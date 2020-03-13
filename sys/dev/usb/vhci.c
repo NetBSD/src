@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.6 2020/02/15 01:21:56 riastradh Exp $ */
+/*	$NetBSD: vhci.c,v 1.7 2020/03/13 18:17:41 christos Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.6 2020/02/15 01:21:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.7 2020/03/13 18:17:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -514,7 +514,7 @@ vhci_device_ctrl_start(struct usbd_xfer *xfer)
 	KASSERT(dev->ud_myhsport != NULL);
 	portno = dev->ud_myhsport->up_portno;
 
-	DPRINTF("%s: type=0x%02x, len=%d, isread=%d, portno=%d\n",
+	DPRINTF("%s: type=%#02x, len=%d, isread=%d, portno=%d\n",
 	    __func__, req->bmRequestType, UGETW(req->wLength), isread, portno);
 
 	if (sc->sc_dying)

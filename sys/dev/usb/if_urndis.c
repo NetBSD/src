@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.37 2020/02/04 07:37:16 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.38 2020/03/13 18:17:40 christos Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.37 2020/02/04 07:37:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.38 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -161,7 +161,7 @@ urndis_ctrl_recv(struct usbnet *un)
 	}
 
 	hdr = (struct rndis_comp_hdr *)buf;
-	DPRINTF(("%s: urndis_ctrl_recv: type 0x%x len %u\n",
+	DPRINTF(("%s: urndis_ctrl_recv: type %#x len %u\n",
 	    DEVNAME(un),
 	    le32toh(hdr->rm_type),
 	    le32toh(hdr->rm_len)));
@@ -214,7 +214,7 @@ urndis_ctrl_handle(struct usbnet *un, struct rndis_comp_hdr *hdr,
 			break;
 
 		default:
-			printf("%s: ctrl message error: unknown event 0x%x\n",
+			printf("%s: ctrl message error: unknown event %#x\n",
 			    DEVNAME(un), le32toh(hdr->rm_type));
 			rval = RNDIS_STATUS_FAILURE;
 	}
@@ -232,8 +232,8 @@ urndis_ctrl_handle_init(struct usbnet *un, const struct rndis_comp_hdr *hdr)
 
 	msg = (const struct rndis_init_comp *) hdr;
 
-	DPRINTF(("%s: urndis_ctrl_handle_init: len %u rid %u status 0x%x "
-	    "ver_major %u ver_minor %u devflags 0x%x medium 0x%x pktmaxcnt %u "
+	DPRINTF(("%s: urndis_ctrl_handle_init: len %u rid %u status %#x "
+	    "ver_major %u ver_minor %u devflags %#x medium %#x pktmaxcnt %u "
 	    "pktmaxsz %u align %u aflistoffset %u aflistsz %u\n",
 	    DEVNAME(un),
 	    le32toh(msg->rm_len),
@@ -250,7 +250,7 @@ urndis_ctrl_handle_init(struct usbnet *un, const struct rndis_comp_hdr *hdr)
 	    le32toh(msg->rm_aflistsz)));
 
 	if (le32toh(msg->rm_status) != RNDIS_STATUS_SUCCESS) {
-		printf("%s: init failed 0x%x\n",
+		printf("%s: init failed %#x\n",
 		    DEVNAME(un),
 		    le32toh(msg->rm_status));
 
@@ -258,7 +258,7 @@ urndis_ctrl_handle_init(struct usbnet *un, const struct rndis_comp_hdr *hdr)
 	}
 
 	if (le32toh(msg->rm_devflags) != RNDIS_DF_CONNECTIONLESS) {
-		printf("%s: wrong device type (current type: 0x%x)\n",
+		printf("%s: wrong device type (current type: %#x)\n",
 		    DEVNAME(un),
 		    le32toh(msg->rm_devflags));
 
@@ -266,7 +266,7 @@ urndis_ctrl_handle_init(struct usbnet *un, const struct rndis_comp_hdr *hdr)
 	}
 
 	if (le32toh(msg->rm_medium) != RNDIS_MEDIUM_802_3) {
-		printf("%s: medium not 802.3 (current medium: 0x%x)\n",
+		printf("%s: medium not 802.3 (current medium: %#x)\n",
 		    DEVNAME(un), le32toh(msg->rm_medium));
 
 		return RNDIS_STATUS_FAILURE;
@@ -296,7 +296,7 @@ urndis_ctrl_handle_query(struct usbnet *un,
 
 	msg = (const struct rndis_query_comp *) hdr;
 
-	DPRINTF(("%s: urndis_ctrl_handle_query: len %u rid %u status 0x%x "
+	DPRINTF(("%s: urndis_ctrl_handle_query: len %u rid %u status %#x "
 	    "buflen %u bufoff %u\n",
 	    DEVNAME(un),
 	    le32toh(msg->rm_len),
@@ -311,7 +311,7 @@ urndis_ctrl_handle_query(struct usbnet *un,
 	}
 
 	if (le32toh(msg->rm_status) != RNDIS_STATUS_SUCCESS) {
-		printf("%s: query failed 0x%x\n",
+		printf("%s: query failed %#x\n",
 		    DEVNAME(un),
 		    le32toh(msg->rm_status));
 
@@ -357,7 +357,7 @@ urndis_ctrl_handle_reset(struct usbnet *un, const struct rndis_comp_hdr *hdr)
 
 	rval = le32toh(msg->rm_status);
 
-	DPRINTF(("%s: urndis_ctrl_handle_reset: len %u status 0x%x "
+	DPRINTF(("%s: urndis_ctrl_handle_reset: len %u status %#x "
 	    "adrreset %u\n",
 	    DEVNAME(un),
 	    le32toh(msg->rm_len),
@@ -365,7 +365,7 @@ urndis_ctrl_handle_reset(struct usbnet *un, const struct rndis_comp_hdr *hdr)
 	    le32toh(msg->rm_adrreset)));
 
 	if (rval != RNDIS_STATUS_SUCCESS) {
-		printf("%s: reset failed 0x%x\n", DEVNAME(un), rval);
+		printf("%s: reset failed %#x\n", DEVNAME(un), rval);
 		return rval;
 	}
 
@@ -396,7 +396,7 @@ urndis_ctrl_handle_status(struct usbnet *un,
 
 	rval = le32toh(msg->rm_status);
 
-	DPRINTF(("%s: urndis_ctrl_handle_status: len %u status 0x%x "
+	DPRINTF(("%s: urndis_ctrl_handle_status: len %u status %#x "
 	    "stbuflen %u\n",
 	    DEVNAME(un),
 	    le32toh(msg->rm_len),
@@ -411,7 +411,7 @@ urndis_ctrl_handle_status(struct usbnet *un,
 			break;
 
 		default:
-		        printf("%s: status 0x%x\n", DEVNAME(un), rval);
+		        printf("%s: status %#x\n", DEVNAME(un), rval);
 	}
 
 	return rval;
@@ -509,7 +509,7 @@ urndis_ctrl_query(struct usbnet *un, uint32_t oid,
 		msg->rm_infobufoffset = 0;
 	msg->rm_devicevchdl = 0;
 
-	DPRINTF(("%s: urndis_ctrl_query send: type %u len %u rid %u oid 0x%x "
+	DPRINTF(("%s: urndis_ctrl_query send: type %u len %u rid %u oid %#x "
 	    "infobuflen %u infobufoffset %u devicevchdl %u\n",
 	    DEVNAME(un),
 	    le32toh(msg->rm_type),
@@ -557,7 +557,7 @@ urndis_ctrl_set(struct usbnet *un, uint32_t oid, void *buf, size_t len)
 		msg->rm_infobufoffset = 0;
 	msg->rm_devicevchdl = 0;
 
-	DPRINTF(("%s: urndis_ctrl_set send: type %u len %u rid %u oid 0x%x "
+	DPRINTF(("%s: urndis_ctrl_set send: type %u len %u rid %u oid %#x "
 	    "infobuflen %u infobufoffset %u devicevchdl %u\n",
 	    DEVNAME(un),
 	    le32toh(msg->rm_type),
@@ -582,7 +582,7 @@ urndis_ctrl_set(struct usbnet *un, uint32_t oid, void *buf, size_t len)
 	}
 	rval = urndis_ctrl_handle(un, hdr, NULL, NULL);
 	if (rval != RNDIS_STATUS_SUCCESS)
-		printf("%s: set failed 0x%x\n", DEVNAME(un), rval);
+		printf("%s: set failed %#x\n", DEVNAME(un), rval);
 
 	return rval;
 }
@@ -620,7 +620,7 @@ urndis_ctrl_set_param(struct urndis_softc *un,
 		param->rm_valueoffset = 0;
 
 	DPRINTF(("%s: urndis_ctrl_set_param send: nameoffset %u namelen %u "
-	    "type 0x%x valueoffset %u valuelen %u\n",
+	    "type %#x valueoffset %u valuelen %u\n",
 	    DEVNAME(un),
 	    le32toh(param->rm_nameoffset),
 	    le32toh(param->rm_namelen),
@@ -631,7 +631,7 @@ urndis_ctrl_set_param(struct urndis_softc *un,
 	rval = urndis_ctrl_set(un, OID_GEN_RNDIS_CONFIG_PARAMETER, param, tlen);
 	kmem_free(param, tlen);
 	if (rval != RNDIS_STATUS_SUCCESS)
-		printf("%s: set param failed 0x%x\n", DEVNAME(un), rval);
+		printf("%s: set param failed %#x\n", DEVNAME(un), rval);
 
 	return rval;
 }
@@ -704,7 +704,7 @@ urndis_ctrl_keepalive(struct usbnet *un)
 	}
 	rval = urndis_ctrl_handle(un, hdr, NULL, NULL);
 	if (rval != RNDIS_STATUS_SUCCESS) {
-		printf("%s: keepalive failed 0x%x\n", DEVNAME(un), rval);
+		printf("%s: keepalive failed %#x\n", DEVNAME(un), rval);
 		urndis_ctrl_reset(un);
 	}
 
@@ -734,7 +734,7 @@ urndis_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	m_copydata(m, 0, m->m_pkthdr.len,
 	    ((char*)msg + RNDIS_DATA_OFFSET + RNDIS_HEADER_OFFSET));
 
-	DPRINTF(("%s: %s type 0x%x len %u data(off %u len %u)\n",
+	DPRINTF(("%s: %s type %#x len %u data(off %u len %u)\n",
 	    __func__,
 	    DEVNAME(un),
 	    le32toh(msg->rm_type),
@@ -782,7 +782,7 @@ urndis_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 		    le32toh(msg->rm_pktinfooffset)));
 
 		if (le32toh(msg->rm_type) != REMOTE_NDIS_PACKET_MSG) {
-			printf("%s: urndis_decap invalid type 0x%x != 0x%x\n",
+			printf("%s: urndis_decap invalid type %#x != %#x\n",
 			    DEVNAME(un),
 			    le32toh(msg->rm_type),
 			    REMOTE_NDIS_PACKET_MSG);
@@ -1029,7 +1029,7 @@ urndis_attach(device_t parent, device_t self, void *aux)
 		}
 
 		if (un->un_ed[USBNET_ENDPT_RX] != 0 && un->un_ed[USBNET_ENDPT_TX] != 0) {
-			DPRINTF(("%s: in=0x%x, out=0x%x\n",
+			DPRINTF(("%s: in=%#x, out=%#x\n",
 			    DEVNAME(un),
 			    un->un_ed[USBNET_ENDPT_RX],
 			    un->un_ed[USBNET_ENDPT_TX]));

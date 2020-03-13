@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.33 2020/02/23 08:54:55 riastradh Exp $	*/
+/*	$NetBSD: motg.c,v 1.34 2020/03/13 18:17:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.33 2020/02/23 08:54:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.34 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -310,7 +310,7 @@ motg_init(struct motg_softc *sc)
 		UWRITE1(sc, MUSB2_REG_DEVCTL, val);
 	}
 	delay(1000);
-	DPRINTF("DEVCTL 0x%jx", UREAD1(sc, MUSB2_REG_DEVCTL), 0, 0, 0);
+	DPRINTF("DEVCTL %#jx", UREAD1(sc, MUSB2_REG_DEVCTL), 0, 0, 0);
 
 	/* disable testmode */
 
@@ -348,7 +348,7 @@ motg_init(struct motg_softc *sc)
 	/* read out configuration data */
 	val = UREAD1(sc, MUSB2_REG_CONFDATA);
 
-	DPRINTF("Config Data: 0x%02jx", val, 0, 0, 0);
+	DPRINTF("Config Data: %#02jx", val, 0, 0, 0);
 
 	dynfifo = (val & MUSB2_MASK_CD_DYNFIFOSZ) ? 1 : 0;
 
@@ -357,7 +357,7 @@ motg_init(struct motg_softc *sc)
 		    "assuming 16Kbytes of FIFO RAM\n");
 	}
 
-	DPRINTF("HW version: 0x%04jx\n", UREAD1(sc, MUSB2_REG_HWVERS), 0, 0, 0);
+	DPRINTF("HW version: %#04jx\n", UREAD1(sc, MUSB2_REG_HWVERS), 0, 0, 0);
 
 	/* initialise endpoint profiles */
 	sc->sc_in_ep[0].ep_fifo_size = 64;
@@ -615,7 +615,7 @@ motg_softintr(void *v)
 	if (ctrl_status & (MUSB2_MASK_IRESET |
 	    MUSB2_MASK_IRESUME | MUSB2_MASK_ISUSP |
 	    MUSB2_MASK_ICONN | MUSB2_MASK_IDISC)) {
-		DPRINTFN(MD_ROOT | MD_CTRL, "bus 0x%jx", ctrl_status, 0, 0, 0);
+		DPRINTFN(MD_ROOT | MD_CTRL, "bus %#jx", ctrl_status, 0, 0, 0);
 
 		if (ctrl_status & MUSB2_MASK_IRESET) {
 			sc->sc_isreset = 1;
@@ -765,7 +765,7 @@ motg_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 #ifdef DIAGNOSTIC
 	if (xfer->ux_state != XFER_BUSY &&
 	    xfer->ux_status != USBD_NOT_STARTED) {
-		printf("motg_freex: xfer=%p not busy, 0x%08x\n", xfer,
+		printf("motg_freex: xfer=%p not busy, %#08x\n", xfer,
 		       xfer->ux_state);
 	}
 	xfer->ux_state = XFER_FREE;
@@ -808,7 +808,7 @@ motg_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	if (sc->sc_dying)
 		return -1;
 
-	DPRINTFN(MD_ROOT, "type=0x%02jx request=%02jx", req->bmRequestType,
+	DPRINTFN(MD_ROOT, "type=%#02jx request=%02jx", req->bmRequestType,
 	    req->bRequest, 0, 0);
 
 	len = UGETW(req->wLength);
@@ -818,7 +818,7 @@ motg_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 #define C(x,y) ((x) | ((y) << 8))
 	switch (C(req->bRequest, req->bmRequestType)) {
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		DPRINTFN(MD_ROOT, "wValue=0x%04jx", value, 0, 0, 0);
+		DPRINTFN(MD_ROOT, "wValue=%#04jx", value, 0, 0, 0);
 		switch (value) {
 #define sd ((usb_string_descriptor_t *)buf)
 		case C(2, UDESC_STRING):
@@ -1437,7 +1437,7 @@ motg_device_ctrl_intr_rx(struct motg_softc *sc)
 
 	/* read out FIFO status */
 	csr = UREAD1(sc, MUSB2_REG_TXCSRL);
-	DPRINTFN(MD_CTRL, "phase %jd csr 0x%jx xfer %#jx status %jd",
+	DPRINTFN(MD_CTRL, "phase %jd csr %#jx xfer %#jx status %jd",
 	    ep->phase, csr, (uintptr_t)xfer,
 	    (xfer != NULL) ? xfer->ux_status : 0);
 
@@ -1563,7 +1563,7 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 	UWRITE1(sc, MUSB2_REG_EPINDEX, 0);
 
 	csr = UREAD1(sc, MUSB2_REG_TXCSRL);
-	DPRINTFN(MD_CTRL, "phase %jd csr 0x%jx xfer %#jx status %jd",
+	DPRINTFN(MD_CTRL, "phase %jd csr %#jx xfer %#jx status %jd",
 	    ep->phase, csr, (uintptr_t)xfer,
 	    (xfer != NULL) ? xfer->ux_status : 0);
 
@@ -1620,7 +1620,7 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 				return;
 			} /*  else fall back to DATA_OUT */
 		} else {
-			DPRINTFN(MD_CTRL, "xfer %#jx to STATUS_IN, csrh 0x%jx",
+			DPRINTFN(MD_CTRL, "xfer %#jx to STATUS_IN, csrh %#jx",
 			    (uintptr_t)xfer, UREAD1(sc, MUSB2_REG_TXCSRH),
 			    0, 0);
 			ep->phase = STATUS_IN;
@@ -1642,7 +1642,7 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 	datalen = uimin(ep->datalen,
 	    UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize));
 	ep->phase = DATA_OUT;
-	DPRINTFN(MD_CTRL, "xfer %#jx to DATA_OUT, csrh 0x%jx", (uintptr_t)xfer,
+	DPRINTFN(MD_CTRL, "xfer %#jx to DATA_OUT, csrh %#jx", (uintptr_t)xfer,
 	    UREAD1(sc, MUSB2_REG_TXCSRH), 0, 0);
 	if (datalen) {
 		data = ep->data;
@@ -1883,7 +1883,7 @@ motg_device_data_read(struct usbd_xfer *xfer)
 		val &= ~MUSB2_MASK_CSRH_RXDT_VAL;
 	UWRITE1(sc, MUSB2_REG_RXCSRH, val);
 
-	DPRINTFN(MD_BULK, "%#jx to DATA_IN on ep %jd, csrh 0x%jx",
+	DPRINTFN(MD_BULK, "%#jx to DATA_IN on ep %jd, csrh %#jx",
 	    (uintptr_t)xfer, otgpipe->hw_ep->ep_number,
 	    UREAD1(sc, MUSB2_REG_RXCSRH), 0);
 	/* start transaction */
@@ -1909,7 +1909,7 @@ motg_device_data_write(struct usbd_xfer *xfer)
 	datalen = uimin(ep->datalen,
 	    UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize));
 	ep->phase = DATA_OUT;
-	DPRINTFN(MD_BULK, "%#jx to DATA_OUT on ep %jd, len %jd csrh 0x%jx",
+	DPRINTFN(MD_BULK, "%#jx to DATA_OUT on ep %jd, len %jd csrh %#jx",
 	    (uintptr_t)xfer, ep->ep_number, datalen,
 	    UREAD1(sc, MUSB2_REG_TXCSRH));
 
@@ -1971,7 +1971,7 @@ motg_device_intr_rx(struct motg_softc *sc, int epnumber)
 
 	/* read out FIFO status */
 	csr = UREAD1(sc, MUSB2_REG_RXCSRL);
-	DPRINTFN(MD_BULK, "phase %jd csr 0x%jx", ep->phase, csr ,0 ,0);
+	DPRINTFN(MD_BULK, "phase %jd csr %#jx", ep->phase, csr ,0 ,0);
 
 	if ((csr & (MUSB2_MASK_CSRL_RXNAKTO | MUSB2_MASK_CSRL_RXSTALL |
 	    MUSB2_MASK_CSRL_RXERROR | MUSB2_MASK_CSRL_RXPKTRDY)) == 0)
@@ -2089,7 +2089,7 @@ motg_device_intr_tx(struct motg_softc *sc, int epnumber)
 	UWRITE1(sc, MUSB2_REG_EPINDEX, epnumber);
 
 	csr = UREAD1(sc, MUSB2_REG_TXCSRL);
-	DPRINTFN(MD_BULK, "phase %jd csr 0x%jx", ep->phase, csr, 0, 0);
+	DPRINTFN(MD_BULK, "phase %jd csr %#jx", ep->phase, csr, 0, 0);
 
 	if (csr & (MUSB2_MASK_CSRL_TXSTALLED|MUSB2_MASK_CSRL_TXERROR)) {
 		/* command not accepted */
@@ -2112,7 +2112,7 @@ motg_device_intr_tx(struct motg_softc *sc, int epnumber)
 			UWRITE1(sc, MUSB2_REG_TXCSRL, csr);
 			delay(1000);
 			csr = UREAD1(sc, MUSB2_REG_TXCSRL);
-			DPRINTFN(MD_BULK, "TX fifo flush ep %jd CSR 0x%jx",
+			DPRINTFN(MD_BULK, "TX fifo flush ep %jd CSR %#jx",
 			    epnumber, csr, 0, 0);
 		}
 		goto complete;

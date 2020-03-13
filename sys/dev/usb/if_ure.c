@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.35 2020/01/29 06:39:07 thorpej Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.36 2020/03/13 18:17:40 christos Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.35 2020/01/29 06:39:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.36 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -131,7 +131,7 @@ ure_ctl(struct usbnet *un, uint8_t rw, uint16_t val, uint16_t index,
 	USETW(req.wIndex, index);
 	USETW(req.wLength, len);
 
-	DPRINTFN(5, ("ure_ctl: rw %d, val 0x%04hu, index 0x%04hu, len %d\n",
+	DPRINTFN(5, ("ure_ctl: rw %d, val %#04hu, index %#04hu, len %d\n",
 	    rw, val, index, len));
 	err = usbd_do_request(un->un_udev, &req, buf);
 	if (err) {

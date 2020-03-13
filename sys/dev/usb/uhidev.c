@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.76 2019/12/06 07:12:39 maxv Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.77 2020/03/13 18:17:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.76 2019/12/06 07:12:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.77 2020/03/13 18:17:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -521,7 +521,7 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	if (!cdev)
 		return;
 	scd = device_private(cdev);
-	DPRINTFN(5,("uhidev_intr: rep=%d, scd=%p state=0x%x\n",
+	DPRINTFN(5,("uhidev_intr: rep=%d, scd=%p state=%#x\n",
 		    rep, scd, scd ? scd->sc_state : 0));
 	if (!(scd->sc_state & UHIDEV_OPEN))
 		return;
@@ -574,7 +574,7 @@ uhidev_open(struct uhidev *scd)
 	sc->sc_ibuf = kmem_alloc(sc->sc_isize, KM_SLEEP);
 
 	/* Set up input interrupt pipe. */
-	DPRINTF(("uhidev_open: isize=%d, ep=0x%02x\n", sc->sc_isize,
+	DPRINTF(("uhidev_open: isize=%d, ep=%#02x\n", sc->sc_isize,
 		 sc->sc_iep_addr));
 
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_iep_addr,
@@ -592,7 +592,7 @@ uhidev_open(struct uhidev *scd)
 	 * exists.
 	 */
 	if (sc->sc_oep_addr != -1) {
-		DPRINTF(("uhidev_open: oep=0x%02x\n", sc->sc_oep_addr));
+		DPRINTF(("uhidev_open: oep=%#02x\n", sc->sc_oep_addr));
 
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_oep_addr,
 		    0, &sc->sc_opipe);

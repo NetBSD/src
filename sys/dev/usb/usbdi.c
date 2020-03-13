@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.195 2020/02/19 16:07:37 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.196 2020/03/13 18:17:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.195 2020/02/19 16:07:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.196 2020/03/13 18:17:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -138,10 +138,10 @@ usbd_dump_iface(struct usbd_interface *iface)
 
 	if (iface == NULL)
 		return;
-	USBHIST_LOG(usbdebug, "     device = %#jx idesc = %#jx index = %d",
+	USBHIST_LOG(usbdebug, "     device = %#jx idesc = %#jx index = %jd",
 	    (uintptr_t)iface->ui_dev, (uintptr_t)iface->ui_idesc,
 	    iface->ui_index, 0);
-	USBHIST_LOG(usbdebug, "     altindex=%d priv=%#jx",
+	USBHIST_LOG(usbdebug, "     altindex=%jd priv=%#jx",
 	    iface->ui_altindex, (uintptr_t)iface->ui_priv, 0, 0);
 }
 
@@ -173,7 +173,7 @@ usbd_dump_endpoint(struct usbd_endpoint *endp)
 	USBHIST_LOG(usbdebug, "    edesc = %#jx refcnt = %jd",
 	    (uintptr_t)endp->ue_edesc, endp->ue_refcnt, 0, 0);
 	if (endp->ue_edesc)
-		USBHIST_LOG(usbdebug, "     bEndpointAddress=0x%02x",
+		USBHIST_LOG(usbdebug, "     bEndpointAddress=%#02jx",
 		    endp->ue_edesc->bEndpointAddress, 0, 0, 0);
 }
 
@@ -229,7 +229,7 @@ usbd_open_pipe_ival(struct usbd_interface *iface, uint8_t address,
 	int i;
 
 	USBHIST_FUNC();
-	USBHIST_CALLARGS(usbdebug, "iface = %#jx address = 0x%jx flags = 0x%jx",
+	USBHIST_CALLARGS(usbdebug, "iface = %#jx address = %#jx flags = %#jx",
 	    (uintptr_t)iface, address, flags, 0);
 
 	for (i = 0; i < iface->ui_idesc->bNumEndpoints; i++) {
@@ -264,7 +264,7 @@ usbd_open_pipe_intr(struct usbd_interface *iface, uint8_t address,
 	struct usbd_pipe *ipipe;
 
 	USBHIST_FUNC();
-	USBHIST_CALLARGS(usbdebug, "address = 0x%jx flags = 0x%jx len = %jd",
+	USBHIST_CALLARGS(usbdebug, "address = %#jx flags = %#jx len = %jd",
 	    address, flags, len, 0);
 
 	err = usbd_open_pipe_ival(iface, address,
@@ -396,7 +396,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 		 * accepted by the HCD for some reason.  It needs removing
 		 * from the pipe queue.
 		 */
-		USBHIST_LOG(usbdebug, "xfer failed: %s, reinserting",
+		USBHIST_LOG(usbdebug, "xfer failed: %jd, reinserting",
 		    err, 0, 0, 0);
 		usbd_lock_pipe(pipe);
 		SDT_PROBE1(usb, device, xfer, preabort,  xfer);
@@ -1214,9 +1214,9 @@ usbd_do_request_len(struct usbd_device *dev, usb_device_request_t *req,
 	err = usbd_sync_transfer(xfer);
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
 	if (xfer->ux_actlen > xfer->ux_length) {
-		USBHIST_LOG(usbdebug, "overrun addr = %jd type = 0x%02jx",
+		USBHIST_LOG(usbdebug, "overrun addr = %jd type = %#02jx",
 		    dev->ud_addr, xfer->ux_request.bmRequestType, 0, 0);
-		USBHIST_LOG(usbdebug, "     req = 0x%02jx val = %jd "
+		USBHIST_LOG(usbdebug, "     req = %#02jx val = %jd "
 		    "index = %jd",
 		    xfer->ux_request.bRequest, UGETW(xfer->ux_request.wValue),
 		    UGETW(xfer->ux_request.wIndex), 0);

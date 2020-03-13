@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.81 2020/01/29 06:39:07 thorpej Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.82 2020/03/13 18:17:40 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.81 2020/01/29 06:39:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.82 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -670,7 +670,7 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 		    USBD_EXCLUSIVE_USE, &sc->rx_pipe[i]);
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
-			    "could not open Rx bulk pipe 0x%02x: %d\n",
+			    "could not open Rx bulk pipe %#02x: %d\n",
 			    rxepaddr[i], error);
 			goto fail;
 		}
@@ -682,7 +682,7 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 		    USBD_EXCLUSIVE_USE, &sc->tx_pipe[i]);
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
-			    "could not open Tx bulk pipe 0x%02x: %d\n",
+			    "could not open Tx bulk pipe %#02x: %d\n",
 			    epaddr[i], error);
 			goto fail;
 		}
@@ -1247,7 +1247,7 @@ urtwn_efuse_read_1(struct urtwn_softc *sc, uint16_t addr)
 		DELAY(5);
 	}
 	aprint_error_dev(sc->sc_dev,
-	    "could not read efuse byte at address 0x%04x\n", addr);
+	    "could not read efuse byte at address %#04x\n", addr);
 	return 0xff;
 }
 
@@ -1354,11 +1354,11 @@ urtwn_dump_rom(struct urtwn_softc *sc, struct r92c_rom *rp)
 {
 
 	aprint_normal_dev(sc->sc_dev,
-	    "id 0x%04x, dbg_sel 0x%x, vid 0x%x, pid 0x%x\n",
+	    "id %#04x, dbg_sel %#x, vid %#x, pid %#x\n",
 	    rp->id, rp->dbg_sel, rp->vid, rp->pid);
 
 	aprint_normal_dev(sc->sc_dev,
-	    "usb_opt 0x%x, ep_setting 0x%x, usb_phy 0x%x\n",
+	    "usb_opt %#x, ep_setting %#x, usb_phy %#x\n",
 	    rp->usb_opt, rp->ep_setting, rp->usb_phy);
 
 	aprint_normal_dev(sc->sc_dev,
@@ -1366,7 +1366,7 @@ urtwn_dump_rom(struct urtwn_softc *sc, struct r92c_rom *rp)
 	    ether_sprintf(rp->macaddr));
 
 	aprint_normal_dev(sc->sc_dev,
-	    "string %s, subcustomer_id 0x%x\n",
+	    "string %s, subcustomer_id %#x\n",
 	    rp->string, rp->subcustomer_id);
 
 	aprint_normal_dev(sc->sc_dev,
@@ -1421,11 +1421,11 @@ urtwn_dump_rom(struct urtwn_softc *sc, struct r92c_rom *rp)
 	    rp->xtal_calib, rp->tssi[0], rp->tssi[1], rp->thermal_meter);
 
 	aprint_normal_dev(sc->sc_dev,
-	    "rf_opt1 0x%x, rf_opt2 0x%x, rf_opt3 0x%x, rf_opt4 0x%x\n",
+	    "rf_opt1 %#x, rf_opt2 %#x, rf_opt3 %#x, rf_opt4 %#x\n",
 	    rp->rf_opt1, rp->rf_opt2, rp->rf_opt3, rp->rf_opt4);
 
 	aprint_normal_dev(sc->sc_dev,
-	    "channnel_plan %d, version %d customer_id 0x%x\n",
+	    "channnel_plan %d, version %d customer_id %#x\n",
 	    rp->channel_plan, rp->version, rp->curstomer_id);
 }
 #endif
@@ -2958,7 +2958,7 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int s, error = 0;
 
 	URTWNHIST_FUNC();
-	URTWNHIST_CALLARGS("cmd=0x%08jx, data=%#jx", cmd, (uintptr_t)data,
+	URTWNHIST_CALLARGS("cmd=%#08jx, data=%#jx", cmd, (uintptr_t)data,
 	    0, 0);
 
 	s = splnet();

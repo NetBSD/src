@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.56 2020/01/29 06:39:07 thorpej Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.57 2020/03/13 18:17:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.56 2020/01/29 06:39:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.57 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -320,7 +320,7 @@ zyd_attach(device_t parent, device_t self, void *aux)
 
 	ddesc = usbd_get_device_descriptor(sc->sc_udev);
 	if (UGETW(ddesc->bcdDevice) < 0x4330) {
-		aprint_error_dev(self, "device version mismatch: 0x%x "
+		aprint_error_dev(self, "device version mismatch: %#x "
 		    "(only >= 43.30 supported)\n", UGETW(ddesc->bcdDevice));
 		return;
 	}
@@ -1544,7 +1544,7 @@ zyd_hw_init(struct zyd_softc *sc)
 	(void)zyd_write32(sc, ZYD_MAC_AFTER_PNP, 1);
 
 	(void)zyd_read16(sc, ZYD_FIRMWARE_BASE_ADDR, &sc->fwbase);
-	DPRINTF(("firmware base address=0x%04x\n", sc->fwbase));
+	DPRINTF(("firmware base address=%#04x\n", sc->fwbase));
 
 	/* retrieve firmware revision number */
 	(void)zyd_read16(sc, sc->fwbase + ZYD_FW_FIRMWARE_REV, &sc->fw_rev);
@@ -1838,7 +1838,7 @@ zyd_intr(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		struct ifnet *ifp = &sc->sc_if;
 		struct ieee80211_node *ni;
 
-		DPRINTF(("retry intr: rate=0x%x addr=%s count=%d (0x%x)\n",
+		DPRINTF(("retry intr: rate=%#x addr=%s count=%d (%#x)\n",
 		    le16toh(retry->rate), ether_sprintf(retry->macaddr),
 		    le16toh(retry->count) & 0xff, le16toh(retry->count)));
 
@@ -2588,7 +2588,7 @@ zyd_loadfirmware(struct zyd_softc *sc, u_char *fw, size_t size)
 		const int mlen = uimin(size, 64);
 #endif
 
-		DPRINTF(("loading firmware block: len=%d, addr=0x%x\n", mlen,
+		DPRINTF(("loading firmware block: len=%d, addr=%#x\n", mlen,
 		    addr));
 
 		USETW(req.wValue, addr);

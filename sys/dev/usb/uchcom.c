@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.34 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.35 2020/03/13 18:17:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.34 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.35 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -448,7 +448,7 @@ static __inline usbd_status
 write_reg(struct uchcom_softc *sc,
 	  uint8_t reg1, uint8_t val1, uint8_t reg2, uint8_t val2)
 {
-	DPRINTF(("%s: write reg 0x%02X<-0x%02X, 0x%02X<-0x%02X\n",
+	DPRINTF(("%s: write reg %#02X<-%#02X, %#02X<-%#02X\n",
 		 device_xname(sc->sc_dev),
 		 (unsigned)reg1, (unsigned)val1,
 		 (unsigned)reg2, (unsigned)val2));
@@ -471,7 +471,7 @@ read_reg(struct uchcom_softc *sc,
 	if (err)
 		return err;
 
-	DPRINTF(("%s: read reg 0x%02X->0x%02X, 0x%02X->0x%02X\n",
+	DPRINTF(("%s: read reg %#02X->%#02X, %#02X->%#02X\n",
 		 device_xname(sc->sc_dev),
 		 (unsigned)reg1, (unsigned)buf[0],
 		 (unsigned)reg2, (unsigned)buf[1]));
@@ -954,8 +954,8 @@ uchcom_intr(struct usbd_xfer *xfer, void * priv,
 		usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
 		return;
 	}
-	DPRINTF(("%s: intr: 0x%02X 0x%02X 0x%02X 0x%02X "
-		 "0x%02X 0x%02X 0x%02X 0x%02X\n",
+	DPRINTF(("%s: intr: %#02X %#02X %#02X %#02X "
+		 "%#02X %#02X %#02X %#02X\n",
 		 device_xname(sc->sc_dev),
 		 (unsigned)buf[0], (unsigned)buf[1],
 		 (unsigned)buf[2], (unsigned)buf[3],

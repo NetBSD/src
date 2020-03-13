@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.54 2020/02/08 07:38:17 maxv Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.55 2020/03/13 18:17:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.54 2020/02/08 07:38:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.55 2020/03/13 18:17:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -530,8 +530,8 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 		if (ifdesc->bInterfaceClass != UICLASS_VIDEO) {
 			DPRINTFN(50, ("uvideo_attach: "
 				      "ignoring non-uvc interface: "
-				      "len=%d type=0x%02x "
-				      "class=0x%02x subclass=0x%02x\n",
+				      "len=%d type=%#02x "
+				      "class=%#02x subclass=%#02x\n",
 				      ifdesc->bLength,
 				      ifdesc->bDescriptorType,
 				      ifdesc->bInterfaceClass,
@@ -545,7 +545,7 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 			if (err != USBD_NORMAL_COMPLETION) {
 				DPRINTF(("uvideo_attach: error with interface "
 					 "%d, VideoControl, "
-					 "descriptor len=%d type=0x%02x: "
+					 "descriptor len=%d type=%#02x: "
 					 "%s (%d)\n",
 					 ifdesc->bInterfaceNumber,
 					 ifdesc->bLength,
@@ -583,7 +583,7 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 			if (err != USBD_NORMAL_COMPLETION) {
 				DPRINTF(("uvideo_attach: error with interface "
 				       "%d, VideoCollection, "
-				       "descriptor len=%d type=0x%02x: "
+				       "descriptor len=%d type=%#02x: "
 				       "%s (%d)\n",
 				       ifdesc->bInterfaceNumber,
 				       ifdesc->bLength,
@@ -594,7 +594,7 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 			break;
 		default:
 			DPRINTF(("uvideo_attach: unknown UICLASS_VIDEO "
-				 "subclass=0x%02x\n",
+				 "subclass=%#02x\n",
 				 ifdesc->bInterfaceSubClass));
 			break;
 		}
@@ -901,7 +901,7 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 			break;
 		default:
 			DPRINTF(("uvideo_unit_init: "
-				 "unknown input terminal type 0x%04x\n",
+				 "unknown input terminal type %#04x\n",
 				 UGETW(input->wTerminalType)));
 			return USBD_INVAL;
 		}
@@ -942,7 +942,7 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 		break;
 	default:
 		DPRINTF(("uvideo_unit_alloc: unknown descriptor "
-			 "type=0x%02x subtype=0x%02x\n",
+			 "type=%#02x subtype=%#02x\n",
 			 desc->bDescriptorType, desc->bDescriptorSubtype));
 		return USBD_INVAL;
 	}
@@ -1174,7 +1174,7 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 			if (ifdesc->bAlternateSetting != 0) {
 				DPRINTF(("uvideo_stream_init_alternate: "
 					 "unexpected class-specific descriptor "
-					 "len=%d type=0x%02x subtype=0x%02x\n",
+					 "len=%d type=%#02x subtype=%#02x\n",
 					 uvdesc->bLength,
 					 uvdesc->bDescriptorType,
 					 uvdesc->bDescriptorSubtype));
@@ -1202,8 +1202,8 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 			case UDESC_VS_FORMAT_STREAM_BASED:
 			default:
 				DPRINTF(("uvideo: unimplemented VS CS "
-					 "descriptor len=%d type=0x%02x "
-					 "subtype=0x%02x\n",
+					 "descriptor len=%d type=%#02x "
+					 "subtype=%#02x\n",
 					 uvdesc->bLength,
 					 uvdesc->bDescriptorType,
 					 uvdesc->bDescriptorSubtype));
@@ -1213,7 +1213,7 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 		default:
 			DPRINTF(("uvideo_stream_init_desc: "
 				 "unknown descriptor "
-				 "len=%d type=0x%02x\n",
+				 "len=%d type=%#02x\n",
 				 uvdesc->bLength,
 				 uvdesc->bDescriptorType));
 			break;
@@ -1595,7 +1595,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 		return 0;
 	default:
 		/* should never get here */
-		DPRINTF(("uvideo_stream_start_xfer: unknown xfer type 0x%x\n",
+		DPRINTF(("uvideo_stream_start_xfer: unknown xfer type %#x\n",
 			 vs->vs_xfer_type));
 		return EINVAL;
 	}
@@ -1682,7 +1682,7 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 		return 0;
 	default:
 		/* should never get here */
-		DPRINTF(("uvideo_stream_stop_xfer: unknown xfer type 0x%x\n",
+		DPRINTF(("uvideo_stream_stop_xfer: unknown xfer type %#x\n",
 			 vs->vs_xfer_type));
 		return EINVAL;
 	}
@@ -2018,7 +2018,7 @@ uvideo_set_format(void *addr, struct video_format *format)
 	}
 
 	DPRINTFN(15, ("uvideo_set_format: committing to format: "
-		      "bmHint=0x%04x bFormatIndex=%d bFrameIndex=%d "
+		      "bmHint=%#04x bFormatIndex=%d bFrameIndex=%d "
 		      "dwFrameInterval=%u wKeyFrameRate=%d wPFrameRate=%d "
 		      "wCompQuality=%d wCompWindowSize=%d wDelay=%d "
 		      "dwMaxVideoFrameSize=%u dwMaxPayloadTransferSize=%u",
@@ -2034,7 +2034,7 @@ uvideo_set_format(void *addr, struct video_format *format)
 		      UGETDW(probe.dwMaxVideoFrameSize),
 		      UGETDW(probe.dwMaxPayloadTransferSize)));
 	if (vs->vs_probelen == 34) {
-		DPRINTFN(15, (" dwClockFrequency=%u bmFramingInfo=0x%02x "
+		DPRINTFN(15, (" dwClockFrequency=%u bmFramingInfo=%#02x "
 			      "bPreferedVersion=%d bMinVersion=%d "
 			      "bMaxVersion=%d",
 			      UGETDW(probe.dwClockFrequency),
@@ -2417,12 +2417,12 @@ print_descriptor(const usb_descriptor_t *desc)
 			print_vs_descriptor(desc);
 			break;
 		case UISUBCLASS_VIDEOCOLLECTION:
-			printf("uvc collection: len=%d type=0x%02x",
+			printf("uvc collection: len=%d type=%#02x",
 			    desc->bLength, desc->bDescriptorType);
 			break;
 		}
 	} else {
-		printf("non uvc descriptor len=%d type=0x%02x",
+		printf("non uvc descriptor len=%d type=%#02x",
 		    desc->bLength, desc->bDescriptorType);
 	}
 
@@ -2485,7 +2485,7 @@ print_vc_descriptor(const usb_descriptor_t *desc)
 			break;
 		default:
 			printf("class specific interface "
-			    "len=%d type=0x%02x subtype=0x%02x",
+			    "len=%d type=%#02x subtype=%#02x",
 			    vcdesc->bLength,
 			    vcdesc->bDescriptorType,
 			    vcdesc->bDescriptorSubtype);
@@ -2502,7 +2502,7 @@ print_vc_descriptor(const usb_descriptor_t *desc)
 			break;
 		default:
 			printf("class specific endpoint "
-			    "len=%d type=0x%02x subtype=0x%02x",
+			    "len=%d type=%#02x subtype=%#02x",
 			    vcdesc->bLength,
 			    vcdesc->bDescriptorType,
 			    vcdesc->bDescriptorSubtype);
@@ -2510,7 +2510,7 @@ print_vc_descriptor(const usb_descriptor_t *desc)
 		}
 		break;
 	default:
-		printf("unknown: len=%d type=0x%02x",
+		printf("unknown: len=%d type=%#02x",
 		    desc->bLength, desc->bDescriptorType);
 		break;
 	}
@@ -2566,14 +2566,14 @@ print_vs_descriptor(const usb_descriptor_t *desc)
 				vsdesc);
 			break;
 		default:
-			printf("unknown cs interface: len=%d type=0x%02x "
-			    "subtype=0x%02x",
+			printf("unknown cs interface: len=%d type=%#02x "
+			    "subtype=%#02x",
 			    vsdesc->bLength, vsdesc->bDescriptorType,
 			    vsdesc->bDescriptorSubtype);
 		}
 		break;
 	default:
-		printf("unknown: len=%d type=0x%02x",
+		printf("unknown: len=%d type=%#02x",
 		    desc->bLength, desc->bDescriptorType);
 		break;
 	}
@@ -2582,11 +2582,11 @@ print_vs_descriptor(const usb_descriptor_t *desc)
 static void
 print_interface_descriptor(const usb_interface_descriptor_t *id)
 {
-	printf("Interface: Len=%d Type=0x%02x "
-	    "bInterfaceNumber=0x%02x "
-	    "bAlternateSetting=0x%02x bNumEndpoints=0x%02x "
-	    "bInterfaceClass=0x%02x bInterfaceSubClass=0x%02x "
-	    "bInterfaceProtocol=0x%02x iInterface=0x%02x",
+	printf("Interface: Len=%d Type=%#02x "
+	    "bInterfaceNumber=%#02x "
+	    "bAlternateSetting=%#02x bNumEndpoints=%#02x "
+	    "bInterfaceClass=%#02x bInterfaceSubClass=%#02x "
+	    "bInterfaceProtocol=%#02x iInterface=%#02x",
 	    id->bLength,
 	    id->bDescriptorType,
 	    id->bInterfaceNumber,
@@ -2601,8 +2601,8 @@ print_interface_descriptor(const usb_interface_descriptor_t *id)
 static void
 print_endpoint_descriptor(const usb_endpoint_descriptor_t *desc)
 {
-	printf("Endpoint: Len=%d Type=0x%02x "
-	    "bEndpointAddress=0x%02x ",
+	printf("Endpoint: Len=%d Type=%#02x "
+	    "bEndpointAddress=%#02x ",
 	    desc->bLength,
 	    desc->bDescriptorType,
 	    desc->bEndpointAddress);
@@ -2618,7 +2618,7 @@ print_vc_header_descriptor(
 	const uvideo_vc_header_descriptor_t *desc)
 {
 	printf("Interface Header: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "bcdUVC=%d wTotalLength=%d "
 	    "dwClockFrequency=%u bInCollection=%d",
 	    desc->bLength,
@@ -2635,7 +2635,7 @@ print_input_terminal_descriptor(
 	const uvideo_input_terminal_descriptor_t *desc)
 {
 	printf("Input Terminal: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "bTerminalID=%d wTerminalType=%x bAssocTerminal=%d "
 	    "iTerminal=%d",
 	    desc->bLength,
@@ -2652,7 +2652,7 @@ print_output_terminal_descriptor(
 	const uvideo_output_terminal_descriptor_t *desc)
 {
 	printf("Output Terminal: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "bTerminalID=%d wTerminalType=%x bAssocTerminal=%d "
 	    "bSourceID=%d iTerminal=%d",
 	    desc->bLength,
@@ -2670,7 +2670,7 @@ print_camera_terminal_descriptor(
 	const uvideo_camera_terminal_descriptor_t *desc)
 {
 	printf("Camera Terminal: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "bTerminalID=%d wTerminalType=%x bAssocTerminal=%d "
 	    "iTerminal=%d "
 	    "wObjectiveFocalLengthMin/Max=%d/%d "
@@ -2698,7 +2698,7 @@ print_selector_unit_descriptor(
 	int i;
 	const uByte *b;
 	printf("Selector Unit: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "bUnitID=%d bNrInPins=%d ",
 	    desc->bLength,
 	    desc->bDescriptorType,
@@ -2719,7 +2719,7 @@ print_processing_unit_descriptor(
 	const uByte *b;
 
 	printf("Processing Unit: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "bUnitID=%d bSourceID=%d wMaxMultiplier=%d bControlSize=%d ",
 	    desc->bLength,
 	    desc->bDescriptorType,
@@ -2745,7 +2745,7 @@ print_extension_unit_descriptor(
 	int i;
 
 	printf("Extension Unit: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "bUnitID=%d ",
 	    desc->bLength,
 	    desc->bDescriptorType,
@@ -2779,7 +2779,7 @@ print_interrupt_endpoint_descriptor(
 	const uvideo_vc_interrupt_endpoint_descriptor_t *desc)
 {
 	printf("Interrupt Endpoint: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "wMaxTransferSize=%d ",
 	    desc->bLength,
 	    desc->bDescriptorType,
@@ -2793,7 +2793,7 @@ print_vs_output_header_descriptor(
 	const uvideo_vs_output_header_descriptor_t *desc)
 {
 	printf("Interface Output Header: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "bNumFormats=%d wTotalLength=%d bEndpointAddress=%d "
 	    "bTerminalLink=%d bControlSize=%d",
 	    desc->bLength,
@@ -2811,7 +2811,7 @@ print_vs_input_header_descriptor(
 	const uvideo_vs_input_header_descriptor_t *desc)
 {
 	printf("Interface Input Header: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "bNumFormats=%d wTotalLength=%d bEndpointAddress=%d "
 	    "bmInfo=%x bTerminalLink=%d bStillCaptureMethod=%d "
 	    "bTriggerSupport=%d bTriggerUsage=%d bControlSize=%d ",
@@ -2835,7 +2835,7 @@ print_vs_format_uncompressed_descriptor(
 	const uvideo_vs_format_uncompressed_descriptor_t *desc)
 {
 	printf("Format Uncompressed: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "bFormatIndex=%d bNumFrameDescriptors=%d ",
 	    desc->bLength,
 	    desc->bDescriptorType,
@@ -2845,7 +2845,7 @@ print_vs_format_uncompressed_descriptor(
 	usb_guid_print(&desc->guidFormat);
 	printf(" bBitsPerPixel=%d bDefaultFrameIndex=%d "
 	    "bAspectRatioX=%d bAspectRatioY=%d "
-	    "bmInterlaceFlags=0x%02x bCopyProtect=%d",
+	    "bmInterlaceFlags=%#02x bCopyProtect=%d",
 	    desc->bBitsPerPixel,
 	    desc->bDefaultFrameIndex,
 	    desc->bAspectRatioX,
@@ -2859,8 +2859,8 @@ print_vs_frame_uncompressed_descriptor(
 	const uvideo_vs_frame_uncompressed_descriptor_t *desc)
 {
 	printf("Frame Uncompressed: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
-	    "bFrameIndex=%d bmCapabilities=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
+	    "bFrameIndex=%d bmCapabilities=%#02x "
 	    "wWidth=%d wHeight=%d dwMinBitRate=%u dwMaxBitRate=%u "
 	    "dwMaxVideoFrameBufferSize=%u dwDefaultFrameInterval=%u "
 	    "bFrameIntervalType=%d",
@@ -2883,10 +2883,10 @@ print_vs_format_mjpeg_descriptor(
 	const uvideo_vs_format_mjpeg_descriptor_t *desc)
 {
 	printf("MJPEG format: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
-	    "bFormatIndex=%d bNumFrameDescriptors=%d bmFlags=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
+	    "bFormatIndex=%d bNumFrameDescriptors=%d bmFlags=%#02x "
 	    "bDefaultFrameIndex=%d bAspectRatioX=%d bAspectRatioY=%d "
-	    "bmInterlaceFlags=0x%02x bCopyProtect=%d",
+	    "bmInterlaceFlags=%#02x bCopyProtect=%d",
 	    desc->bLength,
 	    desc->bDescriptorType,
 	    desc->bDescriptorSubtype,
@@ -2905,8 +2905,8 @@ print_vs_frame_mjpeg_descriptor(
 	const uvideo_vs_frame_mjpeg_descriptor_t *desc)
 {
 	printf("MJPEG frame: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
-	    "bFrameIndex=%d bmCapabilities=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
+	    "bFrameIndex=%d bmCapabilities=%#02x "
 	    "wWidth=%d wHeight=%d dwMinBitRate=%u dwMaxBitRate=%u "
 	    "dwMaxVideoFrameBufferSize=%u dwDefaultFrameInterval=%u "
 	    "bFrameIntervalType=%d",
@@ -2929,7 +2929,7 @@ print_vs_format_dv_descriptor(
 	const uvideo_vs_format_dv_descriptor_t *desc)
 {
 	printf("MJPEG format: "
-	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "Len=%d Type=%#02x Subtype=%#02x "
 	    "bFormatIndex=%d dwMaxVideoFrameBufferSize=%u "
 	    "bFormatType/Rate=%d bFormatType/Format=%d",
 	    desc->bLength,

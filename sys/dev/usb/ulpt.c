@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.104 2019/12/01 08:27:54 maxv Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.105 2020/03/13 18:17:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.104 2019/12/01 08:27:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.105 2020/03/13 18:17:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -392,7 +392,7 @@ ulpt_status(struct ulpt_softc *sc)
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, 1);
 	err = usbd_do_request(sc->sc_udev, &req, &status);
-	DPRINTFN(2, ("ulpt_status: status=0x%02x err=%d\n", status, err));
+	DPRINTFN(2, ("ulpt_status: status=%#02x err=%d\n", status, err));
 	if (!err)
 		return status;
 	else
@@ -448,7 +448,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	sc->sc_state = ULPT_INIT;
 	sc->sc_flags = flags;
-	DPRINTFN(2, ("ulptopen: flags=0x%x\n", (unsigned)flags));
+	DPRINTFN(2, ("ulptopen: flags=%#x\n", (unsigned)flags));
 
 	error = 0;
 	sc->sc_refcnt++;

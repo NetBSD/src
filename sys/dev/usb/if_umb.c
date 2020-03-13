@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.12 2020/02/04 05:46:32 thorpej Exp $ */
+/*	$NetBSD: if_umb.c,v 1.13 2020/03/13 18:17:40 christos Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.12 2020/02/04 05:46:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.13 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -372,7 +372,7 @@ umb_attach(device_t parent, device_t self, void *aux)
 				/* cont. anyway */
 			}
 			sc->sc_maxpktlen = UGETW(md->wMaxSegmentSize);
-			DPRINTFN(2, "%s: ctrl_len=%d, maxpktlen=%d, cap=0x%x\n",
+			DPRINTFN(2, "%s: ctrl_len=%d, maxpktlen=%d, cap=%#x\n",
 			    DEVNAM(sc), sc->sc_ctrl_len, sc->sc_maxpktlen,
 			    md->bmNetworkCapabilities);
 			break;
@@ -1400,7 +1400,7 @@ umb_decode_register_state(struct umb_softc *sc, void *data, int len)
 	umb_getinfobuf(data, len, rs->roamingtxt_offs, rs->roamingtxt_size,
 	    sc->sc_info.roamingtxt, sizeof(sc->sc_info.roamingtxt));
 
-	DPRINTFN(2, "%s: %s, availclass 0x%x, class 0x%x, regmode %d\n",
+	DPRINTFN(2, "%s: %s, availclass %#x, class %#x, regmode %d\n",
 	    DEVNAM(sc), umb_regstate(sc->sc_info.regstate),
 	    le32toh(rs->availclasses), sc->sc_info.cellclass,
 	    sc->sc_info.regmode);
@@ -1432,7 +1432,7 @@ umb_decode_devices_caps(struct umb_softc *sc, void *data, int len)
 	    sc->sc_info.fwinfo, sizeof(sc->sc_info.fwinfo));
 	umb_getinfobuf(data, len, dc->hwinfo_offs, dc->hwinfo_size,
 	    sc->sc_info.hwinfo, sizeof(sc->sc_info.hwinfo));
-	DPRINTFN(2, "%s: max sessions %d, supported classes 0x%x\n",
+	DPRINTFN(2, "%s: max sessions %d, supported classes %#x\n",
 	    DEVNAM(sc), sc->sc_maxsessions, sc->sc_info.supportedclasses);
 	return 1;
 }
@@ -1962,7 +1962,7 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 		}
 		break;
 	default:
-		DPRINTF("%s: unsupported NCM header signature (0x%08x)\n",
+		DPRINTF("%s: unsupported NCM header signature (%#08x)\n",
 		    DEVNAM(sc), hsig);
 		goto fail;
 	}
@@ -1978,7 +1978,7 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 	if (len < ptrlen + ptroff)
 		goto toosmall;
 	if (!MBIM_NCM_NTH16_ISISG(psig) && !MBIM_NCM_NTH32_ISISG(psig)) {
-		DPRINTF("%s: unsupported NCM pointer signature (0x%08x)\n",
+		DPRINTF("%s: unsupported NCM pointer signature (%#08x)\n",
 		    DEVNAM(sc), psig);
 		goto fail;
 	}
@@ -2558,7 +2558,7 @@ umb_decode_qmi(struct umb_softc *sc, uint8_t *data, int len)
 			case 0x0022:	/* Allocate CID */
 				if (val != 0) {
 					log(LOG_ERR, "%s: allocation of QMI CID"
-					    " failed, error 0x%x\n", DEVNAM(sc),
+					    " failed, error %#x\n", DEVNAM(sc),
 					    val);
 					/* XXX how to proceed? */
 					return;
@@ -2575,7 +2575,7 @@ umb_decode_qmi(struct umb_softc *sc, uint8_t *data, int len)
 				else
 					log(LOG_INFO, "%s: send FCC "
 					    "Authentication failed, "
-					    "error 0x%x\n", DEVNAM(sc), val);
+					    "error %#x\n", DEVNAM(sc), val);
 
 				/* FCC Auth is needed only once after power-on*/
 				sc->sc_flags &= ~UMBFLG_FCC_AUTH_REQUIRED;
@@ -2623,7 +2623,7 @@ umb_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		    return;
 	}
 	if (sc->sc_intr_msg.bmRequestType != UCDC_NOTIFICATION) {
-		DPRINTF("%s: unexpected notification (type=0x%02x)\n",
+		DPRINTF("%s: unexpected notification (type=%#02x)\n",
 		    DEVNAM(sc), sc->sc_intr_msg.bmRequestType);
 		return;
 	}
@@ -2644,7 +2644,7 @@ umb_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		    DEVNAM(sc));
 		break;
 	default:
-		DPRINTF("%s: unexpected notification (0x%02x)\n",
+		DPRINTF("%s: unexpected notification (%#02x)\n",
 		    DEVNAM(sc), sc->sc_intr_msg.bNotification);
 		break;
 	}

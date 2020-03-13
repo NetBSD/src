@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.35 2020/02/04 05:46:32 thorpej Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.36 2020/03/13 18:17:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.35 2020/02/04 05:46:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.36 2020/03/13 18:17:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -263,14 +263,14 @@ usbnet_enqueue(struct usbnet * const un, uint8_t *buf, size_t buflen,
 	struct usbnet_private * const unp __unused = un->un_pri;
 	struct mbuf *m;
 
-	USBNETHIST_CALLARGSN(5, "%d: enter: len=%zu csf %x mbf %x",
+	USBNETHIST_CALLARGSN(5, "%jd: enter: len=%ju csf %#jx mbf %#jx",
 	    unp->unp_number, buflen, csum_flags, mbuf_flags);
 
 	usbnet_isowned_rx(un);
 
 	m = usbnet_newbuf(buflen);
 	if (m == NULL) {
-		DPRINTF("%d: no memory", unp->unp_number, 0, 0, 0);
+		DPRINTF("%jd: no memory", unp->unp_number, 0, 0, 0);
 		if_statinc(ifp, if_ierrors);
 		return;
 	}
@@ -293,7 +293,7 @@ usbnet_input(struct usbnet * const un, uint8_t *buf, size_t buflen)
 	struct usbnet_private * const unp __unused = un->un_pri;
 	struct mbuf *m;
 
-	USBNETHIST_CALLARGSN(5, "%d: enter: buf %jx len %ju",
+	USBNETHIST_CALLARGSN(5, "%jd: enter: buf %#jx len %ju",
 	    unp->unp_number, (uintptr_t)buf, buflen, 0);
 
 	usbnet_isowned_rx(un);
@@ -325,7 +325,7 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct ifnet * const ifp = usbnet_ifp(un);
 	uint32_t total_len;
 
-	USBNETHIST_CALLARGSN(5, "%d: enter: status %x xfer %jx",
+	USBNETHIST_CALLARGSN(5, "%jd: enter: status %#jx xfer %#jx",
 	    unp->unp_number, status, (uintptr_t)xfer, 0);
 
 	mutex_enter(&unp->unp_rxlock);
@@ -382,7 +382,7 @@ usbnet_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct usbnet_private * const unp = un->un_pri;
 	struct ifnet * const ifp = usbnet_ifp(un);
 
-	USBNETHIST_CALLARGSN(5, "%d: enter: status %x xfer %jx",
+	USBNETHIST_CALLARGSN(5, "%jd: enter: status %#jx xfer %#jx",
 	    unp->unp_number, status, (uintptr_t)xfer, 0);
 
 	mutex_enter(&unp->unp_txlock);
@@ -434,7 +434,7 @@ usbnet_pipe_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (uni == NULL || unp->unp_dying || unp->unp_stopping ||
 	    status == USBD_INVAL || status == USBD_NOT_STARTED ||
 	    status == USBD_CANCELLED || !(ifp->if_flags & IFF_RUNNING)) {
-		USBNETHIST_CALLARGS("%d: uni %jx d/s %x status %x",
+		USBNETHIST_CALLARGS("%jd: uni %#jx d/s %#jx status %#jx",
 		    unp->unp_number, (uintptr_t)uni,
 		    (unp->unp_dying << 8) | unp->unp_stopping, status);
 		return;
@@ -447,7 +447,7 @@ usbnet_pipe_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		}
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(unp->unp_ep[USBNET_ENDPT_INTR]);
-		USBNETHIST_CALLARGS("%d: not normal status %x",
+		USBNETHIST_CALLARGS("%jd: not normal status %#jx",
 		    unp->unp_number, status, 0, 0);
 		return;
 	}
@@ -467,7 +467,7 @@ usbnet_start_locked(struct ifnet *ifp)
 	bool done_transmit = false;
 	int idx;
 
-	USBNETHIST_CALLARGS("%d: tx_cnt %d list_cnt %d link %d",
+	USBNETHIST_CALLARGS("%jd: tx_cnt %jd list_cnt %jd link %jd",
 	    unp->unp_number, cd->uncd_tx_cnt, un->un_tx_list_cnt,
 	    unp->unp_link);
 
@@ -481,7 +481,7 @@ usbnet_start_locked(struct ifnet *ifp)
 	}
 
 	if (cd->uncd_tx_cnt == un->un_tx_list_cnt) {
-		DPRINTF("start called, tx busy (%jx == %jx)",
+		DPRINTF("start called, tx busy (%#jx == %#jx)",
 		    cd->uncd_tx_cnt, un->un_tx_list_cnt, 0, 0);
 		return;
 	}
@@ -516,7 +516,7 @@ usbnet_start_locked(struct ifnet *ifp)
 		/* Transmit */
 		usbd_status err = usbd_transfer(c->unc_xfer);
 		if (err != USBD_IN_PROGRESS) {
-			DPRINTF("usbd_transfer on %jx for %ju bytes: %d",
+			DPRINTF("usbd_transfer on %#jx for %ju bytes: %d",
 			    (uintptr_t)c->unc_buf, length, err, 0);
 			if_statinc(ifp, if_oerrors);
 			break;
@@ -554,7 +554,7 @@ usbnet_start(struct ifnet *ifp)
 	struct usbnet_private * const unp = un->un_pri;
 
 	USBNETHIST_FUNC();
-	USBNETHIST_CALLARGS("%d, stopping %d",
+	USBNETHIST_CALLARGS("%jd: stopping %jd",
 	    unp->unp_number, unp->unp_stopping, 0, 0);
 
 	mutex_enter(&unp->unp_txlock);
@@ -939,7 +939,8 @@ usbnet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	usbnet_unlock_mii(un);
 
 	if (err) {
-		USBNETHIST_CALLARGS("read PHY failed: %d", err, 0, 0, 0);
+		USBNETHIST_CALLARGS("%jd: read PHY failed: %jd",
+		    unp->unp_number, err, 0, 0);
 		return err;
 	}
 
@@ -966,7 +967,8 @@ usbnet_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 	usbnet_unlock_mii(un);
 
 	if (err) {
-		USBNETHIST_CALLARGS("write PHY failed: %d", err, 0, 0, 0);
+		USBNETHIST_CALLARGS("%jd: write PHY failed: %jd",
+		    unp->unp_number, err, 0, 0);
 		return err;
 	}
 
@@ -1040,7 +1042,7 @@ usbnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct usbnet_private * const unp __unused = un->un_pri;
 	int error;
 
-	USBNETHIST_CALLARGSN(11, "%d: enter %jx data %x",
+	USBNETHIST_CALLARGSN(11, "%jd: enter %#jx data %#jx",
 	    unp->unp_number, cmd, (uintptr_t)data, 0);
 
 	if (un->un_ops->uno_override_ioctl)
@@ -1132,7 +1134,7 @@ usbnet_tick(void *arg)
 	struct usbnet * const un = arg;
 	struct usbnet_private * const unp = un->un_pri;
 
-	USBNETHIST_CALLARGSN(10, "%d: enter", unp->unp_number, 0, 0, 0);
+	USBNETHIST_CALLARGSN(10, "%jd: enter", unp->unp_number, 0, 0, 0);
 
 	if (unp != NULL && !unp->unp_stopping && !unp->unp_dying) {
 		/* Perform periodic stuff in process context */
@@ -1176,7 +1178,7 @@ usbnet_tick_task(void *arg)
 	if (unp == NULL)
 		return;
 
-	USBNETHIST_CALLARGSN(8, "%d: enter", unp->unp_number, 0, 0, 0);
+	USBNETHIST_CALLARGSN(8, "%jd: enter", unp->unp_number, 0, 0, 0);
 
 	mutex_enter(&unp->unp_lock);
 	if (unp->unp_stopping || unp->unp_dying) {
@@ -1195,7 +1197,7 @@ usbnet_tick_task(void *arg)
 	if (unp->unp_timer != 0 && --unp->unp_timer == 0)
 		usbnet_watchdog(ifp);
 
-	DPRINTFN(8, "mii %jx ifp %jx", (uintptr_t)mii, (uintptr_t)ifp, 0, 0);
+	DPRINTFN(8, "mii %#jx ifp %#jx", (uintptr_t)mii, (uintptr_t)ifp, 0, 0);
 	if (mii) {
 		mii_tick(mii);
 		if (!unp->unp_link)

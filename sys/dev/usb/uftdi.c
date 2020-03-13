@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.72 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.73 2020/03/13 18:17:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.72 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.73 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -189,7 +189,7 @@ uftdi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
 
-	DPRINTFN(20,("uftdi: vendor=0x%x, product=0x%x\n",
+	DPRINTFN(20,("uftdi: vendor=%#x, product=%#x\n",
 		     uiaa->uiaa_vendor, uiaa->uiaa_product));
 
 	if (uiaa->uiaa_configno != UFTDI_CONFIG_NO)
@@ -328,7 +328,7 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 	ucaa.ucaa_arg = sc;
 	ucaa.ucaa_info = NULL;
 
-	DPRINTF(("uftdi: in=0x%x out=0x%x isize=0x%x osize=0x%x\n",
+	DPRINTF(("uftdi: in=%#x out=%#x isize=%#x osize=%#x\n",
 		ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
 		ucaa.ucaa_ibufsize, ucaa.ucaa_obufsize));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL,
@@ -432,13 +432,13 @@ uftdi_read(void *vsc, int portno, u_char **ptr, uint32_t *count)
 #ifdef UFTDI_DEBUG
 	if (*count != 2)
 		DPRINTFN(10,("uftdi_read: sc=%p, port=%d count=%d data[0]="
-			    "0x%02x\n", sc, portno, *count, (*ptr)[2]));
+			    "%#02x\n", sc, portno, *count, (*ptr)[2]));
 #endif
 
 	if (sc->sc_msr != msr ||
 	    (sc->sc_lsr & FTDI_LSR_MASK) != (lsr & FTDI_LSR_MASK)) {
-		DPRINTF(("uftdi_read: status change msr=0x%02x(0x%02x) "
-			 "lsr=0x%02x(0x%02x)\n", msr, sc->sc_msr,
+		DPRINTF(("uftdi_read: status change msr=%#02x(%#02x) "
+			 "lsr=%#02x(%#02x)\n", msr, sc->sc_msr,
 			 lsr, sc->sc_lsr));
 		sc->sc_msr = msr;
 		sc->sc_lsr = lsr;
@@ -454,7 +454,7 @@ uftdi_write(void *vsc, int portno, u_char *to, u_char *from, uint32_t *count)
 {
 	struct uftdi_softc *sc = vsc;
 
-	DPRINTFN(10,("uftdi_write: sc=%p, port=%d count=%u data[0]=0x%02x\n",
+	DPRINTFN(10,("uftdi_write: sc=%p, port=%d count=%u data[0]=%#02x\n",
 		     vsc, portno, *count, from[0]));
 
 	/* Make length tag and copy data */
@@ -496,8 +496,8 @@ uftdi_set(void *vsc, int portno, int reg, int onoff)
 	USETW(req.wValue, ctl);
 	USETW(req.wIndex, portno);
 	USETW(req.wLength, 0);
-	DPRINTFN(2,("uftdi_set: reqtype=0x%02x req=0x%02x value=0x%04x "
-		    "index=0x%04x len=%d\n", req.bmRequestType, req.bRequest,
+	DPRINTFN(2,("uftdi_set: reqtype=%#02x req=%#02x value=%#04x "
+		    "index=%#04x len=%d\n", req.bmRequestType, req.bRequest,
 		    UGETW(req.wValue), UGETW(req.wIndex), UGETW(req.wLength)));
 	(void)usbd_do_request(sc->sc_udev, &req, NULL);
 }
@@ -672,8 +672,8 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	USETW(req.wValue, rate);
 	USETW(req.wIndex, portno | ratehi);
 	USETW(req.wLength, 0);
-	DPRINTFN(2,("uftdi_param: reqtype=0x%02x req=0x%02x value=0x%04x "
-		    "index=0x%04x len=%d\n", req.bmRequestType, req.bRequest,
+	DPRINTFN(2,("uftdi_param: reqtype=%#02x req=%#02x value=%#04x "
+		    "index=%#04x len=%d\n", req.bmRequestType, req.bRequest,
 		    UGETW(req.wValue), UGETW(req.wIndex), UGETW(req.wLength)));
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
@@ -711,8 +711,8 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	USETW(req.wValue, data);
 	USETW(req.wIndex, portno);
 	USETW(req.wLength, 0);
-	DPRINTFN(2,("uftdi_param: reqtype=0x%02x req=0x%02x value=0x%04x "
-		    "index=0x%04x len=%d\n", req.bmRequestType, req.bRequest,
+	DPRINTFN(2,("uftdi_param: reqtype=%#02x req=%#02x value=%#04x "
+		    "index=%#04x len=%d\n", req.bmRequestType, req.bRequest,
 		    UGETW(req.wValue), UGETW(req.wIndex), UGETW(req.wLength)));
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
@@ -744,7 +744,7 @@ uftdi_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 {
 	struct uftdi_softc *sc = vsc;
 
-	DPRINTF(("uftdi_status: msr=0x%02x lsr=0x%02x\n",
+	DPRINTF(("uftdi_status: msr=%#02x lsr=%#02x\n",
 		 sc->sc_msr, sc->sc_lsr));
 
 	if (sc->sc_dying)
