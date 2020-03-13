@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.77 2020/03/08 14:10:24 msaitoh Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.78 2020/03/13 05:10:39 msaitoh Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.77 2020/03/08 14:10:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.78 2020/03/13 05:10:39 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -555,20 +555,19 @@ nfe_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 			break;
 	}
 	if (ntries == 1000) {
-		DPRINTFN(2, ("%s: timeout waiting for PHY\n",
-		    device_xname(sc->sc_dev)));
+		DPRINTFN(2, ("%s: timeout waiting for PHY read (%d, %d)\n",
+		    device_xname(sc->sc_dev), phy, reg));
 		return ETIMEDOUT;
 	}
 
 	if (NFE_READ(sc, NFE_PHY_STATUS) & NFE_PHY_ERROR) {
-		DPRINTFN(2, ("%s: could not read PHY\n",
-		    device_xname(sc->sc_dev)));
+		DPRINTFN(2, ("%s: could not read PHY (%d, %d)\n",
+		    device_xname(sc->sc_dev), phy, reg));
 		return -1;
 	}
 
 	data = NFE_READ(sc, NFE_PHY_DATA);
-	if (data != 0xffffffff && data != 0)
-		sc->mii_phyaddr = phy;
+	sc->mii_phyaddr = phy;
 
 	DPRINTFN(2, ("%s: mii read phy %d reg 0x%x data 0x%x\n",
 	    device_xname(sc->sc_dev), phy, reg, data));
@@ -603,9 +602,15 @@ nfe_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 	if (ntries == 1000) {
 #ifdef NFE_DEBUG
 		if (nfedebug >= 2)
-			printf("could not write to PHY\n");
+			printf("timeout waiting for PHY write (%d, %d)\n",
+			    phy, reg);
 #endif
 		return ETIMEDOUT;
+	}
+	if (NFE_READ(sc, NFE_PHY_STATUS) & NFE_PHY_ERROR) {
+		DPRINTFN(2, ("%s: could not write PHY (%d, %d)\n",
+		    device_xname(sc->sc_dev), phy, reg));
+		return -1;
 	}
 	return 0;
 }
