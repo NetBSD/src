@@ -1,7 +1,7 @@
-/* $NetBSD: tic.c,v 1.31 2017/10/02 21:53:55 joerg Exp $ */
+/* $NetBSD: tic.c,v 1.32 2020/03/13 15:19:25 roy Exp $ */
 
 /*
- * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.31 2017/10/02 21:53:55 joerg Exp $");
+__RCSID("$NetBSD: tic.c,v 1.32 2020/03/13 15:19:25 roy Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -106,7 +106,7 @@ save_term(struct cdbw *db, TERM *term)
 	if (term->base_term != NULL) {
 		len = (ssize_t)slen + 7;
 		buf = emalloc(len);
-		buf[0] = 2;
+		buf[0] = TERMINFO_ALIAS;
 		le32enc(buf + 1, term->base_term->id);
 		le16enc(buf + 5, slen);
 		memcpy(buf + 7, term->name, slen);
@@ -197,6 +197,9 @@ process_entry(TBUF *buf, int flags)
 			e = strchr(p, '|');
 			if (e != NULL)
 				*e++ = '\0';
+			/* No need to lengthcheck the alias because the main
+			 * terminfo description already stores all the aliases
+			 * in the same length field as the alias. */
 			if (find_term(p) != NULL) {
 				dowarn("%s: has alias for already assigned"
 				    " term %s", tic->name, p);
@@ -215,7 +218,8 @@ static void
 merge(TIC *rtic, TIC *utic, int flags)
 {
 	char *cap, flag, *code, type, *str;
-	short ind, num;
+	short ind, len;
+	int num;
 	size_t n;
 
 	cap = utic->flags.buf;
@@ -238,16 +242,17 @@ merge(TIC *rtic, TIC *utic, int flags)
 	for (n = utic->nums.entries; n > 0; n--) {
 		ind = le16dec(cap);
 		cap += sizeof(uint16_t);
-		num = le16dec(cap);
-		cap += sizeof(uint16_t);
+		num = le32dec(cap);
+		cap += sizeof(uint32_t);
 		if (VALID_NUMERIC(num) &&
 		    _ti_find_cap(&rtic->nums, 'n', ind) == NULL)
 		{
-			grow_tbuf(&rtic->nums, sizeof(uint16_t) * 2);
+			grow_tbuf(&rtic->nums, sizeof(uint16_t) +
+			    sizeof(uint32_t));
 			le16enc(rtic->nums.buf + rtic->nums.bufpos, ind);
 			rtic->nums.bufpos += sizeof(uint16_t);
-			le16enc(rtic->nums.buf + rtic->nums.bufpos, num);
-			rtic->nums.bufpos += sizeof(uint16_t);
+			le32enc(rtic->nums.buf + rtic->nums.bufpos, num);
+			rtic->nums.bufpos += sizeof(uint32_t);
 			rtic->nums.entries++;
 		}
 	}
@@ -256,22 +261,22 @@ merge(TIC *rtic, TIC *utic, int flags)
 	for (n = utic->strs.entries; n > 0; n--) {
 		ind = le16dec(cap);
 		cap += sizeof(uint16_t);
-		num = le16dec(cap);
+		len = le16dec(cap);
 		cap += sizeof(uint16_t);
-		if (num > 0 &&
+		if (len > 0 &&
 		    _ti_find_cap(&rtic->strs, 's', ind) == NULL)
 		{
-			grow_tbuf(&rtic->strs, (sizeof(uint16_t) * 2) + num);
+			grow_tbuf(&rtic->strs, (sizeof(uint16_t) * 2) + len);
 			le16enc(rtic->strs.buf + rtic->strs.bufpos, ind);
 			rtic->strs.bufpos += sizeof(uint16_t);
-			le16enc(rtic->strs.buf + rtic->strs.bufpos, num);
+			le16enc(rtic->strs.buf + rtic->strs.bufpos, len);
 			rtic->strs.bufpos += sizeof(uint16_t);
 			memcpy(rtic->strs.buf + rtic->strs.bufpos,
-			    cap, num);
-			rtic->strs.bufpos += num;
+			    cap, len);
+			rtic->strs.bufpos += len;
 			rtic->strs.entries++;
 		}
-		cap += num;
+		cap += len;
 	}
 
 	cap = utic->extras.buf;
@@ -290,8 +295,8 @@ merge(TIC *rtic, TIC *utic, int flags)
 				continue;
 			break;
 		case 'n':
-			num = le16dec(cap);
-			cap += sizeof(uint16_t);
+			num = le32dec(cap);
+			cap += sizeof(uint32_t);
 			if (!VALID_NUMERIC(num))
 				continue;
 			break;

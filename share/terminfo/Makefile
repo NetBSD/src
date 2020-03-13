@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2012/06/03 23:19:11 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2020/03/13 15:19:25 roy Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/8/93
 
-CLEANFILES= terminfo.cdb
-realall: terminfo.cdb
-FILES=terminfo.cdb terminfo
+CLEANFILES= terminfo2.cdb
+realall: terminfo2.cdb
+FILES=terminfo2.cdb terminfo
 FILESDIR=${BINDIR}/misc
 
-terminfo.cdb: terminfo ${TOOL_TIC}
+terminfo2.cdb: terminfo ${TOOL_TIC}
 	${_MKTARGET_CREATE}
 	${TOOL_TIC} -ax -o ${.TARGET} "${.CURDIR}/terminfo" 
 
