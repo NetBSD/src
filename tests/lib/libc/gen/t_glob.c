@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob.c,v 1.8 2020/03/13 21:44:25 rillig Exp $	*/
+/*	$NetBSD: t_glob.c,v 1.9 2020/03/13 22:58:31 rillig Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob.c,v 1.8 2020/03/13 21:44:25 rillig Exp $");
+__RCSID("$NetBSD: t_glob.c,v 1.9 2020/03/13 22:58:31 rillig Exp $");
 
 #include <atf-c.h>
 
@@ -75,15 +75,30 @@ static struct vfs_file b[] = {
 	{ "w", 0 },
 };
 
+static struct vfs_file hidden_dir[] = {
+	{ "visible-file", 0 },
+	{ ".hidden-file", 0 },
+};
+
+static struct vfs_file dot[] = {
+	{ "a", 1 },
+	{ ".hidden-dir", 1 },
+};
+
 struct vfs_dir {
 	const char *name;	/* directory name */
 	const struct vfs_file *dir;
 	size_t len, pos;
 };
 
+#define VFS_DIR_INIT(name, entries) \
+    { name, entries, __arraycount(entries), 0 }
+
 static struct vfs_dir d[] = {
-	{ "a", a, __arraycount(a), 0 },
-	{ "a/b", b, __arraycount(b), 0 },
+	VFS_DIR_INIT("a", a),
+	VFS_DIR_INIT("a/b", b),
+	VFS_DIR_INIT(".", dot),
+	VFS_DIR_INIT(".hidden-dir", hidden_dir),
 };
 
 static void
@@ -106,9 +121,10 @@ vfs_opendir(const char *dir)
 
 	for (i = 0; i < __arraycount(d); i++)
 		if (strcmp(buf, d[i].name) == 0) {
-			DPRINTF(("opendir %s %zu\n", buf, i));
+			DPRINTF(("opendir %s %p\n", buf, &d[i]));
 			return &d[i];
 		}
+	DPRINTF(("opendir %s ENOENT\n", buf));
 	errno = ENOENT;
 	return NULL;
 }
@@ -138,32 +154,36 @@ vfs_stat(const char *name , __gl_stat_t *st)
 	trim(buf, sizeof(buf), name);
 	memset(st, 0, sizeof(*st));
 
-	if (strcmp(buf, "a") == 0 || strcmp(buf, "a/b") == 0) {
-		st->st_mode |= S_IFDIR;
-		return 0;
-	}
-
-	if (buf[0] == 'a' && buf[1] == '/') {
-		struct vfs_file *f;
-		size_t offs, count;
-
-		if (buf[2] == 'b' && buf[3] == '/') {
-			offs = 4;
-			count = __arraycount(b);
-			f = b;
-		} else {
-			offs = 2;
-			count = __arraycount(a);
-			f = a;
+	for (size_t i = 0; i < __arraycount(d); i++)
+		if (strcmp(buf, d[i].name) == 0) {
+			st->st_mode = S_IFDIR | 0755;
+			goto out;
 		}
 
-		for (size_t i = 0; i < count; i++)
-			if (strcmp(f[i].name, buf + offs) == 0)
-				return 0;
+	for (size_t i = 0; i < __arraycount(d); i++) {
+		size_t dir_len = strlen(d[i].name);
+		if (strncmp(buf, d[i].name, dir_len) != 0)
+			continue;
+		if (buf[dir_len] != '/')
+			continue;
+		const char *base = buf + dir_len + 1;
+		if (strcspn(base, "/") != strlen(base))
+			continue;
+
+		for (size_t j = 0; j < d[i].len; j++)
+			if (strcmp(d[i].dir[j].name, base) == 0) {
+				st->st_mode = d[i].dir[j].dir
+				    ? S_IFDIR | 0755
+				    : S_IFREG | 0644;
+				goto out;
+			}
 	}
-	DPRINTF(("stat %s %d\n", buf, st->st_mode));
+	DPRINTF(("stat %s ENOENT\n", buf));
 	errno = ENOENT;
 	return -1;
+out:
+	DPRINTF(("stat %s %06o\n", buf, st->st_mode));
+	return 0;
 }
 
 static int
@@ -216,16 +236,21 @@ run(const char *p, int flags, /* const char *res */ ...)
 	}
 
 	for (i = 0; i < gl.gl_pathc; i++)
-		DPRINTF(("%s\n", gl.gl_pathv[i]));
+		DPRINTF(("glob result %zu: %s\n", i, gl.gl_pathv[i]));
 
 	va_list res;
 	va_start(res, flags);
-	const char *expected = NULL;
-	for (i = 0; (expected = va_arg(res, const char *)) != NULL && i < gl.gl_pathc; i++)
-		ATF_CHECK_STREQ(gl.gl_pathv[i], expected);
+	i = 0;
+	const char *name;
+	while ((name = va_arg(res, const char *)) != NULL && i < gl.gl_pathc) {
+		ATF_CHECK_STREQ(gl.gl_pathv[i], name);
+		i++;
+	}
 	va_end(res);
-	ATF_CHECK_EQ(i, gl.gl_pathc);
-	ATF_CHECK_MSG(expected == NULL, "expected \"%s\" to be matched", expected);
+	ATF_CHECK_EQ_MSG(i, gl.gl_pathc,
+	    "expected %zu results, got %zu", i, gl.gl_pathc);
+	ATF_CHECK_EQ_MSG(name, NULL,
+	    "\"%s\" should have been found, but wasn't", name);
 
 	globfree(&gl);
 	return;
@@ -287,6 +312,35 @@ ATF_TC_BODY(glob_star_not, tc)
 	    "a/1", "a/3", "a/4", "a/b");
 }
 
+ATF_TC(glob_star_star);
+ATF_TC_HEAD(glob_star_star, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test glob(3) with star-star");
+}
+
+ATF_TC_BODY(glob_star_star, tc)
+{
+	run("**", GLOB_STAR,
+	    "a",
+	    "a/1", "a/3", "a/4", "a/b",
+	    "a/b/w", "a/b/x", "a/b/y", "a/b/z");
+}
+
+ATF_TC(glob_hidden);
+ATF_TC_HEAD(glob_hidden, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test glob(3) with hidden directory");
+}
+
+ATF_TC_BODY(glob_hidden, tc)
+{
+	run(".**", GLOB_STAR,
+	    ".hidden-dir",
+	    ".hidden-dir/visible-file");
+}
+
 #if 0
 ATF_TC(glob_nocheck);
 ATF_TC_HEAD(glob_nocheck, tc)
@@ -313,6 +367,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, glob_star_not);
 	ATF_TP_ADD_TC(tp, glob_range);
 	ATF_TP_ADD_TC(tp, glob_range_not);
+	ATF_TP_ADD_TC(tp, glob_star_star);
+	ATF_TP_ADD_TC(tp, glob_hidden);
 /*
  * Remove this test for now - the GLOB_NOCHECK return value has been
  * re-defined to return a modified pattern in revision 1.33 of glob.c
