@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.231 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.232 2020/03/14 21:06:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.231 2020/03/14 20:23:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.232 2020/03/14 21:06:35 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1908,7 +1908,7 @@ void
 uvm_pagedeactivate(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg, true));
+	KASSERT(uvm_page_owner_locked_p(pg, false));
 	KASSERT(mutex_owned(&pg->interlock));
 	if (pg->wire_count == 0) {
 		KASSERT(uvmpdpol_pageisqueued_p(pg));
@@ -1927,7 +1927,7 @@ void
 uvm_pageactivate(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg, true));
+	KASSERT(uvm_page_owner_locked_p(pg, false));
 	KASSERT(mutex_owned(&pg->interlock));
 #if defined(READAHEAD_STATS)
 	if ((pg->flags & PG_READAHEAD) != 0) {
@@ -1968,7 +1968,7 @@ void
 uvm_pageenqueue(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg, true));
+	KASSERT(uvm_page_owner_locked_p(pg, false));
 	KASSERT(mutex_owned(&pg->interlock));
 	if (pg->wire_count == 0 && !uvmpdpol_pageisqueued_p(pg)) {
 		uvmpdpol_pageenqueue(pg);
