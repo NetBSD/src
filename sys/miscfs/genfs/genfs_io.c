@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.90 2020/03/14 18:08:39 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.91 2020/03/14 19:07:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.90 2020/03/14 18:08:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.91 2020/03/14 19:07:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -884,7 +884,6 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	bool wasclean, needs_clean;
 	bool async = (origflags & PGO_SYNCIO) == 0;
 	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
-	struct lwp * const l = curlwp ? curlwp : &lwp0;
 	struct mount *trans_mp;
 	int flags;
 	bool modified;		/* if we write out any pages */
