@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.58 2020/03/14 21:23:32 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.59 2020/03/14 21:56:08 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.58 2020/03/14 21:23:32 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.59 2020/03/14 21:56:08 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ static int synaptics_scale_y = 16;
 static int synaptics_scale_z = 32;
 static int synaptics_max_speed_x = 32;
 static int synaptics_max_speed_y = 32;
-static int synaptics_max_speed_z = 2;
+static int synaptics_max_speed_z = 1;
 static int synaptics_movement_threshold = 4;
 static int synaptics_fscroll_min = 13;
 static int synaptics_fscroll_max = 14;
@@ -1745,6 +1745,14 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 
 			synaptics_movement(sc, sp, sp->sp_finger,
 				z_emul, &dx, &dy, &dz);
+		} else if (fingers > 1) {
+			/*
+			 * Multiple finger movement. Interpret it as scrolling.
+			 */
+			synaptics_movement(sc, sp, sp->sp_finger, 1,
+				&dx, &dy, &dz);
+			sc->rem_x[0] = sc->rem_y[0] = 0;
+			dx = dy = 0;
 		} else {
 			/*
 			 * No valid finger. Therefore no movement.
