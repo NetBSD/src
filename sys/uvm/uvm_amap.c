@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.117 2020/03/14 18:08:40 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.118 2020/03/14 20:23:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.117 2020/03/14 18:08:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.118 2020/03/14 20:23:51 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1056,9 +1056,7 @@ ReStart:
 		 */
 
 		if (pg->flags & PG_BUSY) {
-			pg->flags |= PG_WANTED;
-			UVM_UNLOCK_AND_WAIT_RW(pg, amap->am_lock, false,
-			    "cownow", 0);
+			uvm_pagewait(pg, amap->am_lock, "cownow");
 			goto ReStart;
 		}
 
@@ -1097,8 +1095,9 @@ ReStart:
 		amap->am_anon[slot] = nanon;
 
 		/*
-		 * Drop PG_BUSY on new page.  Since its owner was locked all
-		 * this time - it cannot be PG_RELEASED or PG_WANTED.
+		 * Drop PG_BUSY on new page.  Since its owner was write
+		 * locked all this time - it cannot be PG_RELEASED or
+		 * waited on.
 		 */
 		uvm_pagelock(npg);
 		uvm_pageactivate(npg);

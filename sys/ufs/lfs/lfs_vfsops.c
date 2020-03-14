@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.375 2020/03/14 15:35:35 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.376 2020/03/14 20:23:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.375 2020/03/14 15:35:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.376 2020/03/14 20:23:51 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2277,7 +2277,6 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		DLOG((DLOG_PAGE, "pg[%d]->loan_count = %d\n", i,
 		      pg->loan_count));
 	}
-	/* uvm_pageunbusy takes care of PG_BUSY, PG_WANTED */
 	uvm_page_unbusy(pgs, npages);
 	mutex_exit(vp->v_interlock);
 	return EAGAIN;

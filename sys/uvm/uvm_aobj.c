@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.136 2020/02/24 12:38:57 rin Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.137 2020/03/14 20:23:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.136 2020/02/24 12:38:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.137 2020/03/14 20:23:51 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -621,9 +621,7 @@ uao_detach(struct uvm_object *uobj)
 		uvm_page_array_advance(&a);
 		pmap_page_protect(pg, VM_PROT_NONE);
 		if (pg->flags & PG_BUSY) {
-			pg->flags |= PG_WANTED;
-			UVM_UNLOCK_AND_WAIT_RW(pg, uobj->vmobjlock, false,
-			    "uao_det", 0);
+			uvm_pagewait(pg, uobj->vmobjlock, "uao_det");
 			uvm_page_array_clear(&a);
 			rw_enter(uobj->vmobjlock, RW_WRITER);
 			continue;
@@ -715,9 +713,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		 */
 
 		if (pg->flags & PG_BUSY) {
-			pg->flags |= PG_WANTED;
-			UVM_UNLOCK_AND_WAIT_RW(pg, uobj->vmobjlock, 0,
-			    "uao_put", 0);
+			uvm_pagewait(pg, uobj->vmobjlock, "uao_put");
 			uvm_page_array_clear(&a);
 			rw_enter(uobj->vmobjlock, RW_WRITER);
 			continue;
@@ -964,12 +960,10 @@ gotpage:
 
 			/* page is there, see if we need to wait on it */
 			if ((ptmp->flags & PG_BUSY) != 0) {
-				ptmp->flags |= PG_WANTED;
 				UVMHIST_LOG(pdhist,
 				    "sleeping, ptmp->flags %#jx\n",
 				    ptmp->flags,0,0,0);
-				UVM_UNLOCK_AND_WAIT_RW(ptmp, uobj->vmobjlock,
-				    false, "uao_get", 0);
+				uvm_pagewait(ptmp, uobj->vmobjlock, "uao_get");
 				rw_enter(uobj->vmobjlock, RW_WRITER);
 				continue;
 			}
@@ -1038,8 +1032,6 @@ gotpage:
 			if (error != 0) {
 				UVMHIST_LOG(pdhist, "<- done (error=%jd)",
 				    error,0,0,0);
-				if (ptmp->flags & PG_WANTED)
-					wakeup(ptmp);
 
 				/*
 				 * remove the swap slot from the aobj
@@ -1308,14 +1300,11 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	 */
 	uvm_pagelock(pg);
 	uvm_pageenqueue(pg);
+	uvm_pageunbusy(pg);
 	uvm_pageunlock(pg);
 
-	if (pg->flags & PG_WANTED) {
-		wakeup(pg);
-	}
-	pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
+	pg->flags &= ~(PG_FAKE);
 	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
-	UVM_PAGE_OWN(pg, NULL);
 
 	return false;
 }
