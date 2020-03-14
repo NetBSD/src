@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.71 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.72 2020/03/14 02:35:33 christos Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.71 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.72 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -120,7 +120,7 @@ axen_cmd(struct usbnet *un, int cmd, int index, int val, void *buf)
 	USETW(req.wLength, AXEN_CMD_LEN(cmd));
 
 	err = usbd_do_request(un->un_udev, &req, buf);
-	DPRINTFN(5, ("axen_cmd: cmd %#04x val %#04x len %d\n",
+	DPRINTFN(5, ("axen_cmd: cmd 0x%04x val 0x%04x len %d\n",
 	    cmd, val, AXEN_CMD_LEN(cmd)));
 
 	if (err) {
@@ -357,7 +357,7 @@ axen_get_eaddr(struct usbnet *un, void *addr)
 	csum = eeprom[6] + eeprom[7] + eeprom[8] + eeprom[9];
 	csum = (csum >> 8) + (csum & 0xff) + eeprom[10];
 	if (csum != 0xff) {
-		printf("eeprom checksum mismatch(%#02x)\n", csum);
+		printf("eeprom checksum mismatch(0x%02x)\n", csum);
 		return EINVAL;
 	}
 
@@ -378,7 +378,7 @@ axen_ax88179_init(struct usbnet *un)
 
 	/* XXX: ? */
 	axen_cmd(un, AXEN_CMD_MAC_READ, 1, AXEN_UNK_05, &val);
-	DPRINTFN(5, ("AXEN_CMD_MAC_READ(0x05): %#02x\n", val));
+	DPRINTFN(5, ("AXEN_CMD_MAC_READ(0x05): 0x%02x\n", val));
 
 	/* check AX88179 version, UA1 / UA2 */
 	axen_cmd(un, AXEN_CMD_MAC_READ, 1, AXEN_GENERAL_STATUS, &val);
@@ -409,7 +409,7 @@ axen_ax88179_init(struct usbnet *un)
 	/* enable auto detach */
 	axen_cmd(un, AXEN_CMD_EEPROM_READ, 2, AXEN_EEPROM_STAT, &wval);
 	temp = le16toh(wval);
-	DPRINTFN(2,("EEPROM0x43 = %#04x\n", temp));
+	DPRINTFN(2,("EEPROM0x43 = 0x%04x\n", temp));
 	if (!(temp == 0xffff) && !(temp & 0x0100)) {
 		/* Enable auto detach bit */
 		val = 0;
@@ -424,7 +424,7 @@ axen_ax88179_init(struct usbnet *un)
 		wval = htole16(ctl);
 		axen_cmd(un, AXEN_CMD_MAC_WRITE2, 2, AXEN_PHYPWR_RSTCTL, &wval);
 		usbd_delay_ms(un->un_udev, 200);
-		aprint_error_dev(un->un_dev, "enable auto detach (%#04x)\n",
+		aprint_error_dev(un->un_dev, "enable auto detach (0x%04x)\n",
 		    ctl);
 	}
 
@@ -456,7 +456,7 @@ axen_ax88179_init(struct usbnet *un)
 		qctrl.ifg	 = 0xff;
 		break;
 	default:
-		aprint_error_dev(un->un_dev, "unknown uplink bus:%#02x\n",
+		aprint_error_dev(un->un_dev, "unknown uplink bus:0x%02x\n",
 		    val);
 		usbnet_unlock_mii(un);
 		return;
@@ -484,19 +484,19 @@ axen_ax88179_init(struct usbnet *un)
 	val = AXEN_MONITOR_PMETYPE | AXEN_MONITOR_PMEPOL | AXEN_MONITOR_RWMP;
 	axen_cmd(un, AXEN_CMD_MAC_WRITE, 1, AXEN_MONITOR_MODE, &val);
 	axen_cmd(un, AXEN_CMD_MAC_READ, 1, AXEN_MONITOR_MODE, &val);
-	DPRINTF(("axen: Monitor mode = %#02x\n", val));
+	DPRINTF(("axen: Monitor mode = 0x%02x\n", val));
 
 	/* set medium type */
 	ctl = AXEN_MEDIUM_GIGA | AXEN_MEDIUM_FDX | AXEN_MEDIUM_EN_125MHZ |
 	    AXEN_MEDIUM_RXFLOW_CTRL_EN | AXEN_MEDIUM_TXFLOW_CTRL_EN |
 	    AXEN_MEDIUM_RECV_EN;
 	wval = htole16(ctl);
-	DPRINTF(("axen: set to medium mode: %#04x\n", ctl));
+	DPRINTF(("axen: set to medium mode: 0x%04x\n", ctl));
 	axen_cmd(un, AXEN_CMD_MAC_WRITE2, 2, AXEN_MEDIUM_STATUS, &wval);
 	usbd_delay_ms(un->un_udev, 100);
 
 	axen_cmd(un, AXEN_CMD_MAC_READ2, 2, AXEN_MEDIUM_STATUS, &wval);
-	DPRINTF(("axen: current medium mode: %#04x\n", le16toh(wval)));
+	DPRINTF(("axen: current medium mode: 0x%04x\n", le16toh(wval)));
 
 	usbnet_unlock_mii(un);
 
@@ -833,7 +833,7 @@ axen_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 		pkt_hdr = le32toh(*hdr_p);
 		pkt_len = (pkt_hdr >> 16) & 0x1fff;
 		DPRINTFN(10,
-		    ("%s: rxeof: packet#%d, pkt_hdr %#08x, pkt_len %zu\n",
+		    ("%s: rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %zu\n",
 		   device_xname(un->un_dev), pkt_count, pkt_hdr, pkt_len));
 
 		if (pkt_hdr & (AXEN_RXHDR_CRC_ERR | AXEN_RXHDR_DROP_ERR)) {

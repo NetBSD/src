@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.87 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.88 2020/03/14 02:35:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.87 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.88 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -941,7 +941,7 @@ uplcom_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
 	if (sc->sc_dying)
 		return EIO;
 
-	DPRINTF("cmd=%#08lx", cmd, 0, 0, 0);
+	DPRINTF("cmd=0x%08lx", cmd, 0, 0, 0);
 
 	switch (cmd) {
 	case TIOCNOTTY:

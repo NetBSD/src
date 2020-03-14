@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.26 2020/03/13 18:17:40 christos Exp $ */
+/* $NetBSD: pseye.c,v 1.27 2020/03/14 02:35:33 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.26 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.27 2020/03/14 02:35:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,7 +553,7 @@ pseye_getreg(struct pseye_softc *sc, uint16_t reg)
 
 	err = usbd_do_request(sc->sc_udev, &req, &buf);
 	if (err) {
-		aprint_error_dev(sc->sc_dev, "couldn't read reg %#04x: %s\n",
+		aprint_error_dev(sc->sc_dev, "couldn't read reg 0x%04x: %s\n",
 		    reg, usbd_errstr(err));
 		return 0xff;
 	}
@@ -575,7 +575,7 @@ pseye_setreg(struct pseye_softc *sc, uint16_t reg, uint8_t val)
 
 	err = usbd_do_request(sc->sc_udev, &req, &val);
 	if (err)
-		aprint_error_dev(sc->sc_dev, "couldn't write reg %#04x: %s\n",
+		aprint_error_dev(sc->sc_dev, "couldn't write reg 0x%04x: %s\n",
 		    reg, usbd_errstr(err));
 }
 
@@ -584,7 +584,7 @@ pseye_setregv(struct pseye_softc *sc, uint16_t reg, uint8_t val)
 {
 	pseye_setreg(sc, reg, val);
 	if (pseye_getreg(sc, reg) != val)
-		aprint_error_dev(sc->sc_dev, "couldn't verify reg %#04x\n",
+		aprint_error_dev(sc->sc_dev, "couldn't verify reg 0x%04x\n",
 		    reg);
 }
 
@@ -596,7 +596,7 @@ pseye_sccb_setreg(struct pseye_softc *sc, uint8_t reg, uint8_t val)
 	pseye_setreg(sc, PSEYE_SCCB_OPERATION, PSEYE_SCCB_OP_WRITE_3);
 
 	if (pseye_sccb_status(sc) == false)
-		aprint_error_dev(sc->sc_dev, "couldn't write sccb reg %#04x\n",
+		aprint_error_dev(sc->sc_dev, "couldn't write sccb reg 0x%04x\n",
 		    reg);
 }
 

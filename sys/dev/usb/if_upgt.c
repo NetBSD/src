@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.29 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.30 2020/03/14 02:35:33 christos Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.29 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.30 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -385,11 +385,11 @@ upgt_attach_hook(device_t arg)
 	sc->sc_memaddr_frame_end -= UPGT_MEMSIZE_RX + 1;
 	sc->sc_memaddr_rx_start = sc->sc_memaddr_frame_end + 1;
 
-	DPRINTF(1, "%s: memory address frame start=%#08x\n",
+	DPRINTF(1, "%s: memory address frame start=0x%08x\n",
 	    device_xname(sc->sc_dev), sc->sc_memaddr_frame_start);
-	DPRINTF(1, "%s: memory address frame end=%#08x\n",
+	DPRINTF(1, "%s: memory address frame end=0x%08x\n",
 	    device_xname(sc->sc_dev), sc->sc_memaddr_frame_end);
-	DPRINTF(1, "%s: memory address rx start=%#08x\n",
+	DPRINTF(1, "%s: memory address rx start=0x%08x\n",
 	    device_xname(sc->sc_dev), sc->sc_memaddr_rx_start);
 
 	upgt_mem_init(sc);
@@ -631,7 +631,7 @@ upgt_mem_init(struct upgt_softc *sc)
 		    sc->sc_memaddr_frame_end)
 			break;
 
-		DPRINTF(2, "%s: memory address page %d=%#08x\n",
+		DPRINTF(2, "%s: memory address page %d=0x%08x\n",
 		    device_xname(sc->sc_dev), i, sc->sc_memory.page[i].addr);
 	}
 
@@ -670,7 +670,7 @@ upgt_mem_free(struct upgt_softc *sc, uint32_t addr)
 		}
 	}
 
-	aprint_error_dev(sc->sc_dev, "could not free memory address %#08x\n",
+	aprint_error_dev(sc->sc_dev, "could not free memory address 0x%08x\n",
 	    addr);
 }
 
@@ -816,10 +816,10 @@ upgt_fw_verify(struct upgt_softc *sc)
 			sc->sc_memaddr_frame_end =
 			    le32toh(descr->memaddr_space_end);
 
-			DPRINTF(2, "%s: memory address space start=%#08x\n",
+			DPRINTF(2, "%s: memory address space start=0x%08x\n",
 			    device_xname(sc->sc_dev),
 			    sc->sc_memaddr_frame_start);
-			DPRINTF(2, "%s: memory address space end=%#08x\n",
+			DPRINTF(2, "%s: memory address space end=0x%08x\n",
 			    device_xname(sc->sc_dev),
 			    sc->sc_memaddr_frame_end);
 			break;
@@ -1119,7 +1119,7 @@ upgt_eeprom_parse(struct upgt_softc *sc)
 			    device_xname(sc->sc_dev));
 			return EIO;
 		default:
-			DPRINTF(1, "%s: EEPROM unknown type %#04x len=%d\n",
+			DPRINTF(1, "%s: EEPROM unknown type 0x%04x len=%d\n",
 			    device_xname(sc->sc_dev), option_type, option_len);
 			break;
 		}
@@ -1141,7 +1141,7 @@ upgt_eeprom_parse_hwrx(struct upgt_softc *sc, uint8_t *data)
 
 	sc->sc_eeprom_hwrx = option_hwrx->rxfilter - UPGT_EEPROM_RX_CONST;
 
-	DPRINTF(2, "%s: hwrx option value=%#04x\n",
+	DPRINTF(2, "%s: hwrx option value=0x%04x\n",
 	    device_xname(sc->sc_dev), sc->sc_eeprom_hwrx);
 }
 
@@ -1159,7 +1159,7 @@ upgt_eeprom_parse_freq3(struct upgt_softc *sc, uint8_t *data, int len)
 	flags = freq3_header->flags;
 	elements = freq3_header->elements;
 
-	DPRINTF(2, "%s: flags=%#02x\n", device_xname(sc->sc_dev), flags);
+	DPRINTF(2, "%s: flags=0x%02x\n", device_xname(sc->sc_dev), flags);
 	DPRINTF(2, "%s: elements=%d\n", device_xname(sc->sc_dev), elements);
 	__USE(flags);
 
@@ -1193,7 +1193,7 @@ upgt_eeprom_parse_freq4(struct upgt_softc *sc, uint8_t *data, int len)
 	/* we need this value later */
 	sc->sc_eeprom_freq6_settings = freq4_header->settings;
 
-	DPRINTF(2, "%s: flags=%#02x\n", device_xname(sc->sc_dev), flags);
+	DPRINTF(2, "%s: flags=0x%02x\n", device_xname(sc->sc_dev), flags);
 	DPRINTF(2, "%s: elements=%d\n", device_xname(sc->sc_dev), elements);
 	DPRINTF(2, "%s: settings=%d\n", device_xname(sc->sc_dev), settings);
 	__USE(flags);
@@ -1738,7 +1738,7 @@ upgt_tx_done(struct upgt_softc *sc, uint8_t *data)
 			if_statinc(ifp, if_opackets);
 
 			DPRINTF(2, "%s: TX done: ", device_xname(sc->sc_dev));
-			DPRINTF(2, "memaddr=%#08x, status=%#04x, rssi=%d, ",
+			DPRINTF(2, "memaddr=0x%08x, status=0x%04x, rssi=%d, ",
 			    le32toh(desc->header2.reqid),
 			    le16toh(desc->status),
 			    le16toh(desc->rssi));
@@ -1828,7 +1828,7 @@ upgt_rx_cb(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		/* TODO: what could we do with the statistic data? */
 	} else {
 		/* ignore unknown frame types */
-		DPRINTF(1, "%s: received unknown frame type %#02x\n",
+		DPRINTF(1, "%s: received unknown frame type 0x%02x\n",
 		    device_xname(sc->sc_dev), header->header1.type);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.276 2020/03/13 18:17:40 christos Exp $ */
+/*	$NetBSD: ehci.c,v 1.277 2020/03/14 02:35:33 christos Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.276 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.277 2020/03/14 02:35:33 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -795,7 +795,7 @@ ehci_pcd(void *addr)
 		if (EOREAD4(sc, EHCI_PORTSC(i)) & EHCI_PS_CLEAR)
 			p[i/8] |= 1 << (i%8);
 		if (i % 8 == 7)
-			DPRINTF("change(%jd)=%#02jx", i / 8, p[i/8], 0, 0);
+			DPRINTF("change(%jd)=0x%02jx", i / 8, p[i/8], 0, 0);
 	}
 	xfer->ux_actlen = xfer->ux_length;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
@@ -1216,7 +1216,7 @@ ehci_idone(struct ehci_xfer *ex, ex_completeq_t *cq)
 	 */
 	if ((sqtd != lsqtd->nextqtd || EHCI_QTD_GET_BYTES(status)) &&
 	    xfer->ux_pipe->up_dev->ud_pipe0 != xfer->ux_pipe) {
-		DPRINTF("toggle update status=%#08jx nstatus=%#08jx",
+		DPRINTF("toggle update status=0x%08jx nstatus=0x%08jx",
 		    status, nstatus, 0, 0);
 #if 0
 		ehci_dump_sqh(epipe->sqh);
@@ -1225,12 +1225,12 @@ ehci_idone(struct ehci_xfer *ex, ex_completeq_t *cq)
 		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(nstatus);
 	}
 
-	DPRINTF("len=%jd actlen=%jd status=%#08jx", xfer->ux_length, actlen,
+	DPRINTF("len=%jd actlen=%jd status=0x%08jx", xfer->ux_length, actlen,
 	    status, 0);
 	xfer->ux_actlen = actlen;
 	if (status & EHCI_QTD_HALTED) {
 #ifdef EHCI_DEBUG
-		DPRINTF("halted addr=%jd endpt=%#02jx",
+		DPRINTF("halted addr=%jd endpt=0x%02jx",
 		    xfer->ux_pipe->up_dev->ud_addr,
 		    xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress,
 		    0, 0);
@@ -1295,7 +1295,7 @@ ehci_poll(struct usbd_bus *bus)
 	int new;
 	new = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS));
 	if (new != last) {
-		DPRINTF("intrs=%#04jx", new, 0, 0, 0);
+		DPRINTF("intrs=0x%04jx", new, 0, 0, 0);
 		last = new;
 	}
 #endif
@@ -1577,7 +1577,7 @@ ehci_device_clear_toggle(struct usbd_pipe *pipe)
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
-	DPRINTF("epipe=%#jx status=%#08jx", (uintptr_t)epipe,
+	DPRINTF("epipe=%#jx status=0x%08jx", (uintptr_t)epipe,
 	    epipe->sqh->qh.qh_qtd.qtd_status, 0, 0);
 #ifdef EHCI_DEBUG
 	if (ehcidebug)
@@ -1601,17 +1601,17 @@ ehci_dump(void)
 {
 	ehci_softc_t *sc = theehci;
 	int i;
-	printf("cmd=%#08x, sts=%#08x, ien=%#08x\n",
+	printf("cmd=0x%08x, sts=0x%08x, ien=0x%08x\n",
 	    EOREAD4(sc, EHCI_USBCMD),
 	    EOREAD4(sc, EHCI_USBSTS),
 	    EOREAD4(sc, EHCI_USBINTR));
-	printf("frindex=%#08x ctrdsegm=%#08x periodic=%#08x async=%#08x\n",
+	printf("frindex=0x%08x ctrdsegm=0x%08x periodic=0x%08x async=0x%08x\n",
 	    EOREAD4(sc, EHCI_FRINDEX),
 	    EOREAD4(sc, EHCI_CTRLDSSEGMENT),
 	    EOREAD4(sc, EHCI_PERIODICLISTBASE),
 	    EOREAD4(sc, EHCI_ASYNCLISTADDR));
 	for (i = 1; i <= sc->sc_noport; i++)
-		printf("port %d status=%#08x\n", i,
+		printf("port %d status=0x%08x\n", i,
 		    EOREAD4(sc, EHCI_PORTSC(i)));
 }
 
@@ -1622,21 +1622,21 @@ ehci_dump_regs(ehci_softc_t *sc)
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
-	DPRINTF("cmd     = %#08jx  sts      = %#08jx  ien      = %#08jx",
+	DPRINTF("cmd     = 0x%08jx  sts      = 0x%08jx  ien      = 0x%08jx",
 	    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS),
 	    EOREAD4(sc, EHCI_USBINTR), 0);
-	DPRINTF("frindex = %#08jx  ctrdsegm = %#08jx  periodic = %#08jx  "
-	    "async   = %#08jx",
+	DPRINTF("frindex = 0x%08jx  ctrdsegm = 0x%08jx  periodic = 0x%08jx  "
+	    "async   = 0x%08jx",
 	    EOREAD4(sc, EHCI_FRINDEX), EOREAD4(sc, EHCI_CTRLDSSEGMENT),
 	    EOREAD4(sc, EHCI_PERIODICLISTBASE),
 	    EOREAD4(sc, EHCI_ASYNCLISTADDR));
 	for (i = 1; i <= sc->sc_noport; i += 2) {
 		if (i == sc->sc_noport) {
-			DPRINTF("port %jd status = %#08jx", i,
+			DPRINTF("port %jd status = 0x%08jx", i,
 			    EOREAD4(sc, EHCI_PORTSC(i)), 0, 0);
 		} else {
-			DPRINTF("port %jd status = %#08jx  port %jd "
-			    "status = %#08jx",
+			DPRINTF("port %jd status = 0x%08jx  port %jd "
+			    "status = 0x%08jx",
 			    i, EOREAD4(sc, EHCI_PORTSC(i)),
 			    i+1, EOREAD4(sc, EHCI_PORTSC(i+1)));
 		}
@@ -1644,7 +1644,7 @@ ehci_dump_regs(ehci_softc_t *sc)
 }
 
 #define ehci_dump_link(link, type) do {					\
-	DPRINTF("    link %#08jx (T = %jd):",				\
+	DPRINTF("    link 0x%08jx (T = %jd):",				\
 	    link,							\
 	    link & EHCI_LINK_TERMINATE ? 1 : 0, 0, 0);			\
 	if (type) {							\
@@ -1687,7 +1687,7 @@ ehci_dump_sqtd(ehci_soft_qtd_t *sqtd)
 	usb_syncmem(&sqtd->dma, sqtd->offs,
 	    sizeof(sqtd->qtd), BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
-	DPRINTFN(10, "QTD(%#jx) at %#08jx:", (uintptr_t)sqtd, sqtd->physaddr,
+	DPRINTFN(10, "QTD(%#jx) at 0x%08jx:", (uintptr_t)sqtd, sqtd->physaddr,
 	    0, 0);
 	ehci_dump_qtd(&sqtd->qtd);
 
@@ -1702,7 +1702,7 @@ ehci_dump_qtd(ehci_qtd_t *qtd)
 	uint32_t s = le32toh(qtd->qtd_status);
 
 	DPRINTFN(10,
-	    "     next = %#08jx  altnext = %#08jx  status = %#08jx",
+	    "     next = 0x%08jx  altnext = 0x%08jx  status = 0x%08jx",
 	    qtd->qtd_next, qtd->qtd_altnext, s, 0);
 	DPRINTFN(10,
 	    "   toggle = %jd ioc = %jd bytes = %#jx c_page = %#jx",
@@ -1750,7 +1750,7 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 
 	endp = le32toh(qh->qh_endp);
 	DPRINTFN(10, "    endp = %#jx", endp, 0, 0, 0);
-	DPRINTFN(10, "        addr = %#02jx  inact = %jd  endpt = %jd  "
+	DPRINTFN(10, "        addr = 0x%02jx  inact = %jd  endpt = %jd  "
 	    "eps = %jd",
 	    EHCI_QH_GET_ADDR(endp), EHCI_QH_GET_INACT(endp),
 	    EHCI_QH_GET_ENDPT(endp), EHCI_QH_GET_EPS(endp));
@@ -1762,9 +1762,9 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 
 	endphub = le32toh(qh->qh_endphub);
 	DPRINTFN(10, " endphub = %#jx", endphub, 0, 0, 0);
-	DPRINTFN(10, "      smask = %#02jx  cmask = %#02jx one %jx",
+	DPRINTFN(10, "      smask = 0x%02jx  cmask = 0x%02jx one %jx",
 	    EHCI_QH_GET_SMASK(endphub), EHCI_QH_GET_CMASK(endphub), 1, 0);
-	DPRINTFN(10, "      huba  = %#02jx  port  = %jd  mult = %jd",
+	DPRINTFN(10, "      huba  = 0x%02jx  port  = %jd  mult = %jd",
 	    EHCI_QH_GET_HUBA(endphub), EHCI_QH_GET_PORT(endphub),
 	    EHCI_QH_GET_MULT(endphub), 0);
 
@@ -1932,7 +1932,7 @@ ehci_open(struct usbd_pipe *pipe)
 			pipe->up_methods = &ehci_root_intr_methods;
 			break;
 		default:
-			DPRINTF("bad bEndpointAddress %#02jx",
+			DPRINTF("bad bEndpointAddress 0x%02jx",
 			    ed->bEndpointAddress, 0, 0, 0);
 			return USBD_INVAL;
 		}
@@ -2192,12 +2192,12 @@ ehci_sync_hc(ehci_softc_t *sc)
 
 	/* ask for doorbell */
 	EOWRITE4(sc, EHCI_USBCMD, EOREAD4(sc, EHCI_USBCMD) | EHCI_CMD_IAAD);
-	DPRINTF("cmd = %#08jx sts = %#08jx",
+	DPRINTF("cmd = 0x%08jx sts = 0x%08jx",
 	    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS), 0, 0);
 
 	error = cv_timedwait(&sc->sc_doorbell, &sc->sc_lock, hz); /* bell wait */
 
-	DPRINTF("cmd = %#08jx sts = %#08jx ... done",
+	DPRINTF("cmd = 0x%08jx sts = 0x%08jx ... done",
 	    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS), 0, 0);
 #ifdef DIAGNOSTIC
 	if (error == EWOULDBLOCK) {
@@ -2322,7 +2322,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	if (sc->sc_dying)
 		return -1;
 
-	DPRINTF("type=%#02jx request=%02jx", req->bmRequestType, req->bRequest,
+	DPRINTF("type=0x%02jx request=%02jx", req->bmRequestType, req->bRequest,
 	    0, 0);
 
 	len = UGETW(req->wLength);
@@ -2358,7 +2358,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		}
 		port = EHCI_PORTSC(index);
 		v = EOREAD4(sc, port);
-		DPRINTF("portsc=%#08jx", v, 0, 0, 0);
+		DPRINTF("portsc=0x%08jx", v, 0, 0, 0);
 		v &= ~EHCI_PS_CLEAR;
 		switch (value) {
 		case UHF_PORT_ENABLE:
@@ -2457,7 +2457,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			return -1;
 		}
 		v = EOREAD4(sc, EHCI_PORTSC(index));
-		DPRINTF("port status=%#04jx", v, 0, 0, 0);
+		DPRINTF("port status=0x%04jx", v, 0, 0, 0);
 
 		i = UPS_HIGH_SPEED;
 		if (sc->sc_flags & EHCIF_ETTF) {
@@ -2497,7 +2497,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		}
 		port = EHCI_PORTSC(index);
 		v = EOREAD4(sc, port);
-		DPRINTF("portsc=%#08jx", v, 0, 0, 0);
+		DPRINTF("portsc=0x%08jx", v, 0, 0, 0);
 		v &= ~EHCI_PS_CLEAR;
 		switch(value) {
 		case UHF_PORT_ENABLE:
@@ -2544,7 +2544,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			}
 
 			v = EOREAD4(sc, port);
-			DPRINTF("ehci after reset, status=%#08jx", v, 0, 0, 0);
+			DPRINTF("ehci after reset, status=0x%08jx", v, 0, 0, 0);
 			if (v & EHCI_PS_PR) {
 				printf("%s: port reset timeout\n",
 				       device_xname(sc->sc_dev));
@@ -2556,7 +2556,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 				break;
 			}
 			sc->sc_isreset[index] = 1;
-			DPRINTF("ehci port %jd reset, status = %#08jx", index,
+			DPRINTF("ehci port %jd reset, status = 0x%08jx", index,
 			    v, 0, 0);
 			break;
 		case UHF_PORT_POWER:
@@ -3043,7 +3043,7 @@ ehci_reset_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
 			sqtd->qtd.qtd_buffer[i] = htole32(EHCI_PAGE(a));
 			/* Cast up to avoid compiler warnings */
 			sqtd->qtd.qtd_buffer_hi[i] = htole32((uint64_t)a >> 32);
-			DPRINTF("      buffer[%jd/%jd] %#08jx %#08jx",
+			DPRINTF("      buffer[%jd/%jd] 0x%08jx 0x%08jx",
 			    i, pages,
 			    le32toh(sqtd->qtd.qtd_buffer_hi[i]),
 			    le32toh(sqtd->qtd.qtd_buffer[i]));
@@ -3315,7 +3315,7 @@ ehci_abortx(struct usbd_xfer *xfer)
 	sqtd = sqtd->nextqtd;
 	/* Zap curqtd register if hardware pointed inside the xfer. */
 	if (hit && sqtd != NULL) {
-		DPRINTF("cur=%#08jx", sqtd->physaddr, 0, 0, 0);
+		DPRINTF("cur=0x%08jx", sqtd->physaddr, 0, 0, 0);
 		sqh->qh.qh_curqtd = htole32(sqtd->physaddr); /* unlink qTDs */
 		usb_syncmem(&sqh->dma,
 		    sqh->offs + offsetof(ehci_qh_t, qh_curqtd),
@@ -3576,7 +3576,7 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 	const int isread = req->bmRequestType & UT_READ;
 	const int len = UGETW(req->wLength);
 
-	DPRINTF("type=%#02jx, request=%#02jx, wValue=%#04jx, wIndex=%#04jx",
+	DPRINTF("type=0x%02jx, request=0x%02jx, wValue=0x%04jx, wIndex=0x%04jx",
 	    req->bmRequestType, req->bRequest, UGETW(req->wValue),
 	    UGETW(req->wIndex));
 	DPRINTF("len=%jd, addr=%jd, endpt=%jd",

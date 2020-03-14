@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.165 2020/03/14 02:22:16 christos Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.166 2020/03/14 02:35:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.165 2020/03/14 02:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.166 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -497,7 +497,7 @@ aue_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	*val = aue_csr_read_2(sc, AUE_PHY_DATA);
 
-	AUEHIST_CALLARGSN(11, "aue%jd: phy=%#jx reg=%#jx => %#04jx",
+	AUEHIST_CALLARGSN(11, "aue%jd: phy=%#jx reg=%#jx => 0x%04jx",
 	    device_unit(un->un_dev), phy, reg, *val);
 
 	return 0;
@@ -512,7 +512,7 @@ aue_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	usbnet_isowned_mii(un);
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(11, "aue%jd: phy=%jd reg=%jd data=%#04jx",
+	AUEHIST_CALLARGSN(11, "aue%jd: phy=%jd reg=%jd data=0x%04jx",
 	    device_unit(un->un_dev), phy, reg, val);
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.93 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.94 2020/03/14 02:35:33 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.93 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.94 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -353,7 +353,7 @@ usbd_find_quirk(usb_device_descriptor_t *d)
 	}
 #ifdef USB_DEBUG
 	if (usbdebug && t->quirks.uq_flags)
-		printf("usbd_find_quirk %#04x/%#04x/%x: %d\n",
+		printf("usbd_find_quirk 0x%04x/0x%04x/%x: %d\n",
 			  UGETW(d->idVendor), UGETW(d->idProduct),
 			  UGETW(d->bcdDevice), t->quirks.uq_flags);
 #endif

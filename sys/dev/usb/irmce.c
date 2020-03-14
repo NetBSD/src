@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.5 2020/03/13 18:17:40 christos Exp $ */
+/* $NetBSD: irmce.c,v 1.6 2020/03/14 02:35:33 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.5 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.6 2020/03/14 02:35:33 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -196,7 +196,7 @@ irmce_attach(device_t parent, device_t self, void *opaque)
 		}
 	}
 
-	aprint_debug_dev(self, "in %#02x/%d out %#02x/%d\n",
+	aprint_debug_dev(self, "in 0x%02x/%d out 0x%02x/%d\n",
 	    sc->sc_bulkin_ep, sc->sc_bulkin_maxpktsize,
 	    sc->sc_bulkout_ep, sc->sc_bulkout_maxpktsize);
 

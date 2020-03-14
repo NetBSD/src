@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.11 2020/03/13 18:17:40 christos Exp $ */
+/* $NetBSD: auvitek.c,v 1.12 2020/03/14 02:35:33 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.11 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.12 2020/03/14 02:35:33 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -189,7 +189,7 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 
-	aprint_debug_dev(self, "isoc endpoint %#02x size %d\n",
+	aprint_debug_dev(self, "isoc endpoint 0x%02x size %d\n",
 	    sc->sc_ax.ax_endpt, sc->sc_ax.ax_maxpktlen);
 
 	nep = 0;
@@ -219,7 +219,7 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 
-	aprint_debug_dev(self, "bulk endpoint %#02x size %d\n",
+	aprint_debug_dev(self, "bulk endpoint 0x%02x size %d\n",
 	    sc->sc_ab.ab_endpt, AUVITEK_BULK_BUFLEN);
 
 	auvitek_board_init(sc);

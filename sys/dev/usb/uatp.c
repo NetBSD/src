@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.24 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: uatp.c,v 1.25 2020/03/14 02:35:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.24 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.25 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -878,10 +878,10 @@ uatp_match(device_t parent, cfdata_t match, void *aux)
 	int report_size, input_size;
 	const struct uatp_descriptor *uatp_descriptor;
 
-	aprint_debug("%s: vendor %#04x, product %#04x\n", __func__,
+	aprint_debug("%s: vendor 0x%04x, product 0x%04x\n", __func__,
 	    (unsigned int)uha->uiaa->uiaa_vendor,
 	    (unsigned int)uha->uiaa->uiaa_product);
-	aprint_debug("%s: class %#04x, subclass %#04x, proto %#04x\n",
+	aprint_debug("%s: class 0x%04x, subclass 0x%04x, proto 0x%04x\n",
 	    __func__,
 	    (unsigned int)uha->uiaa->uiaa_class,
 	    (unsigned int)uha->uiaa->uiaa_subclass,
@@ -942,7 +942,7 @@ uatp_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s\n", uatp_descriptor->description);
 	aprint_naive(": %s\n", uatp_descriptor->description);
 	aprint_verbose_dev(self,
-	    "vendor %#04x, product %#04x, report id %d\n",
+	    "vendor 0x%04x, product 0x%04x, report id %d\n",
 	    (unsigned int)uha->uiaa->uiaa_vendor,
 	    (unsigned int)uha->uiaa->uiaa_product,
 	    (int)uha->reportid);

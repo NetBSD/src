@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.31 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.32 2020/03/14 02:35:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.31 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.32 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -490,7 +490,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, void *data,
 	struct umodem_softc *sc = addr;
 	int error = 0;
 
-	DPRINTF(("umodem_ioctl: cmd=%#08lx\n", cmd));
+	DPRINTF(("umodem_ioctl: cmd=0x%08lx\n", cmd));
 
 	if (sc->sc_dying)
 		return EIO;

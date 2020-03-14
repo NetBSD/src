@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.19 2020/03/13 18:17:41 christos Exp $   */
+/*	$NetBSD: uthum.c,v 1.20 2020/03/14 02:35:33 christos Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.19 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.20 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -331,7 +331,7 @@ uthum_check_sensortype(struct uthum_softc *sc)
 	 *   { 0x57, 0x58, 0x14, 0x00, 0x14, 0x00, 0x53, 0x00 }
 	 */
 	DPRINTF(("uthum: device signature: "
-	    "%#0x %#0x %#0x %#0x %#0x %#0x %#0x %#0x\n",
+	    "0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x\n",
 	    buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]));
 	if (0 == memcmp(buf, sht1x_sig0, sizeof(sht1x_sig0)))
 		return UTHUM_TYPE_SHT1x;
@@ -362,7 +362,7 @@ uthum_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			return;
 		}
 		DPRINTF(("%s: read SHT1x data "
-		    "%#0x %#0x %#0x %#0x %#0x %#0x %#0x %#0x\n",
+		    "0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x\n",
 		    sc->sc_sme->sme_name, buf[0], buf[1], buf[2], buf[3],
 		    buf[4], buf[5], buf[6], buf[7]));
 
@@ -381,7 +381,7 @@ uthum_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			return;
 		}
 		DPRINTF(("%s: read TEMPER data "
-		    "%#0x %#0x %#0x %#0x %#0x %#0x %#0x %#0x\n",
+		    "0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x\n",
 		    sc->sc_sme->sme_name, buf[0], buf[1], buf[2], buf[3],
 		    buf[4], buf[5], buf[6], buf[7]));
 		temp = uthum_temper_temp(buf[0], buf[1]);

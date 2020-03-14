@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.144 2020/03/13 18:17:41 christos Exp $        */
+/*      $NetBSD: ukbd.c,v 1.145 2020/03/14 02:35:33 christos Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.144 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.145 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -643,7 +643,7 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 	if (ukbddebug > 5) {
 		printf("ukbd_intr: data");
 		for (i = 0; i < len; i++)
-			printf(" %#02x", ((u_char *)ibuf)[i]);
+			printf(" 0x%02x", ((u_char *)ibuf)[i]);
 		printf("\n");
 	}
 #endif
@@ -783,7 +783,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 		return;
 
 	if (sc->sc_flags & FLAG_POLLING) {
-		DPRINTFN(1,("%s: pollchar = %#03x\n", __func__, ibuf[0]));
+		DPRINTFN(1,("%s: pollchar = 0x%03x\n", __func__, ibuf[0]));
 		memcpy(sc->sc_pollchars, ibuf, nkeys * sizeof(uint16_t));
 		sc->sc_npollchar = nkeys;
 		return;
@@ -822,7 +822,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 				sc->sc_rep[npress++] = c & 0x7f;
 			}
 #endif
-			DPRINTFN(1,("%s: raw = %s%#02x\n", __func__,
+			DPRINTFN(1,("%s: raw = %s0x%02x\n", __func__,
 				    c & 0x80 ? "0xe0 " : "",
 				    cbuf[j]));
 			j++;
@@ -973,7 +973,7 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 		       sc->sc_npollchar * sizeof(uint16_t));
 		*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 		*data = c & CODEMASK;
-		DPRINTFN(0,("%s: return %#02x\n", __func__, c));
+		DPRINTFN(0,("%s: return 0x%02x\n", __func__, c));
 	} else {
 		*type = 0;
 		*data = 0;

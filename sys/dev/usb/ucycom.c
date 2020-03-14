@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.50 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.51 2020/03/14 02:35:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.50 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.51 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -813,7 +813,7 @@ ucycomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	err = 0;
 
-	DPRINTF(("ucycomioctl: our cmd=%#08lx\n", cmd));
+	DPRINTF(("ucycomioctl: our cmd=0x%08lx\n", cmd));
 	s = spltty();
 
 	switch (cmd) {
@@ -983,7 +983,7 @@ ucycom_intr(struct uhidev *addr, void *ibuf, u_int len)
 	/* Give characters to tty layer. */
 	s = spltty();
 	while (n-- > 0) {
-		DPRINTFN(7,("ucycom_intr: char=%#02x\n", *cp));
+		DPRINTFN(7,("ucycom_intr: char=0x%02x\n", *cp));
 		if ((*rint)(*cp++, tp) == -1) {
 			/* XXX what should we do? */
 			aprint_error_dev(sc->sc_hdev.sc_dev,

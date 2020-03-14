@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.37 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.38 2020/03/14 02:35:33 christos Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.37 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.38 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -2680,7 +2680,7 @@ athn_usb_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	if (usc->usc_dying)
 		return EIO;
 
-	DPRINTFN(DBG_FN, sc, "cmd=%#08lx\n", cmd);
+	DPRINTFN(DBG_FN, sc, "cmd=0x%08lx\n", cmd);
 
 	s = splnet();
 
