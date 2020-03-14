@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.11 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: uts.c,v 1.12 2020/03/14 02:35:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.11 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.12 2020/03/14 02:35:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -171,7 +171,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 		break;
 	default:
 		aprint_error_dev(sc->sc_hdev.sc_dev,
-		    "X report %#04x not supported\n", flags);
+		    "X report 0x%04x not supported\n", flags);
 		return;
 	}
 
@@ -190,7 +190,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 		break;
 	default:
 		aprint_error_dev(sc->sc_hdev.sc_dev,
-		    "Y report %#04x not supported\n", flags);
+		    "Y report 0x%04x not supported\n", flags);
 		return;
 	}
 

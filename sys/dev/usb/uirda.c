@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.46 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: uirda.c,v 1.47 2020/03/14 02:35:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.46 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.47 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -259,9 +259,9 @@ uirda_attach(device_t parent, device_t self, void *aux)
 		memcpy(&sc->sc_irdadesc, d, USB_IRDA_DESCRIPTOR_SIZE);
 	}
 	DPRINTF(("uirda_attach: bDescriptorSize %d bDescriptorType %#x "
-		 "bmDataSize=%#02x bmWindowSize=%#02x "
-		 "bmMinTurnaroundTime=%#02x wBaudRate=%#04x "
-		 "bmAdditionalBOFs=%#02x bIrdaSniff=%d bMaxUnicastList=%d\n",
+		 "bmDataSize=0x%02x bmWindowSize=0x%02x "
+		 "bmMinTurnaroundTime=0x%02x wBaudRate=0x%04x "
+		 "bmAdditionalBOFs=0x%02x bIrdaSniff=%d bMaxUnicastList=%d\n",
 		 sc->sc_irdadesc.bLength,
 		 sc->sc_irdadesc.bDescriptorType,
 		 sc->sc_irdadesc.bmDataSize,
@@ -508,7 +508,7 @@ uirda_read(void *h, struct uio *uio, int flag)
 
 		mutex_enter(&sc->sc_rd_buf_lk);
 		n = sc->sc_rd_count - sc->sc_hdszi;
-		DPRINTFN(1,("%s: sc=%p n=%u, hdr=%#02x\n", __func__,
+		DPRINTFN(1,("%s: sc=%p n=%u, hdr=0x%02x\n", __func__,
 			    sc, n, sc->sc_rd_buf[0]));
 		if (n > uio->uio_resid)
 			error = EINVAL;
@@ -725,7 +725,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		/* no good value found */
 		return EINVAL;
 	found1:
-		DPRINTF(("uirda_set_params: ebofs hdr=%#02x\n", hdr));
+		DPRINTF(("uirda_set_params: ebofs hdr=0x%02x\n", hdr));
 		;
 
 	}
@@ -742,7 +742,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		/* no good value found */
 		return EINVAL;
 	found2:
-		DPRINTF(("uirda_set_params: speed hdr=%#02x\n", hdr));
+		DPRINTF(("uirda_set_params: speed hdr=0x%02x\n", hdr));
 		;
 	}
 	if (p->maxsize != sc->sc_params.maxsize) {
@@ -786,7 +786,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		 * the new settings.  The 0 length frame is not sent to the
 		 * device.
 		 */
-		DPRINTF(("%s: sc=%p setting header %#02x\n",
+		DPRINTF(("%s: sc=%p setting header 0x%02x\n",
 			 __func__, sc, hdr));
 		sc->sc_wr_hdr = hdr;
 		mutex_enter(&sc->sc_wr_buf_lk);

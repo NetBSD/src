@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.65 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.66 2020/03/14 02:35:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.65 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.66 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -262,7 +262,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 		DPRINTFM(UDMASS_CMD, "sc %#jxp: %jd:%jd xs=%#jxp",
 		    (uintptr_t)sc, periph->periph_target, periph->periph_lun,
 		    (uintptr_t)xs);
-		DPRINTFM(UDMASS_CMD, "cmd=%#02jx datalen=%jd (quirks=%#jx, "
+		DPRINTFM(UDMASS_CMD, "cmd=0x%02jx datalen=%jd (quirks=%#jx, "
 		    "poll=%jd)", xs->cmd->opcode, xs->datalen,
 		    periph->periph_quirks, !!(xs->xs_control & XS_CTL_POLL));
 #if defined(UMASS_DEBUG) && defined(SCSIPI_DEBUG)

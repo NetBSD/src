@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.197 2020/03/14 02:22:16 christos Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.198 2020/03/14 02:35:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.197 2020/03/14 02:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.198 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -173,7 +173,7 @@ usbd_dump_endpoint(struct usbd_endpoint *endp)
 	USBHIST_LOG(usbdebug, "    edesc = %#jx refcnt = %jd",
 	    (uintptr_t)endp->ue_edesc, endp->ue_refcnt, 0, 0);
 	if (endp->ue_edesc)
-		USBHIST_LOG(usbdebug, "     bEndpointAddress=%#02jx",
+		USBHIST_LOG(usbdebug, "     bEndpointAddress=0x%02jx",
 		    endp->ue_edesc->bEndpointAddress, 0, 0, 0);
 }
 
@@ -1214,9 +1214,9 @@ usbd_do_request_len(struct usbd_device *dev, usb_device_request_t *req,
 	err = usbd_sync_transfer(xfer);
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
 	if (xfer->ux_actlen > xfer->ux_length) {
-		USBHIST_LOG(usbdebug, "overrun addr = %jd type = %#02jx",
+		USBHIST_LOG(usbdebug, "overrun addr = %jd type = 0x%02jx",
 		    dev->ud_addr, xfer->ux_request.bmRequestType, 0, 0);
-		USBHIST_LOG(usbdebug, "     req = %#02jx val = %jd "
+		USBHIST_LOG(usbdebug, "     req = 0x%02jx val = %jd "
 		    "index = %jd",
 		    xfer->ux_request.bRequest, UGETW(xfer->ux_request.wValue),
 		    UGETW(xfer->ux_request.wIndex), 0);
