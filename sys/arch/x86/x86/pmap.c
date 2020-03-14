@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.364 2020/03/14 05:19:50 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.365 2020/03/14 14:05:44 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.364 2020/03/14 05:19:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.365 2020/03/14 14:05:44 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2700,7 +2700,7 @@ pmap_destroy(struct pmap *pmap)
  * pmap_remove_all: pmap is being torn down by the current thread.
  * avoid unnecessary invalidations.
  */
-void
+bool
 pmap_remove_all(struct pmap *pmap)
 {
 
@@ -2710,6 +2710,7 @@ pmap_remove_all(struct pmap *pmap)
 	 */
 	KASSERT(pmap->pm_remove_all == NULL);
 	pmap->pm_remove_all = curlwp;
+	return false;
 }
 
 #if defined(PMAP_FORK)
