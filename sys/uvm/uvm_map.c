@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.373 2020/03/14 14:15:43 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.374 2020/03/14 17:29:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.373 2020/03/14 14:15:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.374 2020/03/14 17:29:53 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1719,6 +1719,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 		return (true);
 	}
 
+	SAVE_HINT(map, map->hint, *entry);
 	UVMHIST_LOG(maphist,"<- failed!",0,0,0,0);
 	KDASSERT((*entry) == &map->header || (*entry)->end <= address);
 	KDASSERT((*entry)->next == &map->header ||
