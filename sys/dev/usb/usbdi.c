@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.196 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.197 2020/03/14 02:22:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.196 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.197 2020/03/14 02:22:16 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1006,7 +1006,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	    xfer->ux_status == USBD_TIMEOUT &&
 	    !usbd_xfer_isread(xfer)) {
 		USBHIST_LOG(usbdebug, "Possible output ack miss for xfer %#jx: "
-		    "hiding write timeout to %d.%s for %d bytes written",
+		    "hiding write timeout to %jd.%jd for %ju bytes written",
 		    (uintptr_t)xfer, curlwp->l_proc->p_pid, curlwp->l_lid,
 		    xfer->ux_length);
 

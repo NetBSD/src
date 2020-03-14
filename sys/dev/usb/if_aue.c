@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.164 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.165 2020/03/14 02:22:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.164 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.165 2020/03/14 02:22:16 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -330,7 +330,7 @@ aue_csr_read_2(struct aue_softc *sc, int reg)
 
 	if (err) {
 		AUEHIST_FUNC();
-		AUEHIST_CALLARGS("auw%jd: reg=%#jx err=%jd",
+		AUEHIST_CALLARGS("aue%jd: reg=%#jx err=%jd",
 		    device_unit(un->un_dev), reg, err, 0);
 		return 0;
 	}
@@ -362,7 +362,7 @@ aue_csr_write_1(struct aue_softc *sc, int reg, int aval)
 
 	if (err) {
 		AUEHIST_FUNC();
-		AUEHIST_CALLARGS("%jd: reg=%#jx err=%jd",
+		AUEHIST_CALLARGS("aue%jd: reg=%#jx err=%jd",
 		    device_unit(un->un_dev), reg, err, 0);
 		return -1;
 	}
@@ -533,7 +533,7 @@ aue_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	}
 
 	if (i == AUE_TIMEOUT) {
-		DPRINTF("%d: phy=%#jx reg=%#jx val=%#jx write timed out",
+		DPRINTF("aue%d: phy=%#jx reg=%#jx val=%#jx write timed out",
 		    device_unit(un->un_dev), phy, reg, val);
 		return ETIMEDOUT;
 	}
@@ -587,7 +587,7 @@ aue_mii_statchg(struct ifnet *ifp)
 	usbnet_unlock_mii(un);
 
 	if (usbnet_havelink(un) != hadlink) {
-		DPRINTFN(5, "%d: exit link %d",
+		DPRINTFN(5, "aue%d: exit link %d",
 		    device_unit(un->un_dev), usbnet_havelink(un), 0, 0);
 	}
 }
@@ -736,7 +736,7 @@ aue_reset(struct aue_softc *sc)
 	delay(10000);	/* XXX */
 	//usbd_delay_ms(un->un_udev, 10);	/* XXX */
 
-	DPRINTFN(2, "%d: exit", device_unit(un->un_dev), 0, 0, 0);
+	DPRINTFN(2, "aue%d: exit", device_unit(un->un_dev), 0, 0, 0);
 }
 
 /*
@@ -959,7 +959,7 @@ aue_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	buf[1] = (uint8_t)(m->m_pkthdr.len >> 8);
 	total_len = m->m_pkthdr.len + 2;
 
-	DPRINTFN(5, "%d: send %d bytes",
+	DPRINTFN(5, "aue%d: send %d bytes",
 	    device_unit(un->un_dev), total_len, 0, 0);
 
 	return total_len;
