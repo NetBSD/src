@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.34 2020/03/08 15:01:50 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.35 2020/03/14 13:53:26 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.34 2020/03/08 15:01:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.35 2020/03/14 13:53:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -463,7 +463,7 @@ void
 uvmpdpol_pagedeactivate(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg, true));
+	KASSERT(uvm_page_owner_locked_p(pg, false));
 	KASSERT(mutex_owned(&pg->interlock));
 
 	/*
@@ -495,7 +495,7 @@ void
 uvmpdpol_pageactivate(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg, true));
+	KASSERT(uvm_page_owner_locked_p(pg, false));
 	KASSERT(mutex_owned(&pg->interlock));
 
 	uvmpdpol_set_intent(pg, PQ_INTENT_A);
@@ -536,7 +536,7 @@ void
 uvmpdpol_pageenqueue(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg, true));
+	KASSERT(uvm_page_owner_locked_p(pg, false));
 	KASSERT(mutex_owned(&pg->interlock));
 
 	uvmpdpol_set_intent(pg, PQ_INTENT_E);
