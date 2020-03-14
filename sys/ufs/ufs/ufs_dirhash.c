@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.38 2020/03/08 00:23:59 chs Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.39 2020/03/14 18:08:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.38 2020/03/08 00:23:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.39 2020/03/14 18:08:40 ad Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -212,10 +212,8 @@ ufsdirhash_build(struct inode *ip)
 	bmask = VFSTOUFS(vp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
 	pos = 0;
 	while (pos < ip->i_size) {
-		if ((curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-		    != 0) {
-			preempt();
-		}
+		preempt_point();
+
 		/* If necessary, get the next directory block. */
 		if ((pos & bmask) == 0) {
 			if (bp != NULL)

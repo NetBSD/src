@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.50 2020/03/12 13:01:59 tnn Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.51 2020/03/14 18:08:39 ad Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.50 2020/03/12 13:01:59 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.51 2020/03/14 18:08:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2063,10 +2063,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 
 		/* If no reason to return to userland, keep rolling. */
-		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) {
-			break;
-		}
-		if (curcpu()->ci_data.cpu_softints != 0) {
+		if (preempt_needed()) {
 			break;
 		}
 		if (curlwp->l_flag & LW_USERRET) {
