@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.123 2019/12/03 15:20:59 riastradh Exp $ */
+/*	$NetBSD: intr.c,v 1.124 2020/03/14 13:34:43 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123 2019/12/03 15:20:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.124 2020/03/14 13:34:43 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -897,7 +897,7 @@ cpu_intr_p(void)
 	do {
 		ncsw = l->l_ncsw;
 		__insn_barrier();
-		idepth = l->l_cpu->ci_idepth;
+		idepth = curcpu()->ci_idepth;
 		__insn_barrier();
 	} while (__predict_false(ncsw != l->l_ncsw));
 
