@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.184 2020/02/23 15:46:42 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.185 2020/03/14 19:54:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.184 2020/02/23 15:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.185 2020/03/14 19:54:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -172,15 +172,23 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 	pg->offset = off;
 	pg->uobject = uobj;
 
-	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
-	if (flags & UVM_PGA_ZERO) {
-		uvm_pagezero(pg);
+	if (UVM_OBJ_IS_VNODE(uobj) && uobj->uo_npages == 0) {
+		struct vnode *vp = (struct vnode *)uobj;
+		mutex_enter(vp->v_interlock);
+		vp->v_iflag |= VI_PAGES;
+		mutex_exit(vp->v_interlock);
 	}
 
 	if (radix_tree_insert_node(&uobj->uo_pages, off >> PAGE_SHIFT,
 	    pg) != 0) {
 		pool_cache_put(&pagecache, pg);
 		return NULL;
+	}
+	uobj->uo_npages++;
+
+	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
+	if (flags & UVM_PGA_ZERO) {
+		uvm_pagezero(pg);
 	}
 
 	/*
@@ -194,8 +202,6 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 		TAILQ_INSERT_TAIL(&vmpage_lruqueue, pg, pageq.queue);
 		mutex_exit(&vmpage_lruqueue_lock);
 	}
-
-	uobj->uo_npages++;
 
 	return pg;
 }
@@ -225,6 +231,13 @@ uvm_pagefree(struct vm_page *pg)
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
 		mutex_exit(&vmpage_lruqueue_lock);
 		atomic_dec_uint(&vmpage_onqueue);
+	}
+
+	if (UVM_OBJ_IS_VNODE(uobj) && uobj->uo_npages == 0) {
+		struct vnode *vp = (struct vnode *)uobj;
+		mutex_enter(vp->v_interlock);
+		vp->v_iflag &= ~VI_PAGES;
+		mutex_exit(vp->v_interlock);
 	}
 
 	mutex_destroy(&pg->interlock);
