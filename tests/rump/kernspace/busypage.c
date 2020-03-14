@@ -1,4 +1,4 @@
-/*	$NetBSD: busypage.c,v 1.6 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: busypage.c,v 1.7 2020/03/14 20:25:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: busypage.c,v 1.6 2020/02/23 15:46:43 ad Exp $");
+__RCSID("$NetBSD: busypage.c,v 1.7 2020/03/14 20:25:46 ad Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -52,15 +52,14 @@ static void
 thread(void *arg)
 {
 
-	rw_enter(uobj->vmobjlock, RW_WRITER);
+	mutex_enter(&testpg->interlock);
 	threadrun = true;
-#ifdef notyet
 	cv_signal(&tcv);
-#else
-	wakeup(&tcv);
-#endif
-	testpg->flags |= PG_WANTED;
-	UVM_UNLOCK_AND_WAIT_RW(testpg, uobj->vmobjlock, false, "tw", 0);
+	mutex_exit(&testpg->interlock);
+
+	rw_enter(uobj->vmobjlock, RW_READER);
+	uvm_pagewait(testpg, uobj->vmobjlock, "tw");
+
 	kthread_exit(0);
 }
 
@@ -84,16 +83,17 @@ rumptest_busypage()
 	if (rv)
 		panic("thread creation failed: %d", rv);
 
-	rw_enter(uobj->vmobjlock, RW_WRITER);
-#ifdef notyet
-	while (!threadrun)
-		cv_wait(&tcv, uobj->vmobjlock);
-#else
-	while (!threadrun)
-		rwtsleep(&tcv, 0, "nutter", 0, uobj->vmobjlock);
-#endif
+	kpause("lolgic", false, mstohz(100), NULL);
 
-	uvm_page_unbusy(&testpg, 1);
+	mutex_enter(&testpg->interlock);
+	while (!threadrun)
+		cv_wait(&tcv, &testpg->interlock);
+	mutex_exit(&testpg->interlock);
+
+	rw_enter(uobj->vmobjlock, RW_WRITER);
+	mutex_enter(&testpg->interlock);
+	uvm_pageunbusy(testpg);
+	mutex_exit(&testpg->interlock);
 	rw_exit(uobj->vmobjlock);
 
 	rv = kthread_join(newl);
