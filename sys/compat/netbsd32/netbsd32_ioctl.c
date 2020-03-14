@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.109 2020/02/11 06:33:51 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.110 2020/03/14 04:39:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.109 2020/02/11 06:33:51 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.110 2020/03/14 04:39:15 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -1059,7 +1059,7 @@ netbsd32_do_clockctl_ntp_adjtime(struct clockctl_ntp_adjtime *args)
 	(*vec_ntp_adjtime1)(&ntv);
 	netbsd32_from_timex(&ntv, &ntv32);
 
-	error = copyout(&ntv32, args->tp, sizeof(ntv));
+	error = copyout(&ntv32, args->tp, sizeof(ntv32));
 	if (error == 0)
 		args->retval = ntp_timestatus();
 
