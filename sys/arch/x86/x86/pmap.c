@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.363 2020/03/10 22:38:41 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.364 2020/03/14 05:19:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.363 2020/03/10 22:38:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.364 2020/03/14 05:19:50 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4601,7 +4601,7 @@ pmap_get_physpage(void)
 /*
  * Expand the page tree with the specified amount of PTPs, mapping virtual
  * addresses starting at kva. We populate all the levels but the last one
- * (L1). The nodes of the tree are created as RWX, but the pages covered
+ * (L1). The nodes of the tree are created as RW, but the pages covered
  * will be kentered in L1, with proper permissions.
  *
  * Used only by pmap_growkernel.
@@ -4632,6 +4632,9 @@ pmap_alloc_level(struct pmap *cpm, vaddr_t kva, long *needed_ptps)
 			KASSERT(!pmap_valid_entry(pdep[i]));
 			pa = pmap_get_physpage();
 			pte = pmap_pa2pte(pa) | PTE_P | PTE_W;
+#ifdef __x86_64__
+			pte |= pmap_pg_nx;
+#endif
 			pmap_pte_set(&pdep[i], pte);
 
 #ifdef XENPV
