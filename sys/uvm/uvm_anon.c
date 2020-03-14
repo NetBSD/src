@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.74 2020/02/24 12:38:57 rin Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.75 2020/03/14 20:23:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.74 2020/02/24 12:38:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.75 2020/03/14 20:23:51 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -341,7 +341,7 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 	}
 
 	/*
-	 * Mark the page as dirty, clear its swslot and un-busy it.
+	 * Mark the page as dirty and clear its swslot.
 	 */
 
 	pg = anon->an_page;
@@ -359,11 +359,6 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 	uvm_pagelock(pg);
 	uvm_pagedeactivate(pg);
 	uvm_pageunlock(pg);
-	if (pg->flags & PG_WANTED) {
-		pg->flags &= ~PG_WANTED;
-		wakeup(pg);
-	}
-
 	rw_exit(anon->an_lock);
 	if (uobj) {
 		rw_exit(uobj->vmobjlock);
