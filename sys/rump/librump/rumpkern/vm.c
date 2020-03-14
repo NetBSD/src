@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.185 2020/03/14 19:54:06 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.186 2020/03/14 20:23:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.185 2020/03/14 19:54:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.186 2020/03/14 20:23:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -219,8 +219,12 @@ uvm_pagefree(struct vm_page *pg)
 
 	KASSERT(rw_write_held(uobj->vmobjlock));
 
-	if (pg->flags & PG_WANTED)
+	mutex_enter(&pg->interlock);
+	if (pg->pqflags & PQ_WANTED) {
+		pg->pqflags &= ~PQ_WANTED;
 		wakeup(pg);
+	}
+	mutex_exit(&pg->interlock);
 
 	uobj->uo_npages--;
 	pg2 = radix_tree_remove_node(&uobj->uo_pages, pg->offset >> PAGE_SHIFT);
@@ -682,13 +686,41 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			continue;
 
 		KASSERT(pg->flags & PG_BUSY);
-		if (pg->flags & PG_WANTED)
-			wakeup(pg);
-		if (pg->flags & PG_RELEASED)
+		if (pg->flags & PG_RELEASED) {
 			uvm_pagefree(pg);
-		else
-			pg->flags &= ~(PG_WANTED|PG_BUSY);
+		} else {
+			uvm_pagelock(pg);
+			uvm_pageunbusy(pg);
+			uvm_pageunlock(pg);
+		}
 	}
+}
+
+void
+uvm_pagewait(struct vm_page *pg, krwlock_t *lock, const char *wmesg)
+{
+
+	KASSERT(rw_lock_held(lock));
+	KASSERT((pg->flags & PG_BUSY) != 0);
+
+	mutex_enter(&pg->interlock);
+	pg->pqflags |= PQ_WANTED;
+	rw_exit(lock);
+	UVM_UNLOCK_AND_WAIT(pg, &pg->interlock, false, wmesg, 0);
+}
+
+void
+uvm_pageunbusy(struct vm_page *pg)
+{
+
+	KASSERT((pg->flags & PG_BUSY) != 0);
+	KASSERT(mutex_owned(&pg->interlock));
+
+	if ((pg->pqflags & PQ_WANTED) != 0) {
+		pg->pqflags &= ~PQ_WANTED;
+		wakeup(pg);
+	}
+	pg->flags &= ~PG_BUSY;
 }
 
 void
