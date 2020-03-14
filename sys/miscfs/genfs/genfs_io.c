@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.92 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.93 2020/03/14 20:45:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.92 2020/03/14 20:23:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.93 2020/03/14 20:45:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ static int genfs_getpages_read(struct vnode *, struct vm_page **, int, off_t,
 static int genfs_do_io(struct vnode *, off_t, vaddr_t, size_t, int, enum uio_rw,
     void (*)(struct buf *));
 static void genfs_rel_pages(struct vm_page **, unsigned int);
-static void genfs_markdirty(struct vnode *);
 
 int genfs_maxdio = MAXPHYS;
 
@@ -81,22 +80,6 @@ genfs_rel_pages(struct vm_page **pgs, unsigned int npages)
 		}
 	}
 	uvm_page_unbusy(pgs, npages);
-}
-
-static void
-genfs_markdirty(struct vnode *vp)
-{
-
-	KASSERT(rw_write_held(vp->v_uobj.vmobjlock));
-
-	mutex_enter(vp->v_interlock);
-	if ((vp->v_iflag & VI_ONWORKLST) == 0) {
-		vn_syncer_add_to_worklist(vp, filedelay);
-	}
-	if ((vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP) {
-		vp->v_iflag |= VI_WRMAPDIRTY;
-	}
-	mutex_exit(vp->v_interlock);
 }
 
 /*
@@ -278,7 +261,6 @@ startover:
 					    UVM_PAGE_STATUS_UNKNOWN);
 				}
 			}
-			genfs_markdirty(vp);
 		}
 		goto out_err;
 	}
@@ -546,9 +528,6 @@ out:
 			 */
 			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_UNKNOWN);
 		}
-	}
-	if (memwrite) {
-		genfs_markdirty(vp);
 	}
 	rw_exit(uobj->vmobjlock);
 	if (ap->a_m != NULL) {
@@ -912,8 +891,6 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 retry:
 	modified = false;
 	flags = origflags;
-	KASSERT((vp->v_iflag & VI_ONWORKLST) != 0 ||
-	    (vp->v_iflag & VI_WRMAPDIRTY) == 0);
 
 	/*
 	 * shortcut if we have no pages to process.
@@ -921,10 +898,14 @@ retry:
 
 	nodirty = radix_tree_empty_tagged_tree_p(&uobj->uo_pages,
             UVM_PAGE_DIRTY_TAG);
+#ifdef DIAGNOSTIC
+	mutex_enter(vp->v_interlock);
+	KASSERT((vp->v_iflag & VI_ONWORKLST) != 0 || nodirty);
+	mutex_exit(vp->v_interlock);
+#endif
 	if (uobj->uo_npages == 0 || (dirtyonly && nodirty)) {
 		mutex_enter(vp->v_interlock);
 		if (vp->v_iflag & VI_ONWORKLST) {
-			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 				vn_syncer_remove_from_worklist(vp);
 		}
@@ -1150,7 +1131,6 @@ retry:
 		 */
 
 		if (needs_clean) {
-			KDASSERT((vp->v_iflag & VI_ONWORKLST));
 			wasclean = false;
 			memset(pgs, 0, sizeof(pgs));
 			pg->flags |= PG_BUSY;
@@ -1320,7 +1300,7 @@ retry:
 	 */
 
 	mutex_enter(vp->v_interlock);
-	if (modified && (vp->v_iflag & VI_WRMAPDIRTY) != 0 &&
+	if (modified && (vp->v_iflag & VI_WRMAP) != 0 &&
 	    (vp->v_type != VBLK ||
 	    (vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)) {
 		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
@@ -1334,7 +1314,6 @@ retry:
 	if ((vp->v_iflag & VI_ONWORKLST) != 0 &&
 	    radix_tree_empty_tagged_tree_p(&uobj->uo_pages,
 	    UVM_PAGE_DIRTY_TAG)) {
-		vp->v_iflag &= ~VI_WRMAPDIRTY;
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 			vn_syncer_remove_from_worklist(vp);
 	}
@@ -1635,9 +1614,6 @@ genfs_compat_getpages(void *v)
 		    UFP_NOWAIT|UFP_NOALLOC| (memwrite ? UFP_NORDONLY : 0));
 
 		error = ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0;
-		if (error == 0 && memwrite) {
-			genfs_markdirty(vp);
-		}
 		return error;
 	}
 	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= vp->v_size) {
@@ -1690,9 +1666,6 @@ genfs_compat_getpages(void *v)
 	}
 	if (error) {
 		uvm_page_unbusy(pgs, npages);
-	}
-	if (error == 0 && memwrite) {
-		genfs_markdirty(vp);
 	}
 	rw_exit(uobj->vmobjlock);
 	return error;

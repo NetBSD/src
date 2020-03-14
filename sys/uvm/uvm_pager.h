@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.45 2018/12/09 20:33:04 jdolecek Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.46 2020/03/14 20:45:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -135,6 +135,9 @@ struct uvm_pagerops {
 
 	/* put/write pages */
 	int	(*pgo_put)(struct uvm_object *, voff_t, voff_t, int);
+
+	/* mark object dirty */
+	void	(*pgo_markdirty)(struct uvm_object *);
 };
 
 /* pager flags [mostly for flush] */

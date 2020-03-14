@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.23 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.24 2020/03/14 20:45:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.23 2020/03/14 20:23:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.24 2020/03/14 20:45:23 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -455,11 +455,12 @@ retry:
 	 * If there are no pages, don't do anything.
 	 */
 	if (vp->v_uobj.uo_npages == 0) {
+		mutex_enter(vp->v_interlock);
 		if ((vp->v_iflag & VI_ONWORKLST) &&
 		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
-			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
 		}
+		mutex_exit(vp->v_interlock);
 		if (trans_mp)
 			fstrans_done(trans_mp);
 		rw_exit(vp->v_uobj.vmobjlock);
