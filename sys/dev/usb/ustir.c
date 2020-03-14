@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.45 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: ustir.c,v 1.46 2020/03/14 02:35:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.45 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.46 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -873,7 +873,7 @@ ustir_read(void *h, struct uio *uio, int flag)
 		splx(s);
 
 		uframelen = sc->sc_ur_framelen;
-		DPRINTFN(1,("%s: sc=%p framelen=%u, hdr=%#02x\n",
+		DPRINTFN(1,("%s: sc=%p framelen=%u, hdr=0x%02x\n",
 			    __func__, sc, uframelen, sc->sc_ur_buf[0]));
 		if (uframelen > uio->uio_resid)
 			error = EINVAL;

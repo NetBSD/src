@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.22 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.23 2020/03/14 02:35:33 christos Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.22 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.23 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -637,7 +637,7 @@ urtw_attach(device_t parent, device_t self, void *aux)
 			break;
 		default:
 			sc->sc_hwrev |= URTW_HWREV_8187_B;
-			aprint_normal("RTL8187 rev %#02x", data >> 25);
+			aprint_normal("RTL8187 rev 0x%02x", data >> 25);
 			break;
 		}
 	} else {
@@ -658,7 +658,7 @@ urtw_attach(device_t parent, device_t self, void *aux)
 			break;
 		default:
 			sc->sc_hwrev |= URTW_HWREV_8187B_B;
-			aprint_normal("RTL8187B rev %#02x", data8);
+			aprint_normal("RTL8187B rev 0x%02x", data8);
 			break;
 		}
 	}

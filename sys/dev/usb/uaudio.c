@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.164 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.165 2020/03/14 02:35:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.164 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.165 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -722,7 +722,7 @@ uaudio_add_input(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 
 	d = iot[id].d.it;
 #ifdef UAUDIO_DEBUG
-	DPRINTFN(2,"bTerminalId=%d wTerminalType=%#04x "
+	DPRINTFN(2,"bTerminalId=%d wTerminalType=0x%04x "
 		    "bAssocTerminal=%d bNrChannels=%d wChannelConfig=%d "
 		    "iChannelNames=%d iTerminal=%d\n",
 		    d->bTerminalId, UGETW(d->wTerminalType), d->bAssocTerminal,
@@ -743,7 +743,7 @@ uaudio_add_output(struct uaudio_softc *sc,
 	const struct usb_audio_output_terminal *d;
 
 	d = iot[id].d.ot;
-	DPRINTFN(2,"bTerminalId=%d wTerminalType=%#04x "
+	DPRINTFN(2,"bTerminalId=%d wTerminalType=0x%04x "
 		    "bAssocTerminal=%d bSourceId=%d iTerminal=%d\n",
 		    d->bTerminalId, UGETW(d->wTerminalType), d->bAssocTerminal,
 		    d->bSourceId, d->iTerminal);
@@ -1103,7 +1103,7 @@ uaudio_add_feature(struct uaudio_softc *sc, const struct io_terminal *iot, int i
 	}
 
 	DPRINTFN(1,"bUnitId=%d, "
-		    "%d channels, mmask=%#04x, cmask=%#04x\n",
+		    "%d channels, mmask=0x%04x, cmask=0x%04x\n",
 		    d->bUnitId, nchan, mmask, cmask);
 
 	if (nchan > MIX_MAX_CHAN)
@@ -1112,7 +1112,7 @@ uaudio_add_feature(struct uaudio_softc *sc, const struct io_terminal *iot, int i
 	mix.wIndex = MAKE(unit, sc->sc_ac_iface);
 	for (ctl = MUTE_CONTROL; ctl < LOUDNESS_CONTROL; ctl++) {
 		fumask = FU_MASK(ctl);
-		DPRINTFN(4,"ctl=%d fumask=%#04x\n",
+		DPRINTFN(4,"ctl=%d fumask=0x%04x\n",
 			    ctl, fumask);
 		if (mmask & fumask) {
 			mix.nchan = 1;
@@ -2031,7 +2031,7 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 			break;
 		default:
 			aprint_error(
-			    "uaudio_identify_ac: bad AC desc subtype=%#02x\n",
+			    "uaudio_identify_ac: bad AC desc subtype=0x%02x\n",
 			    dp->bDescriptorSubtype);
 			break;
 		}
@@ -2307,8 +2307,8 @@ uaudio_get(struct uaudio_softc *sc, int which, int type, int wValue,
 	USETW(req.wValue, wValue);
 	USETW(req.wIndex, wIndex);
 	USETW(req.wLength, len);
-	DPRINTFN(2,"type=%#02x req=%#02x wValue=%#04x "
-		    "wIndex=%#04x len=%d\n",
+	DPRINTFN(2,"type=0x%02x req=0x%02x wValue=0x%04x "
+		    "wIndex=0x%04x len=%d\n",
 		    type, which, wValue, wIndex, len);
 	err = usbd_do_request(sc->sc_udev, &req, data);
 	if (err) {
@@ -2357,8 +2357,8 @@ uaudio_set(struct uaudio_softc *sc, int which, int type, int wValue,
 	default:
 		return;
 	}
-	DPRINTFN(2,"type=%#02x req=%#02x wValue=%#04x "
-		    "wIndex=%#04x len=%d, val=%d\n",
+	DPRINTFN(2,"type=0x%02x req=0x%02x wValue=0x%04x "
+		    "wIndex=0x%04x len=%d, val=%d\n",
 		    type, which, wValue, wIndex, len, val & 0xffff);
 	err = usbd_do_request(sc->sc_udev, &req, data);
 #ifdef UAUDIO_DEBUG
@@ -2626,7 +2626,7 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 
 	as = &sc->sc_alts[ch->altidx];
 	endpt = as->edesc->bEndpointAddress;
-	DPRINTF("endpt=%#02x, speed=%d, alt=%d\n",
+	DPRINTF("endpt=0x%02x, speed=%d, alt=%d\n",
 		 endpt, ch->sample_rate, as->alt);
 
 	/* Set alternate interface corresponding to the mode. */
@@ -2646,13 +2646,13 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 		}
 	}
 
-	DPRINTF("create pipe to %#02x\n", endpt);
+	DPRINTF("create pipe to 0x%02x\n", endpt);
 	err = usbd_open_pipe(as->ifaceh, endpt, USBD_MPSAFE, &ch->pipe);
 	if (err)
 		return err;
 	if (as->edesc1 != NULL) {
 		endpt = as->edesc1->bEndpointAddress;
-		DPRINTF("create sync-pipe to %#02x\n", endpt);
+		DPRINTF("create sync-pipe to 0x%02x\n", endpt);
 		err = usbd_open_pipe(as->ifaceh, endpt, USBD_MPSAFE,
 		    &ch->sync_pipe);
 	}

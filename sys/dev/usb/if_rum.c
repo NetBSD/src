@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.67 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.68 2020/03/14 02:35:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.67 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.68 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -380,7 +380,7 @@ rum_attach(device_t parent, device_t self, void *aux)
 	rum_read_eeprom(sc);
 
 	aprint_normal_dev(self,
-	    "MAC/BBP RT%04x (rev %#05x), RF %s, address %s\n",
+	    "MAC/BBP RT%04x (rev 0x%05x), RF %s, address %s\n",
 	    sc->macbbp_rev, tmp,
 	    rum_get_rf(sc->rf_rev), ether_sprintf(ic->ic_myaddr));
 
@@ -1537,7 +1537,7 @@ rum_rf_write(struct rum_softc *sc, uint8_t reg, uint32_t val)
 	/* remember last written value in sc */
 	sc->rf_regs[reg] = val;
 
-	DPRINTFN(15, ("RF R[%u] <- %#05x\n", reg & 3, val & 0xfffff));
+	DPRINTFN(15, ("RF R[%u] <- 0x%05x\n", reg & 3, val & 0xfffff));
 }
 
 static void
