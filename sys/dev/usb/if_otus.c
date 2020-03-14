@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.42 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.43 2020/03/14 02:35:33 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.42 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.43 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -799,7 +799,7 @@ otus_attachhook(device_t arg)
 	}
 	if (in != out) {
 		aprint_error_dev(sc->sc_dev,
-		    "echo reply mismatch: %#08x!=%#08x\n", in, out);
+		    "echo reply mismatch: 0x%08x!=0x%08x\n", in, out);
 		return;
 	}
 
@@ -908,7 +908,7 @@ otus_get_chanlist(struct otus_softc *sc)
 	/* XXX regulatory domain. */
 	uint16_t domain = le16toh(sc->sc_eeprom.baseEepHeader.regDmn[0]);
 
-	DPRINTFN(DBG_FN | DBG_INIT, sc, "regdomain=%#04x\n", domain);
+	DPRINTFN(DBG_FN | DBG_INIT, sc, "regdomain=0x%04x\n", domain);
 #endif
 
 	ic = &sc->sc_ic;
@@ -1423,7 +1423,7 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 	KASSERT(sizeof(hdr) + ilen <= OTUS_MAX_TXCMDSZ);
 	memcpy(cmd->buf + sizeof(hdr[0]), idata, ilen);
 
-	DPRINTFN(DBG_CMD, sc, "sending command code=%#02x len=%d token=%d\n",
+	DPRINTFN(DBG_CMD, sc, "sending command code=0x%02x len=%d token=%d\n",
 	    code, ilen, hdr->token);
 
 	cmd->odata = odata;
@@ -1446,7 +1446,7 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 	mutex_exit(&sc->sc_cmd_mtx);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "timeout waiting for command %#02x reply\n", code);
+		    "timeout waiting for command 0x%02x reply\n", code);
 	}
 	return error;
 }
@@ -1583,7 +1583,7 @@ otus_newassoc(struct ieee80211_node *ni, int isnew)
 			if (otus_rates[ridx].rate == rate)
 				break;
 		on->ridx[i] = ridx;
-		DPRINTFN(DBG_INIT, sc, "rate=%#02x ridx=%d\n",
+		DPRINTFN(DBG_INIT, sc, "rate=0x%02x ridx=%d\n",
 		    rs->rs_rates[i], on->ridx[i]);
 	}
 }
@@ -1641,7 +1641,7 @@ otus_cmd_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	}
 
 	if ((hdr->code & 0xc0) != 0xc0) {
-		DPRINTFN(DBG_RX, sc, "received reply code=%#02x len=%d token=%d\n",
+		DPRINTFN(DBG_RX, sc, "received reply code=0x%02x len=%d token=%d\n",
 		    hdr->code, hdr->len, hdr->token);
 		mutex_enter(&sc->sc_cmd_mtx);
 		cmd = &sc->sc_tx_cmd;
@@ -1659,7 +1659,7 @@ otus_cmd_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	}
 
 	/* Received unsolicited notification. */
-	DPRINTFN(DBG_RX, sc, "received notification code=%#02x len=%d\n",
+	DPRINTFN(DBG_RX, sc, "received notification code=0x%02x len=%d\n",
 	    hdr->code, hdr->len);
 	switch (hdr->code & 0x3f) {
 	case AR_EVT_BEACON:
@@ -1742,7 +1742,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 
 	/* Discard error frames. */
 	if (__predict_false((tail->error & sc->sc_rx_error_msk) != 0)) {
-		DPRINTFN(DBG_RX, sc, "error frame %#02x\n", tail->error);
+		DPRINTFN(DBG_RX, sc, "error frame 0x%02x\n", tail->error);
 		if (tail->error & AR_RX_ERROR_FCS) {
 			DPRINTFN(DBG_RX, sc, "bad FCS\n");
 		} else if (tail->error & AR_RX_ERROR_MMIC) {
@@ -2041,7 +2041,7 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	xferlen = sizeof(*head) + m->m_pkthdr.len;
 	m_copydata(m, 0, m->m_pkthdr.len, (void *)&head[1]);
 
-	DPRINTFN(DBG_TX, sc, "queued len=%d mac=%#04x phy=%#08x rate=%d\n",
+	DPRINTFN(DBG_TX, sc, "queued len=%d mac=0x%04x phy=0x%08x rate=%d\n",
 	    head->len, head->macctl, head->phyctl, otus_rates[ridx].rate);
 
 	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,

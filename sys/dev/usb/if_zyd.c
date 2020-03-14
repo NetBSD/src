@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.57 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.58 2020/03/14 02:35:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.57 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.58 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1544,7 +1544,7 @@ zyd_hw_init(struct zyd_softc *sc)
 	(void)zyd_write32(sc, ZYD_MAC_AFTER_PNP, 1);
 
 	(void)zyd_read16(sc, ZYD_FIRMWARE_BASE_ADDR, &sc->fwbase);
-	DPRINTF(("firmware base address=%#04x\n", sc->fwbase));
+	DPRINTF(("firmware base address=0x%04x\n", sc->fwbase));
 
 	/* retrieve firmware revision number */
 	(void)zyd_read16(sc, sc->fwbase + ZYD_FW_FIRMWARE_REV, &sc->fw_rev);

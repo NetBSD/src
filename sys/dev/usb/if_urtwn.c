@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.82 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.83 2020/03/14 02:35:33 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.82 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.83 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -670,7 +670,7 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 		    USBD_EXCLUSIVE_USE, &sc->rx_pipe[i]);
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
-			    "could not open Rx bulk pipe %#02x: %d\n",
+			    "could not open Rx bulk pipe 0x%02x: %d\n",
 			    rxepaddr[i], error);
 			goto fail;
 		}
@@ -682,7 +682,7 @@ urtwn_open_pipes(struct urtwn_softc *sc)
 		    USBD_EXCLUSIVE_USE, &sc->tx_pipe[i]);
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
-			    "could not open Tx bulk pipe %#02x: %d\n",
+			    "could not open Tx bulk pipe 0x%02x: %d\n",
 			    epaddr[i], error);
 			goto fail;
 		}
@@ -1247,7 +1247,7 @@ urtwn_efuse_read_1(struct urtwn_softc *sc, uint16_t addr)
 		DELAY(5);
 	}
 	aprint_error_dev(sc->sc_dev,
-	    "could not read efuse byte at address %#04x\n", addr);
+	    "could not read efuse byte at address 0x%04x\n", addr);
 	return 0xff;
 }
 
@@ -1354,7 +1354,7 @@ urtwn_dump_rom(struct urtwn_softc *sc, struct r92c_rom *rp)
 {
 
 	aprint_normal_dev(sc->sc_dev,
-	    "id %#04x, dbg_sel %#x, vid %#x, pid %#x\n",
+	    "id 0x%04x, dbg_sel %#x, vid %#x, pid %#x\n",
 	    rp->id, rp->dbg_sel, rp->vid, rp->pid);
 
 	aprint_normal_dev(sc->sc_dev,
@@ -2958,7 +2958,7 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int s, error = 0;
 
 	URTWNHIST_FUNC();
-	URTWNHIST_CALLARGS("cmd=%#08jx, data=%#jx", cmd, (uintptr_t)data,
+	URTWNHIST_CALLARGS("cmd=0x%08jx, data=%#jx", cmd, (uintptr_t)data,
 	    0, 0);
 
 	s = splnet();
