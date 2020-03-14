@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.59 2020/03/14 21:56:08 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.60 2020/03/14 22:23:17 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.59 2020/03/14 21:56:08 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.60 2020/03/14 22:23:17 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1285,13 +1285,7 @@ synaptics_finger_detect(struct synaptics_softc *sc, struct synaptics_packet *sp,
 		return (0);
 	}
 
-	/*
-	 * Detect 2 and 3 fingers if supported, but only if multiple
-	 * fingers appear within the tap gesture time period.
-	 */
-	if (sc->flags & SYN_FLAG_HAS_MULTI_FINGER &&
-	    SYN_TIME(sc, sc->gesture_start_packet,
-	    sp->sp_finger) < synaptics_gesture_length) {
+	if (sc->flags & SYN_FLAG_HAS_MULTI_FINGER) {
 		switch (sp->sp_w) {
 		case SYNAPTICS_WIDTH_TWO_FINGERS:
 			fingers = 2;
