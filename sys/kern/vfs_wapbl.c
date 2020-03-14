@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.104 2020/03/08 18:26:59 ad Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.105 2020/03/14 15:32:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.104 2020/03/08 18:26:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.105 2020/03/14 15:32:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -922,7 +922,7 @@ wapbl_doio(void *data, size_t len, struct vnode *devvp, daddr_t pbn, int flags)
 
 	bp = getiobuf(devvp, true);
 	bp->b_flags = flags;
-	bp->b_cflags = BC_BUSY;	/* mandatory, asserted by biowait() */
+	bp->b_cflags |= BC_BUSY;	/* mandatory, asserted by biowait() */
 	bp->b_dev = devvp->v_rdev;
 	bp->b_data = data;
 	bp->b_bufsize = bp->b_resid = bp->b_bcount = len;
@@ -997,7 +997,7 @@ wapbl_buffered_write_async(struct wapbl *wl, struct buf *bp)
 	TAILQ_REMOVE(&wl->wl_iobufs, bp, b_wapbllist);
 
 	bp->b_flags |= B_WRITE;
-	bp->b_cflags = BC_BUSY;	/* mandatory, asserted by biowait() */
+	bp->b_cflags |= BC_BUSY;	/* mandatory, asserted by biowait() */
 	bp->b_oflags = 0;
 	bp->b_bcount = bp->b_resid;
 	BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);

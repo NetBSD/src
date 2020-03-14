@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.88 2020/02/27 22:12:54 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.89 2020/03/14 15:34:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.88 2020/02/27 22:12:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.89 2020/03/14 15:34:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -615,7 +615,7 @@ genfs_getpages_read(struct vnode *vp, struct vm_page **pgs, int npages,
 	mbp->b_bufsize = totalbytes;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
-	mbp->b_cflags = BC_BUSY;
+	mbp->b_cflags |= BC_BUSY;
 	if (async) {
 		mbp->b_flags = B_READ | B_ASYNC;
 		mbp->b_iodone = uvm_aio_aiodone;
@@ -1497,7 +1497,7 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	mbp->b_bufsize = len;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
-	mbp->b_cflags = BC_BUSY | BC_AGE;
+	mbp->b_cflags |= BC_BUSY | BC_AGE;
 	if (async) {
 		mbp->b_flags = brw | B_ASYNC;
 		mbp->b_iodone = iodone;
@@ -1735,7 +1735,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	mutex_exit(vp->v_interlock);
 
 	bp = getiobuf(vp, true);
-	bp->b_cflags = BC_BUSY | BC_AGE;
+	bp->b_cflags |= BC_BUSY | BC_AGE;
 	bp->b_lblkno = offset >> vp->v_mount->mnt_fs_bshift;
 	bp->b_data = (char *)kva;
 	bp->b_bcount = npages << PAGE_SHIFT;
