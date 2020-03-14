@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.166 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.167 2020/03/14 03:01:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.166 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.167 2020/03/14 03:01:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -533,7 +533,7 @@ aue_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	}
 
 	if (i == AUE_TIMEOUT) {
-		DPRINTF("aue%d: phy=%#jx reg=%#jx val=%#jx write timed out",
+		DPRINTF("aue%jd: phy=%#jx reg=%#jx val=%#jx write timed out",
 		    device_unit(un->un_dev), phy, reg, val);
 		return ETIMEDOUT;
 	}
@@ -587,7 +587,7 @@ aue_mii_statchg(struct ifnet *ifp)
 	usbnet_unlock_mii(un);
 
 	if (usbnet_havelink(un) != hadlink) {
-		DPRINTFN(5, "aue%d: exit link %d",
+		DPRINTFN(5, "aue%jd: exit link %jd",
 		    device_unit(un->un_dev), usbnet_havelink(un), 0, 0);
 	}
 }
@@ -736,7 +736,7 @@ aue_reset(struct aue_softc *sc)
 	delay(10000);	/* XXX */
 	//usbd_delay_ms(un->un_udev, 10);	/* XXX */
 
-	DPRINTFN(2, "aue%d: exit", device_unit(un->un_dev), 0, 0, 0);
+	DPRINTFN(2, "aue%jd: exit", device_unit(un->un_dev), 0, 0, 0);
 }
 
 /*
@@ -959,7 +959,7 @@ aue_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	buf[1] = (uint8_t)(m->m_pkthdr.len >> 8);
 	total_len = m->m_pkthdr.len + 2;
 
-	DPRINTFN(5, "aue%d: send %d bytes",
+	DPRINTFN(5, "aue%jd: send %jd bytes",
 	    device_unit(un->un_dev), total_len, 0, 0);
 
 	return total_len;

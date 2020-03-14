@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.36 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.37 2020/03/14 03:01:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.36 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.37 2020/03/14 03:01:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -475,7 +475,7 @@ usbnet_start_locked(struct ifnet *ifp)
 	KASSERT(cd->uncd_tx_cnt <= un->un_tx_list_cnt);
 
 	if (!unp->unp_link || (ifp->if_flags & IFF_RUNNING) == 0) {
-		DPRINTF("start called no link (%x) or running (flags %x)",
+		DPRINTF("start called no link (%jx) or running (flags %jx)",
 		    unp->unp_link, ifp->if_flags, 0, 0);
 		return;
 	}
@@ -516,7 +516,7 @@ usbnet_start_locked(struct ifnet *ifp)
 		/* Transmit */
 		usbd_status err = usbd_transfer(c->unc_xfer);
 		if (err != USBD_IN_PROGRESS) {
-			DPRINTF("usbd_transfer on %#jx for %ju bytes: %d",
+			DPRINTF("usbd_transfer on %#jx for %ju bytes: %jd",
 			    (uintptr_t)c->unc_buf, length, err, 0);
 			if_statinc(ifp, if_oerrors);
 			break;
@@ -537,7 +537,7 @@ usbnet_start_locked(struct ifnet *ifp)
 	}
 	cd->uncd_tx_prod = idx;
 
-	DPRINTF("finished with start; tx_cnt %d list_cnt %d link %d",
+	DPRINTF("finished with start; tx_cnt %jd list_cnt %jd link %jd",
 	    cd->uncd_tx_cnt, un->un_tx_list_cnt, unp->unp_link, 0);
 
 	/*
@@ -1155,13 +1155,13 @@ usbnet_watchdog(struct ifnet *ifp)
 	aprint_error_dev(un->un_dev, "watchdog timeout\n");
 
 	if (cd->uncd_tx_cnt > 0) {
-		DPRINTF("uncd_tx_cnt=%u non zero, aborting pipe", 0, 0, 0, 0);
+		DPRINTF("uncd_tx_cnt=%ju non zero, aborting pipe", 0, 0, 0, 0);
 		err = usbd_abort_pipe(unp->unp_ep[USBNET_ENDPT_TX]);
 		if (err)
 			aprint_error_dev(un->un_dev, "pipe abort failed: %s\n",
 			    usbd_errstr(err));
 		if (cd->uncd_tx_cnt != 0)
-			DPRINTF("uncd_tx_cnt now %u", cd->uncd_tx_cnt, 0, 0, 0);
+			DPRINTF("uncd_tx_cnt now %ju", cd->uncd_tx_cnt, 0, 0, 0);
 	}
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
