@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.89 2020/03/14 15:34:24 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.90 2020/03/14 18:08:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.89 2020/03/14 15:34:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.90 2020/03/14 18:08:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1047,8 +1047,7 @@ retry:
 		 * a preempt point.
 		 */
 
-		if ((l->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-		    != 0) {
+		if (preempt_needed()) {
 			nextoff = pg->offset; /* visit this page again */
 			rw_exit(slock);
 			preempt();

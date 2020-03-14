@@ -1,7 +1,7 @@
-/*	$NetBSD: bus_dma.c,v 1.39 2020/03/13 03:49:39 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.40 2020/03/14 18:08:38 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.39 2020/03/13 03:49:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2020/03/14 18:08:38 ad Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -1291,10 +1291,8 @@ _bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
 			continue;
 		cnt = MIN(resid, iov->iov_len);
 
-		if (!VMSPACE_IS_KERNEL_P(vm) &&
-		    (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-		    != 0) {
-			preempt();
+		if (!VMSPACE_IS_KERNEL_P(vm)) {
+			preempt_point();
 		}
 		if (direction == UIO_READ) {
 			error = copyout_vmspace(vm, cp, iov->iov_base, cnt);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.342 2020/02/23 16:27:09 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.343 2020/03/14 18:08:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.342 2020/02/23 16:27:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.343 2020/03/14 18:08:39 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -306,8 +306,7 @@ wakeup(wchan_t ident)
 
 /*
  * General yield call.  Puts the current LWP back on its run queue and
- * performs a voluntary context switch.  Should only be called when the
- * current LWP explicitly requests it (eg sched_yield(2)).
+ * performs a context switch.
  */
 void
 yield(void)
@@ -329,7 +328,12 @@ yield(void)
 
 /*
  * General preemption call.  Puts the current LWP back on its run queue
- * and performs an involuntary context switch.
+ * and performs an involuntary context switch.  Different from yield()
+ * in that:
+ *
+ * - It's counted differently (involuntary vs. voluntary).
+ * - Realtime threads go to the head of their runqueue vs. tail for yield().
+ * - Priority boost is retained unless LWP has exceeded timeslice.
  */
 void
 preempt(void)
@@ -342,11 +346,54 @@ preempt(void)
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
 
-	/* Involuntary - keep kpriority boost. */
-	l->l_pflag |= LP_PREEMPTING;
 	spc_lock(l->l_cpu);
+	/* Involuntary - keep kpriority boost unless a CPU hog. */
+	if ((l->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) != 0) {
+		l->l_kpriority = false;
+	}
+	l->l_pflag |= LP_PREEMPTING;
 	mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
+}
+
+/*
+ * A breathing point for long running code in kernel.
+ */
+void
+preempt_point(void)
+{
+	lwp_t *l = curlwp;
+	int needed;
+
+	KPREEMPT_DISABLE(l);
+	needed = l->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD;
+#ifndef __HAVE_FAST_SOFTINTS
+	needed |= l->l_cpu->ci_data.cpu_softints;
+#endif
+	KPREEMPT_ENABLE(l);
+
+	if (__predict_false(needed)) {
+		preempt();
+	}
+}
+
+/*
+ * Check the SPCF_SHOULDYIELD flag.
+ */
+bool
+preempt_needed(void)
+{
+	lwp_t *l = curlwp;
+	int needed;
+
+	KPREEMPT_DISABLE(l);
+	needed = l->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD;
+#ifndef __HAVE_FAST_SOFTINTS
+	needed |= l->l_cpu->ci_data.cpu_softints;
+#endif
+	KPREEMPT_ENABLE(l);
+
+	return (bool)needed;
 }
 
 /*
