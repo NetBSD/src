@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.20 2020/03/05 02:14:53 rin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21 2020/03/14 14:05:43 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,10 +172,11 @@ bool pmap_check_attr(struct vm_page *, u_int, int);
 void pmap_real_memory(paddr_t *, psize_t *);
 int pmap_tlbmiss(vaddr_t va, int ctx);
 
-static __inline void
+static __inline bool
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
+	return false;
 }
 
 int	ctx_alloc(struct pmap *);

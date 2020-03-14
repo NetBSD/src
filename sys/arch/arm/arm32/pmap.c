@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.398 2020/03/13 16:25:19 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.399 2020/03/14 14:05:42 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.398 2020/03/13 16:25:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.399 2020/03/14 14:05:42 ad Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -5180,7 +5180,7 @@ pmap_update(pmap_t pm)
 	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
 
-void
+bool
 pmap_remove_all(pmap_t pm)
 {
 
@@ -5208,6 +5208,7 @@ pmap_remove_all(pmap_t pm)
 	pmap_tlb_asid_release_all(pm);
 #endif
 	pm->pm_remove_all = true;
+	return false;
 }
 
 /*
