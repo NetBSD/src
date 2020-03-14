@@ -6028,19 +6028,9 @@ zfs_netbsd_getpages(void *v)
 		pg->flags &= ~(PG_FAKE);
 	}
 
-	if (memwrite) {
-		if (uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {
-			/* For write faults, start dirtiness tracking. */
-			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_UNKNOWN);
-		}
-		mutex_enter(vp->v_interlock);
-		if ((vp->v_iflag & VI_ONWORKLST) == 0) {
-			vn_syncer_add_to_worklist(vp, filedelay);
-		}
-		if ((vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP) {
-			vp->v_iflag |= VI_WRMAPDIRTY;
-		}
-		mutex_exit(vp->v_interlock);
+	if (memwrite && uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {
+		/* For write faults, start dirtiness tracking. */
+		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_UNKNOWN);
 	}
 	rw_exit(rw);
 	ap->a_m[ap->a_centeridx] = pg;
