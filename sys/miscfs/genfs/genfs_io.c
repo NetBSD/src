@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.91 2020/03/14 19:07:22 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.92 2020/03/14 20:23:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.91 2020/03/14 19:07:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.92 2020/03/14 20:23:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,9 +524,6 @@ out:
 		if (i < ridx || i >= ridx + orignmempages || async) {
 			UVMHIST_LOG(ubchist, "unbusy pg %#jx offset 0x%jx",
 			    (uintptr_t)pg, pg->offset,0,0);
-			if (pg->flags & PG_WANTED) {
-				wakeup(pg);
-			}
 			if (pg->flags & PG_FAKE) {
 				KASSERT(overwrite);
 				uvm_pagezero(pg);
@@ -537,8 +534,9 @@ out:
 			}
 			uvm_pagelock(pg);
 			uvm_pageenqueue(pg);
+			uvm_pageunbusy(pg);
 			uvm_pageunlock(pg);
-			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
+			pg->flags &= ~PG_FAKE;
 			UVM_PAGE_OWN(pg, NULL);
 		} else if (memwrite && !overwrite &&
 		    uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {
@@ -1093,8 +1091,7 @@ retry:
 				continue;
 			}
 			nextoff = pg->offset; /* visit this page again */
-			pg->flags |= PG_WANTED;
-			UVM_UNLOCK_AND_WAIT_RW(pg, slock, 0, "genput", 0);
+			uvm_pagewait(pg, slock, "genput");
 			/*
 			 * as we dropped the object lock, our cached pages can
 			 * be stale.
