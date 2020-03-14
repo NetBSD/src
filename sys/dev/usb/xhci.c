@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.121 2020/03/14 02:35:34 christos Exp $	*/
+/*	$NetBSD: xhci.c,v 1.122 2020/03/14 03:01:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.121 2020/03/14 02:35:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.122 2020/03/14 03:01:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1308,7 +1308,7 @@ xhci_intr1(struct xhci_softc * const sc)
 	if ((usbsts & (XHCI_STS_HSE | XHCI_STS_EINT | XHCI_STS_PCD |
 	    XHCI_STS_HCE)) == 0) {
 		DPRINTFN(16, "ignored intr not for %jd",
-		    device_uinit(sc->sc_dev), 0, 0, 0);
+		    device_unit(sc->sc_dev), 0, 0, 0);
 		return 0;
 	}
 
@@ -3147,7 +3147,7 @@ xhci_setup_route(struct usbd_pipe *pipe, uint32_t *cp)
 	for (hub = dev; hub != NULL; hub = hub->ud_myhub) {
 		uint32_t dep;
 
-		DPRINTFN(4, "hub %#jx depth %jd upport %jp upportno %jd",
+		DPRINTFN(4, "hub %#jx depth %jd upport %#jx upportno %jd",
 		    (uintptr_t)hub, hub->ud_depth, (uintptr_t)hub->ud_powersrc,
 		    hub->ud_powersrc ? (uintptr_t)hub->ud_powersrc->up_portno :
 			 -1);
