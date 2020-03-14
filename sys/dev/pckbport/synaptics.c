@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.55 2020/03/14 13:08:18 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.56 2020/03/14 19:29:39 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.55 2020/03/14 13:08:18 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.56 2020/03/14 19:29:39 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ static void pms_sysctl_synaptics(struct sysctllog **);
 static int pms_sysctl_synaptics_verify(SYSCTLFN_ARGS);
 
 /* Controlled by sysctl. */
-static int synaptics_up_down_emul = 2;
+static int synaptics_up_down_emul = 3;
 static int synaptics_up_down_motion_delta = 1;
 static int synaptics_gesture_move = 200;
 static int synaptics_gesture_length = 20;
