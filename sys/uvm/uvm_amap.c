@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.116 2020/02/24 12:38:57 rin Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.117 2020/03/14 18:08:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.116 2020/02/24 12:38:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.117 2020/03/14 18:08:40 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -764,8 +764,8 @@ amap_wipeout(struct vm_amap *amap)
 			anon->an_link = tofree;
 			tofree = anon;
 		}
-		if (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) {
-			preempt();
+		if ((lcv & 31) == 31) {
+			preempt_point();
 		}
 	}
 
