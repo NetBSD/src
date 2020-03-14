@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.34 2020/02/10 16:13:48 ryoon Exp $
+.\" $NetBSD: pms.4,v 1.35 2020/03/14 13:08:18 nia Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -105,10 +105,17 @@ variables control behavior of Synaptics touchpads:
 If the touchpad reports the existence of Up/Down buttons, this value
 determines if they should be reported as button 4 and 5 events or if
 they should be used to emulate some other event.
-When set to 0, report Up/Down events as buttons 4 and 5.
-When set to 1, the Up and Down buttons are both mapped to the middle button.
-When set to 2 (default), the Up and Down buttons are used for Z-axis
+.Bl -bullet
+.It
+If set to 0, Up/Down events generate button 4 and 5 clicks.
+.It
+If set to 1, Up/Down events generate middle button clicks.
+.It
+If set to 2 (default), the Up and Down buttons are used for Z-axis
 emulation, which more closely resembles how mouse wheels operate.
+.It
+If set to 3, Up/Down events generate left/right clicks.
+.El
 .It Dv hw.synaptics.up_down_motion_delta
 When the Up/Down buttons are used for Z-axis emulation, this value specifies
 the emulated delta-Z value per click.
@@ -139,9 +146,14 @@ reported pressure drops below this value.
 More recent touchpads can report the presence of more than one finger
 on the pad.
 This value determines how such events are used.
+.Bl -bullet
+.It
 If set to 0 (default), two-finger events are ignored.
+.It
 If set to 1, two-finger events generate a right button click.
+.It
 If set to 2, two-finger events generate a middle button click.
+.El
 .It Dv hw.synaptics.scale_x
 .It Dv hw.synaptics.scale_y
 .It Dv hw.synaptics.scale_z
