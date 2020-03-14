@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.366 2020/03/14 18:24:10 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.367 2020/03/14 20:48:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.366 2020/03/14 18:24:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.367 2020/03/14 20:48:40 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4115,14 +4115,18 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 
 	count = SPINLOCK_BACKOFF_MIN;
 	kpreempt_disable();
-startover:
-	mutex_spin_enter(&pp->pp_lock);
-	while ((pvpte = pv_pte_first(pp)) != NULL) {
+	for (;;) {
 		struct pmap *pmap;
 		struct pv_entry *pve;
 		pt_entry_t opte;
 		vaddr_t va;
 		int error;
+
+		mutex_spin_enter(&pp->pp_lock);
+		if ((pvpte = pv_pte_first(pp)) == NULL) {
+			mutex_spin_exit(&pp->pp_lock);
+			break;
+		}
 
 		/*
 		 * Add a reference to the pmap before clearing the pte.
@@ -4150,7 +4154,7 @@ startover:
 			if (ptp != NULL) {
 				pmap_destroy(pmap);
 			}
-			goto startover;
+			continue;
 		}
 
 		error = pmap_sync_pv(pvpte, pa, ~0, &oattrs, &opte);
@@ -4167,7 +4171,7 @@ startover:
 			}
 			SPINLOCK_BACKOFF(count);
 			KERNEL_LOCK(hold_count, curlwp);
-			goto startover;
+			continue;
 		}
 
 		va = pvpte->pte_va;
@@ -4196,9 +4200,7 @@ startover:
 		if (ptp != NULL) {
 			pmap_destroy(pmap);
 		}
-		mutex_spin_enter(&pp->pp_lock);
 	}
-	mutex_spin_exit(&pp->pp_lock);
 	kpreempt_enable();
 }
 
