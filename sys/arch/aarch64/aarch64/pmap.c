@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 2020/03/02 08:39:36 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68 2020/03/14 14:05:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2020/03/02 08:39:36 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2020/03/14 14:05:42 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1947,10 +1947,11 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	return _pmap_enter(pm, va, pa, prot, flags, false);
 }
 
-void
+bool
 pmap_remove_all(struct pmap *pm)
 {
 	/* nothing to do */
+	return false;
 }
 
 static void

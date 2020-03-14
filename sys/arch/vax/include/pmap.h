@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.80 2011/05/24 23:30:30 matt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.81 2020/03/14 14:05:44 ad Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -258,10 +258,11 @@ pmap_protect(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 		pmap_protect_long(pmap, start, end, prot);
 }
 
-static __inline void
+static __inline bool
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
+	return false;
 }
 
 /* Routines that are best to define as macros */
