@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.37 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: if_run.c,v 1.38 2020/03/14 02:35:33 christos Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.37 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.38 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -653,7 +653,7 @@ run_attach(device_t parent, device_t self, void *aux)
 	run_read_eeprom(sc);
 
 	aprint_verbose_dev(sc->sc_dev,
-	    "MAC/BBP RT%04X (rev %#04X), RF %s (MIMO %dT%dR), address %s\n",
+	    "MAC/BBP RT%04X (rev 0x%04X), RF %s (MIMO %dT%dR), address %s\n",
 	    sc->mac_ver, sc->mac_rev, run_get_rf(sc->rf_rev), sc->ntxchains,
 	    sc->nrxchains, ether_sprintf(ic->ic_myaddr));
 
@@ -1488,7 +1488,7 @@ run_read_eeprom(struct run_softc *sc)
 	sc->sc_srom_read = run_eeprom_read_2;
 	if (sc->mac_ver >= 0x3070) {
 		run_read(sc, RT3070_EFUSE_CTRL, &tmp);
-		DPRINTF(("EFUSE_CTRL=%#08x\n", tmp));
+		DPRINTF(("EFUSE_CTRL=0x%08x\n", tmp));
 		if (tmp & RT3070_SEL_EFUSE)
 			sc->sc_srom_read = run_efuse_read_2;
 	}
@@ -1514,7 +1514,7 @@ run_read_eeprom(struct run_softc *sc)
 			run_srom_read(sc, RT2860_EEPROM_BBP_BASE + i, &val);
 			sc->bbp[i].val = val & 0xff;
 			sc->bbp[i].reg = val >> 8;
-			DPRINTF(("BBP%d=%#02x\n", sc->bbp[i].reg,
+			DPRINTF(("BBP%d=0x%02x\n", sc->bbp[i].reg,
 			    sc->bbp[i].val));
 		}
 
@@ -1525,7 +1525,7 @@ run_read_eeprom(struct run_softc *sc)
 				    &val);
 				sc->rf[i].val = val & 0xff;
 				sc->rf[i].reg = val >> 8;
-				DPRINTF(("RF%d=%#02x\n", sc->rf[i].reg,
+				DPRINTF(("RF%d=0x%02x\n", sc->rf[i].reg,
 				    sc->rf[i].val));
 			}
 		}
@@ -1554,7 +1554,7 @@ run_read_eeprom(struct run_softc *sc)
 		sc->led[1] = 0x2221;
 		sc->led[2] = 0x5627;	/* differs from RT2860 */
 	}
-	DPRINTF(("EEPROM LED mode=%#02x, LEDs=%#04x/%#04x/%#04x\n",
+	DPRINTF(("EEPROM LED mode=0x%02x, LEDs=0x%04x/0x%04x/0x%04x\n",
 	    sc->leds, sc->led[0], sc->led[1], sc->led[2]));
 
 	/* read RF information */
@@ -1589,11 +1589,11 @@ run_read_eeprom(struct run_softc *sc)
 		sc->ntxchains = (val >> 4) & 0xf;
 		sc->nrxchains = val & 0xf;
 	}
-	DPRINTF(("EEPROM RF rev=%#04x chains=%dT%dR\n",
+	DPRINTF(("EEPROM RF rev=0x%04x chains=%dT%dR\n",
 	    sc->rf_rev, sc->ntxchains, sc->nrxchains));
 
 	run_srom_read(sc, RT2860_EEPROM_CONFIG, &val);
-	DPRINTF(("EEPROM CFG %#04x\n", val));
+	DPRINTF(("EEPROM CFG 0x%04x\n", val));
 	/* check if driver should patch the DAC issue */
 	if ((val >> 8) != 0xff)
 		sc->patch_dac = (val >> 15) & 1;
@@ -1641,8 +1641,8 @@ run_read_eeprom(struct run_softc *sc)
 		sc->txpow40mhz_2ghz[ridx] = b4inc(reg, delta_2ghz);
 		sc->txpow40mhz_5ghz[ridx] = b4inc(reg, delta_5ghz);
 
-		DPRINTF(("ridx %d: power 20MHz=%#08x, 40MHz/2GHz=%#08x, "
-		    "40MHz/5GHz=%#08x\n", ridx, sc->txpow20mhz[ridx],
+		DPRINTF(("ridx %d: power 20MHz=0x%08x, 40MHz/2GHz=0x%08x, "
+		    "40MHz/5GHz=0x%08x\n", ridx, sc->txpow20mhz[ridx],
 		    sc->txpow40mhz_2ghz[ridx], sc->txpow40mhz_5ghz[ridx]));
 	}
 
@@ -2209,7 +2209,7 @@ run_newassoc(struct ieee80211_node *ni, int isnew)
 			/* no basic rate found, use mandatory one */
 			rn->ctl_ridx[i] = rt2860_rates[ridx].ctl_ridx;
 		}
-		DPRINTF(("rate=%#02x ridx=%d ctl_ridx=%d\n",
+		DPRINTF(("rate=0x%02x ridx=%d ctl_ridx=%d\n",
 		    rs->rs_rates[i], rn->ridx[i], rn->ctl_ridx[i]));
 	}
 }

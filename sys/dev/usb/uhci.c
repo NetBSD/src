@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.295 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: uhci.c,v 1.296 2020/03/14 02:35:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.295 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.296 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -810,9 +810,9 @@ uhci_dump_td(uhci_soft_td_t *p)
 	usb_syncmem(&p->dma, p->offs, sizeof(p->td),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
-	DPRINTF("TD(%#jx) at %#08jx", (uintptr_t)p, p->physaddr, 0, 0);
-	DPRINTF("   link=%#08jx status=%#08jx "
-	    "token=%#08x buffer=%#08x",
+	DPRINTF("TD(%#jx) at 0x%08jx", (uintptr_t)p, p->physaddr, 0, 0);
+	DPRINTF("   link=0x%08jx status=0x%08jx "
+	    "token=0x%08x buffer=0x%08x",
 	     le32toh(p->td.td_link),
 	     le32toh(p->td.td_status),
 	     le32toh(p->td.td_token),
@@ -851,7 +851,7 @@ uhci_dump_qh(uhci_soft_qh_t *sqh)
 	usb_syncmem(&sqh->dma, sqh->offs, sizeof(sqh->qh),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
-	DPRINTF("QH(%#jx) at %#08jx: hlink=%08jx elink=%08jx", (uintptr_t)sqh,
+	DPRINTF("QH(%#jx) at 0x%08jx: hlink=%08jx elink=%08jx", (uintptr_t)sqh,
 	    (int)sqh->physaddr, le32toh(sqh->qh.qh_hlink),
 	    le32toh(sqh->qh.qh_elink));
 
@@ -967,7 +967,7 @@ uhci_dump_ii(struct uhci_xfer *ux)
 	}
 	ed = pipe->up_endpoint->ue_edesc;
 	dev = pipe->up_dev;
-	printf("ux %p: done=%d dev=%p vid=%#04x pid=%#04x addr=%d pipe=%p ep=%#02x attr=%#02x\n",
+	printf("ux %p: done=%d dev=%p vid=0x%04x pid=0x%04x addr=%d pipe=%p ep=0x%02x attr=0x%02x\n",
 	       ux, ux->ux_isdone, dev,
 	       UGETW(dev->ud_ddesc.idVendor),
 	       UGETW(dev->ud_ddesc.idProduct),
@@ -1720,7 +1720,7 @@ uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 	if (status != 0) {
 
 		DPRINTFN((status == UHCI_TD_STALLED) * 10,
-		    "error, addr=%jd, endpt=%#02jx",
+		    "error, addr=%jd, endpt=0x%02jx",
 		    xfer->ux_pipe->up_dev->ud_addr,
 		    xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress,
 		    0, 0);
@@ -2519,8 +2519,8 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 
-	DPRINTFN(3, "type=%#02jx, request=%#02jx, "
-	    "wValue=%#04jx, wIndex=%#04jx",
+	DPRINTFN(3, "type=0x%02jx, request=0x%02jx, "
+	    "wValue=0x%04jx, wIndex=0x%04jx",
 	    req->bmRequestType, req->bRequest, UGETW(req->wValue),
 	    UGETW(req->wIndex));
 	DPRINTFN(3, "len=%jd, addr=%jd, endpt=%jd",
@@ -3183,7 +3183,7 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 	int rd = UE_GET_DIR(upipe->pipe.up_endpoint->ue_edesc->bEndpointAddress) == UE_DIR_IN;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	DPRINTFN(4, "length=%jd, ux_state=%#08jx",
+	DPRINTFN(4, "length=%jd, ux_state=0x%08jx",
 	    xfer->ux_actlen, xfer->ux_state, 0, 0);
 
 #ifdef DIAGNOSTIC
@@ -3545,7 +3545,7 @@ uhci_portreset(uhci_softc_t *sc, int index)
 
 	usb_delay_ms(&sc->sc_bus, USB_PORT_ROOT_RESET_DELAY);
 
-	DPRINTF("uhci port %jd reset, status0 = %#04jx", index,
+	DPRINTF("uhci port %jd reset, status0 = 0x%04jx", index,
 	    UREAD2(sc, port), 0, 0);
 
 	x = URWMASK(UREAD2(sc, port));
@@ -3553,7 +3553,7 @@ uhci_portreset(uhci_softc_t *sc, int index)
 
 	delay(100);
 
-	DPRINTF("uhci port %jd reset, status1 = %#04jx", index,
+	DPRINTF("uhci port %jd reset, status1 = 0x%04jx", index,
 	    UREAD2(sc, port), 0, 0);
 
 	x = URWMASK(UREAD2(sc, port));
@@ -3563,7 +3563,7 @@ uhci_portreset(uhci_softc_t *sc, int index)
 		usb_delay_ms(&sc->sc_bus, USB_PORT_RESET_DELAY);
 
 		x = UREAD2(sc, port);
-		DPRINTF("uhci port %jd iteration %ju, status = %#04jx", index,
+		DPRINTF("uhci port %jd iteration %ju, status = 0x%04jx", index,
 		    lim, x, 0);
 
 		if (!(x & UHCI_PORTSC_CCS)) {
@@ -3599,7 +3599,7 @@ uhci_portreset(uhci_softc_t *sc, int index)
 		UWRITE2(sc, port, URWMASK(x) | UHCI_PORTSC_PE);
 	}
 
-	DPRINTFN(3, "uhci port %jd reset, status2 = %#04jx", index,
+	DPRINTFN(3, "uhci port %jd reset, status2 = 0x%04jx", index,
 	    UREAD2(sc, port), 0, 0);
 
 	if (lim <= 0) {
@@ -3628,7 +3628,7 @@ uhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	if (sc->sc_dying)
 		return -1;
 
-	DPRINTF("type=%#02jx request=%02jx", req->bmRequestType,
+	DPRINTF("type=0x%02jx request=%02jx", req->bmRequestType,
 	    req->bRequest, 0, 0);
 
 	len = UGETW(req->wLength);
@@ -3638,7 +3638,7 @@ uhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 #define C(x,y) ((x) | ((y) << 8))
 	switch (C(req->bRequest, req->bmRequestType)) {
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		DPRINTF("wValue=%#04jx", value, 0, 0, 0);
+		DPRINTF("wValue=0x%04jx", value, 0, 0, 0);
 		if (len == 0)
 			break;
 		switch (value) {

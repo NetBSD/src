@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.13 2020/03/13 18:17:40 christos Exp $ */
+/*	$NetBSD: if_umb.c,v 1.14 2020/03/14 02:35:33 christos Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.13 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.14 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1962,7 +1962,7 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 		}
 		break;
 	default:
-		DPRINTF("%s: unsupported NCM header signature (%#08x)\n",
+		DPRINTF("%s: unsupported NCM header signature (0x%08x)\n",
 		    DEVNAM(sc), hsig);
 		goto fail;
 	}
@@ -1978,7 +1978,7 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 	if (len < ptrlen + ptroff)
 		goto toosmall;
 	if (!MBIM_NCM_NTH16_ISISG(psig) && !MBIM_NCM_NTH32_ISISG(psig)) {
-		DPRINTF("%s: unsupported NCM pointer signature (%#08x)\n",
+		DPRINTF("%s: unsupported NCM pointer signature (0x%08x)\n",
 		    DEVNAM(sc), psig);
 		goto fail;
 	}
@@ -2623,7 +2623,7 @@ umb_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		    return;
 	}
 	if (sc->sc_intr_msg.bmRequestType != UCDC_NOTIFICATION) {
-		DPRINTF("%s: unexpected notification (type=%#02x)\n",
+		DPRINTF("%s: unexpected notification (type=0x%02x)\n",
 		    DEVNAM(sc), sc->sc_intr_msg.bmRequestType);
 		return;
 	}
@@ -2644,7 +2644,7 @@ umb_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		    DEVNAM(sc));
 		break;
 	default:
-		DPRINTF("%s: unexpected notification (%#02x)\n",
+		DPRINTF("%s: unexpected notification (0x%02x)\n",
 		    DEVNAM(sc), sc->sc_intr_msg.bNotification);
 		break;
 	}

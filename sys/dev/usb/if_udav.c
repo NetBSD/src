@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.75 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.76 2020/03/14 02:35:33 christos Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.75 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.76 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -704,13 +704,13 @@ udav_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	total_len -= sizeof(pktstat);
 	buf += sizeof(pktstat);
 
-	DPRINTF(("%s: RX Status: %#02x\n", device_xname(un->un_dev), pktstat));
+	DPRINTF(("%s: RX Status: 0x%02x\n", device_xname(un->un_dev), pktstat));
 
 	pkt_len = UGETW(buf);
  	total_len -= sizeof(pkt_len);
 	buf += sizeof(pkt_len);
 
-	DPRINTF(("%s: RX Length: %#02x\n", device_xname(un->un_dev), pkt_len));
+	DPRINTF(("%s: RX Length: 0x%02x\n", device_xname(un->un_dev), pkt_len));
 
 	if (pktstat & UDAV_RSR_LCS) {
 		if_statinc(ifp, if_collisions);
@@ -726,7 +726,7 @@ udav_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 
 	pkt_len -= ETHER_CRC_LEN;
 
-	DPRINTF(("%s: Rx deliver: %#02x\n", device_xname(un->un_dev), pkt_len));
+	DPRINTF(("%s: Rx deliver: 0x%02x\n", device_xname(un->un_dev), pkt_len));
 
 	usbnet_enqueue(un, buf, pkt_len, 0, 0, 0);
 }
@@ -767,7 +767,7 @@ udav_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	usbnet_isowned_mii(un);
 
-	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=%#04x\n",
+	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x\n",
 		 device_xname(un->un_dev), __func__, phy, reg));
 
 	if (usbnet_isdying(un)) {
@@ -802,7 +802,7 @@ udav_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	*val = data[0] | (data[1] << 8);
 
-	DPRINTFN(0xff, ("%s: %s: phy=%d reg=%#04x => %#04hx\n",
+	DPRINTFN(0xff, ("%s: %s: phy=%d reg=0x%04x => 0x%04hx\n",
 		device_xname(un->un_dev), __func__, phy, reg, *val));
 
 	return 0;
@@ -815,7 +815,7 @@ udav_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 
 	usbnet_isowned_mii(un);
 
-	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=%#04x val=%#04hx\n",
+	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x val=0x%04hx\n",
 		 device_xname(un->un_dev), __func__, phy, reg, val));
 
 	if (usbnet_isdying(un)) {

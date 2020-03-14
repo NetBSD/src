@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.34 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: motg.c,v 1.35 2020/03/14 02:35:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.34 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.35 2020/03/14 02:35:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -348,7 +348,7 @@ motg_init(struct motg_softc *sc)
 	/* read out configuration data */
 	val = UREAD1(sc, MUSB2_REG_CONFDATA);
 
-	DPRINTF("Config Data: %#02jx", val, 0, 0, 0);
+	DPRINTF("Config Data: 0x%02jx", val, 0, 0, 0);
 
 	dynfifo = (val & MUSB2_MASK_CD_DYNFIFOSZ) ? 1 : 0;
 
@@ -357,7 +357,7 @@ motg_init(struct motg_softc *sc)
 		    "assuming 16Kbytes of FIFO RAM\n");
 	}
 
-	DPRINTF("HW version: %#04jx\n", UREAD1(sc, MUSB2_REG_HWVERS), 0, 0, 0);
+	DPRINTF("HW version: 0x%04jx\n", UREAD1(sc, MUSB2_REG_HWVERS), 0, 0, 0);
 
 	/* initialise endpoint profiles */
 	sc->sc_in_ep[0].ep_fifo_size = 64;
@@ -765,7 +765,7 @@ motg_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 #ifdef DIAGNOSTIC
 	if (xfer->ux_state != XFER_BUSY &&
 	    xfer->ux_status != USBD_NOT_STARTED) {
-		printf("motg_freex: xfer=%p not busy, %#08x\n", xfer,
+		printf("motg_freex: xfer=%p not busy, 0x%08x\n", xfer,
 		       xfer->ux_state);
 	}
 	xfer->ux_state = XFER_FREE;
@@ -808,7 +808,7 @@ motg_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	if (sc->sc_dying)
 		return -1;
 
-	DPRINTFN(MD_ROOT, "type=%#02jx request=%02jx", req->bmRequestType,
+	DPRINTFN(MD_ROOT, "type=0x%02jx request=%02jx", req->bmRequestType,
 	    req->bRequest, 0, 0);
 
 	len = UGETW(req->wLength);
@@ -818,7 +818,7 @@ motg_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 #define C(x,y) ((x) | ((y) << 8))
 	switch (C(req->bRequest, req->bmRequestType)) {
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		DPRINTFN(MD_ROOT, "wValue=%#04jx", value, 0, 0, 0);
+		DPRINTFN(MD_ROOT, "wValue=0x%04jx", value, 0, 0, 0);
 		switch (value) {
 #define sd ((usb_string_descriptor_t *)buf)
 		case C(2, UDESC_STRING):
