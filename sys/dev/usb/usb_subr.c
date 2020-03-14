@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.243 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.244 2020/03/14 03:01:36 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.243 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.244 2020/03/14 03:01:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1011,7 +1011,7 @@ usbd_probe_and_attach(device_t parent, struct usbd_device *dev,
 		err = usbd_set_config_index(dev, confi, 1);
 		if (err) {
 			DPRINTF("port %jd, set config at addr %jd failed, "
-			    "error=%d", port, addr, err, 0);
+			    "error=%jd", port, addr, err, 0);
 			printf("%s: port %d, set config at addr %d failed\n",
 			    device_xname(parent), port, addr);
 			return err;

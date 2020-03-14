@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.66 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.67 2020/03/14 03:01:36 christos Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.66 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.67 2020/03/14 03:01:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -539,10 +539,10 @@ smsc_setmacaddress(struct usbnet *un, const uint8_t *addr)
 	int err;
 	uint32_t val;
 
-	DPRINTF("setting mac address to %02jx:%02jx:%02jx:...", addr[0], addr[1],
-	    addr[2], 0);
+	DPRINTF("setting mac address to %02jx:%02jx:%02jx:...", addr[0],
+	    addr[1], addr[2], 0);
 
-	DPRINTF("... %02jx:%0j2x:%02jx", addr[3], addr[4], addr[5], 0);
+	DPRINTF("... %02jx:%02jx:%02jx", addr[3], addr[4], addr[5], 0);
 
 	val = ((uint32_t)addr[3] << 24) | (addr[2] << 16) | (addr[1] << 8)
 	    | addr[0];

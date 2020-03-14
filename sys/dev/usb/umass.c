@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.182 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: umass.c,v 1.183 2020/03/14 03:01:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.182 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.183 2020/03/14 03:01:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1021,7 +1021,7 @@ umass_setup_transfer(struct umass_softc *sc, struct usbd_pipe *pipe,
 
 	err = usbd_transfer(xfer);
 	DPRINTFM(UDMASS_XFER, "start xfer buffer=%#jx buflen=%jd flags=%#jx "
-	    "timeout=%d", (uintptr_t)buffer, buflen, flags, sc->timeout);
+	    "timeout=%jd", (uintptr_t)buffer, buflen, flags, sc->timeout);
 	if (err && err != USBD_IN_PROGRESS) {
 		DPRINTFM(UDMASS_BBB, "failed to setup transfer... err=%jd",
 		    err, 0, 0, 0);
@@ -1880,7 +1880,7 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 
 			if (err) {
 				DPRINTFM(UDMASS_CBI, "sc %#jx: Data dir %jd "
-				    "err %d failed",
+				    "err %jd failed",
 				    (uintptr_t)sc, sc->transfer_dir,
 				    sc->transfer_datalen, err);
 
