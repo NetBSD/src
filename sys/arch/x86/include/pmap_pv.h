@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pv.h,v 1.14 2020/03/14 18:24:10 ad Exp $	*/
+/*	$NetBSD: pmap_pv.h,v 1.15 2020/03/15 15:58:24 ad Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -79,7 +79,6 @@ struct pmap_page {
 		struct {
 			struct pv_pte pte;
 			LIST_HEAD(, pv_entry) pvlist;
-			uint8_t embedded;
 			uint8_t attrs;
 		} s;
 	} pp_u;
@@ -88,7 +87,6 @@ struct pmap_page {
 #define	pp_link		pp_u.link
 #define	pp_pte		pp_u.s.pte
 #define pp_pvlist	pp_u.s.pvlist
-#define	pp_embedded	pp_u.s.embedded
 #define	pp_attrs	pp_u.s.attrs
 };
 
