@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.297 2020/03/15 13:59:20 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.298 2020/03/15 14:58:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.297 2020/03/15 13:59:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.298 2020/03/15 14:58:54 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -460,8 +460,10 @@ uhci_init(uhci_softc_t *sc)
 	if (err)
 		return err;
 	sc->sc_pframes = KERNADDR(&sc->sc_dma, 0);
-	UWRITE2(sc, UHCI_FRNUM, 0);		/* set frame number to 0 */
-	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma, 0)); /* set frame list*/
+	/* set frame number to 0 */
+	UWRITE2(sc, UHCI_FRNUM, 0);
+	/* set frame list*/
+	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma, 0));
 
 	/* Initialise mutex early for uhci_alloc_* */
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
