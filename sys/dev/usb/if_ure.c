@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.37 2020/03/13 19:17:27 martin Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.38 2020/03/15 23:04:51 thorpej Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.37 2020/03/13 19:17:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.38 2020/03/15 23:04:51 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -85,15 +85,16 @@ static void	ure_rtl8153_init(struct usbnet *);
 static void	ure_disable_teredo(struct usbnet *);
 static void	ure_init_fifo(struct usbnet *);
 
-static void	ure_stop_cb(struct ifnet *, int);
-static int	ure_ioctl_cb(struct ifnet *, u_long, void *);
-static int	ure_mii_read_reg(struct usbnet *, int, int, uint16_t *);
-static int	ure_mii_write_reg(struct usbnet *, int, int, uint16_t);
-static void	ure_miibus_statchg(struct ifnet *);
-static unsigned ure_tx_prepare(struct usbnet *, struct mbuf *,
-			       struct usbnet_chain *);
-static void	ure_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
-static int	ure_init(struct ifnet *);
+static void	ure_uno_stop(struct ifnet *, int);
+static int	ure_uno_ioctl(struct ifnet *, u_long, void *);
+static int	ure_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static int	ure_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static void	ure_uno_miibus_statchg(struct ifnet *);
+static unsigned ure_uno_tx_prepare(struct usbnet *, struct mbuf *,
+				   struct usbnet_chain *);
+static void	ure_uno_rx_loop(struct usbnet *, struct usbnet_chain *,
+				uint32_t);
+static int	ure_uno_init(struct ifnet *);
 
 static int	ure_match(device_t, cfdata_t, void *);
 static void	ure_attach(device_t, device_t, void *);
@@ -102,14 +103,14 @@ CFATTACH_DECL_NEW(ure, sizeof(struct usbnet), ure_match, ure_attach,
     usbnet_detach, usbnet_activate);
 
 static const struct usbnet_ops ure_ops = {
-	.uno_stop = ure_stop_cb,
-	.uno_ioctl = ure_ioctl_cb,
-	.uno_read_reg = ure_mii_read_reg,
-	.uno_write_reg = ure_mii_write_reg,
-	.uno_statchg = ure_miibus_statchg,
-	.uno_tx_prepare = ure_tx_prepare,
-	.uno_rx_loop = ure_rx_loop,
-	.uno_init = ure_init,
+	.uno_stop = ure_uno_stop,
+	.uno_ioctl = ure_uno_ioctl,
+	.uno_read_reg = ure_uno_mii_read_reg,
+	.uno_write_reg = ure_uno_mii_write_reg,
+	.uno_statchg = ure_uno_miibus_statchg,
+	.uno_tx_prepare = ure_uno_tx_prepare,
+	.uno_rx_loop = ure_uno_rx_loop,
+	.uno_init = ure_uno_init,
 };
 
 static int
@@ -273,9 +274,8 @@ ure_ocp_reg_write(struct usbnet *un, uint16_t addr, uint16_t data)
 }
 
 static int
-ure_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
+ure_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
-	usbnet_isowned_mii(un);
 
 	if (un->un_phyno != phy)
 		return EINVAL;
@@ -292,9 +292,8 @@ ure_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 }
 
 static int
-ure_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
+ure_uno_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
-	usbnet_isowned_mii(un);
 
 	if (un->un_phyno != phy)
 		return EINVAL;
@@ -305,7 +304,7 @@ ure_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 }
 
 static void
-ure_miibus_statchg(struct ifnet *ifp)
+ure_uno_miibus_statchg(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 	struct mii_data * const mii = usbnet_mii(un);
@@ -342,7 +341,7 @@ ure_setiff_locked(struct usbnet *un)
 	uint32_t hash;
 	uint32_t rxmode;
 
-	usbnet_isowned(un);
+	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return;
@@ -400,20 +399,11 @@ allmulti:
 }
 
 static void
-ure_setiff(struct usbnet *un)
-{
-
-	usbnet_lock(un);
-	ure_setiff_locked(un);
-	usbnet_unlock(un);
-}
-
-static void
 ure_reset(struct usbnet *un)
 {
 	int i;
 
-	usbnet_isowned(un);
+	usbnet_isowned_core(un);
 
 	ure_write_1(un, URE_PLA_CR, URE_MCU_TYPE_PLA, URE_CR_RST);
 
@@ -433,7 +423,7 @@ ure_init_locked(struct ifnet *ifp)
 	struct usbnet * const un = ifp->if_softc;
 	uint8_t eaddr[8];
 
-	usbnet_isowned(un);
+	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return EIO;
@@ -474,19 +464,21 @@ ure_init_locked(struct ifnet *ifp)
 }
 
 static int
-ure_init(struct ifnet *ifp)
+ure_uno_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
-	usbnet_lock(un);
+	usbnet_lock_core(un);
+	usbnet_busy(un);
 	int ret = ure_init_locked(ifp);
-	usbnet_unlock(un);
+	usbnet_unbusy(un);
+	usbnet_unlock_core(un);
 
 	return ret;
 }
 
 static void
-ure_stop_cb(struct ifnet *ifp, int disable __unused)
+ure_uno_stop(struct ifnet *ifp, int disable __unused)
 {
 	struct usbnet * const un = ifp->if_softc;
 
@@ -814,18 +806,24 @@ ure_init_fifo(struct usbnet *un)
 }
 
 static int
-ure_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
+ure_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct usbnet * const un = ifp->if_softc;
+
+	usbnet_lock_core(un);
+	usbnet_busy(un);
 
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ure_setiff(un);
+		ure_setiff_locked(un);
 		break;
 	default:
 		break;
 	}
+
+	usbnet_unbusy(un);
+	usbnet_unlock_core(un);
 
 	return 0;
 }
@@ -940,7 +938,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 	    (un->un_flags != 0) ? "" : "unknown ",
 	    ver);
 
-	usbnet_lock(un);
+	usbnet_lock_core(un);
 	if (un->un_flags & URE_FLAG_8152)
 		ure_rtl8152_init(un);
 	else
@@ -953,7 +951,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 	else
 		ure_read_mem(un, URE_PLA_BACKUP, URE_MCU_TYPE_PLA, eaddr,
 		    sizeof(eaddr));
-	usbnet_unlock(un);
+	usbnet_unlock_core(un);
 	if (ETHER_IS_ZERO(eaddr)) {
 		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
 		machi = cprng_strong32() & 0xffff;
@@ -994,15 +992,13 @@ ure_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-ure_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
+ure_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet *ifp = usbnet_ifp(un);
 	uint8_t *buf = c->unc_buf;
 	uint16_t pkt_len = 0;
 	uint16_t pkt_count = 0;
 	struct ure_rxpkt rxhdr;
-
-	usbnet_isowned_rx(un);
 
 	do {
 		if (total_len < sizeof(rxhdr)) {
@@ -1078,13 +1074,11 @@ ure_rxcsum(struct ifnet *ifp, struct ure_rxpkt *rp)
 }
 
 static unsigned
-ure_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+ure_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	struct ure_txpkt txhdr;
 	uint32_t frm_len = 0;
 	uint8_t *buf = c->unc_buf;
-
-	usbnet_isowned_tx(un);
 
 	if ((unsigned)m->m_pkthdr.len > un->un_tx_bufsz - sizeof(txhdr))
 		return 0;
