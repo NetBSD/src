@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.67 2020/03/14 03:01:36 christos Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.68 2020/03/15 23:04:51 thorpej Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.67 2020/03/14 03:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.68 2020/03/15 23:04:51 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -173,33 +173,34 @@ CFATTACH_DECL_NEW(usmsc, sizeof(struct smsc_softc),
 static int	 smsc_chip_init(struct usbnet *);
 static int	 smsc_setmacaddress(struct usbnet *, const uint8_t *);
 
-static int	 smsc_init(struct ifnet *);
+static int	 smsc_uno_init(struct ifnet *);
 static int	 smsc_init_locked(struct ifnet *);
-static void	 smsc_stop_cb(struct ifnet *, int);
+static void	 smsc_uno_stop(struct ifnet *, int);
 
 static void	 smsc_reset(struct smsc_softc *);
 
-static void	 smsc_miibus_statchg(struct ifnet *);
+static void	 smsc_uno_miibus_statchg(struct ifnet *);
 static int	 smsc_readreg(struct usbnet *, uint32_t, uint32_t *);
 static int	 smsc_writereg(struct usbnet *, uint32_t, uint32_t);
 static int	 smsc_wait_for_bits(struct usbnet *, uint32_t, uint32_t);
-static int	 smsc_miibus_readreg(struct usbnet *, int, int, uint16_t *);
-static int	 smsc_miibus_writereg(struct usbnet *, int, int, uint16_t);
+static int	 smsc_uno_miibus_readreg(struct usbnet *, int, int, uint16_t *);
+static int	 smsc_uno_miibus_writereg(struct usbnet *, int, int, uint16_t);
 
-static int	 smsc_ioctl_cb(struct ifnet *, u_long, void *);
-static unsigned	 smsc_tx_prepare(struct usbnet *, struct mbuf *,
+static int	 smsc_uno_ioctl(struct ifnet *, u_long, void *);
+static unsigned	 smsc_uno_tx_prepare(struct usbnet *, struct mbuf *,
 		     struct usbnet_chain *);
-static void	 smsc_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
+static void	 smsc_uno_rx_loop(struct usbnet *, struct usbnet_chain *,
+		     uint32_t);
 
 static const struct usbnet_ops smsc_ops = {
-	.uno_stop = smsc_stop_cb,
-	.uno_ioctl = smsc_ioctl_cb,
-	.uno_read_reg = smsc_miibus_readreg,
-	.uno_write_reg = smsc_miibus_writereg,
-	.uno_statchg = smsc_miibus_statchg,
-	.uno_tx_prepare = smsc_tx_prepare,
-	.uno_rx_loop = smsc_rx_loop,
-	.uno_init = smsc_init,
+	.uno_stop = smsc_uno_stop,
+	.uno_ioctl = smsc_uno_ioctl,
+	.uno_read_reg = smsc_uno_miibus_readreg,
+	.uno_write_reg = smsc_uno_miibus_writereg,
+	.uno_statchg = smsc_uno_miibus_statchg,
+	.uno_tx_prepare = smsc_uno_tx_prepare,
+	.uno_rx_loop = smsc_uno_rx_loop,
+	.uno_init = smsc_uno_init,
 };
 
 static int
@@ -209,7 +210,7 @@ smsc_readreg(struct usbnet *un, uint32_t off, uint32_t *data)
 	uint32_t buf;
 	usbd_status err;
 
-	usbnet_isowned_mii(un);
+	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return 0;
@@ -236,7 +237,7 @@ smsc_writereg(struct usbnet *un, uint32_t off, uint32_t data)
 	uint32_t buf;
 	usbd_status err;
 
-	usbnet_isowned_mii(un);
+	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return 0;
@@ -274,12 +275,10 @@ smsc_wait_for_bits(struct usbnet *un, uint32_t reg, uint32_t bits)
 }
 
 static int
-smsc_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
+smsc_uno_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint32_t addr;
 	uint32_t data = 0;
-
-	usbnet_isowned_mii(un);
 
 	if (un->un_phyno != phy)
 		return EINVAL;
@@ -304,11 +303,9 @@ smsc_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 }
 
 static int
-smsc_miibus_writereg(struct usbnet *un, int phy, int reg, uint16_t val)
+smsc_uno_miibus_writereg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	uint32_t addr;
-
-	usbnet_isowned_mii(un);
 
 	if (un->un_phyno != phy)
 		return EINVAL;
@@ -332,7 +329,7 @@ smsc_miibus_writereg(struct usbnet *un, int phy, int reg, uint16_t val)
 }
 
 static void
-smsc_miibus_statchg(struct ifnet *ifp)
+smsc_uno_miibus_statchg(struct ifnet *ifp)
 {
 	USMSCHIST_FUNC(); USMSCHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
@@ -364,9 +361,7 @@ smsc_miibus_statchg(struct ifnet *ifp)
 	if (!usbnet_havelink(un))
 		return;
 
-	usbnet_lock_mii(un);
 	int err = smsc_readreg(un, SMSC_AFC_CFG, &afc_cfg);
-	usbnet_unlock_mii(un);
 	if (err) {
 		smsc_warn_printf(un, "failed to read initial AFC_CFG, "
 		    "error %d\n", err);
@@ -397,11 +392,9 @@ smsc_miibus_statchg(struct ifnet *ifp)
 		afc_cfg |= 0xf;
 	}
 
-	usbnet_lock_mii(un);
 	err = smsc_writereg(un, SMSC_MAC_CSR, sc->sc_mac_csr);
 	err += smsc_writereg(un, SMSC_FLOW, flow);
 	err += smsc_writereg(un, SMSC_AFC_CFG, afc_cfg);
-	usbnet_unlock_mii(un);
 
 	if (err)
 		smsc_warn_printf(un, "media change failed, error %d\n", err);
@@ -426,7 +419,7 @@ smsc_setiff_locked(struct usbnet *un)
 	uint32_t hashtbl[2] = { 0, 0 };
 	uint32_t hash;
 
-	usbnet_isowned_mii(un);
+	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return;
@@ -473,14 +466,6 @@ allmulti:
 	smsc_writereg(un, SMSC_MAC_CSR, sc->sc_mac_csr);
 }
 
-static void
-smsc_setiff(struct usbnet *un)
-{
-	usbnet_lock_mii(un);
-	smsc_setiff_locked(un);
-	usbnet_unlock_mii(un);
-}
-
 static int
 smsc_setoe_locked(struct usbnet *un)
 {
@@ -489,7 +474,7 @@ smsc_setoe_locked(struct usbnet *un)
 	uint32_t val;
 	int err;
 
-	usbnet_isowned_mii(un);
+	usbnet_isowned_core(un);
 
 	err = smsc_readreg(un, SMSC_COE_CTRL, &val);
 	if (err != 0) {
@@ -522,16 +507,6 @@ smsc_setoe_locked(struct usbnet *un)
 	return 0;
 }
 
-static void
-smsc_setoe(struct usbnet *un)
-{
-
-	usbnet_lock_mii(un);
-	smsc_setoe_locked(un);
-	usbnet_unlock_mii(un);
-}
-
-
 static int
 smsc_setmacaddress(struct usbnet *un, const uint8_t *addr)
 {
@@ -561,7 +536,7 @@ smsc_reset(struct smsc_softc *sc)
 {
 	struct usbnet * const un = &sc->smsc_un;
 
-	usbnet_isowned(un);
+	usbnet_isowned_core(un);
 	if (usbnet_isdying(un))
 		return;
 
@@ -573,13 +548,15 @@ smsc_reset(struct smsc_softc *sc)
 }
 
 static int
-smsc_init(struct ifnet *ifp)
+smsc_uno_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
-	usbnet_lock(un);
+	usbnet_lock_core(un);
+	usbnet_busy(un);
 	int ret = smsc_init_locked(ifp);
-	usbnet_unlock(un);
+	usbnet_unbusy(un);
+	usbnet_unlock_core(un);
 
 	return ret;
 }
@@ -590,6 +567,8 @@ smsc_init_locked(struct ifnet *ifp)
 	struct usbnet * const un = ifp->if_softc;
 	struct smsc_softc * const sc = usbnet_softc(un);
 
+	usbnet_isowned_core(un);
+
 	if (usbnet_isdying(un))
 		return EIO;
 
@@ -599,21 +578,17 @@ smsc_init_locked(struct ifnet *ifp)
 	/* Reset the ethernet interface. */
 	smsc_reset(sc);
 
-	usbnet_lock_mii_un_locked(un);
-
 	/* Load the multicast filter. */
 	smsc_setiff_locked(un);
 
 	/* TCP/UDP checksum offload engines. */
 	smsc_setoe_locked(un);
 
-	usbnet_unlock_mii_un_locked(un);
-
 	return usbnet_init_rx_tx(un);
 }
 
 static void
-smsc_stop_cb(struct ifnet *ifp, int disable)
+smsc_uno_stop(struct ifnet *ifp, int disable)
 {
 	struct usbnet * const un = ifp->if_softc;
 	struct smsc_softc * const sc = usbnet_softc(un);
@@ -630,7 +605,7 @@ smsc_chip_init(struct usbnet *un)
 	int burst_cap;
 	int err;
 
-	usbnet_lock_mii_un_locked(un);
+	usbnet_isowned_core(un);
 
 	/* Enter H/W config mode */
 	smsc_writereg(un, SMSC_HW_CFG, SMSC_HW_CFG_LRST);
@@ -765,34 +740,38 @@ smsc_chip_init(struct usbnet *un)
 	 */
 	sc->sc_mac_csr |= SMSC_MAC_CSR_RXEN;
 	smsc_writereg(un, SMSC_MAC_CSR, sc->sc_mac_csr);
-	usbnet_unlock_mii_un_locked(un);
 
 	return 0;
 
 init_failed:
-	usbnet_unlock_mii_un_locked(un);
 	smsc_err_printf(un, "smsc_chip_init failed (err=%d)\n", err);
 	return err;
 }
 
 static int
-smsc_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
+smsc_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct usbnet * const un = ifp->if_softc;
+
+	usbnet_lock_core(un);
+	usbnet_busy(un);
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 	case SIOCSETHERCAP:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		smsc_setiff(un);
+		smsc_setiff_locked(un);
 		break;
 	case SIOCSIFCAP:
-		smsc_setoe(un);
+		smsc_setoe_locked(un);
 		break;
 	default:
 		break;
 	}
+
+	usbnet_unbusy(un);
+	usbnet_unlock_core(un);
 
 	return 0;
 }
@@ -902,7 +881,8 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	/* Setup some of the basics */
 	un->un_phyno = 1;
 
-	usbnet_lock_mii(un);
+	usbnet_lock_core(un);
+	usbnet_busy(un);
 	/*
 	 * Attempt to get the mac address, if an EEPROM is not attached this
 	 * will just return FF:FF:FF:FF:FF:FF, so in such cases we invent a MAC
@@ -930,21 +910,20 @@ smsc_attach(device_t parent, device_t self, void *aux)
 			un->un_eaddr[0] = (uint8_t)((mac_l) & 0xff);
 		}
 	}
-	usbnet_unlock_mii(un);
+	usbnet_unbusy(un);
+	usbnet_unlock_core(un);
 
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
 	    0, &unm);
 }
 
 static void
-smsc_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
+smsc_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
 	USMSCHIST_FUNC(); USMSCHIST_CALLED();
 	struct smsc_softc * const sc = usbnet_softc(un);
 	struct ifnet *ifp = usbnet_ifp(un);
 	uint8_t *buf = c->unc_buf;
-
-	usbnet_isowned_rx(un);
 
 	DPRINTF("total_len %jd/%#jx", total_len, total_len, 0, 0);
 	while (total_len != 0) {
@@ -1070,12 +1049,10 @@ smsc_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 }
 
 static unsigned
-smsc_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+smsc_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	uint32_t txhdr;
 	uint32_t frm_len = 0;
-
-	usbnet_isowned_tx(un);
 
 	const size_t hdrsz = sizeof(txhdr) * 2;
 

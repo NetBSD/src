@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.38 2020/03/13 18:17:40 christos Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.39 2020/03/15 23:04:51 thorpej Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.38 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.39 2020/03/15 23:04:51 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -66,10 +66,11 @@ struct urndis_softc {
 static void urndis_watchdog(struct ifnet *);
 #endif
 
-static int urndis_init(struct ifnet *);
-static void urndis_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
-static unsigned urndis_tx_prepare(struct usbnet *, struct mbuf *,
-				  struct usbnet_chain *);
+static int urndis_uno_init(struct ifnet *);
+static void urndis_uno_rx_loop(struct usbnet *, struct usbnet_chain *,
+			       uint32_t);
+static unsigned urndis_uno_tx_prepare(struct usbnet *, struct mbuf *,
+				      struct usbnet_chain *);
 
 static int urndis_init_un(struct ifnet *, struct usbnet *);
 
@@ -89,9 +90,9 @@ static int urndis_match(device_t, cfdata_t, void *);
 static void urndis_attach(device_t, device_t, void *);
 
 static const struct usbnet_ops urndis_ops = {
-	.uno_init = urndis_init,
-	.uno_tx_prepare = urndis_tx_prepare,
-	.uno_rx_loop = urndis_rx_loop,
+	.uno_init = urndis_uno_init,
+	.uno_tx_prepare = urndis_uno_tx_prepare,
+	.uno_rx_loop = urndis_uno_rx_loop,
 };
 
 CFATTACH_DECL_NEW(urndis, sizeof(struct urndis_softc),
@@ -713,11 +714,9 @@ urndis_ctrl_keepalive(struct usbnet *un)
 #endif
 
 static unsigned
-urndis_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+urndis_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	struct rndis_packet_msg		*msg;
-
-	usbnet_isowned_tx(un);
 
 	if ((unsigned)m->m_pkthdr.len > un->un_tx_bufsz - sizeof(*msg))
 		return 0;
@@ -746,7 +745,8 @@ urndis_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 }
 
 static void
-urndis_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
+urndis_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c,
+		   uint32_t total_len)
 {
 	struct rndis_packet_msg	*msg;
 	struct ifnet		*ifp = usbnet_ifp(un);
@@ -866,7 +866,7 @@ urndis_init_un(struct ifnet *ifp, struct usbnet *un)
 	if (err != RNDIS_STATUS_SUCCESS)
 		return EIO;
 
-	usbnet_lock(un);
+	usbnet_lock_core(un);
 	if (usbnet_isdying(un))
 		err = EIO;
 	else {
@@ -874,13 +874,13 @@ urndis_init_un(struct ifnet *ifp, struct usbnet *un)
 		err = usbnet_init_rx_tx(un);
 		usbnet_set_link(un, err == 0);
 	}
-	usbnet_unlock(un);
+	usbnet_unlock_core(un);
 
 	return err;
 }
 
 static int
-urndis_init(struct ifnet *ifp)
+urndis_uno_init(struct ifnet *ifp)
 {
 	struct usbnet *un = ifp->if_softc;
 
@@ -1057,9 +1057,9 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	    &buf, &bufsz) != RNDIS_STATUS_SUCCESS) {
 		aprint_error("%s: unable to get hardware address\n",
 		    DEVNAME(un));
-		usbnet_lock(un);
+		usbnet_lock_core(un);
 		usbnet_stop(un, ifp, 1);
-		usbnet_unlock(un);
+		usbnet_unlock_core(un);
 		return;
 	}
 
@@ -1070,9 +1070,9 @@ urndis_attach(device_t parent, device_t self, void *aux)
 		aprint_error("%s: invalid address\n", DEVNAME(un));
 		if (buf && bufsz)
 			kmem_free(buf, bufsz);
-		usbnet_lock(un);
+		usbnet_lock_core(un);
 		usbnet_stop(un, ifp, 1);
-		usbnet_unlock(un);
+		usbnet_unlock_core(un);
 		return;
 	}
 
@@ -1083,16 +1083,16 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	if (urndis_ctrl_set(un, OID_GEN_CURRENT_PACKET_FILTER, &filter,
 	    sizeof(filter)) != RNDIS_STATUS_SUCCESS) {
 		aprint_error("%s: unable to set data filters\n", DEVNAME(un));
-		usbnet_lock(un);
+		usbnet_lock_core(un);
 		usbnet_stop(un, ifp, 1);
-		usbnet_unlock(un);
+		usbnet_unlock_core(un);
 		return;
 	}
 
 	/* Turn off again now it has been identified. */
-	usbnet_lock(un);
+	usbnet_lock_core(un);
 	usbnet_stop(un, ifp, 1);
-	usbnet_unlock(un);
+	usbnet_unlock_core(un);
 
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
             0, NULL);
