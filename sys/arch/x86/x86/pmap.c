@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.367 2020/03/14 20:48:40 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.368 2020/03/15 15:14:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.367 2020/03/14 20:48:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.368 2020/03/15 15:14:22 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -559,7 +559,6 @@ pv_pte_next(struct pmap_page *pp, struct pv_pte *pvpte)
 	KASSERT(mutex_owned(&pp->pp_lock));
 	KASSERT(pvpte != NULL);
 	if (pvpte == &pp->pp_pte) {
-		KASSERT(pp->pp_embedded);
 		return pve_to_pvpte(LIST_FIRST(&pp->pp_pvlist));
 	}
 	return pve_to_pvpte(LIST_NEXT(pvpte_to_pve(pvpte), pve_list));
@@ -4668,7 +4667,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 			panic("%s: alloc pve failed", __func__);
 		}
 	} else {
-		old_pve = pmap_lookup_pv(pmap, ptp, NULL, va);
+		old_pve = pmap_treelookup_pv(pmap, ptp, tree, va);
 	}
 
 	/* Map PTEs into address space. */
@@ -4773,6 +4772,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		pmap_remove_pv(pmap, old_pp, ptp, va, old_pve,
 		    pmap_pte_to_pp_attrs(opte));
 		if (old_pve != NULL) {
+			KASSERT(old_pve->pve_pp == old_pp);
 			if (pmap->pm_pve == NULL) {
 				pmap->pm_pve = old_pve;
 			} else {
@@ -5584,7 +5584,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			panic("%s: alloc pve failed", __func__);
 		}
 	} else {
-		old_pve = pmap_lookup_pv(pmap, ptp, NULL, va);
+		old_pve = pmap_treelookup_pv(pmap, ptp, tree, va);
 	}
 
 	/* Map PTEs into address space. */
@@ -5654,6 +5654,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		pmap_remove_pv(pmap, old_pp, ptp, va, old_pve,
 		    pmap_ept_to_pp_attrs(opte));
 		if (old_pve != NULL) {
+			KASSERT(old_pve->pve_pp == old_pp);
 			if (pmap->pm_pve == NULL) {
 				pmap->pm_pve = old_pve;
 			} else {
