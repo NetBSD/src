@@ -115,6 +115,12 @@ resize_ffs()
 	local fslevel=$5
 	local numdata=$6
 	local swap=$7
+	local avail=$( df -m . | awk '{if (int($4) > 0) print $4}' )
+	# convert MB size to blocks
+	avail=$(( $avail \* 2 \* 1024 ))
+	if [ $avail -lt $osize ] || [ $avail -lt $nsize ]; then
+		atf_skip "not enough free space in working directory"
+	fi
 	mkdir -p mnt
 	echo "bs is ${bs} numdata is ${numdata}"
 	echo "****resizing fs with blocksize ${bs}"
