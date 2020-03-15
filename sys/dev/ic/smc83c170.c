@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.94 2020/03/12 03:01:46 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.95 2020/03/15 22:19:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.94 2020/03/12 03:01:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.95 2020/03/15 22:19:00 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -499,11 +499,6 @@ epic_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
-	if (sc->sc_txpending == EPIC_NTXDESC) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
-	}
-
 	if (sc->sc_txpending != opending) {
 		/*
 		 * We enqueued packets.	 If the transmitter was idle,
@@ -740,7 +735,6 @@ epic_intr(void *arg)
 	 * Check for transmission complete interrupts.
 	 */
 	if (intstat & (INTSTAT_TXC | INTSTAT_TXU)) {
-		ifp->if_flags &= ~IFF_OACTIVE;
 		for (i = sc->sc_txdirty; sc->sc_txpending != 0;
 		     i = EPIC_NEXTTX(i), sc->sc_txpending--) {
 			txd = EPIC_CDTX(sc, i);
@@ -1035,7 +1029,6 @@ epic_init(struct ifnet *ifp)
 	 * ...all done!
 	 */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Start the one second clock.
@@ -1124,7 +1117,7 @@ epic_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
 	if (disable)

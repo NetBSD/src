@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.61 2020/03/13 00:41:24 thorpej Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.62 2020/03/15 22:20:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.61 2020/03/13 00:41:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.62 2020/03/15 22:20:31 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -656,7 +656,7 @@ ste_start(struct ifnet *ifp)
 	bus_dmamap_t dmamap;
 	int error, olasttx, nexttx, opending, seg, totlen;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
 		return;
 
 	/*
@@ -773,11 +773,6 @@ ste_start(struct ifnet *ifp)
 		 * Pass the packet to any BPF listeners.
 		 */
 		bpf_mtap(ifp, m0, BPF_D_OUT);
-	}
-
-	if (sc->sc_txpending == STE_NTXDESC) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
 	}
 
 	if (sc->sc_txpending != opending) {
@@ -994,8 +989,6 @@ ste_txintr(struct ste_softc *sc)
 	struct ste_descsoft *ds;
 	uint32_t control;
 	int i;
-
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Go through our Tx list and free mbufs for those
@@ -1402,7 +1395,6 @@ ste_init(struct ifnet *ifp)
 	 * ...all done!
 	 */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
 	if (error)
@@ -1484,7 +1476,7 @@ ste_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
 	if (disable)

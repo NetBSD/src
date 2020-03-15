@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.52 2020/01/30 04:56:11 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.53 2020/03/15 22:19:00 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.52 2020/01/30 04:56:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.53 2020/03/15 22:19:00 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -301,7 +301,6 @@ zeinit(struct ze_softc *sc)
 	    ZE_NICSR6_SR | ZE_NICSR6_DC);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Send a setup frame.
@@ -356,7 +355,6 @@ zestart(struct ifnet *ifp)
 
 		if ((map->dm_nsegs + sc->sc_inq) >= (TXDESCS - 1)) {
 			bus_dmamap_unload(sc->sc_dmat, map);
-			ifp->if_flags |= IFF_OACTIVE;
 			goto out;
 		}
 
@@ -416,8 +414,6 @@ zestart(struct ifnet *ifp)
 
 		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
-	if (sc->sc_inq == (TXDESCS - 1))
-		ifp->if_flags |= IFF_OACTIVE;
 
 out:	if (old_inq < sc->sc_inq)
 		ifp->if_timer = 5; /* If transmit logic dies */
@@ -508,7 +504,6 @@ sgec_intr(struct ze_softc *sc)
 			sc->sc_lastack = lastack;
 			if (sc->sc_inq == 0)
 				ifp->if_timer = 0;
-			ifp->if_flags &= ~IFF_OACTIVE;
 			zestart(ifp); /* Put in more in queue */
 		}
 	}
