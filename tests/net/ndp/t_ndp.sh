@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.37 2020/03/11 08:52:13 roy Exp $
+#	$NetBSD: t_ndp.sh,v 1.38 2020/03/15 21:15:25 roy Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -472,7 +472,7 @@ ndp_rtm_body()
 
 	hdr="RTM_MISS.+<DONE>"
 	what="<DST,GATEWAY,AUTHOR>"
-	addr="$IP6DST_FAIL1 link#2 $IP6DST"
+	addr="$IP6DST_FAIL1 link#2 $IP6SRC"
 	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
 		cat $file
 
