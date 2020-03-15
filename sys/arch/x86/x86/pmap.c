@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.368 2020/03/15 15:14:22 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.369 2020/03/15 15:58:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.368 2020/03/15 15:14:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.369 2020/03/15 15:58:24 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -539,6 +539,17 @@ pvpte_to_pve(struct pv_pte *pvpte)
 }
 
 /*
+ * Return true if the pmap page has an embedded PV entry.
+ */
+static inline bool
+pv_pte_embedded(struct pmap_page *pp)
+{
+
+	KASSERT(mutex_owned(&pp->pp_lock));
+	return (bool)((vaddr_t)pp->pp_pte.pte_ptp | pp->pp_pte.pte_va);
+}
+
+/*
  * pv_pte_first, pv_pte_next: PV list iterator.
  */
 static struct pv_pte *
@@ -546,7 +557,7 @@ pv_pte_first(struct pmap_page *pp)
 {
 
 	KASSERT(mutex_owned(&pp->pp_lock));
-	if (pp->pp_embedded) {
+	if (pv_pte_embedded(pp)) {
 		return &pp->pp_pte;
 	}
 	return pve_to_pvpte(LIST_FIRST(&pp->pp_pvlist));
@@ -2025,8 +2036,7 @@ pmap_lookup_pv(const struct pmap *pmap, const struct vm_page *ptp,
 	 * set together for this pmap.
 	 *
 	 */
-	if (atomic_load_relaxed(&old_pp->pp_embedded) &&
-	    atomic_load_relaxed(&old_pp->pp_pte.pte_ptp) == ptp &&
+	if (atomic_load_relaxed(&old_pp->pp_pte.pte_ptp) == ptp &&
 	    atomic_load_relaxed(&old_pp->pp_pte.pte_va) == va) {
 		return NULL;
 	}
@@ -2080,8 +2090,7 @@ pmap_enter_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 	 * to check for this very specific set of values without a lock
 	 * because all 3 will only ever be set together for this pmap.
 	 */
-	if (atomic_load_relaxed(&pp->pp_embedded) &&
-	    atomic_load_relaxed(&pp->pp_pte.pte_ptp) == ptp &&
+	if (atomic_load_relaxed(&pp->pp_pte.pte_ptp) == ptp &&
 	    atomic_load_relaxed(&pp->pp_pte.pte_va) == va) {
 		*samepage = true;
 		return 0;
@@ -2108,13 +2117,12 @@ pmap_enter_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 
 	error = 0;
 	mutex_spin_enter(&pp->pp_lock);
-	if (!pp->pp_embedded) {
+	if (!pv_pte_embedded(pp)) {
 		/*
 		 * Embedded PV tracking available - easy.
 		 */
 		pp->pp_pte.pte_ptp = ptp;
 		pp->pp_pte.pte_va = va;
-		pp->pp_embedded = true;
 		*new_embedded = true;
 	} else if (__predict_false(pmap->pm_pve == NULL)) {
 		/*
@@ -2160,14 +2168,10 @@ pmap_remove_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 	mutex_spin_enter(&pp->pp_lock);
 	pp->pp_attrs |= oattrs;
 	if (pve == NULL) {
-		KASSERT(pp->pp_embedded);
 		KASSERT(pp->pp_pte.pte_ptp == ptp);
 		KASSERT(pp->pp_pte.pte_va == va);
-		pp->pp_embedded = false;
-#ifdef DIAGNOSTIC
 		pp->pp_pte.pte_ptp = NULL;
 		pp->pp_pte.pte_va = 0;
-#endif
 		mutex_spin_exit(&pp->pp_lock);
 	} else {
 		KASSERT(pve == pmap_lookup_pv(pmap, ptp, pp, va));
@@ -2786,14 +2790,22 @@ pmap_destroy(struct pmap *pmap)
 	int i;
 
 	/*
-	 * drop reference count
+	 * drop reference count and verify not in use.
 	 */
 
 	if (atomic_dec_uint_nv(&pmap->pm_obj[0].uo_refs) > 0) {
 		return;
 	}
-
 	pmap_check_inuse(pmap);
+
+	/*
+	 * XXX handle deferred PTP page free for EPT.  ordinarily this is
+	 * taken care of by pmap_remove_all().  once shared with EPT this
+	 * can go away.
+	 */
+	if (__predict_false(!LIST_EMPTY(&pmap->pm_gc_ptp))) {
+		pmap_update(pmap);
+	}
 
 	/*
 	 * Reference count is zero, free pmap resources and then free pmap.
@@ -4105,9 +4117,12 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 	/*
 	 * Do an unlocked check to see if the page has no mappings, eg when
 	 * pmap_remove_all() was called before amap_wipeout() for a process
-	 * private amap - common.
+	 * private amap - common.  The page being removed must be on the way
+	 * out, so we don't have to worry about concurrent attempts to enter
+	 * it (otherwise the caller either doesn't care or has screwed up).
 	 */
-	if (atomic_load_relaxed(&pp->pp_embedded) == 0 &&
+	if (atomic_load_relaxed(&pp->pp_pte.pte_va) == 0 &&
+	    atomic_load_relaxed(&pp->pp_pte.pte_ptp) == NULL &&
 	    atomic_load_relaxed(&pp->pp_pvlist.lh_first) == NULL) {
 	    	return;
 	}
@@ -4554,10 +4569,10 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	struct vm_page *new_pg, *old_pg;
 	struct pmap_page *new_pp, *old_pp;
 	struct pv_entry *old_pve, *new_pve;
-	int error;
 	bool wired = (flags & PMAP_WIRED) != 0;
 	struct pmap *pmap2;
 	struct pmap_ptparray pt;
+	int error;
 	bool getptp, samepage, new_embedded;
 	rb_tree_t *tree;
 
@@ -4631,6 +4646,8 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		pmap_ptp_range_set(ptp, va);
 		tree = &VM_PAGE_TO_PP(ptp)->pp_rb;
 	} else {
+		/* Embedded PV entries rely on this. */
+		KASSERT(va != 0);
 		tree = &pmap_kernel_rb;
 	}
 
@@ -4716,7 +4733,8 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 						KASSERT(pmap->pm_pve == NULL);
 						pmap->pm_pve = new_pve;
 					} else if (new_embedded) {
-						new_pp->pp_embedded = false;
+						new_pp->pp_pte.pte_ptp = NULL;
+						new_pp->pp_pte.pte_va = 0;
 					}
 					mutex_spin_exit(&new_pp->pp_lock);
 					pmap_unmap_ptes(pmap, pmap2);
@@ -5139,7 +5157,8 @@ pmap_update(struct pmap *pmap)
 			pp = VM_PAGE_TO_PP(ptp);
 			LIST_INIT(&pp->pp_pvlist);
 			pp->pp_attrs = 0;
-			pp->pp_embedded = false;
+			pp->pp_pte.pte_ptp = NULL;
+			pp->pp_pte.pte_va = 0;
 
 			/*
 			 * XXX Hack to avoid extra locking, and lock
@@ -5548,6 +5567,8 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		pmap_ptp_range_set(ptp, va);
 		tree = &VM_PAGE_TO_PP(ptp)->pp_rb;
 	} else {
+		/* Embedded PV entries rely on this. */
+		KASSERT(va != 0);
 		tree = &pmap_kernel_rb;
 	}
 
@@ -5595,12 +5616,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		pmap_ept_install_ptp(pmap, &pt, va);
 	}
 
-	/*
-	 * Check if there is an existing mapping.  If we are now sure that
-	 * we need pves and we failed to allocate them earlier, handle that.
-	 * Caching the value of oldpa here is safe because only the mod/ref
-	 * bits can change while the pmap is locked.
-	 */
+	/* Check if there is an existing mapping. */
 	ptes = (pt_entry_t *)PMAP_DIRECT_MAP(VM_PAGE_TO_PHYS(ptp));
 	ptep = &ptes[pl1_pi(va)];
 	opte = *ptep;
@@ -5620,6 +5636,11 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			npte |= opte & (EPT_A | EPT_D);
 		}
 	} while (pmap_pte_cas(ptep, opte, npte) != opte);
+
+	/*
+	 * Done with the PTEs: they can now be unmapped.
+	 */
+	kpreempt_enable();
 
 	/*
 	 * Update statistics and PTP's reference count.
@@ -5673,6 +5694,10 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	}
 
 same_pa:
+	/*
+	 * shootdown tlb if necessary.
+	 */
+
 	if (pmap_ept_has_ad) {
 		accessed = (~opte & (EPT_R | EPT_A)) == 0;
 	} else {
@@ -5681,18 +5706,8 @@ same_pa:
 	if (accessed && ((opte ^ npte) & (PTE_FRAME | EPT_W)) != 0) {
 		pmap_tlb_shootdown(pmap, va, 0, TLBSHOOT_ENTER);
 	}
-
-	error = 0;
-	kpreempt_enable();
-	if (old_pve != NULL) {
-		pool_cache_put(&pmap_pv_cache, old_pve);
-	}
-	if (new_pve != NULL) {
-		pool_cache_put(&pmap_pv_cache, new_pve);
-	}
 	mutex_exit(&pmap->pm_lock);
-
-	return error;
+	return 0;
 }
 
 /* Pay close attention, this returns L2. */
