@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.57 2020/02/02 05:27:21 thorpej Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.58 2020/03/15 23:04:50 thorpej Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.57 2020/02/02 05:27:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.58 2020/03/15 23:04:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1857,8 +1857,8 @@ vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 
 	/* Initialize ifmedia structures. */
 	sc->vmx_ethercom.ec_ifmedia = &sc->vmx_media;
-	ifmedia_init(&sc->vmx_media, IFM_IMASK, vmxnet3_media_change,
-	    vmxnet3_media_status);
+	ifmedia_init_with_lock(&sc->vmx_media, IFM_IMASK, vmxnet3_media_change,
+	    vmxnet3_media_status, sc->vmx_mtx);
 	ifmedia_add(&sc->vmx_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_add(&sc->vmx_media, IFM_ETHER | IFM_10G_T | IFM_FDX, 0, NULL);
 	ifmedia_add(&sc->vmx_media, IFM_ETHER | IFM_10G_T, 0, NULL);
@@ -3511,17 +3511,13 @@ vmxnet3_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
 
-	VMXNET3_CORE_LOCK(sc);
-	if (ifp->if_link_state != LINK_STATE_UP) {
-		VMXNET3_CORE_UNLOCK(sc);
+	if (ifp->if_link_state != LINK_STATE_UP)
 		return;
-	}
 
 	ifmr->ifm_status |= IFM_ACTIVE;
 
 	if (ifp->if_baudrate >= IF_Gbps(10ULL))
 		ifmr->ifm_active |= IFM_10G_T;
-	VMXNET3_CORE_UNLOCK(sc);
 }
 
 static int

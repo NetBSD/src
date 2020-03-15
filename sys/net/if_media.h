@@ -1,7 +1,7 @@
-/*	$NetBSD: if_media.h,v 1.70 2020/02/17 15:51:25 msaitoh Exp $	*/
+/*	$NetBSD: if_media.h,v 1.71 2020/03/15 23:04:51 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2001, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,10 +78,6 @@
  * Many thanks to Matt Thomas for providing the information necessary
  * to implement this interface.
  */
-
-#ifdef _KERNEL
-#include <sys/queue.h>
-#endif /*_KERNEL */
 
 /*
  * Status bits. THIS IS NOT A MEDIA WORD.
@@ -893,6 +889,9 @@ struct ifmedia_status_description {
 }
 
 #ifdef _KERNEL
+#include <sys/mutex.h>
+#include <sys/queue.h>
+
 /*
  * Driver callbacks for media status and change requests.
  */
@@ -912,30 +911,79 @@ struct ifmedia_entry {
 /*
  * One of these goes into a network interface's softc structure.
  * It is used to keep general media state.
+ *
+ * LOCKING
+ * =======
+ * The ifmedia is protected by a lock provided by the interface
+ * driver.  All ifmedia API entry points (with the exception of one)
+ * are expect to be called with this mutex NOT HELD.
+ *
+ * ifmedia_ioctl() is called with the interface's if_ioctl_lock held,
+ * and thus the locking order is:
+ *
+ *	IFNET_LOCK -> ifm_lock
+ *
+ * Driver callbacks (ifm_change / ifm_status) are called with ifm_lock HELD.
+ *
+ * Field markings and the corresponding locks:
+ *
+ * m:	ifm_lock
+ * ::	unlocked, stable
  */
 struct ifmedia {
-	u_int	ifm_mask;	/* IFMWD: mask of changes we don't care */
+	kmutex_t *ifm_lock;	/* :: mutex (provided by interface driver) */
+	u_int	ifm_mask;	/* :: IFMWD: mask of changes we don't care */
 	u_int	ifm_media;	/*
-				 * IFMWD: current use-set media word.
+				 * m: IFMWD: current user-set media word.
 				 *
 				 * XXX some drivers misuse this entry as
 				 * current active media word. Don't use this
 				 * entry as this purpose but use driver
 				 * specific entry if you don't use mii(4).
 				 */
-	struct ifmedia_entry *ifm_cur;	/* current user-selected media entry */
-	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
-	ifm_change_cb_t	ifm_change;	/* media change driver callback */
-	ifm_stat_cb_t	ifm_status;	/* media status driver callback */
+	struct ifmedia_entry *ifm_cur;	/*
+					 * m: entry corresponding to
+					 * ifm_media
+					 */
+	TAILQ_HEAD(, ifmedia_entry) ifm_list; /*
+					       * m: list of all supported
+					       * media
+					       */
+	ifm_change_cb_t	ifm_change;	/* :: media change driver callback */
+	ifm_stat_cb_t	ifm_status;	/* :: media status driver callback */
+	uintptr_t	ifm_legacy;	/* m: legacy driver handling */
 };
+
+#define	ifmedia_lock(ifm)	mutex_enter((ifm)->ifm_lock)
+#define	ifmedia_unlock(ifm)	mutex_exit((ifm)->ifm_lock)
+#define	ifmedia_locked(ifm)	mutex_owned((ifm)->ifm_lock)
+
+#ifdef __IFMEDIA_PRIVATE
+#define	ifmedia_islegacy(ifm)	((ifm)->ifm_legacy)
+void	ifmedia_lock_for_legacy(struct ifmedia *);
+void	ifmedia_unlock_for_legacy(struct ifmedia *);
+
+#define	IFMEDIA_LOCK_FOR_LEGACY(ifm)					\
+do {									\
+	if (ifmedia_islegacy(ifm))					\
+		ifmedia_lock_for_legacy(ifm);				\
+} while (/*CONSTCOND*/0)
+
+#define	IFMEDIA_UNLOCK_FOR_LEGACY(ifm)					\
+do {									\
+	if (ifmedia_islegacy(ifm))					\
+		ifmedia_unlock_for_legacy(ifm);				\
+} while (/*CONSTCOND*/0)
+#endif /* __IFMEDIA_PRIVATE */
 
 /* Initialize an interface's struct if_media field. */
 void	ifmedia_init(struct ifmedia *, int, ifm_change_cb_t, ifm_stat_cb_t);
+void	ifmedia_init_with_lock(struct ifmedia *, int, ifm_change_cb_t,
+	    ifm_stat_cb_t, kmutex_t *);
 
 /* Release resourecs associated with an ifmedia. */
 void	ifmedia_fini(struct ifmedia *);
 
-int	ifmedia_change(struct ifmedia *, struct ifnet *);
 
 /* Add one supported medium to a struct ifmedia. */
 void	ifmedia_add(struct ifmedia *, int, int, void *);
@@ -955,11 +1003,20 @@ struct ifmedia_entry *ifmedia_match(struct ifmedia *, u_int, u_int);
 /* Delete all media for a given media instance */
 void	ifmedia_delete_instance(struct ifmedia *, u_int);
 
+/* Remove all media */
+void	ifmedia_removeall(struct ifmedia *);
+
 /* Compute baudrate for a given media. */
 uint64_t ifmedia_baudrate(int);
 
-/* Remove all media */
-void	ifmedia_removeall(struct ifmedia *);
+/*
+ * This is a thin wrapper around the ifmedia "change" callback that
+ * is available to drivers to use within their own initialization
+ * routines.
+ *
+ * IFMEDIA must be LOCKED.
+ */
+int	ifmedia_change(struct ifmedia *, struct ifnet *);
 
 #else
 /* Functions for converting media to/from strings, in libutil/if_media.c */

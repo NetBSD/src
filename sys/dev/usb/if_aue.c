@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.167 2020/03/14 03:01:36 christos Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.168 2020/03/15 23:04:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.167 2020/03/14 03:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.168 2020/03/15 23:04:50 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -239,27 +239,27 @@ CFATTACH_DECL_NEW(aue, sizeof(struct aue_softc), aue_match, aue_attach,
 
 static void aue_reset_pegasus_II(struct aue_softc *);
 
-static void aue_stop_cb(struct ifnet *, int);
-static int aue_ioctl_cb(struct ifnet *, u_long, void *);
-static int aue_mii_read_reg(struct usbnet *, int, int, uint16_t *);
-static int aue_mii_write_reg(struct usbnet *, int, int, uint16_t);
-static void aue_mii_statchg(struct ifnet *);
-static unsigned aue_tx_prepare(struct usbnet *, struct mbuf *,
-			       struct usbnet_chain *);
-static void aue_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
-static int aue_init(struct ifnet *);
-static void aue_intr(struct usbnet *, usbd_status);
+static void aue_uno_stop(struct ifnet *, int);
+static int aue_uno_ioctl(struct ifnet *, u_long, void *);
+static int aue_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static int aue_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static void aue_uno_mii_statchg(struct ifnet *);
+static unsigned aue_uno_tx_prepare(struct usbnet *, struct mbuf *,
+				   struct usbnet_chain *);
+static void aue_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
+static int aue_uno_init(struct ifnet *);
+static void aue_uno_intr(struct usbnet *, usbd_status);
 
 static const struct usbnet_ops aue_ops = {
-	.uno_stop = aue_stop_cb,
-	.uno_ioctl = aue_ioctl_cb,
-	.uno_read_reg = aue_mii_read_reg,
-	.uno_write_reg = aue_mii_write_reg,
-	.uno_statchg = aue_mii_statchg,
-	.uno_tx_prepare = aue_tx_prepare,
-	.uno_rx_loop = aue_rx_loop,
-	.uno_init = aue_init,
-	.uno_intr = aue_intr,
+	.uno_stop = aue_uno_stop,
+	.uno_ioctl = aue_uno_ioctl,
+	.uno_read_reg = aue_uno_mii_read_reg,
+	.uno_write_reg = aue_uno_mii_write_reg,
+	.uno_statchg = aue_uno_mii_statchg,
+	.uno_tx_prepare = aue_uno_tx_prepare,
+	.uno_rx_loop = aue_uno_rx_loop,
+	.uno_init = aue_uno_init,
+	.uno_intr = aue_uno_intr,
 };
 
 static uint32_t aue_crc(void *);
@@ -284,7 +284,7 @@ aue_csr_read_1(struct aue_softc *sc, int reg)
 	usbd_status		err;
 	uByte			val = 0;
 
-	usbnet_isowned_mii(un);
+	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return 0;
@@ -315,7 +315,7 @@ aue_csr_read_2(struct aue_softc *sc, int reg)
 	usbd_status		err;
 	uWord			val;
 
-	usbnet_isowned_mii(un);
+	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return 0;
@@ -346,7 +346,7 @@ aue_csr_write_1(struct aue_softc *sc, int reg, int aval)
 	usbd_status		err;
 	uByte			val;
 
-	usbnet_isowned_mii(un);
+	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return 0;
@@ -378,7 +378,7 @@ aue_csr_write_2(struct aue_softc *sc, int reg, int aval)
 	usbd_status		err;
 	uWord			val;
 
-	usbnet_isowned_mii(un);
+	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return 0;
@@ -440,7 +440,7 @@ aue_read_mac(struct usbnet *un)
 	int			off = 0;
 	int			word;
 
-	usbnet_isowned_mii(un);
+	usbnet_isowned_core(un);
 
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGS("aue%jd: enter",
@@ -454,14 +454,12 @@ aue_read_mac(struct usbnet *un)
 }
 
 static int
-aue_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
+aue_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	struct aue_softc	*sc = usbnet_softc(un);
 	int			i;
 
 	AUEHIST_FUNC();
-
-	usbnet_isowned_mii(un);
 
 #if 0
 	/*
@@ -504,12 +502,10 @@ aue_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 }
 
 static int
-aue_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
+aue_uno_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	struct aue_softc	*sc = usbnet_softc(un);
 	int			i;
-
-	usbnet_isowned_mii(un);
 
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(11, "aue%jd: phy=%jd reg=%jd data=0x%04jx",
@@ -542,7 +538,7 @@ aue_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 }
 
 static void
-aue_mii_statchg(struct ifnet *ifp)
+aue_uno_mii_statchg(struct ifnet *ifp)
 {
 	struct usbnet *un = ifp->if_softc;
 	struct aue_softc *sc = usbnet_softc(un);
@@ -553,7 +549,6 @@ aue_mii_statchg(struct ifnet *ifp)
 	AUEHIST_CALLARGSN(5, "aue%jd: ifp=%#jx link=%jd",
 	    device_unit(un->un_dev), (uintptr_t)ifp, hadlink, 0);
 
-	usbnet_lock_mii(un);
 	AUE_CLRBIT(sc, AUE_CTL0, AUE_CTL0_RX_ENB | AUE_CTL0_TX_ENB);
 
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX) {
@@ -581,10 +576,9 @@ aue_mii_statchg(struct ifnet *ifp)
 	 */
 	if (!usbnet_isdying(un) && (un->un_flags & LSYS)) {
 		uint16_t auxmode;
-		aue_mii_read_reg(un, 0, 0x1b, &auxmode);
-		aue_mii_write_reg(un, 0, 0x1b, auxmode | 0x04);
+		aue_uno_mii_read_reg(un, 0, 0x1b, &auxmode);
+		aue_uno_mii_write_reg(un, 0, 0x1b, auxmode | 0x04);
 	}
-	usbnet_unlock_mii(un);
 
 	if (usbnet_havelink(un) != hadlink) {
 		DPRINTFN(5, "aue%jd: exit link %jd",
@@ -626,7 +620,7 @@ aue_setiff_locked(struct usbnet *un)
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(5, "aue%jd: enter", device_unit(un->un_dev), 0, 0, 0);
 
-	usbnet_isowned_mii(un);
+	usbnet_isowned_core(un);
 
 	if (ifp->if_flags & IFF_PROMISC) {
 allmulti:
@@ -658,14 +652,6 @@ allmulti:
 		aue_csr_write_1(sc, AUE_MAR0 + i, hashtbl[i]);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
-}
-
-static void
-aue_setiff(struct usbnet *un)
-{
-	usbnet_lock_mii(un);
-	aue_setiff_locked(un);
-	usbnet_unlock_mii(un);
 }
 
 static void
@@ -864,20 +850,20 @@ aue_attach(device_t parent, device_t self, void *aux)
 	/* First level attach. */
 	usbnet_attach(un, "auedet");
 
-	usbnet_lock_mii(un);
+	usbnet_lock_core(un);
 
 	/* Reset the adapter and get station address from the EEPROM.  */
 	aue_reset(sc);
 	aue_read_mac(un);
 
-	usbnet_unlock_mii(un);
+	usbnet_unlock_core(un);
 
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
 	    0, &unm);
 }
 
 static void
-aue_intr(struct usbnet *un, usbd_status status)
+aue_uno_intr(struct usbnet *un, usbd_status status)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 	struct aue_softc	*sc = usbnet_softc(un);
@@ -895,7 +881,7 @@ aue_intr(struct usbnet *un, usbd_status status)
 }
 
 static void
-aue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
+aue_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 	uint8_t			*buf = c->unc_buf;
@@ -905,8 +891,6 @@ aue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(10, "aue%jd: enter len %ju",
 	    device_unit(un->un_dev), total_len, 0, 0);
-
-	usbnet_isowned_rx(un);
 
 	if (total_len <= 4 + ETHER_CRC_LEN) {
 		if_statinc(ifp, if_ierrors);
@@ -929,7 +913,7 @@ aue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 }
 
 static unsigned
-aue_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+aue_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	uint8_t			*buf = c->unc_buf;
 	int			total_len;
@@ -937,8 +921,6 @@ aue_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(10, "aue%jd: enter pktlen=%jd",
 	    device_unit(un->un_dev), m->m_pkthdr.len, 0, 0);
-
-	usbnet_isowned_tx(un);
 
 	if ((unsigned)m->m_pkthdr.len > un->un_tx_bufsz - 2)
 		return 0;
@@ -984,8 +966,6 @@ aue_init_locked(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_RUNNING)
 		return 0;
 
-	usbnet_lock_mii_un_locked(un);
-
 	/* Reset the interface. */
 	aue_reset(sc);
 
@@ -999,9 +979,7 @@ aue_init_locked(struct ifnet *ifp)
 	else
 		AUE_CLRBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
 
-	usbnet_unlock_mii_un_locked(un);
 	rv = usbnet_init_rx_tx(un);
-	usbnet_lock_mii_un_locked(un);
 
 	/* Load the multicast filter. */
 	aue_setiff_locked(un);
@@ -1011,30 +989,29 @@ aue_init_locked(struct ifnet *ifp)
 	AUE_SETBIT(sc, AUE_CTL0, AUE_CTL0_TX_ENB);
 	AUE_SETBIT(sc, AUE_CTL2, AUE_CTL2_EP3_CLR);
 
-	usbnet_unlock_mii_un_locked(un);
-
 	//mii_mediachg(mii);
 
 	return rv;
 }
 
 static int
-aue_init(struct ifnet *ifp)
+aue_uno_init(struct ifnet *ifp)
 {
 	struct usbnet * const	un = ifp->if_softc;
 	int rv;
 
-	usbnet_lock(un);
+	usbnet_lock_core(un);
+	usbnet_busy(un);
 	rv = aue_init_locked(ifp);
-	usbnet_unlock(un);
+	usbnet_unbusy(un);
+	usbnet_unlock_core(un);
 
 	return rv;
 }
 
 static int
-aue_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
+aue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct usbnet * const un = ifp->if_softc;
 
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(5, "aue%jd: enter cmd %#jx data %#jx",
@@ -1043,8 +1020,7 @@ aue_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		aue_init(ifp);
-		aue_setiff(un);
+		aue_uno_init(ifp);
 		break;
 	default:
 		break;
@@ -1054,7 +1030,7 @@ aue_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
 }
 
 static void
-aue_stop_cb(struct ifnet *ifp, int disable)
+aue_uno_stop(struct ifnet *ifp, int disable)
 {
 	struct usbnet * const	un = ifp->if_softc;
 	struct aue_softc * const sc = usbnet_softc(un);
@@ -1062,11 +1038,9 @@ aue_stop_cb(struct ifnet *ifp, int disable)
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(5, "aue%jd: enter", device_unit(un->un_dev), 0, 0, 0);
 
-	usbnet_lock_mii_un_locked(un);
 	aue_csr_write_1(sc, AUE_CTL0, 0);
 	aue_csr_write_1(sc, AUE_CTL1, 0);
 	aue_reset(sc);
-	usbnet_unlock_mii_un_locked(un);
 }
 
 #ifdef _MODULE

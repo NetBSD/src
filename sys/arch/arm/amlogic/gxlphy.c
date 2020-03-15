@@ -1,4 +1,4 @@
-/* $NetBSD: gxlphy.c,v 1.2 2019/11/27 10:19:21 msaitoh Exp $ */
+/* $NetBSD: gxlphy.c,v 1.3 2020/03/15 23:04:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxlphy.c,v 1.2 2019/11/27 10:19:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxlphy.c,v 1.3 2020/03/15 23:04:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,8 @@ gxlphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 
+	mii_lock(mii);
+
 	PHY_RESET(sc);
 
 	gxl_writereg(sc, BANK_BIST, BIST_PLL_CTRL, 0x5);
@@ -180,6 +182,8 @@ gxlphyattach(device_t parent, device_t self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
+	mii_unlock(mii);
+
 	mii_phy_add_media(sc);
 }
 
@@ -188,6 +192,8 @@ gxlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg;
+
+	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -240,6 +246,8 @@ static void
 gxlphy_status(struct mii_softc *sc)
 {
 	uint16_t bmcr, bmsr, wol, lpa, aner;
+
+	KASSERT(mii_locked(sc->mii_pdata));
 
 	PHY_READ(sc, MII_BMCR, &bmcr);
 	if ((bmcr & BMCR_AUTOEN) == 0)

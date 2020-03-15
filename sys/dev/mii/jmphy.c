@@ -1,4 +1,4 @@
-/*	$NetBSD: jmphy.c,v 1.3 2019/11/27 10:19:20 msaitoh Exp $ */
+/*	$NetBSD: jmphy.c,v 1.4 2020/03/15 23:04:50 thorpej Exp $ */
 /*	$OpenBSD: jmphy.c,v 1.6 2015/03/14 03:38:48 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -103,12 +103,16 @@ jmphy_attach(device_t parent, device_t self, void *aux)
 
 	sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
 
+	mii_lock(mii);
+
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
+
+	mii_unlock(mii);
 
 	mii_phy_add_media(sc);
 }
@@ -118,6 +122,8 @@ jmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t bmcr, ssr;
+
+	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -190,6 +196,8 @@ jmphy_status(struct mii_softc *sc)
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t bmcr, ssr, gtsr;
 
+	KASSERT(mii_locked(mii));
+
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
@@ -254,6 +262,8 @@ jmphy_reset(struct mii_softc *sc)
 	int i;
 	uint16_t val;
 
+	KASSERT(mii_locked(sc->mii_pdata));
+
 	/* Disable sleep mode. */
 	PHY_READ(sc, JMPHY_TMCTL, &val);
 	PHY_WRITE(sc, JMPHY_TMCTL, val & ~JMPHY_TMCTL_SLEEP_ENB);
@@ -298,6 +308,8 @@ static int
 jmphy_auto(struct mii_softc *sc, struct ifmedia_entry *ife)
 {
 	uint16_t anar, bmcr, gig;
+
+	KASSERT(mii_locked(sc->mii_pdata));
 
 	gig = 0;
 	PHY_READ(sc, MII_BMCR, &bmcr);

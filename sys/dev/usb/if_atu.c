@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.71 2020/03/13 18:17:40 christos Exp $ */
+/*	$NetBSD: if_atu.c,v 1.72 2020/03/15 23:04:50 thorpej Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.71 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.72 2020/03/15 23:04:50 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1456,7 +1456,10 @@ atu_complete_attach(struct atu_softc *sc)
 	ic->ic_newstate = atu_newstate;
 
 	/* setup ifmedia interface */
-	ieee80211_media_init(ic, atu_media_change, atu_media_status);
+	/* XXX media locking needs revisiting */
+	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTUSB);
+	ieee80211_media_init_with_lock(ic,
+	    atu_media_change, atu_media_status, &sc->sc_media_mtx);
 
 	usb_init_task(&sc->sc_task, atu_task, sc, 0);
 

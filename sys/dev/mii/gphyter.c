@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.36 2019/11/27 10:19:20 msaitoh Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.37 2020/03/15 23:04:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.36 2019/11/27 10:19:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.37 2020/03/15 23:04:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,8 @@ gphyterattach(device_t parent, device_t self, void *aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 
+	mii_lock(mii);
+
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
@@ -155,9 +157,13 @@ gphyterattach(device_t parent, device_t self, void *aux)
 	if (anar & ANAR_10_FD)
 		sc->mii_capabilities |= (BMSR_10TFDX & ma->mii_capmask);
 
+	mii_unlock(mii);
+
 	mii_phy_add_media(sc);
 
+	mii_lock(mii);
 	PHY_READ(sc, MII_GPHYTER_STRAP, &strap);
+	mii_unlock(mii);
 	aprint_normal_dev(self, "strapped to %s mode",
 	    (strap & STRAP_MS_VAL) ? "master" : "slave");
 	if (strap & STRAP_NC_MODE)
@@ -170,6 +176,8 @@ gphyter_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg;
+
+	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -224,6 +232,8 @@ gphyter_status(struct mii_softc *sc)
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t bmsr, bmcr, physup, gtsr;
+
+	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -291,6 +301,8 @@ gphyter_reset(struct mii_softc *sc)
 {
 	int i;
 	uint16_t reg;
+
+	KASSERT(mii_locked(sc->mii_pdata));
 
 	if (sc->mii_flags & MIIF_NOISOLATE)
 		reg = BMCR_RESET;
