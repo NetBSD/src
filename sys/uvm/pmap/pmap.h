@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 2020/03/11 13:30:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 2020/03/15 11:36:24 rin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -185,7 +185,7 @@ extern pmap_segtab_t pmap_kern_segtab;
 /*
  *	Bootstrap the system enough to run with virtual memory.
  */
-void	pmap_remove_all(pmap_t);
+bool	pmap_remove_all(pmap_t);
 void	pmap_set_modified(paddr_t);
 bool	pmap_page_clear_attributes(struct vm_page_md *, u_int);
 void	pmap_page_set_attributes(struct vm_page_md *, u_int);
