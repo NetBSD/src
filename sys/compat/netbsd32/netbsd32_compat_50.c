@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.47 2020/03/12 15:02:29 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.48 2020/03/15 12:46:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.47 2020/03/12 15:02:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.48 2020/03/15 12:46:02 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1013,9 +1013,7 @@ static struct syscall_package compat_netbsd32_50_syscalls[] = {
 	{ 0, 0, NULL }
 }; 
 
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32_50,
-    "compat_netbsd32_60,compat_50,compat_50_quota");
-
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_50, "compat_netbsd32_60,compat_50");
 
 static int
 compat_netbsd32_50_modcmd(modcmd_t cmd, void *arg)
