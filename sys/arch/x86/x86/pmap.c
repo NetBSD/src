@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.369 2020/03/15 15:58:24 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.370 2020/03/15 19:41:04 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.369 2020/03/15 15:58:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.370 2020/03/15 19:41:04 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2032,7 +2032,7 @@ pmap_lookup_pv(const struct pmap *pmap, const struct vm_page *ptp,
 	 *
 	 * If the page is tracked with an embedded entry then the tree
 	 * lookup can be avoided.  It's safe to check for this specific
-	 * set of values without pp_lock because all 3 will only ever be
+	 * set of values without pp_lock because both will only ever be
 	 * set together for this pmap.
 	 *
 	 */
@@ -2088,7 +2088,7 @@ pmap_enter_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 	 * If entering the same page and it's already tracked with an
 	 * embedded entry, we can avoid the expense below.  It's safe
 	 * to check for this very specific set of values without a lock
-	 * because all 3 will only ever be set together for this pmap.
+	 * because both will only ever be set together for this pmap.
 	 */
 	if (atomic_load_relaxed(&pp->pp_pte.pte_ptp) == ptp &&
 	    atomic_load_relaxed(&pp->pp_pte.pte_va) == va) {
