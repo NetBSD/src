@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.60 2020/03/14 22:23:17 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.61 2020/03/15 22:44:32 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.60 2020/03/14 22:23:17 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.61 2020/03/15 22:44:32 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1295,19 +1295,12 @@ synaptics_finger_detect(struct synaptics_softc *sc, struct synaptics_packet *sp,
 			fingers = 3;
 			break;
 
-		case SYNAPTICS_WIDTH_PEN:
-			fingers = 1;
-			break;
-
 		default:
 			/*
 			 * The width value can report spurious single-finger
 			 * events after a multi-finger event.
 			 */
-			if (sc->prev_fingers > 1)
-				fingers = sc->prev_fingers;
-			else
-				fingers = 1;
+			fingers = sc->prev_fingers <= 1 ? 1 : sc->prev_fingers;
 			break;
 		}
 	}
