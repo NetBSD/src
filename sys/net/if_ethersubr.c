@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.282 2020/01/29 04:11:35 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.283 2020/03/15 23:14:41 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.282 2020/01/29 04:11:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.283 2020/03/15 23:14:41 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1007,14 +1007,8 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #ifdef MBUFTRACE
-	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
-	    sizeof(ec->ec_tx_mowner.mo_name));
-	strlcpy(ec->ec_tx_mowner.mo_descr, "tx",
-	    sizeof(ec->ec_tx_mowner.mo_descr));
-	strlcpy(ec->ec_rx_mowner.mo_name, ifp->if_xname,
-	    sizeof(ec->ec_rx_mowner.mo_name));
-	strlcpy(ec->ec_rx_mowner.mo_descr, "rx",
-	    sizeof(ec->ec_rx_mowner.mo_descr));
+	mowner_init_owner(&ec->ec_tx_mowner, ifp->if_xname, "tx");
+	mowner_init_owner(&ec->ec_rx_mowner, ifp->if_xname, "rx");
 	MOWNER_ATTACH(&ec->ec_tx_mowner);
 	MOWNER_ATTACH(&ec->ec_rx_mowner);
 	ifp->if_mowner = &ec->ec_tx_mowner;
