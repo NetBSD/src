@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.668 2020/02/18 04:07:14 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.669 2020/03/15 23:04:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.668 2020/02/18 04:07:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.669 2020/03/15 23:04:50 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -759,7 +759,7 @@ static void	wm_init_sysctls(struct wm_softc *);
 static void	wm_unset_stopping_flags(struct wm_softc *);
 static void	wm_set_stopping_flags(struct wm_softc *);
 static void	wm_stop(struct ifnet *, int);
-static void	wm_stop_locked(struct ifnet *, int);
+static void	wm_stop_locked(struct ifnet *, bool, bool);
 static void	wm_dump_mbuf_chain(struct wm_softc *, struct mbuf *);
 static void	wm_82547_txfifo_stall(void *);
 static int	wm_82547_txfifo_bugchk(struct wm_softc *, struct mbuf *);
@@ -1832,6 +1832,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, CALLOUT_FLAGS);
+	callout_setfunc(&sc->sc_tick_ch, wm_tick, sc);
 	sc->sc_core_stopping = false;
 
 	wmp = wm_lookup(pa);
@@ -2880,6 +2881,12 @@ alloc_retry:
 	snprintb(buf, sizeof(buf), WM_FLAGS, sc->sc_flags);
 	aprint_verbose_dev(sc->sc_dev, "%s\n", buf);
 
+#ifdef WM_MPSAFE
+	sc->sc_core_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+#else
+	sc->sc_core_lock = NULL;
+#endif
+
 	/* Initialize the media structures accordingly. */
 	if (sc->sc_mediatype == WM_MEDIATYPE_COPPER)
 		wm_gmii_mediainit(sc, wmp->wmp_product);
@@ -3016,12 +3023,6 @@ alloc_retry:
 	sc->sc_rx_process_limit = WM_RX_PROCESS_LIMIT_DEFAULT;
 	sc->sc_rx_intr_process_limit = WM_RX_INTR_PROCESS_LIMIT_DEFAULT;
 
-#ifdef WM_MPSAFE
-	sc->sc_core_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
-#else
-	sc->sc_core_lock = NULL;
-#endif
-
 	/* Attach the interface. */
 	error = if_initialize(ifp);
 	if (error != 0) {
@@ -3102,12 +3103,12 @@ wm_detach(device_t self, int flags __unused)
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	if_percpuq_destroy(sc->sc_ipq);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	/* Unload RX dmamaps and free mbufs */
 	for (i = 0; i < sc->sc_nqueues; i++) {
@@ -3379,7 +3380,7 @@ wm_tick(void *arg)
 
 	wm_watchdog(ifp);
 
-	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 static int
@@ -5844,7 +5845,7 @@ wm_init_locked(struct ifnet *ifp)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 	/* Cancel any pending I/O. */
-	wm_stop_locked(ifp, 0);
+	wm_stop_locked(ifp, false, false);
 
 	/* Update statistics before reset */
 	if_statadd2(ifp, if_collisions, CSR_READ(sc, WMREG_COLC),
@@ -6378,7 +6379,7 @@ wm_init_locked(struct ifnet *ifp)
 	wm_unset_stopping_flags(sc);
 
 	/* Start the one second link check clock. */
-	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 
 	/* ...all done! */
 	ifp->if_flags |= IFF_RUNNING;
@@ -6404,8 +6405,10 @@ wm_stop(struct ifnet *ifp, int disable)
 {
 	struct wm_softc *sc = ifp->if_softc;
 
+	ASSERT_SLEEPABLE();
+
 	WM_CORE_LOCK(sc);
-	wm_stop_locked(ifp, disable);
+	wm_stop_locked(ifp, disable ? true : false, true);
 	WM_CORE_UNLOCK(sc);
 
 	/*
@@ -6420,7 +6423,7 @@ wm_stop(struct ifnet *ifp, int disable)
 }
 
 static void
-wm_stop_locked(struct ifnet *ifp, int disable)
+wm_stop_locked(struct ifnet *ifp, bool disable, bool wait)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txsoft *txs;
@@ -6431,13 +6434,6 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 	KASSERT(WM_CORE_LOCKED(sc));
 
 	wm_set_stopping_flags(sc);
-
-	/* Stop the one second clock. */
-	callout_stop(&sc->sc_tick_ch);
-
-	/* Stop the 82547 Tx FIFO stall check timer. */
-	if (sc->sc_type == WM_T_82547)
-		callout_stop(&sc->sc_txfifo_ch);
 
 	if (sc->sc_flags & WM_F_HAS_MII) {
 		/* Down the MII. */
@@ -6468,6 +6464,26 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 			CSR_WRITE(sc, WMREG_EIAC, 0);
 		} else
 			CSR_WRITE(sc, WMREG_EIAC_82574, 0);
+	}
+
+	/*
+	 * Stop callouts after interrupts are disabled; if we have
+	 * to wait for them, we will be releasing the CORE_LOCK
+	 * briefly, which will unblock interrupts on the current CPU.
+	 */
+
+	/* Stop the one second clock. */
+	if (wait)
+		callout_halt(&sc->sc_tick_ch, sc->sc_core_lock);
+	else
+		callout_stop(&sc->sc_tick_ch);
+
+	/* Stop the 82547 Tx FIFO stall check timer. */
+	if (sc->sc_type == WM_T_82547) {
+		if (wait)
+			callout_halt(&sc->sc_txfifo_ch, sc->sc_core_lock);
+		else
+			callout_stop(&sc->sc_txfifo_ch);
 	}
 
 	/* Release any queued transmit buffers. */
@@ -10423,8 +10439,8 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	wm_gmii_reset(sc);
 
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init(&mii->mii_media, IFM_IMASK, wm_gmii_mediachange,
-	    wm_gmii_mediastatus);
+	ifmedia_init_with_lock(&mii->mii_media, IFM_IMASK, wm_gmii_mediachange,
+	    wm_gmii_mediastatus, sc->sc_core_lock);
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
 	    || (sc->sc_type == WM_T_82580)
@@ -11970,12 +11986,14 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 
 	if (((sc->sc_type >= WM_T_82575) && (sc->sc_type <= WM_T_I211))
-	    && (sc->sc_mediatype == WM_MEDIATYPE_SERDES))
-		ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK,
-		    wm_serdes_mediachange, wm_serdes_mediastatus);
-	else
-		ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK,
-		    wm_tbi_mediachange, wm_tbi_mediastatus);
+	    && (sc->sc_mediatype == WM_MEDIATYPE_SERDES)) {
+		ifmedia_init_with_lock(&sc->sc_mii.mii_media, IFM_IMASK,
+		    wm_serdes_mediachange, wm_serdes_mediastatus,
+		    sc->sc_core_lock);
+	} else {
+		ifmedia_init_with_lock(&sc->sc_mii.mii_media, IFM_IMASK,
+		    wm_tbi_mediachange, wm_tbi_mediastatus, sc->sc_core_lock);
+	}
 
 	/*
 	 * SWD Pins:
