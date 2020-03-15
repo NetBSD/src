@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.203 2020/03/11 16:20:57 msaitoh Exp $	*/
+/*	$NetBSD: tulip.c,v 1.204 2020/03/15 22:19:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.203 2020/03/11 16:20:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.204 2020/03/15 22:19:00 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -683,9 +683,9 @@ tlp_start(struct ifnet *ifp)
 	 * itself into the ring.
 	 */
 	if (sc->sc_flags & TULIPF_WANT_SETUP)
-		ifp->if_flags |= IFF_OACTIVE;
+		return;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
 		return;
 
 	if (sc->sc_tick == tlp_2114x_nway_tick &&
@@ -768,15 +768,8 @@ tlp_start(struct ifnet *ifp)
 		if (dmamap->dm_nsegs > sc->sc_txfree) {
 			/*
 			 * Not enough free descriptors to transmit this
-			 * packet.  We haven't committed to anything yet,
-			 * so just unload the DMA map, put the packet
-			 * back on the queue, and punt.  Notify the upper
-			 * layer that there are no more slots left.
-			 *
-			 * XXX We could allocate an mbuf and copy, but
-			 * XXX it is worth it?
+			 * packet.
 			 */
-			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			if (m != NULL)
 				m_freem(m);
@@ -875,11 +868,6 @@ tlp_start(struct ifnet *ifp)
 		 * Pass the packet to any BPF listeners.
 		 */
 		bpf_mtap(ifp, m0, BPF_D_OUT);
-	}
-
-	if (txs == NULL || sc->sc_txfree == 0) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
 	}
 
 	if (sc->sc_txfree != ofree) {
@@ -1414,8 +1402,6 @@ tlp_txintr(struct tulip_softc *sc)
 	DPRINTF(sc, ("%s: tlp_txintr: sc_flags 0x%08x\n",
 	    device_xname(sc->sc_dev), sc->sc_flags));
 
-	ifp->if_flags &= ~IFF_OACTIVE;
-
 	/*
 	 * Go through our Tx list and free mbufs for those
 	 * frames that have been transmitted.
@@ -1947,12 +1933,11 @@ tlp_init(struct ifnet *ifp)
 	 * Note that the interface is now running.
 	 */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->sc_if_flags = ifp->if_flags;
 
  out:
 	if (error) {
-		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		ifp->if_flags &= ~IFF_RUNNING;
 		ifp->if_timer = 0;
 		printf("%s: interface not running\n", device_xname(sc->sc_dev));
 	}
@@ -2062,7 +2047,7 @@ tlp_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
 
