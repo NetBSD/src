@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.73 2020/02/06 01:37:46 mrg Exp $
+#	$NetBSD: GENERIC,v 1.74 2020/03/15 13:54:28 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -737,7 +737,6 @@ dwctwo* 	at fdt?			# Designware USB DRD
 ehci* 		at fdt?			# EHCI
 motg* 		at fdt?			# Mentor Graphics USB OTG
 ohci* 		at fdt?			# OHCI
-ehci* 		at fdt?			# EHCI
 xhci* 		at fdt?			# XHCI
 usb* 		at usbus?
 
