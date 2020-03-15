@@ -1,0 +1,29 @@
+#	$NetBSD: files.sociox,v 1.1 2020/03/15 12:01:41 nisimura Exp $
+#
+# Configuration info for Socionext Unifier/SC2A11
+#
+#
+
+# SC2A11 SynQuacer NetSec GbE
+device	scx: ether, ifnet, arp, mii, bus_dma_generic
+attach	scx at fdt
+file	arch/arm/sociox/if_scx.c		scx
+
+# Unifier AVE GbE
+device	ave: ether, ifnet, arp, mii, bus_dma_generic
+attach	ave at fdt
+file	arch/arm/sociox/if_ave.c		ave
+
+# Socionext eMMC
+attach	sdhc at fdt with sniemmc
+file	arch/arm/sociox/sni_emmc.c		sniemmc
+
+# Socionext I2C
+device	sniiic: i2cbus
+attach	sniiic at fdt
+file	arch/arm/sociox/sni_i2c.c		sniiic	needs-flag
+
+# Socionext GPIO
+device	snigpio: gpiobus
+attach	snigpio at fdt
+file	arch/arm/sociox/sni_gpio.c		snigpio
