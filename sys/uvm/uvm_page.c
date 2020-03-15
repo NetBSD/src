@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.232 2020/03/14 21:06:35 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.233 2020/03/15 11:17:22 rin Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.232 2020/03/14 21:06:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.233 2020/03/15 11:17:22 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1749,6 +1749,7 @@ uvm_pagewait(struct vm_page *pg, krwlock_t *lock, const char *wmesg)
 void
 uvm_pageunbusy(struct vm_page *pg)
 {
+	UVMHIST_FUNC("uvm_pageunbusy"); UVMHIST_CALLED(ubchist);
 
 	KASSERT((pg->flags & PG_BUSY) != 0);
 	KASSERT(uvm_page_owner_locked_p(pg, true));
