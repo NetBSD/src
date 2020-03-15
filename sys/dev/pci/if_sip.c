@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.180 2020/03/13 00:45:59 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.181 2020/03/15 22:20:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.180 2020/03/13 00:45:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.181 2020/03/15 22:20:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1557,9 +1557,9 @@ sipcom_start(struct ifnet *ifp)
 	 * If we've been told to pause, don't transmit any more packets.
 	 */
 	if (!sc->sc_gigabit && sc->sc_paused)
-		ifp->if_flags |= IFF_OACTIVE;
+		return;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
 		return;
 
 	/*
@@ -1647,15 +1647,8 @@ sipcom_start(struct ifnet *ifp)
 		if (dmamap->dm_nsegs > (sc->sc_txfree - 1)) {
 			/*
 			 * Not enough free descriptors to transmit this
-			 * packet.  We haven't committed anything yet,
-			 * so just unload the DMA map, put the packet
-			 * back on the queue, and punt.  Notify the upper
-			 * layer that there are not more slots left.
-			 *
-			 * XXX We could allocate an mbuf and copy, but
-			 * XXX is it worth it?
+			 * packet.
 			 */
-			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			if (m != NULL)
 				m_freem(m);
@@ -1745,11 +1738,6 @@ sipcom_start(struct ifnet *ifp)
 
 		/* Pass the packet to any BPF listeners. */
 		bpf_mtap(ifp, m0, BPF_D_OUT);
-	}
-
-	if (txs == NULL || sc->sc_txfree == 0) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
 	}
 
 	if (sc->sc_txfree != ofree) {
@@ -2008,11 +1996,9 @@ sipcom_intr(void *arg)
 			if (isr & ISR_PAUSE_ST) {
 				sc->sc_paused = 1;
 				SIP_EVCNT_INCR(&sc->sc_ev_rxpause);
-				ifp->if_flags |= IFF_OACTIVE;
 			}
 			if (isr & ISR_PAUSE_END) {
 				sc->sc_paused = 0;
-				ifp->if_flags &= ~IFF_OACTIVE;
 			}
 		}
 
@@ -2067,9 +2053,6 @@ sipcom_txintr(struct sip_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct sip_txsoft *txs;
 	uint32_t cmdsts;
-
-	if (sc->sc_paused == 0)
-		ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Go through our Tx list and free mbufs for those
@@ -2858,7 +2841,6 @@ sipcom_init(struct ifnet *ifp)
 	 * ...all done!
 	 */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->sc_if_flags = ifp->if_flags;
 	sc->sc_prev.ec_capenable = sc->sc_ethercom.ec_capenable;
 	sc->sc_prev.is_vlan = VLAN_ATTACHED(&(sc)->sc_ethercom);
@@ -2956,7 +2938,7 @@ sipcom_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
 	if (disable)
