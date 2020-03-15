@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.74 2020/02/07 00:04:28 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.75 2020/03/15 22:20:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.74 2020/02/07 00:04:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.75 2020/03/15 22:20:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -922,7 +922,7 @@ pcn_start(struct ifnet *ifp)
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, ofree, seg;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
 		return;
 
 	/*
@@ -999,15 +999,8 @@ pcn_start(struct ifnet *ifp)
 		if (dmamap->dm_nsegs > (sc->sc_txfree - 1)) {
 			/*
 			 * Not enough free descriptors to transmit this
-			 * packet.  We haven't committed anything yet,
-			 * so just unload the DMA map, put the packet
-			 * back on the queue, and punt.  Notify the upper
-			 * layer that there are not more slots left.
-			 *
-			 * XXX We could allocate an mbuf and copy, but
-			 * XXX is it worth it?
+			 * packet.
 			 */
-			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			if (m != NULL)
 				m_freem(m);
@@ -1132,11 +1125,6 @@ pcn_start(struct ifnet *ifp)
 
 		/* Pass the packet to any BPF listeners. */
 		bpf_mtap(ifp, m0, BPF_D_OUT);
-	}
-
-	if (sc->sc_txsfree == 0 || sc->sc_txfree == 0) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
 	}
 
 	if (sc->sc_txfree != ofree) {
@@ -1324,8 +1312,6 @@ pcn_txintr(struct pcn_softc *sc)
 	struct pcn_txsoft *txs;
 	uint32_t tmd1, tmd2, tmd;
 	int i, j;
-
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Go through our Tx list and free mbufs for those
@@ -1817,7 +1803,6 @@ pcn_init(struct ifnet *ifp)
 
 	/* ...all done! */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
 	if (error)
@@ -1880,7 +1865,7 @@ pcn_stop(struct ifnet *ifp, int disable)
 	}
 
 	/* Mark the interface as down and cancel the watchdog timer. */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
 	if (disable)

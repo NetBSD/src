@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.43 2020/03/12 03:01:46 thorpej Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.44 2020/03/15 22:19:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.43 2020/03/12 03:01:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.44 2020/03/15 22:19:00 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -469,11 +469,6 @@ sf_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
-	if (sc->sc_txpending == (SF_NTXDESC - 1)) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
-	}
-
 	if (sc->sc_txpending != opending) {
 		KASSERT(last != -1);
 		/*
@@ -637,8 +632,6 @@ sf_txintr(struct sf_softc *sc)
 
 	if (consumer == producer)
 		return;
-
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	while (consumer != producer) {
 		SF_CDTXCSYNC(sc, consumer, BUS_DMASYNC_POSTREAD);
@@ -1097,11 +1090,10 @@ sf_init(struct ifnet *ifp)
 	 * Note that the interface is now running.
 	 */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
 	if (error) {
-		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		ifp->if_flags &= ~IFF_RUNNING;
 		ifp->if_timer = 0;
 		printf("%s: interface not running\n", device_xname(sc->sc_dev));
 	}
@@ -1168,7 +1160,7 @@ sf_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
 	if (disable)
