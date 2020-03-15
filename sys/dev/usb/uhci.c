@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.296 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: uhci.c,v 1.297 2020/03/15 13:59:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.296 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.297 2020/03/15 13:59:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2006,7 +2006,7 @@ uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int len,
 		printf("%s: maxp=0\n", __func__);
 		return EINVAL;
 	}
-	size_t ntd = (len + maxp - 1) / maxp;
+	size_t ntd = howmany(len, maxp);
 	if (!rd && (flags & USBD_FORCE_SHORT_XFER)) {
 		ntd++;
 	}
@@ -3383,7 +3383,7 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 
 	if (ival > UHCI_VFRAMELIST_COUNT)
 		ival = UHCI_VFRAMELIST_COUNT;
-	npoll = (UHCI_VFRAMELIST_COUNT + ival - 1) / ival;
+	npoll = howmany(UHCI_VFRAMELIST_COUNT, ival);
 	DPRINTF("ival=%jd npoll=%jd", ival, npoll, 0, 0);
 
 	upipe->intr.npoll = npoll;
