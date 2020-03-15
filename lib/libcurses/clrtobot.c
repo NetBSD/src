@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.26 2020/03/13 02:57:26 roy Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.27 2020/03/15 01:18:43 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.26 2020/03/13 02:57:26 roy Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.27 2020/03/15 01:18:43 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -66,7 +66,17 @@ wclrtobot(WINDOW *win)
 	int	 minx, startx, starty, y;
 	__LDATA	*sp, *end, *maxx;
 	wchar_t bch;
-	attr_t	attr;
+	attr_t	battr;
+
+#ifdef HAVE_WCHAR
+	bch = (wchar_t)btowc((int)win->bch);
+#else
+	bch = win->bch;
+#endif
+	if (win != curscr)
+		battr = win->battr & __ATTRIBUTES;
+	else
+		battr = 0;
 
 #ifdef __GNUC__
 	maxx = NULL;		/* XXX gcc -Wuninitialized */
@@ -78,28 +88,20 @@ wclrtobot(WINDOW *win)
 		starty = win->cury;
 		startx = win->curx;
 	}
-#ifdef HAVE_WCHAR
-	bch = (wchar_t)btowc((int)win->bch);
-#else
-	bch = win->bch;
-#endif
-	if (win != curscr)
-		attr = win->battr & __ATTRIBUTES;
-	else
-		attr = 0;
 
 	for (y = starty; y < win->maxy; y++) {
 		minx = -1;
 		end = &win->alines[y]->line[win->maxx];
 		for (sp = &win->alines[y]->line[startx]; sp < end; sp++) {
-			if (!(__NEED_ERASE(sp, bch, attr)))
+			if (!(__NEED_ERASE(sp, bch, battr)))
 				continue;
 
 			maxx = sp;
 			if (minx == -1)
 				minx = (int)(sp - win->alines[y]->line);
-			sp->attr = attr | (sp->attr & __ALTCHARSET);
+
 			sp->ch = bch;
+			sp->attr = battr | (sp->attr & __ALTCHARSET);
 #ifdef HAVE_WCHAR
 			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
 				return ERR;

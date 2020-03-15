@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.31 2020/03/13 02:57:26 roy Exp $	*/
+/*	$NetBSD: erase.c,v 1.32 2020/03/15 01:18:43 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.31 2020/03/13 02:57:26 roy Exp $");
+__RCSID("$NetBSD: erase.c,v 1.32 2020/03/15 01:18:43 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -67,7 +67,7 @@ werase(WINDOW *win)
 	int     y;
 	__LDATA *sp, *end, *start;
 	wchar_t	bch;
-	attr_t	attr;
+	attr_t	battr;
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ERASE, "werase: (%p)\n", win);
@@ -78,18 +78,19 @@ werase(WINDOW *win)
 	bch = win->bch;
 #endif
 	if (win != curscr)
-		attr = win->battr & __ATTRIBUTES;
+		battr = win->battr & __ATTRIBUTES;
 	else
-		attr = 0;
+		battr = 0;
 
 	for (y = 0; y < win->maxy; y++) {
 		start = win->alines[y]->line;
 		end = &start[win->maxx];
 		for (sp = start; sp < end; sp++) {
-			if (!(__NEED_ERASE(sp, bch, attr)))
+			if (!(__NEED_ERASE(sp, bch, battr)))
 				continue;
-			sp->attr = attr | (sp->attr & __ALTCHARSET);
+
 			sp->ch = bch;
+			sp->attr = battr | (sp->attr & __ALTCHARSET);
 #ifdef HAVE_WCHAR
 			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
 				return ERR;
