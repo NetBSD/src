@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.364 2020/01/27 20:54:59 macallan Exp $
+# $NetBSD: GENERIC,v 1.365 2020/03/16 19:09:34 nia Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.364 $"
+#ident 		"GENERIC-$Revision: 1.365 $"
 
 maxusers	32
 
@@ -30,6 +30,9 @@ options 	ALTIVEC		# Include AltiVec support
 
 # Standard system options
 options 	INSECURE	# disable kernel security levels
+
+options		AUDIO_BLK_MS=4	# make software with low latency needs performant
+				# no substantial CPU overhead on this platform
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
