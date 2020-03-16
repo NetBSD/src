@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.c,v 1.3 2007/11/22 16:17:10 bouyer Exp $	*/
+/*	$NetBSD: xennet_checksum.c,v 1.3.98.1 2020/03/16 12:22:03 sborrill Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.3 2007/11/22 16:17:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.3.98.1 2020/03/16 12:22:03 sborrill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,7 +124,7 @@ xennet_checksum_fill(struct mbuf **mp)
 	nxt = iph->ip_p;
 	iphlen = iph->ip_hl * 4;
 	iplen = ntohs(iph->ip_len);
-	if (ehlen + iplen != m->m_pkthdr.len) {
+	if (ehlen + iplen > m->m_pkthdr.len) {
 		return EINVAL;
 	}
 	if (nxt == IPPROTO_UDP) {
