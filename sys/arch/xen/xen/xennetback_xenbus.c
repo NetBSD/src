@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.77 2020/03/16 20:49:22 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.78 2020/03/16 20:51:36 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.77 2020/03/16 20:49:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.78 2020/03/16 20:51:36 jdolecek Exp $");
 
 #include "opt_xen.h"
 
