@@ -1,4 +1,4 @@
-#	$NetBSD: files.sociox,v 1.1 2020/03/15 12:01:41 nisimura Exp $
+#	$NetBSD: files.sociox,v 1.2 2020/03/16 08:10:20 nisimura Exp $
 #
 # Configuration info for Socionext Unifier/SC2A11
 #
@@ -15,6 +15,7 @@ attach	ave at fdt
 file	arch/arm/sociox/if_ave.c		ave
 
 # Socionext eMMC
+device	sniemmc: sdmmcbus
 attach	sdhc at fdt with sniemmc
 file	arch/arm/sociox/sni_emmc.c		sniemmc
 
