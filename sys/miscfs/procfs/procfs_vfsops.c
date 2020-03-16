@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.102 2020/01/17 20:08:09 ad Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.103 2020/03/16 21:20:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.102 2020/01/17 20:08:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.103 2020/03/16 21:20:11 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -108,8 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.102 2020/01/17 20:08:09 ad Exp $
 MODULE(MODULE_CLASS_VFS, procfs, "ptrace_common");
 
 VFS_PROTOS(procfs);
-
-static struct sysctllog *procfs_sysctl_log;
 
 static kauth_listener_t procfs_listener;
 
@@ -518,6 +516,21 @@ procfs_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	return result;
 }
 
+SYSCTL_SETUP(procfs_sysctl_setup, "procfs sysctl")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "procfs",
+		       SYSCTL_DESCR("Process file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 12, CTL_EOL);
+	/*
+	 * XXX the "12" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "12" is the order as taken from sys/mount.h
+	 */
+}
 
 static int
 procfs_modcmd(modcmd_t cmd, void *arg)
@@ -529,17 +542,6 @@ procfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&procfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&procfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "procfs",
-			       SYSCTL_DESCR("Process file system"),
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, 12, CTL_EOL);
-		/*
-		 * XXX the "12" above could be dynamic, thereby eliminating
-		 * one more instance of the "number to vfs" mapping problem,
-		 * but "12" is the order as taken from sys/mount.h
-		 */
 
 		procfs_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
 		    procfs_listener_cb, NULL);
@@ -549,7 +551,6 @@ procfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_detach(&procfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_teardown(&procfs_sysctl_log);
 		kauth_unlisten_scope(procfs_listener);
 		break;
 	default:
