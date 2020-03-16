@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.36 2020/03/14 19:29:39 nia Exp $
+.\" $NetBSD: pms.4,v 1.37 2020/03/16 09:31:41 nia Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -174,7 +174,7 @@ ignored (default 4).
 Sets the top edge of the button emulation region on a clickpad.
 Since a clickpad only reports left clicks this region is used to emulate
 two or three buttons by detecting the finger location and reporting
-either a button 2 or button 3 click iff the click occurs within
+either a button 2 or button 3 click if the click occurs within
 the region bounded by button_boundary and the bottom of the clickpad.
 .It Dv hw.synaptics.button3_edge
 This defines the left hand edge of the button 3 region.
