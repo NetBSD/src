@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.141 2020/03/16 08:17:57 nisimura Exp $
+#	$NetBSD: GENERIC64,v 1.142 2020/03/16 08:48:05 nisimura Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -325,7 +325,7 @@ pci*		at ppb?
 awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
 enet*		at fdt?				# IMX FEC
-scx*		at fdt?				# SocioNext Gigabit Ethernet
+#scx*		at fdt?				# SocioNext Gigabit Ethernet
 aq*		at pci? dev ? function ?	# Aquantia AQC 10 gigabit
 ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
 genet*		at acpi?			# Broadcom GENET v5
@@ -522,7 +522,7 @@ options 	FONT_BOLD8x16
 options 	FONT_BOLD16x32
 
 # GPU
-nouveau*	at fdt?			# NVIDIA GPU
+#nouveau*	at fdt?			# NVIDIA GPU
 
 # Backlight
 pwmbacklight*	at fdt?			# PWM Backlight controls
