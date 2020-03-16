@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.98 2020/03/16 13:02:05 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.99 2020/03/16 19:20:36 nia Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -326,11 +326,9 @@ opportunity to adjust this block size to get it within
 implementation-required limits.
 Normally the
 .Va blocksize
-is calculated to correspond to 40ms
-(for some hardware, this value may be different due to
-the hardware restrictions)
-of sound and it is recalculated
-when the encoding parameters change.
+is calculated to correspond to the value of the
+.Em hw.audioX.blk_ms
+sysctl and is recalculated when the encoding parameters change.
 If the descriptor is opened for read only,
 .Va blocksize
 indicates the blocksize for the recording track.
