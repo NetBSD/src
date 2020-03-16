@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.c,v 1.9 2020/03/16 19:56:39 ad Exp $	*/
+/*	$NetBSD: pmap_pvt.c,v 1.10 2020/03/16 20:07:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_pvt.c,v 1.9 2020/03/16 19:56:39 ad Exp $");
+__RCSID("$NetBSD: pmap_pvt.c,v 1.10 2020/03/16 20:07:44 ad Exp $");
 
 #include <sys/atomic.h>
 #include <sys/kmem.h>
@@ -77,9 +77,6 @@ pmap_pv_track(paddr_t start, psize_t size)
 {
 	struct pv_track *pvt;
 	size_t npages;
-#ifdef PMAP_PAGE_INIT
-	size_t i;
-#endif
 
 	KASSERT(start == trunc_page(start));
 	KASSERT(size == trunc_page(size));
@@ -94,7 +91,7 @@ pmap_pv_track(paddr_t start, psize_t size)
 	pvt->pvt_size = size;
 
 #ifdef PMAP_PAGE_INIT
-	for (i = 0; i < npages; i++)
+	for (size_t i = 0; i < npages; i++)
 		PMAP_PAGE_INIT(&pvt->pvt_pages[i]);
 #endif
 
