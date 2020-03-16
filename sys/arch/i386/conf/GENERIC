@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1225 2020/02/17 06:32:46 nisimura Exp $
+# $NetBSD: GENERIC,v 1.1226 2020/03/16 19:09:34 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1225 $"
+#ident		"GENERIC-$Revision: 1.1226 $"
 
 maxusers	64		# estimated number of users
 
@@ -76,6 +76,9 @@ options 	MULTIBOOT	# Multiboot support (see multiboot(8))
 # Standard system options
 
 options 	INSECURE	# disable kernel security levels - X needs this
+
+options		AUDIO_BLK_MS=4	# make software with low latency needs performant
+				# no substantial CPU overhead on this platform
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
