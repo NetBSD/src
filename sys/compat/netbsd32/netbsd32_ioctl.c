@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.111 2020/03/16 00:05:29 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.112 2020/03/16 01:37:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.111 2020/03/16 00:05:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.112 2020/03/16 01:37:51 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -63,6 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.111 2020/03/16 00:05:29 christo
 #include <sys/ksyms.h>
 #include <sys/drvctlio.h>
 #include <sys/compat_stub.h>
+
+#include <sys/vnode.h>
+#include <sys/conf.h>
+#include <miscfs/specfs/specdev.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -498,6 +502,7 @@ netbsd32_to_clockctl_clock_settime(
 	p->tp = NETBSD32PTR64(s32p->tp);
 }
 
+#ifdef NTP
 static inline void
 netbsd32_to_clockctl_ntp_adjtime(
     const struct netbsd32_clockctl_ntp_adjtime *s32p,
@@ -507,6 +512,7 @@ netbsd32_to_clockctl_ntp_adjtime(
 	p->tp = NETBSD32PTR64(s32p->tp);
 	p->retval = s32p->retval;
 }
+#endif
 
 static inline void
 netbsd32_to_ksyms_gsymbol(const struct netbsd32_ksyms_gsymbol *s32p,
@@ -945,6 +951,7 @@ netbsd32_from_clockctl_clock_settime(const struct clockctl_clock_settime *p,
 	NETBSD32PTR32(s32p->tp, p->tp);
 }
 
+#ifdef NTP
 static inline void
 netbsd32_from_clockctl_ntp_adjtime(const struct clockctl_ntp_adjtime *p,
     struct netbsd32_clockctl_ntp_adjtime *s32p, u_long cmd)
@@ -953,6 +960,7 @@ netbsd32_from_clockctl_ntp_adjtime(const struct clockctl_ntp_adjtime *p,
 	NETBSD32PTR32(s32p->tp, p->tp);
 	s32p->retval = p->retval;
 }
+#endif
 
 static inline void
 netbsd32_from_ksyms_gsymbol( const struct ksyms_gsymbol *p,
@@ -1034,6 +1042,51 @@ netbsd32_from_dkwedge_list(const struct dkwedge_list *p,
 	s32p->dkwl_nwedges = p->dkwl_nwedges;
 	s32p->dkwl_ncopied = p->dkwl_ncopied;
 }
+
+#ifdef NTP
+static int
+netbsd32_do_clockctl_ntp_adjtime(struct file *fp,
+    struct clockctl_ntp_adjtime *args)
+{
+	struct vnode *vp;
+	struct specnode *sn;
+	const char *name;
+
+	struct netbsd32_timex ntv32;
+	struct timex ntv;
+	int error;
+
+	/* Verify that the file descriptor is is to the clockctl device */
+	if (fp->f_type != DTYPE_VNODE)
+		return EINVAL;
+
+	vp = fp->f_vnode;
+	if (vp->v_type != VCHR)
+		return EINVAL;
+
+	sn = vp->v_specnode;
+	name = cdevsw_getname(major(sn->sn_rdev));
+	if (name == NULL || strcmp(name, "clockctl") != 0)
+		return EINVAL;
+
+	if (vec_ntp_adjtime1 == NULL)
+		return EINVAL;
+
+	error = copyin(args->tp, &ntv32, sizeof(ntv32));
+	if (error)
+		return error;
+
+	netbsd32_to_timex(&ntv32, &ntv);
+	(*vec_ntp_adjtime1)(&ntv);
+	netbsd32_from_timex(&ntv, &ntv32);
+
+	error = copyout(&ntv32, args->tp, sizeof(ntv32));
+	if (error == 0)
+		args->retval = ntp_timestatus();
+
+	return error;
+}
+#endif
 
 /*
  * main ioctl syscall.
@@ -1425,8 +1478,32 @@ netbsd32_ioctl(struct lwp *l,
 		IOCTL_STRUCT_CONV_TO(CLOCKCTL_CLOCK_SETTIME,
 		    clockctl_clock_settime);
 	case CLOCKCTL_NTP_ADJTIME32:
-		IOCTL_STRUCT_CONV_TO(CLOCKCTL_NTP_ADJTIME,
-		    clockctl_ntp_adjtime);
+#ifdef NTP
+		{
+			size = IOCPARM_LEN(CLOCKCTL_NTP_ADJTIME);
+			if (size > sizeof(stkbuf))
+				data = memp = kmem_alloc(size, KM_SLEEP);
+			else
+				data = (void *)stkbuf;
+
+			netbsd32_to_clockctl_ntp_adjtime(
+				(const struct netbsd32_clockctl_ntp_adjtime *)data32,
+				(struct clockctl_ntp_adjtime *)data,
+				CLOCKCTL_NTP_ADJTIME);
+			error = netbsd32_do_clockctl_ntp_adjtime(fp,
+				(struct clockctl_ntp_adjtime *)data);
+			netbsd32_from_clockctl_ntp_adjtime(
+				(const struct clockctl_ntp_adjtime *)data,
+				(struct netbsd32_clockctl_ntp_adjtime *)data32,
+				CLOCKCTL_NTP_ADJTIME);
+
+			break;
+		}
+#else
+		error = ENOTTY;
+		break;
+#endif /* NTP */
+
 	case KIOCGSYMBOL32:
 		IOCTL_STRUCT_CONV_TO(KIOCGSYMBOL, ksyms_gsymbol);
 	case KIOCGVALUE32:
