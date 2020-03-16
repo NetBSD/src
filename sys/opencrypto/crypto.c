@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.112 2020/02/01 13:48:08 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.113 2020/03/16 21:20:12 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.112 2020/02/01 13:48:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.113 2020/03/16 21:20:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -383,8 +383,7 @@ int	crypto_userasymcrypto = 1;	/* userland may do asym crypto reqs */
  */
 int	crypto_devallowsoft = 1;	/* only use hardware crypto */
 
-static void
-sysctl_opencrypto_setup(struct sysctllog **clog)
+SYSCTL_SETUP(sysctl_opencrypto_setup, "opencrypto sysctl")
 {
 	const struct sysctlnode *ocnode;
 	const struct sysctlnode *retqnode, *retkqnode;
@@ -519,8 +518,6 @@ static struct cryptostats cryptostats;
 static	int crypto_timing = 0;
 #endif
 
-static struct sysctllog *sysctl_opencrypto_clog;
-
 static void
 crypto_crp_ret_qs_init(void)
 {
@@ -587,8 +584,6 @@ crypto_init0(void)
 		return crypto_destroy(false);
 	}
 
-	sysctl_opencrypto_setup(&sysctl_opencrypto_clog);
-
 	return 0;
 }
 
@@ -654,9 +649,6 @@ crypto_destroy(bool exit_kthread)
 			crypto_put_crp_ret_qs(ci);
 		}
 	}
-
-	if (sysctl_opencrypto_clog != NULL)
-		sysctl_teardown(&sysctl_opencrypto_clog);
 
 	if (crypto_ret_si != NULL)
 		softint_disestablish(crypto_ret_si);

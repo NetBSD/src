@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.235 2020/02/07 12:35:33 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.236 2020/03/16 21:20:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.235 2020/02/07 12:35:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.236 2020/03/16 21:20:11 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -2427,14 +2427,12 @@ bpf_sysctl_gstats_handler(SYSCTLFN_ARGS)
 	return 0;
 }
 
-static struct sysctllog *bpf_sysctllog;
-static void
-sysctl_net_bpf_setup(void)
+SYSCTL_SETUP(sysctl_net_bpf_setup, "bpf sysctls")
 {
 	const struct sysctlnode *node;
 
 	node = NULL;
-	sysctl_createv(&bpf_sysctllog, 0, NULL, &node,
+	sysctl_createv(clog, 0, NULL, &node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "bpf",
 		       SYSCTL_DESCR("BPF options"),
@@ -2442,26 +2440,26 @@ sysctl_net_bpf_setup(void)
 		       CTL_NET, CTL_CREATE, CTL_EOL);
 	if (node != NULL) {
 #if defined(MODULAR) || defined(BPFJIT)
-		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
+		sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_BOOL, "jit",
 			SYSCTL_DESCR("Toggle Just-In-Time compilation"),
 			sysctl_net_bpf_jit, 0, &bpf_jit, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 #endif
-		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
+		sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_INT, "maxbufsize",
 			SYSCTL_DESCR("Maximum size for data capture buffer"),
 			sysctl_net_bpf_maxbufsize, 0, &bpf_maxbufsize, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
-		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
+		sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT,
 			CTLTYPE_STRUCT, "stats",
 			SYSCTL_DESCR("BPF stats"),
 			bpf_sysctl_gstats_handler, 0, NULL, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
-		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
+		sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT,
 			CTLTYPE_STRUCT, "peers",
 			SYSCTL_DESCR("BPF peers"),
@@ -2510,7 +2508,6 @@ bpf_modcmd(modcmd_t cmd, void *arg)
 		bpf_ops_handover_enter(&bpf_ops_kernel);
 		atomic_swap_ptr(&bpf_ops, &bpf_ops_kernel);
 		bpf_ops_handover_exit();
-		sysctl_net_bpf_setup();
 		break;
 
 	case MODULE_CMD_FINI:
@@ -2535,7 +2532,6 @@ bpf_modcmd(modcmd_t cmd, void *arg)
 		 * disable packet capture.
 		 */
 		error = EOPNOTSUPP;
-		/* insert sysctl teardown */
 		break;
 
 	default:
