@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.105 2020/03/14 15:32:51 ad Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.106 2020/03/16 21:20:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.105 2020/03/14 15:32:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.106 2020/03/16 21:20:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.105 2020/03/14 15:32:51 ad Exp $");
 #define	wapbl_free(a, s) kmem_free((a), (s))
 #define	wapbl_calloc(n, s) kmem_zalloc((n)*(s), KM_SLEEP)
 
-static struct sysctllog *wapbl_sysctl;
 static int wapbl_flush_disk_cache = 1;
 static int wapbl_verbose_commit = 0;
 static int wapbl_allow_dpofua = 0; 	/* switched off by default for now */
@@ -318,60 +317,57 @@ const struct wapbl_ops wapbl_ops = {
 	.wo_wapbl_biodone	= wapbl_biodone,
 };
 
-static int
-wapbl_sysctl_init(void)
+SYSCTL_SETUP(wapbl_sysctl_init, "wapbl sysctl")
 {
 	int rv;
 	const struct sysctlnode *rnode, *cnode;
 
-	wapbl_sysctl = NULL;
-
-	rv = sysctl_createv(&wapbl_sysctl, 0, NULL, &rnode,
+	rv = sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "wapbl",
 		       SYSCTL_DESCR("WAPBL journaling options"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_CREATE, CTL_EOL);
 	if (rv)
-		return rv;
+		return;
 
-	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &cnode,
+	rv = sysctl_createv(clog, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "flush_disk_cache",
 		       SYSCTL_DESCR("flush disk cache"),
 		       NULL, 0, &wapbl_flush_disk_cache, 0,
 		       CTL_CREATE, CTL_EOL);
 	if (rv)
-		return rv;
+		return;
 
-	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &cnode,
+	rv = sysctl_createv(clog, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "verbose_commit",
 		       SYSCTL_DESCR("show time and size of wapbl log commits"),
 		       NULL, 0, &wapbl_verbose_commit, 0,
 		       CTL_CREATE, CTL_EOL);
 	if (rv)
-		return rv;
+		return;
 
-	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &cnode,
+	rv = sysctl_createv(clog, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "allow_dpofua",
 		       SYSCTL_DESCR("allow use of FUA/DPO instead of cache flush if available"),
 		       NULL, 0, &wapbl_allow_dpofua, 0,
 		       CTL_CREATE, CTL_EOL);
 	if (rv)
-		return rv;
+		return;
 
-	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &cnode,
+	rv = sysctl_createv(clog, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "journal_iobufs",
 		       SYSCTL_DESCR("count of bufs used for journal I/O (max async count)"),
 		       NULL, 0, &wapbl_journal_iobufs, 0,
 		       CTL_CREATE, CTL_EOL);
 	if (rv)
-		return rv;
+		return;
 
-	return rv;
+	return;
 }
 
 static void
@@ -382,16 +378,11 @@ wapbl_init(void)
 	    "wapblentrypl", &pool_allocator_kmem, IPL_VM);
 	pool_init(&wapbl_dealloc_pool, sizeof(struct wapbl_dealloc), 0, 0, 0,
 	    "wapbldealloc", &pool_allocator_nointr, IPL_NONE);
-
-	wapbl_sysctl_init();
 }
 
 static int
 wapbl_fini(void)
 {
-
-	if (wapbl_sysctl != NULL)
-		 sysctl_teardown(&wapbl_sysctl);
 
 	pool_destroy(&wapbl_dealloc_pool);
 	pool_destroy(&wapbl_entry_pool);
