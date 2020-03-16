@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.75 2020/03/15 22:20:31 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.76 2020/03/16 01:54:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.75 2020/03/15 22:20:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.76 2020/03/16 01:54:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,6 @@ struct pcn_softc {
 
 #ifdef PCN_EVENT_COUNTERS
 	/* Event counters. */
-	struct evcnt sc_ev_txsstall;	/* Tx stalled due to no txs */
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
 	struct evcnt sc_ev_txintr;	/* Tx interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
@@ -821,8 +820,6 @@ pcn_attach(device_t parent, device_t self, void *aux)
 
 #ifdef PCN_EVENT_COUNTERS
 	/* Attach event counters. */
-	evcnt_attach_dynamic(&sc->sc_ev_txsstall, EVCNT_TYPE_MISC,
-	    NULL, device_xname(self), "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
 	    NULL, device_xname(self), "txdstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txintr, EVCNT_TYPE_INTR,
@@ -936,18 +933,12 @@ pcn_start(struct ifnet *ifp)
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
-	for (;;) {
+	while (sc->sc_txsfree != 0) {
 		/* Grab a packet off the queue. */
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 		m = NULL;
-
-		/* Get a work queue entry. */
-		if (sc->sc_txsfree == 0) {
-			PCN_EVCNT_INCR(&sc->sc_ev_txsstall);
-			break;
-		}
 
 		txs = &sc->sc_txsoft[sc->sc_txsnext];
 		dmamap = txs->txs_dmamap;
