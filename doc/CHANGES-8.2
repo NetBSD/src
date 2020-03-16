@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.107 2020/03/13 08:36:23 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.108 2020/03/16 12:23:05 sborrill Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2139,4 +2139,12 @@ sys/netipsec/key.c				1.271
 	Reduce unnecessary reqid of NAT-T ipsecif(4).
 	Fix kern/55066.
 	[knakahara, ticket #1520]
+
+sys/arch/xen/xen/xennet_checksum.c		1.4
+
+	Make the packet length check less strict, allow the physical
+	packet longer than IP payload. This fixes problem where checksum
+	was not recomputed for short packets coming from Windows domU
+	on same physical host as it seems Windows does some padding.
+	[jdolecek, ticket #1521]
 
