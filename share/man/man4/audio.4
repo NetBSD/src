@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.97 2020/03/16 09:20:01 nia Exp $
+.\"	$NetBSD: audio.4,v 1.98 2020/03/16 13:02:05 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -813,13 +813,13 @@ string values.
 .Sh HISTORY
 Support for virtual channels and mixing first appeared in
 .Nx 8.0 .
-.Sh BUGS
-If the device is used in
-.Xr mmap 2
-it is currently always mapped for writing (playing) due to VM system weirdness.
 .Sh CAVEATS
 The audio device cannot be reliably used with event notification mechanisms
 such as
 .Xr poll 2 .
 Most users are expected to only read and write a limited number of samples at
-a time, limiting the time spent in the system call. 
+a time, limiting the time spent in the system call.
+.Sh BUGS
+If the device is used in
+.Xr mmap 2
+it is currently always mapped for writing (playing) due to VM system weirdness.
