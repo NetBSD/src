@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.181 2020/03/15 22:20:31 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.182 2020/03/16 01:54:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.181 2020/03/15 22:20:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.182 2020/03/16 01:54:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,6 @@ struct sip_softc {
 	/*
 	 * Event counters.
 	 */
-	struct evcnt sc_ev_txsstall;	/* Tx stalled due to no txs */
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
 	struct evcnt sc_ev_txforceintr;	/* Tx interrupts forced */
 	struct evcnt sc_ev_txdintr;	/* Tx descriptor interrupts */
@@ -973,7 +972,6 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 		 */
 		evcnt_detach(&sc->sc_ev_txforceintr);
 		evcnt_detach(&sc->sc_ev_txdstall);
-		evcnt_detach(&sc->sc_ev_txsstall);
 		evcnt_detach(&sc->sc_ev_hiberr);
 		evcnt_detach(&sc->sc_ev_rxintr);
 		evcnt_detach(&sc->sc_ev_txiintr);
@@ -1432,8 +1430,6 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach event counters.
 	 */
-	evcnt_attach_dynamic(&sc->sc_ev_txsstall, EVCNT_TYPE_MISC,
-	    NULL, device_xname(sc->sc_dev), "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "txdstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txforceintr, EVCNT_TYPE_INTR,
@@ -1567,13 +1563,7 @@ sipcom_start(struct ifnet *ifp)
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
-	for (;;) {
-		/* Get a work queue entry. */
-		if ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) == NULL) {
-			SIP_EVCNT_INCR(&sc->sc_ev_txsstall);
-			break;
-		}
-
+	while ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) != NULL) {
 		/*
 		 * Grab a packet off the queue.
 		 */
