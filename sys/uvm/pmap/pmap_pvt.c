@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap_pvt.c,v 1.8 2020/01/01 16:50:41 martin Exp $	*/
+/*	$NetBSD: pmap_pvt.c,v 1.9 2020/03/16 19:56:39 ad Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_pvt.c,v 1.8 2020/01/01 16:50:41 martin Exp $");
+__RCSID("$NetBSD: pmap_pvt.c,v 1.9 2020/03/16 19:56:39 ad Exp $");
 
 #include <sys/atomic.h>
 #include <sys/kmem.h>
@@ -77,6 +77,9 @@ pmap_pv_track(paddr_t start, psize_t size)
 {
 	struct pv_track *pvt;
 	size_t npages;
+#ifdef PMAP_PAGE_INIT
+	size_t i;
+#endif
 
 	KASSERT(start == trunc_page(start));
 	KASSERT(size == trunc_page(size));
@@ -89,6 +92,11 @@ pmap_pv_track(paddr_t start, psize_t size)
 	    KM_SLEEP);
 	pvt->pvt_start = start;
 	pvt->pvt_size = size;
+
+#ifdef PMAP_PAGE_INIT
+	for (i = 0; i < npages; i++)
+		PMAP_PAGE_INIT(&pvt->pvt_pages[i]);
+#endif
 
 	mutex_enter(&pv_unmanaged.lock);
 	pvt->pvt_next = pv_unmanaged.list;
