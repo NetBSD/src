@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.c,v 1.5 2020/03/16 20:49:22 jdolecek Exp $	*/
+/*	$NetBSD: xennet_checksum.c,v 1.6 2020/03/16 20:51:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.5 2020/03/16 20:49:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.6 2020/03/16 20:51:36 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
