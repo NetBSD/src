@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.100 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.101 2020/03/16 08:03:58 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,6 +67,8 @@
 #ifdef _KERNEL_OPT
 #include "opt_uvm_page_trkown.h"
 #endif
+
+#include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
