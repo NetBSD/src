@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.39 2020/03/14 18:08:40 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.40 2020/03/16 21:20:13 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.39 2020/03/14 18:08:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.40 2020/03/16 21:20:13 pgoyette Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -92,8 +92,6 @@ static TAILQ_HEAD(, dirhash) ufsdirhash_list;
 
 /* Protects: ufsdirhash_list, `dh_list' field, ufs_dirhashmem. */
 static kmutex_t ufsdirhash_lock;
-
-static struct sysctllog *ufsdirhash_sysctl_log;
 
 /*
  * Locking order:
@@ -1089,47 +1087,46 @@ ufsdirhash_recycle(int wanted)
 	return (0);
 }
 
-static void
-ufsdirhash_sysctl_init(void)
+SYSCTL_SETUP(ufsdirhash_sysctl_init, "ufs_dirhash sysctl")
 {
 	const struct sysctlnode *rnode, *cnode;
 
-	sysctl_createv(&ufsdirhash_sysctl_log, 0, NULL, &rnode,
+	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ufs",
 		       SYSCTL_DESCR("ufs"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_CREATE, CTL_EOL);
 
-	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &rnode,
+	sysctl_createv(clog, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "dirhash",
 		       SYSCTL_DESCR("dirhash"),
 		       NULL, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 
-	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &cnode,
+	sysctl_createv(clog, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "minblocks",
 		       SYSCTL_DESCR("minimum hashed directory size in blocks"),
 		       NULL, 0, &ufs_dirhashminblks, 0,
 		       CTL_CREATE, CTL_EOL);
 
-	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &cnode,
+	sysctl_createv(clog, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxmem",
 		       SYSCTL_DESCR("maximum dirhash memory usage"),
 		       NULL, 0, &ufs_dirhashmaxmem, 0,
 		       CTL_CREATE, CTL_EOL);
 
-	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &cnode,
+	sysctl_createv(clog, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "memused",
 		       SYSCTL_DESCR("current dirhash memory usage"),
 		       NULL, 0, &ufs_dirhashmem, 0,
 		       CTL_CREATE, CTL_EOL);
 
-	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &cnode,
+	sysctl_createv(clog, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "docheck",
 		       SYSCTL_DESCR("enable extra sanity checks"),
@@ -1147,7 +1144,6 @@ ufsdirhash_init(void)
 	ufsdirhash_cache = pool_cache_init(sizeof(struct dirhash), 0,
 	    0, 0, "dirhash", NULL, IPL_NONE, NULL, NULL, NULL);
 	TAILQ_INIT(&ufsdirhash_list);
-	ufsdirhash_sysctl_init();
 }
 
 void
@@ -1158,5 +1154,4 @@ ufsdirhash_done(void)
 	pool_cache_destroy(ufsdirhashblk_cache);
 	pool_cache_destroy(ufsdirhash_cache);
 	mutex_destroy(&ufsdirhash_lock);
-	sysctl_teardown(&ufsdirhash_sysctl_log);
 }
