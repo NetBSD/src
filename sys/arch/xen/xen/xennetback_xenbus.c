@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.76 2020/01/29 05:41:48 thorpej Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.77 2020/03/16 20:49:22 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.76 2020/01/29 05:41:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.77 2020/03/16 20:49:22 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -90,7 +90,7 @@ struct xni_pkt {
 /* pools for xni_pkt */
 struct pool xni_pkt_pool;
 /* ratecheck(9) for pool allocation failures */
-struct timeval xni_pool_errintvl = { 30, 0 };  /* 30s, each */
+static const struct timeval xni_pool_errintvl = { 30, 0 };  /* 30s, each */
 
 /* state of a xnetback instance */
 typedef enum {
@@ -301,7 +301,9 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_snd.ifq_maxlen =
 	    uimax(ifqmaxlen, NET_TX_RING_SIZE * 2);
-	ifp->if_capabilities = IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
+	ifp->if_capabilities =
+		IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx
+		| IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx;
 	ifp->if_ioctl = xennetback_ifioctl;
 	ifp->if_start = xennetback_ifstart;
 	ifp->if_watchdog = xennetback_ifwatchdog;
@@ -857,52 +859,28 @@ xennetback_evthandler(void *arg)
 			}
 		}
 
-#ifdef notyet
 		/*
-		 * A lot of work is needed in the tcp stack to handle read-only
-		 * ext storage so always copy for now.
+		 * This is the last TX buffer. Copy the data and
+		 * ack it. Delaying it until the mbuf is
+		 * freed will stall transmit.
 		 */
-		if (((req_cons + 1) & (NET_TX_RING_SIZE - 1)) ==
-		    (xneti->xni_txring.rsp_prod_pvt & (NET_TX_RING_SIZE - 1)))
-#else
-		if (1)
-#endif /* notyet */
-		{
-			/*
-			 * This is the last TX buffer. Copy the data and
-			 * ack it. Delaying it until the mbuf is
-			 * freed will stall transmit.
-			 */
-			m->m_len = uimin(MHLEN, txreq.size);
-			m->m_pkthdr.len = 0;
-			m_copyback(m, 0, txreq.size,
-			    (void *)(pkt_va + txreq.offset));
-			xni_pkt_unmap(pkt, pkt_va);
-			if (m->m_pkthdr.len < txreq.size) {
-				if_statinc(ifp, if_ierrors);
-				m_freem(m);
-				xennetback_tx_response(xneti, txreq.id,
-				    NETIF_RSP_DROPPED);
-				continue;
-			}
+		m->m_len = uimin(MHLEN, txreq.size);
+		m->m_pkthdr.len = 0;
+		m_copyback(m, 0, txreq.size,
+		    (void *)(pkt_va + txreq.offset));
+		xni_pkt_unmap(pkt, pkt_va);
+		if (m->m_pkthdr.len < txreq.size) {
+			if_statinc(ifp, if_ierrors);
+			m_freem(m);
 			xennetback_tx_response(xneti, txreq.id,
-			    NETIF_RSP_OKAY);
-		} else {
-
-			pkt->pkt_id = txreq.id;
-			pkt->pkt_xneti = xneti;
-
-			MEXTADD(m, pkt_va + txreq.offset,
-			    txreq.size, M_DEVBUF, xennetback_tx_free, pkt);
-			m->m_pkthdr.len = m->m_len = txreq.size;
-			m->m_flags |= M_EXT_ROMAP;
+			    NETIF_RSP_DROPPED);
+			continue;
 		}
+		xennetback_tx_response(xneti, txreq.id,
+		    NETIF_RSP_OKAY);
+
 		if ((txreq.flags & NETTXF_csum_blank) != 0) {
-			xennet_checksum_fill(&m);
-			if (m == NULL) {
-				if_statinc(ifp, if_ierrors);
-				continue;
-			}
+			xennet_checksum_fill(ifp, m);
 		}
 		m_set_rcvif(m, ifp);
 
