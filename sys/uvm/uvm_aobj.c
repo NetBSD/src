@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.137 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.138 2020/03/17 18:31:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.137 2020/03/14 20:23:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.138 2020/03/17 18:31:39 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -1300,11 +1300,12 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	 */
 	uvm_pagelock(pg);
 	uvm_pageenqueue(pg);
-	uvm_pageunbusy(pg);
+	uvm_pagewakeup(pg);
 	uvm_pageunlock(pg);
 
-	pg->flags &= ~(PG_FAKE);
+	pg->flags &= ~(PG_BUSY|PG_FAKE);
 	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
+	UVM_PAGE_OWN(pg, NULL);
 
 	return false;
 }
