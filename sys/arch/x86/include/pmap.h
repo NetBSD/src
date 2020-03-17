@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.113 2020/03/14 18:24:10 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.114 2020/03/17 21:02:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -248,8 +248,6 @@ extern struct pool_cache pmap_cache;
  * (the other object locks are only used when uvm_pagealloc is called)
  */
 
-struct pv_page;
-
 struct pmap {
 	struct uvm_object pm_obj[PTP_LEVELS-1];/* objects for lvl >= 1) */
 	LIST_ENTRY(pmap) pm_list;	/* list of all pmaps */
@@ -258,11 +256,11 @@ struct pmap {
 	struct vm_page *pm_ptphint[PTP_LEVELS-1];
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats */
-	struct pv_entry *pm_pve;	/* spare pv_entry */
 
 #if !defined(__x86_64__)
 	vaddr_t pm_hiexec;		/* highest executable mapping */
 #endif /* !defined(__x86_64__) */
+	struct lwp *pm_remove_all;	/* who's emptying the pmap */
 
 	union descriptor *pm_ldt;	/* user-set LDT */
 	size_t pm_ldt_len;		/* size of LDT in bytes */
