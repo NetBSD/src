@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.370 2020/03/15 19:41:04 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.371 2020/03/17 13:34:50 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.370 2020/03/15 19:41:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.371 2020/03/17 13:34:50 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -138,6 +138,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.370 2020/03/15 19:41:04 ad Exp $");
 #include "opt_xen.h"
 #include "opt_svs.h"
 #include "opt_kaslr.h"
+
+#define	__MUTEX_PRIVATE	/* for assertions */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,6 +335,8 @@ paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
 #endif
 
 #define	VM_PAGE_TO_PP(pg)	(&(pg)->mdpage.mp_pp)
+#define	PMAP_CHECK_PP(pp) \
+    KASSERTMSG((pp)->pp_lock.mtx_ipl._ipl == IPL_VM, "bad pmap_page %p", pp)
 
 /*
  * Other data structures
@@ -644,6 +648,7 @@ pmap_ptp_init(struct vm_page *ptp)
 	*minidx = UINT16_MAX;
 	*maxidx = 0;
 	rb_tree_init(&VM_PAGE_TO_PP(ptp)->pp_rb, &pmap_rbtree_ops);
+	PMAP_CHECK_PP(VM_PAGE_TO_PP(ptp));
 }
 
 /*
@@ -654,6 +659,7 @@ pmap_ptp_fini(struct vm_page *ptp)
 {
 
 	KASSERT(RB_TREE_MIN(&VM_PAGE_TO_PP(ptp)->pp_rb) == NULL);
+	PMAP_CHECK_PP(VM_PAGE_TO_PP(ptp));
 	ptp->uanon = NULL;
 }
 
@@ -1982,6 +1988,34 @@ pmap_free_pvs(struct pmap *pmap, struct pv_entry *pve)
 }
 
 /*
+ * pmap_check_pv: verify {VA, PTP} pair is either tracked/untracked by page
+ */
+static void
+pmap_check_pv(struct pmap *pmap, struct vm_page *ptp, struct pmap_page *pp,
+    vaddr_t va, bool tracked)
+{
+#ifdef DIAGNOSTIC /* XXX too slow make this DEBUG before April 2020 */
+	struct pv_pte *pvpte;
+
+	PMAP_CHECK_PP(pp);
+
+	mutex_spin_enter(&pp->pp_lock);
+	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
+		if (pvpte->pte_ptp == ptp && pvpte->pte_va == va) {
+			break;
+		}
+	}
+	mutex_spin_exit(&pp->pp_lock);
+
+	if (pvpte && !tracked) {
+		panic("pmap_check_pv: %p/%lx found on pp %p", ptp, va, pp);
+	} else if (!pvpte && tracked) {
+		panic("pmap_check_pv: %p/%lx missing on pp %p", ptp, va, pp);
+	}
+#endif
+}
+
+/*
  * pmap_treelookup_pv: search the PV tree for a dynamic entry
  *
  * => pmap must be locked
@@ -2010,6 +2044,7 @@ pmap_treelookup_pv(const struct pmap *pmap, const struct vm_page *ptp,
 		node = node->rb_nodes[pve->pve_pte.pte_va < va];
 	}
 }
+
 /*
  * pmap_lookup_pv: look up a non-embedded pv entry for the given pmap
  *
@@ -2083,6 +2118,7 @@ pmap_enter_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 	KASSERT(ptp_to_pmap(ptp) == pmap);
 	KASSERT(ptp == NULL || ptp->uobject != NULL);
 	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
+	PMAP_CHECK_PP(pp);
 
 	/*
 	 * If entering the same page and it's already tracked with an
@@ -2093,6 +2129,7 @@ pmap_enter_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 	if (atomic_load_relaxed(&pp->pp_pte.pte_ptp) == ptp &&
 	    atomic_load_relaxed(&pp->pp_pte.pte_va) == va) {
 		*samepage = true;
+		pmap_check_pv(pmap, ptp, pp, va, true);
 		return 0;
 	}
 
@@ -2104,6 +2141,7 @@ pmap_enter_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 	*old_pve = pmap_treelookup_pv(pmap, ptp, tree, va);
 	if (*old_pve != NULL && (*old_pve)->pve_pp == pp) {
 		*samepage = true;
+		pmap_check_pv(pmap, ptp, pp, va, true);
 		return 0;
 	}
 
@@ -2116,6 +2154,7 @@ pmap_enter_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 	}
 
 	error = 0;
+	pmap_check_pv(pmap, ptp, pp, va, false);
 	mutex_spin_enter(&pp->pp_lock);
 	if (!pv_pte_embedded(pp)) {
 		/*
@@ -2142,6 +2181,7 @@ pmap_enter_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 		LIST_INSERT_HEAD(&pp->pp_pvlist, pve, pve_list);
 	}
 	mutex_spin_exit(&pp->pp_lock);
+	pmap_check_pv(pmap, ptp, pp, va, true);
 
 	return error;
 }
@@ -2157,13 +2197,16 @@ static void
 pmap_remove_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
     vaddr_t va, struct pv_entry *pve, uint8_t oattrs)
 {
-	rb_tree_t *tree;
+	rb_tree_t *tree = (ptp != NULL ?
+	    &VM_PAGE_TO_PP(ptp)->pp_rb : &pmap_kernel_rb);
 
 	KASSERT(mutex_owned(&pmap->pm_lock));
 	KASSERT(ptp_to_pmap(ptp) == pmap);
 	KASSERT(ptp == NULL || ptp->uobject != NULL);
 	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
 	KASSERT(ptp != NULL || pmap == pmap_kernel());
+
+	pmap_check_pv(pmap, ptp, pp, va, true);
 
 	mutex_spin_enter(&pp->pp_lock);
 	pp->pp_attrs |= oattrs;
@@ -2174,16 +2217,23 @@ pmap_remove_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 		pp->pp_pte.pte_va = 0;
 		mutex_spin_exit(&pp->pp_lock);
 	} else {
-		KASSERT(pve == pmap_lookup_pv(pmap, ptp, pp, va));
+		KASSERT(pp->pp_pte.pte_ptp != ptp ||
+		    pp->pp_pte.pte_va != va);
 		KASSERT(pve->pve_pte.pte_ptp == ptp);
 		KASSERT(pve->pve_pte.pte_va == va);
+		KASSERT(pve->pve_pp == pp);
 		LIST_REMOVE(pve, pve_list);
 		mutex_spin_exit(&pp->pp_lock);
 
-		tree = (ptp != NULL ? &VM_PAGE_TO_PP(ptp)->pp_rb :
-		    &pmap_kernel_rb);
+		KASSERT(pmap_treelookup_pv(pmap, ptp, tree, va) == pve);
 		rb_tree_remove_node(tree, pve);
+#ifdef DIAGNOSTIC
+		memset(pve, 0, sizeof(*pve));
+#endif
 	}
+
+	KASSERT(pmap_treelookup_pv(pmap, ptp, tree, va) == NULL);
+	pmap_check_pv(pmap, ptp, pp, va, false);
 }
 
 /*
@@ -2201,7 +2251,9 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, int level)
 
 	if (pmap->pm_ptphint[lidx] && off == pmap->pm_ptphint[lidx]->offset) {
 		KASSERT(pmap->pm_ptphint[lidx]->wire_count > 0);
-		return pmap->pm_ptphint[lidx];
+		pg = pmap->pm_ptphint[lidx];
+		PMAP_CHECK_PP(VM_PAGE_TO_PP(pg));
+		return pg;
 	}
 	PMAP_DUMMY_LOCK(pmap);
 	pg = uvm_pagelookup(&pmap->pm_obj[lidx], off);
@@ -2209,6 +2261,9 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, int level)
 	if (pg != NULL && __predict_false(pg->wire_count == 0)) {
 		/* This page is queued to be freed - ignore. */
 		pg = NULL;
+	}
+	if (pg != NULL) {
+		PMAP_CHECK_PP(VM_PAGE_TO_PP(pg));
 	}
 	pmap->pm_ptphint[lidx] = pg;
 	return pg;
@@ -2439,6 +2494,7 @@ pmap_unget_ptp(struct pmap *pmap, struct pmap_ptparray *pt)
 			continue;
 		}
 		KASSERT(pt->pg[i]->wire_count == 0);
+		PMAP_CHECK_PP(VM_PAGE_TO_PP(pt->pg[i]));
 		/* pmap zeros all pages before freeing. */
 		pt->pg[i]->flags |= PG_ZERO; 
 		pmap_ptp_fini(pt->pg[i]);
@@ -3863,6 +3919,8 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		KASSERTMSG((pmap_pv_tracked(pmap_pte2pa(opte)) == NULL),
 		    "pv-tracked page without PTE_PVLIST for %#"PRIxVADDR, va);
 #endif
+		KASSERT(pmap_treelookup_pv(pmap, ptp, (ptp != NULL ?
+		    &VM_PAGE_TO_PP(ptp)->pp_rb : &pmap_kernel_rb), va) == NULL);
 		return true;
 	}
 
@@ -4313,6 +4371,7 @@ startover:
 		error = pmap_sync_pv(pvpte, pa, clearbits, &oattrs, NULL);
 		if (error == EAGAIN) {
 			int hold_count;
+			/* XXXAD wait for the pmap's lock instead. */
 			mutex_spin_exit(&pp->pp_lock);
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 			SPINLOCK_BACKOFF(count);
@@ -4429,7 +4488,8 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	/*
 	 * Acquire pmap.  No need to lock the kernel pmap as we won't
-	 * be touching the pvmap nor the stats.
+	 * be touching PV entries nor stats and kernel PDEs aren't
+	 * freed.
 	 */
 	if (pmap != pmap_kernel()) {
 		mutex_enter(&pmap->pm_lock);
@@ -4611,13 +4671,16 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	else
 #endif
 		new_pg = PHYS_TO_VM_PAGE(pa);
+		
 	if (new_pg != NULL) {
 		/* This is a managed page */
 		npte |= PTE_PVLIST;
 		new_pp = VM_PAGE_TO_PP(new_pg);
+		PMAP_CHECK_PP(new_pp);
 	} else if ((new_pp = pmap_pv_tracked(pa)) != NULL) {
 		/* This is an unmanaged pv-tracked page */
 		npte |= PTE_PVLIST;
+		PMAP_CHECK_PP(new_pp);
 	} else {
 		new_pp = NULL;
 	}
@@ -4771,7 +4834,13 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	 */
 	if (((opte ^ npte) & (PTE_FRAME | PTE_P)) == 0) {
 		KASSERT(((opte ^ npte) & PTE_PVLIST) == 0);
+		if ((npte & PTE_PVLIST) != 0) {
+			KASSERT(samepage);
+			pmap_check_pv(pmap, ptp, new_pp, va, true);
+		}
 		goto same_pa;
+	} else if ((npte & PTE_PVLIST) != 0) {
+		KASSERT(!samepage);
 	}
 
 	/*
@@ -4790,7 +4859,6 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		pmap_remove_pv(pmap, old_pp, ptp, va, old_pve,
 		    pmap_pte_to_pp_attrs(opte));
 		if (old_pve != NULL) {
-			KASSERT(old_pve->pve_pp == old_pp);
 			if (pmap->pm_pve == NULL) {
 				pmap->pm_pve = old_pve;
 			} else {
@@ -4799,13 +4867,17 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		}
 	} else {
 		KASSERT(old_pve == NULL);
+		KASSERT(pmap_treelookup_pv(pmap, ptp, tree, va) == NULL);
 	}
 
 	/*
 	 * If new page is dynamically PV tracked, insert to tree.
 	 */
 	if (new_pve != NULL) {
-		rb_tree_insert_node(tree, new_pve);
+		KASSERT(pmap_treelookup_pv(pmap, ptp, tree, va) == NULL);
+		old_pve = rb_tree_insert_node(tree, new_pve);
+		KASSERT(old_pve == new_pve);
+		pmap_check_pv(pmap, ptp, new_pp, va, true);
 	}
 
 same_pa:
@@ -5159,6 +5231,7 @@ pmap_update(struct pmap *pmap)
 			pp->pp_attrs = 0;
 			pp->pp_pte.pte_ptp = NULL;
 			pp->pp_pte.pte_va = 0;
+			PMAP_CHECK_PP(VM_PAGE_TO_PP(ptp));
 
 			/*
 			 * XXX Hack to avoid extra locking, and lock
@@ -5656,7 +5729,13 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 */
 	if (((opte ^ npte) & (PTE_FRAME | EPT_R)) == 0) {
 		KASSERT(((opte ^ npte) & EPT_PVLIST) == 0);
+		if ((npte & EPT_PVLIST) != 0) {
+			KASSERT(samepage);
+			pmap_check_pv(pmap, ptp, new_pp, va, true);
+		}
 		goto same_pa;
+	} else if ((npte & EPT_PVLIST) != 0) {
+		KASSERT(!samepage);
 	}
 
 	/*
@@ -5675,7 +5754,6 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		pmap_remove_pv(pmap, old_pp, ptp, va, old_pve,
 		    pmap_ept_to_pp_attrs(opte));
 		if (old_pve != NULL) {
-			KASSERT(old_pve->pve_pp == old_pp);
 			if (pmap->pm_pve == NULL) {
 				pmap->pm_pve = old_pve;
 			} else {
@@ -5684,13 +5762,17 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		}
 	} else {
 		KASSERT(old_pve == NULL);
+		KASSERT(pmap_treelookup_pv(pmap, ptp, tree, va) == NULL);
 	}
 
 	/*
 	 * If new page is dynamically PV tracked, insert to tree.
 	 */
 	if (new_pve != NULL) {
-		rb_tree_insert_node(tree, new_pve);
+		KASSERT(pmap_treelookup_pv(pmap, ptp, tree, va) == NULL);
+		old_pve = rb_tree_insert_node(tree, new_pve);
+		KASSERT(old_pve == new_pve);
+		pmap_check_pv(pmap, ptp, new_pp, va, true);
 	}
 
 same_pa:
@@ -5831,6 +5913,8 @@ pmap_ept_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		    "managed page without EPT_PVLIST for %#"PRIxVADDR, va);
 		KASSERTMSG((pmap_pv_tracked(pmap_pte2pa(opte)) == NULL),
 		    "pv-tracked page without EPT_PVLIST for %#"PRIxVADDR, va);
+		KASSERT(pmap_treelookup_pv(pmap, ptp, (ptp != NULL ?
+		    &VM_PAGE_TO_PP(ptp)->pp_rb : &pmap_kernel_rb), va) == NULL);
 		return true;
 	}
 
