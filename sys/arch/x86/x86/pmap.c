@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.374 2020/03/17 22:29:19 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.375 2020/03/17 22:37:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.374 2020/03/17 22:29:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.375 2020/03/17 22:37:05 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -632,30 +632,6 @@ pmap_compare_key(void *context, const void *n, const void *k)
 		return 1;
 	}
 	return 0;
-}
-
-/*
- * pmap_ptp_init: initialize new page table page
- */
-static inline void
-pmap_ptp_init(struct vm_page *ptp)
-{
-
-	ptp->uanon = (struct vm_anon *)(vaddr_t)~0L;
-	rb_tree_init(&VM_PAGE_TO_PP(ptp)->pp_rb, &pmap_rbtree_ops);
-	PMAP_CHECK_PP(VM_PAGE_TO_PP(ptp));
-}
-
-/*
- * pmap_ptp_fini: finalize a page table page
- */
-static inline void
-pmap_ptp_fini(struct vm_page *ptp)
-{
-
-	KASSERT(RB_TREE_MIN(&VM_PAGE_TO_PP(ptp)->pp_rb) == NULL);
-	PMAP_CHECK_PP(VM_PAGE_TO_PP(ptp));
-	ptp->uanon = NULL;
 }
 
 /*
@@ -2158,7 +2134,9 @@ pmap_enter_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 		LIST_INSERT_HEAD(&pp->pp_pvlist, pve, pve_list);
 	}
 	mutex_spin_exit(&pp->pp_lock);
-	pmap_check_pv(pmap, ptp, pp, va, true);
+	if (error == 0) {
+		pmap_check_pv(pmap, ptp, pp, va, true);
+	}
 
 	return error;
 }
@@ -2252,13 +2230,15 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 	int lidx;
 
 	KASSERT(ptp->wire_count == 1);
+	PMAP_CHECK_PP(VM_PAGE_TO_PP(ptp));
 
 	lidx = level - 1;
 	pmap_stats_update(pmap, -1, 0);
 	if (pmap->pm_ptphint[lidx] == ptp)
 		pmap->pm_ptphint[lidx] = NULL;
 	ptp->wire_count = 0;
-	pmap_ptp_fini(ptp);
+	ptp->uanon = NULL;
+	KASSERT(RB_TREE_MIN(&VM_PAGE_TO_PP(ptp)->pp_rb) == NULL);
 
 	/*
 	 * Enqueue the PTP to be freed by pmap_update().  We can't remove
@@ -2357,19 +2337,21 @@ pmap_get_ptp(struct pmap *pmap, struct pmap_ptparray *pt, vaddr_t va,
 
 		if (pt->pg[i] == NULL) {
 			pt->pg[i] = uvm_pagealloc(obj, off, NULL, aflags);
-			pt->alloced[i] = true;
-			if (pt->pg[i] != NULL) {
-				pmap_ptp_init(pt->pg[i]);
-			}
+			pt->alloced[i] = (pt->pg[i] != NULL);
 		} else if (pt->pg[i]->wire_count == 0) {
 			/* This page was queued to be freed; dequeue it. */
 			LIST_REMOVE(pt->pg[i], mdpage.mp_pp.pp_link);
-			pmap_ptp_init(pt->pg[i]);
+			pt->alloced[i] = true;
 		}
 		PMAP_DUMMY_UNLOCK(pmap);
 		if (pt->pg[i] == NULL) {
 			pmap_unget_ptp(pmap, pt);
 			return ENOMEM;
+		} else {
+			pt->pg[i]->uanon = (struct vm_anon *)(vaddr_t)~0L;
+			rb_tree_init(&VM_PAGE_TO_PP(pt->pg[i])->pp_rb,
+			    &pmap_rbtree_ops);
+			PMAP_CHECK_PP(VM_PAGE_TO_PP(pt->pg[i]));
 		}
 	}
 	ptp = pt->pg[2];
@@ -2464,22 +2446,12 @@ pmap_unget_ptp(struct pmap *pmap, struct pmap_ptparray *pt)
 	KASSERT(mutex_owned(&pmap->pm_lock));
 
 	for (i = PTP_LEVELS; i > 1; i--) {
-		if (pt->pg[i] == NULL) {
-			break;
-		}
 		if (!pt->alloced[i]) {
 			continue;
 		}
 		KASSERT(pt->pg[i]->wire_count == 0);
 		PMAP_CHECK_PP(VM_PAGE_TO_PP(pt->pg[i]));
-		/* pmap zeros all pages before freeing. */
-		pt->pg[i]->flags |= PG_ZERO; 
-		pmap_ptp_fini(pt->pg[i]);
-		PMAP_DUMMY_LOCK(pmap);
-		uvm_pagefree(pt->pg[i]);
-		PMAP_DUMMY_UNLOCK(pmap);
-		pt->pg[i] = NULL;
-		pmap->pm_ptphint[0] = NULL;
+		pmap_freepage(pmap, pt->pg[i], i - 1);
 	}
 }
 
@@ -5232,6 +5204,7 @@ pmap_update(struct pmap *pmap)
 		mutex_enter(&pmap->pm_lock);
 		while ((ptp = LIST_FIRST(&pmap->pm_gc_ptp)) != NULL) {
 			KASSERT(ptp->wire_count == 0);
+			KASSERT(ptp->uanon == NULL);
 			LIST_REMOVE(ptp, mdpage.mp_pp.pp_link);
 			pp = VM_PAGE_TO_PP(ptp);
 			LIST_INIT(&pp->pp_pvlist);
