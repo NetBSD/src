@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.186 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.187 2020/03/17 18:31:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.186 2020/03/14 20:23:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.187 2020/03/17 18:31:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -689,8 +689,9 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 		if (pg->flags & PG_RELEASED) {
 			uvm_pagefree(pg);
 		} else {
+			pg->flags &= ~PG_BUSY;
 			uvm_pagelock(pg);
-			uvm_pageunbusy(pg);
+			uvm_pagewakeup(pg);
 			uvm_pageunlock(pg);
 		}
 	}
@@ -710,17 +711,15 @@ uvm_pagewait(struct vm_page *pg, krwlock_t *lock, const char *wmesg)
 }
 
 void
-uvm_pageunbusy(struct vm_page *pg)
+uvm_pagewakeup(struct vm_page *pg)
 {
 
-	KASSERT((pg->flags & PG_BUSY) != 0);
 	KASSERT(mutex_owned(&pg->interlock));
 
 	if ((pg->pqflags & PQ_WANTED) != 0) {
 		pg->pqflags &= ~PQ_WANTED;
 		wakeup(pg);
 	}
-	pg->flags &= ~PG_BUSY;
 }
 
 void

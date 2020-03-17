@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.105 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.106 2020/03/17 18:31:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.105 2020/03/14 20:23:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.106 2020/03/17 18:31:39 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -283,8 +283,10 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 
 	uvm_pagelock(pg);
 	uvm_pageactivate(pg);
-	uvm_pageunbusy(pg);
+	uvm_pagewakeup(pg);
 	uvm_pageunlock(pg);
+	pg->flags &= ~PG_BUSY;
+	UVM_PAGE_OWN(pg, NULL);
 
 	return error;
 }

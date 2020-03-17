@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.24 2020/03/14 20:45:23 ad Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.25 2020/03/17 18:31:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.24 2020/03/14 20:45:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.25 2020/03/17 18:31:38 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -348,8 +348,9 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 					pg->flags |= PG_DELWRI;
 				}
 			}
+			pg->flags &= ~PG_BUSY;
 			uvm_pagelock(pg);
-			uvm_pageunbusy(pg);
+			uvm_pagewakeup(pg);
 			uvm_pageunlock(pg);
 			UVM_PAGE_OWN(pg, NULL);
 		}
