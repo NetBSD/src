@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.375 2020/03/17 22:37:05 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.376 2020/03/17 22:38:14 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.375 2020/03/17 22:37:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.376 2020/03/17 22:38:14 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -509,7 +509,7 @@ pmap_stats_update_bypte(struct pmap *pmap, pt_entry_t npte, pt_entry_t opte)
 /*
  * ptp_to_pmap: lookup pmap by ptp
  */
-static struct pmap *
+static inline struct pmap *
 ptp_to_pmap(struct vm_page *ptp)
 {
 	struct pmap *pmap;
@@ -556,7 +556,7 @@ pv_pte_embedded(struct pmap_page *pp)
 /*
  * pv_pte_first, pv_pte_next: PV list iterator.
  */
-static struct pv_pte *
+static inline struct pv_pte *
 pv_pte_first(struct pmap_page *pp)
 {
 
@@ -567,7 +567,7 @@ pv_pte_first(struct pmap_page *pp)
 	return pve_to_pvpte(LIST_FIRST(&pp->pp_pvlist));
 }
 
-static struct pv_pte *
+static inline struct pv_pte *
 pv_pte_next(struct pmap_page *pp, struct pv_pte *pvpte)
 {
 
@@ -589,7 +589,7 @@ pmap_is_curpmap(struct pmap *pmap)
 	return ((pmap == pmap_kernel()) || (pmap == curcpu()->ci_pmap));
 }
 
-void
+inline void
 pmap_reference(struct pmap *pmap)
 {
 
@@ -1947,7 +1947,7 @@ static void
 pmap_check_pv(struct pmap *pmap, struct vm_page *ptp, struct pmap_page *pp,
     vaddr_t va, bool tracked)
 {
-#ifdef DIAGNOSTIC /* XXX too slow make this DEBUG before April 2020 */
+#ifdef DEBUG
 	struct pv_pte *pvpte;
 
 	PMAP_CHECK_PP(pp);
@@ -4157,6 +4157,7 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 		 */
 		ptp = pvpte->pte_ptp;
 		pmap = ptp_to_pmap(ptp);
+		KASSERT(pmap->pm_obj[0].uo_refs > 0);
 		if (ptp != NULL) {
 			pmap_reference(pmap);
 		}
@@ -4188,7 +4189,7 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 		KASSERTMSG(ptp == NULL || ptp->wire_count > 1,
 		    "va %lx pmap %p ptp %p is empty", va, pmap, ptp);
 		    
-#ifdef DIAGNOSTIC /* XXX Too expensive make DEBUG before April 2020 */
+#ifdef DEBUG
 		pmap_check_pv(pmap, ptp, pp, pvpte->pte_va, true);
 		rb_tree_t *tree = (ptp != NULL ?
 		    &VM_PAGE_TO_PP(ptp)->pp_rb : &pmap_kernel_rb);
