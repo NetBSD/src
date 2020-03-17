@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2020/03/17 00:50:12 fox Exp $
+#	$NetBSD: Makefile,v 1.28 2020/03/17 01:36:29 fox Exp $
 
 # $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -96,7 +96,7 @@ COPTS.dt_isadep.c	+= -Wno-unused-variable
 
 .if (${MKLIBCSANITIZER:Uno} == "yes")
 .if (${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8)
-COPTS.dt_proc.c+=	-Wno-maybe-uninitialized
+COPTS.dt_proc.c+=	-Wno-error=maybe-uninitialized
 .endif
 .endif
 
