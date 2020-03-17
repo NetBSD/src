@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.15 2019/10/18 06:13:38 skrll Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.16 2020/03/17 21:24:30 skrll Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.15 2019/10/18 06:13:38 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.16 2020/03/17 21:24:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -178,7 +178,7 @@ exynos_do_config(struct exynos_pinctrl_config *pc)
 
 	return 0;
 }
-	
+
 static int
 exynos_pinctrl_set_cfg(device_t dev, const void *data, size_t len)
 {
