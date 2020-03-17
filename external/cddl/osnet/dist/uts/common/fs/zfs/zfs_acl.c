@@ -1598,7 +1598,7 @@ zfs_acl_ids_create(znode_t *dzp, int flag, vattr_t *vap, cred_t *cr,
 	int		error;
 	zfsvfs_t	*zfsvfs = dzp->z_zfsvfs;
 	zfs_acl_t	*paclp;
-	gid_t		gid;
+	gid_t		gid = vap->va_gid;
 	boolean_t	trim = B_FALSE;
 	boolean_t	inherited = B_FALSE;
 
