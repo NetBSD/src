@@ -1,4 +1,4 @@
-/*	$NetBSD: busypage.c,v 1.7 2020/03/14 20:25:46 ad Exp $	*/
+/*	$NetBSD: busypage.c,v 1.8 2020/03/17 18:31:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: busypage.c,v 1.7 2020/03/14 20:25:46 ad Exp $");
+__RCSID("$NetBSD: busypage.c,v 1.8 2020/03/17 18:31:39 ad Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -91,9 +91,7 @@ rumptest_busypage()
 	mutex_exit(&testpg->interlock);
 
 	rw_enter(uobj->vmobjlock, RW_WRITER);
-	mutex_enter(&testpg->interlock);
-	uvm_pageunbusy(testpg);
-	mutex_exit(&testpg->interlock);
+	uvm_page_unbusy(&testpg, 1);
 	rw_exit(uobj->vmobjlock);
 
 	rv = kthread_join(newl);
