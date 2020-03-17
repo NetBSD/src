@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.93 2020/03/14 20:45:23 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.94 2020/03/17 18:31:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.93 2020/03/14 20:45:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.94 2020/03/17 18:31:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,9 +516,9 @@ out:
 			}
 			uvm_pagelock(pg);
 			uvm_pageenqueue(pg);
-			uvm_pageunbusy(pg);
+			uvm_pagewakeup(pg);
 			uvm_pageunlock(pg);
-			pg->flags &= ~PG_FAKE;
+			pg->flags &= ~(PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(pg, NULL);
 		} else if (memwrite && !overwrite &&
 		    uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {

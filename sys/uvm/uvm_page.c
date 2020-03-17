@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.233 2020/03/15 11:17:22 rin Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.234 2020/03/17 18:31:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.233 2020/03/15 11:17:22 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.234 2020/03/17 18:31:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1708,10 +1708,14 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			pg->flags &= ~PG_RELEASED;
 			uvm_pagefree(pg);
 		} else {
+			UVMHIST_LOG(ubchist, "unbusying pg %#jx",
+			    (uintptr_t)pg, 0, 0, 0);
 			KASSERT((pg->flags & PG_FAKE) == 0);
+			pg->flags &= ~PG_BUSY;
 			uvm_pagelock(pg);
-			uvm_pageunbusy(pg);
+			uvm_pagewakeup(pg);
 			uvm_pageunlock(pg);
+			UVM_PAGE_OWN(pg, NULL);
 		}
 	}
 }
@@ -1733,36 +1737,30 @@ uvm_pagewait(struct vm_page *pg, krwlock_t *lock, const char *wmesg)
 	KASSERT(uvm_page_owner_locked_p(pg, false));
 
 	mutex_enter(&pg->interlock);
-	pg->pqflags |= PQ_WANTED;
 	rw_exit(lock);
+	pg->pqflags |= PQ_WANTED;
 	UVM_UNLOCK_AND_WAIT(pg, &pg->interlock, false, wmesg, 0);
 }
 
 /*
- * uvm_pageunbusy: unbusy a single page
+ * uvm_pagewakeup: wake anyone waiting on a page
  *
- * => page must be known PG_BUSY
- * => object must be write locked
  * => page interlock must be held
  */
 
 void
-uvm_pageunbusy(struct vm_page *pg)
+uvm_pagewakeup(struct vm_page *pg)
 {
-	UVMHIST_FUNC("uvm_pageunbusy"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC("uvm_pagewakeup"); UVMHIST_CALLED(ubchist);
 
-	KASSERT((pg->flags & PG_BUSY) != 0);
-	KASSERT(uvm_page_owner_locked_p(pg, true));
 	KASSERT(mutex_owned(&pg->interlock));
 
-	UVMHIST_LOG(ubchist, "unbusying pg %#jx", (uintptr_t)pg, 0, 0, 0);
+	UVMHIST_LOG(ubchist, "waking pg %#jx", (uintptr_t)pg, 0, 0, 0);
 
 	if ((pg->pqflags & PQ_WANTED) != 0) {
 		wakeup(pg);
 		pg->pqflags &= ~PQ_WANTED;
 	}
-	pg->flags &= ~PG_BUSY;
-	UVM_PAGE_OWN(pg, NULL);
 }
 
 #if defined(UVM_PAGE_TRKOWN)
