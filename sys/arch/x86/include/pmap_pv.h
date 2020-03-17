@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pv.h,v 1.16 2020/03/17 21:02:56 ad Exp $	*/
+/*	$NetBSD: pmap_pv.h,v 1.17 2020/03/17 22:29:19 ad Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -34,6 +34,7 @@
 #include <sys/rbtree.h>
 
 struct vm_page;
+struct pmap_page;
 
 /*
  * structures to track P->V mapping
@@ -51,14 +52,14 @@ struct pv_pte {
 };
 
 /*
- * pv_entry: plug pv_pte into lists.
+ * pv_entry: plug pv_pte into lists.  32 bytes on i386, 64 on amd64.
  */
 
 struct pv_entry {
 	struct pv_pte pve_pte;		/* should be the first member */
 	LIST_ENTRY(pv_entry) pve_list;	/* on pmap_page::pp_pvlist */
 	rb_node_t pve_rb;		/* red-black tree node */
-	uintptr_t pve_padding;		/* unused */
+	struct pmap_page *pve_pp;	/* backpointer to mapped page */
 };
 #define	pve_next	pve_list.le_next
 
@@ -71,16 +72,13 @@ struct pmap_page {
 		/* PTPs */
 		rb_tree_t rb;
 
-		/* PTPs */
+		/* PTPs, when being freed */
 		LIST_ENTRY(vm_page) link;
 
-		/* Non-PTPs */
+		/* Non-PTPs (i.e. normal pages) */
 		struct {
-			/* PP_EMBEDDED */
 			struct pv_pte pte;
-
 			LIST_HEAD(, pv_entry) pvlist;
-			uint8_t flags;
 			uint8_t attrs;
 		} s;
 	} pp_u;
@@ -89,17 +87,12 @@ struct pmap_page {
 #define	pp_link		pp_u.link
 #define	pp_pte		pp_u.s.pte
 #define pp_pvlist	pp_u.s.pvlist
-#define	pp_pflags	pp_u.s.flags
 #define	pp_attrs	pp_u.s.attrs
 };
 
 #define PP_ATTRS_D	0x01	/* Dirty */
 #define PP_ATTRS_A	0x02	/* Accessed */
 #define PP_ATTRS_W	0x04	/* Writable */
-
-/* pp_flags */
-#define	PP_EMBEDDED	1
-#define	PP_FREEING	2
 
 #define	PMAP_PAGE_INIT(pp) \
 do { \
