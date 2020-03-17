@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.42 2020/03/15 14:15:12 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.43 2020/03/17 17:16:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.42 2020/03/15 14:15:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.43 2020/03/17 17:16:26 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -122,7 +122,6 @@ SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "netbsd32 shadow tree")
 	const struct sysctlnode *_root = &netbsd32_sysctl_root;
 	extern const char machine32[];
 
-	printf("%s: called\n", __func__); /* XXX PRG */
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
