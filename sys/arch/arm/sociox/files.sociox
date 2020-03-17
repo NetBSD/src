@@ -1,4 +1,4 @@
-#	$NetBSD: files.sociox,v 1.2 2020/03/16 08:10:20 nisimura Exp $
+#	$NetBSD: files.sociox,v 1.3 2020/03/17 23:01:15 nisimura Exp $
 #
 # Configuration info for Socionext Unifier/SC2A11
 #
@@ -6,12 +6,12 @@
 
 # SC2A11 SynQuacer NetSec GbE
 device	scx: ether, ifnet, arp, mii, bus_dma_generic
-attach	scx at fdt
+attach	scx at fdt with scx_fdt
 file	arch/arm/sociox/if_scx.c		scx
 
 # Unifier AVE GbE
 device	ave: ether, ifnet, arp, mii, bus_dma_generic
-attach	ave at fdt
+attach	ave at fdt with ave_fdt
 file	arch/arm/sociox/if_ave.c		ave
 
 # Socionext eMMC
