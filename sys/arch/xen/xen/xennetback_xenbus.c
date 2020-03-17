@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.78 2020/03/16 20:51:36 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.79 2020/03/17 05:04:10 kre Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.78 2020/03/16 20:51:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.79 2020/03/17 05:04:10 kre Exp $");
 
 #include "opt_xen.h"
 
@@ -141,7 +141,9 @@ static void xennetback_frontend_changed(void *, XenbusState);
 
 static inline void xennetback_tx_response(struct xnetback_instance *,
     int, int);
+#if 0	/* XXX */
 static void xennetback_tx_free(struct mbuf * , void *, size_t, void *);
+#endif	/* XXX */
 
 static SLIST_HEAD(, xnetback_instance) xnetback_instances;
 static kmutex_t xnetback_lock;
@@ -895,6 +897,7 @@ xennetback_evthandler(void *arg)
 	return 1;
 }
 
+#if 0	/* XXX */
 static void
 xennetback_tx_free(struct mbuf *m, void *va, size_t size, void *arg)
 {
@@ -912,6 +915,7 @@ xennetback_tx_free(struct mbuf *m, void *va, size_t size, void *arg)
 		pool_cache_put(mb_cache, m);
 	splx(s);
 }
+#endif	/* XXX */
 
 static int
 xennetback_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
