@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.371 2020/03/17 13:34:50 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.372 2020/03/17 18:40:35 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.371 2020/03/17 13:34:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.372 2020/03/17 18:40:35 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -640,13 +640,8 @@ pmap_compare_key(void *context, const void *n, const void *k)
 static inline void
 pmap_ptp_init(struct vm_page *ptp)
 {
-	uint16_t *minidx, *maxidx;
 
-	minidx = (uint16_t *)&ptp->uanon;
-	maxidx = (uint16_t *)&ptp->uanon + 1;
-
-	*minidx = UINT16_MAX;
-	*maxidx = 0;
+	ptp->uanon = (struct vm_anon *)(vaddr_t)~0L;
 	rb_tree_init(&VM_PAGE_TO_PP(ptp)->pp_rb, &pmap_rbtree_ops);
 	PMAP_CHECK_PP(VM_PAGE_TO_PP(ptp));
 }
@@ -664,24 +659,15 @@ pmap_ptp_fini(struct vm_page *ptp)
 }
 
 /*
- * pmap_ptp_range_set: abuse ptp->uanon to record min/max idx of PTE
+ * pmap_ptp_range_set: abuse ptp->uanon to record minimum VA of PTE
  */
 static inline void
 pmap_ptp_range_set(struct vm_page *ptp, vaddr_t va)
 {
-	uint16_t *minidx, *maxidx;
-	u_int idx;
+	vaddr_t *min = (vaddr_t *)&ptp->uanon;
 
-	idx = pl1_pi(va);
-	KASSERT(idx < UINT16_MAX);
-	minidx = (uint16_t *)&ptp->uanon;
-	maxidx = (uint16_t *)&ptp->uanon + 1;
-
-	if (idx < *minidx) {
-		*minidx = idx;
-	}
-	if (idx > *maxidx) {
-		*maxidx = idx;
+	if (va < *min) {
+		*min = va;
 	}
 }
 
@@ -689,27 +675,18 @@ pmap_ptp_range_set(struct vm_page *ptp, vaddr_t va)
  * pmap_ptp_range_clip: abuse ptp->uanon to clip range of PTEs to remove
  */
 static inline void
-pmap_ptp_range_clip(struct vm_page *ptp, vaddr_t *startva, vaddr_t *endva,
-    pt_entry_t **pte)
+pmap_ptp_range_clip(struct vm_page *ptp, vaddr_t *startva, pt_entry_t **pte)
 {
-	vaddr_t sclip, eclip;
+	vaddr_t sclip;
 
 	if (ptp == NULL) {
 		return;
 	}
 
-	sclip = (*startva & L2_FRAME) +
-	    x86_ptob(*(uint16_t *)&ptp->uanon);
-	eclip = (*startva & L2_FRAME) +
-	    x86_ptob(*((uint16_t *)&ptp->uanon + 1) + 1);
-
-	KASSERT(sclip < eclip);
-
+	sclip = (vaddr_t)ptp->uanon;
 	sclip = (*startva < sclip ? sclip : *startva);
-	eclip = (*endva > eclip ? eclip : *endva);
 	*pte += (sclip - *startva) / PAGE_SIZE;
 	*startva = sclip;
-	*endva = eclip;
 }
 
 /*
@@ -2966,7 +2943,7 @@ pmap_remove_all(struct pmap *pmap)
 			    blkendva, &pv_tofree);
 
 			/* PTP should now be unused - free it. */
-			KASSERT(ptps[i]->wire_count <= 1);
+			KASSERT(ptps[i]->wire_count == 1);
 			pmap_free_ptp(pmap, ptps[i], va, ptes, pdes);
 		}
 		pmap_unmap_ptes(pmap, pmap2);
@@ -2982,6 +2959,9 @@ pmap_remove_all(struct pmap *pmap)
 
 	/* Verify that the pmap is now completely empty. */
 	pmap_check_ptps(pmap);
+	KASSERTMSG(pmap->pm_stats.resident_count == PDP_SIZE,
+	    "pmap %p not empty", pmap);
+
 	return true;
 }
 
@@ -3817,7 +3797,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 	 * mappings are very often sparse, so clip the given range to the
 	 * range of PTEs that are known present in the PTP.
 	 */
-	pmap_ptp_range_clip(ptp, &startva, &endva, &pte);
+	pmap_ptp_range_clip(ptp, &startva, &pte);
 
 	/*
 	 * note that ptpva points to the PTE that maps startva.   this may
@@ -4168,9 +4148,9 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 {
 	struct pv_pte *pvpte;
 	struct vm_page *ptp;
+	uintptr_t sum;
 	uint8_t oattrs;
 	bool locked;
-	int count;
 
 	/*
 	 * Do an unlocked check to see if the page has no mappings, eg when
@@ -4179,20 +4159,19 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 	 * out, so we don't have to worry about concurrent attempts to enter
 	 * it (otherwise the caller either doesn't care or has screwed up).
 	 */
-	if (atomic_load_relaxed(&pp->pp_pte.pte_va) == 0 &&
-	    atomic_load_relaxed(&pp->pp_pte.pte_ptp) == NULL &&
-	    atomic_load_relaxed(&pp->pp_pvlist.lh_first) == NULL) {
+	sum = (uintptr_t)atomic_load_relaxed(&pp->pp_pte.pte_va);
+	sum |= (uintptr_t)atomic_load_relaxed(&pp->pp_pte.pte_ptp);
+	sum |= (uintptr_t)atomic_load_relaxed(&pp->pp_pvlist.lh_first);
+	if (sum == 0) {
 	    	return;
 	}
 
-	count = SPINLOCK_BACKOFF_MIN;
 	kpreempt_disable();
 	for (;;) {
 		struct pmap *pmap;
 		struct pv_entry *pve;
 		pt_entry_t opte;
 		vaddr_t va;
-		int error;
 
 		mutex_spin_enter(&pp->pp_lock);
 		if ((pvpte = pv_pte_first(pp)) == NULL) {
@@ -4228,25 +4207,35 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 			}
 			continue;
 		}
+		va = pvpte->pte_va;
 
-		error = pmap_sync_pv(pvpte, pa, ~0, &oattrs, &opte);
-		if (error == EAGAIN) {
-			/*
-			 * XXXAD Shouldn't need to loop here, as the mapping
-			 * can't disappear, seen as the pmap's lock is held.
-			 */
-			int hold_count;
-			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
-			mutex_exit(&pmap->pm_lock);
-			if (ptp != NULL) {
-				pmap_destroy(pmap);
-			}
-			SPINLOCK_BACKOFF(count);
-			KERNEL_LOCK(hold_count, curlwp);
-			continue;
+		KASSERTMSG(pmap->pm_stats.resident_count > PDP_SIZE,
+		    "va %lx pmap %p ptp %p is empty", va, pmap, ptp);
+		KASSERTMSG(ptp == NULL || (ptp->flags & PG_FREE) == 0,
+		    "va %lx pmap %p ptp %p is free", va, pmap, ptp);
+		KASSERTMSG(ptp == NULL || ptp->wire_count > 1,
+		    "va %lx pmap %p ptp %p is empty", va, pmap, ptp);
+		    
+#ifdef DIAGNOSTIC /* XXX Too expensive make DEBUG before April 2020 */
+		pmap_check_pv(pmap, ptp, pp, pvpte->pte_va, true);
+		rb_tree_t *tree = (ptp != NULL ?
+		    &VM_PAGE_TO_PP(ptp)->pp_rb : &pmap_kernel_rb);
+		pve = pmap_treelookup_pv(pmap, ptp, tree, va);
+		if (pve == NULL) {
+			KASSERTMSG(&pp->pp_pte == pvpte,
+			    "va %lx pmap %p ptp %p pvpte %p pve %p oops 1",
+			    va, pmap, ptp, pvpte, pve);
+		} else {
+			KASSERTMSG(&pve->pve_pte == pvpte,
+			    "va %lx pmap %p ptp %p pvpte %p pve %p oops 2",
+			    va, pmap, ptp, pvpte, pve);
+		}
+#endif
+
+		if (pmap_sync_pv(pvpte, pa, ~0, &oattrs, &opte)) {
+			panic("pmap_pp_remove: mapping not present");
 		}
 
-		va = pvpte->pte_va;
 		pve = pmap_lookup_pv(pmap, ptp, pp, va);
 		pmap_remove_pv(pmap, pp, ptp, va, pve, oattrs);
 
@@ -4322,6 +4311,7 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 {
 	struct pmap_page *pp;
 	struct pv_pte *pvpte;
+	struct pmap *pmap;
 	uint8_t oattrs;
 	u_int result;
 	paddr_t pa;
@@ -4331,17 +4321,29 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 		return true;
 	}
 	pa = VM_PAGE_TO_PHYS(pg);
+ startover:
 	mutex_spin_enter(&pp->pp_lock);
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
-		int error;
-
 		if ((pp->pp_attrs & testbits) != 0) {
 			break;
 		}
-		error = pmap_sync_pv(pvpte, pa, 0, &oattrs, NULL);
-		if (error == 0) {
-			pp->pp_attrs |= oattrs;
+		if (pmap_sync_pv(pvpte, pa, 0, &oattrs, NULL)) {
+			/*
+			 * raced with a V->P operation.  wait for the other
+			 * side to finish by acquring pmap's lock.  if no
+			 * wait, updates to pp_attrs by the other side may
+			 * go unseen.
+			 */
+			pmap = ptp_to_pmap(pvpte->pte_ptp);
+			pmap_reference(pmap);
+			mutex_spin_exit(&pp->pp_lock);
+			mutex_enter(&pmap->pm_lock);
+			/* nothing. */
+			mutex_exit(&pmap->pm_lock);
+			pmap_destroy(pmap);
+			goto startover;
 		}
+		pp->pp_attrs |= oattrs;
 	}
 	result = pp->pp_attrs & testbits;
 	mutex_spin_exit(&pp->pp_lock);
@@ -4358,24 +4360,27 @@ static bool
 pmap_pp_clear_attrs(struct pmap_page *pp, paddr_t pa, unsigned clearbits)
 {
 	struct pv_pte *pvpte;
+	struct pmap *pmap;
 	uint8_t oattrs;
 	u_int result;
-	int count;
 
-	count = SPINLOCK_BACKOFF_MIN;
 startover:
 	mutex_spin_enter(&pp->pp_lock);
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
-		int error;
-
-		error = pmap_sync_pv(pvpte, pa, clearbits, &oattrs, NULL);
-		if (error == EAGAIN) {
-			int hold_count;
-			/* XXXAD wait for the pmap's lock instead. */
+		if (pmap_sync_pv(pvpte, pa, clearbits, &oattrs, NULL)) {
+			/*
+			 * raced with a V->P operation.  wait for the other
+			 * side to finish by acquring pmap's lock.  it is
+			 * probably unmapping the page, and it will be gone
+			 * when the loop is restarted.
+			 */
+			pmap = ptp_to_pmap(pvpte->pte_ptp);
+			pmap_reference(pmap);
 			mutex_spin_exit(&pp->pp_lock);
-			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
-			SPINLOCK_BACKOFF(count);
-			KERNEL_LOCK(hold_count, curlwp);
+			mutex_enter(&pmap->pm_lock);
+			/* nothing. */
+			mutex_exit(&pmap->pm_lock);
+			pmap_destroy(pmap);
 			goto startover;
 		}
 		pp->pp_attrs |= oattrs;
@@ -4705,8 +4710,6 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 				    error);
 			}
 		}
-		/* Remember min/max index of PTE in PTP. */
-		pmap_ptp_range_set(ptp, va);
 		tree = &VM_PAGE_TO_PP(ptp)->pp_rb;
 	} else {
 		/* Embedded PV entries rely on this. */
@@ -4800,14 +4803,14 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 						new_pp->pp_pte.pte_va = 0;
 					}
 					mutex_spin_exit(&new_pp->pp_lock);
-					pmap_unmap_ptes(pmap, pmap2);
-					mutex_exit(&pmap->pm_lock);
 				}
+				pmap_unmap_ptes(pmap, pmap2);
 				/* Free new PTP. */
 				if (ptp != NULL && ptp->wire_count <= 1) {
 					pmap_free_ptp(pmap, ptp, va, ptes,
 					    pdes);
 				}
+				mutex_exit(&pmap->pm_lock);
 				return error;
 			}
 			break;
@@ -4824,8 +4827,12 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	 * Update statistics and PTP's reference count.
 	 */
 	pmap_stats_update_bypte(pmap, npte, opte);
-	if (ptp != NULL && !have_oldpa) {
-		ptp->wire_count++;
+	if (ptp != NULL) {
+		if (!have_oldpa) {
+			ptp->wire_count++;
+		}
+		/* Remember minimum VA in PTP. */
+		pmap_ptp_range_set(ptp, va);
 	}
 	KASSERT(ptp == NULL || ptp->wire_count > 1);
 
@@ -5636,8 +5643,6 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 				    error);
 			}
 		}
-		/* Remember min/max index of PTE in PTP. */
-		pmap_ptp_range_set(ptp, va);
 		tree = &VM_PAGE_TO_PP(ptp)->pp_rb;
 	} else {
 		/* Embedded PV entries rely on this. */
@@ -5719,8 +5724,12 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 * Update statistics and PTP's reference count.
 	 */
 	pmap_ept_stats_update_bypte(pmap, npte, opte);
-	if (ptp != NULL && !have_oldpa) {
-		ptp->wire_count++;
+	if (ptp != NULL) {
+		if (!have_oldpa) {
+			ptp->wire_count++;
+		}
+		/* Remember minimum VA in PTP. */
+		pmap_ptp_range_set(ptp, va);
 	}
 	KASSERT(ptp == NULL || ptp->wire_count > 1);
 
@@ -5952,7 +5961,7 @@ pmap_ept_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 	 * mappings are very often sparse, so clip the given range to the
 	 * range of PTEs that are known present in the PTP.
 	 */
-	pmap_ptp_range_clip(ptp, &startva, &endva, &pte);
+	pmap_ptp_range_clip(ptp, &startva, &pte);
 
 	/*
 	 * note that ptpva points to the PTE that maps startva.   this may
