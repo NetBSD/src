@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_body_edit.c,v 1.1.1.2 2020/03/18 18:59:32 christos Exp $	*/
+/*	$NetBSD: cleanup_body_edit.c,v 1.2 2020/03/18 19:05:15 christos Exp $	*/
 
 /*++
 /* NAME
