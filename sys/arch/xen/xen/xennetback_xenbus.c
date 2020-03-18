@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.79 2020/03/17 05:04:10 kre Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.80 2020/03/18 19:23:13 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.79 2020/03/17 05:04:10 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.80 2020/03/18 19:23:13 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -881,8 +881,9 @@ xennetback_evthandler(void *arg)
 		xennetback_tx_response(xneti, txreq.id,
 		    NETIF_RSP_OKAY);
 
-		if ((txreq.flags & NETTXF_csum_blank) != 0) {
-			xennet_checksum_fill(ifp, m);
+		if ((txreq.flags & (NETTXF_csum_blank|NETTXF_data_validated))) {
+			xennet_checksum_fill(ifp, m,
+			    ((txreq.flags & NETTXF_data_validated) != 0));
 		}
 		m_set_rcvif(m, ifp);
 
@@ -1051,7 +1052,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 			    (M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
 				rxresp->flags = NETRXF_csum_blank;
 			} else {
-				rxresp->flags = 0;
+				rxresp->flags = NETRXF_data_validated;
 			}
 			/*
 			 * transfers the page containing the packet to the
@@ -1360,7 +1361,7 @@ xennetback_ifsoftstart_copy(void *arg)
 			    (M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
 				rxresp->flags = NETRXF_csum_blank;
 			} else {
-				rxresp->flags = 0;
+				rxresp->flags = NETRXF_data_validated;
 			}
 
 			mbufs_sent[i] = m;
