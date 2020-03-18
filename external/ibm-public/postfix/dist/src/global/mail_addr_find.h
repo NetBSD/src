@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_find.h,v 1.1.1.2 2020/03/18 18:59:33 christos Exp $	*/
+/*	$NetBSD: mail_addr_find.h,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
 
 #ifndef _MAIL_ADDR_FIND_H_INCLUDED_
 #define _MAIL_ADDR_FIND_H_INCLUDED_

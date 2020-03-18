@@ -1,4 +1,4 @@
-/*	$NetBSD: maillog_client.h,v 1.1.1.1 2020/03/18 18:59:34 christos Exp $	*/
+/*	$NetBSD: maillog_client.h,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
 
 #ifndef _MAILLOG_CLIENT_H_INCLUDED_
 #define _MAILLOG_CLIENT_H_INCLUDED_

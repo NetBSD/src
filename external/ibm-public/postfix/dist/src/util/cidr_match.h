@@ -1,4 +1,4 @@
-/*	$NetBSD: cidr_match.h,v 1.1.1.2 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: cidr_match.h,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
 
 #ifndef _CIDR_MATCH_H_INCLUDED_
 #define _CIDR_MATCH_H_INCLUDED_

@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring_vstream.c,v 1.1.1.3 2020/03/18 18:59:38 christos Exp $	*/
+/*	$NetBSD: vstring_vstream.c,v 1.2 2020/03/18 19:05:22 christos Exp $	*/
 
 /*++
 /* NAME
