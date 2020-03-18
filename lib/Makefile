@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.280 2020/03/17 22:20:48 christos Exp $
+#	$NetBSD: Makefile,v 1.281 2020/03/18 00:37:29 tnn Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -283,7 +283,9 @@ SUBDIR+=	.WAIT
 SUBDIR+=	../external/bsd/pam-u2f/lib	# depends on libpam
 .endif
 
+.if (${MKRUMP} != "no")
 SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
+.endif
 
 .if (${MKTPM} != "no")
 SUBDIR+=	../crypto/external/cpl/tpm-tools/lib	# depends on trousers
