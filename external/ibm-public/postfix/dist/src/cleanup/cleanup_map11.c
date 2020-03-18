@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_map11.c,v 1.1.1.4 2017/02/14 01:13:39 christos Exp $	*/
+/*	$NetBSD: cleanup_map11.c,v 1.1.1.5 2020/03/18 18:59:32 christos Exp $	*/
 
 /*++
 /* NAME
@@ -60,6 +60,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -106,7 +111,9 @@ int     cleanup_map11_external(CLEANUP_STATE *state, VSTRING *addr,
      * the place.
      */
     for (count = 0; count < MAX_RECURSION; count++) {
-	if ((new_addr = mail_addr_map(maps, STR(addr), propagate)) != 0) {
+	if ((new_addr = mail_addr_map_opt(maps, STR(addr), propagate,
+					  MA_FORM_EXTERNAL, MA_FORM_EXTERNAL,
+					  MA_FORM_EXTERNAL)) != 0) {
 	    if (new_addr->argc > 1)
 		msg_warn("%s: multi-valued %s entry for %s",
 			 state->queue_id, maps->title, STR(addr));

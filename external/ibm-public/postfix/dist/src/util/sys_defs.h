@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.1.1.13 2017/02/14 01:13:44 christos Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.1.1.14 2020/03/18 18:59:38 christos Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -21,6 +21,10 @@
   * directory. Adding support for a new system type means updating the
   * makedefs script, and adding a section below for the new system.
   */
+#ifdef SUNOS5
+#define _SVID_GETTOD			/* Solaris 2.5, XSH4.2 versus SVID */
+#endif
+#include <sys/types.h>
 
  /*
   * 4.4BSD and close derivatives.
@@ -28,6 +32,7 @@
 #if defined(FREEBSD2) || defined(FREEBSD3) || defined(FREEBSD4) \
     || defined(FREEBSD5) || defined(FREEBSD6) || defined(FREEBSD7) \
     || defined(FREEBSD8) || defined(FREEBSD9) || defined(FREEBSD10) \
+    || defined(FREEBSD11) \
     || defined(BSDI2) || defined(BSDI3) || defined(BSDI4) \
     || defined(OPENBSD2) || defined(OPENBSD3) || defined(OPENBSD4) \
     || defined(OPENBSD5) || defined(OPENBSD6) \
@@ -36,7 +41,6 @@
     || defined(NETBSD7) \
     || defined(EKKOBSD1) || defined(DRAGONFLY)
 #define SUPPORTED
-#include <sys/types.h>
 #include <sys/param.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
@@ -127,7 +131,7 @@
 #define HAS_FUTIMES			/* XXX maybe earlier */
 #endif
 
-#if (defined(OpenBSD) && OpenBSD >= 199608)
+#if (defined(OpenBSD) && OpenBSD >= 199608 && OpenBSD < 201105)
 #define PREFERRED_RAND_SOURCE	"dev:/dev/arandom"	/* XXX earlier */
 #endif
 
@@ -219,7 +223,6 @@
   */
 #if defined(RHAPSODY5) || defined(MACOSX)
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define USE_PATHS_H
@@ -277,7 +280,6 @@
 #ifndef FD_SETSIZE
 #define FD_SETSIZE	96
 #endif
-#include <sys/types.h>
 #define _PATH_MAILDIR	"/var/spool/mail"
 #define _PATH_BSHELL	"/bin/sh"
 #define _PATH_DEFPATH	"/bin:/usr/bin:/usr/ucb"
@@ -325,7 +327,6 @@ extern int h_errno;
   */
 #ifdef OSF1
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define MISSING_SETENV
@@ -366,7 +367,6 @@ extern int opterr;			/* XXX use <getopt.h> */
   */
 #ifdef SUNOS4
 #define SUPPORTED
-#include <sys/types.h>
 #include <memory.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
@@ -410,6 +410,7 @@ extern int opterr;
 #define size_t	unsigned
 #define ssize_t	int
 #define getsid	getpgrp
+#define NO_SNPRINTF
 #endif
 
  /*
@@ -417,11 +418,8 @@ extern int opterr;
   */
 #ifdef SUNOS5
 #define SUPPORTED
-#define _SVID_GETTOD			/* Solaris 2.5, XSH4.2 versus SVID */
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
-#define MISSING_SETENV
 #define _PATH_MAILDIR	"/var/mail"
 #define _PATH_BSHELL	"/bin/sh"
 #define _PATH_DEFPATH	"/usr/bin:/usr/ucb"
@@ -499,7 +497,6 @@ extern int opterr;
   */
 #ifdef UW7				/* UnixWare 7 */
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define _PATH_MAILDIR	"/var/mail"
@@ -530,7 +527,6 @@ extern int opterr;
 
 #ifdef UW21				/* UnixWare 2.1.x */
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define _PATH_MAILDIR   "/var/mail"
@@ -563,7 +559,6 @@ extern int opterr;
   */
 #if defined(AIX5) || defined(AIX6)
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define MISSING_SETENV
@@ -626,7 +621,6 @@ extern int opterr;
 
 #ifdef AIX4
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define MISSING_SETENV
@@ -672,7 +666,6 @@ extern int initgroups(const char *, int);
 
 #ifdef AIX3
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define MISSING_SETENV
@@ -715,7 +708,6 @@ extern int initgroups(const char *, int);
   */
 #if defined(IRIX5) || defined(IRIX6)
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define MISSING_SETENV
@@ -759,9 +751,8 @@ extern int initgroups(const char *, int);
  /*
   * LINUX.
   */
-#if defined(LINUX2) || defined(LINUX3) || defined(LINUX4)
+#if defined(LINUX2) || defined(LINUX3) || defined(LINUX4) || defined(LINUX5)
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #include <features.h>
@@ -794,11 +785,14 @@ extern int initgroups(const char *, int);
 #define HAVE_GLIBC_API_VERSION_SUPPORT(maj, min) __GLIBC_PREREQ(maj, min)
 #else
 #define HAVE_GLIBC_API_VERSION_SUPPORT(maj, min) \
-    ((__GLIBC__ << 16) + __GLIBC_MINOR__ >= ((maj) << 16) + (min))
+    (defined(__GLIBC__) && \
+	((__GLIBC__ << 16) + __GLIBC_MINOR__ >= ((maj) << 16) + (min)))
 #endif
 #if HAVE_GLIBC_API_VERSION_SUPPORT(2, 1)
 #define SOCKADDR_SIZE	socklen_t
 #define SOCKOPT_SIZE	socklen_t
+#else
+#define NO_SNPRINTF
 #endif
 #ifndef NO_IPV6
 #define HAS_IPV6
@@ -815,7 +809,7 @@ extern int initgroups(const char *, int);
 #define KERNEL_VERSION(a,b,c) (LINUX_VERSION_CODE + 1)
 #endif
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,2,0)) \
-	|| (__GLIBC__ < 2)
+	|| (defined(__GLIBC__) && __GLIBC__ < 2)
 #define CANT_USE_SEND_RECV_MSG
 #define DEF_SMTP_CACHE_DEMAND	0
 #else
@@ -840,7 +834,6 @@ extern int initgroups(const char *, int);
 
 #ifdef LINUX1
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define USE_PATHS_H
@@ -876,7 +869,6 @@ extern int initgroups(const char *, int);
   */
 #ifdef GNU0
 #define SUPPORTED
-#include <sys/types.h>
 #include <features.h>
 #define USE_PATHS_H
 #define HAS_FCNTL_LOCK
@@ -942,7 +934,6 @@ extern int initgroups(const char *, int);
 #ifdef HPUX11
 #define SUPPORTED
 #define USE_SIG_RETURN
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define HAS_DBM
@@ -982,7 +973,6 @@ extern int h_errno;			/* <netdb.h> imports too much stuff */
 #ifdef HPUX10
 #define SUPPORTED
 #define USE_SIG_RETURN
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define HAS_DBM
@@ -1022,7 +1012,6 @@ extern int h_errno;			/* <netdb.h> imports too much stuff */
 #ifdef HPUX9
 #define SUPPORTED
 #define USE_SIG_RETURN
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define HAS_DBM
@@ -1065,7 +1054,6 @@ extern int h_errno;
   */
 #ifdef NEXTSTEP3
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define HAS_DBM
@@ -1120,7 +1108,6 @@ typedef unsigned short mode_t;
   */
 #ifdef OPENSTEP4
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define HAS_DBM
@@ -1172,7 +1159,6 @@ typedef unsigned short mode_t;
 
 #ifdef ReliantUnix543
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define MISSING_SETENV
@@ -1204,7 +1190,6 @@ extern int opterr;			/* XXX use <getopt.h> */
 
 #ifdef DCOSX1				/* Siemens Pyramid */
 #define SUPPORTED
-#include <sys/types.h>
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
 #define _PATH_MAILDIR	"/var/mail"
@@ -1234,7 +1219,6 @@ extern int opterr;			/* XXX use <getopt.h> */
 
 #ifdef SCO5
 #define SUPPORTED
-#include <sys/types.h>
 #include <sys/socket.h>
 extern int h_errno;
 
@@ -1333,6 +1317,12 @@ extern int dup2_pass_on_exec(int oldd, int newd);
 #endif
 #define OPTIND  (optind > 0 ? optind : 1)
 
+#if !defined(__UCLIBC__) && !defined(NO_RES_SEND)
+#define HAVE_RES_SEND
+#else
+#undef HAVE_RES_SEND
+#endif
+
  /*
   * Check for required but missing definitions.
   */
@@ -1360,10 +1350,11 @@ extern int dup2_pass_on_exec(int oldd, int newd);
   * Defaults for systems that pre-date IPv6 support.
   */
 #ifndef HAS_IPV6
+#include <sys/socket.h>
 #define EMULATE_IPV4_ADDRINFO
 #define MISSING_INET_PTON
 #define MISSING_INET_NTOP
-extern const char *inet_ntop(int, const void *, char *, size_t);
+extern const char *inet_ntop(int, const void *, char *, SOCKADDR_SIZE);
 extern int inet_pton(int, const char *, void *);
 
 #endif
@@ -1690,17 +1681,25 @@ typedef int pid_t;
 
  /*
   * Bit banging!! There is no official constant that defines the INT_MAX
-  * equivalent of the off_t type. Wietse came up with the following macro
-  * that works as long as off_t is some two's complement number.
-  * 
-  * Note, however, that C99 permits signed integer representations other than
-  * two's complement.
+  * equivalent for off_t, ssize_t, etc. Wietse came up with the following
+  * macro that works as long as off_t, ssize_t, etc. use one's or two's
+  * complement logic (that is, the maximum value is binary 01...1). Don't use
+  * right-shift for signed types: the result is implementation-defined.
   */
 #include <limits.h>
-#define __MAXINT__(T) ((T) (((((T) 1) << ((sizeof(T) * CHAR_BIT) - 1)) ^ ((T) -1))))
+#define __MAXINT__(T) ((T) ~(((T) 1) << ((sizeof(T) * CHAR_BIT) - 1)))
 #ifndef OFF_T_MAX
 #define OFF_T_MAX __MAXINT__(off_t)
 #endif
+
+#ifndef SSIZE_T_MAX
+#define SSIZE_T_MAX __MAXINT__(ssize_t)
+#endif
+
+ /*
+  * Consistent enforcement of size limits.
+  */
+#define ENFORCING_SIZE_LIMIT(param)	((param) > 0)
 
  /*
   * Setting globals like h_errno can be problematic when Postfix is linked
@@ -1792,6 +1791,11 @@ extern int REMOVE(const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_scache.c,v 1.1.1.4 2017/02/14 01:13:42 christos Exp $	*/
+/*	$NetBSD: tls_scache.c,v 1.1.1.5 2020/03/18 18:59:35 christos Exp $	*/
 
 /*++
 /* NAME
@@ -92,7 +92,7 @@
 /* .IP verbose
 /*	Do verbose logging of cache operations? (zero == no)
 /* .IP timeout
-/*	The time after wich a session cache entry is considered too old.
+/*	The time after which a session cache entry is considered too old.
 /* .IP first_next
 /*	One of DICT_SEQ_FUN_FIRST (first cache element) or DICT_SEQ_FUN_NEXT
 /*	(next cache element).

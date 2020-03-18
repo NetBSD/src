@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_lookup.c,v 1.1.1.4 2017/02/14 01:13:40 christos Exp $	*/
+/*	$NetBSD: dns_lookup.c,v 1.1.1.5 2020/03/18 18:59:33 christos Exp $	*/
 
 /*++
 /* NAME
@@ -147,6 +147,8 @@
 /*	available. The per-record reply TTL specifies how long the
 /*	DNS_NOTFOUND answer is valid. The caller should pass the
 /*	record(s) to dns_rr_free().
+/*	Logs a warning if the RES_DNSRCH or RES_DEFNAMES resolver
+/*	flags are set, and disables those flags.
 /* .RE
 /* .IP ltype
 /*	The resource record types to be looked up. In the case of
@@ -307,6 +309,7 @@ typedef struct DNS_REPLY {
   * information, but that will have to wait until it is safe to make
   * libunbound a mandatory dependency for Postfix.
   */
+#ifdef HAVE_RES_SEND
 
 /* dns_res_query - a res_query() clone that can return negative replies */
 
@@ -373,6 +376,8 @@ static int dns_res_query(const char *name, int class, int type,
     }
 }
 
+#endif
+
 /* dns_res_search - res_search() that can return negative replies */
 
 static int dns_res_search(const char *name, int class, int type,
@@ -398,7 +403,15 @@ static int dns_res_search(const char *name, int class, int type,
     if (keep_notfound)
 	/* Prepare for returning a null-padded server reply. */
 	memset(answer, 0, anslen);
-    len = res_query(name, class, type, answer, anslen);
+    len = res_search(name, class, type, answer, anslen);
+    /* Begin API creep workaround. */
+    if (len < 0 && h_errno == 0) {
+	SET_H_ERRNO(TRY_AGAIN);
+	msg_warn("res_query(\"%s\", %d, %d, %p, %d) returns %d with h_errno==0"
+		 " -- setting h_errno=TRY_AGAIN",
+		 name, class, type, answer, anslen, len);
+    }
+    /* End API creep workaround. */
     if (len > 0) {
 	SET_H_ERRNO(0);
     } else if (keep_notfound && NOT_FOUND_H_ERRNO(h_errno)) {
@@ -453,6 +466,16 @@ static int dns_query(const char *name, int type, unsigned flags,
 	flags |= RES_USE_EDNS0;
 
     /*
+     * Can't append domains: we need the right SOA TTL.
+     */
+#define APPEND_DOMAIN_FLAGS (RES_DNSRCH | RES_DEFNAMES)
+
+    if (keep_notfound && (flags & APPEND_DOMAIN_FLAGS)) {
+	msg_warn("negative caching disables RES_DEFNAMES and RES_DNSRCH");
+	flags &= ~APPEND_DOMAIN_FLAGS;
+    }
+
+    /*
      * Save and restore resolver options that we overwrite, to avoid
      * surprising behavior in other code that also invokes the resolver.
      */
@@ -468,8 +491,16 @@ static int dns_query(const char *name, int type, unsigned flags,
 	_res.options &= ~saved_options;
 	_res.options |= flags;
 	if (keep_notfound && var_dns_ncache_ttl_fix) {
+#ifdef HAVE_RES_SEND
 	    len = dns_res_query((char *) name, C_IN, type, reply->buf,
 				reply->buf_len);
+#else
+	    var_dns_ncache_ttl_fix = 0;
+	    msg_warn("system library does not support %s=yes"
+		     " -- ignoring this setting", VAR_DNS_NCACHE_TTL_FIX);
+	    len = dns_res_search((char *) name, C_IN, type, reply->buf,
+				 reply->buf_len, keep_notfound);
+#endif
 	} else {
 	    len = dns_res_search((char *) name, C_IN, type, reply->buf,
 				 reply->buf_len, keep_notfound);
@@ -1086,8 +1117,8 @@ int     dns_lookup_rl(const char *name, unsigned flags, DNS_RR **rrlist,
     for (type = va_arg(ap, unsigned); type != 0; type = next) {
 	next = va_arg(ap, unsigned);
 	if (msg_verbose)
-	    msg_info("lookup %s type %s flags %d",
-		     name, dns_strtype(type), flags);
+	    msg_info("lookup %s type %s flags %s",
+		     name, dns_strtype(type), dns_str_resflags(flags));
 	status = dns_lookup_x(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
 			      fqdn, why, rcode, lflags);
 	if (rrlist && rr)
@@ -1138,8 +1169,8 @@ int     dns_lookup_rv(const char *name, unsigned flags, DNS_RR **rrlist,
     for (type = *types++; type != 0; type = next) {
 	next = *types++;
 	if (msg_verbose)
-	    msg_info("lookup %s type %s flags %d",
-		     name, dns_strtype(type), flags);
+	    msg_info("lookup %s type %s flags %s",
+		     name, dns_strtype(type), dns_str_resflags(flags));
 	status = dns_lookup_x(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
 			      fqdn, why, rcode, lflags);
 	if (rrlist && rr)

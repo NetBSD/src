@@ -1,4 +1,4 @@
-/*	$NetBSD: rcpt_buf.c,v 1.1.1.2 2017/02/14 01:13:41 christos Exp $	*/
+/*	$NetBSD: rcpt_buf.c,v 1.1.1.3 2020/03/18 18:59:34 christos Exp $	*/
 
 /*++
 /* NAME
@@ -60,7 +60,7 @@
 /*	Yorktown Heights, NY 10598, USA
 /*--*/
 
-/* Syste, library. */
+/* System library. */
 
 #include <sys_defs.h>
 

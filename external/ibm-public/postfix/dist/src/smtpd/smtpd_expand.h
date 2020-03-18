@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_expand.h,v 1.1.1.2 2017/02/14 01:13:43 christos Exp $	*/
+/*	$NetBSD: smtpd_expand.h,v 1.1.1.3 2020/03/18 18:59:37 christos Exp $	*/
 
 /*++
 /* NAME
@@ -20,7 +20,7 @@
  /*
   * External interface.
   */
-VSTRING *smtpd_expand_filter;
+extern VSTRING *smtpd_expand_filter;
 void    smtpd_expand_init(void);
 const char *smtpd_expand_lookup(const char *, int, void *);
 int     smtpd_expand(SMTPD_STATE *, VSTRING *, const char *, int);
@@ -34,4 +34,9 @@ int     smtpd_expand(SMTPD_STATE *, VSTRING *, const char *, int);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/

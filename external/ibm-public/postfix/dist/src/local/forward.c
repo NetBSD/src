@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.1.1.4 2017/02/14 01:13:41 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.1.1.5 2020/03/18 18:59:34 christos Exp $	*/
 
 /*++
 /* NAME
@@ -50,6 +50,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */

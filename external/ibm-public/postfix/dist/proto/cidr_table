@@ -25,30 +25,42 @@
 # .ad
 # .fi
 #	The general form of a Postfix CIDR table is:
-# .IP "\fInetwork_address\fB/\fInetwork_mask     result\fR"
-#	When a search string matches the specified network block,
-#	use the corresponding \fIresult\fR value. Specify
-#	0.0.0.0/0 to match every IPv4 address, and ::/0 to match
-#	every IPv6 address.
-#
-#	An IPv4 network address is a sequence of four decimal octets
-#	separated by ".", and an IPv6 network address is a sequence
-#	of three to eight hexadecimal octet pairs separated by ":".
-#
-#	The \fInetwork_mask\fR is the number of high-order bits in
-#	the \fInetwork_address\fR that the search string must match.
-#
-#	Before comparisons are made, lookup keys and table entries
-#	are converted from string to binary. Therefore table entries
-#	will be matched regardless of redundant zero characters.
-#
-#	Note: address information may be enclosed inside "[]" but
-#	this form is not required.
-#
-#	IPv6 support is available in Postfix 2.2 and later.
-# .IP "\fInetwork_address     result\fR"
-#	When a search string matches the specified network address,
-#	use the corresponding \fIresult\fR value.
+# .IP "\fIpattern     result\fR"
+#	When a search string matches the specified \fIpattern\fR, use
+#	the corresponding \fIresult\fR value. The \fIpattern\fR must be
+#	in \fInetwork/prefix\fR or \fInetwork_address\fR form (see
+#	ADDRESS PATTERN SYNTAX below).
+# .IP "\fB!\fIpattern	result\fR"
+#	When a search string does not match the specified \fIpattern\fR,
+#	use the specified \fIresult\fR value. The \fIpattern\fR must
+#	be in \fInetwork/prefix\fR or \fInetwork_address\fR form (see
+#	ADDRESS PATTERN SYNTAX below).
+# .sp
+#	This feature is available in Postfix 3.2 and later.
+# .IP "\fBif \fIpattern\fR"
+# .IP "\fBendif\fR"
+#	When a search string matches the specified \fIpattern\fR, match
+#	that search string against the patterns between \fBif\fR and
+#	\fBendif\fR.  The \fIpattern\fR must be in \fInetwork/prefix\fR or
+#	\fInetwork_address\fR form (see ADDRESS PATTERN SYNTAX below). The
+#	\fBif\fR..\fBendif\fR can nest.
+# .sp
+#	Note: do not prepend whitespace to text between
+#	\fBif\fR..\fBendif\fR.
+# .sp
+#	This feature is available in Postfix 3.2 and later.
+# .IP "\fBif !\fIpattern\fR"
+# .IP "\fBendif\fR"
+#	When a search string does not match the specified \fIpattern\fR,
+#	match that search string against the patterns between \fBif\fR and
+#	\fBendif\fR. The \fIpattern\fR must be in \fInetwork/prefix\fR or
+#	\fInetwork_address\fR form (see ADDRESS PATTERN SYNTAX below). The
+#	\fBif\fR..\fBendif\fR can nest.
+# .sp
+#	Note: do not prepend whitespace to text between
+#	\fBif\fR..\fBendif\fR.
+# .sp
+#	This feature is available in Postfix 3.2 and later.
 # .IP "blank lines and comments"
 #	Empty lines and whitespace-only lines are ignored, as
 #	are lines whose first non-whitespace character is a `#'.
@@ -60,6 +72,32 @@
 # .fi
 #	Patterns are applied in the order as specified in the table, until a
 #	pattern is found that matches the search string.
+# ADDRESS PATTERN SYNTAX
+# .ad
+# .fi
+#	Postfix CIDR tables are pattern-based.	A pattern is either
+#	a \fInetwork_address\fR which requires an exact match, or a
+#	\fInetwork_address/prefix_length\fR where the \fIprefix_length\fR
+#	part specifies the length of the \fInetwork_address\fR prefix
+#	that must be matched (the other bits in the \fInetwork_address\fR
+#	part must be zero).
+#
+#	An IPv4 network address is a sequence of four decimal octets
+#	separated by ".", and an IPv6 network address is a sequence
+#	of three to eight hexadecimal octet pairs separated by ":"
+#	or "::", where the latter is short-hand for a sequence of
+#	one or more all-zero octet pairs. The pattern 0.0.0.0/0
+#	matches every IPv4 address, and ::/0 matches every IPv6
+#	address.  IPv6 support is available in Postfix 2.2 and
+#	later.
+#
+#	Before comparisons are made, lookup keys and table entries
+#	are converted from string to binary. Therefore, IPv6 patterns
+#	will be matched regardless of leading zeros (a leading zero in
+#	an IPv4 address octet indicates octal notation).
+#
+#	Note: address information may be enclosed inside "[]" but
+#	this form is not required.
 # EXAMPLE SMTPD ACCESS MAP
 # .nf
 #	/etc/postfix/main.cf:
@@ -70,6 +108,8 @@
 #	    # before more general blacklist entries.
 #	    192.168.1.1             OK
 #	    192.168.0.0/16          REJECT
+#	    2001:db8::1             OK
+#	    2001:db8::/32           REJECT
 # .fi
 # SEE ALSO
 #	postmap(1), Postfix lookup table manager

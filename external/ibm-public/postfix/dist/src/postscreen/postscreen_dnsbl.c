@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_dnsbl.c,v 1.1.1.5 2017/02/14 01:13:42 christos Exp $	*/
+/*	$NetBSD: postscreen_dnsbl.c,v 1.1.1.6 2020/03/18 18:59:36 christos Exp $	*/
 
 /*++
 /* NAME
@@ -216,7 +216,7 @@ typedef struct {
   */
 static VSTRING *reply_client;		/* client address in DNSBLOG reply */
 static VSTRING *reply_dnsbl;		/* domain in DNSBLOG reply */
-static VSTRING *reply_addr;		/* adress list in DNSBLOG reply */
+static VSTRING *reply_addr;		/* address list in DNSBLOG reply */
 
 /* psc_dnsbl_add_site - add DNSBL site information */
 

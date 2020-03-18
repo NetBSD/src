@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.h,v 1.1.1.3 2017/02/14 01:13:43 christos Exp $	*/
+/*	$NetBSD: smtpd_check.h,v 1.1.1.4 2020/03/18 18:59:37 christos Exp $	*/
 
 /*++
 /* NAME
@@ -37,4 +37,9 @@ extern char *smtpd_check_policy(SMTPD_STATE *, char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/

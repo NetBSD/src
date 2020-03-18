@@ -1,4 +1,4 @@
-/*	$NetBSD: master_wakeup.c,v 1.1.1.3 2017/02/14 01:13:41 christos Exp $	*/
+/*	$NetBSD: master_wakeup.c,v 1.1.1.4 2020/03/18 18:59:34 christos Exp $	*/
 
 /*++
 /* NAME
@@ -48,6 +48,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -55,6 +60,7 @@
 #include <sys_defs.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 /* Utility library. */
 
@@ -106,6 +112,10 @@ static void master_wakeup_timer_event(int unused_event, void *context)
 	    break;
 	case MASTER_SERV_TYPE_UNIX:
 	    status = LOCAL_TRIGGER(serv->name, &wakeup, sizeof(wakeup), BRIEFLY);
+	    break;
+	case MASTER_SERV_TYPE_UXDG:
+	    status = -1;
+	    errno = EOPNOTSUPP;
 	    break;
 #ifdef MASTER_SERV_TYPE_PASS
 	case MASTER_SERV_TYPE_PASS:

@@ -1,4 +1,4 @@
-/*	$NetBSD: edit_file.c,v 1.1.1.3 2017/02/14 01:13:44 christos Exp $	*/
+/*	$NetBSD: edit_file.c,v 1.1.1.4 2020/03/18 18:59:38 christos Exp $	*/
 
 /*++
 /* NAME
@@ -57,7 +57,7 @@
 /*	pathname into the place of the original file. When any of
 /*	these operations fails, edit_file_close() behaves as if
 /*	edit_file_cleanup() was called. Regardless of whether these
-/*	operations suceed, edit_file_close() releases the exclusive
+/*	operations succeed, edit_file_close() releases the exclusive
 /*	lock, closes the output file, and frees up memory that was
 /*	allocated by edit_file_open().
 /*

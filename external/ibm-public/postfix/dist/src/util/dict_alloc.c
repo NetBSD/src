@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_alloc.c,v 1.1.1.5 2017/02/14 01:13:44 christos Exp $	*/
+/*	$NetBSD: dict_alloc.c,v 1.1.1.6 2020/03/18 18:59:37 christos Exp $	*/
 
 /*++
 /* NAME
@@ -66,6 +66,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System libraries. */
@@ -157,6 +162,8 @@ DICT   *dict_alloc(const char *dict_type, const char *dict_name, ssize_t size)
     dict->error = DICT_ERR_NONE;
     dict->jbuf = 0;
     dict->utf8_backup = 0;
+    dict->file_buf = 0;
+    dict->file_b64 = 0;
     return dict;
 }
 
@@ -170,6 +177,10 @@ void    dict_free(DICT *dict)
 	myfree((void *) dict->jbuf);
     if (dict->utf8_backup)
 	myfree((void *) dict->utf8_backup);
+    if (dict->file_buf)
+	vstring_free(dict->file_buf);
+    if (dict->file_b64)
+	vstring_free(dict->file_b64);
     myfree((void *) dict);
 }
 

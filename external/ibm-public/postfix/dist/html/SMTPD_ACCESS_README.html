@@ -187,12 +187,6 @@ described in the <a href="postconf.5.html">postconf(5)</a> manual page. </p>
     # Don't accept mail from domains that don't exist.
     <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a> = <a href="postconf.5.html#reject_unknown_sender_domain">reject_unknown_sender_domain</a>
 
-    # Relay control (Postfix 2.10 and later): local clients and
-    # authenticated clients may specify any destination domain.
-    <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, 
-        <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>,
-        <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
-
     # Spam control: exclude local clients and authenticated clients
     # from DNSBL lookups.
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, 
@@ -205,6 +199,12 @@ described in the <a href="postconf.5.html">postconf(5)</a> manual page. </p>
         <a href="postconf.5.html#reject_rhsbl_reverse_client">reject_rhsbl_reverse_client</a> dbl.spamhaus.org,
         <a href="postconf.5.html#reject_rhsbl_helo">reject_rhsbl_helo</a> dbl.spamhaus.org,
         <a href="postconf.5.html#reject_rhsbl_sender">reject_rhsbl_sender</a> dbl.spamhaus.org
+
+    # Relay control (Postfix 2.10 and later): local clients and
+    # authenticated clients may specify any destination domain.
+    <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, 
+        <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>,
+        <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
 
     # Block clients that speak too early.
     <a href="postconf.5.html#smtpd_data_restrictions">smtpd_data_restrictions</a> = <a href="postconf.5.html#reject_unauth_pipelining">reject_unauth_pipelining</a>
@@ -246,20 +246,20 @@ Reject HELO/EHLO information </td> </tr>
 Optional </td> <td>
 Reject MAIL FROM information </td> </tr>
 
-<tr> <td rowspan="2"> <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> </td> <td> &ge; 2.10
-</td> <td> Required if <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> does not enforce
-relay policy</td>
-<td rowspan="2"> Reject RCPT TO information </td> </tr>
-
-<tr> <td> &lt 2.10</td> <td> Not available </td> 
-</tr>
-
 <tr> <td rowspan="2"> <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> </td> <td> &ge;
 2.10 </td> <td> Required if <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> does not enforce
 relay policy</td>
 <td rowspan="2"> Reject RCPT TO information </td> </tr>
 
-<tr> <td> &lt 2.10</td> <td> Required </td> </tr>
+<tr> <td> &lt; 2.10</td> <td> Required </td> </tr>
+
+<tr> <td rowspan="2"> <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> </td> <td> &ge; 2.10
+</td> <td> Required if <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> does not enforce
+relay policy</td>
+<td rowspan="2"> Reject RCPT TO information </td> </tr>
+
+<tr> <td> &lt; 2.10</td> <td> Not available </td> 
+</tr>
 
 <tr> <td> <a href="postconf.5.html#smtpd_data_restrictions">smtpd_data_restrictions</a> </td> <td> &ge; 2.0 </td> <td>
 Optional </td> <td>

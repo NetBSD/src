@@ -1,4 +1,4 @@
-/*	$NetBSD: post_mail.c,v 1.1.1.2 2017/02/14 01:13:41 christos Exp $	*/
+/*	$NetBSD: post_mail.c,v 1.1.1.3 2020/03/18 18:59:34 christos Exp $	*/
 
 /*++
 /* NAME
@@ -82,7 +82,7 @@
 /*	open stream and the caller-specified context when the
 /*	service responds, or with a null stream and the caller-specified
 /*	context when the request could not be completed. It is the
-/*	responsability of the application to close an open stream.
+/*	responsibility of the application to close an open stream.
 /*
 /*	post_mail_fprintf() formats message content (header or body)
 /*	and sends it to the cleanup service.
@@ -156,6 +156,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
