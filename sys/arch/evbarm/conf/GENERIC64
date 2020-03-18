@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.143 2020/03/18 02:21:24 nisimura Exp $
+#	$NetBSD: GENERIC64,v 1.144 2020/03/18 03:26:14 nisimura Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -325,7 +325,7 @@ pci*		at ppb?
 awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
 enet*		at fdt?				# IMX FEC
-#scx*		at fdt?				# SocioNext Gigabit Ethernet
+#scx*		at fdt?				# Socionext Gigabit Ethernet
 #scx*		at acpi?
 aq*		at pci? dev ? function ?	# Aquantia AQC 10 gigabit
 ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
@@ -391,6 +391,8 @@ rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
+#sniiic*	at fdt?			# Socionext SC2A11 I2C
+#sniiic*	at acpi?
 iic*		at i2cbus?
 
 # I2C devices
@@ -431,6 +433,8 @@ rkemmcphy*	at fdt?			# Rockchip eMMC PHY
 sdhc*		at fdt?			# SD Host Controller Interface
 sdhc*		at acpi?
 sunximmc*	at fdt?			# Allwinner SD/MMC
+#sniemmc*	at fdt?			# Socionext SC2A11 eMMC
+#sniemmc*	at acpi?
 sdmmc*		at sdmmcbus?
 ld0		at sdmmc0
 ld1		at sdmmc1
