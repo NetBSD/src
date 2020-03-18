@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.170 2020/03/18 09:42:05 martin Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.171 2020/03/18 11:33:32 kre Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.170 2020/03/18 09:42:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.171 2020/03/18 11:33:32 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -127,7 +127,7 @@ fail:
 	aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
 }
 
-#endif /* AXE_DEBUG */
+#endif /* AUE_DEBUG */
 #endif /* USB_DEBUG */
 
 #define DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(auedebug,1,FMT,A,B,C,D)
@@ -1012,13 +1012,11 @@ aue_uno_init(struct ifnet *ifp)
 static int
 aue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-#ifdef AUE_DEBUG
-	struct usbnet * const	un = ifp->if_softc;
-#endif
 
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(5, "aue%jd: enter cmd %#jx data %#jx",
-	    device_unit(un->un_dev), cmd, (uintptr_t)data, 0);
+	    device_unit(((struct usbnet *)(ifp->if_softc))->un_dev),
+	    cmd, (uintptr_t)data, 0);
 
 	switch (cmd) {
 	case SIOCADDMULTI:
