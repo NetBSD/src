@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.168 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.169 2020/03/18 02:58:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.168 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.169 2020/03/18 02:58:24 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1012,6 +1012,7 @@ aue_uno_init(struct ifnet *ifp)
 static int
 aue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+	struct usbnet * const	un = ifp->if_softc;
 
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(5, "aue%jd: enter cmd %#jx data %#jx",
