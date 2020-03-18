@@ -227,6 +227,7 @@ while (<>) {
     s;\blmtp_reply_filter\b;<a href="postconf.5.html#lmtp_reply_filter">$&</a>;g;
     s;\blmtp_sasl_password_maps\b;<a href="postconf.5.html#lmtp_sasl_password_maps">$&</a>;g;
     s;\blmtp_send_dummy_mail_auth\b;<a href="postconf.5.html#lmtp_send_dummy_mail_auth">$&</a>;g;
+    s;\blmtp_balance_inet_protocols\b;<a href="postconf.5.html#lmtp_balance_inet_protocols">$&</a>;g;
     s;\blmtp_sender_dependent_authentication\b;<a href="postconf.5.html#lmtp_sender_dependent_authentication">$&</a>;g;
     s;\blmtp_bind_address\b;<a href="postconf.5.html#lmtp_bind_address">$&</a>;g;
     s;\blmtp_bind_address6\b;<a href="postconf.5.html#lmtp_bind_address6">$&</a>;g;
@@ -246,10 +247,12 @@ while (<>) {
     s;\blmtp_tls_policy_maps\b;<a href="postconf.5.html#lmtp_tls_policy_maps">$&</a>;g;
     s;\blmtp_tls_secure_cert_match\b;<a href="postconf.5.html#lmtp_tls_secure_cert_match">$&</a>;g;
     s;\blmtp_tls_security_level\b;<a href="postconf.5.html#lmtp_tls_security_level">$&</a>;g;
+    s;\blmtp_tls_servername\b;<a href="postconf.5.html#lmtp_tls_servername">$&</a>;g;
     s;\blmtp_tls_fingerprint_cert_match\b;<a href="postconf.5.html#lmtp_tls_fingerprint_cert_match">$&</a>;g;
     s;\blmtp_tls_verify_cert_match\b;<a href="postconf.5.html#lmtp_tls_verify_cert_match">$&</a>;g;
     s;\blmtp_tls_trust_anchor_file\b;<a href="postconf.5.html#lmtp_tls_trust_anchor_file">$&</a>;g;
     s;\blmtp_tls_per_site\b;<a href="postconf.5.html#lmtp_tls_per_site">$&</a>;g;
+    s;\blmtp_tls_chain_files\b;<a href="postconf.5.html#lmtp_tls_chain_files">$&</a>;g;
     s;\blmtp_tls_cert_file\b;<a href="postconf.5.html#lmtp_tls_cert_file">$&</a>;g;
     s;\blmtp_tls_key_file\b;<a href="postconf.5.html#lmtp_tls_key_file">$&</a>;g;
     s;\blmtp_tls_dcert_file\b;<a href="postconf.5.html#lmtp_tls_dcert_file">$&</a>;g;
@@ -323,7 +326,7 @@ while (<>) {
     s;\bmail_owner\b;<a href="postconf.5.html#mail_owner">$&</a>;g;
     s;\bmail_release_date\b;<a href="postconf.5.html#mail_release_date">$&</a>;g;
     s;\bmail_spool_direc[-</bB>]*\n* *[<bB>]*tory\b;<a href="postconf.5.html#mail_spool_directory">$&</a>;g;
-    s;\bmail_version\b;<a href="postconf.5.html#mail_version">$&</a>;g;
+    s;\bmail_ver[-</bB>]*\n* *[<bB>]*sion\b;<a href="postconf.5.html#mail_version">$&</a>;g;
     s;\bmail[-</bB>]*\n* *[<bB>]*box_com[-</bB>]*\n* *[<bB>]*mand\b;<a href="postconf.5.html#mailbox_command">$&</a>;g;
     s;\bmail[-</bB>]*\n* *[<bB>]*box_com[-</bB>]*\n* *[<bB>]*mand_maps\b;<a href="postconf.5.html#mailbox_command_maps">$&</a>;g;
     s;\bmail[-</bB>]*\n* *[<bB>]*box_deliv[-</Bb>]*\n* *[<Bb>]*ery_lock\b;<a href="postconf.5.html#mailbox_delivery_lock">$&</a>;g;
@@ -390,6 +393,7 @@ while (<>) {
     s;\bqmgr_daemon_timeout\b;<a href="postconf.5.html#qmgr_daemon_timeout">$&</a>;g;
     s;\bqmgr_ipc_timeout\b;<a href="postconf.5.html#qmgr_ipc_timeout">$&</a>;g;
     s;\bqmqpd_authorized_clients\b;<a href="postconf.5.html#qmqpd_authorized_clients">$&</a>;g;
+    s;\bservice_name\b;<a href="postconf.5.html#service_name">$&</a>;g;
 
     s;\bdefault_desti[-</Bb>]*\n* *[<Bb>]*na[-</Bb>]*\n* *[<Bb>]*tion_concur[-</Bb>]*\n* *[<Bb>]*rency_negative_feedback\b;<a href="postconf.5.html#default_destination_concurrency_negative_feedback">$&</a>;g;
     s;\bdefault_desti[-</Bb>]*\n* *[<Bb>]*na[-</Bb>]*\n* *[<Bb>]*tion_concur[-</Bb>]*\n* *[<Bb>]*rency_positive_feedback\b;<a href="postconf.5.html#default_destination_concurrency_positive_feedback">$&</a>;g;
@@ -517,6 +521,7 @@ while (<>) {
     s;\bsmtp_skip_4xx_greeting\b;<a href="postconf.5.html#smtp_skip_4xx_greeting">$&</a>;g;
     s;\bsmtp_skip_5xx_greeting\b;<a href="postconf.5.html#smtp_skip_5xx_greeting">$&</a>;g;
     s;\bsmtp_skip_quit_response\b;<a href="postconf.5.html#smtp_skip_quit_response">$&</a>;g;
+    s;\bsmtp_tcp_port\b;<a href="postconf.5.html#smtp_tcp_port">$&</a>;g;
     s;\bsmtp_xforward_timeout\b;<a href="postconf.5.html#smtp_xforward_timeout">$&</a>;g;
     s;\bsmtpd_log_access_permit_actions\b;<a href="postconf.5.html#smtpd_log_access_permit_actions">$&</a>;g;
     s;\bsmtpd_autho[-</bB>]*\n*[ <bB>]*rized_verp_clients\b;<a href="postconf.5.html#smtpd_authorized_verp_clients">$&</a>;g;
@@ -549,6 +554,7 @@ while (<>) {
     s;\bsmtpd_history_flush_threshold\b;<a href="postconf.5.html#smtpd_history_flush_threshold">$&</a>;g;
     s;\bsmtpd_junk_command_limit\b;<a href="postconf.5.html#smtpd_junk_command_limit">$&</a>;g;
     s;\bsmtpd_milters\b;<a href="postconf.5.html#smtpd_milters">$&</a>;g;
+    s;\bsmtpd_milter_maps\b;<a href="postconf.5.html#smtpd_milter_maps">$&</a>;g;
     s;\bsmtpd_noop_commands\b;<a href="postconf.5.html#smtpd_noop_commands">$&</a>;g;
     s;\bsmtpd_null_access_lookup_key\b;<a href="postconf.5.html#smtpd_null_access_lookup_key">$&</a>;g;
     s;\bsmtpd_recipient_overshoot_limit\b;<a href="postconf.5.html#smtpd_recipient_overshoot_limit">$&</a>;g;
@@ -578,6 +584,7 @@ while (<>) {
     s;\bsmtpd_sasl_authenticated_header\b;<a href="postconf.5.html#smtpd_sasl_authenticated_header">$&</a>;g;
     s;\bsmtpd_sasl_exceptions_networks\b;<a href="postconf.5.html#smtpd_sasl_exceptions_networks">$&</a>;g;
     s;\bsmtpd_sasl_local_domain\b;<a href="postconf.5.html#smtpd_sasl_local_domain">$&</a>;g;
+    s;\bsmtpd_sasl_response_limit\b;<a href="postconf.5.html#smtpd_sasl_response_limit">$&</a>;g;
     s;\bsmtpd_sasl_secu[-</Bb>]*\n* *[<Bb>]*rity_options\b;<a href="postconf.5.html#smtpd_sasl_security_options">$&</a>;g;
     s;\bsmtpd_sender_login_maps\b;<a href="postconf.5.html#smtpd_sender_login_maps">$&</a>;g;
     s;\bsmtpd_sender_restrictions\b;<a href="postconf.5.html#smtpd_sender_restrictions">$&</a>;g;
@@ -645,6 +652,7 @@ while (<>) {
     s;\bsmtp_starttls_timeout\b;<a href="postconf.5.html#smtp_starttls_timeout">$&</a>;g;
     s;\bsmtp_tls_CAfile\b;<a href="postconf.5.html#smtp_tls_CAfile">$&</a>;g;
     s;\bsmtp_tls_CApath\b;<a href="postconf.5.html#smtp_tls_CApath">$&</a>;g;
+    s;\bsmtp_tls_chain_files\b;<a href="postconf.5.html#smtp_tls_chain_files">$&</a>;g;
     s;\bsmtp_tls_cert_file\b;<a href="postconf.5.html#smtp_tls_cert_file">$&</a>;g;
     s;\bsmtp_tls_fingerprint_digest\b;<a href="postconf.5.html#smtp_tls_fingerprint_digest">$&</a>;g;
     s;\bsmtp_tls_protocols\b;<a href="postconf.5.html#smtp_tls_protocols">$&</a>;g;
@@ -667,6 +675,7 @@ while (<>) {
     s;\bsmtp_tls_fingerprint_cert_match\b;<a href="postconf.5.html#smtp_tls_fingerprint_cert_match">$&</a>;g;
     s;\bsmtp_tls_verify_cert_match\b;<a href="postconf.5.html#smtp_tls_verify_cert_match">$&</a>;g;
     s;\bsmtp_tls_secure_cert_match\b;<a href="postconf.5.html#smtp_tls_secure_cert_match">$&</a>;g;
+    s;\bsmtp_tls_servername\b;<a href="postconf.5.html#smtp_tls_servername">$&</a>;g;
     s;\bsmtp_tls_trust_anchor_file\b;<a href="postconf.5.html#smtp_tls_trust_anchor_file">$&</a>;g;
     s;\bsmtp_tls_scert_verifydepth\b;<a href="postconf.5.html#smtp_tls_scert_verifydepth">$&</a>;g;
     s;\bsmtp_tls_secu[-</Bb>]*\n* *[<Bb>]*rity_level\b;<a href="postconf.5.html#smtp_tls_security_level">$&</a>;g;
@@ -685,6 +694,9 @@ while (<>) {
     s;\bsmtp_address_preference\b;<a href="postconf.5.html#smtp_address_preference">$&</a>;g;
     s;\bsmtp_per_record_deadline\b;<a href="postconf.5.html#smtp_per_record_deadline">$&</a>;g;
     s;\bsmtp_send_dummy_mail_auth\b;<a href="postconf.5.html#smtp_send_dummy_mail_auth">$&</a>;g;
+    s;\bsmtp_balance_inet_protocols\b;<a href="postconf.5.html#smtp_balance_inet_protocols">$&</a>;g;
+    s;\bsmtp_tls_connection_reuse\b;<a href="postconf.5.html#smtp_tls_connection_reuse">$&</a>;g;
+    s;\blmtp_tls_connection_reuse\b;<a href="postconf.5.html#lmtp_tls_connection_reuse">$&</a>;g;
     s;\bsmtpd_enforce_tls\b;<a href="postconf.5.html#smtpd_enforce_tls">$&</a>;g;
     s;\bsmtpd_sasl_tls_security_options\b;<a href="postconf.5.html#smtpd_sasl_tls_security_options">$&</a>;g;
     s;\bsmtpd_sasl_type\b;<a href="postconf.5.html#smtpd_sasl_type">$&</a>;g;
@@ -694,6 +706,7 @@ while (<>) {
     s;\bsmtpd_tls_ask_ccert\b;<a href="postconf.5.html#smtpd_tls_ask_ccert">$&</a>;g;
     s;\bsmtpd_tls_auth_only\b;<a href="postconf.5.html#smtpd_tls_auth_only">$&</a>;g;
     s;\bsmtpd_tls_ccert_verify[-</bB>]*\n*[ <bB>]*depth\b;<a href="postconf.5.html#smtpd_tls_ccert_verifydepth">$&</a>;g;
+    s;\bsmtpd_tls_chain_files\b;<a href="postconf.5.html#smtpd_tls_chain_files">$&</a>;g;
     s;\bsmtpd_tls_cert_file\b;<a href="postconf.5.html#smtpd_tls_cert_file">$&</a>;g;
     s;\bsmtpd_tls_cipherlist\b;<a href="postconf.5.html#smtpd_tls_cipherlist">$&</a>;g;
     s;\bsmtpd_tls_exclude_ciphers\b;<a href="postconf.5.html#smtpd_tls_exclude_ciphers">$&</a>;g;
@@ -721,6 +734,7 @@ while (<>) {
     s;\bsmtpd_tls_wrappermode\b;<a href="postconf.5.html#smtpd_tls_wrappermode">$&</a>;g;
     s;\bsmtpd_use_tls\b;<a href="postconf.5.html#smtpd_use_tls">$&</a>;g;
     s;\bsmtpd_reject_footer\b;<a href="postconf.5.html#smtpd_reject_footer">$&</a>;g;
+    s;\bsmtpd_reject_footer_maps\b;<a href="postconf.5.html#smtpd_reject_footer_maps">$&</a>;g;
     s;\bsmtpd_per_record_deadline\b;<a href="postconf.5.html#smtpd_per_record_deadline">$&</a>;g;
     s;\bsmtpd_upstream_proxy_protocol\b;<a href="postconf.5.html#smtpd_upstream_proxy_protocol">$&</a>;g;
     s;\bsmtpd_upstream_proxy_timeout\b;<a href="postconf.5.html#smtpd_upstream_proxy_timeout">$&</a>;g;
@@ -737,17 +751,21 @@ while (<>) {
     s;\btls_low_cipherlist\b;<a href="postconf.5.html#tls_low_cipherlist">$&</a>;g;
     s;\btls_export_cipherlist\b;<a href="postconf.5.html#tls_export_cipherlist">$&</a>;g;
     s;\btls_null_cipherlist\b;<a href="postconf.5.html#tls_null_cipherlist">$&</a>;g;
+    s;\btls_eecdh_auto_curves\b;<a href="postconf.5.html#tls_eecdh_auto_curves">$&</a>;g;
     s;\btls_eecdh_strong_curve\b;<a href="postconf.5.html#tls_eecdh_strong_curve">$&</a>;g;
     s;\btls_eecdh_ultra_curve\b;<a href="postconf.5.html#tls_eecdh_ultra_curve">$&</a>;g;
     s;\btls_preempt_cipherlist\b;<a href="postconf.5.html#tls_preempt_cipherlist">$&</a>;g;
     s;\btls_disable_workarounds\b;<a href="postconf.5.html#tls_disable_workarounds">$&</a>;g;
     s;\btls_append_default_CA\b;<a href="postconf.5.html#tls_append_default_CA">$&</a>;g;
     s;\btls_legacy_public_key_fingerprints\b;<a href="postconf.5.html#tls_legacy_public_key_fingerprint">$&</a>;g;
-    s;\btls_dane_trust_anchor_digest_enable\b;<a href="postconf.5.html#tls_dane_trust_anchor_digest_enable">$&</a>;g;
     s;\btls_dane_digests\b;<a href="postconf.5.html#tls_dane_digests">$&</a>;g;
     s;\btls_wildcard_matches_multiple_labels\b;<a href="postconf.5.html#tls_wildcard_matches_multiple_labels">$&</a>;g;
     s;\btls_session_ticket_cipher\b;<a href="postconf.5.html#tls_session_ticket_cipher">$&</a>;g;
+    s;\btls_server_sni_maps\b;<a href="postconf.5.html#tls_server_sni_maps">$&</a>;g;
     s;\btls_ssl_options\b;<a href="postconf.5.html#tls_ssl_options">$&</a>;g;
+    s;\btls_dane_digest_agility\b;<a href="postconf.5.html#tls_dane_digest_agility">$&</a>;g;
+    s;\btls_dane_trust_anchor_digest_enable\b;<a href="postconf.5.html#tls_dane_trust_anchor_digest_enable">$&</a>;g;
+    s;\btls_fast_shutdown_enable\b;<a href="postconf.5.html#tls_fast_shutdown_enable">$&</a>;g;
 
     s;\bfrozen_delivered_to\b;<a href="postconf.5.html#frozen_delivered_to">$&</a>;g;
     s;\breset_owner_alias\b;<a href="postconf.5.html#reset_owner_alias">$&</a>;g;
@@ -796,6 +814,7 @@ while (<>) {
     s/[<bB>]*mas[-<\/bB>]*\n* *[<bB>]*ter[<\/bB>]*\(8\)/<a href="master.8.html">$&<\/a>/g;
     s/[<bB>]*pickup[<\/bB>]*\(8\)/<a href="pickup.8.html">$&<\/a>/g;
     s/[<bB>]*pipe[<\/bB>]*\(8\)/<a href="pipe.8.html">$&<\/a>/g;
+    s/[<bB>]*postlogd[<\/bB>]*\(8\)/<a href="postlogd.8.html">$&<\/a>/g;
     s/[<bB>]*postscreen[<\/bB>]*\(8\)/<a href="postscreen.8.html">$&<\/a>/g;
     s/[<bB>]*oqmgr[<\/bB>]*\(8\)/<a href="qmgr.8.html">$&<\/a>/g;
     s/[<bB>]*\bqmgr[<\/bB>]*\(8\)/<a href="qmgr.8.html">$&<\/a>/g;
@@ -823,7 +842,7 @@ while (<>) {
     s/[<bB>]*postmap[<\/bB>]*\(1\)/<a href="postmap.1.html">$&<\/a>/g;
     s/[<bB>]*postmulti[<\/bB>]*\(1\)/<a href="postmulti.1.html">$&<\/a>/g;
     s/[<bB>]*postqueue[<\/bB>]*\(1\)/<a href="postqueue.1.html">$&<\/a>/g;
-    s/[<bB>]*post[-<\/bB>]*\n*[ <bB>]*super[<\/bB>]*\(1\)/<a href="postsuper.1.html">$&<\/a>/g;
+    s/[<bB>]*post[-<\/bB>]*\n*[ <bB>]*su[-<\/bB>]*\n*[ <bB>]*per[<\/bB>]*\(1\)/<a href="postsuper.1.html">$&<\/a>/g;
     s/[<bB>]*post[-<\/bB>]*\n*[ <bB>]*tls-finger[<\/bB>]*\(1\)/<a href="posttls-finger.1.html">$&<\/a>/g;
     s/[<bB>]*send[-<\/bB>]*\n*[ <bB>]*mail[<\/bB>]*\(1\)/<a href="sendmail.1.html">$&<\/a>/g;
     s/[<bB>]*smtp-[<\/bB>]*\n* *[<bB>]*source[<\/bB>]*\(1\)/<a href="smtp-source.1.html">$&<\/a>/g;
@@ -1039,6 +1058,7 @@ while (<>) {
     s;\bpostscreen_discard_ehlo_keywords\b;<a href="postconf.5.html#postscreen_discard_ehlo_keywords">$&</a>;g;
     s;\bpostscreen_expansion_filter\b;<a href="postconf.5.html#postscreen_expansion_filter">$&</a>;g;
     s;\bpostscreen_reject_footer\b;<a href="postconf.5.html#postscreen_reject_footer">$&</a>;g;
+    s;\bpostscreen_reject_footer_maps\b;<a href="postconf.5.html#postscreen_reject_footer_maps">$&</a>;g;
     s;\bpostscreen_command_filter\b;<a href="postconf.5.html#postscreen_command_filter">$&</a>;g;
     s;\bpostscreen_whitelist_interfaces\b;<a href="postconf.5.html#postscreen_whitelist_interfaces">$&</a>;g;
     s;\bpostscreen_upstream_proxy_protocol\b;<a href="postconf.5.html#postscreen_upstream_proxy_protocol">$&</a>;g;
@@ -1051,6 +1071,7 @@ while (<>) {
     s;\btlsproxy_tls_always_issue_session_ids\b;<a href="postconf.5.html#tlsproxy_tls_always_issue_session_ids">$&</a>;g;
     s;\btlsproxy_tls_ask_ccert\b;<a href="postconf.5.html#tlsproxy_tls_ask_ccert">$&</a>;g;
     s;\btlsproxy_tls_ccert_verifydepth\b;<a href="postconf.5.html#tlsproxy_tls_ccert_verifydepth">$&</a>;g;
+    s;\btlsproxy_tls_chain_files\b;<a href="postconf.5.html#tlsproxy_tls_chain_files">$&</a>;g;
     s;\btlsproxy_tls_cert_file\b;<a href="postconf.5.html#tlsproxy_tls_cert_file">$&</a>;g;
     s;\btlsproxy_tls_ciphers\b;<a href="postconf.5.html#tlsproxy_tls_ciphers">$&</a>;g;
     s;\btlsproxy_tls_dcert_file\b;<a href="postconf.5.html#tlsproxy_tls_dcert_file">$&</a>;g;
@@ -1072,11 +1093,40 @@ while (<>) {
     s;\btlsproxy_tls_security_level\b;<a href="postconf.5.html#tlsproxy_tls_security_level">$&</a>;g;
     s;\btlsproxy_use_tls\b;<a href="postconf.5.html#tlsproxy_use_tls">$&</a>;g;
 
+    s;\btlsproxy_client_CAfile\b;<a href="postconf.5.html#tlsproxy_client_CAfile">$&</a>;g;
+    s;\btlsproxy_client_CApath\b;<a href="postconf.5.html#tlsproxy_client_CApath">$&</a>;g;
+    s;\btlsproxy_client_chain_files\b;<a href="postconf.5.html#tlsproxy_client_chain_files">$&</a>;g;
+    s;\btlsproxy_client_cert_file\b;<a href="postconf.5.html#tlsproxy_client_cert_file">$&</a>;g;
+    s;\btlsproxy_client_dcert_file\b;<a href="postconf.5.html#tlsproxy_client_dcert_file">$&</a>;g;
+    s;\btlsproxy_client_dkey_file\b;<a href="postconf.5.html#tlsproxy_client_dkey_file">$&</a>;g;
+    s;\btlsproxy_client_eccert_file\b;<a href="postconf.5.html#tlsproxy_client_eccert_file">$&</a>;g;
+    s;\btlsproxy_client_eckey_file\b;<a href="postconf.5.html#tlsproxy_client_eckey_file">$&</a>;g;
+    s;\btlsproxy_client_fingerprint_digest\b;<a href="postconf.5.html#tlsproxy_client_fingerprint_digest">$&</a>;g;
+    s;\btlsproxy_client_key_file\b;<a href="postconf.5.html#tlsproxy_client_key_file">$&</a>;g;
+    s;\btlsproxy_client_loglevel\b;<a href="postconf.5.html#tlsproxy_client_loglevel">$&</a>;g;
+    s;\btlsproxy_client_loglevel_parameter\b;<a href="postconf.5.html#tlsproxy_client_loglevel_parameter">$&</a>;g;
+    s;\btlsproxy_client_scert_verifydepth\b;<a href="postconf.5.html#tlsproxy_client_scert_verifydepth">$&</a>;g;
+
+    s;\btlsproxy_client_security_level\b;<a href="postconf.5.html#tlsproxy_client_security_level">$&</a>;g;
+    s;\btlsproxy_client_per_site\b;<a href="postconf.5.html#tlsproxy_client_per_site">$&</a>;g;
+    s;\btlsproxy_client_policy_maps\b;<a href="postconf.5.html#tlsproxy_client_policy_maps">$&</a>;g;
+    s;\btlsproxy_client_use_tls\b;<a href="postconf.5.html#tlsproxy_client_use_tls">$&</a>;g;
+    s;\btlsproxy_client_enforce_tls\b;<a href="postconf.5.html#tlsproxy_client_enforce_tls">$&</a>;g;
+
     # SMTPUTF8
 
     s;\bsmtputf8_enable\b;<a href="postconf.5.html#smtputf8_enable">$&</a>;g;
     s;\bstrict_smtputf8\b;<a href="postconf.5.html#strict_smtputf8">$&</a>;g;
     s;\bsmtputf8_autodetect_classes\b;<a href="postconf.5.html#smtputf8_autodetect_classes">$&</a>;g;
+    s;\benable_idna2003_compatibility\b;<a href="postconf.5.html#enable_idna2003_compatibility">$&</a>;g;
+
+    # Internal logging.
+    s;\bmail[-</bB>]*\n*[ <bB>]*log_file\b;<a href="postconf.5.html#maillog_file">$&</a>;g;
+    s;\bmail[-</bB>]*\n*[ <bB>]*log_file_compressor\b;<a href="postconf.5.html#maillog_file_compressor">$&</a>;g;
+    s;\bmail[-</bB>]*\n*[ <bB>]*log_file_prefixes\b;<a href="postconf.5.html#maillog_file_prefixes">$&</a>;g;
+    s;\bmail[-</bB>]*\n*[ <bB>]*log_file_rotate_suffix\b;<a href="postconf.5.html#maillog_file_rotate_suffix">$&</a>;g;
+    s;\bpostlog_service_name\b;<a href="postconf.5.html#postlog_service_name">$&</a>;g;
+    s;\bpostlogd_watchdog_timeout\b;<a href="postconf.5.html#postlogd_watchdog_timeout">$&</a>;g;
 
     # Service-defined parameters...
 

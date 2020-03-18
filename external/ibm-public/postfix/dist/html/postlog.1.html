@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - postlog(1) </title>
 </head> <body> <pre>
-POSTLOG(1)                  General Commands Manual                 POSTLOG(1)
+POSTLOG(1)                                                          POSTLOG(1)
 
 <b>NAME</b>
        postlog - Postfix-compatible logging utility
@@ -20,16 +20,19 @@ POSTLOG(1)                  General Commands Manual                 POSTLOG(1)
        record.  If  no <i>text</i> is specified on the command line, <a href="postlog.1.html"><b>postlog</b>(1)</a> reads
        from standard input and logs each input line as one record.
 
-       Logging is sent to <b>syslogd</b>(8); when the standard error stream  is  con-
-       nected to a terminal, logging is sent there as well.
+       By default, logging is sent to  <b>syslogd</b>(8)  or  <a href="postlogd.8.html"><b>postlogd</b>(8)</a>;  when  the
+       standard error stream is connected to a terminal, logging is sent there
+       as well.
 
        The following options are implemented:
 
        <b>-c</b> <i>config</i><b>_</b><i>dir</i>
-              Read  the  <a href="postconf.5.html"><b>main.cf</b></a>  configuration  file  in  the named directory
+              Read the <a href="postconf.5.html"><b>main.cf</b></a>  configuration  file  in  the  named  directory
               instead of the default configuration directory.
 
-       <b>-i</b>     Include the process ID in the logging tag.
+       <b>-i</b> (obsolete)
+              Include  the process ID in the logging tag. This flag is ignored
+              as of Postfix 3.4, where the PID is always included.
 
        <b>-p</b> <i>priority</i> (default: <b>info</b>)
               Specifies the logging severity: <b>info</b>,  <b>warn</b>,  <b>error</b>,  <b>fatal</b>,  or
@@ -59,17 +62,31 @@ POSTLOG(1)                  General Commands Manual                 POSTLOG(1)
               The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
 
+       <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
+              The  list  of  environment  parameters that a privileged Postfix
+              process will  import  from  a  non-Postfix  parent  process,  or
+              name=value environment overrides.
+
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name that is prepended to the process name in
-              syslog records, so that "smtpd"  becomes,  for  example,  "post-
-              fix/smtpd".
+              A  prefix  that  is  prepended  to  the  process  name in syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
+
+       Available in Postfix 3.4 and later:
+
+       <b><a href="postconf.5.html#maillog_file">maillog_file</a> (empty)</b>
+              The name of an optional logfile that is written by  the  Postfix
+              <a href="postlogd.8.html"><b>postlogd</b>(8)</a> service.
+
+       <b><a href="postconf.5.html#postlog_service_name">postlog_service_name</a> (postlog)</b>
+              The name of the <a href="postlogd.8.html"><b>postlogd</b>(8)</a> service entry in <a href="master.5.html">master.cf</a>.
 
 <b>SEE ALSO</b>
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
-       syslogd(8), syslog daemon
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
+       syslogd(8), system logging
 
 <b>LICENSE</b>
        The Secure Mailer license must be distributed with this software.

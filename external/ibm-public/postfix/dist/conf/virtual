@@ -81,21 +81,26 @@
 # 
 # TABLE SEARCH ORDER
 #        With lookups from indexed files such as DB or DBM, or from
-#        networked tables such as NIS, LDAP or  SQL,  patterns  are
-#        tried in the order as listed below:
+#        networked  tables  such  as  NIS,  LDAP   or   SQL,   each
+#        user@domain query produces a sequence of query patterns as
+#        described below.
+# 
+#        Each query pattern is sent to each specified lookup  table
+#        before  trying  the  next  query pattern, until a match is
+#        found.
 # 
 #        user@domain address, address, ...
-#               Redirect  mail  for  user@domain  to address.  This
+#               Redirect mail for  user@domain  to  address.   This
 #               form has the highest precedence.
 # 
 #        user address, address, ...
 #               Redirect mail for user@site to address when site is
-#               equal  to $myorigin, when site is listed in $mydes-
-#               tination, or when it is listed in  $inet_interfaces
+#               equal to $myorigin, when site is listed in  $mydes-
+#               tination,  or when it is listed in $inet_interfaces
 #               or $proxy_interfaces.
 # 
-#               This  functionality  overlaps with functionality of
-#               the local aliases(5) database.  The  difference  is
+#               This functionality overlaps with  functionality  of
+#               the  local  aliases(5)  database. The difference is
 #               that virtual(5) mapping can be applied to non-local
 #               addresses.
 # 
@@ -103,14 +108,30 @@
 #               Redirect mail for other users in domain to address.
 #               This form has the lowest precedence.
 # 
-#               Note:  @domain  is a wild-card. With this form, the
-#               Postfix SMTP server accepts mail for any  recipient
-#               in  domain,  regardless  of  whether that recipient
-#               exists.  This may turn  your  mail  system  into  a
-#               backscatter  source: Postfix first accepts mail for
-#               non-existent recipients and then  tries  to  return
-#               that  mail  as  "undeliverable" to the often forged
+#               Note: @domain is a wild-card. With this  form,  the
+#               Postfix  SMTP server accepts mail for any recipient
+#               in domain, regardless  of  whether  that  recipient
+#               exists.   This  may  turn  your  mail system into a
+#               backscatter source: Postfix first accepts mail  for
+#               non-existent  recipients  and  then tries to return
+#               that mail as "undeliverable" to  the  often  forged
 #               sender address.
+# 
+#               To  avoid  backscatter  with  mail  for a wild-card
+#               domain, replace the wild-card mapping with explicit
+#               1:1  mappings, or add a reject_unverified_recipient
+#               restriction for that domain:
+# 
+#                   smtpd_recipient_restrictions =
+#                       ...
+#                       reject_unauth_destination
+#                       check_recipient_access
+#                           inline:{example.com=reject_unverified_recipient}
+#                   unverified_recipient_reject_code = 550
+# 
+#               In the above example, Postfix may contact a  remote
+#               server  if  the  recipient  is  aliased to a remote
+#               address.
 # 
 # RESULT ADDRESS REWRITING
 #        The lookup result is subject to address rewriting:
@@ -230,43 +251,47 @@
 #        details  and  for default values. Use the "postfix reload"
 #        command after a configuration change.
 # 
-#        virtual_alias_maps
-#               List of virtual aliasing tables.
+#        virtual_alias_maps ($virtual_maps)
+#               Optional lookup tables  that  alias  specific  mail
+#               addresses  or  domains  to  other  local  or remote
+#               address.
 # 
-#        virtual_alias_domains
-#               List of virtual alias domains. This uses  the  same
-#               syntax as the mydestination parameter.
+#        virtual_alias_domains ($virtual_alias_maps)
+#               Postfix is final destination for the specified list
+#               of  virtual  alias  domains,  that  is, domains for
+#               which all addresses are  aliased  to  addresses  in
+#               other local or remote domains.
 # 
-#        propagate_unmatched_extensions
-#               A  list  of  address rewriting or forwarding mecha-
-#               nisms that propagate an address extension from  the
-#               original  address  to  the result.  Specify zero or
-#               more  of  canonical,   virtual,   alias,   forward,
-#               include, or generic.
+#        propagate_unmatched_extensions (canonical, virtual)
+#               What  address  lookup tables copy an address exten-
+#               sion from the lookup key to the lookup result.
 # 
 #        Other parameters of interest:
 # 
-#        inet_interfaces
-#               The  network  interface  addresses that this system
-#               receives mail on.  You need to stop and start Post-
-#               fix when this parameter changes.
+#        inet_interfaces (all)
+#               The network interface addresses that this mail sys-
+#               tem receives mail on.
 # 
-#        mydestination
-#               List  of  domains  that  this mail system considers
-#               local.
+#        mydestination  ($myhostname,  localhost.$mydomain,  local-
+#        host)
+#               The  list  of  domains  that  are delivered via the
+#               $local_transport mail delivery transport.
 # 
-#        myorigin
-#               The domain that is appended  to  any  address  that
-#               does not have a domain.
+#        myorigin ($myhostname)
+#               The domain name that locally-posted mail appears to
+#               come  from,  and that locally posted mail is deliv-
+#               ered to.
 # 
-#        owner_request_special
-#               Give special treatment to owner-xxx and xxx-request
-#               addresses.
+#        owner_request_special (yes)
+#               Enable special treatment for owner-listname entries
+#               in the aliases(5) file, and don't split owner-list-
+#               name and listname-request address  localparts  when
+#               the recipient_delimiter is set to "-".
 # 
-#        proxy_interfaces
-#               Other interfaces that this machine receives mail on
-#               by way of a proxy agent or network address transla-
-#               tor.
+#        proxy_interfaces (empty)
+#               The network interface addresses that this mail sys-
+#               tem receives mail on by way of a proxy  or  network
+#               address translation unit.
 # 
 # SEE ALSO
 #        cleanup(8), canonicalize and enqueue mail
@@ -275,14 +300,14 @@
 #        canonical(5), canonical address mapping
 # 
 # README FILES
-#        Use "postconf readme_directory" or  "postconf  html_direc-
+#        Use  "postconf  readme_directory" or "postconf html_direc-
 #        tory" to locate this information.
 #        ADDRESS_REWRITING_README, address rewriting guide
 #        DATABASE_README, Postfix lookup table overview
 #        VIRTUAL_README, domain hosting guide
 # 
 # LICENSE
-#        The  Secure  Mailer  license must be distributed with this
+#        The Secure Mailer license must be  distributed  with  this
 #        software.
 # 
 # AUTHOR(S)

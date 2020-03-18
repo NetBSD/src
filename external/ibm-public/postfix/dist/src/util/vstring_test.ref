@@ -1,0 +1,6 @@
+payload/buffer size 1/1, strlen() 1
+payload/buffer size 2/2, strlen() 2
+payload/buffer size 3/4, strlen() 4
+payload/buffer size 4/4, strlen() 4
+payload/buffer size 5/8, strlen() 8
+argv concatenated: ./vstring.one.two.three.

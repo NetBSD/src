@@ -80,7 +80,7 @@ names are shown in upper case, they are in fact case insensitive.
     xclient-command = XCLIENT 1*( SP attribute-name"="attribute-value )
 </p>
 <p>
-    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO | LOGIN )
+    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO | LOGIN | DESTADDR | DESTPORT )
 </p>
 <p>
     attribute-value = xtext
@@ -92,22 +92,31 @@ names are shown in upper case, they are in fact case insensitive.
     <li> <p> Attribute values are xtext encoded as per RFC 1891.
     </p>
 
-    <li> <p> The NAME attribute specifies an SMTP client hostname
-    (not an SMTP client address), [UNAVAILABLE] when client hostname
-    lookup failed due to a permanent error, or [TEMPUNAVAIL] when
-    the lookup error condition was transient. </p>
+    <li> <p> The NAME attribute specifies a remote SMTP client
+    hostname (not an SMTP client address), [UNAVAILABLE] when client
+    hostname lookup failed due to a permanent error, or [TEMPUNAVAIL]
+    when the lookup error condition was transient. </p>
 
-    <li> <p> The ADDR attribute specifies an SMTP client numerical
-    IPv4 network address, an IPv6 address prefixed with IPV6:, or
-    [UNAVAILABLE] when the address information is unavailable.
-    Address information is not enclosed with []. </p>
+    <li> <p> The ADDR attribute specifies a remote SMTP client
+    numerical IPv4 network address, an IPv6 address prefixed with
+    IPV6:, or [UNAVAILABLE] when the address information is
+    unavailable.  Address information is not enclosed with []. </p>
 
-    <li> <p> The PORT attribute specifies the SMTP client TCP port
-    number as a decimal number, or [UNAVAILABLE] when the information
-    is unavailable.  </p>
+    <li> <p> The PORT attribute specifies a remote SMTP client TCP
+    port number as a decimal number, or [UNAVAILABLE] when the
+    information is unavailable.  </p>
 
     <li> <p> The PROTO attribute specifies either SMTP or ESMTP.
     </p>
+
+    <li> <p> The DESTADDR attribute specifies a local SMTP server
+    numerical IPv4 network address, an IPv6 address prefixed with
+    IPV6:, or [UNAVAILABLE] when the address information is
+    unavailable.  Address information is not enclosed with []. </p>
+
+    <li> <p> The DESTPORT attribute specifies a local SMTP server
+    TCP port number as a decimal number, or [UNAVAILABLE] when the
+    information is unavailable.  </p>
 
     <li> <p> The HELO attribute specifies an SMTP HELO parameter
     value, or the value [UNAVAILABLE] when the information is

@@ -68,8 +68,12 @@
 # .ad
 # .fi
 #	With lookups from indexed files such as DB or DBM, or from networked
-#	tables such as NIS, LDAP or SQL, patterns are tried in the order as
-#	listed below:
+#	tables such as NIS, LDAP or SQL, each \fIuser\fR@\fIdomain\fR
+#	query produces a sequence of query patterns as described below.
+#
+#	Each query pattern is sent to each specified lookup table
+#	before trying the next query pattern, until a match is
+#	found.
 # .IP "\fIuser\fR@\fIdomain address\fR"
 #	Replace \fIuser\fR@\fIdomain\fR by \fIaddress\fR. This form
 #	has the highest precedence.

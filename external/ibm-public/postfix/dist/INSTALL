@@ -357,7 +357,7 @@ inconsistent results with different versions of the make(1) command.
     postfix-files will automatically include files under the directory postfix-
     files.d. Thanks to this, you can install or deinstall a database plugin
     package without having to edit postfix-files or dynamicmaps.cf. Instead,
-    you give that plugin its own configuration files dynamicmaps.cf.d and
+    you give that plugin its own configuration files under dynamicmaps.cf.d and
     postfix-files.d, and you add or remove those configuration files along with
     the database plugin dynamically-linked object.
 
@@ -516,110 +516,122 @@ The general method to override Postfix compile-time features is as follows:
 The following is an extensive list of names and values.
 
  _____________________________________________________________________________
-|Name/Value		       |Description				      |
-|______________________________|______________________________________________|
-|			       |Specifies one or more non-default object      |
-|			       |libraries. Postfix 3.0 and later specify some |
-|			       |of their database library dependencies with   |
-|AUXLIBS="object_library..."   |AUXLIBS_CDB, AUXLIBS_LDAP, AUXLIBS_LMDB,      |
-|			       |AUXLIBS_MYSQL, AUXLIBS_PCRE, AUXLIBS_PGSQL,   |
-|			       |AUXLIBS_SDBM, and AUXLIBS_SQLITE,	      |
-|			       |respectively.				      |
-|______________________________|______________________________________________|
-|CC=compiler_command	       |Specifies a non-default compiler. On many     |
-|			       |systems, the default is gcc.		      |
-|______________________________|______________________________________________|
-|			       |Specifies non-default compiler arguments, for |
-|CCARGS="compiler_arguments..."|example, a non-default include directory. The |
-|			       |following directives turn off Postfix features|
-|			       |at compile time:			      |
-|______________________________|______________________________________________|
-||			       |Do not build with Berkeley DB support. By     |
-||			       |default, Berkeley DB support is compiled in on|
-||-DNO_DB		       |platforms that are known to support this      |
-||			       |feature. If you override this, then you       |
-||			       |probably should also override DEF_DB_TYPE as  |
-||			       |described in section 4.6.		      |
-||_____________________________|______________________________________________|
-||-DNO_DNSSEC		       |Do not build with DNSSEC support, even if the |
-||			       |resolver library appears to support it.       |
-||_____________________________|______________________________________________|
-||			       |Do not build with Solaris /dev/poll support.  |
-||-DNO_DEVPOLL		       |By default, /dev/poll support is compiled in  |
-||			       |on Solaris versions that are known to support |
-||			       |this feature.				      |
-||_____________________________|______________________________________________|
-||			       |Do not build with Linux EPOLL support. By     |
-||-DNO_EPOLL		       |default, EPOLL support is compiled in on      |
-||			       |platforms that are known to support this      |
-||			       |feature.				      |
-||_____________________________|______________________________________________|
-||			       |Do not build with EAI (SMTPUTF8) support. By  |
-||-DNO_EAI		       |default, EAI support is compiled in when the  |
-||			       |"icuuc" library and header files are found.   |
-||_____________________________|______________________________________________|
-||			       |Do not require support for C99 "inline"       |
-||-DNO_INLINE		       |functions. Instead, implement argument	      |
-||			       |typechecks for non-printf/scanf-like functions|
-||			       |with ternary operators and unreachable code.  |
-||_____________________________|______________________________________________|
-||			       |Do not build with IPv6 support. By default,   |
-||			       |IPv6 support is compiled in on platforms that |
-||-DNO_IPV6		       |are known to have IPv6 support. Note: this    |
-||			       |directive is for debugging and testing only.  |
-||			       |It is not guaranteed to work on all platforms.|
-||_____________________________|______________________________________________|
-||			       |Do not build with FreeBSD / NetBSD / OpenBSD /|
-||-DNO_KQUEUE		       |MacOSX KQUEUE support. By default, KQUEUE     |
-||			       |support is compiled in on platforms that are  |
-||			       |known to support it.			      |
-||_____________________________|______________________________________________|
-||			       |Do not build with NIS or NISPLUS support. NIS |
-||-DNO_NIS		       |is not available on some recent Linux	      |
-||			       |distributions.				      |
-||_____________________________|______________________________________________|
-||			       |Do not build with NISPLUS support. NISPLUS is |
-||-DNO_NISPLUS		       |not available on some recent Solaris	      |
-||			       |distributions.				      |
-||_____________________________|______________________________________________|
-||			       |Do not build with PCRE support. By default,   |
-||-DNO_PCRE		       |PCRE support is compiled in when the pcre-    |
-||			       |config utility is installed.		      |
-||_____________________________|______________________________________________|
-||			       |Disable support for POSIX getpwnam_r/	      |
-||-DNO_POSIX_GETPW_R	       |getpwuid_r. By default Postfix uses these     |
-||			       |where they are known to be available.	      |
-||_____________________________|______________________________________________|
-||			       |Use setjmp()/longjmp() instead of sigsetjmp()/|
-||-DNO_SIGSETJMP	       |siglongjmp(). By default, Postfix uses	      |
-||			       |sigsetjmp()/siglongjmp() when they are known  |
-||			       |to be available.			      |
-||_____________________________|______________________________________________|
-|			       |Specifies a non-default compiler debugging    |
-|DEBUG=debug_level	       |level. The default is "-g". Specify DEBUG= to |
-|			       |turn off debugging.			      |
-|______________________________|______________________________________________|
-|			       |Specifies a non-default optimization level.   |
-|OPT=optimization_level        |The default is "-O". Specify OPT= to turn off |
-|			       |optimization.				      |
-|______________________________|______________________________________________|
-|			       |Specifies non-default compiler options for    |
-|SHLIB_CFLAGS=flags	       |building Postfix dynamically-linked libraries |
-|			       |and database plugins. The typical default is  |
-|			       |"-fPIC".				      |
-|______________________________|______________________________________________|
-|			       |Specifies a non-default runpath for Postfix   |
-|SHLIB_RPATH=rpath	       |dynamically-linked libraries. The typical     |
-|			       |default is "'-Wl,-rpath,${SHLIB_DIR}'".       |
-|______________________________|______________________________________________|
-|			       |Specifies a non-default suffix for Postfix    |
-|SHLIB_SUFFIX=suffix	       |dynamically-linked libraries and database     |
-|			       |plugins. The typical default is ".so".	      |
-|______________________________|______________________________________________|
-|			       |Specifies non-default compiler warning options|
-|WARN="warning_flags..."       |for use when "make" is invoked in a source    |
-|			       |subdirectory only.			      |
-|______________________________|______________________________________________|
+|Name/Value			|Description				      |
+|_______________________________|_____________________________________________|
+|				|Specifies one or more non-default object     |
+|				|libraries. Postfix 3.0 and later specify some|
+|				|of their database library dependencies with  |
+|AUXLIBS="object_library..."	|AUXLIBS_CDB, AUXLIBS_LDAP, AUXLIBS_LMDB,     |
+|				|AUXLIBS_MYSQL, AUXLIBS_PCRE, AUXLIBS_PGSQL,  |
+|				|AUXLIBS_SDBM, and AUXLIBS_SQLITE,	      |
+|				|respectively.				      |
+|_______________________________|_____________________________________________|
+|CC=compiler_command		|Specifies a non-default compiler. On many    |
+|				|systems, the default is gcc.		      |
+|_______________________________|_____________________________________________|
+|				|Specifies non-default compiler arguments, for|
+|CCARGS="compiler_arguments..." |example, a non-default include directory. The|
+|				|following directives turn off Postfix	      |
+|				|features at compile time:		      |
+|_______________________________|_____________________________________________|
+||				|Do not build with Berkeley DB support. By    |
+||				|default, Berkeley DB support is compiled in  |
+||-DNO_DB			|on platforms that are known to support this  |
+||				|feature. If you override this, then you      |
+||				|probably should also override DEF_DB_TYPE as |
+||				|described in section 4.6.		      |
+||______________________________|_____________________________________________|
+||-DNO_DNSSEC			|Do not build with DNSSEC support, even if the|
+||				|resolver library appears to support it.      |
+||______________________________|_____________________________________________|
+||				|Do not build with Solaris /dev/poll support. |
+||-DNO_DEVPOLL			|By default, /dev/poll support is compiled in |
+||				|on Solaris versions that are known to support|
+||				|this feature.				      |
+||______________________________|_____________________________________________|
+||				|Do not build with Linux EPOLL support. By    |
+||-DNO_EPOLL			|default, EPOLL support is compiled in on     |
+||				|platforms that are known to support this     |
+||				|feature.				      |
+||______________________________|_____________________________________________|
+||				|Do not build with EAI (SMTPUTF8) support. By |
+||-DNO_EAI			|default, EAI support is compiled in when the |
+||				|"icuuc" library and header files are found.  |
+||______________________________|_____________________________________________|
+||				|Do not require support for C99 "inline"      |
+||				|functions. Instead, implement argument       |
+||-DNO_INLINE			|typechecks for non-printf/scanf-like	      |
+||				|functions with ternary operators and	      |
+||				|unreachable code.			      |
+||______________________________|_____________________________________________|
+||				|Do not build with IPv6 support. By default,  |
+||				|IPv6 support is compiled in on platforms that|
+||				|are known to have IPv6 support. Note: this   |
+||-DNO_IPV6			|directive is for debugging And testing only. |
+||				|It is not guaranteed to work on all	      |
+||				|platforms. If you don't want IPv6 support,   |
+||				|set "inet_protocols = ipv4" in main.cf.      |
+||______________________________|_____________________________________________|
+||				|Do not build with FreeBSD / NetBSD / OpenBSD |
+||-DNO_KQUEUE			|/ MacOSX KQUEUE support. By default, KQUEUE  |
+||				|support is compiled in on platforms that are |
+||				|known to support it.			      |
+||______________________________|_____________________________________________|
+||				|Do not build with NIS or NISPLUS support. NIS|
+||-DNO_NIS			|is not available on some recent Linux	      |
+||				|distributions. 			      |
+||______________________________|_____________________________________________|
+||				|Do not build with NISPLUS support. NISPLUS is|
+||-DNO_NISPLUS			|not available on some recent Solaris	      |
+||				|distributions. 			      |
+||______________________________|_____________________________________________|
+||				|Do not build with PCRE support. By default,  |
+||-DNO_PCRE			|PCRE support is compiled in when the pcre-   |
+||				|config utility is installed.		      |
+||______________________________|_____________________________________________|
+||				|Disable support for POSIX getpwnam_r/	      |
+||-DNO_POSIX_GETPW_R		|getpwuid_r. By default Postfix uses these    |
+||				|where they are known to be available.	      |
+||______________________________|_____________________________________________|
+||				|Use setjmp()/longjmp() instead of sigsetjmp  |
+||-DNO_SIGSETJMP		|()/siglongjmp(). By default, Postfix uses    |
+||				|sigsetjmp()/siglongjmp() when they are known |
+||				|to be available.			      |
+||______________________________|_____________________________________________|
+||				|Use sprintf() instead of snprintf(). By      |
+||-DNO_SNPRINTF 		|default, Postfix uses snprintf() except on   |
+||				|ancient systems.			      |
+||______________________________|_____________________________________________|
+|				|Specifies a non-default compiler debugging   |
+|DEBUG=debug_level		|level. The default is "-g". Specify DEBUG= to|
+|				|turn off debugging.			      |
+|_______________________________|_____________________________________________|
+|				|Specifies a non-default optimization level.  |
+|OPT=optimization_level 	|The default is "-O". Specify OPT= to turn off|
+|				|optimization.				      |
+|_______________________________|_____________________________________________|
+|				|Specifies options for the postfix-install    |
+|POSTFIX_INSTALL_OPTS=-option...|command, separated by whitespace. Currently, |
+|				|the only supported option is "-keep-build-   |
+|				|mtime".				      |
+|_______________________________|_____________________________________________|
+|				|Specifies non-default compiler options for   |
+|SHLIB_CFLAGS=flags		|building Postfix dynamically-linked libraries|
+|				|and database plugins. The typical default is |
+|				|"-fPIC".				      |
+|_______________________________|_____________________________________________|
+|				|Specifies a non-default runpath for Postfix  |
+|SHLIB_RPATH=rpath		|dynamically-linked libraries. The typical    |
+|				|default is "'-Wl,-rpath,${SHLIB_DIR}'".      |
+|_______________________________|_____________________________________________|
+|				|Specifies a non-default suffix for Postfix   |
+|SHLIB_SUFFIX=suffix		|dynamically-linked libraries and database    |
+|				|plugins. The typical default is ".so".       |
+|_______________________________|_____________________________________________|
+|				|Specifies non-default compiler warning       |
+|WARN="warning_flags..."	|options for use when "make" is invoked in a  |
+|				|source subdirectory only.		      |
+|_______________________________|_____________________________________________|
 
 4.8 - Support for thousands of processes
 

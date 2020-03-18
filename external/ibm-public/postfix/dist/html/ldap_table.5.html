@@ -30,30 +30,11 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
        example is given at the end of this manual.
 
        This  configuration  method  is  available with Postfix version 2.1 and
-       later.  See the section "BACKWARDS COMPATIBILITY" below for older Post-
-       fix versions.
+       later.  See the section "OBSOLETE MAIN.CF PARAMETERS" below  for  older
+       Postfix versions.
 
        For  details  about  LDAP  SSL and STARTTLS, see the section on SSL and
        STARTTLS below.
-
-<b>BACKWARDS COMPATIBILITY</b>
-       For backwards compatibility with Postfix version 2.0 and earlier,  LDAP
-       parameters  can  also  be defined in <a href="postconf.5.html">main.cf</a>.  Specify as LDAP source a
-       name that doesn't begin with a slash or a  dot.   The  LDAP  parameters
-       will then be accessible as the name you've given the source in its def-
-       inition, an underscore, and the name of the parameter.  For example, if
-       the  map is specified as "<a href="ldap_table.5.html">ldap</a>:<i>ldapsource</i>", the "server_host" parameter
-       below would be defined in <a href="postconf.5.html">main.cf</a> as "<i>ldapsource</i>_server_host".
-
-       Note: with this form, the passwords for the LDAP sources are written in
-       <a href="postconf.5.html">main.cf</a>,  which is normally world-readable.  Support for this form will
-       be removed in a future Postfix version.
-
-       For backwards compatibility with the pre 2.2 LDAP clients,  <b>result_fil-</b>
-       <b>ter</b>  can  for  now  be  used  instead of <b>result_format</b>, when the latter
-       parameter is not also set.  The new name better reflects  the  function
-       of  the  parameter.  This  compatibility  interface may be removed in a
-       future release.
 
 <b>LIST MEMBERSHIP</b>
        When using LDAP to store lists  such  as  $<a href="postconf.5.html#mynetworks">mynetworks</a>,  $<a href="postconf.5.html#mydestination">mydestination</a>,
@@ -650,6 +631,26 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
        "ldapuser", read the "maildrop" attributes of those found, and build  a
        list  of  their maildrops, which will be treated as <a href="http://tools.ietf.org/html/rfc822">RFC822</a> addresses to
        which the message will be delivered.
+
+<b>OBSOLETE MAIN.CF PARAMETERS</b>
+       For backwards compatibility with Postfix version 2.0 and earlier,  LDAP
+       parameters  can  also  be defined in <a href="postconf.5.html">main.cf</a>.  Specify as LDAP source a
+       name that doesn't begin with a slash or a  dot.   The  LDAP  parameters
+       will then be accessible as the name you've given the source in its def-
+       inition, an underscore, and the name of the parameter.  For example, if
+       the  map is specified as "<a href="ldap_table.5.html">ldap</a>:<i>ldapsource</i>", the "server_host" parameter
+       below would be defined in <a href="postconf.5.html">main.cf</a> as "<i>ldapsource</i>_server_host".
+
+       Note: with this form, the passwords for the LDAP sources are written in
+       <a href="postconf.5.html">main.cf</a>,  which is normally world-readable.  Support for this form will
+       be removed in a future Postfix version.
+
+<b>OTHER OBSOLETE FEATURES</b>
+       For backwards compatibility with the pre 2.2 LDAP clients,  <b>result_fil-</b>
+       <b>ter</b>  can  for  now  be  used  instead of <b>result_format</b>, when the latter
+       parameter is not also set.  The new name better reflects  the  function
+       of  the  parameter.  This  compatibility  interface may be removed in a
+       future release.
 
 <b>SEE ALSO</b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager

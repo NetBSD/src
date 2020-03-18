@@ -24,26 +24,27 @@ DNSBLOG(8)                                                          DNSBLOG(8)
        match and replies with the query arguments plus an  address  list  with
        the resulting IP addresses, separated by whitespace, and the reply TTL.
        Otherwise it replies with the query arguments  plus  an  empty  address
-       list  and  the  reply TTL (-1 if unavailable).  Finally, The <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a>
+       list  and the reply TTL; the reply TTL is -1 if there is no reply, or a
+       negative reply that contains no SOA record.   Finally,  the  <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a>
        server closes the connection.
 
 <b>DIAGNOSTICS</b>
-       Problems and transactions are logged to <b>syslogd</b>(8).
+       Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
 <b>CONFIGURATION PARAMETERS</b>
        Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically, as <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a> processes
        run for only a limited amount of time. Use the command "<b>postfix reload</b>"
        to speed up a change.
 
-       The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
+       The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
        more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How much time a Postfix daemon process  may  take  to  handle  a
+              How  much  time  a  Postfix  daemon process may take to handle a
               request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#postscreen_dnsbl_sites">postscreen_dnsbl_sites</a> (empty)</b>
@@ -51,7 +52,7 @@ DNSBLOG(8)                                                          DNSBLOG(8)
               factors.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The time limit for sending  or  receiving  information  over  an
+              The  time  limit  for  sending  or receiving information over an
               internal communication channel.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
@@ -67,14 +68,19 @@ DNSBLOG(8)                                                          DNSBLOG(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name that is prepended to the process name in
-              syslog records, so that "smtpd"  becomes,  for  example,  "post-
-              fix/smtpd".
+              A prefix that  is  prepended  to  the  process  name  in  syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
+
+       Available in Postfix 3.3 and later:
+
+       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
+              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
 
 <b>SEE ALSO</b>
        <a href="smtpd.8.html">smtpd(8)</a>, Postfix SMTP server
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
-       syslogd(5), system logging
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
+       syslogd(8), system logging
 
 <b>LICENSE</b>
        The Secure Mailer license must be distributed with this software.

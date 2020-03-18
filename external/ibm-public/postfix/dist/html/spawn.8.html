@@ -51,7 +51,7 @@ SPAWN(8)                                                              SPAWN(8)
 
 <b>DIAGNOSTICS</b>
        The  <a href="spawn.8.html"><b>spawn</b>(8)</a> daemon reports abnormal child exits.  Problems are logged
-       to <b>syslogd</b>(8).
+       to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
 
 <b>SECURITY</b>
        This program needs root privilege in order to execute external commands
@@ -71,37 +71,34 @@ SPAWN(8)                                                              SPAWN(8)
        <a href="master.5.html"><b>master.cf</b></a> file.
 
 <b>RESOURCE AND RATE CONTROL</b>
-       <b><a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a> ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
-              The  amount  of  time the command is allowed to run before it is
-              terminated.
-
-              Postfix 2.4 and later support a suffix that specifies  the  time
-              unit:  s (seconds), m (minutes), h (hours), d (days), w (weeks).
-              The default time unit is seconds.
+       <b>transport_time_limit ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
+              A transport-specific override for the <a href="postconf.5.html#command_time_limit">command_time_limit</a> parame-
+              ter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a> name of the  message
+              delivery transport.
 
 <b>MISCELLANEOUS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much  time  a  Postfix  daemon process may take to handle a
+              How much time a Postfix daemon process  may  take  to  handle  a
               request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#export_environment">export_environment</a> (see 'postconf -d' output)</b>
-              The list of environment variables that a  Postfix  process  will
+              The  list  of  environment variables that a Postfix process will
               export to non-Postfix processes.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The  time  limit  for  sending  or receiving information over an
+              The time limit for sending  or  receiving  information  over  an
               internal communication channel.
 
        <b><a href="postconf.5.html#mail_owner">mail_owner</a> (postfix)</b>
-              The UNIX system account that owns the  Postfix  queue  and  most
+              The  UNIX  system  account  that owns the Postfix queue and most
               Postfix daemon processes.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The  maximum  amount of time that an idle Postfix daemon process
+              The maximum amount of time that an idle Postfix  daemon  process
               waits for an incoming connection before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
@@ -121,13 +118,18 @@ SPAWN(8)                                                              SPAWN(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system name that is prepended to the  process  name  in
-              syslog  records,  so  that  "smtpd" becomes, for example, "post-
-              fix/smtpd".
+              A  prefix  that  is  prepended  to  the  process  name in syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
+
+       Available in Postfix 3.3 and later:
+
+       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
+              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
 
 <b>SEE ALSO</b>
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="master.8.html">master(8)</a>, process manager
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>LICENSE</b>

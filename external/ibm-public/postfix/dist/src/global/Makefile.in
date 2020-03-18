@@ -33,7 +33,10 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	smtp_reply_footer.c safe_ultostr.c verify_sender_addr.c \
 	dict_memcache.c mail_version.c memcache_proto.c server_acl.c \
 	mkmap_fail.c haproxy_srvr.c dsn_filter.c dynamicmaps.c uxtext.c \
-	smtputf8.c mail_conf_over.c mail_parm_split.c midna_adomain.c
+	smtputf8.c mail_conf_over.c mail_parm_split.c midna_adomain.c \
+	mail_addr_form.c quote_flags.c maillog_client.c \
+	normalize_mailhost_addr.c map_search.c reject_deliver_request.c \
+	info_log_addr_form.c
 OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	canon_addr.o cfg_parser.o cleanup_strerror.o cleanup_strflags.o \
 	clnt_stream.o conv_time.o db_common.o debug_peer.o debug_process.o \
@@ -69,7 +72,9 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	dict_memcache.o mail_version.o memcache_proto.o server_acl.o \
 	mkmap_fail.o haproxy_srvr.o dsn_filter.o dynamicmaps.o uxtext.o \
 	smtputf8.o attr_override.o mail_parm_split.o midna_adomain.o \
-	$(NON_PLUGIN_MAP_OBJ)
+	$(NON_PLUGIN_MAP_OBJ) mail_addr_form.o quote_flags.o maillog_client.o \
+	normalize_mailhost_addr.o map_search.o reject_deliver_request.o \
+	info_log_addr_form.o
 # MAP_OBJ is for maps that may be dynamically loaded with dynamicmaps.cf.
 # When hard-linking these maps, makedefs sets NON_PLUGIN_MAP_OBJ=$(MAP_OBJ),
 # otherwise it sets the PLUGIN_* macros.
@@ -102,7 +107,9 @@ HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	addr_match_list.h smtp_reply_footer.h safe_ultostr.h \
 	verify_sender_addr.h dict_memcache.h memcache_proto.h server_acl.h \
 	haproxy_srvr.h dsn_filter.h dynamicmaps.h uxtext.h smtputf8.h \
-	attr_override.h mail_parm_split.h midna_adomain.h
+	attr_override.h mail_parm_split.h midna_adomain.h mail_addr_form.h \
+	maillog_client.h normalize_mailhost_addr.h map_search.h \
+	info_log_addr_form.h
 TESTSRC	= rec2stream.c stream2rec.c recdump.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -117,7 +124,8 @@ TESTPROG= domain_list dot_lockfile mail_addr_crunch mail_addr_find \
 	valid_mailhost_addr own_inet_addr header_body_checks \
 	data_redirect addr_match_list safe_ultostr verify_sender_addr \
 	mail_version mail_dict server_acl uxtext mail_parm_split \
-	fold_addr smtp_reply_footer
+	fold_addr smtp_reply_footer mail_addr_map normalize_mailhost_addr \
+	haproxy_srvr map_search
 
 LIBS	= ../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
 LIB_DIR	= ../../lib
@@ -248,7 +256,7 @@ off_cvt: $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 	mv junk $@.o
 
-mail_addr_map: $(LIB) $(LIBS)
+mail_addr_map: mail_addr_map.c $(LIB) $(LIBS)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 	mv junk $@.o
@@ -376,110 +384,122 @@ fold_addr: fold_addr.c $(LIB) $(LIBS)
 smtp_reply_footer: smtp_reply_footer.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
+normalize_mailhost_addr: normalize_mailhost_addr.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+haproxy_srvr: haproxy_srvr.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+map_search: map_search.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
 tests: tok822_test mime_tests strip_addr_test tok822_limit_test \
 	xtext_test scache_multi_test ehlo_mask_test \
 	namadr_list_test mail_conf_time_test header_body_checks_tests \
 	mail_version_test server_acl_test resolve_local_test maps_test \
 	safe_ultostr_test mail_parm_split_test fold_addr_test \
-	smtp_reply_footer_test
+	smtp_reply_footer_test off_cvt_test mail_addr_crunch_test \
+	mail_addr_find_test mail_addr_map_test quote_822_local_test \
+	normalize_mailhost_addr_test haproxy_srvr_test map_search_test
 
 mime_tests: mime_test mime_nest mime_8bit mime_dom mime_trunc mime_cvt \
 	mime_cvt2 mime_cvt3 mime_garb1 mime_garb2 mime_garb3 mime_garb4
 
 header_body_checks_tests: header_body_checks_null_test \
 	header_body_checks_warn_test header_body_checks_prepend_test \
-	header_body_checks_ignore_test header_body_checks_replace_test
+	header_body_checks_ignore_test header_body_checks_replace_test \
+	header_body_checks_strip_test
 
 root_tests: rewrite_clnt_test resolve_clnt_test verify_sender_addr_test
 
 tok822_test: tok822_parse tok822_parse.in tok822_parse.ref
-	$(SHLIB_ENV) ./tok822_parse <tok822_parse.in >tok822_parse.tmp 2>&1
+	$(SHLIB_ENV) $(VALGRIND) ./tok822_parse <tok822_parse.in >tok822_parse.tmp 2>&1
 	diff tok822_parse.ref tok822_parse.tmp
 	rm -f tok822_parse.tmp
 
 mime_test: mime_state mime_test.in mime_test.ref
-	$(SHLIB_ENV) ./mime_state <mime_test.in >mime_test.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_test.in >mime_test.tmp
 	diff  mime_test.ref mime_test.tmp
 	rm -f mime_test.tmp
 
 mime_nest: mime_state mime_nest.in mime_nest.ref
-	$(SHLIB_ENV) ./mime_state <mime_nest.in >mime_nest.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_nest.in >mime_nest.tmp
 	diff  mime_nest.ref mime_nest.tmp
 	rm -f mime_nest.tmp
 
 mime_8bit: mime_state mime_8bit.in mime_8bit.ref
-	$(SHLIB_ENV) ./mime_state <mime_8bit.in >mime_8bit.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_8bit.in >mime_8bit.tmp
 	diff  mime_8bit.ref mime_8bit.tmp
 	rm -f mime_8bit.tmp
 
 mime_dom: mime_state mime_dom.in mime_dom.ref
-	$(SHLIB_ENV) ./mime_state <mime_dom.in >mime_dom.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_dom.in >mime_dom.tmp
 	diff  mime_dom.ref mime_dom.tmp
 	rm -f mime_dom.tmp
 
 mime_trunc: mime_state mime_trunc.in mime_trunc.ref
-	$(SHLIB_ENV) ./mime_state <mime_trunc.in >mime_trunc.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_trunc.in >mime_trunc.tmp
 	diff  mime_trunc.ref mime_trunc.tmp
 	rm -f mime_trunc.tmp
 
 mime_cvt: mime_state mime_cvt.in mime_cvt.ref
-	$(SHLIB_ENV) ./mime_state <mime_cvt.in >mime_cvt.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_cvt.in >mime_cvt.tmp
 	diff  mime_cvt.ref mime_cvt.tmp
 	rm -f mime_cvt.tmp
 
 mime_cvt2: mime_state mime_cvt.in2 mime_cvt.ref2
-	$(SHLIB_ENV) ./mime_state <mime_cvt.in2 >mime_cvt.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_cvt.in2 >mime_cvt.tmp
 	diff  mime_cvt.ref2 mime_cvt.tmp
 	rm -f mime_cvt.tmp
 
 mime_cvt3: mime_state mime_cvt.in3 mime_cvt.ref3
-	$(SHLIB_ENV) ./mime_state <mime_cvt.in3 >mime_cvt.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_cvt.in3 >mime_cvt.tmp
 	diff  mime_cvt.ref3 mime_cvt.tmp
 	rm -f mime_cvt.tmp
 
 mime_garb1: mime_state mime_garb1.in mime_garb1.ref
-	$(SHLIB_ENV) ./mime_state <mime_garb1.in >mime_cvt.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_garb1.in >mime_cvt.tmp
 	diff  mime_garb1.ref mime_cvt.tmp
 	rm -f mime_cvt.tmp
 
 mime_garb2: mime_state mime_garb2.in mime_garb2.ref
-	$(SHLIB_ENV) ./mime_state <mime_garb2.in >mime_cvt.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_garb2.in >mime_cvt.tmp
 	diff  mime_garb2.ref mime_cvt.tmp
 	rm -f mime_cvt.tmp
 
 mime_garb3: mime_state mime_garb3.in mime_garb3.ref
-	$(SHLIB_ENV) ./mime_state <mime_garb3.in >mime_cvt.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_garb3.in >mime_cvt.tmp
 	diff  mime_garb3.ref mime_cvt.tmp
 	rm -f mime_cvt.tmp
 
 mime_garb4: mime_state mime_garb4.in mime_garb4.ref
-	$(SHLIB_ENV) ./mime_state <mime_garb4.in >mime_cvt.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mime_state <mime_garb4.in >mime_cvt.tmp
 	diff  mime_garb4.ref mime_cvt.tmp
 	rm -f mime_cvt.tmp
 
 tok822_limit_test: tok822_parse tok822_limit.in tok822_limit.ref
-	$(SHLIB_ENV) ./tok822_parse <tok822_limit.in >tok822_limit.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./tok822_parse <tok822_limit.in >tok822_limit.tmp
 	diff tok822_limit.ref tok822_limit.tmp
 	rm -f tok822_limit.tmp
 
 strip_addr_test: strip_addr strip_addr.ref
-	$(SHLIB_ENV) ./strip_addr 2>strip_addr.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./strip_addr 2>strip_addr.tmp
 	diff strip_addr.ref strip_addr.tmp
 	rm -f strip_addr.tmp
 
 xtext_test: xtext
-	$(SHLIB_ENV) ./xtext <xtext.c | od -cb >xtext.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./xtext <xtext.c | od -cb >xtext.tmp
 	od -cb <xtext.c >xtext.ref
 	cmp xtext.ref xtext.tmp
 	rm -f xtext.ref xtext.tmp
 
 mail_version_test: mail_version mail_version.in mail_version.ref
-	$(SHLIB_ENV) ./mail_version <mail_version.in >mail_version.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mail_version <mail_version.in >mail_version.tmp
 	diff  mail_version.ref mail_version.tmp
 	rm -f mail_version.tmp
 
 server_acl_test: server_acl server_acl.in server_acl.ref
-	$(SHLIB_ENV) ./server_acl <server_acl.in >server_acl.tmp 2>&1
+	$(SHLIB_ENV) $(VALGRIND) ./server_acl <server_acl.in >server_acl.tmp 2>&1
 	diff  server_acl.ref server_acl.tmp
 	rm -f server_acl.tmp
 
@@ -495,15 +515,15 @@ maps_test: maps maps.in maps.ref
 
 surrogate_test: mail_dict surrogate.ref
 	cp /dev/null surrogate.tmp
-	echo get foo| $(SHLIB_ENV) ./mail_dict ldap:/xx write >>surrogate.tmp 2>&1
-	echo get foo| $(SHLIB_ENV) ./mail_dict ldap:/xx read >>surrogate.tmp 2>&1
-	echo get foo| $(SHLIB_ENV) ./mail_dict mysql:/xx write >>surrogate.tmp 2>&1
-	echo get foo| $(SHLIB_ENV) ./mail_dict mysql:/xx read >>surrogate.tmp 2>&1
-	echo get foo| $(SHLIB_ENV) ./mail_dict pgsql:/xx write >>surrogate.tmp 2>&1
-	echo get foo| $(SHLIB_ENV) ./mail_dict pgsql:/xx read >>surrogate.tmp 2>&1
-	echo get foo| $(SHLIB_ENV) ./mail_dict sqlite:/xx write >>surrogate.tmp 2>&1
-	echo get foo| $(SHLIB_ENV) ./mail_dict sqlite:/xx read >>surrogate.tmp 2>&1
-	echo get foo| $(SHLIB_ENV) ./mail_dict memcache:/xx read >>surrogate.tmp 2>&1
+	echo get foo| $(SHLIB_ENV) $(VALGRIND) ./mail_dict ldap:/xx write >>surrogate.tmp 2>&1
+	echo get foo| $(SHLIB_ENV) $(VALGRIND) ./mail_dict ldap:/xx read >>surrogate.tmp 2>&1
+	echo get foo| $(SHLIB_ENV) $(VALGRIND) ./mail_dict mysql:/xx write >>surrogate.tmp 2>&1
+	echo get foo| $(SHLIB_ENV) $(VALGRIND) ./mail_dict mysql:/xx read >>surrogate.tmp 2>&1
+	echo get foo| $(SHLIB_ENV) $(VALGRIND) ./mail_dict pgsql:/xx write >>surrogate.tmp 2>&1
+	echo get foo| $(SHLIB_ENV) $(VALGRIND) ./mail_dict pgsql:/xx read >>surrogate.tmp 2>&1
+	echo get foo| $(SHLIB_ENV) $(VALGRIND) ./mail_dict sqlite:/xx write >>surrogate.tmp 2>&1
+	echo get foo| $(SHLIB_ENV) $(VALGRIND) ./mail_dict sqlite:/xx read >>surrogate.tmp 2>&1
+	echo get foo| $(SHLIB_ENV) $(VALGRIND) ./mail_dict memcache:/xx read >>surrogate.tmp 2>&1
 	diff surrogate.ref surrogate.tmp
 	rm -f surrogate.tmp
 
@@ -516,7 +536,7 @@ rewrite_clnt_test: rewrite_clnt rewrite_clnt.in rewrite_clnt.ref
 	esac
 	@test -n "`postconf -h remote_header_rewrite_domain`" || { \
 	    echo 'This test requires non-empty remote_header_rewrite_domain'; exit 1; }
-	$(SHLIB_ENV) ./rewrite_clnt <rewrite_clnt.in >rewrite_clnt.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./rewrite_clnt <rewrite_clnt.in >rewrite_clnt.tmp
 	sed -e "s/MYDOMAIN/`postconf -h mydomain`/" \
 	    -e "s/INVALID_DOMAIN/`postconf -h remote_header_rewrite_domain`/" \
 		rewrite_clnt.ref | diff - rewrite_clnt.tmp
@@ -535,7 +555,7 @@ resolve_clnt_test: resolve_clnt resolve_clnt.in resolve_clnt.ref
 	    echo 'This test requires no transport map'; exit 1; }
 	sed -e "s/MYDOMAIN/`postconf -h mydomain`/g" \
 	    -e "s/MYHOSTNAME/`postconf -h myhostname`/g" \
-	    resolve_clnt.in |  $(SHLIB_ENV) ./resolve_clnt >resolve_clnt.tmp
+	    resolve_clnt.in |  $(SHLIB_ENV) $(VALGRIND) ./resolve_clnt >resolve_clnt.tmp
 	sed -e "s/MYDOMAIN/`postconf -h mydomain`/g" \
 	    -e "s/MYHOSTNAME/`postconf -h myhostname`/g" \
 	    -e "s/RELAYHOST/`postconf -h mydomain`/g" \
@@ -551,12 +571,12 @@ verify_sender_addr_test: verify_sender_addr verify_sender_addr.ref
 	esac
 	@test "X`postconf -h append_dot_mydomain`" = Xyes || { \
 	    echo 'This test requires append_dot_mydomain=yes'; exit 1; }
-	($(SHLIB_ENV) ./verify_sender_addr aa@bb 0; \
-	$(SHLIB_ENV) ./verify_sender_addr aa@bb 1; \
-	$(SHLIB_ENV) ./verify_sender_addr aa 0; \
-	$(SHLIB_ENV) ./verify_sender_addr aa 1; \
-	$(SHLIB_ENV) ./verify_sender_addr '' 0; \
-	$(SHLIB_ENV) ./verify_sender_addr '' 1) | \
+	($(SHLIB_ENV) $(VALGRIND) ./verify_sender_addr aa@bb 0; \
+	$(SHLIB_ENV) $(VALGRIND) ./verify_sender_addr aa@bb 1; \
+	$(SHLIB_ENV) $(VALGRIND) ./verify_sender_addr aa 0; \
+	$(SHLIB_ENV) $(VALGRIND) ./verify_sender_addr aa 1; \
+	$(SHLIB_ENV) $(VALGRIND) ./verify_sender_addr '' 0; \
+	$(SHLIB_ENV) $(VALGRIND) ./verify_sender_addr '' 1) | \
 	    sed 's/[A-Z0-9][A-Z0-9]*@/STAMP@/' > verify_sender_addr.tmp
 	sed -e "s/MYDOMAIN/`postconf -h mydomain`/g" \
 	    -e "s/MYORIGIN/`postconf -h myorigin`/g" \
@@ -567,44 +587,44 @@ verify_sender_addr_test: verify_sender_addr verify_sender_addr.ref
 	rm -f verify_sender_addr.tmp
 
 scache_multi_test: scache scache_multi.in scache_multi.ref
-	$(SHLIB_ENV) ./scache <scache_multi.in >scache_multi.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./scache <scache_multi.in >scache_multi.tmp
 	diff scache_multi.ref scache_multi.tmp
 	rm -f scache_multi.tmp
 
 ehlo_mask_test: ehlo_mask ehlo_mask.in ehlo_mask.ref
-	$(SHLIB_ENV) ./ehlo_mask <ehlo_mask.in >ehlo_mask.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./ehlo_mask <ehlo_mask.in >ehlo_mask.tmp
 	diff ehlo_mask.ref ehlo_mask.tmp
 	rm -f ehlo_mask.tmp
 
 namadr_list_test: namadr_list namadr_list.in namadr_list.ref
-	-sh namadr_list.in >namadr_list.tmp 2>&1
+	-$(SHLIB_ENV) sh namadr_list.in >namadr_list.tmp 2>&1
 	diff namadr_list.ref namadr_list.tmp
 	rm -f namadr_list.tmp
 
 mail_conf_time_test: mail_conf_time mail_conf_time.ref
-	$(SHLIB_ENV) ./mail_conf_time >mail_conf_time.tmp
+	$(SHLIB_ENV) $(VALGRIND) ./mail_conf_time >mail_conf_time.tmp
 	diff mail_conf_time.ref mail_conf_time.tmp
 	rm -f mail_conf_time.tmp
 
 safe_ultostr_test: safe_ultostr safe_ultostr.in safe_ultostr.ref
-	$(SHLIB_ENV) ./safe_ultostr <safe_ultostr.in >safe_ultostr.tmp 2>&1
+	$(SHLIB_ENV) $(VALGRIND) ./safe_ultostr <safe_ultostr.in >safe_ultostr.tmp 2>&1
 	diff safe_ultostr.ref safe_ultostr.tmp
 	rm -f safe_ultostr.tmp
 
 header_body_checks_null_test: header_body_checks header_body_checks_null.ref
-	$(SHLIB_ENV) ./header_body_checks "" "" "" "" \
+	$(SHLIB_ENV) $(VALGRIND) ./header_body_checks "" "" "" "" \
 		<mime_test.in >header_body_checks_null.tmp 2>&1
 	cmp header_body_checks_null.ref header_body_checks_null.tmp
-	$(SHLIB_ENV) ./header_body_checks static:dunno static:dunno static:dunno static:dunno \
+	$(SHLIB_ENV) $(VALGRIND) ./header_body_checks static:dunno static:dunno static:dunno static:dunno \
 		<mime_test.in >header_body_checks_null.tmp 2>&1
 	cmp header_body_checks_null.ref header_body_checks_null.tmp
-	$(SHLIB_ENV) ./header_body_checks static:ok static:ok static:ok static:ok \
+	$(SHLIB_ENV) $(VALGRIND) ./header_body_checks static:ok static:ok static:ok static:ok \
 		<mime_test.in >header_body_checks_null.tmp 2>&1
 	cmp header_body_checks_null.ref header_body_checks_null.tmp
 	rm -f header_body_checks_null.tmp
 
 header_body_checks_warn_test: header_body_checks header_body_checks_warn.ref
-	$(SHLIB_ENV) ./header_body_checks static:warn static:warn static:warn static:warn \
+	$(SHLIB_ENV) $(VALGRIND) ./header_body_checks static:warn static:warn static:warn static:warn \
 		<mime_test.in >header_body_checks_warn.tmp 2>&1
 	cmp header_body_checks_warn.ref header_body_checks_warn.tmp
 	rm -f header_body_checks_warn.tmp
@@ -614,7 +634,7 @@ header_body_checks_prepend_test: header_body_checks header_body_checks_prepend.r
 	echo /./ prepend header: mime >header_body_checks_mime
 	echo /./ prepend header: nest >header_body_checks_nest
 	echo /./ prepend body >header_body_checks_body
-	$(SHLIB_ENV) ./header_body_checks regexp:header_body_checks_head regexp:header_body_checks_mime \
+	$(SHLIB_ENV) $(VALGRIND) ./header_body_checks regexp:header_body_checks_head regexp:header_body_checks_mime \
 		regexp:header_body_checks_nest regexp:header_body_checks_body \
 		<mime_test.in >header_body_checks_prepend.tmp 2>&1
 	cmp header_body_checks_prepend.ref header_body_checks_prepend.tmp
@@ -625,7 +645,7 @@ header_body_checks_prepend_test: header_body_checks header_body_checks_prepend.r
 # errors. We can eliminate this restriction by allowing individual
 # map types to advertise whether they can handle null queries.
 header_body_checks_ignore_test: header_body_checks header_body_checks_ignore.ref
-	$(SHLIB_ENV) ./header_body_checks static:ignore static:ignore static:ignore static:ignore \
+	$(SHLIB_ENV) $(VALGRIND) ./header_body_checks static:ignore static:ignore static:ignore static:ignore \
 		<mime_test.in >header_body_checks_ignore.tmp 2>&1
 	cmp header_body_checks_ignore.ref header_body_checks_ignore.tmp
 	rm -f header_body_checks_ignore.tmp header_body_checks_head header_body_checks_mime header_body_checks_nest header_body_checks_body
@@ -635,26 +655,78 @@ header_body_checks_replace_test: header_body_checks header_body_checks_replace.r
 	echo /./ replace header: mime >header_body_checks_mime
 	echo /./ replace header: nest >header_body_checks_nest
 	echo /./ replace body >header_body_checks_body
-	$(SHLIB_ENV) ./header_body_checks regexp:header_body_checks_head regexp:header_body_checks_mime \
+	$(SHLIB_ENV) $(VALGRIND) ./header_body_checks regexp:header_body_checks_head regexp:header_body_checks_mime \
 		regexp:header_body_checks_nest regexp:header_body_checks_body \
 		<mime_test.in >header_body_checks_replace.tmp 2>&1
 	cmp header_body_checks_replace.ref header_body_checks_replace.tmp
 	rm -f header_body_checks_replace.tmp header_body_checks_head header_body_checks_mime header_body_checks_nest header_body_checks_body
 
+header_body_checks_strip_test: header_body_checks header_body_checks_strip.ref
+	echo /./ strip header line >header_body_checks_head
+	echo /./ strip mime header line >header_body_checks_mime
+	echo /./ strip nested header >header_body_checks_nest
+	echo /./ strip body line >header_body_checks_body
+	$(SHLIB_ENV) $(VALGRIND) ./header_body_checks regexp:header_body_checks_head regexp:header_body_checks_mime \
+		regexp:header_body_checks_nest regexp:header_body_checks_body \
+		<mime_test.in >header_body_checks_strip.tmp 2>&1
+	cmp header_body_checks_strip.ref header_body_checks_strip.tmp
+	rm -f header_body_checks_strip.tmp header_body_checks_head header_body_checks_mime header_body_checks_nest header_body_checks_body
+
 mail_parm_split_test: mail_parm_split mail_parm_split.in mail_parm_split.ref
-	$(SHLIB_ENV) ./mail_parm_split <mail_parm_split.in >mail_parm_split.tmp 2>&1
+	$(SHLIB_ENV) $(VALGRIND) ./mail_parm_split <mail_parm_split.in >mail_parm_split.tmp 2>&1
 	diff mail_parm_split.ref mail_parm_split.tmp
 	rm -f mail_parm_split.tmp
 
 fold_addr_test: fold_addr fold_addr_test.in fold_addr_test.ref
-	$(SHLIB_ENV) ./fold_addr <fold_addr_test.in >fold_addr_test.tmp 2>&1
+	$(SHLIB_ENV) $(VALGRIND) ./fold_addr <fold_addr_test.in >fold_addr_test.tmp 2>&1
 	diff fold_addr_test.ref fold_addr_test.tmp
 	rm -f fold_addr_test.tmp
 
 smtp_reply_footer_test: smtp_reply_footer smtp_reply_footer.ref
-	$(SHLIB_ENV) ./smtp_reply_footer >smtp_reply_footer.tmp 2>&1
+	$(SHLIB_ENV) $(VALGRIND) ./smtp_reply_footer >smtp_reply_footer.tmp 2>&1
 	diff smtp_reply_footer.ref smtp_reply_footer.tmp
 	rm -f smtp_reply_footer.tmp
+
+off_cvt_test: off_cvt off_cvt.in off_cvt.ref
+	$(SHLIB_ENV) $(VALGRIND) ./off_cvt <off_cvt.in >off_cvt.tmp 2>&1
+	diff off_cvt.ref off_cvt.tmp
+	rm -f off_cvt.tmp
+
+mail_addr_crunch_test: update mail_addr_crunch mail_addr_crunch.in mail_addr_crunch.ref
+	-$(SHLIB_ENV) sh mail_addr_crunch.in >mail_addr_crunch.tmp 2>&1
+	diff mail_addr_crunch.ref mail_addr_crunch.tmp
+	rm -f mail_addr_crunch.tmp
+
+mail_addr_find_test: update mail_addr_find mail_addr_find.in mail_addr_find.ref
+	-$(SHLIB_ENV) $(VALGRIND) ./mail_addr_find <mail_addr_find.in >mail_addr_find.tmp 2>&1
+	diff mail_addr_find.ref mail_addr_find.tmp
+	rm -f mail_addr_find.tmp
+
+mail_addr_map_test: update mail_addr_map mail_addr_map.ref
+	-$(SHLIB_ENV) $(VALGRIND) ./mail_addr_map pass_tests
+	-$(SHLIB_ENV) $(VALGRIND) ./mail_addr_map fail_tests >mail_addr_map.tmp 2>&1
+	diff mail_addr_map.ref mail_addr_map.tmp
+	rm -f mail_addr_map.tmp
+
+quote_822_local_test: update quote_822_local quote_822_local.in quote_822_local.ref
+	-$(SHLIB_ENV) $(VALGRIND) ./quote_822_local < quote_822_local.in >quote_822_local.tmp 2>&1
+	diff quote_822_local.ref quote_822_local.tmp
+	rm -f quote_822_local.tmp
+
+normalize_mailhost_addr_test: update normalize_mailhost_addr
+	-$(SHLIB_ENV) $(VALGRIND) ./normalize_mailhost_addr >normalize_mailhost_addr.tmp 2>&1
+	diff /dev/null normalize_mailhost_addr.tmp
+	rm -f normalize_mailhost_addr.tmp
+
+haproxy_srvr_test: update haproxy_srvr
+	-$(SHLIB_ENV) $(VALGRIND) ./haproxy_srvr >haproxy_srvr.tmp 2>&1
+	diff /dev/null haproxy_srvr.tmp
+	rm -f haproxy_srvr.tmp
+
+map_search_test: update map_search map_search.ref
+	-$(SHLIB_ENV) $(VALGRIND) ./map_search >map_search.tmp 2>&1
+	diff map_search.ref map_search.tmp
+	rm -f map_search.tmp
 
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck
@@ -679,7 +751,7 @@ depend: $(MAKES)
 	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' \
 	    -e 's/o: \.\//o: /' -e p -e '}' ; \
-	done | sort -u) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
+	done | LANG=C sort -u) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
 
 # do not edit below this line - it is generated by 'make depend'
@@ -1070,13 +1142,31 @@ dict_memcache.o: dict_memcache.c
 dict_memcache.o: dict_memcache.h
 dict_memcache.o: memcache_proto.h
 dict_memcache.o: string_list.h
+dict_mysql.o: ../../include/argv.h
+dict_mysql.o: ../../include/check_arg.h
+dict_mysql.o: ../../include/dict.h
+dict_mysql.o: ../../include/events.h
+dict_mysql.o: ../../include/find_inet.h
+dict_mysql.o: ../../include/match_list.h
+dict_mysql.o: ../../include/msg.h
+dict_mysql.o: ../../include/myflock.h
+dict_mysql.o: ../../include/mymalloc.h
+dict_mysql.o: ../../include/myrand.h
+dict_mysql.o: ../../include/split_at.h
+dict_mysql.o: ../../include/stringops.h
 dict_mysql.o: ../../include/sys_defs.h
+dict_mysql.o: ../../include/vbuf.h
+dict_mysql.o: ../../include/vstream.h
+dict_mysql.o: ../../include/vstring.h
+dict_mysql.o: cfg_parser.h
+dict_mysql.o: db_common.h
 dict_mysql.o: dict_mysql.c
+dict_mysql.o: dict_mysql.h
+dict_mysql.o: string_list.h
 dict_pgsql.o: ../../include/argv.h
 dict_pgsql.o: ../../include/check_arg.h
 dict_pgsql.o: ../../include/dict.h
 dict_pgsql.o: ../../include/events.h
-dict_pgsql.o: ../../include/find_inet.h
 dict_pgsql.o: ../../include/match_list.h
 dict_pgsql.o: ../../include/msg.h
 dict_pgsql.o: ../../include/myflock.h
@@ -1311,6 +1401,7 @@ haproxy_srvr.o: ../../include/inet_proto.h
 haproxy_srvr.o: ../../include/msg.h
 haproxy_srvr.o: ../../include/myaddrinfo.h
 haproxy_srvr.o: ../../include/mymalloc.h
+haproxy_srvr.o: ../../include/split_at.h
 haproxy_srvr.o: ../../include/stringops.h
 haproxy_srvr.o: ../../include/sys_defs.h
 haproxy_srvr.o: ../../include/valid_hostname.h
@@ -1357,6 +1448,18 @@ header_token.o: ../../include/vstring.h
 header_token.o: header_token.c
 header_token.o: header_token.h
 header_token.o: lex_822.h
+info_log_addr_form.o: ../../include/check_arg.h
+info_log_addr_form.o: ../../include/msg.h
+info_log_addr_form.o: ../../include/name_code.h
+info_log_addr_form.o: ../../include/sys_defs.h
+info_log_addr_form.o: ../../include/vbuf.h
+info_log_addr_form.o: ../../include/vstring.h
+info_log_addr_form.o: info_log_addr_form.c
+info_log_addr_form.o: info_log_addr_form.h
+info_log_addr_form.o: mail_addr_form.h
+info_log_addr_form.o: mail_params.h
+info_log_addr_form.o: quote_822_local.h
+info_log_addr_form.o: quote_flags.h
 input_transp.o: ../../include/check_arg.h
 input_transp.o: ../../include/msg.h
 input_transp.o: ../../include/name_mask.h
@@ -1400,6 +1503,7 @@ log_adhoc.o: ../../include/vbuf.h
 log_adhoc.o: ../../include/vstream.h
 log_adhoc.o: ../../include/vstring.h
 log_adhoc.o: dsn.h
+log_adhoc.o: info_log_addr_form.h
 log_adhoc.o: log_adhoc.c
 log_adhoc.o: log_adhoc.h
 log_adhoc.o: mail_params.h
@@ -1422,6 +1526,9 @@ mail_addr_crunch.o: ../../include/vstring.h
 mail_addr_crunch.o: canon_addr.h
 mail_addr_crunch.o: mail_addr_crunch.c
 mail_addr_crunch.o: mail_addr_crunch.h
+mail_addr_crunch.o: mail_addr_form.h
+mail_addr_crunch.o: quote_822_local.h
+mail_addr_crunch.o: quote_flags.h
 mail_addr_crunch.o: resolve_clnt.h
 mail_addr_crunch.o: tok822.h
 mail_addr_find.o: ../../include/argv.h
@@ -1430,6 +1537,7 @@ mail_addr_find.o: ../../include/dict.h
 mail_addr_find.o: ../../include/msg.h
 mail_addr_find.o: ../../include/myflock.h
 mail_addr_find.o: ../../include/mymalloc.h
+mail_addr_find.o: ../../include/name_mask.h
 mail_addr_find.o: ../../include/stringops.h
 mail_addr_find.o: ../../include/sys_defs.h
 mail_addr_find.o: ../../include/vbuf.h
@@ -1437,10 +1545,17 @@ mail_addr_find.o: ../../include/vstream.h
 mail_addr_find.o: ../../include/vstring.h
 mail_addr_find.o: mail_addr_find.c
 mail_addr_find.o: mail_addr_find.h
+mail_addr_find.o: mail_addr_form.h
 mail_addr_find.o: mail_params.h
 mail_addr_find.o: maps.h
+mail_addr_find.o: quote_822_local.h
+mail_addr_find.o: quote_flags.h
 mail_addr_find.o: resolve_local.h
 mail_addr_find.o: strip_addr.h
+mail_addr_form.o: ../../include/name_code.h
+mail_addr_form.o: ../../include/sys_defs.h
+mail_addr_form.o: mail_addr_form.c
+mail_addr_form.o: mail_addr_form.h
 mail_addr_map.o: ../../include/argv.h
 mail_addr_map.o: ../../include/check_arg.h
 mail_addr_map.o: ../../include/dict.h
@@ -1453,9 +1568,12 @@ mail_addr_map.o: ../../include/vstream.h
 mail_addr_map.o: ../../include/vstring.h
 mail_addr_map.o: mail_addr_crunch.h
 mail_addr_map.o: mail_addr_find.h
+mail_addr_map.o: mail_addr_form.h
 mail_addr_map.o: mail_addr_map.c
 mail_addr_map.o: mail_addr_map.h
 mail_addr_map.o: maps.h
+mail_addr_map.o: quote_822_local.h
+mail_addr_map.o: quote_flags.h
 mail_command_client.o: ../../include/attr.h
 mail_command_client.o: ../../include/check_arg.h
 mail_command_client.o: ../../include/htable.h
@@ -1698,6 +1816,7 @@ mail_params.o: ../../include/htable.h
 mail_params.o: ../../include/inet_addr_list.h
 mail_params.o: ../../include/inet_proto.h
 mail_params.o: ../../include/iostuff.h
+mail_params.o: ../../include/midna_domain.h
 mail_params.o: ../../include/msg.h
 mail_params.o: ../../include/msg_syslog.h
 mail_params.o: ../../include/myaddrinfo.h
@@ -1836,6 +1955,38 @@ mail_version.o: ../../include/vbuf.h
 mail_version.o: ../../include/vstring.h
 mail_version.o: mail_version.c
 mail_version.o: mail_version.h
+maillog_client.o: ../../include/argv.h
+maillog_client.o: ../../include/attr.h
+maillog_client.o: ../../include/check_arg.h
+maillog_client.o: ../../include/htable.h
+maillog_client.o: ../../include/iostuff.h
+maillog_client.o: ../../include/logwriter.h
+maillog_client.o: ../../include/msg.h
+maillog_client.o: ../../include/msg_logger.h
+maillog_client.o: ../../include/msg_syslog.h
+maillog_client.o: ../../include/mymalloc.h
+maillog_client.o: ../../include/nvtable.h
+maillog_client.o: ../../include/safe.h
+maillog_client.o: ../../include/stringops.h
+maillog_client.o: ../../include/sys_defs.h
+maillog_client.o: ../../include/vbuf.h
+maillog_client.o: ../../include/vstream.h
+maillog_client.o: ../../include/vstring.h
+maillog_client.o: mail_params.h
+maillog_client.o: mail_proto.h
+maillog_client.o: maillog_client.c
+maillog_client.o: maillog_client.h
+map_search.o: ../../include/check_arg.h
+map_search.o: ../../include/htable.h
+map_search.o: ../../include/msg.h
+map_search.o: ../../include/mymalloc.h
+map_search.o: ../../include/name_code.h
+map_search.o: ../../include/stringops.h
+map_search.o: ../../include/sys_defs.h
+map_search.o: ../../include/vbuf.h
+map_search.o: ../../include/vstring.h
+map_search.o: map_search.c
+map_search.o: map_search.h
 maps.o: ../../include/argv.h
 maps.o: ../../include/check_arg.h
 maps.o: ../../include/dict.h
@@ -2129,6 +2280,19 @@ namadr_list.o: ../../include/vbuf.h
 namadr_list.o: ../../include/vstring.h
 namadr_list.o: namadr_list.c
 namadr_list.o: namadr_list.h
+normalize_mailhost_addr.o: ../../include/check_arg.h
+normalize_mailhost_addr.o: ../../include/inet_proto.h
+normalize_mailhost_addr.o: ../../include/msg.h
+normalize_mailhost_addr.o: ../../include/myaddrinfo.h
+normalize_mailhost_addr.o: ../../include/mymalloc.h
+normalize_mailhost_addr.o: ../../include/stringops.h
+normalize_mailhost_addr.o: ../../include/sys_defs.h
+normalize_mailhost_addr.o: ../../include/valid_hostname.h
+normalize_mailhost_addr.o: ../../include/vbuf.h
+normalize_mailhost_addr.o: ../../include/vstring.h
+normalize_mailhost_addr.o: normalize_mailhost_addr.c
+normalize_mailhost_addr.o: normalize_mailhost_addr.h
+normalize_mailhost_addr.o: valid_mailhost_addr.h
 off_cvt.o: ../../include/check_arg.h
 off_cvt.o: ../../include/msg.h
 off_cvt.o: ../../include/sys_defs.h
@@ -2141,6 +2305,7 @@ opened.o: ../../include/msg.h
 opened.o: ../../include/sys_defs.h
 opened.o: ../../include/vbuf.h
 opened.o: ../../include/vstring.h
+opened.o: info_log_addr_form.h
 opened.o: opened.c
 opened.o: opened.h
 own_inet_addr.o: ../../include/check_arg.h
@@ -2219,6 +2384,13 @@ quote_822_local.o: ../../include/vstring.h
 quote_822_local.o: quote_822_local.c
 quote_822_local.o: quote_822_local.h
 quote_822_local.o: quote_flags.h
+quote_flags.o: ../../include/check_arg.h
+quote_flags.o: ../../include/name_mask.h
+quote_flags.o: ../../include/sys_defs.h
+quote_flags.o: ../../include/vbuf.h
+quote_flags.o: ../../include/vstring.h
+quote_flags.o: quote_flags.c
+quote_flags.o: quote_flags.h
 rcpt_buf.o: ../../include/attr.h
 rcpt_buf.o: ../../include/check_arg.h
 rcpt_buf.o: ../../include/htable.h
@@ -2308,6 +2480,25 @@ record.o: off_cvt.h
 record.o: rec_type.h
 record.o: record.c
 record.o: record.h
+reject_deliver_request.o: ../../include/attr.h
+reject_deliver_request.o: ../../include/check_arg.h
+reject_deliver_request.o: ../../include/htable.h
+reject_deliver_request.o: ../../include/msg.h
+reject_deliver_request.o: ../../include/mymalloc.h
+reject_deliver_request.o: ../../include/nvtable.h
+reject_deliver_request.o: ../../include/sys_defs.h
+reject_deliver_request.o: ../../include/vbuf.h
+reject_deliver_request.o: ../../include/vstream.h
+reject_deliver_request.o: ../../include/vstring.h
+reject_deliver_request.o: bounce.h
+reject_deliver_request.o: defer.h
+reject_deliver_request.o: deliver_completed.h
+reject_deliver_request.o: deliver_request.h
+reject_deliver_request.o: dsn.h
+reject_deliver_request.o: dsn_buf.h
+reject_deliver_request.o: msg_stats.h
+reject_deliver_request.o: recipient_list.h
+reject_deliver_request.o: reject_deliver_request.c
 remove.o: ../../include/check_arg.h
 remove.o: ../../include/sys_defs.h
 remove.o: ../../include/vbuf.h
@@ -2477,6 +2668,7 @@ smtp_reply_footer.o: ../../include/check_arg.h
 smtp_reply_footer.o: ../../include/mac_expand.h
 smtp_reply_footer.o: ../../include/mac_parse.h
 smtp_reply_footer.o: ../../include/msg.h
+smtp_reply_footer.o: ../../include/mymalloc.h
 smtp_reply_footer.o: ../../include/sys_defs.h
 smtp_reply_footer.o: ../../include/vbuf.h
 smtp_reply_footer.o: ../../include/vstring.h

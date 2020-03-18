@@ -287,13 +287,25 @@
 #	This feature is not supported with smtp header/body checks.
 # .IP \fBIGNORE\fR
 #	Delete the current line from the input, and inspect
-#	the next input line.
+#	the next input line. See \fBSTRIP\fR for an alternative
+#	that logs the action.
 # .IP "\fBINFO \fIoptional text...\fR
 #	Log an "info:" record with the \fIoptional text...\fR (or
 #	log a generic text), and inspect the next input line. This
 #	action is useful for routine logging or for debugging.
 # .sp
 #	This feature is available in Postfix 2.8 and later.
+# .IP "\fBPASS \fIoptional text...\fR"
+#	Log a "pass:" record with the \fIoptional text...\fR (or
+#	log a generic text), and turn off header, body, and Milter
+#	inspection for the remainder of this message.
+# .sp
+#	Note: this feature relies on trust in information that is
+#	easy to forge.
+# .sp
+#	This feature is available in Postfix 3.2 and later.
+# .sp
+#	This feature is not supported with smtp header/body checks.
 # .IP "\fBPREPEND \fItext...\fR"
 #	Prepend one line with the specified text, and inspect the next
 #	input line.
@@ -364,6 +376,13 @@
 #	"5.7.1".
 # .sp
 #	This feature is not supported with smtp header/body checks.
+# .IP "\fBSTRIP \fIoptional text...\fR"
+#	Log a "strip:" record with the \fIoptional text...\fR (or
+#	log a generic text), delete the input line from the input,
+#	and inspect the next input line. See \fBIGNORE\fR for a
+#	silent alternative.
+# .sp
+#	This feature is available in Postfix 3.2 and later.
 # .IP "\fBWARN \fIoptional text...\fR
 #	Log a "warning:" record with the \fIoptional text...\fR (or
 #	log a generic text), and inspect the next input line. This

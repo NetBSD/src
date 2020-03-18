@@ -10,21 +10,18 @@ POSTMAP(1)                                                          POSTMAP(1)
        postmap - Postfix lookup table management
 
 <b>SYNOPSIS</b>
-       <b>postmap</b> [<b>-NbfhimnoprsuUvw</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-d</b> <i>key</i>] [<b>-q</b> <i>key</i>]
+       <b>postmap</b> [<b>-bfFhimnNoprsuUvw</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-d</b> <i>key</i>] [<b>-q</b> <i>key</i>]
                [<i>file</i><b>_</b><i>type</i>:]<i>file</i><b>_</b><i>name</i> ...
 
 <b>DESCRIPTION</b>
        The  <a href="postmap.1.html"><b>postmap</b>(1)</a>  command  creates or queries one or more Postfix lookup
-       tables, or updates an existing one. The input and output  file  formats
-       are expected to be compatible with:
+       tables, or updates an existing one.
 
-           <b>makemap</b> <i>file</i><b>_</b><i>type file</i><b>_</b><i>name</i> &lt; <i>file</i><b>_</b><i>name</i>
-
-       If  the  result  files  do not exist they will be created with the same
+       If the result files do not exist they will be  created  with  the  same
        group and other read permissions as their source file.
 
-       While the table update is in progress, signal  delivery  is  postponed,
-       and  an  exclusive,  advisory,  lock  is placed on the entire table, in
+       While  the  table  update is in progress, signal delivery is postponed,
+       and an exclusive, advisory, lock is placed  on  the  entire  table,  in
        order to avoid surprises in spectator processes.
 
 <b>INPUT FILE FORMAT</b>
@@ -34,16 +31,25 @@ POSTMAP(1)                                                          POSTMAP(1)
 
                    <i>key</i> whitespace <i>value</i>
 
-       <b>o</b>      Empty lines and whitespace-only lines are ignored, as are  lines
+       <b>o</b>      Empty  lines and whitespace-only lines are ignored, as are lines
               whose first non-whitespace character is a `#'.
 
-       <b>o</b>      A  logical  line  starts  with  non-whitespace text. A line that
+       <b>o</b>      A logical line starts with  non-whitespace  text.  A  line  that
               starts with whitespace continues a logical line.
 
-       The <i>key</i> and <i>value</i> are processed as is, except  that  surrounding  white
-       space is stripped off. Unlike with Postfix alias databases, quotes can-
-       not be used to protect lookup keys that contain special characters such
-       as `#' or whitespace.
+       The  <i>key</i>  and  <i>value</i> are processed as is, except that surrounding white
+       space is stripped off. Whitespace in lookup keys  is  supported  as  of
+       Postfix 3.2.
+
+       When  the  <b>-F</b> option is given, the <i>value</i> must specify one or more file-
+       names separated by comma and/or whitespace; <a href="postmap.1.html"><b>postmap</b>(1)</a> will concatenate
+       the  file content (with a newline character inserted between files) and
+       will store the base64-encoded result instead of the <i>value</i>.
+
+       When the <i>key</i> specifies email address information, the localpart  should
+       be enclosed with double quotes if required by <a href="http://tools.ietf.org/html/rfc5322">RFC 5322</a>. For example, an
+       address localpart that contains ";", or a localpart that starts or ends
+       with ".".
 
        By  default  the  lookup key is mapped to lowercase to make the lookups
        case insensitive; as of Postfix 2.3 this case folding happens only with
@@ -56,7 +62,7 @@ POSTMAP(1)                                                          POSTMAP(1)
 <b>COMMAND-LINE ARGUMENTS</b>
        <b>-b</b>     Enable  message  body  query mode. When reading lookup keys from
               standard input with "<b>-q -</b>", process the input as  if  it  is  an
-              email  message  in  <a href="http://tools.ietf.org/html/rfc2822">RFC  2822</a> format.  Each line of body content
+              email  message  in  <a href="http://tools.ietf.org/html/rfc5322">RFC  5322</a> format.  Each line of body content
               becomes one lookup key.
 
               By default, the <b>-b</b> option starts generating lookup keys  at  the
@@ -91,9 +97,15 @@ POSTMAP(1)                                                          POSTMAP(1)
               for regular expression tables. There, case folding is controlled
               by appending a flag to a pattern.
 
+       <b>-F</b>     When querying a map, or listing a map, base64-decode each value.
+              When creating a map from source file, process each  value  as  a
+              list  of  filenames, concatenate the content of those files, and
+              store the base64-encoded result instead of the value (see  INPUT
+              FORMAT for details).
+
        <b>-h</b>     Enable  message header query mode. When reading lookup keys from
               standard input with "<b>-q -</b>", process the input as  if  it  is  an
-              email  message  in  <a href="http://tools.ietf.org/html/rfc2822">RFC  2822</a>  format.  Each logical header line
+              email  message  in  <a href="http://tools.ietf.org/html/rfc5322">RFC  5322</a>  format.  Each logical header line
               becomes one lookup key. A multi-line header becomes  one  lookup
               key with one or more embedded newline characters.
 
@@ -137,33 +149,38 @@ POSTMAP(1)                                                          POSTMAP(1)
               found to the standard output stream. The  exit  status  is  zero
               when the requested information was found.
 
-              If  a  key value of <b>-</b> is specified, the program reads key values
-              from the standard input stream and writes one line of <i>key  value</i>
+              Note:  this  performs  a single query with the key as specified,
+              and does not make iterative queries with substrings of  the  key
+              as  described  for  <a href="access.5.html">access(5)</a>,  <a href="canonical.5.html">canonical(5)</a>, <a href="transport.5.html">transport(5)</a>, <a href="virtual.5.html">vir-</a>
+              <a href="virtual.5.html">tual(5)</a> and other Postfix table-driven features.
+
+              If a key value of <b>-</b> is specified, the program reads  key  values
+              from  the standard input stream and writes one line of <i>key value</i>
               output for each key that was found. The exit status is zero when
               at least one of the requested keys was found.
 
-       <b>-r</b>     When updating a table, do not complain about attempts to  update
+       <b>-r</b>     When  updating a table, do not complain about attempts to update
               existing entries, and make those updates anyway.
 
-       <b>-s</b>     Retrieve  all database elements, and write one line of <i>key value</i>
-              output for each element. The elements are  printed  in  database
-              order,  which  is not necessarily the same as the original input
+       <b>-s</b>     Retrieve all database elements, and write one line of <i>key  value</i>
+              output  for  each  element. The elements are printed in database
+              order, which is not necessarily the same as the  original  input
               order.
 
-              This feature is available in Postfix version 2.2 and later,  and
+              This  feature is available in Postfix version 2.2 and later, and
               is not available for all database types.
 
-       <b>-u</b>     Disable  UTF-8 support. UTF-8 support is enabled by default when
-              "<a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> = yes". It requires that keys  and  values  are
+       <b>-u</b>     Disable UTF-8 support. UTF-8 support is enabled by default  when
+              "<a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a>  =  yes".  It requires that keys and values are
               valid UTF-8 strings.
 
        <b>-U</b>     With "<a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> = yes", force UTF-8 syntax checks with the
               <b>-b</b> and <b>-h</b> options.
 
-       <b>-v</b>     Enable verbose  logging  for  debugging  purposes.  Multiple  <b>-v</b>
+       <b>-v</b>     Enable  verbose  logging  for  debugging  purposes.  Multiple <b>-v</b>
               options make the software increasingly verbose.
 
-       <b>-w</b>     When  updating a table, do not complain about attempts to update
+       <b>-w</b>     When updating a table, do not complain about attempts to  update
               existing entries, and ignore those attempts.
 
        Arguments:
@@ -175,32 +192,32 @@ POSTMAP(1)                                                          POSTMAP(1)
               The <a href="postmap.1.html"><b>postmap</b>(1)</a> command can query any supported file type, but it
               can create only the following file types:
 
-              <b>btree</b>  The output file is  a  btree  file,  named  <i>file</i><b>_</b><i>name</i><b>.db</b>.
-                     This  is  available  on systems with support for <b>db</b> data-
+              <b>btree</b>  The  output  file  is  a  btree file, named <i>file</i><b>_</b><i>name</i><b>.db</b>.
+                     This is available on systems with support  for  <b>db</b>  data-
                      bases.
 
-              <b>cdb</b>    The output consists of  one  file,  named  <i>file</i><b>_</b><i>name</i><b>.cdb</b>.
-                     This  is  available on systems with support for <b>cdb</b> data-
+              <b>cdb</b>    The  output  consists  of  one file, named <i>file</i><b>_</b><i>name</i><b>.cdb</b>.
+                     This is available on systems with support for  <b>cdb</b>  data-
                      bases.
 
               <b>dbm</b>    The output consists of two files, named <i>file</i><b>_</b><i>name</i><b>.pag</b> and
                      <i>file</i><b>_</b><i>name</i><b>.dir</b>.  This is available on systems with support
                      for <b>dbm</b> databases.
 
-              <b>hash</b>   The output file is a  hashed  file,  named  <i>file</i><b>_</b><i>name</i><b>.db</b>.
-                     This  is  available  on systems with support for <b>db</b> data-
+              <b>hash</b>   The  output  file  is  a hashed file, named <i>file</i><b>_</b><i>name</i><b>.db</b>.
+                     This is available on systems with support  for  <b>db</b>  data-
                      bases.
 
-              <b>fail</b>   A table that reliably fails all requests. The lookup  ta-
-                     ble  name  is used for logging only. This table exists to
+              <b>fail</b>   A  table that reliably fails all requests. The lookup ta-
+                     ble name is used for logging only. This table  exists  to
                      simplify Postfix error tests.
 
               <b>sdbm</b>   The output consists of two files, named <i>file</i><b>_</b><i>name</i><b>.pag</b> and
                      <i>file</i><b>_</b><i>name</i><b>.dir</b>.  This is available on systems with support
                      for <b>sdbm</b> databases.
 
-              When no <i>file</i><b>_</b><i>type</i> is specified, the software uses  the  database
-              type   specified  via  the  <b><a href="postconf.5.html#default_database_type">default_database_type</a></b>  configuration
+              When  no  <i>file</i><b>_</b><i>type</i> is specified, the software uses the database
+              type  specified  via  the  <b><a href="postconf.5.html#default_database_type">default_database_type</a></b>   configuration
               parameter.
 
        <i>file</i><b>_</b><i>name</i>
@@ -208,12 +225,12 @@ POSTMAP(1)                                                          POSTMAP(1)
               base.
 
 <b>DIAGNOSTICS</b>
-       Problems are logged to the standard error stream and to <b>syslogd</b>(8).  No
-       output means that no problems  were  detected.  Duplicate  entries  are
-       skipped and are flagged with a warning.
+       Problems are logged to the standard error stream and to  <b>syslogd</b>(8)  or
+       <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.  No output means that no problems were detected. Duplicate
+       entries are skipped and are flagged with a warning.
 
        <a href="postmap.1.html"><b>postmap</b>(1)</a> terminates with zero exit status in case of success (includ-
-       ing successful "<b>postmap -q</b>" lookup) and terminates with  non-zero  exit
+       ing  successful  "<b>postmap -q</b>" lookup) and terminates with non-zero exit
        status in case of failure.
 
 <b>ENVIRONMENT</b>
@@ -224,12 +241,12 @@ POSTMAP(1)                                                          POSTMAP(1)
               Enable verbose logging for debugging purposes.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to this pro-
-       gram.  The text below provides only  a  parameter  summary.  See  <a href="postconf.5.html"><b>post-</b></a>
+       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to  this  pro-
+       gram.   The  text  below  provides  only a parameter summary. See <a href="postconf.5.html"><b>post-</b></a>
        <a href="postconf.5.html"><b>conf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#berkeley_db_create_buffer_size">berkeley_db_create_buffer_size</a> (16777216)</b>
-              The  per-table I/O buffer size for programs that create Berkeley
+              The per-table I/O buffer size for programs that create  Berkeley
               DB hash or btree tables.
 
        <b><a href="postconf.5.html#berkeley_db_read_buffer_size">berkeley_db_read_buffer_size</a> (131072)</b>
@@ -237,29 +254,34 @@ POSTMAP(1)                                                          POSTMAP(1)
               hash or btree tables.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
 
        <b><a href="postconf.5.html#default_database_type">default_database_type</a> (see 'postconf -d' output)</b>
               The default database type for use in <a href="newaliases.1.html"><b>newaliases</b>(1)</a>, <a href="postalias.1.html"><b>postalias</b>(1)</a>
               and <a href="postmap.1.html"><b>postmap</b>(1)</a> commands.
 
+       <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
+              The list of environment parameters  that  a  privileged  Postfix
+              process  will  import  from  a  non-Postfix  parent  process, or
+              name=value environment overrides.
+
        <b><a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> (yes)</b>
-              Enable  preliminary SMTPUTF8 support for the protocols described
+              Enable preliminary SMTPUTF8 support for the protocols  described
               in <a href="http://tools.ietf.org/html/rfc6531">RFC 6531</a>..6533.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system name that is prepended to the  process  name  in
-              syslog  records,  so  that  "smtpd" becomes, for example, "post-
-              fix/smtpd".
+              A  prefix  that  is  prepended  to  the  process  name in syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
 <b>SEE ALSO</b>
        <a href="postalias.1.html">postalias(1)</a>, create/update/query alias database
        <a href="postconf.1.html">postconf(1)</a>, supported database types
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>README FILES</b>

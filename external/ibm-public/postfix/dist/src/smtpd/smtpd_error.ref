@@ -10,7 +10,7 @@ OK
 OK
 >>> # Expect: REJECT (temporary lookup failure)
 >>> helo foobar
-./smtpd_check: warning: fail:1_helo_access: table lookup problem
+./smtpd_check: warning: fail:1_helo_access lookup error for "foobar"
 ./smtpd_check: <queue id>: reject: HELO from localhost[127.0.0.1]: 451 4.3.5 <foobar>: Helo command rejected: Server configuration error; proto=SMTP helo=<foobar>
 451 4.3.5 <foobar>: Helo command rejected: Server configuration error
 >>> #
@@ -20,7 +20,7 @@ OK
 OK
 >>> # Expect: REJECT (temporary lookup failure)
 >>> client foo.dunno.com 131.155.210.17
-./smtpd_check: warning: fail:1_client_access: table lookup problem
+./smtpd_check: warning: fail:1_client_access lookup error for "foo.dunno.com"
 ./smtpd_check: <queue id>: reject: CONNECT from foo.dunno.com[131.155.210.17]: 451 4.3.5 <foo.dunno.com[131.155.210.17]>: Client host rejected: Server configuration error; proto=SMTP helo=<foobar>
 451 4.3.5 <foo.dunno.com[131.155.210.17]>: Client host rejected: Server configuration error
 >>> #
@@ -30,7 +30,7 @@ OK
 OK
 >>> # Expect: REJECT (temporary lookup failure)
 >>> mail reject@dunno.domain
-./smtpd_check: warning: fail:1_sender_access: table lookup problem
+./smtpd_check: warning: fail:1_sender_access lookup error for "reject@dunno.domain"
 ./smtpd_check: <queue id>: reject: MAIL from foo.dunno.com[131.155.210.17]: 451 4.3.5 <reject@dunno.domain>: Sender address rejected: Server configuration error; from=<reject@dunno.domain> proto=SMTP helo=<foobar>
 451 4.3.5 <reject@dunno.domain>: Sender address rejected: Server configuration error
 >>> #
@@ -40,7 +40,7 @@ OK
 OK
 >>> # Expect: REJECT (temporary lookup failure)
 >>> rcpt reject@dunno.domain
-./smtpd_check: warning: fail:1_rcpt_access: table lookup problem
+./smtpd_check: warning: fail:1_rcpt_access lookup error for "reject@dunno.domain"
 ./smtpd_check: <queue id>: reject: RCPT from foo.dunno.com[131.155.210.17]: 451 4.3.5 <reject@dunno.domain>: Recipient address rejected: Server configuration error; from=<reject@dunno.domain> to=<reject@dunno.domain> proto=SMTP helo=<foobar>
 451 4.3.5 <reject@dunno.domain>: Recipient address rejected: Server configuration error
 >>> # Expect: OK
@@ -78,7 +78,7 @@ OK
 >>> smtpd_null_access_lookup_key <> 
 OK
 >>> mail <>
-./smtpd_check: warning: fail:1_sender_access: table lookup problem
+./smtpd_check: warning: fail:1_sender_access lookup error for "<>"
 ./smtpd_check: <queue id>: reject: MAIL from foo.dunno.com[131.155.210.17]: 451 4.3.5 <>: Sender address rejected: Server configuration error; from=<> proto=SMTP helo=<foobar>
 451 4.3.5 <>: Sender address rejected: Server configuration error
 >>> #
@@ -104,7 +104,7 @@ OK
 >>> # Expect: REJECT (temporary lookup failure)
 >>> #
 >>> rewrite
-./smtpd_check: warning: local_header_rewrite_clients: fail:1_rewrite: lookup error
+./smtpd_check: warning: fail:1_rewrite lookup error for "131.155.210.17"
 ./smtpd_check: <queue id>: reject: RCPT from foo.dunno.com[131.155.210.17]: 451 4.3.0 Temporary lookup error; from=<> proto=SMTP helo=<foobar>
 451 4.3.0 Temporary lookup error
 >>> #
