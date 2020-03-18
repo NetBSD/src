@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.90 2020/03/16 20:51:36 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.91 2020/03/18 19:23:13 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.90 2020/03/16 20:51:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.91 2020/03/18 19:23:13 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1120,8 +1120,9 @@ again:
 			m->m_ext.ext_paddr = pa;
 			m->m_flags |= M_EXT_RW; /* we own the buffer */
 		}
-		if ((rx->flags & NETRXF_csum_blank) != 0) {
-			xennet_checksum_fill(ifp, m);
+		if ((rx->flags & (NETRXF_csum_blank|NETRXF_data_validated))) {
+			xennet_checksum_fill(ifp, m,
+			    ((rx->flags & NETRXF_data_validated) != 0));
 		}
 		/* free req may overwrite *rx, better doing it late */
 		xennet_rx_free_req(req);
@@ -1231,7 +1232,7 @@ xennet_softstart(void *arg)
 		    (M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
 			txflags = NETTXF_csum_blank;
 		} else {
-			txflags = 0;
+			txflags = NETTXF_data_validated;
 		}
 
 		if (m->m_pkthdr.len != m->m_len ||
