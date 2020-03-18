@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.80 2020/03/18 19:23:13 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.81 2020/03/18 19:26:15 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.80 2020/03/18 19:23:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.81 2020/03/18 19:26:15 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -304,8 +304,8 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	ifp->if_snd.ifq_maxlen =
 	    uimax(ifqmaxlen, NET_TX_RING_SIZE * 2);
 	ifp->if_capabilities =
-		IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx
-		| IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx;
+		IFCAP_CSUM_UDPv4_Tx
+		| IFCAP_CSUM_TCPv4_Tx;
 	ifp->if_ioctl = xennetback_ifioctl;
 	ifp->if_start = xennetback_ifstart;
 	ifp->if_watchdog = xennetback_ifwatchdog;
