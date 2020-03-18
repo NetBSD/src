@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.145 2020/03/18 04:02:20 nisimura Exp $
+#	$NetBSD: GENERIC64,v 1.146 2020/03/18 10:56:38 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -529,6 +529,8 @@ options 	FONT_BOLD16x32
 # GPU
 #nouveau*	at fdt?			# NVIDIA GPU
 #nouveau*	at pci?
+radeon*		at pci? dev ? function ? # AMD Radeon
+radeondrmkmsfb*	at radeonfbbus?
 
 # Backlight
 pwmbacklight*	at fdt?			# PWM Backlight controls
