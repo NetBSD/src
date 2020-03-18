@@ -187,12 +187,6 @@ described in the postconf(5) manual page. </p>
     # Don't accept mail from domains that don't exist.
     smtpd_sender_restrictions = reject_unknown_sender_domain
 
-    # Relay control (Postfix 2.10 and later): local clients and
-    # authenticated clients may specify any destination domain.
-    smtpd_relay_restrictions = permit_mynetworks, 
-	permit_sasl_authenticated,
-	reject_unauth_destination
-
     # Spam control: exclude local clients and authenticated clients
     # from DNSBL lookups.
     smtpd_recipient_restrictions = permit_mynetworks, 
@@ -205,6 +199,12 @@ described in the postconf(5) manual page. </p>
 	reject_rhsbl_reverse_client dbl.spamhaus.org,
 	reject_rhsbl_helo dbl.spamhaus.org,
 	reject_rhsbl_sender dbl.spamhaus.org
+
+    # Relay control (Postfix 2.10 and later): local clients and
+    # authenticated clients may specify any destination domain.
+    smtpd_relay_restrictions = permit_mynetworks, 
+	permit_sasl_authenticated,
+	reject_unauth_destination
 
     # Block clients that speak too early.
     smtpd_data_restrictions = reject_unauth_pipelining
@@ -246,20 +246,20 @@ Reject HELO/EHLO information </td> </tr>
 Optional </td> <td>
 Reject MAIL FROM information </td> </tr>
 
-<tr> <td rowspan="2"> smtpd_relay_restrictions </td> <td> &ge; 2.10
-</td> <td> Required if smtpd_recipient_restrictions does not enforce
-relay policy</td>
-<td rowspan="2"> Reject RCPT TO information </td> </tr>
-
-<tr> <td> &lt 2.10</td> <td> Not available </td> 
-</tr>
-
 <tr> <td rowspan="2"> smtpd_recipient_restrictions </td> <td> &ge;
 2.10 </td> <td> Required if smtpd_relay_restrictions does not enforce
 relay policy</td>
 <td rowspan="2"> Reject RCPT TO information </td> </tr>
 
-<tr> <td> &lt 2.10</td> <td> Required </td> </tr>
+<tr> <td> &lt; 2.10</td> <td> Required </td> </tr>
+
+<tr> <td rowspan="2"> smtpd_relay_restrictions </td> <td> &ge; 2.10
+</td> <td> Required if smtpd_recipient_restrictions does not enforce
+relay policy</td>
+<td rowspan="2"> Reject RCPT TO information </td> </tr>
+
+<tr> <td> &lt; 2.10</td> <td> Not available </td> 
+</tr>
 
 <tr> <td> smtpd_data_restrictions </td> <td> &ge; 2.0 </td> <td>
 Optional </td> <td>

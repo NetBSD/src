@@ -1,10 +1,10 @@
 SHELL	= /bin/sh
 SRCS	= dns_lookup.c dns_rr.c dns_strerror.c dns_strtype.c dns_rr_to_pa.c \
 	dns_sa_to_rr.c dns_rr_eq_sa.c dns_rr_to_sa.c dns_strrecord.c \
-	dns_rr_filter.c
+	dns_rr_filter.c dns_str_resflags.c
 OBJS	= dns_lookup.o dns_rr.o dns_strerror.o dns_strtype.o dns_rr_to_pa.o \
 	dns_sa_to_rr.o dns_rr_eq_sa.o dns_rr_to_sa.o dns_strrecord.o \
-	dns_rr_filter.o
+	dns_rr_filter.o dns_str_resflags.o
 HDRS	= dns.h
 TESTSRC	= test_dns_lookup.c test_alias_token.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
@@ -165,7 +165,6 @@ mxonly_test: test_dns_lookup mxonly_test.ref
 dnsbl_ttl_127.0.0.1_bind_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_plain.ref
 	(set -e; \
         $(SHLIB_ENV) ./test_dns_lookup a 1.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup a 1.0.0.127.b.barracudacentral.org; \
         $(SHLIB_ENV) ./test_dns_lookup a 1.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_NEXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.1_bind_plain.tmp
 	diff dnsbl_ttl_127.0.0.1_bind_plain.ref dnsbl_ttl_127.0.0.1_bind_plain.tmp
@@ -176,7 +175,6 @@ dnsbl_ttl_127.0.0.1_bind_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_pl
 dnsbl_ttl_127.0.0.1_priv_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_plain.ref
 	(set -e; \
         $(SHLIB_ENV) ./test_dns_lookup -p a 1.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -p a 1.0.0.127.b.barracudacentral.org; \
         $(SHLIB_ENV) ./test_dns_lookup -p a 1.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_NEXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.1_priv_plain.tmp
 	diff dnsbl_ttl_127.0.0.1_bind_plain.ref dnsbl_ttl_127.0.0.1_priv_plain.tmp
@@ -187,7 +185,6 @@ dnsbl_ttl_127.0.0.1_priv_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_pl
 dnsbl_ttl_127.0.0.1_bind_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_ncache.ref
 	(set -e; \
         $(SHLIB_ENV) ./test_dns_lookup -n a 1.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -n a 1.0.0.127.b.barracudacentral.org; \
         $(SHLIB_ENV) ./test_dns_lookup -n a 1.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_NEXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.1_bind_ncache.tmp
 	diff dnsbl_ttl_127.0.0.1_bind_ncache.ref dnsbl_ttl_127.0.0.1_bind_ncache.tmp
@@ -198,7 +195,6 @@ dnsbl_ttl_127.0.0.1_bind_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_n
 dnsbl_ttl_127.0.0.1_priv_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_ncache.ref
 	(set -e; \
         $(SHLIB_ENV) ./test_dns_lookup -n -p a 1.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -n -p a 1.0.0.127.b.barracudacentral.org; \
         $(SHLIB_ENV) ./test_dns_lookup -n -p a 1.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_NEXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.1_priv_ncache.tmp
 	diff dnsbl_ttl_127.0.0.1_bind_ncache.ref dnsbl_ttl_127.0.0.1_priv_ncache.tmp
@@ -209,7 +205,6 @@ dnsbl_ttl_127.0.0.1_priv_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.1_bind_n
 dnsbl_ttl_127.0.0.2_bind_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_plain.ref
 	(set -e; \
         $(SHLIB_ENV) ./test_dns_lookup a 2.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup a 2.0.0.127.b.barracudacentral.org; \
         $(SHLIB_ENV) ./test_dns_lookup a 2.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_EXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.2_bind_plain.tmp
 	diff dnsbl_ttl_127.0.0.2_bind_plain.ref dnsbl_ttl_127.0.0.2_bind_plain.tmp
@@ -220,7 +215,6 @@ dnsbl_ttl_127.0.0.2_bind_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_pl
 dnsbl_ttl_127.0.0.2_priv_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_plain.ref
 	(set -e; \
         $(SHLIB_ENV) ./test_dns_lookup -p a 2.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -p a 2.0.0.127.b.barracudacentral.org; \
         $(SHLIB_ENV) ./test_dns_lookup -p a 2.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_EXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.2_priv_plain.tmp
 	diff dnsbl_ttl_127.0.0.2_bind_plain.ref dnsbl_ttl_127.0.0.2_priv_plain.tmp
@@ -231,7 +225,6 @@ dnsbl_ttl_127.0.0.2_priv_plain_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_pl
 dnsbl_ttl_127.0.0.2_bind_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_plain.ref
 	(set -e; \
         $(SHLIB_ENV) ./test_dns_lookup -n a 2.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -n a 2.0.0.127.b.barracudacentral.org; \
         $(SHLIB_ENV) ./test_dns_lookup -n a 2.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_EXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.2_bind_ncache.tmp
 	diff dnsbl_ttl_127.0.0.2_bind_plain.ref dnsbl_ttl_127.0.0.2_bind_ncache.tmp
@@ -242,7 +235,6 @@ dnsbl_ttl_127.0.0.2_bind_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_p
 dnsbl_ttl_127.0.0.2_priv_ncache_test: test_dns_lookup dnsbl_ttl_127.0.0.2_bind_plain.ref
 	(set -e; \
         $(SHLIB_ENV) ./test_dns_lookup -n -p a 2.0.0.127.zen.spamhaus.org; \
-        $(SHLIB_ENV) ./test_dns_lookup -n -p a 2.0.0.127.b.barracudacentral.org; \
         $(SHLIB_ENV) ./test_dns_lookup -n -p a 2.0.0.127.bl.spamcop.net; \
 	) 2>&1 | $(DNSBL_EXIST_REPLY_FIX) >dnsbl_ttl_127.0.0.2_priv_ncache.tmp
 	diff dnsbl_ttl_127.0.0.2_bind_plain.ref dnsbl_ttl_127.0.0.2_priv_ncache.tmp
@@ -271,7 +263,7 @@ depend: $(MAKES)
 	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' \
 	    -e 's/o: \.\//o: /' -e p -e '}' ; \
-	done | sort -u) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
+	done | LANG=C sort -u) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
 
 # do not edit below this line - it is generated by 'make depend'
@@ -354,6 +346,15 @@ dns_sa_to_rr.o: ../../include/vbuf.h
 dns_sa_to_rr.o: ../../include/vstring.h
 dns_sa_to_rr.o: dns.h
 dns_sa_to_rr.o: dns_sa_to_rr.c
+dns_str_resflags.o: ../../include/check_arg.h
+dns_str_resflags.o: ../../include/myaddrinfo.h
+dns_str_resflags.o: ../../include/name_mask.h
+dns_str_resflags.o: ../../include/sock_addr.h
+dns_str_resflags.o: ../../include/sys_defs.h
+dns_str_resflags.o: ../../include/vbuf.h
+dns_str_resflags.o: ../../include/vstring.h
+dns_str_resflags.o: dns.h
+dns_str_resflags.o: dns_str_resflags.c
 dns_strerror.o: ../../include/check_arg.h
 dns_strerror.o: ../../include/myaddrinfo.h
 dns_strerror.o: ../../include/sock_addr.h

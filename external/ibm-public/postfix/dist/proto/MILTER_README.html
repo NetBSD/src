@@ -259,6 +259,9 @@ support per-Milter timeouts, per-Milter error handling, etc. </p>
 <li><a href="#per-milter">Different settings for different Milter
 applications </a>
 
+<li><a href="#per-client">Different settings for different SMTP
+clients </a>
+
 <li><a href="#macros">Sendmail macro emulation</a>
 
 <li><a href="#send-macros">What macros will Postfix send to Milters?</a>
@@ -319,6 +322,11 @@ form <b>inet:</b><i>port</i><b>@</b><i>host</i>. </p>  </dd>
 </dl>
 
 </blockquote>
+
+<p> For advanced configuration see "<a href="#per-client">Different
+settings for different SMTP clients</a>" and "<a
+href="#per-milter">Different settings for different Milter
+applications</a>". </p>
 
 <h3> <a name="non-smtp-milters">Non-SMTP Milter applications </a> </h3>
 
@@ -564,6 +572,29 @@ main.cf: items separated by space or comma. There is one difference:
 }", if you want to have space or comma within a value or around
 "="</b>.  </p>
 
+<h3><a name="per-client">Different settings for different SMTP
+clients </a></h3>
+
+<p> The smtpd_milter_maps feature supports different Milter settings
+for different client IP addresses. Lookup results override the the
+global smtpd_milters setting, and have the same syntax. For example,
+to disable Milter settings for local address ranges: </p>
+
+<pre>
+/etc/postfix/main.cf:
+    smtpd_milter_maps = cidr:/etc/postfix/smtpd_milter_map
+    smtpd_milters = inet:host:port, { inet:host:port, ... }, ...
+
+/etc/postfix/smtpd_milter_map:
+    # Disable Milters for local clients.
+    127.0.0.0/8    DISABLE
+    192.168.0.0/16 DISABLE
+    ::/64          DISABLE
+    2001:db8::/32  DISABLE
+</pre>
+
+<p> This feature is available with Postfix 3.2 and later. </p>
+
 <h3><a name="macros">Sendmail macro emulation</a></h3>
 
 <p> Postfix emulates a limited number of Sendmail macros, as shown
@@ -601,19 +632,19 @@ sender </td> </tr>
 <tr> <td> {auth_type} </td> <td> MAIL, DATA, EOH, EOM </td> <td> SASL
 login method </td> </tr>
 
-<tr> <td> {client_addr} </td> <td> Always </td> <td> Client IP
-address </td> </tr>
+<tr> <td> {client_addr} </td> <td> Always </td> <td> Remote client
+IP address </td> </tr>
 
 <tr> <td> {client_connections} </td> <td> CONNECT </td> <td>
 Connection concurrency for this client (zero if the client is
 excluded from all smtpd_client_* limits). </td> </tr>
 
-<tr> <td> {client_name} </td> <td> Always </td> <td> Client hostname
-<br> When address &rarr; name lookup or name &rarr; address
+<tr> <td> {client_name} </td> <td> Always </td> <td> Remote client
+hostname <br> When address &rarr; name lookup or name &rarr; address
 verification fails: "unknown" </td> </tr>
 
 <tr> <td> {client_port} </td> <td> Always (Postfix &ge;2.5) </td>
-<td> Client TCP port </td> </tr>
+<td> Remote client TCP port </td> </tr>
 
 <tr> <td> {client_ptr} </td> <td> CONNECT, HELO, MAIL, DATA </td>
 <td> Client name from address &rarr; name lookup <br> When address
@@ -631,8 +662,14 @@ TLS session key size </td> </tr>
 <tr> <td> {cipher} </td> <td> HELO, MAIL, DATA, EOH, EOM </td> <td> TLS
 cipher </td> </tr>
 
+<tr> <td> {daemon_addr} </td> <td> Always (Postfix &ge;3.2) </td>
+<td> Local server IP address </td> </tr>
+
 <tr> <td> {daemon_name} </td> <td> Always </td> <td> value of
 milter_macro_daemon_name </td> </tr>
+
+<tr> <td> {daemon_port} </td> <td> Always (Postfix &ge;3.2) </td>
+<td> Local server TCP port </td> </tr>
 
 <tr> <td> {mail_addr} </td> <td> MAIL </td> <td> Sender address
 </td> </tr>
@@ -748,7 +785,8 @@ example. </p>
 
 <li> <p> Some Milter applications use the "<tt>{if_addr}</tt>" macro
 to recognize local mail; this macro does not exist in Postfix.
-Workaround: use the "<tt>{client_addr}</tt>" macro instead. </p>
+Workaround: use the "<tt>{daemon_addr}</tt>" (Postfix &ge; 3.2) or
+"<tt>{client_addr}</tt>" macro instead. </p>
 
 <li> <p> Some Milter applications log a warning that looks like
 this: </p>

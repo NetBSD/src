@@ -192,8 +192,8 @@ PIPE(8)                                                                PIPE(8)
               interpreter.
 
               Specify "{" and "}" around command arguments that contain white-
-              space (Postfix 3.0 and later). Whitespace after "{"  and  before
-              "}" is ignored.
+              space (Postfix 3.0 and later). Whitespace after the opening  "{"
+              and before the closing "}" is ignored.
 
               In  the command argument vector, the following macros are recog-
               nized and replaced with corresponding information from the Post-
@@ -361,9 +361,9 @@ PIPE(8)                                                                PIPE(8)
        fications (Postfix 3.0 and later).  This command output is not examined
        for the presence of an enhanced status code.
 
-       Problems  and transactions are logged to <b>syslogd</b>(8).  Corrupted message
-       files are marked so that the queue manager can move them to the <b>corrupt</b>
-       queue for further inspection.
+       Problems  and  transactions  are  logged  to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
+       Corrupted message files are marked so that the queue manager  can  move
+       them to the <b>corrupt</b> queue for further inspection.
 
 <b>SECURITY</b>
        This  program needs a dual personality 1) to access the private Postfix
@@ -381,26 +381,24 @@ PIPE(8)                                                                PIPE(8)
 <b>RESOURCE AND RATE CONTROLS</b>
        In the text below, <i>transport</i> is the first field in a <a href="master.5.html"><b>master.cf</b></a> entry.
 
-       <b><a href="postconf.5.html#transport_destination_concurrency_limit"><i>transport</i>_destination_concurrency_limit</a>   ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destination_concur</a>-</b>
+       <b>transport_time_limit ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
+              A transport-specific override for the <a href="postconf.5.html#command_time_limit">command_time_limit</a> parame-
+              ter  value, where <i>transport</i> is the <a href="master.5.html">master.cf</a> name of the message
+              delivery transport.
+
+       Implemented in the <a href="qmgr.8.html">qmgr(8)</a> daemon:
+
+       <b>transport_destination_concurrency_limit   ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destination_concur</a>-</b>
        <b><a href="postconf.5.html#default_destination_concurrency_limit">rency_limit</a>)</b>
-              Limit the number of parallel deliveries to the same destination,
-              for  delivery via the named <i>transport</i>.  The limit is enforced by
-              the Postfix queue manager.
+              A transport-specific override for  the  default_destination_con-
+              currency_limit parameter value, where <i>transport</i> is the <a href="master.5.html">master.cf</a>
+              name of the message delivery transport.
 
-       <b><a href="postconf.5.html#transport_destination_recipient_limit"><i>transport</i>_destination_recipient_limit</a>     ($<a href="postconf.5.html#default_destination_recipient_limit">default_destination_recipi</a>-</b>
+       <b>transport_destination_recipient_limit     ($<a href="postconf.5.html#default_destination_recipient_limit">default_destination_recipi</a>-</b>
        <b><a href="postconf.5.html#default_destination_recipient_limit">ent_limit</a>)</b>
-              Limit the number of recipients per message delivery, for  deliv-
-              ery via the named <i>transport</i>.  The limit is enforced by the Post-
-              fix queue manager.
-
-       <b><a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a> ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
-              Limit the time for delivery to external  command,  for  delivery
-              via  the  named  <i>transport</i>.   The  limit is enforced by the pipe
-              delivery agent.
-
-              Postfix 2.4 and later support a suffix that specifies  the  time
-              unit:  s (seconds), m (minutes), h (hours), d (days), w (weeks).
-              The default time unit is seconds.
+              A transport-specific override for the <a href="postconf.5.html#default_destination_recipient_limit">default_destination_recip</a>-
+              <a href="postconf.5.html#default_destination_recipient_limit">ient_limit</a>  parameter  value,  where  <i>transport</i> is the <a href="master.5.html">master.cf</a>
+              name of the message delivery transport.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
@@ -453,16 +451,31 @@ PIPE(8)                                                                PIPE(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name that is prepended to the process name in
-              syslog records, so that "smtpd"  becomes,  for  example,  "post-
-              fix/smtpd".
+              A  prefix  that  is  prepended  to  the  process  name in syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        Available in Postfix version 3.0 and later:
 
        <b><a href="postconf.5.html#pipe_delivery_status_filter">pipe_delivery_status_filter</a> ($<a href="postconf.5.html#default_delivery_status_filter">default_delivery_status_filter</a>)</b>
-              Optional  filter  for  the  <a href="pipe.8.html"><b>pipe</b>(8)</a> delivery agent to change the
+              Optional filter for the <a href="pipe.8.html"><b>pipe</b>(8)</a> delivery  agent  to  change  the
               delivery status code or explanatory text of successful or unsuc-
               cessful deliveries.
+
+       Available in Postfix version 3.3 and later:
+
+       <b><a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a> (yes)</b>
+              Enable support for  the  original  recipient  address  after  an
+              address  is  rewritten  to a different address (for example with
+              aliasing or with canonical mapping).
+
+       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
+              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
+
+       Available in Postfix 3.5 and later:
+
+       <b>info_log_address_format (external)</b>
+              The email address form that will be used  in  non-debug  logging
+              (info, warning, etc.).
 
 <b>SEE ALSO</b>
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
@@ -470,6 +483,7 @@ PIPE(8)                                                                PIPE(8)
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="master.5.html">master(5)</a>, generic daemon options
        <a href="master.8.html">master(8)</a>, process manager
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>LICENSE</b>
