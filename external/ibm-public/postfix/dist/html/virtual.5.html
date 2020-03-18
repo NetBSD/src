@@ -77,32 +77,49 @@ VIRTUAL(5)                                                          VIRTUAL(5)
 
 <b>TABLE SEARCH ORDER</b>
        With lookups from indexed files such as DB or DBM,  or  from  networked
-       tables  such  as  NIS,  LDAP or SQL, patterns are tried in the order as
-       listed below:
+       tables  such  as  NIS,  LDAP  or SQL, each <i>user</i>@<i>domain</i> query produces a
+       sequence of query patterns as described below.
+
+       Each query pattern is sent to each specified lookup table before trying
+       the next query pattern, until a match is found.
 
        <i>user</i>@<i>domain address, address, ...</i>
-              Redirect mail for <i>user</i>@<i>domain</i> to <i>address</i>.   This  form  has  the
+              Redirect  mail  for  <i>user</i>@<i>domain</i>  to <i>address</i>.  This form has the
               highest precedence.
 
        <i>user address, address, ...</i>
-              Redirect  mail  for  <i>user</i>@<i>site</i>  to <i>address</i> when <i>site</i> is equal to
-              $<b><a href="postconf.5.html#myorigin">myorigin</a></b>, when <i>site</i> is listed in $<b><a href="postconf.5.html#mydestination">mydestination</a></b>, or when it  is
+              Redirect mail for <i>user</i>@<i>site</i> to <i>address</i> when  <i>site</i>  is  equal  to
+              $<b><a href="postconf.5.html#myorigin">myorigin</a></b>,  when <i>site</i> is listed in $<b><a href="postconf.5.html#mydestination">mydestination</a></b>, or when it is
               listed in $<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b> or $<b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>.
 
-              This  functionality  overlaps  with  functionality  of the local
-              <i>aliases</i>(5) database. The difference is that  <a href="virtual.5.html"><b>virtual</b>(5)</a>  mapping
+              This functionality overlaps  with  functionality  of  the  local
+              <i>aliases</i>(5)  database.  The difference is that <a href="virtual.5.html"><b>virtual</b>(5)</a> mapping
               can be applied to non-local addresses.
 
        @<i>domain address, address, ...</i>
-              Redirect  mail  for other users in <i>domain</i> to <i>address</i>.  This form
+              Redirect mail for other users in <i>domain</i> to <i>address</i>.   This  form
               has the lowest precedence.
 
-              Note: @<i>domain</i> is a wild-card. With this form, the  Postfix  SMTP
-              server  accepts  mail for any recipient in <i>domain</i>, regardless of
-              whether that recipient exists.  This may turn your  mail  system
-              into  a  backscatter  source:  Postfix  first  accepts  mail for
-              non-existent recipients and then tries to return  that  mail  as
+              Note:  @<i>domain</i>  is a wild-card. With this form, the Postfix SMTP
+              server accepts mail for any recipient in <i>domain</i>,  regardless  of
+              whether  that  recipient exists.  This may turn your mail system
+              into a  backscatter  source:  Postfix  first  accepts  mail  for
+              non-existent  recipients  and  then tries to return that mail as
               "undeliverable" to the often forged sender address.
+
+              To avoid backscatter with mail for a wild-card  domain,  replace
+              the  wild-card  mapping  with  explicit  1:1  mappings, or add a
+              <a href="postconf.5.html#reject_unverified_recipient">reject_unverified_recipient</a> restriction for that domain:
+
+                  <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
+                      ...
+                      <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+                      <a href="postconf.5.html#check_recipient_access">check_recipient_access</a>
+                          <a href="DATABASE_README.html#types">inline</a>:{example.com=<a href="postconf.5.html#reject_unverified_recipient">reject_unverified_recipient</a>}
+                  <a href="postconf.5.html#unverified_recipient_reject_code">unverified_recipient_reject_code</a> = 550
+
+              In the above example, Postfix may contact a remote server if the
+              recipient is aliased to a remote address.
 
 <b>RESULT ADDRESS REWRITING</b>
        The lookup result is subject to address rewriting:
@@ -208,39 +225,42 @@ VIRTUAL(5)                                                          VIRTUAL(5)
        See the Postfix <a href="postconf.5.html"><b>main.cf</b></a> file for syntax details and for default values.
        Use the "<b>postfix reload</b>" command after a configuration change.
 
-       <b><a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a></b>
-              List of virtual aliasing tables.
+       <b><a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> ($<a href="postconf.5.html#virtual_maps">virtual_maps</a>)</b>
+              Optional  lookup  tables  that  alias specific mail addresses or
+              domains to other local or remote address.
 
-       <b><a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a></b>
-              List  of <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domains</a>. This uses the same syntax as the
-              <b><a href="postconf.5.html#mydestination">mydestination</a></b> parameter.
+       <b><a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> ($<a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a>)</b>
+              Postfix is final destination for the specified list  of  virtual
+              alias  domains,  that  is,  domains  for which all addresses are
+              aliased to addresses in other local or remote domains.
 
-       <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>
-              A list of address rewriting or forwarding mechanisms that propa-
-              gate  an  address  extension  from  the  original address to the
-              result.  Specify zero or more of <b>canonical</b>, <b>virtual</b>, <b>alias</b>, <b>for-</b>
-              <b>ward</b>, <b>include</b>, or <b>generic</b>.
+       <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a> (canonical, virtual)</b>
+              What address lookup tables copy an address  extension  from  the
+              lookup key to the lookup result.
 
        Other parameters of interest:
 
-       <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b>
-              The  network  interface addresses that this system receives mail
-              on.  You need to stop and  start  Postfix  when  this  parameter
-              changes.
+       <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> (all)</b>
+              The  network  interface addresses that this mail system receives
+              mail on.
 
-       <b><a href="postconf.5.html#mydestination">mydestination</a></b>
-              List of domains that this mail system considers local.
+       <b><a href="postconf.5.html#mydestination">mydestination</a> ($<a href="postconf.5.html#myhostname">myhostname</a>, localhost.$<a href="postconf.5.html#mydomain">mydomain</a>, localhost)</b>
+              The list of domains that are delivered via the  $<a href="postconf.5.html#local_transport">local_transport</a>
+              mail delivery transport.
 
-       <b><a href="postconf.5.html#myorigin">myorigin</a></b>
-              The  domain that is appended to any address that does not have a
-              domain.
+       <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
+              The  domain  name that locally-posted mail appears to come from,
+              and that locally posted mail is delivered to.
 
-       <b><a href="postconf.5.html#owner_request_special">owner_request_special</a></b>
-              Give special treatment to <b>owner-</b><i>xxx</i> and <i>xxx</i><b>-request</b> addresses.
+       <b><a href="postconf.5.html#owner_request_special">owner_request_special</a> (yes)</b>
+              Enable special  treatment  for  owner-<i>listname</i>  entries  in  the
+              <a href="aliases.5.html"><b>aliases</b>(5)</a>  file,  and  don't  split  owner-<i>listname</i>  and  <i>list-</i>
+              <i>name</i>-request address localparts when the <a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a>  is
+              set to "-".
 
-       <b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>
-              Other interfaces that this machine receives mail on by way of  a
-              proxy agent or network address translator.
+       <b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> (empty)</b>
+              The  network  interface addresses that this mail system receives
+              mail on by way of a proxy or network address translation unit.
 
 <b>SEE ALSO</b>
        <a href="cleanup.8.html">cleanup(8)</a>, canonicalize and enqueue mail

@@ -1,0 +1,14 @@
+postmap: warning: stdin, line 1: open postmap-file-3: No such file or directory: skipping this entry
+entry-4	postmap-entry-4
+file-1	dGhpcy1pcy1maWxlMQ==
+file-2	dGhpcy1pcy1maWxlMg==
+dGhpcy1pcy1maWxlMQ==
+dGhpcy1pcy1maWxlMg==
+postmap-entry-4
+postmap: warning: table hash:file_test_map.db: key entry-4: malformed BASE64 value: postmap-entry-4
+file-1	this-is-file1
+file-2	this-is-file2
+this-is-file1
+this-is-file2
+postmap: warning: table hash:file_test_map.db: key entry-4: malformed BASE64 value: postmap-entry-4
+postmap: fatal: table hash:file_test_map.db: query error

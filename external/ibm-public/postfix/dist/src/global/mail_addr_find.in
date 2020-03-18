@@ -1,0 +1,77 @@
+#!/bin/sh
+
+# Format: input form:output form:query:expected result:expected extension
+# The last fields are optional.
+
+echo ==== no search string extension
+maps inline:{plain1@1.example=plain2@2.example,{"aa bb"@cc.example="dd ee"@dd.example}}
+test internal:external:external:default:plain1@1.example:plain2@2.example
+test internal:external:external:default:aa bb@cc.example:"dd ee"@dd.example
+test external:external:external:default:"aa bb"@cc.example:"dd ee"@dd.example
+test external:external:internal:default:"aa bb"@cc.example:dd ee@dd.example
+test internal:internal:external:default:plain1@1.example:plain2@2.example
+test internal:internal:external:default:aa bb@cc.example
+test internal:internal:external:default:"aa bb"@cc.example:"dd ee"@dd.example
+
+echo ==== with search string extension
+maps inline:{plain1@1.example=plain2@2.example,{"aa bb"@cc.example="dd ee"@dd.example}}
+test internal:external:external:default:plain1+ext@1.example:plain2@2.example:+ext
+test internal:external:external:default:aa bb+ax bx@cc.example:"dd ee"@dd.example:+ax bx
+test external:external:external:default:"aa bb+ax bx"@cc.example:"dd ee"@dd.example:+ax bx
+test external:external:internal:default:"aa bb+ax bx"@cc.example:dd ee@dd.example:+ax bx
+test internal:internal:external:default:plain1+ext@1.example:plain2@2.example:+ext
+test internal:internal:external:default:"aa bb+ax bx"@cc.example
+test internal:internal:external:default:"aa bb"+ax bx@cc.example:"dd ee"@dd.example:+ax bx
+
+echo ==== at in localpart
+maps inline:{"a@b"=foo@example,"a.b."=bar@example}
+test external:external:external:default:"a@b"@localhost.localdomain:foo@example
+test external:external:external:default:"a@b+ext"@localhost.localdomain:foo@example:+ext
+test external:external:external:default:"a.b."@localhost.localdomain:bar@example
+
+echo ==== legacy support
+maps inline:{"a@b"=extern-1@example,a@b=intern-1@example,a.b.=intern-2@example}
+test internal:external-first:external:default:a@b@localhost.localdomain:extern-1@example
+test internal:external-first:external:default:a.b.@localhost.localdomain:intern-2@example
+
+echo ==== at_domain test
+maps inline:{plain1@1.example=plain2@2.example,@3.example=plain4@4.example,plain5@3.example=plain6@6.example}
+test external:external:external:default:plain1+ext@1.example:plain2@2.example:+ext
+test external:external:external:default:plain2@2.example:
+test external:external:external:default:plain3@3.example:plain4@4.example
+test external:external:external:default:plain5@3.example:plain6@6.example
+
+echo ==== domain test
+maps inline:{plain1@1.example=plain2@2.example,3.example=plain4@4.example,plain5@3.example=plain6@6.example}
+test external:external:external:full|noext|domain:plain1+ext@1.example:plain2@2.example:+ext
+test external:external:external:full|noext|domain:plain2@2.example:
+test external:external:external:full|noext|domain:plain3@3.example:plain4@4.example
+test external:external:external:full|noext|domain:plain5@3.example:plain6@6.example
+
+echo ==== at_domain for local domain
+maps inline:{ab=foo@example,@localhost.localdomain=@bar.example}
+test external:external:external:default:ab@localhost.localdomain:foo@example:
+test external:external:external:default:cd@localhost.localdomain:@bar.example
+
+echo ==== localpart_at_if_local and domain test
+maps inline:{ab@=foo@example,localhost.localdomain=@bar.example}
+test internal:external:external:localpart_at_if_local|domain:ab@localhost.localdomain:foo@example:
+test internal:external:external:localpart_at_if_local|noext|domain:ab+ext@localhost.localdomain:foo@example:+ext
+test internal:external:external:localpart_at_if_local|domain:cd@localhost.localdomain:@bar.example
+
+echo ==== localpart_at has less precedence than domain test
+maps inline:{ab@=foo@example,localhost.localdomain=@bar.example}
+test external:external:external:localpart_at|domain:ab@localhost.localdomain:@bar.example:
+test external:external:external:localpart_at|domain:ab@foo:foo@example
+
+echo ==== domain and subdomain test
+maps inline:{example=example-result,.example=dot-example-result}
+test external:external:external:domain:plain1+ext@1.example
+test external:external:external:domain:foo@sub.example
+test external:external:external:domain:foo@example:example-result
+test external:external:external:domain|pdms:foo@example:example-result
+test external:external:external:domain|pdms:foo@sub.example:example-result
+test external:external:external:domain|pdms:foo@sub.sub.example:example-result
+test external:external:external:domain|pddms:foo@example:example-result
+test external:external:external:domain|pddms:foo@sub.example:dot-example-result
+test external:external:external:domain|pddms:foo@sub.sub.example:dot-example-result

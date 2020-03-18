@@ -1,0 +1,9 @@
+# Assume 64-bit off_t (assuming 1- or 2-complement).
+# Maximum.
+9223372036854775807
+# Overflow.
+9223372036854775808
+92233720368547758070
+# off_cvt() does not accept leading signs.
++1
+-1

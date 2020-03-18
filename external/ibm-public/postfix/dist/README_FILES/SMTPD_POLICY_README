@@ -13,8 +13,8 @@ implemented with only a dozen lines of Perl, as is shown at the end of this
 document. A complete example can be found in the Postfix source code, in the
 directory examples/smtpd-policy.
 
-Another example of policy delegation is the SPF policy server at http://
-www.openspf.org/Software.
+Another example of policy delegation is the SPF policy server at https://
+web.archive.org/web/20190221142057/http://www.openspf.org/Software.
 
 Policy delegation is now the preferred method for adding policies to Postfix.
 It's much easier to develop a new feature in few lines of Perl, Python, Ruby,
@@ -36,10 +36,14 @@ This document covers the following topics:
 
 PPrroottooccooll ddeessccrriippttiioonn
 
-The Postfix policy delegation protocol is really simple. The client request is
-a sequence of name=value attributes separated by newline, and is terminated by
-an empty line. The server reply is one name=value attribute and it, too, is
-terminated by an empty line.
+The Postfix policy delegation protocol is really simple. The client sends a
+request and the server sends a response. Unless there was an error, the server
+must not close the connection, so that the same connection can be used multiple
+times.
+
+The client request is a sequence of name=value attributes separated by newline,
+and is terminated by an empty line. The server reply is one name=value
+attribute and it, too, is terminated by an empty line.
 
 Here is an example of all the attributes that the Postfix SMTP server sends in
 a delegated SMTPD access policy request:
@@ -78,6 +82,9 @@ a delegated SMTPD access policy request:
     client_port=1234
     PPoossttffiixx vveerrssiioonn 33..11 aanndd llaatteerr::
     policy_context=submission
+    PPoossttffiixx vveerrssiioonn 33..22 aanndd llaatteerr::
+    server_address=10.3.2.1
+    server_port=54321
     [empty line]
 
 Notes:
@@ -97,14 +104,21 @@ Notes:
 
   * The "recipient" attribute is available in the "RCPT TO" stage. It is also
     available in the "DATA" and "END-OF-MESSAGE" stages if Postfix accepted
-    only one recipient for the current message.
+    only one recipient for the current message. The DATA protocol state also
+    applies to email that is received with BDAT commands (Postfix 3.4 and
+    later).
 
   * The "recipient_count" attribute (Postfix 2.3 and later) is non-zero only in
     the "DATA" and "END-OF-MESSAGE" stages. It specifies the number of
-    recipients that Postfix accepted for the current message.
+    recipients that Postfix accepted for the current message. The DATA protocol
+    state also applies to email that is received with BDAT commands (Postfix
+    3.4 and later).
 
-  * The client address is an IPv4 dotted quad in the form 1.2.3.4 or it is an
-    IPv6 address in the form 1:2:3::4:5:6.
+  * The remote client or local server IP address is an IPv4 dotted quad in the
+    form 1.2.3.4 or it is an IPv6 address in the form 1:2:3::4:5:6.
+
+  * The remote client or local server port is a decimal number in the range 0-
+    65535.
 
   * For a discussion of the differences between reverse and verified
     client_name information, see the reject_unknown_client_hostname discussion
@@ -122,8 +136,8 @@ Notes:
 
   * The "size" attribute value specifies the message size that the client
     specified in the MAIL FROM command (zero if none was specified). With
-    Postfix 2.2 and later, it specifies the actual message size when the client
-    sends the END-OF-DATA command.
+    Postfix 2.2 and later, it specifies the actual message size after the
+    client sends the END-OF-MESSAGE.
 
   * The "sasl_*" attributes (Postfix 2.2 and later) specify information about
     how the client was authenticated via SASL. These attributes are empty in
@@ -156,7 +170,9 @@ The following is specific to SMTPD delegated policy requests:
 
   * Protocol states are CONNECT, EHLO, HELO, MAIL, RCPT, DATA, END-OF-MESSAGE,
     VRFY or ETRN; these are the SMTP protocol states where the Postfix SMTP
-    server makes an OK/REJECT/HOLD/etc. decision.
+    server makes an OK/REJECT/HOLD/etc. decision. The DATA protocol state also
+    applies to email that is received with BDAT commands (Postfix 3.4 and
+    later).
 
 The policy server replies with any action that is allowed in a Postfix SMTPD
 access(5) table. Example:
@@ -308,11 +324,12 @@ timeout, and with "DUNNO" as default action when the service is unvailable. The
 "DUNNO" action causes Postfix to ignore the result.
 
     1 /etc/postfix/main.cf:
-    2     smtpd_recipient_restrictions =
+    2     mua_recipient_restrictions =
     3         ...
     4         reject_unauth_destination
     5         check_policy_service { inet:host:port,
-    6             timeout=10s, default_action=DUNNO }
+    6             timeout=10s, default_action=DUNNO
+    7             policy_context=submission }
     8         ...
 
 Instead of a server endpoint, we now have a list enclosed in {}.
@@ -320,7 +337,7 @@ Instead of a server endpoint, we now have a list enclosed in {}.
   * Line 5: The first item in the list is the server endpoint. This supports
     the exact same "inet" and "unix" syntax as described earlier.
 
-  * Line 6: The remainder of the list contains per-client settings. These
+  * Line 6-7: The remainder of the list contains per-client settings. These
     settings override global main.cf parameters, and have the same name as
     those parameters, without the "smtpd_policy_service_" prefix.
 
