@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy.h,v 1.1.1.2 2020/03/18 18:59:35 christos Exp $	*/
+/*	$NetBSD: tls_proxy.h,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
 
 #ifndef _TLS_PROXY_H_INCLUDED_
 #define _TLS_PROXY_H_INCLUDED_

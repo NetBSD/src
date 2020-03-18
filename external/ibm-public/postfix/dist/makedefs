@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# To view the formatted manual page of this file, type:
+#       POSTFIXSOURCE/mantools/srctoman - makedefs | nroff -man
+
 #++
 # NAME
 #	makedefs 1
@@ -13,21 +16,24 @@
 #	output stream that can be prepended to template Makefiles.
 #	These macros implement an internal interface and are subject
 #	to change without notice.
-#
+# NAME=VALUE OVERRIDES
+# .ad
+# .fi
 #	Default settings can be overruled by specifying them as
 #	environment variables (or as name=value pairs on the "make"
 #	command line). Use quotes if variables contain whitespace
 #	or shell meta characters.
 #
-#	The command "make makefiles name=value..." will replace the
-#	string MAIL_VERSION at the end of a parameter value with
-#	the Postfix release version. Do not try to specify something
-#	like $mail_version on this command line. This produces
-#	inconsistent results with different versions of the make(1)
-#	command.
+#	The command "\fBmake makefiles name=value...\fR" will replace
+#	the string \fBMAIL_VERSION\fR at the end of a value with the
+#	Postfix version (\fImajor.minor.patchlevel\fR for a stable
+#	release, \fImajor.minor-date\fR for a development release).
+#	Do not try to specify something like \fB$mail_version\fR:
+#	that produces inconsistent results with different implementations
+#	of the make(1) command.
 # .IP \fBAUXLIBS=\fIobject_library...\fR
 #	Specifies one or more non-default object libraries. Postfix
-#	2,12 and later specify some of their database library
+#	3.0 and later specify some of their database library
 #	dependencies with AUXLIBS_CDB, AUXLIBS_LDAP, AUXLIBS_LMDB,
 #	AUXLIBS_MYSQL, AUXLIBS_PCRE, AUXLIBS_PGSQL, AUXLIBS_SDBM,
 #	and AUXLIBS_SQLITE, respectively.
@@ -54,11 +60,11 @@
 #	are known to support it.
 # .IP \fB-DNO_EAI\fR
 #	Do not build with EAI (SMTPUTF8) support. By default, EAI
-#	support is compiled in when the "icuuc" library and header
-#	files are found.
+#	support is compiled in when the "pkg-config" command is
+#	found, or the deprecated "icu-config" command.
 # .IP \fB-DNO_INLINE\fR
 #	Do not require support for C99 "inline" functions. Instead,
-#	implement argument typechecks for non-printf/scanf-like
+#	implement argument typechecks for non-(printf/scanf)-like
 #	functions with ternary operators and unreachable code.
 # .IP \fB-DNO_IPV6\fR
 #	Do not build with IPv6 support.
@@ -66,7 +72,12 @@
 #	are known to have IPv6 support.
 #
 #	Note: this directive is for debugging and testing only. It
-#	is not guaranteed to work on all platforms.
+#	is not guaranteed to work on all platforms. If you don't
+#	want IPv6 support, set "inet_protocols = ipv4" in main.cf.
+# .IP \fB-DNO_IP_CYRUS_SASL_AUTH\fR
+#	Don't pass remote SMTP client and Postfix SMTP server IP
+#	address and port information to the Cyrus SASL library.
+#	This is compatible with Postfix < 3.2.
 # .IP \fB-DNO_KQUEUE\fR
 #	Do not build with FreeBSD/NetBSD/OpenBSD/MacOSX KQUEUE support.
 #	By default, KQUEUE support is compiled in on platforms that
@@ -87,6 +98,9 @@
 #	Use setjmp()/longjmp() instead of sigsetjmp()/siglongjmp().
 #	By default, Postfix uses sigsetjmp()/siglongjmp() when they
 #	appear to work.
+# .IP \fB-DNO_SNPRINTF\fR
+#	Use sprintf() instead of snprintf(). By default, Postfix
+#	uses snprintf() except on ancient systems.
 # .RE
 # .IP \fBDEBUG=\fIdebug_level\fR
 #	Specifies a non-default debugging level. The default is \fB-g\fR.
@@ -94,6 +108,10 @@
 # .IP \fBOPT=\fIoptimization_level\fR
 #	Specifies a non-default optimization level. The default is \fB-O\fR.
 #	Specify \fBOPT=\fR to turn off optimization.
+# .IP \fBPOSTFIX_INSTALL_OPTS=\fI-option...\fR
+#	Specifies options for the postfix-install command, separated
+#	by whitespace. Currently, the only supported option is
+#	\fB-keep-build-mtime\fR.
 # .IP \fBSHLIB_CFLAGS=\fIflags\fR
 #	Override the compiler flags (typically, "-fPIC") for Postfix
 #	dynamically-linked libraries and database plugins.
@@ -126,7 +144,6 @@
 #	This feature was introduced with Postfix 3.0.
 # .IP \fBpie=yes\fR
 # .IP \fBpie=no\fR
-#
 #	Enable (disable) Postfix builds with position-independent
 #	executables, on platforms where this is supported.
 #
@@ -272,6 +289,15 @@ case "$SYSTEM.$RELEASE" in
 		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
 		: ${PLUGIN_LD="${CC} -shared"}
 		;;
+   FreeBSD.11*) SYSTYPE=FREEBSD11
+		: ${CC=cc}
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC} -shared"}
+		;;
  DragonFly.*)	SYSTYPE=DRAGONFLY
 		;;
   OpenBSD.2*)	SYSTYPE=OPENBSD2
@@ -358,6 +384,10 @@ case "$SYSTEM.$RELEASE" in
 		case $RELEASE in
 		    5.[0-4]) CCARGS="$CCARGS -DMISSING_USLEEP -DNO_POSIX_REGEXP -DNO_POSIX_GETPW_R";;
 		esac
+		# Solaris 2.6 added snprintf()
+		case $RELEASE in
+		    5.[0-5]) CCARGS="$CCARGS -DNO_SNPRINTF";;
+		esac
 		# Solaris 8 added IPv6 and /dev/poll
 		case $RELEASE in
 		    5.[0-7]|5.[0-7].*) CCARGS="$CCARGS -DNO_IPV6 -DNO_DEVPOLL";;
@@ -367,7 +397,11 @@ case "$SYSTEM.$RELEASE" in
 		case $RELEASE in
 		    5.[0-8]|5.[0-8].*) CCARGS="$CCARGS -DNO_CLOSEFROM -DNO_DEV_URANDOM -DNO_FUTIMESAT -DSTREAM_CONNECTIONS";;
 		esac
-		# Somewhere NISPLUS went away.
+		# Solaris 10 added setenv(), unsetenv().
+		case $RELEASE in
+		    5.[0-9]|5.[0-9].*) CCARGS="$CCARGS -DMISSING_SETENV";;
+		esac
+		# NISPLUS was removed after Solaris 10.
 		case $RELEASE in
 		    5.[0-9][0-9]*) CCARGS="$CCARGS -DNO_NISPLUS";;
 		esac
@@ -523,7 +557,7 @@ EOF
 		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
 		: ${PLUGIN_LD="${CC-gcc} -shared"}
 		;;
-  Linux.[34].*)	SYSTYPE=LINUX$RELEASE_MAJOR
+ Linux.[345].*)	SYSTYPE=LINUX$RELEASE_MAJOR
 		case "$CCARGS" in
 		 *-DNO_DB*) ;;
 		 *-DHAS_DB*) ;;
@@ -610,7 +644,7 @@ EOF
 		;;
 HP-UX.A.09.*)	SYSTYPE=HPUX9
 		SYSLIBS=-ldbm
-		CCARGS="$CCARGS -DMISSING_USLEEP"
+		CCARGS="$CCARGS -DMISSING_USLEEP -DNO_SNPRINTF"
 		if [ -f /usr/lib/libdb.a ]; then
 		    CCARGS="$CCARGS -DHAS_DB"
 		    SYSLIBS="$SYSLIBS -ldb"
@@ -619,6 +653,7 @@ HP-UX.A.09.*)	SYSTYPE=HPUX9
 HP-UX.B.10.*)	SYSTYPE=HPUX10
 		CCARGS="$CCARGS `nm /usr/lib/libc.a 2>/dev/null |
 		    (grep usleep >/dev/null || echo '-DMISSING_USLEEP')`"
+		CCARGS="$CCARGS -DNO_SNPRINTF"
 		if [ -f /usr/lib/libdb.a ]; then
 		    CCARGS="$CCARGS -DHAS_DB"
 		    SYSLIBS=-ldb
@@ -756,9 +791,11 @@ esac
 # Look for the ICU library and enable unicode email if available.
 #
 case "$CCARGS" in
-*-DNO_EAI*) ;;
-	 *) icu_cppflags=`(icu-config --cppflags) 2>/dev/null` && {
-		icu_ldflags=`(icu-config --ldflags) 2>/dev/null` && {
+*-DNO_EAI*) CCARGS="$CCARGS "'-DDEF_SMTPUTF8_ENABLE=\"no\"';;
+	 *) icu_cppflags=`((pkg-config --cflags icu-uc icu-i18n) ||
+		  (icu-config --cppflags)) 2>/dev/null` && {
+		icu_ldflags=`((pkg-config --libs icu-uc icu-i18n) ||
+		  (icu-config --ldflags)) 2>/dev/null` && {
 		    trap 'rm -f makedefs.test makedefs.test.[co]' 1 2 3 15
 		    cat >makedefs.test.c <<'EOF'
 #include <unicode/uidna.h>
@@ -790,7 +827,7 @@ EOF
 		    fi
 		    rm -f makedefs.test makedefs.test.[co]
 		}
-	    } || CCARGS="$CCARGS -DNO_EAI"
+	    } || CCARGS="$CCARGS -DNO_EAI"' -DDEF_SMTPUTF8_ENABLE=\"no\"'
 esac
 
 #
@@ -1160,6 +1197,16 @@ case "$pie" in
     *) error "Specify \"pie=yes\" or \"pie=no\"";;
 esac
 
+# Don't permit random overrides.
+allowed_user_install_opts="-keep-build-mtime"
+for opt in $POSTFIX_INSTALL_OPTS
+do
+    (for allowed in -keep-build-mtime
+    do
+	test "$opt" = "$allowed" && exit 0
+    done; exit 1) || error "invalid option '$opt' in POSTFIX_INSTALL_OPTS"
+done
+
 # Finally...
 
 sed 's/   */ /g' <<EOF
@@ -1196,5 +1243,6 @@ PLUGIN_MAP_OBJ_UPDATE = $PLUGIN_MAP_OBJ_UPDATE
 PLUGIN_MAP_SO_MAKE = $PLUGIN_MAP_SO_MAKE
 PLUGIN_MAP_SO_UPDATE = $PLUGIN_MAP_SO_UPDATE
 PLUGIN_LD = $PLUGIN_LD
+POSTFIX_INSTALL_OPTS = $POSTFIX_INSTALL_OPTS
 # Application-specific rules.
 EOF

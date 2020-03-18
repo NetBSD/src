@@ -566,7 +566,7 @@ configuration file postfix-files will automatically include files
 under the directory postfix-files.d.  Thanks to this, you can install
 or deinstall a database plugin package without having to edit
 postfix-files or dynamicmaps.cf. Instead, you give that plugin its
-own configuration files dynamicmaps.cf.d and postfix-files.d, and
+own configuration files under dynamicmaps.cf.d and postfix-files.d, and
 you add or remove those configuration files along with the database
 plugin dynamically-linked object.  </p>
 
@@ -837,7 +837,9 @@ unreachable code. </td> </tr>
 <tr> <td> </td> <td> -DNO_IPV6 </td> <td> Do not build with IPv6
 support. By default, IPv6 support is compiled in on platforms that
 are known to have IPv6 support. Note: this directive is for debugging
-and testing only. It is not guaranteed to work on all platforms.
+And testing only. It is not guaranteed to work on all platforms.
+If you don't want IPv6 support, set "inet_protocols = ipv4" in
+main.cf.
 </td> </tr>
 
 <tr> <td> </td> <td> -DNO_KQUEUE </td> <td> Do not build with FreeBSD
@@ -866,6 +868,10 @@ these where they are known to be available. </td> </tr>
 By default, Postfix uses <tt>sigsetjmp()/siglongjmp()</tt> when
 they are known to be available. </td> </tr>
 
+<tr> <td> </td> <td> -DNO_SNPRINTF </td> <td> Use <tt>sprintf()</tt>
+instead of <tt>snprintf()</tt>.  By default, Postfix uses
+<tt>snprintf()</tt> except on ancient systems. </td> </tr>
+
 <tr> <td colspan="2"> DEBUG=debug_level </td> <td> Specifies a
 non-default compiler debugging level. The default is "<tt>-g</tt>".
 Specify DEBUG= to turn off debugging. </td> </tr>
@@ -873,6 +879,11 @@ Specify DEBUG= to turn off debugging. </td> </tr>
 <tr> <td colspan="2"> OPT=optimization_level </td> <td> Specifies
 a non-default optimization level. The default is "<tt>-O</tt>".
 Specify OPT= to turn off optimization. </td> </tr>
+
+<tr> <td colspan="2"> POSTFIX_INSTALL_OPTS=-option... </td> <td>
+Specifies options for the <tt>postfix-install</tt> command, separated
+by whitespace. Currently, the only supported option is
+"<tt>-keep-build-mtime</tt>". </td> </tr>
 
 <tr> <td colspan="2"> SHLIB_CFLAGS=flags </td> <td> Specifies
 non-default compiler options for building Postfix dynamically-linked

@@ -47,11 +47,9 @@ could include the Postfix MTA itself, or some remote MTAs (SMTP interruptus).
 Probe messages are like normal mail, except that they are never delivered,
 deferred or bounced; probe messages are always discarded.
 
-                               
                                              probe     Postfix
                                             message ->   mail
-                                                        queue
-                Postfix        Postfix   ->
+                Postfix        Postfix   ->             queue
     Internet ->  SMTP   <->     verify
                 server          server                      |
                                                             v
@@ -62,7 +60,6 @@ deferred or bounced; probe messages are always discarded.
                                     ^
                                     |
                                     v
-                                          
 
                               Address
                             verification
@@ -167,6 +164,12 @@ same address repeatedly.
         # Postfix 2.6 and later privacy feature.
         # unverified_recipient_reject_reason = Address lookup failed
 
+        # Postfix 3.2 and earlier workaround.
+        # Do not set enable_original_recipient=no. This prevents Postfix
+        # from saving the recipient address verification result under
+        # the original address, when the address verification probe
+        # message goes through address aliasing or canonical mapping.
+
 The "reject_unknown_recipient_domain" restriction blocks mail for non-existent
 domains. Putting this before "reject_unverified_recipient" avoids the overhead
 of generating unnecessary probe messages.
@@ -206,6 +209,12 @@ verification for specific domains that often appear in forged email.
         # Note 1: Be sure to read the "Caching" section below!
         # Note 2: Avoid hash files here. Use btree or lmdb instead.
         address_verify_map = btree:/var/lib/postfix/verify
+
+        # Postfix 3.2 and earlier workaround.
+        # Do not set enable_original_recipient=no. This prevents Postfix
+        # from saving the sender address verification result under the
+        # original address, when the address verification probe message
+        # goes through address aliasing or canonical mapping.
 
     /etc/postfix/sender_access:
         # Don't do this when you handle lots of email.

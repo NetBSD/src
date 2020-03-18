@@ -1,4 +1,4 @@
-/*	$NetBSD: rewrite.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: rewrite.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -45,7 +45,8 @@
 /*	completing incomplete address forms.
 /* STANDARDS
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to the syslog daemon.
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* BUGS
 /* SEE ALSO
 /* LICENSE

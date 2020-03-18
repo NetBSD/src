@@ -1,4 +1,4 @@
-/*	$NetBSD: haproxy_srvr.h,v 1.1.1.2 2020/03/18 18:59:33 christos Exp $	*/
+/*	$NetBSD: haproxy_srvr.h,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
 
 #ifndef _HAPROXY_SRVR_H_INCLUDED_
 #define _HAPROXY_SRVR_H_INCLUDED_

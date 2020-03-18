@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_state.c,v 1.1.1.6 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: smtpd_state.c,v 1.2 2020/03/18 19:05:20 christos Exp $	*/
 
 /*++
 /* NAME
