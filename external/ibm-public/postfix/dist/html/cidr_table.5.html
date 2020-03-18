@@ -30,30 +30,39 @@ CIDR_TABLE(5)                                                    CIDR_TABLE(5)
 <b>TABLE FORMAT</b>
        The general form of a Postfix CIDR table is:
 
-       <i>network</i><b>_</b><i>address</i><b>/</b><i>network</i><b>_</b><i>mask     result</i>
-              When  a  search  string matches the specified network block, use
-              the corresponding <i>result</i> value. Specify 0.0.0.0/0 to match every
-              IPv4 address, and ::/0 to match every IPv6 address.
+       <i>pattern     result</i>
+              When a search string matches the specified <i>pattern</i>, use the cor-
+              responding <i>result</i> value. The <i>pattern</i> must be  in  <i>network/prefix</i>
+              or <i>network</i><b>_</b><i>address</i> form (see ADDRESS PATTERN SYNTAX below).
 
-              An  IPv4  network  address  is a sequence of four decimal octets
-              separated by ".", and an IPv6 network address is a  sequence  of
-              three to eight hexadecimal octet pairs separated by ":".
+       <b>!</b><i>pattern     result</i>
+              When  a  search string does not match the specified <i>pattern</i>, use
+              the specified <i>result</i> value. The <i>pattern</i> must be in  <i>network/pre-</i>
+              <i>fix</i>  or <i>network</i><b>_</b><i>address</i> form (see ADDRESS PATTERN SYNTAX below).
 
-              The  <i>network</i><b>_</b><i>mask</i>  is  the number of high-order bits in the <i>net-</i>
-              <i>work</i><b>_</b><i>address</i> that the search string must match.
+              This feature is available in Postfix 3.2 and later.
 
-              Before comparisons are made, lookup keys and table  entries  are
-              converted from string to binary. Therefore table entries will be
-              matched regardless of redundant zero characters.
+       <b>if</b> <i>pattern</i>
 
-              Note: address information may be enclosed inside "[]"  but  this
-              form is not required.
+       <b>endif</b>  When a search string matches the specified <i>pattern</i>,  match  that
+              search  string  against  the patterns between <b>if</b> and <b>endif</b>.  The
+              <i>pattern</i> must be in <i>network/prefix</i> or <i>network</i><b>_</b><i>address</i>  form  (see
+              ADDRESS PATTERN SYNTAX below). The <b>if</b>..<b>endif</b> can nest.
 
-              IPv6 support is available in Postfix 2.2 and later.
+              Note: do not prepend whitespace to text between <b>if</b>..<b>endif</b>.
 
-       <i>network</i><b>_</b><i>address     result</i>
-              When  a search string matches the specified network address, use
-              the corresponding <i>result</i> value.
+              This feature is available in Postfix 3.2 and later.
+
+       <b>if !</b><i>pattern</i>
+
+       <b>endif</b>  When a search string does not match the specified <i>pattern</i>, match
+              that search string against the patterns between  <b>if</b>  and  <b>endif</b>.
+              The  <i>pattern</i>  must  be in <i>network/prefix</i> or <i>network</i><b>_</b><i>address</i> form
+              (see ADDRESS PATTERN SYNTAX below). The <b>if</b>..<b>endif</b> can nest.
+
+              Note: do not prepend whitespace to text between <b>if</b>..<b>endif</b>.
+
+              This feature is available in Postfix 3.2 and later.
 
        blank lines and comments
               Empty lines and whitespace-only lines are ignored, as are  lines
@@ -67,6 +76,28 @@ CIDR_TABLE(5)                                                    CIDR_TABLE(5)
        Patterns are applied in the order as specified in the  table,  until  a
        pattern is found that matches the search string.
 
+<b>ADDRESS PATTERN SYNTAX</b>
+       Postfix  CIDR  tables  are  pattern-based.  A  pattern is either a <i>net-</i>
+       <i>work</i><b>_</b><i>address</i> which requires an exact match, or  a  <i>network</i><b>_</b><i>address/pre-</i>
+       <i>fix</i><b>_</b><i>length</i>  where  the  <i>prefix</i><b>_</b><i>length</i>  part specifies the length of the
+       <i>network</i><b>_</b><i>address</i> prefix that must be matched (the other bits in the <i>net-</i>
+       <i>work</i><b>_</b><i>address</i> part must be zero).
+
+       An  IPv4 network address is a sequence of four decimal octets separated
+       by ".", and an IPv6 network address is a sequence  of  three  to  eight
+       hexadecimal  octet  pairs separated by ":" or "::", where the latter is
+       short-hand for a sequence of one or more all-zero octet pairs. The pat-
+       tern  0.0.0.0/0 matches every IPv4 address, and ::/0 matches every IPv6
+       address.  IPv6 support is available in Postfix 2.2 and later.
+
+       Before comparisons are made, lookup keys and  table  entries  are  con-
+       verted  from string to binary. Therefore, IPv6 patterns will be matched
+       regardless of leading zeros (a leading zero in an  IPv4  address  octet
+       indicates octal notation).
+
+       Note:  address information may be enclosed inside "[]" but this form is
+       not required.
+
 <b>EXAMPLE SMTPD ACCESS MAP</b>
        /etc/postfix/<a href="postconf.5.html">main.cf</a>:
            <a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a> = ... <a href="cidr_table.5.html">cidr</a>:/etc/postfix/client.cidr ...
@@ -76,6 +107,8 @@ CIDR_TABLE(5)                                                    CIDR_TABLE(5)
            # before more general blacklist entries.
            192.168.1.1             OK
            192.168.0.0/16          REJECT
+           2001:db8::1             OK
+           2001:db8::/32           REJECT
 
 <b>SEE ALSO</b>
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table manager
