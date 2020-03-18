@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_emmc.c,v 1.2 2020/03/18 06:44:57 nisimura Exp $	*/
+/*	$NetBSD: sni_emmc.c,v 1.3 2020/03/18 10:05:24 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.2 2020/03/18 06:44:57 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.3 2020/03/18 10:05:24 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -256,8 +256,10 @@ sniemmc_attach_i(device_t self)
 	}
 	return;
  fail:
-	fdtbus_intr_disestablish(sc->sc_phandle, sc->sc_ih);
-	acpi_intr_disestablish(sc->sc_ih);
+	if (sc->sc_phandle)
+		fdtbus_intr_disestablish(sc->sc_phandle, sc->sc_ih);
+	else
+		acpi_intr_disestablish(sc->sc_ih);
 	sc->sc_ih = NULL;
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	return;
