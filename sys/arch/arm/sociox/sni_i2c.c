@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_i2c.c,v 1.1 2020/03/18 03:33:49 nisimura Exp $	*/
+/*	$NetBSD: sni_i2c.c,v 1.2 2020/03/18 05:02:48 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.1 2020/03/18 03:33:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.2 2020/03/18 05:02:48 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,8 +71,7 @@ static int
 sniiic_fdt_match(device_t parent, struct cfdata *match, void *aux)
 {
 	static const char * compatible[] = {
-		"socionext,synquacer-sdhci",
-		"fujitsu,mb86s70-sdhci-3.0",
+		"socionext,synquacer-i2c",
 		NULL
 	};
 	struct fdt_attach_args * const faa = aux;
