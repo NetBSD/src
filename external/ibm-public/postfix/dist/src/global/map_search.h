@@ -1,4 +1,4 @@
-/*	$NetBSD: map_search.h,v 1.1.1.1 2020/03/18 18:59:34 christos Exp $	*/
+/*	$NetBSD: map_search.h,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
 
 /*++
 /* NAME

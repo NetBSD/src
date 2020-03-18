@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf_nint.c,v 1.1.1.3 2020/03/18 18:59:33 christos Exp $	*/
+/*	$NetBSD: mail_conf_nint.c,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
 
 /*++
 /* NAME

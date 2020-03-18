@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_haproxy.h,v 1.1.1.2 2020/03/18 18:59:36 christos Exp $	*/
+/*	$NetBSD: postscreen_haproxy.h,v 1.2 2020/03/18 19:05:19 christos Exp $	*/
 
 /*++
 /* NAME

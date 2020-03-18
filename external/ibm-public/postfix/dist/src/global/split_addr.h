@@ -1,4 +1,4 @@
-/*	$NetBSD: split_addr.h,v 1.1.1.3 2020/03/18 18:59:34 christos Exp $	*/
+/*	$NetBSD: split_addr.h,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
 
 #ifndef _SPLIT_ADDR_H_INCLUDED_
 #define _SPLIT_ADDR_H_INCLUDED_
