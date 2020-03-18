@@ -7,6 +7,9 @@ IInnttrroodduuccttiioonn
 This document describes the Postfix connection cache implementation, which is
 available with Postfix version 2.2 and later.
 
+See Client-side TLS connection reuse for how this connection cache is used to
+implement multiple deliveries per TLS-encrypted connection.
+
 Topics covered in this document:
 
   * What SMTP connection caching can do for you
@@ -64,14 +67,14 @@ to access this cache.
 
             /-- smtp(8) --> Internet
 
-    qmgr(8)       |  
-                  |
-            \--   | smtp(8) --> Internet
-                  |
-                  ^          
-                  |
+    qmgr(8)
+                 |
+            \--  | smtp(8) --> Internet
+                 |
+                 ^
+                 |
 
-                  scache(8)
+                 scache(8)
 
 When SMTP connection caching is enabled (see next section), the smtp(8) client
 does not disconnect after a mail transaction, but gives the connection to the
@@ -156,7 +159,6 @@ mechanisms:
     MTAs, the slowest inbound MTA will attract most connections from Postfix to
     that destination).
 
-    .
     Postfix 2.3 logs the use count of multiply-used connections, as shown in
     the following example:
 
@@ -174,12 +176,11 @@ CCoonnnneeccttiioonn ccaacchhee lliimmiittaattiioonnss
 
 Postfix SMTP connection caching conflicts with certain applications:
 
-  * The Postfix shared connection cache cannot be used with TLS, because saved
-    TLS session information can be used only when a new connection is created
-    (this limitation does not exist in connection caching implementations that
-    reuse a connection only in the process that creates it). For this reason,
-    the Postfix smtp(8) client always closes the connection after completing an
-    attempt to deliver mail over TLS.
+  * With Postfix versions < 3.4, the Postfix shared connection cache cannot be
+    used with TLS, because an open TLS connection can be reused only in the
+    process that creates it. For this reason, the Postfix smtp(8) client
+    historically always closed the connection after completing an attempt to
+    deliver mail over TLS.
 
   * Postfix connection caching currently does not support multiple SASL
     accounts per mail server. Specifically, Postfix connection caching assumes

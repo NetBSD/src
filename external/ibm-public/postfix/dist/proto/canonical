@@ -76,8 +76,12 @@
 # .ad
 # .fi
 #	With lookups from indexed files such as DB or DBM, or from networked
-#	tables such as NIS, LDAP or SQL, patterns are tried in the order as
-#	listed below:
+#	tables such as NIS, LDAP or SQL, each \fIuser\fR@\fIdomain\fR
+#	query produces a sequence of query patterns as described below.
+#
+#	Each query pattern is sent to each specified lookup table
+#	before trying the next query pattern, until a match is
+#	found.
 # .IP "\fIuser\fR@\fIdomain address\fR"
 #	Replace \fIuser\fR@\fIdomain\fR by \fIaddress\fR. This form
 #	has the highest precedence.
@@ -104,6 +108,23 @@
 #	a backscatter source: Postfix first accepts mail for
 #	non-existent recipients and then tries to return that mail
 #	as "undeliverable" to the often forged sender address.
+# .sp
+#	To avoid backscatter with mail for a wild-card domain,
+#	replace the wild-card mapping with explicit 1:1 mappings,
+#	or add a reject_unverified_recipient restriction for that
+#	domain:
+#
+# .nf
+#	    smtpd_recipient_restrictions =
+#		...
+#		reject_unauth_destination
+#		check_recipient_access
+#		    inline:{example.com=reject_unverified_recipient}
+#	    unverified_recipient_reject_code = 550
+# .fi
+#
+#	In the above example, Postfix may contact a remote server
+#	if the recipient is rewritten to a remote address.
 # RESULT ADDRESS REWRITING
 # .ad
 # .fi
@@ -169,56 +190,58 @@
 #	The following \fBmain.cf\fR parameters are especially relevant.  
 #	The text below provides only a parameter summary. See
 #	\fBpostconf\fR(5) for more details including examples.
-# .IP \fBcanonical_classes\fR
-#	What addresses are subject to canonical address mapping.
-# .IP \fBcanonical_maps\fR
-#	List of canonical mapping tables.
-# .IP \fBrecipient_canonical_maps\fR
-#	Address mapping lookup table for envelope and header recipient
-#	addresses.
-# .IP \fBsender_canonical_maps\fR
-#	Address mapping lookup table for envelope and header sender
-#	addresses.
-# .IP \fBpropagate_unmatched_extensions\fR 
-#	A list of address rewriting or forwarding mechanisms that propagate
-#	an address extension from the original address to the result.
-#	Specify zero or more of \fBcanonical\fR, \fBvirtual\fR, \fBalias\fR,  
-#	\fBforward\fR, \fBinclude\fR, or \fBgeneric\fR.
+# .IP "\fBcanonical_classes (envelope_sender, envelope_recipient, header_sender, header_recipient)\fR"
+#	What addresses are subject to canonical_maps address mapping.
+# .IP "\fBcanonical_maps (empty)\fR"
+#	Optional address mapping lookup tables for message headers and
+#	envelopes.
+# .IP "\fBrecipient_canonical_maps (empty)\fR"
+#	Optional address mapping lookup tables for envelope and header
+#	recipient addresses.
+# .IP "\fBsender_canonical_maps (empty)\fR"
+#	Optional address mapping lookup tables for envelope and header
+#	sender addresses.
+# .IP "\fBpropagate_unmatched_extensions (canonical, virtual)\fR"
+#	What address lookup tables copy an address extension from the lookup
+#	key to the lookup result.
 # .PP
 #	Other parameters of interest:
-# .IP \fBinet_interfaces\fR
-#	The network interface addresses that this system receives mail on.
-#	You need to stop and start Postfix when this parameter changes.
-# .IP \fBlocal_header_rewrite_clients\fR
-#	Rewrite message header addresses in mail from these clients
-#	and update incomplete addresses with the domain name in
-#	$myorigin or $mydomain; either don't rewrite message headers
-#	from other clients at all, or rewrite message headers and
-#	update incomplete addresses with the domain specified in
-#	the remote_header_rewrite_domain parameter.
-# .IP \fBproxy_interfaces\fR
-#	Other interfaces that this machine receives mail on by way of a
-#	proxy agent or network address translator.
-# .IP \fBmasquerade_classes\fR
-#	List of address classes subject to masquerading: zero or more of
-#	\fBenvelope_sender\fR, \fBenvelope_recipient\fR, \fBheader_sender\fR, 
-#	\fBheader_recipient\fR.
-# .IP \fBmasquerade_domains\fR
-#	List of domains that hide their subdomain structure.
-# .IP \fBmasquerade_exceptions\fR
-#	List of user names that are not subject to address masquerading.
-# .IP \fBmydestination\fR
-#	List of domains that this mail system considers local.
-# .IP \fBmyorigin\fR
-#	The domain that is appended to locally-posted mail.
-# .IP \fBowner_request_special\fR
-#	Give special treatment to \fBowner-\fIxxx\fR and \fIxxx\fB-request\fR
-#	addresses.
-# .IP \fBremote_header_rewrite_domain\fR
-#	Don't rewrite message headers from remote clients at all
-#	when this parameter is empty; otherwise, rewrite message
-#	headers and append the specified domain name to incomplete
-#	addresses.
+# .IP "\fBinet_interfaces (all)\fR"
+#	The network interface addresses that this mail system receives
+#	mail on.
+# .IP "\fBlocal_header_rewrite_clients (permit_inet_interfaces)\fR"
+#	Rewrite message header addresses in mail from these clients and
+#	update incomplete addresses with the domain name in $myorigin or
+#	$mydomain; either don't rewrite message headers from other clients
+#	at all, or rewrite message headers and update incomplete addresses
+#	with the domain specified in the remote_header_rewrite_domain
+#	parameter.
+# .IP "\fBproxy_interfaces (empty)\fR"
+#	The network interface addresses that this mail system receives mail
+#	on by way of a proxy or network address translation unit.
+# .IP "\fBmasquerade_classes (envelope_sender, header_sender, header_recipient)\fR"
+#	What addresses are subject to address masquerading.
+# .IP "\fBmasquerade_domains (empty)\fR"
+#	Optional list of domains whose subdomain structure will be stripped
+#	off in email addresses.
+# .IP "\fBmasquerade_exceptions (empty)\fR"
+#	Optional list of user names that are not subjected to address
+#	masquerading, even when their address matches $masquerade_domains.
+# .IP "\fBmydestination ($myhostname, localhost.$mydomain, localhost)\fR"
+#	The list of domains that are delivered via the $local_transport
+#	mail delivery transport.
+# .IP "\fBmyorigin ($myhostname)\fR"
+#	The domain name that locally-posted mail appears to come
+#	from, and that locally posted mail is delivered to.
+# .IP "\fBowner_request_special (yes)\fR"
+#	Enable special treatment for owner-\fIlistname\fR entries in the
+#	\fBaliases\fR(5) file, and don't split owner-\fIlistname\fR and
+#	\fIlistname\fR-request address localparts when the recipient_delimiter
+#	is set to "-".
+# .IP "\fBremote_header_rewrite_domain (empty)\fR"
+#	Don't rewrite message headers from remote clients at all when
+#	this parameter is empty; otherwise, rewrite message headers and
+#	append the specified domain name to incomplete addresses.
 # SEE ALSO
 #	cleanup(8), canonicalize and enqueue mail
 #	postmap(1), Postfix lookup table manager

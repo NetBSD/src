@@ -106,7 +106,7 @@ problem will get worse before things improve, if ever. Without a
 tool like postscreen(8) that keeps the zombies away, Postfix would be
 spending most of its resources not receiving email. </p>
 
-<p> The main challenge for postscreen(8) is to make an is-it-a-zombie
+<p> The main challenge for postscreen(8) is to make an is-a-zombie
 decision based on a single measurement. This is necessary because
 many zombies try to fly under the radar and avoid spamming the same
 site repeatedly.  Once postscreen(8) decides that a client is
@@ -124,13 +124,13 @@ mail even when the server tells them to go away. </p>
 zombies.  First, postscreen(8) determines if the remote SMTP client
 IP address is blacklisted.  Second, postscreen(8) looks for protocol
 compromises that are made to speed up delivery.  These are good
-indicators for making is-it-a-zombie decisions based on single
+indicators for making is-a-zombie decisions based on single
 measurements.  </p>
 
 <p> postscreen(8) does not inspect message content. Message content
 can vary from one delivery to the next, especially with clients
 that (also) send legitimate email.  Content is not a good indicator
-for making is-it-a-zombie decisions based on single measurements,
+for making is-a-zombie decisions based on single measurements,
 and that is the problem that postscreen(8) is focused on.  </p>
 
 <h2> <a name="general"> General operation </a> </h2>
@@ -714,16 +714,25 @@ The "<tt><b>after</b> <i>command</i></tt>" portion is logged with
 Postfix 2.10 and later. </p>
 
 <p> When an SMTP client makes too many connections at the same time,
-or when all postscreen(8) ports are busy, postscreen(8) rejects the
-connection with a 421 status code and logs: </p>
+postscreen(8) rejects the connection with a 421 status code and logs: </p>
 
 <pre>
     <b>NOQUEUE: reject: CONNECT from</b> <i>[address]:port</i><b>: too many connections</b>
+</pre>
+
+<p> The postscreen_client_connection_count_limit parameter controls this limit. </p>
+
+<p> When an SMTP client connects after postscreen(8) has reached a
+connection count limit, postscreen(8) rejects the connection with
+a 421 status code and logs: </p>
+
+<pre>
+    <b>NOQUEUE: reject: CONNECT from</b> <i>[address]:port</i><b>: all screening ports busy</b>
     <b>NOQUEUE: reject: CONNECT from</b> <i>[address]:port</i><b>: all server ports busy</b>
 </pre>
 
-<p> The postscreen_client_connection_count_limit and
-postscreen_pre_queue_limit parameters control these limits.  </p>
+<p> The postscreen_pre_queue_limit and postscreen_post_queue_limit
+parameters control these limits.  </p>
 
 <h2> <a name="victory">When all tests succeed</a> </h2>
 
@@ -1072,8 +1081,8 @@ of the following options: </p>
 <li> <p> A non-persistent memcache: temporary whitelist can be shared
     between postscreen(8) daemons on the same host or different
     hosts.  Disable cache cleanup (postscreen_cache_cleanup_interval
-    = 0) in all postscreen(8) daemons because memcache: does not
-    implement this (but see example 4 below for memcache: with
+    = 0) in all postscreen(8) daemons because memcache: has no
+    first-next API (but see example 4 below for memcache: with
     persistent backup). This requires Postfix 2.9 or later. </p>
 
     <pre>

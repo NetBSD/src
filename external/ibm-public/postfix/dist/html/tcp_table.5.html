@@ -34,14 +34,17 @@ TCP_TABLE(5)                                                      TCP_TABLE(5)
        Send and receive operations must complete in 100 seconds.
 
 <b>REQUEST FORMAT</b>
-       Each request specifies a command, a lookup key, and possibly  a  lookup
-       result.
+       The tcp_table protocol supports only the lookup request.   The  request
+       has the following form:
 
        <b>get</b> SPACE <i>key</i> NEWLINE
               Look up data under the specified key.
 
-       <b>put</b> SPACE <i>key</i> SPACE <i>value</i> NEWLINE
-              This request is currently not implemented.
+       Postfix  will  not  generate  partial  search keys such as domain names
+       without one or more subdomains, network addresses without one  or  more
+       least-significant  octets,  or  email  addresses without the localpart,
+       address extension or domain portion. This behavior is also  found  with
+       <a href="cidr_table.5.html">cidr</a>:, <a href="pcre_table.5.html">pcre</a>:, and <a href="regexp_table.5.html">regexp</a>: tables.
 
 <b>REPLY FORMAT</b>
        Each  reply specifies a status code and text. Replies must be no longer
@@ -49,8 +52,7 @@ TCP_TABLE(5)                                                      TCP_TABLE(5)
 
        <b>500</b> SPACE <i>text</i> NEWLINE
               In case of a lookup request, the requested data does not  exist.
-              In  case  of  an  update request, the request was rejected.  The
-              text describes the nature of the problem.
+              The text describes the nature of the problem.
 
        <b>400</b> SPACE <i>text</i> NEWLINE
               This indicates an error condition. The text describes the nature
@@ -61,24 +63,24 @@ TCP_TABLE(5)                                                      TCP_TABLE(5)
               text contains an encoded version of the requested data.
 
 <b>ENCODING</b>
-       In request and reply parameters, the  character  %,  each  non-printing
+       In  request  and  reply  parameters, the character %, each non-printing
        character, and each whitespace character must be replaced by %XX, where
        XX is the corresponding ASCII hexadecimal character value. The hexadec-
        imal codes can be specified in any case (upper, lower, mixed).
 
-       The  Postfix  client always encodes a request.  The server may omit the
-       encoding as long as the reply is guaranteed to not  contain  the  %  or
+       The Postfix client always encodes a request.  The server may  omit  the
+       encoding  as  long  as  the reply is guaranteed to not contain the % or
        NEWLINE character.
 
 <b>SECURITY</b>
-       Do  not  use  TCP  lookup  tables  for security critical purposes.  The
+       Do not use TCP lookup  tables  for  security  critical  purposes.   The
        client-server connection is not protected and the server is not authen-
        ticated.
 
 <b>BUGS</b>
        Only the lookup method is currently implemented.
 
-       The  client  does  not  hang  up when the connection is idle for a long
+       The client does not hang up when the connection  is  idle  for  a  long
        time.
 
 <b>SEE ALSO</b>
