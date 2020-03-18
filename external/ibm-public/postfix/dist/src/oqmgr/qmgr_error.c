@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_error.c,v 1.1.1.2 2020/03/18 18:59:35 christos Exp $	*/
+/*	$NetBSD: qmgr_error.c,v 1.2 2020/03/18 19:05:17 christos Exp $	*/
 
 /*++
 /* NAME

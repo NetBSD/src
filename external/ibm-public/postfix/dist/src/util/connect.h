@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.h,v 1.1.1.4 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: connect.h,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
 
 #ifndef _CONNECT_H_INCLUDED_
 #define _CONNECT_H_INCLUDED_
