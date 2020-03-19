@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.205.2.2 2019/11/10 12:58:31 martin Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.205.2.3 2020/03/19 19:08:31 martin Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -845,6 +845,7 @@ all)
 	makedev veriexec
 	makedev autofs
 	makedev fw0 fw1 fw2 fw3
+	makedev ipmi0
 	makedev local # do this last
 	;;
 
