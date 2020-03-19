@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.64 2020/03/13 05:49:52 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.65 2020/03/19 03:11:23 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.64 2020/03/13 05:49:52 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.65 2020/03/19 03:11:23 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1395,8 +1395,8 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cur_ec_capenable = sc->sc_ec.ec_capenable;
 
 	sc->sc_ec.ec_ifmedia = &sc->sc_media;
-	ifmedia_init(&sc->sc_media, IFM_IMASK, ixl_media_change,
-	    ixl_media_status);
+	ifmedia_init_with_lock(&sc->sc_media, IFM_IMASK, ixl_media_change,
+	    ixl_media_status, &sc->sc_cfg_lock);
 
 	ixl_media_add(sc);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
@@ -1692,10 +1692,10 @@ ixl_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct ixl_softc *sc = ifp->if_softc;
 
-	mutex_enter(&sc->sc_cfg_lock);
+	KASSERT(mutex_owned(&sc->sc_cfg_lock));
+
 	ifmr->ifm_status = sc->sc_media_status;
 	ifmr->ifm_active = sc->sc_media_active;
-	mutex_exit(&sc->sc_cfg_lock);
 }
 
 static int
