@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.153.2.4 2019/11/25 16:53:29 martin Exp $
+$NetBSD: miidevs,v 1.153.2.5 2020/03/19 19:21:37 martin Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@ oui MICREL			0x0010a1	Micrel
 oui ALTIMA			0x0010a9	Altima Communications
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui SUNPLUS			0x001105	Sunplus Technology
-oui ATHEROS			0x001374	Atheros
 oui TERANETICS			0x0014a6	Teranetics
 oui RALINK2			0x0017a5	Ralink Technology
 oui AQUANTIA			0x0017b6	Aquantia Corporation
@@ -148,11 +147,7 @@ model ALTIMA Am79C874		0x0021 Am79C874 10/100 media interface
 model AMLOGIC GXL		0x0000 Meson GXL internal PHY
 model xxAMLOGIC GXL		0x0000 Meson GXL internal PHY
 
-/* Atheros PHYs */
-model ATHEROS F1		0x0001 F1 10/100/1000 PHY
-model ATHEROS F2		0x0002 F2 10/100 PHY
-
-/* Attansic PHYs */
+/* Attansic/Atheros PHYs */
 model ATTANSIC L1		0x0001 L1 10/100/1000 PHY
 model ATTANSIC L2		0x0002 L2 10/100 PHY
 model ATTANSIC AR8021		0x0004 Atheros AR8021 10/100/1000 PHY
