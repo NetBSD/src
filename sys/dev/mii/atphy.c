@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.22.4.1 2019/11/21 14:00:49 martin Exp $ */
+/*	$NetBSD: atphy.c,v 1.22.4.2 2020/03/19 19:21:37 martin Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.22.4.1 2019/11/21 14:00:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.22.4.2 2020/03/19 19:21:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,6 @@ const struct mii_phy_funcs atphy_funcs = {
 };
 
 static const struct mii_phydesc atphys[] = {
-	MII_PHY_DESC(ATHEROS, F1),
 	MII_PHY_DESC(ATTANSIC, L1),
 	MII_PHY_DESC(ATTANSIC, L2),
 	MII_PHY_DESC(ATTANSIC, AR8021),
@@ -358,10 +357,30 @@ atphy_reset(struct mii_softc *sc)
 	uint16_t reg;
 	int i;
 
-	/* Take PHY out of power down mode. */
+	/*
+	 * Take PHY out of power down mode.
+	 *
+	 * XXX AR8021 document has no description about the power saving
+	 * control register. Shouldn't we write it?
+	 */
 	PHY_WRITE(sc, 29, 0x29);
+	/*
+	 * XXX AR8031 document says the lower 14 bits are reserved and the
+	 * default value is 0x36d0. Shouldn't we clear those bits?
+	 * I have no document neither L1(F1) nor L2(F2).
+	 */
 	PHY_WRITE(sc, 30, 0);
 
+	if ((sc->mii_mpd_model == MII_MODEL_ATTANSIC_L2)
+	    && (sc->mii_mpd_rev == 1)) {
+		/*
+		 * On NVIDIA MCP61 with Attansic L2 rev. 1, changing debug
+		 * port 0x29's value makes the next PHY read fail with error.
+		 * This is observed on ASUS M2N-MX SE Plus. Read any register
+		 * to ignore this problem.
+		 */
+		(void)PHY_READ(sc, ATPHY_SCR, &reg);
+	}
 	PHY_READ(sc, ATPHY_SCR, &reg);
 	/* Enable automatic crossover. */
 	reg |= ATPHY_SCR_AUTO_X_MODE;
