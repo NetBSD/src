@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.14 2020/03/14 02:35:33 christos Exp $ */
+/*	$NetBSD: if_umb.c,v 1.15 2020/03/19 07:49:29 khorben Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.14 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.15 2020/03/19 07:49:29 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -948,9 +948,12 @@ Static void
 umb_statechg_timeout(void *arg)
 {
 	struct umb_softc *sc = arg;
+	struct ifnet *ifp = GET_IFP(sc);
 
 	if (sc->sc_info.regstate != MBIM_REGSTATE_ROAMING || sc->sc_roaming)
-		printf("%s: state change timeout\n",DEVNAM(sc));
+		if (ifp->if_flags & IFF_DEBUG)
+			log(LOG_DEBUG, "%s: state change timeout\n",
+			    DEVNAM(sc));
 	usb_add_task(sc->sc_udev, &sc->sc_umb_task, USB_TASKQ_DRIVER);
 }
 
