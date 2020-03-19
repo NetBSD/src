@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.151.2.5 2019/11/25 16:55:09 martin Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.151.2.6 2020/03/19 19:23:14 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.153.2.4 2019/11/25 16:53:29 martin Exp
+ *	NetBSD: miidevs,v 1.153.2.5 2020/03/19 19:21:37 martin Exp
  */
 
 /*-
@@ -71,7 +71,6 @@
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_SUNPLUS	0x001105	/* Sunplus Technology */
-#define	MII_OUI_ATHEROS	0x001374	/* Atheros */
 #define	MII_OUI_TERANETICS	0x0014a6	/* Teranetics */
 #define	MII_OUI_RALINK2	0x0017a5	/* Ralink Technology */
 #define	MII_OUI_AQUANTIA	0x0017b6	/* Aquantia Corporation */
@@ -168,13 +167,7 @@
 #define	MII_MODEL_xxAMLOGIC_GXL	0x0000
 #define	MII_STR_xxAMLOGIC_GXL	"Meson GXL internal PHY"
 
-/* Atheros PHYs */
-#define	MII_MODEL_ATHEROS_F1	0x0001
-#define	MII_STR_ATHEROS_F1	"F1 10/100/1000 PHY"
-#define	MII_MODEL_ATHEROS_F2	0x0002
-#define	MII_STR_ATHEROS_F2	"F2 10/100 PHY"
-
-/* Attansic PHYs */
+/* Attansic/Atheros PHYs */
 #define	MII_MODEL_ATTANSIC_L1	0x0001
 #define	MII_STR_ATTANSIC_L1	"L1 10/100/1000 PHY"
 #define	MII_MODEL_ATTANSIC_L2	0x0002
