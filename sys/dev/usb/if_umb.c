@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.16 2020/03/19 07:50:27 khorben Exp $ */
+/*	$NetBSD: if_umb.c,v 1.17 2020/03/19 07:51:22 khorben Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.16 2020/03/19 07:50:27 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.17 2020/03/19 07:51:22 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1714,7 +1714,8 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 	 * IPv4 configuration
 	 */
 	avail = le32toh(ic->ipv4_available);
-	if (avail & MBIM_IPCONF_HAS_ADDRINFO) {
+	if ((avail & (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) ==
+	    (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) {
 		n = le32toh(ic->ipv4_naddr);
 		off = le32toh(ic->ipv4_addroffs);
 
@@ -1734,10 +1735,8 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		sin = (struct sockaddr_in *)&ifra.ifra_dstaddr;
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(ifra.ifra_dstaddr);
-		if (avail & MBIM_IPCONF_HAS_GWINFO) {
-			off = le32toh(ic->ipv4_gwoffs);
-			sin->sin_addr.s_addr = *((uint32_t *)((char *)data + off));
-		}
+		off = le32toh(ic->ipv4_gwoffs);
+		sin->sin_addr.s_addr = *((uint32_t *)((char *)data + off));
 
 		sin = (struct sockaddr_in *)&ifra.ifra_mask;
 		sin->sin_family = AF_INET;
