@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.22 2020/01/23 23:53:55 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.23 2020/03/19 15:19:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.22 2020/01/23 23:53:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.23 2020/03/19 15:19:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -717,6 +717,7 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		if (error != 0) {
 			cmd->c_error = error;
 			SET(cmd->c_flags, SCF_ITSDONE);
+			mutex_exit(&sc->sc_intr_lock);
 			goto done;
 		}
 	}
