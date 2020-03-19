@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.377 2020/03/18 18:54:28 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.378 2020/03/19 18:58:14 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.377 2020/03/18 18:54:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.378 2020/03/19 18:58:14 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2229,11 +2229,11 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
 	int lidx;
 
-	KASSERT(ptp->wire_count == 1);
+	KASSERT(ptp->wire_count <= 1);
 	PMAP_CHECK_PP(VM_PAGE_TO_PP(ptp));
 
 	lidx = level - 1;
-	pmap_stats_update(pmap, -1, 0);
+	pmap_stats_update(pmap, -ptp->wire_count, 0);
 	if (pmap->pm_ptphint[lidx] == ptp)
 		pmap->pm_ptphint[lidx] = NULL;
 	ptp->wire_count = 0;
@@ -2450,7 +2450,6 @@ pmap_unget_ptp(struct pmap *pmap, struct pmap_ptparray *pt)
 			continue;
 		}
 		KASSERT(pt->pg[i]->wire_count == 0);
-		pt->pg[i]->wire_count = 1;
 		PMAP_CHECK_PP(VM_PAGE_TO_PP(pt->pg[i]));
 		pmap_freepage(pmap, pt->pg[i], i - 1);
 	}
