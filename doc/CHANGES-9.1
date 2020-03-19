@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.19 2020/03/16 11:11:46 sborrill Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.20 2020/03/19 19:47:39 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -533,4 +533,73 @@ sys/arch/xen/xen/xennet_checksum.c		1.4
 	was not recomputed for short packets coming from Windows domU
 	on same physical host as it seems Windows does some padding.
 	[jdolecek, ticket #781]
+
+sys/dev/pci/pci_subr.c				1.220,1.221
+sys/dev/pci/pcireg.h				1.149-1.151
+
+	Enhancements to pcictl(8) dump:
+	- Print Bridge Config Retry Enable bit and Retimer Presence
+	  Detect Supported bit.
+	- 10-bit Tag Requester/Completer.
+	- Add Data link Feature extended capability.
+	- Add Physical Layer 16.0 GT/s extended capability.
+	[msaitoh, ticket #782]
+
+etc/MAKEDEV.tmpl				1.216
+
+	Create /dev/ipmi0 in `MAKEDEV all'.
+	[riastradh, ticket #783]
+
+sys/dev/pci/pcidevs				1.1398-1.1402
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	- Add Radeon HD4290				  
+	- Add Farallon PN9000SX Ethernet.
+	- NVIDIA 0x036[0-7] are nForce MCP55 LPC Bridge.
+	- Add VIA VX900 chipset.	    
+	- Add some GeForce devices.
+	[msaitoh, ticket #784]
+
+sys/net/if_media.h				1.70
+
+	- Remove 50GBASE-LR10.
+	- Add the following medias:
+	  - 25GBASE-ACC
+	  - 100GBASE-ACC
+	  - 100GBASE-AOC
+	  - 100GBASE-FR
+	  - 100GBASE-LR
+	  - 200GBASE-ER4
+	  - 400GBASE-ER8
+	  - 400GBASE-FR4
+	  - 400GBASE-LR4
+	  - 400GBASE-SR4.2
+	  - 400GBASE-SR8
+	[msaitoh, ticket #785]
+
+sys/dev/mii/atphy.c			1.28-1.29 
+sys/dev/mii/miidevs			1.163		        
+sys/dev/pci/if_nfe.c			1.77-1.78
+sys/dev/mii/miidevs.h			regen 
+sys/dev/mii/miidevs_data.h		regen 
+						        
+	- 0x001374 is non-bitreversed value of Attansic OUI(0x00c82e) and
+	  Attansic/Atheros correctly uses ID1 and ID2 register, so delete all
+	  0x001374 related entries.			  
+	- Use unsigned to avoid undefined behavior in nfe_setmulti() and
+	  nfe_set_macaddr(). Found by kUBSan.
+	- Improve error check in mfe_miibus_{read,write}reg().
+	- Fix a bug that atphy(4) doesn't work with Attansic L2 rev. 1.
+	[msaitoh, ticket #786]
+
+sys/altq/altq_flowvalve.h			1.4
+sys/dist/pf/net/pfvar.h				1.23
+sys/external/bsd/drm2/dist/drm/drm_drv.c	1.13
+sys/external/bsd/drm2/dist/include/drm/drmP.h	1.38
+sys/net/slcompress.h				1.20
+sys/net/zlib.h					1.15
+
+	Fix kernel ctf type duplication.
+	[riastradh, ticket #787]
 
