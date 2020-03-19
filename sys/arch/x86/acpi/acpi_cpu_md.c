@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.82 2020/03/14 13:50:46 ad Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.83 2020/03/19 19:55:34 ad Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.82 2020/03/14 13:50:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.83 2020/03/19 19:55:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,10 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.82 2020/03/14 13:50:46 ad Exp $");
 
 #define FID_TO_VCO_FID(fidd)	(((fid) < 8) ? (8 + ((fid) << 1)) : (fid))
 
-#ifdef ACPICPU_ENABLE_C3
 static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
-#endif
 
 static int	 acpicpu_md_quirk_piix4(const struct pci_attach_args *);
 static void	 acpicpu_md_pstate_hwf_reset(void *, void *);
@@ -350,12 +348,6 @@ acpicpu_md_quirk_c1e(void)
 int
 acpicpu_md_cstate_start(struct acpicpu_softc *sc)
 {
-#ifdef ACPICPU_ENABLE_C3
-	/*
-	 * XXX There are performance problems with the ACPI idle loop, and
-	 * it does not enter deep sleep.  Once those are resolved it'll be
-	 * re-enabled.
-	 */
 	const size_t size = sizeof(native_idle_text);
 	struct acpicpu_cstate *cs;
 	bool ipi = false;
@@ -377,7 +369,6 @@ acpicpu_md_cstate_start(struct acpicpu_softc *sc)
 	}
 
 	x86_cpu_idle_set(acpicpu_cstate_idle, "acpi", ipi);
-#endif	/* ACPICPU_ENABLE_C3 */
 
 	return 0;
 }
@@ -385,12 +376,6 @@ acpicpu_md_cstate_start(struct acpicpu_softc *sc)
 int
 acpicpu_md_cstate_stop(void)
 {
-#ifdef ACPICPU_ENABLE_C3
-	/*
-	 * XXX There are performance problems with the ACPI idle loop, and
-	 * it does not enter deep sleep.  Once those are resolved it'll be
-	 * re-enabled.
-	 */
 	static char text[16];
 	void (*func)(void);
 	bool ipi;
@@ -408,7 +393,6 @@ acpicpu_md_cstate_stop(void)
 	 * out from the ACPI idle-loop before detachment.
 	 */
 	xc_barrier(0);
-#endif	/* ACPICPU_ENABLE_C3 */
 
 	return 0;
 }
