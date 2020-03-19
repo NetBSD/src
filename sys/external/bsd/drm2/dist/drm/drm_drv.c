@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.10 2018/08/28 08:20:27 martin Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.10.4.1 2020/03/19 19:41:10 martin Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.10 2018/08/28 08:20:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.10.4.1 2020/03/19 19:41:10 martin Exp $");
 
 #include <linux/err.h>
 #include <linux/export.h>
@@ -541,16 +541,14 @@ EXPORT_SYMBOL(drm_unplug_dev);
 
 #ifdef __NetBSD__
 
-struct inode;
-
-static struct inode *
+static void *
 drm_fs_inode_new(void)
 {
 	return NULL;
 }
 
 static void
-drm_fs_inode_free(struct inode *inode)
+drm_fs_inode_free(void *inode)
 {
 	KASSERT(inode == NULL);
 }
