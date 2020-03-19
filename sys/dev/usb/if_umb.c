@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.15 2020/03/19 07:49:29 khorben Exp $ */
+/*	$NetBSD: if_umb.c,v 1.16 2020/03/19 07:50:27 khorben Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.15 2020/03/19 07:49:29 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.16 2020/03/19 07:50:27 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2569,11 +2569,11 @@ umb_decode_qmi(struct umb_softc *sc, uint8_t *data, int len)
 				break;
 			case 0x555f:	/* Send FCC Authentication */
 				if (val == 0)
-					log(LOG_INFO, "%s: send FCC "
+					DPRINTF("%s: send FCC "
 					    "Authentication succeeded\n",
 					    DEVNAM(sc));
 				else if (val == 0x001a0001)
-					log(LOG_INFO, "%s: FCC Authentication "
+					DPRINTF("%s: FCC Authentication "
 					    "not required\n", DEVNAM(sc));
 				else
 					log(LOG_INFO, "%s: send FCC "
