@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.c,v 1.7 2020/03/18 19:23:13 jdolecek Exp $	*/
+/*	$NetBSD: xennet_checksum.c,v 1.8 2020/03/19 10:53:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.7 2020/03/18 19:23:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.8 2020/03/19 10:53:43 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,14 +126,19 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m, bool data_validated)
 
 	switch (nxt) {
 	case IPPROTO_UDP:
-		m->m_pkthdr.csum_flags = M_CSUM_UDPv4;
+		m->m_pkthdr.csum_flags = M_CSUM_UDPv4 | M_CSUM_IPv4;
 		m->m_pkthdr.csum_data = offsetof(struct udphdr, uh_sum);
 		m->m_pkthdr.csum_data |= iphlen << 16;
 		break;
 	case IPPROTO_TCP:
-		m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
+		m->m_pkthdr.csum_flags = M_CSUM_TCPv4 | M_CSUM_IPv4;
 		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
 		m->m_pkthdr.csum_data |= iphlen << 16;
+		break;
+	case IPPROTO_ICMP:
+	case IPPROTO_IGMP:
+		m->m_pkthdr.csum_flags = M_CSUM_IPv4;
+		m->m_pkthdr.csum_data = iphlen << 16;
 		break;
 	default:
 	    {
@@ -152,6 +157,14 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m, bool data_validated)
 		 * Only compute the checksum if impossible to defer.
 		 */
 		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_rx;
+
+		/*
+		 * Always initialize the sum to 0!  Some HW assisted
+		 * checksumming requires this. in_undefer_cksum()
+		 * also needs it to be zero.
+		 */
+		if (m->m_pkthdr.csum_flags & M_CSUM_IPv4)
+			iph->ip_sum = 0;
 
 		if (sw_csum & (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4)) {
 			in_undefer_cksum(m, ehlen,

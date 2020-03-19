@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.91 2020/03/18 19:23:13 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.92 2020/03/19 10:53:43 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.91 2020/03/18 19:23:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.92 2020/03/19 10:53:43 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -387,7 +387,8 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	ifp->if_timer = 0;
 	ifp->if_snd.ifq_maxlen = uimax(ifqmaxlen, NET_TX_RING_SIZE * 2);
 	ifp->if_capabilities =
-		IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx
+		IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_IPv4_Tx
+		| IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx
 		| IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx;
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
@@ -1229,7 +1230,7 @@ xennet_softstart(void *arg)
 		}
 
 		if ((m->m_pkthdr.csum_flags &
-		    (M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
+		    (M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_IPv4)) != 0) {
 			txflags = NETTXF_csum_blank;
 		} else {
 			txflags = NETTXF_data_validated;
