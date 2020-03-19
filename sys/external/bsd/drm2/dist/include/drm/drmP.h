@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.35.4.1 2019/11/06 09:48:31 martin Exp $	*/
+/*	$NetBSD: drmP.h,v 1.35.4.2 2020/03/19 19:41:10 martin Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -821,7 +821,7 @@ struct drm_device {
 	struct drm_minor *primary;		/**< Primary node */
 	struct drm_minor *render;		/**< Render node */
 	atomic_t unplugged;			/**< Flag whether dev is dead */
-	struct inode *anon_inode;		/**< inode for private address-space */
+	void *anon_inode;		/**< inode for private address-space */
 	char *unique;				/**< unique name of the device */
 	/*@} */
 
