@@ -1,4 +1,4 @@
-#	$NetBSD: files.sociox,v 1.8 2020/03/19 20:53:53 nisimura Exp $
+#	$NetBSD: files.sociox,v 1.9 2020/03/19 22:17:45 nisimura Exp $
 #
 # Configuration info for Socionext Unifier/SC2A11
 #
@@ -35,5 +35,6 @@ file	arch/arm/sociox/sni_gpio.c		snigpio
 
 # Socionext EXIU external interrupt controller unit
 device	sniexiu
-attach	sniexiu at fdt
+attach	sniexiu at acpinodebus with sniexitu_acpi
+attach	sniexiu at fdt with sniexiu_fdt
 file	arch/arm/sociox/sni_exiu.c		sniexiu
