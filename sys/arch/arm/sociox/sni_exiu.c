@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_exiu.c,v 1.1 2020/03/18 08:51:08 nisimura Exp $	*/
+/*	$NetBSD: sni_exiu.c,v 1.2 2020/03/19 22:17:45 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_exiu.c,v 1.1 2020/03/18 08:51:08 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_exiu.c,v 1.2 2020/03/19 22:17:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,9 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: sni_exiu.c,v 1.1 2020/03/18 08:51:08 nisimura Exp $"
 #include <sys/systm.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 
-static int sniexiu_match(device_t, struct cfdata *, void *);
-static void sniexiu_attach(device_t, device_t, void *);
+static int sniexiu_fdt_match(device_t, struct cfdata *, void *);
+static void sniexiu_fdt_attach(device_t, device_t, void *);
+static int sniexiu_acpi_match(device_t, struct cfdata *, void *);
+static void sniexiu_acpi_attach(device_t, device_t, void *);
 
 struct sniexiu_softc {
 	device_t		sc_dev;
@@ -55,15 +60,22 @@ struct sniexiu_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_iob;
 	bus_size_t		sc_ios;
+	kmutex_t		sc_lock;
+	void			*sc_ih;
 	int			sc_phandle;
 };
 
-CFATTACH_DECL_NEW(sniexiu, sizeof(struct sniexiu_softc),
-    sniexiu_match, sniexiu_attach, NULL, NULL);
+CFATTACH_DECL_NEW(sniexiu_fdt, sizeof(struct sniexiu_softc),
+    sniexiu_fdt_match, sniexiu_fdt_attach, NULL, NULL);
 
-/* ARGSUSED */
+CFATTACH_DECL_NEW(sniexiu_acpi, sizeof(struct sniexiu_softc),
+    sniexiu_acpi_match, sniexiu_acpi_attach, NULL, NULL);
+
+static void sniexiu_attach_i(struct sniexiu_softc *);
+static int sniexiu_intr(void *);
+
 static int
-sniexiu_match(device_t parent, struct cfdata *match, void *aux)
+sniexiu_fdt_match(device_t parent, struct cfdata *match, void *aux)
 {
 	static const char * compatible[] = {
 		"socionext,synquacer-exiu",
@@ -74,9 +86,8 @@ sniexiu_match(device_t parent, struct cfdata *match, void *aux)
 	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
-/* ARGSUSED */
 static void
-sniexiu_attach(device_t parent, device_t self, void *aux)
+sniexiu_fdt_attach(device_t parent, device_t self, void *aux)
 {
 	struct sniexiu_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
@@ -111,15 +122,111 @@ sniexiu_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_naive(": External IRQ controller\n");
-	aprint_normal(": External IRQ controller\n");
-
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
 	sc->sc_iot = faa->faa_bst;
 	sc->sc_ioh = ioh;
 	sc->sc_iob = addr;
 	sc->sc_ios = size;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	sc->sc_ih = fdtbus_intr_establish(phandle,
+			0, IPL_NET, 0, sniexiu_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt\n");
+		goto fail;
+	}
+
+	sniexiu_attach_i(sc);
+	return;
+  fail:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	return;
+}
+
+static int
+sniexiu_acpi_match(device_t parent, struct cfdata *match, void *aux)
+{
+	static const char * compatible[] = {
+		"SCX0008",
+		NULL
+	};
+	struct acpi_attach_args *aa = aux;
+
+	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
+		return 0;
+	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+}
+
+static void
+sniexiu_acpi_attach(device_t parent, device_t self, void *aux)
+{
+	struct sniexiu_softc * const sc = device_private(self);
+	struct acpi_attach_args *aa = aux;
+	bus_space_handle_t ioh;
+	struct acpi_resources res;
+	struct acpi_mem *mem;
+	struct acpi_irq *irq;
+	ACPI_STATUS rv;
+
+	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
+	    &res, &acpi_resource_parse_ops_default);
+	if (ACPI_FAILURE(rv))
+		return;
+
+	mem = acpi_res_mem(&res, 0);
+	irq = acpi_res_irq(&res, 0);
+	if (mem == NULL || irq == NULL) {
+		aprint_error(": incomplete resources\n");
+		return;
+	}
+	if (mem->ar_length == 0) {
+		aprint_error(": zero length memory resource\n");
+		return;
+	}
+	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0,
+	    &ioh)) {
+		aprint_error(": couldn't map registers\n");
+		return;
+	}
+
+	sc->sc_dev = self;
+	sc->sc_iot = aa->aa_memt;
+	sc->sc_ioh = ioh;
+	sc->sc_iob = mem->ar_base;
+	sc->sc_ios = mem->ar_length;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	sc->sc_ih = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
+	    IPL_BIO, false, sniexiu_intr, sc, device_xname(self));
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt\n");
+		goto fail;
+	}
+
+	sniexiu_attach_i(sc);
+ fail:
+	acpi_resource_cleanup(&res);
+}
+
+static void
+sniexiu_attach_i(struct sniexiu_softc *sc)
+{
+
+	aprint_naive(": External IRQ controller\n");
+	aprint_normal(": External IRQ controller\n");
+
+	/* AAA */
 
 	return;
+}
+
+static int
+sniexiu_intr(void *arg)
+{
+	struct sniexiu_softc *sc = arg;
+
+	(void)sc;
+	return 1;
 }
