@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.31 2019/04/07 01:39:12 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.32 2020/03/20 07:44:10 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.31 2019/04/07 01:39:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.32 2020/03/20 07:44:10 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -797,7 +797,7 @@ decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d log. banks, %d phys. banks, "
 	    "%d.%03dns cycle time\n",
-	    s->sm_ddr3.ddr3_rows + 9, s->sm_ddr3.ddr3_cols + 12,
+	    s->sm_ddr3.ddr3_rows + 12, s->sm_ddr3.ddr3_cols + 9,
 	    1 << (s->sm_ddr3.ddr3_logbanks + 3),
 	    s->sm_ddr3.ddr3_physbanks + 1,
 	    cycle_time/1000, cycle_time % 1000);
