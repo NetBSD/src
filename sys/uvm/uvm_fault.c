@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.219 2020/03/17 18:31:39 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.220 2020/03/20 18:50:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.219 2020/03/17 18:31:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.220 2020/03/20 18:50:09 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1166,6 +1166,7 @@ uvm_fault_upper_lookup(
 	int lcv;
 	vaddr_t currva;
 	bool shadowed __unused;
+	bool entered;
 	UVMHIST_FUNC("uvm_fault_upper_lookup"); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap(if there) */
@@ -1179,17 +1180,8 @@ uvm_fault_upper_lookup(
 
 	currva = flt->startva;
 	shadowed = false;
+	entered = false;
 	for (lcv = 0; lcv < flt->npages; lcv++, currva += PAGE_SIZE) {
-		/*
-		 * don't play with VAs that are already mapped
-		 * (except for center)
-		 */
-		if (lcv != flt->centeridx &&
-		    pmap_extract(ufi->orig_map->pmap, currva, NULL)) {
-			pages[lcv] = PGO_DONTCARE;
-			continue;
-		}
-
 		/*
 		 * unmapped or center page.   check if any anon at this level.
 		 */
@@ -1213,11 +1205,20 @@ uvm_fault_upper_lookup(
 
 		KASSERT(anon->an_lock == amap->am_lock);
 
-		/* Ignore loaned and busy pages. */
-		if (pg && pg->loan_count == 0 && (pg->flags & PG_BUSY) == 0) {
+		/*
+		 * ignore loaned and busy pages.
+		 * don't play with VAs that are already mapped.
+		 */
+
+		if (pg && pg->loan_count == 0 && (pg->flags & PG_BUSY) == 0 &&
+		    !pmap_extract(ufi->orig_map->pmap, currva, NULL)) {
 			uvm_fault_upper_neighbor(ufi, flt, currva,
 			    pg, anon->an_ref > 1);
+			entered = true;
 		}
+	}
+	if (entered) {
+		pmap_update(ufi->orig_map->pmap);
 	}
 
 	/* locked: maps(read), amap(if there) */
@@ -1276,8 +1277,6 @@ uvm_fault_upper_neighbor(
 	    readonly ? (flt->enter_prot & ~VM_PROT_WRITE) :
 	    flt->enter_prot,
 	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
-
-	pmap_update(ufi->orig_map->pmap);
 }
 
 /*
