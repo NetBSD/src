@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.26 2020/03/17 21:24:30 skrll Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.27 2020/03/20 06:33:00 skrll Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.26 2020/03/17 21:24:30 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.27 2020/03/20 06:33:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -179,11 +179,13 @@ static int
 exynos_gpio_pin_read(void *cookie, int pin)
 {
 	struct exynos_gpio_bank * const bank = cookie;
+	uint8_t val;
 
 	KASSERT(pin < bank->bank_bits);
-	return (bus_space_read_1(bank->bank_sc->sc_bst,
-				 bank->bank_sc->sc_bsh,
-		EXYNOS_GPIO_DAT) >> pin) & 1;
+	val = bus_space_read_1(bank->bank_sc->sc_bst, bank->bank_sc->sc_bsh,
+	    EXYNOS_GPIO_DAT);
+
+	return __SHIFTOUT(val, __BIT(pin));
 }
 
 static void
@@ -193,15 +195,13 @@ exynos_gpio_pin_write(void *cookie, int pin, int value)
 	int val;
 
 	KASSERT(pin < bank->bank_bits);
-	val = bus_space_read_1(bank->bank_sc->sc_bst,
-			       bank->bank_sc->sc_bsh,
-			       EXYNOS_GPIO_DAT);
+	val = bus_space_read_1(bank->bank_sc->sc_bst, bank->bank_sc->sc_bsh,
+	    EXYNOS_GPIO_DAT);
 	val &= ~__BIT(pin);
 	if (value)
 		val |= __BIT(pin);
-	bus_space_write_1(bank->bank_sc->sc_bst,
-			  bank->bank_sc->sc_bsh,
-		EXYNOS_GPIO_DAT, val);
+	bus_space_write_1(bank->bank_sc->sc_bst, bank->bank_sc->sc_bsh,
+	    EXYNOS_GPIO_DAT, val);
 }
 
 static void
