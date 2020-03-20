@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.220 2020/03/20 18:50:09 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.221 2020/03/20 19:08:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.220 2020/03/20 18:50:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.221 2020/03/20 19:08:54 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -910,7 +910,7 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 		flt.anon_spare->an_ref--;
 		KASSERT(flt.anon_spare->an_ref == 0);
 		KASSERT(flt.anon_spare->an_lock == NULL);
-		uvm_anon_free(flt.anon_spare);
+		uvm_anfree(flt.anon_spare);
 	}
 	return error;
 }
