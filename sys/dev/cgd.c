@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.123 2020/03/11 13:48:45 mlelstv Exp $ */
+/* $NetBSD: cgd.c,v 1.124 2020/03/20 19:03:13 tnn Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.123 2020/03/11 13:48:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.124 2020/03/20 19:03:13 tnn Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.123 2020/03/11 13:48:45 mlelstv Exp $");
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/pool.h>
 #include <sys/ioctl.h>
@@ -636,11 +635,11 @@ cgd_getdata(struct cgd_softc *sc, unsigned long size)
 	if (data)
 		return data;
 
-	return malloc(size, M_DEVBUF, M_NOWAIT);
+	return kmem_intr_alloc(size, KM_NOSLEEP);
 }
 
 static void
-cgd_putdata(struct cgd_softc *sc, void *data)
+cgd_putdata(struct cgd_softc *sc, void *data, unsigned long size)
 {
 
 	if (data == sc->sc_data) {
@@ -648,7 +647,7 @@ cgd_putdata(struct cgd_softc *sc, void *data)
 		sc->sc_data_used = false;
 		mutex_exit(&sc->sc_lock);
 	} else
-		free(data, M_DEVBUF);
+		kmem_intr_free(data, size);
 }
 
 static int
@@ -804,7 +803,7 @@ cgd_iodone2(struct cgd_softc *sc, struct cgd_xfer *cx)
 
 	/* If we allocated memory, free it now... */
 	if (nbp->b_data != obp->b_data)
-		cgd_putdata(sc, nbp->b_data);
+		cgd_putdata(sc, nbp->b_data, nbp->b_bcount);
 
 	putiobuf(nbp);
 
@@ -857,7 +856,7 @@ cgd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	error = bdev_dump(sc->sc_tdev, blkno, buf, nbytes);
 
 	/* Release the buffer.  */
-	cgd_putdata(sc, buf);
+	cgd_putdata(sc, buf, nbytes);
 
 	/* Return any error from the underlying disk device.  */
 	return error;
@@ -1129,7 +1128,7 @@ cgd_ioctl_set(struct cgd_softc *sc, void *data, struct lwp *l)
 
 	bufq_alloc(&dksc->sc_bufq, "fcfs", 0);
 
-	sc->sc_data = malloc(MAXPHYS, M_DEVBUF, M_WAITOK);
+	sc->sc_data = kmem_alloc(MAXPHYS, KM_SLEEP);
 	sc->sc_data_used = false;
 
 	/* Attach the disk. */
@@ -1168,7 +1167,7 @@ cgd_ioctl_clr(struct cgd_softc *sc, struct lwp *l)
 	(void)vn_close(sc->sc_tvn, FREAD|FWRITE, l->l_cred);
 	sc->sc_cfuncs->cf_destroy(sc->sc_cdata.cf_priv);
 	kmem_free(sc->sc_tpath, sc->sc_tpathlen);
-	free(sc->sc_data, M_DEVBUF);
+	kmem_free(sc->sc_data, MAXPHYS);
 	sc->sc_data_used = false;
 	dk_detach(dksc);
 	disk_detach(&dksc->sc_dkdev);
@@ -1486,7 +1485,7 @@ selftest(void)
 
 		sc.sc_cdata.cf_blocksize /= 8;
 
-		buf = malloc(txtlen, M_DEVBUF, M_WAITOK);
+		buf = kmem_alloc(txtlen, KM_SLEEP);
 		memcpy(buf, selftests[i].ptxt, txtlen);
 
 		cgd_cipher(&sc, buf, buf, txtlen, selftests[i].blkno,
@@ -1499,7 +1498,7 @@ selftest(void)
 		if (memcmp(buf, selftests[i].ptxt, txtlen) != 0)
 			panic("decryption is broken");
 
-		free(buf, M_DEVBUF);
+		kmem_free(buf, txtlen);
 		sc.sc_cfuncs->cf_destroy(sc.sc_cdata.cf_priv);
 	}
 
