@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.23 2020/03/19 15:19:13 skrll Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.24 2020/03/20 06:18:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.23 2020/03/19 15:19:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.24 2020/03/20 06:18:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -439,7 +439,7 @@ dwc_mmc_bus_width(sdmmc_chipset_handle_t sch, int width)
 	}
 
 	sc->sc_mmc_width = width;
-	
+
 	return 0;
 }
 
