@@ -1315,7 +1315,11 @@ zfs_zget_cleaner(zfsvfs_t *zfsvfs, uint64_t obj_num, znode_t **zpp)
 		return (SET_ERROR(EINVAL));
 	}
 	hdl = dmu_buf_get_user(db);
-	ASSERT3P(hdl, !=, NULL);
+	if (hdl == NULL) {
+		sa_buf_rele(db, NULL);
+		ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
+		return (SET_ERROR(EINVAL));
+	}
 	zp = sa_get_userdata(hdl);
 	ASSERT3U(zp->z_id, ==, obj_num);
 	sa_buf_rele(db, NULL);
