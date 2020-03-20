@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.2 2020/03/20 09:41:24 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.3 2020/03/20 12:29:09 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.2 2020/03/20 09:41:24 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.3 2020/03/20 12:29:09 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -321,18 +321,21 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	int i, error = 0;
 
-	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
-		aprint_error(": couldn't get registers\n");
-		return;
-	}
-	error = bus_space_map(bst, addr, size, 0, &bsh);
-	if (error) {
-		aprint_error(": couldn't map registers: %d\n", error);
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0
+	    || bus_space_map(faa->faa_bst, addr, size, 0, &bsh) != 0) {
+		aprint_error(": unable to map device\n");
 		return;
 	}
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error(": failed to decode interrupt\n");
 		return;
+	}
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0,
+	    ave_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
+		    intrstr);
+		goto fail;
 	}
 
 	sc->sc_dev = self;
@@ -341,25 +344,20 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mapsize = size;
 	sc->sc_dmat = faa->faa_dmat;
 
-	aprint_naive("\n");
-	aprint_normal(": Gigabit Ethernet Controller\n");
-
 	hwimp = CSR_READ(sc, AVEID);
 	hwver = CSR_READ(sc, AVEHWVER);
-	aprint_normal_dev(self, "Unifier %c%c%c%c GbE (%d.%d)\n",
+
+	aprint_naive("\n");
+	aprint_normal(": Gigabit Ethernet Controller\n");
+	aprint_normal_dev(self, "UniPhier %c%c%c%c AVE GbE (%d.%d)\n",
 	    hwimp >> 24, hwimp >> 16, hwimp >> 8, hwimp,
 	    hwver >> 8, hwver & 0xff);
-
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET,
-		FDT_INTR_FLAGS, ave_intr, sc);
-	if (sc->sc_ih == NULL)
-		goto fail;
 	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
 
 	phy_mode = fdtbus_get_string(phandle, "phy-mode");
 	if (phy_mode == NULL) {
 		aprint_error(": missing 'phy-mode' property\n");
-		return;
+		phy_mode = "rgmii";
 	}
 	if (strcmp(phy_mode, "rgmii") == 0)
 		sc->sc_phymode = 0;		/* RGMII */
