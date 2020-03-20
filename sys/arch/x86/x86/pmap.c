@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.378 2020/03/19 18:58:14 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.379 2020/03/20 19:06:14 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.378 2020/03/19 18:58:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.379 2020/03/20 19:06:14 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2163,20 +2163,22 @@ pmap_remove_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 
 	pmap_check_pv(pmap, ptp, pp, va, true);
 
-	mutex_spin_enter(&pp->pp_lock);
-	pp->pp_attrs |= oattrs;
 	if (pve == NULL) {
+		mutex_spin_enter(&pp->pp_lock);
 		KASSERT(pp->pp_pte.pte_ptp == ptp);
 		KASSERT(pp->pp_pte.pte_va == va);
+		pp->pp_attrs |= oattrs;
 		pp->pp_pte.pte_ptp = NULL;
 		pp->pp_pte.pte_va = 0;
 		mutex_spin_exit(&pp->pp_lock);
 	} else {
+		mutex_spin_enter(&pp->pp_lock);
 		KASSERT(pp->pp_pte.pte_ptp != ptp ||
 		    pp->pp_pte.pte_va != va);
 		KASSERT(pve->pve_pte.pte_ptp == ptp);
 		KASSERT(pve->pve_pte.pte_va == va);
 		KASSERT(pve->pve_pp == pp);
+		pp->pp_attrs |= oattrs;
 		LIST_REMOVE(pve, pve_list);
 		mutex_spin_exit(&pp->pp_lock);
 
@@ -2347,7 +2349,7 @@ pmap_get_ptp(struct pmap *pmap, struct pmap_ptparray *pt, vaddr_t va,
 		if (pt->pg[i] == NULL) {
 			pmap_unget_ptp(pmap, pt);
 			return ENOMEM;
-		} else {
+		} else if (pt->alloced[i]) {
 			pt->pg[i]->uanon = (struct vm_anon *)(vaddr_t)~0L;
 			rb_tree_init(&VM_PAGE_TO_PP(pt->pg[i])->pp_rb,
 			    &pmap_rbtree_ops);
@@ -3427,10 +3429,8 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pd_entry_t pde;
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
-	struct cpu_info *ci;
 	paddr_t pa;
-	lwp_t *l;
-	bool hard, rv;
+	bool rv;
 	int lvl;
 
 	if (__predict_false(pmap->pm_extract != NULL)) {
@@ -3448,29 +3448,11 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 
 	rv = false;
 	pa = 0;
-	l = curlwp;
 
-	ci = l->l_cpu;
-	if (pmap == pmap_kernel() ||
-	    __predict_true(!ci->ci_want_pmapload && ci->ci_pmap == pmap)) {
-		/*
-		 * no need to lock, because it's pmap_kernel() or our
-		 * own pmap and is active.  if a user pmap, the caller
-		 * will hold the vm_map write/read locked and so prevent
-		 * entries from disappearing while we are here.  ptps
-		 * can disappear via pmap_remove() and pmap_protect(),
-		 * but they are called with the vm_map write locked.
-		 */
-		hard = false;
-		ptes = PTE_BASE;
-		pdes = normal_pdes;
-		kpreempt_disable();
-	} else {
-		/* we lose, do it the hard way. */
-		hard = true;
+	if (pmap != pmap_kernel()) {
 		mutex_enter(&pmap->pm_lock);
-		pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 	}
+	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 	if (pmap_pdes_valid(va, pdes, &pde, &lvl)) {
 		if (lvl == 2) {
 			pa = (pde & PTE_LGFRAME) | (va & (NBPD_L2 - 1));
@@ -3484,15 +3466,14 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 			}
 		}
 	}
-	if (__predict_false(hard)) {
-		pmap_unmap_ptes(pmap, pmap2);
+	pmap_unmap_ptes(pmap, pmap2);
+	if (pmap != pmap_kernel()) {
 		mutex_exit(&pmap->pm_lock);
-	} else {
-		kpreempt_enable();
 	}
 	if (pap != NULL) {
 		*pap = pa;
 	}
+
 	return rv;
 }
 
