@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.1 2020/03/20 00:27:58 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.2 2020/03/20 09:41:24 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.1 2020/03/20 00:27:58 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.2 2020/03/20 09:41:24 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -290,14 +290,11 @@ static int
 ave_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	static const char * compatible[] = {
-#ifdef _LP64
 		"socionext,unifier-ld20-ave4",
-#else
 		"socionext,unifier-pro4-ave4",
 		"socionext,unifier-pxs2-ave4",
 		"socionext,unifier-ld11-ave4",
 		"socionext,unifier-pxs3-ave4",
-#endif
 		NULL
 	};
 	struct fdt_attach_args * const faa = aux;
