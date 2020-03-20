@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.374 2020/03/14 17:29:53 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.375 2020/03/20 19:08:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.374 2020/03/14 17:29:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.375 2020/03/20 19:08:54 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -3796,7 +3796,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	struct vm_map_entry *current, *entry;
 	struct uvm_object *uobj;
 	struct vm_amap *amap;
-	struct vm_anon *anon, *anon_tofree;
+	struct vm_anon *anon;
 	struct vm_page *pg;
 	vaddr_t offset;
 	vsize_t size;
@@ -3857,7 +3857,6 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 
 		offset = start - current->start;
 		size = MIN(end, current->end) - start;
-		anon_tofree = NULL;
 
 		amap_lock(amap, RW_WRITER);
 		for ( ; size != 0; size -= PAGE_SIZE, offset += PAGE_SIZE) {
@@ -3917,13 +3916,12 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 				amap_unadd(&current->aref, offset);
 				refs = --anon->an_ref;
 				if (refs == 0) {
-					anon->an_link = anon_tofree;
-					anon_tofree = anon;
+					uvm_anfree(anon);
 				}
 				continue;
 			}
 		}
-		uvm_anon_freelst(amap, anon_tofree);
+		amap_unlock(amap);
 
  flush_object:
 		/*

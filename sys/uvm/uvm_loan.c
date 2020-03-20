@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.98 2020/03/17 18:31:39 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.99 2020/03/20 19:08:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.98 2020/03/17 18:31:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.99 2020/03/20 19:08:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -808,7 +808,7 @@ fail:
 	uvmfault_unlockall(ufi, amap, uobj, NULL);
 	if (anon) {
 		anon->an_ref--;
-		uvm_anon_free(anon);
+		uvm_anfree(anon);
 	}
 #endif	/* notdef */
 	return (-1);
@@ -943,11 +943,10 @@ uvm_unloananon(struct vm_anon **aloans, int nanons)
 	while (nanons-- > 0) {
 		anon = *aloans++;
 		if (--anon->an_ref == 0) {
-			anon->an_link = to_free;
-			to_free = anon;
+			uvm_anfree(anon);
 		}
 	}
-	uvm_anon_freelst(amap, to_free);
+	amap_unlock(amap);
 #endif	/* notdef */
 }
 
