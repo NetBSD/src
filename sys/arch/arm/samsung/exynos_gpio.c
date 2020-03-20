@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.27 2020/03/20 06:33:00 skrll Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.28 2020/03/20 06:35:59 skrll Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.27 2020/03/20 06:33:00 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.28 2020/03/20 06:35:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,11 +63,7 @@ struct exynos_gpio_bank {
 	const bus_addr_t	bank_core_offset;
 	const uint8_t		bank_bits;
 
-	uint8_t			bank_pin_mask;
-	uint8_t			bank_pin_inuse_mask;
-	bus_space_handle_t	bank_bsh;
 	struct exynos_gpio_pin_cfg bank_cfg;
-	struct exynos_gpio_bank * bank_next;
 };
 
 struct exynos_gpio_pin {
@@ -310,10 +306,6 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 	bank->bank_sc = sc;
 	bank->bank_dev = config_found_ia(parent->sc_dev, "gpiobus", &gba,
 					 exynos_gpio_cfprint);
-
-	bank->bank_pin_mask = __BIT(bank->bank_bits) - 1;
-	bank->bank_pin_inuse_mask = 0;
-
 
 	/* read in our initial settings */
 	bank->bank_cfg.cfg = GPIO_READ(bank, EXYNOS_GPIO_CON);
