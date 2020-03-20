@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.10 2020/03/20 01:15:05 thorpej Exp $
+.\"	$NetBSD: usbnet.9,v 1.11 2020/03/20 08:02:55 wiz Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -279,9 +279,8 @@ Returns true if device is dying (has been pulled or deactivated,
 pending detach.)
 .El
 .Pp
-Refrence counting functions for
+Reference counting functions for
 .Fa struct usbnet :
-.Pp
 .Bl -tag -width 4n
 .It Fn usbnet_busy un
 Increases the reference count on the driver instance, preventing
@@ -289,7 +288,7 @@ detach from occurring while the driver is blocked accessing the
 device.
 Must be called with the core lock held.
 .It Fn usbnet_unbusy un
-Decreses the reference count on the driver instance.
+Decreases the reference count on the driver instance.
 Once the final reference has been dropped, if a detach event
 is pending, it is allowed to proceed.
 Must be called with the core lock held.
