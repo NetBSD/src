@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.24 2020/03/20 06:18:45 skrll Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.25 2020/03/20 17:07:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.24 2020/03/20 06:18:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.25 2020/03/20 17:07:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -807,11 +807,11 @@ dwc_mmc_init(struct dwc_mmc_softc *sc)
 {
 	uint32_t val;
 
-	if (sc->sc_fifo_reg == 0) {
-		val = MMC_READ(sc, DWC_MMC_VERID);
-		const u_int id = __SHIFTOUT(val, DWC_MMC_VERID_ID);
+	val = MMC_READ(sc, DWC_MMC_VERID);
+	sc->sc_verid = __SHIFTOUT(val, DWC_MMC_VERID_ID);
 
-		if (id < DWC_MMC_VERID_240A)
+	if (sc->sc_fifo_reg == 0) {
+		if (sc->sc_verid < DWC_MMC_VERID_240A)
 			sc->sc_fifo_reg = 0x100;
 		else
 			sc->sc_fifo_reg = 0x200;
