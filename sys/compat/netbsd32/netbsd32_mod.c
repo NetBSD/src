@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.21 2020/03/15 14:15:12 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.22 2020/03/21 16:17:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.21 2020/03/15 14:15:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.22 2020/03/21 16:17:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.21 2020/03/15 14:15:12 pgoyette E
 #include <sys/module_hook.h>
 #include <sys/compat_stub.h>
 
+#include <compat/netbsd32/netbsd32_sysctl.h>
 #include <compat/netbsd32/netbsd32_kern_proc.h>
 #include <compat/netbsd32/netbsd32_exec.h>
 
@@ -180,6 +181,7 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 		MODULE_HOOK_UNSET(amd64_oosyscall_hook);
 #endif /* defined(__amd64__) */
 		netbsd32_machdep_md_fini();
+		netbsd32_sysctl_fini();
 		netbsd32_kern_proc_32_fini();
 
 		error = exec_remove(netbsd32_execsw,

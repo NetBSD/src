@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.43 2020/03/17 17:16:26 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.44 2020/03/21 16:17:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.43 2020/03/17 17:16:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.44 2020/03/21 16:17:08 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.43 2020/03/17 17:16:26 pgoyett
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+#include <compat/netbsd32/netbsd32_sysctl.h>
 
 #if defined(DDB)
 #include <ddb/ddbvar.h>
@@ -178,6 +179,13 @@ SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "netbsd32 shadow tree")
 		       CTLTYPE_STRING, "machine_arch", NULL,
 		       sysctl_hw_machine_arch32, 0, NULL, 0,
 		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
+}
+
+void
+netbsd32_sysctl_fini(void)
+{
+
+	sysctl_free(&netbsd32_sysctl_root);
 }
 
 int
