@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.69 2020/03/16 21:20:11 pgoyette Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.70 2020/03/21 16:30:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.69 2020/03/16 21:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.70 2020/03/21 16:30:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.69 2020/03/16 21:20:11 pgoyette
 MODULE(MODULE_CLASS_VFS, overlay, "layerfs");
 
 VFS_PROTOS(ov);
-
-static struct sysctllog *overlay_sysctl_log;
 
 #define	NOVERLAYNODECACHE	16
 
@@ -273,7 +271,7 @@ struct vfsops overlay_vfsops = {
 SYSCTL_SETUP(overlay_sysctl_setup, "overlay fs sysctl")
 {
 
-	sysctl_createv(&overlay_sysctl_log, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "overlay",
 		       SYSCTL_DESCR("Overlay file system"),
 		       NULL, 0, NULL, 0,

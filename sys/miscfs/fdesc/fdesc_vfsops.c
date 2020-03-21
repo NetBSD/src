@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.94 2020/03/16 21:20:11 pgoyette Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.95 2020/03/21 16:30:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.94 2020/03/16 21:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.95 2020/03/21 16:30:39 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -67,8 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.94 2020/03/16 21:20:11 pgoyette E
 MODULE(MODULE_CLASS_VFS, fdesc, NULL);
 
 VFS_PROTOS(fdesc);
-
-static struct sysctllog *fdesc_sysctl_log;
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
@@ -266,7 +264,7 @@ struct vfsops fdesc_vfsops = {
 SYSCTL_SETUP(fdesc_sysctl_setup, "fdesc sysctl")
 {
 
-		sysctl_createv(&fdesc_sysctl_log, 0, NULL, NULL,
+		sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "fdesc",
 			       SYSCTL_DESCR("File-descriptor file system"),
