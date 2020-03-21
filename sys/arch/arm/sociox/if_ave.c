@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.5 2020/03/21 04:35:20 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.6 2020/03/21 07:16:16 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,11 +30,13 @@
  */
 
 /*
- * Socionext Uniphier AVE GbE driver
+ * Socionext UniPhier AVE GbE driver
+ *
+ * There are two groups for 64bit paddr model and 32bit paddr.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.5 2020/03/21 04:35:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.6 2020/03/21 07:16:16 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -125,15 +127,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.5 2020/03/21 04:35:20 nisimura Exp $");
 #define AVEAFRING	0x0f00		/* entry ring number selector */
 #define AVEAFEN		0x0ffc		/* entry enable bit vector */
 
-#define AVETDB		0x1000		/* 64bit Tx descriptor storage base */
-#define AVERDB		0x1c00		/* 64bit Rx descriptor storage base */
-#define AVE32TDB	0x1000		/* 32bit Tx descriptor storage base */
-#define AVE32RDB	0x1800		/* 32bit Rx descriptor storage base */
+#define AVETDB		0x1000	/* 64bit Tx descriptor store, upto 256 */
+#define AVERDB		0x1c00	/* 64bit Rx descriptor store, upto 2048 */
+#define AVE32TDB	0x1000	/* 32bit Tx store base, upto 256 */
+#define AVE32RDB	0x1800	/* 32bit Rx store base, upto 2048 */
 
 /*
  * descriptor size is 12 bytes when 64bit paddr design, 8 bytes otherwise.
- * 3KB/24KB split or 64bit paddr Tx/Rx descriptor storage.
- * 2KB/16KB split or 32bit paddr Tx/Rx descriptor storage.
  */
 struct tdes {
 	uint32_t t0, t1, t2;
@@ -165,10 +165,10 @@ struct rdes32 { uint32_t r0, r1; };
 /* R2 frame address 63:32 */
 
 #define AVE_NTXSEGS		16
-#define AVE_TXQUEUELEN		8
+#define AVE_TXQUEUELEN		(AVE_NTXDESC / AVE_NTXSEGS)
 #define AVE_TXQUEUELEN_MASK	(AVE_TXQUEUELEN - 1)
 #define AVE_TXQUEUE_GC		(AVE_TXQUEUELEN / 4)
-#define AVE_NTXDESC		(AVE_TXQUEUELEN * AVE_NTXSEGS)
+#define AVE_NTXDESC		256			/* HW limit */
 #define AVE_NTXDESC_MASK	(AVE_NTXDESC - 1)
 #define AVE_NEXTTX(x)		(((x) + 1) & AVE_NTXDESC_MASK)
 #define AVE_NEXTTXS(x)		(((x) + 1) & AVE_TXQUEUELEN_MASK)
@@ -232,8 +232,8 @@ struct ave_softc {
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
 
-	struct tdes *sc_txdescs;	/* PTR to tdes [NTXDESC] array */
-	struct rdes *sc_rxdescs;	/* PTR to rdes [NRXDESC] array */
+	struct tdes *sc_txdescs;	/* PTR to tdes [NTXDESC] store */
+	struct rdes *sc_rxdescs;	/* PTR to rdes [NRXDESC] store */
 	struct tdes32 *sc_txd32;
 	struct rdes32 *sc_rxd32;
 
@@ -344,19 +344,19 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	hwver = CSR_READ(sc, AVEHWVER);
 	sc->sc_model = of_search_compatible(phandle, compat_data)->data;
 
-	aprint_naive("\n");
-	aprint_normal(": Gigabit Ethernet Controller\n");
-	aprint_normal_dev(self, "UniPhier %c%c%c%c AVE %d GbE (%d.%d)\n",
-	    hwimp >> 24, hwimp >> 16, hwimp >> 8, hwimp,
-	    sc->sc_model,
-	    hwver >> 8, hwver & 0xff);
-	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
-
 	phy_mode = fdtbus_get_string(phandle, "phy-mode");
 	if (phy_mode == NULL) {
 		aprint_error(": missing 'phy-mode' property\n");
 		phy_mode = "rgmii";
 	}
+
+	aprint_naive("\n");
+	aprint_normal(": Gigabit Ethernet Controller\n");
+	aprint_normal_dev(self, "UniPhier %c%c%c%c AVE %d GbE (%d.%d) %s\n",
+	    hwimp >> 24, hwimp >> 16, hwimp >> 8, hwimp,
+	    sc->sc_model, hwver >> 8, hwver & 0xff, phy_mode);
+	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
+
 	if (strcmp(phy_mode, "rgmii") == 0)
 		sc->sc_phymode = 0;		/* RGMII */
 	else
@@ -423,14 +423,15 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	callout_setfunc(&sc->sc_tick_ch, phy_tick, sc);
 
 	/*
-	 * no need to build Tx/Rx descriptor control_data.
-	 * go straight to make dmamap to hold Tx segments/Rx frames.
+	 * HW has a dedicated store to hold Tx/Rx descriptor arrays.
+	 * so no need to build Tx/Rx descriptor control_data.
+	 * go straight to make dmamap to hold Tx segments and Rx frames.
 	 */
 	for (i = 0; i < AVE_TXQUEUELEN; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    AVE_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev,
+			aprint_error_dev(self,
 			    "unable to create tx DMA map %d, error = %d\n",
 			    i, error);
 			goto fail_4;
@@ -439,7 +440,7 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < AVE_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    1, MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev,
+			aprint_error_dev(self,
 			    "unable to create rx DMA map %d, error = %d\n",
 			    i, error);
 			goto fail_5;
@@ -448,12 +449,12 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (pmf_device_register(sc->sc_dev, NULL, NULL))
-		pmf_class_network_register(sc->sc_dev, ifp);
+		pmf_class_network_register(self, ifp);
 	else
-		aprint_error_dev(sc->sc_dev,
+		aprint_error_dev(self,
 			"couldn't establish power handler\n");
 
-	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
+	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	return;
@@ -486,7 +487,7 @@ ave_reset(struct ave_softc *sc)
 	CSR_WRITE(sc, AVEGR, GR_RXRST); /* assert RxFIFO reset operation */
 	DELAY(50);
 	CSR_WRITE(sc, AVEGR, 0);	/* negate reset */
-	CSR_WRITE(sc, AVEGISR, GISR_RXOVF);
+	CSR_WRITE(sc, AVEGISR, GISR_RXOVF); /* clear OVF condition */
 }
 
 static int
