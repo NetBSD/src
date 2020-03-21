@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mod.c,v 1.12 2020/03/16 21:20:09 pgoyette Exp $	*/
+/*	$NetBSD: linux_mod.c,v 1.13 2020/03/21 16:28:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.12 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.13 2020/03/21 16:28:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -171,6 +171,7 @@ compat_linux_modcmd(modcmd_t cmd, void *arg)
 		error = exec_remove(linux_execsw, __arraycount(linux_execsw));
 		if (error)
 			return error;
+		linux_sysctl_fini();
 		linux_futex_fini();
 		return 0;
 
