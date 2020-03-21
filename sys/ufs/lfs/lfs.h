@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.205 2020/02/23 08:49:34 riastradh Exp $	*/
+/*	$NetBSD: lfs.h,v 1.206 2020/03/21 06:09:33 riastradh Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -355,6 +355,7 @@ struct lfs_dirheader32 {
 	uint8_t  dh_type; 		/* file type, see below */
 	uint8_t  dh_namlen;		/* length of string in d_name */
 };
+__CTASSERT(sizeof(struct lfs_dirheader32) == 8);
 
 struct lfs_dirheader64 {
 	uint32_t dh_inoA;		/* inode number of entry */
@@ -363,6 +364,7 @@ struct lfs_dirheader64 {
 	uint8_t  dh_type; 		/* file type, see below */
 	uint8_t  dh_namlen;		/* length of string in d_name */
 };
+__CTASSERT(sizeof(struct lfs_dirheader64) == 12);
 
 union lfs_dirheader {
 	struct lfs_dirheader64 u_64;
@@ -381,6 +383,7 @@ struct lfs_dirtemplate32 {
 	struct lfs_dirheader32	dotdot_header;
 	char			dotdot_name[4];	/* ditto */
 };
+__CTASSERT(sizeof(struct lfs_dirtemplate32) == 2*(8 + 4));
 
 struct lfs_dirtemplate64 {
 	struct lfs_dirheader64	dot_header;
@@ -388,6 +391,7 @@ struct lfs_dirtemplate64 {
 	struct lfs_dirheader64	dotdot_header;
 	char			dotdot_name[4];	/* ditto */
 };
+__CTASSERT(sizeof(struct lfs_dirtemplate64) == 2*(12 + 4));
 
 union lfs_dirtemplate {
 	struct lfs_dirtemplate64 u_64;
@@ -408,6 +412,7 @@ struct lfs_odirtemplate {
 	uint16_t	dotdot_namlen;
 	char		dotdot_name[4];	/* ditto */
 };
+__CTASSERT(sizeof(struct lfs_odirtemplate) == 2*(8 + 4));
 #endif
 
 /*
@@ -441,6 +446,7 @@ struct lfs32_dinode {
 	uint32_t	di_gid;		/* 116: File group. */
 	uint64_t	di_modrev;	/* 120: i_modrev for NFSv4 */
 };
+__CTASSERT(sizeof(struct lfs32_dinode) == 128);
 
 struct lfs64_dinode {
 	uint16_t	di_mode;	/*   0: IFMT, permissions; see below. */
@@ -469,6 +475,7 @@ struct lfs64_dinode {
 	uint64_t	di_inumber;	/* 240: Inode number */
 	uint64_t	di_spare[1];	/* 248: Reserved; currently unused */
 };
+__CTASSERT(sizeof(struct lfs64_dinode) == 256);
 
 union lfs_dinode {
 	struct lfs64_dinode u_64;
@@ -529,6 +536,7 @@ struct segusage {
 	uint32_t su_flags;		/* 12: segment flags */
 	uint64_t su_lastmod;		/* 16: last modified timestamp */
 };
+__CTASSERT(sizeof(struct segusage) == 24);
 
 typedef struct segusage_v1 SEGUSE_V1;
 struct segusage_v1 {
@@ -538,6 +546,7 @@ struct segusage_v1 {
 	uint16_t su_ninos;		/* 10: number of inode blocks in seg */
 	uint32_t su_flags;		/* 12: segment flags  */
 };
+__CTASSERT(sizeof(struct segusage_v1) == 16);
 
 /*
  * On-disk file information.  One per file with data blocks in the segment.
@@ -555,6 +564,7 @@ struct finfo64 {
 	uint32_t fi_lastlength;		/* length of last block in array */
 	uint32_t fi_pad;		/* unused */
 };
+__CTASSERT(sizeof(struct finfo64) == 24);
 
 typedef struct finfo32 FINFO32;
 struct finfo32 {
@@ -563,6 +573,7 @@ struct finfo32 {
 	uint32_t fi_ino;		/* inode number */
 	uint32_t fi_lastlength;		/* length of last block in array */
 };
+__CTASSERT(sizeof(struct finfo32) == 16);
 
 typedef union finfo {
 	struct finfo64 u_64;
@@ -580,10 +591,12 @@ typedef union finfo {
 typedef struct iinfo64 {
 	uint64_t ii_block;		/* block number */
 } IINFO64;
+__CTASSERT(sizeof(struct iinfo64) == 8);
 
 typedef struct iinfo32 {
 	uint32_t ii_block;		/* block number */
 } IINFO32;
+__CTASSERT(sizeof(struct iinfo32) == 4);
 
 typedef union iinfo {
 	struct iinfo64 u_64;
@@ -608,6 +621,7 @@ struct ifile64 {
 	int64_t	  if_daddr;		/* inode disk address */
 	uint64_t if_nextfree;		/* next-unallocated inode */
 };
+__CTASSERT(sizeof(struct ifile64) == 32);
 
 typedef struct ifile32 IFILE32;
 struct ifile32 {
@@ -617,6 +631,7 @@ struct ifile32 {
 	uint32_t if_atime_sec;		/* Last access time, seconds */
 	uint32_t if_atime_nsec;		/* and nanoseconds */
 };
+__CTASSERT(sizeof(struct ifile32) == 20);
 
 typedef struct ifile_v1 IFILE_V1;
 struct ifile_v1 {
@@ -628,6 +643,7 @@ struct ifile_v1 {
 	struct timespec if_atime;	/* Last access time */
 #endif
 };
+__CTASSERT(sizeof(struct ifile_v1) == 12);
 
 /*
  * Note: struct ifile_v1 is often handled by accessing the first three
@@ -657,6 +673,7 @@ typedef struct _cleanerinfo32 {
 	uint32_t free_tail;		/* 20: tail of the inode free list */
 	uint32_t flags;			/* 24: status word from the kernel */
 } CLEANERINFO32;
+__CTASSERT(sizeof(struct _cleanerinfo32) == 28);
 
 typedef struct _cleanerinfo64 {
 	uint32_t clean;			/* 0: number of clean segments */
@@ -668,6 +685,7 @@ typedef struct _cleanerinfo64 {
 	uint32_t flags;			/* 40: status word from the kernel */
 	uint32_t pad;			/* 44: must be 64-bit aligned */
 } CLEANERINFO64;
+__CTASSERT(sizeof(struct _cleanerinfo64) == 48);
 
 /* this must not go to disk directly of course */
 typedef union _cleanerinfo {
@@ -705,6 +723,7 @@ struct segsum_v1 {
 	uint16_t ss_pad;		/* 26: extra space */
 	/* FINFO's and inode daddr's... */
 };
+__CTASSERT(sizeof(struct segsum_v1) == 28);
 
 typedef struct segsum32 SEGSUM32;
 struct segsum32 {
@@ -722,6 +741,7 @@ struct segsum32 {
 	uint64_t ss_create;		/* 40: time stamp */
 	/* FINFO's and inode daddr's... */
 };
+__CTASSERT(sizeof(struct segsum32) == 48);
 
 typedef struct segsum64 SEGSUM64;
 struct segsum64 {
@@ -739,6 +759,7 @@ struct segsum64 {
 	uint64_t ss_create;		/* 48: time stamp */
 	/* FINFO's and inode daddr's... */
 };
+__CTASSERT(sizeof(struct segsum64) == 56);
 
 typedef union segsum SEGSUM;
 union segsum {
