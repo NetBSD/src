@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.4 2020/03/21 01:17:51 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.5 2020/03/21 04:35:20 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.4 2020/03/21 01:17:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.5 2020/03/21 04:35:20 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -125,16 +125,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.4 2020/03/21 01:17:51 nisimura Exp $");
 #define AVEAFRING	0x0f00		/* entry ring number selector */
 #define AVEAFEN		0x0ffc		/* entry enable bit vector */
 
-#ifdef _LP64
 #define AVETDB		0x1000		/* 64bit Tx descriptor storage base */
 #define AVERDB		0x1c00		/* 64bit Rx descriptor storage base */
-#else
-#define AVETDB		0x1000		/* 32bit Tx descriptor storage base */
-#define AVERDB		0x1800		/* 32bit Rx descriptor storage base */
-#endif
+#define AVE32TDB	0x1000		/* 32bit Tx descriptor storage base */
+#define AVE32RDB	0x1800		/* 32bit Rx descriptor storage base */
 
 /*
- * descriptor size is 12 bytes when _LP64, 8 bytes otherwise.
+ * descriptor size is 12 bytes when 64bit paddr design, 8 bytes otherwise.
  * 3KB/24KB split or 64bit paddr Tx/Rx descriptor storage.
  * 2KB/16KB split or 32bit paddr Tx/Rx descriptor storage.
  */
@@ -145,6 +142,9 @@ struct tdes {
 struct rdes {
 	uint32_t r0, r1, r2;
 };
+
+struct tdes32 { uint32_t t0, t1; };
+struct rdes32 { uint32_t r0, r1; };
 
 #define T0_OWN		(1U<<31)	/* desc is ready to Tx */
 #define T0_IOC		(1U<<29)	/* post interrupt on Tx completes */
@@ -177,7 +177,6 @@ struct rdes {
 #define AVE_NRXDESC_MASK	(AVE_NRXDESC - 1)
 #define AVE_NEXTRX(x)		(((x) + 1) & AVE_NRXDESC_MASK)
 
-#ifdef _LP64
 #define AVE_INIT_RXDESC(sc, x)						\
 do {									\
 	struct ave_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
@@ -189,18 +188,17 @@ do {									\
 	__rxd->r1 = htole32(BUS_ADDR_LO32(__paddr));			\
 	__rxd->r0 = R0_OWN | R0_FL_MASK;				\
 } while (/*CONSTCOND*/0)
-#else
-#define AVE_INIT_RXDESC(sc, x)						\
+
+#define AVE32_INIT_RXDESC(sc, x)					\
 do {									\
 	struct ave_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
-	struct rdes *__rxd = &(sc)->sc_rxdescs[(x)];			\
+	struct rdes32 *__rxd = &(sc)->sc_rxd32[(x)];			\
 	struct mbuf *__m = __rxs->rxs_mbuf;				\
 	bus_addr_t __paddr =__rxs->rxs_dmamap->dm_segs[0].ds_addr;	\
 	__m->m_data = __m->m_ext.ext_buf;				\
 	__rxd->r1 = htole32(__paddr);					\
 	__rxd->r0 = R0_OWN | R0_FL_MASK;				\
 } while (/*CONSTCOND*/0)
-#endif
 
 struct ave_txsoft {
 	struct mbuf *txs_mbuf;		/* head of our mbuf chain */
@@ -236,6 +234,8 @@ struct ave_softc {
 
 	struct tdes *sc_txdescs;	/* PTR to tdes [NTXDESC] array */
 	struct rdes *sc_rxdescs;	/* PTR to rdes [NRXDESC] array */
+	struct tdes32 *sc_txd32;
+	struct rdes32 *sc_rxd32;
 
 	struct ave_txsoft sc_txsoft[AVE_TXQUEUELEN];
 	struct ave_rxsoft sc_rxsoft[AVE_NRXDESC];
@@ -515,6 +515,8 @@ ave_init(struct ifnet *ifp)
 	/* set ptr to Tx/Rx descriptor store */
 	sc->sc_txdescs = (void *)((uintptr_t)sc->sc_sh + AVETDB);
 	sc->sc_rxdescs = (void *)((uintptr_t)sc->sc_sh + AVERDB);
+	sc->sc_txd32 =   (void *)((uintptr_t)sc->sc_sh + AVE32TDB);
+	sc->sc_rxd32 =   (void *)((uintptr_t)sc->sc_sh + AVE32RDB);
 
 	/* build sane and loaded Tx/Rx descriptors */
 	memset(sc->sc_txdescs, 0, sizeof(struct tdes)*AVE_NTXDESC);
@@ -969,12 +971,8 @@ ave_start(struct ifnet *ifp)
 			 * yet.	 That could cause a race condition.
 			 * We'll do it below.
 			 */
-#ifdef _LP64
 			tdes->t2 = htole32(BUS_ADDR_HI32(paddr));
 			tdes->t1 = htole32(BUS_ADDR_LO32(paddr));
-#else
-			tdes->t1 = htole32(paddr);
-#endif
 			tdes->t0 = tdes0 | sc->sc_t0csum
 			     | (dmamap->dm_segs[seg].ds_len & T0_TBS_MASK);
 			tdes0 = T0_OWN; /* 2nd and other segments */
