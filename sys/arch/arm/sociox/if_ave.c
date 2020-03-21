@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.3 2020/03/20 12:29:09 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.4 2020/03/21 01:17:51 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.3 2020/03/20 12:29:09 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.4 2020/03/21 01:17:51 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -139,17 +139,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.3 2020/03/20 12:29:09 nisimura Exp $");
  * 2KB/16KB split or 32bit paddr Tx/Rx descriptor storage.
  */
 struct tdes {
-	uint32_t t0, t1;
-#ifdef _LP64
-	uint32_t t2;
-#endif
+	uint32_t t0, t1, t2;
 };
 
 struct rdes {
-	uint32_t r0, r1;
-#ifdef _LP64
-	uint32_t r2;
-#endif
+	uint32_t r0, r1, r2;
 };
 
 #define T0_OWN		(1U<<31)	/* desc is ready to Tx */
@@ -235,6 +229,7 @@ struct ave_softc {
 	int sc_phy_id;			/* PHY address */
 	uint32_t sc_phymode;		/* 1<<27: MII/RMII, 0: RGMII */
 	uint32_t sc_rxc;		/* software copy of AVERXC */
+	int sc_model;			/* 64 paddr model or otherwise 32 */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -286,20 +281,21 @@ static int add_rxbuf(struct ave_softc *, int);
 #define CSR_WRITE(sc, off, val) \
 	    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (off), (val))
 
+static const struct of_compat_data compat_data[] = {
+	{ "socionext,unifier-ld20-ave4", 64 },
+	{ "socionext,unifier-pro4-ave4", 32 },
+	{ "socionext,unifier-pxs2-ave4", 32 },
+	{ "socionext,unifier-ld11-ave4", 32 },
+	{ "socionext,unifier-pxs3-ave4", 32 },
+	{ NULL }
+};
+
 static int
 ave_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	static const char * compatible[] = {
-		"socionext,unifier-ld20-ave4",
-		"socionext,unifier-pro4-ave4",
-		"socionext,unifier-pxs2-ave4",
-		"socionext,unifier-ld11-ave4",
-		"socionext,unifier-pxs3-ave4",
-		NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -346,11 +342,13 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 
 	hwimp = CSR_READ(sc, AVEID);
 	hwver = CSR_READ(sc, AVEHWVER);
+	sc->sc_model = of_search_compatible(phandle, compat_data)->data;
 
 	aprint_naive("\n");
 	aprint_normal(": Gigabit Ethernet Controller\n");
-	aprint_normal_dev(self, "UniPhier %c%c%c%c AVE GbE (%d.%d)\n",
+	aprint_normal_dev(self, "UniPhier %c%c%c%c AVE %d GbE (%d.%d)\n",
 	    hwimp >> 24, hwimp >> 16, hwimp >> 8, hwimp,
+	    sc->sc_model,
 	    hwver >> 8, hwver & 0xff);
 	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
 
@@ -613,7 +611,7 @@ ave_ifmedia_upd(struct ifnet *ifp)
 	}
 	sc->sc_rxc = rxcr;
 	CSR_WRITE(sc, AVETXC, txcr);
-	CSR_WRITE(sc, AVERXC, rxcr);
+	CSR_WRITE(sc, AVERXC, rxcr | RXC_EN);
 	return 0;
 }
 
