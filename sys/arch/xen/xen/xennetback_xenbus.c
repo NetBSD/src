@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.82 2020/03/19 11:19:25 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.83 2020/03/21 23:25:53 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.82 2020/03/19 11:19:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.83 2020/03/21 23:25:53 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -1224,6 +1224,13 @@ xennetback_copymbuf(struct mbuf *m)
 	    mtod(new_m, void *));
 	new_m->m_len = new_m->m_pkthdr.len =
 	    m->m_pkthdr.len;
+
+	/*
+	 * Need to retain csum flags to know if csum was actually computed.
+	 * This is used to set NETRXF_csum_blank/NETRXF_data_validated.
+	 */
+	new_m->m_pkthdr.csum_flags = m->m_pkthdr.csum_flags;
+
 	return new_m;
 }
 
