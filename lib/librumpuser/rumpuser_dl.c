@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.31 2019/12/26 04:53:11 msaitoh Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.32 2020/03/21 04:48:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,11 +40,16 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.31 2019/12/26 04:53:11 msaitoh Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.32 2020/03/21 04:48:37 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
+
+#ifdef NOTYET
+#include <sys/evcnt.h>
+#endif
+
 #include <assert.h>
 
 #include <dlfcn.h>
@@ -353,6 +358,14 @@ process_object(void *handle,
 	const struct modinfo *const *mi_start, *const *mi_end;
 	struct rump_component *const *rc, *const *rc_end;
 
+	struct sysctllog;
+	typedef void sysctl_setup_func(struct sysctllog **);
+	sysctl_setup_func *const *sfp, *const *sfp_end;
+
+#ifdef NOTYET	/* We don't yet handle link_set_evcnts */
+	struct evcnt *const *evp, *const *evp_end;
+#endif
+
 	mi_start = dlsym(handle, "__start_link_set_modules");
 	mi_end = dlsym(handle, "__stop_link_set_modules");
 	if (mi_start && mi_end)
@@ -365,6 +378,26 @@ process_object(void *handle,
 			docompload(*rc);
 		assert(rc == rc_end);
 	}
+
+	/* handle link_set_sysctl_funcs */
+	sfp = dlsym(handle, "__start_link_set_sysctl_funcs");
+	sfp_end = dlsym(handle, "__stop_link_set_sysctl_funcs");
+	if (sfp && sfp_end) {
+		for (; sfp < sfp_end; sfp++)
+			(**sfp)(NULL);
+		assert(sfp == sfp_end);
+	}
+
+#ifdef NOTYET
+	/* handle link_set_evcnts */
+	evp = dlsym(handle, "__start_link_set_evcnts");
+	evp_end = dlsym(handle, "__stop_link_set_evcnts");
+	if (evp && evp_end) {
+		for (; evp < evp_end; evp++)
+			evcnt_attach_static(*evp);
+		assert(evp == evp_end);
+	}
+#endif
 }
 
 /*
