@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25 2020/03/05 15:18:54 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.26 2020/03/21 17:00:47 riastradh Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -22,7 +22,7 @@
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
  *
- * 	Utah $Hdr$
+ * 	Utah $Hdr: param.h 1.18 94/12/16$
  */
 
 #ifdef _KERNEL
