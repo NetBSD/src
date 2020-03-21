@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.30.10.1 2020/03/21 15:52:09 martin Exp $ */
+/* $NetBSD: dkvar.h,v 1.30.10.2 2020/03/21 16:00:39 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -108,10 +108,16 @@ int	dk_size(struct dk_softc *, dev_t);
 int	dk_ioctl(struct dk_softc *, dev_t,
 		 u_long, void *, int, struct lwp *);
 int	dk_dump(struct dk_softc *, dev_t,
+		daddr_t, void *, size_t);
+int	dk_dump_flags(struct dk_softc *, dev_t,
 		daddr_t, void *, size_t, int);
 void	dk_getdisklabel(struct dk_softc *, dev_t);
 void	dk_getdefaultlabel(struct dk_softc *, struct disklabel *);
 
 int	dk_lookup(struct pathbuf *, struct lwp *, struct vnode **);
+
+#ifndef _DKSUBR_PRIVATE
+#define	dk_dump	dk_dump_flags
+#endif
 
 #endif /* ! _DEV_DKVAR_H_ */   

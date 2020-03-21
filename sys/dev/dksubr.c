@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.109.2.1 2020/03/21 15:52:09 martin Exp $ */
+/* $NetBSD: dksubr.c,v 1.109.2.2 2020/03/21 16:00:39 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.109.2.1 2020/03/21 15:52:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.109.2.2 2020/03/21 16:00:39 martin Exp $");
+
+#define	_DKSUBR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -758,9 +760,17 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 #define DKFF_READYFORDUMP(x)	(((x) & DKF_READYFORDUMP) == DKF_READYFORDUMP)
 static volatile int	dk_dumping = 0;
 
-/* ARGSUSED */
 int
 dk_dump(struct dk_softc *dksc, dev_t dev,
+    daddr_t blkno, void *vav, size_t size)
+{
+
+	return dk_dump_flags(dksc, dev, blkno, vav, size, 0);
+}
+
+/* ARGSUSED */
+int
+dk_dump_flags(struct dk_softc *dksc, dev_t dev,
     daddr_t blkno, void *vav, size_t size, int flags)
 {
 	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
