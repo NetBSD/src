@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.17 2020/03/19 07:51:22 khorben Exp $ */
+/*	$NetBSD: if_umb.c,v 1.18 2020/03/21 06:55:13 skrll Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.17 2020/03/19 07:51:22 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.18 2020/03/21 06:55:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2760,7 +2760,7 @@ inet_ntop(int af, const void *src, char *dst, socklen_t size)
 Static const char *
 inet_ntop4(const u_char *src, char *dst, size_t size)
 {
-	char tmp[sizeof "255.255.255.255"];
+	char tmp[sizeof("255.255.255.255")];
 	int l;
 
 	l = snprintf(tmp, sizeof(tmp), "%u.%u.%u.%u",
@@ -2789,7 +2789,7 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 	 * Keep this in mind if you think this function should have been coded
 	 * to use pointer overlays.  All the world's not a VAX.
 	 */
-	char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
+	char tmp[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
 	char *tp, *ep;
 	struct { int base, len; } best, cur;
 #define IN6ADDRSZ	16
@@ -2803,7 +2803,7 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 	 *	Copy the input (bytewise) array into a wordwise array.
 	 *	Find the longest run of 0x00's in src[] for :: shorthanding.
 	 */
-	memset(words, '\0', sizeof words);
+	memset(words, '\0', sizeof(words));
 	for (i = 0; i < IN6ADDRSZ; i++)
 		words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;
