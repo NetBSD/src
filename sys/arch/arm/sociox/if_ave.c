@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.7 2020/03/21 08:16:19 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.8 2020/03/21 11:46:36 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.7 2020/03/21 08:16:19 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.8 2020/03/21 11:46:36 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -77,9 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.7 2020/03/21 08:16:19 nisimura Exp $");
 #define AVEGISR		0x104		/* global interrupt status */
 #define  GISR_PHY	(1U<<24)	/* PHY status change detected */
 #define  GISR_TXCI	(1U<<16)	/* transmission completed */
-#define  GISR_RXERR	(1U<<8)		/* Rx frame error detected */
-#define  GISR_RXOVF	(1U<<7)		/* Rx oveflow detected */
-#define  GISR_RXDROP	(1U<<6)		/* Rx has been dropped */
+#define  GISR_RXF2L	(1U<<8)		/* Rx frame length beyond limit */
+#define  GISR_RXOVF	(1U<<7)		/* RxFIFO oveflow detected */
+#define  GISR_RXDROP	(1U<<6)		/* PAUSE frame has been dropped */
 #define  GISR_RXIT	(1U<<5)		/* receive itimer notify */
 #define AVETXC		0x200		/* transmit control */
 #define  TXC_FCE	(1U<<18)	/* enable Tx flow control */
@@ -133,9 +133,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.7 2020/03/21 08:16:19 nisimura Exp $");
 #define AVE32RDB	0x1800	/* 32bit Rx store base, upto 2048 */
 
 #define AVERMIIC	0x8028		/* RMII control */
-#define  RMIIC_RST	(1U<<16)	/* reset */
-#define AVELINKSEL	0x8034		/* link speed selection */
-#define  LINKSEL_SPD100	(1U<<0)		/* RMII speed 100Mbps */
+#define  RMIIC_RST	(1U<<16)	/* reset operation */
+#define AVELINKSEL	0x8034		/* RMII speed selection */
+#define  LINKSEL_SPD100	(1U<<0)		/* use 100Mbps */
 
 /*
  * descriptor size is 12 bytes when 64bit paddr design, 8 bytes otherwise.
@@ -486,12 +486,19 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 static void
 ave_reset(struct ave_softc *sc)
 {
+	uint32_t csr;
 
 	CSR_WRITE(sc, AVERXC, 0);	/* stop Rx first */
 	CSR_WRITE(sc, AVEDESCC, 0);	/* stop Tx/Rx descriptor engine */
+	if (sc->sc_phymode & CFG_MII) {
+		csr = CSR_READ(sc, AVERMIIC);
+		CSR_WRITE(sc, AVERMIIC, csr &~ RMIIC_RST);
+		DELAY(10);
+		CSR_WRITE(sc , AVERMIIC, csr);
+	}
 	CSR_WRITE(sc, AVEGR, GR_RXRST); /* assert RxFIFO reset operation */
 	DELAY(50);
-	CSR_WRITE(sc, AVEGR, 0);	/* negate reset */
+	CSR_WRITE(sc, AVEGR, 0);
 	CSR_WRITE(sc, AVEGISR, GISR_RXOVF); /* clear OVF condition */
 }
 
@@ -564,7 +571,7 @@ ave_init(struct ifnet *ifp)
 	CSR_WRITE(sc, AVEITIRQC, csr | ITIRQC_R0E | INTMVAL);
 
 	CSR_WRITE(sc, AVEGIMR, /* PHY interrupt is not maskable */
-	    GISR_TXCI | GISR_RXIT | GISR_RXDROP | GISR_RXOVF | GISR_RXERR);
+	    GISR_TXCI | GISR_RXIT | GISR_RXDROP | GISR_RXOVF | GISR_RXF2L);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -664,21 +671,19 @@ mii_statchg(struct ifnet *ifp)
 	else
 		rxcr &= ~RXC_FCE;
 
-	/* HW does not handle auto speed adjustment */
+	/* HW does not handle automatic speed adjustment */
 	txcr &= ~(TXC_SPD1000 | TXC_SPD100);
 	if ((sc->sc_phymode & CFG_MII) == 0 /* RGMII model */
-	     && IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
+	     && IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_1000_T)
 		txcr |= TXC_SPD1000;
 	else if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
 		txcr |= TXC_SPD100;
 
 	/* adjust LINKSEL when MII/RMII too */
 	if (sc->sc_phymode & CFG_MII) {
-		csr = CSR_READ(sc, AVELINKSEL);
+		csr = CSR_READ(sc, AVELINKSEL) &~ LINKSEL_SPD100;;
 		if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
 			csr |= LINKSEL_SPD100;
-		else
-			csr &= ~LINKSEL_SPD100;
 		CSR_WRITE(sc, AVELINKSEL, csr);
 	}
 
@@ -804,15 +809,15 @@ ave_write_filt(struct ave_softc *sc, int i, const uint8_t *en)
 {
 	uint32_t macl, mach, n, mskbyte0;
 
-	macl = mach = 0;
-	macl |= (en[3]<<24) | (en[2]<<16)| (en[1]<<8) | en[0];
-	mach |= (en[5]<<8)  | en[4];
 	/* pick v4mcast or v6mcast length */
 	n = (en[0] == 0x01) ? 3 : (en[0] == 0x33) ? 2 : ETHER_ADDR_LEN;
 	/* entry 0 is reserved for promisc mode */
 	mskbyte0 = (i > 0) ? genmask0(n) : MSKBYTE0;
 
 	/* set frame address first */
+	macl = mach = 0;
+	macl |= (en[3]<<24) | (en[2]<<16)| (en[1]<<8) | en[0];
+	mach |= (en[5]<<8)  | en[4];
 	CSR_WRITE(sc, AVEAFB + (i * 0x40) + 0, macl);
 	CSR_WRITE(sc, AVEAFB + (i * 0x40) + 4, mach);
 	/* set byte mask according to mask length, any of 6, 3, or 2 */
@@ -1080,8 +1085,8 @@ ave_intr(void *arg)
 		CSR_WRITE(sc, AVEGISR, GISR_RXDROP);
 	if (stat & GISR_RXOVF)
 		CSR_WRITE(sc, AVEGISR, GISR_RXOVF);
-	if (stat & GISR_RXERR)
-		CSR_WRITE(sc, AVEGISR, GISR_RXERR);
+	if (stat & GISR_RXF2L)
+		CSR_WRITE(sc, AVEGISR, GISR_RXF2L);
 	if (stat & GISR_RXIT) {
 		rxintr(sc);
 		CSR_WRITE(sc, AVEGISR, GISR_RXIT);
