@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.6 2020/03/21 07:16:16 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.7 2020/03/21 08:16:19 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.6 2020/03/21 07:16:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.7 2020/03/21 08:16:19 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.6 2020/03/21 07:16:16 nisimura Exp $");
 #define AVEAFMSKB	0x0d00		/* byte mask base */
 #define  MSKBYTE0	0xfffffff3f	/* zeros in 7:6 */
 #define  MSKBYTE1	0x003ffffff	/* ones in 25:0 */
-#define  genmask0(x)	(MSKBYTE0 & (~0U << (32-(x))))
+#define  genmask0(x)	(MSKBYTE0 & (~0U << (x)))
 #define AVEAFMSKV	0x0e00		/* bit mask base */
 #define AVEAFRING	0x0f00		/* entry ring number selector */
 #define AVEAFEN		0x0ffc		/* entry enable bit vector */
@@ -131,6 +131,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.6 2020/03/21 07:16:16 nisimura Exp $");
 #define AVERDB		0x1c00	/* 64bit Rx descriptor store, upto 2048 */
 #define AVE32TDB	0x1000	/* 32bit Tx store base, upto 256 */
 #define AVE32RDB	0x1800	/* 32bit Rx store base, upto 2048 */
+
+#define AVERMIIC	0x8028		/* RMII control */
+#define  RMIIC_RST	(1U<<16)	/* reset */
+#define AVELINKSEL	0x8034		/* link speed selection */
+#define  LINKSEL_SPD100	(1U<<0)		/* RMII speed 100Mbps */
 
 /*
  * descriptor size is 12 bytes when 64bit paddr design, 8 bytes otherwise.
@@ -635,17 +640,19 @@ mii_statchg(struct ifnet *ifp)
 {
 	struct ave_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
-	uint32_t txcr, rxcr;
+	struct ifmedia * const ifm = &mii->mii_media;
+	uint32_t txcr, rxcr, csr;
 
-	/* Get flow control negotiation result. */
+	/* get flow control negotiation result */
 	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
 	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags)
 		sc->sc_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
 
-	/* Adjust PAUSE flow control. */
 	txcr = CSR_READ(sc, AVETXC);
 	rxcr = CSR_READ(sc, AVERXC);
 	CSR_WRITE(sc, AVERXC, rxcr &~ RXC_EN); /* stop Rx first */
+
+	/* adjust 802.3x PAUSE flow control */
 	if ((mii->mii_media_active & IFM_FDX)
 	    && (sc->sc_flowflags & IFM_ETH_TXPAUSE))
 		txcr |= TXC_FCE;
@@ -656,9 +663,28 @@ mii_statchg(struct ifnet *ifp)
 		rxcr |= RXC_FCE;
 	else
 		rxcr &= ~RXC_FCE;
+
+	/* HW does not handle auto speed adjustment */
+	txcr &= ~(TXC_SPD1000 | TXC_SPD100);
+	if ((sc->sc_phymode & CFG_MII) == 0 /* RGMII model */
+	     && IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
+		txcr |= TXC_SPD1000;
+	else if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
+		txcr |= TXC_SPD100;
+
+	/* adjust LINKSEL when MII/RMII too */
+	if (sc->sc_phymode & CFG_MII) {
+		csr = CSR_READ(sc, AVELINKSEL);
+		if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
+			csr |= LINKSEL_SPD100;
+		else
+			csr &= ~LINKSEL_SPD100;
+		CSR_WRITE(sc, AVELINKSEL, csr);
+	}
+
 	sc->sc_rxc = rxcr;
 	CSR_WRITE(sc, AVETXC, txcr);
-	CSR_WRITE(sc, AVERXC, rxcr);
+	CSR_WRITE(sc, AVERXC, rxcr | RXC_EN);
 
 printf("%ctxfe, %crxfe\n",
 	(txcr & TXC_FCE) ? '+' : '-', (rxcr & RXC_FCE) ? '+' : '-');
@@ -776,22 +802,25 @@ ave_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 static void
 ave_write_filt(struct ave_softc *sc, int i, const uint8_t *en)
 {
-	uint32_t n, macl, mach;
+	uint32_t macl, mach, n, mskbyte0;
 
-	/* pick v4mcast or v6mcast length */
-	n = (en[0] == 0x01) ? 3 : (en[0] == 0x33) ? 2 : ETHER_ADDR_LEN;
 	macl = mach = 0;
 	macl |= (en[3]<<24) | (en[2]<<16)| (en[1]<<8) | en[0];
 	mach |= (en[5]<<8)  | en[4];
+	/* pick v4mcast or v6mcast length */
+	n = (en[0] == 0x01) ? 3 : (en[0] == 0x33) ? 2 : ETHER_ADDR_LEN;
+	/* entry 0 is reserved for promisc mode */
+	mskbyte0 = (i > 0) ? genmask0(n) : MSKBYTE0;
+
 	/* set frame address first */
 	CSR_WRITE(sc, AVEAFB + (i * 0x40) + 0, macl);
 	CSR_WRITE(sc, AVEAFB + (i * 0x40) + 4, mach);
 	/* set byte mask according to mask length, any of 6, 3, or 2 */
-	CSR_WRITE(sc, AVEAFMSKB + (i * 8) + 0, genmask0(n));
+	CSR_WRITE(sc, AVEAFMSKB + (i * 8) + 0, mskbyte0);
 	CSR_WRITE(sc, AVEAFMSKB + (i * 8) + 4, MSKBYTE1);
 	/* set bit vector mask */
 	CSR_WRITE(sc, AVEAFMSKV + (i * 4), 0xffff);
-	/* use Rx ring 0 for any entry */
+	/* use Rx ring 0 anyway */
 	CSR_WRITE(sc, AVEAFRING + (i * 4), 0);
 	/* filter entry enable bit vector */
 	CSR_WRITE(sc, AVEAFEN, CSR_READ(sc, AVEAFEN) | 1U << i);
