@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.206 2020/03/21 06:09:33 riastradh Exp $	*/
+/*	$NetBSD: lfs.h,v 1.207 2020/03/21 06:11:05 riastradh Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -358,18 +358,19 @@ struct lfs_dirheader32 {
 __CTASSERT(sizeof(struct lfs_dirheader32) == 8);
 
 struct lfs_dirheader64 {
-	uint32_t dh_inoA;		/* inode number of entry */
-	uint32_t dh_inoB;		/* inode number of entry */
+	uint64_t dh_ino;		/* inode number of entry */
 	uint16_t dh_reclen;		/* length of this record */
 	uint8_t  dh_type; 		/* file type, see below */
 	uint8_t  dh_namlen;		/* length of string in d_name */
-};
+} __aligned(4) __packed;
 __CTASSERT(sizeof(struct lfs_dirheader64) == 12);
 
 union lfs_dirheader {
 	struct lfs_dirheader64 u_64;
 	struct lfs_dirheader32 u_32;
 };
+__CTASSERT(__alignof(union lfs_dirheader) == __alignof(struct lfs_dirheader64));
+__CTASSERT(__alignof(union lfs_dirheader) == __alignof(struct lfs_dirheader32));
 
 typedef union lfs_dirheader LFS_DIRHEADER;
 
@@ -481,6 +482,8 @@ union lfs_dinode {
 	struct lfs64_dinode u_64;
 	struct lfs32_dinode u_32;
 };
+__CTASSERT(__alignof(union lfs_dinode) == __alignof(struct lfs64_dinode));
+__CTASSERT(__alignof(union lfs_dinode) == __alignof(struct lfs32_dinode));
 
 /*
  * The di_db fields may be overlaid with other information for
@@ -563,7 +566,7 @@ struct finfo64 {
 	uint64_t fi_ino;		/* inode number */
 	uint32_t fi_lastlength;		/* length of last block in array */
 	uint32_t fi_pad;		/* unused */
-};
+} __aligned(4) __packed;
 __CTASSERT(sizeof(struct finfo64) == 24);
 
 typedef struct finfo32 FINFO32;
@@ -579,6 +582,8 @@ typedef union finfo {
 	struct finfo64 u_64;
 	struct finfo32 u_32;
 } FINFO;
+__CTASSERT(__alignof(union finfo) == __alignof(struct finfo64));
+__CTASSERT(__alignof(union finfo) == __alignof(struct finfo32));
 
 /*
  * inode info (part of the segment summary)
@@ -590,7 +595,7 @@ typedef union finfo {
 
 typedef struct iinfo64 {
 	uint64_t ii_block;		/* block number */
-} IINFO64;
+} __aligned(4) __packed IINFO64;
 __CTASSERT(sizeof(struct iinfo64) == 8);
 
 typedef struct iinfo32 {
@@ -602,6 +607,8 @@ typedef union iinfo {
 	struct iinfo64 u_64;
 	struct iinfo32 u_32;
 } IINFO;
+__CTASSERT(__alignof(union iinfo) == __alignof(struct iinfo64));
+__CTASSERT(__alignof(union iinfo) == __alignof(struct iinfo32));
 
 /*
  * Index file inode entries.
@@ -620,7 +627,7 @@ struct ifile64 {
 	uint64_t if_atime_sec;		/* Last access time, seconds */
 	int64_t	  if_daddr;		/* inode disk address */
 	uint64_t if_nextfree;		/* next-unallocated inode */
-};
+} __aligned(4) __packed;
 __CTASSERT(sizeof(struct ifile64) == 32);
 
 typedef struct ifile32 IFILE32;
@@ -655,6 +662,9 @@ typedef union ifile {
 	struct ifile32 u_32;
 	struct ifile_v1 u_v1;
 } IFILE;
+__CTASSERT(__alignof(union ifile) == __alignof(struct ifile64));
+__CTASSERT(__alignof(union ifile) == __alignof(struct ifile32));
+__CTASSERT(__alignof(union ifile) == __alignof(struct ifile_v1));
 
 /*
  * Cleaner information structure.  This resides in the ifile and is used
@@ -684,7 +694,7 @@ typedef struct _cleanerinfo64 {
 	uint64_t free_tail;		/* 32: tail of the inode free list */
 	uint32_t flags;			/* 40: status word from the kernel */
 	uint32_t pad;			/* 44: must be 64-bit aligned */
-} CLEANERINFO64;
+} __aligned(4) __packed CLEANERINFO64;
 __CTASSERT(sizeof(struct _cleanerinfo64) == 48);
 
 /* this must not go to disk directly of course */
@@ -692,6 +702,8 @@ typedef union _cleanerinfo {
 	CLEANERINFO32 u_32;
 	CLEANERINFO64 u_64;
 } CLEANERINFO;
+__CTASSERT(__alignof(union _cleanerinfo) == __alignof(struct _cleanerinfo32));
+__CTASSERT(__alignof(union _cleanerinfo) == __alignof(struct _cleanerinfo64));
 
 /*
  * On-disk segment summary information
@@ -740,7 +752,7 @@ struct segsum32 {
 	uint64_t ss_serial;		/* 32: serial number */
 	uint64_t ss_create;		/* 40: time stamp */
 	/* FINFO's and inode daddr's... */
-};
+} __aligned(4) __packed;
 __CTASSERT(sizeof(struct segsum32) == 48);
 
 typedef struct segsum64 SEGSUM64;
@@ -758,7 +770,7 @@ struct segsum64 {
 	uint64_t ss_serial;		/* 40: serial number */
 	uint64_t ss_create;		/* 48: time stamp */
 	/* FINFO's and inode daddr's... */
-};
+} __aligned(4) __packed;
 __CTASSERT(sizeof(struct segsum64) == 56);
 
 typedef union segsum SEGSUM;
@@ -767,7 +779,9 @@ union segsum {
 	struct segsum32 u_32;
 	struct segsum_v1 u_v1;
 };
-
+__CTASSERT(__alignof(union segsum) == __alignof(struct segsum64));
+__CTASSERT(__alignof(union segsum) == __alignof(struct segsum32));
+__CTASSERT(__alignof(union segsum) == __alignof(struct segsum_v1));
 
 /*
  * On-disk super block.
@@ -955,6 +969,8 @@ struct dlfs64 {
 /* Checksum -- last valid disk field. */
 	uint32_t dlfs_cksum;	  /* 508: checksum for superblock checking */
 };
+
+__CTASSERT(__alignof(struct dlfs) == __alignof(struct dlfs64));
 
 /* Type used for the inode bitmap */
 typedef uint32_t lfs_bm_t;
