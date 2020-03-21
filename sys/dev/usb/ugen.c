@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.150 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.151 2020/03/21 06:54:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.150 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.151 2020/03/21 06:54:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -231,7 +231,7 @@ ugen_attach(device_t parent, device_t self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	struct usbif_attach_arg uiaa;
 
-	memset(&uiaa, 0, sizeof uiaa);
+	memset(&uiaa, 0, sizeof(uiaa));
 	uiaa.uiaa_port = uaa->uaa_port;
 	uiaa.uiaa_vendor = uaa->uaa_vendor;
 	uiaa.uiaa_product = uaa->uaa_product;
