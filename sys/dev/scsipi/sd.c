@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.327 2019/03/19 06:59:40 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.327.4.1 2020/03/21 15:52:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.327 2019/03/19 06:59:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.327.4.1 2020/03/21 15:52:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1192,7 +1192,7 @@ sddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)
 		return (ENXIO);
 
-	return dk_dump(dksc, dev, blkno, va, size);
+	return dk_dump(dksc, dev, blkno, va, size, 0);
 }
 
 static int

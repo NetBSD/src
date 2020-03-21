@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.106.4.1 2020/02/11 08:37:34 martin Exp $	*/
+/*	$NetBSD: ld.c,v 1.106.4.2 2020/03/21 15:52:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.106.4.1 2020/02/11 08:37:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.106.4.2 2020/03/21 15:52:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,7 +507,7 @@ lddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
 
-	return dk_dump(dksc, dev, blkno, va, size);
+	return dk_dump(dksc, dev, blkno, va, size, 0);
 }
 
 static int
