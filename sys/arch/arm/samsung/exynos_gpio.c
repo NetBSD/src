@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.25 2018/07/04 22:16:42 jmcneill Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.25.4.1 2020/03/21 20:01:01 martin Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.25 2018/07/04 22:16:42 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.25.4.1 2020/03/21 20:01:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -292,7 +292,7 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 		    result);
 		return NULL;
 	}
-	
+
 	sc->sc_dev = parent->sc_dev;
 	sc->sc_bst = &armv7_generic_bs_tag;
 	sc->sc_bsh = parent->sc_bsh;
