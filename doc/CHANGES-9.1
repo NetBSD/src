@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.20 2020/03/19 19:47:39 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.21 2020/03/21 16:02:38 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -602,4 +602,73 @@ sys/net/zlib.h					1.15
 
 	Fix kernel ctf type duplication.
 	[riastradh, ticket #787]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/vdev_disk.c 1.14,1.15
+sys/dev/ata/wd.c				1.459
+sys/dev/ata/wdvar.h				1.50
+sys/dev/cgd.c					1.121
+sys/dev/dkwedge/dk.c				1.100
+sys/kern/subr_disk_open.c			1.15
+sys/sys/disk.h					1.75
+sys/sys/dkio.h					1.26
+
+	New ioctl DIOCGSECTORALIGN to query sector alignment parameters.
+	Make zfs zpool(8) use it to detect ata disks with native 4096-byte
+	sectors.
+	[riastradh, ticket #788]
+
+sys/miscfs/deadfs/dead_vnops.c			1.62
+
+	Fix missing biodone from VOP_BWRITE on revoked device vnode.
+	[riastradh, ticket #789]
+
+sys/ufs/ffs/ffs_alloc.c				1.165
+
+	Fix non-DIAGNOSTIC build with UVM_PAGE_TRKOWN.
+	[riastradh, ticket #790]
+
+sys/external/bsd/drm2/include/drm/bus_dma_hacks.h 1.20
+
+	PR 54817: in bus_dmamap_load_pglist() try a 32-element array of
+	bus_dma_segment_t's before attempting to allocate.
+	[mrg, ticket #791]
+
+sys/arch/amiga/dev/aucc.c			1.48
+sys/dev/pci/auacer.c				1.39
+sys/dev/pci/auich.c				1.159
+sys/dev/pci/auixp.c				1.49
+sys/dev/pci/auvia.c				1.85
+sys/dev/pci/gcscaudio.c				1.19
+sys/dev/sbus/dbri.c				1.42
+
+	PR 55017: fix audio round_blocksize mismatch.
+	[isaki, ticket #792]
+
+sys/dev/audio/audio.c				1.42,1.47
+sys/dev/audio/audiodef.h			1.9
+
+	Remove incorrect assertion and improve messages for others.
+	[isaki, ticket #793]
+
+sys/dev/audio/audio.c				1.38, 1.56 (patch), 1.57
+sys/dev/audio/audiodef.h			1.10
+sys/dev/audio/audiovar.h			1.8
+
+	PR 54427: fix panic when closing before pad.
+	[isaki, ticket #794]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.95
+sys/dev/ata/wd.c				1.458
+sys/dev/cgd.c					1.120
+sys/dev/dksubr.c				1.112
+sys/dev/dkvar.h					1.32
+sys/dev/ld.c					1.109
+sys/dev/raidframe/rf_netbsdkintf.c		1.380
+sys/dev/scsipi/sd.c				1.328
+sys/dev/dksubr.c				(apply patch)
+sys/dev/dkvar.h					(apply patch)
+
+	Fix dump on nested virtual disk devices.
+	Additional patches to provide ABI compatibility.
+	[riastradh, ticket #795]
 
