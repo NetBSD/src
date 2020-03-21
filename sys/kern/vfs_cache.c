@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.13 2020/03/10 21:53:45 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.14 2020/03/21 22:00:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.13 2020/03/10 21:53:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.14 2020/03/21 22:00:55 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -179,6 +179,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.13 2020/03/10 21:53:45 ad Exp 
 #include "opt_dtrace.h"
 #endif
 
+#include <sys/types.h>
 #include <sys/cpu.h>
 #include <sys/errno.h>
 #include <sys/evcnt.h>
@@ -228,9 +229,10 @@ static kmutex_t cache_lru_lock __cacheline_aligned;
 struct nchstats	nchstats __cacheline_aligned;
 
 #define	COUNT(f)	do { \
-	kpreempt_disable(); \
+	lwp_t *l = curlwp; \
+	KPREEMPT_DISABLE(l); \
 	((struct nchstats_percpu *)curcpu()->ci_data.cpu_nch)->f++; \
-	kpreempt_enable(); \
+	KPREEMPT_ENABLE(l); \
 } while (/* CONSTCOND */ 0);
 
 /* Tunables */
@@ -314,7 +316,7 @@ cache_compare_key(void *context, const void *n, const void *k)
  * the key value to try and improve uniqueness, and so that length doesn't
  * need to be compared separately for string comparisons.
  */
-static int64_t
+static inline int64_t
 cache_key(const char *name, size_t nlen)
 {
 	int64_t key;
@@ -403,6 +405,7 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
 	vnode_impl_t *dvi = VNODE_TO_VIMPL(dvp);
 	struct rb_node *node = dvi->vi_nc_tree.rbt_root;
 	struct namecache *ncp;
+	int lrulist;
 
 	KASSERT(rw_lock_held(&dvi->vi_nc_lock));
 
@@ -436,7 +439,8 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
 	 * unlocked check, but it will rarely be wrong and even then there
 	 * will be no harm caused.
 	 */
-	if (__predict_false(ncp->nc_lrulist != LRU_ACTIVE)) {
+	lrulist = atomic_load_relaxed(&ncp->nc_lrulist);
+	if (__predict_false(lrulist != LRU_ACTIVE)) {
 		cache_activate(ncp);
 	}
 	return ncp;
@@ -744,8 +748,8 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 	vnode_impl_t *vi = VNODE_TO_VIMPL(vp);
 	struct namecache *ncp;
 	struct vnode *dvp;
+	int error, nlen, lrulist;
 	char *bp;
-	int error, nlen;
 
 	KASSERT(vp != NULL);
 
@@ -793,7 +797,8 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 		}
 
 		/* Record a hit on the entry.  This is an unlocked read. */
-		if (ncp->nc_lrulist != LRU_ACTIVE) {
+		lrulist = atomic_load_relaxed(&ncp->nc_lrulist);
+		if (lrulist != LRU_ACTIVE) {
 			cache_activate(ncp);
 		}
 
@@ -863,7 +868,8 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	 * but it doesn't matter.  Just need to catch up with things
 	 * eventually: it doesn't matter if we go over temporarily.
 	 */
-	total = cache_lru.count[LRU_ACTIVE] + cache_lru.count[LRU_INACTIVE];
+	total = atomic_load_relaxed(&cache_lru.count[LRU_ACTIVE]);
+	total += atomic_load_relaxed(&cache_lru.count[LRU_INACTIVE]);
 	if (__predict_false(total > desiredvnodes)) {
 		cache_reclaim();
 	}
