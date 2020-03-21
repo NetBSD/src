@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.97 2018/05/12 10:33:06 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.97.8.1 2020/03/21 15:18:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.97 2018/05/12 10:33:06 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.97.8.1 2020/03/21 15:18:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1501,7 +1501,24 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		break;
 	    }
+	case DIOCGSECTORALIGN:
+	    {
+		struct disk_sectoralign *dsa = data;
+		uint32_t r;
 
+		error = VOP_IOCTL(sc->sc_parent->dk_rawvp, cmd, dsa, flag,
+		    l != NULL ? l->l_cred : NOCRED);
+		if (error)
+			break;
+
+		r = sc->sc_offset % dsa->dsa_alignment;
+		if (r < dsa->dsa_firstaligned)
+			dsa->dsa_firstaligned = dsa->dsa_firstaligned - r;
+		else
+			dsa->dsa_firstaligned = (dsa->dsa_firstaligned +
+			    dsa->dsa_alignment) - r;
+		break;
+	    }
 	default:
 		error = ENOTTY;
 	}

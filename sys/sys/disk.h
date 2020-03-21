@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.74 2019/05/22 08:47:02 hannken Exp $	*/
+/*	$NetBSD: disk.h,v 1.74.2.1 2020/03/21 15:18:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -298,6 +298,12 @@ struct disk_strategy {
 	char dks_name[DK_STRATEGYNAMELEN]; /* name of strategy */
 	char *dks_param;		/* notyet; should be NULL */
 	size_t dks_paramlen;		/* notyet; should be 0 */
+};
+
+/* Sector alignment */
+struct disk_sectoralign {
+	uint32_t	dsa_firstaligned; /* first aligned sector # */
+	uint32_t	dsa_alignment;	  /* sectors per aligned sector */
 };
 
 #ifdef _KERNEL
