@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.h,v 1.7 2020/03/16 21:20:09 pgoyette Exp $	*/
+/*	$NetBSD: linux_sysctl.h,v 1.8 2020/03/21 16:28:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -465,6 +465,8 @@
 #define	LINUX_BUS_ISA_MEM_BASE					1
 #define	LINUX_BUS_ISA_PORT_BASE					2
 #define	LINUX_BUS_ISA_PORT_SHIFT				3
+
+void	linux_sysctl_fini(void);
 
 int	linux_sysctl_enable(SYSCTLFN_PROTO);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.18 2020/03/16 21:20:09 pgoyette Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.19 2020/03/21 16:28:56 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.18 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.19 2020/03/21 16:28:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,22 @@ struct sysctlnode linux32_sysctl_root = {
 };
 
 extern int linux32_enabled;
+
+/*
+ * We need our own sysctllog here because we deal with two
+ * separate sysctl trees;  each clog is restricted to a
+ * single tree.
+ */
+
+static struct sysctllog *linux32_clog;
+
+void
+linux32_sysctl_fini(void)
+{
+
+	sysctl_teardown(&linux32_clog);
+	sysctl_free(&linux32_sysctl_root);
+}
 
 SYSCTL_SETUP(linux32_sysctl_init, "linux32 emulation sysctls")
 {
@@ -115,23 +131,23 @@ SYSCTL_SETUP(linux32_sysctl_init, "linux32 emulation sysctls")
 		       linux32_sysctl_enable, 0, &linux32_enabled, 0,
 		       CTL_EMUL, EMUL_LINUX32, CTL_CREATE, CTL_EOL);
 
-	sysctl_createv(clog, 0, &node, &node,
+	sysctl_createv(&linux32_clog, 0, &node, &node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       LINUX_CTL_KERN, CTL_EOL);
 
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&linux32_clog, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "ostype", NULL,
 		       NULL, 0, linux32_sysname, sizeof(linux32_sysname),
 		       LINUX_KERN_OSTYPE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&linux32_clog, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "osrelease", NULL,
 		       NULL, 0, linux32_release, sizeof(linux32_release),
 		       LINUX_KERN_OSRELEASE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&linux32_clog, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "version", NULL,
 		       NULL, 0, linux32_version, sizeof(linux32_version),

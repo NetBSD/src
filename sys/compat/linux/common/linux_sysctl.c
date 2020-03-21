@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.45 2020/03/16 21:20:09 pgoyette Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.46 2020/03/21 16:28:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.45 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.46 2020/03/21 16:28:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,26 +70,41 @@ struct sysctlnode linux_sysctl_root = {
 
 extern int linux_enabled;
 
+/*
+ * We need an additional sysctllog here since each log can only
+ * deal with a single root node.
+ */
+
+static struct sysctllog *linux_clog;
+
+void
+linux_sysctl_fini(void)
+{
+
+	sysctl_teardown(&linux_clog);
+	sysctl_free(&linux_sysctl_root);
+}
+
 SYSCTL_SETUP(linux_sysctl_setup, "linux emulation sysctls")
 {
 	const struct sysctlnode *node = &linux_sysctl_root;
 
-	sysctl_createv(clog, 0, &node, &node,
+	sysctl_createv(&linux_clog, 0, &node, &node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       LINUX_CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&linux_clog, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "ostype", NULL,
 		       NULL, 0, linux_sysname, sizeof(linux_sysname),
 		       LINUX_KERN_OSTYPE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&linux_clog, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "osrelease", NULL,
 		       NULL, 0, linux_release, sizeof(linux_release),
 		       LINUX_KERN_OSRELEASE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&linux_clog, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "version", NULL,
 		       NULL, 0, linux_version, sizeof(linux_version),
