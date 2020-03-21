@@ -1,4 +1,4 @@
-# $NetBSD: t_swsensor.sh,v 1.10 2020/03/19 20:10:49 pgoyette Exp $
+# $NetBSD: t_swsensor.sh,v 1.11 2020/03/21 04:50:21 pgoyette Exp $
 
 get_sensor_info() {
 	rump.envstat -x | \
@@ -145,7 +145,6 @@ common_body() {
 	# Step 3 - verify that changes in sensor value are seen
 	rump.sysctl -w hw.swsensor.cur_value=$(( $2 + 1 ))
 	if [ $( get_sensor_key cur-value ) -ne $(( $2 + 1 )) ] ; then
-		atf_expect_fail "PR kern/55088"
 		atf_fail "3: Value not updated"
 	fi
 
