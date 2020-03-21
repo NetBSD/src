@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.116 2018/01/23 22:42:29 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.116.10.1 2020/03/21 15:18:57 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.116 2018/01/23 22:42:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.116.10.1 2020/03/21 15:18:57 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -722,6 +722,33 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * We pass this call down to the underlying disk.
 		 */
 		return VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
+	case DIOCGSECTORALIGN: {
+		struct disk_sectoralign *dsa = data;
+		int error;
+
+		if (!DK_ATTACHED(dksc))
+			return ENOENT;
+
+		/* Get the underlying disk's sector alignment.  */
+		error = VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
+		if (error)
+			return error;
+
+		/* Adjust for the disklabel partition if necessary.  */
+		if (part != RAW_PART) {
+			struct disklabel *lp = dksc->sc_dkdev.dk_label;
+			daddr_t offset = lp->d_partitions[part].p_offset;
+			uint32_t r = offset % dsa->dsa_alignment;
+
+			if (r < dsa->dsa_firstaligned)
+				dsa->dsa_firstaligned = dsa->dsa_firstaligned
+				    - r;
+			else
+				dsa->dsa_firstaligned = (dsa->dsa_firstaligned
+				    + dsa->dsa_alignment) - r;
+		}
+		return 0;
+	}
 	case DIOCGSTRATEGY:
 	case DIOCSSTRATEGY:
 		if (!DK_ATTACHED(dksc))
