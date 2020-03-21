@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.669 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.670 2020/03/21 16:47:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.669 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.670 2020/03/21 16:47:05 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -796,7 +796,7 @@ static void	wm_start_locked(struct ifnet *);
 static int	wm_transmit(struct ifnet *, struct mbuf *);
 static void	wm_transmit_locked(struct ifnet *, struct wm_txqueue *);
 static void	wm_send_common_locked(struct ifnet *, struct wm_txqueue *,
-    bool);
+		    bool);
 static int	wm_nq_tx_offload(struct wm_softc *, struct wm_txqueue *,
     struct wm_txsoft *, uint32_t *, uint32_t *, bool *);
 static void	wm_nq_start(struct ifnet *);
@@ -804,7 +804,7 @@ static void	wm_nq_start_locked(struct ifnet *);
 static int	wm_nq_transmit(struct ifnet *, struct mbuf *);
 static void	wm_nq_transmit_locked(struct ifnet *, struct wm_txqueue *);
 static void	wm_nq_send_common_locked(struct ifnet *, struct wm_txqueue *,
-    bool);
+		    bool);
 static void	wm_deferred_start_locked(struct wm_txqueue *);
 static void	wm_handle_queue(void *);
 static void	wm_handle_queue_work(struct work *, void *);
@@ -6383,7 +6383,6 @@ wm_init_locked(struct ifnet *ifp)
 
 	/* ...all done! */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
 	/* Save last flags for the callback */
@@ -6504,7 +6503,7 @@ wm_stop_locked(struct ifnet *ifp, bool disable, bool wait)
 	}
 
 	/* Mark the interface as down and cancel the watchdog timer. */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 
 	if (disable) {
 		for (i = 0; i < sc->sc_nqueues; i++) {
@@ -7663,8 +7662,6 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-	if ((ifp->if_flags & IFF_OACTIVE) != 0 && !is_transmit)
-		return;
 	if ((txq->txq_flags & WM_TXQ_NO_SPACE) != 0)
 		return;
 
@@ -7787,8 +7784,6 @@ retry:
 			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 				device_xname(sc->sc_dev), dmamap->dm_nsegs,
 				segs_needed, txq->txq_free - 1));
-			if (!is_transmit)
-				ifp->if_flags |= IFF_OACTIVE;
 			txq->txq_flags |= WM_TXQ_NO_SPACE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_Q_EVCNT_INCR(txq, txdstall);
@@ -7805,8 +7800,6 @@ retry:
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: 82547 Tx FIFO bug detected\n",
 				device_xname(sc->sc_dev)));
-			if (!is_transmit)
-				ifp->if_flags |= IFF_OACTIVE;
 			txq->txq_flags |= WM_TXQ_NO_SPACE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_Q_EVCNT_INCR(txq, fifo_stall);
@@ -7951,8 +7944,6 @@ retry:
 	}
 
 	if (m0 != NULL) {
-		if (!is_transmit)
-			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 		WM_Q_EVCNT_INCR(txq, descdrop);
 		DPRINTF(WM_DEBUG_TX, ("%s: TX: error after IFQ_DEQUEUE\n",
@@ -7962,8 +7953,6 @@ retry:
 
 	if (txq->txq_sfree == 0 || txq->txq_free <= 2) {
 		/* No more slots; notify upper layer. */
-		if (!is_transmit)
-			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 	}
 
@@ -8277,8 +8266,6 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-	if ((ifp->if_flags & IFF_OACTIVE) != 0 && !is_transmit)
-		return;
 	if ((txq->txq_flags & WM_TXQ_NO_SPACE) != 0)
 		return;
 
@@ -8379,8 +8366,6 @@ retry:
 			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 				device_xname(sc->sc_dev), dmamap->dm_nsegs,
 				segs_needed, txq->txq_free - 1));
-			if (!is_transmit)
-				ifp->if_flags |= IFF_OACTIVE;
 			txq->txq_flags |= WM_TXQ_NO_SPACE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_Q_EVCNT_INCR(txq, txdstall);
@@ -8536,8 +8521,6 @@ retry:
 	}
 
 	if (m0 != NULL) {
-		if (!is_transmit)
-			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 		WM_Q_EVCNT_INCR(txq, descdrop);
 		DPRINTF(WM_DEBUG_TX, ("%s: TX: error after IFQ_DEQUEUE\n",
@@ -8547,8 +8530,6 @@ retry:
 
 	if (txq->txq_sfree == 0 || txq->txq_free <= 2) {
 		/* No more slots; notify upper layer. */
-		if (!is_transmit)
-			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 	}
 
@@ -8603,7 +8584,6 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 	int count = 0;
 	int i;
 	uint8_t status;
-	struct wm_queue *wmq = container_of(txq, struct wm_queue, wmq_txq);
 	bool more = false;
 
 	KASSERT(mutex_owned(txq->txq_lock));
@@ -8612,9 +8592,6 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 		return false;
 
 	txq->txq_flags &= ~WM_TXQ_NO_SPACE;
-	/* For ALTQ and legacy(not use multiqueue) ethernet controller */
-	if (wmq->wmq_id == 0)
-		ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Go through the Tx list and free mbufs for those
