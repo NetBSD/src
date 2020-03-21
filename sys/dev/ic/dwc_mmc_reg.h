@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_reg.h,v 1.7.8.1 2020/02/25 18:40:43 martin Exp $ */
+/* $NetBSD: dwc_mmc_reg.h,v 1.7.8.2 2020/03/21 20:24:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -153,6 +153,7 @@
 
 #define DWC_MMC_VERID_ID		__BITS(15,0)
 #define DWC_MMC_VERID_240A		0x240a
+#define DWC_MMC_VERID_280A		0x280a
 
 #define DWC_MMC_IDST_HOST_ABT		__BIT(10)
 #define DWC_MMC_IDST_ABNORMAL_INT_SUM	__BIT(9)
