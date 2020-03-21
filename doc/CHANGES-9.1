@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.21 2020/03/21 16:02:38 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.22 2020/03/21 20:25:42 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -671,4 +671,39 @@ sys/dev/dkvar.h					(apply patch)
 	Fix dump on nested virtual disk devices.
 	Additional patches to provide ABI compatibility.
 	[riastradh, ticket #795]
+
+sys/arch/arm/samsung/exynos5410_clock.c		1.6
+sys/arch/arm/samsung/exynos5422_clock.c		1.15
+sys/arch/arm/samsung/exynos_gpio.c		1.26
+sys/arch/arm/samsung/exynos_pinctrl.c		1.16
+sys/arch/arm/samsung/exynos_uart.c		1.3
+
+	Whitespace cosmetics in preparation for further pullups.
+	[skrll, ticket #796]
+
+sys/arch/arm/altera/cycv_dwcmmc.c		1.5
+sys/arch/arm/samsung/exynos_dwcmmc.c		1.10
+
+	Fix some dwcmmc attachments (broken by ticket #717).
+	[skrll, ticket #797]
+
+sys/arch/arm/samsung/exynos_gpio.c		1.27-1.29
+sys/arch/arm/samsung/exynos_pinctrl.c		1.17
+sys/arch/arm/samsung/exynos_pinctrl.h		1.3
+sys/arch/arm/samsung/exynos_var.h		1.28
+
+	Support Exynos 5410 GPIO.
+	[skrll, ticket #798]
+
+sys/arch/arm/samsung/exynos_platform.c		1.28
+
+	Bring back EXYNOS5422_DISABLE_CA7_CLUSTER.
+	[skrll, ticket #799]
+
+sys/dev/ic/dwc_mmc.c				1.23-1.26
+sys/dev/ic/dwc_mmc_reg.h			1.10
+sys/dev/ic/dwc_mmc_var.h			1.14
+
+	Fix dwc_mmc.
+	[skrll, ticket #800]
 
