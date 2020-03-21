@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.103 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.104 2020/03/21 06:55:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.103 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.104 2020/03/21 06:55:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -503,7 +503,7 @@ kue_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "could not read Ethernet descriptor\n");
 		return;
 	}
-	memcpy(un->un_eaddr, sc->kue_desc.kue_macaddr, sizeof un->un_eaddr);
+	memcpy(un->un_eaddr, sc->kue_desc.kue_macaddr, sizeof(un->un_eaddr));
 
 	sc->kue_mcfilters = kmem_alloc(KUE_MCFILTCNT(sc) * ETHER_ADDR_LEN,
 	    KM_SLEEP);
