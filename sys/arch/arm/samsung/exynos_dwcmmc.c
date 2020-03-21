@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_dwcmmc.c,v 1.8 2019/04/09 05:59:24 skrll Exp $ */
+/* $NetBSD: exynos_dwcmmc.c,v 1.8.4.1 2020/03/21 20:17:49 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.8 2019/04/09 05:59:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.8.4.1 2020/03/21 20:17:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.8 2019/04/09 05:59:24 skrll Exp 
 
 #include <arm/samsung/exynos_var.h>
 
+#include <dev/ic/dwc_mmc_reg.h>
 #include <dev/ic/dwc_mmc_var.h>
 #include <dev/fdt/fdtvar.h>
 
@@ -130,6 +131,7 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_dmat = faa->faa_dmat;
+	sc->sc_intr_cardmask = DWC_MMC_INT_SDIO_INT(8);
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
 		aprint_error(": couldn't map %#llx: %d\n",
