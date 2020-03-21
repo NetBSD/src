@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.47.2.7 2020/03/04 20:21:05 ad Exp $	*/
+/*	$NetBSD: namei.src,v 1.47.2.8 2020/03/21 22:04:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -199,11 +199,12 @@ NAMEIFL	PARAMASK	0x02ef800	/* mask of parameter descriptors */
 #define	NCHNAMLEN	sizeof(((struct namecache *)NULL)->nc_name)
 
 /*
- * Namecache entry.  
+ * Namecache entry.
  *
  * This structure describes the elements in the cache of recent names looked
  * up by namei.  It's carefully sized to take up 128 bytes on _LP64, to make
- * good use of space and the CPU caches.
+ * good use of space and the CPU caches.  Items used during RB tree lookup
+ * (nc_tree, nc_key) are clustered at the start of the structure.
  *
  * Field markings and their corresponding locks:
  *
@@ -216,11 +217,11 @@ NAMEIFL	PARAMASK	0x02ef800	/* mask of parameter descriptors */
 struct nchnode;
 struct namecache {
 	struct	rb_node nc_tree;	/* d  red-black tree, must be first */
+	int64_t	nc_key;			/* -  hash key */
 	TAILQ_ENTRY(namecache) nc_list;	/* v  vp's list of cache entries */
 	TAILQ_ENTRY(namecache) nc_lru;	/* l  pseudo-lru chain */
 	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
 	struct	vnode *nc_vp;		/* -  vnode the name refers to */
-	int64_t	nc_key;			/* -  hash key */
 	int	nc_lrulist;		/* l  which LRU list its on */
 	short	nc_nlen;		/* -  length of the name */
 	char	nc_whiteout;		/* -  true if a whiteout */
