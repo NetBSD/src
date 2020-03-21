@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.452.2.1 2020/03/21 15:18:57 martin Exp $ */
+/*	$NetBSD: wd.c,v 1.452.2.2 2020/03/21 15:52:09 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.452.2.1 2020/03/21 15:18:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.452.2.2 2020/03/21 15:52:09 martin Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -1570,7 +1570,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		return (ENXIO);
 	dksc = &wd->sc_dksc;
 
-	return dk_dump(dksc, dev, blkno, va, size);
+	return dk_dump(dksc, dev, blkno, va, size, 0);
 }
 
 static int
