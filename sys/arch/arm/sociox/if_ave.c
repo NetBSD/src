@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.9 2020/03/22 00:05:17 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.10 2020/03/22 00:14:16 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.9 2020/03/22 00:05:17 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.10 2020/03/22 00:14:16 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -82,13 +82,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.9 2020/03/22 00:05:17 nisimura Exp $");
 #define  GISR_RXDROP	(1U<<6)		/* PAUSE frame has been dropped */
 #define  GISR_RXIT	(1U<<5)		/* receive itimer notify */
 #define AVETXC		0x200		/* transmit control */
-#define  TXC_FCE	(1U<<18)	/* enable Tx flow control */
+#define  TXC_FCE	(1U<<18)	/* generate PAUSE to moderate Rx lvl */
 #define  TXC_SPD1000	(1U<<17)	/* use 1000Mbps */
 #define  TXC_SPD100	(1U<<16)	/* use 100Mbps */
 #define AVERXC		0x204		/* receive control */
 #define  RXC_EN		(1U<<30)	/* enable receive circuit */
 #define  RXC_USEFDX	(1U<<22)	/* use full-duplex */
-#define  RXC_FCE	(1U<<21)	/* enable Rx flow control */
+#define  RXC_FCE	(1U<<21)	/* accept PAUSE to throttle Tx */
 #define  RXC_AFE	(1U<<19)	/* use address filter (!promisc) */
 #define  RXC_DRPEN	(1U<<18)	/* drop receiving PAUSE frames */
 /* RXC 15:0 max frame length to accept */
@@ -287,7 +287,7 @@ static int add_rxbuf(struct ave_softc *, int);
 	    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (off), (val))
 
 static const struct of_compat_data compat_data[] = {
-	{ "socionext,unifier-ld20-ave4", 64 },
+	{ "socionext,unifier-ld20-ave4", 64 },	/* XXX only this for now */
 	{ "socionext,unifier-pro4-ave4", 32 },
 	{ "socionext,unifier-pxs2-ave4", 32 },
 	{ "socionext,unifier-ld11-ave4", 32 },
