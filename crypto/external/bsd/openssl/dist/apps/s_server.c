@@ -1809,6 +1809,7 @@ int s_server_main(int argc, char *argv[])
         goto end;
     if (max_version != 0
         && SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
+        goto end;
 
     if (session_id_prefix) {
         if (strlen(session_id_prefix) >= 32)
