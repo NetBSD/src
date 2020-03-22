@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2020/03/22 21:13:35 thorpej Exp $
+# $NetBSD: Makefile,v 1.6 2020/03/22 22:17:11 thorpej Exp $
 
 NOMAN=	# define
 
@@ -9,6 +9,8 @@ NOMAN=	# define
 .if ${MACHINE} == "evbarm"
 BWFM_WANT_SDIO_FIRMWARE=	yes
 .endif
+
+FILESDIR=	${FIRMWAREDIR}/if_bwfm
 
 FILES=	dist/LICENCE.broadcom_bcm43xx
 
@@ -59,8 +61,12 @@ FILES+=	dist/brcmfmac43430-sdio.raspberrypi,3-model-b.txt
 FILES+=	dist/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt
 FILES+=	dist/brcmfmac43455-sdio.raspberrypi,4-model-b.txt
 FILES+=	dist/brcmfmac43456-sdio.pine64,pinebook-pro.txt
+
+# The raspberrypi,model-zero-w uses the same nvram config as the
+# raspberrypi,3-model-b.
+LINKS+=	${FILESDIR}/brcmfmac43430-sdio.raspberrypi,3-model-b.txt \
+	${FILESDIR}/brcmfmac43430-sdio.raspberrypi,model-zero-w.txt
 .endif
 
-FILESDIR=	${FIRMWAREDIR}/if_bwfm
-
+.include <bsd.links.mk>
 .include <bsd.files.mk>
