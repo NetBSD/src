@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.115 2020/03/17 22:29:19 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.116 2020/03/22 00:16:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -399,18 +399,15 @@ vaddr_t		slotspace_rand(int, size_t, size_t);
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
 typedef enum tlbwhy {
-	TLBSHOOT_APTE,
+	TLBSHOOT_REMOVE_ALL,
 	TLBSHOOT_KENTER,
 	TLBSHOOT_KREMOVE,
-	TLBSHOOT_FREE_PTP1,
-	TLBSHOOT_FREE_PTP2,
+	TLBSHOOT_FREE_PTP,
 	TLBSHOOT_REMOVE_PTE,
-	TLBSHOOT_REMOVE_PTES,
-	TLBSHOOT_SYNC_PV1,
-	TLBSHOOT_SYNC_PV2,
+	TLBSHOOT_SYNC_PV,
 	TLBSHOOT_WRITE_PROTECT,
 	TLBSHOOT_ENTER,
-	TLBSHOOT_UPDATE,
+	TLBSHOOT_NVMM,
 	TLBSHOOT_BUS_DMA,
 	TLBSHOOT_BUS_SPACE,
 	TLBSHOOT__MAX,
