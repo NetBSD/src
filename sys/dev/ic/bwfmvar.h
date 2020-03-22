@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.5 2019/10/28 06:37:51 mlelstv Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.6 2020/03/22 23:38:47 thorpej Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -30,6 +30,7 @@
 #define BRCM_CC_4330_CHIP_ID		0x4330
 #define BRCM_CC_4334_CHIP_ID		0x4334
 #define BRCM_CC_43340_CHIP_ID		43340
+#define BRCM_CC_43341_CHIP_ID		43341
 #define BRCM_CC_43362_CHIP_ID		43362
 #define BRCM_CC_4335_CHIP_ID		0x4335
 #define BRCM_CC_4339_CHIP_ID		0x4339
@@ -49,8 +50,10 @@
 #define BRCM_CC_43602_CHIP_ID		43602
 #define BRCM_CC_4365_CHIP_ID		0x4365
 #define BRCM_CC_4366_CHIP_ID		0x4366
+#define BRCM_CC_43664_CHIP_ID		43664
 #define BRCM_CC_4371_CHIP_ID		0x4371
 #define CY_CC_4373_CHIP_ID		0x4373
+#define CY_CC_43012_CHIP_ID		43012
 
 /* Defaults */
 #define BWFM_DEFAULT_SCAN_CHANNEL_TIME	40
