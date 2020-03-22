@@ -28,7 +28,7 @@ extern "C" {
     { \
         return OPENSSL_sk_num((const OPENSSL_STACK *)(const void *)sk); \
     } \
-    static ossl_unused ossl_inline t2 *sk_##t1##_value(const STACK_OF(t1) *sk, int idx) \
+    static ossl_unused ossl_inline t2 *sk_##t1##_value(const STACK_OF(t1)*sk, int idx) \
     { \
         return (t2 *)(void *)OPENSSL_sk_value((const OPENSSL_STACK *)(const void *)sk, idx); \
     } \
@@ -42,11 +42,11 @@ extern "C" {
     } \
     static ossl_unused ossl_inline STACK_OF(t1) *sk_##t1##_new_reserve(sk_##t1##_compfunc compare, int n) \
     { \
-        return (STACK_OF(t1) *)OPENSSL_sk_new_reserve((OPENSSL_sk_compfunc)compare, n); \
+        return (STACK_OF(t1) *)(void *)OPENSSL_sk_new_reserve((OPENSSL_sk_compfunc)compare, n); \
     } \
     static ossl_unused ossl_inline int sk_##t1##_reserve(STACK_OF(t1) *sk, int n) \
     { \
-        return OPENSSL_sk_reserve((OPENSSL_STACK *)sk, n); \
+        return OPENSSL_sk_reserve((OPENSSL_STACK *)(void *)sk, n); \
     } \
     static ossl_unused ossl_inline void sk_##t1##_free(STACK_OF(t1) *sk) \
     { \
