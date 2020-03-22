@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2020/03/22 22:17:11 thorpej Exp $
+# $NetBSD: Makefile,v 1.7 2020/03/22 22:36:12 thorpej Exp $
 
 NOMAN=	# define
 
@@ -66,6 +66,11 @@ FILES+=	dist/brcmfmac43456-sdio.pine64,pinebook-pro.txt
 # raspberrypi,3-model-b.
 LINKS+=	${FILESDIR}/brcmfmac43430-sdio.raspberrypi,3-model-b.txt \
 	${FILESDIR}/brcmfmac43430-sdio.raspberrypi,model-zero-w.txt
+
+# Boards that share the common AP6212 nvram config are listed here.
+FILES+=	dist/brcmfmac43430-sdio.AP6212.txt
+LINKS+=	${FILESDIR}/brcmfmac43430-sdio.AP6212.txt \
+	${FILESDIR}/brcmfmac43430-sdio.sinovoip,bpi-m2-zero.txt
 .endif
 
 .include <bsd.links.mk>
