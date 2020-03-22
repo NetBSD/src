@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.19.2.5 2020/01/24 16:05:23 ad Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.19.2.6 2020/03/22 14:23:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2019, 2020 The NetBSD Foundation, Inc.
@@ -76,6 +76,19 @@ struct vnode_impl {
 	struct vcache_key vi_key;		/* c   vnode cache key */
 
 	/*
+	 * vnode cache, LRU and syncer.  This all changes with some
+	 * regularity so keep it together.
+	 */
+	struct vnodelst	*vi_lrulisthd;		/* d   current lru list head */
+	TAILQ_ENTRY(vnode_impl) vi_lrulist;	/* d   lru list */
+	int 		vi_synclist_slot;	/* s   synclist slot index */
+	int 		vi_lrulisttm;		/* i   time of lru enqueue */
+	TAILQ_ENTRY(vnode_impl) vi_synclist;	/* s   vnodes with dirty bufs */
+	SLIST_ENTRY(vnode_impl) vi_hash;	/* c   vnode cache list */
+	enum vnode_state vi_state;		/* i   current state */
+	TAILQ_ENTRY(vnode_impl) vi_mntvnodes;	/* m   vnodes for mount point */
+
+	/*
 	 * Namecache.  Give it a separate line so activity doesn't impinge
 	 * on the stable stuff.
 	 */
@@ -88,27 +101,14 @@ struct vnode_impl {
 	uint32_t	vi_nc_spare;		/* -   spare (padding) */
 
 	/*
-	 * vnode cache, LRU and syncer.  This all changes with some
-	 * regularity so keep it together.
-	 */
-	struct vnodelst	*vi_lrulisthd		/* d   current lru list head */
-	    __aligned(COHERENCY_UNIT);
-	TAILQ_ENTRY(vnode_impl) vi_lrulist;	/* d   lru list */
-	int 		vi_synclist_slot;	/* s   synclist slot index */
-	int 		vi_lrulisttm;		/* i   time of lru enqueue */
-	TAILQ_ENTRY(vnode_impl) vi_synclist;	/* s   vnodes with dirty bufs */
-	SLIST_ENTRY(vnode_impl) vi_hash;	/* c   vnode cache list */
-	enum vnode_state vi_state;		/* i   current state */
-
-	/*
 	 * Locks and expensive to access items which can be expected to
 	 * generate a cache miss.
 	 */
 	krwlock_t	vi_lock			/* -   lock for this vnode */
 	    __aligned(COHERENCY_UNIT);
-	krwlock_t	vi_nc_lock;		/* -   lock on node */
+	krwlock_t	vi_nc_lock		/* -   lock on node */
+	    __aligned(COHERENCY_UNIT);
 	krwlock_t	vi_nc_listlock;		/* -   lock on nn_list */
-	TAILQ_ENTRY(vnode_impl) vi_mntvnodes;	/* m   vnodes for mount point */
 };
 typedef struct vnode_impl vnode_impl_t;
 
