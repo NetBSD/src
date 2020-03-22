@@ -97,7 +97,7 @@ static const BIO_METHOD methods_slg = {
     slg_ctrl,
     slg_new,
     slg_free,
-    NULL,
+    NULL,                      /* slg_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_log(void)
