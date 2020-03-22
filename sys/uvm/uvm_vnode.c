@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.110 2020/03/14 20:45:23 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.111 2020/03/22 18:32:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.110 2020/03/14 20:45:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.111 2020/03/22 18:32:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -287,7 +287,15 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 	UVMHIST_LOG(ubchist, "vp %#jx off 0x%jx", (uintptr_t)uobj, offset,
 	    0, 0);
 
-	KASSERT(rw_write_held(uobj->vmobjlock));
+	/*
+	 * NOBUSY must come with NOWAIT and NOALLOC.  if NOBUSY is
+	 * specified, this may be called with a reader lock.
+	 */
+
+	KASSERT(rw_lock_held(uobj->vmobjlock));
+	KASSERT((flags & UFP_NOBUSY) == 0 || (flags & UFP_NOWAIT) != 0);
+	KASSERT((flags & UFP_NOBUSY) == 0 || (flags & UFP_NOALLOC) != 0);
+	KASSERT((flags & UFP_NOBUSY) != 0 || rw_write_held(uobj->vmobjlock));
 
 	if (*pgp != NULL) {
 		UVMHIST_LOG(ubchist, "dontcare", 0,0,0,0);
@@ -380,8 +388,10 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 		}
 
 		/* mark the page BUSY and we're done. */
-		pg->flags |= PG_BUSY;
-		UVM_PAGE_OWN(pg, "uvn_findpage");
+		if ((flags & UFP_NOBUSY) == 0) {
+			pg->flags |= PG_BUSY;
+			UVM_PAGE_OWN(pg, "uvn_findpage");
+		}
 		UVMHIST_LOG(ubchist, "found %#jx (color %ju)",
 		    (uintptr_t)pg, VM_PGCOLOR(pg), 0, 0);
 		uvm_page_array_advance(a);
