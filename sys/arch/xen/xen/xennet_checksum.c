@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.c,v 1.9 2020/03/22 00:11:02 jdolecek Exp $	*/
+/*	$NetBSD: xennet_checksum.c,v 1.10 2020/03/22 11:20:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.9 2020/03/22 00:11:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.10 2020/03/22 11:20:59 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -56,12 +56,9 @@ static struct evcnt xn_cksum_defer = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "xennet", "csum blank");
 static struct evcnt xn_cksum_undefer = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "xennet", "csum undeferred");
-static struct evcnt xn_cksum_valid = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
-    NULL, "xennet", "csum data valid");
 
 EVCNT_ATTACH_STATIC(xn_cksum_defer);
 EVCNT_ATTACH_STATIC(xn_cksum_undefer);
-EVCNT_ATTACH_STATIC(xn_cksum_valid);
 
 #ifdef XENNET_DEBUG
 /* ratecheck(9) for checksum validation failures */
@@ -82,7 +79,7 @@ m_extract(struct mbuf *m, int off, int len)
  * for hw offload to do it
  */
 int
-xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m, bool data_validated)
+xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m)
 {
 	const struct ether_header *eh;
 	struct ip *iph = NULL;
@@ -193,51 +190,46 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m, bool data_validated)
 #ifdef XENNET_DEBUG
 		static struct timeval lasttime;
 		if (ratecheck(&lasttime, &xn_cksum_errintvl))
-			printf("%s: unknown proto %d passed%s\n",
-			    ifp->if_xname, nxt,
-			    data_validated ? "" : " no checksum");
+			printf("%s: unknown proto %d passed no checksum\n",
+			    ifp->if_xname, nxt);
 #endif /* XENNET_DEBUG */
 		error = EINVAL;
 		goto out;
 	    }
 	}
 
-	if (!data_validated) {
-		/*
-		 * Only compute the checksum if impossible to defer.
-		 */
-		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_rx;
+	/*
+	 * Only compute the checksum if impossible to defer.
+	 */
+	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_rx;
 
-		/*
-		 * Always initialize the sum to 0!  Some HW assisted
-		 * checksumming requires this. in_undefer_cksum()
-		 * also needs it to be zero.
-		 */
-		if (iph != NULL && (m->m_pkthdr.csum_flags & M_CSUM_IPv4))
-			iph->ip_sum = 0;
+	/*
+	 * Always initialize the sum to 0!  Some HW assisted
+	 * checksumming requires this. in_undefer_cksum()
+	 * also needs it to be zero.
+	 */
+	if (iph != NULL && (m->m_pkthdr.csum_flags & M_CSUM_IPv4))
+		iph->ip_sum = 0;
 
-		if (sw_csum & (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4)) {
-			in_undefer_cksum(m, ehlen,
-			    sw_csum & (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4));
-		}
+	if (sw_csum & (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4)) {
+		in_undefer_cksum(m, ehlen,
+		    sw_csum & (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4));
+	}
 
 #ifdef INET6
-		if (sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6)) {
-			in6_undefer_cksum(m, ehlen,
-			    sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6));
-		}
+	if (sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6)) {
+		in6_undefer_cksum(m, ehlen,
+		    sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6));
+	}
 #endif
 
-		if (m->m_pkthdr.csum_flags != 0) {
-			xn_cksum_defer.ev_count++;
+	if (m->m_pkthdr.csum_flags != 0) {
+		xn_cksum_defer.ev_count++;
 #ifdef M_CSUM_BLANK
-			m->m_pkthdr.csum_flags |= M_CSUM_BLANK;
+		m->m_pkthdr.csum_flags |= M_CSUM_BLANK;
 #endif
-		} else {
-			xn_cksum_undefer.ev_count++;
-		}
 	} else {
-		xn_cksum_valid.ev_count++;
+		xn_cksum_undefer.ev_count++;
 	}
 
     out:
