@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.84 2020/03/22 00:11:02 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.85 2020/03/22 11:20:59 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.84 2020/03/22 00:11:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.85 2020/03/22 11:20:59 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -888,10 +888,10 @@ xennetback_evthandler(void *arg)
 		xennetback_tx_response(xneti, txreq.id,
 		    NETIF_RSP_OKAY);
 
-		if ((txreq.flags & (NETTXF_csum_blank|NETTXF_data_validated))) {
-			xennet_checksum_fill(ifp, m,
-			    ((txreq.flags & NETTXF_data_validated) != 0));
-		}
+		if (txreq.flags & NETTXF_csum_blank)
+			xennet_checksum_fill(ifp, m);
+		else if (txreq.flags & NETTXF_data_validated)
+			m->m_pkthdr.csum_flags = XN_M_CSUM_SUPPORTED;
 		m_set_rcvif(m, ifp);
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
