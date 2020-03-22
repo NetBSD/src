@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.92 2020/03/19 10:53:43 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.93 2020/03/22 00:11:02 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.92 2020/03/19 10:53:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.93 2020/03/22 00:11:02 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -389,7 +389,14 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	ifp->if_capabilities =
 		IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_IPv4_Tx
 		| IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx
-		| IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx;
+		| IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx
+		| IFCAP_CSUM_UDPv6_Rx | IFCAP_CSUM_UDPv6_Tx
+		| IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_TCPv6_Tx;
+#define XN_M_CSUM_SUPPORTED (					\
+		M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_IPv4	\
+		| M_CSUM_TCPv6 | M_CSUM_UDPv6			\
+	)
+
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
@@ -1229,8 +1236,7 @@ xennet_softstart(void *arg)
 			break;
 		}
 
-		if ((m->m_pkthdr.csum_flags &
-		    (M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_IPv4)) != 0) {
+		if ((m->m_pkthdr.csum_flags & XN_M_CSUM_SUPPORTED) != 0) {
 			txflags = NETTXF_csum_blank;
 		} else {
 			txflags = NETTXF_data_validated;
