@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2660 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2661 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -159,3 +159,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		red-black trees. [ad 20200322]
 	uvm: Process concurrent page faults on individual objects in parallel,
 		where the relevant pages are already in-core.  [ad 20200322]
+	bwfm: Update firmware to linux-firmware-20200316. [thorpej 20200322]
