@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.14 2020/03/22 20:21:53 thorpej Exp $
+# $NetBSD: md.evbarm,v 1.15 2020/03/22 21:13:35 thorpej Exp $
 ./libdata/firmware/if_bwfm/brcmfmac43143-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43241b0-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43241b4-sdio.bin	base-firmware-root	firmware
@@ -18,6 +18,9 @@
 ./libdata/firmware/if_bwfm/brcmfmac43455-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43456-sdio.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43456-sdio.clm_blob	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43456-sdio.pine64,pinebook-pro.txt	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4354-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4356-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4373-sdio.bin	base-firmware-root	firmware
