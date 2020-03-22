@@ -1,7 +1,7 @@
-/*	$NetBSD: vhci.c,v 1.9 2020/03/22 15:14:03 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.10 2020/03/22 17:15:15 maxv Exp $ */
 
 /*
- * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.9 2020/03/22 15:14:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.10 2020/03/22 17:15:15 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -180,12 +180,15 @@ typedef struct vhci_packet {
 	TAILQ_ENTRY(vhci_packet) xferlist;
 	struct vhci_xfer *vxfer;
 	bool utoh;
+	uint8_t addr;
 	uint8_t *buf;
 	size_t size;
 	size_t cursor;
 } vhci_packet_t;
 
 typedef TAILQ_HEAD(, vhci_packet) vhci_packet_list_t;
+
+#define VHCI_NADDRS	16	/* maximum supported by USB */
 
 typedef struct {
 	kmutex_t lock;
@@ -194,7 +197,7 @@ typedef struct {
 	struct {
 		vhci_packet_list_t usb_to_host;
 		vhci_packet_list_t host_to_usb;
-	} pkts_device_ctrl;
+	} endpoints[VHCI_NADDRS];
 } vhci_port_t;
 
 typedef struct {
@@ -245,6 +248,7 @@ typedef struct {
 
 typedef struct {
 	u_int port;
+	uint8_t addr;
 	vhci_softc_t *softc;
 } vhci_fd_t;
 
@@ -253,7 +257,8 @@ extern struct cfdriver vhci_cd;
 /* -------------------------------------------------------------------------- */
 
 static void
-vhci_pkt_create(vhci_port_t *port, struct usbd_xfer *xfer, bool usb_to_host)
+vhci_pkt_create(vhci_port_t *port, struct usbd_xfer *xfer, bool utoh,
+    uint8_t addr)
 {
 	vhci_xfer_t *vxfer = (vhci_xfer_t *)xfer;
 	vhci_packet_list_t *reqlist, *datlist;
@@ -261,10 +266,11 @@ vhci_pkt_create(vhci_port_t *port, struct usbd_xfer *xfer, bool usb_to_host)
 	size_t npkts = 0;
 
 	/* Request packet. */
-	reqlist = &port->pkts_device_ctrl.host_to_usb;
+	reqlist = &port->endpoints[addr].host_to_usb;
 	req = kmem_zalloc(sizeof(*req), KM_SLEEP);
 	req->vxfer = vxfer;
 	req->utoh = false;
+	req->addr = addr;
 	req->buf = (uint8_t *)&xfer->ux_request;
 	req->size = sizeof(xfer->ux_request);
 	req->cursor = 0;
@@ -272,14 +278,15 @@ vhci_pkt_create(vhci_port_t *port, struct usbd_xfer *xfer, bool usb_to_host)
 
 	/* Data packet. */
 	if (xfer->ux_length > 0) {
-		if (usb_to_host) {
-			datlist = &port->pkts_device_ctrl.usb_to_host;
+		if (utoh) {
+			datlist = &port->endpoints[addr].usb_to_host;
 		} else {
-			datlist = &port->pkts_device_ctrl.host_to_usb;
+			datlist = &port->endpoints[addr].host_to_usb;
 		}
 		dat = kmem_zalloc(sizeof(*dat), KM_SLEEP);
 		dat->vxfer = vxfer;
-		dat->utoh = usb_to_host;
+		dat->utoh = utoh;
+		dat->addr = addr;
 		dat->buf = xfer->ux_buf;
 		dat->size = xfer->ux_length;
 		dat->cursor = 0;
@@ -312,9 +319,9 @@ vhci_pkt_destroy(vhci_softc_t *sc, vhci_packet_t *pkt)
 
 	/* Remove from the port. */
 	if (pkt->utoh) {
-		pktlist = &port->pkts_device_ctrl.usb_to_host;
+		pktlist = &port->endpoints[pkt->addr].usb_to_host;
 	} else {
-		pktlist = &port->pkts_device_ctrl.host_to_usb;
+		pktlist = &port->endpoints[pkt->addr].host_to_usb;
 	}
 	TAILQ_REMOVE(pktlist, pkt, portlist);
 
@@ -366,8 +373,8 @@ vhci_open(struct usbd_pipe *pipe)
 		case UE_CONTROL:
 			pipe->up_methods = &vhci_device_ctrl_methods;
 			break;
-		case UE_BULK:
 		case UE_INTERRUPT:
+		case UE_BULK:
 		default:
 			goto bad;
 		}
@@ -559,14 +566,17 @@ vhci_device_ctrl_transfer(struct usbd_xfer *xfer)
 static usbd_status
 vhci_device_ctrl_start(struct usbd_xfer *xfer)
 {
+	usb_endpoint_descriptor_t *ed = xfer->ux_pipe->up_endpoint->ue_edesc;
 	usb_device_request_t *req = &xfer->ux_request;
 	struct usbd_device *dev = xfer->ux_pipe->up_dev;
 	vhci_softc_t *sc = xfer->ux_bus->ub_hcpriv;
 	vhci_port_t *port;
 	bool polling = sc->sc_bus.ub_usepolling;
 	bool isread = (req->bmRequestType & UT_READ) != 0;
+	uint8_t addr = UE_GET_ADDR(ed->bEndpointAddress);
 	int portno, ret;
 
+	KASSERT(addr == 0);
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 	KASSERT(dev->ud_myhsport != NULL);
 	portno = dev->ud_myhsport->up_portno;
@@ -585,7 +595,7 @@ vhci_device_ctrl_start(struct usbd_xfer *xfer)
 	mutex_enter(&port->lock);
 	if (port->status & UPS_PORT_ENABLED) {
 		xfer->ux_status = USBD_IN_PROGRESS;
-		vhci_pkt_create(port, xfer, isread);
+		vhci_pkt_create(port, xfer, isread, addr);
 		ret = USBD_IN_PROGRESS;
 	} else {
 		ret = USBD_IOERROR;
@@ -761,10 +771,17 @@ struct vhci_ioc_get_info {
 	/* Current port. */
 	u_int port;
 	int status;
+
+	/* Current addr. */
+	uint8_t addr;
 };
 
 struct vhci_ioc_set_port {
 	u_int port;
+};
+
+struct vhci_ioc_set_addr {
+	uint8_t addr;
 };
 
 struct vhci_ioc_usb_attach {
@@ -777,6 +794,7 @@ struct vhci_ioc_usb_detach {
 
 #define VHCI_IOC_GET_INFO	_IOR('V', 0, struct vhci_ioc_get_info)
 #define VHCI_IOC_SET_PORT	_IOW('V', 1, struct vhci_ioc_set_port)
+#define VHCI_IOC_SET_ADDR	_IOW('V', 2, struct vhci_ioc_set_addr)
 #define VHCI_IOC_USB_ATTACH	_IOW('V', 10, struct vhci_ioc_usb_attach)
 #define VHCI_IOC_USB_DETACH	_IOW('V', 11, struct vhci_ioc_usb_detach)
 
@@ -829,41 +847,44 @@ vhci_port_flush(vhci_softc_t *sc, vhci_port_t *port)
 	vhci_packet_t *pkt, *nxt;
 	vhci_xfer_list_t vxferlist;
 	vhci_xfer_t *vxfer;
+	uint8_t addr;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(mutex_owned(&port->lock));
 
 	TAILQ_INIT(&vxferlist);
 
-	/* Drop all the packets in the H->U direction. */
-	pktlist = &port->pkts_device_ctrl.host_to_usb;
-	TAILQ_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
-		vxfer = pkt->vxfer;
-		KASSERT(vxfer->xfer.ux_status == USBD_IN_PROGRESS);
-		vhci_pkt_destroy(sc, pkt);
-		if (vxfer->npkts == 0)
-			TAILQ_INSERT_TAIL(&vxferlist, vxfer, freelist);
-	}
-	KASSERT(TAILQ_FIRST(pktlist) == NULL);
+	for (addr = 0; addr < VHCI_NADDRS; addr++) {
+		/* Drop all the packets in the H->U direction. */
+		pktlist = &port->endpoints[addr].host_to_usb;
+		TAILQ_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
+			vxfer = pkt->vxfer;
+			KASSERT(vxfer->xfer.ux_status == USBD_IN_PROGRESS);
+			vhci_pkt_destroy(sc, pkt);
+			if (vxfer->npkts == 0)
+				TAILQ_INSERT_TAIL(&vxferlist, vxfer, freelist);
+		}
+		KASSERT(TAILQ_FIRST(pktlist) == NULL);
 
-	/* Drop all the packets in the U->H direction. */
-	pktlist = &port->pkts_device_ctrl.usb_to_host;
-	TAILQ_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
-		vxfer = pkt->vxfer;
-		KASSERT(vxfer->xfer.ux_status == USBD_IN_PROGRESS);
-		vhci_pkt_destroy(sc, pkt);
-		if (vxfer->npkts == 0)
-			TAILQ_INSERT_TAIL(&vxferlist, vxfer, freelist);
-	}
-	KASSERT(TAILQ_FIRST(pktlist) == NULL);
+		/* Drop all the packets in the U->H direction. */
+		pktlist = &port->endpoints[addr].usb_to_host;
+		TAILQ_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
+			vxfer = pkt->vxfer;
+			KASSERT(vxfer->xfer.ux_status == USBD_IN_PROGRESS);
+			vhci_pkt_destroy(sc, pkt);
+			if (vxfer->npkts == 0)
+				TAILQ_INSERT_TAIL(&vxferlist, vxfer, freelist);
+		}
+		KASSERT(TAILQ_FIRST(pktlist) == NULL);
 
-	/* Terminate all the xfers collected. */
-	while ((vxfer = TAILQ_FIRST(&vxferlist)) != NULL) {
-		struct usbd_xfer *xfer = &vxfer->xfer;
-		TAILQ_REMOVE(&vxferlist, vxfer, freelist);
+		/* Terminate all the xfers collected. */
+		while ((vxfer = TAILQ_FIRST(&vxferlist)) != NULL) {
+			struct usbd_xfer *xfer = &vxfer->xfer;
+			TAILQ_REMOVE(&vxferlist, vxfer, freelist);
 
-		xfer->ux_status = USBD_TIMEOUT;
-		usb_transfer_complete(xfer);
+			xfer->ux_status = USBD_TIMEOUT;
+			usb_transfer_complete(xfer);
+		}
 	}
 }
 
@@ -920,6 +941,7 @@ vhci_get_info(vhci_fd_t *vfd, struct vhci_ioc_get_info *args)
 	mutex_enter(&port->lock);
 	args->status = port->status;
 	mutex_exit(&port->lock);
+	args->addr = vfd->addr;
 
 	return 0;
 }
@@ -933,6 +955,17 @@ vhci_set_port(vhci_fd_t *vfd, struct vhci_ioc_set_port *args)
 		return EINVAL;
 
 	vfd->port = args->port;
+
+	return 0;
+}
+
+static int
+vhci_set_addr(vhci_fd_t *vfd, struct vhci_ioc_set_addr *args)
+{
+	if (args->addr >= VHCI_NADDRS)
+		return EINVAL;
+
+	vfd->addr = args->addr;
 
 	return 0;
 }
@@ -989,6 +1022,7 @@ vhci_fd_open(dev_t dev, int flags, int type, struct lwp *l)
 
 	vfd = kmem_alloc(sizeof(*vfd), KM_SLEEP);
 	vfd->port = 1;
+	vfd->addr = 0;
 	vfd->softc = device_lookup_private(&vhci_cd, minor(dev));
 
 	return fd_clone(fp, fd, flags, &vhci_fileops, vfd);
@@ -1031,7 +1065,7 @@ vhci_fd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	if (uio->uio_resid == 0)
 		return 0;
 	port = &sc->sc_port[vfd->port];
-	pktlist = &port->pkts_device_ctrl.host_to_usb;
+	pktlist = &port->endpoints[vfd->addr].host_to_usb;
 
 	TAILQ_INIT(&vxferlist);
 
@@ -1104,7 +1138,7 @@ vhci_fd_write(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	if (uio->uio_resid == 0)
 		return 0;
 	port = &sc->sc_port[vfd->port];
-	pktlist = &port->pkts_device_ctrl.usb_to_host;
+	pktlist = &port->endpoints[vfd->addr].usb_to_host;
 
 	TAILQ_INIT(&vxferlist);
 
@@ -1171,6 +1205,8 @@ vhci_fd_ioctl(file_t *fp, u_long cmd, void *data)
 		return vhci_get_info(vfd, data);
 	case VHCI_IOC_SET_PORT:
 		return vhci_set_port(vfd, data);
+	case VHCI_IOC_SET_ADDR:
+		return vhci_set_addr(vfd, data);
 	case VHCI_IOC_USB_ATTACH:
 		return vhci_usb_attach(vfd, data);
 	case VHCI_IOC_USB_DETACH:
@@ -1236,6 +1272,7 @@ vhci_attach(device_t parent, device_t self, void *aux)
 {
 	vhci_softc_t *sc = device_private(self);
 	vhci_port_t *port;
+	uint8_t addr;
 	size_t i;
 
 	sc->sc_dev = self;
@@ -1251,8 +1288,10 @@ vhci_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < sc->sc_nports; i++) {
 		port = &sc->sc_port[i];
 		mutex_init(&port->lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-		TAILQ_INIT(&port->pkts_device_ctrl.usb_to_host);
-		TAILQ_INIT(&port->pkts_device_ctrl.host_to_usb);
+		for (addr = 0; addr < VHCI_NADDRS; addr++) {
+			TAILQ_INIT(&port->endpoints[addr].usb_to_host);
+			TAILQ_INIT(&port->endpoints[addr].host_to_usb);
+		}
 	}
 
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
