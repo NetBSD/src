@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.236 2020/01/25 05:43:32 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.237 2020/03/22 14:39:28 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.236 2020/01/25 05:43:32 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.237 2020/03/22 14:39:28 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,15 +227,11 @@ struct nlist hashnl[] =
 	{ .n_name = "_in_ifaddrhash" },
 #define	X_IFADDRHASHTBL	9
 	{ .n_name = "_in_ifaddrhashtbl" },
-#define	X_NCHASH	10
-	{ .n_name = "_nchash" },
-#define	X_NCHASHTBL	11
-	{ .n_name = "_nchashtbl" },
-#define	X_NCVCACHEHASH	12
+#define	X_VCACHEHASH	10
 	{ .n_name = "_vcache_hashmask" },
-#define	X_NCVCACHETBL	13
+#define	X_VCACHETBL	11
 	{ .n_name = "_vcache_hashtab" },
-#define X_HASHNL_SIZE	14	/* must be last */
+#define X_HASHNL_SIZE	12	/* must be last */
 	{ .n_name = NULL },
 };
 
@@ -1124,6 +1120,8 @@ dosum(void)
 	(void)printf("%9" PRIu64 " 2passes\n", nch_stats.ncs_2passes);
 	(void)printf("%9" PRIu64 " reverse hits\n", nch_stats.ncs_revhits);
 	(void)printf("%9" PRIu64 " reverse miss\n", nch_stats.ncs_revmiss);
+	(void)printf("%9" PRIu64 " hash collisions\n", nch_stats.ncs_collisions);
+	(void)printf("%9" PRIu64 " access denied\n", nch_stats.ncs_denied);
 	(void)printf(
 	    "%9s cache hits (%d%% pos + %d%% neg) system %d%% per-process\n",
 	    "", PCT(nch_stats.ncs_goodhits, nchtotal),
@@ -1898,16 +1896,12 @@ struct kernel_hash {
 		X_IFADDRHASH, X_IFADDRHASHTBL,
 		HASH_LIST, offsetof(struct in_ifaddr, ia_hash),
 	}, {
-		"name cache hash",
-		X_NCHASH, X_NCHASHTBL,
-		HASH_LIST, offsetof(struct namecache, nc_hash),
-	}, {
 		"user info (uid -> used processes) hash",
 		X_UIHASH, X_UIHASHTBL,
 		HASH_LIST, offsetof(struct uidinfo, ui_hash),
 	}, {
 		"vnode cache hash",
-		X_NCVCACHEHASH, X_NCVCACHETBL,
+		X_VCACHEHASH, X_VCACHETBL,
 		HASH_SLIST, offsetof(struct vnode_impl, vi_hash),
 	}, {
 		NULL, -1, -1, 0, 0,
