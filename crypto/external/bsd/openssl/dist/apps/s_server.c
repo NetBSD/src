@@ -2423,7 +2423,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
             }
             FD_ZERO(&readfds);
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
-            openssl_fdset(fileno_stdin(), &readfds);
+            openssl_fdset(fdin, &readfds);
 #endif
             openssl_fdset(s, &readfds);
             /*

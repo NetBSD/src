@@ -2804,7 +2804,7 @@ int s_client_main(int argc, char **argv)
                  * set the flag so we exit.
                  */
                 if (read_tty && !at_eof)
-                    openssl_fdset(fileno_stdin(), &readfds);
+                    openssl_fdset(fdin, &readfds);
 #if !defined(OPENSSL_SYS_VMS)
                 if (write_tty)
                     openssl_fdset(fdout, &writefds);
