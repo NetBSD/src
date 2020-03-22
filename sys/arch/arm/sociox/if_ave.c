@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.8 2020/03/21 11:46:36 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.9 2020/03/22 00:05:17 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.8 2020/03/21 11:46:36 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.9 2020/03/22 00:05:17 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -387,6 +387,9 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self,
 	    "Ethernet address %s\n", ether_sprintf(enaddr));
 
+	sc->sc_flowflags = 0;
+	sc->sc_rxc = 0;
+
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = mii_readreg;
 	mii->mii_writereg = mii_writereg;
@@ -413,9 +416,6 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	ifp->if_init = ave_init;
 	ifp->if_stop = ave_stop;
 	IFQ_SET_READY(&ifp->if_snd);
-
-	sc->sc_flowflags = 0;
-	sc->sc_rxc = 0;
 
 	sc->sc_ethercom.ec_capabilities = ETHERCAP_VLAN_MTU;
 	ifp->if_capabilities = IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx;
@@ -531,8 +531,12 @@ ave_init(struct ifnet *ifp)
 	sc->sc_txd32 =   (void *)((uintptr_t)sc->sc_sh + AVE32TDB);
 	sc->sc_rxd32 =   (void *)((uintptr_t)sc->sc_sh + AVE32RDB);
 
-	/* build sane and loaded Tx/Rx descriptors */
-	memset(sc->sc_txdescs, 0, sizeof(struct tdes)*AVE_NTXDESC);
+	/* build sane Tx and loaded Rx descriptors */
+	for (i = 0; i < AVE_NTXDESC; i++) {
+		struct tdes *tdes = &sc->sc_txdescs[i];
+		tdes->t2 = tdes->t1 = 0;
+		tdes->t0 = T0_OWN;
+	}
 	for (i = 0; i < AVE_NRXDESC; i++)
 		(void)add_rxbuf(sc, i);
 
@@ -549,6 +553,8 @@ ave_init(struct ifnet *ifp)
 
 	/* accept multicast frame or run promisc mode */
 	ave_set_rcvfilt(sc);
+
+	(void)ave_ifmedia_upd(ifp);
 
 	csr = CSR_READ(sc, AVECFG);
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx) {
@@ -603,7 +609,7 @@ ave_ifmedia_upd(struct ifnet *ifp)
 {
 	struct ave_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_mii.mii_media;
-	uint32_t txcr, rxcr;
+	uint32_t txcr, rxcr, csr;
 
 	txcr = CSR_READ(sc, AVETXC);
 	rxcr = CSR_READ(sc, AVERXC);
@@ -615,14 +621,25 @@ ave_ifmedia_upd(struct ifnet *ifp)
 		; /* advertise flow control pause */
 		; /* adv. 1000FDX,100FDX,100HDX,10FDX,10HDX */
 	} else {
+#if 1 /* XXX not sure to belong here XXX */
 		txcr &= ~(TXC_SPD1000 | TXC_SPD100);
 		rxcr &= ~RXC_USEFDX;
-		if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_1000_T)
+		if ((sc->sc_phymode & CFG_MII) == 0 /* RGMII model */
+		     && IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_1000_T)
 			txcr |= TXC_SPD1000;
 		else if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
 			txcr |= TXC_SPD100;
 		if (ifm->ifm_media & IFM_FDX)
-			rxcr |= RXC_USEFDX;
+			rxcr |= RXC_USEFDX;	
+
+		/* adjust LINKSEL when MII/RMII too */
+		if (sc->sc_phymode & CFG_MII) {
+			csr = CSR_READ(sc, AVELINKSEL) &~ LINKSEL_SPD100;;
+			if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
+				csr |= LINKSEL_SPD100;
+			CSR_WRITE(sc, AVELINKSEL, csr);
+		}
+#endif
 	}
 	sc->sc_rxc = rxcr;
 	CSR_WRITE(sc, AVETXC, txcr);
@@ -647,10 +664,9 @@ mii_statchg(struct ifnet *ifp)
 {
 	struct ave_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
-	struct ifmedia * const ifm = &mii->mii_media;
-	uint32_t txcr, rxcr, csr;
+	uint32_t txcr, rxcr;
 
-	/* get flow control negotiation result */
+	/* Get flow control negotiation result. */
 	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
 	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags)
 		sc->sc_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
@@ -659,32 +675,14 @@ mii_statchg(struct ifnet *ifp)
 	rxcr = CSR_READ(sc, AVERXC);
 	CSR_WRITE(sc, AVERXC, rxcr &~ RXC_EN); /* stop Rx first */
 
-	/* adjust 802.3x PAUSE flow control */
-	if ((mii->mii_media_active & IFM_FDX)
-	    && (sc->sc_flowflags & IFM_ETH_TXPAUSE))
-		txcr |= TXC_FCE;
-	else
-		txcr &= ~TXC_FCE;
-	if ((mii->mii_media_active & IFM_FDX)
-	    && (sc->sc_flowflags & IFM_ETH_RXPAUSE))
-		rxcr |= RXC_FCE;
-	else
-		rxcr &= ~RXC_FCE;
-
-	/* HW does not handle automatic speed adjustment */
-	txcr &= ~(TXC_SPD1000 | TXC_SPD100);
-	if ((sc->sc_phymode & CFG_MII) == 0 /* RGMII model */
-	     && IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_1000_T)
-		txcr |= TXC_SPD1000;
-	else if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
-		txcr |= TXC_SPD100;
-
-	/* adjust LINKSEL when MII/RMII too */
-	if (sc->sc_phymode & CFG_MII) {
-		csr = CSR_READ(sc, AVELINKSEL) &~ LINKSEL_SPD100;;
-		if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
-			csr |= LINKSEL_SPD100;
-		CSR_WRITE(sc, AVELINKSEL, csr);
+	/* Adjust 802.3x PAUSE flow control. */
+	txcr &= ~TXC_FCE;
+	rxcr &= ~RXC_FCE;
+	if (mii->mii_media_active & IFM_FDX) {
+		if (sc->sc_flowflags & IFM_ETH_TXPAUSE)
+			txcr |= TXC_FCE;
+		if (sc->sc_flowflags & IFM_ETH_RXPAUSE)
+			rxcr |= RXC_FCE;
 	}
 
 	sc->sc_rxc = rxcr;
@@ -811,7 +809,7 @@ ave_write_filt(struct ave_softc *sc, int i, const uint8_t *en)
 
 	/* pick v4mcast or v6mcast length */
 	n = (en[0] == 0x01) ? 3 : (en[0] == 0x33) ? 2 : ETHER_ADDR_LEN;
-	/* entry 0 is reserved for promisc mode */
+	/* slot 0 is reserved for promisc mode */
 	mskbyte0 = (i > 0) ? genmask0(n) : MSKBYTE0;
 
 	/* set frame address first */
