@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.15 2020/03/22 00:34:31 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.16 2020/03/22 01:58:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.15 2020/03/22 00:34:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.16 2020/03/22 01:58:22 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -416,8 +416,6 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
 	 * Search the RB tree for the key.  This is an inlined lookup
 	 * tailored for exactly what's needed here (64-bit key and so on)
 	 * that is quite a bit faster than using rb_tree_find_node(). 
-	 * Elsewhere during entry/removal the usual functions are used as it
-	 * doesn't matter there.
 	 */
 	for (;;) {
 		if (__predict_false(RB_SENTINEL_P(node))) {
@@ -525,6 +523,9 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		return false;
 	}
 
+	/* Compute the key up front - don't need the lock. */
+	key = cache_key(name, namelen);
+
 	/* Could the entry be purged below? */
 	if ((cnflags & ISLASTCN) != 0 &&
 	    ((cnflags & MAKEENTRY) == 0 || nameiop == CREATE)) {
@@ -532,9 +533,6 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	} else {
 		op = RW_READER;
 	}
-
-	/* Compute the key up front - don't need the lock. */
-	key = cache_key(name, namelen);
 
 	/* Now look for the name. */
 	rw_enter(&dvi->vi_nc_lock, op);
@@ -890,18 +888,20 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	/*
 	 * Insert to the directory.  Concurrent lookups in the same
 	 * directory may race for a cache entry.  There can also be hash
-	 * value collisions.  If there's a entry there already, free it.
+	 * value collisions.  If there's a entry there already, purge it.
 	 */
 	rw_enter(&dvi->vi_nc_lock, RW_WRITER);
-	oncp = rb_tree_find_node(&dvi->vi_nc_tree, &ncp->nc_key);
-	if (oncp) {
+	oncp = rb_tree_insert_node(&dvi->vi_nc_tree, ncp);
+	if (oncp != ncp) {
+		KASSERT(oncp->nc_key == ncp->nc_key);
 		KASSERT(oncp->nc_nlen == ncp->nc_nlen);
 		if (cache_namecmp(oncp, name, namelen)) {
 			COUNT(ncs_collisions);
 		}
 		cache_remove(oncp, true);
+		oncp = rb_tree_insert_node(&dvi->vi_nc_tree, ncp);
+		KASSERT(oncp == ncp);
 	}
-	rb_tree_insert_node(&dvi->vi_nc_tree, ncp);
 
 	/* Then insert to the vnode. */
 	if (vp == NULL) {
