@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2312 2020/03/03 00:38:12 christos Exp $
+#	$NetBSD: mi,v 1.2313 2020/03/22 14:27:33 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3216,6 +3216,7 @@
 ./usr/include/sys/vmmeter.h			comp-c-include
 ./usr/include/sys/vnode.h			comp-c-include
 ./usr/include/sys/vnode_if.h			comp-c-include
+./usr/include/sys/vnode_impl.h			comp-c-include
 ./usr/include/sys/vsio.h			comp-obsolete		obsolete
 ./usr/include/sys/wait.h			comp-c-include
 ./usr/include/sys/wapbl.h			comp-c-include

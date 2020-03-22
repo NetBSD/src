@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.21 2020/02/23 22:14:04 ad Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.22 2020/03/22 14:27:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2019, 2020 The NetBSD Foundation, Inc.
@@ -28,6 +28,7 @@
 
 #ifndef _SYS_VNODE_IMPL_H_
 #define	_SYS_VNODE_IMPL_H_
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <sys/vnode.h>
 
@@ -143,4 +144,5 @@ int	vcache_vget(vnode_t *);
 int	vcache_tryvget(vnode_t *);
 int	vfs_drainvnodes(void);
 
-#endif /* !_SYS_VNODE_IMPL_H_ */
+#endif	/* defined(_KERNEL) || defined(_KMEMUSER) */
+#endif	/* !_SYS_VNODE_IMPL_H_ */
