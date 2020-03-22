@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.237 2020/03/22 14:39:28 ad Exp $ */
+/* $NetBSD: vmstat.c,v 1.238 2020/03/22 18:32:42 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.237 2020/03/22 14:39:28 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.238 2020/03/22 18:32:42 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -1074,6 +1074,10 @@ dosum(void)
 	(void)printf("%9" PRIu64 " object faults\n", uvmexp.flt_obj);
 	(void)printf("%9" PRIu64 " promote copy faults\n", uvmexp.flt_prcopy);
 	(void)printf("%9" PRIu64 " promote zero fill faults\n", uvmexp.flt_przero);
+	(void)printf("%9" PRIu64 " faults upgraded lock\n",
+	    uvmexp.fltup);
+	(void)printf("%9" PRIu64 " faults couldn't upgrade lock\n",
+	    uvmexp.fltnoup);
 
 	(void)printf("%9" PRIu64 " times daemon wokeup\n",uvmexp.pdwoke);
 	(void)printf("%9" PRIu64 " revolutions of the clock hand\n", uvmexp.pdrevs);

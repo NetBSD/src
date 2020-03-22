@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.138 2020/03/17 18:31:39 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.139 2020/03/22 18:32:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.138 2020/03/17 18:31:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.139 2020/03/22 18:32:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -807,6 +807,16 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		    (uintptr_t)uobj, offset, flags,0);
 
 	/*
+	 * the object must be locked.  it can only be a read lock when
+	 * processing a read fault with PGO_LOCKED | PGO_NOBUSY.
+	 */
+
+	KASSERT(rw_lock_held(uobj->vmobjlock));
+	KASSERT(rw_write_held(uobj->vmobjlock) ||
+	   ((~flags & (PGO_LOCKED | PGO_NOBUSY)) == 0 &&
+	   (access_type & VM_PROT_WRITE) == 0));
+
+	/*
  	 * get number of pages
  	 */
 
@@ -835,10 +845,12 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 			/*
  			 * if page is new, attempt to allocate the page,
-			 * zero-fill'd.
+			 * zero-fill'd.  we can only do this if busying
+			 * pages, as otherwise the object is read locked.
  			 */
 
-			if (ptmp == NULL && uao_find_swslot(uobj,
+			if ((flags & PGO_NOBUSY) == 0 && ptmp == NULL &&
+			    uao_find_swslot(uobj,
 			    current_offset >> PAGE_SHIFT) == 0) {
 				ptmp = uao_pagealloc(uobj, current_offset,
 				    UVM_FLAG_COLORMATCH|UVM_PGA_ZERO);
@@ -870,9 +882,11 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			KASSERT(uvm_pagegetdirty(ptmp) !=
 			    UVM_PAGE_STATUS_CLEAN);
 
-			/* caller must un-busy this page */
-			ptmp->flags |= PG_BUSY;
-			UVM_PAGE_OWN(ptmp, "uao_get1");
+			if ((flags & PGO_NOBUSY) == 0) {
+				/* caller must un-busy this page */
+				ptmp->flags |= PG_BUSY;
+				UVM_PAGE_OWN(ptmp, "uao_get1");
+			}
 gotpage:
 			pps[lcv] = ptmp;
 			gotpages++;
