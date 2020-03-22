@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.115 2020/03/22 16:43:57 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.116 2020/03/22 18:45:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.115 2020/03/22 16:43:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.116 2020/03/22 18:45:28 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1676,6 +1676,7 @@ vcache_reclaim(vnode_t *vp)
 		cpu_count(CPU_COUNT_FILEPAGES, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
+	vp->v_iflag |= VI_DEADCHECK; /* for genfs_getpages() */
 	mutex_exit(vp->v_interlock);
 	rw_exit(vp->v_uobj.vmobjlock);
 
