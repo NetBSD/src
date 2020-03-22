@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2020/03/22 20:21:53 thorpej Exp $
+# $NetBSD: Makefile,v 1.5 2020/03/22 21:13:35 thorpej Exp $
 
 NOMAN=	# define
 
@@ -44,6 +44,8 @@ FILES+=	dist/brcmfmac4339-sdio.bin
 FILES+=	dist/brcmfmac43430-sdio.bin
 FILES+=	dist/brcmfmac43430a0-sdio.bin
 FILES+=	dist/brcmfmac43455-sdio.bin
+FILES+=	dist/brcmfmac43456-sdio.bin
+FILES+=	dist/brcmfmac43456-sdio.clm_blob
 FILES+=	dist/brcmfmac4354-sdio.bin
 FILES+=	dist/brcmfmac4356-sdio.bin
 FILES+=	dist/brcmfmac4373-sdio.bin
@@ -56,6 +58,7 @@ FILES+=	dist/brcmfmac43362-sdio.lemaker,bananapro.txt
 FILES+=	dist/brcmfmac43430-sdio.raspberrypi,3-model-b.txt
 FILES+=	dist/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt
 FILES+=	dist/brcmfmac43455-sdio.raspberrypi,4-model-b.txt
+FILES+=	dist/brcmfmac43456-sdio.pine64,pinebook-pro.txt
 .endif
 
 FILESDIR=	${FIRMWAREDIR}/if_bwfm
