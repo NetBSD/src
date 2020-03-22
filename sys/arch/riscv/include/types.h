@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.8 2020/03/14 16:12:16 skrll Exp $ */
+/* $NetBSD: types.h,v 1.9 2020/03/22 17:33:59 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -106,5 +106,8 @@ typedef __int32_t	__register_t;
 #define PCU_FPU		0
 #define PCU_UNIT_COUNT	1
 #endif
+
+/* XXX temporary */
+#define	__HAVE_UNLOCKED_PMAP
 
 #endif	/* _RISCV_TYPES_H_ */
