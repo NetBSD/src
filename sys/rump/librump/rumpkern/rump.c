@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.342 2020/02/22 21:45:34 ad Exp $	*/
+/*	$NetBSD: rump.c,v 1.343 2020/03/22 13:30:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.342 2020/02/22 21:45:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.343 2020/03/22 13:30:10 pgoyette Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -129,6 +129,7 @@ rump_proc_vfs_init_fn rump_proc_vfs_init = (void *)nullop;
 rump_proc_vfs_release_fn rump_proc_vfs_release = (void *)nullop;
 
 static void add_linkedin_modules(const struct modinfo *const *, size_t);
+static void add_static_evcnt(struct evcnt *);
 
 static pid_t rspo_wrap_getpid(void) {
 	return rump_sysproxy_hyp_getpid();
@@ -423,7 +424,7 @@ rump_init(void)
 
 	/* process dso's */
 	rumpuser_dl_bootstrap(add_linkedin_modules,
-	    rump_kernelfsym_load, rump_component_load);
+	    rump_kernelfsym_load, rump_component_load, add_static_evcnt);
 
 	rump_component_addlocal();
 	rump_component_init(RUMP_COMPONENT_KERN);
@@ -643,6 +644,18 @@ add_linkedin_modules(const struct modinfo * const *mip, size_t nmodinfo)
 {
 
 	module_builtin_add(mip, nmodinfo, false);
+}
+
+/*
+ * Add an evcnt.  Just in case it might already have been added, remove
+ * it first.
+ */
+static void
+add_static_evcnt(struct evcnt *ev)
+{
+
+	evcnt_detach(ev);
+	evcnt_attach_static(ev);
 }
 
 int

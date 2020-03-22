@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.32 2020/03/21 04:48:37 pgoyette Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.33 2020/03/22 13:30:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,15 +40,12 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.32 2020/03/21 04:48:37 pgoyette Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.33 2020/03/22 13:30:10 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
-
-#ifdef NOTYET
 #include <sys/evcnt.h>
-#endif
 
 #include <assert.h>
 
@@ -353,7 +350,8 @@ getsymbols(struct link_map *map, int ismainobj)
 
 static void
 process_object(void *handle,
-	rump_modinit_fn domodinit, rump_compload_fn docompload)
+	rump_modinit_fn domodinit, rump_compload_fn docompload,
+	rump_evcntattach_fn doevcntattach)
 {
 	const struct modinfo *const *mi_start, *const *mi_end;
 	struct rump_component *const *rc, *const *rc_end;
@@ -362,9 +360,7 @@ process_object(void *handle,
 	typedef void sysctl_setup_func(struct sysctllog **);
 	sysctl_setup_func *const *sfp, *const *sfp_end;
 
-#ifdef NOTYET	/* We don't yet handle link_set_evcnts */
 	struct evcnt *const *evp, *const *evp_end;
-#endif
 
 	mi_start = dlsym(handle, "__start_link_set_modules");
 	mi_end = dlsym(handle, "__stop_link_set_modules");
@@ -388,16 +384,14 @@ process_object(void *handle,
 		assert(sfp == sfp_end);
 	}
 
-#ifdef NOTYET
 	/* handle link_set_evcnts */
 	evp = dlsym(handle, "__start_link_set_evcnts");
 	evp_end = dlsym(handle, "__stop_link_set_evcnts");
 	if (evp && evp_end) {
 		for (; evp < evp_end; evp++)
-			evcnt_attach_static(*evp);
+			doevcntattach(*evp);
 		assert(evp == evp_end);
 	}
-#endif
 }
 
 /*
@@ -406,7 +400,8 @@ process_object(void *handle,
  */
 void
 rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
-	rump_symload_fn symload, rump_compload_fn compload)
+	rump_symload_fn symload, rump_compload_fn compload,
+	rump_evcntattach_fn doevcntattach)
 {
 	struct link_map *map, *origmap, *mainmap;
 	void *mainhandle;
@@ -501,7 +496,7 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 			if (handle == NULL)
 				continue;
 		}
-		process_object(handle, domodinit, compload);
+		process_object(handle, domodinit, compload, doevcntattach);
 		if (map != mainmap)
 			dlclose(handle);
 	}
@@ -512,7 +507,8 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
  */
 void
 rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
-	rump_symload_fn symload, rump_compload_fn compload)
+	rump_symload_fn symload, rump_compload_fn compload,
+	rump_evcntattach_fn doevcntattach)
 {
 
 	return;
