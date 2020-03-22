@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.14 2020/03/21 22:00:55 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.15 2020/03/22 00:34:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.14 2020/03/21 22:00:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.15 2020/03/22 00:34:31 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -235,10 +235,13 @@ struct nchstats	nchstats __cacheline_aligned;
 	KPREEMPT_ENABLE(l); \
 } while (/* CONSTCOND */ 0);
 
-/* Tunables */
-static const int cache_lru_maxdeact = 2;	/* max # to deactivate */
-static const int cache_lru_maxscan = 64;	/* max # to scan/reclaim */
-static int doingcache = 1;			/* 1 => enable the cache */
+/*
+ * Tunables.  cache_maxlen replaces the historical doingcache:
+ * set it zero to disable caching for debugging purposes.
+ */
+int cache_lru_maxdeact __read_mostly = 2;	/* max # to deactivate */
+int cache_lru_maxscan __read_mostly = 64;	/* max # to scan/reclaim */
+int cache_maxlen __read_mostly = USHRT_MAX;	/* max name length to cache */
 
 /* sysctl */
 static struct	sysctllog *cache_sysctllog;
@@ -515,11 +518,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	}
 	*vn_ret = NULL;
 
-	if (__predict_false(!doingcache)) {
-		return false;
-	}
-
-	if (__predict_false(namelen > USHRT_MAX)) {
+	if (__predict_false(namelen > cache_maxlen)) {
 		SDT_PROBE(vfs, namecache, lookup, toolong, dvp,
 		    name, namelen, 0, 0);
 		COUNT(ncs_long);
@@ -644,7 +643,7 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	*vn_ret = NULL;
 
 	/* If disabled, or file system doesn't support this, bail out. */
-	if (__predict_false(!doingcache ||
+	if (__predict_false(cache_maxlen == 0 ||
 	    (dvp->v_mount->mnt_iflag & IMNT_NCLOOKUP) == 0)) {
 		return false;
 	}
@@ -753,7 +752,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 
 	KASSERT(vp != NULL);
 
-	if (!doingcache)
+	if (cache_maxlen == 0)
 		goto out;
 
 	rw_enter(&vi->vi_nc_listlock, RW_READER);
@@ -855,7 +854,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 
 	/* First, check whether we can/should add a cache entry. */
 	if ((cnflags & MAKEENTRY) == 0 ||
-	    __predict_false(namelen > USHRT_MAX || !doingcache)) {
+	    __predict_false(namelen > cache_maxlen)) {
 		SDT_PROBE(vfs, namecache, enter, toolong, vp, name, namelen,
 		    0, 0);
 		return;
