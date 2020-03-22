@@ -51,7 +51,6 @@ void _armv8_pmull_probe(void);
 void _armv8_sha512_probe(void);
 # endif
 uint32_t _armv7_tick(void);
-#endif
 
 uint32_t OPENSSL_rdtsc(void)
 {
@@ -206,7 +205,6 @@ void OPENSSL_cpuid_setup(void)
     }
 # endif
 
-#if __ARM_MAX_ARCH__>=7
     /* Things that getauxval didn't tell us */
     if (sigsetjmp(ill_jmp, 1) == 0) {
         _armv7_tick();

@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "../bn_lcl.h"
+#include "../bn_local.h"
 #if !(defined(__GNUC__) && __GNUC__>=2)
 # include "../bn_asm.c"         /* kind of dirty hack for Sun Studio */
 #else
@@ -219,10 +219,9 @@ BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                   "       adcq    (%5,%2,8),%0    \n"
                   "       movq    %0,(%3,%2,8)    \n"
                   "       lea     1(%2),%2        \n"
-                  "       dec     %1              \n"
-                  "       jnz     1b              \n"
-                  "       sbbq    %0,%0           \n"
-                  :"=&r" (ret), "+c"(n), "+r"(i)
+                  "       loop    1b              \n"
+                  "       sbbq    %0,%0           \n":"=&r" (ret), "+c"(n),
+                  "+r"(i)
                   :"r"(rp), "r"(ap), "r"(bp)
                   :"cc", "memory");
 
@@ -246,10 +245,9 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                   "       sbbq    (%5,%2,8),%0    \n"
                   "       movq    %0,(%3,%2,8)    \n"
                   "       lea     1(%2),%2        \n"
-                  "       dec     %1              \n"
-                  "       jnz     1b              \n"
-                  "       sbbq    %0,%0           \n"
-                  :"=&r" (ret), "+c"(n), "+r"(i)
+                  "       loop    1b              \n"
+                  "       sbbq    %0,%0           \n":"=&r" (ret), "+c"(n),
+                  "+r"(i)
                   :"r"(rp), "r"(ap), "r"(bp)
                   :"cc", "memory");
 

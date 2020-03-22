@@ -1,4 +1,3 @@
-{- join("\n",map { "/* $_ */" } @autowarntext) -}
 /*
  * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -8,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_BN_CONF_H
-# define HEADER_BN_CONF_H
+#ifndef OSSL_CRYPTO_BN_CONF_H
+# define OSSL_CRYPTO_BN_CONF_H
 
 /*
  * The contents of this file are not used in the UEFI build, as
@@ -20,8 +19,12 @@
 /* Should we define BN_DIV2W here? */
 
 /* Only one for the following should be defined */
-{- $config{b64l} ? "#define" : "#undef" -} SIXTY_FOUR_BIT_LONG
-{- $config{b64}  ? "#define" : "#undef" -} SIXTY_FOUR_BIT
-{- $config{b32}  ? "#define" : "#undef" -} THIRTY_TWO_BIT
+#if _LP64
+# define SIXTY_FOUR_BIT_LONG
+#elif _ILP64
+# define SIXTY_FOUR_BIT
+#else
+# define THIRTY_TWO_BIT
+#endif 
 
 #endif

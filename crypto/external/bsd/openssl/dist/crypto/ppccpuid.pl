@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -128,27 +128,6 @@ Ladd:	lwarx	r5,0,r3
 .align	4
 .OPENSSL_rdtsc_mftb:
 	mftb	r3
-___
-$code.=<<___	if ($flavour !~ /64/);
-	mfspr	r0,287
-	srwi	r0,r0,0x10
-	cmplwi	r0,0x1
-	bgt	.Loop_rdtsc
-.Loop_rdtsc_601:	
-	mfrtcu	r5
-	mfrtcl	r3
-	mfrtcu	r4
-	cmplw	r4,r5
-	bne	.Loop_rdtsc_601
-	blr
-Loop_rdtsc:
-	mftbu	r5
-	mftb	r3
-	mftbu	r4
-	cmplw	r4,r5
-	bne	Loop_rdtsc
-___
-$code.=<<___;
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
@@ -400,4 +379,4 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

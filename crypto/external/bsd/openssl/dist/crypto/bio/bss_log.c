@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "bio_lcl.h"
+#include "bio_local.h"
 #include "internal/cryptlib.h"
 
 #if defined(OPENSSL_SYS_WINCE)
@@ -97,7 +97,7 @@ static const BIO_METHOD methods_slg = {
     slg_ctrl,
     slg_new,
     slg_free,
-    NULL,                      /* slg_callback_ctrl */
+    NULL,
 };
 
 const BIO_METHOD *BIO_s_log(void)

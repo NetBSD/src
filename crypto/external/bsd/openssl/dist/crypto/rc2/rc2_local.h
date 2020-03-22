@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <inttypes.h>
+
 #undef c2l
 #define c2l(c,l)        (l =((unsigned long)(*((c)++)))    , \
                          l|=((unsigned long)(*((c)++)))<< 8L, \
