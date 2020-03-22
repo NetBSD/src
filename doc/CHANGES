@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2658 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2659 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -154,3 +154,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	pam-u2f: Import token authenticator [christos 20200302]
 	terminfo: Support numeric parameters as int [roy 20200313]
 	postfix(1): Import version 3.5.0. [christos 20200318]
+	OpenSSL: Imported 1.1.1e. [christos 20200321]
