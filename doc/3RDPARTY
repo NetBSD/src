@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1702 2020/03/22 00:56:18 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1703 2020/03/22 00:56:45 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1092,7 +1092,7 @@ Current Vers:	1.0.2t/1.1.1e
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Home Page:	http://www.openssl.org/
-Date:		2019-10-09
+Date:		2020-03-21
 Mailing List:	openssl-announce@openssl.org
 Responsible:	christos, mjf, tls, riastradh, spz
 License:	OpenSSL and SSLeay license (both BSD-like)
