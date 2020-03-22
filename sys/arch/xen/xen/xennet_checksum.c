@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.c,v 1.8 2020/03/19 10:53:43 jdolecek Exp $	*/
+/*	$NetBSD: xennet_checksum.c,v 1.9 2020/03/22 00:11:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.8 2020/03/19 10:53:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.9 2020/03/22 00:11:02 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: xennet_checksum.c,v 1.8 2020/03/19 10:53:43 jdolecek
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
+#include <netinet/ip6.h>
+#include <netinet6/in6_offload.h>
 
 #include <xen/xennet_checksum.h>
 
@@ -57,16 +63,15 @@ EVCNT_ATTACH_STATIC(xn_cksum_defer);
 EVCNT_ATTACH_STATIC(xn_cksum_undefer);
 EVCNT_ATTACH_STATIC(xn_cksum_valid);
 
+#ifdef XENNET_DEBUG
 /* ratecheck(9) for checksum validation failures */
 static const struct timeval xn_cksum_errintvl = { 600, 0 };  /* 10 min, each */
+#endif
 
 static void *
 m_extract(struct mbuf *m, int off, int len)
 {
-	KASSERT(m->m_pkthdr.len >= off + len);
-	KASSERT(m->m_len >= off + len);
-
-	if (m->m_pkthdr.len >= off + len)
+	if (m->m_len >= off + len)
 		return mtod(m, char *) + off;
 	else
 		return NULL;
@@ -80,7 +85,10 @@ int
 xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m, bool data_validated)
 {
 	const struct ether_header *eh;
-	struct ip *iph;
+	struct ip *iph = NULL;
+#ifdef INET6
+	struct ip6_hdr *ip6h = NULL;
+#endif
 	int ehlen;
 	int iphlen;
 	int iplen;
@@ -98,27 +106,49 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m, bool data_validated)
 		return EINVAL;
 	}
 	etype = eh->ether_type;
-	if (etype == htobe16(ETHERTYPE_VLAN)) {
-		ehlen = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
-	} else if (etype == htobe16(ETHERTYPE_IP)) {
-		ehlen = ETHER_HDR_LEN;
-	} else {
-		static struct timeval lasttime;
-		if (ratecheck(&lasttime, &xn_cksum_errintvl))
-			printf("%s: unknown etype %#x passed%s\n",
-			    ifp->if_xname, ntohs(etype),
-			    data_validated ? "" : " no checksum");
-		return EINVAL;
+	ehlen = ETHER_HDR_LEN;
+	if (__predict_false(etype == htons(ETHERTYPE_VLAN))) {
+		struct ether_vlan_header *evl = m_extract(m, 0, sizeof(*evl));
+		if (evl == NULL) {
+			/* Too short, packet will be dropped by upper layer */
+			return EINVAL;
+		}
+		ehlen += ETHER_VLAN_ENCAP_LEN;
+		etype = ntohs(evl->evl_proto);
 	}
 
-	iph = m_extract(m, ehlen, sizeof(*iph));
-	if (iph == NULL) {
-		/* Too short, packet will be dropped by upper layer */
-		return EINVAL;
+	switch (etype) {
+	case htons(ETHERTYPE_IP):
+		iph = m_extract(m, ehlen, sizeof(*iph));
+		if (iph == NULL) {
+			/* Too short, packet will be dropped by upper layer */
+			return EINVAL;
+		}
+		nxt = iph->ip_p;
+		iphlen = iph->ip_hl << 2;
+		iplen = ntohs(iph->ip_len);
+		break;
+#ifdef INET6
+	case htons(ETHERTYPE_IPV6):
+		ip6h = m_extract(m, ehlen, sizeof(*ip6h));
+		if (ip6h == NULL) {
+			/* Too short, packet will be dropped by upper layer */
+			return EINVAL;
+		}
+		if ((ip6h->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
+			/* Bad version */
+			return EINVAL;
+		}
+		nxt = ip6h->ip6_nxt;
+		iphlen = sizeof(*ip6h);
+		iplen = ntohs(ip6h->ip6_plen);
+		break;
+#endif
+	default:
+		/* Not supported ethernet type */
+		return EOPNOTSUPP;
 	}
-	nxt = iph->ip_p;
-	iphlen = iph->ip_hl << 2;
-	iplen = ntohs(iph->ip_len);
+
 	if (ehlen + iplen > m->m_pkthdr.len) {
 		/* Too short, packet will be dropped by upper layer */
 		return EINVAL;
@@ -126,27 +156,47 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m, bool data_validated)
 
 	switch (nxt) {
 	case IPPROTO_UDP:
-		m->m_pkthdr.csum_flags = M_CSUM_UDPv4 | M_CSUM_IPv4;
+		if (iph)
+			m->m_pkthdr.csum_flags = M_CSUM_UDPv4 | M_CSUM_IPv4;
+#ifdef INET6
+		else
+			m->m_pkthdr.csum_flags = M_CSUM_UDPv6;
+#endif
 		m->m_pkthdr.csum_data = offsetof(struct udphdr, uh_sum);
 		m->m_pkthdr.csum_data |= iphlen << 16;
 		break;
 	case IPPROTO_TCP:
-		m->m_pkthdr.csum_flags = M_CSUM_TCPv4 | M_CSUM_IPv4;
+		if (iph)
+			m->m_pkthdr.csum_flags = M_CSUM_TCPv4 | M_CSUM_IPv4;
+#ifdef INET6
+		else
+			m->m_pkthdr.csum_flags = M_CSUM_TCPv6;
+#endif
 		m->m_pkthdr.csum_data = offsetof(struct tcphdr, th_sum);
 		m->m_pkthdr.csum_data |= iphlen << 16;
 		break;
 	case IPPROTO_ICMP:
 	case IPPROTO_IGMP:
-		m->m_pkthdr.csum_flags = M_CSUM_IPv4;
+		if (iph)
+			m->m_pkthdr.csum_flags = M_CSUM_IPv4;
 		m->m_pkthdr.csum_data = iphlen << 16;
 		break;
+	case IPPROTO_HOPOPTS:
+	case IPPROTO_ICMPV6:
+	case IPPROTO_FRAGMENT:
+		/* nothing to do */
+		error = 0;
+		goto out;
+		/* NOTREACHED */
 	default:
 	    {
+#ifdef XENNET_DEBUG
 		static struct timeval lasttime;
 		if (ratecheck(&lasttime, &xn_cksum_errintvl))
 			printf("%s: unknown proto %d passed%s\n",
 			    ifp->if_xname, nxt,
 			    data_validated ? "" : " no checksum");
+#endif /* XENNET_DEBUG */
 		error = EINVAL;
 		goto out;
 	    }
@@ -163,13 +213,20 @@ xennet_checksum_fill(struct ifnet *ifp, struct mbuf *m, bool data_validated)
 		 * checksumming requires this. in_undefer_cksum()
 		 * also needs it to be zero.
 		 */
-		if (m->m_pkthdr.csum_flags & M_CSUM_IPv4)
+		if (iph != NULL && (m->m_pkthdr.csum_flags & M_CSUM_IPv4))
 			iph->ip_sum = 0;
 
 		if (sw_csum & (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4)) {
 			in_undefer_cksum(m, ehlen,
 			    sw_csum & (M_CSUM_IPv4|M_CSUM_UDPv4|M_CSUM_TCPv4));
 		}
+
+#ifdef INET6
+		if (sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6)) {
+			in6_undefer_cksum(m, ehlen,
+			    sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6));
+		}
+#endif
 
 		if (m->m_pkthdr.csum_flags != 0) {
 			xn_cksum_defer.ev_count++;

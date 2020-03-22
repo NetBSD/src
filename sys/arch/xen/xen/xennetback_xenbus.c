@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.83 2020/03/21 23:25:53 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.84 2020/03/22 00:11:02 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.83 2020/03/21 23:25:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.84 2020/03/22 00:11:02 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -306,7 +306,13 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	ifp->if_capabilities =
 		IFCAP_CSUM_IPv4_Tx
 		| IFCAP_CSUM_UDPv4_Tx
-		| IFCAP_CSUM_TCPv4_Tx;
+		| IFCAP_CSUM_TCPv4_Tx
+		| IFCAP_CSUM_UDPv6_Tx
+		| IFCAP_CSUM_TCPv6_Tx;
+#define XN_M_CSUM_SUPPORTED	(				\
+		M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_IPv4	\
+		| M_CSUM_TCPv6 | M_CSUM_UDPv6			\
+	)
 	ifp->if_ioctl = xennetback_ifioctl;
 	ifp->if_start = xennetback_ifstart;
 	ifp->if_watchdog = xennetback_ifwatchdog;
@@ -1050,7 +1056,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 			rxresp->offset = offset;
 			rxresp->status = m->m_pkthdr.len;
 			if ((m->m_pkthdr.csum_flags &
-			    (M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_IPv4)) != 0) {
+			    XN_M_CSUM_SUPPORTED) != 0) {
 				rxresp->flags = NETRXF_csum_blank;
 			} else {
 				rxresp->flags = NETRXF_data_validated;
@@ -1366,7 +1372,7 @@ xennetback_ifsoftstart_copy(void *arg)
 			rxresp->offset = 0;
 			rxresp->status = m->m_pkthdr.len;
 			if ((m->m_pkthdr.csum_flags &
-			    (M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_IPv4)) != 0) {
+			    XN_M_CSUM_SUPPORTED) != 0) {
 				rxresp->flags = NETRXF_csum_blank;
 			} else {
 				rxresp->flags = NETRXF_data_validated;
