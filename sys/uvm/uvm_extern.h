@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.221 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.222 2020/03/22 18:32:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -249,6 +249,7 @@ b\32UNMAP\0\
 #define UFP_NORDONLY	0x08
 #define UFP_DIRTYONLY	0x10
 #define UFP_BACKWARD	0x20
+#define UFP_NOBUSY	0x40
 
 /*
  * lockflags that control the locking behavior of various functions.
@@ -506,6 +507,8 @@ struct uvmexp_sysctl {
 	int64_t fileunknown;
 	int64_t fileclean;
 	int64_t filedirty;
+	int64_t fltup;
+	int64_t fltnoup;
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.99 2020/03/20 19:08:54 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.100 2020/03/22 18:32:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.99 2020/03/20 19:08:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.100 2020/03/22 18:32:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,6 +391,7 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 
 	if (error) {
 		UVMHIST_LOG(loanhist, "error %jd", error,0,0,0);
+		KASSERT(error != ENOLCK);
 
 		/* need to refault (i.e. refresh our lookup) ? */
 		if (error == ERESTART) {

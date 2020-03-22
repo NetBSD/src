@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.75 2020/03/19 20:23:19 ad Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.76 2020/03/22 18:32:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.75 2020/03/19 20:23:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.76 2020/03/22 18:32:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,8 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.fileunknown = cpu_count_get(CPU_COUNT_FILEUNKNOWN);
 	u.fileclean = cpu_count_get(CPU_COUNT_FILECLEAN);
 	u.filedirty = cpu_count_get(CPU_COUNT_FILEDIRTY);
+	u.fltup = cpu_count_get(CPU_COUNT_FLTUP);
+	u.fltnoup = cpu_count_get(CPU_COUNT_FLTNOUP);
 
 	node = *rnode;
 	node.sysctl_data = &u;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.76 2020/03/20 19:08:54 ad Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.77 2020/03/22 18:32:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.76 2020/03/20 19:08:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.77 2020/03/22 18:32:42 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -296,6 +296,8 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 		 * anon was freed.
 		 */
 		return false;
+	case ENOLCK:
+		panic("uvm_anon_pagein");
 	default:
 		return true;
 	}

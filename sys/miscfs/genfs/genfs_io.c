@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.94 2020/03/17 18:31:38 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.95 2020/03/22 18:32:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.94 2020/03/17 18:31:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.95 2020/03/22 18:32:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.94 2020/03/17 18:31:38 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
 #include <sys/buf.h>
+#include <sys/atomic.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
@@ -103,7 +104,7 @@ genfs_getpages(void *v)
 	} */ * const ap = v;
 
 	off_t diskeof, memeof;
-	int i, error, npages;
+	int i, error, npages, iflag;
 	const int flags = ap->a_flags;
 	struct vnode * const vp = ap->a_vp;
 	struct uvm_object * const uobj = &vp->v_uobj;
@@ -125,18 +126,35 @@ genfs_getpages(void *v)
 	KASSERT(vp->v_type == VREG || vp->v_type == VDIR ||
 	    vp->v_type == VLNK || vp->v_type == VBLK);
 
+	/*
+	 * the object must be locked.  it can only be a read lock when
+	 * processing a read fault with PGO_LOCKED | PGO_NOBUSY.
+	 */
+
+	KASSERT(rw_lock_held(uobj->vmobjlock));
+	KASSERT(rw_write_held(uobj->vmobjlock) ||
+	   ((~flags & (PGO_LOCKED | PGO_NOBUSY)) == 0 && !memwrite));
+
 #ifdef DIAGNOSTIC
 	if ((flags & PGO_JOURNALLOCKED) && vp->v_mount->mnt_wapbl)
                 WAPBL_JLOCK_ASSERT(vp->v_mount);
 #endif
 
-	mutex_enter(vp->v_interlock);
-	error = vdead_check(vp, VDEAD_NOWAIT);
-	mutex_exit(vp->v_interlock);
-	if (error) {
-		if ((flags & PGO_LOCKED) == 0)
-			rw_exit(uobj->vmobjlock);
-		return error;
+	/*
+	 * check for reclaimed vnode.  v_interlock is not held here, but
+	 * VI_DEADCHECK is set with vmobjlock held.
+	 */
+
+	iflag = atomic_load_relaxed(&vp->v_iflag);
+	if (__predict_false((iflag & VI_DEADCHECK) != 0)) {
+		mutex_enter(vp->v_interlock);
+		error = vdead_check(vp, VDEAD_NOWAIT);
+		mutex_exit(vp->v_interlock);
+		if (error) {
+			if ((flags & PGO_LOCKED) == 0)
+				rw_exit(uobj->vmobjlock);
+			return error;
+		}
 	}
 
 startover:
@@ -217,9 +235,11 @@ startover:
 			KASSERT(pg == NULL || pg == PGO_DONTCARE);
 		}
 #endif /* defined(DEBUG) */
-		nfound = uvn_findpages(uobj, origoffset, &npages,
+ 		nfound = uvn_findpages(uobj, origoffset, &npages,
 		    ap->a_m, NULL,
-		    UFP_NOWAIT|UFP_NOALLOC|(memwrite ? UFP_NORDONLY : 0));
+		    UFP_NOWAIT | UFP_NOALLOC |
+		    (memwrite ? UFP_NORDONLY : 0) |
+		    ((flags & PGO_NOBUSY) != 0 ? UFP_NOBUSY : 0));
 		KASSERT(npages == *ap->a_count);
 		if (nfound == 0) {
 			error = EBUSY;
@@ -230,7 +250,9 @@ startover:
 		 * the file behind us.
 		 */
 		if (!genfs_node_rdtrylock(vp)) {
-			genfs_rel_pages(ap->a_m, npages);
+			if ((flags & PGO_NOBUSY) == 0) {
+				genfs_rel_pages(ap->a_m, npages);
+			}
 
 			/*
 			 * restore the array.
