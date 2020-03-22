@@ -24,7 +24,7 @@
 #include <openssl/err.h>
 #include <internal/sockets.h>
 #if !defined(OPENSSL_SYS_MSDOS)
-# include <unistd.h>
+# include OPENSSL_UNISTD
 #endif
 
 #define SSL_CONNECT_NAME        "localhost:4433"
