@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.17 2020/02/23 18:57:28 ad Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.18 2020/03/22 00:16:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008-2020 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.17 2020/02/23 18:57:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.18 2020/03/22 00:16:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -124,20 +124,17 @@ static struct evcnt		tlbstat_kernel[TLBSHOOT__MAX];
 static struct evcnt		tlbstat_single_req;
 static struct evcnt		tlbstat_single_issue;
 static const char *		tlbstat_name[ ] = {
-	"APTE",
+	"REMOVE_ALL",
 	"KENTER",
 	"KREMOVE",
-	"FREE_PTP1",
-	"FREE_PTP2",
+	"FREE_PTP",
 	"REMOVE_PTE",
-	"REMOVE_PTES",
-	"SYNC_PV1",
-	"SYNC_PV2",
+	"SYNC_PV",
 	"WRITE_PROTECT",
 	"ENTER",
-	"UPDATE",
+	"NVMM",
 	"BUS_DMA",
-	"BUS_SPACE"
+	"BUS_SPACE",
 };
 #endif
 

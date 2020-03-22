@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.379 2020/03/20 19:06:14 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.380 2020/03/22 00:16:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.379 2020/03/20 19:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.380 2020/03/22 00:16:16 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -577,6 +577,32 @@ pv_pte_next(struct pmap_page *pp, struct pv_pte *pvpte)
 		return pve_to_pvpte(LIST_FIRST(&pp->pp_pvlist));
 	}
 	return pve_to_pvpte(LIST_NEXT(pvpte_to_pve(pvpte), pve_list));
+}
+
+static inline uint8_t
+pmap_pte_to_pp_attrs(pt_entry_t pte)
+{
+	uint8_t ret = 0;
+	if (pte & PTE_D)
+		ret |= PP_ATTRS_D;
+	if (pte & PTE_A)
+		ret |= PP_ATTRS_A;
+	if (pte & PTE_W)
+		ret |= PP_ATTRS_W;
+	return ret;
+}
+
+static inline pt_entry_t
+pmap_pp_attrs_to_pte(uint8_t attrs)
+{
+	pt_entry_t pte = 0;
+	if (attrs & PP_ATTRS_D)
+		pte |= PTE_D;
+	if (attrs & PP_ATTRS_A)
+		pte |= PTE_A;
+	if (attrs & PP_ATTRS_W)
+		pte |= PTE_W;
+	return pte;
 }
 
 /*
@@ -2033,7 +2059,7 @@ pmap_lookup_pv(const struct pmap *pmap, const struct vm_page *ptp,
 	 * [This mostly deals with shared mappings, for example shared libs
 	 * and executables.]
 	 *
-	 * Optimise for pmap_remove_all() which works by ascending scan:
+	 * Optimise for pmap_remove_ptes() which works by ascending scan:
 	 * look at the lowest numbered node in the tree first.  The tree is
 	 * known non-empty because of the check above.  For short lived
 	 * processes where pmap_remove() isn't used much this gets close to
@@ -2287,7 +2313,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		invaladdr = level == 1 ? (vaddr_t)ptes :
 		    (vaddr_t)pdes[level - 2];
 		pmap_tlb_shootdown(pmap, invaladdr + index * PAGE_SIZE,
-		    opde, TLBSHOOT_FREE_PTP1);
+		    opde, TLBSHOOT_FREE_PTP);
 
 #if defined(XENPV)
 		pmap_tlb_shootnow();
@@ -2858,6 +2884,134 @@ pmap_destroy(struct pmap *pmap)
 }
 
 /*
+ * pmap_zap_ptp: clear out an entire PTP without modifying PTEs
+ *
+ * => caller must hold pmap's lock
+ * => PTP must be mapped into KVA
+ * => must be called with kernel preemption disabled
+ * => does as little work as possible
+ */
+static void
+pmap_zap_ptp(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
+    vaddr_t startva, vaddr_t blkendva, struct pv_entry **pv_tofree)
+{
+#ifndef XEN
+	struct pv_entry *pve;
+	struct vm_page *pg;
+	struct pmap_page *pp;
+	pt_entry_t opte;
+	rb_tree_t *tree;
+	vaddr_t va;
+	int wired;
+	uint8_t oattrs;
+	u_int cnt;
+
+	KASSERT(mutex_owned(&pmap->pm_lock));
+	KASSERT(kpreempt_disabled());
+	KASSERT(pmap != pmap_kernel());
+	KASSERT(ptp->wire_count > 1);
+	KASSERT(ptp->wire_count - 1 <= PAGE_SIZE / sizeof(pt_entry_t));
+
+	/*
+	 * Start at the lowest entered VA, and scan until there are no more
+	 * PTEs in the PTPs.  The goal is to disconnect PV entries and patch
+	 * up the pmap's stats.  No PTEs will be modified.
+	 */
+	tree = &VM_PAGE_TO_PP(ptp)->pp_rb;
+	pve = RB_TREE_MIN(tree);
+	wired = 0;
+	va = (vaddr_t)ptp->uanon;
+	pte += ((va - startva) >> PAGE_SHIFT);
+
+	for (cnt = ptp->wire_count; cnt > 1; pte++, va += PAGE_SIZE) {
+		opte = *pte;
+		if (!pmap_valid_entry(opte)) {
+			continue;
+		}
+
+		/*
+		 * Count the PTE.  If it's not for a managed mapping
+		 * there's noting more to do.
+		 */
+		cnt--;
+		wired -= (opte & PTE_WIRED);
+		if ((opte & PTE_PVLIST) == 0) {
+#ifndef DOM0OPS
+			KASSERTMSG((PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) == NULL),
+			    "managed page without PTE_PVLIST for %#"
+			    PRIxVADDR, va);
+			KASSERTMSG((pmap_pv_tracked(pmap_pte2pa(opte)) == NULL),
+			    "pv-tracked page without PTE_PVLIST for %#"
+			    PRIxVADDR, va);
+#endif
+			KASSERT(pmap_treelookup_pv(pmap, ptp, (ptp != NULL ?
+			    &VM_PAGE_TO_PP(ptp)->pp_rb : &pmap_kernel_rb),
+			    va) == NULL);
+			continue;
+		}
+
+		/*
+		 * "pve" now points to the lowest (by VA) dynamic PV entry
+		 * in the PTP.  If it's for this VA, take advantage of it to
+		 * avoid calling PHYS_TO_VM_PAGE().  Avoid modifying the RB
+		 * tree by skipping to the next VA in the tree whenever
+		 * there is a match here.  The tree will be cleared out in
+		 * one pass before return to pmap_remove_all().
+		 */ 
+		oattrs = pmap_pte_to_pp_attrs(opte);
+		if (pve != NULL && pve->pve_pte.pte_va == va) {
+			pp = pve->pve_pp;
+			KASSERT(pve->pve_pte.pte_ptp == ptp);
+			KASSERT(pp->pp_pte.pte_ptp != ptp ||
+			    pp->pp_pte.pte_va != va);
+			mutex_spin_enter(&pp->pp_lock);
+			pp->pp_attrs |= oattrs;
+			LIST_REMOVE(pve, pve_list);
+			mutex_spin_exit(&pp->pp_lock);
+			pve->pve_next = *pv_tofree;
+			*pv_tofree = pve;
+			pve = RB_TREE_NEXT(tree, pve);
+			continue;
+		}
+
+		/*
+		 * No entry in the tree so it must be embedded.  Look up the
+		 * page and cancel the embedded entry.
+		 */
+		if ((pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte))) != NULL) {
+			pp = VM_PAGE_TO_PP(pg);
+		} else if ((pp = pmap_pv_tracked(pmap_pte2pa(opte))) == NULL) {
+			paddr_t pa = pmap_pte2pa(opte);
+			panic("%s: PTE_PVLIST with pv-untracked page"
+			    " va = %#"PRIxVADDR"pa = %#"PRIxPADDR
+			    "(%#"PRIxPADDR")", __func__, va, pa, atop(pa));
+		}
+		mutex_spin_enter(&pp->pp_lock);
+		KASSERT(pp->pp_pte.pte_ptp == ptp);
+		KASSERT(pp->pp_pte.pte_va == va);
+		pp->pp_attrs |= oattrs;
+		pp->pp_pte.pte_ptp = NULL;
+		pp->pp_pte.pte_va = 0;
+		mutex_spin_exit(&pp->pp_lock);
+	}
+
+	/* PTP now empty - adjust the tree & stats to match. */
+	pmap_stats_update(pmap, -(ptp->wire_count - 1), wired / PTE_WIRED);
+	ptp->wire_count = 1;
+#ifdef DIAGNOSTIC
+	rb_tree_init(tree, &pmap_rbtree_ops);
+#endif
+#else	/* !XEN */
+	/*
+	 * XXXAD For XEN, it's not clear to me that we can do this, because
+	 * I guess the hypervisor keeps track of PTEs too.
+	 */
+	pmap_remove_ptes(pmap, ptp, (vaddr_t)pte, startva, blkendva,
+	    pv_tofree);
+#endif	/* !XEN */
+}
+
+/*
  * pmap_remove_all: remove all mappings from pmap in bulk.
  *
  * Ordinarily when removing mappings it's important to hold the UVM object's
@@ -2912,8 +3066,7 @@ pmap_remove_all(struct pmap *pmap)
 			KASSERT(pmap_find_ptp(pmap, va, 1) == ptps[i]);
 
 			/* Zap! */
-			pmap_remove_ptes(pmap, ptps[i],
-			    (vaddr_t)&ptes[pl1_i(va)], va,
+			pmap_zap_ptp(pmap, ptps[i], &ptes[pl1_i(va)], va,
 			    blkendva, &pv_tofree);
 
 			/* PTP should now be unused - free it. */
@@ -2922,6 +3075,7 @@ pmap_remove_all(struct pmap *pmap)
 		}
 		pmap_unmap_ptes(pmap, pmap2);
 		pmap_free_pvs(pmap, pv_tofree);
+		pmap_tlb_shootdown(pmap, -1L, 0, TLBSHOOT_REMOVE_ALL);
 		mutex_exit(&pmap->pm_lock);
 
 		/* Process deferred frees. */
@@ -3767,32 +3921,6 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 	}
 }
 
-static inline uint8_t
-pmap_pte_to_pp_attrs(pt_entry_t pte)
-{
-	uint8_t ret = 0;
-	if (pte & PTE_D)
-		ret |= PP_ATTRS_D;
-	if (pte & PTE_A)
-		ret |= PP_ATTRS_A;
-	if (pte & PTE_W)
-		ret |= PP_ATTRS_W;
-	return ret;
-}
-
-static inline pt_entry_t
-pmap_pp_attrs_to_pte(uint8_t attrs)
-{
-	pt_entry_t pte = 0;
-	if (attrs & PP_ATTRS_D)
-		pte |= PTE_D;
-	if (attrs & PP_ATTRS_A)
-		pte |= PTE_A;
-	if (attrs & PP_ATTRS_W)
-		pte |= PTE_W;
-	return pte;
-}
-
 /*
  * pmap_remove_pte: remove a single PTE from a PTP.
  *
@@ -4024,16 +4152,8 @@ pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, uint8_t *oattrs,
 			 * We lost a race with a V->P operation like
 			 * pmap_remove().  Wait for the competitor
 			 * reflecting pte bits into mp_attrs.
-			 *
-			 * Issue a redundant TLB shootdown so that
-			 * we can wait for its completion.
 			 */
 			pmap_unmap_pte();
-			if (clearbits != 0) {
-				pmap_tlb_shootdown(pmap, va,
-				    (pmap == pmap_kernel() ? PTE_G : 0),
-				    TLBSHOOT_SYNC_PV1);
-			}
 			return EAGAIN;
 		}
 
@@ -4067,7 +4187,7 @@ pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, uint8_t *oattrs,
 	} while (pmap_pte_cas(ptep, opte, npte) != opte);
 
 	if (need_shootdown) {
-		pmap_tlb_shootdown(pmap, va, opte, TLBSHOOT_SYNC_PV2);
+		pmap_tlb_shootdown(pmap, va, opte, TLBSHOOT_SYNC_PV);
 	}
 	pmap_unmap_pte();
 
@@ -5204,8 +5324,10 @@ pmap_update(struct pmap *pmap)
 			uvm_pagerealloc(ptp, NULL, 0);
 			PMAP_DUMMY_UNLOCK(pmap);
 
-			/* pmap zeros all pages before freeing */
-			ptp->flags |= PG_ZERO;
+			/*
+			 * XXX for PTPs freed by pmap_remove_ptes() but not
+			 * pmap_zap_ptp(), we could mark them PG_ZERO.
+			 */
 			uvm_pagefree(ptp);
 		}
 		mutex_exit(&pmap->pm_lock);
@@ -6016,15 +6138,8 @@ pmap_ept_sync_pv(struct vm_page *ptp, vaddr_t va, paddr_t pa, int clearbits,
 			 * We lost a race with a V->P operation like
 			 * pmap_remove().  Wait for the competitor
 			 * reflecting pte bits into mp_attrs.
-			 *
-			 * Issue a redundant TLB shootdown so that
-			 * we can wait for its completion.
 			 */
 			pmap_unmap_pte();
-			if (clearbits != 0) {
-				pmap_tlb_shootdown(pmap, va, 0,
-				    TLBSHOOT_SYNC_PV1);
-			}
 			return EAGAIN;
 		}
 
@@ -6062,7 +6177,7 @@ pmap_ept_sync_pv(struct vm_page *ptp, vaddr_t va, paddr_t pa, int clearbits,
 	} while (pmap_pte_cas(ptep, opte, npte) != opte);
 
 	if (need_shootdown) {
-		pmap_tlb_shootdown(pmap, va, 0, TLBSHOOT_SYNC_PV2);
+		pmap_tlb_shootdown(pmap, va, 0, TLBSHOOT_SYNC_PV);
 	}
 	pmap_unmap_pte();
 
