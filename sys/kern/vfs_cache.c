@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.16 2020/03/22 01:58:22 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.17 2020/03/22 14:16:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -153,9 +153,10 @@
  *	and the definition of "struct vnode" for the particulars.
  *
  *	Per-CPU statistics, and LRU list totals are read unlocked, since
- *	an approximate value is OK.  We maintain uintptr_t sized per-CPU
- *	counters and 64-bit global counters under the theory that uintptr_t
- *	sized counters are less likely to be hosed by nonatomic increment.
+ *	an approximate value is OK.  We maintain 32-bit sized per-CPU
+ *	counters and 64-bit global counters under the theory that 32-bit
+ *	sized counters are less likely to be hosed by nonatomic increment
+ *	(on 32-bit platforms).
  *
  *	The lock order is:
  *
@@ -171,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.16 2020/03/22 01:58:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.17 2020/03/22 14:16:50 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -180,6 +181,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.16 2020/03/22 01:58:22 ad Exp 
 #endif
 
 #include <sys/types.h>
+#include <sys/atomic.h>
+#include <sys/callout.h>
 #include <sys/cpu.h>
 #include <sys/errno.h>
 #include <sys/evcnt.h>
@@ -199,14 +202,12 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.16 2020/03/22 01:58:22 ad Exp 
 #include <miscfs/genfs/genfs.h>
 
 static void	cache_activate(struct namecache *);
+static void	cache_update_stats(void *);
 static int	cache_compare_key(void *, const void *, const void *);
 static int	cache_compare_nodes(void *, const void *, const void *);
 static void	cache_deactivate(void);
 static void	cache_reclaim(void);
 static int	cache_stat_sysctl(SYSCTLFN_ARGS);
-
-/* Per-CPU counters. */
-struct nchstats_percpu _NAMEI_CACHE_STATS(uintptr_t);
 
 /* Global pool cache. */
 static pool_cache_t cache_pool __read_mostly;
@@ -225,8 +226,15 @@ static struct {
 
 static kmutex_t cache_lru_lock __cacheline_aligned;
 
-/* Cache effectiveness statistics.  This holds total from per-cpu stats */
-struct nchstats	nchstats __cacheline_aligned;
+/* Cache effectiveness statistics.  nchstats holds system-wide total. */
+struct nchstats	nchstats;
+struct nchstats_percpu _NAMEI_CACHE_STATS(uint32_t);
+struct nchcpu {
+	struct nchstats_percpu cur;
+	struct nchstats_percpu last;
+};
+static callout_t cache_stat_callout;
+static kmutex_t cache_stat_lock __cacheline_aligned;
 
 #define	COUNT(f)	do { \
 	lwp_t *l = curlwp; \
@@ -235,6 +243,12 @@ struct nchstats	nchstats __cacheline_aligned;
 	KPREEMPT_ENABLE(l); \
 } while (/* CONSTCOND */ 0);
 
+#define	UPDATE(nchcpu, f) do { \
+	uint32_t cur = atomic_load_relaxed(&nchcpu->cur.f); \
+	nchstats.f += cur - nchcpu->last.f; \
+	nchcpu->last.f = cur; \
+} while (/* CONSTCOND */ 0)
+
 /*
  * Tunables.  cache_maxlen replaces the historical doingcache:
  * set it zero to disable caching for debugging purposes.
@@ -242,6 +256,7 @@ struct nchstats	nchstats __cacheline_aligned;
 int cache_lru_maxdeact __read_mostly = 2;	/* max # to deactivate */
 int cache_lru_maxscan __read_mostly = 64;	/* max # to scan/reclaim */
 int cache_maxlen __read_mostly = USHRT_MAX;	/* max name length to cache */
+int cache_stat_interval __read_mostly = 300;	/* in seconds */
 
 /* sysctl */
 static struct	sysctllog *cache_sysctllog;
@@ -1000,6 +1015,11 @@ nchinit(void)
 	TAILQ_INIT(&cache_lru.list[LRU_ACTIVE]);
 	TAILQ_INIT(&cache_lru.list[LRU_INACTIVE]);
 
+	mutex_init(&cache_stat_lock, MUTEX_DEFAULT, IPL_NONE);
+	callout_init(&cache_stat_callout, CALLOUT_MPSAFE);
+	callout_setfunc(&cache_stat_callout, cache_update_stats, NULL);
+	callout_schedule(&cache_stat_callout, cache_stat_interval * hz);
+
 	KASSERT(cache_sysctllog == NULL);
 	sysctl_createv(&cache_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -1362,6 +1382,41 @@ namecache_count_2passes(void)
 }
 
 /*
+ * Sum the stats from all CPUs into nchstats.  This needs to run at least
+ * once within every window where a 32-bit counter could roll over.  It's
+ * called regularly by timer to ensure this.
+ */
+static void
+cache_update_stats(void *cookie)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	mutex_enter(&cache_stat_lock);
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		struct nchcpu *nchcpu = ci->ci_data.cpu_nch;
+		UPDATE(nchcpu, ncs_goodhits);
+		UPDATE(nchcpu, ncs_neghits);
+		UPDATE(nchcpu, ncs_badhits);
+		UPDATE(nchcpu, ncs_falsehits);
+		UPDATE(nchcpu, ncs_miss);
+		UPDATE(nchcpu, ncs_long);
+		UPDATE(nchcpu, ncs_pass2);
+		UPDATE(nchcpu, ncs_2passes);
+		UPDATE(nchcpu, ncs_revhits);
+		UPDATE(nchcpu, ncs_revmiss);
+		UPDATE(nchcpu, ncs_collisions);
+		UPDATE(nchcpu, ncs_denied);
+	}
+	if (cookie != NULL) {
+		memcpy(cookie, &nchstats, sizeof(nchstats));
+	}
+	/* Reset the timer; arrive back here in N minutes at latest. */
+	callout_schedule(&cache_stat_callout, cache_stat_interval * hz);
+	mutex_exit(&cache_stat_lock);
+}
+
+/*
  * Fetch the current values of the stats.  We return the most
  * recent values harvested into nchstats by cache_reclaim(), which
  * will be less than a second old.
@@ -1369,9 +1424,7 @@ namecache_count_2passes(void)
 static int
 cache_stat_sysctl(SYSCTLFN_ARGS)
 {
-	CPU_INFO_ITERATOR cii;
 	struct nchstats stats;
-	struct cpu_info *ci;
 
 	if (oldp == NULL) {
 		*oldlenp = sizeof(nchstats);
@@ -1383,27 +1436,9 @@ cache_stat_sysctl(SYSCTLFN_ARGS)
 		return 0;
 	}
 
+	/* Refresh the global stats. */
 	sysctl_unlock();
-	memset(&stats, 0, sizeof(nchstats));
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		struct nchstats_percpu *np = ci->ci_data.cpu_nch;
-
-		stats.ncs_goodhits += np->ncs_goodhits;
-		stats.ncs_neghits += np->ncs_neghits;
-		stats.ncs_badhits += np->ncs_badhits;
-		stats.ncs_falsehits += np->ncs_falsehits;
-		stats.ncs_miss += np->ncs_miss;
-		stats.ncs_long += np->ncs_long;
-		stats.ncs_pass2 += np->ncs_pass2;
-		stats.ncs_2passes += np->ncs_2passes;
-		stats.ncs_revhits += np->ncs_revhits;
-		stats.ncs_revmiss += np->ncs_revmiss;
-		stats.ncs_collisions += np->ncs_collisions;
-		stats.ncs_denied += np->ncs_denied;
-	}
-	mutex_enter(&cache_lru_lock);
-	memcpy(&nchstats, &stats, sizeof(nchstats));
-	mutex_exit(&cache_lru_lock);
+	cache_update_stats(&stats);
 	sysctl_relock();
 
 	*oldlenp = MIN(sizeof(stats), *oldlenp);
