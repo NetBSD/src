@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1232 2020/03/13 15:19:25 roy Exp $
+# $NetBSD: mi,v 1.1233 2020/03/22 20:21:53 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -148,9 +148,17 @@
 ./libdata/firmware/if_bwfm/brcmfmac43236b.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43242a.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4350-pcie.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac4356-pcie.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4350c2-pcie.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43569.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43602-pcie.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43570-pcie.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac4358-pcie.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43602-pcie.ap.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac4366b-pcie.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac4366c-pcie.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac4371-pcie.bin	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac4373.bin	base-firmware-root	firmware
 ./libdata/firmware/if_ipw			base-firmware-root
 ./libdata/firmware/if_ipw/LICENSE		base-firmware-root	firmware
 ./libdata/firmware/if_ipw/ipw2100-1.2-i.fw	base-firmware-root	firmware
