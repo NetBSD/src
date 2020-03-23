@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.12 2020/03/23 05:24:28 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.13 2020/03/23 07:42:00 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.12 2020/03/23 05:24:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.13 2020/03/23 07:42:00 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -169,18 +169,18 @@ struct rdes32 { uint32_t r0, r1; };
 /* R1 frame address 31:0 */
 /* R2 frame address 63:32 */
 
-#define AVE_NTXSEGS		16
-#define AVE_TXQUEUELEN		(AVE_NTXDESC / AVE_NTXSEGS)
-#define AVE_TXQUEUELEN_MASK	(AVE_TXQUEUELEN - 1)
-#define AVE_TXQUEUE_GC		(AVE_TXQUEUELEN / 4)
-#define AVE_NTXDESC		256			/* HW limit */
-#define AVE_NTXDESC_MASK	(AVE_NTXDESC - 1)
-#define AVE_NEXTTX(x)		(((x) + 1) & AVE_NTXDESC_MASK)
-#define AVE_NEXTTXS(x)		(((x) + 1) & AVE_TXQUEUELEN_MASK)
+#define MD_NTXSEGS		16		/* fixed */
+#define MD_TXQUEUELEN		(MD_NTXDESC / MD_NTXSEGS)
+#define MD_TXQUEUELEN_MASK	(MD_TXQUEUELEN - 1)
+#define MD_TXQUEUE_GC		(MD_TXQUEUELEN / 4)
+#define MD_NTXDESC		256		/* this is max HW limit */
+#define MD_NTXDESC_MASK	(MD_NTXDESC - 1)
+#define MD_NEXTTX(x)		(((x) + 1) & MD_NTXDESC_MASK)
+#define MD_NEXTTXS(x)		(((x) + 1) & MD_TXQUEUELEN_MASK)
 
-#define AVE_NRXDESC		256
-#define AVE_NRXDESC_MASK	(AVE_NRXDESC - 1)
-#define AVE_NEXTRX(x)		(((x) + 1) & AVE_NRXDESC_MASK)
+#define MD_NRXDESC		256		/* tunable */
+#define MD_NRXDESC_MASK	(MD_NRXDESC - 1)
+#define MD_NEXTRX(x)		(((x) + 1) & MD_NRXDESC_MASK)
 
 #define AVE_INIT_RXDESC(sc, x)						\
 do {									\
@@ -242,8 +242,8 @@ struct ave_softc {
 	struct tdes32 *sc_txd32;
 	struct rdes32 *sc_rxd32;
 
-	struct ave_txsoft sc_txsoft[AVE_TXQUEUELEN];
-	struct ave_rxsoft sc_rxsoft[AVE_NRXDESC];
+	struct ave_txsoft sc_txsoft[MD_TXQUEUELEN];
+	struct ave_rxsoft sc_rxsoft[MD_NRXDESC];
 	int sc_txfree;			/* number of free Tx descriptors */
 	int sc_txnext;			/* next ready Tx descriptor */
 	int sc_txsfree;			/* number of free Tx jobs */
@@ -429,9 +429,9 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	 * so no need to build Tx/Rx descriptor control_data.
 	 * go straight to make dmamap to hold Tx segments and Rx frames.
 	 */
-	for (i = 0; i < AVE_TXQUEUELEN; i++) {
+	for (i = 0; i < MD_TXQUEUELEN; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    AVE_NTXSEGS, MCLBYTES, 0, 0,
+		    MD_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			aprint_error_dev(self,
 			    "unable to create tx DMA map %d, error = %d\n",
@@ -439,7 +439,7 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 			goto fail_4;
 		}
 	}
-	for (i = 0; i < AVE_NRXDESC; i++) {
+	for (i = 0; i < MD_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    1, MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 			aprint_error_dev(self,
@@ -462,13 +462,13 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	return;
 
   fail_5:
-	for (i = 0; i < AVE_NRXDESC; i++) {
+	for (i = 0; i < MD_NRXDESC; i++) {
 		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
 			    sc->sc_rxsoft[i].rxs_dmamap);
 	}
   fail_4:
-	for (i = 0; i < AVE_TXQUEUELEN; i++) {
+	for (i = 0; i < MD_TXQUEUELEN; i++) {
 		if (sc->sc_txsoft[i].txs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
 			    sc->sc_txsoft[i].txs_dmamap);
@@ -519,8 +519,8 @@ ave_init(struct ifnet *ifp)
 	CSR_WRITE(sc, AVECFG, CFG_FLE | sc->sc_100mii);
 
 	/* set Tx/Rx descriptor ring base addr offset and total size */
-	CSR_WRITE(sc, AVETXDES,	 0U|(sizeof(struct tdes)*AVE_NTXDESC) << 16);
-	CSR_WRITE(sc, AVERXDES0, 0U|(sizeof(struct rdes)*AVE_NRXDESC) << 16);
+	CSR_WRITE(sc, AVETXDES,	 0U|(sizeof(struct tdes)*MD_NTXDESC) << 16);
+	CSR_WRITE(sc, AVERXDES0, 0U|(sizeof(struct rdes)*MD_NRXDESC) << 16);
 
 	/* set ptr to Tx/Rx descriptor store */
 	sc->sc_txdescs = (void *)((uintptr_t)sc->sc_sh + AVETDB);
@@ -529,12 +529,12 @@ ave_init(struct ifnet *ifp)
 	sc->sc_rxd32 =   (void *)((uintptr_t)sc->sc_sh + AVE32RDB);
 
 	/* build sane Tx and load Rx descriptors with mbuf */
-	for (i = 0; i < AVE_NTXDESC; i++) {
+	for (i = 0; i < MD_NTXDESC; i++) {
 		struct tdes *tdes = &sc->sc_txdescs[i];
 		tdes->t2 = tdes->t1 = 0;
 		tdes->t0 = T0_OWN;
 	}
-	for (i = 0; i < AVE_NRXDESC; i++)
+	for (i = 0; i < MD_NRXDESC; i++)
 		(void)add_rxbuf(sc, i);
 
 	/*
@@ -853,7 +853,7 @@ ave_set_rcvfilt(struct ave_softc *sc)
 	}
 	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_FIRST_MULTI(step, ec, enm);
-	i = 11; /* slot 11:17 to catch multicast frames */
+	i = 11; /* slot 11-17 to catch multicast frames */
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
@@ -868,8 +868,8 @@ ave_set_rcvfilt(struct ave_softc *sc)
 			ETHER_UNLOCK(ec);
 			goto update;
 		}
-		KASSERT(i < 17);
 printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
+		KASSERT(i < 17);
 		/* use additional MAC addr to accept up to 7 */
 		ave_write_filt(sc, i, enm->enm_addrlo);
 		ETHER_NEXT_MULTI(step, enm);
@@ -877,12 +877,14 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 	}
 	ETHER_UNLOCK(ec);
 	sc->sc_rxc |= RXC_AFE;
+	CSR_WRITE(sc, AVERXC, sc->sc_rxc | RXC_EN);
+	return;
 
  update:
 	if (ifp->if_flags & IFF_PROMISC)
 		/* RXC_AFE has been cleared, nothing to do */;
-	else if (ec->ec_flags & ETHER_F_ALLMULTI) {
-		/* slot 11/12 for IPv4/v6 multicast */
+	else {
+		/* slot 11,12 for IPv4/v6 multicast */
 		ave_write_filt(sc, 11, ether_ipmulticast_min);
 		ave_write_filt(sc, 12, ether_ip6multicast_min); /* INET6 */
 		/* clear slot 13-17 */
@@ -891,6 +893,7 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 		sc->sc_rxc |= RXC_AFE;
 	}
 	CSR_WRITE(sc, AVERXC, sc->sc_rxc | RXC_EN);
+	return;
 }
 
 static void
@@ -904,7 +907,7 @@ ave_watchdog(struct ifnet *ifp)
 	 */
 	txreap(sc);
 
-	if (sc->sc_txfree != AVE_NTXDESC) {
+	if (sc->sc_txfree != MD_NTXDESC) {
 		aprint_error_dev(sc->sc_dev,
 		    "device timeout (txfree %d txsfree %d txnext %d)\n",
 		    sc->sc_txfree, sc->sc_txsfree, sc->sc_txnext);
@@ -943,7 +946,7 @@ ave_start(struct ifnet *ifp)
 		if (m0 == NULL)
 			break;
 
-		if (sc->sc_txsfree < AVE_TXQUEUE_GC) {
+		if (sc->sc_txsfree < MD_TXQUEUE_GC) {
 			txreap(sc);
 			if (sc->sc_txsfree == 0)
 				break;
@@ -992,7 +995,7 @@ ave_start(struct ifnet *ifp)
 		lasttx = -1;
 		for (nexttx = sc->sc_txnext, seg = 0;
 		     seg < dmamap->dm_nsegs;
-		     seg++, nexttx = AVE_NEXTTX(nexttx)) {
+		     seg++, nexttx = MD_NEXTTX(nexttx)) {
 			struct tdes *tdes = &sc->sc_txdescs[nexttx];
 			bus_addr_t paddr = dmamap->dm_segs[seg].ds_addr;
 			/*
@@ -1041,7 +1044,7 @@ ave_start(struct ifnet *ifp)
 		sc->sc_txfree -= txs->txs_ndesc;
 		sc->sc_txnext = nexttx;
 		sc->sc_txsfree--;
-		sc->sc_txsnext = AVE_NEXTTXS(sc->sc_txsnext);
+		sc->sc_txsnext = MD_NEXTTXS(sc->sc_txsnext);
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
@@ -1105,8 +1108,8 @@ txreap(struct ave_softc *sc)
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	for (i = sc->sc_txsdirty; sc->sc_txsfree != AVE_TXQUEUELEN;
-	     i = AVE_NEXTTXS(i), sc->sc_txsfree++) {
+	for (i = sc->sc_txsdirty; sc->sc_txsfree != MD_TXQUEUELEN;
+	     i = MD_NEXTTXS(i), sc->sc_txsfree++) {
 		txs = &sc->sc_txsoft[i];
 
 		/* AVE_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndesc,
@@ -1132,7 +1135,7 @@ txreap(struct ave_softc *sc)
 		txs->txs_mbuf = NULL;
 	}
 	sc->sc_txsdirty = i;
-	if (sc->sc_txsfree == AVE_TXQUEUELEN)
+	if (sc->sc_txsfree == MD_TXQUEUELEN)
 		ifp->if_timer = 0;
 }
 
@@ -1145,7 +1148,7 @@ rxintr(struct ave_softc *sc)
 	uint32_t rxstat;
 	int i, len;
 
-	for (i = sc->sc_rxptr; /*CONSTCOND*/ 1; i = AVE_NEXTRX(i)) {
+	for (i = sc->sc_rxptr; /*CONSTCOND*/ 1; i = MD_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
 
 		/* AVE_CDRXSYNC(sc, i,
