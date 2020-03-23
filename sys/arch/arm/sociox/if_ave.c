@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.13 2020/03/23 07:42:00 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.14 2020/03/23 10:26:07 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.13 2020/03/23 07:42:00 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.14 2020/03/23 10:26:07 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,29 +182,6 @@ struct rdes32 { uint32_t r0, r1; };
 #define MD_NRXDESC_MASK	(MD_NRXDESC - 1)
 #define MD_NEXTRX(x)		(((x) + 1) & MD_NRXDESC_MASK)
 
-#define AVE_INIT_RXDESC(sc, x)						\
-do {									\
-	struct ave_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
-	struct rdes *__rxd = &(sc)->sc_rxdescs[(x)];			\
-	struct mbuf *__m = __rxs->rxs_mbuf;				\
-	bus_addr_t __paddr =__rxs->rxs_dmamap->dm_segs[0].ds_addr;	\
-	__m->m_data = __m->m_ext.ext_buf;				\
-	__rxd->r2 = htole32(BUS_ADDR_HI32(__paddr));			\
-	__rxd->r1 = htole32(BUS_ADDR_LO32(__paddr));			\
-	__rxd->r0 = R0_OWN | R0_FL_MASK;				\
-} while (/*CONSTCOND*/0)
-
-#define AVE32_INIT_RXDESC(sc, x)					\
-do {									\
-	struct ave_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
-	struct rdes32 *__rxd = &(sc)->sc_rxd32[(x)];			\
-	struct mbuf *__m = __rxs->rxs_mbuf;				\
-	bus_addr_t __paddr =__rxs->rxs_dmamap->dm_segs[0].ds_addr;	\
-	__m->m_data = __m->m_ext.ext_buf;				\
-	__rxd->r1 = htole32(__paddr);					\
-	__rxd->r0 = R0_OWN | R0_FL_MASK;				\
-} while (/*CONSTCOND*/0)
-
 struct ave_txsoft {
 	struct mbuf *txs_mbuf;		/* head of our mbuf chain */
 	bus_dmamap_t txs_dmamap;	/* our DMA map */
@@ -217,6 +194,8 @@ struct ave_rxsoft {
 	struct mbuf *rxs_mbuf;		/* head of our mbuf chain */
 	bus_dmamap_t rxs_dmamap;	/* our DMA map */
 };
+
+struct desops;
 
 struct ave_softc {
 	device_t sc_dev;		/* generic device information */
@@ -241,6 +220,7 @@ struct ave_softc {
 	struct rdes *sc_rxdescs;	/* PTR to rdes [NRXDESC] store */
 	struct tdes32 *sc_txd32;
 	struct rdes32 *sc_rxd32;
+	struct desops *sc_desops;	/* descriptor management */
 
 	struct ave_txsoft sc_txsoft[MD_TXQUEUELEN];
 	struct ave_rxsoft sc_rxsoft[MD_NRXDESC];
@@ -286,8 +266,62 @@ static int add_rxbuf(struct ave_softc *, int);
 #define CSR_WRITE(sc, off, val) \
 	    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (off), (val))
 
+struct desops {
+	void (*make_tdes)(void *, int, int, int);
+	void (*mark_txfs)(void *, int);
+	void (*mark_txls)(void *, int);
+	void (*mark_txic)(void *, int);
+	int  (*read_tdes0)(void *, int);
+	int  (*read_rdes0)(void *, int);
+	int  (*read_rlen)(void *, int);
+	void (*init_rdes)(void *, int);
+};
+#define MAKE_TDES(sc,x,s,o) (*(sc)->sc_desops->make_tdes)((sc),(x),(s),(o))
+#define MARK_TXFS(sc,x) (*(sc)->sc_desops->mark_txfs)((sc),(x))
+#define MARK_TXLS(sc,x) (*(sc)->sc_desops->mark_txls)((sc),(x))
+#define MARK_TXIC(sc,x) (*(sc)->sc_desops->mark_txic)((sc),(x))
+#define READ_TDES0(sc,x) (*(sc)->sc_desops->read_tdes0)((sc),(x))
+#define READ_RDES0(sc,x) (*(sc)->sc_desops->read_rdes0)((sc),(x))
+#define INIT_RDES(sc,x) (*(sc)->sc_desops->init_rdes)((sc),(x))
+/* received frame length is stored in RDES0 10:0 */
+
+static void make_tdes(void *, int, int, int);
+static void mark_txfs(void *, int);
+static void mark_txls(void *, int);
+static void mark_txic(void *, int);
+static int read_tdes0(void *, int);
+static int read_rdes0(void *, int);
+static void init_rdes(void *, int);
+struct desops ave64ops = {
+	make_tdes,
+	mark_txfs,
+	mark_txls,
+	mark_txic,
+	read_tdes0,
+	read_rdes0,
+	NULL,
+	init_rdes,
+};
+static void omake_tdes(void *, int, int, int);
+static void omark_txfs(void *, int);
+static void omark_txls(void *, int);
+static void omark_txic(void *, int);
+static int oread_tdes0(void *, int);
+static int oread_rdes0(void *, int);
+static void oinit_rdes(void *, int);
+struct desops ave32ops = {
+	omake_tdes,
+	omark_txfs,
+	omark_txls,
+	omark_txic,
+	oread_tdes0,
+	oread_rdes0,
+	NULL,
+	oinit_rdes,
+};
+
 static const struct of_compat_data compat_data[] = {
-	{ "socionext,unifier-ld20-ave4", 64 },	/* XXX only this for now */
+	{ "socionext,unifier-ld20-ave4", 64 },
 	{ "socionext,unifier-pro4-ave4", 32 },
 	{ "socionext,unifier-pxs2-ave4", 32 },
 	{ "socionext,unifier-ld11-ave4", 32 },
@@ -357,12 +391,13 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": Gigabit Ethernet Controller\n");
-	aprint_normal_dev(self, "UniPhier %c%c%c%c AVE %d GbE (%d.%d) %s\n",
+	aprint_normal_dev(self, "UniPhier %c%c%c%c AVE%d GbE (%d.%d) %s\n",
 	    hwimp >> 24, hwimp >> 16, hwimp >> 8, hwimp,
 	    sc->sc_model, hwver >> 8, hwver & 0xff, phy_mode);
 	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
 
 	sc->sc_100mii = (strcmp(phy_mode, "rgmii") == 0) ? CFG_MII : 0;
+	sc->sc_desops = (sc->sc_model == 64) ? &ave64ops : &ave32ops;
 
 	CSR_WRITE(sc, AVEGR, GR_GRST | GR_PHYRST);
 	DELAY(20);
@@ -996,18 +1031,13 @@ ave_start(struct ifnet *ifp)
 		for (nexttx = sc->sc_txnext, seg = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = MD_NEXTTX(nexttx)) {
-			struct tdes *tdes = &sc->sc_txdescs[nexttx];
-			bus_addr_t paddr = dmamap->dm_segs[seg].ds_addr;
+			MAKE_TDES(sc, nexttx, seg, tdes0 | sc->sc_t0csum);
 			/*
 			 * If this is the first descriptor we're
 			 * enqueueing, don't set the OWN bit just
 			 * yet.	 That could cause a race condition.
 			 * We'll do it below.
 			 */
-			tdes->t2 = htole32(BUS_ADDR_HI32(paddr));
-			tdes->t1 = htole32(BUS_ADDR_LO32(paddr));
-			tdes->t0 = tdes0 | sc->sc_t0csum
-			     | (dmamap->dm_segs[seg].ds_len & T0_TBS_MASK);
 			tdes0 = T0_OWN; /* 2nd and other segments */
 			lasttx = nexttx;
 		}
@@ -1022,14 +1052,14 @@ ave_start(struct ifnet *ifp)
 		m = m0;
 		do {
 			if ((m->m_flags & M_EXT) && m->m_ext.ext_free) {
-				sc->sc_txdescs[lasttx].t0 |= T0_IOC;
+				MARK_TXIC(sc, lasttx);
 				break;
 			}
 		} while ((m = m->m_next) != NULL);
 
 		/* Write deferred 1st segment T0_OWN at the final stage */
-		sc->sc_txdescs[lasttx].t0 |= T0_LS;
-		sc->sc_txdescs[sc->sc_txnext].t0 |= (T0_FS | T0_OWN);
+		MARK_TXLS(sc, lasttx);
+		MARK_TXFS(sc, sc->sc_txnext);
 		/* AVE_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE); */
 
@@ -1115,7 +1145,7 @@ txreap(struct ave_softc *sc)
 		/* AVE_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndesc,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE); */
 
-		txstat = sc->sc_txdescs[txs->txs_lastdesc].t0;
+		txstat = READ_TDES0(sc, txs->txs_lastdesc);
 
 		if (txstat & T0_OWN) /* desc is still in use */
 			break;
@@ -1154,7 +1184,7 @@ rxintr(struct ave_softc *sc)
 		/* AVE_CDRXSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE); */
 
-		rxstat = sc->sc_rxdescs[i].r0;
+		rxstat = READ_RDES0(sc, i);
 		if (rxstat & R0_OWN) /* desc is left empty */
 			break;
 
@@ -1169,7 +1199,7 @@ rxintr(struct ave_softc *sc)
 
 		if (add_rxbuf(sc, i) != 0) {
 			if_statinc(ifp, if_ierrors);
-			AVE_INIT_RXDESC(sc, i);
+			INIT_RDES(sc, i);
 			bus_dmamap_sync(sc->sc_dmat,
 			    rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize,
@@ -1223,7 +1253,134 @@ add_rxbuf(struct ave_softc *sc, int i)
 
 	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 	    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-	AVE_INIT_RXDESC(sc, i);
+	INIT_RDES(sc, i);
 
 	return 0;
+}
+
+/* AVE64 descriptor management ops */
+
+static void make_tdes(void *cookie, int x, int seg, int tdes0)
+{
+	struct ave_softc *sc = cookie;
+	struct ave_txsoft *txs = &sc->sc_txsoft[x];
+	struct tdes *txd = &sc->sc_txdescs[x];
+	bus_addr_t p = txs->txs_dmamap->dm_segs[seg].ds_addr;
+	bus_size_t z = txs->txs_dmamap->dm_segs[seg].ds_len;
+
+	txd->t2 = htole32(BUS_ADDR_HI32(p));
+	txd->t1 = htole32(BUS_ADDR_LO32(p));
+	txd->t0 = tdes0 | (z & T0_TBS_MASK);
+}
+
+static void mark_txfs(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct tdes *txd = &sc->sc_txdescs[x];
+	txd->t0 |= (T0_FS | T0_OWN);
+}
+
+static void mark_txls(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct tdes *txd = &sc->sc_txdescs[x];
+	txd->t0 |= T0_LS;
+}
+
+static void mark_txic(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct tdes *txd = &sc->sc_txdescs[x];
+	txd->t0 |= T0_IOC;
+}
+
+static int read_tdes0(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct tdes *txd = &sc->sc_txdescs[x];
+	return txd->t0;
+}
+
+static int read_rdes0(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct rdes *rxd = &sc->sc_rxdescs[x];
+	return rxd->r0;
+}
+
+static void init_rdes(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct ave_rxsoft *rxs = &sc->sc_rxsoft[x];
+	struct rdes *rxd = &sc->sc_rxdescs[x];
+	struct mbuf *m = rxs->rxs_mbuf;
+	bus_addr_t p = rxs->rxs_dmamap->dm_segs[0].ds_addr;
+	bus_size_t z = rxs->rxs_dmamap->dm_segs[0].ds_len;
+
+	m->m_data = m->m_ext.ext_buf;
+	rxd->r1 = htole32(BUS_ADDR_LO32(p));
+	rxd->r0 = R0_OWN | (z & R0_FL_MASK);
+}
+
+/* AVE32 descriptor management ops */
+
+static void omake_tdes(void *cookie, int x, int seg, int tdes0)
+{
+	struct ave_softc *sc = cookie;
+	struct ave_txsoft *txs = &sc->sc_txsoft[x];
+	struct tdes32 *txd = &sc->sc_txd32[x];
+	bus_addr_t p = txs->txs_dmamap->dm_segs[seg].ds_addr;
+	bus_size_t z = txs->txs_dmamap->dm_segs[seg].ds_len;
+
+	txd->t1 = htole32(BUS_ADDR_LO32(p));
+	txd->t0 = tdes0 | (z & T0_TBS_MASK);
+}
+
+static void omark_txfs(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct tdes32 *txd = &sc->sc_txd32[x];
+	txd->t0 |= (T0_FS | T0_OWN);
+}
+
+static void omark_txls(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct tdes32 *txd = &sc->sc_txd32[x];
+	txd->t0 |= T0_LS;
+}
+
+static void omark_txic(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct tdes32 *txd = &sc->sc_txd32[x];
+	txd->t0 |= T0_LS;
+}
+
+static int oread_tdes0(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct tdes32 *txd = &sc->sc_txd32[x];
+	return txd->t0;
+}
+
+static int oread_rdes0(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct rdes32 *rxd = &sc->sc_rxd32[x];
+	return rxd->r0;
+}
+
+static void oinit_rdes(void *cookie, int x)
+{
+	struct ave_softc *sc = cookie;
+	struct ave_rxsoft *rxs = &sc->sc_rxsoft[x];
+	struct rdes32 *rxd = &sc->sc_rxd32[x];
+	struct mbuf *m = rxs->rxs_mbuf;
+	bus_addr_t p = rxs->rxs_dmamap->dm_segs[0].ds_addr;
+	bus_size_t z = rxs->rxs_dmamap->dm_segs[0].ds_len;
+
+	m->m_data = m->m_ext.ext_buf;
+	rxd->r1 = htole32(BUS_ADDR_LO32(p));
+	rxd->r0 = R0_OWN | (z & R0_FL_MASK);
 }
