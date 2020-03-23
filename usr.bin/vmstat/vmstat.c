@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.238 2020/03/22 18:32:42 ad Exp $ */
+/* $NetBSD: vmstat.c,v 1.239 2020/03/23 18:44:17 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.238 2020/03/22 18:32:42 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.239 2020/03/23 18:44:17 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -1124,7 +1124,6 @@ dosum(void)
 	(void)printf("%9" PRIu64 " 2passes\n", nch_stats.ncs_2passes);
 	(void)printf("%9" PRIu64 " reverse hits\n", nch_stats.ncs_revhits);
 	(void)printf("%9" PRIu64 " reverse miss\n", nch_stats.ncs_revmiss);
-	(void)printf("%9" PRIu64 " hash collisions\n", nch_stats.ncs_collisions);
 	(void)printf("%9" PRIu64 " access denied\n", nch_stats.ncs_denied);
 	(void)printf(
 	    "%9s cache hits (%d%% pos + %d%% neg) system %d%% per-process\n",
