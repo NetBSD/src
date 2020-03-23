@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.49 2020/03/22 14:38:37 ad Exp $	*/
+/*	$NetBSD: namei.src,v 1.50 2020/03/23 18:33:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -216,13 +216,13 @@ NAMEIFL	PARAMASK	0x02ee300	/* mask of parameter descriptors */
 struct nchnode;
 struct namecache {
 	struct	rb_node nc_tree;	/* d  red-black tree, must be first */
-	int64_t	nc_key;			/* -  hash key */
+	uint64_t nc_key;		/* -  hash key */
 	TAILQ_ENTRY(namecache) nc_list;	/* v  vp's list of cache entries */
 	TAILQ_ENTRY(namecache) nc_lru;	/* l  pseudo-lru chain */
 	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
 	struct	vnode *nc_vp;		/* -  vnode the name refers to */
 	int	nc_lrulist;		/* l  which LRU list its on */
-	short	nc_nlen;		/* -  length of the name */
+	u_short	nc_nlen;		/* -  length of the name */
 	char	nc_whiteout;		/* -  true if a whiteout */
 	char	nc_name[41];		/* -  segment name */
 };
