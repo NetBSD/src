@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.2 2020/03/23 03:55:49 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.3 2020/03/23 04:34:16 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.2 2020/03/23 03:55:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.3 2020/03/23 04:34:16 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -104,8 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.2 2020/03/23 03:55:49 nisimura Exp $");
 #define RXTIMER		0x45c
 #define TXCOUNT		0x410
 #define RXCOUNT		0x454
-#define DMACH2M		0x210		/* DMAC host2media ucode port */
-#define DMACM2H		0x21c		/* DMAC media2host ucode port */
+#define H2MENG		0x210		/* DMAC host2media ucode port */
+#define M2HENG		0x21c		/* DMAC media2host ucode port */
 #define PKTENG		0x0d0		/* packet engine ucode port */
 #define HWVER0		0x22c
 #define HWVER1		0x230
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.2 2020/03/23 03:55:49 nisimura Exp $");
 #define  MCR_IBN	(1U<<30)	/* */
 #define  MCR_CST	(1U<<25)	/* strip CRC */
 #define  MCR_TC		(1U<<24)	/* keep RGMII PHY notified */
-#define  MCR_JE		(1U<<20)	/* ignore oversized >9018 frame */
+#define  MCR_JE		(1U<<20)	/* ignore oversized >9018 condition */
 #define  MCR_USEMII	(1U<<15)	/* 1: RMII/MII, 0: RGMII */
 #define  MCR_SPD100	(1U<<14)	/* force speed 100 */
 #define  MCR_USEFDX	(1U<<11)	/* force full duplex */
@@ -157,7 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.2 2020/03/23 03:55:49 nisimura Exp $");
 #define GMACFCR		0x0018		/* 802.3x flowcontrol */
 #define  FCR_RFE	(1U<<2)		/* accept PAUSE to throttle Tx */
 #define  FCR_TFE	(1U<<1)		/* generate PAUSE to moderate Rx lvl */
-#define GMACIMPL	0x0020		/* (dig this number XXXX.YYYY) */
+#define GMACIMPL	0x0020		/* implementation number XXXX.YYYY */
 #define GMACVTAG	0x001c		/* VLAN tag control */
 #define GMACMAH0	0x0040		/* MAC address 0 47:32 */
 #define GMACMAL0	0x0044		/* MAC address 0 31:0 */
@@ -165,7 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.2 2020/03/23 03:55:49 nisimura Exp $");
 #define GMACMAL(i) 	((i)*8+0x44)
 #define GMACMHT0	0x0500		/* multicast hash table 0 - 8*/
 
-#define GMACBMR		0x1000		/* DMA bus mode
+#define GMACBMR		0x1000		/* DMA bus mode control
 					 * 24    4PBL
 					 * 22:17 RPBL
 					 * 16    fix burst
@@ -185,8 +185,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.2 2020/03/23 03:55:49 nisimura Exp $");
 #define GMACTDLAR	0x1010		/* */
 #define  _TDLAR		0x1c000		/* XXX TBD */
 #define GMACOMR		0x1018		/* DMA operation */
-#define  OMR_TXE	(1U<<13)	/* start Tx DMA engine */
-#define  OMR_RXE	(1U<<1)		/* start Rx DMA engine */
+#define  OMR_TXE	(1U<<13)	/* start Tx DMA engine, 0 to stop */
+#define  OMR_RXE	(1U<<1)		/* start Rx DMA engine, 0 to stop */
 
 const struct {
 	uint16_t freq, bit; /* GAR 5:2 MDIO frequency selection */
@@ -298,14 +298,15 @@ struct scx_softc {
 	struct ethercom sc_ethercom;	/* Ethernet common data */
 	struct mii_data sc_mii;		/* MII */
 	callout_t sc_tick_ch;		/* PHY monitor callout */
-	int sc_flowflags;		/* 802.3x PAUSE flow control */
-	void *sc_ih;			/* interrupt cookie */
 	bus_dma_segment_t sc_seg;	/* descriptor store seg */
 	int sc_nseg;			/* descriptor store nseg */
+	void *sc_ih;			/* interrupt cookie */
 	int sc_phy_id;			/* PHY address */
+	int sc_flowflags;		/* 802.3x PAUSE flow control */
 	uint32_t sc_gar;		/* GAR 5:2 clock selection */
-	int sc_phandle;			/* fdt phandle */
 	uint32_t sc_t0coso;		/* T0_CSUM | T0_SGOL to run */
+	int sc_ucodeloaded;		/* ucode for H2M/M2H/PKT */
+	int sc_phandle;			/* fdt phandle */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -569,9 +570,10 @@ scx_attach_i(struct scx_softc *sc)
 	csr = bus_space_read_4(sc->sc_st, sc->sc_eesh, 4);
 	enaddr[4] = csr >> 24;
 	enaddr[5] = csr >> 16;
+	csr = CSR_READ(sc, GMACIMPL);
 
-	aprint_normal_dev(sc->sc_dev, "NetSec GbE (%d.%d)\n",
-	    hwver >> 16, hwver & 0xffff);
+	aprint_normal_dev(sc->sc_dev, "NetSec GbE (%d.%d) impl (%x.%x)\n",
+	    hwver >> 16, hwver & 0xffff, csr >> 16, csr & 0xffff);
 	aprint_normal_dev(sc->sc_dev,
 	    "Ethernet address %s\n", ether_sprintf(enaddr));
 
@@ -581,7 +583,7 @@ scx_attach_i(struct scx_softc *sc)
 
 	sc->sc_flowflags = 0;
 
-	if (0/*CONSTCOND*/)
+	if (sc->sc_ucodeloaded == 0)
 		loaducode(sc);
 
 	mii->mii_ifp = ifp;
@@ -1220,7 +1222,7 @@ scx_intr(void *arg)
 {
 	struct scx_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	
+
 	(void)ifp;
 	rxintr(sc);
 	txreap(sc);
@@ -1405,26 +1407,28 @@ loaducode(struct scx_softc *sc)
 	uint32_t up, lo, sz;
 	uint64_t addr;
 
+	sc->sc_ucodeloaded = 1;
+
 	up = EE_READ(sc, 0x08); /* H->M ucode addr high */
 	lo = EE_READ(sc, 0x0c); /* H->M ucode addr low */
 	sz = EE_READ(sc, 0x10); /* H->M ucode size */
 	sz *= 4;
 	addr = ((uint64_t)up << 32) | lo;
 	aprint_normal_dev(sc->sc_dev, "H2M ucode %u\n", sz);
-	injectucode(sc, DMACH2M, (bus_addr_t)addr, (bus_size_t)sz);
+	injectucode(sc, H2MENG, (bus_addr_t)addr, (bus_size_t)sz);
 
 	up = EE_READ(sc, 0x14); /* M->H ucode addr high */
 	lo = EE_READ(sc, 0x18); /* M->H ucode addr low */
 	sz = EE_READ(sc, 0x1c); /* M->H ucode size */
 	sz *= 4;
 	addr = ((uint64_t)up << 32) | lo;
-	injectucode(sc, DMACM2H, (bus_addr_t)addr, (bus_size_t)sz);
+	injectucode(sc, M2HENG, (bus_addr_t)addr, (bus_size_t)sz);
 	aprint_normal_dev(sc->sc_dev, "M2H ucode %u\n", sz);
 
 	lo = EE_READ(sc, 0x20); /* PKT ucode addr */
 	sz = EE_READ(sc, 0x24); /* PKT ucode size */
 	sz *= 4;
-	injectucode(sc, DMACH2M, (bus_addr_t)lo, (bus_size_t)sz);
+	injectucode(sc, PKTENG, (bus_addr_t)lo, (bus_size_t)sz);
 	aprint_normal_dev(sc->sc_dev, "PKT ucode %u\n", sz);
 }
 
@@ -1437,12 +1441,10 @@ injectucode(struct scx_softc *sc, int port,
 	uint32_t ucode;
 	int i;
 
-	const char *uengine[] = { "H2M", "M2H", "PKT" };
-
-printf("%s ucode %lx\n", uengine[port], addr);
+	port &= 03;
 	if (!bus_space_map(sc->sc_st, addr, size, 0, &bsh) != 0) {
-		aprint_error_dev(sc->sc_dev, "eeprom map %s failure\n",
-		    uengine[port]);
+		aprint_error_dev(sc->sc_dev,
+		    "eeprom map failure for ucode port 0x%x\n", port);
 		return;
 	}
 	off = 0;
