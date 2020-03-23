@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.10 2020/03/22 00:14:16 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.11 2020/03/23 03:21:31 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.10 2020/03/22 00:14:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.11 2020/03/23 03:21:31 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.10 2020/03/22 00:14:16 nisimura Exp $")
 
 #include <dev/fdt/fdtvar.h>
 
-#define FDT_INTR_FLAGS	(0)	/* !MP_SAFE */
+#define NOT_MP_SAFE	(0)
 
 #define AVEID		0x000		/* hardware ID */
 #define AVEHWVER	0x004		/* hardware version */
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.10 2020/03/22 00:14:16 nisimura Exp $")
 #define AVECFG		0x00c		/* hw configuration */
 #define  CFG_FLE	(1U<<31)	/* filter function enable */
 #define  CFG_CKE	(1U<<30)	/* checksum enable */
-#define  CFG_MII	(1U<<27)	/* 1: MII/RMII, 0: RGMII */
+#define  CFG_MII	(1U<<27)	/* 1: RMII/MII, 0: RGMII */
 #define  CFG_IPFCKE	(1U<<24)	/* IP framgment csum enable */
 #define AVEGIMR		0x100		/* global interrupt mask */
 #define AVEGISR		0x104		/* global interrupt status */
@@ -331,7 +331,7 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": failed to decode interrupt\n");
 		return;
 	}
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0,
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET, NOT_MP_SAFE,
 	    ave_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
@@ -513,7 +513,7 @@ ave_init(struct ifnet *ifp)
 
 	CSR_WRITE(sc, AVEGIMR, 0);
 
-	/* cancel pending I/O */
+	/* Cancel pending I/O. */
 	ave_stop(ifp, 0);
 
 	/* make sure Rx circuit sane & stable state */
@@ -531,7 +531,7 @@ ave_init(struct ifnet *ifp)
 	sc->sc_txd32 =   (void *)((uintptr_t)sc->sc_sh + AVE32TDB);
 	sc->sc_rxd32 =   (void *)((uintptr_t)sc->sc_sh + AVE32RDB);
 
-	/* build sane Tx and loaded Rx descriptors */
+	/* build sane Tx and load Rx descriptors with mbuf */
 	for (i = 0; i < AVE_NTXDESC; i++) {
 		struct tdes *tdes = &sc->sc_txdescs[i];
 		tdes->t2 = tdes->t1 = 0;
