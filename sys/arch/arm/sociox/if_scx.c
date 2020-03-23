@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.3 2020/03/23 04:34:16 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.4 2020/03/23 05:27:41 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.3 2020/03/23 04:34:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.4 2020/03/23 05:27:41 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -188,17 +188,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.3 2020/03/23 04:34:16 nisimura Exp $");
 #define  OMR_TXE	(1U<<13)	/* start Tx DMA engine, 0 to stop */
 #define  OMR_RXE	(1U<<1)		/* start Rx DMA engine, 0 to stop */
 
-const struct {
-	uint16_t freq, bit; /* GAR 5:2 MDIO frequency selection */
-} garclk[] = {
-	{ 35,	2 },	/* 25-35 MHz */
-	{ 60,	3 },	/* 35-60 MHz */
-	{ 100,	0 },	/* 60-100 MHz */
-	{ 150,	1 },	/* 100-150 MHz */
-	{ 250,	4 },	/* 150-250 MHz */
-	{ 300,	5 },	/* 250-300 MHz */
-	{ 0 },
-};
 static int get_garclk(uint32_t);
 
 /* descriptor format definition */
@@ -306,6 +295,7 @@ struct scx_softc {
 	uint32_t sc_gar;		/* GAR 5:2 clock selection */
 	uint32_t sc_t0coso;		/* T0_CSUM | T0_SGOL to run */
 	int sc_ucodeloaded;		/* ucode for H2M/M2H/PKT */
+	int sc_100mii;			/* 1<<15 RMII/MII, 0 for RGMII */
 	int sc_phandle;			/* fdt phandle */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
@@ -423,6 +413,7 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr[2];
 	bus_size_t size[2];
 	char intrstr[128];
+	const char *phy_mode;
 
 	if (fdtbus_get_reg(phandle, 0, addr+0, size+0) != 0
 	    || bus_space_map(faa->faa_bst, addr[0], size[0], 0, &bsh) != 0) {
@@ -445,6 +436,12 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
+	phy_mode = fdtbus_get_string(phandle, "phy-mode");
+	if (phy_mode == NULL) {
+		aprint_error(": missing 'phy-mode' property\n");
+		phy_mode = "rgmii";
+	}
+
 	aprint_naive("\n");
 	aprint_normal(": Gigabit Ethernet Controller\n");
 	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
@@ -457,6 +454,7 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_eesz = size[1];
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_phandle = phandle;
+	sc->sc_100mii = (strcmp(phy_mode, "rgmii") != 0) ? MCR_USEMII : 0;
 
 	scx_attach_i(sc);
 	return;
@@ -1392,13 +1390,27 @@ mac_write(struct scx_softc *sc, int reg, int val)
 static int
 get_garclk(uint32_t freq)
 {
+
+	const struct {
+		uint16_t freq, bit; /* GAR 5:2 MDIO frequency selection */
+	} garclk[] = {
+		{ 35,	2 },	/* 25-35 MHz */
+		{ 60,	3 },	/* 35-60 MHz */
+		{ 100,	0 },	/* 60-100 MHz */
+		{ 150,	1 },	/* 100-150 MHz */
+		{ 250,	4 },	/* 150-250 MHz */
+		{ 300,	5 },	/* 250-300 MHz */
+	};
 	int i;
 
-	for (i = 0; garclk[i].freq != 0; i++) {
+	/* convert MDIO clk to a divisor value */
+	if (freq < garclk[0].freq)
+		return garclk[0].bit;
+	for (i = 1; i < __arraycount(garclk); i++) {
 		if (freq < garclk[i].freq)
-			return garclk[i].bit;
+			return garclk[i-1].bit;
 	}
-	return garclk[i - 1].bit;
+	return garclk[__arraycount(garclk) - 1].bit;
 }
 
 static void
@@ -1441,7 +1453,6 @@ injectucode(struct scx_softc *sc, int port,
 	uint32_t ucode;
 	int i;
 
-	port &= 03;
 	if (!bus_space_map(sc->sc_st, addr, size, 0, &bsh) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "eeprom map failure for ucode port 0x%x\n", port);
