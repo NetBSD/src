@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.132 2020/03/23 18:56:14 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.133 2020/03/23 19:45:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.132 2020/03/23 18:56:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.133 2020/03/23 19:45:11 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -621,6 +621,7 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
  * names in the cache.  The node locks are chained along the way: a parent's
  * lock is not dropped until the child's is acquired.
  */
+#ifdef notyet
 bool
 cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 		    struct vnode **vn_ret, krwlock_t **plock,
@@ -717,6 +718,7 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	*vn_ret = ncp->nc_vp;
 	return true;
 }
+#endif	/* notyet */
 
 /*
  * Scan cache looking for name of directory entry pointing at vp.
@@ -957,6 +959,7 @@ cache_enter_id(struct vnode *vp, mode_t mode, uid_t uid, gid_t gid)
  * information, missing some updates, so always check the mount flag
  * instead of looking for !VNOVAL.
  */
+#ifdef notyet
 bool
 cache_have_id(struct vnode *vp)
 {
@@ -971,6 +974,7 @@ cache_have_id(struct vnode *vp)
 		return false;
 	}
 }
+#endif	/* notyet */
 
 /*
  * Name cache initialization, from vfs_init() when the system is booting.
