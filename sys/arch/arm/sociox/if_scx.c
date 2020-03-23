@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.4 2020/03/23 05:27:41 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.5 2020/03/23 05:49:57 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.4 2020/03/23 05:27:41 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.5 2020/03/23 05:49:57 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -127,7 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.4 2020/03/23 05:27:41 nisimura Exp $");
 #define  MCR_SPD100	(1U<<14)	/* force speed 100 */
 #define  MCR_USEFDX	(1U<<11)	/* force full duplex */
 #define  MCR_IPCKEN	(1U<<10)	/* handle checksum */
-#define  MCR_ACS	(1U<<7)		/* auto pad CRC strip */
+#define  MCR_ACS	(1U<<7)		/* auto pad strip CRC */
 #define  MCR_TXE	(1U<<3)		/* start Tx DMA engine */
 #define  MCR_RXE	(1U<<2)		/* start Rx DMA engine */
 #define  _MCR_FDX	0x0000280c	/* XXX TBD */
@@ -967,19 +967,21 @@ scx_ifmedia_upd(struct ifnet *ifp)
 		; /* advertise flow control pause */
 		; /* adv. 100FDX,100HDX,10FDX,10HDX */
 	} else {
-#if 1
+#if 1 /* XXX not sure to belong here XXX */
 		uint32_t mcr = mac_read(sc, GMACMCR);
 		if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_1000_T)
 			mcr &= ~MCR_USEMII; /* RGMII+SPD1000 */
 		else {
-			mcr |= MCR_USEMII;  /* RMII/MII */
-			if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
+			if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX
+			    && sc->sc_100mii)
 				mcr |= MCR_SPD100;
+			mcr |= MCR_USEMII;
 		}
 		if (ifm->ifm_cur->ifm_media & IFM_FDX)
 			mcr |= MCR_USEFDX;
 		mcr |= MCR_CST | MCR_JE;
-		mcr |= MCR_IBN;
+		if (sc->sc_100mii == 0)
+			mcr |= MCR_IBN;
 		mac_write(sc, GMACMCR, mcr);
 #endif
 	}
@@ -1365,7 +1367,7 @@ spin_waitfor(struct scx_softc *sc, int reg, int exist)
 	do {
 		DELAY(10);
 		val = CSR_READ(sc, reg);
-	} while (--loop > 0 && (val & exist) != 0);
+	} while (--loop > 0 && (val & exist));
 	return (loop > 0) ? 0 : ETIMEDOUT;
 }
 
@@ -1451,18 +1453,15 @@ injectucode(struct scx_softc *sc, int port,
 	bus_space_handle_t bsh;
 	bus_size_t off;
 	uint32_t ucode;
-	int i;
 
 	if (!bus_space_map(sc->sc_st, addr, size, 0, &bsh) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "eeprom map failure for ucode port 0x%x\n", port);
 		return;
 	}
-	off = 0;
-	for (i = 0; i < size; i++) {
+	for (off = 0; off < size; off += 4) {
 		ucode = bus_space_read_4(sc->sc_st, bsh, off);
 		CSR_WRITE(sc, port, ucode);
-		off += 4;
 	}
 	bus_space_unmap(sc->sc_st, bsh, size);
 }
