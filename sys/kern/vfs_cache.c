@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.128 2020/03/22 14:38:37 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.129 2020/03/23 18:33:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.128 2020/03/22 14:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.129 2020/03/23 18:33:43 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -318,7 +318,7 @@ static int
 cache_compare_key(void *context, const void *n, const void *k)
 {
 	const struct namecache *ncp = n;
-	const int64_t key = *(const int64_t *)k;
+	const uint64_t key = *(const uint64_t *)k;
 
 	if (ncp->nc_key < key) {
 		return -1;
@@ -334,10 +334,10 @@ cache_compare_key(void *context, const void *n, const void *k)
  * the key value to try and improve uniqueness, and so that length doesn't
  * need to be compared separately for string comparisons.
  */
-static inline int64_t
+static inline uint64_t
 cache_key(const char *name, size_t nlen)
 {
-	int64_t key;
+	uint64_t key;
 
 	KASSERT(nlen <= USHRT_MAX);
 
@@ -418,7 +418,7 @@ cache_remove(struct namecache *ncp, const bool dir2node)
  */
 static struct namecache * __noinline
 cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
-    int64_t key)
+    uint64_t key)
 {
 	vnode_impl_t *dvi = VNODE_TO_VIMPL(dvp);
 	struct rb_node *node = dvi->vi_nc_tree.rbt_root;
@@ -520,7 +520,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	vnode_impl_t *dvi = VNODE_TO_VIMPL(dvp);
 	struct namecache *ncp;
 	struct vnode *vp;
-	int64_t key;
+	uint64_t key;
 	int error;
 	bool hit;
 	krw_t op;
@@ -650,7 +650,7 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 {
 	vnode_impl_t *dvi = VNODE_TO_VIMPL(dvp);
 	struct namecache *ncp;
-	int64_t key;
+	uint64_t key;
 	int error;
 
 	/* Establish default results. */
@@ -1169,7 +1169,7 @@ cache_purge_name(struct vnode *dvp, const char *name, size_t namelen)
 {
 	vnode_impl_t *dvi = VNODE_TO_VIMPL(dvp);
 	struct namecache *ncp;
-	int64_t key;
+	uint64_t key;
 
 	SDT_PROBE(vfs, namecache, purge, name, name, namelen, 0, 0, 0);
 
