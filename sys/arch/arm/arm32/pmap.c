@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.399 2020/03/14 14:05:42 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.400 2020/03/23 16:38:29 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.399 2020/03/14 14:05:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.400 2020/03/23 16:38:29 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -3398,9 +3398,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				}
 			}
 		}
-#endif /* !ARM_MMU_EXTENDED */
 
-#ifndef ARM_MMU_EXTENDED
 		UVMHIST_LOG(maphist, "  is_cached %jd cs 0x%08jx",
 		    is_cached, pm->pm_cstate.cs_all, 0, 0);
 
