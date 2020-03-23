@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.222 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.223 2020/03/23 10:35:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.222 2020/03/22 18:32:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.223 2020/03/23 10:35:08 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1226,7 +1226,7 @@ uvm_fault_upper_upgrade(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	/*
 	 * fast path.
 	 */
-	
+
 	if (__predict_true(flt->upper_lock_type == RW_WRITER)) {
 		return 0;
 	}
@@ -1794,7 +1794,7 @@ uvm_fault_lower_upgrade(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	/*
 	 * fast path.
 	 */
-	
+
 	if (__predict_true(flt->lower_lock_type == RW_WRITER)) {
 		KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
 		return 0;
@@ -2074,7 +2074,7 @@ uvm_fault_lower_neighbor(
 
 	/*
 	 * in the read-locked case, it's not possible for this to be a new
-	 * page.  it must be cached with the object and enqueued already. 
+	 * page.  it must be cached with the object and enqueued already.
 	 * there wasn't a direct fault on the page, so avoid the cost of
 	 * re-enqueuing it.
 	 */
@@ -2116,10 +2116,10 @@ uvm_fault_lower_neighbor(
 	}
 	KASSERT(rw_lock_op(pg->uobject->vmobjlock) == flt->lower_lock_type);
 
-	const vm_prot_t mapprot = 
+	const vm_prot_t mapprot =
 	    readonly ? (flt->enter_prot & ~VM_PROT_WRITE) :
 	    flt->enter_prot & MASK(ufi->entry);
-	const u_int mapflags = 
+	const u_int mapflags =
 	    PMAP_CANFAIL | (flt->wire_mapping ? (mapprot | PMAP_WIRED) : 0);
 	(void) pmap_enter(ufi->orig_map->pmap, currva,
 	    VM_PAGE_TO_PHYS(pg), mapprot, mapflags);
