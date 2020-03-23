@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.22 2020/03/21 20:25:42 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.23 2020/03/23 10:07:20 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -706,4 +706,16 @@ sys/dev/ic/dwc_mmc_var.h			1.14
 
 	Fix dwc_mmc.
 	[skrll, ticket #800]
+
+etc/etc.amiga/Makefile.inc			1.29-1.31
+
+	Provide both miniroot.fs (for people wanting to install NetBSD
+	without more 3rdparty software than what's provided on our ISO and
+	.fs.tz (for people downloading over slow links).
+	[is, ticket #801]
+
+sys/arch/vax/vsa/ncr.c				1.50
+
+	Do not expect a struct buf to be present if doing DMA to kernel space.
+	[ragge, ticket #802]
 
