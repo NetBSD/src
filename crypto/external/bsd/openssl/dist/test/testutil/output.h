@@ -11,6 +11,7 @@
 # define OSSL_TESTUTIL_OUTPUT_H
 
 #include <stdarg.h>
+#include "../testutil.h"
 
 /*
  * The basic I/O functions used internally by the test framework.  These
@@ -19,14 +20,14 @@
 void test_open_streams(void);
 void test_close_streams(void);
 /* The following ALL return the number of characters written */
-int test_vprintf_stdout(const char *fmt, va_list ap);
-int test_vprintf_stderr(const char *fmt, va_list ap);
+int test_vprintf_stdout(const char *fmt, va_list ap) PRINTF_FORMAT(1, 0);
+int test_vprintf_stderr(const char *fmt, va_list ap) PRINTF_FORMAT(1, 0);
 /* These return failure or success */
 int test_flush_stdout(void);
 int test_flush_stderr(void);
 
 /* Commodity functions.  There's no need to override these */
-int test_printf_stdout(const char *fmt, ...);
-int test_printf_stderr(const char *fmt, ...);
+int test_printf_stdout(const char *fmt, ...) PRINTF_FORMAT(1, 2);
+int test_printf_stderr(const char *fmt, ...) PRINTF_FORMAT(1, 2);
 
 #endif                          /* OSSL_TESTUTIL_OUTPUT_H */
