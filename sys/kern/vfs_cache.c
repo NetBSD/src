@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.130 2020/03/23 18:37:30 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.131 2020/03/23 18:41:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.130 2020/03/23 18:37:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.131 2020/03/23 18:41:40 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -203,16 +203,19 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.130 2020/03/23 18:37:30 ad Exp $");
 
 static void	cache_activate(struct namecache *);
 static void	cache_update_stats(void *);
-static int	cache_compare_key(void *, const void *, const void *);
 static int	cache_compare_nodes(void *, const void *, const void *);
 static void	cache_deactivate(void);
 static void	cache_reclaim(void);
 static int	cache_stat_sysctl(SYSCTLFN_ARGS);
 
-/* Global pool cache. */
+/*
+ * Global pool cache.
+ */
 static pool_cache_t cache_pool __read_mostly;
 
-/* LRU replacement. */
+/*
+ * LRU replacement.
+ */
 enum cache_lru_id {
 	LRU_ACTIVE,
 	LRU_INACTIVE,
@@ -226,7 +229,9 @@ static struct {
 
 static kmutex_t cache_lru_lock __cacheline_aligned;
 
-/* Cache effectiveness statistics.  nchstats holds system-wide total. */
+/*
+ * Cache effectiveness statistics.  nchstats holds system-wide total.
+ */
 struct nchstats	nchstats;
 struct nchstats_percpu _NAMEI_CACHE_STATS(uint32_t);
 struct nchcpu {
@@ -258,18 +263,24 @@ int cache_lru_maxscan __read_mostly = 64;	/* max # to scan/reclaim */
 int cache_maxlen __read_mostly = USHRT_MAX;	/* max name length to cache */
 int cache_stat_interval __read_mostly = 300;	/* in seconds */
 
-/* sysctl */
+/*
+ * sysctl stuff.
+ */
 static struct	sysctllog *cache_sysctllog;
 
-/* Read-black tree */
+/*
+ * Red-black tree stuff.
+ */
 static const rb_tree_ops_t cache_rbtree_ops = {
 	.rbto_compare_nodes = cache_compare_nodes,
-	.rbto_compare_key = cache_compare_key,
+	.rbto_compare_key = cache_compare_nodes,
 	.rbto_node_offset = offsetof(struct namecache, nc_tree),
 	.rbto_context = NULL
 };
 
-/* dtrace hooks */
+/*
+ * dtrace probes.
+ */
 SDT_PROVIDER_DEFINE(vfs);
 
 SDT_PROBE_DEFINE1(vfs, namecache, invalidate, done, "struct vnode *");
@@ -308,25 +319,8 @@ cache_compare_nodes(void *context, const void *n1, const void *n2)
 	if (nc1->nc_key > nc2->nc_key) {
 		return 1;
 	}
-	return 0;
-}
-
-/*
- * rbtree: compare a node and a key.
- */
-static int
-cache_compare_key(void *context, const void *n, const void *k)
-{
-	const struct namecache *ncp = n;
-	const uint64_t key = *(const uint64_t *)k;
-
-	if (ncp->nc_key < key) {
-		return -1;
-	}
-	if (ncp->nc_key > key) {
-		return 1;
-	}
-	return 0;
+	KASSERT(nc1->nc_nlen == nc2->nc_nlen);
+	return memcmp(nc1->nc_name, nc2->nc_name, nc1->nc_nlen);
 }
 
 /*
@@ -343,26 +337,6 @@ cache_key(const char *name, size_t nlen)
 
 	key = hash32_buf(name, nlen, HASH32_STR_INIT);
 	return (key << 32) | nlen;
-}
-
-/*
- * Like bcmp() but tuned for the use case here which is:
- *
- * - always of equal length both sides
- * - almost always the same string both sides
- * - small strings
- */
-static inline int
-cache_namecmp(struct namecache *ncp, const char *name, size_t namelen)
-{
-	size_t i;
-	int d;
-
-	KASSERT(ncp->nc_nlen == namelen);
-	for (d = 0, i = 0; i < namelen; i++) {
-		d |= (ncp->nc_name[i] ^ name[i]);
-	}
-	return d;
 }
 
 /*
@@ -423,7 +397,7 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
 	vnode_impl_t *dvi = VNODE_TO_VIMPL(dvp);
 	struct rb_node *node = dvi->vi_nc_tree.rbt_root;
 	struct namecache *ncp;
-	int lrulist;
+	int lrulist, diff;
 
 	KASSERT(rw_lock_held(&dvi->vi_nc_lock));
 
@@ -431,6 +405,10 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
 	 * Search the RB tree for the key.  This is an inlined lookup
 	 * tailored for exactly what's needed here (64-bit key and so on)
 	 * that is quite a bit faster than using rb_tree_find_node(). 
+	 *
+	 * In the fast path memcmp() needs to be called at least once to
+	 * confirm that the correct name has been found.  If there has been
+	 * a hash value collision (very rare) the search will continue on.
 	 */
 	for (;;) {
 		if (__predict_false(RB_SENTINEL_P(node))) {
@@ -439,15 +417,16 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
 		KASSERT((void *)&ncp->nc_tree == (void *)ncp);
 		ncp = (struct namecache *)node;
 		KASSERT(ncp->nc_dvp == dvp);
-		if (ncp->nc_key == key) {
-			break;
+		if (__predict_false(ncp->nc_key == key)) {
+			KASSERT(ncp->nc_nlen == namelen);
+			diff = memcmp(ncp->nc_name, name, namelen);
+			if (__predict_true(diff == 0)) {
+				break;
+			}
+			node = node->rb_nodes[diff < 0];			
+		} else {
+			node = node->rb_nodes[ncp->nc_key < key];
 		}
-		node = node->rb_nodes[ncp->nc_key < key];
-	}
-
-	/* Exclude collisions. */
-	if (__predict_false(cache_namecmp(ncp, name, namelen))) {
-		return NULL;
 	}
 
 	/*
@@ -657,12 +636,11 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	*vn_ret = NULL;
 
 	/* If disabled, or file system doesn't support this, bail out. */
-	if (__predict_false(cache_maxlen == 0 ||
-	    (dvp->v_mount->mnt_iflag & IMNT_NCLOOKUP) == 0)) {
+	if (__predict_false((dvp->v_mount->mnt_iflag & IMNT_NCLOOKUP) == 0)) {
 		return false;
 	}
 
-	if (__predict_false(namelen > USHRT_MAX)) {
+	if (__predict_false(namelen > cache_maxlen)) {
 		COUNT(ncs_long);
 		return false;
 	}
@@ -916,9 +894,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	if (oncp != ncp) {
 		KASSERT(oncp->nc_key == ncp->nc_key);
 		KASSERT(oncp->nc_nlen == ncp->nc_nlen);
-		if (cache_namecmp(oncp, name, namelen)) {
-			COUNT(ncs_collisions);
-		}
+		KASSERT(memcmp(oncp->nc_name, name, namelen) == 0);
 		cache_remove(oncp, true);
 		oncp = rb_tree_insert_node(&dvi->vi_nc_tree, ncp);
 		KASSERT(oncp == ncp);
@@ -1406,7 +1382,6 @@ cache_update_stats(void *cookie)
 		UPDATE(nchcpu, ncs_2passes);
 		UPDATE(nchcpu, ncs_revhits);
 		UPDATE(nchcpu, ncs_revmiss);
-		UPDATE(nchcpu, ncs_collisions);
 		UPDATE(nchcpu, ncs_denied);
 	}
 	if (cookie != NULL) {
@@ -1418,9 +1393,7 @@ cache_update_stats(void *cookie)
 }
 
 /*
- * Fetch the current values of the stats.  We return the most
- * recent values harvested into nchstats by cache_reclaim(), which
- * will be less than a second old.
+ * Fetch the current values of the stats for sysctl.
  */
 static int
 cache_stat_sysctl(SYSCTLFN_ARGS)
