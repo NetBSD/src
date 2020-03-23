@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.105 2020/03/22 14:39:03 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.106 2020/03/23 18:43:48 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.49 2020/03/22 14:38:37 ad Exp 
+ *   from: NetBSD: namei.src,v 1.51 2020/03/23 18:41:40 ad Exp 
  */
 
 /*
@@ -224,13 +224,13 @@ struct nameidata {
 struct nchnode;
 struct namecache {
 	struct	rb_node nc_tree;	/* d  red-black tree, must be first */
-	int64_t	nc_key;			/* -  hash key */
+	uint64_t nc_key;		/* -  hash key */
 	TAILQ_ENTRY(namecache) nc_list;	/* v  vp's list of cache entries */
 	TAILQ_ENTRY(namecache) nc_lru;	/* l  pseudo-lru chain */
 	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
 	struct	vnode *nc_vp;		/* -  vnode the name refers to */
 	int	nc_lrulist;		/* l  which LRU list its on */
-	short	nc_nlen;		/* -  length of the name */
+	u_short	nc_nlen;		/* -  length of the name */
 	char	nc_whiteout;		/* -  true if a whiteout */
 	char	nc_name[41];		/* -  segment name */
 };
@@ -336,7 +336,6 @@ void	namecache_print(struct vnode *, void (*)(const char *, ...)
 	type	ncs_2passes;	/* number of times we attempt it (U) */	\
 	type	ncs_revhits;	/* reverse-cache hits */		\
 	type	ncs_revmiss;	/* reverse-cache misses */		\
-	type	ncs_collisions;	/* hash value collisions */		\
 	type	ncs_denied;	/* access denied */			\
 }
 
