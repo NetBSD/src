@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.5 2020/03/23 05:49:57 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.6 2020/03/23 07:42:00 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.5 2020/03/23 05:49:57 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.6 2020/03/23 07:42:00 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -201,9 +201,9 @@ struct rdes {
 
 #define T0_OWN		(1U<<31)	/* desc is ready to Tx */
 #define T0_EOD		(1U<<30)	/* end of descriptor array */
-#define T0_DRID		(24)		/* 29:24 DRID */
+#define T0_DRID		(24)		/* 29:24 D-RID */
 #define T0_PT		(1U<<21)	/* 23:21 PT */
-#define T0_TRID		(16)		/* 20:16 TRID */
+#define T0_TRID		(16)		/* 20:16 T-RID */
 #define T0_FS		(1U<<9)		/* first segment of frame */
 #define T0_LS		(1U<<8)		/* last segment of frame */
 #define T0_CSUM		(1U<<7)		/* enable check sum offload */
@@ -215,11 +215,11 @@ struct rdes {
 /* T3 31:16 TCP segment length, 15:0 segment length to transmit */
 #define R0_OWN		(1U<<31)	/* desc is empty */
 #define R0_EOD		(1U<<30)	/* end of descriptor array */
-#define R0_SRID		(24)		/* 29:24 SRID */
+#define R0_SRID		(24)		/* 29:24 S-RID */
 #define R0_FR		(1U<<23)	/* FR */
 #define R0_ER		(1U<<21)	/* Rx error indication */
 #define R0_ERR		(3U<<16)	/* 18:16 receive error code */
-#define R0_TDRID	(14)		/* 15:14 TDRID */
+#define R0_TDRID	(14)		/* 15:14 TD-RID */
 #define R0_FS		(1U<<9)		/* first segment of frame */
 #define R0_LS		(1U<<8)		/* last segment of frame */
 #define R0_CSUM		(3U<<6)		/* 7:6 checksum status */
@@ -228,18 +228,18 @@ struct rdes {
 /* R2 frame address 31:0 */
 /* R3 31:16 received frame length, 15:0 buffer length to receive */
 
-#define SCX_NTXSEGS		16
-#define SCX_TXQUEUELEN		16
-#define SCX_TXQUEUELEN_MASK	(SCX_TXQUEUELEN - 1)
-#define SCX_TXQUEUE_GC		(SCX_TXQUEUELEN / 4)
-#define SCX_NTXDESC		(SCX_TXQUEUELEN * SCX_NTXSEGS)
-#define SCX_NTXDESC_MASK	(SCX_NTXDESC - 1)
-#define SCX_NEXTTX(x)		(((x) + 1) & SCX_NTXDESC_MASK)
-#define SCX_NEXTTXS(x)		(((x) + 1) & SCX_TXQUEUELEN_MASK)
+#define MD_NTXSEGS		16		/* fixed */
+#define MD_TXQUEUELEN		16		/* tunable */
+#define MD_TXQUEUELEN_MASK	(MD_TXQUEUELEN - 1)
+#define MD_TXQUEUE_GC		(MD_TXQUEUELEN / 4)
+#define MD_NTXDESC		(MD_TXQUEUELEN * MD_NTXSEGS)
+#define MD_NTXDESC_MASK	(MD_NTXDESC - 1)
+#define MD_NEXTTX(x)		(((x) + 1) & MD_NTXDESC_MASK)
+#define MD_NEXTTXS(x)		(((x) + 1) & MD_TXQUEUELEN_MASK)
 
-#define SCX_NRXDESC		64
-#define SCX_NRXDESC_MASK	(SCX_NRXDESC - 1)
-#define SCX_NEXTRX(x)		(((x) + 1) & SCX_NRXDESC_MASK)
+#define MD_NRXDESC		64		/* tunable */
+#define MD_NRXDESC_MASK	(MD_NRXDESC - 1)
+#define MD_NEXTRX(x)		(((x) + 1) & MD_NRXDESC_MASK)
 
 #define SCX_INIT_RXDESC(sc, x)						\
 do {									\
@@ -252,12 +252,12 @@ do {									\
 	__rxd->r2 = htole32(BUS_ADDR_LO32(__paddr));			\
 	__rxd->r1 = htole32(BUS_ADDR_HI32(__paddr));			\
 	__rxd->r0 = R0_OWN | R0_FS | R0_LS;				\
-	if ((x) == SCX_NRXDESC - 1) __rxd->r0 |= R0_EOD;		\
+	if ((x) == MD_NRXDESC - 1) __rxd->r0 |= R0_EOD;			\
 } while (/*CONSTCOND*/0)
 
 struct control_data {
-	struct tdes cd_txdescs[SCX_NTXDESC];
-	struct rdes cd_rxdescs[SCX_NRXDESC];
+	struct tdes cd_txdescs[MD_NTXDESC];
+	struct rdes cd_rxdescs[MD_NRXDESC];
 };
 #define SCX_CDOFF(x)		offsetof(struct control_data, x)
 #define SCX_CDTXOFF(x)		SCX_CDOFF(cd_txdescs[(x)])
@@ -305,8 +305,8 @@ struct scx_softc {
 #define sc_txdescs	sc_control_data->cd_txdescs
 #define sc_rxdescs	sc_control_data->cd_rxdescs
 
-	struct scx_txsoft sc_txsoft[SCX_TXQUEUELEN];
-	struct scx_rxsoft sc_rxsoft[SCX_NRXDESC];
+	struct scx_txsoft sc_txsoft[MD_TXQUEUELEN];
+	struct scx_rxsoft sc_rxsoft[MD_NRXDESC];
 	int sc_txfree;			/* number of free Tx descriptors */
 	int sc_txnext;			/* next ready Tx descriptor */
 	int sc_txsfree;			/* number of free Tx jobs */
@@ -328,11 +328,11 @@ do {									\
 	__n = (n);							\
 									\
 	/* If it will wrap around, sync to the end of the ring. */	\
-	if ((__x + __n) > SCX_NTXDESC) {				\
+	if ((__x + __n) > MD_NTXDESC) {				\
 		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
 		    SCX_CDTXOFF(__x), sizeof(struct tdes) *		\
-		    (SCX_NTXDESC - __x), (ops));			\
-		__n -= (SCX_NTXDESC - __x);				\
+		    (MD_NTXDESC - __x), (ops));			\
+		__n -= (MD_NTXDESC - __x);				\
 		__x = 0;						\
 	}								\
 									\
@@ -653,9 +653,9 @@ scx_attach_i(struct scx_softc *sc)
 		    error);
 		goto fail_3;
 	}
-	for (i = 0; i < SCX_TXQUEUELEN; i++) {
+	for (i = 0; i < MD_TXQUEUELEN; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    SCX_NTXSEGS, MCLBYTES, 0, 0,
+		    MD_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to create tx DMA map %d, error = %d\n",
@@ -663,7 +663,7 @@ scx_attach_i(struct scx_softc *sc)
 			goto fail_4;
 		}
 	}
-	for (i = 0; i < SCX_NRXDESC; i++) {
+	for (i = 0; i < MD_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    1, MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 			aprint_error_dev(sc->sc_dev,
@@ -689,13 +689,13 @@ printf("bus_dmaseg ds_addr %08lx, ds_len %08lx, nseg %d\n", seg.ds_addr, seg.ds_
 	return;
 
   fail_5:
-	for (i = 0; i < SCX_NRXDESC; i++) {
+	for (i = 0; i < MD_NRXDESC; i++) {
 		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
 			    sc->sc_rxsoft[i].rxs_dmamap);
 	}
   fail_4:
-	for (i = 0; i < SCX_TXQUEUELEN; i++) {
+	for (i = 0; i < MD_TXQUEUELEN; i++) {
 		if (sc->sc_txsoft[i].txs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
 			    sc->sc_txsoft[i].txs_dmamap);
@@ -747,10 +747,10 @@ scx_init(struct ifnet *ifp)
 	scx_reset(sc);
 
 	/* build sane Tx and load Rx descriptors with mbuf */
-	for (i = 0; i < SCX_NTXDESC; i++)
+	for (i = 0; i < MD_NTXDESC; i++)
 		sc->sc_txdescs[i].t0 = T0_OWN;
-	sc->sc_txdescs[SCX_NTXDESC - 1].t0 |= T0_EOD; /* tie off the ring */
-	for (i = 0; i < SCX_NRXDESC; i++)
+	sc->sc_txdescs[MD_NTXDESC - 1].t0 |= T0_EOD; /* tie off the ring */
+	for (i = 0; i < MD_NRXDESC; i++)
 		(void)add_rxbuf(sc, i);
 
 	/* set my address in perfect match slot 0 */
@@ -806,7 +806,7 @@ scx_watchdog(struct ifnet *ifp)
 	 */
 	txreap(sc);
 
-	if (sc->sc_txfree != SCX_NTXDESC) {
+	if (sc->sc_txfree != MD_NTXDESC) {
 		aprint_error_dev(sc->sc_dev,
 		    "device timeout (txfree %d txsfree %d txnext %d)\n",
 		    sc->sc_txfree, sc->sc_txsfree, sc->sc_txnext);
@@ -1100,7 +1100,7 @@ scx_start(struct ifnet *ifp)
 		if (m0 == NULL)
 			break;
 
-		if (sc->sc_txsfree < SCX_TXQUEUE_GC) {
+		if (sc->sc_txsfree < MD_TXQUEUE_GC) {
 			txreap(sc);
 			if (sc->sc_txsfree == 0)
 				break;
@@ -1149,7 +1149,7 @@ scx_start(struct ifnet *ifp)
 		lasttx = -1;
 		for (nexttx = sc->sc_txnext, seg = 0;
 		     seg < dmamap->dm_nsegs;
-		     seg++, nexttx = SCX_NEXTTX(nexttx)) {
+		     seg++, nexttx = MD_NEXTTX(nexttx)) {
 			struct tdes *tdes = &sc->sc_txdescs[nexttx];
 			bus_addr_t paddr = dmamap->dm_segs[seg].ds_addr;
 			/*
@@ -1200,7 +1200,7 @@ scx_start(struct ifnet *ifp)
 		sc->sc_txfree -= txs->txs_ndesc;
 		sc->sc_txnext = nexttx;
 		sc->sc_txsfree--;
-		sc->sc_txsnext = SCX_NEXTTXS(sc->sc_txsnext);
+		sc->sc_txsnext = MD_NEXTTXS(sc->sc_txsnext);
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
@@ -1239,8 +1239,8 @@ txreap(struct scx_softc *sc)
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	for (i = sc->sc_txsdirty; sc->sc_txsfree != SCX_TXQUEUELEN;
-	     i = SCX_NEXTTXS(i), sc->sc_txsfree++) {
+	for (i = sc->sc_txsdirty; sc->sc_txsfree != MD_TXQUEUELEN;
+	     i = MD_NEXTTXS(i), sc->sc_txsfree++) {
 		txs = &sc->sc_txsoft[i];
 
 		SCX_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndesc,
@@ -1262,7 +1262,7 @@ txreap(struct scx_softc *sc)
 		txs->txs_mbuf = NULL;
 	}
 	sc->sc_txsdirty = i;
-	if (sc->sc_txsfree == SCX_TXQUEUELEN)
+	if (sc->sc_txsfree == MD_TXQUEUELEN)
 		ifp->if_timer = 0;
 }
 
@@ -1275,7 +1275,7 @@ rxintr(struct scx_softc *sc)
 	uint32_t rxstat;
 	int i, len;
 
-	for (i = sc->sc_rxptr; /*CONSTCOND*/ 1; i = SCX_NEXTRX(i)) {
+	for (i = sc->sc_rxptr; /*CONSTCOND*/ 1; i = MD_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
 
 		SCX_CDRXSYNC(sc, i,
