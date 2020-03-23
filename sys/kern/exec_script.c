@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.81 2020/03/23 00:46:11 ad Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.82 2020/03/23 02:44:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.81 2020/03/23 00:46:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.82 2020/03/23 02:44:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_script.h"
@@ -213,7 +213,7 @@ check_shell:
 	 * if the script isn't readable, or it's set-id, then we've
 	 * gotta supply a "/dev/fd/..." for the shell to read.
 	 * Note that stupid shells (csh) do the wrong thing, and
-	 * close all open fd's when the start.  That kills this
+	 * close all open fd's when they start.  That kills this
 	 * method of implementing "safe" set-id and x-only scripts.
 	 */
 	vn_lock(epp->ep_vp, LK_SHARED | LK_RETRY);
