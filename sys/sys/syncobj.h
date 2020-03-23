@@ -1,4 +1,4 @@
-/*	$NetBSD: syncobj.h,v 1.11 2020/02/23 16:27:09 ad Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.12 2020/03/23 19:14:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -57,9 +57,9 @@ struct lwp *syncobj_noowner(wchan_t);
 #define	SOBJ_SLEEPQ_NULL	0x08
 
 extern syncobj_t	cv_syncobj;
+extern syncobj_t	kpause_syncobj;
 extern syncobj_t	lwp_park_syncobj;
 extern syncobj_t	mutex_syncobj;
-extern syncobj_t	kpause_syncobj;
 extern syncobj_t	rw_syncobj;
 extern syncobj_t	sched_syncobj;
 extern syncobj_t	select_syncobj;
