@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.343 2020/03/22 13:30:10 pgoyette Exp $	*/
+/*	$NetBSD: rump.c,v 1.344 2020/03/23 14:49:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.343 2020/03/22 13:30:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.344 2020/03/23 14:49:50 pgoyette Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -647,14 +647,12 @@ add_linkedin_modules(const struct modinfo * const *mip, size_t nmodinfo)
 }
 
 /*
- * Add an evcnt.  Just in case it might already have been added, remove
- * it first.
+ * Add an evcnt.
  */
 static void
 add_static_evcnt(struct evcnt *ev)
 {
 
-	evcnt_detach(ev);
 	evcnt_attach_static(ev);
 }
 
