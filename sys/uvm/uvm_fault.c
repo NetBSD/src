@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.223 2020/03/23 10:35:08 skrll Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.224 2020/03/23 10:35:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.223 2020/03/23 10:35:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.224 2020/03/23 10:35:56 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1219,6 +1219,7 @@ static inline int
 uvm_fault_upper_upgrade(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
     struct vm_amap *amap, struct uvm_object *uobj)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(amap != NULL);
 	KASSERT(flt->upper_lock_type == rw_lock_op(amap->am_lock));
@@ -1787,6 +1788,8 @@ static inline int
 uvm_fault_lower_upgrade(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
     struct vm_amap *amap, struct uvm_object *uobj, struct vm_page *uobjpage)
 {
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(uobj != NULL);
 	KASSERT(flt->lower_lock_type == rw_lock_op(uobj->vmobjlock));
