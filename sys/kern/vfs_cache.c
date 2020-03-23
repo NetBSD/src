@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.133 2020/03/23 19:45:11 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.134 2020/03/23 20:02:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.133 2020/03/23 19:45:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.134 2020/03/23 20:02:13 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -357,16 +357,10 @@ cache_remove(struct namecache *ncp, const bool dir2node)
 	SDT_PROBE(vfs, namecache, invalidate, done, ncp,
 	    0, 0, 0, 0);
 
-	/* First remove from the directory's rbtree. */
-	rb_tree_remove_node(&dvi->vi_nc_tree, ncp);
-
-	/* Then remove from the LRU lists. */
-	mutex_enter(&cache_lru_lock);
-	TAILQ_REMOVE(&cache_lru.list[ncp->nc_lrulist], ncp, nc_lru);
-	cache_lru.count[ncp->nc_lrulist]--;
-	mutex_exit(&cache_lru_lock);
-
-	/* Then remove from the node's list. */
+	/*
+	 * Remove from the vnode's list.  This excludes cache_revlookup(),
+	 * and then it's safe to remove from the LRU lists.
+	 */
 	if ((vp = ncp->nc_vp) != NULL) {
 		vnode_impl_t *vi = VNODE_TO_VIMPL(vp);
 		if (__predict_true(dir2node)) {
@@ -377,6 +371,15 @@ cache_remove(struct namecache *ncp, const bool dir2node)
 			TAILQ_REMOVE(&vi->vi_nc_list, ncp, nc_list);
 		}
 	}
+
+	/* Remove from the directory's rbtree. */
+	rb_tree_remove_node(&dvi->vi_nc_tree, ncp);
+
+	/* Remove from the LRU lists. */
+	mutex_enter(&cache_lru_lock);
+	TAILQ_REMOVE(&cache_lru.list[ncp->nc_lrulist], ncp, nc_lru);
+	cache_lru.count[ncp->nc_lrulist]--;
+	mutex_exit(&cache_lru_lock);
 
 	/* Finally, free it. */
 	if (ncp->nc_nlen > NCHNAMLEN) {
