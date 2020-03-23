@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.129 2020/03/23 18:33:43 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.130 2020/03/23 18:37:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.129 2020/03/23 18:33:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.130 2020/03/23 18:37:30 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -896,16 +896,20 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 		ncp = kmem_alloc(sz, KM_SLEEP);
 	}
 
-	/* Fill in cache info. */
+	/*
+	 * Fill in cache info.  For negative hits, save the ISWHITEOUT flag
+	 * so we can restore it later when the cache entry is used again.
+	 */
+	ncp->nc_vp = vp;
 	ncp->nc_dvp = dvp;
 	ncp->nc_key = cache_key(name, namelen);
 	ncp->nc_nlen = namelen;
+	ncp->nc_whiteout = ((cnflags & ISWHITEOUT) != 0);
 	memcpy(ncp->nc_name, name, namelen);
 
 	/*
-	 * Insert to the directory.  Concurrent lookups in the same
-	 * directory may race for a cache entry.  There can also be hash
-	 * value collisions.  If there's a entry there already, purge it.
+	 * Insert to the directory.  Concurrent lookups may race for a cache
+	 * entry.  If there's a entry there already, purge it.
 	 */
 	rw_enter(&dvi->vi_nc_lock, RW_WRITER);
 	oncp = rb_tree_insert_node(&dvi->vi_nc_tree, ncp);
@@ -920,16 +924,23 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 		KASSERT(oncp == ncp);
 	}
 
-	/* Then insert to the vnode. */
-	if (vp == NULL) {
-		/*
-		 * For negative hits, save the ISWHITEOUT flag so we can
-		 * restore it later when the cache entry is used again.
-		 */
-		ncp->nc_vp = NULL;
-		ncp->nc_whiteout = ((cnflags & ISWHITEOUT) != 0);
-	} else {
-		/* Partially sort the per-vnode list: dots go to back. */
+	/*
+	 * With the directory lock still held, insert to the tail of the
+	 * ACTIVE LRU list (new) and with the LRU lock held take the to
+	 * opportunity to incrementally balance the lists.
+	 */
+	mutex_enter(&cache_lru_lock);
+	ncp->nc_lrulist = LRU_ACTIVE;
+	cache_lru.count[LRU_ACTIVE]++;
+	TAILQ_INSERT_TAIL(&cache_lru.list[LRU_ACTIVE], ncp, nc_lru);
+	cache_deactivate();
+	mutex_exit(&cache_lru_lock);
+
+	/*
+	 * Finally, insert to the vnode, and unlock.  Partially sort the
+	 * per-vnode list: dots go to back.
+	 */
+	if (vp != NULL) {
 		vnode_impl_t *vi = VNODE_TO_VIMPL(vp);
 		rw_enter(&vi->vi_nc_listlock, RW_WRITER);
 		if ((namelen == 1 && name[0] == '.') ||
@@ -939,21 +950,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 			TAILQ_INSERT_HEAD(&vi->vi_nc_list, ncp, nc_list);
 		}
 		rw_exit(&vi->vi_nc_listlock);
-		ncp->nc_vp = vp;
-		ncp->nc_whiteout = false;
 	}
-
-	/*
-	 * Finally, insert to the tail of the ACTIVE LRU list (new) and
-	 * with the LRU lock held take the to opportunity to incrementally
-	 * balance the lists.
-	 */
-	mutex_enter(&cache_lru_lock);
-	ncp->nc_lrulist = LRU_ACTIVE;
-	cache_lru.count[LRU_ACTIVE]++;
-	TAILQ_INSERT_TAIL(&cache_lru.list[LRU_ACTIVE], ncp, nc_lru);
-	cache_deactivate();
-	mutex_exit(&cache_lru_lock);
 	rw_exit(&dvi->vi_nc_lock);
 }
 
