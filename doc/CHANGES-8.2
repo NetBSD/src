@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.108 2020/03/16 12:23:05 sborrill Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.109 2020/03/23 10:17:07 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2147,4 +2147,16 @@ sys/arch/xen/xen/xennet_checksum.c		1.4
 	was not recomputed for short packets coming from Windows domU
 	on same physical host as it seems Windows does some padding.
 	[jdolecek, ticket #1521]
+
+etc/etc.amiga/Makefile.inc			1.29-1.31
+
+	Provide both miniroot.fs (for people wanting to install NetBSD
+	without more 3rdparty software than what's provided on our ISO)
+	and .fs.tz (for people downloading over slow links).
+	[is, ticket #1522]
+
+sys/external/bsd/drm2/dist/drm/radeon/radeon_vce.c 1.4
+
+	Fix loading TAHITI VCE firmware.
+	[mrg, ticket #1523]
 
