@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.106 2020/03/23 18:43:48 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.107 2020/03/23 23:28:47 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.51 2020/03/23 18:41:40 ad Exp 
+ *   from: NetBSD: namei.src,v 1.52 2020/03/23 23:28:11 ad Exp 
  */
 
 /*
@@ -216,16 +216,15 @@ struct nameidata {
  * Field markings and their corresponding locks:
  *
  * -  stable throught the lifetime of the namecache entry
- * d  protected by nc_dvp->vi_ncdlock
- * v  protected by nc_dvp->vi_ncvlock
+ * d  protected by nc_dvp->vi_nc_lock
+ * v  protected by nc_vp->vi_nc_listlock
  * l  protected by cache_lru_lock
- * u  accesses are unlocked, no serialization applied
  */
 struct nchnode;
 struct namecache {
 	struct	rb_node nc_tree;	/* d  red-black tree, must be first */
-	uint64_t nc_key;		/* -  hash key */
-	TAILQ_ENTRY(namecache) nc_list;	/* v  vp's list of cache entries */
+	uint64_t nc_key;		/* -  hashed key value */
+	TAILQ_ENTRY(namecache) nc_list;	/* v  nc_vp's list of cache entries */
 	TAILQ_ENTRY(namecache) nc_lru;	/* l  pseudo-lru chain */
 	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
 	struct	vnode *nc_vp;		/* -  vnode the name refers to */
