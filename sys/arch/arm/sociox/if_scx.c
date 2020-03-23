@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.1 2020/03/23 03:25:06 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.2 2020/03/23 03:55:49 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.1 2020/03/23 03:25:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.2 2020/03/23 03:55:49 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.1 2020/03/23 03:25:06 nisimura Exp $");
 #define  _MCR_FDX	0x0000280c	/* XXX TBD */
 #define  _MCR_HDX	0x0001a00c	/* XXX TBD */
 #define GMACAFR		0x0004		/* frame DA/SA address filter */
-#define  AFR_RA		(1U<<31)	/* receive all on */
+#define  AFR_RA		(1U<<31)	/* receive block all on */
 #define  AFR_HPF	(1U<<10)	/* activate hash or perfect filter */
 #define  AFR_SAF	(1U<<9)		/* source address filter */
 #define  AFR_SAIF	(1U<<8)		/* SA inverse filtering */
@@ -161,9 +161,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.1 2020/03/23 03:25:06 nisimura Exp $");
 #define GMACVTAG	0x001c		/* VLAN tag control */
 #define GMACMAH0	0x0040		/* MAC address 0 47:32 */
 #define GMACMAL0	0x0044		/* MAC address 0 31:0 */
-#define GMACMAH(i) 	((i)*8+0x40)	/* 0 - 15 */
+#define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1 - 15 */
 #define GMACMAL(i) 	((i)*8+0x44)
-#define GMACMHT0	0x0500		/* multcast hash table 0 - 8*/
+#define GMACMHT0	0x0500		/* multicast hash table 0 - 8*/
+
 #define GMACBMR		0x1000		/* DMA bus mode
 					 * 24    4PBL
 					 * 22:17 RPBL
@@ -304,7 +305,7 @@ struct scx_softc {
 	int sc_phy_id;			/* PHY address */
 	uint32_t sc_gar;		/* GAR 5:2 clock selection */
 	int sc_phandle;			/* fdt phandle */
-	uint32_t sc_t0coso;		/* T0_CSUM | T0_SGOL */
+	uint32_t sc_t0coso;		/* T0_CSUM | T0_SGOL to run */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -388,7 +389,7 @@ static int spin_waitfor(struct scx_softc *, int, int);
 static int mac_read(struct scx_softc *, int);
 static void mac_write(struct scx_softc *, int, int);
 static void loaducode(struct scx_softc *);
-static void injectucode(struct scx_softc *, int, uint64_t, uint32_t);
+static void injectucode(struct scx_softc *, int, bus_addr_t, bus_size_t);
 
 #define CSR_READ(sc,off) \
 	    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (off))
@@ -418,16 +419,15 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t bst = faa->faa_bst;
 	bus_space_handle_t bsh;
 	bus_space_handle_t eebsh;
-	bus_addr_t addr;
-	bus_size_t size;
+	bus_addr_t addr[2];
+	bus_size_t size[2];
 	char intrstr[128];
 
-	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0
-	    || bus_space_map(faa->faa_bst, addr, size, 0, &bsh) != 0) {
+	if (fdtbus_get_reg(phandle, 0, addr+0, size+0) != 0
+	    || bus_space_map(faa->faa_bst, addr[0], size[0], 0, &bsh) != 0) {
 		aprint_error(": unable to map device csr\n");
 		return;
 	}
-	sc->sc_sz = size;
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error(": failed to decode interrupt\n");
 		goto fail;
@@ -438,12 +438,11 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		goto fail;
 	}
-	if (fdtbus_get_reg(phandle, 1, &addr, &size) != 0
-	    || bus_space_map(faa->faa_bst, addr, size, 0, &eebsh) != 0) {
+	if (fdtbus_get_reg(phandle, 1, addr+1, size+1) != 0
+	    || bus_space_map(faa->faa_bst, addr[0], size[1], 0, &eebsh) != 0) {
 		aprint_error(": unable to map device eeprom\n");
 		goto fail;
 	}
-	sc->sc_eesz = size;
 
 	aprint_naive("\n");
 	aprint_normal(": Gigabit Ethernet Controller\n");
@@ -452,7 +451,9 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_st = bst;
 	sc->sc_sh = bsh;
+	sc->sc_sz = size[0];
 	sc->sc_eesh = eebsh;
+	sc->sc_eesz = size[1];
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_phandle = phandle;
 
@@ -945,7 +946,7 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 	return;
 
  update:
-	/* With PM or AM, MHTE/MTL/MTH are never consulted. really? */
+	/* With PM or AM, MHTE/MHTL/MHTH are never consulted. really? */
 	if (ifp->if_flags & IFF_PROMISC)
 		csr |= AFR_PM;	/* run promisc. mode */
 	else
@@ -1407,38 +1408,48 @@ loaducode(struct scx_softc *sc)
 	up = EE_READ(sc, 0x08); /* H->M ucode addr high */
 	lo = EE_READ(sc, 0x0c); /* H->M ucode addr low */
 	sz = EE_READ(sc, 0x10); /* H->M ucode size */
+	sz *= 4;
 	addr = ((uint64_t)up << 32) | lo;
 	aprint_normal_dev(sc->sc_dev, "H2M ucode %u\n", sz);
-	injectucode(sc, DMACH2M, addr, sz);
-printf("H->M ucode %08x-%08x\n", up, lo);
+	injectucode(sc, DMACH2M, (bus_addr_t)addr, (bus_size_t)sz);
 
 	up = EE_READ(sc, 0x14); /* M->H ucode addr high */
 	lo = EE_READ(sc, 0x18); /* M->H ucode addr low */
 	sz = EE_READ(sc, 0x1c); /* M->H ucode size */
+	sz *= 4;
 	addr = ((uint64_t)up << 32) | lo;
+	injectucode(sc, DMACM2H, (bus_addr_t)addr, (bus_size_t)sz);
 	aprint_normal_dev(sc->sc_dev, "M2H ucode %u\n", sz);
-	injectucode(sc, DMACM2H, addr, sz);
-printf("M->H ucode %08x-%08x\n", up, lo);
 
 	lo = EE_READ(sc, 0x20); /* PKT ucode addr */
 	sz = EE_READ(sc, 0x24); /* PKT ucode size */
+	sz *= 4;
+	injectucode(sc, DMACH2M, (bus_addr_t)lo, (bus_size_t)sz);
 	aprint_normal_dev(sc->sc_dev, "PKT ucode %u\n", sz);
-	injectucode(sc, DMACH2M, (uint64_t)lo, sz);
-printf("PKT ucode %08x-%08x\n", 0, lo);
 }
 
 static void
-injectucode(struct scx_softc *sc, int port, uint64_t addr, uint32_t size)
+injectucode(struct scx_softc *sc, int port,
+	bus_addr_t addr, bus_size_t size)
 {
-	uint32_t ucode;
+	bus_space_handle_t bsh;
 	bus_size_t off;
+	uint32_t ucode;
 	int i;
 
-	/* XXX addr is ucode paddr_t itself XXX */
-	for (i = 0; i < size; i++) {
-		off = addr + i * 4;
-		off -= (bus_addr_t)sc->sc_eesh; /* XXX */
-		ucode = bus_space_read_4(sc->sc_st, sc->sc_eesh, off);
-		CSR_WRITE(sc, port, ucode);
+	const char *uengine[] = { "H2M", "M2H", "PKT" };
+
+printf("%s ucode %lx\n", uengine[port], addr);
+	if (!bus_space_map(sc->sc_st, addr, size, 0, &bsh) != 0) {
+		aprint_error_dev(sc->sc_dev, "eeprom map %s failure\n",
+		    uengine[port]);
+		return;
 	}
+	off = 0;
+	for (i = 0; i < size; i++) {
+		ucode = bus_space_read_4(sc->sc_st, bsh, off);
+		CSR_WRITE(sc, port, ucode);
+		off += 4;
+	}
+	bus_space_unmap(sc->sc_st, bsh, size);
 }
