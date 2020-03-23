@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.11 2020/03/23 03:21:31 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.12 2020/03/23 05:24:28 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.11 2020/03/23 03:21:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.12 2020/03/23 05:24:28 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -230,7 +230,7 @@ struct ave_softc {
 	int sc_flowflags;		/* 802.3x PAUSE flow control */
 	void *sc_ih;			/* interrupt cookie */
 	int sc_phy_id;			/* PHY address */
-	uint32_t sc_phymode;		/* 1<<27: MII/RMII, 0: RGMII */
+	uint32_t sc_100mii;		/* 1<<27: RMII/MII, 0: RGMII */
 	uint32_t sc_rxc;		/* software copy of AVERXC */
 	int sc_model;			/* 64 paddr model or otherwise 32 */
 
@@ -362,10 +362,7 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_model, hwver >> 8, hwver & 0xff, phy_mode);
 	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
 
-	if (strcmp(phy_mode, "rgmii") == 0)
-		sc->sc_phymode = 0;		/* RGMII */
-	else
-		sc->sc_phymode = CFG_MII;	/* MII|RMII */
+	sc->sc_100mii = (strcmp(phy_mode, "rgmii") == 0) ? CFG_MII : 0;
 
 	CSR_WRITE(sc, AVEGR, GR_GRST | GR_PHYRST);
 	DELAY(20);
@@ -490,7 +487,7 @@ ave_reset(struct ave_softc *sc)
 
 	CSR_WRITE(sc, AVERXC, 0);	/* stop Rx first */
 	CSR_WRITE(sc, AVEDESCC, 0);	/* stop Tx/Rx descriptor engine */
-	if (sc->sc_phymode & CFG_MII) {
+	if (sc->sc_100mii & CFG_MII) {
 		csr = CSR_READ(sc, AVERMIIC);
 		CSR_WRITE(sc, AVERMIIC, csr &~ RMIIC_RST);
 		DELAY(10);
@@ -519,7 +516,7 @@ ave_init(struct ifnet *ifp)
 	/* make sure Rx circuit sane & stable state */
 	ave_reset(sc);
 
-	CSR_WRITE(sc, AVECFG, CFG_FLE | sc->sc_phymode);
+	CSR_WRITE(sc, AVECFG, CFG_FLE | sc->sc_100mii);
 
 	/* set Tx/Rx descriptor ring base addr offset and total size */
 	CSR_WRITE(sc, AVETXDES,	 0U|(sizeof(struct tdes)*AVE_NTXDESC) << 16);
@@ -624,7 +621,7 @@ ave_ifmedia_upd(struct ifnet *ifp)
 #if 1 /* XXX not sure to belong here XXX */
 		txcr &= ~(TXC_SPD1000 | TXC_SPD100);
 		rxcr &= ~RXC_USEFDX;
-		if ((sc->sc_phymode & CFG_MII) == 0 /* RGMII model */
+		if ((sc->sc_100mii == 0) /* RGMII model */
 		     && IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_1000_T)
 			txcr |= TXC_SPD1000;
 		else if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
@@ -632,9 +629,9 @@ ave_ifmedia_upd(struct ifnet *ifp)
 		if (ifm->ifm_media & IFM_FDX)
 			rxcr |= RXC_USEFDX;	
 
-		/* adjust LINKSEL when MII/RMII too */
-		if (sc->sc_phymode & CFG_MII) {
-			csr = CSR_READ(sc, AVELINKSEL) &~ LINKSEL_SPD100;;
+		/* adjust LINKSEL when RMII/MII too */
+		if (sc->sc_100mii) {
+			csr = CSR_READ(sc, AVELINKSEL) &~ LINKSEL_SPD100;
 			if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
 				csr |= LINKSEL_SPD100;
 			CSR_WRITE(sc, AVELINKSEL, csr);
