@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_mouse.3,v 1.1 2020/03/23 15:32:56 roy Exp $
+.\"	$NetBSD: curses_mouse.3,v 1.2 2020/03/23 16:14:20 wiz Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,18 +52,20 @@
 .Ft int
 .Fn ungetmouse "MEVENT *event"
 .Ft mmask_t
-.Fn mousemask "mmask_t newmask, mmask_t *oldmask"
+.Fn mousemask "mmask_t newmask" "mmask_t *oldmask"
 .Ft bool
-.Fn wenclose "const WINDOW *win, int y, int x"
+.Fn wenclose "const WINDOW *win" "int y" "int x"
 .Ft bool
-.Fn mouse_trafo "int *y, int *x, bool"
+.Fn mouse_trafo "int *y" "int *x" "bool to_screen"
 .Ft bool
-.Fn wmouse_trafo "const WINDOW *win, int *y, int *x, bool to_screen"
+.Fn wmouse_trafo "const WINDOW *win" "int *y" "int *x" "bool to_screen"
 .Ft int
 .Fn mouseinterval "int erval"
 .Sh DESCRIPTION
 This is the curses interface to mouse events.
-Mouse events are reported via the KEY_MOUSE value in the
+Mouse events are reported via the
+.Dv KEY_MOUSE
+value in the
 .Xr wgetch 3
 input stream.
 .Pp
@@ -116,8 +118,7 @@ depending on the value of
 .Fa to_screen .
 If the co-ordinates are not enclosed by the window
 .Fa win
-then false is returned,
-otherwise the
+then false is returned, otherwise the
 .Fa x
 and
 .Fa y
