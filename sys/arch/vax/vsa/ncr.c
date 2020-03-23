@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.49 2018/09/03 16:29:28 riastradh Exp $	*/
+/*	$NetBSD: ncr.c,v 1.49.4.1 2020/03/23 10:06:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.49 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.49.4.1 2020/03/23 10:06:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,11 @@ found:
 	dh->dh_flags = SIDH_BUSY;
 	dh->dh_addr = ncr_sc->sc_dataptr;
 	dh->dh_len = xlen;
-	dh->dh_proc = xs->bp->b_proc;
+	if (((vaddr_t)ncr_sc->sc_dataptr & KERNBASE) == 0) {
+		if (xs->bp == NULL)
+			panic("si_dma_alloc");
+		dh->dh_proc = xs->bp->b_proc;
+	}
 
 	/* Remember dest buffer parameters */
 	if (xs->xs_control & XS_CTL_DATA_OUT)
