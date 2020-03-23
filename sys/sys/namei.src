@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.50 2020/03/23 18:33:43 ad Exp $	*/
+/*	$NetBSD: namei.src,v 1.51 2020/03/23 18:41:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -328,7 +328,6 @@ void	namecache_print(struct vnode *, void (*)(const char *, ...)
 	type	ncs_2passes;	/* number of times we attempt it (U) */	\
 	type	ncs_revhits;	/* reverse-cache hits */		\
 	type	ncs_revmiss;	/* reverse-cache misses */		\
-	type	ncs_collisions;	/* hash value collisions */		\
 	type	ncs_denied;	/* access denied */			\
 }
 
