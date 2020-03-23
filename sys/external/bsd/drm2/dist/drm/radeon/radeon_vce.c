@@ -46,34 +46,38 @@ static void radeon_vce_idle_work_handler(struct work_struct *work);
 
 #ifdef __NetBSD__		/* XXX Ugh!  */
 static bool
-scan_2dec_u8(const char **sp, char delim, uint8_t *u8p)
+scan_2dec_uint(const char **sp, char delim, unsigned int *uintp)
 {
-	char c0, c1;
+	u_int val = 0, n;
+	char c;
 
-	if (!isdigit((unsigned char)(c0 = *(*sp)++)))
-		return false;
-	if (!isdigit((unsigned char)(c1 = *(*sp)++)))
-		return false;
-	if (*(*sp)++ != delim)
+	for (n = 0; n < 2; n++) {
+		c = *(*sp)++;
+		if (!isdigit((unsigned char)c))
+			return false;
+		if (n != 0)
+			val *= 10;
+		val += (c - '0');
+		if (*(*sp) == delim)
+			break;
+	}
+	if (*(*sp) != delim)
 		return false;
 
-	*u8p = ((c0 - '0') * 10) + (c1 - '0');
+	(*sp)++;
+	*uintp = val;
 	return true;
 }
 
 static bool
-scan_2dec_uint(const char **sp, char delim, unsigned int *uintp)
+scan_2dec_u8(const char **sp, char delim, uint8_t *u8p)
 {
-	char c0, c1;
+	unsigned int val;
 
-	if (!isdigit((unsigned char)(c0 = *(*sp)++)))
-		return false;
-	if (!isdigit((unsigned char)(c1 = *(*sp)++)))
-		return false;
-	if (*(*sp)++ != delim)
+	if (!scan_2dec_uint(sp, delim, &val))
 		return false;
 
-	*uintp = ((c0 - '0') * 10) + (c1 - '0');
+	*u8p = (uint8_t)val;
 	return true;
 }
 #endif
