@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.74 2020/03/24 14:47:02 kamil Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.75 2020/03/24 14:56:31 kre Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.74 2020/03/24 14:47:02 kamil Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.75 2020/03/24 14:56:31 kre Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -912,7 +912,7 @@ schedulework(struct spclient *spc, enum sbatype sba_type)
 
 	reqno = spc->spc_hdr.rsp_reqno;
 	while ((sba = malloc(sizeof(*sba))) == NULL) {
-		if (nworker == 0 || retries > 10) {
+		if (nworker == 0 || retries++ > 10) {
 			send_error_resp(spc, reqno, RUMPSP_ERR_TRYAGAIN);
 			spcfreebuf(spc);
 			return;
