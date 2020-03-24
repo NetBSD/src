@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.11 2020/03/24 13:07:46 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.12 2020/03/24 13:44:21 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.11 2020/03/24 13:07:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.12 2020/03/24 13:44:21 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -169,11 +169,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.11 2020/03/24 13:07:46 nisimura Exp $")
 #define GMACMAL0	0x0044		/* MAC address 0 31:0 */
 #define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1 - 15 */
 #define GMACMAL(i) 	((i)*8+0x44)
+#define GMACMDSR	0x00d8		/* GMII/RGMII/MII command/status */
 #define GMACMHT0	0x0500		/* multicast hash table 0 - 7 */
 #define GMACMHT(i)	((i)*4+0x500)
 #define GMACVHT		0x0588		/* VLAN tag hash */
 #define GMACAMAH(i)	((i)*8+0x800)	/* supplimental MAC addr 16-127 */
 #define GMACAMAL(i)	((i)*8+0x804)
+#define GMACEVCNT(i)	((i)*4+0x114)	/* event counter 0x114~284 */
 
 #define GMACBMR		0x1000		/* DMA bus mode control
 					 * 24    4PBL
@@ -185,15 +187,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.11 2020/03/24 13:07:46 nisimura Exp $")
 					 *  1    rxtx ratio 21
 					 *  0    rxtx ratio 11
 					 * 13:8  PBL possible DMA burst len
-					 * 0     reset op. self clear
+					 *  0    reset op. self clear
 					 */
 #define  _BMR		0x00412080	/* XXX TBD */
 #define  _BMR0		0x00020181	/* XXX TBD */
 #define  BMR_RST	(1U<<0)		/* reset op. self clear when done */
-#define GMACRDLAR	0x100c		/* */
-#define  _RDLAR		0x18000		/* XXX TBD */
-#define GMACTDLAR	0x1010		/* */
-#define  _TDLAR		0x1c000		/* XXX TBD */
+#define GMACTDS		0x1004		/* write any to resume tdes */
+#define GMACRDS		0x1008		/* write any to resume rdes */
+#define GMACRDLAR	0x100c		/* rdes base address 32bit paddr */
+#define  _RDLAR		0x18000		/* XXX TBD system SRAM with CC ? */
+#define GMACTDLAR	0x1010		/* tdes base address 32bit paddr */
+#define  _TDLAR		0x1c000		/* XXX TBD system SRAM with CC ? */
 #define GMACOMR		0x1018		/* DMA operation */
 #define  OMR_TXE	(1U<<13)	/* start Tx DMA engine, 0 to stop */
 #define  OMR_RXE	(1U<<1)		/* start Rx DMA engine, 0 to stop */
@@ -1203,7 +1207,7 @@ scx_start(struct ifnet *ifp)
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Tell DMA start transmit */
-		/* CSR_WRITE(sc, MDTSC, 1); */
+		/* CSR_WRITE(sc, GMACTDS, 1); */
 
 		txs->txs_mbuf = m0;
 		txs->txs_firstdesc = sc->sc_txnext;
