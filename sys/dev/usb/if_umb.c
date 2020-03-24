@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.18 2020/03/21 06:55:13 skrll Exp $ */
+/*	$NetBSD: if_umb.c,v 1.19 2020/03/24 07:12:16 maxv Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.18 2020/03/21 06:55:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.19 2020/03/24 07:12:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -569,7 +569,7 @@ fail:
 Static int
 umb_detach(device_t self, int flags)
 {
-	struct umb_softc *sc = (struct umb_softc *)self;
+	struct umb_softc *sc = device_private(self);
 	struct ifnet *ifp = GET_IFP(sc);
 	int	 s;
 
