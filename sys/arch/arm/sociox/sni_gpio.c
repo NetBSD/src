@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_gpio.c,v 1.2 2020/03/19 20:53:53 nisimura Exp $	*/
+/*	$NetBSD: sni_gpio.c,v 1.3 2020/03/24 11:40:08 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.2 2020/03/19 20:53:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.3 2020/03/24 11:40:08 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,6 +64,7 @@ struct snigpio_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_iob;
 	bus_size_t		sc_ios;
+	void			*sc_ih;
 	kmutex_t		sc_lock;
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t		sc_gpio_pins[32];
@@ -77,7 +78,19 @@ CFATTACH_DECL_NEW(snigpio_fdt, sizeof(struct snigpio_softc),
 CFATTACH_DECL_NEW(snigpio_acpi, sizeof(struct snigpio_softc),
     snigpio_acpi_match, snigpio_acpi_attach, NULL, NULL);
 
+/*
+ * "DevelopmentBox" implementation
+ *    DSW3-PIN1,  DSW3-PIN2,  DSW3-PIN3,    DSW3-PIN4,
+ *    DSW3-PIN5,  DSW3-PIN6,  DSW3-PIN7,    DSW3-PIN8,
+ *    PEC-PD8,    PEC-PD9,    PEC-PD10,     PEC-PD11,
+ *    NC,         NC,         PCIE1EXTINT,  PCIE0EXTINT,
+ *    PHY_P2_2,   PHY_P1_2,   NC,           NC,
+ *    NC,         NC,         NC,           NC,
+ *    NC,         NC,         PEC-PD26,     PEC-PD27,
+ *    PEC-PD28,   PEC-PD29,   PEC-PD30,     PEC-PD31;
+ */
 static void snigpio_attach_i(struct snigpio_softc *);
+static int snigpio_intr(void *);
 
 static int
 snigpio_fdt_match(device_t parent, struct cfdata *match, void *aux)
@@ -102,8 +115,8 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	bus_addr_t addr;
 	bus_size_t size;
+	char intrstr[128];
 	_Bool disable;
-	int error;
 
 	prop_dictionary_get_bool(dict, "disable", &disable);
 	if (disable) {
@@ -111,16 +124,25 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": disabled\n");
 		return;
 	}
-	error = fdtbus_get_reg(phandle, 0, &addr, &size);
-	if (error) {
-		aprint_error(": couldn't get registers\n");
-		return;
-	}
-	error = bus_space_map(faa->faa_bst, addr, size, 0, &ioh);
-	if (error) {
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0
+	    || bus_space_map(faa->faa_bst, addr, size, 0, &ioh) != 0) {
 		aprint_error(": unable to map device\n");
 		return;
 	}
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
+		goto fail;
+	}
+	sc->sc_ih = fdtbus_intr_establish(phandle,
+			0, IPL_VM, 0, snigpio_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt\n");
+		goto fail;
+	}
+
+	aprint_naive("\n");
+	aprint_normal(": GPIO controller\n");
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
@@ -131,7 +153,13 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 
 	snigpio_attach_i(sc);
 
+/* dig FDT description to show 32 of GPIO line usage */
+/* DIPSW3 1-8 usage remain unclear */
+
 	return;
+ fail:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	return;	
 }
 
 static int
@@ -163,21 +191,23 @@ snigpio_acpi_attach(device_t parent, device_t self, void *aux)
 	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
-
 	mem = acpi_res_mem(&res, 0);
 	irq = acpi_res_irq(&res, 0);
-	if (mem == NULL || irq == NULL) {
+	if (mem == NULL || irq == NULL || mem->ar_length == 0) {
 		aprint_error(": incomplete resources\n");
-		return;
-	}
-	if (mem->ar_length == 0) {
-		aprint_error(": zero length memory resource\n");
 		return;
 	}
 	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0,
 	    &ioh)) {
 		aprint_error(": couldn't map registers\n");
 		return;
+	}
+	sc->sc_ih = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
+	    IPL_VM, false, snigpio_intr, sc, device_xname(self));
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt\n");
+		goto fail;
 	}
 
 	sc->sc_dev = self;
@@ -186,31 +216,46 @@ snigpio_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ios = mem->ar_length;
 
 	snigpio_attach_i(sc);
+
+/* dig _DSD property to show 32 of GPIO line usage */
+/* DIPSW3 1-8 usage remain unclear */
+
+	acpi_resource_cleanup(&res);
+	return;
+ fail:
+	acpi_resource_cleanup(&res);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	return;	
 }
 
 static void
 snigpio_attach_i(struct snigpio_softc *sc)
 {
+	struct gpio_chipset_tag	*gc;
 	struct gpiobus_attach_args gba;
-
-	aprint_naive(": GPIO controller\n");
-	aprint_normal(": GPIO controller\n");
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	sc->sc_maxpins = 32;
 
 	/* create controller tag */
-	sc->sc_gpio_gc.gp_cookie = sc;
-	sc->sc_gpio_gc.gp_pin_read = NULL; /* AAA */
-	sc->sc_gpio_gc.gp_pin_write = NULL; /* AAA */
-	sc->sc_gpio_gc.gp_pin_ctl = NULL; /* AAA */
-	sc->sc_gpio_gc.gp_intr_establish = NULL; /* AAA */
-	sc->sc_gpio_gc.gp_intr_disestablish = NULL; /* AAA */
-	sc->sc_gpio_gc.gp_intr_str = NULL; /* AAA */
+	gc = &sc->sc_gpio_gc;
+	gc->gp_cookie = sc;
+	gc->gp_pin_read = NULL; /* AAA */
+	gc->gp_pin_write = NULL; /* AAA */
+	gc->gp_pin_ctl = NULL; /* AAA */
+	gc->gp_intr_establish = NULL; /* AAA */
+	gc->gp_intr_disestablish = NULL; /* AAA */
+	gc->gp_intr_str = NULL; /* AAA */
 
-	gba.gba_gc = &sc->sc_gpio_gc;
+	gba.gba_gc = gc;
 	gba.gba_pins = &sc->sc_gpio_pins[0];
 	gba.gba_npins = sc->sc_maxpins;
 
 	(void) config_found_ia(sc->sc_dev, "gpiobus", &gba, gpiobus_print);
+}
+
+static int
+snigpio_intr(void *arg)
+{
+	return 1;
 }
