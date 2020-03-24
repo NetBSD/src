@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.7 2020/03/24 02:31:59 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.8 2020/03/24 10:31:52 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.7 2020/03/24 02:31:59 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.8 2020/03/24 10:31:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -162,13 +162,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.7 2020/03/24 02:31:59 nisimura Exp $");
 #define GMACFCR		0x0018		/* 802.3x flowcontrol */
 #define  FCR_RFE	(1U<<2)		/* accept PAUSE to throttle Tx */
 #define  FCR_TFE	(1U<<1)		/* generate PAUSE to moderate Rx lvl */
-#define GMACIMPL	0x0020		/* implementation number XXXX.YYYY */
 #define GMACVTAG	0x001c		/* VLAN tag control */
+#define GMACIMPL	0x0020		/* implementation number XXXX.YYYY */
 #define GMACMAH0	0x0040		/* MAC address 0 47:32 */
 #define GMACMAL0	0x0044		/* MAC address 0 31:0 */
 #define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1 - 15 */
 #define GMACMAL(i) 	((i)*8+0x44)
-#define GMACMHT0	0x0500		/* multicast hash table 0 - 8*/
+#define GMACMHT0	0x0500		/* multicast hash table 0 - 7 */
+#define GMACMHT(i)	((i)*4+0500)
 
 #define GMACBMR		0x1000		/* DMA bus mode control
 					 * 24    4PBL
@@ -300,7 +301,7 @@ struct scx_softc {
 	uint32_t sc_mdclk;		/* GAR 5:2 clock selection */
 	uint32_t sc_t0coso;		/* T0_CSUM | T0_SGOL to run */
 	int sc_ucodeloaded;		/* ucode for H2M/M2H/PKT */
-	int sc_100mii;			/* 1<<15 RMII/MII, 0 for RGMII */
+	int sc_100mii;			/* 1 for RMII/MII, 0 for RGMII */
 	int sc_phandle;			/* fdt phandle */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
@@ -459,7 +460,7 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_eesz = size[1];
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_phandle = phandle;
-	sc->sc_100mii = (strcmp(phy_mode, "rgmii") != 0) ? MCR_USEMII : 0;
+	sc->sc_100mii = (strcmp(phy_mode, "rgmii") != 0);
 
 	scx_attach_i(sc);
 	return;
@@ -945,13 +946,13 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 
 	if (crc)
 		csr |= AFR_MHTE;
-	for (i = 0; i < 8; i++)
-		CSR_WRITE(sc, GMACMHT0 + i * 4, mchash[i]);
+	for (i = 0; i < __arraycount(mchash); i++)
+		CSR_WRITE(sc, GMACMHT(i), mchash[i]);
 	CSR_WRITE(sc, GMACAFR, csr);
 	return;
 
  update:
-	/* With PM or AM, MHTE/MHTL/MHTH are never consulted. really? */
+	/* With PM or AM, MHTE/MHT0-7 are never consulted. really? */
 	if (ifp->if_flags & IFF_PROMISC)
 		csr |= AFR_PM;	/* run promisc. mode */
 	else
