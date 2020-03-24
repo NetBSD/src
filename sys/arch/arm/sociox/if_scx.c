@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.6 2020/03/23 07:42:00 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.7 2020/03/24 02:31:59 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -47,10 +47,15 @@
  *   for use. Good to catch multicast. Byte-wise selective match available.
  *   Use to catch { 0x01, 0x00, 0x00 } and/or { 0x33, 0x33 }.
  * - The size of multicast hash filter store is unknown. Might be 256 bit.
+ * - Socionext/Linaro "NetSec" code makes many cut shorts. Some constants
+ *   are left unexplained. The values should be handled via external
+ *   controls like FDT descriptions. Fortunately, Intel/Altera CycloneV PDFs
+ *   describe every detail of "such the instance of" DW EMAC IP and
+ *   most of them are likely applicable to SC2A11 GbE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.6 2020/03/23 07:42:00 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.7 2020/03/24 02:31:59 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -188,7 +193,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.6 2020/03/23 07:42:00 nisimura Exp $");
 #define  OMR_TXE	(1U<<13)	/* start Tx DMA engine, 0 to stop */
 #define  OMR_RXE	(1U<<1)		/* start Rx DMA engine, 0 to stop */
 
-static int get_garclk(uint32_t);
+static int get_mdioclk(uint32_t);
 
 /* descriptor format definition */
 struct tdes {
@@ -292,7 +297,7 @@ struct scx_softc {
 	void *sc_ih;			/* interrupt cookie */
 	int sc_phy_id;			/* PHY address */
 	int sc_flowflags;		/* 802.3x PAUSE flow control */
-	uint32_t sc_gar;		/* GAR 5:2 clock selection */
+	uint32_t sc_mdclk;		/* GAR 5:2 clock selection */
 	uint32_t sc_t0coso;		/* T0_CSUM | T0_SGOL to run */
 	int sc_ucodeloaded;		/* ucode for H2M/M2H/PKT */
 	int sc_100mii;			/* 1<<15 RMII/MII, 0 for RGMII */
@@ -577,7 +582,7 @@ scx_attach_i(struct scx_softc *sc)
 
 	phyfreq = 0;
 	sc->sc_phy_id = MII_PHY_ANY;
-	sc->sc_gar = get_garclk(phyfreq) << GAR_CTL; /* 5:2 gar control */
+	sc->sc_mdclk = get_mdioclk(phyfreq); /* 5:2 clk control */
 
 	sc->sc_flowflags = 0;
 
@@ -1044,11 +1049,11 @@ static int
 mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct scx_softc *sc = device_private(self);
-	uint32_t gar;
+	uint32_t miia;
 	int error;
 
-	gar = (phy << GAR_PHY) | (reg << GAR_REG) | sc->sc_gar;
-	mac_write(sc, GMACGAR, gar | GAR_BUSY);
+	miia = (phy << GAR_PHY) | (reg << GAR_REG) | sc->sc_mdclk;
+	mac_write(sc, GMACGAR, miia | GAR_BUSY);
 	error = spin_waitfor(sc, GMACGAR, GAR_BUSY);
 	if (error)
 		return error;
@@ -1060,13 +1065,13 @@ static int
 mii_writereg(device_t self, int phy, int reg, uint16_t val)
 {
 	struct scx_softc *sc = device_private(self);
-	uint32_t gar;
+	uint32_t miia;
 	uint16_t dummy;
 	int error;
 
-	gar = (phy << GAR_PHY) | (reg << GAR_REG) | sc->sc_gar;
+	miia = (phy << GAR_PHY) | (reg << GAR_REG) | sc->sc_mdclk;
 	mac_write(sc, GMACGDR, val);
-	mac_write(sc, GMACGAR, gar | GAR_IOWR | GAR_BUSY);
+	mac_write(sc, GMACGAR, miia | GAR_IOWR | GAR_BUSY);
 	error = spin_waitfor(sc, GMACGAR, GAR_BUSY);
 	if (error)
 		return error;
@@ -1390,12 +1395,12 @@ mac_write(struct scx_softc *sc, int reg, int val)
 }
 
 static int
-get_garclk(uint32_t freq)
+get_mdioclk(uint32_t freq)
 {
 
 	const struct {
 		uint16_t freq, bit; /* GAR 5:2 MDIO frequency selection */
-	} garclk[] = {
+	} mdioclk[] = {
 		{ 35,	2 },	/* 25-35 MHz */
 		{ 60,	3 },	/* 35-60 MHz */
 		{ 100,	0 },	/* 60-100 MHz */
@@ -1406,13 +1411,13 @@ get_garclk(uint32_t freq)
 	int i;
 
 	/* convert MDIO clk to a divisor value */
-	if (freq < garclk[0].freq)
-		return garclk[0].bit;
-	for (i = 1; i < __arraycount(garclk); i++) {
-		if (freq < garclk[i].freq)
-			return garclk[i-1].bit;
+	if (freq < mdioclk[0].freq)
+		return mdioclk[0].bit;
+	for (i = 1; i < __arraycount(mdioclk); i++) {
+		if (freq < mdioclk[i].freq)
+			return mdioclk[i-1].bit;
 	}
-	return garclk[__arraycount(garclk) - 1].bit;
+	return mdioclk[__arraycount(mdioclk) - 1].bit << GAR_CTL;
 }
 
 static void
