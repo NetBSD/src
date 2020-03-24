@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.33 2020/03/24 03:35:25 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.34 2020/03/24 03:45:25 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.33 2020/03/24 03:35:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.34 2020/03/24 03:45:25 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -756,6 +756,30 @@ print_part(const char *part, size_t pnsize)
 	aprint_normal(": %.*s\n", (int)(p - part), part);
 }
 
+static u_int
+ddr3_value_pico(struct spdmem *s, uint8_t txx_mtb, uint8_t txx_ftb)
+{
+	u_int mtb, ftb; /* in picoseconds */
+	intmax_t signed_txx_ftb;
+	u_int val;
+
+	mtb = (u_int)s->sm_ddr3.ddr3_mtb_dividend * 1000 /
+	    s->sm_ddr3.ddr3_mtb_divisor;
+	ftb = (u_int)s->sm_ddr3.ddr3_ftb_dividend * 1000 /
+	    s->sm_ddr3.ddr3_ftb_divisor;
+
+	/* tXX_ftb is signed value */
+	signed_txx_ftb = (int8_t)txx_ftb;
+	val = txx_mtb * mtb +
+	    ((txx_ftb > 127) ? signed_txx_ftb : txx_ftb) * ftb / 1000;
+
+	return val;
+}
+
+#define __DDR3_VALUE_PICO(s, field)				\
+	ddr3_value_pico(s, s->sm_ddr3.ddr3_##field##_mtb,	\
+	    s->sm_ddr3.ddr3_##field##_ftb)
+
 static void
 decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s)
 {
@@ -786,10 +810,7 @@ decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s)
 		    (s->sm_ddr3.ddr3_chipwidth + 2);
 	dimm_size = (1 << dimm_size) * (s->sm_ddr3.ddr3_physbanks + 1);
 
-	cycle_time = (1000 * s->sm_ddr3.ddr3_mtb_dividend +
-			    (s->sm_ddr3.ddr3_mtb_divisor / 2)) /
-		     s->sm_ddr3.ddr3_mtb_divisor;
-	cycle_time *= s->sm_ddr3.ddr3_tCKmin;
+	cycle_time = __DDR3_VALUE_PICO(s, tCKmin);
 	bits = 1 << (s->sm_ddr3.ddr3_datawidth + 3);
 	decode_size_speed(self, node, dimm_size, cycle_time, 2, bits, FALSE,
 			  "PC3", 0);
@@ -802,12 +823,15 @@ decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	    s->sm_ddr3.ddr3_physbanks + 1,
 	    cycle_time/1000, cycle_time % 1000);
 
-#define	__DDR3_CYCLES(field) (s->sm_ddr3.field / s->sm_ddr3.ddr3_tCKmin)
+#define	__DDR3_CYCLES(val)						\
+	((val / cycle_time) + ((val % cycle_time) ? 1 : 0))
 
-	aprint_verbose_dev(self, LATENCY, __DDR3_CYCLES(ddr3_tAAmin),
-		__DDR3_CYCLES(ddr3_tRCDmin), __DDR3_CYCLES(ddr3_tRPmin), 
+	aprint_verbose_dev(self, LATENCY,
+	    __DDR3_CYCLES(__DDR3_VALUE_PICO(s, tAAmin)),
+	    __DDR3_CYCLES(__DDR3_VALUE_PICO(s, tRCDmin)),
+	    __DDR3_CYCLES(__DDR3_VALUE_PICO(s, tRPmin)),
 		(s->sm_ddr3.ddr3_tRAS_msb * 256 + s->sm_ddr3.ddr3_tRAS_lsb) /
-		    s->sm_ddr3.ddr3_tCKmin);
+		    s->sm_ddr3.ddr3_tCKmin_mtb);
 
 #undef	__DDR3_CYCLES
 
