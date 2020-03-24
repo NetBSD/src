@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.34 2020/03/24 03:45:25 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.35 2020/03/24 03:47:39 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.34 2020/03/24 03:45:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.35 2020/03/24 03:47:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -830,8 +830,9 @@ decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	    __DDR3_CYCLES(__DDR3_VALUE_PICO(s, tAAmin)),
 	    __DDR3_CYCLES(__DDR3_VALUE_PICO(s, tRCDmin)),
 	    __DDR3_CYCLES(__DDR3_VALUE_PICO(s, tRPmin)),
-		(s->sm_ddr3.ddr3_tRAS_msb * 256 + s->sm_ddr3.ddr3_tRAS_lsb) /
-		    s->sm_ddr3.ddr3_tCKmin_mtb);
+	    __DDR3_CYCLES((s->sm_ddr3.ddr3_tRAS_msb * 256
+		+ s->sm_ddr3.ddr3_tRAS_lsb) * s->sm_ddr3.ddr3_mtb_dividend
+		/ s->sm_ddr3.ddr3_mtb_divisor * 1000));
 
 #undef	__DDR3_CYCLES
 
