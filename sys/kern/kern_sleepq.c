@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.61 2020/02/15 18:12:15 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.62 2020/03/24 21:05:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.61 2020/02/15 18:12:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.62 2020/03/24 21:05:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -303,7 +303,7 @@ sleepq_block(int timo, bool catch_p)
 			 * Acquiring p_lock may cause us to recurse
 			 * through the sleep path and back into this
 			 * routine, but is safe because LWPs sleeping
-			 * on locks are non-interruptable.  We will
+			 * on locks are non-interruptable and we will
 			 * not recurse again.
 			 */
 			mutex_enter(p->p_lock);
