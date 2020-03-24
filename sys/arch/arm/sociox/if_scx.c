@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.8 2020/03/24 10:31:52 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.9 2020/03/24 10:47:03 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -40,12 +40,13 @@
  *   to designify ring number from which to arrive or to which go.
  * - memory mapped EEPROM to hold MAC address. The rest of the area is
  *   occupied by a set of ucode for two DMA engines and one packet engine.
- * - The size of frame address filter is unknown. Might be 32
+ * - The size of frame address filter is unknown. Might be 16 or even 128.
  * - The first slot is my own station address. Always enabled to perform
  *   to identify oneself.
- * - 1~31 are for supplimental MAC addresses. Independently enabled
- *   for use. Good to catch multicast. Byte-wise selective match available.
- *   Use to catch { 0x01, 0x00, 0x00 } and/or { 0x33, 0x33 }.
+ * - 1~16 are for supplimental MAC addresses. Independently enabled for
+ *   use. Good to catch multicast. Byte-wise selective match available.
+ *   Use the mask to catch { 0x01, 0x00, 0x00 } and/or { 0x33, 0x33 }.
+ * - 16~128 might be exact match without byte-mask.
  * - The size of multicast hash filter store is unknown. Might be 256 bit.
  * - Socionext/Linaro "NetSec" code makes many cut shorts. Some constants
  *   are left unexplained. The values should be handled via external
@@ -55,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.8 2020/03/24 10:31:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.9 2020/03/24 10:47:03 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -924,7 +925,7 @@ scx_set_rcvfilt(struct scx_softc *sc)
 		}
 printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 		if (i < 16) {
-			/* use 31 entry perfect match filter */
+			/* use 15 entry perfect match filter */
 			uint32_t addr;
 			uint8_t *ep = enm->enm_addrlo;
 			addr = (ep[3] << 24) | (ep[2] << 16)
