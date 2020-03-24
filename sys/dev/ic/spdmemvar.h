@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.15 2020/03/24 03:45:25 msaitoh Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.16 2020/03/24 04:12:13 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -509,7 +509,7 @@ struct spdmem_ddr3 {				/* Dual Data Rate 3 SDRAM */
 	uint8_t ddr3_tRCmin_ftb;
 	uint8_t	ddr3_unused4[2];
 	uint8_t	ddr3_MAC;
-	uint8_t	ddr3_unused4a[17];
+	uint8_t	ddr3_unused4a[18];
 	uint8_t	ddr3_mod_height;
 	uint8_t	ddr3_mod_thickness;
 	uint8_t	ddr3_ref_card;
