@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.11 2020/03/24 07:11:07 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.12 2020/03/24 17:20:55 maxv Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.11 2020/03/24 07:11:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.12 2020/03/24 17:20:55 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -804,22 +804,14 @@ struct vhci_ioc_set_addr {
 	uint8_t addr;
 };
 
-struct vhci_ioc_usb_attach {
-	u_int port;
-};
-
-struct vhci_ioc_usb_detach {
-	u_int port;
-};
-
 #define VHCI_IOC_GET_INFO	_IOR('V', 0, struct vhci_ioc_get_info)
 #define VHCI_IOC_SET_PORT	_IOW('V', 1, struct vhci_ioc_set_port)
 #define VHCI_IOC_SET_ADDR	_IOW('V', 2, struct vhci_ioc_set_addr)
-#define VHCI_IOC_USB_ATTACH	_IOW('V', 10, struct vhci_ioc_usb_attach)
-#define VHCI_IOC_USB_DETACH	_IOW('V', 11, struct vhci_ioc_usb_detach)
+#define VHCI_IOC_USB_ATTACH	_IO ('V', 10)
+#define VHCI_IOC_USB_DETACH	_IO ('V', 11)
 
 static int
-vhci_usb_attach(vhci_fd_t *vfd, struct vhci_ioc_usb_attach *args)
+vhci_usb_attach(vhci_fd_t *vfd)
 {
 	vhci_softc_t *sc = vfd->softc;
 	vhci_port_t *port;
@@ -827,9 +819,7 @@ vhci_usb_attach(vhci_fd_t *vfd, struct vhci_ioc_usb_attach *args)
 	u_char *p;
 	int ret = 0;
 
-	if (args->port == 0 || args->port >= sc->sc_nports)
-		return EINVAL;
-	port = &sc->sc_port[args->port];
+	port = &sc->sc_port[vfd->port];
 
 	mutex_enter(&sc->sc_lock);
 
@@ -849,7 +839,7 @@ vhci_usb_attach(vhci_fd_t *vfd, struct vhci_ioc_usb_attach *args)
 
 	p = xfer->ux_buf;
 	memset(p, 0, xfer->ux_length);
-	p[0] = __BIT(args->port);
+	p[0] = __BIT(vfd->port);
 	xfer->ux_actlen = xfer->ux_length;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
 
@@ -909,16 +899,14 @@ vhci_port_flush(vhci_softc_t *sc, vhci_port_t *port)
 }
 
 static int
-vhci_usb_detach(vhci_fd_t *vfd, struct vhci_ioc_usb_detach *args)
+vhci_usb_detach(vhci_fd_t *vfd)
 {
 	vhci_softc_t *sc = vfd->softc;
 	vhci_port_t *port;
 	struct usbd_xfer *xfer;
 	u_char *p;
 
-	if (args->port == 0 || args->port >= sc->sc_nports)
-		return EINVAL;
-	port = &sc->sc_port[args->port];
+	port = &sc->sc_port[vfd->port];
 
 	mutex_enter(&sc->sc_lock);
 
@@ -936,7 +924,7 @@ vhci_usb_detach(vhci_fd_t *vfd, struct vhci_ioc_usb_detach *args)
 
 	p = xfer->ux_buf;
 	memset(p, 0, xfer->ux_length);
-	p[0] = __BIT(args->port);
+	p[0] = __BIT(vfd->port);
 	xfer->ux_actlen = xfer->ux_length;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
 
@@ -1051,14 +1039,11 @@ vhci_fd_open(dev_t dev, int flags, int type, struct lwp *l)
 static int
 vhci_fd_close(file_t *fp)
 {
-	struct vhci_ioc_usb_detach args;
 	vhci_fd_t *vfd = fp->f_data;
 	int ret __diagused;
 
 	KASSERT(vfd != NULL);
-
-	args.port = vfd->port;
-	ret = vhci_usb_detach(vfd, &args);
+	ret = vhci_usb_detach(vfd);
 	KASSERT(ret == 0);
 
 	kmem_free(vfd, sizeof(*vfd));
@@ -1228,9 +1213,9 @@ vhci_fd_ioctl(file_t *fp, u_long cmd, void *data)
 	case VHCI_IOC_SET_ADDR:
 		return vhci_set_addr(vfd, data);
 	case VHCI_IOC_USB_ATTACH:
-		return vhci_usb_attach(vfd, data);
+		return vhci_usb_attach(vfd);
 	case VHCI_IOC_USB_DETACH:
-		return vhci_usb_detach(vfd, data);
+		return vhci_usb_detach(vfd);
 	default:
 		return EINVAL;
 	}
