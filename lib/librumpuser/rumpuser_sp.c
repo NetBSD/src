@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.73 2020/03/24 01:56:56 kamil Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.74 2020/03/24 14:47:02 kamil Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.73 2020/03/24 01:56:56 kamil Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.74 2020/03/24 14:47:02 kamil Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -717,7 +717,7 @@ serv_handleexec(struct spclient *spc, struct rsp_hdr *rhdr, char *comm)
 
 	/* ensure comm is 0-terminated */
 	/* TODO: make sure it contains sensible chars? */
-	comm[commlen - 1] = '\0';
+	comm[commlen] = '\0';
 
 	lwproc_switch(spc->spc_mainlwp);
 	lwproc_execnotify(comm);
@@ -981,7 +981,7 @@ handlereq(struct spclient *spc)
 
 			/* ensure it's 0-terminated */
 			/* XXX make sure it contains sensible chars? */
-			comm[commlen - 1] = '\0';
+			comm[commlen] = '\0';
 
 			/* make sure we fork off of proc1 */
 			_DIAGASSERT(lwproc_curlwp() == NULL);
