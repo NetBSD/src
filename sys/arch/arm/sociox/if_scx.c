@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.9 2020/03/24 10:47:03 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.10 2020/03/24 11:26:21 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.9 2020/03/24 10:47:03 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.10 2020/03/24 11:26:21 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -438,7 +438,7 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 	if (fdtbus_get_reg(phandle, 1, addr+1, size+1) != 0
-	    || bus_space_map(faa->faa_bst, addr[0], size[1], 0, &eebsh) != 0) {
+	    || bus_space_map(faa->faa_bst, addr[1], size[1], 0, &eebsh) != 0) {
 		aprint_error(": unable to map device eeprom\n");
 		goto fail;
 	}
@@ -504,6 +504,7 @@ scx_acpi_attach(device_t parent, device_t self, void *aux)
 	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
+acpi_resource_print(self, &res);
 	mem = acpi_res_mem(&res, 0);
 	irq = acpi_res_irq(&res, 0);
 	if (mem == NULL || irq == NULL || mem->ar_length == 0) {
@@ -540,6 +541,8 @@ scx_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sh = bsh;
 	sc->sc_eesh = eebsh;
 	sc->sc_dmat = aa->aa_dmat64;
+
+/* dig _DSD to see parameters. safe to assume RGMII/spd1000 though */
 
 	scx_attach_i(sc);
 
