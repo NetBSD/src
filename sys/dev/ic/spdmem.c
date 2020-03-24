@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.32 2020/03/20 07:44:10 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.33 2020/03/24 03:35:25 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.32 2020/03/20 07:44:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.33 2020/03/24 03:35:25 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -340,12 +340,12 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	    device_xname(self), NULL, NULL, 0, NULL, 0,
 	    CTL_HW, CTL_CREATE, CTL_EOL);
 	if (node != NULL && spd_len != 0)
-                sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
-                    0,
-                    CTLTYPE_STRUCT, "spd_data",
+		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
+		    0,
+		    CTLTYPE_STRUCT, "spd_data",
 		    SYSCTL_DESCR("raw spd data"), NULL,
-                    0, s, spd_len,
-                    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
+		    0, s, spd_len,
+		    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	/*
 	 * Decode and print key SPD contents
@@ -411,7 +411,7 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 			strlcat(sc->sc_type, " NVDIMM hybrid",
 			    SPDMEM_TYPE_MAXLEN);
 	}
-	
+
 	if (node != NULL)
 		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
 		    0,
@@ -615,7 +615,7 @@ decode_sdram(const struct sysctlnode *node, device_t self, struct spdmem *s,
 		freq = 0;
 	switch (freq) {
 		/*
-		 * Must check cycle time since some PC-133 DIMMs 
+		 * Must check cycle time since some PC-133 DIMMs
 		 * actually report PC-100
 		 */
 	    case 100:
@@ -786,7 +786,7 @@ decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s)
 		    (s->sm_ddr3.ddr3_chipwidth + 2);
 	dimm_size = (1 << dimm_size) * (s->sm_ddr3.ddr3_physbanks + 1);
 
-	cycle_time = (1000 * s->sm_ddr3.ddr3_mtb_dividend + 
+	cycle_time = (1000 * s->sm_ddr3.ddr3_mtb_dividend +
 			    (s->sm_ddr3.ddr3_mtb_divisor / 2)) /
 		     s->sm_ddr3.ddr3_mtb_divisor;
 	cycle_time *= s->sm_ddr3.ddr3_tCKmin;
@@ -857,9 +857,9 @@ decode_fbdimm(const struct sysctlnode *node, device_t self, struct spdmem *s)
 #define	__FBDIMM_CYCLES(field) (s->sm_fbd.field / s->sm_fbd.fbdimm_tCKmin)
 
 	aprint_verbose_dev(self, LATENCY, __FBDIMM_CYCLES(fbdimm_tAAmin),
-		__FBDIMM_CYCLES(fbdimm_tRCDmin), __FBDIMM_CYCLES(fbdimm_tRPmin), 
-		(s->sm_fbd.fbdimm_tRAS_msb * 256 + s->sm_fbd.fbdimm_tRAS_lsb) /
-		    s->sm_fbd.fbdimm_tCKmin);
+	    __FBDIMM_CYCLES(fbdimm_tRCDmin), __FBDIMM_CYCLES(fbdimm_tRPmin),
+	    (s->sm_fbd.fbdimm_tRAS_msb * 256 + s->sm_fbd.fbdimm_tRAS_lsb) /
+	    s->sm_fbd.fbdimm_tCKmin);
 
 #undef	__FBDIMM_CYCLES
 
@@ -870,14 +870,14 @@ static void
 decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 {
 	int dimm_size, cycle_time, ranks;
-	int tAA_clocks, tRCD_clocks,tRP_clocks, tRAS_clocks;
+	int tAA_clocks, tRCD_clocks, tRP_clocks, tRAS_clocks;
 
 	aprint_naive("\n");
 	print_part(s->sm_ddr4.ddr4_part_number,
 	    sizeof(s->sm_ddr4.ddr4_part_number));
 	aprint_normal_dev(self, "%s", spdmem_basic_types[s->sm_type]);
 	if (s->sm_ddr4.ddr4_mod_type < __arraycount(spdmem_ddr4_module_types))
-		aprint_normal(" (%s)", 
+		aprint_normal(" (%s)",
 		    spdmem_ddr4_module_types[s->sm_ddr4.ddr4_mod_type]);
 	aprint_normal(", %sECC, %stemp-sensor, ",
 		(s->sm_ddr4.ddr4_bus_width_extension) ? "" : "no ",
@@ -912,7 +912,7 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	default:
 		dimm_size = -1;		/* flag invalid value */
 	}
-	if (dimm_size >= 0) {				
+	if (dimm_size >= 0) {
 		dimm_size = (1 << dimm_size) *
 		    (s->sm_ddr4.ddr4_package_ranks + 1); /* log.ranks/DIMM */
 		if (s->sm_ddr4.ddr4_signal_loading == 2) {
@@ -928,7 +928,7 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 			     s->sm_ddr4.ddr4_##field##_ftb) - 		\
 			    ((s->sm_ddr4.ddr4_##field##_ftb > 127)?256:0))
 	/*
-	 * For now, the only value for mtb is 0 = 125ps, and ftb = 1ps 
+	 * For now, the only value for mtb is 0 = 125ps, and ftb = 1ps
 	 * so we don't need to figure out the time-base units - just
 	 * hard-code them for now.
 	 */
