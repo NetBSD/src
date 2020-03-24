@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.10 2020/03/24 11:26:21 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.11 2020/03/24 13:07:46 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.10 2020/03/24 11:26:21 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.11 2020/03/24 13:07:46 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -170,17 +170,20 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.10 2020/03/24 11:26:21 nisimura Exp $")
 #define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1 - 15 */
 #define GMACMAL(i) 	((i)*8+0x44)
 #define GMACMHT0	0x0500		/* multicast hash table 0 - 7 */
-#define GMACMHT(i)	((i)*4+0500)
+#define GMACMHT(i)	((i)*4+0x500)
+#define GMACVHT		0x0588		/* VLAN tag hash */
+#define GMACAMAH(i)	((i)*8+0x800)	/* supplimental MAC addr 16-127 */
+#define GMACAMAL(i)	((i)*8+0x804)
 
 #define GMACBMR		0x1000		/* DMA bus mode control
 					 * 24    4PBL
 					 * 22:17 RPBL
 					 * 16    fix burst
 					 * 15:14 priority between Rx and Tx
-					 *  3    rxtx41
-					 *  2    rxtx31
-					 *  1    rxtx21
-					 *  0    rxtx11
+					 *  3    rxtx ratio 41
+					 *  2    rxtx ratio 31
+					 *  1    rxtx ratio 21
+					 *  0    rxtx ratio 11
 					 * 13:8  PBL possible DMA burst len
 					 * 0     reset op. self clear
 					 */
