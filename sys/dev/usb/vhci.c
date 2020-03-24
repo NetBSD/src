@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.10 2020/03/22 17:15:15 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.11 2020/03/24 07:11:07 maxv Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.10 2020/03/22 17:15:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.11 2020/03/24 07:11:07 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -175,12 +175,27 @@ static const struct usbd_pipe_methods vhci_root_intr_methods = {
 
 struct vhci_xfer;
 
+typedef struct {
+	int type;
+#define VHCI_REQ_CTRL	0
+
+	union {
+		usb_device_request_t ctrl;
+	} u;
+} vhci_request_t;
+
 typedef struct vhci_packet {
+	/* General. */
 	TAILQ_ENTRY(vhci_packet) portlist;
 	TAILQ_ENTRY(vhci_packet) xferlist;
 	struct vhci_xfer *vxfer;
 	bool utoh;
 	uint8_t addr;
+
+	/* For a request packet, the storage goes there. */
+	vhci_request_t reqbuf;
+
+	/* Exposed for FD operations. */
 	uint8_t *buf;
 	size_t size;
 	size_t cursor;
@@ -257,7 +272,7 @@ extern struct cfdriver vhci_cd;
 /* -------------------------------------------------------------------------- */
 
 static void
-vhci_pkt_create(vhci_port_t *port, struct usbd_xfer *xfer, bool utoh,
+vhci_pkt_ctrl_create(vhci_port_t *port, struct usbd_xfer *xfer, bool utoh,
     uint8_t addr)
 {
 	vhci_xfer_t *vxfer = (vhci_xfer_t *)xfer;
@@ -271,10 +286,16 @@ vhci_pkt_create(vhci_port_t *port, struct usbd_xfer *xfer, bool utoh,
 	req->vxfer = vxfer;
 	req->utoh = false;
 	req->addr = addr;
-	req->buf = (uint8_t *)&xfer->ux_request;
-	req->size = sizeof(xfer->ux_request);
+	req->buf = (uint8_t *)&req->reqbuf;
+	req->size = sizeof(req->reqbuf);
 	req->cursor = 0;
 	npkts++;
+
+	/* Init the request buffer. */
+	memset(&req->reqbuf, 0, sizeof(req->reqbuf));
+	req->reqbuf.type = VHCI_REQ_CTRL;
+	memcpy(&req->reqbuf.u.ctrl, &xfer->ux_request,
+	    sizeof(xfer->ux_request));
 
 	/* Data packet. */
 	if (xfer->ux_length > 0) {
@@ -595,7 +616,7 @@ vhci_device_ctrl_start(struct usbd_xfer *xfer)
 	mutex_enter(&port->lock);
 	if (port->status & UPS_PORT_ENABLED) {
 		xfer->ux_status = USBD_IN_PROGRESS;
-		vhci_pkt_create(port, xfer, isread, addr);
+		vhci_pkt_ctrl_create(port, xfer, isread, addr);
 		ret = USBD_IN_PROGRESS;
 	} else {
 		ret = USBD_IOERROR;
@@ -622,9 +643,8 @@ vhci_device_ctrl_abort(struct usbd_xfer *xfer)
 
 	callout_halt(&xfer->ux_callout, &sc->sc_lock);
 
-	KASSERT(xfer->ux_status != USBD_CANCELLED);
-
 	/* If anyone else beat us, we're done.  */
+	KASSERT(xfer->ux_status != USBD_CANCELLED);
 	if (xfer->ux_status != USBD_IN_PROGRESS)
 		return;
 
