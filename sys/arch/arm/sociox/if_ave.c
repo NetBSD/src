@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.14 2020/03/23 10:26:07 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.15 2020/03/24 03:08:02 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.14 2020/03/23 10:26:07 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.15 2020/03/24 03:08:02 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -396,7 +396,7 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_model, hwver >> 8, hwver & 0xff, phy_mode);
 	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
 
-	sc->sc_100mii = (strcmp(phy_mode, "rgmii") == 0) ? CFG_MII : 0;
+	sc->sc_100mii = (strcmp(phy_mode, "rgmii") != 0);
 	sc->sc_desops = (sc->sc_model == 64) ? &ave64ops : &ave32ops;
 
 	CSR_WRITE(sc, AVEGR, GR_GRST | GR_PHYRST);
@@ -522,7 +522,7 @@ ave_reset(struct ave_softc *sc)
 
 	CSR_WRITE(sc, AVERXC, 0);	/* stop Rx first */
 	CSR_WRITE(sc, AVEDESCC, 0);	/* stop Tx/Rx descriptor engine */
-	if (sc->sc_100mii & CFG_MII) {
+	if (sc->sc_100mii) {
 		csr = CSR_READ(sc, AVERMIIC);
 		CSR_WRITE(sc, AVERMIIC, csr &~ RMIIC_RST);
 		DELAY(10);
