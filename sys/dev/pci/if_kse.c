@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.50 2020/03/02 19:16:02 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.51 2020/03/24 04:00:26 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,22 +34,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.50 2020/03/02 19:16:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.51 2020/03/24 04:00:26 nisimura Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/callout.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
-#include <sys/device.h>
-#include <sys/queue.h>
-
-#include <machine/endian.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/device.h>
+#include <sys/callout.h>
+#include <sys/ioctl.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/errno.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
