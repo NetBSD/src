@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.12 2020/03/24 13:44:21 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.13 2020/03/25 01:39:49 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.12 2020/03/24 13:44:21 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.13 2020/03/25 01:39:49 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.12 2020/03/24 13:44:21 nisimura Exp $")
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
 
+/* SC2A11 register block */
 #define SWRESET		0x104
 #define COMINIT		0x120
 #define INTRST		0x200
@@ -124,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.12 2020/03/24 13:44:21 nisimura Exp $")
 #define DESCENG_INIT	0x11fc
 #define DESCENG_SRST	0x1204
 
+/* GMAC register block. use mac_write()/mac_read() to handle */
 #define GMACMCR		0x0000		/* MAC configuration */
 #define  MCR_IBN	(1U<<30)	/* */
 #define  MCR_CST	(1U<<25)	/* strip CRC */
@@ -169,13 +171,21 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.12 2020/03/24 13:44:21 nisimura Exp $")
 #define GMACMAL0	0x0044		/* MAC address 0 31:0 */
 #define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1 - 15 */
 #define GMACMAL(i) 	((i)*8+0x44)
-#define GMACMDSR	0x00d8		/* GMII/RGMII/MII command/status */
+#define GMACMIISR	0x00d8		/* resolved xMII link status */
+					/*  3   link up detected
+					 *  2:1 resovled speed
+					 *      0 2.5Mhz (10Mbps) 
+					 *	1 25Mhz  (100bps)
+					 *	2 125Mhz (1000Mbps)
+					 *  1   full duplex detected */
+
 #define GMACMHT0	0x0500		/* multicast hash table 0 - 7 */
 #define GMACMHT(i)	((i)*4+0x500)
 #define GMACVHT		0x0588		/* VLAN tag hash */
 #define GMACAMAH(i)	((i)*8+0x800)	/* supplimental MAC addr 16-127 */
 #define GMACAMAL(i)	((i)*8+0x804)
 #define GMACEVCNT(i)	((i)*4+0x114)	/* event counter 0x114~284 */
+#define GMACEVCTL	0x0100		/* clear event counter registers */
 
 #define GMACBMR		0x1000		/* DMA bus mode control
 					 * 24    4PBL
@@ -201,8 +211,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.12 2020/03/24 13:44:21 nisimura Exp $")
 #define GMACOMR		0x1018		/* DMA operation */
 #define  OMR_TXE	(1U<<13)	/* start Tx DMA engine, 0 to stop */
 #define  OMR_RXE	(1U<<1)		/* start Rx DMA engine, 0 to stop */
-
-static int get_mdioclk(uint32_t);
 
 /* descriptor format definition */
 struct tdes {
@@ -390,6 +398,8 @@ static int scx_intr(void *);
 static void txreap(struct scx_softc *);
 static void rxintr(struct scx_softc *);
 static int add_rxbuf(struct scx_softc *, int);
+
+static int get_mdioclk(uint32_t);
 static int spin_waitfor(struct scx_softc *, int, int);
 static int mac_read(struct scx_softc *, int);
 static void mac_write(struct scx_softc *, int, int);
@@ -585,7 +595,7 @@ scx_attach_i(struct scx_softc *sc)
 	csr = bus_space_read_4(sc->sc_st, sc->sc_eesh, 4);
 	enaddr[4] = csr >> 24;
 	enaddr[5] = csr >> 16;
-	csr = CSR_READ(sc, GMACIMPL);
+	csr = mac_read(sc, GMACIMPL);
 
 	aprint_normal_dev(sc->sc_dev, "NetSec GbE (%d.%d) impl (%x.%x)\n",
 	    hwver >> 16, hwver & 0xffff, csr >> 16, csr & 0xffff);
@@ -747,6 +757,7 @@ scx_reset(struct scx_softc *sc)
 	mac_write(sc, GMACRDLAR, _RDLAR);
 	mac_write(sc, GMACTDLAR, _TDLAR);
 	mac_write(sc, GMACAFR, _AFR);
+	mac_write(sc, GMACEVCTL, 1);
 }
 
 static int
@@ -763,28 +774,43 @@ scx_init(struct ifnet *ifp)
 	/* Reset the chip to a known state. */
 	scx_reset(sc);
 
-	/* build sane Tx and load Rx descriptors with mbuf */
-	for (i = 0; i < MD_NTXDESC; i++)
-		sc->sc_txdescs[i].t0 = T0_OWN;
-	sc->sc_txdescs[MD_NTXDESC - 1].t0 |= T0_EOD; /* tie off the ring */
-	for (i = 0; i < MD_NRXDESC; i++)
-		(void)add_rxbuf(sc, i);
-
 	/* set my address in perfect match slot 0 */
 	csr = (ea[3] << 24) | (ea[2] << 16) | (ea[1] << 8) |  ea[0];
-	CSR_WRITE(sc, GMACMAL0, csr);
+	mac_write(sc, GMACMAL0, csr);
 	csr = (ea[5] << 8) | ea[4];
-	CSR_WRITE(sc, GMACMAH0, csr | 1U<<31); /* always valid? */
+	mac_write(sc, GMACMAH0, csr | 1U<<31); /* always valid? */
 
 	/* accept multicast frame or run promisc mode */
 	scx_set_rcvfilt(sc);
 
 	(void)scx_ifmedia_upd(ifp);
 
+	/* build sane Tx */
+	memset(sc->sc_txdescs, 0, sizeof(struct tdes) * MD_NTXDESC);
+	sc->sc_txdescs[MD_NTXDESC - 1].t0 |= T0_EOD; /* tie off the ring */
+	SCX_CDTXSYNC(sc, 0, MD_NTXDESC,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	sc->sc_txfree = MD_NTXDESC;
+	sc->sc_txnext = 0;
+	for (i = 0; i < MD_TXQUEUELEN; i++)
+		sc->sc_txsoft[i].txs_mbuf = NULL;
+	sc->sc_txsfree = MD_TXQUEUELEN;
+	sc->sc_txsnext = 0;
+	sc->sc_txsdirty = 0;
+
+	/* load Rx descriptors with fresh mbuf */
+	for (i = 0; i < MD_NRXDESC; i++)
+		(void)add_rxbuf(sc, i);
+	sc->sc_rxptr = 0;
+
+	/* XXX 32 bit paddr XXX hand Tx/Rx rings to HW XXX */
+	mac_write(sc, GMACTDLAR, SCX_CDTXADDR(sc, 0));
+	mac_write(sc, GMACRDLAR, SCX_CDRXADDR(sc, 0));
+
 	/* kick to start GMAC engine */
-	csr = mac_read(sc, GMACOMR);
 	CSR_WRITE(sc, RXINT_CLR, ~0);
 	CSR_WRITE(sc, TXINT_CLR, ~0);
+	csr = mac_read(sc, GMACOMR);
 	mac_write(sc, GMACOMR, csr | OMR_RXE | OMR_TXE);
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -898,9 +924,9 @@ scx_set_rcvfilt(struct scx_softc *sc)
 	uint32_t csr, crc;
 	int i;
 
-	csr = CSR_READ(sc, GMACAFR);
+	csr = mac_read(sc, GMACAFR);
 	csr &= ~(AFR_PM | AFR_AM | AFR_MHTE);
-	CSR_WRITE(sc, GMACAFR, csr);
+	mac_write(sc, GMACAFR, csr);
 
 	ETHER_LOCK(ec);
 	if (ifp->if_flags & IFF_PROMISC) {
@@ -912,7 +938,7 @@ scx_set_rcvfilt(struct scx_softc *sc)
 
 	/* clear 15 entry supplimental perfect match filter */
 	for (i = 1; i < 16; i++)
-		 CSR_WRITE(sc, GMACMAH(i), 0);
+		 mac_write(sc, GMACMAH(i), 0);
 	/* build 256 bit multicast hash filter */
 	memset(mchash, 0, sizeof(mchash));
 	crc = 0;
@@ -940,9 +966,9 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 			uint8_t *ep = enm->enm_addrlo;
 			addr = (ep[3] << 24) | (ep[2] << 16)
 			     | (ep[1] <<  8) |  ep[0];
-			CSR_WRITE(sc, GMACMAL(i), addr);
+			mac_write(sc, GMACMAL(i), addr);
 			addr = (ep[5] << 8) | ep[4];
-			CSR_WRITE(sc, GMACMAH(i), addr | 1U<<31);
+			mac_write(sc, GMACMAH(i), addr | 1U<<31);
 		} else {
 			/* use hash table when too many */
 			/* bit_reserve_32(~crc) !? */
@@ -958,8 +984,8 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 	if (crc)
 		csr |= AFR_MHTE;
 	for (i = 0; i < __arraycount(mchash); i++)
-		CSR_WRITE(sc, GMACMHT(i), mchash[i]);
-	CSR_WRITE(sc, GMACAFR, csr);
+		mac_write(sc, GMACMHT(i), mchash[i]);
+	mac_write(sc, GMACAFR, csr);
 	return;
 
  update:
@@ -968,7 +994,7 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 		csr |= AFR_PM;	/* run promisc. mode */
 	else
 		csr |= AFR_AM;	/* accept all multicast */
-	CSR_WRITE(sc, GMACAFR, csr);
+	mac_write(sc, GMACAFR, csr);
 	return;
 }
 
@@ -1023,7 +1049,16 @@ mii_statchg(struct ifnet *ifp)
 	struct scx_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t fcr;
-
+#if 1
+	/* decode MIISR register value */
+	uint32_t miisr = mac_read(sc, GMACMIISR);
+	int spd = (miisr >> 1) & 03;
+	printf("xMII link status (0x%x) spd%d", miisr,
+		(spd == 2) ? 1000 : (spd == 1) ? 100 : 10);
+	if (miisr & 1)
+		printf(",full-duplex");
+	printf("\n");
+#endif
 	/* Get flow control negotiation result. */
 	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
 	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags)
@@ -1207,7 +1242,7 @@ scx_start(struct ifnet *ifp)
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Tell DMA start transmit */
-		/* CSR_WRITE(sc, GMACTDS, 1); */
+		mac_write(sc, GMACTDS, 1);
 
 		txs->txs_mbuf = m0;
 		txs->txs_firstdesc = sc->sc_txnext;
@@ -1241,6 +1276,7 @@ scx_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	(void)ifp;
+	/* XXX decode interrupt cause to pick isr() XXX */
 	rxintr(sc);
 	txreap(sc);
 	return 1;
@@ -1388,6 +1424,8 @@ spin_waitfor(struct scx_softc *sc, int reg, int exist)
 	return (loop > 0) ? 0 : ETIMEDOUT;
 }
 
+/* GMAC register needs to use indirect rd/wr via memory mapped registers. */
+
 static int
 mac_read(struct scx_softc *sc, int reg)
 {
@@ -1406,32 +1444,10 @@ mac_write(struct scx_softc *sc, int reg, int val)
 	(void)spin_waitfor(sc, MACCMD, CMD_BUSY);
 }
 
-static int
-get_mdioclk(uint32_t freq)
-{
-
-	const struct {
-		uint16_t freq, bit; /* GAR 5:2 MDIO frequency selection */
-	} mdioclk[] = {
-		{ 35,	2 },	/* 25-35 MHz */
-		{ 60,	3 },	/* 35-60 MHz */
-		{ 100,	0 },	/* 60-100 MHz */
-		{ 150,	1 },	/* 100-150 MHz */
-		{ 250,	4 },	/* 150-250 MHz */
-		{ 300,	5 },	/* 250-300 MHz */
-	};
-	int i;
-
-	/* convert MDIO clk to a divisor value */
-	if (freq < mdioclk[0].freq)
-		return mdioclk[0].bit;
-	for (i = 1; i < __arraycount(mdioclk); i++) {
-		if (freq < mdioclk[i].freq)
-			return mdioclk[i-1].bit;
-	}
-	return mdioclk[__arraycount(mdioclk) - 1].bit << GAR_CTL;
-}
-
+/*
+ * 3 independent uengines exist * to process host2media, media2host and
+ * packet data flows.
+ */
 static void
 loaducode(struct scx_softc *sc)
 {
@@ -1481,4 +1497,32 @@ injectucode(struct scx_softc *sc, int port,
 		CSR_WRITE(sc, port, ucode);
 	}
 	bus_space_unmap(sc->sc_st, bsh, size);
+}
+
+/* bit selection to determine MDIO speed */
+
+static int
+get_mdioclk(uint32_t freq)
+{
+
+	const struct {
+		uint16_t freq, bit; /* GAR 5:2 MDIO frequency selection */
+	} mdioclk[] = {
+		{ 35,	2 },	/* 25-35 MHz */
+		{ 60,	3 },	/* 35-60 MHz */
+		{ 100,	0 },	/* 60-100 MHz */
+		{ 150,	1 },	/* 100-150 MHz */
+		{ 250,	4 },	/* 150-250 MHz */
+		{ 300,	5 },	/* 250-300 MHz */
+	};
+	int i;
+
+	/* convert MDIO clk to a divisor value */
+	if (freq < mdioclk[0].freq)
+		return mdioclk[0].bit;
+	for (i = 1; i < __arraycount(mdioclk); i++) {
+		if (freq < mdioclk[i].freq)
+			return mdioclk[i-1].bit;
+	}
+	return mdioclk[__arraycount(mdioclk) - 1].bit << GAR_CTL;
 }
