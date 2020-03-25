@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.7 2020/03/04 14:20:44 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.8 2020/03/25 13:07:04 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.7 2020/03/04 14:20:44 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.8 2020/03/25 13:07:04 isaki Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -75,6 +75,7 @@ struct testentry {
 void usage(void) __dead;
 void xp_err(int, int, const char *, ...) __printflike(3, 4) __dead;
 void xp_errx(int, int, const char *, ...) __printflike(3, 4) __dead;
+bool match(const char *, const char *);
 void xxx_close_wait(void);
 int mixer_get_outputs_master(int);
 void do_test(int);
@@ -168,6 +169,7 @@ int skipcount;
 int unit;
 bool use_rump;
 bool use_pad;
+bool exact_match;
 int padfd;
 int maxfd;
 pthread_t th;
@@ -186,6 +188,8 @@ usage(void)
 	fprintf(stderr, "\t-A        : make output suitable for ATF\n");
 	fprintf(stderr, "\t-a        : Test all\n");
 	fprintf(stderr, "\t-d        : Increase debug level\n");
+	fprintf(stderr, "\t-e        : Use exact match for testnames "
+	    "(default is forward match)\n");
 	fprintf(stderr, "\t-l        : List all tests\n");
 	fprintf(stderr, "\t-p        : Open pad\n");
 #if !defined(NO_RUMP)
@@ -246,8 +250,9 @@ main(int argc, char *argv[])
 	cmd = CMD_TEST;
 	use_pad = false;
 	padfd = -1;
+	exact_match = false;
 
-	while ((c = getopt(argc, argv, "AadlpRu:")) != -1) {
+	while ((c = getopt(argc, argv, "AadelpRu:")) != -1) {
 		switch (c) {
 		case 'A':
 			opt_atf = true;
@@ -257,6 +262,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			debug++;
+			break;
+		case 'e':
+			exact_match = true;
 			break;
 		case 'l':
 			cmd = CMD_LIST;
@@ -305,8 +313,7 @@ main(int argc, char *argv[])
 		found = false;
 		for (j = 0; j < argc; j++) {
 			for (i = 0; testtable[i].name != NULL; i++) {
-				if (strncmp(argv[j], testtable[i].name,
-				    strlen(argv[j])) == 0) {
+				if (match(argv[j], testtable[i].name)) {
 					do_test(i);
 					found = true;
 				}
@@ -335,6 +342,21 @@ main(int argc, char *argv[])
 		return 1;
 
 	return 0;
+}
+
+bool
+match(const char *arg, const char *name)
+{
+	if (exact_match) {
+		/* Exact match */
+		if (strcmp(arg, name) == 0)
+			return true;
+	} else {
+		/* Forward match */
+		if (strncmp(arg, name, strlen(arg)) == 0)
+			return true;
+	}
+	return false;
 }
 
 /*
