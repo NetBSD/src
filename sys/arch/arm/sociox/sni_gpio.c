@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_gpio.c,v 1.3 2020/03/24 11:40:08 nisimura Exp $	*/
+/*	$NetBSD: sni_gpio.c,v 1.4 2020/03/25 18:42:16 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.3 2020/03/24 11:40:08 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.4 2020/03/25 18:42:16 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -88,6 +88,15 @@ CFATTACH_DECL_NEW(snigpio_acpi, sizeof(struct snigpio_softc),
  *    NC,         NC,         NC,           NC,
  *    NC,         NC,         PEC-PD26,     PEC-PD27,
  *    PEC-PD28,   PEC-PD29,   PEC-PD30,     PEC-PD31;
+ *
+ *    PD/PC/PB/PA 0-7 in this order.
+ *    DSW3-PIN1 -- what's "varstore" really this
+ *    DSW3-PIN3 -- tweek PCIe bus implementation error toggle
+ *
+ *  96board mezzanine
+ *    i2c  "/i2c@51221000"
+ *    spi  "/spi@54810000"
+ *    gpio "/gpio@51000000" pinA-L (10-25) level? sensitive
  */
 static void snigpio_attach_i(struct snigpio_softc *);
 static int snigpio_intr(void *);
@@ -154,7 +163,6 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 	snigpio_attach_i(sc);
 
 /* dig FDT description to show 32 of GPIO line usage */
-/* DIPSW3 1-8 usage remain unclear */
 
 	return;
  fail:
@@ -181,11 +189,13 @@ snigpio_acpi_attach(device_t parent, device_t self, void *aux)
 {
 	struct snigpio_softc * const sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
+	ACPI_HANDLE handle = aa->aa_node->ad_handle;
 	bus_space_handle_t ioh;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
+	char *list;
 
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
@@ -215,10 +225,14 @@ snigpio_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_ios = mem->ar_length;
 
-	snigpio_attach_i(sc);
+	/* dig _DSD property to show 32 of GPIO line usage */
+	rv = acpi_dsd_string(handle, "gpio-line-names", &list);
+	if (ACPI_FAILURE(rv))
+		list = NULL;
+	else
+		aprint_normal_dev(self, "%s\n", list);
 
-/* dig _DSD property to show 32 of GPIO line usage */
-/* DIPSW3 1-8 usage remain unclear */
+	snigpio_attach_i(sc);
 
 	acpi_resource_cleanup(&res);
 	return;
