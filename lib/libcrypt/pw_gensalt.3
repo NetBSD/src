@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_gensalt.3,v 1.6 2020/03/25 21:26:12 christos Exp $
+.\"	$NetBSD: pw_gensalt.3,v 1.7 2020/03/25 22:09:48 wiz Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@ using the hash function specified in
 with the function-specific
 .Ar option .
 .Pp
-The new salt types follow the 
+The new salt types follow the
 .Dq Modular Crypt Format
 (MCF) standard and are of the form:
 .Bd -literal -offset indent
@@ -65,7 +65,7 @@ The new salt types follow the
 .Pp
 The characters allowed in the password salt are alphanumeric and
 include a forward slash and a period (are in the regular expression
-format 
+format
 .Li [A-Za-z0-9/.] ) .
 .Pp
 The following types are available:
@@ -165,8 +165,8 @@ The
 function was written in 1997 by
 .An Niels Provos Aq Mt provos@physnet.uni-hamburg.de .
 .Pp
-The 
+The
 .Lk https://passlib.readthedocs.io/en/stable/modular_crypt_format.html "Modular Crypt Format (MCF)" .
 .Pp
-The 
+The
 .Lk https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md "Password Hashing Competition (PHC) format" .
