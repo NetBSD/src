@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_i2c.c,v 1.3 2020/03/18 07:49:01 nisimura Exp $	*/
+/*	$NetBSD: sni_i2c.c,v 1.4 2020/03/25 22:11:00 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,13 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.3 2020/03/18 07:49:01 nisimura Exp $");
-
-#ifdef I2CDEBUG
-#define DPRINTF(args)	printf args
-#else
-#define DPRINTF(args)
-#endif
+__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.4 2020/03/25 22:11:00 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,6 +72,7 @@ struct sniiic_softc {
 	kcondvar_t		sc_cv;
 	int			sc_opflags;
 	bool			sc_busy;
+	int			sc_phandle;
 };
 
 CFATTACH_DECL_NEW(sniiic_fdt, sizeof(struct sniiic_softc),
@@ -86,19 +81,24 @@ CFATTACH_DECL_NEW(sniiic_fdt, sizeof(struct sniiic_softc),
 CFATTACH_DECL_NEW(sniiic_acpi, sizeof(struct sniiic_softc),
     sniiic_acpi_match, sniiic_acpi_attach, NULL, NULL);
 
-static int sniiic_acquire_bus(void *, int);
-static void sniiic_release_bus(void *, int);
-static int sniiic_exec(void *, i2c_op_t, i2c_addr_t, const void *,
+static int sni_i2c_acquire_bus(void *, int);
+static void sni_i2c_release_bus(void *, int);
+static int sni_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 			size_t, void *, size_t, int);
 
-static int sniiic_intr(void *);
-static void sniiic_reset(struct sniiic_softc *);
-static void sniiic_flush(struct sniiic_softc *);
+static int sni_i2c_intr(void *);
+static void sni_i2c_reset(struct sniiic_softc *);
+static void sni_i2c_flush(struct sniiic_softc *);
 
-static i2c_tag_t sniiic_get_tag(device_t);
-static const struct fdtbus_i2c_controller_func sniiic_funcs = {
-	.get_tag = sniiic_get_tag,
+static i2c_tag_t sni_i2c_get_tag(device_t);
+static const struct fdtbus_i2c_controller_func sni_i2c_funcs = {
+	.get_tag = sni_i2c_get_tag,
 };
+
+#define I2C_READ(sc, reg) \
+    bus_space_read_4((sc)->sc_ioh,(sc)->sc_ioh,(reg))
+#define I2C_WRITE(sc, reg, val) \
+    bus_space_write_4((sc)->sc_ioh,(sc)->sc_ioh,(reg),(val))
 
 static int
 sniiic_fdt_match(device_t parent, struct cfdata *match, void *aux)
@@ -122,10 +122,8 @@ sniiic_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	bus_addr_t addr;
 	bus_size_t size;
-	void *ih;
 	char intrstr[128];
 	_Bool disable;
-	int error;
 
 	prop_dictionary_get_bool(dict, "disable", &disable);
 	if (disable) {
@@ -133,24 +131,25 @@ sniiic_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": disabled\n");
 		return;
 	}
-	error = fdtbus_get_reg(phandle, 0, &addr, &size);
-	if (error) {
-		aprint_error(": couldn't get registers\n");
-		return;
-	}
-	error = bus_space_map(faa->faa_bst, addr, size, 0, &ioh);
-	if (error) {
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0
+	    || bus_space_map(faa->faa_bst, addr, size, 0, &ioh) != 0) {
 		aprint_error(": unable to map device\n");
 		return;
 	}
-	error = fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr));
-	if (error) {
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error(": failed to decode interrupt\n");
-		return;
+		goto fail;
+	}
+	sc->sc_ih = fdtbus_intr_establish(phandle,
+			0, IPL_BIO, 0, sni_i2c_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt\n");
+		goto fail;
 	}
 
-	aprint_naive(": I2C controller\n");
-	aprint_normal(": I2C controller\n");
+	aprint_naive("\n");
+	aprint_normal_dev(self, ": Socionext I2C controller\n");
+	aprint_normal_dev(self, ": interrupting on %s\n", intrstr);
 
 	sc->sc_dev = self;
 	sc->sc_iot = faa->faa_bst;
@@ -158,23 +157,19 @@ sniiic_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iob = addr;
 	sc->sc_ios = size;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NET);
-	cv_init(&sc->sc_cv, "sniiic");
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&sc->sc_cv, device_xname(self));
+
+	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
-	sc->sc_ic.ic_acquire_bus = sniiic_acquire_bus;
-	sc->sc_ic.ic_release_bus = sniiic_release_bus;
-	sc->sc_ic.ic_exec = sniiic_exec;
+	sc->sc_ic.ic_acquire_bus = sni_i2c_acquire_bus;
+	sc->sc_ic.ic_release_bus = sni_i2c_release_bus;
+	sc->sc_ic.ic_exec = sni_i2c_exec;
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0, sniiic_intr, sc);
-	if (ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt\n");
-		goto fail;
-	}
-	sc->sc_ih = ih;
-
-	fdtbus_register_i2c_controller(self, phandle, &sniiic_funcs);
+	fdtbus_register_i2c_controller(self, phandle, &sni_i2c_funcs);
+#if 0
 	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
-
+#endif
 	return;
  fail:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
@@ -201,25 +196,20 @@ sniiic_acpi_attach(device_t parent, device_t self, void *aux)
 	struct sniiic_softc * const sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	bus_space_handle_t ioh;
+	struct i2cbus_attach_args iba;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
-	void *ih;
 
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
-
 	mem = acpi_res_mem(&res, 0);
 	irq = acpi_res_irq(&res, 0);
-	if (mem == NULL || irq == NULL) {
+	if (mem == NULL || irq == NULL || mem->ar_length == 0) {
 		aprint_error(": incomplete resources\n");
-		return;
-	}
-	if (mem->ar_length == 0) {
-		aprint_error(": zero length memory resource\n");
 		return;
 	}
 	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0,
@@ -227,9 +217,16 @@ sniiic_acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	sc->sc_ih = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
+	    IPL_BIO, false, sni_i2c_intr, sc, device_xname(self));
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt\n");
+		goto fail;
+	}
 
-	aprint_naive(": I2C controller\n");
-	aprint_normal(": I2C controller\n");
+	aprint_naive("\n");
+	aprint_normal_dev(self, ": Socionext I2C controller\n");
 
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_memt;
@@ -238,20 +235,19 @@ sniiic_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ios = mem->ar_length;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NET);
-	cv_init(&sc->sc_cv, "sniiic");
-	sc->sc_ic.ic_cookie = sc;
-	sc->sc_ic.ic_acquire_bus = sniiic_acquire_bus;
-	sc->sc_ic.ic_release_bus = sniiic_release_bus;
-	sc->sc_ic.ic_exec = sniiic_exec;
+	cv_init(&sc->sc_cv, device_xname(self));
 
-	ih = acpi_intr_establish(self,
-	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
-	    IPL_BIO, false, sniiic_intr, sc, device_xname(self));
-	if (ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt\n");
-		goto fail;
-	}
-	sc->sc_ih = ih;
+	iic_tag_init(&sc->sc_ic);	
+	sc->sc_ic.ic_cookie = sc;
+	sc->sc_ic.ic_acquire_bus = sni_i2c_acquire_bus;
+	sc->sc_ic.ic_release_bus = sni_i2c_release_bus;
+	sc->sc_ic.ic_exec = sni_i2c_exec;
+
+	memset(&iba, 0, sizeof(iba));
+	iba.iba_tag = &sc->sc_ic;
+#if 0
+	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
+#endif
 
 	acpi_resource_cleanup(&res);
 
@@ -263,7 +259,7 @@ sniiic_acpi_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-sniiic_acquire_bus(void *opaque, int flags)
+sni_i2c_acquire_bus(void *opaque, int flags)
 {
 	struct sniiic_softc *sc = opaque;
 
@@ -277,7 +273,7 @@ sniiic_acquire_bus(void *opaque, int flags)
 }
 
 static void
-sniiic_release_bus(void *opaque, int flags)
+sni_i2c_release_bus(void *opaque, int flags)
 {
 	struct sniiic_softc *sc = opaque;
 
@@ -288,57 +284,53 @@ sniiic_release_bus(void *opaque, int flags)
 }
 
 static int
-sniiic_exec(void *opaque, i2c_op_t op, i2c_addr_t addr,
+sni_i2c_exec(void *opaque, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
 	struct sniiic_softc *sc = opaque;
 	int err;
+#if 0
+	printf("%s: exec op: %d addr: 0x%x cmdlen: %d len: %d flags 0x%x\n",
+	    device_xname(sc->sc_dev), op, addr, (int)cmdlen, (int)len, flags);
+#endif
 
-	DPRINTF(("sniic_exec: op 0x%x cmdlen %zd len %zd flags 0x%x\n",
-	    op, cmdlen, len, flags));
 	err = 0;
 	/* AAA */
 	goto done;
  done:
 	if (err)
-		sniiic_reset(sc);
-	sniiic_flush(sc);
-	DPRINTF(("sniiic_exec: done %d\n", err));
+		sni_i2c_reset(sc);
+	sni_i2c_flush(sc);
 	return err;
 }
 
 static int
-sniiic_intr(void *arg)
+sni_i2c_intr(void *arg)
 {
 	struct sniiic_softc * const sc = arg;
 	uint32_t stat = 0;
 
+	(void)stat;
 	mutex_enter(&sc->sc_mtx);
-	DPRINTF(("sniiic_intr opflags=%#x\n", sc->sc_opflags));
-	if ((sc->sc_opflags & I2C_F_POLL) == 0) {
-		/* AAA */
-		(void)stat;
-		cv_broadcast(&sc->sc_cv);
-	}
+	cv_broadcast(&sc->sc_cv);
 	mutex_exit(&sc->sc_mtx);
-	DPRINTF(("sniiic_intr status 0x%x\n", stat));
 	return 1;
 }
 
 static void
-sniiic_reset(struct sniiic_softc *sc)
+sni_i2c_reset(struct sniiic_softc *sc)
 {
 	/* AAA */
 }
 
 static void
-sniiic_flush(struct sniiic_softc *sc)
+sni_i2c_flush(struct sniiic_softc *sc)
 {
 	/* AAA */
 }
 
 static i2c_tag_t
-sniiic_get_tag(device_t dev)
+sni_i2c_get_tag(device_t dev)
 {
 	struct sniiic_softc * const sc = device_private(dev);
 
