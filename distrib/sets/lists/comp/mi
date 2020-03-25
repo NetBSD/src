@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2314 2020/03/23 13:37:37 roy Exp $
+#	$NetBSD: mi,v 1.2315 2020/03/25 17:13:49 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9267,6 +9267,7 @@
 ./usr/share/man/cat3/pw_copyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_edit.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_error.0			comp-c-catman		.cat
+./usr/share/man/cat3/pw_gensalt.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pw_getconf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pw_getprefix.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pw_getpwconf.0		comp-c-catman		.cat
@@ -17291,6 +17292,7 @@
 ./usr/share/man/html3/pw_copyx.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_edit.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_error.html		comp-c-htmlman		html
+./usr/share/man/html3/pw_gensalt.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_getconf.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_getprefix.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_getpwconf.html		comp-c-htmlman		html
@@ -25309,6 +25311,7 @@
 ./usr/share/man/man3/pw_copyx.3			comp-c-man		.man
 ./usr/share/man/man3/pw_edit.3			comp-c-man		.man
 ./usr/share/man/man3/pw_error.3			comp-c-man		.man
+./usr/share/man/man3/pw_gensalt.3		comp-c-man		.man
 ./usr/share/man/man3/pw_getconf.3		comp-c-man		.man
 ./usr/share/man/man3/pw_getprefix.3		comp-c-man		.man
 ./usr/share/man/man3/pw_getpwconf.3		comp-c-man		.man
