@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_emmc.c,v 1.4 2020/03/25 22:11:00 nisimura Exp $	*/
+/*	$NetBSD: sni_emmc.c,v 1.5 2020/03/25 22:15:53 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.4 2020/03/25 22:11:00 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.5 2020/03/25 22:15:53 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,7 +132,7 @@ sniemmc_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal_dev(self, ": interrupting on %s\n", intrstr);
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = faa->faa_dmat;
