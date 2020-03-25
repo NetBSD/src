@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_exiu.c,v 1.2 2020/03/19 22:17:45 nisimura Exp $	*/
+/*	$NetBSD: sni_exiu.c,v 1.3 2020/03/25 23:29:39 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_exiu.c,v 1.2 2020/03/19 22:17:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_exiu.c,v 1.3 2020/03/25 23:29:39 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,8 +60,8 @@ struct sniexiu_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_iob;
 	bus_size_t		sc_ios;
-	kmutex_t		sc_lock;
 	void			*sc_ih;
+	kmutex_t		sc_lock;
 	int			sc_phandle;
 };
 
@@ -98,7 +98,6 @@ sniexiu_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 	char intrstr[128];
 	_Bool disable;
-	int error;
 
 	prop_dictionary_get_bool(dict, "disable", &disable);
 	if (disable) {
@@ -106,21 +105,24 @@ sniexiu_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": disabled\n");
 		return;
 	}
-	error = fdtbus_get_reg(phandle, 0, &addr, &size);
-	if (error) {
-		aprint_error(": couldn't get registers\n");
-		return;
-	}
-	error = bus_space_map(faa->faa_bst, addr, size, 0, &ioh);
-	if (error) {
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0
+	    || bus_space_map(faa->faa_bst, addr, size, 0, &ioh) != 0) {
 		aprint_error(": unable to map device\n");
 		return;
 	}
-	error = fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr));
-	if (error) {
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error(": failed to decode interrupt\n");
-		return;
+		goto fail;
 	}
+	sc->sc_ih = fdtbus_intr_establish(phandle,
+			0, IPL_NET, 0, sniexiu_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt\n");
+		goto fail;
+	}
+
+	aprint_naive("\n");
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
@@ -129,13 +131,6 @@ sniexiu_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iob = addr;
 	sc->sc_ios = size;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	sc->sc_ih = fdtbus_intr_establish(phandle,
-			0, IPL_NET, 0, sniexiu_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt\n");
-		goto fail;
-	}
 
 	sniexiu_attach_i(sc);
 	return;
@@ -173,15 +168,10 @@ sniexiu_acpi_attach(device_t parent, device_t self, void *aux)
 	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
-
 	mem = acpi_res_mem(&res, 0);
 	irq = acpi_res_irq(&res, 0);
-	if (mem == NULL || irq == NULL) {
+	if (mem == NULL || irq == NULL || mem->ar_length) {
 		aprint_error(": incomplete resources\n");
-		return;
-	}
-	if (mem->ar_length == 0) {
-		aprint_error(": zero length memory resource\n");
 		return;
 	}
 	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0,
@@ -189,14 +179,6 @@ sniexiu_acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-
-	sc->sc_dev = self;
-	sc->sc_iot = aa->aa_memt;
-	sc->sc_ioh = ioh;
-	sc->sc_iob = mem->ar_base;
-	sc->sc_ios = mem->ar_length;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-
 	sc->sc_ih = acpi_intr_establish(self,
 	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
 	    IPL_BIO, false, sniexiu_intr, sc, device_xname(self));
@@ -205,20 +187,31 @@ sniexiu_acpi_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
+	aprint_naive("\n");
+
+	sc->sc_dev = self;
+	sc->sc_iot = aa->aa_memt;
+	sc->sc_ioh = ioh;
+	sc->sc_iob = mem->ar_base;
+	sc->sc_ios = mem->ar_length;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	sniexiu_attach_i(sc);
- fail:
+
 	acpi_resource_cleanup(&res);
+	return;
+ fail:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	acpi_resource_cleanup(&res);
+	return;
 }
 
 static void
 sniexiu_attach_i(struct sniexiu_softc *sc)
 {
-
-	aprint_naive(": External IRQ controller\n");
-	aprint_normal(": External IRQ controller\n");
-
+	
+	aprint_normal_dev(sc->sc_dev, "Socionext External IRQ controller\n");
 	/* AAA */
-
 	return;
 }
 
