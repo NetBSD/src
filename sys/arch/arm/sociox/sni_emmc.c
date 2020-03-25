@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_emmc.c,v 1.3 2020/03/18 10:05:24 nisimura Exp $	*/
+/*	$NetBSD: sni_emmc.c,v 1.4 2020/03/25 22:11:00 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.3 2020/03/18 10:05:24 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.4 2020/03/25 22:11:00 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,12 +66,12 @@ struct sniemmc_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_iob;
 	bus_size_t		sc_ios;
-	struct sdhc_host	*sc_hosts[1];
 	void			*sc_ih;
-	int			sc_phandle;
+	struct sdhc_host	*sc_hosts[1];
 	bus_dmamap_t		sc_dmamap;
 	bus_dma_segment_t	sc_segs[1];
 	kcondvar_t		sc_cv;
+	int			sc_phandle;
 };
 
 CFATTACH_DECL_NEW(sniemmc_fdt, sizeof(struct sniemmc_softc),
@@ -105,10 +105,8 @@ sniemmc_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	bus_addr_t addr;
 	bus_size_t size;
-	void *ih;
 	char intrstr[128];
 	_Bool disable;
-	int error;
 
 	prop_dictionary_get_bool(dict, "disable", &disable);
 	if (disable) {
@@ -116,24 +114,25 @@ sniemmc_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": disabled\n");
 		return;
 	}
-	error = fdtbus_get_reg(phandle, 0, &addr, &size);
-	if (error) {
-		aprint_error(": couldn't get registers\n");
-		return;
-	}
-	error = bus_space_map(faa->faa_bst, addr, size, 0, &ioh);
-	if (error) {
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0
+	    || bus_space_map(faa->faa_bst, addr, size, 0, &ioh) != 0) {
 		aprint_error(": unable to map device\n");
 		return;
 	}
-	error = fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr));
-	if (error) {
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error(": failed to decode interrupt\n");
-		return;
+		goto fail;
+	}
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SDMMC, 0,
+	    sdhc_intr, &sc->sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
+		    intrstr);
+		goto fail;
 	}
 
-	aprint_naive(": SDHC controller\n");
-	aprint_normal(": SDHC controller\n");
+	aprint_naive("\n");
+	aprint_normal_dev(self, ": interrupting on %s\n", intrstr);
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = faa->faa_dmat;
@@ -144,18 +143,7 @@ sniemmc_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iob = addr;
 	sc->sc_ios = size;
 
-	ih = fdtbus_intr_establish(phandle, 0, IPL_SDMMC, 0,
-	    sdhc_intr, &sc->sc);
-	if (ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
-		    intrstr);
-		goto fail;
-	}
-	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
-	sc->sc_ih = ih;
-
 	config_defer(self, sniemmc_attach_i);
-
 	return;
  fail:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
@@ -186,21 +174,15 @@ sniemmc_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
-	void *ih;
 
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
-
 	mem = acpi_res_mem(&res, 0);
 	irq = acpi_res_irq(&res, 0);
-	if (mem == NULL || irq == NULL) {
+	if (mem == NULL || irq == NULL || mem->ar_length == 0) {
 		aprint_error(": incomplete resources\n");
-		return;
-	}
-	if (mem->ar_length == 0) {
-		aprint_error(": zero length memory resource\n");
 		return;
 	}
 	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0,
@@ -208,9 +190,15 @@ sniemmc_acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	sc->sc_ih = acpi_intr_establish(self,
+	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
+	    IPL_BIO, false, sdhc_intr, &sc->sc, device_xname(self));
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt\n");
+		goto fail;
+	}
 
-	aprint_naive(": SDHC controller\n");
-	aprint_normal(": SDHC controller\n");
+	aprint_naive("\n");
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = aa->aa_dmat;
@@ -219,20 +207,10 @@ sniemmc_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_ios = mem->ar_length;
 
-	ih = acpi_intr_establish(self,
-	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
-	    IPL_BIO, false, sdhc_intr, &sc->sc, device_xname(self));
-	if (ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt\n");
-		goto fail;
-	}
-	sc->sc_ih = ih;
-
 	config_defer(self, sniemmc_attach_i);
 
 	acpi_resource_cleanup(&res);
 	return;
-
  fail:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	acpi_resource_cleanup(&res);
@@ -249,7 +227,11 @@ sniemmc_attach_i(device_t self)
 	sc->sc.sc_flags |= SDHC_FLAG_32BIT_ACCESS;
 	sc->sc.sc_clkbase = 50000;	/* Default to 50MHz */
 
+	aprint_normal_dev(sc->sc.sc_dev, "Socionext eMMC controller\n");
+#if 0
 	error = sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+#endif
+	error = 0;
 	if (error) {
 		aprint_error_dev(self, "couldn't intialize host, error=%d\n",				error);
 		goto fail;
