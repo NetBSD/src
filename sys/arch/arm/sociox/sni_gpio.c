@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_gpio.c,v 1.5 2020/03/25 19:03:44 nisimura Exp $	*/
+/*	$NetBSD: sni_gpio.c,v 1.6 2020/03/25 23:29:39 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.5 2020/03/25 19:03:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.6 2020/03/25 23:29:39 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -125,6 +125,7 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	char intrstr[128];
+	const char *list;
 	_Bool disable;
 
 	prop_dictionary_get_bool(dict, "disable", &disable);
@@ -150,8 +151,11 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": GPIO controller\n");
+	aprint_normal_dev("Socionext GPIO controller\n");
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+	list = fdtbus_get_string(phandle, "gpio-line-names");
+	if (list)
+		aprint_normal_dev(self, "%s\n", list);
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
@@ -161,8 +165,6 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ios = size;
 
 	snigpio_attach_i(sc);
-
-/* dig FDT description to show 32 of GPIO line usage */
 
 	return;
  fail:
@@ -220,17 +222,17 @@ snigpio_acpi_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
+	aprint_normal_dev(self, "Socionext GPIO controller\n");
+	rv = acpi_dsd_string(handle, "gpio-line-names", &list);
+	if (ACPI_SUCCESS(rv))
+		aprint_normal_dev(self, "%s\n", list);
+
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_memt;
 	sc->sc_ioh = ioh;
 	sc->sc_ios = mem->ar_length;
 
 	snigpio_attach_i(sc);
-
-	/* dig _DSD property to show 32 of GPIO line usage */
-	rv = acpi_dsd_string(handle, "gpio-line-names", &list);
-	if (ACPI_SUCCESS(rv))
-		aprint_normal_dev(self, "%s\n", list);
 
 	acpi_resource_cleanup(&res);
 	return;
