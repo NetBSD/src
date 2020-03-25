@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_emmc.c,v 1.5 2020/03/25 22:15:53 nisimura Exp $	*/
+/*	$NetBSD: sni_emmc.c,v 1.6 2020/03/25 23:20:38 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.5 2020/03/25 22:15:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.6 2020/03/25 23:20:38 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,6 +132,7 @@ sniemmc_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
+	aprint_normal_dev(self, "Socionext eMMC controller\n");
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	sc->sc.sc_dev = self;
@@ -199,6 +200,7 @@ sniemmc_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
+	aprint_normal_dev(self, "Socionext eMMC controller\n");
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = aa->aa_dmat;
@@ -227,7 +229,7 @@ sniemmc_attach_i(device_t self)
 	sc->sc.sc_flags |= SDHC_FLAG_32BIT_ACCESS;
 	sc->sc.sc_clkbase = 50000;	/* Default to 50MHz */
 
-	aprint_normal_dev(sc->sc.sc_dev, "Socionext eMMC controller\n");
+	aprint_normal_dev(sc->sc.sc_dev, "doing sdhc_host() ...\n");
 #if 0
 	error = sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 #endif
