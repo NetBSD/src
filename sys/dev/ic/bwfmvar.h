@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.7 2020/03/25 03:44:44 thorpej Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.8 2020/03/25 04:53:11 thorpej Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -85,7 +85,8 @@ struct bwfm_firmware_selector {
 
 #define	BWFM_FILETYPE_UCODE	0
 #define	BWFM_FILETYPE_NVRAM	1
-#define	BWFM_NFILETYPES		2
+#define	BWFM_FILETYPE_CLM	2
+#define	BWFM_NFILETYPES		3
 
 struct bwfm_firmware_context {
 	/* inputs */

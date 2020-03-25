@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.21 2020/03/25 03:44:44 thorpej Exp $ */
+/* $NetBSD: bwfm.c,v 1.22 2020/03/25 04:53:11 thorpej Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -143,6 +143,10 @@ static const struct {
 	[BWFM_FILETYPE_NVRAM] = {
 		.suffix = "txt",
 		.description = "NVRAM",
+	},
+	[BWFM_FILETYPE_CLM] = {
+		.suffix = "clm_blob",
+		.description = "CLM",
 	},
 };
 
