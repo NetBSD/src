@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.543 2020/03/03 19:55:16 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.544 2020/03/25 18:08:34 gdt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.543 2020/03/03 19:55:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.544 2020/03/25 18:08:34 gdt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4059,8 +4059,7 @@ sys_fsync(struct lwp *l, const struct sys_fsync_args *uap, register_t *retval)
  * Sync a range of file data.  API modeled after that found in AIX.
  *
  * FDATASYNC indicates that we need only save enough metadata to be able
- * to re-read the written data.  Note we duplicate AIX's requirement that
- * the file be open for writing.
+ * to re-read the written data.
  */
 /* ARGSUSED */
 int
@@ -4141,10 +4140,6 @@ sys_fdatasync(struct lwp *l, const struct sys_fdatasync_args *uap, register_t *r
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	if ((fp->f_flag & FWRITE) == 0) {
-		fd_putfile(SCARG(uap, fd));
-		return (EBADF);
-	}
 	vp = fp->f_vnode;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT|FSYNC_DATAONLY, 0, 0);
