@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_i2c.c,v 1.5 2020/03/25 22:15:53 nisimura Exp $	*/
+/*	$NetBSD: sni_i2c.c,v 1.6 2020/03/25 23:20:38 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.5 2020/03/25 22:15:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.6 2020/03/25 23:20:38 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,7 +61,6 @@ static void sniiic_acpi_attach(device_t, device_t, void *);
 struct sniiic_softc {
 	device_t		sc_dev;
 	struct i2c_controller	sc_ic;
-	device_t		sc_i2cdev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_iob;
@@ -70,8 +69,7 @@ struct sniiic_softc {
 	kmutex_t		sc_lock;
 	kmutex_t		sc_mtx;
 	kcondvar_t		sc_cv;
-	int			sc_opflags;
-	bool			sc_busy;
+	volatile bool		sc_busy;
 	int			sc_phandle;
 };
 
@@ -80,6 +78,8 @@ CFATTACH_DECL_NEW(sniiic_fdt, sizeof(struct sniiic_softc),
 
 CFATTACH_DECL_NEW(sniiic_acpi, sizeof(struct sniiic_softc),
     sniiic_acpi_match, sniiic_acpi_attach, NULL, NULL);
+
+void sni_i2c_common_i(struct sniiic_softc *);
 
 static int sni_i2c_acquire_bus(void *, int);
 static void sni_i2c_release_bus(void *, int);
@@ -148,7 +148,6 @@ sniiic_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal_dev(self, "Socionext I2C controller\n");
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	sc->sc_dev = self;
@@ -156,15 +155,8 @@ sniiic_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_iob = addr;
 	sc->sc_ios = size;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
-	cv_init(&sc->sc_cv, device_xname(self));
 
-	iic_tag_init(&sc->sc_ic);
-	sc->sc_ic.ic_cookie = sc;
-	sc->sc_ic.ic_acquire_bus = sni_i2c_acquire_bus;
-	sc->sc_ic.ic_release_bus = sni_i2c_release_bus;
-	sc->sc_ic.ic_exec = sni_i2c_exec;
+	sni_i2c_common_i(sc);
 
 	fdtbus_register_i2c_controller(self, phandle, &sni_i2c_funcs);
 #if 0
@@ -226,22 +218,14 @@ sniiic_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal_dev(self, "Socionext I2C controller\n");
 
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_memt;
 	sc->sc_ioh = ioh;
 	sc->sc_iob = mem->ar_base;
 	sc->sc_ios = mem->ar_length;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NET);
-	cv_init(&sc->sc_cv, device_xname(self));
 
-	iic_tag_init(&sc->sc_ic);	
-	sc->sc_ic.ic_cookie = sc;
-	sc->sc_ic.ic_acquire_bus = sni_i2c_acquire_bus;
-	sc->sc_ic.ic_release_bus = sni_i2c_release_bus;
-	sc->sc_ic.ic_exec = sni_i2c_exec;
+	sni_i2c_common_i(sc);
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_ic;
@@ -256,6 +240,24 @@ sniiic_acpi_attach(device_t parent, device_t self, void *aux)
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	acpi_resource_cleanup(&res);
 	return;
+}
+
+void
+sni_i2c_common_i(struct sniiic_softc *sc)
+{
+
+	aprint_normal_dev(sc->sc_dev, "Socionext I2C controller\n");
+
+	iic_tag_init(&sc->sc_ic);
+	sc->sc_ic.ic_cookie = sc;
+	sc->sc_ic.ic_acquire_bus = sni_i2c_acquire_bus;
+	sc->sc_ic.ic_release_bus = sni_i2c_release_bus;
+	sc->sc_ic.ic_exec = sni_i2c_exec;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&sc->sc_cv, device_xname(sc->sc_dev));
+
+	/* no attach here */
 }
 
 static int
