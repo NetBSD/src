@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_gpio.c,v 1.4 2020/03/25 18:42:16 nisimura Exp $	*/
+/*	$NetBSD: sni_gpio.c,v 1.5 2020/03/25 19:03:44 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.4 2020/03/25 18:42:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.5 2020/03/25 19:03:44 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,21 +82,21 @@ CFATTACH_DECL_NEW(snigpio_acpi, sizeof(struct snigpio_softc),
  * "DevelopmentBox" implementation
  *    DSW3-PIN1,  DSW3-PIN2,  DSW3-PIN3,    DSW3-PIN4,
  *    DSW3-PIN5,  DSW3-PIN6,  DSW3-PIN7,    DSW3-PIN8,
- *    PEC-PD8,    PEC-PD9,    PEC-PD10,     PEC-PD11,
- *    NC,         NC,         PCIE1EXTINT,  PCIE0EXTINT,
- *    PHY_P2_2,   PHY_P1_2,   NC,           NC,
- *    NC,         NC,         NC,           NC,
- *    NC,         NC,         PEC-PD26,     PEC-PD27,
- *    PEC-PD28,   PEC-PD29,   PEC-PD30,     PEC-PD31;
+ *    PSIN#,      PWROFF#,    GPIO-A,       GPIO-B,
+ *    GPIO-C,     GPIO-D,     PCIE1EXTINT,  PCIE0EXTINT,
+ *    PHY2-INT#,  PHY1-INT#,  GPIO-E,       GPIO-F,
+ *    GPIO-G,     GPIO-H,     GPIO-I,       GPIO-J,
+ *    GPIO-K,     GPIO-L,     PEC-PD26,     PEC-PD27,
+ *    PEC-PD28,   PEC-PD29,   PEC-PD30,     PEC-PD31
  *
- *    PD/PC/PB/PA 0-7 in this order.
  *    DSW3-PIN1 -- what's "varstore" really this
  *    DSW3-PIN3 -- tweek PCIe bus implementation error toggle
+ *    PowerButton (PWROFF#) can be detectable.
  *
  *  96board mezzanine
  *    i2c  "/i2c@51221000"
  *    spi  "/spi@54810000"
- *    gpio "/gpio@51000000" pinA-L (10-25) level? sensitive
+ *    gpio "/gpio@51000000" pinA-L (10-25) down edge sensitive
  */
 static void snigpio_attach_i(struct snigpio_softc *);
 static int snigpio_intr(void *);
@@ -225,14 +225,12 @@ snigpio_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_ios = mem->ar_length;
 
+	snigpio_attach_i(sc);
+
 	/* dig _DSD property to show 32 of GPIO line usage */
 	rv = acpi_dsd_string(handle, "gpio-line-names", &list);
-	if (ACPI_FAILURE(rv))
-		list = NULL;
-	else
+	if (ACPI_SUCCESS(rv))
 		aprint_normal_dev(self, "%s\n", list);
-
-	snigpio_attach_i(sc);
 
 	acpi_resource_cleanup(&res);
 	return;
