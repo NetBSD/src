@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.25 2018/08/15 06:00:02 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.26 2020/03/25 06:02:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.25 2018/08/15 06:00:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.26 2020/03/25 06:02:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -208,7 +208,7 @@ struct db_tlbinfo {
 	vaddr_t (*dti_decode_vpn)(size_t, uint32_t, uint32_t);
 	void (*dti_print_header)(void);
 	void (*dti_print_entry)(size_t, size_t, uint32_t, uint32_t);
-	u_int dti_index; 
+	u_int dti_index;
 };
 
 #if defined(CPU_CORTEXA5)
