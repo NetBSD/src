@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.6 2020/03/22 23:38:47 thorpej Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.7 2020/03/25 03:44:44 thorpej Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -18,6 +18,7 @@
  */
 
 #include <sys/pcq.h>
+#include <dev/firmload.h>
 
 /* Chipcommon Core Chip IDs */
 #define BRCM_CC_43143_CHIP_ID		43143
@@ -62,8 +63,46 @@
 
 #define	BWFM_TASK_COUNT			256
 
-
 struct bwfm_softc;
+
+struct bwfm_firmware_selector {
+	uint32_t	fwsel_chip;	/* chip ID */
+	uint32_t	fwsel_revmask;	/* mask of applicable chip revs */
+	const char	*fwsel_basename;/* firmware file base name */
+};
+#define	BWFM_FW_ENTRY(c, r, b)						\
+	{ .fwsel_chip = (c),						\
+	  .fwsel_revmask = (r),						\
+	  .fwsel_basename = b }
+
+#define	BWFM_FW_ENTRY_END						\
+	{ .fwsel_basename = NULL }
+
+#define	BWFM_FWSEL_REV_EQ(x)	__BIT(x)
+#define	BWFM_FWSEL_REV_LE(x)	__BITS(0,x)
+#define	BWFM_FWSEL_REV_GE(x)	__BITS(x,31)
+#define	BWFM_FWSEL_ALLREVS	__BITS(0,31)
+
+#define	BWFM_FILETYPE_UCODE	0
+#define	BWFM_FILETYPE_NVRAM	1
+#define	BWFM_NFILETYPES		2
+
+struct bwfm_firmware_context {
+	/* inputs */
+	uint32_t	ctx_chip;
+	uint32_t	ctx_chiprev;
+	const char *	ctx_model;
+	uint32_t	ctx_req;
+
+#define	BWFM_FWREQ(x)		__BIT(x)
+#define	BWFM_FWOPT(x)		__BIT((x)+16)
+
+	/* outputs */
+	struct {
+		void *	ctx_f_data;
+		size_t	ctx_f_size;
+	} ctx_file[BWFM_NFILETYPES];
+};
 
 struct bwfm_core {
 	uint16_t	 co_id;
@@ -190,3 +229,13 @@ int bwfm_chip_sr_capable(struct bwfm_softc *);
 struct bwfm_core *bwfm_chip_get_core(struct bwfm_softc *, int);
 struct bwfm_core *bwfm_chip_get_pmu(struct bwfm_softc *);
 void bwfm_rx(struct bwfm_softc *, struct mbuf *m);
+
+void	bwfm_firmware_context_init(struct bwfm_firmware_context *,
+	    uint32_t, uint32_t, const char *, uint32_t);
+bool	bwfm_firmware_open(struct bwfm_softc *,
+	    const struct bwfm_firmware_selector *,
+	    struct bwfm_firmware_context *);
+void	bwfm_firmware_close(struct bwfm_firmware_context *);
+void *	bwfm_firmware_data(struct bwfm_firmware_context *,
+	    unsigned int, size_t *);
+const char *bwfm_firmware_description(unsigned int);
