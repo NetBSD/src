@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2315 2020/03/25 17:13:49 christos Exp $
+#	$NetBSD: mi,v 1.2316 2020/03/25 18:45:42 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9989,6 +9989,7 @@
 ./usr/share/man/cat3/strcspn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strdup.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strerror.0			comp-c-catman		.cat
+./usr/share/man/cat3/strerror_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strerror_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stresep.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strfmon.0			comp-c-catman		.cat
@@ -17993,6 +17994,7 @@
 ./usr/share/man/html3/strcspn.html		comp-c-htmlman		html
 ./usr/share/man/html3/strdup.html		comp-c-htmlman		html
 ./usr/share/man/html3/strerror.html		comp-c-htmlman		html
+./usr/share/man/html3/strerror_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/strerror_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/stresep.html		comp-c-htmlman		html
 ./usr/share/man/html3/strfmon.html		comp-c-htmlman		html
@@ -26029,6 +26031,7 @@
 ./usr/share/man/man3/strcspn.3			comp-c-man		.man
 ./usr/share/man/man3/strdup.3			comp-c-man		.man
 ./usr/share/man/man3/strerror.3			comp-c-man		.man
+./usr/share/man/man3/strerror_l.3		comp-c-man		.man
 ./usr/share/man/man3/strerror_r.3		comp-c-man		.man
 ./usr/share/man/man3/stresep.3			comp-c-man		.man
 ./usr/share/man/man3/strfmon.3			comp-c-man		.man
