@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_i2c.c,v 1.4 2020/03/25 22:11:00 nisimura Exp $	*/
+/*	$NetBSD: sni_i2c.c,v 1.5 2020/03/25 22:15:53 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.4 2020/03/25 22:11:00 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.5 2020/03/25 22:15:53 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -148,8 +148,8 @@ sniiic_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal_dev(self, ": Socionext I2C controller\n");
-	aprint_normal_dev(self, ": interrupting on %s\n", intrstr);
+	aprint_normal_dev(self, "Socionext I2C controller\n");
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	sc->sc_dev = self;
 	sc->sc_iot = faa->faa_bst;
@@ -226,7 +226,7 @@ sniiic_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal_dev(self, ": Socionext I2C controller\n");
+	aprint_normal_dev(self, "Socionext I2C controller\n");
 
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_memt;
