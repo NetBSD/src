@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_gensalt.3,v 1.4 2020/03/25 21:02:26 christos Exp $
+.\"	$NetBSD: pw_gensalt.3,v 1.5 2020/03/25 21:24:08 christos Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,13 +56,20 @@ using the hash function specified in
 with the function-specific
 .Ar option .
 .Pp
-The new salt types follow the MCF standard and are of the form:
+The new salt types follow the 
+.Dq Modular Crypt Format
+(MCF) standard and are of the form:
+.Bd -literal -offset indent
 .Li $<id>[$<param>=<value>(,<param>=<value>)*][$<salt>[$<hash>]]
+.Ed
+.Pp
 The characters allowed in the password salt are alphanumeric and
-include a forward slash and a period.
+include a forward slash and a period (are in the regular expression
+format 
+.Li [A-Za-z0-9/.] ) .
 .Pp
 The following types are available:
-.Bl -tag -width blowfish -compact
+.Bl -tag -width blowfish -offset indent
 .It old
 The original Unix implementation.
 This is of the form
@@ -117,7 +124,7 @@ A salt generated using the
 .Sq blowfish
 algorithm.
 The minimum salt size is
-.Dv 31
+.Dv 30
 and the number of rounds needs to be specified in
 .Ar option .
 This is of the form:
@@ -157,3 +164,8 @@ The
 .Fn pw_gensalt
 function was written in 1997 by
 .An Niels Provos Aq Mt provos@physnet.uni-hamburg.de .
+.Pp
+The 
+.Lk https://passlib.readthedocs.io/en/stable/modular_crypt_format.html "Modular Crypt Format (MCF)" .
+The 
+.Lk https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md "Password Hashing Competition (PHC) format" .
