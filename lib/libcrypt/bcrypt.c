@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.19 2013/08/28 17:47:07 riastradh Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.20 2020/03/25 18:36:29 christos Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.19 2013/08/28 17:47:07 riastradh Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.20 2020/03/25 18:36:29 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,12 +66,12 @@ __RCSID("$NetBSD: bcrypt.c,v 1.19 2013/08/28 17:47:07 riastradh Exp $");
 
 #define BCRYPT_VERSION '2'
 #define BCRYPT_MAXSALT 16	/* Precomputation is just so nice */
-#define BCRYPT_MAXSALTLEN 	(7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1)
+#define BCRYPT_MAXSALTLEN 	(7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 2)
 #define BCRYPT_BLOCKS 6		/* Ciphertext blocks */
 #define BCRYPT_MINROUNDS 16	/* we have log2(rounds) in salt */
 
 static void encode_salt(char *, u_int8_t *, u_int16_t, u_int8_t);
-static void encode_base64(u_int8_t *, u_int8_t *, u_int16_t);
+static u_int8_t *encode_base64(u_int8_t *, u_int8_t *, u_int16_t);
 static void decode_base64(u_int8_t *, u_int16_t, const u_int8_t *);
 
 char *__bcrypt(const char *, const char *);	/* XXX */
@@ -146,7 +146,9 @@ encode_salt(char *salt, u_int8_t *csalt, u_int16_t clen, u_int8_t logr)
 
 	snprintf(salt + 4, 4, "%2.2u$", logr);
 
-	encode_base64((u_int8_t *) salt + 7, csalt, clen);
+	csalt = encode_base64((u_int8_t *) salt + 7, csalt, clen);
+	*csalt++ = '$';
+	*csalt = '\0';
 }
 
 int
@@ -318,7 +320,7 @@ __bcrypt(const char *key, const char *salt)
 	return encrypted;
 }
 
-static void
+static u_int8_t *
 encode_base64(u_int8_t *buffer, u_int8_t *data, u_int16_t len)
 {
 	u_int8_t *bp = buffer;
@@ -346,6 +348,7 @@ encode_base64(u_int8_t *buffer, u_int8_t *data, u_int16_t len)
 		*bp++ = Base64Code[c2 & 0x3f];
 	}
 	*bp = '\0';
+	return bp;
 }
 #if 0
 void
