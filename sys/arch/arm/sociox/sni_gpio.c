@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_gpio.c,v 1.6 2020/03/25 23:29:39 nisimura Exp $	*/
+/*	$NetBSD: sni_gpio.c,v 1.7 2020/03/25 23:31:19 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.6 2020/03/25 23:29:39 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.7 2020/03/25 23:31:19 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -151,7 +151,7 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal_dev("Socionext GPIO controller\n");
+	aprint_normal_dev(self, "Socionext GPIO controller\n");
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 	list = fdtbus_get_string(phandle, "gpio-line-names");
 	if (list)
