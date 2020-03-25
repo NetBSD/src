@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.13 2020/03/25 01:39:49 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.14 2020/03/25 20:19:46 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -53,10 +53,11 @@
  *   controls like FDT descriptions. Fortunately, Intel/Altera CycloneV PDFs
  *   describe every detail of "such the instance of" DW EMAC IP and
  *   most of them are likely applicable to SC2A11 GbE.
+ * - DW EMAC implmentation (0x20) is 0x10.0x36
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.13 2020/03/25 01:39:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.14 2020/03/25 20:19:46 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -166,7 +167,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.13 2020/03/25 01:39:49 nisimura Exp $")
 #define  FCR_RFE	(1U<<2)		/* accept PAUSE to throttle Tx */
 #define  FCR_TFE	(1U<<1)		/* generate PAUSE to moderate Rx lvl */
 #define GMACVTAG	0x001c		/* VLAN tag control */
-#define GMACIMPL	0x0020		/* implementation number XXXX.YYYY */
+#define GMACIMPL	0x0020		/* implementation number XX.YY */
 #define GMACMAH0	0x0040		/* MAC address 0 47:32 */
 #define GMACMAL0	0x0044		/* MAC address 0 31:0 */
 #define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1 - 15 */
@@ -174,7 +175,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.13 2020/03/25 01:39:49 nisimura Exp $")
 #define GMACMIISR	0x00d8		/* resolved xMII link status */
 					/*  3   link up detected
 					 *  2:1 resovled speed
-					 *      0 2.5Mhz (10Mbps) 
+					 *      0 2.5Mhz (10Mbps)
 					 *	1 25Mhz  (100bps)
 					 *	2 125Mhz (1000Mbps)
 					 *  1   full duplex detected */
@@ -306,6 +307,7 @@ struct scx_softc {
 	bus_space_handle_t sc_eesh;	/* eeprom section handle */
 	bus_size_t sc_eesz;		/* eeprom map size */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
+	bus_dma_tag_t sc_dmat32;
 	struct ethercom sc_ethercom;	/* Ethernet common data */
 	struct mii_data sc_mii;		/* MII */
 	callout_t sc_tick_ch;		/* PHY monitor callout */
@@ -319,6 +321,7 @@ struct scx_softc {
 	int sc_ucodeloaded;		/* ucode for H2M/M2H/PKT */
 	int sc_100mii;			/* 1 for RMII/MII, 0 for RGMII */
 	int sc_phandle;			/* fdt phandle */
+	uint64_t sc_freq;
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -399,12 +402,12 @@ static void txreap(struct scx_softc *);
 static void rxintr(struct scx_softc *);
 static int add_rxbuf(struct scx_softc *, int);
 
-static int get_mdioclk(uint32_t);
 static int spin_waitfor(struct scx_softc *, int, int);
 static int mac_read(struct scx_softc *, int);
 static void mac_write(struct scx_softc *, int, int);
 static void loaducode(struct scx_softc *);
 static void injectucode(struct scx_softc *, int, bus_addr_t, bus_size_t);
+static int get_mdioclk(uint32_t);
 
 #define CSR_READ(sc,off) \
 	    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (off))
@@ -460,14 +463,9 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
-	phy_mode = fdtbus_get_string(phandle, "phy-mode");
-	if (phy_mode == NULL) {
-		aprint_error(": missing 'phy-mode' property\n");
-		phy_mode = "rgmii";
-	}
 
 	aprint_naive("\n");
-	aprint_normal(": Gigabit Ethernet Controller\n");
+	/* aprint_normal(": Gigabit Ethernet Controller\n"); */
 	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
 
 	sc->sc_dev = self;
@@ -478,7 +476,15 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_eesz = size[1];
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_phandle = phandle;
-	sc->sc_100mii = (strcmp(phy_mode, "rgmii") != 0);
+
+	phy_mode = fdtbus_get_string(phandle, "phy-mode");
+	if (phy_mode == NULL)
+		aprint_error(": missing 'phy-mode' property\n");
+	sc->sc_100mii = (phy_mode != NULL && strcmp(phy_mode, "rgmii") != 0);
+sc->sc_phy_id = 7; /* XXX */
+sc->sc_freq = 250 * 1000 * 1000; /* XXX */
+aprint_normal_dev(self,
+"phy mode %s, phy id %d, freq %ld\n", phy_mode, sc->sc_phy_id, sc->sc_freq);
 
 	scx_attach_i(sc);
 	return;
@@ -515,13 +521,14 @@ scx_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
+	char *phy_mode;
+	ACPI_INTEGER acpi_phy, acpi_freq;
 	ACPI_STATUS rv;
 
 	rv = acpi_resource_parse(self, handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
-acpi_resource_print(self, &res);
 	mem = acpi_res_mem(&res, 0);
 	irq = acpi_res_irq(&res, 0);
 	if (mem == NULL || irq == NULL || mem->ar_length == 0) {
@@ -550,16 +557,34 @@ acpi_resource_print(self, &res);
 	}
 	sc->sc_eesz = mem->ar_length;
 
+	rv = acpi_dsd_string(handle, "phy-mode", &phy_mode);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error(": missing 'phy-mode' property\n");
+		phy_mode = NULL;
+	}
+	rv = acpi_dsd_integer(handle, "phy-channel", &acpi_phy);
+	if (ACPI_FAILURE(rv))
+		acpi_phy = 31;
+	rv = acpi_dsd_integer(handle, "socionext,phy-clock-frequency",
+			&acpi_freq);
+	if (ACPI_FAILURE(rv))
+		acpi_freq = 999;
+
 	aprint_naive("\n");
-	aprint_normal(": Gigabit Ethernet Controller\n");
+	/* aprint_normal(": Gigabit Ethernet Controller\n"); */
 
 	sc->sc_dev = self;
 	sc->sc_st = bst;
 	sc->sc_sh = bsh;
 	sc->sc_eesh = eebsh;
 	sc->sc_dmat = aa->aa_dmat64;
+	sc->sc_dmat32 = aa->aa_dmat;	/* descriptor needs dma32 */
 
-/* dig _DSD to see parameters. safe to assume RGMII/spd1000 though */
+aprint_normal_dev(self,
+"phy mode %s, phy id %d, freq %ld\n", phy_mode, (int)acpi_phy, acpi_freq);
+	sc->sc_100mii = (phy_mode && strcmp(phy_mode, "rgmii") != 0);
+	sc->sc_freq = acpi_freq;
+	sc->sc_phy_id = (int)acpi_phy;
 
 	scx_attach_i(sc);
 
@@ -580,7 +605,7 @@ scx_attach_i(struct scx_softc *sc)
 	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifmedia * const ifm = &mii->mii_media;
-	uint32_t hwver, phyfreq;
+	uint32_t hwver;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t seg;
 	uint32_t csr;
@@ -597,14 +622,17 @@ scx_attach_i(struct scx_softc *sc)
 	enaddr[5] = csr >> 16;
 	csr = mac_read(sc, GMACIMPL);
 
-	aprint_normal_dev(sc->sc_dev, "NetSec GbE (%d.%d) impl (%x.%x)\n",
-	    hwver >> 16, hwver & 0xffff, csr >> 16, csr & 0xffff);
+	aprint_normal_dev(sc->sc_dev,
+	    "Socionext NetSec GbE hw %d.%d impl 0x%x\n",
+	    hwver >> 16, hwver & 0xffff, csr);
 	aprint_normal_dev(sc->sc_dev,
 	    "Ethernet address %s\n", ether_sprintf(enaddr));
 
-	phyfreq = 0;
 	sc->sc_phy_id = MII_PHY_ANY;
-	sc->sc_mdclk = get_mdioclk(phyfreq); /* 5:2 clk control */
+	sc->sc_mdclk = get_mdioclk(sc->sc_freq); /* 5:2 clk control */
+sc->sc_mdclk = 5; /* XXX */
+aprint_normal_dev(sc->sc_dev, "using %d for mdclk\n", sc->sc_mdclk);
+sc->sc_mdclk <<= 2;
 
 	sc->sc_flowflags = 0;
 
@@ -648,14 +676,14 @@ scx_attach_i(struct scx_softc *sc)
 	 * Allocate the control data structures, and create and load the
 	 * DMA map for it.
 	 */
-	error = bus_dmamem_alloc(sc->sc_dmat,
+	error = bus_dmamem_alloc(sc->sc_dmat32,
 	    sizeof(struct control_data), PAGE_SIZE, 0, &seg, 1, &nseg, 0);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
-	error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
+	error = bus_dmamem_map(sc->sc_dmat32, &seg, nseg,
 	    sizeof(struct control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT);
 	if (error != 0) {
@@ -663,7 +691,7 @@ scx_attach_i(struct scx_softc *sc)
 		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
-	error = bus_dmamap_create(sc->sc_dmat,
+	error = bus_dmamap_create(sc->sc_dmat32,
 	    sizeof(struct control_data), 1,
 	    sizeof(struct control_data), 0, 0, &sc->sc_cddmamap);
 	if (error != 0) {
@@ -672,7 +700,7 @@ scx_attach_i(struct scx_softc *sc)
 		    "error = %d\n", error);
 		goto fail_2;
 	}
-	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
+	error = bus_dmamap_load(sc->sc_dmat32, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct control_data), NULL, 0);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -681,7 +709,7 @@ scx_attach_i(struct scx_softc *sc)
 		goto fail_3;
 	}
 	for (i = 0; i < MD_TXQUEUELEN; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		if ((error = bus_dmamap_create(sc->sc_dmat32, MCLBYTES,
 		    MD_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			aprint_error_dev(sc->sc_dev,
@@ -691,7 +719,7 @@ scx_attach_i(struct scx_softc *sc)
 		}
 	}
 	for (i = 0; i < MD_NRXDESC; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		if ((error = bus_dmamap_create(sc->sc_dmat32, MCLBYTES,
 		    1, MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to create rx DMA map %d, error = %d\n",
@@ -702,7 +730,7 @@ scx_attach_i(struct scx_softc *sc)
 	}
 	sc->sc_seg = seg;
 	sc->sc_nseg = nseg;
-printf("bus_dmaseg ds_addr %08lx, ds_len %08lx, nseg %d\n", seg.ds_addr, seg.ds_len, nseg);
+aprint_normal_dev(sc->sc_dev, "descriptor ds_addr %lx, ds_len %lx, nseg %d\n", seg.ds_addr, seg.ds_len, nseg);
 
 	if (pmf_device_register(sc->sc_dev, NULL, NULL))
 		pmf_class_network_register(sc->sc_dev, ifp);
@@ -1053,10 +1081,13 @@ mii_statchg(struct ifnet *ifp)
 	/* decode MIISR register value */
 	uint32_t miisr = mac_read(sc, GMACMIISR);
 	int spd = (miisr >> 1) & 03;
-	printf("xMII link status (0x%x) spd%d", miisr,
-		(spd == 2) ? 1000 : (spd == 1) ? 100 : 10);
-	if (miisr & 1)
-		printf(",full-duplex");
+	printf("MII link status (0x%x) %s",
+	    miisr, (miisr & 8) ? "up" : "down");
+	if (miisr & 8) {
+		printf(" spd%d", (spd == 2) ? 1000 : (spd == 1) ? 100 : 10);
+		if (miisr & 1)
+			printf(",full-duplex");
+	}
 	printf("\n");
 #endif
 	/* Get flow control negotiation result. */
@@ -1461,7 +1492,7 @@ loaducode(struct scx_softc *sc)
 	sz = EE_READ(sc, 0x10); /* H->M ucode size */
 	sz *= 4;
 	addr = ((uint64_t)up << 32) | lo;
-	aprint_normal_dev(sc->sc_dev, "H2M ucode %u\n", sz);
+aprint_normal_dev(sc->sc_dev, "0x%x H2M ucode %u\n", lo, sz);
 	injectucode(sc, H2MENG, (bus_addr_t)addr, (bus_size_t)sz);
 
 	up = EE_READ(sc, 0x14); /* M->H ucode addr high */
@@ -1470,13 +1501,13 @@ loaducode(struct scx_softc *sc)
 	sz *= 4;
 	addr = ((uint64_t)up << 32) | lo;
 	injectucode(sc, M2HENG, (bus_addr_t)addr, (bus_size_t)sz);
-	aprint_normal_dev(sc->sc_dev, "M2H ucode %u\n", sz);
+aprint_normal_dev(sc->sc_dev, "0x%x M2H ucode %u\n", lo, sz);
 
 	lo = EE_READ(sc, 0x20); /* PKT ucode addr */
 	sz = EE_READ(sc, 0x24); /* PKT ucode size */
 	sz *= 4;
 	injectucode(sc, PKTENG, (bus_addr_t)lo, (bus_size_t)sz);
-	aprint_normal_dev(sc->sc_dev, "PKT ucode %u\n", sz);
+aprint_normal_dev(sc->sc_dev, "0x%x PKT ucode %u\n", lo, sz);
 }
 
 static void
@@ -1487,7 +1518,7 @@ injectucode(struct scx_softc *sc, int port,
 	bus_size_t off;
 	uint32_t ucode;
 
-	if (!bus_space_map(sc->sc_st, addr, size, 0, &bsh) != 0) {
+	if (bus_space_map(sc->sc_st, addr, size, 0, &bsh) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "eeprom map failure for ucode port 0x%x\n", port);
 		return;
@@ -1517,6 +1548,7 @@ get_mdioclk(uint32_t freq)
 	};
 	int i;
 
+	freq /= 1000 * 1000;
 	/* convert MDIO clk to a divisor value */
 	if (freq < mdioclk[0].freq)
 		return mdioclk[0].bit;
