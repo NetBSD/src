@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.94 2020/03/22 11:20:59 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.95 2020/03/26 18:32:21 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,11 +64,8 @@
  * xennet_start() (default output routine of xennet) that schedules a softint,
  * xennet_softstart(). xennet_softstart() generates the requests associated
  * to the TX mbufs queued (see altq(9)).
- * The backend's responses are processed by xennet_tx_complete(), called either
- * from:
- * - xennet_start()
- * - xennet_handler(), during an asynchronous event notification from backend
- *   (similar to an IRQ).
+ * The backend's responses are processed by xennet_tx_complete(), called
+ * from xennet_softstart()
  *
  * for RX:
  * Purpose is to process the packets received from the outside. RX buffers
@@ -84,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.94 2020/03/22 11:20:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.95 2020/03/26 18:32:21 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -934,7 +931,7 @@ xennet_rx_free_req(struct xennet_rxreq *req)
 /*
  * Process responses associated to the TX mbufs sent previously through
  * xennet_softstart()
- * Called at splnet.
+ * Called at splsoftnet.
  */
 static void
 xennet_tx_complete(struct xennet_xenbus_softc *sc)
@@ -958,7 +955,7 @@ again:
 			aprint_verbose_dev(sc->sc_dev,
 			    "grant still used by backend\n");
 			sc->sc_tx_ring.rsp_cons = i;
-			goto end;
+			return;
 		}
 		if (__predict_false(
 		    RING_GET_RESPONSE(&sc->sc_tx_ring, i)->status !=
@@ -980,11 +977,6 @@ again:
 	xen_wmb();
 	if (resp_prod != sc->sc_tx_ring.sring->rsp_prod)
 		goto again;
-end:
-	if (ifp->if_flags & IFF_OACTIVE) {
-		ifp->if_flags &= ~IFF_OACTIVE;
-		softint_schedule(sc->sc_softintr);
-	}
 }
 
 /*
@@ -1011,7 +1003,11 @@ xennet_handler(void *arg)
 	if (sc->sc_backend_status != BEST_CONNECTED)
 		return 1;
 
-	xennet_tx_complete(sc);
+	/* Poke Tx queue if we run out of Tx buffers earlier */
+	mutex_enter(&sc->sc_tx_lock);
+	if (SLIST_EMPTY(&sc->sc_txreq_head))
+		softint_schedule(sc->sc_softintr);
+	mutex_exit(&sc->sc_tx_lock);
 
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx_ring.req_prod_pvt);
 
@@ -1162,12 +1158,6 @@ xennet_start(struct ifnet *ifp)
 
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx_ring.req_prod_pvt);
 
-	xennet_tx_complete(sc);
-
-	if (__predict_false(
-	    (ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING))
-		return;
-
 	/*
 	 * The Xen communication channel is much more efficient if we can
 	 * schedule batch of packets for domain0. To achieve this, we
@@ -1196,12 +1186,12 @@ xennet_softstart(void *arg)
 	int notify;
 	int do_notify = 0;
 
-	mutex_enter(&sc->sc_tx_lock);
-	if (__predict_false(
-	    (ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)) {
-		mutex_exit(&sc->sc_tx_lock);
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-	}
+
+	xennet_tx_complete(sc);
+
+	mutex_enter(&sc->sc_tx_lock);
 
 	req_prod = sc->sc_tx_ring.req_prod_pvt;
 	while (/*CONSTCOND*/1) {
@@ -1209,7 +1199,6 @@ xennet_softstart(void *arg)
 
 		req = SLIST_FIRST(&sc->sc_txreq_head);
 		if (__predict_false(req == NULL)) {
-			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 		IFQ_POLL(&ifp->if_snd, m);
@@ -1280,7 +1269,6 @@ xennet_softstart(void *arg)
 			    xpmap_ptom_masked(pa),
 			    GNTMAP_readonly, &req->txreq_gntref) != 0)) {
 				m_freem(new_m);
-				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
 			/* we will be able to send new_m */
@@ -1292,7 +1280,6 @@ xennet_softstart(void *arg)
 			    sc->sc_xbusd->xbusd_otherend_id,
 			    xpmap_ptom_masked(pa),
 			    GNTMAP_readonly, &req->txreq_gntref) != 0)) {
-				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
 			/* we will be able to send m */
@@ -1409,7 +1396,6 @@ xennet_init(struct ifnet *ifp)
 		xennet_reset(sc);
 	}
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
 	mutex_exit(&sc->sc_rx_lock);
 	return 0;
@@ -1420,7 +1406,7 @@ xennet_stop(struct ifnet *ifp, int disable)
 {
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	hypervisor_mask_event(sc->sc_evtchn);
 	xennet_reset(sc);
 }
