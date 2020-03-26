@@ -1,6 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 2013/03/19 22:16:52 garbled Exp $
+#	$NetBSD: Makefile,v 1.5 2020/03/26 08:02:55 skrll Exp $
 
-SUBDIR=		ramdisk sshramdisk .WAIT instkernel
+SUBDIR=		ramdisk
+
+.if !empty(ALL_KERNELS:MRPI_INSTALL)
+SUBDIR+=	sshramdisk
+.endif
+
+SUBDIR+=	.WAIT instkernel
 TARGETS+=	release
 
 .include <bsd.subdir.mk>
