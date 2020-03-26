@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.64 2020/03/07 06:27:19 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.65 2020/03/26 13:32:03 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.64 2020/03/07 06:27:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.65 2020/03/26 13:32:03 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2229,7 +2229,10 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 				goto bad3;
 		}
 	}
-	/* Call init_input if this is the first recording open. */
+	/*
+	 * Call init_input and start rmixer, if this is the first recording
+	 * open.  See pause consideration notes.
+	 */
 	if (af->rtrack && sc->sc_ropens == 0) {
 		if (sc->hw_if->init_input) {
 			hwbuf = &sc->sc_rmixer->hwbuf;
@@ -2244,6 +2247,10 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			if (error)
 				goto bad3;
 		}
+
+		mutex_enter(sc->sc_lock);
+		audio_rmixer_start(sc);
+		mutex_exit(sc->sc_lock);
 	}
 
 	if (bellfile == NULL) {
@@ -2462,21 +2469,18 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 
 	TRACET(2, track, "resid=%zd", uio->uio_resid);
 
+#ifdef AUDIO_PM_IDLE
 	error = audio_exlock_mutex_enter(sc);
 	if (error)
 		return error;
 
-#ifdef AUDIO_PM_IDLE
 	if (device_is_active(&sc->sc_dev) || sc->sc_idle)
 		device_active(&sc->sc_dev, DVA_SYSTEM);
-#endif
 
-	/*
-	 * The first read starts rmixer.
-	 */
-	if (sc->sc_rbusy == false)
-		audio_rmixer_start(sc);
+	/* In recording, unlike playback, read() never operates rmixer. */
+
 	audio_exlock_mutex_exit(sc);
+#endif
 
 	usrbuf = &track->usrbuf;
 	input = track->input;
@@ -6680,10 +6684,22 @@ audio_mixers_get_format(struct audio_softc *sc, struct audio_info *ai)
 /*
  * Pause consideration:
  *
- * The introduction of these two behavior makes pause/unpause operation
- * simple.
- * 1. The first read/write access of the first track makes mixer start.
- * 2. A pause of the last track doesn't make mixer stop.
+ * Pausing/unpausing never affect [pr]mixer.  This single rule makes
+ * operation simple.  Note that playback and recording are asymmetric.
+ *
+ * For playback,
+ *  1. Any playback open doesn't start pmixer regardless of initial pause
+ *     state of this track.
+ *  2. The first write access among playback tracks only starts pmixer
+ *     regardless of this track's pause state.
+ *  3. Even a pause of the last playback track doesn't stop pmixer.
+ *  4. The last close of all playback tracks only stops pmixer.
+ *
+ * For recording,
+ *  1. The first recording open only starts rmixer regardless of initial
+ *     pause state of this track.
+ *  2. Even a pause of the last track doesn't stop rmixer.
+ *  3. The last close of all recording tracks only stops rmixer.
  */
 
 /*
