@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.229 2020/03/08 17:04:45 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.230 2020/03/26 20:19:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.229 2020/03/08 17:04:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.230 2020/03/26 20:19:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1592,12 +1592,6 @@ lwp_userret(struct lwp *l)
 	KASSERT(l == curlwp);
 	KASSERT(l->l_stat == LSONPROC);
 	p = l->l_proc;
-
-#ifndef __HAVE_FAST_SOFTINTS
-	/* Run pending soft interrupts. */
-	if (l->l_cpu->ci_data.cpu_softints != 0)
-		softint_overlay();
-#endif
 
 	/*
 	 * It is safe to do this read unlocked on a MP system..
