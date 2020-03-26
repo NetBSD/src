@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.63 2020/03/08 15:00:31 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.64 2020/03/26 19:25:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.63 2020/03/08 15:00:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.64 2020/03/26 19:25:07 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -1086,15 +1086,10 @@ sched_curcpu_runnable_p(void)
 	kpreempt_disable();
 	ci = curcpu();
 	spc = &ci->ci_schedstate;
-
+	rv = (spc->spc_count != 0);
 #ifndef __HAVE_FAST_SOFTINTS
-	if (ci->ci_data.cpu_softints) {
-		kpreempt_enable();
-		return true;
-	}
+	rv |= (ci->ci_data.cpu_softints != 0);
 #endif
-
-	rv = (spc->spc_count != 0) ? true : false;
 	kpreempt_enable();
 
 	return rv;
