@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.37 2020/03/26 19:46:42 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.38 2020/03/26 22:43:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.37 2020/03/26 19:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.38 2020/03/26 22:43:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -557,13 +557,13 @@ turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
 
 	(*pr)("Turnstile:\n");
 	(*pr)("=> %d waiting readers:", TS_WAITERS(ts, TS_READER_Q));
-	TAILQ_FOREACH(l, rsq, l_sleepchain) {
+	LIST_FOREACH(l, rsq, l_sleepchain) {
 		(*pr)(" %p", l);
 	}
 	(*pr)("\n");
 
 	(*pr)("=> %d waiting writers:", TS_WAITERS(ts, TS_WRITER_Q));
-	TAILQ_FOREACH(l, wsq, l_sleepchain) {
+	LIST_FOREACH(l, wsq, l_sleepchain) {
 		(*pr)(" %p", l);
 	}
 	(*pr)("\n");
