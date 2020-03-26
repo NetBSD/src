@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.95 2020/03/26 18:32:21 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.96 2020/03/26 18:50:16 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.95 2020/03/26 18:32:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.96 2020/03/26 18:50:16 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -951,12 +951,7 @@ again:
 		req = &sc->sc_txreqs[RING_GET_RESPONSE(&sc->sc_tx_ring, i)->id];
 		KASSERT(req->txreq_id ==
 		    RING_GET_RESPONSE(&sc->sc_tx_ring, i)->id);
-		if (__predict_false(xengnt_status(req->txreq_gntref))) {
-			aprint_verbose_dev(sc->sc_dev,
-			    "grant still used by backend\n");
-			sc->sc_tx_ring.rsp_cons = i;
-			return;
-		}
+		KASSERT(xengnt_status(req->txreq_gntref) == 0);
 		if (__predict_false(
 		    RING_GET_RESPONSE(&sc->sc_tx_ring, i)->status !=
 		    NETIF_RSP_OKAY))
