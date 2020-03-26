@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.16 2020/03/26 08:28:50 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.17 2020/03/26 10:38:16 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -40,14 +40,14 @@
  *   to designify ring number from which to arrive or to which go.
  * - memory mapped EEPROM to hold MAC address. The rest of the area is
  *   occupied by a set of ucode for two DMA engines and one packet engine.
- * - The size of frame address filter is unknown. Might be 16 or even 128.
+ * - The size of frame address filter is 16 plus 32.
  * - The first slot is my own station address. Always enabled to perform
  *   to identify oneself.
  * - 1~16 are for supplimental MAC addresses. Independently enabled for
  *   use. Good to catch multicast. Byte-wise selective match available.
  *   Use the mask to catch { 0x01, 0x00, 0x00 } and/or { 0x33, 0x33 }.
- * - 16~128 might be exact match without byte-mask.
- * - The size of multicast hash filter store is unknown. Might be 256 bit.
+ * - 16~32 might be exact match without byte-mask.
+ * - The size of multicast hash filter store is 64 bit.
  * - Socionext/Linaro "NetSec" code makes many cut shorts. Some constants
  *   are left unexplained. The values should be handled via external
  *   controls like FDT descriptions. Fortunately, Intel/Altera CycloneV PDFs
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.16 2020/03/26 08:28:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.17 2020/03/26 10:38:16 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.16 2020/03/26 08:28:50 nisimura Exp $")
 
 /* SC2A11 register block */
 #define SWRESET		0x104
+#define MACADRH		0x10c
+#define MACADRL		0x110
 #define COMINIT		0x120
 #define INTRST		0x200
 #define  IRQ_RX		(1U<<1)
@@ -115,8 +117,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.16 2020/03/26 08:28:50 nisimura Exp $")
 #define H2MENG		0x210		/* DMAC host2media ucode port */
 #define M2HENG		0x21c		/* DMAC media2host ucode port */
 #define PKTENG		0x0d0		/* packet engine ucode port */
-#define HWVER0		0x22c
-#define HWVER1		0x230
+#define MCVER		0x22c		/* micro controller version */
+#define HWVER		0x230		/* hardware version */
 
 #define MACSTAT		0x1024		/* gmac status */
 #define MACDATA		0x11c0		/* gmac rd/wr data */
@@ -154,8 +156,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.16 2020/03/26 08:28:50 nisimura Exp $")
 #define  AFR_UHTE	(1U<<1)		/* use additional MAC addresses */
 #define  AFR_PM		(1U<<0)		/* run promisc mode */
 #define  _AFR		0x80000001	/* XXX TBD */
-#define GMACMHTH	0x0008		/* XXX multicast hash table 63:32 */
-#define GMACMHTL	0x000c		/* XXX multicast hash table 31:0 */
+#define GMACMHTH	0x0008		/* multicast hash table 63:32 */
+#define GMACMHTL	0x000c		/* multicast hash table 31:0 */
 #define GMACGAR		0x0010		/* MDIO operation */
 #define  GAR_PHY	(11)		/* mii phy 15:11 */
 #define  GAR_REG	(6)		/* mii reg 10:6 */
@@ -180,13 +182,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.16 2020/03/26 08:28:50 nisimura Exp $")
 					 *	2 125Mhz (1000Mbps)
 					 *  1   full duplex detected */
 
-#define GMACMHT0	0x0500		/* multicast hash table 0 - 7 */
+#define GMACMHT0	0x0500		/* XXX multicast hash table 0 - 7 */
 #define GMACMHT(i)	((i)*4+0x500)
 #define GMACVHT		0x0588		/* VLAN tag hash */
-#define GMACAMAH(i)	((i)*8+0x800)	/* supplimental MAC addr 16-127 */
+#define GMACAMAH(i)	((i)*8+0x800)	/* supplimental MAC addr 16-31 */
 #define GMACAMAL(i)	((i)*8+0x804)
+#define GMACEVCTL	0x0100		/* event counter control */
 #define GMACEVCNT(i)	((i)*4+0x114)	/* event counter 0x114~284 */
-#define GMACEVCTL	0x0100		/* clear event counter registers */
 
 #define GMACBMR		0x1000		/* DMA bus mode control
 					 * 24    4PBL
@@ -613,7 +615,7 @@ scx_attach_i(struct scx_softc *sc)
 	uint32_t csr;
 	int i, nseg, error = 0;
 
-	hwver = CSR_READ(sc, HWVER1);	/* Socionext HW */
+	hwver = CSR_READ(sc, HWVER);	/* Socionext HW */
 	/* stored in big endian order */
 	csr = bus_space_read_4(sc->sc_st, sc->sc_eesh, 0);
 	enaddr[0] = csr >> 24;
@@ -953,7 +955,7 @@ scx_set_rcvfilt(struct scx_softc *sc)
 	struct ifnet * const ifp = &ec->ec_if;
 	struct ether_multistep step;
 	struct ether_multi *enm;
-	uint32_t mchash[8]; 	/* 8x 32 = 256 bit */
+	uint32_t mchash[2]; 	/* 2x 32 = 64 bit */
 	uint32_t csr, crc;
 	int i;
 
@@ -972,9 +974,8 @@ scx_set_rcvfilt(struct scx_softc *sc)
 	/* clear 15 entry supplimental perfect match filter */
 	for (i = 1; i < 16; i++)
 		 mac_write(sc, GMACMAH(i), 0);
-	/* build 256 bit multicast hash filter */
-	memset(mchash, 0, sizeof(mchash));
-	crc = 0;
+	/* build 64 bit multicast hash filter */
+	crc = mchash[1] = mchash[0] = 0;
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	i = 1; /* slot 0 is occupied */
@@ -1006,8 +1007,8 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 			/* use hash table when too many */
 			/* bit_reserve_32(~crc) !? */
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-			/* 3(31:29) 5(28:24) bit sampling */
-			mchash[crc >> 29] |= 1 << ((crc >> 24) & 0x1f);
+			/* 1(31) 5(30:26) bit sampling */
+			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
 		}
 		ETHER_NEXT_MULTI(step, enm);
 		i++;
@@ -1016,8 +1017,8 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 
 	if (crc)
 		csr |= AFR_MHTE;
-	for (i = 0; i < __arraycount(mchash); i++)
-		mac_write(sc, GMACMHT(i), mchash[i]);
+	mac_write(sc, GMACMHTH, mchash[1]);
+	mac_write(sc, GMACMHTL, mchash[0]);
 	mac_write(sc, GMACAFR, csr);
 	return;
 
