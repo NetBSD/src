@@ -1,4 +1,4 @@
-/*	$NetBSD: syncobj.h,v 1.12 2020/03/23 19:14:06 ad Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.13 2020/03/26 21:15:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@ typedef struct syncobj {
 struct lwp *syncobj_noowner(wchan_t);
 
 #define	SOBJ_SLEEPQ_SORTED	0x01
-#define	SOBJ_SLEEPQ_FIFO	0x02
 #define	SOBJ_SLEEPQ_LIFO	0x04
 #define	SOBJ_SLEEPQ_NULL	0x08
 
