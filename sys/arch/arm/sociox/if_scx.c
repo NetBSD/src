@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.15 2020/03/26 01:05:26 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.16 2020/03/26 08:28:50 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.15 2020/03/26 01:05:26 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.16 2020/03/26 08:28:50 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -202,7 +202,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.15 2020/03/26 01:05:26 nisimura Exp $")
 					 */
 #define  _BMR		0x00412080	/* XXX TBD */
 #define  _BMR0		0x00020181	/* XXX TBD */
-#define  BMR_RST	(1U<<0)		/* reset op. self clear when done */
+#define  BMR_RST	(1)		/* reset op. self clear when done */
 #define GMACTDS		0x1004		/* write any to resume tdes */
 #define GMACRDS		0x1008		/* write any to resume rdes */
 #define GMACRDLAR	0x100c		/* rdes base address 32bit paddr */
@@ -585,6 +585,8 @@ aprint_normal_dev(self,
 	sc->sc_100mii = (phy_mode && strcmp(phy_mode, "rgmii") != 0);
 	sc->sc_phy_id = (int)acpi_phy;
 	sc->sc_freq = acpi_freq;
+aprint_normal_dev(self,
+"GMACGAR %08x\n", mac_read(sc, GMACGAR));
 
 	scx_attach_i(sc);
 
@@ -631,7 +633,7 @@ scx_attach_i(struct scx_softc *sc)
 
 sc->sc_phy_id = MII_PHY_ANY;
 	sc->sc_mdclk = get_mdioclk(sc->sc_freq); /* 5:2 clk control */
-sc->sc_mdclk = 5; /* XXX */
+sc->sc_mdclk = 0; /* XXX */
 aprint_normal_dev(sc->sc_dev, "using %d for mdclk\n", sc->sc_mdclk);
 sc->sc_mdclk <<= 2;
 
@@ -776,16 +778,18 @@ aprint_normal_dev(sc->sc_dev, "descriptor ds_addr %lx, ds_len %lx, nseg %d\n", s
 static void
 scx_reset(struct scx_softc *sc)
 {
+	int loop = 0, busy;
 
-	mac_write(sc, GMACBMR, BMR_RST); /* may take for a while */
-	(void)spin_waitfor(sc, GMACBMR, BMR_RST);
+	mac_write(sc, GMACBMR, _BMR0); /* may take for a while */
+	do {
+		DELAY(10);
+		busy = mac_read(sc, GMACBMR) & BMR_RST;
+	} while (++loop < 3000 && busy);
+printf("reset done with %d loop\n", loop);
 
 	CSR_WRITE(sc, DESCENG_SRST, 1);
 	CSR_WRITE(sc, DESCENG_INIT, 1);
 	mac_write(sc, GMACBMR, _BMR);
-	mac_write(sc, GMACRDLAR, _RDLAR);
-	mac_write(sc, GMACTDLAR, _TDLAR);
-	mac_write(sc, GMACAFR, _AFR);
 	mac_write(sc, GMACEVCTL, 1);
 }
 
@@ -1444,16 +1448,16 @@ add_rxbuf(struct scx_softc *sc, int i)
 static int
 spin_waitfor(struct scx_softc *sc, int reg, int exist)
 {
-	int val, loop;
+	int busy, loop;
 
-	val = CSR_READ(sc, reg);
-	if ((val & exist) == 0)
+	busy = CSR_READ(sc, reg) & exist;
+	if (busy == 0)
 		return 0;
 	loop = 3000;
 	do {
 		DELAY(10);
-		val = CSR_READ(sc, reg);
-	} while (--loop > 0 && (val & exist));
+		busy = CSR_READ(sc, reg) & exist;
+	} while (--loop > 0 && busy);
 	return (loop > 0) ? 0 : ETIMEDOUT;
 }
 
