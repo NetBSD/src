@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.14 2020/03/25 20:19:46 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.15 2020/03/26 01:05:26 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.14 2020/03/25 20:19:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.15 2020/03/26 01:05:26 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -176,7 +176,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.14 2020/03/25 20:19:46 nisimura Exp $")
 					/*  3   link up detected
 					 *  2:1 resovled speed
 					 *      0 2.5Mhz (10Mbps)
-					 *	1 25Mhz  (100bps)
+					 *	1 25Mhz  (100Mbps)
 					 *	2 125Mhz (1000Mbps)
 					 *  1   full duplex detected */
 
@@ -463,7 +463,6 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
-
 	aprint_naive("\n");
 	/* aprint_normal(": Gigabit Ethernet Controller\n"); */
 	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
@@ -475,6 +474,7 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_eesh = eebsh;
 	sc->sc_eesz = size[1];
 	sc->sc_dmat = faa->faa_dmat;
+	sc->sc_dmat32 = faa->faa_dmat; /* XXX */
 	sc->sc_phandle = phandle;
 
 	phy_mode = fdtbus_get_string(phandle, "phy-mode");
@@ -583,8 +583,8 @@ scx_acpi_attach(device_t parent, device_t self, void *aux)
 aprint_normal_dev(self,
 "phy mode %s, phy id %d, freq %ld\n", phy_mode, (int)acpi_phy, acpi_freq);
 	sc->sc_100mii = (phy_mode && strcmp(phy_mode, "rgmii") != 0);
-	sc->sc_freq = acpi_freq;
 	sc->sc_phy_id = (int)acpi_phy;
+	sc->sc_freq = acpi_freq;
 
 	scx_attach_i(sc);
 
@@ -605,13 +605,14 @@ scx_attach_i(struct scx_softc *sc)
 	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifmedia * const ifm = &mii->mii_media;
-	uint32_t hwver;
+	uint32_t hwver, dwimp;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t seg;
 	uint32_t csr;
 	int i, nseg, error = 0;
 
-	hwver = CSR_READ(sc, HWVER1);
+	hwver = CSR_READ(sc, HWVER1);	/* Socionext HW */
+	/* stored in big endian order */
 	csr = bus_space_read_4(sc->sc_st, sc->sc_eesh, 0);
 	enaddr[0] = csr >> 24;
 	enaddr[1] = csr >> 16;
@@ -620,15 +621,15 @@ scx_attach_i(struct scx_softc *sc)
 	csr = bus_space_read_4(sc->sc_st, sc->sc_eesh, 4);
 	enaddr[4] = csr >> 24;
 	enaddr[5] = csr >> 16;
-	csr = mac_read(sc, GMACIMPL);
+	dwimp = mac_read(sc, GMACIMPL);	/* DW EMAC XX.YY */
 
 	aprint_normal_dev(sc->sc_dev,
 	    "Socionext NetSec GbE hw %d.%d impl 0x%x\n",
-	    hwver >> 16, hwver & 0xffff, csr);
+	    hwver >> 16, hwver & 0xffff, dwimp);
 	aprint_normal_dev(sc->sc_dev,
 	    "Ethernet address %s\n", ether_sprintf(enaddr));
 
-	sc->sc_phy_id = MII_PHY_ANY;
+sc->sc_phy_id = MII_PHY_ANY;
 	sc->sc_mdclk = get_mdioclk(sc->sc_freq); /* 5:2 clk control */
 sc->sc_mdclk = 5; /* XXX */
 aprint_normal_dev(sc->sc_dev, "using %d for mdclk\n", sc->sc_mdclk);
@@ -802,7 +803,7 @@ scx_init(struct ifnet *ifp)
 	/* Reset the chip to a known state. */
 	scx_reset(sc);
 
-	/* set my address in perfect match slot 0 */
+	/* set my address in perfect match slot 0. little endin order */
 	csr = (ea[3] << 24) | (ea[2] << 16) | (ea[1] << 8) |  ea[0];
 	mac_write(sc, GMACMAL0, csr);
 	csr = (ea[5] << 8) | ea[4];
@@ -1077,6 +1078,7 @@ mii_statchg(struct ifnet *ifp)
 	struct scx_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t fcr;
+
 #if 1
 	/* decode MIISR register value */
 	uint32_t miisr = mac_read(sc, GMACMIISR);
