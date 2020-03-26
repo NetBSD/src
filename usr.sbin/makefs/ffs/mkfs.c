@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.38 2020/03/25 20:17:48 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.39 2020/03/26 04:25:28 kre Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.38 2020/03/25 20:17:48 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.39 2020/03/26 04:25:28 kre Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -821,8 +821,8 @@ ffs_wtfs(daddr_t bno, int size, void *bf, const fsinfo_t *fsopts)
 
 	offset = bno * fsopts->sectorsize + fsopts->offset;
 	if (lseek(fsopts->fd, offset, SEEK_SET) == -1)
-		err(EXIT_FAILURE, "%s: seek error @%td for sector %jd",
-		    __func__, offset, (intmax_t)bno);
+		err(EXIT_FAILURE, "%s: seek error @%jd for sector %jd",
+		    __func__, (intmax_t)offset, (intmax_t)bno);
 	n = write(fsopts->fd, bf, size);
 	if (n == -1)
 		err(EXIT_FAILURE, "%s: write error for sector %jd", __func__,
