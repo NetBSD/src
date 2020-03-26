@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.8 2020/03/25 13:07:04 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.9 2020/03/26 13:37:44 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.8 2020/03/25 13:07:04 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.9 2020/03/26 13:37:44 isaki Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -1557,14 +1557,14 @@ test_open(const char *devname, int mode)
 	XP_EQ(0, ai.record.waiting);
 		/* balance */
 	XP_EQ(exp_ropen, ai.record.open);
-	/*
-	 * NetBSD7,8 (may?) be active when opened in recording mode but
-	 * recording has not started yet. (?)
-	 * NetBSD9 is not active at that time.
-	 */
-	if (netbsd < 9) {
-	} else {
+	if (netbsd < 9 && strcmp(devname, "sound") == 0) {
+		/*
+		 * On NetBSD7/8, it doesn't seem to start recording on open
+		 * for /dev/sound.  It should be a bug.
+		 */
 		XP_EQ(0, ai.record.active);
+	} else {
+		XP_EQ(exp_ropen, ai.record.active);
 	}
 	/* Save it */
 	ai0 = ai;
@@ -1645,9 +1645,14 @@ test_open(const char *devname, int mode)
 	XP_EQ(0, ai.record.waiting);
 		/* balance */
 	XP_EQ(exp_ropen, ai.record.open);
-	if (netbsd < 9) {
-	} else {
+	if (netbsd < 9 && strcmp(devname, "sound") == 0) {
+		/*
+		 * On NetBSD7/8, it doesn't seem to start recording on open
+		 * for /dev/sound.  It should be a bug.
+		 */
 		XP_EQ(0, ai.record.active);
+	} else {
+		XP_EQ(exp_ropen, ai.record.active);
 	}
 
 	r = CLOSE(fd);
@@ -2921,6 +2926,9 @@ test_poll_mode(int mode, int events, int expected_revents)
 	fd = OPEN(devaudio, mode);
 	REQUIRED_SYS_OK(fd);
 
+	/* Wait a bit to be recorded. */
+	usleep(100 * 1000);
+
 	memset(&pfd, 0, sizeof(pfd));
 	pfd.fd = fd;
 	pfd.events = events;
@@ -2948,15 +2956,23 @@ test_poll_mode(int mode, int events, int expected_revents)
 	r = CLOSE(fd);
 	XP_SYS_EQ(0, r);
 }
-DEF(poll_mode_RDONLY_IN)	{ test_poll_mode(O_RDONLY, IN,     0); }
+DEF(poll_mode_RDONLY_IN)	{ test_poll_mode(O_RDONLY, IN,     IN); }
 DEF(poll_mode_RDONLY_OUT)	{ test_poll_mode(O_RDONLY, OUT,    0); }
-DEF(poll_mode_RDONLY_INOUT)	{ test_poll_mode(O_RDONLY, IN|OUT, 0); }
+DEF(poll_mode_RDONLY_INOUT)	{ test_poll_mode(O_RDONLY, IN|OUT, IN); }
 DEF(poll_mode_WRONLY_IN)	{ test_poll_mode(O_WRONLY, IN,     0); }
 DEF(poll_mode_WRONLY_OUT)	{ test_poll_mode(O_WRONLY, OUT,	   OUT); }
 DEF(poll_mode_WRONLY_INOUT)	{ test_poll_mode(O_WRONLY, IN|OUT, OUT); }
-DEF(poll_mode_RDWR_IN)		{ test_poll_mode(O_RDWR,   IN,     0); }
+DEF(poll_mode_RDWR_IN)		{
+	/* On half-duplex, O_RDWR is the same as O_WRONLY. */
+	if (hw_fulldup()) test_poll_mode(O_RDWR,   IN,     IN);
+	else		  test_poll_mode(O_RDWR,   IN,     0);
+}
 DEF(poll_mode_RDWR_OUT)		{ test_poll_mode(O_RDWR,   OUT,	   OUT); }
-DEF(poll_mode_RDWR_INOUT)	{ test_poll_mode(O_RDWR,   IN|OUT, OUT); }
+DEF(poll_mode_RDWR_INOUT)	{
+	/* On half-duplex, O_RDWR is the same as O_WRONLY. */
+	if (hw_fulldup()) test_poll_mode(O_RDWR,   IN|OUT, IN|OUT);
+	else		  test_poll_mode(O_RDWR,   IN|OUT,    OUT);
+}
 
 /*
  * Poll(OUT) when buffer is empty.
