@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.9 2020/03/26 13:37:44 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.10 2020/03/26 13:43:10 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.9 2020/03/26 13:37:44 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.10 2020/03/26 13:43:10 isaki Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -1383,6 +1383,7 @@ void test_rdwr_fallback(int, bool, bool);
 void test_rdwr_two(int, int);
 void test_mmap_mode(int, int);
 void test_poll_mode(int, int, int);
+void test_poll_in_open(const char *);
 void test_kqueue_mode(int, int, int);
 volatile int sigio_caught;
 void signal_FIOASYNC(int);
@@ -3370,6 +3371,81 @@ DEF(poll_out_simul)
 		xxx_close_wait();
 	}
 }
+
+/*
+ * Open with READ mode starts recording immediately.
+ * Of course, audioctl doesn't start.
+ */
+void
+test_poll_in_open(const char *devname)
+{
+	struct audio_info ai;
+	struct pollfd pfd;
+	char buf[4096];
+	char devfile[16];
+	int fd;
+	int r;
+	bool is_audioctl;
+
+	TEST("poll_in_open_%s", devname);
+	if (hw_canrec() == 0) {
+		XP_SKIP("This test is only for recordable device");
+		return;
+	}
+
+	snprintf(devfile, sizeof(devfile), "/dev/%s%d", devname, unit);
+	is_audioctl = (strcmp(devname, "audioctl") == 0);
+
+	fd = OPEN(devfile, O_RDONLY);
+	REQUIRED_SYS_OK(fd);
+
+	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
+	REQUIRED_SYS_EQ(0, r);
+	if (is_audioctl) {
+		/* opening /dev/audioctl doesn't start recording. */
+		XP_EQ(0, ai.record.active);
+	} else {
+		/* opening /dev/{audio,sound} starts recording. */
+		/*
+		 * On NetBSD7/8, opening /dev/sound doesn't start recording.
+		 * It must be a bug.
+		 */
+		XP_EQ(1, ai.record.active);
+	}
+
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.fd = fd;
+	pfd.events = POLLIN;
+	r = POLL(&pfd, 1, 1000);
+	if (is_audioctl) {
+		/*
+		 * poll-ing /dev/audioctl always fails.
+		 * XXX Returning error instead of timeout should be better(?).
+		 */
+		REQUIRED_SYS_EQ(0, r);
+	} else {
+		/*
+		 * poll-ing /dev/{audio,sound} will succeed when recorded
+		 * data is arrived.
+		 */
+		/*
+		 * On NetBSD7/8, opening /dev/sound doesn't start recording.
+		 * It must be a bug.
+		 */
+		REQUIRED_SYS_EQ(1, r);
+
+		/* In this case, read() should succeed. */
+		r = READ(fd, buf, sizeof(buf));
+		XP_SYS_OK(r);
+		XP_NE(0, r);
+	}
+
+	r = CLOSE(fd);
+	XP_SYS_EQ(0, r);
+}
+DEF(poll_in_open_audio)		{ test_poll_in_open("audio"); }
+DEF(poll_in_open_sound)		{ test_poll_in_open("sound"); }
+DEF(poll_in_open_audioctl)	{ test_poll_in_open("audioctl"); }
 
 /*
  * poll(2) must not be affected by other recording descriptors even if
@@ -6216,6 +6292,9 @@ struct testentry testtable[] = {
 	ENT(poll_out_hiwat),
 /**/	ENT(poll_out_unpause),		// XXX does not seem to work on rump
 /**/	ENT(poll_out_simul),		// XXX does not seem to work on rump
+	ENT(poll_in_open_audio),
+	ENT(poll_in_open_sound),
+	ENT(poll_in_open_audioctl),
 	ENT(poll_in_simul),
 	ENT(kqueue_mode_RDONLY_READ),
 	ENT(kqueue_mode_RDONLY_WRITE),
