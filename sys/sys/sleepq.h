@@ -1,7 +1,8 @@
-/*	$NetBSD: sleepq.h,v 1.27 2019/12/16 19:43:36 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.28 2020/03/26 19:46:42 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -49,7 +50,7 @@
 #define	SLEEPTAB_HASH_MASK	(SLEEPTAB_HASH_SIZE - 1)
 #define	SLEEPTAB_HASH(wchan)	(((uintptr_t)(wchan) >> 8) & SLEEPTAB_HASH_MASK)
 
-TAILQ_HEAD(sleepq, lwp);
+LIST_HEAD(sleepq, lwp);
 
 typedef struct sleepq sleepq_t;
 
@@ -169,7 +170,7 @@ typedef struct tschain tschain_t;
 	((ts)->ts_waiters[TS_READER_Q] +				\
 	 (ts)->ts_waiters[TS_WRITER_Q])
 
-#define	TS_FIRST(ts, q)	(TAILQ_FIRST(&(ts)->ts_sleepq[(q)]))
+#define	TS_FIRST(ts, q)	(LIST_FIRST(&(ts)->ts_sleepq[(q)]))
 
 #ifdef	_KERNEL
 
