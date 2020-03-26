@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.344 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.345 2020/03/26 19:42:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.344 2020/03/14 20:23:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.345 2020/03/26 19:42:39 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -387,11 +387,7 @@ kpreempt(uintptr_t where)
 			atomic_swap_uint(&l->l_dopreempt, 0);
 			return true;
 		}
-		if (__predict_false((l->l_flag & LW_IDLE) != 0)) {
-			/* Can't preempt idle loop, don't count as failure. */
-			atomic_swap_uint(&l->l_dopreempt, 0);
-			return true;
-		}
+		KASSERT((l->l_flag & LW_IDLE) == 0);
 		if (__predict_false(l->l_nopreempt != 0)) {
 			/* LWP holds preemption disabled, explicitly. */
 			if ((dop & DOPREEMPT_COUNTED) == 0) {
@@ -547,12 +543,10 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 		lwp_setlock(newl, spc->spc_lwplock);
 	} else {
 		/*
-		 * Updates to newl here are unlocked, but newl is the idle
-		 * LWP and thus sheltered from outside interference, so no
-		 * harm is going to come of it.
+		 * The idle LWP does not get set to LSONPROC, because
+		 * otherwise it screws up the output from top(1) etc.
 		 */
 		newl = ci->ci_data.cpu_idlelwp;
-		newl->l_stat = LSONPROC;
 		newl->l_pflag |= LP_RUNNING;
 		spc->spc_curpriority = PRI_IDLE;
 		spc->spc_flags = (spc->spc_flags & ~SPCF_SWITCHCLEAR) |
@@ -840,7 +834,7 @@ mi_switch(lwp_t *l)
 	}
 
 	KASSERT(l == curlwp);
-	KASSERT(l->l_stat == LSONPROC);
+	KASSERT(l->l_stat == LSONPROC || (l->l_flag & LW_IDLE) != 0); 
 
 	SYSCALL_TIME_WAKEUP(l);
 	LOCKDEBUG_BARRIER(NULL, 1);
