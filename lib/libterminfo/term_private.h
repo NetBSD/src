@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.12 2020/03/13 15:19:25 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.13 2020/03/27 15:11:57 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2013, 2020 The NetBSD Foundation, Inc.
@@ -140,6 +140,7 @@ void		_ti_setospeed(TERMINAL *);
 #define TIC_ALIAS	(1 << 2)
 #define TIC_COMMENT	(1 << 3)
 #define TIC_EXTRA	(1 << 4)
+#define TIC_COMPAT_V1	(1 << 5)
 
 #define UINT16_T_MAX 0xffff
 
@@ -154,18 +155,25 @@ typedef struct {
 	char *name;
 	char *alias;
 	char *desc;
+	int  rtype;
 	TBUF flags;
 	TBUF nums;
 	TBUF strs;
 	TBUF extras;
 } TIC;
 
+#define _ti_numsize(tic) \
+    ((tic)->rtype == TERMINFO_RTYPE_O1 ? sizeof(uint16_t) : sizeof(uint32_t))
+
 char *_ti_grow_tbuf(TBUF *, size_t);
 char *_ti_get_token(char **, char);
-char *_ti_find_cap(TBUF *, char,  short);
-char *_ti_find_extra(TBUF *, const char *);
-size_t _ti_store_extra(TIC *, int, char *, char, char, int,
-    char *, size_t, int);
+char *_ti_find_cap(TIC *, TBUF *, char,  short);
+char *_ti_find_extra(TIC *, TBUF *, const char *);
+char *_ti_getname(int, const char *);
+size_t _ti_store_extra(TIC *, int, const char *, char, char, int,
+    const char *, size_t, int);
+void _ti_encode_num(TIC *, TBUF *, int );
+int _ti_decode_num(int, const char **);
 TIC *_ti_compile(char *, int);
 ssize_t _ti_flatten(uint8_t **, const TIC *);
 void _ti_freetic(TIC *);
