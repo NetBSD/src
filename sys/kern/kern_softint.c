@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.63 2020/03/26 20:19:06 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.64 2020/03/27 00:13:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.63 2020/03/26 20:19:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.64 2020/03/27 00:13:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -477,6 +477,11 @@ softint_schedule(void *arg)
 	uintptr_t offset;
 	int s;
 
+	/*
+	 * If this assert fires, rather than disabling preemption explicitly
+	 * to make it stop, consider that you are probably using a softint
+	 * when you don't need to.
+	 */	
 	KASSERT(kpreempt_disabled());
 
 	/* Find the handler record for this CPU. */
@@ -709,17 +714,13 @@ softint_thread(void *cookie)
 	si = l->l_private;
 
 	for (;;) {
-		/*
-		 * Clear pending status and run it.  We must drop the
-		 * spl before mi_switch(), since IPL_HIGH may be higher
-		 * than IPL_SCHED (and it is not safe to switch at a
-		 * higher level).
-		 */
+		/* Clear pending status and run it. */
 		s = splhigh();
 		l->l_cpu->ci_data.cpu_softints &= ~si->si_machdep;
 		softint_execute(si, l, s);
 		splx(s);
 
+		/* Interrupts allowed to run again before switching. */
 		lwp_lock(l);
 		l->l_stat = LSIDL;
 		spc_lock(l->l_cpu);
