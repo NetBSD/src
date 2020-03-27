@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ave.c,v 1.15 2020/03/24 03:08:02 nisimura Exp $	*/
+/*	$NetBSD: if_ave.c,v 1.16 2020/03/27 13:00:22 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,15 +36,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.15 2020/03/24 03:08:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ave.c,v 1.16 2020/03/27 13:00:22 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h>
+#include <sys/ioctl.h>
 #include <sys/malloc.h>
+#include <sys/mbuf.h>
 #include <sys/errno.h>
 #include <sys/rndsource.h>
 #include <sys/kernel.h>
@@ -249,7 +250,6 @@ static void ave_watchdog(struct ifnet *);
 static int ave_ioctl(struct ifnet *, u_long, void *);
 static void ave_set_rcvfilt(struct ave_softc *);
 static void ave_write_filt(struct ave_softc *, int, const uint8_t *);
-static int ave_ifmedia_upd(struct ifnet *);
 static void ave_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 static void mii_statchg(struct ifnet *);
 static void lnkchg(struct ave_softc *);
@@ -384,19 +384,17 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_model = of_search_compatible(phandle, compat_data)->data;
 
 	phy_mode = fdtbus_get_string(phandle, "phy-mode");
-	if (phy_mode == NULL) {
+	if (phy_mode == NULL)
 		aprint_error(": missing 'phy-mode' property\n");
-		phy_mode = "rgmii";
-	}
 
 	aprint_naive("\n");
 	aprint_normal(": Gigabit Ethernet Controller\n");
-	aprint_normal_dev(self, "UniPhier %c%c%c%c AVE%d GbE (%d.%d) %s\n",
+	aprint_normal_dev(self, "UniPhier %c%c%c%c AVE%d GbE (%d.%d)\n",
 	    hwimp >> 24, hwimp >> 16, hwimp >> 8, hwimp,
-	    sc->sc_model, hwver >> 8, hwver & 0xff, phy_mode);
+	    sc->sc_model, hwver >> 8, hwver & 0xff);
 	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
 
-	sc->sc_100mii = (strcmp(phy_mode, "rgmii") != 0);
+	sc->sc_100mii = (phy_mode && strcmp(phy_mode, "rgmii") != 0);
 	sc->sc_desops = (sc->sc_model == 64) ? &ave64ops : &ave32ops;
 
 	CSR_WRITE(sc, AVEGR, GR_GRST | GR_PHYRST);
@@ -429,7 +427,7 @@ ave_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phy_id = MII_PHY_ANY;
 
 	sc->sc_ethercom.ec_mii = mii;
-	ifmedia_init(ifm, 0, ave_ifmedia_upd, ave_ifmedia_sts);
+	ifmedia_init(ifm, 0, ether_mediachange, ave_ifmedia_sts);
 	mii_attach(sc->sc_dev, mii, 0xffffffff, sc->sc_phy_id,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
@@ -586,7 +584,7 @@ ave_init(struct ifnet *ifp)
 	/* accept multicast frame or run promisc mode */
 	ave_set_rcvfilt(sc);
 
-	(void)ave_ifmedia_upd(ifp);
+	(void)ether_mediachange(ifp);
 
 	csr = CSR_READ(sc, AVECFG);
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Tx) {
@@ -636,49 +634,6 @@ ave_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 }
 
-static int
-ave_ifmedia_upd(struct ifnet *ifp)
-{
-	struct ave_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_mii.mii_media;
-	uint32_t txcr, rxcr, csr;
-
-	txcr = CSR_READ(sc, AVETXC);
-	rxcr = CSR_READ(sc, AVERXC);
-	CSR_WRITE(sc, AVERXC, rxcr &~ RXC_EN); /* stop Rx first */
-
-	if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_AUTO) {
-		; /* restart AN */
-		; /* enable AN */
-		; /* advertise flow control pause */
-		; /* adv. 1000FDX,100FDX,100HDX,10FDX,10HDX */
-	} else {
-#if 1 /* XXX not sure to belong here XXX */
-		txcr &= ~(TXC_SPD1000 | TXC_SPD100);
-		rxcr &= ~RXC_USEFDX;
-		if ((sc->sc_100mii == 0) /* RGMII model */
-		     && IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_1000_T)
-			txcr |= TXC_SPD1000;
-		else if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
-			txcr |= TXC_SPD100;
-		if (ifm->ifm_media & IFM_FDX)
-			rxcr |= RXC_USEFDX;	
-
-		/* adjust LINKSEL when RMII/MII too */
-		if (sc->sc_100mii) {
-			csr = CSR_READ(sc, AVELINKSEL) &~ LINKSEL_SPD100;
-			if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
-				csr |= LINKSEL_SPD100;
-			CSR_WRITE(sc, AVELINKSEL, csr);
-		}
-#endif
-	}
-	sc->sc_rxc = rxcr;
-	CSR_WRITE(sc, AVETXC, txcr);
-	CSR_WRITE(sc, AVERXC, rxcr | RXC_EN);
-	return 0;
-}
-
 static void
 ave_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
@@ -696,7 +651,8 @@ mii_statchg(struct ifnet *ifp)
 {
 	struct ave_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
-	uint32_t txcr, rxcr;
+	struct ifmedia *ifm = &mii->mii_media;
+	uint32_t txcr, rxcr, lsel;
 
 	/* Get flow control negotiation result. */
 	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
@@ -707,14 +663,30 @@ mii_statchg(struct ifnet *ifp)
 	rxcr = CSR_READ(sc, AVERXC);
 	CSR_WRITE(sc, AVERXC, rxcr &~ RXC_EN); /* stop Rx first */
 
-	/* Adjust 802.3x PAUSE flow control. */
+	/* Adjust speed 1000/100/10. */
+	txcr &= ~(TXC_SPD1000 | TXC_SPD100);
+	if ((sc->sc_100mii == 0) /* RGMII model */
+	     && IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_1000_T)
+		txcr |= TXC_SPD1000;
+	else if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
+		txcr |= TXC_SPD100;
+
+	/* Adjust LINKSEL when RMII/MII too. */
+	if (sc->sc_100mii) {
+		lsel = CSR_READ(sc, AVELINKSEL) &~ LINKSEL_SPD100;
+		if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
+			lsel |= LINKSEL_SPD100;
+		CSR_WRITE(sc, AVELINKSEL, lsel);
+	}
+
+	/* Adjust duplexity and 802.3x PAUSE flow control. */
 	txcr &= ~TXC_FCE;
-	rxcr &= ~RXC_FCE;
+	rxcr &= ~(RXC_FCE & RXC_USEFDX);
 	if (mii->mii_media_active & IFM_FDX) {
 		if (sc->sc_flowflags & IFM_ETH_TXPAUSE)
 			txcr |= TXC_FCE;
 		if (sc->sc_flowflags & IFM_ETH_RXPAUSE)
-			rxcr |= RXC_FCE;
+			rxcr |= RXC_FCE | RXC_USEFDX;
 	}
 
 	sc->sc_rxc = rxcr;
