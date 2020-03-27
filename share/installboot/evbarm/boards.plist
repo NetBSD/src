@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.6 2020/03/27 02:01:48 thorpej Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.7 2020/03/27 23:02:33 bad Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -248,6 +248,13 @@
 		<string>FriendlyARM NanoPi NEO 2</string>
 		<key>u-boot-pkg</key>
 		<string>nanopi-neo2</string>
+	</dict>
+	<key>friendlyarm,nanopi-r1</key>
+	<dict>
+		<key>description</key>
+		<string>FriendlyARM NanoPi R1</string>
+		<key>u-boot-pkg</key>
+		<string>nanopi-r1</string>
 	</dict>
 
 	<key>merrii,a31-hummingbird</key>
