@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.39 2020/03/21 06:54:43 skrll Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.40 2020/03/27 18:04:45 nisimura Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.39 2020/03/21 06:54:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.40 2020/03/27 18:04:45 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -331,15 +331,14 @@ ure_uno_miibus_statchg(struct ifnet *ifp)
 }
 
 static void
-ure_setiff_locked(struct usbnet *un)
+ure_rcvfilt_locked(struct usbnet *un)
 {
 	struct ethercom *ec = usbnet_ec(un);
 	struct ifnet *ifp = usbnet_ifp(un);
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	uint32_t hashes[2] = { 0, 0 };
-	uint32_t hash;
-	uint32_t rxmode;
+	uint32_t mchash[2] = { 0, 0 };
+	uint32_t h = 0, rxmode;
 
 	usbnet_isowned_core(un);
 
@@ -347,54 +346,43 @@ ure_setiff_locked(struct usbnet *un)
 		return;
 
 	rxmode = ure_read_4(un, URE_PLA_RCR, URE_MCU_TYPE_PLA);
-	rxmode &= ~URE_RCR_ACPT_ALL;
+	rxmode &= ~(URE_RCR_AAP | URE_RCR_AM);
+	/* continue to accept my own DA and bcast frames */
 
-	/*
-	 * Always accept frames destined to our station address.
-	 * Always accept broadcast frames.
-	 */
-	rxmode |= URE_RCR_APM | URE_RCR_AB;
-
+	ETHER_LOCK(ec);
 	if (ifp->if_flags & IFF_PROMISC) {
-		rxmode |= URE_RCR_AAP;
-allmulti:	
-		ETHER_LOCK(ec);
 		ec->ec_flags |= ETHER_F_ALLMULTI;
 		ETHER_UNLOCK(ec);
-		rxmode |= URE_RCR_AM;
-		hashes[0] = hashes[1] = 0xffffffff;
-	} else {
-		rxmode |= URE_RCR_AM;
-
-		ETHER_LOCK(ec);
-		ec->ec_flags &= ~ETHER_F_ALLMULTI;
-
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    ETHER_ADDR_LEN)) {
-				ETHER_UNLOCK(ec);
-				goto allmulti;
-			}
-
-			hash = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN)
-			    >> 26;
-			if (hash < 32)
-				hashes[0] |= (1 << hash);
-			else
-				hashes[1] |= (1 << (hash - 32));
-
-			ETHER_NEXT_MULTI(step, enm);
-		}
-		ETHER_UNLOCK(ec);
-
-		hash = bswap32(hashes[0]);
-		hashes[0] = bswap32(hashes[1]);
-		hashes[1] = hash;
+		/* run promisc. mode */
+		rxmode |= URE_RCR_AM;	/* ??? */
+		rxmode |= URE_RCR_AAP;
+		goto update;
 	}
-
-	ure_write_4(un, URE_PLA_MAR0, URE_MCU_TYPE_PLA, hashes[0]);
-	ure_write_4(un, URE_PLA_MAR4, URE_MCU_TYPE_PLA, hashes[1]);
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ec->ec_flags |= ETHER_F_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			/* accept all mcast frames */
+			rxmode |= URE_RCR_AM;
+			mchash[0] = mchash[1] = ~0U; /* necessary ?? */
+			goto update;
+		}
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		mchash[h >> 31] |= 1 << ((h >> 26) & 0x1f);
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ETHER_UNLOCK(ec);
+	if (h != 0) {
+		rxmode |= URE_RCR_AM;	/* activate mcast hash filter */
+		h = bswap32(mchash[0]);
+		mchash[0] = bswap32(mchash[1]);
+		mchash[1] = h;
+	}
+ update:
+	ure_write_4(un, URE_PLA_MAR0, URE_MCU_TYPE_PLA, mchash[0]);
+	ure_write_4(un, URE_PLA_MAR4, URE_MCU_TYPE_PLA, mchash[1]);
 	ure_write_4(un, URE_PLA_RCR, URE_MCU_TYPE_PLA, rxmode);
 }
 
@@ -457,8 +445,8 @@ ure_init_locked(struct ifnet *ifp)
 	    ure_read_2(un, URE_PLA_MISC_1, URE_MCU_TYPE_PLA) &
 	    ~URE_RXDY_GATED_EN);
 
-	/* Load the multicast filter. */
-	ure_setiff_locked(un);
+	/* Accept multicast frame or run promisc. mode. */
+	ure_rcvfilt_locked(un);
 
 	return usbnet_init_rx_tx(un);
 }
@@ -701,7 +689,7 @@ ure_disable_teredo(struct usbnet *un)
 static void
 ure_init_fifo(struct usbnet *un)
 {
-	uint32_t rx_fifo1, rx_fifo2;
+	uint32_t rxmode, rx_fifo1, rx_fifo2;
 	int i;
 
 	ure_write_2(un, URE_PLA_MISC_1, URE_MCU_TYPE_PLA,
@@ -710,9 +698,10 @@ ure_init_fifo(struct usbnet *un)
 
 	ure_disable_teredo(un);
 
-	ure_write_4(un, URE_PLA_RCR, URE_MCU_TYPE_PLA,
-	    ure_read_4(un, URE_PLA_RCR, URE_MCU_TYPE_PLA) &
-	    ~URE_RCR_ACPT_ALL);
+	rxmode = ure_read_4(un, URE_PLA_RCR, URE_MCU_TYPE_PLA);
+	rxmode &= ~URE_RCR_ACPT_ALL;
+	rxmode |= URE_RCR_APM | URE_RCR_AB; /* accept my own DA and bcast */
+	ure_write_4(un, URE_PLA_RCR, URE_MCU_TYPE_PLA, rxmode);
 
 	if (!(un->un_flags & URE_FLAG_8152)) {
 		if (un->un_flags & (URE_FLAG_VER_5C00 | URE_FLAG_VER_5C10 |
@@ -816,7 +805,7 @@ ure_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ure_setiff_locked(un);
+		ure_rcvfilt_locked(un);
 		break;
 	default:
 		break;

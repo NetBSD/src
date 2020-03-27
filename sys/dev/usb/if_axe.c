@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.130 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.131 2020/03/27 18:04:45 nisimura Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.130 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.131 2020/03/27 18:04:45 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -426,7 +426,7 @@ axe_uno_mii_statchg(struct ifnet *ifp)
 }
 
 static void
-axe_setiff_locked(struct usbnet *un)
+axe_rcvfilt_locked(struct usbnet *un)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
 	struct axe_softc * const sc = usbnet_softc(un);
@@ -434,9 +434,9 @@ axe_setiff_locked(struct usbnet *un)
 	struct ethercom *ec = usbnet_ec(un);
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	uint32_t h = 0;
 	uint16_t rxmode;
-	uint8_t hashtbl[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	uint32_t h = 0;
+	uint8_t mchash[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	if (usbnet_isdying(un))
 		return;
@@ -450,38 +450,34 @@ axe_setiff_locked(struct usbnet *un)
 	rxmode &=
 	    ~(AXE_RXCMD_ALLMULTI | AXE_RXCMD_PROMISC | AXE_RXCMD_MULTICAST);
 
-	if (ifp->if_flags & IFF_PROMISC) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		goto allmulti;
-	}
-	ifp->if_flags &= ~IFF_ALLMULTI;
-
-	/* Now program new ones */
 	ETHER_LOCK(ec);
+	if (ifp->if_flags & IFF_PROMISC) {
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
+		/* run promisc. mode */
+		rxmode |= AXE_RXCMD_ALLMULTI; /* ??? */
+		rxmode |= AXE_RXCMD_PROMISC;
+		goto update;
+	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ec->ec_flags |= ETHER_F_ALLMULTI;
 			ETHER_UNLOCK(ec);
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
+			/* accept all mcast frames */
+			rxmode |= AXE_RXCMD_ALLMULTI;
+			goto update;
 		}
-
-		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
-		hashtbl[h >> 3] |= 1U << (h & 7);
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		mchash[h >> 29] |= 1U << ((h >> 26) & 7);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
-
-	rxmode |= AXE_RXCMD_MULTICAST;	/* activate mcast hash filter */
-	axe_cmd(sc, AXE_CMD_WRITE_MCAST, 0, 0, hashtbl);
-	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
-	return;
-
- allmulti:
-	if (ifp->if_flags & IFF_PROMISC)
-		rxmode |= AXE_RXCMD_PROMISC; /* run promisc. mode */
-	rxmode |= AXE_RXCMD_ALLMULTI;	/* accept all mcast frames */
+	if (h != 0)
+		rxmode |= AXE_RXCMD_MULTICAST;	/* activate mcast hash filter */
+	axe_cmd(sc, AXE_CMD_WRITE_MCAST, 0, 0, mchash);
+ update:
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 }
 
@@ -1311,7 +1307,7 @@ axe_init_locked(struct ifnet *ifp)
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 
 	/* Accept multicast frame or run promisc. mode */
-	axe_setiff_locked(un);
+	axe_rcvfilt_locked(un);
 
 	return usbnet_init_rx_tx(un);
 }
@@ -1341,7 +1337,7 @@ axe_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		axe_setiff_locked(un);
+		axe_rcvfilt_locked(un);
 		break;
 	default:
 		break;
