@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.62 2020/03/16 11:13:19 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.63 2020/03/27 11:10:07 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.62 2020/03/16 11:13:19 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.63 2020/03/27 11:10:07 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,10 +115,10 @@ static int synaptics_button3 = SYNAPTICS_EDGE_LEFT + 2 * (SYNAPTICS_EDGE_RIGHT -
 static int synaptics_two_fingers_emul = 0;
 static int synaptics_scale_x = 16;
 static int synaptics_scale_y = 16;
-static int synaptics_scale_z = 64;
+static int synaptics_scale_z = 32;
 static int synaptics_max_speed_x = 32;
 static int synaptics_max_speed_y = 32;
-static int synaptics_max_speed_z = 1;
+static int synaptics_max_speed_z = 2;
 static int synaptics_movement_threshold = 4;
 static int synaptics_fscroll_min = 13;
 static int synaptics_fscroll_max = 14;
@@ -1285,7 +1285,13 @@ synaptics_finger_detect(struct synaptics_softc *sc, struct synaptics_packet *sp,
 		return (0);
 	}
 
-	if (sc->flags & SYN_FLAG_HAS_MULTI_FINGER) {
+	/*
+	 * Detect 2 and 3 fingers if supported, but only if multiple
+	 * fingers appear within the tap gesture time period.
+	 */
+	if (sc->flags & SYN_FLAG_HAS_MULTI_FINGER &&
+	    SYN_TIME(sc, sc->gesture_start_packet,
+	    sp->sp_finger) < synaptics_gesture_length) {
 		switch (sp->sp_w) {
 		case SYNAPTICS_WIDTH_TWO_FINGERS:
 			fingers = 2;
@@ -1732,14 +1738,6 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 
 			synaptics_movement(sc, sp, sp->sp_finger,
 				z_emul, &dx, &dy, &dz);
-		} else if (fingers > 1) {
-			/*
-			 * Multiple finger movement. Interpret it as scrolling.
-			 */
-			synaptics_movement(sc, sp, sp->sp_finger, 1,
-				&dx, &dy, &dz);
-			sc->rem_x[0] = sc->rem_y[0] = 0;
-			dx = dy = 0;
 		} else {
 			/*
 			 * No valid finger. Therefore no movement.
