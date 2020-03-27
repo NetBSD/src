@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.13 2020/03/27 15:11:57 christos Exp $ */
+/* $NetBSD: term_private.h,v 1.14 2020/03/27 17:39:53 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2013, 2020 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@
  */
 
 #include <sys/types.h>
+#include <assert.h>
+#include <limits.h>
 
 #define _TERMINFO
 #define TERMINFO_RTYPE_O1	1
@@ -167,17 +169,116 @@ typedef struct {
 
 char *_ti_grow_tbuf(TBUF *, size_t);
 char *_ti_get_token(char **, char);
-char *_ti_find_cap(TIC *, TBUF *, char,  short);
-char *_ti_find_extra(TIC *, TBUF *, const char *);
+const char *_ti_find_cap(TIC *, TBUF *, char,  short);
+const char *_ti_find_extra(TIC *, TBUF *, const char *);
 char *_ti_getname(int, const char *);
 size_t _ti_store_extra(TIC *, int, const char *, char, char, int,
     const char *, size_t, int);
-void _ti_encode_num(TIC *, TBUF *, int );
-int _ti_decode_num(int, const char **);
 TIC *_ti_compile(char *, int);
 ssize_t _ti_flatten(uint8_t **, const TIC *);
 void _ti_freetic(TIC *);
 
+int _ti_encode_buf_id_num(TBUF *, int, int, size_t);
+int _ti_encode_buf_id_count_str(TBUF *, int, const void *, size_t);
+int _ti_encode_buf_id_flags(TBUF *, int, int);
+
 #define TPARM_MAX 9	/* not likely to change */
 int _ti_parm_analyse(const char *, int *, int);
+
+static __inline int
+_ti_decode_16(const char **cap)
+{
+	int num = le16dec(*cap);
+
+	*cap += sizeof(uint16_t);
+	return num;
+}
+	
+static __inline int
+_ti_decode_32(const char **cap)
+{
+	int num = le32dec(*cap);
+
+	*cap += sizeof(uint32_t);
+	return num;
+}
+
+static __inline int
+_ti_decode_num(const char **cap, int rtype)
+{
+	if (rtype == TERMINFO_RTYPE_O1) {
+		return _ti_decode_16(cap);
+	} else {
+		return _ti_decode_32(cap);
+	}
+}
+
+static __inline void
+_ti_encode_16(char **cap, size_t num)
+{
+	_DIAGASSERT(num <= USHRT_MAX);
+	le16enc(*cap, (uint16_t)num);
+	*cap += sizeof(uint16_t);
+}
+	
+static __inline void
+_ti_encode_32(char **cap, size_t num)
+{
+	_DIAGASSERT(num <= UINT_MAX);
+	le32enc(*cap, (uint32_t)num);
+	*cap += sizeof(uint32_t);
+}
+
+static __inline void
+_ti_encode_str(char **cap, const void *buf, size_t len)
+{
+	memcpy(*cap, buf, len);
+	*cap += len;
+}
+
+static __inline void
+_ti_encode_count_str(char **cap, const char *name, size_t len)
+{
+	_ti_encode_16(cap, (uint16_t)len);
+	if (name == NULL)
+		return;
+	_ti_encode_str(cap, name, len);
+}
+
+static __inline void
+_ti_encode_buf_16(TBUF *tbuf, size_t num)
+{
+	_DIAGASSERT(num <= USHRT_MAX);
+	le16enc(tbuf->buf + tbuf->bufpos, (uint16_t)num);
+	tbuf->bufpos += sizeof(uint16_t);
+}
+
+static __inline void
+_ti_encode_buf_32(TBUF *tbuf, size_t num)
+{
+	_DIAGASSERT(num <= UINT_MAX);
+	le32enc(tbuf->buf + tbuf->bufpos, (uint32_t)num);
+	tbuf->bufpos += sizeof(uint32_t);
+}
+
+static __inline void
+_ti_encode_buf_count_str(TBUF *tbuf, const void *buf, size_t len)
+{
+	_ti_encode_buf_16(tbuf, len);
+	memcpy(tbuf->buf + tbuf->bufpos, buf, len);
+	tbuf->bufpos += len;
+}
+
+static __inline void
+_ti_encode_buf_num(TBUF *tbuf, size_t num, int rtype)
+{
+	if (rtype == TERMINFO_RTYPE_O1) {
+		if (num > SHRT_MAX)
+			num = SHRT_MAX;
+		_ti_encode_buf_16(tbuf, num);
+	} else {
+		_ti_encode_buf_32(tbuf, num);
+	}
+}
+
 #endif
