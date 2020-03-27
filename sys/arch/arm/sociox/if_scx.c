@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.18 2020/03/27 06:32:49 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.19 2020/03/27 07:59:50 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.18 2020/03/27 06:32:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.19 2020/03/27 07:59:50 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,7 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.18 2020/03/27 06:32:49 nisimura Exp $")
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
 
-/* SC2A11 register block 0x100-0x1204? */
+/*
+ * SC2A11 register block 0x100-0x1204?
+ */
 #define SWRESET		0x104
 #define COMINIT		0x120
 #define xINTSR		0x200		/* aggregated interrupt status report */
@@ -96,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.18 2020/03/27 06:32:49 nisimura Exp $")
 #define xINTBEN		0x23c		/* INT_B enable */
 #define xINTB_SET	0x240		/* bit to set */
 #define xINTB_CLR	0x244		/* bit to clr */
-/* 0x0c-48 */				/* pkt,tls,s0,s1 SR/IE/SET/CLR */
+/* 0x00c-048 */		/* pkt,tls,s0,s1 SR/IE/SET/CLR */
 #define TXISR		0x400
 #define TXIEN		0x404
 #define TXI_SET		0x428
@@ -127,6 +129,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.18 2020/03/27 06:32:49 nisimura Exp $")
 #define MCVER		0x22c		/* micro controller version */
 #define HWVER		0x230		/* hardware version */
 
+/* 0x800 */		/* dec Tx  SR/EN/SET/CLR */
+/* 0x840 */		/* enc Rx  SR/EN/SET/CLR */
+/* 0x880 */		/* enc TLS Tx  SR/IE/SET/CLR */
+/* 0x8c0 */		/* dec TLS Tx  SR/IE/SET/CLR */
+/* 0x900 */		/* enc TLS Rx  SR/IE/SET/CLR */
+/* 0x940 */		/* dec TLS Rx  SR/IE/SET/CLR */
+/* 0x980 */		/* enc RAW Tx  SR/IE/SET/CLR */
+/* 0x9c0 */		/* dec RAW Tx  SR/IE/SET/CLR */
+/* 0xA00 */		/* enc RAW Rx  SR/IE/SET/CLR */
+/* 0xA40 */		/* dec RAW Rx  SR/IE/SET/CLR */
+
 #define MACCMD		0x11c4		/* gmac operation */
 #define  CMD_IOWR	(1U<<28)	/* write op */
 #define  CMD_BUSY	(1U<<31)	/* busy bit */
@@ -136,23 +149,30 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.18 2020/03/27 06:32:49 nisimura Exp $")
 #define DESC_INIT	0x11fc		/* desc engine init */
 #define DESC_SRST	0x1204		/* desc engine sw reset */
 
-/* GMAC register block. use mac_write()/mac_read() to handle */
+/*
+ * GMAC register block. use mac_write()/mac_read() to handle
+ */
 #define GMACMCR		0x0000		/* MAC configuration */
-#define  MCR_IBN	(1U<<30)	/* */
+#define  MCR_IBN	(1U<<30)	/* ??? */
 #define  MCR_CST	(1U<<25)	/* strip CRC */
 #define  MCR_TC		(1U<<24)	/* keep RGMII PHY notified */
 #define  MCR_JE		(1U<<20)	/* ignore oversized >9018 condition */
+#define  MCR_IFG	(7U<<17)	/* 19:17 IFG value 0~7 */
+#define  MCR_DRCS	(1U<<16)	/* ignore (G)MII HDX Tx error */
 #define  MCR_USEMII	(1U<<15)	/* 1: RMII/MII, 0: RGMII (_PS) */
 #define  MCR_SPD100	(1U<<14)	/* force speed 100 (_FES) */
+#define  MCR_DO		(1U<<13)	/* */
+#define  MCR_LOOP	(1U<<12)	/* */
 #define  MCR_USEFDX	(1U<<11)	/* force full duplex */
-#define  MCR_IPCKEN	(1U<<10)	/* handle checksum */
+#define  MCR_IPCEN	(1U<<10)	/* handle checksum */
 #define  MCR_ACS	(1U<<7)		/* auto pad strip CRC */
-#define  MCR_TXE	(1U<<3)		/* start Tx DMA engine */
-#define  MCR_RXE	(1U<<2)		/* start Rx DMA engine */
+#define  MCR_TE		(1U<<3)		/* run Tx MAC engine, 0 to stop */
+#define  MCR_RE		(1U<<2)		/* run Rx MAC engine, 0 to stop */
+#define  MCR_PREA	(3U)		/* 1:0 preamble len. 0~2 */
 #define  _MCR_FDX	0x0000280c	/* XXX TBD */
 #define  _MCR_HDX	0x0001a00c	/* XXX TBD */
 #define GMACAFR		0x0004		/* frame DA/SA address filter */
-#define  AFR_RA		(1U<<31)	/* receive block all on */
+#define  AFR_RA		(1U<<31)	/* accept all irrecspective of filt. */
 #define  AFR_HPF	(1U<<10)	/* hash+perfect filter, or hash only */
 #define  AFR_SAF	(1U<<9)		/* source address filter */
 #define  AFR_SAIF	(1U<<8)		/* SA inverse filtering */
@@ -161,9 +181,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.18 2020/03/27 06:32:49 nisimura Exp $")
 #define  AFR_PM		(1U<<4)		/* accept all multicast frame */
 #define  AFR_DAIF	(1U<<3)		/* DA inverse filtering */
 #define  AFR_MHTE	(1U<<2)		/* use multicast hash table */
-#define  AFR_UHTE	(1U<<1)		/* use additional MAC addresses */
+#define  AFR_UHTE	(1U<<1)		/* use hash table for unicast */
 #define  AFR_PR		(1U<<0)		/* run promisc mode */
-#define  _AFR		0x80000001	/* XXX TBD */
 #define GMACMHTH	0x0008		/* 64bit multicast hash table 63:32 */
 #define GMACMHTL	0x000c		/* 64bit multicast hash table 31:0 */
 #define GMACGAR		0x0010		/* MDIO operation */
@@ -184,6 +203,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.18 2020/03/27 06:32:49 nisimura Exp $")
 #define GMACLPIC	0x0034		/* AXI LPI control */
 #define GMACISR		0x0038		/* interrupt status, clear when read */
 #define GMACIMR		0x003c		/* interrupt enable */
+#define  ISR_TS		(1U<<9)		/* time stamp operation detected */
+#define  ISR_CO		(1U<<7)		/* Rx checksum offload completed */
+#define  ISR_TX		(1U<<6)		/* Tx completed */
+#define  ISR_RX		(1U<<5)		/* Rx completed */
+#define  ISR_ANY	(1U<<4)		/* any of above 5-7 report */
+#define  ISR_LC		(1U<<0)		/* link status change detected */
 #define GMACMAH0	0x0040		/* MAC address 0 47:32 */
 #define GMACMAL0	0x0044		/* MAC address 0 31:0 */
 #define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1 - 15 */
@@ -283,6 +308,9 @@ struct rdes {
 /* R2 frame address 31:0 */
 /* R3 31:16 received frame length, 15:0 buffer length to receive */
 
+/*
+ * software constraction
+ */
 #define MD_NTXSEGS		16		/* fixed */
 #define MD_TXQUEUELEN		16		/* tunable */
 #define MD_TXQUEUELEN_MASK	(MD_TXQUEUELEN - 1)
@@ -815,18 +843,19 @@ scx_reset(struct scx_softc *sc)
 	mac_write(sc, GMACOMR, 0);
 	mac_write(sc, GMACBMR, BMR_RST); /* may take for a while */
 	do {
-		DELAY(10);
+		DELAY(1);
 		busy = mac_read(sc, GMACBMR) & BMR_RST;
 	} while (++loop < 3000 && busy);
 printf("BMR reset done with %d loop\n", loop);
 	mac_write(sc, GMACBMR, _BMR);
-	mac_write(sc, GMACEVCTL, 1);
+	mac_write(sc, GMACAFR, 0);
 
-	CSR_WRITE(sc, CLKEN, CLK_ALL);
-
+	CSR_WRITE(sc, CLKEN, CLK_ALL);	/* distribute clock sources */
 	CSR_WRITE(sc, SWRESET, 0);	/* reset operation */
 	CSR_WRITE(sc, SWRESET, 1U<<31);	/* manifest run */
 	CSR_WRITE(sc, COMINIT, 3); 	/* DB|CLS*/
+
+	mac_write(sc, GMACEVCTL, 1);
 }
 
 static int
@@ -1494,7 +1523,7 @@ spin_waitfor(struct scx_softc *sc, int reg, int exist)
 	busy = CSR_READ(sc, reg) & exist;
 	if (busy == 0)
 		return 0;
-	loop = 3000;
+	loop = 30000;
 	do {
 		DELAY(10);
 		busy = CSR_READ(sc, reg) & exist;
