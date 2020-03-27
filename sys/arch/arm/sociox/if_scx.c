@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.17 2020/03/26 10:38:16 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.18 2020/03/27 06:32:49 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.17 2020/03/26 10:38:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.18 2020/03/27 06:32:49 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,29 +84,31 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.17 2020/03/26 10:38:16 nisimura Exp $")
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
 
-/* SC2A11 register block */
+/* SC2A11 register block 0x100-0x1204? */
 #define SWRESET		0x104
-#define MACADRH		0x10c
-#define MACADRL		0x110
 #define COMINIT		0x120
-#define INTRST		0x200
-#define  IRQ_RX		(1U<<1)
-#define  IRQ_TX		(1U<<0)
-#define INTREN		0x204
-#define INTR_SET	0x234
-#define INTR_CLR	0x238
-#define TXINTST		0x400
-#define TXINTEN		0x404
-#define TXINT_SET	0x428
-#define TXINT_CLR	0x42c
+#define xINTSR		0x200		/* aggregated interrupt status report */
+#define  IRQ_RX		(1U<<1)		/* top level Rx interrupt */
+#define  IRQ_TX		(1U<<0)		/* top level Rx interrupt */
+#define xINTAEN		0x204		/* INT_A enable */
+#define xINTA_SET	0x234		/* bit to set */
+#define xINTA_CLR	0x238		/* bit to clr */
+#define xINTBEN		0x23c		/* INT_B enable */
+#define xINTB_SET	0x240		/* bit to set */
+#define xINTB_CLR	0x244		/* bit to clr */
+/* 0x0c-48 */				/* pkt,tls,s0,s1 SR/IE/SET/CLR */
+#define TXISR		0x400
+#define TXIEN		0x404
+#define TXI_SET		0x428
+#define TXI_CLR		0x42c
 #define  TXI_NTOWNR	(1U<<17)
 #define  TXI_TR_ERR	(1U<<16)
 #define  TXI_TXDONE	(1U<<15)
 #define  TXI_TMREXP	(1U<<14)
-#define RXINTST		0x440
-#define RXINTEN		0x444
-#define RXINT_SET	0x468
-#define RXINT_CLR	0x46c
+#define RXISR		0x440
+#define RXIEN		0x444
+#define RXI_SET		0x468
+#define RXI_CLR		0x46c
 #define  RXI_RC_ERR	(1U<<16)
 #define  RXI_PKTCNT	(1U<<15)
 #define  RXI_TMREXP	(1U<<14)
@@ -117,16 +119,22 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.17 2020/03/26 10:38:16 nisimura Exp $")
 #define H2MENG		0x210		/* DMAC host2media ucode port */
 #define M2HENG		0x21c		/* DMAC media2host ucode port */
 #define PKTENG		0x0d0		/* packet engine ucode port */
+#define CLKEN		0x100		/* clock distribution enable */
+#define  CLK_G		(1U<<5)
+#define  CLK_ALL	0x24
+#define MACADRH		0x10c		/* ??? */
+#define MACADRL		0x110		/* ??? */
 #define MCVER		0x22c		/* micro controller version */
 #define HWVER		0x230		/* hardware version */
 
-#define MACSTAT		0x1024		/* gmac status */
-#define MACDATA		0x11c0		/* gmac rd/wr data */
 #define MACCMD		0x11c4		/* gmac operation */
 #define  CMD_IOWR	(1U<<28)	/* write op */
 #define  CMD_BUSY	(1U<<31)	/* busy bit */
-#define DESCENG_INIT	0x11fc
-#define DESCENG_SRST	0x1204
+#define MACSTAT		0x1024		/* gmac status */
+#define MACDATA		0x11c0		/* gmac rd/wr data */
+#define MACINTE		0x1028		/* interrupt enable */
+#define DESC_INIT	0x11fc		/* desc engine init */
+#define DESC_SRST	0x1204		/* desc engine sw reset */
 
 /* GMAC register block. use mac_write()/mac_read() to handle */
 #define GMACMCR		0x0000		/* MAC configuration */
@@ -134,8 +142,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.17 2020/03/26 10:38:16 nisimura Exp $")
 #define  MCR_CST	(1U<<25)	/* strip CRC */
 #define  MCR_TC		(1U<<24)	/* keep RGMII PHY notified */
 #define  MCR_JE		(1U<<20)	/* ignore oversized >9018 condition */
-#define  MCR_USEMII	(1U<<15)	/* 1: RMII/MII, 0: RGMII */
-#define  MCR_SPD100	(1U<<14)	/* force speed 100 */
+#define  MCR_USEMII	(1U<<15)	/* 1: RMII/MII, 0: RGMII (_PS) */
+#define  MCR_SPD100	(1U<<14)	/* force speed 100 (_FES) */
 #define  MCR_USEFDX	(1U<<11)	/* force full duplex */
 #define  MCR_IPCKEN	(1U<<10)	/* handle checksum */
 #define  MCR_ACS	(1U<<7)		/* auto pad strip CRC */
@@ -145,19 +153,19 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.17 2020/03/26 10:38:16 nisimura Exp $")
 #define  _MCR_HDX	0x0001a00c	/* XXX TBD */
 #define GMACAFR		0x0004		/* frame DA/SA address filter */
 #define  AFR_RA		(1U<<31)	/* receive block all on */
-#define  AFR_HPF	(1U<<10)	/* activate hash or perfect filter */
+#define  AFR_HPF	(1U<<10)	/* hash+perfect filter, or hash only */
 #define  AFR_SAF	(1U<<9)		/* source address filter */
 #define  AFR_SAIF	(1U<<8)		/* SA inverse filtering */
-#define  AFR_PCF	(3U<<6)		/* */
-#define  AFR_RB		(1U<<5)		/* reject broadcast frame */
-#define  AFR_AM		(1U<<4)		/* accept all multicast frame */
+#define  AFR_PCF	(2U<<6)		/* */
+#define  AFR_DBF	(1U<<5)		/* reject broadcast frame */
+#define  AFR_PM		(1U<<4)		/* accept all multicast frame */
 #define  AFR_DAIF	(1U<<3)		/* DA inverse filtering */
 #define  AFR_MHTE	(1U<<2)		/* use multicast hash table */
 #define  AFR_UHTE	(1U<<1)		/* use additional MAC addresses */
-#define  AFR_PM		(1U<<0)		/* run promisc mode */
+#define  AFR_PR		(1U<<0)		/* run promisc mode */
 #define  _AFR		0x80000001	/* XXX TBD */
-#define GMACMHTH	0x0008		/* multicast hash table 63:32 */
-#define GMACMHTL	0x000c		/* multicast hash table 31:0 */
+#define GMACMHTH	0x0008		/* 64bit multicast hash table 63:32 */
+#define GMACMHTL	0x000c		/* 64bit multicast hash table 31:0 */
 #define GMACGAR		0x0010		/* MDIO operation */
 #define  GAR_PHY	(11)		/* mii phy 15:11 */
 #define  GAR_REG	(6)		/* mii reg 10:6 */
@@ -166,10 +174,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.17 2020/03/26 10:38:16 nisimura Exp $")
 #define  GAR_BUSY	(1U)		/* busy bit */
 #define GMACGDR		0x0014		/* MDIO rd/wr data */
 #define GMACFCR		0x0018		/* 802.3x flowcontrol */
+					/* 31:16 pause timer value */
+					/* 5:4 pause timer threthold */
 #define  FCR_RFE	(1U<<2)		/* accept PAUSE to throttle Tx */
 #define  FCR_TFE	(1U<<1)		/* generate PAUSE to moderate Rx lvl */
 #define GMACVTAG	0x001c		/* VLAN tag control */
 #define GMACIMPL	0x0020		/* implementation number XX.YY */
+#define GMACLPIS	0x0030		/* AXI LPI control */
+#define GMACLPIC	0x0034		/* AXI LPI control */
+#define GMACISR		0x0038		/* interrupt status, clear when read */
+#define GMACIMR		0x003c		/* interrupt enable */
 #define GMACMAH0	0x0040		/* MAC address 0 47:32 */
 #define GMACMAL0	0x0044		/* MAC address 0 31:0 */
 #define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1 - 15 */
@@ -181,39 +195,55 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.17 2020/03/26 10:38:16 nisimura Exp $")
 					 *	1 25Mhz  (100Mbps)
 					 *	2 125Mhz (1000Mbps)
 					 *  1   full duplex detected */
-
-#define GMACMHT0	0x0500		/* XXX multicast hash table 0 - 7 */
-#define GMACMHT(i)	((i)*4+0x500)
-#define GMACVHT		0x0588		/* VLAN tag hash */
-#define GMACAMAH(i)	((i)*8+0x800)	/* supplimental MAC addr 16-31 */
-#define GMACAMAL(i)	((i)*8+0x804)
 #define GMACEVCTL	0x0100		/* event counter control */
 #define GMACEVCNT(i)	((i)*4+0x114)	/* event counter 0x114~284 */
 
+#define GMACMHT0	0x0500		/* 256bit multicast hash table 0 - 7 */
+#define GMACMHT(i)	((i)*4+0x500)
+#define GMACVHT		0x0588		/* VLAN tag hash */
+
+/* 0x0700-0734 */
+#define GMACAMAH(i)	((i)*8+0x800)	/* supplimental MAC addr 16-31 */
+#define GMACAMAL(i)	((i)*8+0x804)
+
 #define GMACBMR		0x1000		/* DMA bus mode control
-					 * 24    4PBL
+					 * 24    4PBL 8?
+					 * 23    USP
 					 * 22:17 RPBL
-					 * 16    fix burst
+					 * 16    fixed burst, or undefined b.
 					 * 15:14 priority between Rx and Tx
 					 *  3    rxtx ratio 41
 					 *  2    rxtx ratio 31
 					 *  1    rxtx ratio 21
 					 *  0    rxtx ratio 11
 					 * 13:8  PBL possible DMA burst len
+					 *  7    alternative des8
 					 *  0    reset op. self clear
 					 */
 #define  _BMR		0x00412080	/* XXX TBD */
 #define  _BMR0		0x00020181	/* XXX TBD */
 #define  BMR_RST	(1)		/* reset op. self clear when done */
-#define GMACTDS		0x1004		/* write any to resume tdes */
-#define GMACRDS		0x1008		/* write any to resume rdes */
-#define GMACRDLAR	0x100c		/* rdes base address 32bit paddr */
-#define  _RDLAR		0x18000		/* XXX TBD system SRAM with CC ? */
-#define GMACTDLAR	0x1010		/* tdes base address 32bit paddr */
-#define  _TDLAR		0x1c000		/* XXX TBD system SRAM with CC ? */
+#define GMACTPD		0x1004		/* write any to resume tdes */
+#define GMACRPD		0x1008		/* write any to resume rdes */
+#define GMACRDLA	0x100c		/* rdes base address 32bit paddr */
+#define GMACTDLA	0x1010		/* tdes base address 32bit paddr */
+#define  _RDLA		0x18000		/* XXX TBD system SRAM with CC ? */
+#define  _TDLA		0x1c000		/* XXX TBD system SRAM with CC ? */
+#define GMACDSR		0x1014		/* DMA status detail report; W1C */
 #define GMACOMR		0x1018		/* DMA operation */
-#define  OMR_TXE	(1U<<13)	/* start Tx DMA engine, 0 to stop */
-#define  OMR_RXE	(1U<<1)		/* start Rx DMA engine, 0 to stop */
+#define  OMR_TSF	(1U<<25)	/* 1: Tx store&forword, 0: immed. */
+#define  OMR_RSF	(1U<<21)	/* 1: Rx store&forward, 0: immed. */
+#define  OMR_ST		(1U<<13)	/* run Tx DMA engine, 0 to stop */
+#define  OMR_EFC	(1U<<8)		/* transmit PAUSE to throttle Rx lvl. */
+#define  OMR_FEF	(1U<<7)		/* allow to receive error frames */
+#define  OMR_RS		(1U<<1)		/* run Rx DMA engine, 0 to stop */
+#define GMACIE		0x101c		/* interrupt enable */
+#define GMACEVCS	0x1020		/* missed frame or ovf detected */
+#define GMACRWDT	0x1024		/* receive watchdog timer count */
+#define GMACAXIB	0x1028		/* AXI bus mode control */
+#define GMACAXIS	0x102c		/* AXI status report */
+/* 0x1048-1054 */			/* descriptor and buffer cur. address */
+#define HWFEA		0x1058		/* feature report */
 
 /* descriptor format definition */
 struct tdes {
@@ -482,9 +512,9 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	phy_mode = fdtbus_get_string(phandle, "phy-mode");
 	if (phy_mode == NULL)
 		aprint_error(": missing 'phy-mode' property\n");
-	sc->sc_100mii = (phy_mode != NULL && strcmp(phy_mode, "rgmii") != 0);
+	sc->sc_100mii = (phy_mode  && strcmp(phy_mode, "rgmii") != 0);
 sc->sc_phy_id = 7; /* XXX */
-sc->sc_freq = 250 * 1000 * 1000; /* XXX */
+sc->sc_freq = 125 * 1000 * 1000; /* XXX */
 aprint_normal_dev(self,
 "phy mode %s, phy id %d, freq %ld\n", phy_mode, sc->sc_phy_id, sc->sc_freq);
 
@@ -635,7 +665,7 @@ scx_attach_i(struct scx_softc *sc)
 
 sc->sc_phy_id = MII_PHY_ANY;
 	sc->sc_mdclk = get_mdioclk(sc->sc_freq); /* 5:2 clk control */
-sc->sc_mdclk = 0; /* XXX */
+sc->sc_mdclk = 5; /* XXX */
 aprint_normal_dev(sc->sc_dev, "using %d for mdclk\n", sc->sc_mdclk);
 sc->sc_mdclk <<= 2;
 
@@ -782,17 +812,21 @@ scx_reset(struct scx_softc *sc)
 {
 	int loop = 0, busy;
 
-	mac_write(sc, GMACBMR, _BMR0); /* may take for a while */
+	mac_write(sc, GMACOMR, 0);
+	mac_write(sc, GMACBMR, BMR_RST); /* may take for a while */
 	do {
 		DELAY(10);
 		busy = mac_read(sc, GMACBMR) & BMR_RST;
 	} while (++loop < 3000 && busy);
-printf("reset done with %d loop\n", loop);
-
-	CSR_WRITE(sc, DESCENG_SRST, 1);
-	CSR_WRITE(sc, DESCENG_INIT, 1);
+printf("BMR reset done with %d loop\n", loop);
 	mac_write(sc, GMACBMR, _BMR);
 	mac_write(sc, GMACEVCTL, 1);
+
+	CSR_WRITE(sc, CLKEN, CLK_ALL);
+
+	CSR_WRITE(sc, SWRESET, 0);	/* reset operation */
+	CSR_WRITE(sc, SWRESET, 1U<<31);	/* manifest run */
+	CSR_WRITE(sc, COMINIT, 3); 	/* DB|CLS*/
 }
 
 static int
@@ -813,7 +847,7 @@ scx_init(struct ifnet *ifp)
 	csr = (ea[3] << 24) | (ea[2] << 16) | (ea[1] << 8) |  ea[0];
 	mac_write(sc, GMACMAL0, csr);
 	csr = (ea[5] << 8) | ea[4];
-	mac_write(sc, GMACMAH0, csr | 1U<<31); /* always valid? */
+	mac_write(sc, GMACMAH0, csr);
 
 	/* accept multicast frame or run promisc mode */
 	scx_set_rcvfilt(sc);
@@ -839,14 +873,14 @@ scx_init(struct ifnet *ifp)
 	sc->sc_rxptr = 0;
 
 	/* XXX 32 bit paddr XXX hand Tx/Rx rings to HW XXX */
-	mac_write(sc, GMACTDLAR, SCX_CDTXADDR(sc, 0));
-	mac_write(sc, GMACRDLAR, SCX_CDRXADDR(sc, 0));
+	mac_write(sc, GMACTDLA, SCX_CDTXADDR(sc, 0));
+	mac_write(sc, GMACRDLA, SCX_CDRXADDR(sc, 0));
 
 	/* kick to start GMAC engine */
-	CSR_WRITE(sc, RXINT_CLR, ~0);
-	CSR_WRITE(sc, TXINT_CLR, ~0);
+	CSR_WRITE(sc, RXI_CLR, ~0);
+	CSR_WRITE(sc, TXI_CLR, ~0);
 	csr = mac_read(sc, GMACOMR);
-	mac_write(sc, GMACOMR, csr | OMR_RXE | OMR_TXE);
+	mac_write(sc, GMACOMR, csr | OMR_RS | OMR_ST);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -960,7 +994,7 @@ scx_set_rcvfilt(struct scx_softc *sc)
 	int i;
 
 	csr = mac_read(sc, GMACAFR);
-	csr &= ~(AFR_PM | AFR_AM | AFR_MHTE);
+	csr &= ~(AFR_PR | AFR_PM | AFR_MHTE | AFR_HPF);
 	mac_write(sc, GMACAFR, csr);
 
 	ETHER_LOCK(ec);
@@ -1016,7 +1050,7 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 	ETHER_UNLOCK(ec);
 
 	if (crc)
-		csr |= AFR_MHTE;
+		csr |= AFR_MHTE | AFR_HPF; /* use hash+perfect */
 	mac_write(sc, GMACMHTH, mchash[1]);
 	mac_write(sc, GMACMHTL, mchash[0]);
 	mac_write(sc, GMACAFR, csr);
@@ -1025,9 +1059,9 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
  update:
 	/* With PM or AM, MHTE/MHT0-7 are never consulted. really? */
 	if (ifp->if_flags & IFF_PROMISC)
-		csr |= AFR_PM;	/* run promisc. mode */
+		csr |= AFR_PR;	/* run promisc. mode */
 	else
-		csr |= AFR_AM;	/* accept all multicast */
+		csr |= AFR_PM;	/* accept all multicast */
 	mac_write(sc, GMACAFR, csr);
 	return;
 }
@@ -1042,7 +1076,7 @@ scx_ifmedia_upd(struct ifnet *ifp)
 		; /* restart AN */
 		; /* enable AN */
 		; /* advertise flow control pause */
-		; /* adv. 100FDX,100HDX,10FDX,10HDX */
+		; /* adv. 1000FDX,100FDX,100HDX,10FDX,10HDX */
 	} else {
 #if 1 /* XXX not sure to belong here XXX */
 		uint32_t mcr = mac_read(sc, GMACMCR);
@@ -1137,6 +1171,9 @@ mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 	uint32_t miia;
 	int error;
 
+uint32_t clk = CSR_READ(sc, CLKEN);
+CSR_WRITE(sc, CLKEN, clk | CLK_G);
+
 	miia = (phy << GAR_PHY) | (reg << GAR_REG) | sc->sc_mdclk;
 	mac_write(sc, GMACGAR, miia | GAR_BUSY);
 	error = spin_waitfor(sc, GMACGAR, GAR_BUSY);
@@ -1153,6 +1190,9 @@ mii_writereg(device_t self, int phy, int reg, uint16_t val)
 	uint32_t miia;
 	uint16_t dummy;
 	int error;
+
+uint32_t clk = CSR_READ(sc, CLKEN);
+CSR_WRITE(sc, CLKEN, clk | CLK_G);
 
 	miia = (phy << GAR_PHY) | (reg << GAR_REG) | sc->sc_mdclk;
 	mac_write(sc, GMACGDR, val);
@@ -1280,7 +1320,7 @@ scx_start(struct ifnet *ifp)
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Tell DMA start transmit */
-		mac_write(sc, GMACTDS, 1);
+		mac_write(sc, GMACTPD, 1);
 
 		txs->txs_mbuf = m0;
 		txs->txs_firstdesc = sc->sc_txnext;
