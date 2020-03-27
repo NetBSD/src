@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.14 2020/03/13 15:19:25 roy Exp $ */
+/* $NetBSD: compile.c,v 1.15 2020/03/27 15:11:57 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.14 2020/03/13 15:19:25 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.15 2020/03/27 15:11:57 christos Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -87,7 +87,7 @@ _ti_grow_tbuf(TBUF *tbuf, size_t len)
 }
 
 char *
-_ti_find_cap(TBUF *tbuf, char type, short ind)
+_ti_find_cap(TIC *tic, TBUF *tbuf, char type, short ind)
 {
 	size_t n;
 	uint16_t num;
@@ -106,7 +106,7 @@ _ti_find_cap(TBUF *tbuf, char type, short ind)
 			cap++;
 			break;
 		case 'n':
-			cap += sizeof(uint32_t);
+			cap += _ti_numsize(tic);
 			break;
 		case 's':
 			num = le16dec(cap);
@@ -121,7 +121,7 @@ _ti_find_cap(TBUF *tbuf, char type, short ind)
 }
 
 char *
-_ti_find_extra(TBUF *tbuf, const char *code)
+_ti_find_extra(TIC *tic, TBUF *tbuf, const char *code)
 {
 	size_t n;
 	uint16_t num;
@@ -142,7 +142,7 @@ _ti_find_extra(TBUF *tbuf, const char *code)
 			cap++;
 			break;
 		case 'n':
-			cap += sizeof(uint32_t);
+			cap += _ti_numsize(tic);
 			break;
 		case 's':
 			num = le16dec(cap);
@@ -156,16 +156,58 @@ _ti_find_extra(TBUF *tbuf, const char *code)
 	return NULL;
 }
 
+void
+_ti_encode_num(TIC *tic, TBUF *rbuf, int num)
+{
+	if (_ti_numsize(tic) == sizeof(uint16_t)) {
+		if (num > SHRT_MAX)
+			num = SHRT_MAX;
+		le16enc(rbuf->buf + rbuf->bufpos, (uint16_t)num);
+	} else {
+		le32enc(rbuf->buf + rbuf->bufpos, (uint32_t)num);
+	}
+	rbuf->bufpos += _ti_numsize(tic);
+}
+
+int
+_ti_decode_num(int rtype, const char **cap)
+{
+	int rv;
+
+	if (rtype == TERMINFO_RTYPE_O1) {
+		rv = (int)le16dec(*cap);
+		*cap += sizeof(uint16_t);
+	} else {
+		rv = (int)le32dec(*cap);
+		*cap += sizeof(uint32_t);
+	}
+	return rv;
+}
+
+char *
+_ti_getname(int rtype, const char *orig)
+{
+	char *name;
+
+	if (rtype == TERMINFO_RTYPE) {
+		if (asprintf(&name, "%s@v3", orig) < 0)
+			name = NULL;
+	} else {
+		name = strdup(orig);
+	}
+	return name;
+}
+
 size_t
-_ti_store_extra(TIC *tic, int wrn, char *id, char type, char flag, int num,
-    char *str, size_t strl, int flags)
+_ti_store_extra(TIC *tic, int wrn, const char *id, char type, char flag,
+    int num, const char *str, size_t strl, int flags)
 {
 	size_t l;
 
 	_DIAGASSERT(tic != NULL);
 
 	if (strcmp(id, "use") != 0) {
-		if (_ti_find_extra(&tic->extras, id) != NULL)
+		if (_ti_find_extra(tic, &tic->extras, id) != NULL)
 			return 0;
 		if (!(flags & TIC_EXTRA)) {
 			if (wrn != 0)
@@ -182,7 +224,7 @@ _ti_store_extra(TIC *tic, int wrn, char *id, char type, char flag, int num,
 	}
 
 	if (!_ti_grow_tbuf(&tic->extras,
-		l + strl + sizeof(uint16_t) + sizeof(uint32_t) + 1))
+		l + strl + sizeof(uint16_t) + _ti_numsize(tic) + 1))
 		return 0;
 	le16enc(tic->extras.buf + tic->extras.bufpos, (uint16_t)l);
 	tic->extras.bufpos += sizeof(uint16_t);
@@ -194,8 +236,7 @@ _ti_store_extra(TIC *tic, int wrn, char *id, char type, char flag, int num,
 		tic->extras.buf[tic->extras.bufpos++] = flag;
 		break;
 	case 'n':
-		le32enc(tic->extras.buf + tic->extras.bufpos, (uint32_t)num);
-		tic->extras.bufpos += sizeof(uint32_t);
+		_ti_encode_num(tic, &tic->extras, num);
 		break;
 	case 's':
 		le16enc(tic->extras.buf + tic->extras.bufpos, (uint16_t)strl);
@@ -239,7 +280,7 @@ _ti_flatten(uint8_t **buf, const TIC *tic)
 		return -1;
 
 	cap = *buf;
-	*cap++ = TERMINFO_RTYPE; /* Record type 3 */
+	*cap++ = tic->rtype;
 	le16enc(cap, (uint16_t)len);
 	cap += sizeof(uint16_t);
 	memcpy(cap, tic->name, len);
@@ -451,6 +492,17 @@ _ti_get_token(char **cap, char sep)
 	return token;
 }
 
+static int
+_ti_find_rtype(const char *cap)
+{
+	for (const char *ptr = cap; (ptr = strchr(ptr, '#')) != NULL;) {
+		if (strtol(++ptr, NULL, 0) > SHRT_MAX) {
+			return TERMINFO_RTYPE;
+		}
+	}
+	return TERMINFO_RTYPE_O1;
+}
+
 TIC *
 _ti_compile(char *cap, int flags)
 {
@@ -467,7 +519,7 @@ _ti_compile(char *cap, int flags)
 
 	name = _ti_get_token(&cap, ',');
 	if (name == NULL) {
-		dowarn(flags, "no seperator found: %s", cap);
+		dowarn(flags, "no separator found: %s", cap);
 		return NULL;
 	}
 	desc = strrchr(name, '|');
@@ -494,14 +546,16 @@ _ti_compile(char *cap, int flags)
 	if (tic == NULL)
 		return NULL;
 
+	tic->rtype = (flags & TIC_COMPAT_V1) ? TERMINFO_RTYPE_O1 :
+	    _ti_find_rtype(cap);
 	buf.buf = NULL;
 	buf.buflen = 0;
 
-	tic->name = strdup(name);
+	tic->name = _ti_getname(tic->rtype, name);
 	if (tic->name == NULL)
 		goto error;
 	if (alias != NULL && flags & TIC_ALIAS) {
-		tic->alias = strdup(alias);
+		tic->alias = _ti_getname(tic->rtype, alias);
 		if (tic->alias == NULL)
 			goto error;
 	}
@@ -533,7 +587,7 @@ _ti_compile(char *cap, int flags)
 			/* Don't use the string if we already have it */
 			ind = (short)_ti_strindex(token);
 			if (ind != -1 &&
-			    _ti_find_cap(&tic->strs, 's', ind) != NULL)
+			    _ti_find_cap(tic, &tic->strs, 's', ind) != NULL)
 				continue;
 
 			/* Encode the string to our scratch buffer */
@@ -579,7 +633,7 @@ _ti_compile(char *cap, int flags)
 			/* Don't use the number if we already have it */
 			ind = (short)_ti_numindex(token);
 			if (ind != -1 &&
-			    _ti_find_cap(&tic->nums, 'n', ind) != NULL)
+			    _ti_find_cap(tic, &tic->nums, 'n', ind) != NULL)
 				continue;
 
 			cnum = strtol(p, &e, 0);
@@ -600,14 +654,12 @@ _ti_compile(char *cap, int flags)
 				    num, NULL, 0, flags);
 			else {
 				if (_ti_grow_tbuf(&tic->nums,
-				    sizeof(uint16_t) + sizeof(uint32_t))==NULL)
+				    sizeof(uint16_t) + _ti_numsize(tic))==NULL)
 					goto error;
 				le16enc(tic->nums.buf + tic->nums.bufpos,
 				    (uint16_t)ind);
 				tic->nums.bufpos += sizeof(uint16_t);
-				le32enc(tic->nums.buf + tic->nums.bufpos,
-				    (uint32_t)num);
-				tic->nums.bufpos += sizeof(uint32_t);
+				_ti_encode_num(tic, &tic->nums, num);
 				tic->nums.entries++;
 			}
 			continue;
@@ -622,21 +674,22 @@ _ti_compile(char *cap, int flags)
 		ind = (short)_ti_flagindex(token);
 		if (ind == -1 && flag == CANCELLED_BOOLEAN) {
 			if ((ind = (short)_ti_numindex(token)) != -1) {
-				if (_ti_find_cap(&tic->nums, 'n', ind) != NULL)
+				if (_ti_find_cap(tic, &tic->nums, 'n', ind)
+				    != NULL)
 					continue;
-				if (_ti_grow_tbuf(&tic->nums,
-					sizeof(uint16_t) * 2) == NULL)
+				if (_ti_grow_tbuf(&tic->nums, sizeof(uint16_t)
+				    + _ti_numsize(tic)) == NULL)
 					goto error;
 				le16enc(tic->nums.buf + tic->nums.bufpos,
 				    (uint16_t)ind);
 				tic->nums.bufpos += sizeof(uint16_t);
-				le32enc(tic->nums.buf + tic->nums.bufpos,
-				    (uint32_t)CANCELLED_NUMERIC);
-				tic->nums.bufpos += sizeof(uint32_t);
+				_ti_encode_num(tic, &tic->nums,
+				    CANCELLED_NUMERIC); 
 				tic->nums.entries++;
 				continue;
 			} else if ((ind = (short)_ti_strindex(token)) != -1) {
-				if (_ti_find_cap(&tic->strs, 's', ind) != NULL)
+				if (_ti_find_cap(tic, &tic->strs, 's', ind)
+				    != NULL)
 					continue;
 				if (_ti_grow_tbuf(&tic->strs,
 				    (sizeof(uint16_t) * 2) + 1) == NULL)
@@ -652,7 +705,7 @@ _ti_compile(char *cap, int flags)
 		if (ind == -1)
 			_ti_store_extra(tic, 1, token, 'f', flag, 0, NULL, 0,
 			    flags);
-		else if (_ti_find_cap(&tic->flags, 'f', ind) == NULL) {
+		else if (_ti_find_cap(tic, &tic->flags, 'f', ind) == NULL) {
 			if (_ti_grow_tbuf(&tic->flags, sizeof(uint16_t) + 1)
 			    == NULL)
 				goto error;
