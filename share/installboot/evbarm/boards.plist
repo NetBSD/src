@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.5 2020/01/27 07:48:59 thorpej Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.6 2020/03/27 02:01:48 thorpej Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -353,6 +353,20 @@
 		<string>Xunlong Orange Pi One</string>
 		<key>u-boot-pkg</key>
 		<string>orangepi-one</string>
+	</dict>
+	<key>xunlong,orangepi-lite</key>
+	<dict>
+		<key>description</key>
+		<string>Xunlong Orange Pi Lite</string>
+		<key>u-boot-pkg</key>
+		<string>orangepi-lite</string>
+	</dict>
+	<key>xunlong,orangepi-lite2</key>
+	<dict>
+		<key>description</key>
+		<string>Xunlong Orange Pi Lite2</string>
+		<key>u-boot-pkg</key>
+		<string>orangepi-lite2</string>
 	</dict>
 	<key>xunlong,orangepi-plus2e</key>
 	<dict>
