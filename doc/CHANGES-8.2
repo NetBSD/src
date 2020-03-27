@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.109 2020/03/23 10:17:07 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.110 2020/03/27 08:48:57 sborrill Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2159,4 +2159,10 @@ sys/external/bsd/drm2/dist/drm/radeon/radeon_vce.c 1.4
 
 	Fix loading TAHITI VCE firmware.
 	[mrg, ticket #1523]
+
+etc/named.conf					1.8
+
+	Stop using obsolete dnssec-lookaside (implies use of dlv.isc.org,
+	which no longer serves any useful purpose).
+	[christos, ticket #806]
 
