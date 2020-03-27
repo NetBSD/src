@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.33 2020/03/27 15:11:57 christos Exp $ */
+/* $NetBSD: tic.c,v 1.34 2020/03/27 17:42:36 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.33 2020/03/27 15:11:57 christos Exp $");
+__RCSID("$NetBSD: tic.c,v 1.34 2020/03/27 17:42:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -104,12 +104,13 @@ save_term(struct cdbw *db, TERM *term)
 	size_t slen = strlen(term->name) + 1;
 
 	if (term->base_term != NULL) {
-		len = (ssize_t)slen + 7;
+		char *cap;
+		len = (ssize_t)(1 + sizeof(uint32_t) + sizeof(uint16_t) + slen);
 		buf = emalloc(len);
-		buf[0] = TERMINFO_ALIAS;
-		le32enc(buf + 1, term->base_term->id);
-		le16enc(buf + 5, slen);
-		memcpy(buf + 7, term->name, slen);
+		cap = (char *)buf;
+		*cap++ = TERMINFO_ALIAS;
+		_ti_encode_32(&cap, term->base_term->id);
+		_ti_encode_count_str(&cap, term->name, slen);
 		if (cdbw_put(db, term->name, slen, buf, len))
 			err(1, "cdbw_put");
 		free(buf);
@@ -229,63 +230,47 @@ merge(TIC *rtic, TIC *utic, int flags)
 
 	cap = utic->flags.buf;
 	for (n = utic->flags.entries; n > 0; n--) {
-		ind = le16dec(cap);
-		cap += sizeof(uint16_t);
+		ind = _ti_decode_16(&cap);
 		flag = *cap++;
 		if (VALID_BOOLEAN(flag) &&
 		    _ti_find_cap(rtic, &rtic->flags, 'f', ind) == NULL)
 		{
-			_ti_grow_tbuf(&rtic->flags, sizeof(uint16_t) + 1);
-			le16enc(rtic->flags.buf + rtic->flags.bufpos, ind);
-			rtic->flags.bufpos += sizeof(uint16_t);
-			rtic->flags.buf[rtic->flags.bufpos++] = flag;
-			rtic->flags.entries++;
+			if (!_ti_encode_buf_id_flags(&rtic->flags, ind, flag))
+				err(1, "encode flag");
 		}
 	}
 
 	cap = utic->nums.buf;
 	for (n = utic->nums.entries; n > 0; n--) {
-		ind = le16dec(cap);
-		cap += sizeof(uint16_t);
-		num = _ti_decode_num(utic->rtype, &cap);
+		ind = _ti_decode_16(&cap);
+		num = _ti_decode_num(&cap, utic->rtype);
 		if (VALID_NUMERIC(num) &&
 		    _ti_find_cap(rtic, &rtic->nums, 'n', ind) == NULL)
 		{
-			grow_tbuf(&rtic->nums, sizeof(uint16_t) +
-			    _ti_numsize(rtic));
-			le16enc(rtic->nums.buf + rtic->nums.bufpos, ind);
-			rtic->nums.bufpos += sizeof(uint16_t);
-			_ti_encode_num(rtic, &rtic->nums, num);
-			rtic->nums.entries++;
+			if (!_ti_encode_buf_id_num(&rtic->nums, ind, num,
+			    _ti_numsize(rtic)))
+				err(1, "encode num");
 		}
 	}
 
 	cap = utic->strs.buf;
 	for (n = utic->strs.entries; n > 0; n--) {
-		ind = le16dec(cap);
-		cap += sizeof(uint16_t);
-		len = le16dec(cap);
-		cap += sizeof(uint16_t);
+		ind = _ti_decode_16(&cap);
+		len = _ti_decode_16(&cap);
 		if (len > 0 &&
 		    _ti_find_cap(rtic, &rtic->strs, 's', ind) == NULL)
 		{
-			grow_tbuf(&rtic->strs, (sizeof(uint16_t) * 2) + len);
-			le16enc(rtic->strs.buf + rtic->strs.bufpos, ind);
-			rtic->strs.bufpos += sizeof(uint16_t);
-			le16enc(rtic->strs.buf + rtic->strs.bufpos, len);
-			rtic->strs.bufpos += sizeof(uint16_t);
-			memcpy(rtic->strs.buf + rtic->strs.bufpos,
-			    cap, len);
-			rtic->strs.bufpos += len;
-			rtic->strs.entries++;
+			if (!_ti_encode_buf_id_count_str(&rtic->strs, ind, cap,
+			    len))
+				err(1, "encode str");
+				
 		}
 		cap += len;
 	}
 
 	cap = utic->extras.buf;
 	for (n = utic->extras.entries; n > 0; n--) {
-		num = le16dec(cap);
-		cap += sizeof(uint16_t);
+		num = _ti_decode_16(&cap);
 		code = cap;
 		cap += num;
 		type = *cap++;
@@ -298,13 +283,12 @@ merge(TIC *rtic, TIC *utic, int flags)
 				continue;
 			break;
 		case 'n':
-			num = _ti_decode_num(utic->rtype, &cap);
+			num = _ti_decode_num(&cap, utic->rtype);
 			if (!VALID_NUMERIC(num))
 				continue;
 			break;
 		case 's':
-			num = le16dec(cap);
-			cap += sizeof(uint16_t);
+			num = _ti_decode_16(&cap);
 			str = cap;
 			cap += num;
 			if (num == 0)
@@ -320,7 +304,7 @@ static size_t
 merge_use(int flags)
 {
 	size_t skipped, merged, memn;
-	char *cap, *scap;
+	const char *cap;
 	uint16_t num;
 	TIC *rtic, *utic;
 	TERM *term, *uterm;;
@@ -368,10 +352,11 @@ merge_use(int flags)
 				dowarn("%s: use no longer exists - impossible",
 					rtic->name);
 			else {
-				scap = cap - (4 + sizeof(uint16_t));
+				char *scap = __UNCONST(
+				    cap - (4 + sizeof(uint16_t)));
 				cap++;
-				num = le16dec(cap);
-				cap += sizeof(uint16_t) + num;
+				num = _ti_decode_16(&cap);
+				cap += num;
 				memn = rtic->extras.bufpos -
 				    (cap - rtic->extras.buf);
 				memmove(scap, cap, memn);
