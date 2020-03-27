@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.19 2020/03/27 07:59:50 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.20 2020/03/27 09:19:33 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -40,24 +40,24 @@
  *   to designify ring number from which to arrive or to which go.
  * - memory mapped EEPROM to hold MAC address. The rest of the area is
  *   occupied by a set of ucode for two DMA engines and one packet engine.
- * - The size of frame address filter is 16 plus 32.
+ * - The size of frame address filter is 16 plus 16.
  * - The first slot is my own station address. Always enabled to perform
  *   to identify oneself.
- * - 1~16 are for supplimental MAC addresses. Independently enabled for
+ * - 1~15 are for supplimental MAC addresses. Independently enabled for
  *   use. Good to catch multicast. Byte-wise selective match available.
  *   Use the mask to catch { 0x01, 0x00, 0x00 } and/or { 0x33, 0x33 }.
  * - 16~32 might be exact match without byte-mask.
  * - The size of multicast hash filter store is 64 bit.
- * - Socionext/Linaro "NetSec" code makes many cut shorts. Some constants
- *   are left unexplained. The values should be handled via external
- *   controls like FDT descriptions. Fortunately, Intel/Altera CycloneV PDFs
- *   describe every detail of "such the instance of" DW EMAC IP and
- *   most of them are likely applicable to SC2A11 GbE.
- * - DW EMAC implmentation (0x20) is 0x10.0x36
+ * - Socionext/Linaro "NetSec" code contains some constants left unexplained.
+ *   Fortunately, Intel/Altera CycloneV PDFs describe every detail of
+ *   "such the instance of" DW EMAC IP and most of them are likely applicable
+ *   to SC2A11 GbE.
+ * - not known "NetSec" instanciates DW timestamp or builds its own.
+ * - DW EMAC implmentation (0x20) is known 0x10.36
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.19 2020/03/27 07:59:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.20 2020/03/27 09:19:33 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -212,7 +212,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.19 2020/03/27 07:59:50 nisimura Exp $")
 #define GMACMAH0	0x0040		/* MAC address 0 47:32 */
 #define GMACMAL0	0x0044		/* MAC address 0 31:0 */
 #define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1 - 15 */
-#define GMACMAL(i) 	((i)*8+0x44)
+#define GMACMAL(i) 	((i)*8+0x44)	/* bit 31 to use, 30 SA,
+					 * 29:24 byte-wise don'care */
 #define GMACMIISR	0x00d8		/* resolved xMII link status */
 					/*  3   link up detected
 					 *  2:1 resovled speed
@@ -227,12 +228,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.19 2020/03/27 07:59:50 nisimura Exp $")
 #define GMACMHT(i)	((i)*4+0x500)
 #define GMACVHT		0x0588		/* VLAN tag hash */
 
-/* 0x0700-0734 */
+/* 0x0700-0734 ??? */
 #define GMACAMAH(i)	((i)*8+0x800)	/* supplimental MAC addr 16-31 */
-#define GMACAMAL(i)	((i)*8+0x804)
+#define GMACAMAL(i)	((i)*8+0x804)	/* bit 31 to use */
 
 #define GMACBMR		0x1000		/* DMA bus mode control
-					 * 24    4PBL 8?
+					 * 24    4PBL 8???
 					 * 23    USP
 					 * 22:17 RPBL
 					 * 16    fixed burst, or undefined b.
@@ -841,12 +842,11 @@ scx_reset(struct scx_softc *sc)
 	int loop = 0, busy;
 
 	mac_write(sc, GMACOMR, 0);
-	mac_write(sc, GMACBMR, BMR_RST); /* may take for a while */
+	mac_write(sc, GMACBMR, BMR_RST);
 	do {
 		DELAY(1);
 		busy = mac_read(sc, GMACBMR) & BMR_RST;
 	} while (++loop < 3000 && busy);
-printf("BMR reset done with %d loop\n", loop);
 	mac_write(sc, GMACBMR, _BMR);
 	mac_write(sc, GMACAFR, 0);
 
