@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.12 2020/03/09 01:54:31 christos Exp $	*/
+/*	$NetBSD: crash.c,v 1.13 2020/03/27 00:17:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.12 2020/03/09 01:54:31 christos Exp $");
+__RCSID("$NetBSD: crash.c,v 1.13 2020/03/27 00:17:08 ad Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -427,17 +427,16 @@ main(int argc, char **argv)
 		errx(EXIT_FAILURE, "cannot read osrelease: %s",
 		    kvm_geterr(kd));
 	}
-#ifdef LOCKDEBUG
-	if ((size_t)kvm_read(kd, nl[X_LOCKDEBUG].n_value, &ld_all,
-	    sizeof(ld_all)) != sizeof(ld_all))
-		warn("Cannot read ld_all (no LOCKDEBUG kernel?): %s",
-		kvm_geterr(kd));
-#endif
 	printf("Crash version %s, image version %s.\n", osrelease, imgrelease);
 	if (strcmp(osrelease, imgrelease) != 0) {
 		printf("WARNING: versions differ, you may not be able to "
 		    "examine this image.\n");
 	}
+#ifdef LOCKDEBUG
+	if ((size_t)kvm_read(kd, nl[X_LOCKDEBUG].n_value, &ld_all,
+	    sizeof(ld_all)) != sizeof(ld_all))
+		printf("Kernel compiled without options LOCKDEBUG.\n");
+#endif
 
 	/*
 	 * Print the panic string, if any.
