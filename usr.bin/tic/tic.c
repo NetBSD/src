@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.32 2020/03/13 15:19:25 roy Exp $ */
+/* $NetBSD: tic.c,v 1.33 2020/03/27 15:11:57 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.32 2020/03/13 15:19:25 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.33 2020/03/27 15:11:57 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -167,6 +167,7 @@ process_entry(TBUF *buf, int flags)
 	char *p, *e, *alias;
 	TERM *term;
 	TIC *tic;
+	TBUF sbuf = *buf;
 
 	if (buf->bufpos == 0)
 		return 0;
@@ -211,13 +212,17 @@ process_entry(TBUF *buf, int flags)
 		free(alias);
 	}
 
+	if (tic->rtype == TERMINFO_RTYPE)
+		return process_entry(&sbuf, flags | TIC_COMPAT_V1);
+
 	return 0;
 }
 
 static void
 merge(TIC *rtic, TIC *utic, int flags)
 {
-	char *cap, flag, *code, type, *str;
+	char flag, type;
+	const char *cap, *code, *str;
 	short ind, len;
 	int num;
 	size_t n;
@@ -228,7 +233,7 @@ merge(TIC *rtic, TIC *utic, int flags)
 		cap += sizeof(uint16_t);
 		flag = *cap++;
 		if (VALID_BOOLEAN(flag) &&
-		    _ti_find_cap(&rtic->flags, 'f', ind) == NULL)
+		    _ti_find_cap(rtic, &rtic->flags, 'f', ind) == NULL)
 		{
 			_ti_grow_tbuf(&rtic->flags, sizeof(uint16_t) + 1);
 			le16enc(rtic->flags.buf + rtic->flags.bufpos, ind);
@@ -242,17 +247,15 @@ merge(TIC *rtic, TIC *utic, int flags)
 	for (n = utic->nums.entries; n > 0; n--) {
 		ind = le16dec(cap);
 		cap += sizeof(uint16_t);
-		num = le32dec(cap);
-		cap += sizeof(uint32_t);
+		num = _ti_decode_num(utic->rtype, &cap);
 		if (VALID_NUMERIC(num) &&
-		    _ti_find_cap(&rtic->nums, 'n', ind) == NULL)
+		    _ti_find_cap(rtic, &rtic->nums, 'n', ind) == NULL)
 		{
 			grow_tbuf(&rtic->nums, sizeof(uint16_t) +
-			    sizeof(uint32_t));
+			    _ti_numsize(rtic));
 			le16enc(rtic->nums.buf + rtic->nums.bufpos, ind);
 			rtic->nums.bufpos += sizeof(uint16_t);
-			le32enc(rtic->nums.buf + rtic->nums.bufpos, num);
-			rtic->nums.bufpos += sizeof(uint32_t);
+			_ti_encode_num(rtic, &rtic->nums, num);
 			rtic->nums.entries++;
 		}
 	}
@@ -264,7 +267,7 @@ merge(TIC *rtic, TIC *utic, int flags)
 		len = le16dec(cap);
 		cap += sizeof(uint16_t);
 		if (len > 0 &&
-		    _ti_find_cap(&rtic->strs, 's', ind) == NULL)
+		    _ti_find_cap(rtic, &rtic->strs, 's', ind) == NULL)
 		{
 			grow_tbuf(&rtic->strs, (sizeof(uint16_t) * 2) + len);
 			le16enc(rtic->strs.buf + rtic->strs.bufpos, ind);
@@ -295,8 +298,7 @@ merge(TIC *rtic, TIC *utic, int flags)
 				continue;
 			break;
 		case 'n':
-			num = le32dec(cap);
-			cap += sizeof(uint32_t);
+			num = _ti_decode_num(utic->rtype, &cap);
 			if (!VALID_NUMERIC(num))
 				continue;
 			break;
@@ -328,7 +330,8 @@ merge_use(int flags)
 		if (term->base_term != NULL)
 			continue;
 		rtic = term->tic;
-		while ((cap = _ti_find_extra(&rtic->extras, "use")) != NULL) {
+		while ((cap = _ti_find_extra(rtic, &rtic->extras, "use"))
+		    != NULL) {
 			if (*cap++ != 's') {
 				dowarn("%s: use is not string", rtic->name);
 				break;
@@ -351,15 +354,16 @@ merge_use(int flags)
 				dowarn("%s: uses itself", rtic->name);
 				goto remove;
 			}
-			if (_ti_find_extra(&utic->extras, "use") != NULL) {
+			if (_ti_find_extra(utic, &utic->extras, "use")
+			    != NULL) {
 				skipped++;
 				break;
 			}
-			cap = _ti_find_extra(&rtic->extras, "use");
+			cap = _ti_find_extra(rtic, &rtic->extras, "use");
 			merge(rtic, utic, flags);
 	remove:
 			/* The pointers may have changed, find the use again */
-			cap = _ti_find_extra(&rtic->extras, "use");
+			cap = _ti_find_extra(rtic, &rtic->extras, "use");
 			if (cap == NULL)
 				dowarn("%s: use no longer exists - impossible",
 					rtic->name);
