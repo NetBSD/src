@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.169 2020/03/24 13:30:54 jdolecek Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.170 2020/03/27 16:47:00 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.169 2020/03/24 13:30:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.170 2020/03/27 16:47:00 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1496,11 +1496,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	 * IFEF_MPSAFE here.
 	 */
 
-	if (m->m_len < ETHER_HDR_LEN) {
-		m = m_pullup(m, ETHER_HDR_LEN);
-		if (m == NULL)
-			return 0;
-	}
+	KASSERT(m->m_len >= ETHER_HDR_LEN);
 
 	eh = mtod(m, struct ether_header *);
 	sc = ifp->if_bridge;
