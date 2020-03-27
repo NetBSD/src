@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.134 2020/03/23 20:02:13 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.135 2020/03/27 00:14:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.134 2020/03/23 20:02:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.135 2020/03/27 00:14:25 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -250,7 +250,7 @@ static kmutex_t cache_stat_lock __cacheline_aligned;
 
 #define	UPDATE(nchcpu, f) do { \
 	uint32_t cur = atomic_load_relaxed(&nchcpu->cur.f); \
-	nchstats.f += cur - nchcpu->last.f; \
+	nchstats.f += (uint32_t)(cur - nchcpu->last.f); \
 	nchcpu->last.f = cur; \
 } while (/* CONSTCOND */ 0)
 
@@ -409,9 +409,9 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
 	 * tailored for exactly what's needed here (64-bit key and so on)
 	 * that is quite a bit faster than using rb_tree_find_node(). 
 	 *
-	 * In the fast path memcmp() needs to be called at least once to
-	 * confirm that the correct name has been found.  If there has been
-	 * a hash value collision (very rare) the search will continue on.
+	 * For a matching key memcmp() needs to be called once to confirm
+	 * that the correct name has been found.  Very rarely there will be
+	 * a key value collision and the search will continue.
 	 */
 	for (;;) {
 		if (__predict_false(RB_SENTINEL_P(node))) {
@@ -791,7 +791,10 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 			}
 		}
 
-		/* Record a hit on the entry.  This is an unlocked read. */
+		/*
+		 * Record a hit on the entry.  This is an unlocked read but
+		 * even if wrong it doesn't matter too much.
+		 */
 		lrulist = atomic_load_relaxed(&ncp->nc_lrulist);
 		if (lrulist != LRU_ACTIVE) {
 			cache_activate(ncp);
@@ -905,8 +908,8 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 
 	/*
 	 * With the directory lock still held, insert to the tail of the
-	 * ACTIVE LRU list (new) and with the LRU lock held take the to
-	 * opportunity to incrementally balance the lists.
+	 * ACTIVE LRU list (new) and take the opportunity to incrementally
+	 * balance the lists.
 	 */
 	mutex_enter(&cache_lru_lock);
 	ncp->nc_lrulist = LRU_ACTIVE;
@@ -916,8 +919,10 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	mutex_exit(&cache_lru_lock);
 
 	/*
-	 * Finally, insert to the vnode, and unlock.  Partially sort the
-	 * per-vnode list: dots go to back.
+	 * Finally, insert to the vnode and unlock.  With everything set up
+	 * it's safe to let cache_revlookup() see the entry.  Partially sort
+	 * the per-vnode list: dots go to back so cache_revlookup() doesn't
+	 * have to consider them.
 	 */
 	if (vp != NULL) {
 		vnode_impl_t *vi = VNODE_TO_VIMPL(vp);
@@ -987,7 +992,7 @@ nchinit(void)
 {
 
 	cache_pool = pool_cache_init(sizeof(struct namecache),
-	    coherency_unit, 0, 0, "nchentry", NULL, IPL_NONE, NULL,
+	    coherency_unit, 0, 0, "namecache", NULL, IPL_NONE, NULL,
 	    NULL, NULL);
 	KASSERT(cache_pool != NULL);
 
@@ -1126,11 +1131,7 @@ cache_purge_children(struct vnode *dvp)
 	SDT_PROBE(vfs, namecache, purge, children, dvp, 0, 0, 0, 0);
 
 	rw_enter(&dvi->vi_nc_lock, RW_WRITER);
-	for (;;) {
-		ncp = rb_tree_iterate(&dvi->vi_nc_tree, NULL, RB_DIR_RIGHT);
-		if (ncp == NULL) {
-			break;
-		}
+	while ((ncp = RB_TREE_MIN(&dvi->vi_nc_tree)) != NULL) {
 		cache_remove(ncp, true);
 	}
 	rw_exit(&dvi->vi_nc_lock);
@@ -1210,14 +1211,14 @@ cache_purgevfs(struct mount *mp)
 }
 
 /*
- * Re-queue an entry onto the correct LRU list, after it has scored a hit.
+ * Re-queue an entry onto the tail of the active LRU list, after it has
+ * scored a hit.
  */
 static void
 cache_activate(struct namecache *ncp)
 {
 
 	mutex_enter(&cache_lru_lock);
-	/* Put on tail of ACTIVE list, since it just scored a hit. */
 	TAILQ_REMOVE(&cache_lru.list[ncp->nc_lrulist], ncp, nc_lru);
 	TAILQ_INSERT_TAIL(&cache_lru.list[LRU_ACTIVE], ncp, nc_lru);
 	cache_lru.count[ncp->nc_lrulist]--;
