@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.20 2020/03/27 09:19:33 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.21 2020/03/27 13:00:13 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.20 2020/03/27 09:19:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.21 2020/03/27 13:00:13 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -224,8 +224,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.20 2020/03/27 09:19:33 nisimura Exp $")
 #define GMACEVCTL	0x0100		/* event counter control */
 #define GMACEVCNT(i)	((i)*4+0x114)	/* event counter 0x114~284 */
 
-#define GMACMHT0	0x0500		/* 256bit multicast hash table 0 - 7 */
-#define GMACMHT(i)	((i)*4+0x500)
+#define GMACMHT(i)	((i)*4+0x500)	/* 256bit multicast hash table 0 - 7 */
 #define GMACVHT		0x0588		/* VLAN tag hash */
 
 /* 0x0700-0734 ??? */
@@ -452,7 +451,6 @@ static void scx_stop(struct ifnet *, int);
 static void scx_watchdog(struct ifnet *);
 static int scx_ioctl(struct ifnet *, u_long, void *);
 static void scx_set_rcvfilt(struct scx_softc *);
-static int scx_ifmedia_upd(struct ifnet *);
 static void scx_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 static void mii_statchg(struct ifnet *);
 static void phy_tick(void *);
@@ -709,7 +707,7 @@ sc->sc_mdclk <<= 2;
 	mii->mii_statchg = mii_statchg;
 
 	sc->sc_ethercom.ec_mii = mii;
-	ifmedia_init(ifm, 0, scx_ifmedia_upd, scx_ifmedia_sts);
+	ifmedia_init(ifm, 0, ether_mediachange, scx_ifmedia_sts);
 	mii_attach(sc->sc_dev, mii, 0xffffffff, sc->sc_phy_id,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
@@ -881,7 +879,7 @@ scx_init(struct ifnet *ifp)
 	/* accept multicast frame or run promisc mode */
 	scx_set_rcvfilt(sc);
 
-	(void)scx_ifmedia_upd(ifp);
+	(void)ether_mediachange(ifp);
 
 	/* build sane Tx */
 	memset(sc->sc_txdescs, 0, sizeof(struct tdes) * MD_NTXDESC);
@@ -1077,55 +1075,22 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 		i++;
 	}
 	ETHER_UNLOCK(ec);
-
 	if (crc)
-		csr |= AFR_MHTE | AFR_HPF; /* use hash+perfect */
+		csr |= AFR_MHTE;
+	csr |= AFR_HPF; /* use hash+perfect */
 	mac_write(sc, GMACMHTH, mchash[1]);
 	mac_write(sc, GMACMHTL, mchash[0]);
 	mac_write(sc, GMACAFR, csr);
 	return;
 
  update:
-	/* With PM or AM, MHTE/MHT0-7 are never consulted. really? */
+	/* With PR or PM, MHTE/MHTL/MHTH are never consulted. really? */
 	if (ifp->if_flags & IFF_PROMISC)
 		csr |= AFR_PR;	/* run promisc. mode */
 	else
 		csr |= AFR_PM;	/* accept all multicast */
 	mac_write(sc, GMACAFR, csr);
 	return;
-}
-
-static int
-scx_ifmedia_upd(struct ifnet *ifp)
-{
-	struct scx_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_mii.mii_media;
-
-	if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_AUTO) {
-		; /* restart AN */
-		; /* enable AN */
-		; /* advertise flow control pause */
-		; /* adv. 1000FDX,100FDX,100HDX,10FDX,10HDX */
-	} else {
-#if 1 /* XXX not sure to belong here XXX */
-		uint32_t mcr = mac_read(sc, GMACMCR);
-		if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_1000_T)
-			mcr &= ~MCR_USEMII; /* RGMII+SPD1000 */
-		else {
-			if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX
-			    && sc->sc_100mii)
-				mcr |= MCR_SPD100;
-			mcr |= MCR_USEMII;
-		}
-		if (ifm->ifm_cur->ifm_media & IFM_FDX)
-			mcr |= MCR_USEFDX;
-		mcr |= MCR_CST | MCR_JE;
-		if (sc->sc_100mii == 0)
-			mcr |= MCR_IBN;
-		mac_write(sc, GMACMCR, mcr);
-#endif
-	}
-	return 0;
 }
 
 static void
@@ -1145,7 +1110,8 @@ mii_statchg(struct ifnet *ifp)
 {
 	struct scx_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
-	uint32_t fcr;
+	struct ifmedia * ifm = &mii->mii_media;
+	uint32_t mcr, fcr;
 
 #if 1
 	/* decode MIISR register value */
@@ -1165,14 +1131,31 @@ mii_statchg(struct ifnet *ifp)
 	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags)
 		sc->sc_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
 
-	/* Adjust PAUSE flow control. */
+	/* Adjust speed 1000/100/10. */
+	mcr = mac_read(sc, GMACMCR);
+	if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_1000_T)
+		mcr &= ~MCR_USEMII; /* RGMII+SPD1000 */
+	else {
+		if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX
+		    && sc->sc_100mii)
+			mcr |= MCR_SPD100;
+		mcr |= MCR_USEMII;
+	}
+	mcr |= MCR_CST | MCR_JE;
+	if (sc->sc_100mii == 0)
+		mcr |= MCR_IBN;
+
+	/* Adjust duplexity and PAUSE flow control. */
+	mcr &= ~MCR_USEFDX;
 	fcr = mac_read(sc, GMACFCR) & ~(FCR_TFE | FCR_RFE);
 	if (mii->mii_media_active & IFM_FDX) {
 		if (sc->sc_flowflags & IFM_ETH_TXPAUSE)
 			fcr |= FCR_TFE;
 		if (sc->sc_flowflags & IFM_ETH_RXPAUSE)
 			fcr |= FCR_RFE;
+		mcr |= MCR_USEFDX;	
 	}
+	mac_write(sc, GMACMCR, mcr);
 	mac_write(sc, GMACFCR, fcr);
 
 printf("%ctxfe, %crxfe\n",
