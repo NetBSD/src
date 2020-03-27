@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.85 2020/03/22 11:20:59 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.86 2020/03/27 18:37:30 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.85 2020/03/22 11:20:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.86 2020/03/27 18:37:30 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -106,7 +106,7 @@ struct xnetback_instance {
 	domid_t xni_domid;		/* attached to this domain */
 	uint32_t xni_handle;	/* domain-specific handle */
 	xnetback_state_t xni_status;
-	void *xni_softintr;
+	bool xni_rx_copy;
 
 	/* network interface stuff */
 	struct ethercom xni_ec;
@@ -129,8 +129,8 @@ struct xnetback_instance {
        void xvifattach(int);
 static int  xennetback_ifioctl(struct ifnet *, u_long, void *);
 static void xennetback_ifstart(struct ifnet *);
-static void xennetback_ifsoftstart_transfer(void *);
-static void xennetback_ifsoftstart_copy(void *);
+static void xennetback_ifsoftstart_transfer(struct xnetback_instance *);
+static void xennetback_ifsoftstart_copy(struct xnetback_instance *);
 static void xennetback_ifwatchdog(struct ifnet *);
 static int  xennetback_ifinit(struct ifnet *);
 static void xennetback_ifstop(struct ifnet *, int);
@@ -321,6 +321,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	ifp->if_timer = 0;
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(&xneti->xni_if, xneti->xni_enaddr);
 
 	mutex_enter(&xnetback_lock);
@@ -397,11 +398,6 @@ xennetback_xenbus_destroy(void *arg)
 		hypervisor_mask_event(xneti->xni_evtchn);
 		xen_intr_disestablish(xneti->xni_ih);
 		xneti->xni_ih = NULL;
-
-		if (xneti->xni_softintr) {
-			softint_disestablish(xneti->xni_softintr);
-			xneti->xni_softintr = NULL;
-		}
 	}
 
 	mutex_enter(&xnetback_lock);
@@ -490,20 +486,7 @@ xennetback_connect(struct xnetback_instance *xneti)
 		    xbusd->xbusd_otherend);
 		return -1;
 	}
-
-	if (rx_copy)
-		xneti->xni_softintr = softint_establish(SOFTINT_NET,
-		    xennetback_ifsoftstart_copy, xneti);
-	else
-		xneti->xni_softintr = softint_establish(SOFTINT_NET,
-		    xennetback_ifsoftstart_transfer, xneti);
-
-	if (xneti->xni_softintr == NULL) {
-		err = ENOMEM;
-		xenbus_dev_fatal(xbusd, ENOMEM,
-		    "can't allocate softint", xbusd->xbusd_otherend);
-		return -1;
-	}
+	xneti->xni_rx_copy = (rx_copy != 0);
 
 	/* allocate VA space and map rings */
 	xneti->xni_tx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
@@ -609,7 +592,6 @@ err1:
 		uvm_km_free(kernel_map, xneti->xni_tx_ring_va,
 		    PAGE_SIZE, UVM_KMF_VAONLY);
 
-	softint_disestablish(xneti->xni_softintr);
 	return -1;
 
 }
@@ -899,8 +881,9 @@ xennetback_evthandler(void *arg)
 	xen_rmb(); /* be sure to read the request before updating pointer */
 	xneti->xni_txring.req_cons = req_cons;
 	xen_wmb();
+
 	/* check to see if we can transmit more packets */
-	softint_schedule(xneti->xni_softintr);
+	if_schedule_deferred_start(ifp);
 
 	return 1;
 }
@@ -947,18 +930,19 @@ xennetback_ifstart(struct ifnet *ifp)
 
 	/*
 	 * The Xen communication channel is much more efficient if we can
-	 * schedule batch of packets for the domain. To achieve this, we
-	 * schedule a soft interrupt, and just return. This way, the network
+	 * schedule batch of packets for the domain. Deferred start by network
 	 * stack will enqueue all pending mbufs in the interface's send queue
-	 * before it is processed by the soft interrupt handler().
+	 * before it is processed by the soft interrupt handler.
 	 */
-	softint_schedule(xneti->xni_softintr);
+	if (__predict_true(xneti->xni_rx_copy))
+		xennetback_ifsoftstart_copy(xneti);
+	else
+		xennetback_ifsoftstart_transfer(xneti);
 }
 
 static void
-xennetback_ifsoftstart_transfer(void *arg)
+xennetback_ifsoftstart_transfer(struct xnetback_instance *xneti)
 {
-	struct xnetback_instance *xneti = arg;
 	struct ifnet *ifp = &xneti->xni_if;
 	struct mbuf *m;
 	vaddr_t xmit_va;
@@ -1270,9 +1254,8 @@ xennetback_mbuf_addr(struct mbuf *m, paddr_t *xmit_pa, int *offset)
 }
 
 static void
-xennetback_ifsoftstart_copy(void *arg)
+xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 {
-	struct xnetback_instance *xneti = arg;
 	struct ifnet *ifp = &xneti->xni_if;
 	struct mbuf *m, *new_m;
 	paddr_t xmit_pa;

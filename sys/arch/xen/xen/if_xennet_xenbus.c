@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.96 2020/03/26 18:50:16 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.97 2020/03/27 18:37:30 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,11 +61,11 @@
  *
  * For TX:
  * Purpose is to transmit packets to the outside. The start of day is in
- * xennet_start() (default output routine of xennet) that schedules a softint,
- * xennet_softstart(). xennet_softstart() generates the requests associated
+ * xennet_start() (output routine of xennet) scheduled via a softint.
+ * xennet_start() generates the requests associated
  * to the TX mbufs queued (see altq(9)).
  * The backend's responses are processed by xennet_tx_complete(), called
- * from xennet_softstart()
+ * from xennet_start()
  *
  * for RX:
  * Purpose is to process the packets received from the outside. RX buffers
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.96 2020/03/26 18:50:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.97 2020/03/27 18:37:30 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -190,7 +190,6 @@ struct xennet_xenbus_softc {
 	netif_rx_front_ring_t sc_rx_ring;
 
 	unsigned int sc_evtchn;
-	void *sc_softintr;
 	struct intrhand *sc_ih;
 	
 	grant_ref_t sc_tx_ring_gntref;
@@ -243,7 +242,6 @@ static void xennet_hex_dump(const unsigned char *, size_t, const char *, int);
 static int  xennet_init(struct ifnet *);
 static void xennet_stop(struct ifnet *, int);
 static void xennet_reset(struct xennet_xenbus_softc *);
-static void xennet_softstart(void *);
 static void xennet_start(struct ifnet *);
 static int  xennet_ioctl(struct ifnet *, u_long, void *);
 static void xennet_watchdog(struct ifnet *);
@@ -396,11 +394,8 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
-	sc->sc_softintr = softint_establish(SOFTINT_NET, xennet_softstart, sc);
-	if (sc->sc_softintr == NULL)
-		panic("%s: can't establish soft interrupt",
-			device_xname(self));
 
 	/* alloc shared rings */
 	tx_ring = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
@@ -481,7 +476,6 @@ xennet_xenbus_detach(device_t self, int flags)
 	xengnt_revoke_access(sc->sc_rx_ring_gntref);
 	uvm_km_free(kernel_map, (vaddr_t)sc->sc_rx_ring.sring, PAGE_SIZE,
 	    UVM_KMF_WIRED);
-	softint_disestablish(sc->sc_softintr);
 	splx(s0);
 
 	pmf_device_deregister(self);
@@ -930,7 +924,7 @@ xennet_rx_free_req(struct xennet_rxreq *req)
 
 /*
  * Process responses associated to the TX mbufs sent previously through
- * xennet_softstart()
+ * xennet_start()
  * Called at splsoftnet.
  */
 static void
@@ -999,10 +993,7 @@ xennet_handler(void *arg)
 		return 1;
 
 	/* Poke Tx queue if we run out of Tx buffers earlier */
-	mutex_enter(&sc->sc_tx_lock);
-	if (SLIST_EMPTY(&sc->sc_txreq_head))
-		softint_schedule(sc->sc_softintr);
-	mutex_exit(&sc->sc_tx_lock);
+	if_schedule_deferred_start(ifp);
 
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx_ring.req_prod_pvt);
 
@@ -1141,38 +1132,14 @@ again:
 }
 
 /*
- * The output routine of a xennet interface
- * Called at splnet.
+ * The output routine of a xennet interface. Prepares mbufs for TX,
+ * and notify backend when finished.
+ * Called at splsoftnet.
  */
 void
 xennet_start(struct ifnet *ifp)
 {
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
-
-	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start()\n", device_xname(sc->sc_dev)));
-
-	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx_ring.req_prod_pvt);
-
-	/*
-	 * The Xen communication channel is much more efficient if we can
-	 * schedule batch of packets for domain0. To achieve this, we
-	 * schedule a soft interrupt, and just return. This way, the network
-	 * stack will enqueue all pending mbufs in the interface's send queue
-	 * before it is processed by xennet_softstart().
-	 */
-	softint_schedule(sc->sc_softintr);
-	return;
-}
-
-/*
- * Prepares mbufs for TX, and notify backend when finished
- * Called at splsoftnet
- */
-void
-xennet_softstart(void *arg)
-{
-	struct xennet_xenbus_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m, *new_m;
 	netif_tx_request_t *txreq;
 	RING_IDX req_prod;
@@ -1183,6 +1150,8 @@ xennet_softstart(void *arg)
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
+
+	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx_ring.req_prod_pvt);
 
 	xennet_tx_complete(sc);
 
