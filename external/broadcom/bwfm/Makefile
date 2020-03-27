@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2020/03/22 22:36:12 thorpej Exp $
+# $NetBSD: Makefile,v 1.8 2020/03/27 04:31:18 thorpej Exp $
 
 NOMAN=	# define
 
@@ -71,6 +71,11 @@ LINKS+=	${FILESDIR}/brcmfmac43430-sdio.raspberrypi,3-model-b.txt \
 FILES+=	dist/brcmfmac43430-sdio.AP6212.txt
 LINKS+=	${FILESDIR}/brcmfmac43430-sdio.AP6212.txt \
 	${FILESDIR}/brcmfmac43430-sdio.sinovoip,bpi-m2-zero.txt
+
+# In lieu of a better option the xunlong,orangepi-lite2 has successfully
+# used the the same nvram config as the raspberrypi,3-model-b-plus.
+LINKS+=	${FILESDIR}/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt \
+	${FILESDIR}/brcmfmac43455-sdio.xunlong,orangepi-lite2.txt
 .endif
 
 .include <bsd.links.mk>
