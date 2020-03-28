@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.34 2020/03/27 17:42:36 christos Exp $ */
+/* $NetBSD: tic.c,v 1.35 2020/03/28 15:19:56 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.34 2020/03/27 17:42:36 christos Exp $");
+__RCSID("$NetBSD: tic.c,v 1.35 2020/03/28 15:19:56 roy Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -227,6 +227,22 @@ merge(TIC *rtic, TIC *utic, int flags)
 	short ind, len;
 	int num;
 	size_t n;
+
+	/* Promote record type if needed. */
+	if (rtic->rtype < utic->rtype) {
+		cap = rtic->nums.buf;
+		rtic->nums.buf = NULL;
+		rtic->nums.buflen = rtic->nums.bufpos = 0;
+		for (n = rtic->nums.entries; n > 0; n--) {
+			ind = _ti_decode_16(&cap);
+			num = _ti_decode_num(&cap, rtic->rtype);
+			if (VALID_NUMERIC(num) &&
+			    !_ti_encode_buf_id_num(&rtic->nums, ind, num,
+			    _ti_numsize(utic)))
+				err(1, "encode num");
+		}
+		rtic->rtype = utic->rtype;
+	}
 
 	cap = utic->flags.buf;
 	for (n = utic->flags.entries; n > 0; n--) {
