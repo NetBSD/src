@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.100 2020/03/17 10:50:59 nia Exp $
+.\"	$NetBSD: audio.4,v 1.101 2020/03/28 04:21:58 isaki Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 16, 2020
+.Dd March 28, 2020
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -157,6 +157,14 @@ For historical reasons, only encodings that are not set
 .Dv AUDIO_ENCODINGFLAG_EMULATED
 are able to
 .Xr mmap 2 .
+.Pp
+The audio device, like most devices, can be used in
+.Xr select 2 ,
+can be set in non-blocking mode and can be set (with a
+.Dv FIOASYNC
+ioctl) to send a
+.Dv SIGIO
+when I/O is possible.
 The mixer device can be set to generate a
 .Dv SIGIO
 whenever a mixer value is changed.
@@ -401,7 +409,7 @@ and
 are one of the values obtained by
 .Dv AUDIO_GETENC .
 .Va channels
-ranges from 1 to 12 for playback.
+ranges from 1 to 12.
 .Va frequency
 ranges from 1000Hz to 192000Hz.
 .Pp
@@ -811,12 +819,6 @@ string values.
 .Sh HISTORY
 Support for virtual channels and mixing first appeared in
 .Nx 8.0 .
-.Sh CAVEATS
-The audio device cannot be reliably used with event notification mechanisms
-such as
-.Xr poll 2 .
-Most users are expected to only read and write a limited number of samples at
-a time, limiting the time spent in the system call.
 .Sh BUGS
 If the device is used in
 .Xr mmap 2
