@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.19 2020/03/28 15:27:54 roy Exp $ */
+/* $NetBSD: compile.c,v 1.20 2020/03/28 15:45:56 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.19 2020/03/28 15:27:54 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.20 2020/03/28 15:45:56 christos Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -647,7 +647,7 @@ _ti_compile(char *cap, int flags)
 			    0, flags))
 				goto error;
 		} else if (_ti_find_cap(tic, &tic->flags, 'f', ind) == NULL) {
-			if (!_ti_encode_buf_id_flags(&tic->flags, ind, flags))
+			if (!_ti_encode_buf_id_flags(&tic->flags, ind, flag))
 				goto error;
 		}
 	}
