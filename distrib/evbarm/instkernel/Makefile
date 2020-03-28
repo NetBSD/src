@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2020/03/26 08:02:55 skrll Exp $
+#	$NetBSD: Makefile,v 1.6 2020/03/28 15:41:23 martin Exp $
 
 SUBDIR=		ramdisk
 
-.if !empty(ALL_KERNELS:MRPI_INSTALL)
+.include "../../etc/etc.evbarm/Makefile.inc"
+
+.if !empty(KERNEL_SETS:MRPI)
 SUBDIR+=	sshramdisk
 .endif
 
