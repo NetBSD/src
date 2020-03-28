@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.13 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: micphy.c,v 1.14 2020/03/28 18:37:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.13 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.14 2020/03/28 18:37:18 thorpej Exp $");
 
 #include "opt_mii.h"
 
@@ -82,9 +82,8 @@ static void	micphyattach(device_t, device_t, void *);
 static void	micphy_reset(struct mii_softc *);
 static int	micphy_service(struct mii_softc *, struct mii_data *, int);
 
-CFATTACH_DECL3_NEW(micphy, sizeof(struct mii_softc),
-    micphymatch, micphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
+CFATTACH_DECL_NEW(micphy, sizeof(struct mii_softc),
+    micphymatch, micphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	micphy_service(struct mii_softc *, struct mii_data *, int);
 static void	micphy_status(struct mii_softc *);

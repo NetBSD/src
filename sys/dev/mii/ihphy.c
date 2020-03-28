@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.17 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.18 2020/03/28 18:37:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.17 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.18 2020/03/28 18:37:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.17 2020/03/15 23:04:50 thorpej Exp $");
 static int	ihphymatch(device_t, cfdata_t, void *);
 static void	ihphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL3_NEW(ihphy, sizeof(struct mii_softc),
-    ihphymatch, ihphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
+CFATTACH_DECL_NEW(ihphy, sizeof(struct mii_softc),
+    ihphymatch, ihphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	ihphy_service(struct mii_softc *, struct mii_data *, int);
 static void	ihphy_status(struct mii_softc *);

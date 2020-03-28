@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.88 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.89 2020/03/28 18:37:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.88 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.89 2020/03/28 18:37:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,8 @@ struct brgphy_softc {
 	uint32_t sc_port_hwcfg;	/* port specific hw config */
 };
 
-CFATTACH_DECL3_NEW(brgphy, sizeof(struct brgphy_softc),
-    brgphymatch, brgphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
+CFATTACH_DECL_NEW(brgphy, sizeof(struct brgphy_softc),
+    brgphymatch, brgphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	brgphy_service(struct mii_softc *, struct mii_data *, int);
 static void	brgphy_copper_status(struct mii_softc *);

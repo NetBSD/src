@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.53 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.54 2020/03/28 18:37:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.53 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.54 2020/03/28 18:37:18 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mii.h"
@@ -81,9 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.53 2020/03/15 23:04:50 thorpej Exp $");
 static int	ukphymatch(device_t, cfdata_t, void *);
 static void	ukphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL3_NEW(ukphy, sizeof(struct mii_softc),
-    ukphymatch, ukphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
+CFATTACH_DECL_NEW(ukphy, sizeof(struct mii_softc),
+    ukphymatch, ukphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	ukphy_service(struct mii_softc *, struct mii_data *, int);
 
