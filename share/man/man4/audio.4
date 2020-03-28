@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.101 2020/03/28 04:21:58 isaki Exp $
+.\"	$NetBSD: audio.4,v 1.102 2020/03/28 04:55:08 isaki Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -400,18 +400,25 @@ unsigned linear encoding with big endian byte order
 Dolby Digital AC3
 .El
 .Pp
-Regardless of formats supported by underlying driver, the
+The
 .Nm
 driver accepts the following formats.
 .Va encoding
 and
 .Va precision
 are one of the values obtained by
-.Dv AUDIO_GETENC .
-.Va channels
-ranges from 1 to 12.
+.Dv AUDIO_GETENC ,
+regardless of formats supported by underlying driver.
 .Va frequency
-ranges from 1000Hz to 192000Hz.
+ranges from 1000Hz to 192000Hz,
+regardless of frequency (ranges) supported by underlying driver.
+.Va channels
+depends your underlying driver.
+If the underlying driver only supports monaural (1channel)
+or stereo (2channels), you can specify 1 or 2 regardless of
+number of channels supported by underlying driver.
+If the underlying driver supports three or more channels, you can specify
+the number of channels supported by the underlying driver or less. 
 .Pp
 The
 .Va gain ,
