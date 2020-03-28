@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.36 2020/03/28 15:20:30 roy Exp $ */
+/* $NetBSD: tic.c,v 1.37 2020/03/28 15:22:27 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.36 2020/03/28 15:20:30 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.37 2020/03/28 15:22:27 roy Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -92,7 +92,7 @@ grow_tbuf(TBUF *tbuf, size_t len)
 
 	buf = _ti_grow_tbuf(tbuf, len);
 	if (buf == NULL)
-		err(1, "_ti_grow_tbuf");
+		err(EXIT_FAILURE, "_ti_grow_tbuf");
 	return buf;
 }
 
@@ -112,7 +112,7 @@ save_term(struct cdbw *db, TERM *term)
 		_ti_encode_32(&cap, term->base_term->id);
 		_ti_encode_count_str(&cap, term->name, slen);
 		if (cdbw_put(db, term->name, slen, buf, len))
-			err(1, "cdbw_put");
+			err(EXIT_FAILURE, "cdbw_put");
 		free(buf);
 		return 0;
 	}
@@ -122,9 +122,9 @@ save_term(struct cdbw *db, TERM *term)
 		return -1;
 
 	if (cdbw_put_data(db, buf, len, &term->id))
-		err(1, "cdbw_put_data");
+		err(EXIT_FAILURE, "cdbw_put_data");
 	if (cdbw_put_key(db, term->name, slen, term->id))
-		err(1, "cdbw_put_key");
+		err(EXIT_FAILURE, "cdbw_put_key");
 	free(buf);
 	return 0;
 }
@@ -239,7 +239,7 @@ merge(TIC *rtic, TIC *utic, int flags)
 			if (VALID_NUMERIC(num) &&
 			    !_ti_encode_buf_id_num(&rtic->nums, ind, num,
 			    _ti_numsize(utic)))
-				err(1, "encode num");
+				err(EXIT_FAILURE, "encode num");
 		}
 		rtic->rtype = utic->rtype;
 	}
@@ -252,7 +252,7 @@ merge(TIC *rtic, TIC *utic, int flags)
 		    _ti_find_cap(rtic, &rtic->flags, 'f', ind) == NULL)
 		{
 			if (!_ti_encode_buf_id_flags(&rtic->flags, ind, flag))
-				err(1, "encode flag");
+				err(EXIT_FAILURE, "encode flag");
 		}
 	}
 
@@ -265,7 +265,7 @@ merge(TIC *rtic, TIC *utic, int flags)
 		{
 			if (!_ti_encode_buf_id_num(&rtic->nums, ind, num,
 			    _ti_numsize(rtic)))
-				err(1, "encode num");
+				err(EXIT_FAILURE, "encode num");
 		}
 	}
 
@@ -278,7 +278,7 @@ merge(TIC *rtic, TIC *utic, int flags)
 		{
 			if (!_ti_encode_buf_id_count_str(&rtic->strs, ind, cap,
 			    len))
-				err(1, "encode str");
+				err(EXIT_FAILURE, "encode str");
 		}
 		cap += len;
 	}
@@ -463,7 +463,7 @@ write_database(const char *dbname)
 
 	db = cdbw_open();
 	if (db == NULL)
-		err(1, "cdbw_open failed");
+		err(EXIT_FAILURE, "cdbw_open failed");
 	/* Save the terms */
 	STAILQ_FOREACH(term, &terms, next)
 		save_term(db, term);
@@ -471,15 +471,18 @@ write_database(const char *dbname)
 	easprintf(&tmp_dbname, "%s.XXXXXX", dbname);
 	fd = mkstemp(tmp_dbname);
 	if (fd == -1)
-		err(1, "creating temporary database %s failed", tmp_dbname);
+		err(EXIT_FAILURE,
+		    "creating temporary database %s failed", tmp_dbname);
 	if (cdbw_output(db, fd, "NetBSD terminfo", cdbw_stable_seeder))
-		err(1, "writing temporary database %s failed", tmp_dbname);
+		err(EXIT_FAILURE,
+		    "writing temporary database %s failed", tmp_dbname);
 	if (fchmod(fd, DEFFILEMODE))
-		err(1, "fchmod failed");
+		err(EXIT_FAILURE, "fchmod failed");
 	if (close(fd))
-		err(1, "writing temporary database %s failed", tmp_dbname);
+		err(EXIT_FAILURE,
+		    "writing temporary database %s failed", tmp_dbname);
 	if (rename(tmp_dbname, dbname))
-		err(1, "renaming %s to %s failed", tmp_dbname, dbname);
+		err(EXIT_FAILURE, "renaming %s to %s failed", tmp_dbname, dbname);
 	free(tmp_dbname);
 	cdbw_close(db);
 }
@@ -533,7 +536,7 @@ main(int argc, char **argv)
 	source = argv[optind++];
 	f = fopen(source, "r");
 	if (f == NULL)
-		err(1, "fopen: %s", source);
+		err(EXIT_FAILURE, "fopen: %s", source);
 
 	hcreate(HASH_SIZE);
 
