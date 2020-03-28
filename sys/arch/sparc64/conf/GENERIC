@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.225 2020/03/16 19:09:34 nia Exp $
+# $NetBSD: GENERIC,v 1.226 2020/03/28 08:35:36 isaki Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.225 $"
+#ident		"GENERIC-$Revision: 1.226 $"
 
 maxusers	64
 
@@ -47,9 +47,6 @@ config		netbsd	root on ? type ?
 #options 	UVM_PAGE_TRKOWN
 #options 	UVMHIST
 #options 	UVMHIST_PRINT	# Loud!
-
-options		AUDIO_BLK_MS=4	# make software with low latency needs performant
-				# no substantial CPU overhead on this platform
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
