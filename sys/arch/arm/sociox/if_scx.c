@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.21 2020/03/27 13:00:13 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.21 2020/03/27 13:00:13 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.22 2020/03/28 13:15:24 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -673,7 +673,12 @@ scx_attach_i(struct scx_softc *sc)
 	int i, nseg, error = 0;
 
 	hwver = CSR_READ(sc, HWVER);	/* Socionext HW */
-	/* stored in big endian order */
+	dwimp = mac_read(sc, GMACIMPL);	/* DW EMAC XX.YY */
+	aprint_normal_dev(sc->sc_dev,
+	    "Socionext NetSec GbE hw %d.%d impl 0x%x\n",
+	    hwver >> 16, hwver & 0xffff, dwimp);
+
+	/* fetch MAC address in flash. stored in big endian order */
 	csr = bus_space_read_4(sc->sc_st, sc->sc_eesh, 0);
 	enaddr[0] = csr >> 24;
 	enaddr[1] = csr >> 16;
@@ -682,11 +687,6 @@ scx_attach_i(struct scx_softc *sc)
 	csr = bus_space_read_4(sc->sc_st, sc->sc_eesh, 4);
 	enaddr[4] = csr >> 24;
 	enaddr[5] = csr >> 16;
-	dwimp = mac_read(sc, GMACIMPL);	/* DW EMAC XX.YY */
-
-	aprint_normal_dev(sc->sc_dev,
-	    "Socionext NetSec GbE hw %d.%d impl 0x%x\n",
-	    hwver >> 16, hwver & 0xffff, dwimp);
 	aprint_normal_dev(sc->sc_dev,
 	    "Ethernet address %s\n", ether_sprintf(enaddr));
 
@@ -1024,20 +1024,21 @@ scx_set_rcvfilt(struct scx_softc *sc)
 	csr &= ~(AFR_PR | AFR_PM | AFR_MHTE | AFR_HPF);
 	mac_write(sc, GMACAFR, csr);
 
-	ETHER_LOCK(ec);
-	if (ifp->if_flags & IFF_PROMISC) {
-		ec->ec_flags |= ETHER_F_ALLMULTI;
-		ETHER_UNLOCK(ec);
-		goto update;
-	}
-	ec->ec_flags &= ~ETHER_F_ALLMULTI;
-
 	/* clear 15 entry supplimental perfect match filter */
 	for (i = 1; i < 16; i++)
 		 mac_write(sc, GMACMAH(i), 0);
 	/* build 64 bit multicast hash filter */
 	crc = mchash[1] = mchash[0] = 0;
 
+	ETHER_LOCK(ec);
+	if (ifp->if_flags & IFF_PROMISC) {
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
+		/* run promisc. mode */
+		csr |= AFR_PR;
+		goto update;
+	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	i = 1; /* slot 0 is occupied */
 	while (enm != NULL) {
@@ -1052,6 +1053,8 @@ scx_set_rcvfilt(struct scx_softc *sc)
 			 */
 			ec->ec_flags |= ETHER_F_ALLMULTI;
 			ETHER_UNLOCK(ec);
+			/* accept all multi */
+			csr |= AFR_PM;
 			goto update;
 		}
 printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
@@ -1080,15 +1083,8 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 	csr |= AFR_HPF; /* use hash+perfect */
 	mac_write(sc, GMACMHTH, mchash[1]);
 	mac_write(sc, GMACMHTL, mchash[0]);
-	mac_write(sc, GMACAFR, csr);
-	return;
-
  update:
 	/* With PR or PM, MHTE/MHTL/MHTH are never consulted. really? */
-	if (ifp->if_flags & IFF_PROMISC)
-		csr |= AFR_PR;	/* run promisc. mode */
-	else
-		csr |= AFR_PM;	/* accept all multicast */
 	mac_write(sc, GMACAFR, csr);
 	return;
 }
@@ -1110,18 +1106,19 @@ mii_statchg(struct ifnet *ifp)
 {
 	struct scx_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
-	struct ifmedia * ifm = &mii->mii_media;
-	uint32_t mcr, fcr;
+	const int Mbps[4] = { 10, 100, 1000, 0 };
+	uint32_t miisr, mcr, fcr;
+	int spd;
 
-#if 1
 	/* decode MIISR register value */
-	uint32_t miisr = mac_read(sc, GMACMIISR);
-	int spd = (miisr >> 1) & 03;
+	miisr = mac_read(sc, GMACMIISR);
+	spd = Mbps[(miisr >> 1) & 03];
+#if 1
 	printf("MII link status (0x%x) %s",
 	    miisr, (miisr & 8) ? "up" : "down");
 	if (miisr & 8) {
-		printf(" spd%d", (spd == 2) ? 1000 : (spd == 1) ? 100 : 10);
-		if (miisr & 1)
+		printf(" spd%d", spd);
+		if (miisr & 01)
 			printf(",full-duplex");
 	}
 	printf("\n");
@@ -1133,11 +1130,10 @@ mii_statchg(struct ifnet *ifp)
 
 	/* Adjust speed 1000/100/10. */
 	mcr = mac_read(sc, GMACMCR);
-	if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_1000_T)
+	if (spd == 1000)
 		mcr &= ~MCR_USEMII; /* RGMII+SPD1000 */
 	else {
-		if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX
-		    && sc->sc_100mii)
+		if (spd == 100 && sc->sc_100mii)
 			mcr |= MCR_SPD100;
 		mcr |= MCR_USEMII;
 	}
@@ -1148,12 +1144,12 @@ mii_statchg(struct ifnet *ifp)
 	/* Adjust duplexity and PAUSE flow control. */
 	mcr &= ~MCR_USEFDX;
 	fcr = mac_read(sc, GMACFCR) & ~(FCR_TFE | FCR_RFE);
-	if (mii->mii_media_active & IFM_FDX) {
+	if (miisr & 01) {
 		if (sc->sc_flowflags & IFM_ETH_TXPAUSE)
 			fcr |= FCR_TFE;
 		if (sc->sc_flowflags & IFM_ETH_RXPAUSE)
 			fcr |= FCR_RFE;
-		mcr |= MCR_USEFDX;	
+		mcr |= MCR_USEFDX;
 	}
 	mac_write(sc, GMACMCR, mcr);
 	mac_write(sc, GMACFCR, fcr);
