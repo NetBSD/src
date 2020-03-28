@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1568,7 +1568,8 @@ AcpiDmDumpTable (
             Temp8 = *Target;
             switch (Temp8)
             {
-            case ACPI_IVRS_TYPE_HARDWARE:
+            case ACPI_IVRS_TYPE_HARDWARE1:
+            case ACPI_IVRS_TYPE_HARDWARE2:
 
                 Name = AcpiDmIvrsSubnames[0];
                 break;
