@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.13 2020/03/13 15:19:25 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.14 2020/03/28 15:50:25 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.13 2020/03/13 15:19:25 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.14 2020/03/28 15:50:25 christos Exp $");
 
 #include <sys/ioctl.h>
 
@@ -128,14 +128,15 @@ ent_compare(const void *a, const void *b)
 static void
 setdb(char *db)
 {
-	size_t len;
+	static const char *ext[] = { ".cdb", ".db" };
 
-	len = strlen(db);
-	if (len > 3 &&
-	    db[len - 3] == '.' &&
-	    db[len - 2] == 'd' &&
-	    db[len - 1] == 'b')
-		db[len - 3] = '\0';
+	for (size_t i = 0; i < __arraycount(ext); i++) {
+		char *ptr = strstr(db, ext[i]);
+		if (ptr == NULL || ptr[strlen(ext[i])] != '\0')
+			continue;
+		*ptr = '\0';
+		break;
+	}
 	setenv("TERMINFO", db, 1);
 }
 
