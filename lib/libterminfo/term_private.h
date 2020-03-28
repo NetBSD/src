@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.14 2020/03/27 17:39:53 christos Exp $ */
+/* $NetBSD: term_private.h,v 1.15 2020/03/28 15:23:33 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2013, 2020 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ void		_ti_setospeed(TERMINAL *);
 #define TIC_EXTRA	(1 << 4)
 #define TIC_COMPAT_V1	(1 << 5)
 
-#define UINT16_T_MAX 0xffff
+#define UINT16_T_MAX	0xffff
 
 typedef struct {
 	char *buf;
@@ -193,7 +193,7 @@ _ti_decode_16(const char **cap)
 	*cap += sizeof(uint16_t);
 	return num;
 }
-	
+
 static __inline int
 _ti_decode_32(const char **cap)
 {
@@ -220,7 +220,7 @@ _ti_encode_16(char **cap, size_t num)
 	le16enc(*cap, (uint16_t)num);
 	*cap += sizeof(uint16_t);
 }
-	
+
 static __inline void
 _ti_encode_32(char **cap, size_t num)
 {
