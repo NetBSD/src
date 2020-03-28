@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.35 2020/03/28 15:19:56 roy Exp $ */
+/* $NetBSD: tic.c,v 1.36 2020/03/28 15:20:30 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.35 2020/03/28 15:19:56 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.36 2020/03/28 15:20:30 roy Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -279,7 +279,6 @@ merge(TIC *rtic, TIC *utic, int flags)
 			if (!_ti_encode_buf_id_count_str(&rtic->strs, ind, cap,
 			    len))
 				err(1, "encode str");
-				
 		}
 		cap += len;
 	}
