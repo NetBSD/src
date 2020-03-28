@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.207 2020/03/21 06:11:05 riastradh Exp $	*/
+/*	$NetBSD: lfs.h,v 1.208 2020/03/28 01:08:42 christos Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -370,7 +370,9 @@ union lfs_dirheader {
 	struct lfs_dirheader32 u_32;
 };
 __CTASSERT(__alignof(union lfs_dirheader) == __alignof(struct lfs_dirheader64));
+#ifndef __lint__
 __CTASSERT(__alignof(union lfs_dirheader) == __alignof(struct lfs_dirheader32));
+#endif
 
 typedef union lfs_dirheader LFS_DIRHEADER;
 
@@ -583,7 +585,9 @@ typedef union finfo {
 	struct finfo32 u_32;
 } FINFO;
 __CTASSERT(__alignof(union finfo) == __alignof(struct finfo64));
+#ifndef __lint__
 __CTASSERT(__alignof(union finfo) == __alignof(struct finfo32));
+#endif
 
 /*
  * inode info (part of the segment summary)
@@ -608,7 +612,9 @@ typedef union iinfo {
 	struct iinfo32 u_32;
 } IINFO;
 __CTASSERT(__alignof(union iinfo) == __alignof(struct iinfo64));
+#ifndef __lint__
 __CTASSERT(__alignof(union iinfo) == __alignof(struct iinfo32));
+#endif
 
 /*
  * Index file inode entries.
@@ -663,8 +669,10 @@ typedef union ifile {
 	struct ifile_v1 u_v1;
 } IFILE;
 __CTASSERT(__alignof(union ifile) == __alignof(struct ifile64));
+#ifndef __lint__
 __CTASSERT(__alignof(union ifile) == __alignof(struct ifile32));
 __CTASSERT(__alignof(union ifile) == __alignof(struct ifile_v1));
+#endif
 
 /*
  * Cleaner information structure.  This resides in the ifile and is used
@@ -702,8 +710,10 @@ typedef union _cleanerinfo {
 	CLEANERINFO32 u_32;
 	CLEANERINFO64 u_64;
 } CLEANERINFO;
+#ifndef __lint__
 __CTASSERT(__alignof(union _cleanerinfo) == __alignof(struct _cleanerinfo32));
 __CTASSERT(__alignof(union _cleanerinfo) == __alignof(struct _cleanerinfo64));
+#endif
 
 /*
  * On-disk segment summary information
@@ -781,7 +791,9 @@ union segsum {
 };
 __CTASSERT(__alignof(union segsum) == __alignof(struct segsum64));
 __CTASSERT(__alignof(union segsum) == __alignof(struct segsum32));
+#ifndef __lint__
 __CTASSERT(__alignof(union segsum) == __alignof(struct segsum_v1));
+#endif
 
 /*
  * On-disk super block.
