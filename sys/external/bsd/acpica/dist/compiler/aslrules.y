@@ -8,7 +8,7 @@ NoEcho('
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -313,14 +313,16 @@ ParameterTypePackage
 
 ParameterTypePackageList
     :                               {$$ = NULL;}
-    | ObjectTypeKeyword             {$$ = $1;}
-    | '{' ParameterTypePackage '}'  {$$ = $2;}
+    | ObjectTypeKeyword             {$$ = TrLinkOpChildren (
+                                        TrCreateLeafOp (PARSEOP_DEFAULT_ARG),1,$1);}
+    | '{' ParameterTypePackage '}'  {$$ = TrLinkOpChildren (
+                                        TrCreateLeafOp (PARSEOP_DEFAULT_ARG),1,$2);}
     ;
 
+
 OptionalParameterTypePackage
-    :                               {$$ = TrCreateLeafOp (PARSEOP_DEFAULT_ARG);}
-    | ',' ParameterTypePackageList  {$$ = TrLinkOpChildren (
-                                        TrCreateLeafOp (PARSEOP_DEFAULT_ARG),1,$2);}
+    :                               {$$ = NULL;}
+    | ',' ParameterTypePackageList  {$$ = $2;}
     ;
 
     /* Rules for specifying the types for method arguments */
@@ -333,14 +335,15 @@ ParameterTypesPackage
 
 ParameterTypesPackageList
     :                               {$$ = NULL;}
-    | ObjectTypeKeyword             {$$ = $1;}
-    | '{' ParameterTypesPackage '}' {$$ = $2;}
+    | ObjectTypeKeyword             {$$ = TrLinkOpChildren (
+                                        TrCreateLeafOp (PARSEOP_DEFAULT_ARG),1,$1);}
+    | '{' ParameterTypesPackage '}' {$$ = TrLinkOpChildren (
+                                        TrCreateLeafOp (PARSEOP_DEFAULT_ARG),1,$2);}
     ;
 
 OptionalParameterTypesPackage
-    :                               {$$ = TrCreateLeafOp (PARSEOP_DEFAULT_ARG);}
-    | ',' ParameterTypesPackageList {$$ = TrLinkOpChildren (
-                                        TrCreateLeafOp (PARSEOP_DEFAULT_ARG),1,$2);}
+    :                               {$$ = NULL;}
+    | ',' ParameterTypesPackageList {$$ = $2;}
     ;
 
 /*
