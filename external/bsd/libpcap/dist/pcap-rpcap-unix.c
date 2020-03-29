@@ -51,7 +51,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <netinet/in.h>
-#include <linux/types.h>
+#include <sys/types.h>
 
 #include "pcap-rpcap-unix.h"
 
@@ -113,17 +113,17 @@ put32(unsigned char *buf, unsigned int val)
 }
 
 static int
-rpcap_recv_pkt(pcap_t *p, int fd, char *recv_buf, unsigned int buflen)
+rpcap_recv_pkt(pcap_t *p, int fd, unsigned char *recv_buf, unsigned int buflen)
 {
-	static char discard[1024];
+	static unsigned char discard[1024];
 
 	size_t mlen;
 	int ret;
-	char *buf;
+	unsigned char *buf;
 	unsigned int len;
 	unsigned int pkt_len;
 
-	char hdr[8];
+	unsigned char hdr[8];
 	int pkt_type;
 
 /* read header loop */
@@ -162,7 +162,7 @@ rpcap_recv_pkt(pcap_t *p, int fd, char *recv_buf, unsigned int buflen)
 	pkt_len  = get32(&hdr[4]);
 
 	if (pkt_type == RPCAP_MSG_ERROR) {
-		recv_buf = p->errbuf;
+		recv_buf = (unsigned char *)p->errbuf;
 		buflen = PCAP_ERRBUF_SIZE-1;
 	}
 
@@ -216,10 +216,8 @@ rpcap_recv_pkt(pcap_t *p, int fd, char *recv_buf, unsigned int buflen)
 }
 
 static int
-rpcap_send_pkt(pcap_t *p, const char *send_buf, unsigned int len)
+rpcap_send_pkt(pcap_t *p, const unsigned char *send_buf, unsigned int len)
 {
-	char *buf;
-
 	size_t mlen;
 	int ret;
 
@@ -252,7 +250,7 @@ rpcap_send_pkt(pcap_t *p, const char *send_buf, unsigned int len)
 }
 
 static int
-rpcap_send_request(pcap_t *p, char type, char *buf, unsigned int payload_len)
+rpcap_send_request(pcap_t *p, char type, unsigned char *buf, unsigned int payload_len)
 {
 	buf[0] = RPCAP_VERSION_EXPERIMENTAL;
 	buf[1] = type;
@@ -265,14 +263,13 @@ rpcap_send_request(pcap_t *p, char type, char *buf, unsigned int payload_len)
 static int
 rpcap_send_request_auth(pcap_t *p, const char *username, const char *password)
 {
-	int res;
 
 	if (username || password) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "rpcap: auth not supported (yet!)");
 		return -1;
 
 	} else {
-		static const char login_null_pkt[16] = { 
+		static const unsigned char login_null_pkt[16] = { 
 			RPCAP_VERSION_EXPERIMENTAL,
 			RPCAP_MSG_AUTH_REQ, 
 			0, 0, 
@@ -293,14 +290,14 @@ rpcap_send_request_open(pcap_t *p, const char *interface)
 {
 	const size_t interface_len = strlen(interface);
 
-	char buf_open[8+255] = { 
+	unsigned char buf_open[8+255] = { 
 		RPCAP_VERSION_EXPERIMENTAL, 
 		RPCAP_MSG_OPEN_REQ, 
 		0, 0, 
 		0, 0, 0, interface_len
 	};
 
-	char reply_buf[8];
+	unsigned char reply_buf[8];
 	int reply_len;
 
 	if (interface_len > 255) {
@@ -328,7 +325,7 @@ rpcap_send_request_open(pcap_t *p, const char *interface)
 static int
 rpcap_send_request_start(pcap_t *p, struct in_addr *server_ip)
 {
-	char buf_start[8+12+8+8] = { 
+	unsigned char buf_start[8+12+8+8] = { 
 		RPCAP_VERSION_EXPERIMENTAL, 
 		RPCAP_MSG_STARTCAP_REQ, 
 		0, 0, 
@@ -350,15 +347,14 @@ rpcap_send_request_start(pcap_t *p, struct in_addr *server_ip)
 	};
 
 	struct sockaddr_in sin;
-	char reply_buf[8];
+	unsigned char reply_buf[8];
 	int reply_len;
 	int fd;
 
-	unsigned int buf_size;
 	unsigned short portdata;
 
 	put32(&buf_start[8], p->snapshot);      /* snaplen */
-	put32(&buf_start[12], p->md.timeout/2); /* read_timeout */
+	put32(&buf_start[12], p->opt.timeout/2); /* read_timeout */
 
 	if (rpcap_send_pkt(p, buf_start, sizeof(buf_start)))
 		return -1;
@@ -370,7 +366,7 @@ rpcap_send_request_start(pcap_t *p, struct in_addr *server_ip)
 		return -1;
 	}
 
-	buf_size = get32(&reply_buf[0]);
+	get32(&reply_buf[0]);
 	portdata = get16(&reply_buf[4]);
 
 	fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -405,14 +401,14 @@ rpcap_inject_common(pcap_t *handle, const void *buf, size_t size)
 static int
 rpcap_stats_common(pcap_t *handle, struct pcap_stat *stats)
 {
-	static const char buf_stats[8] = {
+	static const unsigned char buf_stats[8] = {
 		RPCAP_VERSION_EXPERIMENTAL, 
 		RPCAP_MSG_STATS_REQ, 
 		0, 0, 
 		0, 0, 0, 0
 	};
 
-	char reply_buf[16];
+	unsigned char reply_buf[16];
 	int reply_len;
 
 /* local */
@@ -442,7 +438,7 @@ rpcap_stats_common(pcap_t *handle, struct pcap_stat *stats)
 static int 
 rpcap_setfilter_common(pcap_t *handle, struct bpf_program *prog)
 {
-	char *buf_setfilter;
+	unsigned char *buf_setfilter;
 
 	/* update local filter */
 	if (install_bpf_program(handle, prog) == -1)
@@ -451,9 +447,9 @@ rpcap_setfilter_common(pcap_t *handle, struct bpf_program *prog)
 	/* update remote filter */
 	if (prog->bf_len < 0xfffff) {
 		unsigned int data_size = 8 + 8 * prog->bf_len;
-		char *buf_filter;
-		char *buf_insn;
-		int i;
+		unsigned char *buf_filter;
+		unsigned char *buf_insn;
+		size_t i;
 
 		buf_setfilter = malloc(8 + data_size);
 		if (!buf_setfilter) {
@@ -469,7 +465,7 @@ rpcap_setfilter_common(pcap_t *handle, struct bpf_program *prog)
 		put32(&buf_filter[4], prog->bf_len);
 
 		for (i = 0; i < prog->bf_len; i++) {
-			char *data = &buf_insn[i * 8];
+			unsigned char *data = &buf_insn[i * 8];
 
 			put16(&data[0], prog->bf_insns[i].code);
 			data[2] = prog->bf_insns[i].jt;
@@ -493,14 +489,14 @@ static int
 rpcap_read_unix(pcap_t *handle, int max_packets, pcap_handler callback, u_char *user)
 {
 	struct pcap_pkthdr pkth;
-	const char *pkt;
-	const char *buf;
-	int pkt_len;
+	const unsigned char *pkt;
+	const unsigned char *buf;
+	unsigned int pkt_len;
 	int count = 0;
 
 	pkt_len = rpcap_recv_pkt(handle, handle->selectable_fd, handle->buffer, handle->bufsize);
 	if (pkt_len < 20) {
-		if (pkt_len >= 0) {
+		if (pkt_len == 0) {
 			snprintf(handle->errbuf, PCAP_ERRBUF_SIZE, "pkt_len check failed (%u < 20)", pkt_len);
 			return -1;
 		}
@@ -531,7 +527,7 @@ rpcap_read_unix(pcap_t *handle, int max_packets, pcap_handler callback, u_char *
 	if (handle->fcode.bf_insns == NULL ||
 			bpf_filter(handle->fcode.bf_insns, pkt, pkth.len, pkth.caplen)) 
 	{
-		handle->md.packets_read++;
+//		handle->md.packets_read++;
 		callback(user, &pkth, pkt);
 		count++;
 	}
@@ -555,7 +551,7 @@ rpcap_cleanup(pcap_t *handle)
 static int
 rpcap_activate(pcap_t *handle)
 {
-	const char *dev = handle->opt.source;
+	const char *dev = handle->opt.device;
 	const char *tmp;
 
 	char *host;
@@ -652,7 +648,7 @@ rpcap_activate(pcap_t *handle)
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = inet_addr(host);
 	sin.sin_port = htons(port);
-	if (sin.sin_addr.s_addr == -1) {
+	if (sin.sin_addr.s_addr == INADDR_NONE) {
 		snprintf(handle->errbuf, PCAP_ERRBUF_SIZE, "rpcap: not ipv4 address");
 		goto free_fail;
 	}
@@ -756,7 +752,7 @@ rpcap_create(const char *device, char *err_str, int *is_ours)
 
 	*is_ours = 1;
 
-	p = pcap_create_common(device, err_str);
+	p = pcap_create_common(__UNCONST(device), 16384);
 	if (p == NULL)
 		return NULL;
 
