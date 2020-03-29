@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.28 2020/03/29 17:49:52 christos Exp $	
+# $NetBSD: Makefile,v 1.29 2020/03/29 19:50:46 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.init.mk>
 USE_FORT?= yes	# network protocol library
 
 CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H -DHAVE_CONFIG_H -DENABLE_REMOTE
+CPPFLAGS+= -DPCAP_SUPPORT_RPCAP
 CPPFLAGS+= -I${.OBJDIR}
 
 .SUFFIXES: .3 .3pcap
@@ -138,6 +139,7 @@ pcap-bpf.c \
 pcap-common.c \
 pcap-new.c \
 pcap-rpcap.c \
+pcap-rpcap-unix.c \
 pcap.c \
 rpcap-protocol.c \
 savefile.c \
