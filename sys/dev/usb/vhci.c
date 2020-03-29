@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.12 2020/03/24 17:20:55 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.13 2020/03/29 09:46:14 maxv Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.12 2020/03/24 17:20:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.13 2020/03/29 09:46:14 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -173,8 +173,6 @@ static const struct usbd_pipe_methods vhci_root_intr_methods = {
  *             +------------------------------------------------+
  */
 
-struct vhci_xfer;
-
 typedef struct {
 	int type;
 #define VHCI_REQ_CTRL	0
@@ -184,6 +182,8 @@ typedef struct {
 	} u;
 } vhci_request_t;
 
+struct vhci_xfer;
+
 typedef struct vhci_packet {
 	/* General. */
 	TAILQ_ENTRY(vhci_packet) portlist;
@@ -191,9 +191,6 @@ typedef struct vhci_packet {
 	struct vhci_xfer *vxfer;
 	bool utoh;
 	uint8_t addr;
-
-	/* For a request packet, the storage goes there. */
-	vhci_request_t reqbuf;
 
 	/* Exposed for FD operations. */
 	uint8_t *buf;
@@ -229,6 +226,9 @@ typedef struct vhci_xfer {
 	/* Packets in the xfer. */
 	size_t npkts;
 	vhci_packet_list_t pkts;
+
+	/* Header storage. */
+	vhci_request_t reqbuf;
 
 	/* Used for G/C. */
 	TAILQ_ENTRY(vhci_xfer) freelist;
@@ -286,15 +286,15 @@ vhci_pkt_ctrl_create(vhci_port_t *port, struct usbd_xfer *xfer, bool utoh,
 	req->vxfer = vxfer;
 	req->utoh = false;
 	req->addr = addr;
-	req->buf = (uint8_t *)&req->reqbuf;
-	req->size = sizeof(req->reqbuf);
+	req->buf = (uint8_t *)&vxfer->reqbuf;
+	req->size = sizeof(vxfer->reqbuf);
 	req->cursor = 0;
 	npkts++;
 
 	/* Init the request buffer. */
-	memset(&req->reqbuf, 0, sizeof(req->reqbuf));
-	req->reqbuf.type = VHCI_REQ_CTRL;
-	memcpy(&req->reqbuf.u.ctrl, &xfer->ux_request,
+	memset(&vxfer->reqbuf, 0, sizeof(vxfer->reqbuf));
+	vxfer->reqbuf.type = VHCI_REQ_CTRL;
+	memcpy(&vxfer->reqbuf.u.ctrl, &xfer->ux_request,
 	    sizeof(xfer->ux_request));
 
 	/* Data packet. */
