@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.21 2020/03/29 18:54:57 roy Exp $ */
+/* $NetBSD: compile.c,v 1.22 2020/03/29 21:46:22 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.21 2020/03/29 18:54:57 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.22 2020/03/29 21:46:22 roy Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -62,6 +62,84 @@ dowarn(int flags, const char *fmt, ...)
 		vwarnx(fmt, va);
 		va_end(va);
 	}
+}
+
+int
+_ti_promote(TIC *tic)
+{
+	char *obuf, type, flag;
+	const char *cap, *code, *str;
+	size_t n, entries, strl;
+	uint16_t ind;
+	int num, ortype, error = 0;
+
+	ortype = tic->rtype;
+	tic->rtype = TERMINFO_RTYPE;
+	obuf = tic->name;
+	tic->name = _ti_getname(tic->rtype, tic->name);
+	if (tic->name == NULL) {
+		warn("_ti_getname");
+		tic->name = obuf;
+		return -1;
+	}
+	free(obuf);
+
+	obuf = tic->nums.buf;
+	cap = obuf;
+	entries = tic->nums.entries;
+	tic->nums.buf = NULL;
+	tic->nums.entries = tic->nums.buflen = tic->nums.bufpos = 0;
+	for (n = entries; n > 0; n--) {
+		ind = _ti_decode_16(&cap);
+		num = _ti_decode_num(&cap, ortype);
+		if (VALID_NUMERIC(num) &&
+		    !_ti_encode_buf_id_num(&tic->nums, ind, num,
+		    _ti_numsize(tic)))
+		{
+			warn("promote num");
+			error = -1;
+			break;
+		}
+	}
+	free(obuf);
+
+	obuf = tic->extras.buf;
+	cap = obuf;
+	entries = tic->extras.entries;
+	tic->extras.buf = NULL;
+	tic->extras.entries = tic->extras.buflen = tic->extras.bufpos = 0;
+	for (n = entries; n > 0; n--) {
+		num = _ti_decode_16(&cap);
+		strl = 0;
+		code = cap;
+		cap += num;
+		type = *cap++;
+		switch (type) {
+		case 'f':
+			flag = *cap++;
+			break;
+		case 'n':
+			num = _ti_decode_num(&cap, ortype);
+			break;
+		case 's':
+			strl = _ti_decode_16(&cap);
+			str = cap;
+			cap += strl;
+			break;
+		default:
+			errno = EINVAL;
+			break;
+		}
+		if (!_ti_store_extra(tic, 0, code, type, flag, num,
+		    str, strl, TIC_EXTRA))
+		{
+			error = -1;
+			break;
+		}
+	}
+	free(obuf);
+
+	return error;
 }
 
 char *
@@ -190,7 +268,7 @@ size_t
 _ti_store_extra(TIC *tic, int wrn, const char *id, char type, char flag,
     int num, const char *str, size_t strl, int flags)
 {
-	size_t l;
+	size_t l, capl;
 
 	_DIAGASSERT(tic != NULL);
 
@@ -206,13 +284,25 @@ _ti_store_extra(TIC *tic, int wrn, const char *id, char type, char flag,
 	}
 
 	l = strlen(id) + 1;
-	if (l > UINT16_T_MAX) {
+	if (l > UINT16_MAX) {
 		dowarn(flags, "%s: %s: cap name is too long", tic->name, id);
 		return 0;
 	}
 
-	if (!_ti_grow_tbuf(&tic->extras,
-		l + strl + sizeof(uint16_t) + _ti_numsize(tic) + 1))
+	capl = sizeof(uint16_t) + l + 1;
+	switch (type) {
+	case 'f':
+		capl++;
+		break;
+	case 'n':
+		capl += _ti_numsize(tic);
+		break;
+	case 's':
+		capl += sizeof(uint16_t) + strl;
+		break;
+	}
+
+	if (!_ti_grow_tbuf(&tic->extras, capl))
 		return 0;
 	_ti_encode_buf_count_str(&tic->extras, id, l);
 	tic->extras.buf[tic->extras.bufpos++] = type;
@@ -433,19 +523,6 @@ _ti_get_token(char **cap, char sep)
 	return token;
 }
 
-static int
-_ti_find_rtype(const char *cap)
-{
-	const char *ptr;
-
-	for (ptr = cap; (ptr = strchr(ptr, '#')) != NULL;) {
-		if (strtol(++ptr, NULL, 0) > SHRT_MAX) {
-			return TERMINFO_RTYPE;
-		}
-	}
-	return TERMINFO_RTYPE_O1;
-}
-
 int
 _ti_encode_buf_id_num(TBUF *tbuf, int ind, int num, size_t len)
 {
@@ -525,8 +602,7 @@ _ti_compile(char *cap, int flags)
 	if (tic == NULL)
 		return NULL;
 
-	tic->rtype = (flags & TIC_COMPAT_V1) ? TERMINFO_RTYPE_O1 :
-	    _ti_find_rtype(cap);
+	tic->rtype = TERMINFO_RTYPE_O1; /* will promote if needed */
 	buf.buf = NULL;
 	buf.buflen = 0;
 
@@ -617,6 +693,13 @@ _ti_compile(char *cap, int flags)
 				dowarn(flags, "%s: %s: number %ld out of range",
 				    tic->name, token, cnum);
 				continue;
+			}
+			if (cnum > INT16_MAX) {
+				if (flags & TIC_COMPAT_V1)
+					cnum = INT16_MAX;
+				else if (tic->rtype == TERMINFO_RTYPE_O1)
+					if (_ti_promote(tic) == -1)
+						goto error;
 			}
 
 			num = (int)cnum;
