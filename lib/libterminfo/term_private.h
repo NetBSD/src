@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.15 2020/03/28 15:23:33 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.16 2020/03/29 18:32:45 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2013, 2020 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ int _ti_parm_analyse(const char *, int *, int);
 static __inline int
 _ti_decode_16(const char **cap)
 {
-	int num = le16dec(*cap);
+	int num = (int16_t)le16dec(*cap);
 
 	*cap += sizeof(uint16_t);
 	return num;
@@ -197,7 +197,7 @@ _ti_decode_16(const char **cap)
 static __inline int
 _ti_decode_32(const char **cap)
 {
-	int num = le32dec(*cap);
+	int num = (int32_t)le32dec(*cap);
 
 	*cap += sizeof(uint32_t);
 	return num;
@@ -216,7 +216,7 @@ _ti_decode_num(const char **cap, int rtype)
 static __inline void
 _ti_encode_16(char **cap, size_t num)
 {
-	_DIAGASSERT(num <= USHRT_MAX);
+	_DIAGASSERT(num <= UINT16_MAX);
 	le16enc(*cap, (uint16_t)num);
 	*cap += sizeof(uint16_t);
 }
@@ -224,7 +224,7 @@ _ti_encode_16(char **cap, size_t num)
 static __inline void
 _ti_encode_32(char **cap, size_t num)
 {
-	_DIAGASSERT(num <= UINT_MAX);
+	_DIAGASSERT(num <= UINT32_MAX);
 	le32enc(*cap, (uint32_t)num);
 	*cap += sizeof(uint32_t);
 }
@@ -248,7 +248,7 @@ _ti_encode_count_str(char **cap, const char *name, size_t len)
 static __inline void
 _ti_encode_buf_16(TBUF *tbuf, size_t num)
 {
-	_DIAGASSERT(num <= USHRT_MAX);
+	_DIAGASSERT(num <= UINT16_MAX);
 	le16enc(tbuf->buf + tbuf->bufpos, (uint16_t)num);
 	tbuf->bufpos += sizeof(uint16_t);
 }
@@ -256,7 +256,7 @@ _ti_encode_buf_16(TBUF *tbuf, size_t num)
 static __inline void
 _ti_encode_buf_32(TBUF *tbuf, size_t num)
 {
-	_DIAGASSERT(num <= UINT_MAX);
+	_DIAGASSERT(num <= UINT32_MAX);
 	le32enc(tbuf->buf + tbuf->bufpos, (uint32_t)num);
 	tbuf->bufpos += sizeof(uint32_t);
 }
@@ -273,8 +273,8 @@ static __inline void
 _ti_encode_buf_num(TBUF *tbuf, size_t num, int rtype)
 {
 	if (rtype == TERMINFO_RTYPE_O1) {
-		if (num > SHRT_MAX)
-			num = SHRT_MAX;
+		if (num > INT16_MAX)
+			num = INT16_MAX;
 		_ti_encode_buf_16(tbuf, num);
 	} else {
 		_ti_encode_buf_32(tbuf, num);
