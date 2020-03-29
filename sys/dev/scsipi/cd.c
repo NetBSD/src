@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.340.6.1 2017/06/21 18:18:55 snj Exp $	*/
+/*	$NetBSD: cd.c,v 1.340.6.2 2020/03/29 12:10:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.340.6.1 2017/06/21 18:18:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.340.6.2 2020/03/29 12:10:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,8 +401,8 @@ cd_firstopen(device_t self, dev_t dev, int flag, int fmt)
         else
                 silent = 0;
 
-	/* make cdclose() loud again */
-	cd->flags &= ~CDF_EJECTED;
+	/* make cdclose() silent */
+	cd->flags |= CDF_EJECTED;
 
 	/* Check that it is still responding and ok. */
 	error = scsipi_test_unit_ready(periph,
@@ -419,8 +419,11 @@ cd_firstopen(device_t self, dev_t dev, int flag, int fmt)
 		if (error == EINVAL)
 			error = EIO;
 	}
-	if (error)
+	if (error) {
+		if (part == RAW_PART)
+			goto out;
 		goto bad;
+	}
 
 	/* Lock the pack in. */
 	error = scsipi_prevent(periph, SPAMR_PREVENT_DT,
@@ -448,6 +451,9 @@ cd_firstopen(device_t self, dev_t dev, int flag, int fmt)
 		SC_DEBUG(periph, SCSIPI_DB3, ("Params loaded "));
 
 		cd_set_geometry(cd);
+
+		/* make cdclose() loud again */
+		cd->flags &= ~CDF_EJECTED;
 	}
 
 	periph->periph_flags |= PERIPH_OPEN;
@@ -519,7 +525,8 @@ cd_lastclose(device_t self)
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int silent;
 
-	if (cd->flags & CDF_EJECTED)
+	if ((cd->flags & CDF_EJECTED) != 0 ||
+	    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)
 		silent = XS_CTL_SILENT;
 	else
 		silent = 0;
@@ -1213,6 +1220,14 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return (EIO);
 
 	switch (cmd) {
+	case DIOCTUR: {
+		/* test unit ready */
+		error = scsipi_test_unit_ready(cd->sc_periph, XS_CTL_SILENT);
+		*((int*)addr) = (error == 0);
+		if (error == ENODEV || error == EIO || error == 0)
+			return 0;                       
+		return error;
+	}
 	case CDIOCPLAYTRACKS: {
 		/* PLAY_MSF command */
 		struct ioc_play_track *args = addr;
@@ -1447,15 +1462,18 @@ static void
 cd_label(device_t self, struct disklabel *lp)
 {
 	struct cd_softc *cd = device_private(self);
+	struct scsipi_periph *periph = cd->sc_periph;
 	struct cd_formatted_toc toc;
-	int lastsession;
+	int lastsession = 0;
 
 	strncpy(lp->d_typename, "optical media", 16);
 	lp->d_rpm = 300;
-	lp->d_flags |= D_REMOVABLE | D_SCSI_MMC;
+	lp->d_flags |= D_REMOVABLE;
 
-	if (cdreadmsaddr(cd, &toc, &lastsession) != 0)
-		lastsession = 0;
+	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) != 0) {
+		lp->d_flags |= D_SCSI_MMC;
+		(void) cdreadmsaddr(cd, &toc, &lastsession);
+	}
 
 	lp->d_partitions[0].p_offset = 0;
 	lp->d_partitions[0].p_size = lp->d_secperunit;
