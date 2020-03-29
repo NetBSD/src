@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.4 2020/03/29 13:04:15 jmcneill Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.5 2020/03/29 13:20:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.4 2020/03/29 13:04:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.5 2020/03/29 13:20:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -823,28 +823,38 @@ static void
 genet_get_eaddr(struct genet_softc *sc, uint8_t *eaddr)
 {
 	prop_dictionary_t prop = device_properties(sc->sc_dev);
-	uint32_t maclo, machi;
+	uint32_t maclo, machi, val;
 	prop_data_t eaprop;
 
 	eaprop = prop_dictionary_get(prop, "mac-address");
-	if (eaprop == NULL) {
-		/* Create one */
-		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
-		machi = cprng_strong32() & 0xffff;
-
-		eaddr[0] = maclo & 0xff;
-		eaddr[1] = (maclo >> 8) & 0xff;
-		eaddr[2] = (maclo >> 16) & 0xff;
-		eaddr[3] = (maclo >> 24) & 0xff;
-		eaddr[4] = machi & 0xff;
-		eaddr[5] = (machi >> 8) & 0xff;
-	} else {
+	if (eaprop != NULL) {
 		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
 		memcpy(eaddr, prop_data_data_nocopy(eaprop),
 		    ETHER_ADDR_LEN);
+		return;
 	}
 
+	maclo = machi = 0;
+
+	val = RD4(sc, GENET_SYS_RBUF_FLUSH_CTRL);
+	if ((val & GENET_SYS_RBUF_FLUSH_RESET) == 0) {
+		maclo = htobe32(RD4(sc, GENET_UMAC_MAC0));
+		machi = htobe16(RD4(sc, GENET_UMAC_MAC1) & 0xffff);
+	}
+
+	if (maclo == 0 && machi == 0) {
+		/* Create one */
+		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
+		machi = cprng_strong32() & 0xffff;
+	}
+
+	eaddr[0] = maclo & 0xff;
+	eaddr[1] = (maclo >> 8) & 0xff;
+	eaddr[2] = (maclo >> 16) & 0xff;
+	eaddr[3] = (maclo >> 24) & 0xff;
+	eaddr[4] = machi & 0xff;
+	eaddr[5] = (machi >> 8) & 0xff;
 }
 
 static int
