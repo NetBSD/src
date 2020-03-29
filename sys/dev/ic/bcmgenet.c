@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.4 2020/03/29 13:04:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.4 2020/03/29 13:04:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -626,7 +626,17 @@ genet_rxintr(struct genet_softc *sc, int qid)
 		status = RD4(sc, GENET_RX_DESC_STATUS(index));
 		len = __SHIFTOUT(status, GENET_RX_DESC_STATUS_BUFLEN);
 
-		/* XXX check for errors */
+		m = sc->sc_rx.buf_map[index].mbuf;
+
+		if ((m0 = genet_alloc_mbufcl(sc)) == NULL) {
+			if_statinc(ifp, if_ierrors);
+			goto next;
+		}
+		error = genet_setup_rxbuf(sc, index, m0);
+		if (error != 0) {
+			if_statinc(ifp, if_ierrors);
+			goto next;
+		}
 
 		bus_dmamap_sync(sc->sc_rx.buf_tag, sc->sc_rx.buf_map[index].map,
 		    0, sc->sc_rx.buf_map[index].map->dm_mapsize,
@@ -637,8 +647,6 @@ genet_rxintr(struct genet_softc *sc, int qid)
 		    n, index, status, len, len - ETHER_ALIGN);
 
 		if (len > ETHER_ALIGN) {
-			m = sc->sc_rx.buf_map[index].mbuf;
-
 			m_adj(m, ETHER_ALIGN);
 
 			m_set_rcvif(m, ifp);
@@ -648,15 +656,7 @@ genet_rxintr(struct genet_softc *sc, int qid)
 			if_percpuq_enqueue(ifp->if_percpuq, m);
 		}
 
-		if ((m0 = genet_alloc_mbufcl(sc)) != NULL) {
-			error = genet_setup_rxbuf(sc, index, m0);
-			if (error != 0) {
-				/* XXX hole in RX ring */
-			}
-		} else {
-			if_statinc(ifp, if_ierrors);
-		}
-
+next:
 		index = RX_NEXT(index);
 
 		sc->sc_rx.cidx = (sc->sc_rx.cidx + 1) & 0xffff;
