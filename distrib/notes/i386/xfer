@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.20.38.1 2020/03/29 11:45:13 martin Exp $
+.\"	$NetBSD: xfer,v 1.20.38.2 2020/03/29 11:59:06 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@ to write the floppy image(s) to floppy disk, you can use the
 .Ic Rawrite32
 Windows program.
 It can be downloaded from
-.Lk https://www.NetBSD.org/~martin/rawrite32 .
+.Lk https://www.NetBSD.org/~martin/rawrite32
 A
 .Ic rawrite
 utility for the
