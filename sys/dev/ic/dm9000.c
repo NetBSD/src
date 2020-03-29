@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.22 2020/01/29 14:14:55 thorpej Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.23 2020/03/29 23:16:52 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -879,7 +879,7 @@ dme_reset(struct dme_softc *sc)
 	dme_write(sc, DM9000_IMR,
 	    DM9000_IMR_PAR | DM9000_IMR_PRM | DM9000_IMR_PTM);
 
-	/* Setup multicast address filter, and enable RX. */
+	/* Setup multicast address filter, or run promisc. mode. */
 	dme_set_addr_filter(sc);
 
 	/* Obtain media information from PHY */
@@ -893,33 +893,30 @@ dme_reset(struct dme_softc *sc)
 void
 dme_set_addr_filter(struct dme_softc *sc)
 {
-	struct ether_multi	*enm;
-	struct ether_multistep	step;
-	struct ethercom		*ec;
-	struct ifnet		*ifp;
-	uint16_t		af[4];
-	int			i;
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &ec->ec_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint8_t mchash[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }; /* 64bit mchash */
+	uint32_t h = 0;
+	uint8_t rcr;
 
-	ec = &sc->sc_ethercom;
-	ifp = &ec->ec_if;
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		dme_write(sc, DM9000_RCR, DM9000_RCR_RXEN  |
-					  DM9000_RCR_WTDIS |
-					  DM9000_RCR_PRMSC);
-		ifp->if_flags |= IFF_ALLMULTI;
-		return;
-	}
-
-	af[0] = af[1] = af[2] = af[3] = 0x0000;
-	ifp->if_flags &= ~IFF_ALLMULTI;
+	rcr = dme_read(sc, DM9000_RCR);
+	rcr &= ~(DM9000_RCR_PRMSC | DM9000_RCR_ALL);
+	dme_write(sc, DM9000_RCR, rcr &~ DM9000_RCR_RXEN);
 
 	ETHER_LOCK(ec);
+	if (ifp->if_flags & IFF_PROMISC) {
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
+		/* run promisc. mode */
+		rcr |= DM9000_RCR_PRMSC;
+		goto update;
+	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		uint16_t hash;
-		if (memcpy(enm->enm_addrlo, enm->enm_addrhi,
-		    sizeof(enm->enm_addrlo))) {
+		if (memcpy(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -928,25 +925,25 @@ dme_set_addr_filter(struct dme_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-			ifp->if_flags |= IFF_ALLMULTI;
-			af[0] = af[1] = af[2] = af[3] = 0xffff;
+			ec->ec_flags |= ETHER_F_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			memset(mchash, 0xff, sizeof(mchash)); /* necessary? */
+			/* accept all mulicast frame */
+			rcr |= DM9000_RCR_ALL;
 			break;
-		} else {
-			hash = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3F;
-			af[(uint16_t)(hash>>4)] |= (uint16_t)(1 << (hash % 16));
-			ETHER_NEXT_MULTI(step, enm);
 		}
+		h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3f;
+		/* 3(5:3) and 3(2:0) sampling to make uint8_t[8] */
+		mchash[h / 8] |= 1 << (h % 8);
+		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
-
-	/* Write the multicast address filter */
-	for (i = 0; i < 4; i++) {
-		dme_write(sc, DM9000_MAB0+i*2, af[i] & 0xFF);
-		dme_write(sc, DM9000_MAB0+i*2+1, (af[i] >> 8) & 0xFF);
-	}
-
-	/* Setup RX controls */
-	dme_write(sc, DM9000_RCR, DM9000_RCR_RXEN | DM9000_RCR_WTDIS);
+	/* DM9000 receive filter is always on */
+	mchash[7] |= 0x80; /* to catch bcast frame */
+ update:
+	dme_write_c(sc, DM9000_MAB0, mchash, sizeof(mchash));
+	dme_write(sc, DM9000_RCR, rcr | DM9000_RCR_RXEN | DM9000_RCR_WTDIS);
+	return;
 }
 
 int
