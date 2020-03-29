@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.400 2020/03/23 16:38:29 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.401 2020/03/29 09:10:26 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.400 2020/03/23 16:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.401 2020/03/29 09:10:26 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -3465,6 +3465,12 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, " (pm=%#jx, sva=%#jx, eva=%#jx)",
 	    (uintptr_t)pm, sva, eva, 0);
+
+#ifdef PMAP_FAULTINFO
+	curpcb->pcb_faultinfo.pfi_faultaddr = 0;
+	curpcb->pcb_faultinfo.pfi_repeats = 0;
+	curpcb->pcb_faultinfo.pfi_faultptep = NULL;
+#endif
 
 	SLIST_INIT(&opv_list);
 	/*
