@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1683 2020/03/03 00:38:13 christos Exp $
+# $NetBSD: mi,v 1.1684 2020/03/29 17:13:46 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2292,6 +2292,7 @@
 ./usr/share/man/cat5/rndc.conf.0		man-bind-catman		.cat
 ./usr/share/man/cat5/route.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/rpc.0			man-net-catman		.cat
+./usr/share/man/cat5/rpcapd-config.0		man-netutil-catman	.cat
 ./usr/share/man/cat5/rtadvd.conf.0		man-router-catman	use_inet6,.cat
 ./usr/share/man/cat5/securenet.0		man-obsolete		obsolete
 ./usr/share/man/cat5/security.conf.0		man-sys-catman		.cat
@@ -3058,6 +3059,7 @@
 ./usr/share/man/cat8/rpc.sprayd.0		man-rpcserver-catman	.cat
 ./usr/share/man/cat8/rpc.statd.0		man-nfsserver-catman	.cat
 ./usr/share/man/cat8/rpc.yppasswdd.0		man-nis-catman		yp,.cat
+./usr/share/man/cat8/rpcapd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rpcbind.0			man-rpcserver-catman	.cat
 ./usr/share/man/cat8/rpcinfo.0			man-rpcutil-catman	.cat
 ./usr/share/man/cat8/rquotad.0			man-nfsserver-catman	.cat
@@ -5416,6 +5418,7 @@
 ./usr/share/man/html5/rndc.conf.html		man-bind-htmlman	html
 ./usr/share/man/html5/route.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/rpc.html			man-net-htmlman		html
+./usr/share/man/html5/rpcapd-config.html	man-netutil-htmlman	html
 ./usr/share/man/html5/rtadvd.conf.html		man-router-htmlman	use_inet6,html
 ./usr/share/man/html5/security.conf.html	man-sys-htmlman		html
 ./usr/share/man/html5/services.html		man-net-htmlman		html
@@ -6022,6 +6025,7 @@
 ./usr/share/man/html8/rpc.sprayd.html		man-rpcserver-htmlman	html
 ./usr/share/man/html8/rpc.statd.html		man-nfsserver-htmlman	html
 ./usr/share/man/html8/rpc.yppasswdd.html	man-nis-htmlman		yp,html
+./usr/share/man/html8/rpcapd.html		man-netutil-htmlman	html
 ./usr/share/man/html8/rpcbind.html		man-rpcserver-htmlman	html
 ./usr/share/man/html8/rpcinfo.html		man-rpcutil-htmlman	html
 ./usr/share/man/html8/rquotad.html		man-nfsserver-htmlman	html
@@ -8498,6 +8502,7 @@
 ./usr/share/man/man5/rndc.conf.5		man-bind-man		.man
 ./usr/share/man/man5/route.conf.5		man-sys-man		.man
 ./usr/share/man/man5/rpc.5			man-net-man		.man
+./usr/share/man/man5/rpcapd-config.5		man-netutil-man		.man
 ./usr/share/man/man5/rtadvd.conf.5		man-router-man		use_inet6,.man
 ./usr/share/man/man5/securenet.5		man-obsolete		obsolete
 ./usr/share/man/man5/security.conf.5		man-sys-man		.man
@@ -9264,6 +9269,7 @@
 ./usr/share/man/man8/rpc.sprayd.8		man-rpcserver-man	.man
 ./usr/share/man/man8/rpc.statd.8		man-nfsserver-man	.man
 ./usr/share/man/man8/rpc.yppasswdd.8		man-nis-man		yp,.man
+./usr/share/man/man8/rpcapd.8			man-netutil-man	.man
 ./usr/share/man/man8/rpcbind.8			man-rpcserver-man	.man
 ./usr/share/man/man8/rpcinfo.8			man-rpcutil-man		.man
 ./usr/share/man/man8/rquotad.8			man-nfsserver-man	.man

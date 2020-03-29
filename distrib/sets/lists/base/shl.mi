@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.880 2020/03/13 15:19:25 roy Exp $
+# $NetBSD: shl.mi,v 1.881 2020/03/29 17:13:46 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -68,7 +68,7 @@
 ./lib/libnvpair.so.0.0				base-zfs-shlib		dynamicroot,zfs
 ./lib/libpcap.so				base-sys-shlib		dynamicroot
 ./lib/libpcap.so.8				base-sys-shlib		dynamicroot
-./lib/libpcap.so.8.0				base-sys-shlib		dynamicroot
+./lib/libpcap.so.8.1				base-sys-shlib		dynamicroot
 ./lib/libppath.so				base-sys-shlib		dynamicroot
 ./lib/libppath.so.0				base-sys-shlib		dynamicroot
 ./lib/libppath.so.0.0				base-sys-shlib		dynamicroot
@@ -490,7 +490,7 @@
 ./usr/lib/libpanel.so.3.0			base-sys-shlib		compatfile
 ./usr/lib/libpcap.so				base-net-shlib		compatfile
 ./usr/lib/libpcap.so.8				base-net-shlib		compatfile
-./usr/lib/libpcap.so.8.0			base-net-shlib		compatfile
+./usr/lib/libpcap.so.8.1			base-net-shlib		compatfile
 ./usr/lib/libpci.so				base-sys-shlib		compatfile
 ./usr/lib/libpci.so.2				base-sys-shlib		compatfile
 ./usr/lib/libpci.so.2.2				base-sys-shlib		compatfile
