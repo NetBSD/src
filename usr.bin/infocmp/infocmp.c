@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.14 2020/03/28 15:50:25 christos Exp $ */
+/* $NetBSD: infocmp.c,v 1.15 2020/03/29 19:10:08 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.14 2020/03/28 15:50:25 christos Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.15 2020/03/29 19:10:08 roy Exp $");
 
 #include <sys/ioctl.h>
 
@@ -719,6 +719,10 @@ main(int argc, char **argv)
 			printf("# Reconstructed from %s\n",
 			     _ti_database == NULL ?
 			     "internal database" : _ti_database);
+		/* Strip internal versioning */
+		term = strchr(t->name, TERMINFO_VDELIM);
+		if (term != NULL)
+			*term = '\0';
 		printf("%s", t->name);
 		if (t->_alias != NULL && *t->_alias != '\0')
 			printf("|%s", t->_alias);
