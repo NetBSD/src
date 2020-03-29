@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.165 2020/03/29 09:01:32 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.166 2020/03/29 21:34:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -1184,13 +1184,13 @@ do {									\
 	(pg)->mdpage.k_mappings = 0;					\
 } while (/*CONSTCOND*/0)
 
-#endif /* !_LOCORE */
-
 #ifndef	__BSD_PTENTRY_T__
 #define	__BSD_PTENTRY_T__
 typedef uint32_t pt_entry_t;
 #define PRIxPTE		PRIx32
 #endif
+
+#endif /* !_LOCORE */
 
 #endif /* _KERNEL */
 
