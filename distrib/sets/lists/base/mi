@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1234 2020/03/27 15:11:57 christos Exp $
+# $NetBSD: mi,v 1.1235 2020/03/29 17:13:46 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1973,6 +1973,7 @@
 ./usr/sbin/rpc.pcnfsd				base-nfsserver-bin
 ./usr/sbin/rpc.statd				base-nfsserver-bin
 ./usr/sbin/rpc.yppasswdd			base-nis-bin		yp
+./usr/sbin/rpcapd				base-netutil-bin
 ./usr/sbin/rpcbind				base-rpcbind-bin
 ./usr/sbin/rtadvd				base-router-bin		use_inet6
 ./usr/sbin/rtquery				base-netutil-bin
@@ -2314,6 +2315,7 @@
 ./usr/share/examples/racoon/roadwarrior		base-netutil-examples
 ./usr/share/examples/racoon/roadwarrior/client	base-netutil-examples
 ./usr/share/examples/racoon/roadwarrior/server	base-netutil-examples
+./usr/share/examples/rpcapd			base-netutil-examples
 ./usr/share/examples/rtadvd			base-router-examples
 ./usr/share/examples/slip			base-slip-examples
 ./usr/share/examples/smbfs			base-sysutil-examples
