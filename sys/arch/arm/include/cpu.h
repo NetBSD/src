@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.109 2020/03/09 18:43:52 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.110 2020/03/29 09:06:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -262,6 +262,7 @@ curcpu(void)
 #ifndef curlwp
 #define	curlwp		(curcpu()->ci_curlwp)
 #endif
+#define curpcb		((struct pcb *)lwp_getpcb(curlwp))
 
 #define CPU_INFO_ITERATOR	int
 #if defined(_MODULE) || defined(MULTIPROCESSOR)
