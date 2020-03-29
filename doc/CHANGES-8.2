@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.112 2020/03/29 11:48:21 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.113 2020/03/29 12:11:41 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2177,4 +2177,18 @@ distrib/notes/newsmips/xfer			1.3
 	Replace references to i386 install media for Rawrite32 with
 	links to the homepage. Remove outdated copy of the program.
 	[martin]
+
+include/stdio.h					1.98
+
+	Move P_tmpdir from "/var/tmp/" to "/tmp/".
+	[mrg, ticket #1526]
+
+sys/dev/scsipi/cd.c				1.343
+sys/kern/subr_disk.c				1.130
+
+	PR 55104:
+	Avoid division by zero if label isn't valid.
+	Allow open of RAWPART even when no medium is loaded.
+	Keep errors silent if no medium is loaded.
+	[mlelstv, ticket #1527]
 
