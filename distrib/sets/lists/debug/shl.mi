@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.239 2020/03/14 06:39:20 skrll Exp $
+# $NetBSD: shl.mi,v 1.240 2020/03/29 17:13:46 christos Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -19,7 +19,7 @@
 ./usr/libdata/debug/lib/libm.so.0.12.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libnpf.so.0.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libnvpair.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
-./usr/libdata/debug/lib/libpcap.so.8.0.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libpcap.so.8.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libppath.so.0.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libprop.so.1.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libpthread.so.1.4.debug			comp-sys-debug	debug,dynamicroot
@@ -180,7 +180,7 @@
 ./usr/libdata/debug/usr/lib/libpanel.so.1.0.debug		comp-sys-debug	debug,obsolete,compatfile
 ./usr/libdata/debug/usr/lib/libpanel.so.2.0.debug		comp-sys-debug	debug,obsolete,compatfile
 ./usr/libdata/debug/usr/lib/libpanel.so.3.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libpcap.so.8.0.debug		comp-net-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libpcap.so.8.1.debug		comp-net-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpci.so.2.2.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libperfuse.so.0.0.debug		comp-perfuse-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug		comp-sys-debug	debug,compatfile
