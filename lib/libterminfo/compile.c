@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.20 2020/03/28 15:45:56 christos Exp $ */
+/* $NetBSD: compile.c,v 1.21 2020/03/29 18:54:57 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.20 2020/03/28 15:45:56 christos Exp $");
+__RCSID("$NetBSD: compile.c,v 1.21 2020/03/29 18:54:57 roy Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -155,18 +155,34 @@ _ti_find_extra(TIC *tic, TBUF *tbuf, const char *code)
 char *
 _ti_getname(int rtype, const char *orig)
 {
+	const char *delim;
 	char *name;
+	const char *verstr;
+	size_t diff, vlen;
 
-	if (rtype == TERMINFO_RTYPE) {
-		/* , and | are the two print characters now allowed
-		 * in terminfo aliases or long descriptions.
-		 * As | is generally used to delimit aliases inside the
-		 * description, we use a comma. */
-		if (asprintf(&name, "%s,v3", orig) < 0)
-			name = NULL;
-	} else {
-		name = strdup(orig);
+	switch (rtype) {
+	case TERMINFO_RTYPE:
+		verstr = TERMINFO_VDELIMSTR "v3";
+		break;
+	case TERMINFO_RTYPE_O1:
+		verstr = "";
+		break;
+	default:
+		errno = EINVAL;
+		return NULL;
 	}
+
+	delim = orig;
+	while (*delim != '\0' && *delim != TERMINFO_VDELIM)
+		delim++;
+	diff = delim - orig;
+	vlen = strlen(verstr);
+	name = malloc(diff + vlen + 1);
+	if (name == NULL)
+		return NULL;
+
+	memcpy(name, orig, diff);
+	memcpy(name + diff, verstr, vlen + 1);
 	return name;
 }
 
