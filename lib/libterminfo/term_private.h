@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.17 2020/03/29 18:54:57 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.18 2020/03/29 21:46:22 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2013, 2020 The NetBSD Foundation, Inc.
@@ -151,8 +151,6 @@ void		_ti_setospeed(TERMINAL *);
 #define TIC_EXTRA	(1 << 4)
 #define TIC_COMPAT_V1	(1 << 5)
 
-#define UINT16_T_MAX	0xffff
-
 typedef struct {
 	char *buf;
 	size_t buflen;
@@ -174,6 +172,7 @@ typedef struct {
 #define _ti_numsize(tic) \
     ((tic)->rtype == TERMINFO_RTYPE_O1 ? sizeof(uint16_t) : sizeof(uint32_t))
 
+int _ti_promote(TIC *);
 char *_ti_grow_tbuf(TBUF *, size_t);
 char *_ti_get_token(char **, char);
 const char *_ti_find_cap(TIC *, TBUF *, char,  short);
