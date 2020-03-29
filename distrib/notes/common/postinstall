@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.81 2015/05/19 19:30:27 snj Exp $
+.\"	$NetBSD: postinstall,v 1.81.8.1 2020/03/29 11:59:06 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -373,7 +373,7 @@ post-installation configuration menu, the
 .Xr pkgsrc 7
 framework for compiling packages can be obtained by
 retrieving the file
-.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/pkgsrc.tar.gz .
+.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/pkgsrc.tar.gz
 It is typically extracted into
 .Pa /usr/pkgsrc
 (though other locations work fine) with the commands:

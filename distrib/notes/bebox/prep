@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.2.40.1 2020/03/29 11:45:13 martin Exp $
+.\"	$NetBSD: prep,v 1.2.40.2 2020/03/29 11:59:06 martin Exp $
 .
 .Pp
 . 
@@ -46,7 +46,7 @@ and use it to write the floppy image(s) to floppy disk,
 you can use the
 .Ic Rawrite32
 Windows program which can be found at
-.Lk https://www.NetBSD.org/~martin/rawrite32 .
+.Lk https://www.NetBSD.org/~martin/rawrite32
 .Pp
 Also you can create boot.fs in the following way:
 .Pp

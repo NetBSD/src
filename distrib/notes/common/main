@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.535.2.6 2020/03/29 11:45:13 martin Exp $
+.\"	$NetBSD: main,v 1.535.2.7 2020/03/29 11:59:06 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -259,7 +259,7 @@ which can be found at
 .Lk http://sourceforge.net/projects/win32diskimager/
 or
 Rawrite32 which can be found at
-.Lk https://www.NetBSD.org/~martin/rawrite32 .
+.Lk https://www.NetBSD.org/~martin/rawrite32
 .if \n[amd64]:\n[i386] \{\
 If you have problems writing a raw image to a floppy,
 the
@@ -480,7 +480,7 @@ would not exist.
 .
 .if \n[FOR_RELEASE] \{\
 .Pp
-.Ss Changes Between The NetBSD 8.0 and 8.1 Releases
+.Ss Changes Between The NetBSD 8.1 and 8.2 Releases
 .Pp
 The
 .Nx
@@ -489,8 +489,8 @@ is the first security/critical update of the NetBSD 8 release branch.
 It represents a selected subset of fixes deemed important for
 security or stability reasons.
 The complete list of changes can be found in the
-CHANGES-8.1:
-.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.1/CHANGES-8.1
+CHANGES-8.2:
+.Lk https://cdn.netbsd.org/pub/NetBSD/NetBSD-8.2/CHANGES-8.2
 file in the top level directory of the NetBSD
 \*V release
 tree.
@@ -566,6 +566,8 @@ Changes between the 7.0 and 8.0 releases.
 Changes between the initial 8.0 branch and final release of 8.0.
 .It Li CHANGES-8.1
 Changes between the 8.0 release and the 8.1 release.
+.It Li CHANGES-8.2
+Changes between the 8.1 release and the 8.2 release.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
