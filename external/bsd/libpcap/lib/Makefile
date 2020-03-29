@@ -1,18 +1,13 @@
-# $NetBSD: Makefile,v 1.26 2019/10/13 07:28:06 mrg Exp $	
+# $NetBSD: Makefile,v 1.27 2020/03/29 17:12:45 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
 USE_FORT?= yes	# network protocol library
 
-CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H -DHAVE_CONFIG_H -I${.OBJDIR}
+CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H -DHAVE_CONFIG_H -DENABLE_REMOTE
+CPPFLAGS+= -I${.OBJDIR}
 
 .SUFFIXES: .3 .3pcap
-
-__sed: .USE
-	@rm -f ${.TARGET}
-	${TOOL_SED} -e 's,@MAN_FILE_FORMATS@,5,g' \
-	    -e 's,@MAN_MISC_INFO@,7,g' \
-	    -e 's,3PCAP,3,g' < ${.ALLSRC} > ${.TARGET}
 
 .3pcap.3:
 	@rm -f ${.TARGET}
@@ -23,10 +18,9 @@ __sed: .USE
 
 # Search first in the kernel for bpf_filter.c
 .PATH:	${NETBSDSRCDIR}/sys/net
-SRCDIR=		${.CURDIR}/../dist
-.PATH:		${SRCDIR}
+.PATH:	${SRCDIR}
 
-LIB=		pcap
+LIB=	pcap
 MAN3= \
 pcap_activate.3pcap \
 pcap_breakloop.3pcap \
@@ -142,11 +136,15 @@ nametoaddr.c \
 optimize.c \
 pcap-bpf.c \
 pcap-common.c \
+pcap-new.c \
+pcap-rpcap.c \
 pcap.c \
+rpcap-protocol.c \
 savefile.c \
 scanner.l \
 sf-pcap.c \
-sf-pcapng.c
+sf-pcapng.c \
+sockutils.c
 
 
 INCS=		pcap/pcap.h pcap/namedb.h pcap/funcattrs.h \
@@ -168,6 +166,8 @@ COPTS.bpf_image.c+=	-Wno-format-nonliteral
 COPTS.gencode.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}
 COPTS.pcap.c+=		${GCC_NO_FORMAT_TRUNCATION}
 COPTS.pcap-bpf.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.pcap-new.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.pcap-rpcap.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 CWARNFLAGS.clang+=	-Wno-format-extra-args \
 			-Wno-unneeded-internal-declaration
