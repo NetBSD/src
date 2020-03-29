@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.87 2020/03/29 15:35:31 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.88 2020/03/29 15:38:29 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.87 2020/03/29 15:35:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.88 2020/03/29 15:38:29 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -132,9 +132,6 @@ static void xennetback_frontend_changed(void *, XenbusState);
 static inline void xennetback_tx_response(struct xnetback_instance *,
     int, int);
 static void xennetback_mbuf_addr(struct mbuf *, paddr_t *, int *);
-#if 0	/* XXX */
-static void xennetback_tx_free(struct mbuf * , void *, size_t, void *);
-#endif	/* XXX */
 
 static SLIST_HEAD(, xnetback_instance) xnetback_instances;
 static kmutex_t xnetback_lock;
@@ -870,26 +867,6 @@ xennetback_evthandler(void *arg)
 
 	return 1;
 }
-
-#if 0	/* XXX */
-static void
-xennetback_tx_free(struct mbuf *m, void *va, size_t size, void *arg)
-{
-	int s = splnet();
-	struct xni_pkt *pkt = arg;
-	struct xnetback_instance *xneti = pkt->pkt_xneti;
-
-	XENPRINTF(("xennetback_tx_free\n"));
-
-	xennetback_tx_response(xneti, pkt->pkt_id, NETIF_RSP_OKAY);
-
-	xni_pkt_unmap(pkt, (vaddr_t)va & ~PAGE_MASK);
-
-	if (m)
-		pool_cache_put(mb_cache, m);
-	splx(s);
-}
-#endif	/* XXX */
 
 static int
 xennetback_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
