@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.16 2020/03/29 18:32:45 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.17 2020/03/29 18:54:57 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2013, 2020 The NetBSD Foundation, Inc.
@@ -78,6 +78,13 @@
 #define TERMINFO_RTYPE_O1	1
 #define TERMINFO_ALIAS		2
 #define TERMINFO_RTYPE		3
+
+/* , and | are the two print characters now allowed
+ * in terminfo aliases or long descriptions.
+ * As | is generally used to delimit aliases inside the
+ * description, we use a comma. */
+#define TERMINFO_VDELIM		','
+#define TERMINFO_VDELIMSTR	","
 
 /* We use the same ncurses tic macros so that our data is identical
  * when a caller uses the long name macros to access te terminfo data
