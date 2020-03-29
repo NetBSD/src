@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.86 2020/03/27 18:37:30 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.87 2020/03/29 15:35:31 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.86 2020/03/27 18:37:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.87 2020/03/29 15:35:31 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -79,16 +79,6 @@ extern pt_entry_t xpmap_pg_nx;
 /* linux wants at last 16 bytes free in front of the packet */
 #define LINUX_REQUESTED_OFFSET 16
 
-/* hash list for TX requests */
-/* descriptor of a packet being handled by the kernel */
-struct xni_pkt {
-	int pkt_id; /* packet's ID */
-	grant_handle_t pkt_handle;
-	struct xnetback_instance *pkt_xneti; /* pointer back to our softc */
-};
-
-/* pools for xni_pkt */
-struct pool xni_pkt_pool;
 /* ratecheck(9) for pool allocation failures */
 static const struct timeval xni_pool_errintvl = { 30, 0 };  /* 30s, each */
 
@@ -141,6 +131,7 @@ static void xennetback_frontend_changed(void *, XenbusState);
 
 static inline void xennetback_tx_response(struct xnetback_instance *,
     int, int);
+static void xennetback_mbuf_addr(struct mbuf *, paddr_t *, int *);
 #if 0	/* XXX */
 static void xennetback_tx_free(struct mbuf * , void *, size_t, void *);
 #endif	/* XXX */
@@ -192,13 +183,6 @@ static struct _pages_pool_free {
 } pages_pool_free[NB_XMIT_PAGES_BATCH];
 
 
-static inline void
-xni_pkt_unmap(struct xni_pkt *pkt, vaddr_t pkt_va)
-{
-	xen_shm_unmap(pkt_va, 1, &pkt->pkt_handle);
-	pool_put(&xni_pkt_pool, pkt);
-}
-
 void
 xvifattach(int n)
 {
@@ -223,8 +207,6 @@ xvifattach(int n)
 	mcl_pages_alloc = NB_XMIT_PAGES_BATCH - 1;
 
 	/* initialise pools */
-	pool_init(&xni_pkt_pool, sizeof(struct xni_pkt), 0, 0, 0,
-	    "xnbpkt", NULL, IPL_VM);
 	xmit_pages_cache = pool_cache_init(PAGE_SIZE, 0, 0, 0, "xnbxm", NULL,
 	    IPL_VM, NULL, NULL, NULL);
 
@@ -732,6 +714,10 @@ xennetback_tx_check_packet(const netif_tx_request_t *txreq, int vlan)
 	if (__predict_false(txreq->size > maxlen))
 		return "too big";
 
+	/* Somewhat duplicit, MCLBYTES is > ETHER_MAX_LEN */
+	if (__predict_false(txreq->size > MCLBYTES))
+		return "bigger than MCLBYTES";
+
 	return NULL;
 }
 
@@ -741,11 +727,12 @@ xennetback_evthandler(void *arg)
 	struct xnetback_instance *xneti = arg;
 	struct ifnet *ifp = &xneti->xni_if;
 	netif_tx_request_t txreq;
-	struct xni_pkt *pkt;
-	vaddr_t pkt_va;
 	struct mbuf *m;
-	int receive_pending, err;
+	int receive_pending;
 	RING_IDX req_cons;
+	gnttab_copy_t gop;
+	paddr_t pa;
+	int offset;
 
 	XENPRINTF(("xennetback_evthandler "));
 	req_cons = xneti->xni_txring.req_cons;
@@ -797,52 +784,64 @@ xennetback_evthandler(void *arg)
 			if_statinc(ifp, if_ierrors);
 			continue;
 		}
+		if (txreq.size > MHLEN) {
+			MCLGET(m, M_DONTWAIT);
+			if (__predict_false(m->m_ext_storage.ext_buf == NULL)) {
+				m_freem(m);
+				xennetback_tx_response(xneti, txreq.id,
+				    NETIF_RSP_DROPPED);
+				if_statinc(ifp, if_ierrors);
+				continue;
+			}
+		}
 
 		XENPRINTF(("%s pkt offset %d size %d id %d req_cons %d\n",
 		    xneti->xni_if.if_xname, txreq.offset,
 		    txreq.size, txreq.id, MASK_NETIF_TX_IDX(req_cons)));
 
-		pkt = pool_get(&xni_pkt_pool, PR_NOWAIT);
-		if (__predict_false(pkt == NULL)) {
-			static struct timeval lasttime;
-			if (ratecheck(&lasttime, &xni_pool_errintvl))
-				printf("%s: xnbpkt alloc failed\n",
-				    ifp->if_xname);
-			xennetback_tx_response(xneti, txreq.id,
-			    NETIF_RSP_DROPPED);
-			if_statinc(ifp, if_ierrors);
-			m_freem(m);
-			continue;
-		}
-		err = xen_shm_map(1, xneti->xni_domid, &txreq.gref, &pkt_va,
-		    &pkt->pkt_handle, XSHM_RO);
-		if (__predict_false(err == ENOMEM)) {
-			xennetback_tx_response(xneti, txreq.id,
-			    NETIF_RSP_DROPPED);
-			if_statinc(ifp, if_ierrors);
-			pool_put(&xni_pkt_pool, pkt);
-			m_freem(m);
-			continue;
-		}
+		/*
+		 * Copy the data and ack it. Delaying it until the mbuf is
+		 * freed will stall transmit.
+		 */
+		xennetback_mbuf_addr(m, &pa, &offset);
+		memset(&gop, 0, sizeof(gop));
+		gop.flags = GNTCOPY_source_gref;
+		gop.len = txreq.size;
 
-		if (__predict_false(err)) {
-			printf("%s: mapping foreing page failed: %d\n",
-			    xneti->xni_if.if_xname, err);
+		gop.source.u.ref = txreq.gref;
+		gop.source.offset = txreq.offset;
+		gop.source.domid = xneti->xni_domid;
+
+		gop.dest.offset = offset;
+		gop.dest.domid = DOMID_SELF;
+		gop.dest.u.gmfn = xpmap_ptom(pa) >> PAGE_SHIFT;
+
+		if (HYPERVISOR_grant_table_op(GNTTABOP_copy,
+		    &gop, 1) != 0) {
+			printf("%s: GNTTABOP_copy failed",
+			    ifp->if_xname);
+			m_freem(m);
 			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_ERROR);
 			if_statinc(ifp, if_ierrors);
-			pool_put(&xni_pkt_pool, pkt);
+			continue;
+		}
+		if (gop.status != GNTST_okay) {
+			printf("%s GNTTABOP_copy %d\n",
+			    ifp->if_xname, gop.status);
 			m_freem(m);
+			xennetback_tx_response(xneti, txreq.id,
+			    NETIF_RSP_ERROR);
+			if_statinc(ifp, if_ierrors);
 			continue;
 		}
 
 		if ((ifp->if_flags & IFF_PROMISC) == 0) {
 			struct ether_header *eh =
-			    (void*)(pkt_va + txreq.offset);
+			    mtod(m, struct ether_header *);
 			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
 			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0) {
-				xni_pkt_unmap(pkt, pkt_va);
 				m_freem(m);
 				xennetback_tx_response(xneti, txreq.id,
 				    NETIF_RSP_OKAY);
@@ -850,23 +849,7 @@ xennetback_evthandler(void *arg)
 			}
 		}
 
-		/*
-		 * This is the last TX buffer. Copy the data and
-		 * ack it. Delaying it until the mbuf is
-		 * freed will stall transmit.
-		 */
-		m->m_len = uimin(MHLEN, txreq.size);
-		m->m_pkthdr.len = 0;
-		m_copyback(m, 0, txreq.size,
-		    (void *)(pkt_va + txreq.offset));
-		xni_pkt_unmap(pkt, pkt_va);
-		if (m->m_pkthdr.len < txreq.size) {
-			if_statinc(ifp, if_ierrors);
-			m_freem(m);
-			xennetback_tx_response(xneti, txreq.id,
-			    NETIF_RSP_DROPPED);
-			continue;
-		}
+		m->m_len = m->m_pkthdr.len = txreq.size;
 		xennetback_tx_response(xneti, txreq.id,
 		    NETIF_RSP_OKAY);
 
