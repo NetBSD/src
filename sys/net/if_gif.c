@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.152 2020/02/01 02:57:45 riastradh Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.153 2020/03/30 11:57:50 christos Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.152 2020/02/01 02:57:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.153 2020/03/30 11:57:50 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -324,22 +324,20 @@ gifinit(void)
 static int
 gifdetach(void)
 {
-	int error = 0;
 
 	mutex_enter(&gif_softcs.lock);
 	if (!LIST_EMPTY(&gif_softcs.list)) {
 		mutex_exit(&gif_softcs.lock);
-		error = EBUSY;
+		return EBUSY;
 	}
 
-	if (error == 0) {
-		psref_class_destroy(gv_psref_class);
+	psref_class_destroy(gv_psref_class);
 
-		if_clone_detach(&gif_cloner);
-		sysctl_teardown(&gif_sysctl);
-	}
-
-	return error;
+	if_clone_detach(&gif_cloner);
+	sysctl_teardown(&gif_sysctl);
+	mutex_exit(&gif_softcs.lock);
+	mutex_destroy(&gif_softcs.lock);
+	return 0;
 }
 
 static int
