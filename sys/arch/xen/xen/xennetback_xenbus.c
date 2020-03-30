@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.89 2020/03/30 15:31:52 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.90 2020/03/30 19:07:32 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.89 2020/03/30 15:31:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.90 2020/03/30 19:07:32 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -600,7 +600,7 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 
 	case XenbusStateClosing:
 		xneti->xni_status = DISCONNECTING;
-		xneti->xni_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		xneti->xni_if.if_flags &= ~IFF_RUNNING;
 		xneti->xni_if.if_timer = 0;
 		xenbus_switch_state(xbusd, NULL, XenbusStateClosing);
 		break;
@@ -960,8 +960,7 @@ xennetback_ifsoftstart_transfer(struct xnetback_instance *xneti)
 
 	XENPRINTF(("xennetback_ifsoftstart_transfer "));
 	int s = splnet();
-	if (__predict_false(
-	    (ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)) {
+	if (__predict_false((ifp->if_flags & IFF_RUNNING) == 0)) {
 		splx(s);
 		return;
 	}
@@ -1270,8 +1269,7 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 
 	XENPRINTF(("xennetback_ifsoftstart_copy "));
 	int s = splnet();
-	if (__predict_false(
-	    (ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)) {
+	if (__predict_false((ifp->if_flags & IFF_RUNNING) == 0)) {
 		splx(s);
 		return;
 	}
@@ -1467,7 +1465,7 @@ xennetback_ifstop(struct ifnet *ifp, int disable)
 	struct xnetback_instance *xneti = ifp->if_softc;
 	int s = splnet();
 
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 	if (xneti->xni_status == CONNECTED) {
 		XENPRINTF(("%s: req_prod 0x%x resp_prod 0x%x req_cons 0x%x "
