@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.22 2020/03/29 21:46:22 roy Exp $ */
+/* $NetBSD: compile.c,v 1.23 2020/03/30 00:09:06 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.22 2020/03/29 21:46:22 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.23 2020/03/30 00:09:06 roy Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -67,7 +67,7 @@ dowarn(int flags, const char *fmt, ...)
 int
 _ti_promote(TIC *tic)
 {
-	char *obuf, type, flag;
+	char *obuf, type, flag, *buf, *delim, *name, *nbuf;
 	const char *cap, *code, *str;
 	size_t n, entries, strl;
 	uint16_t ind;
@@ -81,6 +81,28 @@ _ti_promote(TIC *tic)
 		warn("_ti_getname");
 		tic->name = obuf;
 		return -1;
+	}
+	free(obuf);
+
+	n = 0;
+	obuf = buf = tic->alias;
+	tic->alias = NULL;
+	while (buf != NULL) {
+		delim = strchr(buf, '|');
+		if (delim != NULL)
+			*delim++ = '\0';
+		name = _ti_getname(tic->rtype, buf);
+		strl = strlen(name) + 1;
+		nbuf = realloc(tic->alias, n + strl);
+		if (nbuf == NULL) {
+			free(name);
+			return -1;
+		}
+		tic->alias = nbuf;
+		memcpy(tic->alias + n, name, strl);
+		n += strl;
+		free(name);
+		buf = delim;
 	}
 	free(obuf);
 
