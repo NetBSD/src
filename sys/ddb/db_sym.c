@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.65 2017/11/03 09:59:07 maxv Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.66 2020/03/30 20:45:59 maya Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.65 2017/11/03 09:59:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.66 2020/03/30 20:45:59 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -50,7 +50,6 @@ static void		db_symsplit(char *, char **, char **);
 
 const db_symformat_t *db_symformat;
 static db_forall_func_t db_sift;
-extern db_symformat_t db_symformat_aout;
 extern db_symformat_t db_symformat_elf;
 #endif
 
