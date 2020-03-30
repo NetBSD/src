@@ -1,4 +1,4 @@
-.\" $NetBSD: libblacklist.3,v 1.10 2020/03/30 15:47:15 christos Exp $
+.\" $NetBSD: libblacklist.3,v 1.11 2020/03/30 17:32:22 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,11 +96,13 @@ There was an unsuccessful authentication attempt.
 A user successfully authenticated.
 .It Va BLACKLIST_ABUSIVE_BEHAVIOR
 The sending daemon has detected abusive behavior
-from the remote system.  The remote address should
+from the remote system.
+The remote address should
 be blocked as soon as possible.
 .It Va BLACKLIST_BAD_USER
 The sending daemon has determined the username
-presented for authentication is invalid.  The
+presented for authentication is invalid.
+The
 .Xr blacklistd 8
 daemon compares the username to a configured list of forbidden
 usernames and
