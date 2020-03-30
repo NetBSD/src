@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.49 2019/07/23 10:18:52 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.50 2020/03/30 06:54:37 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.49 2019/07/23 10:18:52 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.50 2020/03/30 06:54:37 ryo Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -162,7 +162,7 @@ libedit_private int
 c_hmatch(EditLine *el, const wchar_t *str)
 {
 #ifdef SDEBUG
-	(void) fprintf(el->el_errfile, "match `%s' with `%s'\n",
+	(void) fprintf(el->el_errfile, "match `%ls' with `%ls'\n",
 	    el->el_search.patbuf, str);
 #endif /* SDEBUG */
 
@@ -192,10 +192,10 @@ c_setpat(EditLine *el)
 #ifdef SDEBUG
 	(void) fprintf(el->el_errfile, "\neventno = %d\n",
 	    el->el_history.eventno);
-	(void) fprintf(el->el_errfile, "patlen = %d\n", el->el_search.patlen);
-	(void) fprintf(el->el_errfile, "patbuf = \"%s\"\n",
+	(void) fprintf(el->el_errfile, "patlen = %ld\n", el->el_search.patlen);
+	(void) fprintf(el->el_errfile, "patbuf = \"%ls\"\n",
 	    el->el_search.patbuf);
-	(void) fprintf(el->el_errfile, "cursor %d lastchar %d\n",
+	(void) fprintf(el->el_errfile, "cursor %ld lastchar %ld\n",
 	    EL_CURSOR(el) - el->el_line.buffer,
 	    el->el_line.lastchar - el->el_line.buffer);
 #endif
@@ -573,8 +573,9 @@ cv_repeat_srch(EditLine *el, wint_t c)
 {
 
 #ifdef SDEBUG
-	(void) fprintf(el->el_errfile, "dir %d patlen %d patbuf %s\n",
-	    c, el->el_search.patlen, ct_encode_string(el->el_search.patbuf));
+	static ct_buffer_t conv;
+	(void) fprintf(el->el_errfile, "dir %d patlen %ld patbuf %s\n",
+	    c, el->el_search.patlen, ct_encode_string(el->el_search.patbuf, &conv));
 #endif
 
 	el->el_state.lastcmd = (el_action_t) c;	/* Hack to stop c_setpat */
