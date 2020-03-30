@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.298 2020/03/08 22:08:46 mgorny Exp $
+# $NetBSD: mi,v 1.299 2020/03/30 02:12:38 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1244,6 +1244,7 @@
 ./usr/libdata/debug/usr/sbin/rpc.pcnfsd.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/rpc.statd.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/rpc.yppasswdd.debug	comp-nis-debug		yp,debug
+./usr/libdata/debug/usr/sbin/rpcapd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/rpcbind.debug	comp-rpcbind-debug	debug
 ./usr/libdata/debug/usr/sbin/rtadvd.debug	comp-router-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/rtquery.debug	comp-netutil-debug	debug
