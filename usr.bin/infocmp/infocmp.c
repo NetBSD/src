@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.15 2020/03/29 19:10:08 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.16 2020/03/30 00:22:18 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.15 2020/03/29 19:10:08 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.16 2020/03/30 00:22:18 roy Exp $");
 
 #include <sys/ioctl.h>
 
@@ -715,6 +715,8 @@ main(int argc, char **argv)
 		use_terms(t, argc - optind, argv + optind);
 
 	if ((optind + 1 != argc && nflag == 0) || uflag != 0) {
+		char *alias, *aliascpy, *delim;
+
 		if (uflag == 0)
 			printf("# Reconstructed from %s\n",
 			     _ti_database == NULL ?
@@ -724,8 +726,24 @@ main(int argc, char **argv)
 		if (term != NULL)
 			*term = '\0';
 		printf("%s", t->name);
-		if (t->_alias != NULL && *t->_alias != '\0')
-			printf("|%s", t->_alias);
+		alias = aliascpy = estrdup(t->_alias);
+		while (alias != NULL && *alias != '\0') {
+			putchar('|');
+			delim = strchr(alias, TERMINFO_VDELIM);
+			if (delim != NULL)
+				*delim++ = '\0';
+			printf("%s", alias);
+			if (delim != NULL) {
+				while (*delim != '\0' && *delim != '|')
+					delim++;
+				if (*delim == '\0')
+					alias = NULL;
+				else
+					alias = delim + 1;
+			} else
+				alias = NULL;
+		}
+		free(aliascpy);
 		if (t->desc != NULL && *t->desc != '\0')
 			printf("|%s", t->desc);
 		printf(",\n");
