@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.26 2020/03/30 18:36:47 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.27 2020/03/30 18:58:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -740,4 +740,21 @@ share/man/man9/cprng.9				1.11
 
 	Fix cprng_fast64 return type to match code.
 	[skrll, ticket #805]
+
+share/man/man4/pms.4				1.35,1.36
+sys/dev/pckbport/synaptics.c			1.55,1.56
+
+	synaptics: Make up_down_emulation useful for single-button clickpads.
+	Set up_down_emulation=3 by default.
+	[nia, ticket #809]
+
+sys/dev/pckbport/synaptics.c			1.57,1.58
+
+	synaptics: Allow the max_speed sysctls to be set.
+	[nia, ticket #810]
+
+include/stdio.h					1.98
+
+	Move P_tmpdir from "/var/tmp/" to "/tmp/".
+	[mrg, ticket #811]
 
