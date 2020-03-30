@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.50 2020/03/30 06:54:37 ryo Exp $	*/
+/*	$NetBSD: search.c,v 1.51 2020/03/30 06:56:38 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.50 2020/03/30 06:54:37 ryo Exp $");
+__RCSID("$NetBSD: search.c,v 1.51 2020/03/30 06:56:38 ryo Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -182,12 +182,9 @@ c_setpat(EditLine *el)
 		    (size_t)(EL_CURSOR(el) - el->el_line.buffer);
 		if (el->el_search.patlen >= EL_BUFSIZ)
 			el->el_search.patlen = EL_BUFSIZ - 1;
-		if (el->el_search.patlen != 0) {
-			(void) wcsncpy(el->el_search.patbuf, el->el_line.buffer,
-			    el->el_search.patlen);
-			el->el_search.patbuf[el->el_search.patlen] = '\0';
-		} else
-			el->el_search.patlen = wcslen(el->el_search.patbuf);
+		(void) wcsncpy(el->el_search.patbuf, el->el_line.buffer,
+		    el->el_search.patlen);
+		el->el_search.patbuf[el->el_search.patlen] = '\0';
 	}
 #ifdef SDEBUG
 	(void) fprintf(el->el_errfile, "\neventno = %d\n",
