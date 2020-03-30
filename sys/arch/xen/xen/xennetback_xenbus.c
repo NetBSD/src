@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.88 2020/03/29 15:38:29 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.89 2020/03/30 15:31:52 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.88 2020/03/29 15:38:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.89 2020/03/30 15:31:52 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -178,6 +178,10 @@ static struct _pages_pool_free {
 	vaddr_t va;
 	paddr_t pa;
 } pages_pool_free[NB_XMIT_PAGES_BATCH];
+static struct _req_info {
+	int id;
+	int flags;
+} xstart_req[NB_XMIT_PAGES_BATCH];
 
 
 void
@@ -718,6 +722,71 @@ xennetback_tx_check_packet(const netif_tx_request_t *txreq, int vlan)
 	return NULL;
 }
 
+static void
+xennetback_tx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
+	int queued)
+{
+	int i = 0;
+	gnttab_copy_t *gop;
+	struct mbuf *m;
+	struct _req_info *req;
+
+	/*
+	 * Copy the data and ack it. Delaying it until the mbuf is
+	 * freed will stall transmit.
+	 */
+	if (HYPERVISOR_grant_table_op(GNTTABOP_copy, xstart_gop_copy, queued)
+	    != 0) {
+		printf("%s: GNTTABOP_copy failed", ifp->if_xname);
+		goto abort;
+	}
+
+	for (; i < queued; i++) {
+		gop = &xstart_gop_copy[i];
+		m = mbufs_sent[i];
+		req = &xstart_req[i];
+
+		if (gop->status != GNTST_okay) {
+			printf("%s GNTTABOP_copy[%d] %d\n",
+			    ifp->if_xname, i, gop->status);
+			goto abort;
+		}
+
+		xennetback_tx_response(xneti, req->id, NETIF_RSP_OKAY);
+
+		if ((ifp->if_flags & IFF_PROMISC) == 0) {
+			struct ether_header *eh =
+			    mtod(m, struct ether_header *);
+			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
+			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
+			    ETHER_ADDR_LEN) != 0) {
+				m_freem(m);
+				continue; /* packet is not for us */
+			}
+		}
+
+		if (req->flags & NETTXF_csum_blank)
+			xennet_checksum_fill(ifp, m);
+		else if (req->flags & NETTXF_data_validated)
+			m->m_pkthdr.csum_flags = XN_M_CSUM_SUPPORTED;
+		m_set_rcvif(m, ifp);
+
+		if_percpuq_enqueue(ifp->if_percpuq, m);
+	}
+
+	return;
+
+abort:
+	for (; i < queued; i++) {
+		m = mbufs_sent[i];
+		req = &xstart_req[i];
+
+		m_freem(m);
+		xennetback_tx_response(xneti, req->id, NETIF_RSP_ERROR);
+		if_statinc(ifp, if_ierrors);
+	}
+}
+
 static int
 xennetback_evthandler(void *arg)
 {
@@ -727,9 +796,9 @@ xennetback_evthandler(void *arg)
 	struct mbuf *m;
 	int receive_pending;
 	RING_IDX req_cons;
-	gnttab_copy_t gop;
+	gnttab_copy_t *gop;
 	paddr_t pa;
-	int offset;
+	int offset, queued = 0;
 
 	XENPRINTF(("xennetback_evthandler "));
 	req_cons = xneti->xni_txring.req_cons;
@@ -796,68 +865,38 @@ xennetback_evthandler(void *arg)
 		    xneti->xni_if.if_xname, txreq.offset,
 		    txreq.size, txreq.id, MASK_NETIF_TX_IDX(req_cons)));
 
-		/*
-		 * Copy the data and ack it. Delaying it until the mbuf is
-		 * freed will stall transmit.
-		 */
 		xennetback_mbuf_addr(m, &pa, &offset);
-		memset(&gop, 0, sizeof(gop));
-		gop.flags = GNTCOPY_source_gref;
-		gop.len = txreq.size;
 
-		gop.source.u.ref = txreq.gref;
-		gop.source.offset = txreq.offset;
-		gop.source.domid = xneti->xni_domid;
+		/* Queue for the copy */
+		gop = &xstart_gop_copy[queued];
+		memset(gop, 0, sizeof(*gop));
+		gop->flags = GNTCOPY_source_gref;
+		gop->len = txreq.size;
 
-		gop.dest.offset = offset;
-		gop.dest.domid = DOMID_SELF;
-		gop.dest.u.gmfn = xpmap_ptom(pa) >> PAGE_SHIFT;
+		gop->source.u.ref = txreq.gref;
+		gop->source.offset = txreq.offset;
+		gop->source.domid = xneti->xni_domid;
 
-		if (HYPERVISOR_grant_table_op(GNTTABOP_copy,
-		    &gop, 1) != 0) {
-			printf("%s: GNTTABOP_copy failed",
-			    ifp->if_xname);
-			m_freem(m);
-			xennetback_tx_response(xneti, txreq.id,
-			    NETIF_RSP_ERROR);
-			if_statinc(ifp, if_ierrors);
-			continue;
-		}
-		if (gop.status != GNTST_okay) {
-			printf("%s GNTTABOP_copy %d\n",
-			    ifp->if_xname, gop.status);
-			m_freem(m);
-			xennetback_tx_response(xneti, txreq.id,
-			    NETIF_RSP_ERROR);
-			if_statinc(ifp, if_ierrors);
-			continue;
-		}
-
-		if ((ifp->if_flags & IFF_PROMISC) == 0) {
-			struct ether_header *eh =
-			    mtod(m, struct ether_header *);
-			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
-			    ETHER_ADDR_LEN) != 0) {
-				m_freem(m);
-				xennetback_tx_response(xneti, txreq.id,
-				    NETIF_RSP_OKAY);
-				continue; /* packet is not for us */
-			}
-		}
+		gop->dest.offset = offset;
+		gop->dest.domid = DOMID_SELF;
+		gop->dest.u.gmfn = xpmap_ptom(pa) >> PAGE_SHIFT;
 
 		m->m_len = m->m_pkthdr.len = txreq.size;
-		xennetback_tx_response(xneti, txreq.id,
-		    NETIF_RSP_OKAY);
+		mbufs_sent[queued] = m;
 
-		if (txreq.flags & NETTXF_csum_blank)
-			xennet_checksum_fill(ifp, m);
-		else if (txreq.flags & NETTXF_data_validated)
-			m->m_pkthdr.csum_flags = XN_M_CSUM_SUPPORTED;
-		m_set_rcvif(m, ifp);
+		xstart_req[queued].id = txreq.id;
+		xstart_req[queued].flags = txreq.flags;
 
-		if_percpuq_enqueue(ifp->if_percpuq, m);
+		queued++;
+
+		KASSERT(queued <= NB_XMIT_PAGES_BATCH);
+		if (queued == NB_XMIT_PAGES_BATCH) {
+			xennetback_tx_copy_process(ifp, xneti, queued);
+			queued = 0;
+		}
 	}
+	if (queued > 0)
+		xennetback_tx_copy_process(ifp, xneti, queued);
 	xen_rmb(); /* be sure to read the request before updating pointer */
 	xneti->xni_txring.req_cons = req_cons;
 	xen_wmb();
