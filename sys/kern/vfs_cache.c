@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.135 2020/03/27 00:14:25 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.136 2020/03/30 19:15:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.135 2020/03/27 00:14:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.136 2020/03/30 19:15:28 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -554,6 +554,14 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		return false;
 	}
 	if (ncp->nc_vp == NULL) {
+		if (iswht_ret != NULL) {
+			/*
+			 * Restore the ISWHITEOUT flag saved earlier.
+			 */
+			*iswht_ret = ncp->nc_whiteout;
+		} else {
+			KASSERT(!ncp->nc_whiteout);
+		}
 		if (nameiop == CREATE && (cnflags & ISLASTCN) != 0) {
 			/*
 			 * Last component and we are preparing to create
@@ -569,14 +577,6 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 			    namelen, 0, 0);
 			/* found neg entry; vn is already null from above */
 			hit = true;
-		}
-		if (iswht_ret != NULL) {
-			/*
-			 * Restore the ISWHITEOUT flag saved earlier.
-			 */
-			*iswht_ret = ncp->nc_whiteout;
-		} else {
-			KASSERT(!ncp->nc_whiteout);
 		}
 		rw_exit(&dvi->vi_nc_lock);
 		return hit;
