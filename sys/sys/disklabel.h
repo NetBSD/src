@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.122 2019/11/09 16:46:09 pgoyette Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.123 2020/03/30 09:19:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -398,7 +398,8 @@ x(CGD,     28, "cgd",	     NULL,   NULL)    /* Cryptographic disk */ \
 x(MINIXFS3,29, "MINIX FSv3", NULL,   NULL)    /* MINIX file system v3 */ \
 x(VMKCORE, 30, "VMware vmkcore", NULL, NULL)  /* VMware vmkcore */ \
 x(VMFS,    31, "VMware VMFS", NULL,  NULL)    /* VMware VMFS */ \
-x(VMWRESV, 32, "VMware Reserved", NULL, NULL) /* VMware reserved */
+x(VMWRESV, 32, "VMware Reserved", NULL, NULL) /* VMware reserved */ \
+x(ZFS,	   33, "ZFS", NULL, NULL)	      /* ZFS */
 
 
 #ifndef _LOCORE
