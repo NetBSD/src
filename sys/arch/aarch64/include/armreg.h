@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.38 2020/03/06 20:28:26 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.39 2020/03/30 11:38:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1120,6 +1120,9 @@ AARCH64REG_READ_INLINE(pmceid1_el0)
 
 AARCH64REG_WRITE_INLINE(pmcntenclr_el0)
 AARCH64REG_WRITE_INLINE(pmcntenset_el0)
+
+#define	PMCNTEN_C		__BIT(31)	// Enable the cycle counter
+#define	PMCNTEN_P		__BITS(30,0)	// Enable event counter bits
 
 AARCH64REG_READ_INLINE(pmcr_el0)
 AARCH64REG_WRITE_INLINE(pmcr_el0)
