@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.50.2.1 2020/03/30 18:45:16 martin Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.50.2.2 2020/03/30 18:47:33 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.50.2.1 2020/03/30 18:45:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.50.2.2 2020/03/30 18:47:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,7 +862,10 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 	} else
 	if (node.sysctl_num == synaptics_gesture_length_nodenum ||
 	    node.sysctl_num == synaptics_edge_motion_delta_nodenum ||
-	    node.sysctl_num == synaptics_up_down_motion_delta_nodenum) {
+	    node.sysctl_num == synaptics_up_down_motion_delta_nodenum ||
+	    node.sysctl_num == synaptics_max_speed_x_nodenum ||
+	    node.sysctl_num == synaptics_max_speed_y_nodenum ||
+	    node.sysctl_num == synaptics_max_speed_z_nodenum) {
 		if (t < 0)
 			return (EINVAL);
 	} else
