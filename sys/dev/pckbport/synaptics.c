@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.50 2019/07/05 05:09:24 mlelstv Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.50.2.1 2020/03/30 18:45:16 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.50 2019/07/05 05:09:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.50.2.1 2020/03/30 18:45:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ static void pms_sysctl_synaptics(struct sysctllog **);
 static int pms_sysctl_synaptics_verify(SYSCTLFN_ARGS);
 
 /* Controlled by sysctl. */
-static int synaptics_up_down_emul = 2;
+static int synaptics_up_down_emul = 3;
 static int synaptics_up_down_motion_delta = 1;
 static int synaptics_gesture_move = 200;
 static int synaptics_gesture_length = 20;
@@ -852,8 +852,11 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 		return error;
 
 	/* Sanity check the params. */
-	if (node.sysctl_num == synaptics_up_down_emul_nodenum ||
-	    node.sysctl_num == synaptics_two_fingers_emul_nodenum) {
+	if (node.sysctl_num == synaptics_up_down_emul_nodenum) {
+		if (t < 0 || t > 3)
+			return (EINVAL);
+	} else
+	if (node.sysctl_num == synaptics_two_fingers_emul_nodenum) {
 		if (t < 0 || t > 2)
 			return (EINVAL);
 	} else
@@ -1091,13 +1094,29 @@ pms_synaptics_parse(struct pms_softc *psc)
 			/* Old style Middle Button. */
 			sp.sp_middle = (psc->packet[0] & PMS_LBUTMASK) ^
 		    	    (psc->packet[3] & PMS_LBUTMASK);
-		} else if (synaptics_up_down_emul == 1) {
+		} else if (synaptics_up_down_emul != 1) {
+			sp.sp_middle = 0;
+		}
+
+		switch (synaptics_up_down_emul) {
+		case 1:
 			/* Do middle button emulation using up/down buttons */
 			sp.sp_middle = sp.sp_up | sp.sp_down;
 			sp.sp_up = sp.sp_down = 0;
-		} else
-			sp.sp_middle = 0;
-
+			break;
+		case 3:
+			/* Do left/right button emulation using up/down buttons */
+			sp.sp_left = sp.sp_up;
+			sp.sp_right = sp.sp_down;
+			sp.sp_up = sp.sp_down = 0;
+			break;
+		default:
+			/*
+			 * Don't do any remapping...
+			 * Z-axis emulation is handled in pms_synaptics_process_packet
+			 */
+			break;
+		}
 	}
 
 	pms_synaptics_process_packet(psc, &sp);
