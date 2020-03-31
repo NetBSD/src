@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000reg.h,v 1.3 2020/03/30 00:01:57 nisimura Exp $	*/
+/*	$NetBSD: dm9000reg.h,v 1.4 2020/03/31 02:32:25 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -26,17 +26,26 @@
  * SUCH DAMAGE.
  */
 
-/* Registers accesible on the DM9000, extracted from pp. 11-12 from the data sheet */
+#ifndef _DEV_IC_DM9000REG_H_
+#define _DEV_IC_DM9000REG_H_
 
-/* There are two interesting addresses for the DM9000
- * (at least in the context of the FriendlyARM MINI2440)
- * The I/O or register select address, which is the base address.
- * The DATA address, which is located at offset 4 from the base address.
- *
- * Chances are that this will not work generally, as it really depends on how the address lines are
- * mapped from the CPU to the DM9000. But for now it is a good starting point.
+/*
+ * Registers accesible on the DM9000, extracted from pp. 11-12 from
+ * the data sheet
  */
-#define DM9000_IOSIZE	4	/* XXX: Depends on the wiring of the address lines. */
+
+/*
+ * There are two interesting addresses for the DM9000 (at least in
+ * the context of the FriendlyARM MINI2440) The I/O or register select
+ * address, which is the base address.  The DATA address, which is
+ * located at offset 4 from the base address.
+ *
+ * Chances are that this will not work generally, as it really depends
+ * on how the address lines are mapped from the CPU to the DM9000.
+ * But for now it is a good starting point.
+ */
+
+#define DM9000_IOSIZE 4
 
 #define DM9000_NCR		0x00
 #define  DM9000_NCR_RST		(1<<0)	/* reset chip, self clear */
@@ -168,38 +177,4 @@
 #define  DM9000_IMR_ROOM	(1<<3)
 #define  DM9000_IMR_PAR 	(1<<7)	/* use 3/13K SRAM w/ auto wrap */
 
-#define DM9000_PHY_BMCR 	0x00
-#define  DM9000_PHY_BMCR_COLL_TEST	(1<<7)
-#define  DM9000_PHY_BMCR_DUPLEX_MODE	(1<<8)
-#define  DM9000_PHY_BMCR_RESTART_AN	(1<<9)
-#define  DM9000_PHY_BMCR_ISOLATE	(1<<10)
-#define  DM9000_PHY_BMCR_POWER_DOWN	(1<<11)
-#define  DM9000_PHY_BMCR_AUTO_NEG_EN	(1<<12)
-#define  DM9000_PHY_BMCR_SPEED_SELECT	(1<<13)
-#define  DM9000_PHY_BMCR_LOOPBACK	(1<<14)
-#define  DM9000_PHY_BMCR_RESET  	(1<<15)
-#define DM9000_PHY_BMSR 	0x01
-#define  DM9000_PHY_BMSR_EXT_CAP	(1<<0)
-#define  DM9000_PHY_BMSR_JAB_DET	(1<<1)
-#define  DM9000_PHY_BMSR_LINK_ST	(1<<2)
-#define  DM9000_PHY_BMSR_AUTO_NEG_AB	(1<<3)
-#define  DM9000_PHY_BMSR_REMOTE_FAULT	(1<<4)
-#define  DM9000_PHY_BMSR_AUTO_NEG_COM	(1<<5)
-#define  DM9000_PHY_BMSR_MF_PRE_SUP	(1<<6)
-#define  DM9000_PHY_BMSR_10BASE_HALF_DUPLEX (1<<11)
-#define  DM9000_PHY_BMSR_10BASE_FULL_DUPLEX (1<<12)
-#define  DM9000_PHY_BMSR_100BASE_HALF_DUPLEX (1<<13)
-#define  DM9000_PHY_BMSR_100BASE_FULL_DUPLEX (1<<14)
-#define  DM9000_PHY_BMSR_100BASE_T4	(1<<15)
-#define DM9000_PHY_PHYID1	0x02
-#define DM9000_PHY_PHYID2 	0x03
-#define DM9000_PHY_ANAR 	0x04
-#define  DM9000_PHY_ANAR_10_HDX	 (1<<5)
-#define  DM9000_PHY_ANAR_10_FDX  (1<<6)
-#define  DM9000_PHY_ANAR_TX_HDX  (1<<7)
-#define  DM9000_PHY_ANAR_TX_FDX  (1<<8)
-#define DM9000_PHY_ANLPAR	0x05
-#define DM9000_PHY_ANER 	0x06
-#define DM9000_PHY_DSCR 	0x16	/* Davicom extention */
-#define DM9000_PHY_DSCSR 	0x17	/* Davicom extention */
-#define DM9000_PHY_10BTCSR	0x18	/* Davicom extention */
+#endif
