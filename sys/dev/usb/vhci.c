@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.14 2020/03/31 16:17:32 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.15 2020/03/31 16:28:28 maxv Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.14 2020/03/31 16:17:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.15 2020/03/31 16:28:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.14 2020/03/31 16:17:32 maxv Exp $");
 #include <dev/usb/usbdivar.h>
 
 #include <dev/usb/usbroothub.h>
+#include <dev/usb/vhci.h>
 
 #ifdef VHCI_DEBUG
 #define DPRINTF(fmt, ...)	printf(fmt, __VA_ARGS__)
@@ -815,32 +816,6 @@ vhci_root_intr_done(struct usbd_xfer *xfer)
 }
 
 /* -------------------------------------------------------------------------- */
-
-struct vhci_ioc_get_info {
-	/* General. */
-	size_t nports;
-
-	/* Current port. */
-	u_int port;
-	int status;
-
-	/* Current addr. */
-	uint8_t addr;
-};
-
-struct vhci_ioc_set_port {
-	u_int port;
-};
-
-struct vhci_ioc_set_addr {
-	uint8_t addr;
-};
-
-#define VHCI_IOC_GET_INFO	_IOR('V', 0, struct vhci_ioc_get_info)
-#define VHCI_IOC_SET_PORT	_IOW('V', 1, struct vhci_ioc_set_port)
-#define VHCI_IOC_SET_ADDR	_IOW('V', 2, struct vhci_ioc_set_addr)
-#define VHCI_IOC_USB_ATTACH	_IO ('V', 10)
-#define VHCI_IOC_USB_DETACH	_IO ('V', 11)
 
 static int
 vhci_usb_attach(vhci_fd_t *vfd)
