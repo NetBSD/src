@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.25 2020/03/31 02:47:34 nisimura Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.26 2020/03/31 07:50:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -484,7 +484,7 @@ mii_statchg(struct ifnet *ifp)
 	nsr = dme_read(sc, DM9000_NSR);
 	spd = Mbps[!!(nsr & DM9000_NSR_SPEED)];
 	/* speed/duplexity available also in reg 0x11 of internal PHY */
-#if 1
+#if 0
 	if (nsr & DM9000_NSR_LINKST)
 		printf("link up,spd%d", spd);
 	else
@@ -727,15 +727,16 @@ dme_receive(struct ifnet *ifp)
 				if_statinc(ifp, if_collisions);
 				continue;
 			}
-			/* pick and forward the this frame to ifq */
+			/* pick and forward this frame to ifq */
 			if_percpuq_enqueue(ifp->if_percpuq, m);
 		} else if (avail != 00) {
 			/* Should this be logged somehow? */
 			printf("%s: Resetting chip\n",
 			       device_xname(sc->sc_dev));
 			dme_reset(sc);
+			break;
 		}
-	} while (avail != 01);
+	} while (avail == 01);
 	/* frame receieved successfully */
 }
 
