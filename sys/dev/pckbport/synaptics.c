@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.63 2020/03/27 11:10:07 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.64 2020/03/31 19:08:19 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.63 2020/03/27 11:10:07 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.64 2020/03/31 19:08:19 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1110,8 +1110,8 @@ pms_synaptics_parse(struct pms_softc *psc)
 			break;
 		case 3:
 			/* Do left/right button emulation using up/down buttons */
-			sp.sp_left = sp.sp_up;
-			sp.sp_right = sp.sp_down;
+			sp.sp_left = sp.sp_left | sp.sp_up;
+			sp.sp_right = sp.sp_right | sp.sp_down;
 			sp.sp_up = sp.sp_down = 0;
 			break;
 		default:
