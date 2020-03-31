@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.5 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.6 2020/03/31 23:26:32 nisimura Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.5 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.6 2020/03/31 23:26:32 nisimura Exp $");
 
 #include <sys/param.h>
 
@@ -454,14 +454,14 @@ mos_uno_mii_statchg(struct ifnet *ifp)
 }
 
 static void
-mos_setiff_locked(struct usbnet *un)
+mos_rcvfilt_locked(struct usbnet *un)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 	struct ethercom		*ec = usbnet_ec(un);
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-	u_int32_t		h = 0;
-	u_int8_t		rxmode, hashtbl[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	u_int32_t h = 0;
+	u_int8_t rxmode, mchash[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	if (usbnet_isdying(un))
 		return;
@@ -471,40 +471,39 @@ mos_setiff_locked(struct usbnet *un)
 
 	ETHER_LOCK(ec);
 	if (ifp->if_flags & IFF_PROMISC) {
-allmulti:
 		ec->ec_flags |= ETHER_F_ALLMULTI;
-		rxmode |= MOS_CTL_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
-			rxmode |= MOS_CTL_RX_PROMISC;
-	} else {
-		/* now program new ones */
-		ec->ec_flags &= ~ETHER_F_ALLMULTI;
-
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    ETHER_ADDR_LEN)) {
-				memset(hashtbl, 0, sizeof(hashtbl));
-				goto allmulti;
-			}
-			h = ether_crc32_be(enm->enm_addrlo,
-			    ETHER_ADDR_LEN) >> 26;
-			hashtbl[h / 8] |= 1 << (h % 8);
-
-			ETHER_NEXT_MULTI(step, enm);
+		ETHER_UNLOCK(ec);
+		/* run promisc. mode */
+		rxmode |= MOS_CTL_ALLMULTI; /* ??? */
+		rxmode |= MOS_CTL_RX_PROMISC;
+		goto update;
+	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ec->ec_flags |= ETHER_F_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			memset(mchash, 0, sizeof(mchash)); /* correct ??? */
+			/* accept all mulicast frame */
+			rxmode |= MOS_CTL_ALLMULTI;
+			goto update;
 		}
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		/* 3(31:29) and 3(28:26) sampling to have uint8_t[8] */
+		mchash[h >> 29] |= 1 << ((h >> 26) % 8);
+		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
-
+	/* MOS receive filter is always on */
+ update:
 	/* 
 	 * The datasheet claims broadcast frames were always accepted
 	 * regardless of filter settings. But the hardware seems to
 	 * filter broadcast frames, so pass them explicitly.
 	 */
-	h = ether_crc32_be(etherbroadcastaddr, ETHER_ADDR_LEN) >> 26;
-	hashtbl[h / 8] |= 1 << (h % 8);
-
-	mos_write_mcast(un, hashtbl);
+	mchash[7] |= 0x80;
+	mos_write_mcast(un, mchash);
 	mos_reg_write_1(un, MOS_CTL, rxmode);
 }
 
@@ -745,7 +744,7 @@ mos_init_locked(struct ifnet *ifp)
 	mos_reg_write_1(un, MOS_IPG1, ipgs[1]);
 
 	/* Program promiscuous mode and multicast filters. */
-	mos_setiff_locked(un);
+	mos_rcvfilt_locked(un);
 
 	/* Enable receiver and transmitter, bridge controls speed/duplex mode */
 	rxmode = mos_reg_read_1(un, MOS_CTL);
@@ -781,7 +780,7 @@ mos_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		mos_setiff_locked(un);
+		mos_rcvfilt_locked(un);
 		break;
 	default:
 		break;
