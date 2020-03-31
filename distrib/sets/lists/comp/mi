@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2316 2020/03/25 18:45:42 kre Exp $
+#	$NetBSD: mi,v 1.2317 2020/03/31 16:28:28 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -762,6 +762,7 @@
 ./usr/include/dev/usb/usbdevs.h			comp-obsolete		obsolete
 ./usr/include/dev/usb/usbhid.h			comp-c-include
 ./usr/include/dev/usb/utoppy.h			comp-c-include
+./usr/include/dev/usb/vhci.h			comp-c-include
 ./usr/include/dev/vinum/request.h		comp-obsolete		obsolete
 ./usr/include/dev/vinum/statetexts.h		comp-obsolete		obsolete
 ./usr/include/dev/vinum/vinumext.h		comp-obsolete		obsolete
