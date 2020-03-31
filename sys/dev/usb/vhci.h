@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.h,v 1.1 2020/03/31 16:28:28 maxv Exp $ */
+/*	$NetBSD: vhci.h,v 1.2 2020/03/31 16:34:25 maxv Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -28,6 +28,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+typedef struct {
+	int type;
+#define VHCI_REQ_CTRL	0
+
+	union {
+		usb_device_request_t ctrl;
+	} u;
+} vhci_request_t;
+
+typedef struct {
+	size_t size;
+} vhci_response_t;
 
 struct vhci_ioc_get_info {
 	/* General. */
