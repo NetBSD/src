@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.154 2019/09/15 23:41:41 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.155 2020/03/31 16:49:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -235,6 +235,8 @@ int	 nice(int);
 __aconst char *crypt(const char *, const char *);
 int	 encrypt(char *, int);
 char	*getpass(const char *);
+#endif
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
 pid_t	 getsid(pid_t);
 #endif
 
