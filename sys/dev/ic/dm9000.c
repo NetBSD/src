@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.24 2020/03/31 02:32:25 nisimura Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.25 2020/03/31 02:47:34 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -253,10 +253,11 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 	mii->mii_writereg = mii_writereg;
 	mii->mii_statchg = mii_statchg;
 
+	/* assume davicom PHY at 1. ext PHY could be hooked but only at 0-3 */
 	sc->sc_ethercom.ec_mii = mii;
 	ifmedia_init(ifm, 0, ether_mediachange, ether_mediastatus);
-	mii_attach(sc->sc_dev, mii, 0xffffffff,
-		1 /* PHY 1 */, MII_OFFSET_ANY, 0);
+	mii_attach(sc->sc_dev, mii, 0xffffffff, 1 /* PHY 1 */,
+		MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(ifm, IFM_ETHER | IFM_NONE, 0, NULL);
 		ifmedia_set(ifm, IFM_ETHER | IFM_NONE);
@@ -289,6 +290,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 	io_mode = (dme_read(sc, DM9000_ISR) &
 	    DM9000_IOMODE_MASK) >> DM9000_IOMODE_SHIFT;
 
+	/* frame body read/write ops in 2 byte quantity or byte-wise. */
 	DPRINTF(("DM9000 Operation Mode: "));
 	switch (io_mode) {
 	case DM9000_MODE_8BIT:
