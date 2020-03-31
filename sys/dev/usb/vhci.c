@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.15 2020/03/31 16:28:28 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.16 2020/03/31 16:34:25 maxv Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.15 2020/03/31 16:28:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.16 2020/03/31 16:34:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -173,19 +173,6 @@ static const struct usbd_pipe_methods vhci_root_intr_methods = {
  *             |     +-----------+    +-----------+             |
  *             +------------------------------------------------+
  */
-
-typedef struct {
-	int type;
-#define VHCI_REQ_CTRL	0
-
-	union {
-		usb_device_request_t ctrl;
-	} u;
-} vhci_request_t;
-
-typedef struct {
-	size_t size;
-} vhci_response_t;
 
 struct vhci_xfer;
 
