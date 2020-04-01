@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.158 2019/11/17 15:31:05 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.159 2020/04/01 08:21:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -475,9 +475,12 @@
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
 #define CPUID_SEF_AVX512_4FMAPS	__BIT(3)
 #define CPUID_SEF_FSREP_MOV	__BIT(4)  /* Fast Short REP MOV */
+#define CPUID_SEF_AVX512_VP2INTERSECT __BIT(8)
 #define CPUID_SEF_MD_CLEAR	__BIT(10)
 #define CPUID_SEF_TSX_FORCE_ABORT __BIT(13) /* MSR_TSX_FORCE_ABORT bit 0 */
+#define CPUID_SEF_SERIALIZE	__BIT(14)
 #define CPUID_SEF_HYBRID	__BIT(15) /* Hybrid part */
+#define CPUID_SEF_TSXLDTRK	__BIT(16) /* TSX suspend load addr tracking */
 #define CPUID_SEF_CET_IBT	__BIT(20) /* CET Indirect Branch Tracking */
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
@@ -489,8 +492,9 @@
 #define CPUID_SEF_FLAGS2	"\20" \
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
 	"\5" "FSREP_MOV"						\
-				"\13" "MD_CLEAR"			\
-			"\16" "TSX_FORCE_ABORT"		"\20" "HYBRID"	\
+	"\11" "VP2INTERSECT"	"\13" "MD_CLEAR"			\
+			"\16TSX_FORCE_ABORT" "\17SERIALIZE" "\20HYBRID"	\
+	"\21" "TSXLDTRK"						\
 	"\25" "CET_IBT"							\
 	"\33" "IBRS"	"\34" "STIBP"					\
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP" "\37CORE_CAP"	"\40" "SSBD"
