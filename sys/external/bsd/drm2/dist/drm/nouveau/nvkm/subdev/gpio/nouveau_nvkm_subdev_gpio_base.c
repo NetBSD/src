@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_gpio_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_gpio_base.c,v 1.3 2020/04/01 15:57:46 msaitoh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_gpio_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_gpio_base.c,v 1.3 2020/04/01 15:57:46 msaitoh Exp $");
 
 #include "priv.h"
 
@@ -169,7 +169,7 @@ static int
 nvkm_gpio_fini(struct nvkm_subdev *subdev, bool suspend)
 {
 	struct nvkm_gpio *gpio = nvkm_gpio(subdev);
-	u32 mask = (1 << gpio->func->lines) - 1;
+	u32 mask = (1ULL << gpio->func->lines) - 1;
 
 	gpio->func->intr_mask(gpio, NVKM_GPIO_TOGGLED, mask, 0);
 	gpio->func->intr_stat(gpio, &mask, &mask);
