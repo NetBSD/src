@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.40 2020/03/30 13:01:39 christos Exp $
+#	$NetBSD: net_common.sh,v 1.41 2020/04/01 00:49:04 christos Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -28,6 +28,8 @@
 #
 # Common utility functions for tests/net
 #
+
+export PATH="/sbin:/usr/sbin:/bin:/usr/bin"
 
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so \
     RUMPHIJACK=path=/rump,socket=all:nolocal,sysctl=yes"
