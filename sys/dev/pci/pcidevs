@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1402 2020/03/11 16:13:13 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1403 2020/04/01 15:53:35 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6610,6 +6610,7 @@ product NVIDIA	GEFORCE8400GS	0x06e4	GeForce 8400 GS
 product NVIDIA	GEFORCE9300M_GS	0x06e9	GeForce 9300M GS
 product NVIDIA	QUADRONVS150	0x06ea	Quadro NVS 150m
 product NVIDIA	QUADRONVS160	0x06eb	Quadro NVS 160m
+product NVIDIA	QUADRONVS295	0x06fd	Quadro NVS 295
 product NVIDIA	MCP78S_SMB	0x0752	nForce MCP78S SMBus Controller
 product NVIDIA	MCP77_IDE 	0x0759	nForce MCP77 ATA133 IDE Controller
 product NVIDIA	MCP77_LAN1	0x0760	nForce MCP77 Gigabit Ethernet Controller
