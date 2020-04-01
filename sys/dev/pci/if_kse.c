@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.52 2020/04/01 00:07:04 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.53 2020/04/01 04:00:14 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.52 2020/04/01 00:07:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.53 2020/04/01 04:00:14 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -332,7 +332,7 @@ static void kse_watchdog(struct ifnet *);
 static int kse_init(struct ifnet *);
 static void kse_stop(struct ifnet *, int);
 static void kse_reset(struct kse_softc *);
-static void kse_set_filter(struct kse_softc *);
+static void kse_set_rcvfilt(struct kse_softc *);
 static int add_rxbuf(struct kse_softc *, int);
 static void rxdrain(struct kse_softc *);
 static int kse_intr(void *);
@@ -726,7 +726,7 @@ kse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			kse_set_filter(sc);
+			kse_set_rcvfilt(sc);
 		}
 		break;
 	}
@@ -831,7 +831,7 @@ kse_init(struct ifnet *ifp)
 	}
 
 	/* accept multicast frame or run promisc mode */
-	kse_set_filter(sc);
+	kse_set_rcvfilt(sc);
 
 	/* set current media */
 	if (sc->sc_chip == 0x8841)
@@ -1085,7 +1085,7 @@ kse_start(struct ifnet *ifp)
 }
 
 static void
-kse_set_filter(struct kse_softc *sc)
+kse_set_rcvfilt(struct kse_softc *sc)
 {
 	struct ether_multistep step;
 	struct ether_multi *enm;
@@ -1104,6 +1104,7 @@ kse_set_filter(struct kse_softc *sc)
 	ETHER_LOCK(ec);
 	if (ifp->if_flags & IFF_PROMISC) {
 		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
 		/* run promisc. mode */
 		sc->sc_rxc |= RXC_RA;
 		goto update;
