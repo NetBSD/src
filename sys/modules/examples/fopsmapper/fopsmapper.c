@@ -1,4 +1,4 @@
-/*	$NetBSD: fopsmapper.c,v 1.1 2020/04/01 01:57:20 kamil Exp $	*/
+/*	$NetBSD: fopsmapper.c,v 1.2 2020/04/01 11:45:53 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fopsmapper.c,v 1.1 2020/04/01 01:57:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fopsmapper.c,v 1.2 2020/04/01 11:45:53 kamil Exp $");
 
 #include <sys/module.h>
 #include <sys/param.h>
@@ -115,7 +115,7 @@ fopsmapper_mmap(file_t * fp, off_t * offp, size_t size, int prot,
 	if (prot & PROT_EXEC)
 		return EACCES;
 
-	if (size != PAGE_SIZE)
+	if (size != (size_t)PAGE_SIZE)
 		return EINVAL;
 
 	if ((fo = fp->f_data) == NULL)
