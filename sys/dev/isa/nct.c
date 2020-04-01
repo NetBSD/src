@@ -1,7 +1,7 @@
-/*	$NetBSD: nct.c,v 1.2 2019/11/16 15:38:43 martin Exp $	*/
+/*	$NetBSD: nct.c,v 1.3 2020/04/01 18:34:22 ad Exp $	*/
 
 /*-
- * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,14 +37,14 @@
  * - UARTS: handled by com driver.  3rd & 4th UARTs use GPIO pins.
  *
  * If asked to probe with a wildcard address, we'll only do so if known to
- * be running on a PC Engines APU board.  Probe is invasive.
+ * be running on a PC Engines system.  Probe is invasive.
  *
  * Register access on Super I/O chips typically involves one or two levels
  * of indirection, so we try hard to avoid needless register access.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nct.c,v 1.2 2019/11/16 15:38:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nct.c,v 1.3 2020/04/01 18:34:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: nct.c,v 1.2 2019/11/16 15:38:43 martin Exp $");
 #define	NCT_IOBASE_B		0x4e
 #define	NCT_IOSIZE		2
 #define	NCT_CHIP_ID_1		0x1061
-#define	NCT_CHIP_ID_2		0xc452	/* PC Engines APU1 */
+#define	NCT_CHIP_ID_2		0xc452	/* PC Engines APU */
 #define	NCT_NUM_PINS		17
 
 /* Enable/disable keys */
@@ -241,20 +241,18 @@ nct_match(device_t parent, cfdata_t match, void *aux)
 	int nioaddr, i;
 	u_int8_t low, high;
 	u_int16_t id;
-	const char *vendor, *product;
+	const char *vendor;
 
 	/*
 	 * Allow override of I/O base address.  If no I/O base address is
-	 * provided, proceed to probe if running on a PC Engines APU.
+	 * provided, proceed to probe if running on a PC Engines system.
 	 */
 	if (ia->ia_nio > 0 && ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT) {
 		ioaddrs[0] = ia->ia_io[0].ir_addr;
 		nioaddr = 1;
 	} else {
 		vendor = pmf_get_platform("system-vendor");
-		product = pmf_get_platform("system-product");
-		if (vendor != NULL && strcmp(vendor, "PC Engines") == 0 &&
-		    product != NULL && strcmp(product, "APU") == 0) {
+		if (vendor != NULL && strstr(vendor, "PC Engines") != NULL) {
 			nioaddr = __arraycount(ioaddrs);
 		} else {
 			nioaddr = 0;
@@ -305,7 +303,6 @@ nct_attach(device_t parent, device_t self, void *aux)
 	struct gpiobus_attach_args gba;
 	struct nct_bank *nb;
 	u_int8_t multifun, enable;
-	bool apu;
 	int i, j;
 
 	/*
@@ -321,8 +318,6 @@ nct_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_curdev = -1;
 	sc->sc_curreg = -1;
-	apu = ((strcmp(pmf_get_platform("system-vendor"), "PC Engines") |
-	    strcmp(pmf_get_platform("system-product"), "APU")) == 0);
 
         /*
          * All pin access is funneled through a common, indirect register
@@ -342,45 +337,38 @@ nct_attach(device_t parent, device_t self, void *aux)
         nct_wr(sc, LD8_DEVCFG, 0);
 
 	/*
-	 * Fill out descriptions of GPIO0, GPIO1 and GPIO67.
-	 * Determine which banks and pins are enabled.
+	 * The BIOS doesn't set things up the way we want.  Pfft.
+	 * Enable all GPIO0/GPIO1 pins.
 	 */
 	multifun = nct_rd(sc, GD_MULTIFUN);
-	enable = nct_rd(sc, LD7_ENABLE);
+	nct_wr(sc, GD_MULTIFUN,
+	    multifun & ~(GD_MULTIFUN_GPIO0 | GD_MULTIFUN_GPIO1));
+	nct_wr(sc, LDA_UARTC_ENABLE, 0);
+	nct_wr(sc, LD8_GPIO0_MULTIFUNC, 0);
+	nct_wr(sc, LDB_UARTD_ENABLE, 0);
+	nct_wr(sc, LD8_GPIO1_MULTIFUNC, 0);
+	multifun = nct_rd(sc, GD_MULTIFUN);
+	enable = nct_rd(sc, LD7_ENABLE) | LD7_ENABLE_GPIO0 | LD7_ENABLE_GPIO1;
 
 	nb = &sc->sc_bank[0];
 	nb->nb_firstpin = 0;
 	nb->nb_numpins = 8;
+	nb->nb_enabled = 0xff;
 	nb->nb_reg_dir = LD7_GPIO0_DIRECTION;
 	nb->nb_reg_data = LD7_GPIO0_DATA;
 	nb->nb_reg_inv = LD7_GPIO0_INVERSION;
 	nb->nb_reg_stat = LD7_GPIO0_STATUS;
 	nb->nb_reg_mode = LDF_GPIO0_OUTMODE;
-	if ((multifun & GD_MULTIFUN_GPIO0) == 0 &&
-	    ((nct_rd(sc, LDA_UARTC_ENABLE) & 1) == 0 || apu)) {
-		nct_wr(sc, LD8_GPIO0_MULTIFUNC, 0);
-		nb->nb_enabled = 0xff;
-		enable |= LD7_ENABLE_GPIO0;
-	} else {
-		sc->sc_bank[0].nb_enabled = 0;
-	}
-		
+
 	nb = &sc->sc_bank[1];
 	nb->nb_firstpin = 8;
 	nb->nb_numpins = 8;
+	nb->nb_enabled = 0xff;
 	nb->nb_reg_dir = LD7_GPIO1_DIRECTION;
 	nb->nb_reg_data = LD7_GPIO1_DATA;
 	nb->nb_reg_inv = LD7_GPIO1_INVERSION;
 	nb->nb_reg_stat = LD7_GPIO1_STATUS;
 	nb->nb_reg_mode = LDF_GPIO1_OUTMODE;
-	if ((multifun & GD_MULTIFUN_GPIO1) == 0 &&
-	    (nct_rd(sc, LDB_UARTD_ENABLE) & 1) == 0) {
-		nct_wr(sc, LD8_GPIO1_MULTIFUNC, 0);
-		nb->nb_enabled = 0xff;
-		enable |= LD7_ENABLE_GPIO1;
-	} else {
-		sc->sc_bank[1].nb_enabled = 0;
-	}
 
 	nb = &sc->sc_bank[2];
 	nb->nb_firstpin = 16;
