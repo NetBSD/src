@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_spi.c,v 1.3 2019/08/13 17:15:55 tnn Exp $	*/
+/*	$NetBSD: rk_spi.c,v 1.4 2020/04/01 20:37:32 tnn Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.3 2019/08/13 17:15:55 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.4 2020/04/01 20:37:32 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -277,8 +277,12 @@ rk_spi_configure(void *cookie, int slave, int mode, int speed)
 	uint16_t divider;
 
 	divider = (sc->sc_spi_freq / speed) & ~1;
-	if (divider < 2)
-		return EINVAL;
+	if (divider < 2) {
+		aprint_error_dev(sc->sc_dev,
+		    "spi_clk %u is too low for speed %u, using speed %u\n",
+		     sc->sc_spi_freq, speed, sc->sc_spi_freq / 2);
+		divider = 2;
+	}
 
 	if (slave >= sc->sc_spi.sct_nslaves)
 		return EINVAL;
