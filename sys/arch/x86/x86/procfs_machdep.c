@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.35 2020/01/17 04:48:21 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.36 2020/04/01 08:21:38 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.35 2020/01/17 04:48:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.36 2020/04/01 08:21:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ static const char * const x86_features[][32] = {
 
 	{ /* (18) Intel 0x00000007 edx */
 	NULL, NULL, "avx512_4vnniw", "avx512_4fmaps", "fsrm", NULL, NULL, NULL,
-	NULL, NULL, "md_clear", NULL, NULL, NULL, NULL, NULL,
+	"vp2intersect", NULL, "md_clear", NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, "pconfig", NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	"flush_l1d", "arch_capabilities", NULL, "ssbd"},
