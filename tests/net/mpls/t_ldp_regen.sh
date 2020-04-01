@@ -1,4 +1,4 @@
-# $NetBSD: t_ldp_regen.sh,v 1.9 2020/04/01 01:49:26 christos Exp $
+# $NetBSD: t_ldp_regen.sh,v 1.10 2020/04/01 01:51:02 christos Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,15 +35,6 @@
 # Now: * R4 should install label IMPLNULL for that prefix
 #      * R3 should realloc the target label from IMPLNULL to something else
 
-export PATH=/sbin:/usr/sbin:/bin:/usr/bin
-
-RUMP_SERVER1=unix://./r1
-RUMP_SERVER2=unix://./r2
-RUMP_SERVER3=unix://./r3
-RUMP_SERVER4=unix://./r4
-
-RUMP_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 \
-           -lrumpnet_netmpls -lrumpnet_shmif"
 LDP_FLAGS=""
 
 atf_test_case ldp_regen cleanup
