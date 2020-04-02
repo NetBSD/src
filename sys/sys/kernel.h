@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.32 2020/01/02 15:42:27 thorpej Exp $	*/
+/*	$NetBSD: kernel.h,v 1.33 2020/04/02 16:29:30 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -56,13 +56,17 @@ extern int cold;		/* still working on startup */
 extern int shutting_down;	/* system is shutting down */
 extern int tick;		/* usec per tick (1000000 / hz) */
 extern int tickadj;		/* "standard" clock skew, us./tick */
-extern int hardclock_ticks;	/* # of hardclock ticks */
+extern int hardclock_ticks;	/* # of hardclock ticks; XXX use getticks()! */
 extern int hz;			/* system clock's frequency */
 extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
 
 extern int profsrc;		/* profiling source */
 extern int psratio;		/* ratio: prof / stat */
+
+/* Accessors. */
+
+int getticks(void);
 
 #define PROFSRC_CLOCK	0
 
