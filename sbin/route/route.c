@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.167 2020/03/14 22:26:39 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.168 2020/04/02 18:32:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.167 2020/03/14 22:26:39 roy Exp $");
+__RCSID("$NetBSD: route.c,v 1.168 2020/04/02 18:32:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ main(int argc, char * const *argv)
 		int on = 1;
 
 		sock = prog_socket(PF_ROUTE, SOCK_RAW, 0);
-		if (setsockopt(sock, SOL_SOCKET, SO_RERROR,
+		if (prog_setsockopt(sock, SOL_SOCKET, SO_RERROR,
 		    &on, sizeof(on)) == -1)
 			warn("SO_RERROR");
 	}
