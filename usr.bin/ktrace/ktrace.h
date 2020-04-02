@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.20 2011/04/27 00:00:47 joerg Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.21 2020/04/02 17:41:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -44,3 +44,11 @@ int	getpoints(int, char *);
 const char	*ioctlname(u_long);
 const char	*siginfocodename(int, int);
 void	dumpfile(const char *, int, int);
+
+struct ioctlinfo {
+	const char *name;
+	const char *expr;
+	unsigned long value;
+};
+
+extern const struct ioctlinfo ioctlinfo[];

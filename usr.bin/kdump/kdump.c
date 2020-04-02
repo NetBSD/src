@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.134 2020/04/02 17:40:33 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.135 2020/04/02 17:41:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.134 2020/04/02 17:40:33 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.135 2020/04/02 17:41:34 christos Exp $");
 #endif
 #endif /* not lint */
 
