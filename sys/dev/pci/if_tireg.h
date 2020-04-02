@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.29 2020/04/02 15:30:27 msaitoh Exp $ */
+/* $NetBSD: if_tireg.h,v 1.30 2020/04/02 16:18:51 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -455,14 +455,14 @@ struct ti_stats {
 #define IF_ADMIN_STATUS_UP      1
 #define IF_ADMIN_STATUS_DOWN    2
 #define IF_ADMIN_STATUS_TESTING 3
-	volatile uint32_t ifOperStatus;			/* 17 */
+	volatile uint32_t ifOperStatus;				/* 17 */
 #define IF_OPER_STATUS_UP       1
 #define IF_OPER_STATUS_DOWN     2
 #define IF_OPER_STATUS_TESTING  3
 #define IF_OPER_STATUS_UNKNOWN  4
 #define IF_OPER_STATUS_DORMANT  5
-	volatile uint32_t ifLastChange;			/* 18 */
-	volatile uint32_t ifInDiscards;			/* 19 */
+	volatile uint32_t ifLastChange;				/* 18 */
+	volatile uint32_t ifInDiscards;				/* 19 */
 	volatile uint32_t ifInErrors;				/* 20 */
 	volatile uint32_t ifInUnknownProtos;			/* 21 */
 	volatile uint32_t ifOutDiscards;			/* 22 */
@@ -470,22 +470,22 @@ struct ti_stats {
 	volatile uint32_t ifOutQLen;     /* deprecated */	/* 24 */
 	volatile uint8_t  ifPhysAddress[8]; /* 8 bytes */	/* 25 - 26 */
 	volatile uint8_t  ifDescr[32];				/* 27 - 34 */
-	uint32_t alignIt;      /* align to 64 bit for u_int64_ts following */
+	uint32_t alignIt;      /* align to 64 bit for uint64_ts following */
 	/*
 	 * more interface stats, taken from RFC 1573, MIB-IIupdate,
 	 * interfaces group
 	 */
-	volatile u_int64_t ifHCInOctets;			/* 36 - 37 */
-	volatile u_int64_t ifHCInUcastPkts;			/* 38 - 39 */
-	volatile u_int64_t ifHCInMulticastPkts;			/* 40 - 41 */
-	volatile u_int64_t ifHCInBroadcastPkts;			/* 42 - 43 */
-	volatile u_int64_t ifHCOutOctets;			/* 44 - 45 */
-	volatile u_int64_t ifHCOutUcastPkts;			/* 46 - 47 */
-	volatile u_int64_t ifHCOutMulticastPkts;		/* 48 - 49 */
-	volatile u_int64_t ifHCOutBroadcastPkts;		/* 50 - 51 */
+	volatile uint64_t ifHCInOctets;				/* 36 - 37 */
+	volatile uint64_t ifHCInUcastPkts;			/* 38 - 39 */
+	volatile uint64_t ifHCInMulticastPkts;			/* 40 - 41 */
+	volatile uint64_t ifHCInBroadcastPkts;			/* 42 - 43 */
+	volatile uint64_t ifHCOutOctets;			/* 44 - 45 */
+	volatile uint64_t ifHCOutUcastPkts;			/* 46 - 47 */
+	volatile uint64_t ifHCOutMulticastPkts;			/* 48 - 49 */
+	volatile uint64_t ifHCOutBroadcastPkts;			/* 50 - 51 */
 	volatile uint32_t ifLinkUpDownTrapEnable;		/* 52 */
 	volatile uint32_t ifHighSpeed;				/* 53 */
-	volatile uint32_t ifPromiscuousMode; 			/* 54 */
+	volatile uint32_t ifPromiscuousMode;			/* 54 */
 	volatile uint32_t ifConnectorPresent; /* follow link state 55 */
 	/*
 	 * Host Commands
@@ -498,12 +498,12 @@ struct ti_stats {
 	volatile uint32_t nicCmdsAddMCastAddr;			/* 61 */
 	volatile uint32_t nicCmdsDelMCastAddr;			/* 62 */
 	volatile uint32_t nicCmdsSetPromiscMode;		/* 63 */
-	volatile uint32_t nicCmdsLinkNegotiate;		/* 64 */
+	volatile uint32_t nicCmdsLinkNegotiate;			/* 64 */
 	volatile uint32_t nicCmdsSetMACAddr;			/* 65 */
 	volatile uint32_t nicCmdsClearProfile;			/* 66 */
 	volatile uint32_t nicCmdsSetMulticastMode;		/* 67 */
 	volatile uint32_t nicCmdsClearStats;			/* 68 */
-	volatile uint32_t nicCmdsSetRecvJumboProdIndex;	/* 69 */
+	volatile uint32_t nicCmdsSetRecvJumboProdIndex;		/* 69 */
 	volatile uint32_t nicCmdsSetRecvMiniProdIndex;		/* 70 */
 	volatile uint32_t nicCmdsRefreshStats;			/* 71 */
 	volatile uint32_t nicCmdsUnknown;			/* 72 */
@@ -526,11 +526,11 @@ struct ti_stats {
 	 * Interrupts
 	 */
 	volatile uint32_t nicInterrupts;			/* 82 */
-	volatile uint32_t nicAvoidedInterrupts;		/* 83 */
+	volatile uint32_t nicAvoidedInterrupts;			/* 83 */
 	/*
 	 * BD Coalescing Thresholds
 	 */
-	volatile uint32_t nicEventThresholdHit;		/* 84 */
+	volatile uint32_t nicEventThresholdHit;			/* 84 */
 	volatile uint32_t nicSendThresholdHit;			/* 85 */
 	volatile uint32_t nicRecvThresholdHit;			/* 86 */
 	/*
@@ -540,8 +540,8 @@ struct ti_stats {
 	volatile uint32_t nicDmaRdUnderrun;			/* 88 */
 	volatile uint32_t nicDmaWrOverrun;			/* 89 */
 	volatile uint32_t nicDmaWrUnderrun;			/* 90 */
-	volatile uint32_t nicDmaWrMasterAborts;		/* 91 */
-	volatile uint32_t nicDmaRdMasterAborts;		/* 92 */
+	volatile uint32_t nicDmaWrMasterAborts;			/* 91 */
+	volatile uint32_t nicDmaRdMasterAborts;			/* 92 */
 	/*
 	 * NIC Resources
 	 */
@@ -550,7 +550,7 @@ struct ti_stats {
 	volatile uint32_t nicEventRingFull;			/* 95 */
 	volatile uint32_t nicEventProducerRingFull;		/* 96 */
 	volatile uint32_t nicTxMacDescrRingFull;		/* 97 */
-	volatile uint32_t nicOutOfTxBufSpaceFrameRetry;	/* 98 */
+	volatile uint32_t nicOutOfTxBufSpaceFrameRetry;		/* 98 */
 	volatile uint32_t nicNoMoreWrDMADescriptors;		/* 99 */
 	volatile uint32_t nicNoMoreRxBDs;			/* 100 */
 	volatile uint32_t nicNoSpaceInReturnRing;		/* 101 */
@@ -568,7 +568,7 @@ struct ti_stats {
 	 */
 	volatile uint32_t nicMacRxLateColls;			/* 111 */
 	volatile uint32_t nicMacRxLinkLostDuringPkt;		/* 112 */
-	volatile uint32_t nicMacRxPhyDecodeErr;		/* 113 */
+	volatile uint32_t nicMacRxPhyDecodeErr;			/* 113 */
 	volatile uint32_t nicMacRxMacAbort;			/* 114 */
 	volatile uint32_t nicMacRxTruncNoResources;		/* 115 */
 	/*
@@ -580,7 +580,7 @@ struct ti_stats {
 	volatile uint32_t nicMacRxDropSpace;			/* 119 */
 	volatile uint32_t nicMacRxColls;			/* 120 */
 	/*
- 	 * MAC RX Attentions
+	 * MAC RX Attentions
 	 */
 	volatile uint32_t nicMacRxTotalAttns;			/* 121 */
 	volatile uint32_t nicMacRxLinkAttns;			/* 122 */
@@ -591,8 +591,8 @@ struct ti_stats {
 	volatile uint32_t nicMacRxBufAttns;			/* 127 */
 	volatile uint32_t nicMacRxZeroFrameCleanup;		/* 128 */
 	volatile uint32_t nicMacRxOneFrameCleanup;		/* 129 */
-	volatile uint32_t nicMacRxMultipleFrameCleanup;	/* 130 */
-	volatile uint32_t nicMacRxTimerCleanup;		/* 131 */
+	volatile uint32_t nicMacRxMultipleFrameCleanup;		/* 130 */
+	volatile uint32_t nicMacRxTimerCleanup;			/* 131 */
 	volatile uint32_t nicMacRxDmaCleanup;			/* 132 */
 	/*
 	 * Stats from the mac_stats area
@@ -750,7 +750,7 @@ struct ti_tx_desc {
  * The first thing in the packet is a 14-byte Ethernet header.
  * This means that the packet is misaligned.  To compensate,
  * we actually offset the data 2 bytes into the cluster.  This
- * alignes the packet after the Ethernet header at a 32-bit
+ * aligns the packet after the Ethernet header at a 32-bit
  * boundary.
  */
 
@@ -890,7 +890,7 @@ struct ti_cmd_desc {
 
 #define TI_UPDATE_JUMBOPROD(x, y)	do {				\
 	if ((x)->ti_hwrev == TI_HWREV_TIGON)				\
-		TI_DO_CMD(TI_CMD_SET_RX_JUMBO_PROD_IDX, 0, y);	\
+		TI_DO_CMD(TI_CMD_SET_RX_JUMBO_PROD_IDX, 0, y);		\
 	else								\
 		CSR_WRITE_4(x, TI_MB_JUMBORXPROD_IDX, y);		\
 } while(0)
@@ -983,9 +983,9 @@ struct ti_event_desc {
 #endif
 #define TI_RSLOTS	128
 
-#define TI_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN + sizeof(u_int64_t))
-#define TI_JLEN (TI_JRAWLEN + (sizeof(u_int64_t) - \
-	(TI_JRAWLEN % sizeof(u_int64_t))))
+#define TI_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN + sizeof(uint64_t))
+#define TI_JLEN (TI_JRAWLEN + (sizeof(uint64_t) - \
+	(TI_JRAWLEN % sizeof(uint64_t))))
 #define TI_JPAGESZ PAGE_SIZE
 #define TI_RESID (TI_JPAGESZ - (TI_JLEN * TI_JSLOTS) % TI_JPAGESZ)
 #define TI_JMEM ((TI_JLEN * TI_JSLOTS) + TI_RESID)
