@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.15 2020/02/25 10:27:01 nakayama Exp $
+# $NetBSD: postinstall.in,v 1.16 2020/04/02 13:04:09 roy Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -943,31 +943,58 @@ do_dhcpcd()
 	populate_dir "$op" true "${dir}" "${DEST_DIR}/etc" 644 dhcpcd.conf
 	failed=$(( ${failed} + $? ))
 
-	check_dir "${op}" "${DEST_DIR}/var/db/dhcpcd" 755
+	dstdir="${DESTDIR}/var/chroot/dhcpcd"
+
+	check_dir "${op}" "${dstdir}/var/db/dhcpcd" 755
 	failed=$(( ${failed} + $? ))
 
 	move_file "${op}" \
 		"${DEST_DIR}/etc/dhcpcd.duid" \
-		"${DEST_DIR}/var/db/dhcpcd/duid"
+		"${dstdir}/var/db/dhcpcd/duid"
 	failed=$(( ${failed} + $? ))
 
 	move_file "${op}" \
 		"${DEST_DIR}/etc/dhcpcd.secret" \
-		"${DEST_DIR}/var/db/dhcpcd/secret"
+		"${dstdir}/var/db/dhcpcd/secret"
 	failed=$(( ${failed} + $? ))
 
 	move_file "${op}" \
 		"${DEST_DIR}/var/db/dhcpcd-rdm.monotonic" \
-		"${DEST_DIR}/var/db/dhcpcd/rdm_monotonic"
+		"${dstdir}/var/db/dhcpcd/rdm_monotonic"
 	failed=$(( ${failed} + $? ))
 
 	for lease in "${DEST_DIR}/var/db/dhcpcd-"*.lease*; do
 		[ -f "${lease}" ] || continue
 		new_lease=$(basename "${lease}" | ${SED} -e 's/dhcpcd-//')
-		new_lease="${DEST_DIR}/var/db/dhcpcd/${new_lease}"
+		new_lease="${dstdir}/var/db/dhcpcd/${new_lease}"
 		move_file "${op}" "${lease}" "${new_lease}"
 		failed=$(( ${failed} + $? ))
 	done
+
+	move_file "${op}" \
+		"${DEST_DIR}/var/db/dhcpcd/duid" \
+		"${dstdir}/var/db/dhcpcd/duid"
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/var/db/dhcpcd/secret" \
+		"${dstdir}/var/db/dhcpcd/secret"
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/var/db/dhcpcd/rdm_monotonic" \
+		"${dstdir}/var/db/dhcpcd/rdm_monotonic"
+	failed=$(( ${failed} + $? ))
+
+	for lease in "${DEST_DIR}/var/db/dhcpcd/"*.lease*; do
+		[ -f "${lease}" ] || continue
+		new_lease="${dstdir}/var/db/dhcpcd/$(basename ${lease})"
+		move_file "${op}" "${lease}" "${new_lease}"
+		failed=$(( ${failed} + $? ))
+	done
+
+	contents_owner "${op}" "${dstdir}/var/db/dhcpcd" _dhcpcd _dhcpcd
+	failed=$(( ${failed} + $? ))
 
 	return ${failed}
 }
