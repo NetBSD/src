@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1235 2020/03/29 17:13:46 christos Exp $
+# $NetBSD: mi,v 1.1236 2020/04/02 03:32:46 kamil Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -797,6 +797,7 @@
 ./usr/bin/install				base-util-bin
 ./usr/bin/install-info				base-texinfo-bin
 ./usr/bin/install-sid				base-gnats-bin
+./usr/bin/ioctlprint				base-debug-bin
 ./usr/bin/ipcrm					base-util-bin
 ./usr/bin/ipcs					base-util-bin
 ./usr/bin/join					base-util-bin
