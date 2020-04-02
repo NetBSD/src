@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define ELOOP_QUEUE 6
+#define ELOOP_QUEUE	IPV4LL
 #include "config.h"
 #include "arp.h"
 #include "common.h"
@@ -239,6 +239,8 @@ test:
 #ifdef KERNEL_RFC5227
 	if (!new_addr) {
 		astate = arp_new(ifp, &ia->addr);
+		if (ifp->ctx->options & DHCPCD_FORKED)
+			return;
 		if (astate != NULL) {
 			astate->announced_cb = ipv4ll_announced_arp;
 			astate->free_cb = ipv4ll_arpfree;

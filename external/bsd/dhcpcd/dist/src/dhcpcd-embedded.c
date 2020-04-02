@@ -6,7 +6,7 @@
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -37,14 +37,13 @@ const char * const dhcpcd_embedded_conf[] = {
 #ifdef SMALL
 "define 1 request ipaddress subnet_mask",
 "define 121 rfc3442 classless_static_routes",
-"define 249 rfc3442 ms_classless_static_routes",
-"define 33 request array ipaddress static_routes",
 "define 3 request array ipaddress routers",
 "define 6 array ipaddress domain_name_servers",
 "define 12 dname host_name",
 "define 15 array dname domain_name",
 "define 26 uint16 interface_mtu",
 "define 28 request ipaddress broadcast_address",
+"define 33 request array ipaddress static_routes",
 "define 50 ipaddress dhcp_requested_address",
 "define 51 request uint32 dhcp_lease_time",
 "define 52 byte dhcp_option_overload",
@@ -64,6 +63,7 @@ const char * const dhcpcd_embedded_conf[] = {
 "embed byte rcode2",
 "embed optional domain fqdn",
 "define 119 array domain domain_search",
+"define 249 rfc3442 ms_classless_static_routes",
 "definend 1 binhex source_address",
 "definend 2 binhex target_address",
 "definend 3 index embed prefix_information",
@@ -118,10 +118,8 @@ const char * const dhcpcd_embedded_conf[] = {
 #else
 "define 1 request ipaddress subnet_mask",
 "define 121 rfc3442 classless_static_routes",
-"define 249 rfc3442 ms_classless_static_routes",
-"define 33 request array ipaddress static_routes",
-"define 3 request array ipaddress routers",
 "define 2 uint32 time_offset",
+"define 3 request array ipaddress routers",
 "define 4 array ipaddress time_servers",
 "define 5 array ipaddress ien116_name_servers",
 "define 6 array ipaddress domain_name_servers",
@@ -151,6 +149,7 @@ const char * const dhcpcd_embedded_conf[] = {
 "define 30 byte mask_supplier",
 "define 31 byte router_discovery",
 "define 32 ipaddress router_solicitation_address",
+"define 33 request array ipaddress static_routes",
 "define 34 byte trailer_encapsulation",
 "define 35 uint32 arp_cache_timeout",
 "define 36 uint16 ieee802_3_encapsulation",
@@ -296,6 +295,7 @@ const char * const dhcpcd_embedded_conf[] = {
 "encap 0 string nvt",
 "encap 1 binhex vpn_id",
 "encap 255 flag global",
+"define 249 rfc3442 ms_classless_static_routes",
 "define 252 string wpad_url",
 "definend 1 binhex source_address",
 "definend 2 binhex target_address",

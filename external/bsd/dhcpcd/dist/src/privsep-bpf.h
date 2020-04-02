@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * dhcpcd - DHCP client daemon
+ * Privilege Separation for dhcpcd
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -26,16 +26,26 @@
  * SUCH DAMAGE.
  */
 
-#ifndef SCRIPT_H
-#define SCRIPT_H
+#ifndef PRIVSEP_BPF_H
+#define PRIVSEP_BPF_H
 
-#include "control.h"
+ssize_t ps_bpf_cmd(struct dhcpcd_ctx *,
+    struct ps_msghdr *, struct msghdr *);
+ssize_t ps_bpf_dispatch(struct dhcpcd_ctx *,
+    struct ps_msghdr *, struct msghdr *);
 
-__printflike(2, 3) int efprintf(FILE *, const char *, ...);
-void if_printoptions(void);
-char ** script_buftoenv(struct dhcpcd_ctx *, char *, size_t);
-pid_t script_exec(const struct dhcpcd_ctx *, char *const *, char *const *);
-int send_interface(struct fd_list *, const struct interface *, int);
-int script_runreason(const struct interface *, const char *);
-int script_runchroot(struct dhcpcd_ctx *, char *);
+#ifdef ARP
+ssize_t ps_bpf_openarp(const struct interface *);
+ssize_t ps_bpf_addaddr(const struct interface *, const struct in_addr *);
+ssize_t ps_bpf_deladdr(const struct interface *, const struct in_addr *);
+ssize_t ps_bpf_closearp(const struct interface *);
+ssize_t ps_bpf_sendarp(const struct interface *, const void *, size_t);
+#endif
+
+ssize_t ps_bpf_openbootp(const struct interface *);
+ssize_t ps_bpf_closebootp(const struct interface *);
+ssize_t ps_bpf_sendbootp(const struct interface *, const void *, size_t);
+ssize_t ps_bpf_openbootpudp(const struct interface *);
+ssize_t ps_bpf_closebootpudp(const struct interface *);
+ssize_t ps_bpf_sendbootpudp(const struct interface *, const void *, size_t);
 #endif

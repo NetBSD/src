@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,6 @@
 #include "dhcpcd.h"
 #include "if-options.h"
 #include "logerr.h"
-
-/* Most route(4) messages are less than 256 bytes. */
-#define IOVEC_BUFSIZ	256
 
 const char *
 hwaddr_ntoa(const void *hwaddr, size_t hwlen, char *buf, size_t buflen)

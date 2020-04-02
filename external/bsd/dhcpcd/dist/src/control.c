@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -193,7 +193,7 @@ control_handle_unpriv(void *arg)
 }
 
 static int
-make_sock(struct sockaddr_un *sa, const char *ifname, int unpriv)
+make_sock(struct sockaddr_un *sa, const char *ifname, bool unpriv)
 {
 	int fd;
 
@@ -207,7 +207,7 @@ make_sock(struct sockaddr_un *sa, const char *ifname, int unpriv)
 		strlcpy(sa->sun_path, UNPRIVSOCKET, sizeof(sa->sun_path));
 	else {
 		snprintf(sa->sun_path, sizeof(sa->sun_path), CONTROLSOCKET,
-		    ifname ? "-" : "", ifname ? ifname : "");
+		    ifname ? ifname : "", ifname ? "." : "");
 	}
 	return fd;
 }
@@ -255,12 +255,30 @@ control_start(struct dhcpcd_ctx *ctx, const char *ifname)
 	eloop_event_add(ctx->eloop, fd, control_handle, ctx);
 
 	if (ifname == NULL && (fd = control_start1(ctx, NULL, S_UNPRIV)) != -1){
-		/* We must be in master mode, so create an unpriviledged socket
+		/* We must be in master mode, so create an unprivileged socket
 		 * to allow normal users to learn the status of dhcpcd. */
 		ctx->control_unpriv_fd = fd;
 		eloop_event_add(ctx->eloop, fd, control_handle_unpriv, ctx);
 	}
 	return ctx->control_fd;
+}
+
+static int
+control_unlink(struct dhcpcd_ctx *ctx, const char *file)
+{
+	int retval = 0;
+
+	errno = 0;
+#ifdef PRIVSEP
+	if (ctx->options & DHCPCD_PRIVSEP)
+		retval = (int)ps_root_unlink(ctx, file);
+	else
+#else
+		UNUSED(ctx);
+#endif
+		retval = unlink(file);
+
+	return retval == -1 && errno != ENOENT ? -1 : 0;
 }
 
 int
@@ -270,24 +288,24 @@ control_stop(struct dhcpcd_ctx *ctx)
 	struct fd_list *l;
 
 	if (ctx->options & DHCPCD_FORKED)
-		goto freeit;
-
-	if (ctx->control_fd == -1)
 		return 0;
 
-	control_close(ctx);
-	if (unlink(ctx->control_sock) == -1)
-		retval = -1;
+	if (ctx->control_fd != -1) {
+		eloop_event_delete(ctx->eloop, ctx->control_fd);
+		close(ctx->control_fd);
+		ctx->control_fd = -1;
+		if (control_unlink(ctx, ctx->control_sock) == -1)
+			retval = -1;
+	}
 
 	if (ctx->control_unpriv_fd != -1) {
 		eloop_event_delete(ctx->eloop, ctx->control_unpriv_fd);
 		close(ctx->control_unpriv_fd);
 		ctx->control_unpriv_fd = -1;
-		if (unlink(UNPRIVSOCKET) == -1)
+		if (control_unlink(ctx, UNPRIVSOCKET) == -1)
 			retval = -1;
 	}
 
-freeit:
 	while ((l = TAILQ_FIRST(&ctx->control_fds))) {
 		TAILQ_REMOVE(&ctx->control_fds, l, next);
 		eloop_event_delete(ctx->eloop, l->fd);
@@ -300,12 +318,12 @@ freeit:
 }
 
 int
-control_open(const char *ifname)
+control_open(const char *ifname, bool unpriv)
 {
 	struct sockaddr_un sa;
 	int fd;
 
-	if ((fd = make_sock(&sa, ifname, 0)) != -1) {
+	if ((fd = make_sock(&sa, ifname, unpriv)) != -1) {
 		socklen_t len;
 
 		len = (socklen_t)SUN_LEN(&sa);
@@ -447,15 +465,4 @@ queue:
 	TAILQ_INSERT_TAIL(&fd->queue, d, next);
 	eloop_event_add_w(fd->ctx->eloop, fd->fd, control_writeone, fd);
 	return 0;
-}
-
-void
-control_close(struct dhcpcd_ctx *ctx)
-{
-
-	if (ctx->control_fd != -1) {
-		eloop_event_delete(ctx->eloop, ctx->control_fd);
-		close(ctx->control_fd);
-		ctx->control_fd = -1;
-	}
 }

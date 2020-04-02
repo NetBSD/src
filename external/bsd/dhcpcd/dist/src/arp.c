@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - ARP handler
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define ELOOP_QUEUE 5
+#define ELOOP_QUEUE	ELOOP_ARP
 #include "config.h"
 #include "arp.h"
 #include "bpf.h"
@@ -53,10 +53,12 @@
 #include "if-options.h"
 #include "ipv4ll.h"
 #include "logerr.h"
+#include "privsep.h"
 
 #if defined(ARP)
-#define ARP_LEN								      \
-	(sizeof(struct arphdr) + (2 * sizeof(uint32_t)) + (2 * HWADDR_LEN))
+#define ARP_LEN								\
+	(FRAMEHDRLEN_MAX +						\
+	 sizeof(struct arphdr) + (2 * sizeof(uint32_t)) + (2 * HWADDR_LEN))
 
 /* ARP debugging can be quite noisy. Enable this for more noise! */
 //#define	ARP_DEBUG
@@ -103,7 +105,13 @@ arp_request(const struct interface *ifp,
 	ZERO(ifp->hwlen);
 	APPEND(&tip->s_addr, sizeof(tip->s_addr));
 
+#ifdef PRIVSEP
+	if (ifp->ctx->options & DHCPCD_PRIVSEP)
+		return ps_bpf_sendarp(ifp, arp_buffer, len);
+#endif
 	state = ARP_CSTATE(ifp);
+	/* Note that well formed ethernet will add extra padding
+	 * to ensure that the packet is at least 60 bytes (64 including FCS). */
 	return bpf_send(ifp, state->bpf_fd, ETHERTYPE_ARP, arp_buffer, len);
 
 eexit:
@@ -115,7 +123,8 @@ static void
 arp_report_conflicted(const struct arp_state *astate,
     const struct arp_msg *amsg)
 {
-	char buf[HWADDR_LEN * 3];
+	char abuf[HWADDR_LEN * 3];
+	char fbuf[HWADDR_LEN * 3];
 
 	if (amsg == NULL) {
 		logerrx("%s: DAD detected %s",
@@ -123,9 +132,16 @@ arp_report_conflicted(const struct arp_state *astate,
 		return;
 	}
 
-	logerrx("%s: hardware address %s claims %s",
-	    astate->iface->name,
-	    hwaddr_ntoa(amsg->sha, astate->iface->hwlen, buf, sizeof(buf)),
+	hwaddr_ntoa(amsg->sha, astate->iface->hwlen, abuf, sizeof(abuf));
+	if (bpf_frame_header_len(astate->iface) == 0) {
+		logerrx("%s: %s claims %s",
+		    astate->iface->name, abuf, inet_ntoa(astate->addr));
+		return;
+	}
+
+	logerrx("%s: %s(%s) claims %s",
+	    astate->iface->name, abuf,
+	    hwaddr_ntoa(amsg->fsha, astate->iface->hwlen, fbuf, sizeof(fbuf)),
 	    inet_ntoa(astate->addr));
 }
 
@@ -135,7 +151,7 @@ arp_found(struct arp_state *astate, const struct arp_msg *amsg)
 	struct interface *ifp;
 	struct ipv4_addr *ia;
 #ifndef KERNEL_RFC5227
-	struct timespec now, defend;
+	struct timespec now;
 #endif
 
 	arp_report_conflicted(astate, amsg);
@@ -158,10 +174,9 @@ arp_found(struct arp_state *astate, const struct arp_msg *amsg)
 	 * messages.
 	 * If another conflict happens within DEFEND_INTERVAL
 	 * then we must drop our address and negotiate a new one. */
-	defend.tv_sec = astate->defend.tv_sec + DEFEND_INTERVAL;
-	defend.tv_nsec = astate->defend.tv_nsec;
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	if (timespeccmp(&defend, &now, >))
+	if (timespecisset(&astate->defend) &&
+	    eloop_timespec_diff(&now, &astate->defend, NULL) < DEFEND_INTERVAL)
 		logwarnx("%s: %d second defence failed for %s",
 		    ifp->name, DEFEND_INTERVAL, inet_ntoa(astate->addr));
 	else if (arp_request(ifp, &astate->addr, &astate->addr) == -1)
@@ -206,15 +221,31 @@ arp_validate(const struct interface *ifp, struct arphdr *arp)
 	return true;
 }
 
-static void
+void
 arp_packet(struct interface *ifp, uint8_t *data, size_t len)
 {
+	size_t fl = bpf_frame_header_len(ifp), falen;
 	const struct interface *ifn;
 	struct arphdr ar;
 	struct arp_msg arm;
 	const struct iarp_state *state;
 	struct arp_state *astate, *astaten;
 	uint8_t *hw_s, *hw_t;
+
+	/* Copy the frame header source and destination out */
+	memset(&arm, 0, sizeof(arm));
+	if (fl != 0) {
+		hw_s = bpf_frame_header_src(ifp, data, &falen);
+		if (hw_s != NULL && falen <= sizeof(arm.fsha))
+			memcpy(arm.fsha, hw_s, falen);
+		hw_t = bpf_frame_header_dst(ifp, data, &falen);
+		if (hw_t != NULL && falen <= sizeof(arm.ftha))
+			memcpy(arm.ftha, hw_t, falen);
+
+		/* Skip past the frame header */
+		data += fl;
+		len -= fl;
+	}
 
 	/* We must have a full ARP header */
 	if (len < sizeof(ar))
@@ -255,6 +286,8 @@ arp_packet(struct interface *ifp, uint8_t *data, size_t len)
 	/* Match the ARP probe to our states.
 	 * Ignore Unicast Poll, RFC1122. */
 	state = ARP_CSTATE(ifp);
+	if (state == NULL)
+		return;
 	TAILQ_FOREACH_SAFE(astate, &state->arp_states, next, astaten) {
 		if (IN_ARE_ADDR_EQUAL(&arm.sip, &astate->addr) ||
 		    (IN_IS_ADDR_UNSPECIFIED(&arm.sip) &&
@@ -267,12 +300,24 @@ arp_packet(struct interface *ifp, uint8_t *data, size_t len)
 static void
 arp_close(struct interface *ifp)
 {
+	struct dhcpcd_ctx *ctx = ifp->ctx;
 	struct iarp_state *state;
 
-	if ((state = ARP_STATE(ifp)) == NULL || state->bpf_fd == -1)
+#ifdef PRIVSEP
+	if (IN_PRIVSEP(ctx)) {
+		if (IN_PRIVSEP_SE(ctx) &&
+		    ps_bpf_closearp(ifp) == -1)
+			logerr(__func__);
+		return;
+	}
+#endif
+
+	if ((state = ARP_STATE(ifp)) == NULL)
 		return;
 
-	eloop_event_delete(ifp->ctx->eloop, state->bpf_fd);
+	if (state->bpf_fd == -1)
+		return;
+	eloop_event_delete(ctx->eloop, state->bpf_fd);
 	bpf_close(ifp, state->bpf_fd);
 	state->bpf_fd = -1;
 	state->bpf_flags |= BPF_EOF;
@@ -292,7 +337,7 @@ arp_tryfree(struct iarp_state *state)
 			free(state);
 			ifp->if_data[IF_DATA_ARP] = NULL;
 		}
-	} else {
+	} else if (state->bpf_fd != -1) {
 		if (bpf_arp(ifp, state->bpf_fd) == -1)
 			logerr(__func__);
 	}
@@ -336,6 +381,11 @@ arp_open(struct interface *ifp)
 {
 	struct iarp_state *state;
 
+#ifdef PRIVSEP
+	if (IN_PRIVSEP_SE(ifp->ctx))
+		return ps_bpf_openarp(ifp) == -1 ? -1 : 0;
+#endif
+
 	state = ARP_STATE(ifp);
 	if (state->bpf_fd == -1) {
 		state->bpf_fd = bpf_open(ifp, bpf_arp);
@@ -360,23 +410,21 @@ arp_probe1(void *arg)
 {
 	struct arp_state *astate = arg;
 	struct interface *ifp = astate->iface;
-	struct timespec tv;
+	unsigned int delay;
 
 	if (++astate->probes < PROBE_NUM) {
-		tv.tv_sec = PROBE_MIN;
-		tv.tv_nsec = (suseconds_t)arc4random_uniform(
-		    (PROBE_MAX - PROBE_MIN) * NSEC_PER_SEC);
-		timespecnorm(&tv);
-		eloop_timeout_add_tv(ifp->ctx->eloop, &tv, arp_probe1, astate);
+		delay = (PROBE_MIN * MSEC_PER_SEC) +
+		    (arc4random_uniform(
+		    (PROBE_MAX - PROBE_MIN) * MSEC_PER_SEC));
+		eloop_timeout_add_msec(ifp->ctx->eloop, delay, arp_probe1, astate);
 	} else {
-		tv.tv_sec = ANNOUNCE_WAIT;
-		tv.tv_nsec = 0;
-		eloop_timeout_add_tv(ifp->ctx->eloop, &tv, arp_probed, astate);
+		delay = ANNOUNCE_WAIT *	MSEC_PER_SEC;
+		eloop_timeout_add_msec(ifp->ctx->eloop, delay, arp_probed, astate);
 	}
 	logdebugx("%s: ARP probing %s (%d of %d), next in %0.1f seconds",
 	    ifp->name, inet_ntoa(astate->addr),
 	    astate->probes ? astate->probes : PROBE_NUM, PROBE_NUM,
-	    timespec_to_double(&tv));
+	    (float)delay / MSEC_PER_SEC);
 	if (arp_request(ifp, NULL, &astate->addr) == -1)
 		logerr(__func__);
 }
@@ -385,23 +433,19 @@ void
 arp_probe(struct arp_state *astate)
 {
 
-	if (arp_open(astate->iface) == -1) {
-		logerr(__func__);
-		return;
-	} else {
-		const struct iarp_state *state = ARP_CSTATE(astate->iface);
-
-		if (bpf_arp(astate->iface, state->bpf_fd) == -1)
-			logerr(__func__);
-	}
 	astate->probes = 0;
 	logdebugx("%s: probing for %s",
 	    astate->iface->name, inet_ntoa(astate->addr));
+	if (!(IN_PRIVSEP(astate->iface->ctx)) && arp_open(astate->iface) == -1)
+	{
+		logerr(__func__);
+		return;
+	}
 	arp_probe1(astate);
 }
 #endif	/* ARP */
 
-static struct arp_state *
+struct arp_state *
 arp_find(struct interface *ifp, const struct in_addr *addr)
 {
 	struct iarp_state *state;
@@ -480,7 +524,8 @@ arp_announce(struct arp_state *astate)
 	struct arp_state *a2;
 	int r;
 
-	if (arp_open(astate->iface) == -1) {
+	if (!(IN_PRIVSEP(astate->iface->ctx)) && arp_open(astate->iface) == -1)
+	{
 		logerr(__func__);
 		return;
 	}
@@ -556,6 +601,38 @@ arp_announceaddr(struct dhcpcd_ctx *ctx, const struct in_addr *ia)
 	arp_ifannounceaddr(iff, ia);
 }
 
+void
+arp_change(struct arp_state *astate, const struct in_addr *addr)
+{
+	struct interface *ifp = astate->iface;
+	struct iarp_state *state = ARP_STATE(ifp);
+
+#ifdef PRIVSEP
+	if (!IN_IS_ADDR_UNSPECIFIED(&astate->addr) &&
+	    IN_PRIVSEP_SE(ifp->ctx))
+	{
+		if (ps_bpf_deladdr(ifp, &astate->addr) == -1)
+			logerr(__func__);
+	}
+#endif
+
+	if (addr != NULL)
+		astate->addr = *addr;
+	else
+		astate->addr.s_addr = INADDR_ANY;
+
+#ifdef PRIVSEP
+	if (addr != NULL && IN_PRIVSEP_SE(ifp->ctx)) {
+		if (ps_bpf_addaddr(ifp, addr) == -1)
+			logerr(__func__);
+	} else
+#endif
+	if (state->bpf_fd != -1) {
+		if (bpf_arp(ifp, state->bpf_fd) == -1)
+			logerr(__func__); /* try and continue */
+	}
+}
+
 struct arp_state *
 arp_new(struct interface *ifp, const struct in_addr *addr)
 {
@@ -563,6 +640,13 @@ arp_new(struct interface *ifp, const struct in_addr *addr)
 	struct arp_state *astate;
 
 	if ((state = ARP_STATE(ifp)) == NULL) {
+#ifdef PRIVSEP
+		/* We need to ensure ARP is spawned so we can add to it. */
+		if (IN_PRIVSEP_SE(ifp->ctx) && arp_open(ifp) == -1) {
+			logerr(__func__);
+			return NULL;
+		}
+#endif
 	        ifp->if_data[IF_DATA_ARP] = malloc(sizeof(*state));
 		state = ARP_STATE(ifp);
 		if (state == NULL) {
@@ -583,14 +667,9 @@ arp_new(struct interface *ifp, const struct in_addr *addr)
 		return NULL;
 	}
 	astate->iface = ifp;
-	if (addr)
-		astate->addr = *addr;
 	state = ARP_STATE(ifp);
 	TAILQ_INSERT_TAIL(&state->arp_states, astate, next);
-
-	if (bpf_arp(ifp, state->bpf_fd) == -1)
-		logerr(__func__); /* try and continue */
-
+	arp_change(astate, addr);
 	return astate;
 }
 
@@ -612,6 +691,7 @@ arp_free(struct arp_state *astate)
 
 	ifp = astate->iface;
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, astate);
+	arp_change(astate, NULL);
 	state =	ARP_STATE(ifp);
 	TAILQ_REMOVE(&state->arp_states, astate, next);
 	if (astate->free_cb)

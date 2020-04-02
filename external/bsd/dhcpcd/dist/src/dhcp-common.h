@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -80,6 +80,9 @@
 #define	OT_ESCFILE		(1 << 26)
 #define	OT_BITFLAG		(1 << 27)
 #define	OT_RESERVED		(1 << 28)
+
+#define	DHC_REQ(r, n, o) \
+	(has_option_mask((r), (o)) && !has_option_mask((n), (o)))
 
 #define DHC_REQOPT(o, r, n)						  \
 	(!((o)->type & OT_NOREQ) &&					  \

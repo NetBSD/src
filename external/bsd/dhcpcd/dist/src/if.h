@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -62,10 +62,19 @@
 #endif
 
 #include "config.h"
+
+/* POSIX defines ioctl request as an int, which Solaris and musl use.
+ * Everyone else use an unsigned long, which happens to be the bigger one
+ * so we use that in our on wire API. */
+#ifdef IOCTL_REQUEST_TYPE
+typedef IOCTL_REQUEST_TYPE	ioctl_request_t;
+#else
+typedef unsigned long		ioctl_request_t;
+#endif
+
 #include "dhcpcd.h"
 #include "ipv4.h"
 #include "ipv6.h"
-#include "ipv6nd.h"
 #include "route.h"
 
 #define EUI64_ADDR_LEN			8
@@ -80,6 +89,11 @@
 #ifndef ARPHRD_INFINIBAND
 #  define ARPHRD_INFINIBAND		32
 #endif
+
+/* Maximum frame length.
+ * Support jumbo frames and some extra. */
+#define	FRAMEHDRLEN_MAX			14	/* only ethernet support */
+#define	FRAMELEN_MAX			(FRAMEHDRLEN_MAX + 9216)
 
 /* Work out if we have a private address or not
  * 10/8
@@ -111,9 +125,11 @@ int if_getifaddrs(struct ifaddrs **);
 int if_getsubnet(struct dhcpcd_ctx *, const char *, int, void *, size_t);
 #endif
 
-int if_getflags(struct interface *ifp);
-int if_setflag(struct interface *ifp, short flag);
-#define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING))
+int if_ioctl(struct dhcpcd_ctx *, ioctl_request_t, void *, size_t);
+int if_getflags(struct interface *);
+int if_setflag(struct interface *, short, short);
+#define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING), 0)
+#define if_down(ifp) if_setflag((ifp), 0, IFF_UP);
 bool if_valid_hwaddr(const uint8_t *, size_t);
 struct if_head *if_discover(struct dhcpcd_ctx *, struct ifaddrs **,
     int, char * const *);
@@ -145,6 +161,7 @@ struct if_spec {
 	char devname[IF_NAMESIZE];
 	char drvname[IF_NAMESIZE];
 	int ppa;
+	int vlid;
 	int lun;
 };
 int if_nametospec(const char *, struct if_spec *);
@@ -161,6 +178,8 @@ int if_opensockets_os(struct dhcpcd_ctx *);
 void if_closesockets(struct dhcpcd_ctx *);
 void if_closesockets_os(struct dhcpcd_ctx *);
 int if_handlelink(struct dhcpcd_ctx *);
+int if_randomisemac(struct interface *);
+int if_setmac(struct interface *ifp, void *, uint8_t);
 
 /* dhcpcd uses the same routing flags as BSD.
  * If the platform doesn't use these flags,
@@ -188,6 +207,9 @@ int if_handlelink(struct dhcpcd_ctx *);
 int if_route(unsigned char, const struct rt *rt);
 int if_initrt(struct dhcpcd_ctx *, rb_tree_t *, int);
 
+int if_missfilter(struct interface *, struct sockaddr *);
+int if_missfilter_apply(struct dhcpcd_ctx *);
+
 #ifdef INET
 int if_address(unsigned char, const struct ipv4_addr *);
 int if_addrflags(const struct interface *, const struct in_addr *,
@@ -207,6 +229,9 @@ int ip6_temp_valid_lifetime(const char *ifname);
 #endif
 int ip6_forwarding(const char *ifname);
 
+struct ra;
+struct ipv6_addr;
+
 int if_applyra(const struct ra *);
 int if_address6(unsigned char, const struct ipv6_addr *);
 int if_addrflags6(const struct interface *, const struct in6_addr *,
@@ -221,4 +246,10 @@ int if_machinearch(char *, size_t);
 struct interface *if_findifpfromcmsg(struct dhcpcd_ctx *,
     struct msghdr *, int *);
 int xsocket(int, int, int);
+
+#ifdef __linux__
+int if_linksocket(struct sockaddr_nl *, int);
+int if_getnetlink(struct dhcpcd_ctx *, struct iovec *, int, int,
+    int (*)(struct dhcpcd_ctx *, void *, struct nlmsghdr *), void *);
+#endif
 #endif

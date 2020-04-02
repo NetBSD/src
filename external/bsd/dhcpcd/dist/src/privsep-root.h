@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * dhcpcd - DHCP client daemon
+ * Privilege Separation for dhcpcd
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -26,16 +26,29 @@
  * SUCH DAMAGE.
  */
 
-#ifndef SCRIPT_H
-#define SCRIPT_H
+#ifndef PRIVSEP_ROOT_H
+#define PRIVSEP_ROOT_H
 
-#include "control.h"
+#include "if.h"
 
-__printflike(2, 3) int efprintf(FILE *, const char *, ...);
-void if_printoptions(void);
-char ** script_buftoenv(struct dhcpcd_ctx *, char *, size_t);
-pid_t script_exec(const struct dhcpcd_ctx *, char *const *, char *const *);
-int send_interface(struct fd_list *, const struct interface *, int);
-int script_runreason(const struct interface *, const char *);
-int script_runchroot(struct dhcpcd_ctx *, char *);
+pid_t ps_root_start(struct dhcpcd_ctx *ctx);
+int ps_root_stop(struct dhcpcd_ctx *ctx);
+
+ssize_t ps_root_readerror(struct dhcpcd_ctx *);
+ssize_t ps_root_docopychroot(struct dhcpcd_ctx *, const char *);
+ssize_t ps_root_copychroot(struct dhcpcd_ctx *, const char *);
+ssize_t ps_root_ioctl(struct dhcpcd_ctx *, ioctl_request_t, void *, size_t);
+ssize_t ps_root_unlink(struct dhcpcd_ctx *, const char *);
+ssize_t ps_root_os(struct ps_msghdr *, struct msghdr *);
+#if defined(BSD) || defined(__sun)
+ssize_t ps_root_route(struct dhcpcd_ctx *, void *, size_t);
+ssize_t ps_root_ioctllink(struct dhcpcd_ctx *, unsigned long, void *, size_t);
+ssize_t ps_root_ioctl6(struct dhcpcd_ctx *, unsigned long, void *, size_t);
+#endif
+#ifdef __linux__
+ssize_t ps_root_sendnetlink(struct dhcpcd_ctx *, int, struct msghdr *);
+ssize_t ps_root_writepathuint(struct dhcpcd_ctx *, const char *, unsigned int);
+#endif
+ssize_t ps_root_script(const struct interface *, const void *, size_t);
+
 #endif

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -54,10 +54,13 @@
 
 struct arp_msg {
 	uint16_t op;
-	unsigned char sha[HWADDR_LEN];
+	uint8_t sha[HWADDR_LEN];
 	struct in_addr sip;
-	unsigned char tha[HWADDR_LEN];
+	uint8_t tha[HWADDR_LEN];
 	struct in_addr tip;
+	/* Frame header and sender to diagnose failures */
+	uint8_t fsha[HWADDR_LEN];
+	uint8_t ftha[HWADDR_LEN];
 };
 
 struct arp_state {
@@ -90,12 +93,15 @@ struct iarp_state {
 	((const struct iarp_state *)(ifp)->if_data[IF_DATA_ARP])
 
 #ifdef ARP
+void arp_packet(struct interface *, uint8_t *, size_t);
 struct arp_state *arp_new(struct interface *, const struct in_addr *);
+void arp_change(struct arp_state *, const struct in_addr *);
 void arp_probe(struct arp_state *);
 void arp_announce(struct arp_state *);
 void arp_announceaddr(struct dhcpcd_ctx *, const struct in_addr *);
 void arp_ifannounceaddr(struct interface *, const struct in_addr *);
 void arp_cancel(struct arp_state *);
+struct arp_state * arp_find(struct interface *, const struct in_addr *);
 void arp_free(struct arp_state *);
 void arp_freeaddr(struct interface *, const struct in_addr *);
 void arp_drop(struct interface *);
