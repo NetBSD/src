@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.50 2020/01/29 23:42:57 christos Exp $
+# $NetBSD: Makefile,v 1.51 2020/04/02 12:56:01 roy Exp $
 #
 
 WARNS?=		6
@@ -12,6 +12,10 @@ SRCS=		common.c control.c dhcpcd.c duid.c eloop.c logerr.c
 SRCS+=		if.c if-options.c route.c sa.c script.c
 SRCS+=		dhcp-common.c dhcpcd-embedded.c
 SRCS+=		if-bsd.c
+
+CPPFLAGS+=	-DPRIVSEP -DPRIVSEP_USER=\"_dhcpcd\"
+SRCS+=		privsep.c privsep-root.c privsep-inet.c
+SRCS+=		privsep-bsd.c
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -D_OPENBSD_SOURCE
 
@@ -27,6 +31,7 @@ SRCS+=		auth.c
 .if (${USE_INET} != "no")
 CPPFLAGS+=	-DINET
 SRCS+=		bpf.c dhcp.c ipv4.c
+SRCS+=		privsep-bpf.c
 .if !defined(SMALLPROG)
 CPPFLAGS+=	-DARP
 SRCS+=		arp.c
