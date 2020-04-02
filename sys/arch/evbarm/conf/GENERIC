@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.48.2.6 2020/01/27 07:06:02 martin Exp $
+#	$NetBSD: GENERIC,v 1.48.2.7 2020/04/02 19:20:07 martin Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -754,5 +754,6 @@ uk* 		at scsibus? target ? lun ?	# unknown SCSI
 
 include "dev/usb/usbdevices.config"
 midi* 		at midibus?
+pseudo-device	sequencer			# MIDI sequencer
 
 cinclude "arch/evbarm/conf/GENERIC.local"
