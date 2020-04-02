@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.133 2020/04/02 03:32:46 kamil Exp $	*/
+/*	$NetBSD: kdump.c,v 1.134 2020/04/02 17:40:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.133 2020/04/02 03:32:46 kamil Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.134 2020/04/02 17:40:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,9 +108,9 @@ static const char * const linux_ptrace_ops[] = {
 	"PTRACE_SYSCALL",
 };
 
-static const char default_format[] = { "%n %e %x\n" };
+static const char default_format[] = { "%n\t%E\t%x\n" };
 
-static void	fmtprint(const char *, unsigned long int);
+static void	fmtprint(const char *, const struct ioctlinfo *ii);
 static int	fread_tail(void *, size_t, size_t);
 static int	dumpheader(struct ktr_header *);
 static int	output_ts(const struct timespec *);
@@ -132,11 +132,11 @@ static void	rprint(register_t);
 static const char *signame(long, int);
 static void hexdump_buf(const void *, int, int);
 static void visdump_buf(const void *, int, int);
+static const struct ioctlinfo *find_ioctl(const char *);
 
 int
 main(int argc, char **argv)
 {
-	unsigned long int u;
 	unsigned int ktrlen, size;
 	int ch;
 	void *m;
@@ -145,15 +145,16 @@ main(int argc, char **argv)
 	const char *emul_name = "netbsd";
 	const char *format = default_format;
 	int col;
-	int e;
 	char *cp;
 
 	setprogname(argv[0]);
 
 	if (strcmp(getprogname(), "ioctlprint") == 0) {
+		const struct ioctlinfo *ii;
+		int list = 0;
 		int i;
 
-		while ((ch = getopt(argc, argv, "e:f:")) != -1)
+		while ((ch = getopt(argc, argv, "e:f:l")) != -1)
 			switch (ch) {
 			case 'e':
 				emul_name = optarg;
@@ -163,22 +164,34 @@ main(int argc, char **argv)
 					errx(1, "Too many formats");
 				format = optarg;
 				break;
+			case 'l':
+				list = 1;
+				break;
 			default:
 				usage();
 				break;
 			}
+
 		setemul(emul_name, 0, 0);
 		argv += optind;
 		argc -= optind;
 
-		if (argc < 1)
+		if (argc < 1 && !list)
 			usage();
 
+		if (list) {
+			for (i = 0; ioctlinfo[i].name != NULL; i++) {
+				fmtprint(format, &ioctlinfo[i]);
+			}
+			return 0;
+		}
+
 		for (i = 0; i < argc; i++) {
-			u = strtou(argv[i], NULL, 0, 0, ULONG_MAX, &e);
-			if (e)
-				errc(1, e, "invalid argument: `%s'", argv[i]);
-			fmtprint(format, u);
+			if ((ii = find_ioctl(argv[i])) == NULL) {
+				warnx("Can't find ioctl `%s'", argv[i]);
+				continue;
+			}
+			fmtprint(format, ii);
 		}
 		return 0;
 	}
@@ -338,10 +351,10 @@ main(int argc, char **argv)
 }
 
 static void
-fmtprint(const char *fmt, unsigned long int u)
+fmtprint(const char *fmt, const struct ioctlinfo *ii)
 {
-	const char *name;
 	int c;
+
 
 	while ((c = *fmt++) != '\0') {
 		switch (c) {
@@ -368,21 +381,23 @@ fmtprint(const char *fmt, unsigned long int u)
 			default:
 				putchar(c);
 				break;
+			case 'E':
+				printf("%s", ii->expr);
+				break;
 			case 'e':
-				ioctldecode(u);
+				ioctldecode(ii->value);
 				break;
 			case 'n':
-				name = ioctlname(u);
-				printf("%s", name ? name : "(null)");
+				printf("%s", ii->name);
 				break;
 			case 'x':
-				printf("%#lx", u);
+				printf("%#lx", ii->value);
 				break;
 			case 'o':
-				printf("%#lo", u);
+				printf("%#lo", ii->value);
 				break;
 			case 'd': case 'i':
-				printf("%ld", u);
+				printf("%ld", ii->value);
 				break;
 			}
 			break;
@@ -1312,4 +1327,37 @@ usage(void)
 		   "[-x | -X size] [file]\n", getprogname());
 	}
 	exit(1);
+}
+
+static const struct ioctlinfo *
+find_ioctl_by_name(const char *name)
+{
+	for (size_t i = 0; ioctlinfo[i].name != NULL; i++) {
+		if (strcmp(name, ioctlinfo[i].name) == 0)
+			return &ioctlinfo[i];
+	}
+	return NULL;
+}
+
+static const struct ioctlinfo *
+find_ioctl_by_value(unsigned long value)
+{
+	for (size_t i = 0; ioctlinfo[i].name != NULL; i++) {
+		if (value == ioctlinfo[i].value)
+			return &ioctlinfo[i];
+	}
+	return NULL;
+}
+
+static const struct ioctlinfo *
+find_ioctl(const char *name)
+{
+	if (isalpha((unsigned char)*name)) {
+		return find_ioctl_by_name(name);
+	}
+	int e;
+	unsigned long u = strtou(name, NULL, 0, 0, ULONG_MAX, &e);
+	if (e)
+		errc(1, e, "invalid argument: `%s'", name);
+	return find_ioctl_by_value(u);
 }
