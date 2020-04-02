@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.153 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.154 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -1062,7 +1062,7 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 	compat/sunos, m68k, sparc: move sunos emulation code code to
 		/sys/compat/sunos, for use by all m68k and sparc ports.
 		significantly cleaned and extended up from Torek's base, with
-		help at implimenting various system calls and ioctl's from mw
+		help at implementing various system calls and ioctl's from mw
 		& pk. (deraadt)
 	don't permit TIOCSCTTY on /dev/tty, or kernel recursion happens.
 		from Lars Fredriksen <ludvig!lars@wixer.bga.com> (deraadt)
@@ -1092,7 +1092,7 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 	tunnel driver cleanup done by Brad Parker <brad@fcr.com>
 		and myself (deraadt)
 	upgraded lex to version 2.4.5. (jtc)
-	tty subsystem VMIN/VTIME implimentation from Marc Teitelbaum
+	tty subsystem VMIN/VTIME implementation from Marc Teitelbaum
 		<marc@vangogh.cs.berkeley.edu> (deraadt)
 	multicast patches added.
 		Original code by Steve Mccanne and LBL. NetBSD patches
