@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * logerr: errx with logging
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -207,24 +207,20 @@ vlogmessage(int pri, const char *fmt, va_list args)
 	if (!(ctx->log_opts & LOGERR_LOG))
 		return len;
 
-#ifdef SMALL
+#ifndef SMALL
+	if (ctx->log_file != NULL &&
+	    (pri != LOG_DEBUG || (ctx->log_opts & LOGERR_DEBUG)))
+		len = vlogprintf_r(ctx, ctx->log_file, fmt, args);
+#endif
+
 	vsyslog(pri, fmt, args);
 	return len;
-#else
-	if (ctx->log_file == NULL) {
-		vsyslog(pri, fmt, args);
-		return len;
-	}
-	if (pri == LOG_DEBUG && !(ctx->log_opts & LOGERR_DEBUG))
-		return len;
-	return vlogprintf_r(ctx, ctx->log_file, fmt, args);
-#endif
 }
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))
 #pragma GCC diagnostic pop
 #endif
 
-__printflike(2, 3) static void
+__printflike(2, 3) void
 logmessage(int pri, const char *fmt, ...)
 {
 	va_list args;
@@ -244,8 +240,18 @@ vlogerrmessage(int pri, const char *fmt, va_list args)
 	logmessage(pri, "%s: %s", buf, strerror(_errno));
 }
 
+__printflike(2, 3) void
+logerrmessage(int pri, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	vlogerrmessage(pri, fmt, args);
+	va_end(args);
+}
+
 void
-logdebug(const char *fmt, ...)
+log_debug(const char *fmt, ...)
 {
 	va_list args;
 
@@ -255,7 +261,7 @@ logdebug(const char *fmt, ...)
 }
 
 void
-logdebugx(const char *fmt, ...)
+log_debugx(const char *fmt, ...)
 {
 	va_list args;
 
@@ -265,7 +271,7 @@ logdebugx(const char *fmt, ...)
 }
 
 void
-loginfo(const char *fmt, ...)
+log_info(const char *fmt, ...)
 {
 	va_list args;
 
@@ -275,7 +281,7 @@ loginfo(const char *fmt, ...)
 }
 
 void
-loginfox(const char *fmt, ...)
+log_infox(const char *fmt, ...)
 {
 	va_list args;
 
@@ -285,7 +291,7 @@ loginfox(const char *fmt, ...)
 }
 
 void
-logwarn(const char *fmt, ...)
+log_warn(const char *fmt, ...)
 {
 	va_list args;
 
@@ -295,7 +301,7 @@ logwarn(const char *fmt, ...)
 }
 
 void
-logwarnx(const char *fmt, ...)
+log_warnx(const char *fmt, ...)
 {
 	va_list args;
 
@@ -305,7 +311,7 @@ logwarnx(const char *fmt, ...)
 }
 
 void
-logerr(const char *fmt, ...)
+log_err(const char *fmt, ...)
 {
 	va_list args;
 
@@ -315,13 +321,21 @@ logerr(const char *fmt, ...)
 }
 
 void
-logerrx(const char *fmt, ...)
+log_errx(const char *fmt, ...)
 {
 	va_list args;
 
 	va_start(args, fmt);
 	vlogmessage(LOG_ERR, fmt, args);
 	va_end(args);
+}
+
+unsigned int
+loggetopts(void)
+{
+	struct logctx *ctx = &_logctx;
+
+	return ctx->log_opts;
 }
 
 void
