@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.12 2020/04/02 11:37:23 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.13 2020/04/02 11:52:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -72,7 +72,7 @@ struct xhci_slot {
 	usb_dma_t xs_dc_dma;		/* device context page */
 	usb_dma_t xs_ic_dma;		/* input context page */
 	struct xhci_ring *xs_xr[XHCI_MAX_DCI + 1];
-					/* transfer ring */
+					/* transfer rings */
 	u_int xs_idx;			/* slot index */
 };
 
