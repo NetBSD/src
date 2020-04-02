@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.26 2020/03/31 07:50:42 nisimura Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.27 2020/04/02 07:26:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -477,14 +477,13 @@ mii_statchg(struct ifnet *ifp)
 {
 	struct dme_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
-	uint8_t nsr, fcr, ncr;
-	const uint8_t Mbps[2] = { 10, 100 };
-	int spd;
+	uint8_t fcr, ncr;
 
-	nsr = dme_read(sc, DM9000_NSR);
-	spd = Mbps[!!(nsr & DM9000_NSR_SPEED)];
-	/* speed/duplexity available also in reg 0x11 of internal PHY */
 #if 0
+	const uint8_t Mbps[2] = { 10, 100 };
+	uint8_t nsr = dme_read(sc, DM9000_NSR);
+	int spd = Mbps[!!(nsr & DM9000_NSR_SPEED)];
+	/* speed/duplexity available also in reg 0x11 of internal PHY */
 	if (nsr & DM9000_NSR_LINKST)
 		printf("link up,spd%d", spd);
 	else
