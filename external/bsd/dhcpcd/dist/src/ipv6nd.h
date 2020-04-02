@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - IPv6 ND handling
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,8 @@ struct ra {
 	struct ipv6_addrhead addrs;
 	bool hasdns;
 	bool expired;
+	bool willexpire;
+	bool doexpire;
 	bool isreachable;
 };
 
@@ -96,6 +98,12 @@ struct rs_state {
 #define	RETRANS_TIMER			1000	/* milliseconds */
 #define	DELAY_FIRST_PROBE_TIME		5	/* seconds */
 
+#ifdef __sun
+int ipv6nd_open(struct interface *);
+#else
+int ipv6nd_open(struct dhcpcd_ctx *);
+#endif
+void ipv6nd_recvmsg(struct dhcpcd_ctx *, struct msghdr *);
 void ipv6nd_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 void ipv6nd_startrs(struct interface *);
@@ -104,11 +112,13 @@ const struct ipv6_addr *ipv6nd_iffindaddr(const struct interface *ifp,
     const struct in6_addr *addr, unsigned int flags);
 struct ipv6_addr *ipv6nd_findaddr(struct dhcpcd_ctx *,
     const struct in6_addr *, unsigned int);
+struct ipv6_addr *ipv6nd_iffindprefix(struct interface *,
+    const struct in6_addr *, uint8_t);
 ssize_t ipv6nd_free(struct interface *);
 void ipv6nd_expirera(void *arg);
 bool ipv6nd_hasralifetime(const struct interface *, bool);
 #define	ipv6nd_hasra(i)		ipv6nd_hasralifetime((i), false)
-bool ipv6nd_hasradhcp(const struct interface *);
+bool ipv6nd_hasradhcp(const struct interface *, bool);
 void ipv6nd_handleifa(int, struct ipv6_addr *, pid_t);
 int ipv6nd_dadcompleted(const struct interface *);
 void ipv6nd_advertise(struct ipv6_addr *);

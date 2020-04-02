@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,7 @@
 #include "common.h"
 #include "dhcpcd.h"
 #include "dhcp.h"
+#include "eloop.h"
 #include "if.h"
 #include "if-options.h"
 #include "ipv4.h"
