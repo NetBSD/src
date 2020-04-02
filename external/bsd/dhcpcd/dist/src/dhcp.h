@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -216,8 +216,8 @@ struct dhcp_state {
 	size_t old_len;
 	struct dhcp_lease lease;
 	const char *reason;
-	time_t interval;
-	time_t nakoff;
+	unsigned int interval;
+	unsigned int nakoff;
 	uint32_t xid;
 	int socket;
 
@@ -255,6 +255,9 @@ struct dhcp_state {
 ssize_t print_rfc3361(FILE *, const uint8_t *, size_t);
 ssize_t print_rfc3442(FILE *, const uint8_t *, size_t);
 
+int dhcp_openudp(struct in_addr *);
+void dhcp_packet(struct interface *, uint8_t *, size_t);
+void dhcp_recvmsg(struct dhcpcd_ctx *, struct msghdr *);
 void dhcp_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 uint16_t dhcp_get_mtu(const struct interface *);
@@ -273,7 +276,6 @@ void dhcp_bind(struct interface *);
 void dhcp_reboot_newopts(struct interface *, unsigned long long);
 void dhcp_close(struct interface *);
 void dhcp_free(struct interface *);
-int dhcp_dump(struct interface *);
 #endif /* INET */
 
 #endif /* DHCP_H */

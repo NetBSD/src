@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * dhcpcd - DHCP client daemon
+ * Privilege Separation for dhcpcd
  * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -26,16 +26,33 @@
  * SUCH DAMAGE.
  */
 
-#ifndef SCRIPT_H
-#define SCRIPT_H
+#ifndef PRIVSEP_INET_H
+#define PRIVSEP_INET_H
 
-#include "control.h"
+pid_t ps_inet_start(struct dhcpcd_ctx *);
+int ps_inet_stop(struct dhcpcd_ctx *);
+ssize_t ps_inet_sendmsg(struct dhcpcd_ctx *, uint8_t, const struct msghdr *);
+ssize_t ps_inet_cmd(struct dhcpcd_ctx *, struct ps_msghdr *, struct msghdr *);
+ssize_t ps_inet_dispatch(void *, struct ps_msghdr *, struct msghdr *);
 
-__printflike(2, 3) int efprintf(FILE *, const char *, ...);
-void if_printoptions(void);
-char ** script_buftoenv(struct dhcpcd_ctx *, char *, size_t);
-pid_t script_exec(const struct dhcpcd_ctx *, char *const *, char *const *);
-int send_interface(struct fd_list *, const struct interface *, int);
-int script_runreason(const struct interface *, const char *);
-int script_runchroot(struct dhcpcd_ctx *, char *);
+#ifdef INET
+struct ipv4_addr;
+ssize_t ps_inet_openbootp(struct ipv4_addr *);
+ssize_t ps_inet_closebootp(struct ipv4_addr *);
+ssize_t ps_inet_sendbootp(struct ipv4_addr *, const struct msghdr *);
+#endif
+
+#ifdef INET6
+struct ipv6_addr;
+#ifdef __sun
+ssize_t ps_inet_opennd(struct interface *);
+ssize_t ps_inet_closend(struct interface *);
+#endif
+ssize_t ps_inet_sendnd(struct interface *, const struct msghdr *);
+#ifdef DHCP6
+ssize_t ps_inet_opendhcp6(struct ipv6_addr *);
+ssize_t ps_inet_closedhcp6(struct ipv6_addr *);
+ssize_t ps_inet_senddhcp6(struct ipv6_addr *, const struct msghdr *);
+#endif /* DHCP6 */
+#endif /* INET6 */
 #endif
