@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.122 2020/03/14 03:01:36 christos Exp $	*/
+/*	$NetBSD: xhci.c,v 1.123 2020/04/02 11:37:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.122 2020/03/14 03:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.123 2020/04/02 11:37:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -164,7 +164,7 @@ static usbd_status xhci_do_command(struct xhci_softc * const,
 static usbd_status xhci_do_command_locked(struct xhci_softc * const,
     struct xhci_soft_trb * const, int);
 static usbd_status xhci_init_slot(struct usbd_device *, uint32_t);
-static void xhci_free_slot(struct xhci_softc *, struct xhci_slot *, int, int);
+static void xhci_free_slot(struct xhci_softc *, struct xhci_slot *);
 static usbd_status xhci_set_address(struct usbd_device *, uint32_t, bool);
 static usbd_status xhci_enable_slot(struct xhci_softc * const,
     uint8_t * const);
@@ -175,8 +175,9 @@ static void xhci_set_dcba(struct xhci_softc * const, uint64_t, int);
 static usbd_status xhci_update_ep0_mps(struct xhci_softc * const,
     struct xhci_slot * const, u_int);
 static usbd_status xhci_ring_init(struct xhci_softc * const,
-    struct xhci_ring * const, size_t, size_t);
-static void xhci_ring_free(struct xhci_softc * const, struct xhci_ring * const);
+    struct xhci_ring **, size_t, size_t);
+static void xhci_ring_free(struct xhci_softc * const,
+    struct xhci_ring ** const);
 
 static void xhci_setup_ctx(struct usbd_pipe *);
 static void xhci_setup_route(struct usbd_pipe *, uint32_t *);
@@ -1194,20 +1195,20 @@ xhci_init(struct xhci_softc *sc)
 
 	struct xhci_erste *erst;
 	erst = KERNADDR(&sc->sc_eventst_dma, 0);
-	erst[0].erste_0 = htole64(xhci_ring_trbp(&sc->sc_er, 0));
-	erst[0].erste_2 = htole32(sc->sc_er.xr_ntrb);
+	erst[0].erste_0 = htole64(xhci_ring_trbp(sc->sc_er, 0));
+	erst[0].erste_2 = htole32(sc->sc_er->xr_ntrb);
 	erst[0].erste_3 = htole32(0);
 	usb_syncmem(&sc->sc_eventst_dma, 0,
 	    XHCI_ERSTE_SIZE * XHCI_EVENT_RING_SEGMENTS, BUS_DMASYNC_PREWRITE);
 
 	xhci_rt_write_4(sc, XHCI_ERSTSZ(0), XHCI_EVENT_RING_SEGMENTS);
 	xhci_rt_write_8(sc, XHCI_ERSTBA(0), DMAADDR(&sc->sc_eventst_dma, 0));
-	xhci_rt_write_8(sc, XHCI_ERDP(0), xhci_ring_trbp(&sc->sc_er, 0) |
+	xhci_rt_write_8(sc, XHCI_ERDP(0), xhci_ring_trbp(sc->sc_er, 0) |
 	    XHCI_ERDP_LO_BUSY);
 
 	xhci_op_write_8(sc, XHCI_DCBAAP, DMAADDR(&sc->sc_dcbaa_dma, 0));
-	xhci_op_write_8(sc, XHCI_CRCR, xhci_ring_trbp(&sc->sc_cr, 0) |
-	    sc->sc_cr.xr_cs);
+	xhci_op_write_8(sc, XHCI_CRCR, xhci_ring_trbp(sc->sc_cr, 0) |
+	    sc->sc_cr->xr_cs);
 
 	xhci_op_barrier(sc, 0, 4, BUS_SPACE_BARRIER_WRITE);
 
@@ -1543,7 +1544,7 @@ xhci_set_dequeue_locked(struct usbd_pipe *pipe)
 	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
-	struct xhci_ring * const xr = &xs->xs_ep[dci].xe_tr;
+	struct xhci_ring * const xr = xs->xs_xr[dci];
 	struct xhci_soft_trb trb;
 	usbd_status err;
 
@@ -1551,6 +1552,7 @@ xhci_set_dequeue_locked(struct usbd_pipe *pipe)
 	XHCIHIST_CALLARGS("slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(xr != NULL);
 
 	xhci_host_dequeue(xr);
 
@@ -1588,8 +1590,11 @@ xhci_open(struct usbd_pipe *pipe)
 {
 	struct usbd_device * const dev = pipe->up_dev;
 	struct xhci_softc * const sc = XHCI_BUS2SC(dev->ud_bus);
+	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 	usb_endpoint_descriptor_t * const ed = pipe->up_endpoint->ue_edesc;
+	const u_int dci = xhci_ep_get_dci(ed);
 	const uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
+	usbd_status err;
 
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("addr %jd depth %jd port %jd speed %jd", dev->ud_addr,
@@ -1640,6 +1645,17 @@ xhci_open(struct usbd_pipe *pipe)
 		break;
 	}
 
+	KASSERT(xs != NULL);
+	KASSERT(xs->xs_xr[dci] == NULL);
+
+	/* allocate transfer ring */
+	err = xhci_ring_init(sc, &xs->xs_xr[dci], XHCI_TRANSFER_RING_TRBS,
+	    XHCI_TRB_ALIGN);
+	if (err) {
+		DPRINTFN(1, "ring alloc failed %jd", err, 0, 0, 0);
+		return err;
+	}
+
 	if (ed->bEndpointAddress != USB_CONTROL_ENDPOINT)
 		return xhci_configure_endpoint(pipe);
 
@@ -1681,6 +1697,7 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 
 	if (dci == XHCI_DCI_EP_CONTROL) {
 		DPRINTFN(4, "closing ep0", 0, 0, 0, 0);
+		/* This frees all rings */
 		xhci_disable_slot(sc, xs->xs_idx);
 		return;
 	}
@@ -1702,7 +1719,7 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	cp[0] = htole32(XHCI_SCTX_0_CTX_NUM_SET(dci));
 
 	/* configure ep context performs an implicit dequeue */
-	xhci_host_dequeue(&xs->xs_ep[dci].xe_tr);
+	xhci_host_dequeue(xs->xs_xr[dci]);
 
 	/* sync input contexts before they are read from memory */
 	usb_syncmem(&xs->xs_ic_dma, 0, sc->sc_pgsz, BUS_DMASYNC_PREWRITE);
@@ -1714,6 +1731,8 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 
 	(void)xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
 	usb_syncmem(&xs->xs_dc_dma, 0, sc->sc_pgsz, BUS_DMASYNC_POSTREAD);
+
+	xhci_ring_free(sc, &xs->xs_xr[dci]);
 }
 
 /*
@@ -1809,7 +1828,7 @@ xhci_clear_endpoint_stall_async_task(void *cookie)
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
-	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
+	struct xhci_ring * const tr = xs->xs_xr[dci];
 
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("xfer %#jx slot %ju dci %ju", (uintptr_t)xfer, xs->xs_idx,
@@ -1827,6 +1846,8 @@ xhci_clear_endpoint_stall_async_task(void *cookie)
 		DPRINTFN(4, "ends xs_idx is 0", 0, 0, 0, 0);
 		return;
 	}
+
+	KASSERT(tr != NULL);
 
 	xhci_reset_endpoint(xfer->ux_pipe);
 	xhci_set_dequeue(xfer->ux_pipe);
@@ -1913,9 +1934,10 @@ xhci_event_transfer(struct xhci_softc * const sc,
 	slot = XHCI_TRB_3_SLOT_GET(trb_3);
 	dci = XHCI_TRB_3_EP_GET(trb_3);
 	xs = &sc->sc_slots[slot];
-	xr = &xs->xs_ep[dci].xe_tr;
+	xr = xs->xs_xr[dci];
 
 	/* sanity check */
+	KASSERT(xr != NULL);
 	KASSERTMSG(xs->xs_idx != 0 && xs->xs_idx <= sc->sc_maxslots,
 	    "invalid xs_idx %u slot %u", xs->xs_idx, slot);
 
@@ -2154,7 +2176,7 @@ xhci_softintr(void *v)
 {
 	struct usbd_bus * const bus = v;
 	struct xhci_softc * const sc = XHCI_BUS2SC(bus);
-	struct xhci_ring * const er = &sc->sc_er;
+	struct xhci_ring * const er = sc->sc_er;
 	struct xhci_trb *trb;
 	int i, j, k;
 
@@ -2341,27 +2363,22 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 
 	up->up_dev = dev;
 
-	/* Establish the default pipe. */
-	err = usbd_setup_pipe(dev, 0, &dev->ud_ep0, USBD_DEFAULT_INTERVAL,
-	    &dev->ud_pipe0);
-	if (err) {
-		goto bad;
-	}
-
 	dd = &dev->ud_ddesc;
 
 	if (depth == 0 && port == 0) {
 		KASSERT(bus->ub_devices[USB_ROOTHUB_INDEX] == NULL);
 		bus->ub_devices[USB_ROOTHUB_INDEX] = dev;
+
+		/* Establish the default pipe. */
+		err = usbd_setup_pipe(dev, 0, &dev->ud_ep0,
+		    USBD_DEFAULT_INTERVAL, &dev->ud_pipe0);
+		if (err) {
+			DPRINTFN(1, "setup default pipe failed %jd", err,0,0,0);
+			goto bad;
+		}
 		err = usbd_get_initial_ddesc(dev, dd);
 		if (err) {
 			DPRINTFN(1, "get_initial_ddesc %ju", err, 0, 0, 0);
-			goto bad;
-		}
-
-		err = usbd_reload_device_desc(dev);
-		if (err) {
-			DPRINTFN(1, "reload desc %ju", err, 0, 0, 0);
 			goto bad;
 		}
 	} else {
@@ -2390,6 +2407,18 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 			mutex_enter(&sc->sc_lock);
 			xhci_disable_slot(sc, slot);
 			mutex_exit(&sc->sc_lock);
+			goto bad;
+		}
+
+		/*
+		 * We have to establish the default pipe _after_ slot
+		 * structure has been prepared.
+		 */
+		err = usbd_setup_pipe(dev, 0, &dev->ud_ep0,
+		    USBD_DEFAULT_INTERVAL, &dev->ud_pipe0);
+		if (err) {
+			DPRINTFN(1, "setup default pipe failed %jd", err, 0, 0,
+			    0);
 			goto bad;
 		}
 
@@ -2449,12 +2478,12 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 			DPRINTFN(1, "update mps of ep0 %ju", err, 0, 0, 0);
 			goto bad;
 		}
+	}
 
-		err = usbd_reload_device_desc(dev);
-		if (err) {
-			DPRINTFN(1, "reload desc %ju", err, 0, 0, 0);
-			goto bad;
-		}
+	err = usbd_reload_device_desc(dev);
+	if (err) {
+		DPRINTFN(1, "reload desc %ju", err, 0, 0, 0);
+		goto bad;
 	}
 
 	DPRINTFN(1, "adding unit addr=%jd, rev=%02jx,",
@@ -2486,35 +2515,49 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 }
 
 static usbd_status
-xhci_ring_init(struct xhci_softc * const sc, struct xhci_ring * const xr,
+xhci_ring_init(struct xhci_softc * const sc, struct xhci_ring **xrp,
     size_t ntrb, size_t align)
 {
 	usbd_status err;
 	size_t size = ntrb * XHCI_TRB_SIZE;
+	struct xhci_ring *xr;
 
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("xr %#jx ntrb %#jx align %#jx",
-	    (uintptr_t)xr, ntrb, align, 0);
+	    (uintptr_t)*xrp, ntrb, align, 0);
+
+	xr = kmem_zalloc(sizeof(struct xhci_ring), KM_SLEEP);
+	DPRINTFN(1, "ring %#jx", (uintptr_t)xr, 0, 0, 0);
 
 	err = usb_allocmem(&sc->sc_bus, size, align, &xr->xr_dma);
-	if (err)
+	if (err) {
+		kmem_free(xr, sizeof(struct xhci_ring));
+		DPRINTFN(1, "alloc xr_dma failed %jd", err, 0, 0, 0);
 		return err;
+	}
 	mutex_init(&xr->xr_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	xr->xr_cookies = kmem_zalloc(sizeof(*xr->xr_cookies) * ntrb, KM_SLEEP);
 	xr->xr_trb = xhci_ring_trbv(xr, 0);
 	xr->xr_ntrb = ntrb;
 	xr->is_halted = false;
 	xhci_host_dequeue(xr);
+	*xrp = xr;
 
 	return USBD_NORMAL_COMPLETION;
 }
 
 static void
-xhci_ring_free(struct xhci_softc * const sc, struct xhci_ring * const xr)
+xhci_ring_free(struct xhci_softc * const sc, struct xhci_ring ** const xr)
 {
-	usb_freemem(&sc->sc_bus, &xr->xr_dma);
-	mutex_destroy(&xr->xr_lock);
-	kmem_free(xr->xr_cookies, sizeof(*xr->xr_cookies) * xr->xr_ntrb);
+	if (*xr == NULL)
+		return;
+
+	usb_freemem(&sc->sc_bus, &(*xr)->xr_dma);
+	mutex_destroy(&(*xr)->xr_lock);
+	kmem_free((*xr)->xr_cookies,
+	    sizeof(*(*xr)->xr_cookies) * (*xr)->xr_ntrb);
+	kmem_free(*xr, sizeof(struct xhci_ring));
+	*xr = NULL;
 }
 
 static void
@@ -2631,7 +2674,7 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 static void
 xhci_abort_command(struct xhci_softc *sc)
 {
-	struct xhci_ring * const cr = &sc->sc_cr;
+	struct xhci_ring * const cr = sc->sc_cr;
 	uint64_t crcr;
 	int i;
 
@@ -2675,7 +2718,7 @@ static usbd_status
 xhci_do_command_locked(struct xhci_softc * const sc,
     struct xhci_soft_trb * const trb, int timeout)
 {
-	struct xhci_ring * const cr = &sc->sc_cr;
+	struct xhci_ring * const cr = sc->sc_cr;
 	usbd_status err;
 
 	XHCIHIST_FUNC();
@@ -2806,7 +2849,7 @@ xhci_disable_slot(struct xhci_softc * const sc, uint8_t slot)
 	if (!err) {
 		xs = &sc->sc_slots[slot];
 		if (xs->xs_idx != 0) {
-			xhci_free_slot(sc, xs, XHCI_DCI_SLOT + 1, 32);
+			xhci_free_slot(sc, xs);
 			xhci_set_dcba(sc, 0, slot);
 			memset(xs, 0, sizeof(*xs));
 		}
@@ -2908,7 +2951,6 @@ xhci_init_slot(struct usbd_device *dev, uint32_t slot)
 	struct xhci_softc * const sc = XHCI_BUS2SC(dev->ud_bus);
 	struct xhci_slot *xs;
 	usbd_status err;
-	u_int dci;
 
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("slot %ju", slot, 0, 0, 0);
@@ -2918,37 +2960,26 @@ xhci_init_slot(struct usbd_device *dev, uint32_t slot)
 	/* allocate contexts */
 	err = usb_allocmem(&sc->sc_bus, sc->sc_pgsz, sc->sc_pgsz,
 	    &xs->xs_dc_dma);
-	if (err)
+	if (err) {
+		DPRINTFN(1, "failed to allocmem output device context %jd",
+		    err, 0, 0, 0);
 		return err;
+	}
 	memset(KERNADDR(&xs->xs_dc_dma, 0), 0, sc->sc_pgsz);
 
 	err = usb_allocmem(&sc->sc_bus, sc->sc_pgsz, sc->sc_pgsz,
 	    &xs->xs_ic_dma);
-	if (err)
+	if (err) {
+		DPRINTFN(1, "failed to allocmem input device context %jd",
+		    err, 0, 0, 0);
 		goto bad1;
+	}
 	memset(KERNADDR(&xs->xs_ic_dma, 0), 0, sc->sc_pgsz);
 
-	for (dci = 0; dci < 32; dci++) {
-		//CTASSERT(sizeof(xs->xs_ep[dci]) == sizeof(struct xhci_endpoint));
-		memset(&xs->xs_ep[dci], 0, sizeof(xs->xs_ep[dci]));
-		if (dci == XHCI_DCI_SLOT)
-			continue;
-		err = xhci_ring_init(sc, &xs->xs_ep[dci].xe_tr,
-		    XHCI_TRANSFER_RING_TRBS, XHCI_TRB_ALIGN);
-		if (err) {
-			DPRINTFN(0, "ring init failure", 0, 0, 0, 0);
-			goto bad2;
-		}
-	}
+	memset(&xs->xs_xr[0], 0, sizeof(xs->xs_xr));
+	xs->xs_idx = slot;
 
- bad2:
-	if (err == USBD_NORMAL_COMPLETION) {
-		xs->xs_idx = slot;
-	} else {
-		xhci_free_slot(sc, xs, XHCI_DCI_SLOT + 1, dci);
-	}
-
-	return err;
+	return USBD_NORMAL_COMPLETION;
 
  bad1:
 	usb_freemem(&sc->sc_bus, &xs->xs_dc_dma);
@@ -2957,18 +2988,17 @@ xhci_init_slot(struct usbd_device *dev, uint32_t slot)
 }
 
 static void
-xhci_free_slot(struct xhci_softc *sc, struct xhci_slot *xs, int start_dci,
-    int end_dci)
+xhci_free_slot(struct xhci_softc *sc, struct xhci_slot *xs)
 {
 	u_int dci;
 
 	XHCIHIST_FUNC();
-	XHCIHIST_CALLARGS("slot %ju start %ju end %ju",
-	    xs->xs_idx, start_dci, end_dci, 0);
+	XHCIHIST_CALLARGS("slot %ju", xs->xs_idx, 0, 0, 0);
 
-	for (dci = start_dci; dci < end_dci; dci++) {
-		xhci_ring_free(sc, &xs->xs_ep[dci].xe_tr);
-		memset(&xs->xs_ep[dci], 0, sizeof(xs->xs_ep[dci]));
+	/* deallocate all allocated rings in the slot */
+	for (dci = XHCI_DCI_SLOT; dci <= XHCI_MAX_DCI; dci++) {
+		if (xs->xs_xr[dci] != NULL)
+			xhci_ring_free(sc, &xs->xs_xr[dci]);
 	}
 	usb_freemem(&sc->sc_bus, &xs->xs_ic_dma);
 	usb_freemem(&sc->sc_bus, &xs->xs_dc_dma);
@@ -3109,7 +3139,7 @@ xhci_setup_ctx(struct usbd_pipe *pipe)
 	/* rewind TR dequeue pointer in xHC */
 	/* can't use xhci_ep_get_dci() yet? */
 	*(uint64_t *)(&cp[2]) = htole64(
-	    xhci_ring_trbp(&xs->xs_ep[dci].xe_tr, 0) |
+	    xhci_ring_trbp(xs->xs_xr[dci], 0) |
 	    XHCI_EPCTX_2_DCS_SET(1));
 
 	cp[0] = htole32(cp[0]);
@@ -3117,7 +3147,7 @@ xhci_setup_ctx(struct usbd_pipe *pipe)
 	cp[4] = htole32(cp[4]);
 
 	/* rewind TR dequeue pointer in driver */
-	struct xhci_ring *xr = &xs->xs_ep[dci].xe_tr;
+	struct xhci_ring *xr = xs->xs_xr[dci];
 	mutex_enter(&xr->xr_lock);
 	xhci_host_dequeue(xr);
 	mutex_exit(&xr->xr_lock);
@@ -3811,7 +3841,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
-	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
+	struct xhci_ring * const tr = xs->xs_xr[dci];
 	struct xhci_xfer * const xx = XHCI_XFER2XXFER(xfer);
 	usb_device_request_t * const req = &xfer->ux_request;
 	const int isread = usbd_xfer_isread(xfer);
@@ -3948,7 +3978,7 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
-	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
+	struct xhci_ring * const tr = xs->xs_xr[dci];
 	struct xhci_xfer * const xx = XHCI_XFER2XXFER(xfer);
 	const uint32_t len = xfer->ux_length;
 	usb_dma_t * const dma = &xfer->ux_dmabuf;
@@ -4069,7 +4099,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
-	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
+	struct xhci_ring * const tr = xs->xs_xr[dci];
 	struct xhci_xfer * const xx = XHCI_XFER2XXFER(xfer);
 	const uint32_t len = xfer->ux_length;
 	const bool polling = xhci_polling_p(sc);
