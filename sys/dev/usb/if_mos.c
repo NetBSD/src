@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.6 2020/03/31 23:26:32 nisimura Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.7 2020/04/02 04:09:36 nisimura Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.6 2020/03/31 23:26:32 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.7 2020/04/02 04:09:36 nisimura Exp $");
 
 #include <sys/param.h>
 
@@ -485,7 +485,7 @@ mos_rcvfilt_locked(struct usbnet *un)
 			ec->ec_flags |= ETHER_F_ALLMULTI;
 			ETHER_UNLOCK(ec);
 			memset(mchash, 0, sizeof(mchash)); /* correct ??? */
-			/* accept all mulicast frame */
+			/* accept all multicast frame */
 			rxmode |= MOS_CTL_ALLMULTI;
 			goto update;
 		}
@@ -743,7 +743,7 @@ mos_init_locked(struct ifnet *ifp)
 	mos_reg_write_1(un, MOS_IPG0, ipgs[0]);
 	mos_reg_write_1(un, MOS_IPG1, ipgs[1]);
 
-	/* Program promiscuous mode and multicast filters. */
+	/* Accept multicast frame or run promisc. mode */
 	mos_rcvfilt_locked(un);
 
 	/* Enable receiver and transmitter, bridge controls speed/duplex mode */

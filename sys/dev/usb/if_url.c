@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.76 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_url.c,v 1.77 2020/04/02 04:09:36 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.76 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.77 2020/04/02 04:09:36 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -81,7 +81,7 @@ static int url_uno_ioctl(struct ifnet *, u_long, void *);
 static void url_uno_stop(struct ifnet *, int);
 static void url_uno_mii_statchg(struct ifnet *);
 static int url_uno_init(struct ifnet *);
-static void url_setiff_locked(struct usbnet *);
+static void url_rcvfilt_locked(struct usbnet *);
 static void url_reset(struct usbnet *);
 
 static int url_csr_read_1(struct usbnet *, int);
@@ -398,20 +398,10 @@ url_init_locked(struct ifnet *ifp)
 		   URL_TCR_NOCRC);
 
 	/* Init receive control register */
-	URL_SETBIT2(un, URL_RCR, URL_RCR_TAIL | URL_RCR_AD);
-	if (ifp->if_flags & IFF_BROADCAST)
-		URL_SETBIT2(un, URL_RCR, URL_RCR_AB);
-	else
-		URL_CLRBIT2(un, URL_RCR, URL_RCR_AB);
+	URL_SETBIT2(un, URL_RCR, URL_RCR_TAIL | URL_RCR_AD | URL_RCR_AB);
 
-	/* If we want promiscuous mode, accept all physical frames. */
-	if (ifp->if_flags & IFF_PROMISC)
-		URL_SETBIT2(un, URL_RCR, URL_RCR_AAM | URL_RCR_AAP);
-	else
-		URL_CLRBIT2(un, URL_RCR, URL_RCR_AAM | URL_RCR_AAP);
-
-	/* Load the multicast filter */
-	url_setiff_locked(un);
+	/* Accept multicast frame or run promisc. mode */
+	url_rcvfilt_locked(un);
 
 	/* Enable RX and TX */
 	URL_SETBIT(un, URL_CR, URL_CR_TE | URL_CR_RE);
@@ -454,18 +444,15 @@ url_reset(struct usbnet *un)
 	delay(10000);		/* XXX */
 }
 
-#define url_calchash(addr) (ether_crc32_be((addr), ETHER_ADDR_LEN) >> 26)
-
 static void
-url_setiff_locked(struct usbnet *un)
+url_rcvfilt_locked(struct usbnet *un)
 {
 	struct ifnet * const ifp = usbnet_ifp(un);
 	struct ethercom *ec = usbnet_ec(un);
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	uint32_t hashes[2] = { 0, 0 };
-	int h = 0;
-	int mcnt = 0;
+	uint32_t mchash[2] = { 0, 0 };
+	int h = 0, rcr;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
@@ -474,52 +461,40 @@ url_setiff_locked(struct usbnet *un)
 	if (usbnet_isdying(un))
 		return;
 
-	if (ifp->if_flags & IFF_PROMISC) {
-		URL_SETBIT2(un, URL_RCR, URL_RCR_AAM | URL_RCR_AAP);
-		return;
-	} else if (ifp->if_flags & IFF_ALLMULTI) {
-allmulti:
-		ifp->if_flags |= IFF_ALLMULTI;
-		URL_SETBIT2(un, URL_RCR, URL_RCR_AAM);
-		URL_CLRBIT2(un, URL_RCR, URL_RCR_AAP);
-		return;
-	}
+	rcr = url_csr_read_2(un, URL_RCR);
+	rcr &= ~(URL_RCR_AAP | URL_RCR_AAM | URL_RCR_AM);
 
-	/* first, zot all the existing hash bits */
-	url_csr_write_4(un, URL_MAR0, 0);
-	url_csr_write_4(un, URL_MAR4, 0);
-
-	/* now program new ones */
 	ETHER_LOCK(ec);
+	if (ifp->if_flags & IFF_PROMISC) {
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
+		/* run promisc. mode */
+		rcr |= URL_RCR_AAM; /* ??? */
+		rcr |= URL_RCR_AAP;
+		goto update;
+	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ec->ec_flags |= ETHER_F_ALLMULTI;
 			ETHER_UNLOCK(ec);
-			goto allmulti;
+			/* accept all multicast frames */
+			rcr |= URL_RCR_AAM;
+			goto update;
 		}
-
-		h = url_calchash(enm->enm_addrlo);
-		if (h < 32)
-			hashes[0] |= (1 << h);
-		else
-			hashes[1] |= (1 << (h -32));
-		mcnt++;
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		/* 1(31) and 5(30:26) bit sampling */
+		mchash[h >> 31] |= 1 << ((h >> 26) & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
-
-	ifp->if_flags &= ~IFF_ALLMULTI;
-
-	URL_CLRBIT2(un, URL_RCR, URL_RCR_AAM | URL_RCR_AAP);
-
-	if (mcnt) {
-		URL_SETBIT2(un, URL_RCR, URL_RCR_AM);
-	} else {
-		URL_CLRBIT2(un, URL_RCR, URL_RCR_AM);
-	}
-	url_csr_write_4(un, URL_MAR0, hashes[0]);
-	url_csr_write_4(un, URL_MAR4, hashes[1]);
+	if (h != 0)
+		rcr |= URL_RCR_AM;	/* activate mcast hash filter */
+	url_csr_write_4(un, URL_MAR0, mchash[0]);
+	url_csr_write_4(un, URL_MAR4, mchash[1]);
+ update:
+	url_csr_write_2(un, URL_RCR, rcr);
 }
 
 static unsigned
@@ -601,7 +576,7 @@ url_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		url_setiff_locked(un);
+		url_rcvfilt_locked(un);
 		break;
 	default:
 		break;
