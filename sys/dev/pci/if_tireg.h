@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.28 2020/03/05 16:05:45 msaitoh Exp $ */
+/* $NetBSD: if_tireg.h,v 1.29 2020/04/02 15:30:27 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -288,7 +288,7 @@
  */
 #define TI_OPMODE_BYTESWAP_BD		0x00000002
 #define TI_OPMODE_WORDSWAP_BD		0x00000004
-#define TI_OPMODE_WARN_ENB		0x00000008 /* not yet implimented */
+#define TI_OPMODE_WARN_ENB		0x00000008 /* not yet implemented */
 #define TI_OPMODE_BYTESWAP_DATA		0x00000010
 #define TI_OPMODE_1_DMA_ACTIVE		0x00000040
 #define TI_OPMODE_SBUS			0x00000100
@@ -298,7 +298,7 @@
 #define TI_OPMODE_NO_EVENT_INTRS	0x00001000
 #define TI_OPMODE_NO_TX_INTRS		0x00002000
 #define TI_OPMODE_NO_RX_INTRS		0x00004000
-#define TI_OPMODE_FATAL_ENB		0x40000000 /* not yet implimented */
+#define TI_OPMODE_FATAL_ENB		0x40000000 /* not yet implemented */
 
 /*
  * DMA configuration thresholds.
