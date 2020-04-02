@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd: BPF arp and bootp filtering
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,8 @@
 
 extern const char *bpf_name;
 size_t bpf_frame_header_len(const struct interface *);
+void *bpf_frame_header_src(const struct interface *, void *, size_t *);
+void *bpf_frame_header_dst(const struct interface *, void *, size_t *);
 int bpf_frame_bcast(const struct interface *, const char *frame);
 int bpf_open(struct interface *, int (*)(struct interface *, int));
 int bpf_close(struct interface *, int);
