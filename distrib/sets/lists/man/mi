@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1684 2020/03/29 17:13:46 christos Exp $
+# $NetBSD: mi,v 1.1685 2020/04/02 03:32:46 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -226,6 +226,7 @@
 ./usr/share/man/cat1/install-info.0		man-texinfo-catman	.cat
 ./usr/share/man/cat1/install.0			man-util-catman		.cat
 ./usr/share/man/cat1/intro.0			man-sys-catman		.cat
+./usr/share/man/cat1/ioctlprint.0		man-debug-catman	.cat
 ./usr/share/man/cat1/ipcrm.0			man-util-catman		.cat
 ./usr/share/man/cat1/ipcs.0			man-util-catman		.cat
 ./usr/share/man/cat1/ipftest.0			man-ipf-catman		ipfilter,.cat
@@ -3512,6 +3513,7 @@
 ./usr/share/man/html1/install-info.html		man-texinfo-htmlman	html
 ./usr/share/man/html1/install.html		man-util-htmlman	html
 ./usr/share/man/html1/intro.html		man-sys-htmlman		html
+./usr/share/man/html1/ioctlprint.html		man-debug-htmlman	html
 ./usr/share/man/html1/ipcrm.html		man-util-htmlman	html
 ./usr/share/man/html1/ipcs.html			man-util-htmlman	html
 ./usr/share/man/html1/ipftest.html		man-ipf-htmlman		ipfilter,html
@@ -6436,6 +6438,7 @@
 ./usr/share/man/man1/install-info.1		man-texinfo-man		.man
 ./usr/share/man/man1/install.1			man-util-man		.man
 ./usr/share/man/man1/intro.1			man-sys-man		.man
+./usr/share/man/man1/ioctlprint.1		man-debug-man		.man
 ./usr/share/man/man1/ipcrm.1			man-util-man		.man
 ./usr/share/man/man1/ipcs.1			man-util-man		.man
 ./usr/share/man/man1/ipftest.1			man-ipf-man		ipfilter,.man
