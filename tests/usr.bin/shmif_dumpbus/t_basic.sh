@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.9 2018/04/09 16:21:05 martin Exp $
+#	$NetBSD: t_basic.sh,v 1.10 2020/04/02 00:00:16 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -24,6 +24,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin
 
 unpack_file()
 {
