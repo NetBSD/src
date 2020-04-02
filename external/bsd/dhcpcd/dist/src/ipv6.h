@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,8 @@
 
 /* Interface identifier length. Prefix + this == 128 for autoconf */
 #define ipv6_ifidlen(ifp)	64
+#define	IA6_CANAUTOCONF(ia)	\
+	((ia)->prefix_len + ipv6_ifidlen((ia)->iface) == 128)
 
 #ifndef IN6_ARE_MASKED_ADDR_EQUAL
 #define IN6_ARE_MASKED_ADDR_EQUAL(d, a, m)	(	\
@@ -106,6 +108,11 @@
 #if (defined(__DragonFly_version) && __DragonFly_version >= 500704) || \
     (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 699002000)
 #  undef IPV6_POLLADDRFLAG
+#endif
+
+/* Of course OpenBSD has their own special name. */
+#if !defined(IN6_IFF_TEMPORARY) && defined(IN6_IFF_PRIVACY)
+#define	IN6_IFF_TEMPORARY IN6_IFF_PRIVACY
 #endif
 
 #ifdef __sun
@@ -237,7 +244,7 @@ struct ipv6_state {
 	struct ll_callback_head ll_callbacks;
 
 #ifdef IPV6_MANAGETEMPADDR
-	time_t desync_factor;
+	uint32_t desync_factor;
 	uint8_t randomseed0[8]; /* upper 64 bits of MD5 digest */
 	uint8_t randomseed1[8]; /* lower 64 bits */
 	uint8_t randomid[8];
