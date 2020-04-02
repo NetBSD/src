@@ -1,3 +1,4 @@
+.\" $NetBSD: ioctlprint.1,v 1.2 2020/04/02 08:38:22 wiz Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +41,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility displays information about the file ioctl operation pointed to by one or more
+utility displays information about the file ioctl operation pointed
+to by one or more
 .Ar arg
 arguments.
 .Pp
@@ -54,7 +56,7 @@ default "netbsd".
 The argument is a
 .Xr printf 3
 style format string that allows customization of
-.Nm ioctlprint Ns 's
+.Nm ioctlprint Ap s
 output.
 .Pp
 The following conversion characters can be used:
@@ -76,9 +78,8 @@ The default format is:
 "%n %e %x\\n"
 .Ed
 .El
-.Pp
 .Sh SEE ALSO
-.Xr kdump 1
+.Xr kdump 1 ,
 .Xr ktrace 1
 .Sh HISTORY
 The
