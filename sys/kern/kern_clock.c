@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.139 2019/12/01 15:34:46 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.140 2020/04/02 16:29:30 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.139 2019/12/01 15:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.140 2020/04/02 16:29:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -155,7 +155,13 @@ static u_int
 get_intr_timecount(struct timecounter *tc)
 {
 
-	return (u_int)hardclock_ticks;
+	return (u_int)getticks();
+}
+
+int
+getticks(void)
+{
+	return atomic_load_relaxed(&hardclock_ticks);
 }
 
 /*
@@ -242,7 +248,8 @@ hardclock(struct clockframe *frame)
 		sched_tick(ci);
 
 	if (CPU_IS_PRIMARY(ci)) {
-		hardclock_ticks++;
+		atomic_store_relaxed(&hardclock_ticks,
+		    atomic_load_relaxed(&hardclock_ticks) + 1);
 		tc_ticktock();
 	}
 
