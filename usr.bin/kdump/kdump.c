@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.132 2019/07/23 01:54:51 nonaka Exp $	*/
+/*	$NetBSD: kdump.c,v 1.133 2020/04/02 03:32:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.132 2019/07/23 01:54:51 nonaka Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.133 2020/04/02 03:32:46 kamil Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: kdump.c,v 1.132 2019/07/23 01:54:51 nonaka Exp $");
 
 #include <ctype.h>
 #include <err.h>
+#include <inttypes.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -107,6 +108,9 @@ static const char * const linux_ptrace_ops[] = {
 	"PTRACE_SYSCALL",
 };
 
+static const char default_format[] = { "%n %e %x\n" };
+
+static void	fmtprint(const char *, unsigned long int);
 static int	fread_tail(void *, size_t, size_t);
 static int	dumpheader(struct ktr_header *);
 static int	output_ts(const struct timespec *);
@@ -132,24 +136,32 @@ static void visdump_buf(const void *, int, int);
 int
 main(int argc, char **argv)
 {
+	unsigned long int u;
 	unsigned int ktrlen, size;
 	int ch;
 	void *m;
 	int trpoints = 0;
 	int trset = 0;
 	const char *emul_name = "netbsd";
+	const char *format = default_format;
 	int col;
+	int e;
 	char *cp;
 
 	setprogname(argv[0]);
 
-	if (strcmp(getprogname(), "ioctlname") == 0) {
+	if (strcmp(getprogname(), "ioctlprint") == 0) {
 		int i;
 
-		while ((ch = getopt(argc, argv, "e:")) != -1)
+		while ((ch = getopt(argc, argv, "e:f:")) != -1)
 			switch (ch) {
 			case 'e':
 				emul_name = optarg;
+				break;
+			case 'f':
+				if (format != default_format)
+					errx(1, "Too many formats");
+				format = optarg;
 				break;
 			default:
 				usage();
@@ -163,8 +175,10 @@ main(int argc, char **argv)
 			usage();
 
 		for (i = 0; i < argc; i++) {
-			ioctldecode(strtoul(argv[i], NULL, 0));
-			(void)putchar('\n');
+			u = strtou(argv[i], NULL, 0, 0, ULONG_MAX, &e);
+			if (e)
+				errc(1, e, "invalid argument: `%s'", argv[i]);
+			fmtprint(format, u);
 		}
 		return 0;
 	}
@@ -321,6 +335,60 @@ main(int argc, char **argv)
 			(void)fflush(stdout);
 	}
 	return (0);
+}
+
+static void
+fmtprint(const char *fmt, unsigned long int u)
+{
+	const char *name;
+	int c;
+
+	while ((c = *fmt++) != '\0') {
+		switch (c) {
+		default:
+			putchar(c);
+			continue;
+		case '\\':
+			switch (c = *fmt) {
+				case '\0':
+				continue;
+			case 'n':
+				putchar('\n');
+				break;
+			case 't':
+				putchar('\t');
+				break;
+			}
+			break;
+		case '%':
+			switch (c = *fmt) {
+			case '\0':
+				continue;
+			case '%':
+			default:
+				putchar(c);
+				break;
+			case 'e':
+				ioctldecode(u);
+				break;
+			case 'n':
+				name = ioctlname(u);
+				printf("%s", name ? name : "(null)");
+				break;
+			case 'x':
+				printf("%#lx", u);
+				break;
+			case 'o':
+				printf("%#lo", u);
+				break;
+			case 'd': case 'i':
+				printf("%ld", u);
+				break;
+			}
+			break;
+		}
+		++fmt;
+	}
 }
 
 static int
@@ -1235,8 +1303,8 @@ signame(long sig, int xlat)
 static void
 usage(void)
 {
-	if (strcmp(getprogname(), "ioctlname") == 0) {
-		(void)fprintf(stderr, "Usage: %s [-e emulation] <ioctl> ...\n",
+	if (strcmp(getprogname(), "ioctlprint") == 0) {
+		(void)fprintf(stderr, "Usage: %s [-f format] [-e emulation] <ioctl> ...\n",
 		    getprogname());
 	} else {
 		(void)fprintf(stderr, "Usage: %s [-dElNnRT] [-e emulation] "
