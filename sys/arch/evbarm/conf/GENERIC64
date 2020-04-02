@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.103.2.8 2020/01/27 07:06:02 martin Exp $
+#	$NetBSD: GENERIC64,v 1.103.2.9 2020/04/02 19:20:07 martin Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -508,6 +508,7 @@ usb*		at usbus?
 
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
+pseudo-device	sequencer			# MIDI sequencer
 
 # Virtio devices
 virtio*		at fdt?			# Virtio MMIO device
