@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.28 2020/04/02 19:22:05 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.29 2020/04/02 19:24:39 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -782,4 +782,10 @@ sys/arch/evbarm/conf/GENERIC64			1.136
 
 	Add MIDI sequencer device. Now midiplay works on usb midi devices.
 	[mrg, ticket #817]
+
+sys/dev/pckbport/synaptics.c			1.64
+
+	pms(4): synaptics: maintain the left/right buttons when
+	up/down are remapped.
+	[nia, ticket #818]
 
