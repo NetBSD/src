@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@
 
 #include <sys/socket.h>
 #include <net/if.h>
+
+#include <stdio.h>
 
 #include "config.h"
 #ifdef HAVE_SYS_QUEUE_H
@@ -96,6 +98,7 @@ struct interface {
 };
 TAILQ_HEAD(if_head, interface);
 
+#include "privsep.h"
 
 #ifdef INET6
 /* dhcpcd requires CMSG_SPACE to evaluate to a compile time constant. */
@@ -118,8 +121,11 @@ TAILQ_HEAD(if_head, interface);
 			CMSG_SPACE(sizeof(int)))
 #endif
 
+struct passwd;
+
 struct dhcpcd_ctx {
 	char pidfile[sizeof(PIDFILE) + IF_NAMESIZE + 1];
+	int fork_fd;	/* FD for the fork init signal pipe */
 	const char *cffile;
 	unsigned long long options;
 	char *logfile;
@@ -177,6 +183,24 @@ struct dhcpcd_ctx {
 
 	char *randomstate; /* original state */
 
+	/* For filtering RTM_MISS messages per router */
+#ifdef BSD
+	uint8_t *rt_missfilter;
+	size_t rt_missfilterlen;
+	size_t rt_missfiltersize;
+#endif
+
+#ifdef PRIVSEP
+	struct passwd *ps_user;	/* struct passwd for privsep user */
+	pid_t ps_root_pid;
+	int ps_root_fd;		/* Privileged Actioneer commands */
+	int ps_data_fd;		/* Data from root spawned processes */
+	struct eloop *ps_eloop;	/* eloop for polling root data */
+	struct ps_process_head ps_processes;	/* List of spawned processes */
+	pid_t ps_inet_pid;
+	int ps_inet_fd;		/* Network Proxy commands and data */
+#endif
+
 #ifdef INET
 	struct dhcp_opt *dhcp_opts;
 	size_t dhcp_opts_len;
@@ -227,7 +251,7 @@ extern const size_t dhcpcd_signals_len;
 
 int dhcpcd_ifafwaiting(const struct interface *);
 int dhcpcd_afwaiting(const struct dhcpcd_ctx *);
-pid_t dhcpcd_daemonise(struct dhcpcd_ctx *);
+void dhcpcd_daemonise(struct dhcpcd_ctx *);
 
 void dhcpcd_linkoverflow(struct dhcpcd_ctx *);
 int dhcpcd_handleargs(struct dhcpcd_ctx *, struct fd_list *, int, char **);

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -68,9 +68,8 @@ TAILQ_HEAD(fd_list_head, fd_list);
 
 int control_start(struct dhcpcd_ctx *, const char *);
 int control_stop(struct dhcpcd_ctx *);
-int control_open(const char *);
+int control_open(const char *, bool);
 ssize_t control_send(struct dhcpcd_ctx *, int, char * const *);
 int control_queue(struct fd_list *, void *, size_t, bool);
-void control_close(struct dhcpcd_ctx *ctx);
 
 #endif
