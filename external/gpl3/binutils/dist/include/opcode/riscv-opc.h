@@ -141,6 +141,8 @@
 #define MASK_FENCE  0x707f
 #define MATCH_FENCE_I 0x100f
 #define MASK_FENCE_I  0x707f
+#define MATCH_FENCE_TSO 0x8330000f
+#define MASK_FENCE_TSO  0xfff0707f
 #define MATCH_MUL 0x2000033
 #define MASK_MUL  0xfe00707f
 #define MATCH_MULH 0x2001033
