@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -26,12 +26,12 @@
    system, and I'll stick it in for the next release.  */
 
 #define N_HEADER_IN_TEXT(x)	0
-#define N_TXTOFF(x)   		0x20
-#define N_TXTADDR(x) 		(N_MAGIC (x) == ZMAGIC ? 0x1020 : 0)
-#define N_TXTSIZE(x) 		((x)->a_text)
-#define TARGET_PAGE_SIZE 	4096
-#define SEGMENT_SIZE 		0x400000
-#define DEFAULT_ARCH 		bfd_arch_i386
+#define N_TXTOFF(x)		0x20
+#define N_TXTADDR(x)		(N_MAGIC (x) == ZMAGIC ? 0x1020 : 0)
+#define N_TXTSIZE(x)		((x)->a_text)
+#define TARGET_PAGE_SIZE	4096
+#define SEGMENT_SIZE		0x400000
+#define DEFAULT_ARCH		bfd_arch_i386
 
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
@@ -64,7 +64,7 @@ i386aout_write_object_contents (bfd *abfd)
 }
 
 #define MY_write_object_contents  i386aout_write_object_contents
-#define MY_backend_data           & MY (backend_data)
+#define MY_backend_data		  & MY (backend_data)
 
 static const struct aout_backend_data MY (backend_data);
 

@@ -1,5 +1,5 @@
 /* input_file.h header for input-file.c
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -18,7 +18,7 @@
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
-/*"input_file.c":Operating-system dependant functions to read source files.*/
+/*"input_file.c":Operating-system dependent functions to read source files.*/
 
 /*
  * No matter what the operating system, this module must provide the

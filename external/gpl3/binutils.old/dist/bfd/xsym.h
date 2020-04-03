@@ -1,5 +1,5 @@
 /* xSYM symbol-file support for BFD.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,14 +25,14 @@
 #ifndef __xSYM_H__
 #define __xSYM_H__
 
-#define BFD_SYM_VERSION_STR_3_1 	"\013Version 3.1"
-#define BFD_SYM_VERSION_STR_3_2 	"\013Version 3.2"
-#define BFD_SYM_VERSION_STR_3_3 	"\013Version 3.3"
-#define BFD_SYM_VERSION_STR_3_4 	"\013Version 3.4"
-#define BFD_SYM_VERSION_STR_3_5 	"\013Version 3.5"
+#define BFD_SYM_VERSION_STR_3_1		"\013Version 3.1"
+#define BFD_SYM_VERSION_STR_3_2		"\013Version 3.2"
+#define BFD_SYM_VERSION_STR_3_3		"\013Version 3.3"
+#define BFD_SYM_VERSION_STR_3_4		"\013Version 3.4"
+#define BFD_SYM_VERSION_STR_3_5		"\013Version 3.5"
 #define BFD_SYM_END_OF_LIST_3_2		0xffff
 #define BFD_SYM_END_OF_LIST_3_4		0xffffffff
-#define BFD_SYM_END_OF_LIST 		BFD_SYM_END_OF_LIST_3_4
+#define BFD_SYM_END_OF_LIST		BFD_SYM_END_OF_LIST_3_4
 #define BFD_SYM_FILE_NAME_INDEX_3_2	0xfffe
 #define BFD_SYM_FILE_NAME_INDEX_3_4	0xfffffffe
 #define BFD_SYM_FILE_NAME_INDEX		BFD_SYM_FILE_NAME_INDEX_3_4
@@ -123,8 +123,8 @@ struct bfd_sym_resources_table_entry
   unsigned short rte_res_number;  /* Resource Number.  */
   unsigned long rte_nte_index;    /* Name of the resource.  */
   unsigned long rte_mte_first;    /* Index of first module in the resource.  */
-  unsigned long rte_mte_last;     /* Index of the last module in the resource.	*/
-  unsigned long	rte_res_size;     /* Size of the resource.  */
+  unsigned long rte_mte_last;     /* Index of the last module in the resource.  */
+  unsigned long rte_res_size;     /* Size of the resource.  */
 };
 typedef struct bfd_sym_resources_table_entry bfd_sym_resources_table_entry;
 
@@ -145,21 +145,21 @@ typedef struct bfd_sym_resources_table_entry bfd_sym_resources_table_entry;
 
 struct bfd_sym_modules_table_entry
 {
-  unsigned long mte_rte_index;         /* Which resource it is in.  */
-  unsigned long mte_res_offset;        /* Offset into the resource.  */
-  unsigned long mte_size;              /* Size of module.  */
-  char mte_kind;                       /* What kind of module this is.  */
-  char mte_scope;                      /* How visible is it?  */
-  unsigned long mte_parent;            /* Containing module.  */
-  bfd_sym_file_reference mte_imp_fref; /* Implementation source.  */
-  unsigned long mte_imp_end;           /* End of implementation source.  */
-  unsigned long mte_nte_index;         /* The name of the module.  */
-  unsigned long mte_cmte_index;        /* Modules contained in this.  */
-  unsigned long mte_cvte_index;        /* Variables contained in this.  */
-  unsigned long mte_clte_index;        /* Local labels defined here.  */
-  unsigned long mte_ctte_index;        /* Types contained in this.  */
-  unsigned long mte_csnte_idx_1;       /* CSNTE index of mte_snbr_first.  */
-  unsigned long mte_csnte_idx_2;       /* CSNTE index of mte_snbr_last.  */
+  unsigned long mte_rte_index;		/* Which resource it is in.  */
+  unsigned long mte_res_offset;		/* Offset into the resource.  */
+  unsigned long mte_size;		/* Size of module.  */
+  char mte_kind;			/* What kind of module this is.  */
+  char mte_scope;			/* How visible is it?  */
+  unsigned long mte_parent;		/* Containing module.  */
+  bfd_sym_file_reference mte_imp_fref;	/* Implementation source.  */
+  unsigned long mte_imp_end;		/* End of implementation source.  */
+  unsigned long mte_nte_index;		/* The name of the module.  */
+  unsigned long mte_cmte_index;		/* Modules contained in this.  */
+  unsigned long mte_cvte_index;		/* Variables contained in this.  */
+  unsigned long mte_clte_index;		/* Local labels defined here.  */
+  unsigned long mte_ctte_index;		/* Types contained in this.  */
+  unsigned long mte_csnte_idx_1;	/* CSNTE index of mte_snbr_first.  */
+  unsigned long mte_csnte_idx_2;	/* CSNTE index of mte_snbr_last.  */
 };
 typedef struct bfd_sym_modules_table_entry bfd_sym_modules_table_entry;
 
@@ -169,13 +169,13 @@ typedef struct bfd_sym_modules_table_entry bfd_sym_modules_table_entry;
    The table is ordered by increasing file offset.  Each new offset
    references a module.
 
- 				FRT	= FILE_SOURCE_START
- 							FILE_SOURCE_INCREMENT*
- 							END_OF_LIST.
+			FRT	= FILE_SOURCE_START
+						FILE_SOURCE_INCREMENT*
+						END_OF_LIST.
 
 	*** THIS MECHANISM IS VERY SLOW FOR FILE+STATEMENT_NUMBER TO
- 	*** MODULE/CODE ADDRESS OPERATIONS.  ANOTHER MECHANISM IS
- 	***	REQUIRED!!  */
+	*** MODULE/CODE ADDRESS OPERATIONS.  ANOTHER MECHANISM IS
+	***	REQUIRED!!  */
 
 union bfd_sym_file_references_table_entry
 {
@@ -260,7 +260,7 @@ typedef union bfd_sym_contained_modules_table_entry bfd_sym_contained_modules_ta
      == BFD_SYM_CVTE_BIG_LA
      Logical address bytes in constant pool, at offset 'big_la'.  */
 
-#define	BFD_SYM_CVTE_SCA 0          /* Indicate SCA variant of CVTE.  */
+#define	BFD_SYM_CVTE_SCA 0	    /* Indicate SCA variant of CVTE.  */
 #define	BFD_SYM_CVTE_LA_MAX_SIZE 13 /* Max# of logical address bytes in a CVTE.  */
 #define	BFD_SYM_CVTE_BIG_LA 127     /* Indicates LA redirection to constant pool.  */
 
@@ -286,17 +286,17 @@ union bfd_sym_contained_variables_table_entry
     /* < SOURCE_FILE_CHANGE.  */
     unsigned long tte_index;
     unsigned long nte_index;
-    unsigned long file_delta;                       /* Increment from previous source.  */
+    unsigned long file_delta;			    /* Increment from previous source.  */
     unsigned char scope;
-    unsigned char la_size;                          /* #bytes of LAs below.  */
+    unsigned char la_size;			    /* #bytes of LAs below.  */
 
     union
     {
       /* la_size == BFD_SYM_CVTE_SCA.  */
       struct
       {
-	unsigned char sca_kind;	                    /* Distinguish local from value/var formal.  */
-	unsigned char sca_class;                    /* The storage class itself.  */
+	unsigned char sca_kind;			    /* Distinguish local from value/var formal.  */
+	unsigned char sca_class;		    /* The storage class itself.  */
 	unsigned long sca_offset;
       }
       scstruct;
@@ -304,15 +304,15 @@ union bfd_sym_contained_variables_table_entry
       /* la_size <= BFD_SYM_CVTE_LA_MAX_SIZE.  */
       struct {
 	unsigned char la[BFD_SYM_CVTE_LA_MAX_SIZE]; /* Logical address bytes.  */
-	unsigned char la_kind;                      /* Eqv. cvte_location.sca_kind.  */
+	unsigned char la_kind;			    /* Eqv. cvte_location.sca_kind.  */
       }
       lastruct;
 
       /* la_size == BFD_SYM_CVTE_BIG_LA 127.  */
       struct
       {
-	unsigned long big_la;                       /* Logical address bytes in constant pool.  */
-	unsigned char big_la_kind;                  /* Eqv. cvte_location.sca_kind.  */
+	unsigned long big_la;			    /* Logical address bytes in constant pool.  */
+	unsigned char big_la_kind;		    /* Eqv. cvte_location.sca_kind.  */
       }
       biglastruct;
     }

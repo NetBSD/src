@@ -1,5 +1,5 @@
 /* Disassemble moxie instructions.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -25,7 +25,7 @@
 #define DEFINE_TABLE
 
 #include "opcode/moxie.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 
 static fprintf_ftype fpr;
 static void *stream;

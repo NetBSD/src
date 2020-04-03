@@ -1,5 +1,5 @@
 /* BFD support for the Altera Nios II processor.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2018 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -57,7 +57,7 @@ nios2_compatible (const bfd_arch_info_type *a,
     DEFAULT,						\
     nios2_compatible,					\
     bfd_default_scan,					\
-    bfd_arch_default_fill,			       	\
+    bfd_arch_default_fill,				\
     NEXT						\
   }
 

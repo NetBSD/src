@@ -1,5 +1,5 @@
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -28,15 +28,15 @@
 #	DATA_PLT - .plt should be in data segment, not text segment.
 #	BSS_PLT - .plt should be in bss segment
 #	TEXT_DYNAMIC - .dynamic in text segment, not data segment.
-#	EMBEDDED - whether this is for an embedded system. 
+#	EMBEDDED - whether this is for an embedded system.
 #	SHLIB_TEXT_START_ADDR - if set, add to SIZEOF_HEADERS to set
 #		start address of shared library.
 #	INPUT_FILES - INPUT command of files to always include
 #	WRITABLE_RODATA - if set, the .rodata section should be writable
 #	INIT_START, INIT_END -  statements just before and just after
-# 	combination of .init sections.
+#	combination of .init sections.
 #	FINI_START, FINI_END - statements just before and just after
-# 	combination of .fini sections.
+#	combination of .fini sections.
 #
 # When adding sections, do note that the names of some sections are used
 # when specifying the start address of the next.
@@ -69,13 +69,13 @@ if [ -z "$MACHINE" ]; then OUTPUT_ARCH=${ARCH}; else OUTPUT_ARCH=${ARCH}:${MACHI
 test -z "${ELFSIZE}" && ELFSIZE=32
 test -z "${ALIGNMENT}" && ALIGNMENT="${ELFSIZE} / 8"
 test "$LD_FLAG" = "N" && DATA_ADDR=.
-INTERP=".interp   ${RELOCATING-0} : { *(.interp) 	}"
+INTERP=".interp   ${RELOCATING-0} : { *(.interp) }"
 PLT=".plt    ${RELOCATING-0} : { *(.plt)	}"
 DYNAMIC=".dynamic     ${RELOCATING-0} : { *(.dynamic) }"
 RODATA=".rodata ${RELOCATING-0} : { *(.rodata) ${RELOCATING+*(.rodata.*)} ${RELOCATING+*(.gnu.linkonce.r.*)} }"
 SBSS2=".sbss2 ${RELOCATING-0} : { *(.sbss2) ${RELOCATING+*(.sbss2.*)} ${RELOCATING+*(.gnu.linkonce.sb2.*)} }"
 SDATA2=".sdata2 ${RELOCATING-0} : { *(.sdata2) ${RELOCATING+*(.sdata2.*)} ${RELOCATING+*(.gnu.linkonce.s2.*)} }"
-CTOR=".ctors ${CONSTRUCTING-0} : 
+CTOR=".ctors ${CONSTRUCTING-0} :
   {
     ${CONSTRUCTING+${CTOR_START}}
     /* gcc uses crtbegin.o to find the start of
@@ -121,7 +121,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -217,7 +217,7 @@ eval $COMBRELOCCAT <<EOF
       ${RELOCATING+*(.rela.gnu.linkonce.s.*)}
     }
   .rel.sbss    ${RELOCATING-0} :
-    { 
+    {
       *(.rel.sbss)
       ${RELOCATING+*(.rel.sbss.*)}
       ${RELOCATING+*(.rel.gnu.linkonce.sb.*)}
@@ -228,38 +228,38 @@ eval $COMBRELOCCAT <<EOF
       ${RELOCATING+*(.rela.sbss.*)}
       ${RELOCATING+*(.rela.gnu.linkonce.sb.*)}
     }
-  .rel.sdata2  ${RELOCATING-0} : 
-    { 
+  .rel.sdata2  ${RELOCATING-0} :
+    {
       *(.rel.sdata2)
       ${RELOCATING+*(.rel.sdata2.*)}
       ${RELOCATING+*(.rel.gnu.linkonce.s2.*)}
     }
-  .rela.sdata2 ${RELOCATING-0} : 
+  .rela.sdata2 ${RELOCATING-0} :
     {
       *(.rela.sdata2)
       ${RELOCATING+*(.rela.sdata2.*)}
       ${RELOCATING+*(.rela.gnu.linkonce.s2.*)}
     }
-  .rel.sbss2   ${RELOCATING-0} : 
-    { 
-      *(.rel.sbss2)	
+  .rel.sbss2   ${RELOCATING-0} :
+    {
+      *(.rel.sbss2)
       ${RELOCATING+*(.rel.sbss2.*)}
       ${RELOCATING+*(.rel.gnu.linkonce.sb2.*)}
     }
-  .rela.sbss2  ${RELOCATING-0} : 
-    { 
-      *(.rela.sbss2)	
+  .rela.sbss2  ${RELOCATING-0} :
+    {
+      *(.rela.sbss2)
       ${RELOCATING+*(.rela.sbss2.*)}
       ${RELOCATING+*(.rela.gnu.linkonce.sb2.*)}
     }
-  .rel.bss     ${RELOCATING-0} : 
-    { 
+  .rel.bss     ${RELOCATING-0} :
+    {
       *(.rel.bss)
       ${RELOCATING+*(.rel.bss.*)}
       ${RELOCATING+*(.rel.gnu.linkonce.b.*)}
     }
-  .rela.bss    ${RELOCATING-0} : 
-    { 
+  .rela.bss    ${RELOCATING-0} :
+    {
       *(.rela.bss)
       ${RELOCATING+*(.rela.bss.*)}
       ${RELOCATING+*(.rela.gnu.linkonce.b.*)}
@@ -270,13 +270,13 @@ cat <<EOF
   .rel.dyn	 :
     {
 EOF
-sed -e '/^[ 	]*[{}][ 	]*$/d;/:[ 	]*$/d;/\.rela\./d;s/^.*: { *\(.*\)}$/      \1/' $COMBRELOC
+sed -e '/^[	 ]*[{}][	 ]*$/d;/:[	 ]*$/d;/\.rela\./d;s/^.*: { *\(.*\)}$/      \1/' $COMBRELOC
 cat <<EOF
     }
   .rela.dyn	 :
     {
 EOF
-sed -e '/^[ 	]*[{}][ 	]*$/d;/:[ 	]*$/d;/\.rel\./d;s/^.*: { *\(.*\)}/      \1/' $COMBRELOC
+sed -e '/^[	 ]*[{}][	 ]*$/d;/:[	 ]*$/d;/\.rel\./d;s/^.*: { *\(.*\)}/      \1/' $COMBRELOC
 cat <<EOF
     }
 EOF
@@ -286,8 +286,8 @@ cat <<EOF
   .rela.plt    ${RELOCATING-0} : { *(.rela.plt)		}
   ${OTHER_PLT_RELOC_SECTIONS}
 
-  .init        ${RELOCATING-0} : 
-  { 
+  .init        ${RELOCATING-0} :
+  {
     ${RELOCATING+${INIT_START}}
     KEEP (*(.init))
     ${RELOCATING+${INIT_END}}
@@ -329,10 +329,10 @@ cat <<EOF
     ${CONSTRUCTING+SORT(CONSTRUCTORS)}
   }
   .data1 ${RELOCATING-0} : { *(.data1) }
-  .eh_frame ${RELOCATING-0} : 
-  { 
+  .eh_frame ${RELOCATING-0} :
+  {
     ${RELOCATING+PROVIDE (__eh_frame_begin = .);}
-    *(.eh_frame) 
+    *(.eh_frame)
     LONG (0);
     ${RELOCATING+PROVIDE (__eh_frame_end = .);}
   } ${RELOCATING+}
@@ -363,10 +363,10 @@ cat <<EOF
   /* We want the small data sections together, so single-instruction offsets
      can access them all, and initialized data all before uninitialized, so
      we can shorten the on-disk segment size.  */
-  .sdata   ${RELOCATING-0} : 
+  .sdata   ${RELOCATING-0} :
   {
     ${RELOCATING+${SDATA_START_SYMBOLS}}
-    *(.sdata) 
+    *(.sdata)
     ${RELOCATING+*(.sdata.*)}
     ${RELOCATING+*(.gnu.linkonce.s.*)}
   }
