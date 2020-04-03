@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -16,7 +16,7 @@
 #         __RODATA_PM_OFFSET__ (which defaults to RODATA_PM_OFFSET).
 
 cat <<EOF
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -24,7 +24,9 @@ cat <<EOF
 
 OUTPUT_FORMAT("${OUTPUT_FORMAT}","${OUTPUT_FORMAT}","${OUTPUT_FORMAT}")
 OUTPUT_ARCH(${ARCH})
+EOF
 
+test -n "${RELOCATING}" && cat <<EOF
 __TEXT_REGION_LENGTH__ = DEFINED(__TEXT_REGION_LENGTH__) ? __TEXT_REGION_LENGTH__ : $TEXT_LENGTH;
 __DATA_REGION_LENGTH__ = DEFINED(__DATA_REGION_LENGTH__) ? __DATA_REGION_LENGTH__ : $DATA_LENGTH;
 ${EEPROM_LENGTH+__EEPROM_REGION_LENGTH__ = DEFINED(__EEPROM_REGION_LENGTH__) ? __EEPROM_REGION_LENGTH__ : $EEPROM_LENGTH;}
@@ -43,7 +45,9 @@ ${EEPROM_LENGTH+  eeprom (rw!x) : ORIGIN = 0x810000, LENGTH = __EEPROM_REGION_LE
   signature (rw!x) : ORIGIN = 0x840000, LENGTH = __SIGNATURE_REGION_LENGTH__
 ${USER_SIGNATURE_LENGTH+  user_signatures (rw!x) : ORIGIN = 0x850000, LENGTH = __USER_SIGNATURE_REGION_LENGTH__}
 }
+EOF
 
+cat <<EOF
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
@@ -109,32 +113,32 @@ SECTIONS
   /* Internal text space or external memory.  */
   .text ${RELOCATING-0} :
   {
-    *(.vectors)
+    ${RELOCATING+*(.vectors)
     KEEP(*(.vectors))
 
     /* For data that needs to reside in the lower 64k of progmem.  */
-    ${RELOCATING+ *(.progmem.gcc*)}
+    *(.progmem.gcc*)
 
     /* PR 13812: Placing the trampolines here gives a better chance
        that they will be in range of the code that uses them.  */
-    ${RELOCATING+. = ALIGN(2);}
-    ${CONSTRUCTING+ __trampolines_start = . ; }
+    . = ALIGN(2);
+    __trampolines_start = . ;
     /* The jump trampolines for the 16-bit limited relocs will reside here.  */
     *(.trampolines)
-    ${RELOCATING+ *(.trampolines*)}
-    ${CONSTRUCTING+ __trampolines_end = . ; }
+    *(.trampolines*)
+    __trampolines_end = . ;
 
     /* avr-libc expects these data to reside in lower 64K. */
-    ${RELOCATING+ *libprintf_flt.a:*(.progmem.data)}
-    ${RELOCATING+ *libc.a:*(.progmem.data)}
+    *libprintf_flt.a:*(.progmem.data)
+    *libc.a:*(.progmem.data)
 
-    ${RELOCATING+ *(.progmem.*)}
+    *(.progmem.*)
 
-    ${RELOCATING+. = ALIGN(2);}
+    . = ALIGN(2);
 
     /* For code that needs to reside in the lower 128k progmem.  */
     *(.lowtext)
-    ${RELOCATING+ *(.lowtext*)}
+    *(.lowtext*)}
 
     ${CONSTRUCTING+ __ctors_start = . ; }
     ${CONSTRUCTING+ *(.ctors) }
@@ -142,10 +146,10 @@ SECTIONS
     ${CONSTRUCTING+ __dtors_start = . ; }
     ${CONSTRUCTING+ *(.dtors) }
     ${CONSTRUCTING+ __dtors_end = . ; }
-    KEEP(SORT(*)(.ctors))
+    ${RELOCATING+KEEP(SORT(*)(.ctors))
     KEEP(SORT(*)(.dtors))
 
-    /* From this point on, we don't bother about wether the insns are
+    /* From this point on, we do not bother about whether the insns are
        below or above the 16 bits boundary.  */
     *(.init0)  /* Start here after reset.  */
     KEEP (*(.init0))
@@ -166,11 +170,11 @@ SECTIONS
     *(.init8)
     KEEP (*(.init8))
     *(.init9)  /* Call main().  */
-    KEEP (*(.init9))
+    KEEP (*(.init9))}
     *(.text)
-    ${RELOCATING+. = ALIGN(2);}
-    ${RELOCATING+ *(.text.*)}
-    ${RELOCATING+. = ALIGN(2);}
+    ${RELOCATING+. = ALIGN(2);
+    *(.text.*)
+    . = ALIGN(2);
     *(.fini9)  /* _exit() starts here.  */
     KEEP (*(.fini9))
     *(.fini8)
@@ -194,18 +198,18 @@ SECTIONS
 
     /* For code that needs not to reside in the lower progmem.  */
     *(.hightext)
-    ${RELOCATING+ *(.hightext*)}
+    *(.hightext*)
 
-    ${RELOCATING+ *(.progmemx.*)}
+    *(.progmemx.*)
 
-    ${RELOCATING+. = ALIGN(2);}
+    . = ALIGN(2);
 
-    /* For tablejump instruction arrays.  We don't relax
+    /* For tablejump instruction arrays.  We do not relax
        JMP / CALL instructions within these sections.  */
     *(.jumptables)
-    ${RELOCATING+ *(.jumptables*)}
+    *(.jumptables*)
 
-    ${RELOCATING+ _etext = . ; }
+    _etext = . ;}
   } ${RELOCATING+ > text}
 EOF
 
@@ -218,8 +222,8 @@ if test -n "$RODATA_PM_OFFSET"; then
   .rodata ${RELOCATING+ ADDR(.text) + SIZEOF (.text) + __RODATA_PM_OFFSET__ } ${RELOCATING-0} :
   {
     *(.rodata)
-    ${RELOCATING+ *(.rodata*)}
-    *(.gnu.linkonce.r*)
+    ${RELOCATING+ *(.rodata*)
+    *(.gnu.linkonce.r*)}
   } ${RELOCATING+AT> text}
 EOF
 fi
@@ -229,18 +233,18 @@ cat <<EOF
   {
     ${RELOCATING+ PROVIDE (__data_start = .) ; }
     *(.data)
-    ${RELOCATING+ *(.data*)}
-    *(.gnu.linkonce.d*)
+    ${RELOCATING+ *(.data*)
+    *(.gnu.linkonce.d*)}
 EOF
 
 # Classical devices that don't show flash memory in the SRAM address space
 # need .rodata to be part of .data because the compiler will use LD*
 # instructions and LD* cannot access flash.
 
-if test -z "$RODATA_PM_OFFSET"; then
+if test -z "$RODATA_PM_OFFSET" && test -n "${RELOCATING}"; then
     cat <<EOF
     *(.rodata)  /* We need to include .rodata here if gcc is used */
-    ${RELOCATING+ *(.rodata*)} /* with -fdata-sections.  */
+    *(.rodata*) /* with -fdata-sections.  */
     *(.gnu.linkonce.r*)
 EOF
 fi
@@ -256,7 +260,7 @@ cat <<EOF
     ${RELOCATING+ PROVIDE (__bss_start = .) ; }
     *(.bss)
     ${RELOCATING+ *(.bss*)}
-    *(COMMON)
+    ${RELOCATING+ *(COMMON)}
     ${RELOCATING+ PROVIDE (__bss_end = .) ; }
   } ${RELOCATING+ > data}
 
@@ -292,9 +296,9 @@ cat <<EOF
   .fuse ${RELOCATING-0}:
   {
     KEEP(*(.fuse))
-    KEEP(*(.lfuse))
+    ${RELOCATING+KEEP(*(.lfuse))
     KEEP(*(.hfuse))
-    KEEP(*(.efuse))
+    KEEP(*(.efuse))}
   } ${RELOCATING+ > fuse}
 EOF
 fi
@@ -332,7 +336,7 @@ cat <<EOF
   .stab.index 0 : { *(.stab.index) }
   .stab.indexstr 0 : { *(.stab.indexstr) }
   .comment 0 : { *(.comment) }
-  .note.gnu.build-id : { *(.note.gnu.build-id) }
+  .note.gnu.build-id ${RELOCATING-0} : { *(.note.gnu.build-id) }
 EOF
 
 . $srcdir/scripttempl/DWARF.sc

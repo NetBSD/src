@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,7 +22,7 @@
 
 #include "sysdep.h"
 
-#include <stdint.h>
+#include "bfd_stdint.h"
 #include <assert.h>
 
 #include "safe-ctype.h"
@@ -30,6 +30,10 @@
 #include "hashtab.h"
 #include "bfd.h"
 #include "opintl.h"
+
+#include <config.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "opcode/nds32.h"
 #include "nds32-asm.h"
@@ -42,8 +46,8 @@
 #define MAX_KEYWORD_LEN		32
 /* This LEX is a plain char or operand.  */
 #define IS_LEX_CHAR(c)		(((c) >> 7) == 0)
-#define LEX_SET_FIELD(c)	((c) | SYN_FIELD)
-#define LEX_GET_FIELD(c)	operand_fields[((c) & 0xff)]
+#define LEX_SET_FIELD(k,c)	((c) | (((k) + 1) << 8))
+#define LEX_GET_FIELD(k,c)	(nds32_field_table[k])[((c) & 0xff)]
 /* Get the char in this lexical element.  */
 #define LEX_CHAR(c)		((c) & 0xff)
 
@@ -59,7 +63,8 @@ static int parse_fe5 (struct nds32_asm_desc *, struct nds32_asm_insn *,
 		      char **, int64_t *);
 static int parse_pi5 (struct nds32_asm_desc *, struct nds32_asm_insn *,
 		      char **, int64_t *);
-static int parse_aext_reg (char **, int *, int);
+static int parse_aext_reg (struct nds32_asm_desc *, char **,
+			   int *, int);
 static int parse_a30b20 (struct nds32_asm_desc *, struct nds32_asm_insn *,
 			 char **, int64_t *);
 static int parse_rt21 (struct nds32_asm_desc *, struct nds32_asm_insn *,
@@ -158,6 +163,7 @@ const field_t operand_fields[] =
   {"i14s1",	0, 14, 1, HW_INT, NULL},
   {"i15s1",	0, 15, 1, HW_INT, NULL},
   {"i16s1",	0, 16, 1, HW_INT, NULL},
+  {"i16u5",	5, 16, 0, HW_UINT, NULL},
   {"i18s1",	0, 18, 1, HW_INT, NULL},
   {"i24s1",	0, 24, 1, HW_INT, NULL},
   {"i8s2",	0, 8, 2, HW_INT, NULL},
@@ -169,7 +175,6 @@ const field_t operand_fields[] =
   {"i5u",	0, 5, 0, HW_UINT, NULL},
   {"ib5u",	10, 5, 0, HW_UINT, NULL},	/* imm5 field in ALU.  */
   {"ib5s",	10, 5, 0, HW_INT, NULL},	/* imm5 field in ALU.  */
-  {"i9u",	0, 9, 0, HW_UINT, NULL},	/* for ex9.it.  */
   {"ia3u",	3, 3, 0, HW_UINT, NULL},	/* for bmski33, fexti33.  */
   {"i8u",	0, 8, 0, HW_UINT, NULL},
   {"ib8u",	7, 8, 0, HW_UINT, NULL},	/* for ffbi.  */
@@ -182,6 +187,8 @@ const field_t operand_fields[] =
   {"i7u2",	0, 7, 2, HW_UINT, NULL},
   {"i5u3",	0, 5, 3, HW_UINT, NULL},	/* for pop25/pop25.  */
   {"i15s3",	0, 15, 3, HW_INT, NULL},	/* for dprefi.d.  */
+  {"ib4u",	10, 4, 0, HW_UINT, NULL},	/* imm5 field in ALU.  */
+  {"ib2u",	10, 2, 0, HW_UINT, NULL},	/* imm5 field in ALU.  */
 
   {"a_rt",	15, 5, 0, HW_GPR, NULL},  /* for audio-extension.  */
   {"a_ru",	10, 5, 0, HW_GPR, NULL},  /* for audio-extension.  */
@@ -198,7 +205,9 @@ const field_t operand_fields[] =
   {"aridx",	0, 5, 0, HW_AEXT_ARIDX, NULL},  /* for audio-extension.  */
   {"aridx2",	0, 5, 0, HW_AEXT_ARIDX2, NULL},  /* for audio-extension.  */
   {"aridxi",	16, 4, 0, HW_AEXT_ARIDXI, NULL},  /* for audio-extension.  */
-  {"imm16",	0, 16, 0, HW_UINT, NULL},  /* for audio-extension.  */
+  {"aridxi_mx",	16, 4, 0, HW_AEXT_ARIDXI_MX, NULL},  /* for audio-extension.  */
+  {"imm16s",	0, 16, 0, HW_INT, NULL},  /* for audio-extension.  */
+  {"imm16u",	0, 16, 0, HW_UINT, NULL},  /* for audio-extension.  */
   {"im5_i",	0, 5, 0, HW_AEXT_IM_I, parse_im5_ip},  /* for audio-extension.  */
   {"im5_m",	0, 5, 0, HW_AEXT_IM_M, parse_im5_mr},  /* for audio-extension.  */
   {"im6_ip",	0, 2, 0, HW_AEXT_IM_I, parse_im6_ip},  /* for audio-extension.  */
@@ -293,7 +302,6 @@ struct nds32_opcode nds32_opcodes[] =
   {"jrnez", "%rb",		JREG (JRNEZ), 4, ATTR (BRANCH) | ATTR_V3, 0, NULL, 0, NULL},
   {"jralnez", "%rt,%rb",	JREG (JRALNEZ), 4, ATTR (BRANCH) | ATTR_V3, 0, NULL, 0, NULL},
   {"ret", "%rb",		JREG (JR) | JREG_RET, 4, ATTR (BRANCH) | ATTR_ALL, 0, NULL, 0, NULL},
-  {"ifret", "",			JREG (JR) | JREG_IFC | JREG_RET, 4, ATTR (BRANCH) | ATTR (IFC_EXT), 0, NULL, 0, NULL},
   {"jral", "%rb",		JREG (JRAL) | RT (30), 4, ATTR (BRANCH) | ATTR_ALL, 0, NULL, 0, NULL},
   {"jralnez", "%rb",		JREG (JRALNEZ) | RT (30), 4, ATTR (BRANCH) | ATTR_V3, 0, NULL, 0, NULL},
   {"ret", "",			JREG (JR) | JREG_RET | RB (30), 4, ATTR (BRANCH) | ATTR_ALL, 0, NULL, 0, NULL},
@@ -305,8 +313,6 @@ struct nds32_opcode nds32_opcodes[] =
   {"beq", "%rt,%ra,%i14s1",	OP6 (BR1), 4, ATTR_PCREL | ATTR_ALL, 0, NULL, 0, NULL},
   {"bne", "%rt,%ra,%i14s1",	OP6 (BR1) | N32_BIT (14), 4, ATTR_PCREL | ATTR_ALL, 0, NULL, 0, NULL},
   /* seg-BR2.  */
-#define BR2(sub)	(OP6 (BR2) | (N32_BR2_ ## sub << 16))
-  {"ifcall", "%i16s1",		BR2 (IFCALL), 4, ATTR (IFC_EXT), 0, NULL, 0, NULL},
   {"beqz", "%rt,%i16s1",	BR2 (BEQZ), 4, ATTR_PCREL | ATTR_ALL, 0, NULL, 0, NULL},
   {"bnez", "%rt,%i16s1",	BR2 (BNEZ), 4, ATTR_PCREL | ATTR_ALL, 0, NULL, 0, NULL},
   {"bgez", "%rt,%i16s1",	BR2 (BGEZ), 4, ATTR_PCREL | ATTR_ALL, 0, NULL, 0, NULL},
@@ -376,10 +382,10 @@ struct nds32_opcode nds32_opcodes[] =
   {"bse", "=rt,%ra,=rb",	ALU2 (BSE), 4, ATTR (PERF2_EXT), 0, NULL, 0, NULL},
   {"bsp", "=rt,%ra,=rb",	ALU2 (BSP), 4, ATTR (PERF2_EXT), 0, NULL, 0, NULL},
   {"ffzmism", "=rt,%ra,%rb",	ALU2 (FFZMISM), 4, ATTR (STR_EXT), 0, NULL, 0, NULL},
-  {"mfusr", "=rt,%usr",		ALU2 (MFUSR), 4, ATTR_V3MEX_V1, 0, NULL, 0, NULL},
-  {"mtusr", "%rt,%usr",		ALU2 (MTUSR), 4, ATTR_V3MEX_V1, 0, NULL, 0, NULL},
-  {"mfusr", "=rt,%ridx",	ALU2 (MFUSR), 4, ATTR_V3MEX_V1, 0, NULL, 0, NULL},
-  {"mtusr", "%rt,%ridx",	ALU2 (MTUSR), 4, ATTR_V3MEX_V1, 0, NULL, 0, NULL},
+  {"mfusr", "=rt,%usr",		ALU2 (MFUSR), 4, ATTR_ALL, 0, NULL, 0, NULL},
+  {"mtusr", "%rt,%usr",		ALU2 (MTUSR), 4, ATTR_ALL, 0, NULL, 0, NULL},
+  {"mfusr", "=rt,%ridx",	ALU2 (MFUSR), 4, ATTR_ALL, 0, NULL, 0, NULL},
+  {"mtusr", "%rt,%ridx",	ALU2 (MTUSR), 4, ATTR_ALL, 0, NULL, 0, NULL},
   {"mul", "=rt,%ra,%rb",	ALU2 (MUL), 4, ATTR_ALL, 0, NULL, 0, NULL},
   {"madds64", "=dt,%ra,%rb",	ALU2 (MADDS64), 4, ATTR (MAC) | ATTR_ALL, 0, NULL, 0, NULL},
   {"madd64", "=dt,%ra,%rb",	ALU2 (MADD64), 4, ATTR (MAC) | ATTR_ALL, 0, NULL, 0, NULL},
@@ -438,6 +444,7 @@ struct nds32_opcode nds32_opcodes[] =
   {"tlbop", "%ra,%tlbop_st",	MISC (TLBOP), 4, ATTR_ALL, 0, NULL, 0, NULL},
   {"tlbop", "%ra,%tlbop_stx",	MISC (TLBOP), 4, ATTR_ALL, 0, NULL, 0, NULL},
   {"tlbop", "%rt,%ra,pb",	MISC (TLBOP) | (5 << 5), 4, ATTR_ALL, 0, NULL, 0, NULL},
+  {"tlbop", "%rt,%ra,probe",	MISC (TLBOP) | (5 << 5), 4, ATTR_ALL, 0, NULL, 0, NULL},
   {"tlbop", "flua",		MISC (TLBOP) | (7 << 5), 4, ATTR_ALL, 0, NULL, 0, NULL},
   {"tlbop", "flushall",		MISC (TLBOP) | (7 << 5), 4, ATTR_ALL, 0, NULL, 0, NULL},
 
@@ -709,7 +716,6 @@ struct nds32_opcode nds32_opcodes[] =
   /* SEG11_2  bit7~bit5.  */
   {"jr5", "%ra5",	0xdd00, 2, ATTR_ALL, 0, NULL, 0, NULL},
   {"jral5", "%ra5",	0xdd20, 2, ATTR_ALL, 0, NULL, 0, NULL},
-  {"ex9.it", "%i5u",	0xdd40, 2, ATTR (EX9_EXT), 0, NULL, 0, NULL},
   {"ret5", "%ra5",	0xdd80, 2, ATTR_ALL, 0, NULL, 0, NULL},
   {"add5.pc", "%ra5",	0xdda0, 2, ATTR_V3, 0, NULL, 0, NULL},
   /* SEG11_3  if Ra5=30.  */
@@ -726,13 +732,10 @@ struct nds32_opcode nds32_opcodes[] =
   /* SEG13_1  bit8.  */
   {"beqzs8", "%i8s1",	0xe800, 2, ATTR_PCREL | ATTR_ALL, USE_REG (15), NULL, 0, NULL},
   {"bnezs8", "%i8s1",	0xe900, 2, ATTR_PCREL | ATTR_ALL, USE_REG (15), NULL, 0, NULL},
-  /* SEG13_2  bit8~bit5.  */
-  {"ex9.it", "%i9u",	0xea00, 2, ATTR (EX9_EXT), 0, NULL, 0, NULL},
   /* SEG14  bit7.  */
   {"lwi37.sp", "=rt38,[+%i7u2]",	0xf000, 2, ATTR_V2UP, USE_REG (31), NULL, 0, NULL},
   {"swi37.sp", "%rt38,[+%i7u2]",	0xf080, 2, ATTR_V2UP, USE_REG (31), NULL, 0, NULL},
   /* SEG15  bit10~bit9.  */
-  {"ifcall9", "%i9u1",	0xf800, 2, ATTR (IFC_EXT), 0, NULL, 0, NULL},
   {"movpi45", "=rt4,%pi5",	0xfa00, 2, ATTR_V3MUP, 0, NULL, 0, NULL},
   /* SEG15_1  bit8.  */
   {"movd44", "=rt5e,%ra5e",	0xfd00, 2, ATTR_V3MUP, 0, NULL, 0, NULL},
@@ -758,7 +761,6 @@ struct nds32_opcode nds32_opcodes[] =
   {"or33", "=rt3,%ra3",	0xfe07, 2, ATTR_V3MUP, 0, NULL, 0, NULL},
   /* SEG-Alias instructions.  */
   {"nop16", "",	0x9200, 2, ATTR_ALL, 0, NULL, 0, NULL},
-  {"ifret16", "",	0x83ff, 2, ATTR (IFC_EXT), 0, NULL, 0, NULL},
 
   /* Saturation ext ISA.  */
   {"kaddw", "=rt,%ra,%rb",	ALU2 (KADD), 4, ATTR (SATURATION_EXT), 0, NULL, 0, NULL},
@@ -773,13 +775,16 @@ struct nds32_opcode nds32_opcodes[] =
   {"khmbt", "=rt,%ra,%rb",	ALU2 (KMxy) | N32_BIT (8) | N32_BIT (6), 4, ATTR (SATURATION_EXT), 0, NULL, 0, NULL},
   {"khmtb", "=rt,%ra,%rb",	ALU2 (KMxy) | N32_BIT (8) | N32_BIT (7), 4, ATTR (SATURATION_EXT), 0, NULL, 0, NULL},
   {"khmtt", "=rt,%ra,%rb",	ALU2 (KMxy) | N32_BIT (8) | N32_BIT (6) | N32_BIT (7), 4, ATTR (SATURATION_EXT), 0, NULL, 0, NULL},
-  {"kslraw", "=rt,%ra,%rb",	ALU2 (KSLRA), 4, ATTR (SATURATION_EXT), 0, NULL, 0, NULL},
+  {"kslraw", "=rt,%ra,%rb",	ALU2 (KSLRAW), 4, ATTR (SATURATION_EXT), 0, NULL, 0, NULL},
+  {"ksll", "=rt,%ra,%rb",	ALU2 (KSLRAW), 4, ATTR (SATURATION_EXT), 0, NULL, 0, NULL},
+  {"kslraw.u", "=rt,%ra,%rb",	ALU2 (KSLRAWu), 4, ATTR (SATURATION_EXT), 0, NULL, 0, NULL},
   {"rdov", "=rt",		ALU2 (MFUSR) | N32_BIT (6) | ( 0x1e << 15), 4, ATTR (SATURATION_EXT), 0, NULL, 0, NULL},
   {"clrov", "",			ALU2 (MTUSR) | N32_BIT (6) | ( 0x1e << 15), 4, ATTR (SATURATION_EXT), 0, NULL, 0, NULL},
 
   /* Audio ext. instructions.  */
 
-  {"amtari", "%aridxi,%imm16", AUDIO (AMTARI), 4, ATTR (AUDIO_ISAEXT), 0, NULL, 0, NULL},
+  {"amtari", "%aridxi,%imm16u", AUDIO (AMTARI), 4, ATTR (AUDIO_ISAEXT), 0, NULL, 0, NULL},
+  {"amtari", "%aridxi_mx,%imm16s", AUDIO (AMTARI), 4, ATTR (AUDIO_ISAEXT), 0, NULL, 0, NULL},
   /* N32_AEXT_AMADD */
   {"alr2", "=a_rt,=a_ru,[%im6_ip],[%im6_iq],%im6_mr,%im6_ms", AUDIO (AMADD) | (0x1 << 6), 4, ATTR (AUDIO_ISAEXT), 0, NULL, 0, NULL},
   {"amaddl.s", "=a_dx,%ra,%rb,[%im5_i],%im5_m", AUDIO (AMADD) | (0x04 << 5), 4, ATTR (AUDIO_ISAEXT), 0, NULL, 0, NULL},
@@ -930,6 +935,182 @@ struct nds32_opcode nds32_opcodes[] =
   {"amttsl2.s", "=a_dx,%ra,%rb,[%im6_ip],[%im6_iq],%im6_mr,%im6_ms", AUDIO (AMTTS) | (0x08 << 5), 4, ATTR (AUDIO_ISAEXT), 0, NULL, 0, NULL},
   {"amttsl2.l", "=a_dx,%a_a30,%a_b20,%a_rte,%a_rte1,[%im6_ip],[%im6_iq],%im6_mr,%im6_ms", AUDIO (AMTTS) | (0x0A << 5), 4, ATTR (AUDIO_ISAEXT), 0, NULL, 0, NULL},
   {"amttssa", "=a_dx,%ra,%rb,%dhy,[%im5_i],%im5_m", AUDIO (AMTTS) | (0x0C << 5), 4, ATTR (AUDIO_ISAEXT), 0, NULL, 0, NULL},
+
+  /* DSP ISA.  */
+  /* ALU2 Bit 9-6 = 0000.  */
+  {"add64", "=rt,%ra,%rb",	ALU2 (ADD64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"sub64", "=rt,%ra,%rb",	ALU2 (SUB64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smal", "=rt,%ra,%rb",	ALU2 (SMAL), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"radd64", "=rt,%ra,%rb",	ALU2 (RADD64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"rsub64", "=rt,%ra,%rb",	ALU2 (RSUB64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"uradd64", "=rt,%ra,%rb",	ALU2 (URADD64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ursub64", "=rt,%ra,%rb",	ALU2 (URSUB64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kadd64", "=rt,%ra,%rb",	ALU2 (KADD64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ksub64", "=rt,%ra,%rb",	ALU2 (KSUB64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ukadd64", "=rt,%ra,%rb",	ALU2 (UKADD64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"uksub64", "=rt,%ra,%rb",	ALU2 (UKSUB64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  /* ALU2 Bit 9-6 = 0001.  */
+  {"smar64", "=rt,%ra,%rb",	ALU2_1 (SMAR64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"umar64", "=rt,%ra,%rb",	ALU2_1 (UMAR64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smsr64", "=rt,%ra,%rb",	ALU2_1 (SMSR64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"umsr64", "=rt,%ra,%rb",	ALU2_1 (UMSR64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmar64", "=rt,%ra,%rb",	ALU2_1 (KMAR64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ukmar64", "=rt,%ra,%rb",	ALU2_1 (UKMAR64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmsr64", "=rt,%ra,%rb",	ALU2_1 (KMSR64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ukmsr64", "=rt,%ra,%rb",	ALU2_1 (UKMSR64), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smalda", "=rt,%ra,%rb",	ALU2_1 (SMALDA), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smslda", "=rt,%ra,%rb",	ALU2_1 (SMSLDA), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smalds", "=rt,%ra,%rb",	ALU2_1 (SMALDS), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smalbb", "=rt,%ra,%rb",	ALU2_1 (SMALBB), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smalxda", "=rt,%ra,%rb",	ALU2_1 (SMALXDA), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smslxda", "=rt,%ra,%rb",	ALU2_1 (SMSLXDA), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smalxds", "=rt,%ra,%rb",	ALU2_1 (SMALXDS), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smalbt", "=rt,%ra,%rb",	ALU2_1 (SMALBT), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smalbt", "=rt,%ra,%rb",	ALU2_1 (SMALBT), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smaldrs", "=rt,%ra,%rb",	ALU2_1 (SMALDRS), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smaltt", "=rt,%ra,%rb",	ALU2_1 (SMALTT), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smds", "=rt,%ra,%rb",	ALU2_1 (SMDS), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smxds", "=rt,%ra,%rb",	ALU2_1 (SMXDS), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smdrs", "=rt,%ra,%rb",	ALU2_1 (SMDRS), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmadrs", "=rt,%ra,%rb",	ALU2_1 (KMADRS), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmads", "=rt,%ra,%rb",	ALU2_1 (KMADS), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmaxds", "=rt,%ra,%rb",	ALU2_1 (KMAXDS), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  /* DSP MISC.  */
+  {"bpick", "=rt,%ra,%rb,%rd",	MISC (BPICK), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  /* ALU_2 KMxy.  */
+  {"khm16", "=rt,%ra,%rb",	ALU2 (KMxy) | N32_BIT (9) | N32_BIT (8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"khmx16", "=rt,%ra,%rb",	ALU2 (KMxy) | N32_BIT (9) | N32_BIT (8) | N32_BIT (6), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smul16", "=rt,%ra,%rb",	ALU2 (KMxy) | N32_BIT (9), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smulx16", "=rt,%ra,%rb",	ALU2 (KMxy) | N32_BIT (9) | N32_BIT (6), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"umul16", "=rt,%ra,%rb",	ALU2 (KMxy) | N32_BIT (9) | N32_BIT (7), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"umulx16", "=rt,%ra,%rb",	ALU2 (KMxy) | N32_BIT (9) | N32_BIT (7) | N32_BIT (6), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  /* ALU2 Bit 9-6 = 0010.  */
+  {"kadd16", "=rt,%ra,%rb",	ALU2_2 (KADD16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ksub16", "=rt,%ra,%rb",	ALU2_2 (KSUB16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kcras16", "=rt,%ra,%rb",	ALU2_2 (KCRAS16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kcrsa16", "=rt,%ra,%rb",	ALU2_2 (KCRSA16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kadd8", "=rt,%ra,%rb",	ALU2_2 (KADD8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ksub8", "=rt,%ra,%rb",	ALU2_2 (KSUB8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"wext", "=rt,%ra,%rb",	ALU2_2 (WEXT), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"wexti", "=rt,%ra,%ib5u",	ALU2_2 (WEXTI), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ukadd16", "=rt,%ra,%rb",	ALU2_2 (UKADD16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"uksub16", "=rt,%ra,%rb",	ALU2_2 (UKSUB16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ukcras16", "=rt,%ra,%rb",	ALU2_2 (UKCRAS16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ukcrsa16", "=rt,%ra,%rb",	ALU2_2 (UKCRSA16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ukadd8", "=rt,%ra,%rb",	ALU2_2 (UKADD8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"uksub8", "=rt,%ra,%rb",	ALU2_2 (UKSUB8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  /* ONEOP.  */
+#define DSP_ONEOP(n) ((n) << 10)
+  {"sunpkd810", "=rt,%ra",	ALU2_2 (ONEOP) | DSP_ONEOP (0x0), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"sunpkd820", "=rt,%ra",	ALU2_2 (ONEOP) | DSP_ONEOP (0x1), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"sunpkd830", "=rt,%ra",	ALU2_2 (ONEOP) | DSP_ONEOP (0x2), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"sunpkd831", "=rt,%ra",	ALU2_2 (ONEOP) | DSP_ONEOP (0x3), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"zunpkd810", "=rt,%ra",	ALU2_2 (ONEOP) | DSP_ONEOP (0x4), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"zunpkd820", "=rt,%ra",	ALU2_2 (ONEOP) | DSP_ONEOP (0x5), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"zunpkd830", "=rt,%ra",	ALU2_2 (ONEOP) | DSP_ONEOP (0x6), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"zunpkd831", "=rt,%ra",	ALU2_2 (ONEOP) | DSP_ONEOP (0x7), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kabs", "=rt,%ra",		ALU2 (ABS), 4, ATTR (PERF_EXT), 0, NULL, 0, NULL},
+  {"kabs16", "=rt,%ra",		ALU2_2 (ONEOP) | DSP_ONEOP (0x8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kabs8", "=rt,%ra",		ALU2_2 (ONEOP) | DSP_ONEOP (0xc), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"insb", "=rt,%ra,%ib2u",	ALU2_2 (ONEOP) | DSP_ONEOP (0x10), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smbb", "=rt,%ra,%rb",	ALU2_2 (SMBB), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smbt", "=rt,%ra,%rb",	ALU2_2 (SMBT), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smtt", "=rt,%ra,%rb",	ALU2_2 (SMTT), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmabb", "=rt,%ra,%rb",	ALU2_2 (KMABB), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmabt", "=rt,%ra,%rb",	ALU2_2 (KMABT), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmatt", "=rt,%ra,%rb",	ALU2_2 (KMATT), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmda", "=rt,%ra,%rb",	ALU2_2 (KMDA), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmxda", "=rt,%ra,%rb",	ALU2_2 (KMXDA), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmada", "=rt,%ra,%rb",	ALU2_2 (KMADA), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmaxda", "=rt,%ra,%rb",	ALU2_2 (KMAXDA), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmsda", "=rt,%ra,%rb",	ALU2_2 (KMSDA), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmsxda", "=rt,%ra,%rb",	ALU2_2 (KMSXDA), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"radd16", "=rt,%ra,%rb",	ALU2_2 (RADD16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"rsub16", "=rt,%ra,%rb",	ALU2_2 (RSUB16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"rcras16", "=rt,%ra,%rb",	ALU2_2 (RCRAS16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"rcrsa16", "=rt,%ra,%rb",	ALU2_2 (RCRSA16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"radd8", "=rt,%ra,%rb",	ALU2_2 (RADD8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"rsub8", "=rt,%ra,%rb",	ALU2_2 (RSUB8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"raddw", "=rt,%ra,%rb",	ALU2_2 (RADDW), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"rsubw", "=rt,%ra,%rb",	ALU2_2 (RSUBW), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"uradd16", "=rt,%ra,%rb",	ALU2_2 (URADD16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ursub16", "=rt,%ra,%rb",	ALU2_2 (URSUB16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"urcras16", "=rt,%ra,%rb",	ALU2_2 (URCRAS16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"urcrsa16", "=rt,%ra,%rb",	ALU2_2 (URCRSA16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"uradd8", "=rt,%ra,%rb",	ALU2_2 (URADD8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ursub8", "=rt,%ra,%rb",	ALU2_2 (URSUB8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"uraddw", "=rt,%ra,%rb",	ALU2_2 (URADDW), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ursubw", "=rt,%ra,%rb",	ALU2_2 (URSUBW), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"add16", "=rt,%ra,%rb",	ALU2_2 (ADD16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"sub16", "=rt,%ra,%rb",	ALU2_2 (SUB16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"cras16", "=rt,%ra,%rb",	ALU2_2 (CRAS16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"crsa16", "=rt,%ra,%rb",	ALU2_2 (CRSA16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"add8", "=rt,%ra,%rb",	ALU2_2 (ADD8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"sub8", "=rt,%ra,%rb",	ALU2_2 (SUB8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"bitrev", "=rt,%ra,%rb",	ALU2_2 (BITREV), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"bitrevi", "=rt,%ra,%ib5u",	ALU2_2 (BITREVI), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smmul", "=rt,%ra,%rb",	ALU2_2 (SMMUL), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smmul.u", "=rt,%ra,%rb",	ALU2_2 (SMMULu), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmmac", "=rt,%ra,%rb",	ALU2_2 (KMMAC), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmmac.u", "=rt,%ra,%rb",	ALU2_2 (KMMACu), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmmsb", "=rt,%ra,%rb",	ALU2_2 (KMMSB), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmmsb.u", "=rt,%ra,%rb",	ALU2_2 (KMMSBu), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kwmmul", "=rt,%ra,%rb",	ALU2_2 (KWMMUL), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kwmmul.u", "=rt,%ra,%rb",	ALU2_2 (KWMMULu), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  /* ALU2 Bit 9-6 = 0010.  */
+  {"smmwb", "=rt,%ra,%rb",	ALU2_3 (SMMWB), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smmwb.u", "=rt,%ra,%rb",	ALU2_3 (SMMWBu), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smmwt", "=rt,%ra,%rb",	ALU2_3 (SMMWT), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smmwt.u", "=rt,%ra,%rb",	ALU2_3 (SMMWTu), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmmawb", "=rt,%ra,%rb",	ALU2_3 (KMMAWB), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmmawb.u", "=rt,%ra,%rb",	ALU2_3 (KMMAWBu), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmmawt", "=rt,%ra,%rb",	ALU2_3 (KMMAWT), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kmmawt.u", "=rt,%ra,%rb",	ALU2_3 (KMMAWTu), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"pktt16", "=rt,%ra,%rb",	ALU2_3 (PKTT16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"pktb16", "=rt,%ra,%rb",	ALU2_3 (PKTB16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"pkbt16", "=rt,%ra,%rb",	ALU2_3 (PKBT16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"pkbb16", "=rt,%ra,%rb",	ALU2_3 (PKBB16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"sclip32", "=rt,%ra,%ib5u",	ALU2 (CLIPS), 4, ATTR (PERF_EXT), 0, NULL, 0, NULL},
+  {"sclip16", "=rt,%ra,%ib4u",	ALU2_3 (SCLIP16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smax16", "=rt,%ra,%rb",	ALU2_3 (SMAX16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smax8", "=rt,%ra,%rb",	ALU2_3 (SMAX8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"uclip32", "=rt,%ra,%ib5u",	ALU2 (CLIP), 4, ATTR (PERF_EXT), 0, NULL, 0, NULL},
+  {"uclip16", "=rt,%ra,%ib4u",	ALU2_3 (UCLIP16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"umax16", "=rt,%ra,%rb",	ALU2_3 (UMAX16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"umax8", "=rt,%ra,%rb",	ALU2_3 (UMAX8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"sra16", "=rt,%ra,%rb",	ALU2_3 (SRA16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"sra16.u", "=rt,%ra,%rb",	ALU2_3 (SRA16u), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"srl16", "=rt,%ra,%rb",	ALU2_3 (SRL16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"srl16.u", "=rt,%ra,%rb",	ALU2_3 (SRL16u), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"sll16", "=rt,%ra,%rb",	ALU2_3 (SLL16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kslra16", "=rt,%ra,%rb",	ALU2_3 (KSLRA16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ksll16", "=rt,%ra,%rb",	ALU2_3 (KSLRA16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kslra16.u", "=rt,%ra,%rb",	ALU2_3 (KSLRA16u), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"sra.u", "=rt,%ra,%rb",	ALU2_3 (SRAu), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"srai16", "=rt,%ra,%ib4u",	ALU2_3 (SRAI16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"srai16.u", "=rt,%ra,%ib4u",	ALU2_3 (SRAI16u), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"srli16", "=rt,%ra,%ib4u",	ALU2_3 (SRLI16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"srli16.u", "=rt,%ra,%ib4u",	ALU2_3 (SRLI16u), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"slli16", "=rt,%ra,%ib4u",	ALU2_3 (SLLI16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kslli16", "=rt,%ra,%ib4u",	ALU2_3 (KSLLI16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"kslli", "=rt,%ra,%ib5u",	ALU2_3 (KSLLI), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"srai.u", "=rt,%ra,%ib5u",	ALU2_3 (SRAIu), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"cmpeq16", "=rt,%ra,%rb",	ALU2_3 (CMPEQ16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"scmplt16", "=rt,%ra,%rb",	ALU2_3 (SCMPLT16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"scmple16", "=rt,%ra,%rb",	ALU2_3 (SCMPLE16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smin16", "=rt,%ra,%rb",	ALU2_3 (SMIN16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"cmpeq8", "=rt,%ra,%rb",	ALU2_3 (CMPEQ8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"scmplt8", "=rt,%ra,%rb",	ALU2_3 (SCMPLT8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"scmple8", "=rt,%ra,%rb",	ALU2_3 (SCMPLE8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"smin8", "=rt,%ra,%rb",	ALU2_3 (SMIN8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ucmplt16", "=rt,%ra,%rb",	ALU2_3 (UCMPLT16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ucmple16", "=rt,%ra,%rb",	ALU2_3 (UCMPLE16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"umin16", "=rt,%ra,%rb",	ALU2_3 (UMIN16), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ucmplt8", "=rt,%ra,%rb",	ALU2_3 (UCMPLT8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"ucmple8", "=rt,%ra,%rb",	ALU2_3 (UCMPLE8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"umin8", "=rt,%ra,%rb",	ALU2_3 (UMIN8), 4, ATTR (DSP_ISAEXT), 0, NULL, 0, NULL},
+  {"mtlbi", "%i16s1",		BR2 (SOP0) | N32_BIT (20), 4, ATTR (ZOL) | ATTR (DSP_ISAEXT) | ATTR (PCREL), 0, NULL, 0, NULL},
+  {"mtlei", "%i16s1",		BR2 (SOP0) | N32_BIT (21), 4, ATTR (ZOL) | ATTR (DSP_ISAEXT) | ATTR (PCREL), 0, NULL, 0, NULL},
   {NULL, NULL, 0, 0, 0, 0, NULL, 0, NULL},
 };
 
@@ -985,6 +1166,9 @@ const keyword_t keyword_usr[] =
   {"d0.hi", USRIDX (0, 1), 0},
   {"d1.lo", USRIDX (0, 2), 0},
   {"d1.hi", USRIDX (0, 3), 0},
+  {"lb", USRIDX (0, 25), 0},
+  {"le", USRIDX (0, 26), 0},
+  {"lc", USRIDX (0, 27), 0},
   {"itb", USRIDX (0, 28), 0},
   {"ifc_lp", USRIDX (0, 29), 0},
   {"pc", USRIDX (0, 31), 0},
@@ -1039,6 +1223,7 @@ const keyword_t keyword_sr[] =
   {"ipc", SRIDX (1, 5, 1), 0},		{"ir9", SRIDX (1, 5, 1), 0},
   {"p_ipc", SRIDX (1, 5, 2), 0},	{"ir10", SRIDX (1, 5, 2), 0},
   {"oipc", SRIDX (1, 5, 3), 0},		{"ir11", SRIDX (1, 5, 3), 0},
+  {"dipc", SRIDX (1, 5, 3), 0},
   {"p_p0", SRIDX (1, 6, 2), 0},		{"ir12", SRIDX (1, 6, 2), 0},
   {"p_p1", SRIDX (1, 7, 2), 0},		{"ir13", SRIDX (1, 7, 2), 0},
   {"int_mask", SRIDX (1, 8, 0), 0},	{"ir14", SRIDX (1, 8, 0), 0},
@@ -1058,6 +1243,11 @@ const keyword_t keyword_sr[] =
   {"int_pri2", SRIDX (1, 11, 1), 0},	{"ir28", SRIDX (1, 11, 1), 0},
   {"int_trigger", SRIDX (1, 9, 4), 0},	{"ir29", SRIDX (1, 9, 4), 0},
   {"int_gpr_push_dis", SRIDX(1, 1, 3), 0}, {"ir30", SRIDX (1, 1, 3), 0},
+  {"int_mask3", SRIDX(1, 8, 2), 0},	{"ir31", SRIDX (1, 8, 2), 0},
+  {"int_pend3", SRIDX(1, 9, 2), 0},	{"ir32", SRIDX (1, 9, 2), 0},
+  {"int_pri3", SRIDX(1, 11, 2), 0},	{"ir33", SRIDX (1, 11, 2), 0},
+  {"int_pri4", SRIDX(1, 11, 3), 0},	{"ir34", SRIDX (1, 11, 3), 0},
+  {"int_trigger2", SRIDX(1, 9, 5), 0},	{"ir35", SRIDX (1, 9, 5), 0},
 
   {"mmu_ctl", SRIDX (2, 0, 0), 0},	{"mr0", SRIDX (2, 0, 0), 0},
   {"l1_pptb", SRIDX (2, 1, 0), 0},	{"mr1", SRIDX (2, 1, 0), 0},
@@ -1076,9 +1266,12 @@ const keyword_t keyword_sr[] =
   {"pfmc1", SRIDX (4, 0, 1), 0},	{"pfr1", SRIDX (4, 0, 1), 0},
   {"pfmc2", SRIDX (4, 0, 2), 0},	{"pfr2", SRIDX (4, 0, 2), 0},
   {"pfm_ctl", SRIDX (4, 1, 0), 0},	{"pfr3", SRIDX (4, 1, 0), 0},
+  {"pft_ctl", SRIDX (4, 2, 0), 0},	{"pfr4", SRIDX (4, 2, 0), 0},
   {"hsp_ctl", SRIDX (4, 6, 0), 0},	{"hspr0", SRIDX (4, 6, 0), 0},
   {"sp_bound", SRIDX (4, 6, 1), 0},	{"hspr1", SRIDX (4, 6, 1), 0},
   {"sp_bound_priv", SRIDX (4, 6, 2), 0},{"hspr2", SRIDX (4, 6, 2), 0},
+  {"sp_base", SRIDX (4, 6, 3), 0},	{"hspr3", SRIDX (4, 6, 3), 0},
+  {"sp_base_priv", SRIDX (4, 6, 4), 0},	{"hspr4", SRIDX (4, 6, 4), 0},
 
   {"dma_cfg", SRIDX (5, 0, 0), 0},	{"dmar0", SRIDX (5, 0, 0), 0},
   {"dma_gcsw", SRIDX (5, 1, 0), 0},	{"dmar1", SRIDX (5, 1, 0), 0},
@@ -1101,51 +1294,51 @@ const keyword_t keyword_sr[] =
 
   {"secur0", SRIDX (6, 0, 0), 0},	{"sfcr", SRIDX (6, 0, 0), 0},
   {"secur1", SRIDX (6, 1, 0), 0},	{"sign", SRIDX (6, 1, 0), 0},
-  {"secur2", SRIDX (6, 1, 1), 0},      {"isign", SRIDX (6, 1, 1), 0},
-  {"secur3", SRIDX (6, 1, 2), 0},      {"p_isign", SRIDX (6, 1, 2), 0},
+  {"secur2", SRIDX (6, 1, 1), 0},	{"isign", SRIDX (6, 1, 1), 0},
+  {"secur3", SRIDX (6, 1, 2), 0},	{"p_isign", SRIDX (6, 1, 2), 0},
 
   {"prusr_acc_ctl", SRIDX (4, 4, 0), 0},
   {"fucpr", SRIDX (4, 5, 0), 0},	{"fucop_ctl", SRIDX (4, 5, 0), 0},
 
   {"bpc0", SRIDX (3, 0, 0), 0},		{"dr0", SRIDX (3, 0, 0), 0},
-  {"bpc1", SRIDX (3, 0, 1), 0},		{"dr1", SRIDX (3, 0, 1), 0},
-  {"bpc2", SRIDX (3, 0, 2), 0},		{"dr2", SRIDX (3, 0, 2), 0},
-  {"bpc3", SRIDX (3, 0, 3), 0},		{"dr3", SRIDX (3, 0, 3), 0},
-  {"bpc4", SRIDX (3, 0, 4), 0},		{"dr4", SRIDX (3, 0, 4), 0},
-  {"bpc5", SRIDX (3, 0, 5), 0},		{"dr5", SRIDX (3, 0, 5), 0},
-  {"bpc6", SRIDX (3, 0, 6), 0},		{"dr6", SRIDX (3, 0, 6), 0},
-  {"bpc7", SRIDX (3, 0, 7), 0},		{"dr7", SRIDX (3, 0, 7), 0},
-  {"bpa0", SRIDX (3, 1, 0), 0},		{"dr8", SRIDX (3, 1, 0), 0},
-  {"bpa1", SRIDX (3, 1, 1), 0},		{"dr9", SRIDX (3, 1, 1), 0},
-  {"bpa2", SRIDX (3, 1, 2), 0},		{"dr10", SRIDX (3, 1, 2), 0},
-  {"bpa3", SRIDX (3, 1, 3), 0},		{"dr11", SRIDX (3, 1, 3), 0},
-  {"bpa4", SRIDX (3, 1, 4), 0},		{"dr12", SRIDX (3, 1, 4), 0},
-  {"bpa5", SRIDX (3, 1, 5), 0},		{"dr13", SRIDX (3, 1, 5), 0},
-  {"bpa6", SRIDX (3, 1, 6), 0},		{"dr14", SRIDX (3, 1, 6), 0},
-  {"bpa7", SRIDX (3, 1, 7), 0},		{"dr15", SRIDX (3, 1, 7), 0},
-  {"bpam0", SRIDX (3, 2, 0), 0},	{"dr16", SRIDX (3, 2, 0), 0},
-  {"bpam1", SRIDX (3, 2, 1), 0},	{"dr17", SRIDX (3, 2, 1), 0},
-  {"bpam2", SRIDX (3, 2, 2), 0},	{"dr18", SRIDX (3, 2, 2), 0},
-  {"bpam3", SRIDX (3, 2, 3), 0},	{"dr19", SRIDX (3, 2, 3), 0},
-  {"bpam4", SRIDX (3, 2, 4), 0},	{"dr20", SRIDX (3, 2, 4), 0},
-  {"bpam5", SRIDX (3, 2, 5), 0},	{"dr21", SRIDX (3, 2, 5), 0},
-  {"bpam6", SRIDX (3, 2, 6), 0},	{"dr22", SRIDX (3, 2, 6), 0},
-  {"bpam7", SRIDX (3, 2, 7), 0},	{"dr23", SRIDX (3, 2, 7), 0},
-  {"bpv0", SRIDX (3, 3, 0), 0},		{"dr24", SRIDX (3, 3, 0), 0},
-  {"bpv1", SRIDX (3, 3, 1), 0},		{"dr25", SRIDX (3, 3, 1), 0},
-  {"bpv2", SRIDX (3, 3, 2), 0},		{"dr26", SRIDX (3, 3, 2), 0},
-  {"bpv3", SRIDX (3, 3, 3), 0},		{"dr27", SRIDX (3, 3, 3), 0},
-  {"bpv4", SRIDX (3, 3, 4), 0},		{"dr28", SRIDX (3, 3, 4), 0},
-  {"bpv5", SRIDX (3, 3, 5), 0},		{"dr29", SRIDX (3, 3, 5), 0},
-  {"bpv6", SRIDX (3, 3, 6), 0},		{"dr30", SRIDX (3, 3, 6), 0},
-  {"bpv7", SRIDX (3, 3, 7), 0},		{"dr31", SRIDX (3, 3, 7), 0},
-  {"bpcid0", SRIDX (3, 4, 0), 0},	{"dr32", SRIDX (3, 4, 0), 0},
-  {"bpcid1", SRIDX (3, 4, 1), 0},	{"dr33", SRIDX (3, 4, 1), 0},
-  {"bpcid2", SRIDX (3, 4, 2), 0},	{"dr34", SRIDX (3, 4, 2), 0},
-  {"bpcid3", SRIDX (3, 4, 3), 0},	{"dr35", SRIDX (3, 4, 3), 0},
-  {"bpcid4", SRIDX (3, 4, 4), 0},	{"dr36", SRIDX (3, 4, 4), 0},
-  {"bpcid5", SRIDX (3, 4, 5), 0},	{"dr37", SRIDX (3, 4, 5), 0},
-  {"bpcid6", SRIDX (3, 4, 6), 0},	{"dr38", SRIDX (3, 4, 6), 0},
+  {"bpc1", SRIDX (3, 0, 1), 0},		{"dr5", SRIDX (3, 0, 1), 0},
+  {"bpc2", SRIDX (3, 0, 2), 0},		{"dr10", SRIDX (3, 0, 2), 0},
+  {"bpc3", SRIDX (3, 0, 3), 0},		{"dr15", SRIDX (3, 0, 3), 0},
+  {"bpc4", SRIDX (3, 0, 4), 0},		{"dr20", SRIDX (3, 0, 4), 0},
+  {"bpc5", SRIDX (3, 0, 5), 0},		{"dr25", SRIDX (3, 0, 5), 0},
+  {"bpc6", SRIDX (3, 0, 6), 0},		{"dr30", SRIDX (3, 0, 6), 0},
+  {"bpc7", SRIDX (3, 0, 7), 0},		{"dr35", SRIDX (3, 0, 7), 0},
+  {"bpa0", SRIDX (3, 1, 0), 0},		{"dr1", SRIDX (3, 1, 0), 0},
+  {"bpa1", SRIDX (3, 1, 1), 0},		{"dr6", SRIDX (3, 1, 1), 0},
+  {"bpa2", SRIDX (3, 1, 2), 0},		{"dr11", SRIDX (3, 1, 2), 0},
+  {"bpa3", SRIDX (3, 1, 3), 0},		{"dr16", SRIDX (3, 1, 3), 0},
+  {"bpa4", SRIDX (3, 1, 4), 0},		{"dr21", SRIDX (3, 1, 4), 0},
+  {"bpa5", SRIDX (3, 1, 5), 0},		{"dr26", SRIDX (3, 1, 5), 0},
+  {"bpa6", SRIDX (3, 1, 6), 0},		{"dr31", SRIDX (3, 1, 6), 0},
+  {"bpa7", SRIDX (3, 1, 7), 0},		{"dr36", SRIDX (3, 1, 7), 0},
+  {"bpam0", SRIDX (3, 2, 0), 0},	{"dr2", SRIDX (3, 2, 0), 0},
+  {"bpam1", SRIDX (3, 2, 1), 0},	{"dr7", SRIDX (3, 2, 1), 0},
+  {"bpam2", SRIDX (3, 2, 2), 0},	{"dr12", SRIDX (3, 2, 2), 0},
+  {"bpam3", SRIDX (3, 2, 3), 0},	{"dr17", SRIDX (3, 2, 3), 0},
+  {"bpam4", SRIDX (3, 2, 4), 0},	{"dr22", SRIDX (3, 2, 4), 0},
+  {"bpam5", SRIDX (3, 2, 5), 0},	{"dr27", SRIDX (3, 2, 5), 0},
+  {"bpam6", SRIDX (3, 2, 6), 0},	{"dr32", SRIDX (3, 2, 6), 0},
+  {"bpam7", SRIDX (3, 2, 7), 0},	{"dr37", SRIDX (3, 2, 7), 0},
+  {"bpv0", SRIDX (3, 3, 0), 0},		{"dr3", SRIDX (3, 3, 0), 0},
+  {"bpv1", SRIDX (3, 3, 1), 0},		{"dr8", SRIDX (3, 3, 1), 0},
+  {"bpv2", SRIDX (3, 3, 2), 0},		{"dr13", SRIDX (3, 3, 2), 0},
+  {"bpv3", SRIDX (3, 3, 3), 0},		{"dr18", SRIDX (3, 3, 3), 0},
+  {"bpv4", SRIDX (3, 3, 4), 0},		{"dr23", SRIDX (3, 3, 4), 0},
+  {"bpv5", SRIDX (3, 3, 5), 0},		{"dr28", SRIDX (3, 3, 5), 0},
+  {"bpv6", SRIDX (3, 3, 6), 0},		{"dr33", SRIDX (3, 3, 6), 0},
+  {"bpv7", SRIDX (3, 3, 7), 0},		{"dr38", SRIDX (3, 3, 7), 0},
+  {"bpcid0", SRIDX (3, 4, 0), 0},	{"dr4", SRIDX (3, 4, 0), 0},
+  {"bpcid1", SRIDX (3, 4, 1), 0},	{"dr9", SRIDX (3, 4, 1), 0},
+  {"bpcid2", SRIDX (3, 4, 2), 0},	{"dr14", SRIDX (3, 4, 2), 0},
+  {"bpcid3", SRIDX (3, 4, 3), 0},	{"dr19", SRIDX (3, 4, 3), 0},
+  {"bpcid4", SRIDX (3, 4, 4), 0},	{"dr24", SRIDX (3, 4, 4), 0},
+  {"bpcid5", SRIDX (3, 4, 5), 0},	{"dr29", SRIDX (3, 4, 5), 0},
+  {"bpcid6", SRIDX (3, 4, 6), 0},	{"dr34", SRIDX (3, 4, 6), 0},
   {"bpcid7", SRIDX (3, 4, 7), 0},	{"dr39", SRIDX (3, 4, 7), 0},
   {"edm_cfg", SRIDX (3, 5, 0), 0},	{"dr40", SRIDX (3, 5, 0), 0},
   {"edmsw", SRIDX (3, 6, 0), 0},	{"dr41", SRIDX (3, 6, 0), 0},
@@ -1359,6 +1552,13 @@ const keyword_t keyword_aridxi[] =
   {NULL, 0, 0}
 };
 
+const keyword_t keyword_aridxi_mx[] =
+{
+  {"m1", 9, 0}, {"m2", 10, 0}, {"m3",11, 0},
+  {"m5",13, 0}, {"m6",14, 0}, {"m7",15, 0},
+  {NULL, 0, 0}
+};
+
 const keyword_t *keywords[_HW_LAST] =
 {
   keyword_gpr, keyword_usr, keyword_dxr, keyword_sr, keyword_fsr,
@@ -1369,15 +1569,22 @@ const keyword_t *keywords[_HW_LAST] =
   keyword_cctl_lv, keyword_tlbop_st, keyword_standby_st,
   keyword_msync_st,
   keyword_im5_i, keyword_im5_m,
-  keyword_accumulator, keyword_aridx, keyword_aridx2, keyword_aridxi
+  keyword_accumulator, keyword_aridx, keyword_aridx2,
+  keyword_aridxi, keyword_aridxi_mx
 };
+
+const keyword_t **nds32_keyword_table[NDS32_CORE_COUNT];
+static unsigned int nds32_keyword_count_table[NDS32_CORE_COUNT];
+const field_t *nds32_field_table[NDS32_CORE_COUNT];
+opcode_t *nds32_opcode_table[NDS32_CORE_COUNT];
 
+
 /* Hash table for syntax lex.   */
 static htab_t field_htab;
 /* Hash table for opcodes.  */
 static htab_t opcode_htab;
 /* Hash table for hardware resources.  */
-static htab_t hw_ktabs[_HW_LAST];
+static htab_t *hw_ktabs;
 
 static hashval_t
 htab_hash_hash (const void *p)
@@ -1396,43 +1603,88 @@ htab_hash_eq (const void *p, const void *q)
   return strcmp (name, h->name) == 0;
 }
 
-/* Build a hash table for array BASE.  Each element is in size of SIZE,
-   and it's first element is a pointer to the key of string.
-   It stops inserting elements until reach an NULL key.  */
 
-static htab_t
-build_hash_table (const void *base, size_t size)
+static void
+build_operand_hash_table (void)
 {
-  htab_t htab;
-  hashval_t hash;
-  const char *p;
+  unsigned k;
 
-  htab = htab_create_alloc (128, htab_hash_hash, htab_hash_eq,
-			    NULL, xcalloc, free);
+  field_htab = htab_create_alloc (128, htab_hash_hash, htab_hash_eq,
+				  NULL, xcalloc, free);
 
-  p = base;
-  while (1)
+  for (k = 0; k < NDS32_CORE_COUNT; k++)
     {
-      struct nds32_hash_entry **slot;
-      struct nds32_hash_entry *h;
+      const field_t *fld;
 
-      h = (struct nds32_hash_entry *) p;
+      fld = nds32_field_table[k];
+      if (fld == NULL)
+	continue;
 
-      if (h->name == NULL)
-	break;
+      /* Add op-codes.  */
+      while (fld->name != NULL)
+	{
+	  hashval_t hash;
+	  const field_t **slot;
 
-      hash = htab_hash_string (h->name);
-      slot = (struct nds32_hash_entry **)
-	htab_find_slot_with_hash (htab, h->name, hash, INSERT);
+	  hash = htab_hash_string (fld->name);
+	  slot = (const field_t **)
+	    htab_find_slot_with_hash (field_htab, fld->name, hash, INSERT);
 
-      assert (slot != NULL && *slot == NULL);
+	  assert (slot != NULL && *slot == NULL);
+	  *slot = fld++;
+	}
+    }
+}
 
-      *slot = h;
+static void
+build_keyword_hash_table (void)
+{
+  unsigned int i, j, k, n;
 
-      p = p + size;
+  /* Count total keyword tables.  */
+  for (n = 0, i = 0; i < NDS32_CORE_COUNT; i++)
+    {
+      n += nds32_keyword_count_table[i];
     }
 
-  return htab;
+  /* Allocate space.  */
+  hw_ktabs = (htab_t *) malloc (n * sizeof (struct htab));
+  for (i = 0; i < n; i++)
+    {
+      hw_ktabs[i] = htab_create_alloc (128, htab_hash_hash, htab_hash_eq,
+				       NULL, xcalloc, free);
+    }
+
+  for (n = 0, k = 0; k < NDS32_CORE_COUNT; k++, n += j)
+    {
+      const keyword_t **kwd;
+
+      if ((j = nds32_keyword_count_table[k]) == 0)
+	continue;
+
+      /* Add keywords.  */
+      kwd = nds32_keyword_table[k];
+      for (i = 0; i < j; i++)
+	{
+	  htab_t htab;
+	  const keyword_t *kw;
+
+	  kw = kwd[i];
+	  htab = hw_ktabs[n + i];
+	  while (kw->name != NULL)
+	    {
+	      hashval_t hash;
+	      const keyword_t **slot;
+
+	      hash = htab_hash_string (kw->name);
+	      slot = (const keyword_t **)
+		htab_find_slot_with_hash (htab, kw->name, hash, INSERT);
+
+	      assert (slot != NULL && *slot == NULL);
+	      *slot = kw++;
+	    }
+	}
+    }
 }
 
 /* Build the syntax for a given opcode OPC.  It parses the string
@@ -1457,12 +1709,13 @@ build_opcode_syntax (struct nds32_opcode *opc)
     return;
 
   opc->syntax = xmalloc (MAX_LEX_NUM * sizeof (lex_t));
+  memset (opc->syntax, 0, MAX_LEX_NUM * sizeof (lex_t));
 
   str = opc->instruction;
   plex = opc->syntax;
   while (*str)
     {
-      int fidx;
+      int fidx, i, k;
 
       switch (*str)
 	{
@@ -1500,7 +1753,6 @@ build_opcode_syntax (struct nds32_opcode *opc)
 
       hash = htab_hash_string (odstr);
       fd = (field_t *) htab_find_with_hash (field_htab, odstr, hash);
-      fidx = fd - operand_fields;
 
       if (fd == NULL)
 	{
@@ -1508,8 +1760,22 @@ build_opcode_syntax (struct nds32_opcode *opc)
 	  opcodes_error_handler (_("internal error: unknown operand, %s"), str);
 	  abort ();
 	}
+
+      /* We are not sure how these tables are organized.   */
+      /* Thus, the minimal index should be the right one.  */
+      for (fidx = 256, k = 0, i = 0; i < NDS32_CORE_COUNT; i++)
+	{
+	  int tmp;
+
+	  tmp = fd - nds32_field_table[i];
+	  if (tmp >= 0 && tmp < fidx)
+	    {
+	      fidx = tmp;
+	      k = i;
+	    }
+	}
       assert (fidx >= 0 && fidx < (int) ARRAY_SIZE (operand_fields));
-      *plex |= LEX_SET_FIELD (fidx);
+      *plex |= LEX_SET_FIELD (k, fidx);
 
       str += len;
       plex++;
@@ -1520,44 +1786,37 @@ build_opcode_syntax (struct nds32_opcode *opc)
   return;
 }
 
-/* Initialize the assembler.  It must be called before assembling.  */
-
-void
-nds32_asm_init (nds32_asm_desc_t *pdesc, int flags)
+static void
+build_opcode_hash_table (void)
 {
-  int i;
-  hashval_t hash;
+  unsigned k;
 
-  pdesc->flags = flags;
-  pdesc->mach = flags & NASM_OPEN_ARCH_MASK;
-
-  /* Build keyword tables.  */
-  field_htab = build_hash_table (operand_fields,
-				 sizeof (operand_fields[0]));
-
-  for (i = 0; i < _HW_LAST; i++)
-    hw_ktabs[i] = build_hash_table (keywords[i], sizeof (keyword_t));
-
-  /* Build opcode table.  */
-  opcode_htab = htab_create_alloc (128, htab_hash_hash, htab_hash_eq,
+  opcode_htab = htab_create_alloc (512, htab_hash_hash, htab_hash_eq,
 				   NULL, xcalloc, free);
 
-  for (i = 0; i < (int) ARRAY_SIZE (nds32_opcodes); i++)
+  for (k = 0; k < NDS32_CORE_COUNT; k++)
     {
-      struct nds32_opcode **slot;
-      struct nds32_opcode *opc;
+      opcode_t *opc;
 
-      opc = &nds32_opcodes[i];
-      if ((opc->opcode != NULL) && (opc->instruction != NULL))
+      opc = nds32_opcode_table[k];
+      if (opc == NULL)
+	continue;
+
+      /* Add op-codes.  */
+      while ((opc->opcode != NULL) && (opc->instruction != NULL))
 	{
+	  hashval_t hash;
+	  opcode_t **slot;
+
 	  hash = htab_hash_string (opc->opcode);
-	  slot = (struct nds32_opcode **)
-	    htab_find_slot_with_hash (opcode_htab, opc->opcode, hash, INSERT);
+	  slot = (opcode_t **)
+	    htab_find_slot_with_hash (opcode_htab, opc->opcode, hash,
+				      INSERT);
 
 #define NDS32_PREINIT_SYNTAX
 #if defined (NDS32_PREINIT_SYNTAX)
-	  /* Initial SYNTAX when build opcode table, so bug in syntax can be
-	     found when initialized rather than used.  */
+	  /* Initial SYNTAX when build opcode table, so bug in syntax
+	     can be found when initialized rather than used.  */
 	  build_opcode_syntax (opc);
 #endif
 
@@ -1568,14 +1827,42 @@ nds32_asm_init (nds32_asm_desc_t *pdesc, int flags)
 	    }
 	  else
 	    {
+	      opcode_t *ptr;
+
 	      /* Already exists.  Append to the list.  */
-	      opc = *slot;
-	      while (opc->next)
-		opc = opc->next;
-	      opc->next = &nds32_opcodes[i];
+	      ptr = *slot;
+	      while (ptr->next)
+		ptr = ptr->next;
+	      ptr->next = opc;
+	      opc->next = NULL;
 	    }
+	  opc++;
 	}
     }
+}
+
+/* Initialize the assembler.  It must be called before assembling.  */
+
+void
+nds32_asm_init (nds32_asm_desc_t *pdesc, int flags)
+{
+  pdesc->flags = flags;
+  pdesc->mach = flags & NASM_OPEN_ARCH_MASK;
+
+  /* Setup main core.  */
+  nds32_keyword_table[NDS32_MAIN_CORE] = &keywords[0];
+  nds32_keyword_count_table[NDS32_MAIN_CORE] = _HW_LAST;
+  nds32_opcode_table[NDS32_MAIN_CORE] = &nds32_opcodes[0];
+  nds32_field_table[NDS32_MAIN_CORE] = &operand_fields[0];
+
+  /* Build operand hash table.  */
+  build_operand_hash_table ();
+
+  /* Build keyword hash tables.  */
+  build_keyword_hash_table ();
+
+  /* Build op-code hash table.  */
+  build_opcode_hash_table ();
 }
 
 /* Parse the input and store operand keyword string in ODSTR.
@@ -1618,6 +1905,11 @@ parse_re (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
   if (__GF (pinsn->insn, 20, 5) > (unsigned int) k->value)
     return NASM_ERR_OPERAND;
 
+  /* Register not allowed in reduced register.  */
+  if ((pdesc->flags & NASM_OPEN_REDUCED_REG)
+      && (k->attr & ATTR (RDREG)) == 0)
+    return NASM_ERR_REG_REDUCED;
+
   *value = k->value;
   *pstr = end;
   return NASM_R_CONST;
@@ -1644,6 +1936,11 @@ parse_re2 (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
 
   if (k == NULL)
     return NASM_ERR_OPERAND;
+
+  /* Register not allowed in reduced register.  */
+  if ((pdesc->flags & NASM_OPEN_REDUCED_REG)
+      && (k->attr & ATTR (RDREG)) == 0)
+    return NASM_ERR_REG_REDUCED;
 
   if (k->value == 6)
     *value = 0;
@@ -1700,7 +1997,8 @@ static int aext_im5_ip = 0;
 static int aext_im6_ip = 0;
 /* Parse the operand of audio ext.  */
 static int
-parse_aext_reg (char **pstr, int *value, int hw_res)
+parse_aext_reg (struct nds32_asm_desc *pdesc, char **pstr,
+		int *value, int hw_res)
 {
   char *end = *pstr;
   char odstr[MAX_KEYWORD_LEN];
@@ -1717,20 +2015,26 @@ parse_aext_reg (char **pstr, int *value, int hw_res)
   if (k == NULL)
     return NASM_ERR_OPERAND;
 
+  if (hw_res == HW_GPR
+      && (pdesc->flags & NASM_OPEN_REDUCED_REG)
+      && (k->attr & ATTR (RDREG)) == 0)
+    return NASM_ERR_REG_REDUCED;
+
   *value = k->value;
   *pstr = end;
   return NASM_R_CONST;
 }
 
 static int
-parse_a30b20 (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_a30b20 (struct nds32_asm_desc *pdesc,
 	      struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 	      char **pstr, int64_t *value)
 {
   int rt_value, ret;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_GPR);
-
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_GPR);
+  if (ret == NASM_ERR_REG_REDUCED)
+    return NASM_ERR_REG_REDUCED;
   if ((ret == NASM_ERR_OPERAND) || (rt_value > 15))
     return NASM_ERR_OPERAND;
 
@@ -1740,16 +2044,18 @@ parse_a30b20 (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
 }
 
 static int
-parse_rt21 (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_rt21 (struct nds32_asm_desc *pdesc,
 	    struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 	    char **pstr, int64_t *value)
 {
   int rt_value, ret, tmp_value, tmp1, tmp2;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_GPR);
-
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_GPR);
+  if (ret == NASM_ERR_REG_REDUCED)
+    return NASM_ERR_REG_REDUCED;
   if ((ret == NASM_ERR_OPERAND) || (rt_value > 15))
     return NASM_ERR_OPERAND;
+
   tmp1 = (aext_a30b20 & 0x08);
   tmp2 = (rt_value & 0x08);
   if (tmp1 != tmp2)
@@ -1763,17 +2069,19 @@ parse_rt21 (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
 }
 
 static int
-parse_rte_start (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_rte_start (struct nds32_asm_desc *pdesc,
 		 struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 		 char **pstr, int64_t *value)
 {
   int rt_value, ret, tmp1, tmp2;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_GPR);
-
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_GPR);
+  if (ret == NASM_ERR_REG_REDUCED)
+    return NASM_ERR_REG_REDUCED;
   if ((ret == NASM_ERR_OPERAND) || (rt_value > 15)
       || (rt_value & 0x01))
     return NASM_ERR_OPERAND;
+
   tmp1 = (aext_a30b20 & 0x08);
   tmp2 = (rt_value & 0x08);
   if (tmp1 != tmp2)
@@ -1787,21 +2095,25 @@ parse_rte_start (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
 }
 
 static int
-parse_rte_end (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_rte_end (struct nds32_asm_desc *pdesc,
 	       struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 	       char **pstr, int64_t *value)
 {
   int rt_value, ret, tmp1, tmp2;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_GPR);
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_GPR);
+  if (ret == NASM_ERR_REG_REDUCED)
+    return NASM_ERR_REG_REDUCED;
   if ((ret == NASM_ERR_OPERAND) || (rt_value > 15)
       || ((rt_value & 0x01) == 0)
       || (rt_value != (aext_rte + 1)))
     return NASM_ERR_OPERAND;
+
   tmp1 = (aext_a30b20 & 0x08);
   tmp2 = (rt_value & 0x08);
   if (tmp1 != tmp2)
     return NASM_ERR_OPERAND;
+
   /* Rt=CONCAT(c, t21, 0), t21:bit11-10.  */
   rt_value = (rt_value & 0x06) << 4;
   *value = rt_value;
@@ -1809,16 +2121,19 @@ parse_rte_end (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
 }
 
 static int
-parse_rte69_start (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_rte69_start (struct nds32_asm_desc *pdesc,
 		   struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 		   char **pstr, int64_t *value)
 {
   int rt_value, ret;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_GPR);
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_GPR);
+  if (ret == NASM_ERR_REG_REDUCED)
+    return NASM_ERR_REG_REDUCED;
   if ((ret == NASM_ERR_OPERAND)
       || (rt_value & 0x01))
     return NASM_ERR_OPERAND;
+
   aext_rte = rt_value;
   rt_value = (rt_value >> 1);
   *value = rt_value;
@@ -1826,17 +2141,20 @@ parse_rte69_start (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
 }
 
 static int
-parse_rte69_end (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_rte69_end (struct nds32_asm_desc *pdesc,
 		 struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 		 char **pstr, int64_t *value)
 {
   int rt_value, ret;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_GPR);
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_GPR);
+  if (ret == NASM_ERR_REG_REDUCED)
+    return NASM_ERR_REG_REDUCED;
   if ((ret == NASM_ERR_OPERAND)
       || ((rt_value & 0x01) == 0)
       || (rt_value != (aext_rte + 1)))
     return NASM_ERR_OPERAND;
+
   aext_rte = rt_value;
   rt_value = (rt_value >> 1);
   *value = rt_value;
@@ -1844,15 +2162,16 @@ parse_rte69_end (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
 }
 
 static int
-parse_im5_ip (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_im5_ip (struct nds32_asm_desc *pdesc,
 	      struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 	      char **pstr, int64_t *value)
 {
   int rt_value, ret, new_value;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_AEXT_IM_I);
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_AEXT_IM_I);
   if (ret == NASM_ERR_OPERAND)
     return NASM_ERR_OPERAND;
+
   /* p = bit[4].bit[1:0], r = bit[4].bit[3:2].  */
   new_value = (rt_value & 0x04) << 2;
   new_value |= (rt_value & 0x03);
@@ -1862,35 +2181,38 @@ parse_im5_ip (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
 }
 
 static int
-parse_im5_mr (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_im5_mr (struct nds32_asm_desc *pdesc,
 	      struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 	      char **pstr, int64_t *value)
 {
   int rt_value, ret, new_value, tmp1, tmp2;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_AEXT_IM_M);
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_AEXT_IM_M);
   if (ret == NASM_ERR_OPERAND)
     return NASM_ERR_OPERAND;
+
   /* p = bit[4].bit[1:0], r = bit[4].bit[3:2].  */
   new_value = (rt_value & 0x07) << 2;
   tmp1 = (aext_im5_ip & 0x10);
   tmp2 = (new_value & 0x10);
   if (tmp1 != tmp2)
     return NASM_ERR_OPERAND;
+
   *value = new_value;
   return NASM_R_CONST;
 }
 
 static int
-parse_im6_ip (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_im6_ip (struct nds32_asm_desc *pdesc,
 	      struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 	      char **pstr, int64_t *value)
 {
   int rt_value, ret;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_AEXT_IM_I);
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_AEXT_IM_I);
   if ((ret == NASM_ERR_OPERAND) || (rt_value > 3))
     return NASM_ERR_OPERAND;
+
   /* p = 0.bit[1:0].  */
   aext_im6_ip = rt_value;
   *value = aext_im6_ip;
@@ -1898,47 +2220,51 @@ parse_im6_ip (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
 }
 
 static int
-parse_im6_iq (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_im6_iq (struct nds32_asm_desc *pdesc,
 	      struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 	      char **pstr, int64_t *value)
 {
   int rt_value, ret;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_AEXT_IM_I);
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_AEXT_IM_I);
   if ((ret == NASM_ERR_OPERAND) || (rt_value < 4))
     return NASM_ERR_OPERAND;
+
   /* q = 1.bit[1:0].  */
   if ((rt_value & 0x03) != aext_im6_ip)
     return NASM_ERR_OPERAND;
+
   *value = aext_im6_ip;
   return NASM_R_CONST;
 }
 
 static int
-parse_im6_mr (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_im6_mr (struct nds32_asm_desc *pdesc,
 	      struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 	      char **pstr, int64_t *value)
 {
   int rt_value, ret;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_AEXT_IM_M);
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_AEXT_IM_M);
   if ((ret == NASM_ERR_OPERAND) || (rt_value > 3))
     return NASM_ERR_OPERAND;
+
   /* r = 0.bit[3:2].  */
   *value = (rt_value & 0x03);
   return NASM_R_CONST;
 }
 
 static int
-parse_im6_ms (struct nds32_asm_desc *pdesc ATTRIBUTE_UNUSED,
+parse_im6_ms (struct nds32_asm_desc *pdesc,
 	      struct nds32_asm_insn *pinsn ATTRIBUTE_UNUSED,
 	      char **pstr, int64_t *value)
 {
   int rt_value, ret;
 
-  ret = parse_aext_reg (pstr, &rt_value, HW_AEXT_IM_M);
+  ret = parse_aext_reg (pdesc, pstr, &rt_value, HW_AEXT_IM_M);
   if ((ret == NASM_ERR_OPERAND) || (rt_value < 4))
     return NASM_ERR_OPERAND;
+
   /* s = 1.bit[5:4].  */
   *value = (rt_value & 0x03);
   return NASM_R_CONST;
@@ -1953,9 +2279,9 @@ parse_operand (nds32_asm_desc_t *pdesc, nds32_asm_insn_t *pinsn,
   char odstr[MAX_KEYWORD_LEN];
   char *end;
   hashval_t hash;
-  const field_t *fld = &LEX_GET_FIELD (syn);
+  const field_t *fld = &LEX_GET_FIELD (((syn >> 8) & 0xff) - 1, syn);
   keyword_t *k;
-  int64_t value;
+  int64_t value = 0;	/* 0x100000000; Big enough to overflow.  */
   int r;
   uint64_t modifier = 0;
 
@@ -1964,23 +2290,31 @@ parse_operand (nds32_asm_desc_t *pdesc, nds32_asm_insn_t *pinsn,
   if (fld->parse)
     {
       r = fld->parse (pdesc, pinsn, &end, &value);
-      if (r == NASM_ERR_OPERAND)
+      if (r == NASM_ERR_OPERAND || r == NASM_ERR_REG_REDUCED)
 	{
-	  pdesc->result = NASM_ERR_OPERAND;
+	  pdesc->result = r;
 	  return 0;
 	}
       goto done;
     }
 
-  if (fld->hw_res < _HW_LAST)
+  /* Check valid keyword group.  */
+  if (fld->hw_res < HW_INT)
     {
+      int n = 0, i;
+
+      /* Calculate index of keyword hash table.  */
+      for (i = 0; i < (fld->hw_res >> 8); i++)
+	n += nds32_keyword_count_table[i];
+
       /* Parse the operand in assembly code.  */
       if (*end == '$')
 	end++;
       end = parse_to_delimiter (end, odstr);
 
       hash = htab_hash_string (odstr);
-      k = htab_find_with_hash (hw_ktabs[fld->hw_res], odstr, hash);
+      k = htab_find_with_hash (hw_ktabs[n + (fld->hw_res & 0xff)], odstr,
+			       hash);
 
       if (k == NULL)
 	{

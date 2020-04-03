@@ -1,6 +1,6 @@
 /* TILE-Gx opcode information.
 
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -8096,21 +8096,18 @@ parse_insn_tilegx (tilegx_bundle_bits bits,
 	{
 	  const struct tilegx_operand *op =
 	    &tilegx_operands[opc->operands[pipe][i]];
-	  int raw_opval = op->extract (bits);
-	  long long opval;
+	  unsigned int opval = op->extract (bits);
 
 	  if (op->is_signed)
 	    {
 	      /* Sign-extend the operand.  */
-	      int shift = (int)((sizeof(int) * 8) - op->num_bits);
-	      raw_opval = (raw_opval << shift) >> shift;
+	      unsigned int sign = 1u << (op->num_bits - 1);
+	      opval = ((opval & (sign + sign - 1)) ^ sign) - sign;
 	    }
 
 	  /* Adjust PC-relative scaled branch offsets.  */
 	  if (op->type == TILEGX_OP_TYPE_ADDRESS)
-	    opval = (raw_opval * TILEGX_BUNDLE_SIZE_IN_BYTES) + pc;
-	  else
-	    opval = raw_opval;
+	    opval = opval * TILEGX_BUNDLE_SIZE_IN_BYTES + pc;
 
 	  /* Record the final value.  */
 	  d->operands[i] = op;

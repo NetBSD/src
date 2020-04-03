@@ -310,6 +310,11 @@ typedef struct bfd_section
   /* This section contains vliw code.  This is for Toshiba MeP only.  */
 #define SEC_MEP_VLIW               0x20000000
 
+  /* All symbols, sizes and relocations in this section are octets
+     instead of bytes.  Required for DWARF debug sections as DWARF
+     information is organized in octets, not bytes.  */
+#define SEC_ELF_OCTETS             0x40000000
+
   /* Indicate that section has the no read flag set. This happens
      when memory read flag isn't set. */
 #define SEC_COFF_NOREAD            0x40000000
@@ -508,31 +513,83 @@ struct relax_table @{
   int size;
 @};
 
+static inline const char *
+bfd_section_name (const asection *sec)
+@{
+  return sec->name;
+@}
+
+static inline bfd_size_type
+bfd_section_size (const asection *sec)
+@{
+  return sec->size;
+@}
+
+static inline bfd_vma
+bfd_section_vma (const asection *sec)
+@{
+  return sec->vma;
+@}
+
+static inline bfd_vma
+bfd_section_lma (const asection *sec)
+@{
+  return sec->lma;
+@}
+
+static inline unsigned int
+bfd_section_alignment (const asection *sec)
+@{
+  return sec->alignment_power;
+@}
+
+static inline flagword
+bfd_section_flags (const asection *sec)
+@{
+  return sec->flags;
+@}
+
+static inline void *
+bfd_section_userdata (const asection *sec)
+@{
+  return sec->userdata;
+@}
+static inline bfd_boolean
+bfd_is_com_section (const asection *sec)
+@{
+  return (sec->flags & SEC_IS_COMMON) != 0;
+@}
+
 /* Note: the following are provided as inline functions rather than macros
    because not all callers use the return value.  A macro implementation
    would use a comma expression, eg: "((ptr)->foo = val, TRUE)" and some
    compilers will complain about comma expressions that have no effect.  */
 static inline bfd_boolean
-bfd_set_section_userdata (bfd * abfd ATTRIBUTE_UNUSED, asection * ptr,
-                          void * val)
+bfd_set_section_userdata (asection *sec, void *val)
 @{
-  ptr->userdata = val;
+  sec->userdata = val;
   return TRUE;
 @}
 
 static inline bfd_boolean
-bfd_set_section_vma (bfd * abfd ATTRIBUTE_UNUSED, asection * ptr, bfd_vma val)
+bfd_set_section_vma (asection *sec, bfd_vma val)
 @{
-  ptr->vma = ptr->lma = val;
-  ptr->user_set_vma = TRUE;
+  sec->vma = sec->lma = val;
+  sec->user_set_vma = TRUE;
   return TRUE;
 @}
 
 static inline bfd_boolean
-bfd_set_section_alignment (bfd * abfd ATTRIBUTE_UNUSED, asection * ptr,
-                           unsigned int val)
+bfd_set_section_lma (asection *sec, bfd_vma val)
 @{
-  ptr->alignment_power = val;
+  sec->lma = val;
+  return TRUE;
+@}
+
+static inline bfd_boolean
+bfd_set_section_alignment (asection *sec, unsigned int val)
+@{
+  sec->alignment_power = val;
   return TRUE;
 @}
 
@@ -555,105 +612,39 @@ extern asection _bfd_std_section[4];
 /* Pointer to the indirect section.  */
 #define bfd_ind_section_ptr (&_bfd_std_section[3])
 
-#define bfd_is_und_section(sec) ((sec) == bfd_und_section_ptr)
-#define bfd_is_abs_section(sec) ((sec) == bfd_abs_section_ptr)
-#define bfd_is_ind_section(sec) ((sec) == bfd_ind_section_ptr)
+static inline bfd_boolean
+bfd_is_und_section (const asection *sec)
+@{
+  return sec == bfd_und_section_ptr;
+@}
 
-#define bfd_is_const_section(SEC)              \
- (   ((SEC) == bfd_abs_section_ptr)            \
-  || ((SEC) == bfd_und_section_ptr)            \
-  || ((SEC) == bfd_com_section_ptr)            \
-  || ((SEC) == bfd_ind_section_ptr))
+static inline bfd_boolean
+bfd_is_abs_section (const asection *sec)
+@{
+  return sec == bfd_abs_section_ptr;
+@}
 
-/* Macros to handle insertion and deletion of a bfd's sections.  These
-   only handle the list pointers, ie. do not adjust section_count,
-   target_index etc.  */
-#define bfd_section_list_remove(ABFD, S) \
-  do                                                   \
-    @{                                                  \
-      asection *_s = S;                                \
-      asection *_next = _s->next;                      \
-      asection *_prev = _s->prev;                      \
-      if (_prev)                                       \
-        _prev->next = _next;                           \
-      else                                             \
-        (ABFD)->sections = _next;                      \
-      if (_next)                                       \
-        _next->prev = _prev;                           \
-      else                                             \
-        (ABFD)->section_last = _prev;                  \
-    @}                                                  \
-  while (0)
-#define bfd_section_list_append(ABFD, S) \
-  do                                                   \
-    @{                                                  \
-      asection *_s = S;                                \
-      bfd *_abfd = ABFD;                               \
-      _s->next = NULL;                                 \
-      if (_abfd->section_last)                         \
-        @{                                              \
-          _s->prev = _abfd->section_last;              \
-          _abfd->section_last->next = _s;              \
-        @}                                              \
-      else                                             \
-        @{                                              \
-          _s->prev = NULL;                             \
-          _abfd->sections = _s;                        \
-        @}                                              \
-      _abfd->section_last = _s;                        \
-    @}                                                  \
-  while (0)
-#define bfd_section_list_prepend(ABFD, S) \
-  do                                                   \
-    @{                                                  \
-      asection *_s = S;                                \
-      bfd *_abfd = ABFD;                               \
-      _s->prev = NULL;                                 \
-      if (_abfd->sections)                             \
-        @{                                              \
-          _s->next = _abfd->sections;                  \
-          _abfd->sections->prev = _s;                  \
-        @}                                              \
-      else                                             \
-        @{                                              \
-          _s->next = NULL;                             \
-          _abfd->section_last = _s;                    \
-        @}                                              \
-      _abfd->sections = _s;                            \
-    @}                                                  \
-  while (0)
-#define bfd_section_list_insert_after(ABFD, A, S) \
-  do                                                   \
-    @{                                                  \
-      asection *_a = A;                                \
-      asection *_s = S;                                \
-      asection *_next = _a->next;                      \
-      _s->next = _next;                                \
-      _s->prev = _a;                                   \
-      _a->next = _s;                                   \
-      if (_next)                                       \
-        _next->prev = _s;                              \
-      else                                             \
-        (ABFD)->section_last = _s;                     \
-    @}                                                  \
-  while (0)
-#define bfd_section_list_insert_before(ABFD, B, S) \
-  do                                                   \
-    @{                                                  \
-      asection *_b = B;                                \
-      asection *_s = S;                                \
-      asection *_prev = _b->prev;                      \
-      _s->prev = _prev;                                \
-      _s->next = _b;                                   \
-      _b->prev = _s;                                   \
-      if (_prev)                                       \
-        _prev->next = _s;                              \
-      else                                             \
-        (ABFD)->sections = _s;                         \
-    @}                                                  \
-  while (0)
-#define bfd_section_removed_from_list(ABFD, S) \
-  ((S)->next == NULL ? (ABFD)->section_last != (S) : (S)->next->prev != (S))
+static inline bfd_boolean
+bfd_is_ind_section (const asection *sec)
+@{
+  return sec == bfd_ind_section_ptr;
+@}
+
+static inline bfd_boolean
+bfd_is_const_section (const asection *sec)
+@{
+  return sec >= bfd_abs_section_ptr && sec <= bfd_ind_section_ptr;
+@}
+
+/* Return TRUE if input section SEC has been discarded.  */
+static inline bfd_boolean
+discarded_section (const asection *sec)
+@{
+  return (!bfd_is_abs_section (sec)
+          && bfd_is_abs_section (sec->output_section)
+          && sec->sec_info_type != SEC_INFO_TYPE_MERGE
+          && sec->sec_info_type != SEC_INFO_TYPE_JUST_SYMS);
+@}
 
 #define BFD_FAKE_SECTION(SEC, SYM, NAME, IDX, FLAGS)                   \
   /* name, id,  index, next, prev, flags, user_set_vma,            */  \
@@ -890,13 +881,12 @@ section named @var{name}.  If there is an error, return @code{NULL} and set
 @subsubsection @code{bfd_set_section_flags}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_set_section_flags
-   (bfd *abfd, asection *sec, flagword flags);
+bfd_boolean bfd_set_section_flags (asection *sec, flagword flags);
 @end example
 @strong{Description}@*
-Set the attributes of the section @var{sec} in the BFD
-@var{abfd} to the value @var{flags}. Return @code{TRUE} on success,
-@code{FALSE} on error. Possible error returns are:
+Set the attributes of the section @var{sec} to the value @var{flags}.
+Return @code{TRUE} on success, @code{FALSE} on error.  Possible error
+returns are:
 
 @itemize @bullet
 
@@ -912,10 +902,10 @@ have the @code{SEC_HAS_CONTENTS} field set.
 @strong{Synopsis}
 @example
 void bfd_rename_section
-   (bfd *abfd, asection *sec, const char *newname);
+   (asection *sec, const char *newname);
 @end example
 @strong{Description}@*
-Rename section @var{sec} in @var{abfd} to @var{newname}.
+Rename section @var{sec} to @var{newname}.
 
 @findex bfd_map_over_sections
 @subsubsection @code{bfd_map_over_sections}
@@ -968,8 +958,7 @@ It returns the first section for which @var{operation} returns true.
 @subsubsection @code{bfd_set_section_size}
 @strong{Synopsis}
 @example
-bfd_boolean bfd_set_section_size
-   (bfd *abfd, asection *sec, bfd_size_type val);
+bfd_boolean bfd_set_section_size (asection *sec, bfd_size_type val);
 @end example
 @strong{Description}@*
 Set @var{sec} to the size @var{val}. If the operation is
@@ -993,12 +982,12 @@ bfd_boolean bfd_set_section_contents
 @end example
 @strong{Description}@*
 Sets the contents of the section @var{section} in BFD
-@var{abfd} to the data starting in memory at @var{data}. The
-data is written to the output section starting at offset
+@var{abfd} to the data starting in memory at @var{location}.
+The data is written to the output section starting at offset
 @var{offset} for @var{count} octets.
 
-Normally @code{TRUE} is returned, else @code{FALSE}. Possible error
-returns are:
+Normally @code{TRUE} is returned, but @code{FALSE} is returned if
+there was an error.  Possible error returns are:
 @itemize @bullet
 
 @item
@@ -1006,7 +995,13 @@ returns are:
 The output section does not have the @code{SEC_HAS_CONTENTS}
 attribute, so nothing can be written to it.
 @item
-and some more too
+@code{bfd_error_bad_value} -
+The section is unable to contain all of the data.
+@item
+@code{bfd_error_invalid_operation} -
+The BFD is not writeable.
+@item
+and some more too.
 @end itemize
 This routine is front end to the back end function
 @code{_bfd_set_section_contents}.
@@ -1075,6 +1070,15 @@ bfd_boolean bfd_generic_is_group_section (bfd *, const asection *sec);
 @end example
 @strong{Description}@*
 Returns TRUE if @var{sec} is a member of a group.
+
+@findex bfd_generic_group_name
+@subsubsection @code{bfd_generic_group_name}
+@strong{Synopsis}
+@example
+const char *bfd_generic_group_name (bfd *, const asection *sec);
+@end example
+@strong{Description}@*
+Returns group name if @var{sec} is a member of a group.
 
 @findex bfd_generic_discard_group
 @subsubsection @code{bfd_generic_discard_group}

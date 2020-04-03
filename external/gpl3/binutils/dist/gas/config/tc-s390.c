@@ -1,5 +1,5 @@
 /* tc-s390.c -- Assemble for the S390
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -22,7 +22,6 @@
 #include "as.h"
 #include "safe-ctype.h"
 #include "subsegs.h"
-#include "struc-symbol.h"
 #include "dwarf2dbg.h"
 #include "dw2gencfi.h"
 
@@ -291,6 +290,8 @@ s390_parse_cpu (const char *         arg,
     { STRING_COMMA_LEN ("z13"), STRING_COMMA_LEN ("arch11"),
       S390_INSTR_FLAG_HTM | S390_INSTR_FLAG_VX },
     { STRING_COMMA_LEN ("z14"), STRING_COMMA_LEN ("arch12"),
+      S390_INSTR_FLAG_HTM | S390_INSTR_FLAG_VX },
+    { STRING_COMMA_LEN ("z15"), STRING_COMMA_LEN ("arch13"),
       S390_INSTR_FLAG_HTM | S390_INSTR_FLAG_VX }
   };
   static struct
@@ -895,7 +896,7 @@ s390_elf_suffix (char **str_p, expressionS *exp_p)
 	return ptr->suffix;
       }
 
-  return BFD_RELOC_UNUSED;
+  return ELF_SUFFIX_NONE;
 }
 
 /* Structure used to hold a literal pool entry.  */
@@ -1229,6 +1230,24 @@ s390_elf_cons (int nbytes /* 1=.byte, 2=.word, 4=.long */)
   demand_empty_rest_of_line ();
 }
 
+/* Return true if all remaining operands in the opcode with
+   OPCODE_FLAGS can be skipped.  */
+static bfd_boolean
+skip_optargs_p (unsigned int opcode_flags, const unsigned char *opindex_ptr)
+{
+  if ((opcode_flags & (S390_INSTR_FLAG_OPTPARM | S390_INSTR_FLAG_OPTPARM2))
+      && opindex_ptr[0] != '\0'
+      && opindex_ptr[1] == '\0')
+    return TRUE;
+
+  if ((opcode_flags & S390_INSTR_FLAG_OPTPARM2)
+      && opindex_ptr[0] != '\0'
+      && opindex_ptr[1] != '\0'
+      && opindex_ptr[2] == '\0')
+    return TRUE;
+  return FALSE;
+}
+
 /* We need to keep a list of fixups.  We can't simply generate them as
    we go, because that would require us to first create the frag, and
    that would screw up references to ``.''.  */
@@ -1468,6 +1487,9 @@ md_gather_operands (char *str,
 	      while (!(operand->flags & S390_OPERAND_BASE))
 		operand = s390_operands + *(++opindex_ptr);
 
+	      if (*str == '\0' && skip_optargs_p (opcode->flags, &opindex_ptr[1]))
+		continue;
+
 	      /* If there is a next operand it must be separated by a comma.  */
 	      if (opindex_ptr[1] != '\0')
 		{
@@ -1510,6 +1532,10 @@ md_gather_operands (char *str,
 	  if (*str++ != ')')
 	    as_bad (_("syntax error; missing ')' after base register"));
 	  skip_optional = 0;
+
+	  if (*str == '\0' && skip_optargs_p (opcode->flags, &opindex_ptr[1]))
+	    continue;
+
 	  /* If there is a next operand it must be separated by a comma.  */
 	  if (opindex_ptr[1] != '\0')
 	    {
@@ -1539,18 +1565,7 @@ md_gather_operands (char *str,
 	      str++;
 	    }
 
-	  if ((opcode->flags & (S390_INSTR_FLAG_OPTPARM
-				| S390_INSTR_FLAG_OPTPARM2))
-	      && opindex_ptr[1] != '\0'
-	      && opindex_ptr[2] == '\0'
-	      && *str == '\0')
-	    continue;
-
-	  if ((opcode->flags & S390_INSTR_FLAG_OPTPARM2)
-	      && opindex_ptr[1] != '\0'
-	      && opindex_ptr[2] != '\0'
-	      && opindex_ptr[3] == '\0'
-	      && *str == '\0')
+	  if (*str == '\0' && skip_optargs_p (opcode->flags, &opindex_ptr[1]))
 	    continue;
 
 	  /* If there is a next operand it must be separated by a comma.  */
@@ -1843,7 +1858,7 @@ s390_literals (int ignore ATTRIBUTE_UNUSED)
   /* Emit symbol for start of literal pool.  */
   S_SET_SEGMENT (lp_sym, now_seg);
   S_SET_VALUE (lp_sym, (valueT) frag_now_fix ());
-  lp_sym->sy_frag = frag_now;
+  symbol_set_frag (lp_sym, frag_now);
 
   while (lpe_list)
     {
@@ -1851,7 +1866,7 @@ s390_literals (int ignore ATTRIBUTE_UNUSED)
       lpe_list = lpe_list->next;
       S_SET_SEGMENT (lpe->sym, now_seg);
       S_SET_VALUE (lpe->sym, (valueT) frag_now_fix ());
-      lpe->sym->sy_frag = frag_now;
+      symbol_set_frag (lpe->sym, frag_now);
 
       /* Emit literal pool entry.  */
       if (lpe->reloc != BFD_RELOC_UNUSED)
@@ -2069,7 +2084,7 @@ md_atof (int type, char *litp, int *sizep)
 valueT
 md_section_align (asection *seg, valueT addr)
 {
-  int align = bfd_get_section_alignment (stdoutput, seg);
+  int align = bfd_section_alignment (seg);
 
   return ((addr + (1 << align) - 1) & -(1 << align));
 }
@@ -2294,7 +2309,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	}
       else if (operand->bits == 20 && operand->shift == 20)
 	{
-	  fixP->fx_size = 2;
+	  fixP->fx_size = 4;
 	  fixP->fx_where += 2;
 	  fixP->fx_r_type = BFD_RELOC_390_20;
 	}

@@ -1,6 +1,6 @@
 // merge.cc -- handle section merging for gold
 
-// Copyright (C) 2006-2018 Free Software Foundation, Inc.
+// Copyright (C) 2006-2020 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -440,9 +440,11 @@ Output_merge_string<Char_type>::do_add_input_section(Relobj* object,
 {
   section_size_type sec_len;
   bool is_new;
+  uint64_t addralign = this->addralign();
   const unsigned char* pdata = object->decompressed_section_contents(shndx,
 								     &sec_len,
-								     &is_new);
+								     &is_new,
+								     &addralign);
 
   const Char_type* p = reinterpret_cast<const Char_type*>(pdata);
   const Char_type* pend = p + sec_len / sizeof(Char_type);
@@ -494,7 +496,7 @@ Output_merge_string<Char_type>::do_add_input_section(Relobj* object,
   // aligned, so each string within the section must retain the same
   // modulo.
   uintptr_t init_align_modulo = (reinterpret_cast<uintptr_t>(pdata)
-				 & (this->addralign() - 1));
+				 & (addralign - 1));
   bool has_misaligned_strings = false;
 
   while (p < pend)
@@ -503,7 +505,7 @@ Output_merge_string<Char_type>::do_add_input_section(Relobj* object,
 
       // Within merge input section each string must be aligned.
       if (len != 0
-	  && ((reinterpret_cast<uintptr_t>(p) & (this->addralign() - 1))
+	  && ((reinterpret_cast<uintptr_t>(p) & (addralign - 1))
 	      != init_align_modulo))
 	  has_misaligned_strings = true;
 

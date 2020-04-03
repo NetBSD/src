@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.4"
+#define YYBISON_VERSION "3.0.5"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -66,7 +66,7 @@
 
 /* arparse.y - Strange script language parser */
 
-/* Copyright (C) 1992-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -996,6 +996,7 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
       case N:                               \
         yyformat = S;                       \
       break
+    default: /* Avoid compiler warnings. */
       YYCASE_(0, YY_("syntax error"));
       YYCASE_(1, YY_("syntax error, unexpected %s"));
       YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
@@ -1312,143 +1313,143 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 68 "arparse.y" /* yacc.c:1646  */
+#line 68 "arparse.y" /* yacc.c:1648  */
     { prompt(); }
-#line 1318 "arparse.c" /* yacc.c:1646  */
+#line 1319 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 6:
-#line 77 "arparse.y" /* yacc.c:1646  */
+#line 77 "arparse.y" /* yacc.c:1648  */
     { prompt(); }
-#line 1324 "arparse.c" /* yacc.c:1646  */
+#line 1325 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 19:
-#line 93 "arparse.y" /* yacc.c:1646  */
+#line 93 "arparse.y" /* yacc.c:1648  */
     { ar_end(); return 0; }
-#line 1330 "arparse.c" /* yacc.c:1646  */
+#line 1331 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 21:
-#line 95 "arparse.y" /* yacc.c:1646  */
+#line 95 "arparse.y" /* yacc.c:1648  */
     { yyerror("foo"); }
-#line 1336 "arparse.c" /* yacc.c:1646  */
+#line 1337 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 23:
-#line 102 "arparse.y" /* yacc.c:1646  */
+#line 102 "arparse.y" /* yacc.c:1648  */
     { ar_extract((yyvsp[0].list)); }
-#line 1342 "arparse.c" /* yacc.c:1646  */
+#line 1343 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 24:
-#line 107 "arparse.y" /* yacc.c:1646  */
+#line 107 "arparse.y" /* yacc.c:1648  */
     { ar_replace((yyvsp[0].list)); }
-#line 1348 "arparse.c" /* yacc.c:1646  */
+#line 1349 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 25:
-#line 112 "arparse.y" /* yacc.c:1646  */
+#line 112 "arparse.y" /* yacc.c:1648  */
     { ar_clear(); }
-#line 1354 "arparse.c" /* yacc.c:1646  */
+#line 1355 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 26:
-#line 117 "arparse.y" /* yacc.c:1646  */
+#line 117 "arparse.y" /* yacc.c:1648  */
     { ar_delete((yyvsp[0].list)); }
-#line 1360 "arparse.c" /* yacc.c:1646  */
+#line 1361 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 27:
-#line 121 "arparse.y" /* yacc.c:1646  */
+#line 121 "arparse.y" /* yacc.c:1648  */
     { ar_addmod((yyvsp[0].list)); }
-#line 1366 "arparse.c" /* yacc.c:1646  */
+#line 1367 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 28:
-#line 126 "arparse.y" /* yacc.c:1646  */
+#line 126 "arparse.y" /* yacc.c:1648  */
     { ar_list(); }
-#line 1372 "arparse.c" /* yacc.c:1646  */
+#line 1373 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 29:
-#line 131 "arparse.y" /* yacc.c:1646  */
+#line 131 "arparse.y" /* yacc.c:1648  */
     { ar_save(); }
-#line 1378 "arparse.c" /* yacc.c:1646  */
+#line 1379 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 30:
-#line 138 "arparse.y" /* yacc.c:1646  */
+#line 138 "arparse.y" /* yacc.c:1648  */
     { ar_open((yyvsp[0].name),0); }
-#line 1384 "arparse.c" /* yacc.c:1646  */
+#line 1385 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 31:
-#line 143 "arparse.y" /* yacc.c:1646  */
+#line 143 "arparse.y" /* yacc.c:1648  */
     { ar_open((yyvsp[0].name),1); }
-#line 1390 "arparse.c" /* yacc.c:1646  */
+#line 1391 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 32:
-#line 149 "arparse.y" /* yacc.c:1646  */
+#line 149 "arparse.y" /* yacc.c:1648  */
     { ar_addlib((yyvsp[-1].name),(yyvsp[0].list)); }
-#line 1396 "arparse.c" /* yacc.c:1646  */
+#line 1397 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 33:
-#line 153 "arparse.y" /* yacc.c:1646  */
+#line 153 "arparse.y" /* yacc.c:1648  */
     { ar_directory((yyvsp[-2].name), (yyvsp[-1].list), (yyvsp[0].name)); }
-#line 1402 "arparse.c" /* yacc.c:1646  */
+#line 1403 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 34:
-#line 160 "arparse.y" /* yacc.c:1646  */
+#line 160 "arparse.y" /* yacc.c:1648  */
     { (yyval.name) = (yyvsp[0].name); }
-#line 1408 "arparse.c" /* yacc.c:1646  */
+#line 1409 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 35:
-#line 161 "arparse.y" /* yacc.c:1646  */
+#line 161 "arparse.y" /* yacc.c:1648  */
     { (yyval.name) = 0; }
-#line 1414 "arparse.c" /* yacc.c:1646  */
+#line 1415 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 36:
-#line 166 "arparse.y" /* yacc.c:1646  */
+#line 166 "arparse.y" /* yacc.c:1648  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 1420 "arparse.c" /* yacc.c:1646  */
+#line 1421 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 37:
-#line 168 "arparse.y" /* yacc.c:1646  */
+#line 168 "arparse.y" /* yacc.c:1648  */
     { (yyval.list) = 0; }
-#line 1426 "arparse.c" /* yacc.c:1646  */
+#line 1427 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 38:
-#line 173 "arparse.y" /* yacc.c:1646  */
+#line 173 "arparse.y" /* yacc.c:1648  */
     { 	struct list *n  = (struct list *) malloc(sizeof(struct list));
 			n->next = (yyvsp[-2].list);
 			n->name = (yyvsp[0].name);
 			(yyval.list) = n;
 		 }
-#line 1436 "arparse.c" /* yacc.c:1646  */
+#line 1437 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 39:
-#line 178 "arparse.y" /* yacc.c:1646  */
+#line 178 "arparse.y" /* yacc.c:1648  */
     { (yyval.list) = 0; }
-#line 1442 "arparse.c" /* yacc.c:1646  */
+#line 1443 "arparse.c" /* yacc.c:1648  */
     break;
 
   case 42:
-#line 190 "arparse.y" /* yacc.c:1646  */
+#line 190 "arparse.y" /* yacc.c:1648  */
     { verbose = !verbose; }
-#line 1448 "arparse.c" /* yacc.c:1646  */
+#line 1449 "arparse.c" /* yacc.c:1648  */
     break;
 
 
-#line 1452 "arparse.c" /* yacc.c:1646  */
+#line 1453 "arparse.c" /* yacc.c:1648  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1676,7 +1677,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 194 "arparse.y" /* yacc.c:1906  */
+#line 194 "arparse.y" /* yacc.c:1907  */
 
 
 static int

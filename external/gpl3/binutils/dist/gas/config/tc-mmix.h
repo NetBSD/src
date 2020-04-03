@@ -1,5 +1,5 @@
 /* tc-mmix.h -- Header file for tc-mmix.c.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -179,7 +179,7 @@ extern long md_pcrel_from_section (struct fix *, segT);
 
 extern fragS *mmix_opcode_frag;
 #define TC_FRAG_TYPE fragS *
-#define TC_FRAG_INIT(frag) (frag)->tc_frag_data = mmix_opcode_frag
+#define TC_FRAG_INIT(frag, max_bytes) (frag)->tc_frag_data = mmix_opcode_frag
 
 /* We need to associate each section symbol with a list of GREGs defined
    for that section/segment and sorted on offset, between the point where

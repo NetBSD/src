@@ -1,5 +1,5 @@
 /* This file is tc-sh.h
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

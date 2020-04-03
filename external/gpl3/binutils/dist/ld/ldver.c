@@ -1,5 +1,5 @@
 /* ldver.c -- Print linker version.
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -21,7 +21,8 @@
 #include "sysdep.h"
 #include "bfd.h"
 #include "bfdver.h"
-
+#include "bfdlink.h"
+#include "ctf-api.h"
 #include "ld.h"
 #include "ldver.h"
 #include "ldexp.h"
@@ -38,7 +39,7 @@ ldversion (int noisy)
 
   if (noisy & 2)
     {
-      printf (_("Copyright (C) 2018 Free Software Foundation, Inc.\n"));
+      printf (_("Copyright (C) 2020 Free Software Foundation, Inc.\n"));
       printf (_("\
 This program is free software; you may redistribute it under the terms of\n\
 the GNU General Public License version 3 or (at your option) a later version.\n\

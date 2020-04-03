@@ -1,4 +1,4 @@
-@c Copyright (C) 2009-2018 Free Software Foundation, Inc.
+@c Copyright (C) 2009-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -18,7 +18,7 @@ and eleven chip levels. The architecture modes are the Enterprise System
 Architecture (ESA) and the newer z/Architecture mode. The chip levels
 are g5 (or arch3), g6, z900 (or arch5), z990 (or arch6), z9-109, z9-ec
 (or arch7), z10 (or arch8), z196 (or arch9), zEC12 (or arch10), z13
-(or arch11), and z14 (or arch12).
+(or arch11), z14 (or arch12), and z15 (or arch13).
 
 @menu
 * s390 Options::                Command-line Options.
@@ -68,8 +68,10 @@ are recognized:
 @code{z9-ec} (or @code{arch7}),
 @code{z10} (or @code{arch8}),
 @code{z196} (or @code{arch9}),
-@code{zEC12} (or @code{arch10}) and
-@code{z13} (or @code{arch11}).
+@code{zEC12} (or @code{arch10}),
+@code{z13} (or @code{arch11}),
+@code{z14} (or @code{arch12}), and
+@code{z15} (or @code{arch13}).
 
 Assembling an instruction that is not supported on the target
 processor results in an error message.

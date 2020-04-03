@@ -14,7 +14,7 @@ Makefile.*; configure; configure.ac; src-release
 		gdb-patches@sourceware.org
 
 bfd/; binutils/; elfcpp/; gas/; gold/; gprof/; ld/; opcodes/; cpu/;
-BFD's part of include/
+libctf/; BFD's and libctf's parts of include/
 
 	binutils: http://sourceware.org/binutils/
 	Patches to binutils@sourceware.org.
@@ -41,7 +41,7 @@ config.guess; config.sub; readline/support/config.{sub,guess}
 depcomp; mkinstalldirs
         Send bug reports and patches to bug-automake@gnu.org.
 
-gdb/; readline/; sim/; GDB's part of include/
+gdb/; gdbsupport/; gnulib/; readline/; sim/; GDB's part of include/
 	GDB: http://www.gnu.org/software/gdb/
 	Patches to gdb-patches@sourceware.org.
 	See also gdb/MAINTAINERS and sim/MAINTAINERS.

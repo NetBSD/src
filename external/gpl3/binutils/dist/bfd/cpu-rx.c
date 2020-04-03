@@ -1,5 +1,5 @@
 /* BFD support for the RX processor.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,38 +22,18 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-static const bfd_arch_info_type arch_info_struct[] =
+#define N(mach, name, align, def, next)				\
+  { 32, 32, 8, bfd_arch_rx, mach, "rx", name, align, def,	\
+    bfd_default_compatible, bfd_default_scan,			\
+    bfd_arch_default_fill, next, 0 }
+
+static const bfd_arch_info_type arch_info_struct[3] =
 {
-  {
-    32,				/* Bits per word.  */
-    32,				/* Bits per address.  */
-    8,				/* Bits per byte.  */
-    bfd_arch_rx,		/* Architecture.  */
-    bfd_mach_rx,		/* Machine.  */
-    "rx",			/* Architecture name.  */
-    "rx",			/* Printable name.  */
-    3,				/* Section align power.  */
-    FALSE,			/* The default ?  */
-    bfd_default_compatible,	/* Architecture comparison fn.  */
-    bfd_default_scan,		/* String to architecture convert fn.  */
-    bfd_arch_default_fill,	/* Default fill.  */
-    NULL			/* Next in list.  */
-  },
+  N (bfd_mach_rx,    "rx",    3, FALSE, arch_info_struct + 1),
+  N (bfd_mach_rx_v2, "rx:v2", 3, FALSE, arch_info_struct + 2),
+  N (bfd_mach_rx_v3, "rx:v3", 3, FALSE, NULL)
 };
 
 const bfd_arch_info_type bfd_rx_arch =
-{
-  32,				/* Bits per word.  */
-  32,				/* Bits per address.  */
-  8,				/* Bits per byte.  */
-  bfd_arch_rx,			/* Architecture.  */
-  bfd_mach_rx,			/* Machine.  */
-  "rx",				/* Architecture name.  */
-  "rx",				/* Printable name.  */
-  4,				/* Section align power.  */
-  TRUE,				/* The default ?  */
-  bfd_default_compatible,	/* Architecture comparison fn.  */
-  bfd_default_scan,		/* String to architecture convert fn.  */
-  bfd_arch_default_fill,	/* Default fill.  */
-  & arch_info_struct[0],	/* Next in list.  */
-};
+  N (bfd_mach_rx,    "rx",    4, TRUE, arch_info_struct + 0);
+

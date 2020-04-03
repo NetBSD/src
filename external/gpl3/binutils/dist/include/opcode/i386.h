@@ -1,5 +1,5 @@
 /* opcode/i386.h -- Intel 80386 opcode macros
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler, and GDB, the GNU Debugger.
 
@@ -46,6 +46,7 @@
 
 #define MOV_AX_DISP32 0xa0
 #define POP_SEG_SHORT 0x07
+#define POP_SEG386_SHORT 0xfa1
 #define JUMP_PC_RELATIVE 0xeb
 #define INT_OPCODE  0xcd
 #define INT3_OPCODE 0xcc

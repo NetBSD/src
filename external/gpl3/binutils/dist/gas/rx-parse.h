@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -49,133 +49,163 @@ extern int rx_debug;
     FLAG = 259,
     CREG = 260,
     ACC = 261,
-    EXPR = 262,
-    UNKNOWN_OPCODE = 263,
-    IS_OPCODE = 264,
-    DOT_S = 265,
-    DOT_B = 266,
-    DOT_W = 267,
-    DOT_L = 268,
-    DOT_A = 269,
-    DOT_UB = 270,
-    DOT_UW = 271,
-    ABS = 272,
-    ADC = 273,
-    ADD = 274,
-    AND_ = 275,
-    BCLR = 276,
-    BCND = 277,
-    BMCND = 278,
-    BNOT = 279,
-    BRA = 280,
-    BRK = 281,
-    BSET = 282,
-    BSR = 283,
-    BTST = 284,
-    CLRPSW = 285,
-    CMP = 286,
-    DBT = 287,
-    DIV = 288,
-    DIVU = 289,
-    EDIV = 290,
-    EDIVU = 291,
-    EMACA = 292,
-    EMSBA = 293,
-    EMUL = 294,
-    EMULA = 295,
-    EMULU = 296,
-    FADD = 297,
-    FCMP = 298,
-    FDIV = 299,
-    FMUL = 300,
-    FREIT = 301,
-    FSUB = 302,
-    FSQRT = 303,
-    FTOI = 304,
-    FTOU = 305,
-    INT = 306,
-    ITOF = 307,
-    JMP = 308,
-    JSR = 309,
-    MACHI = 310,
-    MACLH = 311,
-    MACLO = 312,
-    MAX = 313,
-    MIN = 314,
-    MOV = 315,
-    MOVCO = 316,
-    MOVLI = 317,
-    MOVU = 318,
-    MSBHI = 319,
-    MSBLH = 320,
-    MSBLO = 321,
-    MUL = 322,
-    MULHI = 323,
-    MULLH = 324,
-    MULLO = 325,
-    MULU = 326,
-    MVFACHI = 327,
-    MVFACGU = 328,
-    MVFACMI = 329,
-    MVFACLO = 330,
-    MVFC = 331,
-    MVTACGU = 332,
-    MVTACHI = 333,
-    MVTACLO = 334,
-    MVTC = 335,
-    MVTIPL = 336,
-    NEG = 337,
-    NOP = 338,
-    NOT = 339,
-    OR = 340,
-    POP = 341,
-    POPC = 342,
-    POPM = 343,
-    PUSH = 344,
-    PUSHA = 345,
-    PUSHC = 346,
-    PUSHM = 347,
-    RACL = 348,
-    RACW = 349,
-    RDACL = 350,
-    RDACW = 351,
-    REIT = 352,
-    REVL = 353,
-    REVW = 354,
-    RMPA = 355,
-    ROLC = 356,
-    RORC = 357,
-    ROTL = 358,
-    ROTR = 359,
-    ROUND = 360,
-    RTE = 361,
-    RTFI = 362,
-    RTS = 363,
-    RTSD = 364,
-    SAT = 365,
-    SATR = 366,
-    SBB = 367,
-    SCCND = 368,
-    SCMPU = 369,
-    SETPSW = 370,
-    SHAR = 371,
-    SHLL = 372,
-    SHLR = 373,
-    SMOVB = 374,
-    SMOVF = 375,
-    SMOVU = 376,
-    SSTR = 377,
-    STNZ = 378,
-    STOP = 379,
-    STZ = 380,
-    SUB = 381,
-    SUNTIL = 382,
-    SWHILE = 383,
-    TST = 384,
-    UTOF = 385,
-    WAIT = 386,
-    XCHG = 387,
-    XOR = 388
+    DREG = 262,
+    DREGH = 263,
+    DREGL = 264,
+    DCREG = 265,
+    EXPR = 266,
+    UNKNOWN_OPCODE = 267,
+    IS_OPCODE = 268,
+    DOT_S = 269,
+    DOT_B = 270,
+    DOT_W = 271,
+    DOT_L = 272,
+    DOT_A = 273,
+    DOT_UB = 274,
+    DOT_UW = 275,
+    DOT_D = 276,
+    ABS = 277,
+    ADC = 278,
+    ADD = 279,
+    AND_ = 280,
+    BCLR = 281,
+    BCND = 282,
+    BFMOV = 283,
+    BFMOVZ = 284,
+    BMCND = 285,
+    BNOT = 286,
+    BRA = 287,
+    BRK = 288,
+    BSET = 289,
+    BSR = 290,
+    BTST = 291,
+    CLRPSW = 292,
+    CMP = 293,
+    DABS = 294,
+    DADD = 295,
+    DBT = 296,
+    DCMP = 297,
+    DDIV = 298,
+    DIV = 299,
+    DIVU = 300,
+    DMOV = 301,
+    DMUL = 302,
+    DNEG = 303,
+    DPOPM = 304,
+    DPUSHM = 305,
+    DROUND = 306,
+    DSQRT = 307,
+    DSUB = 308,
+    DTOF = 309,
+    DTOI = 310,
+    DTOU = 311,
+    EDIV = 312,
+    EDIVU = 313,
+    EMACA = 314,
+    EMSBA = 315,
+    EMUL = 316,
+    EMULA = 317,
+    EMULU = 318,
+    FADD = 319,
+    FCMP = 320,
+    FDIV = 321,
+    FMUL = 322,
+    FREIT = 323,
+    FSUB = 324,
+    FSQRT = 325,
+    FTOD = 326,
+    FTOI = 327,
+    FTOU = 328,
+    INT = 329,
+    ITOD = 330,
+    ITOF = 331,
+    JMP = 332,
+    JSR = 333,
+    MACHI = 334,
+    MACLH = 335,
+    MACLO = 336,
+    MAX = 337,
+    MIN = 338,
+    MOV = 339,
+    MOVCO = 340,
+    MOVLI = 341,
+    MOVU = 342,
+    MSBHI = 343,
+    MSBLH = 344,
+    MSBLO = 345,
+    MUL = 346,
+    MULHI = 347,
+    MULLH = 348,
+    MULLO = 349,
+    MULU = 350,
+    MVFACHI = 351,
+    MVFACGU = 352,
+    MVFACMI = 353,
+    MVFACLO = 354,
+    MVFC = 355,
+    MVFDC = 356,
+    MVFDR = 357,
+    MVTACGU = 358,
+    MVTACHI = 359,
+    MVTACLO = 360,
+    MVTC = 361,
+    MVTDC = 362,
+    MVTIPL = 363,
+    NEG = 364,
+    NOP = 365,
+    NOT = 366,
+    OR = 367,
+    POP = 368,
+    POPC = 369,
+    POPM = 370,
+    PUSH = 371,
+    PUSHA = 372,
+    PUSHC = 373,
+    PUSHM = 374,
+    RACL = 375,
+    RACW = 376,
+    RDACL = 377,
+    RDACW = 378,
+    REIT = 379,
+    REVL = 380,
+    REVW = 381,
+    RMPA = 382,
+    ROLC = 383,
+    RORC = 384,
+    ROTL = 385,
+    ROTR = 386,
+    ROUND = 387,
+    RSTR = 388,
+    RTE = 389,
+    RTFI = 390,
+    RTS = 391,
+    RTSD = 392,
+    SAT = 393,
+    SATR = 394,
+    SAVE = 395,
+    SBB = 396,
+    SCCND = 397,
+    SCMPU = 398,
+    SETPSW = 399,
+    SHAR = 400,
+    SHLL = 401,
+    SHLR = 402,
+    SMOVB = 403,
+    SMOVF = 404,
+    SMOVU = 405,
+    SSTR = 406,
+    STNZ = 407,
+    STOP = 408,
+    STZ = 409,
+    SUB = 410,
+    SUNTIL = 411,
+    SWHILE = 412,
+    TST = 413,
+    UTOD = 414,
+    UTOF = 415,
+    WAIT = 416,
+    XCHG = 417,
+    XOR = 418
   };
 #endif
 /* Tokens.  */
@@ -183,145 +213,175 @@ extern int rx_debug;
 #define FLAG 259
 #define CREG 260
 #define ACC 261
-#define EXPR 262
-#define UNKNOWN_OPCODE 263
-#define IS_OPCODE 264
-#define DOT_S 265
-#define DOT_B 266
-#define DOT_W 267
-#define DOT_L 268
-#define DOT_A 269
-#define DOT_UB 270
-#define DOT_UW 271
-#define ABS 272
-#define ADC 273
-#define ADD 274
-#define AND_ 275
-#define BCLR 276
-#define BCND 277
-#define BMCND 278
-#define BNOT 279
-#define BRA 280
-#define BRK 281
-#define BSET 282
-#define BSR 283
-#define BTST 284
-#define CLRPSW 285
-#define CMP 286
-#define DBT 287
-#define DIV 288
-#define DIVU 289
-#define EDIV 290
-#define EDIVU 291
-#define EMACA 292
-#define EMSBA 293
-#define EMUL 294
-#define EMULA 295
-#define EMULU 296
-#define FADD 297
-#define FCMP 298
-#define FDIV 299
-#define FMUL 300
-#define FREIT 301
-#define FSUB 302
-#define FSQRT 303
-#define FTOI 304
-#define FTOU 305
-#define INT 306
-#define ITOF 307
-#define JMP 308
-#define JSR 309
-#define MACHI 310
-#define MACLH 311
-#define MACLO 312
-#define MAX 313
-#define MIN 314
-#define MOV 315
-#define MOVCO 316
-#define MOVLI 317
-#define MOVU 318
-#define MSBHI 319
-#define MSBLH 320
-#define MSBLO 321
-#define MUL 322
-#define MULHI 323
-#define MULLH 324
-#define MULLO 325
-#define MULU 326
-#define MVFACHI 327
-#define MVFACGU 328
-#define MVFACMI 329
-#define MVFACLO 330
-#define MVFC 331
-#define MVTACGU 332
-#define MVTACHI 333
-#define MVTACLO 334
-#define MVTC 335
-#define MVTIPL 336
-#define NEG 337
-#define NOP 338
-#define NOT 339
-#define OR 340
-#define POP 341
-#define POPC 342
-#define POPM 343
-#define PUSH 344
-#define PUSHA 345
-#define PUSHC 346
-#define PUSHM 347
-#define RACL 348
-#define RACW 349
-#define RDACL 350
-#define RDACW 351
-#define REIT 352
-#define REVL 353
-#define REVW 354
-#define RMPA 355
-#define ROLC 356
-#define RORC 357
-#define ROTL 358
-#define ROTR 359
-#define ROUND 360
-#define RTE 361
-#define RTFI 362
-#define RTS 363
-#define RTSD 364
-#define SAT 365
-#define SATR 366
-#define SBB 367
-#define SCCND 368
-#define SCMPU 369
-#define SETPSW 370
-#define SHAR 371
-#define SHLL 372
-#define SHLR 373
-#define SMOVB 374
-#define SMOVF 375
-#define SMOVU 376
-#define SSTR 377
-#define STNZ 378
-#define STOP 379
-#define STZ 380
-#define SUB 381
-#define SUNTIL 382
-#define SWHILE 383
-#define TST 384
-#define UTOF 385
-#define WAIT 386
-#define XCHG 387
-#define XOR 388
+#define DREG 262
+#define DREGH 263
+#define DREGL 264
+#define DCREG 265
+#define EXPR 266
+#define UNKNOWN_OPCODE 267
+#define IS_OPCODE 268
+#define DOT_S 269
+#define DOT_B 270
+#define DOT_W 271
+#define DOT_L 272
+#define DOT_A 273
+#define DOT_UB 274
+#define DOT_UW 275
+#define DOT_D 276
+#define ABS 277
+#define ADC 278
+#define ADD 279
+#define AND_ 280
+#define BCLR 281
+#define BCND 282
+#define BFMOV 283
+#define BFMOVZ 284
+#define BMCND 285
+#define BNOT 286
+#define BRA 287
+#define BRK 288
+#define BSET 289
+#define BSR 290
+#define BTST 291
+#define CLRPSW 292
+#define CMP 293
+#define DABS 294
+#define DADD 295
+#define DBT 296
+#define DCMP 297
+#define DDIV 298
+#define DIV 299
+#define DIVU 300
+#define DMOV 301
+#define DMUL 302
+#define DNEG 303
+#define DPOPM 304
+#define DPUSHM 305
+#define DROUND 306
+#define DSQRT 307
+#define DSUB 308
+#define DTOF 309
+#define DTOI 310
+#define DTOU 311
+#define EDIV 312
+#define EDIVU 313
+#define EMACA 314
+#define EMSBA 315
+#define EMUL 316
+#define EMULA 317
+#define EMULU 318
+#define FADD 319
+#define FCMP 320
+#define FDIV 321
+#define FMUL 322
+#define FREIT 323
+#define FSUB 324
+#define FSQRT 325
+#define FTOD 326
+#define FTOI 327
+#define FTOU 328
+#define INT 329
+#define ITOD 330
+#define ITOF 331
+#define JMP 332
+#define JSR 333
+#define MACHI 334
+#define MACLH 335
+#define MACLO 336
+#define MAX 337
+#define MIN 338
+#define MOV 339
+#define MOVCO 340
+#define MOVLI 341
+#define MOVU 342
+#define MSBHI 343
+#define MSBLH 344
+#define MSBLO 345
+#define MUL 346
+#define MULHI 347
+#define MULLH 348
+#define MULLO 349
+#define MULU 350
+#define MVFACHI 351
+#define MVFACGU 352
+#define MVFACMI 353
+#define MVFACLO 354
+#define MVFC 355
+#define MVFDC 356
+#define MVFDR 357
+#define MVTACGU 358
+#define MVTACHI 359
+#define MVTACLO 360
+#define MVTC 361
+#define MVTDC 362
+#define MVTIPL 363
+#define NEG 364
+#define NOP 365
+#define NOT 366
+#define OR 367
+#define POP 368
+#define POPC 369
+#define POPM 370
+#define PUSH 371
+#define PUSHA 372
+#define PUSHC 373
+#define PUSHM 374
+#define RACL 375
+#define RACW 376
+#define RDACL 377
+#define RDACW 378
+#define REIT 379
+#define REVL 380
+#define REVW 381
+#define RMPA 382
+#define ROLC 383
+#define RORC 384
+#define ROTL 385
+#define ROTR 386
+#define ROUND 387
+#define RSTR 388
+#define RTE 389
+#define RTFI 390
+#define RTS 391
+#define RTSD 392
+#define SAT 393
+#define SATR 394
+#define SAVE 395
+#define SBB 396
+#define SCCND 397
+#define SCMPU 398
+#define SETPSW 399
+#define SHAR 400
+#define SHLL 401
+#define SHLR 402
+#define SMOVB 403
+#define SMOVF 404
+#define SMOVU 405
+#define SSTR 406
+#define STNZ 407
+#define STOP 408
+#define STZ 409
+#define SUB 410
+#define SUNTIL 411
+#define SWHILE 412
+#define TST 413
+#define UTOD 414
+#define UTOF 415
+#define WAIT 416
+#define XCHG 417
+#define XOR 418
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 
 union YYSTYPE
 {
-#line 135 "./config/rx-parse.y" /* yacc.c:1909  */
+#line 140 "./config/rx-parse.y" /* yacc.c:1910  */
 
   int regno;
   expressionS exp;
 
-#line 325 "rx-parse.h" /* yacc.c:1909  */
+#line 385 "rx-parse.h" /* yacc.c:1910  */
 };
 
 typedef union YYSTYPE YYSTYPE;

@@ -1,5 +1,5 @@
 /* ARC target-dependent stuff.  Extension structure access functions
-   Copyright (C) 1995-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -53,7 +53,7 @@
 
 struct ExtAuxRegister
 {
-  long			  address;
+  unsigned		  address;
   char *		  name;
   struct ExtAuxRegister * next;
 };
@@ -191,8 +191,8 @@ create_map (unsigned char *block,
 	    char *aux_name = xstrdup ((char *) (p + 6));
 
 	    newAuxRegister->name = aux_name;
-	    newAuxRegister->address = (p[2] << 24) | (p[3] << 16)
-	      | (p[4] << 8) | p[5];
+	    newAuxRegister->address = (((unsigned) p[2] << 24) | (p[3] << 16)
+				       | (p[4] << 8) | p[5]);
 	    newAuxRegister->next = arc_extension_map.auxRegisters;
 	    arc_extension_map.auxRegisters = newAuxRegister;
 	    break;
@@ -406,7 +406,7 @@ arcExtMap_condCodeName (int code)
 /* Get the name of an extension auxiliary register.  */
 
 const char *
-arcExtMap_auxRegName (long address)
+arcExtMap_auxRegName (unsigned address)
 {
   /* Walk the list of auxiliary register names and find the name.  */
   struct ExtAuxRegister *r;
@@ -438,7 +438,7 @@ build_ARC_extmap (bfd *text_bfd)
 	  sizeof (".gnu.linkonce.arcextmap.") - 1)
 	|| !strcmp (sect->name,".arcextmap"))
       {
-	bfd_size_type  count  = bfd_get_section_size (sect);
+	bfd_size_type  count  = bfd_section_size (sect);
 	unsigned char* buffer = xmalloc (count);
 
 	if (buffer)
@@ -463,7 +463,7 @@ dump_ARC_extmap (void)
 
     while (r)
     {
-	printf ("AUX : %s %ld\n", r->name, r->address);
+	printf ("AUX : %s %u\n", r->name, r->address);
 	r = r->next;
     }
 

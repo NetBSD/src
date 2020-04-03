@@ -1,5 +1,5 @@
 /* BFD back-end for PDP-11 a.out binaries.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -37,7 +37,7 @@
 #define ARCH_SIZE	16
 #undef TARGET_IS_BIG_ENDIAN_P
 
-#define	TARGET_PAGE_SIZE	256
+#define	TARGET_PAGE_SIZE	8192
 #define	SEGMENT__SIZE	TARGET_PAGE_SIZE
 
 #define	DEFAULT_ARCH	bfd_arch_pdp11
@@ -66,6 +66,7 @@
 		     && N_MAGIC(x) != ZMAGIC)
 
 #include "sysdep.h"
+#include <limits.h>
 #include "bfd.h"
 
 #define external_exec pdp11_external_exec
@@ -504,10 +505,10 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
       abort ();
     }
 
-  bfd_get_start_address (abfd) = execp->a_entry;
+  abfd->start_address = execp->a_entry;
 
   obj_aout_symbols (abfd) = NULL;
-  bfd_get_symcount (abfd) = execp->a_syms / sizeof (struct external_nlist);
+  abfd->symcount = execp->a_syms / sizeof (struct external_nlist);
 
   /* The default relocation entry size is that of traditional V7 Unix.  */
   obj_reloc_entry_size (abfd) = RELOC_SIZE;
@@ -1146,14 +1147,6 @@ NAME (aout, set_section_contents) (bfd *abfd,
       if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
 	  || bfd_bwrite (location, count, abfd) != count)
 	return FALSE;
-
-      /* If necessary, pad the section to its aligned size.  */
-      if ((section == obj_datasec (abfd)
-	   || section == obj_textsec (abfd))
-	  && count < section->size
-	  && (bfd_seek (abfd, section->filepos + offset + section->size - 1, SEEK_SET) != 0
-	      || bfd_bwrite ("", 1, abfd) != 1))
-	return FALSE;
     }
 
   return TRUE;
@@ -1359,7 +1352,7 @@ translate_to_native_sym_flags (bfd *abfd,
      to another.  */
   sym_pointer->e_type[0] &= ~N_TYPE;
 
-  sec = bfd_get_section (cache_ptr);
+  sec = bfd_asymbol_section (cache_ptr);
   off = 0;
 
   if (sec == NULL)
@@ -1519,7 +1512,7 @@ NAME (aout, slurp_symbol_table) (bfd *abfd)
       return FALSE;
     }
 
-  bfd_get_symcount (abfd) = obj_aout_external_sym_count (abfd);
+  abfd->symcount = obj_aout_external_sym_count (abfd);
 
   obj_aout_symbols (abfd) = cached;
 
@@ -1988,6 +1981,8 @@ NAME (aout, canonicalize_reloc) (bfd *abfd,
 long
 NAME (aout, get_reloc_upper_bound) (bfd *abfd, sec_ptr asect)
 {
+  bfd_size_type count;
+
   if (bfd_get_format (abfd) != bfd_object)
     {
       bfd_set_error (bfd_error_invalid_operation);
@@ -1995,28 +1990,25 @@ NAME (aout, get_reloc_upper_bound) (bfd *abfd, sec_ptr asect)
     }
 
   if (asect->flags & SEC_CONSTRUCTOR)
-    return (sizeof (arelent *) * (asect->reloc_count + 1));
+    count = asect->reloc_count;
+  else if (asect == obj_datasec (abfd))
+    count = exec_hdr (abfd)->a_drsize / obj_reloc_entry_size (abfd);
+  else if (asect == obj_textsec (abfd))
+    count = exec_hdr (abfd)->a_trsize / obj_reloc_entry_size (abfd);
+  else if (asect == obj_bsssec (abfd))
+    count = 0;
+  else
+    {
+      bfd_set_error (bfd_error_invalid_operation);
+      return -1;
+    }
 
-  if (asect == obj_datasec (abfd))
-    return (sizeof (arelent *)
-	    * ((exec_hdr (abfd)->a_drsize / obj_reloc_entry_size (abfd))
-	       + 1));
-
-  if (asect == obj_textsec (abfd))
-    return (sizeof (arelent *)
-	    * ((exec_hdr (abfd)->a_trsize / obj_reloc_entry_size (abfd))
-	       + 1));
-
-  /* TODO: why are there two if statements for obj_bsssec()? */
-
-  if (asect == obj_bsssec (abfd))
-    return sizeof (arelent *);
-
-  if (asect == obj_bsssec (abfd))
-    return 0;
-
-  bfd_set_error (bfd_error_invalid_operation);
-  return -1;
+  if (count >= LONG_MAX / sizeof (arelent *))
+    {
+      bfd_set_error (bfd_error_file_too_big);
+      return -1;
+    }
+  return (count + 1) * sizeof (arelent *);
 }
 
 
@@ -2810,17 +2802,17 @@ aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	  break;
 	case N_TEXT | N_EXT:
 	  section = obj_textsec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_DATA | N_EXT:
 	  /* Treat N_SETV symbols as N_DATA symbol; see comment in
 	     translate_from_native_sym_flags.  */
 	  section = obj_datasec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_BSS | N_EXT:
 	  section = obj_bsssec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	}
 
@@ -3159,8 +3151,7 @@ aout_link_reloc_link_order (struct aout_final_link_info *flaginfo,
 	  (*flaginfo->info->callbacks->reloc_overflow)
 	    (flaginfo->info, NULL,
 	     (p->type == bfd_section_reloc_link_order
-	      ? bfd_section_name (flaginfo->output_bfd,
-				  pr->u.section)
+	      ? bfd_section_name (pr->u.section)
 	      : pr->u.name),
 	     howto->name, pr->addend, NULL,
 	     (asection *) NULL, (bfd_vma) 0);
@@ -3485,7 +3476,7 @@ pdp11_aout_link_input_section (struct aout_final_link_info *flaginfo,
 		    asection *s;
 
 		    s = aout_reloc_type_to_section (input_bfd, r_type);
-		    name = bfd_section_name (input_bfd, s);
+		    name = bfd_section_name (s);
 		  }
 		(*flaginfo->info->callbacks->reloc_overflow)
 		  (flaginfo->info, (h ? &h->root : NULL), name, howto->name,
@@ -4005,8 +3996,7 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
 	return FALSE;
       PUT_WORD (output_bfd, strtab_index, outsym->e_strx);
       PUT_WORD (output_bfd,
-		(bfd_get_section_vma (output_bfd,
-				      obj_textsec (input_bfd)->output_section)
+		(bfd_section_vma (obj_textsec (input_bfd)->output_section)
 		 + obj_textsec (input_bfd)->output_offset),
 		outsym->e_value);
       ++obj_aout_external_sym_count (output_bfd);
@@ -4214,7 +4204,7 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
 		  BFD_ASSERT (bfd_is_abs_section (output_section)
 			      || output_section->owner == output_bfd);
 		  val = (hresolve->root.u.def.value
-			 + bfd_get_section_vma (output_bfd, output_section)
+			 + bfd_section_vma (output_section)
 			 + input_section->output_offset);
 
 		  /* Get the correct type based on the section.  If
