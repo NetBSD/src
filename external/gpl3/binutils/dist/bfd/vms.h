@@ -1,5 +1,5 @@
 /* vms.h -- Header file for VMS (Alpha and Vax) support.
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    Main header file.
 
@@ -98,7 +98,7 @@ struct evax_private_udata_struct
 
 /* vms-misc.c.  */
 
-#define VMS_DEBUG 1
+#define VMS_DEBUG 0
 
 #if VMS_DEBUG
 extern void _bfd_vms_debug (int, char *, ...) ATTRIBUTE_PRINTF_2;
@@ -118,8 +118,8 @@ extern void vms_time_t_to_vms_time (time_t ut, unsigned int *hi, unsigned int *l
 extern void vms_get_time (unsigned int *hi, unsigned int *lo);
 extern void vms_raw_get_time (unsigned char *buf);
 
-extern char * _bfd_vms_save_sized_string (unsigned char *, unsigned);
-extern char * _bfd_vms_save_counted_string (unsigned char *, unsigned);
+extern char * _bfd_vms_save_sized_string (bfd *, unsigned char *, size_t);
+extern char * _bfd_vms_save_counted_string (bfd *, unsigned char *, size_t);
 extern void   _bfd_vms_output_begin (struct vms_rec_wr *, int);
 extern void   _bfd_vms_output_alignment (struct vms_rec_wr *, int);
 extern void   _bfd_vms_output_begin_subrec (struct vms_rec_wr *, int);

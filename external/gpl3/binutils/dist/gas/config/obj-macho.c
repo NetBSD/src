@@ -1,5 +1,5 @@
 /* Mach-O object file format
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -227,7 +227,7 @@ obj_mach_o_make_or_get_sect (char * segname, char * sectname,
   /* Sub-segments don't exists as is on Mach-O.  */
   sec = subseg_new (name, 0);
 
-  oldflags = bfd_get_section_flags (stdoutput, sec);
+  oldflags = bfd_section_flags (sec);
   msect = bfd_mach_o_get_mach_o_section (sec);
 
   if (oldflags == SEC_NO_FLAGS)
@@ -245,9 +245,9 @@ obj_mach_o_make_or_get_sect (char * segname, char * sectname,
 	flags |= SEC_DEBUGGING;
 
       /* New, so just use the defaults or what's specified.  */
-      if (! bfd_set_section_flags (stdoutput, sec, flags))
+      if (!bfd_set_section_flags (sec, flags))
 	as_warn (_("failed to set flags for \"%s\": %s"),
-		 bfd_section_name (stdoutput, sec),
+		 bfd_section_name (sec),
 		 bfd_errmsg (bfd_get_error ()));
 
       strncpy (msect->segname, segname, BFD_MACH_O_SEGNAME_SIZE);
@@ -1697,7 +1697,7 @@ static void
 obj_mach_o_set_section_vma (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, void *v_p)
 {
   bfd_mach_o_section *ms = bfd_mach_o_get_mach_o_section (sec);
-  unsigned bfd_align = bfd_get_section_alignment (abfd, sec);
+  unsigned bfd_align = bfd_section_alignment (sec);
   obj_mach_o_set_vma_data *p = (struct obj_mach_o_set_vma_data *)v_p;
   unsigned sectype = (ms->flags & BFD_MACH_O_SECTION_TYPE_MASK);
   unsigned zf;
@@ -1719,16 +1719,16 @@ obj_mach_o_set_section_vma (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, void *v_p
 
   /* We know the section size now - so make a vma for the section just
      based on order.  */
-  ms->size = bfd_get_section_size (sec);
+  ms->size = bfd_section_size (sec);
 
   /* Make sure that the align agrees, and set to the largest value chosen.  */
   ms->align = ms->align > bfd_align ? ms->align : bfd_align;
-  bfd_set_section_alignment (abfd, sec, ms->align);
+  bfd_set_section_alignment (sec, ms->align);
 
   p->vma += (1 << ms->align) - 1;
   p->vma &= ~((1 << ms->align) - 1);
   ms->addr = p->vma;
-  bfd_set_section_vma (abfd, sec, p->vma);
+  bfd_set_section_vma (sec, p->vma);
   p->vma += ms->size;
 }
 
@@ -1752,7 +1752,7 @@ static void
 obj_mach_o_set_indirect_symbols (bfd *abfd, asection *sec,
 				 void *xxx ATTRIBUTE_UNUSED)
 {
-  bfd_vma sect_size = bfd_section_size (abfd, sec);
+  bfd_vma sect_size = bfd_section_size (sec);
   bfd_mach_o_section *ms = bfd_mach_o_get_mach_o_section (sec);
   unsigned lazy = 0;
 

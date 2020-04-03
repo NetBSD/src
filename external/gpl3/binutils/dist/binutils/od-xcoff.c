@@ -1,5 +1,5 @@
 /* od-xcoff.c -- dump information about an xcoff object file.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
    Written by Tristan Gingold, Adacore.
 
    This file is part of GNU Binutils.
@@ -763,7 +763,7 @@ dump_xcoff32_symbols (bfd *abfd, struct xcoff_dump *data)
     {
       bfd_size_type size;
 
-      size = bfd_get_section_size (debugsec);
+      size = bfd_section_size (debugsec);
       debug = (char *) xmalloc (size);
       bfd_get_section_contents (abfd, debugsec, debug, 0, size);
     }
@@ -1051,7 +1051,7 @@ dump_xcoff32_loader (bfd *abfd)
       printf (_("no .loader section in file\n"));
       return;
     }
-  size = bfd_get_section_size (loader);
+  size = bfd_section_size (loader);
   if (size < sizeof (*lhdr))
     {
       printf (_("section .loader is too short\n"));
@@ -1198,7 +1198,7 @@ dump_xcoff32_except (bfd *abfd, struct xcoff_dump *data)
       printf (_("no .except section in file\n"));
       return;
     }
-  size = bfd_get_section_size (sec);
+  size = bfd_section_size (sec);
   excp_data = (bfd_byte *) xmalloc (size);
   bfd_get_section_contents (abfd, sec, excp_data, 0, size);
   exceptab = (struct external_exceptab *)excp_data;
@@ -1241,7 +1241,7 @@ dump_xcoff32_typchk (bfd *abfd)
       printf (_("no .typchk section in file\n"));
       return;
     }
-  size = bfd_get_section_size (sec);
+  size = bfd_section_size (sec);
   data = (bfd_byte *) xmalloc (size);
   bfd_get_section_contents (abfd, sec, data, 0, size);
 
@@ -1449,9 +1449,9 @@ dump_xcoff32_traceback (bfd *abfd, struct xcoff_dump *data)
   text_sec = bfd_get_section_by_name (abfd, ".text");
   if (text_sec == NULL)
     return;
-  text_vma = bfd_get_section_vma (abfd, text_sec);
+  text_vma = bfd_section_vma (text_sec);
 
-  text_size = bfd_get_section_size (text_sec);
+  text_size = bfd_section_size (text_sec);
   text = (char *) xmalloc (text_size);
   bfd_get_section_contents (abfd, text_sec, text, 0, text_size);
 
@@ -1680,8 +1680,10 @@ dump_dumpx_core (bfd *abfd, struct external_core_dumpx *hdr)
 {
   if (options[OPT_FILE_HEADER].selected)
     {
-      printf ("  signal:     %u\n", bfd_h_get_8 (abfd, hdr->c_signo));
-      printf ("  flags:      0x%02x\n", bfd_h_get_8 (abfd, hdr->c_flag));
+      printf ("  signal:     %u\n",
+	      (unsigned) bfd_h_get_8 (abfd, hdr->c_signo));
+      printf ("  flags:      0x%02x\n",
+	      (unsigned) bfd_h_get_8 (abfd, hdr->c_flag));
       printf ("  entries:    %u\n",
 	      (unsigned) bfd_h_get_16 (abfd, hdr->c_entries));
 #ifdef BFD64

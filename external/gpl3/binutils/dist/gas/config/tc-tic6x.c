@@ -1,5 +1,5 @@
 /* TI C6X assembler.
-   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -781,7 +781,7 @@ md_begin (void)
 
   /* This is copied from perform_an_assembly_pass.  */
   applicable = bfd_applicable_section_flags (stdoutput);
-  bfd_set_section_flags (stdoutput, sbss_section, applicable & SEC_ALLOC);
+  bfd_set_section_flags (sbss_section, applicable & SEC_ALLOC);
 
   subseg_set (seg, subseg);
 
@@ -4483,7 +4483,7 @@ md_section_align (segT segment ATTRIBUTE_UNUSED,
 {
   /* Round up section sizes to ensure that text sections consist of
      whole fetch packets.  */
-  int align = bfd_get_section_alignment (stdoutput, segment);
+  int align = bfd_section_alignment (segment);
   return ((size + (1 << align) - 1) & (-((valueT) 1 << align)));
 }
 
@@ -4526,7 +4526,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
   if (reloc->howto->pcrel_offset && reloc->howto->partial_inplace)
     {
       reloc->addend += reloc->address;
-      if (!bfd_is_com_section (symbol))
+      if (!bfd_is_com_section (bfd_asymbol_section (symbol)))
 	reloc->addend -= symbol->value;
     }
   if (r_type == BFD_RELOC_C6000_PCR_H16
@@ -5060,7 +5060,7 @@ tic6x_output_unwinding (bfd_boolean need_extab)
       if (unwind->personality_index == -1)
 	{
 	  tmp = md_chars_to_number (unwind->frag_start + 4, 4);
-	  tmp |= ((unwind->data_bytes - 8) >> 2) << 24;
+	  tmp |= (valueT) ((unwind->data_bytes - 8) >> 2) << 24;
 	  md_number_to_chars (unwind->frag_start + 4, tmp, 4);
 	}
       else if (unwind->personality_index == 1 || unwind->personality_index == 2)

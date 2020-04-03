@@ -17,6 +17,13 @@ arc-opc.c
 arm-dis.c
 avr-dis.c
 bfin-dis.c
+bpf-asm.c
+bpf-desc.c
+bpf-desc.h
+bpf-dis.c
+bpf-ibld.c
+bpf-opc.c
+bpf-opc.h
 cgen-asm.c
 cgen-bitset.c
 cgen-dis.c
@@ -27,6 +34,7 @@ cris-dis.c
 cris-opc.c
 crx-dis.c
 crx-opc.c
+csky-dis.c
 d10v-dis.c
 d10v-opc.c
 d30v-dis.c
@@ -178,6 +186,7 @@ rl78-dis.c
 rx-decode.c
 rx-dis.c
 s12z-dis.c
+s12z-opc.c
 s390-dis.c
 s390-mkopc.c
 s390-opc.c
@@ -196,8 +205,6 @@ tic4x-dis.c
 tic54x-dis.c
 tic54x-opc.c
 tic6x-dis.c
-tic80-dis.c
-tic80-opc.c
 tilegx-dis.c
 tilegx-opc.c
 tilepro-dis.c

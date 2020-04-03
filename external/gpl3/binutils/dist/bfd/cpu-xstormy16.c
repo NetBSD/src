@@ -1,5 +1,5 @@
 /* BFD support for the XSTORMY16 processor.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,17 +24,18 @@
 
 const bfd_arch_info_type bfd_xstormy16_arch =
 {
-  16,				/* bits per word */
-  32,				/* bits per address */
-  8,				/* bits per byte */
-  bfd_arch_xstormy16,		/* architecture */
-  bfd_mach_xstormy16,		/* machine */
-  "xstormy16",			/* architecture name */
-  "xstormy16",			/* printable name */
-  2,				/* section align power */
-  TRUE,				/* the default ? */
-  bfd_default_compatible,	/* architecture comparison fn */
-  bfd_default_scan,		/* string to architecture convert fn */
+  16,				/* Bits per word.  */
+  32,				/* Bits per address.  */
+  8,				/* Bits per byte.  */
+  bfd_arch_xstormy16,		/* Architecture.  */
+  bfd_mach_xstormy16,		/* Machine.  */
+  "xstormy16",			/* Architecture name.  */
+  "xstormy16",			/* Printable name.  */
+  2,				/* Section align power.  */
+  TRUE,				/* The default ?  */
+  bfd_default_compatible,	/* Architecture comparison fn.  */
+  bfd_default_scan,		/* String to architecture convert fn.  */
   bfd_arch_default_fill,	/* Default fill.  */
-  NULL				/* next in list */
+  NULL,				/* Next in list.  */
+  0 /* Maximum offset of a reloc from the start of an insn.  */
 };

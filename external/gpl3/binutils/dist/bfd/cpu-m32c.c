@@ -1,5 +1,5 @@
 /* BFD support for the M16C/M32C processors.
-   Copyright (C) 2004-2018 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -35,38 +35,13 @@ m32c_scan (const bfd_arch_info_type * info, const char * string)
   return bfd_default_scan (info, string);
 }
 
-static const bfd_arch_info_type arch_info_struct[] =
-{
-  {
-    32,				/* bits per word */
-    32,				/* bits per address */
-    8,				/* bits per byte */
-    bfd_arch_m32c,		/* architecture */
-    bfd_mach_m32c,		/* machine */
-    "m32c",			/* architecture name */
-    "m32c",			/* printable name */
-    3,				/* section align power */
-    FALSE,			/* the default ? */
-    bfd_default_compatible,	/* architecture comparison fn */
-    m32c_scan,			/* string to architecture convert fn */
-    bfd_arch_default_fill,	/* Default fill.  */
-    NULL			/* next in list */
-  },
-};
+#define N(number, print, align, default, next)			   \
+{ 32, 32, 8, bfd_arch_m32c, number, "m32c", print, align, default, \
+  bfd_default_compatible, m32c_scan, bfd_arch_default_fill, next, 0 }
+
+static const bfd_arch_info_type arch_info_struct =
+  N (bfd_mach_m32c, "m32c", 3, FALSE, NULL);
 
 const bfd_arch_info_type bfd_m32c_arch =
-{
-  32,				/* Bits per word.  */
-  32,				/* Bits per address.  */
-  8,				/* Bits per byte.  */
-  bfd_arch_m32c,		/* Architecture.  */
-  bfd_mach_m16c,		/* Machine.  */
-  "m32c",			/* Architecture name.  */
-  "m16c",			/* Printable name.  */
-  4,				/* Section align power.  */
-  TRUE,				/* The default ?  */
-  bfd_default_compatible,	/* Architecture comparison fn.  */
-  m32c_scan,			/* String to architecture convert fn.  */
-  bfd_arch_default_fill,	/* Default fill.  */
-  &arch_info_struct[0],		/* Next in list.  */
-};
+  N (bfd_mach_m16c, "m16c", 4, TRUE, &arch_info_struct);
+

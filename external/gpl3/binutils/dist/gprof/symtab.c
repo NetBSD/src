@@ -1,6 +1,6 @@
 /* symtab.c
 
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -89,7 +89,7 @@ symtab_finalize (Sym_Table *tab)
 
   /* Remove duplicate entries to speed-up later processing and
      set end_addr if its not set yet.  */
-  prev_addr = tab->base[0].addr + 1;
+  prev_addr = tab->base[0].addr - 1;
 
   for (src = dst = tab->base; src < tab->limit; ++src)
     {
@@ -107,7 +107,7 @@ symtab_finalize (Sym_Table *tab)
 		  && ((src->is_func && !dst[-1].is_func)
 		      || ((src->is_func == dst[-1].is_func)
 			  && ((src->name[0] != '_' && dst[-1].name[0] == '_')
-			      || (src->name[0]
+			      || (src->name[0] == '_' && dst[-1].name[0] == '_'
 				  && src->name[1] != '_'
 				  && dst[-1].name[1] == '_'))))))
 	    {
@@ -149,7 +149,7 @@ symtab_finalize (Sym_Table *tab)
 
   if (tab->len > 0 && dst[-1].end_addr == 0)
     dst[-1].end_addr
-      = core_text_sect->vma + bfd_get_section_size (core_text_sect) - 1;
+      = core_text_sect->vma + bfd_section_size (core_text_sect) - 1;
 
   DBG (AOUTDEBUG | IDDEBUG,
        printf ("[symtab_finalize]: removed %d duplicate entries\n",

@@ -1,5 +1,5 @@
 /* read.h - of read.c
-   Copyright (C) 1986-2018 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -114,7 +114,7 @@ extern char original_case_string[];
 
 extern void pop_insert (const pseudo_typeS *);
 extern unsigned int get_stab_string_offset
-  (const char *string, const char *stabstr_secname);
+  (const char *, const char *, bfd_boolean);
 extern void aout_process_stab (int, const char *, int, int, int);
 extern char *demand_copy_string (int *lenP);
 extern char *demand_copy_C_string (int *len_pointer);
