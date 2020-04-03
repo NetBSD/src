@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.105 2020/03/30 02:41:06 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.106 2020/04/03 03:32:28 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -530,6 +530,10 @@ int cached_stat(const char *, void *);
 #define KILLPG(pid, sig)	kill(-(pid), (sig))
 #else
 #define KILLPG(pid, sig)	killpg((pid), (sig))
+#endif
+
+#ifndef __arraycount
+#define __arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
 #endif
 
 #endif /* _MAKE_H_ */

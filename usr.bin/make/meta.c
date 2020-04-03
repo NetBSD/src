@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.80 2020/03/18 23:53:02 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.81 2020/04/03 03:32:28 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1558,8 +1558,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 			if (buf[x - 1] == '\n')
 			    buf[x - 1] = '\0';
 		    }
-		    CHECK_VALID_META(p);
-		    if (!hasOODATE &&
+		    if (p &&
+			!hasOODATE &&
 			!(gn->type & OP_NOMETA_CMP) &&
 			strcmp(p, cmd) != 0) {
 			if (DEBUG(META))
