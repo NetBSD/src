@@ -1,5 +1,5 @@
 /* ARM Mach-O support for BFD.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -30,7 +30,7 @@
 #define bfd_mach_o_mkobject bfd_mach_o_arm_mkobject
 
 #define bfd_mach_o_canonicalize_one_reloc bfd_mach_o_arm_canonicalize_one_reloc
-#define bfd_mach_o_swap_reloc_out NULL
+#define bfd_mach_o_swap_reloc_out  NULL
 #define bfd_mach_o_bfd_reloc_type_lookup bfd_mach_o_arm_bfd_reloc_type_lookup
 #define bfd_mach_o_bfd_reloc_name_lookup bfd_mach_o_arm_bfd_reloc_name_lookup
 
@@ -48,7 +48,7 @@ static const bfd_target *
 bfd_mach_o_arm_core_p (bfd *abfd)
 {
   return bfd_mach_o_header_p (abfd, 0,
-                              BFD_MACH_O_MH_CORE, BFD_MACH_O_CPU_TYPE_ARM);
+			      BFD_MACH_O_MH_CORE, BFD_MACH_O_CPU_TYPE_ARM);
 }
 
 static bfd_boolean
@@ -147,10 +147,12 @@ static reloc_howto_type arm_howto_table[]=
 };
 
 static bfd_boolean
-bfd_mach_o_arm_canonicalize_one_reloc (bfd *abfd,
-                                      struct mach_o_reloc_info_external *raw,
-                                      arelent *res, asymbol **syms)
- {
+bfd_mach_o_arm_canonicalize_one_reloc (bfd *       abfd,
+				       struct mach_o_reloc_info_external * raw,
+				       arelent *   res,
+				       asymbol **  syms,
+				       arelent *   res_base)
+{
   bfd_mach_o_reloc_info reloc;
 
   if (!bfd_mach_o_pre_canonicalize_one_reloc (abfd, raw, &reloc, res, syms))
@@ -159,45 +161,51 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *abfd,
   if (reloc.r_scattered)
     {
       switch (reloc.r_type)
-        {
-        case BFD_MACH_O_ARM_RELOC_PAIR:
-          if (reloc.r_length == 2)
-            {
+	{
+	case BFD_MACH_O_ARM_RELOC_PAIR:
+	  /* PR 21813: Check for a corrupt PAIR reloc at the start.  */
+	  if (res == res_base)
+	    return FALSE;
+	  if (reloc.r_length == 2)
+	    {
 	      res->howto = &arm_howto_table[7];
 	      res->address = res[-1].address;
 	      return TRUE;
-            }
-          else if (reloc.r_length == 1)
+	    }
+	  else if (reloc.r_length == 1)
 	    {
 	      res->howto = &arm_howto_table[10];
 	      res->address = res[-1].address;
 	      return TRUE;
 	    }
-          return FALSE;
-        case BFD_MACH_O_ARM_RELOC_SECTDIFF:
-          if (reloc.r_length == 2)
-            {
+	  return FALSE;
+
+	case BFD_MACH_O_ARM_RELOC_SECTDIFF:
+	  if (reloc.r_length == 2)
+	    {
 	      res->howto = &arm_howto_table[5];
 	      return TRUE;
-            }
-          else if (reloc.r_length == 1)
-            {
+	    }
+	  else if (reloc.r_length == 1)
+	    {
 	      res->howto = &arm_howto_table[8];
 	      return TRUE;
-            }
-          return FALSE;
-        case BFD_MACH_O_ARM_RELOC_LOCAL_SECTDIFF:
-          if (reloc.r_length == 2)
-            {
+	    }
+	  return FALSE;
+
+	case BFD_MACH_O_ARM_RELOC_LOCAL_SECTDIFF:
+	  if (reloc.r_length == 2)
+	    {
 	      res->howto = &arm_howto_table[6];
 	      return TRUE;
-            }
-          else if (reloc.r_length == 1)
-            {
+	    }
+	  else if (reloc.r_length == 1)
+	    {
 	      res->howto = &arm_howto_table[9];
 	      return TRUE;
-            }
-          return FALSE;
+	    }
+	  return FALSE;
+
 	case BFD_MACH_O_ARM_RELOC_HALF_SECTDIFF:
 	  switch (reloc.r_length)
 	    {
@@ -209,55 +217,55 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *abfd,
 	      return TRUE;
 	    }
 	  return FALSE;
-        default:
-          return FALSE;
-        }
+
+	default:
+	  break;
+	}
     }
   else
     {
       switch (reloc.r_type)
-        {
-        case BFD_MACH_O_ARM_RELOC_VANILLA:
-          switch ((reloc.r_length << 1) | reloc.r_pcrel)
-            {
-            case 0: /* len = 0, pcrel = 0  */
-              res->howto = &arm_howto_table[2];
-              return TRUE;
-            case 2: /* len = 1, pcrel = 0  */
-              res->howto = &arm_howto_table[1];
-              return TRUE;
-            case 3: /* len = 1, pcrel = 1  */
-              res->howto = &arm_howto_table[4];
-              return TRUE;
-            case 4: /* len = 2, pcrel = 0  */
-              res->howto = &arm_howto_table[0];
-              return TRUE;
-            case 5: /* len = 2, pcrel = 1  */
-              res->howto = &arm_howto_table[3];
-              return TRUE;
-            default:
-              return FALSE;
-            }
-          break;
-        case BFD_MACH_O_ARM_RELOC_BR24:
+	{
+	case BFD_MACH_O_ARM_RELOC_VANILLA:
+	  switch ((reloc.r_length << 1) | reloc.r_pcrel)
+	    {
+	    case 0: /* len = 0, pcrel = 0  */
+	      res->howto = &arm_howto_table[2];
+	      return TRUE;
+	    case 2: /* len = 1, pcrel = 0  */
+	      res->howto = &arm_howto_table[1];
+	      return TRUE;
+	    case 3: /* len = 1, pcrel = 1  */
+	      res->howto = &arm_howto_table[4];
+	      return TRUE;
+	    case 4: /* len = 2, pcrel = 0  */
+	      res->howto = &arm_howto_table[0];
+	      return TRUE;
+	    case 5: /* len = 2, pcrel = 1  */
+	      res->howto = &arm_howto_table[3];
+	      return TRUE;
+	    default:
+	      return FALSE;
+	    }
+	  break;
+
+	case BFD_MACH_O_ARM_RELOC_BR24:
 	  if (reloc.r_length == 2 && reloc.r_pcrel == 1)
 	    {
-              res->howto = &arm_howto_table[11];
-              return TRUE;
+	      res->howto = &arm_howto_table[11];
+	      return TRUE;
 	    }
-	  else
-	    return FALSE;
 	  break;
-        case BFD_MACH_O_THUMB_RELOC_BR22:
+
+	case BFD_MACH_O_THUMB_RELOC_BR22:
 	  if (reloc.r_length == 2 && reloc.r_pcrel == 1)
 	    {
-              res->howto = &arm_howto_table[16];
-              return TRUE;
+	      res->howto = &arm_howto_table[16];
+	      return TRUE;
 	    }
-	  else
-	    return FALSE;
 	  break;
-        case BFD_MACH_O_ARM_RELOC_HALF:
+
+	case BFD_MACH_O_ARM_RELOC_HALF:
 	  if (reloc.r_pcrel == 0)
 	    switch (reloc.r_length)
 	      {
@@ -268,8 +276,9 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *abfd,
 		res->howto = &arm_howto_table[14];
 		return TRUE;
 	      }
-	  return FALSE;
-        case BFD_MACH_O_ARM_RELOC_PAIR:
+	  break;
+
+	case BFD_MACH_O_ARM_RELOC_PAIR:
 	  if (res[-1].howto == &arm_howto_table[12]
 	      && reloc.r_length == 0)
 	    {
@@ -279,7 +288,7 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *abfd,
 	      res[-1].addend += (res->address & 0xffff) << 16;
 	      res->address = res[-1].address;
 	      return TRUE;
-            }
+	    }
 	  else if (res[-1].howto == &arm_howto_table[14]
 		   && reloc.r_length == 1)
 	    {
@@ -289,12 +298,15 @@ bfd_mach_o_arm_canonicalize_one_reloc (bfd *abfd,
 	      res[-1].addend += res->address & 0xffff;
 	      res->address = res[-1].address;
 	      return TRUE;
-            }
-          return FALSE;
-        default:
-          return FALSE;
-        }
+	    }
+	  break;
+
+	default:
+	  break;
+	}
     }
+
+  return FALSE;
 }
 
 static reloc_howto_type *
@@ -316,11 +328,11 @@ bfd_mach_o_arm_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   return NULL;
 }
 
-#define TARGET_NAME 		arm_mach_o_vec
-#define TARGET_STRING     	"mach-o-arm"
+#define TARGET_NAME		arm_mach_o_vec
+#define TARGET_STRING		"mach-o-arm"
 #define TARGET_ARCHITECTURE	bfd_arch_arm
 #define TARGET_PAGESIZE		4096
-#define TARGET_BIG_ENDIAN 	0
-#define TARGET_ARCHIVE 		0
+#define TARGET_BIG_ENDIAN	0
+#define TARGET_ARCHIVE		0
 #define TARGET_PRIORITY		0
 #include "mach-o-target.c"
