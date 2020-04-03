@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1177 2020/02/27 12:52:20 macallan Exp $
+#	$NetBSD: bsd.own.mk,v 1.1178 2020/04/03 17:57:30 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -171,9 +171,9 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
 #
 HAVE_BINUTILS?=	231
 
-.if ${HAVE_BINUTILS} == 231
+.if ${HAVE_BINUTILS} == 234
 EXTERNAL_BINUTILS_SUBDIR=	binutils
-.elif ${HAVE_BINUTILS} == 227
+.elif ${HAVE_BINUTILS} == 231
 EXTERNAL_BINUTILS_SUBDIR=	binutils.old
 .else
 EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
