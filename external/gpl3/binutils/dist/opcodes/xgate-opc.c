@@ -1,5 +1,5 @@
 /* mc9xgate-opc.c -- Freescale XGATE opcode list
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Written by Sean Keys (skeys@ipdatasys.com)
 
    This file is part of the GNU opcodes library.

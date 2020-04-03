@@ -1,5 +1,5 @@
 /* dllwrap.c -- wrapper for DLLTOOL and GCC to generate PE style DLLs
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Contributed by Mumit Khan (khan@xraylith.wisc.edu).
 
    This file is part of GNU Binutils.

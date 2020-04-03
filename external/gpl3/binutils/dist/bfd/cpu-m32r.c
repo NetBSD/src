@@ -1,5 +1,5 @@
 /* BFD support for the M32R processor.
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,8 +23,8 @@
 #include "libbfd.h"
 
 #define N(number, print, default, next)  \
-{  32, 32, 8, bfd_arch_m32r, number, "m32r", print, 4, default, \
-     bfd_default_compatible, bfd_default_scan, bfd_arch_default_fill, next }
+{ 32, 32, 8, bfd_arch_m32r, number, "m32r", print, 4, default, \
+  bfd_default_compatible, bfd_default_scan, bfd_arch_default_fill, next, 0 }
 
 #define M32R2_NEXT   & arch_info_struct [1]
 #define NEXT	     & arch_info_struct [0]

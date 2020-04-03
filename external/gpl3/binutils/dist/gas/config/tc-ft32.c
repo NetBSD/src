@@ -1,5 +1,5 @@
 /* tc-ft32.c -- Assemble code for ft32
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

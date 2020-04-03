@@ -1,0 +1,957 @@
+2020-02-01  Nick Clifton  <nickc@redhat.com>
+
+	Binutils 2.34 release.
+
+2020-01-18  Nick Clifton  <nickc@redhat.com>
+
+	Binutils 2.34 branch created.
+
+2020-01-05  Joel Brobecker  <brobecker@adacore.com>
+
+	PR binutils/25155:
+	* configure.ac: Add AC_CHECK_DECLS([asprintf]).
+	* configure, config.h.in: Regenerate.
+
+2020-01-01  Alan Modra  <amodra@gmail.com>
+
+	Update year range in copyright notice of all files.
+
+2019-10-16  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* swap.h (bswap_16, bswap_32, bswap_64): Make static.
+
+2019-09-30  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open.c (ctf_bufopen_internal): Fix tabdamage.
+	* ctf-types.c (ctf_type_lname): Likewise.
+
+2019-09-23  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open.c (ctf_import): Do not leak a ctf_file_t ref on every
+	ctf_import after the first for a given file.
+
+2019-09-23  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (ctf_str_append_noerr): Declare.
+	* ctf-util.c (ctf_str_append_noerr): Define in terms of
+	ctf_str_append.
+	* ctf-dump.c (str_append): New, call it.
+	(ctf_dump_format_type): Use str_append, not ctf_str_append.
+	(ctf_dump_label): Likewise.
+	(ctf_dump_objts): Likewise.
+	(ctf_dump_funcs): Likewise.
+	(ctf_dump_var): Likewise.
+	(ctf_dump_member): Likewise.
+	(ctf_dump_type): Likewise.
+	(ctf_dump): Likewise.
+
+2019-09-23  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (ctf_alloc): Remove.
+	(ctf_free): Likewise.
+	(ctf_strdup): Likewise.
+	* ctf-subr.c (ctf_alloc): Remove.
+	(ctf_free): Likewise.
+	* ctf-util.c (ctf_strdup): Remove.
+
+	* ctf-create.c (ctf_serialize): Use malloc, not ctf_alloc; free, not
+	ctf_free; strdup, not ctf_strdup.
+	(ctf_dtd_delete): Likewise.
+	(ctf_dvd_delete): Likewise.
+	(ctf_add_generic): Likewise.
+	(ctf_add_function): Likewise.
+	(ctf_add_enumerator): Likewise.
+	(ctf_add_member_offset): Likewise.
+	(ctf_add_variable): Likewise.
+	(membadd): Likewise.
+	(ctf_compress_write): Likewise.
+	(ctf_write_mem): Likewise.
+	* ctf-decl.c (ctf_decl_push): Likewise.
+	(ctf_decl_fini): Likewise.
+	(ctf_decl_sprintf): Likewise.  Check for OOM.
+	* ctf-dump.c (ctf_dump_append): Use malloc, not ctf_alloc; free, not
+	ctf_free; strdup, not ctf_strdup.
+	(ctf_dump_free): Likewise.
+	(ctf_dump): Likewise.
+	* ctf-open.c (upgrade_types_v1): Likewise.
+	(init_types): Likewise.
+	(ctf_file_close): Likewise.
+	(ctf_bufopen_internal): Likewise.  Check for OOM.
+	(ctf_parent_name_set): Likewise: report the OOM to the caller.
+	(ctf_cuname_set): Likewise.
+	(ctf_import): Likewise.
+	* ctf-string.c (ctf_str_purge_atom_refs): Use malloc, not ctf_alloc;
+	free, not ctf_free; strdup, not ctf_strdup.
+	(ctf_str_free_atom): Likewise.
+	(ctf_str_create_atoms): Likewise.
+	(ctf_str_add_ref_internal): Likewise.
+	(ctf_str_remove_ref): Likewise.
+	(ctf_str_write_strtab): Likewise.
+
+2019-08-09  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-types.c (ctf_type_encoding): Fix the dynamic case to
+	work right for non-int/fps.
+
+2019-08-08  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-types.c (ctf_type_name): Don't strlen a potentially-
+	null pointer.
+
+2019-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (ctf_file_t) <ctf_add_processing>: New.
+	* ctf-open.c (ctf_file_close): Free it.
+	* ctf-create.c (ctf_serialize): Adjust.
+	(membcmp): When reporting a conflict due to an error, report the
+	error.
+	(ctf_add_type): Turn into a ctf_add_processing wrapper.  Rename to...
+	(ctf_add_type_internal): ... this.  Hand back types we are already
+	in the middle of adding immediately.  Hand back structs/unions with
+	the same number of members immediately.  Do not walk the dynamic
+	list.  Call ctf_add_type_internal, not ctf_add_type.  Handle
+	forwards promoted to other types and the inverse case identically.
+	Add structs to the mapping as soon as we intern them, before they
+	gain any members.
+
+2019-08-09  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (ctf_names_t): New.
+	(ctf_lookup_t) <ctf_hash>: Now a ctf_names_t, not a ctf_hash_t.
+	(ctf_file_t) <ctf_structs>: Likewise.
+	<ctf_unions>: Likewise.
+	<ctf_enums>: Likewise.
+	<ctf_names>: Likewise.
+	<ctf_lookups>: Improve comment.
+	<ctf_ptrtab_len>: New.
+	<ctf_prov_strtab>: New.
+	<ctf_str_prov_offset>: New.
+	<ctf_dtbyname>: Remove, redundant to the names hashes.
+	<ctf_dtnextid>: Remove, redundant to ctf_typemax.
+	(ctf_dtdef_t) <dtd_name>: Remove.
+	<dtd_data>: Note that the ctt_name is now populated.
+	(ctf_str_atom_t) <csa_offset>: This is now the strtab
+	offset for internal strings too.
+	<csa_external_offset>: New, the external strtab offset.
+	(CTF_INDEX_TO_TYPEPTR): Handle the LCTF_RDWR case.
+	(ctf_name_table): New declaration.
+	(ctf_lookup_by_rawname): Likewise.
+	(ctf_lookup_by_rawhash): Likewise.
+	(ctf_set_ctl_hashes): Likewise.
+	(ctf_serialize): Likewise.
+	(ctf_dtd_insert): Adjust.
+	(ctf_simple_open_internal): Likewise.
+	(ctf_bufopen_internal): Likewise.
+	(ctf_list_empty_p): Likewise.
+	(ctf_str_remove_ref): Likewise.
+	(ctf_str_add): Returns uint32_t now.
+	(ctf_str_add_ref): Likewise.
+	(ctf_str_add_external): Now returns a boolean (int).
+	* ctf-string.c (ctf_strraw_explicit): Check the ctf_prov_strtab
+	for strings in the appropriate range.
+	(ctf_str_create_atoms): Create the ctf_prov_strtab.  Detect OOM
+	when adding the null string to the new strtab.
+	(ctf_str_free_atoms): Destroy the ctf_prov_strtab.
+	(ctf_str_add_ref_internal): Add make_provisional argument.  If
+	make_provisional, populate the offset and fill in the
+	ctf_prov_strtab accordingly.
+	(ctf_str_add): Return the offset, not the string.
+	(ctf_str_add_ref): Likewise.
+	(ctf_str_add_external): Return a success integer.
+	(ctf_str_remove_ref): New, remove a single ref.
+	(ctf_str_count_strtab): Do not count the initial null string's
+	length or the existence or length of any unreferenced internal
+	atoms.
+	(ctf_str_populate_sorttab): Skip atoms with no refs.
+	(ctf_str_write_strtab): Populate the nullstr earlier.  Add one
+	to the cts_len for the null string, since it is no longer done
+	in ctf_str_count_strtab.  Adjust for csa_external_offset rename.
+	Populate the csa_offset for both internal and external cases.
+	Flush the ctf_prov_strtab afterwards, and reset the
+	ctf_str_prov_offset.
+	* ctf-create.c (ctf_grow_ptrtab): New.
+	(ctf_create): Call it.	Initialize new fields rather than old
+	ones.  Tell ctf_bufopen_internal that this is a writable dictionary.
+	Set the ctl hashes and data model.
+	(ctf_update): Rename to...
+	(ctf_serialize): ... this.  Leave a compatibility function behind.
+	Tell ctf_simple_open_internal that this is a writable dictionary.
+	Pass the new fields along from the old dictionary.  Drop
+	ctf_dtnextid and ctf_dtbyname.	Use ctf_strraw, not dtd_name.
+	Do not zero out the DTD's ctt_name.
+	(ctf_prefixed_name): Rename to...
+	(ctf_name_table): ... this.  No longer return a prefixed name: return
+	the applicable name table instead.
+	(ctf_dtd_insert): Use it, and use the right name table.	 Pass in the
+	kind we're adding.  Migrate away from dtd_name.
+	(ctf_dtd_delete): Adjust similarly.  Remove the ref to the
+	deleted ctt_name.
+	(ctf_dtd_lookup_type_by_name): Remove.
+	(ctf_dynamic_type): Always return NULL on read-only dictionaries.
+	No longer check ctf_dtnextid: check ctf_typemax instead.
+	(ctf_snapshot): No longer use ctf_dtnextid: use ctf_typemax instead.
+	(ctf_rollback): Likewise.  No longer fail with ECTF_OVERROLLBACK. Use
+	ctf_name_table and the right name table, and migrate away from
+	dtd_name as in ctf_dtd_delete.
+	(ctf_add_generic): Pass in the kind explicitly and pass it to
+	ctf_dtd_insert. Use ctf_typemax, not ctf_dtnextid.  Migrate away
+	from dtd_name to using ctf_str_add_ref to populate the ctt_name.
+	Grow the ptrtab if needed.
+	(ctf_add_encoded): Pass in the kind.
+	(ctf_add_slice): Likewise.
+	(ctf_add_array): Likewise.
+	(ctf_add_function): Likewise.
+	(ctf_add_typedef): Likewise.
+	(ctf_add_reftype): Likewise. Initialize the ctf_ptrtab, checking
+	ctt_name rather than dtd_name.
+	(ctf_add_struct_sized): Pass in the kind.  Use
+	ctf_lookup_by_rawname, not ctf_hash_lookup_type /
+	ctf_dtd_lookup_type_by_name.
+	(ctf_add_union_sized): Likewise.
+	(ctf_add_enum): Likewise.
+	(ctf_add_enum_encoded): Likewise.
+	(ctf_add_forward): Likewise.
+	(ctf_add_type): Likewise.
+	(ctf_compress_write): Call ctf_serialize: adjust for ctf_size not
+	being initialized until after the call.
+	(ctf_write_mem): Likewise.
+	(ctf_write): Likewise.
+	* ctf-archive.c (arc_write_one_ctf): Likewise.
+	* ctf-lookup.c (ctf_lookup_by_name): Use ctf_lookuup_by_rawhash, not
+	ctf_hash_lookup_type.
+	(ctf_lookup_by_id): No longer check the readonly types if the
+	dictionary is writable.
+	* ctf-open.c (init_types): Assert that this dictionary is not
+	writable.  Adjust to use the new name hashes, ctf_name_table,
+	and ctf_ptrtab_len.  GNU style fix for the final ptrtab scan.
+	(ctf_bufopen_internal): New 'writable' parameter.  Flip on LCTF_RDWR
+	if set.	 Drop out early when dictionary is writable.  Split the
+	ctf_lookups initialization into...
+	(ctf_set_cth_hashes): ... this new function.
+	(ctf_simple_open_internal): Adjust.  New 'writable' parameter.
+	(ctf_simple_open): Adjust accordingly.
+	(ctf_bufopen): Likewise.
+	(ctf_file_close): Destroy the appropriate name hashes.	No longer
+	destroy ctf_dtbyname, which is gone.
+	(ctf_getdatasect): Remove spurious "extern".
+	* ctf-types.c (ctf_lookup_by_rawname): New, look up types in the
+	specified name table, given a kind.
+	(ctf_lookup_by_rawhash): Likewise, given a ctf_names_t *.
+	(ctf_member_iter): Add support for iterating over the
+	dynamic type list.
+	(ctf_enum_iter): Likewise.
+	(ctf_variable_iter): Likewise.
+	(ctf_type_rvisit): Likewise.
+	(ctf_member_info): Add support for types in the dynamic type list.
+	(ctf_enum_name): Likewise.
+	(ctf_enum_value): Likewise.
+	(ctf_func_type_info): Likewise.
+	(ctf_func_type_args): Likewise.
+	* ctf-link.c (ctf_accumulate_archive_names): No longer call
+	ctf_update.
+	(ctf_link_write): Likewise.
+	(ctf_link_intern_extern_string): Adjust for new
+	ctf_str_add_external return value.
+	(ctf_link_add_strtab): Likewise.
+	* ctf-util.c (ctf_list_empty_p): New.
+
+2019-08-05  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-types.c (ctf_type_resolve): Return ECTF_NONREPRESENTABLE on
+	type zero.
+	* ctf-create.c (ctf_add_type): Detect and skip nonrepresentable
+	members and types.
+	(ctf_add_variable): Likewise for variables pointing to them.
+	* ctf-link.c (ctf_link_one_type): Do not warn for nonrepresentable
+	type link failure, but do warn for others.
+	* ctf-dump.c (ctf_dump_format_type): Likewise.  Do not assume all
+	errors to be ENOMEM.
+	(ctf_dump_member): Likewise.
+	(ctf_dump_type): Likewise.
+	(ctf_dump_header_strfield): Do not assume all errors to be ENOMEM.
+	(ctf_dump_header_sectfield): Do not assume all errors to be ENOMEM.
+	(ctf_dump_header): Likewise.
+	(ctf_dump_label): likewise.
+	(ctf_dump_objts): likewise.
+	(ctf_dump_funcs): likewise.
+	(ctf_dump_var): likewise.
+	(ctf_dump_str): Likewise.
+
+2019-09-30  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure.ac (AC_DISABLE_SHARED): New, like opcodes/.
+	(LT_INIT): Likewise.
+	(AM_INSTALL_LIBBFD): Likewise.
+	(dlopen): Note why this is necessary in a comment.
+	(SHARED_LIBADD): Initialize for possibly-PIC libiberty: derived from
+	opcodes/.
+	(SHARED_LDFLAGS): Likewise.
+	(BFD_LIBADD): Likewise, for libbfd.
+	(BFD_DEPENDENCIES): Likewise.
+	(VERSION_FLAGS): Initialize, using a version script if ld supports
+	one, or libtool -export-symbols-regex otherwise.
+	(AC_CONFIG_MACRO_DIR): Add ../BFD.
+	* Makefile.am (ACLOCAL_AMFLAGS): Likewise.
+	(INCDIR): New.
+	(AM_CPPFLAGS): Use $(srcdir), not $(top_srcdir).
+	(noinst_LIBRARIES): Replace with...
+	[INSTALL_LIBBFD] (lib_LTLIBRARIES): This, or...
+	[!INSTALL_LIBBFD] (noinst_LTLIBRARIES): ... this, mentioning new
+	libctf-nobfd.la as well.
+	[INSTALL_LIBCTF] (include_HEADERS): Add the CTF headers.
+	[!INSTALL_LIBCTF] (include_HEADERS): New, empty.
+	(libctf_a_SOURCES): Rename to...
+	(libctf_nobfd_la_SOURCES): ... this, all of libctf other than
+	ctf-open-bfd.c.
+	(libctf_la_SOURCES): Now derived from libctf_nobfd_la_SOURCES,
+	with ctf-open-bfd.c added.
+	(libctf_nobfd_la_LIBADD): New, using @SHARED_LIBADD@.
+	(libctf_la_LIBADD): New, using @BFD_LIBADD@ as well.
+	(libctf_la_DEPENDENCIES): New, using @BFD_DEPENDENCIES@.
+	* Makefile.am [INSTALL_LIBCTF]: Use it.
+	* aclocal.m4: Add ../bfd/acinclude.m4, ../config/acx.m4, and the
+	libtool macros.
+	* libctf.ver: New, everything is version LIBCTF_1.0 currently (even
+	the unstable components).
+	* Makefile.in: Regenerated.
+	* config.h.in: Likewise.
+	* configure: Likewise.
+
+2019-07-30  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure.ac (INSTALL_LIBCTF): New, controlled by
+	--enable-install-libctf.
+	[INSTALL_LIBCTF] (lib_LIBRARIES): Add libctf.a.
+	* Makefile.in: Regenerated.
+	* configure: Regenerated.
+
+2019-07-30  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-archive.c (ctf_arc_close): Call ctfi_bfd_close if set.
+	* ctf-open-bfd.c (ctf_bfdclose): Fix comment.
+
+2019-07-30  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open-bfd.c (ctf_fdopen): Call bfd_set_cacheable.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (includes): Include <sys/param.h> here.
+
+2019-07-30  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open.c (flip_lbls): Eschew for-loop initial declarations.
+	(flip_objts): Likewise.
+	(flip_vars): Likewise.
+	(flip_types): Likewise.
+
+2019-07-30  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-hash.c (ctf_hashtab_insert): Pass in the key and value
+	freeing functions: if set, free the key and value if the slot
+	already exists.  Always reassign the key.
+	(ctf_dynhash_insert): Adjust call appropriately.
+	(ctf_hash_insert_type): Likewise.
+
+2019-08-03  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-create.c (ctf_add_type): Look up and use the forwarded-to
+	type kind.  Allow forwards to unify with pre-existing structs/
+	unions/enums.
+
+2019-07-30  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (ctf_file_t) <ctf_link_cu_mappping>: New.
+	<ctf_link_memb_name_changer>: Likewise.
+	<ctf_link_memb_name_changer_arg>: Likewise.
+	* ctf-create.c (ctf_update): Update accordingly.
+	* ctf-open.c (ctf_file_close): Likewise.
+	* ctf-link.c (ctf_create_per_cu): Apply the cu mapping.
+	(ctf_link_add_cu_mapping): New.
+	(ctf_link_set_memb_name_changer): Likewise.
+	(ctf_change_parent_name): New.
+	(ctf_name_list_accum_cb_arg_t) <dynames>: New, storage for names
+	allocated by the caller's ctf_link_memb_name_changer.
+	<ndynames>: Likewise.
+	(ctf_accumulate_archive_names): Call the ctf_link_memb_name_changer.
+	(ctf_link_write): Likewise (for _CTF_SECTION only): also call
+	ctf_change_parent_name.  Free any resulting names.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-link.c (ctf_create_per_cu): New, refactored out of...
+	(ctf_link_one_type): ... here, with parent-name setting added.
+	(check_variable): New.
+	(ctf_link_one_variable): Likewise.
+	(ctf_link_one_input_archive_member): Call it.
+	* ctf-error.c (_ctf_errlist): Updated with new errors.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (ctf_file_t): New field ctf_link_type_mapping.
+	(struct ctf_link_type_mapping_key): New.
+	(ctf_hash_type_mapping_key): Likewise.
+	(ctf_hash_eq_type_mapping_key): Likewise.
+	(ctf_add_type_mapping): Likewise.
+	(ctf_type_mapping): Likewise.
+	(ctf_dynhash_empty): Likewise.
+	* ctf-open.c (ctf_file_close): Update accordingly.
+	* ctf-create.c (ctf_update): Likewise.
+	(ctf_add_type): Populate the mapping.
+	* ctf-hash.c (ctf_hash_type_mapping_key): Hash a type mapping key.
+	(ctf_hash_eq_type_mapping_key): Check the key for equality.
+	(ctf_dynhash_insert): Fix comment typo.
+	(ctf_dynhash_empty): New.
+	* ctf-link.c (ctf_add_type_mapping): New.
+	(ctf_type_mapping): Likewise.
+	(empty_link_type_mapping): New.
+	(ctf_link_one_input_archive): Call it.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-link.c: New file, linking of the string and type sections.
+	* Makefile.am (libctf_a_SOURCES): Add it.
+	* Makefile.in: Regenerate.
+
+	* ctf-impl.h (ctf_file_t): New fields ctf_link_inputs,
+	ctf_link_outputs.
+	* ctf-create.c (ctf_update): Update accordingly.
+	* ctf-open.c (ctf_file_close): Likewise.
+	* ctf-error.c (_ctf_errlist): Updated with new errors.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-dump.c (ctf_dump_funcs): Check the right error value.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-dump.c (ctf_dump): Use ctf_type_iter_all to dump types, not
+	ctf_type_iter.
+	(ctf_dump_type): Pass down the flag from ctf_type_iter_all.
+	(ctf_dump_format_type): Add non-root-type { } notation.
+	Add root flag to prototype.
+	(ctf_dump_label): Adjust accordingly.
+	(ctf_dump_objts): Likewise.
+	(ctf_dump_var): Likewise.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-create.c (ctf_compress_write): Fix double-free.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-archive.c (ctf_arc_write): Split off, and reimplement in terms
+	of...
+	(ctf_arc_write_fd): ... this new function.
+	* ctf-create.c (ctf_write_mem): New.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (ctf_str_atom_t) <csa_offset>: New field.
+	(ctf_file_t) <ctf_syn_ext_strtab>: Likewise.
+	(ctf_str_add_ref): Name the last arg.
+	(ctf_str_add_external) New.
+	(ctf_str_add_strraw_explicit): Likewise.
+	(ctf_simple_open_internal): Likewise.
+	(ctf_bufopen_internal): Likewise.
+
+	* ctf-string.c (ctf_strraw_explicit): Split from...
+	(ctf_strraw): ... here, with new support for ctf_syn_ext_strtab.
+	(ctf_str_add_ref_internal): Return the atom, not the
+	string.
+	(ctf_str_add): Adjust accordingly.
+	(ctf_str_add_ref): Likewise.  Move up in the file.
+	(ctf_str_add_external): New: update the csa_offset.
+	(ctf_str_count_strtab): Only account for strings with no csa_offset
+	in the internal strtab length.
+	(ctf_str_write_strtab): If the csa_offset is set, update the
+	string's refs without writing the string out, and update the
+	ctf_syn_ext_strtab.  Make OOM handling less ugly.
+	* ctf-create.c (struct ctf_sort_var_arg_cb): New.
+	(ctf_update): Handle failure to populate the strtab.  Pass in the
+	new ctf_sort_var arg.  Adjust for ctf_syn_ext_strtab addition.
+	Call ctf_simple_open_internal, not ctf_simple_open.
+	(ctf_sort_var): Call ctf_strraw_explicit rather than looking up
+	strings by hand.
+	* ctf-hash.c (ctf_hash_insert_type): Likewise (but using
+	ctf_strraw).  Adjust to diagnose ECTF_STRTAB nonetheless.
+	* ctf-open.c (init_types): No longer filter out ECTF_STRTAB.
+	(ctf_file_close): Destroy the ctf_syn_ext_strtab.
+	(ctf_simple_open): Rename to, and reimplement as a wrapper around...
+	(ctf_simple_open_internal): ... this new function, which calls
+	ctf_bufopen_internal.
+	(ctf_bufopen): Rename to, and reimplement as a wrapper around...
+	(ctf_bufopen_internal): ... this new function, which sets
+	ctf_syn_ext_strtab.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf_types.c (ctf_type_iter_all): New.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open.c (init_symtab): Check for overflow against the right
+	section.
+	(upgrade_header): Set cth_objtidxoff, cth_funcidxoff to zero-length.
+	(upgrade_types_v1): Note that these sections are not checked.
+	(flip_header): Endian-swap the header fields.
+	(flip_ctf): Endian-swap the sections.
+	(flip_objts): Update comment.
+	(ctf_bufopen): Check header offsets and alignment for validity.
+
+2019-07-13  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open-bfd.c: Add <assert.h>.
+	(ctf_bfdopen_ctfsect): Open string and symbol tables using
+	techniques borrowed from bfd_elf_sym_name.
+	(ctf_new_archive_internal): Improve comment.
+	* ctf-archive.c (ctf_arc_close): Do not free the ctfi_strsect.
+	* ctf-open.c (ctf_bufopen): Allow opening with a string section but
+	no symbol section, but not vice versa.
+
+2019-07-08  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (ctf_file_t): New field ctf_openflags.
+	* ctf-open.c (ctf_bufopen): Set it.  No longer dump header offsets.
+	* ctf-dump.c (dump_header): New function, dump the CTF header.
+	(ctf_dump): Call it.
+	(ctf_dump_header_strfield): New function.
+	(ctf_dump_header_sectfield): Likewise.
+
+2019-07-06  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (ctf_file_t): New fields ctf_header, ctf_dynbase,
+	ctf_cuname, ctf_dyncuname: ctf_base and ctf_buf are no longer const.
+	* ctf-open.c (ctf_set_base): Preserve the gap between ctf_buf and
+	ctf_base: do not assume that it is always sizeof (ctf_header_t).
+	Print out ctf_cuname: only print out ctf_parname if set.
+	(ctf_free_base): Removed, ctf_base is no longer freed: free
+	ctf_dynbase instead.
+	(ctf_set_version): Fix spacing.
+	(upgrade_header): New, in-place header upgrading.
+	(upgrade_types): Rename to...
+	(upgrade_types_v1): ... this.  Free ctf_dynbase, not ctf_base.  No
+	longer track old and new headers separately.  No longer allow for
+	header sizes explicitly: squeeze the headers out on upgrade (they
+	are preserved in fp->ctf_header).  Set ctf_dynbase, ctf_base and
+	ctf_buf explicitly.  Use ctf_free, not ctf_free_base.
+	(upgrade_types): New, also handle ctf_parmax updating.
+	(flip_header): Flip ctf_cuname.
+	(flip_types): Flip BUF explicitly rather than deriving BUF from
+	BASE.
+	(ctf_bufopen): Store the header in fp->ctf_header.  Correct minimum
+	required alignment of objtoff and funcoff.  No longer store it in
+	the ctf_buf unless that buf is derived unmodified from the input.
+	Set ctf_dynbase where ctf_base is dynamically allocated. Drop locals
+	that duplicate fields in ctf_file: move allocation of ctf_file
+	further up instead.  Call upgrade_header as needed.  Move
+	version-specific ctf_parmax initialization into upgrade_types.  More
+	concise error handling.
+	(ctf_file_close): No longer test for null pointers before freeing.
+	Free ctf_dyncuname, ctf_dynbase, and ctf_header.  Do not call
+	ctf_free_base.
+	(ctf_cuname): New.
+	(ctf_cuname_set): New.
+	* ctf-create.c (ctf_update): Populate ctf_cuname.
+	(ctf_gzwrite): Write out the header explicitly.  Remove obsolescent
+	comment.
+	(ctf_write): Likewise.
+	(ctf_compress_write): Get the header from ctf_header, not ctf_base.
+	Fix the compression length: fp->ctf_size never counted the CTF
+	header.  Simplify the compress call accordingly.
+
+2019-07-11  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* ctf-endian.h: Don't assume htole64 and le64toh are always
+	present if HAVE_ENDIAN_H; also check if htole64 is defined.
+	[!WORDS_BIGENDIAN] (htole64, le64toh): Define as identity,
+	not bswap_identity_64.
+
+2019-09-18  Alan Modra  <amodra@gmail.com>
+
+	* ctf-open-bfd.c: Update throughout for bfd section macro changes.
+
+2019-09-09  Phil Blundell  <pb@pbcl.net>
+
+	binutils 2.33 branch created.
+
+2019-07-18  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-types.c (ctf_type_aname_raw): New.
+	(ctf_func_type_info): Likewise.
+	(ctf_func_type_args): Likewise.
+	* ctf-error.c (_ctf_errlist): Fix description.
+	* ctf-lookup.c: Fix file description.
+
+2019-06-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-create.c (ctf_create): Fix off-by-one error.
+
+2019-06-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h: (struct ctf_strs_writable): New, non-const version of
+	struct ctf_strs.
+	(struct ctf_dtdef): Note that dtd_data.ctt_name is unpopulated.
+	(struct ctf_str_atom): New, disambiguated single string.
+	(struct ctf_str_atom_ref): New, points to some other location that
+	references this string's offset.
+	(struct ctf_file): New members ctf_str_atoms and ctf_str_num_refs.
+	Remove member ctf_dtvstrlen: we no longer track the total strlen
+	as we add strings.
+	(ctf_str_create_atoms): Declare new function in ctf-string.c.
+	(ctf_str_free_atoms): Likewise.
+	(ctf_str_add): Likewise.
+	(ctf_str_add_ref): Likewise.
+	(ctf_str_rollback): Likewise.
+	(ctf_str_purge_refs): Likewise.
+	(ctf_str_write_strtab): Likewise.
+	(ctf_realloc): Declare new function in ctf-util.c.
+
+	* ctf-open.c (ctf_bufopen): Create the atoms table.
+	(ctf_file_close): Destroy it.
+	* ctf-create.c (ctf_update): Copy-and-free it on update.  No longer
+	special-case the position of the parname string.  Construct the
+	strtab by calling ctf_str_add_ref and ctf_str_write_strtab after the
+	rest of each buffer element is constructed, not via open-coding:
+	realloc the CTF buffer and append the strtab to it.  No longer
+	maintain ctf_dtvstrlen.  Sort the variable entry table later, after
+	strtab construction.
+	(ctf_copy_membnames): Remove: integrated into ctf_copy_{s,l,e}members.
+	(ctf_copy_smembers): Drop the string offset: call ctf_str_add_ref
+	after buffer element construction instead.
+	(ctf_copy_lmembers): Likewise.
+	(ctf_copy_emembers): Likewise.
+	(ctf_create): No longer maintain the ctf_dtvstrlen.
+	(ctf_dtd_delete): Likewise.
+	(ctf_dvd_delete): Likewise.
+	(ctf_add_generic): Likewise.
+	(ctf_add_enumerator): Likewise.
+	(ctf_add_member_offset): Likewise.
+	(ctf_add_variable): Likewise.
+	(membadd): Likewise.
+	* ctf-util.c (ctf_realloc): New, wrapper around realloc that aborts
+	if there are active ctf_str_num_refs.
+	(ctf_strraw): Move to ctf-string.c.
+	(ctf_strptr): Likewise.
+	* ctf-string.c: New file, strtab manipulation.
+
+	* Makefile.am (libctf_a_SOURCES): Add it.
+	* Makefile.in: Regenerate.
+
+2019-06-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (ctf_hash_iter_f): New.
+	(ctf_dynhash_iter): New declaration.
+	(ctf_dynhash_iter_remove): New declaration.
+	* ctf-hash.c (ctf_dynhash_iter): Define.
+	(ctf_dynhash_iter_remove): Likewise.
+	(ctf_hashtab_traverse): New.
+	(ctf_hashtab_traverse_remove): Likewise.
+	(struct ctf_traverse_cb_arg): Likewise.
+	(struct ctf_traverse_remove_cb_arg): Likewise.
+
+2019-06-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-hash.c (ctf_dynhash_remove): Call with a mocked-up element.
+
+2019-06-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-dump.c (ctf_dump_format_type): Prefix hex strings with 0x.
+	(ctf_dump_funcs): Likewise.
+
+2019-06-19  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open-bfd.c: Add swap.h and ctf-endian.h.
+	(ctf_fdopen): Check for endian-swapped raw CTF magic, and
+	little-endian CTF archive magic.  Do not check the CTF version:
+	ctf_simple_open does that in endian-safe ways.  Do not dereference
+	null pointers on open failure.
+
+2019-06-19  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open.c (get_vbytes_common): Return the new slice size.
+	(ctf_bufopen): Flip the endianness of the CTF-section header copy.
+	Remember to copy in the CTF data when opening an uncompressed
+	foreign-endian CTF file.  Prune useless variable manipulation.
+
+2019-06-19  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open.c (ctf_types): Fail when unidentified type kinds are
+	seen.
+
+2019-06-19  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open.c (ctf_bufopen): Dump header offsets into the debugging
+	output.
+
+2019-06-19  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-subr.c (_PAGESIZE): Remove.
+	(ctf_data_alloc): Likewise.
+	(ctf_data_free): Likewise.
+	(ctf_data_protect): Likewise.
+	* ctf-impl.h: Remove declarations.
+	* ctf-create.c (ctf_update): No longer call ctf_data_protect: use
+	ctf_free, not ctf_data_free.
+	(ctf_compress_write): Use ctf_data_alloc, not ctf_alloc.  Free
+	the buffer again on compression error.
+	* ctf-open.c (ctf_set_base): No longer track the size: call
+	ctf_free, not ctf_data_free.
+	(upgrade_types): Likewise.  Call ctf_alloc, not ctf_data_alloc.
+	(ctf_bufopen): Likewise.  No longer call ctf_data_protect.
+
+2019-06-19  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-create.c (ctf_dtd_insert): Pass on error returns from
+	ctf_dynhash_insert.
+	(ctf_dvd_insert): Likewise.
+	(ctf_add_generic): Likewise.
+	(ctf_add_variable): Likewise.
+	* ctf-impl.h: Adjust declarations.
+
+2019-06-14  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2019-06-06  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-decls.h: Include <libiberty.h>.
+	* ctf-lookup.c (ctf_lookup_by_name): Call xstrndup(), not strndup().
+
+2019-06-06  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-dump.c (ctf_dump_format_type): Cast size_t's used in printf()s.
+	(ctf_dump_objts): Likewise.
+	(ctf_dump_funcs): Likewise.
+	(ctf_dump_member): Likewise.
+	(ctf_dump_str): Likewise.
+
+2019-06-06  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-archive.c (arc_mmap_header): Mark fd as potentially unused.
+	* ctf-subr.c (ctf_data_protect): Mark both args as potentially unused.
+
+2019-06-05  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-archive.c (ctf_arc_write): Eschew %zi format specifier.
+	(ctf_arc_open_by_offset): Likewise.
+	* ctf-create.c (ctf_add_type): Likewise.
+
+2019-06-04  Tom Tromey  <tromey@adacore.com>
+
+	* ctf-create.c (ctf_add_encoded, ctf_add_slice)
+	(ctf_add_member_offset): Use CHAR_BIT, not NBBY.
+
+2019-06-04  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure.ac: Check for O_CLOEXEC.
+	* ctf-decls.h (O_CLOEXEC): Define (to 0), if need be.
+	* config.h.in: Regenerate.
+	* configure: Likewise.
+
+2019-06-04  Nick Alcock  <nick.alcock@oracle.com>
+
+	* qsort_r.c: Rename to...
+	* ctf-qsort_r.c: ... this.
+	(_quicksort): Define to ctf_qsort_r.
+	* ctf-decls.h (qsort_r): Remove.
+	(ctf_qsort_r): Add.
+	(struct ctf_qsort_arg): New, transport the real ARG and COMPAR.
+	(ctf_qsort_compar_thunk): Rearrange the arguments to COMPAR.
+	* Makefile.am (libctf_a_LIBADD): Remove.
+	(libctf_a_SOURCES): New, add ctf-qsort_r.c.
+	* ctf-archive.c (ctf_arc_write): Call ctf_qsort_r, not qsort_r.
+	* ctf-create.c (ctf_update): Likewise.
+	* configure.ac: Check for BSD versus GNU qsort_r signature.
+	* Makefile.in: Regenerate.
+	* config.h.in: Likewise.
+	* configure: Likewise.
+
+2019-06-03  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-dump.c (ctf_dump_funcs): Free in the right place.
+
+2019-05-29  Nick Alcock  <nick.alcock@oracle.com>
+
+	* Makefile.am (ZLIB): New.
+	(ZLIBINC): Likewise.
+	(AM_CFLAGS): Use them.
+	(libctf_a_LIBADD): New, for LIBOBJS.
+	* configure.ac: Check for zlib, endian.h, and qsort_r.
+	* ctf-endian.h: New, providing htole64 and le64toh.
+	* swap.h: Code style fixes.
+	(bswap_identity_64): New.
+	* qsort_r.c: New, from gnulib (with one added #include).
+	* ctf-decls.h: New, providing a conditional qsort_r declaration,
+	and unconditional definitions of MIN and MAX.
+	* ctf-impl.h: Use it.  Do not use <sys/errno.h>.
+	(ctf_set_errno): Now returns unsigned long.
+	* ctf-util.c (ctf_set_errno): Adjust here too.
+	* ctf-archive.c: Use ctf-endian.h.
+	(ctf_arc_open_by_offset): Use memset, not bzero.  Drop cts_type,
+	cts_flags and cts_offset.
+	(ctf_arc_write): Drop debugging dependent on the size of off_t.
+	* ctf-create.c: Provide a definition of roundup if not defined.
+	(ctf_create): Drop cts_type, cts_flags and cts_offset.
+	(ctf_add_reftype): Do not check if type IDs are below zero.
+	(ctf_add_slice): Likewise.
+	(ctf_add_typedef): Likewise.
+	(ctf_add_member_offset): Cast error-returning ssize_t's to size_t
+	when known error-free.  Drop CTF_ERR usage for functions returning
+	int.
+	(ctf_add_member_encoded): Drop CTF_ERR usage for functions returning
+	int.
+	(ctf_add_variable): Likewise.
+	(enumcmp): Likewise.
+	(enumadd): Likewise.
+	(membcmp): Likewise.
+	(ctf_add_type): Likewise.  Cast error-returning ssize_t's to size_t
+	when known error-free.
+	* ctf-dump.c (ctf_is_slice): Drop CTF_ERR usage for functions
+	returning int: use CTF_ERR for functions returning ctf_type_id.
+	(ctf_dump_label): Likewise.
+	(ctf_dump_objts): Likewise.
+	* ctf-labels.c (ctf_label_topmost): Likewise.
+	(ctf_label_iter): Likewise.
+	(ctf_label_info): Likewise.
+	* ctf-lookup.c (ctf_func_args): Likewise.
+	* ctf-open.c (upgrade_types): Cast to size_t where appropriate.
+	(ctf_bufopen): Likewise.  Use zlib types as needed.
+	* ctf-types.c (ctf_member_iter): Drop CTF_ERR usage for functions
+	returning int.
+	(ctf_enum_iter): Likewise.
+	(ctf_type_size): Likewise.
+	(ctf_type_align): Likewise.  Cast to size_t where appropriate.
+	(ctf_type_kind_unsliced): Likewise.
+	(ctf_type_kind): Likewise.
+	(ctf_type_encoding): Likewise.
+	(ctf_member_info): Likewise.
+	(ctf_array_info): Likewise.
+	(ctf_enum_value): Likewise.
+	(ctf_type_rvisit): Likewise.
+	* ctf-open-bfd.c (ctf_bfdopen): Drop cts_type, cts_flags and
+	cts_offset.
+	(ctf_simple_open): Likewise.
+	(ctf_bfdopen_ctfsect): Likewise.  Set cts_size properly.
+	* Makefile.in: Regenerate.
+	* aclocal.m4: Likewise.
+	* config.h: Likewise.
+	* configure: Likewise.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure.in: Check for bfd_section_from_elf_index.
+	* configure: Regenerate.
+	* config.h.in [HAVE_BFD_ELF]: Likewise.
+	* libctf/ctf_open_bfd (ctf_bfdopen_ctfsect): Use it.
+	abfd is potentially unused now.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* Makefile.am: New.
+	* Makefile.in: Regenerated.
+	* config.h.in: Likewise.
+	* aclocal.m4: Likewise.
+	* configure: Likewise.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-dump.c: New.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-labels.c: New.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h (_libctf_version): New declaration.
+	* ctf-subr.c (_libctf_version): Define it.
+	(ctf_version): New.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-create.c (enumcmp): New.
+	(enumadd): Likewise.
+	(membcmp): Likewise.
+	(membadd): Likewise.
+	(ctf_add_type): Likewise.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-lookup.c (isqualifier): New.
+	(ctf_lookup_by_name): Likewise.
+	(struct ctf_lookup_var_key): Likewise.
+	(ctf_lookup_var): Likewise.
+	(ctf_lookup_variable): Likewise.
+	(ctf_lookup_symbol_name): Likewise.
+	(ctf_lookup_by_symbol): Likewise.
+	(ctf_func_info): Likewise.
+	(ctf_func_args): Likewise.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-decl.c: New file.
+	* ctf-types.c: Likewise.
+	* ctf-impl.h: New declarations.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open-bfd.c: New file.
+	* ctf-open.c (ctf_close): New.
+	* ctf-impl.h: Include bfd.h.
+	(ctf_file): New members ctf_data_mmapped, ctf_data_mmapped_len.
+	(ctf_archive_internal): New members ctfi_abfd, ctfi_data,
+	ctfi_bfd_close.
+	(ctf_bfdopen_ctfsect): New declaration.
+	(_CTF_SECTION): likewise.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-archive.c: New.
+	* ctf-impl.h (ctf_archive_internal): New type.
+	(ctf_arc_open_internal): New declaration.
+	(ctf_arc_bufopen): Likewise.
+	(ctf_arc_close_internal): Likewise.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-open.c: New file.
+	* swap.h: Likewise.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-create.c: New file.
+	* ctf-lookup.c: New file.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h: New definitions and declarations for type creation
+	and lookup.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-hash.c: New file.
+	* ctf-impl.h: New declarations.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-error.c: New file.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-util.c: New file.
+	* elf.h: Likewise.
+	* ctf-impl.h: Include it, and add declarations.
+
+2019-05-28  Nick Alcock  <nick.alcock@oracle.com>
+
+	* ctf-impl.h: New file.
+	* ctf-subr.c: New file.
+
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 76
+version-control: never
+End:

@@ -1,5 +1,5 @@
 /* Generic ECOFF (Extended-COFF) routines.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -24,6 +24,7 @@
 #include "bfd.h"
 #include "bfdlink.h"
 #include "libbfd.h"
+#include "ecoff-bfd.h"
 #include "aout/ar.h"
 #include "aout/stab_gnu.h"
 
@@ -446,7 +447,7 @@ ecoff_slurp_symbolic_header (bfd *abfd)
   /* See whether there is a symbolic header.  */
   if (ecoff_data (abfd)->sym_filepos == 0)
     {
-      bfd_get_symcount (abfd) = 0;
+      abfd->symcount = 0;
       return TRUE;
     }
 
@@ -479,8 +480,7 @@ ecoff_slurp_symbolic_header (bfd *abfd)
     }
 
   /* Now we can get the correct number of symbols.  */
-  bfd_get_symcount (abfd) = (internal_symhdr->isymMax
-			     + internal_symhdr->iextMax);
+  abfd->symcount = internal_symhdr->isymMax + internal_symhdr->iextMax;
 
   if (raw != NULL)
     free (raw);
@@ -521,7 +521,7 @@ _bfd_ecoff_slurp_symbolic_info (bfd *abfd,
     return TRUE;
   if (ecoff_data (abfd)->sym_filepos == 0)
     {
-      bfd_get_symcount (abfd) = 0;
+      abfd->symcount = 0;
       return TRUE;
     }
 
@@ -965,7 +965,7 @@ _bfd_ecoff_slurp_symbol_table (bfd *abfd)
      the symbol count and warning the user.  */
   if (internal_ptr - internal < (ptrdiff_t) bfd_get_symcount (abfd))
     {
-      bfd_get_symcount (abfd) = internal_ptr - internal;
+      abfd->symcount = internal_ptr - internal;
       _bfd_error_handler
 	/* xgettext:c-format */
 	(_("%pB: warning: isymMax (%ld) is greater than ifdMax (%ld)"),
@@ -1677,10 +1677,10 @@ ecoff_slurp_reloc_table (bfd *abfd,
 	    abort ();
 	  rptr->sym_ptr_ptr = sec->symbol_ptr_ptr;
 
-	  rptr->addend = - bfd_get_section_vma (abfd, sec);
+	  rptr->addend = - bfd_section_vma (sec);
 	}
 
-      rptr->address = intern.r_vaddr - bfd_get_section_vma (abfd, section);
+      rptr->address = intern.r_vaddr - bfd_section_vma (section);
 
       /* Let the backend select the howto field and do any other
 	 required processing.  */
@@ -2313,7 +2313,7 @@ ecoff_get_extr (asymbol *sym, EXTR *esym)
      symbol.  */
   if ((esym->asym.sc == scUndefined
        || esym->asym.sc == scSUndefined)
-      && ! bfd_is_und_section (bfd_get_section (sym)))
+      && ! bfd_is_und_section (bfd_asymbol_section (sym)))
     esym->asym.sc = scAbs;
 
   /* Adjust the FDR index for the symbol by that used for the input
@@ -2432,7 +2432,7 @@ _bfd_ecoff_write_object_contents (bfd *abfd)
       strncpy (section.s_name, current->name, sizeof section.s_name);
 
       /* This seems to be correct for Irix 4 shared libraries.  */
-      vma = bfd_get_section_vma (abfd, current);
+      vma = bfd_section_vma (current);
       if (streq (current->name, _LIB))
 	section.s_vaddr = 0;
       else
@@ -2683,8 +2683,7 @@ _bfd_ecoff_write_object_contents (bfd *abfd)
 	      if (reloc->howto == NULL)
 		continue;
 
-	      in.r_vaddr = (reloc->address
-			    + bfd_get_section_vma (abfd, current));
+	      in.r_vaddr = reloc->address + bfd_section_vma (current);
 	      in.r_type = reloc->howto->type;
 
 	      if ((sym->flags & BSF_SECTION_SYM) == 0)
@@ -2720,7 +2719,7 @@ _bfd_ecoff_write_object_contents (bfd *abfd)
 		    { _RCONST, RELOC_SECTION_RCONST }
 		  };
 
-		  name = bfd_get_section_name (abfd, bfd_get_section (sym));
+		  name = bfd_section_name (bfd_asymbol_section (sym));
 
 		  for (j = 0; j < ARRAY_SIZE (section_symndx); j++)
 		    if (streq (name, section_symndx[j].name))
@@ -2905,7 +2904,7 @@ _bfd_ecoff_slurp_armap (bfd *abfd)
 	  && nextname[ARMAP_OBJECT_ENDIAN_INDEX] != ARMAP_LITTLE_ENDIAN)
       || ! strneq (nextname + ARMAP_END_INDEX, ARMAP_END, sizeof ARMAP_END - 1))
     {
-      bfd_has_map (abfd) = FALSE;
+      abfd->has_armap = FALSE;
       return TRUE;
     }
 
@@ -3018,7 +3017,7 @@ _bfd_ecoff_slurp_armap (bfd *abfd)
   /* Pad to an even boundary.  */
   ardata->first_file_filepos += ardata->first_file_filepos % 2;
 
-  bfd_has_map (abfd) = TRUE;
+  abfd->has_armap = TRUE;
 
   return TRUE;
 }
@@ -4011,7 +4010,7 @@ ecoff_reloc_link_order (bfd *output_bfd,
 	  (*info->callbacks->reloc_overflow)
 	    (info, NULL,
 	     (link_order->type == bfd_section_reloc_link_order
-	      ? bfd_section_name (output_bfd, section)
+	      ? bfd_section_name (section)
 	      : link_order->u.reloc.p->u.name),
 	     rel.howto->name, addend, NULL, NULL, (bfd_vma) 0);
 	  break;
@@ -4026,8 +4025,7 @@ ecoff_reloc_link_order (bfd *output_bfd,
   rel.addend = 0;
 
   /* Move the information into an internal_reloc structure.  */
-  in.r_vaddr = (rel.address
-		+ bfd_get_section_vma (output_bfd, output_section));
+  in.r_vaddr = rel.address + bfd_section_vma (output_section);
   in.r_type = rel.howto->type;
 
   if (type == bfd_symbol_reloc_link_order)
@@ -4077,7 +4075,7 @@ ecoff_reloc_link_order (bfd *output_bfd,
 	{ _RCONST, RELOC_SECTION_RCONST }
       };
 
-      name = bfd_get_section_name (output_bfd, section);
+      name = bfd_section_name (section);
 
       for (i = 0; i < ARRAY_SIZE (section_symndx); i++)
 	if (streq (name, section_symndx[i].name))
@@ -4190,7 +4188,7 @@ ecoff_link_write_external (struct bfd_hash_entry *bh, void * data)
 	  };
 
 	  output_section = h->root.u.def.section->output_section;
-	  name = bfd_section_name (output_section->owner, output_section);
+	  name = bfd_section_name (output_section);
 
 	  for (i = 0; i < ARRAY_SIZE (section_storage_classes); i++)
 	    if (streq (name, section_storage_classes[i].name))
@@ -4459,7 +4457,7 @@ _bfd_ecoff_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 	}
     }
 
-  bfd_get_symcount (abfd) = symhdr->iextMax + symhdr->isymMax;
+  abfd->symcount = symhdr->iextMax + symhdr->isymMax;
 
   ecoff_data (abfd)->linker = TRUE;
 

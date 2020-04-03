@@ -1,5 +1,5 @@
 SCRIPT_NAME=elf
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 EXTRA_EM_FILE=spuelf
 OUTPUT_FORMAT="elf32-spu"
 NO_REL_RELOCS=yes
@@ -19,9 +19,9 @@ MAXPAGESIZE=0x80
 DATA_ADDR="ALIGN(${MAXPAGESIZE})"
 OTHER_BSS_SECTIONS=".toe ALIGN(128) : { *(.toe) } = 0"
 OTHER_SECTIONS=".note.spu_name 0 : { KEEP(*(.note.spu_name)) }
-  ._ea 0 : { KEEP(*(._ea)) KEEP(*(._ea.*)) }"
+  ._ea 0 : { KEEP(*(._ea))${RELOCATING+ KEEP(*(._ea.*))} }"
 OTHER_READONLY_SECTIONS="
   .fixup ${RELOCATING-0} : {
-    PROVIDE (__fixup_start = .);
+    ${RELOCATING+PROVIDE (__fixup_start = .);}
     KEEP(*(.fixup))
   }"

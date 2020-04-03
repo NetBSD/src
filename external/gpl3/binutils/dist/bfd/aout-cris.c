@@ -1,5 +1,5 @@
 /* BFD backend for CRIS a.out binaries.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson.
 
@@ -169,14 +169,14 @@ MY (swap_ext_reloc_out) (bfd *abfd,
      from the abs section, or as a symbol which has an abs value.
      check for that here.  */
 
-  if (bfd_is_abs_section (bfd_get_section (sym)))
+  if (bfd_is_abs_section (bfd_asymbol_section (sym)))
     {
       r_extern = 0;
       r_index = N_ABS;
     }
   else if ((sym->flags & BSF_SECTION_SYM) == 0)
     {
-      if (bfd_is_und_section (bfd_get_section (sym))
+      if (bfd_is_und_section (bfd_asymbol_section (sym))
 	  /* Remember to check for weak symbols; they count as global.  */
 	  || (sym->flags & (BSF_GLOBAL | BSF_WEAK)) != 0)
 	r_extern = 1;

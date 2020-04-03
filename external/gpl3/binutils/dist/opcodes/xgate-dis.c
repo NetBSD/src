@@ -1,5 +1,5 @@
 /* xgate-dis.c -- Freescale XGATE disassembly
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Written by Sean Keys (skeys@ipdatasys.com)
 
    This file is part of the GNU opcodes library.
@@ -169,8 +169,8 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info)
             }
           else if (!strcmp (decodePTR->opcodePTR->constraints, XGATE_OP_DYA))
             {
-        	  operandOne = ripBits (&operMaskReg, 3, opcodePTR, raw_code);
-        	  operandTwo = ripBits (&operMaskReg, 3, opcodePTR, raw_code);
+        	  operandOne = ripBits (&operMaskReg, 3, decodePTR->opcodePTR, raw_code);
+        	  operandTwo = ripBits (&operMaskReg, 3, decodePTR->opcodePTR, raw_code);
         	 ( *info->fprintf_func)(info->stream, " R%x, R%x", operandOne,
         	      operandTwo);
             }
@@ -193,12 +193,12 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info)
                   relAddr = XGATE_NINE_BITS >> 1; /* Clip sign bit.  */
                   relAddr = ~relAddr; /* Make signed.  */
                   relAddr |= (raw_code & 0xFF) + 1; /* Apply our value.  */
-                  relAddr <<= 1; /* Multiply by two as per processor docs.  */
+                  relAddr *= 2; /* Multiply by two as per processor docs.  */
                 }
               else
                 {
                   relAddr = raw_code & 0xff;
-                  relAddr = (relAddr << 1) + 2;
+                  relAddr = relAddr * 2 + 2;
                 }
              (*info->fprintf_func)(info->stream, " *%d", relAddr);
              (*info->fprintf_func)(info->stream, "  Abs* 0x");
@@ -212,12 +212,12 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info)
                   relAddr = XGATE_TEN_BITS >> 1; /* Clip sign bit.  */
                   relAddr = ~relAddr; /* Make signed.  */
                   relAddr |= (raw_code & 0x1FF) + 1; /* Apply our value.  */
-                  relAddr <<= 1; /* Multiply by two as per processor docs.  */
+                  relAddr *= 2; /* Multiply by two as per processor docs.  */
                 }
               else
                 {
                   relAddr = raw_code & 0x1FF;
-                  relAddr = (relAddr << 1) + 2;
+                  relAddr = relAddr * 2 + 2;
                 }
               (*info->fprintf_func)(info->stream, " *%d", relAddr);
               (*info->fprintf_func)(info->stream, "  Abs* 0x");
@@ -259,7 +259,7 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info)
           else
             {
               (*info->fprintf_func)(info->stream, " unhandled mode %s",
-                opcodePTR->constraints);
+				    decodePTR->opcodePTR->constraints);
             }
           perviousBin = raw_code;
         }
@@ -299,12 +299,12 @@ ripBits (unsigned int *operandBitsRemaining,
 	 unsigned int memory)
 {
   unsigned int currentBit;
-  int operand;
+  unsigned int operand = 0;
   int numBitsFound;
 
-  for (operand = 0, numBitsFound = 0, currentBit = 1
-	 << ((opcodePTR->size * 8) - 1);
-       (numBitsFound < numBitsRequested) && currentBit; currentBit >>= 1)
+  for (numBitsFound = 0, currentBit = 1u << ((opcodePTR->size * 8) - 1);
+       numBitsFound < numBitsRequested && currentBit != 0;
+       currentBit >>= 1)
     {
       if (currentBit & *operandBitsRemaining)
 	{

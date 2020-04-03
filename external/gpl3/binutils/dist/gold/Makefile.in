@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#  Copyright (C) 2006-2018 Free Software Foundation, Inc.
+#  Copyright (C) 2006-2020 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -120,6 +120,7 @@ noinst_PROGRAMS = ld-new$(EXEEXT) incremental-dump$(EXEEXT)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@am__append_4 = -Wl,--thread-count=3
 @GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@am__append_5 = ld3
 @GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@am__append_6 = bootstrap-test-treehash-chunksize
+@GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@am__append_7 = bootstrap-test-treehash-chunksize
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../config/ax_pthread.m4 \
@@ -197,28 +198,16 @@ ld_new_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld_new_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@am_ld1_OBJECTS = $(am__objects_4)
 ld1_OBJECTS = $(am_ld1_OBJECTS)
-ld1_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld1_LDFLAGS) \
-	$(LDFLAGS) -o $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@am_ld1_r_OBJECTS = $(am__objects_4)
 ld1_r_OBJECTS = $(am_ld1_r_OBJECTS)
-ld1_r_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld1_r_LDFLAGS) \
-	$(LDFLAGS) -o $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@am_ld2_OBJECTS = $(am__objects_4)
 ld2_OBJECTS = $(am_ld2_OBJECTS)
-ld2_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld2_LDFLAGS) \
-	$(LDFLAGS) -o $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@am_ld2_r_OBJECTS = $(am__objects_4)
 ld2_r_OBJECTS = $(am_ld2_r_OBJECTS)
-ld2_r_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld2_r_LDFLAGS) \
-	$(LDFLAGS) -o $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@am_ld3_OBJECTS = $(am__objects_4)
 ld3_OBJECTS = $(am_ld3_OBJECTS)
-ld3_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld3_LDFLAGS) \
-	$(LDFLAGS) -o $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@am_ld4_OBJECTS = $(am__objects_4)
 ld4_OBJECTS = $(am_ld4_OBJECTS)
-ld4_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(ld4_LDFLAGS) \
-	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -840,45 +829,66 @@ dwp_LDFLAGS = $(GOLD_LDFLAGS)
 CONFIG_STATUS_DEPENDENCIES = $(srcdir)/../bfd/development.sh
 POTFILES = $(CCFILES) $(HFILES) $(TARGETSOURCES)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_SOURCES = $(sources_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_DEPENDENCIES = $(deps_var) gcctestdir1/ld
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_DEPENDENCIES = $(deps_var) gcctestdir1/ld gcctestdir1/collect-ld
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_LDADD = $(ldadd_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_LDFLAGS = -Bgcctestdir1/ \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id=tree \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-chunk-size-for-treehash=12345 \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-min-file-size-for-treehash=0 \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_1)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@editcc1 = -e 's/\([^ ]*\)\(.*\)/\1 -Bgcctestdir1\/\2/'
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_LINK = `echo $(CXXLD) | sed $(editcc1)`\
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(AM_CXXFLAGS) $(CXXFLAGS) $(ld1_LDFLAGS) $(LDFLAGS) -o $@
+
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_SOURCES = $(sources_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_DEPENDENCIES = $(deps_var) gcctestdir2/ld
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_DEPENDENCIES = $(deps_var) gcctestdir2/ld gcctestdir2/collect-ld
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_LDADD = $(ldadd_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_LDFLAGS = -Bgcctestdir2/ \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id=tree \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-chunk-size-for-treehash=12345 \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-min-file-size-for-treehash=0 \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_2)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@editcc2 = -e 's/\([^ ]*\)\(.*\)/\1 -Bgcctestdir2\/\2/'
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_LINK = `echo $(CXXLD) | sed $(editcc2)`\
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(AM_CXXFLAGS) $(CXXFLAGS) $(ld2_LDFLAGS) $(LDFLAGS) -o $@
+
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_SOURCES = $(sources_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_DEPENDENCIES = libgold-1-r.o $(deps_var) gcctestdir1/ld
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_DEPENDENCIES = libgold-1-r.o $(deps_var) gcctestdir1/ld gcctestdir1/collect-ld
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_LDADD = libgold-1-r.o $(ldadd_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_LDFLAGS = -Bgcctestdir1/
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_r_LINK = `echo $(CXXLD) | sed $(editcc1)`\
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(AM_CXXFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@
+
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_r_SOURCES = $(sources_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_r_DEPENDENCIES = libgold-2-r.o $(deps_var) gcctestdir2-r/ld
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_r_DEPENDENCIES = libgold-2-r.o $(deps_var) gcctestdir2-r/ld gcctestdir2-r/collect-ld
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_r_LDADD = libgold-2-r.o $(ldadd_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_r_LDFLAGS = -Bgcctestdir2-r/
+@GCC_TRUE@@NATIVE_LINKER_TRUE@editcc2r = -e 's/\([^ ]*\)\(.*\)/\1 -Bgcctestdir2-r\/\2/'
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_r_LINK = `echo $(CXXLD) | sed $(editcc2r)`\
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(AM_CXXFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@
+
 @GCC_TRUE@@NATIVE_LINKER_TRUE@TESTS = bootstrap-test bootstrap-test-r \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	bootstrap-test-treehash-chunksize \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_6)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@MOSTLYCLEANFILES = bootstrap-test \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	bootstrap-test-r \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	bootstrap-test-treehash-chunksize \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_7)
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld3_SOURCES = $(sources_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld3_DEPENDENCIES = $(deps_var) gcctestdir3/ld
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld3_DEPENDENCIES = $(deps_var) gcctestdir3/ld gcctestdir3/collect-ld
 @GCC_TRUE@@NATIVE_LINKER_TRUE@ld3_LDADD = $(ldadd_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld3_LDFLAGS = -Bgcctestdir3/ \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id=tree \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@editcc3 = -e 's/\([^ ]*\)\(.*\)/\1 -Bgcctestdir3\/\2/'
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld3_LINK = `echo $(CXXLD) | sed $(editcc3)`\
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(AM_CXXFLAGS) $(CXXFLAGS) $(ld3_LDFLAGS) $(LDFLAGS) -o $@
+
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_SOURCES = $(sources_var)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_DEPENDENCIES = $(deps_var) gcctestdir4/ld gcctestdir4/collect-ld
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_LDADD = $(ldadd_var)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@editcc4 = -e 's/\([^ ]*\)\(.*\)/\1 -Bgcctestdir4\/\2/'
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_LINK = `echo $(CXXLD) | sed $(editcc4)`\
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(AM_CXXFLAGS) $(CXXFLAGS) $(ld4_LDFLAGS) $(LDFLAGS) -o $@
+
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld1_LDFLAGS = -Wl,--build-id=tree \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-chunk-size-for-treehash=12345 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-min-file-size-for-treehash=0 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_1)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld2_LDFLAGS = -Wl,--build-id=tree \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-chunk-size-for-treehash=12345 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-min-file-size-for-treehash=0 \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_2)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld3_LDFLAGS = -Wl,--build-id=tree \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-chunk-size-for-treehash=12345 \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-min-file-size-for-treehash=0 \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_3)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_SOURCES = $(sources_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_DEPENDENCIES = $(deps_var) gcctestdir4/ld
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_LDADD = $(ldadd_var)
-@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_LDFLAGS = -Bgcctestdir4/ \
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id=tree \
+@GCC_TRUE@@NATIVE_LINKER_TRUE@ld4_LDFLAGS = -Wl,--build-id=tree \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-chunk-size-for-treehash=12346 \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	-Wl,--build-id-min-file-size-for-treehash=0 \
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	$(am__append_4)
@@ -1011,27 +1021,27 @@ ld-new$(EXEEXT): $(ld_new_OBJECTS) $(ld_new_DEPENDENCIES) $(EXTRA_ld_new_DEPENDE
 
 ld1$(EXEEXT): $(ld1_OBJECTS) $(ld1_DEPENDENCIES) $(EXTRA_ld1_DEPENDENCIES) 
 	@rm -f ld1$(EXEEXT)
-	$(AM_V_CXXLD)$(ld1_LINK) $(ld1_OBJECTS) $(ld1_LDADD) $(LIBS)
+	$(AM_V_GEN)$(ld1_LINK) $(ld1_OBJECTS) $(ld1_LDADD) $(LIBS)
 
 ld1-r$(EXEEXT): $(ld1_r_OBJECTS) $(ld1_r_DEPENDENCIES) $(EXTRA_ld1_r_DEPENDENCIES) 
 	@rm -f ld1-r$(EXEEXT)
-	$(AM_V_CXXLD)$(ld1_r_LINK) $(ld1_r_OBJECTS) $(ld1_r_LDADD) $(LIBS)
+	$(AM_V_GEN)$(ld1_r_LINK) $(ld1_r_OBJECTS) $(ld1_r_LDADD) $(LIBS)
 
 ld2$(EXEEXT): $(ld2_OBJECTS) $(ld2_DEPENDENCIES) $(EXTRA_ld2_DEPENDENCIES) 
 	@rm -f ld2$(EXEEXT)
-	$(AM_V_CXXLD)$(ld2_LINK) $(ld2_OBJECTS) $(ld2_LDADD) $(LIBS)
+	$(AM_V_GEN)$(ld2_LINK) $(ld2_OBJECTS) $(ld2_LDADD) $(LIBS)
 
 ld2-r$(EXEEXT): $(ld2_r_OBJECTS) $(ld2_r_DEPENDENCIES) $(EXTRA_ld2_r_DEPENDENCIES) 
 	@rm -f ld2-r$(EXEEXT)
-	$(AM_V_CXXLD)$(ld2_r_LINK) $(ld2_r_OBJECTS) $(ld2_r_LDADD) $(LIBS)
+	$(AM_V_GEN)$(ld2_r_LINK) $(ld2_r_OBJECTS) $(ld2_r_LDADD) $(LIBS)
 
 ld3$(EXEEXT): $(ld3_OBJECTS) $(ld3_DEPENDENCIES) $(EXTRA_ld3_DEPENDENCIES) 
 	@rm -f ld3$(EXEEXT)
-	$(AM_V_CXXLD)$(ld3_LINK) $(ld3_OBJECTS) $(ld3_LDADD) $(LIBS)
+	$(AM_V_GEN)$(ld3_LINK) $(ld3_OBJECTS) $(ld3_LDADD) $(LIBS)
 
 ld4$(EXEEXT): $(ld4_OBJECTS) $(ld4_DEPENDENCIES) $(EXTRA_ld4_DEPENDENCIES) 
 	@rm -f ld4$(EXEEXT)
-	$(AM_V_CXXLD)$(ld4_LINK) $(ld4_OBJECTS) $(ld4_LDADD) $(LIBS)
+	$(AM_V_GEN)$(ld4_LINK) $(ld4_OBJECTS) $(ld4_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -1448,6 +1458,7 @@ install-strip:
 	    "INSTALL_PROGRAM_ENV=STRIPPROG='$(STRIP)'" install; \
 	fi
 mostlyclean-generic:
+	-test -z "$(MOSTLYCLEANFILES)" || rm -f $(MOSTLYCLEANFILES)
 	-test -z "$(TEST_LOGS)" || rm -f $(TEST_LOGS)
 	-test -z "$(TEST_LOGS:.log=.trs)" || rm -f $(TEST_LOGS:.log=.trs)
 	-test -z "$(TEST_SUITE_LOG)" || rm -f $(TEST_SUITE_LOG)
@@ -1604,15 +1615,15 @@ po/POTFILES.in: @MAINT@ Makefile
 # build ld2.  ld1 and ld2 should be identical.  ld-new need not be
 # identical to ld1, since it was linked with the host linker.
 
-@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir1/ld: ld-new
+@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir1/ld gcctestdir1/collect-ld: ld-new
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	test -d gcctestdir1 || mkdir -p gcctestdir1
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f gcctestdir1/ld
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	(cd gcctestdir1 && $(LN_S) ../ld-new ld)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(LN_S) $(abs_top_builddir)/ld-new $@
 
-@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir2/ld: ld1
+@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir2/ld gcctestdir2/collect-ld: ld1
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	test -d gcctestdir2 || mkdir -p gcctestdir2
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f gcctestdir2/ld
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	(cd gcctestdir2 && $(LN_S) ../ld1 ld)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(LN_S) $(abs_top_builddir)/ld1 $@
 
 @GCC_TRUE@@NATIVE_LINKER_TRUE@bootstrap-test: ld2
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
@@ -1623,10 +1634,10 @@ po/POTFILES.in: @MAINT@ Makefile
 @GCC_TRUE@@NATIVE_LINKER_TRUE@libgold-1-r.o: gcctestdir1/ld libgold.a
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	gcctestdir1/ld -o $@ -r --whole-archive libgold.a
 
-@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir2-r/ld: ld1-r
+@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir2-r/ld gcctestdir2-r/collect-ld: ld1-r
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	test -d gcctestdir2-r || mkdir -p gcctestdir2-r
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f gcctestdir2-r/ld
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	(cd gcctestdir2-r && $(LN_S) ../ld1-r ld)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(LN_S) $(abs_top_builddir)/ld1-r $@
 
 @GCC_TRUE@@NATIVE_LINKER_TRUE@libgold-2-r.o: gcctestdir2-r/ld libgold.a
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	gcctestdir2-r/ld -o $@ -r --whole-archive libgold.a
@@ -1637,15 +1648,15 @@ po/POTFILES.in: @MAINT@ Makefile
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	echo "cmp ld1-r ld2-r" >> $@
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	chmod +x $@
 
-@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir3/ld: ld-new
+@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir3/ld gcctestdir3/collect-ld: ld-new
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	test -d gcctestdir3 || mkdir -p gcctestdir3
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f gcctestdir3/ld
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	(cd gcctestdir3 && $(LN_S) ../ld-new ld)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(LN_S) $(abs_top_builddir)/ld-new $@
 
-@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir4/ld: ld-new
+@GCC_TRUE@@NATIVE_LINKER_TRUE@gcctestdir4/ld gcctestdir4/collect-ld: ld-new
 @GCC_TRUE@@NATIVE_LINKER_TRUE@	test -d gcctestdir4 || mkdir -p gcctestdir4
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f gcctestdir4/ld
-@GCC_TRUE@@NATIVE_LINKER_TRUE@	(cd gcctestdir4 && $(LN_S) ../ld-new ld)
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	rm -f $@
+@GCC_TRUE@@NATIVE_LINKER_TRUE@	$(LN_S) $(abs_top_builddir)/ld-new $@
 
 @GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@bootstrap-test-treehash: ld1 ld3
 @GCC_TRUE@@NATIVE_LINKER_TRUE@@THREADS_TRUE@	rm -f $@

@@ -1,5 +1,5 @@
 /* aarch64-asm.c -- AArch64 assembler support.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -130,6 +130,7 @@ aarch64_ins_reglane (const aarch64_operand *self, const aarch64_opnd_info *info,
       switch (info->qualifier)
 	{
 	case AARCH64_OPND_QLF_S_4B:
+	case AARCH64_OPND_QLF_S_2H:
 	  /* L:H */
 	  assert (reglane_index < 4);
 	  insert_fields (code, reglane_index, 0, 2, FLD_L, FLD_H);
@@ -381,6 +382,8 @@ aarch64_ins_imm (const aarch64_operand *self, const aarch64_opnd_info *info,
   imm = info->imm.value;
   if (operand_need_shift_by_two (self))
     imm >>= 2;
+  if (operand_need_shift_by_four (self))
+    imm >>= 4;
   insert_all_fields (self, code, imm);
   return TRUE;
 }
@@ -688,7 +691,8 @@ aarch64_ins_addr_simm (const aarch64_operand *self,
   insert_field (FLD_Rn, code, info->addr.base_regno, 0);
   /* simm (imm9 or imm7) */
   imm = info->addr.offset.imm;
-  if (self->fields[0] == FLD_imm7)
+  if (self->fields[0] == FLD_imm7
+     || info->qualifier == AARCH64_OPND_QLF_imm_tag)
     /* scaled immediate in ld/st pair instructions..  */
     imm >>= get_logsz (aarch64_get_qualifier_esize (info->qualifier));
   insert_field (self->fields[0], code, imm, 0);
@@ -1238,8 +1242,9 @@ aarch64_ins_sve_shrimm (const aarch64_operand *self,
   const aarch64_opnd_info *prev_operand;
   unsigned int esize;
 
-  assert (info->idx > 0);
-  prev_operand = &inst->operands[info->idx - 1];
+  unsigned int opnd_backshift = get_operand_specific_data (self);
+  assert (info->idx >= (int)opnd_backshift);
+  prev_operand = &inst->operands[info->idx - opnd_backshift];
   esize = aarch64_get_qualifier_esize (prev_operand->qualifier);
   insert_all_fields (self, code, 16 * esize - info->imm.value);
   return TRUE;
@@ -1610,6 +1615,7 @@ do_special_encoding (struct aarch64_inst *inst)
 static void
 aarch64_encode_variant_using_iclass (struct aarch64_inst *inst)
 {
+  int variant = 0;
   switch (inst->opcode->iclass)
     {
     case sve_cpy:
@@ -1620,6 +1626,8 @@ aarch64_encode_variant_using_iclass (struct aarch64_inst *inst)
     case sve_index:
     case sve_shift_pred:
     case sve_shift_unpred:
+    case sve_shift_tsz_hsd:
+    case sve_shift_tsz_bhsd:
       /* For indices and shift amounts, the variant is encoded as
 	 part of the immediate.  */
       break;
@@ -1652,8 +1660,31 @@ aarch64_encode_variant_using_iclass (struct aarch64_inst *inst)
       insert_field (FLD_size, &inst->value, aarch64_get_variant (inst) + 1, 0);
       break;
 
+    case sve_size_bh:
     case sve_size_sd:
       insert_field (FLD_SVE_sz, &inst->value, aarch64_get_variant (inst), 0);
+      break;
+
+    case sve_size_sd2:
+      insert_field (FLD_SVE_sz2, &inst->value, aarch64_get_variant (inst), 0);
+      break;
+
+    case sve_size_hsd2:
+      insert_field (FLD_SVE_size, &inst->value,
+		    aarch64_get_variant (inst) + 1, 0);
+      break;
+
+    case sve_size_tsz_bhs:
+      insert_fields (&inst->value,
+		     (1 << aarch64_get_variant (inst)),
+		     0, 2, FLD_SVE_tszl_19, FLD_SVE_sz);
+      break;
+
+    case sve_size_13:
+      variant = aarch64_get_variant (inst) + 1;
+      if (variant == 2)
+	  variant = 3;
+      insert_field (FLD_size, &inst->value, variant, 0);
       break;
 
     default:
@@ -1948,7 +1979,8 @@ bfd_boolean
 aarch64_opcode_encode (const aarch64_opcode *opcode,
 		       const aarch64_inst *inst_ori, aarch64_insn *code,
 		       aarch64_opnd_qualifier_t *qlf_seq,
-		       aarch64_operand_error *mismatch_detail)
+		       aarch64_operand_error *mismatch_detail,
+		       aarch64_instr_sequence* insn_sequence)
 {
   int i;
   const aarch64_opcode *aliased;
@@ -2034,6 +2066,38 @@ aarch64_opcode_encode (const aarch64_opcode *opcode,
   /* Possibly use the instruction class to encode the chosen qualifier
      variant.  */
   aarch64_encode_variant_using_iclass (inst);
+
+  /* Run a verifier if the instruction has one set.  */
+  if (opcode->verifier)
+    {
+      enum err_type result = opcode->verifier (inst, *code, 0, TRUE,
+					       mismatch_detail, insn_sequence);
+      switch (result)
+	{
+	case ERR_UND:
+	case ERR_UNP:
+	case ERR_NYI:
+	  return FALSE;
+	default:
+	  break;
+	}
+    }
+
+  /* Always run constrain verifiers, this is needed because constrains need to
+     maintain a global state.  Regardless if the instruction has the flag set
+     or not.  */
+  enum err_type result = verify_constraints (inst, *code, 0, TRUE,
+					     mismatch_detail, insn_sequence);
+  switch (result)
+    {
+    case ERR_UND:
+    case ERR_UNP:
+    case ERR_NYI:
+      return FALSE;
+    default:
+      break;
+    }
+
 
 encoding_exit:
   DEBUG_TRACE ("exit with %s", opcode->name);

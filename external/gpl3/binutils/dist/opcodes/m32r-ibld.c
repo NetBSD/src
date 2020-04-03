@@ -4,7 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN: Cpu tools GENerator.
    - the resultant file is machine generated, cgen-ibld.in isn't
 
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -723,7 +723,7 @@ m32r_cgen_extract_operand (CGEN_CPU_DESC cd,
       {
         long value;
         length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_RELOC)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 16, 16, 32, total_length, pc, & value);
-        value = ((((value) << (2))) + (pc));
+        value = ((((value) * (4))) + (pc));
         fields->f_disp16 = value;
       }
       break;
@@ -731,7 +731,7 @@ m32r_cgen_extract_operand (CGEN_CPU_DESC cd,
       {
         long value;
         length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_RELOC)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 8, 24, 32, total_length, pc, & value);
-        value = ((((value) << (2))) + (pc));
+        value = ((((value) * (4))) + (pc));
         fields->f_disp24 = value;
       }
       break;
@@ -739,7 +739,7 @@ m32r_cgen_extract_operand (CGEN_CPU_DESC cd,
       {
         long value;
         length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_RELOC)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 8, 8, 32, total_length, pc, & value);
-        value = ((((value) << (2))) + (((pc) & (-4))));
+        value = ((((value) * (4))) + (((pc) & (-4))));
         fields->f_disp8 = value;
       }
       break;
