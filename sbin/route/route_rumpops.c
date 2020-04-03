@@ -1,4 +1,4 @@
-/*	$NetBSD: route_rumpops.c,v 1.2 2020/04/02 18:32:31 christos Exp $	*/
+/*	$NetBSD: route_rumpops.c,v 1.3 2020/04/03 16:20:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: route_rumpops.c,v 1.2 2020/04/02 18:32:31 christos Exp $");
+__RCSID("$NetBSD: route_rumpops.c,v 1.3 2020/04/03 16:20:52 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -54,7 +54,17 @@ const struct prog_ops prog_ops = {
 	.op_read =		rump_sys_read,
 	.op_write =		rump_sys_write,
 
+	.op_shutdown =		rump_sys_shutdown,
+
 	.op_sysctl =		rump_sys___sysctl,
 
-	.op_shutdown =		rump_sys_shutdown,
+	/*
+	 * The following are only indirected through ops because
+	 * santizers get confused otherwise.
+	 */
+	.op_sysctlbyname =	sysctlbyname,
+
+	.op_sysctlgetmibinfo =	sysctlgetmibinfo,
+
+	.op_sysctlnametomib =	sysctlnametomib,
 };
