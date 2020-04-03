@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.8 2020/02/22 20:08:39 maxv Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.9 2020/04/03 18:26:14 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.8 2020/02/22 20:08:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.9 2020/04/03 18:26:14 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -778,7 +778,7 @@ kmsan_strchr(const char *s, int c)
 	char *ret;
 
 	kmsan_check_arg(sizeof(s) + sizeof(c), "strchr():args");
-	kmsan_shadow_check(s, __builtin_strlen(s), "strchr():arg1");
+	kmsan_shadow_check(s, __builtin_strlen(s) + 1, "strchr():arg1");
 	ret = __builtin_strchr(s, c);
 
 	kmsan_init_ret(sizeof(char *));
@@ -791,7 +791,7 @@ kmsan_strrchr(const char *s, int c)
 	char *ret;
 
 	kmsan_check_arg(sizeof(s) + sizeof(c), "strrchr():args");
-	kmsan_shadow_check(s, __builtin_strlen(s), "strrchr():arg1");
+	kmsan_shadow_check(s, __builtin_strlen(s) + 1, "strrchr():arg1");
 	ret = __builtin_strrchr(s, c);
 
 	kmsan_init_ret(sizeof(char *));
