@@ -1,5 +1,56 @@
 -*- text -*-
 
+Changes in 2.31:
+
+* The ADR and ADRL pseudo-instructions supported by the ARM assembler
+  now only set the bottom bit of the address of thumb function symbols
+  if the -mthumb-interwork command line option is active.
+
+* Add support for the MIPS Global INValidate (GINV) ASE.
+
+* Add support for the MIPS Cyclic Redudancy Check (CRC) ASE.
+
+* Add support for the Freescale S12Z architecture.
+
+* Add --generate-missing-build-notes=[yes|no] option to create (or not) GNU
+  Build Attribute notes if none are present in the input sources.  Add a
+  --enable-generate-build-notes=[yes|no] configure time option to set the
+  default behaviour.  Set the default if the configure option is not used
+  to "no".
+
+* Remove -mold-gcc command-line option for x86 targets.
+
+* Add -O[2|s] command-line options to x86 assembler to enable alternate
+  shorter instruction encoding.
+
+* Add support for .nops directive.  It is currently supported only for
+  x86 targets.
+
+Changes in 2.30:
+
+* Add support for loaction views in DWARF debug line information.
+
+Changes in 2.29:
+
+* Add support for ELF SHF_GNU_MBIND.
+
+* Add support for the WebAssembly file format and wasm32 ELF conversion.
+
+* PowerPC gas now checks that the correct register class is used in
+  instructions.  For instance, "addi %f4,%cr3,%r31" warns three times
+  that the registers are invalid.
+
+* Add support for the Texas Instruments PRU processor.
+
+* Support for the ARMv8-R architecture and Cortex-R52 processor has been
+  added to the ARM port.
+
+Changes in 2.28:
+
+* Add support for the RISC-V architecture.
+
+* Add support for the ARM Cortex-M23 and Cortex-M33 processors.
+
 Changes in 2.27:
 
 * Default to --enable-compressed-debug-sections=gas for Linux/x86 targets.
@@ -695,7 +746,7 @@ Changes in 1.93.01:
   of new CPUs and formats, lots of bugs fixed.
 
 
-Copyright (C) 2012-2016 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

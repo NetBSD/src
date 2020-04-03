@@ -1,5 +1,5 @@
 /* This file is tc-sh.h
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -77,7 +77,7 @@ extern int sh_force_relocation (struct fix *);
        || (FIX)->fx_r_type == BFD_RELOC_8))
 
 #define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEC)		\
-  (! SEG_NORMAL (SEC)					\
+  (GENERIC_FORCE_RELOCATION_SUB_SAME (FIX, SEC)		\
    || TC_FORCE_RELOCATION (FIX)				\
    || (sh_relax && SWITCH_TABLE (FIX)))
 
@@ -160,8 +160,6 @@ extern int target_big_endian;
 #define TARGET_FORMAT (!target_big_endian ? "elf32-sh-linux" : "elf32-shbig-linux")
 #elif defined(TE_NetBSD)
 #define TARGET_FORMAT (!target_big_endian ? "elf32-shl-nbsd" : "elf32-sh-nbsd")
-#elif defined TARGET_SYMBIAN
-#define TARGET_FORMAT (!target_big_endian ? "elf32-shl-symbian" : "elf32-sh-symbian")
 #elif defined (TE_VXWORKS)
 #define TARGET_FORMAT (!target_big_endian ? "elf32-shl-vxworks" : "elf32-sh-vxworks")
 #elif defined (TE_UCLINUX)
@@ -204,11 +202,10 @@ extern bfd_boolean sh_fix_adjustable (struct fix *);
    can only be determined at link time.  */
 
 #define TC_FORCE_RELOCATION_LOCAL(FIX)			\
-  (!(FIX)->fx_pcrel					\
+  (GENERIC_FORCE_RELOCATION_LOCAL (FIX)			\
    || (FIX)->fx_r_type == BFD_RELOC_32_PLT_PCREL	\
    || (FIX)->fx_r_type == BFD_RELOC_32_GOT_PCREL	\
-   || (FIX)->fx_r_type == BFD_RELOC_SH_GOTPC		\
-   || TC_FORCE_RELOCATION (FIX))
+   || (FIX)->fx_r_type == BFD_RELOC_SH_GOTPC)
 
 #define TC_FORCE_RELOCATION_SUB_LOCAL(FIX, SEG)		\
   ((!md_register_arithmetic && (SEG) == reg_section)	\

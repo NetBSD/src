@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2018/04/14 17:53:22 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2020/04/03 17:51:47 christos Exp $
 
 .include "${.PARSEDIR}/../Makefile.inc"
 BINDIR?=	/usr/sbin

@@ -1,4 +1,4 @@
-@c Copyright (C) 2013-2016 Free Software Foundation, Inc.
+@c Copyright (C) 2013-2018 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -17,7 +17,7 @@
 The NDS32 processors family includes high-performance and low-power 32-bit
 processors for high-end to low-end.  @sc{gnu} @code{@value{AS}} for NDS32
 architectures supports NDS32 ISA version 3.  For detail about NDS32
-instruction set, please see the AndeStar ISA User Manual which is availible
+instruction set, please see the AndeStar ISA User Manual which is available
 at http://www.andestech.com/en/index/index.htm
 
 @menu

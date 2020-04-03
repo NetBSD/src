@@ -1,8 +1,8 @@
-;;; dwarf-mode.el --- Browser for DWARF information.
+;;; dwarf-mode.el --- Browser for DWARF information. -*-lexical-binding:t-*-
 
-;; Version: 1.2
+;; Version: 1.4
 
-;; Copyright (C) 2012-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 ;; This file is not part of GNU Emacs, but is distributed under the
 ;; same terms:
@@ -37,21 +37,63 @@
 (defvar dwarf-file nil
   "Buffer-local variable holding the file name passed to objdump.")
 
+(defvar dwarf--process nil
+  "Running objdump process, or nil.")
+
+(defvar dwarf--deletion-region nil
+  "Region to delete before inserting text in `dwarf--filter'.")
+
+(defun dwarf--check-running ()
+  "Throw an exception if an objdump process is already running."
+  (when dwarf--process
+    (error "An objdump process is still running in this buffer")))
+
+(defun dwarf--filter (proc string)
+  "Filter function for objdump processes."
+  (when (buffer-live-p (process-buffer proc))
+    (with-current-buffer (process-buffer proc)
+      (save-excursion
+	(let ((inhibit-read-only t))
+	  (when dwarf--deletion-region
+	    (apply #'delete-region dwarf--deletion-region)
+	    (setq dwarf--deletion-region nil))
+          (goto-char (process-mark proc))
+          (insert string)
+          (set-marker (process-mark proc) (point))
+	  (set-buffer-modified-p nil))))))
+
+(defun dwarf--sentinel (_proc _status)
+  (setq mode-line-process nil)
+  (setq dwarf--process nil))
+
+(defun dwarf--invoke (start end &rest command)
+  "Invoke a command and arrange to insert output into the current buffer."
+  (setq mode-line-process "[Running]")
+  (setq dwarf--deletion-region (list start end))
+  (setq dwarf--process (make-process :name "objdump"
+				     :buffer (current-buffer)
+				     :command command
+				     :connection-type 'pipe
+				     :noquery t
+				     :filter #'dwarf--filter
+				     :sentinel #'dwarf--sentinel))
+  (set-marker (process-mark dwarf--process) (point)))
+
 ;; Expand a "..." to show all the child DIES.  NEW-DEPTH controls how
 ;; deep to display the new dies; `nil' means display all of them.
 (defun dwarf-do-insert-substructure (new-depth die)
+  (dwarf--check-running)
   (let ((inhibit-read-only t))
     (beginning-of-line)
-    (delete-region (point) (progn
-			     (end-of-line)
-			     (forward-char)
-			     (point)))
-    (save-excursion
-      (apply #'call-process dwarf-objdump-program nil (current-buffer) nil
-	     "-Wi" (concat "--dwarf-start=0x" die)
-	     (expand-file-name dwarf-file)
-	     (if new-depth (list (concat "--dwarf-depth="
-					 (int-to-string new-depth))))))
+    (apply #'dwarf--invoke
+	   (point) (save-excursion
+		     (end-of-line)
+		     (forward-char)
+		     (point))
+	   dwarf-objdump-program "-Wi" (concat "--dwarf-start=0x" die)
+	   (expand-file-name dwarf-file)
+	   (if new-depth (list (concat "--dwarf-depth="
+				       (int-to-string new-depth)))))
     (set-buffer-modified-p nil)))
 
 (defun dwarf-insert-substructure-button (die)
@@ -132,14 +174,19 @@ A prefix argument means expand all children."
 ;; are the way they are because this is also called as a
 ;; revert-buffer-function.
 (defun dwarf-do-refresh (&rest ignore)
+  (dwarf--check-running)
   (let ((inhibit-read-only t))
-    (erase-buffer)
-    (save-excursion
-      (call-process dwarf-objdump-program
-		    nil (current-buffer) nil
-		    "-Wi" "--dwarf-depth=1"
-		    (expand-file-name dwarf-file)))
+    (dwarf--invoke (point-min) (point-max)
+		   dwarf-objdump-program "-Wi" "--dwarf-depth=1"
+		   (expand-file-name dwarf-file))
     (set-buffer-modified-p nil)))
+
+(defvar dwarf-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map special-mode-map)
+    (define-key map [(control ?m)] #'dwarf-insert-substructure)
+    map)
+  "Keymap for dwarf-mode buffers.")
 
 (define-derived-mode dwarf-mode special-mode "DWARF"
   "Major mode for browsing DWARF output.
@@ -151,8 +198,6 @@ A prefix argument means expand all children."
   (set (make-local-variable 'revert-buffer-function) #'dwarf-do-refresh)
   (jit-lock-register #'dwarf-fontify-region))
 
-(define-key dwarf-mode-map [(control ?m)] #'dwarf-insert-substructure)
-
 ;;;###autoload
 (defun dwarf-browse (file)
   "Invoke `objdump' and put output into a `dwarf-mode' buffer.
@@ -162,7 +207,10 @@ This is the main interface to `dwarf-mode'."
 	 (buffer (generate-new-buffer (concat "*DWARF for " base-name "*"))))
     (pop-to-buffer buffer)
     (dwarf-mode)
+    (setq default-directory (file-name-directory file))
     (set (make-local-variable 'dwarf-file) file)
+    (set (make-local-variable 'dwarf--process) nil)
+    (set (make-local-variable 'dwarf--deletion-region) nil)
     (dwarf-do-refresh)))
 
 (provide 'dwarf-mode)

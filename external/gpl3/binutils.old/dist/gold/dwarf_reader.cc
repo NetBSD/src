@@ -1,6 +1,6 @@
 // dwarf_reader.cc -- parse dwarf2/3 debug information
 
-// Copyright (C) 2007-2016 Free Software Foundation, Inc.
+// Copyright (C) 2007-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -737,10 +737,23 @@ Dwarf_die::read_attributes()
 	      break;
 	    }
 	  case elfcpp::DW_FORM_addr:
-	  case elfcpp::DW_FORM_ref_addr:
 	    {
 	      off_t sec_off;
 	      if (this->dwinfo_->address_size() == 4)
+		sec_off = this->dwinfo_->read_from_pointer<32>(&pattr);
+	      else
+		sec_off = this->dwinfo_->read_from_pointer<64>(&pattr);
+	      unsigned int shndx =
+		  this->dwinfo_->lookup_reloc(attr_off, &sec_off);
+	      attr_value.aux.shndx = shndx;
+	      attr_value.val.refval = sec_off;
+	      ref_form = true;
+	      break;
+	    }
+	  case elfcpp::DW_FORM_ref_addr:
+	    {
+	      off_t sec_off;
+	      if (this->dwinfo_->ref_addr_size() == 4)
 		sec_off = this->dwinfo_->read_from_pointer<32>(&pattr);
 	      else
 		sec_off = this->dwinfo_->read_from_pointer<64>(&pattr);
@@ -947,8 +960,10 @@ Dwarf_die::skip_attributes()
 	    pattr += this->dwinfo_->offset_size();
 	    break;
 	  case elfcpp::DW_FORM_addr:
-	  case elfcpp::DW_FORM_ref_addr:
 	    pattr += this->dwinfo_->address_size();
+	    break;
+	  case elfcpp::DW_FORM_ref_addr:
+	    pattr += this->dwinfo_->ref_addr_size();
 	    break;
 	  case elfcpp::DW_FORM_block1:
 	    pattr += 1 + *pattr;
@@ -1651,6 +1666,17 @@ Sized_dwarf_line_info<size, big_endian>::read_header_prolog(
 
   header_.min_insn_length = *lineptr;
   lineptr += 1;
+
+  if (header_.version < 4)
+    header_.max_ops_per_insn = 1;
+  else
+    {
+      // DWARF 4 added the maximum_operations_per_instruction field.
+      header_.max_ops_per_insn = *lineptr;
+      lineptr += 1;
+      // TODO: Add support for values other than 1.
+      gold_assert(header_.max_ops_per_insn == 1);
+    }
 
   header_.default_is_stmt = *lineptr;
   lineptr += 1;

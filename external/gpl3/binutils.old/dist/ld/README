@@ -18,8 +18,8 @@ There are many features of the linker:
 
 * The linker supports a control language.
 
-* There is a user manual (ld.texinfo), as well as the
-  beginnings of an internals manual (ldint.texinfo).
+* There is a user manual (ld.texi), as well as the
+  beginnings of an internals manual (ldint.texi).
 
 Installation
 ============
@@ -37,7 +37,7 @@ directory (one directory above this one).
 Porting to a new target
 =======================
 
-See the ldint.texinfo manual.
+See the ldint.texi manual.
 
 Reporting bugs etc
 ===========================
@@ -66,7 +66,7 @@ workarounds to this:
     genscripts.sh with "sh ${srcdir}..." (no parens) and make sure the
     emulparams script used exports any shell variables it sets.
 
-Copyright (C) 2012-2016 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

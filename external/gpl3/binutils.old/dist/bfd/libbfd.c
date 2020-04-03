@@ -1,5 +1,5 @@
 /* Assorted BFD support routines, only used internally.
-   Copyright (C) 1990-2016 Free Software Foundation, Inc.
+   Copyright (C) 1990-2018 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -40,21 +40,87 @@ DESCRIPTION
 	completeness.
 */
 
+bfd_boolean
+_bfd_bool_bfd_false (bfd *abfd ATTRIBUTE_UNUSED)
+{
+  return FALSE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_asymbol_false (bfd *abfd ATTRIBUTE_UNUSED,
+			     asymbol *sym ATTRIBUTE_UNUSED)
+{
+  return FALSE;
+}
+
 /* A routine which is used in target vectors for unsupported
    operations.  */
 
 bfd_boolean
-bfd_false (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_bool_bfd_false_error (bfd *ignore ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return FALSE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_link_false_error (bfd *abfd,
+				struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+  return _bfd_bool_bfd_false_error (abfd);
 }
 
 /* A routine which is used in target vectors for supported operations
    which do not actually do anything.  */
 
 bfd_boolean
-bfd_true (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_bool_bfd_true (bfd *ignore ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_link_true (bfd *abfd ATTRIBUTE_UNUSED,
+			 struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_bfd_true (bfd *ibfd ATTRIBUTE_UNUSED,
+			bfd *obfd ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_uint_true (bfd *abfd ATTRIBUTE_UNUSED,
+			 unsigned int flags ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_asection_bfd_asection_true (bfd *ibfd ATTRIBUTE_UNUSED,
+					  asection *isec ATTRIBUTE_UNUSED,
+					  bfd *obfd ATTRIBUTE_UNUSED,
+					  asection *osec ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_asymbol_bfd_asymbol_true (bfd *ibfd ATTRIBUTE_UNUSED,
+					asymbol *isym ATTRIBUTE_UNUSED,
+					bfd *obfd ATTRIBUTE_UNUSED,
+					asymbol *osym ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_ptr_true (bfd *abfd ATTRIBUTE_UNUSED,
+			void *ptr ATTRIBUTE_UNUSED)
 {
   return TRUE;
 }
@@ -63,26 +129,26 @@ bfd_true (bfd *ignore ATTRIBUTE_UNUSED)
    operations which return a pointer value.  */
 
 void *
-bfd_nullvoidptr (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_ptr_bfd_null_error (bfd *ignore ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return NULL;
 }
 
 int
-bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_int_bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
 {
   return 0;
 }
 
 unsigned int
-bfd_0u (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_uint_bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
 {
    return 0;
 }
 
 long
-bfd_0l (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_long_bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
 {
   return 0;
 }
@@ -91,14 +157,26 @@ bfd_0l (bfd *ignore ATTRIBUTE_UNUSED)
    operations which return -1 on error.  */
 
 long
-_bfd_n1 (bfd *ignore_abfd ATTRIBUTE_UNUSED)
+_bfd_long_bfd_n1_error (bfd *ignore_abfd ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return -1;
 }
 
 void
-bfd_void (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_void_bfd (bfd *ignore ATTRIBUTE_UNUSED)
+{
+}
+
+void
+_bfd_void_bfd_link (bfd *abfd ATTRIBUTE_UNUSED,
+		    struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+}
+
+void
+_bfd_void_bfd_asection (bfd *abfd ATTRIBUTE_UNUSED,
+			asection *sec ATTRIBUTE_UNUSED)
 {
 }
 
@@ -117,6 +195,15 @@ _bfd_norelocs_canonicalize_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 {
   *relptr = NULL;
   return 0;
+}
+
+void
+_bfd_norelocs_set_reloc (bfd *abfd ATTRIBUTE_UNUSED,
+			 asection *sec ATTRIBUTE_UNUSED,
+			 arelent **relptr ATTRIBUTE_UNUSED,
+			 unsigned int count ATTRIBUTE_UNUSED)
+{
+  /* Do nothing.  */
 }
 
 bfd_boolean
@@ -323,8 +410,8 @@ bfd_write_bigendian_4byte_int (bfd *abfd, unsigned int i)
 
 /* FIXME: Should these take a count argument?
    Answer (gnu@cygnus.com):  No, but perhaps they should be inline
-                             functions in swap.h #ifdef __GNUC__.
-                             Gprof them later and find out.  */
+			     functions in swap.h #ifdef __GNUC__.
+			     Gprof them later and find out.  */
 
 /*
 FUNCTION
@@ -398,9 +485,9 @@ DESCRIPTION
 .
 .#define bfd_put(bits, abfd, val, ptr)			\
 .  ((bits) == 8 ? bfd_put_8  (abfd, val, ptr)		\
-.   : (bits) == 16 ? bfd_put_16 (abfd, val, ptr)		\
-.   : (bits) == 32 ? bfd_put_32 (abfd, val, ptr)		\
-.   : (bits) == 64 ? bfd_put_64 (abfd, val, ptr)		\
+.   : (bits) == 16 ? bfd_put_16 (abfd, val, ptr)	\
+.   : (bits) == 32 ? bfd_put_32 (abfd, val, ptr)	\
+.   : (bits) == 64 ? bfd_put_64 (abfd, val, ptr)	\
 .   : (abort (), (void) 0))
 .
 */
@@ -525,6 +612,27 @@ bfd_putl16 (bfd_vma data, void *p)
   addr[0] = data & 0xff;
   addr[1] = (data >> 8) & 0xff;
 }
+
+
+void
+bfd_putb24 (bfd_vma data, void *p)
+{
+  bfd_byte *addr = (bfd_byte *) p;
+  addr[0] = (data >> 16) & 0xff;
+  addr[1] = (data >> 8) & 0xff;
+  addr[2] = data & 0xff;
+}
+
+
+void
+bfd_putl24 (bfd_vma data, void *p)
+{
+  bfd_byte *addr = (bfd_byte *) p;
+  addr[0] = data & 0xff;
+  addr[1] = (data >> 8) & 0xff;
+  addr[2] = (data >> 16) & 0xff;
+}
+
 
 bfd_vma
 bfd_getb32 (const void *p)
@@ -785,8 +893,9 @@ _bfd_generic_get_section_contents (bfd *abfd,
 
   if (section->compress_status != COMPRESS_SECTION_NONE)
     {
-      (*_bfd_error_handler)
-	(_("%B: unable to get decompressed section %A"),
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%pB: unable to get decompressed section %pA"),
 	 abfd, section);
       bfd_set_error (bfd_error_invalid_operation);
       return FALSE;
@@ -802,7 +911,11 @@ _bfd_generic_get_section_contents (bfd *abfd,
   else
     sz = section->size;
   if (offset + count < count
-      || offset + count > sz)
+      || offset + count > sz
+      || (abfd->my_archive != NULL
+	  && !bfd_is_thin_archive (abfd->my_archive)
+	  && ((ufile_ptr) section->filepos + offset + count
+	      > arelt_size (abfd))))
     {
       bfd_set_error (bfd_error_invalid_operation);
       return FALSE;
@@ -857,7 +970,12 @@ _bfd_generic_get_section_contents_in_window
     sz = section->rawsize;
   else
     sz = section->size;
-  if (offset + count > sz
+  if (offset + count < count
+      || offset + count > sz
+      || (abfd->my_archive != NULL
+	  && !bfd_is_thin_archive (abfd->my_archive)
+	  && ((ufile_ptr) section->filepos + offset + count
+	      > arelt_size (abfd)))
       || ! bfd_get_file_window (abfd, section->filepos + offset, count, w,
 				TRUE))
     return FALSE;
@@ -922,40 +1040,14 @@ bfd_generic_is_local_label_name (bfd *abfd, const char *name)
   return name[0] == locals_prefix;
 }
 
-/*  Can be used from / for bfd_merge_private_bfd_data to check that
-    endianness matches between input and output file.  Returns
-    TRUE for a match, otherwise returns FALSE and emits an error.  */
-bfd_boolean
-_bfd_generic_verify_endian_match (bfd *ibfd, bfd *obfd)
-{
-  if (ibfd->xvec->byteorder != obfd->xvec->byteorder
-      && ibfd->xvec->byteorder != BFD_ENDIAN_UNKNOWN
-      && obfd->xvec->byteorder != BFD_ENDIAN_UNKNOWN)
-    {
-      const char *msg;
-
-      if (bfd_big_endian (ibfd))
-	msg = _("%B: compiled for a big endian system and target is little endian");
-      else
-	msg = _("%B: compiled for a little endian system and target is big endian");
-
-      (*_bfd_error_handler) (msg, ibfd);
-
-      bfd_set_error (bfd_error_wrong_format);
-      return FALSE;
-    }
-
-  return TRUE;
-}
-
 /* Give a warning at runtime if someone compiles code which calls
    old routines.  */
 
 void
-warn_deprecated (const char *what,
-		 const char *file,
-		 int line,
-		 const char *func)
+_bfd_warn_deprecated (const char *what,
+		      const char *file,
+		      int line,
+		      const char *func)
 {
   /* Poor man's tracking of functions we've already warned about.  */
   static size_t mask = 0;
@@ -966,6 +1058,7 @@ warn_deprecated (const char *what,
       /* Note: separate sentences in order to allow
 	 for translation into other languages.  */
       if (func)
+	/* xgettext:c-format */
 	fprintf (stderr, _("Deprecated %s called at %s line %d in %s\n"),
 		 what, file, line, func);
       else
@@ -978,9 +1071,9 @@ warn_deprecated (const char *what,
 /* Helper function for reading uleb128 encoded data.  */
 
 bfd_vma
-read_unsigned_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
-		      bfd_byte *buf,
-		      unsigned int *bytes_read_ptr)
+_bfd_read_unsigned_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
+			   bfd_byte *buf,
+			   unsigned int *bytes_read_ptr)
 {
   bfd_vma result;
   unsigned int num_read;
@@ -1009,11 +1102,11 @@ read_unsigned_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
    No bytes will be read at address END or beyond.  */
 
 bfd_vma
-safe_read_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
-		  bfd_byte *data,
-		  unsigned int *length_return,
-		  bfd_boolean sign,
-		  const bfd_byte * const end)
+_bfd_safe_read_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
+		       bfd_byte *data,
+		       unsigned int *length_return,
+		       bfd_boolean sign,
+		       const bfd_byte * const end)
 {
   bfd_vma result = 0;
   unsigned int num_read = 0;
@@ -1045,9 +1138,9 @@ safe_read_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
 /* Helper function for reading sleb128 encoded data.  */
 
 bfd_signed_vma
-read_signed_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
-		    bfd_byte *buf,
-		    unsigned int *bytes_read_ptr)
+_bfd_read_signed_leb128 (bfd *abfd ATTRIBUTE_UNUSED,
+			 bfd_byte *buf,
+			 unsigned int *bytes_read_ptr)
 {
   bfd_vma result;
   unsigned int shift;
