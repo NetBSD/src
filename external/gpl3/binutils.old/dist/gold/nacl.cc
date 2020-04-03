@@ -1,6 +1,6 @@
 // nacl.cc -- Native Client support for gold
 
-// Copyright (C) 2012-2016 Free Software Foundation, Inc.
+// Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 // This file is part of gold.
 

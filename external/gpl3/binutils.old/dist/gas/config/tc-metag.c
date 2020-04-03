@@ -1,5 +1,5 @@
 /* tc-metag.c -- Assembler for the Imagination Technologies Meta.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2018 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This file is part of GAS, the GNU Assembler.
@@ -24,7 +24,6 @@
 #include "symcat.h"
 #include "safe-ctype.h"
 #include "hashtab.h"
-#include "libbfd.h"
 
 #include <stdio.h>
 
@@ -636,7 +635,7 @@ parse_addr_op (const char *line, metag_addr *addr)
   return NULL;
 }
 
-/* Parse the immediate portion of an addrssing mode.  */
+/* Parse the immediate portion of an addressing mode.  */
 static const char *
 parse_imm_addr (const char *line, metag_addr *addr)
 {
@@ -2041,6 +2040,7 @@ parse_swap (const char *line, metag_insn *insn,
 	  as_bad (_("PC, CT, TR and TT are treated as if they are a single unit but operands must be in different units"));
 	  return NULL;
 	}
+      break;
 
     default:
       /* Registers must be in different units.  */
@@ -2683,6 +2683,7 @@ parse_alu (const char *line, metag_insn *insn,
 	      insn->bits |= (1 << 7);
 	      break;
 	    }
+	  /* Fall through.  */
 	default:
 	  as_bad (_("invalid quickrot register specified"));
 	  return NULL;
@@ -4098,7 +4099,7 @@ __parse_dsp_reg (const char *line, const metag_reg **reg, htab_t dsp_regtab)
   /* We don't entirely strip the register name because we might
      actually want to match whole string in the register table,
      e.g. "D0AW.1++" not just "D0AW.1". The string length of the table
-     entry limits our comaprison to a reasonable bound anyway.  */
+     entry limits our comparison to a reasonable bound anyway.  */
   while (is_register_char (*l) || *l == PLUS)
     {
       name[len] = *l;
@@ -4716,7 +4717,7 @@ parse_dtemplate (const char *line, metag_insn *insn,
   return l;
 }
 
-/* Parse a DSP Template definiton memory reference, e.g
+/* Parse a DSP Template definition memory reference, e.g
    [A0.7+A0.5++]. DSPRAM is set to true by this function if this
    template definition is a DSP RAM template definition.  */
 static const char *
@@ -4738,7 +4739,7 @@ template_mem_ref(const char *line, metag_addr *addr,
   return l;
 }
 
-/* Sets LOAD to TRUE if this is a Template load definiton (otherwise
+/* Sets LOAD to TRUE if this is a Template load definition (otherwise
    it's a store). Fills out ADDR, TEMPLATE_REG and ADDR_UNIT.  */
 static const char *
 parse_template_regs (const char *line, bfd_boolean *load,
@@ -5505,7 +5506,7 @@ parse_dalu (const char *line, metag_insn *insn,
 	  insn->bits |= (1 << 2);
 	}
 
-      /* Check for template definitons.  */
+      /* Check for template definitions.  */
       if (IS_TEMPLATE_DEF (insn))
 	{
 	  l = interpret_template_regs(l, insn, regs, regs_shift, &load,
@@ -5625,7 +5626,7 @@ parse_dalu (const char *line, metag_insn *insn,
   if ((template->meta_opcode >> 26) & 0x1)
     ls_shift = INVALID_SHIFT;
 
-  /* The Condition Is Always (CA) bit must be set if we're targetting a
+  /* The Condition Is Always (CA) bit must be set if we're targeting a
      Ux.r register as the destination. This means that we can't have
      any other condition bits set.  */
   if (!is_same_data_unit (regs[1]->unit, regs[0]->unit))
@@ -6416,7 +6417,7 @@ create_dspreg_htabs (void)
 
       /* Make sure there are no hash table collisions, which would
 	 require chaining entries.  */
-      BFD_ASSERT (*slot == NULL);
+      gas_assert (*slot == NULL);
       *slot = reg;
     }
 
@@ -6439,7 +6440,7 @@ create_dspreg_htabs (void)
 
 	  /* Make sure there are no hash table collisions, which would
 	     require chaining entries.  */
-	  BFD_ASSERT (*slot == NULL);
+	  gas_assert (*slot == NULL);
 	  *slot = reg;
 	}
     }
@@ -6486,7 +6487,7 @@ create_scond_htab (void)
 							scond, INSERT);
       /* Make sure there are no hash table collisions, which would
 	 require chaining entries.  */
-      BFD_ASSERT (*slot == NULL);
+      gas_assert (*slot == NULL);
       *slot = scond;
     }
 }
@@ -7110,6 +7111,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
       break;
     case BFD_RELOC_64:
       md_number_to_chars (buf, value, 8);
+      break;
 
     case BFD_RELOC_METAG_RELBRANCH:
       if (!value)

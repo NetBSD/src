@@ -660,7 +660,7 @@ cg_assemble (void)
      fractions.  */
   propagate_flags (top_sorted_syms);
 
-  /* Starting from the topological bottom, propogate children times
+  /* Starting from the topological bottom, propagate children times
      up to parents.  */
   cycle_time ();
   for (sym_index = 0; sym_index < symtab.len; ++sym_index)

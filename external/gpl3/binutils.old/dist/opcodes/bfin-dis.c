@@ -1,5 +1,5 @@
 /* Disassemble ADI Blackfin Instructions.
-   Copyright (C) 2005-2016 Free Software Foundation, Inc.
+   Copyright (C) 2005-2018 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -38,7 +38,7 @@ typedef long TIword;
 #define SIGNEXTEND(v, n)    ((v << (HOST_LONG_WORD_SIZE - (n))) >> (HOST_LONG_WORD_SIZE - (n)))
 #define MASKBITS(val, bits) (val & ((1 << bits) - 1))
 
-#include "dis-asm.h"
+#include "disassemble.h"
 
 typedef unsigned int bu32;
 
@@ -350,7 +350,7 @@ static const enum machine_registers decode_gregs[] =
   REG_P0, REG_P1, REG_P2, REG_P3, REG_P4, REG_P5, REG_SP, REG_FP,
 };
 
-#define gregs(x, i) REGNAME (decode_gregs[((i) << 3) | (x)])
+#define gregs(x, i) REGNAME (decode_gregs[(((i) << 3) | (x)) & 15])
 
 /* [dregs pregs (iregs mregs) (bregs lregs)].  */
 static const enum machine_registers decode_regs[] =
@@ -361,7 +361,7 @@ static const enum machine_registers decode_regs[] =
   REG_B0, REG_B1, REG_B2, REG_B3, REG_L0, REG_L1, REG_L2, REG_L3,
 };
 
-#define regs(x, i) REGNAME (decode_regs[((i) << 3) | (x)])
+#define regs(x, i) REGNAME (decode_regs[(((i) << 3) | (x)) & 31])
 
 /* [dregs pregs (iregs mregs) (bregs lregs) Low Half].  */
 static const enum machine_registers decode_regs_lo[] =
@@ -372,7 +372,7 @@ static const enum machine_registers decode_regs_lo[] =
   REG_BL0, REG_BL1, REG_BL2, REG_BL3, REG_LL0, REG_LL1, REG_LL2, REG_LL3,
 };
 
-#define regs_lo(x, i) REGNAME (decode_regs_lo[((i) << 3) | (x)])
+#define regs_lo(x, i) REGNAME (decode_regs_lo[(((i) << 3) | (x)) & 31])
 
 /* [dregs pregs (iregs mregs) (bregs lregs) High Half].  */
 static const enum machine_registers decode_regs_hi[] =
@@ -383,7 +383,7 @@ static const enum machine_registers decode_regs_hi[] =
   REG_BH0, REG_BH1, REG_BH2, REG_BH3, REG_LH0, REG_LH1, REG_LH2, REG_LH3,
 };
 
-#define regs_hi(x, i) REGNAME (decode_regs_hi[((i) << 3) | (x)])
+#define regs_hi(x, i) REGNAME (decode_regs_hi[(((i) << 3) | (x)) & 31])
 
 static const enum machine_registers decode_statbits[] =
 {
