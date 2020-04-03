@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.100 2019/12/21 12:53:54 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.101 2020/04/03 22:45:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.100 2019/12/21 12:53:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.101 2020/04/03 22:45:30 ad Exp $");
 
 #include "opt_xen.h"
 
@@ -950,7 +950,9 @@ cpu_probe(struct cpu_info *ci)
 		cpu_probe_fpu(ci);
 	}
 
+#ifndef XEN
 	x86_cpu_topology(ci);
+#endif
 
 	if (cpu_vendor != CPUVENDOR_AMD && (ci->ci_feat_val[0] & CPUID_TM) &&
 	    (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) == 0) {
