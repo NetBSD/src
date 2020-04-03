@@ -1,5 +1,5 @@
 /* tc-moxie.c -- Assemble code for moxie
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -534,6 +534,13 @@ md_assemble (char *str)
 		     TRUE,
 		     BFD_RELOC_MOXIE_10_PCREL);
       }
+      break;
+    case MOXIE_BAD:
+      iword = 0;
+      while (ISSPACE (*op_end))
+	op_end++;
+      if (*op_end != 0)
+	as_warn (_("extra stuff on line ignored"));
       break;
     default:
       abort ();

@@ -1,5 +1,5 @@
 /* Disassembly routines for TMS320C54X architecture
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of the GNU opcodes library.
@@ -23,7 +23,7 @@
 #include <errno.h>
 #include <math.h>
 #include <stdlib.h>
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/tic54x.h"
 #include "coff/tic54x.h"
 

@@ -1,6 +1,6 @@
 // gold.cc -- main linker functions
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -175,7 +175,7 @@ queue_initial_tasks(const General_options& options,
 		    Workqueue* workqueue, Input_objects* input_objects,
 		    Symbol_table* symtab, Layout* layout, Mapfile* mapfile)
 {
-  if (cmdline.begin() == cmdline.end())
+  if (cmdline.number_of_input_files() == 0)
     {
       bool is_ok = false;
       if (options.printed_version())
@@ -492,6 +492,14 @@ queue_middle_tasks(const General_options& options,
   if (timer != NULL)
     timer->stamp(0);
 
+  // We have to support the case of not seeing any input objects, and
+  // generate an empty file.  Existing builds depend on being able to
+  // pass an empty archive to the linker and get an empty object file
+  // out.  In order to do this we need to use a default target.
+  if (input_objects->number_of_input_objects() == 0
+      && layout->incremental_base() == NULL)
+    parameters_force_valid_target();
+
   // Add any symbols named with -u options to the symbol table.
   symtab->add_undefined_symbols_from_command_line(layout);
 
@@ -588,14 +596,6 @@ queue_middle_tasks(const General_options& options,
 	    }
 	}
     }
-
-  // We have to support the case of not seeing any input objects, and
-  // generate an empty file.  Existing builds depend on being able to
-  // pass an empty archive to the linker and get an empty object file
-  // out.  In order to do this we need to use a default target.
-  if (input_objects->number_of_input_objects() == 0
-      && layout->incremental_base() == NULL)
-    parameters_force_valid_target();
 
   int thread_count = options.thread_count_middle();
   if (thread_count == 0)

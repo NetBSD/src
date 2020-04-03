@@ -1,6 +1,6 @@
 /* Disassemble Xilinx microblaze instructions.
 
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -24,7 +24,7 @@
 #define STATIC_TABLE
 #define DEFINE_TABLE
 
-#include "dis-asm.h"
+#include "disassemble.h"
 #include <strings.h>
 #include "microblaze-opc.h"
 #include "microblaze-dis.h"

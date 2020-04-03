@@ -1,5 +1,5 @@
 /* tc-mn10200.c -- Assembler code for the Matsushita 10200
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -133,7 +133,7 @@ static const struct reg_name other_registers[] =
   (sizeof (other_registers) / sizeof (struct reg_name))
 
 /* reg_name_search does a binary search of the given register table
-   to see if "name" is a valid regiter name.  Returns the register
+   to see if "name" is a valid register name.  Returns the register
    number from the array on success, or -1 on failure.  */
 
 static int
@@ -1161,7 +1161,7 @@ keep_going:
 	 as the size of a pointer, so we need a union to convert
 	 the opindex field of the fr_cgen structure into a char *
 	 so that it can be stored in the frag.  We do not have
-	 to worry about loosing accuracy as we are not going to
+	 to worry about losing accuracy as we are not going to
 	 be even close to the 32bit limit of the int.  */
       union
       {

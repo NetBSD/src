@@ -1,5 +1,5 @@
 /* ELF object file format.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -162,9 +162,12 @@ extern void obj_elf_common (int);
 extern void obj_elf_data (int);
 extern void obj_elf_text (int);
 extern void obj_elf_change_section
-  (const char *, unsigned int, bfd_vma, int, const char *, int, int);
-extern struct fix *obj_elf_vtable_inherit (int);
-extern struct fix *obj_elf_vtable_entry (int);
+  (const char *, unsigned int, unsigned int, bfd_vma, int, const char *,
+   int, int);
+extern void obj_elf_vtable_inherit (int);
+extern void obj_elf_vtable_entry (int);
+extern struct fix * obj_elf_get_vtable_inherit (void);
+extern struct fix * obj_elf_get_vtable_entry (void);
 extern bfd_boolean obj_elf_seen_attribute
   (int, unsigned int);
 extern int obj_elf_vendor_attribute (int);

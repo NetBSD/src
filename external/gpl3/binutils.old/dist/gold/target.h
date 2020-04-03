@@ -1,6 +1,6 @@
 // target.h -- target support for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -119,9 +119,19 @@ class Target
   { return this->pti_->dynamic_linker; }
 
   // Return the default address to use for the text segment.
+  // If a -z max-page-size argument has set the ABI page size
+  // to a value larger than the default starting address,
+  // bump the starting address up to the page size, to avoid
+  // misaligning the text segment in the file.
   uint64_t
   default_text_segment_address() const
-  { return this->pti_->default_text_segment_address; }
+  {
+    uint64_t addr = this->pti_->default_text_segment_address;
+    uint64_t pagesize = this->abi_pagesize();
+    if (addr < pagesize)
+      addr = pagesize;
+    return addr;
+  }
 
   // Return the ABI specified page size.
   uint64_t
@@ -464,6 +474,11 @@ class Target
   hash_entry_size() const
   { return this->pti_->hash_entry_size; }
 
+  // Return the section type to use for unwind sections.
+  unsigned int
+  unwind_section_type() const
+  { return this->pti_->unwind_section_type; }
+
   // Whether the target has a custom set_dynsym_indexes method.
   bool
   has_custom_set_dynsym_indexes() const
@@ -493,6 +508,11 @@ class Target
   bool
   should_include_section(elfcpp::Elf_Word sh_type) const
   { return this->do_should_include_section(sh_type); }
+
+  // Finalize the target-specific properties in the .note.gnu.property section.
+  void
+  finalize_gnu_properties(Layout* layout) const
+  { this->do_finalize_gnu_properties(layout); }
 
  protected:
   // This struct holds the constant information for a child class.  We
@@ -552,6 +572,9 @@ class Target
     // Size (in bits) of SHT_HASH entry. Always equal to 32, except for
     // 64-bit S/390.
     const int hash_entry_size;
+    // Processor-specific section type for ".eh_frame" (unwind) sections.
+    // SHT_PROGBITS if there is no special section type.
+    const unsigned int unwind_section_type;
   };
 
   Target(const Target_info* pti)
@@ -797,6 +820,11 @@ class Target
   do_should_include_section(elfcpp::Elf_Word) const
   { return true; }
 
+  // Finalize the target-specific properties in the .note.gnu.property section.
+  virtual void
+  do_finalize_gnu_properties(Layout*) const
+  { }
+
  private:
   // The implementations of the four do_make_elf_object virtual functions are
   // almost identical except for their sizes and endianness.  We use a template.
@@ -842,7 +870,7 @@ class Sized_target : public Target
   // pre-existing symbol.  SYM is the new symbol, seen in OBJECT.
   // VERSION is the version of SYM.  This will only be called if
   // has_resolve() returns true.
-  virtual void
+  virtual bool
   resolve(Symbol*, const elfcpp::Sym<size, big_endian>&, Object*,
 	  const char*)
   { gold_unreachable(); }
@@ -1115,6 +1143,17 @@ class Sized_target : public Target
     elfcpp::Rel<size, big_endian> rel(preloc);
     return elfcpp::elf_r_sym<size>(rel.get_r_info());
   }
+
+  // Record a target-specific program property in the .note.gnu.property
+  // section.
+  virtual void
+  record_gnu_property(int, int, size_t, const unsigned char*, const Object*)
+  { }
+
+  // Merge the target-specific program properties from the current object.
+  virtual void
+  merge_gnu_properties(const Object*)
+  { }
 
  protected:
   Sized_target(const Target::Target_info* pti)

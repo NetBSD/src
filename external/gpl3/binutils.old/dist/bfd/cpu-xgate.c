@@ -1,5 +1,5 @@
 /* BFD support for the Freescale XGATE processor
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -31,7 +31,7 @@ const bfd_arch_info_type bfd_xgate_arch =
     bfd_mach_xgate,
     "xgate",
     "xgate",
-    4, 	/* Section alignment power.  */
+    4,	/* Section alignment power.  */
     TRUE,
     bfd_default_compatible,
     bfd_default_scan,

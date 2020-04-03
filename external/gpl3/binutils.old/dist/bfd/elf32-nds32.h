@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2018 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -46,6 +46,13 @@ extern "C" {
 #define R_NDS32_RELAX_ENTRY_EX9_FLAG				(1 << 2)
 /* Enable IFC optimization for this section.  */
 #define R_NDS32_RELAX_ENTRY_IFC_FLAG				(1 << 3)
+/* Two bits for ICT to comply with files without directive.  */
+/* ICT small model.  */
+#define R_NDS32_RELAX_ENTRY_ICT_SMALL                           (0x2 << 4)
+/* ICT large model.  */
+#define R_NDS32_RELAX_ENTRY_ICT_LARGE                           (0x3 << 4)
+/* Mask for get ict bits.  */
+#define R_NDS32_RELAX_ENTRY_ICT_MASK                            (0x3 << 4)
 
 
 /* Relocation flags for R_NDS32_INSN16.  */
@@ -107,10 +114,10 @@ enum
 extern void nds32_insertion_sort
   (void *, size_t, size_t, int (*) (const void *, const void *));
 
-extern int         nds32_elf_ex9_init (void);
-extern int         nds32_convert_32_to_16 (bfd *, uint32_t, uint16_t *, int *);
-extern int         nds32_convert_16_to_32 (bfd *, uint16_t, uint32_t *);
-extern void        bfd_elf32_nds32_set_target_option (struct bfd_link_info *,
+extern int	   nds32_elf_ex9_init (void);
+extern int	   nds32_convert_32_to_16 (bfd *, uint32_t, uint16_t *, int *);
+extern int	   nds32_convert_16_to_32 (bfd *, uint16_t, uint32_t *);
+extern void	   bfd_elf32_nds32_set_target_option (struct bfd_link_info *,
 						      int, int, FILE *, int,
 						      int, int, int, FILE *,
 						      FILE *, int, int,
@@ -129,11 +136,6 @@ struct elf_nds32_link_hash_table
   struct elf_link_hash_table root;
 
   /* Short-cuts to get to dynamic linker sections.  */
-  asection *sgot;
-  asection *sgotplt;
-  asection *srelgot;
-  asection *splt;
-  asection *srelplt;
   asection *sdynbss;
   asection *srelbss;
 
