@@ -1,5 +1,5 @@
 /* tc-alpha.c - Processor-specific code for the DEC Alpha AXP CPU.
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
    Contributed by Carnegie Mellon University, 1993.
    Written by Alessandro Forin, based on earlier gas-1.38 target CPU files.
    Modified by Ken Raeburn for gas-2.x and ECOFF support.
@@ -49,7 +49,6 @@
 
 #include "as.h"
 #include "subsegs.h"
-#include "struc-symbol.h"
 #include "ecoff.h"
 
 #include "opcode/alpha.h"
@@ -1206,10 +1205,9 @@ create_literal_section (const char *name,
 
   *secp = new_sec = subseg_new (name, 0);
   subseg_set (current_section, current_subsec);
-  bfd_set_section_alignment (stdoutput, new_sec, 4);
-  bfd_set_section_flags (stdoutput, new_sec,
-			 SEC_RELOC | SEC_ALLOC | SEC_LOAD | SEC_READONLY
-			 | SEC_DATA);
+  bfd_set_section_alignment (new_sec, 4);
+  bfd_set_section_flags (new_sec, (SEC_RELOC | SEC_ALLOC | SEC_LOAD
+				   | SEC_READONLY | SEC_DATA));
 
   S_CLEAR_EXTERNAL (*symp = section_symbol (new_sec));
 }
@@ -3400,7 +3398,9 @@ add_to_link_pool (symbolS *sym, offsetT addend)
 	    && fixp->fx_offset == (valueT)addend
 	    && fixp->tc_fix_data.info
 	    && fixp->tc_fix_data.info->sym
-	    && fixp->tc_fix_data.info->sym->sy_value.X_op_symbol == basesym)
+	    && symbol_symbolS (fixp->tc_fix_data.info->sym)
+	    && (symbol_get_value_expression (fixp->tc_fix_data.info->sym)
+		->X_op_symbol == basesym))
 	  return fixp->tc_fix_data.info->sym;
       }
 
@@ -3628,7 +3628,7 @@ s_alpha_comm (int ignore ATTRIBUTE_UNUSED)
     }
 
 #ifndef OBJ_EVAX
-  know (symbolP->sy_frag == &zero_address_frag);
+  know (symbol_get_frag (symbolP) == &zero_address_frag);
 #endif
   demand_empty_rest_of_line ();
 }
@@ -3984,8 +3984,8 @@ s_alpha_stab (int n)
   if (alpha_flag_mdebug < 0)
     {
       segT sec = subseg_new (".mdebug", 0);
-      bfd_set_section_flags (stdoutput, sec, SEC_HAS_CONTENTS | SEC_READONLY);
-      bfd_set_section_alignment (stdoutput, sec, 3);
+      bfd_set_section_flags (sec, SEC_HAS_CONTENTS | SEC_READONLY);
+      bfd_set_section_alignment (sec, 3);
 
       ecoff_read_begin_hook ();
 
@@ -5300,7 +5300,7 @@ maybe_set_gp (asection *sec)
 
   if (!sec)
     return;
-  vma = bfd_get_section_vma (sec->owner, sec);
+  vma = bfd_section_vma (sec);
   if (vma && vma < alpha_gp_value)
     alpha_gp_value = vma;
 }
@@ -5514,8 +5514,8 @@ md_begin (void)
   if (ECOFF_DEBUGGING)
     {
       segT sec = subseg_new (".mdebug", (subsegT) 0);
-      bfd_set_section_flags (stdoutput, sec, SEC_HAS_CONTENTS | SEC_READONLY);
-      bfd_set_section_alignment (stdoutput, sec, 3);
+      bfd_set_section_flags (sec, SEC_HAS_CONTENTS | SEC_READONLY);
+      bfd_set_section_alignment (sec, 3);
     }
 #endif
 
@@ -5562,7 +5562,7 @@ md_assemble (char *str)
 valueT
 md_section_align (segT seg, valueT size)
 {
-  int align = bfd_get_section_alignment (stdoutput, seg);
+  int align = bfd_section_alignment (seg);
   valueT mask = ((valueT) 1 << align) - 1;
 
   return (size + mask) & ~mask;
@@ -5769,6 +5769,12 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg)
       md_number_to_chars (fixpos, value, 2);
       break;
 
+    case BFD_RELOC_8:
+      if (fixP->fx_pcrel)
+	fixP->fx_r_type = BFD_RELOC_8_PCREL;
+      size = 1;
+      goto do_reloc_xx;
+
     case BFD_RELOC_16:
       if (fixP->fx_pcrel)
 	fixP->fx_r_type = BFD_RELOC_16_PCREL;
@@ -5871,7 +5877,7 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg)
 	  return;
 	}
 
-      if ((abs (value) >> 2) & ~0xfffff)
+      if (value + (1u << 22) >= (1u << 23))
 	goto done;
       else
 	{
@@ -5890,7 +5896,7 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg)
 	  return;
 	}
 
-      if ((abs (value)) & ~0x7fff)
+      if (value + (1u << 15) >= (1u << 16))
 	goto done;
       else
 	{
@@ -5910,7 +5916,7 @@ md_apply_fix (fixS *fixP, valueT * valP, segT seg)
 	  return;
 	}
 
-      if ((abs (value) >> 2) & ~0xfffff)
+      if (value + (1u << 22) >= (1u << 23))
 	{
 	  /* Out of range.  */
 	  if (fixP->fx_r_type == BFD_RELOC_ALPHA_BOH)

@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+#   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -19,7 +19,7 @@
 # MA 02110-1301, USA.
 #
 
-# This file is sourced from elf32.em, and defines extra arm-elf
+# This file is sourced from elf.em, and defines extra arm-elf
 # specific routines.
 #
 test -z "$TARGET2_TYPE" && TARGET2_TYPE="rel"
@@ -27,6 +27,7 @@ fragment <<EOF
 
 #include "ldctor.h"
 #include "elf/arm.h"
+#include "elf32-arm.h"
 
 static struct elf32_arm_params params =
 {
@@ -233,7 +234,7 @@ elf32_arm_add_stub_section (const char * stub_sec_name,
   if (stub_sec == NULL)
     goto err_ret;
 
-  bfd_set_section_alignment (stub_file->the_bfd, stub_sec, alignment_power);
+  bfd_set_section_alignment (stub_sec, alignment_power);
 
   os = lang_output_section_get (output_section);
 
@@ -277,7 +278,7 @@ gldarm_layout_sections_again (void)
   /* If we have changed sizes of the stub sections, then we need
      to recalculate all the section offsets.  This may mean we need to
      add even more stubs.  */
-  gld${EMULATION_NAME}_map_segments (TRUE);
+  ldelf_map_segments (TRUE);
   need_laying_out = -1;
 }
 
@@ -414,7 +415,7 @@ gld${EMULATION_NAME}_after_allocation (void)
     }
 
   if (need_laying_out != -1)
-    gld${EMULATION_NAME}_map_segments (need_laying_out);
+    ldelf_map_segments (need_laying_out);
 }
 
 static void
@@ -479,8 +480,7 @@ gld${EMULATION_NAME}_finish (void)
       /* Special procesing is required for a Thumb entry symbol.  The
 	 bottom bit of its address must be set.  */
       val = (h->u.def.value
-	     + bfd_get_section_vma (link_info.output_bfd,
-				    h->u.def.section->output_section)
+	     + bfd_section_vma (h->u.def.section->output_section)
 	     + h->u.def.section->output_offset);
 
       val |= 1;
@@ -500,7 +500,7 @@ gld${EMULATION_NAME}_finish (void)
     }
   else
     einfo (_("%P: warning: cannot find thumb start symbol %s\n"),
-	   params.thumb_entry_symbol);
+	   h->root.string);
 }
 
 /* This is a convenient point to tell BFD about target specific flags.
@@ -553,26 +553,6 @@ arm_elf_create_output_section_statements (void)
   bfd_elf32_arm_add_glue_sections_to_bfd (stub_file->the_bfd, &link_info);
   bfd_elf32_arm_get_bfd_for_interworking (stub_file->the_bfd, &link_info);
 }
-
-/* Avoid processing the fake stub_file in vercheck, stat_needed and
-   check_needed routines.  */
-
-static void (*real_func) (lang_input_statement_type *);
-
-static void arm_for_each_input_file_wrapper (lang_input_statement_type *l)
-{
-  if (l != stub_file)
-    (*real_func) (l);
-}
-
-static void
-arm_lang_for_each_input_file (void (*func) (lang_input_statement_type *))
-{
-  real_func = func;
-  lang_for_each_input_file (&arm_for_each_input_file_wrapper);
-}
-
-#define lang_for_each_input_file arm_lang_for_each_input_file
 
 EOF
 
