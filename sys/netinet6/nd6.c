@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.267 2020/03/09 21:20:56 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.268 2020/04/03 14:04:27 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.267 2020/03/09 21:20:56 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.268 2020/04/03 14:04:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -463,6 +463,7 @@ nd6_llinfo_timer(void *arg)
 	const struct in6_addr *taddr6 = &ln->r_l3addr.addr6;
 	struct sockaddr_in6 dsin6, tsin6;
 	struct sockaddr *sa;
+	struct mbuf *m = NULL;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 
@@ -493,7 +494,9 @@ nd6_llinfo_timer(void *arg)
 		}
 
 		if (ln->ln_hold) {
-			struct mbuf *m = ln->ln_hold, *m0;
+			struct mbuf *m0;
+
+			m = ln->ln_hold;
 
 			/*
 			 * assuming every packet in ln_hold has
@@ -503,9 +506,6 @@ nd6_llinfo_timer(void *arg)
 			m->m_nextpkt = NULL;
 			ln->ln_hold = m0;
 			clear_llinfo_pqueue(ln);
-
-			icmp6_error2(m, ICMP6_DST_UNREACH,
-			    ICMP6_DST_UNREACH_ADDR, 0, ifp, &mdaddr6);
 		}
 
 		sockaddr_in6_init(&tsin6, taddr6, 0, 0, 0);
@@ -586,6 +586,10 @@ out:
 	if (ln != NULL)
 		LLE_FREE_LOCKED(ln);
 	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
+	if (m) {
+		icmp6_error2(m, ICMP6_DST_UNREACH,
+		    ICMP6_DST_UNREACH_ADDR, 0, ifp, &mdaddr6);
+	}
 }
 
 /*
