@@ -1,4 +1,4 @@
-/* $NetBSD: intrdefs.h,v 1.14 2019/11/23 19:40:38 ad Exp $ */
+/* $NetBSD: intrdefs.h,v 1.15 2020/04/03 22:20:36 ad Exp $ */
 
 /* This file co-exists, and is included via machine/intrdefs.h */
 
@@ -20,5 +20,10 @@
 
 /* The number of 'irqs' that XEN understands */
 #define NUM_XEN_IRQS 		256
+
+#define XEN_IPI_NAMES {  "halt IPI", "FPU synch IPI", \
+			 "DDB IPI", "xcall IPI", \
+			 "HVCB IPI", "generic IPI", \
+			 "AST IPI" }
 
 #endif /* _XEN_INTRDEFS_H_ */
