@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2020/04/02 14:05:28 roy Exp $
+# $NetBSD: Makefile,v 1.5 2020/04/03 15:02:11 roy Exp $
 #
 
 .include <bsd.own.mk>
@@ -10,15 +10,14 @@ HOOKSRC=	${DIST}/hooks
 FILES=		01-test 02-dump 20-resolv.conf 30-hostname
 FILES+=		50-ntp.conf
 
-FILESBUILD_30-hostname=   YES
-
 FILESDIR=	/libexec/dhcpcd-hooks
 
+FILESBUILD_30-hostname=   YES
 CLEANFILES=	30-hostname
 
-.for f in ${FILES}
-${f}:	../../Makefile.inc ${f}.in
-	${TOOL_SED} ${SED_SYS} ${HOOKSRC}/${f}.in > $@
-.endfor
+.SUFFIXES:	.in
+
+.in:	../../Makefile.inc
+	${TOOL_SED} ${SED_SYS} $< > $@
 
 .include <bsd.prog.mk>
