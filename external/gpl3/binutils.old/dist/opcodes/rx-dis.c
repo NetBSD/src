@@ -1,5 +1,5 @@
 /* Disassembler code for Renesas RX.
-   Copyright (C) 2008-2016 Free Software Foundation, Inc.
+   Copyright (C) 2008-2018 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -27,22 +27,38 @@
 #include "dis-asm.h"
 #include "opcode/rx.h"
 
+#include <setjmp.h>
+
 typedef struct
 {
   bfd_vma pc;
   disassemble_info * dis;
 } RX_Data;
 
+struct private
+{
+  OPCODES_SIGJMP_BUF bailout;
+};
+
 static int
 rx_get_byte (void * vdata)
 {
   bfd_byte buf[1];
   RX_Data *rx_data = (RX_Data *) vdata;
+  int status;
 
-  rx_data->dis->read_memory_func (rx_data->pc,
-				  buf,
-				  1,
-				  rx_data->dis);
+  status = rx_data->dis->read_memory_func (rx_data->pc,
+					   buf,
+					   1,
+					   rx_data->dis);
+  if (status != 0)
+    {
+      struct private *priv = (struct private *) rx_data->dis->private_data;
+
+      rx_data->dis->memory_error_func (status, rx_data->pc,
+				       rx_data->dis);
+       OPCODES_SIGLONGJMP (priv->bailout, 1);
+    }
 
   rx_data->pc ++;
   return buf[0];
@@ -92,9 +108,17 @@ print_insn_rx (bfd_vma addr, disassemble_info * dis)
   RX_Data rx_data;
   RX_Opcode_Decoded opcode;
   const char * s;
+  struct private priv;
 
+  dis->private_data = (PTR) &priv;
   rx_data.pc = addr;
   rx_data.dis = dis;
+
+  if (OPCODES_SIGSETJMP (priv.bailout) != 0)
+    {
+      /* Error return.  */
+      return -1;
+    }
 
   rv = rx_decode_opcode (addr, &opcode, rx_get_byte, &rx_data);
 

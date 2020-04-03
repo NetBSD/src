@@ -1,5 +1,5 @@
 /* ia64-dis.c -- Disassemble ia64 instructions
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2018 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of the GNU opcodes library.
@@ -22,7 +22,7 @@
 #include "sysdep.h"
 #include <assert.h>
 
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/ia64.h"
 
 #define NELEMS(a)	((int) (sizeof (a) / sizeof (a[0])))

@@ -1,5 +1,5 @@
 /* Test plugin for the GNU linker.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -23,6 +23,8 @@
 #include "plugin-api.h"
 /* For ARRAY_SIZE macro only - we don't link the library itself.  */
 #include "libiberty.h"
+
+#include <ctype.h> /* For isdigit.  */
 
 extern enum ld_plugin_status onload (struct ld_plugin_tv *tv);
 static enum ld_plugin_status onclaim_file (const struct ld_plugin_input_file *file,
@@ -139,6 +141,10 @@ static add_file_t *addfiles_list = NULL;
 /* We keep a tail pointer for easy linking on the end.  */
 static add_file_t **addfiles_tail_chain_ptr = &addfiles_list;
 
+/* Number of bytes read in claim file before deciding if the file can be
+   claimed.  */
+static int bytes_to_read_before_claim = 0;
+
 /* Add a new claimfile on the end of the chain.  */
 static enum ld_plugin_status
 record_claim_file (const char *file)
@@ -156,6 +162,25 @@ record_claim_file (const char *file)
   claimfiles_tail_chain_ptr = &newfile->next;
   /* Record it as active for receiving symbols to register.  */
   last_claimfile = newfile;
+  return LDPS_OK;
+}
+
+/* How many bytes to read before claiming (or not) an input file.  */
+static enum ld_plugin_status
+record_read_length (const char *length)
+{
+  const char *tmp;
+
+  tmp = length;
+  while (*tmp != '\0' && isdigit (*tmp))
+    ++tmp;
+  if (*tmp != '\0' || *length == '\0')
+    {
+      fprintf (stderr, "APB: Bad length string: %s\n", tmp);
+      return LDPS_ERR;
+    }
+
+  bytes_to_read_before_claim = atoi (length);
   return LDPS_OK;
 }
 
@@ -325,6 +350,8 @@ parse_option (const char *opt)
     return set_register_hook (opt + 10, FALSE);
   else if (!strncmp ("claim:", opt, 6))
     return record_claim_file (opt + 6);
+  else if (!strncmp ("read:", opt, 5))
+    return record_read_length (opt + 5);
   else if (!strncmp ("sym:", opt, 4))
     return record_claimed_file_symbol (opt + 4);
   else if (!strncmp ("add:", opt, 4))
@@ -527,6 +554,20 @@ onload (struct ld_plugin_tv *tv)
 static enum ld_plugin_status
 onclaim_file (const struct ld_plugin_input_file *file, int *claimed)
 {
+  /* Possible read of some bytes out of the input file into a buffer.  This
+     simulates a plugin that reads some file content in order to decide if
+     the file should be claimed or not.  */
+  if (bytes_to_read_before_claim > 0)
+    {
+      char *buffer = malloc (bytes_to_read_before_claim);
+
+      if (buffer == NULL)
+        return LDPS_ERR;
+      if (read (file->fd, buffer, bytes_to_read_before_claim) < 0)
+        return LDPS_ERR;
+      free (buffer);
+    }
+
   /* Let's see if we want to claim this file.  */
   claim_file_t *claimfile = claimfiles_list;
   while (claimfile)

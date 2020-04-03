@@ -1,5 +1,5 @@
 /* messages.c - error reporter -
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
    GAS is free software; you can redistribute it and/or modify
@@ -18,11 +18,19 @@
    02110-1301, USA.  */
 
 #include "as.h"
+#include <signal.h>
+
+/* If the system doesn't provide strsignal, we get it defined in
+   libiberty but no declaration is supplied.  Because, reasons. */
+#if !defined (HAVE_STRSIGNAL) && !defined (strsignal)
+extern const char *strsignal (int);
+#endif
 
 static void identify (const char *);
 static void as_show_where (void);
 static void as_warn_internal (const char *, unsigned int, char *);
 static void as_bad_internal (const char *, unsigned int, char *);
+static void signal_crash (int) ATTRIBUTE_NORETURN;
 
 /* Despite the rest of the comments in this file, (FIXME-SOON),
    here is the current scheme for error messages etc:
@@ -58,7 +66,10 @@ static void as_bad_internal (const char *, unsigned int, char *);
    as_tsktsk() is used when we see a minor error for which
    our error recovery action is almost certainly correct.
    In this case, we print a message and then assembly
-   continues as though no error occurred.  */
+   continues as though no error occurred.
+
+   as_abort () is used for logic failure (assert or abort, signal).
+*/
 
 static void
 identify (const char *file)
@@ -286,38 +297,61 @@ as_fatal (const char *format, ...)
   xexit (EXIT_FAILURE);
 }
 
-/* Indicate assertion failure.
-   Arguments: Filename, line number, optional function name.  */
-
-void
-as_assert (const char *file, int line, const char *fn)
-{
-  as_show_where ();
-  fprintf (stderr, _("Internal error!\n"));
-  if (fn)
-    fprintf (stderr, _("Assertion failure in %s at %s:%d.\n"),
-	     fn, file, line);
-  else
-    fprintf (stderr, _("Assertion failure at %s:%d.\n"), file, line);
-  fprintf (stderr, _("Please report this bug.\n"));
-  xexit (EXIT_FAILURE);
-}
-
-/* as_abort: Print a friendly message saying how totally hosed we are,
-   and exit without producing a core file.  */
+/* Indicate internal constency error.
+   Arguments: Filename, line number, optional function name.
+   FILENAME may be NULL, which we use for crash-via-signal.  */
 
 void
 as_abort (const char *file, int line, const char *fn)
 {
   as_show_where ();
-  if (fn)
-    fprintf (stderr, _("Internal error, aborting at %s:%d in %s\n"),
-	     file, line, fn);
+
+  if (!file)
+    fprintf (stderr, _("Internal error (%s).\n"), fn ? fn : "unknown");
+  else if (fn)
+    fprintf (stderr, _("Internal error in %s at %s:%d.\n"), fn, file, line);
   else
-    fprintf (stderr, _("Internal error, aborting at %s:%d\n"),
-	     file, line);
+    fprintf (stderr, _("Internal error at %s:%d.\n"), file, line);
+
   fprintf (stderr, _("Please report this bug.\n"));
+
   xexit (EXIT_FAILURE);
+}
+
+/* Handler for fatal signals, such as SIGSEGV. */
+
+static void
+signal_crash (int signo)
+{
+  /* Reset, to prevent unbounded recursion.  */
+  signal (signo, SIG_DFL);
+
+  as_abort (NULL, 0, strsignal (signo));
+}
+
+/* Register signal handlers, for less abrubt crashes.  */
+
+void
+signal_init (void)
+{
+#ifdef SIGSEGV
+  signal (SIGSEGV, signal_crash);
+#endif
+#ifdef SIGILL
+  signal (SIGILL, signal_crash);
+#endif
+#ifdef SIGBUS
+  signal (SIGBUS, signal_crash);
+#endif
+#ifdef SIGABRT
+  signal (SIGABRT, signal_crash);
+#endif
+#if defined SIGIOT && (!defined SIGABRT || SIGABRT != SIGIOT)
+  signal (SIGIOT, signal_crash);
+#endif
+#ifdef SIGFPE
+  signal (SIGFPE, signal_crash);
+#endif
 }
 
 /* Support routines.  */

@@ -1,40 +1,44 @@
-# translation of gprof-2.15.96.tr.po to Turkish
+# This file is distributed under the same license as the binutils package.
+# translation of gprof-2.28.90.tr.po to Turkish
 # Copyright (C) 2003, 2005 Free Software Foundation, Inc.
 # Deniz Akkus Kanca <deniz@arayan.com>, 2001,2003.
-#
+# Mehmet Kececi <mkececi@mehmetkececi.com>, 2017.
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.15.96\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-03-03 21:05+1030\n"
-"PO-Revision-Date: 2005-03-14 04:28+0200\n"
-"Last-Translator: Deniz Akkus Kanca <deniz@arayan.com>\n"
+"Project-Id-Version: gprof 2.28.90\n"
+"Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
+"POT-Creation-Date: 2017-07-03 16:56+0200\n"
+"PO-Revision-Date: 2017-07-05 14:21+0300\n"
+"Last-Translator: Mehmet Kececi <mkececi@mehmetkececi.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
+"Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.9.1\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Virtaal 0.7.1\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 
 #: alpha.c:102 mips.c:54
 msgid "<indirect child>"
 msgstr "<dolaylı ast>"
 
-#: alpha.c:119 mips.c:71
+#: alpha.c:107 mips.c:59
 #, c-format
 msgid "[find_call] %s: 0x%lx to 0x%lx\n"
 msgstr "[find_call] %s: 0x%lx'dan 0x%lx'a\n"
 
-#: alpha.c:141
+#: alpha.c:129
 #, c-format
 msgid "[find_call] 0x%lx: jsr%s <indirect_child>\n"
 msgstr "[find_call] 0x%lx: jsr%s <dolaylı_ast>\n"
 
-#: alpha.c:151
+#: alpha.c:139
 #, c-format
 msgid "[find_call] 0x%lx: bsr"
 msgstr "[find_call] 0x%lx: bsr"
 
-#: basic_blocks.c:128 call_graph.c:89 hist.c:97
+#: basic_blocks.c:128 call_graph.c:89 hist.c:106
 #, c-format
 msgid "%s: %s: unexpected end of file\n"
 msgstr "%s: %s: beklenmeyen dosyasonu\n"
@@ -45,16 +49,16 @@ msgid "%s: warning: ignoring basic-block exec counts (use -l or --line)\n"
 msgstr "%s: uyarı: temel blok yürütme sayıları yoksayıldı (-l veya --line kullanın)\n"
 
 #. FIXME: This only works if bfd_vma is unsigned long.
-#: basic_blocks.c:287 basic_blocks.c:297
+#: basic_blocks.c:289 basic_blocks.c:299
 #, c-format
 msgid "%s:%d: (%s:0x%lx) %lu executions\n"
 msgstr "%s:%d: (%s:0x%lx) %lu yürütme\n"
 
-#: basic_blocks.c:288 basic_blocks.c:298
+#: basic_blocks.c:290 basic_blocks.c:300
 msgid "<unknown>"
 msgstr "<bilinmeyen>"
 
-#: basic_blocks.c:541
+#: basic_blocks.c:543
 #, c-format
 msgid ""
 "\n"
@@ -71,7 +75,7 @@ msgstr ""
 "     Satır      Sayı\n"
 "\n"
 
-#: basic_blocks.c:565
+#: basic_blocks.c:567
 #, c-format
 msgid ""
 "\n"
@@ -82,22 +86,22 @@ msgstr ""
 "Yürütme Özeti:\n"
 "\n"
 
-#: basic_blocks.c:566
+#: basic_blocks.c:568
 #, c-format
 msgid "%9ld   Executable lines in this file\n"
 msgstr "%9ld   yürütülür satır -- bu dosyada\n"
 
-#: basic_blocks.c:568
+#: basic_blocks.c:570
 #, c-format
 msgid "%9ld   Lines executed\n"
 msgstr "%9ld   Yürütülen Satır\n"
 
-#: basic_blocks.c:569
+#: basic_blocks.c:571
 #, c-format
 msgid "%9.2f   Percent of the file executed\n"
 msgstr "%9.2f   Dosyanın yürütülen kısım yüzdesi\n"
 
-#: basic_blocks.c:573
+#: basic_blocks.c:575
 #, c-format
 msgid ""
 "\n"
@@ -106,7 +110,7 @@ msgstr ""
 "\n"
 "%9lu   Toplam satır yürütüş sayısı\n"
 
-#: basic_blocks.c:575
+#: basic_blocks.c:577
 #, c-format
 msgid "%9.2f   Average executions per line\n"
 msgstr "%9.2f   Satır başına ortalama yürütüş sayısı\n"
@@ -116,7 +120,7 @@ msgstr "%9.2f   Satır başına ortalama yürütüş sayısı\n"
 msgid "[cg_tally] arc from %s to %s traversed %lu times\n"
 msgstr "[cg_tally] %s'dan %s'a olan yay %lu defa geçildi\n"
 
-#: cg_print.c:73
+#: cg_print.c:74
 #, c-format
 msgid ""
 "\t\t     Call graph (explanation follows)\n"
@@ -125,7 +129,7 @@ msgstr ""
 "\t\t     Çağrı grafiği (açıklama aşağıda)\n"
 "\n"
 
-#: cg_print.c:75
+#: cg_print.c:76
 #, c-format
 msgid ""
 "\t\t\tCall graph\n"
@@ -134,7 +138,7 @@ msgstr ""
 "\t\t\tÇağrı grafiği\n"
 "\n"
 
-#: cg_print.c:78 hist.c:359
+#: cg_print.c:79 hist.c:470
 #, c-format
 msgid ""
 "\n"
@@ -143,7 +147,7 @@ msgstr ""
 "\n"
 "Öğe boyu: her örnek %ld bayt içermektedir"
 
-#: cg_print.c:82
+#: cg_print.c:83
 #, c-format
 msgid ""
 " for %.2f%% of %.2f seconds\n"
@@ -152,7 +156,7 @@ msgstr ""
 "Toplam %2$.2f saniyenin %1$.2f%%'si için\n"
 "\n"
 
-#: cg_print.c:86
+#: cg_print.c:87
 #, c-format
 msgid ""
 " no time propagated\n"
@@ -161,64 +165,64 @@ msgstr ""
 " zaman ilerletilmedi\n"
 "\n"
 
-#: cg_print.c:95 cg_print.c:98 cg_print.c:100
+#: cg_print.c:96 cg_print.c:101 cg_print.c:104
 msgid "called"
 msgstr "çağrıldı"
 
-#: cg_print.c:95 cg_print.c:100
+#: cg_print.c:96 cg_print.c:104
 msgid "total"
 msgstr "toplam"
 
-#: cg_print.c:95
+#: cg_print.c:96
 msgid "parents"
 msgstr "üstler"
 
-#: cg_print.c:97 cg_print.c:98
+#: cg_print.c:98 cg_print.c:102
 msgid "index"
 msgstr "indeks"
 
-#: cg_print.c:97
-#, c-format
+#: cg_print.c:100
+#, no-c-format
 msgid "%time"
 msgstr "%time"
 
-#: cg_print.c:97 cg_print.c:98
+#: cg_print.c:101
 msgid "self"
 msgstr "kendisi"
 
-#: cg_print.c:97
+#: cg_print.c:101
 msgid "descendants"
 msgstr "astlar"
 
-#: cg_print.c:98 hist.c:385
+#: cg_print.c:102 hist.c:496
 msgid "name"
 msgstr "isim"
 
-#: cg_print.c:100
+#: cg_print.c:104
 msgid "children"
 msgstr "astlar"
 
-#: cg_print.c:105
+#: cg_print.c:109
 #, c-format
 msgid "index %% time    self  children    called     name\n"
 msgstr "indeks %% zaman  kendi astlar      çağrıldı   isim\n"
 
-#: cg_print.c:128
+#: cg_print.c:132
 #, c-format
 msgid " <cycle %d as a whole> [%d]\n"
 msgstr " <%d'yi bütün olarak çevrimler> [%d]\n"
 
-#: cg_print.c:354
+#: cg_print.c:358
 #, c-format
 msgid "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <spontaneous>\n"
 msgstr "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <kendiliğinden>\n"
 
-#: cg_print.c:355
+#: cg_print.c:359
 #, c-format
 msgid "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontaneous>\n"
 msgstr "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <kendiliğinden>\n"
 
-#: cg_print.c:589
+#: cg_print.c:593
 #, c-format
 msgid ""
 "Index by function name\n"
@@ -227,52 +231,57 @@ msgstr ""
 "İşlev adına göre indeks\n"
 "\n"
 
-#: cg_print.c:646 cg_print.c:655
+#: cg_print.c:650 cg_print.c:659
 #, c-format
 msgid "<cycle %d>"
 msgstr "<çevrim %d>"
 
-#: corefile.c:64
-#, c-format
-msgid "%s: could not open %s.\n"
-msgstr "%s: %s açılamadı.\n"
-
-#: corefile.c:78 corefile.c:112
+#: corefile.c:62
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: eşlem dosyası %s ayrıştırılamadı.\n"
 
-#: corefile.c:155
+#: corefile.c:90 corefile.c:527
 #, c-format
-msgid "%s: %s: not in a.out format\n"
-msgstr "%s: %s: a.out biçeminde değil\n"
+msgid "%s: could not open %s.\n"
+msgstr "%s: %s açılamadı.\n"
 
-#: corefile.c:166
+#: corefile.c:192
+#, c-format
+msgid "%s: %s: not in executable format\n"
+msgstr "%s: %s: çalıştırılabilir biçimde değil\n"
+
+#: corefile.c:203
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s: %s içerisinde .text (metin) bölümü bulunamadı\n"
 
-#: corefile.c:224
+#: corefile.c:278
 #, c-format
 msgid "%s: ran out room for %lu bytes of text space\n"
 msgstr "%s: %lu bayt metin yeri için yer bulunamadı\n"
 
-#: corefile.c:238
+#: corefile.c:292
 #, c-format
 msgid "%s: can't do -c\n"
 msgstr "%s: -c yapılamıyor\n"
 
-#: corefile.c:272
+#: corefile.c:335
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c %s platformu üzerinde desteklenmiyor\n"
 
-#: corefile.c:437
+#: corefile.c:536 corefile.c:642
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: `%s' dosyası sembol içermiyor\n"
 
-#: corefile.c:751
+#: corefile.c:541
+#, c-format
+msgid "%s: file `%s' has too many symbols\n"
+msgstr "%s: dosyası `%s' çok fazla sembol içeriyor\n"
+
+#: corefile.c:909
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%1$s: hatalı sayım: %3$ld yerine ltab.len=%2$d\n"
@@ -282,52 +291,52 @@ msgstr "%1$s: hatalı sayım: %3$ld yerine ltab.len=%2$d\n"
 msgid "%s: address size has unexpected value of %u\n"
 msgstr "%s: adres boyu, beklenmeyen %u değerine sahip\n"
 
-#: gmon_io.c:317 gmon_io.c:413
+#: gmon_io.c:318 gmon_io.c:414
 #, c-format
 msgid "%s: file too short to be a gmon file\n"
 msgstr "%s: Dosya bir gmon dosyası olmak için çok kısa\n"
 
-#: gmon_io.c:327 gmon_io.c:456
+#: gmon_io.c:328 gmon_io.c:457
 #, c-format
 msgid "%s: file `%s' has bad magic cookie\n"
 msgstr "%s: `%s' dosyasında kötü sihirli çerez var\n"
 
-#: gmon_io.c:338
+#: gmon_io.c:339
 #, c-format
 msgid "%s: file `%s' has unsupported version %d\n"
 msgstr "%s: `%s' dosyası desteklenmeyen %d sürümünde\n"
 
-#: gmon_io.c:368
+#: gmon_io.c:369
 #, c-format
 msgid "%s: %s: found bad tag %d (file corrupted?)\n"
 msgstr "%s: %s: Hatalı etiket %d bulundu (dosya bozuk mu?)\n"
 
-#: gmon_io.c:435
+#: gmon_io.c:436
 #, c-format
 msgid "%s: profiling rate incompatible with first gmon file\n"
 msgstr "%s: profilleme hızı ilk gmon dosyası ile uyumlu değil\n"
 
-#: gmon_io.c:483
+#: gmon_io.c:487
 #, c-format
 msgid "%s: incompatible with first gmon file\n"
 msgstr "%s: ilk gmon dosyası ile uyumlu değil\n"
 
-#: gmon_io.c:511
+#: gmon_io.c:517
 #, c-format
 msgid "%s: file '%s' does not appear to be in gmon.out format\n"
 msgstr "%s: '%s' dosyası gmon.out biçeminde değil\n"
 
-#: gmon_io.c:532
+#: gmon_io.c:530
 #, c-format
 msgid "%s: unexpected EOF after reading %d/%d bins\n"
 msgstr "%s: %d/%d sele okunduktan sonra beklenmeyen dosyasonu (EOF) bulundu\n"
 
-#: gmon_io.c:565
+#: gmon_io.c:562
 #, c-format
 msgid "time is in ticks, not seconds\n"
 msgstr "zaman tık olarak veriliyor, saniye olarak değil\n"
 
-#: gmon_io.c:571 gmon_io.c:747
+#: gmon_io.c:568 gmon_io.c:748
 #, c-format
 msgid "%s: don't know how to deal with file format %d\n"
 msgstr "%s: %d dosya biçeminin nasıl işleneceği bilinmiyor\n"
@@ -367,134 +376,138 @@ msgstr "\t%d temel blok sayım kaydı\n"
 msgid "\t%d basic-block count records\n"
 msgstr "\t%d temel blok sayım kayıtları\n"
 
-#: gprof.c:160
+#: gprof.c:162
 #, c-format
 msgid ""
-"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n"
+"Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
 "\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
 "\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
 "\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
 "\t[--[no-]time=name] [--all-lines] [--brief] [--debug[=level]]\n"
-"\t[--function-ordering] [--file-ordering]\n"
+"\t[--function-ordering] [--file-ordering] [--inline-file-names]\n"
 "\t[--directory-path=dirs] [--display-unused-functions]\n"
 "\t[--file-format=name] [--file-info] [--help] [--line] [--min-count=n]\n"
 "\t[--no-static] [--print-path] [--separate-files]\n"
 "\t[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n"
 "\t[--version] [--width=n] [--ignore-non-functions]\n"
-"\t[--demangle[=STYLE]] [--no-demangle]\n"
+"\t[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n"
 "\t[image-file] [profile-file...]\n"
 msgstr ""
-"Kullanım: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][isim]] [-I dizinler]\n"
-"\t[-d[sayı]] [-k hedeften/hedefe] [-m minimum-sayı] [-t tablo-uzunluğu]\n"
-"\t[--[no-]annotated-source[=isim]]  açıklamalı kaynak kodunu gösterir/göstermez\n"
-"\t[--[no-]exec-counts[=isim]]       yürütme sayısını gösterir/göstermez\n"
-"\t[--[no-]flat-profile[=isim]]      düz profil çıktılar\n"
-"\t[--[no-]graph[=isim]]             grafik çıktılar\n"
-"\t[--[no-]time=isim]                zaman bilgisi çıktılar\n"
-"\t[--all-lines]                     bütün satırları gösterir\n"
-"\t[--brief]                         kısa çıktı verir\n"
-"\t[--debug[=seviye]]                hata ayıklama seviyesini atar\n"
-"\t[--function-ordering]             işlev adına göre sıralar\n"
-"\t[--file-ordering]                 dosya adına göre sıralar\n"
-"\t[--directory-path=dizinler]       dizin adres yolunu belirtir\n"
-"\t[--display-unused-functions]      kullanılmayan işlevleri gösterir\n"
-"\t[--file-format=isim]              dosya biçemini belirtir\n"
-"\t[--file-info]                     dosya bilgisini gösterir\n"
-"\t[--help]                          yardım bilgisi gösterir\n"
-"\t[--line]                          satır bilgisi gösterir\n"
-"\t[--min-count=n]                   minimum sayıyı atar\n"
-"\t[--no-static]                     statik işlemleri yoksayar\n"
-"\t[--print-path]                    yazdırma yolu\n"
-"\t[--separate-files]                ayrı dosyalar\n"
-"\t[--static-call-graph]             statik çağrı grafiği\n"
-"\t[--sum]                           toplam\n"
-"\t[--table-length=uzunluk]          tablo uzunluğu\n"
-"\t[--traditional]                   geleneksel\n"
-"\t[--version]                       sürüm bilgisi gösterir\n"
-"\t[--width=n]                       genişlik\n"
-"\t[--ignore-non-functions]          işlev olmayanları yoksayar\n"
-"\t[--demangle[=TARZ]]               düzeltme tarzı atar\n"
-"\t[--no-demangle]                   düzeltme uygulamaz\n"
-"\t[görüntü-dosyası] [profil-dosyası...]\n"
+"Kullanım: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n"
+"\t[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n"
+"\t[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n"
+"\t[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n"
+"\t[--[no-]time=name] [--all-lines] [--brief] [--debug[=level]]\n"
+"\t[--function-ordering] [--file-ordering] [--inline-file-names]\n"
+"\t[--directory-path=dirs] [--display-unused-functions]\n"
+"\t[--file-format=name] [--file-info] [--help] [--line] [--min-count=n]\n"
+"\t[--no-static] [--print-path] [--separate-files]\n"
+"\t[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n"
+"\t[--version] [--width=n] [--ignore-non-functions]\n"
+"\t[--demangle[=STYLE]] [--no-demangle] [--external-symbol-table=name] [@FILE]\n"
+"\t[image-file] [profile-file...]\n"
 
-#: gprof.c:176
+#: gprof.c:178
 #, c-format
 msgid "Report bugs to %s\n"
-msgstr ""
-"Yazılım hatalarını %s adresine,\n"
-"çeviri hatalarını <gnu-tr@belgeler.org> adresine bildirin\n"
+msgstr "Hataları %s adresine bildirin\n"
 
-#: gprof.c:248
+#: gprof.c:254
 #, c-format
 msgid "%s: debugging not supported; -d ignored\n"
 msgstr "%s: hata ayıklama desteklenmiyor; -d yoksayıldı\n"
 
-#: gprof.c:328
+#: gprof.c:336
 #, c-format
 msgid "%s: unknown file format %s\n"
 msgstr "%s: bilinmeyen dosya biçemi %s\n"
 
 #. This output is intended to follow the GNU standards document.
-#: gprof.c:412
+#: gprof.c:424
 #, c-format
 msgid "GNU gprof %s\n"
 msgstr "GNU gprof %s\n"
 
-#: gprof.c:413
+#: gprof.c:425
 #, c-format
 msgid "Based on BSD gprof, copyright 1983 Regents of the University of California.\n"
 msgstr "BSD gprof baz alınmıştır. BSD gprof Telif Hakkı 1983 Regents of the University of California.\n"
 
-#: gprof.c:414
+#: gprof.c:426
 #, c-format
 msgid "This program is free software.  This program has absolutely no warranty.\n"
 msgstr "Bu yazılım bir serbest yazılımdır. Bu yazılımın herhangi bir garantisi yoktur.\n"
 
-#: gprof.c:455
+#: gprof.c:467
 #, c-format
 msgid "%s: unknown demangling style `%s'\n"
 msgstr "%s: bilinmeyen düzeltme tarzı `%s'\n"
 
-#: gprof.c:475
+#: gprof.c:490
 #, c-format
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr ""
 "%s: --function-ordering (işleve göre sırala) ve\n"
 "    --file-ordering (dosyaya göre sırala) seçeneklerinin biri seçilebilir.\n"
 
-#: gprof.c:525
+#: gprof.c:542
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr "%s: `prof' dosya biçemi henüz desteklenmiyor\n"
 
-#: gprof.c:574
+#: gprof.c:596
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s: gmon.out dosyasında geçmiş grafiği yok\n"
 
-#: gprof.c:581
+#: gprof.c:603
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: gmon.out dosyasında çağrı grafik verisi yok\n"
 
-#: hist.c:126
+#: hist.c:134
 #, c-format
-msgid "%s: `%s' is incompatible with first gmon file\n"
-msgstr "%s: `%s' ilk gmon dosyası ile uyumlu değil\n"
+msgid ""
+"%s: dimension unit changed between histogram records\n"
+"%s: from '%s'\n"
+"%s: to '%s'\n"
+msgstr ""
+"%s: histogram kayıtları arasında boyut birim değişişimi\n"
+"%s: den '%s'\n"
+"%s: için '%s'\n"
 
-#: hist.c:142
+#: hist.c:144
+#, c-format
+msgid ""
+"%s: dimension abbreviation changed between histogram records\n"
+"%s: from '%c'\n"
+"%s: to '%c'\n"
+msgstr ""
+"%s: histogram kayıtları arasında boyut birim değişişimis\n"
+"%s: den '%c'\n"
+"%s: için '%c'\n"
+
+#: hist.c:158
+#, c-format
+msgid "%s: different scales in histogram records"
+msgstr "%s: histogram kayıtlarında farklı ölçekler"
+
+#: hist.c:195
+#, c-format
+msgid "%s: overlapping histogram records\n"
+msgstr "%s: örtüşen histogram kayıtları\n"
+
+#: hist.c:229
 #, c-format
 msgid "%s: %s: unexpected EOF after reading %u of %u samples\n"
-msgstr ""
-"%1$s: %2$s: Toplam %4$u örneğin %3$u'si okunduktan sonra\n"
-"beklenmeyen dosyasonu(EOF) bulundu\n"
+msgstr "%s: %s: %u örneklerinin %u'nun okunmasından sonra beklenmedik EOF\n"
 
-#: hist.c:355
+#: hist.c:466
 #, c-format
 msgid "%c%c/call"
 msgstr "%c%c/çağrı"
 
-#: hist.c:363
+#: hist.c:474
 #, c-format
 msgid ""
 " for %.2f%% of %.2f %s\n"
@@ -503,7 +516,7 @@ msgstr ""
 " Toplam %2$.2f %3$s'nin %1$.2f%%'si okundu\n"
 "\n"
 
-#: hist.c:369
+#: hist.c:480
 #, c-format
 msgid ""
 "\n"
@@ -512,7 +525,7 @@ msgstr ""
 "\n"
 "Her örnek %g %s sayılıyor.\n"
 
-#: hist.c:374
+#: hist.c:485
 #, c-format
 msgid ""
 " no time accumulated\n"
@@ -521,27 +534,27 @@ msgstr ""
 " zamanlama değeri biriktirilemedi\n"
 "\n"
 
-#: hist.c:381
+#: hist.c:492
 msgid "cumulative"
 msgstr "birikmiş"
 
-#: hist.c:381
+#: hist.c:492
 msgid "self  "
 msgstr "kendisi  "
 
-#: hist.c:381
+#: hist.c:492
 msgid "total "
 msgstr "toplam "
 
-#: hist.c:384
+#: hist.c:495
 msgid "time"
 msgstr "zaman"
 
-#: hist.c:384
+#: hist.c:495
 msgid "calls"
 msgstr "çağrı"
 
-#: hist.c:473
+#: hist.c:584
 #, c-format
 msgid ""
 "\n"
@@ -554,17 +567,22 @@ msgstr ""
 "\n"
 "düz profil:\n"
 
-#: hist.c:479
+#: hist.c:590
 #, c-format
 msgid "Flat profile:\n"
 msgstr "Düz profil:\n"
 
-#: mips.c:82
+#: hist.c:711
+#, c-format
+msgid "%s: found a symbol that covers several histogram records"
+msgstr "%s: birkaç çubuk grafik kayıtlarını kapsayan bir sembol bulundu"
+
+#: mips.c:71
 #, c-format
 msgid "[find_call] 0x%lx: jal"
 msgstr "[find_call] 0x%lx: jal"
 
-#: mips.c:107
+#: mips.c:99
 #, c-format
 msgid "[find_call] 0x%lx: jalr\n"
 msgstr "[find_call] 0x%lx: jalr\n"
@@ -579,10 +597,13 @@ msgstr "%s: `%s' bulunamadı\n"
 msgid "*** File %s:\n"
 msgstr "*** %s Dosyası:\n"
 
-#: utils.c:107
+#: utils.c:106
 #, c-format
 msgid " <cycle %d>"
 msgstr " <çevrim %d>"
+
+#~ msgid "%s: `%s' is incompatible with first gmon file\n"
+#~ msgstr "%s: `%s' ilk gmon dosyası ile uyumlu değil\n"
 
 #~ msgid "%s: bfd_vma has unexpected size of %ld bytes\n"
 #~ msgstr "%s: beklenmeyen boyut: bfd_vma'nın boyutu %ld bayt\n"

@@ -11,6 +11,7 @@ msgstr ""
 "PO-Revision-Date: 2011-01-10 01:31+0100\n"
 "Last-Translator: Keld Simonsen <keld@keldix.com>\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -21,7 +22,7 @@ msgid "  --support-old-code          Support interworking with old code\n"
 msgstr "  --support-old-code          Understøttelse samvirken med gammel kode\n"
 
 #: emultempl/armcoff.em:74
-#, fuzzy, c-format
+#, c-format
 msgid "  --thumb-entry=<sym>         Set the entry point to be Thumb symbol <sym>\n"
 msgstr ""
 "  --thumb-entry=<sym>  Indstil indgangspunktet til at være tommelsymbolet\n"
@@ -37,7 +38,6 @@ msgid "%P: warning: '--thumb-entry %s' is overriding '-e %s'\n"
 msgstr "%P: advarsel: \"--thumb-entry %s\" tilsidesætter \"-e %s\"\n"
 
 #: emultempl/armcoff.em:195 emultempl/pe.em:1817
-#, fuzzy
 msgid "%P: warning: cannot find thumb start symbol %s\n"
 msgstr "%P: advarsel: kan ikke finde tommelstartsymbol %s\n"
 
@@ -160,14 +160,14 @@ msgstr "  --enable-stdcall-fixup             Lænk _sym til _sym@nn uden advarsle
 msgid "  --exclude-symbols sym,sym,...      Exclude symbols from automatic export\n"
 msgstr ""
 "  --exclude-symbols sym,sym,...      Udelad symboler fra automatisk\n"
-"                                       export\n"
+"                                       eksport\n"
 
 #: emultempl/pe.em:440
-#, fuzzy, c-format
+#, c-format
 msgid "  --exclude-all-symbols              Exclude all symbols from automatic export\n"
 msgstr ""
-"  --exclude-symbols sym,sym,...      Udelad symboler fra automatisk\n"
-"                                       export\n"
+"  --exclude-all-symbols              Udelad alle symboler fra automatisk\n"
+"                                       eksport\n"
 
 #: emultempl/pe.em:441
 #, c-format
@@ -182,18 +182,14 @@ msgid "  --exclude-modules-for-implib mod,mod,...\n"
 msgstr ""
 
 #: emultempl/pe.em:443
-#, fuzzy, c-format
+#, c-format
 msgid "                                     Exclude objects, archive members from auto\n"
 msgstr ""
-"  --dll                              Sæt billedbase til standard for\n"
-"                                       DLL'er\n"
 
 #: emultempl/pe.em:444
-#, fuzzy, c-format
+#, c-format
 msgid "                                     export, place into import library instead.\n"
 msgstr ""
-"  --dll                              Sæt billedbase til standard for\n"
-"                                       DLL'er\n"
 
 #: emultempl/pe.em:445
 #, c-format
@@ -248,7 +244,7 @@ msgstr ""
 "                                       (standard).\n"
 
 #: emultempl/pe.em:455
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  --dll-search-prefix=<string>       When linking dynamically to a dll without\n"
 "                                       an importlib, use <string><basename>.dll\n"
@@ -259,7 +255,7 @@ msgstr ""
 "                                       lænkning uden et importbibliotek\n"
 
 #: emultempl/pe.em:458
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  --enable-auto-import               Do sophistcated linking of _sym to\n"
 "                                       __imp_sym for DATA references\n"
@@ -275,24 +271,19 @@ msgstr ""
 "                                       automatisk\n"
 
 #: emultempl/pe.em:461
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  --enable-runtime-pseudo-reloc      Work around auto-import limitations by\n"
 "                                       adding pseudo-relocations resolved at\n"
 "                                       runtime.\n"
 msgstr ""
-"  --dll-search-prefix=<streng>       Brug <streng><basenavn>.dll i stedet\n"
-"                                       for lib<basenavn>.dll ved dynamisk\n"
-"                                       lænkning uden et importbibliotek\n"
 
 #: emultempl/pe.em:464
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  --disable-runtime-pseudo-reloc     Do not add runtime pseudo-relocations for\n"
 "                                       auto-imported DATA.\n"
 msgstr ""
-"  --enable-auto-import               Udfør sofistikeret lænkning af _sym til\n"
-"                                       __imp_sym for DATA-referencer\n"
 
 #: emultempl/pe.em:466
 #, c-format
@@ -305,31 +296,25 @@ msgstr ""
 "                                       (især automatisk import)\n"
 
 #: emultempl/pe.em:469
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  --large-address-aware              Executable supports virtual addresses\n"
 "                                       greater than 2 gigabytes\n"
 msgstr ""
-"  --enable-auto-image-base           Vælg automatisk billedbase for DLL'er\n"
-"                                       med mindre brugeren ikke angiver én\n"
 
 #: emultempl/pe.em:471
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  --enable-long-section-names        Use long COFF section names even in\n"
 "                                       executable image files\n"
 msgstr ""
-"  --enable-auto-image-base           Vælg automatisk billedbase for DLL'er\n"
-"                                       med mindre brugeren ikke angiver én\n"
 
 #: emultempl/pe.em:473
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  --disable-long-section-names       Never use long COFF section names, even\n"
 "                                       in object files\n"
 msgstr ""
-"  --enable-auto-image-base           Vælg automatisk billedbase for DLL'er\n"
-"                                       med mindre brugeren ikke angiver én\n"
 
 #: emultempl/pe.em:475
 #, c-format
@@ -582,7 +567,7 @@ msgstr "%X%S: uløseligt symbol \"%s\" refereredes i udtrykket\n"
 #: ldexp.c:564
 #, c-format
 msgid "%F%S: undefined symbol `%s' referenced in expression\n"
-msgstr "%F%S: udefinerede symbol \"%s\" refereredes i udtrykket\n"
+msgstr "%F%S: udefineret symbol \"%s\" refereredes i udtrykket\n"
 
 #: ldexp.c:585 ldexp.c:602 ldexp.c:629
 #, c-format
@@ -590,9 +575,9 @@ msgid "%F%S: undefined section `%s' referenced in expression\n"
 msgstr "%F%S: udefineret sektion '%s' refereredes i udtrykket\n"
 
 #: ldexp.c:656 ldexp.c:670
-#, fuzzy, c-format
+#, c-format
 msgid "%F%S: undefined MEMORY region `%s' referenced in expression\n"
-msgstr "%F%S: udefinerede symbol \"%s\" refereredes i udtrykket\n"
+msgstr "%F%S: udefineret MEMORY region \"%s\" refereredes i udtrykket\n"
 
 #: ldexp.c:681
 #, c-format
@@ -692,14 +677,12 @@ msgid "%P%F: can not create hash table: %E\n"
 msgstr "%P%F: kan ikke oprette hashtabel: %E\n"
 
 #: ldlang.c:1253
-#, fuzzy
 msgid "%P:%S: warning: redeclaration of memory region `%s'\n"
-msgstr "%P: advarsel: intet hukommelsesområde angivet for sektionen \"%s\"\n"
+msgstr "%P:%S: advarsel: repeteret erklæring af hukommelsesområde \"%s\"\n"
 
 #: ldlang.c:1259
-#, fuzzy
 msgid "%P:%S: warning: memory region `%s' not declared\n"
-msgstr "%P: advarsel: intet hukommelsesområde angivet for sektionen \"%s\"\n"
+msgstr "%P:%S: advarsel: hukommelsesområde \"%s\" er ikke erklæret\n"
 
 #: ldlang.c:1293
 msgid "%F%P:%S: error: alias for default memory region\n"
@@ -714,9 +697,8 @@ msgid "%F%P:%S: error: memory region `%s' for alias `%s' does not exist\n"
 msgstr ""
 
 #: ldlang.c:1363 ldlang.c:1402
-#, fuzzy
 msgid "%P%F: failed creating section `%s': %E\n"
-msgstr "%P%F: kan ikke forenkle sektion: %E\n"
+msgstr "%P%F: mislykkedes med at oprette sektion '%s': %E\n"
 
 #: ldlang.c:1958
 #, c-format
@@ -812,24 +794,20 @@ msgid "%P%F:%s: can not set architecture: %E\n"
 msgstr "%P%F:%s: kan ikke sætte arkitektur: %E\n"
 
 #: ldlang.c:3185
-#, fuzzy
 msgid "%P: warning: %s contains output sections; did you forget -T?\n"
-msgstr "%P: advarsel: ændrer start på sektionen %s med %u byte\n"
+msgstr ""
 
 #: ldlang.c:3215
-#, fuzzy
 msgid "%P%F: bfd_hash_lookup failed creating symbol %s\n"
-msgstr "%P%F: bfd_hash_lookup mislykkedes: %E\n"
+msgstr ""
 
 #: ldlang.c:3233
-#, fuzzy
 msgid "%P%F: bfd_hash_allocate failed creating symbol %s\n"
-msgstr "%P%F: bfd_hash_lookup mislykkedes: %E\n"
+msgstr ""
 
 #: ldlang.c:3688
-#, fuzzy
 msgid "%F%P: %s not found for insert\n"
-msgstr "%F%P: kan ikke finde %s\n"
+msgstr ""
 
 #: ldlang.c:3903
 msgid " load address 0x%V"
@@ -842,60 +820,53 @@ msgstr "%W (størrelse inden forenkling)\n"
 #: ldlang.c:4270
 #, c-format
 msgid "Address of section %s set to "
-msgstr "Adressen på sektionen %s sat til "
+msgstr "Adressen på sektion %s sat til "
 
 #: ldlang.c:4423
 #, c-format
 msgid "Fail with %d\n"
-msgstr "Mislykkes med %d\n"
+msgstr "Mislykkedes med %d\n"
 
 #: ldlang.c:4710
-#, fuzzy
 msgid "%X%P: section %s loaded at [%V,%V] overlaps section %s loaded at [%V,%V]\n"
-msgstr "%X%P: sektionen %s [%V -> %V] overlapper med sektionen %s [%V -> %V]\n"
+msgstr ""
 
 #: ldlang.c:4726
 msgid "%X%P: region `%s' overflowed by %ld bytes\n"
 msgstr ""
 
 #: ldlang.c:4749
-#, fuzzy
 msgid "%X%P: address 0x%v of %B section `%s' is not within region `%s'\n"
-msgstr "%X%P: adressen 0x%v i %B-sektionen %s er ikke inden for området %s\n"
+msgstr "%X%P: adressen 0x%v i %B-sektionen '%s' er ikke inden for området '%s'\n"
 
 #: ldlang.c:4760
-#, fuzzy
 msgid "%X%P: %B section `%s' will not fit in region `%s'\n"
-msgstr "%X%P: adressen 0x%v i %B-sektionen %s er ikke inden for området %s\n"
+msgstr ""
 
 #: ldlang.c:4816
-#, fuzzy, c-format
+#, c-format
 msgid "%F%S: non constant or forward reference address expression for section %s\n"
-msgstr "%F%S: ikke-konstant adresseudtryk for sektionen %s\n"
+msgstr "%F%S: ikke-konstant eller fremadrettet reference adresseudtryk for sektionen %s\n"
 
 #: ldlang.c:4841
 msgid "%P%X: Internal error on COFF shared library section %s\n"
 msgstr "%P%X: Intern fejl i delt COFF-bibliotek sektion %s\n"
 
 #: ldlang.c:4900
-#, fuzzy
 msgid "%P%F: error: no memory region specified for loadable section `%s'\n"
-msgstr "%P: advarsel: intet hukommelsesområde angivet for sektionen \"%s\"\n"
+msgstr "%P%F: fejl: intet hukommelsesområde angivet for indlæsbar sektion \"%s\"\n"
 
 #: ldlang.c:4905
-#, fuzzy
 msgid "%P: warning: no memory region specified for loadable section `%s'\n"
-msgstr "%P: advarsel: intet hukommelsesområde angivet for sektionen \"%s\"\n"
+msgstr "%P: advarsel: intet hukommelsesområde angivet for indlæsbar sektion \"%s\"\n"
 
 #: ldlang.c:4927
-#, fuzzy
 msgid "%P: warning: changing start of section %s by %lu bytes\n"
-msgstr "%P: advarsel: ændrer start på sektionen %s med %u byte\n"
+msgstr "%P: advarsel: ændrer start på sektion %s med %u byte\n"
 
 #: ldlang.c:5004
-#, fuzzy
 msgid "%P: warning: dot moved backwards before `%s'\n"
-msgstr "%P: advarsel: intet hukommelsesområde angivet for sektionen \"%s\"\n"
+msgstr ""
 
 #: ldlang.c:5170
 msgid "%P%F: can't relax section: %E\n"
@@ -934,19 +905,16 @@ msgid "%P%F: Relocatable linking with relocations from format %s (%B) to format 
 msgstr "%P%F: Relokérbar lænkning med omlænkninger fra formatet %s (%B) til formatet %s (%B) understøttes ikke\n"
 
 #: ldlang.c:5770
-#, fuzzy
 msgid "%P%X: %s architecture of input file `%B' is incompatible with %s output\n"
-msgstr "%P: advarsel: %s-arkitekturen i inddatafilen \"%B\" er inkompatibel med %s-uddata\n"
+msgstr "%P%X: %s-arkitekturen i inddatafilen \"%B\" er inkompatibel med %s-uddata\n"
 
 #: ldlang.c:5792
-#, fuzzy
 msgid "%P%X: failed to merge target specific data of file %B\n"
-msgstr "%E%X: mislykkedes at sammenslå målspecifik data i filen %B\n"
+msgstr "%P%X: mislykkedes at sammenflette målspecifikke data i filen %B\n"
 
 #: ldlang.c:5863
-#, fuzzy
 msgid "%P%F: Could not define common symbol `%T': %E\n"
-msgstr "%B%F: kunne ikke læse symboler: %E\n"
+msgstr ""
 
 #: ldlang.c:5875
 msgid ""
@@ -977,9 +945,8 @@ msgid "%P%F: %s: plugin reported error after all symbols read\n"
 msgstr ""
 
 #: ldlang.c:6717
-#, fuzzy
 msgid "%P%F: multiple STARTUP files\n"
-msgstr "%P%Fflere samtidige STARTUP-filer\n"
+msgstr "%P%F: flere STARTUP-filer\n"
 
 #: ldlang.c:6765
 msgid "%X%P:%S: section has both a load address and a load region\n"
@@ -990,9 +957,8 @@ msgid "%X%P:%S: PHDRS and FILEHDR are not supported when prior PT_LOAD headers l
 msgstr ""
 
 #: ldlang.c:7022
-#, fuzzy
 msgid "%F%P: no sections assigned to phdrs\n"
-msgstr "%X%P: sektionen \"%s\" er tildelt til ikke-eksisterende phvd \"%s\"\n"
+msgstr ""
 
 #: ldlang.c:7060
 msgid "%F%P: bfd_record_phdr failed: %E\n"
@@ -1197,7 +1163,7 @@ msgstr "%P%F: Fejl i BFD-bagende: BFD_RELOC_CTOR understøttes ikke\n"
 #. We found a reloc for the symbol we are looking for.
 #: ldmain.c:1170 ldmain.c:1172 ldmain.c:1174 ldmain.c:1192 ldmain.c:1237
 msgid "warning: "
-msgstr ""
+msgstr "advarsel: "
 
 #: ldmain.c:1273
 msgid "%F%P: bfd_hash_table_init failed: %E\n"
@@ -1208,73 +1174,61 @@ msgid "%F%P: bfd_hash_lookup failed: %E\n"
 msgstr "%F%P: bfd_hash_lookup mislykkedes: %E\n"
 
 #: ldmain.c:1301
-#, fuzzy
 msgid "%X%C: undefined reference to `%T'\n"
-msgstr "%C: udefineret reference til \"%T\"\n"
+msgstr "%X%C: udefineret reference til \"%T\"\n"
 
 #: ldmain.c:1304
-#, fuzzy
 msgid "%C: warning: undefined reference to `%T'\n"
-msgstr "%C: udefineret reference til \"%T\"\n"
+msgstr "%C: advarsel: udefineret reference til \"%T\"\n"
 
 #: ldmain.c:1310
-#, fuzzy
 msgid "%X%D: more undefined references to `%T' follow\n"
-msgstr "%D: flere udefinerede referencer til \"%T\" følger\n"
+msgstr "%C%D: flere udefinerede referencer til \"%T\" følger\n"
 
 #: ldmain.c:1313
-#, fuzzy
 msgid "%D: warning: more undefined references to `%T' follow\n"
-msgstr "%D: flere udefinerede referencer til \"%T\" følger\n"
+msgstr "%D: advarsel: flere udefinerede referencer til \"%T\" følger\n"
 
 #: ldmain.c:1324
-#, fuzzy
 msgid "%X%B: undefined reference to `%T'\n"
 msgstr "%B: udefineret reference til \"%T\"\n"
 
 #: ldmain.c:1327
-#, fuzzy
 msgid "%B: warning: undefined reference to `%T'\n"
-msgstr "%B: udefineret reference til \"%T\"\n"
+msgstr "%B: advarsel: udefineret reference til \"%T\"\n"
 
 #: ldmain.c:1333
-#, fuzzy
 msgid "%X%B: more undefined references to `%T' follow\n"
-msgstr "%B: flere udefinerede referencer til \"%T\" følger\n"
+msgstr "%X%B: flere udefinerede referencer til \"%T\" følger\n"
 
 #: ldmain.c:1336
-#, fuzzy
 msgid "%B: warning: more undefined references to `%T' follow\n"
-msgstr "%B: flere udefinerede referencer til \"%T\" følger\n"
+msgstr "%B: advarsel: flere udefinerede referencer til \"%T\" følger\n"
 
 #: ldmain.c:1375
 msgid " additional relocation overflows omitted from the output\n"
 msgstr ""
 
 #: ldmain.c:1388
-#, fuzzy
 msgid " relocation truncated to fit: %s against undefined symbol `%T'"
-msgstr " relokering trunkeret til at passe til: %s %T"
+msgstr " relokering trunkeret til at passe til: %s til udefineret symbol '%T'"
 
 #: ldmain.c:1393
-#, fuzzy
 msgid " relocation truncated to fit: %s against symbol `%T' defined in %A section in %B"
-msgstr " relokering trunkeret til at passe til: %s %T"
+msgstr ""
 
 #: ldmain.c:1405
-#, fuzzy
 msgid " relocation truncated to fit: %s against `%T'"
-msgstr " relokering trunkeret til at passe til: %s %T"
+msgstr " relokering trunkeret til at passe: '%s' til '%T'"
 
 #: ldmain.c:1422
-#, fuzzy, c-format
+#, c-format
 msgid "%X%C: dangerous relocation: %s\n"
-msgstr "farlig relokering: %s\n"
+msgstr "%X%C: farlig relokering: %s\n"
 
 #: ldmain.c:1437
-#, fuzzy
 msgid "%X%C: reloc refers to symbol `%T' which is not being output\n"
-msgstr " relokering refererer til symbol \"%T\" som ikke skrives ud\n"
+msgstr "%X%C: relokering refererer til symbol \"%T\" som ikke skrives ud\n"
 
 #: ldmisc.c:149
 #, c-format
@@ -1308,25 +1262,25 @@ msgstr "%P%F: rapportér denne fejl\n"
 
 #. Output for noisy == 2 is intended to follow the GNU standards.
 #: ldver.c:39
-#, fuzzy, c-format
+#, c-format
 msgid "GNU ld %s\n"
-msgstr "GNU ld version %s\n"
+msgstr "GNU ld %s\n"
 
 #: ldver.c:43
-#, fuzzy, c-format
+#, c-format
 msgid "Copyright 2010 Free Software Foundation, Inc.\n"
-msgstr "Copyright 2002 Free Software Foundation, Inc.\n"
+msgstr "Copyright 2010 Free Software Foundation, Inc.\n"
 
 #: ldver.c:44
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "This program is free software; you may redistribute it under the terms of\n"
 "the GNU General Public License version 3 or (at your option) a later version.\n"
 "This program has absolutely no warranty.\n"
 msgstr ""
 "Dette program er frit programmel. Du kan videredistribuere det under\n"
-"betingelserne i GNU General Public License. Dette program har ingen som\n"
-"helst garanti.\n"
+"betingelserne i GNU General Public License version 3 eller (hvis du ønsker det)\n"
+"en senere version. Dette program har ingen som helst garanti.\n"
 
 #: ldver.c:54
 #, c-format
@@ -1338,9 +1292,8 @@ msgid "%P%F: bfd_new_link_order failed\n"
 msgstr "%P%F: bfd_new_link_order mislykkedes\n"
 
 #: ldwrite.c:365
-#, fuzzy
 msgid "%F%P: cannot create split section name for %s\n"
-msgstr "%P%F: kan ikke oprette hashtabel over lænker: %E\n"
+msgstr ""
 
 #: ldwrite.c:377
 msgid "%F%P: clone section failed: %E\n"
@@ -1497,9 +1450,8 @@ msgid "Do not page align data, do not make text readonly"
 msgstr "Justér ikke data efter lige sider, gør ikke teksten kun læsbar"
 
 #: lexsup.c:275
-#, fuzzy
 msgid "Page align data, make text readonly"
-msgstr "Justér ikke data efter lige sider, gør ikke teksten kun læsbar"
+msgstr "Justér data efter lige sider, gør ikke teksten kun læsbar"
 
 #: lexsup.c:278
 msgid "Set output file name"
@@ -1518,9 +1470,8 @@ msgid "Load named plugin"
 msgstr ""
 
 #: lexsup.c:285
-#, fuzzy
 msgid "ARG"
-msgstr "MÅL"
+msgstr "ARG"
 
 #: lexsup.c:285
 msgid "Send arg to last-loaded plugin"
@@ -1531,9 +1482,8 @@ msgid "Ignored for SVR4 compatibility"
 msgstr "Ignoreret for kompatibilitet med SVR4"
 
 #: lexsup.c:292
-#, fuzzy
 msgid "Generate relocatable output"
-msgstr "Generér relokérbar uddata"
+msgstr "Generér relokérbart uddata"
 
 #: lexsup.c:296
 msgid "Just link symbols (if directory, same as --rpath)"
@@ -1548,14 +1498,12 @@ msgid "Strip debugging symbols"
 msgstr "Fjern fejlsøgningssymboler"
 
 #: lexsup.c:303
-#, fuzzy
 msgid "Strip symbols in discarded sections"
-msgstr "Tillad udefinerede symboler i delte objekter"
+msgstr ""
 
 #: lexsup.c:305
-#, fuzzy
 msgid "Do not strip symbols in discarded sections"
-msgstr "Tillad udefinerede symboler i delte objekter"
+msgstr ""
 
 #: lexsup.c:307
 msgid "Trace file opens"
@@ -1566,9 +1514,8 @@ msgid "Read linker script"
 msgstr "Læs lænkerskript"
 
 #: lexsup.c:311
-#, fuzzy
 msgid "Read default linker script"
-msgstr "Læs lænkerskript"
+msgstr "Læs forvalgt lænkerskript"
 
 #: lexsup.c:315 lexsup.c:333 lexsup.c:418 lexsup.c:439 lexsup.c:538
 #: lexsup.c:566 lexsup.c:605
@@ -1666,9 +1613,8 @@ msgid "Bind global references locally"
 msgstr "Bind globale referencer lokalt"
 
 #: lexsup.c:386
-#, fuzzy
 msgid "Bind global function references locally"
-msgstr "Bind globale referencer lokalt"
+msgstr "Bind globale funktionsreferencer lokalt"
 
 #: lexsup.c:388
 msgid "Check section addresses for overlaps (default)"
@@ -1715,9 +1661,8 @@ msgid "Treat warnings as errors"
 msgstr "Behandl advarsler som fejl"
 
 #: lexsup.c:415
-#, fuzzy
 msgid "Do not treat warnings as errors (default)"
-msgstr "Behandl advarsler som fejl"
+msgstr "Behandl ikke advarsler som fejl (forvalgt)"
 
 #: lexsup.c:418
 msgid "Call SYMBOL at unload-time"
@@ -1736,14 +1681,12 @@ msgid "Don't remove unused sections (default)"
 msgstr "Fjern ikke ubrugte sektioner (standard)"
 
 #: lexsup.c:428
-#, fuzzy
 msgid "List removed unused sections on stderr"
-msgstr "Fjern ubrugte sektioner (på visse mål)"
+msgstr ""
 
 #: lexsup.c:431
-#, fuzzy
 msgid "Do not list removed unused sections"
-msgstr "Fjern ikke ubrugte sektioner (standard)"
+msgstr ""
 
 #: lexsup.c:434
 msgid "Set default hash table size close to <NUMBER>"
@@ -1778,22 +1721,20 @@ msgid "Do not allow unresolved references in object files"
 msgstr ""
 
 #: lexsup.c:452
-#, fuzzy
 msgid "Allow unresolved references in shared libaries"
-msgstr "Tillad udefinerede symboler i delte objekter"
+msgstr "Tillad uløste referencer i delte biblioteker"
 
 #: lexsup.c:456
 msgid "Do not allow unresolved references in shared libs"
-msgstr ""
+msgstr "Tillad ikke uløste referencer i delte biblioteker"
 
 #: lexsup.c:460
 msgid "Allow multiple definitions"
 msgstr "Tillad flere definitioner"
 
 #: lexsup.c:462
-#, fuzzy
 msgid "Disallow undefined version"
-msgstr "Tillad ingen udefinerede symboler"
+msgstr "Forbyd udefineret version"
 
 #: lexsup.c:464
 msgid "Create default symbol version"
@@ -1821,13 +1762,12 @@ msgid "Create an output file even if errors occur"
 msgstr "Opret en uddatafil også hvis fejl forekommer"
 
 #: lexsup.c:483
-#, fuzzy
 msgid ""
 "Only use library directories specified on\n"
 "                                the command line"
 msgstr ""
 "Brug kun bibliotekskataloger som angives\n"
-"\t\t\t\tpå kommandolinjen"
+"                                på kommandolinjen"
 
 #: lexsup.c:487
 msgid "Specify target of output file"
@@ -1842,9 +1782,8 @@ msgid "Reduce memory overheads, possibly taking much longer"
 msgstr ""
 
 #: lexsup.c:496
-#, fuzzy
 msgid "Reduce code size by using target specific optimizations"
-msgstr "Vis målspecifikke flag"
+msgstr ""
 
 #: lexsup.c:498
 msgid "Do not use relaxation techniques to reduce code size"
@@ -1875,9 +1814,8 @@ msgid "[=ascending|descending]"
 msgstr ""
 
 #: lexsup.c:517
-#, fuzzy
 msgid "Sort common symbols by alignment [in specified order]"
-msgstr "Sortér fælles symboler efter størrelse"
+msgstr ""
 
 #: lexsup.c:522
 msgid "name|alignment"
@@ -1948,9 +1886,8 @@ msgid "Set address of .text section"
 msgstr "Sæt adresse på .text-sektion"
 
 #: lexsup.c:551
-#, fuzzy
 msgid "Set address of text segment"
-msgstr "Sæt adresse på .text-sektion"
+msgstr "Sæt adresse på .text-segment"
 
 #: lexsup.c:554
 msgid ""
@@ -1968,13 +1905,12 @@ msgid "Read version information script"
 msgstr "Læs skript med versionsinformation"
 
 #: lexsup.c:566
-#, fuzzy
 msgid ""
 "Take export symbols list from .exports, using\n"
 "                                SYMBOL as the version."
 msgstr ""
 "Tag liste med eksportsymboler fra .exports og\n"
-"\t\t\t\tbrug SYMBOL som version."
+"                                brug SYMBOL som version."
 
 #: lexsup.c:570
 msgid "Add data symbols to dynamic list"
@@ -2061,19 +1997,16 @@ msgid "%P%F: invalid number `%s'\n"
 msgstr "%P%F: ugyldigt tal \"%s\"\n"
 
 #: lexsup.c:996
-#, fuzzy
 msgid "%P%F: bad --unresolved-symbols option: %s\n"
-msgstr "%P%F: ukendt -assert-flag \"%s\"\n"
+msgstr ""
 
 #: lexsup.c:1059
-#, fuzzy
 msgid "%P%F: bad -plugin option\n"
-msgstr "%P%F: ukendt -rpath-flag\n"
+msgstr ""
 
 #: lexsup.c:1063
-#, fuzzy
 msgid "%P%F: bad -plugin-opt option\n"
-msgstr "%P%F: ukendt -rpath-flag\n"
+msgstr ""
 
 #. This can happen if the user put "-rpath,a" on the command
 #. line.  (Or something similar.  The comma is important).
@@ -2092,9 +2025,8 @@ msgid "%P%F: -shared not supported\n"
 msgstr "%P%F: -shared understøttes ikke\n"
 
 #: lexsup.c:1203
-#, fuzzy
 msgid "%P%F: -pie not supported\n"
-msgstr "%P%F: -shared understøttes ikke\n"
+msgstr "%P%F: -pie understøttes ikke\n"
 
 #: lexsup.c:1211
 msgid "descending"
@@ -2105,12 +2037,10 @@ msgid "ascending"
 msgstr ""
 
 #: lexsup.c:1216
-#, fuzzy
 msgid "%P%F: invalid common section sorting option: %s\n"
-msgstr "%P%F: ugyldigt argument til flaget \"--section-start\"\n"
+msgstr ""
 
 #: lexsup.c:1220
-#, fuzzy
 msgid "name"
 msgstr "Navn"
 
@@ -2119,9 +2049,8 @@ msgid "alignment"
 msgstr ""
 
 #: lexsup.c:1225
-#, fuzzy
 msgid "%P%F: invalid section sorting option: %s\n"
-msgstr "%P%F: ukendt -assert-flag \"%s\"\n"
+msgstr ""
 
 #: lexsup.c:1259
 msgid "%P%F: invalid argument to option \"--section-start\"\n"
@@ -2158,9 +2087,9 @@ msgid "Options:\n"
 msgstr "Alternativer:\n"
 
 #: lexsup.c:1707
-#, fuzzy, c-format
+#, c-format
 msgid "  @FILE"
-msgstr "FIL"
+msgstr "@FIL"
 
 #: lexsup.c:1710
 #, c-format
@@ -2201,9 +2130,9 @@ msgid "%XUnsupported PEI architecture: %s\n"
 msgstr "%XPEI-arkitekturen understøttes ikke: %s\n"
 
 #: pe-dll.c:788
-#, fuzzy, c-format
+#, c-format
 msgid "%XCannot export %s: invalid export name\n"
-msgstr "%XKan ikke eksportere %s: symbol er ikke defineret\n"
+msgstr "%XKan ikke eksportere %s: ugyldigt eksportnavn\n"
 
 #: pe-dll.c:844
 #, c-format
@@ -2297,83 +2226,9 @@ msgid "%P%X: %s: hash table failure adding symbol %s"
 msgstr ""
 
 #: plugin.c:833
-#, fuzzy
 msgid "%P%X: %s: can't find IR symbol '%s'"
-msgstr "%P: advarsel: kan ikke finde tommelstartsymbol %s\n"
+msgstr ""
 
 #: plugin.c:836
 msgid "%P%x: %s: bad IR symbol type %d"
 msgstr ""
-
-#~ msgid "  --support-old-code   Support interworking with old code\n"
-#~ msgstr "  --support-old-code   Understøt samvirke med gammel kode\n"
-
-#~ msgid "%B%F: could not read symbols; %E\n"
-#~ msgstr "%B%F: kunne ikke læse symboler; %E\n"
-
-#~ msgid "%F%P: %s uses undefined section %s\n"
-#~ msgstr "%F%P: %s bruger udefineret sektion %s\n"
-
-#~ msgid "%F%P: %s forward reference of section %s\n"
-#~ msgstr "%F%P: %s fremadreference af sektionen %s\n"
-
-#~ msgid "%F%S non constant expression for %s\n"
-#~ msgstr "%F%S ikke-konstant udtryk for %s\n"
-
-#~ msgid "%F%P: cannot open %s for %s: %E\n"
-#~ msgstr "%F%P: kan ikke åbne %s for %s: %E\n"
-
-#~ msgid "%F%P: cannot open %s: %E\n"
-#~ msgstr "%F%P: kan ikke åbne %s: %E\n"
-
-#~ msgid "%P%F: unknown architecture: %s\n"
-#~ msgstr "%P%F: ukendt arkitektur: %s\n"
-
-#~ msgid "%P%F: target architecture respecified\n"
-#~ msgstr "%P%F: målarkitekturen specificeredes igen\n"
-
-#~ msgid "%P: %B: warning: ignoring duplicate section `%s'\n"
-#~ msgstr "%P: %B: advarsel: ignorerer dublet-sektion \"%s\"\n"
-
-#~ msgid "%P: %B: warning: ignoring duplicate `%s' section symbol `%s'\n"
-#~ msgstr "%P: %B: advarsel: ignorerer dobbelt \"%s\"-sektionssymbol \"%s\"\n"
-
-#~ msgid "%P: %B: warning: duplicate section `%s' has different size\n"
-#~ msgstr "%P: %B: advarsel: dublet-sektion \"%s\" har anden størrelse\n"
-
-#~ msgid "%X%P: region %s is full (%B section %s)\n"
-#~ msgstr "%X%P: området %s er fuldt (%B-sektion %s)\n"
-
-#~ msgid "%P: no [COMMON] command, defaulting to .bss\n"
-#~ msgstr "%P: ingen [COMMON]-kommando, bruger standardalternativet .bss\n"
-
-#~ msgid "%P%F: -r and --mpc860c0 may not be used together\n"
-#~ msgstr "%P%F: -r og --mpc860c0 kan ikke bruges sammen\n"
-
-#~ msgid "%P%F: --relax and -r may not be used together\n"
-#~ msgstr "%P%F: --relax og -r kan ikke bruges sammen\n"
-
-#~ msgid "%P%X: generated"
-#~ msgstr "%P%X: genereret"
-
-#~ msgid "%B%F: could not read symbols\n"
-#~ msgstr "%B%F: kunne ikke læse symboler\n"
-
-#~ msgid "Relax branches on certain targets"
-#~ msgstr "Forenkl greninger på visse mål"
-
-#~ msgid "[=WORDS]"
-#~ msgstr "[=ORD]"
-
-#~ msgid ""
-#~ "Modify problematic branches in last WORDS (1-10,\n"
-#~ "\t\t\t\tdefault 5) words of a page"
-#~ msgstr ""
-#~ "Ændr problematiske greninger i sidste ORD (1-10,\n"
-#~ "\t\t\t\tstandardværdi 5) ord på en side"
-
-#~ msgid "%P%F: may not nest groups (--help for usage)\n"
-#~ msgstr "%P%F: må ikke neste grupper (--help for brug)\n"
-
-#~ msgid "%P%F: invalid argument to option \"mpc860c0\"\n"
-#~ msgstr "%P%F: ugyldigt argument til flaget \"mpc860c0\"\n"

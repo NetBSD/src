@@ -1,5 +1,5 @@
 /* te-vms.c -- Utilities for VMS.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
    Written by Douglas B Rupp <rupp@gnat.com>
 
@@ -20,7 +20,7 @@
 #include "as.h"
 #include "te-vms.h"
 
-/* The purspose of the two alternate versions below is to have one that
+/* The purpose of the two alternate versions below is to have one that
    works for native VMS and one that works on an NFS mounted filesystem
    (Unix Server/VMS client).  The main issue being to generate the special
    VMS file timestamps for the debug info.  */

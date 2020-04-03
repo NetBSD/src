@@ -1,5 +1,5 @@
 /* Instruction printing code for the DLX Microprocessor
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2018 Free Software Foundation, Inc.
    Contributed by Kuang Hwa Lin.  Written by Kuang Hwa Lin, 03/2002.
 
    This file is part of the GNU opcodes library.
@@ -20,7 +20,7 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/dlx.h"
 
 #define R_ERROR     0x1

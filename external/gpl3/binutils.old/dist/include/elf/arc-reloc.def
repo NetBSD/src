@@ -1,5 +1,5 @@
 /* ARC relocation types
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -69,35 +69,35 @@ ARC_RELOC_HOWTO(ARC_N8, 8, \
                 8, \
                 replace_bits8, \
                 bitfield, \
-                ( S - A ))
+                ( A - S ))
 
 ARC_RELOC_HOWTO(ARC_N16, 9, \
                 1, \
                 16, \
                 replace_bits16, \
                 bitfield, \
-                ( S - A ))
+                ( A - S ))
 
 ARC_RELOC_HOWTO(ARC_N24, 10, \
                 2, \
                 24, \
                 replace_bits24, \
                 bitfield, \
-                ( S - A ))
+                ( A - S ))
 
 ARC_RELOC_HOWTO(ARC_N32, 11, \
                 2, \
                 32, \
                 replace_word32, \
                 bitfield, \
-                ( S - A ))
+                ( A - S ))
 
 ARC_RELOC_HOWTO(ARC_SDA, 12, \
                 2, \
                 9, \
                 replace_disp9, \
                 bitfield, \
-                ( S + A ))
+                ( ME ( ( ( S + A ) - _SDA_BASE_ ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SECTOFF, 13, \
                 2, \
@@ -139,7 +139,7 @@ ARC_RELOC_HOWTO(ARC_SDA32, 18, \
                 32, \
                 replace_word32, \
                 signed, \
-                ( ME ( ( ( S + A ) - _SDA_BASE_ ) ) ))
+                ( ( ( S + A ) - _SDA_BASE_ ) ))
 
 ARC_RELOC_HOWTO(ARC_SDA_LDST, 19, \
                 2, \
@@ -167,28 +167,28 @@ ARC_RELOC_HOWTO(ARC_SDA16_LD, 22, \
                 9, \
                 replace_disp9s, \
                 signed, \
-                ( ( ( S + A ) - _SDA_BASE_ ) ))
+                ( ( S + A ) - _SDA_BASE_ ))
 
 ARC_RELOC_HOWTO(ARC_SDA16_LD1, 23, \
                 1, \
                 9, \
                 replace_disp9s, \
                 signed, \
-                ( ( ( ( S + A ) - _SDA_BASE_ ) >> 1 ) ))
+                ( ( ( S + A ) - _SDA_BASE_ ) >> 1 ))
 
 ARC_RELOC_HOWTO(ARC_SDA16_LD2, 24, \
                 1, \
                 9, \
                 replace_disp9s, \
                 signed, \
-                ( ( ( ( S + A ) - _SDA_BASE_ ) >> 2 ) ))
+                ( ( ( S + A ) - _SDA_BASE_ ) >> 2 ))
 
 ARC_RELOC_HOWTO(ARC_S13_PCREL, 25, \
                 1, \
                 11, \
                 replace_disp13s, \
                 signed, \
-                ( ( ( ( S + A ) - P ) >> 2 ) ))
+                ( ( ( S + A ) - P ) >> 2 ))
 
 ARC_RELOC_HOWTO(ARC_W, 26, \
                 2, \
@@ -216,7 +216,7 @@ ARC_RELOC_HOWTO(ARC_N32_ME, 28, \
                 32, \
                 replace_word32, \
                 bitfield, \
-                ( ME ( ( S - A ) ) ))
+                ( ME ( ( A - S ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SECTOFF_ME, 29, \
                 2, \
@@ -244,42 +244,42 @@ ARC_RELOC_HOWTO(AC_SECTOFF_U8, 35, \
                 9, \
                 replace_disp9ls, \
                 bitfield, \
-                ( ( S + A ) - SECTSTART ))
+                ( ME ( ( ( S + A ) - SECTSTART ) ) ))
 
 ARC_RELOC_HOWTO(AC_SECTOFF_U8_1, 36, \
                 2, \
                 9, \
                 replace_disp9ls, \
                 bitfield, \
-                ( ( ( S + A ) - SECTSTART ) >> 1 ))
+                ( ME ( ( ( ( S + A ) - SECTSTART ) >> 1 ) ) ))
 
 ARC_RELOC_HOWTO(AC_SECTOFF_U8_2, 37, \
                 2, \
                 9, \
                 replace_disp9ls, \
                 bitfield, \
-                ( ( ( S + A ) - SECTSTART ) >> 2 ))
+                ( ME ( ( ( ( S + A ) - SECTSTART ) >> 2 ) ) ))
 
-ARC_RELOC_HOWTO(AC_SECTFOFF_S9, 38, \
+ARC_RELOC_HOWTO(AC_SECTOFF_S9, 38, \
                 2, \
                 9, \
                 replace_disp9ls, \
                 bitfield, \
-                ( ( S + A ) - SECTSTART ))
+                ( ME ( ( ( ( S + A ) - SECTSTART ) - 256 ) ) ))
 
-ARC_RELOC_HOWTO(AC_SECTFOFF_S9_1, 39, \
+ARC_RELOC_HOWTO(AC_SECTOFF_S9_1, 39, \
                 2, \
                 9, \
                 replace_disp9ls, \
                 bitfield, \
-                ( ( ( S + A ) - SECTSTART ) >> 1 ))
+                ( ME ( ( ( ( ( S + A ) - SECTSTART ) - 256 ) >> 1 ) ) ))
 
-ARC_RELOC_HOWTO(AC_SECTFOFF_S9_2, 40, \
+ARC_RELOC_HOWTO(AC_SECTOFF_S9_2, 40, \
                 2, \
                 9, \
                 replace_disp9ls, \
                 bitfield, \
-                ( ( ( S + A ) - SECTSTART ) >> 2 ))
+                ( ME ( ( ( ( ( S + A ) - SECTSTART ) - 256 ) >> 2 ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SECTOFF_ME_1, 41, \
                 2, \
@@ -308,6 +308,13 @@ ARC_RELOC_HOWTO(ARC_SECTOFF_2, 44, \
                 replace_word32, \
                 bitfield, \
                 ( ( ( S - SECTSTART ) + A ) >> 2 ))
+
+ARC_RELOC_HOWTO(ARC_SDA_12, 45, \
+                2, \
+                12, \
+                replace_disp12s, \
+                signed, \
+                ( ME ( ( ( S + A ) - _SDA_BASE_ ) ) ))
 
 ARC_RELOC_HOWTO(ARC_SDA16_ST2, 48, \
                 1, \
@@ -407,6 +414,13 @@ ARC_RELOC_HOWTO(ARC_S25H_PCREL_PLT, 61, \
                 signed, \
                 ( ME ( ( ( ( L + A ) - P ) >> 1 ) ) ))
 
+ARC_RELOC_HOWTO(ARC_JLI_SECTOFF, 63, \
+                1, \
+                10, \
+                replace_jli, \
+                bitfield, \
+                ( ( S - JLI ) >> 2))
+
 ARC_RELOC_HOWTO(ARC_TLS_DTPMOD, 66, \
                 2, \
                 32, \
@@ -454,7 +468,7 @@ ARC_RELOC_HOWTO(ARC_TLS_DTPOFF, 67, \
                 32, \
                 replace_word32, \
                 dont, \
-                ( ME ( ( S - TLS_REL ) ) ))
+                ( ME ( S - SECTSTART ) + A ))
 
 ARC_RELOC_HOWTO(ARC_TLS_DTPOFF_S9, 73, \
                 2, \

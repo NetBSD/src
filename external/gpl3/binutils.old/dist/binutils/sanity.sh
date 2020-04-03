@@ -2,7 +2,7 @@
 ### quick sanity test for the binutils.
 ###
 # This file was written K. Richard Pixley.
-# Copyright (C) 2007-2016 Free Software Foundation, Inc.
+# Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
 # This program is part of GNU Binutils.
 

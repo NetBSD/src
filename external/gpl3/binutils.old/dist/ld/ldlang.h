@@ -1,5 +1,5 @@
 /* ldlang.h - linker command language support
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -307,10 +307,14 @@ typedef struct lang_input_statement_struct
   struct flag_info *section_flag_list;
 
   /* Point to the next file - whatever it is, wanders up and down
-     archives */
+     archive elements.  If this input_statement is for an archive, it
+     won't be on file_chain (which uses this list pointer), but if
+     any elements have been extracted from the archive, it will point
+     to the input_statement for the last such element.  */
   union lang_statement_union *next;
 
-  /* Point to the next file, but skips archive contents.  */
+  /* Point to the next file, but skips archive contents.  Used by
+     input_file_chain.  */
   union lang_statement_union *next_real_file;
 
   const char *target;
@@ -372,6 +376,7 @@ struct lang_wild_statement_struct
   struct wildcard_list *section_list;
   bfd_boolean keep_sections;
   lang_statement_list_type children;
+  struct name_list *exclude_name_list;
 
   walk_wild_section_handler_t walk_wild_section_handler;
   struct wildcard_list *handler_data[4];
@@ -581,9 +586,9 @@ extern asection *section_for_dot
 
 #define LANG_FOR_EACH_INPUT_STATEMENT(statement)			\
   lang_input_statement_type *statement;					\
-  for (statement = (lang_input_statement_type *) file_chain.head;	\
-       statement != (lang_input_statement_type *) NULL;			\
-       statement = (lang_input_statement_type *) statement->next)	\
+  for (statement = &file_chain.head->input_statement;			\
+       statement != NULL;						\
+       statement = &statement->next->input_statement)
 
 #define lang_output_section_find(NAME) \
   lang_output_section_statement_lookup (NAME, 0, FALSE)

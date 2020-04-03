@@ -1,6 +1,6 @@
 // reloc.cc -- relocate input files for gold.
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -871,7 +871,30 @@ Sized_relobj_file<size, big_endian>::do_relocate_sections(
     Output_file* of,
     Views* pviews)
 {
-  unsigned int shnum = this->shnum();
+  this->relocate_section_range(symtab, layout, pshdrs, of, pviews,
+			       1, this->shnum() - 1);
+}
+
+// Relocate section data for the range of sections START_SHNDX through
+// END_SHNDX.
+
+template<int size, bool big_endian>
+void
+Sized_relobj_file<size, big_endian>::relocate_section_range(
+    const Symbol_table* symtab,
+    const Layout* layout,
+    const unsigned char* pshdrs,
+    Output_file* of,
+    Views* pviews,
+    unsigned int start_shndx,
+    unsigned int end_shndx)
+{
+  gold_assert(start_shndx >= 1);
+  gold_assert(end_shndx < this->shnum());
+
+  if (end_shndx < start_shndx)
+    return;
+
   Sized_target<size, big_endian>* target =
     parameters->sized_target<size, big_endian>();
 
@@ -883,8 +906,8 @@ Sized_relobj_file<size, big_endian>::do_relocate_sections(
   relinfo.layout = layout;
   relinfo.object = this;
 
-  const unsigned char* p = pshdrs + This::shdr_size;
-  for (unsigned int i = 1; i < shnum; ++i, p += This::shdr_size)
+  const unsigned char* p = pshdrs + start_shndx * This::shdr_size;
+  for (unsigned int i = start_shndx; i <= end_shndx; ++i, p += This::shdr_size)
     {
       typename This::Shdr shdr(p);
 
@@ -1718,6 +1741,17 @@ Sized_relobj_file<32, false>::do_relocate_sections(
     Views* pviews);
 
 template
+void
+Sized_relobj_file<32, false>::relocate_section_range(
+    const Symbol_table* symtab,
+    const Layout* layout,
+    const unsigned char* pshdrs,
+    Output_file* of,
+    Views* pviews,
+    unsigned int start_shndx,
+    unsigned int end_shndx);
+
+template
 unsigned char*
 Sized_relobj_file<32, false>::do_get_output_view(
     unsigned int shndx,
@@ -1733,6 +1767,17 @@ Sized_relobj_file<32, true>::do_relocate_sections(
     const unsigned char* pshdrs,
     Output_file* of,
     Views* pviews);
+
+template
+void
+Sized_relobj_file<32, true>::relocate_section_range(
+    const Symbol_table* symtab,
+    const Layout* layout,
+    const unsigned char* pshdrs,
+    Output_file* of,
+    Views* pviews,
+    unsigned int start_shndx,
+    unsigned int end_shndx);
 
 template
 unsigned char*
@@ -1752,6 +1797,17 @@ Sized_relobj_file<64, false>::do_relocate_sections(
     Views* pviews);
 
 template
+void
+Sized_relobj_file<64, false>::relocate_section_range(
+    const Symbol_table* symtab,
+    const Layout* layout,
+    const unsigned char* pshdrs,
+    Output_file* of,
+    Views* pviews,
+    unsigned int start_shndx,
+    unsigned int end_shndx);
+
+template
 unsigned char*
 Sized_relobj_file<64, false>::do_get_output_view(
     unsigned int shndx,
@@ -1767,6 +1823,17 @@ Sized_relobj_file<64, true>::do_relocate_sections(
     const unsigned char* pshdrs,
     Output_file* of,
     Views* pviews);
+
+template
+void
+Sized_relobj_file<64, true>::relocate_section_range(
+    const Symbol_table* symtab,
+    const Layout* layout,
+    const unsigned char* pshdrs,
+    Output_file* of,
+    Views* pviews,
+    unsigned int start_shndx,
+    unsigned int end_shndx);
 
 template
 unsigned char*

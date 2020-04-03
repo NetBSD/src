@@ -1,5 +1,5 @@
 /* -*- c -*- */
-/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2018 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -26,6 +26,7 @@
 #include <string.h>
 #include "ansidecl.h"
 #include "opcode/rx.h"
+#include "libiberty.h"
 
 #define RX_OPCODE_BIG_ENDIAN 0
 
@@ -44,7 +45,7 @@ static int trace = 0;
 #define LSIZE 2
 
 /* These are for when the upper bits are "don't care" or "undefined".  */
-static int bwl[] =
+static int bwl[4] =
 {
   RX_Byte,
   RX_Word,
@@ -52,7 +53,7 @@ static int bwl[] =
   RX_Bad_Size /* Bogus instructions can have a size field set to 3.  */
 };
 
-static int sbwl[] =
+static int sbwl[4] =
 {
   RX_SByte,
   RX_SWord,
@@ -60,7 +61,7 @@ static int sbwl[] =
   RX_Bad_Size /* Bogus instructions can have a size field set to 3.  */
 };
 
-static int ubw[] =
+static int ubw[4] =
 {
   RX_UByte,
   RX_UWord,
@@ -68,7 +69,7 @@ static int ubw[] =
   RX_Bad_Size /* Bogus instructions can have a size field set to 3.  */
 };
 
-static int memex[] =
+static int memex[4] =
 {
   RX_SByte,
   RX_SWord,
@@ -88,6 +89,9 @@ static int SCALE[] = { 1, 2, 4, 0 };
 /* This is for the prefix size enum.  */
 static int PSCALE[] = { 4, 1, 1, 1, 2, 2, 2, 3, 4 };
 
+#define GET_SCALE(_indx)  ((unsigned)(_indx) < ARRAY_SIZE (SCALE) ? SCALE[(_indx)] : 0)
+#define GET_PSCALE(_indx) ((unsigned)(_indx) < ARRAY_SIZE (PSCALE) ? PSCALE[(_indx)] : 0)
+
 static int flagmap[] = {0, 1, 2, 3, 0, 0, 0, 0,
 		       16, 17, 0, 0, 0, 0, 0, 0 };
 
@@ -106,7 +110,7 @@ static int dsp3map[] = { 8, 9, 10, 3, 4, 5, 6, 7 };
 #define DC(c)       OP (0, RX_Operand_Immediate, 0, c)
 #define DR(r)       OP (0, RX_Operand_Register,  r, 0)
 #define DI(r,a)     OP (0, RX_Operand_Indirect,  r, a)
-#define DIs(r,a,s)  OP (0, RX_Operand_Indirect,  r, (a) * SCALE[s])
+#define DIs(r,a,s)  OP (0, RX_Operand_Indirect,  r, (a) * GET_SCALE (s))
 #define DD(t,r,s)   rx_disp (0, t, r, bwl[s], ld);
 #define DF(r)       OP (0, RX_Operand_Flag,  flagmap[r], 0)
 
@@ -114,7 +118,7 @@ static int dsp3map[] = { 8, 9, 10, 3, 4, 5, 6, 7 };
 #define SR(r)       OP (1, RX_Operand_Register,  r, 0)
 #define SRR(r)      OP (1, RX_Operand_TwoReg,  r, 0)
 #define SI(r,a)     OP (1, RX_Operand_Indirect,  r, a)
-#define SIs(r,a,s)  OP (1, RX_Operand_Indirect,  r, (a) * SCALE[s])
+#define SIs(r,a,s)  OP (1, RX_Operand_Indirect,  r, (a) * GET_SCALE (s))
 #define SD(t,r,s)   rx_disp (1, t, r, bwl[s], ld);
 #define SP(t,r)     rx_disp (1, t, r, (t!=3) ? RX_UByte : RX_Long, ld); P(t, 1);
 #define SPm(t,r,m)  rx_disp (1, t, r, memex[m], ld); rx->op[1].size = memex[m];
@@ -123,7 +127,7 @@ static int dsp3map[] = { 8, 9, 10, 3, 4, 5, 6, 7 };
 #define S2C(i)      OP (2, RX_Operand_Immediate, 0, i)
 #define S2R(r)      OP (2, RX_Operand_Register,  r, 0)
 #define S2I(r,a)    OP (2, RX_Operand_Indirect,  r, a)
-#define S2Is(r,a,s) OP (2, RX_Operand_Indirect,  r, (a) * SCALE[s])
+#define S2Is(r,a,s) OP (2, RX_Operand_Indirect,  r, (a) * GET_SCALE (s))
 #define S2D(t,r,s)  rx_disp (2, t, r, bwl[s], ld);
 #define S2P(t,r)    rx_disp (2, t, r, (t!=3) ? RX_UByte : RX_Long, ld); P(t, 2);
 #define S2Pm(t,r,m) rx_disp (2, t, r, memex[m], ld); rx->op[2].size = memex[m];
@@ -210,7 +214,7 @@ immediate (int sfield, int ex, LocalData * ld)
 }
 
 static void
-rx_disp (int n, int type, int reg, int size, LocalData * ld)
+rx_disp (int n, int type, int reg, unsigned int size, LocalData * ld)
 {
   int disp;
 
@@ -227,7 +231,7 @@ rx_disp (int n, int type, int reg, int size, LocalData * ld)
     case 1:
       ld->rx->op[n].type = RX_Operand_Indirect;
       disp = GETBYTE ();
-      ld->rx->op[n].addend = disp * PSCALE[size];
+      ld->rx->op[n].addend = disp * GET_PSCALE (size);
       break;
     case 2:
       ld->rx->op[n].type = RX_Operand_Indirect;
@@ -237,7 +241,7 @@ rx_disp (int n, int type, int reg, int size, LocalData * ld)
 #else
       disp = disp + GETBYTE () * 256;
 #endif
-      ld->rx->op[n].addend = disp * PSCALE[size];
+      ld->rx->op[n].addend = disp * GET_PSCALE (size);
       break;
     default:
       abort ();
