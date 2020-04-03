@@ -1,5 +1,5 @@
 /* tc-d30v.c -- Assembler code for the Mitsubishi D30V
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -121,7 +121,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 static struct hash_control *d30v_hash;
 
 /* Do a binary search of the pre_defined_registers array to see if
-   NAME is a valid regiter name.  Return the register number from the
+   NAME is a valid register name.  Return the register number from the
    array on success, or -1 on failure.  */
 
 static int
@@ -239,8 +239,8 @@ md_show_usage (FILE *stream)
   fprintf (stream, _("\nD30V options:\n\
 -O                      Make adjacent short instructions parallel if possible.\n\
 -n                      Warn about all NOPs inserted by the assembler.\n\
--N			Warn about NOPs inserted after word multiplies.\n\
--c                      Warn about symbols whoes names match register names.\n\
+-N                      Warn about NOPs inserted after word multiplies.\n\
+-c                      Warn about symbols whose names match register names.\n\
 -C                      Opposite of -C.  -c is the default.\n"));
 }
 
@@ -998,7 +998,7 @@ write_2_short (struct d30v_insn *opcode1,
 	}
       else if (prev_left_kills_right_p)
 	{
-	  /* The left instruction kils the right slot, so we
+	  /* The left instruction kills the right slot, so we
 	     must leave it empty.  */
 	  write_1_short (opcode1, insn1, fx->next, FALSE);
 	  return 1;

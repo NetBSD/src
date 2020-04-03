@@ -90,9 +90,9 @@ To detect calling these with less than a @code{bfd_vma}, use
 
 #define bfd_put(bits, abfd, val, ptr)                  \
   ((bits) == 8 ? bfd_put_8  (abfd, val, ptr)           \
-   : (bits) == 16 ? bfd_put_16 (abfd, val, ptr)                \
-   : (bits) == 32 ? bfd_put_32 (abfd, val, ptr)                \
-   : (bits) == 64 ? bfd_put_64 (abfd, val, ptr)                \
+   : (bits) == 16 ? bfd_put_16 (abfd, val, ptr)        \
+   : (bits) == 32 ? bfd_put_32 (abfd, val, ptr)        \
+   : (bits) == 64 ? bfd_put_64 (abfd, val, ptr)        \
    : (abort (), (void) 0))
 
 @end example

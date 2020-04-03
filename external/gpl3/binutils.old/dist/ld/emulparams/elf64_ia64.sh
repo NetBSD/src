@@ -31,8 +31,8 @@ test -n "$CREATE_PIE" && OTHER_READWRITE_SECTIONS="
 test -n "$CREATE_PIE" && OTHER_GOT_RELOC_SECTIONS="
   .rela.opd     ${RELOCATING-0} : { *(.rela.opd) }"
 OTHER_READONLY_SECTIONS="${OTHER_READONLY_SECTIONS}
-  .IA_64.unwind_info ${RELOCATING-0} : { *(.IA_64.unwind_info${RELOCATING+* .gnu.linkonce.ia64unwi.*}) }
-  .IA_64.unwind ${RELOCATING-0} : { *(.IA_64.unwind${RELOCATING+* .gnu.linkonce.ia64unw.*}) }"
+  .IA_64.unwind_info ${RELOCATING-0} : { KEEP(*(.IA_64.unwind_info${RELOCATING+* .gnu.linkonce.ia64unwi.*})) }
+  .IA_64.unwind ${RELOCATING-0} : { KEEP(*(.IA_64.unwind${RELOCATING+* .gnu.linkonce.ia64unw.*})) }"
 # Intel C++ compiler, prior to 9.0, puts small data in .ctors and
 # .dtors.  They have to be next to .sbss/.sbss2/.sdata/.sdata2.
 SMALL_DATA_CTOR=" "

@@ -1,5 +1,5 @@
 /* dw2gencfi.h - Support for generating Dwarf2 CFI information.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
    Contributed by Michal Ludvig <mludvig@suse.cz>
 
    This file is part of GAS, the GNU Assembler.
@@ -41,6 +41,7 @@ extern void cfi_add_advance_loc (struct symbol *);
 extern void cfi_add_label (const char *);
 
 extern void cfi_add_CFA_offset (unsigned, offsetT);
+extern void cfi_add_CFA_val_offset (unsigned, offsetT);
 extern void cfi_add_CFA_def_cfa (unsigned, offsetT);
 extern void cfi_add_CFA_register (unsigned, unsigned);
 extern void cfi_add_CFA_def_cfa_register (unsigned);

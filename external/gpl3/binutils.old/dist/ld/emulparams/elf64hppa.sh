@@ -67,7 +67,7 @@ PLT_BEFORE_GOT=
 TEXT_DYNAMIC=
 
 # The linker is required to define these two symbols.
-EXECUTABLE_SYMBOLS='PROVIDE (__SYSTEM_ID = 0x214); PROVIDE (_FPU_STATUS = 0x0);'
+OTHER_SYMBOLS='PROVIDE (__SYSTEM_ID = 0x214); PROVIDE (_FPU_STATUS = 0x0);'
 # The PA64 ELF port needs two additional initializer sections and also wants
 # a start/end symbol pair for the .init and .fini sections.
 INIT_START='KEEP (*(.HP.init)); PROVIDE (__preinit_start = .); KEEP (*(.preinit)); PROVIDE (__preinit_end = .); PROVIDE (__init_start = .);'
