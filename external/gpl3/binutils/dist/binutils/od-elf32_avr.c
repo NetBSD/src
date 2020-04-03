@@ -1,5 +1,5 @@
 /* od-avrelf.c -- dump information about an AVR elf object file.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
    Written by Senthil Kumar Selvaraj, Atmel.
 
    This file is part of GNU Binutils.
@@ -85,7 +85,7 @@ elf32_avr_get_note_section_contents (bfd *abfd, bfd_size_type *size)
   if ((section = bfd_get_section_by_name (abfd, ".note.gnu.avr.deviceinfo")) == NULL)
     return NULL;
 
-  *size = bfd_get_section_size (section);
+  *size = bfd_section_size (section);
   char *contents = (char *) xmalloc (*size);
   bfd_get_section_contents (abfd, section, contents, 0, *size);
 
@@ -162,17 +162,17 @@ elf32_avr_get_memory_usage (bfd *abfd,
   asection *section;
 
   if ((section = bfd_get_section_by_name (abfd, ".data")) != NULL)
-    avr_datasize = bfd_section_size (abfd, section);
+    avr_datasize = bfd_section_size (section);
   if ((section = bfd_get_section_by_name (abfd, ".text")) != NULL)
-    avr_textsize = bfd_section_size (abfd, section);
+    avr_textsize = bfd_section_size (section);
   if ((section = bfd_get_section_by_name (abfd, ".bss")) != NULL)
-    avr_bsssize = bfd_section_size (abfd, section);
+    avr_bsssize = bfd_section_size (section);
   if ((section = bfd_get_section_by_name (abfd, ".bootloader")) != NULL)
-    bootloadersize = bfd_section_size (abfd, section);
+    bootloadersize = bfd_section_size (section);
   if ((section = bfd_get_section_by_name (abfd, ".noinit")) != NULL)
-    noinitsize = bfd_section_size (abfd, section);
+    noinitsize = bfd_section_size (section);
   if ((section = bfd_get_section_by_name (abfd, ".eeprom")) != NULL)
-    eepromsize = bfd_section_size (abfd, section);
+    eepromsize = bfd_section_size (section);
 
   *text_usage = avr_textsize + avr_datasize + bootloadersize;
   *data_usage = avr_datasize + avr_bsssize + noinitsize;
@@ -255,12 +255,12 @@ elf32_avr_dump_avr_prop (bfd *abfd)
   for (i = 0; i < r_list->record_count; ++i)
     {
       printf ("   %d %s @ %s + %#08lx (%#08lx)\n",
-              i,
-              avr_elf32_property_record_name (&r_list->records [i]),
-              r_list->records [i].section->name,
-              r_list->records [i].offset,
-              (bfd_get_section_vma (abfd, r_list->records [i].section)
-               + r_list->records [i].offset));
+	      i,
+	      avr_elf32_property_record_name (&r_list->records [i]),
+	      r_list->records [i].section->name,
+	      r_list->records [i].offset,
+	      (bfd_section_vma (r_list->records [i].section)
+	       + r_list->records [i].offset));
       switch (r_list->records [i].type)
         {
         case RECORD_ORG:

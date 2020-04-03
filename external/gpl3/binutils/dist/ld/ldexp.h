@@ -1,5 +1,5 @@
 /* ldexp.h -
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -106,7 +106,9 @@ typedef enum
   /* During assignment of symbol values when relaxation in progress.  */
   lang_assigning_phase_enum,
   /* Final assignment of symbol values.  */
-  lang_final_phase_enum
+  lang_final_phase_enum,
+  /* Run after symbol values have been fixed, for lang_map.  */
+  lang_fixed_phase_enum
 } lang_phase_type;
 
 union lang_statement_union;
@@ -229,8 +231,8 @@ void exp_print_tree
   (etree_type *);
 bfd_vma exp_get_vma
   (etree_type *, bfd_vma, char *);
-int exp_get_value_int
-  (etree_type *, int, char *);
+int exp_get_power
+  (etree_type *, char *);
 fill_type *exp_get_fill
   (etree_type *, fill_type *, char *);
 bfd_vma exp_get_abs_int

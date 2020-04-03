@@ -116,7 +116,7 @@ bsd_callg_blurb (FILE *file)
   fputs ("          the members of the cycle, and their contributions\n", file);
   fputs ("          to the time and call counts of the cycle.\n", file);
   fputs ("\n", file);
-  fputs ("Copyright (C) 2012-2018 Free Software Foundation, Inc.\n", file);
+  fputs ("Copyright (C) 2012-2020 Free Software Foundation, Inc.\n", file);
   fputs ("\n", file);
   fputs ("Copying and distribution of this file, with or without modification,\n", file);
   fputs ("are permitted in any medium without royalty provided the copyright\n", file);

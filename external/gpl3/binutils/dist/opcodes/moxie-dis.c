@@ -1,5 +1,5 @@
 /* Disassemble moxie instructions.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -33,7 +33,7 @@ static void *stream;
 /* Macros to extract operands from the instruction word.  */
 #define OP_A(i) ((i >> 4) & 0xf)
 #define OP_B(i) (i & 0xf)
-#define INST2OFFSET(o) ((((signed short)((o & ((1<<10)-1))<<6))>>6)<<1)
+#define INST2OFFSET(o) (((((o) & 0x3ff) ^ 0x200) - 0x200) * 2)
 
 static const char * reg_names[16] =
   { "$fp", "$sp", "$r0", "$r1", "$r2", "$r3", "$r4", "$r5",
@@ -210,8 +210,7 @@ print_insn_moxie (bfd_vma addr, struct disassemble_info * info)
 	{
 	case MOXIE_F3_PCREL:
 	  fpr (stream, "%s\t", opcode->name);
-	  info->print_address_func ((bfd_vma) (addr + INST2OFFSET(iword) + 2),
-				    info);
+	  info->print_address_func (addr + INST2OFFSET (iword) + 2, info);
 	  break;
         case MOXIE_BAD:
 	  fpr (stream, "bad");

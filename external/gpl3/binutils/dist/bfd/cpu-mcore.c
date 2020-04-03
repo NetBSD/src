@@ -1,5 +1,5 @@
 /* BFD library support routines for Motorola's MCore architecture
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,17 +24,18 @@
 
 const bfd_arch_info_type bfd_mcore_arch =
 {
-  32,				/* 32 bits in a word */
-  32,				/* 32 bits in an address */
-  8,				/* 8 bits in a byte */
-  bfd_arch_mcore,		/* Architecture */
-  0,				/* Machine number - 0 for now */
-  "MCore",			/* Architecture name */
-  "MCore",			/* Printable name */
-  3,				/* Section align power */
-  TRUE,				/* Is this the default architecture ? */
-  bfd_default_compatible,	/* Architecture comparison function */
-  bfd_default_scan,		/* String to architecture conversion */
+  32,				/* Bits in a word.  */
+  32,				/* Bits in an address.  */
+  8,				/* Bits in a byte.  */
+  bfd_arch_mcore,		/* Architecture number.  */
+  0,				/* Machine number - 0 for now.  */
+  "MCore",			/* Architecture name.  */
+  "MCore",			/* Machine name.  */
+  3,				/* Section align power.  */
+  TRUE,				/* Is this the default architecture ?  */
+  bfd_default_compatible,	/* Architecture comparison function.  */
+  bfd_default_scan,		/* String to architecture conversion.  */
   bfd_arch_default_fill,	/* Default fill.  */
-  NULL				/* Next in list */
+  NULL,				/* Next in list */
+  0 /* Maximum offset of a reloc from the start of an insn.  */
 };

@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2002-2018 Free Software Foundation, Inc.
+# Copyright (C) 2002-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -19,7 +19,7 @@
 # MA 02110-1301, USA.
 #
 
-# This file is sourced from elf32.em, and defines extra powerpc64-elf
+# This file is sourced from elf.em, and defines extra powerpc64-elf
 # specific routines.
 #
 fragment <<EOF
@@ -421,12 +421,11 @@ ppc_add_stub_section (const char *stub_sec_name, asection *input_section)
   stub_sec = bfd_make_section_anyway_with_flags (stub_file->the_bfd,
 						 stub_sec_name, flags);
   if (stub_sec == NULL
-      || !bfd_set_section_alignment (stub_file->the_bfd, stub_sec,
-				     (params.plt_stub_align > 5
-				      ? params.plt_stub_align
-				      : params.plt_stub_align < -5
-				      ? -params.plt_stub_align
-				      : 5)))
+      || !bfd_set_section_alignment (stub_sec, (params.plt_stub_align > 5
+						? params.plt_stub_align
+						: params.plt_stub_align < -5
+						? -params.plt_stub_align
+						: 5)))
     goto err_ret;
 
   output_section = input_section->output_section;
@@ -456,7 +455,7 @@ ppc_layout_sections_again (void)
   /* If we have changed sizes of the stub sections, then we need
      to recalculate all the section offsets.  This may mean we need to
      add even more stubs.  */
-  gld${EMULATION_NAME}_map_segments (TRUE);
+  ldelf_map_segments (TRUE);
 
   if (!bfd_link_relocatable (&link_info))
     ppc64_elf_set_toc (&link_info, link_info.output_bfd);
@@ -490,7 +489,7 @@ build_section_lists (lang_statement_union_type *statement)
     {
       asection *i = statement->input_section.section;
 
-      if (!((lang_input_statement_type *) i->owner->usrdata)->flags.just_syms
+      if (!bfd_input_just_syms (i->owner)
 	  && (i->flags & SEC_EXCLUDE) == 0
 	  && i->output_section != NULL
 	  && i->output_section->owner == link_info.output_bfd)
@@ -565,7 +564,7 @@ gld${EMULATION_NAME}_after_allocation (void)
      unneeded, after ppc_layout_sections_again.  Another call removes
      these sections from the segment map.  Their presence is
      innocuous except for confusing ELF_SECTION_IN_SEGMENT.  */
-  gld${EMULATION_NAME}_map_segments (need_laying_out > 0);
+  ldelf_map_segments (need_laying_out > 0);
 
   if (need_laying_out != -1 && !bfd_link_relocatable (&link_info))
     ppc64_elf_set_toc (&link_info, link_info.output_bfd);
@@ -652,34 +651,12 @@ gld${EMULATION_NAME}_new_vers_pattern (struct bfd_elf_version_expr *entry)
   return dot_entry;
 }
 
-
-/* Avoid processing the fake stub_file in vercheck, stat_needed and
-   check_needed routines.  */
-
-static void (*real_func) (lang_input_statement_type *);
-
-static void ppc_for_each_input_file_wrapper (lang_input_statement_type *l)
-{
-  if (l != stub_file)
-    (*real_func) (l);
-}
-
-static void
-ppc_lang_for_each_input_file (void (*func) (lang_input_statement_type *))
-{
-  real_func = func;
-  lang_for_each_input_file (&ppc_for_each_input_file_wrapper);
-}
-
-#define lang_for_each_input_file ppc_lang_for_each_input_file
-
 EOF
 
 if grep -q 'ld_elf32_spu_emulation' ldemul-list.h; then
   fragment <<EOF
 /* Special handling for embedded SPU executables.  */
 extern bfd_boolean embedded_spu_file (lang_input_statement_type *, const char *);
-static bfd_boolean gld${EMULATION_NAME}_load_symbols (lang_input_statement_type *);
 
 static bfd_boolean
 ppc64_recognized_file (lang_input_statement_type *entry)
@@ -687,7 +664,7 @@ ppc64_recognized_file (lang_input_statement_type *entry)
   if (embedded_spu_file (entry, "-m64"))
     return TRUE;
 
-  return gld${EMULATION_NAME}_load_symbols (entry);
+  return ldelf_load_symbols (entry);
 }
 EOF
 LDEMUL_RECOGNIZED_FILE=ppc64_recognized_file

@@ -17,7 +17,7 @@ SHLIB_DATA_ADDR=0x8000000000001000
 ARCH=hppa
 MACHINE=hppa2.0w
 ENTRY="main"
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 GENERATE_SHLIB_SCRIPT=yes
 
 # We really want multiple .stub sections, one for each input .text section,

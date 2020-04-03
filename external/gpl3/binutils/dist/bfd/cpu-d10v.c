@@ -1,5 +1,5 @@
 /* BFD support for the D10V processor
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -23,53 +23,29 @@
 #include "bfd.h"
 #include "libbfd.h"
 
+#define N(NUMBER, PRINT, DEFAULT, NEXT)			\
+  {							\
+    16,         /* Bits in a word.  */			\
+    18,         /* Bits in an address.  */		\
+    8,	        /* Bits in a byte.  */			\
+    bfd_arch_d10v,					\
+    NUMBER,						\
+    "d10v",						\
+    PRINT,						\
+    4,		/* Section alignment power.  */		\
+    DEFAULT,						\
+    bfd_default_compatible,				\
+    bfd_default_scan,					\
+    bfd_arch_default_fill,				\
+    NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
+  }
+
 static const bfd_arch_info_type d10v_ts3_info =
-{
-  16,	/* 16 bits in a word.  */
-  18,	/* really 16 bits in an address, but code has 18 bit range.  */
-  8,	/* 8 bits in a byte.  */
-  bfd_arch_d10v,
-  bfd_mach_d10v_ts3,
-  "d10v",
-  "d10v:ts3",
-  4,	/* Section alignment power.  */
-  FALSE,
-  bfd_default_compatible,
-  bfd_default_scan,
-  bfd_arch_default_fill,
-  0,
-};
+  N (bfd_mach_d10v_ts3, "d10v:ts3", FALSE, NULL);
 
 static const bfd_arch_info_type d10v_ts2_info =
-{
-  16,
-  18,
-  8,
-  bfd_arch_d10v,
-  bfd_mach_d10v_ts2,
-  "d10v",
-  "d10v:ts2",
-  4,
-  FALSE,
-  bfd_default_compatible,
-  bfd_default_scan,
-  bfd_arch_default_fill,
-  & d10v_ts3_info,
-};
+  N (bfd_mach_d10v_ts2, "d10v:ts2", FALSE, & d10v_ts3_info);
 
 const bfd_arch_info_type bfd_d10v_arch =
-{
-  16,
-  18,
-  8,
-  bfd_arch_d10v,
-  bfd_mach_d10v,
-  "d10v",
-  "d10v",
-  4,
-  TRUE,
-  bfd_default_compatible,
-  bfd_default_scan,
-  bfd_arch_default_fill,
-  & d10v_ts2_info,
-};
+  N (bfd_mach_d10v, "d10v", TRUE, & d10v_ts2_info);

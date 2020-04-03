@@ -1,6 +1,6 @@
 // aarch64.h -- ELF definitions specific to AARCH64  -*- C++ -*-
 
-// Copyright (C) 2014-2018 Free Software Foundation, Inc.
+// Copyright (C) 2014-2020 Free Software Foundation, Inc.
 // Written by Jing Yu (jingyu@google.com)
 
 // This file is part of elfcpp.

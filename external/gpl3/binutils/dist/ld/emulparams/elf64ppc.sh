@@ -1,12 +1,11 @@
-. ${srcdir}/emulparams/elf32ppccommon.sh
-. ${srcdir}/emulparams/plt_unwind.sh
+source_sh ${srcdir}/emulparams/elf32ppccommon.sh
+source_sh ${srcdir}/emulparams/plt_unwind.sh
 EXTRA_EM_FILE=ppc64elf
 ELFSIZE=64
 OUTPUT_FORMAT="elf64-powerpc"
 TEXT_START_ADDR=0x10000000
 #SEGMENT_SIZE=0x10000000
 ARCH=powerpc:common64
-NOP=0x60000000
 unset EXECUTABLE_SYMBOLS
 unset SDATA_START_SYMBOLS
 unset SDATA2_START_SYMBOLS

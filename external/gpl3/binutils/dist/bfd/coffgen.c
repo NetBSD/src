@@ -1,5 +1,5 @@
 /* Support for the generic parts of COFF, for BFD.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -37,6 +37,7 @@
    coff_data (abfd).  */
 
 #include "sysdep.h"
+#include <limits.h>
 #include "bfd.h"
 #include "libbfd.h"
 #include "coff/internal.h"
@@ -216,7 +217,7 @@ make_a_section_from_file (bfd *abfd,
 	  break;
 	}
       if (new_name != NULL)
-	bfd_rename_section (abfd, return_section, new_name);
+	bfd_rename_section (return_section, new_name);
     }
 
   return result;
@@ -256,14 +257,14 @@ coff_real_object_p (bfd *abfd,
   if ((internal_f->f_flags & F_EXEC) != 0)
     abfd->flags |= D_PAGED;
 
-  bfd_get_symcount (abfd) = internal_f->f_nsyms;
+  abfd->symcount = internal_f->f_nsyms;
   if (internal_f->f_nsyms)
     abfd->flags |= HAS_SYMS;
 
   if (internal_a != (struct internal_aouthdr *) NULL)
-    bfd_get_start_address (abfd) = internal_a->entry;
+    abfd->start_address = internal_a->entry;
   else
-    bfd_get_start_address (abfd) = 0;
+    abfd->start_address = 0;
 
   /* Set up the tdata area.  ECOFF uses its own routine, and overrides
      abfd->flags.  */
@@ -301,14 +302,20 @@ coff_real_object_p (bfd *abfd,
 	}
     }
 
+  obj_coff_keep_syms (abfd) = FALSE;
+  obj_coff_keep_strings (abfd) = FALSE;
+  _bfd_coff_free_symbols (abfd);
   return abfd->xvec;
 
  fail:
+  obj_coff_keep_syms (abfd) = FALSE;
+  obj_coff_keep_strings (abfd) = FALSE;
+  _bfd_coff_free_symbols (abfd);
   bfd_release (abfd, tdata);
  fail2:
   abfd->tdata.any = tdata_save;
   abfd->flags = oflags;
-  bfd_get_start_address (abfd) = ostart;
+  abfd->start_address = ostart;
   return (const bfd_target *) NULL;
 }
 
@@ -835,7 +842,7 @@ coff_mangle_symbols (bfd *bfd_ptr)
 	  for (i = 0; i < s->u.syment.n_numaux; i++)
 	    {
 	      combined_entry_type *a = s + i + 1;
-	      
+
 	      BFD_ASSERT (! a->is_sym);
 	      if (a->fix_tag)
 		{
@@ -1521,7 +1528,8 @@ coff_pointerize_aux (bfd *abfd,
 		     combined_entry_type *table_base,
 		     combined_entry_type *symbol,
 		     unsigned int indaux,
-		     combined_entry_type *auxent)
+		     combined_entry_type *auxent,
+		     combined_entry_type *table_end)
 {
   unsigned int type = symbol->u.syment.n_type;
   unsigned int n_sclass = symbol->u.syment.n_sclass;
@@ -1549,16 +1557,20 @@ coff_pointerize_aux (bfd *abfd,
        || n_sclass == C_FCN)
       && auxent->u.auxent.x_sym.x_fcnary.x_fcn.x_endndx.l > 0
       && auxent->u.auxent.x_sym.x_fcnary.x_fcn.x_endndx.l
-      < (long) obj_raw_syment_count (abfd))
+      < (long) obj_raw_syment_count (abfd)
+      && table_base + auxent->u.auxent.x_sym.x_fcnary.x_fcn.x_endndx.l
+      < table_end)
     {
       auxent->u.auxent.x_sym.x_fcnary.x_fcn.x_endndx.p =
 	table_base + auxent->u.auxent.x_sym.x_fcnary.x_fcn.x_endndx.l;
       auxent->fix_end = 1;
     }
+
   /* A negative tagndx is meaningless, but the SCO 3.2v4 cc can
      generate one, so we must be careful to ignore it.  */
   if ((unsigned long) auxent->u.auxent.x_sym.x_tagndx.l
-      < obj_raw_syment_count (abfd))
+      < obj_raw_syment_count (abfd)
+      && table_base + auxent->u.auxent.x_sym.x_tagndx.l < table_end)
     {
       auxent->u.auxent.x_sym.x_tagndx.p =
 	table_base + auxent->u.auxent.x_sym.x_tagndx.l;
@@ -1808,10 +1820,11 @@ coff_get_normalized_symtab (bfd *abfd)
   if (! _bfd_coff_get_external_symbols (abfd))
     return NULL;
 
-  size = obj_raw_syment_count (abfd) * sizeof (combined_entry_type);
+  size = obj_raw_syment_count (abfd);
   /* Check for integer overflow.  */
-  if (size < obj_raw_syment_count (abfd))
+  if (size > (bfd_size_type) -1 / sizeof (combined_entry_type))
     return NULL;
+  size *= sizeof (combined_entry_type);
   internal = (combined_entry_type *) bfd_zalloc (abfd, size);
   if (internal == NULL && size != 0)
     return NULL;
@@ -1838,29 +1851,20 @@ coff_get_normalized_symtab (bfd *abfd)
       symbol_ptr = internal_ptr;
       internal_ptr->is_sym = TRUE;
 
-      /* PR 17512: file: 1353-1166-0.004.  */
-      if (symbol_ptr->u.syment.n_sclass == C_FILE
-	  && symbol_ptr->u.syment.n_numaux > 0
-	  && raw_src + symesz + symbol_ptr->u.syment.n_numaux
-	  * symesz > raw_end)
-	{
-	  bfd_release (abfd, internal);
-	  return NULL;
-	}
-
       for (i = 0;
 	   i < symbol_ptr->u.syment.n_numaux;
 	   i++)
 	{
 	  internal_ptr++;
+	  raw_src += symesz;
+
 	  /* PR 17512: Prevent buffer overrun.  */
-	  if (internal_ptr >= internal_end)
+	  if (raw_src >= raw_end || internal_ptr >= internal_end)
 	    {
 	      bfd_release (abfd, internal);
 	      return NULL;
 	    }
 
-	  raw_src += symesz;
 	  bfd_coff_swap_aux_in (abfd, (void *) raw_src,
 				symbol_ptr->u.syment.n_type,
 				symbol_ptr->u.syment.n_sclass,
@@ -1869,7 +1873,7 @@ coff_get_normalized_symtab (bfd *abfd)
 
 	  internal_ptr->is_sym = FALSE;
 	  coff_pointerize_aux (abfd, internal, symbol_ptr, i,
-			       internal_ptr);
+			       internal_ptr, internal_end);
 	}
     }
 
@@ -2009,6 +2013,13 @@ coff_get_reloc_upper_bound (bfd *abfd, sec_ptr asect)
       bfd_set_error (bfd_error_invalid_operation);
       return -1;
     }
+#if SIZEOF_LONG == SIZEOF_INT
+  if (asect->reloc_count >= LONG_MAX / sizeof (arelent *))
+    {
+      bfd_set_error (bfd_error_file_too_big);
+      return -1;
+    }
+#endif
   return (asect->reloc_count + 1) * sizeof (arelent *);
 }
 
@@ -2277,7 +2288,7 @@ coff_find_nearest_line_with_names (bfd *abfd,
   /* Also try examining DWARF2 debugging information.  */
   if (_bfd_dwarf2_find_nearest_line (abfd, symbols, NULL, section, offset,
 				     filename_ptr, functionname_ptr,
-				     line_ptr, NULL, debug_sections, 0,
+				     line_ptr, NULL, debug_sections,
 				     &coff_data(abfd)->dwarf2_find_line_info))
     return TRUE;
 
@@ -2289,7 +2300,7 @@ coff_find_nearest_line_with_names (bfd *abfd,
      information.  So try again, using a bias against the address sought.  */
   if (coff_data (abfd)->dwarf2_find_line_info != NULL)
     {
-      bfd_signed_vma bias;
+      bfd_signed_vma bias = 0;
 
       /* Create a cache of the result for the next call.  */
       if (sec_data == NULL && section->owner == abfd)
@@ -2301,10 +2312,11 @@ coff_find_nearest_line_with_names (bfd *abfd,
 
       if (sec_data != NULL && sec_data->saved_bias)
 	bias = sec_data->saved_bias;
-      else
+      else if (symbols)
 	{
 	  bias = _bfd_dwarf2_find_symbol_bias (symbols,
 					       & coff_data (abfd)->dwarf2_find_line_info);
+
 	  if (sec_data)
 	    {
 	      sec_data->saved_bias = TRUE;
@@ -2316,7 +2328,7 @@ coff_find_nearest_line_with_names (bfd *abfd,
 	  && _bfd_dwarf2_find_nearest_line (abfd, symbols, NULL, section,
 					    offset + bias,
 					    filename_ptr, functionname_ptr,
-					    line_ptr, NULL, debug_sections, 0,
+					    line_ptr, NULL, debug_sections,
 					    &coff_data(abfd)->dwarf2_find_line_info))
 	return TRUE;
     }
@@ -2352,7 +2364,7 @@ coff_find_nearest_line_with_names (bfd *abfd,
       bfd_vma maxdiff;
 
       /* Look through the C_FILE symbols to find the best one.  */
-      sec_vma = bfd_get_section_vma (abfd, section);
+      sec_vma = bfd_section_vma (section);
       *filename_ptr = (char *) p->u.syment._n._n_n._n_offset;
       maxdiff = (bfd_vma) 0 - (bfd_vma) 1;
       while (1)
@@ -2394,13 +2406,16 @@ coff_find_nearest_line_with_names (bfd *abfd,
 	      maxdiff = offset + sec_vma - p2->u.syment.n_value;
 	    }
 
+	  if (p->u.syment.n_value >= cof->raw_syment_count)
+	    break;
+
 	  /* Avoid endless loops on erroneous files by ensuring that
 	     we always move forward in the file.  */
 	  if (p >= cof->raw_syments + p->u.syment.n_value)
 	    break;
 
 	  p = cof->raw_syments + p->u.syment.n_value;
-	  if (p > pend || p->u.syment.n_sclass != C_FILE)
+	  if (!p->is_sym || p->u.syment.n_sclass != C_FILE)
 	    break;
 	}
     }
@@ -2633,6 +2648,9 @@ _bfd_coff_section_already_linked (bfd *abfd,
   struct bfd_section_already_linked_hash_entry *already_linked_list;
   struct coff_comdat_info *s_comdat;
 
+  if (sec->output_section == bfd_abs_section_ptr)
+    return FALSE;
+
   flags = sec->flags;
   if ((flags & SEC_LINK_ONCE) == 0)
     return FALSE;
@@ -2641,7 +2659,7 @@ _bfd_coff_section_already_linked (bfd *abfd,
   if ((flags & SEC_GROUP) != 0)
     return FALSE;
 
-  name = bfd_get_section_name (abfd, sec);
+  name = bfd_section_name (sec);
   s_comdat = bfd_coff_get_comdat_section (abfd, sec);
 
   if (s_comdat != NULL)
@@ -3137,4 +3155,30 @@ bfd_coff_gc_sections (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
 
   /* ... and mark SEC_EXCLUDE for those that go.  */
   return coff_gc_sweep (abfd, info);
+}
+
+/* Return name used to identify a comdat group.  */
+
+const char *
+bfd_coff_group_name (bfd *abfd, const asection *sec)
+{
+  struct coff_comdat_info *ci = bfd_coff_get_comdat_section (abfd, sec);
+  if (ci != NULL)
+    return ci->name;
+  return NULL;
+}
+
+bfd_boolean
+_bfd_coff_close_and_cleanup (bfd *abfd)
+{
+  if (abfd->format == bfd_object
+      && bfd_family_coff (abfd)
+      && coff_data (abfd) != NULL)
+    {
+      obj_coff_keep_syms (abfd) = FALSE;
+      obj_coff_keep_strings (abfd) = FALSE;
+      if (!_bfd_coff_free_symbols (abfd))
+	return FALSE;
+    }
+  return _bfd_generic_close_and_cleanup (abfd);
 }

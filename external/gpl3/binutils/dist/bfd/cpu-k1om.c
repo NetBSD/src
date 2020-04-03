@@ -1,5 +1,5 @@
 /* BFD support for the Intel K1OM architecture.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,36 +25,14 @@
 extern void * bfd_arch_i386_short_nop_fill (bfd_size_type, bfd_boolean,
 					    bfd_boolean);
 
+#define N(number, name, print, next)			     \
+  { 64, 64, 8, bfd_arch_k1om, number, name, print, 3, TRUE, \
+    bfd_default_compatible, bfd_default_scan,		     \
+    bfd_arch_i386_short_nop_fill, next, 9 }
+
 static const bfd_arch_info_type bfd_k1om_arch_intel_syntax =
-{
-  64, /* 64 bits in a word */
-  64, /* 64 bits in an address */
-  8,  /* 8 bits in a byte */
-  bfd_arch_k1om,
-  bfd_mach_k1om_intel_syntax,
-  "k1om:intel",
-  "k1om:intel",
-  3,
-  TRUE,
-  bfd_default_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_short_nop_fill,
-  0
-};
+  N (bfd_mach_k1om_intel_syntax, "k1om:intel", "k1om:intel", NULL);
 
 const bfd_arch_info_type bfd_k1om_arch =
-{
-  64, /* 64 bits in a word */
-  64, /* 64 bits in an address */
-  8,  /* 8 bits in a byte */
-  bfd_arch_k1om,
-  bfd_mach_k1om,
-  "k1om",
-  "k1om",
-  3,
-  TRUE,
-  bfd_default_compatible,
-  bfd_default_scan,
-  bfd_arch_i386_short_nop_fill,
-  &bfd_k1om_arch_intel_syntax
-};
+  N (bfd_mach_k1om, "k1om", "k1om", &bfd_k1om_arch_intel_syntax);
+

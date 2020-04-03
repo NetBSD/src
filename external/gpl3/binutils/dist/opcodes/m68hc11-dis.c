@@ -1,5 +1,5 @@
 /* m68hc11-dis.c -- Motorola 68HC11 & 68HC12 disassembly
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
    XGATE and S12X added by James Murray (jsm@jsm-net.demon.co.uk)
 
@@ -45,11 +45,6 @@ static const char *const reg_dst_table[] =
 
 #define OP_PAGE_MASK (M6811_OP_PAGE2|M6811_OP_PAGE3|M6811_OP_PAGE4)
 
-/* Prototypes for local functions.  */
-static int read_memory (bfd_vma, bfd_byte *, int, struct disassemble_info *);
-static int print_indexed_operand (bfd_vma, struct disassemble_info *,
-                                  int*, int, int, bfd_vma, int);
-static int print_insn (bfd_vma, struct disassemble_info *, int);
 
 static int
 read_memory (bfd_vma memaddr, bfd_byte* buffer, int size,
@@ -73,13 +68,13 @@ read_memory (bfd_vma memaddr, bfd_byte* buffer, int size,
    Returns the number of bytes read or -1 if failure.  */
 static int
 print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
-                       int* indirect, int mov_insn, int pc_offset,
-                       bfd_vma endaddr, int arch)
+		       int* indirect, int mov_insn, int pc_offset,
+		       bfd_vma endaddr, int arch)
 {
   bfd_byte buffer[4];
   int reg;
   int status;
-  short sval;
+  bfd_vma val;
   int pos = 1;
 
   if (indirect)
@@ -95,23 +90,22 @@ print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
   if ((buffer[0] & 0x20) == 0)
     {
       reg = (buffer[0] >> 6) & 3;
-      sval = (buffer[0] & 0x1f);
-      if (sval & 0x10)
-	sval |= 0xfff0;
+      val = ((buffer[0] & 0x1f) ^ 0x10) - 0x10;
       /* 68HC12 requires an adjustment for movb/movw pc relative modes.  */
       if (reg == PC_REGNUM && info->mach == bfd_mach_m6812 && mov_insn)
-        sval += pc_offset;
+	val += pc_offset;
       (*info->fprintf_func) (info->stream, "0x%x,%s",
-			     (unsigned short) sval, reg_name[reg]);
+			     (unsigned) val & 0xffff, reg_name[reg]);
 
       if (reg == PC_REGNUM)
-        {
-          (* info->fprintf_func) (info->stream, " {");
-	      if (info->symtab_size > 0) /* Avoid duplicate 0x from core binutils. */
-	        (*info->fprintf_func) (info->stream, "0x");
-          (* info->print_address_func) (endaddr + sval, info);
-          (* info->fprintf_func) (info->stream, "}");
-        }
+	{
+	  (* info->fprintf_func) (info->stream, " {");
+	   /* Avoid duplicate 0x from core binutils.  */
+	  if (info->symtab_size > 0)
+	    (*info->fprintf_func) (info->stream, "0x");
+	  (* info->print_address_func) (endaddr + val, info);
+	  (* info->fprintf_func) (info->stream, "}");
+	}
     }
 
   /* Auto pre/post increment/decrement.  */
@@ -120,88 +114,81 @@ print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
       const char *mode;
 
       reg = (buffer[0] >> 6) & 3;
-      sval = (buffer[0] & 0x0f);
-      if (sval & 0x8)
+      val = buffer[0] & 7;
+      if (buffer[0] & 8)
 	{
-	  sval |= 0xfff0;
-	  sval = -sval;
+	  val = 8 - val;
 	  mode = "-";
 	}
       else
 	{
-	  sval = sval + 1;
+	  val = val + 1;
 	  mode = "+";
 	}
       (*info->fprintf_func) (info->stream, "%d,%s%s%s",
-			     (unsigned short) sval,
-			     (buffer[0] & 0x10 ? "" : mode),
-			     reg_name[reg], (buffer[0] & 0x10 ? mode : ""));
+			     (unsigned) val,
+			     buffer[0] & 0x10 ? "" : mode,
+			     reg_name[reg], buffer[0] & 0x10 ? mode : "");
     }
 
   /* [n,r] 16-bits offset indexed indirect.  */
   else if ((buffer[0] & 0x07) == 3)
     {
       if ((mov_insn) && (!(arch & cpu9s12x)))
-      	{
-      	  (*info->fprintf_func) (info->stream, "<invalid op: 0x%x>",
-    				 buffer[0] & 0x0ff);
-      	  return 0;
-      	}
+	{
+	  (*info->fprintf_func) (info->stream, "<invalid op: 0x%x>",
+				 buffer[0] & 0x0ff);
+	  return 0;
+	}
       reg = (buffer[0] >> 3) & 0x03;
       status = read_memory (memaddr + pos, &buffer[0], 2, info);
       if (status != 0)
-	{
-	  return status;
-	}
+	return status;
 
       pos += 2;
-      sval = ((buffer[0] << 8) | (buffer[1] & 0x0FF));
+      val = (buffer[0] << 8) | buffer[1];
       (*info->fprintf_func) (info->stream, "[0x%x,%s]",
-			     sval & 0x0ffff, reg_name[reg]);
+			     (unsigned) val & 0xffff, reg_name[reg]);
       if (indirect)
-        *indirect = 1;
+	*indirect = 1;
     }
 
   /* n,r with 9 and 16 bit signed constant.  */
   else if ((buffer[0] & 0x4) == 0)
     {
       if ((mov_insn) && (!(arch & cpu9s12x)))
-      	{
-      	  (*info->fprintf_func) (info->stream, "<invalid op: 0x%x>",
-    				 buffer[0] & 0x0ff);
-      	  return 0;
-      	}
+	{
+	  (*info->fprintf_func) (info->stream, "<invalid op: 0x%x>",
+				 buffer[0] & 0x0ff);
+	  return 0;
+	}
 
       reg = (buffer[0] >> 3) & 0x03;
       status = read_memory (memaddr + pos,
 			    &buffer[1], (buffer[0] & 0x2 ? 2 : 1), info);
       if (status != 0)
-	{
-	  return status;
-	}
+	return status;
+
       if (buffer[0] & 2)
 	{
-	  sval = ((buffer[1] << 8) | (buffer[2] & 0x0FF));
-	  sval &= 0x0FFFF;
+	  val = (((buffer[1] << 8) | buffer[2]) ^ 0x8000) - 0x8000;
 	  pos += 2;
-          endaddr += 2;
+	  endaddr += 2;
 	}
       else
 	{
-	  sval = buffer[1] & 0x00ff;
-	  if (buffer[0] & 0x01)
-	    sval |= 0xff00;
+	  val = buffer[1] - ((buffer[0] & 1) << 8);
 	  pos++;
-          endaddr++;
+	  endaddr++;
 	}
       (*info->fprintf_func) (info->stream, "0x%x,%s",
-			     (unsigned short) sval, reg_name[reg]);
+			     (unsigned) val & 0xffff, reg_name[reg]);
       if (reg == PC_REGNUM)
-        {
-          (* info->fprintf_func) (info->stream, " {0x");
-          (* info->print_address_func) (endaddr + sval, info);
-          (* info->fprintf_func) (info->stream, "}");
-        }
+	{
+	  (* info->fprintf_func) (info->stream, " {0x");
+	  (* info->print_address_func) (endaddr + val, info);
+	  (* info->fprintf_func) (info->stream, "}");
+	}
     }
   else
     {
@@ -220,8 +207,8 @@ print_indexed_operand (bfd_vma memaddr, struct disassemble_info* info,
 	case 3:
 	default:
 	  (*info->fprintf_func) (info->stream, "[D,%s]", reg_name[reg]);
-          if (indirect)
-            *indirect = 1;
+	  if (indirect)
+	    *indirect = 1;
 	  break;
 	}
     }
@@ -238,12 +225,11 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
   bfd_byte buffer[4];
   unsigned int code;
   long format, pos, i;
-  short sval;
+  bfd_vma val;
   const struct m68hc11_opcode *opcode;
 
   if (arch & cpuxgate)
     {
-      int val;
       /* Get two bytes as all XGATE instructions are 16bit.  */
       status = read_memory (memaddr, buffer, 2, info);
       if (status != 0)
@@ -295,17 +281,14 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	  else if (format & M68XG_OP_REL9)
 	    {
 	      (*info->fprintf_func) (info->stream, " 0x");
-	      val = (buffer[0] & 0x1) ? buffer[1] | 0xFFFFFF00 : buffer[1];
+	      val = buffer[1] - ((buffer[0] & 1) << 8);
 	      (*info->print_address_func) (memaddr + (val << 1) + 2, info);
 	    }
 	  else if (format & M68XG_OP_REL10)
 	    {
 	      (*info->fprintf_func) (info->stream, " 0x");
-	      val = (buffer[0] << 8) | (unsigned int) buffer[1];
-	      if (val & 0x200)
-		val |= 0xfffffc00;
-	      else
-		val &= 0x000001ff;
+	      val = (buffer[0] << 8) | buffer[1];
+	      val = ((val & 0x3ff) ^ 0x200) - 0x200;
 	      (*info->print_address_func) (memaddr + (val << 1) + 2, info);
 	    }
 	  else if ((code & 0x00ff) == 0x00f8)
@@ -639,13 +622,11 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 
 	  (*info->fprintf_func) (info->stream, "%s,",
 				 reg_src_table[buffer[0] & 0x07]);
-	  sval = buffer[1] & 0x0ff;
-	  if (buffer[0] & 0x10)
-	    sval |= 0xff00;
+	  val = buffer[1] - ((buffer[0] & 0x10) << 4);
 
 	  pos += 2;
 	  (*info->fprintf_func) (info->stream, "0x");
-	  (*info->print_address_func) (memaddr + pos + sval, info);
+	  (*info->print_address_func) (memaddr + pos + val, info);
 	  format &= ~(M6812_OP_REG | M6811_OP_JUMP_REL);
 	}
       else if (format & (M6812_OP_REG | M6812_OP_REG_2))
@@ -662,7 +643,6 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 
       if (format & (M6811_OP_IMM16 | M6811_OP_IND16))
 	{
-	  int val;
 	  bfd_vma addr;
 	  unsigned page = 0;
 
@@ -676,9 +656,7 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	    offset = 0;
 	  pos += 2;
 
-	  val = ((buffer[0] << 8) | (buffer[1] & 0x0FF));
-	  val &= 0x0FFFF;
-	  addr = val;
+	  addr = val = (buffer[0] << 8) | buffer[1];
 	  pc_dst_offset = 2;
 	  if (format & M6812_OP_PAGE)
 	    {
@@ -686,16 +664,15 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	      if (status != 0)
 		return status;
 
-	      page = (unsigned) buffer[0];
+	      page = buffer[0];
 	      if (addr >= M68HC12_BANK_BASE && addr < 0x0c000)
-		addr = ((val - M68HC12_BANK_BASE)
-			| (page << M68HC12_BANK_SHIFT))
-		  + M68HC12_BANK_VIRT;
+		addr = (val - M68HC12_BANK_BASE + (page << M68HC12_BANK_SHIFT)
+			+ M68HC12_BANK_VIRT);
 	    }
 	  else if ((arch & cpu6812)
 		   && addr >= M68HC12_BANK_BASE && addr < 0x0c000)
 	    {
-	      int cur_page;
+	      unsigned cur_page;
 	      bfd_vma vaddr;
 
 	      if (memaddr >= M68HC12_BANK_VIRT)
@@ -704,9 +681,8 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	      else
 		cur_page = 0;
 
-	      vaddr = ((addr - M68HC12_BANK_BASE)
-		       + (cur_page << M68HC12_BANK_SHIFT))
-		+ M68HC12_BANK_VIRT;
+	      vaddr = (addr - M68HC12_BANK_BASE
+		       + (cur_page << M68HC12_BANK_SHIFT)) + M68HC12_BANK_VIRT;
 	      if (!info->symbol_at_address_func (addr, info)
 		  && info->symbol_at_address_func (vaddr, info))
 		addr = vaddr;
@@ -721,14 +697,16 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	      format &= ~M6811_OP_IND16;
 	    }
 
-	  if (info->symtab_size > 0) /* Avoid duplicate 0x from core binutils. */
+	  /* Avoid duplicate 0x from core binutils.  */
+	  if (info->symtab_size > 0)
 	    (*info->fprintf_func) (info->stream, "0x");
 
 	  (*info->print_address_func) (addr, info);
 	  if (format & M6812_OP_PAGE)
 	    {
 	      (* info->fprintf_func) (info->stream, " {");
-	      if (info->symtab_size > 0) /* Avoid duplicate 0x from core binutils. */
+	      /* Avoid duplicate 0x from core binutils.  */
+	      if (info->symtab_size > 0)
 		(*info->fprintf_func) (info->stream, "0x");
 	      (* info->print_address_func) (val, info);
 	      (* info->fprintf_func) (info->stream, ", 0x%x}", page);
@@ -750,8 +728,6 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 
       if (format & M6812_OP_IND16_P2)
 	{
-	  int val;
-
 	  (*info->fprintf_func) (info->stream, ", ");
 
 	  status = read_memory (memaddr + pos + offset, &buffer[0], 2, info);
@@ -760,9 +736,9 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 
 	  pos += 2;
 
-	  val = ((buffer[0] << 8) | (buffer[1] & 0x0FF));
-	  val &= 0x0FFFF;
-	  if (info->symtab_size > 0) /* Avoid duplicate 0x from core binutils. */
+	  val = (buffer[0] << 8) | buffer[1];
+	  /* Avoid duplicate 0x from core binutils.  */
+	  if (info->symtab_size > 0)
 	    (*info->fprintf_func) (info->stream, "0x");
 	  (*info->print_address_func) (val, info);
 	}
@@ -784,30 +760,24 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 	}
       if (format & M6811_OP_JUMP_REL)
 	{
-	  int val;
-
 	  status = read_memory (memaddr + pos, &buffer[0], 1, info);
 	  if (status != 0)
 	    return status;
 
 	  (*info->fprintf_func) (info->stream, "0x");
 	  pos++;
-	  val = (buffer[0] & 0x80) ? buffer[0] | 0xFFFFFF00 : buffer[0];
+	  val = (buffer[0] ^ 0x80) - 0x80;
 	  (*info->print_address_func) (memaddr + pos + val, info);
 	  format &= ~M6811_OP_JUMP_REL;
 	}
       else if (format & M6812_OP_JUMP_REL16)
 	{
-	  int val;
-
 	  status = read_memory (memaddr + pos, &buffer[0], 2, info);
 	  if (status != 0)
 	    return status;
 
 	  pos += 2;
-	  val = ((buffer[0] << 8) | (buffer[1] & 0x0FF));
-	  if (val & 0x8000)
-	    val |= 0xffff0000;
+	  val = (((buffer[0] << 8) | buffer[1]) ^ 0x8000) - 0x8000;
 
 	  (*info->fprintf_func) (info->stream, "0x");
 	  (*info->print_address_func) (memaddr + pos + val, info);
@@ -816,16 +786,14 @@ print_insn (bfd_vma memaddr, struct disassemble_info* info, int arch)
 
       if (format & M6812_OP_PAGE)
 	{
-	  int val;
-
 	  status = read_memory (memaddr + pos + offset, &buffer[0], 1, info);
 	  if (status != 0)
 	    return status;
 
 	  pos += 1;
 
-	  val = buffer[0] & 0x0ff;
-	  (*info->fprintf_func) (info->stream, ", 0x%x", val);
+	  val = buffer[0];
+	  (*info->fprintf_func) (info->stream, ", 0x%x", (unsigned) val);
 	}
 
 #ifdef DEBUG

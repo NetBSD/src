@@ -1,5 +1,5 @@
 /* BFD support for AArch64.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -22,6 +22,7 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "libiberty.h"
+#include "cpu-aarch64.h"
 
 /* This routine is provided two arch_infos and works out which Aarch64
    machine which would be compatible with both and returns a pointer
@@ -68,10 +69,11 @@ static struct
 }
 processors[] =
 {
-  /* These two are example CPUs supported in GCC, once we have real
-     CPUs they will be removed.  */
-  { bfd_mach_aarch64, "example-1" },
-  { bfd_mach_aarch64, "example-2" }
+  { bfd_mach_aarch64,	  "cortex-a34"	    },
+  { bfd_mach_aarch64,	  "cortex-a65"	    },
+  { bfd_mach_aarch64,	  "cortex-a65ae"    },
+  { bfd_mach_aarch64,	  "cortex-a76ae"    },
+  { bfd_mach_aarch64,	  "cortex-a77"	    }
 };
 
 static bfd_boolean
@@ -103,7 +105,7 @@ scan (const struct bfd_arch_info *info, const char *string)
 #define N(NUMBER, PRINT, WORDSIZE, DEFAULT, NEXT)		\
   { WORDSIZE, WORDSIZE, 8, bfd_arch_aarch64, NUMBER,		\
     "aarch64", PRINT, 4, DEFAULT, compatible, scan,		\
-    bfd_arch_default_fill, NEXT }
+      bfd_arch_default_fill, NEXT, 0 }
 
 static const bfd_arch_info_type bfd_aarch64_arch_ilp32 =
   N (bfd_mach_aarch64_ilp32, "aarch64:ilp32", 32, FALSE, NULL);

@@ -1,5 +1,5 @@
 /* Print National Semiconductor 32000 instructions.
-   Copyright (C) 1986-2018 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -262,9 +262,11 @@ list_search (int reg_value, const struct ns32k_option *optionP, char *result)
 static int
 bit_extract (bfd_byte *buffer, int offset, int count)
 {
-  int result;
-  int bit;
+  unsigned int result;
+  unsigned int bit;
 
+  if (offset < 0 || count < 0)
+    return 0;
   buffer += offset >> 3;
   offset &= 7;
   bit = 1;
@@ -289,9 +291,11 @@ bit_extract (bfd_byte *buffer, int offset, int count)
 static int
 bit_extract_simple (bfd_byte *buffer, int offset, int count)
 {
-  int result;
-  int bit;
+  unsigned int result;
+  unsigned int bit;
 
+  if (offset < 0 || count < 0)
+    return 0;
   buffer += offset >> 3;
   offset &= 7;
   bit = 1;
@@ -313,18 +317,18 @@ bit_extract_simple (bfd_byte *buffer, int offset, int count)
 static void
 bit_copy (bfd_byte *buffer, int offset, int count, char *to)
 {
+  if (offset < 0 || count < 0)
+    return;
   for (; count > 8; count -= 8, to++, offset += 8)
     *to = bit_extract (buffer, offset, 8);
   *to = bit_extract (buffer, offset, count);
 }
 
 static int
-sign_extend (int value, int bits)
+sign_extend (unsigned int value, unsigned int bits)
 {
-  value = value & ((1 << bits) - 1);
-  return (value & (1 << (bits - 1))
-	  ? value | (~((1 << bits) - 1))
-	  : value);
+  unsigned int sign = 1u << (bits - 1);
+  return ((value & (sign + sign - 1)) ^ sign) - sign;
 }
 
 static void
@@ -343,9 +347,7 @@ flip_bytes (char *ptr, int count)
 }
 
 /* Given a character C, does it represent a general addressing mode?  */
-#define Is_gen(c) \
-  ((c) == 'F' || (c) == 'L' || (c) == 'B' \
-   || (c) == 'W' || (c) == 'D' || (c) == 'A' || (c) == 'I' || (c) == 'Z')
+#define Is_gen(c) (strchr ("FLBWDAIZf", (c)) != NULL)
 
 /* Adressing modes.  */
 #define Adrmod_index_byte        0x1c
@@ -804,9 +806,10 @@ print_insn_ns32k (bfd_vma memaddr, disassemble_info *info)
 	 if we are using scaled indexed addressing mode, since the index
 	 bytes occur right after the basic instruction, not as part
 	 of the addressing extension.  */
-      if (Is_gen(d[1]))
+      if (Is_gen (d[1]))
 	{
-	  int addr_mode = bit_extract (buffer, ioffset - 5, 5);
+	  int bitoff = d[1] == 'f' ? 10 : 5;
+	  int addr_mode = bit_extract (buffer, ioffset - bitoff, 5);
 
 	  if (Adrmod_is_index (addr_mode))
 	    {
@@ -815,7 +818,7 @@ print_insn_ns32k (bfd_vma memaddr, disassemble_info *info)
 	    }
 	}
 
-      if (d[2] && Is_gen(d[3]))
+      if (d[2] && Is_gen (d[3]))
 	{
 	  int addr_mode = bit_extract (buffer, ioffset - 10, 5);
 
@@ -836,8 +839,10 @@ print_insn_ns32k (bfd_vma memaddr, disassemble_info *info)
 				    memaddr, arg_bufs[argnum],
 				    index_offset[whicharg]);
 	  d++;
-	  whicharg++;
+	  if (whicharg++ >= 1)
+	    break;
 	}
+
       for (argnum = 0; argnum <= maxarg; argnum++)
 	{
 	  bfd_vma addr;

@@ -2,20 +2,15 @@
 # Loosely based on Steve Chamberlain's pe.sc.
 # All new mistakes should be credited to Kim Knuttila (krk@cygnus.com)
 #
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
 #
-# These are substituted in as variables in order to get '}' in a shell
-# conditional expansion.
-
-INIT='.init : { *(.init) }'
-FINI='.fini : { *(.fini) }'
 
 cat <<EOF
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -44,7 +39,7 @@ SECTIONS
   /* text - the usual meaning */
   .text ${RELOCATING+ __image_base__ + __section_alignment__ } :
 	{
-	    ${RELOCATING+ *(.init);}
+	    ${RELOCATING+ KEEP (*(SORT_NONE(.init)))}
 	    *(.text)
 	    ${RELOCATING+ *(.text.*)}
 	    *(.gcc_except_table)
@@ -52,7 +47,7 @@ SECTIONS
 			LONG (-1); *(.ctors); *(.ctor); LONG (0); }
 	    ${CONSTRUCTING+ ___DTOR_LIST__ = .; __DTOR_LIST__ = . ;
 			LONG (-1); *(.dtors); *(.dtor); LONG (0); }
-	    ${RELOCATING+ *(.fini);}
+	    ${RELOCATING+ KEEP (*(SORT_NONE(.fini)))}
 	    ${RELOCATING+ etext = .};
 	}
 

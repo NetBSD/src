@@ -1,5 +1,5 @@
 /* picoJava specific support for 32-bit ELF
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Contributed by Steve Chamberlan of Transmeta (sac@pobox.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -54,6 +54,7 @@ pj_elf_reloc (bfd *abfd,
     }
 
   if (symbol_in != NULL
+      && (symbol_in->flags & BSF_WEAK) == 0
       && bfd_is_und_section (symbol_in->section))
     return bfd_reloc_undefined;
 
@@ -335,12 +336,12 @@ pj_elf_info_to_howto (bfd *abfd,
 /* Take this moment to fill in the special picoJava bits in the
    e_flags field.  */
 
-static void
-pj_elf_final_write_processing (bfd *abfd,
-			       bfd_boolean linker ATTRIBUTE_UNUSED)
+static bfd_boolean
+pj_elf_final_write_processing (bfd *abfd)
 {
   elf_elfheader (abfd)->e_flags |= EF_PICOJAVA_ARCH;
   elf_elfheader (abfd)->e_flags |= EF_PICOJAVA_GNUCALLS;
+  return _bfd_elf_final_write_processing (abfd);
 }
 
 #define TARGET_BIG_SYM		pj_elf32_vec

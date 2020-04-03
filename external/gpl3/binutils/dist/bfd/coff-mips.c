@@ -1,5 +1,5 @@
 /* BFD back-end for MIPS Extended-Coff files.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -31,6 +31,9 @@
 #include "coff/mips.h"
 #include "libcoff.h"
 #include "libecoff.h"
+
+/* All users of this file have bfd_octets_per_byte (abfd, sec) == 1.  */
+#define OCTETS_PER_BYTE(ABFD, SEC) 1
 
 /* Prototypes for static functions.  */
 static bfd_reloc_status_type
@@ -484,13 +487,13 @@ mips_refhi_reloc (bfd *abfd ATTRIBUTE_UNUSED,
    relocation described above.  */
 
 static bfd_reloc_status_type
-mips_reflo_reloc (bfd *abfd ATTRIBUTE_UNUSED,
+mips_reflo_reloc (bfd *abfd,
 		  arelent *reloc_entry,
 		  asymbol *symbol,
 		  void * data,
 		  asection *input_section,
 		  bfd *output_bfd,
-		  char **error_message ATTRIBUTE_UNUSED)
+		  char **error_message)
 {
   if (mips_refhi_list != NULL)
     {
@@ -503,11 +506,12 @@ mips_reflo_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 	  unsigned long val;
 	  unsigned long vallo;
 	  struct mips_hi *next;
+	  bfd_size_type octets = (reloc_entry->address
+				  * OCTETS_PER_BYTE (abfd, input_section));
+	  bfd_byte *loc = (bfd_byte *) data + octets;
 
-	  if (! bfd_reloc_offset_in_range (reloc_entry->howto, abfd,
-					   input_section,
-					   reloc_entry->address
-					   * bfd_octets_per_byte (abfd)))
+	  if (!bfd_reloc_offset_in_range (reloc_entry->howto, abfd,
+					  input_section, octets))
 	    return bfd_reloc_outofrange;
 
 	  /* Do the REFHI relocation.  Note that we actually don't
@@ -515,8 +519,7 @@ mips_reflo_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 	     where to find the low 16 bits of the addend needed by the
 	     REFHI.  */
 	  insn = bfd_get_32 (abfd, l->addr);
-	  vallo = (bfd_get_32 (abfd, (bfd_byte *) data + reloc_entry->address)
-		   & 0xffff);
+	  vallo = bfd_get_32 (abfd, loc) & 0xffff;
 	  val = ((insn & 0xffff) << 16) + vallo;
 	  val += l->addend;
 
@@ -544,7 +547,7 @@ mips_reflo_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 
   /* Now do the REFLO reloc in the usual way.  */
   return mips_generic_reloc (abfd, reloc_entry, symbol, data,
-			      input_section, output_bfd, error_message);
+			     input_section, output_bfd, error_message);
 }
 
 /* Do a GPREL relocation.  This is a 16 bit value which must become
@@ -1012,8 +1015,7 @@ mips_relocate_section (bfd *output_bfd,
 
 		  /* Compute a new r_symndx value.  */
 		  s = h->root.u.def.section;
-		  name = bfd_get_section_name (output_bfd,
-					       s->output_section);
+		  name = bfd_section_name (s->output_section);
 
 		  int_rel.r_symndx = -1;
 		  switch (name[1])
@@ -1223,7 +1225,7 @@ mips_relocate_section (bfd *output_bfd,
 		if (int_rel.r_extern)
 		  name = NULL;
 		else
-		  name = bfd_section_name (input_bfd, s);
+		  name = bfd_section_name (s);
 		(*info->callbacks->reloc_overflow)
 		  (info, (h ? &h->root : NULL), name, howto->name,
 		   (bfd_vma) 0, input_bfd, input_section,
@@ -1416,6 +1418,7 @@ static const struct ecoff_backend_data mips_ecoff_backend_data =
 #define _bfd_ecoff_bfd_merge_sections bfd_generic_merge_sections
 
 #define _bfd_ecoff_bfd_is_group_section bfd_generic_is_group_section
+#define _bfd_ecoff_bfd_group_name bfd_generic_group_name
 #define _bfd_ecoff_bfd_discard_group bfd_generic_discard_group
 #define _bfd_ecoff_section_already_linked \
   _bfd_coff_section_already_linked

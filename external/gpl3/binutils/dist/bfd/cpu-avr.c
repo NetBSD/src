@@ -1,5 +1,5 @@
 /* BFD library support routines for the AVR architecture.
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -82,9 +82,9 @@ compatible (const bfd_arch_info_type * a,
 
 #define N(addr_bits, machine, print, default, next)		\
 {								\
-  8,				/* 8 bits in a word.  */	\
-  addr_bits,			/* bits in an address.  */	\
-  8,				/* 8 bits in a byte.  */	\
+  8,				/* Bits in a word.  */		\
+  addr_bits,			/* Bits in an address.  */	\
+  8,				/* Bits in a byte.  */		\
   bfd_arch_avr,							\
   machine,			/* Machine number.  */		\
   "avr",			/* Architecture name.   */	\
@@ -94,7 +94,8 @@ compatible (const bfd_arch_info_type * a,
   compatible,							\
   bfd_default_scan,						\
   bfd_arch_default_fill,					\
-  next								\
+  next,								\
+  0 /* Maximum offset of a reloc from the start of an insn.  */	\
 }
 
 static const bfd_arch_info_type arch_info_struct[] =

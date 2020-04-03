@@ -1,5 +1,5 @@
 /* Print NFP instructions for objdump.
-   Copyright (C) 2017-2018 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
    Contributed by Francois H. Theron <francois.theron@netronome.com>
 
    This file is part of the GNU opcodes library.
@@ -1325,8 +1325,8 @@ nfp_me27_28_print_alu (uint64_t instr, unsigned int pred_cc,
     case 18:	
       do_close_bracket = 0;
       dinfo->fprintf_func (dinfo->stream, "crc_%s[",
-			   _BTST (instr, 3) ? "le" : "be");
-      if (!nfp_me27_28_crc_op[_BF (instr, 7, 5)])
+			   _BTST (srcA, 3) ? "le" : "be");
+      if (!nfp_me27_28_crc_op[_BF (srcA, 7, 5)])
 	{
 	  dinfo->fprintf_func (dinfo->stream, _(", <invalid CRC operator>, "));
 	  err = TRUE;
@@ -1334,7 +1334,7 @@ nfp_me27_28_print_alu (uint64_t instr, unsigned int pred_cc,
       else
 	{
 	  dinfo->fprintf_func (dinfo->stream, "%s, ",
-			       nfp_me27_28_crc_op[_BF (instr, 7, 5)]);
+			       nfp_me27_28_crc_op[_BF (srcA, 7, 5)]);
 	}
 
       /* Dest operand.  */
@@ -1351,10 +1351,10 @@ nfp_me27_28_print_alu (uint64_t instr, unsigned int pred_cc,
 					 num_ctx, src_lmext, dinfo);
 
       dinfo->fprintf_func (dinfo->stream, "]");
-      if (_BF (instr, 2, 0))
+      if (_BF (srcA, 2, 0))
 	dinfo->fprintf_func (dinfo->stream, ", %s",
-			     nfp_me27_28_crc_bytes[_BF (instr, 2, 0)]);
-      if (_BTST (instr, 4))
+			     nfp_me27_28_crc_bytes[_BF (srcA, 2, 0)]);
+      if (_BTST (srcA, 4))
 	dinfo->fprintf_func (dinfo->stream, ", bit_swap");
       break;
 

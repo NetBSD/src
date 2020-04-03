@@ -45,18 +45,17 @@ output from this option can also be restricted by the use of the
 @item k
 @itemx =links
 Displays the contents of the @samp{.gnu_debuglink} and/or
-@samp{.gnu_debugaltlink} sections.  Also displays the link to a
-separate dwarf object file (dwo), if one is specified by the 
+@samp{.gnu_debugaltlink} sections.  Also displays any links to
+separate dwarf object files (dwo), if they are specified by the 
 DW_AT_GNU_dwo_name or DW_AT_dwo_name attributes in the
 @samp{.debug_info} section.
 
 @item K
 @itemx =follow-links
 Display the contents of any selected debug sections that are found in
-a linked, separate debug info file.  This can result in multiple
-versions of the same debug section being displayed if both the main
-file and the separate debug info file contain sections with the same
-name.
+linked, separate debug info file(s).  This can result in multiple
+versions of the same debug section being displayed if it exists in
+more than one file.
 
 In addition, when displaying DWARF attributes, if a form is found that
 references the separate debug info file, then the referenced contents

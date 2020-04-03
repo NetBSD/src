@@ -1,5 +1,5 @@
 /* BFD library support routines for MMIX.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson (hp@bitrange.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -25,19 +25,20 @@
 
 const bfd_arch_info_type
 bfd_mmix_arch =
- {
-   64,				/* 64 bits in a word.  */
-   64,				/* 64 bits in an address.  */
-   8,				/* 8 bits in a byte.  */
-   bfd_arch_mmix,		/* Architecture.  */
-   0,				/* Machine number - 0 for now.  */
-   /* Sorry, these are by custom and creeping assumption lower-case.  */
-   "mmix",			/* Architecture name.  */
-   "mmix",			/* Printable name.  */
-   3,				/* Section align power.  */
-   TRUE,			/* This is the default architecture.  */
-   bfd_default_compatible,	/* Architecture comparison function.  */
-   bfd_default_scan,		/* String to architecture conversion.  */
-   bfd_arch_default_fill,	/* Default fill.  */
-   NULL				/* Next in list.  */
+{
+  64,				/* Bits in a word.  */
+  64,				/* Bits in an address.  */
+  8,				/* Bits in a byte.  */
+  bfd_arch_mmix,		/* Architecture number.  */
+  0,				/* Machine number - 0 for now.  */
+  /* Sorry, these are by custom and creeping assumption lower-case.  */
+  "mmix",			/* Architecture name.  */
+  "mmix",			/* Printable name.  */
+  3,				/* Section align power.  */
+  TRUE,			/* This is the default architecture.  */
+  bfd_default_compatible,	/* Architecture comparison function.  */
+  bfd_default_scan,		/* String to architecture conversion.  */
+  bfd_arch_default_fill,	/* Default fill.  */
+  NULL,				/* Next in list.  */
+  0 /* Maximum offset of a reloc from the start of an insn.  */
 };

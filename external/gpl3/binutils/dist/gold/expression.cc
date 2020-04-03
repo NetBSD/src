@@ -1,6 +1,6 @@
 // expression.cc -- expressions in linker scripts for gold
 
-// Copyright (C) 2006-2018 Free Software Foundation, Inc.
+// Copyright (C) 2006-2020 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -596,7 +596,7 @@ class Trinary_expression : public Expression
 	     Output_section** section_pointer,
 	     uint64_t* alignment_pointer) const
   {
-    return this->arg1_->eval_maybe_dot(eei->symtab, eei->layout,
+    return this->arg2_->eval_maybe_dot(eei->symtab, eei->layout,
 				       eei->check_assertions,
 				       eei->is_dot_available,
 				       eei->dot_value,
@@ -615,7 +615,7 @@ class Trinary_expression : public Expression
 	     Output_section** section_pointer,
 	     uint64_t* alignment_pointer) const
   {
-    return this->arg1_->eval_maybe_dot(eei->symtab, eei->layout,
+    return this->arg3_->eval_maybe_dot(eei->symtab, eei->layout,
 				       eei->check_assertions,
 				       eei->is_dot_available,
 				       eei->dot_value,

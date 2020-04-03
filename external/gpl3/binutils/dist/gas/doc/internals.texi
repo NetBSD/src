@@ -1,5 +1,5 @@
 \input texinfo
-@c  Copyright (C) 1991-2018 Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2020 Free Software Foundation, Inc.
 @setfilename internals.info
 @node Top
 @top Assembler Internals
@@ -41,11 +41,10 @@ This section describes some fundamental GAS data types.
 @cindex symbolS structure
 
 The definition for the symbol structure, @code{symbolS}, is located in
-@file{struc-symbol.h}.
+@file{symbols.c}.
 
-In general, the fields of this structure may not be referred to directly.
+The fields of this structure may not be referred to directly.
 Instead, you must use one of the accessor functions defined in @file{symbol.h}.
-These accessor functions should work for any GAS version.
 
 Symbol structures contain the following fields:
 
@@ -397,12 +396,6 @@ structures and use the accessor functions.  The accessor functions correctly
 deal with local symbols.  @code{struct local_symbol} is much smaller than
 @code{symbolS} (which also automatically creates a bfd @code{asymbol}
 structure), so this saves space when assembling large files.
-
-The first field of @code{symbolS} is @code{bsym}, the pointer to the BFD
-symbol.  The first field of @code{struct local_symbol} is a pointer which is
-always set to NULL.  This is how the symbol accessor functions can distinguish
-local symbols from ordinary symbols.  The symbol accessor functions
-automatically convert a local symbol into an ordinary symbol when necessary.
 
 @node Expressions
 @subsection Expressions
@@ -1125,10 +1118,11 @@ These fields are defined with the @code{TC_FIX_TYPE} macro.
 A C statement to output target specific debugging information for
 fixup @var{fixp} to @var{stream}.  This macro is called by @code{print_fixup}.
 
-@item TC_FRAG_INIT (@var{fragp})
+@item TC_FRAG_INIT (@var{fragp}, @var{max_bytes})
 @cindex TC_FRAG_INIT
-A C statement to initialize the target specific fields of frag @var{fragp}.
-These fields are defined with the @code{TC_FRAG_TYPE} macro.
+A C statement to initialize the target specific fields of frag @var{fragp}
+with maximum number of bytes @var{max_bytes}.  These fields are defined
+with the @code{TC_FRAG_TYPE} macro.
 
 @item md_number_to_chars
 @cindex md_number_to_chars
@@ -1216,6 +1210,11 @@ If you do not define @code{md_relax_frag}, you may define
 machine independent code knows how to use such a table to relax PC relative
 references.  See @file{tc-m68k.c} for an example.  @xref{Relaxation}.
 
+@item md_generic_table_relax_frag
+@cindex md_generic_table_relax_frag
+If defined, it is a C statement that is invoked, instead of
+the default implementation, to scan @code{TC_GENERIC_RELAX_TABLE}.
+
 @item md_prepare_relax_scan
 @cindex md_prepare_relax_scan
 If defined, it is a C statement that is invoked prior to scanning
@@ -1224,7 +1223,7 @@ the relax table.
 @item LINKER_RELAXING_SHRINKS_ONLY
 @cindex LINKER_RELAXING_SHRINKS_ONLY
 If you define this macro, and the global variable @samp{linkrelax} is set
-(because of a command line option, or unconditionally in @code{md_begin}), a
+(because of a command-line option, or unconditionally in @code{md_begin}), a
 @samp{.align} directive will cause extra space to be allocated.  The linker can
 then discard this space when relaxing the section.
 
@@ -1588,7 +1587,7 @@ if it is necessary to add object file format specific code to the CPU file.
 
 @item obj_begin
 If you define this macro, GAS will call it at the start of the assembly, after
-the command line arguments have been parsed and all the machine independent
+the command-line arguments have been parsed and all the machine independent
 initializations have been completed.
 
 @item obj_app_file

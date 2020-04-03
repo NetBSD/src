@@ -1,5 +1,5 @@
 /* tc-score.h -- Score specific file for assembler
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
    Contributed by:
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -62,7 +62,7 @@ struct score_tc_frag_data
 
 #define TC_FRAG_TYPE struct score_tc_frag_data
 
-#define TC_FRAG_INIT(FRAGP) \
+#define TC_FRAG_INIT(FRAGP, MAX_BYTES) \
   do \
     { \
       (FRAGP)->tc_frag_data.is_insn = (((FRAGP)->fr_type == rs_machine_dependent) ? 1 : 0); \

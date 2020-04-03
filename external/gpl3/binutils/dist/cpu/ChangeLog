@@ -1,10 +1,190 @@
-2018-07-18  Nick Clifton  <nickc@redhat.com>
+2020-02-01  Nick Clifton  <nickc@redhat.com>
 
-	2.31.1 Release point.
+	Binutils 2.34 release.
 
-2018-07-14  Nick Clifton  <nickc@redhat.com>
+2020-01-18  Nick Clifton  <nickc@redhat.com>
 
-	2.31 Release point.
+	Binutils 2.34 branch created.
+
+2020-01-13  Alan Modra  <amodra@gmail.com>
+
+	* fr30.cpu (f-disp9, f-disp10, f-s10, f-rel9, f-rel12): Don't
+	left shift signed values.
+
+2020-01-06  Alan Modra  <amodra@gmail.com>
+
+	* m32c.cpu (f-dsp-8-u16, f-dsp-8-s16): Rearrange to mask any sign
+	bits before shifting rather than masking after shifting.
+	(f-dsp-16-u16, f-dsp-16-s16, f-dsp-32-u16, f-dsp-32-s16): Likewise.
+	(f-dsp-40-u16, f-dsp-40-s16, f-dsp-48-u16, f-dsp-48-s16): Likewise.
+	(f-dsp-64-u16, f-dsp-8-s24): Likewise.
+	(f-bitbase32-16-s19-unprefixed): Avoid signed left shift.
+
+2020-01-04  Alan Modra  <amodra@gmail.com>
+
+	* m32r.cpu (f-disp8): Avoid left shift of negative values.
+	(f-disp16, f-disp24): Likewise.
+
+2019-12-23  Alan Modra  <amodra@gmail.com>
+
+	* iq2000.cpu (f-offset): Avoid left shift of negative values.
+
+2019-12-20  Alan Modra  <amodra@gmail.com>
+
+	* or1korbis.cpu (f-disp26, f-disp21): Don't left shift negative values.
+
+2019-12-17  Alan Modra  <amodra@gmail.com>
+
+	* bpf.cpu (f-imm64): Avoid signed overflow.
+
+2019-12-16  Alan Modra  <amodra@gmail.com>
+
+	* xstormy16.cpu (f-rel12a): Avoid signed overflow.
+
+2019-12-11  Alan Modra  <amodra@gmail.com>
+
+	* epiphany.cpu (f-sdisp11): Don't sign extend with shifts.
+	* lm32.cpu (f-branch, f-vall): Likewise.
+	* m32.cpu (f-lab-8-16): Likewise.
+
+2019-12-11  Alan Modra  <amodra@gmail.com>
+
+	* epiphany.cpu (f-simm8, f-simm24): Use multiply rather than
+	shift left to avoid UB on left shift of negative values.
+
+2019-11-20  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu: Fix comment describing the 128-bit instruction format.
+
+2019-09-09  Phil Blundell  <pb@pbcl.net>
+
+	binutils 2.33 branch created.
+
+2019-07-19  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu (h-gpr): when disassembling, use %r0 and %r6 instead of
+	%a and %ctx.
+
+2019-07-15  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu (dlabs): New pmacro.
+	(dlind): Likewise.
+
+2019-07-14  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu (dlsi): ldabs and ldind instructions do not take an
+	explicit 'dst' argument.
+
+2019-06-13  Stafford Horne  <shorne@gmail.com>
+
+	* or1korfpx.cpu (float-setflag-insn-base): Add 'sf' to symbol.
+
+2019-06-13  Stafford Horne  <shorne@gmail.com>
+
+	* or1k.cpu (or64nd, or32nd, or1200nd): Update comment.a
+	(l-adrp): Improve comment.
+
+2019-06-13  Stafford Horne  <shorne@gmail.com>
+
+	* or1korfpx.cpu (insn-opcode-float-regreg): Add SFUEQ_S, SFUNE_S,
+	SFUGT_S, SFUGE_S, SFULT_S, SFULE_S, SFUN_S, SFUEQ_D, SFUNE_D, SFUGT_D,
+	SFUGE_D, SFULT_D, SFULE_D, SFUN_D opcodes.
+	(float-setflag-insn-base): New pmacro based on float-setflag-insn.
+	(float-setflag-symantics, float-setflag-unordered-cmp-symantics,
+	float-setflag-unordered-symantics): New pmacro for instruction
+	symantics.
+	(float-setflag-insn): Update to use float-setflag-insn-base.
+	(float-setflag-unordered-insn): New pmacro for generating instructions.
+
+2019-06-13  Andrey Bacherov  <avbacherov@opencores.org>
+	    Stafford Horne  <shorne@gmail.com>
+
+	* or1k.cpu (ORFPX64A32-MACHS): New pmacro.
+	(ORFPX-MACHS): Removed pmacro.
+	* or1k.opc (or1k_cgen_insn_supported): New function.
+	(CGEN_VALIDATE_INSN_SUPPORTED): Define macro.
+	(parse_regpair, print_regpair): New functions.
+	* or1kcommon.cpu (h-spr, spr-shift, spr-address, h-gpr): Reorder
+	and add comments.
+	(h-fdr): Update comment to indicate or64.
+	(reg-pair-reg-lo, reg-pair-reg-hi): New pmacros for register pairs.
+	(h-fd32r): New hardware for 64-bit fpu registers.
+	(h-i64r): New hardware for 64-bit int registers.
+	* or1korbis.cpu (f-resv-8-1): New field.
+	* or1korfpx.cpu (rDSF, rASF, rBSF): Update attribute to ORFPX32-MACHS.
+	(rDDF, rADF, rBDF): Update operand comment to indicate or64.
+	(f-rdoff-10-1, f-raoff-9-1, f-rboff-8-1): New fields.
+	(h-roff1): New hardware.
+	(double-field-and-ops mnemonic): New pmacro to generate operations
+	rDD32F, rAD32F, rBD32F, rDDI and rADI.
+	(float-regreg-insn): Update single precision generator to MACH
+	ORFPX32-MACHS.  Add generator for or32 64-bit instructions.
+	(float-setflag-insn): Update single precision generator to MACH
+	ORFPX32-MACHS.  Fix double instructions from single to double
+	precision.  Add generator for or32 64-bit instructions.
+	(float-cust-insn cust-num): Update single precision generator to MACH
+	ORFPX32-MACHS.  Add generator for or32 64-bit instructions.
+	(lf-rem-s, lf-itof-s, lf-ftoi-s, lf-madd-s): Update MACH to
+	ORFPX32-MACHS.
+	(lf-rem-d): Fix operation from mod to rem.
+	(lf-rem-d32, lf-itof-d32, lf-ftoi-d32, lf-madd-d32): New instruction.
+	(lf-itof-d): Fix operands from single to double.
+	(lf-ftoi-d): Update operand mode from DI to WI.
+
+2019-05-23  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu: New file.
+	* bpf.opc: Likewise.
+
+2018-06-24  Nick Clifton  <nickc@redhat.com>
+
+	2.32 branch created.
+
+2018-10-05  Richard Henderson  <rth@twiddle.net>
+	    Stafford Horne  <shorne@gmail.com>
+
+	* or1korbis.cpu (insn-opcode-mac): Add opcodes for MACU and MSBU.
+	(insn-opcode-alu-regreg): Add opcodes for MULD and MULDU.
+	(l-mul): Fix overflow support and indentation.
+	(l-mulu): Fix overflow support and indentation.
+	(l-muld, l-muldu, l-msbu, l-macu): New instructions.
+	(l-div); Remove incorrect carry behavior.
+	(l-divu): Fix carry and overflow behavior.
+	(l-mac): Add overflow support.
+	(l-msb, l-msbu): Add carry and overflow support.
+
+2018-10-05  Richard Henderson  <rth@twiddle.net>
+
+	* or1k.opc (parse_disp26): Add support for plta() relocations.
+	(parse_disp21): New function.
+	(or1k_rclass): New enum.
+	(or1k_rtype): New enum.
+	(or1k_imm16_relocs): Define new PO and SPO relocation mappings.
+	(parse_reloc): Add new po(), gotpo() and gottppo() for LO13 relocations.
+	(parse_imm16): Add support for the new 21bit and 13bit relocations.
+	* or1korbis.cpu (f-disp26): Don't assume SI.
+	(f-disp21): New pc-relative 21-bit 13 shifted to right.
+	(insn-opcode): Add ADRP.
+	(l-adrp): New instruction.
+
+2018-10-05  Richard Henderson  <rth@twiddle.net>
+
+	* or1k.opc: Add RTYPE_ enum.
+	(INVALID_STORE_RELOC): New string.
+	(or1k_imm16_relocs): New array array.
+	(parse_reloc): New static function that just does the parsing.
+	(parse_imm16): New static function for generic parsing.
+	(parse_simm16): Change to just call parse_imm16.
+	(parse_simm16_split): New function.
+	(parse_uimm16): Change to call parse_imm16.
+	(parse_uimm16_split): New function.
+	* or1korbis.cpu (simm16-split): Change to use new simm16_split.
+	(uimm16-split): Change to use new uimm16_split.
+
+2018-07-24  Alan Modra  <amodra@gmail.com>
+
+	PR 23430
+	* or1kcommon.cpu (spr-reg-indices): Fix description typo.
 
 2018-05-09  Sebastian Rasmussen  <sebras@gmail.com>
 

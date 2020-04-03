@@ -1,5 +1,5 @@
 /* Imagination Technologies Meta opcode table.
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This file is part of GDB and GAS.

@@ -1,6 +1,6 @@
 /* Test plugin for the GNU linker.  Check non-object IR file and calling
    release_input_file from onclaim_file.
-   Copyright (C) 2015-2018 Free Software Foundation, Inc.
+   Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 

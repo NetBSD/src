@@ -1,5 +1,5 @@
 /* bfd back-end for TMS320C[34]x support
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    Contributed by Michael Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -45,39 +45,26 @@ tic4x_scan (const struct bfd_arch_info *info,
   return FALSE;
 }
 
+#define N(NUMBER, NAME, PRINT, DEFAULT, NEXT)		\
+  {							\
+    32,        /* Bits in a word.  */			\
+    32,        /* Bits in an address.  */		\
+    32,	       /* Bits in a byte.  */			\
+    bfd_arch_tic4x,					\
+    NUMBER,						\
+    NAME,						\
+    PRINT,						\
+    0,		/* Section alignment power.  */		\
+    DEFAULT,						\
+    bfd_default_compatible,				\
+    tic4x_scan,						\
+    bfd_arch_default_fill,				\
+    NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
+  }
 
 const bfd_arch_info_type bfd_tic3x_arch =
-  {
-    32,				/* 32 bits in a word.  */
-    32,				/* 32 bits in an address.  */
-    32,				/* 32 bits in a byte.  */
-    bfd_arch_tic4x,
-    bfd_mach_tic3x,		/* Machine number.  */
-    "tic3x",			/* Architecture name.  */
-    "tms320c3x",		/* Printable name.  */
-    0,				/* Alignment power.  */
-    FALSE,			/* Not the default architecture.  */
-    bfd_default_compatible,
-    tic4x_scan,
-    bfd_arch_default_fill,
-    0
-  };
+  N (bfd_mach_tic3x, "tic3x", "tms320c3x", FALSE, NULL);
 
 const bfd_arch_info_type bfd_tic4x_arch =
-  {
-    32,				/* 32 bits in a word.  */
-    32,				/* 32 bits in an address.  */
-    32,				/* 32 bits in a byte.  */
-    bfd_arch_tic4x,
-    bfd_mach_tic4x,		/* Machine number.  */
-    "tic4x",			/* Architecture name.  */
-    "tms320c4x",		/* Printable name.  */
-    0,				/* Alignment power.  */
-    TRUE,			/* The default architecture.  */
-    bfd_default_compatible,
-    tic4x_scan,
-    bfd_arch_default_fill,
-    &bfd_tic3x_arch,
-  };
-
-
+  N (bfd_mach_tic4x, "tic4x", "tms320c4x", TRUE, &bfd_tic3x_arch);

@@ -1,5 +1,5 @@
 /* sysdep.h -- handle host dependencies for the BFD library
-   Copyright (C) 1995-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -28,15 +28,12 @@
 
 #include "config.h"
 
-#include "ansidecl.h"
-
 #ifdef HAVE_STDDEF_H
 #include <stddef.h>
 #endif
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #include <errno.h>
 #if !(defined(errno) || defined(_MSC_VER) && defined(_INC_ERRNO))
@@ -190,7 +187,7 @@ size_t strnlen (const char *, size_t);
 
    This is because the code in this directory is used to build a
    library which will be linked with code in other directories to form
-   programs.  We want to maintain a seperate translation file for this
+   programs.  We want to maintain a separate translation file for this
    directory however, rather than being forced to merge it with that
    of any program linked to libbfd.  This is a library, so it cannot
    depend on the catalog currently loaded.

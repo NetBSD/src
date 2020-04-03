@@ -1,5 +1,5 @@
 /* opncls.c -- open and close a BFD.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -223,6 +223,8 @@ bfd_fopen (const char *filename, const char *target, const char *mode, int fd)
   if (nbfd->iostream == NULL)
     {
       bfd_set_error (bfd_error_system_call);
+      if (fd != -1)
+	close (fd);
       _bfd_delete_bfd (nbfd);
       return NULL;
     }
@@ -231,7 +233,13 @@ bfd_fopen (const char *filename, const char *target, const char *mode, int fd)
 
   /* PR 11983: Do not cache the original filename, but
      rather make a copy - the original might go away.  */
-  nbfd->filename = xstrdup (filename);
+  nbfd->filename = bfd_strdup (filename);
+  if (nbfd->filename == NULL)
+    {
+      fclose (nbfd->iostream);
+      _bfd_delete_bfd (nbfd);
+      return NULL;
+    }
 
   /* Figure out whether the user is opening the file for reading,
      writing, or both, by looking at the MODE argument.  */
@@ -243,8 +251,9 @@ bfd_fopen (const char *filename, const char *target, const char *mode, int fd)
   else
     nbfd->direction = write_direction;
 
-  if (! bfd_cache_init (nbfd))
+  if (!bfd_cache_init (nbfd))
     {
+      fclose (nbfd->iostream);
       _bfd_delete_bfd (nbfd);
       return NULL;
     }
@@ -398,7 +407,12 @@ bfd_openstreamr (const char *filename, const char *target, void *streamarg)
   nbfd->iostream = stream;
   /* PR 11983: Do not cache the original filename, but
      rather make a copy - the original might go away.  */
-  nbfd->filename = xstrdup (filename);
+  nbfd->filename = bfd_strdup (filename);
+  if (nbfd->filename == NULL)
+    {
+      _bfd_delete_bfd (nbfd);
+      return NULL;
+    }
   nbfd->direction = read_direction;
 
   if (! bfd_cache_init (nbfd))
@@ -594,7 +608,12 @@ bfd_openr_iovec (const char *filename, const char *target,
 
   /* PR 11983: Do not cache the original filename, but
      rather make a copy - the original might go away.  */
-  nbfd->filename = xstrdup (filename);
+  nbfd->filename = bfd_strdup (filename);
+  if (nbfd->filename == NULL)
+    {
+      _bfd_delete_bfd (nbfd);
+      return NULL;
+    }
   nbfd->direction = read_direction;
 
   /* `open_p (...)' would get expanded by an the open(2) syscall macro.  */
@@ -661,7 +680,12 @@ bfd_openw (const char *filename, const char *target)
 
   /* PR 11983: Do not cache the original filename, but
      rather make a copy - the original might go away.  */
-  nbfd->filename = xstrdup (filename);
+  nbfd->filename = bfd_strdup (filename);
+  if (nbfd->filename == NULL)
+    {
+      _bfd_delete_bfd (nbfd);
+      return NULL;
+    }
   nbfd->direction = write_direction;
 
   if (bfd_open_file (nbfd) == NULL)
@@ -801,7 +825,12 @@ bfd_create (const char *filename, bfd *templ)
     return NULL;
   /* PR 11983: Do not cache the original filename, but
      rather make a copy - the original might go away.  */
-  nbfd->filename = xstrdup (filename);
+  nbfd->filename = bfd_strdup (filename);
+  if (nbfd->filename == NULL)
+    {
+      _bfd_delete_bfd (nbfd);
+      return NULL;
+    }
   if (templ)
     nbfd->xvec = templ->xvec;
   nbfd->direction = no_direction;
@@ -1189,7 +1218,7 @@ bfd_get_debug_link_info_1 (bfd *abfd, void *crc32_out)
   if (sect == NULL)
     return NULL;
 
-  size = bfd_get_section_size (sect);
+  size = bfd_section_size (sect);
 
   /* PR 22794: Make sure that the section has a reasonable size.  */
   if (size < 8 || size >= bfd_get_size (abfd))
@@ -1279,7 +1308,7 @@ bfd_get_alt_debug_link_info (bfd * abfd, bfd_size_type *buildid_len,
   if (sect == NULL)
     return NULL;
 
-  size = bfd_get_section_size (sect);
+  size = bfd_section_size (sect);
   if (size < 8 || size >= bfd_get_size (abfd))
     return NULL;
 
@@ -1293,7 +1322,7 @@ bfd_get_alt_debug_link_info (bfd * abfd, bfd_size_type *buildid_len,
   /* BuildID value is stored after the filename.  */
   name = (char *) contents;
   buildid_offset = strnlen (name, size) + 1;
-  if (buildid_offset >= bfd_get_section_size (sect))
+  if (buildid_offset >= bfd_section_size (sect))
     return NULL;
 
   *buildid_len = size - buildid_offset;
@@ -1698,14 +1727,14 @@ bfd_create_gnu_debuglink_section (bfd *abfd, const char *filename)
   debuglink_size &= ~3;
   debuglink_size += 4;
 
-  if (! bfd_set_section_size (abfd, sect, debuglink_size))
+  if (!bfd_set_section_size (sect, debuglink_size))
     /* XXX Should we delete the section from the bfd ?  */
     return NULL;
 
   /* PR 21193: Ensure that the section has 4-byte alignment for the CRC.
      Note - despite the name of the function being called, we are
      setting an alignment power, not a byte alignment value.  */
-  bfd_set_section_alignment (abfd, sect, 2);
+  bfd_set_section_alignment (sect, 2);
 
   return sect;
 }
@@ -1843,7 +1872,7 @@ get_build_id (bfd *abfd)
       return NULL;
     }
 
-  size = bfd_get_section_size (sect);
+  size = bfd_section_size (sect);
   /* FIXME: Should we support smaller build-id notes ?  */
   if (size < 0x24)
     {
@@ -1861,7 +1890,7 @@ get_build_id (bfd *abfd)
   /* FIXME: Paranoia - allow for compressed build-id sections.
      Maybe we should complain if this size is different from
      the one obtained above...  */
-  size = bfd_get_section_size (sect);
+  size = bfd_section_size (sect);
   if (size < sizeof (Elf_External_Note))
     {
       bfd_set_error (bfd_error_invalid_operation);
@@ -2059,4 +2088,24 @@ bfd_follow_build_id_debuglink (bfd *abfd, const char *dir)
   return find_separate_debug_file (abfd, dir, FALSE,
 				   get_build_id_name,
 				   check_build_id_file, &build_id);
+}
+
+/*
+FUNCTION
+	bfd_set_filename
+
+SYNOPSIS
+	void bfd_set_filename (bfd *abfd, char *filename);
+
+DESCRIPTION
+	Set the filename of @var{abfd}.  The old filename, if any, is freed.
+	@var{filename} must be allocated using @code{xmalloc}.  After
+	this call, it is owned @var{abfd}.
+*/
+
+void
+bfd_set_filename (bfd *abfd, char *filename)
+{
+  free ((char *) abfd->filename);
+  abfd->filename = filename;
 }

@@ -1,5 +1,5 @@
 /* ldcref.c -- output a cross reference table
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -27,6 +27,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 #include "bfdlink.h"
+#include "ctf-api.h"
 #include "libiberty.h"
 #include "demangle.h"
 #include "objalloc.h"
@@ -574,7 +575,7 @@ check_nocrossref (struct cref_hash_entry *h, void *ignore ATTRIBUTE_UNUSED)
   defsec = hl->u.def.section->output_section;
   if (defsec == NULL)
     return TRUE;
-  defsecname = bfd_get_section_name (defsec->owner, defsec);
+  defsecname = bfd_section_name (defsec);
 
   for (ncrs = nocrossref_list; ncrs != NULL; ncrs = ncrs->next)
     for (ncr = ncrs->list; ncr != NULL; ncr = ncr->next)
@@ -658,10 +659,10 @@ check_reloc_refs (bfd *abfd, asection *sec, void *iarg)
   arelent **p, **pend;
 
   outsec = sec->output_section;
-  outsecname = bfd_get_section_name (outsec->owner, outsec);
+  outsecname = bfd_section_name (outsec);
 
   outdefsec = info->defsec->output_section;
-  outdefsecname = bfd_get_section_name (outdefsec->owner, outdefsec);
+  outdefsecname = bfd_section_name (outdefsec);
 
   /* The section where the symbol is defined is permitted.  */
   if (strcmp (outsecname, outdefsecname) == 0)
@@ -705,14 +706,14 @@ check_reloc_refs (bfd *abfd, asection *sec, void *iarg)
       if (q->sym_ptr_ptr != NULL
 	  && *q->sym_ptr_ptr != NULL
 	  && ((global
-	       && (bfd_is_und_section (bfd_get_section (*q->sym_ptr_ptr))
-		   || bfd_is_com_section (bfd_get_section (*q->sym_ptr_ptr))
+	       && (bfd_is_und_section (bfd_asymbol_section (*q->sym_ptr_ptr))
+		   || bfd_is_com_section (bfd_asymbol_section (*q->sym_ptr_ptr))
 		   || ((*q->sym_ptr_ptr)->flags & (BSF_GLOBAL
 						   | BSF_WEAK)) != 0))
 	      || (!global
 		  && ((*q->sym_ptr_ptr)->flags & (BSF_LOCAL
 						  | BSF_SECTION_SYM)) != 0
-		  && bfd_get_section (*q->sym_ptr_ptr) == info->defsec))
+		  && bfd_asymbol_section (*q->sym_ptr_ptr) == info->defsec))
 	  && (symname != NULL
 	      ? strcmp (bfd_asymbol_name (*q->sym_ptr_ptr), symname) == 0
 	      : ((*q->sym_ptr_ptr)->flags & BSF_SECTION_SYM) != 0))

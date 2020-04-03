@@ -1,5 +1,5 @@
 /* ARC-specific header file for PLT support.
-   Copyright (C) 2016-2018 Free Software Foundation, Inc.
+   Copyright (C) 2016-2020 Free Software Foundation, Inc.
    Contributed by Cupertino Miranda (cmiranda@synopsys.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -21,8 +21,6 @@
 
 #ifndef ARC_PLT_H
 #define ARC_PLT_H
-
-#include <stdint.h>
 
 /* Instructions appear in memory as a sequence of half-words (16 bit);
    individual half-words are represented on the target in target byte order.

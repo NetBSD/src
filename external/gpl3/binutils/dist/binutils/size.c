@@ -1,5 +1,5 @@
 /* size.c -- report size of various sections of an executable file.
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -46,8 +46,20 @@ static enum
   }
 radix = decimal;
 
-/* 0 means use AT&T-style output.  */
-static int berkeley_format = BSD_DEFAULT;
+/* Select the desired output format.  */
+enum output_format
+  {
+   FORMAT_BERKLEY,
+   FORMAT_SYSV,
+   FORMAT_GNU
+  };
+static enum output_format selected_output_format =
+#if BSD_DEFAULT
+  FORMAT_BERKLEY
+#else
+  FORMAT_SYSV
+#endif
+  ;
 
 static int show_version = 0;
 static int show_help = 0;
@@ -77,7 +89,7 @@ usage (FILE *stream, int status)
   fprintf (stream, _(" Displays the sizes of sections inside binary files\n"));
   fprintf (stream, _(" If no input file(s) are specified, a.out is assumed\n"));
   fprintf (stream, _(" The options are:\n\
-  -A|-B     --format={sysv|berkeley}  Select output style (default is %s)\n\
+  -A|-B|-G  --format={sysv|berkeley|gnu}  Select output style (default is %s)\n\
   -o|-d|-x  --radix={8|10|16}         Display numbers in octal, decimal or hex\n\
   -t        --totals                  Display the total sizes (Berkeley only)\n\
             --common                  Display total size for *COM* syms\n\
@@ -137,10 +149,11 @@ main (int argc, char **argv)
 
   expandargv (&argc, &argv);
 
-  bfd_init ();
+  if (bfd_init () != BFD_INIT_MAGIC)
+    fatal (_("fatal error: libbfd ABI mismatch"));
   set_default_bfd_target ();
 
-  while ((c = getopt_long (argc, argv, "ABHhVvdfotx", long_options,
+  while ((c = getopt_long (argc, argv, "ABGHhVvdfotx", long_options,
 			   (int *) 0)) != EOF)
     switch (c)
       {
@@ -149,11 +162,15 @@ main (int argc, char **argv)
 	  {
 	  case 'B':
 	  case 'b':
-	    berkeley_format = 1;
+	    selected_output_format = FORMAT_BERKLEY;
 	    break;
 	  case 'S':
 	  case 's':
-	    berkeley_format = 0;
+	    selected_output_format = FORMAT_SYSV;
+	    break;
+	  case 'G':
+	  case 'g':
+	    selected_output_format = FORMAT_GNU;
 	    break;
 	  default:
 	    non_fatal (_("invalid argument to --format: %s"), optarg);
@@ -189,10 +206,13 @@ main (int argc, char **argv)
 	break;
 
       case 'A':
-	berkeley_format = 0;
+	selected_output_format = FORMAT_SYSV;
 	break;
       case 'B':
-	berkeley_format = 1;
+	selected_output_format = FORMAT_BERKLEY;
+	break;
+      case 'G':
+	selected_output_format = FORMAT_GNU;
 	break;
       case 'v':
       case 'V':
@@ -239,17 +259,25 @@ main (int argc, char **argv)
     for (; optind < argc;)
       display_file (argv[optind++]);
 
-  if (show_totals && berkeley_format)
+  if (show_totals && (selected_output_format == FORMAT_BERKLEY
+		      || selected_output_format == FORMAT_GNU))
     {
       bfd_size_type total = total_textsize + total_datasize + total_bsssize;
+      int col_width = (selected_output_format == FORMAT_BERKLEY) ? 7 : 10;
+      char sep_char = (selected_output_format == FORMAT_BERKLEY) ? '\t' : ' ';
 
-      rprint_number (7, total_textsize);
-      putchar('\t');
-      rprint_number (7, total_datasize);
-      putchar('\t');
-      rprint_number (7, total_bsssize);
-      printf (((radix == octal) ? "\t%7lo\t%7lx\t" : "\t%7lu\t%7lx\t"),
-	      (unsigned long) total, (unsigned long) total);
+      rprint_number (col_width, total_textsize);
+      putchar(sep_char);
+      rprint_number (col_width, total_datasize);
+      putchar(sep_char);
+      rprint_number (col_width, total_bsssize);
+      putchar(sep_char);
+      if (selected_output_format == FORMAT_BERKLEY)
+	printf (((radix == octal) ? "%7lo\t%7lx" : "%7lu\t%7lx"),
+		(unsigned long) total, (unsigned long) total);
+      else
+	rprint_number (col_width, total);
+      putchar(sep_char);
       fputs ("(TOTALS)\n", stdout);
     }
 
@@ -444,18 +472,20 @@ static bfd_size_type datasize;
 static bfd_size_type textsize;
 
 static void
-berkeley_sum (bfd *abfd ATTRIBUTE_UNUSED, sec_ptr sec,
-	      void *ignore ATTRIBUTE_UNUSED)
+berkeley_or_gnu_sum (bfd *abfd ATTRIBUTE_UNUSED, sec_ptr sec,
+		     void *ignore ATTRIBUTE_UNUSED)
 {
   flagword flags;
   bfd_size_type size;
 
-  flags = bfd_get_section_flags (abfd, sec);
+  flags = bfd_section_flags (sec);
   if ((flags & SEC_ALLOC) == 0)
     return;
 
-  size = bfd_get_section_size (sec);
-  if ((flags & SEC_CODE) != 0 || (flags & SEC_READONLY) != 0)
+  size = bfd_section_size (sec);
+  if ((flags & SEC_CODE) != 0
+      || (selected_output_format == FORMAT_BERKLEY
+	  && (flags & SEC_READONLY) != 0))
     textsize += size;
   else if ((flags & SEC_HAS_CONTENTS) != 0)
     datasize += size;
@@ -464,21 +494,28 @@ berkeley_sum (bfd *abfd ATTRIBUTE_UNUSED, sec_ptr sec,
 }
 
 static void
-print_berkeley_format (bfd *abfd)
+print_berkeley_or_gnu_format (bfd *abfd)
 {
   static int files_seen = 0;
   bfd_size_type total;
+  int col_width = (selected_output_format == FORMAT_BERKLEY) ? 7 : 10;
+  char sep_char = (selected_output_format == FORMAT_BERKLEY) ? '\t' : ' ';
 
   bsssize = 0;
   datasize = 0;
   textsize = 0;
 
-  bfd_map_over_sections (abfd, berkeley_sum, NULL);
+  bfd_map_over_sections (abfd, berkeley_or_gnu_sum, NULL);
 
   bsssize += common_size;
   if (files_seen++ == 0)
-    puts ((radix == octal) ? "   text\t   data\t    bss\t    oct\t    hex\tfilename" :
-	  "   text\t   data\t    bss\t    dec\t    hex\tfilename");
+    {
+      if (selected_output_format == FORMAT_BERKLEY)
+	puts ((radix == octal) ? "   text\t   data\t    bss\t    oct\t    hex\tfilename" :
+	      "   text\t   data\t    bss\t    dec\t    hex\tfilename");
+      else
+	puts ("      text       data        bss      total filename");
+    }
 
   total = textsize + datasize + bsssize;
 
@@ -489,14 +526,20 @@ print_berkeley_format (bfd *abfd)
       total_bsssize  += bsssize;
     }
 
-  rprint_number (7, textsize);
-  putchar ('\t');
-  rprint_number (7, datasize);
-  putchar ('\t');
-  rprint_number (7, bsssize);
-  printf (((radix == octal) ? "\t%7lo\t%7lx\t" : "\t%7lu\t%7lx\t"),
-	  (unsigned long) total, (unsigned long) total);
+  rprint_number (col_width, textsize);
+  putchar (sep_char);
+  rprint_number (col_width, datasize);
+  putchar (sep_char);
+  rprint_number (col_width, bsssize);
+  putchar (sep_char);
 
+  if (selected_output_format == FORMAT_BERKLEY)
+    printf (((radix == octal) ? "%7lo\t%7lx" : "%7lu\t%7lx"),
+	    (unsigned long) total, (unsigned long) total);
+  else
+    rprint_number (col_width, total);
+
+  putchar (sep_char);
   fputs (bfd_get_filename (abfd), stdout);
 
   if (abfd->my_archive)
@@ -514,21 +557,25 @@ static void
 sysv_internal_sizer (bfd *file ATTRIBUTE_UNUSED, sec_ptr sec,
 		     void *ignore ATTRIBUTE_UNUSED)
 {
-  bfd_size_type size = bfd_section_size (file, sec);
+  flagword flags = bfd_section_flags (sec);
+  /* Exclude sections with no flags set.  This is to omit som spaces.  */
+  if (flags == 0)
+    return;
 
   if (   ! bfd_is_abs_section (sec)
       && ! bfd_is_com_section (sec)
       && ! bfd_is_und_section (sec))
     {
-      int namelen = strlen (bfd_section_name (file, sec));
+      bfd_size_type size = bfd_section_size (sec);
+      int namelen = strlen (bfd_section_name (sec));
 
       if (namelen > svi_namelen)
 	svi_namelen = namelen;
 
       svi_total += size;
 
-      if (bfd_section_vma (file, sec) > svi_maxvma)
-	svi_maxvma = bfd_section_vma (file, sec);
+      if (bfd_section_vma (sec) > svi_maxvma)
+	svi_maxvma = bfd_section_vma (sec);
     }
 }
 
@@ -546,17 +593,21 @@ static void
 sysv_internal_printer (bfd *file ATTRIBUTE_UNUSED, sec_ptr sec,
 		       void *ignore ATTRIBUTE_UNUSED)
 {
-  bfd_size_type size = bfd_section_size (file, sec);
+  flagword flags = bfd_section_flags (sec);
+  if (flags == 0)
+    return;
 
   if (   ! bfd_is_abs_section (sec)
       && ! bfd_is_com_section (sec)
       && ! bfd_is_und_section (sec))
     {
+      bfd_size_type size = bfd_section_size (sec);
+
       svi_total += size;
 
-      sysv_one_line (bfd_section_name (file, sec),
+      sysv_one_line (bfd_section_name (sec),
 		     size,
-		     bfd_section_vma (file, sec));
+		     bfd_section_vma (sec));
     }
 }
 
@@ -610,8 +661,8 @@ print_sizes (bfd *file)
 {
   if (show_common)
     calculate_common_size (file);
-  if (berkeley_format)
-    print_berkeley_format (file);
-  else
+  if (selected_output_format == FORMAT_SYSV)
     print_sysv_format (file);
+  else
+    print_berkeley_or_gnu_format (file);
 }

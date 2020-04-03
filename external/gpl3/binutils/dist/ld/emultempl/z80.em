@@ -1,7 +1,7 @@
 # This shell script emits C code -*- C -*-
 # to keep track of the machine type of Z80 object files
 # It does some substitutions.
-#   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 # This file is part of the GNU Binutils.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -27,11 +27,16 @@ fragment <<EOF
 /* --- \begin{z80.em} */
 /* Codes for machine types, bitwise or gives the code to use for the
    output.  */
-#define M_Z80STRICT 1
-#define M_Z80 3
-#define M_Z80FULL 7
-#define M_R800 11
-#define M_Z80ANY 15
+#define M_Z80STRICT 0x01
+#define M_Z80       0x03
+#define M_Z80FULL   0x07
+#define M_R800      0x10
+#define M_Z80ANY    0x0f
+#define M_GBZ80     0x20
+#define M_Z180      0x40
+#define M_EZ80_Z80  0x80
+#define M_EZ80_ADL  0x100
+#define M_ARCH_MASK 0xFF0
 
 /* Bitwise or of the machine types seen so far.  */
 static int result_mach_type;
@@ -42,7 +47,7 @@ ${LDEMUL_BEFORE_PARSE} (void)
 #ifndef TARGET_			/* I.e., if not generic.  */
   ldfile_set_output_arch ("`echo ${ARCH}`", bfd_arch_unknown);
 #endif /* not TARGET_ */
-  result_mach_type = M_Z80STRICT;
+  result_mach_type = 0;
 }
 
 
@@ -67,7 +72,20 @@ ${LDEMUL_RECOGNIZED_FILE} (lang_input_statement_type *entry)
     case bfd_mach_r800:
       result_mach_type |= M_R800;
       break;
+    case bfd_mach_gbz80:
+      result_mach_type |= M_GBZ80;
+      break;
+    case bfd_mach_z180:
+      result_mach_type |= M_Z180;
+      break;
+    case bfd_mach_ez80_z80:
+      result_mach_type |= M_EZ80_Z80;
+      break;
+    case bfd_mach_ez80_adl:
+      result_mach_type |= M_EZ80_ADL;
+      break;
     default:
+      einfo (_("%P: warning: unknown machine type %u"), (unsigned)mach_type);
       result_mach_type |= M_Z80ANY;
     }
   return FALSE;
@@ -81,23 +99,48 @@ gldz80_after_open (void)
 
   after_open_default ();
 
-  switch (result_mach_type)
+  switch (result_mach_type & M_ARCH_MASK)
     {
-    case M_Z80STRICT:
-      mach_type = bfd_mach_z80strict;
-      break;
-    case M_Z80:
-      mach_type = bfd_mach_z80;
-      break;
-    case M_Z80FULL:
-      mach_type = bfd_mach_z80full;
-      break;
+    case M_Z80 & M_ARCH_MASK:
     case M_R800:
-      mach_type = bfd_mach_r800;
+    case M_Z180:
+    case M_GBZ80:
+    case M_EZ80_Z80:
+    case M_EZ80_ADL:
+    case M_EZ80_Z80 | M_Z180:
+      /* valid combination */
+      break;
+    case M_EZ80_Z80 | M_EZ80_ADL:
+    case M_EZ80_Z80 | M_EZ80_ADL | M_Z180:
+    case M_EZ80_ADL | M_Z180:
+      /* combination may cause invalid objdump output */
+      /* but it is possible for mixed ADL/Z80 code */
+      einfo (_("%P: warning: mixing ADL and Z80 mode binaries, objdump may generate invalid output"));
       break;
     default:
-      mach_type = 0;
+      /* invalid combination: for example Z180 + R800 */
+      einfo (_("%P: warning: incompatible object files linked, result code might not work"));
     }
+
+  if ((result_mach_type & M_EZ80_ADL) == M_EZ80_ADL)
+    mach_type = bfd_mach_ez80_adl;
+  else if ((result_mach_type & M_EZ80_Z80) == M_EZ80_Z80)
+    mach_type = bfd_mach_ez80_z80;
+  else if ((result_mach_type & M_Z180) == M_Z180)
+    mach_type = bfd_mach_z180;
+  else if ((result_mach_type & M_R800) == M_R800)
+    mach_type = bfd_mach_r800;
+  else if ((result_mach_type & M_GBZ80) == M_GBZ80)
+    mach_type = bfd_mach_gbz80;
+  else if ((result_mach_type & M_Z80FULL) == M_Z80FULL)
+    mach_type = bfd_mach_z80full; /* TODO: remove it */
+  else if ((result_mach_type & M_Z80) == M_Z80)
+    mach_type = bfd_mach_z80;
+  else if ((result_mach_type & M_Z80STRICT) == M_Z80STRICT)
+    mach_type = bfd_mach_z80strict; /* TODO: remove this */
+  else
+    mach_type = bfd_arch_unknown;
+
   bfd_set_arch_mach (link_info.output_bfd, bfd_arch_z80, mach_type);
 }
 /* --- \end{z80.em} */

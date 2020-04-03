@@ -1,5 +1,5 @@
 /* stabs.c -- Parse COFF debugging information
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -409,6 +409,7 @@ parse_coff_struct_type (bfd *abfd, struct coff_symbols *symbols,
 	{
 	  non_fatal (_("bfd_coff_get_syment failed: %s"),
 		     bfd_errmsg (bfd_get_error ()));
+	  free (fields);
 	  return DEBUG_TYPE_NULL;
 	}
 
@@ -425,6 +426,7 @@ parse_coff_struct_type (bfd *abfd, struct coff_symbols *symbols,
 	    {
 	      non_fatal (_("bfd_coff_get_auxent failed: %s"),
 			 bfd_errmsg (bfd_get_error ()));
+	      free (fields);
 	      return DEBUG_TYPE_NULL;
 	    }
 	  psubaux = &auxent;
@@ -514,6 +516,8 @@ parse_coff_enum_type (bfd *abfd, struct coff_symbols *symbols,
 	{
 	  non_fatal (_("bfd_coff_get_syment failed: %s"),
 		     bfd_errmsg (bfd_get_error ()));
+	  free (names);
+	  free (vals);
 	  return DEBUG_TYPE_NULL;
 	}
 
@@ -812,7 +816,7 @@ parse_coff (bfd *abfd, asymbol **syms, long symcount, void *dhandle)
 		  else
 		    base = auxent.x_sym.x_misc.x_lnsz.x_lnno - 1;
 
-		  addr = bfd_get_section_vma (abfd, bfd_get_section (sym));
+		  addr = bfd_section_vma (bfd_asymbol_section (sym));
 
 		  ++linenos;
 

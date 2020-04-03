@@ -1,5 +1,5 @@
 /* COFF specific linker code.
-   Copyright (C) 1994-2018 Free Software Foundation, Inc.
+   Copyright (C) 1994-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -221,7 +221,7 @@ coff_link_check_archive_element (bfd *abfd,
     return TRUE;
   *pneeded = TRUE;
 
-  return coff_link_add_object_symbols (abfd, info);
+  return bfd_link_add_symbols (abfd, info);
 }
 
 /* Add all the symbols from an object file to the hash table.  */
@@ -310,7 +310,9 @@ coff_link_add_symbols (bfd *abfd,
 	    case COFF_SYMBOL_GLOBAL:
 	      flags = BSF_EXPORT | BSF_GLOBAL;
 	      section = coff_section_from_bfd_index (abfd, sym.n_scnum);
-	      if (! obj_pe (abfd))
+	      if (discarded_section (section))
+		section = bfd_und_section_ptr;
+	      else if (! obj_pe (abfd))
 		value -= section->vma;
 	      break;
 
@@ -327,6 +329,8 @@ coff_link_add_symbols (bfd *abfd,
 	    case COFF_SYMBOL_PE_SECTION:
 	      flags = BSF_SECTION_SYM | BSF_GLOBAL;
 	      section = coff_section_from_bfd_index (abfd, sym.n_scnum);
+	      if (discarded_section (section))
+		section = bfd_und_section_ptr;
 	      break;
 	    }
 
@@ -898,7 +902,7 @@ _bfd_coff_final_link (bfd *abfd,
 					bfd_asymbol_name(sym), FALSE, FALSE)
 		       == NULL))
 		  || (((flaginfo.info->discard == discard_sec_merge
-			&& (bfd_get_section (sym)->flags & SEC_MERGE)
+			&& (bfd_asymbol_section (sym)->flags & SEC_MERGE)
 			&& ! bfd_link_relocatable (flaginfo.info))
 		       || flaginfo.info->discard == discard_l)
 		      && bfd_is_local_label_name (sub, bfd_asymbol_name(sym))))
@@ -1182,9 +1186,9 @@ _bfd_coff_final_link (bfd *abfd,
 
   _bfd_stringtab_free (flaginfo.strtab);
 
-  /* Setting bfd_get_symcount to 0 will cause write_object_contents to
+  /* Setting symcount to 0 will cause write_object_contents to
      not try to write out the symbols.  */
-  bfd_get_symcount (abfd) = 0;
+  abfd->symcount = 0;
 
   return TRUE;
 
@@ -2537,7 +2541,8 @@ _bfd_coff_link_input_bfd (struct coff_final_link_info *flaginfo, bfd *input_bfd)
       /* Write out the modified section contents.  */
       if (secdata == NULL || secdata->stab_info == NULL)
 	{
-	  file_ptr loc = o->output_offset * bfd_octets_per_byte (output_bfd);
+	  file_ptr loc = (o->output_offset
+			  * bfd_octets_per_byte (output_bfd, o));
 	  if (! bfd_set_section_contents (output_bfd, o->output_section,
 					  contents, loc, o->size))
 	    return FALSE;
@@ -2829,7 +2834,7 @@ _bfd_coff_reloc_link_order (bfd *output_bfd,
 	return FALSE;
 
       rstat = _bfd_relocate_contents (howto, output_bfd,
-				      (bfd_vma) link_order->u.reloc.p->addend,\
+				      (bfd_vma) link_order->u.reloc.p->addend,
 				      buf);
       switch (rstat)
 	{
@@ -2842,14 +2847,14 @@ _bfd_coff_reloc_link_order (bfd *output_bfd,
 	  (*flaginfo->info->callbacks->reloc_overflow)
 	    (flaginfo->info, NULL,
 	     (link_order->type == bfd_section_reloc_link_order
-	      ? bfd_section_name (output_bfd,
-				  link_order->u.reloc.p->u.section)
+	      ? bfd_section_name (link_order->u.reloc.p->u.section)
 	      : link_order->u.reloc.p->u.name),
 	     howto->name, link_order->u.reloc.p->addend,
 	     (bfd *) NULL, (asection *) NULL, (bfd_vma) 0);
 	  break;
 	}
-      loc = link_order->offset * bfd_octets_per_byte (output_bfd);
+      loc = link_order->offset * bfd_octets_per_byte (output_bfd,
+						      output_section);
       ok = bfd_set_section_contents (output_bfd, output_section, buf,
 				     loc, size);
       free (buf);
@@ -3080,7 +3085,7 @@ _bfd_coff_generic_relocate_section (bfd *output_bfd,
       if (sec != NULL && discarded_section (sec))
 	{
 	  _bfd_clear_contents (howto, input_bfd, input_section,
-			       contents + (rel->r_vaddr - input_section->vma));
+			       contents, rel->r_vaddr - input_section->vma);
 	  continue;
 	}
 

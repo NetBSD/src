@@ -1,5 +1,5 @@
 /* BFD PowerPC CPU definition
-   Copyright (C) 1994-2018 Free Software Foundation, Inc.
+   Copyright (C) 1994-2020 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -48,375 +48,111 @@ powerpc_compatible (const bfd_arch_info_type *a,
   /*NOTREACHED*/
 }
 
+/* Return a COUNT sized buffer filled with nops (if CODE is TRUE) or
+   zeros (if CODE is FALSE).  This is the fill used between input
+   sections for alignment.  It won't normally be executed.   */
+
+static void *
+bfd_arch_ppc_nop_fill (bfd_size_type count,
+		       bfd_boolean is_bigendian,
+		       bfd_boolean code)
+{
+  bfd_byte *fill;
+
+  if (count == 0)
+    return NULL;
+  fill = bfd_malloc (count);
+  if (fill == NULL)
+    return fill;
+
+  if (code && (count & 3) == 0)
+    {
+      static const char nop_be[4] = {0x60, 0, 0, 0};
+      static const char nop_le[4] = {0, 0, 0, 0x60};
+      const char *nop = is_bigendian ? nop_be : nop_le;
+      bfd_byte *p = fill;
+
+      while (count != 0)
+	{
+	  memcpy (p, nop, 4);
+	  p += 4;
+	  count -= 4;
+	}
+    }
+  else
+    memset (fill, 0, count);
+
+  return fill;
+}
+
+#define N(BITS, NUMBER, PRINT, DEFAULT, NEXT)		\
+  {							\
+    BITS,      /* Bits in a word.  */			\
+    BITS,      /* Bits in an address.  */		\
+    8,	       /* Bits in a byte.  */			\
+    bfd_arch_powerpc,					\
+    NUMBER,						\
+    "powerpc",						\
+    PRINT,						\
+    3,		/* Section alignment power.  */		\
+    DEFAULT,						\
+    powerpc_compatible,					\
+    bfd_default_scan,					\
+    bfd_arch_ppc_nop_fill,				\
+    NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
+  }
+
 const bfd_arch_info_type bfd_powerpc_archs[] =
 {
 #if BFD_DEFAULT_TARGET_SIZE == 64
-  /* Default arch must come first.  */
-  {
-    64,	/* 64 bits in a word */
-    64,	/* 64 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc64,
-    "powerpc",
-    "powerpc:common64",
-    3,
-    TRUE, /* default for 64 bit target */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[1]
-  },
+  /* Default for 64 bit target.  */
+  N (64, bfd_mach_ppc64, "powerpc:common64", TRUE, bfd_powerpc_archs + 1),
   /* elf32-ppc:ppc_elf_object_p relies on the default 32 bit arch
      being immediately after the 64 bit default.  */
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc, /* for the POWER/PowerPC common architecture */
-    "powerpc",
-    "powerpc:common",
-    3,
-    FALSE,
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[2],
-  },
+  N (32, bfd_mach_ppc, "powerpc:common", FALSE, bfd_powerpc_archs + 2),
 #else
   /* Default arch must come first.  */
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc, /* for the POWER/PowerPC common architecture */
-    "powerpc",
-    "powerpc:common",
-    3,
-    TRUE, /* default for 32 bit target */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[1],
-  },
+  N (32, bfd_mach_ppc, "powerpc:common", TRUE, bfd_powerpc_archs + 1),
   /* elf64-ppc:ppc64_elf_object_p relies on the default 64 bit arch
      being immediately after the 32 bit default.  */
-  {
-    64,	/* 64 bits in a word */
-    64,	/* 64 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc64,
-    "powerpc",
-    "powerpc:common64",
-    3,
-    FALSE,
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[2]
-  },
+  N (64, bfd_mach_ppc64, "powerpc:common64", FALSE, bfd_powerpc_archs + 2),
 #endif
+  N (32, bfd_mach_ppc_603,      "powerpc:603",     FALSE, bfd_powerpc_archs + 3),
+  N (32, bfd_mach_ppc_ec603e,   "powerpc:EC603e",  FALSE, bfd_powerpc_archs + 4),
+  N (32, bfd_mach_ppc_604,      "powerpc:604",     FALSE, bfd_powerpc_archs + 5),
+  N (32, bfd_mach_ppc_403,      "powerpc:403",     FALSE, bfd_powerpc_archs + 6),
+  N (32, bfd_mach_ppc_601,      "powerpc:601",     FALSE, bfd_powerpc_archs + 7),
+  N (64, bfd_mach_ppc_620,      "powerpc:620",     FALSE, bfd_powerpc_archs + 8),
+  N (64, bfd_mach_ppc_630,      "powerpc:630",     FALSE, bfd_powerpc_archs + 9),
+  N (64, bfd_mach_ppc_a35,      "powerpc:a35",     FALSE, bfd_powerpc_archs + 10),
+  N (64, bfd_mach_ppc_rs64ii,   "powerpc:rs64ii",  FALSE, bfd_powerpc_archs + 11),
+  N (64, bfd_mach_ppc_rs64iii,  "powerpc:rs64iii", FALSE, bfd_powerpc_archs + 12),
+  N (32, bfd_mach_ppc_7400,     "powerpc:7400",    FALSE, bfd_powerpc_archs + 13),
+  N (32, bfd_mach_ppc_e500,     "powerpc:e500",    FALSE, bfd_powerpc_archs + 14),
+  N (32, bfd_mach_ppc_e500mc,   "powerpc:e500mc",  FALSE, bfd_powerpc_archs + 15),
+  N (64, bfd_mach_ppc_e500mc64, "powerpc:e500mc64",FALSE, bfd_powerpc_archs + 16),
+  N (32, bfd_mach_ppc_860,      "powerpc:MPC8XX",  FALSE, bfd_powerpc_archs + 17),
+  N (32, bfd_mach_ppc_750,      "powerpc:750",     FALSE, bfd_powerpc_archs + 18),
+  N (32, bfd_mach_ppc_titan,    "powerpc:titan",   FALSE, bfd_powerpc_archs + 19),
+
   {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_603,
-    "powerpc",
-    "powerpc:603",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[3]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_ec603e,
-    "powerpc",
-    "powerpc:EC603e",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[4]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_604,
-    "powerpc",
-    "powerpc:604",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[5]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_403,
-    "powerpc",
-    "powerpc:403",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[6]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_601,
-    "powerpc",
-    "powerpc:601",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[7]
-  },
-  {
-    64,	/* 64 bits in a word */
-    64,	/* 64 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_620,
-    "powerpc",
-    "powerpc:620",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[8]
-  },
-  {
-    64,	/* 64 bits in a word */
-    64,	/* 64 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_630,
-    "powerpc",
-    "powerpc:630",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[9]
-  },
-  {
-    64,	/* 64 bits in a word */
-    64,	/* 64 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_a35,
-    "powerpc",
-    "powerpc:a35",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[10]
-  },
-  {
-    64,	/* 64 bits in a word */
-    64,	/* 64 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_rs64ii,
-    "powerpc",
-    "powerpc:rs64ii",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[11]
-  },
-  {
-    64,	/* 64 bits in a word */
-    64,	/* 64 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_rs64iii,
-    "powerpc",
-    "powerpc:rs64iii",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[12]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_7400,
-    "powerpc",
-    "powerpc:7400",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[13]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_e500,
-    "powerpc",
-    "powerpc:e500",
-    3,
-    FALSE,
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[14]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_e500mc,
-    "powerpc",
-    "powerpc:e500mc",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[15]
-  },
-  {
-    64,	/* 64 bits in a word */
-    64,	/* 64 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_e500mc64,
-    "powerpc",
-    "powerpc:e500mc64",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[16]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_860,
-    "powerpc",
-    "powerpc:MPC8XX",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[17]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_750,
-    "powerpc",
-    "powerpc:750",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[18]
-  },
-  {
-    32,	/* 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_titan,
-    "powerpc",
-    "powerpc:titan",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[19]
-  },
-  {
-    16,	/* 16 or 32 bits in a word */
-    32,	/* 32 bits in an address */
-    8,	/* 8 bits in a byte */
+    16,	/* Bits in a word.  */
+    32,	/* Bits in an address.  */
+    8,	/* Bits in a byte.  */
     bfd_arch_powerpc,
     bfd_mach_ppc_vle,
     "powerpc",
     "powerpc:vle",
     3,
-    FALSE, /* not the default */
+    FALSE, /* Not the default.  */
     powerpc_compatible,
     bfd_default_scan,
     bfd_arch_default_fill,
-    &bfd_powerpc_archs[20]
+    bfd_powerpc_archs + 20,
+    0 /* Maximum offset of a reloc from the start of an insn.  */
   },
-  {
-    64,	/* 64 bits in a word */
-    64,	/* 64 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_e5500,
-    "powerpc",
-    "powerpc:e5500",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_powerpc_archs[21]
-  },
-  {
-    64,	/* 64 bits in a word */
-    64,	/* 64 bits in an address */
-    8,	/* 8 bits in a byte */
-    bfd_arch_powerpc,
-    bfd_mach_ppc_e6500,
-    "powerpc",
-    "powerpc:e6500",
-    3,
-    FALSE, /* not the default */
-    powerpc_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    0
-  }
+
+  N (64, bfd_mach_ppc_e5500, "powerpc:e5500", FALSE, bfd_powerpc_archs + 21),
+  N (64, bfd_mach_ppc_e6500, "powerpc:e6500", FALSE, NULL)
 };

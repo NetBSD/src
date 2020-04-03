@@ -1,5 +1,5 @@
 /* NFP-specific support for 64-bit ELF
-   Copyright (C) 2017-2018 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
    Contributed by Francois H. Theron <francois.theron@netronome.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,7 +24,6 @@
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf/nfp.h"
-#include "bfd_stdint.h"
 
 
 static bfd_reloc_status_type

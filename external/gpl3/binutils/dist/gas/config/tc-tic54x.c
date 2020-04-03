@@ -1,5 +1,5 @@
 /* tc-tic54x.c -- Assembly code for the Texas Instruments TMS320C54X
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of GAS, the GNU Assembler.
@@ -50,7 +50,6 @@
 #include "sb.h"
 #include "macro.h"
 #include "subsegs.h"
-#include "struc-symbol.h"
 #include "opcode/tic54x.h"
 #include "obj-coff.h"
 #include <math.h>
@@ -186,7 +185,8 @@ static struct hash_control *subsym_recurse_hash; /* Prevent infinite recurse.  *
 static struct hash_control *math_hash; /* Built-in math functions.  */
 /* Allow maximum levels of macro nesting; level 0 is the main substitution
    symbol table.  The other assembler only does 32 levels, so there!  */
-static struct hash_control *subsym_hash[100];
+#define MAX_SUBSYM_HASH 100
+static struct hash_control *subsym_hash[MAX_SUBSYM_HASH];
 
 /* Keep track of local labels so we can substitute them before GAS sees them
    since macros use their own 'namespace' for local labels, use a separate hash
@@ -337,7 +337,7 @@ tic54x_asg (int x ATTRIBUTE_UNUSED)
       str = input_line_pointer;
       while ((c = *input_line_pointer) != ',')
 	{
-	  if (is_end_of_line[(int) *input_line_pointer])
+	  if (is_end_of_line[(unsigned char) c])
 	    break;
 	  ++input_line_pointer;
 	}
@@ -506,7 +506,7 @@ tic54x_bss (int x ATTRIBUTE_UNUSED)
   symbolP = symbol_find_or_make (name);
 
   if (S_GET_SEGMENT (symbolP) == bss_section)
-    symbolP->sy_frag->fr_symbol = (symbolS *) NULL;
+    symbol_get_frag (symbolP)->fr_symbol = (symbolS *) NULL;
 
   symbol_set_frag (symbolP, frag_now);
   p = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP,
@@ -646,7 +646,7 @@ tic54x_struct (int arg)
     {
       /* Offset is ignored in inner structs.  */
       SKIP_WHITESPACE ();
-      if (!is_end_of_line[(int) *input_line_pointer])
+      if (!is_end_of_line[(unsigned char) *input_line_pointer])
 	start_offset = get_absolute_expression ();
       else
 	start_offset = 0;
@@ -836,7 +836,7 @@ tic54x_struct_field (int type)
   int longword_align = 0;
 
   SKIP_WHITESPACE ();
-  if (!is_end_of_line[(int) *input_line_pointer])
+  if (!is_end_of_line[(unsigned char) *input_line_pointer])
     count = get_absolute_expression ();
 
   switch (type)
@@ -1106,7 +1106,7 @@ tic54x_global (int type)
       if (c == ',')
 	{
 	  input_line_pointer++;
-	  if (is_end_of_line[(int) *input_line_pointer])
+	  if (is_end_of_line[(unsigned char) *input_line_pointer])
 	    c = *input_line_pointer;
 	}
     }
@@ -1391,7 +1391,7 @@ tic54x_usect (int x ATTRIBUTE_UNUSED)
     blocking_flag = alignment_flag = 0;
 
   seg = subseg_new (name, 0);
-  flags = bfd_get_section_flags (stdoutput, seg) | SEC_ALLOC;
+  flags = bfd_section_flags (seg) | SEC_ALLOC;
 
   if (alignment_flag)
     {
@@ -1420,7 +1420,7 @@ tic54x_usect (int x ATTRIBUTE_UNUSED)
   if (blocking_flag)
     flags |= SEC_TIC54X_BLOCK;
 
-  if (!bfd_set_section_flags (stdoutput, seg, flags))
+  if (!bfd_set_section_flags (seg, flags))
     as_warn (_("Error setting flags for \"%s\": %s"), name,
 	     bfd_errmsg (bfd_get_error ()));
 
@@ -1488,7 +1488,7 @@ tic54x_version (int x ATTRIBUTE_UNUSED)
 
   SKIP_WHITESPACE ();
   ver = input_line_pointer;
-  while (!is_end_of_line[(int) *input_line_pointer])
+  while (!is_end_of_line[(unsigned char) *input_line_pointer])
     ++input_line_pointer;
   c = *input_line_pointer;
   *input_line_pointer = 0;
@@ -1646,7 +1646,7 @@ tic54x_align_words (int arg)
   /* Only ".align" with no argument is allowed within .struct/.union.  */
   int count = arg;
 
-  if (!is_end_of_line[(int) *input_line_pointer])
+  if (!is_end_of_line[(unsigned char) *input_line_pointer])
     {
       if (arg == 2)
 	as_warn (_("Argument to .even ignored"));
@@ -1914,7 +1914,7 @@ tic54x_include (int ignored ATTRIBUTE_UNUSED)
   else
     {
       filename = input_line_pointer;
-      while (!is_end_of_line[(int) *input_line_pointer])
+      while (!is_end_of_line[(unsigned char) *input_line_pointer])
 	++input_line_pointer;
       c = *input_line_pointer;
       *input_line_pointer = '\0';
@@ -1950,7 +1950,7 @@ tic54x_message (int type)
   else
     {
       msg = input_line_pointer;
-      while (!is_end_of_line[(int) *input_line_pointer])
+      while (!is_end_of_line[(unsigned char) *input_line_pointer])
 	++input_line_pointer;
       c = *input_line_pointer;
       *input_line_pointer = 0;
@@ -2028,7 +2028,7 @@ tic54x_loop (int count)
   ILLEGAL_WITHIN_STRUCT ();
 
   SKIP_WHITESPACE ();
-  if (!is_end_of_line[(int) *input_line_pointer])
+  if (!is_end_of_line[(unsigned char) *input_line_pointer])
     count = get_absolute_expression ();
 
   do_repeat ((size_t) count, "LOOP", "ENDLOOP");
@@ -2053,7 +2053,7 @@ tic54x_break (int ignore ATTRIBUTE_UNUSED)
   ILLEGAL_WITHIN_STRUCT ();
 
   SKIP_WHITESPACE ();
-  if (!is_end_of_line[(int) *input_line_pointer])
+  if (!is_end_of_line[(unsigned char) *input_line_pointer])
     cond = get_absolute_expression ();
 
   if (cond)
@@ -2141,7 +2141,7 @@ tic54x_sblock (int ignore ATTRIBUTE_UNUSED)
       seg->flags |= SEC_TIC54X_BLOCK;
 
       c = *input_line_pointer;
-      if (!is_end_of_line[(int) c])
+      if (!is_end_of_line[(unsigned char) c])
 	++input_line_pointer;
     }
 
@@ -2240,7 +2240,7 @@ tic54x_var (int ignore ATTRIBUTE_UNUSED)
       if (c == ',')
 	{
 	  ++input_line_pointer;
-	  if (is_end_of_line[(int) *input_line_pointer])
+	  if (is_end_of_line[(unsigned char) *input_line_pointer])
 	    c = *input_line_pointer;
 	}
     }
@@ -2276,7 +2276,7 @@ tic54x_mlib (int ignore ATTRIBUTE_UNUSED)
     {
       SKIP_WHITESPACE ();
       len = 0;
-      while (!is_end_of_line[(int) *input_line_pointer]
+      while (!is_end_of_line[(unsigned char) *input_line_pointer]
 	     && !ISSPACE (*input_line_pointer))
 	{
 	  obstack_1grow (&notes, *input_line_pointer);
@@ -2498,7 +2498,11 @@ md_parse_option (int c, const char *arg)
 void
 tic54x_macro_start (void)
 {
-  ++macro_level;
+  if (++macro_level >= MAX_SUBSYM_HASH)
+    {
+      as_fatal (_("Macro nesting is too deep"));
+      return;
+    }
   subsym_hash[macro_level] = hash_new ();
   local_label_hash[macro_level] = hash_new ();
 }
@@ -3082,7 +3086,7 @@ get_operands (struct opstruct operands[], char *line)
   int expecting_operand = 0;
   int i;
 
-  while (numexp < MAX_OPERANDS && !is_end_of_line[(int) *lptr])
+  while (numexp < MAX_OPERANDS && !is_end_of_line[(unsigned char) *lptr])
     {
       int paren_not_balanced = 0;
       char *op_start, *op_end;
@@ -3144,7 +3148,7 @@ get_operands (struct opstruct operands[], char *line)
 
   while (*lptr && ISSPACE (*lptr++))
     ;
-  if (!is_end_of_line[(int) *lptr])
+  if (!is_end_of_line[(unsigned char) *lptr])
     {
       as_bad (_("Extra junk on line"));
       return -1;
@@ -3973,12 +3977,12 @@ static void
 emit_insn (tic54x_insn *insn)
 {
   int i;
-  flagword oldflags = bfd_get_section_flags (stdoutput, now_seg);
+  flagword oldflags = bfd_section_flags (now_seg);
   flagword flags = oldflags | SEC_CODE;
 
-  if (! bfd_set_section_flags (stdoutput, now_seg, flags))
+  if (!bfd_set_section_flags (now_seg, flags))
         as_warn (_("error setting flags for \"%s\": %s"),
-                 bfd_section_name (stdoutput, now_seg),
+                 bfd_section_name (now_seg),
                  bfd_errmsg (bfd_get_error ()));
 
   for (i = 0; i < insn->words; i++)
@@ -4196,7 +4200,7 @@ static int
 next_line_shows_parallel (char *next_line)
 {
   /* Look for the second half.  */
-  while (ISSPACE (*next_line))
+  while (*next_line != 0 && ISSPACE (*next_line))
     ++next_line;
 
   return (next_line[0] == PARALLEL_SEPARATOR
@@ -4412,10 +4416,9 @@ subsym_substitute (char *line, int forced)
   if (strstr (line, ".macro"))
     return line;
 
-  while (!is_end_of_line[(int) *ptr])
+  unsigned char current_char;
+  while (!is_end_of_line[(current_char = * (unsigned char *) ptr)])
     {
-      int current_char = *ptr;
-
       /* Need to update this since LINE may have been modified.  */
       if (eval_line)
 	eval_end = strrchr (ptr, ',');
@@ -4735,9 +4738,10 @@ tic54x_start_line_hook (void)
   char *replacement = NULL;
 
   /* Work with a copy of the input line, including EOL char.  */
-  endp = input_line_pointer;
-  while (!is_end_of_line[(int) *endp++])
-    ;
+  for (endp = input_line_pointer; *endp != 0; )
+    if (is_end_of_line[(unsigned char) *endp++])
+      break;
+
   line = xmemdup0 (input_line_pointer, endp - input_line_pointer);
 
   /* Scan ahead for parallel insns.  */
@@ -5334,7 +5338,7 @@ tic54x_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
    Don't allow labels to start with '.'  */
 
 int
-tic54x_start_label (int nul_char, int next_char)
+tic54x_start_label (char * label_start, int nul_char, int next_char)
 {
   char *rest;
 
@@ -5345,18 +5349,14 @@ tic54x_start_label (int nul_char, int next_char)
   /* Disallow labels starting with "."  */
   if (next_char != ':')
     {
-      char *label = input_line_pointer;
-
-      while (!is_end_of_line[(int) label[-1]])
-	--label;
-      if (*label == '.')
+      if (*label_start == '.')
 	{
-	  as_bad (_("Invalid label '%s'"), label);
+	  as_bad (_("Invalid label '%s'"), label_start);
 	  return 0;
 	}
     }
 
-  if (is_end_of_line[(int) next_char])
+  if (is_end_of_line[(unsigned char) next_char])
     return 1;
 
   rest = input_line_pointer;

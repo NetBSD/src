@@ -3,7 +3,7 @@ source_em()
 {
   local current_script="$em_script"
   em_script=$1
-  . $em_script
+  source_sh $1
   em_script=$current_script
 }
 fragment()

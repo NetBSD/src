@@ -1,7 +1,7 @@
 # This is for embedded products (no MMU) with ELF.
 MACHINE=
 SCRIPT_NAME=elf
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 
 # Symbols have underscore prepended.
 OUTPUT_FORMAT="elf32-us-cris"

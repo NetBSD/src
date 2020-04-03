@@ -1,5 +1,5 @@
 /* s12z ELF support for BFD.
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,8 +29,9 @@ START_RELOC_NUMBERS (elf_s12z_reloc_type)
   RELOC_NUMBER (R_S12Z_UKNWN_2, 2)
   RELOC_NUMBER (R_S12Z_PCREL_7_15, 3)
   RELOC_NUMBER (R_S12Z_EXT24, 4)
-  RELOC_NUMBER (R_S12Z_UKNWN_3, 5)
-  RELOC_NUMBER (R_S12Z_EXT32, 6)
+  RELOC_NUMBER (R_S12Z_EXT18, 5)
+  RELOC_NUMBER (R_S12Z_CW32, 6)
+  RELOC_NUMBER (R_S12Z_EXT32, 7)
 END_RELOC_NUMBERS (R_S12Z_max)
 
 #endif

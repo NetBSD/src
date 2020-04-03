@@ -1,6 +1,6 @@
 // arm.h -- ELF definitions specific to EM_ARM  -*- C++ -*-
 
-// Copyright (C) 2009-2018 Free Software Foundation, Inc.
+// Copyright (C) 2009-2020 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com>.
 
 // This file is part of elfcpp.
@@ -194,7 +194,12 @@ enum
   R_ARM_ME_TOO = 128,		// Obsolete
   R_ARM_THM_TLS_DESCSEQ16 = 129,// Static	Thumb16
   R_ARM_THM_TLS_DESCSEQ32 = 130,// Static	Thumb32
-  // 131 - 139			Unallocated
+  // 131 - 135			Unallocated
+  // Relocations for Armv8.1-M Mainline (BF/BFL)
+  R_ARM_THM_BF16 = 136,		// Static       Thumb32 ((S + A) | T) – P
+  R_ARM_THM_BF12 = 137,		// Static       Thumb32 ((S + A) | T) – P
+  R_ARM_THM_BF18 = 138,		// Static       Thumb32 ((S + A) | T) – P
+  // 139			Unallocated
   // 140 - 159			Dynamic		Reserved for future allocation
   R_ARM_IRELATIVE = 160,	// Dynamic
   // 161 - 255			Unallocated
@@ -300,6 +305,7 @@ enum
   Tag_MPextension_use = 42,
   Tag_undefined43 = 43,
   Tag_DIV_use = 44,
+  Tag_MVE_arch = 48,
   Tag_nodefaults = 64,
   Tag_also_compatible_with = 65,
   Tag_T2EE_use = 66,

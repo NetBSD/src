@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -161,31 +161,34 @@ typedef enum bfd_mach_o_load_command_type
   /* Load a dynamically linked shared library that is allowed to be
        missing (weak).  */
   BFD_MACH_O_LC_LOAD_WEAK_DYLIB = 0x18,
-  BFD_MACH_O_LC_SEGMENT_64 = 0x19,	/* 64-bit segment of this file to be
-                                           mapped.  */
-  BFD_MACH_O_LC_ROUTINES_64 = 0x1a,     /* Address of the dyld init routine
-                                           in a dylib.  */
-  BFD_MACH_O_LC_UUID = 0x1b,            /* 128-bit UUID of the executable.  */
-  BFD_MACH_O_LC_RPATH = 0x1c,		/* Run path addiions.  */
-  BFD_MACH_O_LC_CODE_SIGNATURE = 0x1d,	/* Local of code signature.  */
-  BFD_MACH_O_LC_SEGMENT_SPLIT_INFO = 0x1e, /* Local of info to split seg.  */
-  BFD_MACH_O_LC_REEXPORT_DYLIB = 0x1f,  /* Load and re-export lib.  */
-  BFD_MACH_O_LC_LAZY_LOAD_DYLIB = 0x20, /* Delay load of lib until use.  */
-  BFD_MACH_O_LC_ENCRYPTION_INFO = 0x21, /* Encrypted segment info.  */
-  BFD_MACH_O_LC_DYLD_INFO = 0x22,	/* Compressed dyld information.  */
-  BFD_MACH_O_LC_LOAD_UPWARD_DYLIB = 0x23, /* Load upward dylib.  */
-  BFD_MACH_O_LC_VERSION_MIN_MACOSX = 0x24,   /* Minimal MacOSX version.  */
-  BFD_MACH_O_LC_VERSION_MIN_IPHONEOS = 0x25, /* Minimal IOS version.  */
-  BFD_MACH_O_LC_FUNCTION_STARTS = 0x26,  /* Compressed table of func start.  */
-  BFD_MACH_O_LC_DYLD_ENVIRONMENT = 0x27, /* Env variable string for dyld.  */
-  BFD_MACH_O_LC_MAIN = 0x28,             /* Entry point.  */
-  BFD_MACH_O_LC_DATA_IN_CODE = 0x29,     /* Table of non-instructions.  */
-  BFD_MACH_O_LC_SOURCE_VERSION = 0x2a,   /* Source version.  */
-  BFD_MACH_O_LC_DYLIB_CODE_SIGN_DRS = 0x2b, /* DRs from dylibs.  */
-  BFD_MACH_O_LC_ENCRYPTION_INFO_64 = 0x2c, /* Encrypted 64 bit seg info.  */
-  BFD_MACH_O_LC_LINKER_OPTIONS = 0x2d,	/* Linker options.  */
-  BFD_MACH_O_LC_LINKER_OPTIMIZATION_HINT = 0x2e, /* Optimization hints.  */
-  BFD_MACH_O_LC_VERSION_MIN_WATCHOS = 0x30 /* Minimal WatchOS version.  */
+  BFD_MACH_O_LC_SEGMENT_64 = 0x19,		/* 64-bit segment of this file to be
+						   mapped.  */
+  BFD_MACH_O_LC_ROUTINES_64 = 0x1a,     	/* Address of the dyld init routine
+						   in a dylib.  */
+  BFD_MACH_O_LC_UUID = 0x1b,            	/* 128-bit UUID of the executable.  */
+  BFD_MACH_O_LC_RPATH = 0x1c,			/* Run path addiions.  */
+  BFD_MACH_O_LC_CODE_SIGNATURE = 0x1d,		/* Local of code signature.  */
+  BFD_MACH_O_LC_SEGMENT_SPLIT_INFO = 0x1e,	/* Local of info to split seg.  */
+  BFD_MACH_O_LC_REEXPORT_DYLIB = 0x1f,		/* Load and re-export lib.  */
+  BFD_MACH_O_LC_LAZY_LOAD_DYLIB = 0x20,		/* Delay load of lib until use.  */
+  BFD_MACH_O_LC_ENCRYPTION_INFO = 0x21,		/* Encrypted segment info.  */
+  BFD_MACH_O_LC_DYLD_INFO = 0x22,		/* Compressed dyld information.  */
+  BFD_MACH_O_LC_LOAD_UPWARD_DYLIB = 0x23,	/* Load upward dylib.  */
+  BFD_MACH_O_LC_VERSION_MIN_MACOSX = 0x24,	/* Minimal macOS version.  */
+  BFD_MACH_O_LC_VERSION_MIN_IPHONEOS = 0x25,	/* Minimal iOS version.  */
+  BFD_MACH_O_LC_FUNCTION_STARTS = 0x26,  	/* Compressed table of func start.  */
+  BFD_MACH_O_LC_DYLD_ENVIRONMENT = 0x27, 	/* Env variable string for dyld.  */
+  BFD_MACH_O_LC_MAIN = 0x28,             	/* Entry point.  */
+  BFD_MACH_O_LC_DATA_IN_CODE = 0x29,     	/* Table of non-instructions.  */
+  BFD_MACH_O_LC_SOURCE_VERSION = 0x2a,   	/* Source version.  */
+  BFD_MACH_O_LC_DYLIB_CODE_SIGN_DRS = 0x2b,	/* DRs from dylibs.  */
+  BFD_MACH_O_LC_ENCRYPTION_INFO_64 = 0x2c,	/* Encrypted 64 bit seg info.  */
+  BFD_MACH_O_LC_LINKER_OPTIONS = 0x2d,		/* Linker options.  */
+  BFD_MACH_O_LC_LINKER_OPTIMIZATION_HINT = 0x2e,/* Optimization hints.  */
+  BFD_MACH_O_LC_VERSION_MIN_TVOS = 0x2f,	/* Minimal tvOS version.  */
+  BFD_MACH_O_LC_VERSION_MIN_WATCHOS = 0x30,	/* Minimal watchOS version.  */
+  BFD_MACH_O_LC_NOTE = 0x31,			/* Region of arbitrary data.  */
+  BFD_MACH_O_LC_BUILD_VERSION = 0x32,		/* Generic build version.  */
 }
 bfd_mach_o_load_command_type;
 

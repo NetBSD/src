@@ -1,8 +1,8 @@
 ;;; dwarf-mode.el --- Browser for DWARF information. -*-lexical-binding:t-*-
 
-;; Version: 1.4
+;; Version: 1.5
 
-;; Copyright (C) 2012-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
 ;; This file is not part of GNU Emacs, but is distributed under the
 ;; same terms:
@@ -180,6 +180,15 @@ A prefix argument means expand all children."
 		   dwarf-objdump-program "-Wi" "--dwarf-depth=1"
 		   (expand-file-name dwarf-file))
     (set-buffer-modified-p nil)))
+
+(defvar dwarf-mode-syntax-table
+  (let ((table (make-syntax-table)))
+    ;; This at least makes it so mark-sexp on some hex digits inside
+    ;; <...> does not also copy the ">".
+    (modify-syntax-entry ?< "(>" table)
+    (modify-syntax-entry ?> ")<" table)
+    table)
+  "Syntax table for dwarf-mode buffers.")
 
 (defvar dwarf-mode-map
   (let ((map (make-sparse-keymap)))

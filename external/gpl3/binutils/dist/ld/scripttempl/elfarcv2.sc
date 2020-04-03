@@ -12,7 +12,7 @@ test -z "$ENTRY" && ENTRY=start
 test -z "${BIG_OUTPUT_FORMAT}" && BIG_OUTPUT_FORMAT=${OUTPUT_FORMAT}
 test -z "${LITTLE_OUTPUT_FORMAT}" && LITTLE_OUTPUT_FORMAT=${OUTPUT_FORMAT}
 # If we request a big endian toolchain, give a big endian linker
-test -z "$GOT" && GOT=".got          ${RELOCATING-0} : { *(.got.plt) *(.got) } ${RELOCATING+ > ${DATA_MEMORY}}"
+test -z "$GOT" && GOT=".got          ${RELOCATING-0} : {${RELOCATING+ *(.got.plt)} *(.got) } ${RELOCATING+ > ${DATA_MEMORY}}"
 test "${ARC_ENDIAN}" == "big" && OUTPUT_FORMAT=${BIG_OUTPUT_FORMAT}
 if [ -z "$MACHINE" ]; then OUTPUT_ARCH=${ARCH}; else OUTPUT_ARCH=${ARCH}:${MACHINE}; fi
 test -z "${ELFSIZE}" && ELFSIZE=32
@@ -53,6 +53,16 @@ DTOR=".dtors        ${CONSTRUCTING-0} :
     KEEP (*(.dtors))
     ${CONSTRUCTING+${DTOR_END}}
   } ${RELOCATING+ > ${DATA_MEMORY}}"
+
+IVT="
+ /* If the 'ivtbase_addr' symbol is defined, it indicates  the base address of
+    the interrupt vectors.  See description of INT_VECTOR_BASE register.  */
+
+ .ivt DEFINED (ivtbase_addr) ? ivtbase_addr : 0x00 :
+ {
+   ${RELOCATING+ PROVIDE (__ivtbase_addr = .); }
+   KEEP (*(.ivt));
+ } ${RELOCATING+ > ${STARTUP_MEMORY}}"
 
 if test -z "${NO_SMALL_DATA}"; then
   SBSS=".sbss         ${RELOCATING-0} :
@@ -110,10 +120,6 @@ MEMORY
     ICCM : ORIGIN = 0x00000000, LENGTH = ${ICCM_SIZE}
     DCCM : ORIGIN = ${RAM_START_ADDR}, LENGTH = ${RAM_SIZE}
 }
-
-/* Setup the stack on the top of the data memory bank.  */
-PROVIDE (__stack_top = (${RAM_START_ADDR} + ${RAM_SIZE} - 1) & -4);
-PROVIDE (__end_heap = ${RAM_START_ADDR} + ${RAM_SIZE} - 1);
 "
 	;;
 esac
@@ -129,15 +135,7 @@ ${RELOCATING+${MEMORY_DEF}}
 
 SECTIONS
 {
-  .ivt 0x00 :
-  {
-   KEEP (*(.ivt));
-  } ${RELOCATING+ > ${STARTUP_MEMORY}}
-
-  .startup 0x100:
-  {
-    KEEP (*crt0.o(.text.__startup))
-  } ${RELOCATING+ > ${STARTUP_MEMORY}}
+  ${RELOCATING+${IVT}}
 
   /* Read-only sections, merged into text segment: */
   ${TEXT_DYNAMIC+${DYNAMIC}}
@@ -175,11 +173,61 @@ SECTIONS
   .rel.bss      ${RELOCATING-0} : { *(.rel.bss${RELOCATING+ .rel.bss.* .rel.gnu.linkonce.b.*}) }
   .rela.bss     ${RELOCATING-0} : { *(.rela.bss${RELOCATING+ .rela.bss.* .rela.gnu.linkonce.b.*}) }
 
-  .jcr : { KEEP (*(.jcr)) } ${RELOCATING+> ${TEXT_MEMORY}}
-  .eh_frame : { KEEP (*(.eh_frame)) } ${RELOCATING+> ${TEXT_MEMORY}}
-  .gcc_except_table : { *(.gcc_except_table) *(.gcc_except_table.*) } ${RELOCATING+> ${TEXT_MEMORY}}
-  .plt : { *(.plt) } ${RELOCATING+> ${TEXT_MEMORY}}
-  .jlitab :
+  .text         ${RELOCATING-0} :
+  {
+    ${RELOCATING+${TEXT_START_SYMBOLS}}
+
+    ${RELOCATING+ . = ALIGN(4);}
+    ${RELOCATING+${INIT_START}}
+    KEEP (*(SORT_NONE(.init)))
+    ${RELOCATING+${INIT_END}}
+
+    /* Start here after reset.  */
+    ${RELOCATING+ . = ALIGN(4);}
+    KEEP (*crt0.o(.text.__startup))
+
+    /* Remaining code.  */
+    ${RELOCATING+ . = ALIGN(4);}
+    *(.text .stub${RELOCATING+ .text.* .gnu.linkonce.t.*})
+    /* .gnu.warning sections are handled specially by elf.em.  */
+    *(.gnu.warning)
+
+    ${RELOCATING+${OTHER_TEXT_SECTIONS}}
+
+  } ${RELOCATING+ > ${TEXT_MEMORY}} =${NOP-0}
+
+  .fini         ${RELOCATING-0} :
+  {
+    ${RELOCATING+${FINI_START}}
+    KEEP (*(SORT_NONE(.fini)))
+    ${RELOCATING+${FINI_END}}
+
+    ${RELOCATING+PROVIDE (__etext = .);}
+    ${RELOCATING+PROVIDE (_etext = .);}
+    ${RELOCATING+PROVIDE (etext = .);}
+  } ${RELOCATING+ > ${TEXT_MEMORY}} =${NOP-0}
+
+  .jcr ${RELOCATING-0} :
+  {
+    KEEP (*(.jcr))
+  } ${RELOCATING+> ${TEXT_MEMORY}}
+
+  .eh_frame ${RELOCATING-0} :
+  {
+    KEEP (*(.eh_frame))
+  } ${RELOCATING+> ${TEXT_MEMORY}}
+
+  .gcc_except_table ${RELOCATING-0} :
+  {
+    *(.gcc_except_table) *(.gcc_except_table.*)
+  } ${RELOCATING+> ${TEXT_MEMORY}}
+
+  .plt ${RELOCATING-0} :
+  {
+    *(.plt)
+  } ${RELOCATING+> ${TEXT_MEMORY}}
+
+  .jlitab ${RELOCATING-0} :
   {
     ${RELOCATING+${JLI_START_TABLE}}
      jlitab*.o:(.jlitab*) *(.jlitab*)
@@ -191,36 +239,6 @@ SECTIONS
   } ${RELOCATING+> ${TEXT_MEMORY}}
 
   .rodata1      ${RELOCATING-0} : { *(.rodata1) } ${RELOCATING+> ${TEXT_MEMORY}}
-
-  .init         ${RELOCATING-0} :
-  {
-    ${RELOCATING+${INIT_START}}
-    KEEP (*(.init))
-    ${RELOCATING+${INIT_END}}
-  } ${RELOCATING+ > ${TEXT_MEMORY}}  =${NOP-0}
-
-  .text         ${RELOCATING-0} :
-  {
-    ${RELOCATING+${TEXT_START_SYMBOLS}}
-
-    *(.text .stub${RELOCATING+ .text.* .gnu.linkonce.t.*})
-    /* .gnu.warning sections are handled specially by elf32.em.  */
-    *(.gnu.warning)
-
-    ${RELOCATING+${OTHER_TEXT_SECTIONS}}
-
-  } ${RELOCATING+ > ${TEXT_MEMORY}} =${NOP-0}
-
-  .fini         ${RELOCATING-0} :
-  {
-    ${RELOCATING+${FINI_START}}
-    KEEP (*(.fini))
-    ${RELOCATING+${FINI_END}}
-
-    ${RELOCATING+PROVIDE (__etext = .);}
-    ${RELOCATING+PROVIDE (_etext = .);}
-    ${RELOCATING+PROVIDE (etext = .);}
-  } ${RELOCATING+ > ${TEXT_MEMORY}} =${NOP-0}
 
   ${RELOCATING+${OTHER_READONLY_SECTIONS}}
 
@@ -236,7 +254,7 @@ SECTIONS
        line will have no effect, see PR13697.  Thus, keep .data  */
     KEEP (*(.data))
     ${RELOCATING+${DATA_START_SYMBOLS}}
-    *(.data${RELOCATING+ .data.* .gnu.linkonce.d.*})
+    ${RELOCATING+*(.data.* .gnu.linkonce.d.*)}
     ${CONSTRUCTING+SORT(CONSTRUCTORS)}
 
   } ${RELOCATING+ > ${DATA_MEMORY}}
@@ -251,13 +269,13 @@ SECTIONS
   ${RELOCATING+${SBSS2}}
   .bss          ${RELOCATING-0} :
   {
-   *(.dynbss)
-   *(.bss${RELOCATING+ .bss.* .gnu.linkonce.b.*})
-   *(COMMON)
-   /* Align here to ensure that the .bss section occupies space up to
-      _end.  Align after .bss to ensure correct alignment even if the
-      .bss section disappears because there are no input sections.  */
-   ${RELOCATING+. = ALIGN(${ALIGNMENT});}
+    ${RELOCATING+*(.dynbss)}
+    *(.bss${RELOCATING+ .bss.* .gnu.linkonce.b.*})
+    ${RELOCATING+*(COMMON)
+    /* Align here to ensure that the .bss section occupies space up to
+       _end.  Align after .bss to ensure correct alignment even if the
+       .bss section disappears because there are no input sections.  */
+    . = ALIGN(${ALIGNMENT});}
    ${RELOCATING+_end = .;}
    ${RELOCATING+PROVIDE (end = .);}
   } ${RELOCATING+ > ${DATA_MEMORY}}
@@ -270,6 +288,8 @@ SECTIONS
     ${RELOCATING+ PROVIDE (__start_heap = .) ; }
   } ${RELOCATING+ > ${DATA_MEMORY}}
 
+  ${RELOCATING+ PROVIDE (__stack_top = (ORIGIN (${DATA_MEMORY}) + LENGTH (${DATA_MEMORY}) - 1) & -4);}
+  ${RELOCATING+ PROVIDE (__end_heap = ORIGIN (${DATA_MEMORY}) + LENGTH (${DATA_MEMORY}) - 1);}
 
   /* Stabs debugging sections.  */
   .stab          0 : { *(.stab) }
@@ -280,40 +300,13 @@ SECTIONS
   .stab.indexstr 0 : { *(.stab.indexstr) }
 
   .comment       0 : { *(.comment) }
+  .note.gnu.build-id : { *(.note.gnu.build-id) }
+EOF
 
-  /* DWARF debug sections.
-     Symbols in the DWARF debugging sections are relative to the beginning
-     of the section so we begin them at 0.  */
+. $srcdir/scripttempl/DWARF.sc
 
-  /* DWARF 1 */
-  .debug          0 : { *(.debug) }
-  .line           0 : { *(.line) }
-
-  /* GNU DWARF 1 extensions */
-  .debug_srcinfo  0 : { *(.debug_srcinfo) }
-  .debug_sfnames  0 : { *(.debug_sfnames) }
-
-  /* DWARF 1.1 and DWARF 2 */
-  .debug_aranges  0 : { *(.debug_aranges) }
-  .debug_pubnames 0 : { *(.debug_pubnames) }
-
-  /* DWARF 2 */
-  .debug_info     0 : { *(.debug_info) *(.gnu.linkonce.wi.*) }
-  .debug_abbrev   0 : { *(.debug_abbrev) }
-  .debug_line     0 : { *(.debug_line) }
-  .debug_frame    0 : { *(.debug_frame) }
-  .debug_str      0 : { *(.debug_str) }
-  .debug_loc      0 : { *(.debug_loc) }
-  .debug_macinfo  0 : { *(.debug_macinfo) }
-
-  /* DWARF 3 */
-  .debug_pubtypes 0 : { *(.debug_pubtypes) }
-  .debug_ranges   0 : { *(.debug_ranges) }
-
-  /* DWARF Extension.  */
-  .debug_macro    0 : { *(.debug_macro) }
-
+cat <<EOF
   /* ARC Extension Sections */
-  .arcextmap	  0 : { *(.gnu.linkonce.arcextmap.*) }
+  .arcextmap	  0 : { *(.arcextmap.*) }
 }
 EOF

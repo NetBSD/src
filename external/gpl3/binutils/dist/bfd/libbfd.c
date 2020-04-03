@@ -1,5 +1,5 @@
 /* Assorted BFD support routines, only used internally.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -254,6 +254,10 @@ _bfd_dummy_target (bfd *ignore_abfd ATTRIBUTE_UNUSED)
 
 /* Allocate memory using malloc.  */
 
+#ifndef SSIZE_MAX
+#define SSIZE_MAX ((size_t) -1 >> 1)
+#endif
+
 void *
 bfd_malloc (bfd_size_type size)
 {
@@ -262,7 +266,7 @@ bfd_malloc (bfd_size_type size)
 
   if (size != sz
       /* This is to pacify memory checkers like valgrind.  */
-      || ((signed long) sz) < 0)
+      || sz > SSIZE_MAX)
     {
       bfd_set_error (bfd_error_no_memory);
       return NULL;
@@ -304,7 +308,7 @@ bfd_realloc (void *ptr, bfd_size_type size)
 
   if (size != sz
       /* This is to pacify memory checkers like valgrind.  */
-      || ((signed long) sz) < 0)
+      || sz > SSIZE_MAX)
     {
       bfd_set_error (bfd_error_no_memory);
       return NULL;
@@ -445,9 +449,9 @@ DESCRIPTION
 .#define bfd_put_signed_8 \
 .  bfd_put_8
 .#define bfd_get_8(abfd, ptr) \
-.  (*(const unsigned char *) (ptr) & 0xff)
+.  ((bfd_vma) *(const unsigned char *) (ptr) & 0xff)
 .#define bfd_get_signed_8(abfd, ptr) \
-.  (((*(const unsigned char *) (ptr) & 0xff) ^ 0x80) - 0x80)
+.  ((((bfd_signed_vma) *(const unsigned char *) (ptr) & 0xff) ^ 0x80) - 0x80)
 .
 .#define bfd_put_16(abfd, val, ptr) \
 .  BFD_SEND (abfd, bfd_putx16, ((val),(ptr)))
@@ -457,6 +461,20 @@ DESCRIPTION
 .  BFD_SEND (abfd, bfd_getx16, (ptr))
 .#define bfd_get_signed_16(abfd, ptr) \
 .  BFD_SEND (abfd, bfd_getx_signed_16, (ptr))
+.
+.#define bfd_put_24(abfd, val, ptr) \
+.  do					\
+.    if (bfd_big_endian (abfd))		\
+.      bfd_putb24 ((val), (ptr));	\
+.    else				\
+.      bfd_putl24 ((val), (ptr));	\
+.  while (0)
+.
+.bfd_vma bfd_getb24 (const void *p);
+.bfd_vma bfd_getl24 (const void *p);
+.
+.#define bfd_get_24(abfd, ptr) \
+.  (bfd_big_endian (abfd) ? bfd_getb24 (ptr) : bfd_getl24 (ptr))
 .
 .#define bfd_put_32(abfd, val, ptr) \
 .  BFD_SEND (abfd, bfd_putx32, ((val),(ptr)))
@@ -477,7 +495,7 @@ DESCRIPTION
 .  BFD_SEND (abfd, bfd_getx_signed_64, (ptr))
 .
 .#define bfd_get(bits, abfd, ptr)			\
-.  ((bits) == 8 ? (bfd_vma) bfd_get_8 (abfd, ptr)	\
+.  ((bits) == 8 ? bfd_get_8 (abfd, ptr)			\
 .   : (bits) == 16 ? bfd_get_16 (abfd, ptr)		\
 .   : (bits) == 32 ? bfd_get_32 (abfd, ptr)		\
 .   : (bits) == 64 ? bfd_get_64 (abfd, ptr)		\
@@ -613,7 +631,6 @@ bfd_putl16 (bfd_vma data, void *p)
   addr[1] = (data >> 8) & 0xff;
 }
 
-
 void
 bfd_putb24 (bfd_vma data, void *p)
 {
@@ -622,7 +639,6 @@ bfd_putb24 (bfd_vma data, void *p)
   addr[1] = (data >> 8) & 0xff;
   addr[2] = data & 0xff;
 }
-
 
 void
 bfd_putl24 (bfd_vma data, void *p)
@@ -633,6 +649,29 @@ bfd_putl24 (bfd_vma data, void *p)
   addr[2] = (data >> 16) & 0xff;
 }
 
+bfd_vma
+bfd_getb24 (const void *p)
+{
+  const bfd_byte *addr = (const bfd_byte *) p;
+  unsigned long v;
+
+  v =  (unsigned long) addr[0] << 16;
+  v |= (unsigned long) addr[1] << 8;
+  v |= (unsigned long) addr[2];
+  return v;
+}
+
+bfd_vma
+bfd_getl24 (const void *p)
+{
+  const bfd_byte *addr = (const bfd_byte *) p;
+  unsigned long v;
+
+  v = (unsigned long) addr[0];
+  v |= (unsigned long) addr[1] << 8;
+  v |= (unsigned long) addr[2] << 16;
+  return v;
+}
 
 bfd_vma
 bfd_getb32 (const void *p)

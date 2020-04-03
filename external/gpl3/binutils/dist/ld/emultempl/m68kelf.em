@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 #   Written by Michael Sokolov <msokolov@ivan.Harhan.ORG>, based on armelf.em
 #
 # This file is part of the GNU Binutils.
@@ -20,9 +20,9 @@
 # MA 02110-1301, USA.
 
 
-# This file is sourced from elf32.em, and defines some extra routines for m68k
+# This file is sourced from elf.em, and defines some extra routines for m68k
 # embedded systems using ELF and for some other systems using m68k ELF.  While
-# it is sourced from elf32.em for all m68k ELF configurations, here we include
+# it is sourced from elf.em for all m68k ELF configurations, here we include
 # only the features we want depending on the configuration.
 
 case ${target} in
@@ -44,6 +44,8 @@ case ${target} in
 esac
 
 fragment <<EOF
+
+#include "elf32-m68k.h"
 
 #define GOT_HANDLING_SINGLE   (0)
 #define GOT_HANDLING_NEGATIVE (1)
@@ -102,9 +104,8 @@ m68k_elf_after_open (void)
 						    | SEC_HAS_CONTENTS
 						    | SEC_IN_MEMORY));
 	      if (relsec == NULL
-		  || ! bfd_set_section_alignment (abfd, relsec, 2)
-		  || ! bfd_set_section_size (abfd, relsec,
-					     datasec->reloc_count * 12))
+		  || !bfd_set_section_alignment (relsec, 2)
+		  || !bfd_set_section_size (relsec, datasec->reloc_count * 12))
 		einfo (_("%F%P: %pB: can not create .emreloc section: %E\n"));
 	    }
 
@@ -123,11 +124,11 @@ m68k_elf_after_open (void)
 static void
 check_sections (bfd *abfd, asection *sec, void *datasec)
 {
-  if ((bfd_get_section_flags (abfd, sec) & SEC_DATA)
+  if ((bfd_section_flags (sec) & SEC_DATA)
       && sec != datasec
       && sec->reloc_count != 0)
     einfo (_("%X%P: %pB: section %s has relocs; can not use --embedded-relocs\n"),
-	   abfd, bfd_get_section_name (abfd, sec));
+	   abfd, bfd_section_name (sec));
 }
 
 #endif /* SUPPORT_EMBEDDED_RELOCS */
