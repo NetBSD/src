@@ -1,5 +1,5 @@
 /* VAX series support for 32-bit ELF
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Contributed by Matt Thomas <matt@3am-software.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -807,9 +807,7 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
 	case R_VAX_GNU_VTENTRY:
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 
@@ -1096,7 +1094,7 @@ elf_vax_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 
       /* It's OK to base decisions on the section name, because none
 	 of the dynobj section names depend upon the input files.  */
-      name = bfd_get_section_name (dynobj, s);
+      name = bfd_section_name (s);
 
       if (strcmp (name, ".plt") == 0)
 	{
@@ -1121,8 +1119,7 @@ elf_vax_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 		     section, then we probably need a DT_TEXTREL
 		     entry.  .rela.plt is actually associated with
 		     .got.plt, which is never readonly.  */
-		  outname = bfd_get_section_name (output_bfd,
-						  s->output_section);
+		  outname = bfd_section_name (s->output_section);
 		  target = bfd_get_section_by_name (output_bfd, outname + 5);
 		  if (target != NULL
 		      && (target->flags & SEC_READONLY) != 0
@@ -1667,7 +1664,7 @@ elf_vax_relocate_section (bfd *output_bfd,
 		    if (name == NULL)
 		      return FALSE;
 		    if (*name == '\0')
-		      name = bfd_section_name (input_bfd, sec);
+		      name = bfd_section_name (sec);
 		  }
 		info->callbacks->reloc_overflow
 		  (info, (h ? &h->root : NULL), name, howto->name,

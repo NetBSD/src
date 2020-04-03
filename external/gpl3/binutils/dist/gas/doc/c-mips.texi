@@ -1,4 +1,4 @@
-@c Copyright (C) 1991-2018 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -246,6 +246,34 @@ Generate code for the Global INValidate (GINV) Application Specific
 Extension.  This tells the assembler to accept GINV instructions.
 @samp{-mno-ginv} turns off this option.
 
+@item -mloongson-mmi
+@itemx -mno-loongson-mmi
+Generate code for the Loongson MultiMedia extensions Instructions (MMI)
+Application Specific Extension.  This tells the assembler to accept MMI
+instructions.
+@samp{-mno-loongson-mmi} turns off this option.
+
+@item -mloongson-cam
+@itemx -mno-loongson-cam
+Generate code for the Loongson Content Address Memory (CAM)
+Application Specific Extension.  This tells the assembler to accept CAM
+instructions.
+@samp{-mno-loongson-cam} turns off this option.
+
+@item -mloongson-ext
+@itemx -mno-loongson-ext
+Generate code for the Loongson EXTensions (EXT) instructions
+Application Specific Extension.  This tells the assembler to accept EXT
+instructions.
+@samp{-mno-loongson-ext} turns off this option.
+
+@item -mloongson-ext2
+@itemx -mno-loongson-ext2
+Generate code for the Loongson EXTensions R2 (EXT2) instructions
+Application Specific Extension.  This tells the assembler to accept EXT2
+instructions.
+@samp{-mno-loongson-ext2} turns off this option.
+
 @item -minsn32
 @itemx -mno-insn32
 Only use 32-bit instruction encodings when generating code for the
@@ -280,6 +308,13 @@ Replace nops by @code{or at,at,zero} to work around the Loongson2F
 deadlock.  The issue has been solved in later Loongson2F batches, but
 this fix has no side effect to them.
 
+@item -mfix-loongson3-llsc
+@itemx -mno-fix-loongson3-llsc
+Insert @samp{sync} before @samp{ll} and @samp{lld} to work around
+Loongson3 LLSC errata.  Without it, under extrame cases, the CPU might
+deadlock. The default can be controlled by the
+@option{--enable-mips-fix-loongson3-llsc=[yes|no]} configure option.
+
 @item -mfix-vr4120
 @itemx -mno-fix-vr4120
 Insert nops to work around certain VR4120 errata.  This option is
@@ -306,6 +341,14 @@ Insert nops to work around the 24K @samp{eret}/@samp{deret} errata.
 @itemx -mno-fix-cn63xxp1
 Replace @code{pref} hints 0 - 4 and 6 - 24 with hint 28 to work around
 certain CN63XXP1 errata.
+
+@item -mfix-r5900
+@itemx -mno-fix-r5900
+Do not attempt to schedule the preceding instruction into the delay slot
+of a branch instruction placed at the end of a short loop of six
+instructions or fewer and always schedule a @code{nop} instruction there
+instead.  The short loop bug under certain conditions causes loops to
+execute only once or twice, due to a hardware bug in the R5900 chip.
 
 @item -m4010
 @itemx -no-m4010
@@ -414,10 +457,13 @@ p5600,
 sb1,
 sb1a,
 i6400,
+i6500,
 p6600,
 loongson2e,
 loongson2f,
-loongson3a,
+gs464,
+gs464e,
+gs264e,
 octeon,
 octeon+,
 octeon2,
@@ -530,7 +576,7 @@ for branches.
 By default @samp{-mno-ignore-branch-isa} is selected, causing any invalid
 branch requiring a transition between ISA modes to produce an error.
 
-@cindex @option{-mnan=} command line option, MIPS
+@cindex @option{-mnan=} command-line option, MIPS
 @item -mnan=@var{encoding}
 This option indicates whether the source code uses the IEEE 2008
 NaN encoding (@option{-mnan=2008}) or the original MIPS encoding
@@ -756,7 +802,7 @@ for the corresponding ISA level, from that point on in the
 assembly.  @code{.set mips@var{n}} affects not only which instructions
 are permitted, but also how certain macros are expanded.  @code{.set
 mips0} restores the ISA level to its original level: either the
-level you selected with command line options, or the default for your
+level you selected with command-line options, or the default for your
 configuration.  You can use this feature to permit specific MIPS III
 instructions while assembling in 32 bit mode.  Use this directive with
 care!
@@ -766,7 +812,7 @@ care!
 The @code{.set arch=@var{cpu}} directive provides even finer control.
 It changes the effective CPU target and allows the assembler to use
 instructions specific to a particular CPU.  All CPUs supported by the
-@samp{-march} command line option are also selectable by this directive.
+@samp{-march} command-line option are also selectable by this directive.
 The original value is restored by @code{.set arch=default}.
 
 The directive @code{.set mips16} puts the assembler into MIPS 16 mode,
@@ -784,13 +830,13 @@ Traditional MIPS assemblers do not support this directive.
 @node MIPS assembly options
 @section Directives to control code generation
 
-@cindex MIPS directives to override command line options
+@cindex MIPS directives to override command-line options
 @kindex @code{.module}
-The @code{.module} directive allows command line options to be set directly
+The @code{.module} directive allows command-line options to be set directly
 from assembly.  The format of the directive matches the @code{.set}
 directive but only those options which are relevant to a whole module are
 supported.  The effect of a @code{.module} directive is the same as the
-corresponding command line option.  Where @code{.set} directives support
+corresponding command-line option.  Where @code{.set} directives support
 returning to a default then the @code{.module} directives do not as they
 define the defaults.
 
@@ -881,7 +927,7 @@ other and must be tracked carefully.
 
 Traditionally the use of an explicit @code{.gnu_attribute 4, @var{n}}
 directive is used to indicate which ABI is in use by a specific module.
-It was then left to the user to ensure that command line options and the
+It was then left to the user to ensure that command-line options and the
 selected ABI were compatible with some potential for inconsistencies.
 
 @node MIPS FP ABI Variants
@@ -941,7 +987,7 @@ of MIPS32r2.
 @cindex @code{.module fp=@var{nn}} directive, MIPS
 In order to simplify and add safety to the process of selecting the
 correct floating-point ABI, the assembler will automatically infer the
-correct @code{.gnu_attribute 4, @var{n}} directive based on command line
+correct @code{.gnu_attribute 4, @var{n}} directive based on command-line
 options and @code{.module} overrides.  Where an explicit
 @code{.gnu_attribute 4, @var{n}} directive has been seen then a warning
 will be raised if it does not match an inferred setting.
@@ -1144,6 +1190,39 @@ from the CRC Extension from that point on in the assembly.  The
 The directive @code{.set ginv} makes the assembler accept instructions
 from the GINV Extension from that point on in the assembly.  The
 @code{.set noginv} directive prevents GINV instructions from being accepted.
+
+@cindex Loongson MultiMedia extensions Instructions (MMI) generation override
+@kindex @code{.set loongson-mmi}
+@kindex @code{.set noloongson-mmi}
+The directive @code{.set loongson-mmi} makes the assembler accept
+instructions from the MMI Extension from that point on in the assembly.
+The @code{.set noloongson-mmi} directive prevents MMI instructions from
+being accepted.
+
+@cindex Loongson Content Address Memory (CAM) generation override
+@kindex @code{.set loongson-cam}
+@kindex @code{.set noloongson-cam}
+The directive @code{.set loongson-cam} makes the assembler accept
+instructions from the Loongson CAM from that point on in the assembly.
+The @code{.set noloongson-cam} directive prevents Loongson CAM instructions
+from being accepted.
+
+@cindex Loongson EXTensions (EXT) instructions generation override
+@kindex @code{.set loongson-ext}
+@kindex @code{.set noloongson-ext}
+The directive @code{.set loongson-ext} makes the assembler accept
+instructions from the Loongson EXT from that point on in the assembly.
+The @code{.set noloongson-ext} directive prevents Loongson EXT instructions
+from being accepted.
+
+@cindex Loongson EXTensions R2 (EXT2) instructions generation override
+@kindex @code{.set loongson-ext2}
+@kindex @code{.set noloongson-ext2}
+The directive @code{.set loongson-ext2} makes the assembler accept
+instructions from the Loongson EXT2 from that point on in the assembly.
+This directive implies @code{.set loognson-ext}.
+The @code{.set noloongson-ext2} directive prevents Loongson EXT2 instructions
+from being accepted.
 
 Traditional MIPS assemblers do not support these directives.
 

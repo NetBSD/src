@@ -1,5 +1,5 @@
 /* arsup.c - Archive support for MRI compatibility
-   Copyright (C) 1992-2018 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -158,7 +158,7 @@ ar_open (char *name, int t)
   if (asprintf (&tname, "%.*stmp-%s", (int) (bname - name), name, bname) == -1)
     {
       fprintf (stderr, _("%s: Can't allocate memory for temp name (%s)\n"),
-	program_name, strerror(errno));
+	       program_name, strerror(errno));
       maybequit ();
       return;
     }

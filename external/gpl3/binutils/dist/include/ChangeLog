@@ -1,382 +1,95 @@
-2019-08-22  Alan Modra  <amodra@gmail.com>
+2020-01-18  Nick Clifton  <nickc@redhat.com>
 
-	* elf/arm.h (ARM_GET_SYM_CMSE_SPCL, ARM_SET_SYM_CMSE_SPCL): Delete.
+	Binutils 2.34 branch created.
 
-2018-07-18  Nick Clifton  <nickc@redhat.com>
+2020-01-17  Nick Clifton  <nickc@redhat.com>
 
-	2.31.1 Release point.
+	* Import from gcc mainline:
+	2019-06-10  Martin Liska  <mliska@suse.cz>
 
-2018-07-14  Nick Clifton  <nickc@redhat.com>
+	* ansidecl.h (ATTRIBUTE_WARN_UNUSED_RESULT): New macro.
+	* libiberty.h (xmalloc): Use it.
+	(xrealloc): Likewise.
+	(xcalloc): Likewise.
+	(xstrdup): Likewise.
+	(xstrndup): Likewise.
+	(xmemdup): Likewise.
 
-	2.31 Release point.
+	2019-06-10  Martin Liska  <mliska@suse.cz>
 
-2018-07-06  Alan Modra  <amodra@gmail.com>
+	* ansidecl.h:
+	(ATTRIBUTE_RESULT_SIZE_1): Define new macro.
+	(ATTRIBUTE_RESULT_SIZE_2): Likewise.
+	(ATTRIBUTE_RESULT_SIZE_1_2): Likewise.
+	* libiberty.h (xmalloc): Add RESULT_SIZE attribute.
+	(xrealloc): Likewise.
+	(xcalloc): Likewise.
 
-	* diagnostics.h: Comment on macro usage.
+	2019-11-16  Tim Ruehsen  <tim.ruehsen@gmx.de>
 
-2018-06-29  Tamar Christina  <tamar.christina@arm.com>
+	* demangle.h (struct demangle_component): Add member
+	d_counting.
 
-	PR binutils/23192
-	*opcode/aarch64.h (aarch64_opnd): Add AARCH64_OPND_Em16.
+	2019-11-16  Eduard-Mihai Burtescu  <eddyb@lyken.rs>
 
-2018-06-26  Alan Modra  <amodra@gmail.com>
+	* demangle.h (rust_demangle_callback): Add.
 
-	* elf/internal.h (ELF_SECTION_IN_SEGMENT): Revert last change.
+	2019-07-18  Eduard-Mihai Burtescu  <eddyb@lyken.rs>
 
-2018-06-24  Nick Clifton  <nickc@redhat.com>
+	* demangle.h (rust_is_mangled): Move to libiberty/rust-demangle.h.
+	(rust_demangle_sym): Move to libiberty/rust-demangle.h.
 
-	2.31 branch created.
+2020-01-16  Andre Vieira  <andre.simoesdiasvieira@arm.com>
 
-2018-06-21  Alan Hayward  <alan.hayward@arm.com>
+	PR 25376
+	* opcodes/arm.h (FPU_MVE, FPU_MVE_FPU): Move these features to...
+	(ARM_EXT2_MVE, ARM_EXT2_MVE_FP): ... the CORE_HIGH space.
+	(ARM_ANY): Redefine to not include any MVE bits.
+	(ARM_FEATURE_ALL): Removed.
 
-	* elf/internal.h (ELF_SECTION_IN_SEGMENT): Don’t check addresses
-	for non SHT_NOBITS.
+2020-01-15  Jozef Lawrynowicz  <jozef.l@mittosystems.com>
 
-2018-06-19  Simon Marchi  <simon.marchi@ericsson.com>
+	* opcode/msp430.h (enum msp430_expp_e): New.
+	(struct msp430_operand_s): Add expp member to struct.
 
-	Sync with GCC
+2020-01-13  Claudiu Zissulescu  <claziss@gmail.com>
 
-	2018-05-24  Tom Rix  <trix@juniper.net>
+	* elf/arc-cpu.def: Update ARC cpu list.
 
-	* dwarf2.def (DW_FORM_strx*, DW_FORM_addrx*): New.
+2020-01-13  Alan Modra  <amodra@gmail.com>
 
-	2017-11-20  Kito Cheng  <kito.cheng@gmail.com>
+	* opcode/tic4x.h (EXTR): Delete.
+	(EXTRU, EXTRS, INSERTU, INSERTS): Rewrite without zero/sign
+	extension using shifts.  Do trim INSERTU value to specified bitfield.
 
-	* longlong.h [__riscv] (__umulsidi3): Define.
-	[__riscv] (umul_ppmm): Likewise.
-	[__riscv] (__muluw3): Likewise.
+2020-01-10  Alan Modra  <amodra@gmail.com>
 
-2018-06-14  Faraz Shahbazker  <Faraz.Shahbazker@mips.com>
+	* opcode/spu.h: Formatting.
+	(UNSIGNED_EXTRACT): Use 1u.
+	(SIGNED_EXTRACT): Don't sign extend with shifts.
+	(DECODE_INSN_I9a, DECODE_INSN_I9b): Avoid left shift of signed value.
+	Keep result signed.
+	(DECODE_INSN_U9a, DECODE_INSN_U9b): Delete.
 
-	* elf/mips.h (AFL_ASE_GINV, AFL_ASE_RESERVED1): New macros.
-	(AFL_ASE_MASK): Update to include AFL_ASE_GINV.
-	* opcode/mips.h: Document "+\" operand format.
-	(ASE_GINV): New macro.
+2020-01-07  Shahab Vahedi  <shahab@synopsys.com>
 
-2018-06-13  Scott Egerton  <scott.egerton@imgtec.com>
-	    Faraz Shahbazker  <Faraz.Shahbazker@mips.com>
+	* opcode/arc.h (insn_class_t): Add 'LLOCK' and 'SCOND'.
 
-	* elf/mips.h (AFL_ASE_CRC): New macro.
-	(AFL_ASE_MASK): Update to include AFL_ASE_CRC.
-	* opcode/mips.h (ASE_CRC): New macro.
-	* opcode/mips.h (ASE_CRC64): Likewise.
+2020-01-02  Sergey Belyashov  <sergey.belyashov@gmail.com>
 
-2018-06-04  Max Filippov  <jcmvbkbc@gmail.com>
+	* coff/internal.h: Add defintions of Z80 reloc names.
 
-	* elf/xtensa.h (xtensa_read_table_entries)
-	(xtensa_compute_fill_extra_space): New declarations.
+2020-01-02  Christian Biesinger  <cbiesinger@google.com>
 
-2018-06-04  H.J. Lu  <hongjiu.lu@intel.com>
+	* opcode/s12z.h: Undef REG_Y.
 
-	* diagnostics.h (DIAGNOSTIC_IGNORE_STRINGOP_TRUNCATION): Always
-	define for GCC.
-
-2018-06-04  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* diagnostics.h (DIAGNOSTIC_STRINGIFY_1): New.
-	(DIAGNOSTIC_STRINGIFY): Likewise.
-	(DIAGNOSTIC_IGNORE): Replace STRINGIFY with DIAGNOSTIC_STRINGIFY.
-	(DIAGNOSTIC_IGNORE_SELF_MOVE): Define empty if not defined.
-	(DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER): Likewise.
-	(DIAGNOSTIC_IGNORE_UNUSED_FUNCTION): Likewise.
-	(DIAGNOSTIC_IGNORE_SWITCH_DIFFERENT_ENUM_TYPES): Likewise.
-	(DIAGNOSTIC_IGNORE_STRINGOP_TRUNCATION): New.
-
-2018-06-01  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* diagnostics.h: Moved from ../gdb/common/diagnostics.h.
-
-2018-05-28  Bernd Edlinger  <bernd.edlinger@hotmail.de>
-
-	* splay-tree.h (splay_tree_compare_strings,
-	splay_tree_delete_pointers): Declare new utility functions.
-
-2018-05-21  Peter Bergner  <bergner@vnet.ibm.com.com>
-
-	* opcode/ppc.h (PPC_OPERAND_FAKE): Delete macro.
-
-2018-05-18  Kito Cheng  <kito.cheng@gmail.com>
-
-	* elf/riscv.h (EF_RISCV_RVE): New define.
-
-2018-05-18  John Darrington  <john@darrington.wattle.id.au>
-
-	* elf/s12z.h: New header.
-
-2018-05-15  Tamar Christina  <tamar.christina@arm.com>
-
-	PR binutils/21446
-	* opcode/aarch64.h (F_SYS_READ, F_SYS_WRITE): New.
-
-2018-05-15  Tamar Christina  <tamar.christina@arm.com>
-
-	PR binutils/21446
-	* opcode/aarch64.h (aarch64_operand_error): Add non_fatal.
-	(aarch64_print_operand): Support notes.
-
-2018-05-15  Tamar Christina  <tamar.christina@arm.com>
-
-	PR binutils/21446
-	* opcode/aarch64.h (aarch64_opnd_info): Change sysreg to struct.
-	(aarch64_decode_insn): Accept error struct.
-
-2018-05-15  Francois H. Theron  <francois.theron@netronome.com>
-
-	* opcode/nfp.h: Use uint64_t instead of bfd_vma.
-
-2018-05-10  John Darrington  <john@darrington.wattle.id.au>
-
-	* elf/common.h (EM_S12Z): New macro.
-
-2018-05-09  Sebastian Rasmussen  <sebras@gmail.com>
-
-	* mach-o/unwind.h (MACH_O_UNWIND_X86_64_RBP_FRAME_REGISTERS):
-	Rename from MACH_O_UNWIND_X86_64_RBP_FRAME_REGSITERS.
-	(MACH_O_UNWIND_X86_EBP_FRAME_REGISTERS): Rename from
-	MACH_O_UNWIND_X86_EBP_FRAME_REGSITERS.
-
-2018-05-08  Jim Wilson  <jimw@sifive.com>
-
-	* opcode/riscv-opc.h (MATCH_C_SRLI64, MASK_C_SRLI64): New.
-	(MATCH_C_SRAI64, MASK_C_SRAI64): New.
-	(MATCH_C_SLLI64, MASK_C_SLLI64): New.
-
-2018-05-07  Peter Bergner  <bergner@vnet.ibm.com.com>
-
-	* opcode/ppc.h (powerpc_num_opcodes): Change type to unsigned.
-	(vle_num_opcodes): Likewise.
-	(spe2_num_opcodes): Likewise.
-
-2018-05-04  Alan Modra  <amodra@gmail.com>
-
-	* ansidecl.h: Import from gcc.
-	* coff/internal.h (struct internal_scnhdr): Add ATTRIBUTE_NONSTRING
-	to s_name.
-	(struct internal_syment): Add ATTRIBUTE_NONSTRING to _n_name.
-
-2018-04-30  Francois H. Theron <francois.theron@netronome.com>
-
-	* dis-asm.h: Added print_nfp_disassembler_options prototype.
-	* elf/common.h: Added EM_NFP, officially assigned. See Google Group
-	Generic System V Application Binary Interface.
-	* elf/nfp.h: New, for NFP support.
-	* opcode/nfp.h: New, for NFP support.
-
-2018-04-25  Christophe Lyon  <christophe.lyon@st.com>
-	Mickaël Guêné  <mickael.guene@st.com>
-
-	* elf/arm.h: Add R_ARM_TLS_GD32_FDPIC, R_ARM_TLS_LDM32_FDPIC,
-	R_ARM_TLS_IE32_FDPIC.
-
-2018-04-25  Christophe Lyon  <christophe.lyon@st.com>
-	Mickaël Guêné  <mickael.guene@st.com>
-
-	* elf/arm.h (R_ARM_GOTFUNCDESC, R_ARM_GOTOFFFUNCDESC)
-	(R_ARM_FUNCDESC)
-	(R_ARM_FUNCDESC_VALUE): Define new relocations.
-
-2018-04-25  Christophe Lyon  <christophe.lyon@st.com>
-	Mickaël Guêné  <mickael.guene@st.com>
-
-	* elf/arm.h (EF_ARM_FDPIC): New.
-
-2018-04-18  Alan Modra  <amodra@gmail.com>
-
-	* coff/mipspe.h: Delete.
-
-2018-04-18  Alan Modra  <amodra@gmail.com>
-
-	* aout/dynix3.h: Delete.
-
-2018-04-17 Andrew Sadek  <andrew.sadek.se@gmail.com>
-
-	Microblaze Target: PIC data text relative
-
-	* bfdlink.h (Add flag): Add new flag @ 'bfd_link_info' struct.
-	* elf/microblaze.h (Add 3 new relocations):
-	R_MICROBLAZE_TEXTPCREL_64, R_MICROBLAZE_TEXTREL_64
-	and R_MICROBLAZE_TEXTREL_32_LO for relax function.
-
-2018-04-17  Alan Modra  <amodra@gmail.com>
-
-	* elf/i370.h: Revert removal.
-	* elf/i860.h: Likewise.
-	* elf/i960.h: Likewise.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* coff/sparc.h: Delete.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* aout/host.h: Remove m68k-aout and m68k-coff support.
-	* aout/hp300hpux.h: Delete.
-	* coff/apollo.h: Delete.
-	* coff/aux-coff.h: Delete.
-	* coff/m68k.h: Delete.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* dis-asm.h: Remove sh5 and sh64 support.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* coff/internal.h: Remove w65 support.
-	* coff/w65.h: Delete.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* coff/we32k.h: Delete.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* coff/internal.h: Remove m88k support.
-	* coff/m88k.h: Delete.
-	* opcode/m88k.h: Delete.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* elf/i370.h: Delete.
-	* opcode/i370.h: Delete.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* coff/h8500.h: Delete.
-	* coff/internal.h: Remove h8500 support.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* coff/h8300.h: Delete.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* ieee.h: Delete.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* aout/host.h: Remove newsos3 support.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* nlm/ChangeLog-9315: Delete.
-	* nlm/alpha-ext.h: Delete.
-	* nlm/common.h: Delete.
-	* nlm/external.h: Delete.
-	* nlm/i386-ext.h: Delete.
-	* nlm/internal.h: Delete.
-	* nlm/ppc-ext.h: Delete.
-	* nlm/sparc32-ext.h: Delete.
-
-2018-04-16  Alan Modra  <amodra@gmail.com>
-
-	* opcode/tahoe.h: Delete.
-
-2018-04-11  Alan Modra  <amodra@gmail.com>
-
-	* aout/adobe.h: Delete.
-	* aout/reloc.h: Delete.
-	* coff/i860.h: Delete.
-	* coff/i960.h: Delete.
-	* elf/i860.h: Delete.
-	* elf/i960.h: Delete.
-	* opcode/i860.h: Delete.
-	* opcode/i960.h: Delete.
-	* aout/aout64.h (enum reloc_type): Trim off 29k and other unused values.
-	* aout/ar.h (ARMAGB): Remove.
-	* coff/internal.h (struct internal_aouthdr, struct internal_scnhdr,
-	union internal_auxent): Remove i960 support.
-
-2018-04-09  Alan Modra  <amodra@gmail.com>
-
-	* elf/ppc.h (R_PPC_PLTSEQ, R_PPC_PLTCALL): Define.
-	* elf/ppc64.h (R_PPC64_PLTSEQ, R_PPC64_PLTCALL): Define.
-
-2018-03-28  Renlin Li  <renlin.li@arm.com>
-
-	PR ld/22970
-	* elf/aarch64.h: Add relocation number for
-	R_AARCH64_P32_TLSLE_LDST16_TPREL_LO12,
-	R_AARCH64_P32_TLSLE_LDST16_TPREL_LO12_NC,
-	R_AARCH64_P32_TLSLE_LDST32_TPREL_LO12,
-	R_AARCH64_P32_TLSLE_LDST32_TPREL_LO12_NC,
-	R_AARCH64_P32_TLSLE_LDST64_TPREL_LO12,
-	R_AARCH64_P32_TLSLE_LDST64_TPREL_LO12_NC,
-	R_AARCH64_P32_TLSLE_LDST8_TPREL_LO12,
-	R_AARCH64_P32_TLSLE_LDST8_TPREL_LO12_NC.
-
-2018-03-28  Nick Clifton  <nickc@redhat.com>
-
-	PR 22988
-	* opcode/aarch64.h (enum aarch64_opnd): Add
-	AARCH64_OPND_SVE_ADDR_R.
-
-2018-03-21  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* elf/common.h (DF_1_KMOD): New.
-	(DF_1_WEAKFILTER): Likewise.
-	(DF_1_NOCOMMON): Likewise.
-
-2018-03-14  Kito Cheng  <kito.cheng@gmail.com>
-
-	* opcode/riscv.h (OP_MASK_FUNCT3): New.
-	(OP_SH_FUNCT3): Likewise.
-	(OP_MASK_FUNCT7): Likewise.
-	(OP_SH_FUNCT7): Likewise.
-	(OP_MASK_OP2): Likewise.
-	(OP_SH_OP2): Likewise.
-	(OP_MASK_CFUNCT4): Likewise.
-	(OP_SH_CFUNCT4): Likewise.
-	(OP_MASK_CFUNCT3): Likewise.
-	(OP_SH_CFUNCT3): Likewise.
-	(riscv_insn_types): Likewise.
-
-2018-03-13  Nick Clifton  <nickc@redhat.com>
-
-	PR 22113
-	* coff/pe.h (struct pex64_unwind_info): Add a rawUnwindCodesEnd
-	field.
-
-2018-03-08  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* opcode/i386 (OLDGCC_COMPAT): Removed.
-
-2018-02-27  Thomas Preud'homme  <thomas.preudhomme@arm.com>
-
-	* opcode/arm.h (ARM_FEATURE_COPY): Remove macro definition.
-
-2018-02-20  Maciej W. Rozycki  <macro@mips.com>
-
-	* opcode/mips.h: Remove `M' operand code.
-
-2018-02-12  Zebediah Figura  <z.figura12@gmail.com>
-
-	* coff/msdos.h: New header.
-	* coff/pe.h: Move common defines to msdos.h.
-	* coff/powerpc.h: Likewise.
-
-2018-01-13  Nick Clifton  <nickc@redhat.com>
-
-	2.30 branch created.
-
-2018-01-11  H.J. Lu  <hongjiu.lu@intel.com>
-
-	PR ld/22393
-	* bfdlink.h (bfd_link_info): Add separate_code.
-
-2018-01-04  Jim Wilson  <jimw@sifive.com>
-
-	* opcode/riscv-opc.h (CSR_SBADADDR): Rename to CSR_STVAL.  Rename
-	DECLARE_CSR entry.  Add alias to map sbadaddr to CSR_STVAL.
-	(CSR_MBADADDR): Rename to CSR_MTVAL.  Rename DECLARE_CSR entry.
-	Add alias to map mbadaddr to CSR_MTVAL.
-
-2018-01-03  Alan Modra  <amodra@gmail.com>
+2020-01-01  Alan Modra  <amodra@gmail.com>
 
 	Update year range in copyright notice of all files.
 
-For older changes see ChangeLog-2017
+For older changes see ChangeLog-2019
 
-Copyright (C) 2018 Free Software Foundation, Inc.
+Copyright (C) 2020 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

@@ -1,5 +1,5 @@
 /* ldmain.h -
-   Copyright (C) 1991-2018 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -29,7 +29,7 @@ extern FILE *saved_script_handle;
 extern FILE *previous_script_handle;
 extern bfd_boolean force_make_executable;
 extern char *default_target;
-extern bfd_boolean trace_files;
+extern unsigned int trace_files;
 extern bfd_boolean verbose;
 extern bfd_boolean version_printed;
 extern bfd_boolean demangling;

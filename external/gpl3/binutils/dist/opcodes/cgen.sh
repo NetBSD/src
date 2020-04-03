@@ -1,7 +1,7 @@
 #! /bin/sh
 # CGEN generic assembler support code.
 #
-#   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 #
 #   This file is part of the GNU opcodes library.
 #

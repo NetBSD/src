@@ -1,5 +1,5 @@
 /* BFD semi-generic back-end for a.out binaries.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -117,6 +117,7 @@ DESCRIPTION
 #define KEEPIT udata.i
 
 #include "sysdep.h"
+#include <limits.h>
 #include "bfd.h"
 #include "safe-ctype.h"
 #include "bfdlink.h"
@@ -510,10 +511,10 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
        was called.  */
     abort ();
 
-  bfd_get_start_address (abfd) = execp->a_entry;
+  abfd->start_address = execp->a_entry;
 
   obj_aout_symbols (abfd) = NULL;
-  bfd_get_symcount (abfd) = execp->a_syms / sizeof (struct external_nlist);
+  abfd->symcount = execp->a_syms / sizeof (struct external_nlist);
 
   /* The default relocation entry size is that of traditional V7 Unix.  */
   obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
@@ -1569,7 +1570,7 @@ translate_to_native_sym_flags (bfd *abfd,
      to another.  */
   sym_pointer->e_type[0] &= ~N_TYPE;
 
-  sec = bfd_get_section (cache_ptr);
+  sec = bfd_asymbol_section (cache_ptr);
   off = 0;
 
   if (sec == NULL)
@@ -1781,7 +1782,7 @@ NAME (aout, slurp_symbol_table) (bfd *abfd)
       return FALSE;
     }
 
-  bfd_get_symcount (abfd) = obj_aout_external_sym_count (abfd);
+  abfd->symcount = obj_aout_external_sym_count (abfd);
 
   obj_aout_symbols (abfd) = cached;
 
@@ -2063,14 +2064,14 @@ NAME (aout, swap_ext_reloc_out) (bfd *abfd,
      Absolute symbols can come in in two ways, either as an offset
      from the abs section, or as a symbol which has an abs value.
      check for that here.  */
-  if (bfd_is_abs_section (bfd_get_section (sym)))
+  if (bfd_is_abs_section (bfd_asymbol_section (sym)))
     {
       r_extern = 0;
       r_index = N_ABS;
     }
   else if ((sym->flags & BSF_SECTION_SYM) == 0)
     {
-      if (bfd_is_und_section (bfd_get_section (sym))
+      if (bfd_is_und_section (bfd_asymbol_section (sym))
 	  || (sym->flags & BSF_GLOBAL) != 0)
 	r_extern = 1;
       else
@@ -2491,6 +2492,8 @@ NAME (aout, canonicalize_reloc) (bfd *abfd,
 long
 NAME (aout, get_reloc_upper_bound) (bfd *abfd, sec_ptr asect)
 {
+  bfd_size_type count;
+
   if (bfd_get_format (abfd) != bfd_object)
     {
       bfd_set_error (bfd_error_invalid_operation);
@@ -2498,26 +2501,25 @@ NAME (aout, get_reloc_upper_bound) (bfd *abfd, sec_ptr asect)
     }
 
   if (asect->flags & SEC_CONSTRUCTOR)
-    return sizeof (arelent *) * (asect->reloc_count + 1);
+    count = asect->reloc_count;
+  else if (asect == obj_datasec (abfd))
+    count = exec_hdr (abfd)->a_drsize / obj_reloc_entry_size (abfd);
+  else if (asect == obj_textsec (abfd))
+    count = exec_hdr (abfd)->a_trsize / obj_reloc_entry_size (abfd);
+  else if (asect == obj_bsssec (abfd))
+    count = 0;
+  else
+    {
+      bfd_set_error (bfd_error_invalid_operation);
+      return -1;
+    }
 
-  if (asect == obj_datasec (abfd))
-    return sizeof (arelent *)
-      * ((exec_hdr (abfd)->a_drsize / obj_reloc_entry_size (abfd))
-	 + 1);
-
-  if (asect == obj_textsec (abfd))
-    return sizeof (arelent *)
-      * ((exec_hdr (abfd)->a_trsize / obj_reloc_entry_size (abfd))
-	 + 1);
-
-  if (asect == obj_bsssec (abfd))
-    return sizeof (arelent *);
-
-  if (asect == obj_bsssec (abfd))
-    return 0;
-
-  bfd_set_error (bfd_error_invalid_operation);
-  return -1;
+  if (count >= LONG_MAX / sizeof (arelent *))
+    {
+      bfd_set_error (bfd_error_file_too_big);
+      return -1;
+    }
+  return (count + 1) * sizeof (arelent *);
 }
 
 long
@@ -3106,18 +3108,18 @@ aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	  break;
 	case N_TEXT | N_EXT:
 	  section = obj_textsec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_DATA | N_EXT:
 	case N_SETV | N_EXT:
 	  /* Treat N_SETV symbols as N_DATA symbol; see comment in
 	     translate_from_native_sym_flags.  */
 	  section = obj_datasec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_BSS | N_EXT:
 	  section = obj_bsssec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_INDR | N_EXT:
 	  /* An indirect symbol.  The next symbol is the symbol
@@ -3143,17 +3145,17 @@ aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	case N_SETT: case N_SETT | N_EXT:
 	  section = obj_textsec (abfd);
 	  flags |= BSF_CONSTRUCTOR;
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_SETD: case N_SETD | N_EXT:
 	  section = obj_datasec (abfd);
 	  flags |= BSF_CONSTRUCTOR;
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_SETB: case N_SETB | N_EXT:
 	  section = obj_bsssec (abfd);
 	  flags |= BSF_CONSTRUCTOR;
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  break;
 	case N_WARNING:
 	  /* A warning symbol.  The next symbol is the one to warn
@@ -3179,17 +3181,17 @@ aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	  break;
 	case N_WEAKT:
 	  section = obj_textsec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  flags = BSF_WEAK;
 	  break;
 	case N_WEAKD:
 	  section = obj_datasec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  flags = BSF_WEAK;
 	  break;
 	case N_WEAKB:
 	  section = obj_bsssec (abfd);
-	  value -= bfd_get_section_vma (abfd, section);
+	  value -= bfd_section_vma (section);
 	  flags = BSF_WEAK;
 	  break;
 	}
@@ -3897,8 +3899,7 @@ aout_link_reloc_link_order (struct aout_final_link_info *flaginfo,
 	      (*flaginfo->info->callbacks->reloc_overflow)
 		(flaginfo->info, NULL,
 		 (p->type == bfd_section_reloc_link_order
-		  ? bfd_section_name (flaginfo->output_bfd,
-				      pr->u.section)
+		  ? bfd_section_name (pr->u.section)
 		  : pr->u.name),
 		 howto->name, pr->addend, NULL, NULL, (bfd_vma) 0);
 	      break;
@@ -4312,7 +4313,7 @@ aout_link_input_section_std (struct aout_final_link_info *flaginfo,
 		    asection *s;
 
 		    s = aout_reloc_index_to_section (input_bfd, r_index);
-		    name = bfd_section_name (input_bfd, s);
+		    name = bfd_section_name (s);
 		  }
 		(*flaginfo->info->callbacks->reloc_overflow)
 		  (flaginfo->info, (h ? &h->root : NULL), name, howto->name,
@@ -4726,7 +4727,7 @@ aout_link_input_section_ext (struct aout_final_link_info *flaginfo,
 			asection *s;
 
 			s = aout_reloc_index_to_section (input_bfd, r_index);
-			name = bfd_section_name (input_bfd, s);
+			name = bfd_section_name (s);
 		      }
 		    (*flaginfo->info->callbacks->reloc_overflow)
 		      (flaginfo->info, (h ? &h->root : NULL), name,
@@ -4866,8 +4867,7 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
 	return FALSE;
       PUT_WORD (output_bfd, strtab_index, outsym->e_strx);
       PUT_WORD (output_bfd,
-		(bfd_get_section_vma (output_bfd,
-				      obj_textsec (input_bfd)->output_section)
+		(bfd_section_vma (obj_textsec (input_bfd)->output_section)
 		 + obj_textsec (input_bfd)->output_offset),
 		outsym->e_value);
       ++obj_aout_external_sym_count (output_bfd);
@@ -5075,7 +5075,7 @@ aout_link_write_symbols (struct aout_final_link_info *flaginfo, bfd *input_bfd)
 		  BFD_ASSERT (bfd_is_abs_section (output_section)
 			      || output_section->owner == output_bfd);
 		  val = (hresolve->root.u.def.value
-			 + bfd_get_section_vma (output_bfd, output_section)
+			 + bfd_section_vma (output_section)
 			 + input_section->output_offset);
 
 		  /* Get the correct type based on the section.  If
