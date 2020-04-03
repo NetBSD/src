@@ -1,6 +1,6 @@
 /* SPU specific support for 32-bit ELF
 
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -37,13 +37,13 @@ static bfd_reloc_status_type spu_elf_rel9 (bfd *, arelent *, asymbol *,
    array, so it must be declared in the order of that type.  */
 
 static reloc_howto_type elf_howto_table[] = {
-  HOWTO (R_SPU_NONE,       0, 3,  0, FALSE,  0, complain_overflow_dont,
+  HOWTO (R_SPU_NONE,	   0, 3,  0, FALSE,  0, complain_overflow_dont,
 	 bfd_elf_generic_reloc, "SPU_NONE",
 	 FALSE, 0, 0x00000000, FALSE),
-  HOWTO (R_SPU_ADDR10,     4, 2, 10, FALSE, 14, complain_overflow_bitfield,
+  HOWTO (R_SPU_ADDR10,	   4, 2, 10, FALSE, 14, complain_overflow_bitfield,
 	 bfd_elf_generic_reloc, "SPU_ADDR10",
 	 FALSE, 0, 0x00ffc000, FALSE),
-  HOWTO (R_SPU_ADDR16,     2, 2, 16, FALSE,  7, complain_overflow_bitfield,
+  HOWTO (R_SPU_ADDR16,	   2, 2, 16, FALSE,  7, complain_overflow_bitfield,
 	 bfd_elf_generic_reloc, "SPU_ADDR16",
 	 FALSE, 0, 0x007fff80, FALSE),
   HOWTO (R_SPU_ADDR16_HI, 16, 2, 16, FALSE,  7, complain_overflow_bitfield,
@@ -52,43 +52,43 @@ static reloc_howto_type elf_howto_table[] = {
   HOWTO (R_SPU_ADDR16_LO,  0, 2, 16, FALSE,  7, complain_overflow_dont,
 	 bfd_elf_generic_reloc, "SPU_ADDR16_LO",
 	 FALSE, 0, 0x007fff80, FALSE),
-  HOWTO (R_SPU_ADDR18,     0, 2, 18, FALSE,  7, complain_overflow_bitfield,
+  HOWTO (R_SPU_ADDR18,	   0, 2, 18, FALSE,  7, complain_overflow_bitfield,
 	 bfd_elf_generic_reloc, "SPU_ADDR18",
 	 FALSE, 0, 0x01ffff80, FALSE),
-  HOWTO (R_SPU_ADDR32,     0, 2, 32, FALSE,  0, complain_overflow_dont,
+  HOWTO (R_SPU_ADDR32,	   0, 2, 32, FALSE,  0, complain_overflow_dont,
 	 bfd_elf_generic_reloc, "SPU_ADDR32",
 	 FALSE, 0, 0xffffffff, FALSE),
-  HOWTO (R_SPU_REL16,      2, 2, 16,  TRUE,  7, complain_overflow_bitfield,
+  HOWTO (R_SPU_REL16,	   2, 2, 16,  TRUE,  7, complain_overflow_bitfield,
 	 bfd_elf_generic_reloc, "SPU_REL16",
 	 FALSE, 0, 0x007fff80, TRUE),
-  HOWTO (R_SPU_ADDR7,      0, 2,  7, FALSE, 14, complain_overflow_dont,
+  HOWTO (R_SPU_ADDR7,	   0, 2,  7, FALSE, 14, complain_overflow_dont,
 	 bfd_elf_generic_reloc, "SPU_ADDR7",
 	 FALSE, 0, 0x001fc000, FALSE),
-  HOWTO (R_SPU_REL9,       2, 2,  9,  TRUE,  0, complain_overflow_signed,
-	 spu_elf_rel9,          "SPU_REL9",
+  HOWTO (R_SPU_REL9,	   2, 2,  9,  TRUE,  0, complain_overflow_signed,
+	 spu_elf_rel9,		"SPU_REL9",
 	 FALSE, 0, 0x0180007f, TRUE),
-  HOWTO (R_SPU_REL9I,      2, 2,  9,  TRUE,  0, complain_overflow_signed,
-	 spu_elf_rel9,          "SPU_REL9I",
+  HOWTO (R_SPU_REL9I,	   2, 2,  9,  TRUE,  0, complain_overflow_signed,
+	 spu_elf_rel9,		"SPU_REL9I",
 	 FALSE, 0, 0x0000c07f, TRUE),
-  HOWTO (R_SPU_ADDR10I,    0, 2, 10, FALSE, 14, complain_overflow_signed,
+  HOWTO (R_SPU_ADDR10I,	   0, 2, 10, FALSE, 14, complain_overflow_signed,
 	 bfd_elf_generic_reloc, "SPU_ADDR10I",
 	 FALSE, 0, 0x00ffc000, FALSE),
-  HOWTO (R_SPU_ADDR16I,    0, 2, 16, FALSE,  7, complain_overflow_signed,
+  HOWTO (R_SPU_ADDR16I,	   0, 2, 16, FALSE,  7, complain_overflow_signed,
 	 bfd_elf_generic_reloc, "SPU_ADDR16I",
 	 FALSE, 0, 0x007fff80, FALSE),
-  HOWTO (R_SPU_REL32,      0, 2, 32, TRUE,  0, complain_overflow_dont,
+  HOWTO (R_SPU_REL32,	   0, 2, 32, TRUE,  0, complain_overflow_dont,
 	 bfd_elf_generic_reloc, "SPU_REL32",
 	 FALSE, 0, 0xffffffff, TRUE),
-  HOWTO (R_SPU_ADDR16X,    0, 2, 16, FALSE,  7, complain_overflow_bitfield,
+  HOWTO (R_SPU_ADDR16X,	   0, 2, 16, FALSE,  7, complain_overflow_bitfield,
 	 bfd_elf_generic_reloc, "SPU_ADDR16X",
 	 FALSE, 0, 0x007fff80, FALSE),
-  HOWTO (R_SPU_PPU32,      0, 2, 32, FALSE,  0, complain_overflow_dont,
+  HOWTO (R_SPU_PPU32,	   0, 2, 32, FALSE,  0, complain_overflow_dont,
 	 bfd_elf_generic_reloc, "SPU_PPU32",
 	 FALSE, 0, 0xffffffff, FALSE),
-  HOWTO (R_SPU_PPU64,      0, 4, 64, FALSE,  0, complain_overflow_dont,
+  HOWTO (R_SPU_PPU64,	   0, 4, 64, FALSE,  0, complain_overflow_dont,
 	 bfd_elf_generic_reloc, "SPU_PPU64",
 	 FALSE, 0, -1, FALSE),
-  HOWTO (R_SPU_ADD_PIC,      0, 0, 0, FALSE,  0, complain_overflow_dont,
+  HOWTO (R_SPU_ADD_PIC,	     0, 0, 0, FALSE,  0, complain_overflow_dont,
 	 bfd_elf_generic_reloc, "SPU_ADD_PIC",
 	 FALSE, 0, 0x00000000, FALSE),
 };
@@ -145,8 +145,8 @@ spu_elf_bfd_to_reloc_type (bfd_reloc_code_real_type code)
     }
 }
 
-static void
-spu_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+spu_elf_info_to_howto (bfd *abfd,
 		       arelent *cache_ptr,
 		       Elf_Internal_Rela *dst)
 {
@@ -156,12 +156,14 @@ spu_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
   /* PR 17512: file: 90c2a92e.  */
   if (r_type >= R_SPU_max)
     {
-      (*_bfd_error_handler) (_("%B: unrecognised SPU reloc number: %d"),
-			     abfd, r_type);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      r_type = R_SPU_NONE;
+      return FALSE;
     }
   cache_ptr->howto = &elf_howto_table[(int) r_type];
+  return TRUE;
 }
 
 static reloc_howto_type *
@@ -722,16 +724,16 @@ spu_elf_find_overlays (struct bfd_link_info *info)
 
 	      if ((s->vma - vma_start) & (htab->params->line_size - 1))
 		{
-		  info->callbacks->einfo (_("%X%P: overlay section %A "
-					    "does not start on a cache line.\n"),
+		  info->callbacks->einfo (_("%X%P: overlay section %pA "
+					    "does not start on a cache line\n"),
 					  s);
 		  bfd_set_error (bfd_error_bad_value);
 		  return 0;
 		}
 	      else if (s->size > htab->params->line_size)
 		{
-		  info->callbacks->einfo (_("%X%P: overlay section %A "
-					    "is larger than a cache line.\n"),
+		  info->callbacks->einfo (_("%X%P: overlay section %pA "
+					    "is larger than a cache line\n"),
 					  s);
 		  bfd_set_error (bfd_error_bad_value);
 		  return 0;
@@ -750,8 +752,8 @@ spu_elf_find_overlays (struct bfd_link_info *info)
 	  s = alloc_sec[i];
 	  if (s->vma < ovl_end)
 	    {
-	      info->callbacks->einfo (_("%X%P: overlay section %A "
-					"is not in cache area.\n"),
+	      info->callbacks->einfo (_("%X%P: overlay section %pA "
+					"is not in cache area\n"),
 				      alloc_sec[i-1]);
 	      bfd_set_error (bfd_error_bad_value);
 	      return 0;
@@ -790,9 +792,10 @@ spu_elf_find_overlays (struct bfd_link_info *info)
 		  spu_elf_section_data (s)->u.o.ovl_buf = num_buf;
 		  if (s0->vma != s->vma)
 		    {
-		      info->callbacks->einfo (_("%X%P: overlay sections %A "
-						"and %A do not start at the "
-						"same address.\n"),
+		      /* xgettext:c-format */
+		      info->callbacks->einfo (_("%X%P: overlay sections %pA "
+						"and %pA do not start at the "
+						"same address\n"),
 					      s0, s);
 		      bfd_set_error (bfd_error_bad_value);
 		      return 0;
@@ -1014,9 +1017,10 @@ needs_ovl_stub (struct elf_link_hash_entry *h,
 					       sym,
 					       sym_sec);
 		}
-	      (*_bfd_error_handler) (_("warning: call to non-function"
-				       " symbol %s defined in %B"),
-				     sym_sec->owner, sym_name);
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("warning: call to non-function symbol %s defined in %pB"),
+		 sym_name, sym_sec->owner);
 
 	    }
 	}
@@ -1364,7 +1368,8 @@ build_stub (struct bfd_link_info *info,
 
 	  if (stub_type != br000_ovl_stub
 	      && lrlive != stub_type - br000_ovl_stub)
-	    info->callbacks->einfo (_("%A:0x%v lrlive .brinfo (%u) differs "
+	    /* xgettext:c-format */
+	    info->callbacks->einfo (_("%pA:0x%v lrlive .brinfo (%u) differs "
 				      "from analysis (%u)\n"),
 				    isec, irela->r_offset, lrlive,
 				    stub_type - br000_ovl_stub);
@@ -1895,16 +1900,17 @@ define_ovtab_symbol (struct spu_link_hash_table *htab, const char *name)
     }
   else if (h->root.u.def.section->owner != NULL)
     {
-      (*_bfd_error_handler) (_("%B is not allowed to define %s"),
-			     h->root.u.def.section->owner,
-			     h->root.root.string);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB is not allowed to define %s"),
+			  h->root.u.def.section->owner,
+			  h->root.root.string);
       bfd_set_error (bfd_error_bad_value);
       return NULL;
     }
   else
     {
-      (*_bfd_error_handler) (_("you are not allowed to define %s in a script"),
-			     h->root.root.string);
+      _bfd_error_handler (_("you are not allowed to define %s in a script"),
+			  h->root.root.string);
       bfd_set_error (bfd_error_bad_value);
       return NULL;
     }
@@ -1937,8 +1943,8 @@ spu_elf_build_stubs (struct bfd_link_info *info)
 	      s = h->root.u.def.section->output_section;
 	      if (spu_elf_section_data (s)->u.o.ovl_index)
 		{
-		  (*_bfd_error_handler) (_("%s in overlay section"),
-					 h->root.root.string);
+		  _bfd_error_handler (_("%s in overlay section"),
+				      h->root.root.string);
 		  bfd_set_error (bfd_error_bad_value);
 		  return FALSE;
 		}
@@ -1966,7 +1972,7 @@ spu_elf_build_stubs (struct bfd_link_info *info)
 
       if (htab->stub_err)
 	{
-	  (*_bfd_error_handler) (_("overlay stub relocation overflow"));
+	  _bfd_error_handler (_("overlay stub relocation overflow"));
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	}
@@ -1975,7 +1981,7 @@ spu_elf_build_stubs (struct bfd_link_info *info)
 	{
 	  if (htab->stub_sec[i]->size != htab->stub_sec[i]->rawsize)
 	    {
-	      (*_bfd_error_handler)  (_("stubs don't match calculated size"));
+	      _bfd_error_handler  (_("stubs don't match calculated size"));
 	      bfd_set_error (bfd_error_bad_value);
 	      return FALSE;
 	    }
@@ -2557,6 +2563,7 @@ check_function_ranges (asection *sec, struct bfd_link_info *info)
 	const char *f1 = func_name (&sinfo->fun[i - 1]);
 	const char *f2 = func_name (&sinfo->fun[i]);
 
+	/* xgettext:c-format */
 	info->callbacks->einfo (_("warning: %s overlaps %s\n"), f1, f2);
 	sinfo->fun[i - 1].hi = sinfo->fun[i].lo;
       }
@@ -2604,7 +2611,8 @@ find_function (asection *sec, bfd_vma offset, struct bfd_link_info *info)
       else
 	return &sinfo->fun[mid];
     }
-  info->callbacks->einfo (_("%A:0x%v not found in function table\n"),
+  /* xgettext:c-format */
+  info->callbacks->einfo (_("%pA:0x%v not found in function table\n"),
 			  sec, offset);
   bfd_set_error (bfd_error_bad_value);
   return NULL;
@@ -2744,8 +2752,9 @@ mark_functions_via_relocs (asection *sec,
 		{
 		  if (!warned)
 		    info->callbacks->einfo
-		      (_("%B(%A+0x%v): call to non-code section"
-			 " %B(%A), analysis incomplete\n"),
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+0x%v): call to non-code section"
+			 " %pB(%pA), analysis incomplete\n"),
 		       sec->owner, sec, irela->r_offset,
 		       sym_sec->owner, sym_sec);
 		  warned = TRUE;
@@ -3312,7 +3321,8 @@ remove_cycles (struct function_info *fun,
 	      const char *f1 = func_name (fun);
 	      const char *f2 = func_name (call->fun);
 
-	      info->callbacks->info (_("Stack analysis will ignore the call "
+	      /* xgettext:c-format */
+	      info->callbacks->info (_("stack analysis will ignore the call "
 				       "from %s to %s\n"),
 				     f1, f2);
 	    }
@@ -4003,8 +4013,8 @@ sum_stack (struct function_info *fun,
   if (htab->params->stack_analysis)
     {
       if (!fun->non_root)
-	info->callbacks->info (_("  %s: 0x%v\n"), f1, (bfd_vma) cum_stack);
-      info->callbacks->minfo (_("%s: 0x%v 0x%v\n"),
+	info->callbacks->info ("  %s: 0x%v\n", f1, (bfd_vma) cum_stack);
+      info->callbacks->minfo ("%s: 0x%v 0x%v\n",
 			      f1, (bfd_vma) stack, (bfd_vma) cum_stack);
 
       if (has_call)
@@ -4017,7 +4027,7 @@ sum_stack (struct function_info *fun,
 		const char *ann1 = call->fun == max ? "*" : " ";
 		const char *ann2 = call->is_tail ? "t" : " ";
 
-		info->callbacks->minfo (_("   %s%s %s\n"), ann1, ann2, f2);
+		info->callbacks->minfo ("   %s%s %s\n", ann1, ann2, f2);
 	      }
 	}
     }
@@ -4322,6 +4332,7 @@ spu_elf_auto_overlay (struct bfd_link_info *info)
 	    if (bfd_arr[i - 1]->my_archive == bfd_arr[i]->my_archive)
 	      {
 		if (bfd_arr[i - 1]->my_archive && bfd_arr[i]->my_archive)
+		  /* xgettext:c-format */
 		  info->callbacks->einfo (_("%s duplicated in %s\n"),
 					  bfd_arr[i]->filename,
 					  bfd_arr[i]->my_archive->filename);
@@ -4374,6 +4385,7 @@ spu_elf_auto_overlay (struct bfd_link_info *info)
     }
 
   if (fixed_size + mos_param.max_overlay_size > htab->local_store)
+    /* xgettext:c-format */
     info->callbacks->einfo (_("non-overlay size of 0x%v plus maximum overlay "
 			      "size of 0x%v exceeds local store\n"),
 			    (bfd_vma) fixed_size,
@@ -4529,7 +4541,8 @@ spu_elf_auto_overlay (struct bfd_link_info *info)
 
       if (i == base)
 	{
-	  info->callbacks->einfo (_("%B:%A%s exceeds overlay size\n"),
+	  /* xgettext:c-format */
+	  info->callbacks->einfo (_("%pB:%pA%s exceeds overlay size\n"),
 				  ovly_sections[2 * i]->owner,
 				  ovly_sections[2 * i],
 				  ovly_sections[2 * i + 1] ? " + rodata" : "");
@@ -4670,7 +4683,7 @@ spu_elf_auto_overlay (struct bfd_link_info *info)
  file_err:
   bfd_set_error (bfd_error_system_call);
  err_exit:
-  info->callbacks->einfo ("%F%P: auto overlay error: %E\n");
+  info->callbacks->einfo (_("%F%P: auto overlay error: %E\n"));
   xexit (1);
 }
 
@@ -4721,10 +4734,10 @@ spu_elf_final_link (bfd *output_bfd, struct bfd_link_info *info)
        || (htab->params->ovly_flavour == ovly_soft_icache
 	   && htab->params->lrlive_analysis))
       && !spu_elf_stack_analysis (info))
-    info->callbacks->einfo ("%X%P: stack/lrlive analysis error: %E\n");
+    info->callbacks->einfo (_("%X%P: stack/lrlive analysis error: %E\n"));
 
   if (!spu_elf_build_stubs (info))
-    info->callbacks->einfo ("%F%P: can not build overlay stubs: %E\n");
+    info->callbacks->einfo (_("%F%P: can not build overlay stubs: %E\n"));
 
   return bfd_elf_final_link (output_bfd, info);
 }
@@ -4793,7 +4806,7 @@ spu_elf_emit_fixup (bfd * output_bfd, struct bfd_link_info *info,
       if (qaddr != (base & ~(bfd_vma) 15))
 	{
 	  if ((sfixup->reloc_count + 1) * FIXUP_RECORD_SIZE > sfixup->size)
-	    (*_bfd_error_handler) (_("fatal error while creating .fixup"));
+	    _bfd_error_handler (_("fatal error while creating .fixup"));
 	  FIXUP_PUT (output_bfd, htab, sfixup->reloc_count, qaddr | bit);
 	  sfixup->reloc_count++;
 	}
@@ -5026,11 +5039,13 @@ spu_elf_relocate_section (bfd *output_bfd,
 	  && _bfd_elf_section_offset (output_bfd, info, input_section,
 				      rel->r_offset) != (bfd_vma) -1)
 	{
-	  (*_bfd_error_handler)
-	    (_("%B(%s+0x%lx): unresolvable %s relocation against symbol `%s'"),
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%pB(%s+%#" PRIx64 "): "
+	       "unresolvable %s relocation against symbol `%s'"),
 	     input_bfd,
 	     bfd_get_section_name (input_bfd, input_section),
-	     (long) rel->r_offset,
+	     (uint64_t) rel->r_offset,
 	     howto->name,
 	     sym_name);
 	  ret = FALSE;
@@ -5424,7 +5439,7 @@ spu_elf_size_sections (bfd * output_bfd, struct bfd_link_info *info)
 	      bfd_vma base_end;
 
 	      /* If there aren't any relocs, then there's nothing more
-	         to do.  */
+		 to do.  */
 	      if ((isec->flags & SEC_ALLOC) == 0
 		  || (isec->flags & SEC_RELOC) == 0
 		  || isec->reloc_count == 0)
@@ -5438,10 +5453,10 @@ spu_elf_size_sections (bfd * output_bfd, struct bfd_link_info *info)
 		return FALSE;
 
 	      /* 1 quadword can contain up to 4 R_SPU_ADDR32
-	         relocations.  They are stored in a single word by
-	         saving the upper 28 bits of the address and setting the
-	         lower 4 bits to a bit mask of the words that have the
-	         relocation.  BASE_END keeps track of the next quadword. */
+		 relocations.  They are stored in a single word by
+		 saving the upper 28 bits of the address and setting the
+		 lower 4 bits to a bit mask of the words that have the
+		 relocation.  BASE_END keeps track of the next quadword. */
 	      irela = internal_relocs;
 	      irelaend = irela + isec->reloc_count;
 	      base_end = 0;
@@ -5473,7 +5488,7 @@ spu_elf_size_sections (bfd * output_bfd, struct bfd_link_info *info)
 #define ELF_MACHINE_CODE	EM_SPU
 /* This matches the alignment need for DMA.  */
 #define ELF_MAXPAGESIZE		0x80
-#define elf_backend_rela_normal         1
+#define elf_backend_rela_normal		1
 #define elf_backend_can_gc_sections	1
 
 #define bfd_elf32_bfd_reloc_type_lookup		spu_elf_reloc_type_lookup
@@ -5491,7 +5506,7 @@ spu_elf_size_sections (bfd * output_bfd, struct bfd_link_info *info)
 #define elf_backend_additional_program_headers	spu_elf_additional_program_headers
 #define elf_backend_modify_segment_map		spu_elf_modify_segment_map
 #define elf_backend_modify_program_headers	spu_elf_modify_program_headers
-#define elf_backend_post_process_headers        spu_elf_post_process_headers
+#define elf_backend_post_process_headers	spu_elf_post_process_headers
 #define elf_backend_fake_sections		spu_elf_fake_sections
 #define elf_backend_special_sections		spu_elf_special_sections
 #define bfd_elf32_bfd_final_link		spu_elf_final_link

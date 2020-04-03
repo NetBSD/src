@@ -1,3 +1,7 @@
+2016-07-15  John Baldwin  <jhb@FreeBSD.org>
+
+	* signals.def: Add GDB_SIGNAL_LIBRT.
+
 2016-01-06  Mike Frysinger  <vapier@gentoo.org>
 
 	* remote-sim.h (sim_open): Mark argv const.
@@ -336,7 +340,7 @@ Wed Jul 17 19:36:38 2002  J"orn Rennecke <joern.rennecke@superh.com>
 	* signals.h: New file, from gdb/defs.h.
 
 
-Copyright (C) 2002-2016 Free Software Foundation, Inc.
+Copyright (C) 2002-2018 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

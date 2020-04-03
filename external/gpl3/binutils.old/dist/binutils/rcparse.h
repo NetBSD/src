@@ -1,14 +1,13 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
+/* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,9 +15,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -33,109 +30,118 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Tokens.  */
+#ifndef YY_YY_RCPARSE_H_INCLUDED
+# define YY_YY_RCPARSE_H_INCLUDED
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int yydebug;
+#endif
+
+/* Token type.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     BEG = 258,
-     END = 259,
-     ACCELERATORS = 260,
-     VIRTKEY = 261,
-     ASCII = 262,
-     NOINVERT = 263,
-     SHIFT = 264,
-     CONTROL = 265,
-     ALT = 266,
-     BITMAP = 267,
-     CURSOR = 268,
-     DIALOG = 269,
-     DIALOGEX = 270,
-     EXSTYLE = 271,
-     CAPTION = 272,
-     CLASS = 273,
-     STYLE = 274,
-     AUTO3STATE = 275,
-     AUTOCHECKBOX = 276,
-     AUTORADIOBUTTON = 277,
-     CHECKBOX = 278,
-     COMBOBOX = 279,
-     CTEXT = 280,
-     DEFPUSHBUTTON = 281,
-     EDITTEXT = 282,
-     GROUPBOX = 283,
-     LISTBOX = 284,
-     LTEXT = 285,
-     PUSHBOX = 286,
-     PUSHBUTTON = 287,
-     RADIOBUTTON = 288,
-     RTEXT = 289,
-     SCROLLBAR = 290,
-     STATE3 = 291,
-     USERBUTTON = 292,
-     BEDIT = 293,
-     HEDIT = 294,
-     IEDIT = 295,
-     FONT = 296,
-     ICON = 297,
-     ANICURSOR = 298,
-     ANIICON = 299,
-     DLGINCLUDE = 300,
-     DLGINIT = 301,
-     FONTDIR = 302,
-     HTML = 303,
-     MANIFEST = 304,
-     PLUGPLAY = 305,
-     VXD = 306,
-     TOOLBAR = 307,
-     BUTTON = 308,
-     LANGUAGE = 309,
-     CHARACTERISTICS = 310,
-     VERSIONK = 311,
-     MENU = 312,
-     MENUEX = 313,
-     MENUITEM = 314,
-     SEPARATOR = 315,
-     POPUP = 316,
-     CHECKED = 317,
-     GRAYED = 318,
-     HELP = 319,
-     INACTIVE = 320,
-     MENUBARBREAK = 321,
-     MENUBREAK = 322,
-     MESSAGETABLE = 323,
-     RCDATA = 324,
-     STRINGTABLE = 325,
-     VERSIONINFO = 326,
-     FILEVERSION = 327,
-     PRODUCTVERSION = 328,
-     FILEFLAGSMASK = 329,
-     FILEFLAGS = 330,
-     FILEOS = 331,
-     FILETYPE = 332,
-     FILESUBTYPE = 333,
-     BLOCKSTRINGFILEINFO = 334,
-     BLOCKVARFILEINFO = 335,
-     VALUE = 336,
-     BLOCK = 337,
-     MOVEABLE = 338,
-     FIXED = 339,
-     PURE = 340,
-     IMPURE = 341,
-     PRELOAD = 342,
-     LOADONCALL = 343,
-     DISCARDABLE = 344,
-     NOT = 345,
-     QUOTEDUNISTRING = 346,
-     QUOTEDSTRING = 347,
-     STRING = 348,
-     NUMBER = 349,
-     SIZEDUNISTRING = 350,
-     SIZEDSTRING = 351,
-     IGNORED_TOKEN = 352,
-     NEG = 353
-   };
+  enum yytokentype
+  {
+    BEG = 258,
+    END = 259,
+    ACCELERATORS = 260,
+    VIRTKEY = 261,
+    ASCII = 262,
+    NOINVERT = 263,
+    SHIFT = 264,
+    CONTROL = 265,
+    ALT = 266,
+    BITMAP = 267,
+    CURSOR = 268,
+    DIALOG = 269,
+    DIALOGEX = 270,
+    EXSTYLE = 271,
+    CAPTION = 272,
+    CLASS = 273,
+    STYLE = 274,
+    AUTO3STATE = 275,
+    AUTOCHECKBOX = 276,
+    AUTORADIOBUTTON = 277,
+    CHECKBOX = 278,
+    COMBOBOX = 279,
+    CTEXT = 280,
+    DEFPUSHBUTTON = 281,
+    EDITTEXT = 282,
+    GROUPBOX = 283,
+    LISTBOX = 284,
+    LTEXT = 285,
+    PUSHBOX = 286,
+    PUSHBUTTON = 287,
+    RADIOBUTTON = 288,
+    RTEXT = 289,
+    SCROLLBAR = 290,
+    STATE3 = 291,
+    USERBUTTON = 292,
+    BEDIT = 293,
+    HEDIT = 294,
+    IEDIT = 295,
+    FONT = 296,
+    ICON = 297,
+    ANICURSOR = 298,
+    ANIICON = 299,
+    DLGINCLUDE = 300,
+    DLGINIT = 301,
+    FONTDIR = 302,
+    HTML = 303,
+    MANIFEST = 304,
+    PLUGPLAY = 305,
+    VXD = 306,
+    TOOLBAR = 307,
+    BUTTON = 308,
+    LANGUAGE = 309,
+    CHARACTERISTICS = 310,
+    VERSIONK = 311,
+    MENU = 312,
+    MENUEX = 313,
+    MENUITEM = 314,
+    SEPARATOR = 315,
+    POPUP = 316,
+    CHECKED = 317,
+    GRAYED = 318,
+    HELP = 319,
+    INACTIVE = 320,
+    MENUBARBREAK = 321,
+    MENUBREAK = 322,
+    MESSAGETABLE = 323,
+    RCDATA = 324,
+    STRINGTABLE = 325,
+    VERSIONINFO = 326,
+    FILEVERSION = 327,
+    PRODUCTVERSION = 328,
+    FILEFLAGSMASK = 329,
+    FILEFLAGS = 330,
+    FILEOS = 331,
+    FILETYPE = 332,
+    FILESUBTYPE = 333,
+    BLOCKSTRINGFILEINFO = 334,
+    BLOCKVARFILEINFO = 335,
+    VALUE = 336,
+    BLOCK = 337,
+    MOVEABLE = 338,
+    FIXED = 339,
+    PURE = 340,
+    IMPURE = 341,
+    PRELOAD = 342,
+    LOADONCALL = 343,
+    DISCARDABLE = 344,
+    NOT = 345,
+    QUOTEDUNISTRING = 346,
+    QUOTEDSTRING = 347,
+    STRING = 348,
+    NUMBER = 349,
+    SIZEDUNISTRING = 350,
+    SIZEDSTRING = 351,
+    IGNORED_TOKEN = 352,
+    NEG = 353
+  };
 #endif
 /* Tokens.  */
 #define BEG 258
@@ -235,13 +241,13 @@
 #define IGNORED_TOKEN 352
 #define NEG 353
 
-
-
-
+/* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE
-#line 68 "rcparse.y"
+
+union YYSTYPE
 {
+#line 68 "rcparse.y" /* yacc.c:1909  */
+
   rc_accelerator acc;
   rc_accelerator *pacc;
   rc_dialog_control *dialog_control;
@@ -285,14 +291,18 @@ typedef union YYSTYPE
     rc_uint_type length;
     const unichar *s;
   } suni;
-}
-/* Line 1529 of yacc.c.  */
-#line 291 "rcparse.h"
-	YYSTYPE;
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
+
+#line 296 "rcparse.h" /* yacc.c:1909  */
+};
+
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
 #endif
+
 
 extern YYSTYPE yylval;
 
+int yyparse (void);
+
+#endif /* !YY_YY_RCPARSE_H_INCLUDED  */

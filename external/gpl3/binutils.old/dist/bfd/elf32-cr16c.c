@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CR16C ELF
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -165,15 +165,15 @@ elf_cr16c_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   return NULL;
 }
 
-static void
+static bfd_boolean
 elf_cr16c_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
 			 arelent *cache_ptr ATTRIBUTE_UNUSED,
 			 Elf_Internal_Rela *dst ATTRIBUTE_UNUSED)
 {
-  abort ();
+  return FALSE;
 }
 
-static void
+static bfd_boolean
 elf_cr16c_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
 			     arelent *cache_ptr,
 			     Elf_Internal_Rela *dst)
@@ -182,10 +182,14 @@ elf_cr16c_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
 
   if (r_type >= RINDEX_16C_MAX)
     {
-      _bfd_error_handler (_("%B: invalid CR16C reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = &elf_howto_table[r_type];
+  return TRUE;
 }
 
 /* Perform a relocation as part of a final link.  */
@@ -232,10 +236,10 @@ cr16c_elf_final_link_relocate (reloc_howto_type *howto,
     case R_NUMBER:
       switch (size)
 	{
-	case R_S_16C_08: 	/* One byte.  */
+	case R_S_16C_08:	/* One byte.  */
 	  value = bfd_get_8 (abfd, (char *) data + octets);
 	  break;
-	case R_S_16C_16: 	/* Two bytes. */
+	case R_S_16C_16:	/* Two bytes. */
 	  sword = bfd_get_16 (abfd, (bfd_byte *) data + octets);
 	  value = sword;
 	  break;
@@ -436,7 +440,7 @@ cr16c_elf_final_link_relocate (reloc_howto_type *howto,
     case R_NUMBER:
       switch (size)
 	{
-	case R_S_16C_08: 	/* One byte.  */
+	case R_S_16C_08:	/* One byte.  */
 	  if (value > (int) MAX_UBYTE || value < MIN_BYTE)
 	    return bfd_reloc_overflow;
 	  value &= 0xFF;
@@ -581,7 +585,7 @@ cr16c_elf_final_link_relocate (reloc_howto_type *howto,
 	  if (neg2pos)
 	    {
 	      /* Change load/stor negative displ opcode
-	         to load/stor positive displ opcode.  */
+		 to load/stor positive displ opcode.  */
 	      value = bfd_get_8 (abfd, (char *) data + octets - 3);
 	      value &= 0xF7;
 	      value |= 0x2;
@@ -950,9 +954,9 @@ elf32_cr16c_link_output_symbol_hook (struct bfd_link_info *info ATTRIBUTE_UNUSED
 #define elf_info_to_howto_rel			elf_cr16c_info_to_howto_rel
 #define elf_backend_relocate_section		elf32_cr16c_relocate_section
 #define elf_backend_symbol_processing		elf32_cr16c_symbol_processing
-#define elf_backend_section_from_bfd_section 	elf32_cr16c_section_from_bfd_section
+#define elf_backend_section_from_bfd_section	elf32_cr16c_section_from_bfd_section
 #define elf_backend_add_symbol_hook		elf32_cr16c_add_symbol_hook
-#define elf_backend_link_output_symbol_hook 	elf32_cr16c_link_output_symbol_hook
+#define elf_backend_link_output_symbol_hook	elf32_cr16c_link_output_symbol_hook
 
 #define elf_backend_can_gc_sections     1
 

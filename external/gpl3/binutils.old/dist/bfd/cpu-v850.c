@@ -1,5 +1,5 @@
 /* BFD support for the NEC V850 processor
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -31,12 +31,12 @@
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (bfd_mach_v850e3v5, "v850e3v5", 	FALSE, & arch_info_struct[1]),
-  N (bfd_mach_v850e3v5, "v850e2v4", 	FALSE, & arch_info_struct[2]),
-  N (bfd_mach_v850e2v3, "v850e2v3", 	FALSE, & arch_info_struct[3]),
-  N (bfd_mach_v850e2,   "v850e2", 	FALSE, & arch_info_struct[4]),
-  N (bfd_mach_v850e1,   "v850e1",  	FALSE, & arch_info_struct[5]),
-  N (bfd_mach_v850e,    "v850e",   	FALSE, NULL)
+  N (bfd_mach_v850e3v5, "v850e3v5",	FALSE, & arch_info_struct[1]),
+  N (bfd_mach_v850e3v5, "v850e2v4",	FALSE, & arch_info_struct[2]),
+  N (bfd_mach_v850e2v3, "v850e2v3",	FALSE, & arch_info_struct[3]),
+  N (bfd_mach_v850e2,	"v850e2",	FALSE, & arch_info_struct[4]),
+  N (bfd_mach_v850e1,	"v850e1",	FALSE, & arch_info_struct[5]),
+  N (bfd_mach_v850e,	"v850e",	FALSE, NULL)
 };
 
 #undef  NEXT
