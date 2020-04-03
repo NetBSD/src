@@ -1,5 +1,5 @@
 /* tc-ia64.h -- Header file for tc-ia64.c.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2018 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -320,9 +320,8 @@ typedef struct unwind_record
 
 #define TC_FORCE_RELOCATION_LOCAL(FIX)			\
   ((FIX)->fx_r_type != BFD_RELOC_UNUSED			\
-   && (!(FIX)->fx_pcrel					\
-       || (FIX)->fx_r_type == BFD_RELOC_IA64_PLTOFF22	\
-       || TC_FORCE_RELOCATION (FIX)))
+   && (GENERIC_FORCE_RELOCATION_LOCAL (FIX)		\
+       || (FIX)->fx_r_type == BFD_RELOC_IA64_PLTOFF22))
 
 /* VMS backtraces expect dwarf version 3.  */
 #ifdef TE_VMS

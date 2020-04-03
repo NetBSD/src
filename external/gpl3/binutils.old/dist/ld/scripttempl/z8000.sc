@@ -1,11 +1,11 @@
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
 
 cat <<EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -15,16 +15,16 @@ OUTPUT_FORMAT("${OUTPUT_FORMAT}")
 OUTPUT_ARCH("${OUTPUT_ARCH}")
 ${RELOCATING+ENTRY (_start)}
 
-SECTIONS 				
-{ 					
+SECTIONS
+{
 .text ${BIG+ ${RELOCATING+ 0x0000000}} :
-	{ 
-	  *(.text) 				
+	{
+	  *(.text)
 	  *(.strings)
 	  *(.rdata)
 	}
 
-.ctors ${BIG+ ${RELOCATING+ 0x2000000}}  : 
+.ctors ${BIG+ ${RELOCATING+ 0x2000000}}  :
 	{
 	  ${CONSTRUCTING+ ___ctors = . ;  }
 	  *(.ctors);
@@ -32,14 +32,14 @@ SECTIONS
 	  ___dtors = . ;
 	  *(.dtors);
 	  ${CONSTRUCTING+ ___dtors_end = . ; }
-	} 
+	}
 
 .data ${BIG+ ${RELOCATING+ 0x3000000}} :
 	{
 	   *(.data)
 	}
 
-.bss ${BIG+ ${RELOCATING+ 0x4000000}} : 
+.bss ${BIG+ ${RELOCATING+ 0x4000000}} :
 	{
 	  ${RELOCATING+ __start_bss = . ; }
 	  *(.bss);
@@ -52,9 +52,9 @@ SECTIONS
 	  ${RELOCATING+ __start_heap = . ; }
 	  ${RELOCATING+ . = . + 20k  ; }
 	  ${RELOCATING+ __end_heap = . ; }
-	} 
+	}
 
-.stack ${RELOCATING+ 0xf000 }  : 
+.stack ${RELOCATING+ 0xf000 }  :
 	{
 	  ${RELOCATING+ _stack = . ; }
 	  *(.stack)

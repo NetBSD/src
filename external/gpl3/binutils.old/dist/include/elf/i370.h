@@ -1,5 +1,5 @@
 /* i370 ELF support for BFD.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -47,9 +47,9 @@ START_RELOC_NUMBERS (i370_reloc_type)
   RELOC_NUMBER (R_I370_NONE,      0)
   RELOC_NUMBER (R_I370_ADDR31,    1)
   RELOC_NUMBER (R_I370_ADDR32,    2)
-  RELOC_NUMBER (R_I370_ADDR16,    3) 
+  RELOC_NUMBER (R_I370_ADDR16,    3)
   RELOC_NUMBER (R_I370_REL31,     4)
-  RELOC_NUMBER (R_I370_REL32,     5)  
+  RELOC_NUMBER (R_I370_REL32,     5)
   RELOC_NUMBER (R_I370_ADDR12,    6)
   RELOC_NUMBER (R_I370_REL12,     7)
   RELOC_NUMBER (R_I370_ADDR8,     8)

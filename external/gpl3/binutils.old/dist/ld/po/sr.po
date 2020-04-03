@@ -1,0 +1,2284 @@
+# Serbian translation of binutils ld.
+# Copyright © 2017 Free Software Foundation, Inc.
+# This file is distributed under the same license as the binutils package.
+# Мирослав Николић <miroslavnikolic@rocketmail.com>, 2017.
+msgid ""
+msgstr ""
+"Project-Id-Version: ld-2.24.90\n"
+"Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
+"POT-Creation-Date: 2014-02-10 09:42+1030\n"
+"PO-Revision-Date: 2017-01-25 12:46+0200\n"
+"Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
+"Language-Team: Serbian <(nothing)>\n"
+"Language: sr\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: emultempl/armcoff.em:73
+#, c-format
+msgid "  --support-old-code          Support interworking with old code\n"
+msgstr "  --support-old-code          Подржава међусобни рад са старим кодом\n"
+
+#: emultempl/armcoff.em:74
+#, c-format
+msgid "  --thumb-entry=<sym>         Set the entry point to be Thumb symbol <sym>\n"
+msgstr "  --thumb-entry=<сим>         Подешава тачку уноса на симбол сличице <сим>\n"
+
+#: emultempl/armcoff.em:122
+#, c-format
+msgid "Errors encountered processing file %s"
+msgstr "Наиђох на грешке током обраде датотеке „%s“"
+
+#: emultempl/armcoff.em:192 emultempl/pe.em:1827
+msgid "%P: warning: '--thumb-entry %s' is overriding '-e %s'\n"
+msgstr "%P: упозорење: „--thumb-entry %s“ преписује „-e %s“\n"
+
+#: emultempl/armcoff.em:197 emultempl/pe.em:1832
+msgid "%P: warning: cannot find thumb start symbol %s\n"
+msgstr "%P: упозорење: не могу да нађем почетни симбол сличице „%s“\n"
+
+#: emultempl/pe.em:425
+#, c-format
+msgid "  --base_file <basefile>             Generate a base file for relocatable DLLs\n"
+msgstr "  --base_file <дттка_основе>         Ствара датотеку основе за преместљиве ДЛЛ-е\n"
+
+#: emultempl/pe.em:426
+#, c-format
+msgid "  --dll                              Set image base to the default for DLLs\n"
+msgstr "  --dll                              Подешава основу слике на основну за ДЛЛ-е\n"
+
+#: emultempl/pe.em:427
+#, c-format
+msgid "  --file-alignment <size>            Set file alignment\n"
+msgstr "  --file-alignment <величина>        Подешава поравнање датотеке\n"
+
+#: emultempl/pe.em:428
+#, c-format
+msgid "  --heap <size>                      Set initial size of the heap\n"
+msgstr "  --heap <величина>                  Подешава почетнуи величину гомиле\n"
+
+#: emultempl/pe.em:429
+#, c-format
+msgid "  --image-base <address>             Set start address of the executable\n"
+msgstr "  --image-base <адреса>              Подешава почетну адресу извршног\n"
+
+#: emultempl/pe.em:430
+#, c-format
+msgid "  --major-image-version <number>     Set version number of the executable\n"
+msgstr "  --major-image-version <број>       Подешава број издања извршног\n"
+
+#: emultempl/pe.em:431
+#, c-format
+msgid "  --major-os-version <number>        Set minimum required OS version\n"
+msgstr "  --major-os-version <број>          Подешава најмање захтевано издање ОС-а\n"
+
+#: emultempl/pe.em:432
+#, c-format
+msgid "  --major-subsystem-version <number> Set minimum required OS subsystem version\n"
+msgstr "  --major-subsystem-version <број>   Подешава најмање захтевано издање подсистема ОС-а\n"
+
+#: emultempl/pe.em:433
+#, c-format
+msgid "  --minor-image-version <number>     Set revision number of the executable\n"
+msgstr "  --minor-image-version <број>       Подешава број ревизије извршног\n"
+
+#: emultempl/pe.em:434
+#, c-format
+msgid "  --minor-os-version <number>        Set minimum required OS revision\n"
+msgstr "  --minor-os-version <број>          Подешава најмању захтевану ревизију ОС-а\n"
+
+#: emultempl/pe.em:435
+#, c-format
+msgid "  --minor-subsystem-version <number> Set minimum required OS subsystem revision\n"
+msgstr "  --minor-subsystem-version <број>   Подешава најмању захтевану ревизију подсистема ОС-а\n"
+
+#: emultempl/pe.em:436
+#, c-format
+msgid "  --section-alignment <size>         Set section alignment\n"
+msgstr "  --section-alignment <величина>     Подешава поравнање одељка\n"
+
+#: emultempl/pe.em:437
+#, c-format
+msgid "  --stack <size>                     Set size of the initial stack\n"
+msgstr "  --stack <величина>                 Подешава величину почетног спремника\n"
+
+#: emultempl/pe.em:438
+#, c-format
+msgid "  --subsystem <name>[:<version>]     Set required OS subsystem [& version]\n"
+msgstr "  --subsystem <назив>[:<издање>]     Подешава захтевани подсистем ОС-а [и издања]\n"
+
+#: emultempl/pe.em:439
+#, c-format
+msgid "  --support-old-code                 Support interworking with old code\n"
+msgstr "  --support-old-code                 Подржава међусобни рад са старим кодом\n"
+
+#: emultempl/pe.em:440
+#, c-format
+msgid "  --[no-]leading-underscore          Set explicit symbol underscore prefix mode\n"
+msgstr "  --[no-]leading-underscore          Подешава изричити режим префикса подвлаке симбола\n"
+
+#: emultempl/pe.em:441
+#, c-format
+msgid "  --thumb-entry=<symbol>             Set the entry point to be Thumb <symbol>\n"
+msgstr "  --thumb-entry=<симбол>             Подешава тачку уноса да буде сличица <симбол>\n"
+
+#: emultempl/pe.em:442
+#, c-format
+msgid "  --insert-timestamp                 Use a real timestamp rather than zero.\n"
+msgstr "  --insert-timestamp                 Користи стварну временску ознаку уместо нуле.\n"
+
+#: emultempl/pe.em:443
+#, c-format
+msgid "                                     This makes binaries non-deterministic\n"
+msgstr "                                     Ово чини бинарне не-детерминистичким\n"
+
+#: emultempl/pe.em:445
+#, c-format
+msgid "  --add-stdcall-alias                Export symbols with and without @nn\n"
+msgstr "  --add-stdcall-alias                Извози симболе са и без „@nn“\n"
+
+#: emultempl/pe.em:446
+#, c-format
+msgid "  --disable-stdcall-fixup            Don't link _sym to _sym@nn\n"
+msgstr "  --disable-stdcall-fixup            Не прави везу за „_sym“ на „_sym@nn“\n"
+
+#: emultempl/pe.em:447
+#, c-format
+msgid "  --enable-stdcall-fixup             Link _sym to _sym@nn without warnings\n"
+msgstr "  --enable-stdcall-fixup             Прави вез од „_sym“ на „_sym@nn“ без упозорења\n"
+
+#: emultempl/pe.em:448
+#, c-format
+msgid "  --exclude-symbols sym,sym,...      Exclude symbols from automatic export\n"
+msgstr "  --exclude-symbols сим,сим,...      Искључује симболе из самосталног извоза\n"
+
+#: emultempl/pe.em:449
+#, c-format
+msgid "  --exclude-all-symbols              Exclude all symbols from automatic export\n"
+msgstr "  --exclude-all-symbols              Искључује све симболе из самосталног извоза\n"
+
+#: emultempl/pe.em:450
+#, c-format
+msgid "  --exclude-libs lib,lib,...         Exclude libraries from automatic export\n"
+msgstr "  --exclude-libs библ,библ,...       Искључује библиотеке из самосталног извоза\n"
+
+#: emultempl/pe.em:451
+#, c-format
+msgid "  --exclude-modules-for-implib mod,mod,...\n"
+msgstr "  --exclude-modules-for-implib мод,мод,...\n"
+
+#: emultempl/pe.em:452
+#, c-format
+msgid "                                     Exclude objects, archive members from auto\n"
+msgstr "                                     Искључује објекте, чланове архиве из самосталног\n"
+
+#: emultempl/pe.em:453
+#, c-format
+msgid "                                     export, place into import library instead.\n"
+msgstr "                                     извози, ставља у библиотеку увоза уместо тога.\n"
+
+#: emultempl/pe.em:454
+#, c-format
+msgid "  --export-all-symbols               Automatically export all globals to DLL\n"
+msgstr "  --export-all-symbols               Самостално извози све општости у ДЛЛ\n"
+
+#: emultempl/pe.em:455
+#, c-format
+msgid "  --kill-at                          Remove @nn from exported symbols\n"
+msgstr "  --kill-at                          Уклања „@nn“ из извезених симбола\n"
+
+#: emultempl/pe.em:456
+#, c-format
+msgid "  --out-implib <file>                Generate import library\n"
+msgstr "  --out-implib <дттка>               Ствара библиотеку увоза\n"
+
+#: emultempl/pe.em:457
+#, c-format
+msgid "  --output-def <file>                Generate a .DEF file for the built DLL\n"
+msgstr "  --output-def <дттка>               Ствара датотеку „.DEF“ за ДЛЛ изградње\n"
+
+#: emultempl/pe.em:458
+#, c-format
+msgid "  --warn-duplicate-exports           Warn about duplicate exports.\n"
+msgstr "  --warn-duplicate-exports           Упозорава о удвострученим извозима.\n"
+
+#: emultempl/pe.em:459
+#, c-format
+msgid ""
+"  --compat-implib                    Create backward compatible import libs;\n"
+"                                       create __imp_<SYMBOL> as well.\n"
+msgstr ""
+"  --compat-implib                    Прави уназад сагласне библиотеке увоза;\n"
+"                                       прави „__imp_<СИМБОЛ>“ такође.\n"
+
+#: emultempl/pe.em:461
+#, c-format
+msgid ""
+"  --enable-auto-image-base           Automatically choose image base for DLLs\n"
+"                                       unless user specifies one\n"
+msgstr ""
+"  --enable-auto-image-base           Сам бира основу слике за ДЛЛ-е\n"
+"                                       осим ако корисник не наведе неку\n"
+
+#: emultempl/pe.em:463
+#, c-format
+msgid "  --disable-auto-image-base          Do not auto-choose image base. (default)\n"
+msgstr "  --disable-auto-image-base          Не бира сам основу слике. (основно)\n"
+
+#: emultempl/pe.em:464
+#, c-format
+msgid ""
+"  --dll-search-prefix=<string>       When linking dynamically to a dll without\n"
+"                                       an importlib, use <string><basename>.dll\n"
+"                                       in preference to lib<basename>.dll \n"
+msgstr ""
+"  --dll-search-prefix=<ниска>        Када динамички повезује на „dll“ без\n"
+"                                       библиотеке увоза, користи „<ниска><назив_основе>.dll“\n"
+"                                       уместо „lib<назив_основе>.dll“ \n"
+
+#: emultempl/pe.em:467
+#, c-format
+msgid ""
+"  --enable-auto-import               Do sophisticated linking of _sym to\n"
+"                                       __imp_sym for DATA references\n"
+msgstr ""
+"  --enable-auto-import               Одрађује префињеније повезивање „_sym“-а на\n"
+"                                       „__imp_sym“ за упуте ПОДАТАКА\n"
+
+#: emultempl/pe.em:469
+#, c-format
+msgid "  --disable-auto-import              Do not auto-import DATA items from DLLs\n"
+msgstr "  --disable-auto-import              Не увози самостално ставке ПОДАТАКА из ДЛЛ-а\n"
+
+#: emultempl/pe.em:470
+#, c-format
+msgid ""
+"  --enable-runtime-pseudo-reloc      Work around auto-import limitations by\n"
+"                                       adding pseudo-relocations resolved at\n"
+"                                       runtime.\n"
+msgstr ""
+"  --enable-runtime-pseudo-reloc      Превазилази ограничења самосталног увоза\n"
+"                                       додавајући псеудо-премештања која се решавају\n"
+"                                       у време извршавања.\n"
+
+#: emultempl/pe.em:473
+#, c-format
+msgid ""
+"  --disable-runtime-pseudo-reloc     Do not add runtime pseudo-relocations for\n"
+"                                       auto-imported DATA.\n"
+msgstr ""
+"  --disable-runtime-pseudo-reloc     Не додаје псеудо-премештања у време извршавања за\n"
+"                                       самостално увезене ПОДАТКЕ.\n"
+
+#: emultempl/pe.em:475
+#, c-format
+msgid ""
+"  --enable-extra-pe-debug            Enable verbose debug output when building\n"
+"                                       or linking to DLLs (esp. auto-import)\n"
+msgstr ""
+"  --enable-extra-pe-debug            Укључује опширан излаз прочишћавања када изграђује\n"
+"                                       или прави везе до ДЛЛ-а (нарочито самостални увоз)\n"
+
+#: emultempl/pe.em:478
+#, c-format
+msgid ""
+"  --large-address-aware              Executable supports virtual addresses\n"
+"                                       greater than 2 gigabytes\n"
+msgstr ""
+"  --large-address-aware              Извршни подржава виртуелне адресе\n"
+"                                       веће од 2 гигабајта\n"
+
+#: emultempl/pe.em:480
+#, c-format
+msgid ""
+"  --disable-large-address-aware      Executable does not support virtual\n"
+"                                       addresses greater than 2 gigabytes\n"
+msgstr ""
+"  --disable-large-address-aware      Извршни не подржава виртуелне\n"
+"                                       адресе веће од 2 гигабајта\n"
+
+#: emultempl/pe.em:482
+#, c-format
+msgid ""
+"  --enable-long-section-names        Use long COFF section names even in\n"
+"                                       executable image files\n"
+msgstr ""
+"  --enable-long-section-names        Користи дуге називе ЦОФФ одељка, чак и у\n"
+"                                       извршним датотекама слике\n"
+
+#: emultempl/pe.em:484
+#, c-format
+msgid ""
+"  --disable-long-section-names       Never use long COFF section names, even\n"
+"                                       in object files\n"
+msgstr ""
+"  --disable-long-section-names       Никада не користи дуге називе ЦОФФ одељка, чак ни у\n"
+"                                       објектним датотекама\n"
+
+#: emultempl/pe.em:486
+#, c-format
+msgid ""
+"  --dynamicbase\t\t\t Image base address may be relocated using\n"
+"\t\t\t\t       address space layout randomization (ASLR)\n"
+msgstr ""
+"  --dynamicbase\t\t\t Адреса основе слике се може преместити коришћењем\n"
+"\t\t\t\t       насумичности распореда простора адресе (ASLR)\n"
+
+#: emultempl/pe.em:488
+#, c-format
+msgid "  --forceinteg\t\t Code integrity checks are enforced\n"
+msgstr "  --forceinteg\t\t Провере целовитости кода су присиљене\n"
+
+#: emultempl/pe.em:489
+#, c-format
+msgid "  --nxcompat\t\t Image is compatible with data execution prevention\n"
+msgstr "  --nxcompat\t\t Слика је сагласна са спречавањем извршавања података\n"
+
+#: emultempl/pe.em:490
+#, c-format
+msgid "  --no-isolation\t\t Image understands isolation but do not isolate the image\n"
+msgstr "  --no-isolation\t\t Слика разуме изолацију али не изолује слику\n"
+
+#: emultempl/pe.em:491
+#, c-format
+msgid ""
+"  --no-seh\t\t\t Image does not use SEH. No SE handler may\n"
+"\t\t\t\t       be called in this image\n"
+msgstr ""
+"  --no-seh\t\t\t Слика не користи „СЕХ“. Никакав „СЕ“ руковалац не може\n"
+"\t\t\t\t       бити позван у овој слици\n"
+
+#: emultempl/pe.em:493
+#, c-format
+msgid "  --no-bind\t\t\t Do not bind this image\n"
+msgstr "  --no-bind\t\t\t Не свезује ову слику\n"
+
+#: emultempl/pe.em:494
+#, c-format
+msgid "  --wdmdriver\t\t Driver uses the WDM model\n"
+msgstr "  --wdmdriver\t\t Управљачки програм користи „WDM“ модел\n"
+
+#: emultempl/pe.em:495
+#, c-format
+msgid "  --tsaware                  Image is Terminal Server aware\n"
+msgstr "  --tsaware                  Слика је свесна сервера терминала\n"
+
+#: emultempl/pe.em:624
+msgid "%P: warning: bad version number in -subsystem option\n"
+msgstr "%P: упозорење: лош број издања у опцији „-subsystem“\n"
+
+#: emultempl/pe.em:649
+msgid "%P%F: invalid subsystem type %s\n"
+msgstr "%P%F: неисправна врста подсистема „%s“\n"
+
+#: emultempl/pe.em:670
+msgid "%P%F: invalid hex number for PE parameter '%s'\n"
+msgstr "%P%F: Неисправан хекс број за ПЕ параметар „%s“\n"
+
+#: emultempl/pe.em:687
+msgid "%P%F: strange hex info for PE parameter '%s'\n"
+msgstr "%P%F: чудни хекс подаци за ПЕ параметар „%s“\n"
+
+#: emultempl/pe.em:702
+msgid "%F%P: cannot open base file %s\n"
+msgstr "%F%P: не могу да отворим датотеку основе „%s“\n"
+
+#: emultempl/pe.em:981
+msgid "%P: warning, file alignment > section alignment.\n"
+msgstr "%P: упозорење: поравнање датотеке > поравнања одељка.\n"
+
+#: emultempl/pe.em:994
+msgid "%P: warning: --export-dynamic is not supported for PE targets, did you mean --export-all-symbols?\n"
+msgstr "%P: упозорење: „--export-dynamic“ није подржано за ПЕ мете, да ли сте мислили „--export-all-symbols“?\n"
+
+#: emultempl/pe.em:1070 emultempl/pe.em:1097
+#, c-format
+msgid "Warning: resolving %s by linking to %s\n"
+msgstr "Упозорење: решавам „%s“ повезивањем на „%s“\n"
+
+#: emultempl/pe.em:1075 emultempl/pe.em:1102
+msgid "Use --enable-stdcall-fixup to disable these warnings\n"
+msgstr "Користите „--enable-stdcall-fixup“ да искључите ова упозорења\n"
+
+#: emultempl/pe.em:1076 emultempl/pe.em:1103
+msgid "Use --disable-stdcall-fixup to disable these fixups\n"
+msgstr "Користите „--disable-stdcall-fixup“ да искључите ове исправке\n"
+
+#: emultempl/pe.em:1122
+#, c-format
+msgid "%C: Cannot get section contents - auto-import exception\n"
+msgstr "%C: Не могу да добавим садржај одељка — изузетак самосталног увоза\n"
+
+#: emultempl/pe.em:1162
+#, c-format
+msgid "Info: resolving %s by linking to %s (auto-import)\n"
+msgstr "Инфо: решавам „%s“ повезивањем на „%s“ (самостални увоз)\n"
+
+#: emultempl/pe.em:1169
+msgid ""
+"%P: warning: auto-importing has been activated without --enable-auto-import specified on the command line.\n"
+"This should work unless it involves constant data structures referencing symbols from auto-imported DLLs.\n"
+msgstr ""
+"%P: упозорење: самостални увоз је активиран без наведеног „--enable-auto-import“ на линији наредби.\n"
+"Ово би требало да ради осим ако не умеша и константне структуре података које упућују на симболе из самостално увезених ДЛЛ-а.\n"
+
+#: emultempl/pe.em:1176 emultempl/pe.em:1383 emultempl/pe.em:1590 ldcref.c:503
+#: ldcref.c:601 ldmain.c:1183 ldmisc.c:300 pe-dll.c:710 pe-dll.c:1276
+#: pe-dll.c:1371
+msgid "%B%F: could not read symbols: %E\n"
+msgstr "%B%F: не могу да читам симболе: %E\n"
+
+#: emultempl/pe.em:1258
+msgid "%F%P: cannot perform PE operations on non PE output file '%B'.\n"
+msgstr "%F%P: не могу да обавим ПЕ радње на излазној датотеци која није ПЕ „%B“.\n"
+
+#: emultempl/pe.em:1633
+#, c-format
+msgid "Errors encountered processing file %s\n"
+msgstr "Наиђох на грешке током обраде датотеке „%s“\n"
+
+#: emultempl/pe.em:1656
+#, c-format
+msgid "Errors encountered processing file %s for interworking\n"
+msgstr "Наиђох на грешке током обраде датотеке „%s“ за међусобни рад\n"
+
+#: emultempl/pe.em:1718 ldexp.c:631 ldlang.c:3451 ldmain.c:1128
+msgid "%P%F: bfd_link_hash_lookup failed: %E\n"
+msgstr "%P%F: „bfd_link_hash_lookup“ није успело: %E\n"
+
+#: ldcref.c:167
+msgid "%X%P: bfd_hash_table_init of cref table failed: %E\n"
+msgstr "%X%P: „bfd_hash_table_init“ табеле унакрсне упуте није успело: %E\n"
+
+#: ldcref.c:173
+msgid "%X%P: cref_hash_lookup failed: %E\n"
+msgstr "%X%P: „cref_hash_lookup“ није успело: %E\n"
+
+#: ldcref.c:183
+msgid "%X%P: cref alloc failed: %E\n"
+msgstr "%X%P: додељивање унакрсне упуте није успело: %E\n"
+
+#: ldcref.c:365
+#, c-format
+msgid ""
+"\n"
+"Cross Reference Table\n"
+"\n"
+msgstr ""
+"\n"
+"Табела унакрсне упуте\n"
+"\n"
+
+#: ldcref.c:366
+msgid "Symbol"
+msgstr "Симбол"
+
+#: ldcref.c:374
+#, c-format
+msgid "File\n"
+msgstr "Датотека\n"
+
+#: ldcref.c:378
+#, c-format
+msgid "No symbols\n"
+msgstr "Нема симбола\n"
+
+#: ldcref.c:545
+msgid "%P: symbol `%T' missing from main hash table\n"
+msgstr "%P: симбол „%T“ недостаје у главној хеш табели\n"
+
+#: ldcref.c:663 ldcref.c:670 ldmain.c:1217 ldmain.c:1224
+msgid "%B%F: could not read relocs: %E\n"
+msgstr "%B%F: не могу да читам премештања: %E\n"
+
+#. We found a reloc for the symbol.  The symbol is defined
+#. in OUTSECNAME.  This reloc is from a section which is
+#. mapped into a section from which references to OUTSECNAME
+#. are prohibited.  We must report an error.
+#: ldcref.c:697
+msgid "%X%C: prohibited cross reference from %s to `%T' in %s\n"
+msgstr "%X%C: забрањена унакрсна упута из „%s“ у „%T“ у „%s“\n"
+
+#: ldctor.c:85
+msgid "%P%X: Different relocs used in set %s\n"
+msgstr "%P%X: Другачија премештања су коришћена у скупу „%s“\n"
+
+#: ldctor.c:103
+msgid "%P%X: Different object file formats composing set %s\n"
+msgstr "%P%X: Другачији формати објектне датотеке чине скуп „%s“\n"
+
+#: ldctor.c:281 ldctor.c:295
+msgid "%P%X: %s does not support reloc %s for set %s\n"
+msgstr "%P%X: „%s“ не подржава премештање „%s“ за скуп „%s“\n"
+
+#: ldctor.c:316
+msgid "%P%X: Unsupported size %d for set %s\n"
+msgstr "%P%X: Неподржана величина од %d за скуп „%s“\n"
+
+#: ldctor.c:339
+msgid ""
+"\n"
+"Set                 Symbol\n"
+"\n"
+msgstr ""
+"\n"
+"Скуп                Симбол\n"
+"\n"
+
+#: ldemul.c:265
+#, c-format
+msgid "%S SYSLIB ignored\n"
+msgstr "„%S SYSLIB“ је занемарено\n"
+
+#: ldemul.c:271
+#, c-format
+msgid "%S HLL ignored\n"
+msgstr "„%S HLL“ је занемарено\n"
+
+#: ldemul.c:291
+msgid "%P: unrecognised emulation mode: %s\n"
+msgstr "%P: непзнат режим емулације: %s\n"
+
+#: ldemul.c:292
+msgid "Supported emulations: "
+msgstr "Подржане емулације: "
+
+#: ldemul.c:334
+#, c-format
+msgid "  no emulation specific options.\n"
+msgstr "  нема посебних опција емулације.\n"
+
+#: ldexp.c:346
+msgid "%P: warning: address of `%s' isn't multiple of maximum page size\n"
+msgstr "%P: упозорење: адреса од „%s“ није множилац највеће величине странице\n"
+
+#: ldexp.c:439
+#, c-format
+msgid "%F%S %% by zero\n"
+msgstr "%F%S %% нулом\n"
+
+#: ldexp.c:449
+#, c-format
+msgid "%F%S / by zero\n"
+msgstr "%F%S / нулом\n"
+
+#: ldexp.c:643
+#, c-format
+msgid "%X%S: unresolvable symbol `%s' referenced in expression\n"
+msgstr "%X%S: нерешиви симбол „%s“ има упуту у изразу\n"
+
+#: ldexp.c:658
+#, c-format
+msgid "%F%S: undefined symbol `%s' referenced in expression\n"
+msgstr "%F%S: недефинисани симбол „%s“ има упуту у изразу\n"
+
+#: ldexp.c:680 ldexp.c:698 ldexp.c:726
+#, c-format
+msgid "%F%S: undefined section `%s' referenced in expression\n"
+msgstr "%F%S: недефинисани одељак „%s“ има упуту у изразу\n"
+
+#: ldexp.c:756 ldexp.c:771
+#, c-format
+msgid "%F%S: undefined MEMORY region `%s' referenced in expression\n"
+msgstr "%F%S: недефинисана област МЕМОРИЈЕ „%s“ има упуту у изразу\n"
+
+#: ldexp.c:783
+#, c-format
+msgid "%F%S: unknown constant `%s' referenced in expression\n"
+msgstr "%F%S: непозната константа „%s“ има упуту у изразу\n"
+
+#: ldexp.c:931
+#, c-format
+msgid "%F%S can not PROVIDE assignment to location counter\n"
+msgstr "„%F%S“ не може да ОБЕЗБЕДИ додељивање бројачу места\n"
+
+#: ldexp.c:957
+#, c-format
+msgid "%F%S invalid assignment to location counter\n"
+msgstr "„%F%S“ неисправно додељивање бројачу места\n"
+
+#: ldexp.c:961
+#, c-format
+msgid "%F%S assignment to location counter invalid outside of SECTIONS\n"
+msgstr "„%F%S“ додељивање бројачу места неисправно изван ОДЕЉАКА\n"
+
+#: ldexp.c:980
+msgid "%F%S cannot move location counter backwards (from %V to %V)\n"
+msgstr "„%F%S“ не може да помери бројач места уназад (од %V до %V)\n"
+
+#: ldexp.c:1035
+msgid "%P%F:%s: hash creation failed\n"
+msgstr "%P%F:%s: стварање хеша није успело\n"
+
+#: ldexp.c:1368 ldexp.c:1394 ldexp.c:1454
+#, c-format
+msgid "%F%S: nonconstant expression for %s\n"
+msgstr "%F%S: неконстантни израз за „%s“\n"
+
+#: ldfile.c:132
+#, c-format
+msgid "attempt to open %s failed\n"
+msgstr "покушај отварања „%s“ није успео\n"
+
+#: ldfile.c:134
+#, c-format
+msgid "attempt to open %s succeeded\n"
+msgstr "покушај отварања „%s“ је успео\n"
+
+#: ldfile.c:140
+msgid "%F%P: invalid BFD target `%s'\n"
+msgstr "%F%P: неисправна БФД мета „%s“\n"
+
+#: ldfile.c:257 ldfile.c:286
+msgid "%P: skipping incompatible %s when searching for %s\n"
+msgstr "%P: прескачем несагласно „%s“ када тражим „%s“\n"
+
+#: ldfile.c:270
+msgid "%F%P: attempted static link of dynamic object `%s'\n"
+msgstr "%F%P: покушах статичку везу динамичког објекта „%s“\n"
+
+#: ldfile.c:408
+msgid "%P: cannot find %s (%s): %E\n"
+msgstr "%P: не могу да нађем „%s“ (%s): %E\n"
+
+#: ldfile.c:411
+msgid "%P: cannot find %s: %E\n"
+msgstr "%P: не могу да нађем „%s“: %E\n"
+
+#: ldfile.c:446
+msgid "%P: cannot find %s inside %s\n"
+msgstr "%P: не могу да нађем „%s“ унутар „%s“\n"
+
+#: ldfile.c:449
+msgid "%P: cannot find %s\n"
+msgstr "%P: не могу да нађем „%s“\n"
+
+#: ldfile.c:471
+#, c-format
+msgid "cannot find script file %s\n"
+msgstr "не могу да нађем датотеку скрипте „%s“\n"
+
+#: ldfile.c:473
+#, c-format
+msgid "opened script file %s\n"
+msgstr "отворих датотеку скрипте „%s“\n"
+
+#: ldfile.c:604
+msgid "%P%F: cannot open linker script file %s: %E\n"
+msgstr "%P%F: не могу да отворим датотеку скрипте повезивача „%s“: %E\n"
+
+#: ldfile.c:669
+msgid "%P%F: cannot represent machine `%s'\n"
+msgstr "%P%F: не могу да представим машину „%s“\n"
+
+#: ldlang.c:1194 ldlang.c:1232 ldlang.c:3154
+msgid "%P%F: can not create hash table: %E\n"
+msgstr "%P%F: не могу да направим хеш табелу: %E\n"
+
+#: ldlang.c:1288
+msgid "%P:%S: warning: redeclaration of memory region `%s'\n"
+msgstr "%P:%S: упозорење: поновно декларисање области меморије „%s“\n"
+
+#: ldlang.c:1294
+msgid "%P:%S: warning: memory region `%s' not declared\n"
+msgstr "%P:%S: упозорење: област меморије „%s“ није декларисана\n"
+
+#: ldlang.c:1329
+msgid "%F%P:%S: error: alias for default memory region\n"
+msgstr "%F%P:%S: грешка: алијас за основну област меморије\n"
+
+#: ldlang.c:1340
+msgid "%F%P:%S: error: redefinition of memory region alias `%s'\n"
+msgstr "%F%P:%S: грешка: поновно дефинисање алијаса области меморије „%s“\n"
+
+#: ldlang.c:1347
+msgid "%F%P:%S: error: memory region `%s' for alias `%s' does not exist\n"
+msgstr "%F%P:%S: грешка: област меморије „%s“ за алијаса „%s“ не постоји\n"
+
+#: ldlang.c:1406 ldlang.c:1445
+msgid "%P%F: failed creating section `%s': %E\n"
+msgstr "%P%F: нисам успео да направим одељак „%s“: %E\n"
+
+#: ldlang.c:2000
+#, c-format
+msgid ""
+"\n"
+"As-needed library included to satisfy reference by file (symbol)\n"
+"\n"
+msgstr ""
+"\n"
+"Библиотека као-што-је-потребно је укључена да би задовољила упуту датотеком (симболом)\n"
+"\n"
+
+#: ldlang.c:2068
+#, c-format
+msgid ""
+"\n"
+"Discarded input sections\n"
+"\n"
+msgstr ""
+"\n"
+"Одбачени одељци улаза\n"
+"\n"
+
+#: ldlang.c:2076
+msgid ""
+"\n"
+"Memory Configuration\n"
+"\n"
+msgstr ""
+"\n"
+"Подешавање меморије\n"
+"\n"
+
+#: ldlang.c:2078
+msgid "Name"
+msgstr "Назив"
+
+#: ldlang.c:2078
+msgid "Origin"
+msgstr "Порекло"
+
+#: ldlang.c:2078
+msgid "Length"
+msgstr "Дужина"
+
+#: ldlang.c:2078
+msgid "Attributes"
+msgstr "Атрибути"
+
+#: ldlang.c:2118
+#, c-format
+msgid ""
+"\n"
+"Linker script and memory map\n"
+"\n"
+msgstr ""
+"\n"
+"Скрипта повезивача и мапа меморије\n"
+"\n"
+
+#: ldlang.c:2168
+msgid "%P%F: Illegal use of `%s' section\n"
+msgstr "%P%F: Неисправна употреба одељка „%s“\n"
+
+#: ldlang.c:2177
+msgid "%P%F: output format %s cannot represent section called %s\n"
+msgstr "%P%F: формат излаза „%s“ не може да представља одељак под називом „%s“\n"
+
+#: ldlang.c:2739
+msgid "%B: file not recognized: %E\n"
+msgstr "%B: датотека није препозната: %E\n"
+
+#: ldlang.c:2740
+msgid "%B: matching formats:"
+msgstr "%B: упоређујем формате:"
+
+#: ldlang.c:2747
+msgid "%F%B: file not recognized: %E\n"
+msgstr "%F%B: датотека није препозната: %E\n"
+
+#: ldlang.c:2821
+msgid "%F%B: member %B in archive is not an object\n"
+msgstr "%F%B: члан „%B“ у архиви није објекат\n"
+
+#: ldlang.c:2836 ldlang.c:2850
+msgid "%F%B: error adding symbols: %E\n"
+msgstr "%F%B: грешка додавања симбола: %E\n"
+
+#: ldlang.c:3124
+msgid "%P: warning: could not find any targets that match endianness requirement\n"
+msgstr "%P: упозорење: не могу да нађем ниједну мету која одговар захтевима крајњости\n"
+
+#: ldlang.c:3138
+msgid "%P%F: target %s not found\n"
+msgstr "%P%F: нисам нашао мету „%s“\n"
+
+#: ldlang.c:3140
+msgid "%P%F: cannot open output file %s: %E\n"
+msgstr "%P%F: не могу да отворим излазну датотеку „%s“: %E\n"
+
+#: ldlang.c:3146
+msgid "%P%F:%s: can not make object file: %E\n"
+msgstr "%P%F:%s: не могу да направим објектну датотеку: %E\n"
+
+#: ldlang.c:3150
+msgid "%P%F:%s: can not set architecture: %E\n"
+msgstr "%P%F:%s: не могу да подесим архитектуру: %E\n"
+
+#: ldlang.c:3322
+msgid "%P: warning: %s contains output sections; did you forget -T?\n"
+msgstr "%P: упозорење: „%s“ садржи излазне одељке; да ли сте заборавили „-T“?\n"
+
+#: ldlang.c:3372
+msgid "%P%F: bfd_hash_allocate failed creating symbol %s\n"
+msgstr "%P%F: „bfd_hash_allocate“ није успело стварањем симбола „%s“\n"
+
+#: ldlang.c:3402
+msgid "%P%F: bfd_hash_lookup failed creating symbol %s\n"
+msgstr "%P%F: „bfd_hash_lookup“ није успело стварањем симбола „%s“\n"
+
+#: ldlang.c:3759
+msgid "%F%P: %s not found for insert\n"
+msgstr "%F%P: нисам нашао „%s“ за уметање\n"
+
+#: ldlang.c:3974
+msgid " load address 0x%V"
+msgstr " адреса учитавања 0x%V"
+
+#: ldlang.c:4201
+msgid "%W (size before relaxing)\n"
+msgstr "%W (величина пре одмора)\n"
+
+#: ldlang.c:4292
+#, c-format
+msgid "Address of section %s set to "
+msgstr "Адреса одељка „%s“ је постављена на "
+
+#: ldlang.c:4445
+#, c-format
+msgid "Fail with %d\n"
+msgstr "Нисам успео са стањем „%d“\n"
+
+#: ldlang.c:4733
+msgid "%X%P: section %s loaded at [%V,%V] overlaps section %s loaded at [%V,%V]\n"
+msgstr "%X%P: одељак „%s“ је учитан при [%V,%V] одељак преклапања „%s“ јеучитан при [%V,%V]\n"
+
+#: ldlang.c:4749
+msgid "%X%P: region `%s' overflowed by %ld bytes\n"
+msgstr "%X%P: област „%s“ је препуњена са %ld бајта\n"
+
+#: ldlang.c:4772
+msgid "%X%P: address 0x%v of %B section `%s' is not within region `%s'\n"
+msgstr "%X%P: адреса 0x%v %B одељка „%s“ није унутар области „%s“\n"
+
+#: ldlang.c:4783
+msgid "%X%P: %B section `%s' will not fit in region `%s'\n"
+msgstr "%X%P: %B одељак „%s“ неће стати у област „%s“\n"
+
+#: ldlang.c:4840
+#, c-format
+msgid "%F%S: non constant or forward reference address expression for section %s\n"
+msgstr "%F%S: не константа или следећи израз адресе упуте за одељак „%s“\n"
+
+#: ldlang.c:4865
+msgid "%P%X: Internal error on COFF shared library section %s\n"
+msgstr "%P%X: Унутрашња грешка на ЦОФФ дељеном одељку библиотеке „%s“\n"
+
+#: ldlang.c:4923
+msgid "%P%F: error: no memory region specified for loadable section `%s'\n"
+msgstr "%P%F: грешка: није наведена област меморије за учитљив одељак „%s“\n"
+
+#: ldlang.c:4928
+msgid "%P: warning: no memory region specified for loadable section `%s'\n"
+msgstr "%P: упозорење: није наведена област меморије за учитљив одељак „%s“\n"
+
+#: ldlang.c:4951
+msgid "%P: warning: changing start of section %s by %lu bytes\n"
+msgstr "%P: упозорење: мењам почетак одељка „%s“ за %lu бајта\n"
+
+#: ldlang.c:5040
+msgid "%P: warning: dot moved backwards before `%s'\n"
+msgstr "%P: упозорење: тачка је померена уназад пре „%s“\n"
+
+#: ldlang.c:5212
+msgid "%P%F: can't relax section: %E\n"
+msgstr "%P%F: не могу да одморим одељак: %E\n"
+
+#: ldlang.c:5557
+msgid "%F%P: invalid data statement\n"
+msgstr "%F%P: неисправна изјава података\n"
+
+#: ldlang.c:5590
+msgid "%F%P: invalid reloc statement\n"
+msgstr "%F%P: неисправна изјава премештања\n"
+
+#: ldlang.c:5802
+msgid "%P%F: gc-sections requires either an entry or an undefined symbol\n"
+msgstr "%P%F: гц-одељци захтевају или унос или недефинисани симбол\n"
+
+#: ldlang.c:5827
+msgid "%P%F:%s: can't set start address\n"
+msgstr "%P%F:%s: не могу да подесим почетну адресу\n"
+
+#: ldlang.c:5840 ldlang.c:5859
+msgid "%P%F: can't set start address\n"
+msgstr "%P%F: не могу да подесим почетну адресу\n"
+
+#: ldlang.c:5852
+msgid "%P: warning: cannot find entry symbol %s; defaulting to %V\n"
+msgstr "%P: упозорење: не могу да нађем улазни симбол „%s“; постављам на основно „%V“\n"
+
+#: ldlang.c:5864
+msgid "%P: warning: cannot find entry symbol %s; not setting start address\n"
+msgstr "%P: упозорење: не могу да нађем улазни симбол „%s“; не подешавам почетну адресу\n"
+
+#: ldlang.c:5916
+msgid "%P%F: Relocatable linking with relocations from format %s (%B) to format %s (%B) is not supported\n"
+msgstr "%P%F: Преместиво повезивање са премештањима из формата „%s“ (%B) у формат „%s“ (%B) није подржано\n"
+
+#: ldlang.c:5926
+msgid "%P%X: %s architecture of input file `%B' is incompatible with %s output\n"
+msgstr "%P%X: „%s“ архитектура улазне датотеке „%B“ није сагласна са излазом „%s“\n"
+
+#: ldlang.c:5948
+msgid "%P%X: failed to merge target specific data of file %B\n"
+msgstr "%P%X: нисма успео да спојим мети специфичне податке датотеке „%B“\n"
+
+#: ldlang.c:6019
+msgid "%P%F: Could not define common symbol `%T': %E\n"
+msgstr "%P%F: Не могу да дефинишем општи симбол „%T“: %E\n"
+
+#: ldlang.c:6031
+msgid ""
+"\n"
+"Allocating common symbols\n"
+msgstr ""
+"\n"
+"Додељујем опште симболе\n"
+
+#: ldlang.c:6032
+msgid ""
+"Common symbol       size              file\n"
+"\n"
+msgstr ""
+"Општи симбол        величина          датотека\n"
+"\n"
+
+#: ldlang.c:6178
+msgid "%P%F: invalid syntax in flags\n"
+msgstr "%P%F: неисправна синтакса у заставицама\n"
+
+#: ldlang.c:6304
+msgid "%F%P:%S: error: align with input and explicit align specified\n"
+msgstr "%F%P:%S: грешка: поравнање са улазом и изричитим поравнањем је наведено\n"
+
+#: ldlang.c:6645
+msgid "%P%F: Failed to create hash table\n"
+msgstr "%P%F: Нисам успео да направим хеш табелу\n"
+
+#: ldlang.c:6668
+msgid "%P%F: %s: plugin reported error after all symbols read\n"
+msgstr "%P%F: %s: извештена грешка прикључка након читања свих симбола\n"
+
+#: ldlang.c:6991
+msgid "%P%F: multiple STARTUP files\n"
+msgstr "%P%F: неколико ПОЧЕТНИХ датотека\n"
+
+#: ldlang.c:7037
+msgid "%X%P:%S: section has both a load address and a load region\n"
+msgstr "%X%P:%S: одељак има и адресу учитавања и област учитавања\n"
+
+#: ldlang.c:7162
+msgid "%X%P:%S: PHDRS and FILEHDR are not supported when prior PT_LOAD headers lack them\n"
+msgstr "%X%P:%S: „PHDRS“ и „FILEHDR“ нису подржани када недостају у претходним „PT_LOAD“ заглављима\n"
+
+#: ldlang.c:7235
+msgid "%F%P: no sections assigned to phdrs\n"
+msgstr "%F%P: ниједан одељак није додељен „phdrs“-у\n"
+
+#: ldlang.c:7273
+msgid "%F%P: bfd_record_phdr failed: %E\n"
+msgstr "%F%P: „bfd_record_phdr“ није успело: %E\n"
+
+#: ldlang.c:7293
+msgid "%X%P: section `%s' assigned to non-existent phdr `%s'\n"
+msgstr "%X%P: одељак „%s“ је додељен непостојећем „phdr“-у „%s“\n"
+
+#: ldlang.c:7705
+msgid "%X%P: unknown language `%s' in version information\n"
+msgstr "%X%P: непознат језик „%s“ у подацима о издању\n"
+
+#: ldlang.c:7850
+msgid "%X%P: anonymous version tag cannot be combined with other version tags\n"
+msgstr "%X%P: анонимна ознака издања се не може комбиновати са другим ознакама издања\n"
+
+#: ldlang.c:7859
+msgid "%X%P: duplicate version tag `%s'\n"
+msgstr "%X%P: удвостручена ознака издања „%s“\n"
+
+#: ldlang.c:7880 ldlang.c:7889 ldlang.c:7907 ldlang.c:7917
+msgid "%X%P: duplicate expression `%s' in version information\n"
+msgstr "%X%P: удвостручени израз „%s“ у подацима о издању\n"
+
+#: ldlang.c:7957
+msgid "%X%P: unable to find version dependency `%s'\n"
+msgstr "%X%P: не могу да нађем зависност издања „%s“\n"
+
+#: ldlang.c:7980
+msgid "%X%P: unable to read .exports section contents\n"
+msgstr "%X%P: не могу да прочитам садржаје одељка „.exports“ (извоза)\n"
+
+#: ldlang.c:8104
+msgid "%X%P: unknown feature `%s'\n"
+msgstr "%X%P: непозната функција „%s“\n"
+
+#: ldmain.c:246
+msgid "%X%P: can't set BFD default target to `%s': %E\n"
+msgstr "%X%P: не могу да поставим основну БФД мету на „%s“: %E\n"
+
+#: ldmain.c:336
+msgid "built in linker script"
+msgstr "уграђена скрипта повезивача"
+
+#: ldmain.c:346
+msgid "using external linker script:"
+msgstr "користим спољну скрипту повезивача:"
+
+#: ldmain.c:348
+msgid "using internal linker script:"
+msgstr "користим унутрашњу скрипту повезивача:"
+
+#: ldmain.c:385
+msgid "%P%F: no input files\n"
+msgstr "%P%F: нема улазних датотека\n"
+
+#: ldmain.c:389
+msgid "%P: mode %s\n"
+msgstr "%P: режим „%s“\n"
+
+#: ldmain.c:405
+msgid "%P%F: cannot open map file %s: %E\n"
+msgstr "%P%F: не могу да отворим датотеку мапе „%s“: %E\n"
+
+#: ldmain.c:437
+msgid "%P: link errors found, deleting executable `%s'\n"
+msgstr "%P: нађох грешке везе, бришем извршног „%s“\n"
+
+#: ldmain.c:446
+msgid "%F%B: final close failed: %E\n"
+msgstr "%F%B: завршно затварање није успело: %E\n"
+
+#: ldmain.c:472
+msgid "%X%P: unable to open for source of copy `%s'\n"
+msgstr "%X%P: не могу да отворим за извором умношка „%s“\n"
+
+#: ldmain.c:475
+msgid "%X%P: unable to open for destination of copy `%s'\n"
+msgstr "%X%P: не могу да отворим за одредиштем умношка „%s“\n"
+
+#: ldmain.c:482
+msgid "%P: Error writing file `%s'\n"
+msgstr "%P: Грешка писања датотеке „%s“\n"
+
+#: ldmain.c:487 pe-dll.c:1761
+#, c-format
+msgid "%P: Error closing file `%s'\n"
+msgstr "%P: Грешка затварања датотеке „%s“\n"
+
+#: ldmain.c:504
+#, c-format
+msgid "%s: total time in link: %ld.%06ld\n"
+msgstr "%s: укупно време у вези: %ld.%06ld\n"
+
+#: ldmain.c:507
+#, c-format
+msgid "%s: data size %ld\n"
+msgstr "%s: величина података %ld\n"
+
+#: ldmain.c:591
+msgid "%P%F: missing argument to -m\n"
+msgstr "%P%F: недостаје аргумент за „-m“\n"
+
+#: ldmain.c:639 ldmain.c:656 ldmain.c:676 ldmain.c:708
+msgid "%P%F: bfd_hash_table_init failed: %E\n"
+msgstr "%P%F: „bfd_hash_table_init“ није успело: %E\n"
+
+#: ldmain.c:643 ldmain.c:660 ldmain.c:680
+msgid "%P%F: bfd_hash_lookup failed: %E\n"
+msgstr "%P%F: „bfd_hash_lookup“ није успело: %E\n"
+
+#: ldmain.c:694
+msgid "%X%P: error: duplicate retain-symbols-file\n"
+msgstr "%X%P: грешка: удвостручено задржи-датотеку-симбола\n"
+
+#: ldmain.c:738
+msgid "%P%F: bfd_hash_lookup for insertion failed: %E\n"
+msgstr "%P%F: „bfd_hash_lookup“ за уметање није успело: %E\n"
+
+#: ldmain.c:743
+msgid "%P: `-retain-symbols-file' overrides `-s' and `-S'\n"
+msgstr "%P: „-retain-symbols-file“ преписује `-s' и „-S“\n"
+
+#: ldmain.c:844
+#, c-format
+msgid ""
+"Archive member included to satisfy reference by file (symbol)\n"
+"\n"
+msgstr ""
+"Члан архиве је укључен да би задовољио упуту датотеком (симболом)\n"
+"\n"
+
+#: ldmain.c:951
+msgid "%X%C: multiple definition of `%T'\n"
+msgstr "%X%C: випеструка дефиниција за „%T“\n"
+
+#: ldmain.c:954
+msgid "%D: first defined here\n"
+msgstr "%D: прво је дефинисано овде\n"
+
+#: ldmain.c:958
+msgid "%P: Disabling relaxation: it will not work with multiple definitions\n"
+msgstr "%P: Искључујем опуштање: неће радити са вишеструким дефиницијама\n"
+
+#: ldmain.c:1012
+msgid "%B: warning: definition of `%T' overriding common\n"
+msgstr "%B: упозорење: дефиниција за „%T“ преписује опште\n"
+
+#: ldmain.c:1015
+msgid "%B: warning: common is here\n"
+msgstr "%B: упозорење: опште је овде\n"
+
+#: ldmain.c:1022
+msgid "%B: warning: common of `%T' overridden by definition\n"
+msgstr "%B: упозорење: опште за „%T“ је преписано дефиницијом\n"
+
+#: ldmain.c:1025
+msgid "%B: warning: defined here\n"
+msgstr "%B: упозорење: дефинисано је овде\n"
+
+#: ldmain.c:1032
+msgid "%B: warning: common of `%T' overridden by larger common\n"
+msgstr "%B: упозорење: опште за „%T“ је преписано већим општим\n"
+
+#: ldmain.c:1035
+msgid "%B: warning: larger common is here\n"
+msgstr "%B: упозорење: већи општи је овде\n"
+
+#: ldmain.c:1039
+msgid "%B: warning: common of `%T' overriding smaller common\n"
+msgstr "%B: упозорење: опште за „%T“ преписује мањег општег\n"
+
+#: ldmain.c:1042
+msgid "%B: warning: smaller common is here\n"
+msgstr "%B: упозорење: мањи општи је овде\n"
+
+#: ldmain.c:1046
+msgid "%B: warning: multiple common of `%T'\n"
+msgstr "%B: упозорење: више општих за „%T“\n"
+
+#: ldmain.c:1048
+msgid "%B: warning: previous common is here\n"
+msgstr "%B: упозорење: претходни општи је овде\n"
+
+#: ldmain.c:1068 ldmain.c:1106
+msgid "%P: warning: global constructor %s used\n"
+msgstr "%P: упозорење: глобални конструктор „%s“ је коришћен\n"
+
+#: ldmain.c:1116
+msgid "%P%F: BFD backend error: BFD_RELOC_CTOR unsupported\n"
+msgstr "%P%F: грешка БФД позадинца: „BFD_RELOC_CTOR“ није подржано\n"
+
+#. We found a reloc for the symbol we are looking for.
+#: ldmain.c:1170 ldmain.c:1172 ldmain.c:1174 ldmain.c:1192 ldmain.c:1237
+msgid "warning: "
+msgstr "упозорење: "
+
+#: ldmain.c:1290
+msgid "%X%C: undefined reference to `%T'\n"
+msgstr "%X%C: недефинисана упута ка „%T“\n"
+
+#: ldmain.c:1293
+msgid "%C: warning: undefined reference to `%T'\n"
+msgstr "%C: упозорење: недефинисана упута ка „%T“\n"
+
+#: ldmain.c:1299
+msgid "%X%D: more undefined references to `%T' follow\n"
+msgstr "%X%D: недефинисанија упута ка „%T“ следи\n"
+
+#: ldmain.c:1302
+msgid "%D: warning: more undefined references to `%T' follow\n"
+msgstr "%D: упозорење: недефинисанија упута ка „%T“ следи\n"
+
+#: ldmain.c:1313
+msgid "%X%B: undefined reference to `%T'\n"
+msgstr "%X%B: недефинисана упута ка „%T“\n"
+
+#: ldmain.c:1316
+msgid "%B: warning: undefined reference to `%T'\n"
+msgstr "%B: упозорење: недефинисана упута ка „%T“\n"
+
+#: ldmain.c:1322
+msgid "%X%B: more undefined references to `%T' follow\n"
+msgstr "%X%B: недефинисанија упута ка „%T“ следи\n"
+
+#: ldmain.c:1325
+msgid "%B: warning: more undefined references to `%T' follow\n"
+msgstr "%B: упозорење: недефинисанија упута ка „%T“ следи\n"
+
+#: ldmain.c:1364
+msgid " additional relocation overflows omitted from the output\n"
+msgstr " додатна превазилажења премештања су изостављена из излаза\n"
+
+#: ldmain.c:1377
+msgid " relocation truncated to fit: %s against undefined symbol `%T'"
+msgstr " премештање је скраћено да стане: „%s“ наспрам недефинисаног симбола „%T“"
+
+#: ldmain.c:1382
+msgid " relocation truncated to fit: %s against symbol `%T' defined in %A section in %B"
+msgstr " премештање је скраћено да стане: „%s“ наспрам симбола „%T“ дефинисаног у одељку „%A“ у „%B“"
+
+#: ldmain.c:1394
+msgid " relocation truncated to fit: %s against `%T'"
+msgstr " премештање је скраћено да стане: „%s“ наспрам „%T“"
+
+#: ldmain.c:1411
+msgid "%X%H: dangerous relocation: %s\n"
+msgstr "%X%H: опасно премештање: %s\n"
+
+#: ldmain.c:1426
+msgid "%X%H: reloc refers to symbol `%T' which is not being output\n"
+msgstr "%X%H: премештање упућује на симбол „%T“ који није био излаз\n"
+
+#: ldmisc.c:154
+#, c-format
+msgid "no symbol"
+msgstr "нема симбола"
+
+#: ldmisc.c:339
+msgid "%B: In function `%T':\n"
+msgstr "%B: У функцији „%T“:\n"
+
+#: ldmisc.c:474
+msgid "%F%P: internal error %s %d\n"
+msgstr "%F%P: унутрашња грешка „%s“ %d\n"
+
+#: ldmisc.c:538
+msgid "%P: internal error: aborting at %s line %d in %s\n"
+msgstr "%P: унутрашња грешка: прекидам при „%s“ %d. ред у „%s“\n"
+
+#: ldmisc.c:541
+msgid "%P: internal error: aborting at %s line %d\n"
+msgstr "%P: унутрашња грешка: прекидам при „%s“ %d. ред\n"
+
+#: ldmisc.c:543
+msgid "%P%F: please report this bug\n"
+msgstr "%P%F: пријавите ову грешку\n"
+
+#. Output for noisy == 2 is intended to follow the GNU standards.
+#: ldver.c:39
+#, c-format
+msgid "GNU ld %s\n"
+msgstr "ГНУ лд %s\n"
+
+#: ldver.c:43
+#, c-format
+msgid "Copyright 2014 Free Software Foundation, Inc.\n"
+msgstr "Ауторска права 2014 Задужбина слободног софтвера, Доо.\n"
+
+#: ldver.c:44
+#, c-format
+msgid ""
+"This program is free software; you may redistribute it under the terms of\n"
+"the GNU General Public License version 3 or (at your option) a later version.\n"
+"This program has absolutely no warranty.\n"
+msgstr ""
+"Овај програм је слободан софтвер; можете да га расподељујете под одредбама\n"
+"Гнуове опште јавне лиценце издања 3 или (према вашем мишљењу) било ког\n"
+"новијег издања. Овај програм нема никакву гаранцију.\n"
+
+#: ldver.c:54
+#, c-format
+msgid "  Supported emulations:\n"
+msgstr "  Подржане емулације:\n"
+
+#: ldwrite.c:62 ldwrite.c:208
+msgid "%P%F: bfd_new_link_order failed\n"
+msgstr "%P%F: „bfd_new_link_order“ није успело\n"
+
+#: ldwrite.c:366
+msgid "%F%P: cannot create split section name for %s\n"
+msgstr "%F%P: не могу да направим назив одељка поделе за „%s“\n"
+
+#: ldwrite.c:378
+msgid "%F%P: clone section failed: %E\n"
+msgstr "%F%P: клонирање одељка није успело: %E\n"
+
+#: ldwrite.c:419
+#, c-format
+msgid "%8x something else\n"
+msgstr "%8x нешто друго\n"
+
+#: ldwrite.c:589
+msgid "%F%P: final link failed: %E\n"
+msgstr "%F%P: завршна веза није успела: %E\n"
+
+#: lexsup.c:104 lexsup.c:261
+msgid "KEYWORD"
+msgstr "КЉУЧНА РЕЧ"
+
+#: lexsup.c:104
+msgid "Shared library control for HP/UX compatibility"
+msgstr "Управљање дељеном библиотеком за ХП/УИкс сагласност"
+
+#: lexsup.c:107
+msgid "ARCH"
+msgstr "АРХИТЕКТУРА"
+
+#: lexsup.c:107
+msgid "Set architecture"
+msgstr "Подешава архитектуру"
+
+#: lexsup.c:109 lexsup.c:380
+msgid "TARGET"
+msgstr "МЕТА"
+
+#: lexsup.c:109
+msgid "Specify target for following input files"
+msgstr "Наводи мету за пратеће улазне датотеке"
+
+#: lexsup.c:112 lexsup.c:163 lexsup.c:190 lexsup.c:203 lexsup.c:205
+#: lexsup.c:334 lexsup.c:396 lexsup.c:463 lexsup.c:476
+msgid "FILE"
+msgstr "ДАТОТЕКА"
+
+#: lexsup.c:112
+msgid "Read MRI format linker script"
+msgstr "Чита МРИ формат скрипте повезивача"
+
+#: lexsup.c:114
+msgid "Force common symbols to be defined"
+msgstr "Приморава дефинисање општих симбола"
+
+#: lexsup.c:118 lexsup.c:440 lexsup.c:442 lexsup.c:444 lexsup.c:446
+#: lexsup.c:448 lexsup.c:450
+msgid "ADDRESS"
+msgstr "АДРЕСА"
+
+#: lexsup.c:118
+msgid "Set start address"
+msgstr "Подешава полазну адресу"
+
+#: lexsup.c:120
+msgid "Export all dynamic symbols"
+msgstr "Извози све динамичке симболе"
+
+#: lexsup.c:122
+msgid "Undo the effect of --export-dynamic"
+msgstr "Поништава дејство „--export-dynamic“"
+
+#: lexsup.c:124
+msgid "Link big-endian objects"
+msgstr "Повезује објекте велике крајњости"
+
+#: lexsup.c:126
+msgid "Link little-endian objects"
+msgstr "Повезује објекте мале крајњости"
+
+#: lexsup.c:128 lexsup.c:131
+msgid "SHLIB"
+msgstr "ДЕЉ_БИБЛ"
+
+#: lexsup.c:128
+msgid "Auxiliary filter for shared object symbol table"
+msgstr "Помоћни филтер за табелу симбола дељеног објекта"
+
+#: lexsup.c:131
+msgid "Filter for shared object symbol table"
+msgstr "Филтер за табелу симбола дељеног објекта"
+
+#: lexsup.c:134
+msgid "Ignored"
+msgstr "Занемарено"
+
+#: lexsup.c:136
+msgid "SIZE"
+msgstr "ВЕЛИЧИНА"
+
+#: lexsup.c:136
+msgid "Small data size (if no size, same as --shared)"
+msgstr "Величина малих података (ако нема величине, исто као „--shared“)"
+
+#: lexsup.c:139
+msgid "FILENAME"
+msgstr "ДАТОТЕКА"
+
+#: lexsup.c:139
+msgid "Set internal name of shared library"
+msgstr "Подешава унутрашњи назив дељене библиотеке"
+
+#: lexsup.c:141
+msgid "PROGRAM"
+msgstr "ПРОГРАМ"
+
+#: lexsup.c:141
+msgid "Set PROGRAM as the dynamic linker to use"
+msgstr "Поставља ПРОГРАМ као динамички повезивач за коришћење"
+
+#: lexsup.c:144
+msgid "LIBNAME"
+msgstr "НАЗИВ_БИБЛ"
+
+#: lexsup.c:144
+msgid "Search for library LIBNAME"
+msgstr "Тражи библиотеку НАЗИВ_БИБЛ"
+
+#: lexsup.c:146
+msgid "DIRECTORY"
+msgstr "ДИРЕКТРОРИЈУМ"
+
+#: lexsup.c:146
+msgid "Add DIRECTORY to library search path"
+msgstr "Додаје ДИРЕКТРОРИЈУМ у путању тражења библиотеке"
+
+#: lexsup.c:149
+msgid "Override the default sysroot location"
+msgstr "Преписује основно место системског администратора"
+
+#: lexsup.c:151
+msgid "EMULATION"
+msgstr "ЕМУЛАЦИЈА"
+
+#: lexsup.c:151
+msgid "Set emulation"
+msgstr "Подешава емулацију"
+
+#: lexsup.c:153
+msgid "Print map file on standard output"
+msgstr "Исписује датотеку мапе на стандардном излазу"
+
+#: lexsup.c:155
+msgid "Do not page align data"
+msgstr "Не страничи податке поравнања"
+
+#: lexsup.c:157
+msgid "Do not page align data, do not make text readonly"
+msgstr "Не страничи податке поравнања, не чини текст само за читање"
+
+#: lexsup.c:160
+msgid "Page align data, make text readonly"
+msgstr "Страничи податке поравнања, чини текст само за читање"
+
+#: lexsup.c:163
+msgid "Set output file name"
+msgstr "Поставља назив излазне датотеке"
+
+#: lexsup.c:165
+msgid "Optimize output file"
+msgstr "Оптимизује излазну датотеку"
+
+#: lexsup.c:168
+msgid "PLUGIN"
+msgstr "ПРИКЉУЧАК"
+
+#: lexsup.c:168
+msgid "Load named plugin"
+msgstr "Учитава именовани прикључак"
+
+#: lexsup.c:170
+msgid "ARG"
+msgstr "АРГ"
+
+#: lexsup.c:170
+msgid "Send arg to last-loaded plugin"
+msgstr "Шаље аргумент последње учитаном прикључку"
+
+#: lexsup.c:172 lexsup.c:175
+msgid "Ignored for GCC LTO option compatibility"
+msgstr "Занемарено зарад сагласности ГЦЦ ЛТО опције"
+
+#: lexsup.c:179
+msgid "Ignored for GCC linker option compatibility"
+msgstr "Занемарено зарад сагласности опције ГЦЦ повезивача"
+
+#: lexsup.c:182
+msgid "Ignored for SVR4 compatibility"
+msgstr "Занемарено зарад СВР4 сагласности"
+
+#: lexsup.c:186
+msgid "Generate relocatable output"
+msgstr "Ствара преместиви излаз"
+
+#: lexsup.c:190
+msgid "Just link symbols (if directory, same as --rpath)"
+msgstr "Само повезује симболе (ако је директоријум, исто као „--rpath“)"
+
+#: lexsup.c:193
+msgid "Strip all symbols"
+msgstr "Кида све симболе"
+
+#: lexsup.c:195
+msgid "Strip debugging symbols"
+msgstr "Кида симболе прочишћавања"
+
+#: lexsup.c:197
+msgid "Strip symbols in discarded sections"
+msgstr "Кида симболе у одбаченим одељцима"
+
+#: lexsup.c:199
+msgid "Do not strip symbols in discarded sections"
+msgstr "Не кида симболе у одбаченим одељцима"
+
+#: lexsup.c:201
+msgid "Trace file opens"
+msgstr "Прати отварања датотеке"
+
+#: lexsup.c:203
+msgid "Read linker script"
+msgstr "Чита скрипту повезивача"
+
+#: lexsup.c:205
+msgid "Read default linker script"
+msgstr "Чита основну скрипту повезивача"
+
+#: lexsup.c:209 lexsup.c:227 lexsup.c:311 lexsup.c:332 lexsup.c:433
+#: lexsup.c:466 lexsup.c:505 lexsup.c:508
+msgid "SYMBOL"
+msgstr "СИМБОЛ"
+
+#: lexsup.c:209
+msgid "Start with undefined reference to SYMBOL"
+msgstr "Почиње са недефинисаном упутом ка СИМБОЛУ"
+
+#: lexsup.c:212
+msgid "[=SECTION]"
+msgstr "[=ОДЕЉАК]"
+
+#: lexsup.c:213
+msgid "Don't merge input [SECTION | orphan] sections"
+msgstr "Не стапа улазне [ОДЕЉАК | сироче] одељке"
+
+#: lexsup.c:215
+msgid "Build global constructor/destructor tables"
+msgstr "Гради опште табеле градитеља/рушитеља"
+
+#: lexsup.c:217
+msgid "Print version information"
+msgstr "Исписује податке о издању"
+
+#: lexsup.c:219
+msgid "Print version and emulation information"
+msgstr "Исписује податке о издању и емулацији"
+
+#: lexsup.c:221
+msgid "Discard all local symbols"
+msgstr "Одбацује све локалне симболе"
+
+#: lexsup.c:223
+msgid "Discard temporary local symbols (default)"
+msgstr "Одбацује привремене локалне симболе (основно)"
+
+#: lexsup.c:225
+msgid "Don't discard any local symbols"
+msgstr "Не одбацује никакве локалне симболе"
+
+#: lexsup.c:227
+msgid "Trace mentions of SYMBOL"
+msgstr "Прати помињање СИМБОЛА"
+
+#: lexsup.c:229 lexsup.c:398 lexsup.c:400
+msgid "PATH"
+msgstr "ПУТАЊА"
+
+#: lexsup.c:229
+msgid "Default search path for Solaris compatibility"
+msgstr "Основна путања претраге за сагласност са Соларисом"
+
+#: lexsup.c:232
+msgid "Start a group"
+msgstr "Започиње групу"
+
+#: lexsup.c:234
+msgid "End a group"
+msgstr "Завршава групу"
+
+#: lexsup.c:238
+msgid "Accept input files whose architecture cannot be determined"
+msgstr "Прихвата улазне датотеке чија се архитектура не може одредити"
+
+#: lexsup.c:242
+msgid "Reject input files whose architecture is unknown"
+msgstr "Одбија улазне датотеке чија је архитектура непозната"
+
+#: lexsup.c:254
+msgid "Only set DT_NEEDED for following dynamic libs if used"
+msgstr "Само поставља „DT_NEEDED“ за пратеће динамичке библиотеке ако се користе"
+
+#: lexsup.c:257
+msgid ""
+"Always set DT_NEEDED for dynamic libraries mentioned on\n"
+"                                the command line"
+msgstr ""
+"Увек поставља „DT_NEEDED“ за динамичке библиотеке поменуте на\n"
+"                                линији наредби"
+
+#: lexsup.c:261
+msgid "Ignored for SunOS compatibility"
+msgstr "Занемарено зарад СанОС сагласности"
+
+#: lexsup.c:263
+msgid "Link against shared libraries"
+msgstr "Повезује дељене библиотеке"
+
+#: lexsup.c:269
+msgid "Do not link against shared libraries"
+msgstr "Не повезује дељене библиотеке"
+
+#: lexsup.c:277
+msgid "Bind global references locally"
+msgstr "Свезује опште упуте локално"
+
+#: lexsup.c:279
+msgid "Bind global function references locally"
+msgstr "Свезује опште упуте функције локално"
+
+#: lexsup.c:281
+msgid "Check section addresses for overlaps (default)"
+msgstr "Проверава адресе одељка за преклапањима (основно)"
+
+#: lexsup.c:284
+msgid "Do not check section addresses for overlaps"
+msgstr "Не проверава адресе одељка за преклапањима"
+
+#: lexsup.c:288
+msgid "Copy DT_NEEDED links mentioned inside DSOs that follow"
+msgstr "Умножава „DT_NEEDED“ везе споменуте унутар ДСО-а који следи"
+
+#: lexsup.c:292
+msgid "Do not copy DT_NEEDED links mentioned inside DSOs that follow"
+msgstr "Не умножава „DT_NEEDED“ везе споменуте унутар ДСО-а који следи"
+
+#: lexsup.c:296
+msgid "Output cross reference table"
+msgstr "Исписује табелу унакрсне упуте"
+
+#: lexsup.c:298
+msgid "SYMBOL=EXPRESSION"
+msgstr "СИМБОЛ=ИЗРАЗ"
+
+#: lexsup.c:298
+msgid "Define a symbol"
+msgstr "Дефинише симбол"
+
+#: lexsup.c:300
+msgid "[=STYLE]"
+msgstr "[=СТИЛ]"
+
+#: lexsup.c:300
+msgid "Demangle symbol names [using STYLE]"
+msgstr "Прекрштава називе симбола [користећи СТИЛ]"
+
+#: lexsup.c:303
+msgid "Generate embedded relocs"
+msgstr "Ствара угнежђена премештања"
+
+#: lexsup.c:305
+msgid "Treat warnings as errors"
+msgstr "Сматра упозорења грешкама"
+
+#: lexsup.c:308
+msgid "Do not treat warnings as errors (default)"
+msgstr "Не сматра упозорења грешкама (основно)"
+
+#: lexsup.c:311
+msgid "Call SYMBOL at unload-time"
+msgstr "Позива СИМБОЛ за време истовара"
+
+#: lexsup.c:313
+msgid "Force generation of file with .exe suffix"
+msgstr "Приморава стварање датотеке са суфиксом „.exe“"
+
+#: lexsup.c:315
+msgid "Remove unused sections (on some targets)"
+msgstr "Уклања некоришћене одељке (на неким метама)"
+
+#: lexsup.c:318
+msgid "Don't remove unused sections (default)"
+msgstr "Не уклања некоришћене одељке (основно)"
+
+#: lexsup.c:321
+msgid "List removed unused sections on stderr"
+msgstr "Исписује уклоњене некоришћене одељке на стандардној грешци"
+
+#: lexsup.c:324
+msgid "Do not list removed unused sections"
+msgstr "Не исписује уклоњене некоришћене одељке"
+
+#: lexsup.c:327
+msgid "Set default hash table size close to <NUMBER>"
+msgstr "Поставља основну величину хеш табеле приближно на <БРОЈ>"
+
+#: lexsup.c:330
+msgid "Print option help"
+msgstr "Исписује помоћ опције"
+
+#: lexsup.c:332
+msgid "Call SYMBOL at load-time"
+msgstr "Позива СИМБОЛ за време учитавања"
+
+#: lexsup.c:334
+msgid "Write a map file"
+msgstr "Пише датотеку мапе"
+
+#: lexsup.c:336
+msgid "Do not define Common storage"
+msgstr "Не дефинише општи смештај"
+
+#: lexsup.c:338
+msgid "Do not demangle symbol names"
+msgstr "Не прекрштава називе симбола"
+
+#: lexsup.c:340
+msgid "Use less memory and more disk I/O"
+msgstr "Користи мање меморије а више У/И диска"
+
+#: lexsup.c:342
+msgid "Do not allow unresolved references in object files"
+msgstr "Не дозвољава нерешене упуте у објектним датотекама"
+
+#: lexsup.c:345
+msgid "Allow unresolved references in shared libraries"
+msgstr "Дозвољава нерешене упуте у дељеним библиотекама"
+
+#: lexsup.c:349
+msgid "Do not allow unresolved references in shared libs"
+msgstr "Не дозвољава нерешене упуте у дељеним библиотекама"
+
+#: lexsup.c:353
+msgid "Allow multiple definitions"
+msgstr "Дозвољава више дефиниција"
+
+#: lexsup.c:355
+msgid "Disallow undefined version"
+msgstr "Искључује недефинисано издање"
+
+#: lexsup.c:357
+msgid "Create default symbol version"
+msgstr "Ствара основно издање симбола"
+
+#: lexsup.c:360
+msgid "Create default symbol version for imported symbols"
+msgstr "Ствара основно издање симбола за увезене симболе"
+
+#: lexsup.c:363
+msgid "Don't warn about mismatched input files"
+msgstr "Не упозорава о неодговарајућим улазним датотекама"
+
+#: lexsup.c:366
+msgid "Don't warn on finding an incompatible library"
+msgstr "Не упозорава о налажењу несагласне библиотеке"
+
+#: lexsup.c:369
+msgid "Turn off --whole-archive"
+msgstr "Искључује „--whole-archive“"
+
+#: lexsup.c:371
+msgid "Create an output file even if errors occur"
+msgstr "Ствара излазну датотеку чак и ако дође до грешака"
+
+#: lexsup.c:376
+msgid ""
+"Only use library directories specified on\n"
+"                                the command line"
+msgstr ""
+"Само користи директоријуме библиотеке наведене на\n"
+"                                линији наредби"
+
+#: lexsup.c:380
+msgid "Specify target of output file"
+msgstr "Наводи мету излазне датотеке"
+
+#: lexsup.c:383
+msgid "Print default output format"
+msgstr "Исписује основни излазни формат"
+
+#: lexsup.c:385
+msgid "Ignored for Linux compatibility"
+msgstr "Занемарено зарад Линукс сагласности"
+
+#: lexsup.c:388
+msgid "Reduce memory overheads, possibly taking much longer"
+msgstr "Умањује утрошке меморије, вероватно трајући дуже"
+
+#: lexsup.c:391
+msgid "Reduce code size by using target specific optimizations"
+msgstr "Смањује величину кода користећи оптимизације специфичне мети"
+
+#: lexsup.c:393
+msgid "Do not use relaxation techniques to reduce code size"
+msgstr "Не користи технике опуштања да умањи величину кода"
+
+#: lexsup.c:396
+msgid "Keep only symbols listed in FILE"
+msgstr "Користи само симболе исписане у ДАТОТЕЦИ"
+
+#: lexsup.c:398
+msgid "Set runtime shared library search path"
+msgstr "Поставља путању претраге дељене библиотеке времена извршавања"
+
+#: lexsup.c:400
+msgid "Set link time shared library search path"
+msgstr "Поставља путању претраге дељене библиотеке времена везе"
+
+#: lexsup.c:403
+msgid "Create a shared library"
+msgstr "Прави дељену библиотеку"
+
+#: lexsup.c:407
+msgid "Create a position independent executable"
+msgstr "Ствара извршног независног од положаја"
+
+#: lexsup.c:411
+msgid "[=ascending|descending]"
+msgstr "[=растуће|опадајуће]"
+
+#: lexsup.c:412
+msgid "Sort common symbols by alignment [in specified order]"
+msgstr "Ређа опште симболе према поравнању [наведеним редом]"
+
+#: lexsup.c:417
+msgid "name|alignment"
+msgstr "назив|поравнање"
+
+#: lexsup.c:418
+msgid "Sort sections by name or maximum alignment"
+msgstr "Ређа одељке према називу или највећем поравнању"
+
+#: lexsup.c:420
+msgid "COUNT"
+msgstr "БРОЈ"
+
+#: lexsup.c:420
+msgid "How many tags to reserve in .dynamic section"
+msgstr "Колико ознака да резервише у одељку „.dynamic“"
+
+#: lexsup.c:423
+msgid "[=SIZE]"
+msgstr "[=ВЕЛИЧИНА]"
+
+#: lexsup.c:423
+msgid "Split output sections every SIZE octets"
+msgstr "Дели излазне одељке свака ВЕЛИЧИНА октета"
+
+#: lexsup.c:426
+msgid "[=COUNT]"
+msgstr "[=БРОЈ]"
+
+#: lexsup.c:426
+msgid "Split output sections every COUNT relocs"
+msgstr "Дели излазне одељке свака ВЕЛИЧИНА премештања"
+
+#: lexsup.c:429
+msgid "Print memory usage statistics"
+msgstr "Исписује статистику коришћења меморије"
+
+#: lexsup.c:431
+msgid "Display target specific options"
+msgstr "Приказује опције специфичне за мету"
+
+#: lexsup.c:433
+msgid "Do task level linking"
+msgstr "Обавља повезивање на нивоу задатка"
+
+#: lexsup.c:435
+msgid "Use same format as native linker"
+msgstr "Користи исти формат као матични повезивач"
+
+#: lexsup.c:437
+msgid "SECTION=ADDRESS"
+msgstr "ОДЕЉАК=АДРЕСА"
+
+#: lexsup.c:437
+msgid "Set address of named section"
+msgstr "Поставља адресу именованог одељка"
+
+#: lexsup.c:440
+msgid "Set address of .bss section"
+msgstr "Поставља адресу одељка „.bss“"
+
+#: lexsup.c:442
+msgid "Set address of .data section"
+msgstr "Поставља адресу одељка „.data“"
+
+#: lexsup.c:444
+msgid "Set address of .text section"
+msgstr "Поставља адресу одељка „.text“"
+
+#: lexsup.c:446
+msgid "Set address of text segment"
+msgstr "Поставља адресу одељка текста"
+
+#: lexsup.c:448
+msgid "Set address of rodata segment"
+msgstr "Поставља адресу одељка ро-података"
+
+#: lexsup.c:450
+msgid "Set address of ldata segment"
+msgstr "Поставља адресу одељка л-података"
+
+#: lexsup.c:453
+msgid ""
+"How to handle unresolved symbols.  <method> is:\n"
+"                                ignore-all, report-all, ignore-in-object-files,\n"
+"                                ignore-in-shared-libs"
+msgstr ""
+"Шта да ради са нерешеним симболима.  <метод> је:\n"
+"                                „ignore-all“ (занемари све), „report-all“ (пријави све), „ignore-in-object-files“ (занемари у објектним датотекама),\n"
+"                                „ignore-in-shared-libs“ (занемари у дељеним библиотекама)"
+
+#: lexsup.c:458
+msgid "[=NUMBER]"
+msgstr "[=БРОЈ]"
+
+#: lexsup.c:459
+msgid "Output lots of information during link"
+msgstr "Исписује доста података за време повезивања"
+
+#: lexsup.c:463
+msgid "Read version information script"
+msgstr "Чита скрипту података о издању"
+
+#: lexsup.c:466
+msgid ""
+"Take export symbols list from .exports, using\n"
+"                                SYMBOL as the version."
+msgstr ""
+"Узима извозни списак симбола из „.exports“, користећи\n"
+"                                СИМБОЛ као издање."
+
+#: lexsup.c:470
+msgid "Add data symbols to dynamic list"
+msgstr "Додаје симболе података на динамички списак"
+
+#: lexsup.c:472
+msgid "Use C++ operator new/delete dynamic list"
+msgstr "Користи нови/обриши динамички списак Ц++ оператора"
+
+#: lexsup.c:474
+msgid "Use C++ typeinfo dynamic list"
+msgstr "Користи Ц++ динамички списак врсте података"
+
+#: lexsup.c:476
+msgid "Read dynamic list"
+msgstr "Чита динамички списак"
+
+#: lexsup.c:478
+msgid "Warn about duplicate common symbols"
+msgstr "Упозорава о удвострученим општим симболима"
+
+#: lexsup.c:480
+msgid "Warn if global constructors/destructors are seen"
+msgstr "Упозорава ако је виђен општи градитељ/рушитељ"
+
+#: lexsup.c:483
+msgid "Warn if the multiple GP values are used"
+msgstr "Упозорава ако је коришћено више ГП вредности"
+
+#: lexsup.c:485
+msgid "Warn only once per undefined symbol"
+msgstr "Упозорава само једном по недефинисаном симболу"
+
+#: lexsup.c:487
+msgid "Warn if start of section changes due to alignment"
+msgstr "Упозорава ако се почетак одељка промени у току поравнања"
+
+#: lexsup.c:490
+msgid "Warn if shared object has DT_TEXTREL"
+msgstr "Упозорава ако дељени објекат има „DT_TEXTREL“"
+
+#: lexsup.c:493
+msgid "Warn if an object has alternate ELF machine code"
+msgstr "Упозорава ако објект има заменски ЕЛФ машински код"
+
+#: lexsup.c:497
+msgid "Report unresolved symbols as warnings"
+msgstr "Представља нерешене симболе као упозорења"
+
+#: lexsup.c:500
+msgid "Report unresolved symbols as errors"
+msgstr "Представља нерешене симболе као грешке"
+
+#: lexsup.c:502
+msgid "Include all objects from following archives"
+msgstr "Укључује све објкете из пратећих архива"
+
+#: lexsup.c:505
+msgid "Use wrapper functions for SYMBOL"
+msgstr "Користи функције омотача за СИМБОЛ"
+
+#: lexsup.c:509
+msgid "Unresolved SYMBOL will not cause an error or warning"
+msgstr "Нерешени СИМБОЛ неће довести до грешке или упозорења"
+
+#: lexsup.c:659
+msgid "%P: unrecognized option '%s'\n"
+msgstr "%P: непозната опција „%s“\n"
+
+#: lexsup.c:663
+msgid "%P%F: use the --help option for usage information\n"
+msgstr "%P%F: користите опцију „--help“ за податке о коришћењу\n"
+
+#: lexsup.c:681
+msgid "%P%F: unrecognized -a option `%s'\n"
+msgstr "%P%F: непозната опција „-a“ „%s“\n"
+
+#: lexsup.c:694
+msgid "%P%F: unrecognized -assert option `%s'\n"
+msgstr "%P%F: непозната опција „-assert“ „%s“\n"
+
+#: lexsup.c:735
+msgid "%F%P: unknown demangling style `%s'\n"
+msgstr "%F%P: непознат стил прекрштавања „%s“\n"
+
+#: lexsup.c:801 lexsup.c:1239
+msgid "%P%F: invalid number `%s'\n"
+msgstr "%P%F: неисправан број „%s“\n"
+
+#: lexsup.c:899
+msgid "%P%F: bad --unresolved-symbols option: %s\n"
+msgstr "%P%F: лоша опција „--unresolved-symbols“: %s\n"
+
+#: lexsup.c:968
+msgid "%P%F: bad -plugin-opt option\n"
+msgstr "%P%F: лоша опција „-plugin-opt“\n"
+
+#. This can happen if the user put "-rpath,a" on the command
+#. line.  (Or something similar.  The comma is important).
+#. Getopt becomes confused and thinks that this is a -r option
+#. but it cannot parse the text after the -r so it refuses to
+#. increment the optind counter.  Detect this case and issue
+#. an error message here.  We cannot just make this a warning,
+#. increment optind, and continue because getopt is too confused
+#. and will seg-fault the next time around.
+#: lexsup.c:985
+msgid "%P%F: bad -rpath option\n"
+msgstr "%P%F: лоша опција „-rpath“\n"
+
+#: lexsup.c:1099
+msgid "%P%F: -shared not supported\n"
+msgstr "%P%F: „-shared“ није подржана\n"
+
+#: lexsup.c:1108
+msgid "%P%F: -pie not supported\n"
+msgstr "%P%F: „-pie“ није подржана\n"
+
+#: lexsup.c:1116
+msgid "descending"
+msgstr "опадајуће"
+
+#: lexsup.c:1118
+msgid "ascending"
+msgstr "растуће"
+
+#: lexsup.c:1121
+msgid "%P%F: invalid common section sorting option: %s\n"
+msgstr "%P%F: неисправна опција ређања општег одељка: %s\n"
+
+#: lexsup.c:1125
+msgid "name"
+msgstr "назив"
+
+#: lexsup.c:1127
+msgid "alignment"
+msgstr "поравнање"
+
+#: lexsup.c:1130
+msgid "%P%F: invalid section sorting option: %s\n"
+msgstr "%P%F: неисправна опција ређања одељка: %s\n"
+
+#: lexsup.c:1164
+msgid "%P%F: invalid argument to option \"--section-start\"\n"
+msgstr "%P%F: неисправан аргумент за опцију „--section-start“\n"
+
+#: lexsup.c:1171
+msgid "%P%F: missing argument(s) to option \"--section-start\"\n"
+msgstr "%P%F: недостаје аргумент за опцију „--section-start“\n"
+
+#: lexsup.c:1414
+msgid "%P%F: group ended before it began (--help for usage)\n"
+msgstr "%P%F: група је завршена пре почетка („--help“ за коришћење)\n"
+
+#: lexsup.c:1442
+msgid "%P%X: --hash-size needs a numeric argument\n"
+msgstr "%P%X: „--hash-size“ је потребан бројевни аргумент\n"
+
+#: lexsup.c:1473
+msgid "%P%F: -r and -shared may not be used together\n"
+msgstr "%P%F: „-r“ и „-shared“ се не могу користити заједно\n"
+
+#: lexsup.c:1516
+msgid "%P%F: -F may not be used without -shared\n"
+msgstr "%P%F: „-F“ се не може користити са „-shared“\n"
+
+#: lexsup.c:1518
+msgid "%P%F: -f may not be used without -shared\n"
+msgstr "%P%F: „-f“ се не може користити без „-shared“\n"
+
+#: lexsup.c:1562 lexsup.c:1575
+msgid "%P%F: invalid hex number `%s'\n"
+msgstr "%P%F: неисправан хексадецимални број „%s“\n"
+
+#: lexsup.c:1611
+#, c-format
+msgid "Usage: %s [options] file...\n"
+msgstr "Употреба: %s [опције] датотека...\n"
+
+#: lexsup.c:1613
+#, c-format
+msgid "Options:\n"
+msgstr "Опције:\n"
+
+#: lexsup.c:1691
+#, c-format
+msgid "  @FILE"
+msgstr "  @ДАТОТЕКА"
+
+#: lexsup.c:1694
+#, c-format
+msgid "Read options from FILE\n"
+msgstr "Чита опције из ДАТОТЕКЕ\n"
+
+#. Note: Various tools (such as libtool) depend upon the
+#. format of the listings below - do not change them.
+#: lexsup.c:1699
+#, c-format
+msgid "%s: supported targets:"
+msgstr "%s: подржане мете:"
+
+#: lexsup.c:1707
+#, c-format
+msgid "%s: supported emulations: "
+msgstr "%s: подржане емулације: "
+
+#: lexsup.c:1712
+#, c-format
+msgid "%s: emulation specific options:\n"
+msgstr "%s: посебне опције емулације:\n"
+
+#: lexsup.c:1717
+#, c-format
+msgid "Report bugs to %s\n"
+msgstr "Грешке пријавите на „%s“\n"
+
+#: mri.c:294
+msgid "%P%F: unknown format type %s\n"
+msgstr "%P%F: непозната врста формата „%s“\n"
+
+#: pe-dll.c:430
+#, c-format
+msgid "%XUnsupported PEI architecture: %s\n"
+msgstr "%XНеподржана ПЕИ архитектура: %s\n"
+
+#: pe-dll.c:799
+#, c-format
+msgid "%XCannot export %s: invalid export name\n"
+msgstr "%XНе могу да извезем „%s“: неисправан назив извоза\n"
+
+#: pe-dll.c:851
+#, c-format
+msgid "%XError, duplicate EXPORT with ordinals: %s (%d vs %d)\n"
+msgstr "%XГрешка, удвостручени ИЗВОЗ са редним бројевима: %s (%d vs %d)\n"
+
+#: pe-dll.c:858
+#, c-format
+msgid "Warning, duplicate EXPORT: %s\n"
+msgstr "Упозорење, удвостручено „ИЗВЕЗИ“: %s\n"
+
+#: pe-dll.c:961
+#, c-format
+msgid "%XCannot export %s: symbol not defined\n"
+msgstr "%XНе могу да извезем „%s“: симбол није дефинисан\n"
+
+#: pe-dll.c:967
+#, c-format
+msgid "%XCannot export %s: symbol wrong type (%d vs %d)\n"
+msgstr "%XНе могу да извезем „%s“: погрешна врста симбола (%d vs %d)\n"
+
+#: pe-dll.c:974
+#, c-format
+msgid "%XCannot export %s: symbol not found\n"
+msgstr "%XНе могу да извезем „%s“: нисам нашао симбол\n"
+
+#: pe-dll.c:1088
+#, c-format
+msgid "%XError, ordinal used twice: %d (%s vs %s)\n"
+msgstr "%XГрешка, редни број је коришћен два пута: %d (%s vs %s)\n"
+
+#: pe-dll.c:1478
+#, c-format
+msgid "%XError: %d-bit reloc in dll\n"
+msgstr "%XГрешка: %d-битно премештање у „dll“-у\n"
+
+#: pe-dll.c:1606
+#, c-format
+msgid "%s: Can't open output def file %s\n"
+msgstr "%s: Не могу да отворим излазну датотеку дефиниције „%s“\n"
+
+#: pe-dll.c:1757
+#, c-format
+msgid "; no contents available\n"
+msgstr "; садржај није доступан\n"
+
+#: pe-dll.c:2684
+msgid "%C: variable '%T' can't be auto-imported. Please read the documentation for ld's --enable-auto-import for details.\n"
+msgstr "%C: променљива „%T“ се не може сама увести. Прочитајте документацију за лд-ову опцију „--enable-auto-import“.\n"
+
+#: pe-dll.c:2714
+#, c-format
+msgid "%XCan't open .lib file: %s\n"
+msgstr "%XНе могу да отворим датотеку „.lib“: %s\n"
+
+#: pe-dll.c:2720
+#, c-format
+msgid "Creating library file: %s\n"
+msgstr "Правим датотеку библиотеке: %s\n"
+
+#: pe-dll.c:2749
+#, c-format
+msgid "%Xbfd_openr %s: %E\n"
+msgstr "%X„bfd_openr“ „%s“: %E\n"
+
+#: pe-dll.c:2761
+#, c-format
+msgid "%X%s(%s): can't find member in non-archive file"
+msgstr "%X%s(%s): не могу наћи члана у датотеци која није архива"
+
+#: pe-dll.c:2773
+#, c-format
+msgid "%X%s(%s): can't find member in archive"
+msgstr "%X%s(%s): не могу наћи члана у архиви"
+
+#: pe-dll.c:3356
+#, c-format
+msgid "%XError: can't use long section names on this arch\n"
+msgstr "%XГрешка: не могу да користим дуге називе одељака на овој архитектури\n"
+
+#: plugin.c:185 plugin.c:218
+msgid "<no plugin>"
+msgstr "<нема прикључка>"
+
+#: plugin.c:199 plugin.c:814
+msgid "%P%F: %s: error loading plugin: %s\n"
+msgstr "%P%F: %s: грешка учитавања прикључка: %s\n"
+
+#: plugin.c:257
+#, c-format
+msgid "could not create dummy IR bfd: %F%E\n"
+msgstr "не могу да направим лажни ИР бфд: %F%E\n"
+
+#: plugin.c:350
+msgid "%P%F: %s: non-ELF symbol in ELF BFD!\n"
+msgstr "%P%F: %s: не-ЕЛФ симбол у ЕЛФ БФД-У!\n"
+
+#: plugin.c:354
+msgid "%P%F: unknown ELF symbol visibility: %d!\n"
+msgstr "%P%F: непозната видљивост ЕЛФ симбола: %d!\n"
+
+#: plugin.c:591
+msgid "%P: %B: symbol `%s' definition: %d, visibility: %d, resolution: %d\n"
+msgstr "%P: %B: дефиниција симбола „%s“: %d, видљивост: %d, резолуција: %d\n"
+
+#: plugin.c:821
+msgid "%P%F: %s: plugin error: %d\n"
+msgstr "%P%F: %s: грешка прикључка: %d\n"
+
+#: plugin.c:871
+msgid "%P%F: %s: plugin reported error claiming file\n"
+msgstr "%P%F: %s: прикључак је известио грешку захтевајући датотеку\n"
+
+#: plugin.c:936
+msgid "%P: %s: error in plugin cleanup: %d (ignored)\n"
+msgstr "%P: %s: грешка у чишћењу прикључка: %d (ignored)\n"

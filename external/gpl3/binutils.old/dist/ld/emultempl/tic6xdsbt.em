@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2011-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2011-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -60,7 +60,7 @@ tic6x_after_open (void)
     {
       if (params.dsbt_index >= params.dsbt_size)
 	{
-	  einfo (_("%P%F: invalid --dsbt-index %d, outside DSBT size.\n"),
+	  einfo (_("%F%P: invalid --dsbt-index %d, outside DSBT size\n"),
 		 params.dsbt_index);
 	}
       elf32_tic6x_setup (&link_info, &params);
@@ -103,7 +103,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 	 the unwind table index.  */
       unsigned int list_size = 10;
       asection **sec_list = (asection **)
-          xmalloc (list_size * sizeof (asection *));
+	xmalloc (list_size * sizeof (asection *));
       unsigned int sec_count = 0;
 
       LANG_FOR_EACH_INPUT_STATEMENT (is)
@@ -130,7 +130,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 		    {
 		      list_size *= 2;
 		      sec_list = (asection **)
-                          xrealloc (sec_list, list_size * sizeof (asection *));
+			xrealloc (sec_list, list_size * sizeof (asection *));
 		    }
 
 		  sec_list[sec_count++] = sec;
@@ -153,7 +153,7 @@ gld${EMULATION_NAME}_after_allocation (void)
   ret = bfd_elf_discard_info (link_info.output_bfd, & link_info);
   if (ret < 0)
     {
-      einfo ("%X%P: .eh_frame/.stab edit: %E\n");
+      einfo (_("%X%P: .eh_frame/.stab edit: %E\n"));
       return;
     }
   else if (ret > 0)
@@ -178,11 +178,10 @@ PARSE_AND_LIST_LONGOPTS='
 '
 
 PARSE_AND_LIST_OPTIONS='
-  fprintf (file, _("  --dsbt-index <index>\n"));
-  fprintf (file, _("\t\t\tUse this as the DSBT index for the output object\n"));
-  fprintf (file, _("  --dsbt-size <index>\n"));
-  fprintf (file, _("\t\t\tUse this as the number of entries in the DSBT table\n"));
-  fprintf (file, _("  --no-merge-exidx-entries    Disable merging exidx entries\n"));
+  fprintf (file, _("  --dsbt-index <index>    Use this as the DSBT index for the output object\n"));
+  fprintf (file, _("  --dsbt-size <index>     Use this as the number of entries in the DSBT table\n"));
+  fprintf (file, _("  --no-merge-exidx-entries\n"));
+  fprintf (file, _("                          Disable merging exidx entries\n"));
 '
 
 PARSE_AND_LIST_ARGS_CASES='
@@ -193,7 +192,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	if (*end == 0
 	    && params.dsbt_index >= 0 && params.dsbt_index < 0x7fff)
 	  break;
-	einfo (_("%P%F: invalid --dsbt-index %s\n"), optarg);
+	einfo (_("%F%P: invalid --dsbt-index %s\n"), optarg);
       }
       break;
     case OPTION_DSBT_SIZE:
@@ -203,7 +202,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	if (*end == 0
 	    && params.dsbt_size >= 0 && params.dsbt_size < 0x7fff)
 	  break;
-	einfo (_("%P%F: invalid --dsbt-size %s\n"), optarg);
+	einfo (_("%F%P: invalid --dsbt-size %s\n"), optarg);
       }
       break;
    case OPTION_NO_MERGE_EXIDX_ENTRIES:

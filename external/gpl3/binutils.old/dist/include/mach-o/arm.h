@@ -1,5 +1,5 @@
 /* Mach-O arm declarations for BFD.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,7 +24,7 @@
 /* ARM relocations.  */
 #define BFD_MACH_O_ARM_RELOC_VANILLA   0 /* Generic relocation.  */
 #define BFD_MACH_O_ARM_RELOC_PAIR      1 /* Second entry in a pair.  */
-#define BFD_MACH_O_ARM_RELOC_SECTDIFF  2 /* Substract with a PAIR.  */
+#define BFD_MACH_O_ARM_RELOC_SECTDIFF  2 /* Subtract with a PAIR.  */
 #define BFD_MACH_O_ARM_RELOC_LOCAL_SECTDIFF 3 /* Like above, but local ref.  */
 #define BFD_MACH_O_ARM_RELOC_PB_LA_PTR 4 /* Prebound lazy pointer.  */
 #define BFD_MACH_O_ARM_RELOC_BR24      5 /* 24bit branch.  */

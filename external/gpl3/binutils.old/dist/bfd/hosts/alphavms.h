@@ -1,5 +1,5 @@
 /* alphavms.h -- BFD definitions for an openVMS host
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
    Written by Klaus Kämpf (kkaempf@progis.de)
    of proGIS Softwareentwicklung, Aachen, Germany
 
@@ -56,7 +56,13 @@ extern char *stpcpy (char *, const char *);
 #define gettext(Msgid) (Msgid)
 #define dgettext(Domainname, Msgid) (Msgid)
 #define dcgettext(Domainname, Msgid, Category) (Msgid)
-#define textdomain(Domainname) while (0) /* nothing */
-#define bindtextdomain(Domainname, Dirname) while (0) /* nothing */
+#define ngettext(Msgid1, Msgid2, n) \
+  (n == 1 ? Msgid1 : Msgid2)
+#define dngettext(Domainname, Msgid1, Msgid2, n) \
+  (n == 1 ? Msgid1 : Msgid2)
+#define dcngettext(Domainname, Msgid1, Msgid2, n, Category) \
+  (n == 1 ? Msgid1 : Msgid2)
+#define textdomain(Domainname) do {} while (0)
+#define bindtextdomain(Domainname, Dirname) do {} while (0)
 #define _(String) (String)
 #define N_(String) (String)

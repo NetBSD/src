@@ -1,5 +1,5 @@
 /* SPARC ELF support for BFD.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
    By Doug Evans, Cygnus Support, <dje@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -248,5 +248,14 @@ enum
 #define ELF_SPARC_HWCAP2_FJATHHPC  0x00001000 /* Fujitsu HPC instrs */
 #define ELF_SPARC_HWCAP2_FJDES     0x00002000 /* Fujitsu DES instrs */
 #define ELF_SPARC_HWCAP2_FJAES     0x00010000 /* Fujitsu AES instrs */
+
+#define ELF_SPARC_HWCAP2_SPARC6    0x00020000 /* OSA2017 new instructions */
+#define ELF_SPARC_HWCAP2_ONADDSUB  0x00040000 /* Oracle Number add/subtract */
+#define ELF_SPARC_HWCAP2_ONMUL     0x00080000 /* Oracle Number multiply */
+#define ELF_SPARC_HWCAP2_ONDIV     0x00100000 /* Oracle Number divide */
+#define ELF_SPARC_HWCAP2_DICTUNP   0x00200000 /* Dictionary unpack instruction */
+#define ELF_SPARC_HWCAP2_FPCMPSHL  0x00400000 /* Partition compare with shifted result */
+#define ELF_SPARC_HWCAP2_RLE       0x00800000 /* Run-length encoded burst and length */
+#define ELF_SPARC_HWCAP2_SHA3      0x01000000 /* SHA3 instruction */
 
 #endif /* _ELF_SPARC_H */

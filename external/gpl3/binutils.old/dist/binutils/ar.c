@@ -1,5 +1,5 @@
 /* ar.c - Archive modify and extract.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -29,11 +29,11 @@
 #include "progress.h"
 #include "getopt.h"
 #include "aout/ar.h"
-#include "libbfd.h"
 #include "bucomm.h"
 #include "arsup.h"
 #include "filenames.h"
 #include "binemul.h"
+#include "plugin-api.h"
 #include "plugin.h"
 
 #ifdef __GO32___
@@ -74,6 +74,9 @@ int silent_create = 0;
 
 /* Nonzero means describe each action performed.  */
 int verbose = 0;
+
+/* Nonzero means display offsets of files in the archive.  */
+int display_offsets = 0;
 
 /* Nonzero means preserve dates of members when extracting them.  */
 int preserve_dates = 0;
@@ -268,13 +271,13 @@ usage (int help)
 #if BFD_SUPPORTS_PLUGINS
   /* xgettext:c-format */
   const char *command_line
-    = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoPsSTuvV]"
+    = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoOPsSTuvV]"
 	" [--plugin <name>] [member-name] [count] archive-file file...\n");
 
 #else
   /* xgettext:c-format */
   const char *command_line
-    = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoPsSTuvV]"
+    = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoOPsSTuvV]"
 	" [member-name] [count] archive-file file...\n");
 #endif
   s = help ? stdout : stderr;
@@ -290,7 +293,7 @@ usage (int help)
   fprintf (s, _("  q[f]         - quick append file(s) to the archive\n"));
   fprintf (s, _("  r[ab][f][u]  - replace existing or insert new file(s) into the archive\n"));
   fprintf (s, _("  s            - act as ranlib\n"));
-  fprintf (s, _("  t            - display contents of archive\n"));
+  fprintf (s, _("  t[O][v]      - display contents of the archive\n"));
   fprintf (s, _("  x[o]         - extract file(s) from the archive\n"));
   fprintf (s, _(" command specific modifiers:\n"));
   fprintf (s, _("  [a]          - put file(s) after [member-name]\n"));
@@ -313,6 +316,7 @@ usage (int help)
   fprintf (s, _("  [f]          - truncate inserted file names\n"));
   fprintf (s, _("  [P]          - use full path names when matching\n"));
   fprintf (s, _("  [o]          - preserve original dates\n"));
+  fprintf (s, _("  [O]          - display offsets of files in the archive\n"));
   fprintf (s, _("  [u]          - only replace files that are newer than current archive contents\n"));
   fprintf (s, _(" generic modifiers:\n"));
   fprintf (s, _("  [c]          - do not warn if the library had to be created\n"));
@@ -473,7 +477,7 @@ decode_options (int argc, char **argv)
       argv = new_argv;
     }
 
-  while ((c = getopt_long (argc, argv, "hdmpqrtxlcoVsSuvabiMNfPTDU",
+  while ((c = getopt_long (argc, argv, "hdmpqrtxlcoOVsSuvabiMNfPTDU",
 			   long_options, NULL)) != EOF)
     {
       switch (c)
@@ -527,6 +531,9 @@ decode_options (int argc, char **argv)
           break;
         case 'o':
           preserve_dates = 1;
+          break;
+        case 'O':
+          display_offsets = 1;
           break;
         case 'V':
           show_version = TRUE;
@@ -747,6 +754,12 @@ main (int argc, char **argv)
     {
       bfd *arch;
 
+      /* Fail if no files are specified on the command line.
+	 (But not for MRI mode which allows for reading arguments
+	 and filenames from stdin).  */
+      if (argv[arg_index] == NULL)
+	usage (0);
+
       /* We don't use do_quick_append any more.  Too many systems
 	 expect ar to always rebuild the symbol table even when q is
 	 used.  */
@@ -776,18 +789,26 @@ main (int argc, char **argv)
       default_deterministic ();
 
       if (postype != pos_default)
-	posname = argv[arg_index++];
+	{
+	  posname = argv[arg_index++];
+	  if (posname == NULL)
+	    fatal (_("missing position arg."));
+	}
 
       if (counted_name_mode)
 	{
 	  if (operation != extract && operation != del)
 	    fatal (_("`N' is only meaningful with the `x' and `d' options."));
+	  if (argv[arg_index] == NULL)
+	    fatal (_("`N' missing value."));
 	  counted_name_counter = atoi (argv[arg_index++]);
 	  if (counted_name_counter <= 0)
 	    fatal (_("Value for `N' must be positive."));
 	}
 
       inarch_filename = argv[arg_index++];
+      if (inarch_filename == NULL)
+	usage (0);
 
       for (file_count = 0; argv[arg_index + file_count] != NULL; file_count++)
 	continue;
@@ -1183,6 +1204,7 @@ write_archive (bfd *iarch)
   if (smart_rename (new_name, old_name, 0) != 0)
     xexit (1);
   free (old_name);
+  free (new_name);
 }
 
 /* Return a pointer to the pointer to the entry which should be rplacd'd
@@ -1488,5 +1510,5 @@ ranlib_touch (const char *archname)
 static void
 print_descr (bfd *abfd)
 {
-  print_arelt_descr (stdout, abfd, verbose);
+  print_arelt_descr (stdout, abfd, verbose, display_offsets);
 }

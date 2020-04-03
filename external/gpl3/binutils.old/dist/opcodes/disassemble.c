@@ -1,5 +1,5 @@
 /* Select disassembly routine for specified architecture.
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -19,7 +19,9 @@
    MA 02110-1301, USA.  */
 
 #include "sysdep.h"
-#include "dis-asm.h"
+#include "disassemble.h"
+#include "safe-ctype.h"
+#include <assert.h>
 
 #ifdef ARCH_all
 #define ARCH_aarch64
@@ -39,12 +41,8 @@
 #define ARCH_frv
 #define ARCH_ft32
 #define ARCH_h8300
-#define ARCH_h8500
 #define ARCH_hppa
-#define ARCH_i370
 #define ARCH_i386
-#define ARCH_i860
-#define ARCH_i960
 #define ARCH_ia64
 #define ARCH_ip2k
 #define ARCH_iq2000
@@ -54,7 +52,6 @@
 #define ARCH_m68hc11
 #define ARCH_m68hc12
 #define ARCH_m68k
-#define ARCH_m88k
 #define ARCH_mcore
 #define ARCH_mep
 #define ARCH_metag
@@ -67,12 +64,14 @@
 #define ARCH_mt
 #define ARCH_msp430
 #define ARCH_nds32
+#define ARCH_nfp
 #define ARCH_nios2
 #define ARCH_ns32k
 #define ARCH_or1k
 #define ARCH_pdp11
 #define ARCH_pj
 #define ARCH_powerpc
+#define ARCH_pru
 #define ARCH_riscv
 #define ARCH_rs6000
 #define ARCH_rl78
@@ -92,14 +91,13 @@
 #define ARCH_v850
 #define ARCH_vax
 #define ARCH_visium
-#define ARCH_w65
+#define ARCH_wasm32
 #define ARCH_xstormy16
 #define ARCH_xc16x
 #define ARCH_xgate
 #define ARCH_xtensa
 #define ARCH_z80
 #define ARCH_z8k
-#define INCLUDE_SHMEDIA
 #endif
 
 #ifdef ARCH_m32c
@@ -107,9 +105,11 @@
 #endif
 
 disassembler_ftype
-disassembler (bfd *abfd)
+disassembler (enum bfd_architecture a,
+	      bfd_boolean big ATTRIBUTE_UNUSED,
+	      unsigned long mach ATTRIBUTE_UNUSED,
+	      bfd *abfd ATTRIBUTE_UNUSED)
 {
-  enum bfd_architecture a = bfd_get_arch (abfd);
   disassembler_ftype disassemble;
 
   switch (a)
@@ -133,7 +133,7 @@ disassembler (bfd *abfd)
 #endif
 #ifdef ARCH_arm
     case bfd_arch_arm:
-      if (bfd_big_endian (abfd))
+      if (big)
 	disassemble = print_insn_big_arm;
       else
 	disassemble = print_insn_little_arm;
@@ -182,31 +182,20 @@ disassembler (bfd *abfd)
 #endif
 #ifdef ARCH_h8300
     case bfd_arch_h8300:
-      if (bfd_get_mach (abfd) == bfd_mach_h8300h
-	  || bfd_get_mach (abfd) == bfd_mach_h8300hn)
+      if (mach == bfd_mach_h8300h || mach == bfd_mach_h8300hn)
 	disassemble = print_insn_h8300h;
-      else if (bfd_get_mach (abfd) == bfd_mach_h8300s
-	       || bfd_get_mach (abfd) == bfd_mach_h8300sn
-	       || bfd_get_mach (abfd) == bfd_mach_h8300sx
-	       || bfd_get_mach (abfd) == bfd_mach_h8300sxn)
+      else if (mach == bfd_mach_h8300s
+	       || mach == bfd_mach_h8300sn
+	       || mach == bfd_mach_h8300sx
+	       || mach == bfd_mach_h8300sxn)
 	disassemble = print_insn_h8300s;
       else
 	disassemble = print_insn_h8300;
       break;
 #endif
-#ifdef ARCH_h8500
-    case bfd_arch_h8500:
-      disassemble = print_insn_h8500;
-      break;
-#endif
 #ifdef ARCH_hppa
     case bfd_arch_hppa:
       disassemble = print_insn_hppa;
-      break;
-#endif
-#ifdef ARCH_i370
-    case bfd_arch_i370:
-      disassemble = print_insn_i370;
       break;
 #endif
 #ifdef ARCH_i386
@@ -215,16 +204,6 @@ disassembler (bfd *abfd)
     case bfd_arch_l1om:
     case bfd_arch_k1om:
       disassemble = print_insn_i386;
-      break;
-#endif
-#ifdef ARCH_i860
-    case bfd_arch_i860:
-      disassemble = print_insn_i860;
-      break;
-#endif
-#ifdef ARCH_i960
-    case bfd_arch_i960:
-      disassemble = print_insn_i960;
       break;
 #endif
 #ifdef ARCH_ia64
@@ -272,14 +251,14 @@ disassembler (bfd *abfd)
       disassemble = print_insn_m9s12xg;
       break;
 #endif
+#if defined(ARCH_s12z)
+    case bfd_arch_s12z:
+      disassemble = print_insn_s12z;
+      break;
+#endif
 #ifdef ARCH_m68k
     case bfd_arch_m68k:
       disassemble = print_insn_m68k;
-      break;
-#endif
-#ifdef ARCH_m88k
-    case bfd_arch_m88k:
-      disassemble = print_insn_m88k;
       break;
 #endif
 #ifdef ARCH_mt
@@ -300,6 +279,11 @@ disassembler (bfd *abfd)
 #ifdef ARCH_nds32
     case bfd_arch_nds32:
       disassemble = print_insn_nds32;
+      break;
+#endif
+#ifdef ARCH_nfp
+    case bfd_arch_nfp:
+      disassemble = print_insn_nfp;
       break;
 #endif
 #ifdef ARCH_ns32k
@@ -324,7 +308,7 @@ disassembler (bfd *abfd)
 #endif
 #ifdef ARCH_mips
     case bfd_arch_mips:
-      if (bfd_big_endian (abfd))
+      if (big)
 	disassemble = print_insn_big_mips;
       else
 	disassemble = print_insn_little_mips;
@@ -347,7 +331,7 @@ disassembler (bfd *abfd)
 #endif
 #ifdef ARCH_nios2
     case bfd_arch_nios2:
-      if (bfd_big_endian (abfd))
+      if (big)
 	disassemble = print_insn_big_nios2;
       else
 	disassemble = print_insn_little_nios2;
@@ -370,23 +354,25 @@ disassembler (bfd *abfd)
 #endif
 #ifdef ARCH_powerpc
     case bfd_arch_powerpc:
-      if (bfd_big_endian (abfd))
+#endif
+#ifdef ARCH_rs6000
+    case bfd_arch_rs6000:
+#endif
+#if defined ARCH_powerpc || defined ARCH_rs6000
+      if (big)
 	disassemble = print_insn_big_powerpc;
       else
 	disassemble = print_insn_little_powerpc;
       break;
 #endif
-#ifdef ARCH_riscv
-    case bfd_arch_riscv:
-      disassemble = print_insn_riscv;    
+#ifdef ARCH_pru
+    case bfd_arch_pru:
+      disassemble = print_insn_pru;
       break;
 #endif
-#ifdef ARCH_rs6000
-    case bfd_arch_rs6000:
-      if (bfd_get_mach (abfd) == bfd_mach_ppc_620)
-	disassemble = print_insn_big_powerpc;
-      else
-	disassemble = print_insn_rs6000;
+#ifdef ARCH_riscv
+    case bfd_arch_riscv:
+      disassemble = print_insn_riscv;
       break;
 #endif
 #ifdef ARCH_rl78
@@ -406,7 +392,7 @@ disassembler (bfd *abfd)
 #endif
 #ifdef ARCH_score
     case bfd_arch_score:
-      if (bfd_big_endian (abfd))
+      if (big)
 	disassemble = print_insn_big_score;
       else
 	disassemble = print_insn_little_score;
@@ -463,9 +449,9 @@ disassembler (bfd *abfd)
       disassemble = print_insn_v850;
       break;
 #endif
-#ifdef ARCH_w65
-    case bfd_arch_w65:
-      disassemble = print_insn_w65;
+#ifdef ARCH_wasm32
+    case bfd_arch_wasm32:
+      disassemble = print_insn_wasm32;
       break;
 #endif
 #ifdef ARCH_xgate
@@ -495,7 +481,7 @@ disassembler (bfd *abfd)
 #endif
 #ifdef ARCH_z8k
     case bfd_arch_z8k:
-      if (bfd_get_mach(abfd) == bfd_mach_z8001)
+      if (mach == bfd_mach_z8001)
 	disassemble = print_insn_z8001;
       else
 	disassemble = print_insn_z8002;
@@ -553,20 +539,32 @@ disassembler_usage (FILE *stream ATTRIBUTE_UNUSED)
 #ifdef ARCH_aarch64
   print_aarch64_disassembler_options (stream);
 #endif
+#ifdef ARCH_arc
+  print_arc_disassembler_options (stream);
+#endif
 #ifdef ARCH_arm
   print_arm_disassembler_options (stream);
 #endif
 #ifdef ARCH_mips
   print_mips_disassembler_options (stream);
 #endif
+#ifdef ARCH_nfp
+  print_nfp_disassembler_options (stream);
+#endif
 #ifdef ARCH_powerpc
   print_ppc_disassembler_options (stream);
+#endif
+#ifdef ARCH_riscv
+  print_riscv_disassembler_options (stream);
 #endif
 #ifdef ARCH_i386
   print_i386_disassembler_options (stream);
 #endif
 #ifdef ARCH_s390
   print_s390_disassembler_options (stream);
+#endif
+#ifdef ARCH_wasm32
+  print_wasm32_disassembler_options (stream);
 #endif
 
   return;
@@ -628,6 +626,11 @@ disassemble_init_for_target (struct disassemble_info * info)
 	}
       break;
 #endif
+#ifdef ARCH_pru
+    case bfd_arch_pru:
+      info->disassembler_needs_relocs = TRUE;
+      break;
+#endif
 #ifdef ARCH_powerpc
     case bfd_arch_powerpc:
 #endif
@@ -638,7 +641,81 @@ disassemble_init_for_target (struct disassemble_info * info)
       disassemble_init_powerpc (info);
       break;
 #endif
+#ifdef ARCH_wasm32
+    case bfd_arch_wasm32:
+      disassemble_init_wasm32 (info);
+      break;
+#endif
+#ifdef ARCH_s390
+    case bfd_arch_s390:
+      disassemble_init_s390 (info);
+      break;
+#endif
     default:
       break;
     }
+}
+
+/* Remove whitespace and consecutive commas from OPTIONS.  */
+
+char *
+remove_whitespace_and_extra_commas (char *options)
+{
+  char *str;
+  size_t i, len;
+
+  if (options == NULL)
+    return NULL;
+
+  /* Strip off all trailing whitespace and commas.  */
+  for (len = strlen (options); len > 0; len--)
+    {
+      if (!ISSPACE (options[len - 1]) && options[len - 1] != ',')
+	break;
+      options[len - 1] = '\0';
+    }
+
+  /* Convert all remaining whitespace to commas.  */
+  for (i = 0; options[i] != '\0'; i++)
+    if (ISSPACE (options[i]))
+      options[i] = ',';
+
+  /* Remove consecutive commas.  */
+  for (str = options; *str != '\0'; str++)
+    if (*str == ',' && (*(str + 1) == ',' || str == options))
+      {
+	char *next = str + 1;
+	while (*next == ',')
+	  next++;
+	len = strlen (next);
+	if (str != options)
+	  str++;
+	memmove (str, next, len);
+	next[len - (size_t)(next - str)] = '\0';
+      }
+  return (strlen (options) != 0) ? options : NULL;
+}
+
+/* Like STRCMP, but treat ',' the same as '\0' so that we match
+   strings like "foobar" against "foobar,xxyyzz,...".  */
+
+int
+disassembler_options_cmp (const char *s1, const char *s2)
+{
+  unsigned char c1, c2;
+
+  do
+    {
+      c1 = (unsigned char) *s1++;
+      if (c1 == ',')
+	c1 = '\0';
+      c2 = (unsigned char) *s2++;
+      if (c2 == ',')
+	c2 = '\0';
+      if (c1 == '\0')
+	return c1 - c2;
+    }
+  while (c1 == c2);
+
+  return c1 - c2;
 }

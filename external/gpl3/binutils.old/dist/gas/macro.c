@@ -1,5 +1,5 @@
 /* macro.c - macro support for gas
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com
@@ -815,7 +815,7 @@ macro_expand_body (sb *in, sb *out, formal_entry *formals,
 	    }
 	  else
 	    {
-	      /* Permit macro parameter substition delineated with
+	      /* Permit macro parameter substitution delineated with
 		 an '&' prefix and optional '&' suffix.  */
 	      src = sub_actual (src + 1, in, &t, formal_hash, '&', out, 0);
 	    }
@@ -842,7 +842,7 @@ macro_expand_body (sb *in, sb *out, formal_entry *formals,
 	    {
 	      /* Sub in the macro invocation number.  */
 
-	      char buffer[10];
+	      char buffer[12];
 	      src++;
 	      sprintf (buffer, "%d", macro_number);
 	      sb_add_string (out, buffer);
@@ -1301,7 +1301,7 @@ delete_macro (const char *name)
       free_macro (macro);
     }
   else
-    as_warn (_("Attempt to purge non-existant macro `%s'"), copy);
+    as_warn (_("Attempt to purge non-existing macro `%s'"), copy);
   free (copy);
 }
 

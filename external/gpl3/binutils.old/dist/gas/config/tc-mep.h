@@ -1,5 +1,5 @@
 /* tc-mep.h -- Header file for tc-mep.c.
-   Copyright (C) 2001-2016 Free Software Foundation, Inc.
+   Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -115,6 +115,6 @@ extern flagword mep_elf_section_flags  (flagword, bfd_vma, int);
 
 /* The values of the following enum are for use with parinsnum, which
    is a variable in md_assemble that keeps track of whether or not the
-   next instruction is expected to be the first or second instrucion in
+   next instruction is expected to be the first or second instruction in
    a parallelization group.  */
 typedef enum exp_par_insn_{FIRST, SECOND} EXP_PAR_INSN;

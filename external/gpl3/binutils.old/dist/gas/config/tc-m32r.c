@@ -1,5 +1,5 @@
 /* tc-m32r.c -- Assembler for the Renesas M32R.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -113,7 +113,7 @@ static int warn_explicit_parallel_conflicts = 1;
 /* Non-zero if the programmer should not receive any messages about
    parallel instruction with potential or real constraint violations.
    The ability to suppress these messages is intended only for hardware
-   vendors testing the chip.  It superceedes
+   vendors testing the chip.  It supersedes
    warn_explicit_parallel_conflicts.  */
 static int ignore_parallel_conflicts = 0;
 
@@ -393,11 +393,11 @@ md_show_usage (FILE *stream)
   fprintf (stream, _("\
   -warn-explicit-parallel-conflicts     warn when parallel instructions\n"));
   fprintf (stream, _("\
-                                         might violate contraints\n"));
+                                         might violate constraints\n"));
   fprintf (stream, _("\
   -no-warn-explicit-parallel-conflicts  do not warn when parallel\n"));
   fprintf (stream, _("\
-                                         instructions might violate contraints\n"));
+                                         instructions might violate constraints\n"));
   fprintf (stream, _("\
   -Wp                     synonym for -warn-explicit-parallel-conflicts\n"));
   fprintf (stream, _("\
@@ -2291,7 +2291,7 @@ printf(" => %s\n",reloc->howto->name);
            && S_IS_DEFINED (fixP->fx_addsy)
            && ! S_IS_EXTERNAL(fixP->fx_addsy)
            && ! S_IS_WEAK(fixP->fx_addsy))
-    /* Already used fx_offset in the opcode field itseld.  */
+    /* Already used fx_offset in the opcode field itself.  */
     reloc->addend  = fixP->fx_offset;
   else
     reloc->addend  = fixP->fx_addnumber;

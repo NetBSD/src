@@ -1,5 +1,5 @@
 /* Table of relaxations for Xtensa assembly.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1683,7 +1683,7 @@ build_transition (insn_pattern *initial_insn,
 	  op2 = get_opmatch (&initial_insn->t.operand_map, precond->opname2);
 	  if (op2 == NULL)
 	    as_fatal (_("opcode '%s': no bound opname '%s' "
-			"for precondition in %s"),
+			"for precondition in '%s'"),
 		      xtensa_opcode_name (isa, opcode),
 		      precond->opname2, from_string);
 	}
@@ -1764,7 +1764,9 @@ build_transition (insn_pattern *initial_insn,
 	  /* Check for the right number of ops.  */
 	  if (xtensa_opcode_num_operands (isa, bi->opcode)
 	      != (int) operand_count)
-	    as_fatal (_("opcode '%s': replacement does not have %d ops"),
+	    as_fatal (ngettext ("opcode '%s': replacement does not have %d op",
+				"opcode '%s': replacement does not have %d ops",
+				xtensa_opcode_num_operands (isa, bi->opcode)),
 		      opcode_name,
 		      xtensa_opcode_num_operands (isa, bi->opcode));
 	}
@@ -1794,7 +1796,7 @@ build_transition (insn_pattern *initial_insn,
 	      orig_op = get_opmatch (&initial_insn->t.operand_map,
 				     op->operand_name);
 	      if (orig_op == NULL)
-		as_fatal (_("opcode %s: unidentified operand '%s' in '%s'"),
+		as_fatal (_("opcode '%s': unidentified operand '%s' in '%s'"),
 			  opcode_name, op->operand_name, to_string);
 	      append_field_op (bi, op->operand_num, orig_op->operand_num);
 	    }
@@ -1824,13 +1826,13 @@ build_transition (insn_pattern *initial_insn,
 	      orig_op = get_opmatch (&initial_insn->t.operand_map,
 				     operand_arg_name);
 	      if (orig_op == NULL)
-		as_fatal (_("opcode %s: unidentified operand '%s' in '%s'"),
+		as_fatal (_("opcode '%s': unidentified operand '%s' in '%s'"),
 			  opcode_name, op->operand_name, to_string);
 	      append_user_fn_field_op (bi, op->operand_num,
 				       typ, orig_op->operand_num);
 	    }
 	  else
-	    as_fatal (_("opcode %s: could not parse operand '%s' in '%s'"),
+	    as_fatal (_("opcode '%s': could not parse operand '%s' in '%s'"),
 		      opcode_name, op->operand_name, to_string);
 	}
     }

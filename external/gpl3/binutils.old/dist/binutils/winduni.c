@@ -1,5 +1,5 @@
 /* winduni.c -- unicode support for the windres program.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2018 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -57,7 +57,7 @@ static int unichar_isascii (const unichar *, rc_uint_type);
 /* Codepages mapped.  */
 static local_iconv_map codepages[] =
 {
-  { 0, "MS-ANSI" },
+  { 0, "cp1252" },
   { 1, "WINDOWS-1252" },
   { 437, "MS-ANSI" },
   { 737, "MS-GREEK" },

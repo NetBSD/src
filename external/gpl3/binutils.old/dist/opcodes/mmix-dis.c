@@ -1,5 +1,5 @@
 /* mmix-dis.c -- Disassemble MMIX instructions.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com)
 
    This file is part of the GNU opcodes library.
@@ -22,29 +22,28 @@
 #include "sysdep.h"
 #include <stdio.h>
 #include "opcode/mmix.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "libiberty.h"
 #include "bfd.h"
 #include "opintl.h"
 
-#define BAD_CASE(x)				\
- do						\
-   {						\
-     fprintf (stderr,				\
-	      _("Bad case %d (%s) in %s:%d\n"),	\
-	      x, #x, __FILE__, __LINE__);	\
-     abort ();					\
-   }						\
+#define BAD_CASE(x)						\
+  do								\
+   {								\
+     opcodes_error_handler (_("bad case %d (%s) in %s:%d"),	\
+			    x, #x, __FILE__, __LINE__);		\
+     abort ();							\
+   }								\
  while (0)
 
-#define FATAL_DEBUG							\
- do									\
-   {									\
-     fprintf (stderr,							\
-	      _("Internal: Non-debugged code (test-case missing): %s:%d"),\
-	      __FILE__, __LINE__);					\
-     abort ();								\
-   }									\
+#define FATAL_DEBUG						\
+ do								\
+   {								\
+     opcodes_error_handler (_("internal: non-debugged code "	\
+			      "(test-case missing): %s:%d"),	\
+			    __FILE__, __LINE__);		\
+     abort ();							\
+   }								\
  while (0)
 
 #define ROUND_MODE(n)					\

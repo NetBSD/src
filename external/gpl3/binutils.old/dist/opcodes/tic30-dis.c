@@ -1,5 +1,5 @@
 /* Disassembly routines for TMS320C30 architecture
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2018 Free Software Foundation, Inc.
    Contributed by Steven Haworth (steve@pm.cse.rmit.edu.au)
 
    This file is part of the GNU opcodes library.
@@ -22,7 +22,7 @@
 #include "sysdep.h"
 #include <errno.h>
 #include <math.h>
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/tic30.h"
 
 #define NORMAL_INSN   1

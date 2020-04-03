@@ -1,5 +1,5 @@
 /* ldexp.h -
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -66,7 +66,6 @@ typedef union etree_union {
     node_type type;
     const char *dst;
     union etree_union *src;
-    bfd_boolean defsym;
     bfd_boolean hidden;
   } assign;
   struct {
@@ -115,22 +114,33 @@ union lang_statement_union;
 enum phase_enum {
   /* We step through the first four states here as we see the
      associated linker script tokens.  */
-  exp_dataseg_none,
-  exp_dataseg_align_seen,
-  exp_dataseg_relro_seen,
-  exp_dataseg_end_seen,
+  exp_seg_none,
+  exp_seg_align_seen,
+  exp_seg_relro_seen,
+  exp_seg_end_seen,
   /* The last three states are final, and affect the value returned
-     by DATA_SEGMENT_ALIGN.  */
-  exp_dataseg_relro_adjust,
-  exp_dataseg_adjust,
-  exp_dataseg_done
+     by XXX_SEGMENT_ALIGN.  */
+  exp_seg_relro_adjust,
+  exp_seg_adjust,
+  exp_seg_done
 };
 
 enum relro_enum {
-  exp_dataseg_relro_none,
-  exp_dataseg_relro_start,
-  exp_dataseg_relro_end,
+  exp_seg_relro_none,
+  exp_seg_relro_start,
+  exp_seg_relro_end,
 };
+
+typedef struct {
+  enum phase_enum phase;
+
+  bfd_vma base, relro_offset, relro_end, end, pagesize, maxpagesize;
+
+  enum relro_enum relro;
+
+  union lang_statement_union *relro_start_stat;
+  union lang_statement_union *relro_end_stat;
+} seg_align_type;
 
 struct ldexp_control {
   /* Modify expression evaluation depending on this.  */
@@ -152,6 +162,11 @@ struct ldexp_control {
      does the false branch of a trinary expression.  */
   const char *assign_name;
 
+  /* If evaluating an assignment, the source if it is an expression
+     referencing single etree_name NAME, or a trinary expression where
+     the true branch references a single etree_name NAME.  */
+  struct bfd_link_hash_entry *assign_src;
+
   /* Working results.  */
   etree_value_type result;
   bfd_vma dot;
@@ -161,16 +176,7 @@ struct ldexp_control {
   asection *section;
 
   /* State machine and results for DATASEG.  */
-  struct {
-    enum phase_enum phase;
-
-    bfd_vma base, relro_offset, relro_end, end, pagesize, maxpagesize;
-
-    enum relro_enum relro;
-
-    union lang_statement_union *relro_start_stat;
-    union lang_statement_union *relro_end_stat;
-  } dataseg;
+  seg_align_type dataseg;
 };
 
 extern struct ldexp_control expld;
