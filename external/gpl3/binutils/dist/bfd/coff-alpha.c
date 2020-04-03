@@ -1,5 +1,5 @@
 /* BFD back-end for ALPHA Extended-Coff files.
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Modified from coff-mips.c by Steve Chamberlain <sac@cygnus.com> and
    Ian Lance Taylor <ian@cygnus.com>.
 
@@ -423,10 +423,10 @@ alpha_ecoff_object_p (bfd *abfd)
 	{
 	  bfd_size_type size;
 
-	  size = sec->line_filepos * 8;
+	  size = (bfd_size_type) sec->line_filepos * 8;
 	  BFD_ASSERT (size == sec->size
 		      || size + 8 == sec->size);
-	  if (! bfd_set_section_size (abfd, sec, size))
+	  if (!bfd_set_section_size (sec, size))
 	    return NULL;
 	}
     }
@@ -1239,7 +1239,7 @@ alpha_convert_external_reloc (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       /* Compute a new r_symndx value.  */
       hsec = h->root.u.def.section;
-      name = bfd_get_section_name (output_bfd, hsec->output_section);
+      name = bfd_section_name (hsec->output_section);
 
       r_symndx = (unsigned long) -1;
       switch (name[1])
@@ -1930,8 +1930,7 @@ alpha_relocate_section (bfd *output_bfd,
 		    if (r_extern)
 		      name = sym_hashes[r_symndx]->root.root.string;
 		    else
-		      name = bfd_section_name (input_bfd,
-					       symndx_to_section[r_symndx]);
+		      name = bfd_section_name (symndx_to_section[r_symndx]);
 		    (*info->callbacks->reloc_overflow)
 		      (info, NULL, name, alpha_howto_table[r_type].name,
 		       (bfd_vma) 0, input_bfd, input_section,
@@ -2029,7 +2028,10 @@ alpha_ecoff_read_ar_hdr (bfd *abfd)
       if (bfd_seek (abfd, (file_ptr) FILHSZ, SEEK_CUR) != 0
 	  || bfd_bread (ab, (bfd_size_type) 8, abfd) != 8
 	  || bfd_seek (abfd, (file_ptr) (- (FILHSZ + 8)), SEEK_CUR) != 0)
-	return NULL;
+	{
+	  free (ret);
+	  return NULL;
+	}
 
       ret->parsed_size = H_GET_64 (abfd, ab);
     }
@@ -2392,6 +2394,7 @@ static const struct ecoff_backend_data alpha_ecoff_backend_data =
 #define _bfd_ecoff_bfd_gc_sections bfd_generic_gc_sections
 #define _bfd_ecoff_bfd_merge_sections bfd_generic_merge_sections
 #define _bfd_ecoff_bfd_is_group_section bfd_generic_is_group_section
+#define _bfd_ecoff_bfd_group_name bfd_generic_group_name
 #define _bfd_ecoff_bfd_discard_group bfd_generic_discard_group
 #define _bfd_ecoff_section_already_linked \
   _bfd_coff_section_already_linked
