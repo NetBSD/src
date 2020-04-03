@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.135 2020/04/02 17:41:34 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.136 2020/04/03 06:13:07 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.135 2020/04/02 17:41:34 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.136 2020/04/03 06:13:07 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1319,7 +1319,7 @@ static void
 usage(void)
 {
 	if (strcmp(getprogname(), "ioctlprint") == 0) {
-		(void)fprintf(stderr, "Usage: %s [-f format] [-e emulation] <ioctl> ...\n",
+		(void)fprintf(stderr, "Usage: %s [-l] [-e emulation] [-f format] <ioctl> ...\n",
 		    getprogname());
 	} else {
 		(void)fprintf(stderr, "Usage: %s [-dElNnRT] [-e emulation] "
