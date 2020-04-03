@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.89 2019/11/06 07:29:08 mrg Exp $	*/
+/*	$NetBSD: savecore.c,v 1.90 2020/04/03 19:09:43 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.89 2019/11/06 07:29:08 mrg Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.90 2020/04/03 19:09:43 maxv Exp $");
 #endif
 #endif /* not lint */
 
@@ -275,6 +275,20 @@ main(int argc, char *argv[])
 }
 
 static void
+read_string(kvm_t *kd, u_long kva, char *buf, size_t size)
+{
+	size_t i;
+
+	for (i = 0; i < size - 1; i++) {
+		(void)kvm_read(kd, kva + i, buf + i, 1);
+		if (buf[i] == '\0')
+			return;
+	}
+
+	buf[size - 1] = '\0';
+}
+
+static void
 kmem_setup(int verbose)
 {
 	long l_dumplo;
@@ -331,9 +345,8 @@ kmem_setup(int verbose)
 		    (long long)dumplo, (long)(dumplo / DEV_BSIZE), (long)DEV_BSIZE);
 	KREAD_LOGWARN(kd_kern, current_nl[X_DUMPMAG].n_value, dumpmag, exit(1));
 
-	(void)kvm_read(kd_kern, current_nl[X_VERSION].n_value, vers,
+	read_string(kd_kern, current_nl[X_VERSION].n_value, vers,
 	    sizeof(vers));
-	vers[sizeof(vers) - 1] = '\0';
 
 	if (current_nl[X_DUMPCDEV].n_value != 0) {
 		KREAD_LOGWARN(kd_kern, current_nl[X_DUMPCDEV].n_value, dumpcdev,
@@ -395,9 +408,8 @@ check_kmem(void)
 	long panicloc, panicstart, panicend;
 	char core_vers[1024];
 
-	(void)kvm_read(kd_dump, dump_nl[X_VERSION].n_value, core_vers,
+	read_string(kd_dump, dump_nl[X_VERSION].n_value, core_vers,
 	    sizeof(core_vers));
-	core_vers[sizeof(core_vers) - 1] = '\0';
 
 	if (strcmp(vers, core_vers) != 0)
 		syslog(LOG_WARNING,
