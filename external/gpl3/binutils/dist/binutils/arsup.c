@@ -1,5 +1,5 @@
 /* arsup.c - Archive support for MRI compatibility
-   Copyright (C) 1992-2018 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -149,13 +149,20 @@ maybequit (void)
 void
 ar_open (char *name, int t)
 {
-  char *tname = (char *) xmalloc (strlen (name) + 10);
+  char *tname;
   const char *bname = lbasename (name);
   real_name = name;
 
   /* Prepend tmp- to the beginning, to avoid file-name clashes after
      truncation on filesystems with limited namespaces (DOS).  */
-  sprintf (tname, "%.*stmp-%s", (int) (bname - name), name, bname);
+  if (asprintf (&tname, "%.*stmp-%s", (int) (bname - name), name, bname) == -1)
+    {
+      fprintf (stderr, _("%s: Can't allocate memory for temp name (%s)\n"),
+	       program_name, strerror(errno));
+      maybequit ();
+      return;
+    }
+
   obfd = bfd_openw (tname, NULL);
 
   if (!obfd)

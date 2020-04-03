@@ -1,5 +1,5 @@
 /* alpha.h -- Header file for Alpha opcode table
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>,
    patterned after the PPC opcode table written by Ian Lance Taylor.
 

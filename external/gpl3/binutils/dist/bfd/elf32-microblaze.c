@@ -1,6 +1,6 @@
 /* Xilinx MicroBlaze-specific support for 32-bit ELF
 
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -252,7 +252,7 @@ static reloc_howto_type microblaze_elf_howto_raw[] =
 	  TRUE),		/* PC relative offset?  */
 
      /* A 64 bit TEXTPCREL relocation.  Table-entry not really used.  */
-   HOWTO (R_MICROBLAZE_TEXTPCREL_64,   	/* Type.  */
+   HOWTO (R_MICROBLAZE_TEXTPCREL_64,	/* Type.  */
 	  0,			/* Rightshift.  */
 	  2,			/* Size (0 = byte, 1 = short, 2 = long).  */
 	  16,			/* Bitsize.  */
@@ -260,11 +260,11 @@ static reloc_howto_type microblaze_elf_howto_raw[] =
 	  0,			/* Bitpos.  */
 	  complain_overflow_dont, /* Complain on overflow.  */
 	  bfd_elf_generic_reloc,	/* Special Function.  */
-	  "R_MICROBLAZE_TEXTPCREL_64", 	/* Name.  */
+	  "R_MICROBLAZE_TEXTPCREL_64",	/* Name.  */
 	  FALSE,		/* Partial Inplace.  */
 	  0,			/* Source Mask.  */
 	  0x0000ffff,		/* Dest Mask.  */
-	  TRUE), 		/* PC relative offset?  */
+	  TRUE),		/* PC relative offset?  */
 
    /* A 64 bit GOT relocation.  Table-entry not really used.  */
    HOWTO (R_MICROBLAZE_GOT_64,  /* Type.  */
@@ -294,7 +294,7 @@ static reloc_howto_type microblaze_elf_howto_raw[] =
 	  FALSE,		/* Partial Inplace.  */
 	  0,			/* Source Mask.  */
 	  0x0000ffff,		/* Dest Mask.  */
-	  FALSE), 		/* PC relative offset?  */
+	  FALSE),		/* PC relative offset?  */
 
    /* A 64 bit PLT relocation.  Table-entry not really used.  */
    HOWTO (R_MICROBLAZE_PLT_64,  /* Type.  */
@@ -1071,7 +1071,7 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 		/* Only relocate if the symbol is defined.  */
 		if (sec)
 		  {
-		    name = bfd_get_section_name (sec->owner, sec);
+		    name = bfd_section_name (sec);
 
 		    if (strcmp (name, ".sdata2") == 0
 			|| strcmp (name, ".sbss2") == 0)
@@ -1119,7 +1119,7 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 		/* Only relocate if the symbol is defined.  */
 		if (sec)
 		  {
-		    name = bfd_get_section_name (sec->owner, sec);
+		    name = bfd_section_name (sec);
 
 		    if (strcmp (name, ".sdata") == 0
 			|| strcmp (name, ".sbss") == 0)
@@ -1608,7 +1608,7 @@ microblaze_elf_relocate_section (bfd *output_bfd,
 	      name = (bfd_elf_string_from_elf_section
 		      (input_bfd, symtab_hdr->sh_link, sym->st_name));
 	      if (name == NULL || *name == '\0')
-		name = bfd_section_name (input_bfd, sec);
+		name = bfd_section_name (sec);
 	    }
 
 	  if (errmsg != NULL)
@@ -2766,7 +2766,7 @@ microblaze_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   s->size = BFD_ALIGN (s->size, (bfd_size_type) (1 << power_of_two));
   if (power_of_two > s->alignment_power)
     {
-      if (!bfd_set_section_alignment (s->owner, s, power_of_two))
+      if (!bfd_set_section_alignment (s, power_of_two))
 	return FALSE;
     }
 
@@ -3115,7 +3115,7 @@ microblaze_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       /* It's OK to base decisions on the section name, because none
 	 of the dynobj section names depend upon the input files.  */
-      name = bfd_get_section_name (dynobj, s);
+      name = bfd_section_name (s);
 
       if (strncmp (name, ".rela", 5) == 0)
 	{
@@ -3455,9 +3455,10 @@ microblaze_elf_finish_dynamic_sections (bfd *output_bfd,
 	  memset (splt->contents, 0, PLT_ENTRY_SIZE);
 	  bfd_put_32 (output_bfd, (bfd_vma) 0x80000000 /* nop.  */,
 		      splt->contents + splt->size - 4);
-	}
 
-      elf_section_data (splt->output_section)->this_hdr.sh_entsize = 4;
+	  if (splt->output_section != bfd_abs_section_ptr)
+	    elf_section_data (splt->output_section)->this_hdr.sh_entsize = 4;
+	}
     }
 
   /* Set the first entry in the global offset table to the address of
@@ -3500,7 +3501,7 @@ microblaze_elf_add_symbol_hook (bfd *abfd,
 	 put into .sbss.  */
       *secp = bfd_make_section_old_way (abfd, ".sbss");
       if (*secp == NULL
-	  || ! bfd_set_section_flags (abfd, *secp, SEC_IS_COMMON))
+	  || !bfd_set_section_flags (*secp, SEC_IS_COMMON))
 	return FALSE;
 
       *valp = sym->st_size;

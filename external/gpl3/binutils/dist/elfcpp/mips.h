@@ -1,6 +1,6 @@
 // mips.h -- ELF definitions specific to EM_MIPS  -*- C++ -*-
 
-// Copyright (C) 2012-2018 Free Software Foundation, Inc.
+// Copyright (C) 2012-2020 Free Software Foundation, Inc.
 // Written by Sasa Stankovic <sasa.stankovic@imgtec.com>
 //        and Aleksandar Simeonov <aleksandar.simeonov@rt-rk.com>.
 
@@ -235,7 +235,9 @@ enum
   E_MIPS_MACH_9000 = 0x00990000,
   E_MIPS_MACH_LS2E = 0x00A00000,
   E_MIPS_MACH_LS2F = 0x00A10000,
-  E_MIPS_MACH_LS3A = 0x00A20000,
+  E_MIPS_MACH_GS464 = 0x00A20000,
+  E_MIPS_MACH_GS464E = 0x00A30000,
+  E_MIPS_MACH_GS264E = 0x00A40000,
 };
 
 // MIPS architecture
@@ -308,7 +310,9 @@ enum
   // MICROMIPS ASE.
   AFL_ASE_MICROMIPS = 0x00000800,
   // XPA ASE.
-  AFL_ASE_XPA = 0x00001000
+  AFL_ASE_XPA = 0x00001000,
+  // Loongson EXT ASE.
+  AFL_ASE_LOONGSON_EXT = 0x00002000
 };
 
 // Values for the isa_ext word of an ABI flags structure.

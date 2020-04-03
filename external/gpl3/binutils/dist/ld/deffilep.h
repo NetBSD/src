@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -110,7 +110,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 113 "deffilep.y" /* yacc.c:1909  */
+#line 114 "deffilep.y" /* yacc.c:1910  */
 
   char *id;
   const char *id_const;
@@ -118,7 +118,7 @@ union YYSTYPE
   bfd_vma vma;
   char *digits;
 
-#line 122 "deffilep.h" /* yacc.c:1909  */
+#line 122 "deffilep.h" /* yacc.c:1910  */
 };
 
 typedef union YYSTYPE YYSTYPE;

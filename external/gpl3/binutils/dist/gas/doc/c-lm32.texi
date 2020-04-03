@@ -1,4 +1,4 @@
-@c Copyright (C) 2008-2018 Free Software Foundation, Inc.
+@c Copyright (C) 2008-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -27,39 +27,39 @@
 
 @table @code
 
-@cindex @code{-mmultiply-enabled} command line option, LM32
+@cindex @code{-mmultiply-enabled} command-line option, LM32
 @item -mmultiply-enabled
 Enable multiply instructions.
 
-@cindex @code{-mdivide-enabled} command line option, LM32
+@cindex @code{-mdivide-enabled} command-line option, LM32
 @item -mdivide-enabled
 Enable divide instructions.
 
-@cindex @code{-mbarrel-shift-enabled} command line option, LM32
+@cindex @code{-mbarrel-shift-enabled} command-line option, LM32
 @item -mbarrel-shift-enabled
 Enable barrel-shift instructions.
 
-@cindex @code{-msign-extend-enabled} command line option, LM32
+@cindex @code{-msign-extend-enabled} command-line option, LM32
 @item -msign-extend-enabled
 Enable sign extend instructions.
 
-@cindex @code{-muser-enabled} command line option, LM32
+@cindex @code{-muser-enabled} command-line option, LM32
 @item -muser-enabled
 Enable user defined instructions.
 
-@cindex @code{-micache-enabled} command line option, LM32
+@cindex @code{-micache-enabled} command-line option, LM32
 @item -micache-enabled
 Enable instruction cache related CSRs.
 
-@cindex @code{-mdcache-enabled} command line option, LM32
+@cindex @code{-mdcache-enabled} command-line option, LM32
 @item -mdcache-enabled
 Enable data cache related CSRs.
 
-@cindex @code{-mbreak-enabled} command line option, LM32
+@cindex @code{-mbreak-enabled} command-line option, LM32
 @item -mbreak-enabled
 Enable break instructions.
 
-@cindex @code{-mall-enabled} command line option, LM32
+@cindex @code{-mall-enabled} command-line option, LM32
 @item -mall-enabled
 Enable all instructions and CSRs.
 

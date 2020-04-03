@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -121,7 +121,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -289,7 +289,7 @@ cat <<EOF
   .init        ${RELOCATING-0} :
   {
     ${RELOCATING+${INIT_START}}
-    KEEP (*(.init))
+    KEEP (*(SORT_NONE(.init)))
     ${RELOCATING+${INIT_END}}
   } =${NOP-0}
 
@@ -300,7 +300,7 @@ cat <<EOF
     *(.text)
     ${RELOCATING+*(.text.*)}
     *(.stub)
-    /* .gnu.warning sections are handled specially by elf32.em.  */
+    /* .gnu.warning sections are handled specially by elf.em.  */
     *(.gnu.warning)
     ${RELOCATING+*(.gnu.linkonce.t.*)}
     ${RELOCATING+${OTHER_TEXT_SECTIONS}}
@@ -308,7 +308,7 @@ cat <<EOF
   .fini    ${RELOCATING-0} :
   {
     ${RELOCATING+${FINI_START}}
-    KEEP (*(.fini))
+    KEEP (*(SORT_NONE(.fini)))
     ${RELOCATING+${FINI_END}}
   } =${NOP-0}
   ${RELOCATING+PROVIDE (__etext = .);}
@@ -333,9 +333,9 @@ cat <<EOF
   {
     ${RELOCATING+PROVIDE (__eh_frame_begin = .);}
     *(.eh_frame)
-    LONG (0);
+    ${RELOCATING+LONG (0);}
     ${RELOCATING+PROVIDE (__eh_frame_end = .);}
-  } ${RELOCATING+}
+  }
   .gcc_except_table : { *(.gcc_except_table) }
   ${INITIAL_READONLY_SECTIONS}
   .hash        ${RELOCATING-0} : { *(.hash)		}
@@ -356,7 +356,7 @@ cat <<EOF
   .jcr : { KEEP (*(.jcr)) }
   ${DATA_PLT+${PLT}}
   ${RELOCATING+${OTHER_GOT_SYMBOLS}}
-  .got		${RELOCATING-0} : { *(.got.plt) *(.got) }
+  .got		${RELOCATING-0} : {${RELOCATING+ *(.got.plt)} *(.got) }
   ${RELOCATING+${OTHER_GOT_SECTIONS}}
   ${CREATE_SHLIB+${SDATA2}}
   ${CREATE_SHLIB+${SBSS2}}
@@ -379,26 +379,26 @@ cat <<EOF
   {
     ${RELOCATING+PROVIDE (__sbss_start = .);}
     ${RELOCATING+PROVIDE (___sbss_start = .);}
-    *(.dynsbss)
+    ${RELOCATING+*(.dynsbss)}
     *(.sbss)
     ${RELOCATING+*(.sbss.*)}
     ${RELOCATING+*(.gnu.linkonce.sb.*)}
-    *(.scommon)
+    ${RELOCATING+*(.scommon)}
     ${RELOCATING+PROVIDE (__sbss_end = .);}
     ${RELOCATING+PROVIDE (___sbss_end = .);}
   }
   ${BSS_PLT+${PLT}}
   .bss     ${RELOCATING-0} :
   {
-   *(.dynbss)
+   ${RELOCATING+*(.dynbss)}
    *(.bss)
    ${RELOCATING+*(.bss.*)}
    ${RELOCATING+*(.gnu.linkonce.b.*)}
-   *(COMMON)
+   ${RELOCATING+*(COMMON)
    /* Align here to ensure that the .bss section occupies space up to
       _end.  Align after .bss to ensure correct alignment even if the
       .bss section disappears because there are no input sections.  */
-   ${RELOCATING+. = ALIGN(${ALIGNMENT});}
+   . = ALIGN(${ALIGNMENT});}
   }
   ${RELOCATING+${OTHER_BSS_END_SYMBOLS}}
   ${RELOCATING+. = ALIGN(${ALIGNMENT});}

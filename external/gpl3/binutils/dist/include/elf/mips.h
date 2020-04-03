@@ -1,5 +1,5 @@
 /* MIPS ELF support for BFD.
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    By Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>, from
    information in the System V Application Binary Interface, MIPS
@@ -299,7 +299,9 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
 #define E_MIPS_MACH_9000	0x00990000
 #define E_MIPS_MACH_LS2E        0x00A00000
 #define E_MIPS_MACH_LS2F        0x00A10000
-#define E_MIPS_MACH_LS3A        0x00A20000
+#define E_MIPS_MACH_GS464       0x00A20000
+#define E_MIPS_MACH_GS464E	0x00A30000
+#define E_MIPS_MACH_GS264E	0x00A40000
 
 /* Processor specific section indices.  These sections do not actually
    exist.  Symbols with a st_shndx field corresponding to one of these
@@ -449,6 +451,9 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
 
 /* ABI related flags section.  */
 #define SHT_MIPS_ABIFLAGS	0x7000002a
+
+/* GNU style symbol hash table with xlat.  */
+#define SHT_MIPS_XHASH		0x7000002b
 
 /* A section of type SHT_MIPS_LIBLIST contains an array of the
    following structure.  The sh_link field is the section index of the
@@ -757,6 +762,9 @@ extern void bfd_mips_elf32_swap_reginfo_out
 
 /* Relative offset of run time loader map, used for debugging.  */
 #define DT_MIPS_RLD_MAP_REL    0x70000035
+
+/* Address of .MIPS.xhash section.  */
+#define DT_MIPS_XHASH	       0x70000036
 
 /* Flags which may appear in a DT_MIPS_FLAGS entry.  */
 
@@ -1238,14 +1246,17 @@ extern void bfd_mips_elf_swap_abiflags_v0_out
 #define AFL_ASE_CRC          0x00008000 /* CRC ASE.  */
 #define AFL_ASE_RESERVED1    0x00010000 /* Reserved by MIPS Tech for WIP.  */
 #define AFL_ASE_GINV         0x00020000 /* GINV ASE.  */
-#define AFL_ASE_MASK         0x0002ffff /* All ASEs.  */
+#define AFL_ASE_LOONGSON_MMI 0x00040000 /* Loongson MMI ASE.  */
+#define AFL_ASE_LOONGSON_CAM 0x00080000 /* Loongson CAM ASE.  */
+#define AFL_ASE_LOONGSON_EXT 0x00100000 /* Loongson EXT instructions.  */
+#define AFL_ASE_LOONGSON_EXT2 0x00200000 /* Loongson EXT2 instructions.  */
+#define AFL_ASE_MASK         0x003effff /* All ASEs.  */
 
 /* Values for the isa_ext word of an ABI flags structure.  */
 
 #define AFL_EXT_XLR           1  /* RMI Xlr instruction.  */
 #define AFL_EXT_OCTEON2       2  /* Cavium Networks Octeon2.  */
 #define AFL_EXT_OCTEONP       3  /* Cavium Networks OcteonP.  */
-#define AFL_EXT_LOONGSON_3A   4  /* Loongson 3A.  */
 #define AFL_EXT_OCTEON        5  /* Cavium Networks Octeon.  */
 #define AFL_EXT_5900          6  /* MIPS R5900 instruction.  */
 #define AFL_EXT_4650          7  /* MIPS R4650 instruction.  */

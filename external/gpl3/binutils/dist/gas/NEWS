@@ -1,5 +1,68 @@
 -*- text -*-
 
+Changes in 2.34:
+
+* Add support for Zilog eZ80 and Zilog Z180 CPUs.
+
+* Add support for z80-elf target.
+
+* Add support for relocation of each byte or word of multibyte value to Z80
+  targets (just use right shift to 0, 8, 16, or 24 bits or AND operation
+  with 0xff/0xffff mask): ld a, label >> 16 \ ld hl, label & 0xffff
+
+* Add SDCC support for Z80 targets.
+
+Changes in 2.33:
+
+* Add support for the Arm Scalable Vector Extension version 2 (SVE2)
+  instructions.
+
+* Add support for the Arm Transactional Memory Extension (TME)
+  instructions.
+
+* Add support for the Armv8.1-M Mainline and M-profile Vector Extension (MVE)
+  instructions.
+
+* For MIPS, Add -m[no-]fix-loongson3-llsc option to fix (or not) Loongson3
+  LLSC Errata.  Add a --enable-mips-fix-loongson3-llsc=[yes|no] configure
+  time option to set the default behavior. Set the default if the configure
+  option is not used to "no".
+
+* Add support for the Arm Cortex-A76AE, Cortex-A77 and Cortex-M35P
+  processors.
+
+* Add support for the AArch64 Cortex-A34, Cortex-A65, Cortex-A65AE,
+  Cortex-A76AE, and Cortex-A77 processors.
+
+* Add .float16 directive for both Arm and AArch64 to allow encoding of 16-bit
+  floating point literals.  Add .float16_format directive and
+  -mfp16-format=[ieee|alternative] option for Arm to control the format of the
+  encoding.
+
+* Add --gdwarf-cie-version command line flag.  This allows control over which
+  version of DWARF CIE the assembler creates.
+
+Changes in 2.32:
+
+* Add -mvexwig=[0|1] option to x86 assembler to control encoding of
+  VEX.W-ignored (WIG) VEX instructions.
+
+* Add -mx86-used-note=[yes|no] option to generate (or not) x86 GNU property
+  notes.  Add a --enable-x86-used-note configure time option to set the
+  default behavior.  Set the default if the configure option is not used
+  to "no".
+
+* Add support for the MIPS Loongson EXTensions R2 (EXT2) instructions.
+
+* Add support for the MIPS Loongson EXTensions (EXT) instructions.
+
+* Add support for the MIPS Loongson Content Address Memory (CAM) ASE.
+
+* Add support for the C-SKY processor series.
+
+* Add support for the MIPS Loongson MultiMedia extensions Instructions (MMI)
+  ASE.
+
 Changes in 2.31:
 
 * The ADR and ADRL pseudo-instructions supported by the ARM assembler
@@ -70,7 +133,7 @@ Changes in 2.27:
   assembler should generate common symbols with the STT_COMMON type by
   default.  Default to no.
 
-* New command line option --elf-stt-common= for ELF targets to control
+* New command-line option --elf-stt-common= for ELF targets to control
   whether to generate common symbols with the STT_COMMON type.
 
 * Add ability to set section flags and types via numeric values for ELF
@@ -80,10 +143,10 @@ Changes in 2.27:
   x86 assembler should generate relax relocations by default.  Default to
   yes, except for x86 Solaris targets older than Solaris 12.
 
-* New command line option -mrelax-relocations= for x86 target to control
+* New command-line option -mrelax-relocations= for x86 target to control
   whether to generate relax relocations.
 
-* New command line option -mfence-as-lock-add=yes for x86 target to encode
+* New command-line option -mfence-as-lock-add=yes for x86 target to encode
   lfence, mfence and sfence as "lock addl $0x0, (%[re]sp)".
 
 * Add assembly-time relaxation option for ARC cpus.
@@ -127,7 +190,7 @@ Changes in 2.25:
 * Replace support for openrisc and or32 with support for or1k.
 
 * Enhanced the ARM port to accept the assembler output from the CodeComposer
-  Studio tool.  Support is enabled via the new command line option -mccs.
+  Studio tool.  Support is enabled via the new command-line option -mccs.
 
 * Add support for the Andes NDS32.
 
@@ -135,7 +198,7 @@ Changes in 2.24:
 
 * Add support for the Texas Instruments MSP430X processor.
 
-* Add -gdwarf-sections command line option to enable per-code-section
+* Add -gdwarf-sections command-line option to enable per-code-section
   generation of DWARF .debug_line sections.
 
 * Add support for Altera Nios II.
@@ -182,7 +245,7 @@ Changes in 2.21:
 
 * Add support for the Renesas RX processor.
 
-* New command line option, --compress-debug-sections, which requests
+* New command-line option, --compress-debug-sections, which requests
   compression of DWARF debug information sections in the relocatable output
   file.  Compressed debug sections are supported by readelf, objdump, and
   gold, but not currently by Gnu ld.
@@ -219,23 +282,23 @@ Changes in 2.19:
 * New pseudo op .cfi_val_encoded_addr, to record constant addresses in unwind
   tables without runtime relocation.
 
-* New command line option, -h-tick-hex, for sh, m32c, and h8/300 targets, which
+* New command-line option, -h-tick-hex, for sh, m32c, and h8/300 targets, which
   adds compatibility with H'00 style hex constants.
 
-* New command line option, -msse-check=[none|error|warning], for x86
+* New command-line option, -msse-check=[none|error|warning], for x86
   targets.
 
-* New sub-option added to the assembler's -a command line switch to
+* New sub-option added to the assembler's -a command-line switch to
   generate a listing output.  The 'g' sub-option will insert into the listing
   various information about the assembly, such as assembler version, the
-  command line options used, and a time stamp.
+  command-line options used, and a time stamp.
 
-* New command line option -msse2avx for x86 target to encode SSE
+* New command-line option -msse2avx for x86 target to encode SSE
   instructions with VEX prefix.
 
 * Add Intel XSAVE, EPT, MOVBE, AES, PCLMUL, AVX/FMA support for x86 target.
 
-* New command line options, -march=CPU[,+EXTENSION...], -mtune=CPU,
+* New command-line options, -march=CPU[,+EXTENSION...], -mtune=CPU,
   -mmnemonic=[att|intel], -msyntax=[att|intel], -mindex-reg,
   -mnaked-reg and -mold-gcc, for x86 targets.
 
@@ -268,7 +331,7 @@ Changes in 2.17:
 * Add support for the "@<file>" syntax to the command line, so that extra
   switches can be read from <file>.
 
-* The SH target supports a new command line switch --enable-reg-prefix which,
+* The SH target supports a new command-line switch --enable-reg-prefix which,
   if enabled, will allow register names to be optionally prefixed with a $
   character.  This allows register names to be distinguished from label names.
 
@@ -289,15 +352,15 @@ Changes in 2.17:
   for the VAX target in order to be more compatible with the VAX MACRO
   assembler.
 
-* New command line option -mtune=[itanium1|itanium2] for IA64 targets.
+* New command-line option -mtune=[itanium1|itanium2] for IA64 targets.
 
 Changes in 2.16:
 
 * Redefinition of macros now results in an error.
 
-* New command line option -mhint.b=[ok|warning|error] for IA64 targets.
+* New command-line option -mhint.b=[ok|warning|error] for IA64 targets.
 
-* New command line option -munwind-check=[warning|error] for IA64
+* New command-line option -munwind-check=[warning|error] for IA64
   targets.
 
 * The IA64 port now uses automatic dependency violation removal as its default
@@ -307,7 +370,7 @@ Changes in 2.16:
 
 * Added support for generating unwind tables for ARM ELF targets.
 
-* Add a -g command line option to generate debug information in the target's
+* Add a -g command-line option to generate debug information in the target's
   preferred debug format.
 
 * Support for the crx-elf target added.
@@ -322,9 +385,9 @@ Changes in 2.16:
 * Support for ColdFire EMAC instructions added and Motorola syntax for MAC/EMAC
   instrucitons.
 
-* New command line option -mno-shared for MIPS ELF targets.
+* New command-line option -mno-shared for MIPS ELF targets.
 
-* New command line option --alternate and pseudo-ops .altmacro and .noaltmacro
+* New command-line option --alternate and pseudo-ops .altmacro and .noaltmacro
   added to enter (and leave) alternate macro syntax mode.
 
 Changes in 2.15:
@@ -418,7 +481,7 @@ Changes in 2.12:
   but still works for compatability.
 
 * The MIPS assembler no longer issues a warning by default when it
-  generates a nop instruction from a macro. The new command line option
+  generates a nop instruction from a macro. The new command-line option
   -n will turn on the warning.
 
 Changes in 2.11:
@@ -441,7 +504,7 @@ Changes in 2.11:
 
 * x86 gas has a new .arch pseudo op to specify the target CPU architecture.
 
-* x86 gas -q command line option quietens warnings about register size changes
+* x86 gas -q command-line option quietens warnings about register size changes
   due to suffix, indirect jmp/call without `*', stand-alone prefixes, and
   translating various deprecated floating point instructions.
 
@@ -746,7 +809,7 @@ Changes in 1.93.01:
   of new CPUs and formats, lots of bugs fixed.
 
 
-Copyright (C) 2012-2018 Free Software Foundation, Inc.
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

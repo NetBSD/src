@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -77,6 +77,8 @@ enum
   NASM_ATTR_SATURATION_EXT	= 0x0400000,
   NASM_ATTR_PCREL		= 0x0800000,
   NASM_ATTR_GPREL		= 0x1000000,
+  NASM_ATTR_DSP_ISAEXT		= 0x2000000,
+  NASM_ATTR_ZOL			= (1 << 26),
 
   /* Attributes for relocations.  */
   NASM_ATTR_HI20		= 0x10000000,
@@ -87,19 +89,22 @@ enum
   NASM_ATTR_RDREG		= 0x000100
 };
 
+/* We only support one core for now.  */
+#define NDS32_CORE_COUNT	1
+#define NDS32_MAIN_CORE		0
+
 enum
 {
-  /* This is a field (operand) of just a separator char.  */
-  SYN_FIELD = 0x100,
-
   /* This operand is used for input or output.  (define or use)  */
-  SYN_INPUT = 0x1000,
-  SYN_OUTPUT = 0x2000,
-  SYN_LOPT = 0x4000,
-  SYN_ROPT = 0x8000,
+  SYN_INPUT = 0x10000,
+  SYN_OUTPUT = 0x20000,
+  SYN_LOPT = 0x40000,
+  SYN_ROPT = 0x80000,
 
-  /* Hardware resources.  */
-  HW_GPR = 0,
+  /* Hardware resources:
+     Current set up allows up to 256 resources for each class
+     defined above.  */
+  HW_GPR = NDS32_MAIN_CORE << 8,
   HW_USR,
   HW_DXR,
   HW_SR,
@@ -128,10 +133,9 @@ enum
   HW_AEXT_ARIDX,
   HW_AEXT_ARIDX2,
   HW_AEXT_ARIDXI,
+  HW_AEXT_ARIDXI_MX,
   _HW_LAST,
-  /* TODO: Maybe we should add a new type to distinguish address and
-	   const int.  Only the former allows symbols and relocations.  */
-  HW_INT,
+  HW_INT = 0x1000,
   HW_UINT
 };
 
@@ -277,6 +281,9 @@ extern void nds32_asm_init (nds32_asm_desc_t *, int);
 #define SIMD(sub)	(OP6 (SIMD) | N32_SIMD_ ## sub)
 #define ALU1(sub)	(OP6 (ALU1) | N32_ALU1_ ## sub)
 #define ALU2(sub)	(OP6 (ALU2) | N32_ALU2_ ## sub)
+#define ALU2_1(sub)	(OP6 (ALU2) | N32_BIT (6) | N32_ALU2_ ## sub)
+#define ALU2_2(sub)	(OP6 (ALU2) | N32_BIT (7) | N32_ALU2_ ## sub)
+#define ALU2_3(sub)	(OP6 (ALU2) | N32_BIT (6) | N32_BIT (7) | N32_ALU2_ ## sub)
 #define MISC(sub)	(OP6 (MISC) | N32_MISC_ ## sub)
 #define MEM(sub)	(OP6 (MEM) | N32_MEM_ ## sub)
 #define FPU_RA_IMMBI(sub)	(OP6 (sub) | N32_BIT (12))

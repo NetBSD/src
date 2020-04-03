@@ -393,7 +393,7 @@
   (length 11)
   (mode INT)
   (encode (value pc) (sra SI (sub SI value (add SI pc 2)) 1))
-  (decode (value pc) (add SI (sll value 1) (add SI pc 2)))
+  (decode (value pc) (add SI (mul value 2) (add SI pc 2)))
 )
 (dnop rel12a "12 bit relative address" () h-uint f-rel12a)
 

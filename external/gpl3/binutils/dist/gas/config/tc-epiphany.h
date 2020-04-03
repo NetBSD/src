@@ -1,5 +1,5 @@
 /* tc-epiphany.h -- Header file for tc-epiphany.c.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by Embecosm on behalf of Adapteva, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -37,7 +37,6 @@
 /* We don't need to handle .word strangely.  */
 #define WORKING_DOT_WORD
 
-#define LITERAL_PREFIXDOLLAR_HEX
 #define LITERAL_PREFIXPERCENT_BIN
 #define DOUBLESLASH_LINE_COMMENTS
 

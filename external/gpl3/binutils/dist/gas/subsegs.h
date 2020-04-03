@@ -1,5 +1,5 @@
 /* subsegs.h -> subsegs.c
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -112,7 +112,7 @@ typedef struct segment_info_struct {
 
 
 #define seg_info(sec) \
-  ((segment_info_type *) bfd_get_section_userdata (stdoutput, sec))
+  ((segment_info_type *) bfd_section_userdata (sec))
 
 extern symbolS *section_symbol (segT);
 
