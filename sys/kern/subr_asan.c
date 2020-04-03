@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.19 2020/04/03 18:12:39 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.20 2020/04/03 18:44:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.19 2020/04/03 18:12:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.20 2020/04/03 18:44:50 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -505,6 +505,37 @@ kasan_strlen(const char *str)
 	}
 
 	return (s - str);
+}
+
+char *
+kasan_strcat(char *dst, const char *src)
+{
+	size_t ldst, lsrc;
+
+	ldst = __builtin_strlen(dst);
+	lsrc = __builtin_strlen(src);
+	kasan_shadow_check((unsigned long)dst, ldst + lsrc + 1, true,
+	    __RET_ADDR);
+	kasan_shadow_check((unsigned long)src, lsrc + 1, false,
+	    __RET_ADDR);
+
+	return __builtin_strcat(dst, src);
+}
+
+char *
+kasan_strchr(const char *s, int c)
+{
+	kasan_shadow_check((unsigned long)s, __builtin_strlen(s) + 1, false,
+	    __RET_ADDR);
+	return __builtin_strchr(s, c);
+}
+
+char *
+kasan_strrchr(const char *s, int c)
+{
+	kasan_shadow_check((unsigned long)s, __builtin_strlen(s) + 1, false,
+	    __RET_ADDR);
+	return __builtin_strrchr(s, c);
 }
 
 #undef kcopy
