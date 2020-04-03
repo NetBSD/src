@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctlprint.1,v 1.4 2020/04/02 17:41:34 christos Exp $
+.\" $NetBSD: ioctlprint.1,v 1.5 2020/04/03 06:12:48 wiz Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,12 +47,11 @@ to by one or more
 .Ar arg
 arguments.
 The argument can either be an
-.Xr ioctl
-symbolic name or the
-ioctl value.
+.Xr ioctl 2
+symbolic name or the ioctl value.
 .Pp
 The options are as follows:
-.Bl -tag -width Fl
+.Bl -tag -width 12n
 .It Fl e Ar emulation
 If an emulation of a process is unknown,
 interpret system call maps assuming the named emulation instead of
@@ -65,7 +64,7 @@ style format string that allows customization of
 output.
 .Pp
 The following conversion characters can be used:
-.Bl -tag -width xxxx
+.Bl -tag -width 9n
 .It \&%E
 Symbolic decoded ioctl string.
 .It \&%e
@@ -85,9 +84,9 @@ The default format is:
 "%n %e %x\\n"
 .Ed
 .It Fl l
-List all 
+List all known
 .Xr ioctl 2
-known.
+requests.
 .El
 .Sh SEE ALSO
 .Xr kdump 1 ,
