@@ -1,5 +1,5 @@
 /* sysdep.h -- handle host dependencies for binutils
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -159,8 +159,14 @@ size_t strnlen (const char *, size_t);
 # define gettext(Msgid) (Msgid)
 # define dgettext(Domainname, Msgid) (Msgid)
 # define dcgettext(Domainname, Msgid, Category) (Msgid)
-# define textdomain(Domainname) while (0) /* nothing */
-# define bindtextdomain(Domainname, Dirname) while (0) /* nothing */
+# define ngettext(Msgid1, Msgid2, n) \
+  (n == 1 ? Msgid1 : Msgid2)
+# define dngettext(Domainname, Msgid1, Msgid2, n) \
+  (n == 1 ? Msgid1 : Msgid2)
+# define dcngettext(Domainname, Msgid1, Msgid2, n, Category) \
+  (n == 1 ? Msgid1 : Msgid2)
+# define textdomain(Domainname) do {} while (0)
+# define bindtextdomain(Domainname, Dirname) do {} while (0)
 # define _(String) (String)
 # define N_(String) (String)
 #endif
@@ -185,6 +191,14 @@ size_t strnlen (const char *, size_t);
 #   define PATH_MAX 1024
 #  endif
 # endif
+#endif
+
+#if defined HAVE_LONG_LONG && SIZEOF_LONG_LONG > SIZEOF_LONG
+/* We can't use any bfd types here since readelf may define BFD64 and
+   objdump may not.  */
+#define HOST_WIDEST_INT	long long
+#else
+#define HOST_WIDEST_INT long
 #endif
 
 #endif /* _BIN_SYSDEP_H */

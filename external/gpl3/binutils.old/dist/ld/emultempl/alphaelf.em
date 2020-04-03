@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -126,10 +126,11 @@ PARSE_AND_LIST_LONGOPTS='
 PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("\
   --taso                      Load executable in the lower 31-bit addressable\n\
-                                virtual address range.\n\
-  --secureplt                 Force PLT in text segment.\n\
-  --no-secureplt              Force PLT in data segment.\n\
-"));
+                                virtual address range\n"));
+  fprintf (file, _("\
+  --secureplt                 Force PLT in text segment\n"));
+  fprintf (file, _("\
+  --no-secureplt              Force PLT in data segment\n"));
 '
 
 PARSE_AND_LIST_ARGS_CASES='

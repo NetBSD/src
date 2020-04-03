@@ -1,5 +1,5 @@
 /* Routines to link ECOFF debugging information.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -51,40 +51,40 @@ _bfd_ecoff_swap_tir_in (int bigend, const struct tir_ext *ext_copy,
   /* now the fun stuff...  */
   if (bigend)
     {
-      intern->fBitfield   = 0 != (ext->t_bits1[0] & TIR_BITS1_FBITFIELD_BIG);
-      intern->continued   = 0 != (ext->t_bits1[0] & TIR_BITS1_CONTINUED_BIG);
-      intern->bt          = (ext->t_bits1[0] & TIR_BITS1_BT_BIG)
-                          >>                   TIR_BITS1_BT_SH_BIG;
-      intern->tq4         = (ext->t_tq45[0] & TIR_BITS_TQ4_BIG)
+      intern->fBitfield	  = 0 != (ext->t_bits1[0] & TIR_BITS1_FBITFIELD_BIG);
+      intern->continued	  = 0 != (ext->t_bits1[0] & TIR_BITS1_CONTINUED_BIG);
+      intern->bt	  = (ext->t_bits1[0] & TIR_BITS1_BT_BIG)
+			  >>		       TIR_BITS1_BT_SH_BIG;
+      intern->tq4	  = (ext->t_tq45[0] & TIR_BITS_TQ4_BIG)
 			  >>		      TIR_BITS_TQ4_SH_BIG;
-      intern->tq5         = (ext->t_tq45[0] & TIR_BITS_TQ5_BIG)
+      intern->tq5	  = (ext->t_tq45[0] & TIR_BITS_TQ5_BIG)
 			  >>		      TIR_BITS_TQ5_SH_BIG;
-      intern->tq0         = (ext->t_tq01[0] & TIR_BITS_TQ0_BIG)
+      intern->tq0	  = (ext->t_tq01[0] & TIR_BITS_TQ0_BIG)
 			  >>		      TIR_BITS_TQ0_SH_BIG;
-      intern->tq1         = (ext->t_tq01[0] & TIR_BITS_TQ1_BIG)
+      intern->tq1	  = (ext->t_tq01[0] & TIR_BITS_TQ1_BIG)
 			  >>		      TIR_BITS_TQ1_SH_BIG;
-      intern->tq2         = (ext->t_tq23[0] & TIR_BITS_TQ2_BIG)
+      intern->tq2	  = (ext->t_tq23[0] & TIR_BITS_TQ2_BIG)
 			  >>		      TIR_BITS_TQ2_SH_BIG;
-      intern->tq3         = (ext->t_tq23[0] & TIR_BITS_TQ3_BIG)
+      intern->tq3	  = (ext->t_tq23[0] & TIR_BITS_TQ3_BIG)
 			  >>		      TIR_BITS_TQ3_SH_BIG;
     }
   else
     {
-      intern->fBitfield   = 0 != (ext->t_bits1[0] & TIR_BITS1_FBITFIELD_LITTLE);
-      intern->continued   = 0 != (ext->t_bits1[0] & TIR_BITS1_CONTINUED_LITTLE);
-      intern->bt          = (ext->t_bits1[0] & TIR_BITS1_BT_LITTLE)
+      intern->fBitfield	  = 0 != (ext->t_bits1[0] & TIR_BITS1_FBITFIELD_LITTLE);
+      intern->continued	  = 0 != (ext->t_bits1[0] & TIR_BITS1_CONTINUED_LITTLE);
+      intern->bt	  = (ext->t_bits1[0] & TIR_BITS1_BT_LITTLE)
 			  >>		    TIR_BITS1_BT_SH_LITTLE;
-      intern->tq4         = (ext->t_tq45[0] & TIR_BITS_TQ4_LITTLE)
+      intern->tq4	  = (ext->t_tq45[0] & TIR_BITS_TQ4_LITTLE)
 			  >>		    TIR_BITS_TQ4_SH_LITTLE;
-      intern->tq5         = (ext->t_tq45[0] & TIR_BITS_TQ5_LITTLE)
+      intern->tq5	  = (ext->t_tq45[0] & TIR_BITS_TQ5_LITTLE)
 			  >>		    TIR_BITS_TQ5_SH_LITTLE;
-      intern->tq0         = (ext->t_tq01[0] & TIR_BITS_TQ0_LITTLE)
+      intern->tq0	  = (ext->t_tq01[0] & TIR_BITS_TQ0_LITTLE)
 			  >>		    TIR_BITS_TQ0_SH_LITTLE;
-      intern->tq1         = (ext->t_tq01[0] & TIR_BITS_TQ1_LITTLE)
+      intern->tq1	  = (ext->t_tq01[0] & TIR_BITS_TQ1_LITTLE)
 			  >>		    TIR_BITS_TQ1_SH_LITTLE;
-      intern->tq2         = (ext->t_tq23[0] & TIR_BITS_TQ2_LITTLE)
+      intern->tq2	  = (ext->t_tq23[0] & TIR_BITS_TQ2_LITTLE)
 			  >>		    TIR_BITS_TQ2_SH_LITTLE;
-      intern->tq3         = (ext->t_tq23[0] & TIR_BITS_TQ3_LITTLE)
+      intern->tq3	  = (ext->t_tq23[0] & TIR_BITS_TQ3_LITTLE)
 			  >>		    TIR_BITS_TQ3_SH_LITTLE;
     }
 
@@ -170,9 +170,9 @@ _bfd_ecoff_swap_rndx_in (int bigend,
     {
       intern->rfd   = (ext->r_bits[0] << RNDX_BITS0_RFD_SH_LEFT_BIG)
 		  | ((ext->r_bits[1] & RNDX_BITS1_RFD_BIG)
-		    		    >> RNDX_BITS1_RFD_SH_BIG);
+				    >> RNDX_BITS1_RFD_SH_BIG);
       intern->index = ((ext->r_bits[1] & RNDX_BITS1_INDEX_BIG)
-		    		    << RNDX_BITS1_INDEX_SH_LEFT_BIG)
+				    << RNDX_BITS1_INDEX_SH_LEFT_BIG)
 		  | (ext->r_bits[2] << RNDX_BITS2_INDEX_SH_LEFT_BIG)
 		  | (ext->r_bits[3] << RNDX_BITS3_INDEX_SH_LEFT_BIG);
     }
@@ -180,9 +180,9 @@ _bfd_ecoff_swap_rndx_in (int bigend,
     {
       intern->rfd   = (ext->r_bits[0] << RNDX_BITS0_RFD_SH_LEFT_LITTLE)
 		  | ((ext->r_bits[1] & RNDX_BITS1_RFD_LITTLE)
-		    		    << RNDX_BITS1_RFD_SH_LEFT_LITTLE);
+				    << RNDX_BITS1_RFD_SH_LEFT_LITTLE);
       intern->index = ((ext->r_bits[1] & RNDX_BITS1_INDEX_LITTLE)
-		    		    >> RNDX_BITS1_INDEX_SH_LITTLE)
+				    >> RNDX_BITS1_INDEX_SH_LITTLE)
 		  | (ext->r_bits[2] << RNDX_BITS2_INDEX_SH_LEFT_LITTLE)
 		  | ((unsigned int) ext->r_bits[3]
 		     << RNDX_BITS3_INDEX_SH_LEFT_LITTLE);
@@ -898,7 +898,7 @@ bfd_ecoff_debug_accumulate (void * handle,
       if (! bfd_link_relocatable (info))
 	{
 
-	  /* When are are hashing strings, we lie about the number of
+	  /* When we are hashing strings, we lie about the number of
 	     strings attached to each FDR.  We need to set cbSs
 	     because some versions of dbx apparently use it to decide
 	     how much of the string table to read in.  */
@@ -1044,7 +1044,7 @@ ecoff_add_string (struct accumulate *ainfo,
   if (bfd_link_relocatable (info))
     {
       if (!add_memory_shuffle (ainfo, &ainfo->ss, &ainfo->ss_end,
-                               (bfd_byte *) string, len + 1))
+			       (bfd_byte *) string, len + 1))
 	return -1;
       ret = symhdr->issMax;
       symhdr->issMax += len + 1;
@@ -1897,11 +1897,11 @@ lookup_line (bfd *abfd,
      (output format has been edited for our purposes):
 
      FDR [2]: (main.C): First instruction: 0x12000207c <x>
-       PDR [5] for File [2]: LoopTest__Xv                 <0x1200020a0> (a)
-       PDR [7] for File [2]: foo__Xv                      <0x120002168>
-     FDR [1]: (-1):     First instruction: 0x1200020e8 <y>
-       PDR [3] for File [1]:                              <0x120001ad0> (b)
-     FDR [6]: (-1):     First instruction: 0x1200026f0 <z>
+       PDR [5] for File [2]: LoopTest__Xv		  <0x1200020a0> (a)
+       PDR [7] for File [2]: foo__Xv			  <0x120002168>
+     FDR [1]: (-1):	First instruction: 0x1200020e8 <y>
+       PDR [3] for File [1]:				  <0x120001ad0> (b)
+     FDR [6]: (-1):	First instruction: 0x1200026f0 <z>
 
      (a) In the case of PDR5, the vma is such that the first few instructions
      of the procedure can be found.  But since the size of this procedure is
@@ -1987,60 +1987,60 @@ lookup_line (bfd *abfd,
       unsigned char *line_end;
       int lineno;
       /* This file uses ECOFF debugging information.  Each FDR has a
-         list of procedure descriptors (PDR).  The address in the FDR
-         is the absolute address of the first procedure.  The address
-         in the first PDR gives the offset of that procedure relative
-         to the object file's base-address.  The addresses in
-         subsequent PDRs specify each procedure's address relative to
-         the object file's base-address.  To make things more juicy,
-         whenever the PROF bit in the PDR is set, the real entry point
-         of the procedure may be 16 bytes below what would normally be
-         the procedure's entry point.  Instead, DEC came up with a
-         wicked scheme to create profiled libraries "on the fly":
-         instead of shipping a regular and a profiled version of each
-         library, they insert 16 bytes of unused space in front of
-         each procedure and set the "prof" bit in the PDR to indicate
-         that there is a gap there (this is done automagically by "as"
-         when option "-pg" is specified).  Thus, normally, you link
-         against such a library and, except for lots of 16 byte gaps
-         between functions, things will behave as usual.  However,
-         when invoking "ld" with option "-pg", it will fill those gaps
-         with code that calls mcount().  It then moves the function's
-         entry point down by 16 bytes, and out pops a binary that has
-         all functions profiled.
+	 list of procedure descriptors (PDR).  The address in the FDR
+	 is the absolute address of the first procedure.  The address
+	 in the first PDR gives the offset of that procedure relative
+	 to the object file's base-address.  The addresses in
+	 subsequent PDRs specify each procedure's address relative to
+	 the object file's base-address.  To make things more juicy,
+	 whenever the PROF bit in the PDR is set, the real entry point
+	 of the procedure may be 16 bytes below what would normally be
+	 the procedure's entry point.  Instead, DEC came up with a
+	 wicked scheme to create profiled libraries "on the fly":
+	 instead of shipping a regular and a profiled version of each
+	 library, they insert 16 bytes of unused space in front of
+	 each procedure and set the "prof" bit in the PDR to indicate
+	 that there is a gap there (this is done automagically by "as"
+	 when option "-pg" is specified).  Thus, normally, you link
+	 against such a library and, except for lots of 16 byte gaps
+	 between functions, things will behave as usual.  However,
+	 when invoking "ld" with option "-pg", it will fill those gaps
+	 with code that calls mcount().  It then moves the function's
+	 entry point down by 16 bytes, and out pops a binary that has
+	 all functions profiled.
 
-         NOTE: Neither FDRs nor PDRs are strictly sorted in memory
-               order.  For example, when including header-files that
-               define functions, the FDRs follow behind the including
-               file, even though their code may have been generated at
-               a lower address.  File coff-alpha.c from libbfd
-               illustrates this (use "odump -PFv" to look at a file's
-               FDR/PDR).  Similarly, PDRs are sometimes out of order
-               as well.  An example of this is OSF/1 v3.0 libc's
-               malloc.c.  I'm not sure why this happens, but it could
-               be due to optimizations that reorder a function's
-               position within an object-file.
+	 NOTE: Neither FDRs nor PDRs are strictly sorted in memory
+	       order.  For example, when including header-files that
+	       define functions, the FDRs follow behind the including
+	       file, even though their code may have been generated at
+	       a lower address.  File coff-alpha.c from libbfd
+	       illustrates this (use "odump -PFv" to look at a file's
+	       FDR/PDR).  Similarly, PDRs are sometimes out of order
+	       as well.  An example of this is OSF/1 v3.0 libc's
+	       malloc.c.  I'm not sure why this happens, but it could
+	       be due to optimizations that reorder a function's
+	       position within an object-file.
 
-         Strategy:
+	 Strategy:
 
-         On the first call to this function, we build a table of FDRs
-         that is sorted by the base-address of the object-file the FDR
-         is referring to.  Notice that each object-file may contain
-         code from multiple source files (e.g., due to code defined in
-         include files).  Thus, for any given base-address, there may
-         be multiple FDRs (but this case is, fortunately, uncommon).
-         lookup(addr) guarantees to return the first FDR that applies
-         to address ADDR.  Thus, after invoking lookup(), we have a
-         list of FDRs that may contain the PDR for ADDR.  Next, we
-         walk through the PDRs of these FDRs and locate the one that
-         is closest to ADDR (i.e., for which the difference between
-         ADDR and the PDR's entry point is positive and minimal).
-         Once, the right FDR and PDR are located, we simply walk
-         through the line-number table to lookup the line-number that
-         best matches ADDR.  Obviously, things could be sped up by
-         keeping a sorted list of PDRs instead of a sorted list of
-         FDRs.  However, this would increase space requirements
-         considerably, which is undesirable.  */
+	 On the first call to this function, we build a table of FDRs
+	 that is sorted by the base-address of the object-file the FDR
+	 is referring to.  Notice that each object-file may contain
+	 code from multiple source files (e.g., due to code defined in
+	 include files).  Thus, for any given base-address, there may
+	 be multiple FDRs (but this case is, fortunately, uncommon).
+	 lookup(addr) guarantees to return the first FDR that applies
+	 to address ADDR.  Thus, after invoking lookup(), we have a
+	 list of FDRs that may contain the PDR for ADDR.  Next, we
+	 walk through the PDRs of these FDRs and locate the one that
+	 is closest to ADDR (i.e., for which the difference between
+	 ADDR and the PDR's entry point is positive and minimal).
+	 Once, the right FDR and PDR are located, we simply walk
+	 through the line-number table to lookup the line-number that
+	 best matches ADDR.  Obviously, things could be sped up by
+	 keeping a sorted list of PDRs instead of a sorted list of
+	 FDRs.  However, this would increase space requirements
+	 considerably, which is undesirable.  */
       external_pdr_size = debug_swap->external_pdr_size;
 
       /* eraxxon: The Horrible Hack: Because of the problems above, set 'i'
@@ -2053,13 +2053,13 @@ lookup_line (bfd *abfd,
       i = 0;
 
       /* Search FDR list starting at tab[i] for the PDR that best matches
-         OFFSET.  Normally, the FDR list is only one entry long.  */
+	 OFFSET.  Normally, the FDR list is only one entry long.  */
       best_fdr = NULL;
       do
 	{
 	  /* eraxxon: 'dist' and 'min_dist' can be negative now
-             because we iterate over every FDR rather than just ones
-             with a base address less than or equal to 'offset'.  */
+	     because we iterate over every FDR rather than just ones
+	     with a base address less than or equal to 'offset'.  */
 	  bfd_signed_vma dist = -1, min_dist = -1;
 	  char *pdr_hold;
 	  char *pdr_end;
@@ -2085,7 +2085,7 @@ lookup_line (bfd *abfd,
 		  dist = offset - (pdr.adr - 0x10 * pdr.prof);
 
 		  /* eraxxon: 'dist' can be negative now.  Note that
-                     'min_dist' can be negative if 'pdr_hold' below is NULL.  */
+		     'min_dist' can be negative if 'pdr_hold' below is NULL.  */
 		  if (!pdr_hold || (dist >= 0 && dist < min_dist))
 		    {
 		      min_dist = dist;
@@ -2114,9 +2114,9 @@ lookup_line (bfd *abfd,
       pdr_ptr = best_pdr;
       (*debug_swap->swap_pdr_in) (abfd, pdr_ptr, &pdr);
       /* Now we can look for the actual line number.  The line numbers
-         are stored in a very funky format, which I won't try to
-         describe.  The search is bounded by the end of the FDRs line
-         number entries.  */
+	 are stored in a very funky format, which I won't try to
+	 describe.  The search is bounded by the end of the FDRs line
+	 number entries.  */
       line_end = debug_info->line + fdr_ptr->cbLineOffset + fdr_ptr->cbLine;
 
       /* Make offset relative to procedure entry.  */
@@ -2150,7 +2150,7 @@ lookup_line (bfd *abfd,
 	}
 
       /* If fdr_ptr->rss is -1, then this file does not have full
-         symbols, at least according to gdb/mipsread.c.  */
+	 symbols, at least according to gdb/mipsread.c.  */
       if (fdr_ptr->rss == -1)
 	{
 	  line_info->cache.filename = NULL;
@@ -2252,7 +2252,7 @@ lookup_line (bfd *abfd,
 		    debug_info->ss + fdr_ptr->issBase + sym.iss;
 
 		  /* Check the next symbol to see if it is also an
-                     N_SO symbol.  */
+		     N_SO symbol.  */
 		  if (sym_ptr + external_sym_size < sym_ptr_end)
 		    {
 		      SYMR nextsym;
@@ -2263,7 +2263,7 @@ lookup_line (bfd *abfd,
 		      if (ECOFF_IS_STAB (&nextsym)
 			  && ECOFF_UNMARK_STAB (nextsym.index) == N_SO)
 			{
- 			  directory_name = current_file_name;
+			  directory_name = current_file_name;
 			  main_file_name = current_file_name =
 			    debug_info->ss + fdr_ptr->issBase + nextsym.iss;
 			  sym_ptr += external_sym_size;
@@ -2305,8 +2305,8 @@ lookup_line (bfd *abfd,
 	main_file_name = line_file_name;
 
       /* We need to remove the stuff after the colon in the function
-         name.  We also need to put the directory name and the file
-         name together.  */
+	 name.  We also need to put the directory name and the file
+	 name together.  */
       if (function_name == NULL)
 	len = funclen = 0;
       else

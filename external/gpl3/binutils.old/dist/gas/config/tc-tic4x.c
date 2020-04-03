@@ -1,5 +1,5 @@
 /* tc-tic4x.c -- Assemble for the Texas Instruments TMS320C[34]x.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2018 Free Software Foundation, Inc.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -223,7 +223,7 @@ const char FLT_CHARS[] = "fFilsS";
 extern FLONUM_TYPE generic_floating_point_number;
 
 /* Precision in LittleNums.  */
-#define MAX_PRECISION (4)       /* Its a bit overkill for us, but the code
+#define MAX_PRECISION (4)       /* It's a bit overkill for us, but the code
                                    requires it... */
 #define S_PRECISION (1)		/* Short float constants 16-bit.  */
 #define F_PRECISION (2)		/* Float and double types 32-bit.  */
@@ -903,7 +903,7 @@ tic4x_stringer (int append_zero)
               as_bad (_("Non-constant symbols not allowed\n"));
               return;
             }
-          exp.X_add_number &= 255; /* Limit numeber to 8-bit */
+          exp.X_add_number &= 255; /* Limit number to 8-bit */
 	  emit_expr (&exp, 1);
           bytes++;
 	}
@@ -1553,10 +1553,10 @@ tic4x_operand_parse (char *s, tic4x_operand_t *operand)
       /* Allow ori ^foo, ar0 to be equivalent to ldi .hi.foo, ar0  */
       /* WARNING : The TI C40 assembler cannot do this.  */
       else if (exp->X_op == O_symbol)
-	{
-	  operand->mode = M_HI;
-	  break;
-	}
+	operand->mode = M_HI;
+      else
+	as_bad (_("Expecting a constant value"));
+      break;
 
     case '#':
       input_line_pointer = tic4x_expression (++input_line_pointer, exp);
@@ -1576,14 +1576,11 @@ tic4x_operand_parse (char *s, tic4x_operand_t *operand)
       /* Allow ori foo, ar0 to be equivalent to ldi .lo.foo, ar0  */
       /* WARNING : The TI C40 assembler cannot do this.  */
       else if (exp->X_op == O_symbol)
-	{
-	  operand->mode = M_IMMED;
-	  break;
-	}
-
+	operand->mode = M_IMMED;
       else
 	as_bad (_("Expecting a constant value"));
       break;
+
     case '\\':
 #endif
     case '@':
@@ -2356,7 +2353,7 @@ tic4x_insn_check (tic4x_insn_t *tinsn)
       if (tinsn->operands[1].mode == M_REGISTER
 	  && tinsn->operands[tinsn->num_operands-1].mode == M_REGISTER
 	  && tinsn->operands[1].expr.X_add_number == tinsn->operands[tinsn->num_operands-1].expr.X_add_number )
-        as_warn (_("Equal parallell destination registers, one result will be discarded"));
+        as_warn (_("Equal parallel destination registers, one result will be discarded"));
     }
 }
 
@@ -2641,9 +2638,11 @@ md_apply_fix (fixS *fixP, valueT *value, segT seg ATTRIBUTE_UNUSED)
     {
     case BFD_RELOC_32:
       buf[3] = val >> 24;
+      /* Fall through.  */
     case BFD_RELOC_24:
     case BFD_RELOC_24_PCREL:
       buf[2] = val >> 16;
+      /* Fall through.  */
     case BFD_RELOC_16:
     case BFD_RELOC_16_PCREL:
     case BFD_RELOC_LO16:
@@ -2721,24 +2720,28 @@ md_parse_option (int c, const char *arg)
 
     case 'b':
       as_warn (_("Option -b is depreciated, please use -mbig"));
+      /* Fall through.  */
     case OPTION_BIG:             /* big model */
       tic4x_big_model = 1;
       break;
 
     case 'p':
       as_warn (_("Option -p is depreciated, please use -mmemparm"));
+      /* Fall through.  */
     case OPTION_MEMPARM:         /* push args */
       tic4x_reg_args = 0;
       break;
 
     case 'r':
       as_warn (_("Option -r is depreciated, please use -mregparm"));
+      /* Fall through.  */
     case OPTION_REGPARM:        /* register args */
       tic4x_reg_args = 1;
       break;
 
     case 's':
       as_warn (_("Option -s is depreciated, please use -msmall"));
+      /* Fall through.  */
     case OPTION_SMALL:		/* small model */
       tic4x_big_model = 0;
       break;

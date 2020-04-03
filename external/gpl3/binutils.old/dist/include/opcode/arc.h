@@ -1,5 +1,5 @@
 /* Opcode table for the ARC.
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -33,92 +33,131 @@ extern "C" {
 #endif
 
 #ifndef MAX_INSN_FLGS
-#define MAX_INSN_FLGS	     3
+#define MAX_INSN_FLGS	     4
 #endif
 
 /* Instruction Class.  */
 typedef enum
-  {
-    ACL,
-    ARITH,
-    AUXREG,
-    BITOP,
-    BRANCH,
-    CONTROL,
-    DPI,
-    DSP,
-    FLOAT,
-    INVALID,
-    JUMP,
-    KERNEL,
-    LOGICAL,
-    MEMORY,
-    NET,
-  } insn_class_t;
+{
+  ACL,
+  ARITH,
+  AUXREG,
+  BBIT0,
+  BBIT1,
+  BI,
+  BIH,
+  BITOP,
+  BITSTREAM,
+  BMU,
+  BRANCH,
+  BRCC,
+  CONTROL,
+  DIVREM,
+  DMA,
+  DPI,
+  DSP,
+  EI,
+  ENTER,
+  FLOAT,
+  INVALID,
+  JLI,
+  JUMP,
+  KERNEL,
+  LEAVE,
+  LOAD,
+  LOGICAL,
+  LOOP,
+  MEMORY,
+  MISC,
+  MOVE,
+  MPY,
+  NET,
+  PROTOCOL_DECODE,
+  PMU,
+  POP,
+  PUSH,
+  SJLI,
+  STORE,
+  SUB,
+  ULTRAIP,
+  XY
+} insn_class_t;
 
 /* Instruction Subclass.  */
 typedef enum
-  {
-    NONE,
-    CVT,
-    BTSCN,
-    CD1,
-    CD2,
-    COND,
-    DIV,
-    DP,
-    DPA,
-    DPX,
-    MPY1E,
-    MPY6E,
-    MPY7E,
-    MPY8E,
-    MPY9E,
-    NPS400,
-    QUARKSE,
-    SHFT1,
-    SHFT2,
-    SWAP,
-    SP,
-    SPX
-  } insn_subclass_t;
+{
+  NONE     = 0,
+  CVT      = (1U << 1),
+  BTSCN    = (1U << 2),
+  CD       = (1U << 3),
+  CD1      = CD,
+  CD2      = CD,
+  COND     = (1U << 4),
+  DIV      = (1U << 5),
+  DP       = (1U << 6),
+  DPA      = (1U << 7),
+  DPX      = (1U << 8),
+  LL64     = (1U << 9),
+  MPY1E    = (1U << 10),
+  MPY6E    = (1U << 11),
+  MPY7E    = (1U << 12),
+  MPY8E    = (1U << 13),
+  MPY9E    = (1U << 14),
+  NPS400   = (1U << 15),
+  QUARKSE1 = (1U << 16),
+  QUARKSE2 = (1U << 17),
+  SHFT1    = (1U << 18),
+  SHFT2    = (1U << 19),
+  SWAP     = (1U << 20),
+  SP       = (1U << 21),
+  SPX      = (1U << 22)
+} insn_subclass_t;
 
 /* Flags class.  */
 typedef enum
-  {
-    F_CLASS_NONE = 0,
+{
+  F_CLASS_NONE = 0,
 
-    /* At most one flag from the set of flags can appear in the
-       instruction.  */
-    F_CLASS_OPTIONAL = (1 << 0),
+  /* At most one flag from the set of flags can appear in the
+     instruction.  */
+  F_CLASS_OPTIONAL = (1 << 0),
 
-    /* Exactly one from from the set of flags must appear in the
-       instruction.  */
-    F_CLASS_REQUIRED = (1 << 1),
+  /* Exactly one from from the set of flags must appear in the
+     instruction.  */
+  F_CLASS_REQUIRED = (1 << 1),
 
-    /* The conditional code can be extended over the standard variants
-       via .extCondCode pseudo-op.  */
-    F_CLASS_EXTEND = (1 << 2),
+  /* The conditional code can be extended over the standard variants
+     via .extCondCode pseudo-op.  */
+  F_CLASS_EXTEND = (1 << 2),
 
-    /* Condition code flag.  */
-    F_CLASS_COND = (1 << 3)
-  } flag_class_t;
+  /* Condition code flag.  */
+  F_CLASS_COND = (1 << 3),
+
+  /* Write back mode.  */
+  F_CLASS_WB = (1 << 4),
+
+  /* Data size.  */
+  F_CLASS_ZZ = (1 << 5),
+
+  /* Implicit flag.  */
+  F_CLASS_IMPLICIT = (1 << 6)
+} flag_class_t;
 
 /* The opcode table is an array of struct arc_opcode.  */
 struct arc_opcode
 {
   /* The opcode name.  */
-  const char *name;
+  const char * name;
 
   /* The opcode itself.  Those bits which will be filled in with
      operands are zeroes.  */
-  unsigned opcode;
+  unsigned long long opcode;
 
   /* The opcode mask.  This is used by the disassembler.  This is a
      mask containing ones indicating those bits which must match the
      opcode field, and zeroes indicating those bits which need not
      match (and are presumably filled in by operands).  */
-  unsigned mask;
+  unsigned long long mask;
 
   /* One bit flags for the opcode.  These are primarily used to
      indicate specific processors and environments support the
@@ -142,34 +181,13 @@ struct arc_opcode
   unsigned char flags[MAX_INSN_FLGS + 1];
 };
 
-/* Structure used to describe 48 and 64 bit instructions.  */
-struct arc_long_opcode
-{
-  /* The base instruction is either 16 or 32 bits, and is described like a
-     normal instruction.  */
-  struct arc_opcode base_opcode;
-
-  /* The template value for the 32-bit LIMM extension.  Used by the
-     assembler and disassembler in the same way as the 'opcode' field of
-     'struct arc_opcode'.  */
-  unsigned limm_template;
-
-  /* The mask value for the 32-bit LIMM extension.  Used by the
-     disassembler just like the 'mask' field in 'struct arc_opcode'.  */
-  unsigned limm_mask;
-
-  /* Array of operand codes similar to the 'operands' array in 'struct
-     arc_opcode'.  These operands are used to fill in the LIMM value.  */
-  unsigned char operands[MAX_INSN_ARGS + 1];
-};
-
-extern const struct arc_long_opcode arc_long_opcodes[];
-extern const unsigned arc_num_long_opcodes;
-
 /* The table itself is sorted by major opcode number, and is otherwise
    in the order in which the disassembler should consider
    instructions.  */
 extern const struct arc_opcode arc_opcodes[];
+
+/* Return length of an instruction represented by OPCODE, in bytes.  */
+extern int arc_opcode_len (const struct arc_opcode *opcode);
 
 /* CPU Availability.  */
 #define ARC_OPCODE_NONE     0x0000
@@ -182,50 +200,8 @@ extern const struct arc_opcode arc_opcodes[];
 #define ARC_OPCODE_ARCALL  (ARC_OPCODE_ARC600 | ARC_OPCODE_ARC700	\
 			    | ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS)
 #define ARC_OPCODE_ARCFPX  (ARC_OPCODE_ARC700 | ARC_OPCODE_ARCv2EM)
-
-/* CPU extensions.  */
-#define ARC_EA       0x0001
-#define ARC_CD       0x0001    /* Mutual exclusive with EA.  */
-#define ARC_LLOCK    0x0002
-#define ARC_ATOMIC   0x0002    /* Mutual exclusive with LLOCK.  */
-#define ARC_MPY      0x0004
-#define ARC_MULT     0x0004
-#define ARC_NPS400   0x0008
-
-/* Floating point support.  */
-#define ARC_DPFP     0x0010
-#define ARC_SPFP     0x0020
-#define ARC_FPU      0x0030
-#define ARC_FPUDA    0x0040
-
-/* NORM & SWAP.  */
-#define ARC_SWAP     0x0100
-#define ARC_NORM     0x0200
-#define ARC_BSCAN    0x0200
-
-/* A7 specific.  */
-#define ARC_UIX      0x1000
-#define ARC_TSTAMP   0x1000
-
-/* A6 specific.  */
-#define ARC_VBFDW    0x1000
-#define ARC_BARREL   0x1000
-#define ARC_DSPA     0x1000
-
-/* EM specific.  */
-#define ARC_SHIFT    0x1000
-
-/* V2 specific.  */
-#define ARC_INTR     0x1000
-#define ARC_DIV      0x1000
-
-/* V1 specific.  */
-#define ARC_XMAC     0x1000
-#define ARC_CRC      0x1000
-
-/* A macro to check for short instructions.  */
-#define ARC_SHORT(mask)				\
-  (((mask) & 0xFFFF0000) ? 0 : 1)
+#define ARC_OPCODE_ARCV2   (ARC_OPCODE_ARCv2EM | ARC_OPCODE_ARCv2HS)
+#define ARC_OPCODE_ARCMPY6E  (ARC_OPCODE_ARC700 | ARC_OPCODE_ARCV2)
 
 /* The operands table is an array of struct arc_operand.  */
 struct arc_operand
@@ -258,7 +234,9 @@ struct arc_operand
      string (the operand will be inserted in any case).	 If the
      operand value is legal, *ERRMSG will be unchanged (most operands
      can accept any value).  */
-  unsigned (*insert) (unsigned instruction, int op, const char **errmsg);
+  unsigned long long (*insert) (unsigned long long instruction,
+                                long long int op,
+                                const char **errmsg);
 
   /* Extraction function.  This is used by the disassembler.  To
      extract this operand type from an instruction, check this field.
@@ -277,7 +255,8 @@ struct arc_operand
      TRUE if this operand type can not actually be extracted from
      this operand (i.e., the instruction does not match).  If the
      operand is valid, *INVALID will not be changed.  */
-  int (*extract) (unsigned instruction, bfd_boolean *invalid);
+  long long int (*extract) (unsigned long long instruction,
+                            bfd_boolean *invalid);
 };
 
 /* Elements in the table are retrieved by indexing with values from
@@ -336,17 +315,30 @@ extern const unsigned arc_NToperand;
 /* Mark the braket possition.  */
 #define ARC_OPERAND_BRAKET      0x1000
 
+/* Address type operand for NPS400.  */
+#define ARC_OPERAND_ADDRTYPE    0x2000
+
+/* Mark the colon position.  */
+#define ARC_OPERAND_COLON       0x4000
+
 /* Mask for selecting the type for typecheck purposes.  */
-#define ARC_OPERAND_TYPECHECK_MASK		\
-  (ARC_OPERAND_IR |				\
-   ARC_OPERAND_LIMM | ARC_OPERAND_SIGNED | 	\
-   ARC_OPERAND_UNSIGNED | ARC_OPERAND_BRAKET)
+#define ARC_OPERAND_TYPECHECK_MASK		 \
+  (ARC_OPERAND_IR				 \
+   | ARC_OPERAND_LIMM     | ARC_OPERAND_SIGNED	 \
+   | ARC_OPERAND_UNSIGNED | ARC_OPERAND_BRAKET   \
+   | ARC_OPERAND_ADDRTYPE | ARC_OPERAND_COLON)
+
+/* Macro to determine if an operand is a fake operand.  */
+#define ARC_OPERAND_IS_FAKE(op)                     \
+  ((operand->flags & ARC_OPERAND_FAKE)              \
+   && !((operand->flags & ARC_OPERAND_BRAKET)	    \
+	|| (operand->flags & ARC_OPERAND_COLON)))
 
 /* The flags structure.  */
 struct arc_flag_operand
 {
   /* The flag name.  */
-  const char *name;
+  const char * name;
 
   /* The flag code.  */
   unsigned code;
@@ -428,13 +420,13 @@ struct arc_operand_operation
 struct arc_pseudo_insn
 {
   /* Mnemonic for pseudo/alias insn.  */
-  const char *mnemonic_p;
+  const char * mnemonic_p;
 
   /* Mnemonic for real instruction.  */
-  const char *mnemonic_r;
+  const char * mnemonic_r;
 
   /* Flag that will have to be added (if any).  */
-  const char *flag_r;
+  const char * flag_r;
 
   /* Amount of operands.  */
   unsigned operand_cnt;
@@ -461,7 +453,7 @@ struct arc_aux_reg
   insn_subclass_t subclass;
 
   /* Register name.  */
-  const char *name;
+  const char * name;
 
   /* Size of the string.  */
   size_t length;
@@ -512,26 +504,28 @@ extern const unsigned arc_num_relax_opcodes;
 #define INSN3OP_C0LU(MOP,SOP)					\
   (INSN3OP (MOP,SOP) | (0x03 << 22) | (0x01 << 5) | FIELDB (62))
 
-#define MINSN3OP_ABC  (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_ALC  (~(FIELDF | FIELDA (63) | FIELDC (63)))
-#define MINSN3OP_ABL  (~(FIELDF | FIELDA (63) | FIELDB (63)))
-#define MINSN3OP_ALL  (~(FIELDF | FIELDA (63)))
-#define MINSN3OP_0BC  (~(FIELDF | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_0LC  (~(FIELDF | FIELDC (63)))
-#define MINSN3OP_0BL  (~(FIELDF | FIELDB (63)))
-#define MINSN3OP_0LL  (~(FIELDF))
-#define MINSN3OP_ABU  (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_ALU  (~(FIELDF | FIELDA (63) | FIELDC (63)))
-#define MINSN3OP_0BU  (~(FIELDF | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_0LU  (~(FIELDF | FIELDC (63)))
-#define MINSN3OP_BBS  (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_0LS  (~(FIELDF | FIELDA (63) | FIELDC (63)))
-#define MINSN3OP_CBBC (~(FIELDF | FIELDQ | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_CBBL (~(FIELDF | FIELDQ | FIELDB (63)))
-#define MINSN3OP_C0LC (~(FIELDF | FIELDQ | FIELDC (63)))
-#define MINSN3OP_C0LL (~(FIELDF | FIELDQ))
-#define MINSN3OP_CBBU (~(FIELDF | FIELDQ | FIELDB (63) | FIELDC (63)))
-#define MINSN3OP_C0LU (~(FIELDF | FIELDQ | FIELDC (63)))
+#define MASK_32BIT(VAL) (0xffffffff & (VAL))
+
+#define MINSN3OP_ABC  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_ALC  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDC (63))))
+#define MINSN3OP_ABL  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDB (63))))
+#define MINSN3OP_ALL  (MASK_32BIT (~(FIELDF | FIELDA (63))))
+#define MINSN3OP_0BC  (MASK_32BIT (~(FIELDF | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_0LC  (MASK_32BIT (~(FIELDF | FIELDC (63))))
+#define MINSN3OP_0BL  (MASK_32BIT (~(FIELDF | FIELDB (63))))
+#define MINSN3OP_0LL  (MASK_32BIT (~(FIELDF)))
+#define MINSN3OP_ABU  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_ALU  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDC (63))))
+#define MINSN3OP_0BU  (MASK_32BIT (~(FIELDF | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_0LU  (MASK_32BIT (~(FIELDF | FIELDC (63))))
+#define MINSN3OP_BBS  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_0LS  (MASK_32BIT (~(FIELDF | FIELDA (63) | FIELDC (63))))
+#define MINSN3OP_CBBC (MASK_32BIT (~(FIELDF | FIELDQ | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_CBBL (MASK_32BIT (~(FIELDF | FIELDQ | FIELDB (63))))
+#define MINSN3OP_C0LC (MASK_32BIT (~(FIELDF | FIELDQ | FIELDC (63))))
+#define MINSN3OP_C0LL (MASK_32BIT (~(FIELDF | FIELDQ)))
+#define MINSN3OP_CBBU (MASK_32BIT (~(FIELDF | FIELDQ | FIELDB (63) | FIELDC (63))))
+#define MINSN3OP_C0LU (MASK_32BIT (~(FIELDF | FIELDQ | FIELDC (63))))
 
 #define INSN2OP_BC(MOP,SOP) (INSN2OP (MOP,SOP))
 #define INSN2OP_BL(MOP,SOP) (INSN2OP (MOP,SOP) | FIELDC (62))
@@ -540,12 +534,12 @@ extern const unsigned arc_num_relax_opcodes;
 #define INSN2OP_BU(MOP,SOP) (INSN2OP (MOP,SOP) | (0x01 << 22))
 #define INSN2OP_0U(MOP,SOP) (INSN2OP (MOP,SOP) | (0x01 << 22) | FIELDB (62))
 
-#define MINSN2OP_BC  (~(FIELDF | FIELDB (63) | FIELDC (63)))
-#define MINSN2OP_BL  (~(FIELDF | FIELDB (63)))
-#define MINSN2OP_0C  (~(FIELDF | FIELDC (63)))
-#define MINSN2OP_0L  (~(FIELDF))
-#define MINSN2OP_BU  (~(FIELDF | FIELDB (63) | FIELDC (63)))
-#define MINSN2OP_0U  (~(FIELDF | FIELDC (63)))
+#define MINSN2OP_BC  (MASK_32BIT ((~(FIELDF | FIELDB (63) | FIELDC (63)))))
+#define MINSN2OP_BL  (MASK_32BIT ((~(FIELDF | FIELDB (63)))))
+#define MINSN2OP_0C  (MASK_32BIT ((~(FIELDF | FIELDC (63)))))
+#define MINSN2OP_0L  (MASK_32BIT ((~(FIELDF))))
+#define MINSN2OP_BU  (MASK_32BIT ((~(FIELDF | FIELDB (63) | FIELDC (63)))))
+#define MINSN2OP_0U  (MASK_32BIT ((~(FIELDF | FIELDC (63)))))
 
 /* Various constants used when defining an extension instruction.  */
 #define ARC_SYNTAX_3OP		(1 << 0)
@@ -607,6 +601,67 @@ extern const unsigned char arg_32bit_limmlimm[MAX_INSN_ARGS + 1];
 extern const unsigned char arg_32bit_rc[MAX_INSN_ARGS + 1];
 extern const unsigned char arg_32bit_u6[MAX_INSN_ARGS + 1];
 extern const unsigned char arg_32bit_limm[MAX_INSN_ARGS + 1];
+
+/* Address types used in the NPS-400. See page 367 of the NPS-400 CTOP
+   Instruction Set Reference Manual v2.4 for a description of address types.  */
+
+typedef enum
+{
+  /* Addresses in memory.  */
+
+  /* Buffer descriptor.  */
+  ARC_NPS400_ADDRTYPE_BD,
+
+  /* Job identifier.  */
+  ARC_NPS400_ADDRTYPE_JID,
+
+  /* Linked Buffer Descriptor.  */
+  ARC_NPS400_ADDRTYPE_LBD,
+
+  /* Multicast Buffer Descriptor.  */
+  ARC_NPS400_ADDRTYPE_MBD,
+
+  /* Summarized Address.  */
+  ARC_NPS400_ADDRTYPE_SD,
+
+  /* SMEM Security Context Local Memory.  */
+  ARC_NPS400_ADDRTYPE_SM,
+
+  /* Extended Address.  */
+  ARC_NPS400_ADDRTYPE_XA,
+
+  /* Extended Summarized Address.  */
+  ARC_NPS400_ADDRTYPE_XD,
+
+  /* CMEM offset addresses.  */
+
+  /* On-demand Counter Descriptor.  */
+  ARC_NPS400_ADDRTYPE_CD,
+
+  /* CMEM Buffer Descriptor.  */
+  ARC_NPS400_ADDRTYPE_CBD,
+
+  /* CMEM Job Identifier.  */
+  ARC_NPS400_ADDRTYPE_CJID,
+
+  /* CMEM Linked Buffer Descriptor.  */
+  ARC_NPS400_ADDRTYPE_CLBD,
+
+  /* CMEM Offset.  */
+  ARC_NPS400_ADDRTYPE_CM,
+
+  /* CMEM Summarized Address.  */
+  ARC_NPS400_ADDRTYPE_CSD,
+
+  /* CMEM Extended Address.  */
+  ARC_NPS400_ADDRTYPE_CXA,
+
+  /* CMEM Extended Summarized Address.  */
+  ARC_NPS400_ADDRTYPE_CXD
+
+} arc_nps_address_type;
+
+#define ARC_NUM_ADDRTYPES 16
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /* AVR-specific support for 32-bit ELF.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2018 Free Software Foundation, Inc.
 
    Written by Bjoern Haase <bjoern.m.haase@web.de>
 
@@ -25,8 +25,8 @@
 
 extern void
 elf32_avr_setup_params (struct bfd_link_info *, bfd *, asection *,
-                        bfd_boolean, bfd_boolean, bfd_boolean,
-                        bfd_vma, bfd_boolean);
+			bfd_boolean, bfd_boolean, bfd_boolean,
+			bfd_vma, bfd_boolean);
 
 extern int
 elf32_avr_setup_section_lists (bfd *, struct bfd_link_info *);
@@ -80,10 +80,10 @@ struct avr_property_record
       unsigned long fill;
 
       /* This field is used during linker relaxation to track the number of
-         bytes that have been opened up before this alignment directive.
-         When we have enough bytes available it is possible to move the
-         re-align this directive backwards while still maintaining the
-         alignment requirement.  */
+	 bytes that have been opened up before this alignment directive.
+	 When we have enough bytes available it is possible to move the
+	 re-align this directive backwards while still maintaining the
+	 alignment requirement.  */
       unsigned long preceding_deleted;
     } align;
   } data;

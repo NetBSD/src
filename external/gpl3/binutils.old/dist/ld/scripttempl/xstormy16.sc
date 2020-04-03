@@ -1,5 +1,5 @@
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -25,9 +25,9 @@
 #		.bss section besides __bss_start.
 #	INPUT_FILES - INPUT command of files to always include
 #	INIT_START, INIT_END -  statements just before and just after
-# 	combination of .init sections.
+#	combination of .init sections.
 #	FINI_START, FINI_END - statements just before and just after
-# 	combination of .fini sections.
+#	combination of .fini sections.
 #
 # When adding sections, do note that the names of some sections are used
 # when specifying the start address of the next.
@@ -59,7 +59,7 @@ test -z "${LITTLE_OUTPUT_FORMAT}" && LITTLE_OUTPUT_FORMAT=${OUTPUT_FORMAT}
 if [ -z "$MACHINE" ]; then OUTPUT_ARCH=${ARCH}; else OUTPUT_ARCH=${ARCH}:${MACHINE}; fi
 test -z "${ELFSIZE}" && ELFSIZE=32
 test -z "${ALIGNMENT}" && ALIGNMENT="${ELFSIZE} / 8"
-CTOR=".ctors ${CONSTRUCTING-0} : 
+CTOR=".ctors ${CONSTRUCTING-0} :
   {
     ${CONSTRUCTING+${CTOR_START}}
     /* gcc uses crtbegin.o to find the start of
@@ -98,7 +98,7 @@ DTOR=" .dtors       ${CONSTRUCTING-0} :
   } > ROM"
 
 cat <<EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -119,7 +119,7 @@ ${RELOCATING- /* For some reason, the Solaris linker makes bad executables
 
 /* There are two memory regions we care about, one from 0 through 0x7F00
    that is RAM and one from 0x8000 up which is ROM.  */
-MEMORY 
+MEMORY
 {
   RAM (w) : ORIGIN = 0, LENGTH = 0x7F00
   ROM (!w) : ORIGIN = 0x8000, LENGTH = 0xFF8000
@@ -185,8 +185,8 @@ SECTIONS
     ${RELOCATING+*(.gnu.linkonce.t.*)}
     ${RELOCATING+${OTHER_TEXT_SECTIONS}}
   } ${RELOCATING+> ROM =${NOP-0}}
-  .init        ${RELOCATING-0} : 
-  { 
+  .init        ${RELOCATING-0} :
+  {
     ${RELOCATING+${INIT_START}}
     KEEP (*(.init))
     ${RELOCATING+${INIT_END}}

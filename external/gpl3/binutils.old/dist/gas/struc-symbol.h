@@ -1,5 +1,5 @@
 /* struct_symbol.h - Internal symbol structure
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -23,10 +23,10 @@
 
 struct symbol_flags
 {
-  /* Wether the symbol is a local_symbol.  */
+  /* Whether the symbol is a local_symbol.  */
   unsigned int sy_local_symbol : 1;
 
-  /* Wether symbol has been written.  */
+  /* Weather symbol has been written.  */
   unsigned int sy_written : 1;
 
   /* Whether symbol value has been completely resolved (used during

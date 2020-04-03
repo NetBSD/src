@@ -1,6 +1,6 @@
 /* Overlay manager for SPU.
 
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -101,7 +101,7 @@
 #define irq_stat	save4
 
 	.text
-	.align 	4
+	.align	4
 	.type	__rv_pattern, @object
 	.size	__rv_pattern, 16
 __rv_pattern:
@@ -126,7 +126,7 @@ __ovly_current:
  * Load the previous overlay and jump to the caller return address.
  * Updates __ovly_current.
  */
-	.align 	4
+	.align	4
 	.global	__ovly_return
 	.type	__ovly_return, @function
 __ovly_return:
@@ -446,7 +446,7 @@ __ovly_xfer_loop:
 #endif
 	andc	oldvma, oldvma, pbit				# 0,2	77
 	lqd	save1, -16($sp)					# 1,6	77
-	nop	       						# 0,0	78
+	nop							# 0,0	78
 #lnop
 #nop
 	stqx	oldvma, tab5, off5				# 1,6	79

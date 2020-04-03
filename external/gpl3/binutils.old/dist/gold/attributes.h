@@ -1,6 +1,6 @@
 // attributes.h -- object attributes for gold   -*- C++ -*-
 
-// Copyright (C) 2009-2016 Free Software Foundation, Inc.
+// Copyright (C) 2009-2018 Free Software Foundation, Inc.
 // Written by Doug Kwan <dougkwan@google.com>.
 // This file contains code adapted from BFD.
 

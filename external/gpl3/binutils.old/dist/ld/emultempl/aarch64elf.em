@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2009-2018 Free Software Foundation, Inc.
 #   Contributed by ARM Ltd.
 #
 # This file is part of the GNU Binutils.
@@ -44,6 +44,8 @@ gld${EMULATION_NAME}_before_parse (void)
   input_flags.add_DT_NEEDED_for_dynamic = TRUE;
   config.has_shared = `if test -n "$GENERATE_SHLIB_SCRIPT" ; then echo TRUE ; else echo FALSE ; fi`;
   config.separate_code = `if test "x${SEPARATE_CODE}" = xyes ; then echo TRUE ; else echo FALSE ; fi`;
+  link_info.check_relocs_after_open_input = TRUE;
+  link_info.relro = DEFAULT_LD_Z_RELRO;
 }
 
 static void
@@ -55,10 +57,10 @@ aarch64_elf_before_allocation (void)
     {
       /* Here we rummage through the found bfds to collect information.  */
       LANG_FOR_EACH_INPUT_STATEMENT (is)
-	{
-          /* Initialise mapping tables for code/data.  */
-          bfd_elf${ELFSIZE}_aarch64_init_maps (is->the_bfd);
-	}
+      {
+	/* Initialise mapping tables for code/data.  */
+	bfd_elf${ELFSIZE}_aarch64_init_maps (is->the_bfd);
+      }
     }
 
   /* Call the standard elf routine.  */
@@ -173,7 +175,9 @@ elf${ELFSIZE}_aarch64_add_stub_section (const char *stub_sec_name,
   if (stub_sec == NULL)
     goto err_ret;
 
-  bfd_set_section_alignment (stub_file->the_bfd, stub_sec, 2);
+  /* Long branch stubs contain a 64-bit address, so the section requires
+     8 byte alignment.  */
+  bfd_set_section_alignment (stub_file->the_bfd, stub_sec, 3);
 
   output_section = input_section->output_section;
   os = lang_output_section_get (output_section);
@@ -189,7 +193,7 @@ elf${ELFSIZE}_aarch64_add_stub_section (const char *stub_sec_name,
     return stub_sec;
 
  err_ret:
-  einfo ("%X%P: can not make stub section: %E\n");
+  einfo (_("%X%P: can not make stub section: %E\n"));
   return NULL;
 }
 
@@ -232,7 +236,7 @@ gld${EMULATION_NAME}_after_allocation (void)
   ret = bfd_elf_discard_info (link_info.output_bfd, & link_info);
   if (ret < 0)
     {
-      einfo ("%X%P: .eh_frame/.stab edit: %E\n");
+      einfo (_("%X%P: .eh_frame/.stab edit: %E\n"));
       return;
     }
   else if (ret > 0)
@@ -248,7 +252,8 @@ gld${EMULATION_NAME}_after_allocation (void)
 	{
 	  if (ret < 0)
 	    {
-	      einfo ("%X%P: could not compute sections lists for stub generation: %E\n");
+	      einfo (_("%X%P: could not compute sections lists "
+		       "for stub generation: %E\n"));
 	      return;
 	    }
 
@@ -262,7 +267,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 					  & elf${ELFSIZE}_aarch64_add_stub_section,
 					  & gldaarch64_layout_sections_again))
 	    {
-	      einfo ("%X%P: cannot size stub section: %E\n");
+	      einfo (_("%X%P: can not size stub section: %E\n"));
 	      return;
 	    }
 	}
@@ -281,7 +286,7 @@ gld${EMULATION_NAME}_finish (void)
       if (stub_file->the_bfd->sections != NULL)
 	{
 	  if (! elf${ELFSIZE}_aarch64_build_stubs (& link_info))
-	    einfo ("%X%P: can not build stubs: %E\n");
+	    einfo (_("%X%P: can not build stubs: %E\n"));
 	}
     }
 
@@ -299,7 +304,8 @@ aarch64_elf_create_output_section_statements (void)
 	 These will only be created if the output format is an arm format,
 	 hence we do not support linking and changing output formats at the
 	 same time.  Use a link followed by objcopy to change output formats.  */
-      einfo ("%F%X%P: error: Cannot change output format whilst linking AArch64 binaries.\n");
+      einfo (_("%F%P: error: cannot change output format "
+	       "whilst linking %s binaries\n"), "AArch64");
       return;
     }
 
@@ -319,7 +325,7 @@ aarch64_elf_create_output_section_statements (void)
 			      bfd_get_arch (link_info.output_bfd),
 			      bfd_get_mach (link_info.output_bfd)))
     {
-      einfo ("%X%P: can not create BFD %E\n");
+      einfo (_("%F%P: can not create BFD: %E\n"));
       return;
     }
 
@@ -355,7 +361,7 @@ EOF
 PARSE_AND_LIST_PROLOGUE='
 #define OPTION_NO_ENUM_SIZE_WARNING	309
 #define OPTION_PIC_VENEER		310
-#define OPTION_STUBGROUP_SIZE           311
+#define OPTION_STUBGROUP_SIZE		311
 #define OPTION_NO_WCHAR_SIZE_WARNING	312
 #define OPTION_FIX_ERRATUM_835769	313
 #define OPTION_FIX_ERRATUM_843419	314
@@ -378,21 +384,21 @@ PARSE_AND_LIST_LONGOPTS='
 PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("  --no-enum-size-warning      Don'\''t warn about objects with incompatible\n"
 		   "                                enum sizes\n"));
-  fprintf (file, _("  --no-wchar-size-warning     Don'\''t warn about objects with incompatible"
+  fprintf (file, _("  --no-wchar-size-warning     Don'\''t warn about objects with incompatible\n"
 		   "                                wchar_t sizes\n"));
   fprintf (file, _("  --pic-veneer                Always generate PIC interworking veneers\n"));
   fprintf (file, _("\
-   --stub-group-size=N   Maximum size of a group of input sections that can be\n\
-                           handled by one stub section.  A negative value\n\
-                           locates all stubs after their branches (with a\n\
-                           group size of -N), while a positive value allows\n\
-                           two groups of input sections, one before, and one\n\
-                           after each stub section.  Values of +/-1 indicate\n\
-                           the linker should choose suitable defaults.\n"
-		   ));
+  --stub-group-size=N         Maximum size of a group of input sections that\n\
+                                can be handled by one stub section.  A negative\n\
+                                value locates all stubs after their branches\n\
+                                (with a group size of -N), while a positive\n\
+                                value allows two groups of input sections, one\n\
+                                before, and one after each stub section.\n\
+                                Values of +/-1 indicate the linker should\n\
+                                choose suitable defaults.\n"));
   fprintf (file, _("  --fix-cortex-a53-835769      Fix erratum 835769\n"));
   fprintf (file, _("  --fix-cortex-a53-843419      Fix erratum 843419\n"));
-  fprintf (file, _("  --no-apply-dynamic-relocs	   Do not apply link-time values for dynamic relocations\n"));
+  fprintf (file, _("  --no-apply-dynamic-relocs    Do not apply link-time values for dynamic relocations\n"));
 '
 
 PARSE_AND_LIST_ARGS_CASES='
@@ -428,9 +434,9 @@ PARSE_AND_LIST_ARGS_CASES='
       {
 	const char *end;
 
-        group_size = bfd_scan_vma (optarg, &end, 0);
-        if (*end)
-	  einfo (_("%P%F: invalid number `%s'\''\n"), optarg);
+	group_size = bfd_scan_vma (optarg, &end, 0);
+	if (*end)
+	  einfo (_("%F%P: invalid number `%s'\''\n"), optarg);
       }
       break;
 '

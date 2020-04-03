@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CRX ELF
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2018 Free Software Foundation, Inc.
    Written by Tomer Levi, NSC, Israel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -28,7 +28,7 @@
 
 static reloc_howto_type *elf_crx_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
-static void elf_crx_info_to_howto
+static bfd_boolean elf_crx_info_to_howto
   (bfd *, arelent *, Elf_Internal_Rela *);
 static bfd_boolean elf32_crx_relax_delete_bytes
   (struct bfd_link_info *, bfd *, asection *, bfd_vma, int);
@@ -272,7 +272,7 @@ static reloc_howto_type crx_elf_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_NUM8",		/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0,	  		/* src_mask */
+	 0x0,			/* src_mask */
 	 0xff,			/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
@@ -286,7 +286,7 @@ static reloc_howto_type crx_elf_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_NUM16",		/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0,	  		/* src_mask */
+	 0x0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
@@ -300,7 +300,7 @@ static reloc_howto_type crx_elf_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_NUM32",		/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0,	  		/* src_mask */
+	 0x0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
@@ -314,7 +314,7 @@ static reloc_howto_type crx_elf_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_IMM16",		/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0, 	 		/* src_mask */
+	 0x0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
@@ -328,7 +328,7 @@ static reloc_howto_type crx_elf_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_CRX_IMM32",		/* name */
 	 FALSE,			/* partial_inplace */
-	 0x0,  			/* src_mask */
+	 0x0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
@@ -418,19 +418,21 @@ elf_crx_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Retrieve a howto ptr using an internal relocation entry.  */
 
-static void
-elf_crx_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
+static bfd_boolean
+elf_crx_info_to_howto (bfd *abfd, arelent *cache_ptr,
 		       Elf_Internal_Rela *dst)
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= R_CRX_MAX)
     {
-      (*_bfd_error_handler) (_("%B: unrecognised CRX reloc number: %d"),
-			     abfd, r_type);
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      r_type = R_CRX_NONE;
+      return FALSE;
     }
   cache_ptr->howto = &crx_elf_howto_table[r_type];
+  return TRUE;
 }
 
 /* Perform a relocation as part of a final link.  */
@@ -1319,7 +1321,7 @@ elf32_crx_relax_section (bfd *abfd, asection *sec,
 #define bfd_elf32_bfd_reloc_name_lookup \
 					elf_crx_reloc_name_lookup
 #define elf_info_to_howto		elf_crx_info_to_howto
-#define elf_info_to_howto_rel		0
+#define elf_info_to_howto_rel		NULL
 #define elf_backend_relocate_section	elf32_crx_relocate_section
 #define bfd_elf32_bfd_relax_section	elf32_crx_relax_section
 #define bfd_elf32_bfd_get_relocated_section_contents \

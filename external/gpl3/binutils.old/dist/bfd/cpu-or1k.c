@@ -1,5 +1,5 @@
 /* BFD support for the OpenRISC 1000 architecture.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2018 Free Software Foundation, Inc.
    Contributed for OR32 by Ivan Guzvinec  <ivang@opencores.org>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -26,9 +26,9 @@ const bfd_arch_info_type bfd_or1knd_arch;
 
 const bfd_arch_info_type bfd_or1k_arch =
   {
-    32,           /* 32 bits in a word.  */
-    32,	          /* 32 bits in an address.  */
-    8,	          /* 8 bits in a byte.  */
+    32,		  /* 32 bits in a word.  */
+    32,		  /* 32 bits in an address.  */
+    8,		  /* 8 bits in a byte.  */
     bfd_arch_or1k,
     bfd_mach_or1k,
     "or1k",
@@ -43,9 +43,9 @@ const bfd_arch_info_type bfd_or1k_arch =
 
 const bfd_arch_info_type bfd_or1knd_arch =
   {
-    32,           /* 32 bits in a word.  */
-    32,	          /* 32 bits in an address.  */
-    8,	          /* 8 bits in a byte.  */
+    32,		  /* 32 bits in a word.  */
+    32,		  /* 32 bits in an address.  */
+    8,		  /* 8 bits in a byte.  */
     bfd_arch_or1k,
     bfd_mach_or1knd,
     "or1knd",

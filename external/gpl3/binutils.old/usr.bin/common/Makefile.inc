@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2018/04/14 17:53:09 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2020/04/03 17:51:33 christos Exp $
 
 .if !defined(__COMMON_MAKEFILE_INC_INCLUDED__)
 __COMMON_MAKEFILE_INC_INCLUDED__=1

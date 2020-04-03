@@ -1,46 +1,94 @@
-2016-08-03  Tristan Gingold  <gingold@adacore.com>
+2018-07-18  Nick Clifton  <nickc@redhat.com>
+
+	2.31.1 Release point.
+	* configure: Regenerate.
+
+2018-07-14  Nick Clifton  <nickc@redhat.com>
 
 	* configure: Regenerate.
 
-2016-07-01  Tristan Gingold  <gingold@adacore.com>
+2018-07-14  Nick Clifton  <nickc@redhat.com>
+
+	2.31 Release point.
+	* configure: Regenerate.
+
+2018-06-24  Nick Clifton  <nickc@redhat.com>
+
+	* configure: Regenerate.
+	* po/gprof.pot: Regenerate.
+
+2018-06-24  Nick Clifton  <nickc@redhat.com>
+
+	2.31 branch created.
+
+2018-06-19  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* configure.ac: Remove AC_PREREQ.
+	* Makefile.am: Remove DISTCLEANFILES hack.
+	(AUTOMAKE_OPTIONS): Remove 1.11, add info-in-builddir.
+	* Makefile.in: Re-generate.
+	* aclocal.m4: Re-generate.
+	* configure: Re-generate.
+	* gconfig.in: Re-generate.
+
+2018-06-05  Nick Clifton  <nickc@redhat.com>
+
+	* po/eo.po: Updated Esperanto translation.
+	* po/ms.po: Updated Malay translation.
+
+2018-06-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure: Regenerated.
+
+2018-04-18  Nick Clifton  <nickc@redhat.com>
+
+	* po/es.po: Updated Spanish translation.
+
+2018-04-16  Alan Modra  <amodra@gmail.com>
+
+	* corefile.c: Remove netware support.
+
+2018-04-16  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am: Remove tahoe support.
+	* corefile.c: Likewise.
+	* tahoe.c: Delete.
+	* Makefile.in: Regenerate.
+	* po/POTFILES.in: Regenerate.
+
+2018-04-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/22318
+	* configure: Regenerated.
+
+2018-03-01  Alan Modra  <amodra@gmail.com>
+
+	* configure.ac (ALL_LINGUAS): Add it, ro, ru, uk.  Sort.
+	* configure: Regenerate.
+
+2018-02-05  Nick Clifton  <nickc@redhat.com>
+
+	* po/pt_BR.po: Updated Brazilian Portuguese translation.
+
+2018-01-13  Nick Clifton  <nickc@redhat.com>
+
+	* po/gprof.pot: Regenerated.
+
+2018-01-13  Nick Clifton  <nickc@redhat.com>
 
 	* configure: Regenerate.
 
-2016-07-01  Tristan Gingold  <gingold@adacore.com>
+2018-01-13  Nick Clifton  <nickc@redhat.com>
 
-	* configure: Regenerate.
+	2.30 branch created.
 
-2016-04-20  Trevor Saunders  <tbsaunde+binutils@tbsaunde.org>
-
-	* basic_blocks.c: Update old style function definitions.
-	* cg_arcs.c: Likewise.
-	* cg_print.c: Likewise.
-	* gen-c-prog.awk: Likewise.
-	* gmon_io.c: Likewise.
-	* hertz.c: Likewise.
-	* hist.c: Likewise.
-	* sym_ids.c: Likewise.
-
-2016-04-15  H.J. Lu  <hongjiu.lu@intel.com>
-
-	* Makefile.in: Regenerated with automake 1.11.6.
-	* aclocal.m4: Likewise.
-
-2016-03-22  Nick Clifton  <nickc@redhat.com>
-
-	* configure: Regenerate.
-
-2016-01-17  Alan Modra  <amodra@gmail.com>
-
-	* configure: Regenerate.
-
-2016-01-01  Alan Modra  <amodra@gmail.com>
+2018-01-03  Alan Modra  <amodra@gmail.com>
 
 	Update year range in copyright notice of all files.
 
-For older changes see ChangeLog-2015
+For older changes see ChangeLog-2017
 
-Copyright (C) 2016 Free Software Foundation, Inc.
+Copyright (C) 2018 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

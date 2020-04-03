@@ -1,5 +1,5 @@
 /* BFD support for the moxie processor.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
    Written by Anthony Green
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -25,15 +25,15 @@
 
 const bfd_arch_info_type bfd_moxie_arch =
   {
-    32,               /* 32 bits in a word.  */
-    32,               /* 32 bits in an address.  */
-    8,                /*  8 bits in a byte.  */
+    32,		      /* 32 bits in a word.  */
+    32,		      /* 32 bits in an address.  */
+    8,		      /*  8 bits in a byte.  */
     bfd_arch_moxie,   /* enum bfd_architecture arch.  */
     bfd_mach_moxie,
-    "moxie",          /* Arch name.  */
-    "moxie",          /* Printable name.  */
-    2,                /* Unsigned int section alignment power.  */
-    TRUE,             /* The one and only.  */
+    "moxie",	      /* Arch name.  */
+    "moxie",	      /* Printable name.  */
+    2,		      /* Unsigned int section alignment power.  */
+    TRUE,	      /* The one and only.  */
     bfd_default_compatible,
     bfd_default_scan,
     bfd_arch_default_fill,
