@@ -1,4 +1,4 @@
-/*	$NetBSD: route_hostops.c,v 1.2 2020/04/02 18:32:31 christos Exp $	*/
+/*	$NetBSD: route_hostops.c,v 1.3 2020/04/03 16:20:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: route_hostops.c,v 1.2 2020/04/02 18:32:31 christos Exp $");
+__RCSID("$NetBSD: route_hostops.c,v 1.3 2020/04/03 16:20:52 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -51,7 +51,13 @@ const struct prog_ops prog_ops = {
 	.op_read =		read,
 	.op_write =		write,
 
+	.op_shutdown =		shutdown,
+
 	.op_sysctl =		sysctl,
 
-	.op_shutdown =		shutdown,
+	.op_sysctlbyname =	sysctlbyname,
+
+	.op_sysctlgetmibinfo =	sysctlgetmibinfo,
+
+	.op_sysctlnametomib =	sysctlnametomib,
 };
