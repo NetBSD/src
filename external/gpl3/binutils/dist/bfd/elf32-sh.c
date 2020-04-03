@@ -1,5 +1,5 @@
 /* Renesas / SuperH SH specific support for 32-bit ELF
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -29,6 +29,9 @@
 #include "dwarf2.h"
 #include "libiberty.h"
 #include "../opcodes/sh-opc.h"
+
+/* All users of this file have bfd_octets_per_byte (abfd, sec) == 1.  */
+#define OCTETS_PER_BYTE(ABFD, SEC) 1
 
 static bfd_reloc_status_type sh_elf_reloc
   (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
@@ -229,11 +232,12 @@ sh_elf_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol_in,
 	      void *data, asection *input_section, bfd *output_bfd,
 	      char **error_message ATTRIBUTE_UNUSED)
 {
-  unsigned long insn;
+  bfd_vma insn;
   bfd_vma sym_value;
   enum elf_sh_reloc_type r_type;
   bfd_vma addr = reloc_entry->address;
-  bfd_byte *hit_data = addr + (bfd_byte *) data;
+  bfd_size_type octets = addr * OCTETS_PER_BYTE (abfd, input_section);
+  bfd_byte *hit_data = (bfd_byte *) data + octets;
 
   r_type = (enum elf_sh_reloc_type) reloc_entry->howto->type;
 
@@ -254,7 +258,7 @@ sh_elf_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol_in,
     return bfd_reloc_undefined;
 
   /* PR 17512: file: 9891ca98.  */
-  if (addr * bfd_octets_per_byte (abfd) + bfd_get_reloc_size (reloc_entry->howto)
+  if (octets + bfd_get_reloc_size (reloc_entry->howto)
       > bfd_get_section_limit_octets (abfd, input_section))
     return bfd_reloc_outofrange;
 
@@ -270,7 +274,7 @@ sh_elf_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol_in,
     case R_SH_DIR32:
       insn = bfd_get_32 (abfd, hit_data);
       insn += sym_value + reloc_entry->addend;
-      bfd_put_32 (abfd, (bfd_vma) insn, hit_data);
+      bfd_put_32 (abfd, insn, hit_data);
       break;
     case R_SH_IND12W:
       insn = bfd_get_16 (abfd, hit_data);
@@ -279,12 +283,10 @@ sh_elf_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol_in,
 		    + input_section->output_offset
 		    + addr
 		    + 4);
-      sym_value += (insn & 0xfff) << 1;
-      if (insn & 0x800)
-	sym_value -= 0x1000;
-      insn = (insn & 0xf000) | (sym_value & 0xfff);
-      bfd_put_16 (abfd, (bfd_vma) insn, hit_data);
-      if (sym_value < (bfd_vma) -0x1000 || sym_value >= 0x1000)
+      sym_value += (((insn & 0xfff) ^ 0x800) - 0x800) << 1;
+      insn = (insn & 0xf000) | ((sym_value >> 1) & 0xfff);
+      bfd_put_16 (abfd, insn, hit_data);
+      if (sym_value + 0x1000 >= 0x2000 || (sym_value & 1) != 0)
 	return bfd_reloc_overflow;
       break;
     default:
@@ -2324,7 +2326,7 @@ create_got_section (bfd *dynobj, struct bfd_link_info *info)
 							 | SEC_IN_MEMORY
 							 | SEC_LINKER_CREATED));
   if (htab->sfuncdesc == NULL
-      || ! bfd_set_section_alignment (dynobj, htab->sfuncdesc, 2))
+      || !bfd_set_section_alignment (htab->sfuncdesc, 2))
     return FALSE;
 
   htab->srelfuncdesc = bfd_make_section_anyway_with_flags (dynobj,
@@ -2335,7 +2337,7 @@ create_got_section (bfd *dynobj, struct bfd_link_info *info)
 							    | SEC_LINKER_CREATED
 							    | SEC_READONLY));
   if (htab->srelfuncdesc == NULL
-      || ! bfd_set_section_alignment (dynobj, htab->srelfuncdesc, 2))
+      || !bfd_set_section_alignment (htab->srelfuncdesc, 2))
     return FALSE;
 
   /* Also create .rofixup.  */
@@ -2346,7 +2348,7 @@ create_got_section (bfd *dynobj, struct bfd_link_info *info)
 							| SEC_LINKER_CREATED
 							| SEC_READONLY));
   if (htab->srofixup == NULL
-      || ! bfd_set_section_alignment (dynobj, htab->srofixup, 2))
+      || !bfd_set_section_alignment (htab->srofixup, 2))
     return FALSE;
 
   return TRUE;
@@ -2401,7 +2403,7 @@ sh_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   s = bfd_make_section_anyway_with_flags (abfd, ".plt", pltflags);
   htab->root.splt = s;
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, bed->plt_alignment))
+      || !bfd_set_section_alignment (s, bed->plt_alignment))
     return FALSE;
 
   if (bed->want_plt_sym)
@@ -2433,7 +2435,7 @@ sh_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 					  flags | SEC_READONLY);
   htab->root.srelplt = s;
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, ptralign))
+      || !bfd_set_section_alignment (s, ptralign))
     return FALSE;
 
   if (htab->root.sgot == NULL
@@ -2473,7 +2475,7 @@ sh_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 						  flags | SEC_READONLY);
 	  htab->srelbss = s;
 	  if (s == NULL
-	      || ! bfd_set_section_alignment (abfd, s, ptralign))
+	      || !bfd_set_section_alignment (s, ptralign))
 	    return FALSE;
 	}
     }
@@ -3212,7 +3214,7 @@ sh_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  /* Strip this section if we don't need it; see the
 	     comment below.  */
 	}
-      else if (CONST_STRNEQ (bfd_get_section_name (dynobj, s), ".rela"))
+      else if (CONST_STRNEQ (bfd_section_name (s), ".rela"))
 	{
 	  if (s->size != 0 && s != htab->root.srelplt && s != htab->srelplt2)
 	    relocs = TRUE;
@@ -3511,7 +3513,11 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
   unsigned isec_segment, got_segment, plt_segment, check_segment[2];
   bfd_boolean fdpic_p = FALSE;
 
-  BFD_ASSERT (is_sh_elf (input_bfd));
+  if (!is_sh_elf (input_bfd))
+    {
+      bfd_set_error (bfd_error_wrong_format);
+      return FALSE;
+    }
 
   htab = sh_elf_hash_table (info);
   if (htab != NULL)
@@ -3616,7 +3622,7 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  symname = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
 	  if (symname == NULL || *symname == '\0')
-	    symname = bfd_section_name (input_bfd, sec);
+	    symname = bfd_section_name (sec);
 
 	  relocation = (sec->output_section->vma
 			+ sec->output_offset
@@ -4695,7 +4701,15 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		       1: .long x@TPOFF; 2: .long __tls_get_addr@PLT; 3:.  */
 
 		  offset = rel->r_offset;
-		  BFD_ASSERT (offset >= 16);
+		  if (offset < 16)
+		    {
+		      _bfd_error_handler
+			/* xgettext:c-format */
+			(_("%pB(%pA): offset in relocation for GD->LE translation is too small: %#" PRIx64),
+			 input_bfd, input_section, (uint64_t) offset);
+		      return FALSE;
+		    }
+
 		  /* Size of GD instructions is 16 or 18.  */
 		  offset -= 16;
 		  insn = bfd_get_16 (input_bfd, contents + offset + 0);
@@ -4706,17 +4720,47 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		      insn = bfd_get_16 (input_bfd, contents + offset + 0);
 		    }
 
-		  BFD_ASSERT ((insn & 0xff00) == 0xd400);
+		  if ((insn & 0xff00) != 0xd400)
+		    _bfd_error_handler
+		      /* xgettext:c-format */  /* The backslash is to prevent bogus trigraph detection.  */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0xd4?\?)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 2);
-		  BFD_ASSERT ((insn & 0xff00) == 0xc700);
+
+		  if ((insn & 0xff00) != 0xc700)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0xc7?\?)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 4);
-		  BFD_ASSERT ((insn & 0xff00) == 0xd100);
+		  if ((insn & 0xff00) != 0xd100)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0xd1?\?)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 6);
-		  BFD_ASSERT (insn == 0x310c);
+		  if (insn != 0x310c)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0x310c)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 8);
-		  BFD_ASSERT (insn == 0x410b);
+		  if (insn != 0x410b)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0x410b)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 10);
-		  BFD_ASSERT (insn == 0x34cc);
+		  if (insn != 0x34cc)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0x34cc)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
 
 		  bfd_put_16 (output_bfd, 0x0012, contents + offset + 2);
 		  bfd_put_16 (output_bfd, 0x304c, contents + offset + 4);
@@ -4729,14 +4773,32 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		  int target;
 
 		  /* IE->LE transition:
-		     mov.l 1f,r0; stc gbr,rN; mov.l @(r0,r12),rM;
-		     bra 2f; add ...; .align 2; 1: x@GOTTPOFF; 2:
+		         mov.l 1f,r0;
+		         stc gbr,rN;
+		         mov.l @(r0,r12),rM;
+		         bra 2f;
+		         add ...;
+		         .align 2;
+		       1: x@GOTTPOFF;
+		       2:
 		     We change it into:
-		     mov.l .Ln,rM; stc gbr,rN; nop; ...;
-		     1: x@TPOFF; 2:.  */
+		         mov.l .Ln,rM;
+			 stc gbr,rN;
+			 nop;
+			 ...;
+		       1: x@TPOFF;
+		       2:.  */
 
 		  offset = rel->r_offset;
-		  BFD_ASSERT (offset >= 16);
+		  if (offset < 16)
+		    {
+		      _bfd_error_handler
+			/* xgettext:c-format */
+			(_("%pB(%pA): offset in relocation for IE->LE translation is too small: %#" PRIx64),
+			 input_bfd, input_section, (uint64_t) offset);
+		      return FALSE;
+		    }
+
 		  /* Size of IE instructions is 10 or 12.  */
 		  offset -= 10;
 		  insn = bfd_get_16 (input_bfd, contents + offset + 0);
@@ -4747,12 +4809,28 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		      insn = bfd_get_16 (input_bfd, contents + offset + 0);
 		    }
 
-		  BFD_ASSERT ((insn & 0xff00) == 0xd000);
+		  if ((insn & 0xff00) != 0xd000)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0xd0??: mov.l)"),
+		       input_bfd, input_section, (uint64_t) offset, (int) insn);
+
 		  target = insn & 0x00ff;
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 2);
-		  BFD_ASSERT ((insn & 0xf0ff) == 0x0012);
+		  if ((insn & 0xf0ff) != 0x0012)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0x0?12: stc)"),
+		       input_bfd, input_section, (uint64_t) (offset + 2), (int) insn);
+
 		  insn = bfd_get_16 (input_bfd, contents + offset + 4);
-		  BFD_ASSERT ((insn & 0xf0ff) == 0x00ce);
+		  if ((insn & 0xf0ff) != 0x00ce)
+		    _bfd_error_handler
+		      /* xgettext:c-format */
+		      (_("%pB(%pA+%#" PRIx64 "): unexpected instruction %#04X (expected 0x0?ce: mov.l)"),
+		       input_bfd, input_section, (uint64_t) (offset + 4), (int) insn);
+
 		  insn = 0xd000 | (insn & 0x0f00) | target;
 		  bfd_put_16 (output_bfd, insn, contents + offset + 0);
 		  bfd_put_16 (output_bfd, 0x0009, contents + offset + 4);
@@ -4861,7 +4939,15 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		   1: .long x@TPOFF; 2:...; 3:.  */
 
 	      offset = rel->r_offset;
-	      BFD_ASSERT (offset >= 16);
+	      if (offset < 16)
+		{
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("%pB(%pA): offset in relocation for GD->IE translation is too small: %#" PRIx64),
+		     input_bfd, input_section, (uint64_t) offset);
+		  return FALSE;
+		}
+
 	      /* Size of GD instructions is 16 or 18.  */
 	      offset -= 16;
 	      insn = bfd_get_16 (input_bfd, contents + offset + 0);
@@ -4921,7 +5007,15 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		   nop; nop; bra 3f; ...; 3:.  */
 
 	      offset = rel->r_offset;
-	      BFD_ASSERT (offset >= 16);
+	      if (offset < 16)
+		{
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("%pB(%pA): offset in relocation for LD->LE translation is too small: %#" PRIx64),
+		     input_bfd, input_section, (uint64_t) offset);
+		  return FALSE;
+		}
+
 	      /* Size of LD instructions is 16 or 18.  */
 	      offset -= 16;
 	      insn = bfd_get_16 (input_bfd, contents + offset + 0);
@@ -5079,7 +5173,7 @@ sh_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		    if (name == NULL)
 		      return FALSE;
 		    if (*name == '\0')
-		      name = bfd_section_name (input_bfd, sec);
+		      name = bfd_section_name (sec);
 		  }
 		(*info->callbacks->reloc_overflow)
 		  (info, (h ? &h->root : NULL), name, howto->name,
@@ -5479,9 +5573,7 @@ sh_elf_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
 	case R_SH_GNU_VTENTRY:
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 
@@ -6757,8 +6849,6 @@ sh_elf_encode_eh_address (bfd *abfd,
 #define	elf32_bed			elf32_sh_fd_bed
 
 #include "elf32-target.h"
-
-#undef elf_backend_modify_program_headers
 
 /* VxWorks support.  */
 #undef	TARGET_BIG_SYM

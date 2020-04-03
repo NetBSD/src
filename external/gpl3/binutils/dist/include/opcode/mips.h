@@ -1,5 +1,5 @@
 /* mips.h.  Mips opcode list for GDB, the GNU debugger.
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Contributed by Ralph Campbell and OSF
    Commented and modified by Ian Lance Taylor, Cygnus Support
 
@@ -56,8 +56,8 @@ extern "C" {
    code field in BREAK is 20 bits; yet MIPS assemblers and debuggers
    only use ten bits).  An optional two-operand form of break/sdbbp
    allows the lower ten bits to be set too, and MIPS32 and later
-   architectures allow 20 bits to be set with a signal operand
-   (using CODE20).
+   architectures allow 20 bits to be set with a single operand for
+   the sdbbp instruction (using CODE20).
 
    The syscall instruction uses CODE20.
 
@@ -928,7 +928,7 @@ mips_opcode_32bit_p (const struct mips_opcode *mo)
    "+S" Length-minus-one field of cins/exts.  Requires msb position
 	of the field to be <= 63.
 
-   Loongson-3A:
+   Loongson-ext ASE:
    "+a" 8-bit signed offset in bit 6 (OP_*_OFFSET_A)
    "+b" 8-bit signed offset in bit 3 (OP_*_OFFSET_B)
    "+c" 9-bit signed offset in bit 6 (OP_*_OFFSET_C)
@@ -1256,8 +1256,6 @@ static const unsigned int mips_isa_table[] = {
 #define INSN_LOONGSON_2E          0x40000000
 /* ST Microelectronics Loongson 2F.  */
 #define INSN_LOONGSON_2F          0x80000000
-/* Loongson 3A.  */
-#define INSN_LOONGSON_3A          0x00000400
 /* RMI Xlr instruction */
 #define INSN_XLR                 0x00000020
 /* Imagination interAptiv MR2.  */
@@ -1302,6 +1300,17 @@ static const unsigned int mips_isa_table[] = {
 #define ASE_CRC64		0x00080000
 /* Global INValidate Extension.  */
 #define ASE_GINV		0x00100000
+/* Loongson MultiMedia extensions Instructions (MMI).  */
+#define ASE_LOONGSON_MMI	0x00200000
+/* Loongson Content Address Memory (CAM).  */
+#define ASE_LOONGSON_CAM	0x00400000
+/* Loongson EXTensions (EXT) instructions.  */
+#define ASE_LOONGSON_EXT	0x00800000
+/* Loongson EXTensions R2 (EXT2) instructions.  */
+#define ASE_LOONGSON_EXT2	0x01000000
+/* The Enhanced VA Scheme (EVA) extension has instructions which are
+   only valid for the R6 ISA.  */
+#define ASE_EVA_R6		0x02000000
 
 /* MIPS ISA defines, use instead of hardcoding ISA level.  */
 
@@ -1366,7 +1375,9 @@ static const unsigned int mips_isa_table[] = {
 #define CPU_SB1         12310201        /* octal 'SB', 01.  */
 #define CPU_LOONGSON_2E 3001
 #define CPU_LOONGSON_2F 3002
-#define CPU_LOONGSON_3A 3003
+#define CPU_GS464	3003
+#define CPU_GS464E	3004
+#define CPU_GS264E	3005
 #define CPU_OCTEON	6501
 #define CPU_OCTEONP	6601
 #define CPU_OCTEON2	6502
@@ -1424,9 +1435,6 @@ cpu_is_member (int cpu, unsigned int mask)
 
     case CPU_LOONGSON_2F:
       return (mask & INSN_LOONGSON_2F) != 0;
-
-    case CPU_LOONGSON_3A:
-      return (mask & INSN_LOONGSON_3A) != 0;
 
     case CPU_OCTEON:
       return (mask & INSN_OCTEON) != 0;
@@ -1627,7 +1635,10 @@ enum
   M_LI_SS,
   M_LL_AB,
   M_LLD_AB,
+  M_LLDP_AB,
   M_LLE_AB,
+  M_LLWP_AB,
+  M_LLWPE_AB,
   M_LQ_AB,
   M_LW_AB,
   M_LWE_AB,
@@ -1678,7 +1689,10 @@ enum
   M_SAAD_AB,
   M_SC_AB,
   M_SCD_AB,
+  M_SCDP_AB,
   M_SCE_AB,
+  M_SCWP_AB,
+  M_SCWPE_AB,
   M_SD_AB,
   M_SDC1_AB,
   M_SDC2_AB,

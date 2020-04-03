@@ -1,5 +1,5 @@
 /* tc-riscv.c -- RISC-V assembler
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target.
@@ -28,8 +28,8 @@
 #include "itbl-ops.h"
 #include "dwarf2dbg.h"
 #include "dw2gencfi.h"
-#include "struc-symbol.h"
 
+#include "bfd/elfxx-riscv.h"
 #include "elf/riscv.h"
 #include "opcode/riscv.h"
 
@@ -59,6 +59,10 @@ struct riscv_cl_insn
 #define DEFAULT_ARCH "riscv64"
 #endif
 
+#ifndef DEFAULT_RISCV_ATTR
+#define DEFAULT_RISCV_ATTR 0
+#endif
+
 static const char default_arch[] = DEFAULT_ARCH;
 
 static unsigned xlen = 0; /* width of an x-register */
@@ -78,6 +82,7 @@ struct riscv_set_options
   int rvc; /* Generate RVC code.  */
   int rve; /* Generate RVE code.  */
   int relax; /* Emit relocs the linker is allowed to relax.  */
+  int arch_attr; /* Emit arch attribute.  */
 };
 
 static struct riscv_set_options riscv_opts =
@@ -86,6 +91,7 @@ static struct riscv_set_options riscv_opts =
   0,	/* rvc */
   0,	/* rve */
   1,	/* relax */
+  DEFAULT_RISCV_ATTR, /* arch_attr */
 };
 
 static void
@@ -103,52 +109,40 @@ riscv_set_rve (bfd_boolean rve_value)
   riscv_opts.rve = rve_value;
 }
 
-struct riscv_subset
-{
-  const char *name;
-
-  struct riscv_subset *next;
-};
-
-static struct riscv_subset *riscv_subsets;
+static riscv_subset_list_t riscv_subsets;
 
 static bfd_boolean
 riscv_subset_supports (const char *feature)
 {
-  struct riscv_subset *s;
-  char *p;
-  unsigned xlen_required = strtoul (feature, &p, 10);
+  if (riscv_opts.rvc && (strcasecmp (feature, "c") == 0))
+    return TRUE;
 
-  if (xlen_required && xlen != xlen_required)
-    return FALSE;
-
-  for (s = riscv_subsets; s != NULL; s = s->next)
-    if (strcasecmp (s->name, p) == 0)
-      return TRUE;
-
-  return FALSE;
+  return riscv_lookup_subset (&riscv_subsets, feature) != NULL;
 }
 
-static void
-riscv_clear_subsets (void)
+static bfd_boolean
+riscv_multi_subset_supports (enum riscv_insn_class insn_class)
 {
-  while (riscv_subsets != NULL)
+  switch (insn_class)
     {
-      struct riscv_subset *next = riscv_subsets->next;
-      free ((void *) riscv_subsets->name);
-      free (riscv_subsets);
-      riscv_subsets = next;
+    case INSN_CLASS_I: return riscv_subset_supports ("i");
+    case INSN_CLASS_C: return riscv_subset_supports ("c");
+    case INSN_CLASS_A: return riscv_subset_supports ("a");
+    case INSN_CLASS_M: return riscv_subset_supports ("m");
+    case INSN_CLASS_F: return riscv_subset_supports ("f");
+    case INSN_CLASS_D: return riscv_subset_supports ("d");
+    case INSN_CLASS_D_AND_C:
+      return riscv_subset_supports ("d") && riscv_subset_supports ("c");
+
+    case INSN_CLASS_F_AND_C:
+      return riscv_subset_supports ("f") && riscv_subset_supports ("c");
+
+    case INSN_CLASS_Q: return riscv_subset_supports ("q");
+
+    default:
+      as_fatal ("Unreachable");
+      return FALSE;
     }
-}
-
-static void
-riscv_add_subset (const char *subset)
-{
-  struct riscv_subset *s = xmalloc (sizeof *s);
-
-  s->name = xstrdup (subset);
-  s->next = riscv_subsets;
-  riscv_subsets = s;
 }
 
 /* Set which ISA and extensions are available.  */
@@ -156,97 +150,13 @@ riscv_add_subset (const char *subset)
 static void
 riscv_set_arch (const char *s)
 {
-  const char *all_subsets = "imafdqc";
-  char *extension = NULL;
-  const char *p = s;
+  riscv_parse_subset_t rps;
+  rps.subset_list = &riscv_subsets;
+  rps.error_handler = as_fatal;
+  rps.xlen = &xlen;
 
-  riscv_clear_subsets();
-
-  if (strncmp (p, "rv32", 4) == 0)
-    {
-      xlen = 32;
-      p += 4;
-    }
-  else if (strncmp (p, "rv64", 4) == 0)
-    {
-      xlen = 64;
-      p += 4;
-    }
-  else
-    as_fatal ("-march=%s: ISA string must begin with rv32 or rv64", s);
-
-  switch (*p)
-    {
-      case 'i':
-	break;
-
-      case 'e':
-	p++;
-	riscv_add_subset ("e");
-	riscv_add_subset ("i");
-
-	if (xlen > 32)
-	  as_fatal ("-march=%s: rv%de is not a valid base ISA", s, xlen);
-
-	break;
-
-      case 'g':
-	p++;
-	for ( ; *all_subsets != 'q'; all_subsets++)
-	  {
-	    const char subset[] = {*all_subsets, '\0'};
-	    riscv_add_subset (subset);
-	  }
-	break;
-
-      default:
-	as_fatal ("-march=%s: first ISA subset must be `e', `i' or `g'", s);
-    }
-
-  while (*p)
-    {
-      if (*p == 'x')
-	{
-	  char *subset = xstrdup (p);
-	  char *q = subset;
-
-	  while (*++q != '\0' && *q != '_')
-	    ;
-	  *q = '\0';
-
-	  if (extension)
-	    as_fatal ("-march=%s: only one non-standard extension is supported"
-		      " (found `%s' and `%s')", s, extension, subset);
-	  extension = subset;
-	  riscv_add_subset (subset);
-	  p += strlen (subset);
-	}
-      else if (*p == '_')
-	p++;
-      else if ((all_subsets = strchr (all_subsets, *p)) != NULL)
-	{
-	  const char subset[] = {*p, 0};
-	  riscv_add_subset (subset);
-	  all_subsets++;
-	  p++;
-	}
-      else
-	as_fatal ("-march=%s: unsupported ISA subset `%c'", s, *p);
-    }
-
-  if (riscv_subset_supports ("e") && riscv_subset_supports ("f"))
-    as_fatal ("-march=%s: rv32e does not support the `f' extension", s);
-
-  if (riscv_subset_supports ("d") && !riscv_subset_supports ("f"))
-    as_fatal ("-march=%s: `d' extension requires `f' extension", s);
-
-  if (riscv_subset_supports ("q") && !riscv_subset_supports ("d"))
-    as_fatal ("-march=%s: `q' extension requires `d' extension", s);
-
-  if (riscv_subset_supports ("q") && xlen < 64)
-    as_fatal ("-march=%s: rv32 does not support the `q' extension", s);
-
-  free (extension);
+  riscv_release_subset_list (&riscv_subsets);
+  riscv_parse_subset (&rps, s);
 }
 
 /* Handle of the OPCODE hash table.  */
@@ -278,6 +188,12 @@ const char EXP_CHARS[] = "eE";
 /* As in 0f12.456 */
 /* or    0d1.2345e12 */
 const char FLT_CHARS[] = "rRsSfFdDxXpP";
+
+/* Indicate we are already assemble any instructions or not.  */
+static bfd_boolean start_assemble = FALSE;
+
+/* Indicate arch attribute is explictly set.  */
+static bfd_boolean explicit_arch_attr = FALSE;
 
 /* Macros for encoding relaxation state for RVC branches and far jumps.  */
 #define RELAX_BRANCH_ENCODE(uncond, rvc, length)	\
@@ -530,12 +446,6 @@ opcode_name_lookup (char **s)
   return o;
 }
 
-struct regname
-{
-  const char *name;
-  unsigned int num;
-};
-
 enum reg_class
 {
   RCLASS_GPR,
@@ -573,7 +483,7 @@ hash_reg_names (enum reg_class class, const char * const names[], unsigned n)
 static unsigned int
 reg_lookup_internal (const char *s, enum reg_class class)
 {
-  struct regname *r = (struct regname *) hash_find (reg_names_hash, s);
+  void *r = hash_find (reg_names_hash, s);
 
   if (r == NULL || DECODE_REG_CLASS (r) != class)
     return -1;
@@ -617,6 +527,9 @@ arg_lookup (char **s, const char *const *array, size_t size, unsigned *regnop)
 {
   const char *p = strchr (*s, ',');
   size_t i, len = p ? (size_t)(p - *s) : strlen (*s);
+
+  if (len == 0)
+    return FALSE;
 
   for (i = 0; i < size; i++)
     if (array[i] != NULL && strncmp (array[i], *s, len) == 0)
@@ -680,6 +593,7 @@ validate_riscv_insn (const struct riscv_opcode *opc, int length)
 	  case 'v': used_bits |= ENCODE_RVC_IMM (-1U); break;
 	  case 'w': break; /* RS1S, constrained to equal RD */
 	  case 'x': break; /* RS2S, constrained to equal RD */
+	  case 'z': break; /* RS2S, contrained to be x0 */
 	  case 'K': used_bits |= ENCODE_RVC_ADDI4SPN_IMM (-1U); break;
 	  case 'L': used_bits |= ENCODE_RVC_ADDI16SP_IMM (-1U); break;
 	  case 'M': used_bits |= ENCODE_RVC_SWSP_IMM (-1U); break;
@@ -695,8 +609,10 @@ validate_riscv_insn (const struct riscv_opcode *opc, int length)
 	  case 'F': /* funct */
 	    switch (c = *p++)
 	      {
+		case '6': USE_BITS (OP_MASK_CFUNCT6, OP_SH_CFUNCT6); break;
 		case '4': USE_BITS (OP_MASK_CFUNCT4, OP_SH_CFUNCT4); break;
 		case '3': USE_BITS (OP_MASK_CFUNCT3, OP_SH_CFUNCT3); break;
+		case '2': USE_BITS (OP_MASK_CFUNCT2, OP_SH_CFUNCT2); break;
 		default:
 		  as_bad (_("internal: bad RISC-V opcode"
 			    " (unknown operand type `CF%c'): %s %s"),
@@ -741,6 +657,7 @@ validate_riscv_insn (const struct riscv_opcode *opc, int length)
       case '[': break;
       case ']': break;
       case '0': break;
+      case '1': break;
       case 'F': /* funct */
 	switch (c = *p++)
 	  {
@@ -852,6 +769,9 @@ md_begin (void)
   hash_reg_names (RCLASS_GPR, riscv_gpr_names_abi, NGPR);
   hash_reg_names (RCLASS_FPR, riscv_fpr_names_numeric, NFPR);
   hash_reg_names (RCLASS_FPR, riscv_fpr_names_abi, NFPR);
+
+  /* Add "fp" as an alias for "s0".  */
+  hash_reg_name (RCLASS_GPR, "fp", 8);
 
   opcode_names_hash = hash_new ();
   init_opcode_names_hash ();
@@ -1015,6 +935,29 @@ macro_build (expressionS *ep, const char *name, const char *fmt, ...)
   append_insn (&insn, ep, r);
 }
 
+/* Build an instruction created by a macro expansion.  Like md_assemble but
+   accept a printf-style format string and arguments.  */
+
+static void
+md_assemblef (const char *format, ...)
+{
+  char *buf = NULL;
+  va_list ap;
+  int r;
+
+  va_start (ap, format);
+
+  r = vasprintf (&buf, format, ap);
+
+  if (r < 0)
+    as_fatal (_("internal error: vasprintf failed"));
+
+  md_assemble (buf);
+  free(buf);
+
+  va_end (ap);
+}
+
 /* Sign-extend 32-bit mode constants that have bit 31 set and all higher bits
    unset.  */
 static void
@@ -1100,8 +1043,9 @@ static void
 load_const (int reg, expressionS *ep)
 {
   int shift = RISCV_IMM_BITS;
+  bfd_vma upper_imm, sign = (bfd_vma) 1 << (RISCV_IMM_BITS - 1);
   expressionS upper = *ep, lower = *ep;
-  lower.X_add_number = (int32_t) ep->X_add_number << (32-shift) >> (32-shift);
+  lower.X_add_number = ((ep->X_add_number & (sign + sign - 1)) ^ sign) - sign;
   upper.X_add_number -= lower.X_add_number;
 
   if (ep->X_op != O_constant)
@@ -1119,9 +1063,10 @@ load_const (int reg, expressionS *ep)
       upper.X_add_number = (int64_t) upper.X_add_number >> shift;
       load_const (reg, &upper);
 
-      macro_build (NULL, "slli", "d,s,>", reg, reg, shift);
+      md_assemblef ("slli x%d, x%d, 0x%x", reg, reg, shift);
       if (lower.X_add_number != 0)
-	macro_build (&lower, "addi", "d,s,j", reg, reg, BFD_RELOC_RISCV_LO12_I);
+	md_assemblef ("addi x%d, x%d, %" BFD_VMA_FMT "d", reg, reg,
+		      lower.X_add_number);
     }
   else
     {
@@ -1130,13 +1075,16 @@ load_const (int reg, expressionS *ep)
 
       if (upper.X_add_number != 0)
 	{
-	  macro_build (ep, "lui", "d,u", reg, BFD_RELOC_RISCV_HI20);
+	  /* Discard low part and zero-extend upper immediate.  */
+	  upper_imm = ((uint32_t)upper.X_add_number >> shift);
+
+	  md_assemblef ("lui x%d, 0x%" BFD_VMA_FMT "x", reg, upper_imm);
 	  hi_reg = reg;
 	}
 
       if (lower.X_add_number != 0 || hi_reg == 0)
-	macro_build (ep, ADD32_INSN, "d,s,j", reg, hi_reg,
-		     BFD_RELOC_RISCV_LO12_I);
+	md_assemblef ("%s x%d, x%d, %" BFD_VMA_FMT "d", ADD32_INSN, reg, hi_reg,
+		      lower.X_add_number);
     }
 }
 
@@ -1299,6 +1247,11 @@ static const struct percent_op_match percent_op_rtype[] =
   {0, 0}
 };
 
+static const struct percent_op_match percent_op_null[] =
+{
+  {0, 0}
+};
+
 /* Return true if *STR points to a relocation operator.  When returning true,
    move *STR over the operator and store its relocation code in *RELOC.
    Leave both *STR and *RELOC alone when returning false.  */
@@ -1358,11 +1311,15 @@ my_getSmallExpression (expressionS *ep, bfd_reloc_code_real_type *reloc,
   unsigned crux_depth, str_depth, regno;
   char *crux;
 
-  /* First, check for integer registers.  */
+  /* First, check for integer registers.  No callers can accept a reg, but
+     we need to avoid accidentally creating a useless undefined symbol below,
+     if this is an instruction pattern that can't match.  A glibc build fails
+     if this is removed.  */
   if (reg_lookup (&str, RCLASS_GPR, &regno))
     {
       ep->X_op = O_register;
       ep->X_add_number = regno;
+      expr_end = str;
       return 0;
     }
 
@@ -1474,7 +1431,10 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
   argsStart = s;
   for ( ; insn && insn->name && strcmp (insn->name, str) == 0; insn++)
     {
-      if (!riscv_subset_supports (insn->subset))
+      if ((insn->xlen_requirement != 0) && (xlen != insn->xlen_requirement))
+	continue;
+
+      if (!riscv_multi_subset_supports (insn->insn_class))
 	continue;
 
       create_insn (ip, insn);
@@ -1546,6 +1506,11 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		case 'c': /* RS1, constrained to equal sp.  */
 		  if (!reg_lookup (&s, RCLASS_GPR, &regno)
 		      || regno != X_SP)
+		    break;
+		  continue;
+		case 'z': /* RS2, contrained to equal x0.  */
+		  if (!reg_lookup (&s, RCLASS_GPR, &regno)
+		      || regno != 0)
 		    break;
 		  continue;
 		case '>':
@@ -1726,6 +1691,21 @@ rvc_lui:
 		case 'F':
 		  switch (*++args)
 		    {
+		      case '6':
+		        if (my_getSmallExpression (imm_expr, imm_reloc, s, p)
+			    || imm_expr->X_op != O_constant
+			    || imm_expr->X_add_number < 0
+			    || imm_expr->X_add_number >= 64)
+			  {
+			    as_bad (_("bad value for funct6 field, "
+				      "value must be 0...64"));
+			    break;
+			  }
+
+			INSERT_OPERAND (CFUNCT6, *ip, imm_expr->X_add_number);
+			imm_expr->X_op = O_absent;
+			s = expr_end;
+			continue;
 		      case '4':
 		        if (my_getSmallExpression (imm_expr, imm_reloc, s, p)
 			    || imm_expr->X_op != O_constant
@@ -1752,6 +1732,20 @@ rvc_lui:
 			    break;
 			  }
 			INSERT_OPERAND (CFUNCT3, *ip, imm_expr->X_add_number);
+			imm_expr->X_op = O_absent;
+			s = expr_end;
+			continue;
+		      case '2':
+			if (my_getSmallExpression (imm_expr, imm_reloc, s, p)
+			    || imm_expr->X_op != O_constant
+			    || imm_expr->X_add_number < 0
+			    || imm_expr->X_add_number >= 4)
+			  {
+			    as_bad (_("bad value for funct2 field, "
+				      "value must be 0...3"));
+			    break;
+			  }
+			INSERT_OPERAND (CFUNCT2, *ip, imm_expr->X_add_number);
 			imm_expr->X_op = O_absent;
 			s = expr_end;
 			continue;
@@ -1947,8 +1941,8 @@ rvc_lui:
 	      continue;
 
 	    case 'j': /* Sign-extended immediate.  */
-	      *imm_reloc = BFD_RELOC_RISCV_LO12_I;
 	      p = percent_op_itype;
+	      *imm_reloc = BFD_RELOC_RISCV_LO12_I;
 	      goto alu_op;
 	    case 'q': /* Store displacement.  */
 	      p = percent_op_stype;
@@ -1958,9 +1952,11 @@ rvc_lui:
 	      p = percent_op_itype;
 	      *imm_reloc = BFD_RELOC_RISCV_LO12_I;
 	      goto load_store;
-	    case '0': /* AMO "displacement," which must be zero.  */
+	    case '1': /* 4-operand add, must be %tprel_add.  */
 	      p = percent_op_rtype;
-	      *imm_reloc = BFD_RELOC_UNUSED;
+	      goto alu_op;
+	    case '0': /* AMO "displacement," which must be zero.  */
+	      p = percent_op_null;
 load_store:
 	      if (riscv_handle_implicit_zero_offset (imm_expr, s))
 		continue;
@@ -1973,6 +1969,7 @@ alu_op:
 		  normalize_constant_expr (imm_expr);
 		  if (imm_expr->X_op != O_constant
 		      || (*args == '0' && imm_expr->X_add_number != 0)
+		      || (*args == '1')
 		      || imm_expr->X_add_number >= (signed)RISCV_IMM_REACH/2
 		      || imm_expr->X_add_number < -(signed)RISCV_IMM_REACH/2)
 		    break;
@@ -1990,9 +1987,11 @@ branch:
 
 	    case 'u':		/* Upper 20 bits.  */
 	      p = percent_op_utype;
-	      if (!my_getSmallExpression (imm_expr, imm_reloc, s, p)
-		  && imm_expr->X_op == O_constant)
+	      if (!my_getSmallExpression (imm_expr, imm_reloc, s, p))
 		{
+		  if (imm_expr->X_op != O_constant)
+		    break;
+
 		  if (imm_expr->X_add_number < 0
 		      || imm_expr->X_add_number >= (signed)RISCV_BIGIMM_REACH)
 		    as_bad (_("lui expression not in range 0..1048575"));
@@ -2150,6 +2149,8 @@ md_assemble (char *str)
 
   const char *error = riscv_ip (str, &insn, &imm_expr, &imm_reloc, op_hash);
 
+  start_assemble = TRUE;
+
   if (error)
     {
       as_bad ("%s `%s'", error, str);
@@ -2184,6 +2185,8 @@ enum options
   OPTION_MABI,
   OPTION_RELAX,
   OPTION_NO_RELAX,
+  OPTION_ARCH_ATTR,
+  OPTION_NO_ARCH_ATTR,
   OPTION_END_OF_ENUM
 };
 
@@ -2196,6 +2199,8 @@ struct option md_longopts[] =
   {"mabi", required_argument, NULL, OPTION_MABI},
   {"mrelax", no_argument, NULL, OPTION_RELAX},
   {"mno-relax", no_argument, NULL, OPTION_NO_RELAX},
+  {"march-attr", no_argument, NULL, OPTION_ARCH_ATTR},
+  {"mno-arch-attr", no_argument, NULL, OPTION_NO_ARCH_ATTR},
 
   {NULL, no_argument, NULL, 0}
 };
@@ -2266,6 +2271,14 @@ md_parse_option (int c, const char *arg)
       riscv_opts.relax = FALSE;
       break;
 
+    case OPTION_ARCH_ATTR:
+      riscv_opts.arch_attr = TRUE;
+      break;
+
+    case OPTION_NO_ARCH_ATTR:
+      riscv_opts.arch_attr = FALSE;
+      break;
+
     default:
       return 0;
     }
@@ -2286,15 +2299,13 @@ riscv_after_parse_args (void)
 	as_bad ("unknown default architecture `%s'", default_arch);
     }
 
-  if (riscv_subsets == NULL)
+  if (riscv_subsets.head == NULL)
     riscv_set_arch (xlen == 64 ? "rv64g" : "rv32g");
 
   /* Add the RVC extension, regardless of -march, to support .option rvc.  */
   riscv_set_rvc (FALSE);
   if (riscv_subset_supports ("c"))
     riscv_set_rvc (TRUE);
-  else
-    riscv_add_subset ("c");
 
   /* Enable RVE if specified by the -march option.  */
   riscv_set_rve (FALSE);
@@ -2311,12 +2322,12 @@ riscv_after_parse_args (void)
 
   if (float_abi == FLOAT_ABI_DEFAULT)
     {
-      struct riscv_subset *subset;
+      riscv_subset_t *subset;
 
       /* Assume soft-float unless D extension is present.  */
       float_abi = FLOAT_ABI_SOFT;
 
-      for (subset = riscv_subsets; subset != NULL; subset = subset->next)
+      for (subset = riscv_subsets.head; subset != NULL; subset = subset->next)
 	{
 	  if (strcasecmp (subset->name, "D") == 0)
 	    float_abi = FLOAT_ABI_DOUBLE;
@@ -2330,6 +2341,12 @@ riscv_after_parse_args (void)
 
   /* Insert float_abi into the EF_RISCV_FLOAT_ABI field of elf_flags.  */
   elf_flags |= float_abi * (EF_RISCV_FLOAT_ABI & ~(EF_RISCV_FLOAT_ABI << 1));
+
+  /* If the CIE to be produced has not been overridden on the command line,
+     then produce version 3 by default.  This allows us to use the full
+     range of registers in a .cfi_return_column directive.  */
+  if (flag_dwarf_cie_version == -1)
+    flag_dwarf_cie_version = 3;
 }
 
 long
@@ -2604,14 +2621,13 @@ riscv_pre_output_hook (void)
 	    if (frag->fr_type == rs_cfa)
 	      {
 		expressionS exp;
+		expressionS *symval;
 
-		symbolS *add_symbol = frag->fr_symbol->sy_value.X_add_symbol;
-		symbolS *op_symbol = frag->fr_symbol->sy_value.X_op_symbol;
-
+		symval = symbol_get_value_expression (frag->fr_symbol);
 		exp.X_op = O_subtract;
-		exp.X_add_symbol = add_symbol;
+		exp.X_add_symbol = symval->X_add_symbol;
 		exp.X_add_number = 0;
-		exp.X_op_symbol = op_symbol;
+		exp.X_op_symbol = symval->X_op_symbol;
 
 		fix_new_exp (frag, (int) frag->fr_offset, 1, &exp, 0,
 			     BFD_RELOC_RISCV_CFA);
@@ -3004,6 +3020,8 @@ RISC-V options:\n\
   -mabi=ABI      set the RISC-V ABI\n\
   -mrelax        enable relax (default)\n\
   -mno-relax     disable relax\n\
+  -march-attr    generate RISC-V arch attribute\n\
+  -mno-arch-attr don't generate RISC-V arch attribute\n\
 "));
 }
 
@@ -3024,6 +3042,10 @@ tc_riscv_regname_to_dw2regnum (char *regname)
 
   if ((reg = reg_lookup_internal (regname, RCLASS_FPR)) >= 0)
     return reg + 32;
+
+  /* CSRs are numbered 4096 -> 8191.  */
+  if ((reg = reg_lookup_internal (regname, RCLASS_CSR)) >= 0)
+    return reg + 4096;
 
   as_bad (_("unknown register `%s'"), regname);
   return -1;
@@ -3087,6 +3109,104 @@ s_riscv_insn (int x ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 }
 
+/* Update arch attributes.  */
+
+static void
+riscv_write_out_arch_attr (void)
+{
+  const char *arch_str = riscv_arch_str (xlen, &riscv_subsets);
+
+  bfd_elf_add_proc_attr_string (stdoutput, Tag_RISCV_arch, arch_str);
+
+  xfree ((void *)arch_str);
+}
+
+/* Add the default contents for the .riscv.attributes section.  */
+
+static void
+riscv_set_public_attributes (void)
+{
+  if (riscv_opts.arch_attr || explicit_arch_attr)
+    /* Re-write arch attribute to normalize the arch string.  */
+    riscv_write_out_arch_attr ();
+}
+
+/* Called after all assembly has been done.  */
+
+void
+riscv_md_end (void)
+{
+  riscv_set_public_attributes ();
+}
+
+/* Given a symbolic attribute NAME, return the proper integer value.
+   Returns -1 if the attribute is not known.  */
+
+int
+riscv_convert_symbolic_attribute (const char *name)
+{
+  static const struct
+  {
+    const char * name;
+    const int    tag;
+  }
+  attribute_table[] =
+    {
+      /* When you modify this table you should
+	 also modify the list in doc/c-riscv.texi.  */
+#define T(tag) {#tag, Tag_RISCV_##tag},  {"Tag_RISCV_" #tag, Tag_RISCV_##tag}
+      T(arch),
+      T(priv_spec),
+      T(priv_spec_minor),
+      T(priv_spec_revision),
+      T(unaligned_access),
+      T(stack_align),
+#undef T
+    };
+
+  unsigned int i;
+
+  if (name == NULL)
+    return -1;
+
+  for (i = 0; i < ARRAY_SIZE (attribute_table); i++)
+    if (strcmp (name, attribute_table[i].name) == 0)
+      return attribute_table[i].tag;
+
+  return -1;
+}
+
+/* Parse a .attribute directive.  */
+
+static void
+s_riscv_attribute (int ignored ATTRIBUTE_UNUSED)
+{
+  int tag = obj_elf_vendor_attribute (OBJ_ATTR_PROC);
+
+  if (tag == Tag_RISCV_arch)
+    {
+      unsigned old_xlen = xlen;
+
+      explicit_arch_attr = TRUE;
+      obj_attribute *attr;
+      attr = elf_known_obj_attributes_proc (stdoutput);
+      if (!start_assemble)
+	riscv_set_arch (attr[Tag_RISCV_arch].s);
+      else
+	as_fatal (_(".attribute arch must set before any instructions"));
+
+      if (old_xlen != xlen)
+	{
+	  /* We must re-init bfd again if xlen is changed.  */
+	  unsigned long mach = xlen == 64 ? bfd_mach_riscv64 : bfd_mach_riscv32;
+	  bfd_find_target (riscv_target_format (), stdoutput);
+
+	  if (! bfd_set_arch_mach (stdoutput, bfd_arch_riscv, mach))
+	    as_warn (_("Could not set architecture and machine"));
+	}
+    }
+}
+
 /* Pseudo-op table.  */
 
 static const pseudo_typeS riscv_pseudo_table[] =
@@ -3102,6 +3222,7 @@ static const pseudo_typeS riscv_pseudo_table[] =
   {"uleb128", s_riscv_leb128, 0},
   {"sleb128", s_riscv_leb128, 1},
   {"insn", s_riscv_insn, 0},
+  {"attribute", s_riscv_attribute, 0},
 
   { NULL, NULL, 0 },
 };

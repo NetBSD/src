@@ -1,5 +1,5 @@
 /* ARM ELF support for BFD.
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,6 +23,8 @@
 #include "elf/reloc-macros.h"
 
 /* Processor specific flags for the ELF header e_flags field.  */
+
+/* Old ABI (ie GNU pre EABI).  These are deprecated.  */
 #define EF_ARM_RELEXEC     0x01
 #define EF_ARM_INTERWORK   0x04
 #define EF_ARM_APCS_26     0x08
@@ -38,13 +40,12 @@
 /* Frame unwind information */
 #define PT_ARM_EXIDX (PT_LOPROC + 1)
 
-/* Other constants defined in the ARM ELF spec. version B-01.  */
+/* Old ARM ELF spec. version B-01.  Mostly deprecated.  */
 #define EF_ARM_SYMSARESORTED 0x04	/* NB conflicts with EF_INTERWORK.  */
 #define EF_ARM_DYNSYMSUSESEGIDX 0x08	/* NB conflicts with EF_APCS26.  */
 #define EF_ARM_MAPSYMSFIRST 0x10	/* NB conflicts with EF_APCS_FLOAT.  */
-#define EF_ARM_EABIMASK      0xFF000000
 
-/* New constants defined in the ARM ELF spec. version XXX.
+/* New constants defined in the ARM ELF spec. version XXX (AAELF).
    Only valid in conjunction with EF_ARM_EABI_VER5. */
 #define EF_ARM_ABI_FLOAT_SOFT 0x200	/* NB conflicts with EF_ARM_SOFT_FLOAT.  */
 #define EF_ARM_ABI_FLOAT_HARD 0x400	/* NB conflicts with EF_ARM_VFP_FLOAT.  */
@@ -53,6 +54,7 @@
 #define EF_ARM_BE8	    0x00800000
 #define EF_ARM_LE8	    0x00400000
 
+#define EF_ARM_EABIMASK      0xFF000000
 #define EF_ARM_EABI_VERSION(flags) ((flags) & EF_ARM_EABIMASK)
 #define EF_ARM_EABI_UNKNOWN  0x00000000
 #define EF_ARM_EABI_VER1     0x01000000
@@ -109,7 +111,8 @@
 #define TAG_CPU_ARCH_V8R	15
 #define TAG_CPU_ARCH_V8M_BASE	16
 #define TAG_CPU_ARCH_V8M_MAIN	17
-#define MAX_TAG_CPU_ARCH	TAG_CPU_ARCH_V8M_MAIN
+#define TAG_CPU_ARCH_V8_1M_MAIN 21
+#define MAX_TAG_CPU_ARCH	TAG_CPU_ARCH_V8_1M_MAIN
 /* Pseudo-architecture to allow objects to be compatible with the subset of
    armv4t and armv6-m.  This value should never be stored in object files.  */
 #define TAG_CPU_ARCH_V4T_PLUS_V6_M (MAX_TAG_CPU_ARCH + 1)
@@ -238,6 +241,9 @@ START_RELOC_NUMBERS (elf_arm_reloc_type)
   RELOC_NUMBER (R_ARM_THM_ALU_ABS_G1_NC,133)
   RELOC_NUMBER (R_ARM_THM_ALU_ABS_G2_NC,134)
   RELOC_NUMBER (R_ARM_THM_ALU_ABS_G3_NC,135)
+  RELOC_NUMBER (R_ARM_THM_BF16,		136)
+  RELOC_NUMBER (R_ARM_THM_BF12,		137)
+  RELOC_NUMBER (R_ARM_THM_BF18,		138)
 
   RELOC_NUMBER (R_ARM_IRELATIVE,      	160)
   RELOC_NUMBER (R_ARM_GOTFUNCDESC,    	161)
@@ -320,6 +326,7 @@ enum
   Tag_undefined_43,
   Tag_DIV_use,
   Tag_DSP_extension = 46,
+  Tag_MVE_arch = 48,
   Tag_nodefaults = 64,
   Tag_also_compatible_with,
   Tag_T2EE_use,
