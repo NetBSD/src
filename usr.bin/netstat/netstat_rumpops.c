@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat_rumpops.c,v 1.3 2020/04/03 16:20:51 martin Exp $	*/
+/*	$NetBSD: netstat_rumpops.c,v 1.4 2020/04/03 16:41:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,4 +26,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../../sbin/route/route_rumpops.c"
+#include "route_rumpops.c"
