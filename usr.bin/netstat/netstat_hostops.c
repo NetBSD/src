@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat_hostops.c,v 1.3 2020/04/03 16:20:51 martin Exp $	*/
+/*	$NetBSD: netstat_hostops.c,v 1.4 2020/04/03 16:41:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,9 +26,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: netstat_hostops.c,v 1.3 2020/04/03 16:20:51 martin Exp $");
-#endif /* !lint */
-
-#include "../../sbin/route/route_hostops.c"
+#include "route_hostops.c"
