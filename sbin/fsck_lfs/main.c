@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.54 2019/08/15 03:10:43 kamil Exp $	 */
+/* $NetBSD: main.c,v 1.55 2020/04/03 19:36:33 joerg Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -53,12 +53,12 @@
 #include "fsutil.h"
 #include "exitvalues.h"
 
+int	Uflag;
 
 static int argtoi(int, const char *, const char *, int);
 static int checkfilesys(const char *, char *, long, int);
 static void usage(void);
 static void efun(int, const char *, ...);
-extern void (*panic_func)(int, const char *, va_list);
 
 static void
 efun(int eval, const char *fmt, ...)

@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.27 2015/09/01 06:15:02 dholland Exp $	 */
+/* $NetBSD: pass4.c,v 1.28 2020/04/03 19:36:33 joerg Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -45,7 +45,6 @@
 #include <string.h>
 
 #include "bufcache.h"
-#include "vnode.h"
 #include "lfs_user.h"
 
 #include "fsutil.h"
