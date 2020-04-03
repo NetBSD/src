@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.18 2019/12/23 13:35:37 thorpej Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.19 2020/04/03 22:20:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.18 2019/12/23 13:35:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.19 2020/04/03 22:20:36 ad Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-
 #include <sys/cpu.h>
+#include <sys/device.h>
 
 #include <xen/evtchn.h>
 #include <xen/xenfunc.h>
@@ -65,6 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.18 2019/12/23 13:35:37 thorpej Exp $"
 
 #if NPCI > 0
 #include <dev/pci/ppbreg.h>
+#endif
+
+#if defined(MULTIPROCESSOR)
+static const char *xen_ipi_names[XEN_NIPIS] = XEN_IPI_NAMES;
 #endif
 
 /*
@@ -367,6 +373,12 @@ xen_cpu_intr_init(struct cpu_info *ci)
 	 */
 	ci->ci_intrstack = (char *)istack + redzone_const_or_zero(PAGE_SIZE) +
 	    INTRSTACKSIZE - 33 * sizeof(register_t);
+#endif
+
+#ifdef MULTIPROCESSOR
+	for (i = 0; i < XEN_NIPIS; i++)
+		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_MISC,
+		    NULL, device_xname(ci->ci_dev), xen_ipi_names[i]);
 #endif
 
 	ci->ci_idepth = -1;
