@@ -1,5 +1,5 @@
 /* PEF support for BFD.
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -56,6 +56,7 @@
 #define bfd_pef_bfd_lookup_section_flags	    bfd_generic_lookup_section_flags
 #define bfd_pef_bfd_merge_sections		    bfd_generic_merge_sections
 #define bfd_pef_bfd_is_group_section		    bfd_generic_is_group_section
+#define bfd_pef_bfd_group_name			    bfd_generic_group_name
 #define bfd_pef_bfd_discard_group		    bfd_generic_discard_group
 #define bfd_pef_section_already_linked		    _bfd_generic_section_already_linked
 #define bfd_pef_bfd_define_common_symbol	    bfd_generic_define_common_symbol
@@ -220,15 +221,16 @@ bfd_pef_print_symbol (bfd *abfd,
       fprintf (file, " %-5s %s", symbol->section->name, symbol->name);
       if (CONST_STRNEQ (symbol->name, "__traceback_"))
 	{
-	  unsigned char *buf = xmalloc (symbol->udata.i);
+	  unsigned char *buf;
 	  size_t offset = symbol->value + 4;
 	  size_t len = symbol->udata.i;
-	  int ret;
 
-	  bfd_get_section_contents (abfd, symbol->section, buf, offset, len);
-	  ret = bfd_pef_parse_traceback_table (abfd, symbol->section, buf,
-					       len, 0, NULL, file);
-	  if (ret < 0)
+	  buf = bfd_malloc (len);
+	  if (buf == NULL
+	      || !bfd_get_section_contents (abfd, symbol->section, buf,
+					    offset, len)
+	      || bfd_pef_parse_traceback_table (abfd, symbol->section, buf,
+						len, 0, NULL, file) < 0)
 	    fprintf (file, " [ERROR]");
 	  free (buf);
 	}
@@ -445,6 +447,8 @@ bfd_pef_print_loader_section (bfd *abfd, FILE *file)
 
   loaderlen = loadersec->size;
   loaderbuf = bfd_malloc (loaderlen);
+  if (loaderbuf == NULL)
+    return -1;
 
   if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) < 0
       || bfd_bread ((void *) loaderbuf, loaderlen, abfd) != loaderlen
@@ -476,6 +480,9 @@ bfd_pef_scan_start_address (bfd *abfd)
 
   loaderlen = loadersec->size;
   loaderbuf = bfd_malloc (loaderlen);
+  if (loaderbuf == NULL)
+    goto end;
+
   if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) < 0)
     goto error;
   if (bfd_bread ((void *) loaderbuf, loaderlen, abfd) != loaderlen)
@@ -751,6 +758,8 @@ bfd_pef_parse_function_stubs (bfd *abfd,
     (header.imported_library_count * sizeof (bfd_pef_imported_library));
   imports = bfd_malloc
     (header.total_imported_symbol_count * sizeof (bfd_pef_imported_symbol));
+  if (libraries == NULL || imports == NULL)
+    goto error;
 
   if (loaderlen < (56 + (header.imported_library_count * 24)))
     goto error;
@@ -797,7 +806,7 @@ bfd_pef_parse_function_stubs (bfd *abfd,
 	  codepos += 4;
 	}
 
-      if ((codepos + 4) > codelen)
+      if ((codepos + 24) > codelen)
 	break;
 
       ret = bfd_pef_parse_function_stub (abfd, codebuf + codepos, 24, &sym_index);
@@ -895,6 +904,8 @@ bfd_pef_parse_symbols (bfd *abfd, asymbol **csym)
     {
       codelen = codesec->size;
       codebuf = bfd_malloc (codelen);
+      if (codebuf == NULL)
+	goto end;
       if (bfd_seek (abfd, codesec->filepos, SEEK_SET) < 0)
 	goto end;
       if (bfd_bread ((void *) codebuf, codelen, abfd) != codelen)
@@ -906,6 +917,8 @@ bfd_pef_parse_symbols (bfd *abfd, asymbol **csym)
     {
       loaderlen = loadersec->size;
       loaderbuf = bfd_malloc (loaderlen);
+      if (loaderbuf == NULL)
+	goto end;
       if (bfd_seek (abfd, loadersec->filepos, SEEK_SET) < 0)
 	goto end;
       if (bfd_bread ((void *) loaderbuf, loaderlen, abfd) != loaderlen)

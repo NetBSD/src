@@ -1,6 +1,6 @@
 // plugin.cc -- plugin manager for gold      -*- C++ -*-
 
-// Copyright (C) 2008-2018 Free Software Foundation, Inc.
+// Copyright (C) 2008-2020 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.
@@ -508,8 +508,20 @@ Plugin_recorder::init()
   // Create a temporary directory where we can stash the log and
   // copies of replacement files.
   char dir_template[] = "gold-recording-XXXXXX";
+#ifdef HAVE_MKDTEMP
   if (mkdtemp(dir_template) == NULL)
     return false;
+#else
+  if (mktemp(dir_template) == NULL)
+    return false;
+#if defined (_WIN32) && !defined (__CYGWIN32__)
+  if (mkdir(dir_template) != 0)
+    return false;
+#else
+  if (mkdir(dir_template, 0700) != 0)
+    return false;
+#endif
+#endif
 
   size_t len = strlen(dir_template) + 1;
   char* tempdir = new char[len];
@@ -562,8 +574,10 @@ link_or_copy_file(const char* inname, const char* outname)
 {
   static char buf[4096];
 
+#ifdef HAVE_LINK
   if (::link(inname, outname) == 0)
     return true;
+#endif
 
   int in = ::open(inname, O_RDONLY);
   if (in < 0)

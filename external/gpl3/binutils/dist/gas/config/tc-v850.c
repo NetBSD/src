@@ -1,5 +1,5 @@
 /* tc-v850.c -- Assembler code for the NEC V850
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -229,7 +229,7 @@ do_v850_seg (int i, subsegT sub)
   else
     {
       seg->s = subseg_new (seg->name, sub);
-      bfd_set_section_flags (stdoutput, seg->s, seg->flags);
+      bfd_set_section_flags (seg->s, seg->flags);
       if ((seg->flags & SEC_LOAD) == 0)
 	seg_info (seg->s)->bss = 1;
     }
@@ -1878,7 +1878,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
 valueT
 md_section_align (asection *seg, valueT addr)
 {
-  int align = bfd_get_section_alignment (stdoutput, seg);
+  int align = bfd_section_alignment (seg);
   return ((addr + (1 << align) - 1) & -(1 << align));
 }
 
@@ -3740,8 +3740,8 @@ v850_md_end (void)
   enum v850_notes id;
 
   note_sec = subseg_new (V850_NOTE_SECNAME, 0);
-  bfd_set_section_flags (stdoutput, note_sec, SEC_HAS_CONTENTS | SEC_READONLY | SEC_MERGE);
-  bfd_set_section_alignment (stdoutput, note_sec, 2);
+  bfd_set_section_flags (note_sec, SEC_HAS_CONTENTS | SEC_READONLY | SEC_MERGE);
+  bfd_set_section_alignment (note_sec, 2);
 
   /* Provide default values for all of the notes.  */
   for (id = V850_NOTE_ALIGNMENT; id <= NUM_V850_NOTES; id++)

@@ -1,6 +1,6 @@
 dnl Common configure.ac fragment
 dnl
-dnl   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -47,22 +47,22 @@ GCC_WARN_CFLAGS="-W -Wall -Wstrict-prototypes -Wmissing-prototypes"
 GCC_WARN_CFLAGS_FOR_BUILD="-W -Wall -Wstrict-prototypes -Wmissing-prototypes"
 
 # Add -Wshadow if the compiler is a sufficiently recent version of GCC.
-AC_EGREP_CPP([^[0-3]$],[__GNUC__],,GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wshadow")
+AC_EGREP_CPP([(^[0-3]$|^__GNUC__$)],[__GNUC__],,GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wshadow")
 
 # Add -Wstack-usage if the compiler is a sufficiently recent version of GCC.
-AC_EGREP_CPP([^[0-4]$],[__GNUC__],,GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wstack-usage=262144")
+AC_EGREP_CPP([(^[0-4]$|^__GNUC__$)],[__GNUC__],,GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wstack-usage=262144")
 
 # Set WARN_WRITE_STRINGS if the compiler supports -Wwrite-strings.
 WARN_WRITE_STRINGS=""
-AC_EGREP_CPP([^[0-3]$],[__GNUC__],,WARN_WRITE_STRINGS="-Wwrite-strings")
+AC_EGREP_CPP([(^[0-3]$|^__GNUC__$)],[__GNUC__],,WARN_WRITE_STRINGS="-Wwrite-strings")
 
 # Verify CC_FOR_BUILD to be compatible with warning flags
 
 # Add -Wshadow if the compiler is a sufficiently recent version of GCC.
-AC_EGREP_CPP_FOR_BUILD([^[0-3]$],[__GNUC__],,GCC_WARN_CFLAGS_FOR_BUILD="$GCC_WARN_CFLAGS_FOR_BUILD -Wshadow")
+AC_EGREP_CPP_FOR_BUILD([(^[0-3]$|^__GNUC__$)],[__GNUC__],,GCC_WARN_CFLAGS_FOR_BUILD="$GCC_WARN_CFLAGS_FOR_BUILD -Wshadow")
 
 # Add -Wstack-usage if the compiler is a sufficiently recent version of GCC.
-AC_EGREP_CPP_FOR_BUILD([^[0-4]$],[__GNUC__],,GCC_WARN_CFLAGS_FOR_BUILD="$GCC_WARN_CFLAGS_FOR_BUILD -Wstack-usage=262144")
+AC_EGREP_CPP_FOR_BUILD([(^[0-4]$|^__GNUC__$)],[__GNUC__],,GCC_WARN_CFLAGS_FOR_BUILD="$GCC_WARN_CFLAGS_FOR_BUILD -Wstack-usage=262144")
 
 AC_ARG_ENABLE(werror,
   [  --enable-werror         treat compile warnings as errors],

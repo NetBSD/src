@@ -6,7 +6,9 @@ ARCH=mep
 MAXPAGESIZE=256
 ENTRY=_start
 EMBEDDED=yes
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
+
+if test -n "${RELOCATING}"; then
 DATA_START_SYMBOLS='__data_start = . ;'
 OTHER_GOT_SYMBOLS='
   . = ALIGN(4);
@@ -53,3 +55,4 @@ OTHER_BSS_SECTIONS='
   __assert_near_size = ASSERT (. <= 0x1000000, "near section overflow");
   .farbss : { PROVIDE (__farbss_start = .); *(.farbss) *(.farbss.*) PROVIDE (__farbss_end = .); }
 '
+fi

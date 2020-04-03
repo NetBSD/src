@@ -1,5 +1,5 @@
 /* Nios II R2 opcode list for GAS, the GNU assembler.
-   Copyright (C) 2013-2018 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
    Contributed by Mentor Graphics, Inc.
 
    This file is part of the GNU opcodes library.

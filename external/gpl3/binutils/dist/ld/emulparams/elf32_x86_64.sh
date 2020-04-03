@@ -1,9 +1,9 @@
-. ${srcdir}/emulparams/plt_unwind.sh
-. ${srcdir}/emulparams/extern_protected_data.sh
-. ${srcdir}/emulparams/dynamic_undefined_weak.sh
-. ${srcdir}/emulparams/reloc_overflow.sh
-. ${srcdir}/emulparams/call_nop.sh
-. ${srcdir}/emulparams/cet.sh
+source_sh ${srcdir}/emulparams/plt_unwind.sh
+source_sh ${srcdir}/emulparams/extern_protected_data.sh
+source_sh ${srcdir}/emulparams/dynamic_undefined_weak.sh
+source_sh ${srcdir}/emulparams/reloc_overflow.sh
+source_sh ${srcdir}/emulparams/call_nop.sh
+source_sh ${srcdir}/emulparams/cet.sh
 SCRIPT_NAME=elf
 ELFSIZE=32
 OUTPUT_FORMAT="elf32-x86-64"
@@ -13,7 +13,8 @@ MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
 COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
 ARCH="i386:x64-32"
 MACHINE=
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
+EXTRA_EM_FILE="elf-x86"
 GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
 NO_SMALL_DATA=yes

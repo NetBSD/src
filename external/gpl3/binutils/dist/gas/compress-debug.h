@@ -1,5 +1,5 @@
 /* compress-debug.h - Header file for compressed debug sections.
-   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

@@ -1,6 +1,6 @@
 /* Opcode table for the TI MSP430 microcontrollers
 
-   Copyright (C) 2002-2018 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Dmitry Diky <diwil@mail.ru>
    
    This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,18 @@
 #ifndef __MSP430_H_
 #define __MSP430_H_
 
+enum msp430_expp_e
+{
+  MSP_EXPP_ALL = 0,	/* Use full the value of the expression - default.  */
+  MSP_EXPP_LO,		/* Extract least significant word from expression.  */
+  MSP_EXPP_HI,		/* Extract 2nd word from expression.  */
+  MSP_EXPP_LLO,		/* Extract least significant word from an
+			   immediate value.  */
+  MSP_EXPP_LHI,		/* Extract 2nd word from an immediate value.  */
+  MSP_EXPP_HLO,		/* Extract 3rd word from an immediate value.  */
+  MSP_EXPP_HHI,		/* Extract 4th word from an immediate value.  */
+};
+
 struct msp430_operand_s
 {
   int ol;	/* Operand length words.  */
@@ -28,6 +40,9 @@ struct msp430_operand_s
   int reg;	/* Register.  */
   int mode;	/* Operand mode.  */
   int vshift;   /* Number of bytes to shift operand down.  */
+  enum msp430_expp_e expp;	/* For when the operand is a constant
+				   expression, the part of the expression to
+				   extract.  */
 #define OP_REG		0
 #define OP_EXP		1
 #ifndef DASM_SECTION
