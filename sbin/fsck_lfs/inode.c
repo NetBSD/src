@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.69 2017/06/10 08:13:15 pgoyette Exp $	 */
+/* $NetBSD: inode.c,v 1.70 2020/04/03 19:36:33 joerg Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,6 @@
 #include <util.h>
 
 #include "bufcache.h"
-#include "vnode.h"
 #include "lfs_user.h"
 
 #include "fsck.h"
