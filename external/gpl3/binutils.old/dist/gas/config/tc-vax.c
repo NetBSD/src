@@ -1,5 +1,5 @@
 /* tc-vax.c - vax-specific -
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -128,7 +128,7 @@ int flag_want_pic;		/* -k */
  bbsc		e4
  bbcc		e5
  Always, you complement 0th bit to reverse condition.
- Always, 1-byte opcde, longword-address, byte-address, 1-byte-displacement
+ Always, 1-byte opcode, longword-address, byte-address, 1-byte-displacement
 
  2c.	J<cond> where cond tests low-order memory bit
  length of byte,word,long.
@@ -189,7 +189,7 @@ int flag_want_pic;		/* -k */
 #define BB (1+-128)
 #define WF (2+ 32767)
 #define WB (2+-32768)
-/* Dont need LF, LB because they always reach. [They are coded as 0.]  */
+/* Don't need LF, LB because they always reach. [They are coded as 0.]  */
 
 #define C(a,b) ENCODE_RELAX(a,b)
 /* This macro has no side-effects.  */
@@ -1948,8 +1948,10 @@ vip_op (char *optext, struct vop *vopP)
 	{
 	case 'l':
 	  mode += 2;
+	  /* Fall through.  */
 	case 'w':
 	  mode += 2;
+	  /* Fall through.  */
 	case ' ':	/* Assumed B^ until our caller changes it.  */
 	case 'b':
 	  break;
@@ -2263,7 +2265,7 @@ main (void)
 
 	default:
 	  my_operand_length = 2;
-	  printf ("I dn't understand access width %c\n", mywidth);
+	  printf ("I don't understand access width %c\n", mywidth);
 	  break;
 	}
       printf ("VAX assembler instruction operand: ");
@@ -3279,9 +3281,9 @@ md_assemble (char *instruction_string)
 			  || operandP->vop_access == 'a')
 			{
 			  if (operandP->vop_access == 'v')
-			    as_warn (_("Invalid operand:  immediate value used as base address."));
+			    as_warn (_("Invalid operand: immediate value used as base address."));
 			  else
-			    as_warn (_("Invalid operand:  immediate value used as address."));
+			    as_warn (_("Invalid operand: immediate value used as address."));
 			  /* gcc 2.6.3 is known to generate these in at least
 			     one case.  */
 			}

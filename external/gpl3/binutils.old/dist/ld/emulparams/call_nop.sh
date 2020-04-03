@@ -10,11 +10,6 @@ PARSE_AND_LIST_ARGS_CASE_Z_CALL_NOP='
 	      link_info.call_nop_as_suffix = FALSE;
 	      link_info.call_nop_byte = 0x67;
 	    }
-	  else if (strcmp (optarg + 9, "prefix-nop") == 0)
-	    {
-	      link_info.call_nop_as_suffix = FALSE;
-	      link_info.call_nop_byte = 0x90;
-	    }
 	  else if (strcmp (optarg + 9, "suffix-nop") == 0)
 	    {
 	      link_info.call_nop_as_suffix = TRUE;
@@ -25,7 +20,7 @@ PARSE_AND_LIST_ARGS_CASE_Z_CALL_NOP='
 	      char *end;
 	      link_info.call_nop_byte = strtoul (optarg + 16 , &end, 0);
 	      if (*end)
-	        einfo (_("%P%F: invalid number for -z call-nop=prefix-: %s\n"),
+		einfo (_("%F%P: invalid number for -z call-nop=prefix-: %s\n"),
 		       optarg + 16);
 	      link_info.call_nop_as_suffix = FALSE;
 	    }
@@ -34,12 +29,12 @@ PARSE_AND_LIST_ARGS_CASE_Z_CALL_NOP='
 	      char *end;
 	      link_info.call_nop_byte = strtoul (optarg + 16, &end, 0);
 	      if (*end)
-	        einfo (_("%P%F: invalid number for -z call-nop=suffix-: %s\n"),
+		einfo (_("%F%P: invalid number for -z call-nop=suffix-: %s\n"),
 		       optarg + 16);
 	      link_info.call_nop_as_suffix = TRUE;
 	    }
 	  else
-	    einfo (_("%P%F: unsupported option: -z %s\n"), optarg);
+	    einfo (_("%F%P: unsupported option: -z %s\n"), optarg);
 	}
 '
 

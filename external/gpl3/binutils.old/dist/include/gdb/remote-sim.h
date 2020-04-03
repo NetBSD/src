@@ -1,6 +1,6 @@
 /* This file defines the interface between the simulator and gdb.
 
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -261,7 +261,7 @@ int sim_stop (SIM_DESC sd);
    that information is not directly accessable via this interface.
 
    SIM_SIGNALLED: The program has been terminated by a signal. The
-   simulator has encountered target code that causes the the program
+   simulator has encountered target code that causes the program
    to exit with signal SIGRC.
 
    SIM_RUNNING, SIM_POLLING: The return of one of these values

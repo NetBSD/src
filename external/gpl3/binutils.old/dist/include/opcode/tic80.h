@@ -1,5 +1,5 @@
 /* tic80.h -- Header file for TI TMS320C80 (MV) opcode table
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
    Written by Fred Fish (fnf@cygnus.com), Cygnus Support
 
    This file is part of GDB, GAS, and the GNU binutils.

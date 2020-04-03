@@ -22,7 +22,6 @@ case ${target} in
 esac
 MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
 ARCH=tic6x
-EXECUTABLE_SYMBOLS="EXTERN (__c6xabi_DSBT_BASE);"
 OTHER_GOT_SYMBOLS="PROVIDE_HIDDEN (__c6xabi_DSBT_BASE = .);"
 # ".bss" is near (small) BSS, ".far" is far (normal) BSS, ".const" is
 # far read-only data, ".rodata" is near read-only data.  ".neardata"

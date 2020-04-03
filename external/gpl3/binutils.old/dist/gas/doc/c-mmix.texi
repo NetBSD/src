@@ -1,4 +1,4 @@
-@c Copyright (C) 2001-2016 Free Software Foundation, Inc.
+@c Copyright (C) 2001-2018 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c MMIX description by Hans-Peter Nilsson, hp@bitrange.com
@@ -79,7 +79,7 @@ is specified, and assembly fails otherwise, when an instruction needs to
 be expanded.  It needs to be kept in mind that @code{mmixal} is both an
 assembler and linker, while @code{@value{AS}} will expand instructions
 that at link stage can be contracted.  (Though linker relaxation isn't yet
-implemented in @code{@value{LD}}.)  The option @samp{-x} also imples
+implemented in @code{@value{LD}}.)  The option @samp{-x} also implies
 @samp{--linker-allocated-gregs}.
 
 @cindex @samp{--no-pushj-stubs} command line option, MMIX
