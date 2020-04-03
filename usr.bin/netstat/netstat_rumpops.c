@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat_rumpops.c,v 1.2 2019/08/18 04:14:40 kamil Exp $	*/
+/*	$NetBSD: netstat_rumpops.c,v 1.3 2020/04/03 16:20:51 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,28 +26,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: netstat_rumpops.c,v 1.2 2019/08/18 04:14:40 kamil Exp $");
-#endif /* !lint */
-
-#include <sys/types.h>
-#include <sys/sysctl.h>
-
-#include <rump/rump.h>
-#include <rump/rumpclient.h>
-#include <rump/rump_syscalls.h>
-
-#include "prog_ops.h"
-
-const struct prog_ops prog_ops = {
-	.op_init =	rumpclient_init,
-
-	.op_sysctl =	rump_sys___sysctl,
-
-	.op_sysctlbyname =	sysctlbyname,
-
-	.op_sysctlgetmibinfo =	sysctlgetmibinfo,
-
-	.op_sysctlnametomib =	sysctlnametomib,
-};
+#include "../../sbin/route/route_rumpops.c"
