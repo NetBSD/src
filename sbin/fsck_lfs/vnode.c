@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.15 2015/08/19 20:33:29 dholland Exp $ */
+/* $NetBSD: vnode.c,v 1.16 2020/04/03 19:36:33 joerg Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,7 +52,7 @@
 #include <util.h>
 
 #include "bufcache.h"
-#include "vnode.h"
+#include "extern.h"
 #include "kernelops.h"
 
 struct uvnodelst vnodelist;

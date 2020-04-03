@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.41 2015/08/12 18:28:00 dholland Exp $	 */
+/* $NetBSD: utilities.c,v 1.42 2020/04/03 19:36:33 joerg Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -49,7 +49,6 @@
 #include <signal.h>
 
 #include "bufcache.h"
-#include "vnode.h"
 #include "lfs_user.h"
 #include "segwrite.h"
 
@@ -59,8 +58,6 @@
 #include "exitvalues.h"
 
 long diskreads, totalreads;	/* Disk cache statistics */
-
-extern off_t locked_queue_bytes;
 
 int
 ftypeok(union lfs_dinode * dp)

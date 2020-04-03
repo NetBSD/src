@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.20 2018/03/30 12:56:46 christos Exp $ */
+/* $NetBSD: bufcache.c,v 1.21 2020/04/03 19:36:33 joerg Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 #include <util.h>
 
 #include "bufcache.h"
-#include "vnode.h"
+#include "extern.h"
 
 /*
  * Definitions for the buffer free lists.

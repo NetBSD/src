@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.46 2020/02/23 15:11:33 riastradh Exp $	 */
+/* $NetBSD: pass1.c,v 1.47 2020/04/03 19:36:33 joerg Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -48,7 +48,6 @@
 #include <util.h>
 
 #include "bufcache.h"
-#include "vnode.h"
 #include "lfs_user.h"
 
 #include "fsck.h"
