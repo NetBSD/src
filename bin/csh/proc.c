@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.38 2019/01/05 16:54:00 christos Exp $ */
+/* $NetBSD: proc.c,v 1.39 2020/04/03 18:11:29 joerg Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.38 2019/01/05 16:54:00 christos Exp $");
+__RCSID("$NetBSD: proc.c,v 1.39 2020/04/03 18:11:29 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,17 @@ __RCSID("$NetBSD: proc.c,v 1.38 2019/01/05 16:54:00 christos Exp $");
 #define BIGINDEX 9 /* largest desirable job index */
 
 extern int insource;
+
+struct process proclist;
+int pnoprocesses;
+
+struct process *pholdjob;
+
+struct process *pcurrjob;
+struct process *pcurrent;
+struct process *pprevious;
+
+int pmaxindex;
 
 static void pflushall(void);
 static void pflush(struct process *);

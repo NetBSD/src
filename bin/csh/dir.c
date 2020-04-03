@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.32 2019/01/05 16:54:00 christos Exp $ */
+/* $NetBSD: dir.c,v 1.33 2020/04/03 18:11:29 joerg Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.32 2019/01/05 16:54:00 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.33 2020/04/03 18:11:29 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,8 @@ struct directory dhead;		/* "head" of loop */
 int printd;			/* force name to be printed */
 
 static int dirflag = 0;
+
+struct directory *dcwd;
 
 /*
  * dinit - initialize current working directory
