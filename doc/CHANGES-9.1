@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.29 2020/04/02 19:24:39 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.30 2020/04/03 12:28:24 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -788,4 +788,9 @@ sys/dev/pckbport/synaptics.c			1.64
 	pms(4): synaptics: maintain the left/right buttons when
 	up/down are remapped.
 	[nia, ticket #818]
+
+sys/dev/usb/usbdi.c				1.199
+
+	Avoid crashes if we fail to allocate a transfer buffer.
+	[skrll, ticket #819]
 
