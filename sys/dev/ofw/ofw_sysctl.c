@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_sysctl.c,v 1.1 2020/04/03 06:02:51 macallan Exp $ */
+/*	$NetBSD: ofw_sysctl.c,v 1.2 2020/04/03 21:55:07 macallan Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_sysctl.c,v 1.1 2020/04/03 06:02:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_sysctl.c,v 1.2 2020/04/03 21:55:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,18 +36,15 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_sysctl.c,v 1.1 2020/04/03 06:02:51 macallan Exp 
 #include <dev/ofw/openfirm.h>
 
 char firmwarestring[64] = "unknown";
+char firmwareversion[64] = "unknown";
 
 SYSCTL_SETUP(sysctl_hw_misc_setup, "sysctl hw.ofw subtree misc setup")
 {
 	const struct sysctlnode *me;
 	int openprom;
 
-	if ((openprom = OF_finddevice("/openprom")) != 0) {
-		memset(firmwarestring, 0, 64);
-		if (OF_getprop(openprom, "model", firmwarestring, 63) != 0) {
-			printf("firmware: %s\n", firmwarestring);
-		}
-	}
+	openprom = OF_finddevice("/openprom");
+	if (openprom == 0 || openprom == -1) return;
 
 	sysctl_createv(clog, 0, NULL, &me,
 		CTLFLAG_PERMANENT,
@@ -55,10 +52,28 @@ SYSCTL_SETUP(sysctl_hw_misc_setup, "sysctl hw.ofw subtree misc setup")
 		SYSCTL_DESCR("OpenFirmware information"),
 		NULL, 0, NULL, 0,
 		CTL_HW, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_STRING, "version",
-		SYSCTL_DESCR("firmware version string"),
-		NULL, 0, firmwarestring, 0,
-		CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	memset(firmwarestring, 0, 64);
+	if (OF_getprop(openprom, "model", firmwarestring, 63) > 0) {
+
+		aprint_debug("firmware: %s\n", firmwarestring);
+		sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_STRING, "model",
+			SYSCTL_DESCR("firmware type"),
+			NULL, 0, firmwarestring, 0,
+			CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
+	}
+
+	memset(firmwareversion, 0, 64);
+	if (OF_getprop(openprom, "version", firmwareversion, 63) > 0) {
+
+		aprint_debug("version: %s\n", firmwareversion);
+		sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_STRING, "version",
+			SYSCTL_DESCR("firmware version"),
+			NULL, 0, firmwareversion, 0,
+			CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
+	}
 }
