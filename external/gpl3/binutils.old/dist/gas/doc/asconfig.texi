@@ -1,4 +1,4 @@
-@c Copyright (C) 1992-2016 Free Software Foundation, Inc.
+@c Copyright (C) 1992-2018 Free Software Foundation, Inc.
 @c This file is part of the documentation for the GAS manual
 
 @c Configuration settings for all-inclusive version of manual
@@ -39,8 +39,6 @@
 @set HPPA
 @set I370
 @set I80386
-@set I860
-@set I960
 @set IA64
 @set IP2K
 @set LM32
@@ -48,6 +46,7 @@
 @set M32R
 @set xc16x
 @set M68HC11
+@set S12Z
 @set M680X0
 @set MCORE
 @set METAG
@@ -62,7 +61,9 @@
 @set PDP11
 @set PJ
 @set PPC
+@set PRU
 @set RL78
+@set RISCV
 @set RX
 @set S390
 @set SCORE
@@ -75,6 +76,7 @@
 @set V850
 @set VAX
 @set VISIUM
+@set WASM32
 @set XGATE
 @set XSTORMY16
 @set XTENSA

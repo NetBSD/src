@@ -1,5 +1,5 @@
 /* Disassemble MN10300 instructions.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -21,7 +21,7 @@
 #include "sysdep.h"
 #include <stdio.h>
 #include "opcode/mn10300.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opintl.h"
 
 #define HAVE_AM33_2 (info->mach == AM33_2)

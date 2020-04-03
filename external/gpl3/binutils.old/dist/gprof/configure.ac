@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2018 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@ dnl You should have received a copy of the GNU General Public License
 dnl along with this program; see the file COPYING3.  If not see
 dnl <http://www.gnu.org/licenses/>.
 dnl
-AC_PREREQ(2.59)
 m4_include([../bfd/version.m4])
 AC_INIT([gprof], BFD_VERSION)
 AC_CONFIG_SRCDIR([gprof.c])
@@ -42,7 +41,7 @@ ACX_LARGEFILE
 
 AC_CHECK_FUNCS(setmode)
 
-ALL_LINGUAS="fr tr sv es id da pt_BR de vi rw ga ms fi nl bg eo ja sr hu"
+ALL_LINGUAS="bg da de eo es fi fr ga hu id it ja ms nl pt_BR ro ru rw sr sv tr uk vi"
 ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
 

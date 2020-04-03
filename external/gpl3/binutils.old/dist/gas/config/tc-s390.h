@@ -1,5 +1,5 @@
 /* tc-s390.h -- Header file for tc-s390.c.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
    Written by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -28,7 +28,8 @@ extern int tc_s390_force_relocation (struct fix *);
 
 /* Don't resolve foo@PLT-bar to offset@PLT.  */
 #define TC_FORCE_RELOCATION_SUB_SAME(FIX, SEG)	\
-  (! SEG_NORMAL (SEG) || TC_FORCE_RELOCATION (FIX))
+  (GENERIC_FORCE_RELOCATION_SUB_SAME (FIX, SEG)	\
+   || TC_FORCE_RELOCATION (FIX))
 
 #define tc_fix_adjustable(X)  tc_s390_fix_adjustable(X)
 extern int tc_s390_fix_adjustable (struct fix *);

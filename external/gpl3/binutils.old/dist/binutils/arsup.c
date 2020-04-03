@@ -1,5 +1,5 @@
 /* arsup.c - Archive support for MRI compatibility
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -96,7 +96,7 @@ map_over_list (bfd *arch, void (*function) (bfd *, bfd *), struct list *list)
 static void
 ar_directory_doer (bfd *abfd, bfd *ignore ATTRIBUTE_UNUSED)
 {
-  print_arelt_descr(outfile, abfd, verbose);
+  print_arelt_descr(outfile, abfd, verbose, FALSE);
 }
 
 void
@@ -261,8 +261,13 @@ ar_addmod (struct list *list)
     {
       while (list)
 	{
-	  bfd *abfd = bfd_openr (list->name, NULL);
+	  bfd *abfd;
 
+#if BFD_SUPPORTS_PLUGINS	  
+	  abfd = bfd_openr (list->name, "plugin");
+#else
+	  abfd = bfd_openr (list->name, NULL);
+#endif
 	  if (!abfd)
 	    {
 	      fprintf (stderr, _("%s: can't open file %s\n"),
@@ -374,7 +379,7 @@ ar_replace (struct list *list)
 	      if (FILENAME_CMP (member->filename, list->name) == 0)
 		{
 		  /* Found the one to replace.  */
-		  bfd *abfd = bfd_openr (list->name, 0);
+		  bfd *abfd = bfd_openr (list->name, NULL);
 
 		  if (!abfd)
 		    {
@@ -398,7 +403,7 @@ ar_replace (struct list *list)
 
 	  if (!found)
 	    {
-	      bfd *abfd = bfd_openr (list->name, 0);
+	      bfd *abfd = bfd_openr (list->name, NULL);
 
 	      fprintf (stderr,_("%s: can't find module file %s\n"),
 		       program_name, list->name);
@@ -480,7 +485,7 @@ ar_extract (struct list *list)
 
 	  if (!found)
 	    {
-	      bfd_openr (list->name, 0);
+	      bfd_openr (list->name, NULL);
 	      fprintf (stderr, _("%s: can't find module file %s\n"),
 		       program_name, list->name);
 	    }

@@ -9,18 +9,18 @@
 # be last. The other sections should be sorted, but the current linker script
 # parse does not seem to allow that with the SORT keyword in this context.
 INIT_START='_init = .;
-            KEEP (*(.init$00));
-            KEEP (*(.init$0[1-9]));
-            KEEP (*(.init$[1-8][0-9]));
-            KEEP (*(.init$9[0-8]));'
+	    KEEP (*(.init$00));
+	    KEEP (*(.init$0[1-9]));
+	    KEEP (*(.init$[1-8][0-9]));
+	    KEEP (*(.init$9[0-8]));'
 INIT_END='KEEP (*(.init$99));'
 FINI_START='_fini = .;
-            KEEP (*(.fini$00));
-            KEEP (*(.fini$0[1-9]));
-            KEEP (*(.fini$[1-8][0-9]));
-            KEEP (*(.fini$9[0-8]));'
+	    KEEP (*(.fini$00));
+	    KEEP (*(.fini$0[1-9]));
+	    KEEP (*(.fini$[1-8][0-9]));
+	    KEEP (*(.fini$9[0-8]));'
 FINI_END="KEEP (*(.fini\$99));
-          PROVIDE (${SYMPREFIX}_etext = .);"
+	  PROVIDE (${SYMPREFIX}_etext = .);"
 
 OTHER_READWRITE_SECTIONS=".tls_data ${RELOCATING-0} : {${RELOCATING+
     __wrs_rtp_tls_data_start = .;

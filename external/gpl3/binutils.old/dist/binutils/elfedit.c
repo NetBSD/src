@@ -1,5 +1,5 @@
 /* elfedit.c -- Update the ELF header of an ELF format file
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -655,7 +655,7 @@ static struct option options[] =
   {0,			no_argument, 0, 0}
 };
 
-static void
+ATTRIBUTE_NORETURN static void
 usage (FILE *stream, int exit_status)
 {
   fprintf (stream, _("Usage: %s <option(s)> elffile(s)\n"),

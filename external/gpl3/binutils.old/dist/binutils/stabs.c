@@ -1,5 +1,5 @@
 /* stabs.c -- Parse stabs debugging information
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2018 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -145,42 +145,51 @@ struct stab_tag
 };
 
 static char *savestring (const char *, int);
-static bfd_vma parse_number (const char **, bfd_boolean *);
+
 static void bad_stab (const char *);
 static void warn_stab (const char *, const char *);
 static bfd_boolean parse_stab_string
-  (void *, struct stab_handle *, int, int, bfd_vma, const char *);
+  (void *, struct stab_handle *, int, int, bfd_vma,
+   const char *, const char *);
 static debug_type parse_stab_type
-  (void *, struct stab_handle *, const char *, const char **, debug_type **);
-static bfd_boolean parse_stab_type_number (const char **, int *);
+  (void *, struct stab_handle *, const char *, const char **,
+   debug_type **, const char *);
+static bfd_boolean parse_stab_type_number
+  (const char **, int *, const char *);
 static debug_type parse_stab_range_type
-  (void *, struct stab_handle *, const char *, const char **, const int *);
-static debug_type parse_stab_sun_builtin_type (void *, const char **);
-static debug_type parse_stab_sun_floating_type (void *, const char **);
-static debug_type parse_stab_enum_type (void *, const char **);
+  (void *, struct stab_handle *, const char *, const char **,
+   const int *, const char *);
+static debug_type parse_stab_sun_builtin_type
+  (void *, const char **, const char *);
+static debug_type parse_stab_sun_floating_type
+  (void *, const char **, const char *);
+static debug_type parse_stab_enum_type
+  (void *, const char **, const char *);
 static debug_type parse_stab_struct_type
   (void *, struct stab_handle *, const char *, const char **,
-   bfd_boolean, const int *);
+   bfd_boolean, const int *, const char *);
 static bfd_boolean parse_stab_baseclasses
-  (void *, struct stab_handle *, const char **, debug_baseclass **);
+  (void *, struct stab_handle *, const char **, debug_baseclass **,
+   const char *);
 static bfd_boolean parse_stab_struct_fields
-  (void *, struct stab_handle *, const char **, debug_field **, bfd_boolean *);
+  (void *, struct stab_handle *, const char **, debug_field **,
+   bfd_boolean *, const char *);
 static bfd_boolean parse_stab_cpp_abbrev
-  (void *, struct stab_handle *, const char **, debug_field *);
+  (void *, struct stab_handle *, const char **, debug_field *, const char *);
 static bfd_boolean parse_stab_one_struct_field
   (void *, struct stab_handle *, const char **, const char *,
-   debug_field *, bfd_boolean *);
+   debug_field *, bfd_boolean *, const char *);
 static bfd_boolean parse_stab_members
   (void *, struct stab_handle *, const char *, const char **, const int *,
-   debug_method **);
+   debug_method **, const char *);
 static debug_type parse_stab_argtypes
   (void *, struct stab_handle *, debug_type, const char *, const char *,
    debug_type, const char *, bfd_boolean, bfd_boolean, const char **);
 static bfd_boolean parse_stab_tilde_field
   (void *, struct stab_handle *, const char **, const int *, debug_type *,
-   bfd_boolean *);
+   bfd_boolean *, const char *);
 static debug_type parse_stab_array_type
-  (void *, struct stab_handle *, const char **, bfd_boolean);
+  (void *, struct stab_handle *, const char **, bfd_boolean, const char *);
 static void push_bincl (struct stab_handle *, const char *, bfd_vma);
 static const char *pop_bincl (struct stab_handle *);
 static bfd_boolean find_excl (struct stab_handle *, const char *, bfd_vma);
@@ -222,7 +231,7 @@ savestring (const char *start, int len)
 /* Read a number from a string.  */
 
 static bfd_vma
-parse_number (const char **pp, bfd_boolean *poverflow)
+parse_number (const char **pp, bfd_boolean *poverflow, const char *p_end)
 {
   unsigned long ul;
   const char *orig;
@@ -231,6 +240,12 @@ parse_number (const char **pp, bfd_boolean *poverflow)
     *poverflow = FALSE;
 
   orig = *pp;
+  if (orig >= p_end)
+    return (bfd_vma) 0;
+
+  /* Stop early if we are passed an empty string.  */
+  if (*orig == 0)
+    return (bfd_vma) 0;
 
   errno = 0;
   ul = strtoul (*pp, (char **) pp, 0);
@@ -405,6 +420,7 @@ bfd_boolean
 parse_stab (void *dhandle, void *handle, int type, int desc, bfd_vma value,
 	    const char *string)
 {
+  const char * string_end;
   struct stab_handle *info = (struct stab_handle *) handle;
 
   /* gcc will emit two N_SO strings per compilation unit, one for the
@@ -433,11 +449,12 @@ parse_stab (void *dhandle, void *handle, int type, int desc, bfd_vma value,
       info->file_types = ((struct stab_types **)
 			  xmalloc (sizeof *info->file_types));
       info->file_types[0] = NULL;
-
       info->so_string = NULL;
 
       /* Now process whatever type we just got.  */
     }
+
+  string_end = string + strlen (string);
 
   switch (type)
     {
@@ -648,7 +665,7 @@ parse_stab (void *dhandle, void *handle, int type, int desc, bfd_vma value,
 	    info->within_function = TRUE;
 	  }
 
-	if (! parse_stab_string (dhandle, info, type, desc, value, string))
+	if (! parse_stab_string (dhandle, info, type, desc, value, string, string_end))
 	  return FALSE;
       }
       break;
@@ -676,7 +693,8 @@ parse_stab (void *dhandle, void *handle, int type, int desc, bfd_vma value,
 
 static bfd_boolean
 parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
-		   int desc ATTRIBUTE_UNUSED, bfd_vma value, const char *string)
+		   int desc ATTRIBUTE_UNUSED, bfd_vma value,
+		   const char *string, const char * string_end)
 {
   const char *p;
   char *name;
@@ -739,6 +757,11 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
   ++p;
   if (ISDIGIT (*p) || *p == '(' || *p == '-')
     type = 'l';
+  else if (*p == 0)
+    {
+      bad_stab (string);
+      return FALSE;
+    }
   else
     type = *p++;
 
@@ -781,7 +804,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
 	     e.g. "b:c=e6,0" for "const b = blob1"
 	     (where type 6 is defined by "blobs:t6=eblob1:0,blob2:1,;").  */
 	  dtype = parse_stab_type (dhandle, info, (const char *) NULL,
-				   &p, (debug_type **) NULL);
+				   &p, (debug_type **) NULL, string_end);
 	  if (dtype == DEBUG_TYPE_NULL)
 	    return FALSE;
 	  if (*p != ',')
@@ -802,7 +825,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
     case 'C':
       /* The name of a caught exception.  */
       dtype = parse_stab_type (dhandle, info, (const char *) NULL,
-			       &p, (debug_type **) NULL);
+			       &p, (debug_type **) NULL, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       if (! debug_record_label (dhandle, name, dtype, value))
@@ -813,7 +836,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
     case 'F':
       /* A function definition.  */
       dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-			       (debug_type **) NULL);
+			       (debug_type **) NULL, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       if (! debug_record_function (dhandle, name, dtype, type == 'F', value))
@@ -827,7 +850,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
 	{
 	  ++p;
 	  if (parse_stab_type (dhandle, info, (const char *) NULL, &p,
-			       (debug_type **) NULL)
+			       (debug_type **) NULL, string_end)
 	      == DEBUG_TYPE_NULL)
 	    return FALSE;
 	}
@@ -841,7 +864,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
 	/* A global symbol.  The value must be extracted from the
 	   symbol table.  */
 	dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-				 (debug_type **) NULL);
+				 (debug_type **) NULL, string_end);
 	if (dtype == DEBUG_TYPE_NULL)
 	  return FALSE;
 	if (name != NULL)
@@ -877,7 +900,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
     case 'l':
     case 's':
       dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-			       (debug_type **) NULL);
+			       (debug_type **) NULL, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       if (! stab_record_variable (dhandle, info, name, dtype, DEBUG_LOCAL,
@@ -889,7 +912,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
       /* A function parameter.  */
       if (*p != 'F')
 	dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-				 (debug_type **) NULL);
+				 (debug_type **) NULL, string_end);
       else
 	{
 	/* pF is a two-letter code that means a function parameter in
@@ -897,7 +920,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
 	   value.  Translate it into a pointer-to-function type.  */
 	  ++p;
 	  dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-				   (debug_type **) NULL);
+				   (debug_type **) NULL, string_end);
 	  if (dtype != DEBUG_TYPE_NULL)
 	    {
 	      debug_type ftype;
@@ -927,7 +950,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
 	    {
 	      ++p;
 	      if (parse_stab_type (dhandle, info, (const char *) NULL, &p,
-				   (debug_type **) NULL)
+				   (debug_type **) NULL, string_end)
 		  == DEBUG_TYPE_NULL)
 		return FALSE;
 	    }
@@ -937,7 +960,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
     case 'R':
       /* Parameter which is in a register.  */
       dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-			       (debug_type **) NULL);
+			       (debug_type **) NULL, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       if (! debug_record_parameter (dhandle, name, dtype, DEBUG_PARM_REG,
@@ -948,7 +971,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
     case 'r':
       /* Register variable (either global or local).  */
       dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-			       (debug_type **) NULL);
+			       (debug_type **) NULL, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       if (! stab_record_variable (dhandle, info, name, dtype, DEBUG_REGISTER,
@@ -962,7 +985,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
     case 'S':
       /* Static symbol at top level of file.  */
       dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-			       (debug_type **) NULL);
+			       (debug_type **) NULL, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       if (! stab_record_variable (dhandle, info, name, dtype, DEBUG_STATIC,
@@ -972,7 +995,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
 
     case 't':
       /* A typedef.  */
-      dtype = parse_stab_type (dhandle, info, name, &p, &slot);
+      dtype = parse_stab_type (dhandle, info, name, &p, &slot, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       if (name == NULL)
@@ -991,7 +1014,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
       break;
 
     case 'T':
-      /* Struct, union, or enum tag.  For GNU C++, this can be be followed
+      /* Struct, union, or enum tag.  For GNU C++, this can be followed
 	 by 't' which means we are typedef'ing it as well.  */
       if (*p != 't')
 	{
@@ -1005,7 +1028,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
 	  ++p;
 	}
 
-      dtype = parse_stab_type (dhandle, info, name, &p, &slot);
+      dtype = parse_stab_type (dhandle, info, name, &p, &slot, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       if (name == NULL)
@@ -1056,7 +1079,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
     case 'V':
       /* Static symbol of local scope */
       dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-			       (debug_type **) NULL);
+			       (debug_type **) NULL, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       /* FIXME: gdb checks os9k_stabs here.  */
@@ -1068,7 +1091,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
     case 'v':
       /* Reference parameter.  */
       dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-			       (debug_type **) NULL);
+			       (debug_type **) NULL, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       if (! debug_record_parameter (dhandle, name, dtype, DEBUG_PARM_REFERENCE,
@@ -1079,7 +1102,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
     case 'a':
       /* Reference parameter which is in a register.  */
       dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-			       (debug_type **) NULL);
+			       (debug_type **) NULL, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       if (! debug_record_parameter (dhandle, name, dtype, DEBUG_PARM_REF_REG,
@@ -1093,7 +1116,7 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
 	 that Pascal uses it too, but when I tried it Pascal used
 	 "x:3" (local symbol) instead.  */
       dtype = parse_stab_type (dhandle, info, (const char *) NULL, &p,
-			       (debug_type **) NULL);
+			       (debug_type **) NULL, string_end);
       if (dtype == DEBUG_TYPE_NULL)
 	return FALSE;
       if (! stab_record_variable (dhandle, info, name, dtype, DEBUG_LOCAL,
@@ -1138,7 +1161,12 @@ parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
    store the slot used if the type is being defined.  */
 
 static debug_type
-parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name, const char **pp, debug_type **slotp)
+parse_stab_type (void *                dhandle,
+		 struct stab_handle *  info,
+		 const char *          type_name,
+		 const char **         pp,
+		 debug_type **         slotp,
+		 const char *          p_end)
 {
   const char *orig;
   int typenums[2];
@@ -1151,6 +1179,8 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
     *slotp = NULL;
 
   orig = *pp;
+  if (orig >= p_end)
+    return DEBUG_TYPE_NULL;
 
   size = -1;
   stringp = FALSE;
@@ -1168,7 +1198,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
     }
   else
     {
-      if (! parse_stab_type_number (pp, typenums))
+      if (! parse_stab_type_number (pp, typenums, p_end))
 	return DEBUG_TYPE_NULL;
 
       if (**pp != '=')
@@ -1231,6 +1261,10 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 	      stringp = TRUE;
 	      break;
 
+	    case 0:
+	      bad_stab (orig);
+	      return DEBUG_TYPE_NULL;
+
 	    default:
 	      /* Ignore unrecognized type attributes, so future
 		 compilers can invent new ones.  */
@@ -1261,6 +1295,10 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 	  case 'e':
 	    code = DEBUG_KIND_ENUM;
 	    break;
+	  case 0:
+	      bad_stab (orig);
+	      return DEBUG_TYPE_NULL;
+	    
 	  default:
 	    /* Complain and keep going, so compilers can invent new
 	       cross-reference types.  */
@@ -1334,7 +1372,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 	hold = *pp;
 
 	/* Peek ahead at the number to detect void.  */
-	if (! parse_stab_type_number (pp, xtypenums))
+	if (! parse_stab_type_number (pp, xtypenums, p_end))
 	  return DEBUG_TYPE_NULL;
 
 	if (typenums[0] == xtypenums[0] && typenums[1] == xtypenums[1])
@@ -1351,7 +1389,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 	       This means that we can deal with something like
 	       t(1,2)=(3,4)=... which the Lucid compiler uses.  */
 	    dtype = parse_stab_type (dhandle, info, (const char *) NULL,
-				     pp, (debug_type **) NULL);
+				     pp, (debug_type **) NULL, p_end);
 	    if (dtype == DEBUG_TYPE_NULL)
 	      return DEBUG_TYPE_NULL;
 	  }
@@ -1370,7 +1408,8 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 				       parse_stab_type (dhandle, info,
 							(const char *) NULL,
 							pp,
-							(debug_type **) NULL));
+							(debug_type **) NULL,
+							p_end));
       break;
 
     case '&':
@@ -1378,7 +1417,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
       dtype = (debug_make_reference_type
 	       (dhandle,
 		parse_stab_type (dhandle, info, (const char *) NULL, pp,
-				 (debug_type **) NULL)));
+				 (debug_type **) NULL, p_end)));
       break;
 
     case 'f':
@@ -1387,7 +1426,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
       dtype = (debug_make_function_type
 	       (dhandle,
 		parse_stab_type (dhandle, info, (const char *) NULL, pp,
-				 (debug_type **) NULL),
+				 (debug_type **) NULL, p_end),
 		(debug_type *) NULL, FALSE));
       break;
 
@@ -1398,7 +1437,8 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 				     parse_stab_type (dhandle, info,
 						      (const char *) NULL,
 						      pp,
-						      (debug_type **) NULL));
+						      (debug_type **) NULL,
+						      p_end));
       break;
 
     case 'B':
@@ -1407,7 +1447,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
       dtype = (debug_make_volatile_type
 	       (dhandle,
 		parse_stab_type (dhandle, info, (const char *) NULL, pp,
-				 (debug_type **) NULL)));
+				 (debug_type **) NULL, p_end)));
       break;
 
     case '@':
@@ -1420,7 +1460,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 	/* Member type.  */
 
 	domain = parse_stab_type (dhandle, info, (const char *) NULL, pp,
-				  (debug_type **) NULL);
+				  (debug_type **) NULL, p_end);
 	if (domain == DEBUG_TYPE_NULL)
 	  return DEBUG_TYPE_NULL;
 
@@ -1432,7 +1472,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 	++*pp;
 
 	memtype = parse_stab_type (dhandle, info, (const char *) NULL, pp,
-				   (debug_type **) NULL);
+				   (debug_type **) NULL, p_end);
 	if (memtype == DEBUG_TYPE_NULL)
 	  return DEBUG_TYPE_NULL;
 
@@ -1448,7 +1488,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 
 	  ++*pp;
 	  return_type = parse_stab_type (dhandle, info, (const char *) NULL,
-					 pp, (debug_type **) NULL);
+					 pp, (debug_type **) NULL, p_end);
 	  if (return_type == DEBUG_TYPE_NULL)
 	    return DEBUG_TYPE_NULL;
 	  if (**pp != ';')
@@ -1471,7 +1511,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 	  bfd_boolean varargs;
 
 	  domain = parse_stab_type (dhandle, info, (const char *) NULL,
-				    pp, (debug_type **) NULL);
+				    pp, (debug_type **) NULL, p_end);
 	  if (domain == DEBUG_TYPE_NULL)
 	    return DEBUG_TYPE_NULL;
 
@@ -1483,7 +1523,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 	  ++*pp;
 
 	  return_type = parse_stab_type (dhandle, info, (const char *) NULL,
-					 pp, (debug_type **) NULL);
+					 pp, (debug_type **) NULL, p_end);
 	  if (return_type == DEBUG_TYPE_NULL)
 	    return DEBUG_TYPE_NULL;
 
@@ -1507,7 +1547,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 		}
 
 	      args[n] = parse_stab_type (dhandle, info, (const char *) NULL,
-					 pp, (debug_type **) NULL);
+					 pp, (debug_type **) NULL, p_end);
 	      if (args[n] == DEBUG_TYPE_NULL)
 		return DEBUG_TYPE_NULL;
 	      ++n;
@@ -1535,30 +1575,30 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 
     case 'r':
       /* Range type.  */
-      dtype = parse_stab_range_type (dhandle, info, type_name, pp, typenums);
+      dtype = parse_stab_range_type (dhandle, info, type_name, pp, typenums, p_end);
       break;
 
     case 'b':
       /* FIXME: gdb checks os9k_stabs here.  */
       /* Sun ACC builtin int type.  */
-      dtype = parse_stab_sun_builtin_type (dhandle, pp);
+      dtype = parse_stab_sun_builtin_type (dhandle, pp, p_end);
       break;
 
     case 'R':
       /* Sun ACC builtin float type.  */
-      dtype = parse_stab_sun_floating_type (dhandle, pp);
+      dtype = parse_stab_sun_floating_type (dhandle, pp, p_end);
       break;
 
     case 'e':
       /* Enumeration type.  */
-      dtype = parse_stab_enum_type (dhandle, pp);
+      dtype = parse_stab_enum_type (dhandle, pp, p_end);
       break;
 
     case 's':
     case 'u':
       /* Struct or union type.  */
       dtype = parse_stab_struct_type (dhandle, info, type_name, pp,
-				      descriptor == 's', typenums);
+				      descriptor == 's', typenums, p_end);
       break;
 
     case 'a':
@@ -1570,7 +1610,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 	}
       ++*pp;
 
-      dtype = parse_stab_array_type (dhandle, info, pp, stringp);
+      dtype = parse_stab_array_type (dhandle, info, pp, stringp, p_end);
       break;
 
     case 'S':
@@ -1578,7 +1618,8 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
 				   parse_stab_type (dhandle, info,
 						    (const char *) NULL,
 						    pp,
-						    (debug_type **) NULL),
+						    (debug_type **) NULL,
+						    p_end),
 				   stringp);
       break;
 
@@ -1611,7 +1652,7 @@ parse_stab_type (void *dhandle, struct stab_handle *info, const char *type_name,
    storing them in the vector TYPENUMS.  */
 
 static bfd_boolean
-parse_stab_type_number (const char **pp, int *typenums)
+parse_stab_type_number (const char **pp, int *typenums, const char *p_end)
 {
   const char *orig;
 
@@ -1620,34 +1661,39 @@ parse_stab_type_number (const char **pp, int *typenums)
   if (**pp != '(')
     {
       typenums[0] = 0;
-      typenums[1] = (int) parse_number (pp, (bfd_boolean *) NULL);
-    }
-  else
-    {
-      ++*pp;
-      typenums[0] = (int) parse_number (pp, (bfd_boolean *) NULL);
-      if (**pp != ',')
-	{
-	  bad_stab (orig);
-	  return FALSE;
-	}
-      ++*pp;
-      typenums[1] = (int) parse_number (pp, (bfd_boolean *) NULL);
-      if (**pp != ')')
-	{
-	  bad_stab (orig);
-	  return FALSE;
-	}
-      ++*pp;
+      typenums[1] = (int) parse_number (pp, (bfd_boolean *) NULL, p_end);
+      return TRUE;
     }
 
+  ++*pp;
+  typenums[0] = (int) parse_number (pp, (bfd_boolean *) NULL, p_end);
+  if (**pp != ',')
+    {
+      bad_stab (orig);
+      return FALSE;
+    }
+
+  ++*pp;
+  typenums[1] = (int) parse_number (pp, (bfd_boolean *) NULL, p_end);
+  if (**pp != ')')
+    {
+      bad_stab (orig);
+      return FALSE;
+    }
+
+  ++*pp;
   return TRUE;
 }
 
 /* Parse a range type.  */
 
 static debug_type
-parse_stab_range_type (void *dhandle, struct stab_handle *info, const char *type_name, const char **pp, const int *typenums)
+parse_stab_range_type (void *                dhandle,
+		       struct stab_handle *  info,
+		       const char *          type_name,
+		       const char **         pp,
+		       const int *           typenums,
+		       const char *          p_end)
 {
   const char *orig;
   int rangenums[2];
@@ -1658,12 +1704,14 @@ parse_stab_range_type (void *dhandle, struct stab_handle *info, const char *type
   bfd_boolean ov2, ov3;
 
   orig = *pp;
+  if (orig >= p_end)
+    return DEBUG_TYPE_NULL;
 
   index_type = DEBUG_TYPE_NULL;
 
   /* First comes a type we are a subrange of.
      In C it is usually 0, 1 or the type being defined.  */
-  if (! parse_stab_type_number (pp, rangenums))
+  if (! parse_stab_type_number (pp, rangenums, p_end))
     return DEBUG_TYPE_NULL;
 
   self_subrange = (rangenums[0] == typenums[0]
@@ -1673,7 +1721,7 @@ parse_stab_range_type (void *dhandle, struct stab_handle *info, const char *type
     {
       *pp = orig;
       index_type = parse_stab_type (dhandle, info, (const char *) NULL,
-				    pp, (debug_type **) NULL);
+				    pp, (debug_type **) NULL, p_end);
       if (index_type == DEBUG_TYPE_NULL)
 	return DEBUG_TYPE_NULL;
     }
@@ -1684,7 +1732,7 @@ parse_stab_range_type (void *dhandle, struct stab_handle *info, const char *type
   /* The remaining two operands are usually lower and upper bounds of
      the range.  But in some special cases they mean something else.  */
   s2 = *pp;
-  n2 = parse_number (pp, &ov2);
+  n2 = parse_number (pp, &ov2, p_end);
   if (**pp != ';')
     {
       bad_stab (orig);
@@ -1693,7 +1741,7 @@ parse_stab_range_type (void *dhandle, struct stab_handle *info, const char *type
   ++*pp;
 
   s3 = *pp;
-  n3 = parse_number (pp, &ov3);
+  n3 = parse_number (pp, &ov3, p_end);
   if (**pp != ';')
     {
       bad_stab (orig);
@@ -1831,13 +1879,15 @@ parse_stab_range_type (void *dhandle, struct stab_handle *info, const char *type
    FIXME.  */
 
 static debug_type
-parse_stab_sun_builtin_type (void *dhandle, const char **pp)
+parse_stab_sun_builtin_type (void *dhandle, const char **pp, const char * p_end)
 {
   const char *orig;
   bfd_boolean unsignedp;
   bfd_vma bits;
 
   orig = *pp;
+  if (orig >= p_end)
+    return DEBUG_TYPE_NULL;
 
   switch (**pp)
     {
@@ -1866,7 +1916,7 @@ parse_stab_sun_builtin_type (void *dhandle, const char **pp)
      by this type, except that unsigned short is 4 instead of 2.
      Since this information is redundant with the third number,
      we will ignore it.  */
-  (void) parse_number (pp, (bfd_boolean *) NULL);
+  (void) parse_number (pp, (bfd_boolean *) NULL, p_end);
   if (**pp != ';')
     {
       bad_stab (orig);
@@ -1875,7 +1925,7 @@ parse_stab_sun_builtin_type (void *dhandle, const char **pp)
   ++*pp;
 
   /* The second number is always 0, so ignore it too.  */
-  (void) parse_number (pp, (bfd_boolean *) NULL);
+  (void) parse_number (pp, (bfd_boolean *) NULL, p_end);
   if (**pp != ';')
     {
       bad_stab (orig);
@@ -1884,7 +1934,7 @@ parse_stab_sun_builtin_type (void *dhandle, const char **pp)
   ++*pp;
 
   /* The third number is the number of bits for this type.  */
-  bits = parse_number (pp, (bfd_boolean *) NULL);
+  bits = parse_number (pp, (bfd_boolean *) NULL, p_end);
 
   /* The type *should* end with a semicolon.  If it are embedded
      in a larger type the semicolon may be the only way to know where
@@ -1904,17 +1954,19 @@ parse_stab_sun_builtin_type (void *dhandle, const char **pp)
 /* Parse a builtin floating type generated by the Sun compiler.  */
 
 static debug_type
-parse_stab_sun_floating_type (void *dhandle, const char **pp)
+parse_stab_sun_floating_type (void *dhandle, const char **pp, const char *p_end)
 {
   const char *orig;
   bfd_vma details;
   bfd_vma bytes;
 
   orig = *pp;
+  if (orig >= p_end)
+    return DEBUG_TYPE_NULL;
 
   /* The first number has more details about the type, for example
      FN_COMPLEX.  */
-  details = parse_number (pp, (bfd_boolean *) NULL);
+  details = parse_number (pp, (bfd_boolean *) NULL, p_end);
   if (**pp != ';')
     {
       bad_stab (orig);
@@ -1922,7 +1974,7 @@ parse_stab_sun_floating_type (void *dhandle, const char **pp)
     }
 
   /* The second number is the number of bytes occupied by this type */
-  bytes = parse_number (pp, (bfd_boolean *) NULL);
+  bytes = parse_number (pp, (bfd_boolean *) NULL, p_end);
   if (**pp != ';')
     {
       bad_stab (orig);
@@ -1940,7 +1992,7 @@ parse_stab_sun_floating_type (void *dhandle, const char **pp)
 /* Handle an enum type.  */
 
 static debug_type
-parse_stab_enum_type (void *dhandle, const char **pp)
+parse_stab_enum_type (void *dhandle, const char **pp, const char * p_end)
 {
   const char *orig;
   const char **names;
@@ -1949,6 +2001,8 @@ parse_stab_enum_type (void *dhandle, const char **pp)
   unsigned int alloc;
 
   orig = *pp;
+  if (orig >= p_end)
+    return DEBUG_TYPE_NULL;
 
   /* FIXME: gdb checks os9k_stabs here.  */
 
@@ -1956,8 +2010,14 @@ parse_stab_enum_type (void *dhandle, const char **pp)
      my guess is it's a type of some sort.  Just ignore it.  */
   if (**pp == '-')
     {
-      while (**pp != ':')
+      while (**pp != ':' && **pp != 0)
 	++*pp;
+
+      if (**pp == 0)
+	{
+	  bad_stab (orig);
+	  return DEBUG_TYPE_NULL;
+	}
       ++*pp;
     }
 
@@ -1975,13 +2035,21 @@ parse_stab_enum_type (void *dhandle, const char **pp)
       bfd_signed_vma val;
 
       p = *pp;
-      while (*p != ':')
+      while (*p != ':' && *p != 0)
 	++p;
+
+      if (*p == 0)
+	{
+	  bad_stab (orig);
+	  free (names);
+	  free (values);
+	  return DEBUG_TYPE_NULL;
+	}
 
       name = savestring (*pp, p - *pp);
 
       *pp = p + 1;
-      val = (bfd_signed_vma) parse_number (pp, (bfd_boolean *) NULL);
+      val = (bfd_signed_vma) parse_number (pp, (bfd_boolean *) NULL, p_end);
       if (**pp != ',')
 	{
 	  bad_stab (orig);
@@ -2023,9 +2091,13 @@ parse_stab_enum_type (void *dhandle, const char **pp)
    *PP will point to "4a:1,0,32;;".  */
 
 static debug_type
-parse_stab_struct_type (void *dhandle, struct stab_handle *info,
-			const char *tagname, const char **pp,
-			bfd_boolean structp, const int *typenums)
+parse_stab_struct_type (void *                dhandle,
+			struct stab_handle *  info,
+			const char *          tagname,
+			const char **         pp,
+			bfd_boolean           structp,
+			const int *           typenums,
+			const char *          p_end)
 {
   bfd_vma size;
   debug_baseclass *baseclasses;
@@ -2036,14 +2108,14 @@ parse_stab_struct_type (void *dhandle, struct stab_handle *info,
   bfd_boolean ownvptr;
 
   /* Get the size.  */
-  size = parse_number (pp, (bfd_boolean *) NULL);
+  size = parse_number (pp, (bfd_boolean *) NULL, p_end);
 
   /* Get the other information.  */
-  if (! parse_stab_baseclasses (dhandle, info, pp, &baseclasses)
-      || ! parse_stab_struct_fields (dhandle, info, pp, &fields, &statics)
-      || ! parse_stab_members (dhandle, info, tagname, pp, typenums, &methods)
+  if (! parse_stab_baseclasses (dhandle, info, pp, &baseclasses, p_end)
+      || ! parse_stab_struct_fields (dhandle, info, pp, &fields, &statics, p_end)
+      || ! parse_stab_members (dhandle, info, tagname, pp, typenums, &methods, p_end)
       || ! parse_stab_tilde_field (dhandle, info, pp, typenums, &vptrbase,
-				   &ownvptr))
+				   &ownvptr, p_end))
     {
       if (fields != NULL)
 	free (fields);
@@ -2086,8 +2158,11 @@ parse_stab_struct_type (void *dhandle, struct stab_handle *info,
   Return TRUE for success, FALSE for failure.  */
 
 static bfd_boolean
-parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
-			const char **pp, debug_baseclass **retp)
+parse_stab_baseclasses (void *                dhandle,
+			struct stab_handle *  info,
+			const char **         pp,
+			debug_baseclass **    retp,
+			const char *          p_end)
 {
   const char *orig;
   unsigned int c, i;
@@ -2096,6 +2171,8 @@ parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
   *retp = NULL;
 
   orig = *pp;
+  if (orig >= p_end)
+    return FALSE;
 
   if (**pp != '!')
     {
@@ -2104,7 +2181,7 @@ parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
     }
   ++*pp;
 
-  c = (unsigned int) parse_number (pp, (bfd_boolean *) NULL);
+  c = (unsigned int) parse_number (pp, (bfd_boolean *) NULL, p_end);
 
   if (**pp != ',')
     {
@@ -2130,6 +2207,9 @@ parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
 	case '1':
 	  is_virtual = TRUE;
 	  break;
+	case 0:
+	  bad_stab (orig);
+	  return FALSE;
 	default:
 	  warn_stab (orig, _("unknown virtual character for baseclass"));
 	  is_virtual = FALSE;
@@ -2148,6 +2228,9 @@ parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
 	case '2':
 	  visibility = DEBUG_VISIBILITY_PUBLIC;
 	  break;
+	case 0:
+	  bad_stab (orig);
+	  return FALSE;
 	default:
 	  warn_stab (orig, _("unknown visibility character for baseclass"));
 	  visibility = DEBUG_VISIBILITY_PUBLIC;
@@ -2158,7 +2241,7 @@ parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
       /* The remaining value is the bit offset of the portion of the
 	 object corresponding to this baseclass.  Always zero in the
 	 absence of multiple inheritance.  */
-      bitpos = parse_number (pp, (bfd_boolean *) NULL);
+      bitpos = parse_number (pp, (bfd_boolean *) NULL, p_end);
       if (**pp != ',')
 	{
 	  bad_stab (orig);
@@ -2167,7 +2250,7 @@ parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
       ++*pp;
 
       type = parse_stab_type (dhandle, info, (const char *) NULL, pp,
-			      (debug_type **) NULL);
+			      (debug_type **) NULL, p_end);
       if (type == DEBUG_TYPE_NULL)
 	return FALSE;
 
@@ -2209,9 +2292,12 @@ parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
    Returns 1 for success, 0 for failure.  */
 
 static bfd_boolean
-parse_stab_struct_fields (void *dhandle, struct stab_handle *info,
-			  const char **pp, debug_field **retp,
-			  bfd_boolean *staticsp)
+parse_stab_struct_fields (void *                dhandle,
+			  struct stab_handle *  info,
+			  const char **         pp,
+			  debug_field **        retp,
+			  bfd_boolean *         staticsp,
+			  const char *          p_end)
 {
   const char *orig;
   const char *p;
@@ -2223,6 +2309,8 @@ parse_stab_struct_fields (void *dhandle, struct stab_handle *info,
   *staticsp = FALSE;
 
   orig = *pp;
+  if (orig >= p_end)
+    return FALSE;
 
   c = 0;
   alloc = 10;
@@ -2251,7 +2339,7 @@ parse_stab_struct_fields (void *dhandle, struct stab_handle *info,
       if ((*p == '$' || *p == '.') && p[1] != '_')
 	{
 	  ++*pp;
-	  if (! parse_stab_cpp_abbrev (dhandle, info, pp, fields + c))
+	  if (! parse_stab_cpp_abbrev (dhandle, info, pp, fields + c, p_end))
 	    {
 	      free (fields);
 	      return FALSE;
@@ -2277,7 +2365,7 @@ parse_stab_struct_fields (void *dhandle, struct stab_handle *info,
 	break;
 
       if (! parse_stab_one_struct_field (dhandle, info, pp, p, fields + c,
-					 staticsp))
+					 staticsp, p_end))
 	return FALSE;
 
       ++c;
@@ -2293,8 +2381,11 @@ parse_stab_struct_fields (void *dhandle, struct stab_handle *info,
 /* Special GNU C++ name.  */
 
 static bfd_boolean
-parse_stab_cpp_abbrev (void *dhandle, struct stab_handle *info,
-		       const char **pp, debug_field *retp)
+parse_stab_cpp_abbrev (void *                dhandle,
+		       struct stab_handle *  info,
+		       const char **         pp,
+		       debug_field *         retp,
+		       const char *          p_end)
 {
   const char *orig;
   int cpp_abbrev;
@@ -2307,6 +2398,8 @@ parse_stab_cpp_abbrev (void *dhandle, struct stab_handle *info,
   *retp = DEBUG_FIELD_NULL;
 
   orig = *pp;
+  if (orig >= p_end)
+    return FALSE;
 
   if (**pp != 'v')
     {
@@ -2316,6 +2409,11 @@ parse_stab_cpp_abbrev (void *dhandle, struct stab_handle *info,
   ++*pp;
 
   cpp_abbrev = **pp;
+  if (cpp_abbrev == 0)
+    {
+      bad_stab (orig);
+      return FALSE;
+    }
   ++*pp;
 
   /* At this point, *pp points to something like "22:23=*22...", where
@@ -2324,7 +2422,7 @@ parse_stab_cpp_abbrev (void *dhandle, struct stab_handle *info,
      name, and construct the field name.  */
 
   context = parse_stab_type (dhandle, info, (const char *) NULL, pp,
-			     (debug_type **) NULL);
+			     (debug_type **) NULL, p_end);
   if (context == DEBUG_TYPE_NULL)
     return FALSE;
 
@@ -2358,7 +2456,7 @@ parse_stab_cpp_abbrev (void *dhandle, struct stab_handle *info,
   ++*pp;
 
   type = parse_stab_type (dhandle, info, (const char *) NULL, pp,
-			  (debug_type **) NULL);
+			  (debug_type **) NULL, p_end);
   if (**pp != ',')
     {
       bad_stab (orig);
@@ -2366,7 +2464,7 @@ parse_stab_cpp_abbrev (void *dhandle, struct stab_handle *info,
     }
   ++*pp;
 
-  bitpos = parse_number (pp, (bfd_boolean *) NULL);
+  bitpos = parse_number (pp, (bfd_boolean *) NULL, p_end);
   if (**pp != ';')
     {
       bad_stab (orig);
@@ -2385,9 +2483,13 @@ parse_stab_cpp_abbrev (void *dhandle, struct stab_handle *info,
 /* Parse a single field in a struct or union.  */
 
 static bfd_boolean
-parse_stab_one_struct_field (void *dhandle, struct stab_handle *info,
-			     const char **pp, const char *p,
-			     debug_field *retp, bfd_boolean *staticsp)
+parse_stab_one_struct_field (void *                dhandle,
+			     struct stab_handle *  info,
+			     const char **         pp,
+			     const char *          p,
+			     debug_field *         retp,
+			     bfd_boolean *         staticsp,
+			     const char *          p_end)
 {
   const char *orig;
   char *name;
@@ -2397,6 +2499,8 @@ parse_stab_one_struct_field (void *dhandle, struct stab_handle *info,
   bfd_vma bitsize;
 
   orig = *pp;
+  if (orig >= p_end)
+    return FALSE;
 
   /* FIXME: gdb checks ARM_DEMANGLING here.  */
 
@@ -2420,6 +2524,9 @@ parse_stab_one_struct_field (void *dhandle, struct stab_handle *info,
 	case '2':
 	  visibility = DEBUG_VISIBILITY_PUBLIC;
 	  break;
+	case 0:
+	  bad_stab (orig);
+	  return FALSE;
 	default:
 	  warn_stab (orig, _("unknown visibility character for field"));
 	  visibility = DEBUG_VISIBILITY_PUBLIC;
@@ -2429,7 +2536,7 @@ parse_stab_one_struct_field (void *dhandle, struct stab_handle *info,
     }
 
   type = parse_stab_type (dhandle, info, (const char *) NULL, pp,
-			  (debug_type **) NULL);
+			  (debug_type **) NULL, p_end);
   if (type == DEBUG_TYPE_NULL)
     {
       free (name);
@@ -2469,7 +2576,7 @@ parse_stab_one_struct_field (void *dhandle, struct stab_handle *info,
     }
   ++*pp;
 
-  bitpos = parse_number (pp, (bfd_boolean *) NULL);
+  bitpos = parse_number (pp, (bfd_boolean *) NULL, p_end);
   if (**pp != ',')
     {
       bad_stab (orig);
@@ -2478,7 +2585,7 @@ parse_stab_one_struct_field (void *dhandle, struct stab_handle *info,
     }
   ++*pp;
 
-  bitsize = parse_number (pp, (bfd_boolean *) NULL);
+  bitsize = parse_number (pp, (bfd_boolean *) NULL, p_end);
   if (**pp != ';')
     {
       bad_stab (orig);
@@ -2526,9 +2633,13 @@ parse_stab_one_struct_field (void *dhandle, struct stab_handle *info,
    name (such as `+=') and `.' marks the end of the operator name.  */
 
 static bfd_boolean
-parse_stab_members (void *dhandle, struct stab_handle *info,
-		    const char *tagname, const char **pp,
-		    const int *typenums, debug_method **retp)
+parse_stab_members (void *                dhandle,
+		    struct stab_handle *  info,
+		    const char *          tagname,
+		    const char **         pp,
+		    const int *           typenums,
+		    debug_method **       retp,
+		    const char *          p_end)
 {
   const char *orig;
   debug_method *methods;
@@ -2541,6 +2652,8 @@ parse_stab_members (void *dhandle, struct stab_handle *info,
   *retp = NULL;
 
   orig = *pp;
+  if (orig >= p_end)
+    return FALSE;
 
   alloc = 0;
   methods = NULL;
@@ -2610,7 +2723,7 @@ parse_stab_members (void *dhandle, struct stab_handle *info,
 	  else
 	    {
 	      type = parse_stab_type (dhandle, info, (const char *) NULL, pp,
-				      (debug_type **) NULL);
+				      (debug_type **) NULL, p_end);
 	      if (type == DEBUG_TYPE_NULL)
 		goto fail;
 
@@ -2645,6 +2758,9 @@ parse_stab_members (void *dhandle, struct stab_handle *info,
 	    case '1':
 	      visibility = DEBUG_VISIBILITY_PROTECTED;
 	      break;
+	    case 0:
+	      bad_stab (orig);
+	      goto fail;
 	    default:
 	      visibility = DEBUG_VISIBILITY_PUBLIC;
 	      break;
@@ -2691,9 +2807,9 @@ parse_stab_members (void *dhandle, struct stab_handle *info,
 	    case '*':
 	      /* virtual member function, followed by index.  The sign
 		 bit is supposedly set to distinguish
-		 pointers-to-methods from virtual function indicies.  */
+		 pointers-to-methods from virtual function indices.  */
 	      ++*pp;
-	      voffset = parse_number (pp, (bfd_boolean *) NULL);
+	      voffset = parse_number (pp, (bfd_boolean *) NULL, p_end);
 	      if (**pp != ';')
 		{
 		  bad_stab (orig);
@@ -2702,7 +2818,7 @@ parse_stab_members (void *dhandle, struct stab_handle *info,
 	      ++*pp;
 	      voffset &= 0x7fffffff;
 
-	      if (**pp == ';' || *pp == '\0')
+	      if (**pp == ';' || **pp == '\0')
 		{
 		  /* Must be g++ version 1.  */
 		  context = DEBUG_TYPE_NULL;
@@ -2715,7 +2831,8 @@ parse_stab_members (void *dhandle, struct stab_handle *info,
 		  look_ahead_type = parse_stab_type (dhandle, info,
 						     (const char *) NULL,
 						     pp,
-						     (debug_type **) NULL);
+						     (debug_type **) NULL,
+						     p_end);
 		  if (**pp == ':')
 		    {
 		      /* g++ version 1 overloaded methods.  */
@@ -2974,9 +3091,13 @@ parse_stab_argtypes (void *dhandle, struct stab_handle *info,
    so we can look for the vptr base class info.  */
 
 static bfd_boolean
-parse_stab_tilde_field (void *dhandle, struct stab_handle *info,
-			const char **pp, const int *typenums,
-			debug_type *retvptrbase, bfd_boolean *retownvptr)
+parse_stab_tilde_field (void *                dhandle,
+			struct stab_handle *  info,
+			const char **         pp,
+			const int *           typenums,
+			debug_type *          retvptrbase,
+			bfd_boolean *         retownvptr,
+			const char *          p_end)
 {
   const char *orig;
   const char *hold;
@@ -2986,14 +3107,15 @@ parse_stab_tilde_field (void *dhandle, struct stab_handle *info,
   *retownvptr = FALSE;
 
   orig = *pp;
-
+  if (orig >= p_end)
+    return FALSE;
+  
   /* If we are positioned at a ';', then skip it.  */
   if (**pp == ';')
     ++*pp;
 
   if (**pp != '~')
     return TRUE;
-
   ++*pp;
 
   if (**pp == '=' || **pp == '+' || **pp == '-')
@@ -3005,14 +3127,13 @@ parse_stab_tilde_field (void *dhandle, struct stab_handle *info,
 
   if (**pp != '%')
     return TRUE;
-
   ++*pp;
 
   hold = *pp;
 
   /* The next number is the type number of the base class (possibly
      our own class) which supplies the vtable for this class.  */
-  if (! parse_stab_type_number (pp, vtypenums))
+  if (! parse_stab_type_number (pp, vtypenums, p_end))
     return FALSE;
 
   if (vtypenums[0] == typenums[0]
@@ -3026,7 +3147,7 @@ parse_stab_tilde_field (void *dhandle, struct stab_handle *info,
       *pp = hold;
 
       vtype = parse_stab_type (dhandle, info, (const char *) NULL, pp,
-			       (debug_type **) NULL);
+			       (debug_type **) NULL, p_end);
       for (p = *pp; *p != ';' && *p != '\0'; p++)
 	;
       if (*p != ';')
@@ -3046,8 +3167,11 @@ parse_stab_tilde_field (void *dhandle, struct stab_handle *info,
 /* Read a definition of an array type.  */
 
 static debug_type
-parse_stab_array_type (void *dhandle, struct stab_handle *info,
-		       const char **pp, bfd_boolean stringp)
+parse_stab_array_type (void *                dhandle,
+		       struct stab_handle *  info,
+		       const char **         pp,
+		       bfd_boolean           stringp,
+		       const char *          p_end)
 {
   const char *orig;
   const char *p;
@@ -3065,13 +3189,16 @@ parse_stab_array_type (void *dhandle, struct stab_handle *info,
      for these, produce a type like float[][].  */
 
   orig = *pp;
+  if (orig >= p_end)
+    return DEBUG_TYPE_NULL;
 
   /* FIXME: gdb checks os9k_stabs here.  */
 
   /* If the index type is type 0, we take it as int.  */
   p = *pp;
-  if (! parse_stab_type_number (&p, typenums))
+  if (! parse_stab_type_number (&p, typenums, p_end))
     return DEBUG_TYPE_NULL;
+
   if (typenums[0] == 0 && typenums[1] == 0 && **pp != '=')
     {
       index_type = debug_find_named_type (dhandle, "int");
@@ -3086,7 +3213,7 @@ parse_stab_array_type (void *dhandle, struct stab_handle *info,
   else
     {
       index_type = parse_stab_type (dhandle, info, (const char *) NULL, pp,
-				    (debug_type **) NULL);
+				    (debug_type **) NULL, p_end);
     }
 
   if (**pp != ';')
@@ -3098,13 +3225,13 @@ parse_stab_array_type (void *dhandle, struct stab_handle *info,
 
   adjustable = FALSE;
 
-  if (! ISDIGIT (**pp) && **pp != '-')
+  if (! ISDIGIT (**pp) && **pp != '-' && **pp != 0)
     {
       ++*pp;
       adjustable = TRUE;
     }
 
-  lower = (bfd_signed_vma) parse_number (pp, (bfd_boolean *) NULL);
+  lower = (bfd_signed_vma) parse_number (pp, (bfd_boolean *) NULL, p_end);
   if (**pp != ';')
     {
       bad_stab (orig);
@@ -3112,13 +3239,13 @@ parse_stab_array_type (void *dhandle, struct stab_handle *info,
     }
   ++*pp;
 
-  if (! ISDIGIT (**pp) && **pp != '-')
+  if (! ISDIGIT (**pp) && **pp != '-' && **pp != 0)
     {
       ++*pp;
       adjustable = TRUE;
     }
 
-  upper = (bfd_signed_vma) parse_number (pp, (bfd_boolean *) NULL);
+  upper = (bfd_signed_vma) parse_number (pp, (bfd_boolean *) NULL, p_end);
   if (**pp != ';')
     {
       bad_stab (orig);
@@ -3127,7 +3254,7 @@ parse_stab_array_type (void *dhandle, struct stab_handle *info,
   ++*pp;
 
   element_type = parse_stab_type (dhandle, info, (const char *) NULL, pp,
-				  (debug_type **) NULL);
+				  (debug_type **) NULL, p_end);
   if (element_type == DEBUG_TYPE_NULL)
     return DEBUG_TYPE_NULL;
 
@@ -3197,6 +3324,9 @@ pop_bincl (struct stab_handle *info)
   if (o == NULL)
     return info->main_filename;
   info->bincl_stack = o->next_stack;
+
+  if (o->file >= info->files)
+    return info->main_filename;
 
   o->file_types = info->file_types[o->file];
 
@@ -3432,6 +3562,7 @@ stab_xcoff_builtin_type (void *dhandle, struct stab_handle *info,
     case 9:
       name = "unsigned";
       rettype = debug_make_int_type (dhandle, 4, TRUE);
+      break;
     case 10:
       name = "unsigned long";
       rettype = debug_make_int_type (dhandle, 4, TRUE);

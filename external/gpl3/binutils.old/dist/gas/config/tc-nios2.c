@@ -1,5 +1,5 @@
 /* Altera Nios II assembler.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2018 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -25,7 +25,6 @@
 #include "elf/nios2.h"
 #include "tc-nios2.h"
 #include "bfd.h"
-#include "libbfd.h"
 #include "dwarf2dbg.h"
 #include "subsegs.h"
 #include "safe-ctype.h"
@@ -207,7 +206,7 @@ static segT nios2_current_align_seg;
 static int nios2_auto_align_on = 1;
 
 /* The last seen label in the current section.  This is used to auto-align
-   labels preceeding instructions.  */
+   labels preceding instructions.  */
 static symbolS *nios2_last_label;
 
 /* If we saw a 16-bit CDX instruction, we can align on 2-byte boundaries
@@ -728,8 +727,8 @@ const pseudo_typeS md_pseudo_table[] = {
 #define CDX_CBRANCH_SUBTYPE(N) (CDXBRANCH | CBRANCH | (N))
 #define SUBTYPE_ADDIS(SUBTYPE) ((SUBTYPE) & 0xffff)
 
-/* For the -relax-section mode, unconditional branches require 2 extra i
-   nstructions besides the addis, conditional branches require 3.  */
+/* For the -relax-section mode, unconditional branches require 2 extra
+   instructions besides the addis, conditional branches require 3.  */
 #define UBRANCH_ADDIS_TO_SIZE(N) (((N) + 2) * 4)
 #define CBRANCH_ADDIS_TO_SIZE(N) (((N) + 3) * 4)
 
@@ -3245,16 +3244,29 @@ static nios2_ps_insn_infoS*
 nios2_translate_pseudo_insn (nios2_insn_infoS *insn)
 {
 
+  const struct nios2_opcode *op = insn->insn_nios2_opcode;
   nios2_ps_insn_infoS *ps_insn;
+  unsigned int tokidx, ntok;
 
-  /* Find which real insn the pseudo-op transates to and
+  /* Find which real insn the pseudo-op translates to and
      switch the insn_info ptr to point to it.  */
-  ps_insn = nios2_ps_lookup (insn->insn_nios2_opcode->name);
+  ps_insn = nios2_ps_lookup (op->name);
 
   if (ps_insn != NULL)
     {
       insn->insn_nios2_opcode = nios2_opcode_lookup (ps_insn->insn);
       insn->insn_tokens[0] = insn->insn_nios2_opcode->name;
+      
+      /* Make sure there are enough arguments.  */
+      ntok = ((op->pinfo & NIOS2_INSN_OPTARG)
+	      ? op->num_args - 1 : op->num_args);
+      for (tokidx = 1; tokidx <= ntok; tokidx++)
+	if (insn->insn_tokens[tokidx] == NULL)
+	  {
+	    as_bad ("missing argument");
+	    return NULL;
+	  }
+
       /* Modify the args so they work with the real insn.  */
       ps_insn->arg_modifer_func ((char **) insn->insn_tokens,
 				 ps_insn->arg_modifier, ps_insn->num,
@@ -3685,6 +3697,7 @@ md_assemble (char *op_str)
   unsigned long saved_pinfo = 0;
   nios2_insn_infoS thisinsn;
   nios2_insn_infoS *insn = &thisinsn;
+  bfd_boolean ps_error = FALSE;
 
   /* Make sure we are aligned on an appropriate boundary.  */
   if (nios2_current_align < nios2_min_align)
@@ -3731,35 +3744,45 @@ md_assemble (char *op_str)
 	 with its real equivalent, and then continue.  */
       if ((insn->insn_nios2_opcode->pinfo & NIOS2_INSN_MACRO)
 	  == NIOS2_INSN_MACRO)
-	ps_insn = nios2_translate_pseudo_insn (insn);
+	{
+	  ps_insn = nios2_translate_pseudo_insn (insn);
+	  if (!ps_insn)
+	    ps_error = TRUE;
+	}
 
-      /* Assemble the parsed arguments into the instruction word.  */
-      nios2_assemble_args (insn);
+      /* If we found invalid pseudo-instruction syntax, the error's already
+	 been diagnosed in nios2_translate_pseudo_insn, so skip
+	 remaining processing.  */
+      if (!ps_error)
+	{
+	  /* Assemble the parsed arguments into the instruction word.  */
+	  nios2_assemble_args (insn);
 
-      /* Handle relaxation and other transformations.  */
-      if (nios2_as_options.relax != relax_none
-	  && !nios2_as_options.noat
-	  && insn->insn_nios2_opcode->pinfo & NIOS2_INSN_UBRANCH)
-	output_ubranch (insn);
-      else if (nios2_as_options.relax != relax_none
-	       && !nios2_as_options.noat
-	       && insn->insn_nios2_opcode->pinfo & NIOS2_INSN_CBRANCH)
-	output_cbranch (insn);
-      else if (nios2_as_options.relax == relax_all
-	       && !nios2_as_options.noat
-	       && insn->insn_nios2_opcode->pinfo & NIOS2_INSN_CALL
-	       && insn->insn_reloc
-	       && ((insn->insn_reloc->reloc_type
-		    == BFD_RELOC_NIOS2_CALL26)
-		   || (insn->insn_reloc->reloc_type
-		       == BFD_RELOC_NIOS2_CALL26_NOAT)))
-	output_call (insn);
-      else if (saved_pinfo == NIOS2_INSN_MACRO_MOVIA)
-	output_movia (insn);
-      else
-	output_insn (insn);
-      if (ps_insn)
-	nios2_cleanup_pseudo_insn (insn, ps_insn);
+	  /* Handle relaxation and other transformations.  */
+	  if (nios2_as_options.relax != relax_none
+	      && !nios2_as_options.noat
+	      && insn->insn_nios2_opcode->pinfo & NIOS2_INSN_UBRANCH)
+	    output_ubranch (insn);
+	  else if (nios2_as_options.relax != relax_none
+		   && !nios2_as_options.noat
+		   && insn->insn_nios2_opcode->pinfo & NIOS2_INSN_CBRANCH)
+	    output_cbranch (insn);
+	  else if (nios2_as_options.relax == relax_all
+		   && !nios2_as_options.noat
+		   && insn->insn_nios2_opcode->pinfo & NIOS2_INSN_CALL
+		   && insn->insn_reloc
+		   && ((insn->insn_reloc->reloc_type
+			== BFD_RELOC_NIOS2_CALL26)
+		       || (insn->insn_reloc->reloc_type
+			   == BFD_RELOC_NIOS2_CALL26_NOAT)))
+	    output_call (insn);
+	  else if (saved_pinfo == NIOS2_INSN_MACRO_MOVIA)
+	    output_movia (insn);
+	  else
+	    output_insn (insn);
+	  if (ps_insn)
+	    nios2_cleanup_pseudo_insn (insn, ps_insn);
+	}
     }
   else
     /* Unrecognised instruction - error.  */

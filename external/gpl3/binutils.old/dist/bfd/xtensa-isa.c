@@ -1,5 +1,5 @@
 /* Configurable Xtensa ISA support.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -292,7 +292,8 @@ xtensa_isa_init (xtensa_isa_status *errno_p, char **error_msg_p)
       xtensa_sysreg_internal *sreg = &isa->sysregs[n];
       is_user = sreg->is_user;
 
-      isa->sysreg_table[is_user][sreg->number] = n;
+      if (sreg->number >= 0)
+	isa->sysreg_table[is_user][sreg->number] = n;
     }
 
   /* Set up the interface lookup table.  */

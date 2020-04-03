@@ -1,6 +1,6 @@
 // s390.cc -- s390 target support for gold.
 
-// Copyright (C) 2015-2016 Free Software Foundation, Inc.
+// Copyright (C) 2015-2018 Free Software Foundation, Inc.
 // Written by Marcin Kościelnicki <koriakin@0x04.net>.
 
 // This file is part of gold.
@@ -827,6 +827,7 @@ Target::Target_info Target_s390<32>::s390_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 template<>
@@ -855,6 +856,7 @@ Target::Target_info Target_s390<64>::s390_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   64,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 template<int size>
@@ -2555,7 +2557,7 @@ Target_s390<size>::Scan::local(Symbol_table* symtab,
 		    unsupported_reloc_local(object, r_type);
 		  }
 	      }
-	    // fall through
+	    // Fall through.
 	  case elfcpp::R_390_TLS_IEENT:
 	  case elfcpp::R_390_TLS_GOTIE12:
 	  case elfcpp::R_390_TLS_GOTIE20:
@@ -2993,7 +2995,7 @@ Target_s390<size>::Scan::global(Symbol_table* symtab,
 		    unsupported_reloc_global(object, r_type, gsym);
 		  }
 	      }
-	    // fall through
+	    // Fall through.
 	  case elfcpp::R_390_TLS_IEENT:
 	  case elfcpp::R_390_TLS_GOTIE12:
 	  case elfcpp::R_390_TLS_GOTIE20:
@@ -3241,7 +3243,7 @@ Target_s390<size>::Relocate::relocate(
 		  || (gsym->is_defined()
 		      && !gsym->is_from_dynobj()
 		      && !gsym->is_preemptible()));
-      // fallthru
+      // Fall through.
     case elfcpp::R_390_8:
     case elfcpp::R_390_12:
     case elfcpp::R_390_16:
@@ -3270,7 +3272,7 @@ Target_s390<size>::Relocate::relocate(
       gold_assert(gsym == NULL
 		  || gsym->has_plt_offset()
 		  || gsym->final_value_is_known());
-      // fallthru
+      // Fall through.
     case elfcpp::R_390_GOTOFF64:
     case elfcpp::R_390_GOTOFF32:
     case elfcpp::R_390_GOTOFF16:

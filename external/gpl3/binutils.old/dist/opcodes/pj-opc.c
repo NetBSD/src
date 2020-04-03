@@ -1,5 +1,5 @@
 /* pj-opc.c -- Definitions for picoJava opcodes.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain of Transmeta (sac@pobox.com).
 
    This file is part of the GNU opcodes library.

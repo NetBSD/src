@@ -1,5 +1,5 @@
 /* BFD support for the SPARC architecture.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -302,6 +302,36 @@ static const bfd_arch_info_type arch_info_struct[] =
     bfd_mach_sparc_v9m,
     "sparc",
     "sparc:v9m",
+    3,
+    FALSE,
+    bfd_default_compatible,
+    bfd_default_scan,
+    bfd_arch_default_fill,
+    &arch_info_struct[19],
+  },
+  {
+    32,	/* bits in a word */
+    32,	/* bits in an address */
+    8,	/* bits in a byte */
+    bfd_arch_sparc,
+    bfd_mach_sparc_v8plusm8,
+    "sparc",
+    "sparc:v8plusm8",
+    3,
+    FALSE,
+    bfd_default_compatible,
+    bfd_default_scan,
+    bfd_arch_default_fill,
+    &arch_info_struct[20],
+  },
+  {
+    64,	/* bits in a word */
+    64,	/* bits in an address */
+    8,	/* bits in a byte */
+    bfd_arch_sparc,
+    bfd_mach_sparc_v9m8,
+    "sparc",
+    "sparc:v9m8",
     3,
     FALSE,
     bfd_default_compatible,

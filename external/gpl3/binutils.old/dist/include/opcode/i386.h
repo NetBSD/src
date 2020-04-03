@@ -1,5 +1,5 @@
 /* opcode/i386.h -- Intel 80386 opcode macros
-   Copyright (C) 1989-2016 Free Software Foundation, Inc.
+   Copyright (C) 1989-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler, and GDB, the GNU Debugger.
 
@@ -43,12 +43,6 @@
    compatible instructions.  */
 #define SYSV386_COMPAT 1
 #endif
-#ifndef OLDGCC_COMPAT
-/* Set non-zero to cater for old (<= 2.8.1) versions of gcc that could
-   generate nonsense fsubp, fsubrp, fdivp and fdivrp with operands
-   reversed.  */
-#define OLDGCC_COMPAT SYSV386_COMPAT
-#endif
 
 #define MOV_AX_DISP32 0xa0
 #define POP_SEG_SHORT 0x07
@@ -77,6 +71,7 @@
 #define XACQUIRE_PREFIX_OPCODE 0xf2
 #define XRELEASE_PREFIX_OPCODE 0xf3
 #define BND_PREFIX_OPCODE 0xf2
+#define NOTRACK_PREFIX_OPCODE 0x3e
 
 #define TWO_BYTE_OPCODE_ESCAPE 0x0f
 #define NOP_OPCODE (char) 0x90

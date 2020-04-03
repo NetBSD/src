@@ -1,5 +1,5 @@
 /* seh pdata/xdata coff object file format
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -38,7 +38,7 @@
 
   The third version has a function entry block of BeginAddress (RVA),
   EndAddress (RVA), and UnwindData (RVA). The description of the
-  prologue, excepetion-handler, and additional SEH data is stored
+  prologue, exception-handler, and additional SEH data is stored
   within the UNWIND_DATA field in the xdata section.
 
   The pseudos:

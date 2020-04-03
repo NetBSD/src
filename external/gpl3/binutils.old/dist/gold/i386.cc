@@ -1,6 +1,6 @@
 // i386.cc -- i386 target support for gold.
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -925,6 +925,7 @@ const Target::Target_info Target_i386::i386_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 // Get the GOT section, creating it if necessary.
@@ -2794,8 +2795,11 @@ Target_i386::Relocate::relocate(const Relocate_info<32, false>* relinfo,
 	   && r_type != elfcpp::R_386_PC32)
 	  || gsym == NULL
 	  || strcmp(gsym->name(), "___tls_get_addr") != 0)
-	gold_error_at_location(relinfo, relnum, rel.get_r_offset(),
-			       _("missing expected TLS relocation"));
+	{
+	  gold_error_at_location(relinfo, relnum, rel.get_r_offset(),
+				 _("missing expected TLS relocation"));
+	  this->skip_call_tls_get_addr_ = false;
+	}
       else
 	{
 	  this->skip_call_tls_get_addr_ = false;
@@ -4200,6 +4204,7 @@ const Target::Target_info Target_i386_nacl::i386_nacl_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 #define	NACLMASK	0xe0            // 32-byte alignment mask
@@ -4437,6 +4442,7 @@ const Target::Target_info Target_iamcu::iamcu_info =
   NULL,			// attributes_vendor
   "_start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 class Target_selector_iamcu : public Target_selector

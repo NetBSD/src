@@ -1,5 +1,5 @@
 /* tc-v850.c -- Assembler code for the NEC V850
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -38,7 +38,7 @@ static signed int soft_float = -1;
 static int machine = -1;
 
 
-/* Indiciates the target BFD architecture.  */
+/* Indicates the target BFD architecture.  */
 enum bfd_architecture v850_target_arch = bfd_arch_v850_rh850;
 const char * v850_target_format = "elf32-v850-rh850";
 static flagword v850_e_flags = 0;
@@ -935,7 +935,7 @@ static const struct reg_name vector_registers[] =
   (sizeof (vector_registers) / sizeof (struct reg_name))
 
 /* Do a binary search of the given register table to see if NAME is a
-   valid regiter name.  Return the register number from the array on
+   valid register name.  Return the register number from the array on
    success, or -1 on failure.  */
 
 static int
@@ -1366,7 +1366,7 @@ skip_white_space (void)
      { rX - rY, rZ }
      etc
 
-   and also parses constant expressions whoes bits indicate the
+   and also parses constant expressions whose bits indicate the
    registers in the lists.  The LSB in the expression refers to
    the lowest numbered permissible register in the register list,
    and so on upwards.  System registers are considered to be very
@@ -1397,7 +1397,7 @@ parse_register_list (unsigned long *insn,
   skip_white_space ();
 
   /* If the expression starts with a curly brace it is a register list.
-     Otherwise it is a constant expression, whoes bits indicate which
+     Otherwise it is a constant expression, whose bits indicate which
      registers are to be included in the list.  */
   if (*input_line_pointer != '{')
     {
@@ -2298,7 +2298,7 @@ md_assemble (char *str)
   const unsigned char *opindex_ptr;
   int next_opindex;
   int relaxable = 0;
-  unsigned long insn;
+  unsigned long insn = 0;
   unsigned long insn_size;
   char *f = NULL;
   int i;
@@ -2828,12 +2828,12 @@ md_assemble (char *str)
 	      else if ((operand->flags & V850_OPERAND_CACHEOP) != 0)
 		{
 		  if (!cacheop_name (&ex, TRUE))
-		    errmsg = _("invalid cache oparation name");
+		    errmsg = _("invalid cache operation name");
 		}
 	      else if ((operand->flags & V850_OPERAND_PREFOP) != 0)
 		{
 		  if (!prefop_name (&ex, TRUE))
-		    errmsg = _("invalid pref oparation name");
+		    errmsg = _("invalid pref operation name");
 		}
 	      else if ((operand->flags & V850_OPERAND_VREG) != 0)
 		{
@@ -3065,7 +3065,6 @@ md_assemble (char *str)
   dwarf2_emit_insn (0);
 
   /* Write out the instruction.  */
-
   if (relaxable && fc > 0)
     {
       insn_size = 2;
@@ -3476,7 +3475,7 @@ md_apply_fix (fixS *fixP, valueT *valueP, segT seg ATTRIBUTE_UNUSED)
       else
 	insn = bfd_getl16 ((unsigned char *) where);
 
-      /* When inserting loop offets a backwards displacement
+      /* When inserting loop offsets a backwards displacement
 	 is encoded as a positive value.  */
       if (operand->flags & V850_INVERSE_PCREL)
 	value = - value;

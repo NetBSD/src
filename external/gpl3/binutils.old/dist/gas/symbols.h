@@ -1,5 +1,5 @@
 /* symbols.h -
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -146,7 +146,7 @@ struct broken_word
     struct broken_word *use_jump;
   };
 extern struct broken_word *broken_words;
-#endif /* ndef WORKING_DOT_WORD */
+#endif /* ifdef WORKING_DOT_WORD */
 
 /*
  * Current means for getting from symbols to segments and vice verse.

@@ -1,5 +1,5 @@
 /* Declarations for Intel 80386 opcode table
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -188,12 +188,22 @@ enum
   CpuSE1,
   /* CLWB instruction required */
   CpuCLWB,
-  /* PCOMMIT instruction required */
-  CpuPCOMMIT,
   /* Intel AVX-512 IFMA Instructions support required.  */
   CpuAVX512IFMA,
   /* Intel AVX-512 VBMI Instructions support required.  */
   CpuAVX512VBMI,
+  /* Intel AVX-512 4FMAPS Instructions support required.  */
+  CpuAVX512_4FMAPS,
+  /* Intel AVX-512 4VNNIW Instructions support required.  */
+  CpuAVX512_4VNNIW,
+  /* Intel AVX-512 VPOPCNTDQ Instructions support required.  */
+  CpuAVX512_VPOPCNTDQ,
+  /* Intel AVX-512 VBMI2 Instructions support required.  */
+  CpuAVX512_VBMI2,
+  /* Intel AVX-512 VNNI Instructions support required.  */
+  CpuAVX512_VNNI,
+  /* Intel AVX-512 BITALG Instructions support required.  */
+  CpuAVX512_BITALG,
   /* mwaitx instruction required */
   CpuMWAITX,
   /* Clzero instruction required */
@@ -202,16 +212,29 @@ enum
   CpuOSPKE,
   /* RDPID instruction required */
   CpuRDPID,
-  /* MMX register support required */
-  CpuRegMMX,
-  /* XMM register support required */
-  CpuRegXMM,
-  /* YMM register support required */
-  CpuRegYMM,
-  /* ZMM register support required */
-  CpuRegZMM,
-  /* Mask register support required */
-  CpuRegMask,
+  /* PTWRITE instruction required */
+  CpuPTWRITE,
+  /* CET instructions support required */
+  CpuIBT,
+  CpuSHSTK,
+  /* GFNI instructions required */
+  CpuGFNI,
+  /* VAES instructions required */
+  CpuVAES,
+  /* VPCLMULQDQ instructions required */
+  CpuVPCLMULQDQ,
+  /* WBNOINVD instructions required */
+  CpuWBNOINVD,
+  /* PCONFIG instructions required */
+  CpuPCONFIG,
+  /* WAITPKG instructions required */
+  CpuWAITPKG,
+  /* CLDEMOTE instruction required */
+  CpuCLDEMOTE,
+  /* MOVDIRI instruction support required */
+  CpuMOVDIRI,
+  /* MOVDIRR64B instruction required */
+  CpuMOVDIR64B,
   /* 64bit support required  */
   Cpu64,
   /* Not supported in the 64bit mode  */
@@ -313,18 +336,30 @@ typedef union i386_cpu_flags
       unsigned int cpuprefetchwt1:1;
       unsigned int cpuse1:1;
       unsigned int cpuclwb:1;
-      unsigned int cpupcommit:1;
       unsigned int cpuavx512ifma:1;
       unsigned int cpuavx512vbmi:1;
+      unsigned int cpuavx512_4fmaps:1;
+      unsigned int cpuavx512_4vnniw:1;
+      unsigned int cpuavx512_vpopcntdq:1;
+      unsigned int cpuavx512_vbmi2:1;
+      unsigned int cpuavx512_vnni:1;
+      unsigned int cpuavx512_bitalg:1;
       unsigned int cpumwaitx:1;
       unsigned int cpuclzero:1;
       unsigned int cpuospke:1;
       unsigned int cpurdpid:1;
-      unsigned int cpuregmmx:1;
-      unsigned int cpuregxmm:1;
-      unsigned int cpuregymm:1;
-      unsigned int cpuregzmm:1;
-      unsigned int cpuregmask:1;
+      unsigned int cpuptwrite:1;
+      unsigned int cpuibt:1;
+      unsigned int cpushstk:1;
+      unsigned int cpugfni:1;
+      unsigned int cpuvaes:1;
+      unsigned int cpuvpclmulqdq:1;
+      unsigned int cpuwbnoinvd:1;
+      unsigned int cpupconfig:1;
+      unsigned int cpuwaitpkg:1;
+      unsigned int cpucldemote:1;
+      unsigned int cpumovdiri:1;
+      unsigned int cpumovdir64b:1;
       unsigned int cpu64:1;
       unsigned int cpuno64:1;
 #ifdef CpuUnused
@@ -342,9 +377,8 @@ enum
   D = 0,
   /* set if operands can be words or dwords encoded the canonical way */
   W,
-  /* Skip the current insn and use the next insn in i386-opc.tbl to swap
-     operand in encoding.  */
-  S,
+  /* load form instruction. Must be placed before store form.  */
+  Load,
   /* insn has a modrm byte. */
   Modrm,
   /* register is in low 3 bits of opcode */
@@ -361,8 +395,6 @@ enum
   FloatMF,
   /* src/dest swap for floats. */
   FloatR,
-  /* has float insn direction bit. */
-  FloatD,
   /* needs size prefix if in 32-bit mode */
   Size16,
   /* needs size prefix if in 16-bit mode */
@@ -394,13 +426,13 @@ enum
   IsString,
   /* quick test if branch instruction is MPX supported */
   BNDPrefixOk,
+  /* quick test if NOTRACK prefix is supported */
+  NoTrackPrefixOk,
   /* quick test for lockable instructions */
   IsLockable,
   /* fake an extra reg operand for clr, imul and special register
      processing for some instructions.  */
   RegKludge,
-  /* The first operand must be xmm0 */
-  FirstXmm0,
   /* An implicit xmm0 as the first operand */
   Implicit1stXmm0,
   /* The HLE prefix is OK:
@@ -419,8 +451,8 @@ enum
   ToDword,
   /* Convert to QWORD */
   ToQword,
-  /* Address prefix changes operand 0 */
-  AddrPrefixOp0,
+  /* Address prefix changes register operand */
+  AddrPrefixOpReg,
   /* opcode is a prefix */
   IsPrefix,
   /* instruction has extension in 8 bit imm */
@@ -432,7 +464,7 @@ enum
   /* deprecated fp insn, gets a warning */
   Ugh,
   /* insn has VEX prefix:
-	1: 128bit VEX prefix.
+	1: 128bit VEX prefix (or operand dependent).
 	2: 256bit VEX prefix.
 	3: Scalar VEX prefix.
    */
@@ -491,8 +523,6 @@ enum
 #define XOP2SOURCES	1
 #define VEX3SOURCES	2
   VexSources,
-  /* instruction has VEX 8 bit imm */
-  VexImmExt,
   /* Instruction with vector SIB byte:
 	1: 128bit vector register.
 	2: 256bit vector register.
@@ -512,11 +542,13 @@ enum
 	2: 128bit EVEX prefix.
 	3: 256bit EVEX prefix.
 	4: Length-ignored (LIG) EVEX prefix.
+	5: Length determined from actual operands.
    */
 #define EVEX512                1
 #define EVEX128                2
 #define EVEX256                3
 #define EVEXLIG                4
+#define EVEXDYN                5
   EVex,
 
   /* AVX512 masking support:
@@ -529,22 +561,6 @@ enum
 #define BOTH_MASKING    3
   Masking,
 
-  /* Input element size of vector insn:
-	0: 32bit.
-	1: 64bit.
-   */
-  VecESize,
-
-  /* Broadcast factor.
-	0: No broadcast.
-	1: 1to16 broadcast.
-	2: 1to8 broadcast.
-   */
-#define NO_BROADCAST	0
-#define BROADCAST_1TO16	1
-#define BROADCAST_1TO8	2
-#define BROADCAST_1TO4	3
-#define BROADCAST_1TO2	4
   Broadcast,
 
   /* Static rounding control is supported.  */
@@ -559,8 +575,14 @@ enum
   /* Default mask isn't allowed.  */
   NoDefMask,
 
-  /* Compatible with old (<= 2.8.1) versions of gcc  */
-  OldGcc,
+  /* The second operand must be a vector register, {x,y,z}mmN, where N is a multiple of 4.
+     It implicitly denotes the register group of {x,y,z}mmN - {x,y,z}mm(N + 3).
+   */
+  ImplicitQuadGroup,
+
+  /* Support encoding optimization.  */
+  Optimize,
+
   /* AT&T mnemonic.  */
   ATTMnemonic,
   /* AT&T syntax.  */
@@ -579,7 +601,7 @@ typedef struct i386_opcode_modifier
 {
   unsigned int d:1;
   unsigned int w:1;
-  unsigned int s:1;
+  unsigned int load:1;
   unsigned int modrm:1;
   unsigned int shortform:1;
   unsigned int jump:1;
@@ -588,7 +610,6 @@ typedef struct i386_opcode_modifier
   unsigned int jumpintersegment:1;
   unsigned int floatmf:1;
   unsigned int floatr:1;
-  unsigned int floatd:1;
   unsigned int size16:1;
   unsigned int size32:1;
   unsigned int size64:1;
@@ -604,15 +625,15 @@ typedef struct i386_opcode_modifier
   unsigned int fwait:1;
   unsigned int isstring:1;
   unsigned int bndprefixok:1;
+  unsigned int notrackprefixok:1;
   unsigned int islockable:1;
   unsigned int regkludge:1;
-  unsigned int firstxmm0:1;
   unsigned int implicit1stxmm0:1;
   unsigned int hleprefixok:2;
   unsigned int repprefixok:1;
   unsigned int todword:1;
   unsigned int toqword:1;
-  unsigned int addrprefixop0:1;
+  unsigned int addrprefixopreg:1;
   unsigned int isprefix:1;
   unsigned int immext:1;
   unsigned int norex64:1;
@@ -623,19 +644,18 @@ typedef struct i386_opcode_modifier
   unsigned int vexw:2;
   unsigned int vexopcode:3;
   unsigned int vexsources:2;
-  unsigned int veximmext:1;
   unsigned int vecsib:2;
   unsigned int sse2avx:1;
   unsigned int noavx:1;
   unsigned int evex:3;
   unsigned int masking:2;
-  unsigned int vecesize:1;
-  unsigned int broadcast:3;
+  unsigned int broadcast:1;
   unsigned int staticrounding:1;
   unsigned int sae:1;
   unsigned int disp8memshift:3;
   unsigned int nodefmask:1;
-  unsigned int oldgcc:1;
+  unsigned int implicitquadgroup:1;
+  unsigned int optimize:1;
   unsigned int attmnemonic:1;
   unsigned int attsyntax:1;
   unsigned int intelsyntax:1;
@@ -647,24 +667,12 @@ typedef struct i386_opcode_modifier
 
 enum
 {
-  /* 8bit register */
-  Reg8 = 0,
-  /* 16bit register */
-  Reg16,
-  /* 32bit register */
-  Reg32,
-  /* 64bit register */
-  Reg64,
-  /* Floating pointer stack register */
-  FloatReg,
+  /* Register (qualified by Byte, Word, etc) */
+  Reg = 0,
   /* MMX register */
   RegMMX,
-  /* SSE register */
-  RegXMM,
-  /* AVX registers */
-  RegYMM,
-  /* AVX512 registers */
-  RegZMM,
+  /* Vector registers */
+  RegSIMD,
   /* Vector Mask registers */
   RegMask,
   /* Control register */
@@ -708,10 +716,8 @@ enum
   Disp32S,
   /* 64 bit displacement */
   Disp64,
-  /* Accumulator %al/%ax/%eax/%rax */
+  /* Accumulator %al/%ax/%eax/%rax/%st(0)/%xmm0 */
   Acc,
-  /* Floating pointer top stack register %st(0) */
-  FloatAcc,
   /* Register which can be used for base or index in memory operand.  */
   BaseIndex,
   /* Register to hold in/out port addr = dx */
@@ -759,9 +765,6 @@ enum
   /* Bound register.  */
   RegBND,
 
-  /* Vector 8bit displacement */
-  Vec_Disp8,
-
   /* The last bitfield in i386_operand_type.  */
   OTMax
 };
@@ -779,15 +782,9 @@ typedef union i386_operand_type
 {
   struct
     {
-      unsigned int reg8:1;
-      unsigned int reg16:1;
-      unsigned int reg32:1;
-      unsigned int reg64:1;
-      unsigned int floatreg:1;
+      unsigned int reg:1;
       unsigned int regmmx:1;
-      unsigned int regxmm:1;
-      unsigned int regymm:1;
-      unsigned int regzmm:1;
+      unsigned int regsimd:1;
       unsigned int regmask:1;
       unsigned int control:1;
       unsigned int debug:1;
@@ -807,7 +804,6 @@ typedef union i386_operand_type
       unsigned int disp32s:1;
       unsigned int disp64:1;
       unsigned int acc:1;
-      unsigned int floatacc:1;
       unsigned int baseindex:1;
       unsigned int inoutportreg:1;
       unsigned int shiftcount:1;
@@ -828,7 +824,6 @@ typedef union i386_operand_type
       unsigned int anysize:1;
       unsigned int vec_imm4:1;
       unsigned int regbnd:1;
-      unsigned int vec_disp8:1;
 #ifdef OTUnused
       unsigned int unused:(OTNumOfBits - OTUnused);
 #endif
