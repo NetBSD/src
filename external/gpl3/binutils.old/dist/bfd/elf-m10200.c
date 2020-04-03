@@ -1,5 +1,5 @@
 /* Matsushita 10200 specific support for 32-bit ELF
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -212,16 +212,25 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an MN10200 ELF reloc.  */
 
-static void
-mn10200_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+mn10200_info_to_howto (bfd *abfd,
 		       arelent *cache_ptr,
 		       Elf_Internal_Rela *dst)
 {
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_MN10200_MAX);
+  if (r_type >= (unsigned int) R_MN10200_MAX)
+    {
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
+    }
+  
   cache_ptr->howto = &elf_mn10200_howto_table[r_type];
+  return cache_ptr->howto != NULL;
 }
 
 /* Perform a relocation as part of a final link.  */
@@ -524,7 +533,7 @@ mn10200_elf_relax_delete_bytes (bfd *abfd, asection *sec,
 
    There are quite a few relaxing opportunities available on the mn10200:
 
-	* jsr:24 -> jsr:16 					   2 bytes
+	* jsr:24 -> jsr:16					   2 bytes
 
 	* jmp:24 -> jmp:16					   2 bytes
 	* jmp:16 -> bra:8					   1 byte
@@ -654,8 +663,8 @@ mn10200_elf_relax_section (bfd *abfd,
 	      && h->root.type != bfd_link_hash_defweak)
 	    {
 	      /* This appears to be a reference to an undefined
-                 symbol.  Just ignore it--it will be caught by the
-                 regular reloc processing.  */
+		 symbol.  Just ignore it--it will be caught by the
+		 regular reloc processing.  */
 	      continue;
 	    }
 
@@ -1378,7 +1387,7 @@ mn10200_elf_get_relocated_section_contents (bfd *output_bfd,
 
 #define elf_backend_rela_normal 1
 #define elf_info_to_howto	mn10200_info_to_howto
-#define elf_info_to_howto_rel	0
+#define elf_info_to_howto_rel	NULL
 #define elf_backend_relocate_section mn10200_elf_relocate_section
 #define bfd_elf32_bfd_relax_section	mn10200_elf_relax_section
 #define bfd_elf32_bfd_get_relocated_section_contents \

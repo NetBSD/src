@@ -1,5 +1,5 @@
 /* subsegs.c - subsegments -
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -296,6 +296,10 @@ subsegs_print_statistics (FILE *file)
 {
   frchainS *frchp;
   asection *s;
+
+  /* PR 20897 - check to see if the output bfd was actually created.  */
+  if (stdoutput == NULL)
+    return;
 
   fprintf (file, "frag chains:\n");
   for (s = stdoutput->sections; s; s = s->next)

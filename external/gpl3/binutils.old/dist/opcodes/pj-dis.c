@@ -1,5 +1,5 @@
 /* pj-dis.c -- Disassemble picoJava instructions.
-   Copyright (C) 1999-2016 Free Software Foundation, Inc.
+   Copyright (C) 1999-2018 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain, of Transmeta (sac@pobox.com).
 
    This file is part of the GNU opcodes library.
@@ -22,7 +22,7 @@
 #include "sysdep.h"
 #include <stdio.h>
 #include "opcode/pj.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 
 extern const pj_opc_info_t pj_opc_info[512];
 

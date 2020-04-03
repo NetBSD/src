@@ -1,11 +1,11 @@
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
 
 cat << EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -21,17 +21,17 @@ SEARCH_DIR(.);
 MEMORY
 {
 	D_GPR    : org = 0x01000080, len = 128
-        D_RAM    : org = 0x01000100, len = 4K - 256
-        P_RAM    : org = 0x02000000, len = 16K
-        P_ROM    : org = 0x02010000, len = 64K - 32
-        P_RESET  : org = 0x0201FFE0, len = 32
-        P_CONFIG : org = 0x02020000, len = 128
+	D_RAM	 : org = 0x01000100, len = 4K - 256
+	P_RAM	 : org = 0x02000000, len = 16K
+	P_ROM	 : org = 0x02010000, len = 64K - 32
+	P_RESET	 : org = 0x0201FFE0, len = 32
+	P_CONFIG : org = 0x02020000, len = 128
 }
 
 SECTIONS
 {
 	/* Allocated memory end markers
-	   (initialized to start of appropiate memory address).  */
+	   (initialized to start of appropriate memory address).  */
 	__data_end  = 0x01000100;
 	__pram_end  = 0x02000000;
 	__flash_end = 0x02010000;
@@ -89,7 +89,7 @@ SECTIONS
 
 	/* PRAM overlay code.  */
 	__pram_overlay_run_start  = (__pram_end  + 1) & 0xFFFFFFFE;
-	__pram_overlay_load_start = (__flash_end + 1) & 0xFFFFFFFE;	
+	__pram_overlay_load_start = (__flash_end + 1) & 0xFFFFFFFE;
 	OVERLAY __pram_overlay_run_start : AT (__pram_overlay_load_start)
 	{
 		.pram1 { */overlay1/* (.pram); * (.pram1) }

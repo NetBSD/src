@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2018 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -26,7 +26,6 @@ fragment <<EOF
 
 #include <xtensa-config.h>
 #include "../bfd/elf-bfd.h"
-#include "../bfd/libbfd.h"
 #include "elf/xtensa.h"
 #include "bfd.h"
 
@@ -116,12 +115,7 @@ replace_insn_sec_with_prop_sec (bfd *abfd,
 
   if (insn_sec->size != 0)
     {
-      insn_contents = (bfd_byte *) bfd_malloc (insn_sec->size);
-      if (insn_contents == NULL)
-	{
-	  *error_message = _("out of memory");
-	  goto cleanup;
-	}
+      insn_contents = (bfd_byte *) xmalloc (insn_sec->size);
       if (! bfd_get_section_contents (abfd, insn_sec, insn_contents,
 				      (file_ptr) 0, insn_sec->size))
 	{
@@ -273,7 +267,7 @@ replace_instruction_table_sections (bfd *abfd, asection *sec)
       if (! replace_insn_sec_with_prop_sec (abfd, insn_sec_name, prop_sec_name,
 					    &message))
 	{
-	  einfo (_("%P: warning: failed to convert %s table in %B (%s); subsequent disassembly may be incomplete\n"),
+	  einfo (_("%P: warning: failed to convert %s table in %pB (%s); subsequent disassembly may be incomplete\n"),
 		 insn_sec_name, abfd, message);
 	}
     }
@@ -390,7 +384,7 @@ check_xtensa_info (bfd *abfd, asection *info_sec)
 
   data = xmalloc (info_sec->size);
   if (! bfd_get_section_contents (abfd, info_sec, data, 0, info_sec->size))
-    einfo (_("%F%P:%B: cannot read contents of section %A\n"), abfd, info_sec);
+    einfo (_("%F%P: %pB: cannot read contents of section %pA\n"), abfd, info_sec);
 
   if (info_sec->size > 24
       && info_sec->size >= 24 + bfd_get_32 (abfd, data + 4)
@@ -401,11 +395,11 @@ check_xtensa_info (bfd *abfd, asection *info_sec)
 					  &mismatch, &errmsg))
     {
       if (mismatch)
-	einfo (_("%P:%B: warning: incompatible Xtensa configuration (%s)\n"),
+	einfo (_("%P: %pB: warning: incompatible Xtensa configuration (%s)\n"),
 	       abfd, errmsg);
     }
   else
-    einfo (_("%P:%B: warning: cannot parse .xtensa.info section\n"), abfd);
+    einfo (_("%P: %pB: warning: cannot parse .xtensa.info section\n"), abfd);
 
   free (data);
 }
@@ -456,7 +450,7 @@ elf_xtensa_before_allocation (void)
 	 cannot go any further if there are any mismatches.  */
       if ((is_big_endian && f->the_bfd->xvec->byteorder == BFD_ENDIAN_LITTLE)
 	  || (!is_big_endian && f->the_bfd->xvec->byteorder == BFD_ENDIAN_BIG))
-	einfo (_("%F%P: cross-endian linking for %B not supported\n"),
+	einfo (_("%F%P: cross-endian linking for %pB not supported\n"),
 	       f->the_bfd);
 
       if (! first_bfd)
@@ -1438,7 +1432,7 @@ xtensa_wild_group_interleave_callback (lang_statement_union_type *statement)
 	  struct wildcard_list *l;
 	  for (l = w->section_list; l != NULL; l = l->next)
 	    {
-	      if (l->spec.sorted == TRUE)
+	      if (l->spec.sorted == by_name)
 		{
 		  no_reorder = TRUE;
 		  break;

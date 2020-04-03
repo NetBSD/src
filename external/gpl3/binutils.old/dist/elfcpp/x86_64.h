@@ -1,6 +1,6 @@
 // x86-64.h -- ELF definitions specific to EM_X86_64  -*- C++ -*-
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Andrew Chatham.
 
 // This file is part of elfcpp.
@@ -102,6 +102,12 @@ enum
   R_X86_64_GNU_VTINHERIT = 250,
   R_X86_64_GNU_VTENTRY = 251
 };
+
+// The bit values that can appear in the GNU_PROPERTY_X86_FEATURE_1_AND
+// program property.
+
+const uint64_t GNU_PROPERTY_X86_FEATURE_1_IBT = 1ULL << 0;
+const uint64_t GNU_PROPERTY_X86_FEATURE_1_SHSTK = 1ULL << 1;
 
 } // End namespace elfcpp.
 

@@ -1,5 +1,5 @@
 /* ECOFF object file format.
-   Copyright (C) 1993-2016 Free Software Foundation, Inc.
+   Copyright (C) 1993-2018 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    This file was put together by Ian Lance Taylor <ian@cygnus.com>.
 
@@ -53,7 +53,7 @@ ecoff_frob_file_before_fix (void)
      This output ordering of sections is magic, on the Alpha, at
      least.  The .lita section must come before .lit8 and .lit4,
      otherwise the OSF/1 linker may silently trash the .lit{4,8}
-     section contents.  Also, .text must preceed .rdata.  These differ
+     section contents.  Also, .text must precede .rdata.  These differ
      from the order described in some parts of the DEC OSF/1 Assembly
      Language Programmer's Guide, but that order doesn't seem to work
      with their linker.
@@ -221,8 +221,8 @@ ecoff_separate_stab_sections (void)
    relating to debugging information are supported here.
 
    The following pseudo-ops from the Kane and Heinrich MIPS book
-   should be defined here, but are currently unsupported: .aent,
-   .bgnb, .endb, .verstamp, .vreg.
+   should be defined here, but are currently unsupported: .bgnb,
+   .endb, .verstamp, .vreg.
 
    The following pseudo-ops from the Kane and Heinrich MIPS book are
    MIPS CPU specific, and should be defined by tc-mips.c: .alias,
@@ -253,6 +253,7 @@ const pseudo_typeS obj_pseudo_table[] =
   { "val",	ecoff_directive_val,	0 },
 
   /* ECOFF specific debugging information.  */
+  { "aent",	ecoff_directive_ent,	1 },
   { "begin",	ecoff_directive_begin,	0 },
   { "bend",	ecoff_directive_bend,	0 },
   { "end",	ecoff_directive_end,	0 },

@@ -1,6 +1,6 @@
 // aarch64.h -- ELF definitions specific to AARCH64  -*- C++ -*-
 
-// Copyright (C) 2014-2016 Free Software Foundation, Inc.
+// Copyright (C) 2014-2018 Free Software Foundation, Inc.
 // Written by Jing Yu (jingyu@google.com)
 
 // This file is part of elfcpp.
@@ -146,7 +146,7 @@ enum
   R_AARCH64_TLSLE_LDST8_TPREL_LO12 = 552,	// TPREL(S+A)
   R_AARCH64_TLSLE_LDST8_TPREL_LO12_NC = 553,	// TPREL(S+A)
   R_AARCH64_TLSLE_LDST16_TPREL_LO12 = 554,	// TPREL(S+A)
-  R_AARCH64_TLSLE_LSDT16_TPREL_LO12_NC = 555,	// TPREL(S+A)
+  R_AARCH64_TLSLE_LDST16_TPREL_LO12_NC = 555,	// TPREL(S+A)
   R_AARCH64_TLSLE_LDST32_TPREL_LO12 = 556,	// TPREL(S+A)
   R_AARCH64_TLSLE_LDST32_TPREL_LO12_NC = 557,	// TPREL(S+A)
   R_AARCH64_TLSLE_LDST64_TPREL_LO12 = 558,	// TPREL(S+A)

@@ -1,4 +1,4 @@
-@c Copyright (C) 2002-2016 Free Software Foundation, Inc.
+@c Copyright (C) 2002-2018 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -93,7 +93,7 @@ default behaviour.
 
 @item -my
 tells the assembler to generate a warning message if a NOP does not
-immediately forllow an instruction that enables or disables
+immediately follow an instruction that enables or disables
 interrupts.  This is the default.
 
 Note that this option can be stacked with the @option{-mn} option so
@@ -106,6 +106,19 @@ disables warnings about missing NOP instructions.
 @item -md
 mark the object file as one that requires data to copied from ROM to
 RAM at execution startup.  Disabled by default.
+
+@item -mdata-region=@var{region}
+Select the region data will be placed in.
+Region placement is performed by the compiler and linker.  The only effect this
+option will have on the assembler is that if @var{upper} or @var{either} is
+selected, then the symbols to initialise high data and bss will be defined.
+Valid @var{region} values are:
+@table @code
+@item none
+@item lower
+@item upper
+@item either
+@end table
 
 @end table
 
