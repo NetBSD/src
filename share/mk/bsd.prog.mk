@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.325 2020/03/03 02:25:03 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.326 2020/04/04 01:35:22 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -137,6 +137,7 @@ _LIBLIST=\
 	fido2 \
 	form \
 	gcc \
+	gnuctf \
 	gnumalloc \
 	gssapi \
 	hdb \
