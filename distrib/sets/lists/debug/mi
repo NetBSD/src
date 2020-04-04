@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.299 2020/03/30 02:12:38 christos Exp $
+# $NetBSD: mi,v 1.300 2020/04/04 15:39:16 jdolecek Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -190,7 +190,7 @@
 ./usr/lib/librumpfs_null_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpfs_nullfs_g.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/librumpfs_ptyfs_g.a			comp-c-debuglib		debuglib,rump
-./usr/lib/librumpfs_smbfs_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpfs_smbfs_g.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_syspuffs_g.a		comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpfs_sysvbfs_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpfs_tmpfs_g.a			comp-c-debuglib		debuglib,rump
@@ -380,7 +380,7 @@
 ./usr/libdata/debug/sbin/mount_ptyfs.debug	comp-miscfs-debug	debug
 ./usr/libdata/debug/sbin/mount_puffs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_qemufwcfg.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/mount_smbfs.debug	comp-smbfs-debug	debug
+./usr/libdata/debug/sbin/mount_smbfs.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/sbin/mount_sysvbfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_tmpfs.debug	comp-miscfs-debug	debug
 ./usr/libdata/debug/sbin/mount_udf.debug	comp-sysutil-debug	debug
@@ -1265,7 +1265,7 @@
 ./usr/libdata/debug/usr/sbin/rump_msdos.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_nfs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_ntfs.debug	comp-puffs-debug	debug,rump
-./usr/libdata/debug/usr/sbin/rump_smbfs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_smbfs.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/rump_syspuffs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_sysvbfs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_tmpfs.debug	comp-puffs-debug	debug,rump

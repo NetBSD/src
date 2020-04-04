@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1 2019/10/02 11:16:00 maya Exp $
+# $NetBSD: mi,v 1.2 2020/04/04 15:39:16 jdolecek Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -99,7 +99,7 @@
 ./rescue/mount_overlay				base-rescue-root
 ./rescue/mount_portal				base-obsolete		obsolete
 ./rescue/mount_procfs				base-rescue-root
-./rescue/mount_smbfs				base-rescue-root
+./rescue/mount_smbfs				base-obsolete		obsolete
 ./rescue/mount_tmpfs				base-rescue-root
 ./rescue/mount_ufs				base-rescue-root
 ./rescue/mount_umap				base-rescue-root

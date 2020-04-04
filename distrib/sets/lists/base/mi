@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1237 2020/04/02 13:03:22 roy Exp $
+# $NetBSD: mi,v 1.1238 2020/04/04 15:39:15 jdolecek Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -579,7 +579,7 @@
 ./sbin/mount_ptyfs				base-miscfs-root
 ./sbin/mount_puffs				base-sysutil-root
 ./sbin/mount_qemufwcfg				base-sysutil-root
-./sbin/mount_smbfs				base-smbfs-root
+./sbin/mount_smbfs				base-obsolete		obsolete
 ./sbin/mount_sysvbfs				base-sysutil-root
 ./sbin/mount_tmpfs				base-miscfs-root
 ./sbin/mount_udf				base-sysutil-root
@@ -984,7 +984,7 @@
 ./usr/bin/skeyinfo				base-util-bin		skey
 ./usr/bin/skeyinit				base-util-bin		skey
 ./usr/bin/slogin				base-secsh-bin
-./usr/bin/smbutil				base-util-bin
+./usr/bin/smbutil				base-obsolete		obsolete
 ./usr/bin/sockstat				base-util-bin
 ./usr/bin/sort					base-util-bin
 ./usr/bin/spell					base-util-bin
@@ -1174,7 +1174,7 @@
 ./usr/include/fs/nilfs				base-c-usr
 ./usr/include/fs/ptyfs				base-c-usr
 ./usr/include/fs/puffs				base-puffs-usr
-./usr/include/fs/smbfs				base-c-usr
+./usr/include/fs/smbfs				base-obsolete		obsolete
 ./usr/include/fs/sysvbfs			base-c-usr
 ./usr/include/fs/tmpfs				base-c-usr
 ./usr/include/fs/udf				base-c-usr
@@ -1272,7 +1272,7 @@
 ./usr/include/netnatm				base-obsolete		obsolete
 ./usr/include/netns				base-obsolete		obsolete
 ./usr/include/netpgp				base-c-usr
-./usr/include/netsmb				base-c-usr
+./usr/include/netsmb				base-obsolete		obsolete
 ./usr/include/nfs				base-c-usr
 ./usr/include/ntfs				base-c-usr
 ./usr/include/objc				base-objc-usr
@@ -1995,7 +1995,7 @@
 ./usr/sbin/rump_msdos				base-puffs-bin	rump
 ./usr/sbin/rump_nfs				base-puffs-bin	rump
 ./usr/sbin/rump_ntfs				base-puffs-bin	rump
-./usr/sbin/rump_smbfs				base-puffs-bin	rump
+./usr/sbin/rump_smbfs				base-obsolete		obsolete
 ./usr/sbin/rump_syspuffs			base-puffs-bin	rump
 ./usr/sbin/rump_sysvbfs				base-puffs-bin	rump
 ./usr/sbin/rump_tmpfs				base-puffs-bin	rump
@@ -2319,7 +2319,7 @@
 ./usr/share/examples/rpcapd			base-netutil-examples
 ./usr/share/examples/rtadvd			base-router-examples
 ./usr/share/examples/slip			base-slip-examples
-./usr/share/examples/smbfs			base-sysutil-examples
+./usr/share/examples/smbfs			base-obsolete	obsolete
 ./usr/share/examples/supfiles			base-obsolete	obsolete
 ./usr/share/examples/syslogd			base-sysutil-examples
 ./usr/share/examples/unbound			base-netutil-examples   share

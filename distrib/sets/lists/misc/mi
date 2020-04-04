@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.217 2020/03/29 17:13:47 christos Exp $
+# $NetBSD: mi,v 1.218 2020/04/04 15:39:16 jdolecek Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1607,7 +1607,7 @@
 ./usr/share/examples/rpcapd/rpcapd@.service	misc-netutil-examples	share
 ./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples	use_inet6,share
 ./usr/share/examples/slip/slip.login		misc-slip-examples	share
-./usr/share/examples/smbfs/dot.nsmbrc		misc-sysutil-examples	share
+./usr/share/examples/smbfs/dot.nsmbrc		misc-obsolete		obsolete
 ./usr/share/examples/supfiles/ftp.cs.umn.edu	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/skarven.itea.unit.no	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.au.netbsd.org	misc-obsolete		obsolete
