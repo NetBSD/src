@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.327 2020/03/03 00:38:12 christos Exp $
+# $NetBSD: shl.mi,v 1.328 2020/04/04 09:57:13 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -119,8 +119,10 @@
 ./usr/lib/libntp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libobjc_pic.a				comp-objc-piclib	compatfile,picinstall,gcccmds
-./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=231
-./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=231
+./usr/lib/libopcodes.so.8			comp-c-shlib		compatfile,binutils=231
+./usr/lib/libopcodes.so.8.0			comp-c-shlib		compatfile,binutils=231
+./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=234
+./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=234
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib	compatfile,picinstall,rump
