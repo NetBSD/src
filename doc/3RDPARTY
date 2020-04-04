@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1707 2020/04/02 14:11:59 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1708 2020/04/04 16:25:17 jdolecek Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1596,19 +1596,6 @@ License:	BSD-like (2-clause)
 Location:	sys/external/bsd/elftoolchain/dist
 Notes:
 		Run prepare-import.sh; next time use svn id.
-
-Package:	smbfs
-Version:	smbfs-1.4.1.tar.gz + FreeBSD-2003-02-16
-Current Vers:	smbfs-1.4.5.tar.gz
-Maintainer:	Boris Popov <bp@FreeBSD.org>
-Archive Site:	http://people.freebsd.org/~bp/pub/smbfs/smbfs-1.4.1.tar.gz
-Home Page:	http://people.freebsd.org/~bp/pub/smbfs/
-License:	BSD-like (4-clause)
-Location:	external/bsd/smbfs
-Notes:
-		The kernel portion has been removed from the tar file.
-		Our kernel smbfs and netsmb directories could move to
-		external, but this is just make-work.
 
 Package:	timeout
 Version:	FreeBSD-2014-07-16 r268763
