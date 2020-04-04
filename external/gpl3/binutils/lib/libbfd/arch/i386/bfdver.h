@@ -20,7 +20,7 @@
 
    In releases, the date is not included in either version strings or
    sonames.  */
-#define BFD_VERSION_DATE 20180718
-#define BFD_VERSION 231010000
-#define BFD_VERSION_STRING  "(NetBSD Binutils nb1) " "2.31.1"
+#define BFD_VERSION_DATE 20200201
+#define BFD_VERSION 234000000
+#define BFD_VERSION_STRING  "(NetBSD Binutils nb1) " "2.34"
 #define REPORT_BUGS_TO "<http://www.NetBSD.org/support/send-pr.html>"
