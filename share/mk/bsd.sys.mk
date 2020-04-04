@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.299 2020/02/08 07:07:06 maxv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.300 2020/04/04 07:03:57 maxv Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -238,9 +238,7 @@ AFLAGS+=	${CPUFLAGS}
 
 .if ${KCOV:U0} > 0
 KCOVFLAGS=	-fsanitize-coverage=trace-pc
-.for f in subr_kcov.c subr_lwp_specificdata.c subr_specificdata.c subr_asan.c \
-	subr_csan.c subr_msan.c x86_machdep.c
-# TODO Adapt the file list for !x86 or implement __nocov (missing in GCC 8)
+.for f in subr_kcov.c subr_asan.c subr_csan.c subr_msan.c
 KCOVFLAGS.${f}=		# empty
 .endfor
 CFLAGS+=	${KCOVFLAGS.${.IMPSRC:T}:U${KCOVFLAGS}}
