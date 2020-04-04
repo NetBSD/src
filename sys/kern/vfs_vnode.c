@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.117 2020/04/04 20:49:30 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.118 2020/04/04 20:54:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.117 2020/04/04 20:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.118 2020/04/04 20:54:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -847,9 +847,6 @@ vrelel(vnode_t *vp, int flags, int lktype)
 			rw_exit(vp->v_uobj.vmobjlock);
 			return;
 		}
-		if (!recycle) {
-			VOP_UNLOCK(vp);
-		}
 
 		/* Take care of space accounting. */
 		if ((vp->v_iflag & VI_EXECMAP) != 0 &&
@@ -869,6 +866,8 @@ vrelel(vnode_t *vp, int flags, int lktype)
 			VSTATE_ASSERT(vp, VS_LOADED);
 			/* vcache_reclaim drops the lock. */
 			vcache_reclaim(vp);
+		} else {
+			VOP_UNLOCK(vp);
 		}
 		KASSERT(vp->v_usecount > 0);
 	}
