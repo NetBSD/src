@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1179 2020/04/04 20:47:56 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1180 2020/04/04 23:54:06 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1161,6 +1161,11 @@ MKARZERO ?= ${MKREPRO}
 GROFF_FLAGS ?= -dpaper=letter
 ROFF_PAGESIZE ?= -P-pletter
 .endif
+
+#
+# Install the kernel as /netbsd/kernel and the modules in /netbsd/modules
+#
+KERNEL_DIR?=	no
 
 # Only install the general firmware on some systems
 MKFIRMWARE.amd64=		yes
