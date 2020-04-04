@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.103 2020/03/16 21:20:11 pgoyette Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.104 2020/04/04 20:49:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.103 2020/03/16 21:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.104 2020/04/04 20:49:30 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -171,7 +171,7 @@ procfs_mount(
 	else
 		pmnt->pmnt_flags = 0;
 
-	mp->mnt_iflag |= IMNT_MPSAFE;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_SHRLOOKUP;
 	return error;
 }
 

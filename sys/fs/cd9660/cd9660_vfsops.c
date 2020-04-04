@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.95 2020/03/16 21:20:09 pgoyette Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.96 2020/04/04 20:49:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.95 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.96 2020/04/04 20:49:30 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -446,7 +446,7 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = ISO_MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_iflag |= IMNT_MPSAFE;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_SHRLOOKUP;
 	mp->mnt_dev_bshift = iso_bsize;
 	mp->mnt_fs_bshift = isomp->im_bshift;
 	isomp->im_mountp = mp;
