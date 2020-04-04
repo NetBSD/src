@@ -180,7 +180,6 @@ pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	nsmb			# SMB requester
 pseudo-device   bpfilter        8       # Berkeley packet filter
 #pseudo-device	npf			# NPF packet filter
 
