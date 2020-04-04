@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-binutils,v 1.12 2020/04/04 00:47:52 christos Exp $
+#	$NetBSD: mknative-binutils,v 1.13 2020/04/04 01:34:53 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/binutils
@@ -49,16 +49,16 @@ get_libopcodes () {
 	} | write_c external/gpl3/binutils/lib/libopcodes/arch/$MACHINE_ARCH/config.h
 }
 
-get_libctf () {
-	mkdir -p $_TOP/external/gpl3/binutils/lib/libctf/arch/$MACHINE_ARCH
+get_libgnuctf () {
+	mkdir -p $_TOP/external/gpl3/binutils/lib/libgnuctf/arch/$MACHINE_ARCH
 
 	{
 		getvars libctf/Makefile libctf_la_SOURCES
-	} | write_mk external/gpl3/binutils/lib/libctf/arch/$MACHINE_ARCH/defs.mk
+	} | write_mk external/gpl3/binutils/lib/libgnuctf/arch/$MACHINE_ARCH/defs.mk
 
 	{
 		cat $_TMPDIR/libctf/config.h
-	} | write_c external/gpl3/binutils/lib/libctf/arch/$MACHINE_ARCH/config.h
+	} | write_c external/gpl3/binutils/lib/libgnuctf/arch/$MACHINE_ARCH/config.h
 }
 
 ##### external/gpl3/binutils/lib/libiberty #####
@@ -150,7 +150,7 @@ case $1 in
 all|binutils)	# everything (uses "canadian cross" temp environment)
 	get_binutils
 	get_libbfd
-	get_libctf
+	get_libgnuctf
 	get_libopcodes
 	get_libiberty
 	exit 0
