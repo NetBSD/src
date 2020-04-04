@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.35 2020/01/29 18:39:00 maya Exp $
+#	$NetBSD: majors.alpha,v 1.36 2020/04/04 16:06:11 jdolecek Exp $
 #
 # Device majors for alpha
 #
@@ -75,7 +75,7 @@ device-major	cgd		char 73  block 18	cgd
 device-major	radio		char 74			radio
 device-major	ksyms		char 75			ksyms
 device-major	wsfont		char 76			wsfont
-device-major	nsmb		char 77			nsmb
+#device-major	obsolete	char 77			obsolete (nsmb)
 device-major	joy		char 78			joy
 device-major	twe		char 79			twe
 device-major	sysmon		char 80			sysmon

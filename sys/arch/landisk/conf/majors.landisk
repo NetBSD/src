@@ -1,4 +1,4 @@
-#	$NetBSD: majors.landisk,v 1.10 2020/01/29 18:39:02 maya Exp $
+#	$NetBSD: majors.landisk,v 1.11 2020/04/04 16:06:14 jdolecek Exp $
 #
 # Device majors for landisk
 #
@@ -67,7 +67,7 @@ device-major	sequencer	char 73			sequencer
 
 device-major	altq		char 76			altq
 device-major	kttcp		char 77			kttcp
-device-major	nsmb		char 78			nsmb
+#device-major	obsolete	char 78			obsolete (nsmb)
 device-major	irframe		char 79			irframedrv
 device-major	pci		char 80			pci
 

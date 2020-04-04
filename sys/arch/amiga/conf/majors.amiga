@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amiga,v 1.26 2019/01/28 02:28:56 dholland Exp $
+#	$NetBSD: majors.amiga,v 1.27 2020/04/04 16:06:11 jdolecek Exp $
 #
 # Device majors for amiga
 #
@@ -56,7 +56,7 @@ device-major	clockctl	char 55			clockctl
 #device-major	obsolete	char 56			obsolete (systrace)
 device-major	cgd		char 57  block 18	cgd
 device-major	ksyms		char 58			ksyms
-device-major	nsmb		char 59			nsmb
+#device-major	obsolete	char 59			obsolete (nsmb)
 #device-major	obsolete	char 60			obsolete (opencrypto)
 device-major	wsmouse		char 61			wsmouse
 device-major	wsfont		char 62			wsfont
