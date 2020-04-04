@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.11 2020/02/26 07:57:24 hikaru Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.12 2020/04/04 13:59:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.11 2020/02/26 07:57:24 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.12 2020/04/04 13:59:16 mlelstv Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -348,8 +348,8 @@ db_show_proc(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 			    sizeof(cpuno), (char *)&cpuno);
 		} else
 			cpuno = -1;
-		db_printf("    stat %d flags %x cpu %d pri %d \n",
-		    l.l_stat, l.l_flag, cpuno, l.l_priority);
+		db_printf("    stat %d flags %x cpu %d pri %d ref %d\n",
+		    l.l_stat, l.l_flag, cpuno, l.l_priority, l.l_refcnt);
 
 		if (l.l_wchan && l.l_wmesg) {
 			db_read_string(l.l_wmesg, MAXCOMLEN, wbuf);
