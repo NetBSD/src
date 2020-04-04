@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.297 2020/02/10 20:11:48 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.298 2020/04/04 21:36:15 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.297 2020/02/10 20:11:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.298 2020/04/04 21:36:15 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1278,8 +1278,7 @@ wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int flags,
 	else {
 		error = __wdcwait(chp, mask, bits, WDCDELAY_POLL, tfd);
 		if (error != 0) {
-			if ((chp->ch_flags & ATACH_TH_RUN) ||
-			    (flags & AT_WAIT)) {
+			if (ata_is_thread_run(chp) || (flags & AT_WAIT)) {
 				/*
 				 * we're running in the channel thread
 				 * or some userland thread context
