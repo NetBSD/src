@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.42 2019/03/01 11:06:57 pgoyette Exp $ */
+/* $NetBSD: wsevent.c,v 1.43 2020/04/04 07:33:18 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.42 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.43 2020/04/04 07:33:18 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.42 2019/03/01 11:06:57 pgoyette Exp $"
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/compat_stub.h>
+#include <sys/sysctl.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wseventvar.h>
@@ -137,6 +138,8 @@ __KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.42 2019/03/01 11:06:57 pgoyette Exp $"
     sizeof(struct wscons_event) : \
     sizeof(struct owscons_event))
 #define EVARRAY(ev, idx) (&(ev)->q[(idx)])
+
+static int wsevent_default_version = WSEVENT_VERSION;
 
 /*
  * Priority of code managing wsevent queues.  PWSEVENT is set just above
@@ -161,8 +164,16 @@ wsevent_init(struct wseventvar *ev, struct proc *p)
 #endif
 		return;
 	}
-	/* For binary compat. New code must call WSxxxIO_SETVERSION */
-	ev->version = 0;
+	/* For binary compat set default version and either build with
+	 * COMPAT_50 or load COMPAT_50 module to include the compatibility
+	 * code.
+	 */
+	if (wsevent_default_version >= 0 &&
+	    wsevent_default_version < WSEVENT_VERSION)
+		ev->version = wsevent_default_version;
+	else
+		ev->version = WSEVENT_VERSION;
+
 	ev->get = ev->put = 0;
 	ev->q = kmem_alloc(WSEVENT_QSIZE * sizeof(*ev->q), KM_SLEEP);
 	selinit(&ev->sel);
@@ -444,4 +455,23 @@ wsevent_setversion(struct wseventvar *ev, int vers)
 	ev->get = ev->put = 0;
 	ev->version = vers;
 	return 0;
+}
+
+SYSCTL_SETUP(sysctl_wsevent_setup, "sysctl hw.wsevent subtree setup")
+{
+        const struct sysctlnode *node = NULL;
+ 
+        if (sysctl_createv(clog, 0, NULL, &node,
+            CTLFLAG_PERMANENT,
+            CTLTYPE_NODE, "wsevent", NULL, 
+            NULL, 0, NULL, 0,
+            CTL_HW, CTL_CREATE, CTL_EOL) != 0)
+                return;
+ 
+        sysctl_createv(clog, 0, &node, NULL,
+            CTLFLAG_READWRITE,
+            CTLTYPE_INT, "default_version",
+            SYSCTL_DESCR("Set default event version for compatibility"),
+            NULL, 0, &wsevent_default_version, 0,
+            CTL_CREATE, CTL_EOL);
 }
