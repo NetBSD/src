@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.43 2020/01/31 21:13:40 jmcneill Exp $
+# $NetBSD: Makefile,v 1.44 2020/04/04 03:04:58 christos Exp $
 
 # Link the gallium mega driver.
 
@@ -25,7 +25,6 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm \
 
 CFLAGS+=	-pthread
 LDFLAGS+=	-pthread
-LIBDPLIBS+=	pthread		${.CURDIR}/../../../../../lib/libpthread
 
 GALLIUM_SUBDIRS= \
 	auxiliary \
@@ -953,10 +952,11 @@ CPPFLAGS.${_s}+= -I${X11SRCDIR.Mesa}/src/gallium/${_d}
 .if ${BUILD_RADEON} == 1
 CFLAGS+=	-pthread
 LDFLAGS+=	-pthread
-LIBDPLIBS+=	pthread		${.CURDIR}/../../../../../lib/libpthread
 .endif
 
-LIBDPLIBS+=	m		${.CURDIR}/../../../../../lib/libm
+LIBDPLIBS+=	X11-xcb         ${.CURDIR}/../libX11/libX11-xcb
+LIBDPLIBS+=	xcb-dri2        ${.CURDIR}/../libxcb/dri2
+LIBDPLIBS+=	xcb		${.CURDIR}/../libxcb/libxcb
 .if ${BUILD_RADEON} == 1 || ${BUILD_NOUVEAU} == 1
 LIBDPLIBS+= 	drm		${.CURDIR}/../libdrm
 .if ${BUILD_I915} == 1
@@ -973,10 +973,11 @@ LIBDPLIBS+= 	drm_nouveau	${.CURDIR}/../libdrm_nouveau
 LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi
 LIBDPLIBS+=	expat		${.CURDIR}/../../../../../external/mit/expat/lib/libexpat
 LIBDPLIBS+=	terminfo	${.CURDIR}/../../../../../lib/libterminfo
-LIBDPLIBS+=	z		${.CURDIR}/../../../../../lib/libz
 LIBDPLIBS+=	execinfo	${.CURDIR}/../../../../../lib/libexecinfo
-LIBDPLIBS+=	X11-xcb         ${.CURDIR}/../libX11/libX11-xcb
-LIBDPLIBS+=	xcb-dri2        ${.CURDIR}/../libxcb/dri2
+
+LIBDPLIBS+=	elf		${NETBSDSRCDIR}/external/bsd/elftoolchain/lib/libelf
+LIBDPLIBS+=	z		${.CURDIR}/../../../../../lib/libz
+LIBDPLIBS+=	m		${.CURDIR}/../../../../../lib/libm
 
 # gallium drivers requiring LLVM
 .if ${BUILD_LLVMPIPE} == 1 || ${BUILD_RADEON} == 1
