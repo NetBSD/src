@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.238 2020/03/08 22:12:42 mgorny Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.239 2020/04/04 07:07:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.238 2020/03/08 22:12:42 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.239 2020/04/04 07:07:20 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1696,8 +1696,8 @@ nfsm_srvfattr(struct nfsrv_descript *nfsd, struct vattr *vap, struct nfs_fattr *
 	} else {
 		fp->fa_type = vtonfsv2_type(vap->va_type);
 		fp->fa_mode = vtonfsv2_mode(vap->va_type, vap->va_mode);
-		fp->fa2_size = txdr_unsigned(vap->va_size);
-		fp->fa2_blocksize = txdr_unsigned(vap->va_blocksize);
+		fp->fa2_size = txdr_unsigned(NFS_V2CLAMP32(vap->va_size));
+		fp->fa2_blocksize = txdr_unsigned(NFS_V2CLAMP16(vap->va_blocksize));
 		if (vap->va_type == VFIFO)
 			fp->fa2_rdev = 0xffffffff;
 		else
