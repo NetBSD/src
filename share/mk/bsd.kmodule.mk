@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.64 2020/04/04 19:50:53 christos Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.65 2020/04/04 23:19:08 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -177,9 +177,9 @@ KMODULEDIR=	${DESTDIR}/netbsd/modules/${KMOD}
 _INST_DIRS=	${DESTDIR}/netbsd
 _INST_DIRS+=	${DESTDIR}/netbsd/modules
 _INST_DIRS+=	${DESTDIR}/netbsd/modules/${KMOD}
-_OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh -k
 .else
 # Ensure these are recorded properly in METALOG on unprived installes:
+_OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh -k
 KMODULEARCHDIR?= ${MACHINE}
 _INST_DIRS=	${DESTDIR}/stand/${KMODULEARCHDIR}
 _INST_DIRS+=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}
