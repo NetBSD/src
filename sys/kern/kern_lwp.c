@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.231 2020/03/26 21:31:55 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.232 2020/04/04 06:51:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.231 2020/03/26 21:31:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.232 2020/04/04 06:51:46 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -244,6 +244,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.231 2020/03/26 21:31:55 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/psref.h>
 #include <sys/msan.h>
+#include <sys/kcov.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -1360,6 +1361,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		kmem_free(l->l_name, MAXCOMLEN);
 
 	kmsan_lwp_free(l);
+	kcov_lwp_free(l);
 	cpu_lwp_free2(l);
 	uvm_lwp_exit(l);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.203 2020/03/26 19:46:42 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.204 2020/04/04 06:51:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -54,6 +54,7 @@ struct lwp;
 static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
 #ifdef _KERNEL_OPT
+#include "opt_kcov.h"
 #include "opt_kmsan.h"
 #endif
 #endif
@@ -208,6 +209,9 @@ struct lwp {
 
 #ifdef KMSAN
 	void		*l_kmsan; /* !: KMSAN private data. */
+#endif
+#ifdef KCOV
+	void		*l_kcov; /* !: KCOV private data. */
 #endif
 };
 
