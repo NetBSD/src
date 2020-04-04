@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.204 2020/04/04 06:51:46 maxv Exp $	*/
+/*	$NetBSD: lwp.h,v 1.205 2020/04/04 20:20:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -134,6 +134,24 @@ struct lwp {
 	kcondvar_t	l_waitcv;	/* a: vfork() wait */
 	u_int		l_slptime;	/* l: time since last blocked */
 	bool		l_vforkwaiting;	/* a: vfork() waiting */
+
+	/* User-space synchronization. */
+	uintptr_t	l___reserved;	/* reserved for future use */
+	/*
+	 * The global thread ID has special locking and access
+	 * considerations.  Because many LWPs may never need one,
+	 * global thread IDs are allocated lazily in lwp_gettid().
+	 * l___tid is not bean to be accessed directly unless
+	 * the accessor has specific knowledge that doing so
+	 * is safe.  l___tid is only assigned by the LWP itself.
+	 * Once assigned, it is stable until the LWP exits.
+	 * An LWP assigns its own thread ID unlocked before it
+	 * reaches visibility to the rest of the system, and
+	 * can access its own thread ID unlocked.  But once
+	 * published, it must hold the proc's lock to change
+	 * the value.
+	 */
+	lwpid_t		l___tid;	/* p: global thread id */
 
 #if PCU_UNIT_COUNT > 0
 	struct cpu_info	* volatile l_pcu_cpu[PCU_UNIT_COUNT];
@@ -288,6 +306,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
  */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */
 #define	LPR_CRMOD	0x00000100 /* Credentials modified */
+#define	LPR_DRAINING	0x80000000 /* Draining references before exiting */
 
 /*
  * Mask indicating that there is "exceptional" work to be done on return to
@@ -345,7 +364,7 @@ int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);
 void	lwp_delref(lwp_t *);
 void	lwp_delref2(lwp_t *);
-void	lwp_drainrefs(lwp_t *);
+bool	lwp_drainrefs(lwp_t *);
 bool	lwp_alive(lwp_t *);
 lwp_t	*lwp_find_first(proc_t *);
 
@@ -369,6 +388,10 @@ uint64_t lwp_pctr(void);
 int	lwp_setprivate(lwp_t *, void *);
 int	do_lwp_create(lwp_t *, void *, u_long, lwp_t **, const sigset_t *,
     const stack_t *);
+
+lwpid_t	lwp_gettid(void);
+lwp_t *	lwp_getref_tid(lwpid_t);
+void	lwp_thread_cleanup(lwp_t *);
 
 void	lwpinit_specificdata(void);
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
