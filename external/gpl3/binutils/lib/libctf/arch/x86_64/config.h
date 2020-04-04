@@ -2,42 +2,54 @@
 /* Generated from: NetBSD: mknative-binutils,v 1.11 2018/11/08 02:08:35 christos Exp  */
 /* Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp  */
 
-/* config.h.  Generated from config.in by configure.  */
-/* config.in.  Generated from configure.ac by autoheader.  */
+/* config.h.  Generated from config.h.in by configure.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Check that config.h is #included before system headers
-   (this works only for glibc, but that should be enough).  */
-#if defined(__GLIBC__) && !defined(__FreeBSD_kernel__) && !defined(__CONFIG_H__)
-#  error config.h must be #included before system headers
-#endif
-#define __CONFIG_H__ 1
+/* Define if building universal (internal helper macro) */
+/* #undef AC_APPLE_UNIVERSAL_BUILD */
 
-/* Define to 1 if translation of program messages to the user's native
-   language is requested. */
-#define ENABLE_NLS 1
+/* Whether libbfd was configured for an ELF target. */
+/* #undef HAVE_BFD_ELF */
 
-/* Define to 1 if you have the declaration of `basename', and to 0 if you
+/* Define to 1 if you have the <byteswap.h> header file. */
+/* #undef HAVE_BYTESWAP_H */
+
+/* Define to 1 if you have the declaration of `asprintf', and to 0 if you
    don't. */
-#define HAVE_DECL_BASENAME 0
-
-/* Define to 1 if you have the declaration of `stpcpy', and to 0 if you don't.
-   */
-#define HAVE_DECL_STPCPY 1
+#define HAVE_DECL_ASPRINTF 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
+/* Define to 1 if you have the <endian.h> header file. */
+#define HAVE_ENDIAN_H 1
+
+/* Define to 1 if you have the `getpagesize' function. */
+#define HAVE_GETPAGESIZE 1
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
-
-/* Define to 1 if you have the <limits.h> header file. */
-#define HAVE_LIMITS_H 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
-/* Define if sigsetjmp is available. */
-#define HAVE_SIGSETJMP 1
+/* Define to 1 if you have a working `mmap' system call. */
+#define HAVE_MMAP 1
+
+/* Whether the platform has a definition of O_CLOEXEC. */
+#define HAVE_O_CLOEXEC 1
+
+/* Define to 1 if you have the `pread' function. */
+#define HAVE_PREAD 1
+
+/* Define to 1 if you have the `qsort_r' function. */
+/* #undef HAVE_QSORT_R */
+
+/* Whether a qsort_r exists with a void *arg as its last arg. */
+/* #undef HAVE_QSORT_R_ARG_LAST */
+
+/* Whether a qsort_r exists with the compar function as its last arg. */
+/* #undef HAVE_QSORT_R_COMPAR_LAST */
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -50,6 +62,9 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -65,31 +80,28 @@
 #define LT_OBJDIR ".libs/"
 
 /* Name of package */
-#define PACKAGE "opcodes"
+#define PACKAGE "libctf-library"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "opcodes"
+#define PACKAGE_NAME "libctf library"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "opcodes 2.34"
+#define PACKAGE_STRING "libctf library 1.2.0-pre"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "opcodes"
+#define PACKAGE_TARNAME "libctf-library"
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.34"
+#define PACKAGE_VERSION "1.2.0-pre"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
-
-/* Define if you can safely include both <string.h> and <strings.h>. */
-#define STRING_WITH_STRINGS 1
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE
@@ -114,7 +126,30 @@
 
 
 /* Version number of package */
-#define VERSION "2.34"
+#define VERSION "1.2.0-pre"
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+/* #  undef WORDS_BIGENDIAN */
+# endif
+#endif
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+/* #undef _FILE_OFFSET_BITS */
+
+/* Define for large files, on AIX-style hosts. */
+/* #undef _LARGE_FILES */
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */
