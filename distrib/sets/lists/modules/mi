@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.134 2020/02/29 18:46:12 skrll Exp $
+# $NetBSD: mi,v 1.135 2020/04/04 15:39:16 jdolecek Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -398,8 +398,8 @@
 ./@MODULEDIR@/skipjack/skipjack.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/slcompress			modules-base-kernel     kmod
 ./@MODULEDIR@/slcompress/slcompress.kmod	modules-base-kernel     kmod
-./@MODULEDIR@/smbfs				modules-base-kernel	kmod
-./@MODULEDIR@/smbfs/smbfs.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/smbfs				base-obsolete		obsolete
+./@MODULEDIR@/smbfs/smbfs.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/solaris				modules-base-kernel     kmod,solaris
 ./@MODULEDIR@/solaris/solaris.kmod		modules-base-kernel     kmod,solaris
 ./@MODULEDIR@/spdmem				modules-base-kernel	kmod

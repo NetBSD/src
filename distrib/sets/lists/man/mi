@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1685 2020/04/02 03:32:46 kamil Exp $
+# $NetBSD: mi,v 1.1686 2020/04/04 15:39:16 jdolecek Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -536,7 +536,7 @@
 ./usr/share/man/cat1/skeyinit.0			man-util-catman		skey,.cat
 ./usr/share/man/cat1/sleep.0			man-util-catman		.cat
 ./usr/share/man/cat1/slogin.0			man-secsh-catman	.cat
-./usr/share/man/cat1/smbutil.0			man-util-catman		.cat
+./usr/share/man/cat1/smbutil.0			man-obsolete		obsolete
 ./usr/share/man/cat1/sntp.0			man-ntp-catman		.cat
 ./usr/share/man/cat1/sockstat.0			man-util-catman		.cat
 ./usr/share/man/cat1/sort.0			man-util-catman		.cat
@@ -1534,7 +1534,7 @@
 ./usr/share/man/cat4/nele.0			man-sys-catman		.cat
 ./usr/share/man/cat4/neo.0			man-sys-catman		.cat
 ./usr/share/man/cat4/netintro.0			man-sys-catman		.cat
-./usr/share/man/cat4/netsmb.0			man-sys-catman		.cat
+./usr/share/man/cat4/netsmb.0			man-obsolete		obsolete
 ./usr/share/man/cat4/networking.0		man-sys-catman		.cat
 ./usr/share/man/cat4/nfe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nfsmb.0			man-sys-catman		.cat
@@ -1545,7 +1545,7 @@
 ./usr/share/man/cat4/nsclpcsio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/nside.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nsip.0			man-obsolete		obsolete
-./usr/share/man/cat4/nsmb.0			man-sys-catman		.cat
+./usr/share/man/cat4/nsmb.0			man-obsolete		obsolete
 ./usr/share/man/cat4/nsp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/nsphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nsphyter.0			man-sys-catman		.cat
@@ -2831,7 +2831,7 @@
 ./usr/share/man/cat8/mount_ptyfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_puffs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_qemufwcfg.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/mount_smbfs.0		man-smbfs-catman	.cat
+./usr/share/man/cat8/mount_smbfs.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mount_sysctlfs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/mount_sysvbfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_tmpfs.0		man-sysutil-catman	.cat
@@ -3080,7 +3080,7 @@
 ./usr/share/man/cat8/rump_msdos.0		man-puffs-catman	.cat,rump
 ./usr/share/man/cat8/rump_nfs.0			man-puffs-catman	.cat,rump
 ./usr/share/man/cat8/rump_ntfs.0		man-puffs-catman	.cat,rump
-./usr/share/man/cat8/rump_smbfs.0		man-puffs-catman	.cat,rump
+./usr/share/man/cat8/rump_smbfs.0		man-obsolete		obsolete
 ./usr/share/man/cat8/rump_syspuffs.0		man-puffs-catman	.cat,rump
 ./usr/share/man/cat8/rump_sysvbfs.0		man-puffs-catman	.cat,rump
 ./usr/share/man/cat8/rump_tmpfs.0		man-puffs-catman	.cat,rump
@@ -3816,7 +3816,7 @@
 ./usr/share/man/html1/skeyinit.html		man-util-htmlman	skey,html
 ./usr/share/man/html1/sleep.html		man-util-htmlman	html
 ./usr/share/man/html1/slogin.html		man-secsh-htmlman	html
-./usr/share/man/html1/smbutil.html		man-util-htmlman	html
+./usr/share/man/html1/smbutil.html		man-obsolete		obsolete
 ./usr/share/man/html1/sntp.html			man-ntp-htmlman		html
 ./usr/share/man/html1/sockstat.html		man-util-htmlman	html
 ./usr/share/man/html1/sort.html			man-util-htmlman	html
@@ -4713,7 +4713,7 @@
 ./usr/share/man/html4/nele.html			man-sys-htmlman		html
 ./usr/share/man/html4/neo.html			man-sys-htmlman		html
 ./usr/share/man/html4/netintro.html		man-sys-htmlman		html
-./usr/share/man/html4/netsmb.html		man-sys-htmlman		html
+./usr/share/man/html4/netsmb.html		man-obsolete		obsolete
 ./usr/share/man/html4/networking.html		man-sys-htmlman		html
 ./usr/share/man/html4/nfe.html			man-sys-htmlman		html
 ./usr/share/man/html4/nfsmb.html		man-sys-htmlman		html
@@ -4722,7 +4722,7 @@
 ./usr/share/man/html4/njs.html			man-sys-htmlman		html
 ./usr/share/man/html4/nsclpcsio.html		man-sys-htmlman		html
 ./usr/share/man/html4/nside.html		man-sys-htmlman		html
-./usr/share/man/html4/nsmb.html			man-sys-htmlman		html
+./usr/share/man/html4/nsmb.html			man-obsolete		obsolete
 ./usr/share/man/html4/nsp.html			man-obsolete		obsolete
 ./usr/share/man/html4/nsphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/nsphyter.html		man-sys-htmlman		html
@@ -5846,7 +5846,7 @@
 ./usr/share/man/html8/mount_ptyfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_puffs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_qemufwcfg.html	man-sysutil-htmlman	html
-./usr/share/man/html8/mount_smbfs.html		man-smbfs-htmlman	html
+./usr/share/man/html8/mount_smbfs.html		man-obsolete		obsolete
 ./usr/share/man/html8/mount_sysctlfs.html	man-puffs-htmlman	html
 ./usr/share/man/html8/mount_sysvbfs.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_tmpfs.html		man-sysutil-htmlman	html
@@ -6047,7 +6047,7 @@
 ./usr/share/man/html8/rump_msdos.html		man-puffs-htmlman	html,rump
 ./usr/share/man/html8/rump_nfs.html		man-puffs-htmlman	html,rump
 ./usr/share/man/html8/rump_ntfs.html		man-puffs-htmlman	html,rump
-./usr/share/man/html8/rump_smbfs.html		man-puffs-htmlman	html,rump
+./usr/share/man/html8/rump_smbfs.html		man-obsolete		obsolete
 ./usr/share/man/html8/rump_syspuffs.html	man-puffs-htmlman	html,rump
 ./usr/share/man/html8/rump_sysvbfs.html		man-puffs-htmlman	html,rump
 ./usr/share/man/html8/rump_tmpfs.html		man-puffs-htmlman	html,rump
@@ -6748,7 +6748,7 @@
 ./usr/share/man/man1/skeyinit.1			man-util-man		skey,.man
 ./usr/share/man/man1/sleep.1			man-util-man		.man
 ./usr/share/man/man1/slogin.1			man-secsh-man		.man
-./usr/share/man/man1/smbutil.1			man-util-man		.man
+./usr/share/man/man1/smbutil.1			man-obsolete		obsolete
 ./usr/share/man/man1/sntp.1			man-ntp-man		.man
 ./usr/share/man/man1/sockstat.1			man-util-man		.man
 ./usr/share/man/man1/sort.1			man-util-man		.man
@@ -7746,7 +7746,7 @@
 ./usr/share/man/man4/nele.4			man-sys-man		.man
 ./usr/share/man/man4/neo.4			man-sys-man		.man
 ./usr/share/man/man4/netintro.4			man-sys-man		.man
-./usr/share/man/man4/netsmb.4			man-sys-man		.man
+./usr/share/man/man4/netsmb.4			man-obsolete		obsolete
 ./usr/share/man/man4/networking.4		man-sys-man		.man
 ./usr/share/man/man4/nfe.4			man-sys-man		.man
 ./usr/share/man/man4/nfsmb.4			man-sys-man		.man
@@ -7757,7 +7757,7 @@
 ./usr/share/man/man4/nsclpcsio.4		man-sys-man		.man
 ./usr/share/man/man4/nside.4			man-sys-man		.man
 ./usr/share/man/man4/nsip.4			man-obsolete		obsolete
-./usr/share/man/man4/nsmb.4			man-sys-man		.man
+./usr/share/man/man4/nsmb.4			man-obsolete		obsolete
 ./usr/share/man/man4/nsp.4			man-obsolete		obsolete
 ./usr/share/man/man4/nsphy.4			man-sys-man		.man
 ./usr/share/man/man4/nsphyter.4			man-sys-man		.man
@@ -9043,7 +9043,7 @@
 ./usr/share/man/man8/mount_ptyfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_puffs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_qemufwcfg.8		man-sysutil-man		.man
-./usr/share/man/man8/mount_smbfs.8		man-smbfs-man		.man
+./usr/share/man/man8/mount_smbfs.8		man-obsolete		obsolete
 ./usr/share/man/man8/mount_sysctlfs.8		man-puffs-man		.man
 ./usr/share/man/man8/mount_sysvbfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_tmpfs.8		man-sysutil-man		.man
@@ -9292,7 +9292,7 @@
 ./usr/share/man/man8/rump_msdos.8		man-puffs-man		.man,rump
 ./usr/share/man/man8/rump_nfs.8			man-puffs-man		.man,rump
 ./usr/share/man/man8/rump_ntfs.8		man-puffs-man		.man,rump
-./usr/share/man/man8/rump_smbfs.8		man-puffs-man		.man,rump
+./usr/share/man/man8/rump_smbfs.8		man-obsolete		obsolete
 ./usr/share/man/man8/rump_syspuffs.8		man-puffs-man		.man,rump
 ./usr/share/man/man8/rump_sysvbfs.8		man-puffs-man		.man,rump
 ./usr/share/man/man8/rump_tmpfs.8		man-puffs-man		.man,rump
