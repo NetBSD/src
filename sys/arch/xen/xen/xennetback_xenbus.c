@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.90 2020/03/30 19:07:32 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.91 2020/04/04 14:45:37 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.90 2020/03/30 19:07:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.91 2020/04/04 14:45:37 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -287,11 +287,11 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	ifp->if_snd.ifq_maxlen =
 	    uimax(ifqmaxlen, NET_TX_RING_SIZE * 2);
 	ifp->if_capabilities =
-		IFCAP_CSUM_IPv4_Tx
-		| IFCAP_CSUM_UDPv4_Tx
-		| IFCAP_CSUM_TCPv4_Tx
-		| IFCAP_CSUM_UDPv6_Tx
-		| IFCAP_CSUM_TCPv6_Tx;
+		IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_IPv4_Tx
+		| IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx
+		| IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx
+		| IFCAP_CSUM_UDPv6_Rx | IFCAP_CSUM_UDPv6_Tx
+		| IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_TCPv6_Tx;
 #define XN_M_CSUM_SUPPORTED	(				\
 		M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_IPv4	\
 		| M_CSUM_TCPv6 | M_CSUM_UDPv6			\
