@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.35 2020/01/29 18:39:01 maya Exp $
+#	$NetBSD: majors.evbmips,v 1.36 2020/04/04 16:06:13 jdolecek Exp $
 #
 # Device majors for evbmips
 #
@@ -82,7 +82,7 @@ device-major	ksyms		char 76			ksyms
 device-major	uart		char 77			uart
 #device-major	obsolete	char 78			obsolete (opencrypto)
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 device-major	athflash	char 99			athflash
 #device-major	obsolete	char 100 block 19	obsolete (spiflash)
 
