@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.107 2020/03/23 23:28:47 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.108 2020/04/04 20:52:18 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.52 2020/03/23 23:28:11 ad Exp 
+ *   from: NetBSD: namei.src,v 1.53 2020/04/04 20:49:31 ad Exp 
  */
 
 /*
@@ -160,13 +160,14 @@ struct nameidata {
 					   (pseudo) */
 #define	EMULROOTSET	0x00000080	/* emulation root already
 					   in ni_erootdir */
+#define	LOCKSHARED	0x00000100	/* want shared locks if possible */
 #define	NOCHROOT	0x01000000	/* no chroot on abs path lookups */
-#define	MODMASK		0x010000fc	/* mask of operational modifiers */
+#define	MODMASK		0x010001fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.
  */
-#define	NOCROSSMOUNT	0x0000100	/* do not cross mount points */
-#define	RDONLY		0x0000200	/* lookup with read-only semantics */
+#define	NOCROSSMOUNT	0x0000800	/* do not cross mount points */
+#define	RDONLY		0x0001000	/* lookup with read-only semantics */
 #define	ISDOTDOT	0x0002000	/* current component name is .. */
 #define	MAKEENTRY	0x0004000	/* entry is to be added to name cache */
 #define	ISLASTCN	0x0008000	/* this is last component of pathname */
@@ -174,7 +175,7 @@ struct nameidata {
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
-#define	PARAMASK	0x02ee300	/* mask of parameter descriptors */
+#define	PARAMASK	0x02ef800	/* mask of parameter descriptors */
 
 /*
  * Initialization of a nameidata structure.
@@ -215,12 +216,11 @@ struct nameidata {
  *
  * Field markings and their corresponding locks:
  *
- * -  stable throught the lifetime of the namecache entry
+ * -  stable throughout the lifetime of the namecache entry
  * d  protected by nc_dvp->vi_nc_lock
  * v  protected by nc_vp->vi_nc_listlock
  * l  protected by cache_lru_lock
  */
-struct nchnode;
 struct namecache {
 	struct	rb_node nc_tree;	/* d  red-black tree, must be first */
 	uint64_t nc_key;		/* -  hashed key value */
@@ -228,7 +228,7 @@ struct namecache {
 	TAILQ_ENTRY(namecache) nc_lru;	/* l  pseudo-lru chain */
 	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
 	struct	vnode *nc_vp;		/* -  vnode the name refers to */
-	int	nc_lrulist;		/* l  which LRU list its on */
+	int	nc_lrulist;		/* l  which LRU list it's on */
 	u_short	nc_nlen;		/* -  length of the name */
 	char	nc_whiteout;		/* -  true if a whiteout */
 	char	nc_name[41];		/* -  segment name */
@@ -321,18 +321,17 @@ void	namecache_print(struct vnode *, void (*)(const char *, ...)
  * Stats on usefulness of namei caches.  A couple of structures are
  * used for counting, with members having the same names but different
  * types.  Containerize member names with the preprocessor to avoid
- * cut-'n'-paste.  A (U) in the comment documents values that are
- * incremented unlocked; we may treat these specially.
+ * cut-'n'-paste.
  */
 #define	_NAMEI_CACHE_STATS(type) {					\
-	type	ncs_goodhits;	/* hits that we can really use (U) */	\
+	type	ncs_goodhits;	/* hits that we can really use */	\
 	type	ncs_neghits;	/* negative hits that we can use */	\
 	type	ncs_badhits;	/* hits we must drop */			\
-	type	ncs_falsehits;	/* hits with id mismatch (U) */		\
+	type	ncs_falsehits;	/* hits with id mismatch */		\
 	type	ncs_miss;	/* misses */				\
 	type	ncs_long;	/* long names that ignore cache */	\
-	type	ncs_pass2;	/* names found with passes == 2 (U) */	\
-	type	ncs_2passes;	/* number of times we attempt it (U) */	\
+	type	ncs_pass2;	/* names found with passes == 2 */	\
+	type	ncs_2passes;	/* number of times we attempt it */	\
 	type	ncs_revhits;	/* reverse-cache hits */		\
 	type	ncs_revmiss;	/* reverse-cache misses */		\
 	type	ncs_denied;	/* access denied */			\
@@ -359,10 +358,11 @@ struct	nchstats _NAMEI_CACHE_STATS(uint64_t);
 #define NAMEI_FOLLOW	0x00000040
 #define NAMEI_NOFOLLOW	0x00000000
 #define NAMEI_EMULROOTSET	0x00000080
+#define NAMEI_LOCKSHARED	0x00000100
 #define NAMEI_NOCHROOT	0x01000000
-#define NAMEI_MODMASK	0x010000fc
-#define NAMEI_NOCROSSMOUNT	0x0000100
-#define NAMEI_RDONLY	0x0000200
+#define NAMEI_MODMASK	0x010001fc
+#define NAMEI_NOCROSSMOUNT	0x0000800
+#define NAMEI_RDONLY	0x0001000
 #define NAMEI_ISDOTDOT	0x0002000
 #define NAMEI_MAKEENTRY	0x0004000
 #define NAMEI_ISLASTCN	0x0008000
@@ -370,6 +370,6 @@ struct	nchstats _NAMEI_CACHE_STATS(uint64_t);
 #define NAMEI_DOWHITEOUT	0x0040000
 #define NAMEI_REQUIREDIR	0x0080000
 #define NAMEI_CREATEDIR	0x0200000
-#define NAMEI_PARAMASK	0x02ee300
+#define NAMEI_PARAMASK	0x02ef800
 
 #endif /* !_SYS_NAMEI_H_ */
