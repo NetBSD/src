@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.99 2019/11/11 22:44:56 joerg Exp $
+# $NetBSD: ad.arm,v 1.100 2020/04/04 12:06:57 mlelstv Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
@@ -704,9 +704,9 @@
 ./usr/libdata/ldscripts/armelf.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/armelf.xbn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/armelf.xc		comp-util-bin		binutils
-./usr/libdata/ldscripts/armelf.xd		comp-util-bin		binutils=231
-./usr/libdata/ldscripts/armelf.xdc		comp-util-bin		binutils=231
-./usr/libdata/ldscripts/armelf.xdw		comp-util-bin		binutils=231
+./usr/libdata/ldscripts/armelf.xd		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/armelf.xdc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/armelf.xdw		comp-util-bin		binutils=234
 ./usr/libdata/ldscripts/armelf.xn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/armelf.xr		comp-util-bin		binutils
 ./usr/libdata/ldscripts/armelf.xs		comp-util-bin		binutils
