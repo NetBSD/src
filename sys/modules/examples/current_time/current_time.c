@@ -1,4 +1,4 @@
-/*	$NetBSD: current_time.c,v 1.1 2020/04/04 21:15:04 kamil Exp $  */
+/*	$NetBSD: current_time.c,v 1.2 2020/04/04 23:22:12 kamil Exp $  */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: current_time.c,v 1.1 2020/04/04 21:15:04 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: current_time.c,v 1.2 2020/04/04 23:22:12 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -55,7 +55,8 @@ print_current_time(void)
 	getmicrotime(&tv);
 	clock_secs_to_ymdhms(tv.tv_sec, &dt);
     
-	printf("Current Time: %s, %04lu/%02u/%02u %02u:%02u:%02u UTC\n",
+	printf("Current Time: %s, %04" PRIu64 "/%02" PRIu8 "/%02" PRIu8
+	    " %02" PRIu8 ":%02" PRIu8 ":%02" PRIu8 " UTC\n",
 	    w_day[dt.dt_wday], dt.dt_year, dt.dt_mon, dt.dt_day, dt.dt_hour,
 	    dt.dt_min, dt.dt_sec);
 }
