@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.124 2020/01/27 15:31:03 jdolecek Exp $
+#	$NetBSD: RESPONSIBLE,v 1.125 2020/04/04 16:25:17 jdolecek Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -207,7 +207,6 @@ overlay		[nobody]
 procfs		?
 ptyfs		christos
 puffs		pooka
-smbfs		jdolecek
 sysvbfs		?
 tmpfs		rmind
 udf		reinoud
