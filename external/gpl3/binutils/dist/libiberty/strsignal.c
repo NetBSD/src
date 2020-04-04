@@ -551,7 +551,7 @@ followed by a newline.
 #ifndef HAVE_PSIGNAL
 
 void
-psignal (int signo, char *message)
+psignal (int signo, const char *message)
 {
   if (signal_names == NULL)
     {
