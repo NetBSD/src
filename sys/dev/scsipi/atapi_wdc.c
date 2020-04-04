@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.136 2020/02/19 16:04:39 riastradh Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.137 2020/04/04 21:36:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.136 2020/02/19 16:04:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.137 2020/04/04 21:36:15 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -501,10 +501,9 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	/* Do control operations specially. */
 	if (__predict_false(drvp->state < READY)) {
 		/* If it's not a polled command, we need the kernel thread */
-		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0 &&
-		    (chp->ch_flags & ATACH_TH_RUN) == 0) {
+		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0
+		    && !ata_is_thread_run(chp))
 			return ATASTART_TH;
-		}
 		/*
 		 * disable interrupts, all commands here should be quick
 		 * enough to be able to poll, and we don't go here that often
