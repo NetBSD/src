@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.286 2020/03/26 21:31:55 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.287 2020/04/04 20:20:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.286 2020/03/26 21:31:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.287 2020/04/04 20:20:12 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -265,7 +265,16 @@ exit1(struct lwp *l, int exitcode, int signo)
 	sigfillset(&p->p_sigctx.ps_sigignore);
 	sigclearall(p, NULL, &kq);
 	p->p_stat = SDYING;
-	mutex_exit(p->p_lock);
+
+	/*
+	 * Perform any required thread cleanup.  Do this early so
+	 * anyone wanting to look us up by our global thread ID
+	 * will fail to find us.
+	 *
+	 * N.B. this will unlock p->p_lock on our behalf.
+	 */
+	lwp_thread_cleanup(l);
+
 	ksiginfo_queue_drain(&kq);
 
 	/* Destroy any lwpctl info. */
@@ -559,9 +568,7 @@ exit1(struct lwp *l, int exitcode, int signo)
 	/* Free the linux lwp id */
 	if ((l->l_pflag & LP_PIDLID) != 0 && l->l_lid != p->p_pid)
 		proc_free_pid(l->l_lid);
-	if (l->l_refcnt > 0) {
-		lwp_drainrefs(l);
-	}
+	lwp_drainrefs(l);
 	lwp_lock(l);
 	l->l_prflag &= ~LPR_DETACHED;
 	l->l_stat = LSZOMB;
