@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.544 2020/03/25 18:08:34 gdt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.545 2020/04/04 20:49:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.544 2020/03/25 18:08:34 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.545 2020/04/04 20:49:30 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1529,7 +1529,7 @@ chdir_lookup(const char *path, int where, struct vnode **vpp, struct lwp *l)
 	if (error) {
 		return error;
 	}
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | LOCKSHARED | TRYEMULROOT, pb);
 	if ((error = namei(&nd)) != 0) {
 		pathbuf_destroy(pb);
 		return error;
@@ -2995,7 +2995,7 @@ do_sys_accessat(struct lwp *l, int fdat, const char *path,
 		return EINVAL;
 	}
 
-	nd_flag = FOLLOW | LOCKLEAF | TRYEMULROOT;
+	nd_flag = FOLLOW | LOCKLEAF | LOCKSHARED | TRYEMULROOT;
 	if (flags & AT_SYMLINK_NOFOLLOW)
 		nd_flag &= ~FOLLOW;
 
@@ -3221,7 +3221,7 @@ do_sys_readlinkat(struct lwp *l, int fdat, const char *path, char *buf,
 	if (error) {
 		return error;
 	}
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF | TRYEMULROOT, pb);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF | LOCKSHARED | TRYEMULROOT, pb);
 	if ((error = fd_nameiat(l, fdat, &nd)) != 0) {
 		pathbuf_destroy(pb);
 		return error;
@@ -4687,7 +4687,7 @@ dorevoke(struct vnode *vp, kauth_cred_t cred)
 	struct vattr vattr;
 	int error, fs_decision;
 
-	vn_lock(vp, LK_SHARED | LK_RETRY);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_GETATTR(vp, &vattr, cred);
 	VOP_UNLOCK(vp);
 	if (error != 0)
