@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.281 2020/03/18 00:37:29 tnn Exp $
+#	$NetBSD: Makefile,v 1.282 2020/04/04 17:56:22 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -302,9 +302,6 @@ SUBDIR+=	../sys/rump/net/lib
 
 # Lua bindings come last, they might depend on anything
 SUBDIR+=	lua
-
-# Needed by rump and rescue which are outside the smbfs tree
-SUBDIR+=	../external/bsd/smbfs/lib
 
 .include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>
