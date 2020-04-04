@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.151 2020/03/14 18:08:40 ad Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.152 2020/04/04 20:49:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.151 2020/03/14 18:08:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.152 2020/04/04 20:49:31 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -330,14 +330,6 @@ ufs_lookup(void *v)
 	endsearch = 0; /* silence compiler warning */
 
 	/*
-	 * Produce the auxiliary lookup results into i_crap. Increment
-	 * its serial number so elsewhere we can tell if we're using
-	 * stale results. This should not be done this way. XXX.
-	 */
-	results = &dp->i_crap;
-	dp->i_crapcounter++;
-
-	/*
 	 * Check accessiblity of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
@@ -361,6 +353,20 @@ ufs_lookup(void *v)
 		}
 		return *vpp == NULLVP ? ENOENT : 0;
 	}
+
+	/* May need to restart the lookup with an exclusive lock. */
+	if (VOP_ISLOCKED(vdp) != LK_EXCLUSIVE) {
+		return ENOLCK;
+	}
+
+	/*
+	 * Produce the auxiliary lookup results into i_crap. Increment
+	 * its serial number so elsewhere we can tell if we're using
+	 * stale results. This should not be done this way. XXX.
+	 */
+	results = &dp->i_crap;
+	dp->i_crapcounter++;
+
 	if (iswhiteout) {
 		/*
 		 * The namecache set iswhiteout without finding a
