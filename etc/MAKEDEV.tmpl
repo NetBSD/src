@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.217 2020/04/01 15:32:21 gson Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.218 2020/04/04 16:04:36 jdolecek Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -255,7 +255,6 @@
 #	mly*	Mylex AcceleRAID/eXtremeRAID control interface
 #	np*	UNIBUS Ethernet co-processor interface, for downloading.
 #	npf	NPF packet filter
-#	nsmb*	SMB requester
 #	nvme*	Non-Volatile Memory Host Controller Interface device driver
 #	nvme*ns* Non-Volatile Memory namespace
 #	nvmm	NetBSD Virtual Machine Monitor
@@ -1772,15 +1771,6 @@ rtc)
 
 clockctl)
 	mkdev clockctl c %clockctl_chr% 0 660 $g_ntpd
-	;;
-
-nsmb)
-	makedev nsmb0 nsmb1 nsmb2 nsmb3
-	;;
-
-nsmb[0-9]*)
-	unit=${i#nsmb}
-	mkdev nsmb$unit c %nsmb_chr% $unit 644
 	;;
 
 kttcp)
