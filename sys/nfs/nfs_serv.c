@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.179 2020/01/17 20:08:09 ad Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.180 2020/04/04 07:07:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.179 2020/01/17 20:08:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.180 2020/04/04 07:07:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3394,10 +3394,10 @@ nfsrv_statfs(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 		sfp->sf_invarsec = 0;
 	} else {
 		sfp->sf_tsize = txdr_unsigned(NFS_MAXDGRAMDATA);
-		sfp->sf_bsize = txdr_unsigned(sf->f_frsize);
-		sfp->sf_blocks = txdr_unsigned(sf->f_blocks);
-		sfp->sf_bfree = txdr_unsigned(sf->f_bfree);
-		sfp->sf_bavail = txdr_unsigned(sf->f_bavail);
+		sfp->sf_bsize = txdr_unsigned(NFS_V2CLAMP16(sf->f_frsize));
+		sfp->sf_blocks = txdr_unsigned(NFS_V2CLAMP32(sf->f_blocks));
+		sfp->sf_bfree = txdr_unsigned(NFS_V2CLAMP32(sf->f_bfree));
+		sfp->sf_bavail = txdr_unsigned(NFS_V2CLAMP32(sf->f_bavail));
 	}
 nfsmout:
 	if (sf)
