@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.187 2019/10/02 11:16:00 maya Exp $
+#	$NetBSD: sets.subr,v 1.188 2020/04/04 19:50:53 christos Exp $
 #
 
 #
@@ -168,7 +168,11 @@ xlists="xbase xcomp $xdebugset xetc xfont xserver"
 extlists="extbase extcomp extetc"
 
 OSRELEASE=$(${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -k)
-MODULEDIR="stand/${MACHINE}/${OSRELEASE}/modules"
+if [ "${KERNEL_DIR}" = "yes" ]; then
+	MODULEDIR="netbsd/modules"
+else
+	MODULEDIR="stand/${MACHINE}/${OSRELEASE}/modules"
+fi
 SUBST="s#@MODULEDIR@#${MODULEDIR}#g"
 SUBST="${SUBST};s#@OSRELEASE@#${OSRELEASE}#g"
 SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
@@ -180,7 +184,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.187 2019/10/02 11:16:00 maya Exp $
+# 	# $NetBSD: sets.subr,v 1.188 2020/04/04 19:50:53 christos Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root

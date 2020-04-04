@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.63 2019/12/01 20:24:47 jmcneill Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.64 2020/04/04 19:50:53 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -172,13 +172,20 @@ ${PROG}: ${OBJS} ${DPADD} ${KMODSCRIPT}
 ##### Install rules
 .if !target(kmodinstall)
 .if !defined(KMODULEDIR)
+.if ${KERNEL_DIR:Uno} == "yes"
+KMODULEDIR=	${DESTDIR}/netbsd/modules/${KMOD}
+_INST_DIRS=	${DESTDIR}/netbsd
+_INST_DIRS+=	${DESTDIR}/netbsd/modules
+_INST_DIRS+=	${DESTDIR}/netbsd/modules/${KMOD}
 _OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh -k
+.else
 # Ensure these are recorded properly in METALOG on unprived installes:
 KMODULEARCHDIR?= ${MACHINE}
 _INST_DIRS=	${DESTDIR}/stand/${KMODULEARCHDIR}
 _INST_DIRS+=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}
 _INST_DIRS+=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}/modules
 KMODULEDIR=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}/modules/${KMOD}
+.endif
 .endif
 _PROG:=		${KMODULEDIR}/${PROG} # installed path
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.148 2020/03/20 23:09:01 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.149 2020/04/04 19:50:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.148 2020/03/20 23:09:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.149 2020/04/04 19:50:54 christos Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -421,6 +421,18 @@ module_init(void)
 	module_init_md();
 #endif
 
+#ifdef KERNEL_DIR
+	const char *booted_kernel = get_booted_kernel();
+	if (booted_kernel) {
+		char *ptr = strrchr(booted_kernel, '/');
+		snprintf(module_base, sizeof(module_base), "/%.*s/modules",
+		    (int)(ptr - booted_kernel), booted_kernel);
+	} else {
+		strlcpy(module_base, "/netbsd/modules", sizeof(module_base));
+		printf("Cannot find kernel name, loading modules from \"%s\"\n",
+		    module_base);
+	}
+#else
 	if (!module_machine)
 		module_machine = machine;
 #if __NetBSD_Version__ / 1000000 % 100 == 99	/* -current */
@@ -430,6 +442,7 @@ module_init(void)
 	snprintf(module_base, sizeof(module_base), "/stand/%s/%d.%d/modules",
 	    module_machine, __NetBSD_Version__ / 100000000,
 	    __NetBSD_Version__ / 1000000 % 100);
+#endif
 #endif
 
 	module_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,

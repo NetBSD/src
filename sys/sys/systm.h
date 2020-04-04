@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.293 2020/02/08 07:07:07 maxv Exp $	*/
+/*	$NetBSD: systm.h,v 1.294 2020/04/04 19:50:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -165,6 +165,8 @@ extern const uint32_t sysent_nomodbits[];
 extern int boothowto;		/* reboot flags, from console subsystem */
 #define	bootverbose	(boothowto & AB_VERBOSE)
 #define	bootquiet	(boothowto & AB_QUIET)
+
+extern const char *get_booted_kernel(void);
 
 extern void (*v_putc)(int); /* Virtual console putc routine */
 
