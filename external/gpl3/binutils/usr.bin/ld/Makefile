@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2019/04/18 10:07:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.32 2020/04/04 00:46:55 christos Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -22,6 +22,7 @@ SRCS=		${G_OFILES:.o=.c}
 
 COPTS.ldgram.c = -Wno-stack-protector
 
+PROGDPLIBS+=	ctf 	${TOP}/${BFDSUBDIR}/libctf
 PROGDPLIBS+=	bfd	${TOP}/${BFDSUBDIR}/libbfd
 PROGDPLIBS+=	iberty 	${TOP}/${BFDSUBDIR}/libiberty
 
@@ -69,7 +70,7 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	NATIVE=yes ${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld \
 		${LIBDIR} "/usr" "/usr/bin" \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
-		${G_EMUL} ${LIBDIR} yes ${G_enable_initfini_array} \
+		"" "" ${G_EMUL} ${LIBDIR} yes ${G_enable_initfini_array} \
 		${f} "${G_target_alias}"
 
 . if ${BINUTILS_MACHINE_ARCH} == "x86_64" || \

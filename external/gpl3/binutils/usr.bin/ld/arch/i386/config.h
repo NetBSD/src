@@ -187,7 +187,7 @@
 #define PACKAGE_NAME "ld"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ld 2.31.1"
+#define PACKAGE_STRING "ld 2.34"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ld"
@@ -196,7 +196,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.31.1"
+#define PACKAGE_VERSION "2.34"
 
 /* The size of `void *', as computed by sizeof. */
 #define SIZEOF_VOID_P 4
@@ -233,7 +233,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.31.1"
+#define VERSION "2.34"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
