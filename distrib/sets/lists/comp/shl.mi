@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.330 2020/04/04 17:00:05 christos Exp $
+# $NetBSD: shl.mi,v 1.331 2020/04/04 19:26:51 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -57,7 +57,8 @@
 ./usr/lib/libgmp.so.10				comp-obsolete		obsolete
 ./usr/lib/libgmp.so.10.2			comp-obsolete		obsolete
 ./usr/lib/libgmp_pic.a				comp-obsolete		obsolete
-./usr/lib/libgnuctf_pic.a			comp-c-piclib		compatfile,picinstall,binutils=234
+./usr/lib/libgnuctf.so.0			base-sys-shlib		compatfile,binutils=234
+./usr/lib/libgnuctf.so.0.0			base-sys-shlib		compatfile,binutils=234
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libgomp_pic.a				comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
@@ -164,7 +165,7 @@
 ./usr/lib/librumpdev_drvctl_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_fss_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_md_pic.a			comp-c-piclib		picinstall,rump
-./usr/lib/librumpdev_netsmb_pic.a		comp-c-piclib		picinstall,rump
+./usr/lib/librumpdev_netsmb_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpdev_opencrypto_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_pad_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_pic.a			comp-c-piclib		compatfile,picinstall,rump
@@ -201,7 +202,7 @@
 ./usr/lib/librumpfs_null_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpfs_nullfs_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpfs_ptyfs_pic.a			comp-c-piclib		picinstall,rump
-./usr/lib/librumpfs_smbfs_pic.a			comp-c-piclib		picinstall,rump
+./usr/lib/librumpfs_smbfs_pic.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_syspuffs_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpfs_sysvbfs_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpfs_tmpfs_pic.a			comp-c-piclib		picinstall,rump
