@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.135 2020/04/04 15:39:16 jdolecek Exp $
+# $NetBSD: mi,v 1.136 2020/04/04 19:50:53 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -481,5 +481,6 @@
 ./@MODULEDIR@/zlib				modules-base-kernel     kmod
 ./@MODULEDIR@/zlib/zlib.kmod			modules-base-kernel     kmod
 ./etc/mtree/set.modules				modules-sys-root	kmod
-./stand/@MACHINE@				modules-base-kernel	kmod
-./stand/@MACHINE@/@OSRELEASE@			modules-base-kernel	kmod
+./stand/@MACHINE@				modules-base-kernel	kmod,!kernel_dir
+./stand/@MACHINE@/@OSRELEASE@			modules-base-kernel	kmod,!kernel_dir
+./netbsd								kmod,kernel_dir

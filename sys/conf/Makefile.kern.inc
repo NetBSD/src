@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.268 2019/02/05 08:33:25 mrg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.269 2020/04/04 19:50:54 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -65,6 +65,9 @@ INCLUDES?=	-I. ${EXTRA_INCLUDES} -I${S}/../common/include -I$S/arch \
 CPPFLAGS+=	${INCLUDES} ${IDENT} -D_KERNEL -D_KERNEL_OPT
 .if !defined(COVERITY_TOP_CONFIG)
 CPPFLAGS+=	-std=gnu99
+.endif
+.if ${KERNEL_DIR:Uno} == "yes"
+CPPFLAGS+=	-DKERNEL_DIR
 .endif
 DEFCOPTS?=	-O2
 COPTS?=		${DEFCOPTS}
@@ -413,10 +416,17 @@ install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME})
 install-kernel-${MACHINE_NAME}:
 .for _K in ${KERNIMAGES}
+.if ${KERNEL_DIR:Uno} == "yes"
+	rm -fr ${DESTDIR}/o${_K}
+	mv ${DESTDIR}/${_K} ${DESTDIR}/o${_K}
+	mkdir -p ${DESTDIR}/${_K}
+	cp ${_K} ${DESTDIR}/${_K}/kernel
+.else
 	rm -f ${DESTDIR}/o${_K}
 	ln ${DESTDIR}/${_K} ${DESTDIR}/o${_K}
 	cp ${_K} ${DESTDIR}/n${_K}
 	mv ${DESTDIR}/n${_K} ${DESTDIR}/${_K}
+.endif
 .endfor
 .endif
 .endif

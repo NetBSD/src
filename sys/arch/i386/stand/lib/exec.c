@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.75 2019/12/07 02:29:03 christos Exp $	 */
+/*	$NetBSD: exec.c,v 1.76 2020/04/04 19:50:54 christos Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ static void	module_add_common(const char *, uint8_t);
 static void	userconf_init(void);
 
 static void	extract_device(const char *, char *, size_t);
-static void	module_base_path(char *, size_t);
+static void	module_base_path(char *, size_t, const char *);
 static int	module_open(boot_module_t *, int, const char *, const char *,
 		    bool);
 
@@ -653,8 +653,15 @@ module_open(boot_module_t *bm, int mode, const char *kdev,
 }
 
 static void
-module_base_path(char *buf, size_t bufsize)
+module_base_path(char *buf, size_t bufsize, const char *kernel_path)
 {
+#ifdef KERNEL_DIR
+	/* we cheat here, because %.* does not work with the mini printf */
+	char *ptr = strrchr(kernel_path, '/');
+	if (ptr) *ptr = '\0';
+	snprintf(buf, bufsize, "%s/modules", kernel_path);
+	if (ptr) *ptr = '/';
+#else
 	const char *machine;
 
 	switch (netbsd_elf_class) {
@@ -682,6 +689,7 @@ module_base_path(char *buf, size_t bufsize)
 		    netbsd_version / 100000000,
 		    netbsd_version / 1000000 % 100);
 	}
+#endif
 }
 
 static void
@@ -697,7 +705,7 @@ module_init(const char *kernel_path)
 	int err, fd, nfail = 0;
 
 	extract_device(kernel_path, kdev, sizeof(kdev));
-	module_base_path(module_base, sizeof(module_base));
+	module_base_path(module_base, sizeof(module_base), kernel_path);
 
 	/* First, see which modules are valid and calculate btinfo size */
 	len = sizeof(struct btinfo_modulelist);

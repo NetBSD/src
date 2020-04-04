@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238 2020/04/04 15:39:15 jdolecek Exp $
+# $NetBSD: mi,v 1.1239 2020/04/04 19:50:53 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -660,6 +660,7 @@
 ./sbin/zfs					base-zfs-bin            zfs
 ./sbin/zpool					base-zfs-bin            zfs
 ./stand						base-sys-root
+./netbsd					base-sys-root		kernel_dir
 ./tmp						base-sys-root
 ./usr						base-sys-root
 ./usr/bin					base-sys-usr
