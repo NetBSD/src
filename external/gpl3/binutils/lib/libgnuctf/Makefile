@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2020/04/04 00:46:53 christos Exp $
+#	$NetBSD: Makefile,v 1.1 2020/04/04 01:34:30 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -8,7 +8,7 @@ NOCLANGERROR=	# defined
 
 .include <bsd.init.mk>
 
-LIB=		ctf
+LIB=		gnuctf
 
 BFD_MACHINE_ARCH?=	${MACHINE_ARCH:C/armv[4-7]/arm/}
 

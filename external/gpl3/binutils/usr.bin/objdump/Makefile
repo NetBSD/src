@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2020/04/04 00:46:55 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2020/04/04 01:34:30 christos Exp $
 
 PROG=		objdump
 
 CPPFLAGS+=-DOBJDUMP_PRIVATE_VECTORS=""
 
-PROGDPLIBS+=	ctf 	${TOP}/${BFDSUBDIR}/libctf
+PROGDPLIBS+=	gnuctf 	${TOP}/${BFDSUBDIR}/libgnuctf
 
 .include "${.CURDIR}/../common/Makefile.prog"
