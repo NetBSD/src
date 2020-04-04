@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2317 2020/03/31 16:28:28 maxv Exp $
+#	$NetBSD: mi,v 1.2318 2020/04/04 15:39:15 jdolecek Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -873,7 +873,7 @@
 ./usr/include/fs/nilfs/nilfs_mount.h		comp-c-include
 ./usr/include/fs/ptyfs/ptyfs.h			comp-c-include
 ./usr/include/fs/puffs/puffs_msgif.h		comp-puffs-include
-./usr/include/fs/smbfs/smbfs.h			comp-c-include
+./usr/include/fs/smbfs/smbfs.h			comp-obsolete		obsolete
 ./usr/include/fs/sysvbfs/bfs.h			comp-c-include
 ./usr/include/fs/sysvbfs/sysvbfs_args.h		comp-c-include
 ./usr/include/fs/tmpfs/tmpfs_args.h		comp-c-include
@@ -2601,11 +2601,11 @@
 ./usr/include/netns/spp_var.h			comp-obsolete		obsolete
 ./usr/include/netpgp.h				comp-c-include
 ./usr/include/netpgp/verify.h			comp-c-include
-./usr/include/netsmb/iconv.h			comp-c-include
-./usr/include/netsmb/netbios.h			comp-c-include
-./usr/include/netsmb/smb.h			comp-c-include
-./usr/include/netsmb/smb_conn.h			comp-c-include
-./usr/include/netsmb/smb_dev.h			comp-c-include
+./usr/include/netsmb/iconv.h			comp-obsolete		obsolete
+./usr/include/netsmb/netbios.h			comp-obsolete		obsolete
+./usr/include/netsmb/smb.h			comp-obsolete		obsolete
+./usr/include/netsmb/smb_conn.h			comp-obsolete		obsolete
+./usr/include/netsmb/smb_dev.h			comp-obsolete		obsolete
 ./usr/include/nfs/krpc.h			comp-c-include
 ./usr/include/nfs/nfs.h				comp-c-include
 ./usr/include/nfs/nfs_var.h			comp-obsolete		obsolete
@@ -3690,8 +3690,8 @@
 ./usr/lib/librumpdev_fss_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_md.a			comp-c-lib		rump
 ./usr/lib/librumpdev_md_p.a			comp-c-proflib		rump,profile
-./usr/lib/librumpdev_netsmb.a			comp-c-lib		rump
-./usr/lib/librumpdev_netsmb_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpdev_netsmb.a			comp-obsolete		obsolete
+./usr/lib/librumpdev_netsmb_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpdev_opencrypto.a		comp-c-lib		rump
 ./usr/lib/librumpdev_opencrypto_p.a		comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_p.a			comp-c-proflib		compatfile,rump,profile
@@ -3763,8 +3763,8 @@
 ./usr/lib/librumpfs_nullfs_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_ptyfs.a			comp-c-lib		rump
 ./usr/lib/librumpfs_ptyfs_p.a			comp-c-proflib		rump,profile
-./usr/lib/librumpfs_smbfs.a			comp-c-lib		rump
-./usr/lib/librumpfs_smbfs_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpfs_smbfs.a			comp-obsolete		obsolete
+./usr/lib/librumpfs_smbfs_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_syspuffs.a			comp-c-lib		rump
 ./usr/lib/librumpfs_syspuffs_p.a		comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_sysvbfs.a			comp-c-lib		rump
