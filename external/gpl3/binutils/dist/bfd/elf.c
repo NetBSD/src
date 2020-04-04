@@ -5948,7 +5948,11 @@ assign_file_positions_for_load_sections (bfd *abfd,
 	  _bfd_error_handler (_("%pB: error: PHDR segment not covered"
 				" by LOAD segment"),
 			      abfd);
-	  return FALSE;
+	  if (link_info == NULL)
+	    return FALSE;
+	  /* Arrange for the linker to exit with an error, deleting
+	     the output file unless --noinhibit-exec is given.  */
+	  link_info->callbacks->info ("%X");
 	}
 
       /* Check that all sections are in a PT_LOAD segment.
