@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.400 2020/04/04 01:35:22 christos Exp $
+#	$NetBSD: bsd.README,v 1.401 2020/04/04 23:54:06 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -848,6 +848,9 @@ USETOOLS	Indicates whether the tools specified by ${TOOLDIR} should
 
 OBJECT_FMT	Object file format.  [set to "ELF" on architectures that
 		use ELF -- currently all architectures].
+
+KERNEL_DIR	Install the kernel as /netbsd/kernel and the modules
+		in /netbsd/modules, defaults to "no".
 
 TOOLCHAIN_MISSING
 		If not "no", this indicates that the platform being built
