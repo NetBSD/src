@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2019/11/11 22:45:26 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2020/04/04 15:45:45 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -24,8 +24,8 @@ CPPFLAGS+= -DDEF_CLIENT_SASL_TYPE=\"saslc\"
 DPADD+= ${LIBSASCL} ${LIBSSL}
 LDADD+= -lsaslc -lssl
 .if (${MKKERBEROS} != "no")
-DPADD+= ${LIBGSSAPI}
-LDADD+= -lgssapi
+DPADD+= ${LIBGSSAPI} ${LIBCRYPTO}
+LDADD+= -lgssapi -lcrypto
 .endif
 
 .if defined(HAVE_PCC)
