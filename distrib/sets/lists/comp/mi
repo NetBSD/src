@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2320 2020/04/04 17:00:05 christos Exp $
+#	$NetBSD: mi,v 1.2321 2020/04/04 19:26:51 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3511,8 +3511,6 @@
 ./usr/lib/libgcov.a				comp-c-lib		compatfile,gcc
 ./usr/lib/libgmp.a				comp-obsolete		obsolete
 ./usr/lib/libgmp_p.a				comp-obsolete		obsolete
-./usr/lib/libgnuctf.a				comp-c-lib		compatfile,binutils=234
-./usr/lib/libgnuctf_p.a				comp-c-proflib		compatfile,profile,binutils=234
 ./usr/lib/libgnumalloc.a			comp-c-lib		compatfile
 ./usr/lib/libgnumalloc_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libgomp.a				comp-c-lib		compatfile,gcc
