@@ -1,4 +1,4 @@
-#	$NetBSD: majors.newsmips,v 1.22 2019/01/28 02:28:59 dholland Exp $
+#	$NetBSD: majors.newsmips,v 1.23 2020/04/04 16:06:15 jdolecek Exp $
 #
 # Device majors for newsmips
 #
@@ -47,7 +47,7 @@ device-major	ksyms		char 78			ksyms
 device-major	wsfont		char 79			wsfont
 #device-major	obsolete	char 80			obsolete (opencrypto)
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

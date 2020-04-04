@@ -1,4 +1,4 @@
-#	$NetBSD: majors.playstation2,v 1.24 2020/01/29 18:39:03 maya Exp $
+#	$NetBSD: majors.playstation2,v 1.25 2020/04/04 16:06:16 jdolecek Exp $
 #
 # Device majors for playstation2
 #
@@ -48,7 +48,7 @@ device-major	ksyms		char 41			ksyms
 device-major	wsfont		char 42			wsfont
 #device-major	obsolete	char 43			obsolete (opencrypto)
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independent driver majors are assigned in 
