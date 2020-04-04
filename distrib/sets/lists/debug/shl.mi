@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.244 2020/04/04 17:00:05 christos Exp $
+# $NetBSD: shl.mi,v 1.245 2020/04/04 19:26:51 christos Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -213,7 +213,7 @@
 ./usr/libdata/debug/usr/lib/librumpdev_drvctl.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev_fss.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev_md.so.0.0.debug		comp-rump-debug	debug,rump
-./usr/libdata/debug/usr/lib/librumpdev_netsmb.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_netsmb.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/librumpdev_opencrypto.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev_pad.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev_pud.so.0.0.debug		comp-rump-debug	debug,rump
@@ -248,7 +248,7 @@
 ./usr/libdata/debug/usr/lib/librumpfs_ntfs.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpfs_null.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpfs_ptyfs.so.0.0.debug	comp-rump-debug	debug,rump
-./usr/libdata/debug/usr/lib/librumpfs_smbfs.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpfs_smbfs.so.0.0.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/librumpfs_syspuffs.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpfs_sysvbfs.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpfs_tmpfs.so.0.0.debug	comp-rump-debug	debug,rump

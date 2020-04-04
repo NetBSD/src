@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.302 2020/04/04 17:00:05 christos Exp $
+# $NetBSD: mi,v 1.303 2020/04/04 19:26:51 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -155,7 +155,7 @@
 ./usr/lib/librumpdev_fss_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpdev_md_g.a			comp-c-debuglib		debuglib,rump
-./usr/lib/librumpdev_netsmb_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpdev_netsmb_g.a			comp-obsolete		obsolete
 ./usr/lib/librumpdev_opencrypto_g.a		comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_pad_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_pud_g.a			comp-c-debuglib		debuglib,rump
