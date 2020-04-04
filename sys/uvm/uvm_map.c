@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.376 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.377 2020/04/04 21:17:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.376 2020/03/22 18:32:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.377 2020/04/04 21:17:02 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -938,7 +938,8 @@ uvm_map_init_caches(void)
 	 */
 
 	pool_cache_bootstrap(&uvm_map_entry_cache, sizeof(struct vm_map_entry),
-	    coherency_unit, 0, 0, "vmmpepl", NULL, IPL_NONE, NULL, NULL, NULL);
+	    coherency_unit, 0, PR_LARGECACHE, "vmmpepl", NULL, IPL_NONE, NULL,
+	    NULL, NULL);
 	pool_cache_bootstrap(&uvm_vmspace_cache, sizeof(struct vmspace),
 	    0, 0, 0, "vmsppl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
