@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.377 2020/03/16 21:20:13 pgoyette Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.378 2020/04/04 20:49:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.377 2020/03/16 21:20:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.378 2020/04/04 20:49:31 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1125,6 +1125,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_stat.f_namemax = LFS_MAXNAMLEN;
 	mp->mnt_stat.f_iosize = lfs_sb_getbsize(fs);
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_iflag |= IMNT_SHRLOOKUP;
 	mp->mnt_fs_bshift = lfs_sb_getbshift(fs);
 	mp->mnt_iflag |= IMNT_CAN_RWTORO;
 	if (fs->um_maxsymlinklen > 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.217 2020/03/16 21:20:12 pgoyette Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.218 2020/04/04 20:49:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.217 2020/03/16 21:20:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.218 2020/04/04 20:49:31 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -738,7 +738,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_fs_bshift = m_fs->e2fs_bshift;
-	mp->mnt_iflag |= IMNT_DTYPE;
+	mp->mnt_iflag |= IMNT_DTYPE | IMNT_SHRLOOKUP;
 	ump->um_flags = 0;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
