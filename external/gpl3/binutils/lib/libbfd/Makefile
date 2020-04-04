@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2018/11/07 01:13:56 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2020/04/04 00:46:53 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -23,11 +23,12 @@ BFD_MACHINE_ARCH?=	${MACHINE_ARCH:C/armv[4-7]/arm/}
 DEFS_MK=${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk
 # XXX: Fix me
 BINDIR=/usr/bin
+BINDIR=/usr/lib
 
 .if exists(${DEFS_MK})
 .include "${DEFS_MK}"
 
-SHLIB_MAJOR=	16
+SHLIB_MAJOR=	17
 SHLIB_MINOR=	0
 
 LIBDPLIBS+=	z	${.CURDIR}/../../../../../lib/libz
@@ -37,7 +38,8 @@ GCPPFLAGS+=	${G_HAVEVECS}
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BFD_MACHINE_ARCH} -I${DIST}/include -I. \
 		-I${DIST}/bfd ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
-		-DDEBUGDIR=\"${DEBUGDIR}\" -DBINDIR=\"${BINDIR}\"
+		-DDEBUGDIR=\"${DEBUGDIR}\" -DLIBDIR=\"${LIBDIR}\" \
+		-DBINDIR=\"${BINDIR}\"
 
 .if (${BFD_MACHINE_ARCH} == "vax")
 CPPFLAGS.elf.c +=	-O0
