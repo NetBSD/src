@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.43 2020/04/04 07:33:18 mlelstv Exp $ */
+/* $NetBSD: wsevent.c,v 1.44 2020/04/04 13:07:11 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.43 2020/04/04 07:33:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.44 2020/04/04 13:07:11 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -164,7 +164,8 @@ wsevent_init(struct wseventvar *ev, struct proc *p)
 #endif
 		return;
 	}
-	/* For binary compat set default version and either build with
+	/*
+	 * For binary compat set default version and either build with
 	 * COMPAT_50 or load COMPAT_50 module to include the compatibility
 	 * code.
 	 */
