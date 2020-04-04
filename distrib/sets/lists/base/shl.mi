@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.882 2020/04/04 09:57:12 mlelstv Exp $
+# $NetBSD: shl.mi,v 1.883 2020/04/04 16:04:01 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -222,10 +222,10 @@
 ./usr/lib/libavl.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libavl.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libavl.so.0.0          		base-zfs-shlib		compatfile,zfs
-./usr/lib/libbfd.so.15				base-sys-shlib		compatfile,binutils=231
-./usr/lib/libbfd.so.15.0			base-sys-shlib		compatfile,binutils=231
-./usr/lib/libbfd.so.16				base-sys-shlib		compatfile,binutils=234
-./usr/lib/libbfd.so.16.0			base-sys-shlib		compatfile,binutils=234
+./usr/lib/libbfd.so.16				base-sys-shlib		compatfile,binutils=231
+./usr/lib/libbfd.so.16.0			base-sys-shlib		compatfile,binutils=231
+./usr/lib/libbfd.so.17				base-sys-shlib		compatfile,binutils=234
+./usr/lib/libbfd.so.17.0			base-sys-shlib		compatfile,binutils=234
 ./usr/lib/libbind9.so				base-bind-shlib		compatfile
 ./usr/lib/libbind9.so.13				base-bind-shlib		compatfile
 ./usr/lib/libbind9.so.13.0			base-bind-shlib		compatfile
@@ -334,6 +334,9 @@
 ./usr/lib/libgcc_s.so				base-sys-shlib		compatfile,gcc
 ./usr/lib/libgcc_s.so.1				base-sys-shlib		compatfile,gcc
 ./usr/lib/libgcc_s.so.1.0			base-sys-shlib		compatfile,gcc
+./usr/lib/libgnuctf.so				base-sys-shlib		compatfile,binutils=234
+./usr/lib/libgnuctf.so.0			base-sys-shlib		compatfile,binutils=234
+./usr/lib/libgnuctf.so.0.0			base-sys-shlib		compatfile,binutils=234
 ./usr/lib/libgnumalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libgnumalloc.so.1			base-sys-shlib		compatfile
 ./usr/lib/libgnumalloc.so.1.0			base-sys-shlib		compatfile
