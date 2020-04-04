@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cobalt,v 1.34 2020/03/04 04:58:52 thorpej Exp $
+#	$NetBSD: majors.cobalt,v 1.35 2020/04/04 16:06:12 jdolecek Exp $
 #
 # Device majors for cobalt
 #
@@ -62,7 +62,7 @@ device-major	wsfont		char 55			wsfont
 
 device-major	altq		char 77			altq
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in
