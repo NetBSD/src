@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.345 2020/03/26 19:42:39 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.346 2020/04/04 20:21:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.345 2020/03/26 19:42:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.346 2020/04/04 20:21:53 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -317,43 +317,32 @@ preempt(void)
 }
 
 /*
- * A breathing point for long running code in kernel.
+ * Return true if the current LWP should yield the processor.  Intended to
+ * be used by long-running code in kernel.
  */
-void
-preempt_point(void)
-{
-	lwp_t *l = curlwp;
-	int needed;
-
-	KPREEMPT_DISABLE(l);
-	needed = l->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD;
-#ifndef __HAVE_FAST_SOFTINTS
-	needed |= l->l_cpu->ci_data.cpu_softints;
-#endif
-	KPREEMPT_ENABLE(l);
-
-	if (__predict_false(needed)) {
-		preempt();
-	}
-}
-
-/*
- * Check the SPCF_SHOULDYIELD flag.
- */
-bool
+inline bool
 preempt_needed(void)
 {
 	lwp_t *l = curlwp;
 	int needed;
 
 	KPREEMPT_DISABLE(l);
-	needed = l->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD;
-#ifndef __HAVE_FAST_SOFTINTS
-	needed |= l->l_cpu->ci_data.cpu_softints;
-#endif
+	needed = l->l_cpu->ci_want_resched;
 	KPREEMPT_ENABLE(l);
 
 	return (bool)needed;
+}
+
+/*
+ * A breathing point for long running code in kernel.
+ */
+void
+preempt_point(void)
+{
+
+	if (__predict_false(preempt_needed())) {
+		preempt();
+	}
 }
 
 /*
