@@ -108,7 +108,8 @@ script_exec(const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
 	for (i = 0; i < dhcpcd_signals_len; i++)
 		sigaddset(&defsigs, dhcpcd_signals[i]);
 	posix_spawnattr_setsigdefault(&attr, &defsigs);
-	posix_spawnattr_setsigmask(&attr, &ctx->sigset);
+	sigemptyset(&defsigs);
+	posix_spawnattr_setsigmask(&attr, &defsigs);
 #endif
 	errno = 0;
 	r = posix_spawn(&pid, argv[0], NULL, &attr, argv, env);
