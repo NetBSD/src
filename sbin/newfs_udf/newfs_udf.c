@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.19 2016/03/09 19:48:24 christos Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.20 2020/04/05 15:25:40 joerg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -71,7 +71,6 @@
 /* prototypes */
 int newfs_udf(int argc, char **argv);
 static void usage(void) __attribute__((__noreturn__));
-
 
 /* queue for temporary storage of sectors to be written out */
 struct wrsect {

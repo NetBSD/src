@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.86 2019/08/15 03:10:42 kamil Exp $	*/
+/*	$NetBSD: main.c,v 1.87 2020/04/05 15:25:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.86 2019/08/15 03:10:42 kamil Exp $");
+__RCSID("$NetBSD: main.c,v 1.87 2020/04/05 15:25:40 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,68 @@ __RCSID("$NetBSD: main.c,v 1.86 2019/08/15 03:10:42 kamil Exp $");
 #include "fsutil.h"
 #include "exitvalues.h"
 #include "snapshot.h"
+
+struct bufarea bufhead;
+struct bufarea sblk;
+struct bufarea asblk;
+struct bufarea cgblk;
+struct bufarea appleufsblk;
+struct bufarea *pdirbp;
+struct bufarea *pbp;
+struct fs *sblock;
+struct fs *altsblock;
+struct cg *cgrp;
+struct fs *sblocksave;
+struct dups *duplist;
+struct dups *muldup;
+struct zlncnt *zlnhead;
+struct inoinfo **inphead, **inpsort;
+long numdirs, dirhash, listmax, inplast;
+struct uquot_hash *uquot_user_hash;
+struct uquot_hash *uquot_group_hash;
+uint8_t q2h_hash_shift;
+uint16_t q2h_hash_mask;
+struct inostatlist *inostathead;
+long	dev_bsize;
+long	secsize;
+char	nflag;
+char	yflag;
+int	Uflag;
+int	bflag;
+int	debug;
+int	zflag;
+int	cvtlevel;
+int	doinglevel1;
+int	doinglevel2;
+int	newinofmt;
+char	usedsoftdep;
+int	preen;
+int	forceimage;
+int	is_ufs2;
+int	markclean;
+char	havesb;
+char	skipclean;
+int	fsmodified;
+int	fsreadfd;
+int	fswritefd;
+int	rerun;
+char	resolved;
+int	endian;
+int	doswap;
+int	needswap;
+int	do_blkswap;
+int	do_dirswap;
+int	isappleufs;
+daddr_t maxfsblock;
+char	*blockmap;
+ino_t	maxino;
+int	dirblksiz;
+daddr_t n_blks;
+ino_t n_files;
+long countdirs;
+int	got_siginfo;
+struct	ufs1_dinode ufs1_zino;
+struct	ufs2_dinode ufs2_zino;
 
 int	progress = 0;
 
