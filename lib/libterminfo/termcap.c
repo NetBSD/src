@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.23 2020/03/27 17:39:53 christos Exp $ */
+/* $NetBSD: termcap.c,v 1.24 2020/04/05 14:53:39 martin Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.23 2020/03/27 17:39:53 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.24 2020/04/05 14:53:39 martin Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -183,6 +183,7 @@ tgoto(const char *cm, int destcol, int destline)
 	return tiparm(cm, destline, destcol);
 }
 
+#ifdef TERMINFO_COMPILE
 static const char *
 flagname(const char *key)
 {
@@ -600,4 +601,4 @@ captoinfo(char *cap)
 	*ip = '\0';
 	return info;
 }
-
+#endif
