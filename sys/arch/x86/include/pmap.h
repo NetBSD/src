@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.116 2020/03/22 00:16:16 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.117 2020/04/05 00:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -259,6 +259,9 @@ struct pmap {
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats */
 	struct pv_entry *pm_pve;	/* spare pv_entry */
+	LIST_HEAD(, pv_page) pm_pvp_part;
+	LIST_HEAD(, pv_page) pm_pvp_empty;
+	LIST_HEAD(, pv_page) pm_pvp_full;
 
 #if !defined(__x86_64__)
 	vaddr_t pm_hiexec;		/* highest executable mapping */
