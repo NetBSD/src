@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.130 2020/01/08 13:28:14 macallan Exp $
+#	$NetBSD: INSTALL,v 1.131 2020/04/05 14:36:43 sevan Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -204,6 +204,7 @@ udav*	at uhub? port ?		# Davicom DM9601 based adapters
 pseudo-device	md			# memory disk
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# network loopback
+pseudo-device	bpfilter		# packet filter
 pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	wsmux			# mouse and keyboard multiplexor
