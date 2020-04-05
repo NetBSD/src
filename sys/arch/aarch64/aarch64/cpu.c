@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.42 2020/03/30 11:38:29 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.43 2020/04/05 22:54:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.42 2020/03/30 11:38:29 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.43 2020/04/05 22:54:51 jmcneill Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -158,32 +158,32 @@ cpu_attach(device_t dv, cpuid_t id)
 struct cpuidtab {
 	uint32_t cpu_partnum;
 	const char *cpu_name;
-	const char *cpu_class;
+	const char *cpu_vendor;
 	const char *cpu_architecture;
 };
 
 #define CPU_PARTMASK	(CPU_ID_IMPLEMENTOR_MASK | CPU_ID_PARTNO_MASK)
 
 const struct cpuidtab cpuids[] = {
-	{ CPU_ID_CORTEXA35R0 & CPU_PARTMASK, "Cortex-A35", "Cortex", "V8-A" },
-	{ CPU_ID_CORTEXA53R0 & CPU_PARTMASK, "Cortex-A53", "Cortex", "V8-A" },
-	{ CPU_ID_CORTEXA57R0 & CPU_PARTMASK, "Cortex-A57", "Cortex", "V8-A" },
-	{ CPU_ID_CORTEXA55R1 & CPU_PARTMASK, "Cortex-A55", "Cortex", "V8.2-A+" },
-	{ CPU_ID_CORTEXA65R0 & CPU_PARTMASK, "Cortex-A65", "Cortex", "V8.2-A+" },
-	{ CPU_ID_CORTEXA72R0 & CPU_PARTMASK, "Cortex-A72", "Cortex", "V8-A" },
-	{ CPU_ID_CORTEXA73R0 & CPU_PARTMASK, "Cortex-A73", "Cortex", "V8-A" },
-	{ CPU_ID_CORTEXA75R2 & CPU_PARTMASK, "Cortex-A75", "Cortex", "V8.2-A+" },
-	{ CPU_ID_CORTEXA76R3 & CPU_PARTMASK, "Cortex-A76", "Cortex", "V8.2-A+" },
-	{ CPU_ID_CORTEXA76AER1 & CPU_PARTMASK, "Cortex-A76AE", "Cortex", "V8.2-A+" },
-	{ CPU_ID_CORTEXA77R0 & CPU_PARTMASK, "Cortex-A77", "Cortex", "V8.2-A+" },
-	{ CPU_ID_NVIDIADENVER2 & CPU_PARTMASK, "NVIDIA", "Denver2", "V8-A" },
-	{ CPU_ID_EMAG8180 & CPU_PARTMASK, "Ampere eMAG", "Skylark", "V8-A" },
-	{ CPU_ID_NEOVERSEE1R1 & CPU_PARTMASK, "Neoverse E1", "Neoverse", "V8.2-A+" },
-	{ CPU_ID_NEOVERSEN1R3 & CPU_PARTMASK, "Neoverse N1", "Neoverse", "V8.2-A+" },
-	{ CPU_ID_THUNDERXRX, "Cavium ThunderX", "Cavium", "V8-A" },
-	{ CPU_ID_THUNDERX81XXRX, "Cavium ThunderX CN81XX", "Cavium", "V8-A" },
-	{ CPU_ID_THUNDERX83XXRX, "Cavium ThunderX CN83XX", "Cavium", "V8-A" },
-	{ CPU_ID_THUNDERX2RX, "Cavium ThunderX2", "Cavium", "V8.1-A" },
+	{ CPU_ID_CORTEXA35R0 & CPU_PARTMASK, "Cortex-A35", "Arm", "v8-A" },
+	{ CPU_ID_CORTEXA53R0 & CPU_PARTMASK, "Cortex-A53", "Arm", "v8-A" },
+	{ CPU_ID_CORTEXA57R0 & CPU_PARTMASK, "Cortex-A57", "Arm", "v8-A" },
+	{ CPU_ID_CORTEXA55R1 & CPU_PARTMASK, "Cortex-A55", "Arm", "v8.2-A+" },
+	{ CPU_ID_CORTEXA65R0 & CPU_PARTMASK, "Cortex-A65", "Arm", "v8.2-A+" },
+	{ CPU_ID_CORTEXA72R0 & CPU_PARTMASK, "Cortex-A72", "Arm", "v8-A" },
+	{ CPU_ID_CORTEXA73R0 & CPU_PARTMASK, "Cortex-A73", "Arm", "v8-A" },
+	{ CPU_ID_CORTEXA75R2 & CPU_PARTMASK, "Cortex-A75", "Arm", "v8.2-A+" },
+	{ CPU_ID_CORTEXA76R3 & CPU_PARTMASK, "Cortex-A76", "Arm", "v8.2-A+" },
+	{ CPU_ID_CORTEXA76AER1 & CPU_PARTMASK, "Cortex-A76AE", "Arm", "v8.2-A+" },
+	{ CPU_ID_CORTEXA77R0 & CPU_PARTMASK, "Cortex-A77", "Arm", "v8.2-A+" },
+	{ CPU_ID_NVIDIADENVER2 & CPU_PARTMASK, "Denver2", "NVIDIA", "v8-A" },
+	{ CPU_ID_EMAG8180 & CPU_PARTMASK, "eMAG", "Ampere", "v8-A" },
+	{ CPU_ID_NEOVERSEE1R1 & CPU_PARTMASK, "Neoverse E1", "Arm", "v8.2-A+" },
+	{ CPU_ID_NEOVERSEN1R3 & CPU_PARTMASK, "Neoverse N1", "Arm", "v8.2-A+" },
+	{ CPU_ID_THUNDERXRX, "ThunderX", "Cavium", "v8-A" },
+	{ CPU_ID_THUNDERX81XXRX, "ThunderX CN81XX", "Cavium", "v8-A" },
+	{ CPU_ID_THUNDERX83XXRX, "ThunderX CN83XX", "Cavium", "v8-A" },
+	{ CPU_ID_THUNDERX2RX, "ThunderX2", "Marvell", "v8.1-A" },
 };
 
 static void
@@ -198,9 +198,9 @@ identify_aarch64_model(uint32_t cpuid, char *buf, size_t len)
 
 	for (i = 0; i < __arraycount(cpuids); i++) {
 		if (cpupart == cpuids[i].cpu_partnum) {
-			snprintf(buf, len, "%s r%dp%d (%s %s core)",
-			    cpuids[i].cpu_name, variant, revision,
-			    cpuids[i].cpu_class,
+			snprintf(buf, len, "%s %s r%dp%d (%s)",
+			    cpuids[i].cpu_vendor, cpuids[i].cpu_name,
+			    variant, revision,
 			    cpuids[i].cpu_architecture);
 			return;
 		}
@@ -223,9 +223,7 @@ cpu_identify(device_t self, struct cpu_info *ci)
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": %s\n", model);
-	aprint_normal_dev(ci->ci_dev, "package %u, core %u, smt %u\n",
-	    ci->ci_package_id, ci->ci_core_id, ci->ci_smt_id);
+	aprint_normal(": %s, id 0x%lx\n", model, ci->ci_cpuid);
 }
 
 static void
@@ -236,31 +234,31 @@ cpu_identify1(device_t self, struct cpu_info *ci)
 	/* SCTLR - System Control Register */
 	sctlr = reg_sctlr_el1_read();
 	if (sctlr & SCTLR_I)
-		aprint_normal_dev(self, "IC enabled");
+		aprint_verbose_dev(self, "IC enabled");
 	else
-		aprint_normal_dev(self, "IC disabled");
+		aprint_verbose_dev(self, "IC disabled");
 
 	if (sctlr & SCTLR_C)
-		aprint_normal(", DC enabled");
+		aprint_verbose(", DC enabled");
 	else
-		aprint_normal(", DC disabled");
+		aprint_verbose(", DC disabled");
 
 	if (sctlr & SCTLR_A)
-		aprint_normal(", Alignment check enabled\n");
+		aprint_verbose(", Alignment check enabled\n");
 	else {
 		switch (sctlr & (SCTLR_SA | SCTLR_SA0)) {
 		case SCTLR_SA | SCTLR_SA0:
-			aprint_normal(
+			aprint_verbose(
 			    ", EL0/EL1 stack Alignment check enabled\n");
 			break;
 		case SCTLR_SA:
-			aprint_normal(", EL1 stack Alignment check enabled\n");
+			aprint_verbose(", EL1 stack Alignment check enabled\n");
 			break;
 		case SCTLR_SA0:
-			aprint_normal(", EL0 stack Alignment check enabled\n");
+			aprint_verbose(", EL0 stack Alignment check enabled\n");
 			break;
 		case 0:
-			aprint_normal(", Alignment check disabled\n");
+			aprint_verbose(", Alignment check disabled\n");
 			break;
 		}
 	}
@@ -269,12 +267,12 @@ cpu_identify1(device_t self, struct cpu_info *ci)
 	 * CTR - Cache Type Register
 	 */
 	ctr = reg_ctr_el0_read();
-	aprint_normal_dev(self, "Cache Writeback Granule %" PRIu64 "B,"
+	aprint_verbose_dev(self, "Cache Writeback Granule %" PRIu64 "B,"
 	    " Exclusives Reservation Granule %" PRIu64 "B\n",
 	    __SHIFTOUT(ctr, CTR_EL0_CWG_LINE) * 4,
 	    __SHIFTOUT(ctr, CTR_EL0_ERG_LINE) * 4);
 
-	aprint_normal_dev(self, "Dcache line %ld, Icache line %ld\n",
+	aprint_verbose_dev(self, "Dcache line %ld, Icache line %ld\n",
 	    sizeof(int) << __SHIFTOUT(ctr, CTR_EL0_DMIN_LINE),
 	    sizeof(int) << __SHIFTOUT(ctr, CTR_EL0_IMIN_LINE));
 }
@@ -298,83 +296,83 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 
 	aprint_debug_dev(self, "midr=0x%" PRIx32 " mpidr=0x%" PRIx32 "\n",
 	    (uint32_t)ci->ci_id.ac_midr, (uint32_t)ci->ci_id.ac_mpidr);
-	aprint_normal_dev(self, "revID=0x%" PRIx64, id->ac_revidr);
+	aprint_verbose_dev(self, "revID=0x%" PRIx64, id->ac_revidr);
 
 	/* ID_AA64DFR0_EL1 */
 	switch (__SHIFTOUT(dfr0, ID_AA64DFR0_EL1_PMUVER)) {
 	case ID_AA64DFR0_EL1_PMUVER_V3:
-		aprint_normal(", PMCv3");
+		aprint_verbose(", PMCv3");
 		break;
 	case ID_AA64DFR0_EL1_PMUVER_NOV3:
-		aprint_normal(", PMC");
+		aprint_verbose(", PMC");
 		break;
 	}
 
 	/* ID_AA64MMFR0_EL1 */
 	switch (__SHIFTOUT(id->ac_aa64mmfr0, ID_AA64MMFR0_EL1_TGRAN4)) {
 	case ID_AA64MMFR0_EL1_TGRAN4_4KB:
-		aprint_normal(", 4k table");
+		aprint_verbose(", 4k table");
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_aa64mmfr0, ID_AA64MMFR0_EL1_TGRAN16)) {
 	case ID_AA64MMFR0_EL1_TGRAN16_16KB:
-		aprint_normal(", 16k table");
+		aprint_verbose(", 16k table");
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_aa64mmfr0, ID_AA64MMFR0_EL1_TGRAN64)) {
 	case ID_AA64MMFR0_EL1_TGRAN64_64KB:
-		aprint_normal(", 64k table");
+		aprint_verbose(", 64k table");
 		break;
 	}
 
 	switch (__SHIFTOUT(id->ac_aa64mmfr0, ID_AA64MMFR0_EL1_ASIDBITS)) {
 	case ID_AA64MMFR0_EL1_ASIDBITS_8BIT:
-		aprint_normal(", 8bit ASID");
+		aprint_verbose(", 8bit ASID");
 		break;
 	case ID_AA64MMFR0_EL1_ASIDBITS_16BIT:
-		aprint_normal(", 16bit ASID");
+		aprint_verbose(", 16bit ASID");
 		break;
 	}
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 
 
-	aprint_normal_dev(self, "auxID=0x%" PRIx64, ci->ci_id.ac_aa64isar0);
+	aprint_verbose_dev(self, "auxID=0x%" PRIx64, ci->ci_id.ac_aa64isar0);
 
 	/* PFR0 */
 	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_GIC)) {
 	case ID_AA64PFR0_EL1_GIC_CPUIF_EN:
-		aprint_normal(", GICv3");
+		aprint_verbose(", GICv3");
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_FP)) {
 	case ID_AA64PFR0_EL1_FP_IMPL:
-		aprint_normal(", FP");
+		aprint_verbose(", FP");
 		break;
 	}
 
 	/* ISAR0 */
 	switch (__SHIFTOUT(id->ac_aa64isar0, ID_AA64ISAR0_EL1_CRC32)) {
 	case ID_AA64ISAR0_EL1_CRC32_CRC32X:
-		aprint_normal(", CRC32");
+		aprint_verbose(", CRC32");
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_aa64isar0, ID_AA64ISAR0_EL1_SHA1)) {
 	case ID_AA64ISAR0_EL1_SHA1_SHA1CPMHSU:
-		aprint_normal(", SHA1");
+		aprint_verbose(", SHA1");
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_aa64isar0, ID_AA64ISAR0_EL1_SHA2)) {
 	case ID_AA64ISAR0_EL1_SHA2_SHA256HSU:
-		aprint_normal(", SHA256");
+		aprint_verbose(", SHA256");
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_aa64isar0, ID_AA64ISAR0_EL1_AES)) {
 	case ID_AA64ISAR0_EL1_AES_AES:
-		aprint_normal(", AES");
+		aprint_verbose(", AES");
 		break;
 	case ID_AA64ISAR0_EL1_AES_PMUL:
-		aprint_normal(", AES+PMULL");
+		aprint_verbose(", AES+PMULL");
 		break;
 	}
 
@@ -382,46 +380,46 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 	/* PFR0:AdvSIMD */
 	switch (__SHIFTOUT(id->ac_aa64pfr0, ID_AA64PFR0_EL1_ADVSIMD)) {
 	case ID_AA64PFR0_EL1_ADV_SIMD_IMPL:
-		aprint_normal(", NEON");
+		aprint_verbose(", NEON");
 		break;
 	}
 
 	/* MVFR0/MVFR1 */
 	switch (__SHIFTOUT(id->ac_mvfr0, MVFR0_FPROUND)) {
 	case MVFR0_FPROUND_ALL:
-		aprint_normal(", rounding");
+		aprint_verbose(", rounding");
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_mvfr0, MVFR0_FPTRAP)) {
 	case MVFR0_FPTRAP_TRAP:
-		aprint_normal(", exceptions");
+		aprint_verbose(", exceptions");
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_mvfr1, MVFR1_FPDNAN)) {
 	case MVFR1_FPDNAN_NAN:
-		aprint_normal(", NaN propagation");
+		aprint_verbose(", NaN propagation");
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_mvfr1, MVFR1_FPFTZ)) {
 	case MVFR1_FPFTZ_DENORMAL:
-		aprint_normal(", denormals");
+		aprint_verbose(", denormals");
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_mvfr0, MVFR0_SIMDREG)) {
 	case MVFR0_SIMDREG_16x64:
-		aprint_normal(", 16x64bitRegs");
+		aprint_verbose(", 16x64bitRegs");
 		break;
 	case MVFR0_SIMDREG_32x64:
-		aprint_normal(", 32x64bitRegs");
+		aprint_verbose(", 32x64bitRegs");
 		break;
 	}
 	switch (__SHIFTOUT(id->ac_mvfr1, MVFR1_SIMDFMAC)) {
 	case MVFR1_SIMDFMAC_FMAC:
-		aprint_normal(", Fused Multiply-Add");
+		aprint_verbose(", Fused Multiply-Add");
 		break;
 	}
 
-	aprint_normal("\n");
+	aprint_verbose("\n");
 }
 
 /*
