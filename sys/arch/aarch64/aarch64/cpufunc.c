@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.15 2020/01/15 08:34:04 mrg Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.16 2020/04/05 22:54:51 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.15 2020/01/15 08:34:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.16 2020/04/05 22:54:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -273,7 +273,7 @@ prt_cache(device_t self, struct aarch64_cache_info *cinfo, int level)
 		}
 
 		purging = cunit->cache_purging;
-		aprint_normal_dev(self,
+		aprint_verbose_dev(self,
 		    "L%d %dKB/%dB %d-way%s%s%s%s %s %s cache\n",
 		    level + 1,
 		    cunit->cache_size / 1024,
