@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.493 2020/02/23 22:14:03 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.494 2020/04/05 20:53:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.493 2020/02/23 22:14:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.494 2020/04/05 20:53:17 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2062,6 +2062,156 @@ spawn_exec_data_release(struct spawn_exec_data *data)
 	kmem_free(data, sizeof(*data));
 }
 
+static int
+handle_posix_spawn_file_actions(struct posix_spawn_file_actions *actions)
+{
+	struct lwp *l = curlwp;
+	register_t retval;
+	int error, newfd;
+
+	if (actions == NULL)
+		return 0;
+
+	for (size_t i = 0; i < actions->len; i++) {
+		const struct posix_spawn_file_actions_entry *fae =
+		    &actions->fae[i];
+		switch (fae->fae_action) {
+		case FAE_OPEN:
+			if (fd_getfile(fae->fae_fildes) != NULL) {
+				error = fd_close(fae->fae_fildes);
+				if (error)
+					return error;
+			}
+			error = fd_open(fae->fae_path, fae->fae_oflag,
+			    fae->fae_mode, &newfd);
+			if (error)
+				return error;
+			if (newfd != fae->fae_fildes) {
+				error = dodup(l, newfd,
+				    fae->fae_fildes, 0, &retval);
+				if (fd_getfile(newfd) != NULL)
+					fd_close(newfd);
+			}
+			break;
+		case FAE_DUP2:
+			error = dodup(l, fae->fae_fildes,
+			    fae->fae_newfildes, 0, &retval);
+			break;
+		case FAE_CLOSE:
+			if (fd_getfile(fae->fae_fildes) == NULL) {
+				return EBADF;
+			}
+			error = fd_close(fae->fae_fildes);
+			break;
+		}
+		if (error)
+			return error;
+	}
+	return 0;
+}
+
+static int
+handle_posix_spawn_attrs(struct posix_spawnattr *attrs, struct proc *parent)
+{
+	struct sigaction sigact;
+	int error;
+	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+
+	if (attrs == NULL)
+		return 0;
+
+	memset(&sigact, 0, sizeof(sigact));
+	sigact._sa_u._sa_handler = SIG_DFL;
+	sigact.sa_flags = 0;
+
+	/* 
+	 * set state to SSTOP so that this proc can be found by pid.
+	 * see proc_enterprp, do_sched_setparam below
+	 */
+	mutex_enter(proc_lock);
+	/*
+	 * p_stat should be SACTIVE, so we need to adjust the
+	 * parent's p_nstopchild here.  For safety, just make
+	 * we're on the good side of SDEAD before we adjust.
+	 */
+	int ostat = p->p_stat;
+	KASSERT(ostat < SSTOP);
+	p->p_stat = SSTOP;
+	p->p_waited = 0;
+	p->p_pptr->p_nstopchild++;
+	mutex_exit(proc_lock);
+
+	/* Set process group */
+	if (attrs->sa_flags & POSIX_SPAWN_SETPGROUP) {
+		pid_t mypid = p->p_pid;
+		pid_t pgrp = attrs->sa_pgroup;
+
+		if (pgrp == 0)
+			pgrp = mypid;
+
+		error = proc_enterpgrp(parent, mypid, pgrp, false);
+		if (error)
+			goto out;
+	}
+
+	/* Set scheduler policy */
+	if (attrs->sa_flags & POSIX_SPAWN_SETSCHEDULER)
+		error = do_sched_setparam(p->p_pid, 0, attrs->sa_schedpolicy,
+		    &attrs->sa_schedparam);
+	else if (attrs->sa_flags & POSIX_SPAWN_SETSCHEDPARAM) {
+		error = do_sched_setparam(parent->p_pid, 0,
+		    SCHED_NONE, &attrs->sa_schedparam);
+	}
+	if (error)
+		goto out;
+
+	/* Reset user ID's */
+	if (attrs->sa_flags & POSIX_SPAWN_RESETIDS) {
+		error = do_setresuid(l, -1, kauth_cred_getgid(l->l_cred), -1,
+		     ID_E_EQ_R | ID_E_EQ_S);
+		if (error)
+			return error;
+		error = do_setresuid(l, -1, kauth_cred_getuid(l->l_cred), -1,
+		    ID_E_EQ_R | ID_E_EQ_S);
+		if (error)
+			goto out;
+	}
+
+	/* Set signal masks/defaults */
+	if (attrs->sa_flags & POSIX_SPAWN_SETSIGMASK) {
+		mutex_enter(p->p_lock);
+		error = sigprocmask1(l, SIG_SETMASK, &attrs->sa_sigmask, NULL);
+		mutex_exit(p->p_lock);
+		if (error)
+			goto out;
+	}
+
+	if (attrs->sa_flags & POSIX_SPAWN_SETSIGDEF) {
+		/*
+		 * The following sigaction call is using a sigaction
+		 * version 0 trampoline which is in the compatibility
+		 * code only. This is not a problem because for SIG_DFL
+		 * and SIG_IGN, the trampolines are now ignored. If they
+		 * were not, this would be a problem because we are
+		 * holding the exec_lock, and the compat code needs
+		 * to do the same in order to replace the trampoline
+		 * code of the process.
+		 */
+		for (int i = 1; i <= NSIG; i++) {
+			if (sigismember(&attrs->sa_sigdefault, i))
+				sigaction1(l, i, &sigact, NULL, NULL, 0);
+		}
+	}
+	error = 0;
+out:
+	mutex_enter(proc_lock);
+	p->p_stat = ostat;
+	p->p_pptr->p_nstopchild--;
+	mutex_exit(proc_lock);
+	return error;
+}
+
 /*
  * A child lwp of a posix_spawn operation starts here and ends up in
  * cpu_spawn_return, dealing with all filedescriptor and scheduler
@@ -2080,12 +2230,7 @@ spawn_return(void *arg)
 	struct spawn_exec_data *spawn_data = arg;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	int error, newfd;
-	int ostat;
-	size_t i;
-	const struct posix_spawn_file_actions_entry *fae;
-	pid_t ppid;
-	register_t retval;
+	int error;
 	bool have_reflock;
 	bool parent_is_waiting = true;
 
@@ -2097,10 +2242,9 @@ spawn_return(void *arg)
 	 * We then try to get the exec_lock, and only if that works, we can
 	 * release the parent here already.
 	 */
-	ppid = spawn_data->sed_parent->p_pid;
-	if ((!spawn_data->sed_attrs
-	    || (spawn_data->sed_attrs->sa_flags
-	        & (POSIX_SPAWN_RETURNERROR|POSIX_SPAWN_SETPGROUP)) == 0)
+	struct posix_spawnattr *attrs = spawn_data->sed_attrs;
+	if ((!attrs || (attrs->sa_flags
+		& (POSIX_SPAWN_RETURNERROR|POSIX_SPAWN_SETPGROUP)) == 0)
 	    && rw_tryenter(&exec_lock, RW_READER)) {
 		parent_is_waiting = false;
 		mutex_enter(&spawn_data->sed_mtx_child);
@@ -2112,144 +2256,15 @@ spawn_return(void *arg)
 	rw_enter(&p->p_reflock, RW_WRITER);
 	have_reflock = true;
 
-	error = 0;
 	/* handle posix_spawn_file_actions */
-	if (spawn_data->sed_actions != NULL) {
-		for (i = 0; i < spawn_data->sed_actions->len; i++) {
-			fae = &spawn_data->sed_actions->fae[i];
-			switch (fae->fae_action) {
-			case FAE_OPEN:
-				if (fd_getfile(fae->fae_fildes) != NULL) {
-					error = fd_close(fae->fae_fildes);
-					if (error)
-						break;
-				}
-				error = fd_open(fae->fae_path, fae->fae_oflag,
-				    fae->fae_mode, &newfd);
-				if (error)
-					break;
-				if (newfd != fae->fae_fildes) {
-					error = dodup(l, newfd,
-					    fae->fae_fildes, 0, &retval);
-					if (fd_getfile(newfd) != NULL)
-						fd_close(newfd);
-				}
-				break;
-			case FAE_DUP2:
-				error = dodup(l, fae->fae_fildes,
-				    fae->fae_newfildes, 0, &retval);
-				break;
-			case FAE_CLOSE:
-				if (fd_getfile(fae->fae_fildes) == NULL) {
-					error = EBADF;
-					break;
-				}
-				error = fd_close(fae->fae_fildes);
-				break;
-			}
-			if (error)
-				goto report_error;
-		}
-	}
+	error = handle_posix_spawn_file_actions(spawn_data->sed_actions);
+	if (error)
+		goto report_error;
 
 	/* handle posix_spawnattr */
-	if (spawn_data->sed_attrs != NULL) {
-		struct sigaction sigact;
-		memset(&sigact, 0, sizeof(sigact));
-		sigact._sa_u._sa_handler = SIG_DFL;
-		sigact.sa_flags = 0;
-
-		/* 
-		 * set state to SSTOP so that this proc can be found by pid.
-		 * see proc_enterprp, do_sched_setparam below
-		 */
-		mutex_enter(proc_lock);
-		/*
-		 * p_stat should be SACTIVE, so we need to adjust the
-		 * parent's p_nstopchild here.  For safety, just make
-		 * we're on the good side of SDEAD before we adjust.
-		 */
-		ostat = p->p_stat;
-		KASSERT(ostat < SSTOP);
-		p->p_stat = SSTOP;
-		p->p_waited = 0;
-		p->p_pptr->p_nstopchild++;
-		mutex_exit(proc_lock);
-
-		/* Set process group */
-		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETPGROUP) {
-			pid_t mypid = p->p_pid,
-			     pgrp = spawn_data->sed_attrs->sa_pgroup;
-
-			if (pgrp == 0)
-				pgrp = mypid;
-
-			error = proc_enterpgrp(spawn_data->sed_parent,
-			    mypid, pgrp, false);
-			if (error)
-				goto report_error_stopped;
-		}
-
-		/* Set scheduler policy */
-		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETSCHEDULER)
-			error = do_sched_setparam(p->p_pid, 0,
-			    spawn_data->sed_attrs->sa_schedpolicy,
-			    &spawn_data->sed_attrs->sa_schedparam);
-		else if (spawn_data->sed_attrs->sa_flags
-		    & POSIX_SPAWN_SETSCHEDPARAM) {
-			error = do_sched_setparam(ppid, 0,
-			    SCHED_NONE, &spawn_data->sed_attrs->sa_schedparam);
-		}
-		if (error)
-			goto report_error_stopped;
-
-		/* Reset user ID's */
-		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_RESETIDS) {
-			error = do_setresuid(l, -1,
-			     kauth_cred_getgid(l->l_cred), -1,
-			     ID_E_EQ_R | ID_E_EQ_S);
-			if (error)
-				goto report_error_stopped;
-			error = do_setresuid(l, -1,
-			    kauth_cred_getuid(l->l_cred), -1,
-			    ID_E_EQ_R | ID_E_EQ_S);
-			if (error)
-				goto report_error_stopped;
-		}
-
-		/* Set signal masks/defaults */
-		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETSIGMASK) {
-			mutex_enter(p->p_lock);
-			error = sigprocmask1(l, SIG_SETMASK,
-			    &spawn_data->sed_attrs->sa_sigmask, NULL);
-			mutex_exit(p->p_lock);
-			if (error)
-				goto report_error_stopped;
-		}
-
-		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETSIGDEF) {
-			/*
-			 * The following sigaction call is using a sigaction
-			 * version 0 trampoline which is in the compatibility
-			 * code only. This is not a problem because for SIG_DFL
-			 * and SIG_IGN, the trampolines are now ignored. If they
-			 * were not, this would be a problem because we are
-			 * holding the exec_lock, and the compat code needs
-			 * to do the same in order to replace the trampoline
-			 * code of the process.
-			 */
-			for (i = 1; i <= NSIG; i++) {
-				if (sigismember(
-				    &spawn_data->sed_attrs->sa_sigdefault, i))
-					sigaction1(l, i, &sigact, NULL, NULL,
-					    0);
-			}
-		}
-		mutex_enter(proc_lock);
-		p->p_stat = ostat;
-		p->p_pptr->p_nstopchild--;
-		mutex_exit(proc_lock);
-	}
+	error = handle_posix_spawn_attrs(attrs, spawn_data->sed_parent);
+	if (error)
+		goto report_error;
 
 	/* now do the real exec */
 	error = execve_runproc(l, &spawn_data->sed_exec, parent_is_waiting,
@@ -2269,30 +2284,15 @@ spawn_return(void *arg)
 	/* release our refcount on the data */
 	spawn_exec_data_release(spawn_data);
 
-	if (p->p_slflag & PSL_TRACED) {
-		/* Paranoid check */
-		mutex_enter(proc_lock);
-		if (!(p->p_slflag & PSL_TRACED)) {
-			mutex_exit(proc_lock);
-			goto cpu_return;
-		}
+	if (p->p_slflag & PSL_TRACED)
+		eventswitchchild(p, TRAP_CHLD, PTRACE_POSIX_SPAWN);
 
-		mutex_enter(p->p_lock);
-		eventswitch(TRAP_CHLD, PTRACE_POSIX_SPAWN, p->p_opptr->p_pid);
-	}
-
- cpu_return:
 	/* and finally: leave to userland for the first time */
 	cpu_spawn_return(l);
 
 	/* NOTREACHED */
 	return;
 
- report_error_stopped:
-	mutex_enter(proc_lock);
-	p->p_stat = ostat;
-	p->p_pptr->p_nstopchild--;
-	mutex_exit(proc_lock);
  report_error:
 	if (have_reflock) {
 		/*
