@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.31 2019/09/30 16:58:06 bouyer Exp $	*/
+/*	$NetBSD: fil.c,v 1.32 2020/04/05 02:50:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -141,7 +141,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.31 2019/09/30 16:58:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.32 2020/04/05 02:50:27 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -1696,7 +1696,7 @@ ipf_pr_ipv4hdr(fr_info_t *fin)
 	fi->fi_p = p;
 	fin->fin_crc = p;
 	fi->fi_tos = ip->ip_tos;
-	fin->fin_id = ip->ip_id;
+	fin->fin_id = ntohs(ip->ip_id);
 	off = ntohs(ip->ip_off);
 
 	/* Get both TTL and protocol */
