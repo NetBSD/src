@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprestore.h,v 1.18 2016/01/22 23:11:50 dholland Exp $	*/
+/*	$NetBSD: dumprestore.h,v 1.19 2020/04/05 15:25:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,7 +68,7 @@
 #endif
 #define CHECKSUM	(int)84446
 
-union u_spcl {
+extern union u_spcl {
 	char dummy[TP_BSIZE];
 	struct	s_spcl {
 		int32_t	c_type;		    /* record type (see below) */
