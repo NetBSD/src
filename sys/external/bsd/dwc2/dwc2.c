@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.72 2020/02/21 12:41:29 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.73 2020/04/05 20:59:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.72 2020/02/21 12:41:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.73 2020/04/05 20:59:38 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -405,7 +405,7 @@ dwc2_open(struct usbd_pipe *pipe)
 	case UE_CONTROL:
 		pipe->up_methods = &dwc2_device_ctrl_methods;
 		err = usb_allocmem(&sc->sc_bus, sizeof(usb_device_request_t),
-		    0, &dpipe->req_dma);
+		    0, USBMALLOC_COHERENT, &dpipe->req_dma);
 		if (err)
 			return err;
 		break;
