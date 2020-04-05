@@ -1,4 +1,4 @@
-/* $NetBSD: granttables.h,v 1.10 2019/02/02 12:32:55 cherry Exp $ */
+/* $NetBSD: granttables.h,v 1.11 2020/04/05 17:48:30 jdolecek Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -45,12 +45,6 @@ int xengnt_grant_access(domid_t, paddr_t, int, grant_ref_t *);
  * not referenced any more.
  */
 void xengnt_revoke_access(grant_ref_t);
-
-/* allow a page transfer from a remote domain */
-int xengnt_grant_transfer(domid_t, grant_ref_t *);
-
-/* end transfer, return the new page address or 0 */
-paddr_t xengnt_revoke_transfer(grant_ref_t);
 
 /*
  * Query grant status (i.e. if remote has a valid mapping to this grant).
