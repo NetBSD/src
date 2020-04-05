@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.304 2020/04/04 22:08:33 mlelstv Exp $
+# $NetBSD: mi,v 1.305 2020/04/05 01:21:43 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -780,6 +780,7 @@
 ./usr/libdata/debug/usr/bin/skey.debug		comp-util-debug		skey,debug
 ./usr/libdata/debug/usr/bin/skeyinfo.debug	comp-util-debug		skey,debug
 ./usr/libdata/debug/usr/bin/skeyinit.debug	comp-util-debug		skey,debug
+./usr/libdata/debug/usr/bin/smbutil.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/sockstat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/soelim.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/sort.debug		comp-util-debug		debug
