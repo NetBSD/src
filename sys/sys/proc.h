@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.360 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.361 2020/04/05 20:53:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -252,7 +252,7 @@ struct proc {
 	int		p_exitsig;	/* l: signal to send to parent on exit */
 	int		p_flag;		/* p: PK_* flags */
 	int		p_sflag;	/* p: PS_* flags */
-	int		p_slflag;	/* s, l: PSL_* flags */
+	int		p_slflag;	/* p, l: PSL_* flags */
 	int		p_lflag;	/* l: PL_* flags */
 	int		p_stflag;	/* t: PST_* flags */
 	char		p_stat;		/* p: S* process status. */
