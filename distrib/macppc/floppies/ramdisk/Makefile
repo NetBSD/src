@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2019/12/29 18:26:17 christos Exp $
+#	$NetBSD: Makefile,v 1.52 2020/04/05 14:36:43 sevan Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -37,6 +37,7 @@ HACKSRC=	${DISTRIBDIR}/utils/libhack
 ${CRUNCHBIN}:	libhack.o
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.dhcpcd"
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .include "${DISTRIBDIR}/common/Makefile.image"
 
