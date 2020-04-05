@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2668 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2669 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -163,7 +163,9 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	acpi(4): Updated ACPICA to 20200326. [christos 20200328]
 	ioctlprint(1): Add ioctl descriptive printer. [kamil 20200402]
 	dhcpcd(8): Import version 9.0.0 [roy 20200402]
+	binutils: Updated to FSF binutils 2.34. [christos 20200404]
 	mount_smbfs(8): Removed from the tree [jdolecek 20200404]
 	nsmb(4): Removed from the tree [jdolecek 20200404]
 	xen: remove legacy rx-flip support from xennet(4) and xvif(4)
 		[jdolecek 20200405]
+	OpenSSL: Imported 1.1.1f. [christos 20200405]
