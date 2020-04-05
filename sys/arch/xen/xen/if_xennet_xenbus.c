@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.97 2020/03/27 18:37:30 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.98 2020/04/05 14:20:18 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.97 2020/03/27 18:37:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.98 2020/04/05 14:20:18 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1340,7 +1340,7 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 void
 xennet_watchdog(struct ifnet *ifp)
 {
-	aprint_verbose_ifnet(ifp, "xennet_watchdog\n");
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_watchdog\n", ifp->if_xname));
 }
 
 int
