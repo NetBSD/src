@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.219 2020/03/01 21:37:26 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.220 2020/04/05 20:53:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.219 2020/03/01 21:37:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.220 2020/04/05 20:53:17 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -631,14 +631,8 @@ child_return(void *arg)
 	struct proc *p = l->l_proc;
 
 	if ((p->p_slflag & PSL_TRACED) != 0) {
-		/* Paranoid check */
-		mutex_enter(proc_lock);
-		if ((p->p_slflag & PSL_TRACED) != 0) {
-			mutex_enter(p->p_lock);
-			eventswitch(TRAP_CHLD, ISSET(p->p_lflag, PL_PPWAIT) ?
-			    PTRACE_VFORK : PTRACE_FORK, p->p_opptr->p_pid);
-		} else
-			mutex_exit(proc_lock);
+		eventswitchchild(p, TRAP_CHLD, 
+		    ISSET(p->p_lflag, PL_PPWAIT) ? PTRACE_VFORK : PTRACE_FORK);
 	}
 
 	md_child_return(l);
