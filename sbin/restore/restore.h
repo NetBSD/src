@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.h,v 1.21 2019/12/27 07:41:23 msaitoh Exp $	*/
+/*	$NetBSD: restore.h,v 1.22 2020/04/05 15:25:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -120,7 +120,7 @@ struct entry {
 /*
  * The entry describes the next file available on the tape
  */
-struct context {
+extern struct context {
 	short	action;		/* action being taken on this file */
 	mode_t	mode;		/* mode of file */
 	ino_t	ino;		/* inumber of file */
