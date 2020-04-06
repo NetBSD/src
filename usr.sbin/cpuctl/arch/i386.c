@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.109 2020/04/06 09:46:21 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.110 2020/04/06 09:48:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.109 2020/04/06 09:46:21 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.110 2020/04/06 09:48:44 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2286,10 +2286,11 @@ identifycpu(int fd, const char *cpuname)
 		    cpuname, descs[0]);
 	}
 
-	if (cpu_vendor == CPUVENDOR_AMD) {
+	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
 		if (ci->ci_cpuid_extlevel >= 0x80000007)
 			powernow_probe(ci);
 
+	if (cpu_vendor == CPUVENDOR_AMD) {
 		if (ci->ci_cpuid_extlevel >= 0x80000008) {
 			x86_cpuid(0x80000008, descs);
 			print_bits(cpuname, "AMD Extended features",
@@ -2566,8 +2567,7 @@ powernow_probe(struct cpu_info *ci)
 	x86_cpuid(0x80000007, regs);
 
 	snprintb(buf, sizeof(buf), CPUID_APM_FLAGS, regs[3]);
-	aprint_normal_dev(ci->ci_dev, "AMD Power Management features: %s\n",
-	    buf);
+	aprint_normal_dev(ci->ci_dev, "Power Management features: %s\n", buf);
 }
 
 bool
