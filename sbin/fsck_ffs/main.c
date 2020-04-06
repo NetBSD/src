@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.87 2020/04/05 15:25:40 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.88 2020/04/06 06:41:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.87 2020/04/05 15:25:40 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.88 2020/04/06 06:41:34 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,9 @@ int	fsreadfd;
 int	fswritefd;
 int	rerun;
 char	resolved;
+#ifndef NO_FFS_EI
 int	endian;
+#endif
 int	doswap;
 int	needswap;
 int	do_blkswap;
