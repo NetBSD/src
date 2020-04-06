@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.103 2020/04/06 10:44:44 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.104 2020/04/06 15:30:52 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.103 2020/04/06 10:44:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.104 2020/04/06 15:30:52 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -127,7 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.103 2020/04/06 10:44:44 jdole
 #include "locators.h"
 
 #undef XENNET_DEBUG_DUMP
-#define XENNET_DEBUG
+#undef XENNET_DEBUG
 
 #ifdef XENNET_DEBUG
 #define XEDB_FOLLOW     0x01
