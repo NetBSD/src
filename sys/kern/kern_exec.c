@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.494 2020/04/05 20:53:17 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.495 2020/04/06 08:20:05 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.494 2020/04/05 20:53:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.495 2020/04/06 08:20:05 kamil Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2660,6 +2660,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	if ((p1->p_slflag & (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) ==
 	    (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) {
 		proc_changeparent(p2, p1->p_pptr);
+		p2->p_oppid = p1->p_pid;
 	}
 
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
