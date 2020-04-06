@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.361 2020/04/05 20:53:46 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.362 2020/04/06 08:20:05 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -311,6 +311,7 @@ struct proc {
 	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 	pid_t		p_ppid;		/* :: cached parent pid */
+	pid_t		p_oppid;	/* :: cached original parent pid */
 	char		*p_path;	/* :: full pathname of executable */
 
 /*
