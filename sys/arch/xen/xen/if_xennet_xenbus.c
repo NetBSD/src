@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.105 2020/04/06 16:43:34 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.106 2020/04/06 18:23:21 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.105 2020/04/06 16:43:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.106 2020/04/06 18:23:21 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -194,8 +194,8 @@ struct xennet_xenbus_softc {
 	grant_ref_t sc_tx_ring_gntref;
 	grant_ref_t sc_rx_ring_gntref;
 
-	kmutex_t sc_tx_lock; /* protects free TX list, TX ring, and ifp */
-	kmutex_t sc_rx_lock; /* protects free RX list, RX ring, and rxreql */
+	kmutex_t sc_tx_lock; /* protects free TX list, TX ring */
+	kmutex_t sc_rx_lock; /* protects free RX list, RX ring, rxreql */
 	struct xennet_txreq sc_txreqs[NET_TX_RING_SIZE];
 	struct xennet_rxreq sc_rxreqs[NET_RX_RING_SIZE];
 	SLIST_HEAD(,xennet_txreq) sc_txreq_head; /* list of free TX requests */
@@ -234,7 +234,6 @@ static int  xennet_init(struct ifnet *);
 static void xennet_stop(struct ifnet *, int);
 static void xennet_start(struct ifnet *);
 static int  xennet_ioctl(struct ifnet *, u_long, void *);
-static void xennet_watchdog(struct ifnet *);
 
 static bool xennet_xenbus_suspend(device_t dev, const pmf_qual_t *);
 static bool xennet_xenbus_resume (device_t dev, const pmf_qual_t *);
@@ -363,11 +362,10 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_start = xennet_start;
 	ifp->if_ioctl = xennet_ioctl;
-	ifp->if_watchdog = xennet_watchdog;
 	ifp->if_init = xennet_init;
 	ifp->if_stop = xennet_stop;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_timer = 0;
+	ifp->if_extflags = IFEF_MPSAFE;
 	ifp->if_snd.ifq_maxlen = uimax(ifqmaxlen, NET_TX_RING_SIZE * 2);
 	ifp->if_capabilities =
 		IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_IPv4_Tx
@@ -535,8 +533,8 @@ xennet_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 		goto abort_resume;
 	aprint_verbose_dev(dev, "using event channel %d\n",
 	    sc->sc_evtchn);
-	sc->sc_ih = xen_intr_establish_xname(-1, &xen_pic, sc->sc_evtchn, IST_LEVEL,
-	    IPL_NET, &xennet_handler, sc, false, device_xname(dev));
+	sc->sc_ih = xen_intr_establish_xname(-1, &xen_pic, sc->sc_evtchn,
+	    IST_LEVEL, IPL_NET, &xennet_handler, sc, true, device_xname(dev));
 	KASSERT(sc->sc_ih != NULL);
 	return true;
 
@@ -849,7 +847,6 @@ again:
 	/* set new event and check for race with rsp_cons update */
 	sc->sc_tx_ring.sring->rsp_event =
 	    resp_prod + ((sc->sc_tx_ring.sring->req_prod - resp_prod) >> 1) + 1;
-	ifp->if_timer = 0;
 	xen_wmb();
 	if (resp_prod != sc->sc_tx_ring.sring->rsp_prod)
 		goto again;
@@ -906,18 +903,6 @@ again:
 #ifdef XENNET_DEBUG_DUMP
 		xennet_hex_dump(pktp, rx->status, "r", rx->id);
 #endif
-		if ((ifp->if_flags & IFF_PROMISC) == 0) {
-			struct ether_header *eh = pktp;
-			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
-			    ETHER_ADDR_LEN) != 0) {
-				DPRINTFN(XEDB_EVENT,
-				    ("xennet_handler bad dest\n"));
-				/* packet not for us */
-				xennet_rx_free_req(sc, req);
-				continue;
-			}
-		}
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (__predict_false(m == NULL)) {
 			printf("%s: rx no mbuf\n", ifp->if_xname);
@@ -984,7 +969,7 @@ void
 xennet_start(struct ifnet *ifp)
 {
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
-	struct mbuf *m, *new_m;
+	struct mbuf *m;
 	netif_tx_request_t *txreq;
 	RING_IDX req_prod;
 	paddr_t pa;
@@ -993,11 +978,6 @@ xennet_start(struct ifnet *ifp)
 	int do_notify = 0;
 
 	mutex_enter(&sc->sc_tx_lock);
-
-	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		mutex_exit(&sc->sc_tx_lock);
-		return;
-	}
 
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx_ring.req_prod_pvt);
 
@@ -1011,7 +991,7 @@ xennet_start(struct ifnet *ifp)
 		if (__predict_false(req == NULL)) {
 			break;
 		}
-		IFQ_POLL(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
@@ -1043,11 +1023,13 @@ xennet_start(struct ifnet *ifp)
 
 		if (m->m_pkthdr.len != m->m_len ||
 		    (pa ^ (pa + m->m_pkthdr.len - 1)) & PTE_4KFRAME) {
+			struct mbuf *new_m;
 
 			MGETHDR(new_m, M_DONTWAIT, MT_DATA);
 			if (__predict_false(new_m == NULL)) {
 				printf("%s: cannot allocate new mbuf\n",
 				       device_xname(sc->sc_dev));
+				m_freem(m);
 				break;
 			}
 			if (m->m_pkthdr.len > MHLEN) {
@@ -1057,12 +1039,14 @@ xennet_start(struct ifnet *ifp)
 					DPRINTF(("%s: no mbuf cluster\n",
 					    device_xname(sc->sc_dev)));
 					m_freem(new_m);
+					m_freem(m);
 					break;
 				}
 			}
 
 			m_copydata(m, 0, m->m_pkthdr.len, mtod(new_m, void *));
 			new_m->m_len = new_m->m_pkthdr.len = m->m_pkthdr.len;
+			m_freem(m);
 
 			if ((new_m->m_flags & M_EXT) != 0) {
 				pa = new_m->m_ext.ext_paddr;
@@ -1074,27 +1058,17 @@ xennet_start(struct ifnet *ifp)
 				KASSERT(new_m->m_data == M_BUFADDR(new_m));
 				pa += M_BUFOFFSET(new_m);
 			}
-			if (__predict_false(xengnt_grant_access(
-			    sc->sc_xbusd->xbusd_otherend_id,
-			    xpmap_ptom_masked(pa),
-			    GNTMAP_readonly, &req->txreq_gntref) != 0)) {
-				m_freem(new_m);
-				break;
-			}
-			/* we will be able to send new_m */
-			IFQ_DEQUEUE(&ifp->if_snd, m);
-			m_freem(m);
 			m = new_m;
-		} else {
-			if (__predict_false(xengnt_grant_access(
-			    sc->sc_xbusd->xbusd_otherend_id,
-			    xpmap_ptom_masked(pa),
-			    GNTMAP_readonly, &req->txreq_gntref) != 0)) {
-				break;
-			}
-			/* we will be able to send m */
-			IFQ_DEQUEUE(&ifp->if_snd, m);
 		}
+
+		if (__predict_false(xengnt_grant_access(
+		    sc->sc_xbusd->xbusd_otherend_id,
+		    xpmap_ptom_masked(pa),
+		    GNTMAP_readonly, &req->txreq_gntref) != 0)) {
+			m_freem(m);
+			break;
+		}
+
 		MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 
 		KASSERT(((pa ^ (pa + m->m_pkthdr.len -  1)) & PTE_4KFRAME) == 0);
@@ -1131,10 +1105,8 @@ xennet_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 
-	if (do_notify) {
+	if (do_notify)
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
-		ifp->if_timer = 5;
-	}
 
 	mutex_exit(&sc->sc_tx_lock);
 
@@ -1148,16 +1120,15 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifdef XENNET_DEBUG
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
 #endif
-	int s, error = 0;
+	int error = 0;
 
-	s = splnet();
+	KASSERT(IFNET_LOCKED(ifp));
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl()\n",
 	    device_xname(sc->sc_dev)));
 	error = ether_ioctl(ifp, cmd, data);
 	if (error == ENETRESET)
 		error = 0;
-	splx(s);
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() returning %d\n",
 	    device_xname(sc->sc_dev), error));
@@ -1165,21 +1136,16 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return error;
 }
 
-void
-xennet_watchdog(struct ifnet *ifp)
-{
-	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_watchdog\n", ifp->if_xname));
-}
-
 int
 xennet_init(struct ifnet *ifp)
 {
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
 
+	KASSERT(IFNET_LOCKED(ifp));
+
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_init()\n",
 	    device_xname(sc->sc_dev)));
 
-	mutex_enter(&sc->sc_tx_lock);
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		mutex_enter(&sc->sc_rx_lock);
 		sc->sc_rx_ring.sring->rsp_event =
@@ -1189,8 +1155,7 @@ xennet_init(struct ifnet *ifp)
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
 	}
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_timer = 0;
-	mutex_exit(&sc->sc_tx_lock);
+
 	return 0;
 }
 
@@ -1199,9 +1164,9 @@ xennet_stop(struct ifnet *ifp, int disable)
 {
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
 
-	mutex_enter(&sc->sc_tx_lock);
+	IFNET_LOCK(ifp);
 	ifp->if_flags &= ~IFF_RUNNING;
-	mutex_exit(&sc->sc_tx_lock);
+	IFNET_UNLOCK(ifp);
 	hypervisor_mask_event(sc->sc_evtchn);
 }
 
