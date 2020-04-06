@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.67 2018/06/15 20:16:35 mrg Exp $	*/
+/*	$NetBSD: man.c,v 1.68 2020/04/06 19:53:22 maya Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.67 2018/06/15 20:16:35 mrg Exp $");
+__RCSID("$NetBSD: man.c,v 1.68 2020/04/06 19:53:22 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -363,8 +363,10 @@ main(int argc, char **argv)
 
 	}
 
-	if (m.getpath) 
+	if (m.getpath) {
 		printmanpath(&m);
+		exit(cleanup());
+	}
 		
 	/*
 	 * now m.mymanpath is complete!
