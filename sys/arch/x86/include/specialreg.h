@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.159 2020/04/01 08:21:38 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.160 2020/04/06 02:36:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -708,7 +708,7 @@
 #define CPUID_APM_STC	0x00000020	/* Software thermal control (STC) */
 #define CPUID_APM_100	0x00000040	/* 100MHz multiplier control */
 #define CPUID_APM_HWP	0x00000080	/* HW P-State control */
-#define CPUID_APM_TSC	0x00000100	/* TSC invariant */
+#define CPUID_APM_TSC	0x00000100	/* TSC invariant (Intel, too) */
 #define CPUID_APM_CPB	0x00000200	/* Core performance boost */
 #define CPUID_APM_EFF	0x00000400	/* Effective Frequency (read-only) */
 #define CPUID_APM_PROCFI 0x00000800	/* Proc Feedback Interface */
@@ -719,7 +719,7 @@
 #define CPUID_APM_FLAGS		"\20"					      \
 	"\1" "TS"	"\2" "FID"	"\3" "VID"	"\4" "TTP"	      \
 	"\5" "HTC"	"\6" "STC"	"\7" "100"	"\10" "HWP"	      \
-	"\11" "TSC"	"\12" "CPB"	"\13" "EffFreq"	"\14" "PROCFI"	      \
+	"\11" "ITSC"	"\12" "CPB"	"\13" "EffFreq"	"\14" "PROCFI"	      \
 	"\15" "PROCPR"	"\16" "CONNSTBY" "\17" "RAPL"
 
 /*
