@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.101 2020/04/06 10:05:38 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.102 2020/04/06 10:33:10 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.101 2020/04/06 10:05:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.102 2020/04/06 10:33:10 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -269,7 +269,6 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	netif_rx_sring_t *rx_ring;
 	RING_IDX i;
 	char *val, *e, *p;
-	int s;
 	extern int ifqmaxlen; /* XXX */
 #ifdef XENNET_DEBUG
 	char **dir;
@@ -320,9 +319,9 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, &sc->sc_txreqs[i],
 		    txreq_next);
 	}
+
 	mutex_init(&sc->sc_rx_lock, MUTEX_DEFAULT, IPL_NET);
 	SLIST_INIT(&sc->sc_rxreq_head);
-	s = splvm(); /* XXXSMP */
 	for (i = 0; i < NET_RX_RING_SIZE; i++) {
 		struct xennet_rxreq *rxreq = &sc->sc_rxreqs[i];
 		rxreq->rxreq_id = i;
@@ -333,7 +332,6 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 		rxreq->rxreq_gntref = GRANT_INVALID_REF;
 		SLIST_INSERT_HEAD(&sc->sc_rxreq_head, rxreq, rxreq_next);
 	}
-	splx(s);
 	sc->sc_free_rxreql = i;
 	if (sc->sc_free_rxreql == 0) {
 		aprint_error_dev(self, "failed to allocate rx memory\n");
@@ -422,7 +420,7 @@ xennet_xenbus_detach(device_t self, int flags)
 {
 	struct xennet_xenbus_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int s0, s1;
+	int s0;
 	RING_IDX i;
 
 	DPRINTF(("%s: xennet_xenbus_detach\n", device_xname(self)));
@@ -438,13 +436,14 @@ xennet_xenbus_detach(device_t self, int flags)
 	}
 	xennet_free_rx_buffer(sc);
 
-	s1 = splvm(); /* XXXSMP */
 	for (i = 0; i < NET_RX_RING_SIZE; i++) {
 		struct xennet_rxreq *rxreq = &sc->sc_rxreqs[i];
-		uvm_km_free(kernel_map, rxreq->rxreq_va, PAGE_SIZE,
-		    UVM_KMF_WIRED);
+		if (rxreq->rxreq_va != 0) {
+			pool_cache_put_paddr(if_xennetrxbuf_cache,
+			    (void *)rxreq->rxreq_va, rxreq->rxreq_pa);
+			rxreq->rxreq_va = 0;
+		}
 	}
-	splx(s1);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
