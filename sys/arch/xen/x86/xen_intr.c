@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.19 2020/04/03 22:20:36 ad Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.20 2020/04/06 18:02:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.19 2020/04/03 22:20:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.20 2020/04/06 18:02:33 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -166,17 +166,11 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	if (pic->pic_type == PIC_XEN) {
 		struct intrhand *rih;
 
-		/*
-		 * event_set_handler interprets `level != IPL_VM' to
-		 * mean MP-safe, so we require the caller to match that
-		 * for the moment.
-		 */
-		KASSERT(known_mpsafe == (level != IPL_VM));
-
 		intrstr = intr_create_intrid(legacy_irq, pic, pin, intrstr_buf,
 		    sizeof(intrstr_buf));
 
-		event_set_handler(pin, handler, arg, level, intrstr, xname);
+		event_set_handler(pin, handler, arg, level, intrstr, xname,
+		    known_mpsafe);
 
 		rih = kmem_zalloc(sizeof(*rih), cold ? KM_NOSLEEP : KM_SLEEP);
 		if (rih == NULL) {
