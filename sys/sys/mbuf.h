@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.226 2020/03/15 23:14:41 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.227 2020/04/06 09:32:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -218,6 +218,7 @@ struct pkthdr {
 #define M_CSUM_TSOv6		0x00000200	/* TCPv6 segmentation offload */
 
 /* Checksum-assist quirks: keep separate from jump-table bits. */
+#define M_CSUM_BLANK		0x40000000	/* csum is missing */
 #define M_CSUM_NO_PSEUDOHDR	0x80000000	/* Rx csum_data does not include
 						 * the UDP/TCP pseudo-hdr, and
 						 * is not yet 1s-complemented.
@@ -225,7 +226,7 @@ struct pkthdr {
 
 #define M_CSUM_BITS \
     "\20\1TCPv4\2UDPv4\3TCP_UDP_BAD\4DATA\5TCPv6\6UDPv6\7IPv4\10IPv4_BAD" \
-    "\11TSOv4\12TSOv6\40NO_PSEUDOHDR"
+    "\11TSOv4\12TSOv6\39BLANK\40NO_PSEUDOHDR"
 
 /*
  * Macros for manipulating csum_data on outgoing packets. These are
