@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.30 2020/04/03 12:28:24 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.31 2020/04/06 14:59:48 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -793,4 +793,22 @@ sys/dev/usb/usbdi.c				1.199
 
 	Avoid crashes if we fail to allocate a transfer buffer.
 	[skrll, ticket #819]
+
+sys/dev/wscons/wsevent.c			1.43,1.44
+
+	PR 55103: make default protocol version used by wscons selectable
+	and default to the current version.
+	[pgoyette, ticket #820]
+
+sys/dev/dkwedge/dk.c				1.99
+
+	Allow dumping to cgd(4) on a dk(4).
+	[riastradh, ticket #822]
+
+sys/dev/cgd.c					1.122-1.124
+sys/dev/cgdvar.h				1.19
+
+	Defer crypto operations to a workqueue and make it utilize all CPUs.
+	Make device mpsafe.
+	[riastradh, ticket #823]
 
