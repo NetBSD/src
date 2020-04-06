@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.100 2020/04/06 08:26:32 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.101 2020/04/06 10:05:38 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.100 2020/04/06 08:26:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.101 2020/04/06 10:05:38 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -177,7 +177,6 @@ struct xennet_rxreq {
 /* va/pa for this receive buf. ma will be provided by backend */
 	paddr_t rxreq_pa;
 	vaddr_t rxreq_va;
-	struct xennet_xenbus_softc *rxreq_sc; /* pointer to our interface */
 };
 
 struct xennet_xenbus_softc {
@@ -225,7 +224,6 @@ static void xennet_alloc_rx_buffer(struct xennet_xenbus_softc *);
 static void xennet_free_rx_buffer(struct xennet_xenbus_softc *);
 static void xennet_tx_complete(struct xennet_xenbus_softc *);
 static void xennet_rx_mbuf_free(struct mbuf *, void *, size_t, void *);
-static void xennet_rx_free_req(struct xennet_rxreq *);
 static int  xennet_handler(void *);
 static bool xennet_talk_to_backend(struct xennet_xenbus_softc *);
 #ifdef XENNET_DEBUG_DUMP
@@ -328,7 +326,6 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < NET_RX_RING_SIZE; i++) {
 		struct xennet_rxreq *rxreq = &sc->sc_rxreqs[i];
 		rxreq->rxreq_id = i;
-		rxreq->rxreq_sc = sc;
 		rxreq->rxreq_va = (vaddr_t)pool_cache_get_paddr(
 		    if_xennetrxbuf_cache, PR_WAITOK, &rxreq->rxreq_pa);
 		if (rxreq->rxreq_va == 0)
@@ -782,10 +779,8 @@ xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 };
 
 static void
-xennet_rx_free_req(struct xennet_rxreq *req)
+xennet_rx_free_req(struct xennet_xenbus_softc *sc, struct xennet_rxreq *req)
 {
-	struct xennet_xenbus_softc *sc = req->rxreq_sc;
-
 	KASSERT(mutex_owned(&sc->sc_rx_lock));
 
 	/* puts back the RX request in the list of free RX requests */
@@ -907,7 +902,7 @@ again:
 				DPRINTFN(XEDB_EVENT,
 				    ("xennet_handler bad dest\n"));
 				/* packet not for us */
-				xennet_rx_free_req(req);
+				xennet_rx_free_req(sc, req);
 				continue;
 			}
 		}
@@ -915,7 +910,7 @@ again:
 		if (__predict_false(m == NULL)) {
 			printf("%s: rx no mbuf\n", ifp->if_xname);
 			if_statinc(ifp, if_ierrors);
-			xennet_rx_free_req(req);
+			xennet_rx_free_req(sc, req);
 			continue;
 		}
 		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
@@ -935,7 +930,7 @@ again:
 				if_statinc(ifp, if_ierrors);
 				req->rxreq_va = va;
 				req->rxreq_pa = pa;
-				xennet_rx_free_req(req);
+				xennet_rx_free_req(sc, req);
 				m_freem(m);
 				continue;
 			}
@@ -950,7 +945,7 @@ again:
 		else if (rx->flags & NETRXF_data_validated)
 			m->m_pkthdr.csum_flags = XN_M_CSUM_SUPPORTED;
 		/* free req may overwrite *rx, better doing it late */
-		xennet_rx_free_req(req);
+		xennet_rx_free_req(sc, req);
 
 		/* Pass the packet up. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
