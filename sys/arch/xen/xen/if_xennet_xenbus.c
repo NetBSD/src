@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.107 2020/04/06 19:52:38 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.108 2020/04/06 19:58:09 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.107 2020/04/06 19:52:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.108 2020/04/06 19:58:09 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -379,20 +379,20 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 		IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_IPv4_Tx
 		| IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx
 		| IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx
-		| IFCAP_CSUM_UDPv6_Rx | IFCAP_CSUM_UDPv6_Tx
-		| IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_TCPv6_Tx;
+		| IFCAP_CSUM_UDPv6_Rx
+		| IFCAP_CSUM_TCPv6_Rx;
 #define XN_M_CSUM_SUPPORTED (					\
 		M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_IPv4	\
 		| M_CSUM_TCPv6 | M_CSUM_UDPv6			\
 	)
-	if (!sc->sc_ipv6_csum) {
+	if (sc->sc_ipv6_csum) {
 		/*
-		 * If backend doesn't support IPv6 csum offloading, we must
-		 * provide valid IPv6 csum for Tx packets, but can still
-		 * skip validation for Rx packets.
+		 * If backend supports IPv6 csum offloading, we can skip
+		 * IPv6 csum for Tx packets. Rx packet validation can
+		 * be skipped regardless.
 		 */
-		ifp->if_capabilities &=
-		    ~(IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_TCPv6_Tx);
+		ifp->if_capabilities |=
+		    IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_TCPv6_Tx;
 	}
 
 	IFQ_SET_READY(&ifp->if_snd);
