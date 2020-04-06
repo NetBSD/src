@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.97.8.1 2020/03/21 15:18:57 martin Exp $	*/
+/*	$NetBSD: dk.c,v 1.97.8.2 2020/04/06 14:53:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.97.8.1 2020/03/21 15:18:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.97.8.2 2020/04/06 14:53:33 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1622,7 +1622,8 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	/* Our content type is static, no need to open the device. */
 
 	if (strcmp(sc->sc_ptype, DKW_PTYPE_SWAP) != 0 &&
-	    strcmp(sc->sc_ptype, DKW_PTYPE_RAID) != 0) {
+	    strcmp(sc->sc_ptype, DKW_PTYPE_RAID) != 0 &&
+	    strcmp(sc->sc_ptype, DKW_PTYPE_CGD) != 0) {
 		rv = ENXIO;
 		goto out;
 	}
