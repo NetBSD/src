@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.20 2020/04/06 18:02:33 jdolecek Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.21 2020/04/06 19:26:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.20 2020/04/06 18:02:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21 2020/04/06 19:26:00 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -231,7 +231,7 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	}
 
 	pih = pirq_establish(gsi, evtchn, handler, arg, level,
-			     intrstr, xname);
+			     intrstr, xname, known_mpsafe);
 	pih->pic_type = pic->pic_type;
 	return pih;
 #endif /* NPCI > 0 || NISA > 0 */

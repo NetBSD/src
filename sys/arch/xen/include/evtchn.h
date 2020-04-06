@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.27 2020/04/06 18:02:33 jdolecek Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.28 2020/04/06 19:26:00 jdolecek Exp $	*/
 
 /*
  *
@@ -70,7 +70,7 @@ struct pintrhand {
 };
 
 struct pintrhand *pirq_establish(int, int, int (*)(void *), void *, int,
-     const char *, const char *);
+     const char *, const char *, bool);
 void pirq_disestablish(struct pintrhand *);
 
 #endif /*  _XEN_EVENTS_H_ */
