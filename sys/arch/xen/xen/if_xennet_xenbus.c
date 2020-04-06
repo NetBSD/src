@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.106 2020/04/06 18:23:21 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.107 2020/04/06 19:52:38 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.106 2020/04/06 18:23:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.107 2020/04/06 19:52:38 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -207,6 +207,7 @@ struct xennet_xenbus_softc {
 #define BEST_DISCONNECTED	1
 #define BEST_CONNECTED		2
 #define BEST_SUSPENDED		3
+	bool sc_ipv6_csum;	/* whether backend support IPv6 csum offload */
 	krndsource_t sc_rnd_source;
 };
 #define SC_NLIVEREQ(sc) ((sc)->sc_rx_ring.req_prod_pvt - \
@@ -268,6 +269,7 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	netif_rx_sring_t *rx_ring;
 	RING_IDX i;
 	char *val, *e, *p;
+	unsigned long uval;
 	extern int ifqmaxlen; /* XXX */
 #ifdef XENNET_DEBUG
 	char **dir;
@@ -338,7 +340,7 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* read mac address */
-	err = xenbus_read(NULL, xa->xa_xbusd->xbusd_path, "mac", NULL, &val);
+	err = xenbus_read(NULL, sc->sc_xbusd->xbusd_path, "mac", NULL, &val);
 	if (err) {
 		aprint_error_dev(self, "can't read mac address, err %d\n", err);
 		return;
@@ -356,6 +358,12 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	free(val, M_DEVBUF);
 	aprint_normal_dev(self, "MAC address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
+
+	/* read ipv6 csum support flag */
+	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
+	    "feature-ipv6-csum-offload", &uval, 10);
+	sc->sc_ipv6_csum = (!err && uval == 1);
+
 	/* Initialize ifnet structure and attach interface */
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
@@ -377,6 +385,15 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 		M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_IPv4	\
 		| M_CSUM_TCPv6 | M_CSUM_UDPv6			\
 	)
+	if (!sc->sc_ipv6_csum) {
+		/*
+		 * If backend doesn't support IPv6 csum offloading, we must
+		 * provide valid IPv6 csum for Tx packets, but can still
+		 * skip validation for Rx packets.
+		 */
+		ifp->if_capabilities &=
+		    ~(IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_TCPv6_Tx);
+	}
 
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
