@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.160 2020/04/06 02:36:49 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.161 2020/04/06 09:24:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -697,8 +697,10 @@
 	"\35" "L2IPERFC" "\36" "MWAITX"	"\37" "B30"	"\40" "B31"
 
 /*
- * AMD Advanced Power Management
+ * Advanced Power Management
  * CPUID Fn8000_0007 %edx
+ *
+ * Only ITSC is for both Intel and AMD. Others are only for AMD.
  */
 #define CPUID_APM_TS	0x00000001	/* Temperature Sensor */
 #define CPUID_APM_FID	0x00000002	/* Frequency ID control */
@@ -708,7 +710,7 @@
 #define CPUID_APM_STC	0x00000020	/* Software thermal control (STC) */
 #define CPUID_APM_100	0x00000040	/* 100MHz multiplier control */
 #define CPUID_APM_HWP	0x00000080	/* HW P-State control */
-#define CPUID_APM_TSC	0x00000100	/* TSC invariant (Intel, too) */
+#define CPUID_APM_ITSC	0x00000100	/* invariant TSC */
 #define CPUID_APM_CPB	0x00000200	/* Core performance boost */
 #define CPUID_APM_EFF	0x00000400	/* Effective Frequency (read-only) */
 #define CPUID_APM_PROCFI 0x00000800	/* Proc Feedback Interface */
