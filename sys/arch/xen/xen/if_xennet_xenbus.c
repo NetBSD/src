@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.102 2020/04/06 10:33:10 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.103 2020/04/06 10:44:44 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.102 2020/04/06 10:33:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.103 2020/04/06 10:44:44 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -127,7 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.102 2020/04/06 10:33:10 jdole
 #include "locators.h"
 
 #undef XENNET_DEBUG_DUMP
-#undef XENNET_DEBUG
+#define XENNET_DEBUG
 
 #ifdef XENNET_DEBUG
 #define XEDB_FOLLOW     0x01
@@ -240,8 +240,9 @@ static void xennet_watchdog(struct ifnet *);
 static bool xennet_xenbus_suspend(device_t dev, const pmf_qual_t *);
 static bool xennet_xenbus_resume (device_t dev, const pmf_qual_t *);
 
-CFATTACH_DECL_NEW(xennet, sizeof(struct xennet_xenbus_softc),
-   xennet_xenbus_match, xennet_xenbus_attach, xennet_xenbus_detach, NULL);
+CFATTACH_DECL3_NEW(xennet, sizeof(struct xennet_xenbus_softc),
+   xennet_xenbus_match, xennet_xenbus_attach, xennet_xenbus_detach, NULL,
+   NULL, NULL, /*DVF_DETACH_SHUTDOWN*/0);
 
 static int
 xennet_xenbus_match(device_t parent, cfdata_t match, void *aux)
@@ -1089,12 +1090,6 @@ xennet_start(struct ifnet *ifp)
 		    "mbuf %p, buf %p/%p/%p, size %d\n",
 		    req->txreq_id, m, mtod(m, void *), (void *)pa,
 		    (void *)xpmap_ptom_masked(pa), m->m_pkthdr.len));
-#ifdef XENNET_DEBUG
-		paddr_t pa2;
-		pmap_extract_ma(pmap_kernel(), mtod(m, vaddr_t), &pa2);
-		DPRINTFN(XEDB_MBUF, ("xennet_start pa %p ma %p/%p\n",
-		    (void *)pa, (void *)xpmap_ptom_masked(pa), (void *)pa2));
-#endif
 
 #ifdef XENNET_DEBUG_DUMP
 		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len, "s",
@@ -1113,18 +1108,6 @@ xennet_start(struct ifnet *ifp)
 		RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&sc->sc_tx_ring, notify);
 		if (notify)
 			do_notify = 1;
-
-#ifdef XENNET_DEBUG
-		DPRINTFN(XEDB_MEM, ("packet addr %p/%p, physical %p/%p, "
-		    "m_paddr %p, len %d/%d\n", M_BUFADDR(m), mtod(m, void *),
-		    (void *)*kvtopte(mtod(m, vaddr_t)),
-		    (void *)xpmap_mtop(*kvtopte(mtod(m, vaddr_t))),
-		    (void *)m->m_paddr, m->m_pkthdr.len, m->m_len));
-		DPRINTFN(XEDB_MEM, ("id %d gref %d offset %d size %d flags %d"
-		    " prod %d\n",
-		    txreq->id, txreq->gref, txreq->offset, txreq->size,
-		    txreq->flags, req_prod));
-#endif
 
 		/*
 		 * Pass packet to bpf if there is a listener.
