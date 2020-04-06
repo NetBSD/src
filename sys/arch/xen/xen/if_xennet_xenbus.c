@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.104 2020/04/06 15:30:52 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.105 2020/04/06 16:43:34 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.104 2020/04/06 15:30:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.105 2020/04/06 16:43:34 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -194,8 +194,8 @@ struct xennet_xenbus_softc {
 	grant_ref_t sc_tx_ring_gntref;
 	grant_ref_t sc_rx_ring_gntref;
 
-	kmutex_t sc_tx_lock; /* protects free TX list, below */
-	kmutex_t sc_rx_lock; /* protects free RX list, below */
+	kmutex_t sc_tx_lock; /* protects free TX list, TX ring, and ifp */
+	kmutex_t sc_rx_lock; /* protects free RX list, RX ring, and rxreql */
 	struct xennet_txreq sc_txreqs[NET_TX_RING_SIZE];
 	struct xennet_rxreq sc_rxreqs[NET_RX_RING_SIZE];
 	SLIST_HEAD(,xennet_txreq) sc_txreq_head; /* list of free TX requests */
@@ -232,7 +232,6 @@ static void xennet_hex_dump(const unsigned char *, size_t, const char *, int);
 
 static int  xennet_init(struct ifnet *);
 static void xennet_stop(struct ifnet *, int);
-static void xennet_reset(struct xennet_xenbus_softc *);
 static void xennet_start(struct ifnet *);
 static int  xennet_ioctl(struct ifnet *, u_long, void *);
 static void xennet_watchdog(struct ifnet *);
@@ -242,7 +241,7 @@ static bool xennet_xenbus_resume (device_t dev, const pmf_qual_t *);
 
 CFATTACH_DECL3_NEW(xennet, sizeof(struct xennet_xenbus_softc),
    xennet_xenbus_match, xennet_xenbus_attach, xennet_xenbus_detach, NULL,
-   NULL, NULL, /*DVF_DETACH_SHUTDOWN*/0);
+   NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 static int
 xennet_xenbus_match(device_t parent, cfdata_t match, void *aux)
@@ -308,7 +307,7 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	/* xenbus ensure 2 devices can't be probed at the same time */
 	if (if_xennetrxbuf_cache_inited == 0) {
 		if_xennetrxbuf_cache = pool_cache_init(PAGE_SIZE, 0, 0, 0,
-		    "xnfrx", NULL, IPL_VM, NULL, NULL, NULL);
+		    "xnfrx", NULL, IPL_NET, NULL, NULL, NULL);
 		if_xennetrxbuf_cache_inited = 1;
 	}
 
@@ -421,22 +420,34 @@ xennet_xenbus_detach(device_t self, int flags)
 {
 	struct xennet_xenbus_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int s0;
 	RING_IDX i;
 
-	DPRINTF(("%s: xennet_xenbus_detach\n", device_xname(self)));
-	s0 = splnet();
-	xennet_stop(ifp, 1);
-	xen_intr_disestablish(sc->sc_ih);
-	/* wait for pending TX to complete, and collect pending RX packets */
-	xennet_handler(sc);
-	while (sc->sc_tx_ring.sring->rsp_prod != sc->sc_tx_ring.rsp_cons) {
-		/* XXXSMP */
-		tsleep(xennet_xenbus_detach, PRIBIO, "xnet_detach", hz/2);
-		xennet_handler(sc);
+	if ((flags & (DETACH_SHUTDOWN | DETACH_FORCE)) == DETACH_SHUTDOWN) {
+		/* Trigger state transition with backend */
+		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosing);
+		return EBUSY;
 	}
-	xennet_free_rx_buffer(sc);
 
+	DPRINTF(("%s: xennet_xenbus_detach\n", device_xname(self)));
+
+	/* stop interface */
+	xennet_stop(ifp, 1);
+	if (sc->sc_ih != NULL) {
+		xen_intr_disestablish(sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+
+	/* collect any outstanding TX responses */
+	mutex_enter(&sc->sc_tx_lock);
+	xennet_tx_complete(sc);
+	while (sc->sc_tx_ring.sring->rsp_prod != sc->sc_tx_ring.rsp_cons) {
+		kpause("xndetach", true, hz/2, &sc->sc_tx_lock);
+		xennet_tx_complete(sc);
+	}
+	mutex_exit(&sc->sc_tx_lock);
+
+	mutex_enter(&sc->sc_rx_lock);
+	xennet_free_rx_buffer(sc);
 	for (i = 0; i < NET_RX_RING_SIZE; i++) {
 		struct xennet_rxreq *rxreq = &sc->sc_rxreqs[i];
 		if (rxreq->rxreq_va != 0) {
@@ -445,6 +456,7 @@ xennet_xenbus_detach(device_t self, int flags)
 			rxreq->rxreq_va = 0;
 		}
 	}
+	mutex_exit(&sc->sc_rx_lock);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
@@ -452,23 +464,25 @@ xennet_xenbus_detach(device_t self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->sc_rnd_source);
 
-	while (xengnt_status(sc->sc_tx_ring_gntref)) {
-		/* XXXSMP */
-		tsleep(xennet_xenbus_detach, PRIBIO, "xnet_txref", hz/2);
-	}
+	/* Wait until the tx/rx rings stop being used by backend */
+	mutex_enter(&sc->sc_tx_lock);
+	while (xengnt_status(sc->sc_tx_ring_gntref))
+		kpause("xntxref", true, hz/2, &sc->sc_tx_lock);
 	xengnt_revoke_access(sc->sc_tx_ring_gntref);
+	mutex_exit(&sc->sc_tx_lock);
 	uvm_km_free(kernel_map, (vaddr_t)sc->sc_tx_ring.sring, PAGE_SIZE,
 	    UVM_KMF_WIRED);
-	while (xengnt_status(sc->sc_rx_ring_gntref)) {
-		/* XXXSMP */
-		tsleep(xennet_xenbus_detach, PRIBIO, "xnet_rxref", hz/2);
-	}
+	mutex_enter(&sc->sc_rx_lock);
+	while (xengnt_status(sc->sc_rx_ring_gntref))
+		kpause("xnrxref", true, hz/2, &sc->sc_rx_lock);
 	xengnt_revoke_access(sc->sc_rx_ring_gntref);
+	mutex_exit(&sc->sc_rx_lock);
 	uvm_km_free(kernel_map, (vaddr_t)sc->sc_rx_ring.sring, PAGE_SIZE,
 	    UVM_KMF_WIRED);
-	splx(s0);
 
 	pmf_device_deregister(self);
+
+	sc->sc_backend_status = BEST_DISCONNECTED;
 
 	DPRINTF(("%s: xennet_xenbus_detach done\n", device_xname(self)));
 	return 0;
@@ -616,7 +630,6 @@ abort_transaction:
 static bool
 xennet_xenbus_suspend(device_t dev, const pmf_qual_t *qual)
 {
-	int s;
 	struct xennet_xenbus_softc *sc = device_private(dev);
 
 	/*
@@ -624,14 +637,14 @@ xennet_xenbus_suspend(device_t dev, const pmf_qual_t *qual)
 	 * so we do not mask event channel here
 	 */
 
-	s = splnet();
-	/* process any outstanding TX responses, then collect RX packets */
-	xennet_handler(sc);
+	/* collect any outstanding TX responses */
+	mutex_enter(&sc->sc_tx_lock);
+	xennet_tx_complete(sc);
 	while (sc->sc_tx_ring.sring->rsp_prod != sc->sc_tx_ring.rsp_cons) {
-		/* XXXSMP */
-		tsleep(xennet_xenbus_suspend, PRIBIO, "xnet_suspend", hz/2);
-		xennet_handler(sc);
+		kpause("xnsuspend", true, hz/2, &sc->sc_tx_lock);
+		xennet_tx_complete(sc);
 	}
+	mutex_exit(&sc->sc_tx_lock);
 
 	/*
 	 * dom0 may still use references to the grants we gave away
@@ -641,9 +654,11 @@ xennet_xenbus_suspend(device_t dev, const pmf_qual_t *qual)
 	 */
 
 	sc->sc_backend_status = BEST_SUSPENDED;
-	xen_intr_disestablish(sc->sc_ih);
-
-	splx(s);
+	if (sc->sc_ih != NULL) {
+		/* event already disabled */
+		xen_intr_disestablish(sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
 
 	xenbus_device_suspend(sc->sc_xbusd);
 	aprint_verbose_dev(dev, "removed event channel %d\n", sc->sc_evtchn);
@@ -693,9 +708,10 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 	struct xennet_rxreq *req;
 	int otherend_id, notify;
 
+	KASSERT(mutex_owned(&sc->sc_rx_lock));
+
 	otherend_id = sc->sc_xbusd->xbusd_otherend_id;
 
-	KASSERT(mutex_owned(&sc->sc_rx_lock));
 	for (i = 0; sc->sc_free_rxreql != 0; i++) {
 		req  = SLIST_FIRST(&sc->sc_rxreq_head);
 		KASSERT(req != NULL);
@@ -736,7 +752,7 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 {
 	RING_IDX i;
 
-	mutex_enter(&sc->sc_rx_lock);
+	KASSERT(mutex_owned(&sc->sc_rx_lock));
 
 	DPRINTF(("%s: xennet_free_rx_buffer\n", device_xname(sc->sc_dev)));
 	/* get back memory from RX ring */
@@ -757,7 +773,6 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 		}
 
 	}
-	mutex_exit(&sc->sc_rx_lock);
 	DPRINTF(("%s: xennet_free_rx_buffer done\n", device_xname(sc->sc_dev)));
 }
 
@@ -767,7 +782,6 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 static void
 xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 {
-	int s = splnet();
 	KASSERT(buf == m->m_ext.ext_buf);
 	KASSERT(arg == NULL);
 	KASSERT(m != NULL);
@@ -775,7 +789,6 @@ xennet_rx_mbuf_free(struct mbuf *m, void *buf, size_t size, void *arg)
 	pool_cache_put_paddr(if_xennetrxbuf_cache,
 	    (void *)va, m->m_ext.ext_paddr);
 	pool_cache_put(mb_cache, m);
-	splx(s);
 };
 
 static void
@@ -812,10 +825,10 @@ xennet_tx_complete(struct xennet_xenbus_softc *sc)
 	DPRINTFN(XEDB_EVENT, ("xennet_tx_complete prod %d cons %d\n",
 	    sc->sc_tx_ring.sring->rsp_prod, sc->sc_tx_ring.rsp_cons));
 
+	KASSERT(mutex_owned(&sc->sc_tx_lock));
 again:
 	resp_prod = sc->sc_tx_ring.sring->rsp_prod;
 	xen_rmb();
-	mutex_enter(&sc->sc_tx_lock);
 	for (i = sc->sc_tx_ring.rsp_cons; i != resp_prod; i++) {
 		req = &sc->sc_txreqs[RING_GET_RESPONSE(&sc->sc_tx_ring, i)->id];
 		KASSERT(req->txreq_id ==
@@ -831,7 +844,6 @@ again:
 		m_freem(req->txreq_m);
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, req, txreq_next);
 	}
-	mutex_exit(&sc->sc_tx_lock);
 
 	sc->sc_tx_ring.rsp_cons = resp_prod;
 	/* set new event and check for race with rsp_cons update */
@@ -955,8 +967,10 @@ again:
 	RING_FINAL_CHECK_FOR_RESPONSES(&sc->sc_rx_ring, more_to_do);
 	mutex_exit(&sc->sc_rx_lock);
 
-	if (more_to_do)
+	if (more_to_do) {
+		DPRINTF(("%s: %s more_to_do\n", ifp->if_xname, __func__));
 		goto again;
+	}
 
 	return 1;
 }
@@ -978,14 +992,16 @@ xennet_start(struct ifnet *ifp)
 	int notify;
 	int do_notify = 0;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	mutex_enter(&sc->sc_tx_lock);
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+		mutex_exit(&sc->sc_tx_lock);
 		return;
+	}
 
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx_ring.req_prod_pvt);
 
 	xennet_tx_complete(sc);
-
-	mutex_enter(&sc->sc_tx_lock);
 
 	req_prod = sc->sc_tx_ring.req_prod_pvt;
 	while (/*CONSTCOND*/1) {
@@ -1159,21 +1175,22 @@ int
 xennet_init(struct ifnet *ifp)
 {
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
-	mutex_enter(&sc->sc_rx_lock);
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_init()\n",
 	    device_xname(sc->sc_dev)));
 
+	mutex_enter(&sc->sc_tx_lock);
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+		mutex_enter(&sc->sc_rx_lock);
 		sc->sc_rx_ring.sring->rsp_event =
 		    sc->sc_rx_ring.rsp_cons + 1;
+		mutex_exit(&sc->sc_rx_lock);
 		hypervisor_unmask_event(sc->sc_evtchn);
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
-		xennet_reset(sc);
 	}
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_timer = 0;
-	mutex_exit(&sc->sc_rx_lock);
+	mutex_exit(&sc->sc_tx_lock);
 	return 0;
 }
 
@@ -1182,17 +1199,10 @@ xennet_stop(struct ifnet *ifp, int disable)
 {
 	struct xennet_xenbus_softc *sc = ifp->if_softc;
 
+	mutex_enter(&sc->sc_tx_lock);
 	ifp->if_flags &= ~IFF_RUNNING;
+	mutex_exit(&sc->sc_tx_lock);
 	hypervisor_mask_event(sc->sc_evtchn);
-	xennet_reset(sc);
-}
-
-void
-xennet_reset(struct xennet_xenbus_softc *sc)
-{
-
-	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_reset()\n",
-	    device_xname(sc->sc_dev)));
 }
 
 #if defined(NFS_BOOT_BOOTSTATIC)
