@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.17 2020/04/02 13:44:46 roy Exp $
+# $NetBSD: postinstall.in,v 1.18 2020/04/06 13:10:48 roy Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -738,10 +738,12 @@ contents_owner()
 	_grp="$4"
 
 	if [ "${_op}" = "check" ]; then
-		if [ ! -z "`find "${_dir}" \( ! -user "${_user}" \) -o \
-		    \( ! -group "${_grp}" \)`" ]; then
-			msg \
-    "${_dir} and contents not all owned by ${_user}:${_grp}"
+		_files=$(find "${_dir}" \( \( ! -user "${_user}" \) -o \
+		                \( ! -group "${_grp}" \) \) )
+		_error=$?
+		if [ ! -z "$_files" ] || [ $_error != 0 ]; then
+			msg "${_dir} and contents not all owned by" \
+			    "${_user}:${_grp}"
 			return 1
 		else
 			return 0
