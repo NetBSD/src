@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.149 2020/02/27 22:12:54 ad Exp $ */
+/* $NetBSD: udf_subr.c,v 1.150 2020/04/06 14:31:06 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.149 2020/02/27 22:12:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.150 2020/04/06 14:31:06 hannken Exp $");
 #endif /* not lint */
 
 
@@ -5641,7 +5641,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	    sizeof(node_icb_loc->loc), &vp);
 	if (error)
 		return error;
-	error = vn_lock(vp, LK_EXCLUSIVE);
+	error = vn_lock(vp, lktype);
 	if (error) {
 		vrele(vp);
 		return error;
