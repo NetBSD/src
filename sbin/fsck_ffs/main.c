@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.88 2020/04/06 06:41:34 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.89 2020/04/06 09:54:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.88 2020/04/06 06:41:34 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.89 2020/04/06 09:54:24 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,12 +117,14 @@ int	rerun;
 char	resolved;
 #ifndef NO_FFS_EI
 int	endian;
-#endif
 int	doswap;
 int	needswap;
 int	do_blkswap;
 int	do_dirswap;
+#endif
+#ifndef NO_APPLE_UFS
 int	isappleufs;
+#endif
 daddr_t maxfsblock;
 char	*blockmap;
 ino_t	maxino;
