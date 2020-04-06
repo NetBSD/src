@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.92 2020/04/05 17:26:46 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.93 2020/04/06 19:52:38 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.92 2020/04/05 17:26:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.93 2020/04/06 19:52:38 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -286,6 +286,14 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 		if (err) {
 			aprint_error_ifnet(ifp,
 			    "failed to write %s/feature-rx-copy: %d\n",
+			    xbusd->xbusd_path, err);
+			goto abort_xbt;
+		}
+		err = xenbus_printf(xbt, xbusd->xbusd_path,
+		    "feature-ipv6-csum-offload", "%d", 1);
+		if (err) {
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/feature-ipv6-csum-offload: %d\n",
 			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
