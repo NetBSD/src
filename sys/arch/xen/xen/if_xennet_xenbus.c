@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.99 2020/04/05 17:26:46 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.100 2020/04/06 08:26:32 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.99 2020/04/05 17:26:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.100 2020/04/06 08:26:32 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -796,8 +796,6 @@ xennet_rx_free_req(struct xennet_rxreq *req)
 	 * ring needs more requests to be pushed in, allocate some
 	 * RX buffers to catch-up with backend's consumption
 	 */
-	req->rxreq_gntref = GRANT_INVALID_REF;
-
 	if (sc->sc_free_rxreql >= (NET_RX_RING_SIZE * 4 / 5) &&
 	    __predict_true(sc->sc_backend_status == BEST_CONNECTED)) {
 		xennet_alloc_rx_buffer(sc);
@@ -892,6 +890,7 @@ again:
 		KASSERT(req->rxreq_id == rx->id);
 
 		xengnt_revoke_access(req->rxreq_gntref);
+		req->rxreq_gntref = GRANT_INVALID_REF;
 
 		pa = req->rxreq_pa;
 		va = req->rxreq_va;
