@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.216 2020/04/07 18:28:31 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.217 2020/04/07 19:17:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.216 2020/04/07 18:28:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.217 2020/04/07 19:17:50 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1351,6 +1351,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 			/* v_interlock now unheld */
 			if (error != 0) {
 				foundobj = NULL;
+				error = EOPNOTSUPP;
 			}
 			break;
 		}
