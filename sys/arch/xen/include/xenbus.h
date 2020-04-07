@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.17 2020/04/07 13:36:22 jdolecek Exp $ */
+/* $NetBSD: xenbus.h,v 1.18 2020/04/07 13:38:50 jdolecek Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -164,20 +164,6 @@ int xenbus_free_device(struct xenbus_device *);
 })
 
 #define XENBUS_EXIST_ERR(err) ((err) == -ENOENT || (err) == -ERANGE)
-
-
-/**
- * Register a watch on the given path, using the given xenbus_watch structure
- * for storage, and the given callback function as the callback.  Return 0 on
- * success, or -errno on error.  On success, the given path will be saved as
- * watch->node, and remains the caller's to free.  On error, watch->node will
- * be NULL, the device will switch to XenbusStateClosing, and the error will
- * be saved in the store.
- */
-int xenbus_watch_path(struct xenbus_device *dev, char *path,
-		      struct xenbus_watch *watch, 
-		      void (*callback)(struct xenbus_watch *,
-				       const char **, unsigned int));
 
 
 /**
