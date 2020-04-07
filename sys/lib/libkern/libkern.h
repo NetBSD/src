@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.138 2020/04/03 18:44:50 maxv Exp $	*/
+/*	$NetBSD: libkern.h,v 1.139 2020/04/07 08:07:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -429,6 +429,9 @@ size_t	 kmsan_strlen(const char *);
 #define	alloca(s)		__builtin_alloca(s)
 #endif
 
+char	*strcat(char *, const char *);
+char	*strchr(const char *, int);
+char	*strrchr(const char *, int);
 /* These exist in GCC 3.x, but we don't bother. */
 #if defined(_KERNEL) && defined(KASAN)
 char	*kasan_strcat(char *, const char *);
