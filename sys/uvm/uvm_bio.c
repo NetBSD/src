@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.107 2020/04/07 19:11:13 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.108 2020/04/07 19:12:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.107 2020/04/07 19:11:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.108 2020/04/07 19:12:25 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -914,17 +914,12 @@ ubc_direct_release(struct uvm_object *uobj,
 		uvm_pageactivate(pg);
 		uvm_pageunlock(pg);
 
-		/*
-		 * Page was changed, no longer fake and neither clean. 
-		 * There's no managed mapping in the direct case, so 
-		 * mark the page dirty manually.
-		 */
+		/* Page was changed, no longer fake and neither clean. */
 		if (flags & UBC_WRITE) {
 			pg->flags &= ~PG_FAKE;
 			KASSERTMSG(uvm_pagegetdirty(pg) ==
 			    UVM_PAGE_STATUS_DIRTY,
 			    "page %p not dirty", pg);
-			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 		}
 	}
 	uvm_page_unbusy(pgs, npages);
