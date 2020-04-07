@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.25 2020/01/19 01:25:05 thorpej Exp $
+# 	$NetBSD: RAMDISK,v 1.26 2020/04/07 11:12:25 martin Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -27,6 +27,7 @@ no options	DDB
 no options 	INCLUDE_CONFIG_FILE
 no options 	NTP
 no options 	KTRACE
+no options 	USERCONF
 no options 	SYSVMSG
 no options 	SYSVSEM
 no options 	SYSVSHM
