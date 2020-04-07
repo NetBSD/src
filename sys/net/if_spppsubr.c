@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.187.2.1 2020/04/07 18:28:40 is Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.187.2.2 2020/04/07 18:32:20 is Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.1 2020/04/07 18:28:40 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.2 2020/04/07 18:32:20 is Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2383,12 +2383,19 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 			break;
 		case LCP_OPT_MP_EID:
 			if (len >= l && l >= 3) {
-				if (debug)
-					addlog(" [rej]");
-				break;
+				switch (p[2]) {
+				case 0: if (l==3+ 0) continue;break;
+				case 2: if (l==3+ 4) continue;break;
+				case 3: if (l==3+ 6) continue;break;
+				case 6: if (l==3+16) continue;break;
+				case 1: /* FALLTHROUGH */
+				case 4: if (l<=3+20) continue;break;
+				case 5: if (l<=3+15) continue;break;
+				/* XXX should it be default: continue;? */
+				}
 			}
 			if (debug)
-				addlog(" [invalid]");
+				addlog(" [invalid class %d len %d]", p[2], l);
 			break;
 		case LCP_OPT_MP_SSNHF:
 			if (len >= 2 && l == 2) {
@@ -2402,15 +2409,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		case LCP_OPT_MP_MRRU:
 			/* Multilink maximum received reconstructed unit */
 			/* should be fall through, both are same length */
-			/* for now, check, then reject anyway */
-			if (len >= 4 && l == 4) {
-				if (debug)
-					addlog(" %d [rej]", (p[2] <<8) + p[3]);
-				break;
-			}
-			if (debug)
-				addlog(" [invalid]");
-			break;
+			/* FALLTHROUGH */
 		case LCP_OPT_MRU:
 			/* Maximum receive unit. */
 			if (len >= 4 && l == 4)
@@ -2568,6 +2567,27 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				p[4] = CHAP_MD5;
 				break;
 			}
+			continue;
+		case LCP_OPT_MP_EID:
+			/*
+			 * Endpoint identification.
+			 * Always agreeable,
+			 * but ignored by now.
+			 */
+			if (debug) {
+				addlog(" type %d", p[2]);
+				sppp_print_bytes(p+3, p[1]-3);
+			}
+			continue;
+		case LCP_OPT_MP_MRRU:
+			/*
+			 * Maximum received reconstructed unit. 
+			 * Always agreeable,
+			 * but ignored by now.
+			 */
+			sp->lcp.their_mrru = p[2] * 256 + p[3];
+			if (debug)
+				addlog(" %ld", sp->lcp.their_mrru);
 			continue;
 		}
 		if (rlen + l > blen) {
