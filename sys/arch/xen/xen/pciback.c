@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.19 2019/02/02 12:32:55 cherry Exp $      */
+/*      $NetBSD: pciback.c,v 1.20 2020/04/07 08:14:42 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.19 2019/02/02 12:32:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.20 2020/04/07 08:14:42 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -290,7 +290,7 @@ pciback_pci_attach(device_t parent, device_t self, void *aux)
 	snprintf(sc->sc_kernfsname, sizeof(sc->sc_kernfsname),
 	    "0000:%02x:%02x.%x", pa->pa_bus, pa->pa_device, pa->pa_function);
 	kfst = KERNFS_ALLOCTYPE(pciback_dev_fileops);
-	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+	KERNFS_ALLOCENTRY(dkt, KM_SLEEP);
 	KERNFS_INITENTRY(dkt, DT_REG, sc->sc_kernfsname, sc,
 	    kfst, VREG, FILE_MODE);
 	kernfs_addentry(pciback_kern_pkt, dkt);
@@ -405,7 +405,7 @@ pciback_pci_init(void)
 
 	xenbus_backend_register(&pci_backend_driver);
 
-	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+	KERNFS_ALLOCENTRY(dkt, KM_SLEEP);
 	KERNFS_INITENTRY(dkt, DT_DIR, "pci", NULL, KFSsubdir, VDIR, DIR_MODE);
 	kernfs_addentry(kernxen_pkt, dkt);
 	pciback_kern_pkt = KERNFS_ENTOPARENTDIR(dkt);
