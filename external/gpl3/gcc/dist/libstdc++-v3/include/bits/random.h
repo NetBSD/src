@@ -3645,8 +3645,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	       std::bernoulli_distribution& __x)
     {
       double __p;
-      if (__is >> __p)
-	__x.param(bernoulli_distribution::param_type(__p));
+      __is >> __p;
+      __x.param(bernoulli_distribution::param_type(__p));
       return __is;
     }
 
@@ -5982,9 +5982,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     size_t size() const noexcept
     { return _M_v.size(); }
 
-    template<typename _OutputIterator>
+    template<typename OutputIterator>
       void
-      param(_OutputIterator __dest) const
+      param(OutputIterator __dest) const
       { std::copy(_M_v.begin(), _M_v.end(), __dest); }
 
     // no copy functions

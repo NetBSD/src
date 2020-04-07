@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.161 2020/03/08 22:08:46 mgorny Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.160 2020/01/17 16:09:11 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -88,7 +88,6 @@
 ./usr/libdata/debug/usr/tests/lib/libc/misc
 ./usr/libdata/debug/usr/tests/lib/libc/net
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo
-./usr/libdata/debug/usr/tests/lib/libc/nls
 ./usr/libdata/debug/usr/tests/lib/libc/regex
 ./usr/libdata/debug/usr/tests/lib/libc/rpc
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp
@@ -279,7 +278,6 @@
 ./usr/tests/lib/libc/net
 ./usr/tests/lib/libc/net/getaddrinfo
 ./usr/tests/lib/libc/net/getaddrinfo/data
-./usr/tests/lib/libc/nls
 ./usr/tests/lib/libc/regex
 ./usr/tests/lib/libc/regex/data
 ./usr/tests/lib/libc/rpc

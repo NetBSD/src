@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_proto.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtpd_sasl_proto.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -9,7 +9,7 @@
 /*	#include "smtpd.h"
 /*	#include "smtpd_sasl_proto.h"
 /*
-/*	int	smtpd_sasl_auth_cmd(state, argc, argv)
+/*	void	smtpd_sasl_auth_cmd(state, argc, argv)
 /*	SMTPD_STATE *state;
 /*	int	argc;
 /*	SMTPD_TOKEN *argv;
@@ -101,11 +101,6 @@
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
-/*
 /*	TLS support originally by:
 /*	Lutz Jaenicke
 /*	BTU Cottbus
@@ -170,7 +165,7 @@ int     smtpd_sasl_auth_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "503 5.5.1 Error: MAIL transaction in progress");
 	return (-1);
     }
-    if (state->milters != 0 && (err = milter_other_event(state->milters)) != 0) {
+    if (smtpd_milters != 0 && (err = milter_other_event(smtpd_milters)) != 0) {
 	if (err[0] == '5') {
 	    state->error_mask |= MAIL_ERROR_POLICY;
 	    smtpd_chat_reply(state, "%s", err);

@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.10 2020/03/12 15:04:13 pgoyette Exp $
+# $NetBSD: md.sparc64,v 1.9 2020/02/11 11:36:53 uki Exp $
 
 ./@MODULEDIR@/compat_netbsd32			modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod modules-base-kernel	kmod
@@ -38,10 +38,6 @@
 ./@MODULEDIR@/compat_netbsd32_ptrace/compat_netbsd32_ptrace.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_raid		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_raid/compat_netbsd32_raid.kmod	modules-base-kernel	kmod
-./@MODULEDIR@/compat_netbsd32_quota		modules-base-kernel	kmod
-./@MODULEDIR@/compat_netbsd32_quota/compat_netbsd32_quota.kmod	modules-base-kernel	kmod
-./@MODULEDIR@/compat_netbsd32_quota_50		modules-base-kernel	kmod
-./@MODULEDIR@/compat_netbsd32_quota_50/compat_netbsd32_quota_50.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc/compat_netbsd32_sysvipc.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc_10	modules-base-kernel	kmod

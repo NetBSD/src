@@ -1,4 +1,4 @@
-/*	$NetBSD: postfix.c,v 1.3 2020/03/18 19:05:18 christos Exp $	*/
+/*	$NetBSD: postfix.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -33,17 +33,6 @@
 /* .IP \fBstart\fR
 /*	Start the Postfix mail system. This also runs the configuration
 /*	check described above.
-/* .IP \fBstart-fg\fR
-/*	Like \fBstart\fR, but keep the \fBmaster\fR(8) daemon running
-/*	in the foreground, and enable \fBmaster\fR(8) "init" mode
-/*	when running as PID 1.
-/*	This command requires that multi-instance support is
-/*	disabled (i.e. the multi_instance_directories parameter
-/*	value must be empty). When running Postfix inside a container,
-/*	mount the container host's /dev/log socket inside the
-/*	container (example: "docker run -v /dev/log:/dev/log ...")
-/*	and specify a distinct Postfix "syslog_name" prefix that
-/*	identifies logging from the Postfix instance.
 /* .IP \fBstop\fR
 /*	Stop the Postfix mail system in an orderly fashion. If
 /*	possible, running processes are allowed to terminate at
@@ -79,14 +68,6 @@
 /*	This feature is available in Postfix 2.1 and later.  With
 /*	Postfix 2.0 and earlier, use "\fB$config_directory/post-install
 /*	set-permissions\fR".
-/* .IP "\fBlogrotate\fR"
-/*	Rotate the logfile specified with $maillog_file, by appending
-/*	a time-stamp suffix that is formatted according to
-/*	$maillog_file_rotate_suffix, and by compressing the file
-/*	with the command specified with $maillog_file_compressor.
-/*	This will not rotate /dev/* files.
-/* .sp
-/*	This feature is available in Postfix 3.4 and later.
 /* .IP "\fBtls\fR \fIsubcommand\fR"
 /*	Enable opportunistic TLS in the Postfix SMTP client or
 /*	server, and manage Postfix SMTP server TLS private keys and
@@ -138,15 +119,6 @@
 /*	This is set when the -v command-line option is present.
 /* .IP \fBMAIL_DEBUG\fR
 /*	This is set when the -D command-line option is present.
-/* .PP
-/*	When the internal logging service is enabled (by setting a
-/*	non-empty maillog_file parameter value) the postfix(1)
-/*	command exports settings that are used by child processes
-/*	before they have processed main.cf or command-line settings.
-/* .IP \fBPOSTLOG_SERVICE
-/*	The name of the public postlog service endpoint.
-/* .IP \fBPOSTLOG_HOSTNAME
-/*	The hostname to prepend to internal logging.
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
@@ -207,14 +179,13 @@
 /* .PP
 /*	Other configuration parameters:
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a privileged Postfix
-/*	process will import from a non-Postfix parent process, or name=value
-/*	environment overrides.
+/*	The list of environment parameters that a Postfix process will
+/*	import from a non-Postfix parent process.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* .PP
 /*	Available in Postfix version 2.6 and later:
 /* .IP "\fBmulti_instance_directories (empty)\fR"
@@ -234,21 +205,6 @@
 /* .IP "\fBmulti_instance_enable (no)\fR"
 /*	Allow this Postfix instance to be started, stopped, etc., by a
 /*	multi-instance manager.
-/* .PP
-/*	Available in Postfix version 3.4 and later:
-/* .IP "\fBmaillog_file (empty)\fR"
-/*	The name of an optional logfile that is written by the Postfix
-/*	\fBpostlogd\fR(8) service.
-/* .IP "\fBmaillog_file_compressor (gzip)\fR"
-/*	The program to run after rotating $maillog_file with "postfix
-/*	logrotate".
-/* .IP "\fBmaillog_file_prefixes (/var, /dev/stdout)\fR"
-/*	A list of allowed prefixes for a maillog_file value.
-/* .IP "\fBmaillog_file_rotate_suffix (%Y%M%d-%H%M%S)\fR"
-/*	The format of the suffix to append to $maillog_file while rotating
-/*	the file with "postfix logrotate".
-/* .IP "\fBpostlog_service_name (postlog)\fR"
-/*	The name of the \fBpostlogd\fR(8) service entry in master.cf.
 /* FILES
 /* .ad
 /* .fi
@@ -330,7 +286,6 @@
 /*	oqmgr(8), old Postfix queue manager
 /*	pickup(8), Postfix local mail pickup
 /*	pipe(8), deliver mail to non-Postfix command
-/*	postlogd(8), Postfix internal logging service
 /*	postscreen(8), Postfix zombie blocker
 /*	proxymap(8), Postfix lookup table proxy server
 /*	qmgr(8), Postfix queue manager
@@ -415,6 +370,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <syslog.h>
 #ifdef USE_PATHS_H
 #include <paths.h>
 #endif
@@ -423,6 +379,7 @@
 
 #include <msg.h>
 #include <msg_vstream.h>
+#include <msg_syslog.h>
 #include <stringops.h>
 #include <clean_env.h>
 #include <argv.h>
@@ -435,7 +392,6 @@
 #include <mail_params.h>
 #include <mail_version.h>
 #include <mail_parm_split.h>
-#include <maillog_client.h>
 
 /* Additional installation parameters. */
 
@@ -510,7 +466,7 @@ int     main(int argc, char **argv)
 	argv[0] = slash + 1;
     if (isatty(STDERR_FILENO))
 	msg_vstream_init(argv[0], VSTREAM_ERR);
-    maillog_client_init(argv[0], MAILLOG_CLIENT_FLAG_LOGWRITER_FALLBACK);
+    msg_syslog_init(argv[0], LOG_PID, LOG_FACILITY);
 
     /*
      * Check the Postfix library version as soon as we enable logging.
@@ -560,22 +516,6 @@ int     main(int argc, char **argv)
     get_mail_conf_str_table(str_table);
 
     /*
-     * Environment import filter, to enforce consistent behavior whether this
-     * command is started by hand, or at system boot time. This is necessary
-     * because some shell scripts use environment settings to override
-     * main.cf settings.
-     */
-    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
-    clean_env(import_env->argv);
-    argv_free(import_env);
-
-    /*
-     * This is after calling clean_env(), to ensure that POSTLOG_XXX exports
-     * will work, even if import_environment would remove them.
-     */
-    maillog_client_init(argv[0], MAILLOG_CLIENT_FLAG_LOGWRITER_FALLBACK);
-
-    /*
      * Alert the sysadmin that the backwards-compatible settings are still in
      * effect.
      */
@@ -588,6 +528,17 @@ int     main(int argc, char **argv)
 		 VAR_COMPAT_LEVEL "=%d\" and \"postfix reload\"",
 		 CUR_COMPAT_LEVEL);
     }
+
+    /*
+     * Environment import filter, to enforce consistent behavior whether this
+     * command is started by hand, or at system boot time. This is necessary
+     * because some shell scripts use environment settings to override
+     * main.cf settings.
+     */
+    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
+    clean_env(import_env->argv);
+    argv_free(import_env);
+
     check_setenv("PATH", ROOT_PATH);		/* sys_defs.h */
     check_setenv(CONF_ENV_PATH, var_config_dir);/* mail_conf.h */
 

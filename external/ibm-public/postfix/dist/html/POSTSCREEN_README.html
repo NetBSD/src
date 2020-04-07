@@ -106,7 +106,7 @@ problem will get worse before things improve, if ever. Without a
 tool like <a href="postscreen.8.html">postscreen(8)</a> that keeps the zombies away, Postfix would be
 spending most of its resources not receiving email. </p>
 
-<p> The main challenge for <a href="postscreen.8.html">postscreen(8)</a> is to make an is-a-zombie
+<p> The main challenge for <a href="postscreen.8.html">postscreen(8)</a> is to make an is-it-a-zombie
 decision based on a single measurement. This is necessary because
 many zombies try to fly under the radar and avoid spamming the same
 site repeatedly.  Once <a href="postscreen.8.html">postscreen(8)</a> decides that a client is
@@ -124,13 +124,13 @@ mail even when the server tells them to go away. </p>
 zombies.  First, <a href="postscreen.8.html">postscreen(8)</a> determines if the remote SMTP client
 IP address is blacklisted.  Second, <a href="postscreen.8.html">postscreen(8)</a> looks for protocol
 compromises that are made to speed up delivery.  These are good
-indicators for making is-a-zombie decisions based on single
+indicators for making is-it-a-zombie decisions based on single
 measurements.  </p>
 
 <p> <a href="postscreen.8.html">postscreen(8)</a> does not inspect message content. Message content
 can vary from one delivery to the next, especially with clients
 that (also) send legitimate email.  Content is not a good indicator
-for making is-a-zombie decisions based on single measurements,
+for making is-it-a-zombie decisions based on single measurements,
 and that is the problem that <a href="postscreen.8.html">postscreen(8)</a> is focused on.  </p>
 
 <h2> <a name="general"> General operation </a> </h2>
@@ -714,25 +714,16 @@ The "<tt><b>after</b> <i>command</i></tt>" portion is logged with
 Postfix 2.10 and later. </p>
 
 <p> When an SMTP client makes too many connections at the same time,
-<a href="postscreen.8.html">postscreen(8)</a> rejects the connection with a 421 status code and logs: </p>
+or when all <a href="postscreen.8.html">postscreen(8)</a> ports are busy, <a href="postscreen.8.html">postscreen(8)</a> rejects the
+connection with a 421 status code and logs: </p>
 
 <pre>
     <b>NOQUEUE: reject: CONNECT from</b> <i>[address]:port</i><b>: too many connections</b>
-</pre>
-
-<p> The <a href="postconf.5.html#postscreen_client_connection_count_limit">postscreen_client_connection_count_limit</a> parameter controls this limit. </p>
-
-<p> When an SMTP client connects after <a href="postscreen.8.html">postscreen(8)</a> has reached a
-connection count limit, <a href="postscreen.8.html">postscreen(8)</a> rejects the connection with
-a 421 status code and logs: </p>
-
-<pre>
-    <b>NOQUEUE: reject: CONNECT from</b> <i>[address]:port</i><b>: all screening ports busy</b>
     <b>NOQUEUE: reject: CONNECT from</b> <i>[address]:port</i><b>: all server ports busy</b>
 </pre>
 
-<p> The <a href="postconf.5.html#postscreen_pre_queue_limit">postscreen_pre_queue_limit</a> and <a href="postconf.5.html#postscreen_post_queue_limit">postscreen_post_queue_limit</a>
-parameters control these limits.  </p>
+<p> The <a href="postconf.5.html#postscreen_client_connection_count_limit">postscreen_client_connection_count_limit</a> and
+<a href="postconf.5.html#postscreen_pre_queue_limit">postscreen_pre_queue_limit</a> parameters control these limits.  </p>
 
 <h2> <a name="victory">When all tests succeed</a> </h2>
 
@@ -1081,8 +1072,8 @@ of the following options: </p>
 <li> <p> A non-persistent <a href="memcache_table.5.html">memcache</a>: temporary whitelist can be shared
     between <a href="postscreen.8.html">postscreen(8)</a> daemons on the same host or different
     hosts.  Disable cache cleanup (<a href="postconf.5.html#postscreen_cache_cleanup_interval">postscreen_cache_cleanup_interval</a>
-    = 0) in all <a href="postscreen.8.html">postscreen(8)</a> daemons because <a href="memcache_table.5.html">memcache</a>: has no
-    first-next API (but see example 4 below for <a href="memcache_table.5.html">memcache</a>: with
+    = 0) in all <a href="postscreen.8.html">postscreen(8)</a> daemons because <a href="memcache_table.5.html">memcache</a>: does not
+    implement this (but see example 4 below for <a href="memcache_table.5.html">memcache</a>: with
     persistent backup). This requires Postfix 2.9 or later. </p>
 
     <pre>

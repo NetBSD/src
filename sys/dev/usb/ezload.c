@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.c,v 1.18 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: ezload.c,v 1.17 2016/11/25 12:56:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.18 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.17 2016/11/25 12:56:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -131,7 +131,7 @@ ezload_download(struct usbd_device *dev, const struct ezdata *rec)
 				len = ANCHOR_CHUNK;
 			USETW(req.wValue, ptr->address + offs);
 			USETW(req.wLength, len);
-			DPRINTFN(2,("ezload_download: addr=%#x len=%d\n",
+			DPRINTFN(2,("ezload_download: addr=0x%x len=%d\n",
 				    ptr->address + offs, len));
 			/*XXXUNCONST*/
 			err = usbd_do_request(dev, &req,

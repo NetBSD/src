@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.h,v 1.12 2020/03/22 14:41:32 ad Exp $ */
+/*	$NetBSD: pmap.h,v 1.11 2019/09/13 13:56:04 christos Exp $ */
 
 /*
- * Copyright (c) 2002, 2003, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -46,7 +46,6 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
-#include <sys/vnode_impl.h>
 #define __EXPOSE_MOUNT
 #include <sys/mount.h>
 #include <sys/uio.h>

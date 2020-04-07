@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_request.h,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: deliver_request.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 #ifndef _DELIVER_REQUEST_H_INCLUDED_
 #define _DELIVER_REQUEST_H_INCLUDED_
@@ -12,12 +12,6 @@
 /*	#include <deliver_request.h>
 /* DESCRIPTION
 /* .nf
-
- /*
-  * System library.
-  */
-#include <sys_defs.h>
-#include <stdarg.h>
 
  /*
   * Utility library.
@@ -136,9 +130,6 @@ typedef struct VSTREAM _deliver_vstream_;
 extern DELIVER_REQUEST *deliver_request_read(_deliver_vstream_ *);
 extern int deliver_request_done(_deliver_vstream_ *, DELIVER_REQUEST *, int);
 
-extern int PRINTFLIKE(4, 5) reject_deliver_request(const char *,
-		         DELIVER_REQUEST *, const char *, const char *,...);
-
 /* LICENSE
 /* .ad
 /* .fi
@@ -148,11 +139,6 @@ extern int PRINTFLIKE(4, 5) reject_deliver_request(const char *,
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 #endif

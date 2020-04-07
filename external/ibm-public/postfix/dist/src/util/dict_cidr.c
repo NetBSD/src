@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cidr.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: dict_cidr.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -29,11 +29,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -61,7 +56,6 @@
 #include <cidr_match.h>
 #include <dict_cidr.h>
 #include <warn_stat.h>
-#include <mvect.h>
 
 /* Application-specific. */
 
@@ -71,7 +65,6 @@
 typedef struct DICT_CIDR_ENTRY {
     CIDR_MATCH cidr_info;		/* must be first */
     char   *value;			/* lookup result */
-    int     lineno;
 } DICT_CIDR_ENTRY;
 
 typedef struct {
@@ -115,119 +108,42 @@ static void dict_cidr_close(DICT *dict)
 
 /* dict_cidr_parse_rule - parse CIDR table rule into network, mask and value */
 
-static DICT_CIDR_ENTRY *dict_cidr_parse_rule(DICT *dict, char *p, int lineno,
-					          int nesting, VSTRING *why)
+static DICT_CIDR_ENTRY *dict_cidr_parse_rule(char *p, VSTRING *why)
 {
     DICT_CIDR_ENTRY *rule;
     char   *pattern;
     char   *value;
     CIDR_MATCH cidr_info;
     MAI_HOSTADDR_STR hostaddr;
-    int     match = 1;
 
     /*
-     * IF must be followed by a pattern.
+     * Split the rule into key and value. We already eliminated leading
+     * whitespace, comments, empty lines or lines with whitespace only. This
+     * means a null key can't happen but we will handle this anyway.
      */
-    if (strncasecmp(p, "IF", 2) == 0 && !ISALNUM(p[2])) {
-	p += 2;
-	for (;;) {
-	    if (*p == '!')
-		match = !match;
-	    else if (!ISSPACE(*p))
-		break;
-	    p++;
-	}
-	if (*p == 0) {
-	    vstring_sprintf(why, "no address pattern");
-	    return (0);
-	}
-	trimblanks(p, 0)[0] = 0;		/* Trim trailing blanks */
-	if (cidr_match_parse_if(&cidr_info, p, match, why) != 0)
-	    return (0);
-	value = "";
+    pattern = p;
+    while (*p && !ISSPACE(*p))			/* Skip over key */
+	p++;
+    if (*p)					/* Terminate key */
+	*p++ = 0;
+    while (*p && ISSPACE(*p))			/* Skip whitespace */
+	p++;
+    value = p;
+    trimblanks(value, 0)[0] = 0;		/* Trim trailing blanks */
+    if (*pattern == 0) {
+	vstring_sprintf(why, "no address pattern");
+	return (0);
+    }
+    if (*value == 0) {
+	vstring_sprintf(why, "no lookup result");
+	return (0);
     }
 
     /*
-     * ENDIF must not be followed by other text.
+     * Parse the pattern, destroying it in the process.
      */
-    else if (strncasecmp(p, "ENDIF", 5) == 0 && !ISALNUM(p[5])) {
-	p += 5;
-	while (*p && ISSPACE(*p))		/* Skip whitespace */
-	    p++;
-	if (*p != 0) {
-	    vstring_sprintf(why, "garbage after ENDIF");
-	    return (0);
-	}
-	if (nesting == 0) {
-	    vstring_sprintf(why, "ENDIF without IF");
-	    return (0);
-	}
-	cidr_match_endif(&cidr_info);
-	value = "";
-    }
-
-    /*
-     * An address pattern.
-     */
-    else {
-
-	/*
-	 * Process negation operators.
-	 */
-	for (;;) {
-	    if (*p == '!')
-		match = !match;
-	    else if (!ISSPACE(*p))
-		break;
-	    p++;
-	}
-
-	/*
-	 * Split the rule into key and value. We already eliminated leading
-	 * whitespace, comments, empty lines or lines with whitespace only.
-	 * This means a null key can't happen but we will handle this anyway.
-	 */
-	pattern = p;
-	while (*p && !ISSPACE(*p))		/* Skip over key */
-	    p++;
-	if (*p)					/* Terminate key */
-	    *p++ = 0;
-	while (*p && ISSPACE(*p))		/* Skip whitespace */
-	    p++;
-	value = p;
-	trimblanks(value, 0)[0] = 0;		/* Trim trailing blanks */
-	if (*pattern == 0) {
-	    vstring_sprintf(why, "no address pattern");
-	    return (0);
-	}
-
-	/*
-	 * Parse the pattern, destroying it in the process.
-	 */
-	if (cidr_match_parse(&cidr_info, pattern, match, why) != 0)
-	    return (0);
-
-	if (*value == 0) {
-	    vstring_sprintf(why, "no lookup result");
-	    return (0);
-	}
-    }
-
-    /*
-     * Optionally replace the value file the contents of a file.
-     */
-    if (dict->flags & DICT_FLAG_SRC_RHS_IS_FILE) {
-	VSTRING *base64_buf;
-	char   *err;
-
-	if ((base64_buf = dict_file_to_b64(dict, value)) == 0) {
-	    err = dict_file_get_error(dict);
-	    vstring_strcpy(why, err);
-	    myfree(err);
-	    return (0);
-	}
-	value = vstring_str(base64_buf);
-    }
+    if (cidr_match_parse(&cidr_info, pattern, why) != 0)
+	return (0);
 
     /*
      * Bundle up the result.
@@ -235,7 +151,6 @@ static DICT_CIDR_ENTRY *dict_cidr_parse_rule(DICT *dict, char *p, int lineno,
     rule = (DICT_CIDR_ENTRY *) mymalloc(sizeof(DICT_CIDR_ENTRY));
     rule->cidr_info = cidr_info;
     rule->value = mystrdup(value);
-    rule->lineno = lineno;
 
     if (msg_verbose) {
 	if (inet_ntop(cidr_info.addr_family, cidr_info.net_bytes,
@@ -251,7 +166,6 @@ static DICT_CIDR_ENTRY *dict_cidr_parse_rule(DICT *dict, char *p, int lineno,
 
 DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
 {
-    const char myname[] = "dict_cidr_open";
     DICT_CIDR *dict_cidr;
     VSTREAM *map_fp = 0;
     struct stat st;
@@ -261,9 +175,6 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
     DICT_CIDR_ENTRY *last_rule = 0;
     int     last_line = 0;
     int     lineno;
-    int     nesting = 0;
-    DICT_CIDR_ENTRY **rule_stack = 0;
-    MVECT   mvect;
 
     /*
      * Let the optimizer worry about eliminating redundant code.
@@ -316,35 +227,11 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
     dict_cidr->dict.owner.status = (st.st_uid != 0);
 
     while (readllines(line_buffer, map_fp, &last_line, &lineno)) {
-	rule = dict_cidr_parse_rule(&dict_cidr->dict,
-				    vstring_str(line_buffer), lineno,
-				    nesting, why);
+	rule = dict_cidr_parse_rule(vstring_str(line_buffer), why);
 	if (rule == 0) {
 	    msg_warn("cidr map %s, line %d: %s: skipping this rule",
 		     mapname, lineno, vstring_str(why));
 	    continue;
-	}
-	if (rule->cidr_info.op == CIDR_MATCH_OP_IF) {
-	    if (rule_stack == 0)
-		rule_stack = (DICT_CIDR_ENTRY **) mvect_alloc(&mvect,
-					   sizeof(*rule_stack), nesting + 1,
-						(MVECT_FN) 0, (MVECT_FN) 0);
-	    else
-		rule_stack =
-		    (DICT_CIDR_ENTRY **) mvect_realloc(&mvect, nesting + 1);
-	    rule_stack[nesting] = rule;
-	    nesting++;
-	} else if (rule->cidr_info.op == CIDR_MATCH_OP_ENDIF) {
-	    DICT_CIDR_ENTRY *if_rule;
-
-	    if (nesting-- <= 0)
-		/* Already handled in dict_cidr_parse_rule(). */
-		msg_panic("%s: ENDIF without IF", myname);
-	    if_rule = rule_stack[nesting];
-	    if (if_rule->cidr_info.op != CIDR_MATCH_OP_IF)
-		msg_panic("%s: unexpected rule stack element type %d",
-			  myname, if_rule->cidr_info.op);
-	    if_rule->cidr_info.block_end = &(rule->cidr_info);
 	}
 	if (last_rule == 0)
 	    dict_cidr->head = rule;
@@ -353,13 +240,5 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
 	last_rule = rule;
     }
 
-    while (nesting-- > 0)
-	msg_warn("cidr map %s, line %d: IF has no matching ENDIF",
-		 mapname, rule_stack[nesting]->lineno);
-
-    if (rule_stack)
-	(void) mvect_free(&mvect);
-
-    dict_file_purge_buffers(&dict_cidr->dict);
     DICT_CIDR_OPEN_RETURN(DICT_DEBUG (&dict_cidr->dict));
 }

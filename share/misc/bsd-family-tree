@@ -408,10 +408,6 @@ FreeBSD 5.2           |      |                 |                       |
  |     |              |      *--NetBSD            |                    |
  |     v              |      |   9.0              |                    |
  |                    |      |                    |                    |
- |                    |      |                    |            DragonFly 5.8
- |                    |      |                    |                    |
- |                    |      |                    |            DragonFly 5.6.3
- |                    |      |                    |                    |
 FreeBSD 13 -current   |  NetBSD -current   OpenBSD -current    DragonFly -current
  |                    |      |                    |                    |
  v                    v      v                    v                    v
@@ -804,8 +800,6 @@ macOS 10.15		2019-10-07 [APL]
 macOS 10.15.1		2019-10-29 [APL] (security/critical release)
 FreeBSD 12.1		2019-11-04 [FBD]
 NetBSD 9.0 		2020-02-14 [NBD]
-DragonFly 5.8 		2020-03-03 [DFB]
-DragonFly 5.6.3 	2020-03-11 [DFB]
 
 Bibliography
 ------------------------
@@ -870,5 +864,5 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 
-$FreeBSD: head/share/misc/bsd-family-tree 359157 2020-03-20 03:15:23Z sevan $
-$NetBSD: bsd-family-tree,v 1.80 2020/03/20 03:19:43 sevan Exp $
+$FreeBSD: head/share/misc/bsd-family-tree 358264 2020-02-23 23:29:53Z sevan $
+$NetBSD: bsd-family-tree,v 1.79 2020/02/23 23:31:55 sevan Exp $

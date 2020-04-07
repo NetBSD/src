@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.70 2020/03/15 23:04:50 thorpej Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.69 2020/01/29 06:26:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.70 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.69 2020/01/29 06:26:32 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -78,16 +78,15 @@ static void	cdce_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(cdce, sizeof(struct usbnet), cdce_match, cdce_attach,
     usbnet_detach, usbnet_activate);
 
-static void	cdce_uno_rx_loop(struct usbnet *, struct usbnet_chain *,
-				 uint32_t);
-static unsigned	cdce_uno_tx_prepare(struct usbnet *, struct mbuf *,
-				    struct usbnet_chain *);
-static int	cdce_uno_init(struct ifnet *);
+static void	cdce_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
+static unsigned	cdce_tx_prepare(struct usbnet *, struct mbuf *,
+				struct usbnet_chain *);
+static int	cdce_init(struct ifnet *);
 
 static const struct usbnet_ops cdce_ops = {
-	.uno_tx_prepare = cdce_uno_tx_prepare,
-	.uno_rx_loop = cdce_uno_rx_loop,
-	.uno_init = cdce_uno_init,
+	.uno_tx_prepare = cdce_tx_prepare,
+	.uno_rx_loop = cdce_rx_loop,
+	.uno_init = cdce_init,
 };
 
 static int
@@ -253,12 +252,12 @@ cdce_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-cdce_uno_init(struct ifnet *ifp)
+cdce_init(struct ifnet *ifp)
 {
 	struct usbnet		*un = ifp->if_softc;
 	int rv;
 
-	usbnet_lock_core(un);
+	usbnet_lock(un);
 	if (usbnet_isdying(un))
 		rv = EIO;
 	else {
@@ -266,13 +265,13 @@ cdce_uno_init(struct ifnet *ifp)
 		rv = usbnet_init_rx_tx(un);
 		usbnet_set_link(un, rv == 0);
 	}
-	usbnet_unlock_core(un);
+	usbnet_unlock(un);
 
 	return rv;
 }
 
 static void
-cdce_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
+cdce_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 
@@ -291,12 +290,14 @@ cdce_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 }
 
 static unsigned
-cdce_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+cdce_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	/* Zaurus wants a 32-bit CRC appended to every frame */
 	uint32_t		 crc;
 	unsigned		 extra = 0;
 	unsigned		 length;
+
+	usbnet_isowned_tx(un);
 
 	if (un->un_flags & CDCE_ZAURUS)
 		extra = sizeof(crc);

@@ -1,7 +1,7 @@
-/*	$NetBSD: condvar.h,v 1.15 2020/03/26 19:46:42 ad Exp $	*/
+/*	$NetBSD: condvar.h,v 1.14 2017/07/03 03:12:42 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,7 +33,7 @@
 #define	_SYS_CONDVAR_H_
 
 typedef struct kcondvar {
-	void		*cv_opaque[2];
+	void		*cv_opaque[3];
 } kcondvar_t;
 
 #ifdef _KERNEL

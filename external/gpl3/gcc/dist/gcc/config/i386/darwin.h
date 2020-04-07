@@ -47,13 +47,12 @@ along with GCC; see the file COPYING3.  If not see
    image.
    Therefore, for 64b exes at least, we must use the libunwind implementation,
    even when static-libgcc is specified.  We put libSystem first so that
-   unwinder symbols are satisfied from there.
-   We default to 64b for single-arch builds, so apply this unconditionally. */
+   unwinder symbols are satisfied from there. */
 #undef REAL_LIBGCC_SPEC
 #define REAL_LIBGCC_SPEC						   \
    "%{static-libgcc|static: 						   \
-       %:version-compare(>= 10.6 mmacosx-version-min= -lSystem)		   \
-       -lgcc_eh -lgcc;							   \
+      %{m64:%:version-compare(>= 10.6 mmacosx-version-min= -lSystem)}	   \
+        -lgcc_eh -lgcc;							   \
       shared-libgcc|fexceptions|fgnu-runtime:				   \
        %:version-compare(!> 10.5 mmacosx-version-min= -lgcc_s.10.4)	   \
        %:version-compare(>< 10.5 10.6 mmacosx-version-min= -lgcc_s.10.5)   \
@@ -89,12 +88,14 @@ along with GCC; see the file COPYING3.  If not see
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-/* Generate pic symbol indirection stubs if this is true.  */
-#undef TARGET_MACHO_SYMBOL_STUBS
-#define TARGET_MACHO_SYMBOL_STUBS (darwin_symbol_stubs)
+/* Generate branch islands stubs if this is true.  */
+extern int darwin_emit_branch_islands;
+
+#undef TARGET_MACHO_BRANCH_ISLANDS
+#define TARGET_MACHO_BRANCH_ISLANDS darwin_emit_branch_islands
 
 /* For compatibility with OSX system tools, use the new style of pic stub
-   if this is set (default).  */
+   if this is set.  */
 #undef  MACHOPIC_ATT_STUB
 #define MACHOPIC_ATT_STUB (darwin_macho_att_stub)
 
@@ -129,14 +130,16 @@ along with GCC; see the file COPYING3.  If not see
 #undef CC1_SPEC
 #define CC1_SPEC "%(cc1_cpu) \
   %{!mkernel:%{!static:%{!mdynamic-no-pic:-fPIC}}} \
-  %{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }} \
-  %{mx32:%eDarwin is not an mx32 platform}" \
+  %{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }} " \
   DARWIN_CC1_SPEC
 
 #undef ASM_SPEC
 #define ASM_SPEC "-arch %(darwin_arch) \
   " ASM_OPTIONS " -force_cpusubtype_ALL \
   %{static}" ASM_MMACOSX_VERSION_MIN_SPEC
+
+#define DARWIN_ARCH_SPEC "%{m64:x86_64;:i386}"
+#define DARWIN_SUBARCH_SPEC DARWIN_ARCH_SPEC
 
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC \
@@ -145,15 +148,12 @@ along with GCC; see the file COPYING3.  If not see
    %{mpc64:crtprec64.o%s} \
    %{mpc80:crtprec80.o%s}" TM_DESTRUCTOR
 
-/* We default to x86_64 for single-arch builds, bi-arch overrides.  */
-#define DARWIN_ARCH_SPEC "x86_64"
-
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS                                   \
   DARWIN_EXTRA_SPECS                                            \
-  { "darwin_arch", DARWIN_ARCH_SPEC },				\
+  { "darwin_arch", DARWIN_ARCH_SPEC },                          \
   { "darwin_crt2", "" },                                        \
-  { "darwin_subarch", DARWIN_ARCH_SPEC },
+  { "darwin_subarch", DARWIN_SUBARCH_SPEC },
 
 /* The Darwin assembler mostly follows AT&T syntax.  */
 #undef ASSEMBLER_DIALECT
@@ -219,36 +219,19 @@ along with GCC; see the file COPYING3.  If not see
         }				\
     } while (0)
 
-#ifdef HAVE_GAS_MAX_SKIP_P2ALIGN
-#define ASM_OUTPUT_MAX_SKIP_ALIGN(FILE,LOG,MAX_SKIP)                    \
-  do {                                                                  \
-    if ((LOG) != 0) {                                                   \
-      if ((MAX_SKIP) == 0 || (MAX_SKIP) >= (1 << (LOG)) - 1)            \
-        fprintf ((FILE), "\t.p2align %d\n", (LOG));                     \
-      else                                                              \
-        fprintf ((FILE), "\t.p2align %d,,%d\n", (LOG), (MAX_SKIP));     \
-    }                                                                   \
-  } while (0)
-#endif
-
-/* Darwin x86 assemblers support the .ident directive.  */
-
-#undef TARGET_ASM_OUTPUT_IDENT
-#define TARGET_ASM_OUTPUT_IDENT default_asm_output_ident_directive
-
 /* Darwin profiling -- call mcount.  */
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO)				\
-  do {									\
-    if (TARGET_MACHO_SYMBOL_STUBS 					\
-	&& MACHOPIC_INDIRECT && !TARGET_64BIT)				\
-      {									\
-	const char *name = machopic_mcount_stub_name ();		\
-	fprintf (FILE, "\tcall %s\n", name+1);  /*  skip '&'  */	\
-	machopic_validate_stub_or_non_lazy_ptr (name);			\
-      }									\
-    else fprintf (FILE, "\tcall mcount\n");				\
-  } while (0)
+    do {								\
+      if (TARGET_MACHO_BRANCH_ISLANDS 					\
+	   && MACHOPIC_INDIRECT && !TARGET_64BIT)			\
+	{								\
+	  const char *name = machopic_mcount_stub_name ();		\
+	  fprintf (FILE, "\tcall %s\n", name+1);  /*  skip '&'  */	\
+	  machopic_validate_stub_or_non_lazy_ptr (name);		\
+	}								\
+      else fprintf (FILE, "\tcall mcount\n");				\
+    } while (0)
 
 #define C_COMMON_OVERRIDE_OPTIONS					\
   do {									\
@@ -321,8 +304,10 @@ do {									\
         }                                                                       \
     }
 
-/* First available SYMBOL flag bit for use by subtargets.  */
-#define SYMBOL_FLAG_SUBT_DEP (SYMBOL_FLAG_MACH_DEP << 5)
+/* This needs to move since i386 uses the first flag and other flags are
+   used in Mach-O.  */
+#undef MACHO_SYMBOL_FLAG_VARIABLE
+#define MACHO_SYMBOL_FLAG_VARIABLE ((SYMBOL_FLAG_MACH_DEP) << 3)
 
 #undef MACHOPIC_NL_SYMBOL_PTR_SECTION
 #define MACHOPIC_NL_SYMBOL_PTR_SECTION \

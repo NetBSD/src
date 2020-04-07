@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.49 2020/03/21 06:11:05 riastradh Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.48 2017/06/10 05:29:36 maya Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -274,7 +274,17 @@ static __inline uint64_t
 lfs_dir_getino(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 {
 	if (fs->lfs_is64) {
-		return LFS_SWAP_uint64_t(fs, dh->u_64.dh_ino);
+		uint64_t ino;
+
+		/*
+		 * XXX we can probably write this in a way that's both
+		 * still legal and generates better code.
+		 */
+		memcpy(&ino, &dh->u_64.dh_inoA, sizeof(dh->u_64.dh_inoA));
+		memcpy((char *)&ino + sizeof(dh->u_64.dh_inoA),
+		       &dh->u_64.dh_inoB,
+		       sizeof(dh->u_64.dh_inoB));
+		return LFS_SWAP_uint64_t(fs, ino);
 	} else {
 		return LFS_SWAP_uint32_t(fs, dh->u_32.dh_ino);
 	}
@@ -321,7 +331,16 @@ static __inline void
 lfs_dir_setino(STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint64_t ino)
 {
 	if (fs->lfs_is64) {
-		dh->u_64.dh_ino = LFS_SWAP_uint64_t(fs, ino);
+
+		ino = LFS_SWAP_uint64_t(fs, ino);
+		/*
+		 * XXX we can probably write this in a way that's both
+		 * still legal and generates better code.
+		 */
+		memcpy(&dh->u_64.dh_inoA, &ino, sizeof(dh->u_64.dh_inoA));
+		memcpy(&dh->u_64.dh_inoB,
+		       (char *)&ino + sizeof(dh->u_64.dh_inoA),
+		       sizeof(dh->u_64.dh_inoB));
 	} else {
 		dh->u_32.dh_ino = LFS_SWAP_uint32_t(fs, ino);
 	}

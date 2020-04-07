@@ -1,4 +1,4 @@
-.\"	$NetBSD: local.8,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: local.8,v 1.2 2017/02/14 01:16:44 christos Exp $
 .\"
 .TH LOCAL 8 
 .ad
@@ -342,8 +342,7 @@ RFC 3463 (Enhanced status codes)
 .SH DIAGNOSTICS
 .ad
 .fi
-Problems and transactions are logged to \fBsyslogd\fR(8)
-or \fBpostlogd\fR(8).
+Problems and transactions are logged to \fBsyslogd\fR(8).
 Corrupted message files are marked so that the queue
 manager can move them to the \fBcorrupt\fR queue afterwards.
 
@@ -398,14 +397,13 @@ The text below provides only a parameter summary. See
 .IP "\fBbiff (yes)\fR"
 Whether or not to use the local biff service.
 .IP "\fBexpand_owner_alias (no)\fR"
-When delivering to an alias "\fIaliasname\fR" that has an
-"owner\-\fIaliasname\fR" companion alias, set the envelope sender
-address to the expansion of the "owner\-\fIaliasname\fR" alias.
+When delivering to an alias "aliasname" that has an "owner\-aliasname"
+companion alias, set the envelope sender address to the expansion
+of the "owner\-aliasname" alias.
 .IP "\fBowner_request_special (yes)\fR"
-Enable special treatment for owner\-\fIlistname\fR entries in the
-\fBaliases\fR(5) file, and don't split owner\-\fIlistname\fR and
-\fIlistname\fR\-request address localparts when the recipient_delimiter
-is set to "\-".
+Give special treatment to owner\-listname and listname\-request
+address localparts: don't split such addresses when the
+recipient_delimiter is set to "\-".
 .IP "\fBsun_mailtool_compatibility (no)\fR"
 Obsolete SUN mailtool compatibility feature.
 .PP
@@ -504,11 +502,6 @@ Time limit for delivery to external commands.
 The maximal number of addresses remembered by the address
 duplicate filter for \fBaliases\fR(5) or \fBvirtual\fR(5) alias expansion, or
 for \fBshowq\fR(8) queue displays.
-.IP "\fBmailbox_size_limit (51200000)\fR"
-The maximal size of any \fBlocal\fR(8) individual mailbox or maildir
-file, or zero (no limit).
-.PP
-Implemented in the qmgr(8) daemon:
 .IP "\fBlocal_destination_concurrency_limit (2)\fR"
 The maximal number of parallel deliveries via the local mail
 delivery transport to the same recipient (when
@@ -518,6 +511,9 @@ parallel deliveries to the same local domain (when
 .IP "\fBlocal_destination_recipient_limit (1)\fR"
 The maximal number of recipients per message delivery via the
 local mail delivery transport.
+.IP "\fBmailbox_size_limit (51200000)\fR"
+The maximal size of any \fBlocal\fR(8) individual mailbox or maildir
+file, or zero (no limit).
 .SH "SECURITY CONTROLS"
 .na
 .nf
@@ -596,21 +592,8 @@ before mail delivery is attempted.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-A prefix that is prepended to the process name in syslog
-records, so that, for example, "smtpd" becomes "prefix/smtpd".
-.PP
-Available in Postfix version 3.3 and later:
-.IP "\fBenable_original_recipient (yes)\fR"
-Enable support for the original recipient address after an
-address is rewritten to a different address (for example with
-aliasing or with canonical mapping).
-.IP "\fBservice_name (read\-only)\fR"
-The master.cf service name of a Postfix daemon process.
-.PP
-Available in Postfix 3.5 and later:
-.IP "\fBinfo_log_address_format (external)\fR"
-The email address form that will be used in non\-debug logging
-(info, warning, etc.).
+The mail system name that is prepended to the process name in syslog
+records, so that "smtpd" becomes, for example, "postfix/smtpd".
 .SH "FILES"
 .na
 .nf
@@ -628,7 +611,6 @@ postalias(1), create/update alias database
 aliases(5), format of alias database
 postconf(5), configuration parameters
 master(5), generic daemon options
-postlogd(8), Postfix logging
 syslogd(8), system logging
 .SH "LICENSE"
 .na

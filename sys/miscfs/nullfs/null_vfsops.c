@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.97 2020/03/16 21:20:11 pgoyette Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.96 2019/12/15 20:30:56 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.97 2020/03/16 21:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.96 2019/12/15 20:30:56 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.97 2020/03/16 21:20:11 pgoyette Ex
 MODULE(MODULE_CLASS_VFS, null, "layerfs");
 
 VFS_PROTOS(nullfs);
+
+static struct sysctllog *nullfs_sysctl_log;
 
 int
 nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
@@ -236,22 +238,6 @@ struct vfsops nullfs_vfsops = {
 	.vfs_opv_descs = nullfs_vnodeopv_descs
 };
 
-SYSCTL_SETUP(nullfs_sysctl_setup, "nullfs sysctl")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "null",
-	    SYSCTL_DESCR("Loopback file system"),
-	    NULL, 0, NULL, 0,
-	    CTL_VFS, 9, CTL_EOL);
-	/*
-	 * XXX the "9" above could be dynamic, thereby eliminating
-	 * one more instance of the "number to vfs" mapping problem,
-	 * but "9" is the order as taken from sys/mount.h
-	 */
-}
-
 static int
 null_modcmd(modcmd_t cmd, void *arg)
 {
@@ -262,11 +248,23 @@ null_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&nullfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_createv(&nullfs_sysctl_log, 0, NULL, NULL,
+		    CTLFLAG_PERMANENT,
+		    CTLTYPE_NODE, "null",
+		    SYSCTL_DESCR("Loopback file system"),
+		    NULL, 0, NULL, 0,
+		    CTL_VFS, 9, CTL_EOL);
+		/*
+		 * XXX the "9" above could be dynamic, thereby eliminating
+		 * one more instance of the "number to vfs" mapping problem,
+		 * but "9" is the order as taken from sys/mount.h
+		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&nullfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_teardown(&nullfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

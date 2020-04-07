@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -71,6 +71,10 @@ XfValidateCrossReference (
     ACPI_PARSE_OBJECT       *Op,
     const ACPI_OPCODE_INFO  *OpInfo,
     ACPI_NAMESPACE_NODE     *Node);
+
+static ACPI_PARSE_OBJECT *
+XfGetParentMethod (
+    ACPI_PARSE_OBJECT       *Op);
 
 static BOOLEAN
 XfObjectExists (
@@ -270,6 +274,41 @@ XfCheckFieldRange (
 
 /*******************************************************************************
  *
+ * FUNCTION:    XfGetParentMethod
+ *
+ * PARAMETERS:  Op                      - Parse Op to be checked
+ *
+ * RETURN:      Control method Op if found. NULL otherwise
+ *
+ * DESCRIPTION: Find the control method parent of a parse op. Returns NULL if
+ *              the input Op is not within a control method.
+ *
+ ******************************************************************************/
+
+static ACPI_PARSE_OBJECT *
+XfGetParentMethod (
+    ACPI_PARSE_OBJECT       *Op)
+{
+    ACPI_PARSE_OBJECT       *NextOp;
+
+
+    NextOp = Op->Asl.Parent;
+    while (NextOp)
+    {
+        if (NextOp->Asl.AmlOpcode == AML_METHOD_OP)
+        {
+            return (NextOp);
+        }
+
+        NextOp = NextOp->Asl.Parent;
+    }
+
+    return (NULL); /* No parent method found */
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    XfNamespaceLocateBegin
  *
  * PARAMETERS:  ASL_WALK_CALLBACK
@@ -392,7 +431,7 @@ XfNamespaceLocateBegin (
     {
         /* Find parent method Op */
 
-        NextOp = UtGetParentMethodOp (Op);
+        NextOp = XfGetParentMethod (Op);
         if (!NextOp)
         {
             return_ACPI_STATUS (AE_OK);
@@ -429,7 +468,7 @@ XfNamespaceLocateBegin (
     {
         /* Find parent method Op */
 
-        NextOp = UtGetParentMethodOp (Op);
+        NextOp = XfGetParentMethod (Op);
         if (!NextOp)
         {
             return_ACPI_STATUS (AE_OK);
@@ -667,10 +706,10 @@ XfNamespaceLocateBegin (
          * same method or outside of any method, this is a forward reference
          * and should be reported as a compiler error.
          */
-        DeclarationParentMethod = UtGetParentMethodNode (Node);
-        ReferenceParentMethod = UtGetParentMethodOp (Op);
+        DeclarationParentMethod = UtGetParentMethod (Node);
+        ReferenceParentMethod = XfGetParentMethod (Op);
 
-        /* case 1: declaration and reference are both outside of method */
+        /* case 1: declaration and refrence are both outside of method */
 
         if (!ReferenceParentMethod && !DeclarationParentMethod)
         {
@@ -1191,8 +1230,8 @@ XfNamespaceLocateEnd (
  *                                      execution of A)
  *
  * NOTES:
- *      A null pointer returned by either UtGetParentMethodOp or
- *      UtGetParentMethodNode indicates that the parameter object is not
+ *      A null pointer returned by either XfGetParentMethod or
+ *      UtGetParentMethod indicates that the parameter object is not
  *      within a control method.
  *
  *      Five cases are handled: Case(Op, Node)
@@ -1225,8 +1264,8 @@ XfValidateCrossReference (
      * 1) Search upwards in parse tree for owner of the referencing object
      * 2) Search upwards in namespace to find the owner of the referenced object
      */
-    ReferencingMethodOp = UtGetParentMethodOp (Op);
-    ReferencedMethodNode = UtGetParentMethodNode (Node);
+    ReferencingMethodOp = XfGetParentMethod (Op);
+    ReferencedMethodNode = UtGetParentMethod (Node);
 
     if (!ReferencingMethodOp && !ReferencedMethodNode)
     {

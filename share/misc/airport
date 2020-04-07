@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.69 2020/03/04 14:59:00 maya Exp $
+#	$NetBSD: airport,v 1.67 2017/09/15 19:20:11 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -2149,7 +2149,7 @@ ESW:Easton State Airport, WA, USA
 ETB:West Bend Municipal Airport, WI, USA
 ETD:Etadunna, South Australia, Australia
 ETE:Genda Wuha, Ethiopia
-ETM:Eilat, Israel
+ETH:Elat (Hozman), Israel
 ETN:Eastland Municipal Airport, TX, USA
 ETS:Enterprise Municipal Airport, AL, USA
 ETZ:Metz/Nancy (Lorraine), France
@@ -4466,7 +4466,6 @@ LUU:Laura, Queensland, Australia
 LUV:Langgur/Tual, Indonesia
 LUW:Luwuk, Indonesia
 LUX:Luxembourg (Findel), Luxembourg
-LUZ:Lublin (Swidnik), Poland
 LVA:Laval, France
 LVB:Santana do Livramento, RS, Brazil
 LVD:Lime Village Airport, AK, USA
@@ -8413,7 +8412,6 @@ WMC:Winnemucca, NV, USA
 WMD:Mandabe, Madagascar
 WME:Warramboor, Western Australia, Australia
 WMH:Mountain Home (Baxter County), AR, USA
-WMI:Warsaw (Nowy Dwor Mazowiecki), Poland
 WMK:Meyers Chuck (Seaplane Base), AK, USA
 WML:Malaimbandy, Madagascar
 WMN:Maroantsetra, Madagascar

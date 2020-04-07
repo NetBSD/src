@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.38 2020/03/25 17:06:18 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.37 2019/04/26 21:40:28 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.38 $"
+#ident          "GENERIC-$Revision: 1.37 $"
 
 maxusers	8
 
@@ -100,6 +100,7 @@ file-system 	OVERLAY		# overlay file system
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
@@ -428,6 +429,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
+pseudo-device	nsmb			# experimental - SMB requester
 
 include "dev/veriexec.config"
 

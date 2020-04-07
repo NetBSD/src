@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.217 2020/03/29 17:13:47 christos Exp $
+# $NetBSD: mi,v 1.216 2019/10/15 18:33:57 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1602,9 +1602,6 @@
 ./usr/share/examples/racoon/roadwarrior/server/phase1-down.sh	misc-obsolete		obsolete
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf		misc-netutil-examples	share
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf-radius	misc-netutil-examples	share
-./usr/share/examples/rpcapd/rpcapd.inetd.conf	misc-netutil-examples	share
-./usr/share/examples/rpcapd/rpcapd.socket	misc-netutil-examples	share
-./usr/share/examples/rpcapd/rpcapd@.service	misc-netutil-examples	share
 ./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples	use_inet6,share
 ./usr/share/examples/slip/slip.login		misc-slip-examples	share
 ./usr/share/examples/smbfs/dot.nsmbrc		misc-sysutil-examples	share

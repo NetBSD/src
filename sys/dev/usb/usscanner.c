@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.48 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.46 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.48 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.46 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -711,7 +711,7 @@ usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		xs = arg;
 
 		DPRINTFN(8, ("%s: usscanner_scsipi_request: %d:%d "
-		    "xs=%p cmd=0x%02x datalen=%d (quirks=%#x, poll=%d)\n",
+		    "xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
 		    device_xname(sc->sc_dev),
 		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun,
 		    xs, xs->cmd->opcode, xs->datalen,

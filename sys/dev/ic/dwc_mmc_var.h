@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_var.h,v 1.14 2020/03/20 17:07:17 skrll Exp $ */
+/* $NetBSD: dwc_mmc_var.h,v 1.13 2020/01/23 23:53:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -45,7 +45,6 @@ struct dwc_mmc_softc {
 	u_int sc_clock_freq;
 	u_int sc_bus_width;
 	bool sc_card_inited;
-	u_int sc_verid;
 
 	void *sc_ih;
 	kmutex_t sc_lock;

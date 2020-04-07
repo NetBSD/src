@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.187 2020/03/17 18:31:38 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.184 2020/02/23 15:46:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.187 2020/03/17 18:31:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.184 2020/02/23 15:46:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -172,23 +172,15 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 	pg->offset = off;
 	pg->uobject = uobj;
 
-	if (UVM_OBJ_IS_VNODE(uobj) && uobj->uo_npages == 0) {
-		struct vnode *vp = (struct vnode *)uobj;
-		mutex_enter(vp->v_interlock);
-		vp->v_iflag |= VI_PAGES;
-		mutex_exit(vp->v_interlock);
+	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
+	if (flags & UVM_PGA_ZERO) {
+		uvm_pagezero(pg);
 	}
 
 	if (radix_tree_insert_node(&uobj->uo_pages, off >> PAGE_SHIFT,
 	    pg) != 0) {
 		pool_cache_put(&pagecache, pg);
 		return NULL;
-	}
-	uobj->uo_npages++;
-
-	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
-	if (flags & UVM_PGA_ZERO) {
-		uvm_pagezero(pg);
 	}
 
 	/*
@@ -202,6 +194,8 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 		TAILQ_INSERT_TAIL(&vmpage_lruqueue, pg, pageq.queue);
 		mutex_exit(&vmpage_lruqueue_lock);
 	}
+
+	uobj->uo_npages++;
 
 	return pg;
 }
@@ -219,12 +213,8 @@ uvm_pagefree(struct vm_page *pg)
 
 	KASSERT(rw_write_held(uobj->vmobjlock));
 
-	mutex_enter(&pg->interlock);
-	if (pg->pqflags & PQ_WANTED) {
-		pg->pqflags &= ~PQ_WANTED;
+	if (pg->flags & PG_WANTED)
 		wakeup(pg);
-	}
-	mutex_exit(&pg->interlock);
 
 	uobj->uo_npages--;
 	pg2 = radix_tree_remove_node(&uobj->uo_pages, pg->offset >> PAGE_SHIFT);
@@ -235,13 +225,6 @@ uvm_pagefree(struct vm_page *pg)
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
 		mutex_exit(&vmpage_lruqueue_lock);
 		atomic_dec_uint(&vmpage_onqueue);
-	}
-
-	if (UVM_OBJ_IS_VNODE(uobj) && uobj->uo_npages == 0) {
-		struct vnode *vp = (struct vnode *)uobj;
-		mutex_enter(vp->v_interlock);
-		vp->v_iflag &= ~VI_PAGES;
-		mutex_exit(vp->v_interlock);
 	}
 
 	mutex_destroy(&pg->interlock);
@@ -686,39 +669,12 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			continue;
 
 		KASSERT(pg->flags & PG_BUSY);
-		if (pg->flags & PG_RELEASED) {
+		if (pg->flags & PG_WANTED)
+			wakeup(pg);
+		if (pg->flags & PG_RELEASED)
 			uvm_pagefree(pg);
-		} else {
-			pg->flags &= ~PG_BUSY;
-			uvm_pagelock(pg);
-			uvm_pagewakeup(pg);
-			uvm_pageunlock(pg);
-		}
-	}
-}
-
-void
-uvm_pagewait(struct vm_page *pg, krwlock_t *lock, const char *wmesg)
-{
-
-	KASSERT(rw_lock_held(lock));
-	KASSERT((pg->flags & PG_BUSY) != 0);
-
-	mutex_enter(&pg->interlock);
-	pg->pqflags |= PQ_WANTED;
-	rw_exit(lock);
-	UVM_UNLOCK_AND_WAIT(pg, &pg->interlock, false, wmesg, 0);
-}
-
-void
-uvm_pagewakeup(struct vm_page *pg)
-{
-
-	KASSERT(mutex_owned(&pg->interlock));
-
-	if ((pg->pqflags & PQ_WANTED) != 0) {
-		pg->pqflags &= ~PQ_WANTED;
-		wakeup(pg);
+		else
+			pg->flags &= ~(PG_WANTED|PG_BUSY);
 	}
 }
 

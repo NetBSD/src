@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.51 2020/03/30 06:56:38 ryo Exp $	*/
+/*	$NetBSD: search.c,v 1.49 2019/07/23 10:18:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.51 2020/03/30 06:56:38 ryo Exp $");
+__RCSID("$NetBSD: search.c,v 1.49 2019/07/23 10:18:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -162,7 +162,7 @@ libedit_private int
 c_hmatch(EditLine *el, const wchar_t *str)
 {
 #ifdef SDEBUG
-	(void) fprintf(el->el_errfile, "match `%ls' with `%ls'\n",
+	(void) fprintf(el->el_errfile, "match `%s' with `%s'\n",
 	    el->el_search.patbuf, str);
 #endif /* SDEBUG */
 
@@ -182,17 +182,20 @@ c_setpat(EditLine *el)
 		    (size_t)(EL_CURSOR(el) - el->el_line.buffer);
 		if (el->el_search.patlen >= EL_BUFSIZ)
 			el->el_search.patlen = EL_BUFSIZ - 1;
-		(void) wcsncpy(el->el_search.patbuf, el->el_line.buffer,
-		    el->el_search.patlen);
-		el->el_search.patbuf[el->el_search.patlen] = '\0';
+		if (el->el_search.patlen != 0) {
+			(void) wcsncpy(el->el_search.patbuf, el->el_line.buffer,
+			    el->el_search.patlen);
+			el->el_search.patbuf[el->el_search.patlen] = '\0';
+		} else
+			el->el_search.patlen = wcslen(el->el_search.patbuf);
 	}
 #ifdef SDEBUG
 	(void) fprintf(el->el_errfile, "\neventno = %d\n",
 	    el->el_history.eventno);
-	(void) fprintf(el->el_errfile, "patlen = %ld\n", el->el_search.patlen);
-	(void) fprintf(el->el_errfile, "patbuf = \"%ls\"\n",
+	(void) fprintf(el->el_errfile, "patlen = %d\n", el->el_search.patlen);
+	(void) fprintf(el->el_errfile, "patbuf = \"%s\"\n",
 	    el->el_search.patbuf);
-	(void) fprintf(el->el_errfile, "cursor %ld lastchar %ld\n",
+	(void) fprintf(el->el_errfile, "cursor %d lastchar %d\n",
 	    EL_CURSOR(el) - el->el_line.buffer,
 	    el->el_line.lastchar - el->el_line.buffer);
 #endif
@@ -570,9 +573,8 @@ cv_repeat_srch(EditLine *el, wint_t c)
 {
 
 #ifdef SDEBUG
-	static ct_buffer_t conv;
-	(void) fprintf(el->el_errfile, "dir %d patlen %ld patbuf %s\n",
-	    c, el->el_search.patlen, ct_encode_string(el->el_search.patbuf, &conv));
+	(void) fprintf(el->el_errfile, "dir %d patlen %d patbuf %s\n",
+	    c, el->el_search.patlen, ct_encode_string(el->el_search.patbuf));
 #endif
 
 	el->el_state.lastcmd = (el_action_t) c;	/* Hack to stop c_setpat */

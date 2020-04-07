@@ -16,8 +16,9 @@ use OpenSSL::Test qw/:DEFAULT data_file/;
 
 setup("test_bn");
 
-my @files = qw( bnexp.txt bnmod.txt bnmul.txt bnshift.txt bnsum.txt bngcd.txt );
-
+my @files = (
+    "bnexp.txt", "bnmod.txt", "bnmul.txt", "bnshift.txt", "bnsum.txt"
+    );
 plan tests => 1 + scalar(@files);
 
 foreach my $f ( @files ) {

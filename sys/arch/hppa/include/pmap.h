@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.40 2020/03/14 14:05:42 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.39 2020/02/24 20:42:18 ad Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -167,11 +167,10 @@ pmap_deactivate(struct lwp *l)
 	/* Nothing. */
 }
 
-static inline bool
+static inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
-	return false;
 }
 
 static inline int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.130 2020/03/10 03:49:56 christos Exp $ */
+/*	$NetBSD: cpu.h,v 1.129 2019/12/29 21:09:27 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -456,6 +456,16 @@ void kgdb_panic(void);
 /* emul.c */
 int	fixalign(struct lwp *, struct trapframe64 *);
 int	emulinstr(vaddr_t, struct trapframe64 *);
+
+#else /* _KERNEL */
+
+/*
+ * XXX: provide some definitions for crash(8), probably can share
+ */
+#if defined(_KMEMUSER)
+#define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
+#define curlwp		curcpu()->ci_curlwp
+#endif
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */

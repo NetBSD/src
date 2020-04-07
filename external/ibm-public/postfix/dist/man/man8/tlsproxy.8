@@ -1,4 +1,4 @@
-.\"	$NetBSD: tlsproxy.8,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: tlsproxy.8,v 1.2 2017/02/14 01:16:44 christos Exp $
 .\"
 .TH TLSPROXY 8 
 .ad
@@ -14,12 +14,11 @@ Postfix TLS proxy
 .SH DESCRIPTION
 .ad
 .fi
-The \fBtlsproxy\fR(8) server implements a two\-way TLS proxy. It
-is used by the \fBpostscreen\fR(8) server to talk SMTP\-over\-TLS
+The \fBtlsproxy\fR(8) server implements a server\-side TLS
+proxy. It is used by \fBpostscreen\fR(8) to talk SMTP\-over\-TLS
 with remote SMTP clients that are not whitelisted (including
-clients whose whitelist status has expired), and by the
-\fBsmtp\fR(8) client to support TLS connection reuse, but it
-should also work for non\-SMTP protocols.
+clients whose whitelist status has expired),
+but it should also work for non\-SMTP protocols.
 
 Although one \fBtlsproxy\fR(8) process can serve multiple
 sessions at the same time, it is a good idea to allow the
@@ -59,8 +58,7 @@ can be run chrooted at fixed low privilege.
 .SH DIAGNOSTICS
 .ad
 .fi
-Problems and transactions are logged to \fBsyslogd\fR(8)
-or \fBpostlogd\fR(8).
+Problems and transactions are logged to \fBsyslogd\fR(8).
 .SH "CONFIGURATION PARAMETERS"
 .na
 .nf
@@ -73,98 +71,11 @@ reload\fR" to speed up a change.
 
 The text below provides only a parameter summary. See
 \fBpostconf\fR(5) for more details including examples.
-.SH "STARTTLS GLOBAL CONTROLS"
+.SH "STARTTLS SUPPORT CONTROLS"
 .na
 .nf
 .ad
 .fi
-The following settings are global and therefore cannot be
-overruled by information specified in a \fBtlsproxy\fR(8)
-client request.
-.IP "\fBtls_append_default_CA (no)\fR"
-Append the system\-supplied default Certification Authority
-certificates to the ones specified with *_tls_CApath or *_tls_CAfile.
-.IP "\fBtls_daemon_random_bytes (32)\fR"
-The number of pseudo\-random bytes that an \fBsmtp\fR(8) or \fBsmtpd\fR(8)
-process requests from the \fBtlsmgr\fR(8) server in order to seed its
-internal pseudo random number generator (PRNG).
-.IP "\fBtls_high_cipherlist (see 'postconf -d' output)\fR"
-The OpenSSL cipherlist for "high" grade ciphers.
-.IP "\fBtls_medium_cipherlist (see 'postconf -d' output)\fR"
-The OpenSSL cipherlist for "medium" or higher grade ciphers.
-.IP "\fBtls_low_cipherlist (see 'postconf -d' output)\fR"
-The OpenSSL cipherlist for "low" or higher grade ciphers.
-.IP "\fBtls_export_cipherlist (see 'postconf -d' output)\fR"
-The OpenSSL cipherlist for "export" or higher grade ciphers.
-.IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
-The OpenSSL cipherlist for "NULL" grade ciphers that provide
-authentication without encryption.
-.IP "\fBtls_eecdh_strong_curve (prime256v1)\fR"
-The elliptic curve used by the Postfix SMTP server for sensibly
-strong
-ephemeral ECDH key exchange.
-.IP "\fBtls_eecdh_ultra_curve (secp384r1)\fR"
-The elliptic curve used by the Postfix SMTP server for maximally
-strong
-ephemeral ECDH key exchange.
-.IP "\fBtls_disable_workarounds (see 'postconf -d' output)\fR"
-List or bit\-mask of OpenSSL bug work\-arounds to disable.
-.IP "\fBtls_preempt_cipherlist (no)\fR"
-With SSLv3 and later, use the Postfix SMTP server's cipher
-preference order instead of the remote client's cipher preference
-order.
-.PP
-Available in Postfix version 2.9 and later:
-.IP "\fBtls_legacy_public_key_fingerprints (no)\fR"
-A temporary migration aid for sites that use certificate
-\fIpublic\-key\fR fingerprints with Postfix 2.9.0..2.9.5, which use
-an incorrect algorithm.
-.PP
-Available in Postfix version 2.11\-3.1:
-.IP "\fBtls_dane_digest_agility (on)\fR"
-Configure RFC7671 DANE TLSA digest algorithm agility.
-.IP "\fBtls_dane_trust_anchor_digest_enable (yes)\fR"
-Enable support for RFC 6698 (DANE TLSA) DNS records that contain
-digests of trust\-anchors with certificate usage "2".
-.PP
-Available in Postfix version 2.11 and later:
-.IP "\fBtlsmgr_service_name (tlsmgr)\fR"
-The name of the \fBtlsmgr\fR(8) service entry in master.cf.
-.PP
-Available in Postfix version 3.0 and later:
-.IP "\fBtls_session_ticket_cipher (Postfix >= 3.0: aes\-256\-cbc, Postfix < 3.0: aes\-128\-cbc)\fR"
-Algorithm used to encrypt RFC5077 TLS session tickets.
-.IP "\fBopenssl_path (openssl)\fR"
-The location of the OpenSSL command line program \fBopenssl\fR(1).
-.PP
-Available in Postfix version 3.2 and later:
-.IP "\fBtls_eecdh_auto_curves (see 'postconf -d' output)\fR"
-The prioritized list of elliptic curves supported by the Postfix
-SMTP client and server.
-.PP
-Available in Postfix version 3.4 and later:
-.IP "\fBtls_server_sni_maps (empty)\fR"
-Optional lookup tables that map names received from remote SMTP
-clients via the TLS Server Name Indication (SNI) extension to the
-appropriate keys and certificate chains.
-.PP
-Available in Postfix 3.5, 3.4.6, 3.3.5, 3.2.10, 3.1.13 and later:
-.IP "\fBtls_fast_shutdown_enable (yes)\fR"
-A workaround for implementations that hang Postfix while shutting
-down a TLS session, until Postfix times out.
-.SH "STARTTLS SERVER CONTROLS"
-.na
-.nf
-.ad
-.fi
-These settings are clones of Postfix SMTP server settings.
-They allow \fBtlsproxy\fR(8) to load the same certificate
-and private key information as the Postfix SMTP server,
-before dropping privileges, so that the key files can be
-kept read\-only for root. These settings can currently not
-be overruled by information in a \fBtlsproxy\fR(8) client
-request, but that limitation may be removed in a future
-version.
 .IP "\fBtlsproxy_tls_CAfile ($smtpd_tls_CAfile)\fR"
 A file containing (PEM format) CA certificates of root CAs
 trusted to sign either remote SMTP client certificates or intermediate
@@ -199,11 +110,11 @@ should use with export\-grade EDH ciphers.
 File with the Postfix \fBtlsproxy\fR(8) server DSA private key in PEM
 format.
 .IP "\fBtlsproxy_tls_eccert_file ($smtpd_tls_eccert_file)\fR"
-File with the Postfix \fBtlsproxy\fR(8) server ECDSA certificate in PEM
-format.
+File with the Postfix \fBtlsproxy\fR(8) server ECDSA certificate in
+PEM format.
 .IP "\fBtlsproxy_tls_eckey_file ($smtpd_tls_eckey_file)\fR"
-File with the Postfix \fBtlsproxy\fR(8) server ECDSA private key in PEM
-format.
+File with the Postfix \fBtlsproxy\fR(8) server ECDSA private key in
+PEM format.
 .IP "\fBtlsproxy_tls_eecdh_grade ($smtpd_tls_eecdh_grade)\fR"
 The Postfix \fBtlsproxy\fR(8) server security grade for ephemeral
 elliptic\-curve Diffie\-Hellman (EECDH) key exchange.
@@ -239,76 +150,10 @@ client certificate in order to allow TLS connections to proceed.
 The SMTP TLS security level for the Postfix \fBtlsproxy\fR(8) server;
 when a non\-empty value is specified, this overrides the obsolete
 parameters smtpd_use_tls and smtpd_enforce_tls.
-.IP "\fBtlsproxy_tls_chain_files ($smtpd_tls_chain_files)\fR"
-Files with the Postfix \fBtlsproxy\fR(8) server keys and certificate
-chains in PEM format.
-.SH "STARTTLS CLIENT CONTROLS"
-.na
-.nf
-.ad
-.fi
-These settings are clones of Postfix SMTP client settings.
-They allow \fBtlsproxy\fR(8) to load the same certificate
-and private key information as the Postfix SMTP client,
-before dropping privileges, so that the key files can be
-kept read\-only for root. Some settings may be overruled by
-information in a \fBtlsproxy\fR(8) client request.
 .PP
-Available in Postfix version 3.4 and later:
-.IP "\fBtlsproxy_client_CAfile ($smtp_tls_CAfile)\fR"
-A file containing CA certificates of root CAs trusted to sign
-either remote TLS server certificates or intermediate CA certificates.
-.IP "\fBtlsproxy_client_CApath ($smtp_tls_CApath)\fR"
-Directory with PEM format Certification Authority certificates
-that the Postfix \fBtlsproxy\fR(8) client uses to verify a remote TLS
-server certificate.
-.IP "\fBtlsproxy_client_chain_files ($smtp_tls_chain_files)\fR"
-Files with the Postfix \fBtlsproxy\fR(8) client keys and certificate
-chains in PEM format.
-.IP "\fBtlsproxy_client_cert_file ($smtp_tls_cert_file)\fR"
-File with the Postfix \fBtlsproxy\fR(8) client RSA certificate in PEM
-format.
-.IP "\fBtlsproxy_client_key_file ($smtp_tls_key_file)\fR"
-File with the Postfix \fBtlsproxy\fR(8) client RSA private key in PEM
-format.
-.IP "\fBtlsproxy_client_dcert_file ($smtp_tls_dcert_file)\fR"
-File with the Postfix \fBtlsproxy\fR(8) client DSA certificate in PEM
-format.
-.IP "\fBtlsproxy_client_dkey_file ($smtp_tls_dkey_file)\fR"
-File with the Postfix \fBtlsproxy\fR(8) client DSA private key in PEM
-format.
-.IP "\fBtlsproxy_client_eccert_file ($smtp_tls_eccert_file)\fR"
-File with the Postfix \fBtlsproxy\fR(8) client ECDSA certificate in PEM
-format.
-.IP "\fBtlsproxy_client_eckey_file ($smtp_tls_eckey_file)\fR"
-File with the Postfix \fBtlsproxy\fR(8) client ECDSA private key in PEM
-format.
-.IP "\fBtlsproxy_client_fingerprint_digest ($smtp_tls_fingerprint_digest)\fR"
-The message digest algorithm used to construct remote TLS server
-certificate fingerprints.
-.IP "\fBtlsproxy_client_loglevel ($smtp_tls_loglevel)\fR"
-Enable additional Postfix \fBtlsproxy\fR(8) client logging of TLS
-activity.
-.IP "\fBtlsproxy_client_loglevel_parameter (smtp_tls_loglevel)\fR"
-The name of the parameter that provides the tlsproxy_client_loglevel
-value.
-.IP "\fBtlsproxy_client_scert_verifydepth ($smtp_tls_scert_verifydepth)\fR"
-The verification depth for remote TLS server certificates.
-.IP "\fBtlsproxy_client_security_level ($smtp_tls_security_level)\fR"
-The default TLS security level for the Postfix \fBtlsproxy\fR(8)
-client.
-.IP "\fBtlsproxy_client_policy_maps ($smtp_tls_policy_maps)\fR"
-Optional lookup tables with the Postfix \fBtlsproxy\fR(8) client TLS
-security policy by next\-hop destination.
-.IP "\fBtlsproxy_client_use_tls ($smtp_use_tls)\fR"
-Opportunistic mode: use TLS when a remote server announces TLS
-support.
-.IP "\fBtlsproxy_client_enforce_tls ($smtp_enforce_tls)\fR"
-Enforcement mode: require that SMTP servers use TLS encryption.
-.IP "\fBtlsproxy_client_per_site ($smtp_tls_per_site)\fR"
-Optional lookup tables with the Postfix \fBtlsproxy\fR(8) client TLS
-usage policy by next\-hop destination and by remote TLS server
-hostname.
+Available in Postfix version 2.11 and later:
+.IP "\fBtlsmgr_service_name (tlsmgr)\fR"
+The name of the \fBtlsmgr\fR(8) service entry in master.cf.
 .SH "OBSOLETE STARTTLS SUPPORT CONTROLS"
 .na
 .nf
@@ -345,20 +190,15 @@ The process name of a Postfix command or daemon process.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-A prefix that is prepended to the process name in syslog
-records, so that, for example, "smtpd" becomes "prefix/smtpd".
-.PP
-Available in Postfix 3.3 and later:
-.IP "\fBservice_name (read\-only)\fR"
-The master.cf service name of a Postfix daemon process.
+The mail system name that is prepended to the process name in syslog
+records, so that "smtpd" becomes, for example, "postfix/smtpd".
 .SH "SEE ALSO"
 .na
 .nf
 postscreen(8), Postfix zombie blocker
 smtpd(8), Postfix SMTP server
 postconf(5), configuration parameters
-postlogd(8), Postfix logging
-syslogd(8), system logging
+syslogd(5), system logging
 .SH "LICENSE"
 .na
 .nf

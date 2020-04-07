@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rumvar.h,v 1.12 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_rumvar.h,v 1.11 2019/10/05 23:27:20 mrg Exp $	*/
 /*	$OpenBSD: if_rumvar.h,v 1.7 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
@@ -77,8 +77,6 @@ struct rum_softc {
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
-
-	kmutex_t			sc_media_mtx;	/* XXX */
 
 	struct usbd_device *		sc_udev;
 	struct usbd_interface *		sc_iface;

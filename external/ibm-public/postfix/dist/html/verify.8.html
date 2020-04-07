@@ -58,7 +58,7 @@ VERIFY(8)                                                            VERIFY(8)
        warning is logged.
 
 <b>DIAGNOSTICS</b>
-       Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
+       Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>BUGS</b>
        Address verification probe messages add additional traffic to the  mail
@@ -169,13 +169,6 @@ VERIFY(8)                                                            VERIFY(8)
               Detect  that  a message requires SMTPUTF8 support for the speci-
               fied mail origin classes.
 
-       Available in Postfix version 3.2 and later:
-
-       <b><a href="postconf.5.html#enable_idna2003_compatibility">enable_idna2003_compatibility</a> (no)</b>
-              Enable  'transitional'  compatibility   between   IDNA2003   and
-              IDNA2008,  when  converting UTF-8 domain names to/from the ASCII
-              form that is used for DNS lookups.
-
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
               The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
@@ -202,20 +195,15 @@ VERIFY(8)                                                            VERIFY(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A  prefix  that  is  prepended  to  the  process  name in syslog
-              records, so that, for example, "smtpd" becomes "prefix/smtpd".
-
-       Available in Postfix 3.3 and later:
-
-       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
-              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
+              The  mail  system  name that is prepended to the process name in
+              syslog records, so that "smtpd"  becomes,  for  example,  "post-
+              fix/smtpd".
 
 <b>SEE ALSO</b>
        <a href="smtpd.8.html">smtpd(8)</a>, Postfix SMTP server
        <a href="cleanup.8.html">cleanup(8)</a>, enqueue Postfix message
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
-       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
-       syslogd(8), system logging
+       syslogd(5), system logging
 
 <b>README FILES</b>
        <a href="ADDRESS_VERIFICATION_README.html">ADDRESS_VERIFICATION_README</a>, address verification howto

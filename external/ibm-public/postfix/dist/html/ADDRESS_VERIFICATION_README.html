@@ -298,12 +298,6 @@ the same address repeatedly.  </p>
         ...
     # Postfix 2.6 and later privacy feature.
     # <a href="postconf.5.html#unverified_recipient_reject_reason">unverified_recipient_reject_reason</a> = Address lookup failed
-
-    # Postfix 3.2 and earlier workaround.
-    # Do not set <a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a>=no. This prevents Postfix
-    # from saving the recipient address verification result under
-    # the original address, when the address verification probe
-    # message goes through address aliasing or canonical mapping.
 </pre>
 </blockquote>
 
@@ -354,12 +348,6 @@ in forged email.  </p>
     # Note 1: Be sure to read the "<a href="#caching">Caching</a>" section below!
     # Note 2: Avoid hash files here. Use btree or lmdb instead.
     <a href="postconf.5.html#address_verify_map">address_verify_map</a> = <a href="DATABASE_README.html#types">btree</a>:/var/lib/postfix/verify
-
-    # Postfix 3.2 and earlier workaround.
-    # Do not set <a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a>=no. This prevents Postfix
-    # from saving the sender address verification result under the
-    # original address, when the address verification probe message
-    # goes through address aliasing or canonical mapping.
  
 /etc/postfix/sender_access:
     # Don't do this when you handle lots of email.

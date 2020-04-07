@@ -125,9 +125,9 @@ VIRTUAL(8)                                                          VIRTUAL(8)
        over  disk quota. In all other cases, mail for an existing recipient is
        deferred and a warning is logged.
 
-       Problems and transactions are  logged  to  <b>syslogd</b>(8)  or  <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
-       Corrupted  message  files are marked so that the queue manager can move
-       them to the <b>corrupt</b> queue afterwards.
+       Problems and transactions are logged to <b>syslogd</b>(8).  Corrupted  message
+       files are marked so that the queue manager can move them to the <b>corrupt</b>
+       queue afterwards.
 
        Depending on the setting of the <b><a href="postconf.5.html#notify_classes">notify_classes</a></b> parameter, the  postmas-
        ter is notified of bounces and of other trouble.
@@ -205,21 +205,19 @@ VIRTUAL(8)                                                          VIRTUAL(8)
               removed.
 
 <b>RESOURCE AND RATE CONTROLS</b>
-       <b><a href="postconf.5.html#virtual_mailbox_limit">virtual_mailbox_limit</a> (51200000)</b>
-              The maximal size in bytes of an individual <a href="virtual.8.html"><b>virtual</b>(8)</a> mailbox or
-              maildir file, or zero (no limit).
-
-       Implemented in the <a href="qmgr.8.html">qmgr(8)</a> daemon:
-
        <b><a href="postconf.5.html#virtual_destination_concurrency_limit">virtual_destination_concurrency_limit</a>     ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destination_concur</a>-</b>
        <b><a href="postconf.5.html#default_destination_concurrency_limit">rency_limit</a>)</b>
-              The  maximal  number of parallel deliveries to the same destina-
+              The maximal number of parallel deliveries to the  same  destina-
               tion via the virtual message delivery transport.
 
        <b><a href="postconf.5.html#virtual_destination_recipient_limit">virtual_destination_recipient_limit</a>       ($<a href="postconf.5.html#default_destination_recipient_limit">default_destination_recipi</a>-</b>
        <b><a href="postconf.5.html#default_destination_recipient_limit">ent_limit</a>)</b>
-              The maximal number of recipients per  message  for  the  virtual
+              The  maximal  number  of  recipients per message for the virtual
               message delivery transport.
+
+       <b><a href="postconf.5.html#virtual_mailbox_limit">virtual_mailbox_limit</a> (51200000)</b>
+              The maximal size in bytes of an individual <a href="virtual.8.html"><b>virtual</b>(8)</a> mailbox or
+              maildir file, or zero (no limit).
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
@@ -259,37 +257,21 @@ VIRTUAL(8)                                                          VIRTUAL(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A prefix that  is  prepended  to  the  process  name  in  syslog
-              records, so that, for example, "smtpd" becomes "prefix/smtpd".
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              fix/smtpd".
 
        Available in Postfix version 3.0 and later:
 
        <b><a href="postconf.5.html#virtual_delivery_status_filter">virtual_delivery_status_filter</a> ($<a href="postconf.5.html#default_delivery_status_filter">default_delivery_status_filter</a>)</b>
-              Optional  filter for the <a href="virtual.8.html"><b>virtual</b>(8)</a> delivery agent to change the
+              Optional filter for the <a href="virtual.8.html"><b>virtual</b>(8)</a> delivery agent to change  the
               delivery status code or explanatory text of successful or unsuc-
               cessful deliveries.
-
-       Available in Postfix version 3.3 and later:
-
-       <b><a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a> (yes)</b>
-              Enable  support  for  the  original  recipient  address after an
-              address is rewritten to a different address  (for  example  with
-              aliasing or with canonical mapping).
-
-       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
-              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
-
-       Available in Postfix 3.5 and later:
-
-       <b>info_log_address_format (external)</b>
-              The  email  address  form that will be used in non-debug logging
-              (info, warning, etc.).
 
 <b>SEE ALSO</b>
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
        <a href="bounce.8.html">bounce(8)</a>, delivery status reports
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
-       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>README_FILES</b>

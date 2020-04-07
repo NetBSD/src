@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_usb.c,v 1.11 2020/03/25 03:44:45 thorpej Exp $ */
+/* $NetBSD: if_bwfm_usb.c,v 1.10 2020/01/29 06:26:32 thorpej Exp $ */
 /* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.11 2020/03/25 03:44:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.10 2020/01/29 06:26:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.11 2020/03/25 03:44:45 thorpej Exp
 
 #include <net80211/ieee80211_var.h>
 
+#include <dev/firmload.h>
+
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
@@ -50,31 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.11 2020/03/25 03:44:45 thorpej Exp
 
 #include <dev/ic/bwfmvar.h>
 #include <dev/ic/bwfmreg.h>
-
-static const struct bwfm_firmware_selector bwfm_usb_fwtab[] = {
-	BWFM_FW_ENTRY(BRCM_CC_43143_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43143"),
-	
-	BWFM_FW_ENTRY(BRCM_CC_43235_CHIP_ID,
-		      BWFM_FWSEL_REV_EQ(3), "brcmfmac43236b"),
-	BWFM_FW_ENTRY(BRCM_CC_43236_CHIP_ID,
-		      BWFM_FWSEL_REV_EQ(3), "brcmfmac43236b"),
-	BWFM_FW_ENTRY(BRCM_CC_43238_CHIP_ID,
-		      BWFM_FWSEL_REV_EQ(3), "brcmfmac43236b"),
-
-	BWFM_FW_ENTRY(BRCM_CC_43242_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43242a"),
-	
-	BWFM_FW_ENTRY(BRCM_CC_43566_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43569"),
-	BWFM_FW_ENTRY(BRCM_CC_43569_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43569"),
-	
-	BWFM_FW_ENTRY(CY_CC_4373_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4373"),
-
-	BWFM_FW_ENTRY_END
-};
 
 /*
  * Various supported device vendors/products.
@@ -333,13 +310,13 @@ void
 bwfm_usb_attachhook(device_t self)
 {
 	struct bwfm_usb_softc *sc = device_private(self);
-	struct bwfm_softc *bwfm = &sc->sc_sc;
 	struct bwfm_usb_rx_data *data;
+	const char *name = NULL;
 	struct bootrom_id brom;
-	struct bwfm_firmware_context fwctx;
+	firmware_handle_t fwh;
 	usbd_status error;
 	u_char *ucode;
-	size_t ucsize;
+	size_t size;
 	int i;
 
 	/* Read chip id and chip rev to check the firmware. */
@@ -352,41 +329,76 @@ bwfm_usb_attachhook(device_t self)
 	error = usbd_open_pipe(sc->sc_iface, sc->sc_rx_no, USBD_EXCLUSIVE_USE,
 	    &sc->sc_rx_pipeh);
 	if (error != 0) {
-		aprint_error_dev(bwfm->sc_dev, "could not open rx pipe: %s\n",
-		    usbd_errstr(error));
+		printf("%s: could not open rx pipe: %s\n",
+		    DEVNAME(sc), usbd_errstr(error));
 		return;
 	}
 	error = usbd_open_pipe(sc->sc_iface, sc->sc_tx_no, USBD_EXCLUSIVE_USE,
 	    &sc->sc_tx_pipeh);
 	if (error != 0) {
-		aprint_error_dev(bwfm->sc_dev, "could not open tx pipe: %s\n",
-		    usbd_errstr(error));
+		printf("%s: could not open tx pipe: %s\n",
+		    DEVNAME(sc), usbd_errstr(error));
 		return;
 	}
 
 	/* Firmware not yet loaded? */
 	if (sc->sc_chip != BRCMF_POSTBOOT_ID) {
-		bwfm_firmware_context_init(&fwctx,
-		    sc->sc_chip, sc->sc_chiprev, NULL,
-		    BWFM_FWREQ(BWFM_FILETYPE_UCODE));
+		switch (sc->sc_chip)
+		{
+		case BRCM_CC_43143_CHIP_ID:
+			name = "brcmfmac43143.bin";
+			break;
+		case BRCM_CC_43235_CHIP_ID:
+		case BRCM_CC_43236_CHIP_ID:
+		case BRCM_CC_43238_CHIP_ID:
+			if (sc->sc_chiprev == 3)
+				name = "brcmfmac43236b.bin";
+			break;
+		case BRCM_CC_43242_CHIP_ID:
+			name = "brcmfmac43242a.bin";
+			break;
+		case BRCM_CC_43566_CHIP_ID:
+		case BRCM_CC_43569_CHIP_ID:
+			name = "brcmfmac43569.bin";
+			break;
+		default:
+			break;
+		}
 
-		if (!bwfm_firmware_open(bwfm, bwfm_usb_fwtab, &fwctx)) {
-			/* Error message already displayed. */
+		if (name == NULL) {
+			printf("%s: unknown firmware\n", DEVNAME(sc));
 			return;
 		}
 
-		ucode = bwfm_firmware_data(&fwctx, BWFM_FILETYPE_UCODE,
-		    &ucsize);
-		KASSERT(ucode != NULL);
-
-		if (bwfm_usb_load_microcode(sc, ucode, ucsize) != 0) {
-			aprint_error_dev(bwfm->sc_dev,
-			    "could not load microcode\n");
-			bwfm_firmware_close(&fwctx);
+		if (firmware_open("if_bwfm", name, &fwh) != 0) {
+			printf("%s: failed firmware_open of file %s\n",
+			    DEVNAME(sc), name);
+			return;
+		}
+		size = firmware_get_size(fwh);
+		ucode = firmware_malloc(size);
+		if (ucode == NULL) {
+			printf("%s: failed to allocate firmware memory\n",
+			    DEVNAME(sc));
+			firmware_close(fwh);
+			return;
+		}
+		error = firmware_read(fwh, 0, ucode, size);
+		firmware_close(fwh);
+		if (error != 0) {
+			printf("%s: failed to read firmware (error %d)\n",
+			    DEVNAME(sc), error);
+			firmware_free(ucode, size);
 			return;
 		}
 
-		bwfm_firmware_close(&fwctx);
+		if (bwfm_usb_load_microcode(sc, ucode, size) != 0) {
+			printf("%s: could not load microcode\n",
+			    DEVNAME(sc));
+			return;
+		}
+
+		firmware_free(ucode, size);
 
 		for (i = 0; i < 10; i++) {
 			delay(100 * 1000);
@@ -397,13 +409,14 @@ bwfm_usb_attachhook(device_t self)
 		}
 
 		if (le32toh(brom.chip) != BRCMF_POSTBOOT_ID) {
-			aprint_error_dev(bwfm->sc_dev,
-			    "firmware did not start up\n");
+			printf("%s: firmware did not start up\n",
+			    DEVNAME(sc));
 			return;
 		}
 
 		sc->sc_chip = le32toh(brom.chip);
 		sc->sc_chiprev = le32toh(brom.chiprev);
+		printf("%s: firmware loaded\n", DEVNAME(sc));
 	}
 
 	bwfm_usb_dl_cmd(sc, DL_RESETCFG, &brom, sizeof(brom));
@@ -423,9 +436,8 @@ bwfm_usb_attachhook(device_t self)
 		    bwfm_usb_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != 0 && error != USBD_IN_PROGRESS)
-			aprint_error_dev(bwfm->sc_dev,
-			    "could not set up new transfer: %s\n",
-			    usbd_errstr(error));
+			printf("%s: could not set up new transfer: %s\n",
+			    DEVNAME(sc), usbd_errstr(error));
 	}
 }
 

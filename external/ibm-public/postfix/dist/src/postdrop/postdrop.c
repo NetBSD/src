@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -32,8 +32,7 @@
 /*	it can connect to Postfix daemon processes.
 /* DIAGNOSTICS
 /*	Fatal errors: malformed input, I/O error, out of memory. Problems
-/*	are logged to \fBsyslogd\fR(8) or \fBpostlogd\fR(8) and to
-/*	the standard error stream.
+/*	are logged to \fBsyslogd\fR(8) and to the standard error stream.
 /*	When the input is incomplete, or when the process receives a HUP,
 /*	INT, QUIT or TERM signal, the queue file is deleted.
 /* ENVIRONMENT
@@ -59,23 +58,21 @@
 /*	\fBpostconf\fR(5) for more details including examples.
 /* .IP "\fBalternate_config_directories (empty)\fR"
 /*	A list of non-default Postfix configuration directories that may
-/*	be specified with "-c config_directory" on the command line (in the
-/*	case of \fBsendmail\fR(1), with the "-C" option), or via the MAIL_CONFIG
-/*	environment parameter.
+/*	be specified with "-c config_directory" on the command line, or
+/*	via the MAIL_CONFIG environment parameter.
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a privileged Postfix
-/*	process will import from a non-Postfix parent process, or name=value
-/*	environment overrides.
+/*	The list of environment parameters that a Postfix process will
+/*	import from a non-Postfix parent process.
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* .IP "\fBtrigger_timeout (10s)\fR"
 /*	The time limit for sending a trigger to a Postfix daemon (for
 /*	example, the \fBpickup\fR(8) or \fBqmgr\fR(8) daemon).
@@ -89,7 +86,6 @@
 /* SEE ALSO
 /*	sendmail(1), compatibility interface
 /*	postconf(5), configuration parameters
-/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* LICENSE
 /* .ad
@@ -117,6 +113,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <syslog.h>
 #include <errno.h>
 #include <warn_stat.h>
 
@@ -127,6 +124,7 @@
 #include <vstream.h>
 #include <vstring.h>
 #include <msg_vstream.h>
+#include <msg_syslog.h>
 #include <argv.h>
 #include <iostuff.h>
 #include <stringops.h>
@@ -148,7 +146,6 @@
 #include <user_acl.h>
 #include <rec_attr_map.h>
 #include <mail_parm_split.h>
-#include <maillog_client.h>
 
 /* Application-specific. */
 
@@ -189,11 +186,9 @@ static void postdrop_sig(int sig)
     /*
      * This is the fatal error handler. Don't try to do anything fancy.
      * 
-     * To avoid privilege escalation in a set-gid program, Postfix logging
-     * functions must not be called from a user-triggered signal handler,
-     * because Postfix logging functions may allocate memory on the fly (as
-     * does the syslog() library function), and the memory allocator is not
-     * reentrant.
+     * msg_vstream does not allocate memory, but msg_syslog may indirectly in
+     * syslog(), so it should not be called from a user-triggered signal
+     * handler.
      * 
      * Assume atomic signal() updates, even when emulated with sigaction(). We
      * use the in-kernel SIGINT handler address as an atomic variable to
@@ -277,7 +272,7 @@ int     main(int argc, char **argv)
      */
     argv[0] = "postdrop";
     msg_vstream_init(argv[0], VSTREAM_ERR);
-    maillog_client_init(mail_task("postdrop"), MAILLOG_CLIENT_FLAG_NONE);
+    msg_syslog_init(mail_task("postdrop"), LOG_PID, LOG_FACILITY);
     set_mail_conf_str(VAR_PROCNAME, var_procname = mystrdup(argv[0]));
 
     /*
@@ -310,11 +305,16 @@ int     main(int argc, char **argv)
 
     /*
      * Read the global configuration file and extract configuration
-     * information.
+     * information. Some claim that the user should supply the working
+     * directory instead. That might be OK, given that this command needs
+     * write permission in a subdirectory called "maildrop". However we still
+     * need to reliably detect incomplete input, and so we must perform
+     * record-level I/O. With that, we should also take the opportunity to
+     * perform some sanity checks on the input.
      */
     mail_conf_read();
     /* Re-evaluate mail_task() after reading main.cf. */
-    maillog_client_init(mail_task("postdrop"), MAILLOG_CLIENT_FLAG_NONE);
+    msg_syslog_init(mail_task("postdrop"), LOG_PID, LOG_FACILITY);
     get_mail_conf_str_table(str_table);
 
     /*
@@ -331,8 +331,7 @@ int     main(int argc, char **argv)
      * Stop run-away process accidents by limiting the queue file size. This
      * is not a defense against DOS attack.
      */
-    if (ENFORCING_SIZE_LIMIT(var_message_limit)
-	&& get_file_limit() > var_message_limit)
+    if (var_message_limit > 0 && get_file_limit() > var_message_limit)
 	set_file_limit((off_t) var_message_limit);
 
     /*

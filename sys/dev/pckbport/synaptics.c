@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.64 2020/03/31 19:08:19 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.54 2020/02/25 21:41:38 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.64 2020/03/31 19:08:19 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.54 2020/02/25 21:41:38 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ static void pms_sysctl_synaptics(struct sysctllog **);
 static int pms_sysctl_synaptics_verify(SYSCTLFN_ARGS);
 
 /* Controlled by sysctl. */
-static int synaptics_up_down_emul = 3;
+static int synaptics_up_down_emul = 2;
 static int synaptics_up_down_motion_delta = 1;
 static int synaptics_gesture_move = 200;
 static int synaptics_gesture_length = 20;
@@ -852,20 +852,14 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 		return error;
 
 	/* Sanity check the params. */
-	if (node.sysctl_num == synaptics_up_down_emul_nodenum) {
-		if (t < 0 || t > 3)
-			return (EINVAL);
-	} else
-	if (node.sysctl_num == synaptics_two_fingers_emul_nodenum) {
+	if (node.sysctl_num == synaptics_up_down_emul_nodenum ||
+	    node.sysctl_num == synaptics_two_fingers_emul_nodenum) {
 		if (t < 0 || t > 2)
 			return (EINVAL);
 	} else
 	if (node.sysctl_num == synaptics_gesture_length_nodenum ||
 	    node.sysctl_num == synaptics_edge_motion_delta_nodenum ||
-	    node.sysctl_num == synaptics_up_down_motion_delta_nodenum ||
-	    node.sysctl_num == synaptics_max_speed_x_nodenum ||
-	    node.sysctl_num == synaptics_max_speed_y_nodenum ||
-	    node.sysctl_num == synaptics_max_speed_z_nodenum) {
+	    node.sysctl_num == synaptics_up_down_motion_delta_nodenum) {
 		if (t < 0)
 			return (EINVAL);
 	} else
@@ -1098,29 +1092,13 @@ pms_synaptics_parse(struct pms_softc *psc)
 			/* Old style Middle Button. */
 			sp.sp_middle = (psc->packet[0] & PMS_LBUTMASK) ^
 		    	    (psc->packet[3] & PMS_LBUTMASK);
-		} else if (synaptics_up_down_emul != 1) {
-			sp.sp_middle = 0;
-		}
-
-		switch (synaptics_up_down_emul) {
-		case 1:
+		} else if (synaptics_up_down_emul == 1) {
 			/* Do middle button emulation using up/down buttons */
 			sp.sp_middle = sp.sp_up | sp.sp_down;
 			sp.sp_up = sp.sp_down = 0;
-			break;
-		case 3:
-			/* Do left/right button emulation using up/down buttons */
-			sp.sp_left = sp.sp_left | sp.sp_up;
-			sp.sp_right = sp.sp_right | sp.sp_down;
-			sp.sp_up = sp.sp_down = 0;
-			break;
-		default:
-			/*
-			 * Don't do any remapping...
-			 * Z-axis emulation is handled in pms_synaptics_process_packet
-			 */
-			break;
-		}
+		} else
+			sp.sp_middle = 0;
+
 	}
 
 	pms_synaptics_process_packet(psc, &sp);
@@ -1301,12 +1279,19 @@ synaptics_finger_detect(struct synaptics_softc *sc, struct synaptics_packet *sp,
 			fingers = 3;
 			break;
 
+		case SYNAPTICS_WIDTH_PEN:
+			fingers = 1;
+			break;
+
 		default:
 			/*
 			 * The width value can report spurious single-finger
 			 * events after a multi-finger event.
 			 */
-			fingers = sc->prev_fingers <= 1 ? 1 : sc->prev_fingers;
+			if (sc->prev_fingers > 1)
+				fingers = sc->prev_fingers;
+			else
+				fingers = 1;
 			break;
 		}
 	}

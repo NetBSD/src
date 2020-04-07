@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -635,18 +635,13 @@ TrCreateConstantLeafOp (
 
         /* Get a copy of the current time */
 
-        Op->Asl.Value.String = "";
         CurrentTime = time (NULL);
-
         StaticTimeString = ctime (&CurrentTime);
-        if (StaticTimeString)
-        {
-            TimeString = UtLocalCalloc (strlen (StaticTimeString) + 1);
-            strcpy (TimeString, StaticTimeString);
+        TimeString = UtLocalCalloc (strlen (StaticTimeString) + 1);
+        strcpy (TimeString, StaticTimeString);
 
-            TimeString[strlen(TimeString) -1] = 0;  /* Remove trailing newline */
-            Op->Asl.Value.String = TimeString;
-        }
+        TimeString[strlen(TimeString) -1] = 0;  /* Remove trailing newline */
+        Op->Asl.Value.String = TimeString;
         break;
 
     default: /* This would be an internal error */

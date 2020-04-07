@@ -1,4 +1,4 @@
-#	$NetBSD: t_audio.awk,v 1.2 2020/03/25 13:07:04 isaki Exp $
+#	$NetBSD: t_audio.awk,v 1.1 2020/02/11 07:03:16 isaki Exp $
 #
 # Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
 #
@@ -34,7 +34,7 @@ BEGIN {
 	print "h_audio() {"
 	print "	local testname=$1"
 	print "	local outfile=/tmp/t_audio_$testname.$$"
-	print "	$(atf_get_srcdir)/audiotest -ARe $testname > $outfile"
+	print "	$(atf_get_srcdir)/audiotest -AR $testname > $outfile"
 	print "	local retval=$?"
 	print "	# Discard rump outputs..."
 	print "	outmsg=`cat $outfile | grep -v '^\\['`"

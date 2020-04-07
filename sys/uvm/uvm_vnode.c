@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.111 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.107 2020/02/27 22:12:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,13 +45,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.111 2020/03/22 18:32:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.107 2020/02/27 22:12:54 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
 #endif
 
-#include <sys/atomic.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -81,7 +80,6 @@ static void	uvn_alloc_ractx(struct uvm_object *);
 static void	uvn_detach(struct uvm_object *);
 static int	uvn_get(struct uvm_object *, voff_t, struct vm_page **, int *,
 			int, vm_prot_t, int, int);
-static void	uvn_markdirty(struct uvm_object *);
 static int	uvn_put(struct uvm_object *, voff_t, voff_t, int);
 static void	uvn_reference(struct uvm_object *);
 
@@ -98,7 +96,6 @@ const struct uvm_pagerops uvm_vnodeops = {
 	.pgo_detach = uvn_detach,
 	.pgo_get = uvn_get,
 	.pgo_put = uvn_put,
-	.pgo_markdirty = uvn_markdirty,
 };
 
 /*
@@ -156,6 +153,7 @@ uvn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
 	return error;
 }
 
+
 /*
  * uvn_get: get pages (synchronously) from backing store
  *
@@ -196,25 +194,6 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 	return error;
 }
 
-/*
- * uvn_markdirty: called when the object gains first dirty page
- *
- * => uobj must be write locked.
- */
-
-static void
-uvn_markdirty(struct uvm_object *uobj)
-{
-	struct vnode *vp = (struct vnode *)uobj;
-
-	KASSERT(rw_write_held(uobj->vmobjlock));
-
-	mutex_enter(vp->v_interlock);
-	if ((vp->v_iflag & VI_ONWORKLST) == 0) {
-		vn_syncer_add_to_worklist(vp, filedelay);
-	}
-	mutex_exit(vp->v_interlock);
-}
 
 /*
  * uvn_findpages:
@@ -287,15 +266,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 	UVMHIST_LOG(ubchist, "vp %#jx off 0x%jx", (uintptr_t)uobj, offset,
 	    0, 0);
 
-	/*
-	 * NOBUSY must come with NOWAIT and NOALLOC.  if NOBUSY is
-	 * specified, this may be called with a reader lock.
-	 */
-
-	KASSERT(rw_lock_held(uobj->vmobjlock));
-	KASSERT((flags & UFP_NOBUSY) == 0 || (flags & UFP_NOWAIT) != 0);
-	KASSERT((flags & UFP_NOBUSY) == 0 || (flags & UFP_NOALLOC) != 0);
-	KASSERT((flags & UFP_NOBUSY) != 0 || rw_write_held(uobj->vmobjlock));
+	KASSERT(rw_write_held(uobj->vmobjlock));
 
 	if (*pgp != NULL) {
 		UVMHIST_LOG(ubchist, "dontcare", 0,0,0,0);
@@ -343,7 +314,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 					return 0;
 				}
 				rw_exit(uobj->vmobjlock);
-				uvm_wait("uvnfp1");
+				uvm_wait("uvn_fp1");
 				uvm_page_array_clear(a);
 				rw_enter(uobj->vmobjlock, RW_WRITER);
 				continue;
@@ -364,9 +335,11 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				UVMHIST_LOG(ubchist, "nowait",0,0,0,0);
 				goto skip;
 			}
+			pg->flags |= PG_WANTED;
 			UVMHIST_LOG(ubchist, "wait %#jx (color %ju)",
 			    (uintptr_t)pg, VM_PGCOLOR(pg), 0, 0);
-			uvm_pagewait(pg, uobj->vmobjlock, "uvnfp2");
+			UVM_UNLOCK_AND_WAIT_RW(pg, uobj->vmobjlock, 0,
+					       "uvn_fp2", 0);
 			uvm_page_array_clear(a);
 			rw_enter(uobj->vmobjlock, RW_WRITER);
 			continue;
@@ -388,10 +361,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 		}
 
 		/* mark the page BUSY and we're done. */
-		if ((flags & UFP_NOBUSY) == 0) {
-			pg->flags |= PG_BUSY;
-			UVM_PAGE_OWN(pg, "uvn_findpage");
-		}
+		pg->flags |= PG_BUSY;
+		UVM_PAGE_OWN(pg, "uvn_findpage");
 		UVMHIST_LOG(ubchist, "found %#jx (color %ju)",
 		    (uintptr_t)pg, VM_PGCOLOR(pg), 0, 0);
 		uvm_page_array_advance(a);
@@ -493,14 +464,12 @@ bool
 uvn_text_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;
-	int iflag;
 
 	/*
 	 * v_interlock is not held here, but VI_EXECMAP is only ever changed
 	 * with the vmobjlock held too.
 	 */
-	iflag = atomic_load_relaxed(&vp->v_iflag);
-	return (iflag & VI_EXECMAP) != 0;
+	return (vp->v_iflag & VI_EXECMAP) != 0;
 }
 
 bool
@@ -509,6 +478,20 @@ uvn_clean_p(struct uvm_object *uobj)
 
 	return radix_tree_empty_tagged_tree_p(&uobj->uo_pages,
             UVM_PAGE_DIRTY_TAG);
+}
+
+bool
+uvn_needs_writefault_p(struct uvm_object *uobj)
+{
+	struct vnode *vp = (struct vnode *)uobj;
+
+	/*
+	 * v_interlock is not held here, but VI_WRMAP and VI_WRMAPDIRTY are
+	 * only ever changed with the vmobjlock held too, or when it's known
+	 * the uvm_object contains no pages (VI_PAGES clear).
+	 */
+	return uvn_clean_p(uobj) ||
+	    (vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP;
 }
 
 static void

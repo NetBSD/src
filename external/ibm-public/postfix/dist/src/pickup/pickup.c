@@ -1,4 +1,4 @@
-/*	$NetBSD: pickup.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: pickup.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -29,8 +29,7 @@
 /*	what files it opens for reading, and does not actually touch any data
 /*	that is sent to its public service endpoint.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8)
-/*	or \fBpostlogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* BUGS
 /*	The \fBpickup\fR(8) daemon copies mail from file to the \fBcleanup\fR(8)
 /*	daemon.  It could avoid message copying overhead by sending a file
@@ -81,17 +80,8 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
-/* .PP
-/*	Available in Postfix 3.3 and later:
-/* .IP "\fBservice_name (read-only)\fR"
-/*	The master.cf service name of a Postfix daemon process.
-/* .PP
-/*	Available in Postfix 3.5 and later:
-/* .IP "\fBinfo_log_address_format (external)\fR"
-/*	The email address form that will be used in non-debug logging
-/*	(info, warning, etc.).
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* SEE ALSO
 /*	cleanup(8), message canonicalization
 /*	sendmail(1), Sendmail-compatible interface
@@ -99,7 +89,6 @@
 /*	postconf(5), configuration parameters
 /*	master(5), generic daemon options
 /*	master(8), process manager
-/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* LICENSE
 /* .ad
@@ -158,7 +147,6 @@
 #include <rec_attr_map.h>
 #include <mail_version.h>
 #include <smtputf8.h>
-#include <info_log_addr_form.h>
 
 /* Single-threaded server skeleton. */
 
@@ -372,12 +360,12 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
 
     if (MAIL_IS_REQUEUED(info)) {
 	msg_info("%s: uid=%d from=<%s> orig_id=%s", info->id,
-	     (int) info->st.st_uid, info_log_addr_form_sender(info->sender),
+		 (int) info->st.st_uid, info->sender,
 		 ((name = strrchr(info->path, '/')) != 0 ?
 		  name + 1 : info->path));
     } else {
 	msg_info("%s: uid=%d from=<%s>", info->id,
-	    (int) info->st.st_uid, info_log_addr_form_sender(info->sender));
+		 (int) info->st.st_uid, info->sender);
     }
 
     /*

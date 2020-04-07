@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap_db.c,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mkmap_db.c,v 1.1.1.2 2013/01/02 18:58:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -115,7 +115,7 @@ static MKMAP *mkmap_db_before_open(const char *path,
      * files performance degrades rapidly unless the memory pool is O(file
      * size).
      * 
-     * For "btree" files performance is good with sorted input even for small
+     * For "btree" files peformance is good with sorted input even for small
      * memory pools, but with random input degrades rapidly unless the memory
      * pool is O(file size).
      * 

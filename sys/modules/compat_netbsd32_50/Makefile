@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2020/03/12 15:02:29 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.5 2019/09/26 02:01:03 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,7 @@
 
 KMOD=	compat_netbsd32_50
 
-CPPFLAGS+=	-DNTP
+CPPFLAGS+=	-DNTP -DQUOTA
 CPPFLAGS+=	-DCOMPAT_NETBSD32
 CPPFLAGS+=	-DCOMPAT_50 -DCOMPAT_60 -DCOMPAT_70 -DCOMPAT_80
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist

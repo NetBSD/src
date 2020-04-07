@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_conf.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -13,9 +13,6 @@
 /*	void	mail_conf_suck()
 /*
 /*	void	mail_conf_flush()
-/*
-/*	void	mail_conf_checkdir(config_dir)
-/*	const char *config_dir;
 /*
 /*	void	mail_conf_update(name, value)
 /*	const char *name;
@@ -33,18 +30,8 @@
 /*	const char *mail_conf_lookup_eval(name)
 /*	const char *name;
 /* DESCRIPTION
-/*	mail_conf_suck() reads the global Postfix configuration
-/*	file, and stores its values into a global configuration
-/*	dictionary. When the configuration directory name is not
-/*	trusted, this function requires that the directory name is
-/*	authorized with the alternate_config_directories setting
-/*	in the default main.cf file.
-/*
-/*	This function requires that all configuration directory
-/*	override mechanisms set the MAIL_CONFIG environment variable,
-/*	even if the override was specified via the command line.
-/*	This reduces the number of pathways that need to be checked
-/*	for possible security attacks.
+/*	mail_conf_suck() reads the global Postfix configuration file, and
+/*	stores its values into a global configuration dictionary.
 /*
 /*	mail_conf_read() invokes mail_conf_suck() and assigns the values
 /*	to global variables by calling mail_params_init().
@@ -52,10 +39,6 @@
 /*	mail_conf_flush() discards the global configuration dictionary.
 /*	This is needed in programs that read main.cf multiple times, to
 /*	ensure that deleted parameter settings are handled properly.
-/*
-/*	mail_conf_checkdir() verifies that configuration directory
-/*	is authorized through settings in the default main.cf file,
-/*	and terminates the program if it is not.
 /*
 /*	The following routines are wrappers around the generic dictionary
 /*	access routines.
@@ -101,11 +84,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -133,7 +111,7 @@
 
 /* mail_conf_checkdir - authorize non-default directory */
 
-void mail_conf_checkdir(const char *config_dir)
+static void mail_conf_checkdir(const char *config_dir)
 {
     VSTRING *buf;
     VSTREAM *fp;
@@ -167,10 +145,9 @@ void mail_conf_checkdir(const char *config_dir)
     vstring_free(buf);
 
     if (found == 0) {
-	msg_error("unauthorized configuration directory name: %s", config_dir);
-	msg_fatal("specify \"%s = %s\" or \"%s = %s\" in %s",
-		  VAR_CONFIG_DIRS, config_dir,
-		  VAR_MULTI_CONF_DIRS, config_dir, path);
+	msg_error("untrusted configuration directory name: %s", config_dir);
+	msg_fatal("specify \"%s = %s\" in %s",
+		  VAR_CONFIG_DIRS, config_dir, path);
     }
     myfree(path);
 }
@@ -191,16 +168,6 @@ void    mail_conf_suck(void)
     char   *path;
 
     /*
-     * The code below requires that all configuration directory override
-     * mechanisms set the CONF_ENV_PATH environment variable, even if the
-     * override was specified via the command line. This reduces the number
-     * of pathways that need to be checked for possible security attacks.
-     * 
-     * Note: this code necessarily runs before cleanenv() can enforce the
-     * import_environment scrubbing policy.
-     */
-
-    /*
      * Permit references to unknown configuration variable names. We rely on
      * a separate configuration checking tool to spot misspelled names and
      * other kinds of trouble. Enter the configuration directory into the
@@ -214,11 +181,12 @@ void    mail_conf_suck(void)
     set_mail_conf_str(VAR_CONFIG_DIR, var_config_dir);
 
     /*
-     * If the configuration directory name comes from an untrusted source,
-     * require that it is listed in the default main.cf file.
+     * If the configuration directory name comes from a different trust
+     * domain, require that it is listed in the default main.cf file.
      */
     if (strcmp(var_config_dir, DEF_CONFIG_DIR) != 0	/* non-default */
-	&& unsafe())				/* untrusted env and cli */
+	&& safe_getenv(CONF_ENV_PATH) == 0	/* non-default */
+	&& geteuid() != 0)			/* untrusted */
 	mail_conf_checkdir(var_config_dir);
     path = concatenate(var_config_dir, "/", "main.cf", (char *) 0);
     if (dict_load_file_xt(CONFIG_DICT, path) == 0)

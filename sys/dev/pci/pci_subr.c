@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.222 2020/03/21 17:09:29 thorpej Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.221 2020/01/25 08:13:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.222 2020/03/21 17:09:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.221 2020/01/25 08:13:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2566,7 +2566,9 @@ pci_conf_print_ea_cap(const pcireg_t *regs, int capoff)
 		printf("        range: 0x%016" PRIx64 "-0x%016" PRIx64
 			    "\n", base, base + offset);
 
-		entoff += 4 + (4 * entry_size);
+		entoff += 4;
+		entoff += baseis64 ? 8 : 4;
+		entoff += offsetis64 ? 8 : 4;
 	}
 }
 

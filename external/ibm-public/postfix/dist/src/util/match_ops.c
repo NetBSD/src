@@ -1,4 +1,4 @@
-/*	$NetBSD: match_ops.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: match_ops.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -60,11 +60,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -301,8 +296,7 @@ int     match_hostaddr(MATCH_LIST *list, const char *addr, const char *pattern)
      * everything into to binary form, and to do the comparison there.
      */
     saved_patt = mystrdup(pattern);
-    err = cidr_match_parse(&match_info, saved_patt, CIDR_MATCH_TRUE,
-			   (VSTRING *) 0);
+    err = cidr_match_parse(&match_info, saved_patt, (VSTRING *) 0);
     myfree(saved_patt);
     if (err != 0) {
 	list->error = DICT_ERR_RETRY;

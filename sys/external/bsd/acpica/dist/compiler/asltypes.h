@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -273,36 +273,11 @@ typedef struct asl_error_msg
 
 typedef struct asl_expected_message
 {
-    UINT32                      MessageId;
-    char                        *MessageIdStr;
-    BOOLEAN                     MessageReceived;
+    UINT32                       MessageId;
+    char                         *MessageIdStr;
+    BOOLEAN                      MessageReceived;
 
 } ASL_EXPECTED_MESSAGE;
-
-/*
- * An entry in the line-based expected messages list
- *
- * TBD: might be possible to merge this with ASL_EXPECTED_MESSAGE
- */
-typedef struct asl_expected_msg_node
-{
-    struct asl_expected_msg_node    *Next;
-    UINT32                          MessageId;
-    char                            *MessageIdStr;
-    struct asl_location_node        *LocationList;
-
-} ASL_EXPECTED_MSG_NODE;
-
-typedef struct asl_location_node
-{
-    struct asl_location_node    *Next;
-    char                        *Filename;
-    UINT32                      LineNumber;
-    UINT32                      Column;
-    UINT32                      LogicalByteOffset;
-    BOOLEAN                     MessageReceived;
-
-} ASL_LOCATION_NODE;
 
 
 /* An entry in the listing file stack (for include files) */

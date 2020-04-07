@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_server.h,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_server.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -46,7 +46,6 @@
 #define MAIL_SERVER_IN_FLOW_DELAY	20
 #define MAIL_SERVER_SLOW_EXIT	21
 #define MAIL_SERVER_BOUNCE_INIT	22
-#define MAIL_SERVER_RETIRE_ME	23
 
 typedef void (*MAIL_SERVER_INIT_FN) (char *, char **);
 typedef int (*MAIL_SERVER_LOOP_FN) (char *, char **);
@@ -77,7 +76,6 @@ typedef void (*MAIL_SERVER_SLOW_EXIT_FN) (char *, char **);
 #define CA_MAIL_SERVER_IN_FLOW_DELAY	MAIL_SERVER_IN_FLOW_DELAY
 #define CA_MAIL_SERVER_SLOW_EXIT(v)	MAIL_SERVER_SLOW_EXIT, CHECK_VAL(MAIL_SERVER, MAIL_SERVER_SLOW_EXIT_FN, (v))
 #define CA_MAIL_SERVER_BOUNCE_INIT(v, w) MAIL_SERVER_BOUNCE_INIT, CHECK_PTR(MAIL_SERVER, char, (v)), CHECK_PPTR(MAIL_SERVER, char, (w))
-#define CA_MAIL_SERVER_RETIRE_ME	MAIL_SERVER_RETIRE_ME
 
 CHECK_VAL_HELPER_DCL(MAIL_SERVER, MAIL_SERVER_SLOW_EXIT_FN);
 CHECK_VAL_HELPER_DCL(MAIL_SERVER, MAIL_SERVER_LOOP_FN);
@@ -127,14 +125,6 @@ extern NORETURN trigger_server_main(int, char **, TRIGGER_SERVER_FN,...);
 
 #define TRIGGER_BUF_SIZE	1024
 
- /*
-  * dgram_server.c
-  */
-typedef void (*DGRAM_SERVER_FN) (char *, ssize_t, char *, char **);
-extern NORETURN dgram_server_main(int, char **, DGRAM_SERVER_FN,...);
-
-#define DGRAM_BUF_SIZE	4096
-
 /* LICENSE
 /* .ad
 /* .fi
@@ -144,9 +134,4 @@ extern NORETURN dgram_server_main(int, char **, DGRAM_SERVER_FN,...);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/

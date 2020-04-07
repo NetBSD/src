@@ -67,11 +67,11 @@ get worse before things improve, if ever. Without a tool like postscreen(8)
 that keeps the zombies away, Postfix would be spending most of its resources
 not receiving email.
 
-The main challenge for postscreen(8) is to make an is-a-zombie decision based
-on a single measurement. This is necessary because many zombies try to fly
-under the radar and avoid spamming the same site repeatedly. Once postscreen(8)
-decides that a client is not-a-zombie, it whitelists the client temporarily to
-avoid further delays for legitimate mail.
+The main challenge for postscreen(8) is to make an is-it-a-zombie decision
+based on a single measurement. This is necessary because many zombies try to
+fly under the radar and avoid spamming the same site repeatedly. Once
+postscreen(8) decides that a client is not-a-zombie, it whitelists the client
+temporarily to avoid further delays for legitimate mail.
 
 Zombies have challenges too: they have only a limited amount of time to deliver
 spam before their IP address becomes blacklisted. To speed up spam deliveries,
@@ -82,14 +82,14 @@ continue sending mail even when the server tells them to go away.
 postscreen(8) uses a variety of measurements to recognize zombies. First,
 postscreen(8) determines if the remote SMTP client IP address is blacklisted.
 Second, postscreen(8) looks for protocol compromises that are made to speed up
-delivery. These are good indicators for making is-a-zombie decisions based on
-single measurements.
+delivery. These are good indicators for making is-it-a-zombie decisions based
+on single measurements.
 
 postscreen(8) does not inspect message content. Message content can vary from
 one delivery to the next, especially with clients that (also) send legitimate
-email. Content is not a good indicator for making is-a-zombie decisions based
-on single measurements, and that is the problem that postscreen(8) is focused
-on.
+email. Content is not a good indicator for making is-it-a-zombie decisions
+based on single measurements, and that is the problem that postscreen(8) is
+focused on.
 
 GGeenneerraall ooppeerraattiioonn
 
@@ -508,21 +508,15 @@ limit, as specified with the line_length_limit parameter. The session is
 terminated immediately. The "aafftteerr command" portion is logged with Postfix 2.10
 and later.
 
-When an SMTP client makes too many connections at the same time, postscreen(8)
-rejects the connection with a 421 status code and logs:
+When an SMTP client makes too many connections at the same time, or when all
+postscreen(8) ports are busy, postscreen(8) rejects the connection with a 421
+status code and logs:
 
     NNOOQQUUEEUUEE:: rreejjeecctt:: CCOONNNNEECCTT ffrroomm [address]:port:: ttoooo mmaannyy ccoonnnneeccttiioonnss
-
-The postscreen_client_connection_count_limit parameter controls this limit.
-
-When an SMTP client connects after postscreen(8) has reached a connection count
-limit, postscreen(8) rejects the connection with a 421 status code and logs:
-
-    NNOOQQUUEEUUEE:: rreejjeecctt:: CCOONNNNEECCTT ffrroomm [address]:port:: aallll ssccrreeeenniinngg ppoorrttss bbuussyy
     NNOOQQUUEEUUEE:: rreejjeecctt:: CCOONNNNEECCTT ffrroomm [address]:port:: aallll sseerrvveerr ppoorrttss bbuussyy
 
-The postscreen_pre_queue_limit and postscreen_post_queue_limit parameters
-control these limits.
+The postscreen_client_connection_count_limit and postscreen_pre_queue_limit
+parameters control these limits.
 
 WWhheenn aallll tteessttss ssuucccceeeedd
 
@@ -773,7 +767,7 @@ By default, the temporary whitelist is not shared between multiple postscreen
   * A non-persistent memcache: temporary whitelist can be shared between
     postscreen(8) daemons on the same host or different hosts. Disable cache
     cleanup (postscreen_cache_cleanup_interval = 0) in all postscreen(8)
-    daemons because memcache: has no first-next API (but see example 4 below
+    daemons because memcache: does not implement this (but see example 4 below
     for memcache: with persistent backup). This requires Postfix 2.9 or later.
 
         # Example 1: non-persistent memcache: whitelist.

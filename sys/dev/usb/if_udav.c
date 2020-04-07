@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.77 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.74 2020/01/29 06:35:28 thorpej Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.77 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.74 2020/01/29 06:35:28 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -65,15 +65,16 @@ CFATTACH_DECL_NEW(udav, sizeof(struct usbnet), udav_match, udav_attach,
 
 static void udav_chip_init(struct usbnet *);
 
-static unsigned udav_uno_tx_prepare(struct usbnet *, struct mbuf *,
-				    struct usbnet_chain *);
-static void udav_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
-static void udav_uno_stop(struct ifnet *, int);
-static int udav_uno_ioctl(struct ifnet *, u_long, void *);
-static int udav_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
-static int udav_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
-static void udav_uno_mii_statchg(struct ifnet *);
-static int udav_uno_init(struct ifnet *);
+static unsigned udav_tx_prepare(struct usbnet *, struct mbuf *,
+			        struct usbnet_chain *);
+static void udav_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
+static void udav_stop_cb(struct ifnet *, int);
+static int udav_ioctl_cb(struct ifnet *, u_long, void *);
+static int udav_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static int udav_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static void udav_mii_statchg(struct ifnet *);
+static int udav_init(struct ifnet *);
+static void udav_setiff(struct usbnet *);
 static void udav_setiff_locked(struct usbnet *);
 static void udav_reset(struct usbnet *);
 
@@ -131,14 +132,14 @@ static const struct udav_type {
 #define udav_lookup(v, p) ((const struct udav_type *)usb_lookup(udav_devs, v, p))
 
 static const struct usbnet_ops udav_ops = {
-	.uno_stop = udav_uno_stop,
-	.uno_ioctl = udav_uno_ioctl,
-	.uno_read_reg = udav_uno_mii_read_reg,
-	.uno_write_reg = udav_uno_mii_write_reg,
-	.uno_statchg = udav_uno_mii_statchg,
-	.uno_tx_prepare = udav_uno_tx_prepare,
-	.uno_rx_loop = udav_uno_rx_loop,
-	.uno_init = udav_uno_init,
+	.uno_stop = udav_stop_cb,
+	.uno_ioctl = udav_ioctl_cb,
+	.uno_read_reg = udav_mii_read_reg,
+	.uno_write_reg = udav_mii_write_reg,
+	.uno_statchg = udav_mii_statchg,
+	.uno_tx_prepare = udav_tx_prepare,
+	.uno_rx_loop = udav_rx_loop,
+	.uno_init = udav_init,
 };
 
 /* Probe */
@@ -237,18 +238,15 @@ udav_attach(device_t parent, device_t self, void *aux)
 	/* Not supported yet. */
 	un->un_ed[USBNET_ENDPT_INTR] = 0;
 
-	usbnet_lock_core(un);
-	usbnet_busy(un);
-
 // 	/* reset the adapter */
 // 	udav_reset(un);
 
 	usbnet_attach(un, "udavdet");
 
 	/* Get Ethernet Address */
+	usbnet_lock_mii(un);
 	err = udav_csr_read(un, UDAV_PAR, un->un_eaddr, ETHER_ADDR_LEN);
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
+	usbnet_unlock_mii(un);
 	if (err) {
 		aprint_error_dev(self, "read MAC address failed\n");
 		return;
@@ -367,7 +365,7 @@ udav_csr_read(struct usbnet *un, int offset, void *buf, int len)
 	usb_device_request_t req;
 	usbd_status err;
 
-	usbnet_isowned_core(un);
+	usbnet_isowned_mii(un);
 	KASSERT(!usbnet_isdying(un));
 
 	DPRINTFN(0x200,
@@ -398,7 +396,7 @@ udav_csr_write(struct usbnet *un, int offset, void *buf, int len)
 	usb_device_request_t req;
 	usbd_status err;
 
-	usbnet_isowned_core(un);
+	usbnet_isowned_mii(un);
 	KASSERT(!usbnet_isdying(un));
 
 	DPRINTFN(0x200,
@@ -427,7 +425,7 @@ udav_csr_read1(struct usbnet *un, int offset)
 {
 	uint8_t val = 0;
 
-	usbnet_isowned_core(un);
+	usbnet_isowned_mii(un);
 
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(un->un_dev), __func__));
@@ -445,7 +443,7 @@ udav_csr_write1(struct usbnet *un, int offset, unsigned char ch)
 	usb_device_request_t req;
 	usbd_status err;
 
-	usbnet_isowned_core(un);
+	usbnet_isowned_mii(un);
 	KASSERT(!usbnet_isdying(un));
 
 	DPRINTFN(0x200,
@@ -469,7 +467,7 @@ udav_csr_write1(struct usbnet *un, int offset, unsigned char ch)
 }
 
 static int
-udav_uno_init(struct ifnet *ifp)
+udav_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 	struct mii_data * const mii = usbnet_mii(un);
@@ -478,10 +476,10 @@ udav_uno_init(struct ifnet *ifp)
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
-	usbnet_lock_core(un);
+	usbnet_lock(un);
 
 	if (usbnet_isdying(un)) {
-		usbnet_unlock_core(un);
+		usbnet_unlock(un);
 		return EIO;
 	}
 
@@ -489,7 +487,7 @@ udav_uno_init(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_RUNNING)
 		usbnet_stop(un, ifp, 1);
 
-	usbnet_busy(un);
+	usbnet_lock_mii_un_locked(un);
 
 	memcpy(eaddr, CLLADDR(ifp->if_sadl), sizeof(eaddr));
 	udav_csr_write(un, UDAV_PAR, eaddr, ETHER_ADDR_LEN);
@@ -517,22 +515,21 @@ udav_uno_init(struct ifnet *ifp)
 	UDAV_SETBIT(un, UDAV_GPCR, UDAV_GPCR_GEP_CNTL0);
 	UDAV_CLRBIT(un, UDAV_GPR, UDAV_GPR_GEPIO0);
 
+	usbnet_unlock_mii_un_locked(un);
+	usbnet_unlock(un);
+
 	if (mii && (rc = mii_mediachg(mii)) == ENXIO)
 		rc = 0;
 
-	if (rc != 0) {
-		usbnet_unbusy(un);
-		usbnet_unlock_core(un);
+	if (rc != 0)
 		return rc;
-	}
 
+	usbnet_lock(un);
 	if (usbnet_isdying(un))
 		rc = EIO;
 	else
 		rc = usbnet_init_rx_tx(un);
-
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
+	usbnet_unlock(un);
 
 	return rc;
 }
@@ -540,7 +537,7 @@ udav_uno_init(struct ifnet *ifp)
 static void
 udav_reset(struct usbnet *un)
 {
-    	usbnet_isowned_core(un);
+    	usbnet_isowned(un);
 
 	if (usbnet_isdying(un))
 		return;
@@ -553,7 +550,7 @@ udav_reset(struct usbnet *un)
 static void
 udav_chip_init(struct usbnet *un)
 {
-	usbnet_isowned_core(un);
+	usbnet_lock_mii_un_locked(un);
 
 	/* Select PHY */
 #if 1
@@ -578,6 +575,8 @@ udav_chip_init(struct usbnet *un)
 		delay(10);	/* XXX */
 	}
 	delay(10000);		/* XXX */
+
+	usbnet_unlock_mii_un_locked(un);
 }
 
 #define UDAV_BITS	6
@@ -597,7 +596,7 @@ udav_setiff_locked(struct usbnet *un)
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
-	usbnet_isowned_core(un);
+	usbnet_isowned_mii(un);
 
 	if (usbnet_isdying(un))
 		return;
@@ -648,11 +647,22 @@ allmulti:
 	udav_csr_write(un, UDAV_MAR, hashes, sizeof(hashes));
 }
 
+static void
+udav_setiff(struct usbnet *un)
+{
+	usbnet_lock_mii(un);
+	udav_setiff_locked(un);
+	usbnet_unlock_mii(un);
+}
+
+
 static unsigned
-udav_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+udav_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	int total_len;
 	uint8_t *buf = c->unc_buf;
+
+	usbnet_isowned_tx(un);
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
@@ -680,7 +690,7 @@ udav_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 }
 
 static void
-udav_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
+udav_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet *ifp = usbnet_ifp(un);
 	uint8_t *buf = c->unc_buf;
@@ -722,31 +732,26 @@ udav_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 }
 
 static int
-udav_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+udav_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct usbnet * const un = ifp->if_softc;
-
-	usbnet_lock_core(un);
-	usbnet_busy(un);
 
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		udav_setiff_locked(un);
+		udav_setiff(un);
 		break;
 	default:
 		break;
 	}
 
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
 
 	return 0;
 }
 
 /* Stop the adapter and free any mbufs allocated to the RX and TX lists. */
 static void
-udav_uno_stop(struct ifnet *ifp, int disable)
+udav_stop_cb(struct ifnet *ifp, int disable)
 {
 	struct usbnet * const un = ifp->if_softc;
 
@@ -756,9 +761,11 @@ udav_uno_stop(struct ifnet *ifp, int disable)
 }
 
 static int
-udav_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
+udav_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint8_t data[2];
+
+	usbnet_isowned_mii(un);
 
 	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x\n",
 		 device_xname(un->un_dev), __func__, phy, reg));
@@ -802,9 +809,11 @@ udav_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 }
 
 static int
-udav_uno_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
+udav_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	uint8_t data[2];
+
+	usbnet_isowned_mii(un);
 
 	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x val=0x%04hx\n",
 		 device_xname(un->un_dev), __func__, phy, reg, val));
@@ -845,7 +854,7 @@ udav_uno_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 }
 
 static void
-udav_uno_mii_statchg(struct ifnet *ifp)
+udav_mii_statchg(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 	struct mii_data * const mii = usbnet_mii(un);

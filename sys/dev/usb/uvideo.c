@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.56 2020/03/14 02:35:34 christos Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.54 2020/02/08 07:38:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.56 2020/03/14 02:35:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.54 2020/02/08 07:38:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1595,7 +1595,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 		return 0;
 	default:
 		/* should never get here */
-		DPRINTF(("uvideo_stream_start_xfer: unknown xfer type %#x\n",
+		DPRINTF(("uvideo_stream_start_xfer: unknown xfer type 0x%x\n",
 			 vs->vs_xfer_type));
 		return EINVAL;
 	}
@@ -1682,7 +1682,7 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 		return 0;
 	default:
 		/* should never get here */
-		DPRINTF(("uvideo_stream_stop_xfer: unknown xfer type %#x\n",
+		DPRINTF(("uvideo_stream_stop_xfer: unknown xfer type 0x%x\n",
 			 vs->vs_xfer_type));
 		return EINVAL;
 	}

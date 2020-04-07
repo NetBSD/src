@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.7 2020/03/27 23:02:33 bad Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.5 2020/01/27 07:48:59 thorpej Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -249,13 +249,6 @@
 		<key>u-boot-pkg</key>
 		<string>nanopi-neo2</string>
 	</dict>
-	<key>friendlyarm,nanopi-r1</key>
-	<dict>
-		<key>description</key>
-		<string>FriendlyARM NanoPi R1</string>
-		<key>u-boot-pkg</key>
-		<string>nanopi-r1</string>
-	</dict>
 
 	<key>merrii,a31-hummingbird</key>
 	<dict>
@@ -360,20 +353,6 @@
 		<string>Xunlong Orange Pi One</string>
 		<key>u-boot-pkg</key>
 		<string>orangepi-one</string>
-	</dict>
-	<key>xunlong,orangepi-lite</key>
-	<dict>
-		<key>description</key>
-		<string>Xunlong Orange Pi Lite</string>
-		<key>u-boot-pkg</key>
-		<string>orangepi-lite</string>
-	</dict>
-	<key>xunlong,orangepi-lite2</key>
-	<dict>
-		<key>description</key>
-		<string>Xunlong Orange Pi Lite2</string>
-		<key>u-boot-pkg</key>
-		<string>orangepi-lite2</string>
 	</dict>
 	<key>xunlong,orangepi-plus2e</key>
 	<dict>

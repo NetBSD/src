@@ -50,7 +50,7 @@ TLSMGR(8)                                                            TLSMGR(8)
        Postfix-owned <b><a href="postconf.5.html#data_directory">data_directory</a></b>, and a warning is logged.
 
 <b>DIAGNOSTICS</b>
-       Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
+       Problems and transactions are logged to the syslog daemon.
 
 <b>BUGS</b>
        There is no automatic means to limit the number of entries in  the  TLS
@@ -146,13 +146,9 @@ TLSMGR(8)                                                            TLSMGR(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A prefix that  is  prepended  to  the  process  name  in  syslog
-              records, so that, for example, "smtpd" becomes "prefix/smtpd".
-
-       Available in Postfix 3.3 and later:
-
-       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
-              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              fix/smtpd".
 
 <b>SEE ALSO</b>
        <a href="smtp.8.html">smtp(8)</a>, Postfix SMTP client
@@ -160,7 +156,6 @@ TLSMGR(8)                                                            TLSMGR(8)
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="master.5.html">master(5)</a>, generic daemon options
        <a href="master.8.html">master(8)</a>, process manager
-       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>README FILES</b>

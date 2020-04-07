@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.76 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.74 2020/01/15 17:55:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.76 2020/03/22 18:32:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.74 2020/01/15 17:55:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,14 +180,12 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.poolpages = pool_totalpages();
 	u.countsyncone = cpu_count_get(CPU_COUNT_SYNC_ONE);
 	u.countsyncall = cpu_count_get(CPU_COUNT_SYNC_ALL);
-	u.anonunknown = cpu_count_get(CPU_COUNT_ANONUNKNOWN);
-	u.anonclean = cpu_count_get(CPU_COUNT_ANONCLEAN);
-	u.anondirty = cpu_count_get(CPU_COUNT_ANONDIRTY);
-	u.fileunknown = cpu_count_get(CPU_COUNT_FILEUNKNOWN);
-	u.fileclean = cpu_count_get(CPU_COUNT_FILECLEAN);
-	u.filedirty = cpu_count_get(CPU_COUNT_FILEDIRTY);
-	u.fltup = cpu_count_get(CPU_COUNT_FLTUP);
-	u.fltnoup = cpu_count_get(CPU_COUNT_FLTNOUP);
+	u.anonunknown = (int)cpu_count_get(CPU_COUNT_ANONUNKNOWN);
+	u.anonclean = (int)cpu_count_get(CPU_COUNT_ANONCLEAN);
+	u.anondirty = (int)cpu_count_get(CPU_COUNT_ANONDIRTY);
+	u.fileunknown = (int)cpu_count_get(CPU_COUNT_FILEUNKNOWN);
+	u.fileclean = (int)cpu_count_get(CPU_COUNT_FILECLEAN);
+	u.filedirty = (int)cpu_count_get(CPU_COUNT_FILEDIRTY);
 
 	node = *rnode;
 	node.sysctl_data = &u;

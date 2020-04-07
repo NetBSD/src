@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.58 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.57 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.58 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.57 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,14 +136,10 @@ exphyattach(device_t parent, device_t self, void *aux)
 	}
 	sc->mii_flags |= MIIF_NOISOLATE;
 
-	mii_lock(mii);
-
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
-
-	mii_unlock(mii);
 
 	mii_phy_add_media(sc);
 }
@@ -156,8 +152,6 @@ exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	/* We can't isolate the 3Com PHY, so it has to be the only one! */
 	if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 		panic("exphy_service: can't isolate 3Com PHY");
-
-	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -196,8 +190,6 @@ exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 static void
 exphy_reset(struct mii_softc *sc)
 {
-
-	KASSERT(mii_locked(sc->mii_pdata));
 
 	mii_phy_reset(sc);
 

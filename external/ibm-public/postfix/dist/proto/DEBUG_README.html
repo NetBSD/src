@@ -71,20 +71,9 @@ debugger</a>
 
 <h2><a name="logging">Look for obvious signs of trouble</a></h2>
 
-<p> Postfix logs all failed and successful deliveries to a logfile. </p>
-
-<ul>
-
-<li> <p> When Postfix uses syslog logging (the default), the file
-is usually called /var/log/maillog, /var/log/mail, or something
-similar; the exact pathname is configured in a file called
-/etc/syslog.conf, /etc/rsyslog.conf, or something similar. </p>
-
-<li> <p> When Postfix uses its own logging system (see MAILLOG_README),
-the location of the logfile is configured with the Postfix maillog_file
-parameter. </p>
-
-</ul>
+<p> Postfix logs all failed and successful deliveries to a logfile.
+The file is usually called /var/log/maillog or /var/log/mail; the
+exact pathname is defined in the /etc/syslog.conf file. </p>
 
 <p> When Postfix does not receive or deliver mail, the first order
 of business is to look for errors that prevent Postfix from working

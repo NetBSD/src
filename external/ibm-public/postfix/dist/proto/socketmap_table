@@ -25,7 +25,7 @@
 # .fi
 #	Socketmaps use a simple protocol: the client sends one
 #	request, and the server sends one reply.  Each request and
-#	each reply are sent as one netstring object.
+#	reply are sent as one netstring object.
 # REQUEST FORMAT
 # .ad
 # .fi

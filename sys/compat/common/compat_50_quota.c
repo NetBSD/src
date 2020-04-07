@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_quota.c,v 1.3 2020/03/09 00:42:36 pgoyette Exp $ */
+/*	$NetBSD: compat_50_quota.c,v 1.2 2020/01/22 23:41:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_quota.c,v 1.3 2020/03/09 00:42:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_50_quota.c,v 1.2 2020/01/22 23:41:29 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -164,7 +164,7 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 	return error;
 }
 
-MODULE(MODULE_CLASS_EXEC, compat_50_quota, "compat_50,ufs");
+MODULE(MODULE_CLASS_EXEC, compat_50_quota, "compat_50");
 
 static int
 compat_50_quota_modcmd(modcmd_t cmd, void *arg)

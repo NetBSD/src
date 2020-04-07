@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.195 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.194 2020/02/23 15:46:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.195 2020/03/22 18:32:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.194 2020/02/23 15:46:41 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1260,19 +1260,6 @@ nfs_getpages(void *v)
 	bool v3 = NFS_ISV3(vp);
 	bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	bool locked = (ap->a_flags & PGO_LOCKED) != 0;
-	bool nobusy = (ap->a_flags & PGO_NOBUSY);
-
-	/*
-	 * XXX NFS wants to modify the pages below and that can't be done
-	 * with a read lock.  We can't upgrade the lock here because it
-	 * would screw up UVM fault processing.  Have NFS take the I/O
-	 * path.
-	 */
-	if (locked && rw_lock_op(uobj->vmobjlock) == RW_READER) {
-		*ap->a_count = 0;
-		ap->a_m[ap->a_centeridx] = NULL;
-		return EBUSY;
-	}
 
 	/*
 	 * If we are not locked we are not really using opgs,
@@ -1354,8 +1341,7 @@ nfs_getpages(void *v)
 				 * available and put back original pgs array.
 				 */
 
-				if (nobusy == false)
-					uvm_page_unbusy(pgs, npages);
+				uvm_page_unbusy(pgs, npages);
 				*ap->a_count = 0;
 				memcpy(pgs, opgs,
 				    npages * sizeof(struct vm_pages *));

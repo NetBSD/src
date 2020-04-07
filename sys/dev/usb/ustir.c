@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.46 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: ustir.c,v 1.44 2019/12/01 12:47:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.46 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.44 2019/12/01 12:47:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -463,7 +463,7 @@ ustir_periodic(struct ustir_softc *sc)
 			    "status register read failed: %s\n",
 			     usbd_errstr(err));
 		} else {
-			DPRINTFN(10, ("%s: status register = %#x\n",
+			DPRINTFN(10, ("%s: status register = 0x%x\n",
 				      __func__,
 				      (unsigned int)regval));
 			if (sc->sc_direction == udir_output &&
@@ -1163,7 +1163,7 @@ Static int ustir_ioctl(void *h, u_long cmd, void *addr, int flag, struct lwp *l)
 
 		err = ustir_read_reg(sc, regnum, &regdata);
 
-		DPRINTFN(10, ("%s: regget(%u) = %#x\n", __func__,
+		DPRINTFN(10, ("%s: regget(%u) = 0x%x\n", __func__,
 			      regnum, (unsigned int)regdata));
 
 		*(unsigned int *)addr = regdata;
@@ -1185,7 +1185,7 @@ Static int ustir_ioctl(void *h, u_long cmd, void *addr, int flag, struct lwp *l)
 			break;
 		}
 
-		DPRINTFN(10, ("%s: regset(%u, %#x)\n", __func__,
+		DPRINTFN(10, ("%s: regset(%u, 0x%x)\n", __func__,
 			      regnum, (unsigned int)regdata));
 
 		err = ustir_write_reg(sc, regnum, regdata);

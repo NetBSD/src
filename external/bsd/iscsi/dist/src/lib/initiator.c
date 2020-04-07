@@ -794,7 +794,6 @@ discovery_phase(int target, strv_t *svp)
 		}
 	} else {
 		/* the user has asked for a specific target - find it */
-		ptr = NULL;
 		for (i = 0 ; i < svp->c ; i += 2) {
 			if (strcmp(g_target[target].iqnwanted,
 					svp->v[i]) == 0) {
@@ -804,7 +803,7 @@ discovery_phase(int target, strv_t *svp)
 				break;
 			}
 		}
-		if (ptr == NULL) {
+		if (i >= svp->c) {
 			iscsi_err(__FILE__, __LINE__,
 				"SendTargets failed - target `%s' not found\n",
 				g_target[target].iqnwanted);

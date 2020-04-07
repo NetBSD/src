@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.75 2020/03/15 14:19:04 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.72 2019/08/28 07:11:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,27 +38,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.75 2020/03/15 14:19:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.72 2019/08/28 07:11:19 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/bus.h>
-#include <sys/cpu.h>
-#include <sys/device.h>		/* for usbdivar.h */
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-#include <sys/once.h>
 #include <sys/queue.h>
-#include <sys/systm.h>
+#include <sys/device.h>		/* for usbdivar.h */
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/once.h>
+
+#ifdef DIAGNOSTIC
+#include <sys/proc.h>
+#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>	/* just for usb_dma_t */
-#include <dev/usb/usbhist.h>
 #include <dev/usb/usb_mem.h>
+#include <dev/usb/usbhist.h>
 
 #define	DPRINTF(FMT,A,B,C,D)	USBHIST_LOG(usbdebug,FMT,A,B,C,D)
 #define	DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(usbdebug,N,FMT,A,B,C,D)

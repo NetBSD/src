@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.91 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.89 2020/01/29 06:26:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.91 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.89 2020/01/29 06:26:32 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -138,21 +138,21 @@ static void cue_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(cue, sizeof(struct cue_softc), cue_match, cue_attach,
     usbnet_detach, usbnet_activate);
 
-static unsigned cue_uno_tx_prepare(struct usbnet *, struct mbuf *,
-				   struct usbnet_chain *);
-static void cue_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
-static int cue_uno_ioctl(struct ifnet *, u_long, void *);
-static void cue_uno_stop(struct ifnet *, int);
-static int cue_uno_init(struct ifnet *);
-static void cue_uno_tick(struct usbnet *);
+static unsigned cue_tx_prepare(struct usbnet *, struct mbuf *,
+			  struct usbnet_chain *);
+static void cue_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
+static int cue_ioctl_cb(struct ifnet *, u_long, void *);
+static void cue_stop_cb(struct ifnet *, int);
+static int cue_init(struct ifnet *);
+static void cue_tick(struct usbnet *);
 
 static const struct usbnet_ops cue_ops = {
-	.uno_stop = cue_uno_stop,
-	.uno_ioctl = cue_uno_ioctl,
-	.uno_tx_prepare = cue_uno_tx_prepare,
-	.uno_rx_loop = cue_uno_rx_loop,
-	.uno_init = cue_uno_init,
-	.uno_tick = cue_uno_tick,
+	.uno_stop = cue_stop_cb,
+	.uno_ioctl = cue_ioctl_cb,
+	.uno_tx_prepare = cue_tx_prepare,
+	.uno_rx_loop = cue_rx_loop,
+	.uno_init = cue_init,
+	.uno_tick = cue_tick,
 };
 
 #ifdef CUE_DEBUG
@@ -175,12 +175,12 @@ cue_csr_read_1(struct usbnet *un, int reg)
 	err = usbd_do_request(un->un_udev, &req, &val);
 
 	if (err) {
-		DPRINTF(("%s: cue_csr_read_1: reg=%#x err=%s\n",
+		DPRINTF(("%s: cue_csr_read_1: reg=0x%x err=%s\n",
 		    device_xname(un->un_dev), reg, usbd_errstr(err)));
 		return 0;
 	}
 
-	DPRINTFN(10,("%s: cue_csr_read_1 reg=%#x val=%#x\n",
+	DPRINTFN(10,("%s: cue_csr_read_1 reg=0x%x val=0x%x\n",
 	    device_xname(un->un_dev), reg, val));
 
 	return val;
@@ -205,11 +205,11 @@ cue_csr_read_2(struct usbnet *un, int reg)
 
 	err = usbd_do_request(un->un_udev, &req, &val);
 
-	DPRINTFN(10,("%s: cue_csr_read_2 reg=%#x val=%#x\n",
+	DPRINTFN(10,("%s: cue_csr_read_2 reg=0x%x val=0x%x\n",
 	    device_xname(un->un_dev), reg, UGETW(val)));
 
 	if (err) {
-		DPRINTF(("%s: cue_csr_read_2: reg=%#x err=%s\n",
+		DPRINTF(("%s: cue_csr_read_2: reg=0x%x err=%s\n",
 		    device_xname(un->un_dev), reg, usbd_errstr(err)));
 		return 0;
 	}
@@ -226,7 +226,7 @@ cue_csr_write_1(struct usbnet *un, int reg, int val)
 	if (usbnet_isdying(un))
 		return 0;
 
-	DPRINTFN(10,("%s: cue_csr_write_1 reg=%#x val=%#x\n",
+	DPRINTFN(10,("%s: cue_csr_write_1 reg=0x%x val=0x%x\n",
 	    device_xname(un->un_dev), reg, val));
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -238,12 +238,12 @@ cue_csr_write_1(struct usbnet *un, int reg, int val)
 	err = usbd_do_request(un->un_udev, &req, NULL);
 
 	if (err) {
-		DPRINTF(("%s: cue_csr_write_1: reg=%#x err=%s\n",
+		DPRINTF(("%s: cue_csr_write_1: reg=0x%x err=%s\n",
 		    device_xname(un->un_dev), reg, usbd_errstr(err)));
 		return -1;
 	}
 
-	DPRINTFN(20,("%s: cue_csr_write_1, after reg=%#x val=%#x\n",
+	DPRINTFN(20,("%s: cue_csr_write_1, after reg=0x%x val=0x%x\n",
 	    device_xname(un->un_dev), reg, cue_csr_read_1(un, reg)));
 
 	return 0;
@@ -261,7 +261,7 @@ cue_csr_write_2(struct usbnet *un, int reg, int aval)
 	if (usbnet_isdying(un))
 		return 0;
 
-	DPRINTFN(10,("%s: cue_csr_write_2 reg=%#x val=%#x\n",
+	DPRINTFN(10,("%s: cue_csr_write_2 reg=0x%x val=0x%x\n",
 	    device_xname(un->un_dev), reg, aval));
 
 	USETW(val, aval);
@@ -274,7 +274,7 @@ cue_csr_write_2(struct usbnet *un, int reg, int aval)
 	err = usbd_do_request(un->un_udev, &req, NULL);
 
 	if (err) {
-		DPRINTF(("%s: cue_csr_write_2: reg=%#x err=%s\n",
+		DPRINTF(("%s: cue_csr_write_2: reg=0x%x err=%s\n",
 		    device_xname(un->un_dev), reg, usbd_errstr(err)));
 		return -1;
 	}
@@ -289,7 +289,7 @@ cue_mem(struct usbnet *un, int cmd, int addr, void *buf, int len)
 	usb_device_request_t	req;
 	usbd_status		err;
 
-	DPRINTFN(10,("%s: cue_mem cmd=%#x addr=%#x len=%d\n",
+	DPRINTFN(10,("%s: cue_mem cmd=0x%x addr=0x%x len=%d\n",
 	    device_xname(un->un_dev), cmd, addr, len));
 
 	if (cmd == CUE_CMD_READSRAM)
@@ -304,7 +304,7 @@ cue_mem(struct usbnet *un, int cmd, int addr, void *buf, int len)
 	err = usbd_do_request(un->un_udev, &req, buf);
 
 	if (err) {
-		DPRINTF(("%s: cue_csr_mem: addr=%#x err=%s\n",
+		DPRINTF(("%s: cue_csr_mem: addr=0x%x err=%s\n",
 		    device_xname(un->un_dev), addr, usbd_errstr(err)));
 		return -1;
 	}
@@ -357,7 +357,7 @@ cue_crc(const char *addr)
 }
 
 static void
-cue_setiff_locked(struct usbnet *un)
+cue_setiff(struct usbnet *un)
 {
 	struct cue_softc	*sc = usbnet_softc(un);
 	struct ethercom		*ec = usbnet_ec(un);
@@ -366,7 +366,7 @@ cue_setiff_locked(struct usbnet *un)
 	struct ether_multistep	step;
 	uint32_t		h, i;
 
-	DPRINTFN(2,("%s: cue_setiff if_flags=%#x\n",
+	DPRINTFN(2,("%s: cue_setiff if_flags=0x%x\n",
 	    device_xname(un->un_dev), ifp->if_flags));
 
 	if (ifp->if_flags & IFF_PROMISC) {
@@ -541,11 +541,9 @@ cue_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-cue_uno_tick(struct usbnet *un)
+cue_tick(struct usbnet *un)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
-
-	usbnet_lock_core(un);
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (cue_csr_read_2(un, CUE_RX_FRAMEERR))
@@ -558,12 +556,10 @@ cue_uno_tick(struct usbnet *un)
 	if_statadd_ref(nsr, if_collisions,
 	    cue_csr_read_2(un, CUE_TX_EXCESSCOLL));
 	IF_STAT_PUTREF(ifp);
-
-	usbnet_unlock_core(un);
 }
 
 static void
-cue_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
+cue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 	uint8_t			*buf = c->unc_buf;
@@ -586,7 +582,7 @@ cue_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 }
 
 static unsigned
-cue_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+cue_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	unsigned		total_len;
 
@@ -648,7 +644,7 @@ cue_init_locked(struct ifnet *ifp)
 	cue_csr_write_1(un, CUE_ETHCTL, ctl);
 
 	/* Load the multicast filter. */
-	cue_setiff_locked(un);
+	cue_setiff(un);
 
 	/*
 	 * Set the number of RX and TX buffers that we want
@@ -668,46 +664,38 @@ cue_init_locked(struct ifnet *ifp)
 }
 
 static int
-cue_uno_init(struct ifnet *ifp)
+cue_init(struct ifnet *ifp)
 {
 	struct usbnet * const	un = ifp->if_softc;
 	int rv;
 
-	usbnet_lock_core(un);
-	usbnet_busy(un);
+	usbnet_lock(un);
 	rv = cue_init_locked(ifp);
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
+	usbnet_unlock(un);
 
 	return rv;
 }
 
 static int
-cue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+cue_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct usbnet * const	un = ifp->if_softc;
-
-	usbnet_lock_core(un);
-	usbnet_busy(un);
 
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		cue_setiff_locked(un);
+		cue_setiff(un);
 		break;
 	default:
 		break;
 	}
-
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
 
 	return 0;
 }
 
 /* Stop and reset the adapter.  */
 static void
-cue_uno_stop(struct ifnet *ifp, int disable)
+cue_stop_cb(struct ifnet *ifp, int disable)
 {
 	struct usbnet * const	un = ifp->if_softc;
 

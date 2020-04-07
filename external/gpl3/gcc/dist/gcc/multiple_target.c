@@ -103,16 +103,10 @@ create_dispatcher_calls (struct cgraph_node *node)
     inode->resolve_alias (cgraph_node::get (resolver_decl));
 
   auto_vec<cgraph_edge *> edges_to_redirect;
-  /* We need to capture the references by value rather than just pointers to them
-     and remove them right away, as removing them later would invalidate what
-     some other reference pointers point to.  */
-  auto_vec<ipa_ref> references_to_redirect;
+  auto_vec<ipa_ref *> references_to_redirect;
 
-  while (node->iterate_referring (0, ref))
-    {
-      references_to_redirect.safe_push (*ref);
-      ref->remove_reference ();
-    }
+  for (unsigned i = 0; node->iterate_referring (i, ref); i++)
+    references_to_redirect.safe_push (ref);
 
   /* We need to remember NEXT_CALLER as it could be modified in the loop.  */
   for (cgraph_edge *e = node->callers; e ; e = e->next_caller)
@@ -152,14 +146,15 @@ create_dispatcher_calls (struct cgraph_node *node)
 		}
 
 	      symtab_node *source = ref->referring;
+	      ref->remove_reference ();
 	      source->create_reference (inode, IPA_REF_ADDR);
 	    }
 	  else if (ref->use == IPA_REF_ALIAS)
 	    {
 	      symtab_node *source = ref->referring;
+	      ref->remove_reference ();
 	      source->create_reference (inode, IPA_REF_ALIAS);
-	      if (inode->get_comdat_group ())
-		source->add_to_same_comdat_group (inode);
+	      source->add_to_same_comdat_group (inode);
 	    }
 	  else
 	    gcc_unreachable ();
@@ -299,8 +294,7 @@ create_new_asm_name (char *old_asm_name, char *new_asm_name)
 /*  Creates target clone of NODE.  */
 
 static cgraph_node *
-create_target_clone (cgraph_node *node, bool definition, char *name,
-		     tree attributes)
+create_target_clone (cgraph_node *node, bool definition, char *name)
 {
   cgraph_node *new_node;
 
@@ -309,16 +303,13 @@ create_target_clone (cgraph_node *node, bool definition, char *name,
       new_node = node->create_version_clone_with_body (vNULL, NULL,
     						       NULL, false,
 						       NULL, NULL,
-						       name, attributes);
-      if (new_node == NULL)
-	return NULL;
+						       name);
       new_node->force_output = true;
     }
   else
     {
       tree new_decl = copy_node (node->decl);
       new_node = cgraph_node::get_create (new_decl);
-      DECL_ATTRIBUTES (new_decl) = attributes;
       /* Generate a new name for the new version.  */
       symtab->change_decl_assembler_name (new_node->decl,
 					  clone_function_name (node->decl,
@@ -408,16 +399,22 @@ expand_target_clones (struct cgraph_node *node, bool definition)
 
       create_new_asm_name (attr, suffix);
       /* Create new target clone.  */
-      tree attributes = make_attribute ("target", attr,
-					DECL_ATTRIBUTES (node->decl));
-
-      cgraph_node *new_node = create_target_clone (node, definition, suffix,
-						   attributes);
-      if (new_node == NULL)
-	return false;
+      cgraph_node *new_node = create_target_clone (node, definition, suffix);
       new_node->local.local = false;
       XDELETEVEC (suffix);
 
+      /* Set new attribute for the clone.  */
+      tree attributes = make_attribute ("target", attr,
+					DECL_ATTRIBUTES (new_node->decl));
+      DECL_ATTRIBUTES (new_node->decl) = attributes;
+      location_t saved_loc = input_location;
+      input_location = DECL_SOURCE_LOCATION (node->decl);
+      if (!targetm.target_option.valid_attribute_p (new_node->decl, NULL,
+						    TREE_VALUE (attributes),
+						    0))
+	return false;
+
+      input_location = saved_loc;
       decl2_v = new_node->function_version ();
       if (decl2_v != NULL)
         continue;
@@ -444,7 +441,13 @@ expand_target_clones (struct cgraph_node *node, bool definition)
 				    DECL_ATTRIBUTES (node->decl));
   DECL_ATTRIBUTES (node->decl) = attributes;
   node->local.local = false;
-  return true;
+  location_t saved_loc = input_location;
+  input_location = DECL_SOURCE_LOCATION (node->decl);
+  bool ret
+    = targetm.target_option.valid_attribute_p (node->decl, NULL,
+					       TREE_VALUE (attributes), 0);
+  input_location = saved_loc;
+  return ret;
 }
 
 static unsigned int

@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_lookup.c,v 1.5 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: dns_lookup.c,v 1.4 2017/02/14 01:16:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -147,8 +147,6 @@
 /*	available. The per-record reply TTL specifies how long the
 /*	DNS_NOTFOUND answer is valid. The caller should pass the
 /*	record(s) to dns_rr_free().
-/*	Logs a warning if the RES_DNSRCH or RES_DEFNAMES resolver
-/*	flags are set, and disables those flags.
 /* .RE
 /* .IP ltype
 /*	The resource record types to be looked up. In the case of
@@ -342,7 +340,6 @@ res_nmkquery(res_state statp, int op, const char *dname, int class,
   * information, but that will have to wait until it is safe to make
   * libunbound a mandatory dependency for Postfix.
   */
-#ifdef HAVE_RES_SEND
 
 /* dns_res_query - a res_query() clone that can return negative replies */
 
@@ -407,8 +404,6 @@ static int dns_res_query(res_state res, const char *name, int class, int type,
 	return (len);
     }
 }
-
-#endif
 
 /* dns_res_search - res_search() that can return negative replies */
 
@@ -491,16 +486,6 @@ static int dns_query(const char *name, int type, unsigned flags,
 
     if (flags & RES_USE_DNSSEC)
 	flags |= RES_USE_EDNS0;
-
-    /*
-     * Can't append domains: we need the right SOA TTL.
-     */
-#define APPEND_DOMAIN_FLAGS (RES_DNSRCH | RES_DEFNAMES)
-
-    if (keep_notfound && (flags & APPEND_DOMAIN_FLAGS)) {
-	msg_warn("negative caching disables RES_DEFNAMES and RES_DNSRCH");
-	flags &= ~APPEND_DOMAIN_FLAGS;
-    }
 
     /*
      * Save and restore resolver options that we overwrite, to avoid
@@ -1136,8 +1121,8 @@ int     dns_lookup_rl(const char *name, unsigned flags, DNS_RR **rrlist,
     for (type = va_arg(ap, unsigned); type != 0; type = next) {
 	next = va_arg(ap, unsigned);
 	if (msg_verbose)
-	    msg_info("lookup %s type %s flags %s",
-		     name, dns_strtype(type), dns_str_resflags(flags));
+	    msg_info("lookup %s type %s flags %d",
+		     name, dns_strtype(type), flags);
 	status = dns_lookup_x(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
 			      fqdn, why, rcode, lflags);
 	if (rrlist && rr)
@@ -1188,8 +1173,8 @@ int     dns_lookup_rv(const char *name, unsigned flags, DNS_RR **rrlist,
     for (type = *types++; type != 0; type = next) {
 	next = *types++;
 	if (msg_verbose)
-	    msg_info("lookup %s type %s flags %s",
-		     name, dns_strtype(type), dns_str_resflags(flags));
+	    msg_info("lookup %s type %s flags %d",
+		     name, dns_strtype(type), flags);
 	status = dns_lookup_x(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
 			      fqdn, why, rcode, lflags);
 	if (rrlist && rr)

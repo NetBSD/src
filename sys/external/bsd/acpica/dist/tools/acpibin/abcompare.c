@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -511,7 +511,7 @@ AbGetFile (
 {
     FILE                    *File;
     UINT32                  Size;
-    char                    *DataBuffer = NULL;
+    char                    *Buffer = NULL;
     size_t                  Actual;
 
 
@@ -535,8 +535,8 @@ AbGetFile (
 
     /* Allocate a buffer for the entire file */
 
-    DataBuffer = calloc (Size, 1);
-    if (!DataBuffer)
+    Buffer = calloc (Size, 1);
+    if (!Buffer)
     {
         printf ("Could not allocate buffer of size %u\n", Size);
         goto ErrorExit;
@@ -544,12 +544,12 @@ AbGetFile (
 
     /* Read the entire file */
 
-    Actual = fread (DataBuffer, 1, Size, File);
+    Actual = fread (Buffer, 1, Size, File);
     if (Actual != Size)
     {
         printf ("Could not read the input file %s\n", Filename);
-        free (DataBuffer);
-        DataBuffer = NULL;
+        free (Buffer);
+        Buffer = NULL;
         goto ErrorExit;
     }
 
@@ -557,7 +557,7 @@ AbGetFile (
 
 ErrorExit:
     fclose (File);
-    return (DataBuffer);
+    return (Buffer);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.13 2020/03/05 07:46:59 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.12 2020/02/14 14:34:57 maya Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.13 2020/03/05 07:46:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.12 2020/02/14 14:34:57 maya Exp $");
 
 #include <linux/debugfs.h>
 #include <linux/fs.h>
@@ -540,14 +540,16 @@ EXPORT_SYMBOL(drm_unplug_dev);
 
 #ifdef __NetBSD__
 
-static void *
+struct inode;
+
+static struct inode *
 drm_fs_inode_new(void)
 {
 	return NULL;
 }
 
 static void
-drm_fs_inode_free(void *inode)
+drm_fs_inode_free(struct inode *inode)
 {
 	KASSERT(inode == NULL);
 }

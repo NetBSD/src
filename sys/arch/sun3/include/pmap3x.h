@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.31 2020/03/14 14:05:44 ad Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.30 2020/01/18 20:47:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,11 +56,10 @@ segsz_t pmap_count(pmap_t, int);
 /* Map a given physical region to a virtual region */
 vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, int);
 
-static __inline bool
+static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
-	return false;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: clean_env.h,v 1.2 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: clean_env.h,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
 
 #ifndef _CLEAN_ENV_H_INCLUDED_
 #define _CLEAN_ENV_H_INCLUDED_
@@ -17,7 +17,6 @@
   * External interface.
   */
 extern void clean_env(char **);
-extern void update_env(char **);
 
 /* LICENSE
 /* .ad
@@ -28,11 +27,6 @@ extern void update_env(char **);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 #endif

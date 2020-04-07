@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2020/03/26 20:19:06 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.19 2015/08/17 06:16:03 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ void	softint_schedule_cpu(void *, struct cpu_info *);
 /* MI hooks. */
 void	softint_init(struct cpu_info *);
 lwp_t	*softint_picklwp(void);
+void	softint_overlay(void);
 void	softint_block(lwp_t *);
 
 /* MD-MI interface. */

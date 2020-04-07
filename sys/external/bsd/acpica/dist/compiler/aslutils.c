@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -190,7 +190,7 @@ UtNodeIsDescendantOf (
 
 /*******************************************************************************
  *
- * FUNCTION:    UtGetParentMethodNode
+ * FUNCTION:    UtGetParentMethod
  *
  * PARAMETERS:  Node                    - Namespace node for any object
  *
@@ -201,8 +201,8 @@ UtNodeIsDescendantOf (
  *
  ******************************************************************************/
 
-ACPI_NAMESPACE_NODE *
-UtGetParentMethodNode (
+void *
+UtGetParentMethod (
     ACPI_NAMESPACE_NODE     *Node)
 {
     ACPI_NAMESPACE_NODE     *ParentNode;
@@ -227,41 +227,6 @@ UtGetParentMethodNode (
     }
 
     return (NULL); /* Object is not within a control method */
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    UtGetParentMethodOp
- *
- * PARAMETERS:  Op                      - Parse Op to be checked
- *
- * RETURN:      Control method Op if found. NULL otherwise
- *
- * DESCRIPTION: Find the control method parent of a parse op. Returns NULL if
- *              the input Op is not within a control method.
- *
- ******************************************************************************/
-
-ACPI_PARSE_OBJECT *
-UtGetParentMethodOp (
-    ACPI_PARSE_OBJECT       *Op)
-{
-    ACPI_PARSE_OBJECT       *NextOp;
-
-
-    NextOp = Op->Asl.Parent;
-    while (NextOp)
-    {
-        if (NextOp->Asl.AmlOpcode == AML_METHOD_OP)
-        {
-            return (NextOp);
-        }
-
-        NextOp = NextOp->Asl.Parent;
-    }
-
-    return (NULL); /* No parent method found */
 }
 
 

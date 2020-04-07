@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl.h,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: xsasl.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 #ifndef _XSASL_H_INCLUDED_
 #define _XSASL_H_INCLUDED_
@@ -48,11 +48,8 @@ typedef struct XSASL_SERVER {
   */
 typedef struct XSASL_SERVER_CREATE_ARGS {
     VSTREAM *stream;
-    int     addr_family;
     const char *server_addr;
-    const char *server_port;
     const char *client_addr;
-    const char *client_port;
     const char *service;
     const char *user_realm;
     const char *security_options;
@@ -69,10 +66,9 @@ extern ARGV *xsasl_server_types(void);
 
 #define xsasl_server_create(impl, args) \
 	(impl)->create((impl), (args))
-#define XSASL_SERVER_CREATE(impl, args, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) \
+#define XSASL_SERVER_CREATE(impl, args, a1, a2, a3, a4, a5, a6, a7) \
 	xsasl_server_create((impl), (((args)->a1), ((args)->a2), ((args)->a3), \
-	((args)->a4), ((args)->a5), ((args)->a6), ((args)->a7), ((args)->a8), \
-	((args)->a9), ((args)->a10), (args)))
+	((args)->a4), ((args)->a5), ((args)->a6), ((args)->a7), (args)))
 #define xsasl_server_done(impl) (impl)->done((impl));
 
  /*

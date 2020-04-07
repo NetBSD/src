@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_flowvalve.h,v 1.4 2020/03/05 07:46:36 riastradh Exp $	*/
+/*	$NetBSD: altq_flowvalve.h,v 1.3 2006/10/12 19:59:08 peter Exp $	*/
 /*	$KAME: altq_flowvalve.h,v 1.5 2002/04/03 05:38:50 kjc Exp $	*/
 
 /*
@@ -31,10 +31,6 @@
 #define	_ALTQ_ALTQ_FLOWVALVE_H_
 
 #ifdef _KERNEL
-
-#ifdef _KERNEL_OPT
-#include "opt_inet.h"
-#endif
 
 /* fv_flow structure to define a unique address pair */
 struct fv_flow {

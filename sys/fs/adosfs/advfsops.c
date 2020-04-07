@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.79 2020/03/16 21:20:09 pgoyette Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.78 2020/01/17 20:08:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.79 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.78 2020/01/17 20:08:07 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.79 2020/03/16 21:20:09 pgoyette Exp $
 MODULE(MODULE_CLASS_VFS, adosfs, NULL);
 
 VFS_PROTOS(adosfs);
+
+static struct sysctllog *adosfs_sysctl_log;
 
 int adosfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 int adosfs_loadbitmap(struct adosfsmount *);
@@ -810,15 +812,6 @@ struct vfsops adosfs_vfsops = {
 	.vfs_opv_descs = adosfs_vnodeopv_descs
 };
 
-SYSCTL_SETUP(adosfs_sysctl_setup, "adosfs sysctl")
-{	sysctl_createv(clog, 0, NULL, NULL,
-	       CTLFLAG_PERMANENT,
-	       CTLTYPE_NODE, "adosfs",
-	       SYSCTL_DESCR("AmigaDOS file system"),
-	       NULL, 0, NULL, 0,
-	       CTL_VFS, 16, CTL_EOL);
-}
-
 static int
 adosfs_modcmd(modcmd_t cmd, void *arg)
 {
@@ -829,6 +822,12 @@ adosfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&adosfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_createv(&adosfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "adosfs",
+			       SYSCTL_DESCR("AmigaDOS file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 16, CTL_EOL);
 		/*
 		 * XXX the "16" above could be dynamic, thereby eliminating
 		 * one more instance of the "number to vfs" mapping problem,
@@ -839,6 +838,7 @@ adosfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_detach(&adosfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_teardown(&adosfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

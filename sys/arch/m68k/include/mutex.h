@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.10 2020/03/08 06:12:01 rin Exp $	*/
+/*	$NetBSD: mutex.h,v 1.9 2019/11/29 22:55:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -60,9 +60,7 @@ struct kmutex {
 #define	mtx_lock		u.s.mtxs_lock
 
 #define	__HAVE_SIMPLE_MUTEXES		1
-#ifndef	__mc68010__
 #define	__HAVE_MUTEX_STUBS		1
-#endif
 
 #define	MUTEX_CAS(p, o, n)		(atomic_cas_uint((p), (o), (n)) == (o))
 

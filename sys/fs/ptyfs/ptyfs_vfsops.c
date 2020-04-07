@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.58 2020/03/16 21:20:10 pgoyette Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.57 2020/01/17 20:08:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.58 2020/03/16 21:20:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.57 2020/01/17 20:08:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,8 @@ MALLOC_JUSTDEFINE(M_PTYFSMNT, "ptyfs mount", "ptyfs mount structures");
 MALLOC_JUSTDEFINE(M_PTYFSTMP, "ptyfs temp", "ptyfs temporary structures");
 
 VFS_PROTOS(ptyfs);
+
+static struct sysctllog *ptyfs_sysctl_log;
 
 static int ptyfs__allocvp(struct mount *, struct lwp *, struct vnode **,
     dev_t, char);
@@ -497,22 +499,6 @@ struct vfsops ptyfs_vfsops = {
 	.vfs_opv_descs = ptyfs_vnodeopv_descs
 };
 
-SYSCTL_SETUP(ptyfs_sysctl_setup, "ptyfs sysctl")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ptyfs",
-		       SYSCTL_DESCR("Pty file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 23, CTL_EOL);
-	/*
-	 * XXX the "23" above could be dynamic, thereby eliminating
-	 * one more instance of the "number to vfs" mapping problem,
-	 * but "23" is the order as taken from sys/mount.h
-	 */
-}
-
 static int
 ptyfs_modcmd(modcmd_t cmd, void *arg)
 {
@@ -523,11 +509,23 @@ ptyfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&ptyfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_createv(&ptyfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "ptyfs",
+			       SYSCTL_DESCR("Pty file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 23, CTL_EOL);
+		/*
+		 * XXX the "23" above could be dynamic, thereby eliminating
+		 * one more instance of the "number to vfs" mapping problem,
+		 * but "23" is the order as taken from sys/mount.h
+		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&ptyfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_teardown(&ptyfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

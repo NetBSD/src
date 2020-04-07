@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.237 2020/03/15 23:14:41 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.236 2019/12/06 07:27:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.237 2020/03/15 23:14:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.236 2019/12/06 07:27:07 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -2053,14 +2053,6 @@ nextchain:
 #endif /* defined(DDB) */
 
 #if defined(MBUFTRACE)
-void
-mowner_init_owner(struct mowner *mo, const char *name, const char *descr)
-{
-	memset(mo, 0, sizeof(*mo));
-	strlcpy(mo->mo_name, name, sizeof(mo->mo_name));
-	strlcpy(mo->mo_descr, descr, sizeof(mo->mo_descr));
-}
-
 void
 mowner_attach(struct mowner *mo)
 {

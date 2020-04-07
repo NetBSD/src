@@ -358,10 +358,10 @@ get_initial_register_offset (int from, int to)
   if (to == from)
     return 0;
 
-  /* It is not safe to call INITIAL_ELIMINATION_OFFSET before the epilogue
-     is completed, but we need to give at least an estimate for the stack
-     pointer based on the frame size.  */
-  if (!epilogue_completed)
+  /* It is not safe to call INITIAL_ELIMINATION_OFFSET
+     before the reload pass.  We need to give at least
+     an estimation for the resulting frame size.  */
+  if (! reload_completed)
     {
       offset1 = crtl->outgoing_args_size + get_frame_size ();
 #if !STACK_GROWS_DOWNWARD
@@ -4756,7 +4756,7 @@ nonzero_bits1 (const_rtx x, scalar_int_mode mode, const_rtx known_x,
 	       || ((extend_op = load_extend_op (inner_mode)) == SIGN_EXTEND
 		   ? val_signbit_known_set_p (inner_mode, nonzero)
 		   : extend_op != ZERO_EXTEND)
-	       || !MEM_P (SUBREG_REG (x)))
+	       || (!MEM_P (SUBREG_REG (x)) && !REG_P (SUBREG_REG (x))))
 	      && xmode_width > inner_width)
 	    nonzero
 	      |= (GET_MODE_MASK (GET_MODE (x)) & ~GET_MODE_MASK (inner_mode));

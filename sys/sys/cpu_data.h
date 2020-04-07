@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.50 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.49 2020/01/15 17:55:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -93,8 +93,8 @@ enum cpu_count {
 	CPU_COUNT_FILEUNKNOWN,
 	CPU_COUNT_FILECLEAN,
 	CPU_COUNT_FILEDIRTY,
-	CPU_COUNT_FLTUP,
-	CPU_COUNT_FLTNOUP,
+	CPU_COUNT__UNUSED1,
+	CPU_COUNT__UNUSED2,
 	CPU_COUNT_MAX			/* 48 */
 };
 

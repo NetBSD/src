@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.73 2020/03/15 01:12:47 uwe Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.71 2019/06/09 07:40:14 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -335,18 +335,6 @@ extern SCREEN   *_cursesi_screen;       /* The current screen in use */
 #define __CTRACE_FILEIO		0x00001000
 #define __CTRACE_ALL		0x7fffffff
 void	 __CTRACE(int, const char *, ...) __attribute__((__format__(__printf__, 2, 3)));
-#endif
-
-/* Common erase logic */
-#ifdef HAVE_WCHAR
-#define __NEED_ERASE(_sp, _bch, _battr)				\
-	((_sp)->ch != (_bch) ||					\
-	    ((_sp)->attr & WA_ATTRIBUTES) != (_battr) ||	\
-	    (_sp)->nsp != NULL ||				\
-	    WCOL(*_sp) < 0)
-#else
-#define __NEED_ERASE(_sp, _bch, _battr)				\
-	((_sp)->ch != (_bch) || (_sp)->attr != (_battr))
 #endif
 
 /* Private functions. */

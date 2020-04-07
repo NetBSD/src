@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.16 2020/03/16 21:20:09 pgoyette Exp $ */
+/*	$NetBSD: swsensor.c,v 1.15 2015/04/25 23:55:23 pgoyette Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.16 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.15 2015/04/25 23:55:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.16 2020/03/16 21:20:09 pgoyette Exp $
 #endif
 
 int swsensorattach(int);
+
+static struct sysctllog *swsensor_sysctllog = NULL;
 
 static int sensor_value_sysctl = 0;
 static int sensor_state_sysctl = 0;
@@ -64,14 +66,18 @@ MODULE(MODULE_CLASS_DRIVER, swsensor, "sysmon_envsys");
  * Set-up the sysctl interface for setting the sensor's cur_value
  */
 
-SYSCTL_SETUP(sysctl_swsensor_setup, "swsensor sysctl")
+static
+void
+sysctl_swsensor_setup(void)
 {
 	int ret;
 	int node_sysctl_num;
 	const struct sysctlnode *me = NULL;
 	const struct sysctlnode *me2;
 
-	ret = sysctl_createv(clog, 0, NULL, &me,
+	KASSERT(swsensor_sysctllog == NULL);
+
+	ret = sysctl_createv(&swsensor_sysctllog, 0, NULL, &me,
 			     CTLFLAG_READWRITE,
 			     CTLTYPE_NODE, "swsensor", NULL,
 			     NULL, 0, NULL, 0,
@@ -80,7 +86,7 @@ SYSCTL_SETUP(sysctl_swsensor_setup, "swsensor sysctl")
 		return;
 
 	node_sysctl_num = me->sysctl_num;
-	ret = sysctl_createv(clog, 0, NULL, &me2,
+	ret = sysctl_createv(&swsensor_sysctllog, 0, NULL, &me2,
 			     CTLFLAG_READWRITE,
 			     CTLTYPE_INT, "cur_value", NULL,
 			     NULL, 0, &sw_sensor_value, 0,
@@ -90,7 +96,7 @@ SYSCTL_SETUP(sysctl_swsensor_setup, "swsensor sysctl")
 		sensor_value_sysctl = me2->sysctl_num;
 
 	node_sysctl_num = me->sysctl_num;
-	ret = sysctl_createv(clog, 0, NULL, &me2,
+	ret = sysctl_createv(&swsensor_sysctllog, 0, NULL, &me2,
 			     CTLFLAG_READWRITE,
 			     CTLTYPE_INT, "state", NULL,
 			     NULL, 0, &sw_sensor_state, 0,
@@ -346,6 +352,7 @@ swsensor_init(void *arg)
 		return error;
 	}
 
+	sysctl_swsensor_setup();
 	aprint_normal("swsensor: initialized\n");
 
 	return 0;
@@ -357,6 +364,8 @@ swsensor_fini(void *arg)
 {
 
 	sysmon_envsys_unregister(swsensor_sme);
+
+	sysctl_teardown(&swsensor_sysctllog);
 
 	return 0;
 }

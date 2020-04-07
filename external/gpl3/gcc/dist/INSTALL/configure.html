@@ -91,10 +91,9 @@ for both native and cross targets.
 <p>We use <var>srcdir</var> to refer to the toplevel source directory for
 GCC; we use <var>objdir</var> to refer to the toplevel build/object directory.
 </p>
-<p>If you obtained the sources by cloning the repository, <var>srcdir</var>
-must refer to the top <samp>gcc</samp> directory, the one where the
-<samp>MAINTAINERS</samp> file can be found, and not its <samp>gcc</samp>
-subdirectory, otherwise the build will fail.
+<p>If you obtained the sources via SVN, <var>srcdir</var> must refer to the top
+<samp>gcc</samp> directory, the one where the <samp>MAINTAINERS</samp> file can be
+found, and not its <samp>gcc</samp> subdirectory, otherwise the build will fail.
 </p>
 <p>If either <var>srcdir</var> or <var>objdir</var> is located on an automounted NFS
 file system, the shell&rsquo;s built-in <code>pwd</code> command will return
@@ -1051,7 +1050,7 @@ with <samp>--enable-bootstrap</samp>.
 <dt><code>--enable-generated-files-in-srcdir</code></dt>
 <dd><p>Neither the .c and .h files that are generated from Bison and flex nor the
 info manuals and man pages that are built from the .texi files are present
-in the repository development tree.  When building GCC from that development tree,
+in the SVN development tree.  When building GCC from that development tree,
 or from one of our snapshots, those generated files are placed in your
 build directory, which allows for the source to be in a readonly
 directory.
@@ -1344,51 +1343,42 @@ controlled by the Makefiles.
 </p>
 </dd>
 <dt><code>--enable-checking</code></dt>
-<dt><code>--disable-checking</code></dt>
 <dt><code>--enable-checking=<var>list</var></code></dt>
-<dd><p>This option controls performing internal consistency checks in the compiler.
-It does not change the generated code, but adds error checking of the
-requested complexity.  This slows down the compiler and may only work
-properly if you are building the compiler with GCC.
+<dd><p>When you specify this option, the compiler is built to perform internal
+consistency checks of the requested complexity.  This does not change the
+generated code, but adds error checking within the compiler.  This will
+slow down the compiler and may only work properly if you are building
+the compiler with GCC.  This is &lsquo;<samp>yes,extra</samp>&rsquo; by default when building
+from SVN or snapshots, but &lsquo;<samp>release</samp>&rsquo; for releases.  The default
+for building the stage1 compiler is &lsquo;<samp>yes</samp>&rsquo;.  More control
+over the checks may be had by specifying <var>list</var>.  The categories of
+checks available are &lsquo;<samp>yes</samp>&rsquo; (most common checks
+&lsquo;<samp>assert,misc,tree,gc,rtlflag,runtime</samp>&rsquo;), &lsquo;<samp>no</samp>&rsquo; (no checks at
+all), &lsquo;<samp>all</samp>&rsquo; (all but &lsquo;<samp>valgrind</samp>&rsquo;), &lsquo;<samp>release</samp>&rsquo; (cheapest
+checks &lsquo;<samp>assert,runtime</samp>&rsquo;) or &lsquo;<samp>none</samp>&rsquo; (same as &lsquo;<samp>no</samp>&rsquo;).
+Individual checks can be enabled with these flags &lsquo;<samp>assert</samp>&rsquo;,
+&lsquo;<samp>df</samp>&rsquo;, &lsquo;<samp>fold</samp>&rsquo;, &lsquo;<samp>gc</samp>&rsquo;, &lsquo;<samp>gcac</samp>&rsquo;, &lsquo;<samp>misc</samp>&rsquo;, &lsquo;<samp>rtl</samp>&rsquo;,
+&lsquo;<samp>rtlflag</samp>&rsquo;, &lsquo;<samp>runtime</samp>&rsquo;, &lsquo;<samp>tree</samp>&rsquo;, &lsquo;<samp>extra</samp>&rsquo; and &lsquo;<samp>valgrind</samp>&rsquo;.
+&lsquo;<samp>extra</samp>&rsquo; adds for &lsquo;<samp>misc</samp>&rsquo; checking extra checks that might affect
+code generation and should therefore not differ between stage1 and later
+stages.
 </p>
-<p>When the option is not specified, the active set of checks depends on context.
-Namely, bootstrap stage 1 defaults to &lsquo;<samp>--enable-checking=yes</samp>&rsquo;, builds
-from release branches or release archives default to
-&lsquo;<samp>--enable-checking=release</samp>&rsquo;, and otherwise
-&lsquo;<samp>--enable-checking=yes,extra</samp>&rsquo; is used.  When the option is
-specified without a <var>list</var>, the result is the same as
-&lsquo;<samp>--enable-checking=yes</samp>&rsquo;.  Likewise, &lsquo;<samp>--disable-checking</samp>&rsquo; is
-equivalent to &lsquo;<samp>--enable-checking=no</samp>&rsquo;.
-</p>
-<p>The categories of checks available in <var>list</var> are &lsquo;<samp>yes</samp>&rsquo; (most common
-checks &lsquo;<samp>assert,misc,gc,gimple,rtlflag,runtime,tree,types</samp>&rsquo;), &lsquo;<samp>no</samp>&rsquo;
-(no checks at all), &lsquo;<samp>all</samp>&rsquo; (all but &lsquo;<samp>valgrind</samp>&rsquo;), &lsquo;<samp>release</samp>&rsquo;
-(cheapest checks &lsquo;<samp>assert,runtime</samp>&rsquo;) or &lsquo;<samp>none</samp>&rsquo; (same as &lsquo;<samp>no</samp>&rsquo;).
-&lsquo;<samp>release</samp>&rsquo; checks are always on and to disable them
-&lsquo;<samp>--disable-checking</samp>&rsquo; or &lsquo;<samp>--enable-checking=no[,&lt;other checks&gt;]</samp>&rsquo;
-must be explicitly requested.  Disabling assertions makes the compiler and
-runtime slightly faster but increases the risk of undetected internal errors
-causing wrong code to be generated.
-</p>
-<p>Individual checks can be enabled with these flags: &lsquo;<samp>assert</samp>&rsquo;, &lsquo;<samp>df</samp>&rsquo;,
-&lsquo;<samp>extra</samp>&rsquo;, &lsquo;<samp>fold</samp>&rsquo;, &lsquo;<samp>gc</samp>&rsquo;, &lsquo;<samp>gcac</samp>&rsquo;, &lsquo;<samp>gimple</samp>&rsquo;,
-&lsquo;<samp>misc</samp>&rsquo;, &lsquo;<samp>rtl</samp>&rsquo;, &lsquo;<samp>rtlflag</samp>&rsquo;, &lsquo;<samp>runtime</samp>&rsquo;, &lsquo;<samp>tree</samp>&rsquo;,
-&lsquo;<samp>types</samp>&rsquo; and &lsquo;<samp>valgrind</samp>&rsquo;.  &lsquo;<samp>extra</samp>&rsquo; extends &lsquo;<samp>misc</samp>&rsquo;
-checking with extra checks that might affect code generation and should
-therefore not differ between stage1 and later stages in bootstrap.
-</p>
-<p>The &lsquo;<samp>valgrind</samp>&rsquo; check requires the external <code>valgrind</code> simulator,
-available from <a href="http://valgrind.org/">http://valgrind.org/</a>.  The &lsquo;<samp>rtl</samp>&rsquo; checks are
-expensive and the &lsquo;<samp>df</samp>&rsquo;, &lsquo;<samp>gcac</samp>&rsquo; and &lsquo;<samp>valgrind</samp>&rsquo; checks are very
-expensive.
+<p>The &lsquo;<samp>valgrind</samp>&rsquo; check requires the external <code>valgrind</code>
+simulator, available from <a href="http://valgrind.org/">http://valgrind.org/</a>.  The
+&lsquo;<samp>df</samp>&rsquo;, &lsquo;<samp>rtl</samp>&rsquo;, &lsquo;<samp>gcac</samp>&rsquo; and &lsquo;<samp>valgrind</samp>&rsquo; checks are very expensive.
+To disable all checking, &lsquo;<samp>--disable-checking</samp>&rsquo; or
+&lsquo;<samp>--enable-checking=none</samp>&rsquo; must be explicitly requested.  Disabling
+assertions will make the compiler and runtime slightly faster but
+increase the risk of undetected internal errors causing wrong code to be
+generated.
 </p>
 </dd>
 <dt><code>--disable-stage1-checking</code></dt>
 <dt><code>--enable-stage1-checking</code></dt>
 <dt><code>--enable-stage1-checking=<var>list</var></code></dt>
-<dd><p>This option affects only bootstrap build.  If no <samp>--enable-checking</samp>
-option is specified the stage1 compiler is built with &lsquo;<samp>yes</samp>&rsquo; checking
-enabled, otherwise the stage1 checking flags are the same as specified by
+<dd><p>If no <samp>--enable-checking</samp> option is specified the stage1
+compiler will be built with &lsquo;<samp>yes</samp>&rsquo; checking enabled, otherwise
+the stage1 checking flags are the same as specified by
 <samp>--enable-checking</samp>.  To build the stage1 compiler with
 different checking options use <samp>--enable-stage1-checking</samp>.
 The list of checking options is the same as for <samp>--enable-checking</samp>.

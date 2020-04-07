@@ -1,4 +1,4 @@
-/*	$NetBSD: master_conf.c,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: master_conf.c,v 1.1.1.2 2013/01/02 18:59:01 tron Exp $	*/
 
 /*++
 /* NAME
@@ -32,11 +32,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System libraries. */
@@ -130,11 +125,7 @@ void    master_config(void)
 	 * settings.
 	 */
 	else {
-	    if ((serv->flags & MASTER_FLAG_MARK) == 0)
-		msg_warn("duplicate master.cf entry for service \"%s\" (%s) "
-		     "-- using the last entry", serv->ext_name, serv->name);
-	    else
-		serv->flags &= ~MASTER_FLAG_MARK;
+	    serv->flags &= ~MASTER_FLAG_MARK;
 	    if (entry->flags & MASTER_FLAG_CONDWAKE)
 		serv->flags |= MASTER_FLAG_CONDWAKE;
 	    else

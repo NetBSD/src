@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.12 2020/03/15 23:04:50 thorpej Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.11 2020/02/29 18:07:57 thorpej Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
@@ -52,13 +52,12 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-/* XXX This driver is not yet MP-safe; don't claim to be! */
-/* #ifdef NET_MPSAFE */
-/* #define	MCX_MPSAFE	1 */
-/* #define	CALLOUT_FLAGS	CALLOUT_MPSAFE */
-/* #else */
+#ifdef NET_MPSAFE
+#define	MCX_MPSAFE	1
+#define	CALLOUT_FLAGS	CALLOUT_MPSAFE
+#else
 #define	CALLOUT_FLAGS	0
-/* #endif */
+#endif
 
 #define	MCX_MAX_NINTR	1
 
@@ -1942,7 +1941,6 @@ struct mcx_softc {
 	struct ifmedia		 sc_media;
 	uint64_t		 sc_media_status;
 	uint64_t		 sc_media_active;
-	kmutex_t		 sc_media_mutex;
 
 	pci_chipset_tag_t	 sc_pc;
 	pci_intr_handle_t	*sc_intrs;
@@ -2233,8 +2231,6 @@ mcx_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, "Ethernet controller");
 
-	mutex_init(&sc->sc_media_mutex, MUTEX_DEFAULT, IPL_SOFTNET);
-
 	if (mcx_version(sc) != 0) {
 		/* error printed by mcx_version */
 		goto unmap;
@@ -2424,8 +2420,8 @@ mcx_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ec.ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
 
 	sc->sc_ec.ec_ifmedia = &sc->sc_media;
-	ifmedia_init_with_lock(&sc->sc_media, IFM_IMASK, mcx_media_change,
-	    mcx_media_status, &sc->sc_media_mutex);
+	ifmedia_init(&sc->sc_media, IFM_IMASK, mcx_media_change,
+	    mcx_media_status);
 	mcx_media_add_types(sc);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);

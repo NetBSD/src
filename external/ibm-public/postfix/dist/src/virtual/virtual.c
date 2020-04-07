@@ -1,4 +1,4 @@
-/*	$NetBSD: virtual.c,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: virtual.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -135,8 +135,7 @@
 /*	recipient is over disk quota. In all other cases, mail for
 /*	an existing recipient is deferred and a warning is logged.
 /*
-/*	Problems and transactions are logged to \fBsyslogd\fR(8)
-/*	or \fBpostlogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*	Corrupted message files are marked so that the queue
 /*	manager can move them to the \fBcorrupt\fR queue afterwards.
 /*
@@ -207,17 +206,15 @@
 /* RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi
-/* .IP "\fBvirtual_mailbox_limit (51200000)\fR"
-/*	The maximal size in bytes of an individual \fBvirtual\fR(8) mailbox or
-/*	maildir file, or zero (no limit).
-/* .PP
-/*	Implemented in the qmgr(8) daemon:
 /* .IP "\fBvirtual_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
 /*	The maximal number of parallel deliveries to the same destination
 /*	via the virtual message delivery transport.
 /* .IP "\fBvirtual_destination_recipient_limit ($default_destination_recipient_limit)\fR"
 /*	The maximal number of recipients per message for the virtual
 /*	message delivery transport.
+/* .IP "\fBvirtual_mailbox_limit (51200000)\fR"
+/*	The maximal size in bytes of an individual \fBvirtual\fR(8) mailbox or
+/*	maildir file, or zero (no limit).
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -248,32 +245,18 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* .PP
 /*	Available in Postfix version 3.0 and later:
 /* .IP "\fBvirtual_delivery_status_filter ($default_delivery_status_filter)\fR"
 /*	Optional filter for the \fBvirtual\fR(8) delivery agent to change the
 /*	delivery status code or explanatory text of successful or unsuccessful
 /*	deliveries.
-/* .PP
-/*	Available in Postfix version 3.3 and later:
-/* .IP "\fBenable_original_recipient (yes)\fR"
-/*	Enable support for the original recipient address after an
-/*	address is rewritten to a different address (for example with
-/*	aliasing or with canonical mapping).
-/* .IP "\fBservice_name (read-only)\fR"
-/*	The master.cf service name of a Postfix daemon process.
-/* .PP
-/*	Available in Postfix 3.5 and later:
-/* .IP "\fBinfo_log_address_format (external)\fR"
-/*	The email address form that will be used in non-debug logging
-/*	(info, warning, etc.).
 /* SEE ALSO
 /*	qmgr(8), queue manager
 /*	bounce(8), delivery status reports
 /*	postconf(5), configuration parameters
-/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README_FILES
 /*	Use "\fBpostconf readme_directory\fR" or
@@ -510,12 +493,9 @@ static void pre_init(char *unused_name, char **unused_argv)
      * because that prohibits the delivery agent from updating the queue
      * file.
      */
-    if (ENFORCING_SIZE_LIMIT(var_virt_mailbox_limit)) {
-	if (!ENFORCING_SIZE_LIMIT(var_message_limit))
-	    msg_fatal("configuration error: %s is limited but %s is "
-		    "unlimited", VAR_VIRT_MAILBOX_LIMIT, VAR_MESSAGE_LIMIT);
-	if (var_virt_mailbox_limit < var_message_limit)
-	    msg_fatal("configuration error: %s is smaller than %s",
+    if (var_virt_mailbox_limit) {
+	if (var_virt_mailbox_limit < var_message_limit || var_message_limit == 0)
+	    msg_fatal("main.cf configuration error: %s is smaller than %s",
 		      VAR_VIRT_MAILBOX_LIMIT, VAR_MESSAGE_LIMIT);
 	set_file_limit(var_virt_mailbox_limit);
     }

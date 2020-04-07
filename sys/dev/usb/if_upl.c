@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.71 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.70 2020/01/29 06:35:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.71 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.70 2020/01/29 06:35:28 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -105,21 +105,21 @@ CFATTACH_DECL_NEW(upl, sizeof(struct usbnet), upl_match, upl_attach,
     usbnet_detach, usbnet_activate);
 
 #if 0
-static void upl_uno_intr(struct usbnet *, usbd_status);
+static void upl_intr_cb(struct usbnet *, usbd_status);
 #endif
-static void upl_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
-static unsigned upl_uno_tx_prepare(struct usbnet *, struct mbuf *,
+static void upl_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
+static unsigned upl_tx_prepare(struct usbnet *, struct mbuf *,
 			       struct usbnet_chain *);
-static int upl_uno_ioctl(struct ifnet *, u_long, void *);
-static int upl_uno_init(struct ifnet *);
+static int upl_ioctl_cb(struct ifnet *, u_long, void *);
+static int upl_init(struct ifnet *);
 
 static const struct usbnet_ops upl_ops = {
-	.uno_init = upl_uno_init,
-	.uno_tx_prepare = upl_uno_tx_prepare,
-	.uno_rx_loop = upl_uno_rx_loop,
-	.uno_ioctl = upl_uno_ioctl,
+	.uno_init = upl_init,
+	.uno_tx_prepare = upl_tx_prepare,
+	.uno_rx_loop = upl_rx_loop,
+	.uno_ioctl = upl_ioctl_cb,
 #if 0
-	.uno_intr = upl_uno_intr,
+	.uno_intr = upl_intr_cb,
 #endif
 };
 
@@ -225,8 +225,9 @@ upl_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-upl_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
+upl_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
+	usbnet_isowned_rx(un);
 
 	DPRINTFN(9,("%s: %s: enter length=%d\n",
 		    device_xname(un->un_dev), __func__, total_len));
@@ -235,7 +236,7 @@ upl_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 }
 
 static unsigned
-upl_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+upl_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	int	total_len;
 
@@ -252,23 +253,23 @@ upl_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 }
 
 static int
-upl_uno_init(struct ifnet *ifp)
+upl_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 	int rv;
 
-	usbnet_lock_core(un);
+	usbnet_lock(un);
 	if (usbnet_isdying(un))
 		rv = EIO;
 	else
 		rv = usbnet_init_rx_tx(un);
-	usbnet_unlock_core(un);
+	usbnet_unlock(un);
 
 	return rv;
 }
 
 static int
-upl_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+upl_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
 {
 	if (cmd == SIOCSIFMTU) {
 		struct ifreq *ifr = data;

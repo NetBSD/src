@@ -29,23 +29,23 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: procfs_machdep.c,v 1.2 2020/03/14 16:12:16 skrll Exp $");
+__RCSID("$NetBSD: procfs_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 
 #include <miscfs/procfs/procfs.h>
-
-/*
+        
+/*              
  * Linux-style /proc/cpuinfo.
  * Only used when procfs is mounted with -o linux.
- */
-int
+ */     
+int             
 procfs_getcpuinfstr(char *buf, size_t *len)
 {
 	*len = 0;
-
+   
 	return 0;
-}
+}   
 

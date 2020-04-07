@@ -5858,10 +5858,10 @@ zfs_netbsd_reclaim(void *v)
 			zp->z_atime_dirty = 0;
 			dmu_tx_commit(tx);
 		}
-
-		if (zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
-			zil_commit(zfsvfs->z_log, zp->z_id);
 	}
+
+	if (zfsvfs->z_log)
+		zil_commit(zfsvfs->z_log, zp->z_id);
 
 	if (zp->z_sa_hdl == NULL)
 		zfs_znode_free(zp);
@@ -6028,9 +6028,19 @@ zfs_netbsd_getpages(void *v)
 		pg->flags &= ~(PG_FAKE);
 	}
 
-	if (memwrite && uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {
-		/* For write faults, start dirtiness tracking. */
-		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_UNKNOWN);
+	if (memwrite) {
+		if (uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {
+			/* For write faults, start dirtiness tracking. */
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_UNKNOWN);
+		}
+		mutex_enter(vp->v_interlock);
+		if ((vp->v_iflag & VI_ONWORKLST) == 0) {
+			vn_syncer_add_to_worklist(vp, filedelay);
+		}
+		if ((vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP) {
+			vp->v_iflag |= VI_WRMAPDIRTY;
+		}
+		mutex_exit(vp->v_interlock);
 	}
 	rw_exit(rw);
 	ap->a_m[ap->a_centeridx] = pg;

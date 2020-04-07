@@ -33,15 +33,9 @@ follows:
 
 LLooookk ffoorr oobbvviioouuss ssiiggnnss ooff ttrroouubbllee
 
-Postfix logs all failed and successful deliveries to a logfile.
-
-  * When Postfix uses syslog logging (the default), the file is usually called
-    /var/log/maillog, /var/log/mail, or something similar; the exact pathname
-    is configured in a file called /etc/syslog.conf, /etc/rsyslog.conf, or
-    something similar.
-
-  * When Postfix uses its own logging system (see MAILLOG_README), the location
-    of the logfile is configured with the Postfix maillog_file parameter.
+Postfix logs all failed and successful deliveries to a logfile. The file is
+usually called /var/log/maillog or /var/log/mail; the exact pathname is defined
+in the /etc/syslog.conf file.
 
 When Postfix does not receive or deliver mail, the first order of business is
 to look for errors that prevent Postfix from working properly:

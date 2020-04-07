@@ -134,17 +134,13 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        (the first name of a mail delivery service entry in  the  Postfix  <a href="master.5.html"><b>mas-</b>
        <b>ter.cf</b></a> file).
 
-       The  nexthop  field usually specifies one recipient domain or hostname.
-       In the case of the Postfix SMTP/LMTP client, the nexthop field may con-
-       tain  a  list  of nexthop destinations separated by comma or whitespace
-       (Postfix 3.5 and later).
+       The  interpretation of the nexthop field is transport dependent. In the
+       case of SMTP, specify a service on a non-default port as  <i>host</i>:<i>service</i>,
+       and disable MX (mail exchanger) DNS lookups with [<i>host</i>] or [<i>host</i>]:<i>port</i>.
+       The [] form is required when you specify an IP  address  instead  of  a
+       hostname.
 
-       The syntax of a nexthop destination is transport dependent.  With SMTP,
-       specify a service on a non-default port as <i>host</i>:<i>service</i>, and disable MX
-       (mail exchanger) DNS lookups with [<i>host</i>] or [<i>host</i>]:<i>port</i>. The [] form is
-       required when you specify an IP address instead of a hostname.
-
-       A  null <i>transport</i> and null <i>nexthop</i> field means "do not change": use the
+       A null <i>transport</i> and null <i>nexthop</i> result means "do not change": use the
        delivery transport and nexthop information that would be used when  the
        entire transport table did not exist.
 
@@ -189,7 +185,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        In the above example, the [] suppress MX lookups.  This  prevents  mail
        routing loops when your machine is primary MX host for <b>example.com</b>.
 
-       In  the case of delivery via SMTP or LMTP, one may specify <i>host</i>:<i>service</i>
+       In  the  case  of  delivery  via SMTP, one may specify <i>hostname</i>:<i>service</i>
        instead of just a host:
 
             <b>example.com      <a href="smtp.8.html">smtp</a>:bar.example:2025</b>
@@ -197,14 +193,6 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        This directs mail for <i>user</i>@<b>example.com</b> to host <b>bar.example</b>  port  <b>2025</b>.
        Instead  of  a  numerical  port a symbolic name may be used. Specify []
        around the hostname if MX lookups must be disabled.
-
-       Deliveries via SMTP or LMTP support multiple destinations  (Postfix  &gt;=
-       3.5):
-
-            <b>example.com      <a href="smtp.8.html">smtp</a>:bar.example, foo.example</b>
-
-       This  tries  to  deliver  to  <b>bar.example</b>  before  trying to deliver to
-       <b>foo.example</b>.
 
        The error mailer can be used to bounce mail:
 
@@ -246,17 +234,16 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        below provides only a  parameter  summary.  See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for  more
        details including examples.
 
-       <b><a href="postconf.5.html#empty_address_recipient">empty_address_recipient</a> (MAILER-DAEMON)</b>
-              The recipient of mail addressed to the null address.
+       <b><a href="postconf.5.html#empty_address_recipient">empty_address_recipient</a></b>
+              The  address  that  is  looked  up  instead  of  the null sender
+              address.
 
-       <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a> (see 'postconf -d' output)</b>
-              A  list of Postfix features where the pattern "example.com" also
-              matches subdomains  of  example.com,  instead  of  requiring  an
-              explicit ".example.com" pattern.
+       <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a></b>
+              List of Postfix features that use <i>domain.tld</i> patterns  to  match
+              <i>sub.domain.tld</i> (as opposed to requiring <i>.domain.tld</i> patterns).
 
-       <b><a href="postconf.5.html#transport_maps">transport_maps</a> (empty)</b>
-              Optional  lookup  tables with mappings from recipient address to
-              (message delivery transport, next-hop destination).
+       <b><a href="postconf.5.html#transport_maps">transport_maps</a></b>
+              List of transport lookup tables.
 
 <b>SEE ALSO</b>
        <a href="trivial-rewrite.8.html">trivial-rewrite(8)</a>, rewrite and resolve addresses

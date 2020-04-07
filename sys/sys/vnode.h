@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.294 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.290 2020/02/27 22:12:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -210,9 +210,9 @@ typedef struct vnode vnode_t;
 #define	VI_TEXT		0x00000100	/* vnode is a pure text prototype */
 #define	VI_EXECMAP	0x00000200	/* might have PROT_EXEC mappings */
 #define	VI_WRMAP	0x00000400	/* might have PROT_WRITE u. mappings */
-#define	VI_PAGES	0x00000800	/* UVM object has >0 pages */
+#define	VI_WRMAPDIRTY	0x00000800	/* might have dirty pages */
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
-#define	VI_DEADCHECK	0x00008000	/* UVM: need to call vdead_check() */
+#define	VI_PAGES	0x00008000	/* UVM object has >0 pages */
 
 /*
  * The third set are locked by the underlying file system.
@@ -221,7 +221,7 @@ typedef struct vnode vnode_t;
 
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
-    "\13WRMAP\14PAGES\17ONWORKLST\18DEADCHECK\31DIROP"
+    "\13WRMAP\14WRMAPDIRTY\17ONWORKLST\31DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
 

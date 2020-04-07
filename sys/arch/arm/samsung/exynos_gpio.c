@@ -1,11 +1,11 @@
-/*	$NetBSD: exynos_gpio.c,v 1.29 2020/03/20 06:38:16 skrll Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.25 2018/07/04 22:16:42 jmcneill Exp $ */
 
 /*-
-* Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
+* Copyright (c) 2014 The NetBSD Foundation, Inc.
 * All rights reserved.
 *
 * This code is derived from software contributed to The NetBSD Foundation
-* by Reinoud Zandijk, and by Nick Hudson
+* by Reinoud Zandijk
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.29 2020/03/20 06:38:16 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.25 2018/07/04 22:16:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,7 +63,11 @@ struct exynos_gpio_bank {
 	const bus_addr_t	bank_core_offset;
 	const uint8_t		bank_bits;
 
+	uint8_t			bank_pin_mask;
+	uint8_t			bank_pin_inuse_mask;
+	bus_space_handle_t	bank_bsh;
 	struct exynos_gpio_pin_cfg bank_cfg;
+	struct exynos_gpio_bank * bank_next;
 };
 
 struct exynos_gpio_pin {
@@ -84,30 +88,7 @@ struct exynos_gpio_pin {
 		.bank_bits = b, \
 	}
 
-#define GPIO_GRP_INTR(o, n, b, i)			\
-	{ 						\
-		.bank_name = #n,			\
-		.bank_core_offset = GPIO_REG(v,s,o),	\
-		.bank_bits = b,				\
-	}
-
-#define GPIO_GRP_NONE(o, n, b)	\
-	{ \
-		.bank_name = #n, \
-		.bank_core_offset = GPIO_REG(v,s,o), \
-		.bank_bits = b, \
-	}
-
-#define GPIO_GRP_WAKEUP(o, n, b, i)			\
-	{ 						\
-		.bank_name = #n,			\
-		.bank_core_offset = GPIO_REG(v,s,o),	\
-		.bank_bits = b,				\
-	}
-
-
-
-static struct exynos_gpio_bank exynos5420_banks[] = {
+static struct exynos_gpio_bank exynos5_banks[] = {
 	GPIO_GRP(5, MUXA, 0x0000, gpy7, 8),
 	GPIO_GRP(5, MUXA, 0x0C00, gpx0, 8),
 	GPIO_GRP(5, MUXA, 0x0C20, gpx1, 8),
@@ -148,78 +129,10 @@ static struct exynos_gpio_bank exynos5420_banks[] = {
 	GPIO_GRP(5, MUXD, 0x0100, gph0, 4),
 
 	GPIO_GRP(5, MUXE, 0x0000, gpz, 7),
+
 };
 
-struct exynos_pinctrl_banks exynos5420_pinctrl_banks = {
-	.epb_banks = exynos5420_banks,
-	.epb_nbanks = __arraycount(exynos5420_banks)
-};
-
-static struct exynos_gpio_bank exynos5410_banks[] = {
-	/* pin-controller 0 */
-	GPIO_GRP_INTR(0x000, gpa0, 8, 0x00),
-	GPIO_GRP_INTR(0x020, gpa1, 6, 0x04),
-	GPIO_GRP_INTR(0x040, gpa2, 8, 0x08),
-	GPIO_GRP_INTR(0x060, gpb0, 5, 0x0c),
-	GPIO_GRP_INTR(0x080, gpb1, 5, 0x10),
-	GPIO_GRP_INTR(0x0A0, gpb2, 4, 0x14),
-	GPIO_GRP_INTR(0x0C0, gpb3, 4, 0x18),
-	GPIO_GRP_INTR(0x0E0, gpc0, 7, 0x1c),
-	GPIO_GRP_INTR(0x100, gpc3, 4, 0x20),
-	GPIO_GRP_INTR(0x120, gpc1, 7, 0x24),
-	GPIO_GRP_INTR(0x140, gpc2, 7, 0x28),
-	GPIO_GRP_INTR(0x180, gpd1, 8, 0x2c),
-	GPIO_GRP_INTR(0x1A0, gpe0, 8, 0x30),
-	GPIO_GRP_INTR(0x1C0, gpe1, 2, 0x34),
-	GPIO_GRP_INTR(0x1E0, gpf0, 6, 0x38),
-	GPIO_GRP_INTR(0x200, gpf1, 8, 0x3c),
-	GPIO_GRP_INTR(0x220, gpg0, 8, 0x40),
-	GPIO_GRP_INTR(0x240, gpg1, 8, 0x44),
-	GPIO_GRP_INTR(0x260, gpg2, 2, 0x48),
-	GPIO_GRP_INTR(0x280, gph0, 4, 0x4c),
-	GPIO_GRP_INTR(0x2A0, gph1, 8, 0x50),
-	GPIO_GRP_NONE(0x160, gpm5, 2),
-	GPIO_GRP_NONE(0x2C0, gpm7, 8),
-	GPIO_GRP_NONE(0x2E0, gpy0, 6),
-	GPIO_GRP_NONE(0x300, gpy1, 4),
-	GPIO_GRP_NONE(0x320, gpy2, 6),
-	GPIO_GRP_NONE(0x340, gpy3, 8),
-	GPIO_GRP_NONE(0x360, gpy4, 8),
-	GPIO_GRP_NONE(0x380, gpy5, 8),
-	GPIO_GRP_NONE(0x3A0, gpy6, 8),
-	GPIO_GRP_NONE(0x3C0, gpy7, 8),
-	GPIO_GRP_WAKEUP(0xC00, gpx0, 8, 0x00),
-	GPIO_GRP_WAKEUP(0xC20, gpx1, 8, 0x04),
-	GPIO_GRP_WAKEUP(0xC40, gpx2, 8, 0x08),
-	GPIO_GRP_WAKEUP(0xC60, gpx3, 8, 0x0c),
-
-	/* pin-controller 1 */
-	GPIO_GRP_INTR(0x000, gpj0, 5, 0x00),
-	GPIO_GRP_INTR(0x020, gpj1, 8, 0x04),
-	GPIO_GRP_INTR(0x040, gpj2, 8, 0x08),
-	GPIO_GRP_INTR(0x060, gpj3, 8, 0x0c),
-	GPIO_GRP_INTR(0x080, gpj4, 2, 0x10),
-	GPIO_GRP_INTR(0x0A0, gpk0, 8, 0x14),
-	GPIO_GRP_INTR(0x0C0, gpk1, 8, 0x18),
-	GPIO_GRP_INTR(0x0E0, gpk2, 8, 0x1c),
-	GPIO_GRP_INTR(0x100, gpk3, 7, 0x20),
-
-	/* pin-controller 2 */
-	GPIO_GRP_INTR(0x000, gpv0, 8, 0x00),
-	GPIO_GRP_INTR(0x020, gpv1, 8, 0x04),
-	GPIO_GRP_INTR(0x060, gpv2, 8, 0x08),
-	GPIO_GRP_INTR(0x080, gpv3, 8, 0x0c),
-	GPIO_GRP_INTR(0x0C0, gpv4, 2, 0x10),
-
-	/* pin-controller 2 */
-	GPIO_GRP_INTR(0x000, gpz, 7, 0x00),
-};
-
-struct exynos_pinctrl_banks exynos5410_pinctrl_banks = {
-	.epb_banks = exynos5410_banks,
-	.epb_nbanks = __arraycount(exynos5410_banks)
-};
-
+struct exynos_gpio_bank *exynos_gpio_banks = exynos5_banks;
 
 static int exynos_gpio_pin_read(void *, int);
 static void exynos_gpio_pin_write(void *, int, int);
@@ -266,13 +179,11 @@ static int
 exynos_gpio_pin_read(void *cookie, int pin)
 {
 	struct exynos_gpio_bank * const bank = cookie;
-	uint8_t val;
 
 	KASSERT(pin < bank->bank_bits);
-	val = bus_space_read_1(bank->bank_sc->sc_bst, bank->bank_sc->sc_bsh,
-	    EXYNOS_GPIO_DAT);
-
-	return __SHIFTOUT(val, __BIT(pin));
+	return (bus_space_read_1(bank->bank_sc->sc_bst,
+				 bank->bank_sc->sc_bsh,
+		EXYNOS_GPIO_DAT) >> pin) & 1;
 }
 
 static void
@@ -282,13 +193,15 @@ exynos_gpio_pin_write(void *cookie, int pin, int value)
 	int val;
 
 	KASSERT(pin < bank->bank_bits);
-	val = bus_space_read_1(bank->bank_sc->sc_bst, bank->bank_sc->sc_bsh,
-	    EXYNOS_GPIO_DAT);
+	val = bus_space_read_1(bank->bank_sc->sc_bst,
+			       bank->bank_sc->sc_bsh,
+			       EXYNOS_GPIO_DAT);
 	val &= ~__BIT(pin);
 	if (value)
 		val |= __BIT(pin);
-	bus_space_write_1(bank->bank_sc->sc_bst, bank->bank_sc->sc_bsh,
-	    EXYNOS_GPIO_DAT, val);
+	bus_space_write_1(bank->bank_sc->sc_bst,
+			  bank->bank_sc->sc_bsh,
+		EXYNOS_GPIO_DAT, val);
 }
 
 static void
@@ -366,20 +279,20 @@ struct exynos_gpio_softc *
 exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 			const struct fdt_attach_args *faa, int node)
 {
+	struct exynos_gpio_bank *bank = kmem_zalloc(sizeof(*bank), KM_SLEEP);
 	struct exynos_gpio_softc *sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	struct gpiobus_attach_args gba;
 	struct gpio_chipset_tag *gc_tag;
 	char result[64];
 
 	OF_getprop(node, "name", result, sizeof(result));
-	struct exynos_gpio_bank *bank =
-	    exynos_gpio_bank_lookup(parent->sc_epb, result);
+	bank = exynos_gpio_bank_lookup(result);
 	if (bank == NULL) {
 		aprint_error_dev(parent->sc_dev, "no bank found for %s\n",
 		    result);
 		return NULL;
 	}
-
+	
 	sc->sc_dev = parent->sc_dev;
 	sc->sc_bst = &armv7_generic_bs_tag;
 	sc->sc_bsh = parent->sc_bsh;
@@ -394,11 +307,13 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 	gba.gba_gc = &bank->bank_gc;
 	gba.gba_pins = bank->bank_pins;
 	gba.gba_npins = bank->bank_bits;
-
 	bank->bank_sc = sc;
 	bank->bank_dev = config_found_ia(parent->sc_dev, "gpiobus", &gba,
 					 exynos_gpio_cfprint);
-	bank->bank_dev->dv_private = sc;
+
+	bank->bank_pin_mask = __BIT(bank->bank_bits) - 1;
+	bank->bank_pin_inuse_mask = 0;
+
 
 	/* read in our initial settings */
 	bank->bank_cfg.cfg = GPIO_READ(bank, EXYNOS_GPIO_CON);
@@ -418,12 +333,12 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
  * the '-', or the four character string if the dash is not present.
  */
 struct exynos_gpio_bank *
-exynos_gpio_bank_lookup(struct exynos_pinctrl_banks *epb,  const char *name)
+exynos_gpio_bank_lookup(const char *name)
 {
 	struct exynos_gpio_bank *bank;
 
-	for (u_int n = 0; n < epb->epb_nbanks; n++) {
-		bank = &epb->epb_banks[n];
+	for (u_int n = 0; n < __arraycount(exynos5_banks); n++) {
+		bank = &exynos_gpio_banks[n];
 		if (!strncmp(bank->bank_name, name,
 			     strlen(bank->bank_name))) {
 			return bank;
@@ -450,17 +365,25 @@ exynos_gpio_pin_lookup(const char *name)
 static void *
 exynos_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 {
+	const u_int *cells = data;
+	struct exynos_gpio_bank *bank = NULL;
 	struct exynos_gpio_pin *gpin;
+	int n;
 
 	if (len != 12)
 		return NULL;
 
-	const u_int *cells = data;
 	const int pin = be32toh(cells[1]) & 0x0f;
 	const int actlo = be32toh(cells[2]) & 0x01;
 
-	struct exynos_gpio_softc *bank_sc = device_private(dev);
-	struct exynos_gpio_bank * const bank = bank_sc->sc_bank;
+	for (n = 0; n < __arraycount(exynos5_banks); n++) {
+		if (exynos_gpio_banks[n].bank_dev == dev) {
+			bank = &exynos_gpio_banks[n];
+			break;
+		}
+	}
+	if (bank == NULL)
+		return NULL;
 
 	gpin = kmem_alloc(sizeof(*gpin), KM_SLEEP);
 	gpin->pin_sc = bank->bank_sc;

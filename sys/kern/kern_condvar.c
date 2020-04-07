@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.44 2020/03/26 19:46:42 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.43 2020/02/15 17:09:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.44 2020/03/26 19:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.43 2020/02/15 17:09:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,19 +48,20 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.44 2020/03/26 19:46:42 ad Exp $")
 /*
  * Accessors for the private contents of the kcondvar_t data type.
  *
- *	cv_opaque[0]	sleepq_t
- *	cv_opaque[1]	description for ps(1)
+ *	cv_opaque[0]	sleepq...
+ *	cv_opaque[1]	...pointers
+ *	cv_opaque[2]	description for ps(1)
  *
- * cv_opaque[0] is protected by the interlock passed to cv_wait() (enqueue
+ * cv_opaque[0..1] is protected by the interlock passed to cv_wait() (enqueue
  * only), and the sleep queue lock acquired with sleepq_hashlock() (enqueue
  * and dequeue).
  *
- * cv_opaque[1] (the wmesg) is static and does not change throughout the life
+ * cv_opaque[2] (the wmesg) is static and does not change throughout the life
  * of the CV.
  */
 #define	CV_SLEEPQ(cv)		((sleepq_t *)(cv)->cv_opaque)
-#define	CV_WMESG(cv)		((const char *)(cv)->cv_opaque[1])
-#define	CV_SET_WMESG(cv, v) 	(cv)->cv_opaque[1] = __UNCONST(v)
+#define	CV_WMESG(cv)		((const char *)(cv)->cv_opaque[2])
+#define	CV_SET_WMESG(cv, v) 	(cv)->cv_opaque[2] = __UNCONST(v)
 
 #define	CV_DEBUG_P(cv)	(CV_WMESG(cv) != nodebug)
 #define	CV_RA		((uintptr_t)__builtin_return_address(0))
@@ -485,7 +486,7 @@ cv_signal(kcondvar_t *cv)
 	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
 	KASSERT(cv_is_valid(cv));
 
-	if (__predict_false(!LIST_EMPTY(CV_SLEEPQ(cv))))
+	if (__predict_false(!TAILQ_EMPTY(CV_SLEEPQ(cv))))
 		cv_wakeup_one(cv);
 }
 
@@ -507,7 +508,7 @@ cv_wakeup_one(kcondvar_t *cv)
 
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
-	l = LIST_FIRST(sq);
+	l = TAILQ_FIRST(sq);
 	if (__predict_false(l == NULL)) {
 		mutex_spin_exit(mp);
 		return;
@@ -535,7 +536,7 @@ cv_broadcast(kcondvar_t *cv)
 	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
 	KASSERT(cv_is_valid(cv));
 
-	if (__predict_false(!LIST_EMPTY(CV_SLEEPQ(cv))))  
+	if (__predict_false(!TAILQ_EMPTY(CV_SLEEPQ(cv))))  
 		cv_wakeup_all(cv);
 }
 
@@ -557,11 +558,11 @@ cv_wakeup_all(kcondvar_t *cv)
 
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
-	for (l = LIST_FIRST(sq); l != NULL; l = next) {
+	for (l = TAILQ_FIRST(sq); l != NULL; l = next) {
 		KASSERT(l->l_sleepq == sq);
 		KASSERT(l->l_mutex == mp);
 		KASSERT(l->l_wchan == cv);
-		next = LIST_NEXT(l, l_sleepchain);
+		next = TAILQ_NEXT(l, l_sleepchain);
 		CV_LOCKDEBUG_PROCESS(l, cv);
 		sleepq_remove(sq, l);
 	}
@@ -580,7 +581,7 @@ bool
 cv_has_waiters(kcondvar_t *cv)
 {
 
-	return !LIST_EMPTY(CV_SLEEPQ(cv));
+	return !TAILQ_EMPTY(CV_SLEEPQ(cv));
 }
 
 /*

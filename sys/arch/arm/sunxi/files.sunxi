@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.68 2020/03/24 22:09:50 tnn Exp $
+#	$NetBSD: files.sunxi,v 1.67 2019/12/09 04:51:03 riastradh Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -158,6 +158,14 @@ file	arch/arm/sunxi/sunxi_usb3phy.c		sunxi_usb3phy
 device	sun9iusbphy
 attach	sun9iusbphy at fdt with sunxi_a80_usbphy
 file	arch/arm/sunxi/sun9i_a80_usbphy.c	sunxi_a80_usbphy
+
+# EHCI
+attach	ehci at fdt with ehci_fdt
+file	dev/fdt/ehci_fdt.c			ehci_fdt	
+
+# OHCI
+attach	ohci at fdt with ohci_fdt
+file	dev/fdt/ohci_fdt.c			ohci_fdt
 
 # TWI
 device	sunxitwi: i2cbus, i2cexec, mvi2c

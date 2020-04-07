@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.44 2020/03/20 01:08:42 joerg Exp $	*/
+/*	$NetBSD: wchar.h,v 1.43 2018/12/28 13:11:46 maya Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -151,9 +151,9 @@ long int wcstol(const wchar_t * __restrict,
 	wchar_t ** __restrict, int);
 double wcstod(const wchar_t * __restrict, wchar_t ** __restrict);
 
-#if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-    (__cplusplus - 0) >= 201103L || defined(_NETBSD_SOURCE) || \
-    (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
+#if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
+    defined(_NETBSD_SOURCE) || \
+	(_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
 float wcstof(const wchar_t * __restrict, wchar_t ** __restrict);
 long double wcstold(const wchar_t * __restrict, wchar_t ** __restrict);
 
@@ -194,8 +194,8 @@ int vwprintf(const wchar_t * __restrict, __va_list);
 int wprintf(const wchar_t * __restrict, ...);
 int wscanf(const wchar_t * __restrict, ...);
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
-    (__cplusplus - 0) >= 201103L || defined(_NETBSD_SOURCE) || \
-    (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
+    defined(_NETBSD_SOURCE) || \
+	(_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
 int vfwscanf(FILE * __restrict, const wchar_t * __restrict, __va_list);
 int vswscanf(const wchar_t * __restrict, const wchar_t * __restrict,
     __va_list);

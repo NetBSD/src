@@ -376,14 +376,9 @@ target_to_host (char *hostr, size_t hostsz, const char *targstr)
      overlong strings just like the translated strings are.  */
   if (target_to_host_charmap['\0'] == 1)
     {
-      size_t len = strlen (targstr);
-      if (len >= hostsz)
-	{
-	  memcpy (hostr, targstr, hostsz - 4);
-	  strcpy (hostr + hostsz - 4, "...");
-	}
-      else
-	memcpy (hostr, targstr, len + 1);
+      strncpy (hostr, targstr, hostsz - 4);
+      if (strlen (targstr) >= hostsz)
+	strcpy (hostr + hostsz - 4, "...");
       return hostr;
     }
 
@@ -397,9 +392,10 @@ target_to_host (char *hostr, size_t hostsz, const char *targstr)
       if (!*targstr)
 	break;
 
-      if (size_t (ph - hostr) == hostsz)
+      if (size_t (ph - hostr) == hostsz - 4)
 	{
-	  strcpy (ph - 4, "...");
+	  *ph = '\0';
+	  strcat (ph, "...");
 	  break;
 	}
     }
@@ -3666,10 +3662,10 @@ try_substitute_return_value (gimple_stmt_iterator *gsi,
 	 are badly declared.  */
       && !stmt_ends_bb_p (info.callstmt))
     {
-      tree cst = build_int_cst (lhs ? TREE_TYPE (lhs) : integer_type_node,
-				retval[0]);
+      tree cst = build_int_cst (integer_type_node, retval[0]);
 
-      if (lhs == NULL_TREE && info.nowrite)
+      if (lhs == NULL_TREE
+	  && info.nowrite)
 	{
 	  /* Remove the call to the bounded function with a zero size
 	     (e.g., snprintf(0, 0, "%i", 123)) if there is no lhs.  */
@@ -3710,7 +3706,7 @@ try_substitute_return_value (gimple_stmt_iterator *gsi,
 	    }
 	}
     }
-  else if (lhs && types_compatible_p (TREE_TYPE (lhs), integer_type_node))
+  else if (lhs)
     {
       bool setrange = false;
 

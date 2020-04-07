@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 2020/03/14 16:12:16 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.3 2019/04/13 12:41:36 maya Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 	REG_L	ra, CALLFRAME_RA(sp);				\
 	REG_L	a0, CALLFRAME_S0(sp);				\
 	addi	sp, sp, CALLFRAME_SIZ;				\
-	.set	pop;
+	.set	pop;					
 
 #ifdef GPROF
 #define	_PROF_PROLOGUE _KERN_MCOUNT

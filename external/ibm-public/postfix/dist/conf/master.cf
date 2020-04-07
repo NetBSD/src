@@ -1,4 +1,4 @@
-#	$NetBSD: master.cf,v 1.9 2020/03/18 19:05:13 christos Exp $
+#	$NetBSD: master.cf,v 1.8 2017/02/14 01:16:43 christos Exp $
 #
 #
 # Postfix master process configuration file.  For details on the format
@@ -20,7 +20,6 @@
 #  -o syslog_name=postfix/submission
 #  -o smtpd_tls_security_level=encrypt
 #  -o smtpd_sasl_auth_enable=yes
-#  -o smtpd_tls_auth_only=yes
 #  -o smtpd_reject_unlisted_recipient=no
 #  -o smtpd_client_restrictions=$mua_client_restrictions
 #  -o smtpd_helo_restrictions=$mua_helo_restrictions
@@ -55,7 +54,6 @@ proxymap  unix  -       -       n       -       -       proxymap
 proxywrite unix -       -       n       -       1       proxymap
 smtp      unix  -       -       n       -       -       smtp
 relay     unix  -       -       n       -       -       smtp
-        -o syslog_name=postfix/$service_name
 #       -o smtp_helo_timeout=5 -o smtp_connect_timeout=5
 showq     unix  n       -       n       -       -       showq
 error     unix  -       -       n       -       -       error
@@ -66,7 +64,6 @@ virtual   unix  -       n       n       -       -       virtual
 lmtp      unix  -       -       n       -       -       lmtp
 anvil     unix  -       -       n       -       1       anvil
 scache    unix  -       -       n       -       1       scache
-postlog   unix-dgram n  -       n       -       1       postlogd
 #
 # ====================================================================
 # Interfaces to non-Postfix software. Be sure to examine the manual
@@ -81,7 +78,7 @@ postlog   unix-dgram n  -       n       -       1       postlogd
 # Also specify in main.cf: maildrop_destination_recipient_limit=1
 #
 #maildrop  unix  -       n       n       -       -       pipe
-#  flags=DRXhu user=vmail argv=/usr/local/bin/maildrop -d ${recipient}
+#  flags=DRhu user=vmail argv=/usr/local/bin/maildrop -d ${recipient}
 #
 # ====================================================================
 #
@@ -100,7 +97,7 @@ postlog   unix-dgram n  -       n       -       1       postlogd
 # Also specify in main.cf: cyrus_destination_recipient_limit=1
 #
 #cyrus     unix  -       n       n       -       -       pipe
-#  flags=DRX user=cyrus argv=/cyrus/bin/deliver -e -r ${sender} -m ${extension} ${user}
+#  user=cyrus argv=/cyrus/bin/deliver -e -r ${sender} -m ${extension} ${user}
 #
 # ====================================================================
 #
@@ -131,5 +128,5 @@ postlog   unix-dgram n  -       n       -       1       postlogd
 #  ${nexthop} ${user} ${extension}
 #
 #mailman   unix  -       n       n       -       -       pipe
-#  flags=FRX user=list argv=/usr/lib/mailman/bin/postfix-to-mailman.py
+#  flags=FR user=list argv=/usr/lib/mailman/bin/postfix-to-mailman.py
 #  ${nexthop} ${user}

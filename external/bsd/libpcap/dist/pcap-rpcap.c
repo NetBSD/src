@@ -2701,7 +2701,7 @@ SOCKET pcap_remoteact_accept(const char *address, const char *port, const char *
 	}
 
 	/* checks if the connecting host is among the ones allowed */
-	if (sock_check_hostlist(__UNCONST(hostlist), RPCAP_HOSTLIST_SEP, &from, errbuf, PCAP_ERRBUF_SIZE) < 0)
+	if (sock_check_hostlist((char *)hostlist, RPCAP_HOSTLIST_SEP, &from, errbuf, PCAP_ERRBUF_SIZE) < 0)
 	{
 		rpcap_senderror(sockctrl, 0, PCAP_ERR_REMOTEACCEPT, errbuf, NULL);
 		sock_close(sockctrl, NULL, 0);

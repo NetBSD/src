@@ -10,7 +10,7 @@ MASTER(8)                                                            MASTER(8)
        master - Postfix master process
 
 <b>SYNOPSIS</b>
-       <b>master</b> [<b>-Dditvw</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-e</b> <i>exit</i><b>_</b><i>time</i>]
+       <b>master</b> [<b>-Ddtvw</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-e</b> <i>exit</i><b>_</b><i>time</i>]
 
 <b>DESCRIPTION</b>
        The  <a href="master.8.html"><b>master</b>(8)</a> daemon is the resident process that runs Postfix daemons
@@ -47,18 +47,6 @@ MASTER(8)                                                            MASTER(8)
               Terminate the master process after <i>exit</i><b>_</b><i>time</i> seconds. Child pro-
               cesses terminate at their convenience.
 
-       <b>-i</b>     Enable  <b>init</b>  mode:  do  not  become  a session or process group
-              leader; and similar to <b>-s</b>, do not redirect stdout to  /dev/null,
-              so  that  "<a href="postconf.5.html#maillog_file">maillog_file</a>  =  /dev/stdout"  works.   This  mode is
-              allowed only if the process ID equals 1.
-
-              This feature is available in Postfix 3.3 and later.
-
-       <b>-s</b>     Do not redirect stdout to /dev/null,  so  that  "<a href="postconf.5.html#maillog_file">maillog_file</a>  =
-              /dev/stdout" works.
-
-              This feature is available in Postfix 3.4 and later.
-
        <b>-t</b>     Test  mode.  Return  a zero exit status when the <b>master.pid</b> lock
               file does not exist or when that file is not  locked.   This  is
               evidence that the <a href="master.8.html"><b>master</b>(8)</a> daemon is not running.
@@ -92,9 +80,9 @@ MASTER(8)                                                            MASTER(8)
               running processes to finish what they are doing.
 
 <b>DIAGNOSTICS</b>
-       Problems are reported to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.  The exit status is
-       non-zero  in case of problems, including problems while initializing as
-       a master daemon process in the background.
+       Problems are reported to <b>syslogd</b>(8). The exit  status  is  non-zero  in
+       case  of  problems,  including  problems while initializing as a master
+       daemon process in the background.
 
 <b>ENVIRONMENT</b>
        <b>MAIL_DEBUG</b>
@@ -155,12 +143,11 @@ MASTER(8)                                                            MASTER(8)
               or accepting connections.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The list of environment parameters  that  a  privileged  Postfix
-              process  will  import  from  a  non-Postfix  parent  process, or
-              name=value environment overrides.
+              The list of environment parameters that a Postfix  process  will
+              import from a non-Postfix parent process.
 
        <b><a href="postconf.5.html#mail_owner">mail_owner</a> (postfix)</b>
-              The UNIX system account that owns the  Postfix  queue  and  most
+              The  UNIX  system  account  that owns the Postfix queue and most
               Postfix daemon processes.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
@@ -176,13 +163,9 @@ MASTER(8)                                                            MASTER(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A  prefix  that  is  prepended  to  the  process  name in syslog
-              records, so that, for example, "smtpd" becomes "prefix/smtpd".
-
-       Available in Postfix 3.3 and later:
-
-       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
-              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              fix/smtpd".
 
 <b>FILES</b>
        To expand the directory names below into their actual values,  use  the
@@ -198,7 +181,6 @@ MASTER(8)                                                            MASTER(8)
        <a href="verify.8.html">verify(8)</a>, address verification
        <a href="master.5.html">master(5)</a>, <a href="master.5.html">master.cf</a> configuration file syntax
        <a href="postconf.5.html">postconf(5)</a>, <a href="postconf.5.html">main.cf</a> configuration file syntax
-       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>LICENSE</b>

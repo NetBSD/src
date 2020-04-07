@@ -32,7 +32,7 @@
 #define __PMAP_PRIVATE
 #define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.5 2020/03/14 16:12:16 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.4 2019/11/21 19:24:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,7 +398,7 @@ cpu_trap(struct trapframe *tf, register_t epc, register_t status,
 #ifndef _LP64
 		// This fault may be cause the kernel's page table got a new
 		// page table page and this pmap's page table doesn't know
-		// about it.  See
+		// about it.  See 
 		struct pmap * const pmap = curlwp->l_proc->p_vmspace->vm_map.pmap;
 		if ((intptr_t) addr < 0
 		    && pmap != pmap_kernel()
@@ -463,7 +463,7 @@ fetch_user_data(const void *uaddr, void *valp, size_t size)
 
 	if ((error = cpu_set_onfault(&fb, 1)) != 0)
 		return error;
-
+	
 	switch (size) {
 	case 1:
 		*(uint8_t *)valp = *(volatile const uint8_t *)uaddr;
@@ -521,7 +521,7 @@ store_user_data(void *uaddr, const void *valp, size_t size)
 
 	if ((error = cpu_set_onfault(&fb, 1)) != 0)
 		return error;
-
+	
 	switch (size) {
 	case 1:
 		*(volatile uint8_t *)uaddr = *(const uint8_t *)valp;

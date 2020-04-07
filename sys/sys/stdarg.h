@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.5 2020/03/20 01:06:11 joerg Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.4 2014/08/15 11:58:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@
 #define	__builtin_va_end(a)		/* nothing */
 #define	__builtin_va_copy(d, s)		((d) = (s))
 #elif !(__GNUC_PREREQ__(4, 5) || \
-    (__GNUC_PREREQ__(4, 4) && __GNUC_PATCHLEVEL__ > 2) || defined(__clang__))
+    (__GNUC_PREREQ__(4, 4) && __GNUC_PATCHLEVEL__ > 2))
 #define __builtin_va_start(ap, last)    __builtin_stdarg_start((ap), (last))
 #endif
 

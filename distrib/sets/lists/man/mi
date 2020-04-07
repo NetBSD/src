@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1684 2020/03/29 17:13:46 christos Exp $
+# $NetBSD: mi,v 1.1682 2020/02/26 16:12:44 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -165,9 +165,6 @@
 ./usr/share/man/cat1/fdformat.0			man-util-catman		.cat
 ./usr/share/man/cat1/fg.0			man-util-catman		.cat
 ./usr/share/man/cat1/fgrep.0			man-util-catman		.cat
-./usr/share/man/cat1/fido2-assert.0			man-util-catman	.cat
-./usr/share/man/cat1/fido2-cred.0			man-util-catman	.cat
-./usr/share/man/cat1/fido2-token.0			man-util-catman	.cat
 ./usr/share/man/cat1/file.0			man-util-catman		.cat
 ./usr/share/man/cat1/fincore.0			man-util-catman		.cat
 ./usr/share/man/cat1/find.0			man-util-catman		.cat
@@ -668,35 +665,10 @@
 ./usr/share/man/cat3/atari/ahdi_readlabel.0	man-obsolete		obsolete
 ./usr/share/man/cat3/atari/ahdi_writedisktab.0	man-obsolete		obsolete
 ./usr/share/man/cat3/atari/ahdi_writelabel.0	man-obsolete		obsolete
-./usr/share/man/cat3/eddsa_pk_new.0			man-util-catman	.cat
-./usr/share/man/cat3/es256_pk_new.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_assert_allow_cred.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_assert_new.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_assert_set_authdata.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_assert_verify.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_bio_dev_get_info.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_bio_enroll_new.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_bio_info_new.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_bio_template.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_cbor_info_new.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_cred_exclude.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_cred_new.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_cred_set_authdata.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_cred_verify.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_credman_metadata_new.0	man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_get_assert.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_info_manifest.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_make_cred.0		man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_open.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_set_io_functions.0	man-util-catman	.cat
-./usr/share/man/cat3/fido_dev_set_pin.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_init.0			man-util-catman	.cat
-./usr/share/man/cat3/fido_strerr.0			man-util-catman	.cat
 ./usr/share/man/cat3/i386			man-obsolete		obsolete
 ./usr/share/man/cat3/i386/keycap.0		man-obsolete		obsolete
 ./usr/share/man/cat3/libbozohttpd.0		man-sys-catman		.cat
 ./usr/share/man/cat3/libunbound.0		man-netutil-catman	.cat,unbound
-./usr/share/man/cat3/rs256_pk_new.0			man-util-catman	.cat
 ./usr/share/man/cat3lua/bozohttpd.0		man-sys-catman		.cat
 ./usr/share/man/cat3lua/gpio.0			man-sys-catman		.cat
 ./usr/share/man/cat3lua/gpio.attach.0		man-sys-catman		.cat
@@ -1747,8 +1719,8 @@
 ./usr/share/man/cat4/slip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/smsc.0			man-sys-catman		.cat
-./usr/share/man/cat4/smscmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/smscphy.0			man-sys-catman		.cat
+./usr/share/man/cat4/smscmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/smsh.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sony.0			man-sys-catman		.cat
@@ -2292,7 +2264,6 @@
 ./usr/share/man/cat5/rndc.conf.0		man-bind-catman		.cat
 ./usr/share/man/cat5/route.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/rpc.0			man-net-catman		.cat
-./usr/share/man/cat5/rpcapd-config.0		man-netutil-catman	.cat
 ./usr/share/man/cat5/rtadvd.conf.0		man-router-catman	use_inet6,.cat
 ./usr/share/man/cat5/securenet.0		man-obsolete		obsolete
 ./usr/share/man/cat5/security.conf.0		man-sys-catman		.cat
@@ -2344,8 +2315,8 @@
 ./usr/share/man/cat7/des_modes.0		man-reference-catman	.cat
 ./usr/share/man/cat7/editline.0			man-sys-catman		.cat
 ./usr/share/man/cat7/environ.0			man-reference-catman	.cat
-./usr/share/man/cat7/glob.0			man-reference-catman	.cat
 ./usr/share/man/cat7/groups.0			man-reference-catman	.cat
+./usr/share/man/cat7/glob.0			man-reference-catman	.cat
 ./usr/share/man/cat7/hier.0			man-reference-catman	.cat
 ./usr/share/man/cat7/hostname.0			man-reference-catman	.cat
 ./usr/share/man/cat7/intro.0			man-reference-catman	.cat
@@ -2361,8 +2332,8 @@
 ./usr/share/man/cat7/module.0			man-reference-catman	.cat
 ./usr/share/man/cat7/msafer.0			man-obsolete		obsolete
 ./usr/share/man/cat7/nls.0			man-reference-catman	.cat
-./usr/share/man/cat7/npf-params.0		man-npf-catman		.cat,npf
 ./usr/share/man/cat7/npf.0			man-npf-catman		.cat,npf
+./usr/share/man/cat7/npf-params.0		man-npf-catman		.cat,npf
 ./usr/share/man/cat7/orders.0			man-reference-catman	.cat
 ./usr/share/man/cat7/packages.0			man-obsolete		obsolete
 ./usr/share/man/cat7/pcap-filter.0		man-netutil-catman	.cat
@@ -3059,7 +3030,6 @@
 ./usr/share/man/cat8/rpc.sprayd.0		man-rpcserver-catman	.cat
 ./usr/share/man/cat8/rpc.statd.0		man-nfsserver-catman	.cat
 ./usr/share/man/cat8/rpc.yppasswdd.0		man-nis-catman		yp,.cat
-./usr/share/man/cat8/rpcapd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rpcbind.0			man-rpcserver-catman	.cat
 ./usr/share/man/cat8/rpcinfo.0			man-rpcutil-catman	.cat
 ./usr/share/man/cat8/rquotad.0			man-nfsserver-catman	.cat
@@ -3146,7 +3116,6 @@
 ./usr/share/man/cat8/sprayd.0			man-rpcserver-catman	.cat
 ./usr/share/man/cat8/ssh-keysign.0		man-secsh-catman	.cat
 ./usr/share/man/cat8/ssh-pkcs11-helper.0	man-secsh-catman	.cat
-./usr/share/man/cat8/ssh-sk-helper.0		man-secsh-catman	.cat
 ./usr/share/man/cat8/sshd.0			man-secsh-catman	.cat
 ./usr/share/man/cat8/statd.0			man-nfsserver-catman	.cat
 ./usr/share/man/cat8/statmsg.0			man-obsolete		obsolete
@@ -3463,9 +3432,6 @@
 ./usr/share/man/html1/fdformat.html		man-util-htmlman	html
 ./usr/share/man/html1/fg.html			man-util-htmlman	html
 ./usr/share/man/html1/fgrep.html		man-util-htmlman	html
-./usr/share/man/html1/fido2-assert.html			man-util-htmlman	html
-./usr/share/man/html1/fido2-cred.html			man-util-htmlman	html
-./usr/share/man/html1/fido2-token.html			man-util-htmlman	html
 ./usr/share/man/html1/file.html			man-util-htmlman	html
 ./usr/share/man/html1/fincore.html		man-util-htmlman	html
 ./usr/share/man/html1/find.html			man-util-htmlman	html
@@ -3937,33 +3903,8 @@
 ./usr/share/man/html1/zmore.html		man-util-htmlman	html
 ./usr/share/man/html1/znew.html			man-util-htmlman	html
 ./usr/share/man/html1/ztest.html		man-zfs-htmlman		zfs,html
-./usr/share/man/html3/eddsa_pk_new.html			man-util-htmlman	html
-./usr/share/man/html3/es256_pk_new.html			man-util-htmlman	html
-./usr/share/man/html3/fido_assert_allow_cred.html	man-util-htmlman	html
-./usr/share/man/html3/fido_assert_new.html		man-util-htmlman	html
-./usr/share/man/html3/fido_assert_set_authdata.html	man-util-htmlman	html
-./usr/share/man/html3/fido_assert_verify.html		man-util-htmlman	html
-./usr/share/man/html3/fido_bio_dev_get_info.html	man-util-htmlman	html
-./usr/share/man/html3/fido_bio_enroll_new.html		man-util-htmlman	html
-./usr/share/man/html3/fido_bio_info_new.html		man-util-htmlman	html
-./usr/share/man/html3/fido_bio_template.html		man-util-htmlman	html
-./usr/share/man/html3/fido_cbor_info_new.html		man-util-htmlman	html
-./usr/share/man/html3/fido_cred_exclude.html		man-util-htmlman	html
-./usr/share/man/html3/fido_cred_new.html		man-util-htmlman	html
-./usr/share/man/html3/fido_cred_set_authdata.html	man-util-htmlman	html
-./usr/share/man/html3/fido_cred_verify.html		man-util-htmlman	html
-./usr/share/man/html3/fido_credman_metadata_new.html	man-util-htmlman	html
-./usr/share/man/html3/fido_dev_get_assert.html		man-util-htmlman	html
-./usr/share/man/html3/fido_dev_info_manifest.html	man-util-htmlman	html
-./usr/share/man/html3/fido_dev_make_cred.html		man-util-htmlman	html
-./usr/share/man/html3/fido_dev_open.html		man-util-htmlman	html
-./usr/share/man/html3/fido_dev_set_io_functions.html	man-util-htmlman	html
-./usr/share/man/html3/fido_dev_set_pin.html		man-util-htmlman	html
-./usr/share/man/html3/fido_init.html			man-util-htmlman	html
-./usr/share/man/html3/fido_strerr.html			man-util-htmlman	html
 ./usr/share/man/html3/libbozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3/libunbound.html		man-netutil-htmlman	html,unbound
-./usr/share/man/html3/rs256_pk_new.html			man-util-htmlman	html
 ./usr/share/man/html3lua/bozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.attach.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.close.html	man-sys-htmlman		html
@@ -4899,8 +4840,8 @@
 ./usr/share/man/html4/slip.html			man-sys-htmlman		html
 ./usr/share/man/html4/sm.html			man-sys-htmlman		html
 ./usr/share/man/html4/smsc.html			man-sys-htmlman		html
-./usr/share/man/html4/smscmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/smscphy.html		man-sys-htmlman		html
+./usr/share/man/html4/smscmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/smsh.html			man-sys-htmlman		html
 ./usr/share/man/html4/sn.html			man-sys-htmlman		html
 ./usr/share/man/html4/sony.html			man-sys-htmlman		html
@@ -5418,7 +5359,6 @@
 ./usr/share/man/html5/rndc.conf.html		man-bind-htmlman	html
 ./usr/share/man/html5/route.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/rpc.html			man-net-htmlman		html
-./usr/share/man/html5/rpcapd-config.html	man-netutil-htmlman	html
 ./usr/share/man/html5/rtadvd.conf.html		man-router-htmlman	use_inet6,html
 ./usr/share/man/html5/security.conf.html	man-sys-htmlman		html
 ./usr/share/man/html5/services.html		man-net-htmlman		html
@@ -5478,8 +5418,8 @@
 ./usr/share/man/html7/mdoc.html			man-groff-htmlman	html,groff
 ./usr/share/man/html7/module.html		man-reference-htmlman	html
 ./usr/share/man/html7/nls.html			man-reference-htmlman	html
-./usr/share/man/html7/npf-params.html		man-npf-htmlman		html,npf
 ./usr/share/man/html7/npf.html			man-npf-htmlman		html,npf
+./usr/share/man/html7/npf-params.html		man-npf-htmlman		html,npf
 ./usr/share/man/html7/orders.html		man-reference-htmlman	html
 ./usr/share/man/html7/pcap-filter.html		man-netutil-htmlman	html
 ./usr/share/man/html7/pcap-linktype.html	man-netutil-htmlman	html
@@ -6025,7 +5965,6 @@
 ./usr/share/man/html8/rpc.sprayd.html		man-rpcserver-htmlman	html
 ./usr/share/man/html8/rpc.statd.html		man-nfsserver-htmlman	html
 ./usr/share/man/html8/rpc.yppasswdd.html	man-nis-htmlman		yp,html
-./usr/share/man/html8/rpcapd.html		man-netutil-htmlman	html
 ./usr/share/man/html8/rpcbind.html		man-rpcserver-htmlman	html
 ./usr/share/man/html8/rpcinfo.html		man-rpcutil-htmlman	html
 ./usr/share/man/html8/rquotad.html		man-nfsserver-htmlman	html
@@ -6091,7 +6030,6 @@
 ./usr/share/man/html8/sprayd.html		man-rpcserver-htmlman	html
 ./usr/share/man/html8/ssh-keysign.html		man-secsh-htmlman	html
 ./usr/share/man/html8/ssh-pkcs11-helper.html	man-secsh-htmlman	html
-./usr/share/man/html8/ssh-sk-helper.html	man-secsh-htmlman	html
 ./usr/share/man/html8/sshd.html			man-secsh-htmlman	html
 ./usr/share/man/html8/statd.html		man-nfsserver-htmlman	html
 ./usr/share/man/html8/stdethers.html		man-nis-htmlman		yp,html
@@ -6375,9 +6313,6 @@
 ./usr/share/man/man1/fdformat.1			man-util-man		.man
 ./usr/share/man/man1/fg.1			man-util-man		.man
 ./usr/share/man/man1/fgrep.1			man-util-man		.man
-./usr/share/man/man1/fido2-assert.1			man-util-man	.man
-./usr/share/man/man1/fido2-cred.1			man-util-man	.man
-./usr/share/man/man1/fido2-token.1			man-util-man	.man
 ./usr/share/man/man1/file.1			man-util-man		.man
 ./usr/share/man/man1/fincore.1			man-util-man		.man
 ./usr/share/man/man1/find.1			man-util-man		.man
@@ -6878,35 +6813,10 @@
 ./usr/share/man/man3/atari/ahdi_readlabel.3	man-obsolete		obsolete
 ./usr/share/man/man3/atari/ahdi_writedisktab.3	man-obsolete		obsolete
 ./usr/share/man/man3/atari/ahdi_writelabel.3	man-obsolete		obsolete
-./usr/share/man/man3/eddsa_pk_new.3			man-util-man	.man
-./usr/share/man/man3/es256_pk_new.3			man-util-man	.man
-./usr/share/man/man3/fido_assert_allow_cred.3		man-util-man	.man
-./usr/share/man/man3/fido_assert_new.3			man-util-man	.man
-./usr/share/man/man3/fido_assert_set_authdata.3		man-util-man	.man
-./usr/share/man/man3/fido_assert_verify.3		man-util-man	.man
-./usr/share/man/man3/fido_bio_dev_get_info.3		man-util-man	.man
-./usr/share/man/man3/fido_bio_enroll_new.3		man-util-man	.man
-./usr/share/man/man3/fido_bio_info_new.3		man-util-man	.man
-./usr/share/man/man3/fido_bio_template.3		man-util-man	.man
-./usr/share/man/man3/fido_cbor_info_new.3		man-util-man	.man
-./usr/share/man/man3/fido_cred_exclude.3		man-util-man	.man
-./usr/share/man/man3/fido_cred_new.3			man-util-man	.man
-./usr/share/man/man3/fido_cred_set_authdata.3		man-util-man	.man
-./usr/share/man/man3/fido_cred_verify.3			man-util-man	.man
-./usr/share/man/man3/fido_credman_metadata_new.3	man-util-man	.man
-./usr/share/man/man3/fido_dev_get_assert.3		man-util-man	.man
-./usr/share/man/man3/fido_dev_info_manifest.3		man-util-man	.man
-./usr/share/man/man3/fido_dev_make_cred.3		man-util-man	.man
-./usr/share/man/man3/fido_dev_open.3			man-util-man	.man
-./usr/share/man/man3/fido_dev_set_io_functions.3	man-util-man	.man
-./usr/share/man/man3/fido_dev_set_pin.3			man-util-man	.man
-./usr/share/man/man3/fido_init.3			man-util-man	.man
-./usr/share/man/man3/fido_strerr.3			man-util-man	.man
 ./usr/share/man/man3/i386			man-obsolete		obsolete
 ./usr/share/man/man3/i386/keycap.3		man-obsolete		obsolete
 ./usr/share/man/man3/libbozohttpd.3		man-sys-man		.man
 ./usr/share/man/man3/libunbound.3		man-netutil-man		.man,unbound
-./usr/share/man/man3/rs256_pk_new.3			man-util-man	.man
 ./usr/share/man/man3lua/bozohttpd.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/gpio.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/gpio.attach.3lua	man-sys-man		.man
@@ -8502,7 +8412,6 @@
 ./usr/share/man/man5/rndc.conf.5		man-bind-man		.man
 ./usr/share/man/man5/route.conf.5		man-sys-man		.man
 ./usr/share/man/man5/rpc.5			man-net-man		.man
-./usr/share/man/man5/rpcapd-config.5		man-netutil-man		.man
 ./usr/share/man/man5/rtadvd.conf.5		man-router-man		use_inet6,.man
 ./usr/share/man/man5/securenet.5		man-obsolete		obsolete
 ./usr/share/man/man5/security.conf.5		man-sys-man		.man
@@ -8570,8 +8479,8 @@
 ./usr/share/man/man7/module.7			man-reference-man	.man
 ./usr/share/man/man7/msafer.7			man-obsolete		obsolete
 ./usr/share/man/man7/nls.7			man-reference-man	.man
-./usr/share/man/man7/npf-params.7		man-npf-man		.man,npf
 ./usr/share/man/man7/npf.7			man-npf-man		.man,npf
+./usr/share/man/man7/npf-params.7		man-npf-man		.man,npf
 ./usr/share/man/man7/orders.7			man-reference-man	.man
 ./usr/share/man/man7/packages.7			man-obsolete		obsolete
 ./usr/share/man/man7/pcap-filter.7		man-netutil-man		.man
@@ -9269,7 +9178,6 @@
 ./usr/share/man/man8/rpc.sprayd.8		man-rpcserver-man	.man
 ./usr/share/man/man8/rpc.statd.8		man-nfsserver-man	.man
 ./usr/share/man/man8/rpc.yppasswdd.8		man-nis-man		yp,.man
-./usr/share/man/man8/rpcapd.8			man-netutil-man	.man
 ./usr/share/man/man8/rpcbind.8			man-rpcserver-man	.man
 ./usr/share/man/man8/rpcinfo.8			man-rpcutil-man		.man
 ./usr/share/man/man8/rquotad.8			man-nfsserver-man	.man
@@ -9356,7 +9264,6 @@
 ./usr/share/man/man8/sprayd.8			man-rpcserver-man	.man
 ./usr/share/man/man8/ssh-keysign.8		man-secsh-man		.man
 ./usr/share/man/man8/ssh-pkcs11-helper.8	man-secsh-man		.man
-./usr/share/man/man8/ssh-sk-helper.8		man-secsh-man		.man
 ./usr/share/man/man8/sshd.8			man-secsh-man		.man
 ./usr/share/man/man8/statd.8			man-nfsserver-man	.man
 ./usr/share/man/man8/statmsg.8			man-obsolete		obsolete

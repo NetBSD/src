@@ -1,4 +1,4 @@
-/*	$NetBSD: if_runvar.h,v 1.8 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_runvar.h,v 1.7 2020/01/04 22:30:06 mlelstv Exp $	*/
 /*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
@@ -143,8 +143,6 @@ struct run_softc {
 					    enum ieee80211_state, int);
 	int				(*sc_srom_read)(struct run_softc *,
 					    uint16_t, uint16_t *);
-
-	kmutex_t			sc_media_mtx;	/* XXX */
 
 	struct usbd_device *		sc_udev;
 	struct usbd_interface *		sc_iface;

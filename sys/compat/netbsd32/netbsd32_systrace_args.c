@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.40 2020/03/12 15:03:15 pgoyette Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.38 2020/01/18 14:07:31 pgoyette Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1094,6 +1094,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 0;
 		break;
 	}
+#if defined(QUOTA) || !defined(_KERNEL_OPT)
 	/* netbsd32_quotactl */
 	case 148: {
 		const struct compat_50_netbsd32_quotactl_args *p = params;
@@ -1104,6 +1105,13 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 4;
 		break;
 	}
+	/* sys_quota */
+	case 149: {
+		*n_args = 0;
+		break;
+	}
+#else
+#endif
 	/* netbsd32_ogetsockname */
 	case 150: {
 		const struct compat_43_netbsd32_ogetsockname_args *p = params;
@@ -3377,6 +3385,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 2;
 		break;
 	}
+#if defined(QUOTA) || !defined(_KERNEL_OPT)
 	/* netbsd32___quotactl */
 	case 473: {
 		const struct netbsd32___quotactl_args *p = params;
@@ -3385,6 +3394,8 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 2;
 		break;
 	}
+#else
+#endif
 	/* netbsd32_posix_spawn */
 	case 474: {
 		const struct netbsd32_posix_spawn_args *p = params;
@@ -5272,6 +5283,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	/* sys_setsid */
 	case 147:
 		break;
+#if defined(QUOTA) || !defined(_KERNEL_OPT)
 	/* netbsd32_quotactl */
 	case 148:
 		switch(ndx) {
@@ -5291,6 +5303,11 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* sys_quota */
+	case 149:
+		break;
+#else
+#endif
 	/* netbsd32_ogetsockname */
 	case 150:
 		switch(ndx) {
@@ -9241,6 +9258,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+#if defined(QUOTA) || !defined(_KERNEL_OPT)
 	/* netbsd32___quotactl */
 	case 473:
 		switch(ndx) {
@@ -9254,6 +9272,8 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+#else
+#endif
 	/* netbsd32_posix_spawn */
 	case 474:
 		switch(ndx) {
@@ -10145,11 +10165,16 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys_setsid */
 	case 147:
+#if defined(QUOTA) || !defined(_KERNEL_OPT)
 	/* netbsd32_quotactl */
 	case 148:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* sys_quota */
+	case 149:
+#else
+#endif
 	/* netbsd32_ogetsockname */
 	case 150:
 		if (ndx == 0 || ndx == 1)
@@ -11427,11 +11452,14 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+#if defined(QUOTA) || !defined(_KERNEL_OPT)
 	/* netbsd32___quotactl */
 	case 473:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+#else
+#endif
 	/* netbsd32_posix_spawn */
 	case 474:
 		if (ndx == 0 || ndx == 1)

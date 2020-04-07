@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.32 2020/03/20 19:08:54 ad Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.31 2020/02/23 15:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,12 @@
 
 struct vm_anon {
 	krwlock_t		*an_lock;	/* Lock for an_ref */
-	uintptr_t		an_ref;		/* Reference count [an_lock] */
+	union {
+		uintptr_t	au_ref;		/* Reference count [an_lock] */
+		struct vm_anon	*au_link;	/* Link for deferred free */
+	} an_u;
+#define	an_ref	an_u.au_ref
+#define	an_link	an_u.au_link
 	struct vm_page		*an_page;	/* If in RAM [an_lock] */
 #if defined(VMSWAP) || 1 /* XXX libkvm */
 	/*
@@ -95,7 +100,8 @@ struct vm_aref {
  */
 
 struct vm_anon *uvm_analloc(void);
-void uvm_anfree(struct vm_anon *);
+void uvm_anon_free(struct vm_anon *);
+void uvm_anon_freelst(struct vm_amap *, struct vm_anon *);
 void uvm_anon_init(void);
 struct vm_page *uvm_anon_lockloanpg(struct vm_anon *);
 #if defined(VMSWAP)

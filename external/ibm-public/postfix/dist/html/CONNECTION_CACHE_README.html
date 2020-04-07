@@ -22,10 +22,6 @@
 <p> This document describes the Postfix connection cache implementation,
 which is available with Postfix version 2.2 and later. </p>
 
-<p> See <a href="TLS_README.html#client_tls_reuse">Client-side TLS
-connection reuse</a> for how this connection cache is used to
-implement multiple deliveries per TLS-encrypted connection. </p>
-
 <p> Topics covered in this document: </p>
 
 <ul>
@@ -236,7 +232,7 @@ the <a href="postconf.5.html#smtp_connection_reuse_time_limit">smtp_connection_r
 times a connection may be reused, but this feature is unsafe as it
 introduces a "fatal attractor" failure mode (when a destination has
 multiple inbound MTAs, the slowest inbound MTA will attract most
-connections from Postfix to that destination). </p>
+connections from Postfix to that destination).  </p>.
 
 <p> Postfix 2.3 logs the use count of multiply-used connections,
 as shown in the following example: </p>
@@ -264,11 +260,13 @@ This prevents mis-delivery of mail. </p>
 
 <ul>
 
-<li> <p> With Postfix versions &lt; 3.4, the Postfix shared connection
-cache cannot be used with TLS, because an open TLS connection can
-be reused only in the process that creates it.  For this reason,
-the Postfix <a href="smtp.8.html">smtp(8)</a> client historically always closed the connection
-after completing an attempt to deliver mail over TLS.</p>
+<li> <p> The Postfix shared connection cache cannot be used with
+TLS, because saved TLS session information can be used only when a
+new connection is created (this limitation does not exist in
+connection caching implementations that reuse a connection only in
+the process that creates it).  For this reason, the Postfix <a href="smtp.8.html">smtp(8)</a>
+client always closes the connection after completing an attempt to
+deliver mail over TLS.  </p>
 
 <li> <p> Postfix connection caching currently does not support
 multiple SASL accounts per mail server.  Specifically, Postfix

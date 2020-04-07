@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsan.c,v 1.10 2020/03/08 21:35:03 kamil Exp $	*/
+/*	$NetBSD: ubsan.c,v 1.9 2019/11/01 14:54:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.10 2020/03/08 21:35:03 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.9 2019/11/01 14:54:07 kamil Exp $");
 #else
-__RCSID("$NetBSD: ubsan.c,v 1.10 2020/03/08 21:35:03 kamil Exp $");
+__RCSID("$NetBSD: ubsan.c,v 1.9 2019/11/01 14:54:07 kamil Exp $");
 #endif
 
 #if defined(_KERNEL)
@@ -245,12 +245,6 @@ struct CImplicitConversionData {
 	uint8_t mKind;
 };
 
-struct CAlignmentAssumptionData {
-	struct CSourceLocation mLocation;
-	struct CSourceLocation mAssumptionLocation;
-	struct CTypeDescriptor *mType;
-};
-
 /* Local utility functions */
 static void Report(bool isFatal, const char *pFormat, ...) __printflike(2, 3);
 static bool isAlreadyReported(struct CSourceLocation *pLocation);
@@ -284,8 +278,6 @@ intptr_t __ubsan_vptr_type_cache[128];
 /* Public symbols used in the instrumentation of the code generation part */
 void __ubsan_handle_add_overflow(struct COverflowData *pData, unsigned long ulLHS, unsigned long ulRHS);
 void __ubsan_handle_add_overflow_abort(struct COverflowData *pData, unsigned long ulLHS, unsigned long ulRHS);
-void __ubsan_handle_alignment_assumption(struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset);
-void __ubsan_handle_alignment_assumption_abort(struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset);
 void __ubsan_handle_builtin_unreachable(struct CUnreachableData *pData);
 void __ubsan_handle_cfi_bad_type(struct CCFICheckFailData *pData, unsigned long ulVtable, bool bValidVtable, bool FromUnrecoverableHandler, unsigned long ProgramCounter, unsigned long FramePointer);
 void __ubsan_handle_cfi_check_fail(struct CCFICheckFailData *pData, unsigned long ulValue, unsigned long ulValidVtable);
@@ -352,7 +344,6 @@ static void HandleMissingReturn(bool isFatal, struct CUnreachableData *pData);
 static void HandleNonnullArg(bool isFatal, struct CNonNullArgData *pData);
 static void HandleNonnullReturn(bool isFatal, struct CNonNullReturnData *pData, struct CSourceLocation *pLocationPointer);
 static void HandlePointerOverflow(bool isFatal, struct CPointerOverflowData *pData, unsigned long ulBase, unsigned long ulResult);
-static void HandleAlignmentAssumption(bool isFatal, struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset);
 
 static void
 HandleOverflow(bool isFatal, struct COverflowData *pData, unsigned long ulLHS, unsigned long ulRHS, const char *szOperation)
@@ -725,34 +716,6 @@ HandleImplicitConversion(bool isFatal, struct CImplicitConversionData *pData, un
 	       szLocation, DeserializeImplicitConversionCheckKind(pData->mKind), szFrom, zDeserializeTypeWidth(pData->mFromType), ISSET(pData->mFromType->mTypeInfo, NUMBER_SIGNED_BIT) ? "signed" : "unsigned", pData->mFromType->mTypeName, pData->mToType->mTypeName, szTo, zDeserializeTypeWidth(pData->mToType), ISSET(pData->mToType->mTypeInfo, NUMBER_SIGNED_BIT) ? "signed" : "unsigned");
 }
 
-static void
-HandleAlignmentAssumption(bool isFatal, struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset)
-{
-	char szLocation[LOCATION_MAXLEN];
-	char szAssumptionLocation[LOCATION_MAXLEN];
-	unsigned long ulRealPointer;
-
-	ASSERT(pData);
-
-	if (isAlreadyReported(&pData->mLocation))
-		return;
-
-	DeserializeLocation(szLocation, LOCATION_MAXLEN, &pData->mLocation);
-
-	ulRealPointer = ulPointer - ulOffset;
-
-	if (pData->mAssumptionLocation.mFilename != NULL) {
-		DeserializeLocation(szAssumptionLocation, LOCATION_MAXLEN,
-		    &pData->mAssumptionLocation);
-		Report(isFatal, "UBSan: Undefined Behavior in %s, alignment assumption of %#lx for pointer %#lx (offset %#lx), asumption made in %s\n",
-		    szLocation, ulAlignment, ulRealPointer, ulOffset,
-		    szAssumptionLocation);
-	} else {
-		Report(isFatal, "UBSan: Undefined Behavior in %s, alignment assumption of %#lx for pointer %#lx (offset %#lx)\n",
-		    szLocation, ulAlignment, ulRealPointer, ulOffset);
-	}
-}
-
 /* Definions of public symbols emitted by the instrumentation code */
 void
 __ubsan_handle_add_overflow(struct COverflowData *pData, unsigned long ulLHS, unsigned long ulRHS)
@@ -770,24 +733,6 @@ __ubsan_handle_add_overflow_abort(struct COverflowData *pData, unsigned long ulL
 	ASSERT(pData);
 
 	HandleOverflow(true, pData, ulLHS, ulRHS, PLUS_STRING);
-}
-
-void
-__ubsan_handle_alignment_assumption(struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset)
-{
-
-	ASSERT(pData);
-
-	HandleAlignmentAssumption(false, pData, ulPointer, ulAlignment, ulOffset);
-}
-
-void
-__ubsan_handle_alignment_assumption_abort(struct CAlignmentAssumptionData *pData, unsigned long ulPointer, unsigned long ulAlignment, unsigned long ulOffset)
-{
-
-	ASSERT(pData);
-
-	HandleAlignmentAssumption(true, pData, ulPointer, ulAlignment, ulOffset);
 }
 
 void

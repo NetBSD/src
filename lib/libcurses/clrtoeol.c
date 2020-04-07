@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.31 2020/03/15 01:18:43 uwe Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.28 2017/01/06 13:53:18 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.31 2020/03/15 01:18:43 uwe Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.28 2017/01/06 13:53:18 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -65,18 +65,7 @@ wclrtoeol(WINDOW *win)
 {
 	int     minx, x, y;
 	__LDATA *end, *maxx, *sp;
-	wchar_t bch;
-	attr_t	battr;
-
-#ifdef HAVE_WCHAR
-	bch = (wchar_t)btowc((int)win->bch);
-#else
-	bch = win->bch;
-#endif
-	if (win != curscr)
-		battr = win->battr & __ATTRIBUTES;
-	else
-		battr = 0;
+	attr_t	attr;
 
 	y = win->cury;
 	x = win->curx;
@@ -93,24 +82,31 @@ wclrtoeol(WINDOW *win)
 	end = &win->alines[y]->line[win->maxx];
 	minx = -1;
 	maxx = &win->alines[y]->line[x];
-
-	for (sp = maxx; sp < end; sp++) {
-		if (!(__NEED_ERASE(sp, bch, battr)))
-			continue;
-
-		maxx = sp;
-		if (minx == -1)
-			minx = (int)(sp - win->alines[y]->line);
-
-		sp->ch = bch;
-		sp->attr = battr | (sp->attr & __ALTCHARSET);
+	if (win != curscr)
+		attr = win->battr & __ATTRIBUTES;
+	else
+		attr = 0;
+	for (sp = maxx; sp < end; sp++)
+#ifndef HAVE_WCHAR
+		if (sp->ch != win->bch || sp->attr != attr) {
+#else
+		if (sp->ch != (wchar_t)btowc((int) win->bch ) ||
+		    (sp->attr & WA_ATTRIBUTES) != attr || sp->nsp
+		    || (WCOL(*sp) < 0)) {
+#endif /* HAVE_WCHAR */
+			maxx = sp;
+			if (minx == -1)
+				minx = (int) (sp - win->alines[y]->line);
+			sp->attr = attr | (sp->attr & __ALTCHARSET);
 #ifdef HAVE_WCHAR
-		if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
-			return ERR;
-		SET_WCOL(*sp, 1);
-#endif
-	}
-
+			sp->ch = (wchar_t)btowc((int) win->bch);
+			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
+				return ERR;
+			SET_WCOL(*sp, 1);
+#else
+			sp->ch = win->bch;
+#endif /* HAVE_WCHAR */
+		}
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ERASE, "CLRTOEOL: y = %d, minx = %d, maxx = %d, "
 	    "firstch = %d, lastch = %d\n",

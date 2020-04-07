@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_init.c,v 1.6 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup_init.c,v 1.5 2017/02/14 01:16:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -63,8 +63,7 @@
 /*	cleanup_sig() must be called in case of SIGTERM, in order
 /*	to remove an incomplete queue file.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8)
-/*	or \fBpostlogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* SEE ALSO
 /*	cleanup_api(3) cleanup callable interface, message processing
 /* LICENSE
@@ -93,7 +92,6 @@
 
 #include <msg.h>
 #include <iostuff.h>
-#include <name_code.h>
 #include <name_mask.h>
 #include <stringops.h>
 
@@ -139,6 +137,7 @@ char   *var_mimehdr_checks;		/* mime header checks */
 char   *var_nesthdr_checks;		/* nested header checks */
 char   *var_body_checks;		/* any body checks */
 int     var_dup_filter_limit;		/* recipient dup filter */
+bool    var_enable_orcpt;		/* Include orcpt in dup filter? */
 char   *var_empty_addr;			/* destination of bounced bounces */
 int     var_delay_warn_time;		/* delay that triggers warning */
 char   *var_prop_extension;		/* propagate unmatched extension */
@@ -177,7 +176,6 @@ char   *var_milt_macro_deflts;		/* default macro settings */
 int     var_auto_8bit_enc_hdr;		/* auto-detect 8bit encoding header */
 int     var_always_add_hdrs;		/* always add missing headers */
 int     var_virt_addrlen_limit;		/* stop exponential growth */
-char   *var_hfrom_format;		/* header_from_format */
 
 const CONFIG_INT_TABLE cleanup_int_table[] = {
     VAR_HOPCOUNT_LIMIT, DEF_HOPCOUNT_LIMIT, &var_hopcount_limit, 1, 0,
@@ -191,6 +189,7 @@ const CONFIG_INT_TABLE cleanup_int_table[] = {
 };
 
 const CONFIG_BOOL_TABLE cleanup_bool_table[] = {
+    VAR_ENABLE_ORCPT, DEF_ENABLE_ORCPT, &var_enable_orcpt,
     VAR_VERP_BOUNCE_OFF, DEF_VERP_BOUNCE_OFF, &var_verp_bounce_off,
     VAR_AUTO_8BIT_ENC_HDR, DEF_AUTO_8BIT_ENC_HDR, &var_auto_8bit_enc_hdr,
     VAR_ALWAYS_ADD_HDRS, DEF_ALWAYS_ADD_HDRS, &var_always_add_hdrs,
@@ -244,7 +243,6 @@ const CONFIG_STR_TABLE cleanup_str_table[] = {
     VAR_CLEANUP_MILTERS, DEF_CLEANUP_MILTERS, &var_cleanup_milters, 0, 0,
     VAR_MILT_HEAD_CHECKS, DEF_MILT_HEAD_CHECKS, &var_milt_head_checks, 0, 0,
     VAR_MILT_MACRO_DEFLTS, DEF_MILT_MACRO_DEFLTS, &var_milt_macro_deflts, 0, 0,
-    VAR_HFROM_FORMAT, DEF_HFROM_FORMAT, &var_hfrom_format, 1, 0,
     0,
 };
 
@@ -283,11 +281,6 @@ int     cleanup_ext_prop_mask;
   * Milter support.
   */
 MILTERS *cleanup_milters;
-
- /*
-  * From: header format.
-  */
-int     hfrom_format_code;
 
 /* cleanup_all - callback for the runtime error handler */
 
@@ -439,11 +432,6 @@ void    cleanup_pre_jail(char *unused_name, char **unused_argv)
 
 void    cleanup_post_jail(char *unused_name, char **unused_argv)
 {
-    static const NAME_CODE hfrom_format_table[] = {
-	HFROM_FORMAT_NAME_STD, HFROM_FORMAT_CODE_STD,
-	HFROM_FORMAT_NAME_OBS, HFROM_FORMAT_CODE_OBS,
-	0, -1,
-    };
 
     /*
      * Optionally set the file size resource limit. XXX This limits the
@@ -452,7 +440,7 @@ void    cleanup_post_jail(char *unused_name, char **unused_argv)
      * really low limit, the difference is going to matter only when a queue
      * file has lots of recipients.
      */
-    if (ENFORCING_SIZE_LIMIT(var_message_limit))
+    if (var_message_limit > 0)
 	set_file_limit((off_t) var_message_limit);
 
     /*
@@ -473,12 +461,4 @@ void    cleanup_post_jail(char *unused_name, char **unused_argv)
 	cleanup_strip_chars = vstring_alloc(strlen(var_msg_strip_chars));
 	unescape(cleanup_strip_chars, var_msg_strip_chars);
     }
-
-    /*
-     * From: header formatting.
-     */
-    if ((hfrom_format_code = name_code(hfrom_format_table,
-				NAME_CODE_FLAG_NONE, var_hfrom_format)) < 0)
-	msg_fatal("invalid setting: %s = %s",
-		  VAR_HFROM_FORMAT, var_hfrom_format);
 }

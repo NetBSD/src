@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.133 2020/03/16 21:20:10 pgoyette Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.132 2020/02/27 22:12:53 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.133 2020/03/16 21:20:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.132 2020/02/27 22:12:53 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -106,6 +106,8 @@ MALLOC_JUSTDEFINE(M_MSDOSFSMNT, "MSDOSFS mount", "MSDOS FS mount structure");
 MALLOC_JUSTDEFINE(M_MSDOSFSFAT, "MSDOSFS FAT", "MSDOS FS FAT table");
 MALLOC_JUSTDEFINE(M_MSDOSFSTMP, "MSDOSFS temp", "MSDOS FS temp. structures");
 
+static struct sysctllog *msdosfs_sysctl_log;
+
 extern const struct vnodeopv_desc msdosfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const msdosfs_vnodeopv_descs[] = {
@@ -140,21 +142,6 @@ struct vfsops msdosfs_vfsops = {
 	.vfs_opv_descs = msdosfs_vnodeopv_descs
 };
 
-SYSCTL_SETUP(msdosfs_sysctl_setup, "msdosfs sysctl")
-{
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "msdosfs",
-		       SYSCTL_DESCR("MS-DOS file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 4, CTL_EOL);
-	/*
-	 * XXX the "4" above could be dynamic, thereby eliminating one
-	 * more instance of the "number to vfs" mapping problem, but
-	 * "4" is the order as taken from sys/mount.h
-	 */
-}
-
 static int
 msdos_modcmd(modcmd_t cmd, void *arg)
 {
@@ -165,11 +152,23 @@ msdos_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&msdosfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_createv(&msdosfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "msdosfs",
+			       SYSCTL_DESCR("MS-DOS file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 4, CTL_EOL);
+		/*
+		 * XXX the "4" above could be dynamic, thereby eliminating one
+		 * more instance of the "number to vfs" mapping problem, but
+		 * "4" is the order as taken from sys/mount.h
+		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&msdosfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_teardown(&msdosfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.33 2020/03/05 15:18:54 riastradh Exp $ */
+/* $NetBSD: machdep.h,v 1.31 2020/02/15 08:16:11 skrll Exp $ */
 
 #ifndef _ARM32_MACHDEP_H_
 #define _ARM32_MACHDEP_H_

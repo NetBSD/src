@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.14 2020/03/15 21:06:30 ad Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.13 2019/12/21 14:41:44 ad Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -87,15 +87,12 @@
  * uvm_physseg: describes one segment of physical memory
  */
 struct uvm_physseg {
-	/* used during RB tree lookup for PHYS_TO_VM_PAGE(). */
 	struct  rb_node rb_node;	/* tree information */
 	paddr_t	start;			/* PF# of first page in segment */
 	paddr_t	end;			/* (PF# of last page in segment) + 1 */
-	struct	vm_page *pgs;		/* vm_page structures (from start) */
-
-	/* less performance sensitive fields. */
 	paddr_t	avail_start;		/* PF# of first free page in segment */
 	paddr_t	avail_end;		/* (PF# of last free page in segment) +1  */
+	struct	vm_page *pgs;		/* vm_page structures (from start) */
 	struct  extent *ext;		/* extent(9) structure to manage pgs[] */
 	int	free_list;		/* which free list they belong on */
 	u_int	start_hint;		/* start looking for free pages here */
@@ -124,9 +121,9 @@ struct vm_page *uvm_physseg_seg_alloc_from_slab(uvm_physseg_t, size_t);
 struct uvm_physseg_graph {
 	struct rb_tree rb_tree;		/* Tree for entries */
 	int            nentries;	/* Number of entries */
-} __aligned(COHERENCY_UNIT);
+};
 
-static struct uvm_physseg_graph uvm_physseg_graph __read_mostly;
+static struct uvm_physseg_graph uvm_physseg_graph;
 
 /*
  * Note on kmem(9) allocator usage:

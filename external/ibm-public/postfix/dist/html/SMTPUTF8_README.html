@@ -7,7 +7,7 @@
 
 <title>Postfix SMTPUTF8 support</title>
 
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 
 </head>
 
@@ -44,17 +44,15 @@ header values. </p>
 
 <li><a href="#compatibility">Compatibility with pre-SMTPUTF8 environments</a>
 
-<li><a href="#idna2003">Compatibility with IDNA2003</a>
-
 <li><a href="#credits">Credits</a>
 
 </ul>
 
 <h2> <a name="building">Building Postfix with/without SMTPUTF8 support</a> </h2>
 
-<p> Postfix will build with SMTPUTF8 support if the ICU version
-&ge; 46 library and header files are installed on the system.  The
-package name varies with the OS distribution. The table shows package
+<p> Postfix will build with SMTPUTF8 support if the ICU library and
+header files are installed on the system. The package name varies
+with the OS distribution (and version). The table shows package
 names for a number of platforms at the time this text was written.
 </p>
 
@@ -105,10 +103,6 @@ parameter in <a href="postconf.5.html">main.cf</a>:</p>
 # <b>postfix reload</b>
 </pre>
 </blockquote>
-
-<p> (With Postfix &le; 3.1, you may also need to specify "<b>option_group
-= client</b>" in Postfix MySQL client files, to enable UTF8 support
-in MySQL queries. This setting is the default as of Postfix 3.2.) </p>
 
 <p> With SMTPUTF8 support enabled, Postfix changes behavior with
 respect to earlier Postfix releases: </p>
@@ -346,36 +340,12 @@ in address localparts (and in headers) as before.  The vast majority
 of email software is perfectly capable of handling such email, even
 if pre-SMTPUTF8 standards do not support such practice. </p>
 
-<h3> Rejecting non-UTF8 addresses </h3>
-
-<p> With "<a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> = yes", Postfix
+<p> However, when you specify "<a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> = yes", Postfix
 requires that non-ASCII address information is encoded in UTF-8 and
 will reject other encodings such as ISO-8859. It is not practical
 for Postfix to support multiple encodings at the same time.  There
 is no problem with <a href="http://tools.ietf.org/html/rfc2047">RFC 2047</a> encodings such as "=?ISO-8859-1?Q?text?=",
-because those use only characters from the ASCII characterset. </p>
-
-<h3> Rejecting non-ASCII addresses in non-SMTPUTF8 transactions </h3>
-
-<p> Setting "<a href="postconf.5.html#strict_smtputf8">strict_smtputf8</a> = yes" in addition to "<a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a>
-= yes" will enable stricter enforcement of the SMTPUTF8 protocol.
-Specifically, the Postfix SMTP server will not only reject non-UTF8
-sender or recipient addresses, it will in addition accept UTF-8
-sender or recipient addresses only when the client requests an
-SMTPUTF8 mail transaction. </p>
-
-<h2> <a name="idna2003">Compatibility with IDNA2003</a> </h2>
-
-<p> Postfix &ge; 3.2 by default disables the 'transitional'
-compatibility between IDNA2003 and IDNA2008, when converting UTF-8
-domain names to/from the ASCII form that is used in DNS lookups.
-This makes Postfix behavior consistent with current versions of the
-Firefox and Chrome web browsers. Specify "<a href="postconf.5.html#enable_idna2003_compatibility">enable_idna2003_compatibility</a>
-= yes" to get the historical behavior. </p>
-
-<p> This affects the conversion of domain names that contain for
-example the German sz (ß) and the Greek zeta (ς). See
-<a href="http://unicode.org/cldr/utility/idna.jsp">http://unicode.org/cldr/utility/idna.jsp</a> for more examples. </p>
+because those use only characters from the ASCII characterset.  </p>
 
 <h2> <a name="credits">Credits</a> </h2>
 

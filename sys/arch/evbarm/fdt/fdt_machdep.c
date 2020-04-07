@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.68 2020/03/08 08:26:54 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.67 2020/02/16 14:56:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.68 2020/03/08 08:26:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.67 2020/02/16 14:56:52 thorpej Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.68 2020/03/08 08:26:54 skrll Exp $
 #include <evbarm/fdt/fdt_memory.h>
 
 #include <arm/fdt/arm_fdtvar.h>
-#include <dev/fdt/fdt_private.h>
 
 #ifdef EFI_RUNTIME
 #include <arm/arm/efi_runtime.h>
@@ -695,8 +694,6 @@ consinit(void)
 void
 cpu_startup_hook(void)
 {
-
-	fdtbus_intr_init();
 
 	fdt_setup_rndseed();
 }

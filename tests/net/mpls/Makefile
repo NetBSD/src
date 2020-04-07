@@ -1,13 +1,10 @@
-# $NetBSD: Makefile,v 1.7 2020/04/01 01:49:26 christos Exp $
+# $NetBSD: Makefile,v 1.6 2015/05/27 18:13:14 kefren Exp $
 #
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/net/mpls
 
-.for name in t_mpls_fw t_mpls_fw6 t_mpls_fw64 t_rfc4182 t_ldp_regen
-TESTS_SH+=              ${name}
-TESTS_SH_SRC_${name}= mpls_common.sh ${name}.sh
-.endfor
+TESTS_SH=	t_mpls_fw t_mpls_fw6 t_mpls_fw64 t_rfc4182 t_ldp_regen
 
 .include <bsd.test.mk>

@@ -3,11 +3,9 @@
        81 message_arrival_time: Mon Apr 27 20:41:30 2009
       100 create_time: Mon Apr 27 20:41:41 2009
       124 named_attribute: rewrite_context=local
-      147 pointer_record:             975
-      975 pointer_record:            1009
+      147 pointer_record:            1009
      1009 sender: n@porcupine.org
-     1026 pointer_record:             992
-      992 pointer_record:             164
+     1026 pointer_record:             164
       164 named_attribute: log_client_name=localhost
       191 named_attribute: log_client_address=127.0.0.1
       221 named_attribute: log_client_port=51286

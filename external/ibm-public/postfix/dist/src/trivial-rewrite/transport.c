@@ -1,4 +1,4 @@
-/*	$NetBSD: transport.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: transport.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -39,7 +39,7 @@
 /*	domain, and returns 1 if something was found.	Otherwise, 0
 /*	is returned.
 /* DIAGNOSTICS
-/*	info->transport_path->error is non-zero when the lookup
+/*	The global \fIdict_errno\fR is non-zero when the lookup
 /*	should be tried again.
 /* SEE ALSO
 /*	maps(3), multi-dictionary search
@@ -56,11 +56,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -82,7 +77,7 @@
 
 #include <strip_addr.h>
 #include <mail_params.h>
-#include <mail_addr_find.h>
+#include <maps.h>
 #include <match_parent_style.h>
 #include <mail_proto.h>
 
@@ -168,16 +163,26 @@ static void update_entry(const char *new_channel, const char *new_nexthop,
     }
 }
 
-/* parse_transport_entry - parse transport table entry */
+/* find_transport_entry - look up and parse transport table entry */
 
-static void parse_transport_entry(const char *value, const char *rcpt_domain,
-				          VSTRING *channel, VSTRING *nexthop)
+static int find_transport_entry(TRANSPORT_INFO *tp, const char *key,
+				        const char *rcpt_domain, int flags,
+				        VSTRING *channel, VSTRING *nexthop)
 {
     char   *saved_value;
     const char *host;
+    const char *value;
 
 #define FOUND		1
 #define NOTFOUND	0
+
+    /*
+     * Look up an entry with extreme prejudice.
+     * 
+     * XXX Should report lookup failure status to caller instead of aborting.
+     */
+    if ((value = maps_find(tp->transport_path, key, flags)) == 0)
+	return (NOTFOUND);
 
     /*
      * It would be great if we could specify a recipient address in the
@@ -186,10 +191,14 @@ static void parse_transport_entry(const char *value, const char *rcpt_domain,
      * result can have arbitrary content (especially in the case of the error
      * mailer).
      */
-    saved_value = mystrdup(value);
-    host = split_at(saved_value, ':');
-    update_entry(saved_value, host ? host : "", rcpt_domain, channel, nexthop);
-    myfree(saved_value);
+    else {
+	saved_value = mystrdup(value);
+	host = split_at(saved_value, ':');
+	update_entry(saved_value, host ? host : "", rcpt_domain,
+		     channel, nexthop);
+	myfree(saved_value);
+	return (FOUND);
+    }
 }
 
 /* transport_wildcard_init - (re) initialize wild-card lookup result */
@@ -198,7 +207,6 @@ static void transport_wildcard_init(TRANSPORT_INFO *tp)
 {
     VSTRING *channel = vstring_alloc(10);
     VSTRING *nexthop = vstring_alloc(10);
-    const char *value;
 
     /*
      * Both channel and nexthop may be zero-length strings. Therefore we must
@@ -224,8 +232,7 @@ static void transport_wildcard_init(TRANSPORT_INFO *tp)
 #define FULL		0
 #define PARTIAL		DICT_FLAG_FIXED
 
-    if ((value = maps_find(tp->transport_path, WILDCARD, FULL)) != 0) {
-	parse_transport_entry(value, "", channel, nexthop);
+    if (find_transport_entry(tp, WILDCARD, "", FULL, channel, nexthop)) {
 	tp->wildcard_errno = 0;
 	tp->wildcard_channel = channel;
 	tp->wildcard_nexthop = nexthop;
@@ -248,8 +255,11 @@ int     transport_lookup(TRANSPORT_INFO *tp, const char *addr,
 			         const char *rcpt_domain,
 			         VSTRING *channel, VSTRING *nexthop)
 {
+    char   *stripped_addr;
     char   *ratsign = 0;
-    const char *value;
+    const char *name;
+    const char *next;
+    int     found;
 
 #define STREQ(x,y)	(strcmp((x), (y)) == 0)
 #define DISCARD_EXTENSION ((char **) 0)
@@ -263,25 +273,60 @@ int     transport_lookup(TRANSPORT_INFO *tp, const char *addr,
     }
 
     /*
-     * Look up the full and extension-stripped address, then match the domain
-     * and subdomains. Try the external form before the backwards-compatible
-     * internal form.
+     * Look up the full address with the FULL flag to include regexp maps in
+     * the query.
      */
-#define LOOKUP_STRATEGY \
-	(MA_FIND_FULL | MA_FIND_NOEXT | MA_FIND_DOMAIN | \
-	(transport_match_parent_style == MATCH_FLAG_PARENT ? \
-		MA_FIND_PDMS : MA_FIND_PDDMDS))
-
     if ((ratsign = strrchr(addr, '@')) == 0 || ratsign[1] == 0)
 	msg_panic("transport_lookup: bad address: \"%s\"", addr);
 
-    if ((value = mail_addr_find_strategy(tp->transport_path, addr, (char **) 0,
-					 LOOKUP_STRATEGY)) != 0) {
-	parse_transport_entry(value, rcpt_domain, channel, nexthop);
+    if (find_transport_entry(tp, addr, rcpt_domain, FULL, channel, nexthop))
 	return (FOUND);
-    }
     if (tp->transport_path->error != 0)
 	return (NOTFOUND);
+
+    /*
+     * If the full address did not match, and there is an address extension,
+     * look up the stripped address with the PARTIAL flag to avoid matching
+     * partial lookup keys with regular expressions.
+     */
+    if ((stripped_addr = strip_addr(addr, DISCARD_EXTENSION,
+				    var_rcpt_delim)) != 0) {
+	found = find_transport_entry(tp, stripped_addr, rcpt_domain, PARTIAL,
+				     channel, nexthop);
+
+	myfree(stripped_addr);
+	if (found)
+	    return (FOUND);
+	if (tp->transport_path->error != 0)
+	    return (NOTFOUND);
+    }
+
+    /*
+     * If the full and stripped address lookup fails, try domain name lookup.
+     * 
+     * Keep stripping domain components until nothing is left or until a
+     * matching entry is found.
+     * 
+     * After checking the full domain name, check for .upper.domain, to
+     * distinguish between the parent domain and it's decendants, a la
+     * sendmail and tcp wrappers.
+     * 
+     * Before changing the DB lookup result, make a copy first, in order to
+     * avoid DB cache corruption.
+     * 
+     * Specify that the lookup key is partial, to avoid matching partial keys
+     * with regular expressions.
+     */
+    for (name = ratsign + 1; *name != 0; name = next) {
+	if (find_transport_entry(tp, name, rcpt_domain, PARTIAL, channel, nexthop))
+	    return (FOUND);
+	if (tp->transport_path->error != 0)
+	    return (NOTFOUND);
+	if ((next = strchr(name + 1, '.')) == 0)
+	    break;
+	if (transport_match_parent_style == MATCH_FLAG_PARENT)
+	    next++;
+    }
 
     /*
      * Fall back to the wild-card entry.
@@ -302,139 +347,3 @@ int     transport_lookup(TRANSPORT_INFO *tp, const char *addr,
      */
     return (NOTFOUND);
 }
-
-#ifdef TEST
-
- /*
-  * Proof-of-concept test program. Read an address from stdin, and spit out
-  * the lookup result.
-  */
-
-#include <string.h>
-
-#include <mail_conf.h>
-#include <vstream.h>
-#include <vstring_vstream.h>
-
-static NORETURN usage(const char *progname)
-{
-    msg_fatal("usage: %s [-v] database", progname);
-}
-
-int     main(int argc, char **argv)
-{
-    VSTRING *buffer = vstring_alloc(100);
-    VSTRING *channel = vstring_alloc(100);
-    VSTRING *nexthop = vstring_alloc(100);
-    TRANSPORT_INFO *tp;
-    char   *bp;
-    char   *addr_field;
-    char   *rcpt_domain;
-    char   *expect_channel;
-    char   *expect_nexthop;
-    int     status;
-    int     ch;
-    int     errs = 0;
-
-    /*
-     * Parse JCL.
-     */
-    while ((ch = GETOPT(argc, argv, "v")) > 0) {
-	switch (ch) {
-	case 'v':
-	    msg_verbose++;
-	    break;
-	default:
-	    usage(argv[0]);
-	}
-    }
-    if (argc != optind + 1)
-	usage(argv[0]);
-
-    /*
-     * Initialize.
-     */
-#define UPDATE(var, val) do { myfree(var); var = mystrdup(val); } while (0)
-
-    mail_conf_read();				/* XXX eliminate dependency. */
-    UPDATE(var_rcpt_delim, "+");
-    UPDATE(var_mydomain, "localdomain");
-    UPDATE(var_myorigin, "localhost.localdomain");
-    UPDATE(var_mydest, "localhost.localdomain");
-
-    tp = transport_pre_init("transport map", argv[optind]);
-    transport_post_init(tp);
-
-    while (vstring_fgets_nonl(buffer, VSTREAM_IN)) {
-	bp = STR(buffer);
-
-	/*
-	 * Parse the input and expectations. XXX We can't expect empty
-	 * fields, so require '-' instead.
-	 */
-	if ((addr_field = mystrtok(&bp, ":")) == 0)
-	    msg_fatal("no address field");
-	if ((rcpt_domain = strrchr(addr_field, '@')) == 0)
-	    msg_fatal("no recipient domain");
-	rcpt_domain += 1;
-	expect_channel = mystrtok(&bp, ":");
-	expect_nexthop = mystrtok(&bp, ":");
-	if ((expect_channel != 0) != (expect_nexthop != 0))
-	    msg_fatal("specify both channel and nexthop, or specify neither");
-	if (expect_channel) {
-	    if (strcmp(expect_channel, "-") == 0)
-		*expect_channel = 0;
-	    if (strcmp(expect_nexthop, "-") == 0)
-		*expect_nexthop = 0;
-	    vstring_strcpy(channel, "DEFAULT");
-	    vstring_strcpy(nexthop, rcpt_domain);
-	}
-	if (mystrtok(&bp, ":") != 0)
-	    msg_fatal("garbage after nexthop field");
-
-	/*
-	 * Lookups.
-	 */
-	status = transport_lookup(tp, addr_field, rcpt_domain,
-				  channel, nexthop);
-
-	/*
-	 * Enforce expectations.
-	 */
-	if (expect_nexthop && status) {
-	    vstream_printf("%s:%s -> %s:%s \n",
-			   addr_field, rcpt_domain,
-			   STR(channel), STR(nexthop));
-	    vstream_fflush(VSTREAM_OUT);
-	    if (strcmp(expect_channel, STR(channel)) != 0) {
-		msg_warn("expect channel '%s' but got '%s'",
-			 expect_channel, STR(channel));
-		errs = 1;
-	    }
-	    if (strcmp(expect_nexthop, STR(nexthop)) != 0) {
-		msg_warn("expect nexthop '%s' but got '%s'",
-			 expect_nexthop, STR(nexthop));
-		errs = 1;
-	    }
-	} else if (expect_nexthop && !status) {
-	    vstream_printf("%s:%s -> %s\n", addr_field, rcpt_domain,
-			   tp->transport_path->error ?
-			   "(try again)" : "(not found)");
-	    vstream_fflush(VSTREAM_OUT);
-	    msg_warn("expect channel '%s' but got none", expect_channel);
-	    msg_warn("expect nexthop '%s' but got none", expect_nexthop);
-	    errs = 1;
-	} else if (!status) {
-	    vstream_printf("%s:%s -> %s\n", addr_field, rcpt_domain,
-			   tp->transport_path->error ?
-			   "(try again)" : "(not found)");
-	}
-    }
-    transport_free(tp);
-    vstring_free(nexthop);
-    vstring_free(channel);
-    vstring_free(buffer);
-    exit(errs != 0);
-}
-
-#endif

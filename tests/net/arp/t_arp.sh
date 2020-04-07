@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.41 2020/03/11 08:52:13 roy Exp $
+#	$NetBSD: t_arp.sh,v 1.40 2019/09/09 10:29:04 roy Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -735,8 +735,8 @@ arp_rtm_body()
 	$DEBUG && cat $file
 
 	hdr="RTM_MISS.+<DONE>"
-	what="<DST,GATEWAY,AUTHOR>"
-	addr="$IP4DST_FAIL1 link#2 $IP4SRC"
+	what="<DST,GATEWAY>"
+	addr="$IP4DST_FAIL1 link#2"
 	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
 		cat $file
 

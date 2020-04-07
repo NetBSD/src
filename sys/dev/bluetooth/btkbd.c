@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.19 2020/03/14 04:49:33 maxv Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.18 2017/12/10 17:03:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.19 2020/03/14 04:49:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.18 2017/12/10 17:03:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -281,10 +281,8 @@ btkbd_parse_desc(struct btkbd_softc *sc, int id, const void *desc, int dlen)
 			continue;
 
 		if (h.flags & HIO_VARIABLE) {
-			if (h.loc.size != 1) {
-				hid_end_parse(d);
+			if (h.loc.size != 1)
 				return ("bad modifier size");
-			}
 
 			/* Single item */
 			if (imod < MAXMOD) {
@@ -292,28 +290,22 @@ btkbd_parse_desc(struct btkbd_softc *sc, int id, const void *desc, int dlen)
 				sc->sc_mods[imod].mask = 1 << imod;
 				sc->sc_mods[imod].key = HID_GET_USAGE(h.usage);
 				imod++;
-			} else {
-				hid_end_parse(d);
+			} else
 				return ("too many modifier keys");
-			}
 		} else {
 			/* Array */
-			if (h.loc.size != 8) {
-				hid_end_parse(d);
+			if (h.loc.size != 8)
 				return ("key code size != 8");
-			}
-			if (h.loc.count > MAXKEYCODE) {
-				hid_end_parse(d);
+
+			if (h.loc.count > MAXKEYCODE)
 				return ("too many key codes");
-			}
-			if (h.loc.pos % 8 != 0) {
-				hid_end_parse(d);
+
+			if (h.loc.pos % 8 != 0)
 				return ("key codes not on byte boundary");
-			}
-			if (sc->sc_nkeycode != 0) {
-				hid_end_parse(d);
+
+			if (sc->sc_nkeycode != 0)
 				return ("multiple key code arrays\n");
-			}
+
 			sc->sc_keycodeloc = h.loc;
 			sc->sc_nkeycode = h.loc.count;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.169 2020/03/07 14:53:14 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.167 2020/03/01 18:22:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.169 2020/03/07 14:53:14 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.167 2020/03/01 18:22:00 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -60,6 +60,11 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.169 2020/03/07 14:53:14 christos Exp $");
 #include <time.h>
 #include <unistd.h>
 
+#include <fenv.h>
+#if (__arm__ && !__SOFTFP__) || __aarch64__
+#include <ieeefp.h> /* only need for ARM Cortex/Neon hack */
+#endif
+
 #if defined(__i386__) || defined(__x86_64__)
 #include <cpuid.h>
 #include <x86/cpu_extended_state.h>
@@ -91,6 +96,22 @@ static_assert(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
 
 #include "t_ptrace_wait.h"
 #include "msg.h"
+
+#define PARENT_TO_CHILD(info, fds, msg) \
+    SYSCALL_REQUIRE(msg_write_child(info " to child " # fds, &fds, &msg, \
+	sizeof(msg)) == 0)
+
+#define CHILD_FROM_PARENT(info, fds, msg) \
+    FORKEE_ASSERT(msg_read_parent(info " from parent " # fds, &fds, &msg, \
+	sizeof(msg)) == 0)
+
+#define CHILD_TO_PARENT(info, fds, msg) \
+    FORKEE_ASSERT(msg_write_parent(info " to parent " # fds, &fds, &msg, \
+	sizeof(msg)) == 0)
+
+#define PARENT_FROM_CHILD(info, fds, msg) \
+    SYSCALL_REQUIRE(msg_read_child(info " from parent " # fds, &fds, &msg, \
+	sizeof(msg)) == 0)
 
 #define SYSCALL_REQUIRE(expr) ATF_REQUIRE_MSG(expr, "%s: %s", # expr, \
     strerror(errno))

@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.80 2020/03/21 16:56:00 thorpej Exp $ */
+/* $NetBSD: if_vge.c,v 1.79 2020/01/30 05:24:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.80 2020/03/21 16:56:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.79 2020/01/30 05:24:53 thorpej Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -75,13 +75,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.80 2020/03/21 16:56:00 thorpej Exp $");
  * The other issue has to do with the way 64-bit addresses are handled.
  * The DMA descriptors only allow you to specify 48 bits of addressing
  * information. The remaining 16 bits are specified using one of the
- * I/O registers (VGE_DATABUF_HIADDR). If you only have a 32-bit system,
- * then this isn't an issue, but if you have a 64-bit system and more than
- * 4GB of memory, you must have to make sure your network data buffers reside
+ * I/O registers. If you only have a 32-bit system, then this isn't
+ * an issue, but if you have a 64-bit system and more than 4GB of
+ * memory, you must have to make sure your network data buffers reside
  * in the same 48-bit 'segment.'
- *
- * Furthermore, the descriptors must also all reside within the same 32-bit
- * 'segment' (see VGE_TXDESC_HIADDR).
  *
  * Special thanks to Ryan Fu at VIA Networking for providing documentation
  * and sample NICs for testing.
@@ -131,8 +128,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.80 2020/03/21 16:56:00 thorpej Exp $");
 #define VGE_NEXT_RXDESC(x)	((x + 1) & VGE_NRXDESC_MASK)
 #define VGE_PREV_RXDESC(x)	((x - 1) & VGE_NRXDESC_MASK)
 
-#define VGE_ADDR_LO(y)		BUS_ADDR_LO32(y)
-#define VGE_ADDR_HI(y)		BUS_ADDR_HI32(y)
+#define VGE_ADDR_LO(y)		((uint64_t)(y) & 0xFFFFFFFF)
+#define VGE_ADDR_HI(y)		((uint64_t)(y) >> 32)
 #define VGE_BUFLEN(y)		((y) & 0x7FFF)
 #define ETHER_PAD_LEN		(ETHER_MIN_LEN - ETHER_CRC_LEN)
 
@@ -784,17 +781,10 @@ vge_allocmem(struct vge_softc *sc)
 
 	/*
 	 * Allocate memory for control data.
-	 *
-	 * NOTE: This must all fit within the same 4GB segment.  The
-	 * "boundary" argument to bus_dmamem_alloc() will end up as
-	 * 4GB on 64-bit platforms and 0 ("no boundary constraint") on
-	 * 32-bit platformds.
 	 */
 
 	error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct vge_control_data),
-	     VGE_RING_ALIGN,
-	     (bus_size_t)(1ULL << 32),
-	     &seg, 1, &nseg, BUS_DMA_NOWAIT);
+	     VGE_RING_ALIGN, 0, &seg, 1, &nseg, BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not allocate control data dma memory\n");
@@ -968,24 +958,10 @@ vge_attach(device_t parent, device_t self, void *aux)
 	vge_clrwol(sc);
 
 	/*
-	 * The hardware supports 64-bit DMA addresses, but it's a little
-	 * complicated (see large comment about the hardware near the top
-	 * of the file).  TL;DR -- restrict ourselves to 48-bit.
+	 * Use the 32bit tag. Hardware supports 48bit physical addresses,
+	 * but we don't use that for now.
 	 */
-	if (pci_dma64_available(pa)) {
-		if (bus_dmatag_subregion(pa->pa_dmat64,
-					 0,
-					 (bus_addr_t)(1ULL << 48),
-					 &sc->sc_dmat,
-					 BUS_DMA_WAITOK) != 0) {
-			aprint_error_dev(self,
-			    "WARNING: failed to restrict dma range,"
-			    " falling back to parent bus dma range\n");
-			sc->sc_dmat = pa->pa_dmat64;
-		}
-	} else {
-		sc->sc_dmat = pa->pa_dmat;
-	}
+	sc->sc_dmat = pa->pa_dmat;
 
 	if (vge_allocmem(sc) != 0)
 		return;
@@ -1817,7 +1793,6 @@ vge_init(struct ifnet *ifp)
 	 * Note that we only use one transmit queue.
 	 */
 
-	CSR_WRITE_4(sc, VGE_TXDESC_HIADDR, VGE_ADDR_HI(VGE_CDTXADDR(sc, 0)));
 	CSR_WRITE_4(sc, VGE_TXDESC_ADDR_LO0, VGE_ADDR_LO(VGE_CDTXADDR(sc, 0)));
 	CSR_WRITE_2(sc, VGE_TXDESCNUM, VGE_NTXDESC - 1);
 

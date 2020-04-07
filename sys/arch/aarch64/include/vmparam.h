@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.11 2020/03/04 19:28:04 ryo Exp $ */
+/* $NetBSD: vmparam.h,v 1.10 2020/01/22 16:59:38 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -130,17 +130,10 @@
 #define VM_MAXUSER_ADDRESS32	((vaddr_t) 0xfffff000)
 
 /*
- * kernel virtual space layout:
- *   0xffff000000000000-   64T KSEG(direct mapping)
- *   0xffff400000000000-   32T (KASAN SHADOW MAP)
- *   0xffff600000000000-   32T (not used)
- *   0xffff800000000000-    1G EFI_RUNTIME
- *   0xffff800040000000-   64T (not used)
- *   0xffffc00000000000-   64T KERNEL VM Space (including kernel text/data/bss)
- *   0xfffffffff0000000-  254M KERNEL_IO for pmap_devmap
- *   0xffffffffffe00000-    2M RESERVED
+ * Give ourselves 64GB of mappable kernel space.  That leaves the rest
+ * to be user for directly mapped (block addressable) addresses.
  */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 0xffffc00000000000L)
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 0xffffffc000000000L)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffffffe00000L)
 
 /*
@@ -171,7 +164,7 @@
  * using block page table entries.
  */
 #define AARCH64_KSEG_MASK	((vaddr_t) 0xffff000000000000L)
-#define AARCH64_KSEG_SIZE	(1UL << 46)	/* 64TB */
+#define AARCH64_KSEG_SIZE	(1UL << 39)	/* 512GB */
 #define AARCH64_KSEG_START	AARCH64_KSEG_MASK
 #define AARCH64_KSEG_END	(AARCH64_KSEG_START + AARCH64_KSEG_SIZE)
 #define AARCH64_KMEMORY_BASE	AARCH64_KSEG_MASK

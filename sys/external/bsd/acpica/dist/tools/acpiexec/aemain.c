@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,6 +84,7 @@ BOOLEAN                     AcpiGbl_VerboseHandlers = FALSE;
 UINT8                       AcpiGbl_RegionFillValue = 0;
 BOOLEAN                     AcpiGbl_IgnoreErrors = FALSE;
 BOOLEAN                     AcpiGbl_AbortLoopOnTimeout = FALSE;
+BOOLEAN                     AcpiGbl_DbOpt_NoRegionSupport = FALSE;
 UINT8                       AcpiGbl_UseHwReducedFadt = FALSE;
 BOOLEAN                     AcpiGbl_DoInterfaceTests = FALSE;
 BOOLEAN                     AcpiGbl_LoadTestTables = FALSE;
@@ -566,6 +567,8 @@ main (
         signal (SIGSEGV, AeSignalHandler);
     }
 
+    AeProcessInitFile();
+
     /* The remaining arguments are filenames for ACPI tables */
 
     if (!argv[AcpiGbl_Optind])
@@ -623,21 +626,7 @@ main (
         goto EnterDebugger;
     }
 
-    /* Read the entire namespace initialization file if requested */
-
-    Status = AeProcessInitFile();
-    if (ACPI_FAILURE (Status))
-    {
-        ExitCode = -1;
-        goto ErrorExit;
-    }
-
     Status = AeLoadTables ();
-    if (ACPI_FAILURE (Status))
-    {
-        ExitCode = -1;
-        goto ErrorExit;
-    }
 
     /*
      * Exit namespace initialization for the "load namespace only" option.
@@ -698,7 +687,6 @@ main (
         goto EnterDebugger;
     }
 
-    AeDisplayUnusedInitFileItems ();
     AeMiscellaneousTests ();
 
 
@@ -745,9 +733,7 @@ NormalExit:
 
 ErrorExit:
     AeLateTest ();
-
-    AeDeleteInitFileList ();
-
+    AcpiOsFree (AcpiGbl_InitEntries);
     (void) AcpiTerminate ();
     AcDeleteTableList (ListHead);
     return (ExitCode);

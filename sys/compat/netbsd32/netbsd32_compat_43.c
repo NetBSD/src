@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.60 2020/03/07 00:56:41 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.59 2020/01/01 09:17:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.60 2020/03/07 00:56:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.59 2020/01/01 09:17:45 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -769,26 +769,6 @@ static struct syscall_package compat_netbsd32_43_syscalls[] = {
 	    (sy_call_t *)compat_43_netbsd32_sigsetmask },
 	{ NETBSD32_SYS_compat_43_netbsd32_osigstack, 0,
 	    (sy_call_t *)compat_43_netbsd32_osigstack },
-/*
- * These syscalls are provided by emul_netbsd compat_43 code, but their
- * entry points must still be loaded in the emul_netbsd32 disatch table
- */
-	{ NETBSD32_SYS_compat_43_ogetpagesize, 0,
-	    (sy_call_t *)compat_43_sys_getpagesize },
-	{ NETBSD32_SYS_compat_43_ogetdtablesize, 0,
-	    (sy_call_t *)compat_43_sys_getdtablesize},
-	{ NETBSD32_SYS_compat_43_ogethostid, 0,
-	    (sy_call_t *)compat_43_sys_gethostid },
-	{ NETBSD32_SYS_compat_43_owait, 0,
-	    (sy_call_t *)compat_43_sys_wait },
-/*
- * Skip oquota since it isn't part of compat_43
- *	{ NETBSD32_SYS_compat_43_oquota, 0,
- *	    (sy_call_t *)compat_43_sys_quota },
- */
-
-/* End of compat_43 syscalls */
-
 	{ 0, 0, NULL }
 }; 
 

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.777 2020/03/13 07:42:26 nisimura Exp $
+$NetBSD: usbdevs,v 1.776 2020/02/15 02:08:54 manu Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -537,7 +537,6 @@ vendor ANYDATA		0x16d5	AnyDATA Inc.
 vendor JABLOTRON	0x16d6	Jablotron
 vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
-vendor ASMEDIA		0x174c	ASMedia
 vendor ASUSTEK2		0x1761	ASUSTeK Computer
 vendor SWEEX2		0x177f	Sweex
 vendor MISC		0x1781	Misc Vendors
@@ -930,9 +929,6 @@ product ASIX AX88772		0x7720	AX88772 USB 2.0 10/100 ethernet controller
 product ASIX AX88772A		0x772a	AX88772A USB 2.0 10/100 Ethernet adapter
 product ASIX AX88772B		0x772b	AX88772B USB 2.0 10/100 Ethernet adapter
 product ASIX AX88772B_1		0x7e2b	AX88772B1 USB 2.0 10/100 Ethernet adapter
-
-/* ASMedia products */
-product ASMEDIA ASM1051	0x55aa	ASM1051,1053,1153 SATA Bridge
 
 /* ASUSTeK computer products */
 product ASUSTEK RT2570		0x1706	RT2570

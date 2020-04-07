@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_log.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: bounce_log.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -80,11 +80,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -271,7 +266,7 @@ BOUNCE_LOG *bounce_log_read(BOUNCE_LOG *bp, RCPT_BUF *rcpt_buf,
 	recipient = cp + 1;
 	if ((cp = strstr(recipient, ">: ")) == 0) {
 	    msg_warn("%s: malformed record: %.30s...",
-		     VSTREAM_PATH(bp->fp), recipient - 1);
+		     VSTREAM_PATH(bp->fp), cp);
 	    continue;
 	}
 	*cp = 0;

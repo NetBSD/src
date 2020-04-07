@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.133 2020/03/12 15:02:29 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.131 2020/01/18 07:33:24 kamil Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -183,7 +183,7 @@
 			{ int|netbsd32||ogetkerninfo(int op, \
 			    netbsd32_charp where, netbsd32_intp size, \
 			    int arg); }
-64	COMPAT_43 MODULAR compat_43	\
+64	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|sys||getpagesize(void); } ogetpagesize
 65	COMPAT_12 MODULAR compat_netbsd32_12	\
 			{ int|netbsd32||msync(netbsd32_voidp addr, \
@@ -219,7 +219,7 @@
 			{ int|netbsd32||setitimer(int which, \
 			    netbsd32_itimerval50p_t itv, \
 			    netbsd32_itimerval50p_t oitv); }
-84	COMPAT_43 MODULAR compat_43	\
+84	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|sys||wait(void); } owait
 85	COMPAT_12 MODULAR compat_netbsd32_12	\
 			{ int|netbsd32||oswapon(netbsd32_charp name); }
@@ -232,7 +232,7 @@
 88	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||osethostname(netbsd32_charp hostname, \
 			    u_int len); }
-89	COMPAT_43 MODULAR compat_43	\
+89	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|sys||getdtablesize(void); } ogetdtablesize
 90	STD		{ int|netbsd32||dup2(int from, int to); }
 91	UNIMPL		getdopt
@@ -343,7 +343,7 @@
 141	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||ogetpeername(int fdes, \
 			    netbsd32_voidp asa, netbsd32_intp alen); }
-142	COMPAT_43 MODULAR compat_43	\
+142	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int32_t|sys||gethostid(void); } ogethostid
 143	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||sethostid(int32_t hostid); }
@@ -356,10 +356,16 @@
 146	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||killpg(int pgid, int signum); }
 147	NOARGS		{ int|sys||setsid(void); }
-148	COMPAT_50 MODULAR compat_netbsd32_quota_50	\
+#if defined(QUOTA) || !defined(_KERNEL_OPT)
+148	COMPAT_50 MODULAR compat_netbsd32_50	\
 			{ int|netbsd32||quotactl(netbsd32_charp path, int cmd, \
 			    int uid, netbsd32_voidp arg); }
+149	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|sys||quota(void); } oquota
+#else
+148	EXCL 		compat_netbsd32_quotactl
 149	EXCL 		compat_netbsd32_quota
+#endif
 150	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||ogetsockname(int fdec, \
 			    netbsd32_voidp asa, netbsd32_intp alen); }
@@ -1123,9 +1129,12 @@
 			    int flag); }
 472	STD  		{ int|netbsd32||futimens(int fd, \
 			    const netbsd32_timespecp_t tptr); }
-473	STD MODULAR compat_netbsd32_quota	\
-			{ int|netbsd32||__quotactl(const netbsd32_charp path, \
+#if defined(QUOTA) || !defined(_KERNEL_OPT)
+473	STD		{ int|netbsd32||__quotactl(const netbsd32_charp path, \
 			    netbsd32_voidp args); }
+#else
+473	EXCL		netbsd32___quotactl
+#endif
 474	NOERR		{ int|netbsd32||posix_spawn(netbsd32_pid_tp pid, \
 			    const netbsd32_charp path, \
 			    const netbsd32_posix_spawn_file_actionsp \

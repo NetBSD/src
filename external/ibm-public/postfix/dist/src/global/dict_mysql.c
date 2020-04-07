@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_mysql.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: dict_mysql.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -59,7 +59,7 @@
 /*	List of domains the queries should be restricted to.  If
 /*	specified, only FQDN addresses whose domain parts matching this
 /*	list will be queried against the SQL database.  Lookups for
-/*	partial addresses are also suppressed.  This can significantly
+/*	partial addresses are also supressed.  This can significantly
 /*	reduce the query load on the server.
 /* .IP query
 /*	Query template, before the query is actually issued, variable
@@ -98,8 +98,6 @@
 /*	location.
 /* .IP option_group
 /*	Read options from the given group.
-/* .IP require_result_set
-/*	Require that every query produces a result set.
 /* .IP tls_cert_file
 /*	File containing client's X509 certificate.
 /* .IP tls_key_file
@@ -136,25 +134,44 @@
 /*	where_field = alias
 /* .br
 /*	hosts = host1.some.domain host2.some.domain
+/* .IP additional_conditions
+/*	Backward compatibility when \fIquery\fR is not set, additional
+/*	conditions to the WHERE clause.
+/* .IP hosts
+/*	List of hosts to connect to.
+/* .PP
+/*	For example, if you want the map to reference databases of
+/*	the name "your_db" and execute a query like this: select
+/*	forw_addr from aliases where alias like '<some username>'
+/*	against any database called "vmailer_info" located on hosts
+/*	host1.some.domain and host2.some.domain, logging in as user
+/*	"vmailer" and password "passwd" then the configuration file
+/*	should read:
+/* .PP
+/*	user = vmailer
+/* .br
+/*	password = passwd
+/* .br
+/*	dbname = vmailer_info
+/* .br
+/*	table = aliases
+/* .br
+/*	select_field = forw_addr
+/* .br
+/*	where_field = alias
+/* .br
+/*	hosts = host1.some.domain host2.some.domain
 /* .PP
 /* SEE ALSO
 /*	dict(3) generic dictionary manager
 /* AUTHOR(S)
-/*	Scott Cotton, Joshua Marcus
+/*	Scott Cotton
 /*	IC Group, Inc.
 /*	scott@icgroup.com
 /*
-/*	Liviu Daia
-/*	Institute of Mathematics of the Romanian Academy
-/*	P.O. BOX 1-764
-/*	RO-014700 Bucharest, ROMANIA
-/*
-/*	John Fawcett
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
+/*	Joshua Marcus
+/*	IC Group, Inc.
+/*	josh@icgroup.com
 /*--*/
 
 /* System library. */
@@ -171,8 +188,6 @@
 #include <syslog.h>
 #include <time.h>
 #include <mysql.h>
-#include <limits.h>
-#include <errno.h>
 
 #ifdef STRCASECMP_IN_STRINGS_H
 #include <strings.h>
@@ -199,14 +214,6 @@
 /* Application-specific. */
 
 #include "dict_mysql.h"
-
-/* MySQL 8.x API change */
-
-#if defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 50023
-#define DICT_MYSQL_SSL_VERIFY_SERVER_CERT MYSQL_OPT_SSL_VERIFY_SERVER_CERT
-#elif MYSQL_VERSION_ID >= 80000
-#define DICT_MYSQL_SSL_VERIFY_SERVER_CERT MYSQL_OPT_SSL_MODE
-#endif
 
 /* need some structs to help organize things */
 typedef struct {
@@ -247,11 +254,10 @@ typedef struct {
     char   *tls_CAfile;
     char   *tls_CApath;
     char   *tls_ciphers;
-#if defined(DICT_MYSQL_SSL_VERIFY_SERVER_CERT)
+#if MYSQL_VERSION_ID >= 50023
     int     tls_verify_cert;
 #endif
 #endif
-    int     require_result_set;
 } DICT_MYSQL;
 
 #define STATACTIVE			(1<<0)
@@ -267,7 +273,7 @@ typedef struct {
 
 /* internal function declarations */
 static PLMYSQL *plmysql_init(ARGV *);
-static int plmysql_query(DICT_MYSQL *, const char *, VSTRING *, MYSQL_RES **);
+static MYSQL_RES *plmysql_query(DICT_MYSQL *, const char *, VSTRING *);
 static void plmysql_dealloc(PLMYSQL *);
 static void plmysql_close_host(HOST *);
 static void plmysql_down_host(HOST *);
@@ -284,16 +290,14 @@ static void dict_mysql_quote(DICT *dict, const char *name, VSTRING *result)
 {
     DICT_MYSQL *dict_mysql = (DICT_MYSQL *) dict;
     int     len = strlen(name);
-    int     buflen;
+    int     buflen = 2 * len + 1;
 
     /*
      * We won't get integer overflows in 2*len + 1, because Postfix input
      * keys have reasonable size limits, better safe than sorry.
      */
-    if (len > (INT_MAX - VSTRING_LEN(result) - 1) / 2)
-	msg_panic("dict_mysql_quote: integer overflow in %lu+2*%d+1",
-		  (unsigned long) VSTRING_LEN(result), len);
-    buflen = 2 * len + 1;
+    if (buflen < len)
+	msg_panic("dict_mysql_quote: integer overflow in 2*%d+1", len);
     VSTRING_SPACE(result, buflen);
 
 #if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
@@ -326,19 +330,6 @@ static const char *dict_mysql_lookup(DICT *dict, const char *name)
     int     domain_rc;
 
     dict->error = 0;
-
-    /*
-     * Don't frustrate future attempts to make Postfix UTF-8 transparent.
-     */
-#ifdef SNAPSHOT
-    if ((dict->flags & DICT_FLAG_UTF8_ACTIVE) == 0
-	&& !valid_utf8_string(name, strlen(name))) {
-	if (msg_verbose)
-	    msg_info("%s: %s: Skipping lookup of non-UTF-8 key '%s'",
-		     myname, dict_mysql->parser->name, name);
-	return (0);
-    }
-#endif
 
     /*
      * Optionally fold the key.
@@ -390,12 +381,10 @@ static const char *dict_mysql_lookup(DICT *dict, const char *name)
 	return (0);
 
     /* do the query - set dict->error & cleanup if there's an error */
-    if (plmysql_query(dict_mysql, name, query, &query_res) == 0) {
+    if ((query_res = plmysql_query(dict_mysql, name, query)) == 0) {
 	dict->error = DICT_ERR_RETRY;
 	return (0);
     }
-    if (query_res == 0)
-	return (0);
     numrows = mysql_num_rows(query_res);
     if (msg_verbose)
 	msg_info("%s: retrieved %d rows", myname, numrows);
@@ -517,34 +506,20 @@ static void dict_mysql_event(int unused_event, void *context)
 }
 
 /*
- * plmysql_query - process a MySQL query.  Return 'true' on success.
+ * plmysql_query - process a MySQL query.  Return MYSQL_RES* on success.
  *			On failure, log failure and try other db instances.
- *			on failure of all db instances, return 'false';
+ *			on failure of all db instances, return 0;
  *			close unnecessary active connections
  */
 
-static int plmysql_query(DICT_MYSQL *dict_mysql,
-			         const char *name,
-			         VSTRING *query,
-			         MYSQL_RES **result)
+static MYSQL_RES *plmysql_query(DICT_MYSQL *dict_mysql,
+				        const char *name,
+				        VSTRING *query)
 {
     HOST   *host;
-    MYSQL_RES *first_result = 0;
-    int     query_error;
-
-    /*
-     * Helper to avoid spamming the log with warnings.
-     */
-#define SET_ERROR_AND_WARN_ONCE(err, ...) \
-    do { \
-	if (err == 0) { \
-	    err = 1; \
-	    msg_warn(__VA_ARGS__); \
-	} \
-    } while (0)
+    MYSQL_RES *res = 0;
 
     while ((host = dict_mysql_get_active(dict_mysql)) != NULL) {
-
 #if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
 
 	/*
@@ -559,104 +534,23 @@ static int plmysql_query(DICT_MYSQL *dict_mysql,
 	dict_mysql->active_host = 0;
 #endif
 
-	query_error = 0;
-	errno = 0;
-
-	/*
-	 * The query must complete.
-	 */
-	if (mysql_query(host->db, vstring_str(query)) != 0) {
-	    query_error = 1;
-	    msg_warn("%s:%s: query failed: %s",
-		     dict_mysql->dict.type, dict_mysql->dict.name,
-		     mysql_error(host->db));
-	}
-
-	/*
-	 * Collect all result sets to avoid synchronization errors.
-	 */
-	else {
-	    int     next_res_status;
-
-	    do {
-		MYSQL_RES *temp_result;
-
-		/*
-		 * Keep the first result set. Reject multiple result sets.
-		 */
-		if ((temp_result = mysql_store_result(host->db)) != 0) {
-		    if (first_result == 0) {
-			first_result = temp_result;
-		    } else {
-			SET_ERROR_AND_WARN_ONCE(query_error,
-				"%s:%s: query failed: multiple result sets "
-					 "returning data are not supported",
-						dict_mysql->dict.type,
-						dict_mysql->dict.name);
-			mysql_free_result(temp_result);
-		    }
-		}
-
-		/*
-		 * No result: the mysql_field_count() function must return 0
-		 * to indicate that mysql_store_result() completed normally.
-		 */
-		else if (mysql_field_count(host->db) != 0) {
-		    SET_ERROR_AND_WARN_ONCE(query_error,
-			     "%s:%s: query failed (mysql_store_result): %s",
-					    dict_mysql->dict.type,
-					    dict_mysql->dict.name,
-					    mysql_error(host->db));
-		}
-
-		/*
-		 * Are there more results? -1 = no, 0 = yes, > 0 = error.
-		 */
-		if ((next_res_status = mysql_next_result(host->db)) > 0) {
-		    SET_ERROR_AND_WARN_ONCE(query_error,
-			      "%s:%s: query failed (mysql_next_result): %s",
-					    dict_mysql->dict.type,
-					    dict_mysql->dict.name,
-					    mysql_error(host->db));
-		}
-	    } while (next_res_status == 0);
-
-	    /*
-	     * Enforce the require_result_set setting.
-	     */
-	    if (first_result == 0 && dict_mysql->require_result_set) {
-		SET_ERROR_AND_WARN_ONCE(query_error,
-			 "%s:%s: query failed: query returned no result set"
-					"(require_result_set = yes)",
-					dict_mysql->dict.type,
-					dict_mysql->dict.name);
-	    }
-	}
-
-	/*
-	 * See what we got.
-	 */
-	if (query_error) {
-	    plmysql_down_host(host);
-	    if (errno == 0)
-		errno = ENOTSUP;
-	    if (first_result) {
-		mysql_free_result(first_result);
-		first_result = 0;
+	if (!(mysql_query(host->db, vstring_str(query)))) {
+	    if ((res = mysql_store_result(host->db)) == 0) {
+		msg_warn("mysql query failed: %s", mysql_error(host->db));
+		plmysql_down_host(host);
+	    } else {
+		if (msg_verbose)
+		    msg_info("dict_mysql: successful query from host %s", host->hostname);
+		event_request_timer(dict_mysql_event, (void *) host, IDLE_CONN_INTV);
+		break;
 	    }
 	} else {
-	    if (msg_verbose)
-		msg_info("%s:%s: successful query result from host %s",
-			 dict_mysql->dict.type, dict_mysql->dict.name,
-			 host->hostname);
-	    event_request_timer(dict_mysql_event, (void *) host,
-				IDLE_CONN_INTV);
-	    break;
+	    msg_warn("mysql query failed: %s", mysql_error(host->db));
+	    plmysql_down_host(host);
 	}
     }
 
-    *result = first_result;
-    return (query_error == 0);
+    return res;
 }
 
 /*
@@ -670,7 +564,7 @@ static void plmysql_connect_single(DICT_MYSQL *dict_mysql, HOST *host)
 	msg_fatal("dict_mysql: insufficient memory");
     if (dict_mysql->option_file)
 	mysql_options(host->db, MYSQL_READ_DEFAULT_FILE, dict_mysql->option_file);
-    if (dict_mysql->option_group && dict_mysql->option_group[0])
+    if (dict_mysql->option_group)
 	mysql_options(host->db, MYSQL_READ_DEFAULT_GROUP, dict_mysql->option_group);
 #if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
     if (dict_mysql->tls_key_file || dict_mysql->tls_cert_file ||
@@ -679,9 +573,9 @@ static void plmysql_connect_single(DICT_MYSQL *dict_mysql, HOST *host)
 		      dict_mysql->tls_key_file, dict_mysql->tls_cert_file,
 		      dict_mysql->tls_CAfile, dict_mysql->tls_CApath,
 		      dict_mysql->tls_ciphers);
-#if defined(DICT_MYSQL_SSL_VERIFY_SERVER_CERT)
+#if MYSQL_VERSION_ID >= 50023
     if (dict_mysql->tls_verify_cert != -1)
-	mysql_options(host->db, DICT_MYSQL_SSL_VERIFY_SERVER_CERT,
+	mysql_options(host->db, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
 		      &dict_mysql->tls_verify_cert);
 #endif
 #endif
@@ -692,7 +586,7 @@ static void plmysql_connect_single(DICT_MYSQL *dict_mysql, HOST *host)
 			   dict_mysql->dbname,
 			   host->port,
 			   (host->type == TYPEUNIX ? host->name : 0),
-			   CLIENT_MULTI_RESULTS)) {
+			   0)) {
 	if (msg_verbose)
 	    msg_info("dict_mysql: successful connection to host %s",
 		     host->hostname);
@@ -739,18 +633,17 @@ static void mysql_parse_config(DICT_MYSQL *dict_mysql, const char *mysqlcf)
     dict_mysql->dbname = cfg_get_str(p, "dbname", "", 1, 0);
     dict_mysql->result_format = cfg_get_str(p, "result_format", "%s", 1, 0);
     dict_mysql->option_file = cfg_get_str(p, "option_file", NULL, 0, 0);
-    dict_mysql->option_group = cfg_get_str(p, "option_group", "client", 0, 0);
+    dict_mysql->option_group = cfg_get_str(p, "option_group", NULL, 0, 0);
 #if defined(MYSQL_VERSION_ID) && MYSQL_VERSION_ID >= 40000
     dict_mysql->tls_key_file = cfg_get_str(p, "tls_key_file", NULL, 0, 0);
     dict_mysql->tls_cert_file = cfg_get_str(p, "tls_cert_file", NULL, 0, 0);
     dict_mysql->tls_CAfile = cfg_get_str(p, "tls_CAfile", NULL, 0, 0);
     dict_mysql->tls_CApath = cfg_get_str(p, "tls_CApath", NULL, 0, 0);
     dict_mysql->tls_ciphers = cfg_get_str(p, "tls_ciphers", NULL, 0, 0);
-#if defined(DICT_MYSQL_SSL_VERIFY_SERVER_CERT)
+#if MYSQL_VERSION_ID >= 50023
     dict_mysql->tls_verify_cert = cfg_get_bool(p, "tls_verify_cert", -1);
 #endif
 #endif
-    dict_mysql->require_result_set = cfg_get_bool(p, "require_result_set", 1);
 
     /*
      * XXX: The default should be non-zero for safety, but that is not
@@ -837,13 +730,13 @@ DICT   *dict_mysql_open(const char *name, int open_flags, int dict_flags)
 #endif
     dict_mysql->pldb = plmysql_init(dict_mysql->hosts);
     if (dict_mysql->pldb == NULL)
-	msg_fatal("couldn't initialize pldb!\n");
+	msg_fatal("couldn't intialize pldb!\n");
     dict_mysql->dict.owner = cfg_get_owner(dict_mysql->parser);
     return (DICT_DEBUG (&dict_mysql->dict));
 }
 
 /*
- * plmysql_init - initialize a MYSQL database.
+ * plmysql_init - initalize a MYSQL database.
  *		    Return NULL on failure, or a PLMYSQL * on success.
  */
 static PLMYSQL *plmysql_init(ARGV *hosts)

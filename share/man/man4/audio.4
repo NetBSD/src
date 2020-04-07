@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.103 2020/03/28 05:47:41 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.95 2019/12/08 10:57:17 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 28, 2020
+.Dd November 12, 2019
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -334,9 +334,11 @@ opportunity to adjust this block size to get it within
 implementation-required limits.
 Normally the
 .Va blocksize
-is calculated to correspond to the value of the
-.Em hw.audioX.blk_ms
-sysctl and is recalculated when the encoding parameters change.
+is calculated to correspond to 40ms
+(for some hardware, this value may be different due to
+the hardware restrictions)
+of sound and it is recalculated
+when the encoding parameters change.
 If the descriptor is opened for read only,
 .Va blocksize
 indicates the blocksize for the recording track.
@@ -400,25 +402,18 @@ unsigned linear encoding with big endian byte order
 Dolby Digital AC3
 .El
 .Pp
-The
+Regardless of formats supported by underlying driver, the
 .Nm
 driver accepts the following formats.
 .Va encoding
 and
 .Va precision
 are one of the values obtained by
-.Dv AUDIO_GETENC ,
-regardless of formats supported by underlying driver.
-.Va frequency
-ranges from 1000Hz to 192000Hz,
-regardless of frequency (ranges) supported by underlying driver.
+.Dv AUDIO_GETENC .
 .Va channels
-depends your underlying driver.
-If the underlying driver only supports monaural (1channel)
-or stereo (2channels), you can specify 1 or 2 regardless of
-number of channels supported by underlying driver.
-If the underlying driver supports three or more channels, you can specify
-the number of channels supported by the underlying driver or less.
+ranges from 1 to 12.
+.Va frequency
+ranges from 1000Hz to 192000Hz.
 .Pp
 The
 .Va gain ,

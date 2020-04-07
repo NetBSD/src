@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_key.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp_key.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -53,14 +53,13 @@
 /*	The envelope sender address. This is a proxy for sender-dependent
 /*	context, such as per-sender SASL authentication.
 /* .IP SMTP_KEY_FLAG_REQ_NEXTHOP
-/*	The delivery request nexthop destination, including optional
-/*	[] and :port (the same form that users specify in a SASL
-/*	password or TLS policy lookup table). This is a proxy for
+/*	The request nexthop destination. This is a proxy for
 /*	destination-dependent, but host-independent context.
-/* .IP SMTP_KEY_FLAG_CUR_NEXTHOP
-/*	The current iterator's nexthop destination (delivery request
-/*	nexthop or fallback nexthop, including optional [] and
-/*	:port).
+/* .IP SMTP_KEY_FLAG_NEXTHOP
+/*	The current iterator's nexthop destination (request nexthop
+/*	or fallback nexthop, including optional [] and :port). This
+/*	is the form that users specify in a SASL or TLS lookup
+/*	tables.
 /* .IP SMTP_KEY_FLAG_HOSTNAME
 /*	The current iterator's remote hostname.
 /* .IP SMTP_KEY_FLAG_ADDR
@@ -79,11 +78,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
  /*
@@ -186,7 +180,7 @@ char   *smtp_key_prefix(VSTRING *buffer, const char *delim_na,
      */
     if (flags & SMTP_KEY_FLAG_REQ_NEXTHOP)
 	smtp_key_append_str(buffer, STR(iter->request_nexthop), delim_na);
-    if (flags & SMTP_KEY_FLAG_CUR_NEXTHOP)
+    if (flags & SMTP_KEY_FLAG_NEXTHOP)
 	smtp_key_append_str(buffer, STR(iter->dest), delim_na);
 
     /*
@@ -199,17 +193,7 @@ char   *smtp_key_prefix(VSTRING *buffer, const char *delim_na,
     if (flags & SMTP_KEY_FLAG_PORT)
 	smtp_key_append_uint(buffer, ntohs(iter->port), delim_na);
 
-    /*
-     * Requested TLS level, if applicable. TODO(tlsproxy) should the lookup
-     * engine also try the requested TLS level and 'stronger', in case a
-     * server hosts multiple domains with different TLS requirements?
-     */
-    if (flags & SMTP_KEY_FLAG_TLS_LEVEL)
-#ifdef USE_TLS
-	smtp_key_append_uint(buffer, state->tls->level, delim_na);
-#else
-	smtp_key_append_na(buffer, delim_na);
-#endif
+    /* Similarly, provide unique TLS fingerprint when applicable. */
 
     VSTRING_TERMINATE(buffer);
 

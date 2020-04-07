@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.300 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: ohci.c,v 1.296 2020/02/21 12:41:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.300 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.296 2020/02/21 12:41:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -531,7 +531,7 @@ ohci_alloc_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer, int length, int r
 	KASSERT(length != 0 || (!rd && (flags & USBD_FORCE_SHORT_XFER)));
 
 	size_t nstd = (!rd && (flags & USBD_FORCE_SHORT_XFER)) ? 1 : 0;
-	nstd += howmany(length, OHCI_PAGE_SIZE);
+	nstd += ((length + OHCI_PAGE_SIZE - 1) / OHCI_PAGE_SIZE);
 	ox->ox_stds = kmem_zalloc(sizeof(ohci_soft_td_t *) * nstd,
 	    KM_SLEEP);
 	ox->ox_nstd = nstd;
@@ -1343,7 +1343,7 @@ ohci_intr1(ohci_softc_t *sc)
 		/* Block unprocessed interrupts. */
 		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, eintrs);
 		sc->sc_eintrs &= ~eintrs;
-		DPRINTF("sc %#jx blocking intrs %#jx", (uintptr_t)sc,
+		DPRINTF("sc %#jx blocking intrs 0x%jx", (uintptr_t)sc,
 		    eintrs, 0, 0);
 	}
 
@@ -1479,7 +1479,7 @@ ohci_softintr(void *v)
 		if (std->td.td_cbp != 0)
 			len -= O32TOH(std->td.td_be) -
 			       O32TOH(std->td.td_cbp) + 1;
-		DPRINTFN(10, "len=%jd, flags=%#jx", len, std->flags, 0, 0);
+		DPRINTFN(10, "len=%jd, flags=0x%jx", len, std->flags, 0, 0);
 		if (std->flags & OHCI_ADD_LEN)
 			xfer->ux_actlen += len;
 
@@ -2142,8 +2142,8 @@ ohci_close_pipe(struct usbd_pipe *pipe, ohci_soft_ed_t *head)
 	    (O32TOH(sed->ed.ed_headp) & OHCI_HEADMASK)) {
 		ohci_soft_td_t *std;
 		std = ohci_hash_find_td(sc, O32TOH(sed->ed.ed_headp));
-		printf("ohci_close_pipe: pipe not empty sed=%p hd=%#x "
-		       "tl=%#x pipe=%p, std=%p\n", sed,
+		printf("ohci_close_pipe: pipe not empty sed=%p hd=0x%x "
+		       "tl=0x%x pipe=%p, std=%p\n", sed,
 		       (int)O32TOH(sed->ed.ed_headp),
 		       (int)O32TOH(sed->ed.ed_tailp),
 		       pipe, std);
@@ -3358,7 +3358,8 @@ ohci_device_isoc_init(struct usbd_xfer *xfer)
 	DPRINTFN(1, "xfer %#jx len %jd flags %jd", (uintptr_t)xfer,
 	    xfer->ux_length, xfer->ux_flags, 0);
 
-	const size_t nfsitd = howmany(xfer->ux_nframes, OHCI_ITD_NOFFSET);
+	const size_t nfsitd =
+	    (xfer->ux_nframes + OHCI_ITD_NOFFSET - 1) / OHCI_ITD_NOFFSET;
 	const size_t nbsitd = xfer->ux_bufsize / OHCI_PAGE_SIZE;
 	const size_t nsitd = MAX(nfsitd, nbsitd) + 1;
 
@@ -3511,6 +3512,7 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 			ncur = 0;
 		}
 		sitd->itd.itd_offset[ncur] = HTOO16(OHCI_ITD_MK_OFFS(offs));
+		/* XXX Sync */
 		offs = noffs;
 	}
 	KASSERT(j <= ox->ox_nsitd);

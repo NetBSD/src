@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_ktrace.c,v 1.176 2020/03/14 18:08:39 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.175 2020/02/21 00:26:22 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.176 2020/03/14 18:08:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.175 2020/02/21 00:26:22 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -720,7 +720,7 @@ ktr_io(lwp_t *l, int fd, enum uio_rw rw, struct iovec *iov, size_t len)
 	 */
 	ktraddentry(l, kte, KTA_WAITOK | KTA_LARGE);
 	if (resid > 0) {
-		if (preempt_needed()) {
+		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) {
 			(void)ktrenter(l);
 			preempt();
 			ktrexit(l);

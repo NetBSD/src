@@ -1,9 +1,0 @@
-${VALGRIND} ./dict_open 'pipemap:{inline:{k1=v1,k2=v2},inline:{v2=v3}}' read <<EOF
-get k0
-get k1
-get k2
-EOF
-${VALGRIND} ./dict_open 'pipemap:{inline:{k1=v1},fail:fail}' read <<EOF
-get k0
-get k1
-EOF

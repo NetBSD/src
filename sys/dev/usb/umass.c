@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.183 2020/03/14 03:01:36 christos Exp $	*/
+/*	$NetBSD: umass.c,v 1.180 2020/02/19 16:04:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.183 2020/03/14 03:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.180 2020/02/19 16:04:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -823,7 +823,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 		break;
 
 	default:
-		aprint_error_dev(self, "command protocol=%#x not supported\n",
+		aprint_error_dev(self, "command protocol=0x%x not supported\n",
 		    sc->sc_cmd);
 		umass_disco(sc);
 		return;
@@ -1020,8 +1020,8 @@ umass_setup_transfer(struct umass_softc *sc, struct usbd_pipe *pipe,
 	    sc->sc_methods->wire_state);
 
 	err = usbd_transfer(xfer);
-	DPRINTFM(UDMASS_XFER, "start xfer buffer=%#jx buflen=%jd flags=%#jx "
-	    "timeout=%jd", (uintptr_t)buffer, buflen, flags, sc->timeout);
+	DPRINTFM(UDMASS_XFER, "start xfer buffer=%#jx buflen=%jd flags=0x%jx "
+	    "timeout=%d", (uintptr_t)buffer, buflen, flags, sc->timeout);
 	if (err && err != USBD_IN_PROGRESS) {
 		DPRINTFM(UDMASS_BBB, "failed to setup transfer... err=%jd",
 		    err, 0, 0, 0);
@@ -1880,7 +1880,7 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 
 			if (err) {
 				DPRINTFM(UDMASS_CBI, "sc %#jx: Data dir %jd "
-				    "err %jd failed",
+				    "err %d failed",
 				    (uintptr_t)sc, sc->transfer_dir,
 				    sc->transfer_datalen, err);
 

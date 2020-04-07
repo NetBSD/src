@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -840,7 +840,7 @@ AslDoOptions (
                 return (-1);
             }
 
-            Status = AslLogExpectedException (AcpiGbl_Optarg);
+            Status = AslExpectException (AcpiGbl_Optarg);
             if (ACPI_FAILURE (Status))
             {
                 return (-1);

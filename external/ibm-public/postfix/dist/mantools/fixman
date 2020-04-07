@@ -230,14 +230,6 @@ while(<>) {
 	next;
     }
 
-    if ($incomment == 2 && /^(\/\*|#) +\.IP +"?\\fI([a-zA-Z0-9_]+)\\fB([a-zA-Z0-9_]+)( +\((.*)\))?/) {
-	emit_text($1) if ($name ne "");
-	$name = "$2$3";
-	$defval = $4;
-	$text = "";
-	next;
-    }
-
     if ($incomment == 2 && /^(\/\*|#) +([A-Z][A-Z][A-Z]+|\.[A-Z][A-Z])/) {
 	emit_text($1) if ($name ne "");
 	$incomment = 0 if /^(\/\*|#) +(SEE +ALSO|README +FILES|LICENSE|AUTHOR)/;

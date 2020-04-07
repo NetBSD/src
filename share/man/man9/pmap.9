@@ -1,6 +1,6 @@
-.\"	$NetBSD: pmap.9,v 1.47 2020/03/14 14:05:42 ad Exp $
+.\"	$NetBSD: pmap.9,v 1.46 2019/01/14 15:56:06 wiz Exp $
 .\"
-.\" Copyright (c) 2000, 2001, 2002, 2020 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 14, 2020
+.Dd January 13, 2019
 .Dt PMAP 9
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@
     "u_int flags"
 .Ft void
 .Fn "pmap_remove" "pmap_t pmap" "vaddr_t sva" "vaddr_t eva"
-.Ft bool
+.Ft void
 .Fn "pmap_remove_all" "pmap_t pmap"
 .Ft void
 .Fn "pmap_protect" "pmap_t pmap" "vaddr_t sva" "vaddr_t eva" "vm_prot_t prot"
@@ -549,7 +549,7 @@ Remove mappings from the virtual address range
 to
 .Fa eva
 from the specified physical map.
-.It bool Fn "pmap_remove_all" "pmap_t pmap"
+.It void Fn "pmap_remove_all" "pmap_t pmap"
 This function is a hint to the
 .Nm pmap
 implementation that all entries in
@@ -581,21 +581,6 @@ mappings immediately in
 or to use the knowledge of the upcoming
 .Fn pmap_remove
 calls to optimize the removals (or to just ignore this call).
-.Pp
-If  all mappings in the address space have been removed,
-.Fn pmap_remove_all
-should return
-.Dv true
-to indicate that that the pmap is now empty.
-In this case UVM will skip all subsequent calls to
-.Fn pmap_remove
-and
-.Fn pmap_update
-for the pmap, that would otherwise be required to clean it out.
-If any mappings could possibly remain,
-.Fn pmap_remove_all
-must return
-.Dv false .
 .It void Fn "pmap_protect" "pmap_t pmap" "vaddr_t sva" "vaddr_t eva" \
     "vm_prot_t prot"
 Set the protection of the mappings in the virtual address range

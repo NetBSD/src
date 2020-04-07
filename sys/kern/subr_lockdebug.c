@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.75 2020/03/09 01:47:50 christos Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.74 2020/01/21 20:31:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.75 2020/03/09 01:47:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.74 2020/01/21 20:31:57 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -97,21 +97,13 @@ typedef _TAILQ_HEAD(lockdebuglist, struct lockdebug, volatile) lockdebuglist_t;
 
 __cpu_simple_lock_t	ld_mod_lk;
 lockdebuglist_t		ld_free = TAILQ_HEAD_INITIALIZER(ld_free);
-#ifdef _KERNEL
 lockdebuglist_t		ld_all = TAILQ_HEAD_INITIALIZER(ld_all);
-#else
-extern lockdebuglist_t	ld_all;
-#define cpu_name(a)	"?"
-#define cpu_index(a)	-1
-#define curlwp		NULL
-#endif /* _KERNEL */
 int			ld_nfree;
 int			ld_freeptr;
 int			ld_recurse;
 bool			ld_nomore;
 lockdebug_t		ld_prime[LD_BATCH];
 
-#ifdef _KERNEL
 static void	lockdebug_abort1(const char *, size_t, lockdebug_t *, int,
     const char *, bool);
 static int	lockdebug_more(int);
@@ -752,13 +744,6 @@ lockdebug_mem_check(const char *func, size_t line, void *base, size_t sz)
 	}
 	splx(s);
 }
-#endif /* _KERNEL */
-
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_interface.h>
-#include <ddb/db_access.h>
-#endif
 
 /*
  * lockdebug_dump:
@@ -770,7 +755,6 @@ lockdebug_dump(lwp_t *l, lockdebug_t *ld, void (*pr)(const char *, ...)
     __printflike(1, 2))
 {
 	int sleeper = (ld->ld_flags & LD_SLEEPER);
-	lockops_t *lo = ld->ld_lockops;
 
 	(*pr)(
 	    "lock address : %#018lx type     : %18s\n"
@@ -778,12 +762,7 @@ lockdebug_dump(lwp_t *l, lockdebug_t *ld, void (*pr)(const char *, ...)
 	    (long)ld->ld_lock, (sleeper ? "sleep/adaptive" : "spin"),
 	    (long)ld->ld_initaddr);
 
-#ifndef _KERNEL
-	lockops_t los;
-	lo = &los;
-	db_read_bytes((db_addr_t)ld->ld_lockops, sizeof(los), (char *)lo);
-#endif
-	if (lo->lo_type == LOCKOPS_CV) {
+	if (ld->ld_lockops->lo_type == LOCKOPS_CV) {
 		(*pr)(" interlock: %#018lx\n", (long)ld->ld_locked);
 	} else {
 		(*pr)("\n"
@@ -802,17 +781,14 @@ lockdebug_dump(lwp_t *l, lockdebug_t *ld, void (*pr)(const char *, ...)
 		    (long)ld->ld_unlocked);
 	}
 
-#ifdef _KERNEL
-	if (lo->lo_dump != NULL)
-		(*lo->lo_dump)(ld->ld_lock, pr);
+	if (ld->ld_lockops->lo_dump != NULL)
+		(*ld->ld_lockops->lo_dump)(ld->ld_lock, pr);
 
 	if (sleeper) {
 		turnstile_print(ld->ld_lock, pr);
 	}
-#endif
 }
 
-#ifdef _KERNEL
 /*
  * lockdebug_abort1:
  *
@@ -845,7 +821,6 @@ lockdebug_abort1(const char *func, size_t line, lockdebug_t *ld, int s,
 		    ld->ld_lockops->lo_name, func, line, msg);
 }
 
-#endif /* _KERNEL */
 #endif	/* LOCKDEBUG */
 
 /*
@@ -854,16 +829,17 @@ lockdebug_abort1(const char *func, size_t line, lockdebug_t *ld, int s,
  *	Handle the DDB 'show lock' command.
  */
 #ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+
 void
 lockdebug_lock_print(void *addr,
     void (*pr)(const char *, ...) __printflike(1, 2))
 {
 #ifdef LOCKDEBUG
-	lockdebug_t *ld, lds;
+	lockdebug_t *ld;
 
 	TAILQ_FOREACH(ld, &ld_all, ld_achain) {
-		db_read_bytes((db_addr_t)ld, sizeof(lds), __UNVOLATILE(&lds));
-		ld = &lds;
 		if (ld->ld_lock == NULL)
 			continue;
 		if (addr == NULL || ld->ld_lock == addr) {
@@ -881,7 +857,6 @@ lockdebug_lock_print(void *addr,
 #endif	/* LOCKDEBUG */
 }
 
-#ifdef _KERNEL
 #ifdef LOCKDEBUG
 static void
 lockdebug_show_one(lwp_t *l, lockdebug_t *ld, int i,
@@ -889,10 +864,8 @@ lockdebug_show_one(lwp_t *l, lockdebug_t *ld, int i,
 {
 	const char *sym;
 
-#ifdef _KERNEL
 	ksyms_getname(NULL, &sym, (vaddr_t)ld->ld_initaddr,
 	    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
-#endif
 	(*pr)("* Lock %d (initialized at %s)\n", i++, sym);
 	lockdebug_dump(l, ld, pr);
 }
@@ -974,10 +947,8 @@ lockdebug_show_all_locks_cpu(void (*pr)(const char *, ...) __printflike(1, 2),
 		}
 	}
 }
-#endif /* _KERNEL */
 #endif	/* LOCKDEBUG */
 
-#ifdef _KERNEL
 void
 lockdebug_show_all_locks(void (*pr)(const char *, ...) __printflike(1, 2),
     const char *modif)
@@ -1048,10 +1019,8 @@ lockdebug_show_lockstats(void (*pr)(const char *, ...) __printflike(1, 2))
 	(*pr)("Sorry, kernel not built with the LOCKDEBUG option.\n");
 #endif	/* LOCKDEBUG */
 }
-#endif /* _KERNEL */
 #endif	/* DDB */
 
-#ifdef _KERNEL
 /*
  * lockdebug_dismiss:
  *
@@ -1107,4 +1076,3 @@ lockdebug_abort(const char *func, size_t line, const volatile void *lock,
 	panic("lock error: %s: %s,%zu: %s: lock %p cpu %d lwp %p",
 	    ops->lo_name, func, line, msg, lock, cpu_index(curcpu()), curlwp);
 }
-#endif /* _KERNEL */

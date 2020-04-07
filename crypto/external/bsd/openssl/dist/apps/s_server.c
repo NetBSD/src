@@ -180,6 +180,9 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 }
 #endif
 
+#define TLS13_AES_128_GCM_SHA256_BYTES  ((const unsigned char *)"\x13\x01")
+#define TLS13_AES_256_GCM_SHA384_BYTES  ((const unsigned char *)"\x13\x02")
+
 static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
                                size_t identity_len, SSL_SESSION **sess)
 {
@@ -2424,7 +2427,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
             }
             FD_ZERO(&readfds);
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
-            openssl_fdset(fdin, &readfds);
+            openssl_fdset(fileno_stdin(), &readfds);
 #endif
             openssl_fdset(s, &readfds);
             /*
@@ -3210,12 +3213,6 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                 if (e[0] == ' ')
                     break;
 
-                if (e[0] == ':') {
-                    /* Windows drive. We treat this the same way as ".." */
-                    dot = -1;
-                    break;
-                }
-
                 switch (dot) {
                 case 1:
                     dot = (e[0] == '.') ? 2 : 0;
@@ -3224,11 +3221,11 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                     dot = (e[0] == '.') ? 3 : 0;
                     break;
                 case 3:
-                    dot = (e[0] == '/' || e[0] == '\\') ? -1 : 0;
+                    dot = (e[0] == '/') ? -1 : 0;
                     break;
                 }
                 if (dot == 0)
-                    dot = (e[0] == '/' || e[0] == '\\') ? 1 : 0;
+                    dot = (e[0] == '/') ? 1 : 0;
             }
             dot = (dot == 3) || (dot == -1); /* filename contains ".."
                                               * component */
@@ -3242,11 +3239,11 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 
             if (dot) {
                 BIO_puts(io, text);
-                BIO_printf(io, "'%s' contains '..' or ':'\r\n", p);
+                BIO_printf(io, "'%s' contains '..' reference\r\n", p);
                 break;
             }
 
-            if (*p == '/' || *p == '\\') {
+            if (*p == '/') {
                 BIO_puts(io, text);
                 BIO_printf(io, "'%s' is an invalid path\r\n", p);
                 break;

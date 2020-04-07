@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.334 2020/03/28 20:13:13 jmcneill Exp $
+#	$NetBSD: build.sh,v 1.333 2019/06/07 15:49:20 sborrill Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1462,7 +1462,7 @@ sanitycheck()
 	path="${path%:}"	# delete trailing ":"
 	path="${path%:.}"	# delete trailing ":."
 	case ":${path}:/" in
-	*:[!/~]*)
+	*:[!/]*)
 		if ${do_expertmode}; then
 			warning "PATH contains non-absolute components"
 		else
@@ -1937,7 +1937,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.334 2020/03/28 20:13:13 jmcneill Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.333 2019/06/07 15:49:20 sborrill Exp $
 # with these arguments: ${_args}
 #
 

@@ -1,8 +1,8 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.35 2020/03/14 13:53:26 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.33 2020/02/23 15:46:43 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.35 2020/03/14 13:53:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.33 2020/02/23 15:46:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -455,15 +455,14 @@ uvmpdpol_pagedeactivate_locked(struct vm_page *pg)
 		TAILQ_INSERT_TAIL(&pdpol_state.s_inactiveq, pg, pdqueue);
 		pdpol_state.s_inactive++;
 	}
-	pg->pqflags &= ~(PQ_ACTIVE | PQ_INTENT_SET);
-	pg->pqflags |= PQ_INACTIVE;
+	pg->pqflags = (pg->pqflags & PQ_INTENT_QUEUED) | PQ_INACTIVE;
 }
 
 void
 uvmpdpol_pagedeactivate(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg, false));
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 	KASSERT(mutex_owned(&pg->interlock));
 
 	/*
@@ -487,15 +486,14 @@ uvmpdpol_pageactivate_locked(struct vm_page *pg)
 	uvmpdpol_pagedequeue_locked(pg);
 	TAILQ_INSERT_TAIL(&pdpol_state.s_activeq, pg, pdqueue);
 	pdpol_state.s_active++;
-	pg->pqflags &= ~(PQ_INACTIVE | PQ_INTENT_SET);
-	pg->pqflags |= PQ_ACTIVE;
+	pg->pqflags = (pg->pqflags & PQ_INTENT_QUEUED) | PQ_ACTIVE;
 }
 
 void
 uvmpdpol_pageactivate(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg, false));
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 	KASSERT(mutex_owned(&pg->interlock));
 
 	uvmpdpol_set_intent(pg, PQ_INTENT_A);
@@ -519,7 +517,7 @@ uvmpdpol_pagedequeue_locked(struct vm_page *pg)
 		KASSERT(pdpol_state.s_inactive > 0);
 		pdpol_state.s_inactive--;
 	}
-	pg->pqflags &= ~(PQ_ACTIVE | PQ_INACTIVE | PQ_INTENT_SET);
+	pg->pqflags &= PQ_INTENT_QUEUED;
 }
 
 void
@@ -536,7 +534,7 @@ void
 uvmpdpol_pageenqueue(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg, false));
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 	KASSERT(mutex_owned(&pg->interlock));
 
 	uvmpdpol_set_intent(pg, PQ_INTENT_E);

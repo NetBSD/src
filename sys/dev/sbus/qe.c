@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.77 2020/03/19 02:58:54 thorpej Exp $	*/
+/*	$NetBSD: qe.c,v 1.76 2020/01/29 05:59:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.77 2020/03/19 02:58:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.76 2020/01/29 05:59:06 thorpej Exp $");
 
 #define QEDEBUG
 
@@ -425,10 +425,12 @@ qe_read(struct qe_softc *sc, int idx, int len)
 
 /*
  * Start output on interface.
- * We make an assumption here:
+ * We make two assumptions here:
  *  1) that the current priority is set to splnet _before_ this code
  *     is called *and* is returned to the appropriate priority after
  *     return
+ *  2) that the IFF_OACTIVE flag is checked before this code is called
+ *     (i.e. that the output part of the interface is idle)
  */
 void
 qestart(struct ifnet *ifp)
@@ -439,12 +441,12 @@ qestart(struct ifnet *ifp)
 	unsigned int bix, len;
 	unsigned int ntbuf = sc->sc_rb.rb_ntbuf;
 
-	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	bix = sc->sc_rb.rb_tdhead;
 
-	while (sc->sc_rb.rb_td_nbusy < ntbuf) {
+	for (;;) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
@@ -471,7 +473,10 @@ qestart(struct ifnet *ifp)
 		if (++bix == QEC_XD_RING_MAXSIZE)
 			bix = 0;
 
-		sc->sc_rb.rb_td_nbusy++;
+		if (++sc->sc_rb.rb_td_nbusy == ntbuf) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 	}
 
 	sc->sc_rb.rb_tdhead = bix;
@@ -621,6 +626,7 @@ qe_tint(struct qe_softc *sc)
 		if (txflags & QEC_XD_OWN)
 			break;
 
+		ifp->if_flags &= ~IFF_OACTIVE;
 		if_statinc(ifp, if_opackets);
 
 		if (++bix == QEC_XD_RING_MAXSIZE)
@@ -1040,6 +1046,7 @@ qeinit(struct qe_softc *sc)
 	qe_mcreset(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 	splx(s);
 }
 

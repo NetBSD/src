@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.34 2020/03/16 21:20:12 pgoyette Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.33 2020/02/21 00:26:23 joerg Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.34 2020/03/16 21:20:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.33 2020/02/21 00:26:23 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -65,6 +65,7 @@ static kauth_listener_t l_system, l_process, l_network, l_machdep, l_device,
     l_vnode;
 
 static secmodel_t securelevel_sm;
+static struct sysctllog *securelevel_sysctl_log;
 
 /*
  * Sysctl helper routine for securelevel. Ensures that the value only rises
@@ -91,7 +92,8 @@ secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
 	return (error);
 }
 
-SYSCTL_SETUP(sysctl_security_securelevel_setup, "securelevel sysctl")
+void
+sysctl_security_securelevel_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode, *rnode2;
 
@@ -217,9 +219,11 @@ securelevel_modcmd(modcmd_t cmd, void *arg)
 			    "returned %d\n", error);
 
 		secmodel_securelevel_start();
+		sysctl_security_securelevel_setup(&securelevel_sysctl_log);
 		break;
 
 	case MODULE_CMD_FINI:
+		sysctl_teardown(&securelevel_sysctl_log);
 		secmodel_securelevel_stop();
 
 		error = secmodel_deregister(securelevel_sm);

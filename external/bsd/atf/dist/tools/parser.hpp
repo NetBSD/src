@@ -324,7 +324,7 @@ class parser {
 
 public:
     parser(TKZ& tkz);
-    ~parser(void) noexcept(false);
+    ~parser(void);
 
     bool good(void) const;
     void add_error(const parse_error&);
@@ -386,7 +386,7 @@ parser< TKZ >::parser(TKZ& tkz) :
 }
 
 template< class TKZ >
-parser< TKZ >::~parser(void) noexcept(false)
+parser< TKZ >::~parser(void)
 {
     if (!m_errors.empty() && !m_thrown)
         throw m_errors;

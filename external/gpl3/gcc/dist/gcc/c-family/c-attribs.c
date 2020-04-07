@@ -1650,7 +1650,6 @@ handle_mode_attribute (tree *node, tree name, tree args,
 		typefm = make_signed_type (TYPE_PRECISION (typefm));
 	      TREE_TYPE (typefm) = type;
 	    }
-	  *no_add_attrs = false;
 	}
       else if (VECTOR_MODE_P (mode)
 	       ? TREE_CODE (type) != TREE_CODE (TREE_TYPE (typefm))
@@ -2311,12 +2310,13 @@ handle_visibility_attribute (tree *node, tree name, tree args,
 
 static tree
 handle_tls_model_attribute (tree *node, tree name, tree args,
-			    int ARG_UNUSED (flags),
-			    bool *ARG_UNUSED (no_add_attrs))
+			    int ARG_UNUSED (flags), bool *no_add_attrs)
 {
   tree id;
   tree decl = *node;
   enum tls_model kind;
+
+  *no_add_attrs = true;
 
   if (!VAR_P (decl) || !DECL_THREAD_LOCAL_P (decl))
     {
@@ -3562,28 +3562,9 @@ handle_fallthrough_attribute (tree *, tree name, tree, int,
   return NULL_TREE;
 }
 
-/* Handle a "patchable_function_entry" attributes; arguments as in
-   struct attribute_spec.handler.  */
-
 static tree
-handle_patchable_function_entry_attribute (tree *, tree name, tree args,
-					   int, bool *no_add_attrs)
+handle_patchable_function_entry_attribute (tree *, tree, tree, int, bool *)
 {
-  for (; args; args = TREE_CHAIN (args))
-    {
-      tree val = TREE_VALUE (args);
-      if (val && TREE_CODE (val) != IDENTIFIER_NODE
-	  && TREE_CODE (val) != FUNCTION_DECL)
-	val = default_conversion (val);
-
-      if (!tree_fits_uhwi_p (val))
-	{
-	  warning (OPT_Wattributes,
-		   "%qE attribute argument %qE is not an integer constant",
-		   name, val);
-	  *no_add_attrs = true;
-	  return NULL_TREE;
-	}
-    }
+  /* Nothing to be done here.  */
   return NULL_TREE;
 }

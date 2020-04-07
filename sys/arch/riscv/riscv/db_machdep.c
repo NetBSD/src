@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.4 2020/03/14 16:12:16 skrll Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.3 2019/06/16 07:42:52 maxv Exp $");
 
 #include <sys/param.h>
 
@@ -89,7 +89,7 @@ db_rw_ddbreg(const struct db_variable *vp, db_expr_t *valp, int rw)
 {
 	struct trapframe * const tf = curcpu()->ci_ddb_regs;
 	KASSERT(db_regs <= vp && vp < db_regs + __arraycount(db_regs));
-	const uintptr_t addr = (uintptr_t)tf + (uintptr_t)vp->valuep;
+	const uintptr_t addr = (uintptr_t)tf + (uintptr_t)vp->valuep; 
 	if (vp->modif != NULL && vp->modif[0] == 'i') {
 		if (rw == DB_VAR_GET) {
 			*valp = *(const uint32_t *)addr;

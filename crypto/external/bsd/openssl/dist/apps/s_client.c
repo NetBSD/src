@@ -2253,7 +2253,10 @@ int s_client_main(int argc, char **argv)
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
             }
-            while (mbuf_len > 3 && (!isdigit((unsigned char)mbuf[0]) || !isdigit((unsigned char)mbuf[1]) || !isdigit((unsigned char)mbuf[2]) || mbuf[3] != ' '));
+            while (mbuf_len > 3 && (!isdigit((unsigned char)mbuf[0]) ||
+				    !isdigit((unsigned char)mbuf[1]) ||
+				    !isdigit((unsigned char)mbuf[2]) ||
+				    mbuf[3] != ' '));
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
@@ -2804,7 +2807,7 @@ int s_client_main(int argc, char **argv)
                  * set the flag so we exit.
                  */
                 if (read_tty && !at_eof)
-                    openssl_fdset(fdin, &readfds);
+                    openssl_fdset(fileno_stdin(), &readfds);
 #if !defined(OPENSSL_SYS_VMS)
                 if (write_tty)
                     openssl_fdset(fdout, &writefds);

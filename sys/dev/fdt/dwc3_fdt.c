@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.10 2020/03/26 00:21:27 thorpej Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.9 2020/01/15 01:09:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.10 2020/03/26 00:21:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.9 2020/01/15 01:09:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -212,7 +212,6 @@ dwc3_fdt_match(device_t parent, cfdata_t cf, void *aux)
 		"rockchip,rk3328-dwc3",
 		"rockchip,rk3399-dwc3",
 		"samsung,exynos5250-dwusb3",
-		"snps,dwc3",
 		NULL
 	};
 	struct fdt_attach_args * const faa = aux;

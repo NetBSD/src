@@ -280,8 +280,50 @@ fix_small_cpu_struct(tdata_t *td, size_t ptrsize)
 #ifdef __NetBSD__
 
 /*
+ * The kmutex structure comes in two flavours, with or without __MUTEX_PRIVATE
+ * defined.  Since many structures include kmutexes this causes massive amounts
+ * of duplication on merge (~ 40% for a GENERIC kernel).  Remove the private
+ * fields if we see them.
+ */
+static void
+fix_kmutex_private(tdata_t *td, size_t ptrsize)
+{
+	tdesc_t *desc;
+	mlist_t *ml;
+
+	/*
+	 * X86 kmutex is either
+	 *	union {
+	 *		volatile uintptr_t mtxa_owner;
+	 *	} u
+	 * or
+	 *	union {
+	 *		volatile uintptr_t mtxa_owner;
+	 *		struct {
+	 *			...
+	 *		} s;
+	 *	} u
+	 * so we remove "struct s" if we find it.
+	 */
+	if ((desc = lookup_tdesc(td, "kmutex")) != NULL &&
+	    desc->t_type == STRUCT &&
+	    (ml = desc->t_members) != NULL &&
+	    streq(ml->ml_name, "u") &&
+	    (desc = ml->ml_type) != NULL &&
+	    desc->t_type == UNION &&
+	    (ml = desc->t_members) != NULL &&
+	    streq(ml->ml_name, "mtxa_owner") &&
+	    (ml = ml->ml_next) != NULL &&
+	    streq(ml->ml_name, "s") &&
+	    ml->ml_next == NULL) {
+		/* Found, delete member "s". */
+		desc->t_members->ml_next = NULL;
+	}
+}
+
+/*
  * XXX: A crude hack to bring down the number of types for a
- * GENERIC kernel below 2**15-1 (from ~34000 to ~29800).
+ * GENRIC kernel below 2**15-1 (from ~34000 to ~29800).
  *
  * Remove the type attributes "volatile", "const" and "restrict",
  * for DTRACE these attributes are of little value.
@@ -335,6 +377,7 @@ cvt_fixups(tdata_t *td, size_t ptrsize)
 {
 	fix_small_cpu_struct(td, ptrsize);
 #ifdef __NetBSD__
+	fix_kmutex_private(td, ptrsize);
 	fix_kill_attr(td, ptrsize);
 #endif
 }

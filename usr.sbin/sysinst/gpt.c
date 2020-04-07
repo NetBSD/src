@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.18 2020/03/30 12:19:28 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.16 2020/01/27 21:21:22 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -112,8 +112,7 @@ struct {
 	{ .name = "raid",	.fstype = FS_RAID,	.ptype = PT_root },
 	{ .name = "vmcore",	.fstype = FS_VMKCORE,	.ptype = PT_unknown },
 	{ .name = "vmfs",	.fstype = FS_VMFS,	.ptype = PT_unknown },
-	{ .name = "vmresered",	.fstype = FS_VMWRESV,	.ptype = PT_unknown },
-	{ .name = "zfs",	.fstype = FS_ZFS,	.ptype = PT_root },
+	{ .name = "vmresered",	.fstype = FS_VMWRESV,	.ptype = PT_unknown }
 };
 
 static size_t gpt_ptype_cnt = 0, gpt_ptype_alloc = 0;

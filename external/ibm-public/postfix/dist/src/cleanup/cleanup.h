@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.9 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.8 2017/02/14 01:16:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -114,14 +114,11 @@ typedef struct CLEANUP_STATE {
     const char *client_addr;		/* real or ersatz client */
     int     client_af;			/* real or ersatz client */
     const char *client_port;		/* real or ersatz client */
-    const char *server_addr;		/* real or ersatz server */
-    const char *server_port;		/* real or ersatz server */
     VSTRING *milter_ext_from;		/* externalized sender */
     VSTRING *milter_ext_rcpt;		/* externalized recipient */
     VSTRING *milter_err_text;		/* milter call-back reply */
     HBC_CHECKS *milter_hbc_checks;	/* Milter header checks */
     VSTRING *milter_hbc_reply;		/* Milter header checks reply */
-    VSTRING *milter_dsn_buf;		/* Milter DSN parsing buffer */
 
     /*
      * Support for Milter body replacement requests.
@@ -351,13 +348,6 @@ extern int cleanup_body_edit_write(CLEANUP_STATE *, int, VSTRING *);
 extern int cleanup_body_edit_finish(CLEANUP_STATE *);
 extern void cleanup_body_edit_free(CLEANUP_STATE *);
 
- /*
-  * From: header formatting.
-  */
-#define HFROM_FORMAT_CODE_STD	0
-#define HFROM_FORMAT_CODE_OBS	1
-extern int hfrom_format_code;
-
 /* LICENSE
 /* .ad
 /* .fi
@@ -367,9 +357,4 @@ extern int hfrom_format_code;
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/

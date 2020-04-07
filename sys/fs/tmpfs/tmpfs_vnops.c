@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.135 2020/03/14 13:39:36 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.134 2020/02/23 15:46:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.135 2020/03/14 13:39:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.134 2020/02/23 15:46:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1040,7 +1040,6 @@ tmpfs_inactive(void *v)
 	} */ *ap = v;
 	vnode_t *vp = ap->a_vp;
 	tmpfs_node_t *node;
-	int error = 0;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -1050,21 +1049,12 @@ tmpfs_inactive(void *v)
 		 * Mark node as dead by setting its generation to zero.
 		 */
 		atomic_and_32(&node->tn_gen, ~TMPFS_NODE_GEN_MASK);
-
-		/*
-		 * If the file has been deleted, truncate it, otherwise VFS
-		 * will quite rightly try to write back dirty data, which in
-		 * the case of tmpfs/UAO means needless page deactivations.
-		 */
-		if (vp->v_type == VREG) {
-			error = tmpfs_reg_resize(vp, 0);
-		}
 		*ap->a_recycle = true;
 	} else {
 		*ap->a_recycle = false;
 	}
 
-	return error;
+	return 0;
 }
 
 int

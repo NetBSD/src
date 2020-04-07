@@ -8879,16 +8879,11 @@ static bool
 arm_cannot_force_const_mem (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 {
   rtx base, offset;
-  split_const (x, &base, &offset);
 
-  if (SYMBOL_REF_P (base))
+  if (ARM_OFFSETS_MUST_BE_WITHIN_SECTIONS_P)
     {
-      /* Function symbols cannot have an offset due to the Thumb bit.  */
-      if ((SYMBOL_REF_FLAGS (base) & SYMBOL_FLAG_FUNCTION)
-	  && INTVAL (offset) != 0)
-	return true;
-
-      if (ARM_OFFSETS_MUST_BE_WITHIN_SECTIONS_P
+      split_const (x, &base, &offset);
+      if (GET_CODE (base) == SYMBOL_REF
 	  && !offset_within_block_p (base, INTVAL (offset)))
 	return true;
     }
@@ -11935,7 +11930,8 @@ neon_valid_immediate (rtx op, machine_mode mode, int inverse,
   else
     {
       n_elts = 1;
-      gcc_assert (mode != VOIDmode);
+      if (mode == VOIDmode)
+	mode = DImode;
     }
 
   innersize = GET_MODE_UNIT_SIZE (mode);
@@ -13099,9 +13095,6 @@ ldm_stm_operation_p (rtx op, bool load, machine_mode mode,
   if (load && (REGNO (reg) == SP_REGNUM) && (REGNO (addr) != SP_REGNUM))
     return false;
 
-  if (regno == REGNO (addr))
-    addr_reg_in_reglist = true;
-
   for (; i < count; i++)
     {
       elt = XVECEXP (op, 0, i);
@@ -13296,6 +13289,7 @@ load_multiple_sequence (rtx *operands, int nops, int *regs, int *saved_order,
   int unsorted_regs[MAX_LDM_STM_OPS];
   HOST_WIDE_INT unsorted_offsets[MAX_LDM_STM_OPS];
   int order[MAX_LDM_STM_OPS];
+  rtx base_reg_rtx = NULL;
   int base_reg = -1;
   int i, ldm_case;
 
@@ -13340,6 +13334,7 @@ load_multiple_sequence (rtx *operands, int nops, int *regs, int *saved_order,
 	  if (i == 0)
 	    {
 	      base_reg = REGNO (reg);
+	      base_reg_rtx = reg;
 	      if (TARGET_THUMB1 && base_reg > LAST_LO_REGNUM)
 		return 0;
 	    }
@@ -13397,6 +13392,10 @@ load_multiple_sequence (rtx *operands, int nops, int *regs, int *saved_order,
 
       *load_offset = unsorted_offsets[order[0]];
     }
+
+  if (TARGET_THUMB1
+      && !peep2_reg_dead_p (nops, base_reg_rtx))
+    return 0;
 
   if (unsorted_offsets[order[0]] == 0)
     ldm_case = 1; /* ldmia */
@@ -13773,17 +13772,9 @@ gen_ldm_seq (rtx *operands, int nops, bool sort_regs)
 
   if (TARGET_THUMB1)
     {
+      gcc_assert (peep2_reg_dead_p (nops, base_reg_rtx));
       gcc_assert (ldm_case == 1 || ldm_case == 5);
-
-      /* Thumb-1 ldm uses writeback except if the base is loaded.  */
-      write_back = true;
-      for (i = 0; i < nops; i++)
-	if (base_reg == regs[i])
-	  write_back = false;
-
-      /* Ensure the base is dead if it is updated.  */
-      if (write_back && !peep2_reg_dead_p (nops, base_reg_rtx))
-	return false;
+      write_back = TRUE;
     }
 
   if (ldm_case == 5)
@@ -13791,7 +13782,8 @@ gen_ldm_seq (rtx *operands, int nops, bool sort_regs)
       rtx newbase = TARGET_THUMB1 ? base_reg_rtx : gen_rtx_REG (SImode, regs[0]);
       emit_insn (gen_addsi3 (newbase, base_reg_rtx, GEN_INT (offset)));
       offset = 0;
-      base_reg_rtx = newbase;
+      if (!TARGET_THUMB1)
+	base_reg_rtx = newbase;
     }
 
   for (i = 0; i < nops; i++)
@@ -19516,35 +19508,6 @@ arm_compute_save_core_reg_mask (void)
   return save_reg_mask;
 }
 
-/* Return a mask for the call-clobbered low registers that are unused
-   at the end of the prologue.  */
-static unsigned long
-thumb1_prologue_unused_call_clobbered_lo_regs (void)
-{
-  unsigned long mask = 0;
-
-  for (int reg = 0; reg <= LAST_LO_REGNUM; reg++)
-    if (!callee_saved_reg_p (reg)
-	&& !REGNO_REG_SET_P (df_get_live_out (ENTRY_BLOCK_PTR_FOR_FN (cfun)),
-			     reg))
-      mask |= 1 << reg;
-  return mask;
-}
-
-/* Similarly for the start of the epilogue.  */
-static unsigned long
-thumb1_epilogue_unused_call_clobbered_lo_regs (void)
-{
-  unsigned long mask = 0;
-
-  for (int reg = 0; reg <= LAST_LO_REGNUM; reg++)
-    if (!callee_saved_reg_p (reg)
-	&& !REGNO_REG_SET_P (df_get_live_in (EXIT_BLOCK_PTR_FOR_FN (cfun)),
-			     reg))
-      mask |= 1 << reg;
-  return mask;
-}
-
 /* Compute a bit mask of which core registers need to be
    saved on the stack for the current function.  */
 static unsigned long
@@ -19576,19 +19539,10 @@ thumb1_compute_save_core_reg_mask (void)
   if (mask & 0xff || thumb_force_lr_save ())
     mask |= (1 << LR_REGNUM);
 
-  bool call_clobbered_scratch
-    = (thumb1_prologue_unused_call_clobbered_lo_regs ()
-       && thumb1_epilogue_unused_call_clobbered_lo_regs ());
-
-  /* Make sure we have a low work register if we need one.  We will
-     need one if we are going to push a high register, but we are not
-     currently intending to push a low register.  However if both the
-     prologue and epilogue have a spare call-clobbered low register,
-     then we won't need to find an additional work register.  It does
-     not need to be the same register in the prologue and
-     epilogue.  */
+  /* Make sure we have a low work register if we need one.
+     We will need one if we are going to push a high register,
+     but we are not currently intending to push a low register.  */
   if ((mask & 0xff) == 0
-      && !call_clobbered_scratch
       && ((mask & 0x0f00) || TARGET_BACKTRACE))
     {
       /* Use thumb_find_work_register to choose which register
@@ -24814,7 +24768,12 @@ thumb1_unexpanded_epilogue (void)
       unsigned long mask = live_regs_mask & 0xff;
       int next_hi_reg;
 
-      mask |= thumb1_epilogue_unused_call_clobbered_lo_regs ();
+      /* The available low registers depend on the size of the value we are
+         returning.  */
+      if (size <= 12)
+	mask |=  1 << 3;
+      if (size <= 8)
+	mask |= 1 << 2;
 
       if (mask == 0)
 	/* Oh dear!  We have no low registers into which we can pop
@@ -24822,7 +24781,7 @@ thumb1_unexpanded_epilogue (void)
 	internal_error
 	  ("no low registers available for popping high registers");
 
-      for (next_hi_reg = 12; next_hi_reg > LAST_LO_REGNUM; next_hi_reg--)
+      for (next_hi_reg = 8; next_hi_reg < 13; next_hi_reg++)
 	if (live_regs_mask & (1 << next_hi_reg))
 	  break;
 
@@ -24830,7 +24789,7 @@ thumb1_unexpanded_epilogue (void)
 	{
 	  /* Find lo register(s) into which the high register(s) can
              be popped.  */
-	  for (regno = LAST_LO_REGNUM; regno >= 0; regno--)
+	  for (regno = 0; regno <= LAST_LO_REGNUM; regno++)
 	    {
 	      if (mask & (1 << regno))
 		high_regs_pushed--;
@@ -24838,22 +24797,20 @@ thumb1_unexpanded_epilogue (void)
 		break;
 	    }
 
-	  if (high_regs_pushed == 0 && regno >= 0)
-	    mask &= ~((1 << regno) - 1);
+	  mask &= (2 << regno) - 1;	/* A noop if regno == 8 */
 
 	  /* Pop the values into the low register(s).  */
 	  thumb_pop (asm_out_file, mask);
 
 	  /* Move the value(s) into the high registers.  */
-	  for (regno = LAST_LO_REGNUM; regno >= 0; regno--)
+	  for (regno = 0; regno <= LAST_LO_REGNUM; regno++)
 	    {
 	      if (mask & (1 << regno))
 		{
 		  asm_fprintf (asm_out_file, "\tmov\t%r, %r\n", next_hi_reg,
 			       regno);
 
-		  for (next_hi_reg--; next_hi_reg > LAST_LO_REGNUM;
-		       next_hi_reg--)
+		  for (next_hi_reg++; next_hi_reg < 13; next_hi_reg++)
 		    if (live_regs_mask & (1 << next_hi_reg))
 		      break;
 		}
@@ -25235,20 +25192,10 @@ thumb1_expand_prologue (void)
 	  break;
 
       /* Here we need to mask out registers used for passing arguments
-	 even if they can be pushed.  This is to avoid using them to
-	 stash the high registers.  Such kind of stash may clobber the
-	 use of arguments.  */
+	 even if they can be pushed.  This is to avoid using them to stash the high
+	 registers.  Such kind of stash may clobber the use of arguments.  */
       pushable_regs = l_mask & (~arg_regs_mask);
-      pushable_regs |= thumb1_prologue_unused_call_clobbered_lo_regs ();
-
-      /* Normally, LR can be used as a scratch register once it has been
-	 saved; but if the function examines its own return address then
-	 the value is still live and we need to avoid using it.  */
-      bool return_addr_live
-	= REGNO_REG_SET_P (df_get_live_out (ENTRY_BLOCK_PTR_FOR_FN (cfun)),
-			   LR_REGNUM);
-
-      if (lr_needs_saving || return_addr_live)
+      if (lr_needs_saving)
 	pushable_regs &= ~(1 << LR_REGNUM);
 
       if (pushable_regs == 0)
@@ -25289,11 +25236,6 @@ thumb1_expand_prologue (void)
 	      push_mask |= 1 << LR_REGNUM;
 	      real_regs_mask |= 1 << LR_REGNUM;
 	      lr_needs_saving = false;
-	      /* If the return address is not live at this point, we
-		 can add LR to the list of registers that we can use
-		 for pushes.  */
-	      if (!return_addr_live)
-		pushable_regs |= 1 << LR_REGNUM;
 	    }
 
 	  insn = thumb1_emit_multi_reg_push (push_mask, real_regs_mask);

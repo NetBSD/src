@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.127 2020/03/09 14:45:41 kamil Exp $
+#	$NetBSD: Makefile.rump,v 1.125 2020/02/20 22:52:10 joerg Exp $
 #
 
 .if !defined(_RUMP_MK)

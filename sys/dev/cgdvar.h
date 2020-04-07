@@ -1,4 +1,4 @@
-/* $NetBSD: cgdvar.h,v 1.19 2020/03/09 08:33:15 mlelstv Exp $ */
+/* $NetBSD: cgdvar.h,v 1.18 2015/09/06 06:00:59 dholland Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,41 +80,17 @@ struct cryptdata {
 	void		*cf_priv;	/* enc alg private data */
 };
 
-struct cgd_xfer {
-	struct work		 cx_work;
-	struct cgd_softc	*cx_sc;
-	struct buf		*cx_obp;
-	struct buf		*cx_nbp;
-	void			*cx_dstv;
-	void			*cx_srcv;
-	size_t			 cx_len;
-	daddr_t			 cx_blkno;
-	size_t			 cx_secsize;
-	int			 cx_dir;
-};
-
-struct cgd_worker {
-	struct workqueue	*cw_wq;		/* work queue */
-	struct pool		*cw_cpool;	/* cgd_xfer contexts */
-	u_int		 	 cw_busy;	/* number of busy contexts */
-	u_int			 cw_last;	/* index of last CPU used */
-	kmutex_t		 cw_lock;
-};
-
 struct cgd_softc {
 	struct dk_softc		 sc_dksc;	/* generic disk interface */
 	struct vnode		*sc_tvn;	/* target device's vnode */
 	dev_t			 sc_tdev;	/* target device */
 	char			*sc_tpath;	/* target device's path */
-	void			*sc_data;	/* emergency buffer */
-	bool			 sc_data_used;	/* Really lame, we'll change */
+	void *			 sc_data;	/* emergency buffer */
+	int			 sc_data_used;	/* Really lame, we'll change */
 	size_t			 sc_tpathlen;	/* length of prior string */
 	struct cryptdata	 sc_cdata;	/* crypto data */
 	const struct cryptfuncs	*sc_cfuncs;	/* encryption functions */
-	kmutex_t		 sc_lock;
-	kcondvar_t		 sc_cv;
-	bool			 sc_busy;
-	struct cgd_worker	*sc_worker;	/* shared worker data */
+	kmutex_t		 sc_lock;	/* our lock */
 };
 #endif
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.149 2020/03/31 12:23:17 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.140 2020/02/22 18:57:50 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -325,12 +325,10 @@ pci*		at ppb?
 awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
 enet*		at fdt?				# IMX FEC
-genet*		at acpi?			# Broadcom GENET v5
-genet*		at fdt?
-#scx*		at acpi?			# Socionext Gigabit Ethernet
-#scx*		at fdt?	
 aq*		at pci? dev ? function ?	# Aquantia AQC 10 gigabit
 ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
+genet*		at acpi?			# Broadcom GENET v5
+genet*		at fdt?
 mcx*		at pci? dev ? function ?	# Mellanox 5th generation Ethernet
 mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*		at mskc?
@@ -384,7 +382,6 @@ com*		at puc? port ?
 # I2C controllers
 options 	I2C_MAX_ADDR=0xfff
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
-bsciic*		at acpi?
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
 imxi2c*		at fdt? pass 4		# IMX I2C
@@ -392,8 +389,6 @@ rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
-#sniiic*	at fdt?			# Socionext SC2A11 I2C
-#sniiic*	at acpi?
 iic*		at i2cbus?
 
 # I2C devices
@@ -422,7 +417,7 @@ sun8icrypto* 	at fdt?			# Allwinner Crypto Engine
 
 # RTC
 plrtc*		at fdt?			# ARM PrimeCell RTC
-sunxirtc*	at fdt? pass 4		# Allwinner RTC
+sunxirtc*	at fdt?			# Allwinner RTC
 tegrartc*	at fdt?			# NVIDIA Tegra RTC
 
 # SDMMC
@@ -434,8 +429,6 @@ rkemmcphy*	at fdt?			# Rockchip eMMC PHY
 sdhc*		at fdt?			# SD Host Controller Interface
 sdhc*		at acpi?
 sunximmc*	at fdt?			# Allwinner SD/MMC
-#sniemmc*	at fdt?			# Socionext SC2A11 eMMC
-#sniemmc*	at acpi?
 sdmmc*		at sdmmcbus?
 ld0		at sdmmc0
 ld1		at sdmmc1
@@ -482,6 +475,7 @@ h3codec*	at fdt?			# Allwinner H3 audio codec (analog part)
 a64acodec*	at fdt?			# Allwinner A64 audio codec (analog part)
 sunxii2s*	at fdt?			# Allwinner I2S/PCM
 audio*		at audiobus?
+options 	AUDIO_BLK_MS=4
 
 spkr*		at audio?		# PC speaker (synthesized)
 
@@ -528,9 +522,6 @@ options 	FONT_BOLD16x32
 
 # GPU
 #nouveau*	at fdt?			# NVIDIA GPU
-#nouveau*	at pci?
-radeon*		at pci? dev ? function ? # AMD Radeon
-radeondrmkmsfb*	at radeonfbbus?
 
 # Backlight
 pwmbacklight*	at fdt?			# PWM Backlight controls

@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.103 2020/03/21 01:07:21 jhigh Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.102 2018/11/13 14:52:30 mlelstv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -429,7 +429,7 @@ get_first_ring(pgp_keyring_t *ring, char *id, size_t len, int last)
 	int	 i;
 	int	 n;
 
-	if (ring == NULL || ring->keyc == 0) {
+	if (ring == NULL) {
 		return 0;
 	}
 	(void) memset(id, 0x0, len);

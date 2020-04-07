@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.165 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.163 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.165 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.163 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -651,7 +651,7 @@ uaudio_dump_cluster(const struct usb_audio_cluster *cl)
 	int cc, i, first;
 
 	cc = UGETW(cl->wChannelConfig);
-	printf("cluster: bNrChannels=%u wChannelConfig=%#.4x",
+	printf("cluster: bNrChannels=%u wChannelConfig=0x%.4x",
 		  cl->bNrChannels, cc);
 	first = TRUE;
 	for (i = 0; cc != 0; i++) {
@@ -915,7 +915,7 @@ uaudio_get_terminal_name(int terminal_type)
 	case UATF_MULTITRACK:	return "UATF_MULTITRACK";
 	case UATF_SYNTHESIZER:	return "UATF_SYNTHESIZER";
 	default:
-		snprintf(tbuf, sizeof(tbuf), "unknown type (%#.4x)", terminal_type);
+		snprintf(tbuf, sizeof(tbuf), "unknown type (0x%.4x)", terminal_type);
 		return tbuf;
 	}
 }
@@ -1066,7 +1066,7 @@ uaudio_feature_name(const struct io_terminal *iot, struct mixerctl *mix)
 	case UATF_MULTITRACK:
 	case 0xffff:
 	default:
-		DPRINTF("'master' for %#.4x\n", terminal_type);
+		DPRINTF("'master' for 0x%.4x\n", terminal_type);
 		return AudioNmaster;
 	}
 	return AudioNmaster;
@@ -1224,7 +1224,7 @@ uaudio_add_processing_updown(struct uaudio_softc *sc,
 	snprintf(mix.ctlname, sizeof(mix.ctlname), "pro%d-mode", d->bUnitId);
 
 	for (i = 0; i < ud->bNrModes; i++) {
-		DPRINTFN(2,"i=%d bm=%#x\n",
+		DPRINTFN(2,"i=%d bm=0x%x\n",
 			    i, UGETW(ud->waModes[i]));
 		/* XXX */
 	}
@@ -1565,7 +1565,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	if (ed->bDescriptorType != UDESC_ENDPOINT)
 		return USBD_INVAL;
 	DPRINTF("endpoint[0] bLength=%d bDescriptorType=%d "
-		 "bEndpointAddress=%d bmAttributes=%#x wMaxPacketSize=%d "
+		 "bEndpointAddress=%d bmAttributes=0x%x wMaxPacketSize=%d "
 		 "bInterval=%d bRefresh=%d bSynchAddress=%d\n",
 		 ed->bLength, ed->bDescriptorType, ed->bEndpointAddress,
 		 ed->bmAttributes, UGETW(ed->wMaxPacketSize),
@@ -1629,7 +1629,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 			return USBD_INVAL;
 		DPRINTF("endpoint[1] bLength=%d "
 			 "bDescriptorType=%d bEndpointAddress=%d "
-			 "bmAttributes=%#x wMaxPacketSize=%d bInterval=%d "
+			 "bmAttributes=0x%x wMaxPacketSize=%d bInterval=%d "
 			 "bRefresh=%d bSynchAddress=%d\n",
 			 epdesc1->bLength, epdesc1->bDescriptorType,
 			 epdesc1->bEndpointAddress, epdesc1->bmAttributes,
@@ -1645,15 +1645,15 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 		}
 		if (UE_GET_XFERTYPE(epdesc1->bmAttributes) != UE_ISOCHRONOUS) {
 			aprint_error_dev(sc->sc_dev,
-			    "invalid endpoint: bmAttributes=%#x\n",
+			    "invalid endpoint: bmAttributes=0x%x\n",
 			     epdesc1->bmAttributes);
 			return USBD_INVAL;
 		}
 		if (epdesc1->bEndpointAddress != ed->bSynchAddress) {
 			aprint_error_dev(sc->sc_dev,
 			    "invalid endpoint addresses: "
-			    "ep[0]->bSynchAddress=%#x "
-			    "ep[1]->bEndpointAddress=%#x\n",
+			    "ep[0]->bSynchAddress=0x%x "
+			    "ep[1]->bEndpointAddress=0x%x\n",
 			    ed->bSynchAddress, epdesc1->bEndpointAddress);
 			return USBD_INVAL;
 		}

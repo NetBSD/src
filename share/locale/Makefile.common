@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.common,v 1.2 2020/03/23 13:56:12 kim Exp $
+# $NetBSD: Makefile.common,v 1.1 2013/08/11 22:09:40 joerg Exp $
 
 all:		${LOCALES:S/$/.out/g}
 realall:	${LOCALES:S/$/.out/g}
@@ -37,7 +37,6 @@ update-converted:
 	@echo Generating character set ${charset} of ${locale_name}...
 	@rm -f ${.CURDIR}/converted/${locale}.src
 	@set -e; cat < ${.CURDIR}/${locale_name}.UTF-8.src \
-	| (case ${locale}  in fi_FI.ISO8859-1) sed 's,€,e,g';; *) cat ;; esac) \
 	| (case ${charset} in ISO8859-[125]) sed 's,€,EUR,g';; *) cat ;; esac) \
 	| (case ${charset} in ISO8859-9) sed 's,₺,L,g';; *) cat ;; esac) \
 	| (case ${charset} in ISO8859*) sed 's,−,-,g';; *) cat ;; esac) \

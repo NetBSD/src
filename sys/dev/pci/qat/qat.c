@@ -1,4 +1,4 @@
-/*	$NetBSD: qat.c,v 1.5 2020/03/05 15:33:13 msaitoh Exp $	*/
+/*	$NetBSD: qat.c,v 1.4 2020/02/01 13:48:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.5 2020/03/05 15:33:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.4 2020/02/01 13:48:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1027,7 +1027,7 @@ qat_etr_setup_ring(struct qat_softc *sc, int bank, uint32_t ring,
 	qr = &qb->qb_et_rings[ring];
 	qb->qb_allocated_rings |= 1 << ring;
 
-	/* Initialize allocated ring */
+	/* Intialize allocated ring */
 	qr->qr_ring = ring;
 	qr->qr_bank = bank;
 	qr->qr_name = name;

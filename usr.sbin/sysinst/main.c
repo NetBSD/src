@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2020/03/04 11:15:06 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2020/02/19 21:51:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -144,8 +144,6 @@ init(void)
 	memset(pm_new, 0, sizeof *pm_new);
 
 	for (arg = fflagopts; arg->name != NULL; arg++) {
-		if (arg->var == NULL)
-			continue;
 		if (arg->var == cdrom_dev)
 			get_default_cdrom(arg->var, arg->size);
 		else

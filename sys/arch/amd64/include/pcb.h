@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.32 2020/03/17 17:18:49 maxv Exp $	*/
+/*	$NetBSD: pcb.h,v 1.31 2019/10/12 15:44:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,10 +77,6 @@
 
 #define	NIOPORTS	1024		/* # of ports we allow to be mapped */
 
-/*
- * IMPORTANT NOTE: this structure, including the variable-sized FPU state at
- * the end, must fit within one page.
- */
 struct pcb {
 	int	  pcb_flags;
 #define	PCB_COMPAT32	0x01

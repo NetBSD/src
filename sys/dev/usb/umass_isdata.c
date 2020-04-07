@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.44 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.42 2019/02/10 19:23:55 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.44 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.42 2019/02/10 19:23:55 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -441,7 +441,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 	struct ata_cmd ata;
 
 	DPRINTF(("%s\n", __func__));
-	DPRINTF(("  r_command=0x%02x timeout=%d flags=%#x bcount=%d\n",
+	DPRINTF(("  r_command=0x%02x timeout=%d flags=0x%x bcount=%d\n",
 		 cmd->r_command, cmd->timeout, cmd->flags, cmd->bcount));
 
 	dir = DIR_NONE;
@@ -566,7 +566,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 		goto out;
 	}
 	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		DPRINTF(("uisdata_get_parms: ata_c.flags=%#x\n",
+		DPRINTF(("uisdata_get_parms: ata_c.flags=0x%x\n",
 			 xfer->c_ata_c.flags));
 		rv = CMD_ERR;
 		goto out;

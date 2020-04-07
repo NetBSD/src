@@ -750,10 +750,8 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	return globres != -1;
 
 found:
-#if !defined(__NetBSD__)
 	warnx("outdated mandoc.db lacks %s(%s) entry, run %s %s",
 	    name, sec, BINM_MAKEWHATIS, paths->paths[ipath]);
-#endif
 	if (res == NULL) {
 		free(file);
 		return 1;

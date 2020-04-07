@@ -20,12 +20,13 @@ presence of the required flag.
 </para>
 
 <para>
-This section describes the C++17 and library TS support in the GCC 8 series.
+This section describes the C++17 and library TS support in mainline GCC SVN,
+not in any particular release.
 </para>
 
 <para>
-The following table lists new library features that are included in
-the C++17 standard. The "Proposal" column provides a link to the
+The following table lists new library features that have been accepted into
+the C++17 working draft. The "Proposal" column provides a link to the
 ISO C++ committee proposal that describes the feature, while the "Status"
 column indicates the first version of GCC that contains an implementation of
 this feature (if it has been implemented).
@@ -381,7 +382,7 @@ Feature-testing recommendations for C++</link>.
 	</link>
       </entry>
       <entry align="center"> 7.1 </entry>
-      <entry><code>__cpp_lib_raw_memory_algorithms &gt;= 201606L</code></entry>
+      <entry><code> </code></entry>
     </row>
 
     <row>
@@ -787,31 +788,6 @@ Feature-testing recommendations for C++</link>.
              <code> __cpp_lib_to_chars >= 201611 </code></entry>
     </row>
 
-    <row>
-      <entry> Homogeneous interface for variant, any and optional </entry>
-      <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0032r3.pdf">
-	P0032R3
-	</link>
-      </entry>
-      <entry align="center"> 7.1  </entry>
-      <entry>
-             <code> __cpp_lib_any >= 201606 </code>,
-             <code> __cpp_lib_optional >= 201606 </code>,
-             <code> __cpp_lib_variant >= 201606 </code>
-      </entry>
-    </row>
-
-    <row>
-      <entry> Making Optional Greater Equal Again </entry>
-      <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0307r2.pdf">
-	P0307R2
-	</link>
-      </entry>
-      <entry align="center"> 7.1  </entry>
-      <entry> <code> __cpp_lib_optional >= 201606 </code> </entry>
-    </row>
 
   </tbody>
 </tgroup>
@@ -1073,7 +1049,7 @@ and test for <code>__STDCPP_MATH_SPEC_FUNCS__ >= 201003L</code>.
    <para>
       <emphasis>30.10.2.1 [fs.conform.9945]</emphasis>
       The behavior of the filesystem library implementation will depend on
-      the target operating system. Some features will not be supported
+      the target operating system. Some features will not be not supported
       on some targets.
    </para>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.19 2020/03/21 16:28:56 pgoyette Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.17 2017/09/29 17:47:29 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.19 2020/03/21 16:28:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.17 2017/09/29 17:47:29 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,86 +68,82 @@ struct sysctlnode linux32_sysctl_root = {
 	.sysctl_size = sizeof(struct sysctlnode),
 };
 
+static struct sysctllog *linux32_clog1;
+static struct sysctllog *linux32_clog2;
 extern int linux32_enabled;
-
-/*
- * We need our own sysctllog here because we deal with two
- * separate sysctl trees;  each clog is restricted to a
- * single tree.
- */
-
-static struct sysctllog *linux32_clog;
 
 void
 linux32_sysctl_fini(void)
 {
 
-	sysctl_teardown(&linux32_clog);
+	sysctl_teardown(&linux32_clog2);
+	sysctl_teardown(&linux32_clog1);
 	sysctl_free(&linux32_sysctl_root);
 }
 
-SYSCTL_SETUP(linux32_sysctl_init, "linux32 emulation sysctls")
+void
+linux32_sysctl_init(void)
 {
 	const struct sysctlnode *node = &linux32_sysctl_root;
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&linux32_clog1, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "linux32",
 		       SYSCTL_DESCR("Linux 32 bit emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_LINUX32, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&linux32_clog1, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern",
 		       SYSCTL_DESCR("Linux 32 bit kernel emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_LINUX32, EMUL_LINUX32_KERN, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&linux32_clog1, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "ostype",
 		       SYSCTL_DESCR("Linux 32 bit operating system type"),
 		       NULL, 0, linux32_sysname, sizeof(linux32_sysname),
 		       CTL_EMUL, EMUL_LINUX32, EMUL_LINUX32_KERN,
 		       EMUL_LINUX32_KERN_OSTYPE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&linux32_clog1, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "osrelease",
 		       SYSCTL_DESCR("Linux 32 bit operating system release"),
 		       NULL, 0, linux32_release, sizeof(linux32_release),
 		       CTL_EMUL, EMUL_LINUX32, EMUL_LINUX32_KERN,
 		       EMUL_LINUX32_KERN_OSRELEASE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&linux32_clog1, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "osversion",
 		       SYSCTL_DESCR("Linux 32 bit operating system revision"),
 		       NULL, 0, linux32_version, sizeof(linux32_version),
 		       CTL_EMUL, EMUL_LINUX32, EMUL_LINUX32_KERN,
 		       EMUL_LINUX32_KERN_VERSION, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&linux32_clog1, 0, NULL, NULL,
 		       CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "enabled",
 		       SYSCTL_DESCR("Linux 32 bit compat enabled."),
 		       linux32_sysctl_enable, 0, &linux32_enabled, 0,
 		       CTL_EMUL, EMUL_LINUX32, CTL_CREATE, CTL_EOL);
 
-	sysctl_createv(&linux32_clog, 0, &node, &node,
+	sysctl_createv(&linux32_clog2, 0, &node, &node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       LINUX_CTL_KERN, CTL_EOL);
 
-	sysctl_createv(&linux32_clog, 0, &node, NULL,
+	sysctl_createv(&linux32_clog2, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "ostype", NULL,
 		       NULL, 0, linux32_sysname, sizeof(linux32_sysname),
 		       LINUX_KERN_OSTYPE, CTL_EOL);
-	sysctl_createv(&linux32_clog, 0, &node, NULL,
+	sysctl_createv(&linux32_clog2, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "osrelease", NULL,
 		       NULL, 0, linux32_release, sizeof(linux32_release),
 		       LINUX_KERN_OSRELEASE, CTL_EOL);
-	sysctl_createv(&linux32_clog, 0, &node, NULL,
+	sysctl_createv(&linux32_clog2, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "version", NULL,
 		       NULL, 0, linux32_version, sizeof(linux32_version),

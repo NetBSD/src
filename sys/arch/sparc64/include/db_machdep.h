@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.36 2020/03/10 15:54:52 christos Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.35 2017/11/06 03:47:48 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -69,11 +69,9 @@ typedef struct {
 } db_regs_t;
 
 /* Current CPU register state */
-#ifdef _KERNEL
 #define	DDB_REGS	((db_regs_t*)__UNVOLATILE(curcpu()->ci_ddb_regs))
 #define	DDB_TF		(&DDB_REGS->db_tf)
 #define	DDB_FP		(&DDB_REGS->db_fpstate)
-#endif
 
 /* DDB commands not in db_interface.c */
 void	db_dump_ts(db_expr_t, bool, db_expr_t, const char *);

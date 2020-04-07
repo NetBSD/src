@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphy.c,v 1.19 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: ikphy.c,v 1.18 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
@@ -59,7 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.19 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.18 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,16 +129,12 @@ ikphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 
-	mii_lock(mii);
-
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
-
-	mii_unlock(mii);
 
 	mii_phy_add_media(sc);
 }
@@ -148,8 +144,6 @@ ikphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg;
-
-	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -204,8 +198,6 @@ ikphy_setmedia(struct mii_softc *sc)
 	uint16_t phy_data;
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-
-	KASSERT(mii_locked(mii));
 
 	/* Enable CRS on TX for half-duplex operation. */
 	PHY_READ(sc, GG82563_PHY_MAC_SPEC_CTRL, &phy_data);
@@ -283,8 +275,6 @@ ikphy_status(struct mii_softc *sc)
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t pssr, bmcr, gtsr, kmrn;
-
-	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;

@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.29 2020/03/13 18:17:41 christos Exp $ */
+/* $NetBSD: uslsa.c,v 1.28 2019/05/09 02:43:35 mrg Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.29 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.28 2019/05/09 02:43:35 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -439,7 +439,7 @@ uslsa_param(void *vsc, int portno, struct termios *t)
 		break;
 	}
 
-	DPRINTF((sc->sc_dev, "%s: setting LINE_CTL to %#x\n",
+	DPRINTF((sc->sc_dev, "%s: setting LINE_CTL to 0x%x\n",
 	    __func__, value));
 	if ((ret = uslsa_request_set(sc, SLSA_R_SET_LINE_CTL, value)) != 0) {
 		device_printf(sc->sc_dev, "SET_LINE_CTL failed\n");

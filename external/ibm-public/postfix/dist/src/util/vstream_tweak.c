@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream_tweak.c,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: vstream_tweak.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -34,11 +34,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -131,20 +126,12 @@ int     vstream_tweak_tcp(VSTREAM *fp)
      * stream buffer size to less than VSTREAM_BUFSIZE, when the request is
      * made before the first stream read or write operation. We don't want to
      * reduce the buffer size.
-     * 
-     * As of 20190820 we increase the mss size multiplier from 2x to 4x, because
-     * some LINUX loopback TCP stacks report an MSS of 21845 which is 3x
-     * smaller than the MTU of 65536. Even with a VSTREAM buffer 2x the
-     * reported MSS size, performance would suck due to Nagle or delayed ACK
-     * delays.
      */
 #define EFF_BUFFER_SIZE(fp) (vstream_req_bufsize(fp) ? \
 		vstream_req_bufsize(fp) : VSTREAM_BUFSIZE)
 
 #ifdef CA_VSTREAM_CTL_BUFSIZE
-    if (mss > EFF_BUFFER_SIZE(fp) / 4) {
-	if (mss < INT_MAX / 2)
-	    mss *= 2;
+    if (mss > EFF_BUFFER_SIZE(fp) / 2) {
 	if (mss < INT_MAX / 2)
 	    mss *= 2;
 	vstream_control(fp,

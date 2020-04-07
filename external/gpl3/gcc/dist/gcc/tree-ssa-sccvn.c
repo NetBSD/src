@@ -69,7 +69,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-cfgcleanup.h"
 #include "tree-ssa-loop.h"
 #include "tree-scalar-evolution.h"
-#include "builtins.h"
 #include "tree-ssa-sccvn.h"
 
 /* This algorithm is based on the SCC algorithm presented by Keith
@@ -1858,11 +1857,23 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *vr_,
       /* If we reach a clobbering statement try to skip it and see if
          we find a VN result with exactly the same value as the
 	 possible clobber.  In this case we can ignore the clobber
-	 and return the found value.  */
+	 and return the found value.
+	 Note that we don't need to worry about partial overlapping
+	 accesses as we then can use TBAA to disambiguate against the
+	 clobbering statement when looking up a load (thus the
+	 VN_WALKREWRITE guard).  */
       if (vn_walk_kind == VN_WALKREWRITE
 	  && is_gimple_reg_type (TREE_TYPE (lhs))
 	  && types_compatible_p (TREE_TYPE (lhs), vr->type)
-	  && ref->ref)
+	  /* The overlap restriction breaks down when either access
+	     alias-set is zero.  Still for accesses of the size of
+	     an addressable unit there can be no overlaps.  Overlaps
+	     between different union members are not an issue since
+	     activation of a union member via a store makes the
+	     values of untouched bytes unspecified.  */
+	  && (known_eq (ref->size, BITS_PER_UNIT)
+	      || (get_alias_set (lhs) != 0
+		  && ao_ref_alias_set (ref) != 0)))
 	{
 	  tree *saved_last_vuse_ptr = last_vuse_ptr;
 	  /* Do not update last_vuse_ptr in vn_reference_lookup_2.  */
@@ -1880,14 +1891,7 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *vr_,
 	      vn_reference_t vnresult = (vn_reference_t) res;
 	      if (vnresult->result
 		  && operand_equal_p (vnresult->result,
-				      gimple_assign_rhs1 (def_stmt), 0)
-		  /* We have to honor our promise about union type punning
-		     and also support arbitrary overlaps with
-		     -fno-strict-aliasing.  So simply resort to alignment to
-		     rule out overlaps.  Do this check last because it is
-		     quite expensive compared to the hash-lookup above.  */
-		  && multiple_p (get_object_alignment (ref->ref), ref->size)
-		  && multiple_p (get_object_alignment (lhs), ref->size))
+				      gimple_assign_rhs1 (def_stmt), 0))
 		return res;
 	    }
 	}
@@ -2027,20 +2031,9 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *vr_,
 	  tree rhs = gimple_assign_rhs1 (def_stmt);
 	  if (TREE_CODE (rhs) == SSA_NAME)
 	    rhs = SSA_VAL (rhs);
-	  unsigned pad = 0;
-	  if (BYTES_BIG_ENDIAN
-	      && is_a <scalar_mode> (TYPE_MODE (TREE_TYPE (rhs))))
-	    {
-	      /* On big-endian the padding is at the 'front' so
-		 just skip the initial bytes.  */
-	      fixed_size_mode mode
-		  = as_a <fixed_size_mode> (TYPE_MODE (TREE_TYPE (rhs)));
-	      pad = GET_MODE_SIZE (mode) - size2 / BITS_PER_UNIT;
-	    }
-	  len = native_encode_expr (rhs,
+	  len = native_encode_expr (gimple_assign_rhs1 (def_stmt),
 				    buffer, sizeof (buffer),
-				    ((offseti - offset2) / BITS_PER_UNIT
-				     + pad));
+				    (offseti - offset2) / BITS_PER_UNIT);
 	  if (len > 0 && len * BITS_PER_UNIT >= maxsizei)
 	    {
 	      tree type = vr->type;
@@ -5213,57 +5206,6 @@ public:
   auto_vec<tree> avail;
   auto_vec<tree> avail_stack;
 };
-
-/* Return true if the reference operation REF may trap.  */
-
-bool
-vn_reference_may_trap (vn_reference_t ref)
-{
-  switch (ref->operands[0].opcode)
-    {
-    case MODIFY_EXPR:
-    case CALL_EXPR:
-      /* We do not handle calls.  */
-    case ADDR_EXPR:
-      /* And toplevel address computations never trap.  */
-      return false;
-    default:;
-    }
-
-  vn_reference_op_t op;
-  unsigned i;
-  FOR_EACH_VEC_ELT (ref->operands, i, op)
-    {
-      switch (op->opcode)
-	{
-	case WITH_SIZE_EXPR:
-	case TARGET_MEM_REF:
-	  /* Always variable.  */
-	  return true;
-	case COMPONENT_REF:
-	  if (op->op1 && TREE_CODE (op->op1) == SSA_NAME)
-	    return true;
-	  break;
-	case ARRAY_RANGE_REF:
-	case ARRAY_REF:
-	  if (TREE_CODE (op->op0) == SSA_NAME)
-	    return true;
-	  break;
-	case MEM_REF:
-	  /* Nothing interesting in itself, the base is separate.  */
-	  break;
-	/* The following are the address bases.  */
-	case SSA_NAME:
-	  return true;
-	case ADDR_EXPR:
-	  if (op->op0)
-	    return tree_could_trap_p (TREE_OPERAND (op->op0, 0));
-	  return false;
-	default:;
-	}
-    }
-  return false;
-}
 
 eliminate_dom_walker::eliminate_dom_walker (cdi_direction direction,
 					    bitmap inserted_exprs_)

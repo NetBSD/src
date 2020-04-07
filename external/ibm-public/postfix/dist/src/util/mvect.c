@@ -1,4 +1,4 @@
-/*	$NetBSD: mvect.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: mvect.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -56,11 +56,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -115,5 +110,6 @@ char   *mvect_free(MVECT *vect)
     if (vect->wipe_fn)
 	vect->wipe_fn(vect->ptr, vect->nelm);
     myfree(vect->ptr);
+    myfree((void *) vect);
     return (0);
 }

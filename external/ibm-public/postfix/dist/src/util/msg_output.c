@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_output.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: msg_output.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -21,6 +21,10 @@
 /*	int	level;
 /*	const char *format;
 /*	va_list ap;
+/*
+/*	void	msg_text(level, text)
+/*	int	level;
+/*	const char *text;
 /* DESCRIPTION
 /*	This module implements low-level output management for the
 /*	msg(3) diagnostics interface.
@@ -77,11 +81,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -103,31 +102,26 @@
  /*
   * Global scope, to discourage the compiler from doing smart things.
   */
-volatile int msg_vprintf_level;
+volatile int msg_vprintf_lock;
+volatile int msg_text_lock;
 
  /*
-  * Private state. Allow one nested call, so that one logging error can be
-  * reported to stderr before bailing out.
+  * Private state.
   */
-#define MSG_OUT_NESTING_LIMIT	2
 static MSG_OUTPUT_FN *msg_output_fn = 0;
 static int msg_output_fn_count = 0;
-static VSTRING *msg_buffers[MSG_OUT_NESTING_LIMIT];
+static VSTRING *msg_buffer = 0;
 
 /* msg_output - specify output handler */
 
 void    msg_output(MSG_OUTPUT_FN output_fn)
 {
-    int     i;
 
     /*
-     * Allocate all resources during initialization. This may result in a
-     * recursive call due to memory allocation error.
+     * Allocate all resources during initialization.
      */
-    if (msg_buffers[MSG_OUT_NESTING_LIMIT - 1] == 0) {
-	for (i = 0; i < MSG_OUT_NESTING_LIMIT; i++)
-	    msg_buffers[i] = vstring_alloc(100);
-    }
+    if (msg_buffer == 0)
+	msg_buffer = vstring_alloc(100);
 
     /*
      * We're not doing this often, so avoid complexity and allocate memory
@@ -157,21 +151,40 @@ void    msg_printf(int level, const char *format,...)
 void    msg_vprintf(int level, const char *format, va_list ap)
 {
     int     saved_errno = errno;
-    VSTRING *vp;
-    int     i;
 
-    if (msg_vprintf_level < MSG_OUT_NESTING_LIMIT) {
-	msg_vprintf_level += 1;
-	/* On-the-fly initialization for test programs and startup errors. */
+    if (msg_vprintf_lock == 0) {
+	msg_vprintf_lock = 1;
+	/* On-the-fly initialization for debugging test programs only. */
 	if (msg_output_fn_count == 0)
 	    msg_vstream_init("unknown", VSTREAM_ERR);
-	vp = msg_buffers[msg_vprintf_level - 1];
 	/* OK if terminating signal handler hijacks control before next stmt. */
-	vstring_vsprintf(vp, percentm(format, errno), ap);
-	printable(vstring_str(vp), '?');
-	for (i = 0; i < msg_output_fn_count; i++)
-	    msg_output_fn[i] (level, vstring_str(vp));
-	msg_vprintf_level -= 1;
+	vstring_vsprintf(msg_buffer, percentm(format, errno), ap);
+	msg_text(level, vstring_str(msg_buffer));
+	msg_vprintf_lock = 0;
     }
     errno = saved_errno;
+}
+
+/* msg_text - sanitize and log pre-formatted text */
+
+void    msg_text(int level, const char *text)
+{
+    int     i;
+
+    /*
+     * Sanitize the text. Use a private copy if necessary.
+     */
+    if (msg_text_lock == 0) {
+	msg_text_lock = 1;
+	/* OK if terminating signal handler hijacks control before next stmt. */
+	if (text != vstring_str(msg_buffer))
+	    vstring_strcpy(msg_buffer, text);
+	printable(vstring_str(msg_buffer), '?');
+	/* On-the-fly initialization for debugging test programs only. */
+	if (msg_output_fn_count == 0)
+	    msg_vstream_init("unknown", VSTREAM_ERR);
+	for (i = 0; i < msg_output_fn_count; i++)
+	    msg_output_fn[i] (level, vstring_str(msg_buffer));
+	msg_text_lock = 0;
+    }
 }

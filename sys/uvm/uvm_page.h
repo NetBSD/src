@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.102 2020/03/17 18:31:39 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.98 2020/02/23 15:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -63,12 +63,6 @@
 
 #ifndef _UVM_UVM_PAGE_H_
 #define _UVM_UVM_PAGE_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_uvm_page_trkown.h"
-#endif
-
-#include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
@@ -211,8 +205,13 @@ struct vm_page {
  * PG_BUSY:
  *	Page is long-term locked, usually because of I/O (transfer from the
  *	page memory to the backing store) is in progress.  LWP attempting
- *	to access the page shall set PQ_WANTED and wait.  PG_BUSY may only
- *	be set with a write lock held on the object.
+ *	to access the page shall set PG_WANTED and wait.
+ *
+ * PG_WANTED:
+ *	Indicates that the page, which is currently PG_BUSY, is wanted by
+ *	some other LWP.  The page owner (i.e. LWP which set PG_BUSY) is
+ *	responsible to clear both flags and wake up any waiters once it has
+ *	released the long-term lock (PG_BUSY).
  *
  * PG_PAGEOUT:
  *	Indicates that the page is being paged-out in preparation for
@@ -248,6 +247,7 @@ struct vm_page {
 #define	PG_CLEAN	0x00000001	/* page is known clean */
 #define	PG_DIRTY	0x00000002	/* page is known dirty */
 #define	PG_BUSY		0x00000004	/* page is locked */
+#define	PG_WANTED	0x00000008	/* someone is waiting for page */
 #define	PG_PAGEOUT	0x00000010	/* page to be freed for pagedaemon */
 #define	PG_RELEASED	0x00000020	/* page to be freed when unbusied */
 #define	PG_FAKE		0x00000040	/* page is not yet initialized */
@@ -268,7 +268,7 @@ struct vm_page {
 #define	PG_SWAPBACKED	(PG_ANON|PG_AOBJ)
 
 #define	UVM_PGFLAGBITS \
-	"\20\1CLEAN\2DIRTY\3BUSY" \
+	"\20\1CLEAN\2DIRTY\3BUSY\4WANTED" \
 	"\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
 	"\11ZERO\12TABLED\13AOBJ\14ANON" \
 	"\15FILE\16READAHEAD\17FREE\20MARKER" \
@@ -277,21 +277,7 @@ struct vm_page {
 /*
  * Flags stored in pg->pqflags, which is protected by pg->interlock.
  *
- * PQ_PRIVATE:
- *	... is for uvmpdpol to do whatever it wants with.
- *
- * PQ_INTENT_SET:
- *	Indicates that the intent set on the page has not yet been realized.
- *
- * PQ_INTENT_QUEUED:
- *	Indicates that the page is, or will soon be, on a per-CPU queue for
- *	the intent to be realized.
- *
- * PQ_WANTED:
- *	Indicates that the page, which is currently PG_BUSY, is wanted by
- *	some other LWP.  The page owner (i.e. LWP which set PG_BUSY) is
- *	responsible to clear both flags and wake up any waiters once it has
- *	released the long-term lock (PG_BUSY).
+ * PQ_PRIVATE is for uvmpdpol to do whatever it wants with.
  */
 
 #define	PQ_INTENT_A		0x00000000	/* intend activation */
@@ -302,13 +288,11 @@ struct vm_page {
 #define	PQ_INTENT_SET		0x00000004	/* not realized yet */
 #define	PQ_INTENT_QUEUED	0x00000008	/* queued for processing */
 #define	PQ_PRIVATE		0x00000ff0	/* private for pdpolicy */
-#define	PQ_WANTED		0x00001000	/* someone is waiting for page */
 
 #define	UVM_PQFLAGBITS \
 	"\20\1INTENT_0\2INTENT_1\3INTENT_SET\4INTENT_QUEUED" \
 	"\5PRIVATE1\6PRIVATE2\7PRIVATE3\10PRIVATE4" \
-	"\11PRIVATE5\12PRIVATE6\13PRIVATE7\14PRIVATE8" \
-	"\15WANTED"
+	"\11PRIVATE5\12PRIVATE6\13PRIVATE7\14PRIVATE8"
 
 /*
  * physical memory layout structure
@@ -375,8 +359,6 @@ void uvm_pagemarkdirty(struct vm_page *, unsigned int);
 bool uvm_pagecheckdirty(struct vm_page *, bool);
 bool uvm_pagereadonly_p(struct vm_page *);
 bool uvm_page_locked_p(struct vm_page *);
-void uvm_pagewakeup(struct vm_page *);
-void uvm_pagewait(struct vm_page *, krwlock_t *, const char *);
 
 int uvm_page_lookup_freelist(struct vm_page *);
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2020/03/08 17:21:52 christos Exp $
+# $NetBSD: Makefile,v 1.2 2014/10/29 16:24:32 uebayasi Exp $
 
 SUBDIR=			support
 
@@ -12,7 +12,6 @@ TESTS_SH=		t_config
 
 FILESDIR=		${TESTSDIR}
 FILES=			d_deffs_redef
-FILES+=			d_ifdef
 FILES+=			d_loop
 FILES+=			d_loop2
 FILES+=			d_min

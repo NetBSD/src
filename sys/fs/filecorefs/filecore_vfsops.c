@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.83 2020/03/16 21:20:10 pgoyette Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.82 2020/01/17 20:08:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.83 2020/03/16 21:20:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.82 2020/01/17 20:08:07 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.83 2020/03/16 21:20:10 pgoyett
 #include <fs/filecorefs/filecore_mount.h>
 
 MODULE(MODULE_CLASS_VFS, filecore, NULL);
+
+static struct sysctllog *filecore_sysctl_log;
 
 extern const struct vnodeopv_desc filecore_vnodeop_opv_desc;
 
@@ -130,22 +132,6 @@ struct vfsops filecore_vfsops = {
 	.vfs_opv_descs = filecore_vnodeopv_descs
 };
 
-SYSCTL_SETUP(filecore_sysctl_setup, "filecore fs sysctl")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "filecore",
-		       SYSCTL_DESCR("Acorn FILECORE file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 19, CTL_EOL);
-	/*
-	 * XXX the "19" above could be dynamic, thereby eliminating
-	 * one more instance of the "number to vfs" mapping problem,
-	 * but "19" is the order as taken from sys/mount.h
-	 */
-}
-
 static int
 filecore_modcmd(modcmd_t cmd, void *arg)
 {
@@ -156,11 +142,23 @@ filecore_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&filecore_vfsops);
 		if (error != 0)
 			break;
+		sysctl_createv(&filecore_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "filecore",
+			       SYSCTL_DESCR("Acorn FILECORE file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 19, CTL_EOL);
+		/*
+		 * XXX the "19" above could be dynamic, thereby eliminating
+		 * one more instance of the "number to vfs" mapping problem,
+		 * but "19" is the order as taken from sys/mount.h
+		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&filecore_vfsops);
 		if (error != 0)
 			break;
+		sysctl_teardown(&filecore_sysctl_log);	
 		break;
 	default:
 		error = ENOTTY;

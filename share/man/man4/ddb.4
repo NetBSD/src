@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.189 2020/03/30 20:47:57 maya Exp $
+.\"	$NetBSD: ddb.4,v 1.188 2019/12/15 20:29:08 joerg Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd March 30, 2020
+.Dd December 15, 2019
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -834,7 +834,21 @@ If
 is specified, a character is displayed immediately after each symbol
 name indicating the type of symbol.
 .Pp
-Object symbols display
+For
+.Xr a.out 5 Ns -format
+symbol tables,
+absolute symbols display
+.Sy @ ,
+text segment symbols display
+.Sy * ,
+data segment symbols display
+.Sy + ,
+BSS segment symbols display
+.Sy - ,
+and filename symbols display
+.Sy / .
+For ELF-format symbol tables,
+object symbols display
 .Sy + ,
 function symbols display
 .Sy * ,

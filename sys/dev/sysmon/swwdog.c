@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.22 2020/03/16 21:20:09 pgoyette Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.21 2020/01/01 22:57:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.22 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.21 2020/01/01 22:57:17 thorpej Exp $");
 
 /*
  *
@@ -84,6 +84,9 @@ static int	swwdog_arm(struct swwdog_softc *);
 static int	swwdog_disarm(struct swwdog_softc *);
 
 static void	swwdog_panic(void *);
+
+static void	swwdog_sysctl_setup(void);
+static struct sysctllog *swwdog_sysctllog = NULL;
 
 static int	swwdog_match(device_t, cfdata_t, void *);
 static void	swwdog_attach(device_t, device_t, void *);
@@ -178,6 +181,8 @@ swwdog_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, swwdog_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	swwdog_sysctl_setup();
 }
 
 static int
@@ -187,6 +192,7 @@ swwdog_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 	swwdog_disarm(sc);
+	sysctl_teardown(&swwdog_sysctllog);
 	sysmon_wdog_unregister(&sc->sc_smw);
 	callout_destroy(&sc->sc_c);
 	workqueue_destroy(wq);
@@ -268,15 +274,18 @@ swwdog_panic(void *vsc)
 		workqueue_enqueue(wq, &wk, NULL);
 }
 
-SYSCTL_SETUP(swwdog_sysctl_setup, "swwdog sysctl")
+static void
+swwdog_sysctl_setup(void)
 {
 	const struct sysctlnode *me;
 
-	sysctl_createv(clog, 0, NULL, &me, CTLFLAG_READWRITE,
+	KASSERT(swwdog_sysctllog == NULL);
+
+	sysctl_createv(&swwdog_sysctllog, 0, NULL, &me, CTLFLAG_READWRITE,
 	    CTLTYPE_NODE, "swwdog", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_HW, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL, CTLFLAG_READWRITE,
+	sysctl_createv(&swwdog_sysctllog, 0, NULL, NULL, CTLFLAG_READWRITE,
 	    CTLTYPE_BOOL, "reboot", "reboot if timer expires",
 	    NULL, 0, &swwdog_reboot, sizeof(bool),
 	    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);

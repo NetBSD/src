@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.16 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.15 2020/01/15 08:20:13 skrll Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -134,7 +134,6 @@ struct urtwn_softc {
 	kmutex_t			sc_tx_mtx;
 	kmutex_t			sc_rx_mtx;
 	kmutex_t			sc_write_mtx;
-	kmutex_t			sc_media_mtx;	/* XXX */
 
 	struct usbd_pipe *		rx_pipe[R92C_MAX_EPIN];
 	int				rx_npipe;

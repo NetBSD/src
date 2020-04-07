@@ -26,7 +26,6 @@
 # define _GLIBCXX_USE_CXX11_ABI 1
 #endif
 
-#include <bits/largefile-config.h>
 #include <experimental/filesystem>
 #include <utility>
 #include <stack>

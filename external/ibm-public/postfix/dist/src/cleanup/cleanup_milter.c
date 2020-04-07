@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -98,7 +98,6 @@
 #include <vstream.h>
 #include <vstring.h>
 #include <stringops.h>
-#include <inet_proto.h>
 
 /* Global library. */
 
@@ -115,7 +114,6 @@
 #include <quote_821_local.h>
 #include <dsn_util.h>
 #include <xtext.h>
-#include <info_log_addr_form.h>
 
 /* Application-specific. */
 
@@ -243,11 +241,9 @@ static void cleanup_milter_hbc_log(void *context, const char *action,
 		    state->queue_id, where, action, where, line,
 		    state->client_name, state->client_addr);
     if (state->sender)
-	vstring_sprintf_append(state->temp1, " from=<%s>",
-			       info_log_addr_form_sender(state->sender));
+	vstring_sprintf_append(state->temp1, " from=<%s>", state->sender);
     if (state->recip)
-	vstring_sprintf_append(state->temp1, " to=<%s>",
-			       info_log_addr_form_recipient(state->recip));
+	vstring_sprintf_append(state->temp1, " to=<%s>", state->recip);
     if ((attr = nvtable_find(state->attr, MAIL_ATTR_LOG_PROTO_NAME)) != 0)
 	vstring_sprintf_append(state->temp1, " proto=%s", attr);
     if ((attr = nvtable_find(state->attr, MAIL_ATTR_LOG_HELO_NAME)) != 0)
@@ -1335,61 +1331,22 @@ static const char *cleanup_chg_from(void *context, const char *ext_from,
 {
     const char *myname = "cleanup_chg_from";
     CLEANUP_STATE *state = (CLEANUP_STATE *) context;
-    off_t   new_offset;
     off_t   new_sender_offset;
     off_t   after_sender_offs;
     int     addr_count;
     TOK822 *tree;
     TOK822 *tp;
     VSTRING *int_sender_buf;
-    int     dsn_envid = 0;
-    int     dsn_ret = 0;
 
     if (msg_verbose)
 	msg_info("%s: \"%s\" \"%s\"", myname, ext_from, esmtp_args);
 
-    /*
-     * ESMTP support is limited to RET and ENVID, i.e. things that are stored
-     * together with the sender queue file record.
-     */
-    if (esmtp_args[0]) {
-	ARGV   *esmtp_argv;
-	int     i;
-	const char *arg;
-
-	esmtp_argv = argv_split(esmtp_args, " ");
-	for (i = 0; i < esmtp_argv->argc; ++i) {
-	    arg = esmtp_argv->argv[i];
-	    if (strncasecmp(arg, "RET=", 4) == 0) {
-		if ((dsn_ret = dsn_ret_code(arg + 4)) == 0) {
-		    msg_warn("Ignoring bad ESMTP parameter \"%s\" in "
-			     "SMFI_CHGFROM request", arg);
-		} else {
-		    state->dsn_ret = dsn_ret;
-		}
-	    } else if (strncasecmp(arg, "ENVID=", 6) == 0) {
-		if (state->milter_dsn_buf == 0)
-		    state->milter_dsn_buf = vstring_alloc(20);
-		dsn_envid = (xtext_unquote(state->milter_dsn_buf, arg + 6)
-			     && allprint(STR(state->milter_dsn_buf)));
-		if (!dsn_envid) {
-		    msg_warn("Ignoring bad ESMTP parameter \"%s\" in "
-			     "SMFI_CHGFROM request", arg);
-		} else {
-		    if (state->dsn_envid)
-			myfree(state->dsn_envid);
-		    state->dsn_envid = mystrdup(STR(state->milter_dsn_buf));
-		}
-	    } else {
-		msg_warn("Ignoring bad ESMTP parameter \"%s\" in "
-			 "SMFI_CHGFROM request", arg);
-	    }
-	}
-	argv_free(esmtp_argv);
-    }
+    if (esmtp_args[0])
+	msg_warn("%s: %s: ignoring ESMTP arguments \"%.100s\"",
+		 state->queue_id, myname, esmtp_args);
 
     /*
-     * The cleanup server remembers the file offset of the current sender
+     * The cleanup server remembers the location of the the original sender
      * address record (offset in sender_pt_offset) and the file offset of the
      * record that follows the sender address (offset in sender_pt_target).
      * Short original sender records are padded, so that they can safely be
@@ -1401,34 +1358,20 @@ static const char *cleanup_chg_from(void *context, const char *ext_from,
 	msg_panic("%s: no post-sender record offset", myname);
 
     /*
-     * Allocate space after the end of the queue file, and write the new {DSN
-     * envid, DSN ret, sender address, sender BCC} records, followed by a
-     * reverse pointer record that points to the record that follows the
-     * original sender record.
+     * Allocate space after the end of the queue file, and write the new
+     * sender record, followed by a reverse pointer record that points to the
+     * record that follows the original sender address record. No padding is
+     * needed for a "new" short sender record, since the record is not meant
+     * to be overwritten. When the "new" sender is replaced, we allocate a
+     * new record at the end of the queue file.
      * 
      * We update the queue file in a safe manner: save the new sender after the
      * end of the queue file, write the reverse pointer, and only then
      * overwrite the old sender record with the forward pointer to the new
      * sender.
      */
-    if ((new_offset = vstream_fseek(state->dst, (off_t) 0, SEEK_END)) < 0) {
+    if ((new_sender_offset = vstream_fseek(state->dst, (off_t) 0, SEEK_END)) < 0) {
 	msg_warn("%s: seek file %s: %m", myname, cleanup_path);
-	return (cleanup_milter_error(state, errno));
-    }
-
-    /*
-     * Sender DSN attribute records precede the sender record.
-     */
-    if (dsn_envid)
-	rec_fprintf(state->dst, REC_TYPE_ATTR, "%s=%s",
-		    MAIL_ATTR_DSN_ENVID, STR(state->milter_dsn_buf));
-    if (dsn_ret)
-	rec_fprintf(state->dst, REC_TYPE_ATTR, "%s=%d",
-		    MAIL_ATTR_DSN_RET, dsn_ret);
-    if (dsn_envid == 0 && dsn_ret == 0) {
-	new_sender_offset = new_offset;
-    } else if ((new_sender_offset = vstream_ftell(state->dst)) < 0) {
-	msg_warn("%s: vstream_ftell file %s: %m", myname, cleanup_path);
 	return (cleanup_milter_error(state, errno));
     }
 
@@ -1460,20 +1403,15 @@ static const char *cleanup_chg_from(void *context, const char *ext_from,
     state->sender_pt_target = after_sender_offs;
 
     /*
-     * Overwrite the current sender record with the pointer to the new {DSN
-     * envid, DSN ret, sender address, sender BCC} records.
+     * Overwrite the original sender record with the pointer to the new
+     * sender address record.
      */
     if (vstream_fseek(state->dst, state->sender_pt_offset, SEEK_SET) < 0) {
 	msg_warn("%s: seek file %s: %m", myname, cleanup_path);
 	return (cleanup_milter_error(state, errno));
     }
     cleanup_out_format(state, REC_TYPE_PTR, REC_TYPE_PTR_FORMAT,
-		       (long) new_offset);
-
-    /*
-     * Remember the location of the new current sender record.
-     */
-    state->sender_pt_offset = new_sender_offset;
+		       (long) new_sender_offset);
 
     /*
      * In case of error while doing record output.
@@ -1885,7 +1823,6 @@ static const char *cleanup_milter_eval(const char *name, void *ptr)
      */
 #ifndef CLIENT_ATTR_UNKNOWN
 #define CLIENT_ATTR_UNKNOWN "unknown"
-#define SERVER_ATTR_UNKNOWN "unknown"
 #endif
 
     if (strcmp(name, S8_MAC__) == 0) {
@@ -1907,13 +1844,6 @@ static const char *cleanup_milter_eval(const char *name, void *ptr)
 		state->client_port : "0");
     if (strcmp(name, S8_MAC_CLIENT_PTR) == 0)
 	return (state->reverse_name);
-    /* XXX S8_MAC_CLIENT_RES needs SMTPD_PEER_CODE_XXX from smtpd. */
-    if (strcmp(name, S8_MAC_DAEMON_ADDR) == 0)
-	return (state->server_addr);
-    if (strcmp(name, S8_MAC_DAEMON_PORT) == 0)
-	return (state->server_port
-		&& strcmp(state->server_port, SERVER_ATTR_UNKNOWN) ?
-		state->server_port : "0");
 
     /*
      * MAIL FROM macros.
@@ -1959,7 +1889,7 @@ void    cleanup_milter_receive(CLEANUP_STATE *state, int count)
 			 cleanup_repl_body, (void *) state);
 }
 
-/* cleanup_milter_apply - apply Milter response, non-zero if rejecting */
+/* cleanup_milter_apply - apply Milter reponse, non-zero if rejecting */
 
 static const char *cleanup_milter_apply(CLEANUP_STATE *state, const char *event,
 					        const char *resp)
@@ -2061,11 +1991,9 @@ static const char *cleanup_milter_apply(CLEANUP_STATE *state, const char *event,
 		    state->queue_id, action, event, state->client_name,
 		    state->client_addr, text);
     if (state->sender)
-	vstring_sprintf_append(state->temp1, " from=<%s>",
-			       info_log_addr_form_sender(state->sender));
+	vstring_sprintf_append(state->temp1, " from=<%s>", state->sender);
     if (state->recip)
-	vstring_sprintf_append(state->temp1, " to=<%s>",
-			       info_log_addr_form_recipient(state->recip));
+	vstring_sprintf_append(state->temp1, " to=<%s>", state->recip);
     if ((attr = nvtable_find(state->attr, MAIL_ATTR_LOG_PROTO_NAME)) != 0)
 	vstring_sprintf_append(state->temp1, " proto=%s", attr);
     if ((attr = nvtable_find(state->attr, MAIL_ATTR_LOG_HELO_NAME)) != 0)
@@ -2079,7 +2007,6 @@ static const char *cleanup_milter_apply(CLEANUP_STATE *state, const char *event,
 
 static void cleanup_milter_client_init(CLEANUP_STATE *state)
 {
-    static INET_PROTO_INFO *proto_info;
     const char *proto_attr;
 
     /*
@@ -2094,34 +2021,19 @@ static void cleanup_milter_client_init(CLEANUP_STATE *state)
     state->client_addr = nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_ADDR);
     state->client_port = nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_PORT);
     proto_attr = nvtable_find(state->attr, MAIL_ATTR_ACT_CLIENT_AF);
-    state->server_addr = nvtable_find(state->attr, MAIL_ATTR_ACT_SERVER_ADDR);
-    state->server_port = nvtable_find(state->attr, MAIL_ATTR_ACT_SERVER_PORT);
 
     if (state->client_name == 0 || state->client_addr == 0 || proto_attr == 0
 	|| !alldig(proto_attr)) {
 	state->client_name = "localhost";
-#ifdef AF_INET6
-	if (proto_info == 0)
-	    proto_info = inet_proto_info();
-	if (proto_info->sa_family_list[0] == PF_INET6) {
-	    state->client_addr = "::1";
-	    state->client_af = AF_INET6;
-	} else
-#endif
-	{
-	    state->client_addr = "127.0.0.1";
-	    state->client_af = AF_INET;
-	}
-	state->server_addr = state->client_addr;
+	state->client_addr = "127.0.0.1";
+	state->client_af = AF_INET;
     } else
 	state->client_af = atoi(proto_attr);
     if (state->reverse_name == 0)
 	state->reverse_name = state->client_name;
     /* Compatibility with pre-2.5 queue files. */
-    if (state->client_port == 0) {
+    if (state->client_port == 0)
 	state->client_port = NO_CLIENT_PORT;
-	state->server_port = state->client_port;
-    }
 }
 
 /* cleanup_milter_inspect - run message through mail filter */
@@ -2309,6 +2221,7 @@ int     cleanup_send_canon_flags;
 MAPS   *cleanup_send_canon_maps;
 int     var_dup_filter_limit = DEF_DUP_FILTER_LIMIT;
 char   *var_empty_addr = DEF_EMPTY_ADDR;
+int     var_enable_orcpt = DEF_ENABLE_ORCPT;
 MAPS   *cleanup_virt_alias_maps;
 char   *var_milt_daemon_name = "host.example.com";
 char   *var_milt_v = DEF_MILT_V;
@@ -2492,7 +2405,6 @@ int     main(int unused_argc, char **argv)
     char   *bufp;
     int     istty = isatty(vstream_fileno(VSTREAM_IN));
     CLEANUP_STATE *state = cleanup_state_alloc((VSTREAM *) 0);
-    const char *parens = "{}";
 
     state->queue_id = mystrdup("NOQUEUE");
     state->sender = mystrdup("sender");
@@ -2504,8 +2416,6 @@ int     main(int unused_argc, char **argv)
     msg_vstream_init(argv[0], VSTREAM_ERR);
     var_line_limit = DEF_LINE_LIMIT;
     var_header_limit = DEF_HEADER_LIMIT;
-    var_enable_orcpt = DEF_ENABLE_ORCPT;
-    var_info_log_addr_form = DEF_INFO_LOG_ADDR_FORM;
 
     for (;;) {
 	ARGV   *argv;
@@ -2526,7 +2436,7 @@ int     main(int unused_argc, char **argv)
 	}
 	if (*bufp == '#' || *bufp == 0 || allspace(bufp))
 	    continue;
-	argv = argv_splitq(bufp, " ", parens);
+	argv = argv_split(bufp, " ");
 	if (argv->argc == 0) {
 	    msg_warn("missing command");
 	} else if (strcmp(argv->argv[0], "?") == 0) {
@@ -2606,15 +2516,7 @@ int     main(int unused_argc, char **argv)
 	    if (argv->argc != 3) {
 		msg_warn("bad chg_from argument count: %ld", (long) argv->argc);
 	    } else {
-		char   *arg = argv->argv[2];
-		const char *err;
-
-		if (*arg == parens[0]
-		    && (err = extpar(&arg, parens, EXTPAR_FLAG_NONE)) != 0) {
-		    msg_warn("%s in \"%s\"", err, arg);
-		} else {
-		    cleanup_chg_from(state, argv->argv[1], arg);
-		}
+		cleanup_chg_from(state, argv->argv[1], argv->argv[2]);
 	    }
 	} else if (strcmp(argv->argv[0], "add_rcpt") == 0) {
 	    if (argv->argc != 2) {

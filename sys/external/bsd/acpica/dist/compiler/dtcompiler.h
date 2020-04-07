@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -353,6 +353,7 @@ DtCreateTableUnit (
 
 /* dtparser - lex/yacc files */
 
+UINT64                      DtCompilerParserResult; /* Expression return value */
 int
 DtCompilerParserparse (
     void);

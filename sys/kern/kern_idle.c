@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.33 2020/03/26 19:42:39 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.32 2020/02/15 18:12:15 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.33 2020/03/26 19:42:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.32 2020/02/15 18:12:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -56,8 +56,8 @@ idle_loop(void *dummy)
 	/* Update start time for this thread. */
 	binuptime(&l->l_stime);
 	spc->spc_flags |= SPCF_RUNNING;
+	KASSERT(l->l_stat == LSONPROC);
 	KASSERT((l->l_pflag & LP_RUNNING) != 0);
-	l->l_stat = LSIDL;
 	lwp_unlock(l);
 
 	/*
@@ -91,10 +91,11 @@ idle_loop(void *dummy)
 		}
 		KASSERT(l->l_mutex == l->l_cpu->ci_schedstate.spc_lwplock);
 		lwp_lock(l);
+		l->l_stat = LSIDL;
 		spc_lock(l->l_cpu);
 		mi_switch(l);
 		KASSERT(curlwp == l);
-		KASSERT(l->l_stat == LSIDL);
+		KASSERT(l->l_stat == LSONPROC);
 	}
 }
 
@@ -118,7 +119,7 @@ create_idle_lwp(struct cpu_info *ci)
 		 * mi_switch().  Make the picture look good in case the CPU
 		 * takes an interrupt before it calls idle_loop().
 		 */
-		l->l_stat = LSIDL;
+		l->l_stat = LSONPROC;
 		l->l_pflag |= LP_RUNNING;
 		ci->ci_onproc = l;
 	}

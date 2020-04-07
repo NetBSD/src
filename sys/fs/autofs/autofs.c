@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs.c,v 1.5 2020/03/28 17:29:56 tkusumi Exp $	*/
+/*	$NetBSD: autofs.c,v 1.4 2019/12/14 12:01:13 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.5 2020/03/28 17:29:56 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.4 2019/12/14 12:01:13 tkusumi Exp $");
 
 #include "autofs.h"
 
@@ -376,9 +376,8 @@ autofs_trigger_one(struct autofs_node *anp, const char *component,
 
 	request_error = ar->ar_error;
 	if (request_error)
-		AUTOFS_WARN("request for %s completed with error %d, "
-		    "pid %d (%s)", ar->ar_path, request_error,
-		    curproc->p_pid, curproc->p_comm);
+		AUTOFS_WARN("request for %s completed with error %d",
+		    ar->ar_path, request_error);
 
 	wildcards = ar->ar_wildcards;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.30 2020/03/19 02:31:28 thorpej Exp $	*/
+/*	$NetBSD: am79900.c,v 1.29 2020/02/04 07:36:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.30 2020/03/19 02:31:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.29 2020/02/04 07:36:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,6 +338,8 @@ am79900_tint(struct lance_softc *sc)
 		if (tmd.tmd1 & LE_T1_OWN)
 			break;
 
+		ifp->if_flags &= ~IFF_OACTIVE;
+
 		if (tmd.tmd1 & LE_T1_ERR) {
 			if (tmd.tmd2 & LE_T2_BUFF)
 				printf("%s: transmit buffer error\n",
@@ -486,20 +488,19 @@ am79900_start(struct ifnet *ifp)
 	int rp;
 	int len;
 
-	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	bix = sc->sc_last_td;
 
-	while (sc->sc_no_td < sc->sc_ntbuf) {
+	for (;;) {
 		rp = LE_TMDADDR(sc, bix);
 		(*sc->sc_copyfromdesc)(sc, &tmd, rp, sizeof(tmd));
 
 		if (tmd.tmd1 & LE_T1_OWN) {
-			printf("%s: missing buffer, no_td = %d, last_td = %d\n",
-			    device_xname(sc->sc_dev), sc->sc_no_td,
-			    sc->sc_last_td);
-			break;
+			ifp->if_flags |= IFF_OACTIVE;
+			printf("missing buffer, no_td = %d, last_td = %d\n",
+			    sc->sc_no_td, sc->sc_last_td);
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
@@ -543,7 +544,11 @@ am79900_start(struct ifnet *ifp)
 		if (++bix == sc->sc_ntbuf)
 			bix = 0;
 
-		sc->sc_no_td++;
+		if (++sc->sc_no_td == sc->sc_ntbuf) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
 	}
 
 	sc->sc_last_td = bix;

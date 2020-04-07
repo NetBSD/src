@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.11 2020/03/20 08:02:55 wiz Exp $
+.\"	$NetBSD: usbnet.9,v 1.9 2019/08/23 07:14:35 wiz Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 15, 2020
+.Dd August 22, 2019
 .Dt USBNET 9
 .Os
 .Sh NAME
@@ -54,13 +54,13 @@
 .Ft bool
 .Fn usbnet_isdying "struct usbnet *un"
 .Ft void
-.Fn usbnet_lock_core "struct usbnet *un"
+.Fn usbnet_lock "struct usbnet *un"
 .Ft void
-.Fn usbnet_unlock_core "struct usbnet *un"
+.Fn usbnet_unlock "struct usbnet *un"
 .Ft kmutex_t *
-.Fn usbnet_mutex_core "struct usbnet *un"
+.Fn usbnet_mutex "struct usbnet *un"
 .Ft void
-.Fn usbnet_isowned_core "struct usbnet *un"
+.Fn usbnet_isowned "struct usbnet *un"
 .Ft void
 .Fn usbnet_lock_rx "struct usbnet *un"
 .Ft void
@@ -79,16 +79,24 @@
 .Fn usbnet_isowned_tx "struct usbnet *un"
 .Ft int
 .Fn usbnet_init_rx_tx "struct usbnet *un" "unsigned rxflags" "unsigned txflags"
+.Ft void
+.Fn usbnet_lock_mii "struct usbnet *un"
+.Ft void
+.Fn usbnet_lock_mii_un_locked "struct usbnet *un"
+.Ft void
+.Fn usbnet_unlock_mii "struct usbnet *un"
+.Ft void
+.Fn usbnet_unlock_mii_un_locked "struct usbnet *un"
+.Ft kmutex_t *
+.Fn usbnet_mutex_mii "struct usbnet *un"
+.Ft void
+.Fn usbnet_isowned_mii "struct usbnet *un"
 .Ft int
 .Fn usbnet_miibus_readreg "device_t dev" "int phy" "int reg" "uint16_t *val"
 .Ft int
 .Fn usbnet_miibus_writereg "device_t dev" "int phy" "int reg" "uint16_t val"
 .Ft void
 .Fn usbnet_miibus_statchg "struct ifnet *"
-.Ft void
-.Fn usbnet_busy "struct usbnet *un"
-.Ft void
-.Fn usbnet_unbusy "struct usbnet *un"
 .Ft void
 .Fn usbnet_enqueue "struct usbnet *un" "uint8_t *buf" "size_t buflen" "int csum_flags" "uint32_t csum_data" "int mbuf_flags"
 .Ft void
@@ -118,7 +126,7 @@ Rx and Tx chain handling
 .It
 Generic handlers or support for several struct ifnet callbacks
 .It
-Network stack locking protocol
+MII bus locking
 .It
 Interrupt handling
 .El
@@ -215,16 +223,21 @@ callback to turn off any chipset specific values if required.
 .Pp
 For devices requiring MII handling there are callbacks for reading and
 writing registers, and for status change events.
-The framework serializes MII access with the core lock, which will be
-held when calling these functions, and this lock should be used by
+The framework provides an MII-specific lock per interface which will be
+held when calling these functions, and these locks should be used by
 internal code that also requires serialized access to registers with the
-.Fn usbnet_lock_core
+.Fn usbnet_lock_mii ,
+.Fn usbnet_unlock_mii ,
+.Fn usbnet_lock_mii_un_locked ,
 and
-.Fn usbnet_unlock_core
+.Fn usbnet_unlock_mii_un_locked
 functions.
-The MII callbacks handle device detach events safely; a reference count
-is taken and released around calls to the callbacks as the MII callbacks
-usually block.
+These functions handle device detach events safely, and as such take
+and release a reference on this device and use the usbnet lock for
+this.
+Sometimes the usbnet lock is already held and instead the
+.Dq un_locked
+versions should be used.
 .Pp
 As receive must handle the case of multiple packets in one buffer,
 the support is split between the driver and the framework.
@@ -272,51 +285,55 @@ Returns pointer to this
 Returns pointer to this
 .Fa un's
 device softc.
-.It Fn usbnet_havelink un
+.It Fn bool usbnet_havelink un
 Returns true if link is active.
-.It Fn usbnet_isdying un
+.It Fn bool usbnet_isdying un
 Returns true if device is dying (has been pulled or deactivated,
 pending detach.)
-.El
-.Pp
-Reference counting functions for
-.Fa struct usbnet :
-.Bl -tag -width 4n
-.It Fn usbnet_busy un
-Increases the reference count on the driver instance, preventing
-detach from occurring while the driver is blocked accessing the
-device.
-Must be called with the core lock held.
-.It Fn usbnet_unbusy un
-Decreases the reference count on the driver instance.
-Once the final reference has been dropped, if a detach event
-is pending, it is allowed to proceed.
-Must be called with the core lock held.
 .El
 .Pp
 Lock handling functions for
 .Fa struct usbnet :
 .Pp
 .Bl -tag -width 4n -compact
-.It Fn usbnet_lock_core un
-.It Fn usbnet_unlock_core un
-.It Fn usbnet_isowned_core un
+.It Fn usbnet_lock un
+.It Fn usbnet_unlock un
+.It Fn usbnet_isowned un
 .It Fn usbnet_lock_rx un
 .It Fn usbnet_unlock_rx un
 .It Fn usbnet_isowned_rx un
 .It Fn usbnet_lock_tx un
 .It Fn usbnet_unlock_tx un
 .It Fn usbnet_isowned_tx un
-These groups of three functions provide methods to lock,
-unlock, and assert ownership of one of the three locks provided by
+.It Fn usbnet_lock_mii un
+.It Fn usbnet_lock_mii_un_locked un
+.It Fn usbnet_unlock_mii un
+.It Fn usbnet_unlock_mii_un_locked un
+.It Fn usbnet_isowned_mii un
+These groups of three or five functions provide methods to lock,
+unlock, and assert ownership of one of the four locks provided by
 .Nm .
-The three locks are the
-.Dq core
+The four locks are the
+.Dq softc
 lock, the
 .Dq Tx
-lock, and the
+lock, the
 .Dq Rx
+lock, and the
+.Dq MII
 lock.
+The MII lock is special in that it blocks device detach using
+an internal reference count and is frequently required when
+both the
+.Dq softc
+lock is held or unheld, and two versions are provided that
+either hold the
+.Dq softc
+lock while increasing or decreasing the reference count, or
+assume (and in debug builds, assert) the lock is held for
+the
+.Dq un_locked
+versions.
 .El
 .Pp
 MII access functions for
@@ -329,7 +346,7 @@ on PHY number
 .Fa phy
 and return the value in
 .Fa valp .
-Called with the core lock held.
+Called with the MII lock held.
 .It Fn usbnet_mii_writereg dev phy reg val
 Write register
 .Fa reg
@@ -337,11 +354,11 @@ on PHY number
 .Fa phy
 with
 .Fa val .
-Called with the core lock held.
+Called with the MII lock held.
 .It Fn usbnet_mii_statchg ifp
 Trigger a status change update for interface
 .Fa ifp .
-Called with the core lock held.
+Unlike register access, called with the MII lock not held.
 .El
 .Pp
 Buffer enqueue handling for
@@ -442,51 +459,35 @@ Points to a
 structure which contains these members:
 .Bl -tag -width 4n
 .It Ft void Fn (*uno_stop) "struct ifnet *ifp" "int disable"
-Stop interface
-.Pq optional .
-Called with the core lock held and with a busy reference.
+Stop interface (optional.)
 .It Ft int Fn (*uno_ioctl) "struct ifnet *ifp" "u_long cmd" "void *data"
-Simple ioctl callback
-.Pq optional .
-May be called with the ifnet lock held.
+Simple ioctl callback (optional.)
 .It Ft int Fn (*uno_override_ioctl) "struct ifnet *ifp" "u_long cmd" "void *data"
-Full ioctl callback
-.Pq optional .
-May be called with the ifnet lock held.
+Full ioctl callback (optional.)
 .It Ft int Fn (*uno_init) "struct ifnet *ifp"
 Initialize (bring up) interface.
 Required.
-Called with the ifnet lock held.
 Must call
 .Fn usbnet_rx_tx_init .
 .It Ft int Fn (*uno_read_reg) "struct usbnet *un" "int phy" "int reg" "uint16_t *val"
 Read MII register.
 Required with MII.
-Called with the core lock held and with a busy reference.
 .It Ft int Fn (*uno_write_reg) "struct usbnet *un" "int phy" "int reg" "uint16_t val"
 Write MII register.
 Required with MII.
-Called with the core lock held and with a busy reference.
 .It Ft usbd_status Fn (*uno_statchg) "struct ifnet *ifp"
 Handle MII status change.
 Required with MII.
-Called with the core lock held and with a busy reference.
 .It Ft unsigned Fn (*uno_tx_prepare) "struct usbnet *un" "struct mbuf *m" "struct usbnet_chain *c"
 Prepare an mbuf for transmit.
 Required.
-Called with the Tx lock held.
 .It Ft void Fn (*uno_rx_loop) "struct usbnet *un" "struct usbnet_chain *c" "uint32_t total_len"
 Prepare one or more chain for enqueue.
 Required.
-Called with the Rx lock held.
 .It Ft void Fn (*uno_intr) "struct usbnet *un" "usbd_status status"
-Process periodic interrupt
-.Pq optional .
-Called with no locks held.
+Process periodic interrupt (optional.)
 .It Ft void Fn (*uno_tick) "struct usbnet *un"
-Called every second with USB task thread context
-.Pq optional .
-Called with no locks held, but a busy reference is maintained across this call.
+Called every second with USB task thread context (optional.)
 .El
 .It un_intr
 Points to a
@@ -672,7 +673,7 @@ Returns standard
 .It uno_statchg
 Handle a status change event for this interface.
 .El
-The read and write callbacks are called with the core lock held.
+The read and write callbacks are called with the MII lock held.
 See
 .Fn usbnet_lock_mii
 and
@@ -802,25 +803,19 @@ framework handles pipes and transfers and buffers.
 .It Device locking
 The
 .Nm
-framework provides three locks for the system: core lock,
-receive lock, and transmit lock.
+framework provides four locks for the system: normal device/softc lock,
+receive and transmit locks, and the MII lock.
 The normal locking order
-for these locks is ifnet lock -> usbnet core lock -> usbnet rxlock -> usbne
-txlock, or, ifnet lock -> usbnet core lock.
-Also note that the core lock may be taken when the ifnet lock is not
-held.
+for these locks is ifnet lock -> usbnet lock -> usbnet rxlock -> usbne
+txlock, or, ifnet lock -> usbnet lock -> MII lock.
 .It MII handling
-For devices with MII support the three normal callbacks
-.Pq read, write, and status change
-must be converted to
+For devices with MII support the three normal callbacks (read, write,
+and status change) must be converted to
 .Va usbnet .
-These functions are called with the core lock is held
-.Po
-see
-.Dq Fn usbnet_isowned_core
-.Pc ,
-and with a busy reference held and do not require any checking for running,
-or up, or dying devices.
+These functions are called with the MII lock is held (see
+.Dq Fn usbnet_isowned_mii ) ,
+and do not require any checking for running, or up, or dying devices
+unless they drop and retake the MII lock.
 Local
 .Dq link
 variables need to be replaced with accesses to

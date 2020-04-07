@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.34 2020/03/05 01:21:09 rin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.33 2014/03/24 19:29:59 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2020/03/05 01:21:09 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33 2014/03/24 19:29:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,6 +317,6 @@ dcache_wbinv_page(vaddr_t va)
 		for (size_t i = 0; i < PAGE_SIZE; i += dcache_line_size) {
 			__asm volatile("dcbf %0,%1" : : "b" (va), "r" (i));
 		}
-		__asm volatile("sync; isync" : : );
+		__asm volatile("sync;isync" : : );
 	}
 }

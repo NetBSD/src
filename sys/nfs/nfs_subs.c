@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.238 2020/03/08 22:12:42 mgorny Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.237 2020/02/24 20:18:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.238 2020/03/08 22:12:42 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.237 2020/02/24 20:18:53 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -207,7 +207,7 @@ const int nfsv2_procid[NFS_NPROCS] = {
  * Use NFSERR_IO as the catch all for ones not specifically defined in
  * RFC 1094.
  */
-static const u_char nfsrv_v2errmap[] = {
+static const u_char nfsrv_v2errmap[ELAST] = {
   NFSERR_PERM,	NFSERR_NOENT,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
   NFSERR_NXIO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
   NFSERR_IO,	NFSERR_IO,	NFSERR_ACCES,	NFSERR_IO,	NFSERR_IO,
@@ -224,12 +224,8 @@ static const u_char nfsrv_v2errmap[] = {
   NFSERR_NOTEMPTY, NFSERR_IO,	NFSERR_IO,	NFSERR_DQUOT,	NFSERR_STALE,
   NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
   NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
-  NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
-  NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
-  NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,	NFSERR_IO,
-  NFSERR_IO,	NFSERR_IO,	NFSERR_IO
+  NFSERR_IO,	NFSERR_IO,
 };
-__CTASSERT(__arraycount(nfsrv_v2errmap) == ELAST);
 
 /*
  * Maps errno values to nfs error numbers.

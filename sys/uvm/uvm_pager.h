@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.47 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.45 2018/12/09 20:33:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -135,9 +135,6 @@ struct uvm_pagerops {
 
 	/* put/write pages */
 	int	(*pgo_put)(struct uvm_object *, voff_t, voff_t, int);
-
-	/* mark object dirty */
-	void	(*pgo_markdirty)(struct uvm_object *);
 };
 
 /* pager flags [mostly for flush] */
@@ -152,7 +149,6 @@ struct uvm_pagerops {
 #define PGO_JOURNALLOCKED 0x020	/* journal is already locked [get/put] */
 #define PGO_LOCKED	0x040	/* fault data structures are locked [get] */
 #define PGO_BUSYFAIL	0x080	/* fail if a page is busy [put] */
-#define PGO_NOBUSY	0x100	/* don't busy returned pages (read locked) */
 #define PGO_OVERWRITE	0x200	/* pages will be overwritten before unlocked */
 #define PGO_PASTEOF	0x400	/* allow allocation of pages past EOF */
 #define PGO_NOBLOCKALLOC 0x800	/* backing block allocation is not needed */

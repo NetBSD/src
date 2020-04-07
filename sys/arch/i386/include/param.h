@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.87 2020/03/05 15:18:54 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.85 2019/08/20 12:33:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

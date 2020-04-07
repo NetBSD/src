@@ -324,8 +324,6 @@ struct urtw_softc {
 	struct ethercom			sc_ec;
 #define sc_if	sc_ec.ec_if
 
-	kmutex_t			sc_media_mtx;	/* XXX */
-
 	enum {
 		URTW_INIT_NONE,
 		URTW_INIT_INITED

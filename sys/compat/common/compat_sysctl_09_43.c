@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysctl_09_43.c,v 1.6 2020/03/26 13:39:29 pgoyette Exp $	*/
+/*	$NetBSD: compat_sysctl_09_43.c,v 1.5 2020/02/27 17:42:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysctl_09_43.c,v 1.6 2020/03/26 13:39:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysctl_09_43.c,v 1.5 2020/02/27 17:42:33 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,17 +104,6 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 SYSCTL_SETUP(compat_sysctl_vfs, "Top-level filesystem info")
 {
 	int error;
-
-	error = sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT, 
-			CTLTYPE_NODE, "generic",
-			SYSCTL_DESCR("Non-specific vfs related information"),
-			NULL, 0, NULL, 0,
-			CTL_VFS, VFS_GENERIC, CTL_EOL);
-	if (error == EEXIST)
-		error = 0;
-	if (error != 0)
-		return;
 
 	error = sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,

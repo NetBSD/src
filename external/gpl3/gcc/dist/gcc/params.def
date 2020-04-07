@@ -387,7 +387,7 @@ DEFPARAM(PARAM_SMS_MIN_SC,
 DEFPARAM(PARAM_SMS_DFA_HISTORY,
 	 "sms-dfa-history",
 	 "The number of cycles the swing modulo scheduler considers when checking conflicts using DFA.",
-	 0, 0, 16)
+	 0, 0, 0)
 DEFPARAM(PARAM_SMS_LOOP_AVERAGE_COUNT_THRESHOLD,
 	 "sms-loop-average-count-threshold",
 	 "A threshold on the average loop count considered by the swing modulo scheduler.",
@@ -1330,11 +1330,6 @@ DEFPARAM(PARAM_AVOID_FMA_MAX_BITS,
 	 "avoid-fma-max-bits",
 	 "Maximum number of bits for which we avoid creating FMAs.",
 	 0, 0, 512)
-
-DEFPARAM(PARAM_LOGICAL_OP_NON_SHORT_CIRCUIT,
-	 "logical-op-non-short-circuit",
-	 "True if a non-short-circuit operation is optimal.",
-	 -1, -1, 1)
 
 /*
 

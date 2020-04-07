@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.11 2020/03/07 06:25:57 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.8 2020/02/23 07:17:01 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -150,37 +150,34 @@ struct audio_softc {
 
 	/*
 	 * Blocksize in msec.
-	 * Must be protected by sc_exlock.
+	 * Must be protected by sc_lock.
 	 */
 	int sc_blk_ms;
 
 	/*
 	 * Track mixer for playback and recording.
 	 * If null, the mixer is disabled.
-	 * Must be protected by sc_exlock.
 	 */
 	audio_trackmixer_t *sc_pmixer;
 	audio_trackmixer_t *sc_rmixer;
 
 	/*
 	 * Opening track counter.
-	 * Must be protected by sc_lock && sc_exlock for modifying.
-	 * Must be protected by sc_lock || sc_exlock for reference.
+	 * Must be protected by sc_lock.
 	 */
 	int sc_popens;
 	int sc_ropens;
 
 	/*
 	 * true if the track mixer is running.
-	 * Must be protected by sc_exlock && sc_intr_lock for modifying.
-	 * Must be protected by sc_exlock || sc_intr_lock for reference.
+	 * Must be protected by sc_lock.
 	 */
 	bool sc_pbusy;
 	bool sc_rbusy;
 
 	/*
 	 * These four are the parameters sustained with /dev/sound.
-	 * Must be protected by sc_exlock.
+	 * Must be protected by sc_lock.
 	 */
 	audio_format2_t sc_sound_pparams;
 	audio_format2_t sc_sound_rparams;
@@ -203,7 +200,7 @@ struct audio_softc {
 	 * sc_am is an array of pids, or NULL if empty.
 	 * sc_am_capacity is the number of allocated elements.
 	 * sc_am_used is the number of elements actually used.
-	 * Must be protected by sc_exlock.
+	 * Must be protected by sc_lock.
 	 */
 	pid_t *sc_am;
 	int sc_am_capacity;
@@ -237,7 +234,7 @@ struct audio_softc {
 	/*
 	 * If multiuser is false, other users who have different euid
 	 * than the first user cannot open this device.
-	 * Must be protected by sc_exlock.
+	 * Must be protected by sc_lock.
 	 */
 	bool sc_multiuser;
 	kauth_cred_t sc_cred;

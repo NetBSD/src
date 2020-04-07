@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.51 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.49 2020/01/01 09:08:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.51 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.49 2020/01/01 09:08:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -487,7 +487,7 @@ ucycomstart(struct tty *tp)
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP)) {
-		DPRINTFN(4,("ucycomstart: no go, state=%#x\n", tp->t_state));
+		DPRINTFN(4,("ucycomstart: no go, state=0x%x\n", tp->t_state));
 		goto out;
 	}
 

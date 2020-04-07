@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_borrow_cred.c,v 1.4 2020/03/03 00:45:21 christos Exp $	*/
+/*	$NetBSD: openpam_borrow_cred.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -42,7 +42,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_borrow_cred.c,v 1.4 2020/03/03 00:45:21 christos Exp $");
+__RCSID("$NetBSD: openpam_borrow_cred.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
 
 #include <sys/param.h>
 
@@ -71,7 +71,7 @@ openpam_borrow_cred(pam_handle_t *pamh,
 	const void *scredp;
 	int r;
 
-	ENTERN(pwd->pw_uid);
+	ENTERI(pwd->pw_uid);
 	r = pam_get_data(pamh, PAM_SAVED_CRED, &scredp);
 	if (r == PAM_SUCCESS && scredp != NULL) {
 		openpam_log(PAM_LOG_LIBDEBUG,

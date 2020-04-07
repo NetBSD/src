@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.11 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp.c,v 1.10 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -6,7 +6,7 @@
 /* SUMMARY
 /*	Postfix SMTP+LMTP client
 /* SYNOPSIS
-/*	\fBsmtp\fR [generic Postfix daemon options] [flags=DORX]
+/*	\fBsmtp\fR [generic Postfix daemon options]
 /* DESCRIPTION
 /*	The Postfix SMTP+LMTP client implements the SMTP and LMTP mail
 /*	delivery protocols. It processes message delivery requests from
@@ -40,8 +40,6 @@
 /* SMTP DESTINATION SYNTAX
 /* .ad
 /* .fi
-/*	The Postfix SMTP+LMTP client supports multiple destinations
-/*	separated by comma or whitespace (Postfix 3.5 and later).
 /*	SMTP destinations have the following form:
 /* .IP \fIdomainname\fR
 /* .IP \fIdomainname\fR:\fIport\fR
@@ -59,8 +57,6 @@
 /* LMTP DESTINATION SYNTAX
 /* .ad
 /* .fi
-/*	The Postfix SMTP+LMTP client supports multiple destinations
-/*	separated by comma or whitespace (Postfix 3.5 and later).
 /*	LMTP destinations have the following form:
 /* .IP \fBunix\fR:\fIpathname\fR
 /*	Connect to the local UNIX-domain server that is bound to the specified
@@ -76,62 +72,10 @@
 /*	If no such service is found, the \fBlmtp_tcp_port\fR configuration
 /*	parameter (default value of 24) will be used.
 /*	An IPv6 address must be formatted as [\fBipv6\fR:\fIaddress\fR].
-/* SINGLE-RECIPIENT DELIVERY
-/* .ad
-/* .fi
-/*	By default, the Postfix SMTP+LMTP client delivers mail to
-/*	multiple recipients per delivery request. This is undesirable
-/*	when prepending a \fBDelivered-to:\fR or \fBX-Original-To:\fR
-/*	message header. To prevent Postfix from sending multiple
-/*	recipients per delivery request, specify
-/* .sp
-/* .nf
-/*	    \fItransport\fB_destination_recipient_limit = 1\fR
-/* .fi
-/*
-/*	in the Postfix \fBmain.cf\fR file, where \fItransport\fR
-/*	is the name in the first column of the Postfix \fBmaster.cf\fR
-/*	entry for this mail delivery service.
-/* COMMAND ATTRIBUTE SYNTAX
-/* .ad
-/* .fi
-/* .IP "\fBflags=DORX\fR (optional)"
-/*	Optional message processing flags.
-/* .RS
-/* .IP \fBD\fR
-/*	Prepend a "\fBDelivered-To: \fIrecipient\fR" message header
-/*	with the envelope recipient address. Note: for this to work,
-/*	the \fItransport\fB_destination_recipient_limit\fR must be
-/*	1 (see SINGLE-RECIPIENT DELIVERY above for details).
-/* .sp
-/*	The \fBD\fR flag also enforces loop detection: if a message
-/*	already contains a \fBDelivered-To:\fR header with the same
-/*	recipient address, then the message is returned as
-/*	undeliverable. The address comparison is case insensitive.
-/* .sp
-/*	This feature is available as of Postfix 3.5.
-/* .IP \fBO\fR
-/*	Prepend an "\fBX-Original-To: \fIrecipient\fR" message
-/*	header with the recipient address as given to Postfix. Note:
-/*	for this to work, the
-/*	\fItransport\fB_destination_recipient_limit\fR must be 1
-/*	(see SINGLE-RECIPIENT DELIVERY above for details).
-/* .sp
-/*	This feature is available as of Postfix 3.5.
-/* .IP \fBR\fR
-/*	Prepend a "\fBReturn-Path: <\fIsender\fB>\fR" message header
-/*	with the envelope sender address.
-/* .sp
-/*	This feature is available as of Postfix 3.5.
-/* .IP \fBX\fR
-/*	Indicates that the delivery is final. This flag affects
-/*	the status reported in "success" DSN (delivery status
-/*	notification) messages, and changes it from "relayed" into
-/*	"delivered".
-/* .sp
-/*	This feature is available as of Postfix 3.5.
-/* .RE
+/* .PP
 /* SECURITY
+/* .ad
+/* .fi
 /*	The SMTP+LMTP client is moderately security-sensitive. It
 /*	talks to SMTP or LMTP servers and to DNS servers on the
 /*	network. The SMTP+LMTP client can be run chrooted at fixed
@@ -158,8 +102,7 @@
 /*	RFC 6533 (Internationalized Delivery Status Notifications)
 /*	RFC 7672 (SMTP security via opportunistic DANE TLS)
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8)
-/*	or \fBpostlogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*	Corrupted message files are marked so that the queue manager can
 /*	move them to the \fBcorrupt\fR queue for further inspection.
 /*
@@ -167,10 +110,11 @@
 /*	the postmaster is notified of bounces, protocol problems, and of
 /*	other trouble.
 /* BUGS
-/*	SMTP and LMTP connection reuse for TLS (without closing the
-/*	SMTP or LMTP connection) is not supported before Postfix 3.4.
+/*	SMTP and LMTP connection caching does not work with TLS. The necessary
+/*	support for TLS object passivation and re-activation does not
+/*	exist without closing the session, which defeats the purpose.
 /*
-/*	SMTP and LMTP connection reuse assumes that SASL credentials
+/*	SMTP and LMTP connection caching assumes that SASL credentials
 /*	are valid for all destinations that map onto the same IP
 /*	address and TCP port.
 /* CONFIGURATION PARAMETERS
@@ -321,17 +265,6 @@
 /*	deliveries.
 /* .IP "\fBsmtp_dns_reply_filter (empty)\fR"
 /*	Optional filter for Postfix SMTP client DNS lookup results.
-/* .PP
-/*	Available in Postfix version 3.3 and later:
-/* .IP "\fBsmtp_balance_inet_protocols (yes)\fR"
-/*	When a remote destination resolves to a combination of IPv4 and
-/*	IPv6 addresses, ensure that the Postfix SMTP client can try both
-/*	address types before it runs into the smtp_mx_address_limit.
-/* .PP
-/*	Available in Postfix 3.5 and later:
-/* .IP "\fBinfo_log_address_format (external)\fR"
-/*	The email address form that will be used in non-debug logging
-/*	(info, warning, etc.).
 /* MIME PROCESSING CONTROLS
 /* .ad
 /* .fi
@@ -521,13 +454,6 @@
 /* .IP "\fBtls_disable_workarounds (see 'postconf -d' output)\fR"
 /*	List or bit-mask of OpenSSL bug work-arounds to disable.
 /* .PP
-/*	Available in Postfix version 2.11-3.1:
-/* .IP "\fBtls_dane_digest_agility (on)\fR"
-/*	Configure RFC7671 DANE TLSA digest algorithm agility.
-/* .IP "\fBtls_dane_trust_anchor_digest_enable (yes)\fR"
-/*	Enable support for RFC 6698 (DANE TLSA) DNS records that contain
-/*	digests of trust-anchors with certificate usage "2".
-/* .PP
 /*	Available in Postfix version 2.11 and later:
 /* .IP "\fBsmtp_tls_trust_anchor_file (empty)\fR"
 /*	Zero or more PEM-format files with trust-anchor certificates
@@ -535,6 +461,8 @@
 /* .IP "\fBsmtp_tls_force_insecure_host_tlsa_lookup (no)\fR"
 /*	Lookup the associated DANE TLSA RRset even when a hostname is
 /*	not an alias and its address records lie in an unsigned zone.
+/* .IP "\fBtls_dane_trust_anchor_digest_enable (yes)\fR"
+/*	RFC 6698 trust-anchor digest support in the Postfix TLS library.
 /* .IP "\fBtlsmgr_service_name (tlsmgr)\fR"
 /*	The name of the \fBtlsmgr\fR(8) service entry in master.cf.
 /* .PP
@@ -548,21 +476,6 @@
 /*	The TLS policy for MX hosts with "secure" TLSA records when the
 /*	nexthop destination security level is \fBdane\fR, but the MX
 /*	record was found via an "insecure" MX lookup.
-/* .PP
-/*	Available in Postfix version 3.4 and later:
-/* .IP "\fBsmtp_tls_connection_reuse (no)\fR"
-/*	Try to make multiple deliveries per TLS-encrypted connection.
-/* .IP "\fBsmtp_tls_chain_files (empty)\fR"
-/*	List of one or more PEM files, each holding one or more private keys
-/*	directly followed by a corresponding certificate chain.
-/* .IP "\fBsmtp_tls_servername (empty)\fR"
-/*	Optional name to send to the remote SMTP server in the TLS Server
-/*	Name Indication (SNI) extension.
-/* .PP
-/*	Available in Postfix 3.5, 3.4.6, 3.3.5, 3.2.10, 3.1.13 and later:
-/* .IP "\fBtls_fast_shutdown_enable (yes)\fR"
-/*	A workaround for implementations that hang Postfix while shutting
-/*	down a TLS session, until Postfix times out.
 /* OBSOLETE STARTTLS CONTROLS
 /* .ad
 /* .fi
@@ -588,6 +501,12 @@
 /* RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi
+/* .IP "\fBsmtp_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
+/*	The maximal number of parallel deliveries to the same destination
+/*	via the smtp message delivery transport.
+/* .IP "\fBsmtp_destination_recipient_limit ($default_destination_recipient_limit)\fR"
+/*	The maximal number of recipients per message for the smtp
+/*	message delivery transport.
 /* .IP "\fBsmtp_connect_timeout (30s)\fR"
 /*	The Postfix SMTP client time limit for completing a TCP connection, or
 /*	zero (use the operating system built-in time limit).
@@ -668,22 +587,6 @@
 /*	When SMTP connection caching is enabled, the number of times
 /*	that an SMTP session may be reused before it is closed, or zero (no
 /*	limit).
-/* .PP
-/*	Available in Postfix version 3.4 and later:
-/* .IP "\fBsmtp_tls_connection_reuse (no)\fR"
-/*	Try to make multiple deliveries per TLS-encrypted connection.
-/* .PP
-/*	Implemented in the qmgr(8) daemon:
-/* .IP "\fBtransport_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
-/*	A transport-specific override for the
-/*	default_destination_concurrency_limit parameter value, where
-/*	\fItransport\fR is the master.cf name of the message delivery
-/*	transport.
-/* .IP "\fBtransport_destination_recipient_limit ($default_destination_recipient_limit)\fR"
-/*	A transport-specific override for the
-/*	default_destination_recipient_limit parameter value, where
-/*	\fItransport\fR is the master.cf name of the message delivery
-/*	transport.
 /* SMTPUTF8 CONTROLS
 /* .ad
 /* .fi
@@ -694,12 +597,6 @@
 /* .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
 /*	Detect that a message requires SMTPUTF8 support for the specified
 /*	mail origin classes.
-/* .PP
-/*	Available in Postfix version 3.2 and later:
-/* .IP "\fBenable_idna2003_compatibility (no)\fR"
-/*	Enable 'transitional' compatibility between IDNA2003 and IDNA2008,
-/*	when converting UTF-8 domain names to/from the ASCII form that is
-/*	used for DNS lookups.
 /* TROUBLE SHOOTING CONTROLS
 /* .ad
 /* .fi
@@ -788,8 +685,8 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* .PP
 /*	Available with Postfix 2.2 and earlier:
 /* .IP "\fBfallback_relay (empty)\fR"
@@ -810,14 +707,6 @@
 /* .IP "\fBlmtp_fallback_relay (empty)\fR"
 /*	Optional list of relay hosts for LMTP destinations that can't be
 /*	found or that are unreachable.
-/* .PP
-/*	Available with Postfix 3.2 and later:
-/* .IP "\fBsmtp_tcp_port (smtp)\fR"
-/*	The default TCP port that the Postfix SMTP client connects to.
-/* .PP
-/*	Available in Postfix 3.3 and later:
-/* .IP "\fBservice_name (read-only)\fR"
-/*	The master.cf service name of a Postfix daemon process.
 /* SEE ALSO
 /*	generic(5), output address rewriting
 /*	header_checks(5), message header content inspection
@@ -829,7 +718,6 @@
 /*	master(5), generic daemon options
 /*	master(8), process manager
 /*	tlsmgr(8), TLS session and PRNG management
-/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README FILES
 /* .ad
@@ -896,13 +784,10 @@
 #include <mymalloc.h>
 #include <name_mask.h>
 #include <name_code.h>
-#include <byte_mask.h>
 
 /* Global library. */
 
 #include <deliver_request.h>
-#include <delivered_hdr.h>
-#include <mail_proto.h>
 #include <mail_params.h>
 #include <mail_version.h>
 #include <mail_conf.h>
@@ -988,8 +873,6 @@ bool    var_smtp_enforce_tls;
 char   *var_smtp_tls_per_site;
 char   *var_smtp_tls_policy;
 bool    var_smtp_tls_wrappermode;
-bool    var_smtp_tls_conn_reuse;
-char   *var_tlsproxy_service;
 
 #ifdef USE_TLS
 char   *var_smtp_sasl_tls_opts;
@@ -997,7 +880,6 @@ char   *var_smtp_sasl_tlsv_opts;
 int     var_smtp_starttls_tmout;
 char   *var_smtp_tls_CAfile;
 char   *var_smtp_tls_CApath;
-char   *var_smtp_tls_chain_files;
 char   *var_smtp_tls_cert_file;
 char   *var_smtp_tls_mand_ciph;
 char   *var_smtp_tls_excl_ciph;
@@ -1019,7 +901,6 @@ char   *var_smtp_tls_proto;
 char   *var_smtp_tls_ciph;
 char   *var_smtp_tls_eccert_file;
 char   *var_smtp_tls_eckey_file;
-char   *var_smtp_tls_sni;
 bool    var_smtp_tls_blk_early_mail_reply;
 bool    var_smtp_tls_force_tlsa;
 char   *var_smtp_tls_insecure_mx_policy;
@@ -1029,7 +910,7 @@ char   *var_smtp_tls_insecure_mx_policy;
 char   *var_smtp_generic_maps;
 char   *var_prop_extension;
 bool    var_smtp_sender_auth;
-char   *var_smtp_tcp_port;
+char   *var_lmtp_tcp_port;
 int     var_scache_proto_tmout;
 bool    var_smtp_cname_overr;
 char   *var_smtp_pix_bug_words;
@@ -1047,7 +928,6 @@ bool    var_smtp_rec_deadline;
 bool    var_smtp_dummy_mail_auth;
 char   *var_smtp_dsn_filter;
 char   *var_smtp_dns_re_filter;
-bool    var_smtp_balance_inet_proto;
 
  /* Special handling of 535 AUTH errors. */
 char   *var_smtp_sasl_auth_cache_name;
@@ -1069,7 +949,6 @@ unsigned smtp_dns_res_opt;
 MAPS   *smtp_pix_bug_maps;
 HBC_CHECKS *smtp_header_checks;		/* limited header checks */
 HBC_CHECKS *smtp_body_checks;		/* limited body checks */
-SMTP_CLI_ATTR smtp_cli_attr;		/* parsed command-line */
 
 #ifdef USE_TLS
 
@@ -1085,59 +964,6 @@ int     smtp_tls_insecure_mx_policy;
   * IPv6 preference.
   */
 static int smtp_addr_pref;
-
-/* get_cli_attr - get command-line attributes */
-
-static void get_cli_attr(SMTP_CLI_ATTR *attr, char **argv)
-{
-    const char myname[] = "get_cli_attr";
-    const char *last_flags = "flags=";	/* i.e. empty */
-    static const BYTE_MASK flags_map[] = {
-	'D', SMTP_CLI_FLAG_DELIVERED_TO,
-	'O', SMTP_CLI_FLAG_ORIG_RCPT,
-	'R', SMTP_CLI_FLAG_RETURN_PATH,
-	'X', SMTP_CLI_FLAG_FINAL_DELIVERY,
-	0,
-    };
-
-    /*
-     * Initialize.
-     */
-    attr->flags = 0;
-
-    /*
-     * Iterate over the command-line attribute list. Errors are fatal.
-     */
-    for ( /* void */ ; *argv != 0; argv++) {
-
-	/*
-	 * flags=stuff. Errors are fatal.
-	 */
-	if (strncasecmp("flags=", *argv, sizeof("flags=") - 1) == 0) {
-	    last_flags = *argv;
-	    if (msg_verbose)
-		msg_info("%s: %s", myname, last_flags);
-	    attr->flags = byte_mask(*argv, flags_map,
-				    *argv + sizeof("flags=") - 1);
-	}
-
-	/*
-	 * Bad.
-	 */
-	else
-	    msg_fatal("unknown attribute name: %s", *argv);
-    }
-
-    /*
-     * Backwards compatibility, redundancy, and obsolescence.
-     */
-    if (!smtp_mode && var_lmtp_assume_final
-	&& (attr->flags & SMTP_CLI_FLAG_FINAL_DELIVERY) == 0) {
-	attr->flags |= SMTP_CLI_FLAG_FINAL_DELIVERY;
-	msg_warn("%s is obsolete; instead, specify \"%sX\" in %s",
-		 VAR_LMTP_ASSUME_FINAL, last_flags, MASTER_CONF_FILE);
-    }
-}
 
 /* deliver_message - deliver message with extreme prejudice */
 
@@ -1158,55 +984,6 @@ static int deliver_message(const char *service, DELIVER_REQUEST *request)
 	msg_fatal("empty nexthop hostname");
     if (request->rcpt_list.len <= 0)
 	msg_fatal("recipient count: %d", request->rcpt_list.len);
-
-    /*
-     * D flag checks.
-     */
-    if (smtp_cli_attr.flags & SMTP_CLI_FLAG_DELIVERED_TO) {
-
-	/*
-	 * The D flag cannot be specified for multi-recipient deliveries.
-	 */
-	if (request->rcpt_list.len > 1) {
-	    msg_warn("flag `D' requires %s_destination_recipient_limit = 1",
-		     service);
-	    return (reject_deliver_request(service, request, "4.3.5",
-					"mail system configuration error"));
-	}
-
-	/*
-	 * The recipient cannot appear in a Delivered-To: header.
-	 */
-	else {
-	    DELIVERED_HDR_INFO *delivered_info = delivered_hdr_init(
-			  request->fp, request->data_offset, FOLD_ADDR_ALL);
-	    VSTRING *generic_rcpt = vstring_alloc(100);
-	    int     have_delivered_loop;
-
-	    smtp_rewrite_generic_internal(generic_rcpt,
-					  request->rcpt_list.info->address);
-	    have_delivered_loop = delivered_hdr_find(
-					 delivered_info, STR(generic_rcpt));
-	    vstring_free(generic_rcpt);
-	    delivered_hdr_free(delivered_info);
-	    if (have_delivered_loop) {
-		return (reject_deliver_request(service, request, "5.4.6",
-					       "mail forwarding loop for %s",
-					 request->rcpt_list.info->address));
-	    }
-	}
-    }
-
-    /*
-     * The O flag cannot be specified for multi-recipient deliveries.
-     */
-    if ((smtp_cli_attr.flags & SMTP_CLI_FLAG_ORIG_RCPT)
-	&& request->rcpt_list.len > 1) {
-	msg_warn("flag `O' requires %s_destination_recipient_limit = 1",
-		 service);
-	return (reject_deliver_request(service, request, "4.3.5",
-				       "mail system configuration error"));
-    }
 
     /*
      * Initialize. Bundle all information about the delivery request, so that
@@ -1238,11 +1015,16 @@ static int deliver_message(const char *service, DELIVER_REQUEST *request)
 
 /* smtp_service - perform service for client */
 
-static void smtp_service(VSTREAM *client_stream, char *service,
-			         char **unused_argv)
+static void smtp_service(VSTREAM *client_stream, char *service, char **argv)
 {
     DELIVER_REQUEST *request;
     int     status;
+
+    /*
+     * Sanity check. This service takes no command-line arguments.
+     */
+    if (argv[0])
+	msg_fatal("unexpected command-line argument: %s", argv[0]);
 
     /*
      * This routine runs whenever a client connects to the UNIX-domain socket
@@ -1260,7 +1042,7 @@ static void smtp_service(VSTREAM *client_stream, char *service,
 
 /* post_init - post-jail initialization */
 
-static void post_init(char *unused_name, char **argv)
+static void post_init(char *unused_name, char **unused_argv)
 {
     static const NAME_MASK lookup_masks[] = {
 	SMTP_HOST_LOOKUP_DNS, SMTP_HOST_FLAG_DNS,
@@ -1347,12 +1129,6 @@ static void post_init(char *unused_name, char **argv)
      * Address verification.
      */
     smtp_vrfy_init();
-
-    /*
-     * Look up service command-line attributes; these do not change during
-     * the process lifetime.
-     */
-    get_cli_attr(&smtp_cli_attr, argv);
 }
 
 /* pre_init - pre-jail initialization */
@@ -1416,17 +1192,12 @@ static void pre_init(char *unused_name, char **unused_argv)
 #ifdef USE_TLS
 	TLS_CLIENT_INIT_PROPS props;
 
-	tls_pre_jail_init(TLS_ROLE_CLIENT);
-
 	/*
 	 * We get stronger type safety and a cleaner interface by combining
 	 * the various parameters into a single tls_client_props structure.
 	 * 
 	 * Large parameter lists are error-prone, so we emulate a language
 	 * feature that C does not have natively: named parameter lists.
-	 * 
-	 * With tlsproxy(8) turned on, this is still needed for DANE-related
-	 * initializations.
 	 */
 	smtp_tls_ctx =
 	    TLS_CLIENT_INIT(&props,
@@ -1434,7 +1205,6 @@ static void pre_init(char *unused_name, char **unused_argv)
 			    log_level = var_smtp_tls_loglevel,
 			    verifydepth = var_smtp_tls_scert_vd,
 			    cache_type = LMTP_SMTP_SUFFIX(TLS_MGR_SCACHE),
-			    chain_files = var_smtp_tls_chain_files,
 			    cert_file = var_smtp_tls_cert_file,
 			    key_file = var_smtp_tls_key_file,
 			    dcert_file = var_smtp_tls_dcert_file,
@@ -1571,7 +1341,6 @@ int     main(int argc, char **argv)
     else if (strcmp(sane_procname, "lmtp") == 0)
 	smtp_mode = 0;
     else
-	/* TODO: logging is not initialized. */
 	msg_fatal("unexpected process name \"%s\" - "
 		  "specify \"smtp\" or \"lmtp\"", var_procname);
 

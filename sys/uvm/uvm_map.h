@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.79 2020/03/14 14:15:43 ad Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.78 2020/02/23 15:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -125,39 +125,35 @@
  * a VM object (or sharing map) and offset into that object,
  * and user-exported inheritance and protection information.
  * Also included is control information for virtual copy operations.
- *
- * At runtime this is aligned on a cacheline boundary, with fields
- * used during fault processing to do RB tree lookup clustered at
- * the beginning.
  */
 struct vm_map_entry {
 	struct rb_node		rb_node;	/* tree information */
-	vaddr_t			start;		/* start address */
-	vaddr_t			end;		/* end address */
 	vsize_t			gap;		/* free space after */
 	vsize_t			maxgap;		/* space in subtree */
 	struct vm_map_entry	*prev;		/* previous entry */
 	struct vm_map_entry	*next;		/* next entry */
+	vaddr_t			start;		/* start address */
+	vaddr_t			end;		/* end address */
 	union {
 		struct uvm_object *uvm_obj;	/* uvm object */
 		struct vm_map	*sub_map;	/* belongs to another map */
 	} object;				/* object I point to */
 	voff_t			offset;		/* offset into object */
-	uint8_t			etype;		/* entry type */
-	uint8_t			flags;		/* flags */
-	uint8_t			advice;		/* madvise advice */
-	uint8_t			unused;		/* unused */
+	int			etype;		/* entry type */
 	vm_prot_t		protection;	/* protection code */
 	vm_prot_t		max_protection;	/* maximum protection */
 	vm_inherit_t		inheritance;	/* inheritance */
 	int			wired_count;	/* can be paged if == 0 */
 	struct vm_aref		aref;		/* anonymous overlay */
-};
+	int			advice;		/* madvise advice */
+#define uvm_map_entry_stop_copy flags
+	u_int8_t		flags;		/* flags */
 
-/* flags */
 #define	UVM_MAP_KERNEL		0x01		/* kernel map entry */
 #define	UVM_MAP_STATIC		0x04		/* special static entries */
 #define	UVM_MAP_NOMERGE		0x08		/* this entry is not mergable */
+
+};
 
 #define	VM_MAPENT_ISWIRED(entry)	((entry)->wired_count != 0)
 

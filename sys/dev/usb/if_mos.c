@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.6 2020/03/31 23:26:32 nisimura Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.4 2020/01/29 06:26:32 thorpej Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.6 2020/03/31 23:26:32 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.4 2020/01/29 06:26:32 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -142,16 +142,16 @@ static void mos_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(mos, sizeof(struct usbnet),
 	mos_match, mos_attach, usbnet_detach, usbnet_activate);
 
-static void mos_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
-static unsigned mos_uno_tx_prepare(struct usbnet *, struct mbuf *,
-				   struct usbnet_chain *);
-static int mos_uno_ioctl(struct ifnet *, u_long, void *);
-static int mos_uno_init(struct ifnet *);
+static void mos_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
+static unsigned mos_tx_prepare(struct usbnet *, struct mbuf *,
+			       struct usbnet_chain *);
+static int mos_ioctl(struct ifnet *, u_long, void *);
+static int mos_init(struct ifnet *);
 static void mos_chip_init(struct usbnet *);
-static void mos_uno_stop(struct ifnet *ifp, int disable);
-static int mos_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
-static int mos_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
-static void mos_uno_mii_statchg(struct ifnet *);
+static void mos_stop(struct ifnet *ifp, int disable);
+static int mos_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static int mos_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static void mos_mii_statchg(struct ifnet *);
 static void mos_reset(struct usbnet *);
 
 static int mos_reg_read_1(struct usbnet *, int);
@@ -163,14 +163,14 @@ static int mos_writemac(struct usbnet *);
 static int mos_write_mcast(struct usbnet *, uint8_t *);
 
 static const struct usbnet_ops mos_ops = {
-	.uno_stop = mos_uno_stop,
-	.uno_ioctl = mos_uno_ioctl,
-	.uno_read_reg = mos_uno_mii_read_reg,
-	.uno_write_reg = mos_uno_mii_write_reg,
-	.uno_statchg = mos_uno_mii_statchg,
-	.uno_tx_prepare = mos_uno_tx_prepare,
-	.uno_rx_loop = mos_uno_rx_loop,
-	.uno_init = mos_uno_init,
+	.uno_stop = mos_stop,
+	.uno_ioctl = mos_ioctl,
+	.uno_read_reg = mos_mii_read_reg,
+	.uno_write_reg = mos_mii_write_reg,
+	.uno_statchg = mos_mii_statchg,
+	.uno_tx_prepare = mos_tx_prepare,
+	.uno_rx_loop = mos_rx_loop,
+	.uno_init = mos_init,
 };
 
 static int
@@ -353,7 +353,7 @@ mos_write_mcast(struct usbnet *un, uint8_t *hashtbl)
 }
 
 static int
-mos_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
+mos_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	int			i, res;
 
@@ -382,7 +382,7 @@ mos_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 }
 
 static int
-mos_uno_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
+mos_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	int			i;
 
@@ -408,7 +408,7 @@ mos_uno_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 }
 
 void
-mos_uno_mii_statchg(struct ifnet *ifp)
+mos_mii_statchg(struct ifnet *ifp)
 {
 	struct usbnet * const		un = ifp->if_softc;
 	struct mii_data * const		mii = usbnet_mii(un);
@@ -418,6 +418,8 @@ mos_uno_mii_statchg(struct ifnet *ifp)
 		return;
 
 	DPRINTFN(10,("%s: %s: enter\n", device_xname(un->un_dev), __func__));
+
+	usbnet_lock_mii(un);
 
 	/* disable RX, TX prior to changing FDX, SPEEDSEL */
 	val = mos_reg_read_1(un, MOS_CTL);
@@ -448,20 +450,21 @@ mos_uno_mii_statchg(struct ifnet *ifp)
 	/* re-enable TX, RX */
 	val |= (MOS_CTL_TX_ENB | MOS_CTL_RX_ENB);
 	err = mos_reg_write_1(un, MOS_CTL, val);
+	usbnet_unlock_mii(un);
 
 	if (err)
 		aprint_error_dev(un->un_dev, "media change failed\n");
 }
 
 static void
-mos_rcvfilt_locked(struct usbnet *un)
+mos_setiff_locked(struct usbnet *un)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 	struct ethercom		*ec = usbnet_ec(un);
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-	u_int32_t h = 0;
-	u_int8_t rxmode, mchash[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	u_int32_t		h = 0;
+	u_int8_t		rxmode, hashtbl[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	if (usbnet_isdying(un))
 		return;
@@ -471,40 +474,49 @@ mos_rcvfilt_locked(struct usbnet *un)
 
 	ETHER_LOCK(ec);
 	if (ifp->if_flags & IFF_PROMISC) {
+allmulti:
 		ec->ec_flags |= ETHER_F_ALLMULTI;
-		ETHER_UNLOCK(ec);
-		/* run promisc. mode */
-		rxmode |= MOS_CTL_ALLMULTI; /* ??? */
-		rxmode |= MOS_CTL_RX_PROMISC;
-		goto update;
-	}
-	ec->ec_flags &= ~ETHER_F_ALLMULTI;
-	ETHER_FIRST_MULTI(step, ec, enm);
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ec->ec_flags |= ETHER_F_ALLMULTI;
-			ETHER_UNLOCK(ec);
-			memset(mchash, 0, sizeof(mchash)); /* correct ??? */
-			/* accept all mulicast frame */
-			rxmode |= MOS_CTL_ALLMULTI;
-			goto update;
+		rxmode |= MOS_CTL_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			rxmode |= MOS_CTL_RX_PROMISC;
+	} else {
+		/* now program new ones */
+		ec->ec_flags &= ~ETHER_F_ALLMULTI;
+
+		ETHER_FIRST_MULTI(step, ec, enm);
+		while (enm != NULL) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
+				memset(hashtbl, 0, sizeof(hashtbl));
+				goto allmulti;
+			}
+			h = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26;
+			hashtbl[h / 8] |= 1 << (h % 8);
+
+			ETHER_NEXT_MULTI(step, enm);
 		}
-		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-		/* 3(31:29) and 3(28:26) sampling to have uint8_t[8] */
-		mchash[h >> 29] |= 1 << ((h >> 26) % 8);
-		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
-	/* MOS receive filter is always on */
- update:
+
 	/* 
 	 * The datasheet claims broadcast frames were always accepted
 	 * regardless of filter settings. But the hardware seems to
 	 * filter broadcast frames, so pass them explicitly.
 	 */
-	mchash[7] |= 0x80;
-	mos_write_mcast(un, mchash);
+	h = ether_crc32_be(etherbroadcastaddr, ETHER_ADDR_LEN) >> 26;
+	hashtbl[h / 8] |= 1 << (h % 8);
+
+	mos_write_mcast(un, hashtbl);
 	mos_reg_write_1(un, MOS_CTL, rxmode);
+}
+
+static void
+mos_setiff(struct usbnet *un)
+{
+	usbnet_lock_mii(un);
+	mos_setiff_locked(un);
+	usbnet_unlock_mii(un);
 }
 
 static void
@@ -657,7 +669,7 @@ mos_attach(device_t parent, device_t self, void *aux)
  * the higher level protocols.
  */
 void
-mos_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
+mos_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 	uint8_t			*buf = c->unc_buf;
@@ -702,9 +714,11 @@ mos_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 }
 
 static unsigned
-mos_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+mos_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	int			length;
+
+	usbnet_isowned_tx(un);
 
 	if ((unsigned)m->m_pkthdr.len > un->un_tx_bufsz)
 		return 0;
@@ -731,6 +745,8 @@ mos_init_locked(struct ifnet *ifp)
 	/* Cancel pending I/O */
 	usbnet_stop(un, ifp, 1);
 
+	usbnet_lock_mii_un_locked(un);
+
 	/* Reset the ethernet interface. */
 	mos_reset(un);
 
@@ -744,7 +760,7 @@ mos_init_locked(struct ifnet *ifp)
 	mos_reg_write_1(un, MOS_IPG1, ipgs[1]);
 
 	/* Program promiscuous mode and multicast filters. */
-	mos_rcvfilt_locked(un);
+	mos_setiff_locked(un);
 
 	/* Enable receiver and transmitter, bridge controls speed/duplex mode */
 	rxmode = mos_reg_read_1(un, MOS_CTL);
@@ -752,50 +768,46 @@ mos_init_locked(struct ifnet *ifp)
 	rxmode &= ~(MOS_CTL_SLEEP);
 	mos_reg_write_1(un, MOS_CTL, rxmode);
 
+	usbnet_unlock_mii_un_locked(un);
+
 	return usbnet_init_rx_tx(un);
 }
 
 static int
-mos_uno_init(struct ifnet *ifp)
+mos_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
-	usbnet_lock_core(un);
-	usbnet_busy(un);
+	usbnet_lock(un);
 	int ret = mos_init_locked(ifp);
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
+	usbnet_unlock(un);
 
 	return ret;
 }
 
 static int
-mos_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+mos_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct usbnet * const un = ifp->if_softc;
-
-	usbnet_lock_core(un);
-	usbnet_busy(un);
 
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		mos_rcvfilt_locked(un);
+		mos_setiff(un);
 		break;
 	default:
 		break;
 	}
 
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
-
 	return 0;
 }
 
 void
-mos_uno_stop(struct ifnet *ifp, int disable)
+mos_stop(struct ifnet *ifp, int disable)
 {
 	struct usbnet * const un = ifp->if_softc;
 
+	usbnet_lock_mii_un_locked(un);
 	mos_reset(un);
+	usbnet_unlock_mii_un_locked(un);
 }

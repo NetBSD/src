@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.17 2020/03/30 08:24:36 ryo Exp $ */
+/*	$NetBSD: pidlock.c,v 1.16 2012/04/07 16:17:17 christos Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@NetBSD.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.17 2020/03/30 08:24:36 ryo Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.16 2012/04/07 16:17:17 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -66,12 +66,6 @@ pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 	if (gethostname(hostname, sizeof(hostname)))
 		return -1;
 	hostname[sizeof(hostname) - 1] = '\0';
-
-	/* avoid '/' in hostname, as it may contain arbitrary characters */
-	for (p = hostname; *p != '\0'; p++) {
-		if (*p == '/')
-			*p = '_';
-	}
 
 	/*
 	 * Build a path to the temporary file.

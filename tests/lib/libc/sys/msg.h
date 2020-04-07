@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.3 2020/03/06 14:06:56 kamil Exp $	*/
+/*	$NetBSD: msg.h,v 1.2 2018/03/13 14:45:36 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ struct msg_fds {
 	} \
 } while (/*CONSTCOND*/ 0)
 
-static int __used
+static int
 msg_open(struct msg_fds *fds)
 {
 	if (pipe(fds->pfd) == -1)
@@ -54,7 +54,7 @@ msg_open(struct msg_fds *fds)
 	return 0;
 }
 
-static void __used
+static void
 msg_close(struct msg_fds *fds)
 {
 	CLOSEFD(fds->pfd[0]);
@@ -63,7 +63,7 @@ msg_close(struct msg_fds *fds)
 	CLOSEFD(fds->cfd[1]);
 }
 
-static int __used
+static int
 msg_write_child(const char *info, struct msg_fds *fds, void *msg, size_t len)
 {
 	ssize_t rv;
@@ -81,7 +81,7 @@ msg_write_child(const char *info, struct msg_fds *fds, void *msg, size_t len)
 	return 0;
 }
 
-static int __used
+static int
 msg_write_parent(const char *info, struct msg_fds *fds, void *msg, size_t len)
 {
 	ssize_t rv;
@@ -99,7 +99,7 @@ msg_write_parent(const char *info, struct msg_fds *fds, void *msg, size_t len)
 	return 0;
 }
 
-static int __used
+static int
 msg_read_parent(const char *info, struct msg_fds *fds, void *msg, size_t len)
 {
 	ssize_t rv;
@@ -117,7 +117,7 @@ msg_read_parent(const char *info, struct msg_fds *fds, void *msg, size_t len)
 	return 0;
 }
 
-static int __used
+static int
 msg_read_child(const char *info, struct msg_fds *fds, void *msg, size_t len)
 {
 	ssize_t rv;
@@ -134,19 +134,3 @@ msg_read_child(const char *info, struct msg_fds *fds, void *msg, size_t len)
 		return 1;
 	return 0;
 }
-
-#define PARENT_TO_CHILD(info, fds, msg) \
-    SYSCALL_REQUIRE(msg_write_child(info " to child " # fds, &fds, &msg, \
-	sizeof(msg)) == 0)
-
-#define CHILD_FROM_PARENT(info, fds, msg) \
-    FORKEE_ASSERT(msg_read_parent(info " from parent " # fds, &fds, &msg, \
-	sizeof(msg)) == 0)
-
-#define CHILD_TO_PARENT(info, fds, msg) \
-    FORKEE_ASSERT(msg_write_parent(info " to parent " # fds, &fds, &msg, \
-	sizeof(msg)) == 0)
-
-#define PARENT_FROM_CHILD(info, fds, msg) \
-    SYSCALL_REQUIRE(msg_read_child(info " from parent " # fds, &fds, &msg, \
-	sizeof(msg)) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.46 2020/03/15 22:19:00 thorpej Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.45 2020/01/29 14:14:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.46 2020/03/15 22:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.45 2020/01/29 14:14:55 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -287,7 +287,7 @@ sonic_start(struct ifnet *ifp)
 	int error, olasttx, nexttx, opending, totlen, olseg;
 	int seg = 0;	/* XXX: gcc */
 
-	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -471,6 +471,11 @@ sonic_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
+	if (sc->sc_txpending == (SONIC_NTXDESC - 1)) {
+		/* No more slots left; notify upper layer. */
+		ifp->if_flags |= IFF_OACTIVE;
+	}
+
 	if (sc->sc_txpending != opending) {
 		/*
 		 * We enqueued packets.  If the transmitter was idle,
@@ -628,6 +633,8 @@ sonic_txintr(struct sonic_softc *sc)
 	struct sonic_tda16 *tda16;
 	uint16_t status, totstat = 0;
 	int i;
+
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	for (i = sc->sc_txdirty; sc->sc_txpending != 0;
 	     i = SONIC_NEXTTX(i), sc->sc_txpending--) {
@@ -1010,6 +1017,7 @@ sonic_init(struct ifnet *ifp)
 	 * ...all done!
 	 */
 	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
 	if (error)
@@ -1082,7 +1090,7 @@ sonic_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~IFF_RUNNING;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
 	if (disable)

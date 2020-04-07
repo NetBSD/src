@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.179 2020/03/27 21:05:03 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.178 2020/02/10 22:13:50 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.179 2020/03/27 21:05:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.178 2020/02/10 22:13:50 skrll Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1301,6 +1301,17 @@ ENTRY(cpu_switchto)
 	pushl	%esi
 	pushl	%edi
 
+#if defined(DIAGNOSTIC) && !defined(XENPV)
+	cmpl	$IPL_SCHED,CPUVAR(ILEVEL)
+	jbe	0f
+	pushl	CPUVAR(ILEVEL)
+	pushl	$.Lstr
+	call	_C_LABEL(panic)
+	addl	$8,%esp
+.Lstr:	.string	"cpu_switchto: switching above IPL_SCHED (%d)\0"
+0:
+#endif
+
 	movl	16(%esp),%esi		/* oldlwp */
 	movl	20(%esp),%edi		/* newlwp */
 	movl	24(%esp),%edx		/* returning */
@@ -1397,6 +1408,10 @@ no_RAS:
 	pushl	%edi
 	call	_C_LABEL(i386_tls_switch)
 	addl	$4,%esp
+#else
+	/* Raise the IPL to IPL_HIGH. Dropping the priority is deferred until
+	 * mi_switch(), when cpu_switchto() returns. XXX Still needed? */
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 #endif
 
 switch_return:

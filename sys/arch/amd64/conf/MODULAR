@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.15 2020/03/25 17:06:18 jdolecek Exp $
+# $NetBSD: MODULAR,v 1.14 2020/01/19 01:25:04 thorpej Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -75,6 +75,7 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no file-system PROCFS		# /proc
 -no file-system PTYFS		# /dev/ptm support
 -no file-system PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+-no file-system SMBFS		# experimental - CIFS; also needs nsmb (below)
 -no file-system TMPFS		# Efficient memory file-system
 -no file-system UDF		# experimental - OSTA UDF CD/DVD file-system
 -no file-system UMAPFS		# NULLFS + uid and gid remapping
@@ -153,6 +154,9 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no pseudo-device	clockctl		# user control of clock subsystem
 -no pseudo-device	vcoda			# coda minicache <-> venus comm.
 -no pseudo-device	autofs			# experimental - AUTOFS
+
+# a pseudo device needed for SMBFS
+-no pseudo-device	nsmb			# experimental - SMB requester
 
 # pseudo audio device driver
 -no pseudo-device	pad

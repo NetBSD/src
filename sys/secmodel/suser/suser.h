@@ -1,4 +1,4 @@
-/* $NetBSD: suser.h,v 1.3 2020/03/16 21:20:12 pgoyette Exp $ */
+/* $NetBSD: suser.h,v 1.2 2011/12/04 19:25:01 jym Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,6 +35,8 @@
 void secmodel_suser_init(void);
 void secmodel_suser_start(void);
 void secmodel_suser_stop(void);
+
+void sysctl_security_suser_setup(struct sysctllog **);
 
 int secmodel_suser_generic_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);

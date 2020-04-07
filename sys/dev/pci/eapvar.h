@@ -1,4 +1,4 @@
-/* $NetBSD: eapvar.h,v 1.6 2020/03/05 15:18:55 riastradh Exp $ */
+/* $NetBSD: eapvar.h,v 1.4 2011/11/23 23:07:35 jmcneill Exp $ */
 
 #include <dev/pci/pcivar.h>
 

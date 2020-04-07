@@ -99,7 +99,7 @@
 #define HAVE_ENOSTR 1
 
 /* Define if ENOTRECOVERABLE exists. */
-#define HAVE_ENOTRECOVERABLE 1
+/* #undef HAVE_ENOTRECOVERABLE */
 
 /* Define if ENOTSUP exists. */
 #define HAVE_ENOTSUP 1
@@ -108,7 +108,7 @@
 #define HAVE_EOVERFLOW 1
 
 /* Define if EOWNERDEAD exists. */
-#define HAVE_EOWNERDEAD 1
+/* #undef HAVE_EOWNERDEAD */
 
 /* Define if EPERM exists. */
 #define HAVE_EPERM 1
@@ -186,7 +186,7 @@
 #define HAVE_FREXPF 1
 
 /* Define to 1 if you have the `frexpl' function. */
-#define HAVE_FREXPL 1
+/* #undef HAVE_FREXPL */
 
 /* Define if _Unwind_GetIPInfo is available. */
 #define HAVE_GETIPINFO 1
@@ -481,7 +481,7 @@
 #define HAVE_TANL 1
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-#define HAVE_TGMATH_H 1
+/* #undef HAVE_TGMATH_H */
 
 /* Define to 1 if the target supports thread-local storage. */
 #define HAVE_TLS 1
@@ -766,9 +766,6 @@
 /* Version number of package */
 /* #undef VERSION */
 
-/* Number of bits in a file offset, on hosts where this is settable. */
-/* #undef _FILE_OFFSET_BITS */
-
 /* Define if C99 functions in <complex.h> should be used in <complex> for
    C++11. Using compiler builtins for these functions requires corresponding
    C99 library functions to be present. */
@@ -996,9 +993,6 @@
 
 /* Define to 1 if mutex_timedlock is available. */
 #define _GTHREAD_USE_MUTEX_TIMEDLOCK 0
-
-/* Define for large files, on AIX-style hosts. */
-/* #undef _LARGE_FILES */
 
 /* Define if all C++11 floating point overloads are available in <math.h>.  */
 #if __cplusplus >= 201103L

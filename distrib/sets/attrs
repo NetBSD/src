@@ -17,3 +17,4 @@ etc-sys-root	preserve
 etc-sysutil-etc	preserve
 etc-sysutil-log	preserve
 etc-sysutil-rc	preserve
+modules-base-kernel	preserve

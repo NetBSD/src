@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.20 2020/03/20 13:33:23 thorpej Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.19 2017/02/02 10:05:35 nonaka Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -147,8 +147,6 @@ struct iwi_softc {
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
 	void			*sc_soft_ih;
-
-	kmutex_t		sc_media_mtx;	/* XXX */
 
 	struct sysctllog	*sc_sysctllog;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.37 2020/03/17 17:18:49 maxv Exp $	*/
+/*	$NetBSD: param.h,v 1.36 2020/02/08 07:07:07 maxv Exp $	*/
 
 #ifdef __x86_64__
 
@@ -69,8 +69,10 @@
 
 #if defined(KASAN) || defined(KMSAN)
 #define	UPAGES		8
-#else
+#elif defined(DIAGNOSTIC)
 #define	UPAGES		5		/* pages of u-area (1 for redzone) */
+#else
+#define	UPAGES		4		/* pages of u-area */
 #endif
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 

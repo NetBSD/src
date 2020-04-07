@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -529,16 +529,19 @@ AcpiDbGetNextToken (
         return (NULL);
     }
 
-    /* Remove any spaces at the beginning, ignore blank lines */
+    /* Remove any spaces at the beginning */
 
-    while (*String && isspace (*String))
+    if (*String == ' ')
     {
-        String++;
-    }
+        while (*String && (*String == ' '))
+        {
+            String++;
+        }
 
-    if (!(*String))
-    {
-        return (NULL);
+        if (!(*String))
+        {
+            return (NULL);
+        }
     }
 
     switch (*String)
@@ -643,7 +646,7 @@ AcpiDbGetNextToken (
 
         /* Find end of token */
 
-        while (*String && !isspace (*String))
+        while (*String && (*String != ' '))
         {
             String++;
         }

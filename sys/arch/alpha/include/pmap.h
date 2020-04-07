@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.81 2020/03/14 14:05:42 ad Exp $ */
+/* $NetBSD: pmap.h,v 1.80 2018/05/19 20:04:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -214,11 +214,10 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 #define	pmap_update(pmap)		/* nothing (yet) */
 
-static __inline bool
+static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
-	return false;
 }
 
 #define	pmap_is_referenced(pg)						\

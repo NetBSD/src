@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.15 2020/03/21 13:39:31 reinoud Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.14 2015/03/29 14:12:28 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.15 2020/03/21 13:39:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.14 2015/03/29 14:12:28 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -230,7 +230,6 @@ nilfs_btree_lookup_level(struct nilfs_node *node, uint64_t lblocknr,
 	dptrs = dkeys + NILFS_BTREE_NODE_NCHILDREN_MAX(nilfsdev->blocksize);
 
 	assert((btree_hdr->bn_flags & NILFS_BTREE_NODE_ROOT) == 0);
-	assert((btree_hdr->bn_level == level));
 
 	/* select matching child XXX could use binary search */
 	selected = 0;
@@ -254,7 +253,7 @@ nilfs_btree_lookup_level(struct nilfs_node *node, uint64_t lblocknr,
 	brelse(bp, BC_AGE);
 
 	return nilfs_btree_lookup_level(node, lblocknr,
-			child_btree_blk, level-1, vblocknr);
+			child_btree_blk, btree_hdr->bn_level-1, vblocknr);
 }
 
 
@@ -687,10 +686,9 @@ nilfs_get_node_raw(struct nilfs_device *nilfsdev, struct nilfs_mount *ump,
 
 	/* fixup inode size for system nodes */
 	if ((ino < NILFS_USER_INO) && (ino != NILFS_ROOT_INO)) {
-		DPRINTF(VOLUMES, ("NEED TO GET my size for inode %"PRIu64"?\n",
+		DPRINTF(VOLUMES, ("NEED TO GET my size for inode %"PRIu64"\n",
 			ino));
 		/* for now set it to maximum, -1 is illegal */
-		DPRINTF(VOLUMES, ("  current size of inode is %"PRIu64"\n", inode->i_size));
 		inode->i_size = nilfs_rw64(((uint64_t) -2));
 	}
 

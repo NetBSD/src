@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.81 2020/03/16 21:20:10 pgoyette Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.80 2020/01/17 20:08:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.81 2020/03/16 21:20:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.80 2020/01/17 20:08:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.81 2020/03/16 21:20:10 pgoyette E
 #include <fs/union/union.h>
 
 MODULE(MODULE_CLASS_VFS, union, NULL);
+
+static struct sysctllog *union_sysctl_log;
 
 /*
  * Mount union filesystem
@@ -543,22 +545,6 @@ struct vfsops union_vfsops = {
 	.vfs_opv_descs = union_vnodeopv_descs
 };
 
-SYSCTL_SETUP(unionfs_sysctl_setup, "unionfs sysctl")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "union",
-		       SYSCTL_DESCR("Union file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 15, CTL_EOL);
-	/*
-	 * XXX the "15" above could be dynamic, thereby eliminating
-	 * one more instance of the "number to vfs" mapping problem,
-	 * but "15" is the order as taken from sys/mount.h
-	 */
-}
-
 static int
 union_modcmd(modcmd_t cmd, void *arg)
 {
@@ -569,11 +555,23 @@ union_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&union_vfsops);
 		if (error != 0)
 			break;
+		sysctl_createv(&union_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "union",
+			       SYSCTL_DESCR("Union file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 15, CTL_EOL);
+		/*
+		 * XXX the "15" above could be dynamic, thereby eliminating
+		 * one more instance of the "number to vfs" mapping problem,
+		 * but "15" is the order as taken from sys/mount.h
+		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&union_vfsops);
 		if (error != 0)
 			break;
+		sysctl_teardown(&union_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

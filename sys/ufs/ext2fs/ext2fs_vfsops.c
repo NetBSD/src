@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.217 2020/03/16 21:20:12 pgoyette Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.216 2020/02/27 22:12:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.217 2020/03/16 21:20:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.216 2020/02/27 22:12:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,6 +104,8 @@ MODULE(MODULE_CLASS_VFS, ext2fs, "ufs");
 
 int ext2fs_sbupdate(struct ufsmount *, int);
 static int ext2fs_sbfill(struct m_ext2fs *, int);
+
+static struct sysctllog *ext2fs_sysctl_log;
 
 extern const struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc ext2fs_specop_opv_desc;
@@ -172,22 +174,6 @@ ext2fs_set_inode_guid(struct inode *ip)
 	}
 }
 
-SYSCTL_SETUP(ext2fs_sysctl_setup, "ext2fs sysctl")
-{
-
-		sysctl_createv(clog, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "ext2fs",
-			       SYSCTL_DESCR("Linux EXT2FS file system"),
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, 17, CTL_EOL);
-		/*
-		 * XXX the "17" above could be dynamic, thereby eliminating
-		 * one more instance of the "number to vfs" mapping problem,
-		 * but "17" is the order as taken from sys/mount.h
-		 */
-}
-
 static int
 ext2fs_modcmd(modcmd_t cmd, void *arg)
 {
@@ -198,11 +184,23 @@ ext2fs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&ext2fs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_createv(&ext2fs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "ext2fs",
+			       SYSCTL_DESCR("Linux EXT2FS file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 17, CTL_EOL);
+		/*
+		 * XXX the "17" above could be dynamic, thereby eliminating
+		 * one more instance of the "number to vfs" mapping problem,
+		 * but "17" is the order as taken from sys/mount.h
+		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&ext2fs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_teardown(&ext2fs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

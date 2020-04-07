@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.108 2020/03/12 03:01:46 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.107 2020/02/07 00:56:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.108 2020/03/12 03:01:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.107 2020/02/07 00:56:48 thorpej Exp $");
 
 /* #define HMEDEBUG */
 
@@ -695,7 +695,6 @@ hme_get(struct hme_softc *sc, int ri, uint32_t flags)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
-	MCLAIM(m0, &sc->sc_ethercom.ec_rx_mowner);
 	m_set_rcvif(m0, ifp);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;

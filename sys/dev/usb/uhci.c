@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.299 2020/03/15 15:00:14 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.294 2020/02/21 12:41:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.299 2020/03/15 15:00:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.294 2020/02/21 12:41:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -460,10 +460,8 @@ uhci_init(uhci_softc_t *sc)
 	if (err)
 		return err;
 	sc->sc_pframes = KERNADDR(&sc->sc_dma, 0);
-	/* set frame number to 0 */
-	UWRITE2(sc, UHCI_FRNUM, 0);
-	/* set frame list */
-	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma, 0));
+	UWRITE2(sc, UHCI_FRNUM, 0);		/* set frame number to 0 */
+	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma, 0)); /* set frame list*/
 
 	/* Initialise mutex early for uhci_alloc_* */
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
@@ -1717,7 +1715,7 @@ uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 		upipe->nexttoggle = UHCI_TD_GET_DT(le32toh(std->td.td_token));
 
 	status &= UHCI_TD_ERROR;
-	DPRINTFN(10, "actlen=%jd, status=%#jx", actlen, status, 0, 0);
+	DPRINTFN(10, "actlen=%jd, status=0x%jx", actlen, status, 0, 0);
 	xfer->ux_actlen = actlen;
 	if (status != 0) {
 
@@ -1808,7 +1806,7 @@ uhci_run(uhci_softc_t *sc, int run, int locked)
 		if (run == running) {
 			if (!locked)
 				mutex_spin_exit(&sc->sc_intr_lock);
-			DPRINTF("done cmd=%#jx sts=%#jx",
+			DPRINTF("done cmd=0x%jx sts=0x%jx",
 			    UREAD2(sc, UHCI_CMD), UREAD2(sc, UHCI_STS), 0, 0);
 			return USBD_NORMAL_COMPLETION;
 		}
@@ -2008,7 +2006,7 @@ uhci_alloc_std_chain(uhci_softc_t *sc, struct usbd_xfer *xfer, int len,
 		printf("%s: maxp=0\n", __func__);
 		return EINVAL;
 	}
-	size_t ntd = howmany(len, maxp);
+	size_t ntd = (len + maxp - 1) / maxp;
 	if (!rd && (flags & USBD_FORCE_SHORT_XFER)) {
 		ntd++;
 	}
@@ -3385,7 +3383,7 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 
 	if (ival > UHCI_VFRAMELIST_COUNT)
 		ival = UHCI_VFRAMELIST_COUNT;
-	npoll = howmany(UHCI_VFRAMELIST_COUNT, ival);
+	npoll = (UHCI_VFRAMELIST_COUNT + ival - 1) / ival;
 	DPRINTF("ival=%jd npoll=%jd", ival, npoll, 0, 0);
 
 	upipe->intr.npoll = npoll;

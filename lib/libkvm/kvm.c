@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.105 2020/03/08 00:06:42 chs Exp $	*/
+/*	$NetBSD: kvm.c,v 1.104 2018/11/05 00:43:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.105 2020/03/08 00:06:42 chs Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.104 2018/11/05 00:43:30 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -352,12 +352,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 			/* swap is not configured?  not fatal */
 		}
 	} else {
-		if (S_ISCHR(st.st_mode)) {
-			kd->fdalign = DEV_BSIZE;
-		} else {
-			kd->fdalign = 1;
-		}
-
+		kd->fdalign = DEV_BSIZE;	/* XXX */
 		/*
 		 * This is a crash dump.
 		 * Initialize the virtual address translation machinery.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.42 2020/03/14 18:08:40 ad Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.41 2017/06/10 05:29:36 maya Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.135 2015/07/11 11:04:48 mlelstv  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.42 2020/03/14 18:08:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.41 2017/06/10 05:29:36 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -292,8 +292,8 @@ ulfs_lookup(void *v)
 
 searchloop:
 	while (results->ulr_offset < endsearch) {
-		preempt_point();
-
+		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+			preempt();
 		/*
 		 * If necessary, get the next directory block.
 		 */

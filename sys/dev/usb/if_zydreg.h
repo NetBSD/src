@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.12 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.11 2020/01/15 08:20:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1181,8 +1181,6 @@ struct zyd_softc {
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 	struct zyd_rf			sc_rf;
-
-	kmutex_t			sc_media_mtx;	/* XXX */
 
 	struct usb_task			sc_task;
 	struct usbd_device *		sc_udev;

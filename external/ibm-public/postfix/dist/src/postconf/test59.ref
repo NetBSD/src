@@ -6,5 +6,3 @@ bar        inet  -       n       n       0       0       other
     -o {name2=value2a value2b}
     arg1a arg1b {arg2a arg2b} {arg3a arg3b}
 baz        unix  -       n       n       0       0       other
-./postconf: warning: ./master.cf: unused parameter: name1=value1
-./postconf: warning: ./master.cf: unused parameter: name2=value2a value2b

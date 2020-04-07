@@ -16,7 +16,7 @@
 #include <openssl/srp.h>
 #endif
 
-#include "../ssl/ssl_local.h"
+#include "../ssl/ssl_locl.h"
 #include "internal/sockets.h"
 #include "internal/nelem.h"
 #include "handshake_helper.h"

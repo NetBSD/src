@@ -1,8 +1,7 @@
-/*	$NetBSD: kern_turnstile.c,v 1.38 2020/03/26 22:43:19 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.36 2020/01/21 20:31:57 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020
- *     The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -61,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.38 2020/03/26 22:43:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.36 2020/01/21 20:31:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -398,8 +397,8 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 		 */
 		ts = l->l_ts;
 		KASSERT(TS_ALL_WAITERS(ts) == 0);
-		KASSERT(LIST_EMPTY(&ts->ts_sleepq[TS_READER_Q]) &&
-			LIST_EMPTY(&ts->ts_sleepq[TS_WRITER_Q]));
+		KASSERT(TAILQ_EMPTY(&ts->ts_sleepq[TS_READER_Q]) &&
+			TAILQ_EMPTY(&ts->ts_sleepq[TS_WRITER_Q]));
 		ts->ts_obj = obj;
 		ts->ts_inheritor = NULL;
 		LIST_INSERT_HEAD(tc, ts, ts_chain);
@@ -417,8 +416,8 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 
 		KASSERT(ts->ts_obj == obj);
 		KASSERT(TS_ALL_WAITERS(ts) != 0);
-		KASSERT(!LIST_EMPTY(&ts->ts_sleepq[TS_READER_Q]) ||
-			!LIST_EMPTY(&ts->ts_sleepq[TS_WRITER_Q]));
+		KASSERT(!TAILQ_EMPTY(&ts->ts_sleepq[TS_READER_Q]) ||
+			!TAILQ_EMPTY(&ts->ts_sleepq[TS_WRITER_Q]));
 	}
 
 	sq = &ts->ts_sleepq[q];
@@ -477,7 +476,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 
 	if (nl != NULL) {
 #if defined(DEBUG) || defined(LOCKDEBUG)
-		LIST_FOREACH(l, sq, l_sleepchain) {
+		TAILQ_FOREACH(l, sq, l_sleepchain) {
 			if (l == nl)
 				break;
 		}
@@ -487,7 +486,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 		turnstile_remove(ts, nl, q);
 	} else {
 		while (count-- > 0) {
-			l = LIST_FIRST(sq);
+			l = TAILQ_FIRST(sq);
 			KASSERT(l != NULL);
 			turnstile_remove(ts, l, q);
 		}
@@ -557,13 +556,13 @@ turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
 
 	(*pr)("Turnstile:\n");
 	(*pr)("=> %d waiting readers:", TS_WAITERS(ts, TS_READER_Q));
-	LIST_FOREACH(l, rsq, l_sleepchain) {
+	TAILQ_FOREACH(l, rsq, l_sleepchain) {
 		(*pr)(" %p", l);
 	}
 	(*pr)("\n");
 
 	(*pr)("=> %d waiting writers:", TS_WAITERS(ts, TS_WRITER_Q));
-	LIST_FOREACH(l, wsq, l_sleepchain) {
+	TAILQ_FOREACH(l, wsq, l_sleepchain) {
 		(*pr)(" %p", l);
 	}
 	(*pr)("\n");

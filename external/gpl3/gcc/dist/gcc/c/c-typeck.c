@@ -5538,14 +5538,10 @@ build_c_cast (location_t loc, tree type, tree expr)
 {
   tree value;
 
-  bool int_operands = EXPR_INT_CONST_OPERANDS (expr);
-
   if (TREE_CODE (expr) == EXCESS_PRECISION_EXPR)
     expr = TREE_OPERAND (expr, 0);
 
   value = expr;
-  if (int_operands)
-    value = remove_c_maybe_const_expr (value);
 
   if (type == error_mark_node || expr == error_mark_node)
     return error_mark_node;
@@ -5775,14 +5771,6 @@ build_c_cast (location_t loc, tree type, tree expr)
 	       || TREE_CODE (expr) == REAL_CST
 	       || TREE_CODE (expr) == COMPLEX_CST)))
       value = build1 (NOP_EXPR, type, value);
-
-  /* If the expression has integer operands and so can occur in an
-     unevaluated part of an integer constant expression, ensure the
-     return value reflects this.  */
-  if (int_operands
-      && INTEGRAL_TYPE_P (type)
-      && !EXPR_INT_CONST_OPERANDS (value))
-    value = note_integer_operands (value);
 
   protected_set_expr_location (value, loc);
   return value;
@@ -10540,14 +10528,11 @@ c_finish_if_stmt (location_t if_locus, tree cond, tree then_block,
    the beginning of the loop.  COND is the loop condition.  COND_IS_FIRST
    is false for DO loops.  INCR is the FOR increment expression.  BODY is
    the statement controlled by the loop.  BLAB is the break label.  CLAB is
-   the continue label.  Everything is allowed to be NULL.
-   COND_LOCUS is the location of the loop condition, INCR_LOCUS is the
-   location of the FOR increment expression.  */
+   the continue label.  Everything is allowed to be NULL.  */
 
 void
-c_finish_loop (location_t start_locus, location_t cond_locus, tree cond,
-	       location_t incr_locus, tree incr, tree body, tree blab,
-	       tree clab, bool cond_is_first)
+c_finish_loop (location_t start_locus, tree cond, tree incr, tree body,
+	       tree blab, tree clab, bool cond_is_first)
 {
   tree entry = NULL, exit = NULL, t;
 
@@ -10589,8 +10574,12 @@ c_finish_loop (location_t start_locus, location_t cond_locus, tree cond,
 	    }
 
 	  t = build_and_jump (&blab);
-	  exit = fold_build3_loc (cond_is_first ? start_locus : input_location,
-				  COND_EXPR, void_type_node, cond, exit, t);
+	  if (cond_is_first)
+	    exit = fold_build3_loc (start_locus,
+				COND_EXPR, void_type_node, cond, exit, t);
+	  else
+	    exit = fold_build3_loc (input_location,
+				COND_EXPR, void_type_node, cond, exit, t);
 	}
       else
 	{
@@ -10611,23 +10600,9 @@ c_finish_loop (location_t start_locus, location_t cond_locus, tree cond,
   if (clab)
     add_stmt (build1 (LABEL_EXPR, void_type_node, clab));
   if (incr)
-    {
-      if (MAY_HAVE_DEBUG_MARKER_STMTS && incr_locus != UNKNOWN_LOCATION)
-	{
-	  t = build0 (DEBUG_BEGIN_STMT, void_type_node);
-	  SET_EXPR_LOCATION (t, incr_locus);
-	  add_stmt (t);
-	}
-      add_stmt (incr);
-    }
+    add_stmt (incr);
   if (entry)
     add_stmt (entry);
-  if (MAY_HAVE_DEBUG_MARKER_STMTS && cond_locus != UNKNOWN_LOCATION)
-    {
-      t = build0 (DEBUG_BEGIN_STMT, void_type_node);
-      SET_EXPR_LOCATION (t, cond_locus);
-      add_stmt (t);
-    }
   if (exit)
     add_stmt (exit);
   if (blab)

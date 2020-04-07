@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.55 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.54 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.55 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.54 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -200,7 +200,7 @@ uvisor_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	DPRINTFN(20,("uvisor: vendor=%#x, product=%#x\n",
+	DPRINTFN(20,("uvisor: vendor=0x%x, product=0x%x\n",
 		     uaa->uaa_vendor, uaa->uaa_product));
 
 	return uvisor_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?

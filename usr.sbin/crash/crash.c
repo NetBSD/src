@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.13 2020/03/27 00:17:08 ad Exp $	*/
+/*	$NetBSD: crash.c,v 1.11 2017/01/10 20:57:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.13 2020/03/27 00:17:08 ad Exp $");
+__RCSID("$NetBSD: crash.c,v 1.11 2017/01/10 20:57:26 christos Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -73,23 +73,8 @@ static struct nlist nl[] = {
 	{ .n_name = "_osrelease" },
 #define	X_PANICSTR	1
 	{ .n_name = "_panicstr" },
-#ifdef LOCKDEBUG
-#define	X_LOCKDEBUG	2
-	{ .n_name = "ld_all" },
-#endif
 	{ .n_name = NULL },
 };
-
-#ifdef LOCKDEBUG
-struct lockdebug;
-TAILQ_HEAD(, lockdebug) ld_all;
-#else
-void lockdebug_lock_print(void);
-void lockdebug_lock_print(void) {
-	warnx("No lockdebug support compiled in");
-}
-#endif
-
 
 static void
 cleanup(void)
@@ -432,11 +417,6 @@ main(int argc, char **argv)
 		printf("WARNING: versions differ, you may not be able to "
 		    "examine this image.\n");
 	}
-#ifdef LOCKDEBUG
-	if ((size_t)kvm_read(kd, nl[X_LOCKDEBUG].n_value, &ld_all,
-	    sizeof(ld_all)) != sizeof(ld_all))
-		printf("Kernel compiled without options LOCKDEBUG.\n");
-#endif
 
 	/*
 	 * Print the panic string, if any.

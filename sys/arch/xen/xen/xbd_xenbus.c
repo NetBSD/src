@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.96 2020/03/13 00:32:05 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.95 2020/03/01 03:21:54 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.96 2020/03/13 00:32:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.95 2020/03/01 03:21:54 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -859,7 +859,7 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCCACHESYNC:
 		if (sc->sc_cache_flush <= 0) {
 			if (sc->sc_cache_flush == 0) {
-				aprint_verbose_dev(sc->sc_dksc.sc_dev,
+				aprint_error_dev(sc->sc_dksc.sc_dev,
 				    "WARNING: cache flush not supported "
 				    "by backend\n");
 				sc->sc_cache_flush = -1;

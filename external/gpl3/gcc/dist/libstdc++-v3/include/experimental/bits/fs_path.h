@@ -120,12 +120,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
       : decltype(__is_path_src(std::declval<_Source>(), 0))
       { };
 
-    template<typename _Tp1, typename _Tp2 = void,
-	     typename _Tp1_nocv = typename remove_cv<_Tp1>::type,
-	     typename _Tp1_noptr = typename remove_pointer<_Tp1>::type>
+    template<typename _Tp1, typename _Tp2 = void>
       using _Path = typename
-	std::enable_if<__and_<__not_<is_same<_Tp1_nocv, path>>,
-			      __not_<is_void<_Tp1_noptr>>,
+	std::enable_if<__and_<__not_<is_same<typename remove_cv<_Tp1>::type,
+					     path>>,
+			      __not_<is_void<_Tp1>>,
 			      __constructible_from<_Tp1, _Tp2>>::value,
 		       path>::type;
 
@@ -186,8 +185,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
     path(path&& __p) noexcept
     : _M_pathname(std::move(__p._M_pathname)), _M_type(__p._M_type)
     {
-      if (_M_type == _Type::_Multi)
-	_M_split_cmpts();
+      _M_split_cmpts();
       __p.clear();
     }
 
@@ -461,7 +459,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 	return _S_convert_loc(__tmp.data(), __tmp.data()+__tmp.size(), __loc);
       }
 
-    static bool _S_is_dir_sep(value_type __ch)
+    bool _S_is_dir_sep(value_type __ch)
     {
 #ifdef _GLIBCXX_FILESYSTEM_IS_WINDOWS
       return __ch == L'/' || __ch == preferred_separator;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.c,v 1.10 2020/03/29 19:49:26 christos Exp $	*/
+/*	$NetBSD: pcap.c,v 1.9 2019/10/01 16:02:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap.c,v 1.10 2020/03/29 19:49:26 christos Exp $");
+__RCSID("$NetBSD: pcap.c,v 1.9 2019/10/01 16:02:12 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -123,10 +123,6 @@ struct rtentry;		/* declarations in <net/if.h> */
 
 #ifdef PCAP_SUPPORT_DBUS
 #include "pcap-dbus.h"
-#endif
-
-#ifdef PCAP_SUPPORT_RPCAP
-#include "pcap-rpcap-unix.h"
 #endif
 
 #ifdef PCAP_SUPPORT_RDMASNIFF
@@ -557,9 +553,6 @@ static struct capture_source_type {
 #endif
 #ifdef PCAP_SUPPORT_RDMASNIFF
 	{ rdmasniff_findalldevs, rdmasniff_create },
-#endif
-#ifdef PCAP_SUPPORT_RPCAP
-	{ NULL, rpcap_create },
 #endif
 	{ NULL, NULL }
 };

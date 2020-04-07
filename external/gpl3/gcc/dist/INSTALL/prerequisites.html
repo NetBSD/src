@@ -193,9 +193,8 @@ and up works.
 <p>Necessary when regenerating <samp>Makefile</samp> dependencies in libiberty.
 Necessary when regenerating <samp>libiberty/functions.texi</samp>.
 Necessary when generating manpages from Texinfo manuals.
-Used by various scripts to generate some files included in the source
-repository (mainly Unicode-related and rarely changing) from source
-tables.
+Used by various scripts to generate some files included in SVN (mainly
+Unicode-related and rarely changing) from source tables.
 </p>
 <p>Used by <code>automake</code>.
 </p>
@@ -332,8 +331,8 @@ for more information.  This bug has been fixed in 8.6.1.
 <p>Necessary when modifying <samp>*.l</samp> files.
 </p>
 <p>Necessary to build GCC during development because the generated output
-files are not included in the version-controlled source repository.
-They are included in releases.
+files are not included in the SVN repository.  They are included in
+releases.
 </p>
 </dd>
 <dt>Texinfo version 4.7 (or later)</dt>
@@ -346,7 +345,7 @@ create printable documentation in DVI or PDF format.  Texinfo version
 4.8 or later is required for <code>make pdf</code>.
 </p>
 <p>Necessary to build GCC documentation during development because the
-generated output files are not included in the repository.  They are
+generated output files are not included in the SVN repository.  They are
 included in releases.
 </p>
 </dd>
@@ -363,11 +362,11 @@ DVI or PDF files, respectively.
 files in the directories below <samp>jit/docs</samp>.
 </p>
 </dd>
-<dt>git (any version)</dt>
+<dt>SVN (any version)</dt>
 <dt>SSH (any version)</dt>
 <dd>
-<p>Necessary to access the source repository.  Public releases and weekly
-snapshots of the development sources are also available via HTTPS.
+<p>Necessary to access the SVN repository.  Public releases and weekly
+snapshots of the development sources are also available via FTP.
 </p>
 </dd>
 <dt>GNU diffutils version 2.7 (or later)</dt>

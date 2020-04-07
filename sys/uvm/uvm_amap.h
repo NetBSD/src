@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.41 2020/03/20 19:08:54 ad Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.40 2020/02/23 15:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -266,11 +266,12 @@ struct vm_amap {
 #define PPREF_NONE ((int *) -1)	/* not using ppref */
 
 void		amap_pp_adjref		/* adjust references */
-			(struct vm_amap *, int, vsize_t, int);
+			(struct vm_amap *, int, vsize_t, int,
+			struct vm_anon **);
 void		amap_pp_establish	/* establish ppref */
 			(struct vm_amap *, vaddr_t);
 void		amap_wiperange		/* wipe part of an amap */
-			(struct vm_amap *, int, int);
+			(struct vm_amap *, int, int, struct vm_anon **);
 #endif	/* UVM_AMAP_PPREF */
 
 #endif /* _KERNEL */

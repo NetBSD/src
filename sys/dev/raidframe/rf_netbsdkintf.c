@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.381 2020/03/21 06:02:13 riastradh Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.380 2020/03/01 03:21:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: cd.c 1.6 90/11/28$
+ * from: Utah $Hdr$
  *
  *      @(#)cd.c        8.2 (Berkeley) 11/16/93
  */
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.381 2020/03/21 06:02:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.380 2020/03/01 03:21:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"

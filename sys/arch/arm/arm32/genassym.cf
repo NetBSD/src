@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.89 2020/03/20 19:48:03 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.88 2020/02/18 10:33:38 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -109,7 +109,6 @@ define	L1_S_FRAME		L1_S_FRAME
 define	L1_S_SHIFT		L1_S_SHIFT
 define	L1_S_SIZE		L1_S_SIZE
 define	L1_S_CACHEABLE		L1_S_C|L1_S_B|L1_S_V6_S
-define	L1_S_NOCACHE		L1_S_XS_TEX(1)
 define	L1_S_B			L1_S_B
 define	L1_S_C			L1_S_C
 define	L1_S_V6_S		L1_S_V6_S

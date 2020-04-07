@@ -8,25 +8,25 @@
  */
 
 #include "e_os.h"
-#include "crypto/cryptlib.h"
+#include "internal/cryptlib_int.h"
 #include <openssl/err.h>
-#include "crypto/rand.h"
+#include "internal/rand_int.h"
 #include "internal/bio.h"
 #include <openssl/evp.h>
-#include "crypto/evp.h"
+#include "internal/evp_int.h"
 #include "internal/conf.h"
-#include "crypto/async.h"
-#include "crypto/engine.h"
+#include "internal/async.h"
+#include "internal/engine.h"
 #include "internal/comp.h"
 #include "internal/err.h"
-#include "crypto/err.h"
-#include "crypto/objects.h"
+#include "internal/err_int.h"
+#include "internal/objects.h"
 #include <stdlib.h>
 #include <assert.h>
 #include "internal/thread_once.h"
-#include "crypto/dso_conf.h"
+#include "internal/dso_conf.h"
 #include "internal/dso.h"
-#include "crypto/store.h"
+#include "internal/store.h"
 
 static int stopped = 0;
 

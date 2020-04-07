@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.4 2020/03/11 13:30:31 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.3 2019/06/16 07:42:52 maxv Exp $ */
 
 /*
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -107,8 +107,6 @@ struct pmap_md {
 	paddr_t md_ptbr;
 	pd_entry_t *md_pdetab;
 };
-
-void	pmap_bootstrap(void);
 
 struct vm_page *
         pmap_md_alloc_poolpage(int flags);

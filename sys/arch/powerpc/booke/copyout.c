@@ -1,4 +1,4 @@
-/*	$NetBSD: copyout.c,v 1.8 2020/03/05 02:02:08 rin Exp $	*/
+/*	$NetBSD: copyout.c,v 1.5 2019/04/07 05:25:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.8 2020/03/05 02:02:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.5 2019/04/07 05:25:55 thorpej Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 
@@ -400,50 +400,6 @@ copyout(const void *vksaddr, void *vudaddr, size_t len)
 	return 0;
 }
 
-#if 1
-int
-copyoutstr(const void *ksaddr, void *udaddr, size_t len, size_t *done)
-{
-	struct pcb * const pcb = lwp_getpcb(curlwp);
-	struct faultbuf env;
-	int rv;
-
-	if (__predict_false(len == 0)) {
-		if (done)
-			*done = 0;
-		return 0;
-	}
-
-	rv = setfault(&env);
-	if (rv != 0) {
-		pcb->pcb_onfault = NULL;
-		if (done)
-			*done = 0;
-		return rv;
-	}
-
-	const register_t ds_msr = mfmsr() | PSL_DS;
-	const uint8_t *ksaddr8 = ksaddr;
-	size_t copylen = 0;
-
-	uint8_t *udaddr8 = (void *)udaddr;
-
-	while (copylen++ < len) {
-		const uint8_t data = *ksaddr8++;
-		copyout_uint8(udaddr8++, data, ds_msr);
-		if (data == 0)
-			goto out;
-	}
-	rv = ENAMETOOLONG;
-
-out:
-	pcb->pcb_onfault = NULL;
-	if (done)
-		*done = copylen;
-	return rv;
-}
-#else
-/* XXX This version of copyoutstr(9) has never beeen enabled so far. */
 int
 copyoutstr(const void *ksaddr, void *udaddr, size_t len, size_t *lenp)
 {
@@ -467,6 +423,16 @@ copyoutstr(const void *ksaddr, void *udaddr, size_t len, size_t *lenp)
 	const uint8_t *ksaddr8 = ksaddr;
 	size_t copylen = 0;
 
+#if 1
+	uint8_t *udaddr8 = (void *)udaddr;
+
+	while (copylen++ < len) {
+		const uint8_t data = *ksaddr8++;
+		copyout_uint8(udaddr8++, data, ds_msr);
+		if (data == 0)
+			break;
+	}
+#else
 	uint32_t *udaddr32 = (void *)((uintptr_t)udaddr & ~3);
 
 	size_t boff = (uintptr_t)udaddr & 3;
@@ -557,10 +523,10 @@ copyoutstr(const void *ksaddr, void *udaddr, size_t len, size_t *lenp)
 		copyout_le32_with_mask(udaddr32, data, mask, ds_msr);
 		copylen += wlen;
 	}
+#endif
 
 	pcb->pcb_onfault = NULL;
 	if (lenp)
 		*lenp = copylen;
 	return 0;
 }
-#endif

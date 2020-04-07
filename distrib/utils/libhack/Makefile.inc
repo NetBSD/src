@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.34 2020/03/02 16:01:52 roy Exp $
+# $NetBSD: Makefile.inc,v 1.33 2020/03/01 22:47:26 roy Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -20,6 +20,12 @@
 
 CPPFLAGS+=	-DSMALL
 CPPFLAGS+=	-DLIBHACK
+
+# Build as re-entrant.
+# A few tool using libhack, such as zpool on the ramdisk-zfsroot,
+# expect this and it's simpler just to set it globally rather than
+# debugging why stuff randomly crashes.
+CPPFLAGS+=	-D_REENTRANT
 
 HACKOBJS+=	getcap.o getgrent.o getnet.o getnetgr.o getpwent.o jemalloc.o \
 		localeconv.o multibyte.o perror.o runetable.o setlocale.o \

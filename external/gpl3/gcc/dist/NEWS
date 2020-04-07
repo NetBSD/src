@@ -8,27 +8,24 @@ see ONEWS.
 http://gcc.gnu.org/gcc-8/index.html
                               GCC 8 Release Series
 
-   Mar 4, 2020
+   Feb 22, 2019
 
    The [1]GNU project and the GCC developers are pleased to announce the
-   release of GCC 8.4.
+   release of GCC 8.3.
 
    This release is a bug-fix release, containing fixes for regressions in
-   GCC 8.3 relative to previous releases of GCC.
+   GCC 8.2 relative to previous releases of GCC.
 
 Release History
 
-   GCC 8.4
-          Mar 4, 2020 ([2]changes, [3]documentation)
-
    GCC 8.3
-          Feb 22, 2019 ([4]changes, [5]documentation)
+          Feb 22, 2019 ([2]changes, [3]documentation)
 
    GCC 8.2
-          Jul 26, 2018 ([6]changes, [7]documentation)
+          Jul 14, 2018 ([4]changes, [5]documentation)
 
    GCC 8.1
-          May 2, 2018 ([8]changes, [9]documentation)
+          May 2, 2018 ([6]changes, [7]documentation)
 
 References and Acknowledgements
 
@@ -36,59 +33,56 @@ References and Acknowledgements
    supports several other languages aside from C, it now stands for the
    GNU Compiler Collection.
 
-   A list of [10]successful builds is updated as new information becomes
+   A list of [8]successful builds is updated as new information becomes
    available.
 
    The GCC developers would like to thank the numerous people that have
    contributed new features, improvements, bug fixes, and other changes as
-   well as test results to GCC. This [11]amazing group of volunteers is
+   well as test results to GCC. This [9]amazing group of volunteers is
    what makes GCC successful.
 
-   For additional information about GCC please refer to the [12]GCC
-   project web site or contact the [13]GCC development mailing list.
+   For additional information about GCC please refer to the [10]GCC
+   project web site or contact the [11]GCC development mailing list.
 
-   To obtain GCC please use [14]our mirror sites or [15]our version
-   control system.
+   To obtain GCC please use [12]our mirror sites or [13]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
-    pages and the [16]GCC manuals. If that fails, the
-    [17]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    pages and the [14]GCC manuals. If that fails, the
+    [15]gcc-help@gcc.gnu.org mailing list might help. Comments on these
     web pages and the development of GCC are welcome on our developer
-    list at [18]gcc@gcc.gnu.org. All of [19]our lists have public
+    list at [16]gcc@gcc.gnu.org. All of [17]our lists have public
     archives.
 
-   Copyright (C) [20]Free Software Foundation, Inc. Verbatim copying and
+   Copyright (C) [18]Free Software Foundation, Inc. Verbatim copying and
    distribution of this entire article is permitted in any medium,
    provided this notice is preserved.
 
-   These pages are [21]maintained by the GCC team. Last modified
-   2020-03-04[22].
+   These pages are [19]maintained by the GCC team. Last modified
+   2019-02-22[20].
 
 References
 
    1. http://www.gnu.org/
    2. http://gcc.gnu.org/gcc-8/changes.html
-   3. http://gcc.gnu.org/onlinedocs/8.4.0/
+   3. http://gcc.gnu.org/onlinedocs/8.3.0/
    4. http://gcc.gnu.org/gcc-8/changes.html
-   5. http://gcc.gnu.org/onlinedocs/8.3.0/
+   5. http://gcc.gnu.org/onlinedocs/8.2.0/
    6. http://gcc.gnu.org/gcc-8/changes.html
-   7. http://gcc.gnu.org/onlinedocs/8.2.0/
-   8. http://gcc.gnu.org/gcc-8/changes.html
-   9. http://gcc.gnu.org/onlinedocs/8.1.0/
-  10. http://gcc.gnu.org/gcc-8/buildstat.html
-  11. http://gcc.gnu.org/onlinedocs/gcc-8.1.0/gcc/Contributors.html
-  12. http://gcc.gnu.org/index.html
-  13. mailto:gcc@gcc.gnu.org
-  14. http://gcc.gnu.org/mirrors.html
-  15. http://gcc.gnu.org/git.html
-  16. https://gcc.gnu.org/onlinedocs/
-  17. mailto:gcc-help@gcc.gnu.org
-  18. mailto:gcc@gcc.gnu.org
-  19. https://gcc.gnu.org/lists.html
-  20. https://www.fsf.org/
-  21. https://gcc.gnu.org/about.html
-  22. http://validator.w3.org/check/referer
+   7. http://gcc.gnu.org/onlinedocs/8.1.0/
+   8. http://gcc.gnu.org/gcc-8/buildstat.html
+   9. http://gcc.gnu.org/onlinedocs/gcc-8.1.0/gcc/Contributors.html
+  10. http://gcc.gnu.org/index.html
+  11. mailto:gcc@gcc.gnu.org
+  12. http://gcc.gnu.org/mirrors.html
+  13. http://gcc.gnu.org/svn.html
+  14. https://gcc.gnu.org/onlinedocs/
+  15. mailto:gcc-help@gcc.gnu.org
+  16. mailto:gcc@gcc.gnu.org
+  17. https://gcc.gnu.org/lists.html
+  18. https://www.fsf.org/
+  19. https://gcc.gnu.org/about.html
+  20. http://validator.w3.org/check/referer
 ======================================================================
 http://gcc.gnu.org/gcc-8/changes.html
                               GCC 8 Release Series
@@ -111,7 +105,7 @@ Caveats
        std::make_exception_ptr should be used instead.
      * Support for the powerpc*-*-*spe* target ports which have been
        recently unmaintained and untested in GCC has been declared
-       obsolete in GCC 8 as [3]announced. Unless there is activity to
+       obsolete in GCC 8 as announced [3]here. Unless there is activity to
        revive them, the next release of GCC will have their sources
        permanently removed.
 
@@ -751,9 +745,6 @@ ctor<double> >()' from 'map<map<int,vector<double>>,vector<double>>' to 'map<map
      * The main version of libfortran has been changed to 5.
      * Parameterized derived types, a major feature of Fortran 2003, have
        been implemented.
-     * Partial support is provided for Fortran 2018 teams, which are
-       hierarchical subsets of images that execute independently of other
-       image subsets.
      * The maximum rank for arrays has been increased to 15, conforming to
        the Fortran 2008 standard.
      * Transformational intrinsics are now fully supported in
@@ -1132,27 +1123,20 @@ GCC 8.3
        resolve only those regressions, we decided to resolve all the cases
        of this defect in single change.
 
-GCC 8.4
-
-   This is the [37]list of problem reports (PRs) from GCC's bug tracking
-   system that are known to be fixed in the 8.4 release. This list might
-   not be complete (that is, it is possible that some PRs that have been
-   fixed are not listed here).
-
 
     For questions related to the use of GCC, please consult these web
-    pages and the [38]GCC manuals. If that fails, the
-    [39]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    pages and the [37]GCC manuals. If that fails, the
+    [38]gcc-help@gcc.gnu.org mailing list might help. Comments on these
     web pages and the development of GCC are welcome on our developer
-    list at [40]gcc@gcc.gnu.org. All of [41]our lists have public
+    list at [39]gcc@gcc.gnu.org. All of [40]our lists have public
     archives.
 
-   Copyright (C) [42]Free Software Foundation, Inc. Verbatim copying and
+   Copyright (C) [41]Free Software Foundation, Inc. Verbatim copying and
    distribution of this entire article is permitted in any medium,
    provided this notice is preserved.
 
-   These pages are [43]maintained by the GCC team. Last modified
-   2020-03-04[44].
+   These pages are [42]maintained by the GCC team. Last modified
+   2019-02-22[43].
 
 References
 
@@ -1192,42 +1176,38 @@ References
   34. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=84413
   35. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=8.3
   36. https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87137
-  37. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=8.4
-  38. https://gcc.gnu.org/onlinedocs/
-  39. mailto:gcc-help@gcc.gnu.org
-  40. mailto:gcc@gcc.gnu.org
-  41. https://gcc.gnu.org/lists.html
-  42. https://www.fsf.org/
-  43. https://gcc.gnu.org/about.html
-  44. http://validator.w3.org/check/referer
+  37. https://gcc.gnu.org/onlinedocs/
+  38. mailto:gcc-help@gcc.gnu.org
+  39. mailto:gcc@gcc.gnu.org
+  40. https://gcc.gnu.org/lists.html
+  41. https://www.fsf.org/
+  42. https://gcc.gnu.org/about.html
+  43. http://validator.w3.org/check/referer
 ======================================================================
 http://gcc.gnu.org/gcc-7/index.html
                               GCC 7 Release Series
 
-   Nov 14, 2019
+   Dec 6, 2018
 
    The [1]GNU project and the GCC developers are pleased to announce the
-   release of GCC 7.5.
+   release of GCC 7.4.
 
    This release is a bug-fix release, containing fixes for regressions in
-   GCC 7.4 relative to previous releases of GCC.
+   GCC 7.3 relative to previous releases of GCC.
 
 Release History
 
-   GCC 7.5
-          Nov 14, 2019 ([2]changes, [3]documentation)
-
    GCC 7.4
-          Dec 6, 2018 ([4]changes, [5]documentation)
+          Dec 6, 2018 ([2]changes, [3]documentation)
 
    GCC 7.3
-          Jan 25, 2018 ([6]changes, [7]documentation)
+          Jan 25, 2018 ([4]changes, [5]documentation)
 
    GCC 7.2
-          Aug 14, 2017 ([8]changes, [9]documentation)
+          Aug 14, 2017 ([6]changes, [7]documentation)
 
    GCC 7.1
-          May 2, 2017 ([10]changes, [11]documentation)
+          May 2, 2017 ([8]changes, [9]documentation)
 
 References and Acknowledgements
 
@@ -1235,61 +1215,58 @@ References and Acknowledgements
    supports several other languages aside from C, it now stands for the
    GNU Compiler Collection.
 
-   A list of [12]successful builds is updated as new information becomes
+   A list of [10]successful builds is updated as new information becomes
    available.
 
    The GCC developers would like to thank the numerous people that have
    contributed new features, improvements, bug fixes, and other changes as
-   well as test results to GCC. This [13]amazing group of volunteers is
+   well as test results to GCC. This [11]amazing group of volunteers is
    what makes GCC successful.
 
-   For additional information about GCC please refer to the [14]GCC
-   project web site or contact the [15]GCC development mailing list.
+   For additional information about GCC please refer to the [12]GCC
+   project web site or contact the [13]GCC development mailing list.
 
-   To obtain GCC please use [16]our mirror sites or [17]our version
-   control system.
+   To obtain GCC please use [14]our mirror sites or [15]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
-    pages and the [18]GCC manuals. If that fails, the
-    [19]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    pages and the [16]GCC manuals. If that fails, the
+    [17]gcc-help@gcc.gnu.org mailing list might help. Comments on these
     web pages and the development of GCC are welcome on our developer
-    list at [20]gcc@gcc.gnu.org. All of [21]our lists have public
+    list at [18]gcc@gcc.gnu.org. All of [19]our lists have public
     archives.
 
-   Copyright (C) [22]Free Software Foundation, Inc. Verbatim copying and
+   Copyright (C) [20]Free Software Foundation, Inc. Verbatim copying and
    distribution of this entire article is permitted in any medium,
    provided this notice is preserved.
 
-   These pages are [23]maintained by the GCC team. Last modified
-   2020-01-14[24].
+   These pages are [21]maintained by the GCC team. Last modified
+   2018-12-06[22].
 
 References
 
    1. http://www.gnu.org/
    2. http://gcc.gnu.org/gcc-7/changes.html
-   3. http://gcc.gnu.org/onlinedocs/7.5.0/
+   3. http://gcc.gnu.org/onlinedocs/7.4.0/
    4. http://gcc.gnu.org/gcc-7/changes.html
-   5. http://gcc.gnu.org/onlinedocs/7.4.0/
+   5. http://gcc.gnu.org/onlinedocs/7.3.0/
    6. http://gcc.gnu.org/gcc-7/changes.html
-   7. http://gcc.gnu.org/onlinedocs/7.3.0/
+   7. http://gcc.gnu.org/onlinedocs/7.2.0/
    8. http://gcc.gnu.org/gcc-7/changes.html
-   9. http://gcc.gnu.org/onlinedocs/7.2.0/
-  10. http://gcc.gnu.org/gcc-7/changes.html
-  11. http://gcc.gnu.org/onlinedocs/7.1.0/
-  12. http://gcc.gnu.org/gcc-7/buildstat.html
-  13. http://gcc.gnu.org/onlinedocs/gcc/Contributors.html
-  14. http://gcc.gnu.org/index.html
-  15. mailto:gcc@gcc.gnu.org
-  16. http://gcc.gnu.org/mirrors.html
-  17. http://gcc.gnu.org/git.html
-  18. https://gcc.gnu.org/onlinedocs/
-  19. mailto:gcc-help@gcc.gnu.org
-  20. mailto:gcc@gcc.gnu.org
-  21. https://gcc.gnu.org/lists.html
-  22. https://www.fsf.org/
-  23. https://gcc.gnu.org/about.html
-  24. http://validator.w3.org/check/referer
+   9. http://gcc.gnu.org/onlinedocs/7.1.0/
+  10. http://gcc.gnu.org/gcc-7/buildstat.html
+  11. http://gcc.gnu.org/onlinedocs/gcc/Contributors.html
+  12. http://gcc.gnu.org/index.html
+  13. mailto:gcc@gcc.gnu.org
+  14. http://gcc.gnu.org/mirrors.html
+  15. http://gcc.gnu.org/svn.html
+  16. https://gcc.gnu.org/onlinedocs/
+  17. mailto:gcc-help@gcc.gnu.org
+  18. mailto:gcc@gcc.gnu.org
+  19. https://gcc.gnu.org/lists.html
+  20. https://www.fsf.org/
+  21. https://gcc.gnu.org/about.html
+  22. http://validator.w3.org/check/referer
 ======================================================================
 http://gcc.gnu.org/gcc-7/changes.html
                               GCC 7 Release Series
@@ -2339,27 +2316,20 @@ GCC 7.4
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
-GCC 7.5
-
-   This is the [28]list of problem reports (PRs) from GCC's bug tracking
-   system that are known to be fixed in the 7.5 release. This list might
-   not be complete (that is, it is possible that some PRs that have been
-   fixed are not listed here).
-
 
     For questions related to the use of GCC, please consult these web
-    pages and the [29]GCC manuals. If that fails, the
-    [30]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    pages and the [28]GCC manuals. If that fails, the
+    [29]gcc-help@gcc.gnu.org mailing list might help. Comments on these
     web pages and the development of GCC are welcome on our developer
-    list at [31]gcc@gcc.gnu.org. All of [32]our lists have public
+    list at [30]gcc@gcc.gnu.org. All of [31]our lists have public
     archives.
 
-   Copyright (C) [33]Free Software Foundation, Inc. Verbatim copying and
+   Copyright (C) [32]Free Software Foundation, Inc. Verbatim copying and
    distribution of this entire article is permitted in any medium,
    provided this notice is preserved.
 
-   These pages are [34]maintained by the GCC team. Last modified
-   2019-11-28[35].
+   These pages are [33]maintained by the GCC team. Last modified
+   2018-12-06[34].
 
 References
 
@@ -2390,19 +2360,16 @@ References
   25. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=7.3
   26. https://www.gaisler.com/index.php/information/app-tech-notes
   27. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=7.4
-  28. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=7.5
-  29. https://gcc.gnu.org/onlinedocs/
-  30. mailto:gcc-help@gcc.gnu.org
-  31. mailto:gcc@gcc.gnu.org
-  32. https://gcc.gnu.org/lists.html
-  33. https://www.fsf.org/
-  34. https://gcc.gnu.org/about.html
-  35. http://validator.w3.org/check/referer
+  28. https://gcc.gnu.org/onlinedocs/
+  29. mailto:gcc-help@gcc.gnu.org
+  30. mailto:gcc@gcc.gnu.org
+  31. https://gcc.gnu.org/lists.html
+  32. https://www.fsf.org/
+  33. https://gcc.gnu.org/about.html
+  34. http://validator.w3.org/check/referer
 ======================================================================
 http://gcc.gnu.org/gcc-6/index.html
                               GCC 6 Release Series
-
-   (This release series is no longer supported.)
 
    October 26, 2018
 
@@ -2446,8 +2413,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [14]GCC
    project web site or contact the [15]GCC development mailing list.
 
-   To obtain GCC please use [16]our mirror sites or [17]our version
-   control system.
+   To obtain GCC please use [16]our mirror sites or [17]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -2462,7 +2428,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [23]maintained by the GCC team. Last modified
-   2020-01-14[24].
+   2018-10-26[24].
 
 References
 
@@ -2482,7 +2448,7 @@ References
   14. http://gcc.gnu.org/index.html
   15. mailto:gcc@gcc.gnu.org
   16. http://gcc.gnu.org/mirrors.html
-  17. http://gcc.gnu.org/git.html
+  17. http://gcc.gnu.org/svn.html
   18. https://gcc.gnu.org/onlinedocs/
   19. mailto:gcc-help@gcc.gnu.org
   20. mailto:gcc@gcc.gnu.org
@@ -3200,7 +3166,7 @@ Operating Systems
    provided this notice is preserved.
 
    These pages are [32]maintained by the GCC team. Last modified
-   2019-11-28[33].
+   2018-10-31[33].
 
 References
 
@@ -3240,8 +3206,6 @@ References
 ======================================================================
 http://gcc.gnu.org/gcc-5/index.html
                               GCC 5 Release Series
-
-   (This release series is no longer supported.)
 
    October 10, 2017
 
@@ -3285,8 +3249,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [14]GCC
    project web site or contact the [15]GCC development mailing list.
 
-   To obtain GCC please use [16]our mirror sites or [17]our version
-   control system.
+   To obtain GCC please use [16]our mirror sites or [17]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -3301,7 +3264,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [23]maintained by the GCC team. Last modified
-   2020-01-14[24].
+   2018-09-30[24].
 
 References
 
@@ -3321,7 +3284,7 @@ References
   14. http://gcc.gnu.org/index.html
   15. mailto:gcc@gcc.gnu.org
   16. http://gcc.gnu.org/mirrors.html
-  17. http://gcc.gnu.org/git.html
+  17. http://gcc.gnu.org/svn.html
   18. https://gcc.gnu.org/onlinedocs/
   19. mailto:gcc-help@gcc.gnu.org
   20. mailto:gcc@gcc.gnu.org
@@ -4211,7 +4174,7 @@ Target Specific Changes
    provided this notice is preserved.
 
    These pages are [51]maintained by the GCC team. Last modified
-   2019-11-28[52].
+   2018-09-30[52].
 
 References
 
@@ -4271,8 +4234,6 @@ References
 http://gcc.gnu.org/gcc-4.9/index.html
                              GCC 4.9 Release Series
 
-   (This release series is no longer supported.)
-
    Aug 3, 2016
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -4280,6 +4241,8 @@ http://gcc.gnu.org/gcc-4.9/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.9.3 relative to previous releases of GCC.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -4315,8 +4278,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [14]GCC
    project web site or contact the [15]GCC development mailing list.
 
-   To obtain GCC please use [16]our mirror sites or [17]our version
-   control system.
+   To obtain GCC please use [16]our mirror sites or [17]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -4331,7 +4293,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [23]maintained by the GCC team. Last modified
-   2020-01-14[24].
+   2018-09-30[24].
 
 References
 
@@ -4351,7 +4313,7 @@ References
   14. http://gcc.gnu.org/index.html
   15. mailto:gcc@gcc.gnu.org
   16. http://gcc.gnu.org/mirrors.html
-  17. http://gcc.gnu.org/git.html
+  17. http://gcc.gnu.org/svn.html
   18. https://gcc.gnu.org/onlinedocs/
   19. mailto:gcc-help@gcc.gnu.org
   20. mailto:gcc@gcc.gnu.org
@@ -4970,7 +4932,7 @@ GCC 4.9.4
    provided this notice is preserved.
 
    These pages are [34]maintained by the GCC team. Last modified
-   2019-11-28[35].
+   2018-12-01[35].
 
 References
 
@@ -5013,8 +4975,6 @@ References
 http://gcc.gnu.org/gcc-4.8/index.html
                              GCC 4.8 Release Series
 
-   (This release series is no longer supported.)
-
    June 23, 2015
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -5022,6 +4982,8 @@ http://gcc.gnu.org/gcc-4.8/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.8.4 relative to previous releases of GCC.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -5060,8 +5022,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [16]GCC
    project web site or contact the [17]GCC development mailing list.
 
-   To obtain GCC please use [18]our mirror sites or [19]our version
-   control system.
+   To obtain GCC please use [18]our mirror sites or [19]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -5076,7 +5037,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [25]maintained by the GCC team. Last modified
-   2020-01-14[26].
+   2018-09-30[26].
 
 References
 
@@ -5098,7 +5059,7 @@ References
   16. http://gcc.gnu.org/index.html
   17. mailto:gcc@gcc.gnu.org
   18. http://gcc.gnu.org/mirrors.html
-  19. http://gcc.gnu.org/git.html
+  19. http://gcc.gnu.org/svn.html
   20. https://gcc.gnu.org/onlinedocs/
   21. mailto:gcc-help@gcc.gnu.org
   22. mailto:gcc@gcc.gnu.org
@@ -5831,7 +5792,7 @@ GCC 4.8.5
    provided this notice is preserved.
 
    These pages are [43]maintained by the GCC team. Last modified
-   2019-11-28[44].
+   2018-09-30[44].
 
 References
 
@@ -5883,8 +5844,6 @@ References
 http://gcc.gnu.org/gcc-4.7/index.html
                              GCC 4.7 Release Series
 
-   (This release series is no longer supported.)
-
    June 12, 2014
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -5892,6 +5851,8 @@ http://gcc.gnu.org/gcc-4.7/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.7.3 relative to previous releases of GCC.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -5927,8 +5888,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [14]GCC
    project web site or contact the [15]GCC development mailing list.
 
-   To obtain GCC please use [16]our mirror sites or [17]our version
-   control system.
+   To obtain GCC please use [16]our mirror sites or [17]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -5943,7 +5903,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [23]maintained by the GCC team. Last modified
-   2020-01-14[24].
+   2018-09-30[24].
 
 References
 
@@ -5963,7 +5923,7 @@ References
   14. http://gcc.gnu.org/index.html
   15. mailto:gcc@gcc.gnu.org
   16. http://gcc.gnu.org/mirrors.html
-  17. http://gcc.gnu.org/git.html
+  17. http://gcc.gnu.org/svn.html
   18. https://gcc.gnu.org/onlinedocs/
   19. mailto:gcc-help@gcc.gnu.org
   20. mailto:gcc@gcc.gnu.org
@@ -6764,7 +6724,7 @@ GCC 4.7.4
    provided this notice is preserved.
 
    These pages are [54]maintained by the GCC team. Last modified
-   2019-11-28[55].
+   2018-12-11[55].
 
 References
 
@@ -6792,7 +6752,7 @@ References
   22. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfaggressive-function-elimination_007d-270
   23. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Error-and-Warning-Options.html#index-g_t_0040code_007bWreal-q-constant_007d-149
   24. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/SELECTED_005fREAL_005fKIND.html
-  25. https://docs.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps
+  25. https://docs.microsoft.com/en-us/windows/desktop/wer/collecting-user-mode-dumps
   26. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Debugging-Options.html#index-g_t_0040code_007bfno-backtrace_007d-183
   27. https://gcc.gnu.org/wiki/Fortran2003Status
   28. https://gcc.gnu.org/wiki/OOP
@@ -6827,8 +6787,6 @@ References
 http://gcc.gnu.org/gcc-4.6/index.html
                              GCC 4.6 Release Series
 
-   (This release series is no longer supported.)
-
    April 12, 2013
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -6836,6 +6794,8 @@ http://gcc.gnu.org/gcc-4.6/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.6.3 relative to previous releases of GCC.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -6871,8 +6831,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [14]GCC
    project web site or contact the [15]GCC development mailing list.
 
-   To obtain GCC please use [16]our mirror sites or [17]our version
-   control system.
+   To obtain GCC please use [16]our mirror sites or [17]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -6887,7 +6846,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [23]maintained by the GCC team. Last modified
-   2020-01-14[24].
+   2018-09-30[24].
 
 References
 
@@ -6907,7 +6866,7 @@ References
   14. http://gcc.gnu.org/index.html
   15. mailto:gcc@gcc.gnu.org
   16. http://gcc.gnu.org/mirrors.html
-  17. http://gcc.gnu.org/git.html
+  17. http://gcc.gnu.org/svn.html
   18. https://gcc.gnu.org/onlinedocs/
   19. mailto:gcc-help@gcc.gnu.org
   20. mailto:gcc@gcc.gnu.org
@@ -7811,7 +7770,7 @@ GCC 4.6.4
    provided this notice is preserved.
 
    These pages are [29]maintained by the GCC team. Last modified
-   2019-11-28[30].
+   2018-09-30[30].
 
 References
 
@@ -7849,8 +7808,6 @@ References
 http://gcc.gnu.org/gcc-4.5/index.html
                              GCC 4.5 Release Series
 
-   (This release series is no longer supported.)
-
    Jul 2, 2012
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -7858,6 +7815,8 @@ http://gcc.gnu.org/gcc-4.5/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.5.3 relative to previous releases of GCC.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -7893,8 +7852,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [9]GCC project
    web site or contact the [10]GCC development mailing list.
 
-   To obtain GCC please use [11]our mirror sites or [12]our version
-   control system.
+   To obtain GCC please use [11]our mirror sites or [12]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -7909,7 +7867,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [18]maintained by the GCC team. Last modified
-   2020-01-14[19].
+   2018-09-30[19].
 
 References
 
@@ -7924,7 +7882,7 @@ References
    9. http://gcc.gnu.org/index.html
   10. mailto:gcc@gcc.gnu.org
   11. http://gcc.gnu.org/mirrors.html
-  12. http://gcc.gnu.org/git.html
+  12. http://gcc.gnu.org/svn.html
   13. https://gcc.gnu.org/onlinedocs/
   14. mailto:gcc-help@gcc.gnu.org
   15. mailto:gcc@gcc.gnu.org
@@ -8581,7 +8539,7 @@ GCC 4.5.4
    provided this notice is preserved.
 
    These pages are [32]maintained by the GCC team. Last modified
-   2019-11-28[33].
+   2018-09-30[33].
 
 References
 
@@ -8622,8 +8580,6 @@ References
 http://gcc.gnu.org/gcc-4.4/index.html
                              GCC 4.4 Release Series
 
-   This release series is no longer maintained.
-
    March 13, 2012
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -8631,6 +8587,8 @@ http://gcc.gnu.org/gcc-4.4/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.4.6 relative to previous releases of GCC.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -8675,8 +8633,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [12]GCC
    project web site or contact the [13]GCC development mailing list.
 
-   To obtain GCC please use [14]our mirror sites or [15]our version
-   control system.
+   To obtain GCC please use [14]our mirror sites or [15]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -8691,7 +8648,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [21]maintained by the GCC team. Last modified
-   2020-01-14[22].
+   2018-09-30[22].
 
 References
 
@@ -8709,7 +8666,7 @@ References
   12. http://gcc.gnu.org/index.html
   13. mailto:gcc@gcc.gnu.org
   14. http://gcc.gnu.org/mirrors.html
-  15. http://gcc.gnu.org/git.html
+  15. http://gcc.gnu.org/svn.html
   16. https://gcc.gnu.org/onlinedocs/
   17. mailto:gcc-help@gcc.gnu.org
   18. mailto:gcc@gcc.gnu.org
@@ -9321,7 +9278,7 @@ GCC 4.4.7
    provided this notice is preserved.
 
    These pages are [23]maintained by the GCC team. Last modified
-   2019-11-28[24].
+   2018-09-30[24].
 
 References
 
@@ -9353,8 +9310,6 @@ References
 http://gcc.gnu.org/gcc-4.3/index.html
                              GCC 4.3 Release Series
 
-   (This release series is no longer supported.)
-
    Jun 27, 2011
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -9362,6 +9317,8 @@ http://gcc.gnu.org/gcc-4.3/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.3.5 relative to previous releases of GCC.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -9403,8 +9360,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [11]GCC
    project web site or contact the [12]GCC development mailing list.
 
-   To obtain GCC please use [13]our mirror sites or [14]our version
-   control system.
+   To obtain GCC please use [13]our mirror sites or [14]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -9419,7 +9375,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [20]maintained by the GCC team. Last modified
-   2020-01-14[21].
+   2018-09-30[21].
 
 References
 
@@ -9436,7 +9392,7 @@ References
   11. http://gcc.gnu.org/index.html
   12. mailto:gcc@gcc.gnu.org
   13. http://gcc.gnu.org/mirrors.html
-  14. http://gcc.gnu.org/git.html
+  14. http://gcc.gnu.org/svn.html
   15. https://gcc.gnu.org/onlinedocs/
   16. mailto:gcc-help@gcc.gnu.org
   17. mailto:gcc@gcc.gnu.org
@@ -10224,7 +10180,7 @@ GCC 4.3.6
    provided this notice is preserved.
 
    These pages are [30]maintained by the GCC team. Last modified
-   2019-11-28[31].
+   2018-09-30[31].
 
 References
 
@@ -10263,8 +10219,6 @@ References
 http://gcc.gnu.org/gcc-4.2/index.html
                              GCC 4.2 Release Series
 
-   (This release series is no longer supported.)
-
    May 19, 2008
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -10272,6 +10226,8 @@ http://gcc.gnu.org/gcc-4.2/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.2.3 relative to previous releases of GCC.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -10307,8 +10263,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [9]GCC project
    web site or contact the [10]GCC development mailing list.
 
-   To obtain GCC please use [11]our mirror sites or [12]our version
-   control system.
+   To obtain GCC please use [11]our mirror sites or [12]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -10323,7 +10278,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [18]maintained by the GCC team. Last modified
-   2020-01-14[19].
+   2018-09-30[19].
 
 References
 
@@ -10338,7 +10293,7 @@ References
    9. http://gcc.gnu.org/index.html
   10. mailto:gcc@gcc.gnu.org
   11. http://gcc.gnu.org/mirrors.html
-  12. http://gcc.gnu.org/git.html
+  12. http://gcc.gnu.org/svn.html
   13. https://gcc.gnu.org/onlinedocs/
   14. mailto:gcc-help@gcc.gnu.org
   15. mailto:gcc@gcc.gnu.org
@@ -10651,7 +10606,7 @@ Other significant improvements
    provided this notice is preserved.
 
    These pages are [11]maintained by the GCC team. Last modified
-   2019-11-28[12].
+   2018-09-30[12].
 
 References
 
@@ -10671,8 +10626,6 @@ References
 http://gcc.gnu.org/gcc-4.1/index.html
                              GCC 4.1 Release Series
 
-   (This release series is no longer supported.)
-
    February 13, 2007
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -10680,6 +10633,8 @@ http://gcc.gnu.org/gcc-4.1/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.1.1 relative to previous releases of GCC.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -10709,8 +10664,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [7]GCC project
    web site or contact the [8]GCC development mailing list.
 
-   To obtain GCC please use [9]our mirror sites or [10]our version control
-   system.
+   To obtain GCC please use [9]our mirror sites or [10]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -10725,7 +10679,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [16]maintained by the GCC team. Last modified
-   2020-01-14[17].
+   2018-09-30[17].
 
 References
 
@@ -10738,7 +10692,7 @@ References
    7. http://gcc.gnu.org/index.html
    8. mailto:gcc@gcc.gnu.org
    9. http://gcc.gnu.org/mirrors.html
-  10. http://gcc.gnu.org/git.html
+  10. http://gcc.gnu.org/svn.html
   11. https://gcc.gnu.org/onlinedocs/
   12. mailto:gcc-help@gcc.gnu.org
   13. mailto:gcc@gcc.gnu.org
@@ -11288,7 +11242,7 @@ GCC 4.1.2
    provided this notice is preserved.
 
    These pages are [12]maintained by the GCC team. Last modified
-   2019-11-28[13].
+   2018-09-30[13].
 
 References
 
@@ -11309,8 +11263,6 @@ References
 http://gcc.gnu.org/gcc-4.0/index.html
                              GCC 4.0 Release Series
 
-   (This release series is no longer supported.)
-
    January 31, 2007
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -11318,6 +11270,8 @@ http://gcc.gnu.org/gcc-4.0/index.html
 
    This release is a bug-fix release, containing fixes for regressions in
    GCC 4.0.3 relative to previous releases of GCC.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -11353,8 +11307,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [9]GCC project
    web site or contact the [10]GCC development mailing list.
 
-   To obtain GCC please use [11]our mirror sites, or [12]our version
-   control system.
+   To obtain GCC please use [11]our mirror sites, or [12]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -11369,7 +11322,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [18]maintained by the GCC team. Last modified
-   2020-01-14[19].
+   2018-09-30[19].
 
 References
 
@@ -11384,7 +11337,7 @@ References
    9. http://gcc.gnu.org/index.html
   10. mailto:gcc@gcc.gnu.org
   11. http://gcc.gnu.org/mirrors.html
-  12. http://gcc.gnu.org/git.html
+  12. http://gcc.gnu.org/svn.html
   13. https://gcc.gnu.org/onlinedocs/
   14. mailto:gcc-help@gcc.gnu.org
   15. mailto:gcc@gcc.gnu.org
@@ -11895,7 +11848,7 @@ GCC 4.0.4
    provided this notice is preserved.
 
    These pages are [21]maintained by the GCC team. Last modified
-   2019-11-28[22].
+   2018-09-30[22].
 
 References
 
@@ -11925,8 +11878,6 @@ References
 http://gcc.gnu.org/gcc-3.4/index.html
                              GCC 3.4 Release Series
 
-   (This release series is no longer supported.)
-
    May 26, 2006
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -11939,6 +11890,8 @@ http://gcc.gnu.org/gcc-3.4/index.html
    The GCC 3.4 release series includes numerous [2]new features,
    improvements, bug fixes, and other changes, thanks to an [3]amazing
    group of volunteers.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -11980,8 +11933,7 @@ References and Acknowledgements
    For additional information about GCC please refer to the [13]GCC
    project web site or contact the [14]GCC development mailing list.
 
-   To obtain GCC please use [15]our mirror sites, or [16]our version
-   control system.
+   To obtain GCC please use [15]our mirror sites, or [16]our SVN server.
 
 
     For questions related to the use of GCC, please consult these web
@@ -11996,7 +11948,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [22]maintained by the GCC team. Last modified
-   2020-01-14[23].
+   2018-09-30[23].
 
 References
 
@@ -12015,7 +11967,7 @@ References
   13. http://gcc.gnu.org/index.html
   14. mailto:gcc@gcc.gnu.org
   15. http://gcc.gnu.org/mirrors.html
-  16. http://gcc.gnu.org/git.html
+  16. http://gcc.gnu.org/svn.html
   17. https://gcc.gnu.org/onlinedocs/
   18. mailto:gcc-help@gcc.gnu.org
   19. mailto:gcc@gcc.gnu.org
@@ -13784,7 +13736,7 @@ GCC 3.4.6
    provided this notice is preserved.
 
    These pages are [416]maintained by the GCC team. Last modified
-   2019-11-28[417].
+   2018-09-30[417].
 
 References
 
@@ -14209,8 +14161,6 @@ References
 http://gcc.gnu.org/gcc-3.3/index.html
                              GCC 3.3 Release Series
 
-   (This release series is no longer supported.)
-
    May 03, 2005
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -14224,6 +14174,8 @@ http://gcc.gnu.org/gcc-3.3/index.html
    The GCC 3.3 release series includes numerous [2]new features,
    improvements, bug fixes, and other changes, thanks to an [3]amazing
    group of volunteers.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -14280,7 +14232,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [21]maintained by the GCC team. Last modified
-   2019-11-28[22].
+   2018-09-30[22].
 
 References
 
@@ -15655,7 +15607,7 @@ GCC 3.3.6
    provided this notice is preserved.
 
    These pages are [556]maintained by the GCC team. Last modified
-   2019-11-28[557].
+   2018-09-30[557].
 
 References
 
@@ -16220,8 +16172,6 @@ References
 http://gcc.gnu.org/gcc-3.2/index.html
                              GCC 3.2 Release Series
 
-   (This release series is no longer supported.)
-
    April 25, 2003
 
    The [1]GNU project and the GCC developers are pleased to announce the
@@ -16238,6 +16188,8 @@ http://gcc.gnu.org/gcc-3.2/index.html
 
    Please refer to our [2]detailed list of news, caveats, and bug-fixes
    for further information.
+
+   This release series is no longer maintained.
 
 Release History
 
@@ -16285,7 +16237,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [17]maintained by the GCC team. Last modified
-   2019-11-28[18].
+   2018-09-30[18].
 
 References
 
@@ -16908,7 +16860,7 @@ GCC 3.2
    provided this notice is preserved.
 
    These pages are [251]maintained by the GCC team. Last modified
-   2019-11-28[252].
+   2018-09-30[252].
 
 References
 
@@ -17168,14 +17120,14 @@ References
 http://gcc.gnu.org/gcc-3.1/index.html
                                     GCC 3.1
 
-   (This release series is no longer supported.)
-
    July 27, 2002
 
    The [1]GNU project and the GCC developers are pleased to announce the
    release of GCC 3.1.1.
 
    The links below still apply to GCC 3.1.1.
+
+   This release series is no longer maintained.
 
    May 15, 2002
 
@@ -17213,7 +17165,7 @@ http://gcc.gnu.org/gcc-3.1/index.html
    provided this notice is preserved.
 
    These pages are [14]maintained by the GCC team. Last modified
-   2019-11-28[15].
+   2018-09-30[15].
 
 References
 
@@ -17567,7 +17519,7 @@ Documentation improvements
    provided this notice is preserved.
 
    These pages are [13]maintained by the GCC team. Last modified
-   2019-11-28[14].
+   2018-09-30[14].
 
 References
 
@@ -17589,13 +17541,13 @@ References
 http://gcc.gnu.org/gcc-3.0/index.html
                                    GCC 3.0.4
 
-   (This release series is no longer supported.)
-
    February 20, 2002
 
    The [1]GNU project and the GCC developers are pleased to announce the
    release of GCC 3.0.4, which is a bug-fix release for the GCC 3.0
    series.
+
+   This release series is no longer maintained.
 
    GCC used to stand for the GNU C Compiler, but since the compiler
    supports several other languages aside from C, it now stands for the
@@ -17641,7 +17593,7 @@ Previous 3.0.x Releases
    provided this notice is preserved.
 
    These pages are [14]maintained by the GCC team. Last modified
-   2019-11-28[15].
+   2018-09-30[15].
 
 References
 
@@ -17832,7 +17784,7 @@ Other significant improvements
    provided this notice is preserved.
 
    These pages are [18]maintained by the GCC team. Last modified
-   2019-11-28[19].
+   2018-09-30[19].
 
 References
 
@@ -17903,7 +17855,7 @@ http://gcc.gnu.org/gcc-3.0/caveats.html
    provided this notice is preserved.
 
    These pages are [7]maintained by the GCC team. Last modified
-   2019-11-28[8].
+   2018-09-30[8].
 
 References
 
@@ -17919,10 +17871,10 @@ References
 http://gcc.gnu.org/gcc-2.95/index.html
                                     GCC 2.95
 
-   (This release series is no longer supported.)
-
    March 16, 2001: The GNU project and the GCC developers are pleased to
    announce the release of GCC version 2.95.3.
+
+   This release is no longer maintained.
 
 Release History
 
@@ -17985,7 +17937,7 @@ References and Acknowledgements
    provided this notice is preserved.
 
    These pages are [15]maintained by the GCC team. Last modified
-   2019-11-28[16].
+   2018-09-30[16].
 
 References
 
@@ -18250,7 +18202,7 @@ Additional Changes in GCC 2.95.3
    provided this notice is preserved.
 
    These pages are [22]maintained by the GCC team. Last modified
-   2019-11-28[23].
+   2018-09-30[23].
 
 References
 
@@ -18333,7 +18285,7 @@ http://gcc.gnu.org/gcc-2.95/caveats.html
    provided this notice is preserved.
 
    These pages are [7]maintained by the GCC team. Last modified
-   2019-11-28[8].
+   2018-09-30[8].
 
 References
 
@@ -18554,7 +18506,7 @@ http://gcc.gnu.org/egcs-1.1/index.html
    provided this notice is preserved.
 
    These pages are [15]maintained by the GCC team. Last modified
-   2019-11-28[16].
+   2018-09-30[16].
 
 References
 
@@ -18653,7 +18605,7 @@ http://gcc.gnu.org/egcs-1.1/features.html
    provided this notice is preserved.
 
    These pages are [10]maintained by the GCC team. Last modified
-   2019-11-28[11].
+   2018-09-30[11].
 
 References
 
@@ -18707,7 +18659,7 @@ http://gcc.gnu.org/egcs-1.1/caveats.html
    provided this notice is preserved.
 
    These pages are [6]maintained by the GCC team. Last modified
-   2019-11-28[7].
+   2018-09-30[7].
 
 References
 
@@ -18903,7 +18855,7 @@ http://gcc.gnu.org/egcs-1.0/index.html
    provided this notice is preserved.
 
    These pages are [10]maintained by the GCC team. Last modified
-   2019-11-28[11].
+   2018-09-30[11].
 
 References
 
@@ -18969,7 +18921,7 @@ http://gcc.gnu.org/egcs-1.0/features.html
    provided this notice is preserved.
 
    These pages are [8]maintained by the GCC team. Last modified
-   2019-11-28[9].
+   2018-09-30[9].
 
 References
 
@@ -19022,7 +18974,7 @@ http://gcc.gnu.org/egcs-1.0/caveats.html
    provided this notice is preserved.
 
    These pages are [6]maintained by the GCC team. Last modified
-   2019-11-28[7].
+   2018-09-30[7].
 
 References
 

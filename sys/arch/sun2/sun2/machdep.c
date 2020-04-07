@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 2020/03/08 06:06:46 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 2019/12/31 13:07:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,68 +149,67 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2020/03/08 06:06:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2019/12/31 13:07:12 ad Exp $");
 
 #include "opt_ddb.h"
-#include "opt_fpu_emulate.h"
 #include "opt_kgdb.h"
+#include "opt_fpu_emulate.h"
 #include "opt_modular.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/core.h>
-#include <sys/cpu.h>
+#include <sys/file.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/extent.h>
+#include <sys/mbuf.h>
+#include <sys/msgbuf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
-#include <sys/extent.h>
-#include <sys/file.h>
-#include <sys/ioctl.h>
+#include <sys/core.h>
 #include <sys/kcore.h>
-#include <sys/kernel.h>
-#include <sys/ksyms.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/module.h>
-#include <sys/mount.h>
-#include <sys/msgbuf.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/syscallargs.h>
-#include <sys/sysctl.h>
-#include <sys/systm.h>
-#include <sys/tty.h>
 #include <sys/vnode.h>
-
+#include <sys/syscallargs.h>
+#include <sys/ksyms.h>
+#include <sys/cpu.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
 
 #include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */
 
+#include <sys/sysctl.h>
+
 #include <dev/cons.h>
 #include <dev/mm.h>
 
-#define _SUN68K_BUS_DMA_PRIVATE
-#include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <machine/promlib.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
 #include <machine/idprom.h>
-#include <machine/intr.h>
 #include <machine/kcore.h>
+#include <machine/reg.h>
 #include <machine/pcb.h>
-#include <machine/pmap.h>
-#include <machine/promlib.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
-#include <machine/reg.h>
+#define _SUN68K_BUS_DMA_PRIVATE
+#include <machine/autoconf.h>
+#include <machine/bus.h>
+#include <machine/intr.h>
+#include <machine/pmap.h>
 
 #if defined(DDB)
 #include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
 #endif
 
 #include <dev/vme/vmereg.h>
@@ -1168,13 +1167,3 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		return 0;
 	return EFAULT;
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-#endif

@@ -1,7 +1,7 @@
-/* $NetBSD: tic.c,v 1.40 2020/03/30 00:09:06 roy Exp $ */
+/* $NetBSD: tic.c,v 1.31 2017/10/02 21:53:55 joerg Exp $ */
 
 /*
- * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.40 2020/03/30 00:09:06 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.31 2017/10/02 21:53:55 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: tic.c,v 1.40 2020/03/30 00:09:06 roy Exp $");
 #include <fcntl.h>
 #include <search.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -93,7 +92,7 @@ grow_tbuf(TBUF *tbuf, size_t len)
 
 	buf = _ti_grow_tbuf(tbuf, len);
 	if (buf == NULL)
-		err(EXIT_FAILURE, "_ti_grow_tbuf");
+		err(1, "_ti_grow_tbuf");
 	return buf;
 }
 
@@ -105,15 +104,14 @@ save_term(struct cdbw *db, TERM *term)
 	size_t slen = strlen(term->name) + 1;
 
 	if (term->base_term != NULL) {
-		char *cap;
-		len = (ssize_t)(1 + sizeof(uint32_t) + sizeof(uint16_t) + slen);
+		len = (ssize_t)slen + 7;
 		buf = emalloc(len);
-		cap = (char *)buf;
-		*cap++ = TERMINFO_ALIAS;
-		_ti_encode_32(&cap, term->base_term->id);
-		_ti_encode_count_str(&cap, term->name, slen);
+		buf[0] = 2;
+		le32enc(buf + 1, term->base_term->id);
+		le16enc(buf + 5, slen);
+		memcpy(buf + 7, term->name, slen);
 		if (cdbw_put(db, term->name, slen, buf, len))
-			err(EXIT_FAILURE, "cdbw_put");
+			err(1, "cdbw_put");
 		free(buf);
 		return 0;
 	}
@@ -123,9 +121,9 @@ save_term(struct cdbw *db, TERM *term)
 		return -1;
 
 	if (cdbw_put_data(db, buf, len, &term->id))
-		err(EXIT_FAILURE, "cdbw_put_data");
+		err(1, "cdbw_put_data");
 	if (cdbw_put_key(db, term->name, slen, term->id))
-		err(EXIT_FAILURE, "cdbw_put_key");
+		err(1, "cdbw_put_key");
 	free(buf);
 	return 0;
 }
@@ -139,22 +137,6 @@ find_term(const char *name)
 	elem.data = NULL;
 	elemp = hsearch(elem, FIND);
 	return elemp ? (TERM *)elemp->data : NULL;
-}
-
-static TERM *
-find_newest_term(const char *name)
-{
-	char *lname;
-	TERM *term;
-
-	lname = _ti_getname(TERMINFO_RTYPE, name);
-	if (lname == NULL)
-		return NULL;
-	term = find_term(lname);
-	free(lname);
-	if (term == NULL)
-		term = find_term(name);
-	return term;
 }
 
 static TERM *
@@ -179,40 +161,12 @@ store_term(const char *name, TERM *base_term)
 	return term;
 }
 
-static void
-alias_terms(TERM *term)
-{
-	char *p, *e, *alias;
-
-	/* Create aliased terms */
-	if (term->tic->alias == NULL)
-		return;
-
-	alias = p = estrdup(term->tic->alias);
-	while (p != NULL && *p != '\0') {
-		e = strchr(p, '|');
-		if (e != NULL)
-			*e++ = '\0';
-		/* No need to lengthcheck the alias because the main
-		 * terminfo description already stores all the aliases
-		 * in the same length field as the alias. */
-		if (find_term(p) != NULL) {
-			dowarn("%s: has alias for already assigned"
-			    " term %s", term->tic->name, p);
-		} else {
-			store_term(p, term);
-		}
-		p = e;
-	}
-	free(alias);
-}
-
 static int
 process_entry(TBUF *buf, int flags)
 {
+	char *p, *e, *alias;
 	TERM *term;
 	TIC *tic;
-	TBUF sbuf = *buf;
 
 	if (buf->bufpos == 0)
 		return 0;
@@ -235,10 +189,24 @@ process_entry(TBUF *buf, int flags)
 	}
 	term = store_term(tic->name, NULL);
 	term->tic = tic;
-	alias_terms(term);
 
-	if (tic->rtype == TERMINFO_RTYPE)
-		return process_entry(&sbuf, flags | TIC_COMPAT_V1);
+	/* Create aliased terms */
+	if (tic->alias != NULL) {
+		alias = p = estrdup(tic->alias);
+		while (p != NULL && *p != '\0') {
+			e = strchr(p, '|');
+			if (e != NULL)
+				*e++ = '\0';
+			if (find_term(p) != NULL) {
+				dowarn("%s: has alias for already assigned"
+				    " term %s", tic->name, p);
+			} else {
+				store_term(p, term);
+			}
+			p = e;
+		}
+		free(alias);
+	}
 
 	return 0;
 }
@@ -246,58 +214,70 @@ process_entry(TBUF *buf, int flags)
 static void
 merge(TIC *rtic, TIC *utic, int flags)
 {
-	char flag, type;
-	const char *cap, *code, *str;
-	short ind, len;
-	int num;
+	char *cap, flag, *code, type, *str;
+	short ind, num;
 	size_t n;
-
-	if (rtic->rtype < utic->rtype)
-		errx(EXIT_FAILURE, "merge rtype diff (%s:%d into %s:%d)",
-		    utic->name, utic->rtype, rtic->name, rtic->rtype);
 
 	cap = utic->flags.buf;
 	for (n = utic->flags.entries; n > 0; n--) {
-		ind = _ti_decode_16(&cap);
+		ind = le16dec(cap);
+		cap += sizeof(uint16_t);
 		flag = *cap++;
 		if (VALID_BOOLEAN(flag) &&
-		    _ti_find_cap(rtic, &rtic->flags, 'f', ind) == NULL)
+		    _ti_find_cap(&rtic->flags, 'f', ind) == NULL)
 		{
-			if (!_ti_encode_buf_id_flags(&rtic->flags, ind, flag))
-				err(EXIT_FAILURE, "encode flag");
+			_ti_grow_tbuf(&rtic->flags, sizeof(uint16_t) + 1);
+			le16enc(rtic->flags.buf + rtic->flags.bufpos, ind);
+			rtic->flags.bufpos += sizeof(uint16_t);
+			rtic->flags.buf[rtic->flags.bufpos++] = flag;
+			rtic->flags.entries++;
 		}
 	}
 
 	cap = utic->nums.buf;
 	for (n = utic->nums.entries; n > 0; n--) {
-		ind = _ti_decode_16(&cap);
-		num = _ti_decode_num(&cap, utic->rtype);
+		ind = le16dec(cap);
+		cap += sizeof(uint16_t);
+		num = le16dec(cap);
+		cap += sizeof(uint16_t);
 		if (VALID_NUMERIC(num) &&
-		    _ti_find_cap(rtic, &rtic->nums, 'n', ind) == NULL)
+		    _ti_find_cap(&rtic->nums, 'n', ind) == NULL)
 		{
-			if (!_ti_encode_buf_id_num(&rtic->nums, ind, num,
-			    _ti_numsize(rtic)))
-				err(EXIT_FAILURE, "encode num");
+			grow_tbuf(&rtic->nums, sizeof(uint16_t) * 2);
+			le16enc(rtic->nums.buf + rtic->nums.bufpos, ind);
+			rtic->nums.bufpos += sizeof(uint16_t);
+			le16enc(rtic->nums.buf + rtic->nums.bufpos, num);
+			rtic->nums.bufpos += sizeof(uint16_t);
+			rtic->nums.entries++;
 		}
 	}
 
 	cap = utic->strs.buf;
 	for (n = utic->strs.entries; n > 0; n--) {
-		ind = _ti_decode_16(&cap);
-		len = _ti_decode_16(&cap);
-		if (len > 0 &&
-		    _ti_find_cap(rtic, &rtic->strs, 's', ind) == NULL)
+		ind = le16dec(cap);
+		cap += sizeof(uint16_t);
+		num = le16dec(cap);
+		cap += sizeof(uint16_t);
+		if (num > 0 &&
+		    _ti_find_cap(&rtic->strs, 's', ind) == NULL)
 		{
-			if (!_ti_encode_buf_id_count_str(&rtic->strs, ind, cap,
-			    len))
-				err(EXIT_FAILURE, "encode str");
+			grow_tbuf(&rtic->strs, (sizeof(uint16_t) * 2) + num);
+			le16enc(rtic->strs.buf + rtic->strs.bufpos, ind);
+			rtic->strs.bufpos += sizeof(uint16_t);
+			le16enc(rtic->strs.buf + rtic->strs.bufpos, num);
+			rtic->strs.bufpos += sizeof(uint16_t);
+			memcpy(rtic->strs.buf + rtic->strs.bufpos,
+			    cap, num);
+			rtic->strs.bufpos += num;
+			rtic->strs.entries++;
 		}
-		cap += len;
+		cap += num;
 	}
 
 	cap = utic->extras.buf;
 	for (n = utic->extras.entries; n > 0; n--) {
-		num = _ti_decode_16(&cap);
+		num = le16dec(cap);
+		cap += sizeof(uint16_t);
 		code = cap;
 		cap += num;
 		type = *cap++;
@@ -310,12 +290,14 @@ merge(TIC *rtic, TIC *utic, int flags)
 				continue;
 			break;
 		case 'n':
-			num = _ti_decode_num(&cap, utic->rtype);
+			num = le16dec(cap);
+			cap += sizeof(uint16_t);
 			if (!VALID_NUMERIC(num))
 				continue;
 			break;
 		case 's':
-			num = _ti_decode_16(&cap);
+			num = le16dec(cap);
+			cap += sizeof(uint16_t);
 			str = cap;
 			cap += num;
 			if (num == 0)
@@ -327,123 +309,31 @@ merge(TIC *rtic, TIC *utic, int flags)
 	}
 }
 
-static int
-dup_tbuf(TBUF *dst, const TBUF *src)
-{
-
-	if (src->buflen == 0)
-		return 0;
-	dst->buf = malloc(src->buflen);
-	if (dst->buf == NULL)
-		return -1;
-	dst->buflen = src->buflen;
-	memcpy(dst->buf, src->buf, dst->buflen);
-	dst->bufpos = src->bufpos;
-	dst->entries = src->entries;
-	return 0;
-}
-
-static int
-promote(TIC *rtic, TIC *utic)
-{
-	TERM *nrterm = find_newest_term(rtic->name);
-	TERM *nuterm = find_newest_term(utic->name);
-	TERM *term;
-	TIC *tic;
-
-	if (nrterm == NULL || nuterm == NULL)
-		return -1;
-	if (nrterm->tic->rtype >= nuterm->tic->rtype)
-		return 0;
-
-	tic = calloc(1, sizeof(*tic));
-	if (tic == NULL)
-		return -1;
-
-	tic->name = _ti_getname(TERMINFO_RTYPE, rtic->name);
-	if (tic->name == NULL)
-		goto err;
-	if (rtic->alias != NULL) {
-		tic->alias = strdup(rtic->alias);
-		if (tic->alias == NULL)
-			goto err;
-	}
-	if (rtic->desc != NULL) {
-		tic->desc = strdup(rtic->desc);
-		if (tic->desc == NULL)
-			goto err;
-	}
-
-	tic->rtype = rtic->rtype;
-	if (dup_tbuf(&tic->flags, &rtic->flags) == -1)
-		goto err;
-	if (dup_tbuf(&tic->nums, &rtic->nums) == -1)
-		goto err;
-	if (dup_tbuf(&tic->strs, &rtic->strs) == -1)
-		goto err;
-	if (dup_tbuf(&tic->extras, &rtic->extras) == -1)
-		goto err;
-	if (_ti_promote(tic) == -1)
-		goto err;
-
-	term = store_term(tic->name, NULL);
-	if (term == NULL)
-		goto err;
-
-	term->tic = tic;
-	alias_terms(term);
-	return 0;
-
-err:
-	free(tic->flags.buf);
-	free(tic->nums.buf);
-	free(tic->strs.buf);
-	free(tic->extras.buf);
-	free(tic->desc);
-	free(tic->alias);
-	free(tic->name);
-	free(tic);
-	return -1;
-}
-
 static size_t
 merge_use(int flags)
 {
 	size_t skipped, merged, memn;
-	const char *cap;
-	char *name, *basename;
+	char *cap, *scap;
 	uint16_t num;
 	TIC *rtic, *utic;
-	TERM *term, *uterm;
-	bool promoted;
+	TERM *term, *uterm;;
 
 	skipped = merged = 0;
 	STAILQ_FOREACH(term, &terms, next) {
 		if (term->base_term != NULL)
 			continue;
 		rtic = term->tic;
-		basename = _ti_getname(TERMINFO_RTYPE_O1, rtic->name);
-		promoted = false;
-		while ((cap = _ti_find_extra(rtic, &rtic->extras, "use"))
-		    != NULL) {
+		while ((cap = _ti_find_extra(&rtic->extras, "use")) != NULL) {
 			if (*cap++ != 's') {
 				dowarn("%s: use is not string", rtic->name);
 				break;
 			}
 			cap += sizeof(uint16_t);
-			if (strcmp(basename, cap) == 0) {
+			if (strcmp(rtic->name, cap) == 0) {
 				dowarn("%s: uses itself", rtic->name);
 				goto remove;
 			}
-			name = _ti_getname(rtic->rtype, cap);
-			if (name == NULL) {
-				dowarn("%s: ???: %s", rtic->name, cap);
-				goto remove;
-			}
-			uterm = find_term(name);
-			free(name);
-			if (uterm == NULL)
-				uterm = find_term(cap);
+			uterm = find_term(cap);
 			if (uterm != NULL && uterm->base_term != NULL)
 				uterm = uterm->base_term;
 			if (uterm == NULL) {
@@ -456,34 +346,23 @@ merge_use(int flags)
 				dowarn("%s: uses itself", rtic->name);
 				goto remove;
 			}
-			if (_ti_find_extra(utic, &utic->extras, "use")
-			    != NULL) {
+			if (_ti_find_extra(&utic->extras, "use") != NULL) {
 				skipped++;
 				break;
 			}
-
-			/* If we need to merge in a term that requires
-			 * this term to be promoted, we need to duplicate
-			 * this term, promote it and append it to our list. */
-			if (!promoted && rtic->rtype != TERMINFO_RTYPE) {
-				if (promote(rtic, utic) == -1)
-					err(EXIT_FAILURE, "promote");
-				promoted = true;
-			}
-
+			cap = _ti_find_extra(&rtic->extras, "use");
 			merge(rtic, utic, flags);
 	remove:
 			/* The pointers may have changed, find the use again */
-			cap = _ti_find_extra(rtic, &rtic->extras, "use");
+			cap = _ti_find_extra(&rtic->extras, "use");
 			if (cap == NULL)
 				dowarn("%s: use no longer exists - impossible",
 					rtic->name);
 			else {
-				char *scap = __UNCONST(
-				    cap - (4 + sizeof(uint16_t)));
+				scap = cap - (4 + sizeof(uint16_t));
 				cap++;
-				num = _ti_decode_16(&cap);
-				cap += num;
+				num = le16dec(cap);
+				cap += sizeof(uint16_t) + num;
 				memn = rtic->extras.bufpos -
 				    (cap - rtic->extras.buf);
 				memmove(scap, cap, memn);
@@ -493,7 +372,6 @@ merge_use(int flags)
 				merged++;
 			}
 		}
-		free(basename);
 	}
 
 	if (merged == 0 && skipped != 0)
@@ -520,7 +398,7 @@ print_dump(int argc, char **argv)
 
 	n = 0;
 	for (i = 0; i < argc; i++) {
-		term = find_newest_term(argv[i]);
+		term = find_term(argv[i]);
 		if (term == NULL) {
 			warnx("%s: no description for terminal", argv[i]);
 			continue;
@@ -576,7 +454,7 @@ write_database(const char *dbname)
 
 	db = cdbw_open();
 	if (db == NULL)
-		err(EXIT_FAILURE, "cdbw_open failed");
+		err(1, "cdbw_open failed");
 	/* Save the terms */
 	STAILQ_FOREACH(term, &terms, next)
 		save_term(db, term);
@@ -584,18 +462,15 @@ write_database(const char *dbname)
 	easprintf(&tmp_dbname, "%s.XXXXXX", dbname);
 	fd = mkstemp(tmp_dbname);
 	if (fd == -1)
-		err(EXIT_FAILURE,
-		    "creating temporary database %s failed", tmp_dbname);
+		err(1, "creating temporary database %s failed", tmp_dbname);
 	if (cdbw_output(db, fd, "NetBSD terminfo", cdbw_stable_seeder))
-		err(EXIT_FAILURE,
-		    "writing temporary database %s failed", tmp_dbname);
+		err(1, "writing temporary database %s failed", tmp_dbname);
 	if (fchmod(fd, DEFFILEMODE))
-		err(EXIT_FAILURE, "fchmod failed");
+		err(1, "fchmod failed");
 	if (close(fd))
-		err(EXIT_FAILURE,
-		    "writing temporary database %s failed", tmp_dbname);
+		err(1, "writing temporary database %s failed", tmp_dbname);
 	if (rename(tmp_dbname, dbname))
-		err(EXIT_FAILURE, "renaming %s to %s failed", tmp_dbname, dbname);
+		err(1, "renaming %s to %s failed", tmp_dbname, dbname);
 	free(tmp_dbname);
 	cdbw_close(db);
 }
@@ -649,7 +524,7 @@ main(int argc, char **argv)
 	source = argv[optind++];
 	f = fopen(source, "r");
 	if (f == NULL)
-		err(EXIT_FAILURE, "fopen: %s", source);
+		err(1, "fopen: %s", source);
 
 	hcreate(HASH_SIZE);
 

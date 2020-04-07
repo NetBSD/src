@@ -1,4 +1,4 @@
-#	$NetBSD: LINKITSMART7688,v 1.13 2020/03/25 17:06:18 jdolecek Exp $
+#	$NetBSD: LINKITSMART7688,v 1.12 2020/01/19 01:25:05 thorpej Exp $
 #
 # MediaTek MT7688
 #
@@ -81,6 +81,7 @@ file-system	KERNFS		# /kern
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
+#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 

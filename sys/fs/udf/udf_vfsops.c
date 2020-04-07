@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.78 2020/03/16 21:20:10 pgoyette Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.77 2020/01/17 20:08:08 ad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.78 2020/03/16 21:20:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.77 2020/01/17 20:08:08 ad Exp $");
 #endif /* not lint */
 
 
@@ -78,6 +78,8 @@ MALLOC_JUSTDEFINE(M_UDFMNT,   "UDF mount",	"UDF mount structures");
 MALLOC_JUSTDEFINE(M_UDFVOLD,  "UDF volspace",	"UDF volume space descriptors");
 MALLOC_JUSTDEFINE(M_UDFTEMP,  "UDF temp",	"UDF scrap space");
 struct pool udf_node_pool;
+
+static struct sysctllog *udf_sysctl_log;
 
 /* internal functions */
 static int udf_mountfs(struct vnode *, struct mount *, struct lwp *, struct udf_args *);
@@ -167,29 +169,10 @@ udf_done(void)
  */
 #define UDF_VERBOSE_SYSCTLOPT        1
 
-SYSCTL_SETUP(udf_sysctl_setup, "udf sysctl")
-{
-	const struct sysctlnode *node;
-
-	sysctl_createv(clog, 0, NULL, &node,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "udf",
-		       SYSCTL_DESCR("OSTA Universal File System"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 24, CTL_EOL);
-#ifdef DEBUG
-	sysctl_createv(clog, 0, NULL, &node,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "verbose",
-		       SYSCTL_DESCR("Bitmask for filesystem debugging"),
-		       NULL, 0, &udf_verbose, 0,
-		       CTL_VFS, 24, UDF_VERBOSE_SYSCTLOPT, CTL_EOL);
-#endif
-}
-
 static int
 udf_modcmd(modcmd_t cmd, void *arg)
 {
+	const struct sysctlnode *node;
 	int error;
 
 	switch (cmd) {
@@ -202,11 +185,26 @@ udf_modcmd(modcmd_t cmd, void *arg)
 		 * more instance of the "number to vfs" mapping problem, but
 		 * "24" is the order as taken from sys/mount.h
 		 */
+		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "udf",
+			       SYSCTL_DESCR("OSTA Universal File System"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 24, CTL_EOL);
+#ifdef DEBUG
+		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "verbose",
+			       SYSCTL_DESCR("Bitmask for filesystem debugging"),
+			       NULL, 0, &udf_verbose, 0,
+			       CTL_VFS, 24, UDF_VERBOSE_SYSCTLOPT, CTL_EOL);
+#endif
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&udf_vfsops);
 		if (error != 0)
 			break;
+		sysctl_teardown(&udf_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

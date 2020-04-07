@@ -50,8 +50,7 @@ typedef enum OPTION_choice {
 
 const OPTIONS enc_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"list", OPT_LIST, '-', "List ciphers"},
-    {"ciphers", OPT_LIST, '-', "Alias for -list"},
+    {"ciphers", OPT_LIST, '-', "List ciphers"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
     {"pass", OPT_PASS, 's', "Passphrase source"},

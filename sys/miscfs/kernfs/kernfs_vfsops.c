@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.99 2020/03/16 21:20:11 pgoyette Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.98 2020/02/04 04:19:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.99 2020/03/16 21:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.98 2020/02/04 04:19:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -73,6 +73,8 @@ kmutex_t kfs_lock;
 VFS_PROTOS(kernfs);
 
 void	kernfs_get_rrootdev(void);
+
+static struct sysctllog *kernfs_sysctl_log;
 
 void
 kernfs_init(void)
@@ -326,22 +328,6 @@ struct vfsops kernfs_vfsops = {
 	.vfs_opv_descs = kernfs_vnodeopv_descs
 };
 
-SYSCTL_SETUP(kernfs_sysctl_setup, "kernfs sysctl")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kernfs",
-		       SYSCTL_DESCR("/kern file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 11, CTL_EOL);
-	/*
-	 * XXX the "11" above could be dynamic, thereby eliminating one
-	 * more instance of the "number to vfs" mapping problem, but
-	 * "11" is the order as taken from sys/mount.h
-	 */
-}
-
 static int
 kernfs_modcmd(modcmd_t cmd, void *arg)
 {
@@ -352,11 +338,23 @@ kernfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&kernfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_createv(&kernfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "kernfs",
+			       SYSCTL_DESCR("/kern file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 11, CTL_EOL);
+		/*
+		 * XXX the "11" above could be dynamic, thereby eliminating one
+		 * more instance of the "number to vfs" mapping problem, but
+		 * "11" is the order as taken from sys/mount.h
+		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&kernfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_teardown(&kernfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

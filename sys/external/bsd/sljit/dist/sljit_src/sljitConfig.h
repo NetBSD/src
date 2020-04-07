@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitConfig.h,v 1.17 2020/03/05 15:18:55 riastradh Exp $	*/
+/*	$NetBSD: sljitConfig.h,v 1.15 2019/01/20 23:14:16 alnsn Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler

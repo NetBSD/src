@@ -1,4 +1,4 @@
-#	$NetBSD: crontab,v 1.16 2020/03/29 06:44:16 kim Exp $
+#	$NetBSD: crontab,v 1.15 2002/11/27 15:09:17 perry Exp $
 #
 # /var/cron/tabs/root - root's crontab for NetBSD
 #
@@ -15,6 +15,6 @@ CRON_WITHIN=7200
 0	*	*	*	*	/usr/bin/newsyslog
 #
 # do daily/weekly/monthly maintenance
-15	4	*	*	*	/bin/sh /etc/daily 2>&1 | tee /var/log/daily.out | sendmail -t
-30	5	*	*	6	/bin/sh /etc/weekly 2>&1 | tee /var/log/weekly.out | sendmail -t
+15	3	*	*	*	/bin/sh /etc/daily 2>&1 | tee /var/log/daily.out | sendmail -t
+30	4	*	*	6	/bin/sh /etc/weekly 2>&1 | tee /var/log/weekly.out | sendmail -t
 #30	5	1	*	*	/bin/sh /etc/monthly 2>&1 | tee /var/log/monthly.out | sendmail -t

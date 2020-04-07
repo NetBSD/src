@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 2020/03/14 04:55:14 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.3 2019/10/09 17:28:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define PGC_UC		(PTE_PWT | PTE_PCD)	/* hard UC */
 
 /*
- * #PF exception bits
+ * Page protection exception bits
  */
 #define PGEX_P		0x0001	/* the page was present */
 #define PGEX_W		0x0002	/* exception during a write cycle */

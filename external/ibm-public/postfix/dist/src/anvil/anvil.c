@@ -1,4 +1,4 @@
-/*	$NetBSD: anvil.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: anvil.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -167,8 +167,7 @@
 /*	from many remote clients.  To reduce memory usage, reduce
 /*	the time unit over which state is kept.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8)
-/*	or \fBpostlogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*
 /*	Upon exit, and every \fBanvil_status_update_time\fR
 /*	seconds, the server logs the maximal count and rate values measured,
@@ -232,12 +231,8 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
-/* .PP
-/*	Available in Postfix 3.3 and later:
-/* .IP "\fBservice_name (read-only)\fR"
-/*	The master.cf service name of a Postfix daemon process.
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* SEE ALSO
 /*	smtpd(8), Postfix SMTP server
 /*	postconf(5), configuration parameters

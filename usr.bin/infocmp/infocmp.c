@@ -1,7 +1,7 @@
-/* $NetBSD: infocmp.c,v 1.17 2020/03/31 12:44:15 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.12 2017/05/16 09:21:54 roy Exp $ */
 
 /*
- * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.17 2020/03/31 12:44:15 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.12 2017/05/16 09:21:54 roy Exp $");
 
 #include <sys/ioctl.h>
 
@@ -48,7 +48,7 @@ typedef struct tient {
 	char type;
 	const char *id;
 	signed char flag;
-	int num;
+	short num;
 	const char *str;
 } TIENT;
 
@@ -128,15 +128,14 @@ ent_compare(const void *a, const void *b)
 static void
 setdb(char *db)
 {
-	static const char *ext[] = { ".cdb", ".db" };
+	size_t len;
 
-	for (size_t i = 0; i < __arraycount(ext); i++) {
-		char *ptr = strstr(db, ext[i]);
-		if (ptr == NULL || ptr[strlen(ext[i])] != '\0')
-			continue;
-		*ptr = '\0';
-		break;
-	}
+	len = strlen(db);
+	if (len > 3 &&
+	    db[len - 3] == '.' &&
+	    db[len - 2] == 'd' &&
+	    db[len - 1] == 'b')
+		db[len - 3] = '\0';
 	setenv("TERMINFO", db, 1);
 }
 
@@ -442,11 +441,9 @@ load_term(const char *name)
 		return t;
 
 	if (_ti_database == NULL)
-		errx(EXIT_FAILURE,
-		    "no terminal definition found in internal database");
+		errx(EXIT_FAILURE, "no terminal definition found in internal database");
 	else
-		errx(EXIT_FAILURE,
-		    "no terminal definition found in %s.db", _ti_database);
+		errx(EXIT_FAILURE, "no terminal definition found in %s.db", _ti_database);
 }
 
 static void
@@ -719,33 +716,9 @@ main(int argc, char **argv)
 			printf("# Reconstructed from %s\n",
 			     _ti_database == NULL ?
 			     "internal database" : _ti_database);
-		/* Strip internal versioning */
-		term = strchr(t->name, TERMINFO_VDELIM);
-		if (term != NULL)
-			*term = '\0';
 		printf("%s", t->name);
-		if (t->_alias != NULL) {
-			char *alias, *aliascpy, *delim;
-
-			alias = aliascpy = estrdup(t->_alias);
-			while (alias != NULL && *alias != '\0') {
-				putchar('|');
-				delim = strchr(alias, TERMINFO_VDELIM);
-				if (delim != NULL)
-					*delim++ = '\0';
-				printf("%s", alias);
-				if (delim != NULL) {
-					while (*delim != '\0' && *delim != '|')
-						delim++;
-					if (*delim == '\0')
-						alias = NULL;
-					else
-						alias = delim + 1;
-				} else
-					alias = NULL;
-			}
-			free(aliascpy);
-		}
+		if (t->_alias != NULL && *t->_alias != '\0')
+			printf("|%s", t->_alias);
 		if (t->desc != NULL && *t->desc != '\0')
 			printf("|%s", t->desc);
 		printf(",\n");

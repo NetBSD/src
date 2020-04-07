@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2020/03/14 14:05:43 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36 2016/09/03 09:07:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,11 +61,10 @@ void pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 /* ARGSUSED */
-static __inline bool
+static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
-	return false;
 }
 
 /*

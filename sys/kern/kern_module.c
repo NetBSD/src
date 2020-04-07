@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.148 2020/03/20 23:09:01 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.147 2020/02/22 19:51:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.148 2020/03/20 23:09:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.147 2020/02/22 19:51:57 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -136,8 +136,8 @@ static void	module_callback_unload(struct module *);
 static void
 module_incompat(const modinfo_t *mi, int modclass)
 {
-	module_error("incompatible module class %d for `%s' (wanted %d)",
-	    mi->mi_class, mi->mi_name, modclass);
+	module_error("incompatible module class for `%s' (%d != %d)",
+	    mi->mi_name, modclass, mi->mi_class);
 }
 
 struct module *

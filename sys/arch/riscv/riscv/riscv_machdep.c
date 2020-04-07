@@ -31,7 +31,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.10 2020/03/14 16:12:16 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.8 2019/12/31 13:07:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ delay(unsigned long us)
 
 #ifdef MODULAR
 /*
- * Push any modules loaded by the boot loader.
+ * Push any modules loaded by the boot loader. 
  */
 void
 module_init_md(void)
@@ -131,7 +131,7 @@ cpu_spawn_return(struct lwp *l)
 	userret(l);
 }
 
-/*
+/* 
  * Start a new LWP
  */
 void
@@ -333,7 +333,4 @@ cpu_startup(void)
 void
 init_riscv(vaddr_t kernstart, vaddr_t kernend)
 {
-
-	/* Early VM bootstrap. */
-	pmap_bootstrap();
 }

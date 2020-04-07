@@ -3370,7 +3370,7 @@ metaslab_alloc(spa_t *spa, metaslab_class_t *mc, uint64_t psize, blkptr_t *bp,
     zio_alloc_list_t *zal, zio_t *zio)
 {
 	dva_t *dva = bp->blk_dva;
-	dva_t *hintdva = (hintbp != NULL) ? hintbp->blk_dva : NULL;
+	dva_t *hintdva = hintbp->blk_dva;
 	int error = 0;
 
 	ASSERT(bp->blk_birth == 0);

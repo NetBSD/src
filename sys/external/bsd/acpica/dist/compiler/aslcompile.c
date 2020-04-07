@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -175,7 +175,6 @@ CmDoCompile (
 
     LsDumpParseTree ();
 
-    UtEndEvent (Event);
     UtEndEvent (FullCompile);
     return (AE_OK);
 
@@ -540,7 +539,7 @@ void
 AslCompilerFileHeader (
     UINT32                  FileId)
 {
-    char                    *NewTime;
+    struct tm               *NewTime;
     time_t                  Aclock;
     char                    *Prefix = "";
 
@@ -584,17 +583,13 @@ AslCompilerFileHeader (
 
     /* Compilation header with timestamp */
 
-    Aclock = time (NULL);
-    NewTime = ctime (&Aclock);
+    (void) time (&Aclock);
+    NewTime = localtime (&Aclock);
 
     FlPrintFile (FileId,
-        "%sCompilation of \"%s\" -",
-        Prefix, AslGbl_Files[ASL_FILE_INPUT].Filename);
-
-    if (NewTime)
-    {
-        FlPrintFile (FileId, " %s%s\n", NewTime, Prefix);
-    }
+        "%sCompilation of \"%s\" - %s%s\n",
+        Prefix, AslGbl_Files[ASL_FILE_INPUT].Filename, asctime (NewTime),
+        Prefix);
 
     switch (FileId)
     {

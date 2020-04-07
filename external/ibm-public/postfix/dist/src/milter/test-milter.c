@@ -1,4 +1,4 @@
-/*	$NetBSD: test-milter.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: test-milter.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -20,8 +20,7 @@
 /*	Arguments (multiple alternatives are separated by "\fB|\fR"):
 /* .IP "\fB-a accept|tempfail|reject|discard|skip|\fIddd x.y.z text\fR"
 /*	Specifies a non-default reply for the MTA command specified
-/*	with \fB-c\fR. The default is \fBtempfail\fR. The \fItext\fR
-/*	is repeated once, to produce multi-line reply text.
+/*	with \fB-c\fR. The default is \fBtempfail\fR.
 /* .IP "\fB-A address\fR"
 /*	Add the specified recipient address (specify ESMTP parameters
 /*	separated by space). Multiple -A options are supported.
@@ -71,11 +70,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 #include <sys/types.h>
@@ -193,9 +187,7 @@ static const char *macro_names[] = {
     "{client_port}",
     "{client_ptr}",
     "{client_resolve}",
-    "{daemon_addr}",
     "{daemon_name}",
-    "{daemon_port}",
     "{if_addr}",
     "{if_name}",
     "{mail_addr}",
@@ -221,7 +213,7 @@ static int test_reply(SMFICTX *ctx, int code)
     if (code == SMFIR_REPLYCODE) {
 	if (smfi_setmlreply(ctx, reply_code, reply_dsn, reply_message, reply_message, (char *) 0) == MI_FAILURE)
 	    fprintf(stderr, "smfi_setmlreply failed\n");
-	printf("test_reply %s\n\n", reply_code);
+	printf("test_reply %s\n", reply_code);
 	return (reply_code[0] == '4' ? SMFIS_TEMPFAIL : SMFIS_REJECT);
     } else {
 	printf("test_reply %d\n\n", code);

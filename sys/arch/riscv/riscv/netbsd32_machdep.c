@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: netbsd32_machdep.c,v 1.4 2020/03/14 16:12:16 skrll Exp $");
+__RCSID("$NetBSD: netbsd32_machdep.c,v 1.3 2017/03/16 16:13:21 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -51,7 +51,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	setregs(l, pack, stack);
 }
 
-/*
+/* 
  * Start a new LWP
  */
 void
@@ -179,7 +179,7 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap,
 vaddr_t
 netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size,
     int topdown)
-{
+{          
 	if (topdown)
 		return VM_DEFAULT_ADDRESS32_TOPDOWN(base, size);
 	else

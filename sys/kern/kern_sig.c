@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.385 2020/03/26 21:25:26 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.384 2020/02/01 02:23:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.385 2020/03/26 21:25:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.384 2020/02/01 02:23:23 riastradh Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1117,7 +1117,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 	 * If the LWP is on the way out, sigclear() will be busy draining all
 	 * pending signals.  Don't give it more.
 	 */
-	if (l->l_stat == LSZOMB)
+	if (l->l_refcnt == 0)
 		return 0;
 
 	SDT_PROBE(proc, kernel, , signal__send, l, p, sig, 0, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.166 2020/03/29 21:34:33 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.163 2020/02/24 20:31:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -374,7 +374,7 @@ u_int arm32_mmap_flags(paddr_t);
  * Functions that we need to export
  */
 void	pmap_procwr(struct proc *, vaddr_t, int);
-bool	pmap_remove_all(pmap_t);
+void	pmap_remove_all(pmap_t);
 bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 
 #define	PMAP_NEED_PROCWR
@@ -1183,12 +1183,6 @@ do {									\
 	(pg)->mdpage.urw_mappings = 0;					\
 	(pg)->mdpage.k_mappings = 0;					\
 } while (/*CONSTCOND*/0)
-
-#ifndef	__BSD_PTENTRY_T__
-#define	__BSD_PTENTRY_T__
-typedef uint32_t pt_entry_t;
-#define PRIxPTE		PRIx32
-#endif
 
 #endif /* !_LOCORE */
 

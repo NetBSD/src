@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.83 2020/03/19 19:55:34 ad Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.81 2019/11/05 20:21:34 maxv Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.83 2020/03/19 19:55:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.81 2019/11/05 20:21:34 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

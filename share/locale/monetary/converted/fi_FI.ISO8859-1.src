@@ -1,4 +1,4 @@
-# $NetBSD: fi_FI.ISO8859-1.src,v 1.2 2020/03/23 13:56:12 kim Exp $
+# $NetBSD: fi_FI.ISO8859-1.src,v 1.1 2013/08/11 22:09:41 joerg Exp $
 #
 # Locale: fi_FI
 # Character set: ISO8859-1
@@ -33,7 +33,7 @@ EUR
 #
 # Currency Symbol (currency_symbol)
 #
-e
+EUR
 #
 # Monetary Decimal Point (mon_decimal_point)
 #

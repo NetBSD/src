@@ -191,6 +191,7 @@ wskbd*	at ukbd? console ?
 ums*	at uhidev? reportid ?				# USB Mice
 wsmouse* at ums?
 
+options		OFWOEA_WSCONS_NO_ROM_FONT
 genfb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 radeonfb*	at pci? dev ? function ?
 options 	RADEONFB_ALWAYS_ACCEL_PUTCHAR

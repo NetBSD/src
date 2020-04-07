@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwfm_pci.c,v 1.7 2020/03/25 03:44:45 thorpej Exp $	*/
+/*	$NetBSD: if_bwfm_pci.c,v 1.6 2018/12/09 11:14:02 jdolecek Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -36,6 +36,8 @@
 #include <netinet/in.h>
 
 #include <net80211/ieee80211_var.h>
+
+#include <dev/firmload.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -317,55 +319,6 @@ struct bwfm_proto_ops bwfm_pci_msgbuf_ops = {
 CFATTACH_DECL_NEW(bwfm_pci, sizeof(struct bwfm_pci_softc),
     bwfm_pci_match, bwfm_pci_attach, bwfm_pci_detach, NULL);
 
-static const struct bwfm_firmware_selector bwfm_pci_fwtab[] = {
-	BWFM_FW_ENTRY(BRCM_CC_43602_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43602-pcie"),
-
-	BWFM_FW_ENTRY(BRCM_CC_43465_CHIP_ID,
-		      BWFM_FWSEL_REV_GE(4), "brcmfmac4366c-pcie"),
-	
-	BWFM_FW_ENTRY(BRCM_CC_4350_CHIP_ID,
-		      BWFM_FWSEL_REV_LE(7), "brcmfmac4350c2-pcie"),
-	BWFM_FW_ENTRY(BRCM_CC_4350_CHIP_ID,
-		      BWFM_FWSEL_REV_GE(8), "brcmfmac4350-pcie"),
-	
-	BWFM_FW_ENTRY(BRCM_CC_43525_CHIP_ID,
-		      BWFM_FWSEL_REV_GE(4), "brcmfmac4365c-pcie"),
-	
-	BWFM_FW_ENTRY(BRCM_CC_4356_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4356-pcie"),
-	
-	BWFM_FW_ENTRY(BRCM_CC_43567_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43570-pcie"),
-	BWFM_FW_ENTRY(BRCM_CC_43569_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43570-pcie"),
-	BWFM_FW_ENTRY(BRCM_CC_43570_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43570-pcie"),
-	
-	BWFM_FW_ENTRY(BRCM_CC_4358_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4358-pcie"),
-	
-	BWFM_FW_ENTRY(BRCM_CC_4359_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4359-pcie"),
-	
-	BWFM_FW_ENTRY(BRCM_CC_4365_CHIP_ID,
-		      BWFM_FWSEL_REV_LE(3), "brcmfmac4365b-pcie"),
-	BWFM_FW_ENTRY(BRCM_CC_4365_CHIP_ID,
-		      BWFM_FWSEL_REV_GE(4), "brcmfmac4365c-pcie"),
-	
-	BWFM_FW_ENTRY(BRCM_CC_4366_CHIP_ID,
-		      BWFM_FWSEL_REV_LE(3), "brcmfmac4366b-pcie"),
-	BWFM_FW_ENTRY(BRCM_CC_4366_CHIP_ID,
-		      BWFM_FWSEL_REV_GE(4), "brcmfmac4366c-pcie"),
-	BWFM_FW_ENTRY(BRCM_CC_43664_CHIP_ID,
-		      BWFM_FWSEL_REV_GE(4), "brcmfmac4366c-pcie"),
-
-	BWFM_FW_ENTRY(BRCM_CC_4371_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4371-pcie"),
-
-	BWFM_FW_ENTRY_END
-};
-
 static const struct bwfm_pci_matchid {
 	pci_vendor_id_t		bwfm_vendor;
 	pci_product_id_t	bwfm_product;
@@ -473,17 +426,18 @@ bwfm_pci_attachhook(device_t self)
 	struct bwfm_pci_softc *sc = device_private(self);
 	struct bwfm_softc *bwfm = (void *)sc;
 	struct bwfm_pci_ringinfo ringinfo;
-	struct bwfm_firmware_context fwctx;
-	uint8_t *ucode;
-	size_t ucsize;
+	const char *name = NULL;
+	firmware_handle_t fwh;
+	u_char *ucode; size_t size;
 	uint32_t d2h_w_idx_ptr, d2h_r_idx_ptr;
 	uint32_t h2d_w_idx_ptr, h2d_r_idx_ptr;
 	uint32_t idx_offset, reg;
 	int i;
+	int error;
 
 	sc->sc_sc.sc_buscore_ops = &bwfm_pci_buscore_ops;
 	if (bwfm_chip_attach(&sc->sc_sc) != 0) {
-		aprint_error_dev(bwfm->sc_dev, "cannot attach chip\n");
+		printf("%s: cannot attach chip\n", DEVNAME(sc));
 		return;
 	}
 
@@ -495,39 +449,68 @@ bwfm_pci_attachhook(device_t self)
 	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 	    BWFM_PCI_PCIE2REG_CONFIGDATA, reg);
 
-	bwfm_firmware_context_init(&fwctx,
-	    bwfm->sc_chip.ch_chip, bwfm->sc_chip.ch_chiprev, NULL,
-	    BWFM_FWREQ(BWFM_FILETYPE_UCODE));
-	
-	if (!bwfm_firmware_open(bwfm, bwfm_pci_fwtab, &fwctx)) {
-		/* Error message already displayed. */
-		goto err;
+	switch (bwfm->sc_chip.ch_chip)
+	{
+	case BRCM_CC_4350_CHIP_ID:
+		if (bwfm->sc_chip.ch_chiprev > 7)
+			name = "brcmfmac4350-pcie.bin";
+		else
+			name = "brcmfmac4350c2-pcie.bin";
+		break;
+	case BRCM_CC_43602_CHIP_ID:
+		name = "brcmfmac43602-pcie.bin";
+		break;
+	default:
+		printf("%s: unknown firmware for chip %s\n",
+		    DEVNAME(sc), bwfm->sc_chip.ch_name);
+		return;
 	}
 
-	ucode = bwfm_firmware_data(&fwctx, BWFM_FILETYPE_UCODE, &ucsize);
-	KASSERT(ucode != NULL);
+	if (firmware_open("if_bwfm", name, &fwh) != 0) {
+		printf("%s: failed firmware_open of file %s\n",
+		    DEVNAME(sc), name);
+		return;
+	}
+	size = firmware_get_size(fwh);
+	ucode = firmware_malloc(size);
+	if (ucode == NULL) {
+		printf("%s: failed to allocate firmware memory\n",
+		    DEVNAME(sc));
+		firmware_close(fwh);
+		return;
+	}
+	error = firmware_read(fwh, 0, ucode, size);
+	firmware_close(fwh);
+	if (error != 0) {
+		printf("%s: failed to read firmware (error %d)\n",
+		    DEVNAME(sc), error);
+		firmware_free(ucode, size);
+		return;
+	}
 
 	/* Retrieve RAM size from firmware. */
-	if (ucsize >= BWFM_RAMSIZE + 8) {
+	if (size >= BWFM_RAMSIZE + 8) {
 		uint32_t *ramsize = (uint32_t *)&ucode[BWFM_RAMSIZE];
 		if (letoh32(ramsize[0]) == BWFM_RAMSIZE_MAGIC)
 			bwfm->sc_chip.ch_ramsize = letoh32(ramsize[1]);
 	}
 
-	if (bwfm_pci_load_microcode(sc, ucode, ucsize) != 0) {
-		aprint_error_dev(bwfm->sc_dev, "could not load microcode\n");
-		goto err;
+	if (bwfm_pci_load_microcode(sc, ucode, size) != 0) {
+		printf("%s: could not load microcode\n",
+		    DEVNAME(sc));
+		kmem_free(ucode, size);
+		return;
 	}
 
-	bwfm_firmware_close(&fwctx);
+	firmware_free(ucode, size);
 
 	sc->sc_shared_flags = bus_space_read_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
 	    sc->sc_shared_address + BWFM_SHARED_INFO);
 	sc->sc_shared_version = sc->sc_shared_flags;
 	if (sc->sc_shared_version > BWFM_SHARED_INFO_MAX_VERSION ||
 	    sc->sc_shared_version < BWFM_SHARED_INFO_MIN_VERSION) {
-		aprint_error_dev(bwfm->sc_dev,
-		    "PCIe version %d unsupported\n", sc->sc_shared_version);
+		printf("%s: PCIe version %d unsupported\n",
+		    DEVNAME(sc), sc->sc_shared_version);
 		return;
 	}
 
@@ -597,8 +580,8 @@ bwfm_pci_attachhook(device_t self)
 		    sc->sc_dma_idx_bufsz, 8);
 		if (sc->sc_dma_idx_buf == NULL) {
 			/* XXX: Fallback to TCM? */
-			aprint_error_dev(bwfm->sc_dev,
-			    "cannot allocate idx buf\n");
+			printf("%s: cannot allocate idx buf\n",
+			    DEVNAME(sc));
 			return;
 		}
 
@@ -780,9 +763,6 @@ cleanup:
 		bwfm_pci_dmamem_free(sc, sc->sc_ctrl_submit.ring);
 	if (sc->sc_dma_idx_buf)
 		bwfm_pci_dmamem_free(sc, sc->sc_dma_idx_buf);
-
- err:
-	bwfm_firmware_close(&fwctx);
 }
 
 int

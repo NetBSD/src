@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.22 2020/03/10 01:17:33 christos Exp $ */
+/* $NetBSD: cpu.h,v 1.21 2020/02/15 08:16:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@ struct cpu_info {
 
 } __aligned(COHERENCY_UNIT);
 
-#ifdef _KERNEL
 static inline struct cpu_info *
 curcpu(void)
 {
@@ -159,8 +158,6 @@ cpu_dosoftints(void)
 		dosoftints();
 #endif
 }
-
-#endif /* _KERNEL */
 
 #endif /* _KERNEL || _KMEMUSER */
 

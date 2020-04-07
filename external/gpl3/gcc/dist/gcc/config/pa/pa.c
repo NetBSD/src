@@ -118,11 +118,11 @@ static void set_reg_plus_d (int, int, HOST_WIDE_INT, int);
 static rtx pa_function_value (const_tree, const_tree, bool);
 static rtx pa_libcall_value (machine_mode, const_rtx);
 static bool pa_function_value_regno_p (const unsigned int);
-static void pa_output_function_prologue (FILE *) ATTRIBUTE_UNUSED;
-static void pa_linux_output_function_prologue (FILE *) ATTRIBUTE_UNUSED;
+static void pa_output_function_prologue (FILE *);
 static void update_total_code_bytes (unsigned int);
 static void pa_output_function_epilogue (FILE *);
 static int pa_adjust_cost (rtx_insn *, int, rtx_insn *, int, unsigned int);
+static int pa_adjust_priority (rtx_insn *, int);
 static int pa_issue_rate (void);
 static int pa_reloc_rw_mask (void);
 static void pa_som_asm_init_sections (void) ATTRIBUTE_UNUSED;
@@ -263,6 +263,8 @@ static size_t n_deferred_plabels = 0;
 #undef TARGET_ASM_INTEGER
 #define TARGET_ASM_INTEGER pa_assemble_integer
 
+#undef TARGET_ASM_FUNCTION_PROLOGUE
+#define TARGET_ASM_FUNCTION_PROLOGUE pa_output_function_prologue
 #undef TARGET_ASM_FUNCTION_EPILOGUE
 #define TARGET_ASM_FUNCTION_EPILOGUE pa_output_function_epilogue
 
@@ -278,6 +280,8 @@ static size_t n_deferred_plabels = 0;
 
 #undef TARGET_SCHED_ADJUST_COST
 #define TARGET_SCHED_ADJUST_COST pa_adjust_cost
+#undef TARGET_SCHED_ADJUST_PRIORITY
+#define TARGET_SCHED_ADJUST_PRIORITY pa_adjust_priority
 #undef TARGET_SCHED_ISSUE_RATE
 #define TARGET_SCHED_ISSUE_RATE pa_issue_rate
 
@@ -3838,10 +3842,16 @@ pa_compute_frame_size (poly_int64 size, int *fregs_live)
 	  & ~(PREFERRED_STACK_BOUNDARY / BITS_PER_UNIT - 1));
 }
 
-/* Output function label, and associated .PROC and .CALLINFO statements.  */
+/* On HP-PA, move-double insns between fpu and cpu need an 8-byte block
+   of memory.  If any fpu reg is used in the function, we allocate
+   such a block here, at the bottom of the frame, just in case it's needed.
 
-void
-pa_output_function_label (FILE *file)
+   If this function is a leaf procedure, then we may choose not
+   to do a "save" insn.  The decision about whether or not
+   to do this is made in regclass.c.  */
+
+static void
+pa_output_function_prologue (FILE *file)
 {
   /* The function's label and associated .PROC must never be
      separated and must be output *after* any profiling declarations
@@ -3887,22 +3897,7 @@ pa_output_function_label (FILE *file)
     fprintf (file, ",ENTRY_FR=%d", fr_saved + 11);
 
   fputs ("\n\t.ENTRY\n", file);
-}
 
-/* Output function prologue.  */
-
-static void
-pa_output_function_prologue (FILE *file)
-{
-  pa_output_function_label (file);
-  remove_useless_addtr_insns (0);
-}
-
-/* The label is output by ASM_DECLARE_FUNCTION_NAME on linux.  */
-
-static void
-pa_linux_output_function_prologue (FILE *file ATTRIBUTE_UNUSED)
-{
   remove_useless_addtr_insns (0);
 }
 
@@ -4574,6 +4569,10 @@ output_deferred_profile_counters (void)
 void
 hppa_profile_hook (int label_no)
 {
+  /* We use SImode for the address of the function in both 32 and
+     64-bit code to avoid having to provide DImode versions of the
+     lcla2 and load_offset_label_address insn patterns.  */
+  rtx reg = gen_reg_rtx (SImode);
   rtx_code_label *label_rtx = gen_label_rtx ();
   int reg_parm_stack_space = REG_PARM_STACK_SPACE (NULL_TREE);
   rtx arg_bytes, begin_label_rtx, mcount, sym;
@@ -4605,13 +4604,18 @@ hppa_profile_hook (int label_no)
   if (!use_mcount_pcrel_call)
     {
       /* The address of the function is loaded into %r25 with an instruction-
-	 relative sequence that avoids the use of relocations.  We use SImode
-	 for the address of the function in both 32 and 64-bit code to avoid
-	 having to provide DImode versions of the lcla2 pattern.  */
+	 relative sequence that avoids the use of relocations.  The sequence
+	 is split so that the load_offset_label_address instruction can
+	 occupy the delay slot of the call to _mcount.  */
       if (TARGET_PA_20)
-	emit_insn (gen_lcla2 (gen_rtx_REG (SImode, 25), label_rtx));
+	emit_insn (gen_lcla2 (reg, label_rtx));
       else
-	emit_insn (gen_lcla1 (gen_rtx_REG (SImode, 25), label_rtx));
+	emit_insn (gen_lcla1 (reg, label_rtx));
+
+      emit_insn (gen_load_offset_label_address (gen_rtx_REG (SImode, 25), 
+						reg,
+						begin_label_rtx,
+						label_rtx));
     }
 
   if (!NO_DEFERRED_PROFILE_COUNTERS)
@@ -4986,6 +4990,37 @@ pa_adjust_cost (rtx_insn *insn, int dep_type, rtx_insn *dep_insn, int cost,
     default:
       gcc_unreachable ();
     }
+}
+
+/* Adjust scheduling priorities.  We use this to try and keep addil
+   and the next use of %r1 close together.  */
+static int
+pa_adjust_priority (rtx_insn *insn, int priority)
+{
+  rtx set = single_set (insn);
+  rtx src, dest;
+  if (set)
+    {
+      src = SET_SRC (set);
+      dest = SET_DEST (set);
+      if (GET_CODE (src) == LO_SUM
+	  && symbolic_operand (XEXP (src, 1), VOIDmode)
+	  && ! read_only_operand (XEXP (src, 1), VOIDmode))
+	priority >>= 3;
+
+      else if (GET_CODE (src) == MEM
+	       && GET_CODE (XEXP (src, 0)) == LO_SUM
+	       && symbolic_operand (XEXP (XEXP (src, 0), 1), VOIDmode)
+	       && ! read_only_operand (XEXP (XEXP (src, 0), 1), VOIDmode))
+	priority >>= 1;
+
+      else if (GET_CODE (dest) == MEM
+	       && GET_CODE (XEXP (dest, 0)) == LO_SUM
+	       && symbolic_operand (XEXP (XEXP (dest, 0), 1), VOIDmode)
+	       && ! read_only_operand (XEXP (XEXP (dest, 0), 1), VOIDmode))
+	priority >>= 3;
+    }
+  return priority;
 }
 
 /* The 700 can only issue a single insn at a time.
@@ -7853,7 +7888,7 @@ pa_attr_length_call (rtx_insn *insn, int sibcall)
 
   /* 64-bit plabel sequence.  */
   else if (TARGET_64BIT && !local_call)
-    length += 24;
+    length += sibcall ? 28 : 24;
 
   /* non-pic long absolute branch sequence.  */
   else if ((TARGET_LONG_ABS_CALL || local_call) && !flag_pic)
@@ -7925,24 +7960,38 @@ pa_output_call (rtx_insn *insn, rtx call_dest, int sibcall)
 	  xoperands[0] = pa_get_deferred_plabel (call_dest);
 	  xoperands[1] = gen_label_rtx ();
 
-	  /* Put the load of %r27 into the delay slot.  We don't need to
-	     do anything when generating fast indirect calls.  */
-	  if (seq_length != 0)
+	  /* If this isn't a sibcall, we put the load of %r27 into the
+	     delay slot.  We can't do this in a sibcall as we don't
+	     have a second call-clobbered scratch register available.
+	     We don't need to do anything when generating fast indirect
+	     calls.  */
+	  if (seq_length != 0 && !sibcall)
 	    {
 	      final_scan_insn (NEXT_INSN (insn), asm_out_file,
 			       optimize, 0, NULL);
 
 	      /* Now delete the delay insn.  */
 	      SET_INSN_DELETED (NEXT_INSN (insn));
+	      seq_length = 0;
 	    }
 
 	  output_asm_insn ("addil LT'%0,%%r27", xoperands);
 	  output_asm_insn ("ldd RT'%0(%%r1),%%r1", xoperands);
 	  output_asm_insn ("ldd 0(%%r1),%%r1", xoperands);
-	  output_asm_insn ("ldd 16(%%r1),%%r2", xoperands);
-	  output_asm_insn ("bve,l (%%r2),%%r2", xoperands);
-	  output_asm_insn ("ldd 24(%%r1),%%r27", xoperands);
-	  seq_length = 1;
+
+	  if (sibcall)
+	    {
+	      output_asm_insn ("ldd 24(%%r1),%%r27", xoperands);
+	      output_asm_insn ("ldd 16(%%r1),%%r1", xoperands);
+	      output_asm_insn ("bve (%%r1)", xoperands);
+	    }
+	  else
+	    {
+	      output_asm_insn ("ldd 16(%%r1),%%r2", xoperands);
+	      output_asm_insn ("bve,l (%%r2),%%r2", xoperands);
+	      output_asm_insn ("ldd 24(%%r1),%%r27", xoperands);
+	      seq_length = 1;
+	    }
 	}
       else
 	{
@@ -8035,22 +8084,20 @@ pa_output_call (rtx_insn *insn, rtx call_dest, int sibcall)
 		    {
 		      output_asm_insn ("addil LT'%0,%%r19", xoperands);
 		      output_asm_insn ("ldw RT'%0(%%r1),%%r1", xoperands);
-		      output_asm_insn ("ldw 0(%%r1),%%r22", xoperands);
+		      output_asm_insn ("ldw 0(%%r1),%%r1", xoperands);
 		    }
 		  else
 		    {
 		      output_asm_insn ("addil LR'%0-$global$,%%r27",
 				       xoperands);
-		      output_asm_insn ("ldw RR'%0-$global$(%%r1),%%r22",
+		      output_asm_insn ("ldw RR'%0-$global$(%%r1),%%r1",
 				       xoperands);
 		    }
 
-		  output_asm_insn ("bb,>=,n %%r22,30,.+16", xoperands);
-		  output_asm_insn ("depi 0,31,2,%%r22", xoperands);
-		  /* Should this be an ordered load to ensure the target
-	             address is loaded before the global pointer?  */
-		  output_asm_insn ("ldw 0(%%r22),%%r1", xoperands);
-		  output_asm_insn ("ldw 4(%%r22),%%r19", xoperands);
+		  output_asm_insn ("bb,>=,n %%r1,30,.+16", xoperands);
+		  output_asm_insn ("depi 0,31,2,%%r1", xoperands);
+		  output_asm_insn ("ldw 4(%%sr0,%%r1),%%r19", xoperands);
+		  output_asm_insn ("ldw 0(%%sr0,%%r1),%%r1", xoperands);
 
 		  if (!sibcall && !TARGET_PA_20)
 		    {
@@ -8143,6 +8190,10 @@ pa_attr_length_indirect_call (rtx_insn *insn)
   if (TARGET_PORTABLE_RUNTIME)
     return 16;
 
+  /* Inline version of $$dyncall.  */
+  if ((TARGET_NO_SPACE_REGS || TARGET_PA_20) && !optimize_size)
+    return 20;
+
   if (!TARGET_LONG_CALLS
       && ((TARGET_PA_20 && !TARGET_SOM && distance < 7600000)
 	  || distance < MAX_PCREL17F_OFFSET))
@@ -8152,15 +8203,12 @@ pa_attr_length_indirect_call (rtx_insn *insn)
   if (!flag_pic)
     return 12;
 
-  /* Inline versions of $$dyncall.  */
-  if (!optimize_size)
-    {
-      if (TARGET_NO_SPACE_REGS)
-	return 28;
+  /* Inline version of $$dyncall.  */
+  if (TARGET_NO_SPACE_REGS || TARGET_PA_20)
+    return 20;
 
-      if (TARGET_PA_20)
-	return 32;
-    }
+  if (!optimize_size)
+    return 36;
 
   /* Long PIC pc-relative call.  */
   return 20;
@@ -8198,6 +8246,22 @@ pa_output_indirect_call (rtx_insn *insn, rtx call_dest)
       return "blr %%r0,%%r2\n\tbv,n %%r0(%%r31)";
     }
 
+  /* Maybe emit a fast inline version of $$dyncall.  */
+  if ((TARGET_NO_SPACE_REGS || TARGET_PA_20) && !optimize_size)
+    {
+      output_asm_insn ("bb,>=,n %%r22,30,.+12\n\t"
+		       "ldw 2(%%r22),%%r19\n\t"
+		       "ldw -2(%%r22),%%r22", xoperands);
+      pa_output_arg_descriptor (insn);
+      if (TARGET_NO_SPACE_REGS)
+	{
+	  if (TARGET_PA_20)
+	    return "bve,l,n (%%r22),%%r2\n\tnop";
+	  return "ble 0(%%sr4,%%r22)\n\tcopy %%r31,%%r2";
+	}
+      return "bve,l (%%r22),%%r2\n\tstw %%r2,-24(%%sp)";
+    }
+
   /* Now the normal case -- we can reach $$dyncall directly or
      we're sure that we can get there via a long-branch stub. 
 
@@ -8226,40 +8290,35 @@ pa_output_indirect_call (rtx_insn *insn, rtx call_dest)
       return "ble R'$$dyncall(%%sr4,%%r2)\n\tcopy %%r31,%%r2";
     }
 
-  /* The long PIC pc-relative call sequence is five instructions.  So,
-     let's use an inline version of $$dyncall when the calling sequence
-     has a roughly similar number of instructions and we are not optimizing
-     for size.  We need two instructions to load the return pointer plus
-     the $$dyncall implementation.  */
-  if (!optimize_size)
+  /* Maybe emit a fast inline version of $$dyncall.  The long PIC
+     pc-relative call sequence is five instructions.  The inline PA 2.0
+     version of $$dyncall is also five instructions.  The PA 1.X versions
+     are longer but still an overall win.  */
+  if (TARGET_NO_SPACE_REGS || TARGET_PA_20 || !optimize_size)
     {
+      output_asm_insn ("bb,>=,n %%r22,30,.+12\n\t"
+		       "ldw 2(%%r22),%%r19\n\t"
+		       "ldw -2(%%r22),%%r22", xoperands);
       if (TARGET_NO_SPACE_REGS)
 	{
 	  pa_output_arg_descriptor (insn);
-	  output_asm_insn ("bl .+8,%%r2\n\t"
-			   "ldo 20(%%r2),%%r2\n\t"
-			   "extru,<> %%r22,30,1,%%r0\n\t"
-			   "bv,n %%r0(%%r22)\n\t"
-			   "ldw -2(%%r22),%%r21\n\t"
-			   "bv %%r0(%%r21)\n\t"
-			   "ldw 2(%%r22),%%r19", xoperands);
-	  return "";
+	  if (TARGET_PA_20)
+	    return "bve,l,n (%%r22),%%r2\n\tnop";
+	  return "ble 0(%%sr4,%%r22)\n\tcopy %%r31,%%r2";
 	}
       if (TARGET_PA_20)
 	{
 	  pa_output_arg_descriptor (insn);
-	  output_asm_insn ("bl .+8,%%r2\n\t"
-			   "ldo 24(%%r2),%%r2\n\t"
-			   "stw %%r2,-24(%%sp)\n\t"
-			   "extru,<> %r22,30,1,%%r0\n\t"
-			   "bve,n (%%r22)\n\t"
-			   "ldw -2(%%r22),%%r21\n\t"
-			   "bve (%%r21)\n\t"
-			   "ldw 2(%%r22),%%r19", xoperands);
-	  return "";
+	  return "bve,l (%%r22),%%r2\n\tstw %%r2,-24(%%sp)";
 	}
+      output_asm_insn ("bl .+8,%%r2\n\t"
+		       "ldo 16(%%r2),%%r2\n\t"
+		       "ldsid (%%r22),%%r1\n\t"
+		       "mtsp %%r1,%%sr0", xoperands);
+      pa_output_arg_descriptor (insn);
+      return "be 0(%%sr0,%%r22)\n\tstw %%r2,-24(%%sp)";
     }
-
+ 
   /* We need a long PIC call to $$dyncall.  */
   xoperands[0] = gen_rtx_SYMBOL_REF (Pmode, "$$dyncall");
   xoperands[1] = gen_rtx_REG (Pmode, 2);
@@ -9339,7 +9398,7 @@ pa_function_value (const_tree valtype,
       HOST_WIDE_INT valsize = int_size_in_bytes (valtype);
 
       /* Handle aggregates that fit exactly in a word or double word.  */
-      if (valsize == UNITS_PER_WORD || valsize == 2 * UNITS_PER_WORD)
+      if ((valsize & (UNITS_PER_WORD - 1)) == 0)
 	return gen_rtx_REG (TYPE_MODE (valtype), 28);
 
       if (TARGET_64BIT)
@@ -9980,11 +10039,10 @@ pa_can_change_mode_class (machine_mode from, machine_mode to,
   /* There is no way to load QImode or HImode values directly from memory
      to a FP register.  SImode loads to the FP registers are not zero
      extended.  On the 64-bit target, this conflicts with the definition
-     of LOAD_EXTEND_OP.  Thus, we reject all mode changes in the FP registers
-     except for DImode to SImode on the 64-bit target.  It is handled by
-     register renaming in pa_print_operand.  */
+     of LOAD_EXTEND_OP.  Thus, we can't allow changing between modes with
+     different sizes in the floating-point registers.  */
   if (MAYBE_FP_REG_CLASS_P (rclass))
-    return TARGET_64BIT && from == DImode && to == SImode;
+    return false;
 
   /* TARGET_HARD_REGNO_MODE_OK places modes with sizes larger than a word
      in specific sets of registers.  Thus, we cannot allow changing
@@ -10018,7 +10076,7 @@ pa_modes_tieable_p (machine_mode mode1, machine_mode mode2)
 
 /* Length in units of the trampoline instruction code.  */
 
-#define TRAMPOLINE_CODE_SIZE (TARGET_64BIT ? 24 : (TARGET_PA_20 ? 36 : 48))
+#define TRAMPOLINE_CODE_SIZE (TARGET_64BIT ? 24 : (TARGET_PA_20 ? 32 : 40))
 
 
 /* Output assembler code for a block containing the constant parts
@@ -10039,46 +10097,27 @@ pa_asm_trampoline_template (FILE *f)
 {
   if (!TARGET_64BIT)
     {
+      fputs ("\tldw	36(%r22),%r21\n", f);
+      fputs ("\tbb,>=,n	%r21,30,.+16\n", f);
+      if (ASSEMBLER_DIALECT == 0)
+	fputs ("\tdepi	0,31,2,%r21\n", f);
+      else
+	fputs ("\tdepwi	0,31,2,%r21\n", f);
+      fputs ("\tldw	4(%r21),%r19\n", f);
+      fputs ("\tldw	0(%r21),%r21\n", f);
       if (TARGET_PA_20)
 	{
-	  fputs ("\tmfia	%r20\n", f);
-	  fputs ("\tldw		48(%r20),%r22\n", f);
-	  fputs ("\tcopy	%r22,%r21\n", f);
-	  fputs ("\tbb,>=,n	%r22,30,.+16\n", f);
-	  fputs ("\tdepwi	0,31,2,%r22\n", f);
-	  fputs ("\tldw		0(%r22),%r21\n", f);
-	  fputs ("\tldw		4(%r22),%r19\n", f);
-	  fputs ("\tbve		(%r21)\n", f);
-	  fputs ("\tldw		52(%r1),%r29\n", f);
-	  fputs ("\t.word	0\n", f);
+	  fputs ("\tbve	(%r21)\n", f);
+	  fputs ("\tldw	40(%r22),%r29\n", f);
 	  fputs ("\t.word	0\n", f);
 	  fputs ("\t.word	0\n", f);
 	}
       else
 	{
-	  if (ASSEMBLER_DIALECT == 0)
-	    {
-	      fputs ("\tbl	.+8,%r20\n", f);
-	      fputs ("\tdepi	0,31,2,%r20\n", f);
-	    }
-	  else
-	    {
-	      fputs ("\tb,l	.+8,%r20\n", f);
-	      fputs ("\tdepwi	0,31,2,%r20\n", f);
-	    }
-	  fputs ("\tldw		40(%r20),%r22\n", f);
-	  fputs ("\tcopy	%r22,%r21\n", f);
-	  fputs ("\tbb,>=,n	%r22,30,.+16\n", f);
-	  if (ASSEMBLER_DIALECT == 0)
-	    fputs ("\tdepi	0,31,2,%r22\n", f);
-	  else
-	    fputs ("\tdepwi	0,31,2,%r22\n", f);
-	  fputs ("\tldw		0(%r22),%r21\n", f);
-	  fputs ("\tldw		4(%r22),%r19\n", f);
 	  fputs ("\tldsid	(%r21),%r1\n", f);
 	  fputs ("\tmtsp	%r1,%sr0\n", f);
-	  fputs ("\tbe		0(%sr0,%r21)\n", f);
-	  fputs ("\tldw		44(%r20),%r29\n", f);
+	  fputs ("\tbe	0(%sr0,%r21)\n", f);
+	  fputs ("\tldw	40(%r22),%r29\n", f);
 	}
       fputs ("\t.word	0\n", f);
       fputs ("\t.word	0\n", f);
@@ -10092,11 +10131,11 @@ pa_asm_trampoline_template (FILE *f)
       fputs ("\t.dword 0\n", f);
       fputs ("\t.dword 0\n", f);
       fputs ("\tmfia	%r31\n", f);
-      fputs ("\tldd	24(%r31),%r27\n", f);
-      fputs ("\tldd	32(%r31),%r31\n", f);
-      fputs ("\tldd	16(%r27),%r1\n", f);
+      fputs ("\tldd	24(%r31),%r1\n", f);
+      fputs ("\tldd	24(%r1),%r27\n", f);
+      fputs ("\tldd	16(%r1),%r1\n", f);
       fputs ("\tbve	(%r1)\n", f);
-      fputs ("\tldd	24(%r27),%r27\n", f);
+      fputs ("\tldd	32(%r31),%r31\n", f);
       fputs ("\t.dword 0  ; fptr\n", f);
       fputs ("\t.dword 0  ; static link\n", f);
     }
@@ -10106,10 +10145,10 @@ pa_asm_trampoline_template (FILE *f)
    FNADDR is an RTX for the address of the function's pure code.
    CXT is an RTX for the static chain value for the function.
 
-   Move the function address to the trampoline template at offset 48.
-   Move the static chain value to trampoline template at offset 52.
-   Move the trampoline address to trampoline template at offset 56.
-   Move r19 to trampoline template at offset 60.  The latter two
+   Move the function address to the trampoline template at offset 36.
+   Move the static chain value to trampoline template at offset 40.
+   Move the trampoline address to trampoline template at offset 44.
+   Move r19 to trampoline template at offset 48.  The latter two
    words create a plabel for the indirect call to the trampoline.
 
    A similar sequence is used for the 64-bit port but the plabel is
@@ -10135,15 +10174,15 @@ pa_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
 
   if (!TARGET_64BIT)
     {
-      tmp = adjust_address (m_tramp, Pmode, 48);
+      tmp = adjust_address (m_tramp, Pmode, 36);
       emit_move_insn (tmp, fnaddr);
-      tmp = adjust_address (m_tramp, Pmode, 52);
+      tmp = adjust_address (m_tramp, Pmode, 40);
       emit_move_insn (tmp, chain_value);
 
       /* Create a fat pointer for the trampoline.  */
-      tmp = adjust_address (m_tramp, Pmode, 56);
+      tmp = adjust_address (m_tramp, Pmode, 44);
       emit_move_insn (tmp, r_tramp);
-      tmp = adjust_address (m_tramp, Pmode, 60);
+      tmp = adjust_address (m_tramp, Pmode, 48);
       emit_move_insn (tmp, gen_rtx_REG (Pmode, 19));
 
       /* fdc and fic only use registers for the address to flush,
@@ -10195,20 +10234,20 @@ pa_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
     }
 
 #ifdef HAVE_ENABLE_EXECUTE_STACK
-  emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "__enable_execute_stack"),
+  emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "__enable_execute_stack"),
 		     LCT_NORMAL, VOIDmode, XEXP (m_tramp, 0), Pmode);
 #endif
 }
 
 /* Perform any machine-specific adjustment in the address of the trampoline.
    ADDR contains the address that was passed to pa_trampoline_init.
-   Adjust the trampoline address to point to the plabel at offset 56.  */
+   Adjust the trampoline address to point to the plabel at offset 44.  */
 
 static rtx
 pa_trampoline_adjust_address (rtx addr)
 {
   if (!TARGET_64BIT)
-    addr = memory_address (Pmode, plus_constant (Pmode, addr, 58));
+    addr = memory_address (Pmode, plus_constant (Pmode, addr, 46));
   return addr;
 }
 

@@ -51,7 +51,7 @@ class timer {
     timer& operator=(const timer&);
 
     struct impl;
-    std::unique_ptr< impl > m_pimpl;
+    std::auto_ptr< impl > m_pimpl;
 
 public:
     timer(const unsigned int);

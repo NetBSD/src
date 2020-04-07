@@ -53,7 +53,7 @@
 #  endif
 # endif
 
-# include "ui_local.h"
+# include "ui_locl.h"
 # include "internal/cryptlib.h"
 
 # ifdef OPENSSL_SYS_VMS          /* prototypes for sys$whatever */

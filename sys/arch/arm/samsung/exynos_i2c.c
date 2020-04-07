@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.19 2020/03/17 21:24:30 skrll Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.18 2019/12/22 23:50:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.19 2020/03/17 21:24:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.18 2019/12/22 23:50:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -169,7 +169,7 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
-
+	
 	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_send_start  = exynos_i2c_send_start;

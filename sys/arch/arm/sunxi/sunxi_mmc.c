@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.41 2020/03/07 00:51:10 macallan Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.40 2019/10/05 12:09:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.41 2020/03/07 00:51:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.40 2019/10/05 12:09:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -547,14 +547,6 @@ sunxi_mmc_attach_i(device_t self)
 	const u_int flags = sc->sc_config->flags;
 	struct sdmmcbus_attach_args saa;
 	uint32_t width;
-	const bool supports_hs200 =
-		of_hasprop(sc->sc_phandle, "mmc-hs200-1_2v") |
-		of_hasprop(sc->sc_phandle, "mmc-hs200-1_8v");
-
-	const bool supports_ddr =
-		of_hasprop(sc->sc_phandle, "mmc-ddr-1_2v") |
-		of_hasprop(sc->sc_phandle, "mmc-ddr-1_8v") |
-		of_hasprop(sc->sc_phandle, "mmc-ddr-3_3v");
 
 	if (sc->sc_pwrseq)
 		fdtbus_mmc_pwrseq_pre_power_on(sc->sc_pwrseq);
@@ -585,11 +577,10 @@ sunxi_mmc_attach_i(device_t self)
 		       SMC_CAPS_SD_HIGHSPEED |
 		       SMC_CAPS_MMC_HIGHSPEED;
 
-	if ((sc->sc_config->delays || (flags & SUNXI_MMC_FLAG_NEW_TIMINGS)) &&
-	     supports_ddr)
+	if (sc->sc_config->delays || (flags & SUNXI_MMC_FLAG_NEW_TIMINGS))
 		saa.saa_caps |= SMC_CAPS_MMC_DDR52;
 
-	if ((flags & SUNXI_MMC_FLAG_HS200) != 0 && supports_hs200)
+	if (flags & SUNXI_MMC_FLAG_HS200)
 		saa.saa_caps |= SMC_CAPS_MMC_HS200;
 
 	if (width == 4)

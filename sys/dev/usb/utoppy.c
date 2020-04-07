@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.35 2020/03/14 02:35:34 christos Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.33 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.35 2020/03/14 02:35:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.33 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1188,7 +1188,7 @@ utoppy_readdir_next(struct utoppy_softc *sc)
 
 	default:
 		DPRINTF(UTOPPY_DBG_READDIR, ("%s: utoppy_readdir_next: "
-		    "bad response: %#x\n", device_xname(sc->sc_dev), resp));
+		    "bad response: 0x%x\n", device_xname(sc->sc_dev), resp));
 		sc->sc_state = UTOPPY_STATE_IDLE;
 		sc->sc_in_len = 0;
 		return EIO;
@@ -1557,7 +1557,7 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 		if (resp != UTOPPY_RESP_SUCCESS) {
 			DPRINTF(UTOPPY_DBG_WRITE, ("%s: utoppywrite: "
 			    "utoppy_command(UTOPPY_RESP_FILE_DATA) returned "
-			    "bad response %#x\n", device_xname(sc->sc_dev),
+			    "bad response 0x%x\n", device_xname(sc->sc_dev),
 			    resp));
 			utoppy_cancel(sc);
 			err = EIO;
@@ -1805,7 +1805,7 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 		if (resp != UTOPPY_RESP_SUCCESS) {
 			DPRINTF(UTOPPY_DBG_WRITE,("%s: utoppyioctl: "
 			    "utoppy_command(UTOPPY_CMD_FILE) returned "
-			    "bad response %#x\n", device_xname(sc->sc_dev),
+			    "bad response 0x%x\n", device_xname(sc->sc_dev),
 			    resp));
 			err = EIO;
 			break;
@@ -1829,7 +1829,7 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 		if (resp != UTOPPY_RESP_SUCCESS) {
 			DPRINTF(UTOPPY_DBG_WRITE,("%s: utoppyioctl: "
 			    "utoppy_command(UTOPPY_RESP_FILE_HEADER) "
-			    "returned bad response %#x\n",
+			    "returned bad response 0x%x\n",
 			    device_xname(sc->sc_dev), resp));
 			err = EIO;
 			break;

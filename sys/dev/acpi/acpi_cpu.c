@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.52 2020/03/16 21:20:09 pgoyette Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.51 2017/06/01 02:45:09 chs Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.52 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.51 2017/06/01 02:45:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -55,6 +55,7 @@ static int		  acpicpu_detach(device_t, int);
 static int		  acpicpu_once_attach(void);
 static int		  acpicpu_once_detach(void);
 static void		  acpicpu_start(device_t);
+static void		  acpicpu_sysctl(device_t);
 
 static ACPI_STATUS	  acpicpu_object(ACPI_HANDLE, struct acpicpu_object *);
 static uint32_t		  acpicpu_cap(struct acpicpu_softc *);
@@ -72,6 +73,7 @@ static const char	 *acpicpu_debug_print_dep(uint32_t);
 
 static uint32_t		  acpicpu_count = 0;
 struct acpicpu_softc	**acpicpu_sc = NULL;
+static struct sysctllog	 *acpicpu_log = NULL;
 static bool		  acpicpu_dynamic = true;
 static bool		  acpicpu_passive = true;
 
@@ -232,6 +234,7 @@ acpicpu_once_attach(void)
 		return 0;
 
 	KASSERT(acpicpu_sc == NULL);
+	KASSERT(acpicpu_log == NULL);
 
 	acpicpu_sc = kmem_zalloc(maxcpus * sizeof(*sc), KM_SLEEP);
 
@@ -250,6 +253,9 @@ acpicpu_once_detach(void)
 		return EDEADLK;
 
 	cpufreq_deregister();
+
+	if (acpicpu_log != NULL)
+		sysctl_teardown(&acpicpu_log);
 
 	if (acpicpu_sc != NULL)
 		kmem_free(acpicpu_sc, maxcpus * sizeof(*sc));
@@ -290,6 +296,7 @@ acpicpu_start(device_t self)
 	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
 		acpicpu_tstate_start(self);
 
+	acpicpu_sysctl(self);
 	aprint_debug_dev(self, "ACPI CPUs started\n");
 
 	/*
@@ -321,26 +328,29 @@ acpicpu_start(device_t self)
 	}
 }
 
-SYSCTL_SETUP(acpicpu_sysctl, "acpi_cpu sysctls")
+static void
+acpicpu_sysctl(device_t self)
 {
 	const struct sysctlnode *node;
 	int err;
 
-	err = sysctl_createv(clog, 0, NULL, &node,
+	KASSERT(acpicpu_log == NULL);
+
+	err = sysctl_createv(&acpicpu_log, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi", NULL,
 	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
 		goto fail;
 
-	err = sysctl_createv(clog, 0, &node, &node,
+	err = sysctl_createv(&acpicpu_log, 0, &node, &node,
 	    0, CTLTYPE_NODE, "cpu", SYSCTL_DESCR("ACPI CPU"),
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
 		goto fail;
 
-	err = sysctl_createv(clog, 0, &node, NULL,
+	err = sysctl_createv(&acpicpu_log, 0, &node, NULL,
 	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "dynamic",
 	    SYSCTL_DESCR("Dynamic states"), NULL, 0,
 	    &acpicpu_dynamic, 0, CTL_CREATE, CTL_EOL);
@@ -348,7 +358,7 @@ SYSCTL_SETUP(acpicpu_sysctl, "acpi_cpu sysctls")
 	if (err != 0)
 		goto fail;
 
-	err = sysctl_createv(clog, 0, &node, NULL,
+	err = sysctl_createv(&acpicpu_log, 0, &node, NULL,
 	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "passive",
 	    SYSCTL_DESCR("Passive cooling"), NULL, 0,
 	    &acpicpu_passive, 0, CTL_CREATE, CTL_EOL);
@@ -359,7 +369,7 @@ SYSCTL_SETUP(acpicpu_sysctl, "acpi_cpu sysctls")
 	return;
 
 fail:
-	aprint_error("%s: failed to init sysctl (err %d)\n", __func__, err);
+	aprint_error_dev(self, "failed to initialize sysctl (err %d)\n", err);
 }
 
 static ACPI_STATUS

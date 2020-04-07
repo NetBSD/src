@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.12 2020/03/16 21:20:12 pgoyette Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.11 2020/02/21 00:26:23 joerg Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.12 2020/03/16 21:20:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.11 2020/02/21 00:26:23 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,6 +57,7 @@ int user_set_dbregs;
 static kauth_listener_t l_system, l_process, l_network;
 
 static secmodel_t extensions_sm;
+static struct sysctllog *extensions_sysctl_log;
 
 static void secmodel_extensions_init(void);
 static void secmodel_extensions_start(void);
@@ -74,8 +75,8 @@ static int secmodel_extensions_process_cb(kauth_cred_t, kauth_action_t,
 static int secmodel_extensions_network_cb(kauth_cred_t, kauth_action_t,
     void *, void *, void *, void *, void *);
 
-SYSCTL_SETUP(sysctl_security_extensions_setup,
-    "security extensions sysctl")
+static void
+sysctl_security_extensions_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode, *rnode2;
 
@@ -307,9 +308,11 @@ extensions_modcmd(modcmd_t cmd, void *arg)
 
 		secmodel_extensions_init();
 		secmodel_extensions_start();
+		sysctl_security_extensions_setup(&extensions_sysctl_log);
 		break;
 
 	case MODULE_CMD_FINI:
+		sysctl_teardown(&extensions_sysctl_log);
 		secmodel_extensions_stop();
 
 		error = secmodel_deregister(extensions_sm);

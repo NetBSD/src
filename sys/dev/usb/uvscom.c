@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.37 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.36 2019/12/01 08:27:54 maxv Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.37 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.36 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -354,12 +354,12 @@ uvscom_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	DPRINTF(("uvscom: in = %#x out = %#x intr = %#x\n",
+	DPRINTF(("uvscom: in = 0x%x out = 0x%x intr = 0x%x\n",
 		 ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
-	DPRINTF(("uplcom: in=%#x out=%#x intr=%#x\n",
+	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
 		ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number ));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);

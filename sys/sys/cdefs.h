@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.151 2020/03/21 22:45:47 kamil Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.150 2019/12/08 11:48:15 maxv Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,6 +38,9 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_diagnostic.h"
+#include "opt_kasan.h"
+#include "opt_kcsan.h"
+#include "opt_kmsan.h"
 #endif
 
 /*
@@ -333,32 +336,28 @@
 #define	__unreachable()	do {} while (/*CONSTCOND*/0)
 #endif
 
-#if defined(_KERNEL) || defined(_RUMPKERNEL)
-#if defined(__clang__) && __has_feature(address_sanitizer)
-#define	__noasan	__attribute__((no_sanitize("kernel-address", "address")))
-#elif __GNUC_PREREQ__(4, 9) && defined(__SANITIZE_ADDRESS__)
+#if defined(_KERNEL)
+#if __GNUC_PREREQ__(4, 9) && defined(KASAN)
 #define	__noasan	__attribute__((no_sanitize_address))
 #else
 #define	__noasan	/* nothing */
 #endif
 
-#if defined(__clang__) && __has_feature(thread_sanitizer)
-#define	__nocsan	__attribute__((no_sanitize("thread")))
-#elif __GNUC_PREREQ__(4, 9) && defined(__SANITIZE_THREAD__)
+#if __GNUC_PREREQ__(4, 9) && defined(KCSAN)
 #define	__nocsan	__attribute__((no_sanitize_thread))
 #else
 #define	__nocsan	/* nothing */
 #endif
 
-#if defined(__clang__) && __has_feature(memory_sanitizer)
-#define	__nomsan	__attribute__((no_sanitize("kernel-memory", "memory")))
+#if defined(__clang__) && defined(KMSAN)
+#define	__nomsan	__attribute__((no_sanitize("kernel-memory")))
 #else
 #define	__nomsan	/* nothing */
 #endif
 
-#if defined(__clang__) && __has_feature(undefined_behavior_sanitizer)
+#if defined(__clang__)
 #define __noubsan	__attribute__((no_sanitize("undefined")))
-#elif __GNUC_PREREQ__(4, 9) && defined(__SANITIZE_UNDEFINED__)
+#elif __GNUC_PREREQ__(4, 9)
 #define __noubsan	__attribute__((no_sanitize_undefined))
 #else
 #define __noubsan	/* nothing */

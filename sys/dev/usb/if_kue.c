@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.104 2020/03/21 06:55:22 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.102 2020/01/29 06:26:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.104 2020/03/21 06:55:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.102 2020/01/29 06:26:32 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -171,19 +171,20 @@ static int kue_detach(device_t, int);
 CFATTACH_DECL_NEW(kue, sizeof(struct kue_softc), kue_match, kue_attach,
     kue_detach, usbnet_activate);
 
-static void kue_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
-static unsigned kue_uno_tx_prepare(struct usbnet *, struct mbuf *,
-				   struct usbnet_chain *);
-static int kue_uno_ioctl(struct ifnet *, u_long, void *);
-static int kue_uno_init(struct ifnet *);
+static void kue_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
+static unsigned kue_tx_prepare(struct usbnet *, struct mbuf *,
+			       struct usbnet_chain *);
+static int kue_ioctl_cb(struct ifnet *, u_long, void *);
+static int kue_init(struct ifnet *);
 
 static const struct usbnet_ops kue_ops = {
-	.uno_ioctl = kue_uno_ioctl,
-	.uno_tx_prepare = kue_uno_tx_prepare,
-	.uno_rx_loop = kue_uno_rx_loop,
-	.uno_init = kue_uno_init,
+	.uno_ioctl = kue_ioctl_cb,
+	.uno_tx_prepare = kue_tx_prepare,
+	.uno_rx_loop = kue_rx_loop,
+	.uno_init = kue_init,
 };
 
+static void kue_setiff(struct usbnet *);
 static void kue_reset(struct usbnet *);
 
 static usbd_status kue_ctl(struct usbnet *, int, uint8_t,
@@ -318,7 +319,7 @@ kue_load_fw(struct usbnet *un)
 }
 
 static void
-kue_setiff_locked(struct usbnet *un)
+kue_setiff(struct usbnet *un)
 {
 	struct ethercom *	ec = usbnet_ec(un);
 	struct kue_softc *	sc = usbnet_softc(un);
@@ -503,7 +504,7 @@ kue_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "could not read Ethernet descriptor\n");
 		return;
 	}
-	memcpy(un->un_eaddr, sc->kue_desc.kue_macaddr, sizeof(un->un_eaddr));
+	memcpy(un->un_eaddr, sc->kue_desc.kue_macaddr, sizeof un->un_eaddr);
 
 	sc->kue_mcfilters = kmem_alloc(KUE_MCFILTCNT(sc) * ETHER_ADDR_LEN,
 	    KM_SLEEP);
@@ -531,7 +532,7 @@ kue_detach(device_t self, int flags)
  * the higher level protocols.
  */
 static void
-kue_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
+kue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 	uint8_t			*buf = c->unc_buf;
@@ -560,7 +561,7 @@ kue_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 }
 
 static unsigned
-kue_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+kue_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	unsigned		total_len, pkt_len;
 
@@ -622,45 +623,38 @@ kue_init_locked(struct ifnet *ifp)
 	kue_setword(un, KUE_CMD_SET_URB_SIZE, 64);
 
 	/* Load the multicast filter. */
-	kue_setiff_locked(un);
+	kue_setiff(un);
 
 	return usbnet_init_rx_tx(un);
 }
 
 static int
-kue_uno_init(struct ifnet *ifp)
+kue_init(struct ifnet *ifp)
 {
 	struct usbnet * const	un = ifp->if_softc;
 	int rv;
 
-	usbnet_lock_core(un);
-	usbnet_busy(un);
+	usbnet_lock(un);
 	rv = kue_init_locked(ifp);
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
+	usbnet_unlock(un);
 
 	return rv;
 }
 
 static int
-kue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+kue_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct usbnet * const	un = ifp->if_softc;
-
-	usbnet_lock_core(un);
-	usbnet_busy(un);
 
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		kue_setiff_locked(un);
+		//kue_init(ifp);
+		kue_setiff(un);
 		break;
 	default:
 		break;
 	}
-
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
 
 	return 0;
 }

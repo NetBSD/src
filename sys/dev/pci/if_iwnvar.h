@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnvar.h,v 1.22 2020/03/20 16:35:41 sevan Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.21 2019/10/05 23:27:20 mrg Exp $	*/
 /*	$OpenBSD: if_iwnvar.h,v 1.28 2014/09/09 18:55:08 sthen Exp $	*/
 
 /*-
@@ -323,8 +323,6 @@ struct iwn_softc {
 	void			*powerhook;
 
 	struct bpf_if *		sc_drvbpf;
-
-	kmutex_t 		sc_media_mtx;	/* XXX */
 
 	union {
 		struct iwn_rx_radiotap_header th;

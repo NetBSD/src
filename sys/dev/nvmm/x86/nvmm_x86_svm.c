@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.58 2020/03/22 00:16:16 ad Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.56 2020/02/21 00:26:22 joerg Exp $	*/
 
 /*
- * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.58 2020/03/22 00:16:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.56 2020/02/21 00:26:22 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1441,7 +1441,10 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 
 		/* If no reason to return to userland, keep rolling. */
-		if (preempt_needed()) {
+		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) {
+			break;
+		}
+		if (curcpu()->ci_data.cpu_softints != 0) {
 			break;
 		}
 		if (curlwp->l_flag & LW_USERRET) {
@@ -2214,7 +2217,7 @@ svm_tlb_flush(struct pmap *pm)
 	atomic_inc_64(&machdata->mach_htlb_gen);
 
 	/* Generates IPIs, which cause #VMEXITs. */
-	pmap_tlb_shootdown(pmap_kernel(), -1, PTE_G, TLBSHOOT_NVMM);
+	pmap_tlb_shootdown(pmap_kernel(), -1, PTE_G, TLBSHOOT_UPDATE);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.670 2020/03/21 16:47:05 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.668 2020/02/18 04:07:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.670 2020/03/21 16:47:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.668 2020/02/18 04:07:14 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -759,7 +759,7 @@ static void	wm_init_sysctls(struct wm_softc *);
 static void	wm_unset_stopping_flags(struct wm_softc *);
 static void	wm_set_stopping_flags(struct wm_softc *);
 static void	wm_stop(struct ifnet *, int);
-static void	wm_stop_locked(struct ifnet *, bool, bool);
+static void	wm_stop_locked(struct ifnet *, int);
 static void	wm_dump_mbuf_chain(struct wm_softc *, struct mbuf *);
 static void	wm_82547_txfifo_stall(void *);
 static int	wm_82547_txfifo_bugchk(struct wm_softc *, struct mbuf *);
@@ -796,7 +796,7 @@ static void	wm_start_locked(struct ifnet *);
 static int	wm_transmit(struct ifnet *, struct mbuf *);
 static void	wm_transmit_locked(struct ifnet *, struct wm_txqueue *);
 static void	wm_send_common_locked(struct ifnet *, struct wm_txqueue *,
-		    bool);
+    bool);
 static int	wm_nq_tx_offload(struct wm_softc *, struct wm_txqueue *,
     struct wm_txsoft *, uint32_t *, uint32_t *, bool *);
 static void	wm_nq_start(struct ifnet *);
@@ -804,7 +804,7 @@ static void	wm_nq_start_locked(struct ifnet *);
 static int	wm_nq_transmit(struct ifnet *, struct mbuf *);
 static void	wm_nq_transmit_locked(struct ifnet *, struct wm_txqueue *);
 static void	wm_nq_send_common_locked(struct ifnet *, struct wm_txqueue *,
-		    bool);
+    bool);
 static void	wm_deferred_start_locked(struct wm_txqueue *);
 static void	wm_handle_queue(void *);
 static void	wm_handle_queue_work(struct work *, void *);
@@ -1832,7 +1832,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, CALLOUT_FLAGS);
-	callout_setfunc(&sc->sc_tick_ch, wm_tick, sc);
 	sc->sc_core_stopping = false;
 
 	wmp = wm_lookup(pa);
@@ -2881,12 +2880,6 @@ alloc_retry:
 	snprintb(buf, sizeof(buf), WM_FLAGS, sc->sc_flags);
 	aprint_verbose_dev(sc->sc_dev, "%s\n", buf);
 
-#ifdef WM_MPSAFE
-	sc->sc_core_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
-#else
-	sc->sc_core_lock = NULL;
-#endif
-
 	/* Initialize the media structures accordingly. */
 	if (sc->sc_mediatype == WM_MEDIATYPE_COPPER)
 		wm_gmii_mediainit(sc, wmp->wmp_product);
@@ -3023,6 +3016,12 @@ alloc_retry:
 	sc->sc_rx_process_limit = WM_RX_PROCESS_LIMIT_DEFAULT;
 	sc->sc_rx_intr_process_limit = WM_RX_INTR_PROCESS_LIMIT_DEFAULT;
 
+#ifdef WM_MPSAFE
+	sc->sc_core_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+#else
+	sc->sc_core_lock = NULL;
+#endif
+
 	/* Attach the interface. */
 	error = if_initialize(ifp);
 	if (error != 0) {
@@ -3103,12 +3102,12 @@ wm_detach(device_t self, int flags __unused)
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
+	/* Delete all remaining media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	if_percpuq_destroy(sc->sc_ipq);
-
-	/* Delete all remaining media. */
-	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	/* Unload RX dmamaps and free mbufs */
 	for (i = 0; i < sc->sc_nqueues; i++) {
@@ -3380,7 +3379,7 @@ wm_tick(void *arg)
 
 	wm_watchdog(ifp);
 
-	callout_schedule(&sc->sc_tick_ch, hz);
+	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 }
 
 static int
@@ -5845,7 +5844,7 @@ wm_init_locked(struct ifnet *ifp)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 	/* Cancel any pending I/O. */
-	wm_stop_locked(ifp, false, false);
+	wm_stop_locked(ifp, 0);
 
 	/* Update statistics before reset */
 	if_statadd2(ifp, if_collisions, CSR_READ(sc, WMREG_COLC),
@@ -6379,10 +6378,11 @@ wm_init_locked(struct ifnet *ifp)
 	wm_unset_stopping_flags(sc);
 
 	/* Start the one second link check clock. */
-	callout_schedule(&sc->sc_tick_ch, hz);
+	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 
 	/* ...all done! */
 	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
 	/* Save last flags for the callback */
@@ -6404,10 +6404,8 @@ wm_stop(struct ifnet *ifp, int disable)
 {
 	struct wm_softc *sc = ifp->if_softc;
 
-	ASSERT_SLEEPABLE();
-
 	WM_CORE_LOCK(sc);
-	wm_stop_locked(ifp, disable ? true : false, true);
+	wm_stop_locked(ifp, disable);
 	WM_CORE_UNLOCK(sc);
 
 	/*
@@ -6422,7 +6420,7 @@ wm_stop(struct ifnet *ifp, int disable)
 }
 
 static void
-wm_stop_locked(struct ifnet *ifp, bool disable, bool wait)
+wm_stop_locked(struct ifnet *ifp, int disable)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txsoft *txs;
@@ -6433,6 +6431,13 @@ wm_stop_locked(struct ifnet *ifp, bool disable, bool wait)
 	KASSERT(WM_CORE_LOCKED(sc));
 
 	wm_set_stopping_flags(sc);
+
+	/* Stop the one second clock. */
+	callout_stop(&sc->sc_tick_ch);
+
+	/* Stop the 82547 Tx FIFO stall check timer. */
+	if (sc->sc_type == WM_T_82547)
+		callout_stop(&sc->sc_txfifo_ch);
 
 	if (sc->sc_flags & WM_F_HAS_MII) {
 		/* Down the MII. */
@@ -6465,26 +6470,6 @@ wm_stop_locked(struct ifnet *ifp, bool disable, bool wait)
 			CSR_WRITE(sc, WMREG_EIAC_82574, 0);
 	}
 
-	/*
-	 * Stop callouts after interrupts are disabled; if we have
-	 * to wait for them, we will be releasing the CORE_LOCK
-	 * briefly, which will unblock interrupts on the current CPU.
-	 */
-
-	/* Stop the one second clock. */
-	if (wait)
-		callout_halt(&sc->sc_tick_ch, sc->sc_core_lock);
-	else
-		callout_stop(&sc->sc_tick_ch);
-
-	/* Stop the 82547 Tx FIFO stall check timer. */
-	if (sc->sc_type == WM_T_82547) {
-		if (wait)
-			callout_halt(&sc->sc_txfifo_ch, sc->sc_core_lock);
-		else
-			callout_stop(&sc->sc_txfifo_ch);
-	}
-
 	/* Release any queued transmit buffers. */
 	for (qidx = 0; qidx < sc->sc_nqueues; qidx++) {
 		struct wm_queue *wmq = &sc->sc_queue[qidx];
@@ -6503,7 +6488,7 @@ wm_stop_locked(struct ifnet *ifp, bool disable, bool wait)
 	}
 
 	/* Mark the interface as down and cancel the watchdog timer. */
-	ifp->if_flags &= ~IFF_RUNNING;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	if (disable) {
 		for (i = 0; i < sc->sc_nqueues; i++) {
@@ -7662,6 +7647,8 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
+	if ((ifp->if_flags & IFF_OACTIVE) != 0 && !is_transmit)
+		return;
 	if ((txq->txq_flags & WM_TXQ_NO_SPACE) != 0)
 		return;
 
@@ -7784,6 +7771,8 @@ retry:
 			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 				device_xname(sc->sc_dev), dmamap->dm_nsegs,
 				segs_needed, txq->txq_free - 1));
+			if (!is_transmit)
+				ifp->if_flags |= IFF_OACTIVE;
 			txq->txq_flags |= WM_TXQ_NO_SPACE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_Q_EVCNT_INCR(txq, txdstall);
@@ -7800,6 +7789,8 @@ retry:
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: 82547 Tx FIFO bug detected\n",
 				device_xname(sc->sc_dev)));
+			if (!is_transmit)
+				ifp->if_flags |= IFF_OACTIVE;
 			txq->txq_flags |= WM_TXQ_NO_SPACE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_Q_EVCNT_INCR(txq, fifo_stall);
@@ -7944,6 +7935,8 @@ retry:
 	}
 
 	if (m0 != NULL) {
+		if (!is_transmit)
+			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 		WM_Q_EVCNT_INCR(txq, descdrop);
 		DPRINTF(WM_DEBUG_TX, ("%s: TX: error after IFQ_DEQUEUE\n",
@@ -7953,6 +7946,8 @@ retry:
 
 	if (txq->txq_sfree == 0 || txq->txq_free <= 2) {
 		/* No more slots; notify upper layer. */
+		if (!is_transmit)
+			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 	}
 
@@ -8266,6 +8261,8 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
+	if ((ifp->if_flags & IFF_OACTIVE) != 0 && !is_transmit)
+		return;
 	if ((txq->txq_flags & WM_TXQ_NO_SPACE) != 0)
 		return;
 
@@ -8366,6 +8363,8 @@ retry:
 			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 				device_xname(sc->sc_dev), dmamap->dm_nsegs,
 				segs_needed, txq->txq_free - 1));
+			if (!is_transmit)
+				ifp->if_flags |= IFF_OACTIVE;
 			txq->txq_flags |= WM_TXQ_NO_SPACE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_Q_EVCNT_INCR(txq, txdstall);
@@ -8521,6 +8520,8 @@ retry:
 	}
 
 	if (m0 != NULL) {
+		if (!is_transmit)
+			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 		WM_Q_EVCNT_INCR(txq, descdrop);
 		DPRINTF(WM_DEBUG_TX, ("%s: TX: error after IFQ_DEQUEUE\n",
@@ -8530,6 +8531,8 @@ retry:
 
 	if (txq->txq_sfree == 0 || txq->txq_free <= 2) {
 		/* No more slots; notify upper layer. */
+		if (!is_transmit)
+			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 	}
 
@@ -8584,6 +8587,7 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 	int count = 0;
 	int i;
 	uint8_t status;
+	struct wm_queue *wmq = container_of(txq, struct wm_queue, wmq_txq);
 	bool more = false;
 
 	KASSERT(mutex_owned(txq->txq_lock));
@@ -8592,6 +8596,9 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 		return false;
 
 	txq->txq_flags &= ~WM_TXQ_NO_SPACE;
+	/* For ALTQ and legacy(not use multiqueue) ethernet controller */
+	if (wmq->wmq_id == 0)
+		ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Go through the Tx list and free mbufs for those
@@ -10416,8 +10423,8 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	wm_gmii_reset(sc);
 
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
-	ifmedia_init_with_lock(&mii->mii_media, IFM_IMASK, wm_gmii_mediachange,
-	    wm_gmii_mediastatus, sc->sc_core_lock);
+	ifmedia_init(&mii->mii_media, IFM_IMASK, wm_gmii_mediachange,
+	    wm_gmii_mediastatus);
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
 	    || (sc->sc_type == WM_T_82580)
@@ -11963,14 +11970,12 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 
 	if (((sc->sc_type >= WM_T_82575) && (sc->sc_type <= WM_T_I211))
-	    && (sc->sc_mediatype == WM_MEDIATYPE_SERDES)) {
-		ifmedia_init_with_lock(&sc->sc_mii.mii_media, IFM_IMASK,
-		    wm_serdes_mediachange, wm_serdes_mediastatus,
-		    sc->sc_core_lock);
-	} else {
-		ifmedia_init_with_lock(&sc->sc_mii.mii_media, IFM_IMASK,
-		    wm_tbi_mediachange, wm_tbi_mediastatus, sc->sc_core_lock);
-	}
+	    && (sc->sc_mediatype == WM_MEDIATYPE_SERDES))
+		ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK,
+		    wm_serdes_mediachange, wm_serdes_mediastatus);
+	else
+		ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK,
+		    wm_tbi_mediachange, wm_tbi_mediastatus);
 
 	/*
 	 * SWD Pins:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_region.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup_region.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -40,7 +40,7 @@
 /*	queue file is complete.
 /*
 /*	cleanup_region_open() opens an existing region or creates
-/*	a new region that can accommodate at least the specified
+/*	a new region that can accomodate at least the specified
 /*	amount of space. A new region is an open-ended region at
 /*	the end of the file; it must be closed (see next) before
 /*	unrelated data can be appended to the same file.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.9 2020/03/05 17:58:08 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.7 2019/11/29 22:55:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 struct kmutex {
 	union {
 		volatile uintptr_t	mtxa_owner;
-#ifdef _KERNEL
+#ifdef __MUTEX_PRIVATE
 		struct {
 			volatile uint8_t	mtxs_dummy;
 			ipl_cookie_t		mtxs_ipl;

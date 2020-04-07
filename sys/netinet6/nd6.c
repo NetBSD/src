@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.267 2020/03/09 21:20:56 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.266 2020/01/20 18:38:22 thorpej Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.267 2020/03/09 21:20:56 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.266 2020/01/20 18:38:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -458,11 +458,9 @@ nd6_llinfo_timer(void *arg)
 	struct ifnet *ifp;
 	struct nd_ifinfo *ndi = NULL;
 	bool send_ns = false;
-	struct in6_addr mdaddr6 = zeroin6_addr;
 	const struct in6_addr *daddr6 = NULL;
 	const struct in6_addr *taddr6 = &ln->r_l3addr.addr6;
-	struct sockaddr_in6 dsin6, tsin6;
-	struct sockaddr *sa;
+	struct sockaddr_in6 sin6;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 
@@ -505,17 +503,11 @@ nd6_llinfo_timer(void *arg)
 			clear_llinfo_pqueue(ln);
 
 			icmp6_error2(m, ICMP6_DST_UNREACH,
-			    ICMP6_DST_UNREACH_ADDR, 0, ifp, &mdaddr6);
+			    ICMP6_DST_UNREACH_ADDR, 0, ifp);
 		}
 
-		sockaddr_in6_init(&tsin6, taddr6, 0, 0, 0);
-		if (!IN6_IS_ADDR_UNSPECIFIED(&mdaddr6)) {
-			sockaddr_in6_init(&dsin6, &mdaddr6, 0, 0, 0);
-			sa = sin6tosa(&dsin6);
-		} else
-			sa = NULL;
-
-		rt_clonedmsg(RTM_MISS, sa, sin6tosa(&tsin6), NULL, ifp);
+		sockaddr_in6_init(&sin6, taddr6, 0, 0, 0);
+		rt_clonedmsg(RTM_MISS, sin6tosa(&sin6), NULL, ifp);
 
 		/*
 		 * Move to the ND6_LLINFO_WAITDELETE state for another
@@ -1312,7 +1304,7 @@ nd6_free(struct llentry *ln, int gc)
 		sockaddr_in6_init(&sin6, in6, 0, 0, 0);
 		lladdr = ln->la_flags & LLE_VALID ?
 		    (const char *)&ln->ll_addr : NULL;
-		rt_clonedmsg(RTM_DELETE, NULL, sin6tosa(&sin6), lladdr, ifp);
+		rt_clonedmsg(RTM_DELETE, sin6tosa(&sin6), lladdr, ifp);
 	}
 
 	/*
@@ -2253,7 +2245,7 @@ nd6_cache_lladdr(
 
 		sockaddr_in6_init(&sin6, from, 0, 0, 0);
 		rt_clonedmsg(is_newentry ? RTM_ADD : RTM_CHANGE,
-		    NULL, sin6tosa(&sin6), lladdr, ifp);
+		    sin6tosa(&sin6), lladdr, ifp);
 	}
 
 	if (ln != NULL) {

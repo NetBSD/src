@@ -767,7 +767,6 @@ split_data_refs_to_components (struct loop *loop,
   /* Don't do store elimination if loop has multiple exit edges.  */
   bool eliminate_store_p = single_exit (loop) != NULL;
   basic_block last_always_executed = last_always_executed_block (loop);
-  auto_bitmap no_store_store_comps;
 
   FOR_EACH_VEC_ELT (datarefs, i, dr)
     {
@@ -839,13 +838,9 @@ split_data_refs_to_components (struct loop *loop,
       else if (DR_IS_READ (dra) && ib != bad)
 	{
 	  if (ia == bad)
-	    {
-	      bitmap_set_bit (no_store_store_comps, ib);
-	      continue;
-	    }
+	    continue;
 	  else if (!determine_offset (dra, drb, &dummy_off))
 	    {
-	      bitmap_set_bit (no_store_store_comps, ib);
 	      merge_comps (comp_father, comp_size, bad, ia);
 	      continue;
 	    }
@@ -853,13 +848,9 @@ split_data_refs_to_components (struct loop *loop,
       else if (DR_IS_READ (drb) && ia != bad)
 	{
 	  if (ib == bad)
-	    {
-	      bitmap_set_bit (no_store_store_comps, ia);
-	      continue;
-	    }
+	    continue;
 	  else if (!determine_offset (dra, drb, &dummy_off))
 	    {
-	      bitmap_set_bit (no_store_store_comps, ia);
 	      merge_comps (comp_father, comp_size, bad, ib);
 	      continue;
 	    }
@@ -915,17 +906,6 @@ split_data_refs_to_components (struct loop *loop,
 				gimple_bb (dataref->stmt));
       dataref->pos = comp->refs.length ();
       comp->refs.quick_push (dataref);
-    }
-
-  if (eliminate_store_p)
-    {
-      bitmap_iterator bi;
-      EXECUTE_IF_SET_IN_BITMAP (no_store_store_comps, 0, ia, bi)
-	{
-	  ca = component_of (comp_father, ia);
-	  if (ca != bad)
-	    comps[ca]->eliminate_store_p = false;
-	}
     }
 
   for (i = 0; i < n; i++)
@@ -1732,7 +1712,7 @@ is_inv_store_elimination_chain (struct loop *loop, chain_p chain)
 
   gcc_assert (!chain->has_max_use_after);
 
-  /* If loop iterates for unknown times or fewer times than chain->length,
+  /* If loop iterates for unknown times or fewer times than chain->lenght,
      we still need to setup root variable and propagate it with PHI node.  */
   tree niters = number_of_latch_executions (loop);
   if (TREE_CODE (niters) != INTEGER_CST

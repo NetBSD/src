@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.106 2020/03/17 18:31:39 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.104 2020/02/23 15:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.106 2020/03/17 18:31:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.104 2020/02/23 15:46:43 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -236,6 +236,9 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 
 	KASSERT(rw_write_held(pg->uobject->vmobjlock));
 
+	if (pg->flags & PG_WANTED) {
+		wakeup(pg);
+	}
 	KASSERT((pg->flags & PG_FAKE) == 0);
 	if (pg->flags & PG_RELEASED) {
 		uvm_pagefree(pg);
@@ -283,9 +286,8 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 
 	uvm_pagelock(pg);
 	uvm_pageactivate(pg);
-	uvm_pagewakeup(pg);
 	uvm_pageunlock(pg);
-	pg->flags &= ~PG_BUSY;
+	pg->flags &= ~(PG_BUSY|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
 
 	return error;

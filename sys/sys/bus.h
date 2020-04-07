@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 2020/03/08 02:42:00 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.12 2018/04/19 21:19:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -244,13 +244,5 @@ typedef struct bus_dmamap {
 	bus_dma_segment_t *dm_segs;
 } *bus_dmamap_t;
 #endif /* __HAVE_NO_BUS_DMA */
-
-/*
- * Convenience macros to correctly extract the upper and lower
- * 32 bits of a bus_addr_t (which may be a 32-bit or 64-bit
- * value).
- */
-#define	BUS_ADDR_HI32(a)	((uint32_t) __SHIFTOUT(a, __BITS(32,63)))
-#define	BUS_ADDR_LO32(a)	((uint32_t) __SHIFTOUT(a, __BITS(0,31)))
 
 #endif	/* _SYS_BUS_H_ */

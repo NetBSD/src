@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.113 2020/03/04 01:23:08 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.112 2020/03/02 18:15:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.113 2020/03/04 01:23:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.112 2020/03/02 18:15:28 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -600,14 +600,6 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 			return EPERM;
 		}
 		mutex_exit(proc_lock);
-		break;
-
-	case USB_HID_GET_RAW:
-		*(int *)addr = sc->sc_raw;
-		break;
-
-	case USB_HID_SET_RAW:
-		sc->sc_raw = *(int *)addr;
 		break;
 
 	case USB_GET_REPORT_DESC:

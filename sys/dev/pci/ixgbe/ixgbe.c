@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.227 2020/03/15 23:04:50 thorpej Exp $ */
+/* $NetBSD: ixgbe.c,v 1.226 2020/02/06 06:28:49 thorpej Exp $ */
 
 /******************************************************************************
 
@@ -1387,8 +1387,8 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	 * callbacks to update media and link information
 	 */
 	ec->ec_ifmedia = &adapter->media;
-	ifmedia_init_with_lock(&adapter->media, IFM_IMASK, ixgbe_media_change,
-	    ixgbe_media_status, &adapter->core_mtx);
+	ifmedia_init(&adapter->media, IFM_IMASK, ixgbe_media_change,
+	    ixgbe_media_status);
 
 	adapter->phy_layer = ixgbe_get_supported_physical_layer(&adapter->hw);
 	ixgbe_add_media_types(adapter);
@@ -2816,6 +2816,7 @@ ixgbe_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	int layer;
 
 	INIT_DEBUGOUT("ixgbe_media_status: begin");
+	IXGBE_CORE_LOCK(adapter);
 	ixgbe_update_link_status(adapter);
 
 	ifmr->ifm_status = IFM_AVALID;
@@ -2823,6 +2824,7 @@ ixgbe_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	if (adapter->link_active != LINK_STATE_UP) {
 		ifmr->ifm_active |= IFM_NONE;
+		IXGBE_CORE_UNLOCK(adapter);
 		return;
 	}
 
@@ -2943,6 +2945,8 @@ ixgbe_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	    hw->fc.current_mode == ixgbe_fc_full)
 		ifmr->ifm_active |= IFM_ETH_TXPAUSE;
 
+	IXGBE_CORE_UNLOCK(adapter);
+
 	return;
 } /* ixgbe_media_status */
 
@@ -2971,6 +2975,7 @@ ixgbe_media_change(struct ifnet *ifp)
 	if (hw->phy.media_type == ixgbe_media_type_backplane)
 		return (EPERM);
 
+	IXGBE_CORE_LOCK(adapter);
 	/*
 	 * We don't actually need to check against the supported
 	 * media types of the adapter; ifmedia will take care of
@@ -2983,6 +2988,7 @@ ixgbe_media_change(struct ifnet *ifp)
 		if (err != IXGBE_SUCCESS) {
 			device_printf(adapter->dev, "Unable to determine "
 			    "supported advertise speeds\n");
+			IXGBE_CORE_UNLOCK(adapter);
 			return (ENODEV);
 		}
 		speed |= link_caps;
@@ -3040,10 +3046,12 @@ ixgbe_media_change(struct ifnet *ifp)
 			adapter->advertise |= 1 << 5;
 	}
 
+	IXGBE_CORE_UNLOCK(adapter);
 	return (0);
 
 invalid:
 	device_printf(adapter->dev, "Invalid media type!\n");
+	IXGBE_CORE_UNLOCK(adapter);
 
 	return (EINVAL);
 } /* ixgbe_media_change */

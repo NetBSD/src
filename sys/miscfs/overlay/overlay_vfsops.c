@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.70 2020/03/21 16:30:39 pgoyette Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.68 2019/02/20 10:06:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.70 2020/03/21 16:30:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.68 2019/02/20 10:06:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.70 2020/03/21 16:30:39 pgoyette
 MODULE(MODULE_CLASS_VFS, overlay, "layerfs");
 
 VFS_PROTOS(ov);
+
+static struct sysctllog *overlay_sysctl_log;
 
 #define	NOVERLAYNODECACHE	16
 
@@ -268,16 +270,6 @@ struct vfsops overlay_vfsops = {
 	.vfs_opv_descs = ov_vnodeopv_descs
 };
 
-SYSCTL_SETUP(overlay_sysctl_setup, "overlay fs sysctl")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "overlay",
-		       SYSCTL_DESCR("Overlay file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_CREATE, CTL_EOL);
-}
-
 static int
 overlay_modcmd(modcmd_t cmd, void *arg)
 {
@@ -288,11 +280,17 @@ overlay_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&overlay_vfsops);
 		if (error != 0)
 			break;
+		sysctl_createv(&overlay_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT, CTLTYPE_NODE, "overlay",
+			       SYSCTL_DESCR("Overlay file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_CREATE, CTL_EOL);
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&overlay_vfsops);
 		if (error != 0)
 			break;
+		sysctl_teardown(&overlay_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.35 2020/03/12 15:50:11 roy Exp $	*/
+/*	$NetBSD: initscr.c,v 1.33 2018/10/02 17:35:44 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.35 2020/03/12 15:50:11 roy Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.33 2018/10/02 17:35:44 roy Exp $");
 #endif
 #endif	/* not lint */
 
@@ -65,15 +65,8 @@ initscr(void)
 		sp = Def_term;
 
 	/* LINTED const castaway; newterm does not modify sp! */
-	if ((_cursesi_screen = newterm((char *) sp, stdout, stdin)) == NULL) {
-		/*
-		 * POSIX says we should write a diagnostic and exit on error.
-		 * As such some applications don't bother checking the return
-		 * value at all.
-		 */
-		perror("initscr");
-		exit(EXIT_FAILURE);
-	}
+	if ((_cursesi_screen = newterm((char *) sp, stdout, stdin)) == NULL)
+		return NULL;
 
 	set_term(_cursesi_screen);
 	wrefresh(curscr);

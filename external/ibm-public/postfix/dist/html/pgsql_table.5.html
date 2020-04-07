@@ -26,6 +26,40 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
        The file /etc/postfix/pgsql-aliases.cf has the same format as the Post-
        fix <a href="postconf.5.html">main.cf</a> file, and can specify the parameters described below.
 
+<b>BACKWARDS COMPATIBILITY</b>
+       For  compatibility with other Postfix lookup tables, PostgreSQL parame-
+       ters can also be defined in <a href="postconf.5.html">main.cf</a>.  In order to do that,  specify  as
+       PostgreSQL source a name that doesn't begin with a slash or a dot.  The
+       PostgreSQL parameters will then be accessible as the name you've  given
+       the source in its definition, an underscore, and the name of the param-
+       eter.  For example, if the map is specified as  "<a href="pgsql_table.5.html">pgsql</a>:<i>pgsqlname</i>",  the
+       parameter  "hosts"  below  would  be  defined  in  <a href="postconf.5.html">main.cf</a>  as  "<i>pgsql-</i>
+       <i>name</i>_hosts".
+
+       Note: with this form, the passwords  for  the  PostgreSQL  sources  are
+       written in <a href="postconf.5.html">main.cf</a>, which is normally world-readable.  Support for this
+       form will be removed in a future Postfix version.
+
+       Normally, the SQL query is  specified  via  a  single  <b>query</b>  parameter
+       (described in more detail below).  When this parameter is not specified
+       in the map definition, Postfix reverts to an older interface, with  the
+       SQL   query constructed  from the <b>select_function</b>, <b>select_field</b>, <b>table</b>,
+       <b>where_field</b> and <b>additional_conditions</b> parameters.   The  old  interface
+       will be gradually phased out. To migrate to the new interface set:
+
+           <b>query</b> = SELECT <i>select</i><b>_</b><i>function</i>('%s')
+
+       or in the absence of <b>select_function</b>, the lower precedence:
+
+           <b>query</b> = SELECT <i>select</i><b>_</b><i>field</i>
+               FROM <i>table</i>
+               WHERE <i>where</i><b>_</b><i>field</i> = '%s'
+                   <i>additional</i><b>_</b><i>conditions</i>
+
+       Use  the  value,  not the name, of each legacy parameter. Note that the
+       <b>additional_conditions</b> parameter is optional  and  if  not  empty,  will
+       always start with <b>AND</b>.
+
 <b>LIST MEMBERSHIP</b>
        When  using  SQL  to  store  lists such as $<a href="postconf.5.html#mynetworks">mynetworks</a>, $<a href="postconf.5.html#mydestination">mydestination</a>,
        $<a href="postconf.5.html#relay_domains">relay_domains</a>, $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, etc., it is important to  under-
@@ -42,18 +76,21 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
 
 <b>PGSQL PARAMETERS</b>
        <b>hosts</b>  The hosts that Postfix will try to connect to  and  query  from.
-              Besides  a  <b>postgresql://</b>  connection URI, this setting supports
-              the historical forms <b>unix:/</b><i>pathname</i> for UNIX-domain sockets  and
-              <b>inet:</b><i>host:port</i>  for  TCP  connections, where the <b>unix:</b> and <b>inet:</b>
-              prefixes are accepted and ignored for  backwards  compatibility.
-              Examples:
-                  hosts = postgresql://username@example.com/tablename?sslmode=require
+              Specify <i>unix:</i> for UNIX-domain sockets, <i>inet:</i> for TCP connections
+              (default).  Example:
                   hosts = host1.some.domain host2.some.domain:port
                   hosts = unix:/file/name
 
-              The  hosts  are tried in random order. The connections are auto-
-              matically closed after being idle for about 1  minute,  and  are
-              re-opened as necessary.
+              The hosts are tried in random order, with all  connections  over
+              UNIX domain sockets being tried before those over TCP.  The con-
+              nections are automatically closed after being idle for  about  1
+              minute, and are re-opened as necessary.
+
+              NOTE:  the  <i>unix:</i>  and <i>inet:</i> prefixes are accepted for backwards
+              compatibility reasons, but are actually ignored.  The PostgreSQL
+              client  library  will always try to connect to an UNIX socket if
+              the name starts with a slash, and will try a TCP connection oth-
+              erwise.
 
        <b>user, password</b>
               The  user name and password to log into the pgsql server.  Exam-
@@ -189,19 +226,6 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
               zero  disables the limit. Lookups fail with a temporary error if
               the limit is exceeded.  Setting the  limit  to  1  ensures  that
               lookups do not return multiple values.
-
-<b>OBSOLETE MAIN.CF PARAMETERS</b>
-       For  compatibility with other Postfix lookup tables, PostgreSQL parame-
-       ters can also be defined in <a href="postconf.5.html">main.cf</a>.  In order to do that,  specify  as
-       PostgreSQL source a name that doesn't begin with a slash or a dot.  The
-       PostgreSQL parameters will then be accessible as the name you've  given
-       the source in its definition, an underscore, and the name of the param-
-       eter.  For example, if the map is specified as  "<a href="pgsql_table.5.html">pgsql</a>:<i>pgsqlname</i>",  the
-       parameter "hosts" would be defined in <a href="postconf.5.html">main.cf</a> as "<i>pgsqlname</i>_hosts".
-
-       Note:  with  this  form,  the  passwords for the PostgreSQL sources are
-       written in <a href="postconf.5.html">main.cf</a>, which is normally world-readable.  Support for this
-       form will be removed in a future Postfix version.
 
 <b>OBSOLETE QUERY INTERFACES</b>
        This section describes query interfaces that are deprecated as of Post-

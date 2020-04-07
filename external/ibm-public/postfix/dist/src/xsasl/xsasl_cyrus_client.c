@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_client.c,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: xsasl_cyrus_client.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -51,11 +51,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
  /*
@@ -491,7 +486,7 @@ static int xsasl_cyrus_client_first(XSASL_CLIENT *xp,
 					 &enc_length_out)) != SASL_OK)
 	    msg_panic("%s: sasl_encode64 botch: %s",
 		      myname, xsasl_cyrus_strerror(sasl_status));
-	vstring_set_payload_size(init_resp, enc_length_out);
+	VSTRING_AT_OFFSET(init_resp, enc_length_out);	/* XXX */
 #if SASL_VERSION_MAJOR < 2
 	/* SASL version 1 doesn't free memory that it allocates. */
 	free(clientout);

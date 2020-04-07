@@ -604,11 +604,27 @@ bool function_info::group_line_p (unsigned n, unsigned src_idx)
 typedef vector<arc_info *> arc_vector_t;
 typedef vector<const block_info *> block_vector_t;
 
+/* Enum with types of loop in CFG.  */
+
+enum loop_type
+{
+  NO_LOOP = 0,
+  LOOP = 1,
+  NEGATIVE_LOOP = 3
+};
+
+/* Loop_type operator that merges two values: A and B.  */
+
+inline loop_type& operator |= (loop_type& a, loop_type b)
+{
+    return a = static_cast<loop_type> (a | b);
+}
+
 /* Handle cycle identified by EDGES, where the function finds minimum cs_count
    and subtract the value from all counts.  The subtracted value is added
    to COUNT.  Returns type of loop.  */
 
-static void
+static loop_type
 handle_cycle (const arc_vector_t &edges, int64_t &count)
 {
   /* Find the minimum edge of the cycle, and reduce all nodes in the cycle by
@@ -624,7 +640,7 @@ handle_cycle (const arc_vector_t &edges, int64_t &count)
   for (unsigned i = 0; i < edges.size (); i++)
     edges[i]->cs_count -= cycle_count;
 
-  gcc_assert (cycle_count > 0);
+  return cycle_count < 0 ? NEGATIVE_LOOP : LOOP;
 }
 
 /* Unblock a block U from BLOCKED.  Apart from that, iterate all blocks
@@ -650,28 +666,17 @@ unblock (const block_info *u, block_vector_t &blocked,
     unblock (*it, blocked, block_lists);
 }
 
-/* Return true when PATH contains a zero cycle arc count.  */
-
-static bool
-path_contains_zero_cycle_arc (arc_vector_t &path)
-{
-  for (unsigned i = 0; i < path.size (); i++)
-    if (path[i]->cs_count == 0)
-      return true;
-  return false;
-}
-
 /* Find circuit going to block V, PATH is provisional seen cycle.
    BLOCKED is vector of blocked vertices, BLOCK_LISTS contains vertices
    blocked by a block.  COUNT is accumulated count of the current LINE.
    Returns what type of loop it contains.  */
 
-static bool
+static loop_type
 circuit (block_info *v, arc_vector_t &path, block_info *start,
 	 block_vector_t &blocked, vector<block_vector_t> &block_lists,
 	 line_info &linfo, int64_t &count)
 {
-  bool loop_found = false;
+  loop_type result = NO_LOOP;
 
   /* Add v to the block list.  */
   gcc_assert (find (blocked.begin (), blocked.end (), v) == blocked.end ());
@@ -681,35 +686,26 @@ circuit (block_info *v, arc_vector_t &path, block_info *start,
   for (arc_info *arc = v->succ; arc; arc = arc->succ_next)
     {
       block_info *w = arc->dst;
-      if (w < start
-	  || arc->cs_count == 0
-	  || !linfo.has_block (w))
+      if (w < start || !linfo.has_block (w))
 	continue;
 
       path.push_back (arc);
       if (w == start)
-	{
-	  /* Cycle has been found.  */
-	  handle_cycle (path, count);
-	  loop_found = true;
-	}
-      else if (!path_contains_zero_cycle_arc (path)
-	       &&  find (blocked.begin (), blocked.end (), w) == blocked.end ())
-	loop_found |= circuit (w, path, start, blocked, block_lists, linfo,
-			       count);
+	/* Cycle has been found.  */
+	result |= handle_cycle (path, count);
+      else if (find (blocked.begin (), blocked.end (), w) == blocked.end ())
+	result |= circuit (w, path, start, blocked, block_lists, linfo, count);
 
       path.pop_back ();
     }
 
-  if (loop_found)
+  if (result != NO_LOOP)
     unblock (v, blocked, block_lists);
   else
     for (arc_info *arc = v->succ; arc; arc = arc->succ_next)
       {
 	block_info *w = arc->dst;
-	if (w < start
-	    || arc->cs_count == 0
-	    || !linfo.has_block (w))
+	if (w < start || !linfo.has_block (w))
 	  continue;
 
 	size_t index
@@ -720,13 +716,14 @@ circuit (block_info *v, arc_vector_t &path, block_info *start,
 	  list.push_back (v);
       }
 
-  return loop_found;
+  return result;
 }
 
-/* Find cycles for a LINFO.  */
+/* Find cycles for a LINFO.  If HANDLE_NEGATIVE_CYCLES is set and the line
+   contains a negative loop, then perform the same function once again.  */
 
 static gcov_type
-get_cycles_count (line_info &linfo)
+get_cycles_count (line_info &linfo, bool handle_negative_cycles = true)
 {
   /* Note that this algorithm works even if blocks aren't in sorted order.
      Each iteration of the circuit detection is completely independent
@@ -734,7 +731,7 @@ get_cycles_count (line_info &linfo)
      Therefore, operating on a permuted order (i.e., non-sorted) only
      has the effect of permuting the output cycles.  */
 
-  bool loop_found = false;
+  loop_type result = NO_LOOP;
   gcov_type count = 0;
   for (vector<block_info *>::iterator it = linfo.blocks.begin ();
        it != linfo.blocks.end (); it++)
@@ -742,9 +739,13 @@ get_cycles_count (line_info &linfo)
       arc_vector_t path;
       block_vector_t blocked;
       vector<block_vector_t > block_lists;
-      loop_found |= circuit (*it, path, *it, blocked, block_lists, linfo,
-			     count);
+      result |= circuit (*it, path, *it, blocked, block_lists, linfo,
+			 count);
     }
+
+  /* If we have a negative cycle, repeat the find_cycles routine.  */
+  if (result == NEGATIVE_LOOP && handle_negative_cycles)
+    count += get_cycles_count (linfo, false);
 
   return count;
 }

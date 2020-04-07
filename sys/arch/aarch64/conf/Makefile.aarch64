@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.17 2020/03/04 19:28:04 ryo Exp $
+#	$NetBSD: Makefile.aarch64,v 1.16 2019/12/04 11:24:31 jmcneill Exp $
 
 # Makefile for NetBSD
 #
@@ -43,7 +43,7 @@ CFLAGS+=	-mno-omit-leaf-frame-pointer
 KASANFLAGS=	-fsanitize=kernel-address \
 		--param asan-globals=1 --param asan-stack=1 \
 		-fsanitize-address-use-after-scope \
-		-fasan-shadow-offset=0xDFFF600000000000
+		-fasan-shadow-offset=0xDFFF208000000000
 .for f in subr_asan.c
 KASANFLAGS.${f}=	# empty
 .endfor
@@ -74,7 +74,7 @@ locore.o: ${ARM}/aarch64/locore.S assym.h
 ## (5) link settings
 ##
 KERNLDSCRIPT?=	${ARM}/conf/kern.ldscript
-LOADADDRESS?=	0xffffc00000000000
+LOADADDRESS?=	0xffffffc000000000
 LINKFLAGS_NORMAL=	-X
 
 # Strip AArch64 mapping symbols from the kernel image, as they interfere

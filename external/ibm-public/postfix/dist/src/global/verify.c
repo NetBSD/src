@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -63,11 +63,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -107,12 +102,11 @@ int     verify_append(const char *queue_id, MSG_STATS *stats,
      * XXX vrfy_stat is competely redundant because of dsn.
      */
     if (var_verify_neg_cache || vrfy_stat == DEL_RCPT_STAT_OK) {
-	if (recipient->orig_addr[0])
-	    req_stat = verify_clnt_update(recipient->orig_addr, vrfy_stat,
-					  my_dsn.reason);
+	req_stat = verify_clnt_update(recipient->orig_addr, vrfy_stat,
+				      my_dsn.reason);
 	/* Two verify updates for one verify request! */
 	if (req_stat == VRFY_STAT_OK
-	    && strcmp(recipient->address, recipient->orig_addr) != 0)
+	  && strcasecmp_utf8(recipient->address, recipient->orig_addr) != 0)
 	    req_stat = verify_clnt_update(recipient->address, vrfy_stat,
 					  my_dsn.reason);
     } else {

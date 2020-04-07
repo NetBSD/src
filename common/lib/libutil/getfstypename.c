@@ -1,4 +1,4 @@
-/*	$NetBSD: getfstypename.c,v 1.10 2020/03/30 08:36:09 wiz Exp $	*/
+/*	$NetBSD: getfstypename.c,v 1.9 2018/11/06 04:04:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@
 # include <sys/cdefs.h>
 # ifndef _KERNEL
 #  if !defined(lint)
-__RCSID("$NetBSD: getfstypename.c,v 1.10 2020/03/30 08:36:09 wiz Exp $");
+__RCSID("$NetBSD: getfstypename.c,v 1.9 2018/11/06 04:04:33 mrg Exp $");
 #  endif
 # else
-__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.10 2020/03/30 08:36:09 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.9 2018/11/06 04:04:33 mrg Exp $");
 # endif /* _KERNEL */
 
 # define FSTYPE_ENUMNAME fstype_enum
@@ -129,8 +129,6 @@ getfstypename(int fstype)
 		return DKW_PTYPE_VMFS;
 	case FS_VMWRESV:
 		return DKW_PTYPE_VMWRESV;
-	case FS_ZFS:
-		return DKW_PTYPE_ZFS;
 	}
 	/* Stupid gcc, should know it is impossible to get here */
 	/*NOTREACHED*/

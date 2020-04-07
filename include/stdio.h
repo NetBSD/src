@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.99 2020/03/20 01:08:42 joerg Exp $	*/
+/*	$NetBSD: stdio.h,v 1.98 2019/12/13 20:25:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,13 +40,6 @@
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <sys/ansi.h>
-
-#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)) || ((_POSIX_C_SOURCE - 0) >= 200809L || \
-     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
-     (__cplusplus - 0) >= 201103L || defined(_NETBSD_SOURCE))
-#define __STDIO_C99_FEATURES
-#endif
 
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;
@@ -314,8 +307,8 @@ __END_DECLS
 /*
  * IEEE Std 1003.1c-95, also adopted by X/Open CAE Spec Issue 5 Version 2
  */
-#if defined(__STDIO_C99_FEATURES) || (_POSIX_C_SOURCE - 0) >= 199506L || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_REENTRANT)
+#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_REENTRANT) || defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 void	flockfile(FILE *);
 int	ftrylockfile(FILE *);
@@ -325,7 +318,7 @@ int	getchar_unlocked(void);
 int	putc_unlocked(int, FILE *);
 int	putchar_unlocked(int);
 __END_DECLS
-#endif /* C99 || _POSIX_C_SOURCE >= 1995056 || _XOPEN_SOURCE >= 500 || ... */
+#endif /* _POSIX_C_SOURCE >= 1995056 || _XOPEN_SOURCE >= 500 || ... */
 
 /*
  * Functions defined in POSIX 1003.2 and XPG2 or later.
@@ -346,9 +339,11 @@ __END_DECLS
 /*
  * Functions defined in ISO XPG4.2, ISO C99, POSIX 1003.1-2001 or later.
  */
-#if defined(__STDIO_C99_FEATURES) || (_POSIX_C_SOURCE - 0) >= 200112L || \
+#if ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500
+    ((_XOPEN_SOURCE - 0) >= 500) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 int	 snprintf(char * __restrict, size_t, const char * __restrict, ...)
 		__printflike(3, 4);
@@ -392,7 +387,7 @@ __END_DECLS
  * Functions defined in ISO C99.  Still put under _NETBSD_SOURCE due to
  * backward compatible.
  */
-#if defined(__STDIO_C99_FEATURES)
+#if defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 int	 vscanf(const char * __restrict, __va_list)
 		__scanflike(1, 0);
@@ -402,7 +397,7 @@ int	 vsscanf(const char * __restrict, const char * __restrict,
     __va_list)
     __scanflike(2, 0);
 __END_DECLS
-#endif /* C99 */
+#endif /* _ISOC99_SOURCE || _NETBSD_SOURCE */
 
 /*
  * Routines that are purely local.

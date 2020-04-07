@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.67 2020/03/05 18:20:38 fcambus Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.66 2019/04/07 13:48:27 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.67 2020/03/05 18:20:38 fcambus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.66 2019/04/07 13:48:27 jmcneill Exp $");
 
 #include "opt_wsfont.h"
 
@@ -217,6 +217,12 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_BOLD16x32
 	{ { NULL, NULL }, &bold16x32, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN  },
+#endif
+#ifdef FONT_ISO8x16
+	{ { NULL, NULL }, &iso8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_COURIER11x18
+	{ { NULL, NULL }, &courier11x18, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_GALLANT12x22
 	{ { NULL, NULL }, &gallant12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },

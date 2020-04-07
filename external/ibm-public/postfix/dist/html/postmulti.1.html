@@ -18,9 +18,9 @@ POSTMULTI(1)                                                      POSTMULTI(1)
 
        <b>postmulti -l</b> [<b>-aRv</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>]
 
-       <b>postmulti -p</b> [<b>-av</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>] <i>postfix-command...</i>
+       <b>postmulti -p</b> [<b>-av</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>] <i>command...</i>
 
-       <b>postmulti -x</b> [<b>-aRv</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>] <i>unix-command...</i>
+       <b>postmulti -x</b> [<b>-aRv</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>] <i>command...</i>
 
    <b>Life-cycle management:</b>
 
@@ -100,8 +100,7 @@ POSTMULTI(1)                                                      POSTMULTI(1)
               name, enable/disable status and configuration directory.
 
 <b>Postfix-wrapper mode</b>
-       <b>-p</b> <i>postfix-command</i>
-              Invoke  <a href="postfix.1.html"><b>postfix(1)</a></b>  to  execute  <i>postfix-command</i>.   This  option
+       <b>-p</b>     Invoke <a href="postfix.1.html"><b>postfix(1)</a></b> to execute the specified <i>command</i>.  This option
               implements the <a href="postfix-wrapper.5.html"><b>postfix-wrapper</b>(5)</a> interface.
 
               <b>o</b>      With "start"-like commands, "postfix check"  is  executed
@@ -131,11 +130,10 @@ POSTMULTI(1)                                                      POSTMULTI(1)
                      # postmulti -g msa -p start
 
 <b>Command mode</b>
-       <b>-x</b> <i>unix-command</i>
-              Execute the specified <i>unix-command</i> for  all  Postfix  instances.
-              The  command  runs  with  appropriate  environment  settings for
-              MAIL_CONFIG, <a href="postconf.5.html#command_directory">command_directory</a>, <a href="postconf.5.html#daemon_directory">daemon_directory</a>,  <a href="postconf.5.html#config_directory">config_direc</a>-
-              <a href="postconf.5.html#config_directory">tory</a>,   <a href="postconf.5.html#queue_directory">queue_directory</a>,   <a href="postconf.5.html#data_directory">data_directory</a>,  <a href="postconf.5.html#multi_instance_name">multi_instance_name</a>,
+       <b>-x</b>     Execute the specified <i>command</i> for all  Postfix  instances.   The
+              command runs with appropriate environment settings for MAIL_CON-
+              FIG,  <a href="postconf.5.html#command_directory">command_directory</a>,   <a href="postconf.5.html#daemon_directory">daemon_directory</a>,   <a href="postconf.5.html#config_directory">config_directory</a>,
+              <a href="postconf.5.html#queue_directory">queue_directory</a>,       <a href="postconf.5.html#data_directory">data_directory</a>,      <a href="postconf.5.html#multi_instance_name">multi_instance_name</a>,
               <a href="postconf.5.html#multi_instance_group">multi_instance_group</a> and <a href="postconf.5.html#multi_instance_enable">multi_instance_enable</a>.
 
 <b>Other options</b>
@@ -318,15 +316,14 @@ POSTMULTI(1)                                                      POSTMULTI(1)
               The directory with Postfix support programs and daemon programs.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The list of environment parameters  that  a  privileged  Postfix
-              process  will  import  from  a  non-Postfix  parent  process, or
-              name=value environment overrides.
+              The list of environment parameters that a Postfix  process  will
+              import from a non-Postfix parent process.
 
        <b><a href="postconf.5.html#multi_instance_directories">multi_instance_directories</a> (empty)</b>
-              An optional list of non-default Postfix  configuration  directo-
-              ries;  these  directories belong to additional Postfix instances
-              that share the Postfix executable files and  documentation  with
-              the  default  Postfix  instance,  and that are started, stopped,
+              An  optional  list of non-default Postfix configuration directo-
+              ries; these directories belong to additional  Postfix  instances
+              that  share  the Postfix executable files and documentation with
+              the default Postfix instance, and  that  are  started,  stopped,
               etc., together with the default Postfix instance.
 
        <b><a href="postconf.5.html#multi_instance_group">multi_instance_group</a> (empty)</b>
@@ -336,27 +333,28 @@ POSTMULTI(1)                                                      POSTMULTI(1)
               The optional instance name of this Postfix instance.
 
        <b><a href="postconf.5.html#multi_instance_enable">multi_instance_enable</a> (no)</b>
-              Allow this Postfix instance to be started, stopped, etc.,  by  a
+              Allow  this  Postfix instance to be started, stopped, etc., by a
               multi-instance manager.
 
        <b><a href="postconf.5.html#postmulti_start_commands">postmulti_start_commands</a> (start)</b>
-              The  <a href="postfix.1.html"><b>postfix</b>(1)</a>  commands that the <a href="postmulti.1.html"><b>postmulti</b>(1)</a> instance manager
+              The <a href="postfix.1.html"><b>postfix</b>(1)</a> commands that the <a href="postmulti.1.html"><b>postmulti</b>(1)</a>  instance  manager
               treats as "start" commands.
 
        <b><a href="postconf.5.html#postmulti_stop_commands">postmulti_stop_commands</a> (see 'postconf -d' output)</b>
-              The <a href="postfix.1.html"><b>postfix</b>(1)</a> commands that the <a href="postmulti.1.html"><b>postmulti</b>(1)</a>  instance  manager
+              The  <a href="postfix.1.html"><b>postfix</b>(1)</a>  commands that the <a href="postmulti.1.html"><b>postmulti</b>(1)</a> instance manager
               treats as "stop" commands.
 
        <b><a href="postconf.5.html#postmulti_control_commands">postmulti_control_commands</a> (reload flush)</b>
-              The  <a href="postfix.1.html"><b>postfix</b>(1)</a>  commands that the <a href="postmulti.1.html"><b>postmulti</b>(1)</a> instance manager
+              The <a href="postfix.1.html"><b>postfix</b>(1)</a> commands that the <a href="postmulti.1.html"><b>postmulti</b>(1)</a>  instance  manager
               treats as "control" commands, that operate on running instances.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A  prefix  that  is  prepended  to  the  process  name in syslog
-              records, so that, for example, "smtpd" becomes "prefix/smtpd".
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              fix/smtpd".
 
        Available in Postfix 3.0 and later:
 
@@ -398,11 +396,6 @@ POSTMULTI(1)                                                      POSTMULTI(1)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
-
-       Wietse Venema
-       Google, Inc.
-       111 8th Avenue
-       New York, NY 10011, USA
 
                                                                   POSTMULTI(1)
 </pre> </body> </html>

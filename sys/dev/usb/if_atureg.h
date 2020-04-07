@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atureg.h,v 1.12 2020/03/15 23:04:50 thorpej Exp $ */
+/*	$NetBSD: if_atureg.h,v 1.11 2016/04/23 10:15:31 skrll Exp $ */
 /*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003
@@ -137,8 +137,6 @@ struct atu_softc {
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
-
-	kmutex_t		sc_media_mtx;	/* XXX */
 
 	char			sc_state;
 #define ATU_S_DEAD		0

@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: record.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -139,11 +139,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -289,11 +284,14 @@ int     rec_get_raw(VSTREAM *stream, VSTRING *buf, ssize_t maxsize, int flags)
 	 * Reserve buffer space for the result, and read the record data into
 	 * the buffer.
 	 */
-	if (vstream_fread_buf(stream, buf, len) != len) {
+	VSTRING_RESET(buf);
+	VSTRING_SPACE(buf, len);
+	if (vstream_fread(stream, vstring_str(buf), len) != len) {
 	    msg_warn("%s: unexpected EOF in data, record type %d length %ld",
 		     VSTREAM_PATH(stream), type, (long) len);
 	    return (REC_TYPE_ERROR);
 	}
+	VSTRING_AT_OFFSET(buf, len);
 	VSTRING_TERMINATE(buf);
 	if (msg_verbose > 2)
 	    msg_info("%s: type %c len %ld data %.10s", myname,

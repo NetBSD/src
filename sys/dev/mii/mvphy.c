@@ -1,4 +1,4 @@
-/*	$NetBSD: mvphy.c,v 1.15 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: mvphy.c,v 1.14 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.15 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.14 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,8 +192,6 @@ mvphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 
-	mii_lock(mii);
-
 	if (MV_PORT(sc) == 0) {		/* NB: only when attaching first PHY */
 		/*
 		 * Set the global switch settings and configure the
@@ -209,8 +207,6 @@ mvphyattach(device_t parent, device_t self, void *aux)
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
 
-	mii_unlock(mii);
-
 	mii_phy_add_media(sc);
 }
 
@@ -218,8 +214,6 @@ static int
 mvphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-
-	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -273,8 +267,6 @@ mvphy_status(struct mii_softc *sc)
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t hwstatus;
 
-	KASSERT(mii_locked(mii));
-
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
@@ -299,8 +291,6 @@ mvphy_status(struct mii_softc *sc)
 static void
 mvphy_reset(struct mii_softc *sc)
 {
-
-	KASSERT(mii_locked(sc->mii_pdata));
 
 	/* XXX handle fixed media config */
 	PHY_WRITE(sc, MII_BMCR, BMCR_RESET | BMCR_AUTOEN);

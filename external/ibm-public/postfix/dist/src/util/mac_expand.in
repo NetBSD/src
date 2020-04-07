@@ -1,12 +1,7 @@
 name1 = name1-value
 
-$name1
 $(name1
-$(name1)
-$( name1)
-$(name1 )
-$(na me1)
-${na me1}
+$(name )
 ${${name1} != {}?name 1 defined, |$name1|$name2|}
 ${ ${name1} != {}?name 1 defined, |$name1|$name2|}
 ${ ${name1} ?name 1 defined, |$name1|$name2|}

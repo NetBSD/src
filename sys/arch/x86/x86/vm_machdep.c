@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42 2020/03/17 17:18:49 maxv Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.41 2020/01/25 15:38:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42 2020/03/17 17:18:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.41 2020/01/25 15:38:24 ad Exp $");
 
 #include "opt_mtrr.h"
 
@@ -193,6 +193,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	/* Child LWP might get aston() before returning to userspace. */
 	tf->tf_trapno = T_ASTFLT;
+
+#if 0 /* DIAGNOSTIC */
+	/* Set a red zone in the kernel stack after the uarea. */
+	pmap_kremove(uv, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+#endif
 
 	/* If specified, set a different user stack for a child. */
 	if (stack != NULL) {
@@ -347,31 +353,3 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
-
-#ifdef __HAVE_CPU_UAREA_ROUTINES
-void *
-cpu_uarea_alloc(bool system)
-{
-	vaddr_t va;
-
-	va = uvm_km_alloc(kernel_map, USPACE, 0, UVM_KMF_WIRED|UVM_KMF_WAITVA);
-	if (va == 0)
-		return NULL;
-
-	/*
-	 * The second page is unmapped, and acts as a guard page between the
-	 * PCB (first page) and the stack (rest of the pages).
-	 */
-	pmap_kremove(va + PAGE_SIZE, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-
-	return (void *)va;
-}
-
-bool
-cpu_uarea_free(void *addr)
-{
-	uvm_km_free(kernel_map, (vaddr_t)addr, USPACE, UVM_KMF_WIRED);
-	return true;
-}
-#endif /* __HAVE_CPU_UAREA_ROUTINES */

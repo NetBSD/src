@@ -1,4 +1,4 @@
-/*	$NetBSD: off_cvt.c,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: off_cvt.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
 
 /*++
 /* NAME
@@ -40,17 +40,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
 
 #include <sys_defs.h>
-#include <sys/types.h>
 #include <ctype.h>
 
 /* Utility library. */
@@ -74,21 +68,29 @@ off_t   off_cvt_string(const char *str)
 {
     int     ch;
     off_t   result;
-    off_t   digit_value;
+    off_t   res2;
+    off_t   res4;
+    off_t   res8;
+    off_t   res10;
 
     /*
-     * Detect overflow before it happens. Code that attempts to detect
-     * overflow after-the-fact makes assumptions about undefined behavior.
-     * Compilers may invalidate such assumptions.
+     * Multiplication by numbers > 2 can overflow without producing a smaller
+     * result mod 2^N (where N is the number of bits in the result type).
+     * (Victor Duchovni, Morgan Stanley).
      */
     for (result = 0; (ch = *(unsigned char *) str) != 0; str++) {
 	if (!ISDIGIT(ch))
 	    return (-1);
-	digit_value = ch - '0';
-	if (result > OFF_T_MAX / 10
-	    || (result *= 10) > OFF_T_MAX - digit_value)
+	if ((res2 = result + result) < result)
 	    return (-1);
-	result += digit_value;
+	if ((res4 = res2 + res2) < res2)
+	    return (-1);
+	if ((res8 = res4 + res4) < res4)
+	    return (-1);
+	if ((res10 = res8 + res2) < res8)
+	    return (-1);
+	if ((result = res10 + ch - '0') < res10)
+	    return (-1);
     }
     return (result);
 }
@@ -144,8 +146,6 @@ int     main(int unused_argc, char **unused_argv)
     off_t   offset;
 
     while (vstring_fgets_nonl(buf, VSTREAM_IN)) {
-	if (STR(buf)[0] == '#' || STR(buf)[0] == 0)
-	    continue;
 	if ((offset = off_cvt_string(STR(buf))) < 0) {
 	    msg_warn("bad input %s", STR(buf));
 	} else {

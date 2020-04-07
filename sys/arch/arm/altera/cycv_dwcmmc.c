@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_dwcmmc.c,v 1.5 2020/03/20 06:23:51 skrll Exp $ */
+/* $NetBSD: cycv_dwcmmc.c,v 1.4 2019/10/18 06:50:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_dwcmmc.c,v 1.5 2020/03/20 06:23:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_dwcmmc.c,v 1.4 2019/10/18 06:50:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -134,7 +134,6 @@ cycv_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_fifo_depth = fifo_depth;
 	sc->sc_fifo_reg = FIFO_REG;
 	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG | DWC_MMC_F_DMA;
-	sc->sc_intr_cardmask = DWC_MMC_INT_SDIO_INT(8);
 
 	sc->sc_card_detect = cycv_dwcmmc_card_detect;
 	sc->sc_write_protect = NULL;

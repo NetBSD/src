@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_private.h,v 1.26 2020/03/30 20:34:11 maya Exp $ */
+/* $NetBSD: nlist_private.h,v 1.25 2016/01/29 21:38:35 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -54,6 +54,9 @@
 #  define	NLIST_AOUT
 #  define	NLIST_ELF32
 #  define	NLIST_ELF64
+#elif defined(__SH5__)
+#  define	NLIST_ELF32
+#  define	NLIST_ELF64
 #elif defined(__sh__)
 #  define	NLIST_COFF
 #  define	NLIST_ELF32
@@ -71,7 +74,10 @@
 #elif defined(__or1k__)
 #  define	NLIST_ELF32
 #else
-#  error	"Add your architecture here"
+#  define	NLIST_AOUT
+/* #define	NLIST_ECOFF */
+/* #define	NLIST_ELF32 */
+/* #define	NLIST_ELF64 */
 #endif
 
 #define	ISLAST(p)	(N_NAME(p) == 0 || N_NAME(p)[0] == 0)

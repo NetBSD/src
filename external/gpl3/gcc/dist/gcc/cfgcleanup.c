@@ -53,7 +53,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "dce.h"
 #include "dbgcnt.h"
 #include "rtl-iter.h"
-#include "regs.h"
 
 #define FORWARDER_BLOCK_P(BB) ((BB)->flags & BB_FORWARDER_BLOCK)
 
@@ -1218,14 +1217,6 @@ old_insns_match_p (int mode ATTRIBUTE_UNUSED, rtx_insn *i1, rtx_insn *i2)
 		}
 	    }
 	}
-
-      HARD_REG_SET i1_used, i2_used;
-
-      get_call_reg_set_usage (i1, &i1_used, call_used_reg_set);
-      get_call_reg_set_usage (i2, &i2_used, call_used_reg_set);
-
-      if (!hard_reg_set_equal_p (i1_used, i2_used))
-        return dir_none;
     }
 
   /* If both i1 and i2 are frame related, verify all the CFA notes
@@ -2714,23 +2705,23 @@ try_optimize_cfg (int mode)
 
 		      if (current_ir_type () == IR_RTL_CFGLAYOUT)
 			{
-			  rtx_insn *insn;
-			  for (insn = BB_FOOTER (b);
-			       insn; insn = NEXT_INSN (insn))
-			    if (BARRIER_P (insn))
-			      break;
-			  if (insn)
+			  if (BB_FOOTER (b)
+			      && BARRIER_P (BB_FOOTER (b)))
 			    FOR_EACH_EDGE (e, ei, b->preds)
-			      if ((e->flags & EDGE_FALLTHRU))
+			      if ((e->flags & EDGE_FALLTHRU)
+				  && BB_FOOTER (e->src) == NULL)
 				{
-				  if (BB_FOOTER (b)
-				      && BB_FOOTER (e->src) == NULL)
+				  if (BB_FOOTER (b))
 				    {
 				      BB_FOOTER (e->src) = BB_FOOTER (b);
 				      BB_FOOTER (b) = NULL;
 				    }
 				  else
-				    emit_barrier_after_bb (e->src);
+				    {
+				      start_sequence ();
+				      BB_FOOTER (e->src) = emit_barrier ();
+				      end_sequence ();
+				    }
 				}
 			}
 		      else

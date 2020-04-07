@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.13 2020/04/01 01:57:20 kamil Exp $
+	$NetBSD: README,v 1.12 2020/02/07 19:22:21 pgoyette Exp $
 
                            Kernel Developer's Manual
 
@@ -7,7 +7,6 @@ DESCRIPTION
 
      This directory contains the following example modules:
      * executor        - basic implementation of callout and RUN_ONCE
-     * fopsmapper      - basic implementation of mmap with fileops fo_mmap
      * hello           - the simplest `hello world' module
      * luahello        - the simplest `hello world' Lua module
      * luareadhappy    - demonstrates calling Lua code from C
@@ -74,9 +73,6 @@ HISTORY
      
      The ping_block module first appeared in NetBSD 10.0 and was authored by
      Nisarg Joshi.
-
-     The fopsmapper module first appeared in NetBSD 10.0 and was authored by
-     Aditya Vardhan Padala.
 
 AUTHORS
      This document was written by Kamil Rytarowski.

@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_select.c,v 1.53 2020/03/26 19:46:42 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.52 2020/02/15 17:09:24 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.53 2020/03/26 19:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.52 2020/02/15 17:09:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,14 +136,8 @@ static const int sel_flag[] = {
 	POLLRDBAND
 };
 
-/* 
- * LWPs are woken using the sleep queue only due to a collision, the case
- * with the maximum Suck Factor.  Save the cost of sorting for named waiters
- * by inserting in LIFO order.  In the future it would be preferable to not
- * enqueue LWPs at all, unless subject to a collision.
- */
 syncobj_t select_sobj = {
-	.sobj_flag	= SOBJ_SLEEPQ_LIFO,
+	.sobj_flag	= SOBJ_SLEEPQ_FIFO,
 	.sobj_unsleep	= sleepq_unsleep,
 	.sobj_changepri	= sleepq_changepri,
 	.sobj_lendpri	= sleepq_lendpri,

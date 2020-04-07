@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2020/03/18 19:05:23 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2017/02/14 01:16:49 christos Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -31,8 +31,8 @@ CLEANFILES+= ${GENSRCS}
 
 CPPFLAGS+= -I.
 
-DPADD+= ${LIBPTLS} ${LIBPGLOBAL} ${LIBPXSASL} ${LIBPUTIL}
-LDADD+= ${LIBPTLS} ${LIBPGLOBAL} ${LIBPXSASL} ${LIBPUTIL}
+DPADD+= ${LIBPGLOBAL} ${LIBPTLS} ${LIBPXSASL} ${LIBPUTIL}
+LDADD+= ${LIBPGLOBAL} ${LIBPTLS} ${LIBPXSASL} ${LIBPUTIL}
 
 ${GENSRCS}: postconf-hdrs.stamp
 CLEANFILES+= postconf-hdrs.stamp

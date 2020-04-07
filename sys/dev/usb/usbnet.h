@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.17 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.16 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -156,40 +156,18 @@ typedef void (*usbnet_tick_cb)(struct usbnet *);
 /* Interrupt pipe callback. */
 typedef void (*usbnet_intr_cb)(struct usbnet *, usbd_status);
 
-/*
- * LOCKING
- * =======
- *
- * The following annotations indicate which locks are held when
- * usbnet_ops functions are invoked:
- *
- * I -> IFNET_LOCK (if_ioctl_lock)
- * C -> CORE_LOCK (usbnet core_lock)
- * T -> TX_LOCK (usbnet tx_lock)
- * R -> RX_LOCK (usbnet rx_lock)
- * n -> no locks held
- *
- * Note that when CORE_LOCK is held, IFNET_LOCK may or may not also
- * be held.
- *
- * Note that the IFNET_LOCK **may not be held** for some ioctl
- * operations (add/delete multicast addresses, for example).
- *
- * Busy reference counts are maintained across calls to: uno_stop,
- * uno_read_reg, uno_write_reg, uno_statchg, and uno_tick.
- */
 struct usbnet_ops {
-	usbnet_stop_cb		uno_stop;		/* C */
-	usbnet_ioctl_cb		uno_ioctl;		/* I (maybe) */
-	usbnet_ioctl_cb		uno_override_ioctl;	/* I (maybe) */
-	usbnet_init_cb		uno_init;		/* I */
-	usbnet_mii_read_reg_cb	uno_read_reg;		/* C */
-	usbnet_mii_write_reg_cb uno_write_reg;		/* C */
-	usbnet_mii_statchg_cb	uno_statchg;		/* C */
-	usbnet_tx_prepare_cb	uno_tx_prepare;		/* T */
-	usbnet_rx_loop_cb	uno_rx_loop;		/* R */
-	usbnet_tick_cb		uno_tick;		/* n */
-	usbnet_intr_cb		uno_intr;		/* n */
+	usbnet_stop_cb		uno_stop;
+	usbnet_ioctl_cb		uno_ioctl;
+	usbnet_ioctl_cb		uno_override_ioctl;
+	usbnet_init_cb		uno_init;
+	usbnet_mii_read_reg_cb	uno_read_reg;
+	usbnet_mii_write_reg_cb uno_write_reg;
+	usbnet_mii_statchg_cb	uno_statchg;
+	usbnet_tx_prepare_cb	uno_tx_prepare;
+	usbnet_rx_loop_cb	uno_rx_loop;
+	usbnet_tick_cb		uno_tick;
+	usbnet_intr_cb		uno_intr;
 };
 
 /*
@@ -299,17 +277,14 @@ bool usbnet_isdying(struct usbnet *);
  * Locking.  Note that the isowned() are implemented here so that
  * empty-KASSERT() causes them to be elided for non-DIAG builds.
  */
-void	usbnet_lock_core(struct usbnet *);
-void	usbnet_unlock_core(struct usbnet *);
-kmutex_t *usbnet_mutex_core(struct usbnet *);
+void	usbnet_lock(struct usbnet *);
+void	usbnet_unlock(struct usbnet *);
+kmutex_t *usbnet_mutex(struct usbnet *);
 static __inline__ void
-usbnet_isowned_core(struct usbnet *un)
+usbnet_isowned(struct usbnet *un)
 {
-	KASSERT(mutex_owned(usbnet_mutex_core(un)));
+	KASSERT(mutex_owned(usbnet_mutex(un)));
 }
-
-void	usbnet_busy(struct usbnet *);
-void	usbnet_unbusy(struct usbnet *);
 
 void	usbnet_lock_rx(struct usbnet *);
 void	usbnet_unlock_rx(struct usbnet *);
@@ -345,6 +320,18 @@ usbnet_isowned_tx(struct usbnet *un)
 int	usbnet_init_rx_tx(struct usbnet * const);
 
 /* MII. */
+void	usbnet_lock_mii(struct usbnet *);
+void	usbnet_lock_mii_un_locked(struct usbnet *);
+void	usbnet_unlock_mii(struct usbnet *);
+void	usbnet_unlock_mii_un_locked(struct usbnet *);
+kmutex_t *usbnet_mutex_mii(struct usbnet *);
+static __inline__ void
+usbnet_isowned_mii(struct usbnet *un)
+{
+	KASSERT(mutex_owned(usbnet_mutex_mii(un)));
+}
+
+
 int	usbnet_mii_readreg(device_t, int, int, uint16_t *);
 int	usbnet_mii_writereg(device_t, int, int, uint16_t);
 void	usbnet_mii_statchg(struct ifnet *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.14 2020/03/14 18:08:39 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.13 2019/09/28 15:13:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -87,7 +87,8 @@ static inline void
 cond_resched(void)
 {
 
-	preempt_point();
+	if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		preempt();
 }
 
 #endif  /* _LINUX_SCHED_H_ */

@@ -826,7 +826,6 @@ input_cfg (struct lto_input_block *ib, struct data_in *data_in,
       /* Read OMP SIMD related info.  */
       loop->safelen = streamer_read_hwi (ib);
       loop->unroll = streamer_read_hwi (ib);
-      loop->owned_clique = streamer_read_hwi (ib);
       loop->dont_vectorize = streamer_read_hwi (ib);
       loop->force_vectorize = streamer_read_hwi (ib);
       loop->simduid = stream_read_tree (ib, data_in);
@@ -1131,14 +1130,6 @@ input_function (tree fn_decl, struct data_in *data_in,
 		  && (gimple_debug_nonbind_marker_p (stmt)
 		      ? !MAY_HAVE_DEBUG_MARKER_STMTS
 		      : !MAY_HAVE_DEBUG_BIND_STMTS))
-		remove = true;
-	      /* In case the linemap overflows locations can be dropped
-		 to zero.  Thus do not keep nonsensical inline entry markers
-		 we'd later ICE on.  */
-	      tree block;
-	      if (gimple_debug_inline_entry_p (stmt)
-		  && (block = gimple_block (stmt))
-		  && !inlined_function_outer_scope_p (block))
 		remove = true;
 	      if (is_gimple_call (stmt)
 		  && gimple_call_internal_p (stmt))

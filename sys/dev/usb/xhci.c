@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.122 2020/03/14 03:01:36 christos Exp $	*/
+/*	$NetBSD: xhci.c,v 1.119 2020/02/15 09:26:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.122 2020/03/14 03:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.119 2020/02/15 09:26:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -767,7 +767,7 @@ xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
 	const uint32_t wc = xhci_read_4(sc, ecp + 0xc);
 
 	aprint_debug_dev(sc->sc_dev,
-	    " SP: 0x%08x 0x%08x 0x%08x 0x%08x\n", w0, w4, w8, wc);
+	    " SP: %08x %08x %08x %08x\n", w0, w4, w8, wc);
 
 	if (w4 != XHCI_XECP_USBID)
 		return;
@@ -928,7 +928,7 @@ xhci_start(struct xhci_softc *sc)
 
 	/* Go! */
 	xhci_op_write_4(sc, XHCI_USBCMD, XHCI_CMD_INTE|XHCI_CMD_RS);
-	aprint_debug_dev(sc->sc_dev, "USBCMD 0x%08"PRIx32"\n",
+	aprint_debug_dev(sc->sc_dev, "USBCMD %08"PRIx32"\n",
 	    xhci_op_read_4(sc, XHCI_USBCMD));
 }
 
@@ -1140,7 +1140,7 @@ xhci_init(struct xhci_softc *sc)
 
 	memset(KERNADDR(dma, 0), 0, size);
 	usb_syncmem(dma, 0, size, BUS_DMASYNC_PREWRITE);
-	aprint_debug_dev(sc->sc_dev, "eventst: 0x%016jx %p %zx\n",
+	aprint_debug_dev(sc->sc_dev, "eventst: %016jx %p %zx\n",
 	    (uintmax_t)DMAADDR(&sc->sc_eventst_dma, 0),
 	    KERNADDR(&sc->sc_eventst_dma, 0),
 	    sc->sc_eventst_dma.udma_block->size);
@@ -1155,7 +1155,7 @@ xhci_init(struct xhci_softc *sc)
 		rv = ENOMEM;
 		goto bad4;
 	}
-	aprint_debug_dev(sc->sc_dev, "dcbaa: 0x%016jx %p %zx\n",
+	aprint_debug_dev(sc->sc_dev, "dcbaa: %016jx %p %zx\n",
 	    (uintmax_t)DMAADDR(&sc->sc_dcbaa_dma, 0),
 	    KERNADDR(&sc->sc_dcbaa_dma, 0),
 	    sc->sc_dcbaa_dma.udma_block->size);
@@ -1304,11 +1304,11 @@ xhci_intr1(struct xhci_softc * const sc)
 	XHCIHIST_FUNC();
 
 	usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
-	XHCIHIST_CALLARGS("USBSTS 0x%08jx", usbsts, 0, 0, 0);
+	XHCIHIST_CALLARGS("USBSTS %08jx", usbsts, 0, 0, 0);
 	if ((usbsts & (XHCI_STS_HSE | XHCI_STS_EINT | XHCI_STS_PCD |
 	    XHCI_STS_HCE)) == 0) {
-		DPRINTFN(16, "ignored intr not for %jd",
-		    device_unit(sc->sc_dev), 0, 0, 0);
+		DPRINTFN(16, "ignored intr not for %s",
+		    (uintptr_t)device_xname(sc->sc_dev), 0, 0, 0);
 		return 0;
 	}
 
@@ -1321,19 +1321,19 @@ xhci_intr1(struct xhci_softc * const sc)
 
 #ifdef XHCI_DEBUG
 	usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
-	DPRINTFN(16, "USBSTS 0x%08jx", usbsts, 0, 0, 0);
+	DPRINTFN(16, "USBSTS %08jx", usbsts, 0, 0, 0);
 #endif
 
 	iman = xhci_rt_read_4(sc, XHCI_IMAN(0));
-	DPRINTFN(16, "IMAN0 0x%08jx", iman, 0, 0, 0);
+	DPRINTFN(16, "IMAN0 %08jx", iman, 0, 0, 0);
 	iman |= XHCI_IMAN_INTR_PEND;
 	xhci_rt_write_4(sc, XHCI_IMAN(0), iman);
 
 #ifdef XHCI_DEBUG
 	iman = xhci_rt_read_4(sc, XHCI_IMAN(0));
-	DPRINTFN(16, "IMAN0 0x%08jx", iman, 0, 0, 0);
+	DPRINTFN(16, "IMAN0 %08jx", iman, 0, 0, 0);
 	usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
-	DPRINTFN(16, "USBSTS 0x%08jx", usbsts, 0, 0, 0);
+	DPRINTFN(16, "USBSTS %08jx", usbsts, 0, 0, 0);
 #endif
 
 	return 1;
@@ -1922,7 +1922,7 @@ xhci_event_transfer(struct xhci_softc * const sc,
 	int idx = 0;
 	if ((trb_3 & XHCI_TRB_3_ED_BIT) == 0) {
 		if (xhci_trb_get_idx(xr, trb_0, &idx)) {
-			DPRINTFN(0, "invalid trb_0 %#jx", trb_0, 0, 0, 0);
+			DPRINTFN(0, "invalid trb_0 0x%jx", trb_0, 0, 0, 0);
 			return;
 		}
 		xx = xr->xr_cookies[idx];
@@ -1937,7 +1937,7 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		if (xx == NULL || trbcode == XHCI_TRB_ERROR_LENGTH) {
 			DPRINTFN(1, "Ignore #%ju: cookie %#jx cc %ju dci %ju",
 			    idx, (uintptr_t)xx, trbcode, dci);
-			DPRINTFN(1, " orig TRB %#jx type %ju", trb_0,
+			DPRINTFN(1, " orig TRB %jx type %ju", trb_0,
 			    XHCI_TRB_3_TYPE_GET(le32toh(xr->xr_trb[idx].trb_3)),
 			    0, 0);
 			return;
@@ -2529,14 +2529,14 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	uint32_t control;
 
 	XHCIHIST_FUNC();
-	XHCIHIST_CALLARGS("%#jx xr_ep %#jx xr_cs %ju",
+	XHCIHIST_CALLARGS("%#jx xr_ep 0x%jx xr_cs %ju",
 	    (uintptr_t)xr, xr->xr_ep, xr->xr_cs, 0);
 
 	KASSERTMSG(ntrbs <= XHCI_XFER_NTRB, "ntrbs %zu", ntrbs);
 	for (i = 0; i < ntrbs; i++) {
 		DPRINTFN(12, "xr %#jx trbs %#jx num %ju", (uintptr_t)xr,
 		    (uintptr_t)trbs, i, 0);
-		DPRINTFN(12, " 0x%016jx 0x%08jx 0x%08jx",
+		DPRINTFN(12, " %016jx %08jx %08jx",
 		    trbs[i].trb_0, trbs[i].trb_2, trbs[i].trb_3, 0);
 		KASSERTMSG(XHCI_TRB_3_TYPE_GET(trbs[i].trb_3) !=
 		    XHCI_TRB_TYPE_LINK, "trbs[%zu].trb3 %#x", i, trbs[i].trb_3);
@@ -2620,7 +2620,7 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	xr->xr_ep = ri;
 	xr->xr_cs = cs;
 
-	DPRINTFN(12, "%#jx xr_ep %#jx xr_cs %ju", (uintptr_t)xr, xr->xr_ep,
+	DPRINTFN(12, "%#jx xr_ep 0x%jx xr_cs %ju", (uintptr_t)xr, xr->xr_ep,
 	    xr->xr_cs, 0);
 }
 
@@ -2727,7 +2727,7 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 		break;
 	default:
 	case 192 ... 223:
-		DPRINTFN(5, "error %#jx",
+		DPRINTFN(5, "error %x",
 		    XHCI_TRB_2_ERROR_GET(trb->trb_2), 0, 0, 0);
 		err = USBD_IOERROR;
 		break;
@@ -2831,10 +2831,10 @@ xhci_address_device(struct xhci_softc * const sc,
 
 	XHCIHIST_FUNC();
 	if (bsr) {
-		XHCIHIST_CALLARGS("icp %#jx slot %#jx with bsr",
+		XHCIHIST_CALLARGS("icp %jx slot %jx with bsr",
 		    icp, slot_id, 0, 0);
 	} else {
-		XHCIHIST_CALLARGS("icp %#jx slot %#jx nobsr",
+		XHCIHIST_CALLARGS("icp %jx slot %jx nobsr",
 		    icp, slot_id, 0, 0);
 	}
 
@@ -2890,7 +2890,7 @@ xhci_set_dcba(struct xhci_softc * const sc, uint64_t dcba, int si)
 	uint64_t * const dcbaa = KERNADDR(&sc->sc_dcbaa_dma, 0);
 
 	XHCIHIST_FUNC();
-	XHCIHIST_CALLARGS("dcbaa %#jx dc 0x%016jx slot %jd",
+	XHCIHIST_CALLARGS("dcbaa %#jx dc %016jx slot %jd",
 	    (uintptr_t)&dcbaa[si], dcba, si, 0);
 
 	dcbaa[si] = htole64(dcba);
@@ -3147,7 +3147,7 @@ xhci_setup_route(struct usbd_pipe *pipe, uint32_t *cp)
 	for (hub = dev; hub != NULL; hub = hub->ud_myhub) {
 		uint32_t dep;
 
-		DPRINTFN(4, "hub %#jx depth %jd upport %#jx upportno %jd",
+		DPRINTFN(4, "hub %#jx depth %jd upport %jp upportno %jd",
 		    (uintptr_t)hub, hub->ud_depth, (uintptr_t)hub->ud_powersrc,
 		    hub->ud_powersrc ? (uintptr_t)hub->ud_powersrc->up_portno :
 			 -1);
@@ -3550,12 +3550,12 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			return -1;
 		}
 		if (len != 4) {
-			DPRINTFN(5, "bad get port status: len %jd != 4",
+			DPRINTFN(5, "bad get port status: len %d != 4",
 			    len, 0, 0, 0);
 			return -1;
 		}
 		v = xhci_op_read_4(sc, XHCI_PORTSC(cp));
-		DPRINTFN(4, "getrhportsc %jd 0x%08jx", cp, v, 0, 0);
+		DPRINTFN(4, "getrhportsc %jd %08jx", cp, v, 0, 0);
 		i = xhci_xspeed2psspeed(XHCI_PS_SPEED_GET(v));
 		if (v & XHCI_PS_CCS)	i |= UPS_CURRENT_CONNECT_STATUS;
 		if (v & XHCI_PS_PED)	i |= UPS_PORT_ENABLED;
@@ -3584,8 +3584,8 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		USETW(ps.wPortChange, i);
 		totlen = uimin(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
-		DPRINTFN(5, "get port status: wPortStatus %#jx wPortChange %#jx"
-			    " totlen %jd",
+		DPRINTFN(5, "get port status: wPortStatus %x wPortChange %x "
+			    "totlen %d",
 		    UGETW(ps.wPortStatus), UGETW(ps.wPortChange), totlen, 0);
 		break;
 	}

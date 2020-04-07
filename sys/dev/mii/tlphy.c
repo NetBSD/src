@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.68 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.67 2019/11/27 10:19:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.68 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.67 2019/11/27 10:19:21 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,8 +144,6 @@ tlphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 
-	mii_lock(mii);
-
 	PHY_RESET(sc);
 
 	/*
@@ -161,15 +159,12 @@ tlphyattach(device_t parent, device_t self, void *aux)
 	} else
 		sc->mii_capabilities = 0;
 
-	mii_unlock(mii);
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 #define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
 	if (tsc->sc_tlphycap) {
-		mii_lock(mii);
 		sc->mii_anegticks = MII_ANEGTICKS;
-		mii_unlock(mii);
 		aprint_normal_dev(self, "");
 		if (tsc->sc_tlphycap & TLPHY_MEDIA_10_2) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0, sc->mii_inst),
@@ -207,8 +202,6 @@ tlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	struct tlphy_softc *tsc = (struct tlphy_softc *)sc;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg;
-
-	KASSERT(mii_locked(mii));
 
 	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0 && tsc->sc_need_acomp)
 		tlphy_acomp(tsc);
@@ -289,8 +282,6 @@ tlphy_status(struct mii_softc *sc)
 	struct tlphy_softc *tsc = (struct tlphy_softc *)sc;
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t bmsr, bmcr, tlctrl;
-
-	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;

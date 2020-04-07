@@ -1,4 +1,4 @@
-/*	$NetBSD: ipgphy.c,v 1.10 2020/03/15 23:04:50 thorpej Exp $ */
+/*	$NetBSD: ipgphy.c,v 1.9 2020/01/14 09:49:26 msaitoh Exp $ */
 /*	$OpenBSD: ipgphy.c,v 1.19 2015/07/19 06:28:12 yuo Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * Driver for the IC Plus IP1000A/IP1001 10/100/1000 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.10 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.9 2020/01/14 09:49:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,8 +121,6 @@ ipgphy_attach(device_t parent, device_t self, void *aux)
 		    &isc->need_loaddspcode);
 	}
 
-	mii_lock(mii);
-
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
@@ -130,8 +128,6 @@ ipgphy_attach(device_t parent, device_t self, void *aux)
 	//sc->mii_capabilities &= ~BMSR_ANEG;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
-
-	mii_unlock(mii);
 
 	mii_phy_add_media(sc);
 }
@@ -141,8 +137,6 @@ ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg, speed;
-
-	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -260,8 +254,6 @@ ipgphy_status(struct mii_softc *sc)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t bmsr, bmcr, stat, gtsr;
 
-	KASSERT(mii_locked(mii));
-
 	/* For IP1000A, use generic way */
 	if (sc->mii_mpd_model == MII_MODEL_xxICPLUS_IP1000A) {
 		ukphy_status(sc);
@@ -326,8 +318,6 @@ ipgphy_mii_phy_auto(struct mii_softc *sc, u_int media)
 	uint16_t reg = 0;
 	u_int subtype = IFM_SUBTYPE(media);
 
-	KASSERT(mii_locked(sc->mii_pdata));
-
 	/* XXX Is it requreid ? */
 	if (sc->mii_mpd_model == MII_MODEL_xxICPLUS_IP1001) {
 		PHY_READ(sc, MII_ANAR, &reg);
@@ -380,8 +370,6 @@ ipgphy_reset(struct mii_softc *sc)
 {
 	struct ipgphy_softc *isc = device_private(sc->mii_dev);
 	uint16_t reg;
-
-	KASSERT(mii_locked(sc->mii_pdata));
 
 	mii_phy_reset(sc);
 

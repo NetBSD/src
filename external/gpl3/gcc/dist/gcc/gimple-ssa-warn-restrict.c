@@ -314,9 +314,13 @@ builtin_memref::extend_offset_range (tree offset)
 	  offrange[0] += offset_int::from (min, SIGNED);
 	  offrange[1] += offset_int::from (max, SIGNED);
 	}
+      else if (rng == VR_ANTI_RANGE)
+	{
+	  offrange[0] += offset_int::from (max + 1, SIGNED);
+	  offrange[1] += offset_int::from (min - 1, SIGNED);
+	}
       else
 	{
-	  /* Handle an anti-range the same as no range at all.  */
 	  gimple *stmt = SSA_NAME_DEF_STMT (offset);
 	  tree type;
 	  if (is_gimple_assign (stmt)
@@ -698,10 +702,6 @@ builtin_access::builtin_access (gcall *call, builtin_memref &dst,
   offset_int bounds[2] = { maxobjsize, maxobjsize };
   if (dstref->strbounded_p)
     {
-      unsigned nargs = gimple_call_num_args (call);
-      if (nargs <= sizeargno)
-	return;
-
       tree size = gimple_call_arg (call, sizeargno);
       tree range[2];
       if (get_size_range (size, range, true))
