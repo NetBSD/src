@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.47 2019/11/11 07:27:48 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.48 2020/04/07 07:25:41 ryo Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.47 2019/11/11 07:27:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.48 2020/04/07 07:25:41 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1721,7 +1721,13 @@ nvme_ccbs_free(struct nvme_queue *q)
 	mutex_enter(&q->q_ccb_mtx);
 	while ((ccb = SIMPLEQ_FIRST(&q->q_ccb_list)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&q->q_ccb_list, ccb_entry);
+		/* 
+		 * bus_dmamap_destroy() may call vm_map_lock() and rw_enter()
+		 * internally. don't hold spin mutex
+		 */
+		mutex_exit(&q->q_ccb_mtx);
 		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+		mutex_enter(&q->q_ccb_mtx);
 	}
 	mutex_exit(&q->q_ccb_mtx);
 
