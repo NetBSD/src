@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.73 2020/01/17 19:30:51 ad Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.74 2020/04/07 09:18:00 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.73 2020/01/17 19:30:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.74 2020/04/07 09:18:00 jdolecek Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -490,7 +490,6 @@ xbdback_xenbus_destroy(void *arg)
 	/* unregister watch */
 	if (xbdi->xbdi_watch.node) {
 		unregister_xenbus_watch(&xbdi->xbdi_watch);
-		free(xbdi->xbdi_watch.node, M_DEVBUF);
 		xbdi->xbdi_watch.node = NULL;
 	}
 	/* unmap ring */
