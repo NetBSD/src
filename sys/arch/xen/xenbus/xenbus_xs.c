@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.24 2020/04/07 11:47:06 jdolecek Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.25 2020/04/07 15:59:57 jdolecek Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.24 2020/04/07 11:47:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.25 2020/04/07 15:59:57 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -336,6 +336,12 @@ xenbus_directory(struct xenbus_transaction *t,
 	if (*retbuf == NULL)
 		return ENOMEM;
 	return 0;
+}
+
+void
+xenbus_directory_free(unsigned int num, char **dir)
+{
+	free(dir, M_DEVBUF);
 }
 
 /* Check if a path exists. Return 1 if it does. */

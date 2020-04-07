@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.20 2020/04/07 15:40:14 jdolecek Exp $ */
+/* $NetBSD: xenbus.h,v 1.21 2020/04/07 15:59:57 jdolecek Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -120,6 +120,7 @@ struct xenbus_transaction;
 int xenbus_directory(struct xenbus_transaction *t,
 			const char *dir, const char *node, unsigned int *num,
 			char ***);
+void xenbus_directory_free(unsigned int, char **);
 int xenbus_read(struct xenbus_transaction *,
 		  const char *, const char *, char *, size_t);
 int xenbus_read_ul(struct xenbus_transaction *,
