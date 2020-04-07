@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_client.c,v 1.14 2019/11/10 21:16:34 chs Exp $ */
+/* $NetBSD: xenbus_client.c,v 1.15 2020/04/07 13:38:50 jdolecek Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.14 2019/11/10 21:16:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.15 2020/04/07 13:38:50 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.14 2019/11/10 21:16:34 chs Exp $
 #include <xen/granttables.h>
 
 
-int
+static int
 xenbus_watch_path(struct xenbus_device *dev, char *path,
 		      struct xenbus_watch *watch, 
 		      void (*callback)(struct xenbus_watch *,
