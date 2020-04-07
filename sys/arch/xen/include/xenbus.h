@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.19 2020/04/07 14:07:01 jdolecek Exp $ */
+/* $NetBSD: xenbus.h,v 1.20 2020/04/07 15:40:14 jdolecek Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -96,6 +96,7 @@ struct xenbus_device {
 	int xbusd_has_error;
 	/* for xenbus internal use */
 	struct xenbus_watch xbusd_otherend_watch;
+	size_t xbusd_sz;		/* size of allocated structure */
 	const char xbusd_path[1]; /* our path */
 };
 
