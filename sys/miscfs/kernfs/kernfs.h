@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.43 2020/02/04 04:19:24 riastradh Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.44 2020/04/07 08:14:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -169,9 +169,9 @@ typedef struct dyn_kern_target kernfs_entry_t;
 kfstype kernfs_alloctype(int, const struct kernfs_fileop *);
 #define	KERNFS_ALLOCTYPE(kf) kernfs_alloctype(sizeof((kf)) / \
 	sizeof((kf)[0]), (kf))
-#define	KERNFS_ALLOCENTRY(dkt, m_type, m_flags)				\
-	dkt = (struct dyn_kern_target *)malloc(				\
-		sizeof(struct dyn_kern_target), (m_type), (m_flags))
+#define	KERNFS_ALLOCENTRY(dkt, km_flags)				\
+	dkt = (kernfs_entry_t *)kmem_zalloc(				\
+		sizeof(struct dyn_kern_target), (km_flags))
 #define	KERNFS_INITENTRY(dkt, type, name, data, tag, vtype, mode) do {	\
 	(dkt)->dkt_kt.kt_type = (type);					\
 	(dkt)->dkt_kt.kt_namlen = strlen((name));			\

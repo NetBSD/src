@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.53 2020/02/23 15:46:39 ad Exp $ */
+/* $NetBSD: privcmd.c,v 1.54 2020/04/07 08:14:42 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,12 +27,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.53 2020/02/23 15:46:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.54 2020/04/07 08:14:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
@@ -572,7 +571,7 @@ xenprivcmd_init(void)
 
 	kfst = KERNFS_ALLOCTYPE(privcmd_fileops);
 
-	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+	KERNFS_ALLOCENTRY(dkt, KM_SLEEP);
 	KERNFS_INITENTRY(dkt, DT_REG, "privcmd", NULL, kfst, VREG,
 	    PRIVCMD_MODE);
 	kernfs_addentry(kernxen_pkt, dkt);

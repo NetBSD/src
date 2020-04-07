@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.72 2019/02/14 08:18:26 cherry Exp $ */
+/* $NetBSD: hypervisor.c,v 1.73 2020/04/07 08:14:42 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,12 +53,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.72 2019/02/14 08:18:26 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73 2020/04/07 08:14:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/sysctl.h>
 
 #include "xenbus.h"
@@ -416,7 +415,7 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 	bi.common.len = sizeof(struct btinfo_rootdevice);
 
 	/* From i386/multiboot.c */
-	/*	$NetBSD: hypervisor.c,v 1.72 2019/02/14 08:18:26 cherry Exp $	*/
+	/*	$NetBSD: hypervisor.c,v 1.73 2020/04/07 08:14:42 jdolecek Exp $	*/
 	int i, len;
 	vaddr_t data;
 	extern struct bootinfo	bootinfo;
@@ -671,7 +670,7 @@ xenkernfs_init(void)
 {
 	kernfs_entry_t *dkt;
 
-	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+	KERNFS_ALLOCENTRY(dkt, KM_SLEEP);
 	KERNFS_INITENTRY(dkt, DT_DIR, "xen", NULL, KFSsubdir, VDIR, DIR_MODE);
 	kernfs_addentry(NULL, dkt);
 	kernxen_pkt = KERNFS_ENTOPARENTDIR(dkt);

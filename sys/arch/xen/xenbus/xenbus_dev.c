@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.14 2017/03/27 18:39:55 bouyer Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.15 2020/04/07 08:14:43 jdolecek Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.14 2017/03/27 18:39:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.15 2020/04/07 08:14:43 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -84,14 +84,14 @@ xenbus_kernfs_init(void)
 	kfstype kfst;
 
 	kfst = KERNFS_ALLOCTYPE(xenbus_fileops);
-	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+	KERNFS_ALLOCENTRY(dkt, KM_SLEEP);
 	KERNFS_INITENTRY(dkt, DT_REG, "xenbus", NULL, kfst, VREG,
 	    PRIVCMD_MODE);
 	kernfs_addentry(kernxen_pkt, dkt);
 
 	if (xendomain_is_dom0()) {
 		kfst = KERNFS_ALLOCTYPE(xsd_port_fileops);
-		KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+		KERNFS_ALLOCENTRY(dkt, KM_SLEEP);
 		KERNFS_INITENTRY(dkt, DT_REG, "xsd_port", NULL,
 		    kfst, VREG, XSD_MODE);
 		kernfs_addentry(kernxen_pkt, dkt);
