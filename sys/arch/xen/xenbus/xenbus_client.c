@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_client.c,v 1.16 2020/04/07 14:07:01 jdolecek Exp $ */
+/* $NetBSD: xenbus_client.c,v 1.17 2020/04/07 15:16:52 jdolecek Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.16 2020/04/07 14:07:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.17 2020/04/07 15:16:52 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.16 2020/04/07 14:07:01 jdolecek 
 #include <sys/types.h>
 #include <sys/null.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 
@@ -129,13 +128,12 @@ xenbus_switch_state(struct xenbus_device *dev,
  * If the value returned is non-NULL, then it is the caller's to kfree.
  */
 static char *
-error_path(struct xenbus_device *dev)
+error_path(struct xenbus_device *dev, size_t *len)
 {
-	char *path_buffer = malloc(strlen("error/") + strlen(dev->xbusd_path) +
-				    1, M_DEVBUF, M_NOWAIT);
-	if (path_buffer == NULL) {
+	*len = strlen("error/") + strlen(dev->xbusd_path) + 1;
+	char *path_buffer = kmem_alloc(*len, KM_NOSLEEP);
+	if (path_buffer == NULL)
 		return NULL;
-	}
 
 	strcpy(path_buffer, "error/");
 	strcpy(path_buffer + strlen("error/"), dev->xbusd_path);
@@ -151,9 +149,10 @@ _dev_error(struct xenbus_device *dev, int err, const char *fmt,
 	int ret __diagused;
 	unsigned int len;
 	char *printf_buffer = NULL, *path_buffer = NULL;
+	size_t path_buffer_sz = 0;
 
 #define PRINTF_BUFFER_SIZE 4096
-	printf_buffer = malloc(PRINTF_BUFFER_SIZE, M_DEVBUF, M_NOWAIT);
+	printf_buffer = kmem_alloc(PRINTF_BUFFER_SIZE, KM_NOSLEEP);
 	if (printf_buffer == NULL)
 		goto fail;
 
@@ -163,8 +162,7 @@ _dev_error(struct xenbus_device *dev, int err, const char *fmt,
 	KASSERT(len + ret < PRINTF_BUFFER_SIZE);
 	dev->xbusd_has_error = 1;
 
-	path_buffer = error_path(dev);
-
+	path_buffer = error_path(dev, &path_buffer_sz);
 	if (path_buffer == NULL) {
 		printk("xenbus: failed to write error node for %s (%s)\n",
 		       dev->xbusd_path, printf_buffer);
@@ -179,9 +177,9 @@ _dev_error(struct xenbus_device *dev, int err, const char *fmt,
 
 fail:
 	if (printf_buffer)
-		free(printf_buffer, M_DEVBUF);
+		kmem_free(printf_buffer, PRINTF_BUFFER_SIZE);
 	if (path_buffer)
-		free(path_buffer, M_DEVBUF);
+		kmem_free(path_buffer, path_buffer_sz);
 }
 
 
