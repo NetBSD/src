@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.27 2020/03/25 06:17:23 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.25 2018/08/15 06:00:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.27 2020/03/25 06:17:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.25 2018/08/15 06:00:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -117,48 +117,23 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("fault",	db_show_fault_cmd,	0,
 			"Displays the fault registers",
 		     	NULL,NULL) },
-#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7)
+#endif
+#if defined(_KERNEL) && (defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7))
 	{ DDB_ADD_CMD("tlb",	db_show_tlb_cmd,	0,
 			"Displays the TLB",
 		     	NULL,NULL) },
 #endif
-#if defined(MULTIPROCESSOR)
+#if defined(_KERNEL) && defined(MULTIPROCESSOR)
 	{ DDB_ADD_CMD("cpu",	db_switch_cpu_cmd,	0,
 			"switch to a different cpu",
 		     	NULL,NULL) },
 #endif
-#endif /* _KERNEL */
 
 #ifdef ARM32_DB_COMMANDS
 	ARM32_DB_COMMANDS,
 #endif
 	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) }
 };
-
-void
-db_show_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
-{
-	struct trapframe *frame;
-
-	if (!have_addr) {
-		db_printf("frame address must be specified\n");
-		return;
-	}
-
-	frame = (struct trapframe *)addr;
-
-	db_printf("frame address = %08x  ", (u_int)frame);
-	db_printf("spsr=%08x\n", frame->tf_spsr);
-	db_printf("r0 =%08x r1 =%08x r2 =%08x r3 =%08x\n",
-	    frame->tf_r0, frame->tf_r1, frame->tf_r2, frame->tf_r3);
-	db_printf("r4 =%08x r5 =%08x r6 =%08x r7 =%08x\n",
-	    frame->tf_r4, frame->tf_r5, frame->tf_r6, frame->tf_r7);
-	db_printf("r8 =%08x r9 =%08x r10=%08x r11=%08x\n",
-	    frame->tf_r8, frame->tf_r9, frame->tf_r10, frame->tf_r11);
-	db_printf("r12=%08x r13=%08x r14=%08x r15=%08x\n",
-	    frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
-	db_printf("slr=%08x ssp=%08x\n", frame->tf_svc_lr, frame->tf_svc_sp);
-}
 
 #ifdef _KERNEL
 int
@@ -233,7 +208,7 @@ struct db_tlbinfo {
 	vaddr_t (*dti_decode_vpn)(size_t, uint32_t, uint32_t);
 	void (*dti_print_header)(void);
 	void (*dti_print_entry)(size_t, size_t, uint32_t, uint32_t);
-	u_int dti_index;
+	u_int dti_index; 
 };
 
 #if defined(CPU_CORTEXA5)
@@ -448,8 +423,35 @@ db_show_tlb_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 	db_printf("%zu TLB valid entries found\n", n);
 }
 #endif /* CPU_CORTEXA5 || CPU_CORTEXA7 */
+#endif /* _KERNEL */
 
-#if defined(MULTIPROCESSOR)
+
+void
+db_show_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+	struct trapframe *frame;
+
+	if (!have_addr) {
+		db_printf("frame address must be specified\n");
+		return;
+	}
+
+	frame = (struct trapframe *)addr;
+
+	db_printf("frame address = %08x  ", (u_int)frame);
+	db_printf("spsr=%08x\n", frame->tf_spsr);
+	db_printf("r0 =%08x r1 =%08x r2 =%08x r3 =%08x\n",
+	    frame->tf_r0, frame->tf_r1, frame->tf_r2, frame->tf_r3);
+	db_printf("r4 =%08x r5 =%08x r6 =%08x r7 =%08x\n",
+	    frame->tf_r4, frame->tf_r5, frame->tf_r6, frame->tf_r7);
+	db_printf("r8 =%08x r9 =%08x r10=%08x r11=%08x\n",
+	    frame->tf_r8, frame->tf_r9, frame->tf_r10, frame->tf_r11);
+	db_printf("r12=%08x r13=%08x r14=%08x r15=%08x\n",
+	    frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
+	db_printf("slr=%08x ssp=%08x\n", frame->tf_svc_lr, frame->tf_svc_sp);
+}
+
+#if defined(_KERNEL) && defined(MULTIPROCESSOR)
 void
 db_switch_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
@@ -471,4 +473,3 @@ db_switch_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *m
 	db_continue_cmd(0, false, 0, "");
 }
 #endif
-#endif /* _KERNEL */

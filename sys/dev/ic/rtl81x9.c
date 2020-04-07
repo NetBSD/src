@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.111 2020/03/12 03:01:46 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.110 2020/02/07 00:56:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.111 2020/03/12 03:01:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.110 2020/02/07 00:56:48 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -1034,7 +1034,6 @@ rtk_rxeof(struct rtk_softc *sc)
 			if_statinc(ifp, if_ierrors);
 			goto next_packet;
 		}
-		MCLAIM(m, &sc->ethercom.ec_rx_mowner);
 		if (total_len > (MHLEN - RTK_ETHER_ALIGN)) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
@@ -1256,7 +1255,6 @@ rtk_start(struct ifnet *ifp)
 				    device_xname(sc->sc_dev));
 				break;
 			}
-			MCLAIM(m_new, &sc->ethercom.ec_rx_mowner);
 			if (m_head->m_pkthdr.len > MHLEN) {
 				MCLGET(m_new, M_DONTWAIT);
 				if ((m_new->m_flags & M_EXT) == 0) {

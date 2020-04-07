@@ -15,7 +15,7 @@
  */
 
 #include "internal/cryptlib.h"
-#include "bn_local.h"
+#include "bn_lcl.h"
 
 #define MONT_WORD               /* use the faster word-based algorithm */
 
@@ -207,10 +207,12 @@ int bn_from_mont_fixed_top(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
     if (!BN_rshift(ret, t2, mont->ri))
         goto err;
 
+#if !defined(BRANCH_FREE) || BRANCH_FREE==0
     if (BN_ucmp(ret, &(mont->N)) >= 0) {
         if (!BN_usub(ret, ret, &(mont->N)))
             goto err;
     }
+#endif
     retn = 1;
     bn_check_top(ret);
  err:

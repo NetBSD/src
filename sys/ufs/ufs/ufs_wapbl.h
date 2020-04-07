@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.18 2020/03/05 15:18:55 riastradh Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.16 2018/12/10 20:48:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.47 2020/03/10 15:58:37 christos Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.46 2018/02/17 00:41:09 sevan Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.47 2020/03/10 15:58:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.46 2018/02/17 00:41:09 sevan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -250,14 +250,12 @@ db_find_variable(const struct db_variable **varp)
 				return (1);
 			}
 		}
-#ifdef _KERNEL
 		for (vp = db_regs; vp < db_eregs; vp++) {
 			if (!strcmp(db_tok_string, vp->name)) {
 				*varp = vp;
 				return (1);
 			}
 		}
-#endif
 	}
 	db_error("Unknown variable\n");
 	/*NOTREACHED*/

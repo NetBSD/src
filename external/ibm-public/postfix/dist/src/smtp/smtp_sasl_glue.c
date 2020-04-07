@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_glue.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp_sasl_glue.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -91,11 +91,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
  /*
@@ -365,36 +360,22 @@ int     smtp_sasl_authenticate(SMTP_SESSION *session, DSN_BUF *why)
 		   session->namaddr, STR(session->sasl_reply));
 	return (-1);
     }
-    /*-
+
+    /*
      * Send the AUTH command and the optional initial client response.
-     *
-     * https://tools.ietf.org/html/rfc4954#page-4
-     * Note that the AUTH command is still subject to the line length
-     * limitations defined in [SMTP].  If use of the initial response argument
-     * would cause the AUTH command to exceed this length, the client MUST NOT
-     * use the initial response parameter...
-     *
-     * https://tools.ietf.org/html/rfc5321#section-4.5.3.1.4
-     * The maximum total length of a command line including the command word
-     * and the <CRLF> is 512 octets.
-     *
-     * Defer the initial response if the resulting command exceeds the limit.
+     * sasl_encode64() produces four bytes for each complete or incomplete
+     * triple of input bytes. Allocate an extra byte for string termination.
      */
-    if (LEN(session->sasl_reply) > 0
-	&& strlen(mechanism) + LEN(session->sasl_reply) + 8 <= 512) {
+    if (LEN(session->sasl_reply) > 0) {
 	smtp_chat_cmd(session, "AUTH %s %s", mechanism,
 		      STR(session->sasl_reply));
-	VSTRING_RESET(session->sasl_reply);	/* no deferred initial reply */
     } else {
 	smtp_chat_cmd(session, "AUTH %s", mechanism);
     }
 
     /*
      * Step through the authentication protocol until the server tells us
-     * that we are done.  If session->sasl_reply is non-empty we have a
-     * deferred initial reply and expect an empty initial challenge from the
-     * server. If the server's initial challenge is non-empty we have a SASL
-     * protocol violation with both sides wanting to go first.
+     * that we are done.
      */
     while ((resp = smtp_chat_resp(session))->code / 100 == 3) {
 
@@ -413,39 +394,21 @@ int     smtp_sasl_authenticate(SMTP_SESSION *session, DSN_BUF *why)
 	 */
 	line = resp->str;
 	(void) mystrtok(&line, "- \t\n");	/* skip over result code */
-
-	if (LEN(session->sasl_reply) > 0) {
-
-	    /*
-	     * Deferred initial response, the server challenge must be empty.
-	     * Cleared after actual transmission to the server.
-	     */
-	    if (*line) {
-		dsb_update(why, "4.7.0", DSB_DEF_ACTION,
-			   DSB_SKIP_RMTA, DSB_DTYPE_SASL, "protocol error",
-			   "SASL authentication failed; non-empty initial "
-			   "%s challenge from server %s: %s", mechanism,
-			   session->namaddr, STR(session->sasl_reply));
-		return (-1);
-	    }
-	} else {
-	    result = xsasl_client_next(session->sasl_client, line,
-				       session->sasl_reply);
-	    if (result != XSASL_AUTH_OK) {
-		dsb_update(why, "4.7.0", DSB_DEF_ACTION,	/* Fix 200512 */
+	result = xsasl_client_next(session->sasl_client, line,
+				   session->sasl_reply);
+	if (result != XSASL_AUTH_OK) {
+	    dsb_update(why, "4.7.0", DSB_DEF_ACTION,	/* Fix 200512 */
 		    DSB_SKIP_RMTA, DSB_DTYPE_SASL, STR(session->sasl_reply),
-			   "SASL authentication failed; "
-			   "cannot authenticate to server %s: %s",
-			   session->namaddr, STR(session->sasl_reply));
-		return (-1);			/* Fix 200512 */
-	    }
+		       "SASL authentication failed; "
+		       "cannot authenticate to server %s: %s",
+		       session->namaddr, STR(session->sasl_reply));
+	    return (-1);			/* Fix 200512 */
 	}
 
 	/*
 	 * Send a client response.
 	 */
 	smtp_chat_cmd(session, "%s", STR(session->sasl_reply));
-	VSTRING_RESET(session->sasl_reply);	/* clear initial reply */
     }
 
     /*

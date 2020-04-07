@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.509 2020/03/07 23:17:47 tnn Exp $
+.\"	$NetBSD: options.4,v 1.508 2020/02/08 07:07:06 maxv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 7, 2020
+.Dd February 8, 2020
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1323,9 +1323,10 @@ embedded in the kernel using
 .Xr mdsetimage 8 .
 The RAM disk name is obtained using DHCP's filename parameter.
 This option requires
-.Em MEMORY_DISK_HOOKS
+.Em MEMORY_DISK_HOOKS ,
+.Em MEMORY_DISK_DYNAMIC ,
 and
-.Em MEMORY_DISK_DYNAMIC .
+.Em MEMORY_DISK_IS_ROOT .
 It is incompatible with
 .Em MEMORY_DISK_ROOT_SIZE .
 .It Cd options HZ=integer

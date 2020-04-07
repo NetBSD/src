@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.25 2020/03/17 18:31:38 ad Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.22 2020/02/23 15:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.25 2020/03/17 18:31:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.22 2020/02/23 15:46:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -167,7 +167,8 @@ wait_for_page(struct vnode *vp, struct vm_page *pg, const char *label)
 	lastpg = pg;
 #endif
 
-	uvm_pagewait(pg, vp->v_uobj.vmobjlock, "lfsput");
+	pg->flags |= PG_WANTED;
+	UVM_UNLOCK_AND_WAIT_RW(pg, vp->v_uobj.vmobjlock, 0, "lfsput", 0);
 	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 }
 
@@ -348,10 +349,9 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 					pg->flags |= PG_DELWRI;
 				}
 			}
-			pg->flags &= ~PG_BUSY;
-			uvm_pagelock(pg);
-			uvm_pagewakeup(pg);
-			uvm_pageunlock(pg);
+			if (pg->flags & PG_WANTED)
+				wakeup(pg);
+			pg->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}
 
@@ -456,12 +456,11 @@ retry:
 	 * If there are no pages, don't do anything.
 	 */
 	if (vp->v_uobj.uo_npages == 0) {
-		mutex_enter(vp->v_interlock);
 		if ((vp->v_iflag & VI_ONWORKLST) &&
 		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
 		}
-		mutex_exit(vp->v_interlock);
 		if (trans_mp)
 			fstrans_done(trans_mp);
 		rw_exit(vp->v_uobj.vmobjlock);
@@ -496,7 +495,9 @@ retry:
 			pg = uvm_pagelookup(&vp->v_uobj, off);
 			KASSERT(pg != NULL);
 			while (pg->flags & PG_BUSY) {
-				uvm_pagewait(pg, vp->v_uobj.vmobjlock, "lfsput2");
+				pg->flags |= PG_WANTED;
+				UVM_UNLOCK_AND_WAIT_RW(pg, vp->v_uobj.vmobjlock, 0,
+						    "lfsput2", 0);
 				rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			}
 			uvm_pagelock(pg);

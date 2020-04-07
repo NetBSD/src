@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.57 2020/03/16 06:48:17 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.56 2020/02/19 21:51:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,7 @@ const char *getfslabelname(uint, uint);
  * if a system has less ram (in MB) than this, we will not create a
  * tmpfs /tmp by default (to workaround PR misc/54886)
  */
-#define	SMALL_RAM_SIZE		384
+#define	SMALL_RAM_SIZE		256
 
 /* helper macros to create unique internal error messages */
 #define STR_NO(STR)	#STR

@@ -5044,6 +5044,7 @@ ecp_nistz256_point_double_vis3:
 	restore
 .type	ecp_nistz256_point_double_vis3,#function
 .size	ecp_nistz256_point_double_vis3,.-ecp_nistz256_point_double_vis3
+.globl	ecp_nistz256_point_add_vis3
 .align	32
 ecp_nistz256_point_add_vis3:
 	save	%sp,-STACK64_FRAME-32*18-32,%sp

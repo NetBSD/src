@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.377 2020/03/16 21:20:13 pgoyette Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.374 2020/02/23 15:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.377 2020/03/16 21:20:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.374 2020/02/23 15:46:42 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -121,6 +121,8 @@ MODULE(MODULE_CLASS_VFS, lfs, NULL);
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 static int lfs_flushfiles(struct mount *, int);
+
+static struct sysctllog *lfs_sysctl_log;
 
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
@@ -199,7 +201,8 @@ sysctl_lfs_dostats(SYSCTLFN_ARGS)
 	return (0);
 }
 
-SYSCTL_SETUP(lfs_sysctl_setup, "lfs sysctl")
+static void
+lfs_sysctl_setup(struct sysctllog **clog)
 {
 	int i;
 	extern int lfs_writeindir, lfs_dostats, lfs_clean_vnhead,
@@ -352,6 +355,7 @@ lfs_modcmd(modcmd_t cmd, void *arg)
 			syscall_disestablish(NULL, lfs_syscalls);
 			break;
 		}
+		lfs_sysctl_setup(&lfs_sysctl_log);
 		cv_init(&lfs_allclean_wakeup, "segment");
 		break;
 	case MODULE_CMD_FINI:
@@ -359,6 +363,7 @@ lfs_modcmd(modcmd_t cmd, void *arg)
 		if (error != 0)
 			break;
 		syscall_disestablish(NULL, lfs_syscalls);
+		sysctl_teardown(&lfs_sysctl_log);
 		cv_destroy(&lfs_allclean_wakeup);
 		break;
 	default:
@@ -2122,7 +2127,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	mbp->b_bufsize = npages << PAGE_SHIFT;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
-	mbp->b_cflags |= BC_BUSY|BC_AGE;
+	mbp->b_cflags = BC_BUSY|BC_AGE;
 	mbp->b_iodone = uvm_aio_aiodone;
 
 	bp = NULL;
@@ -2272,6 +2277,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		DLOG((DLOG_PAGE, "pg[%d]->loan_count = %d\n", i,
 		      pg->loan_count));
 	}
+	/* uvm_pageunbusy takes care of PG_BUSY, PG_WANTED */
 	uvm_page_unbusy(pgs, npages);
 	mutex_exit(vp->v_interlock);
 	return EAGAIN;

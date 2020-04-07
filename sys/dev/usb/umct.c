@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.41 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: umct.c,v 1.40 2020/01/07 06:42:26 maxv Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.41 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.40 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -299,7 +299,7 @@ umct_attach(device_t parent, device_t self, void *aux)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
-	DPRINTF(("umct: in=%#x out=%#x intr=%#x\n",
+	DPRINTF(("umct: in=0x%x out=0x%x intr=0x%x\n",
 	    ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);

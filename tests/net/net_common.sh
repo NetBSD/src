@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.41 2020/04/01 00:49:04 christos Exp $
+#	$NetBSD: net_common.sh,v 1.39 2020/02/20 08:02:26 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -28,8 +28,6 @@
 #
 # Common utility functions for tests/net
 #
-
-export PATH="/sbin:/usr/sbin:/bin:/usr/bin"
 
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so \
     RUMPHIJACK=path=/rump,socket=all:nolocal,sysctl=yes"
@@ -328,17 +326,13 @@ rump_server_add_iface()
 	if [ -n "$bus" ]; then
 		atf_check -s exit:0 rump.ifconfig $ifname linkstr $bus
 	fi
-
 	macaddr=$(get_macaddr $sock $ifname)
-	if [ -n "$macaddr" ]; then
-		if [ -f $_rump_server_macaddrs ]; then
-			atf_check -s not-exit:0 \
-			    grep -q $macaddr $_rump_server_macaddrs
-		fi
-		echo $macaddr >> $_rump_server_macaddrs
-	fi
-
 	export RUMP_SERVER=$backup
+
+	if [ -f $_rump_server_macaddrs ]; then
+		atf_check -s not-exit:0 grep -q $macaddr $_rump_server_macaddrs
+	fi
+	echo $macaddr >> $_rump_server_macaddrs
 
 	echo $sock $ifname >> $_rump_server_ifaces
 	$DEBUG && cat $_rump_server_ifaces

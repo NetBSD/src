@@ -278,8 +278,20 @@ is_normal_capture_proxy (tree decl)
     /* It's not a capture proxy.  */
     return false;
 
-  return (DECL_LANG_SPECIFIC (decl)
-	  && DECL_CAPTURED_VARIABLE (decl));
+  if (variably_modified_type_p (TREE_TYPE (decl), NULL_TREE))
+    /* VLA capture.  */
+    return true;
+
+  /* It is a capture proxy, is it a normal capture?  */
+  tree val = DECL_VALUE_EXPR (decl);
+  if (val == error_mark_node)
+    return true;
+
+  if (TREE_CODE (val) == ADDR_EXPR)
+    val = TREE_OPERAND (val, 0);
+  gcc_assert (TREE_CODE (val) == COMPONENT_REF);
+  val = TREE_OPERAND (val, 1);
+  return DECL_NORMAL_CAPTURE_P (val);
 }
 
 /* Returns true iff DECL is a capture proxy for a normal capture
@@ -600,6 +612,19 @@ add_capture (tree lambda, tree id, tree orig_init, bool by_reference_p,
 	  IDENTIFIER_LENGTH (id) + 1);
   name = get_identifier (buf);
 
+  /* If TREE_TYPE isn't set, we're still in the introducer, so check
+     for duplicates.  */
+  if (!LAMBDA_EXPR_CLOSURE (lambda))
+    {
+      if (IDENTIFIER_MARKED (name))
+	{
+	  pedwarn (input_location, 0,
+		   "already captured %qD in lambda expression", id);
+	  return NULL_TREE;
+	}
+      IDENTIFIER_MARKED (name) = true;
+    }
+
   if (variadic)
     type = make_pack_expansion (type);
 
@@ -660,6 +685,8 @@ register_capture_members (tree captures)
   if (PACK_EXPANSION_P (field))
     field = PACK_EXPANSION_PATTERN (field);
 
+  /* We set this in add_capture to avoid duplicates.  */
+  IDENTIFIER_MARKED (DECL_NAME (field)) = false;
   finish_member_declaration (field);
 }
 
@@ -705,11 +732,10 @@ add_default_capture (tree lambda_stack, tree id, tree initializer)
 
 /* Return the capture pertaining to a use of 'this' in LAMBDA, in the
    form of an INDIRECT_REF, possibly adding it through default
-   capturing, if ADD_CAPTURE_P is nonzero.  If ADD_CAPTURE_P is negative,
-   try to capture but don't complain if we can't.  */
+   capturing, if ADD_CAPTURE_P is true.  */
 
 tree
-lambda_expr_this_capture (tree lambda, int add_capture_p)
+lambda_expr_this_capture (tree lambda, bool add_capture_p)
 {
   tree result;
 
@@ -805,7 +831,7 @@ lambda_expr_this_capture (tree lambda, int add_capture_p)
     result = this_capture;
   else if (!this_capture)
     {
-      if (add_capture_p == 1)
+      if (add_capture_p)
 	{
 	  error ("%<this%> was not captured for this lambda function");
 	  result = error_mark_node;
@@ -909,7 +935,7 @@ maybe_generic_this_capture (tree object, tree fns)
 	      && DECL_NONSTATIC_MEMBER_FUNCTION_P (*iter))
 	    {
 	      /* Found a non-static member.  Capture this.  */
-	      lambda_expr_this_capture (lam, /*maybe*/-1);
+	      lambda_expr_this_capture (lam, true);
 	      break;
 	    }
       }

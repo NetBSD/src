@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_as.h,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: stat_as.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 #ifndef _STAT_AS_H_INCLUDED_
 #define _STAT_AS_H_INCLUDED_
@@ -27,11 +27,6 @@ extern int WARN_UNUSED_RESULT stat_as(const char *, struct stat *, uid_t, gid_t)
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 #endif

@@ -81,10 +81,6 @@ POSTALIAS(1)                                                      POSTALIAS(1)
               found to the standard output stream. The  exit  status  is  zero
               when the requested information was found.
 
-              Note:  this  performs  a single query with the key as specified,
-              and does not make iterative queries with substrings of  the  key
-              as described in the <a href="aliases.5.html">aliases(5)</a> manual page.
-
               If  a  key value of <b>-</b> is specified, the program reads key values
               from the standard input stream and writes one line of <i>key: value</i>
               output for each key that was found. The exit status is zero when
@@ -149,9 +145,9 @@ POSTALIAS(1)                                                      POSTALIAS(1)
               base.
 
 <b>DIAGNOSTICS</b>
-       Problems are logged to the standard error stream and to  <b>syslogd</b>(8)  or
-       <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.  No output means that no problems were detected. Duplicate
-       entries are skipped and are flagged with a warning.
+       Problems are logged to the standard error stream and to <b>syslogd</b>(8).  No
+       output  means  that  no  problems  were detected. Duplicate entries are
+       skipped and are flagged with a warning.
 
        <a href="postalias.1.html"><b>postalias</b>(1)</a> terminates with  zero  exit  status  in  case  of  success
        (including  successful  "<b>postalias  -q</b>"  lookup)  and  terminates  with
@@ -191,11 +187,6 @@ POSTALIAS(1)                                                      POSTALIAS(1)
               The default database type for use in <a href="newaliases.1.html"><b>newaliases</b>(1)</a>, <a href="postalias.1.html"><b>postalias</b>(1)</a>
               and <a href="postmap.1.html"><b>postmap</b>(1)</a> commands.
 
-       <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The  list  of  environment  parameters that a privileged Postfix
-              process will  import  from  a  non-Postfix  parent  process,  or
-              name=value environment overrides.
-
        <b><a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> (yes)</b>
               Enable  preliminary SMTPUTF8 support for the protocols described
               in <a href="http://tools.ietf.org/html/rfc6531">RFC 6531</a>..6533.
@@ -204,8 +195,9 @@ POSTALIAS(1)                                                      POSTALIAS(1)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A prefix that  is  prepended  to  the  process  name  in  syslog
-              records, so that, for example, "smtpd" becomes "prefix/smtpd".
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              fix/smtpd".
 
 <b>STANDARDS</b>
        <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
@@ -217,7 +209,6 @@ POSTALIAS(1)                                                      POSTALIAS(1)
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
        <a href="postmap.1.html">postmap(1)</a>, create/update/query lookup tables
        <a href="newaliases.1.html">newaliases(1)</a>, Sendmail compatibility interface.
-       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>README FILES</b>

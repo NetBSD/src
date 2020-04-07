@@ -1,4 +1,4 @@
-/*	$NetBSD: qatvar.h,v 1.2 2020/03/14 18:08:39 ad Exp $	*/
+/*	$NetBSD: qatvar.h,v 1.1 2019/11/20 09:37:46 hikaru Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -889,7 +889,7 @@ struct qat_softc {
  * and the configroot threads, which is running for qat_init(),
  * takes kernel_lock and the uvm_scheduler is not working at that point.
  */
-#define QAT_YIELD()	preempt_point()
+#define QAT_YIELD()	yield()
 
 extern int qat_dump;
 

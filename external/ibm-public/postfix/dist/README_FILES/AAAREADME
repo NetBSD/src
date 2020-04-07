@@ -12,8 +12,8 @@ GGeenneerraall ccoonnffiigguurraattiioonn
   * TLS_README: TLS Encryption and authentication
   * FORWARD_SECRECY_README: TLS Forward Secrecy
   * IPV6_README: IP Version 6 Support
+  * IPV6_README: IP Version 6 Support
   * SMTPUTF8_README: SMTPUTF8 Support
-  * MAILLOG_README: Postfix logging to file or stdout
   * COMPATIBILITY_README: Backwards-Compatibility Safety Net
   * INSTALL: Installation from source code
 
@@ -78,7 +78,6 @@ OOtthheerr ttooppiiccss
   * ADDRESS_CLASS_README: Address Classes
   * CONNECTION_CACHE_README: Connection cache howto
   * DSN_README: Postfix DSN support
-  * BDAT_README: Postfix BDAT (CHUNKING) support
   * PACKAGE_README: Guidelines for Package Builders
   * SCHEDULER_README: Queue Scheduler
   * XCLIENT_README: XCLIENT Command

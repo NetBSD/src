@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.h,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: qmgr.h,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -510,7 +510,6 @@ struct QMGR_SCAN {
 #define QMGR_FLUSH_ONCE	(1<<2)		/* unthrottle once */
 #define QMGR_FLUSH_DFXP	(1<<3)		/* override defer_transports */
 #define QMGR_FLUSH_EACH	(1<<4)		/* unthrottle per message */
-#define QMGR_FORCE_EXPIRE (1<<5)	/* force-defer and force-expire */
 
  /*
   * qmgr_scan.c
@@ -535,11 +534,6 @@ extern char *qmgr_error_nexthop(DSN *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*
 /*	Preemptive scheduler enhancements:
 /*	Patrik Rak

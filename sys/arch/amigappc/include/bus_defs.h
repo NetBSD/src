@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.8 2020/03/06 02:31:13 christos Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.7 2019/09/23 16:17:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -176,13 +176,10 @@ struct amiga_bus_space_methods {
 #define __BUS_SPACE_HAS_STREAM_METHODS
 
 extern const struct amiga_bus_space_methods amiga_bus_stride_1;
-extern const struct amiga_bus_space_methods amiga_bus_stride_1swap;
-extern const struct amiga_bus_space_methods amiga_bus_stride_1swap_abs;
 extern const struct amiga_bus_space_methods amiga_bus_stride_2;
 extern const struct amiga_bus_space_methods amiga_bus_stride_4;
 extern const struct amiga_bus_space_methods amiga_bus_stride_4swap;
 extern const struct amiga_bus_space_methods amiga_bus_stride_16;
 extern const struct amiga_bus_space_methods amiga_bus_stride_0x1000;
-extern const struct amiga_bus_space_methods amiga_bus_stride_0x4000;
 
 #endif /* _AMIGAPPC_BUS_DEFS_H_ */

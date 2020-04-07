@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.60 2020/03/25 17:06:18 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.59 2020/01/19 01:25:05 thorpej Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.60 $"
+#ident		"GENERIC-$Revision: 1.59 $"
 
 maxusers	16
 
@@ -91,6 +91,7 @@ file-system	PROCFS		# /proc
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 #file-system	CODA		# Coda file system; also needs vcoda (below)
+#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	SYSVBFS		# System V boot filesystem.
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
@@ -258,6 +259,9 @@ pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+#pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
 pseudo-device	wsmux

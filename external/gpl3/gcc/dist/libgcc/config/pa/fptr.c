@@ -53,7 +53,7 @@ typedef int (*fixup_t) (struct link_map *, unsigned int);
 extern unsigned int _GLOBAL_OFFSET_TABLE_;
 
 static inline int
-_dl_read_access_allowed (unsigned int addr)
+_dl_read_access_allowed (unsigned int *addr)
 {
   int result;
 
@@ -76,8 +76,7 @@ __canonicalize_funcptr_for_compare (fptr_t fptr)
 {
   static unsigned int fixup_plabel[2] __attribute__((used));
   fixup_t fixup;
-  volatile unsigned int *plabel;
-  unsigned int *got, *iptr, reloc_offset;
+  unsigned int *got, *iptr, *plabel;
   int i;
 
   /* -1 and page 0 are special.  -1 is used in crtend to mark the end of
@@ -92,20 +91,17 @@ __canonicalize_funcptr_for_compare (fptr_t fptr)
      to the entry of the PLT stub just before the global offset table.
      The second word in the plabel contains the relocation offset for the
      function.  */
-  plabel = (volatile unsigned int *) ((unsigned int) fptr & ~3);
-  if (!_dl_read_access_allowed ((unsigned int)plabel))
+  plabel = (unsigned int *) ((unsigned int) fptr & ~3);
+  if (!_dl_read_access_allowed (plabel))
     return (unsigned int) fptr;
 
   /* Load first word of candidate descriptor.  It should be a pointer
      with word alignment and point to memory that can be read.  */
   got = (unsigned int *) plabel[0];
   if (((unsigned int) got & 3) != 0
-      || !_dl_read_access_allowed ((unsigned int)got))
+      || !_dl_read_access_allowed (got))
     return (unsigned int) fptr;
 
-  /* We need to load the relocation offset before the function address.  */
-  reloc_offset = plabel[1];
-  __sync_synchronize();
   got = (unsigned int *) (plabel[0] + GOT_FROM_PLT_STUB);
 
   /* Return the address of the function if the plabel has been resolved.  */
@@ -141,7 +137,7 @@ __canonicalize_funcptr_for_compare (fptr_t fptr)
 
   /* Call fixup to resolve the function address.  got[1] contains the
      link_map pointer and plabel[1] the relocation offset.  */
-  fixup ((struct link_map *) got[1], reloc_offset);
+  fixup ((struct link_map *) got[1], plabel[1]);
 
   return plabel[0];
 }

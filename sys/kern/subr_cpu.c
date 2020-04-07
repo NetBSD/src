@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.14 2020/03/26 19:23:18 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.13 2020/02/15 07:20:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.14 2020/03/26 19:23:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.13 2020/02/15 07:20:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,7 @@ cpu_topology_set(struct cpu_info *ci, u_int package_id, u_int core_id,
 	ci->ci_core_id = core_id;
 	ci->ci_smt_id = smt_id;
 	ci->ci_numa_id = numa_id;
+	ci->ci_is_slow = false;
 	for (rel = 0; rel < __arraycount(ci->ci_sibling); rel++) {
 		ci->ci_sibling[rel] = ci;
 		ci->ci_nsibling[rel] = 1;
@@ -245,9 +246,8 @@ cpu_topology_fake1(struct cpu_info *ci)
 	ci->ci_schedstate.spc_flags |=
 	    (SPCF_CORE1ST | SPCF_PACKAGE1ST | SPCF_1STCLASS);
 	ci->ci_package1st = ci;
-	if (!cpu_topology_haveslow) {
-		ci->ci_is_slow = false;
-	}
+	ci->ci_is_slow = false;
+	cpu_topology_haveslow = false;
 }
 
 /*

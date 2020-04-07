@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.72 2020/03/19 14:06:32 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.71 2020/01/29 05:39:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.72 2020/03/19 14:06:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.71 2020/01/29 05:39:48 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -583,6 +583,7 @@ ietint(struct ie_softc *sc)
 	ifp = &sc->sc_if;
 
 	ifp->if_timer = 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	status = sc->xmit_cmds[sc->xctail]->ie_xmit_status;
 
@@ -958,10 +959,15 @@ iestart(struct ifnet *ifp)
 	uint8_t *buffer;
 	uint16_t len;
 
-	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	while (sc->xmit_busy < sc->ntxbuf) {
+	for (;;) {
+		if (sc->xmit_busy == sc->ntxbuf) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0)
 			break;
@@ -1383,6 +1389,7 @@ ieinit(struct ie_softc *sc)
 
 	/* tell higher levels that we are here */
 	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	sc->scb->ie_recv_list =
 	    vtop16sw(sc, __UNVOLATILE(sc->rframes[0]));

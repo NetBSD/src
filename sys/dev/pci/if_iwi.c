@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.114 2020/03/20 13:33:23 thorpej Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.113 2020/01/30 06:03:34 thorpej Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.114 2020/03/20 13:33:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.113 2020/01/30 06:03:34 thorpej Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -375,11 +375,7 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwi_newstate;
-
-	/* XXX media locking needs revisiting */
-	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTNET);
-	ieee80211_media_init_with_lock(ic,
-	    iwi_media_change, iwi_media_status, &sc->sc_media_mtx);
+	ieee80211_media_init(ic, iwi_media_change, iwi_media_status);
 
 	/*
 	 * Allocate rings.

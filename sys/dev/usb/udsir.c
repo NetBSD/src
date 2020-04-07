@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.11 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: udsir.c,v 1.9 2019/09/22 07:29:16 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.11 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.9 2019/09/22 07:29:16 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.14 2020/03/25 03:44:45 thorpej Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.13 2020/01/29 06:00:27 thorpej Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -38,6 +38,8 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/fdt/fdtvar.h>
+
+#include <dev/firmload.h>
 
 #include <net80211/ieee80211_var.h>
 
@@ -185,66 +187,6 @@ static void	bwfm_sdio_rx_glom(struct bwfm_sdio_softc *,
 #ifdef BWFM_DEBUG 
 static void	bwfm_sdio_debug_console(struct bwfm_sdio_softc *);
 #endif 
-
-static const struct bwfm_firmware_selector bwfm_sdio_fwtab[] = {
-	BWFM_FW_ENTRY(BRCM_CC_43143_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43143-sdio"),
-
-	BWFM_FW_ENTRY(BRCM_CC_43241_CHIP_ID,
-		      BWFM_FWSEL_REV_LE(4), "brcmfmac43241b0-sdio"),
-	BWFM_FW_ENTRY(BRCM_CC_43241_CHIP_ID,
-		      BWFM_FWSEL_REV_EQ(5), "brcmfmac43241b4-sdio"),
-	BWFM_FW_ENTRY(BRCM_CC_43241_CHIP_ID,
-		      BWFM_FWSEL_REV_GE(6), "brcmfmac43241b5-sdio"),
-
-	BWFM_FW_ENTRY(BRCM_CC_4329_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4329-sdio"),
-
-	BWFM_FW_ENTRY(BRCM_CC_4330_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4330-sdio"),
-
-	BWFM_FW_ENTRY(BRCM_CC_4334_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4334-sdio"),
-
-	BWFM_FW_ENTRY(BRCM_CC_43340_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43340-sdio"),
-	BWFM_FW_ENTRY(BRCM_CC_43341_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43340-sdio"),
-
-	BWFM_FW_ENTRY(BRCM_CC_4335_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4335-sdio"),
-
-	BWFM_FW_ENTRY(BRCM_CC_43362_CHIP_ID,
-		      BWFM_FWSEL_REV_GE(1), "brcmfmac43362-sdio"),
-
-	BWFM_FW_ENTRY(BRCM_CC_4339_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4339-sdio"),
-
-	BWFM_FW_ENTRY(BRCM_CC_43430_CHIP_ID,
-		      BWFM_FWSEL_REV_EQ(0), "brcmfmac43430a0-sdio"),
-	BWFM_FW_ENTRY(BRCM_CC_43430_CHIP_ID,
-		      BWFM_FWSEL_REV_GE(1), "brcmfmac43430-sdio"),
-
-	BWFM_FW_ENTRY(BRCM_CC_4345_CHIP_ID,
-		      BWFM_FWSEL_REV_EQ(9), "brcmfmac43456-sdio"),
-	BWFM_FW_ENTRY(BRCM_CC_4345_CHIP_ID,
-		      BWFM_FWSEL_REV_LE(8) + BWFM_FWSEL_REV_GE(10),
-		      "brcmfmac43455-sdio"),
-
-	BWFM_FW_ENTRY(BRCM_CC_4354_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4354-sdio"),
-	
-	BWFM_FW_ENTRY(BRCM_CC_4356_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4356-sdio"),
-
-	BWFM_FW_ENTRY(CY_CC_4373_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac4373-sdio"),
-
-	BWFM_FW_ENTRY(CY_CC_43012_CHIP_ID,
-		      BWFM_FWSEL_ALLREVS, "brcmfmac43012-sdio"),
-
-	BWFM_FW_ENTRY_END
-};
 
 struct bwfm_bus_ops bwfm_sdio_bus_ops = {
 	.bs_init = NULL,
@@ -440,55 +382,153 @@ bwfm_sdio_attachhook(device_t self)
 {
 	struct bwfm_sdio_softc *sc = device_private(self);
 	struct bwfm_softc *bwfm = &sc->sc_sc;
-	struct bwfm_firmware_context fwctx;
-	size_t ucsize = 0, nvlen = 0, nvsize = 0;
-	uint8_t *ucode, *nvram;
+	firmware_handle_t fwh;
+	const char *name, *nvname, *model;
+	char *nvnamebuf;
+	u_char *ucode, *nvram;
+	size_t size, nvlen, nvsize;
 	uint32_t reg, clk;
+	int error;
 
 	DPRINTF(("%s: chip 0x%08x rev %u\n", DEVNAME(sc),
 	    bwfm->sc_chip.ch_chip, bwfm->sc_chip.ch_chiprev));
-
-	/*
-	 * 4335s >= rev 2 are considered 4339s.
-	 */
-	if (bwfm->sc_chip.ch_chip == BRCM_CC_4335_CHIP_ID &&
-	    bwfm->sc_chip.ch_chiprev >= 2)
-		bwfm->sc_chip.ch_chip = BRCM_CC_4339_CHIP_ID;
-
-	bwfm_firmware_context_init(&fwctx,
-	    bwfm->sc_chip.ch_chip, bwfm->sc_chip.ch_chiprev,
-	    bwfm_fdt_get_model(),
-	    BWFM_FWREQ(BWFM_FILETYPE_UCODE) | BWFM_FWREQ(BWFM_FILETYPE_NVRAM));
-
-	if (!bwfm_firmware_open(bwfm, bwfm_sdio_fwtab, &fwctx)) {
-		/* Error message already displayed. */
+	switch (bwfm->sc_chip.ch_chip) {
+	case BRCM_CC_4330_CHIP_ID:
+		name = "brcmfmac4330-sdio.bin";
+		nvname = "brcmfmac4330-sdio.txt";
+		break;
+	case BRCM_CC_4334_CHIP_ID:
+		name = "brcmfmac4334-sdio.bin";
+		nvname = "brcmfmac4334-sdio.txt";
+		break;
+	case BRCM_CC_4345_CHIP_ID:
+		if ((0x200 & __BIT(bwfm->sc_chip.ch_chiprev)) != 0) {
+			name = "brcmfmac43456-sdio.bin";
+			nvname = "brcmfmac43456-sdio.txt";
+		} else {
+			name = "brcmfmac43455-sdio.bin";
+			nvname = "brcmfmac43455-sdio.txt";
+		}
+		break;
+	case BRCM_CC_43340_CHIP_ID:
+		name = "brcmfmac43340-sdio.bin";
+		nvname = "brcmfmac43340-sdio.txt";
+		break;
+	case BRCM_CC_4335_CHIP_ID:
+		if (bwfm->sc_chip.ch_chiprev < 2) {
+			name = "brcmfmac4335-sdio.bin";
+			nvname = "brcmfmac4335-sdio.txt";
+		} else {
+			name = "brcmfmac4339-sdio.bin";
+			nvname = "brcmfmac4339-sdio.txt";
+			bwfm->sc_chip.ch_chip = BRCM_CC_4339_CHIP_ID;
+		}
+		break;
+	case BRCM_CC_4339_CHIP_ID:
+		name = "brcmfmac4339-sdio.bin";
+		nvname = "brcmfmac4339-sdio.txt";
+		break;
+	case BRCM_CC_43430_CHIP_ID:
+		if (bwfm->sc_chip.ch_chiprev == 0) {
+			name = "brcmfmac43430a0-sdio.bin";
+			nvname = "brcmfmac43430a0-sdio.txt";
+		} else {
+			name = "brcmfmac43430-sdio.bin";
+			nvname = "brcmfmac43430-sdio.txt";
+		}
+		break;
+	case BRCM_CC_4356_CHIP_ID:
+		name = "brcmfmac4356-sdio.bin";
+		nvname = "brcmfmac4356-sdio.txt";
+		break;
+	default:
+		printf("%s: unknown firmware for chip %s\n",
+		    DEVNAME(sc), bwfm->sc_chip.ch_name);
 		goto err;
 	}
 
-	ucode = bwfm_firmware_data(&fwctx, BWFM_FILETYPE_UCODE, &ucsize);
-	KASSERT(ucode != NULL);
-	nvram = bwfm_firmware_data(&fwctx, BWFM_FILETYPE_NVRAM, &nvlen);
-	KASSERT(nvram != NULL);
+	/* compute a model specific filename for the NV config */
+	nvnamebuf = NULL;
+	model = bwfm_fdt_get_model();
+	if (model != NULL) {
+		/* assume nvname ends in ".txt" */
+		nvnamebuf = kmem_asprintf("%.*s.%s.txt",
+		    (int)(strlen(nvname) - 4),
+		    nvname, model);
+	}
+
+	aprint_verbose_dev(self, "Firmware       %s\n", name);
+	aprint_verbose_dev(self, "Default Config %s\n", nvname);
+	if (nvnamebuf != NULL)
+		aprint_verbose_dev(self, "Model Config   %s\n", nvnamebuf);
+
+	if (firmware_open("if_bwfm", name, &fwh) != 0) {
+		printf("%s: failed firmware_open of file %s\n",
+		    DEVNAME(sc), name);
+		goto err;
+	}
+	size = firmware_get_size(fwh);
+	ucode = firmware_malloc(size);
+	if (ucode == NULL) {
+		printf("%s: failed firmware_open of file %s\n",
+		    DEVNAME(sc), name);
+		firmware_close(fwh);
+		goto err;
+	}
+	error = firmware_read(fwh, 0, ucode, size);
+	firmware_close(fwh);
+	if (error != 0) {
+		printf("%s: failed to read firmware (error %d)\n",
+		    DEVNAME(sc), error);
+		goto err1;
+	}
+
+	if ((nvnamebuf == NULL || firmware_open("if_bwfm", nvnamebuf, &fwh) != 0)
+	    && firmware_open("if_bwfm", nvname, &fwh) != 0) {
+		printf("%s: failed firmware_open of file %s\n",
+		    DEVNAME(sc), nvname);
+		goto err1;
+	}
+	nvlen = firmware_get_size(fwh);
+	nvram = firmware_malloc(nvlen);
+	if (nvram == NULL) {
+		printf("%s: failed firmware_open of file %s\n",
+		    DEVNAME(sc), name);
+		firmware_close(fwh);
+		goto err1;
+	}
+	error = firmware_read(fwh, 0, nvram, nvlen);
+	firmware_close(fwh);
+	if (error != 0) {
+		printf("%s: failed to read firmware (error %d)\n",
+		    DEVNAME(sc), error);
+		goto err2;
+	}
 
 	if (bwfm_nvram_convert(nvram, nvlen, &nvsize)) {
-		aprint_error_dev(bwfm->sc_dev,
-		    "unable to convert %s file\n",
-		    bwfm_firmware_description(BWFM_FILETYPE_NVRAM));
-		goto err;
+		printf("%s: failed to convert nvram\n", DEVNAME(sc));
+		goto err2;
 	}
 
 	sc->sc_alp_only = true;
-	if (bwfm_sdio_load_microcode(sc, ucode, ucsize, nvram, nvsize) != 0) {
-		aprint_error_dev(bwfm->sc_dev, "could not load microcode\n");
-		goto err;
+	if (bwfm_sdio_load_microcode(sc, ucode, size, nvram, nvsize) != 0) {
+		printf("%s: could not load microcode\n",
+		    DEVNAME(sc));
+		goto err2;
 	}
 	sc->sc_alp_only = false;
+
+	firmware_free(nvram, nvlen);
+	firmware_free(ucode, size);
+	if (nvnamebuf != NULL)
+		kmem_free(nvnamebuf, strlen(nvnamebuf)+1);
 
 	sdmmc_pause(hztoms(1)*1000, NULL);
 
 	bwfm_sdio_clkctl(sc, CLK_AVAIL, false);
 	if (sc->sc_clkstate != CLK_AVAIL) {
-		aprint_error_dev(bwfm->sc_dev, "could not access clock\n");
+		printf("%s: could not access clock\n",
+		    DEVNAME(sc));
 		goto err;
 	}
 
@@ -499,7 +539,7 @@ bwfm_sdio_attachhook(device_t self)
 	bwfm_sdio_dev_write(sc, SDPCMD_TOSBMAILBOXDATA,
 	    SDPCM_PROT_VERSION << SDPCM_PROT_VERSION_SHIFT);
 	if (sdmmc_io_function_enable(sc->sc_sf[2])) {
-		aprint_error_dev(bwfm->sc_dev, "cannot enable function 2\n");
+		printf("%s: cannot enable function 2\n", DEVNAME(sc));
 		goto err;
 	}
 
@@ -549,8 +589,16 @@ bwfm_sdio_attachhook(device_t self)
 	bwfm_attach(&sc->sc_sc);
 	sc->sc_bwfm_attached = true;
 
- err:
-	bwfm_firmware_close(&fwctx);
+	return;
+
+err2:
+	firmware_free(nvram, nvlen);
+err1:
+	firmware_free(ucode, size);
+	if (nvnamebuf != NULL)
+		kmem_free(nvnamebuf, strlen(nvnamebuf)+1);
+err:
+	return;
 }
 
 static int
@@ -1081,7 +1129,7 @@ bwfm_nvram_convert(u_char *buf, size_t len, size_t *newlenp)
 			skip = true;
 			continue;
 		}
-		if (*src == '\r' || *src == ' ')
+		if (*src == '\r')
 			continue;
 		*dst++ = *src;
 		++count;
@@ -1104,7 +1152,7 @@ bwfm_nvram_convert(u_char *buf, size_t len, size_t *newlenp)
 	memcpy(dst, &token, sizeof(token));
 	count += sizeof(token);
 
-	*newlenp = count;
+	*newlenp = count ;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: IMX6UL-STARTER,v 1.15 2020/03/25 17:06:18 jdolecek Exp $
+#	$NetBSD: IMX6UL-STARTER,v 1.14 2020/01/19 01:25:04 thorpej Exp $
 #
 #	IMX6UL-STARTER - Freescale i.MX6UL Evaluation Board
 #
@@ -103,6 +103,7 @@ file-system	NULLFS		# loopback file system
 file-system	OVERLAY		# overlay file system
 file-system	PROCFS		# /proc
 file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
@@ -367,6 +368,9 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda			# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

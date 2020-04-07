@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.8 2020/03/14 16:12:16 skrll Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.7 2019/06/01 12:42:28 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -117,13 +117,13 @@
 #ifdef _KERNEL
 #ifdef ELFSIZE
 #define ELF_MD_PROBE_FUNC       ELFNAME2(cpu_netbsd,probe)
-#endif
-
+#endif     
+ 
 struct exec_package;
-
+ 
 int cpu_netbsd_elf32_probe(struct lwp *, struct exec_package *, void *, char *,
-        vaddr_t *);
-
+        vaddr_t *); 
+ 
 int cpu_netbsd_elf64_probe(struct lwp *, struct exec_package *, void *, char *,
         vaddr_t *);
 

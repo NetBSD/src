@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_auth_cache.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp_sasl_auth_cache.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -130,7 +130,7 @@ SMTP_SASL_AUTH_CACHE *smtp_sasl_auth_cache_init(const char *map, int ttl)
      * XXX To avoid multiple writers the map needs to be maintained by the
      * proxywrite service. We would like to have a DICT_FLAG_REQ_PROXY flag
      * so that the library can enforce this, but that requires moving the
-     * dict_proxy module one level down in the build dependency hierarchy.
+     * dict_proxy module one level down in the build dependency hierachy.
      */
 #define CACHE_DICT_OPEN_FLAGS \
 	(DICT_FLAG_DUP_REPLACE | DICT_FLAG_SYNC_UPDATE | DICT_FLAG_UTF8_REQUEST)

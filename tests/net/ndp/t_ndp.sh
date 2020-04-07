@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.38 2020/03/15 21:15:25 roy Exp $
+#	$NetBSD: t_ndp.sh,v 1.36 2019/09/03 19:07:50 roy Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -455,8 +455,8 @@ ndp_rtm_body()
 	$DEBUG && cat $file
 
 	hdr="RTM_ADD.+<UP,HOST,DONE,LLINFO,CLONED>"
-	what="<DST,GATEWAY,AUTHOR>"
-	addr="$IP6DST $macaddr_dst $IP6DST"
+	what="<DST,GATEWAY>"
+	addr="$IP6DST $macaddr_dst"
 	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
 		cat $file
 
@@ -471,8 +471,8 @@ ndp_rtm_body()
 	$DEBUG && cat $file
 
 	hdr="RTM_MISS.+<DONE>"
-	what="<DST,GATEWAY,AUTHOR>"
-	addr="$IP6DST_FAIL1 link#2 $IP6SRC"
+	what="<DST,GATEWAY>"
+	addr="$IP6DST_FAIL1 link#2"
 	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
 		cat $file
 

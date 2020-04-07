@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_quota.c,v 1.3 2020/03/12 15:02:29 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_quota.c,v 1.2 2019/06/18 16:22:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_quota.c,v 1.3 2020/03/12 15:02:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_quota.c,v 1.2 2019/06/18 16:22:54 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -38,13 +38,13 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_quota.c,v 1.3 2020/03/12 15:02:29 pgoyette 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/quotactl.h>
-#include <sys/module.h>
+#include <sys/filedesc.h>
 #include <sys/vfs_syscalls.h>
-#include <sys/syscallvar.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+#include <compat/netbsd32/netbsd32_conv.h>
 
 #ifdef QUOTA
 int
@@ -139,31 +139,5 @@ netbsd32___quotactl(struct lwp *l, const struct netbsd32___quotactl_args *uap, r
 	}
 
 	return do_sys_quotactl(SCARG_P32(uap, path), &args);
-}
-static struct syscall_package compat_netbsd32_quota_syscalls[] = {
-	{ NETBSD32_SYS_netbsd32___quotactl, 0,
-	    (sy_call_t *)netbsd32___quotactl },
-	{ 0, 0, NULL }
-};
-
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32_quota, "compat_netbsd32");
-
-static int
-compat_netbsd32_quota_modcmd(modcmd_t cmd, void *arg)
-{
-	int ret;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		ret = syscall_establish(&emul_netbsd32,
-		    compat_netbsd32_quota_syscalls);
-		return ret;
-	case MODULE_CMD_FINI:
-		ret = syscall_disestablish(&emul_netbsd32,
-		    compat_netbsd32_quota_syscalls);
-		return ret;
-	default:
-		return ENOTTY;
-	}
 }
 #endif

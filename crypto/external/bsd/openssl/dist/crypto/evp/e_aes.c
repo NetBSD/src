@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,10 +14,10 @@
 #include <string.h>
 #include <assert.h>
 #include <openssl/aes.h>
-#include "crypto/evp.h"
-#include "modes_local.h"
+#include "internal/evp_int.h"
+#include "modes_lcl.h"
 #include <openssl/rand.h>
-#include "evp_local.h"
+#include "evp_locl.h"
 
 typedef struct {
     union {
@@ -176,7 +176,7 @@ static void ctr64_inc(unsigned char *counter)
 # define HWAES_xts_decrypt aes_p8_xts_decrypt
 #endif
 
-#if     defined(OPENSSL_CPUID_OBJ) &&                   (  \
+#if     !defined(OPENSSL_NO_ASM) &&                     (  \
         ((defined(__i386)       || defined(__i386__)    || \
           defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
         defined(__x86_64)       || defined(__x86_64__)  || \
@@ -1127,7 +1127,7 @@ typedef struct {
                 } icv;
                 unsigned char k[32];
             } kmac_param;
-            /* KMAC-AES parameter block - end */
+            /* KMAC-AES paramater block - end */
 
             union {
                 unsigned long long g[2];
@@ -1414,7 +1414,7 @@ static int s390x_aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                     (OPENSSL_s390xcap_P.kma[0] &	\
                                      S390X_CAPBIT(S390X_AES_256)))
 
-/* iv + padding length for iv lengths != 12 */
+/* iv + padding length for iv lenghts != 12 */
 # define S390X_gcm_ivpadlen(i)	((((i) + 15) >> 4 << 4) + 16)
 
 /*-
@@ -2551,7 +2551,7 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(AES_ASM) && (defined(__arm__) || defined(__arm) || defined(__aarch64__))
 # include "arm_arch.h"
-# if __ARM_MAX_ARCH__>=7
+# if __ARM_MAX_ARCH__>= 7
 #  if defined(BSAES_ASM)
 #   define BSAES_CAPABLE (OPENSSL_armcap_P & ARMV7_NEON)
 #  endif
@@ -2559,7 +2559,7 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 #   define VPAES_CAPABLE (OPENSSL_armcap_P & ARMV7_NEON)
 #  endif
 # endif
-# if __ARM_MAX_ARCH__>=8
+# if __ARM_MAX_ARCH__>= 8
 #  define HWAES_CAPABLE (OPENSSL_armcap_P & ARMV8_AES)
 #  define HWAES_set_encrypt_key aes_v8_set_encrypt_key
 #  define HWAES_set_decrypt_key aes_v8_set_decrypt_key

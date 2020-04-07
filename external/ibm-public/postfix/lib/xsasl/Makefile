@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2020/03/18 19:05:23 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2011/02/12 19:07:09 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -9,14 +9,8 @@ LIB=	xsasl
 DIST=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist/src/${LIB}
 .PATH:	${DIST}
 
-SRCS+= \
-xsasl_client.c \
-xsasl_cyrus_client.c \
-xsasl_cyrus_log.c \
-xsasl_cyrus_security.c \
-xsasl_cyrus_server.c \
-xsasl_dovecot_server.c \
-xsasl_saslc_client.c \
-xsasl_server.c
+SRCS=	xsasl_server.c xsasl_cyrus_server.c xsasl_cyrus_log.c \
+	xsasl_cyrus_security.c xsasl_client.c xsasl_cyrus_client.c \
+	xsasl_dovecot_server.c xsasl_saslc_client.c
 
 .include <bsd.lib.mk>

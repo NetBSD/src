@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.78 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.76 2019/12/06 07:12:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.78 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.76 2019/12/06 07:12:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -521,7 +521,7 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	if (!cdev)
 		return;
 	scd = device_private(cdev);
-	DPRINTFN(5,("uhidev_intr: rep=%d, scd=%p state=%#x\n",
+	DPRINTFN(5,("uhidev_intr: rep=%d, scd=%p state=0x%x\n",
 		    rep, scd, scd ? scd->sc_state : 0));
 	if (!(scd->sc_state & UHIDEV_OPEN))
 		return;

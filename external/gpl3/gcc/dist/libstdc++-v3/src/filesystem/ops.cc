@@ -26,7 +26,6 @@
 # define _GLIBCXX_USE_CXX11_ABI 1
 #endif
 
-#include <bits/largefile-config.h>
 #include <experimental/filesystem>
 #include <functional>
 #include <ostream>
@@ -796,7 +795,7 @@ fs::file_size(const path& p, error_code& ec) noexcept
     S(const stat_type& st) : type(make_file_type(st)), size(st.st_size) { }
     S() : type(file_type::not_found) { }
     file_type type;
-    uintmax_t size;
+    size_t size;
   };
   auto s = do_stat(p, ec, [](const auto& st) { return S{st}; }, S{});
   if (s.type == file_type::regular)
@@ -1071,17 +1070,12 @@ fs::remove_all(const path& p, error_code& ec) noexcept
   uintmax_t count = 0;
   if (s.type() == file_type::directory)
     {
-      directory_iterator d(p, ec), end;
-      while (!ec && d != end)
-	{
-	  const auto removed = fs::remove_all(d->path(), ec);
-	  if (removed == numeric_limits<uintmax_t>::max())
-	    return -1;
-	  count += removed;
-	  d.increment(ec);
-	  if (ec)
-	    return -1;
-	}
+      for (directory_iterator d(p, ec), end; !ec && d != end; d.increment(ec))
+	count += fs::remove_all(d->path(), ec);
+      if (ec.value() == ENOENT)
+	ec.clear();
+      else if (ec)
+	return -1;
     }
 
   if (fs::remove(p, ec))

@@ -558,7 +558,7 @@ namespace std
 #define _GLIBCXX_HAVE_ENOSTR 1
 
 /* Define if ENOTRECOVERABLE exists. */
-#define _GLIBCXX_HAVE_ENOTRECOVERABLE 1
+/* #undef _GLIBCXX_HAVE_ENOTRECOVERABLE */
 
 /* Define if ENOTSUP exists. */
 #define _GLIBCXX_HAVE_ENOTSUP 1
@@ -567,7 +567,7 @@ namespace std
 #define _GLIBCXX_HAVE_EOVERFLOW 1
 
 /* Define if EOWNERDEAD exists. */
-#define _GLIBCXX_HAVE_EOWNERDEAD 1
+/* #undef _GLIBCXX_HAVE_EOWNERDEAD */
 
 /* Define if EPERM exists. */
 #define _GLIBCXX_HAVE_EPERM 1

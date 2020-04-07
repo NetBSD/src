@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_thash.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: dict_thash.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -31,11 +31,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -106,7 +101,7 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 	    DICT_THASH_OPEN_RETURN(dict_surrogate(DICT_TYPE_THASH, path,
 						  open_flags, dict_flags,
 					     "open database %s: %m", path));
-	}
+	    }
 
 	/*
 	 * Reuse the "internal" dictionary type.
@@ -114,21 +109,17 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 	dict = dict_open3(DICT_TYPE_HT, path, open_flags, dict_flags);
 	dict_type_override(dict, DICT_TYPE_THASH);
 
-	/*
-	 * XXX This duplicates the parser in postmap.c.
-	 */
 	if (line_buffer == 0)
 	    line_buffer = vstring_alloc(100);
 	last_line = 0;
 	while (readllines(line_buffer, fp, &last_line, &lineno)) {
-	    int     in_quotes = 0;
 
 	    /*
 	     * First some UTF-8 checks sans casefolding.
 	     */
 	    if ((dict->flags & DICT_FLAG_UTF8_ACTIVE)
 		&& allascii(STR(line_buffer)) == 0
-	    && valid_utf8_string(STR(line_buffer), LEN(line_buffer)) == 0) {
+		&& valid_utf8_string(STR(line_buffer), LEN(line_buffer)) == 0) {
 		msg_warn("%s, line %d: non-UTF-8 input \"%s\""
 			 " -- ignoring this line",
 			 VSTREAM_PATH(fp), lineno, STR(line_buffer));
@@ -139,34 +130,14 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 	     * Split on the first whitespace character, then trim leading and
 	     * trailing whitespace from key and value.
 	     */
-	    for (value = STR(line_buffer); *value; value++) {
-		if (*value == '\\') {
-		    if (*++value == 0)
-			break;
-		} else if (ISSPACE(*value)) {
-		    if (!in_quotes)
-			break;
-		} else if (*value == '"') {
-		    in_quotes = !in_quotes;
-		}
-	    }
-	    if (in_quotes) {
-		msg_warn("%s, line %d: unbalanced '\"' in '%s'"
-			 " -- ignoring this line",
-			 VSTREAM_PATH(fp), lineno, STR(line_buffer));
-		continue;
-	    }
+	    key = STR(line_buffer);
+	    value = key + strcspn(key, CHARS_SPACE);
 	    if (*value)
 		*value++ = 0;
 	    while (ISSPACE(*value))
 		value++;
+	    trimblanks(key, 0)[0] = 0;
 	    trimblanks(value, 0)[0] = 0;
-
-	    /*
-	     * Leave the key in quoted form, for consistency with postmap.c
-	     * and dict_inline.c.
-	     */
-	    key = STR(line_buffer);
 
 	    /*
 	     * Enforce the "key whitespace value" format. Disallow missing
@@ -187,8 +158,7 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 	     * ignores duplicates by default and we would have to check that
 	     * we won't break existing code that depends on such benavior; 2)
 	     * by inlining the checks here we can degrade gracefully instead
-	     * of terminating with a fatal error. See comment in
-	     * dict_inline.c.
+	     * of terminating with a fatal error. See comment in dict_inline.c.
 	     */
 	    if (dict->lookup(dict, key) != 0) {
 		if (dict_flags & DICT_FLAG_DUP_IGNORE) {

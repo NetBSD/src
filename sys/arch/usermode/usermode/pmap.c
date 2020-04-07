@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.115 2020/03/14 14:05:44 ad Exp $ */
+/* $NetBSD: pmap.c,v 1.114 2018/09/16 09:25:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2020/03/14 14:05:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2018/09/16 09:25:47 skrll Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -1030,7 +1030,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	splx(s);
 }
 
-bool
+void
 pmap_remove_all(pmap_t pmap)
 {
 	/* just a hint that all the entries are to be removed */
@@ -1038,7 +1038,7 @@ pmap_remove_all(pmap_t pmap)
 
 	/* we dont do anything with the kernel pmap */
 	if (pmap == pmap_kernel())
-		return false;
+		return;
 
 #if 0
 	/* remove all mappings in one-go; not needed */
@@ -1050,7 +1050,6 @@ pmap_remove_all(pmap_t pmap)
 	thunk_msync(VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS,
 		THUNK_MS_SYNC | THUNK_MS_INVALIDATE);
 #endif
-	return false;
 }
 
 void

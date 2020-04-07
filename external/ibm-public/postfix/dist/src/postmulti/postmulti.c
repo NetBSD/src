@@ -1,4 +1,4 @@
-/*	$NetBSD: postmulti.c,v 1.3 2020/03/18 19:05:18 christos Exp $	*/
+/*	$NetBSD: postmulti.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -19,10 +19,10 @@
 /*	[\fB-i \fIname\fR]
 /*
 /*	\fBpostmulti\fR \fB-p\fR [\fB-av\fR] [\fB-g \fIgroup\fR]
-/*	[\fB-i \fIname\fR] \fIpostfix-command...\fR
+/*	[\fB-i \fIname\fR] \fIcommand...\fR
 /*
 /*	\fBpostmulti\fR \fB-x\fR [\fB-aRv\fR] [\fB-g \fIgroup\fR]
-/*	[\fB-i \fIname\fR] \fIunix-command...\fR
+/*	[\fB-i \fIname\fR] \fIcommand...\fR
 /*
 /* .ti -4
 /*	\fBLife-cycle management:\fR
@@ -107,8 +107,8 @@
 /*	List Postfix instances with their instance name, instance
 /*	group name, enable/disable status and configuration directory.
 /* .SH "Postfix-wrapper mode"
-/* .IP "\fB-p \fIpostfix-command\fR"
-/*	Invoke \fBpostfix(1)\fR to execute \fIpostfix-command\fR.
+/* .IP \fB-p\fR
+/*	Invoke \fBpostfix(1)\fR to execute the specified \fIcommand\fR.
 /*	This option implements the \fBpostfix-wrapper\fR(5) interface.
 /* .RS
 /* .IP \(bu
@@ -138,8 +138,8 @@
 /*	# postmulti -g msa -p start
 /* .RE
 /* .SH "Command mode"
-/* .IP "\fB-x \fIunix-command\fR"
-/*	Execute the specified \fIunix-command\fR for all Postfix instances.
+/* .IP \fB-x\fR
+/*	Execute the specified \fIcommand\fR for all Postfix instances.
 /*	The command runs with appropriate environment settings for
 /*	MAIL_CONFIG, command_directory, daemon_directory,
 /*	config_directory, queue_directory, data_directory,
@@ -328,9 +328,8 @@
 /* .IP "\fBdaemon_directory (see 'postconf -d' output)\fR"
 /*	The directory with Postfix support programs and daemon programs.
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a privileged Postfix
-/*	process will import from a non-Postfix parent process, or name=value
-/*	environment overrides.
+/*	The list of environment parameters that a Postfix process will
+/*	import from a non-Postfix parent process.
 /* .IP "\fBmulti_instance_directories (empty)\fR"
 /*	An optional list of non-default Postfix configuration directories;
 /*	these directories belong to additional Postfix instances that share
@@ -356,8 +355,8 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* .PP
 /*	Available in Postfix 3.0 and later:
 /* .IP "\fBmeta_directory (see 'postconf -d' output)\fR"
@@ -401,11 +400,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -418,6 +412,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <syslog.h>
 #include <errno.h>
 #include <ctype.h>
 #ifdef USE_PATHS_H
@@ -429,6 +424,7 @@
 
 #include <msg.h>
 #include <msg_vstream.h>
+#include <msg_syslog.h>
 #include <vstream.h>
 #include <vstring_vstream.h>
 #include <stringops.h>
@@ -447,7 +443,6 @@
 #include <mail_params.h>
 #include <mail_conf.h>
 #include <mail_parm_split.h>
-#include <maillog_client.h>
 
 /* Application-specific. */
 
@@ -770,7 +765,7 @@ static INSTANCE *create_primary_instance(void)
     INSTANCE *ip = alloc_instance(var_config_dir);
 
     /*
-     * There is no need to load primary instance parameter settings from
+     * There is no need to load primary instance paramater settings from
      * file. We already have the main.cf parameters of interest in memory.
      */
 #define SAVE_INSTANCE_NAME(val) (*(val) ? mystrdup(val) : 0)
@@ -1693,21 +1688,12 @@ int     main(int argc, char **argv)
 	argv[0] = slash + 1;
     if (isatty(STDERR_FILENO))
 	msg_vstream_init(argv[0], VSTREAM_ERR);
-    maillog_client_init(argv[0], MAILLOG_CLIENT_FLAG_LOGWRITER_FALLBACK);
+    msg_syslog_init(argv[0], LOG_PID, LOG_FACILITY);
 
     /*
      * Check the Postfix library version as soon as we enable logging.
      */
     MAIL_VERSION_CHECK;
-
-    /*
-     * Process main.cf parameters. This is done before the GETOPT() loop to
-     * improve logging. This assumes that no command-line option can affect
-     * parameter processing.
-     */
-    mail_conf_read();
-    get_mail_conf_str_table(str_table);
-    maillog_client_init(argv[0], MAILLOG_CLIENT_FLAG_LOGWRITER_FALLBACK);
 
     if ((config_dir = getenv(CONF_ENV_PATH)) != 0
 	&& strcmp(config_dir, DEF_CONFIG_DIR) != 0)
@@ -1715,8 +1701,7 @@ int     main(int argc, char **argv)
 		  CONF_ENV_PATH, config_dir);
 
     /*
-     * Parse switches. Move the above mail_conf_read() block after this loop,
-     * if any command-line option can affect parameter processing.
+     * Parse switches.
      */
     while ((ch = GETOPT(argc, argv, "ae:g:i:G:I:lpRvx")) > 0) {
 	switch (ch) {
@@ -1829,6 +1814,12 @@ int     main(int argc, char **argv)
 	    msg_fatal("Parameter overrides not valid with '-e %s'",
 		      EDIT_CMD_STR(cmd_mode));
     }
+
+    /*
+     * Proces main.cf parameters.
+     */
+    mail_conf_read();
+    get_mail_conf_str_table(str_table);
 
     /*
      * Sanity checks.

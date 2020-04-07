@@ -131,6 +131,12 @@ Examples of simple restriction lists are:
     # Don't accept mail from domains that don't exist.
     smtpd_sender_restrictions = reject_unknown_sender_domain
 
+    # Relay control (Postfix 2.10 and later): local clients and
+    # authenticated clients may specify any destination domain.
+    smtpd_relay_restrictions = permit_mynetworks,
+        permit_sasl_authenticated,
+        reject_unauth_destination
+
     # Spam control: exclude local clients and authenticated clients
     # from DNSBL lookups.
     smtpd_recipient_restrictions = permit_mynetworks,
@@ -143,12 +149,6 @@ Examples of simple restriction lists are:
         reject_rhsbl_reverse_client dbl.spamhaus.org,
         reject_rhsbl_helo dbl.spamhaus.org,
         reject_rhsbl_sender dbl.spamhaus.org
-
-    # Relay control (Postfix 2.10 and later): local clients and
-    # authenticated clients may specify any destination domain.
-    smtpd_relay_restrictions = permit_mynetworks,
-        permit_sasl_authenticated,
-        reject_unauth_destination
 
     # Block clients that speak too early.
     smtpd_data_restrictions = reject_unauth_pipelining
@@ -186,21 +186,21 @@ and in the effect of a REJECT or DEFER result.
     |                              |       |                            |information|
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
     |                              |       |Required if                 |           |
-    |                              |>= 2.10|smtpd_relay_restrictions    |           |
-    |                              |       |does not enforce relay      |Reject RCPT|
-    |smtpd_recipient_restrictions  |       |policy                      |TO         |
-    |                              |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |information|
-    |                              |       |                            |           |
-    |                              |< 2.10 |Required                    |           |
-    |                              |       |                            |           |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
-    |                              |       |Required if                 |           |
     |                              |>= 2.10|smtpd_recipient_restrictions|           |
     |                              |       |does not enforce relay      |Reject RCPT|
     |smtpd_relay_restrictions      |       |policy                      |TO         |
     |                              |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |information|
     |                              |       |                            |           |
     |                              |< 2.10 |Not available               |           |
+    |                              |       |                            |           |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
+    |                              |       |Required if                 |           |
+    |                              |>= 2.10|smtpd_relay_restrictions    |           |
+    |                              |       |does not enforce relay      |Reject RCPT|
+    |smtpd_recipient_restrictions  |       |policy                      |TO         |
+    |                              |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |information|
+    |                              |       |                            |           |
+    |                              |< 2.10 |Required                    |           |
     |                              |       |                            |           |
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
     |smtpd_data_restrictions       |>= 2.0 |Optional                    |Reject DATA|

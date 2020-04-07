@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -62,7 +62,6 @@
 #define MAIL_SERVICE_SCACHE	"scache"
 #define MAIL_SERVICE_DNSBLOG	"dnsblog"
 #define MAIL_SERVICE_TLSPROXY	"tlsproxy"
-#define MAIL_SERVICE_POSTLOG	"postlog"
 
  /*
   * Mail source classes. Used to specify policy decisions for content
@@ -165,7 +164,6 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_LOG_IDENT	"log_ident"
 #define MAIL_ATTR_RWR_CONTEXT	"rewrite_context"
 #define MAIL_ATTR_POL_CONTEXT	"policy_context"
-#define MAIL_ATTR_FORCED_EXPIRE	"forced_expire"
 
 #define MAIL_ATTR_RWR_LOCAL	"local"
 #define MAIL_ATTR_RWR_REMOTE	"remote"
@@ -246,8 +244,6 @@ extern char *mail_pathname(const char *, const char *);
 #define XCLIENT_PROTO		"PROTO"	/* client protocol */
 #define XCLIENT_HELO		"HELO"	/* client helo */
 #define XCLIENT_LOGIN		"LOGIN"	/* SASL login name */
-#define XCLIENT_DESTADDR	"DESTADDR"	/* server address */
-#define XCLIENT_DESTPORT	"DESTPORT"	/* server port */
 
 #define XCLIENT_UNAVAILABLE	"[UNAVAILABLE]"	/* permanently unavailable */
 #define XCLIENT_TEMPORARY	"[TEMPUNAVAIL]"	/* temporarily unavailable */
@@ -281,6 +277,25 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_SMTPUTF8	"smtputf8"	/* RFC6531 support */
 
  /*
+  * TLSPROXY support.
+  */
+#define MAIL_ATTR_REMOTE_ENDPT	"remote_endpoint"	/* name[addr]:port */
+#define MAIL_ATTR_ROLE		"role"	/* requested role */
+#define MAIL_ATTR_ROLE_SERVER	"server"
+#define MAIL_ATTR_ROLE_CLIENT	"client"
+#define MAIL_ATTR_TIMEOUT	"timeout"
+#define MAIL_ATTR_PEER_CN	"peer_CN"
+#define MAIL_ATTR_ISSUER_CN	"issuer_CN"
+#define MAIL_ATTR_PEER_CERT_FPT	"peer_fingerprint"
+#define MAIL_ATTR_PEER_PKEY_FPT	"peer_pubkey_fingerprint"
+#define MAIL_ATTR_PEER_STATUS	"peer_status"
+#define MAIL_ATTR_CIPHER_PROTOCOL "cipher_protocol"
+#define MAIL_ATTR_CIPHER_NAME	"cipher_name"
+#define MAIL_ATTR_CIPHER_USEBITS "cipher_usebits"
+#define MAIL_ATTR_CIPHER_ALGBITS "cipher_algbits"
+#define MAIL_ATTR_SERVER_ID	"server_id"
+
+ /*
   * SMTP reply footer support.
   */
 #define MAIL_ATTR_SERVER_NAME	"server_name"
@@ -294,11 +309,6 @@ extern char *mail_pathname(const char *, const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 #endif

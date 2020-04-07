@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.54 2020/03/22 16:46:30 macallan Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.53 2020/02/19 16:04:39 riastradh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.54 2020/03/22 16:46:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.53 2020/02/19 16:04:39 riastradh Exp $");
 
 #include "opt_mvsata.h"
 
@@ -669,8 +669,7 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 		const uint32_t val = SControl_IPM_NONE | SControl_SPD_ANY |
 		    SControl_DET_DISABLE;
 
-		bus_space_write_4(mvport->port_iot,
-		    mvport->port_sata_scontrol, 0, val);
+		MVSATA_EDMA_WRITE_4(mvport, mvport->port_sata_scontrol, val);
 
 		ctrl = MVSATA_EDMA_READ_4(mvport, SATA_SATAICFG);
 		ctrl &= ~(1 << 17);	/* Disable GenII */

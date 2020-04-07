@@ -16,7 +16,7 @@
 # define _GNU_SOURCE            /* make sure dladdr is declared */
 #endif
 
-#include "dso_local.h"
+#include "dso_locl.h"
 #include "e_os.h"
 
 #ifdef DSO_DLFCN
@@ -275,7 +275,7 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
         else
             snprintf(translated, rsize, "%s" DSO_EXTENSION, filename);
     } else
-        sprintf(translated, "%s", filename);
+        snprintf(translated, rsize, "%s", filename);
     return translated;
 }
 

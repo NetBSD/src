@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.23 2020/03/22 14:38:37 ad Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.21 2020/02/23 22:14:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2019, 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,6 @@
 
 #ifndef _SYS_VNODE_IMPL_H_
 #define	_SYS_VNODE_IMPL_H_
-#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <sys/vnode.h>
 
@@ -64,8 +63,7 @@ struct vcache_key {
  *	i	v_interlock
  *	l	vi_nc_listlock
  *	m	mnt_vnodelock
- *	n	vi_nc_lock
- *	n,l	vi_nc_lock + vi_nc_listlock to modify
+ *	n	namecache_lock
  *	s	syncer_data_lock
  */
 struct vnode_impl {
@@ -77,29 +75,25 @@ struct vnode_impl {
 	struct vcache_key vi_key;		/* c   vnode cache key */
 
 	/*
+	 * Namecache.  Give it a separate line so activity doesn't impinge
+	 * on the stable stuff (pending merge of ad-namecache branch).
+	 */
+	LIST_HEAD(, namecache) vi_dnclist	/* n: namecaches (children) */
+	    __aligned(COHERENCY_UNIT);
+	TAILQ_HEAD(, namecache) vi_nclist;	/* n: namecaches (parent) */
+
+	/*
 	 * vnode cache, LRU and syncer.  This all changes with some
 	 * regularity so keep it together.
 	 */
-	struct vnodelst	*vi_lrulisthd;		/* d   current lru list head */
+	struct vnodelst	*vi_lrulisthd		/* d   current lru list head */
+	    __aligned(COHERENCY_UNIT);
 	TAILQ_ENTRY(vnode_impl) vi_lrulist;	/* d   lru list */
 	int 		vi_synclist_slot;	/* s   synclist slot index */
 	int 		vi_lrulisttm;		/* i   time of lru enqueue */
 	TAILQ_ENTRY(vnode_impl) vi_synclist;	/* s   vnodes with dirty bufs */
 	SLIST_ENTRY(vnode_impl) vi_hash;	/* c   vnode cache list */
 	enum vnode_state vi_state;		/* i   current state */
-	TAILQ_ENTRY(vnode_impl) vi_mntvnodes;	/* m   vnodes for mount point */
-
-	/*
-	 * Namecache.  Give it a separate line so activity doesn't impinge
-	 * on the stable stuff.
-	 */
-	rb_tree_t	vi_nc_tree		/* n   namecache tree */
-	    __aligned(COHERENCY_UNIT);
-	TAILQ_HEAD(,namecache) vi_nc_list;	/* l   namecaches (parent) */
-	mode_t		vi_nc_mode;		/* n,l cached mode or VNOVAL */
-	uid_t		vi_nc_uid;		/* n,l cached UID or VNOVAL */
-	gid_t		vi_nc_gid;		/* n,l cached GID or VNOVAL */
-	uint32_t	vi_nc_spare;		/* -   spare (padding) */
 
 	/*
 	 * Locks and expensive to access items which can be expected to
@@ -107,9 +101,9 @@ struct vnode_impl {
 	 */
 	krwlock_t	vi_lock			/* -   lock for this vnode */
 	    __aligned(COHERENCY_UNIT);
-	krwlock_t	vi_nc_lock		/* -   lock on node */
-	    __aligned(COHERENCY_UNIT);
+	krwlock_t	vi_nc_lock;		/* -   lock on node */
 	krwlock_t	vi_nc_listlock;		/* -   lock on nn_list */
+	TAILQ_ENTRY(vnode_impl) vi_mntvnodes;	/* m   vnodes for mount point */
 };
 typedef struct vnode_impl vnode_impl_t;
 
@@ -149,5 +143,4 @@ int	vcache_vget(vnode_t *);
 int	vcache_tryvget(vnode_t *);
 int	vfs_drainvnodes(void);
 
-#endif	/* defined(_KERNEL) || defined(_KMEMUSER) */
-#endif	/* !_SYS_VNODE_IMPL_H_ */
+#endif /* !_SYS_VNODE_IMPL_H_ */

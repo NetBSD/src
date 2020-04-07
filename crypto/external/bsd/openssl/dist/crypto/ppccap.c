@@ -29,8 +29,8 @@
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
 #include <internal/cryptlib.h>
-#include <crypto/chacha.h>
-#include "bn/bn_local.h"
+#include <internal/chacha.h>
+#include "bn/bn_lcl.h"
 
 #include "ppc_arch.h"
 

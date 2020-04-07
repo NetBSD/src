@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.192 2020/03/05 15:18:55 riastradh Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.190 2018/12/27 16:59:17 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

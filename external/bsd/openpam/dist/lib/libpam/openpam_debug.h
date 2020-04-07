@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_debug.h,v 1.4 2020/03/03 00:45:37 christos Exp $	*/
+/*	$NetBSD: openpam_debug.h,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -50,8 +50,8 @@
 		openpam_log(PAM_LOG_LIBDEBUG, "entering: %d", i_); \
 } while (/*CONSTCOND*/0)
 #define ENTERN(n) do { \
-	intmax_t n_ = (n); \
-	openpam_log(PAM_LOG_LIBDEBUG, "entering: %jd", n_); \
+	int n_ = (n); \
+	openpam_log(PAM_LOG_LIBDEBUG, "entering: %d", n_); \
 } while (/*CONSTCOND*/0)
 #define ENTERS(s) do { \
 	const char *s_ = (s); \

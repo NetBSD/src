@@ -1,18 +1,3 @@
-2020-03-04  Release Manager
-
-	* GCC 8.4.0 released.
-
-2020-01-15  Richard Earnshaw  <rearnsha@arm.com>
-
-	Backport:
-	2018-05-01  Jim Wilson  <jimw@sifive.com>
-
-	* gcc_update: Check for .git as a file.
-
-2019-08-16  Uros Bizjak  <ubizjak@gmail.com>
-
-	* test_summary: Do not escape "=".
-
 2019-02-22  Release Manager
 
 	* GCC 8.3.0 released.

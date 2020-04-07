@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror_r.c,v 1.5 2020/03/25 16:15:41 kre Exp $	*/
+/*	$NetBSD: strerror_r.c,v 1.4 2017/01/10 20:25:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strerror_r.c,v 1.5 2020/03/25 16:15:41 kre Exp $");
+__RCSID("$NetBSD: strerror_r.c,v 1.4 2017/01/10 20:25:48 christos Exp $");
 
 #include "namespace.h"
 #include <assert.h>
@@ -53,12 +53,12 @@ __weak_alias(strerror_r, _strerror_r)
 int
 _strerror_lr(int num, char *buf, size_t buflen, locale_t loc)
 {
-#define	UPREFIX	"Unknown error: %d"
+#define	UPREFIX	"Unknown error: %u"
 	unsigned int errnum = num;
 	int retval = 0;
 	size_t slen;
-	int saved_errno = errno;
 #ifdef NLS
+	int saved_errno = errno;
 	nl_catd catd;
 	catd = catopen_l("libc", NL_CAT_LOCALE, loc);
 #endif
@@ -66,7 +66,7 @@ _strerror_lr(int num, char *buf, size_t buflen, locale_t loc)
 
 	if (errnum < (unsigned int) sys_nerr) {
 #ifdef NLS
-		slen = strlcpy(buf, catgets(catd, 1, num,
+		slen = strlcpy(buf, catgets(catd, 1, (int)errnum,
 		    sys_errlist[errnum]), buflen); 
 #else
 		slen = strlcpy(buf, sys_errlist[errnum], buflen); 
@@ -74,9 +74,9 @@ _strerror_lr(int num, char *buf, size_t buflen, locale_t loc)
 	} else {
 #ifdef NLS
 		slen = snprintf_l(buf, buflen, loc,
-		    catgets(catd, 1, 0xffff, UPREFIX), num);
+		    catgets(catd, 1, 0xffff, UPREFIX), errnum);
 #else
-		slen = snprintf(buf, buflen, UPREFIX, num);
+		slen = snprintf(buf, buflen, UPREFIX, errnum);
 #endif
 		retval = EINVAL;
 	}
@@ -86,8 +86,8 @@ _strerror_lr(int num, char *buf, size_t buflen, locale_t loc)
 
 #ifdef NLS
 	catclose(catd);
-#endif
 	errno = saved_errno;
+#endif
 
 	return retval;
 }

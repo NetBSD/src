@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.95 2020/03/14 03:01:36 christos Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.92 2019/05/23 04:44:49 msaitoh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.95 2020/03/14 03:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.92 2019/05/23 04:44:49 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -128,7 +128,7 @@ usbd_get_desc_fake(struct usbd_device *dev, int type, int index,
 	usbd_status err = USBD_INVAL;
 
 	if (dev->ud_quirks == NULL || dev->ud_quirks->desc == NULL) {
-		DPRINTF("%04jx/%04j: no fake descriptors",
+		DPRINTF("%04x/%04x: no fake descriptors",
 		        UGETW(dd->idVendor), UGETW(dd->idProduct), 0, 0);
 		goto out;
 	}
@@ -140,7 +140,7 @@ usbd_get_desc_fake(struct usbd_device *dev, int type, int index,
 	}
 
 	if (dev->ud_quirks->desc[j] == NULL) {
-		DPRINTF("%04jx/%04jx: no fake descriptor type = %jd, len = %jd",
+		DPRINTF("%04x/%04x: no fake descriptor type = %d, len = %d",
 		       UGETW(dd->idVendor), UGETW(dd->idProduct), type, len);
 		goto out;
 	}
@@ -149,14 +149,14 @@ usbd_get_desc_fake(struct usbd_device *dev, int type, int index,
 		ub = dev->ud_quirks->desc[j];
 
 		if (ub->bLength > len) {
-			DPRINTF("%04jx/%04jx: short buf len = %jd, bLength = %jd",
+			DPRINTF("%04x/%04x: short buf len = %d, bLength = %d",
 			        UGETW(dd->idVendor), UGETW(dd->idProduct),
 			        type, ub->bLength);
 			goto out;
 		}
 
 		memcpy(desc, ub, ub->bLength);
-		DPRINTF("%04jx/%04jx: Use fake descriptor type %jd",
+		DPRINTF("%04x/%04x: Use fake descriptor type %d",
 			UGETW(dd->idVendor), UGETW(dd->idProduct),
 			type, 0);
 
@@ -168,10 +168,10 @@ usbd_get_desc_fake(struct usbd_device *dev, int type, int index,
 
 	err = USBD_NORMAL_COMPLETION;
 
-	DPRINTF("%04jx/%04jx: Using fake USB descriptors\n",
+	DPRINTF("%04x/%04x: Using fake USB descriptors\n",
 	        UGETW(dd->idVendor), UGETW(dd->idProduct), 0, 0);
 out:
-	DPRINTF("return err = %jd", err, 0, 0, 0);
+	DPRINTF("return err = %d", err, 0, 0, 0);
 	return err;
 }
 

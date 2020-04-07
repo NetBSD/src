@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.244 2020/03/14 03:01:36 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.242 2020/02/08 08:47:27 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.244 2020/03/14 03:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.242 2020/02/08 08:47:27 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -208,7 +208,7 @@ usbd_devinfo(struct usbd_device *dev, int showclass, char *cp, size_t l)
 
 	usbd_devinfo_vp(dev, vendor, USB_MAX_ENCODED_STRING_LEN,
 	    product, USB_MAX_ENCODED_STRING_LEN, 0, 1);
-	cp += snprintf(cp, ep - cp, "%s (0x%04x) %s (0x%04x)", vendor,
+	cp += snprintf(cp, ep - cp, "%s (%#04x) %s (%#04x)", vendor,
 	    UGETW(udd->idVendor), product, UGETW(udd->idProduct));
 	if (showclass)
 		cp += snprintf(cp, ep - cp, ", class %d/%d",
@@ -658,7 +658,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	 */
 	selfpowered = !!(cdp->bmAttributes & UC_SELF_POWERED);
 
-	DPRINTF("addr %jd cno=%jd attr=0x%02jx, selfpowered=%jd",
+	DPRINTF("addr %jd cno=%jd attr=%#02jx, selfpowered=%jd",
 	    dev->ud_addr, cdp->bConfigurationValue, cdp->bmAttributes,
 	    selfpowered);
 	DPRINTF("max power=%jd", cdp->bMaxPower * 2, 0, 0, 0);
@@ -1011,7 +1011,7 @@ usbd_probe_and_attach(device_t parent, struct usbd_device *dev,
 		err = usbd_set_config_index(dev, confi, 1);
 		if (err) {
 			DPRINTF("port %jd, set config at addr %jd failed, "
-			    "error=%jd", port, addr, err, 0);
+			    "error=%d", port, addr, err, 0);
 			printf("%s: port %d, set config at addr %d failed\n",
 			    device_xname(parent), port, addr);
 			return err;
@@ -1353,10 +1353,10 @@ usbd_reload_device_desc(struct usbd_device *dev)
 	DPRINTFN(15, "bDeviceSubClass     %5ju", udd->bDeviceSubClass, 0, 0, 0);
 	DPRINTFN(15, "bDeviceProtocol     %5ju", udd->bDeviceProtocol, 0, 0, 0);
 	DPRINTFN(15, "bMaxPacketSize0     %5ju", udd->bMaxPacketSize, 0, 0, 0);
-	DPRINTFN(15, "idVendor            0x%02jx 0x%02jx",
+	DPRINTFN(15, "idVendor            %#02jx %#02jx",
 						    udd->idVendor[0],
 						    udd->idVendor[1], 0, 0);
-	DPRINTFN(15, "idProduct           0x%02jx 0x%02jx",
+	DPRINTFN(15, "idProduct           %#02jx %#02jx",
 						    udd->idProduct[0],
 						    udd->idProduct[1], 0, 0);
 	DPRINTFN(15, "bcdDevice           %2jx.%02jx", udd->bcdDevice[1],
@@ -1421,11 +1421,11 @@ usbd_print(void *aux, const char *pnp)
 	 * by each driver.
 	 */
 	if (uaa->uaa_vendor != UHUB_UNK_VENDOR)
-		aprint_normal(" vendor 0x%04x", uaa->uaa_vendor);
+		aprint_normal(" vendor %#04x", uaa->uaa_vendor);
 	if (uaa->uaa_product != UHUB_UNK_PRODUCT)
-		aprint_normal(" product 0x%04x", uaa->uaa_product);
+		aprint_normal(" product %#04x", uaa->uaa_product);
 	if (uaa->uaa_release != UHUB_UNK_RELEASE)
-		aprint_normal(" release 0x%04x", uaa->uaa_release);
+		aprint_normal(" release %#04x", uaa->uaa_release);
 #endif
 	return UNCONF;
 }
@@ -1447,11 +1447,11 @@ usbd_ifprint(void *aux, const char *pnp)
 	 * by each driver.
 	 */
 	if (uaa->uaa_vendor != UHUB_UNK_VENDOR)
-		aprint_normal(" vendor 0x%04x", uaa->uaa_vendor);
+		aprint_normal(" vendor %#04x", uaa->uaa_vendor);
 	if (uaa->uaa_product != UHUB_UNK_PRODUCT)
-		aprint_normal(" product 0x%04x", uaa->uaa_product);
+		aprint_normal(" product %#04x", uaa->uaa_product);
 	if (uaa->uaa_release != UHUB_UNK_RELEASE)
-		aprint_normal(" release 0x%04x", uaa->uaa_release);
+		aprint_normal(" release %#04x", uaa->uaa_release);
 #endif
 	return UNCONF;
 }

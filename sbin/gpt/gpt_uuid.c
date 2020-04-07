@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.19 2020/03/30 10:41:53 martin Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.18 2019/06/25 04:25:11 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.19 2020/03/30 10:41:53 martin Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.18 2019/06/25 04:25:11 jnemeth Exp $");
 #endif
 
 #include <err.h>
@@ -73,7 +73,7 @@ static const struct {
 	{ GPT_ENT_TYPE_FREEBSD_SWAP, "fbsd-swap", "FreeBSD swap" },
 	{ GPT_ENT_TYPE_FREEBSD_UFS, "fbsd-ufs", "FreeBSD UFS/UFS2" },
 	{ GPT_ENT_TYPE_FREEBSD_VINUM, "fbsd-vinum", "FreeBSD vinum" },
-	{ GPT_ENT_TYPE_FREEBSD_ZFS, "zfs", "ZFS" },
+	{ GPT_ENT_TYPE_FREEBSD_ZFS, "fbsd-zfs", "FreeBSD ZFS" },
 	{ GPT_ENT_TYPE_LINUX_DATA, "linux-data", "Linux data" },
 	{ GPT_ENT_TYPE_LINUX_RAID, "linux-raid", "Linux RAID" },
 	{ GPT_ENT_TYPE_LINUX_SWAP, "linux-swap", "Linux swap" },

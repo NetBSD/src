@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,7 +89,7 @@ ACPI_STRING_TABLE           StandardDataTypes[] = {
 char                        EmptyHeader[] = "";
 char                        DualLicenseHeader[] =
 "/*\n"
-" * Copyright (C) 2000 - 2020, Intel Corp.\n"
+" * Copyright (C) 2000 - 2019, Intel Corp.\n"
 " * All rights reserved.\n"
 " *\n"
 " * Redistribution and use in source and binary forms, with or without\n"
@@ -503,22 +503,15 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"AE_DEBUG_REGIONS",                    SRC_TYPE_STRUCT},
     {"AE_REGION",                           SRC_TYPE_STRUCT},
     {"ASL_ANALYSIS_WALK_INFO",              SRC_TYPE_STRUCT},
-    {"ASL_CACHE_INFO",                      SRC_TYPE_STRUCT},
     {"ASL_COMMENT_STATE",                   SRC_TYPE_STRUCT},
     {"ASL_COMMENT_TYPES",                   SRC_TYPE_SIMPLE},
     {"ASL_ERROR_MSG",                       SRC_TYPE_STRUCT},
+    {"ASL_ERROR_MSG",                       SRC_TYPE_STRUCT},
     {"ASL_EVENT_INFO",                      SRC_TYPE_STRUCT},
-    {"ASL_EXPECTED_MESSAGE",                SRC_TYPE_STRUCT},
-    {"ASL_EXPECTED_MSG_NODE",               SRC_TYPE_STRUCT},
-    {"ASL_FILE_DESC",                       SRC_TYPE_STRUCT},
     {"ASL_FILE_INFO",                       SRC_TYPE_STRUCT},
-    {"ASL_FILE_NODE",                       SRC_TYPE_STRUCT},
     {"ASL_FILE_STATUS",                     SRC_TYPE_STRUCT},
-    {"ASL_FILE_TYPES",                      SRC_TYPE_STRUCT},
-    {"ASL_GLOBAL_FILE_NODE",                SRC_TYPE_STRUCT},
     {"ASL_INCLUDE_DIR",                     SRC_TYPE_STRUCT},
     {"ASL_LISTING_NODE",                    SRC_TYPE_STRUCT},
-    {"ASL_LOCATION_NODE",                   SRC_TYPE_STRUCT},
     {"ASL_MAPPING_ENTRY",                   SRC_TYPE_STRUCT},
     {"ASL_METHOD_INFO",                     SRC_TYPE_STRUCT},
     {"ASL_METHOD_LOCAL",                    SRC_TYPE_STRUCT},
@@ -1055,8 +1048,8 @@ ACPI_CONVERSION_TABLE       LicenseConversionTable =
 
 ACPI_STRING_TABLE           CustomReplacements[] =
 {
-    {"(c) 1999 - 2020",     "(c) 1999 - 2020",         REPLACE_WHOLE_WORD}, /* Main ACPICA source */
-    {"(c) 2006 - 2020",     "(c) 2006 - 2020",         REPLACE_WHOLE_WORD}, /* Test suites */
+    {"(c) 1999 - 2018",     "(c) 1999 - 2019",         REPLACE_WHOLE_WORD}, /* Main ACPICA source */
+    {"(c) 2006 - 2018",     "(c) 2006 - 2019",         REPLACE_WHOLE_WORD}, /* Test suites */
 
 #if 0
     {"SUPPORT, ASSISTANCE", "SUPPORT, ASSISTANCE",     REPLACE_WHOLE_WORD}, /* Fix intel header */

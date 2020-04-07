@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.24 2020/03/21 14:19:26 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.23 2019/11/21 22:29:03 joerg Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -63,9 +63,6 @@
 #	EFIMB
 #		EFI partition size in target image in MB
 #		(default: 128)
-#	FATMB
-#		FAT partition size in target image in MB
-#		(default: 0)
 #	KERN_SET
 #		kernel set name which should be extracted into image
 #		(default: kern-GENERIC)
@@ -126,15 +123,6 @@
 #	EFIBOOT
 #		EFI bootloader
 #		(default: empty)
-#	MBRFAT
-#		MBR partition type value for FAT
-#		(default: 6 ("16-bit FAT, more than 32M"))
-#	FATMAKEFSOPTIONS
-#		options passed to makefs(8) to create a FAT partition
-#		(default: -o fat_type=16)
-#	FATFILES
-#		list of additional files to be copied into FAT partition
-#		(default: empty)
 #
 
 .include <bsd.own.mk> 		#
@@ -181,13 +169,11 @@ GPTSECTORS=	0
 EFIMB?=		128		# 128MB
 GPTSECTORS=	2048
 .endif
-FATMB?=		0
 
 # XXX: SWAPMB could be zero and expr(1) returns exit status 1 in that case
 IMAGESECTORS!=	expr ${IMAGEMB} \* 1024 \* 1024 / 512
 SWAPSECTORS!=	expr ${SWAPMB} \* 1024 \* 1024 / 512 || true
 EFISECTORS!=	expr ${EFIMB} \* 1024 \* 1024 / 512 || true
-FATSECTORS!=	expr ${FATMB} \* 1024 \* 1024 / 512 || true
 
 .if ${USE_MBR} == "no" && ${USE_GPT} == "no"
 LABELSECTORS?=	0
@@ -198,7 +184,7 @@ LABELSECTORS?=	2048	# 1MB aligned for modern flash devices
 .endif
 
 FSSECTORS!=	expr ${IMAGESECTORS} - ${SWAPSECTORS} - ${LABELSECTORS} \
-		    - ${EFISECTORS} - ${GPTSECTORS} - ${FATSECTORS}
+		    - ${EFISECTORS} - ${GPTSECTORS}
 FSSIZE!=	expr ${FSSECTORS} \* 512
 
 # parameters for disklabel and MBR
@@ -210,14 +196,10 @@ MBRHEADS=	255
 MBRSECTORS=	63
 MBRCYLINDERS!=	expr ${IMAGESECTORS} / \( ${MBRHEADS} \* ${MBRSECTORS} \)
 MBRNETBSD=	169
-MBRFAT?=	6	# 16-bit FAT, more than 32M
 
-BSDPARTSECTORS!= expr ${IMAGESECTORS} - ${LABELSECTORS} \
-		    - ${EFISECTORS} - ${GPTSECTORS} - ${FATSECTORS}
-FSOFFSET!=	expr ${LABELSECTORS} + ${EFISECTORS} + ${FATSECTORS}
-SWAPOFFSET!=	expr ${LABELSECTORS} + ${FSSECTORS} \
-		    + ${EFISECTORS} + ${FATSECTORS}
-FATOFFSET=	${LABELSECTORS}
+BSDPARTSECTORS!= expr ${IMAGESECTORS} - ${LABELSECTORS} - ${EFISECTORS} - ${GPTSECTORS}
+FSOFFSET!=	expr ${LABELSECTORS} + ${EFISECTORS}
+SWAPOFFSET!=	expr ${LABELSECTORS} + ${FSSECTORS} + ${EFISECTORS}
 
 # parameters for sunlabel
 FSCYLINDERS!=	expr ${FSSECTORS} / \( ${HEADS} \* ${SECTORS} \)
@@ -245,7 +227,6 @@ FSTAB_IN?=	${DISTRIBDIR}/common/bootimage/fstab.in
 SPEC_IN?=	${DISTRIBDIR}/common/bootimage/spec.in
 
 IMGMAKEFSOPTIONS?=	-o bsize=16384,fsize=2048,density=8192
-FATMAKEFSOPTIONS?=	-o fat_type=16
 
 WORKDIR?=       work
 WORKSPEC?=      work.spec
@@ -286,8 +267,6 @@ WORKGPT?=	work.gpt
 WORKLABEL?=	work.diskproto
 WORKIMG?=	work.img
 EFIWORKDIR?=	work.efidir
-WORKFAT?=	work.fat
-WORKFATDIR?=	work.fatdir
 
 .if ${USE_GPT} != "no"
 ${WORKFSTAB}: ${WORKMBR}
@@ -409,9 +388,6 @@ TARGET_BLOCKS+=	${WORKMBRTRUNC}
 .if ${USE_GPT} != "no"
 TARGET_BLOCKS+=	${WORKEFI}
 .endif
-.if ${FATSECTORS} != 0
-TARGET_BLOCKS+=	${WORKFAT}
-.endif
 TARGET_BLOCKS+=	 ${TARGETFS}
 .if ${SWAPSECTORS} != 0
 TARGET_BLOCKS+=	${WORKSWAP}
@@ -422,7 +398,6 @@ TARGET_BLOCKS+=	${WORKGPT}
 
 CLEANFILES+=	${WORKMBR} ${WORKMBRTRUNC} ${WORKSWAP}
 CLEANFILES+=	${WORKEFI} ${WORKGPT}
-CLEANFILES+=	${WORKFAT}
 CLEANFILES+=	${WORKLABEL}.tmp ${WORKLABEL}
 CLEANFILES+=	${WORKIMG} ${IMGBASE}.img
 
@@ -448,8 +423,6 @@ ${WORKLABEL}:
 	    -e "s/@@SWAPSECTORS@@/${SWAPSECTORS}/"			\
 	    -e "s/@@SWAPOFFSET@@/${SWAPOFFSET}/"			\
 	    -e "s/@@BSDPARTSECTORS@@/${BSDPARTSECTORS}/"		\
-	    -e "s/@@FATSECTORS@@/${FATSECTORS}/"			\
-	    -e "s/@@FATOFFSET@@/${FATOFFSET}/"				\
 	    < ${DISKPROTO_IN} > ${WORKLABEL}.tmp
 	mv ${WORKLABEL}.tmp ${WORKLABEL}
 
@@ -466,26 +439,6 @@ ${WORKEFI}: ${TARGETFS}
 	    -t msdos -o F=32,c=1					\
 	    ${WORKEFI} ${EFIWORKDIR}
 
-${WORKFAT}: ${TARGETFS} ${FATFILES}
-	@echo create FAT partition for bootstrap files...
-	@${MKDIR} ${MKDIRPERM} ${WORKFATDIR}
-.if defined(FATFILES)
-	@echo Copying files for FAT partition...
-.for f in ${FATFILES}
-	@if [ ! -f ${f} ]; then 					\
-		echo "${f} in FATFILES not found, aborting";		\
-		false; 							\
-	fi
-	${INSTALL} ${COPY} -m 0644 ${f} ${WORKFATDIR}
-.endfor
-.endif
-	${RM} -f ${WORKFAT}
-	${TOOL_MAKEFS} -M ${FATMB}m -m ${FATMB}m			\
-	    ${MAKEFS_TIMESTAMP}						\
-	    -t msdos							\
-	    ${FATMAKEFSOPTIONS}						\
-	    ${WORKFAT} ${WORKFATDIR}
-
 ${WORKMBR}:
 .if ${USE_GPT} != "no"
 	@echo creating GPT header and partition entries...
@@ -500,24 +453,10 @@ ${WORKMBR}:
 .elif ${USE_MBR} != "no"
 	@echo creating MBR labels...
 	${DD} if=/dev/zero of=${WORKMBR} seek=$$((${IMAGESECTORS} - 1)) count=1
-.  if ${FATSECTORS} != 0
-	# create BSD partition
-	${TOOL_FDISK} -f -i -u \
-	    -b ${MBRCYLINDERS}/${MBRHEADS}/${MBRSECTORS}		\
-	    -1 -a -s ${MBRNETBSD}/${FSOFFSET}/${BSDPARTSECTORS}		\
-	    -F ${WORKMBR}
-	# create FAT partition
-	${TOOL_FDISK} -f -u \
-	    -b ${MBRCYLINDERS}/${MBRHEADS}/${MBRSECTORS}		\
-	    -0 -s ${MBRFAT}/${FATOFFSET}/${FATSECTORS}			\
-	    -F ${WORKMBR}
-.  else
-	# create BSD partition
 	${TOOL_FDISK} -f -i -u \
 	    -b ${MBRCYLINDERS}/${MBRHEADS}/${MBRSECTORS}		\
 	    -0 -a -s ${MBRNETBSD}/${FSOFFSET}/${BSDPARTSECTORS}		\
 	    -F ${WORKMBR}
-.  endif
 .  if empty(MBR_BOOTCODE)
 	@if [ -f ${WORKDIR}/usr/mdec/${MBR_DEFAULT_BOOTCODE} ]; then 	\
 		echo ${TOOL_FDISK} -f					\
@@ -581,7 +520,6 @@ clean:
 	fi	# XXX
 	${RM} -fr ${WORKDIR}
 	${RM} -fr ${EFIWORKDIR}
-	${RM} -fr ${WORKFATDIR}
 
 prepare_md_post: .PHONY
 image_md_post: .PHONY

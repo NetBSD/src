@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsmgr.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: tlsmgr.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -51,8 +51,7 @@
 /*	to the Postfix-owned \fBdata_directory\fR, and a warning
 /*	is logged.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8)
-/*	or \fBpostlogd\fR(8).
+/*	Problems and transactions are logged to the syslog daemon.
 /* BUGS
 /*	There is no automatic means to limit the number of entries in the
 /*	TLS session caches and/or the size of the TLS cache files.
@@ -133,19 +132,14 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
-/* .PP
-/*	Available in Postfix 3.3 and later:
-/* .IP "\fBservice_name (read-only)\fR"
-/*	The master.cf service name of a Postfix daemon process.
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* SEE ALSO
 /*	smtp(8), Postfix SMTP client
 /*	smtpd(8), Postfix SMTP server
 /*	postconf(5), configuration parameters
 /*	master(5), generic daemon options
 /*	master(8), process manager
-/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README FILES
 /* .ad
@@ -761,7 +755,8 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
 		} else {
 		    VSTRING_SPACE(buffer, len);
 		    RAND_bytes((unsigned char *) STR(buffer), len);
-		    vstring_set_payload_size(buffer, len);
+		    VSTRING_AT_OFFSET(buffer, len);	/* XXX not part of the
+							 * official interface */
 		    status = TLS_MGR_STAT_OK;
 		}
 	    }

@@ -144,20 +144,14 @@
 #        transport (the first name of a mail delivery service entry
 #        in the Postfix master.cf file).
 # 
-#        The  nexthop  field usually specifies one recipient domain
-#        or hostname. In the case of the Postfix SMTP/LMTP  client,
-#        the  nexthop  field may contain a list of nexthop destina-
-#        tions separated by comma or whitespace  (Postfix  3.5  and
-#        later).
+#        The  interpretation  of  the  nexthop  field  is transport
+#        dependent. In the case of SMTP, specify  a  service  on  a
+#        non-default  port  as  host:service,  and disable MX (mail
+#        exchanger) DNS lookups with [host] or [host]:port. The  []
+#        form is required when you specify an IP address instead of
+#        a hostname.
 # 
-#        The  syntax  of  a nexthop destination is transport depen-
-#        dent.  With SMTP, specify a service on a non-default  port
-#        as  host:service,  and  disable  MX  (mail  exchanger) DNS
-#        lookups  with  [host]  or  [host]:port.  The  []  form  is
-#        required when you specify an IP address instead of a host-
-#        name.
-# 
-#        A null transport and null  nexthop  field  means  "do  not
+#        A null transport and null nexthop  result  means  "do  not
 #        change":  use  the delivery transport and nexthop informa-
 #        tion that would be used when the  entire  transport  table
 #        did not exist.
@@ -206,8 +200,8 @@
 #        prevents  mail  routing loops when your machine is primary
 #        MX host for example.com.
 # 
-#        In the case of delivery via SMTP or LMTP, one may  specify
-#        host:service instead of just a host:
+#        In the case of delivery via SMTP, one  may  specify  host-
+#        name:service instead of just a host:
 # 
 #             example.com      smtp:bar.example:2025
 # 
@@ -215,14 +209,6 @@
 #        port 2025. Instead of a numerical port a symbolic name may
 #        be used. Specify [] around the hostname if MX lookups must
 #        be disabled.
-# 
-#        Deliveries via SMTP or LMTP support multiple  destinations
-#        (Postfix >= 3.5):
-# 
-#             example.com      smtp:bar.example, foo.example
-# 
-#        This  tries  to  deliver  to  bar.example before trying to
-#        deliver to foo.example.
 # 
 #        The error mailer can be used to bounce mail:
 # 
@@ -270,21 +256,17 @@
 #        The  text  below  provides  only  a parameter summary. See
 #        postconf(5) for more details including examples.
 # 
-#        empty_address_recipient (MAILER-DAEMON)
-#               The  recipient  of  mail  addressed  to  the   null
-#               address.
+#        empty_address_recipient
+#               The address that is looked up instead of  the  null
+#               sender address.
 # 
-#        parent_domain_matches_subdomains  (see  'postconf -d' out-
-#        put)
-#               A list of Postfix features where the pattern "exam-
-#               ple.com" also matches  subdomains  of  example.com,
-#               instead  of  requiring  an  explicit ".example.com"
-#               pattern.
+#        parent_domain_matches_subdomains
+#               List  of  Postfix features that use domain.tld pat-
+#               terns  to  match  sub.domain.tld  (as  opposed   to
+#               requiring .domain.tld patterns).
 # 
-#        transport_maps (empty)
-#               Optional lookup tables with mappings from recipient
-#               address  to  (message  delivery transport, next-hop
-#               destination).
+#        transport_maps
+#               List of transport lookup tables.
 # 
 # SEE ALSO
 #        trivial-rewrite(8), rewrite and resolve addresses
@@ -293,14 +275,14 @@
 #        postmap(1), Postfix lookup table manager
 # 
 # README FILES
-#        Use "postconf readme_directory" or  "postconf  html_direc-
+#        Use  "postconf  readme_directory" or "postconf html_direc-
 #        tory" to locate this information.
 #        ADDRESS_REWRITING_README, address rewriting guide
 #        DATABASE_README, Postfix lookup table overview
 #        FILTER_README, external content filter
 # 
 # LICENSE
-#        The  Secure  Mailer  license must be distributed with this
+#        The Secure Mailer license must be  distributed  with  this
 #        software.
 # 
 # AUTHOR(S)

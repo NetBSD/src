@@ -2486,16 +2486,8 @@ cxx_eval_array_reference (const constexpr_ctx *ctx, tree t,
     }
 
   /* If it's within the array bounds but doesn't have an explicit
-     initializer, it's initialized from {}.  But use build_value_init
-     directly for non-aggregates to avoid creating a garbage CONSTRUCTOR.  */
-  tree val;
-  if (CP_AGGREGATE_TYPE_P (elem_type))
-    {
-      tree empty_ctor = build_constructor (init_list_type_node, NULL);
-      val = digest_init (elem_type, empty_ctor, tf_warning_or_error);
-    }
-  else
-    val = build_value_init (elem_type, tf_warning_or_error);
+     initializer, it's value-initialized.  */
+  tree val = build_value_init (elem_type, tf_warning_or_error);
   return cxx_eval_constant_expression (ctx, val, lval, non_constant_p,
 				       overflow_p);
 }
@@ -4163,29 +4155,8 @@ cxx_eval_constant_expression (const constexpr_ctx *ctx, tree t,
 
     case VAR_DECL:
       if (DECL_HAS_VALUE_EXPR_P (t))
-	{
-	  if (is_normal_capture_proxy (t)
-	      && current_function_decl == DECL_CONTEXT (t))
-	    {
-	      /* Function parms aren't constexpr within the function
-		 definition, so don't try to look at the closure.  But if the
-		 captured variable is constant, try to evaluate it directly. */
-	      r = DECL_CAPTURED_VARIABLE (t);
-	      tree type = TREE_TYPE (t);
-	      if (TYPE_REF_P (type) != TYPE_REF_P (TREE_TYPE (r)))
-		{
-		  /* Adjust r to match the reference-ness of t.  */
-		  if (TYPE_REF_P (type))
-		    r = build_address (r);
-		  else
-		    r = convert_from_reference (r);
-		}
-	    }
-	  else
-	    r = DECL_VALUE_EXPR (t);
-	  return cxx_eval_constant_expression (ctx, r, lval, non_constant_p,
-					       overflow_p);
-	}
+	return cxx_eval_constant_expression (ctx, DECL_VALUE_EXPR (t),
+					     lval, non_constant_p, overflow_p);
       /* fall through */
     case CONST_DECL:
       /* We used to not check lval for CONST_DECL, but darwin.c uses
@@ -4998,13 +4969,15 @@ cxx_eval_outermost_constant_expr (tree t, bool allow_non_constant,
       if (TREE_CODE (t) == TARGET_EXPR
 	  && TARGET_EXPR_INITIAL (t) == r)
 	return t;
-      else if (TREE_CODE (t) != CONSTRUCTOR)
+      else
 	{
 	  r = get_target_expr (r);
 	  TREE_CONSTANT (r) = true;
+	  return r;
 	}
     }
-  return r;
+  else
+    return r;
 }
 
 /* Returns true if T is a valid subexpression of a constant expression,
@@ -5134,15 +5107,7 @@ maybe_constant_value (tree t, tree decl)
   if (cv_cache == NULL)
     cv_cache = hash_map<tree, tree>::create_ggc (101);
   if (tree *cached = cv_cache->get (t))
-    {
-      r = *cached;
-      if (r != t)
-	{
-	  r = unshare_expr_without_location (r);
-	  protected_set_expr_location (r, EXPR_LOCATION (t));
-	}
-      return r;
-    }
+    return *cached;
 
   r = cxx_eval_outermost_constant_expr (t, true, true, decl);
   gcc_checking_assert (r == t

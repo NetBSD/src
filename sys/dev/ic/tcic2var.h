@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2var.h,v 1.15 2020/03/05 15:18:55 riastradh Exp $	*/
+/*	$NetBSD: tcic2var.h,v 1.13 2012/10/27 17:18:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.

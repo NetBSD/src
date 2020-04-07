@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.402 2020/03/29 09:20:43 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.394 2020/02/24 20:31:56 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the company nor the name of the author may be used to
- *   endorse or promote products derived from this software without specific
+ *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.402 2020/03/29 09:20:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.394 2020/02/24 20:31:56 ad Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -2722,10 +2722,9 @@ pmap_syncicache_page(struct vm_page_md *md, paddr_t pa)
 		 * Unmap the page(s).
 		 */
 		l2pte_reset(ptep + j);
-		PTE_SYNC(ptep + j);
-
 		pmap_tlb_flush_SE(kpm, dstp + i, PVF_REF | PVF_EXEC);
 	}
+	PTE_SYNC_RANGE(ptep, way_size / L2_S_SIZE);
 
 	md->pvh_attrs |= PVF_EXEC;
 	PMAPCOUNT(exec_synced);
@@ -3399,7 +3398,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				}
 			}
 		}
+#endif /* !ARM_MMU_EXTENDED */
 
+#ifndef ARM_MMU_EXTENDED
 		UVMHIST_LOG(maphist, "  is_cached %jd cs 0x%08jx",
 		    is_cached, pm->pm_cstate.cs_all, 0, 0);
 
@@ -3466,12 +3467,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, " (pm=%#jx, sva=%#jx, eva=%#jx)",
 	    (uintptr_t)pm, sva, eva, 0);
-
-#ifdef PMAP_FAULTINFO
-	curpcb->pcb_faultinfo.pfi_faultaddr = 0;
-	curpcb->pcb_faultinfo.pfi_repeats = 0;
-	curpcb->pcb_faultinfo.pfi_faultptep = NULL;
-#endif
 
 	SLIST_INIT(&opv_list);
 	/*
@@ -5185,7 +5180,7 @@ pmap_update(pmap_t pm)
 	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
 
-bool
+void
 pmap_remove_all(pmap_t pm)
 {
 
@@ -5213,7 +5208,6 @@ pmap_remove_all(pmap_t pm)
 	pmap_tlb_asid_release_all(pm);
 #endif
 	pm->pm_remove_all = true;
-	return false;
 }
 
 /*
@@ -5826,34 +5820,30 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 			return 1;
 		pa = VM_PAGE_TO_PHYS(pg);
 		/*
-		 * This new page must not have any mappings.
+		 * This new page must not have any mappings.  Enter it via
+		 * pmap_kenter_pa and let that routine do the hard work.
 		 */
 		struct vm_page_md *md __diagused = VM_PAGE_TO_MD(pg);
 		KASSERT(SLIST_EMPTY(&md->pvh_list));
 	}
 
-	/*
-	 * Enter it via pmap_kenter_pa and let that routine do the hard work.
-	 */
-	pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
-	    PMAP_KMPAGE | PMAP_PTE);
+	pmap_kenter_pa(va, pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE|PMAP_PTE);
 
 	if (pap)
 		*pap = pa;
 
 	PMAPCOUNT(pt_mappings);
 
-	const pmap_t kpm __diagused = pmap_kernel();
-	struct l2_bucket * const l2b __diagused = pmap_get_l2_bucket(kpm, va);
+	struct l2_bucket * const l2b __diagused =
+	    pmap_get_l2_bucket(pmap_kernel(), va);
 	KASSERT(l2b != NULL);
 
 	pt_entry_t * const ptep __diagused = &l2b->l2b_kva[l2pte_index(va)];
-	const pt_entry_t pte __diagused = *ptep;
-	KASSERT(l2pte_valid_p(pte));
-	KASSERT((pte & L2_S_CACHE_MASK) == pte_l2_s_cache_mode_pt);
+	const pt_entry_t opte __diagused = *ptep;
+	KASSERT((opte & L2_S_CACHE_MASK) == pte_l2_s_cache_mode_pt);
 
 	memset((void *)va, 0, PAGE_SIZE);
-
 	return 0;
 }
 

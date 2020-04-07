@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.89 2020/03/14 03:01:36 christos Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.86 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.89 2020/03/14 03:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.86 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -453,7 +453,7 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
-	DPRINTF("in=%#jx out=%#jx intr=%#jx",
+	DPRINTF("in=0x%x out=0x%x intr=0x%x",
 	    ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number, 0);
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
@@ -497,7 +497,7 @@ uplcom_detach(device_t self, int flags)
 	int rv = 0;
 
 	UPLCOMHIST_FUNC(); UPLCOMHIST_CALLED();
-	DPRINTF("sc=%#jx flags=%jd", (uintptr_t)sc, flags, 0, 0);
+	DPRINTF("sc=%#jx flags=%d", (uintptr_t)sc, flags, 0, 0);
 
 	sc->sc_dying = true;
  
@@ -643,7 +643,7 @@ uplcom_dtr(struct uplcom_softc *sc, int onoff)
 {
 
 	UPLCOMHIST_FUNC(); UPLCOMHIST_CALLED();
-	DPRINTF("onoff=%jd", onoff, 0, 0, 0);
+	DPRINTF("onoff=%d", onoff, 0, 0, 0);
 
 	if (sc->sc_dtr != -1 && !sc->sc_dtr == !onoff)
 		return;
@@ -657,7 +657,7 @@ static void
 uplcom_rts(struct uplcom_softc *sc, int onoff)
 {
 	UPLCOMHIST_FUNC(); UPLCOMHIST_CALLED();
-	DPRINTF("onoff=%jd", onoff, 0, 0, 0);
+	DPRINTF("onoff=%d", onoff, 0, 0, 0);
 
 	if (sc->sc_rts != -1 && !sc->sc_rts == !onoff)
 		return;
@@ -673,7 +673,7 @@ uplcom_break(struct uplcom_softc *sc, int onoff)
 	usb_device_request_t req;
 
 	UPLCOMHIST_FUNC(); UPLCOMHIST_CALLED();
-	DPRINTF("onoff=%jd", onoff, 0, 0, 0);
+	DPRINTF("onoff=%d", onoff, 0, 0, 0);
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UCDC_SEND_BREAK;
@@ -703,7 +703,7 @@ uplcom_set_crtscts(struct uplcom_softc *sc)
 
 	err = usbd_do_request(sc->sc_udev, &req, 0);
 	if (err) {
-		DPRINTF("failed, err=%jd", err, 0, 0, 0);
+		DPRINTF("failed, err=%d", err, 0, 0, 0);
 		return err;
 	}
 
@@ -718,7 +718,7 @@ uplcom_set_line_coding(struct uplcom_softc *sc, usb_cdc_line_state_t *state)
 
 	UPLCOMHIST_FUNC(); UPLCOMHIST_CALLED();
 
-	DPRINTF("rate=%jd fmt=%jd parity=%jd bits=%jd",
+	DPRINTF("rate=%d fmt=%d parity=%d bits=%d",
 		UGETDW(state->dwDTERate), state->bCharFormat,
 		state->bParityType, state->bDataBits);
 
@@ -735,7 +735,7 @@ uplcom_set_line_coding(struct uplcom_softc *sc, usb_cdc_line_state_t *state)
 
 	err = usbd_do_request(sc->sc_udev, &req, state);
 	if (err) {
-		DPRINTF("failed, err=%ju", err, 0, 0, 0);
+		DPRINTF("failed, err=%u", err, 0, 0, 0);
 		return err;
 	}
 
@@ -786,7 +786,7 @@ uplcom_param(void *addr, int portno, struct termios *t)
 
 	err = uplcom_set_line_coding(sc, &ls);
 	if (err) {
-		DPRINTF("err=%jd", err, 0, 0, 0);
+		DPRINTF("err=%d", err, 0, 0, 0);
 		return EIO;
 	}
 
@@ -797,7 +797,7 @@ uplcom_param(void *addr, int portno, struct termios *t)
 		uplcom_set_line_state(sc);
 
 	if (err) {
-		DPRINTF("err=%jd", err, 0, 0, 0);
+		DPRINTF("err=%d", err, 0, 0, 0);
 		return EIO;
 	}
 
@@ -822,7 +822,7 @@ uplcom_vendor_control_write(struct usbd_device *dev, uint16_t value,
 	err = usbd_do_request(dev, &req, NULL);
 
 	if (err) {
-		DPRINTF("vendor write failed, err=%jd", err, 0, 0, 0);
+		DPRINTF("vendor write failed, err=%d", err, 0, 0, 0);
 	}
 
 	return err;
@@ -853,7 +853,7 @@ uplcom_open(void *addr, int portno)
 			sc->sc_intr_buf, sc->sc_isize,
 			uplcom_intr, USBD_DEFAULT_INTERVAL);
 		if (err) {
-			DPRINTF("cannot open interrupt pipe (addr %jd)",
+			DPRINTF("cannot open interrupt pipe (addr %d)",
 				sc->sc_intr_number, 0, 0, 0);
 		}
 	}
@@ -894,12 +894,12 @@ uplcom_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
 
-		DPRINTF("abnormal status: %ju", status, 0, 0, 0);
+		DPRINTF("abnormal status: %u", status, 0, 0, 0);
 		usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
 		return;
 	}
 
-	DPRINTF("uplcom status = %02jx", buf[8], 0, 0, 0);
+	DPRINTF("uplcom status = %02x", buf[8], 0, 0, 0);
 
 	sc->sc_lsr = sc->sc_msr = 0;
 	pstatus = buf[8];

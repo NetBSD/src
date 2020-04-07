@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.203 2020/03/26 19:46:42 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.202 2020/02/15 18:12:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -125,7 +125,7 @@ struct lwp {
 	/* Synchronisation. */
 	struct turnstile *l_ts;		/* l: current turnstile */
 	struct syncobj	*l_syncobj;	/* l: sync object operations set */
-	LIST_ENTRY(lwp) l_sleepchain;	/* l: sleep queue */
+	TAILQ_ENTRY(lwp) l_sleepchain;	/* l: sleep queue */
 	wchan_t		l_wchan;	/* l: sleep address */
 	const char	*l_wmesg;	/* l: reason for sleep */
 	struct sleepq	*l_sleepq;	/* l: current sleep queue */

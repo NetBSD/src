@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.147 2020/03/25 17:06:17 jdolecek Exp $
+# $NetBSD: ALL,v 1.146 2020/02/09 16:06:18 jmcneill Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.147 $"
+#ident		"ALL-$Revision: 1.146 $"
 
 maxusers	64		# estimated number of users
 
@@ -107,7 +107,7 @@ options 	BUFQ_READPRIO
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# inexpensive kernel consistency checks
+options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
 options 	DEBUG		# expensive debugging checks/support
 options 	LOCKDEBUG	# expensive locking checks/support
@@ -173,6 +173,7 @@ file-system	PROCFS		# /proc
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	SYSVBFS		# System V boot file system
 file-system	PTYFS		# /dev/ptm support
 file-system	TMPFS		# Efficient memory file-system
@@ -1658,6 +1659,9 @@ pseudo-device	gpiosim		1	# GPIO simulator
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda			# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb			# experimental - SMB requester
 
 # a pseudo device needed for AUTOFS
 pseudo-device	autofs			# experimental - AUTOFS

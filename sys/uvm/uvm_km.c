@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.157 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.156 2020/02/24 12:38:57 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.157 2020/03/14 20:23:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.156 2020/02/24 12:38:57 rin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -456,7 +456,9 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 		nextoff = curoff + PAGE_SIZE;
 		pg = uvm_pagelookup(uobj, curoff);
 		if (pg != NULL && pg->flags & PG_BUSY) {
-			uvm_pagewait(pg, uobj->vmobjlock, "km_pgrm");
+			pg->flags |= PG_WANTED;
+			UVM_UNLOCK_AND_WAIT_RW(pg, uobj->vmobjlock, 0,
+				    "km_pgrm", 0);
 			rw_enter(uobj->vmobjlock, RW_WRITER);
 			nextoff = curoff;
 			continue;
@@ -567,7 +569,7 @@ uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 		 * - we can recurse when allocating radix_node for
 		 *   kernel_object.
 		 */
-		if (rw_tryenter(uvm_kernel_object->vmobjlock, RW_READER)) {
+		if (rw_tryenter(uvm_kernel_object->vmobjlock, RW_WRITER)) {
 			struct vm_page *pg;
 
 			pg = uvm_pagelookup(uvm_kernel_object,

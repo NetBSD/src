@@ -1,4 +1,4 @@
-/*	$NetBSD: uxtext.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: uxtext.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -54,11 +54,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -237,7 +232,9 @@ static ssize_t read_buf(VSTREAM *fp, VSTRING *buf)
 {
     ssize_t len;
 
-    len = vstream_fread_buf(fp, buf, BUFLEN);
+    VSTRING_RESET(buf);
+    len = vstream_fread(fp, STR(buf), vstring_avail(buf));
+    VSTRING_AT_OFFSET(buf, len);		/* XXX */
     VSTRING_TERMINATE(buf);
     return (len);
 }

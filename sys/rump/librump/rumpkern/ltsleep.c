@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.36 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.35 2020/02/23 15:46:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.36 2020/03/14 20:23:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.35 2020/02/23 15:46:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -147,6 +147,21 @@ mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo, kmutex_t *lock)
 	rv = sleeper(ident, timo, true);
 	if ((prio & PNORELOCK) == 0)
 		mutex_enter(lock);
+
+	return rv;
+}
+
+int
+rwtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo, krwlock_t *lock)
+{
+	krw_t op = rw_write_held(lock) ? RW_WRITER : RW_READER;
+	int rv;
+
+	mutex_spin_enter(&qlock);
+	rw_exit(lock);
+	rv = sleeper(ident, timo, true);
+	if ((prio & PNORELOCK) == 0)
+		rw_enter(lock, op);
 
 	return rv;
 }

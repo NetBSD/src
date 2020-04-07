@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.12 2020/03/14 02:35:33 christos Exp $ */
+/* $NetBSD: auvitek.c,v 1.10 2016/04/23 10:15:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.12 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.10 2016/04/23 10:15:31 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -123,7 +123,7 @@ PROXYMAP(8)                                                        PROXYMAP(8)
        its content.
 
 <b>DIAGNOSTICS</b>
-       Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
+       Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>BUGS</b>
        The  <a href="proxymap.8.html"><b>proxymap</b>(8)</a>  server provides service to multiple clients, and must
@@ -188,11 +188,6 @@ PROXYMAP(8)                                                        PROXYMAP(8)
        <b><a href="postconf.5.html#proxy_write_maps">proxy_write_maps</a> (see 'postconf -d' output)</b>
               The lookup tables that the  <a href="proxymap.8.html"><b>proxymap</b>(8)</a>  server  is  allowed  to
               access for the read-write service.
-
-       Available in Postfix 3.3 and later:
-
-       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
-              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
 
 <b>SEE ALSO</b>
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters

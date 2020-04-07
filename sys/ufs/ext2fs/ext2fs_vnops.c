@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.131 2020/03/08 17:38:12 kamil Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.130 2019/09/18 17:59:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.131 2020/03/08 17:38:12 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.130 2019/09/18 17:59:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -999,7 +999,7 @@ ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 	 */
 	getmicrouptime(&tv);
 	SETHIGH(ip->i_modrev, tv.tv_sec);
-	SETLOW(ip->i_modrev, tv.tv_usec * 4294U);
+	SETLOW(ip->i_modrev, tv.tv_usec * 4294);
 	*vpp = vp;
 	return 0;
 }

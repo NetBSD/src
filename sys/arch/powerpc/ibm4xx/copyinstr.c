@@ -1,4 +1,4 @@
-/*	$NetBSD: copyinstr.c,v 1.13 2020/03/05 01:15:35 rin Exp $	*/
+/*	$NetBSD: copyinstr.c,v 1.9 2010/03/20 23:31:29 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.13 2020/03/05 01:15:35 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyinstr.c,v 1.9 2010/03/20 23:31:29 chs Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -46,20 +46,14 @@ int
 copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
-	size_t resid;
-	int rv, msr, pid, data, ctx;
+	int rv, msr, pid, tmp, ctx;
 	struct faultbuf env;
-
-	if (__predict_false(len == 0)) {
-		if (done)
-			*done = 0;
-		return 0;
-	}
 
 	if ((rv = setfault(&env))) {
 		curpcb->pcb_onfault = NULL;
+		/* XXXX -- len may be lost on a fault */
 		if (done)
-			*done = 0;
+			*done = len;
 		return rv;
 	}
 
@@ -69,37 +63,36 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 		ctx = pm->pm_ctx;
 	}
 
-	resid = len;
-	__asm volatile(
-		"mtctr %3;"			/* Set up counter */
-		"mfmsr %0;"			/* Save MSR */
-		"li %1,0x20;"
-		"andc %1,%0,%1; mtmsr %1;"	/* Disable IMMU */
-		"mfpid %1;"			/* Save old PID */
-		"sync; isync;"
+	if (len) {
+		__asm volatile("mtctr %3;"		/* Set up counter */
+			"mfmsr %0;"			/* Save MSR */
+			"li %1,0x20; "
+			"andc %1,%0,%1; mtmsr %1;"	/* Disable IMMU */
+			"mfpid %1;"			/* Save old PID */
+			"sync; isync;"
 
-		"1: "
-		"mtpid %4; sync;"		/* Load user ctx */
-		"lbz %2,0(%5); addi %5,%5,1;"	/* Load byte */
-		"sync; isync;"
-		"mtpid %1; sync;"
-		"stb %2,0(%6); dcbst 0,%6; addi %6,%6,1;"
-						/* Store kernel byte */
-		"sync; isync;"
-		"or. %2,%2,%2;"
-		"bdnzf 2,1b;"			/* while(ctr-- && !zero) */
+			"li %3,0;"			/* Clear len */
 
-		"mtpid %1; mtmsr %0;"		/* Restore PID, MSR */
-		"sync; isync;"
-		"mfctr %3;"			/* Restore resid */
-		: "=&r" (msr), "=&r" (pid), "=&r" (data), "+r" (resid)
-		: "r" (ctx), "b" (udaddr), "b" (kaddr));
+			"1: "
+			"mtpid %4; sync;"		/* Load user ctx */
+			"lbz %2,0(%5); addi %5,%5,1;"	/* Load byte */
+			"sync; isync;"
+			"mtpid %1;sync;"
+			"stb %2,0(%6);  dcbf 0,%6; addi %6,%6,1;"	/* Store kernel byte */
+			"sync; isync;"
+			"addi %3,%3,1;"			/* Inc len */
+			"or. %2,%2,%2;"
+			"bdnzf 2,1b;"			/*
+							 * while(ctr-- && !zero)
+							 */
 
+			"mtpid %1; mtmsr %0;"		/* Restore PID, MSR */
+			"sync; isync;"
+			: "=&r" (msr), "=&r" (pid), "=&r" (tmp), "+b" (len)
+			: "r" (ctx), "b" (udaddr), "b" (kaddr));
+	}
 	curpcb->pcb_onfault = NULL;
 	if (done)
-		*done = len - resid;
-	if (resid == 0 && (char)data != '\0')
-		return ENAMETOOLONG;
-	else
-		return 0;
+		*done = len;
+	return 0;
 }

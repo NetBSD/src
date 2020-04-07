@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.290 2020/03/14 18:08:39 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.289 2020/02/21 02:04:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.290 2020/03/14 18:08:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.289 2020/02/21 02:04:40 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1378,7 +1378,8 @@ allocbuf(buf_t *bp, int size, int preserve)
 		 * Need to trim overall memory usage.
 		 */
 		while (buf_canrelease()) {
-			if (preempt_needed()) {
+			if (curcpu()->ci_schedstate.spc_flags &
+			    SPCF_SHOULDYIELD) {
 				mutex_exit(&bufcache_lock);
 				preempt();
 				mutex_enter(&bufcache_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.94 2020/03/20 16:35:41 sevan Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.93 2020/01/30 06:03:34 thorpej Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.94 2020/03/20 16:35:41 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.93 2020/01/30 06:03:34 thorpej Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -614,11 +614,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwn_newstate;
-
-	/* XXX media locking needs revisiting */
-	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTNET);
-	ieee80211_media_init_with_lock(ic,
-	    iwn_media_change, ieee80211_media_status, &sc->sc_media_mtx);
+	ieee80211_media_init(ic, iwn_media_change, ieee80211_media_status);
 
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 15;

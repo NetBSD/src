@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.53 2020/03/06 20:46:12 ad Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.52 2019/12/27 12:51:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.53 2020/03/06 20:46:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.52 2019/12/27 12:51:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,9 @@ uvm_init(void)
 	uvm_loan_init();
 
 	/*
-	 * Enable paging of kernel objects.
+	 * The VM system is now up!  Now that kmem is up we can resize the
+	 * <obj,off> => <page> hash table for general use and enable paging
+	 * of kernel objects.
 	 */
 
 	uao_create(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS,

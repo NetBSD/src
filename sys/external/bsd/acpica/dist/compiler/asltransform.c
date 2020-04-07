@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -96,10 +96,6 @@ static BOOLEAN
 TrCheckForBufferMatch (
     ACPI_PARSE_OBJECT       *Next1,
     ACPI_PARSE_OBJECT       *Next2);
-
-static void
-TrDoMethod (
-    ACPI_PARSE_OBJECT       *Op);
 
 
 /*******************************************************************************
@@ -359,8 +355,11 @@ TrTransformSubtree (
         break;
 
     case PARSEOP_METHOD:
-
-        TrDoMethod (Op);
+        /*
+         * TBD: Zero the tempname (_T_x) count. Probably shouldn't be a global,
+         * however
+         */
+        AslGbl_TempCount = 0;
         break;
 
     case PARSEOP_EXTERNAL:
@@ -1002,40 +1001,6 @@ NextCase:
     }
 }
 
-/*******************************************************************************
- *
- * FUNCTION:    TrBufferIsAllZero
- *
- * PARAMETERS:  Op          - Parse node for first opcode in buffer initializer
- *                            list
- *
- * RETURN:      TRUE if buffer contains all zeros or a DEFAULT_ARG
- *
- * DESCRIPTION: Check for duplicate Buffer case values.
- *
- ******************************************************************************/
-
-static BOOLEAN
-TrBufferIsAllZero (
-    ACPI_PARSE_OBJECT       *Op)
-{
-    while (Op)
-    {
-        if (Op->Asl.ParseOpcode == PARSEOP_DEFAULT_ARG)
-        {
-            return (TRUE);
-        }
-        else if (Op->Asl.Value.Integer != 0)
-        {
-            return (FALSE);
-        }
-
-        Op = Op->Asl.Next;
-    }
-
-    return (TRUE);
-}
-
 
 /*******************************************************************************
  *
@@ -1057,37 +1022,10 @@ TrCheckForBufferMatch (
     ACPI_PARSE_OBJECT       *NextOp1,
     ACPI_PARSE_OBJECT       *NextOp2)
 {
-    /*
-     * The buffer length can be a DEFAULT_ARG or INTEGER. If any of the nodes
-     * are DEFAULT_ARG, it means that the length has yet to be computed.
-     * However, the initializer list can be compared to determine if these two
-     * buffers match.
-     */
-    if ((NextOp1->Asl.ParseOpcode == PARSEOP_INTEGER &&
-        NextOp2->Asl.ParseOpcode == PARSEOP_INTEGER) &&
-        NextOp1->Asl.Value.Integer != NextOp2->Asl.Value.Integer)
+
+    if (NextOp1->Asl.Value.Integer != NextOp2->Asl.Value.Integer)
     {
         return (FALSE);
-    }
-
-    /*
-     * Buffers that have explicit lengths but no initializer lists are
-     * filled with zeros at runtime. This is equivalent to buffers that have the
-     * same length that are filled with zeros.
-     *
-     * In other words, the following buffers are equivalent:
-     *
-     * Buffer(0x4) {}
-     * Buffer() {0x0, 0x0, 0x0, 0x0}
-     *
-     * This statement checks for matches where one buffer does not have an
-     * initializer list and another buffer contains all zeros.
-     */
-    if (NextOp1->Asl.ParseOpcode != NextOp2->Asl.ParseOpcode &&
-        TrBufferIsAllZero (NextOp1->Asl.Next) &&
-        TrBufferIsAllZero (NextOp2->Asl.Next))
-    {
-        return (TRUE);
     }
 
     /* Start at the BYTECONST initializer node list */
@@ -1132,77 +1070,4 @@ TrCheckForBufferMatch (
     /* Otherwise, the buffers match */
 
     return (TRUE);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    TrDoMethod
- *
- * PARAMETERS:  Op               - Parse node for SWITCH
- *
- * RETURN:      None
- *
- * DESCRIPTION: Determine that parameter count of an ASL method node by
- *              translating the parameter count parse node from
- *              PARSEOP_DEFAULT_ARG to PARSEOP_BYTECONST.
- *
- ******************************************************************************/
-
-static void
-TrDoMethod (
-    ACPI_PARSE_OBJECT       *Op)
-{
-    ACPI_PARSE_OBJECT           *ArgCountOp;
-    UINT8                       ArgCount;
-    ACPI_PARSE_OBJECT           *ParameterOp;
-
-
-    /*
-     * TBD: Zero the tempname (_T_x) count. Probably shouldn't be a global,
-     * however
-     */
-    AslGbl_TempCount = 0;
-
-    ArgCountOp = Op->Asl.Child->Asl.Next;
-    if (ArgCountOp->Asl.ParseOpcode == PARSEOP_BYTECONST)
-    {
-        /*
-         * Parameter count for this method has already been recorded in the
-         * method declaration.
-         */
-        return;
-    }
-
-    /*
-     * Parameter count has been omitted in the method declaration.
-     * Count the amount of arguments here.
-     */
-    ParameterOp = ArgCountOp->Asl.Next->Asl.Next->Asl.Next->Asl.Next;
-    if (ParameterOp->Asl.ParseOpcode == PARSEOP_DEFAULT_ARG)
-    {
-        ArgCount = 0;
-        ParameterOp = ParameterOp->Asl.Child;
-
-        while (ParameterOp)
-        {
-            ParameterOp = ParameterOp->Asl.Next;
-            ArgCount++;
-        }
-
-        ArgCountOp->Asl.Value.Integer = ArgCount;
-        ArgCountOp->Asl.ParseOpcode = PARSEOP_BYTECONST;
-    }
-    else
-    {
-        /*
-         * Method parameters can be counted by analyzing the Parameter type
-         * list. If the Parameter list contains more than 1 parameter, it
-         * is nested under PARSEOP_DEFAULT_ARG. When there is only 1
-         * parameter, the parse tree contains a single node representing
-         * that type.
-         */
-        ArgCountOp->Asl.Value.Integer = 1;
-        ArgCountOp->Asl.ParseOpcode = PARSEOP_BYTECONST;
-    }
 }

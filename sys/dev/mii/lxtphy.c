@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.55 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.54 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.55 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.54 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,20 +138,14 @@ lxtphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 
-	mii_lock(mii);
-
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
 
-	mii_unlock(mii);
-
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-		mii_lock(mii);
 		sc->mii_anegticks = MII_ANEGTICKS;
-		mii_unlock(mii);
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_FX, 0, sc->mii_inst),
 		    MII_MEDIA_100_TX);
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_FX, IFM_FDX, sc->mii_inst),
@@ -168,8 +162,6 @@ lxtphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg;
-
-	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -230,8 +222,6 @@ lxtphy_status(struct mii_softc *sc)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t bmcr, bmsr, csr;
 
-	KASSERT(mii_locked(mii));
-
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
@@ -279,8 +269,6 @@ static void
 lxtphy_reset(struct mii_softc *sc)
 {
 	uint16_t ier;
-
-	KASSERT(mii_locked(sc->mii_pdata));
 
 	mii_phy_reset(sc);
 	PHY_READ(sc, MII_LXTPHY_IER, &ier);

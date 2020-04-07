@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.24 2020/03/14 21:47:41 ad Exp $ */
+/* $NetBSD: genfs_node.h,v 1.23 2020/01/15 17:55:44 ad Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -61,7 +61,7 @@ struct genfs_ops {
 /*
  * GOP_MARKUPDATE: mark vnode's timestamps for update.
  *
- * => called with vmobjlock (and possibly other locks) held.
+ * => called with v_interlock (and possibly other locks) held.
  * => used for accesses via mmap.
  */
 

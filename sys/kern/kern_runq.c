@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.64 2020/03/26 19:25:07 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.62 2020/01/25 15:09:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.64 2020/03/26 19:25:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.62 2020/01/25 15:09:54 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -908,7 +908,6 @@ sched_preempted(struct lwp *l)
 		if ((tspc->spc_flags & flags) == flags &&
 		    sched_migratable(l, tci)) {
 		    	l->l_target_cpu = tci;
-			l->l_pflag &= ~LP_TELEPORT;
 		    	return;
 		}
 		tci = tci->ci_sibling[CPUREL_CORE];
@@ -1086,10 +1085,15 @@ sched_curcpu_runnable_p(void)
 	kpreempt_disable();
 	ci = curcpu();
 	spc = &ci->ci_schedstate;
-	rv = (spc->spc_count != 0);
+
 #ifndef __HAVE_FAST_SOFTINTS
-	rv |= (ci->ci_data.cpu_softints != 0);
+	if (ci->ci_data.cpu_softints) {
+		kpreempt_enable();
+		return true;
+	}
 #endif
+
+	rv = (spc->spc_count != 0) ? true : false;
 	kpreempt_enable();
 
 	return rv;

@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "ssl_local.h"
+#include "ssl_locl.h"
 
 int ssl3_do_change_cipher_spec(SSL *s)
 {

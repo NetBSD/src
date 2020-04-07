@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.107 2020/03/14 13:37:49 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.106 2020/02/23 15:46:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.107 2020/03/14 13:37:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.106 2020/02/23 15:46:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -913,10 +913,6 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	oldpages = round_page(oldsize) >> PAGE_SHIFT;
 	newpages = round_page(newsize) >> PAGE_SHIFT;
 	KASSERT(oldpages == node->tn_spec.tn_reg.tn_aobj_pages);
-
-	if (newsize == oldsize) {
-		return 0;
-	}
 
 	if (newpages > oldpages) {
 		/* Increase the used-memory counter if getting extra pages. */

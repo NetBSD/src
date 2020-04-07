@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.399 2020/03/24 07:56:26 mrg Exp $
+#	$NetBSD: bsd.README,v 1.397 2019/11/22 13:30:19 martin Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -333,9 +333,8 @@ MKLLVM		If "yes", build and install clang as host tool and target
 		Default: no
 
 MKLLVMRT	If "yes", build the LLVM PIC libraries necessary for the
-		various Mesa backend and the native JIT of the target
-		architecture, if supported.  (Radeon R300 and newer,
-		LLVMPIPE for most.)
+		AMDGPU backend and the native JIT of the target architecture,
+		if supported.
 		Default: no, enabled automatically with HAVE_MESA_VER=18.
 
 MKLVM		If "no", don't build or install the logical volume manager
@@ -1658,7 +1657,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBBZ2?=		${DESTDIR}/usr/lib/libbz2.a
 		LIBC?=			${DESTDIR}/usr/lib/libc.a
 		LIBC_PIC?=		${DESTDIR}/usr/lib/libc_pic.a
-		LIBCBOR?=		${DESTDIR}/usr/lib/libcbor.a
 		LIBCOMPAT?=		${DESTDIR}/usr/lib/libcompat.a
 		LIBCOM_ERR?=		${DESTDIR}/usr/lib/libcom_err.a
 		LIBCRYPT?=		${DESTDIR}/usr/lib/libcrypt.a
@@ -1674,7 +1672,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBEXECINFO?=		${DESTDIR}/usr/lib/libexecinfo.a
 		LIBEXPAT?=		${DESTDIR}/usr/lib/libexpat.a
 		LIBFETCH?=		${DESTDIR}/usr/lib/libfetch.a
-		LIBFIDO2?=		${DESTDIR}/usr/lib/libfido2.a
 		LIBFL?=			${DESTDIR}/usr/lib/libfl.a
 		LIBFORM?=		${DESTDIR}/usr/lib/libform.a
 		LIBGCC?=		${DESTDIR}/usr/lib/libgcc.a

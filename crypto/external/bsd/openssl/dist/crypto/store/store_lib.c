@@ -18,8 +18,8 @@
 #include <openssl/err.h>
 #include <openssl/store.h>
 #include "internal/thread_once.h"
-#include "crypto/store.h"
-#include "store_local.h"
+#include "internal/store_int.h"
+#include "store_locl.h"
 
 struct ossl_store_ctx_st {
     const OSSL_STORE_LOADER *loader;

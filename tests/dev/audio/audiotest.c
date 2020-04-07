@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.10 2020/03/26 13:43:10 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.6 2020/02/22 05:53:19 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.10 2020/03/26 13:43:10 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.6 2020/02/22 05:53:19 isaki Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -75,7 +75,6 @@ struct testentry {
 void usage(void) __dead;
 void xp_err(int, int, const char *, ...) __printflike(3, 4) __dead;
 void xp_errx(int, int, const char *, ...) __printflike(3, 4) __dead;
-bool match(const char *, const char *);
 void xxx_close_wait(void);
 int mixer_get_outputs_master(int);
 void do_test(int);
@@ -107,6 +106,7 @@ bool xp_sys_eq(int, int, int, const char *);
 bool xp_sys_ok(int, int, const char *);
 bool xp_sys_ng(int, int, int, const char *);
 bool xp_sys_ptr(int, int, void *, const char *);
+bool xp_buffsize(int, bool, int, const char *);
 int debug_open(int, const char *, int);
 int debug_write(int, int, const void *, size_t);
 int debug_read(int, int, void *, size_t);
@@ -169,7 +169,6 @@ int skipcount;
 int unit;
 bool use_rump;
 bool use_pad;
-bool exact_match;
 int padfd;
 int maxfd;
 pthread_t th;
@@ -188,8 +187,6 @@ usage(void)
 	fprintf(stderr, "\t-A        : make output suitable for ATF\n");
 	fprintf(stderr, "\t-a        : Test all\n");
 	fprintf(stderr, "\t-d        : Increase debug level\n");
-	fprintf(stderr, "\t-e        : Use exact match for testnames "
-	    "(default is forward match)\n");
 	fprintf(stderr, "\t-l        : List all tests\n");
 	fprintf(stderr, "\t-p        : Open pad\n");
 #if !defined(NO_RUMP)
@@ -250,9 +247,8 @@ main(int argc, char *argv[])
 	cmd = CMD_TEST;
 	use_pad = false;
 	padfd = -1;
-	exact_match = false;
 
-	while ((c = getopt(argc, argv, "AadelpRu:")) != -1) {
+	while ((c = getopt(argc, argv, "AadlpRu:")) != -1) {
 		switch (c) {
 		case 'A':
 			opt_atf = true;
@@ -262,9 +258,6 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			debug++;
-			break;
-		case 'e':
-			exact_match = true;
 			break;
 		case 'l':
 			cmd = CMD_LIST;
@@ -313,7 +306,8 @@ main(int argc, char *argv[])
 		found = false;
 		for (j = 0; j < argc; j++) {
 			for (i = 0; testtable[i].name != NULL; i++) {
-				if (match(argv[j], testtable[i].name)) {
+				if (strncmp(argv[j], testtable[i].name,
+				    strlen(argv[j])) == 0) {
 					do_test(i);
 					found = true;
 				}
@@ -342,21 +336,6 @@ main(int argc, char *argv[])
 		return 1;
 
 	return 0;
-}
-
-bool
-match(const char *arg, const char *name)
-{
-	if (exact_match) {
-		/* Exact match */
-		if (strcmp(arg, name) == 0)
-			return true;
-	} else {
-		/* Forward match */
-		if (strncmp(arg, name, strlen(arg)) == 0)
-			return true;
-	}
-	return false;
 }
 
 /*
@@ -941,6 +920,29 @@ bool xp_sys_ptr(int line, int exp, void *act, const char *varname)
 	return r;
 }
 
+/*
+ * Check ai.*.buffer_size.
+ * If exp == true, it expects that buffer_size is non-zero.
+ * If exp == false, it expects that buffer_size is zero.
+ */
+#define XP_BUFFSIZE(exp, act)	\
+	xp_buffsize(__LINE__, exp, act, #act)
+bool xp_buffsize(int line, bool exp, int act, const char *varname)
+{
+	bool r = true;
+
+	testcount++;
+	if (exp) {
+		if (act == 0)
+			r = xp_fail(line, "%s expects non-zero but %d",
+			    varname, act);
+	} else {
+		if (act != 0)
+			r = xp_fail(line, "%s expects zero but %d",
+			    varname, act);
+	}
+	return r;
+}
 
 /*
  * REQUIRED_* return immediately if condition does not meet.
@@ -1375,7 +1377,9 @@ mixer_get_outputs_master(int mixerfd)
  */
 
 void test_open_mode(int);
-void test_open(const char *, int);
+void test_open_audio(int);
+void test_open_sound(int);
+void test_open_audioctl(int);
 void test_open_simul(int, int);
 void try_open_multiuser(bool);
 void test_open_multiuser(bool);
@@ -1383,7 +1387,6 @@ void test_rdwr_fallback(int, bool, bool);
 void test_rdwr_two(int, int);
 void test_mmap_mode(int, int);
 void test_poll_mode(int, int, int);
-void test_poll_in_open(const char *);
 void test_kqueue_mode(int, int, int);
 volatile int sigio_caught;
 void signal_FIOASYNC(int);
@@ -1432,89 +1435,49 @@ DEF(open_mode_RDONLY)	{ test_open_mode(O_RDONLY); }
 DEF(open_mode_WRONLY)	{ test_open_mode(O_WRONLY); }
 DEF(open_mode_RDWR)	{ test_open_mode(O_RDWR);   }
 
+
 /*
- * Check the initial parameters and stickiness.
- * /dev/audio
- *	The initial parameters are always the same whenever you open.
- * /dev/sound and /dev/audioctl
- *	The initial parameters are inherited from the last /dev/sound or
- *	/dev/audio.
+ * The initial parameters are always the same whenever you open /dev/audio.
  */
 void
-test_open(const char *devname, int mode)
+test_open_audio(int mode)
 {
 	struct audio_info ai;
 	struct audio_info ai0;
-	char devfile[16];
 	int fd;
 	int r;
 	int can_play;
 	int can_rec;
-	int exp_mode;
-	int exp_encoding;
-	int exp_precision;
-	int exp_channels;
-	int exp_sample_rate;
-	int exp_pause;
-	int exp_popen;
-	int exp_ropen;
+	bool pbuff;
+	bool rbuff;
 
-	TEST("open_%s_%s", devname, openmode_str[mode] + 2);
+	TEST("open_audio_%s", openmode_str[mode] + 2);
 
-	snprintf(devfile, sizeof(devfile), "/dev/%s%d", devname, unit);
 	can_play = mode2play(mode);
 	can_rec  = mode2rec(mode);
-	if (strcmp(devname, "audioctl") != 0) {
-		if (can_play + can_rec == 0) {
-			/* Check whether it cannot be opened */
-			fd = OPEN(devaudio, mode);
-			XP_SYS_NG(ENXIO, fd);
-			return;
-		}
+	if (can_play + can_rec == 0) {
+		/* Check whether it cannot be opened */
+		fd = OPEN(devaudio, mode);
+		XP_SYS_NG(ENXIO, fd);
+		return;
 	}
-
-	/* /dev/audio is always initialized */
-	if (strcmp(devname, "audio") == 0) {
-		exp_encoding = AUDIO_ENCODING_ULAW;
-		exp_precision = 8;
-		exp_channels = 1;
-		exp_sample_rate = 8000;
-		exp_pause = 0;
-	} else {
-		exp_encoding = AUDIO_ENCODING_SLINEAR_LE;
-		exp_precision = 16;
-		exp_channels = 2;
-		exp_sample_rate = 11025;
-		exp_pause = 1;
-	}
-
-	/* /dev/audioctl is always "not opened" */
-	if (strcmp(devname, "audioctl") == 0) {
-		exp_mode = 0;
-		exp_popen = 0;
-		exp_ropen = 0;
-	} else {
-		exp_mode = mode2aumode(mode);
-		exp_popen = can_play;
-		exp_ropen = can_rec;
-	}
-
 
 	/*
-	 * At first, initialize the sticky parameters both of play and rec.
-	 * This uses /dev/audio to verify /dev/audio.  It's not good way but
-	 * I don't have better one...
+	 * NetBSD7,8 always has both buffers for playback and recording.
+	 * NetBSD9 only has necessary buffers.
 	 */
-	fd = OPEN(devaudio, openable_mode());
-	REQUIRED_SYS_OK(fd);
-	r = CLOSE(fd);
-	REQUIRED_SYS_EQ(0, r);
+	if (netbsd < 9) {
+		pbuff = true;
+		rbuff = true;
+	} else {
+		pbuff = can_play;
+		rbuff = can_rec;
+	}
 
 	/*
-	 * Open target device and check the initial parameters
-	 * At this moment, all devices are initialized by default.
+	 * Open /dev/audio and check parameters
 	 */
-	fd = OPEN(devfile, mode);
+	fd = OPEN(devaudio, mode);
 	REQUIRED_SYS_OK(fd);
 	memset(&ai, 0, sizeof(ai));
 	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
@@ -1522,24 +1485,23 @@ test_open(const char *devname, int mode)
 
 	XP_NE(0, ai.blocksize);
 		/* hiwat/lowat */
-	XP_EQ(exp_mode, ai.mode);
+	XP_EQ(mode2aumode(mode), ai.mode);
 	/* ai.play */
 	XP_EQ(8000, ai.play.sample_rate);
 	XP_EQ(1, ai.play.channels);
-	XP_EQ(8, ai.play.precision);
 	XP_EQ(AUDIO_ENCODING_ULAW, ai.play.encoding);
 		/* gain */
 		/* port */
 	XP_EQ(0, ai.play.seek);
 		/* avail_ports */
-	XP_NE(0, ai.play.buffer_size);
+	XP_BUFFSIZE(pbuff, ai.play.buffer_size);
 	XP_EQ(0, ai.play.samples);
 	XP_EQ(0, ai.play.eof);
 	XP_EQ(0, ai.play.pause);
 	XP_EQ(0, ai.play.error);
 	XP_EQ(0, ai.play.waiting);
 		/* balance */
-	XP_EQ(exp_popen, ai.play.open);
+	XP_EQ(can_play, ai.play.open);
 	XP_EQ(0, ai.play.active);
 	/* ai.record */
 	XP_EQ(8000, ai.record.sample_rate);
@@ -1550,22 +1512,22 @@ test_open(const char *devname, int mode)
 		/* port */
 	XP_EQ(0, ai.record.seek);
 		/* avail_ports */
-	XP_NE(0, ai.record.buffer_size);
+	XP_BUFFSIZE(rbuff, ai.record.buffer_size);
 	XP_EQ(0, ai.record.samples);
 	XP_EQ(0, ai.record.eof);
 	XP_EQ(0, ai.record.pause);
 	XP_EQ(0, ai.record.error);
 	XP_EQ(0, ai.record.waiting);
 		/* balance */
-	XP_EQ(exp_ropen, ai.record.open);
-	if (netbsd < 9 && strcmp(devname, "sound") == 0) {
-		/*
-		 * On NetBSD7/8, it doesn't seem to start recording on open
-		 * for /dev/sound.  It should be a bug.
-		 */
-		XP_EQ(0, ai.record.active);
+	XP_EQ(can_rec, ai.record.open);
+	/*
+	 * NetBSD7,8 (may?) be active when opened in recording mode but
+	 * recording has not started yet. (?)
+	 * NetBSD9 is not active at that time.
+	 */
+	if (netbsd < 9) {
 	} else {
-		XP_EQ(exp_ropen, ai.record.active);
+		XP_EQ(0, ai.record.active);
 	}
 	/* Save it */
 	ai0 = ai;
@@ -1574,7 +1536,12 @@ test_open(const char *devname, int mode)
 	 * Change much as possible
 	 */
 	AUDIO_INITINFO(&ai);
-	ai.mode = ai0.mode ^ AUMODE_PLAY_ALL;
+	ai.blocksize = ai0.blocksize * 2;
+	if (ai0.hiwat > 0)
+		ai.hiwat = ai0.hiwat - 1;
+	if (ai0.lowat < ai0.hiwat)
+		ai.lowat = ai0.lowat + 1;
+	ai.mode = ai.mode & ~AUMODE_PLAY_ALL;
 	ai.play.sample_rate = 11025;
 	ai.play.channels = 2;
 	ai.play.precision = 16;
@@ -1591,9 +1558,125 @@ test_open(const char *devname, int mode)
 	REQUIRED_SYS_EQ(0, r);
 
 	/*
-	 * Open the same target device again and check
+	 * Open /dev/audio again and check
 	 */
-	fd = OPEN(devfile, mode);
+	fd = OPEN(devaudio, mode);
+	REQUIRED_SYS_OK(fd);
+	memset(&ai, 0, sizeof(ai));
+	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
+	REQUIRED_SYS_EQ(0, r);
+
+	XP_EQ(ai0.blocksize, ai.blocksize);
+	XP_EQ(ai0.hiwat, ai.hiwat);
+	XP_EQ(ai0.lowat, ai.lowat);
+	XP_EQ(mode2aumode(mode), ai.mode);
+	/* ai.play */
+	XP_EQ(8000, ai.play.sample_rate);
+	XP_EQ(1, ai.play.channels);
+	XP_EQ(8, ai.play.precision);
+	XP_EQ(AUDIO_ENCODING_ULAW, ai.play.encoding);
+		/* gain */
+		/* port */
+	XP_EQ(0, ai.play.seek);
+		/* avail_ports */
+	XP_EQ(ai0.play.buffer_size, ai.play.buffer_size);
+	XP_EQ(0, ai.play.samples);
+	XP_EQ(0, ai.play.eof);
+	XP_EQ(0, ai.play.pause);
+	XP_EQ(0, ai.play.error);
+	XP_EQ(0, ai.play.waiting);
+		/* balance */
+	XP_EQ(can_play, ai.play.open);
+	XP_EQ(0, ai.play.active);
+	/* ai.record */
+	XP_EQ(8000, ai.record.sample_rate);
+	XP_EQ(1, ai.record.channels);
+	XP_EQ(8, ai.record.precision);
+	XP_EQ(AUDIO_ENCODING_ULAW, ai.record.encoding);
+		/* gain */
+		/* port */
+	XP_EQ(0, ai.record.seek);
+		/* avail_ports */
+	XP_EQ(ai0.record.buffer_size, ai.record.buffer_size);
+	XP_EQ(0, ai.record.samples);
+	XP_EQ(0, ai.record.eof);
+	XP_EQ(0, ai.record.pause);
+	XP_EQ(0, ai.record.error);
+	XP_EQ(0, ai.record.waiting);
+		/* balance */
+	XP_EQ(can_rec, ai.record.open);
+	if (netbsd < 9) {
+	} else {
+		XP_EQ(0, ai.record.active);
+	}
+
+	r = CLOSE(fd);
+	REQUIRED_SYS_EQ(0, r);
+}
+DEF(open_audio_RDONLY)	{ test_open_audio(O_RDONLY); }
+DEF(open_audio_WRONLY)	{ test_open_audio(O_WRONLY); }
+DEF(open_audio_RDWR)	{ test_open_audio(O_RDWR);   }
+
+/*
+ * /dev/sound inherits the initial parameters from /dev/sound and /dev/audio.
+ */
+void
+test_open_sound(int mode)
+{
+	struct audio_info ai;
+	struct audio_info ai0;
+	int fd;
+	int r;
+	int can_play;
+	int can_rec;
+	bool pbuff;
+	bool rbuff;
+
+	TEST("open_sound_%s", openmode_str[mode] + 2);
+
+	can_play = mode2play(mode);
+	can_rec  = mode2rec(mode);
+	if (can_play + can_rec == 0) {
+		/* Check whether it cannot be opened */
+		fd = OPEN(devaudio, mode);
+		XP_SYS_NG(ENXIO, fd);
+		return;
+	}
+
+	/*
+	 * NetBSD7,8 always has both buffers for playback and recording.
+	 * NetBSD9 only has necessary buffers.
+	 */
+	if (netbsd < 9) {
+		pbuff = true;
+		rbuff = true;
+	} else {
+		pbuff = can_play;
+		rbuff = can_rec;
+	}
+
+	/*
+	 * At first, open /dev/audio to initialize the parameters both of
+	 * playback and recording.
+	 */
+	if (hw_canplay()) {
+		fd = OPEN(devaudio, O_WRONLY);
+		REQUIRED_SYS_OK(fd);
+		r = CLOSE(fd);
+		REQUIRED_SYS_EQ(0, r);
+	}
+	if (hw_canrec()) {
+		fd = OPEN(devaudio, O_RDONLY);
+		REQUIRED_SYS_OK(fd);
+		r = CLOSE(fd);
+		REQUIRED_SYS_EQ(0, r);
+	}
+
+	/*
+	 * Open /dev/sound and check the initial parameters.
+	 * It should be the same with /dev/audio's initial parameters.
+	 */
+	fd = OPEN(devsound, mode);
 	REQUIRED_SYS_OK(fd);
 	memset(&ai, 0, sizeof(ai));
 	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
@@ -1601,73 +1684,336 @@ test_open(const char *devname, int mode)
 
 	XP_NE(0, ai.blocksize);
 		/* hiwat/lowat */
-	if (netbsd < 8) {
-		/*
-		 * On NetBSD7, the behavior when changing ai.mode on
-		 * /dev/audioctl can not be explained yet but I won't
-		 * verify it more over.
-		 */
-	} else {
-		/* On NetBSD9, changing mode never affects other fds */
-		XP_EQ(exp_mode, ai.mode);
-	}
+	XP_EQ(mode2aumode(mode), ai.mode);
 	/* ai.play */
-	XP_EQ(exp_sample_rate, ai.play.sample_rate);
-	XP_EQ(exp_channels, ai.play.channels);
-	XP_EQ(exp_precision, ai.play.precision);
-	XP_EQ(exp_encoding, ai.play.encoding);
+	XP_EQ(8000, ai.play.sample_rate);
+	XP_EQ(1, ai.play.channels);
+	XP_EQ(8, ai.play.precision);
+	XP_EQ(AUDIO_ENCODING_ULAW, ai.play.encoding);
 		/* gain */
 		/* port */
 	XP_EQ(0, ai.play.seek);
 		/* avail_ports */
-	XP_NE(0, ai.play.buffer_size);
+	XP_BUFFSIZE(pbuff, ai.play.buffer_size);
 	XP_EQ(0, ai.play.samples);
 	XP_EQ(0, ai.play.eof);
-	XP_EQ(exp_pause, ai.play.pause);
+	XP_EQ(0, ai.play.pause);
 	XP_EQ(0, ai.play.error);
 	XP_EQ(0, ai.play.waiting);
 		/* balance */
-	XP_EQ(exp_popen, ai.play.open);
+	XP_EQ(can_play, ai.play.open);
 	XP_EQ(0, ai.play.active);
 	/* ai.record */
-	XP_EQ(exp_sample_rate, ai.record.sample_rate);
-	XP_EQ(exp_channels, ai.record.channels);
-	XP_EQ(exp_precision, ai.record.precision);
-	XP_EQ(exp_encoding, ai.record.encoding);
+	XP_EQ(8000, ai.record.sample_rate);
+	XP_EQ(1, ai.record.channels);
+	XP_EQ(8, ai.record.precision);
+	XP_EQ(AUDIO_ENCODING_ULAW, ai.record.encoding);
 		/* gain */
 		/* port */
 	XP_EQ(0, ai.record.seek);
 		/* avail_ports */
-	XP_NE(0, ai.record.buffer_size);
+	XP_BUFFSIZE(rbuff, ai.record.buffer_size);
 	XP_EQ(0, ai.record.samples);
 	XP_EQ(0, ai.record.eof);
-	XP_EQ(exp_pause, ai.record.pause);
+	XP_EQ(0, ai.record.pause);
 	XP_EQ(0, ai.record.error);
 	XP_EQ(0, ai.record.waiting);
 		/* balance */
-	XP_EQ(exp_ropen, ai.record.open);
-	if (netbsd < 9 && strcmp(devname, "sound") == 0) {
-		/*
-		 * On NetBSD7/8, it doesn't seem to start recording on open
-		 * for /dev/sound.  It should be a bug.
-		 */
-		XP_EQ(0, ai.record.active);
+	XP_EQ(can_rec, ai.record.open);
+	/*
+	 * NetBSD7,8 (may?) be active when opened in recording mode but
+	 * recording has not started yet. (?)
+	 * NetBSD9 is not active at that time.
+	 */
+	if (netbsd < 9) {
 	} else {
-		XP_EQ(exp_ropen, ai.record.active);
+		XP_EQ(0, ai.record.active);
+	}
+	/* Save it */
+	ai0 = ai;
+
+	/*
+	 * Change much as possible
+	 */
+	AUDIO_INITINFO(&ai);
+	ai.blocksize = ai0.blocksize * 2;
+	ai.hiwat = ai0.hiwat - 1;
+	ai.lowat = ai0.lowat + 1;
+	ai.mode = ai0.mode & ~AUMODE_PLAY_ALL;
+	ai.play.sample_rate = 11025;
+	ai.play.channels = 2;
+	ai.play.precision = 16;
+	ai.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
+	ai.play.pause = 1;
+	ai.record.sample_rate = 11025;
+	ai.record.channels = 2;
+	ai.record.precision = 16;
+	ai.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
+	ai.record.pause = 1;
+	r = IOCTL(fd, AUDIO_SETINFO, &ai, "ai");
+	REQUIRED_SYS_EQ(0, r);
+	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai0, "ai0");
+	REQUIRED_SYS_EQ(0, r);
+	r = CLOSE(fd);
+	REQUIRED_SYS_EQ(0, r);
+
+	/*
+	 * Open /dev/sound again and check
+	 */
+	fd = OPEN(devsound, mode);
+	REQUIRED_SYS_OK(fd);
+	memset(&ai, 0, sizeof(ai));
+	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
+	REQUIRED_SYS_EQ(0, r);
+
+	XP_EQ(ai0.blocksize, ai.blocksize);
+		/* hiwat/lowat */
+	XP_EQ(mode2aumode(mode), ai.mode);	/* mode is reset */
+	/* ai.play */
+	XP_EQ(ai0.play.sample_rate, ai.play.sample_rate);	/* sticky */
+	XP_EQ(ai0.play.channels, ai.play.channels);		/* sticky */
+	XP_EQ(ai0.play.precision, ai.play.precision);		/* sticky */
+	XP_EQ(ai0.play.encoding, ai.play.encoding);		/* sticky */
+		/* gain */
+		/* port */
+	XP_EQ(0, ai.play.seek);
+		/* avail_ports */
+	XP_BUFFSIZE(pbuff, ai.play.buffer_size);
+	XP_EQ(0, ai.play.samples);
+	XP_EQ(0, ai.play.eof);
+	XP_EQ(ai0.play.pause, ai.play.pause);			/* sticky */
+	XP_EQ(0, ai.play.error);
+	XP_EQ(0, ai.play.waiting);
+		/* balance */
+	XP_EQ(can_play, ai.play.open);
+	XP_EQ(0, ai.play.active);
+	/* ai.record */
+	XP_EQ(ai0.record.sample_rate, ai.record.sample_rate);	/* sticky */
+	XP_EQ(ai0.record.channels, ai.record.channels);		/* sticky */
+	XP_EQ(ai0.record.precision, ai.record.precision);	/* sticky */
+	XP_EQ(ai0.record.encoding, ai.record.encoding);		/* sticky */
+		/* gain */
+		/* port */
+	XP_EQ(0, ai.record.seek);
+		/* avail_ports */
+	XP_BUFFSIZE(rbuff, ai.record.buffer_size);
+	XP_EQ(0, ai.record.samples);
+	XP_EQ(0, ai.record.eof);
+	XP_EQ(ai0.record.pause, ai.record.pause);		/* sticky */
+	XP_EQ(0, ai.record.error);
+	XP_EQ(0, ai.record.waiting);
+		/* balance */
+	XP_EQ(can_rec, ai.record.open);
+	if (netbsd < 9) {
+	} else {
+		XP_EQ(0, ai.record.active);
 	}
 
 	r = CLOSE(fd);
 	REQUIRED_SYS_EQ(0, r);
 }
-DEF(open_audio_RDONLY)		{ test_open("audio", O_RDONLY); }
-DEF(open_audio_WRONLY)		{ test_open("audio", O_WRONLY); }
-DEF(open_audio_RDWR)		{ test_open("audio", O_RDWR);   }
-DEF(open_sound_RDONLY)		{ test_open("sound", O_RDONLY); }
-DEF(open_sound_WRONLY)		{ test_open("sound", O_WRONLY); }
-DEF(open_sound_RDWR)		{ test_open("sound", O_RDWR);   }
-DEF(open_audioctl_RDONLY)	{ test_open("audioctl", O_RDONLY); }
-DEF(open_audioctl_WRONLY)	{ test_open("audioctl", O_WRONLY); }
-DEF(open_audioctl_RDWR)		{ test_open("audioctl", O_RDWR);   }
+DEF(open_sound_RDONLY)	{ test_open_sound(O_RDONLY); }
+DEF(open_sound_WRONLY)	{ test_open_sound(O_WRONLY); }
+DEF(open_sound_RDWR)	{ test_open_sound(O_RDWR);   }
+
+/*
+ * The (initial) parameters of /dev/audioctl are affected by sticky like
+ * as /dev/sound.
+ */
+void
+test_open_audioctl(int mode)
+{
+	struct audio_info ai;
+	struct audio_info ai0;
+	int fd;
+	int r;
+	int can_play;
+	int can_rec;
+	bool pbuff;
+	bool rbuff;
+
+	TEST("open_audioctl_%s", openmode_str[mode] + 2);
+	XP_SKIP("not yet");
+	return;
+
+	can_play = mode2play(mode);
+	can_rec  = mode2rec(mode);
+
+	/*
+	 * NetBSD7,8 always has both buffers for playback and recording.
+	 * NetBSD9 only has necessary buffers.
+	 */
+	if (netbsd < 9) {
+		pbuff = true;
+		rbuff = true;
+	} else {
+		pbuff = can_play;
+		rbuff = can_rec;
+	}
+
+	/* Reset sticky */
+	fd = OPEN(devaudio, openable_mode());
+	REQUIRED_SYS_OK(fd);
+	r = CLOSE(fd);
+	REQUIRED_SYS_EQ(0, r);
+
+	/*
+	 * Open /dev/audioctl and check parameters
+	 */
+	fd = OPEN(devaudioctl, mode);
+	REQUIRED_SYS_OK(fd);
+	memset(&ai, 0, sizeof(ai));
+	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
+	REQUIRED_SYS_EQ(0, r);
+
+	if (netbsd < 9) {
+		XP_NE(0, ai.blocksize);
+		XP_NE(0, ai.hiwat);
+		/* lowat */
+	} else {
+		/* NetBSD9 returns dummy non-zero blocksize */
+		XP_NE(0, ai.blocksize);
+		XP_NE(0, ai.hiwat);
+		/* lowat */
+	}
+	XP_EQ(0, ai.mode);
+	/* ai.play */
+	XP_EQ(8000, ai.play.sample_rate);
+	XP_EQ(1, ai.play.channels);
+	XP_EQ(AUDIO_ENCODING_ULAW, ai.play.encoding);
+		/* gain */
+		/* port */
+	XP_EQ(0, ai.play.seek);
+		/* avail_ports */
+	XP_BUFFSIZE(pbuff, ai.play.buffer_size);
+	XP_EQ(0, ai.play.samples);
+	XP_EQ(0, ai.play.eof);
+	XP_EQ(0, ai.play.pause);
+	XP_EQ(0, ai.play.error);
+	XP_EQ(0, ai.play.waiting);
+		/* balance */
+	XP_EQ(0, ai.play.open);
+	XP_EQ(0, ai.play.active);
+	/* ai.record */
+	XP_EQ(8000, ai.record.sample_rate);
+	XP_EQ(1, ai.record.channels);
+	XP_EQ(8, ai.record.precision);
+	XP_EQ(AUDIO_ENCODING_ULAW, ai.record.encoding);
+		/* gain */
+		/* port */
+	XP_EQ(0, ai.record.seek);
+		/* avail_ports */
+	XP_BUFFSIZE(rbuff, ai.record.buffer_size);
+	XP_EQ(0, ai.record.samples);
+	XP_EQ(0, ai.record.eof);
+	XP_EQ(0, ai.record.pause);
+	XP_EQ(0, ai.record.error);
+	XP_EQ(0, ai.record.waiting);
+		/* balance */
+	XP_EQ(0, ai.record.open);
+	/*
+	 * NetBSD7,8 (may?) be active when opened in recording mode but
+	 * recording has not started yet. (?)
+	 * NetBSD9 is not active at that time.
+	 */
+	if (netbsd < 9) {
+		/* ai.record.active */
+	} else {
+		XP_EQ(0, ai.record.active);
+	}
+
+	/*
+	 * Change much as possible
+	 */
+	ai0 = ai;
+	AUDIO_INITINFO(&ai);
+	if (netbsd < 8) {
+		/*
+		 * On NetBSD7, The behavior when changing ai.mode on
+		 * /dev/audioctl can not be explained yet but I won't
+		 * verify it more over.
+		 */
+	} else {
+		/* On NetBSD9, changing mode never affects other tracks */
+		ai0.mode ^= 7;
+		ai.mode = ai0.mode;
+	}
+	ai.play.sample_rate = 11025;
+	ai.play.channels = 2;
+	ai.play.precision = 16;
+	ai.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
+	ai.play.pause = 1;
+	ai.record.sample_rate = 11025;
+	ai.record.channels = 2;
+	ai.record.precision = 16;
+	ai.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
+	ai.record.pause = 1;
+	r = IOCTL(fd, AUDIO_SETINFO, &ai, "ai");
+	REQUIRED_SYS_EQ(0, r);
+	r = CLOSE(fd);
+	REQUIRED_SYS_EQ(0, r);
+
+	/*
+	 * Open /dev/audioctl again and check
+	 */
+	fd = OPEN(devaudioctl, mode);
+	REQUIRED_SYS_OK(fd);
+	memset(&ai, 0, sizeof(ai));
+	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
+	REQUIRED_SYS_EQ(0, r);
+
+	XP_NE(0, ai.blocksize);
+	XP_NE(0, ai.hiwat);		/* hiwat should not be zero */
+		/* lowat */		/* lowat can be zero */
+	XP_EQ(0, ai.mode);
+	/* ai.play */
+	XP_EQ(11025, ai.play.sample_rate);
+	XP_EQ(2, ai.play.channels);
+	XP_EQ(16, ai.play.precision);
+	XP_EQ(AUDIO_ENCODING_SLINEAR_LE, ai.play.encoding);
+		/* gain */
+		/* port */
+	XP_EQ(0, ai.play.seek);
+		/* avail_ports */
+	XP_EQ(ai0.play.buffer_size, ai.play.buffer_size);
+	XP_EQ(0, ai.play.samples);
+	XP_EQ(0, ai.play.eof);
+	XP_EQ(1, ai.play.pause);
+	XP_EQ(0, ai.play.error);
+	XP_EQ(0, ai.play.waiting);
+		/* balance */
+	XP_EQ(0, ai.play.open);
+	XP_EQ(0, ai.play.active);
+	/* ai.record */
+	XP_EQ(11025, ai.record.sample_rate);
+	XP_EQ(2, ai.record.channels);
+	XP_EQ(16, ai.record.precision);
+	XP_EQ(AUDIO_ENCODING_SLINEAR_LE, ai.record.encoding);
+		/* gain */
+		/* port */
+	XP_EQ(0, ai.record.seek);
+		/* avail_ports */
+	XP_EQ(ai0.record.buffer_size, ai.record.buffer_size);
+	XP_EQ(0, ai.record.samples);
+	XP_EQ(0, ai.record.eof);
+	XP_EQ(1, ai.record.pause);
+	XP_EQ(0, ai.record.error);
+	XP_EQ(0, ai.record.waiting);
+		/* balance */
+	XP_EQ(0, ai.record.open);
+	if (netbsd < 9) {
+		/* ai.record.active */
+	} else {
+		XP_EQ(0, ai.record.active);
+	}
+
+	r = CLOSE(fd);
+	REQUIRED_SYS_EQ(0, r);
+}
+DEF(open_audioctl_RDONLY)	{ test_open_audioctl(O_RDONLY); }
+DEF(open_audioctl_WRONLY)	{ test_open_audioctl(O_WRONLY); }
+DEF(open_audioctl_RDWR)		{ test_open_audioctl(O_RDWR);   }
+
 
 /*
  * Open (1) /dev/sound -> (2) /dev/audio -> (3) /dev/sound,
@@ -1716,7 +2062,7 @@ DEF(open_sound_sticky)
 }
 
 /*
- * /dev/audioctl has stickiness like /dev/sound.
+ * /dev/audioctl doesn't have stickiness like /dev/sound.
  */
 DEF(open_audioctl_sticky)
 {
@@ -1726,54 +2072,30 @@ DEF(open_audioctl_sticky)
 	int openmode;
 
 	TEST("open_audioctl_sticky");
+	XP_SKIP("not yet");
+	return;
 
 	openmode = openable_mode();
 
-	/* First, open /dev/audio and change encoding */
-	fd = OPEN(devaudio, openmode);
+	/* First, open /dev/sound and change encoding as a delegate */
+	fd = OPEN(devsound, openmode);
 	REQUIRED_SYS_OK(fd);
 	AUDIO_INITINFO(&ai);
 	ai.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
-	ai.play.precision = 16;
 	ai.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
-	ai.record.precision = 16;
-	r = IOCTL(fd, AUDIO_SETINFO, &ai, "SLINEAR_LE");
+	r = IOCTL(fd, AUDIO_SETINFO, &ai, "");
 	REQUIRED_SYS_EQ(0, r);
 	r = CLOSE(fd);
 	REQUIRED_SYS_EQ(0, r);
 
-	/* Next, open /dev/audioctl.  It should be affected */
+	/* Next, open /dev/audioctl.  It should not be affected */
 	fd = OPEN(devaudioctl, openmode);
 	REQUIRED_SYS_OK(fd);
 	memset(&ai, 0, sizeof(ai));
 	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
 	REQUIRED_SYS_EQ(0, r);
 	XP_EQ(AUDIO_ENCODING_SLINEAR_LE, ai.play.encoding);
-	XP_EQ(16, ai.play.precision);
 	XP_EQ(AUDIO_ENCODING_SLINEAR_LE, ai.record.encoding);
-	XP_EQ(16, ai.record.precision);
-
-	/* Then, change /dev/audioctl */
-	AUDIO_INITINFO(&ai);
-	ai.play.encoding = AUDIO_ENCODING_ULAW;
-	ai.play.precision = 8;
-	ai.record.encoding = AUDIO_ENCODING_ULAW;
-	ai.record.precision = 8;
-	r = IOCTL(fd, AUDIO_SETINFO, &ai, "ULAW");
-	REQUIRED_SYS_EQ(0, r);
-	r = CLOSE(fd);
-	REQUIRED_SYS_EQ(0, r);
-
-	/* Finally, open /dev/sound.  It also should be affected  */
-	fd = OPEN(devsound, openmode);
-	REQUIRED_SYS_OK(fd);
-	memset(&ai, 0, sizeof(ai));
-	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
-	REQUIRED_SYS_EQ(0, r);
-	XP_EQ(AUDIO_ENCODING_ULAW, ai.play.encoding);
-	XP_EQ(8, ai.play.precision);
-	XP_EQ(AUDIO_ENCODING_ULAW, ai.record.encoding);
-	XP_EQ(8, ai.record.precision);
 	r = CLOSE(fd);
 	REQUIRED_SYS_EQ(0, r);
 }
@@ -2927,9 +3249,6 @@ test_poll_mode(int mode, int events, int expected_revents)
 	fd = OPEN(devaudio, mode);
 	REQUIRED_SYS_OK(fd);
 
-	/* Wait a bit to be recorded. */
-	usleep(100 * 1000);
-
 	memset(&pfd, 0, sizeof(pfd));
 	pfd.fd = fd;
 	pfd.events = events;
@@ -2957,23 +3276,15 @@ test_poll_mode(int mode, int events, int expected_revents)
 	r = CLOSE(fd);
 	XP_SYS_EQ(0, r);
 }
-DEF(poll_mode_RDONLY_IN)	{ test_poll_mode(O_RDONLY, IN,     IN); }
+DEF(poll_mode_RDONLY_IN)	{ test_poll_mode(O_RDONLY, IN,     0); }
 DEF(poll_mode_RDONLY_OUT)	{ test_poll_mode(O_RDONLY, OUT,    0); }
-DEF(poll_mode_RDONLY_INOUT)	{ test_poll_mode(O_RDONLY, IN|OUT, IN); }
+DEF(poll_mode_RDONLY_INOUT)	{ test_poll_mode(O_RDONLY, IN|OUT, 0); }
 DEF(poll_mode_WRONLY_IN)	{ test_poll_mode(O_WRONLY, IN,     0); }
 DEF(poll_mode_WRONLY_OUT)	{ test_poll_mode(O_WRONLY, OUT,	   OUT); }
 DEF(poll_mode_WRONLY_INOUT)	{ test_poll_mode(O_WRONLY, IN|OUT, OUT); }
-DEF(poll_mode_RDWR_IN)		{
-	/* On half-duplex, O_RDWR is the same as O_WRONLY. */
-	if (hw_fulldup()) test_poll_mode(O_RDWR,   IN,     IN);
-	else		  test_poll_mode(O_RDWR,   IN,     0);
-}
+DEF(poll_mode_RDWR_IN)		{ test_poll_mode(O_RDWR,   IN,     0); }
 DEF(poll_mode_RDWR_OUT)		{ test_poll_mode(O_RDWR,   OUT,	   OUT); }
-DEF(poll_mode_RDWR_INOUT)	{
-	/* On half-duplex, O_RDWR is the same as O_WRONLY. */
-	if (hw_fulldup()) test_poll_mode(O_RDWR,   IN|OUT, IN|OUT);
-	else		  test_poll_mode(O_RDWR,   IN|OUT,    OUT);
-}
+DEF(poll_mode_RDWR_INOUT)	{ test_poll_mode(O_RDWR,   IN|OUT, OUT); }
 
 /*
  * Poll(OUT) when buffer is empty.
@@ -3371,81 +3682,6 @@ DEF(poll_out_simul)
 		xxx_close_wait();
 	}
 }
-
-/*
- * Open with READ mode starts recording immediately.
- * Of course, audioctl doesn't start.
- */
-void
-test_poll_in_open(const char *devname)
-{
-	struct audio_info ai;
-	struct pollfd pfd;
-	char buf[4096];
-	char devfile[16];
-	int fd;
-	int r;
-	bool is_audioctl;
-
-	TEST("poll_in_open_%s", devname);
-	if (hw_canrec() == 0) {
-		XP_SKIP("This test is only for recordable device");
-		return;
-	}
-
-	snprintf(devfile, sizeof(devfile), "/dev/%s%d", devname, unit);
-	is_audioctl = (strcmp(devname, "audioctl") == 0);
-
-	fd = OPEN(devfile, O_RDONLY);
-	REQUIRED_SYS_OK(fd);
-
-	r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
-	REQUIRED_SYS_EQ(0, r);
-	if (is_audioctl) {
-		/* opening /dev/audioctl doesn't start recording. */
-		XP_EQ(0, ai.record.active);
-	} else {
-		/* opening /dev/{audio,sound} starts recording. */
-		/*
-		 * On NetBSD7/8, opening /dev/sound doesn't start recording.
-		 * It must be a bug.
-		 */
-		XP_EQ(1, ai.record.active);
-	}
-
-	memset(&pfd, 0, sizeof(pfd));
-	pfd.fd = fd;
-	pfd.events = POLLIN;
-	r = POLL(&pfd, 1, 1000);
-	if (is_audioctl) {
-		/*
-		 * poll-ing /dev/audioctl always fails.
-		 * XXX Returning error instead of timeout should be better(?).
-		 */
-		REQUIRED_SYS_EQ(0, r);
-	} else {
-		/*
-		 * poll-ing /dev/{audio,sound} will succeed when recorded
-		 * data is arrived.
-		 */
-		/*
-		 * On NetBSD7/8, opening /dev/sound doesn't start recording.
-		 * It must be a bug.
-		 */
-		REQUIRED_SYS_EQ(1, r);
-
-		/* In this case, read() should succeed. */
-		r = READ(fd, buf, sizeof(buf));
-		XP_SYS_OK(r);
-		XP_NE(0, r);
-	}
-
-	r = CLOSE(fd);
-	XP_SYS_EQ(0, r);
-}
-DEF(poll_in_open_audio)		{ test_poll_in_open("audio"); }
-DEF(poll_in_open_sound)		{ test_poll_in_open("sound"); }
-DEF(poll_in_open_audioctl)	{ test_poll_in_open("audioctl"); }
 
 /*
  * poll(2) must not be affected by other recording descriptors even if
@@ -4833,8 +5069,16 @@ test_AUDIO_SETINFO_mode(int openmode, int index, int setmode, int expected)
 	XP_EQ(inimode, ai.mode);
 	XP_EQ(mode2play(openmode), ai.play.open);
 	XP_EQ(mode2rec(openmode),  ai.record.open);
-	XP_NE(0, ai.play.buffer_size);
-	XP_NE(0, ai.record.buffer_size);
+
+	/*
+	 * On NetBSD7 and 8, both playback and recording buffer are always
+	 * allocated.  So I won't check it.
+	 * On NetBSD9, buffer should be allocated only if necessary.
+	 */
+	if (netbsd >= 9) {
+		XP_BUFFSIZE(mode2play(openmode), ai.play.buffer_size);
+		XP_BUFFSIZE(mode2rec(openmode), ai.record.buffer_size);
+	}
 
 	/* Change mode (and pause here) */
 	ai.mode = setmode;
@@ -4850,8 +5094,11 @@ test_AUDIO_SETINFO_mode(int openmode, int index, int setmode, int expected)
 		/* It seems to keep the initial openmode regardless of mode */
 		XP_EQ(mode2play(openmode), ai.play.open);
 		XP_EQ(mode2rec(openmode), ai.record.open);
-		XP_NE(0, ai.play.buffer_size);
-		XP_NE(0, ai.record.buffer_size);
+		/* buffers are always allocated on NetBSD 7 and 8 */
+		if (netbsd >= 9) {
+			XP_BUFFSIZE(mode2play(openmode), ai.play.buffer_size);
+			XP_BUFFSIZE(mode2rec(openmode), ai.record.buffer_size);
+		}
 	}
 
 	/*
@@ -5068,10 +5315,30 @@ test_AUDIO_SETINFO_params_set(int openmode, int aimode, int pause)
 	    ? (mode2aumode(openmode) & ~AUMODE_PLAY_ALL)
 	    : mode2aumode(openmode);
 	XP_EQ(expmode, ai.mode);
-	XP_EQ(11025, ai.play.sample_rate);
-	XP_EQ(pause, ai.play.pause);
-	XP_EQ(11025, ai.record.sample_rate);
-	XP_EQ(pause, ai.record.pause);
+
+	if (openmode == O_RDONLY) {
+		/* Playback track doesn't exist */
+		if (netbsd < 9)
+			XP_EQ(pause, ai.play.pause);
+		else
+			XP_EQ(0, ai.play.pause);
+	} else {
+		/* Playback track exists */
+		XP_EQ(11025, ai.play.sample_rate);
+		XP_EQ(pause, ai.play.pause);
+	}
+
+	if (openmode == O_WRONLY) {
+		/* Recording track doesn't exist */
+		if (netbsd < 9)
+			XP_EQ(pause, ai.record.pause);
+		else
+			XP_EQ(0, ai.record.pause);
+	} else {
+		/* Recording track exists */
+		XP_EQ(11025, ai.record.sample_rate);
+		XP_EQ(pause, ai.record.pause);
+	}
 
 	r = CLOSE(fd);
 	XP_SYS_EQ(0, r);
@@ -5094,10 +5361,7 @@ DEF(AUDIO_SETINFO_params_set_RDWR_3)	{ f(O_RDWR, 1, 1); }
 #undef f
 
 /*
- * AUDIO_SETINFO for existing track should not be interfered by other
- * descriptor.
- * AUDIO_SETINFO for non-existing track affects/is affected sticky parameters
- * for backward compatibility.
+ * AUDIO_SETINFO should not be interfere by other descriptor.
  */
 DEF(AUDIO_SETINFO_params_simul)
 {
@@ -5109,10 +5373,6 @@ DEF(AUDIO_SETINFO_params_simul)
 	TEST("AUDIO_SETINFO_params_simul");
 	if (netbsd < 8) {
 		XP_SKIP("Multiple open is not supported");
-		return;
-	}
-	if (hw_canplay() == 0) {
-		XP_SKIP("This test is for playable device");
 		return;
 	}
 
@@ -5131,38 +5391,12 @@ DEF(AUDIO_SETINFO_params_simul)
 	r = IOCTL(fd1, AUDIO_SETINFO, &ai, "");
 	XP_SYS_EQ(0, r);
 
-	/*
-	 * The 1st one doesn't have recording track so that only recording
-	 * parameter is affected by sticky parameter.
-	 */
+	/* Both track of the 1st one should not be affected */
 	memset(&ai, 0, sizeof(ai));
-	r = IOCTL(fd0, AUDIO_GETBUFINFO, &ai, "");
+	r = IOCTL(fd0, AUDIO_GETINFO, &ai, "");
 	XP_SYS_EQ(0, r);
 	XP_EQ(8000, ai.play.sample_rate);
-	XP_EQ(11025, ai.record.sample_rate);
-
-	/* Next, change some parameters of both track on the 1st one */
-	AUDIO_INITINFO(&ai);
-	ai.play.sample_rate = 16000;
-	ai.record.sample_rate = 16000;
-	r = IOCTL(fd0, AUDIO_SETINFO, &ai, "");
-	XP_SYS_EQ(0, r);
-
-	/*
-	 * On bi-directional device, the 2nd one has both track so that
-	 * both track are not affected by sticky parameter.
-	 * On uni-directional device, the 2nd one has only playback track
-	 * so that playback track is not affected by sticky parameter.
-	 */
-	memset(&ai, 0, sizeof(ai));
-	r = IOCTL(fd1, AUDIO_GETBUFINFO, &ai, "");
-	XP_SYS_EQ(0, r);
-	XP_EQ(11025, ai.play.sample_rate);
-	if (hw_bidir()) {
-		XP_EQ(11025, ai.record.sample_rate);
-	} else {
-		XP_EQ(16000, ai.record.sample_rate);
-	}
+	XP_EQ(8000, ai.record.sample_rate);
 
 	r = CLOSE(fd0);
 	XP_SYS_EQ(0, r);
@@ -5441,10 +5675,28 @@ test_AUDIO_SETINFO_pause(int openmode, int aimode, int param)
 	    ? (mode2aumode(openmode) & ~AUMODE_PLAY_ALL)
 	    : mode2aumode(openmode);
 	XP_EQ(expmode, ai.mode);
-	XP_EQ(1, ai.play.pause);
-	XP_EQ(param ? 11025 : 8000, ai.play.sample_rate);
-	XP_EQ(1, ai.record.pause);
-	XP_EQ(param ? 11025 : 8000, ai.record.sample_rate);
+	if (openmode == O_RDONLY) {
+		/* Playback track doesn't exists */
+		if (netbsd < 9)
+			XP_EQ(1, ai.play.pause);
+		else
+			XP_EQ(0, ai.play.pause);
+	} else {
+		/* Playback track exists */
+		XP_EQ(1, ai.play.pause);
+		XP_EQ(param ? 11025 : 8000, ai.play.sample_rate);
+	}
+	if (openmode == O_WRONLY) {
+		/* Recording track doesn't exist */
+		if (netbsd < 9)
+			XP_EQ(1, ai.record.pause);
+		else
+			XP_EQ(0, ai.record.pause);
+	} else {
+		/* Recording track exists */
+		XP_EQ(1, ai.record.pause);
+		XP_EQ(param ? 11025 : 8000, ai.record.sample_rate);
+	}
 
 	/* Set unpause (?) */
 	AUDIO_INITINFO(&ai);
@@ -6292,9 +6544,6 @@ struct testentry testtable[] = {
 	ENT(poll_out_hiwat),
 /**/	ENT(poll_out_unpause),		// XXX does not seem to work on rump
 /**/	ENT(poll_out_simul),		// XXX does not seem to work on rump
-	ENT(poll_in_open_audio),
-	ENT(poll_in_open_sound),
-	ENT(poll_in_open_audioctl),
 	ENT(poll_in_simul),
 	ENT(kqueue_mode_RDONLY_READ),
 	ENT(kqueue_mode_RDONLY_WRITE),

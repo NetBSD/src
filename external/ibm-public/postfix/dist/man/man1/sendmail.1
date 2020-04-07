@@ -1,4 +1,4 @@
-.\"	$NetBSD: sendmail.1,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: sendmail.1,v 1.2 2017/02/14 01:16:44 christos Exp $
 .\"
 .TH SENDMAIL 1 
 .ad
@@ -114,11 +114,6 @@ This feature is available in Postfix version 2.1 and later.
 The path name of the Postfix \fBmain.cf\fR file, or of its
 parent directory. This information is ignored with Postfix
 versions before 2.3.
-
-With Postfix version 3.2 and later, a non\-default directory
-must be authorized in the default \fBmain.cf\fR file, through
-the alternate_config_directories or multi_instance_directories
-parameters.
 
 With all Postfix versions, you can specify a directory pathname
 with the MAIL_CONFIG environment variable to override the
@@ -267,8 +262,8 @@ inputs.
 .SH DIAGNOSTICS
 .ad
 .fi
-Problems are logged to \fBsyslogd\fR(8) or \fBpostlogd\fR(8),
-and to the standard error stream.
+Problems are logged to \fBsyslogd\fR(8) and to the standard error
+stream.
 .SH "ENVIRONMENT"
 .na
 .nf
@@ -308,7 +303,7 @@ line endings from <CR><LF> into UNIX format (<LF>).
 .nf
 .ad
 .fi
-The DEBUG_README file gives examples of how to troubleshoot a
+The DEBUG_README file gives examples of how to trouble shoot a
 Postfix system.
 .IP "\fBdebugger_command (empty)\fR"
 The external command to execute when a Postfix daemon program is
@@ -395,10 +390,6 @@ and \fBpostmap\fR(1) commands.
 .IP "\fBdelay_warning_time (0h)\fR"
 The time after which the sender receives a copy of the message
 headers of mail that is still queued.
-.IP "\fBimport_environment (see 'postconf -d' output)\fR"
-The list of environment parameters that a privileged Postfix
-process will import from a non\-Postfix parent process, or name=value
-environment overrides.
 .IP "\fBmail_owner (postfix)\fR"
 The UNIX system account that owns the Postfix queue and most Postfix
 daemon processes.
@@ -411,21 +402,8 @@ append the specified domain name to incomplete addresses.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-A prefix that is prepended to the process name in syslog
-records, so that, for example, "smtpd" becomes "prefix/smtpd".
-.PP
-Postfix 3.2 and later:
-.IP "\fBalternate_config_directories (empty)\fR"
-A list of non\-default Postfix configuration directories that may
-be specified with "\-c config_directory" on the command line (in the
-case of \fBsendmail\fR(1), with the "\-C" option), or via the MAIL_CONFIG
-environment parameter.
-.IP "\fBmulti_instance_directories (empty)\fR"
-An optional list of non\-default Postfix configuration directories;
-these directories belong to additional Postfix instances that share
-the Postfix executable files and documentation with the default
-Postfix instance, and that are started, stopped, etc., together
-with the default Postfix instance.
+The mail system name that is prepended to the process name in syslog
+records, so that "smtpd" becomes, for example, "postfix/smtpd".
 .SH "FILES"
 .na
 .nf
@@ -443,7 +421,6 @@ postalias(1), create/update/query alias database
 postdrop(1), mail posting utility
 postfix(1), mail system control
 postqueue(1), mail queue control
-postlogd(8), Postfix logging
 syslogd(8), system logging
 .SH "README_FILES"
 .na

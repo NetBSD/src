@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5410_clock.c,v 1.6 2020/03/17 21:24:30 skrll Exp $ */
+/* $NetBSD: exynos5410_clock.c,v 1.5 2019/10/18 06:13:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.6 2020/03/17 21:24:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.5 2019/10/18 06:13:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -448,7 +448,7 @@ exynos5410_clock_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
-
+	
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
 		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
@@ -583,7 +583,7 @@ exynos5410_clock_get_rate_pll(struct exynos5410_clock_softc *sc,
 	    &clk_parent->base);
 
 	const uint32_t v = CLOCK_READ(sc, epll->con0_reg);
-
+	
 	return PLL_FREQ(rate_parent, v);
 }
 

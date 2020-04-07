@@ -1,4 +1,4 @@
-/*	$NetBSD: master_proto.h,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: master_proto.h,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
 
 /*++
 /* NAME
@@ -18,7 +18,6 @@
 #define MASTER_XPORT_NAME_FIFO	"fifo"	/* local IPC */
 #define MASTER_XPORT_NAME_INET	"inet"	/* non-local IPC */
 #define MASTER_XPORT_NAME_PASS	"pass"	/* local IPC */
-#define MASTER_XPORT_NAME_UXDG	"unix-dgram"	/* local IPC */
 
  /*
   * Format of a status message sent by a child process to the process
@@ -68,10 +67,5 @@ extern int master_notify(int, unsigned, int);	/* encapsulate status msg */
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 

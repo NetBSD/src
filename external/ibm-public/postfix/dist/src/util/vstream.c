@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.c,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: vstream.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -15,15 +15,6 @@
 /*
 /*	VSTREAM	*vstream_fdopen(fd, flags)
 /*	int	fd;
-/*	int	flags;
-/*
-/*	VSTREAM	*vstream_memopen(string, flags)
-/*	VSTRING	*string;
-/*	int	flags;
-/*
-/*	VSTREAM	*vstream_memreopen(stream, string, flags)
-/*	VSTREAM	*stream;
-/*	VSTRING	*string;
 /*	int	flags;
 /*
 /*	int	vstream_fclose(stream)
@@ -80,17 +71,7 @@
 /*
 /*	ssize_t	vstream_fwrite(stream, buf, len)
 /*	VSTREAM	*stream;
-/*	void *buf;
-/*	ssize_t	len;
-/*
-/*	ssize_t	vstream_fread_app(stream, buf, len)
-/*	VSTREAM	*stream;
-/*	VSTRING	*buf;
-/*	ssize_t	len;
-/*
-/*	ssize_t	vstream_fread_buf(stream, buf, len)
-/*	VSTREAM	*stream;
-/*	VSTRING	*buf;
+/*	const void *buf;
 /*	ssize_t	len;
 /*
 /*	void	vstream_control(stream, name, ...)
@@ -211,21 +192,6 @@
 /*	stream with it. The \fIflags\fR argument specifies how the file
 /*	was opened. vstream_fdopen() either succeeds or never returns.
 /*
-/*	vstream_memopen() opens a VSTRING as a stream. The \fIflags\fR
-/*	argument must specify one of O_RDONLY, O_WRONLY, or O_APPEND.
-/*	vstream_memopen() either succeeds or never returns. Streams
-/*	opened with vstream_memopen() have limitations: they can't
-/*	be opened in read/write mode, they can't seek beyond the
-/*	end of the VSTRING, and they don't support vstream_control()
-/*	methods that manipulate buffers, file descriptors, or I/O
-/*	functions. After a VSTRING is opened for writing, its content
-/*	will be in an indeterminate state while the stream is open,
-/*	and will be null-terminated when the stream is closed.
-/*
-/*	vstream_memreopen() reopens a memory stream. When the
-/*	\fIstream\fR argument is a null pointer, the behavior is that
-/*	of vstream_memopen().
-/*
 /*	vstream_fclose() closes the named buffered stream. The result
 /*	is 0 in case of success, VSTREAM_EOF in case of problems.
 /*	vstream_fclose() reports the same errors as vstream_ferror().
@@ -298,19 +264,6 @@
 /*	on the named stream. The result value is the number of bytes
 /*	transferred. A short count is returned in case of end-of-file
 /*	or error conditions.
-/*
-/*	vstream_fread_buf() resets the buffer write position,
-/*	allocates space for the specified number of bytes in the
-/*	buffer, reads the bytes from the specified VSTREAM, and
-/*	adjusts the buffer write position. The buffer is NOT
-/*	null-terminated. The result value is as with vstream_fread().
-/*      NOTE: do not skip calling vstream_fread_buf() when len == 0.
-/*      This function has side effects including resetting the buffer
-/*      write position, and skipping the call would invalidate the
-/*      buffer state.
-/*
-/*	vstream_fread_app() is like vstream_fread_buf() but appends
-/*	to existing buffer content, instead of writing over it.
 /*
 /*	vstream_control() allows the user to fine tune the behavior of
 /*	the specified stream.  The arguments are a list of macros with
@@ -414,7 +367,7 @@
 /*	vstream_feof() returns non-zero when a previous operation on the
 /*	specified stream caused an end-of-file condition.
 /*	Although further read requests after EOF may complete
-/*	successfully, vstream_feof() will keep returning non-zero
+/*	succesfully, vstream_feof() will keep returning non-zero
 /*	until vstream_clearerr() is called for that stream.
 /*
 /*	vstream_ferror() returns non-zero when a previous operation on the
@@ -480,8 +433,6 @@
 /*	The deadline feature is activated.
 /* .IP VSTREAM_FLAG_DOUBLE
 /*	The double-buffering feature is activated.
-/* .IP VSTREAM_FLAG_MEMORY
-/*	The stream is connected to a VSTRING buffer.
 /* DIAGNOSTICS
 /*	Panics: interface violations. Fatal errors: out of memory.
 /* SEE ALSO
@@ -500,11 +451,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -520,8 +466,6 @@
 #include <string.h>
 
 /* Utility library. */
-
-#define VSTRING_INTERNAL
 
 #include "mymalloc.h"
 #include "msg.h"
@@ -1038,8 +982,6 @@ static int vstream_buf_space(VBUF *bp, ssize_t want)
      */
     if (bp->put_ready == 0)
 	msg_panic("%s: read-only stream", myname);
-    if (want < 0)
-	msg_panic("%s: bad length %ld", myname, (long) want);
     switch (bp->flags & (VSTREAM_FLAG_READ | VSTREAM_FLAG_WRITE)) {
     case VSTREAM_FLAG_READ:			/* change direction */
 	bp->flags &= ~VSTREAM_FLAG_READ;
@@ -1149,29 +1091,6 @@ off_t   vstream_fseek(VSTREAM *stream, off_t offset, int whence)
     VBUF   *bp = &stream->buf;
 
     /*
-     * TODO: support data length (data length != buffer length). Without data
-     * length information, vstream_fseek() would break vstream_fflush() for
-     * memory streams.
-     */
-    if (stream->buf.flags & VSTREAM_FLAG_MEMORY) {
-#ifdef PENDING_VSTREAM_FSEEK_FOR_MEMORY
-	if (whence == SEEK_CUR)
-	    offset += (bp->ptr - bp->data);
-	else if (whence == SEEK_END)
-	    offset += bp->len;
-	if (offset < 0 || offset > bp->data_len) {
-	    errno = EINVAL;
-	    return (-1);
-	}
-	VSTREAM_BUF_AT_OFFSET(bp, offset);
-	return (offset);
-#else
-	errno = EOPNOTSUPP;
-	return (-1);
-#endif
-    }
-
-    /*
      * Flush any unwritten output. Discard any unread input. Position the
      * buffer at the end, so that the next GET or PUT operation triggers a
      * buffer boundary action.
@@ -1235,12 +1154,6 @@ off_t   vstream_ftell(VSTREAM *stream)
     VBUF   *bp = &stream->buf;
 
     /*
-     * Special case for memory buffer.
-     */
-    if (stream->buf.flags & VSTREAM_FLAG_MEMORY)
-	return (bp->ptr - bp->data);
-
-    /*
      * Shave an unnecessary syscall.
      */
     if (bp->flags & VSTREAM_FLAG_NSEEK) {
@@ -1281,28 +1194,6 @@ off_t   vstream_ftell(VSTREAM *stream)
     return (stream->offset);
 }
 
-/* vstream_subopen - initialize everything except buffers and I/O handlers */
-
-static VSTREAM *vstream_subopen(void)
-{
-    VSTREAM *stream;
-
-    /* Note: memset() is not a portable way to initialize non-integer types. */
-    stream = (VSTREAM *) mymalloc(sizeof(*stream));
-    stream->offset = 0;
-    stream->path = 0;
-    stream->pid = 0;
-    stream->waitpid_fn = 0;
-    stream->timeout = 0;
-    stream->context = 0;
-    stream->jbuf = 0;
-    stream->iotime.tv_sec = stream->iotime.tv_usec = 0;
-    stream->time_limit.tv_sec = stream->time_limit.tv_usec = 0;
-    stream->req_bufsize = 0;
-    stream->vstring = 0;
-    return (stream);
-}
-
 /* vstream_fdopen - add buffering to pre-opened stream */
 
 VSTREAM *vstream_fdopen(int fd, int flags)
@@ -1322,11 +1213,21 @@ VSTREAM *vstream_fdopen(int fd, int flags)
      * have a really ugly interface with lots of mostly-unused arguments (can
      * you say VMS?).
      */
-    stream = vstream_subopen();
+    stream = (VSTREAM *) mymalloc(sizeof(*stream));
     stream->fd = fd;
     stream->read_fn = VSTREAM_CAN_READ(flags) ? (VSTREAM_RW_FN) timed_read : 0;
     stream->write_fn = VSTREAM_CAN_WRITE(flags) ? (VSTREAM_RW_FN) timed_write : 0;
     vstream_buf_init(&stream->buf, flags);
+    stream->offset = 0;
+    stream->path = 0;
+    stream->pid = 0;
+    stream->waitpid_fn = 0;
+    stream->timeout = 0;
+    stream->context = 0;
+    stream->jbuf = 0;
+    stream->iotime.tv_sec = stream->iotime.tv_usec = 0;
+    stream->time_limit.tv_sec = stream->time_limit.tv_usec = 0;
+    stream->req_bufsize = 0;
     return (stream);
 }
 
@@ -1350,25 +1251,6 @@ VSTREAM *vstream_fopen(const char *path, int flags, mode_t mode)
 
 int     vstream_fflush(VSTREAM *stream)
 {
-
-    /*
-     * With VSTRING, the write pointer must be positioned behind the end of
-     * data. Without knowing the actual data length, VSTREAM can't support
-     * vstream_fseek() for memory streams, because vstream_fflush() would
-     * leave the VSTRING in a broken state.
-     */
-    if (stream->buf.flags & VSTREAM_FLAG_MEMORY) {
-	if (stream->buf.flags & VSTREAM_FLAG_WRITE) {
-	    VSTRING *string = stream->vstring;
-
-#ifdef PENDING_VSTREAM_FSEEK_FOR_MEMORY
-	    VSTREAM_BUF_AT_OFFSET(&stream->buf, stream->buf.data_len);
-#endif
-	    memcpy(&string->vbuf, &stream->buf, sizeof(stream->buf));
-	    VSTRING_TERMINATE(string);
-	}
-	return (0);
-    }
     if ((stream->buf.flags & VSTREAM_FLAG_READ_DOUBLE)
 	== VSTREAM_FLAG_READ_DOUBLE
 	&& stream->write_buf.len > stream->write_buf.cnt)
@@ -1390,9 +1272,7 @@ int     vstream_fclose(VSTREAM *stream)
      */
     if (stream->pid != 0)
 	msg_panic("vstream_fclose: stream has process");
-    if ((stream->buf.flags & VSTREAM_FLAG_MEMORY)
-	|| ((stream->buf.flags & VSTREAM_FLAG_WRITE_DOUBLE) != 0
-	    && stream->fd >= 0))
+    if ((stream->buf.flags & VSTREAM_FLAG_WRITE_DOUBLE) != 0 && stream->fd >= 0)
 	vstream_fflush(stream);
     /* Do not remove: vstream_fdclose() depends on this error test. */
     err = vstream_ferror(stream);
@@ -1408,8 +1288,7 @@ int     vstream_fclose(VSTREAM *stream)
     } else {
 	if (stream->fd >= 0)
 	    err |= close(stream->fd);
-	if ((stream->buf.flags & VSTREAM_FLAG_MEMORY) == 0)
-	    vstream_buf_wipe(&stream->buf);
+	vstream_buf_wipe(&stream->buf);
     }
     if (stream->path)
 	myfree(stream->path);
@@ -1483,33 +1362,6 @@ int     vstream_fputs(const char *str, VSTREAM *stream)
     return (0);
 }
 
-/* vstream_fread_buf - unformatted read to VSTRING */
-
-ssize_t vstream_fread_buf(VSTREAM *fp, VSTRING *vp, ssize_t len)
-{
-    ssize_t ret;
-
-    VSTRING_RESET(vp);
-    VSTRING_SPACE(vp, len);
-    ret = vstream_fread(fp, vstring_str(vp), len);
-    if (ret > 0)
-	VSTRING_AT_OFFSET(vp, ret);
-    return (ret);
-}
-
-/* vstream_fread_app - unformatted read to VSTRING */
-
-ssize_t vstream_fread_app(VSTREAM *fp, VSTRING *vp, ssize_t len)
-{
-    ssize_t ret;
-
-    VSTRING_SPACE(vp, len);
-    ret = vstream_fread(fp, vstring_end(vp), len);
-    if (ret > 0)
-	VSTRING_AT_OFFSET(vp, VSTRING_LEN(vp) + ret);
-    return (ret);
-}
-
 /* vstream_control - fine control */
 
 void    vstream_control(VSTREAM *stream, int name,...)
@@ -1523,18 +1375,7 @@ void    vstream_control(VSTREAM *stream, int name,...)
 
 #define SWAP(type,a,b) do { type temp = (a); (a) = (b); (b) = (temp); } while (0)
 
-    /*
-     * A crude 'allow' filter for memory streams.
-     */
-    int     memory_ops =
-    ((1 << VSTREAM_CTL_END) | (1 << VSTREAM_CTL_CONTEXT)
-     | (1 << VSTREAM_CTL_PATH) | (1 << VSTREAM_CTL_EXCEPT));
-
     for (va_start(ap, name); name != VSTREAM_CTL_END; name = va_arg(ap, int)) {
-	if ((stream->buf.flags & VSTREAM_FLAG_MEMORY)
-	    && (memory_ops & (1 << name)) == 0)
-	    msg_panic("%s: memory stream does not support VSTREAM_CTL_%d",
-		      VSTREAM_PATH(stream), name);
 	switch (name) {
 	case VSTREAM_CTL_READ_FN:
 	    stream->read_fn = va_arg(ap, VSTREAM_RW_FN);
@@ -1755,49 +1596,14 @@ const char *vstream_peek_data(VSTREAM *vp)
     }
 }
 
-/* vstream_memopen - open a VSTRING */
-
-VSTREAM *vstream_memreopen(VSTREAM *stream, VSTRING *string, int flags)
-{
-    if (stream == 0)
-	stream = vstream_subopen();
-    else if ((stream->buf.flags & VSTREAM_FLAG_MEMORY) == 0)
-	msg_panic("vstream_memreopen: cannot reopen non-memory stream");
-    stream->fd = -1;
-    stream->read_fn = 0;
-    stream->write_fn = 0;
-    stream->vstring = string;
-    memcpy(&stream->buf, &stream->vstring->vbuf, sizeof(stream->buf));
-    stream->buf.flags |= VSTREAM_FLAG_MEMORY;
-    switch (VSTREAM_ACC_MASK(flags)) {
-    case O_RDONLY:
-	stream->buf.flags |= VSTREAM_FLAG_READ;
-	stream->buf.len = stream->buf.ptr - stream->buf.data;
-	VSTREAM_BUF_AT_OFFSET(&stream->buf, 0);
-	break;
-    case O_WRONLY:
-	stream->buf.flags |= VSTREAM_FLAG_WRITE;
-	VSTREAM_BUF_AT_OFFSET(&stream->buf, 0);
-	break;
-    case O_APPEND:
-	stream->buf.flags |= VSTREAM_FLAG_WRITE;
-	VSTREAM_BUF_AT_END(&stream->buf);
-	break;
-    default:
-	msg_panic("vstream_memopen: flags must be one of "
-		  "O_RDONLY, O_WRONLY, or O_APPEND");
-    }
-    return (stream);
-}
-
 #ifdef TEST
 
 static void copy_line(ssize_t bufsize)
 {
     int     c;
 
-    vstream_control(VSTREAM_IN, CA_VSTREAM_CTL_BUFSIZE(bufsize), VSTREAM_CTL_END);
-    vstream_control(VSTREAM_OUT, CA_VSTREAM_CTL_BUFSIZE(bufsize), VSTREAM_CTL_END);
+    vstream_control(VSTREAM_IN, VSTREAM_CTL_BUFSIZE(bufsize), VSTREAM_CTL_END);
+    vstream_control(VSTREAM_OUT, VSTREAM_CTL_BUFSIZE(bufsize), VSTREAM_CTL_END);
     while ((c = VSTREAM_GETC(VSTREAM_IN)) != VSTREAM_EOF) {
 	VSTREAM_PUTC(c, VSTREAM_OUT);
 	if (c == '\n')
@@ -1808,58 +1614,8 @@ static void copy_line(ssize_t bufsize)
 
 static void printf_number(void)
 {
-    vstream_printf("%d\n", 1234567890);
+    vstream_printf("%d\n", __MAXINT__(int));
     vstream_fflush(VSTREAM_OUT);
-}
-
-static void do_memory_stream(void)
-{
-    VSTRING *buf = vstring_alloc(1);
-    VSTREAM *fp = vstream_memopen(buf, O_WRONLY);
-
-#ifdef PENDING_VSTREAM_FSEEK_FOR_MEMORY
-    off_t   offset;
-
-#endif
-    int     ch;
-
-    vstream_fprintf(fp, "hallo world\n");
-    if (vstream_fflush(fp))
-	msg_fatal("vstream_fflush: %m");
-    vstream_printf("final memory stream write offset: %ld\n",
-		   (long) vstream_ftell(fp));
-#ifdef PENDING_VSTREAM_FSEEK_FOR_MEMORY
-    vstream_fflush(fp);
-    vstream_printf("buffer size: %ld, content: %s",
-		   (long) VSTRING_LEN(buf), vstring_str(buf));
-    if ((offset = vstream_fseek(fp, 1, SEEK_SET)) != 1)
-	msg_panic("unexpected vstream_fseek return: %ld, expected: %ld",
-		  (long) offset, (long) 1);
-    VSTREAM_PUTC('e', fp);
-#endif
-    vstream_fclose(fp);
-
-    vstream_printf("buffer size: %ld, content: %s",
-		   (long) VSTRING_LEN(buf), vstring_str(buf));
-    vstream_fflush(VSTREAM_OUT);
-
-    fp = vstream_memopen(buf, O_RDONLY);
-    vstream_printf("reading memory stream: ");
-    while ((ch = VSTREAM_GETC(fp)) != VSTREAM_EOF)
-	VSTREAM_PUTCHAR(ch);
-#ifdef PENDING_VSTREAM_FSEEK_FOR_MEMORY
-    vstream_printf("reading memory stream from offset 6: ");
-    if ((offset = vstream_fseek(fp, 6, SEEK_SET)) != 6)
-	msg_panic("unexpected vstream_fseek return: %ld, expected: %ld",
-		  (long) offset, (long) 6);
-    while ((ch = VSTREAM_GETC(fp)) != VSTREAM_EOF)
-	VSTREAM_PUTCHAR(ch);
-#endif
-    vstream_printf("final memory stream read offset: %ld\n",
-		   (long) vstream_ftell(fp));
-    vstream_fflush(VSTREAM_OUT);
-    vstream_fclose(fp);
-    vstring_free(buf);
 }
 
  /*
@@ -1876,8 +1632,6 @@ int     main(int argc, char **argv)
     copy_line(2);				/* two-byte read/write */
     copy_line(1);				/* two-byte read/write */
     printf_number();				/* multi-byte write */
-    do_memory_stream();
-
     exit(0);
 }
 

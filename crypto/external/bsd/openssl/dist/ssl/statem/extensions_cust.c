@@ -10,9 +10,9 @@
 /* Custom extension utility functions */
 
 #include <openssl/ct.h>
-#include "../ssl_local.h"
+#include "../ssl_locl.h"
 #include "internal/cryptlib.h"
-#include "statem_local.h"
+#include "statem_locl.h"
 
 typedef struct {
     void *add_arg;

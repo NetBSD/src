@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_haproxy.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtpd_haproxy.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -17,11 +17,6 @@
 /*	The following summarizes what the Postfix SMTP server expects
 /*	from an up-stream proxy adapter.
 /* .IP \(bu
-/*	Call smtpd_peer_from_default() if the up-stream proxy
-/*	indicates that the connection is not proxied. In that case,
-/*	a proxy adapter MUST NOT update any STATE fields: the
-/*	smtpd_peer_from_default() function will do that instead.
-/* .IP \(bu
 /*	Validate protocol, address and port syntax. Permit only
 /*	protocols that are configured with the main.cf:inet_protocols
 /*	setting.
@@ -30,8 +25,8 @@
 /*	both IPv6 and IPv4 support are enabled with main.cf:inet_protocols.
 /* .IP \(bu
 /*	Update the following session context fields: addr, port,
-/*	rfc_addr, addr_family, dest_addr, dest_port. The addr_family
-/*	field applies to the client address.
+/*	rfc_addr, addr_family, dest_addr. The addr_family field
+/*	applies to the client address.
 /* .IP \(bu
 /*	Dynamically allocate storage for string information with
 /*	mystrdup(). In case of error, leave unassigned string fields
@@ -59,11 +54,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -77,7 +67,6 @@
 #include <myaddrinfo.h>
 #include <mymalloc.h>
 #include <stringops.h>
-#include <iostuff.h>
 
 /* Global library. */
 
@@ -99,39 +88,77 @@
 
 int     smtpd_peer_from_haproxy(SMTPD_STATE *state)
 {
+    const char *myname = "smtpd_peer_from_haproxy";
     MAI_HOSTADDR_STR smtp_client_addr;
     MAI_SERVPORT_STR smtp_client_port;
     MAI_HOSTADDR_STR smtp_server_addr;
     MAI_SERVPORT_STR smtp_server_port;
-    int     non_proxy = 0;
-
-    if (read_wait(vstream_fileno(state->client), var_smtpd_uproxy_tmout) < 0) {
-	msg_warn("haproxy read: timeout error");
-	return (-1);
-    }
-    if (haproxy_srvr_receive(vstream_fileno(state->client), &non_proxy,
-			     &smtp_client_addr, &smtp_client_port,
-			     &smtp_server_addr, &smtp_server_port) < 0) {
-	return (-1);
-    }
-    if (non_proxy) {
-	smtpd_peer_from_default(state);
-	return (0);
-    }
-    state->addr = mystrdup(smtp_client_addr.buf);
-    if (strrchr(state->addr, ':') != 0) {
-	state->rfc_addr = concatenate(IPV6_COL, state->addr, (char *) 0);
-	state->addr_family = AF_INET6;
-    } else {
-	state->rfc_addr = mystrdup(state->addr);
-	state->addr_family = AF_INET;
-    }
-    state->port = mystrdup(smtp_client_port.buf);
+    const char *proxy_err;
+    int     io_err;
+    VSTRING *escape_buf;
 
     /*
-     * The Dovecot authentication server needs the server IP address.
+     * While reading HAProxy handshake information, don't buffer input beyond
+     * the end-of-line. That would break the TLS wrappermode handshake.
      */
-    state->dest_addr = mystrdup(smtp_server_addr.buf);
-    state->dest_port = mystrdup(smtp_server_port.buf);
-    return (0);
+    vstream_control(state->client,
+		    VSTREAM_CTL_BUFSIZE, 1,
+		    VSTREAM_CTL_END);
+
+    /*
+     * Note: the haproxy_srvr_parse() routine performs address protocol
+     * checks, address and port syntax checks, and converts IPv4-in-IPv6
+     * address string syntax (:ffff::1.2.3.4) to IPv4 syntax where permitted
+     * by the main.cf:inet_protocols setting, but logs no warnings.
+     */
+#define ENABLE_DEADLINE	1
+
+    smtp_stream_setup(state->client, var_smtpd_uproxy_tmout, ENABLE_DEADLINE);
+    switch (io_err = vstream_setjmp(state->client)) {
+    default:
+	msg_panic("%s: unhandled I/O error %d", myname, io_err);
+    case SMTP_ERR_EOF:
+	msg_warn("haproxy read: unexpected EOF");
+	return (-1);
+    case SMTP_ERR_TIME:
+	msg_warn("haproxy read: timeout error");
+	return (-1);
+    case 0:
+	if (smtp_get(state->buffer, state->client, HAPROXY_MAX_LEN,
+		     SMTP_GET_FLAG_NONE) != '\n') {
+	    msg_warn("haproxy read: line > %d characters", HAPROXY_MAX_LEN);
+	    return (-1);
+	}
+	if ((proxy_err = haproxy_srvr_parse(STR(state->buffer),
+				       &smtp_client_addr, &smtp_client_port,
+			      &smtp_server_addr, &smtp_server_port)) != 0) {
+	    escape_buf = vstring_alloc(HAPROXY_MAX_LEN + 2);
+	    escape(escape_buf, STR(state->buffer), LEN(state->buffer));
+	    msg_warn("haproxy read: %s: %s", proxy_err, STR(escape_buf));
+	    vstring_free(escape_buf);
+	    return (-1);
+	}
+	state->addr = mystrdup(smtp_client_addr.buf);
+	if (strrchr(state->addr, ':') != 0) {
+	    state->rfc_addr = concatenate(IPV6_COL, state->addr, (char *) 0);
+	    state->addr_family = AF_INET6;
+	} else {
+	    state->rfc_addr = mystrdup(state->addr);
+	    state->addr_family = AF_INET;
+	}
+	state->port = mystrdup(smtp_client_port.buf);
+
+	/*
+	 * Avoid surprises in the Dovecot authentication server.
+	 */
+	state->dest_addr = mystrdup(smtp_server_addr.buf);
+
+	/*
+	 * Enable normal buffering.
+	 */
+	vstream_control(state->client,
+			VSTREAM_CTL_BUFSIZE, VSTREAM_BUFSIZE,
+			VSTREAM_CTL_END);
+	return (0);
+    }
 }

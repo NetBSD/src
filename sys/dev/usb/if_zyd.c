@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.59 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.56 2020/01/29 06:39:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.59 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.56 2020/01/29 06:39:07 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -320,7 +320,7 @@ zyd_attach(device_t parent, device_t self, void *aux)
 
 	ddesc = usbd_get_device_descriptor(sc->sc_udev);
 	if (UGETW(ddesc->bcdDevice) < 0x4330) {
-		aprint_error_dev(self, "device version mismatch: %#x "
+		aprint_error_dev(self, "device version mismatch: 0x%x "
 		    "(only >= 43.30 supported)\n", UGETW(ddesc->bcdDevice));
 		return;
 	}
@@ -433,11 +433,7 @@ zyd_complete_attach(struct zyd_softc *sc)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = zyd_newstate;
-
-	/* XXX media locking needs revisiting */
-	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTUSB);
-	ieee80211_media_init_with_lock(ic,
-	    zyd_media_change, ieee80211_media_status, &sc->sc_media_mtx);
+	ieee80211_media_init(ic, zyd_media_change, ieee80211_media_status);
 
 	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
@@ -1842,7 +1838,7 @@ zyd_intr(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		struct ifnet *ifp = &sc->sc_if;
 		struct ieee80211_node *ni;
 
-		DPRINTF(("retry intr: rate=%#x addr=%s count=%d (%#x)\n",
+		DPRINTF(("retry intr: rate=0x%x addr=%s count=%d (0x%x)\n",
 		    le16toh(retry->rate), ether_sprintf(retry->macaddr),
 		    le16toh(retry->count) & 0xff, le16toh(retry->count)));
 
@@ -2592,7 +2588,7 @@ zyd_loadfirmware(struct zyd_softc *sc, u_char *fw, size_t size)
 		const int mlen = uimin(size, 64);
 #endif
 
-		DPRINTF(("loading firmware block: len=%d, addr=%#x\n", mlen,
+		DPRINTF(("loading firmware block: len=%d, addr=0x%x\n", mlen,
 		    addr));
 
 		USETW(req.wValue, addr);

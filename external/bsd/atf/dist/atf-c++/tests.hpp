@@ -77,7 +77,7 @@ class tc {
     tc(const tc&);
     tc& operator=(const tc&);
 
-    std::unique_ptr< tc_impl > pimpl;
+    std::auto_ptr< tc_impl > pimpl;
 
 protected:
     virtual void head(void);

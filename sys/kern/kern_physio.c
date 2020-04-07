@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.98 2020/03/14 15:31:29 ad Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.97 2019/12/08 19:52:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.98 2020/03/14 15:31:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.97 2019/12/08 19:52:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 				bp = obp;
 			} else {
 				bp = getiobuf(NULL, true);
-				bp->b_cflags |= BC_BUSY;
+				bp->b_cflags = BC_BUSY;
 			}
 			bp->b_dev = dev;
 			bp->b_proc = p;
@@ -296,7 +296,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			 * raw transfers".
 			 */
 			bp->b_oflags = 0;
-			bp->b_cflags |= BC_BUSY;
+			bp->b_cflags = BC_BUSY;
 			bp->b_flags = flags | B_PHYS | B_RAW;
 			bp->b_iodone = physio_biodone;
 

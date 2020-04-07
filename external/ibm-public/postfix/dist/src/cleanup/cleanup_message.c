@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_message.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: cleanup_message.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -41,11 +41,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -77,7 +72,6 @@
 #include <rec_type.h>
 #include <cleanup_user.h>
 #include <tok822.h>
-#include <lex_822.h>
 #include <header_opts.h>
 #include <quote_822_local.h>
 #include <mail_params.h>
@@ -90,7 +84,6 @@
 #include <lex_822.h>
 #include <dsn_util.h>
 #include <conv_time.h>
-#include <info_log_addr_form.h>
 
 /* Application-specific. */
 
@@ -266,11 +259,9 @@ static void cleanup_act_log(CLEANUP_STATE *state,
     vstring_sprintf(state->temp1, "%s: %s: %s %.200s from %s;",
 		    state->queue_id, action, class, content, attr);
     if (state->sender)
-	vstring_sprintf_append(state->temp1, " from=<%s>",
-			       info_log_addr_form_sender(state->sender));
+	vstring_sprintf_append(state->temp1, " from=<%s>", state->sender);
     if (state->recip)
-	vstring_sprintf_append(state->temp1, " to=<%s>",
-			       info_log_addr_form_recipient(state->recip));
+	vstring_sprintf_append(state->temp1, " to=<%s>", state->recip);
     if ((attr = nvtable_find(state->attr, MAIL_ATTR_LOG_PROTO_NAME)) != 0)
 	vstring_sprintf_append(state->temp1, " proto=%s", attr);
     if ((attr = nvtable_find(state->attr, MAIL_ATTR_LOG_HELO_NAME)) != 0)
@@ -356,11 +347,6 @@ static const char *cleanup_act(CLEANUP_STATE *state, char *context,
 	}
 	return (buf);
     }
-    if (STREQUAL(value, "PASS", command_len)) {
-	cleanup_act_log(state, "pass", context, buf, optional_text);
-	state->flags &= ~CLEANUP_FLAG_FILTER_ALL;
-	return (buf);
-    }
     if (STREQUAL(value, "DISCARD", command_len)) {
 	cleanup_act_log(state, "discard", context, buf, optional_text);
 	state->flags |= CLEANUP_FLAG_DISCARD;
@@ -417,7 +403,7 @@ static const char *cleanup_act(CLEANUP_STATE *state, char *context,
 
 		cleanup_act_log(state, "prepend", context, buf, optional_text);
 		temp = vstring_strcpy(vstring_alloc(strlen(optional_text)),
-				      optional_text);
+						    optional_text);
 		cleanup_out_header(state, temp);
 		vstring_free(temp);
 	    }
@@ -468,10 +454,6 @@ static const char *cleanup_act(CLEANUP_STATE *state, char *context,
 	    cleanup_act_log(state, "bcc", context, buf, optional_text);
 	}
 	return (buf);
-    }
-    if (STREQUAL(value, "STRIP", command_len)) {
-	cleanup_act_log(state, "strip", context, buf, optional_text);
-	return (CLEANUP_ACT_DROP);
     }
     /* Allow and ignore optional text after the action. */
 
@@ -666,7 +648,6 @@ static void cleanup_header_done_callback(void *context)
     char    time_stamp[1024];		/* XXX locale dependent? */
     struct tm *tp;
     TOK822 *token;
-    TOK822 *dummy_token;
     time_t  tv;
 
     /*
@@ -754,60 +735,14 @@ static void cleanup_header_done_callback(void *context)
 				       HDR_RESENT_FROM : HDR_FROM))) == 0) {
 	quote_822_local(state->temp1, *state->sender ?
 			state->sender : MAIL_ADDR_MAIL_DAEMON);
+	vstring_sprintf(state->temp2, "%sFrom: %s",
+			state->resent, vstring_str(state->temp1));
 	if (*state->sender && state->fullname && *state->fullname) {
-	    char   *cp;
-
-	    /* Enforce some sanity on full name content. */
-	    while ((cp = strchr(state->fullname, '\r')) != 0
-		   || (cp = strchr(state->fullname, '\n')) != 0)
-		*cp = ' ';
-
-	    switch (hfrom_format_code) {
-
-		/*
-		 * "From: phrase <route-addr>". Quote the phrase if it
-		 * contains specials or the "%!" legacy address operators.
-		 */
-	    case HFROM_FORMAT_CODE_STD:
-		vstring_sprintf(state->temp2, "%sFrom: ", state->resent);
-		if (state->fullname[strcspn(state->fullname,
-					    "%!" LEX_822_SPECIALS)] == 0) {
-		    /* Normalize whitespace. */
-		    token = tok822_scan_limit(state->fullname, &dummy_token,
-					      var_token_limit);
-		} else {
-		    token = tok822_alloc(TOK822_QSTRING, state->fullname);
-		}
-		tok822_externalize(state->temp2, token, TOK822_STR_NONE);
-		tok822_free(token);
-		vstring_sprintf_append(state->temp2, " <%s>",
-				       vstring_str(state->temp1));
-		break;
-
-		/*
-		 * "From: addr-spec (ctext)". This is the obsolete form.
-		 */
-	    case HFROM_FORMAT_CODE_OBS:
-		vstring_sprintf(state->temp2, "%sFrom: %s ",
-				state->resent, vstring_str(state->temp1));
-		vstring_sprintf(state->temp1, "(%s)", state->fullname);
-		token = tok822_parse(vstring_str(state->temp1));
-		tok822_externalize(state->temp2, token, TOK822_STR_NONE);
-		tok822_free_tree(token);
-		break;
-	    default:
-		msg_panic("%s: unknown header format %d",
-			  myname, hfrom_format_code);
-	    }
-	}
-
-	/*
-	 * "From: addr-spec". This is the form in the absence of full name
-	 * information, also used for mail from mailer-daemon.
-	 */
-	else {
-	    vstring_sprintf(state->temp2, "%sFrom: %s",
-			    state->resent, vstring_str(state->temp1));
+	    vstring_sprintf(state->temp1, "(%s)", state->fullname);
+	    token = tok822_parse(vstring_str(state->temp1));
+	    vstring_strcat(state->temp2, " ");
+	    tok822_externalize(state->temp2, token, TOK822_STR_NONE);
+	    tok822_free_tree(token);
 	}
 	CLEANUP_OUT_BUF(state, REC_TYPE_NORM, state->temp2);
     }
@@ -1029,9 +964,7 @@ static void cleanup_mime_error_callback(void *context, int err_code,
 #define TEXT_LEN (len < 100 ? (int) len : 100)
 	msg_info("%s: reject: mime-error %s: %.*s from %s; from=<%s> to=<%s>",
 		 state->queue_id, mime_state_error(err_code), TEXT_LEN, text,
-		 origin, info_log_addr_form_sender(state->sender),
-		 info_log_addr_form_recipient(state->recip ?
-					      state->recip : "unknown"));
+	    origin, state->sender, state->recip ? state->recip : "unknown");
     }
 }
 

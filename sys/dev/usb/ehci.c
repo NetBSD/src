@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.277 2020/03/14 02:35:33 christos Exp $ */
+/*	$NetBSD: ehci.c,v 1.274 2020/02/21 12:41:29 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.277 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.274 2020/02/21 12:41:29 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -750,7 +750,7 @@ ehci_intr1(ehci_softc_t *sc)
 		/* Block unprocessed interrupts. */
 		sc->sc_eintrs &= ~eintrs;
 		EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
-		printf("%s: blocking intrs %#x\n",
+		printf("%s: blocking intrs 0x%x\n",
 		       device_xname(sc->sc_dev), eintrs);
 	}
 
@@ -2913,7 +2913,7 @@ ehci_alloc_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
 	KASSERT(alen != 0 || (!rd && (flags & USBD_FORCE_SHORT_XFER)));
 
 	size_t nsqtd = (!rd && (flags & USBD_FORCE_SHORT_XFER)) ? 1 : 0;
-	nsqtd += howmany(alen, EHCI_PAGE_SIZE);
+	nsqtd += ((alen + EHCI_PAGE_SIZE - 1) / EHCI_PAGE_SIZE);
 	exfer->ex_sqtds = kmem_zalloc(sizeof(ehci_soft_qtd_t *) * nsqtd,
 	    KM_SLEEP);
 	exfer->ex_nsqtd = nsqtd;
@@ -3061,7 +3061,7 @@ ehci_reset_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
 
 		ehci_append_sqtd(sqtd, prev);
 
-		if (howmany(curlen, mps) & 1) {
+		if (((curlen + mps - 1) / mps) & 1) {
 			tog ^= 1;
 		}
 
@@ -4582,7 +4582,7 @@ ehci_device_isoc_init(struct usbd_xfer *xfer)
 	}
 
 	ufrperframe = uimax(1, USB_UFRAMES_PER_FRAME / (1 << (i - 1)));
-	frames = howmany(xfer->ux_nframes, ufrperframe);
+	frames = (xfer->ux_nframes + (ufrperframe - 1)) / ufrperframe;
 
 	for (i = 0, prev = NULL; i < frames; i++, prev = itd) {
 		itd = ehci_alloc_itd(sc);
@@ -4717,7 +4717,7 @@ ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 	}
 
 	ufrperframe = uimax(1, USB_UFRAMES_PER_FRAME / (1 << (i - 1)));
-	frames = howmany(xfer->ux_nframes, ufrperframe);
+	frames = (xfer->ux_nframes + (ufrperframe - 1)) / ufrperframe;
 	uframes = USB_UFRAMES_PER_FRAME / ufrperframe;
 
 	if (frames == 0) {

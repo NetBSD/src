@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.52 2020/03/16 21:20:12 pgoyette Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.51 2020/02/21 00:26:23 joerg Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.52 2020/03/16 21:20:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.51 2020/02/21 00:26:23 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,8 +61,10 @@ static kauth_listener_t l_generic, l_system, l_process, l_network, l_machdep,
     l_device, l_vnode;
 
 static secmodel_t suser_sm;
+static struct sysctllog *suser_sysctl_log;
 
-SYSCTL_SETUP(sysctl_security_suser_setup, "secmodel_user sysctl")
+void
+sysctl_security_suser_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode;
 
@@ -161,9 +163,11 @@ suser_modcmd(modcmd_t cmd, void *arg)
 
 		secmodel_suser_init();
 		secmodel_suser_start();
+		sysctl_security_suser_setup(&suser_sysctl_log);
 		break;
 
 	case MODULE_CMD_FINI:
+		sysctl_teardown(&suser_sysctl_log);
 		secmodel_suser_stop();
 
 		error = secmodel_deregister(suser_sm);

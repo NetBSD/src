@@ -1,4 +1,4 @@
-.\"	$NetBSD: umbctl.8,v 1.3 2020/03/22 07:45:02 khorben Exp $
+.\"	$NetBSD: umbctl.8,v 1.2 2018/08/01 17:26:30 wiz Exp $
 .\"
 .\" Copyright (c) 2018 by Pierre Pronchery <khorben@defora.org>
 .\" All rights reserved.
@@ -26,11 +26,11 @@
 .\"
 .\" From: pppoectl.8,v 1.30 2016/09/12 05:35:20 sevan Exp $
 .\"
-.\" $Id: umbctl.8,v 1.3 2020/03/22 07:45:02 khorben Exp $
+.\" $Id: umbctl.8,v 1.2 2018/08/01 17:26:30 wiz Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
-.Dd March 22, 2020
+.Dd July 24, 2018
 .Dt UMBCTL 8
 .Os
 .Sh NAME
@@ -40,13 +40,15 @@
 .Nm umbctl
 .Op Fl v
 .Ar ifname
-.Op Ar parameter Op Ar value
+.Op Ar parameter Ns Op \&= Ns Ar value
 .Op Ar ...
 .Pp
 .Nm umbctl
 .Op Fl v
-.Fl f Ar config-file
+.Op Fl f Ar config-file
 .Ar ifname
+.Op Ar parameter Ns Op \&= Ns Ar value
+.Op Ar ...
 .Sh DESCRIPTION
 .Nm
 supports the following options:

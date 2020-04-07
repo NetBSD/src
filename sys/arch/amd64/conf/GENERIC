@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.564 2020/03/28 08:35:36 isaki Exp $
+# $NetBSD: GENERIC,v 1.563 2020/02/17 06:32:46 nisimura Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.564 $"
+#ident		"GENERIC-$Revision: 1.563 $"
 
 maxusers	64		# estimated number of users
 
@@ -54,6 +54,9 @@ maxusers	64		# estimated number of users
 # Standard system options
 
 options 	INSECURE	# disable kernel security levels - X needs this
+
+options		AUDIO_BLK_MS=4	# make software with low latency needs performant
+				# no substantial CPU overhead on this platform
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop

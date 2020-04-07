@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.90 2020/03/08 00:26:06 chs Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.89 2020/01/23 12:35:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.90 2020/03/08 00:26:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.89 2020/01/23 12:35:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -384,8 +384,8 @@ mutex_destroy(kmutex_t *mtx)
 	uintptr_t owner = mtx->mtx_owner;
 
 	if (MUTEX_ADAPTIVE_P(owner)) {
-		MUTEX_ASSERT(mtx, !MUTEX_OWNED(owner));
-		MUTEX_ASSERT(mtx, !MUTEX_HAS_WAITERS(mtx));
+		MUTEX_ASSERT(mtx, !MUTEX_OWNED(owner) &&
+		    !MUTEX_HAS_WAITERS(mtx));
 	} else {
 		MUTEX_ASSERT(mtx, !MUTEX_SPINBIT_LOCKED_P(mtx));
 	}

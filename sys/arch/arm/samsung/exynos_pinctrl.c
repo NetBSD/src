@@ -1,11 +1,11 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.17 2020/03/20 06:38:16 skrll Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.15 2019/10/18 06:13:38 skrll Exp $ */
 
 /*-
-* Copyright (c) 2015, 2020 The NetBSD Foundation, Inc.
+* Copyright (c) 2015 The NetBSD Foundation, Inc.
 * All rights reserved.
 *
 * This code is derived from software contributed to The NetBSD Foundation
-* by Marty Fouts, and by Nick Hudson
+* by Marty Fouts
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.17 2020/03/20 06:38:16 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.15 2019/10/18 06:13:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,19 +72,15 @@ static struct fdtbus_pinctrl_controller_func exynos_pinctrl_controller_func = {
 CFATTACH_DECL_NEW(exynos_pinctrl, sizeof(struct exynos_pinctrl_softc),
 	exynos_pinctrl_match, exynos_pinctrl_attach, NULL, NULL);
 
-
-static const struct of_compat_data compat_data[] = {
-	{ "samsung,exynos5410-pinctrl",	(uintptr_t)&exynos5410_pinctrl_banks },
-	{ "samsung,exynos5420-pinctrl",	(uintptr_t)&exynos5420_pinctrl_banks },
-	{ NULL }
-};
-
 static int
 exynos_pinctrl_match(device_t parent, cfdata_t cf, void *aux)
 {
+	const char * const compatible[] = {
+	    "samsung,exynos5410-pinctrl",
+	    "samsung,exynos5420-pinctrl",
+	    NULL };
 	struct fdt_attach_args * const faa = aux;
-
-	return of_match_compat_data(faa->faa_phandle, compat_data);
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
@@ -103,12 +99,9 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_normal(" pinctrl @ 0x%08x ", (uint)addr);
-	self->dv_private = sc;
+	aprint_normal(" pinctl @ 0x%08x ", (uint)addr);
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
-	sc->sc_epb = (struct exynos_pinctrl_banks *)of_search_compatible(faa->faa_phandle, compat_data)->data;
-
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
 		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
@@ -128,7 +121,7 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 
 		if (of_hasprop(child, "samsung,pins")) {
 			fdtbus_register_pinctrl_config(self, child,
-			    &exynos_pinctrl_controller_func);
+						       &exynos_pinctrl_controller_func);
 		}
 	}
 }
@@ -162,7 +155,6 @@ static int
 exynos_do_config(struct exynos_pinctrl_config *pc)
 {
 	struct exynos_gpio_pin_cfg *gc = &pc->pc_pincfg;
-	struct exynos_pinctrl_banks *epb = pc->pc_sc->sc_epb;
 	struct exynos_gpio_bank *bank;
 	const char *pins;
 	int pin;
@@ -174,7 +166,7 @@ exynos_do_config(struct exynos_pinctrl_config *pc)
 	for (pins = fdtbus_get_string(pc->pc_phandle, "samsung,pins");
 	     pins_len > 0;
 	     pins_len -= strlen(pins) + 1, pins += strlen(pins) + 1) {
-		bank = exynos_gpio_bank_lookup(epb, pins);
+		bank = exynos_gpio_bank_lookup(pins);
 		pin = exynos_parse_pin(pins);
 		if (bank == NULL) {
 			aprint_error_dev(pc->pc_sc->sc_dev,
@@ -186,7 +178,7 @@ exynos_do_config(struct exynos_pinctrl_config *pc)
 
 	return 0;
 }
-
+	
 static int
 exynos_pinctrl_set_cfg(device_t dev, const void *data, size_t len)
 {

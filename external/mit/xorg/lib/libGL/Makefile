@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2020/03/29 21:06:03 maya Exp $
+#	$NetBSD: Makefile,v 1.28 2019/09/24 19:29:42 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -117,8 +117,7 @@ SRCS.dri=	\
 
 .for fn in ${SRCS.dri}
 CPPFLAGS.${fn}= \
-	-I${X11SRCDIR.Mesa}/src \
-	-DGL_LIB_NAME="\"libGL.so.${SHLIB_MAJOR}\""
+	-I${X11SRCDIR.Mesa}/src
 .endfor
 .endif
 

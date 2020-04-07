@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.299 2020/03/30 02:12:38 christos Exp $
+# $NetBSD: mi,v 1.294 2020/02/11 09:32:07 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -39,7 +39,6 @@
 ./usr/lib/libbz2_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libc++_g.a				comp-c-debuglib		debuglib,compatfile,libcxx
 ./usr/lib/libc_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libcbor_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libcom_err_g.a			comp-c-debuglib		debuglib,kerberos,compatfile
 ./usr/lib/libcompat_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libcrypt_g.a				comp-c-debuglib		debuglib,compatfile
@@ -64,7 +63,6 @@
 ./usr/lib/libexecinfo_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libexpat_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libfetch_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libfido2_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libfl_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libform_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcccmds
@@ -534,9 +532,6 @@
 ./usr/libdata/debug/usr/bin/f77.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/bin/fgen.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/file.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/fido2-assert.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/fido2-cred.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/fido2-token.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fincore.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/find.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/finger.debug	comp-util-debug		debug
@@ -706,7 +701,6 @@
 ./usr/libdata/debug/usr/bin/openpgp.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/openssl.debug	comp-crypto-debug	debug
 ./usr/libdata/debug/usr/bin/p++.debug		comp-obsolete		obsolete
-./usr/libdata/debug/usr/bin/pamu2fcfg.debug	comp-util-debug		debug,pam
 ./usr/libdata/debug/usr/bin/passwd.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/paste.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/patch.debug		comp-util-debug		debug
@@ -1011,7 +1005,6 @@
 ./usr/libdata/debug/usr/libexec/spellprog.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/libexec/ssh-keysign.debug	comp-secsh-debug	debug
 ./usr/libdata/debug/usr/libexec/ssh-pkcs11-helper.debug	comp-secsh-debug	debug
-./usr/libdata/debug/usr/libexec/ssh-sk-helper.debug	comp-secsh-debug	debug
 ./usr/libdata/debug/usr/libexec/telnetd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/tftp-proxy.debug	comp-pf-debug		pf,debug
 ./usr/libdata/debug/usr/libexec/tftpd.debug	comp-netutil-debug	debug
@@ -1244,7 +1237,6 @@
 ./usr/libdata/debug/usr/sbin/rpc.pcnfsd.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/rpc.statd.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/rpc.yppasswdd.debug	comp-nis-debug		yp,debug
-./usr/libdata/debug/usr/sbin/rpcapd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/rpcbind.debug	comp-rpcbind-debug	debug
 ./usr/libdata/debug/usr/sbin/rtadvd.debug	comp-router-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/rtquery.debug	comp-netutil-debug	debug
@@ -2028,7 +2020,6 @@
 ./usr/libdata/debug/usr/tests/lib/libc/net/t_ether_aton.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/t_getprotoent.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/t_if_nametoindex.debug	tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libc/nls/t_catalog.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex_att.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/regex/t_exhaust.debug		tests-lib-debug		debug,atf,compattestfile
@@ -2156,7 +2147,6 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_posix_fadvise.debug	tests-lib-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_posix_fallocate.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_ptrace.debug		tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libc/sys/t_ptrace_sigchld.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_ptrace_wait.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_ptrace_wait3.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_ptrace_wait4.debug		tests-lib-debug		debug,atf,compattestfile

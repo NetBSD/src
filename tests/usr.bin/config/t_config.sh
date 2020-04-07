@@ -1,4 +1,4 @@
-# $NetBSD: t_config.sh,v 1.10 2020/03/09 20:33:16 christos Exp $
+# $NetBSD: t_config.sh,v 1.8 2016/08/27 12:08:14 christos Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -260,45 +260,6 @@ min_body() {
 	test_output min
 }
 
-# Check ifdef supper
-test_case ifdef pass "ifdef config"
-check_ifdef_files()
-{
-	test -e Makefile &&
-	test -e config_file.h &&
-	test -e config_time.src &&
-	test -e ioconf.c &&
-	test -e ioconf.h &&
-	test -e locators.h &&
-	test -e swapregress.c &&
-	test -h machine &&
-	test -h regress &&
-	:
-}
-
-check_ifdef_makefile()
-{
-	local f=Makefile
-	local e='-DOK1_1  -DOK2_1  -DOK2_2  -DOK3_1  -DOK3_2  -DOK3_3  -DOK3_4  -DOK3_5  -DOK4_1  -DMAXUSERS="4"'
-	local r
-	r=$(make -f Makefile -V IDENT)
-	if [ "$r" != "$e" ]; then
-		echo "Expected: '$e'"
-		echo "Result: '$r'"
-		return 1
-	fi
-}
-
-check_ifdef()
-{
-	check_ifdef_files &&
-	check_ifdef_makefile &&
-	:
-}
-ifdef_body() {
-	test_output ifdef
-}
-
 atf_init_test_cases()
 {
 	atf_add_test_case shadow_instance
@@ -314,5 +275,4 @@ atf_init_test_cases()
 	atf_add_test_case no_select
 	atf_add_test_case devi
 	atf_add_test_case min
-	atf_add_test_case ifdef
 }

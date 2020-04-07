@@ -26,7 +26,6 @@
 # define _GLIBCXX_USE_CXX11_ABI 1
 #endif
 
-#include <bits/largefile-config.h>
 #include <filesystem>
 #include <experimental/filesystem>
 #include <utility>
@@ -58,13 +57,7 @@ struct fs::_Dir : _Dir_base
   {
     if (const auto entp = _Dir_base::advance(skip_permission_denied, ec))
       {
-	file_type type = file_type::none;
-#ifdef _GLIBCXX_HAVE_STRUCT_DIRENT_D_TYPE
-	// Even if the OS supports dirent::d_type the filesystem might not:
-	if (entp->d_type != DT_UNKNOWN)
-	  type = get_file_type(*entp);
-#endif
-	entry = fs::directory_entry{path / entp->d_name, type};
+	entry = fs::directory_entry{path / entp->d_name, get_file_type(*entp)};
 	return true;
       }
     else if (!ec)

@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.56 2020/03/22 14:38:37 ad Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.55 2020/02/23 22:14:03 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.56 2020/03/22 14:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.55 2020/02/23 22:14:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +293,7 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	 * This returns 0 on a cache hit, -1 on a clean cache miss,
 	 * or an errno on other failure.
 	 */
-	error = cache_revlookup(lvp, uvpp, bpp, bufp, 0, 0);
+	error = cache_revlookup(lvp, uvpp, bpp, bufp);
 	if (error) {
 		if (error != -1) {
 			vput(lvp);
@@ -559,7 +559,7 @@ vnode_to_path(char *path, size_t len, struct vnode *vp, struct lwp *curl,
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
 		return error;
-	error = cache_revlookup(vp, &dvp, &bp, path, 0, 0);
+	error = cache_revlookup(vp, &dvp, &bp, path);
 	VOP_UNLOCK(vp);
 	if (error != 0)
 		return (error == -1 ? ENOENT : error);

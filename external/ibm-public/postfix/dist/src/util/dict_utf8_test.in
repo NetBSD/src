@@ -1,6 +1,6 @@
 #!/bin/sh
 
-LC_ALL=C awk 'BEGIN {
+awk 'BEGIN {
 	print "flags"
 	print "verbose"
 	printf "get foo\n"
@@ -11,4 +11,4 @@ LC_ALL=C awk 'BEGIN {
 	printf "put xxx %c%c%c\n", 128, 128, 128
 	printf "get xxx\n"
 	exit
-}' | ${VALGRIND} ./dict_open internal:whatever write utf8_request
+}' | ./dict_open internal:whatever write utf8_request

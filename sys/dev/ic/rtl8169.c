@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.166 2020/03/13 04:08:07 thorpej Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.164 2020/02/07 00:56:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.166 2020/03/13 04:08:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.164 2020/02/07 00:56:48 thorpej Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -176,8 +176,11 @@ static inline void
 re_set_bufaddr(struct re_desc *d, bus_addr_t addr)
 {
 
-	d->re_bufaddr_lo = htole32(RE_ADDR_LO(addr));
-	d->re_bufaddr_hi = htole32(RE_ADDR_HI(addr));
+	d->re_bufaddr_lo = htole32((uint32_t)addr);
+	if (sizeof(bus_addr_t) == sizeof(uint64_t))
+		d->re_bufaddr_hi = htole32((uint64_t)addr >> 32);
+	else
+		d->re_bufaddr_hi = 0;
 }
 
 static int
@@ -1073,7 +1076,6 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 		if (n == NULL)
 			return ENOBUFS;
 
-		MCLAIM(n, &sc->ethercom.ec_rx_mowner);
 		MCLGET(n, M_DONTWAIT);
 		if ((n->m_flags & M_EXT) == 0) {
 			m_freem(n);

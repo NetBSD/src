@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.63 2020/03/26 19:46:42 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.61 2020/02/15 18:12:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.63 2020/03/26 19:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.61 2020/02/15 18:12:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,7 +98,7 @@ void
 sleepq_init(sleepq_t *sq)
 {
 
-	LIST_INIT(sq);
+	TAILQ_INIT(sq);
 }
 
 /*
@@ -116,7 +116,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 
 	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_NULL) == 0) {
 		KASSERT(sq != NULL);
-		LIST_REMOVE(l, l_sleepchain);
+		TAILQ_REMOVE(sq, l, l_sleepchain);
 	} else {
 		KASSERT(sq == NULL);
 	}
@@ -191,15 +191,18 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 		lwp_t *l2;
 		const pri_t pri = lwp_eprio(l);
 
-		LIST_FOREACH(l2, sq, l_sleepchain) {
+		TAILQ_FOREACH(l2, sq, l_sleepchain) {
 			if (lwp_eprio(l2) < pri) {
-				LIST_INSERT_BEFORE(l2, l, l_sleepchain);
+				TAILQ_INSERT_BEFORE(l2, l, l_sleepchain);
 				return;
 			}
 		}
 	}
 
-	LIST_INSERT_HEAD(sq, l, l_sleepchain);
+	if ((sobj->sobj_flag & SOBJ_SLEEPQ_LIFO) != 0)
+		TAILQ_INSERT_HEAD(sq, l, l_sleepchain);
+	else
+		TAILQ_INSERT_TAIL(sq, l, l_sleepchain);
 }
 
 /*
@@ -300,7 +303,7 @@ sleepq_block(int timo, bool catch_p)
 			 * Acquiring p_lock may cause us to recurse
 			 * through the sleep path and back into this
 			 * routine, but is safe because LWPs sleeping
-			 * on locks are non-interruptable and we will
+			 * on locks are non-interruptable.  We will
 			 * not recurse again.
 			 */
 			mutex_enter(p->p_lock);
@@ -331,10 +334,10 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 
 	KASSERT(mutex_owned(mp));
 
-	for (l = LIST_FIRST(sq); l != NULL; l = next) {
+	for (l = TAILQ_FIRST(sq); l != NULL; l = next) {
 		KASSERT(l->l_sleepq == sq);
 		KASSERT(l->l_mutex == mp);
-		next = LIST_NEXT(l, l_sleepchain);
+		next = TAILQ_NEXT(l, l_sleepchain);
 		if (l->l_wchan != wchan)
 			continue;
 		sleepq_remove(sq, l);
@@ -460,10 +463,10 @@ sleepq_reinsert(sleepq_t *sq, lwp_t *l)
 	 * sleep queue lock held and need to see a non-empty queue
 	 * head if there are waiters.
 	 */
-	if (LIST_FIRST(sq) == l && LIST_NEXT(l, l_sleepchain) == NULL) {
+	if (TAILQ_FIRST(sq) == l && TAILQ_NEXT(l, l_sleepchain) == NULL) {
 		return;
 	}
-	LIST_REMOVE(l, l_sleepchain);
+	TAILQ_REMOVE(sq, l, l_sleepchain);
 	sleepq_insert(sq, l, l->l_syncobj);
 }
 

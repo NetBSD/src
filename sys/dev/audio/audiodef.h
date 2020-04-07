@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.13 2020/03/28 08:35:36 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.10 2020/02/23 07:17:01 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -44,21 +44,13 @@
 
 /*
  * Hardware blocksize in msec.
- * We use 10 msec as default for most platforms.  But it's too severe for
- * most m68k.
- *
- * 40 msec was initially choosen for the following reason:
- * (1 / 40ms) = 25 = 5^2.  Thus, the frequency is factored by 5.
+ * We use 40 msec as default.  (1 / 40ms) = 25 = 5^2.
  * In this case, the number of frames in a block can be an integer
  * even if the frequency is a multiple of 100 (44100, 48000, etc),
  * or even if 15625Hz (vs(4)).
  */
 #if !defined(AUDIO_BLK_MS)
-# if defined(__m68k__)
-#  define AUDIO_BLK_MS 40
-# else
-#  define AUDIO_BLK_MS 10
-# endif
+#define AUDIO_BLK_MS 40
 #endif
 
 /*

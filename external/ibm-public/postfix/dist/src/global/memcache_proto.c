@@ -1,4 +1,4 @@
-/*	$NetBSD: memcache_proto.c,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: memcache_proto.c,v 1.1.1.2 2014/07/06 19:27:51 tron Exp $	*/
 
 /*++
 /* NAME
@@ -41,11 +41,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 #include <sys_defs.h>
@@ -150,13 +145,16 @@ int     memcache_fread(VSTREAM *stream, VSTRING *buf, ssize_t todo)
     /*
      * Do the I/O.
      */
-    if (vstream_fread_buf(stream, buf, todo) != todo
+    VSTRING_SPACE(buf, todo);
+    VSTRING_AT_OFFSET(buf, todo);
+    if (vstream_fread(stream, STR(buf), todo) != todo
 	|| VSTREAM_GETC(stream) != '\r'
 	|| VSTREAM_GETC(stream) != '\n') {
 	if (msg_verbose)
 	    msg_info("%s read: error", VSTREAM_PATH(stream));
 	return (-1);
     } else {
+	vstring_truncate(buf, todo);
 	VSTRING_TERMINATE(buf);
 	if (msg_verbose)
 	    msg_info("%s read: %s", VSTREAM_PATH(stream), STR(buf));

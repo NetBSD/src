@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.73 2020/03/10 01:23:42 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.64 2020/02/29 21:31:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.73 2020/03/10 01:23:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.64 2020/02/29 21:31:55 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -121,9 +121,6 @@ static void txp_tx_reclaim(struct txp_softc *, struct txp_tx_ring *,
 static void txp_rxbuf_reclaim(struct txp_softc *);
 static void txp_rx_reclaim(struct txp_softc *, struct txp_rx_ring *,
     struct txp_dma_alloc *);
-
-static void txp_rxd_free(struct txp_softc *, struct txp_swdesc *);
-static struct txp_swdesc *txp_rxd_alloc(struct txp_softc *);
 
 CFATTACH_DECL_NEW(txp, sizeof(struct txp_softc), txp_probe, txp_attach,
 	      NULL, NULL);
@@ -300,14 +297,20 @@ txp_attach(device_t parent, device_t self, void *aux)
 	if (flags & TXP_FIBER) {
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_FX,
 			    0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_FX | IFM_HDX,
+			    0, NULL);
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_FX | IFM_FDX,
 			    0, NULL);
 	} else {
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T,
 			    0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T | IFM_HDX,
+			    0, NULL);
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T | IFM_FDX,
 			    0, NULL);
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX,
+			    0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX | IFM_HDX,
 			    0, NULL);
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX | IFM_FDX,
 			    0, NULL);
@@ -342,19 +345,6 @@ txp_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
-
-	/*
-	 * XXX Because we allocate Rx buffers in txp_alloc_rings(),
-	 * XXX we have to go back and claim them now that our mowners
-	 * XXX have been initialized (in ether_ifattach()).
-	 *
-	 * XXX FIXME by allocating Rx buffers only when interface is
-	 * XXX running, like other drivers do.
-	 */
-	for (i = 0; i < RXBUF_ENTRIES; i++) {
-		KASSERT(sc->sc_rxd[i].sd_mbuf != NULL);
-		MCLAIM(sc->sc_rxd[i].sd_mbuf, &sc->sc_arpcom.ec_rx_mowner);
-	}
 
 	if (pmf_device_register1(self, NULL, NULL, txp_shutdown))
 		pmf_class_network_register(self, ifp);
@@ -470,11 +460,6 @@ txp_download_fw(struct txp_softc *sc)
 
 	/* Tell boot firmware to get ready for image */
 	WRITE_REG(sc, TXP_H2A_1, le32toh(fileheader->addr));
-	WRITE_REG(sc, TXP_H2A_2, le32toh(fileheader->hmac[0]));
-	WRITE_REG(sc, TXP_H2A_3, le32toh(fileheader->hmac[1]));
-	WRITE_REG(sc, TXP_H2A_4, le32toh(fileheader->hmac[2]));
-	WRITE_REG(sc, TXP_H2A_5, le32toh(fileheader->hmac[3]));
-	WRITE_REG(sc, TXP_H2A_6, le32toh(fileheader->hmac[4]));
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
 
 	if (txp_download_fw_wait(sc)) {
@@ -604,8 +589,8 @@ txp_download_fw_section(struct txp_softc *sc,
 	WRITE_REG(sc, TXP_H2A_1, le32toh(sect->nbytes));
 	WRITE_REG(sc, TXP_H2A_2, le32toh(sect->cksum));
 	WRITE_REG(sc, TXP_H2A_3, le32toh(sect->addr));
-	WRITE_REG(sc, TXP_H2A_4, BUS_ADDR_HI32(dma.dma_paddr));
-	WRITE_REG(sc, TXP_H2A_5, BUS_ADDR_LO32(dma.dma_paddr));
+	WRITE_REG(sc, TXP_H2A_4, dma.dma_paddr >> 32);
+	WRITE_REG(sc, TXP_H2A_5, dma.dma_paddr & 0xffffffff);
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_SEGMENT_AVAILABLE);
 
 	if (txp_download_fw_wait(sc)) {
@@ -676,35 +661,6 @@ txp_intr(void *vsc)
 	return (claimed);
 }
 
-static struct txp_swdesc *
-txp_rxd_alloc(struct txp_softc *sc)
-{
-	if (sc->sc_txd_pool_ptr == 0)
-		return NULL;
-	return sc->sc_rxd_pool[--sc->sc_txd_pool_ptr];
-}
-
-static void
-txp_rxd_free(struct txp_softc *sc, struct txp_swdesc *sd)
-{
-	KASSERT(sc->sc_txd_pool_ptr < RXBUF_ENTRIES);
-	sc->sc_rxd_pool[sc->sc_txd_pool_ptr++] = sd;
-}
-
-static inline uint32_t
-txp_rxd_idx(struct txp_softc *sc, struct txp_swdesc *sd)
-{
-	KASSERT(sd >= &sc->sc_rxd[0] && sd < &sc->sc_rxd[RXBUF_ENTRIES]);
-	return (uint32_t)(sd - &sc->sc_rxd[0]);
-}
-
-static inline uint32_t
-txp_txd_idx(struct txp_softc *sc, struct txp_swdesc *sd)
-{
-	KASSERT(sd >= &sc->sc_txd[0] && sd < &sc->sc_txd[TX_ENTRIES]);
-	return (uint32_t)(sd - &sc->sc_txd[0]);
-}
-
 static void
 txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
     struct txp_dma_alloc *dma)
@@ -714,7 +670,6 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 	struct mbuf *m;
 	struct txp_swdesc *sd;
 	uint32_t roff, woff;
-	uint16_t len;
 	int sumflags = 0;
 	int idx;
 
@@ -737,48 +692,47 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 		}
 
 		/* retrieve stashed pointer */
-		KASSERT(rxd->rx_vaddrlo < RXBUF_ENTRIES);
-		sd = &sc->sc_rxd[rxd->rx_vaddrlo];
+		memcpy(&sd, __UNVOLATILE(&rxd->rx_vaddrlo), sizeof(sd));
 
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-
-		len = le16toh(rxd->rx_len);
-
-#ifdef __NO_STRICT_ALIGNMENT
 		bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
+		bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
 		m = sd->sd_mbuf;
-		sd->sd_mbuf = NULL;
-		txp_rxd_free(sc, sd);
-#else
-		/*
-		 * The Typhoon's receive buffers must be 4-byte aligned.
-		 * But this means the data after the Ethernet header
-		 * is misaligned.  We must allocate a new buffer and
-		 * copy the data, shifted forward 2 bytes.
-		 */
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
- dropit:
-			if_statinc(ifp, if_ierrors);
-			txp_rxd_free(sc, sd);
-			goto next;
-		}
-		MCLAIM(m, &sc->sc_arpcom.ec_rx_mowner);
-		if (len > (MHLEN - ETHER_ALIGN)) {
-			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_freem(m);
-				goto dropit;
-			}
-		}
-		m_set_rcvif(m, ifp);
-		m->m_data += ETHER_ALIGN;
-		memcpy(mtod(m, void *), mtod(sd->sd_mbuf, void *), len);
-		txp_rxd_free(sc, sd);
-#endif /* __NO_STRICT_ALIGNMENT */
+		free(sd, M_DEVBUF);
+		m->m_pkthdr.len = m->m_len = le16toh(rxd->rx_len);
 
-		m->m_pkthdr.len = m->m_len = len;
+#ifdef __STRICT_ALIGNMENT
+		{
+			/*
+			 * XXX Nice chip, except it won't accept "off by 2"
+			 * buffers, so we're force to copy.  Supposedly
+			 * this will be fixed in a newer firmware rev
+			 * and this will be temporary.
+			 */
+			struct mbuf *mnew;
+
+			MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+			if (mnew == NULL) {
+				m_freem(m);
+				goto next;
+			}
+			if (m->m_len > (MHLEN - 2)) {
+				MCLGET(mnew, M_DONTWAIT);
+				if (!(mnew->m_flags & M_EXT)) {
+					m_freem(mnew);
+					m_freem(m);
+					goto next;
+				}
+			}
+			m_set_rcvif(mnew, ifp);
+			mnew->m_pkthdr.len = mnew->m_len = m->m_len;
+			mnew->m_data += 2;
+			memcpy(mnew->m_data, m->m_data, m->m_len);
+			m_freem(m);
+			m = mnew;
+		}
+#endif
 
 		if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMBAD))
 			sumflags |= (M_CSUM_IPv4 | M_CSUM_IPv4_BAD);
@@ -841,27 +795,27 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 	rbd = sc->sc_rxbufs + i;
 
 	while (i != end) {
-		sd = txp_rxd_alloc(sc);
+		sd = (struct txp_swdesc *)malloc(sizeof(struct txp_swdesc),
+		    M_DEVBUF, M_NOWAIT);
 		if (sd == NULL)
 			break;
 
-		/* We might already have a buffer allocated. */
-		if (sd->sd_mbuf == NULL) {
-			MGETHDR(sd->sd_mbuf, M_DONTWAIT, MT_DATA);
-			if (sd->sd_mbuf == NULL)
-				goto err_sd;
-			MCLAIM(sd->sd_mbuf, &sc->sc_arpcom.ec_rx_mowner);
+		MGETHDR(sd->sd_mbuf, M_DONTWAIT, MT_DATA);
+		if (sd->sd_mbuf == NULL)
+			goto err_sd;
 
-			MCLGET(sd->sd_mbuf, M_DONTWAIT);
-			if ((sd->sd_mbuf->m_flags & M_EXT) == 0)
-				goto err_mbuf;
-			m_set_rcvif(sd->sd_mbuf, ifp);
-			sd->sd_mbuf->m_pkthdr.len =
-			    sd->sd_mbuf->m_len = MCLBYTES;
-			if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map,
-			    sd->sd_mbuf, BUS_DMA_NOWAIT)) {
-				goto err_mbuf;
-			}
+		MCLGET(sd->sd_mbuf, M_DONTWAIT);
+		if ((sd->sd_mbuf->m_flags & M_EXT) == 0)
+			goto err_mbuf;
+		m_set_rcvif(sd->sd_mbuf, ifp);
+		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES;
+		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN, 1,
+		    TXP_MAX_PKTLEN, 0, BUS_DMA_NOWAIT, &sd->sd_map))
+			goto err_mbuf;
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, sd->sd_mbuf,
+		    BUS_DMA_NOWAIT)) {
+			bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
+			goto err_mbuf;
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxbufring_dma.dma_map,
@@ -869,12 +823,12 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 		    sizeof(struct txp_rxbuf_desc), BUS_DMASYNC_POSTWRITE);
 
 		/* stash away pointer */
-		rbd->rb_vaddrlo = txp_rxd_idx(sc, sd);
+		memcpy(__UNVOLATILE(&rbd->rb_vaddrlo), &sd, sizeof(sd));
 
-		rbd->rb_paddrlo =
-		    htole32(BUS_ADDR_LO32(sd->sd_map->dm_segs[0].ds_addr));
-		rbd->rb_paddrhi =
-		    htole32(BUS_ADDR_HI32(sd->sd_map->dm_segs[0].ds_addr));
+		rbd->rb_paddrlo = ((uint64_t)sd->sd_map->dm_segs[0].ds_addr)
+		    & 0xffffffff;
+		rbd->rb_paddrhi = ((uint64_t)sd->sd_map->dm_segs[0].ds_addr)
+		    >> 32;
 
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -895,9 +849,8 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 
 err_mbuf:
 	m_freem(sd->sd_mbuf);
-	sd->sd_mbuf = NULL;
 err_sd:
-	txp_rxd_free(sc, sd);
+	free(sd, M_DEVBUF);
 }
 
 /*
@@ -911,7 +864,7 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r,
 	uint32_t idx = TXP_OFFSET2IDX(le32toh(*(r->r_off)));
 	uint32_t cons = r->r_cons, cnt = r->r_cnt;
 	struct txp_tx_desc *txd = r->r_desc + cons;
-	struct txp_swdesc *sd;
+	struct txp_swdesc *sd = sc->sc_txd + cons;
 	struct mbuf *m;
 
 	while (cons != idx) {
@@ -925,15 +878,11 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r,
 
 		if ((txd->tx_flags & TX_FLAGS_TYPE_M) ==
 		    TX_FLAGS_TYPE_DATA) {
-			KASSERT(txd->tx_addrlo < TX_ENTRIES);
-			sd = &sc->sc_txd[txd->tx_addrlo];
+			bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
+			    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
 			m = sd->sd_mbuf;
-			sd->sd_mbuf = NULL;
 			if (m != NULL) {
-				bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
-				    sd->sd_map->dm_mapsize,
-				    BUS_DMASYNC_POSTWRITE);
-				bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
 				m_freem(m);
 				txd->tx_addrlo = 0;
 				txd->tx_addrhi = 0;
@@ -945,8 +894,11 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r,
 		if (++cons == TX_ENTRIES) {
 			txd = r->r_desc;
 			cons = 0;
-		} else
+			sd = sc->sc_txd;
+		} else {
 			txd++;
+			sd++;
+		}
 
 		cnt--;
 	}
@@ -1003,8 +955,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		goto bail_boot;
 	}
 	memset(sc->sc_host_dma.dma_vaddr, 0, sizeof(struct txp_hostvar));
-	boot->br_hostvar_lo = htole32(BUS_ADDR_LO32(sc->sc_host_dma.dma_paddr));
-	boot->br_hostvar_hi = htole32(BUS_ADDR_HI32(sc->sc_host_dma.dma_paddr));
+	boot->br_hostvar_lo = htole32(sc->sc_host_dma.dma_paddr & 0xffffffff);
+	boot->br_hostvar_hi = htole32(sc->sc_host_dma.dma_paddr >> 32);
 	sc->sc_hostvar = (struct txp_hostvar *)sc->sc_host_dma.dma_vaddr;
 
 	/* high priority tx ring */
@@ -1015,20 +967,17 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_txhiring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_tx_desc) * TX_ENTRIES);
-	boot->br_txhipri_lo =
-	    htole32(BUS_ADDR_LO32(sc->sc_txhiring_dma.dma_paddr));
-	boot->br_txhipri_hi =
-	    htole32(BUS_ADDR_HI32(sc->sc_txhiring_dma.dma_paddr));
+	boot->br_txhipri_lo = htole32(sc->sc_txhiring_dma.dma_paddr & 0xffffffff);
+	boot->br_txhipri_hi = htole32(sc->sc_txhiring_dma.dma_paddr >> 32);
 	boot->br_txhipri_siz = htole32(TX_ENTRIES * sizeof(struct txp_tx_desc));
 	sc->sc_txhir.r_reg = TXP_H2A_1;
-	sc->sc_txhir.r_desc =
-	    (struct txp_tx_desc *)sc->sc_txhiring_dma.dma_vaddr;
+	sc->sc_txhir.r_desc = (struct txp_tx_desc *)sc->sc_txhiring_dma.dma_vaddr;
 	sc->sc_txhir.r_cons = sc->sc_txhir.r_prod = sc->sc_txhir.r_cnt = 0;
 	sc->sc_txhir.r_off = &sc->sc_hostvar->hv_tx_hi_desc_read_idx;
 	for (i = 0; i < TX_ENTRIES; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN,
-		    TXP_MAXTXSEGS, TXP_MAX_SEGLEN, 0, BUS_DMA_NOWAIT,
-		    &sc->sc_txd[i].sd_map) != 0) {
+		    TX_ENTRIES - 4, TXP_MAX_SEGLEN, 0,
+		    BUS_DMA_NOWAIT, &sc->sc_txd[i].sd_map) != 0) {
 			for (j = 0; j < i; j++) {
 				bus_dmamap_destroy(sc->sc_dmat,
 				    sc->sc_txd[j].sd_map);
@@ -1046,14 +995,11 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_txloring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_tx_desc) * TX_ENTRIES);
-	boot->br_txlopri_lo =
-	    htole32(BUS_ADDR_LO32(sc->sc_txloring_dma.dma_paddr));
-	boot->br_txlopri_hi =
-	    htole32(BUS_ADDR_HI32(sc->sc_txloring_dma.dma_paddr));
+	boot->br_txlopri_lo = htole32(sc->sc_txloring_dma.dma_paddr & 0xffffffff);
+	boot->br_txlopri_hi = htole32(sc->sc_txloring_dma.dma_paddr >> 32);
 	boot->br_txlopri_siz = htole32(TX_ENTRIES * sizeof(struct txp_tx_desc));
 	sc->sc_txlor.r_reg = TXP_H2A_3;
-	sc->sc_txlor.r_desc =
-	    (struct txp_tx_desc *)sc->sc_txloring_dma.dma_vaddr;
+	sc->sc_txlor.r_desc = (struct txp_tx_desc *)sc->sc_txloring_dma.dma_vaddr;
 	sc->sc_txlor.r_cons = sc->sc_txlor.r_prod = sc->sc_txlor.r_cnt = 0;
 	sc->sc_txlor.r_off = &sc->sc_hostvar->hv_tx_lo_desc_read_idx;
 
@@ -1065,10 +1011,8 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_rxhiring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_rx_desc) * RX_ENTRIES);
-	boot->br_rxhipri_lo =
-	    htole32(BUS_ADDR_LO32(sc->sc_rxhiring_dma.dma_paddr));
-	boot->br_rxhipri_hi =
-	    htole32(BUS_ADDR_HI32(sc->sc_rxhiring_dma.dma_paddr));
+	boot->br_rxhipri_lo = htole32(sc->sc_rxhiring_dma.dma_paddr & 0xffffffff);
+	boot->br_rxhipri_hi = htole32(sc->sc_rxhiring_dma.dma_paddr >> 32);
 	boot->br_rxhipri_siz = htole32(RX_ENTRIES * sizeof(struct txp_rx_desc));
 	sc->sc_rxhir.r_desc =
 	    (struct txp_rx_desc *)sc->sc_rxhiring_dma.dma_vaddr;
@@ -1085,10 +1029,8 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_rxloring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_rx_desc) * RX_ENTRIES);
-	boot->br_rxlopri_lo =
-	    htole32(BUS_ADDR_LO32(sc->sc_rxloring_dma.dma_paddr));
-	boot->br_rxlopri_hi =
-	    htole32(BUS_ADDR_HI32(sc->sc_rxloring_dma.dma_paddr));
+	boot->br_rxlopri_lo = htole32(sc->sc_rxloring_dma.dma_paddr & 0xffffffff);
+	boot->br_rxlopri_hi = htole32(sc->sc_rxloring_dma.dma_paddr >> 32);
 	boot->br_rxlopri_siz = htole32(RX_ENTRIES * sizeof(struct txp_rx_desc));
 	sc->sc_rxlor.r_desc =
 	    (struct txp_rx_desc *)sc->sc_rxloring_dma.dma_vaddr;
@@ -1105,8 +1047,8 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_cmdring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_cmd_desc) * CMD_ENTRIES);
-	boot->br_cmd_lo = htole32(BUS_ADDR_LO32(sc->sc_cmdring_dma.dma_paddr));
-	boot->br_cmd_hi = htole32(BUS_ADDR_HI32(sc->sc_cmdring_dma.dma_paddr));
+	boot->br_cmd_lo = htole32(sc->sc_cmdring_dma.dma_paddr & 0xffffffff);
+	boot->br_cmd_hi = htole32(sc->sc_cmdring_dma.dma_paddr >> 32);
 	boot->br_cmd_siz = htole32(CMD_ENTRIES * sizeof(struct txp_cmd_desc));
 	sc->sc_cmdring.base = (struct txp_cmd_desc *)sc->sc_cmdring_dma.dma_vaddr;
 	sc->sc_cmdring.size = CMD_ENTRIES * sizeof(struct txp_cmd_desc);
@@ -1120,8 +1062,8 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_rspring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_rsp_desc) * RSP_ENTRIES);
-	boot->br_resp_lo = htole32(BUS_ADDR_LO32(sc->sc_rspring_dma.dma_paddr));
-	boot->br_resp_hi = htole32(BUS_ADDR_HI32(sc->sc_rspring_dma.dma_paddr));
+	boot->br_resp_lo = htole32(sc->sc_rspring_dma.dma_paddr & 0xffffffff);
+	boot->br_resp_hi = htole32(sc->sc_rspring_dma.dma_paddr >> 32);
 	boot->br_resp_siz = htole32(CMD_ENTRIES * sizeof(struct txp_rsp_desc));
 	sc->sc_rspring.base = (struct txp_rsp_desc *)sc->sc_rspring_dma.dma_vaddr;
 	sc->sc_rspring.size = RSP_ENTRIES * sizeof(struct txp_rsp_desc);
@@ -1135,43 +1077,44 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_rxbufring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_rxbuf_desc) * RXBUF_ENTRIES);
-	boot->br_rxbuf_lo = htole32(BUS_ADDR_LO32(sc->sc_rxbufring_dma.dma_paddr));
-	boot->br_rxbuf_hi = htole32(BUS_ADDR_HI32(sc->sc_rxbufring_dma.dma_paddr));
+	boot->br_rxbuf_lo = htole32(sc->sc_rxbufring_dma.dma_paddr & 0xffffffff);
+	boot->br_rxbuf_hi = htole32(sc->sc_rxbufring_dma.dma_paddr >> 32);
 	boot->br_rxbuf_siz = htole32(RXBUF_ENTRIES * sizeof(struct txp_rxbuf_desc));
 	sc->sc_rxbufs = (struct txp_rxbuf_desc *)sc->sc_rxbufring_dma.dma_vaddr;
 	for (nb = 0; nb < RXBUF_ENTRIES; nb++) {
-		sd = &sc->sc_rxd[nb];
-
+		sd = malloc(sizeof(struct txp_swdesc), M_DEVBUF, M_WAITOK);
 		/* stash away pointer */
-		sc->sc_rxbufs[nb].rb_vaddrlo = txp_rxd_idx(sc, sd);
+		memcpy(__UNVOLATILE(&sc->sc_rxbufs[nb].rb_vaddrlo), &sd,
+		    sizeof(sd));
 
-		MGETHDR(sd->sd_mbuf, M_WAIT, MT_DATA);
+		MGETHDR(sd->sd_mbuf, M_DONTWAIT, MT_DATA);
 		if (sd->sd_mbuf == NULL) {
 			goto bail_rxbufring;
 		}
 
-		MCLGET(sd->sd_mbuf, M_WAIT);
+		MCLGET(sd->sd_mbuf, M_DONTWAIT);
 		if ((sd->sd_mbuf->m_flags & M_EXT) == 0) {
 			goto bail_rxbufring;
 		}
 		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES;
 		m_set_rcvif(sd->sd_mbuf, ifp);
 		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN, 1,
-		    TXP_MAX_PKTLEN, 0, BUS_DMA_WAITOK, &sd->sd_map)) {
+		    TXP_MAX_PKTLEN, 0, BUS_DMA_NOWAIT, &sd->sd_map)) {
 			goto bail_rxbufring;
 		}
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, sd->sd_mbuf,
-		    BUS_DMA_WAITOK)) {
+		    BUS_DMA_NOWAIT)) {
 			bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
 			goto bail_rxbufring;
 		}
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
+
 		sc->sc_rxbufs[nb].rb_paddrlo =
-		    htole32(BUS_ADDR_LO32(sd->sd_map->dm_segs[0].ds_addr));
+		    ((uint64_t)sd->sd_map->dm_segs[0].ds_addr) & 0xffffffff;
 		sc->sc_rxbufs[nb].rb_paddrhi =
-		    htole32(BUS_ADDR_HI32(sd->sd_map->dm_segs[0].ds_addr));
+		    ((uint64_t)sd->sd_map->dm_segs[0].ds_addr) >> 32;
 	}
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxbufring_dma.dma_map,
 	    0, sc->sc_rxbufring_dma.dma_map->dm_mapsize,
@@ -1186,8 +1129,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		goto bail_rxbufring;
 	}
 	memset(sc->sc_zero_dma.dma_vaddr, 0, sizeof(uint32_t));
-	boot->br_zero_lo = htole32(BUS_ADDR_LO32(sc->sc_zero_dma.dma_paddr));
-	boot->br_zero_hi = htole32(BUS_ADDR_HI32(sc->sc_zero_dma.dma_paddr));
+	boot->br_zero_lo = htole32(sc->sc_zero_dma.dma_paddr & 0xffffffff);
+	boot->br_zero_hi = htole32(sc->sc_zero_dma.dma_paddr >> 32);
 
 	/* See if it's waiting for boot, and try to boot it */
 	for (i = 0; i < 10000; i++) {
@@ -1200,8 +1143,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": not waiting for boot\n");
 		goto bail;
 	}
-	WRITE_REG(sc, TXP_H2A_2, BUS_ADDR_HI32(sc->sc_boot_dma.dma_paddr));
-	WRITE_REG(sc, TXP_H2A_1, BUS_ADDR_LO32(sc->sc_boot_dma.dma_paddr));
+	WRITE_REG(sc, TXP_H2A_2, sc->sc_boot_dma.dma_paddr >> 32);
+	WRITE_REG(sc, TXP_H2A_1, sc->sc_boot_dma.dma_paddr & 0xffffffff);
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_REGISTER_BOOT_RECORD);
 
 	/* See if it booted */
@@ -1232,7 +1175,8 @@ bail_rxbufring:
 	for (i = 0; i <= nb; i++) {
 		memcpy(&sd, __UNVOLATILE(&sc->sc_rxbufs[i].rb_vaddrlo),
 		    sizeof(sd));
-		/* XXXJRT */
+		if (sd)
+			free(sd, M_DEVBUF);
 	}
 	txp_dma_free(sc, &sc->sc_rxbufring_dma);
 bail_rspring:
@@ -1450,8 +1394,7 @@ txp_start(struct ifnet *ifp)
 	struct txp_frag_desc *fxd;
 	struct mbuf *m, *mnew;
 	struct txp_swdesc *sd;
-	uint32_t prod, cnt, i;
-	int error;
+	uint32_t firstprod, firstcnt, prod, cnt, i;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1460,73 +1403,47 @@ txp_start(struct ifnet *ifp)
 	cnt = r->r_cnt;
 
 	while (1) {
-		if (cnt >= TX_ENTRIES - TXP_MAXTXSEGS - 4) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
-		}
-
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 		mnew = NULL;
 
-		sd = sc->sc_txd + prod;
+		firstprod = prod;
+		firstcnt = cnt;
 
-		/*
-		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we
-		 * were short on resources.  In this case, we'll copy
-		 * and try again.
-		 */
+		sd = sc->sc_txd + prod;
+		sd->sd_mbuf = m;
+
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, m,
-		    BUS_DMA_NOWAIT) != 0) {
+		    BUS_DMA_NOWAIT)) {
 			MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-			if (mnew == NULL) {
-				printf("%s: unable to allocate Tx mbuf\n",
-				    device_xname(sc->sc_dev));
-				break;
-			}
-			MCLAIM(mnew, &sc->sc_arpcom.ec_tx_mowner);
+			if (mnew == NULL)
+				goto oactive1;
 			if (m->m_pkthdr.len > MHLEN) {
 				MCLGET(mnew, M_DONTWAIT);
 				if ((mnew->m_flags & M_EXT) == 0) {
-					printf("%s: unable to allocate Tx "
-					    "cluster\n",
-					    device_xname(sc->sc_dev));
 					m_freem(mnew);
-					break;
+					goto oactive1;
 				}
 			}
 			m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, void *));
 			mnew->m_pkthdr.len = mnew->m_len = m->m_pkthdr.len;
-			error = bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map,
-			    mnew, BUS_DMA_NOWAIT);
-			if (error) {
-				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", device_xname(sc->sc_dev),
-				    error);
-				m_freem(mnew);
-				break;
-			}
-		}
-
-		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (mnew != NULL) {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
 			m_freem(m);
 			m = mnew;
+			if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, m,
+			    BUS_DMA_NOWAIT))
+				goto oactive1;
 		}
 
-		/*
-		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
-		 */
-
-		sd->sd_mbuf = m;
+		if ((TX_ENTRIES - cnt) < 4)
+			goto oactive;
 
 		txd = r->r_desc + prod;
 		txdidx = prod;
 		txd->tx_flags = TX_FLAGS_TYPE_DATA;
 		txd->tx_numdesc = 0;
-		txd->tx_addrlo = txp_txd_idx(sc, sd);
+		txd->tx_addrlo = 0;
 		txd->tx_addrhi = 0;
 		txd->tx_totlen = m->m_pkthdr.len;
 		txd->tx_pflags = 0;
@@ -1534,7 +1451,9 @@ txp_start(struct ifnet *ifp)
 
 		if (++prod == TX_ENTRIES)
 			prod = 0;
-		cnt++;
+
+		if (++cnt >= (TX_ENTRIES - 4))
+			goto oactive;
 
 		if (vlan_has_tag(m))
 			txd->tx_pflags = TX_PFLAGS_VLAN |
@@ -1556,14 +1475,23 @@ txp_start(struct ifnet *ifp)
 
 		fxd = (struct txp_frag_desc *)(r->r_desc + prod);
 		for (i = 0; i < sd->sd_map->dm_nsegs; i++) {
+			if (++cnt >= (TX_ENTRIES - 4)) {
+				bus_dmamap_sync(sc->sc_dmat, sd->sd_map,
+				    0, sd->sd_map->dm_mapsize,
+				    BUS_DMASYNC_POSTWRITE);
+				goto oactive;
+			}
+
 			fxd->frag_flags = FRAG_FLAGS_TYPE_FRAG |
 			    FRAG_FLAGS_VALID;
 			fxd->frag_rsvd1 = 0;
-			fxd->frag_len = htole16(sd->sd_map->dm_segs[i].ds_len);
+			fxd->frag_len = sd->sd_map->dm_segs[i].ds_len;
 			fxd->frag_addrlo =
-			    htole32(BUS_ADDR_LO32(sd->sd_map->dm_segs[i].ds_addr));
+			    ((uint64_t)sd->sd_map->dm_segs[i].ds_addr) &
+			    0xffffffff;
 			fxd->frag_addrhi =
-			    htole32(BUS_ADDR_HI32(sd->sd_map->dm_segs[i].ds_addr));
+			    ((uint64_t)sd->sd_map->dm_segs[i].ds_addr) >>
+			    32;
 			fxd->frag_rsvd2 = 0;
 
 			bus_dmamap_sync(sc->sc_dmat,
@@ -1576,8 +1504,15 @@ txp_start(struct ifnet *ifp)
 				prod = 0;
 			} else
 				fxd++;
-			cnt++;
+
 		}
+
+		/*
+		 * if mnew isn't NULL, we already dequeued and copied
+		 * the packet.
+		 */
+		if (mnew == NULL)
+			IFQ_DEQUEUE(&ifp->if_snd, m);
 
 		ifp->if_timer = 5;
 
@@ -1611,6 +1546,14 @@ txp_start(struct ifnet *ifp)
 
 	r->r_prod = prod;
 	r->r_cnt = cnt;
+	return;
+
+oactive:
+	bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
+oactive1:
+	ifp->if_flags |= IFF_OACTIVE;
+	r->r_prod = firstprod;
+	r->r_cnt = firstcnt;
 }
 
 /*

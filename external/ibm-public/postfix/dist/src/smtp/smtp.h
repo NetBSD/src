@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.h,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp.h,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -41,11 +41,6 @@
 #include <tls.h>
 
  /*
-  * tlsproxy client.
-  */
-#include <tls_proxy.h>
-
- /*
   * Global iterator support. This is updated by the connection-management
   * loop, and contains dynamic context that appears in lookup keys for SASL
   * passwords, TLS policy, cached SMTP connections, and cached TLS session
@@ -56,7 +51,7 @@
   */
 typedef struct SMTP_ITERATOR {
     /* Public members. */
-    VSTRING *request_nexthop;		/* delivery request nexhop or empty */
+    VSTRING *request_nexthop;		/* request nexhop or empty */
     VSTRING *dest;			/* current nexthop */
     VSTRING *host;			/* hostname or empty */
     VSTRING *addr;			/* printable address or empty */
@@ -76,6 +71,12 @@ typedef struct SMTP_ITERATOR {
 	(iter)->mx = (iter)->rr = 0; \
 	vstring_strcpy((iter)->saved_dest, ""); \
 	(iter)->parent = (state); \
+    } while (0)
+
+#define SMTP_ITER_CLOBBER(iter, _dest, _host, _addr) do { \
+	vstring_strcpy((iter)->dest, (_dest)); \
+	vstring_strcpy((iter)->host, (_host)); \
+	vstring_strcpy((iter)->addr, (_addr)); \
     } while (0)
 
 #define SMTP_ITER_SAVE_DEST(iter) do { \
@@ -99,8 +100,6 @@ typedef struct SMTP_TLS_POLICY {
     ARGV   *matchargv;			/* Cert match patterns */
     DSN_BUF *why;			/* Lookup error status */
     TLS_DANE *dane;			/* DANE TLSA digests */
-    char   *sni;			/* Optional SNI name when not DANE */
-    int     conn_reuse;			/* enable connection reuse */
 } SMTP_TLS_POLICY;
 
  /*
@@ -134,8 +133,6 @@ extern void smtp_tls_policy_cache_flush(void);
 	_tls_policy_init_tmp->matchargv = 0; \
 	_tls_policy_init_tmp->why = (w); \
 	_tls_policy_init_tmp->dane = 0; \
-	_tls_policy_init_tmp->sni = 0; \
-	_tls_policy_init_tmp->conn_reuse = 0; \
     } while (0)
 
 #endif
@@ -190,26 +187,17 @@ typedef struct SMTP_STATE {
 } SMTP_STATE;
 
  /*
-  * Primitives to enable/disable/test connection caching and reuse based on
-  * the delivery request next-hop destination (i.e. not smtp_fallback_relay).
-  * 
-  * Connection cache lookup by the delivery request next-hop destination allows
-  * a reuse request to skip over bad hosts, and may result in a connection to
-  * a fall-back relay. Once we have found a 'good' host for a delivery
-  * request next-hop, clear the delivery request next-hop destination, to
-  * avoid caching less-preferred connections under that same delivery request
-  * next-hop.
+  * TODO: use the new SMTP_ITER name space.
   */
-#define SET_SCACHE_REQUEST_NEXTHOP(state, nexthop) do { \
+#define SET_NEXTHOP_STATE(state, nexthop) { \
 	vstring_strcpy((state)->iterator->request_nexthop, nexthop); \
-    } while (0)
+    }
 
-#define CLEAR_SCACHE_REQUEST_NEXTHOP(state) do { \
+#define FREE_NEXTHOP_STATE(state) { \
 	STR((state)->iterator->request_nexthop)[0] = 0; \
-    } while (0)
+    }
 
-#define HAVE_SCACHE_REQUEST_NEXTHOP(state) \
-	(STR((state)->iterator->request_nexthop)[0] != 0)
+#define HAVE_NEXTHOP_STATE(state) (STR((state)->iterator->request_nexthop)[0] != 0)
 
 
  /*
@@ -236,7 +224,6 @@ typedef struct SMTP_STATE {
 #define SMTP_FEATURE_EARLY_TLS_MAIL_REPLY (1<<19)	/* CVE-2009-3555 */
 #define SMTP_FEATURE_XFORWARD_IDENT	(1<<20)
 #define SMTP_FEATURE_SMTPUTF8		(1<<21)	/* RFC 6531 */
-#define SMTP_FEATURE_FROM_PROXY		(1<<22)	/* proxied connection */
 
  /*
   * Features that passivate under the endpoint.
@@ -410,7 +397,7 @@ extern HBC_CALL_BACKS smtp_hbc_callbacks[];
   * at completely different times.
   * 
   * We "freeze" the choice in the sender loop, just before we generate "." or
-  * "RSET". The reader loop leaves the connection cacheable even if the timer
+  * "RSET". The reader loop leaves the connection cachable even if the timer
   * expires by the time the response arrives. The connection cleanup code
   * will call smtp_quit() for connections with an expired cache expiration
   * timer.
@@ -624,18 +611,17 @@ char   *smtp_key_prefix(VSTRING *, const char *, SMTP_ITERATOR *, int);
 
 #define SMTP_KEY_FLAG_SERVICE		(1<<0)	/* service name */
 #define SMTP_KEY_FLAG_SENDER		(1<<1)	/* sender address */
-#define SMTP_KEY_FLAG_REQ_NEXTHOP	(1<<2)	/* delivery request nexthop */
-#define SMTP_KEY_FLAG_CUR_NEXTHOP	(1<<3)	/* current nexthop */
+#define SMTP_KEY_FLAG_REQ_NEXTHOP	(1<<2)	/* request nexthop */
+#define SMTP_KEY_FLAG_NEXTHOP		(1<<3)	/* current nexthop */
 #define SMTP_KEY_FLAG_HOSTNAME		(1<<4)	/* remote host name */
 #define SMTP_KEY_FLAG_ADDR		(1<<5)	/* remote address */
 #define SMTP_KEY_FLAG_PORT		(1<<6)	/* remote port */
-#define SMTP_KEY_FLAG_TLS_LEVEL		(1<<7)	/* requested TLS level */
 
 #define SMTP_KEY_MASK_ALL \
 	(SMTP_KEY_FLAG_SERVICE | SMTP_KEY_FLAG_SENDER | \
 	SMTP_KEY_FLAG_REQ_NEXTHOP | \
-	SMTP_KEY_FLAG_CUR_NEXTHOP | SMTP_KEY_FLAG_HOSTNAME | \
-	SMTP_KEY_FLAG_ADDR | SMTP_KEY_FLAG_PORT | SMTP_KEY_FLAG_TLS_LEVEL)
+	SMTP_KEY_FLAG_NEXTHOP | SMTP_KEY_FLAG_HOSTNAME | \
+	SMTP_KEY_FLAG_ADDR | SMTP_KEY_FLAG_PORT)
 
  /*
   * Conditional lookup-key flags for cached connections that may be
@@ -648,28 +634,17 @@ char   *smtp_key_prefix(VSTRING *, const char *, SMTP_ITERATOR *, int);
 	((var_smtp_sender_auth && *var_smtp_sasl_passwd) ? \
 	    SMTP_KEY_FLAG_SENDER : 0)
 
-#define COND_SASL_SMTP_KEY_FLAG_CUR_NEXTHOP \
-	(*var_smtp_sasl_passwd ? SMTP_KEY_FLAG_CUR_NEXTHOP : 0)
-
-#ifdef USE_TLS
-#define COND_TLS_SMTP_KEY_FLAG_CUR_NEXTHOP \
-	(TLS_MUST_MATCH(state->tls->level) ? SMTP_KEY_FLAG_CUR_NEXTHOP : 0)
-#else
-#define COND_TLS_SMTP_KEY_FLAG_CUR_NEXTHOP \
-	(0)
-#endif
+#define COND_SASL_SMTP_KEY_FLAG_NEXTHOP \
+	(*var_smtp_sasl_passwd ? SMTP_KEY_FLAG_NEXTHOP : 0)
 
 #define COND_SASL_SMTP_KEY_FLAG_HOSTNAME \
 	(*var_smtp_sasl_passwd ? SMTP_KEY_FLAG_HOSTNAME : 0)
 
  /*
-  * Connection-cache destination lookup key, based on the delivery request
-  * nexthop. The SENDER attribute is a proxy for sender-dependent SASL
-  * credentials (or absence thereof), and prevents false connection sharing
-  * when different SASL credentials may be required for different deliveries
-  * to the same domain and port. Likewise, the delivery request nexthop
-  * (REQ_NEXTHOP) prevents false sharing of TLS identities (the destination
-  * key links only to appropriate endpoint lookup keys). The SERVICE
+  * Connection-cache destination lookup key. The SENDER attribute is a proxy
+  * for sender-dependent SASL credentials (or absence thereof), and prevents
+  * false connection sharing when different SASL credentials may be required
+  * for different deliveries to the same domain and port. The SERVICE
   * attribute is a proxy for all request-independent configuration details.
   */
 #define SMTP_KEY_MASK_SCACHE_DEST_LABEL \
@@ -677,19 +652,15 @@ char   *smtp_key_prefix(VSTRING *, const char *, SMTP_ITERATOR *, int);
 	| SMTP_KEY_FLAG_REQ_NEXTHOP)
 
  /*
-  * Connection-cache endpoint lookup key. The SENDER, CUR_NEXTHOP, HOSTNAME,
-  * PORT and TLS_LEVEL attributes are proxies for SASL credentials and TLS
-  * authentication (or absence thereof), and prevent false connection sharing
-  * when different SASL credentials or TLS identities may be required for
-  * different deliveries to the same IP address and port. The SERVICE
-  * attribute is a proxy for all request-independent configuration details.
+  * Connection-cache endpoint lookup key. The SENDER, NEXTHOP, and HOSTNAME
+  * attributes are proxies for SASL credentials (or absence thereof), and
+  * prevent false connection sharing when different SASL credentials may be
+  * required for different deliveries to the same IP address and port.
   */
 #define SMTP_KEY_MASK_SCACHE_ENDP_LABEL \
 	(SMTP_KEY_FLAG_SERVICE | COND_SASL_SMTP_KEY_FLAG_SENDER \
-	| COND_SASL_SMTP_KEY_FLAG_CUR_NEXTHOP \
-	| COND_SASL_SMTP_KEY_FLAG_HOSTNAME \
-	| COND_TLS_SMTP_KEY_FLAG_CUR_NEXTHOP | SMTP_KEY_FLAG_ADDR | \
-	SMTP_KEY_FLAG_PORT | SMTP_KEY_FLAG_TLS_LEVEL)
+	| COND_SASL_SMTP_KEY_FLAG_NEXTHOP | COND_SASL_SMTP_KEY_FLAG_HOSTNAME \
+	| SMTP_KEY_FLAG_ADDR | SMTP_KEY_FLAG_PORT)
 
  /*
   * Silly little macros.
@@ -702,31 +673,6 @@ extern int smtp_mode;
 #define VAR_LMTP_SMTP(x) (smtp_mode ? VAR_SMTP_##x : VAR_LMTP_##x)
 #define LMTP_SMTP_SUFFIX(x) (smtp_mode ? x##_SMTP : x##_LMTP)
 
- /*
-  * Parsed command-line attributes. These do not change during the process
-  * lifetime.
-  */
-typedef struct {
-    int     flags;			/* from flags=, see below */
-} SMTP_CLI_ATTR;
-
-#define SMTP_CLI_FLAG_DELIVERED_TO	(1<<0)	/* prepend Delivered-To: */
-#define SMTP_CLI_FLAG_ORIG_RCPT		(1<<1)	/* prepend X-Original-To: */
-#define SMTP_CLI_FLAG_RETURN_PATH	(1<<2)	/* prepend Return-Path: */
-#define SMTP_CLI_FLAG_FINAL_DELIVERY	(1<<3)	/* final, not relay */
-
-#define SMTP_CLI_MASK_ADD_HEADERS	(SMTP_CLI_FLAG_DELIVERED_TO | \
-	SMTP_CLI_FLAG_ORIG_RCPT | SMTP_CLI_FLAG_RETURN_PATH)
-
-extern SMTP_CLI_ATTR smtp_cli_attr;
-
- /*
-  * smtp_misc.c.
-  */
-extern void smtp_rewrite_generic_internal(VSTRING *, const char *);
-extern void smtp_quote_822_address_flags(VSTRING *, const char *, int);
-extern void smtp_quote_821_address(VSTRING *, const char *);
-
 /* LICENSE
 /* .ad
 /* .fi
@@ -736,11 +682,6 @@ extern void smtp_quote_821_address(VSTRING *, const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*
 /*	TLS support originally by:
 /*	Lutz Jaenicke

@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.37 2020/03/16 09:31:41 nia Exp $
+.\" $NetBSD: pms.4,v 1.34 2020/02/10 16:13:48 ryoon Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd March 14, 2020
+.Dd February 11, 2020
 .Dt PMS 4
 .Os
 .Sh NAME
@@ -102,22 +102,13 @@ The following
 variables control behavior of Synaptics touchpads:
 .Bl -tag -width 8n
 .It Dv hw.synaptics.up_down_emulation
-If the touchpad reports the existence of extra ("Up/Down") buttons, this
-value determines what kind of mouse events they should generate.
-On certain clickpads, the Up/Down buttons may be physical buttons that
-can be used instead of pressing the pad down, or used as additional
-buttons.
-.Bl -bullet
-.It
-If set to 0, Up/Down events generate button 4 and 5 clicks.
-.It
-If set to 1, Up/Down events generate middle button clicks.
-.It
-If set to 2, the Up and Down buttons are used for Z-axis emulation,
-which more closely resembles how mouse wheels operate.
-.It
-If set to 3 (default), Up/Down events generate left/right clicks.
-.El
+If the touchpad reports the existence of Up/Down buttons, this value
+determines if they should be reported as button 4 and 5 events or if
+they should be used to emulate some other event.
+When set to 0, report Up/Down events as buttons 4 and 5.
+When set to 1, the Up and Down buttons are both mapped to the middle button.
+When set to 2 (default), the Up and Down buttons are used for Z-axis
+emulation, which more closely resembles how mouse wheels operate.
 .It Dv hw.synaptics.up_down_motion_delta
 When the Up/Down buttons are used for Z-axis emulation, this value specifies
 the emulated delta-Z value per click.
@@ -148,14 +139,9 @@ reported pressure drops below this value.
 More recent touchpads can report the presence of more than one finger
 on the pad.
 This value determines how such events are used.
-.Bl -bullet
-.It
 If set to 0 (default), two-finger events are ignored.
-.It
 If set to 1, two-finger events generate a right button click.
-.It
 If set to 2, two-finger events generate a middle button click.
-.El
 .It Dv hw.synaptics.scale_x
 .It Dv hw.synaptics.scale_y
 .It Dv hw.synaptics.scale_z
@@ -174,7 +160,7 @@ ignored (default 4).
 Sets the top edge of the button emulation region on a clickpad.
 Since a clickpad only reports left clicks this region is used to emulate
 two or three buttons by detecting the finger location and reporting
-either a button 2 or button 3 click if the click occurs within
+either a button 2 or button 3 click iff the click occurs within
 the region bounded by button_boundary and the bottom of the clickpad.
 .It Dv hw.synaptics.button3_edge
 This defines the left hand edge of the button 3 region.

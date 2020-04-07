@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.52 2020/04/01 00:07:04 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.50 2020/03/02 19:16:02 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,19 +34,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.52 2020/04/01 00:07:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.50 2020/03/02 19:16:02 nisimura Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/callout.h>
+#include <sys/mbuf.h>
+#include <sys/malloc.h>
+#include <sys/kernel.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/device.h>
+#include <sys/queue.h>
+
+#include <machine/endian.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
-#include <sys/device.h>
-#include <sys/callout.h>
-#include <sys/ioctl.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/errno.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -1096,19 +1099,18 @@ kse_set_filter(struct kse_softc *sc)
 
 	sc->sc_rxc &= ~(RXC_MHTE | RXC_RM | RXC_RA);
 
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		goto update;
+	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
 	/* clear perfect match filter and prepare mcast hash table */
 	for (i = 0; i < 16; i++)
 		 CSR_WRITE_4(sc, MAAH0 + i*8, 0);
 	crc = mchash[0] = mchash[1] = 0;
 
 	ETHER_LOCK(ec);
-	if (ifp->if_flags & IFF_PROMISC) {
-		ec->ec_flags |= ETHER_F_ALLMULTI;
-		/* run promisc. mode */
-		sc->sc_rxc |= RXC_RA;
-		goto update;
-	}
-	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	i = 0;
 	while (enm != NULL) {
@@ -1121,10 +1123,8 @@ kse_set_filter(struct kse_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-			ec->ec_flags |= ETHER_F_ALLMULTI;
 			ETHER_UNLOCK(ec);
-			/* accept all multicast */
-			sc->sc_rxc |= RXC_RM;
+			ifp->if_flags |= IFF_ALLMULTI;
 			goto update;
 		}
 #if KSE_MCASTDEBUG == 1
@@ -1153,8 +1153,14 @@ kse_set_filter(struct kse_softc *sc)
 		sc->sc_rxc |= RXC_MHTE;
 	CSR_WRITE_4(sc, MTR0, mchash[0]);
 	CSR_WRITE_4(sc, MTR1, mchash[1]);
+	return;
+
  update:
 	/* With RA or RM, MHTE/MTR0/MTR1 are never consulted. */
+	if (ifp->if_flags & IFF_PROMISC)
+		sc->sc_rxc |= RXC_RA;
+	else
+		sc->sc_rxc |= RXC_RM;
 	return;
 }
 

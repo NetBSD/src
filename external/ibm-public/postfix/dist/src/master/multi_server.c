@@ -1,4 +1,4 @@
-/*	$NetBSD: multi_server.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: multi_server.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -153,12 +153,10 @@
 /*	This value is taken from the global \fBmain.cf\fR configuration
 /*	file. Setting \fBvar_idle_limit\fR to zero disables the idle limit.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8)
-/*	or \fBpostlogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* SEE ALSO
 /*	master(8), master process
-/*	postlogd(8), Postfix logging
-/*	syslogd(8), system logging
+/*	syslogd(8) system logging
 /* LICENSE
 /* .ad
 /* .fi
@@ -168,11 +166,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -182,6 +175,7 @@
 #include <sys/time.h>			/* select() */
 #include <unistd.h>
 #include <signal.h>
+#include <syslog.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
@@ -200,6 +194,7 @@
 /* Utility library. */
 
 #include <msg.h>
+#include <msg_syslog.h>
 #include <msg_vstream.h>
 #include <chroot_uid.h>
 #include <listen.h>
@@ -229,7 +224,6 @@
 #include <mail_flow.h>
 #include <mail_version.h>
 #include <bounce.h>
-#include <maillog_client.h>
 
 /* Process manager. */
 
@@ -563,6 +557,7 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     const char *err;
     char   *generation;
     int     msg_vstream_needed = 0;
+    int     redo_syslog_init = 0;
     const char *dsn_filter_title;
     const char **dsn_filter_maps;
 
@@ -596,7 +591,7 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
      * Initialize logging and exit handler. Do the syslog first, so that its
      * initialization completes before we enter the optional chroot jail.
      */
-    maillog_client_init(mail_task(var_procname), MAILLOG_CLIENT_FLAG_NONE);
+    msg_syslog_init(mail_task(var_procname), LOG_PID, LOG_FACILITY);
     if (msg_verbose)
 	msg_info("daemon started");
 
@@ -650,6 +645,8 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    if ((err = split_nameval(oname_val, &oname, &oval)) != 0)
 		msg_fatal("invalid \"-o %s\" option value: %s", optarg, err);
 	    mail_conf_update(oname, oval);
+	    if (strcmp(oname, VAR_SYSLOG_NAME) == 0)
+		redo_syslog_init = 1;
 	    myfree(oname_val);
 	    break;
 	case 's':
@@ -676,18 +673,17 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    zerolimit = 1;
 	    break;
 	default:
-	    msg_fatal("invalid option: %c", optopt);
+	    msg_fatal("invalid option: %c", c);
 	    break;
 	}
     }
-    set_mail_conf_str(VAR_SERVNAME, service_name);
 
     /*
-     * Initialize generic parameters and re-initialize logging in case of a
-     * non-default program name or logging destination.
+     * Initialize generic parameters.
      */
     mail_params_init();
-    maillog_client_init(mail_task(var_procname), MAILLOG_CLIENT_FLAG_NONE);
+    if (redo_syslog_init)
+	msg_syslog_init(mail_task(var_procname), LOG_PID, LOG_FACILITY);
 
     /*
      * Register higher-level dictionaries and initialize the support for

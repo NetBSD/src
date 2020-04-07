@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.10 2020/03/08 06:12:01 rin Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.9 2013/08/01 13:42:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -83,30 +83,32 @@ STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_32)
 
 #if !defined(LOCKDEBUG)
 
-#if !defined(__mc68010__)
 /*
  * void mutex_enter(kmutex_t *mtx);
  */
 ENTRY(mutex_enter)
+#if !defined(__mc68010__)
 	movq	#0,%d0
 	movl	_C_LABEL(curlwp),%d1
 	movl	4(%sp),%a0
 	casl	%d0,%d1,(%a0)
 	bnes	1f
 	rts
+#endif /* !__mc68010__ */
 1:	jra	_C_LABEL(mutex_vector_enter)
 
 /*
  * void mutex_exit(kmutex_t *mtx);
  */
 ENTRY(mutex_exit)
+#if !defined(__mc68010__)
 	movl	_C_LABEL(curlwp),%d0
 	movq	#0,%d1
 	movl	4(%sp),%a0
 	casl	%d0,%d1,(%a0)
 	bnes	1f
 	rts
-1:	jra	_C_LABEL(mutex_vector_exit)
 #endif /* !__mc68010__ */
+1:	jra	_C_LABEL(mutex_vector_exit)
 
 #endif	/* !LOCKDEBUG */

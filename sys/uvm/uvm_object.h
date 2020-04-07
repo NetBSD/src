@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.38 2020/03/14 20:45:23 ad Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.37 2020/02/23 15:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -114,7 +114,7 @@ extern const struct uvm_pagerops aobj_pager;
  */
 
 #define	UVM_OBJ_NEEDS_WRITEFAULT(uobj)					\
-	(UVM_OBJ_IS_VNODE(uobj) && uvn_clean_p(uobj))
+	(UVM_OBJ_IS_VNODE(uobj) && uvn_needs_writefault_p(uobj))
 
 #define	UVM_OBJ_IS_AOBJ(uobj)						\
 	((uobj)->pgops == &aobj_pager)

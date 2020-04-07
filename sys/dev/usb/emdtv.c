@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.15 2020/03/14 02:35:33 christos Exp $ */
+/* $NetBSD: emdtv.c,v 1.13 2018/09/03 16:29:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.15 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.13 2018/09/03 16:29:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

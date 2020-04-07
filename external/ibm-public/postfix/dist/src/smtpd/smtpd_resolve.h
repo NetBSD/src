@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_resolve.h,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtpd_resolve.h,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -30,11 +30,6 @@ extern const RESOLVE_REPLY *smtpd_resolve_addr(const char*, const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*
 /*	TLS support originally by:
 /*	Lutz Jaenicke

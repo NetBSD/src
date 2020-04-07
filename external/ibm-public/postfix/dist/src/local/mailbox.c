@@ -1,4 +1,4 @@
-/*	$NetBSD: mailbox.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mailbox.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -43,11 +43,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -104,7 +99,7 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     int     deliver_status;
     int     copy_flags;
     VSTRING *biff;
-    off_t   end;
+    long    end;
     struct stat st;
     uid_t   spool_uid;
     gid_t   spool_gid;
@@ -209,8 +204,7 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
 	    msg_warn("specify \"%s = no\" to ignore mailbox ownership mismatch",
 		     VAR_STRICT_MBOX_OWNER);
 	} else {
-	    if ((end = vstream_fseek(mp->fp, (off_t) 0, SEEK_END)) < 0)
-		msg_fatal("seek mailbox file %s: %m", mailbox);
+	    end = vstream_fseek(mp->fp, (off_t) 0, SEEK_END);
 	    mail_copy_status = mail_copy(COPY_ATTR(state.msg_attr), mp->fp,
 					 copy_flags, "\n", why);
 	}

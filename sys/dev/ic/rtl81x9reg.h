@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.53 2020/03/13 04:08:07 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.52 2019/12/17 10:42:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -588,8 +588,8 @@ struct re_desc {
 #define RE_UDPPKT(x)		(((x) & RE_RDESC_STAT_PROTOID) == \
 				 RE_PROTOID_UDPIP)
 
-#define RE_ADDR_LO(y)		BUS_ADDR_LO32(y)
-#define RE_ADDR_HI(y)		BUS_ADDR_HI32(y)
+#define RE_ADDR_LO(y)		((uint64_t)(y) & 0xFFFFFFFF)
+#define RE_ADDR_HI(y)		((uint64_t)(y) >> 32)
 
 /*
  * Statistics counter structure (8139C+ and 8169 only)

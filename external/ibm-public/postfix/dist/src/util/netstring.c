@@ -1,4 +1,4 @@
-/*	$NetBSD: netstring.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: netstring.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -153,11 +153,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -203,7 +198,6 @@ ssize_t netstring_get_length(VSTREAM *stream)
     const char *myname = "netstring_get_length";
     ssize_t len = 0;
     int     ch;
-    int     digit;
 
     for (;;) {
 	switch (ch = VSTREAM_GETC(stream)) {
@@ -217,11 +211,10 @@ ssize_t netstring_get_length(VSTREAM *stream)
 	default:
 	    if (!ISDIGIT(ch))
 		netstring_except(stream, NETSTRING_ERR_FORMAT);
-	    digit = ch - '0';
-	    if (len > SSIZE_T_MAX / 10
-		|| (len *= 10) > SSIZE_T_MAX - digit)
+	    len = len * 10 + ch - '0';
+	    /* vstream_fread() would read zero bytes. Reject input anyway. */
+	    if (len < 0)
 		netstring_except(stream, NETSTRING_ERR_SIZE);
-	    len += digit;
 	    break;
 	}
     }
@@ -234,9 +227,15 @@ VSTRING *netstring_get_data(VSTREAM *stream, VSTRING *buf, ssize_t len)
     const char *myname = "netstring_get_data";
 
     /*
+     * Allocate buffer space.
+     */
+    VSTRING_RESET(buf);
+    VSTRING_SPACE(buf, len);
+
+    /*
      * Read the payload and absorb the terminator.
      */
-    if (vstream_fread_buf(stream, buf, len) != len)
+    if (vstream_fread(stream, STR(buf), len) != len)
 	netstring_except(stream, vstream_ftimeout(stream) ?
 			 NETSTRING_ERR_TIME : NETSTRING_ERR_EOF);
     if (msg_verbose > 1)
@@ -245,8 +244,9 @@ VSTRING *netstring_get_data(VSTREAM *stream, VSTRING *buf, ssize_t len)
     netstring_get_terminator(stream);
 
     /*
-     * Return the buffer.
+     * Position the buffer.
      */
+    VSTRING_AT_OFFSET(buf, len);
     return (buf);
 }
 
@@ -265,7 +265,7 @@ VSTRING *netstring_get(VSTREAM *stream, VSTRING *buf, ssize_t limit)
     ssize_t len;
 
     len = netstring_get_length(stream);
-    if (ENFORCING_SIZE_LIMIT(limit) && len > limit)
+    if (limit && len > limit)
 	netstring_except(stream, NETSTRING_ERR_SIZE);
     netstring_get_data(stream, buf, len);
     return (buf);

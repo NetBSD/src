@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.23 2020/03/05 07:46:36 riastradh Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.22 2014/06/05 23:48:16 rmind Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.254 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -33,10 +33,6 @@
 
 #ifndef _NET_PFVAR_H_
 #define _NET_PFVAR_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.86 2020/03/15 22:20:31 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.83 2020/03/02 15:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.86 2020/03/15 22:20:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.83 2020/03/02 15:13:23 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -456,7 +456,6 @@ stge_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self,
 			    "WARNING: failed to restrict dma range,"
 			    " falling back to parent bus dma range\n");
-			sc->sc_dmat = pa->pa_dmat64;
 		}
 	} else {
 		sc->sc_dmat = pa->pa_dmat;
@@ -827,7 +826,7 @@ stge_start(struct ifnet *ifp)
 	int error, firsttx, nexttx, opending, seg, totlen;
 	uint64_t csum_flags;
 
-	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	/*
@@ -1013,6 +1012,11 @@ stge_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
+	if (sc->sc_txpending == (STGE_NTXDESC - 1)) {
+		/* No more slots left; notify upper layer. */
+		ifp->if_flags |= IFF_OACTIVE;
+	}
+
 	if (sc->sc_txpending != opending) {
 		/*
 		 * We enqueued packets.  If the transmitter was idle,
@@ -1193,6 +1197,8 @@ stge_txintr(struct stge_softc *sc)
 	uint64_t control;
 	int i;
 
+	ifp->if_flags &= ~IFF_OACTIVE;
+
 	/*
 	 * Go through our Tx list and free mbufs for those
 	 * frames which have been transmitted.
@@ -1347,7 +1353,6 @@ stge_rxintr(struct stge_softc *sc)
 				m_freem(m);
 				continue;
 			}
-			MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 			nm->m_data += 2;
 			nm->m_pkthdr.len = nm->m_len = len;
 			m_copydata(m, 0, len, mtod(nm, void *));
@@ -1705,6 +1710,7 @@ stge_init(struct ifnet *ifp)
 	 * ...all done!
 	 */
 	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
 	if (error)
@@ -1789,7 +1795,7 @@ stge_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~IFF_RUNNING;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
 	if (disable)
@@ -1846,7 +1852,6 @@ stge_add_rxbuf(struct stge_softc *sc, int idx)
 	if (m == NULL)
 		return (ENOBUFS);
 
-	MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);

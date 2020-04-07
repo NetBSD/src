@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.21 2020/03/08 02:44:12 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.20 2018/02/08 09:05:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,32 +85,17 @@
  * and receive descriptor chains.
  *
  * Note the DP83820 can use 64-bit DMA addresses for link and bufptr.
- * Note also that the buffer pointer and command/status words are in
- * the opposite order on the DP83820 to facilitate 64-bit DMA addresses.
+ * However, we do not yet support that.
  *
  * For transmit, buffers need not be aligned.  For receive, buffers
  * must be aligned to 4-byte (8-byte on DP83820) boundaries.
  */
-#define	SIP_DESC_LINK		0	/* link to next descriptor */
-#define	SIP_DESC_CMDSTS		1	/* ccommand/status */
-#define	SIP_DESC_BUFPTR		2	/* pointer to DMA segment */
-
-#define	GSIP_DESC_LINK		0
-#define	GSIP_DESC_BUFPTR	1
-#define	GSIP_DESC_CMDSTS	2
-#define	GSIP_DESC_EXTSTS	3	/* extended status */
-
-#define	GSIP64_DESC_LINK_LO	0
-#define	GSIP64_DESC_LINK_HI	1
-#define	GSIP64_DESC_BUFPTR_LO	2
-#define	GSIP64_DESC_BUFPTR_HI	3
-#define	GSIP64_DESC_CMDSTS	4
-#define	GSIP64_DESC_EXTSTS	5
-
-#define	SIP_NDESC_WORDS		6
-
 struct sip_desc {
-	uint32_t	sipd_words[SIP_NDESC_WORDS];
+	u_int32_t	sipd_link;	/* link to next descriptor */
+	uint32_t	sipd_cbs[2];	/* command/status and pointer to
+					 * DMA segment
+					 */
+	u_int32_t	sipd_extsts;	/* extended status */
 };
 
 /*

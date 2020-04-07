@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2662 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2654 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -117,6 +117,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	amd64, i386: Replace the global PV hash table with radix trees,
 		yielding significant performance and scalability benefits.
 		[ad 20200112]
+	amd64, i386: Use the pmap module as a source of pre-zeroed pages
+		for the VM system. [ad 20200112]
 	scheduler: Make the scheduler topology aware.  It understands and
 		makes good use of HyperThreading/SMT, spreads the load evenly
 		across different physical CPU packages, and can effectively
@@ -146,18 +148,3 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		in the Raspberry Pi 4. [jmcneill 20200222]
 	OpenSSH: Import 8.2. [christos 20200226]
 	ld.elf_so(1): Implement DT_GNU_HASH [kamil 20200229]
-	amiga: Fix word accesses on Gayle (A1200) pcmcia. [is 20200302]
-	libcbor: Import for libfido2 support [christos 20200302]
-	libfido2: Import for pam-u2f support [christos 20200302]
-	pam-u2f: Import token authenticator [christos 20200302]
-	terminfo: Support numeric parameters as int [roy 20200313]
-	postfix(1): Import version 3.5.0. [christos 20200318]
-	OpenSSL: Imported 1.1.1e. [christos 20200321]
-	amd64, i386: Significant performance improvements in the pmap module
-		[ad 20200322]
-	namecache: Change the namecache to index names using per directory
-		red-black trees. [ad 20200322]
-	uvm: Process concurrent page faults on individual objects in parallel,
-		where the relevant pages are already in-core.  [ad 20200322]
-	bwfm: Update firmware to linux-firmware-20200316. [thorpej 20200322]
-	acpi(4): Updated ACPICA to 20200326. [christos 20200328]

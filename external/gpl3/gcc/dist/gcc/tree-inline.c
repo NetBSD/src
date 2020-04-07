@@ -578,92 +578,6 @@ remap_type_1 (tree type, copy_body_data *id)
   return new_tree;
 }
 
-/* Helper function for remap_type_2, called through walk_tree.  */
-
-static tree
-remap_type_3 (tree *tp, int *walk_subtrees, void *data)
-{
-  copy_body_data *id = (copy_body_data *) data;
-
-  if (TYPE_P (*tp))
-    *walk_subtrees = 0;
-
-  else if (DECL_P (*tp) && remap_decl (*tp, id) != *tp)
-    return *tp;
-
-  return NULL_TREE;
-}
-
-/* Return true if TYPE needs to be remapped because remap_decl on any
-   needed embedded decl returns something other than that decl.  */
-
-static bool
-remap_type_2 (tree type, copy_body_data *id)
-{
-  tree t;
-
-#define RETURN_TRUE_IF_VAR(T) \
-  do								\
-    {								\
-      tree _t = (T);						\
-      if (_t)							\
-	{							\
-	  if (DECL_P (_t) && remap_decl (_t, id) != _t)		\
-	    return true;					\
-	  if (!TYPE_SIZES_GIMPLIFIED (type)			\
-	      && walk_tree (&_t, remap_type_3, id, NULL))	\
-	    return true;					\
-	}							\
-    }								\
-  while (0)
-
-  switch (TREE_CODE (type))
-    {
-    case POINTER_TYPE:
-    case REFERENCE_TYPE:
-    case FUNCTION_TYPE:
-    case METHOD_TYPE:
-      return remap_type_2 (TREE_TYPE (type), id);
-
-    case INTEGER_TYPE:
-    case REAL_TYPE:
-    case FIXED_POINT_TYPE:
-    case ENUMERAL_TYPE:
-    case BOOLEAN_TYPE:
-      RETURN_TRUE_IF_VAR (TYPE_MIN_VALUE (type));
-      RETURN_TRUE_IF_VAR (TYPE_MAX_VALUE (type));
-      return false;
-
-    case ARRAY_TYPE:
-      if (remap_type_2 (TREE_TYPE (type), id)
-	  || (TYPE_DOMAIN (type) && remap_type_2 (TYPE_DOMAIN (type), id)))
-	return true;
-      break;
-
-    case RECORD_TYPE:
-    case UNION_TYPE:
-    case QUAL_UNION_TYPE:
-      for (t = TYPE_FIELDS (type); t; t = DECL_CHAIN (t))
-	if (TREE_CODE (t) == FIELD_DECL)
-	  {
-	    RETURN_TRUE_IF_VAR (DECL_FIELD_OFFSET (t));
-	    RETURN_TRUE_IF_VAR (DECL_SIZE (t));
-	    RETURN_TRUE_IF_VAR (DECL_SIZE_UNIT (t));
-	    if (TREE_CODE (type) == QUAL_UNION_TYPE)
-	      RETURN_TRUE_IF_VAR (DECL_QUALIFIER (t));
-	  }
-      break;
-
-    default:
-      return false;
-    }
-
-  RETURN_TRUE_IF_VAR (TYPE_SIZE (type));
-  RETURN_TRUE_IF_VAR (TYPE_SIZE_UNIT (type));
-  return false;
-#undef RETURN_TRUE_IF_VAR
-}
-
 tree
 remap_type (tree type, copy_body_data *id)
 {
@@ -679,10 +593,7 @@ remap_type (tree type, copy_body_data *id)
     return *node;
 
   /* The type only needs remapping if it's variably modified.  */
-  if (! variably_modified_type_p (type, id->src_fn)
-      /* Don't remap if copy_decl method doesn't always return a new
-	 decl and for all embedded decls returns the passed in decl.  */
-      || (id->dont_remap_vla_if_no_change && !remap_type_2 (type, id)))
+  if (! variably_modified_type_p (type, id->src_fn))
     {
       insert_decl_map (id, type, type);
       return type;
@@ -957,12 +868,7 @@ remap_dependence_clique (copy_body_data *id, unsigned short clique)
   bool existed;
   unsigned short &newc = id->dependence_map->get_or_insert (clique, &existed);
   if (!existed)
-    {
-      /* Clique 1 is reserved for local ones set by PTA.  */
-      if (cfun->last_clique == 0)
-	cfun->last_clique = 1;
-      newc = ++cfun->last_clique;
-    }
+    newc = ++cfun->last_clique;
   return newc;
 }
 
@@ -2745,11 +2651,7 @@ copy_loops (copy_body_data *id,
 	      dest_loop->simduid = remap_decl (src_loop->simduid, id);
 	      cfun->has_simduid_loops = true;
 	    }
-	  if (id->src_cfun->last_clique != 0)
-	    dest_loop->owned_clique
-	      = remap_dependence_clique (id,
-					 src_loop->owned_clique
-					 ? src_loop->owned_clique : 1);
+
 	  /* Recurse.  */
 	  copy_loops (id, dest_loop, src_loop);
 	}
@@ -4476,8 +4378,7 @@ reset_debug_bindings (copy_body_data *id, gimple_stmt_iterator gsi)
 /* If STMT is a GIMPLE_CALL, replace it with its inline expansion.  */
 
 static bool
-expand_call_inline (basic_block bb, gimple *stmt, copy_body_data *id,
-		    bitmap to_purge)
+expand_call_inline (basic_block bb, gimple *stmt, copy_body_data *id)
 {
   tree use_retvar;
   tree fn;
@@ -4623,7 +4524,7 @@ expand_call_inline (basic_block bb, gimple *stmt, copy_body_data *id,
       gimple_call_set_fndecl (stmt, edge->callee->decl);
       update_stmt (stmt);
       id->src_node->remove ();
-      expand_call_inline (bb, stmt, id, to_purge);
+      expand_call_inline (bb, stmt, id);
       maybe_remove_unused_call_args (cfun, stmt);
       return true;
     }
@@ -5011,7 +4912,10 @@ expand_call_inline (basic_block bb, gimple *stmt, copy_body_data *id,
     }
 
   if (purge_dead_abnormal_edges)
-    bitmap_set_bit (to_purge, return_block->index);
+    {
+      gimple_purge_dead_eh_edges (return_block);
+      gimple_purge_dead_abnormal_call_edges (return_block);
+    }
 
   /* If the value of the new expression is ignored, that's OK.  We
      don't warn about this for CALL_EXPRs, so we shouldn't warn about
@@ -5053,8 +4957,7 @@ expand_call_inline (basic_block bb, gimple *stmt, copy_body_data *id,
    in a MODIFY_EXPR.  */
 
 static bool
-gimple_expand_calls_inline (basic_block bb, copy_body_data *id,
-			    bitmap to_purge)
+gimple_expand_calls_inline (basic_block bb, copy_body_data *id)
 {
   gimple_stmt_iterator gsi;
   bool inlined = false;
@@ -5066,7 +4969,7 @@ gimple_expand_calls_inline (basic_block bb, copy_body_data *id,
 
       if (is_gimple_call (stmt)
 	  && !gimple_call_internal_p (stmt))
-	inlined |= expand_call_inline (bb, stmt, id, to_purge);
+	inlined |= expand_call_inline (bb, stmt, id);
     }
 
   return inlined;
@@ -5079,8 +4982,7 @@ gimple_expand_calls_inline (basic_block bb, copy_body_data *id,
 static void
 fold_marked_statements (int first, hash_set<gimple *> *statements)
 {
-  auto_bitmap to_purge;
-  for (; first < last_basic_block_for_fn (cfun); first++)
+  for (; first < n_basic_blocks_for_fn (cfun); first++)
     if (BASIC_BLOCK_FOR_FN (cfun, first))
       {
         gimple_stmt_iterator gsi;
@@ -5091,8 +4993,7 @@ fold_marked_statements (int first, hash_set<gimple *> *statements)
 	  if (statements->contains (gsi_stmt (gsi)))
 	    {
 	      gimple *old_stmt = gsi_stmt (gsi);
-	      tree old_decl
-		= is_gimple_call (old_stmt) ? gimple_call_fndecl (old_stmt) : 0;
+	      tree old_decl = is_gimple_call (old_stmt) ? gimple_call_fndecl (old_stmt) : 0;
 
 	      if (old_decl && DECL_BUILT_IN (old_decl))
 		{
@@ -5136,7 +5037,8 @@ fold_marked_statements (int first, hash_set<gimple *> *statements)
 				 is mood anyway.  */
 			      if (maybe_clean_or_replace_eh_stmt (old_stmt,
 								  new_stmt))
-				bitmap_set_bit (to_purge, first);
+				gimple_purge_dead_eh_edges (
+				  BASIC_BLOCK_FOR_FN (cfun, first));
 			      break;
 			    }
 			  gsi_next (&i2);
@@ -5156,11 +5058,11 @@ fold_marked_statements (int first, hash_set<gimple *> *statements)
 						       new_stmt);
 
 		  if (maybe_clean_or_replace_eh_stmt (old_stmt, new_stmt))
-		    bitmap_set_bit (to_purge, first);
+		    gimple_purge_dead_eh_edges (BASIC_BLOCK_FOR_FN (cfun,
+								    first));
 		}
 	    }
       }
-  gimple_purge_all_dead_eh_edges (to_purge);
 }
 
 /* Expand calls to inline functions in the body of FN.  */
@@ -5206,9 +5108,8 @@ optimize_inline_calls (tree fn)
      will split id->current_basic_block, and the new blocks will
      follow it; we'll trudge through them, processing their CALL_EXPRs
      along the way.  */
-  auto_bitmap to_purge;
   FOR_EACH_BB_FN (bb, cfun)
-    inlined_p |= gimple_expand_calls_inline (bb, &id, to_purge);
+    inlined_p |= gimple_expand_calls_inline (bb, &id);
 
   pop_gimplify_context (NULL);
 
@@ -5227,21 +5128,6 @@ optimize_inline_calls (tree fn)
   update_max_bb_count ();
   fold_marked_statements (last, id.statements_to_fold);
   delete id.statements_to_fold;
-
-  /* Finally purge EH and abnormal edges from the call stmts we inlined.
-     We need to do this after fold_marked_statements since that may walk
-     the SSA use-def chain.  */
-  unsigned i;
-  bitmap_iterator bi;
-  EXECUTE_IF_SET_IN_BITMAP (to_purge, 0, i, bi)
-    {
-      basic_block bb = BASIC_BLOCK_FOR_FN (cfun, i);
-      if (bb)
-	{
-	  gimple_purge_dead_eh_edges (bb);
-	  gimple_purge_dead_abnormal_call_edges (bb);
-	}
-    }
 
   gcc_assert (!id.debug_stmts.exists ());
 
@@ -5653,10 +5539,6 @@ copy_decl_for_dup_finish (copy_body_data *id, tree decl, tree copy)
   if (CODE_CONTAINS_STRUCT (TREE_CODE (copy), TS_DECL_WRTL)
       && !TREE_STATIC (copy) && !DECL_EXTERNAL (copy))
     SET_DECL_RTL (copy, 0);
-  /* For vector typed decls make sure to update DECL_MODE according
-     to the new function context.  */
-  if (VECTOR_TYPE_P (TREE_TYPE (copy)))
-    SET_DECL_MODE (copy, TYPE_MODE (TREE_TYPE (copy)));
 
   /* These args would always appear unused, if not for this.  */
   TREE_USED (copy) = 1;

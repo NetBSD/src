@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.177 2020/03/05 12:21:00 rin Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.176 2020/01/12 12:55:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.177 2020/03/05 12:21:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.176 2020/01/12 12:55:03 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -244,8 +244,7 @@ uarea_poolpage_alloc(struct pool *pp, int flags)
 	KASSERT((flags & PR_WAITOK) != 0);
 
 #if defined(PMAP_MAP_POOLPAGE)
-	while (USPACE == PAGE_SIZE &&
-	    (USPACE_ALIGN == 0 || USPACE_ALIGN == PAGE_SIZE)) {
+	while (USPACE == PAGE_SIZE && USPACE_ALIGN == 0) {
 		struct vm_page *pg;
 		vaddr_t va;
 #if defined(PMAP_ALLOC_POOLPAGE)
@@ -275,8 +274,7 @@ static void
 uarea_poolpage_free(struct pool *pp, void *addr)
 {
 #if defined(PMAP_MAP_POOLPAGE)
-	if (USPACE == PAGE_SIZE &&
-	    (USPACE_ALIGN == 0 || USPACE_ALIGN == PAGE_SIZE)) {
+	if (USPACE == PAGE_SIZE && USPACE_ALIGN == 0) {
 		paddr_t pa;
 
 		pa = PMAP_UNMAP_POOLPAGE((vaddr_t) addr);

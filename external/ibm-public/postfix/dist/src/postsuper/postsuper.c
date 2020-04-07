@@ -1,4 +1,4 @@
-/*	$NetBSD: postsuper.c,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: postsuper.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -8,8 +8,7 @@
 /* SYNOPSIS
 /* .fi
 /*	\fBpostsuper\fR [\fB-psSv\fR]
-/*		[\fB-c \fIconfig_dir\fR] [\fB-d \fIqueue_id\fR]
-/*		[\fB-e \fIqueue_id\fR] [\fB-f \fIqueue_id\fR]
+/*	[\fB-c \fIconfig_dir\fR] [\fB-d \fIqueue_id\fR]
 /*		[\fB-h \fIqueue_id\fR] [\fB-H \fIqueue_id\fR]
 /*		[\fB-r \fIqueue_id\fR] [\fIdirectory ...\fR]
 /* DESCRIPTION
@@ -21,9 +20,8 @@
 /*	By default, \fBpostsuper\fR(1) performs the operations
 /*	requested with the
 /*	\fB-s\fR and \fB-p\fR command-line options on all Postfix queue
-/*	directories - this includes the \fBincoming\fR, \fBactive\fR,
-/*	\fBdeferred\fR, and \fBhold\fR directories with message
-/*	files and the \fBbounce\fR,
+/*	directories - this includes the \fBincoming\fR, \fBactive\fR and
+/*	\fBdeferred\fR directories with mail files and the \fBbounce\fR,
 /*	\fBdefer\fR, \fBtrace\fR and \fBflush\fR directories with log files.
 /*
 /*	Options:
@@ -36,17 +34,16 @@
 /*	mail queue(s) (default: \fBhold\fR, \fBincoming\fR, \fBactive\fR and
 /*	\fBdeferred\fR).
 /*
-/*	To delete multiple files, specify the \fB-d\fR option multiple
-/*	times, or specify a \fIqueue_id\fR of \fB-\fR to read queue IDs
-/*	from standard input. For example, to delete all mail
+/*	If a \fIqueue_id\fR of \fB-\fR is specified, the program reads
+/*	queue IDs from standard input. For example, to delete all mail
 /*	with exactly one recipient \fBuser@example.com\fR:
 /* .sp
 /* .nf
-/*	mailq | tail -n +2 | grep -v '^ *(' | awk  'BEGIN { RS = "" }
+/*	mailq | tail +2 | grep -v '^ *(' | awk  \'BEGIN { RS = "" }
 /*	    # $7=sender, $8=recipient1, $9=recipient2
 /*	    { if ($8 == "user@example.com" && $9 == "")
 /*	          print $1 }
-/*	 ' | tr -d '*!' | postsuper -d -
+/*	\' | tr -d '*!' | postsuper -d -
 /* .fi
 /* .sp
 /*	Specify "\fB-d ALL\fR" to remove all messages; for example, specify
@@ -76,49 +73,14 @@
 /*	\fBpostsuper\fR(1) deletes the new message, instead of the old
 /*	message that it should have deleted.
 /* .RE
-/* .IP "\fB-e \fIqueue_id\fR"
-/* .IP "\fB-f \fIqueue_id\fR"
-/*	Request forced expiration for one message with the named
-/*	queue ID in the named mail queue(s) (default: \fBhold\fR,
-/*	\fBincoming\fR, \fBactive\fR and \fBdeferred\fR).
-/* .RS
-/* .IP \(bu
-/*	The message will be returned to the sender when the queue
-/*	manager attempts to deliver that message (note that Postfix
-/*	will never deliver messages in the \fBhold\fR queue).
-/* .IP \(bu
-/*	The \fB-e\fR and \fB-f\fR options both request forced
-/*	expiration. The difference is that \fB-f\fR will also release
-/*	a message if it is in the \fBhold\fR queue. With \fB-e\fR, such
-/*	a message would not be returned to the sender until it is
-/*	released with \fB-f\fR or \fB-H\fR.
-/* .IP \(bu
-/*	When a deferred message is force-expired, the return message
-/*	will state the reason for the delay. Otherwise, the reason
-/*	will be "message is administratively expired".
-/* .RE
-/* .IP
-/*	To expire multiple files, specify the \fB-e\fR or \fB-f\fR
-/*	option multiple times, or specify a \fIqueue_id\fR of \fB-\fR
-/*	to read queue IDs from standard input (see the \fB-d\fR option
-/*	above for an example, but be sure to replace \fB-d\fR in
-/*	the example).
-/* .sp
-/*	Specify "\fB-e ALL\fR" or "\fB-f ALL\fR" to expire all
-/*	messages; for example, specify "\fB-e ALL deferred\fR" to
-/*	expire all mail in the \fBdeferred\fR queue.  As a safety
-/*	measure, the word \fBALL\fR must be specified in upper case.
-/* .sp
-/*	These features are available in Postfix 3.5 and later.
 /* .IP "\fB-h \fIqueue_id\fR"
 /*	Put mail "on hold" so that no attempt is made to deliver it.
 /*	Move one message with the named queue ID from the named
 /*	mail queue(s) (default: \fBincoming\fR, \fBactive\fR and
 /*	\fBdeferred\fR) to the \fBhold\fR queue.
 /*
-/*	To hold multiple files, specify the \fB-h\fR option multiple
-/*	times, or specify a \fIqueue_id\fR of \fB-\fR to read queue IDs
-/*	from standard input.
+/*	If a \fIqueue_id\fR of \fB-\fR is specified, the program reads
+/*	queue IDs from standard input.
 /* .sp
 /*	Specify "\fB-h ALL\fR" to hold all messages; for example, specify
 /*	"\fB-h ALL deferred\fR" to hold all mail in the \fBdeferred\fR queue.
@@ -136,9 +98,8 @@
 /*	Move one message with the named queue ID from the named
 /*	mail queue(s) (default: \fBhold\fR) to the \fBdeferred\fR queue.
 /*
-/*	To release multiple files, specify the \fB-H\fR option multiple
-/*	times, or specify a \fIqueue_id\fR of \fB-\fR to read queue IDs
-/*	from standard input.
+/*	If a \fIqueue_id\fR of \fB-\fR is specified, the program reads
+/*	queue IDs from standard input.
 /* .sp
 /*	Note: specify "\fBpostsuper -r\fR" to release mail that was kept on
 /*	hold for a significant fraction of \fB$maximal_queue_lifetime\fR
@@ -152,16 +113,15 @@
 /* .IP \fB-p\fR
 /*	Purge old temporary files that are left over after system or
 /*	software crashes.
-/*	The \fB-p\fR, \fB-s\fR, and \fB-S\fR operations are done
-/*	before other operations.
 /* .IP "\fB-r \fIqueue_id\fR"
 /*	Requeue the message with the named queue ID from the named
 /*	mail queue(s) (default: \fBhold\fR, \fBincoming\fR, \fBactive\fR and
 /*	\fBdeferred\fR).
+/*	To requeue multiple messages, specify multiple \fB-r\fR
+/*	command-line options.
 /*
-/*	To requeue multiple files, specify the \fB-r\fR option multiple
-/*	times, or specify a \fIqueue_id\fR of \fB-\fR to read queue IDs
-/*	from standard input.
+/*	Alternatively, if a \fIqueue_id\fR of \fB-\fR is specified,
+/*	the program reads queue IDs from standard input.
 /* .sp
 /*	Specify "\fB-r ALL\fR" to requeue all messages. As a safety
 /*	measure, the word \fBALL\fR must be specified in upper case.
@@ -201,8 +161,6 @@
 /* .IP \fB-s\fR
 /*	Structure check and structure repair.  This should be done once
 /*	before Postfix startup.
-/*	The \fB-p\fR, \fB-s\fR, and \fB-S\fR operations are done
-/*	before other operations.
 /* .RS
 /* .IP \(bu
 /*	Rename files whose name does not match the message file inode
@@ -237,23 +195,17 @@
 /*	file names also match the message file inode number. This
 /*	option exists for testing purposes, and is available with
 /*	Postfix 2.9 and later.
-/*	The \fB-p\fR, \fB-s\fR, and \fB-S\fR operations are done
-/*	before other operations.
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 /*	options make the software increasingly verbose.
 /* DIAGNOSTICS
 /*	Problems are reported to the standard error stream and to
-/*	\fBsyslogd\fR(8) or \fBpostlogd\fR(8).
+/*	\fBsyslogd\fR(8).
 /*
-/*	\fBpostsuper\fR(1) reports the number of messages deleted
-/*	with \fB-d\fR, the number of messages expired with \fB-e\fR,
-/*	the number of messages expired or released with \fB-f\fR,
-/*	the number of messages held or released with \fB-h\fR or
-/*	\fB-H\fR, the number of messages requeued with \fB-r\fR,
-/*	and the number of messages whose queue file name was fixed
-/*	with \fB-s\fR. The report is written to the standard error
-/*	stream and to \fBsyslogd\fR(8) or \fBpostlogd\fR(8).
+/*	\fBpostsuper\fR(1) reports the number of messages deleted with \fB-d\fR,
+/*	the number of messages requeued with \fB-r\fR, and the number of
+/*	messages whose queue file name was fixed with \fB-s\fR. The report
+/*	is written to the standard error stream and to \fBsyslogd\fR(8).
 /* ENVIRONMENT
 /* .ad
 /* .fi
@@ -278,17 +230,13 @@
 /* .IP "\fBhash_queue_names (deferred, defer)\fR"
 /*	The names of queue directories that are split across multiple
 /*	subdirectory levels.
-/* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a privileged Postfix
-/*	process will import from a non-Postfix parent process, or name=value
-/*	environment overrides.
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* .PP
 /*	Available in Postfix version 2.9 and later:
 /* .IP "\fBenable_long_queue_ids (no)\fR"
@@ -296,8 +244,6 @@
 /* SEE ALSO
 /*	sendmail(1), Sendmail-compatible user interface
 /*	postqueue(1), unprivileged queue operations
-/*	postlogd(8), Postfix logging
-/*	syslogd(8), system logging
 /* LICENSE
 /* .ad
 /* .fi
@@ -330,6 +276,7 @@
 
 #include <mymalloc.h>
 #include <msg.h>
+#include <msg_syslog.h>
 #include <vstream.h>
 #include <msg_vstream.h>
 #include <scan_dir.h>
@@ -341,9 +288,6 @@
 #include <sane_fsops.h>
 #include <myrand.h>
 #include <warn_stat.h>
-#include <clean_env.h>
-#include <safe_open.h>
-#include <name_mask.h>
 
 /* Global library. */
 
@@ -355,12 +299,10 @@
 #include <mail_queue.h>
 #include <mail_open_ok.h>
 #include <file_id.h>
-#include <mail_parm_split.h>
-#include <maillog_client.h>
 
 /* Application-specific. */
 
-#define MAX_TEMP_AGE (7 * 60 * 60 * 24)	/* temp file maximal age */
+#define MAX_TEMP_AGE (60 * 60 * 24)	/* temp file maximal age */
 #define STR vstring_str			/* silly little macro */
 
 #define ACTION_STRUCT	(1<<0)		/* fix file organization */
@@ -374,35 +316,22 @@
 #define ACTION_RELEASE_ONE (1<<8)	/* release named queue file(s) */
 #define ACTION_RELEASE_ALL (1<<9)	/* release all "on hold" mail */
 #define ACTION_STRUCT_RED (1<<10)	/* fix long queue ID inode fields */
-#define ACTION_EXPIRE_ONE (1<<11)	/* expire named queue file(s) */
-#define ACTION_EXPIRE_ALL (1<<12)	/* expire all queue file(s) */
-#define ACTION_EXP_REL_ONE (1<<13)	/* expire+release named queue file(s) */
-#define ACTION_EXP_REL_ALL (1<<14)	/* expire+release all queue file(s) */
 
 #define ACTION_DEFAULT	(ACTION_STRUCT | ACTION_PURGE)
 
  /*
   * Actions that operate on individually named queue files. These must never
-  * be done after fixing queue file names to match their inode number because
-  * the target file may have been replaced. Actions that move files are safe
-  * only when queue file names match their inode number, otherwise mail can
-  * be lost due to filename collisions.
+  * be done when queue file names are changed to match their inode number.
   */
 #define ACTIONS_BY_QUEUE_ID	(ACTION_DELETE_ONE | ACTION_REQUEUE_ONE \
-				| ACTION_HOLD_ONE | ACTION_RELEASE_ONE \
-				| ACTION_EXPIRE_ONE | ACTION_EXP_REL_ONE)
+				| ACTION_HOLD_ONE | ACTION_RELEASE_ONE)
 
  /*
-  * Mass actions. Actions that move files are safe only when queue file names
-  * match their inode number, otherwise mail can be lost due to filename
-  * collisions.
+  * Mass rename operations that are postponed to a second pass after queue
+  * file names are changed to match their inode number.
   */
-#define ACTIONS_BY_WILDCARD	(ACTION_DELETE_ALL | ACTION_REQUEUE_ALL \
-				| ACTION_HOLD_ALL | ACTION_RELEASE_ALL \
-				| ACTION_EXPIRE_ALL | ACTION_EXP_REL_ALL)
-
-#define ACTIONS_FOR_REPAIR	(ACTION_PURGE | ACTION_STRUCT \
-				| ACTION_STRUCT_RED)
+#define ACTIONS_AFTER_INUM_FIX	(ACTION_REQUEUE_ALL | ACTION_HOLD_ALL \
+				| ACTION_RELEASE_ALL)
 
  /*
   * Information about queue directories and what we expect to do there. If a
@@ -460,7 +389,6 @@ static int message_requeued = 0;	/* requeued messages */
 static int message_held = 0;		/* messages put on hold */
 static int message_released = 0;	/* messages released from hold */
 static int message_deleted = 0;		/* deleted messages */
-static int message_expired = 0;		/* expired messages */
 static int inode_fixed = 0;		/* queue id matched to inode number */
 static int inode_mismatch = 0;		/* queue id inode mismatch */
 static int position_mismatch = 0;	/* file position mismatch */
@@ -500,47 +428,6 @@ static int postremove(const char *path)
     return (ret);
 }
 
-/* postexpire - expire file, setting the group execute permission */
-
-static int postexpire(const char *path)
-{
-    static VSTRING *why = 0;
-    VSTREAM *fp;
-    struct stat st;
-
-    /*
-     * Initialize.
-     */
-    if (why == 0)
-	why = vstring_alloc(100);
-
-    /*
-     * We don't actually verify the file content, therefore safe_open() the
-     * queue file so that we won't add group execute permission to some file
-     * outside of the mail queue.
-     */
-    if ((fp = safe_open(path, O_RDWR, 0, &st, -1, -1, why)) == 0) {
-	if (errno != ENOENT)
-	    msg_warn("expire file %s: %s", path, vstring_str(why));
-	return (-1);
-    }
-#define POSTEXPIRE_RETURN(x) do { \
-	(void) vstream_fclose(fp); \
-	return (x); \
-    } while (0)
-
-    if (!READY_MESSAGE(st))
-	POSTEXPIRE_RETURN(-1);			/* must not expire */
-    if ((st.st_mode & MAIL_QUEUE_STAT_EXPIRE) != 0)
-	POSTEXPIRE_RETURN(-1);			/* already expired */
-    if (fchmod(vstream_fileno(fp),
-	       (st.st_mode | MAIL_QUEUE_STAT_EXPIRE) & ~S_IFMT) < 0) {
-	msg_warn("expire file %s: cannot set permission: %m", path);
-	POSTEXPIRE_RETURN(-1);
-    }
-    POSTEXPIRE_RETURN(0);
-}
-
 /* postrename - rename file with extreme prejudice */
 
 static int postrename(const char *old, const char *new)
@@ -578,7 +465,7 @@ static int postrmdir(const char *path)
 
 /* delete_one - delete one message instance and all its associated files */
 
-static void delete_one(const char **queue_names, const char *queue_id)
+static int delete_one(const char **queue_names, const char *queue_id)
 {
     struct stat st;
     const char **msg_qpp;
@@ -593,7 +480,7 @@ static void delete_one(const char **queue_names, const char *queue_id)
      */
     if (!mail_queue_id_ok(queue_id)) {
 	msg_warn("invalid mail queue id: %s", queue_id);
-	return;
+	return (0);
     }
     log_path_buf = vstring_alloc(100);
 
@@ -619,12 +506,12 @@ static void delete_one(const char **queue_names, const char *queue_id)
 	}
     }
     vstring_free(log_path_buf);
-    message_deleted += found;
+    return (found);
 }
 
 /* requeue_one - requeue one message instance and delete its logfiles */
 
-static void requeue_one(const char **queue_names, const char *queue_id)
+static int requeue_one(const char **queue_names, const char *queue_id)
 {
     struct stat st;
     const char **msg_qpp;
@@ -639,7 +526,7 @@ static void requeue_one(const char **queue_names, const char *queue_id)
      */
     if (!mail_queue_id_ok(queue_id)) {
 	msg_warn("invalid mail queue id: %s", queue_id);
-	return;
+	return (0);
     }
     new_path_buf = vstring_alloc(100);
 
@@ -669,12 +556,12 @@ static void requeue_one(const char **queue_names, const char *queue_id)
 	}
     }
     vstring_free(new_path_buf);
-    message_requeued += found;
+    return (found);
 }
 
 /* hold_one - put "on hold" one message instance */
 
-static void hold_one(const char **queue_names, const char *queue_id)
+static int hold_one(const char **queue_names, const char *queue_id)
 {
     struct stat st;
     const char **msg_qpp;
@@ -688,7 +575,7 @@ static void hold_one(const char **queue_names, const char *queue_id)
      */
     if (!mail_queue_id_ok(queue_id)) {
 	msg_warn("invalid mail queue id: %s", queue_id);
-	return;
+	return (0);
     }
     new_path_buf = vstring_alloc(100);
 
@@ -720,12 +607,12 @@ static void hold_one(const char **queue_names, const char *queue_id)
 	}
     }
     vstring_free(new_path_buf);
-    message_held += found;
+    return (found);
 }
 
 /* release_one - release one message instance that was placed "on hold" */
 
-static void release_one(const char **queue_names, const char *queue_id)
+static int release_one(const char **queue_names, const char *queue_id)
 {
     struct stat st;
     const char **msg_qpp;
@@ -738,7 +625,7 @@ static void release_one(const char **queue_names, const char *queue_id)
      */
     if (!mail_queue_id_ok(queue_id)) {
 	msg_warn("invalid mail queue id: %s", queue_id);
-	return;
+	return (0);
     }
     new_path_buf = vstring_alloc(100);
 
@@ -760,68 +647,23 @@ static void release_one(const char **queue_names, const char *queue_id)
 	}
     }
     vstring_free(new_path_buf);
-    message_released += found;
-}
-
-/* expire_one - expire one message instance */
-
-static void expire_one(const char **queue_names, const char *queue_id)
-{
-    struct stat st;
-    const char **msg_qpp;
-    const char *msg_path;
-    int     found;
-    int     tries;
-
-    /*
-     * Sanity check. No early returns beyond this point.
-     */
-    if (!mail_queue_id_ok(queue_id)) {
-	msg_warn("invalid mail queue id: %s", queue_id);
-	return;
-    }
-
-    /*
-     * Skip meta file directories.
-     */
-    for (found = 0, tries = 0; found == 0 && tries < 2; tries++) {
-	for (msg_qpp = queue_names; *msg_qpp != 0; msg_qpp++) {
-	    if (!MESSAGE_QUEUE(find_queue_info(*msg_qpp)))
-		continue;
-	    if (strcmp(*msg_qpp, MAIL_QUEUE_MAILDROP) == 0)
-		continue;
-	    if (mail_open_ok(*msg_qpp, queue_id, &st, &msg_path) != MAIL_OPEN_YES)
-		continue;
-	    if (postexpire(msg_path) == 0) {
-		found = 1;
-		msg_info("%s: expired", queue_id);
-		break;
-	    }					/* else: maybe lost a race */
-	}
-    }
-    message_expired += found;
-}
-
-/* exp_rel_one - expire or release one message instance */
-
-static void exp_rel_one(const char **queue_names, const char *queue_id)
-{
-    expire_one(queue_names, queue_id);
-    release_one(queue_names, queue_id);
+    return (found);
 }
 
 /* operate_stream - operate on queue IDs given on stream */
 
-static void operate_stream(VSTREAM *fp,
-		             void (*operator) (const char **, const char *),
-			           const char **queues)
+static int operate_stream(VSTREAM *fp,
+		              int (*operator) (const char **, const char *),
+			          const char **queues)
 {
     VSTRING *buf = vstring_alloc(20);
+    int     found = 0;
 
     while (vstring_get_nonl(buf, fp) != VSTREAM_EOF)
-	operator(queues, STR(buf));
+	found += operator(queues, STR(buf));
 
     vstring_free(buf);
+    return (found);
 }
 
 /* fix_queue_id - make message queue ID match inode number */
@@ -907,15 +749,6 @@ static void super(const char **queues, int action)
     int     error;
 
     /*
-     * This routine was originally written to do multiple mass operations in
-     * one pass. However this hard-coded the order of operations which became
-     * difficult to explain. As of Postfix 3.5 this routine is called for one
-     * mass operation at a time, in the user-specified order. The exception
-     * is that repair operations (purging stale files, queue hashing, and
-     * file-inode match) are combined and done before other mass operations.
-     */
-
-    /*
      * Make sure every file is in the right place, clean out stale files, and
      * remove non-file/non-directory objects.
      */
@@ -986,7 +819,7 @@ static void super(const char **queues, int action)
 	     * otherwise we can hit the wrong files.
 	     */
 	    vstring_sprintf(actual_path, "%s/%s", scan_dir_path(info), path);
-	    if (lstat(STR(actual_path), &st) < 0)
+	    if (stat(STR(actual_path), &st) < 0)
 		continue;
 
 	    /*
@@ -1110,7 +943,7 @@ static void super(const char **queues, int action)
 		    || (inum != (unsigned long) st.st_ino
 		     && (long_name == 0 || (action & ACTION_STRUCT_RED)))) {
 		    inode_mismatch++;		/* before we fix */
-		    action &= ~ACTIONS_BY_WILDCARD;
+		    action &= ~ACTIONS_AFTER_INUM_FIX;
 		    fix_queue_id(STR(actual_path), queue_name, path, &st);
 		    /* At this point, path and actual_path are invalidated. */
 		    continue;
@@ -1134,24 +967,6 @@ static void super(const char **queues, int action)
 		/* At this point, path and actual_path are invalidated. */
 		continue;
 	    }
-
-	    /*
-	     * Many of the following actions may move queue files. To avoid
-	     * loss of email due to file name collisions. we should do such
-	     * actions only when the queue file names are known to match
-	     * their inode number. Even with non-repeating queue IDs a name
-	     * collision may happen when different queues are merged.
-	     */
-
-	    /*
-	     * Mass expiration. We count the expiration of mail that this
-	     * system has taken responsibility for.
-	     */
-	    if ((action & (ACTION_EXPIRE_ALL | ACTION_EXP_REL_ALL))
-		&& MESSAGE_QUEUE(qp) && READY_MESSAGE(st)
-		&& strcmp(queue_name, MAIL_QUEUE_MAILDROP) != 0
-		&& postexpire(STR(actual_path)) == 0)
-		message_expired++;
 
 	    /*
 	     * Mass renaming to the "on hold" queue. XXX This option does not
@@ -1179,7 +994,7 @@ static void super(const char **queues, int action)
 	     * first move queue files to the "right" subdirectory level. Like
 	     * the release_one() routine, this code must not touch logfiles.
 	     */
-	    if ((action & (ACTION_RELEASE_ALL | ACTION_EXP_REL_ALL))
+	    if ((action & ACTION_RELEASE_ALL)
 		&& strcmp(queue_name, MAIL_QUEUE_HOLD) == 0) {
 		(void) mail_queue_path(wanted_path, MAIL_QUEUE_DEFERRED, path);
 		if (postrename(STR(actual_path), STR(wanted_path)) == 0)
@@ -1260,8 +1075,11 @@ int     main(int argc, char **argv)
     int     action = 0;
     const char **queues;
     int     c;
-    ARGV   *import_env;
-    int     saved_optind;
+    ARGV   *requeue_names = 0;
+    ARGV   *delete_names = 0;
+    ARGV   *hold_names = 0;
+    ARGV   *release_names = 0;
+    char  **cpp;
 
     /*
      * Defaults. The structural checks must fix the directory levels of "log
@@ -1279,6 +1097,16 @@ int     main(int argc, char **argv)
 	MAIL_QUEUE_DEFERRED,
 	MAIL_QUEUE_HOLD,
 	MAIL_QUEUE_FLUSH,
+	0,
+    };
+    static char *default_hold_queues[] = {
+	MAIL_QUEUE_INCOMING,
+	MAIL_QUEUE_ACTIVE,
+	MAIL_QUEUE_DEFERRED,
+	0,
+    };
+    static char *default_release_queues[] = {
+	MAIL_QUEUE_HOLD,
 	0,
     };
 
@@ -1314,8 +1142,7 @@ int     main(int argc, char **argv)
     if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
 	argv[0] = slash + 1;
     msg_vstream_init(argv[0], VSTREAM_ERR);
-    maillog_client_init(mail_task(argv[0]),
-			MAILLOG_CLIENT_FLAG_LOGWRITER_FALLBACK);
+    msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
     set_mail_conf_str(VAR_PROCNAME, var_procname = mystrdup(argv[0]));
 
     /*
@@ -1337,21 +1164,13 @@ int     main(int argc, char **argv)
 
     /*
      * Parse JCL.
-     * 
-     * First, find out what kind of actions are requested, without executing
-     * them. Later, we execute actions in mostly user-specified order.
      */
-#define GETOPT_LIST "c:d:e:f:h:H:pr:sSv"
-
-    saved_optind = optind;
-    while ((c = GETOPT(argc, argv, GETOPT_LIST)) > 0) {
+    while ((c = GETOPT(argc, argv, "c:d:h:H:pr:sSv")) > 0) {
 	switch (c) {
 	default:
 	    msg_fatal("usage: %s "
 		      "[-c config_dir] "
 		      "[-d queue_id (delete)] "
-		      "[-e queue_id (expire)] "
-		      "[-f queue_id (expire and/or un-hold)] "
 		      "[-h queue_id (hold)] [-H queue_id (un-hold)] "
 		      "[-p (purge temporary files)] [-r queue_id (requeue)] "
 		      "[-s (structure fix)] [-S (redundant structure fix)]"
@@ -1363,22 +1182,23 @@ int     main(int argc, char **argv)
 		msg_fatal("setenv: %m");
 	    break;
 	case 'd':
+	    if (delete_names == 0)
+		delete_names = argv_alloc(1);
+	    argv_add(delete_names, optarg, (char *) 0);
 	    action |= (strcmp(optarg, "ALL") == 0 ?
 		       ACTION_DELETE_ALL : ACTION_DELETE_ONE);
 	    break;
-	case 'e':
-	    action |= (strcmp(optarg, "ALL") == 0 ?
-		       ACTION_EXPIRE_ALL : ACTION_EXPIRE_ONE);
-	    break;
-	case 'f':
-	    action |= (strcmp(optarg, "ALL") == 0 ?
-		       ACTION_EXP_REL_ALL : ACTION_EXP_REL_ONE);
-	    break;
 	case 'h':
+	    if (hold_names == 0)
+		hold_names = argv_alloc(1);
+	    argv_add(hold_names, optarg, (char *) 0);
 	    action |= (strcmp(optarg, "ALL") == 0 ?
 		       ACTION_HOLD_ALL : ACTION_HOLD_ONE);
 	    break;
 	case 'H':
+	    if (release_names == 0)
+		release_names = argv_alloc(1);
+	    argv_add(release_names, optarg, (char *) 0);
 	    action |= (strcmp(optarg, "ALL") == 0 ?
 		       ACTION_RELEASE_ALL : ACTION_RELEASE_ONE);
 	    break;
@@ -1386,6 +1206,9 @@ int     main(int argc, char **argv)
 	    action |= ACTION_PURGE;
 	    break;
 	case 'r':
+	    if (requeue_names == 0)
+		requeue_names = argv_alloc(1);
+	    argv_add(requeue_names, optarg, (char *) 0);
 	    action |= (strcmp(optarg, "ALL") == 0 ?
 		       ACTION_REQUEUE_ALL : ACTION_REQUEUE_ONE);
 	    break;
@@ -1407,13 +1230,8 @@ int     main(int argc, char **argv)
      * configuration directory location.
      */
     mail_conf_read();
-    /* Enforce consistent operation of different Postfix parts. */
-    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
-    update_env(import_env->argv);
-    argv_free(import_env);
     /* Re-evaluate mail_task() after reading main.cf. */
-    maillog_client_init(mail_task(argv[0]),
-			MAILLOG_CLIENT_FLAG_LOGWRITER_FALLBACK);
+    msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
     if (chdir(var_queue_dir))
 	msg_fatal("chdir %s: %m", var_queue_dir);
 
@@ -1454,6 +1272,26 @@ int     main(int argc, char **argv)
     msg_cleanup(fatal_warning);
 
     /*
+     * Sanity checks.
+     */
+    if ((action & ACTION_DELETE_ALL) && (action & ACTION_DELETE_ONE)) {
+	msg_warn("option \"-d ALL\" will ignore other command line queue IDs");
+	action &= ~ACTION_DELETE_ONE;
+    }
+    if ((action & ACTION_REQUEUE_ALL) && (action & ACTION_REQUEUE_ONE)) {
+	msg_warn("option \"-r ALL\" will ignore other command line queue IDs");
+	action &= ~ACTION_REQUEUE_ONE;
+    }
+    if ((action & ACTION_HOLD_ALL) && (action & ACTION_HOLD_ONE)) {
+	msg_warn("option \"-h ALL\" will ignore other command line queue IDs");
+	action &= ~ACTION_HOLD_ONE;
+    }
+    if ((action & ACTION_RELEASE_ALL) && (action & ACTION_RELEASE_ONE)) {
+	msg_warn("option \"-H ALL\" will ignore other command line queue IDs");
+	action &= ~ACTION_RELEASE_ONE;
+    }
+
+    /*
      * Execute the explicitly specified (or default) action, on the
      * explicitly specified (or default) queues.
      * 
@@ -1467,16 +1305,20 @@ int     main(int argc, char **argv)
 	action = ACTION_DEFAULT;
     if (argv[optind] != 0)
 	queues = (const char **) argv + optind;
+    else if (action == ACTION_HOLD_ALL)
+	queues = (const char **) default_hold_queues;
+    else if (action == ACTION_RELEASE_ALL)
+	queues = (const char **) default_release_queues;
     else
 	queues = (const char **) default_queues;
 
     /*
-     * Basic queue maintenance, including mass name-to-inode fixing. This
-     * ensures that queue files are in the right place before any other
-     * operations are done.
+     * Basic queue maintenance, as well as mass deletion, mass requeuing, and
+     * mass name-to-inode fixing. This ensures that queue files are in the
+     * right place before the file-by-name operations are done.
      */
-    if (action & ACTIONS_FOR_REPAIR)
-	super(queues, action & ACTIONS_FOR_REPAIR);
+    if (action & ~ACTIONS_BY_QUEUE_ID)
+	super(queues, action);
 
     /*
      * If any file names needed changing to match the message file inode
@@ -1485,7 +1327,7 @@ int     main(int argc, char **argv)
      * operations that had to be skipped in the first pass.
      */
     if (inode_mismatch > 0)
-	super(queues, action & ACTIONS_FOR_REPAIR);
+	super(queues, action);
 
     /*
      * Don't do actions by queue file name if any queue files changed name
@@ -1499,97 +1341,117 @@ int     main(int argc, char **argv)
     }
 
     /*
-     * Execute actions by queue ID and by wildcard in the user-specified
-     * order.
+     * Delete queue files by name. This must not be done when queue file
+     * names have changed names as a result of inode number mismatches,
+     * because we could be deleting the wrong message.
      */
-    optind = saved_optind;
-    while ((c = GETOPT(argc, argv, GETOPT_LIST)) > 0) {
-	switch (c) {
-	default:
-	    msg_panic("%s: unexpected option: %c", argv[0], c);
-	case 'c':
-	case 'p':
-	case 'S':
-	case 's':
-	case 'v':
-	    /* Already handled. */
-	    break;
-	case 'd':
-	    if (strcmp(optarg, "ALL") == 0)
-		super(queues, ACTION_DELETE_ALL);
-	    else if (strcmp(optarg, "-") == 0)
-		operate_stream(VSTREAM_IN, delete_one, queues);
+    if (action & ACTION_DELETE_ONE) {
+	argv_terminate(delete_names);
+	queues = (const char **)
+	    (argv[optind] ? argv + optind : default_queues);
+	for (cpp = delete_names->argv; *cpp; cpp++) {
+	    if (strcmp(*cpp, "ALL") == 0)
+		continue;
+	    if (strcmp(*cpp, "-") == 0)
+		message_deleted +=
+		    operate_stream(VSTREAM_IN, delete_one, queues);
 	    else
-		delete_one(queues, optarg);
-	    break;
-	case 'e':
-	    if (strcmp(optarg, "ALL") == 0)
-		super(queues, ACTION_EXPIRE_ALL);
-	    else if (strcmp(optarg, "-") == 0)
-		operate_stream(VSTREAM_IN, expire_one, queues);
+		message_deleted += delete_one(queues, *cpp);
+	}
+    }
+
+    /*
+     * Requeue queue files by name. This must not be done when queue file
+     * names have changed names as a result of inode number mismatches,
+     * because we could be requeuing the wrong message.
+     */
+    if (action & ACTION_REQUEUE_ONE) {
+	argv_terminate(requeue_names);
+	queues = (const char **)
+	    (argv[optind] ? argv + optind : default_queues);
+	for (cpp = requeue_names->argv; *cpp; cpp++) {
+	    if (strcmp(*cpp, "ALL") == 0)
+		continue;
+	    if (strcmp(*cpp, "-") == 0)
+		message_requeued +=
+		    operate_stream(VSTREAM_IN, requeue_one, queues);
 	    else
-		expire_one(queues, optarg);
-	    break;
-	case 'f':
-	    if (strcmp(optarg, "ALL") == 0)
-		super(queues, ACTION_EXP_REL_ALL);
-	    else if (strcmp(optarg, "-") == 0)
-		operate_stream(VSTREAM_IN, exp_rel_one, queues);
+		message_requeued += requeue_one(queues, *cpp);
+	}
+    }
+
+    /*
+     * Put on hold queue files by name. This must not be done when queue file
+     * names have changed names as a result of inode number mismatches,
+     * because we could put on hold the wrong message.
+     */
+    if (action & ACTION_HOLD_ONE) {
+	argv_terminate(hold_names);
+	queues = (const char **)
+	    (argv[optind] ? argv + optind : default_hold_queues);
+	for (cpp = hold_names->argv; *cpp; cpp++) {
+	    if (strcmp(*cpp, "ALL") == 0)
+		continue;
+	    if (strcmp(*cpp, "-") == 0)
+		message_held +=
+		    operate_stream(VSTREAM_IN, hold_one, queues);
 	    else
-		exp_rel_one(queues, optarg);
-	    break;
-	case 'h':
-	    if (strcmp(optarg, "ALL") == 0)
-		super(queues, ACTION_HOLD_ALL);
-	    else if (strcmp(optarg, "-") == 0)
-		operate_stream(VSTREAM_IN, hold_one, queues);
+		message_held += hold_one(queues, *cpp);
+	}
+    }
+
+    /*
+     * Take "off hold" queue files by name. This must not be done when queue
+     * file names have changed names as a result of inode number mismatches,
+     * because we could take off hold the wrong message.
+     */
+    if (action & ACTION_RELEASE_ONE) {
+	argv_terminate(release_names);
+	queues = (const char **)
+	    (argv[optind] ? argv + optind : default_release_queues);
+	for (cpp = release_names->argv; *cpp; cpp++) {
+	    if (strcmp(*cpp, "ALL") == 0)
+		continue;
+	    if (strcmp(*cpp, "-") == 0)
+		message_released +=
+		    operate_stream(VSTREAM_IN, release_one, queues);
 	    else
-		hold_one(queues, optarg);
-	    break;
-	case 'H':
-	    if (strcmp(optarg, "ALL") == 0)
-		super(queues, ACTION_RELEASE_ALL);
-	    else if (strcmp(optarg, "-") == 0)
-		operate_stream(VSTREAM_IN, release_one, queues);
-	    else
-		release_one(queues, optarg);
-	    break;
-	case 'r':
-	    if (strcmp(optarg, "ALL") == 0)
-		super(queues, ACTION_REQUEUE_ALL);
-	    else if (strcmp(optarg, "-") == 0)
-		operate_stream(VSTREAM_IN, requeue_one, queues);
-	    else
-		requeue_one(queues, optarg);
-	    break;
+		message_released += release_one(queues, *cpp);
 	}
     }
 
     /*
      * Report.
      */
-    if (action & (ACTION_REQUEUE_ONE | ACTION_REQUEUE_ALL))
+    if (message_requeued > 0)
 	msg_info("Requeued: %d message%s", message_requeued,
-		 message_requeued != 1 ? "s" : "");
-    if (action & (ACTION_DELETE_ONE | ACTION_DELETE_ALL))
+		 message_requeued > 1 ? "s" : "");
+    if (message_deleted > 0)
 	msg_info("Deleted: %d message%s", message_deleted,
-		 message_deleted != 1 ? "s" : "");
-    if (action & (ACTION_EXPIRE_ONE | ACTION_EXPIRE_ALL
-		  | ACTION_EXP_REL_ONE | ACTION_EXP_REL_ALL))
-	msg_info("Force-expired: %d message%s", message_expired,
-		 message_expired != 1 ? "s" : "");
-    if (action & (ACTION_HOLD_ONE | ACTION_HOLD_ALL))
+		 message_deleted > 1 ? "s" : "");
+    if (message_held > 0)
 	msg_info("Placed on hold: %d message%s",
-		 message_held, message_held != 1 ? "s" : "");
-    if (action & (ACTION_RELEASE_ONE | ACTION_RELEASE_ALL
-		  | ACTION_EXP_REL_ONE | ACTION_EXP_REL_ALL))
+		 message_held, message_held > 1 ? "s" : "");
+    if (message_released > 0)
 	msg_info("Released from hold: %d message%s",
-		 message_released, message_released != 1 ? "s" : "");
+		 message_released, message_released > 1 ? "s" : "");
     if (inode_fixed > 0)
 	msg_info("Renamed to match inode number: %d message%s", inode_fixed,
-		 inode_fixed != 1 ? "s" : "");
+		 inode_fixed > 1 ? "s" : "");
     if (inode_mismatch > 0 || inode_fixed > 0)
 	msg_warn("QUEUE FILE NAMES WERE CHANGED TO MATCH INODE NUMBERS");
+
+    /*
+     * Clean up.
+     */
+    if (requeue_names)
+	argv_free(requeue_names);
+    if (delete_names)
+	argv_free(delete_names);
+    if (hold_names)
+	argv_free(hold_names);
+    if (release_names)
+	argv_free(release_names);
 
     exit(0);
 }

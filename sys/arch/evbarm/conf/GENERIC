@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.75 2020/03/28 08:35:36 isaki Exp $
+#	$NetBSD: GENERIC,v 1.73 2020/02/06 01:37:46 mrg Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -622,6 +622,7 @@ sun8icodec* 	at fdt?			# Audio codec (sun8i)
 sunxicodec* 	at fdt?			# Allwinner audio codec
 sunxii2s* 	at fdt?			# I2S/PCM
 audio* 		at audiobus?
+options 	AUDIO_BLK_MS=4
 spkr* 		at audio?
 
 # SDMMC
@@ -736,6 +737,7 @@ dwctwo* 	at fdt?			# Designware USB DRD
 ehci* 		at fdt?			# EHCI
 motg* 		at fdt?			# Mentor Graphics USB OTG
 ohci* 		at fdt?			# OHCI
+ehci* 		at fdt?			# EHCI
 xhci* 		at fdt?			# XHCI
 usb* 		at usbus?
 

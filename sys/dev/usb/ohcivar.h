@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.61 2020/03/15 07:56:19 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.60 2018/08/09 06:26:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ typedef struct ohci_soft_ed {
 	usb_dma_t dma;
 	int offs;
 } ohci_soft_ed_t;
-#define OHCI_SED_SIZE (roundup(sizeof(struct ohci_soft_ed), OHCI_ED_ALIGN))
+#define OHCI_SED_SIZE ((sizeof(struct ohci_soft_ed) + OHCI_ED_ALIGN - 1) / OHCI_ED_ALIGN * OHCI_ED_ALIGN)
 #define OHCI_SED_CHUNK 128
 
 
@@ -60,7 +60,7 @@ typedef struct ohci_soft_td {
 #define OHCI_CALL_DONE	0x0001
 #define OHCI_ADD_LEN	0x0002
 } ohci_soft_td_t;
-#define OHCI_STD_SIZE (roundup(sizeof(struct ohci_soft_td), OHCI_TD_ALIGN))
+#define OHCI_STD_SIZE ((sizeof(struct ohci_soft_td) + OHCI_TD_ALIGN - 1) / OHCI_TD_ALIGN * OHCI_TD_ALIGN)
 #define OHCI_STD_CHUNK 128
 
 
@@ -76,7 +76,7 @@ typedef struct ohci_soft_itd {
 	uint16_t flags;
 	bool isdone;	/* used only when DIAGNOSTIC is defined */
 } ohci_soft_itd_t;
-#define OHCI_SITD_SIZE (roundup(sizeof(struct ohci_soft_itd), OHCI_ITD_ALIGN))
+#define OHCI_SITD_SIZE ((sizeof(struct ohci_soft_itd) + OHCI_ITD_ALIGN - 1) / OHCI_ITD_ALIGN * OHCI_ITD_ALIGN)
 #define OHCI_SITD_CHUNK 64
 
 

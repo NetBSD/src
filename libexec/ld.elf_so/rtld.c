@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.203 2020/03/04 01:21:17 thorpej Exp $	 */
+/*	$NetBSD: rtld.c,v 1.202 2020/02/29 04:23:05 kamil Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.203 2020/03/04 01:21:17 thorpej Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.202 2020/02/29 04:23:05 kamil Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1773,25 +1773,13 @@ int
 _rtld_relro(const Obj_Entry *obj, bool wantmain)
 {
 #ifdef GNU_RELRO
-	/*
-	 * If our VM page size is larger than the page size used by the
-	 * linker when laying out the object, we could end up making data
-	 * read-only that is unintended.  Detect and avoid this situation.
-	 * It may mean we are unable to protect everything we'd like, but
-	 * it's better than crashing.
-	 */
-	uintptr_t relro_end = (uintptr_t)obj->relro_page + obj->relro_size;
-	uintptr_t relro_start = round_down((uintptr_t)obj->relro_page);
-	assert(relro_end >= relro_start);
-	size_t relro_size = round_down(relro_end) - relro_start;
-
-	if (relro_size == 0)
+	if (obj->relro_size == 0)
 		return 0;
 	if (wantmain != (obj ==_rtld_objmain))
 		return 0;
 
-	dbg(("RELRO %s %p %zx\n", obj->path, (void *)relro_start, relro_size));
-	if (mprotect((void *)relro_start, relro_size, PROT_READ) == -1) {
+	dbg(("RELRO %s %p %zx\n", obj->path, obj->relro_page, obj->relro_size));
+	if (mprotect(obj->relro_page, obj->relro_size, PROT_READ) == -1) {
 		_rtld_error("%s: Cannot enforce relro " "protection: %s",
 		    obj->path, xstrerror(errno));
 		return -1;

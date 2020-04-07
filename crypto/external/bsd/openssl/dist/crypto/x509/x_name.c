@@ -8,13 +8,13 @@
  */
 
 #include <stdio.h>
-#include "crypto/ctype.h"
+#include "internal/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include "crypto/x509.h"
-#include "crypto/asn1.h"
-#include "x509_local.h"
+#include "internal/x509_int.h"
+#include "internal/asn1_int.h"
+#include "x509_lcl.h"
 
 /*
  * Maximum length of X509_NAME: much larger than anything we should

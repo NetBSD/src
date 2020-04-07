@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.14 2020/03/28 18:37:18 thorpej Exp $	*/
+/*	$NetBSD: micphy.c,v 1.12 2020/02/14 12:14:33 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.14 2020/03/28 18:37:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.12 2020/02/14 12:14:33 nisimura Exp $");
 
 #include "opt_mii.h"
 
@@ -82,8 +82,9 @@ static void	micphyattach(device_t, device_t, void *);
 static void	micphy_reset(struct mii_softc *);
 static int	micphy_service(struct mii_softc *, struct mii_data *, int);
 
-CFATTACH_DECL_NEW(micphy, sizeof(struct mii_softc),
-    micphymatch, micphyattach, mii_phy_detach, mii_phy_activate);
+CFATTACH_DECL3_NEW(micphy, sizeof(struct mii_softc),
+    micphymatch, micphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 static int	micphy_service(struct mii_softc *, struct mii_data *, int);
 static void	micphy_status(struct mii_softc *);
@@ -231,8 +232,6 @@ micphyattach(device_t parent, device_t self, void *aux)
 	} else
 		msc->sc_lstype = MICPHYF_LSTYPE_DEFAULT;
 
-	mii_lock(mii);
-
 	PHY_RESET(sc);
 
 	micphy_fixup(sc, model, rev, parent);
@@ -241,8 +240,6 @@ micphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
-
-	mii_unlock(mii);
 
 	aprint_normal_dev(self, "");
 	mii_phy_add_media(sc);
@@ -253,8 +250,6 @@ static void
 micphy_reset(struct mii_softc *sc)
 {
 	uint16_t reg;
-
-	KASSERT(mii_locked(sc->mii_pdata));
 
 	/*
 	 * The 8081 has no "sticky bits" that survive a soft reset; several
@@ -275,8 +270,6 @@ micphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg;
-
-	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -340,9 +333,6 @@ micphy_writexreg(struct mii_softc *sc, uint32_t reg, uint32_t wval)
 static void
 micphy_fixup(struct mii_softc *sc, int model, int rev, device_t parent)
 {
-
-	KASSERT(mii_locked(sc->mii_pdata));
-
 	switch (model) {
 	case MII_MODEL_MICREL_KSZ9021_8001_8721:
 		if (!device_is_a(parent, "cpsw"))
@@ -371,8 +361,6 @@ micphy_status(struct mii_softc *sc)
 	struct micphy_softc *msc = device_private(sc->mii_dev);
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t bmsr, bmcr, sr;
-
-	KASSERT(mii_locked(mii));
 
 	/* For unknown devices */
 	if (msc->sc_lstype == MICPHYF_LSTYPE_DEFAULT) {

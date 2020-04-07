@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_server.c,v 1.2 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: xsasl_server.c,v 1.1.1.1 2009/06/23 10:09:02 tron Exp $	*/
 
 /*++
 /* NAME
@@ -94,7 +94,7 @@
 /*	It destroys a SASL server instance, and disables further
 /*	read/write operations if encryption was turned on.
 /*
-/*	xsasl_server_first() produces the server response for the
+/*	xsasl_server_first() produces the server reponse for the
 /*	client AUTH command. The client input are an authentication
 /*	method, and an optional initial response or null pointer.
 /*	The initial response and server non-error replies are BASE64
@@ -128,15 +128,11 @@
 /*	after successful authentication.
 /*
 /*	Arguments:
-/* .IP addr_family
-/*	The network address family: AF_INET6 or AF_INET.
 /* .IP auth_method
 /*	AUTH command authentication method.
 /* .IP client_addr
 /*	IPv4 or IPv6 address (no surrounding [] or ipv6: prefix),
 /*	or zero-length string if unavailable.
-/* .IP client_port
-/*	TCP port or zero-length string if unavailable.
 /* .IP init_resp
 /*	AUTH command initial response or null pointer.
 /* .IP implementation
@@ -154,8 +150,6 @@
 /* .IP server_addr
 /*	IPv4 or IPv6 address (no surrounding [] or ipv6: prefix),
 /*	or zero-length string if unavailable.
-/* .IP server_port
-/*	TCP port or zero-length string if unavailable.
 /* .IP server_reply
 /*	BASE64 encoded server non-error reply (without SMTP reply
 /*	code or enhanced status code), or ASCII error description.
@@ -204,11 +198,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */

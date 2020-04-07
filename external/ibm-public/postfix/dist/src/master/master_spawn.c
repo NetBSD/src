@@ -1,4 +1,4 @@
-/*	$NetBSD: master_spawn.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: master_spawn.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -303,11 +303,8 @@ void    master_reap_child(void)
 	if (msg_verbose)
 	    msg_info("master_reap_child: pid %d", pid);
 	if ((proc = (MASTER_PROC *) binhash_find(master_child_table,
-					(void *) &pid, sizeof(pid))) == 0) {
-	    if (init_mode)
-		continue;			/* non-Postfix process */
+					  (void *) &pid, sizeof(pid))) == 0)
 	    msg_panic("master_reap: unknown pid: %d", pid);
-	}
 	serv = proc->serv;
 
 #define MASTER_KILL_SIGNAL	SIGTERM

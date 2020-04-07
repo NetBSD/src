@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.93 2020/03/14 14:05:43 ad Exp $ */
+/*	$NetBSD: pmap.h,v 1.92 2013/10/19 19:40:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -270,7 +270,7 @@ void		kvm_uncache(char *, int);
 int		mmu_pagein(struct pmap *pm, vaddr_t, int);
 void		pmap_writetext(unsigned char *, int);
 void		pmap_globalize_boot_cpuinfo(struct cpu_info *);
-bool		pmap_remove_all(struct pmap *pm);
+void		pmap_remove_all(struct pmap *pm);
 #define 	pmap_mmap_flags(x)	0	/* dummy so far */
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */

@@ -1380,23 +1380,24 @@ simple_rhs_p (rtx rhs)
 static rtx
 find_single_def_src (unsigned int regno)
 {
-  rtx src = NULL_RTX;
+  df_ref adef;
+  rtx set, src;
 
-  /* Don't look through unbounded number of single definition REG copies,
-     there might be loops for sources with uninitialized variables.  */
-  for (int cnt = 0; cnt < 128; cnt++)
+  for (;;)
     {
-      df_ref adef = DF_REG_DEF_CHAIN (regno);
+      rtx note;
+      adef = DF_REG_DEF_CHAIN (regno);
       if (adef == NULL || DF_REF_NEXT_REG (adef) != NULL
 	  || DF_REF_IS_ARTIFICIAL (adef))
 	return NULL_RTX;
 
-      rtx set = single_set (DF_REF_INSN (adef));
+      set = single_set (DF_REF_INSN (adef));
       if (set == NULL || !REG_P (SET_DEST (set))
 	  || REGNO (SET_DEST (set)) != regno)
 	return NULL_RTX;
 
-      rtx note = find_reg_equal_equiv_note (DF_REF_INSN (adef));
+      note = find_reg_equal_equiv_note (DF_REF_INSN (adef));
+
       if (note && function_invariant_p (XEXP (note, 0)))
 	{
 	  src = XEXP (note, 0);

@@ -22,7 +22,7 @@
 #include <openssl/objects.h>
 #include <crypto/cryptodev.h>
 
-#include "crypto/engine.h"
+#include "internal/engine.h"
 
 /* #define ENGINE_DEVCRYPTO_DEBUG */
 
@@ -761,7 +761,7 @@ void engine_load_devcrypto_int()
 
     if ((cfd = open("/dev/crypto", O_RDWR, 0)) < 0) {
 #ifndef ENGINE_DEVCRYPTO_DEBUG
-        if (errno != ENOENT)
+        if (errno != ENOENT && errno != ENXIO)
 #endif
             fprintf(stderr, "Could not open /dev/crypto: %s\n", strerror(errno));
         return;

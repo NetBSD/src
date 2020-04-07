@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.65 2020/03/19 03:11:23 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.56 2020/02/25 08:05:24 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.65 2020/03/19 03:11:23 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.56 2020/02/25 08:05:24 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -137,8 +137,6 @@ struct ixl_softc; /* defined */
 #define I40E_ITR_INDEX_TX		0x1
 #define I40E_ITR_INDEX_OTHER		0x2
 #define I40E_ITR_INDEX_NONE		0x3
-#define IXL_ITR_RX			0x7a /* 4K intrs/sec */
-#define IXL_ITR_TX			0x7a /* 4K intrs/sec */
 
 #define I40E_INTR_NOTX_QUEUE		0
 #define I40E_INTR_NOTX_INTR		0
@@ -706,8 +704,6 @@ struct ixl_softc {
 	unsigned int		 sc_nqueue_pairs_max;
 	unsigned int		 sc_nqueue_pairs_device;
 	struct ixl_queue_pair	*sc_qps;
-	uint32_t		 sc_itr_rx;
-	uint32_t		 sc_itr_tx;
 
 	struct evcnt		 sc_event_atq;
 	struct evcnt		 sc_event_link;
@@ -779,10 +775,10 @@ static int	ixl_atq_poll(struct ixl_softc *, struct ixl_aq_desc *,
 		    unsigned int);
 static void	ixl_atq_set(struct ixl_atq *,
 		    void (*)(struct ixl_softc *, const struct ixl_aq_desc *));
+static int	ixl_atq_post(struct ixl_softc *, struct ixl_atq *);
 static int	ixl_atq_post_locked(struct ixl_softc *, struct ixl_atq *);
 static void	ixl_atq_done(struct ixl_softc *);
 static int	ixl_atq_exec(struct ixl_softc *, struct ixl_atq *);
-static int	ixl_atq_exec_locked(struct ixl_softc *, struct ixl_atq *);
 static int	ixl_get_version(struct ixl_softc *);
 static int	ixl_get_nvm_version(struct ixl_softc *);
 static int	ixl_get_hw_capabilities(struct ixl_softc *);
@@ -802,9 +798,7 @@ static int	ixl_set_vsi(struct ixl_softc *);
 static void	ixl_set_filter_control(struct ixl_softc *);
 static void	ixl_get_link_status(void *);
 static int	ixl_get_link_status_poll(struct ixl_softc *, int *);
-static void	ixl_get_link_status_done(struct ixl_softc *,
-		    const struct ixl_aq_desc *);
-static int	ixl_set_link_status_locked(struct ixl_softc *,
+static int	ixl_set_link_status(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
 static uint64_t	ixl_search_link_speed(uint8_t);
 static uint8_t	ixl_search_baudrate(uint64_t);
@@ -1395,8 +1389,8 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cur_ec_capenable = sc->sc_ec.ec_capenable;
 
 	sc->sc_ec.ec_ifmedia = &sc->sc_media;
-	ifmedia_init_with_lock(&sc->sc_media, IFM_IMASK, ixl_media_change,
-	    ixl_media_status, &sc->sc_cfg_lock);
+	ifmedia_init(&sc->sc_media, IFM_IMASK, ixl_media_change,
+	    ixl_media_status);
 
 	ixl_media_add(sc);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
@@ -1418,7 +1412,6 @@ ixl_attach(device_t parent, device_t self, void *aux)
 		link = LINK_STATE_UNKNOWN;
 	if_link_state_change(ifp, link);
 
-	ixl_atq_set(&sc->sc_link_state_atq, ixl_get_link_status_done);
 	ixl_work_set(&sc->sc_link_state_task, ixl_get_link_status, sc);
 
 	ixl_config_other_intr(sc);
@@ -1457,8 +1450,6 @@ ixl_attach(device_t parent, device_t self, void *aux)
 
 	if (pmf_device_register(self, NULL, NULL) != true)
 		aprint_debug_dev(self, "couldn't establish power handler\n");
-	sc->sc_itr_rx = IXL_ITR_RX;
-	sc->sc_itr_tx = IXL_ITR_TX;
 	sc->sc_attached = true;
 	return;
 
@@ -1692,10 +1683,13 @@ ixl_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct ixl_softc *sc = ifp->if_softc;
 
-	KASSERT(mutex_owned(&sc->sc_cfg_lock));
-
 	ifmr->ifm_status = sc->sc_media_status;
 	ifmr->ifm_active = sc->sc_media_active;
+
+	mutex_enter(&sc->sc_cfg_lock);
+	if (ifp->if_link_state == LINK_STATE_UP)
+		SET(ifmr->ifm_status, IFM_ACTIVE);
+	mutex_exit(&sc->sc_cfg_lock);
 }
 
 static int
@@ -2122,6 +2116,8 @@ ixl_init_locked(struct ixl_softc *sc)
 	SET(ifp->if_flags, IFF_RUNNING);
 	CLR(ifp->if_flags, IFF_OACTIVE);
 
+	(void)ixl_get_link_status(sc);
+
 	ixl_config_rss(sc);
 	ixl_config_queue_intr(sc);
 
@@ -2149,9 +2145,6 @@ ixl_init(struct ifnet *ifp)
 	mutex_enter(&sc->sc_cfg_lock);
 	error = ixl_init_locked(sc);
 	mutex_exit(&sc->sc_cfg_lock);
-
-	if (error == 0)
-		(void)ixl_get_link_status(sc);
 
 	return error;
 }
@@ -2737,7 +2730,8 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 
 	KASSERT(mutex_owned(&txr->txr_lock));
 
-	if (!ISSET(ifp->if_flags, IFF_RUNNING)
+	if (ifp->if_link_state != LINK_STATE_UP
+	    || !ISSET(ifp->if_flags, IFF_RUNNING)
 	    || (!is_transmit && ISSET(ifp->if_flags, IFF_OACTIVE))) {
 		if (!is_transmit)
 			IFQ_PURGE(&ifp->if_snd);
@@ -3654,17 +3648,8 @@ static void
 ixl_get_link_status_done(struct ixl_softc *sc,
     const struct ixl_aq_desc *iaq)
 {
-	struct ixl_aq_desc iaq_buf;
 
-	memcpy(&iaq_buf, iaq, sizeof(iaq_buf));
-
-	/*
-	 * The lock can be released here
-	 * because there is no post processing about ATQ
-	 */
-	mutex_exit(&sc->sc_atq_lock);
-	ixl_link_state_update(sc, &iaq_buf);
-	mutex_enter(&sc->sc_atq_lock);
+	ixl_link_state_update(sc, iaq);
 }
 
 static void
@@ -3673,24 +3658,15 @@ ixl_get_link_status(void *xsc)
 	struct ixl_softc *sc = xsc;
 	struct ixl_aq_desc *iaq;
 	struct ixl_aq_link_param *param;
-	int error;
 
-	mutex_enter(&sc->sc_atq_lock);
-
+	memset(&sc->sc_link_state_atq, 0, sizeof(sc->sc_link_state_atq));
 	iaq = &sc->sc_link_state_atq.iatq_desc;
-	memset(iaq, 0, sizeof(*iaq));
 	iaq->iaq_opcode = htole16(IXL_AQ_OP_PHY_LINK_STATUS);
 	param = (struct ixl_aq_link_param *)iaq->iaq_param;
 	param->notify = IXL_AQ_LINK_NOTIFY;
 
-	error = ixl_atq_exec_locked(sc, &sc->sc_link_state_atq);
 	ixl_atq_set(&sc->sc_link_state_atq, ixl_get_link_status_done);
-
-	if (error == 0) {
-		ixl_get_link_status_done(sc, iaq);
-	}
-
-	mutex_exit(&sc->sc_atq_lock);
+	(void)ixl_atq_post(sc, &sc->sc_link_state_atq);
 }
 
 static void
@@ -3699,17 +3675,15 @@ ixl_link_state_update(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int link_state;
 
-	mutex_enter(&sc->sc_cfg_lock);
-	link_state = ixl_set_link_status_locked(sc, iaq);
-	mutex_exit(&sc->sc_cfg_lock);
+	KASSERT(kpreempt_disabled());
+
+	link_state = ixl_set_link_status(sc, iaq);
 
 	if (ifp->if_link_state != link_state)
 		if_link_state_change(ifp, link_state);
 
 	if (link_state != LINK_STATE_DOWN) {
-		kpreempt_disable();
 		if_schedule_deferred_start(ifp);
-		kpreempt_enable();
 	}
 }
 
@@ -3771,7 +3745,9 @@ ixl_arq(void *xsc)
 
 		switch (iaq->iaq_opcode) {
 		case htole16(IXL_AQ_OP_PHY_LINK_STATUS):
+			kpreempt_disable();
 			ixl_link_state_update(sc, iaq);
+			kpreempt_enable();
 			break;
 		}
 
@@ -3827,7 +3803,6 @@ ixl_atq_post_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&sc->sc_atq),
 	    0, IXL_DMA_LEN(&sc->sc_atq), BUS_DMASYNC_POSTWRITE);
 
-	KASSERT(iatq->iatq_fn != NULL);
 	*slot = iatq->iatq_desc;
 	slot->iaq_cookie = (uint64_t)((intptr_t)iatq);
 
@@ -3841,6 +3816,18 @@ ixl_atq_post_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
 	ixl_wr(sc, sc->sc_aq_regs->atq_tail, sc->sc_atq_prod);
 
 	return 0;
+}
+
+static int
+ixl_atq_post(struct ixl_softc *sc, struct ixl_atq *iatq)
+{
+	int rv;
+
+	mutex_enter(&sc->sc_atq_lock);
+	rv = ixl_atq_post_locked(sc, iatq);
+	mutex_exit(&sc->sc_atq_lock);
+
+	return rv;
 }
 
 static void
@@ -3914,29 +3901,20 @@ ixl_atq_exec(struct ixl_softc *sc, struct ixl_atq *iatq)
 {
 	int error;
 
-	mutex_enter(&sc->sc_atq_lock);
-	error = ixl_atq_exec_locked(sc, iatq);
-	mutex_exit(&sc->sc_atq_lock);
-
-	return error;
-}
-
-static int
-ixl_atq_exec_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
-{
-	int error;
-
-	KASSERT(mutex_owned(&sc->sc_atq_lock));
 	KASSERT(iatq->iatq_desc.iaq_cookie == 0);
 
 	ixl_atq_set(iatq, ixl_wakeup);
 
+	mutex_enter(&sc->sc_atq_lock);
 	error = ixl_atq_post_locked(sc, iatq);
-	if (error)
+	if (error) {
+		mutex_exit(&sc->sc_atq_lock);
 		return error;
+	}
 
 	error = cv_timedwait(&sc->sc_atq_cv, &sc->sc_atq_lock,
 	    IXL_ATQ_EXEC_TIMEOUT);
+	mutex_exit(&sc->sc_atq_lock);
 
 	return error;
 }
@@ -4518,8 +4496,7 @@ ixl_get_link_status_poll(struct ixl_softc *sc, int *l)
 		return EIO;
 	}
 
-	/* It is unneccessary to hold lock */
-	link = ixl_set_link_status_locked(sc, &iaq);
+	link = ixl_set_link_status(sc, &iaq);
 
 	if (l != NULL)
 		*l = link;
@@ -5709,7 +5686,7 @@ out:
 }
 
 static int
-ixl_set_link_status_locked(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
+ixl_set_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 {
 	const struct ixl_aq_link_status *status;
 	const struct ixl_phy_type *itype;
@@ -5741,7 +5718,6 @@ ixl_set_link_status_locked(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	baudrate = ixl_search_link_speed(status->link_speed);
 
 done:
-	/* sc->sc_cfg_lock held expect during attach */
 	sc->sc_media_active = ifm_active;
 	sc->sc_media_status = ifm_status;
 
@@ -5920,18 +5896,13 @@ ixl_config_queue_intr(struct ixl_softc *sc)
 		     I40E_QINT_TQCTL_NEXTQ_TYPE_SHIFT) |
 		     I40E_QINT_TQCTL_CAUSE_ENA_MASK);
 
-		if (sc->sc_intrtype == PCI_INTR_TYPE_MSIX) {
-			ixl_wr(sc, I40E_PFINT_ITRN(I40E_ITR_INDEX_RX, i),
-			    sc->sc_itr_rx);
-			ixl_wr(sc, I40E_PFINT_ITRN(I40E_ITR_INDEX_TX, i),
-			    sc->sc_itr_tx);
+		if (sc->sc_intrtype == PCI_INTR_TYPE_MSIX)
 			vector++;
-		}
 	}
 	ixl_flush(sc);
 
-	ixl_wr(sc, I40E_PFINT_ITR0(I40E_ITR_INDEX_RX), sc->sc_itr_rx);
-	ixl_wr(sc, I40E_PFINT_ITR0(I40E_ITR_INDEX_TX), sc->sc_itr_tx);
+	ixl_wr(sc, I40E_PFINT_ITR0(I40E_ITR_INDEX_RX), 0x7a);
+	ixl_wr(sc, I40E_PFINT_ITR0(I40E_ITR_INDEX_TX), 0x7a);
 	ixl_flush(sc);
 }
 

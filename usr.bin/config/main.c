@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.99 2020/03/07 19:26:13 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.98 2018/12/24 02:07:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.99 2020/03/07 19:26:13 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.98 2018/12/24 02:07:44 christos Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -756,7 +756,7 @@ check_dependencies(const char *thing, struct nvlist *deps)
 		} else if (OPT_OBSOLETE(dep->nv_name)) {
 			cfgerror("option `%s' dependency `%s' "
 			    "is obsolete", thing, dep->nv_name);
-		} else if (!find_declared_option(dep->nv_name)) {
+		} else if (!is_declared_option(dep->nv_name)) {
 			cfgerror("option `%s' dependency `%s' "
 			    "is an unknown option",
 			    thing, dep->nv_name);
@@ -786,16 +786,14 @@ void
 deffilesystem(struct nvlist *fses, struct nvlist *deps)
 {
 	struct nvlist *nv;
-	struct where *w;
 
 	/*
 	 * Mark these options as ones to skip when creating the Makefile.
 	 */
 	for (nv = fses; nv != NULL; nv = nv->nv_next) {
-		if ((w = DEFINED_OPTION(nv->nv_name)) != NULL) {
-			cfgerror("file system or option `%s' already defined"
-			    " at %s:%hu", nv->nv_name, w->w_srcfile,
-			    w->w_srcline);
+		if (DEFINED_OPTION(nv->nv_name)) {
+			cfgerror("file system or option `%s' already defined",
+			    nv->nv_name);
 			return;
 		}
 
@@ -880,8 +878,8 @@ find_declared_fs_option(const char *name)
  * Like find_declared_option but doesn't return what it finds, so it
  * can search both the various kinds of options and also filesystems.
  */
-struct where *
-find_declared_option(const char *name)
+int
+is_declared_option(const char *name)
 {
 	struct defoptlist *option = NULL;
 	struct nvlist *fs;
@@ -889,13 +887,13 @@ find_declared_option(const char *name)
 	if ((option = dlhash_lookup(defopttab, name)) != NULL ||
 	    (option = dlhash_lookup(defparamtab, name)) != NULL ||
 	    (option = dlhash_lookup(defflagtab, name)) != NULL) {
-		return &option->dl_where;
+		return 1;
 	}
 	if ((fs = nvhash_lookup(deffstab, name)) != NULL) {
-		return &fs->nv_where;
+		return 1;
 	}
 
-	return NULL;
+	return 0;
 }
 
 /*
@@ -910,7 +908,6 @@ defopt(struct dlhash *ht, const char *fname, struct defoptlist *opts,
 {
 	struct defoptlist *dl, *nextdl, *olddl;
 	const char *name;
-	struct where *w;
 	char buf[500];
 
 	if (fname != NULL && badfilename(fname)) {
@@ -933,17 +930,15 @@ defopt(struct dlhash *ht, const char *fname, struct defoptlist *opts,
 		}
 
 		/* An option name can be declared at most once. */
-		if ((w = DEFINED_OPTION(dl->dl_name)) != NULL) {
-			cfgerror("file system or option `%s' already defined"
-			    " at %s:%hu", dl->dl_name, w->w_srcfile,
-			    w->w_srcline);
+		if (DEFINED_OPTION(dl->dl_name)) {
+			cfgerror("file system or option `%s' already defined",
+			    dl->dl_name);
 			return;
 		}
 
 		if (dlhash_insert(ht, dl->dl_name, dl)) {
-			cfgerror("file system or option `%s' already defined"
-			    " at %s:%hu", dl->dl_name, dl->dl_where.w_srcfile,
-			    dl->dl_where.w_srcline);
+			cfgerror("file system or option `%s' already defined",
+			    dl->dl_name);
 			return;
 		}
 
@@ -1384,8 +1379,8 @@ cfcrosscheck(struct config *cf, const char *what, struct nvlist *nv)
 				goto loop;
 		}
 		(void)fprintf(stderr,
-		    "%s:%hu: %s says %s on %s, but there's no %s\n",
-		    conffile, cf->cf_where.w_srcline,
+		    "%s:%d: %s says %s on %s, but there's no %s\n",
+		    conffile, cf->cf_lineno,
 		    cf->cf_name, what, nv->nv_str, nv->nv_str);
 		errs++;
  loop:

@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "internal/conf.h"
-#include "crypto/ctype.h"
+#include "internal/ctype.h"
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>

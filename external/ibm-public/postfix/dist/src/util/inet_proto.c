@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_proto.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: inet_proto.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -216,7 +216,7 @@ INET_PROTO_INFO *inet_proto_init(const char *context, const char *protocols)
     }
 
     /*
-     * Store address family etc. info as null-terminated vectors. If that
+     * Store addess family etc. info as null-terminated vectors. If that
      * breaks because we must be able to store nulls, we'll deal with the
      * additional complexity.
      * 

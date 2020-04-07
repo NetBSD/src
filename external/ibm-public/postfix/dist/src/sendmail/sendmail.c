@@ -1,4 +1,4 @@
-/*	$NetBSD: sendmail.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: sendmail.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -108,11 +108,6 @@
 /*	The path name of the Postfix \fBmain.cf\fR file, or of its
 /*	parent directory. This information is ignored with Postfix
 /*	versions before 2.3.
-/*
-/*	With Postfix version 3.2 and later, a non-default directory
-/*	must be authorized in the default \fBmain.cf\fR file, through
-/*	the alternate_config_directories or multi_instance_directories
-/*	parameters.
 /*
 /*	With all Postfix versions, you can specify a directory pathname
 /*	with the MAIL_CONFIG environment variable to override the
@@ -257,8 +252,8 @@
 /*	Thus, the usual precautions need to be taken against malicious
 /*	inputs.
 /* DIAGNOSTICS
-/*	Problems are logged to \fBsyslogd\fR(8) or \fBpostlogd\fR(8),
-/*	and to the standard error stream.
+/*	Problems are logged to \fBsyslogd\fR(8) and to the standard error
+/*	stream.
 /* ENVIRONMENT
 /* .ad
 /* .fi
@@ -290,7 +285,7 @@
 /* TROUBLE SHOOTING CONTROLS
 /* .ad
 /* .fi
-/*	The DEBUG_README file gives examples of how to troubleshoot a
+/*	The DEBUG_README file gives examples of how to trouble shoot a
 /*	Postfix system.
 /* .IP "\fBdebugger_command (empty)\fR"
 /*	The external command to execute when a Postfix daemon program is
@@ -367,10 +362,6 @@
 /* .IP "\fBdelay_warning_time (0h)\fR"
 /*	The time after which the sender receives a copy of the message
 /*	headers of mail that is still queued.
-/* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a privileged Postfix
-/*	process will import from a non-Postfix parent process, or name=value
-/*	environment overrides.
 /* .IP "\fBmail_owner (postfix)\fR"
 /*	The UNIX system account that owns the Postfix queue and most Postfix
 /*	daemon processes.
@@ -383,21 +374,8 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
-/* .PP
-/*	Postfix 3.2 and later:
-/* .IP "\fBalternate_config_directories (empty)\fR"
-/*	A list of non-default Postfix configuration directories that may
-/*	be specified with "-c config_directory" on the command line (in the
-/*	case of \fBsendmail\fR(1), with the "-C" option), or via the MAIL_CONFIG
-/*	environment parameter.
-/* .IP "\fBmulti_instance_directories (empty)\fR"
-/*	An optional list of non-default Postfix configuration directories;
-/*	these directories belong to additional Postfix instances that share
-/*	the Postfix executable files and documentation with the default
-/*	Postfix instance, and that are started, stopped, etc., together
-/*	with the default Postfix instance.
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* FILES
 /*	/var/spool/postfix, mail queue
 /*	/etc/postfix, configuration files
@@ -411,7 +389,6 @@
 /*	postdrop(1), mail posting utility
 /*	postfix(1), mail system control
 /*	postqueue(1), mail queue control
-/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README_FILES
 /* .ad
@@ -449,6 +426,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <syslog.h>
 #include <time.h>
 #include <errno.h>
 #include <ctype.h>
@@ -461,6 +439,7 @@
 #include <mymalloc.h>
 #include <vstream.h>
 #include <msg_vstream.h>
+#include <msg_syslog.h>
 #include <vstring_vstream.h>
 #include <username.h>
 #include <fullname.h>
@@ -473,8 +452,6 @@
 #include <split_at.h>
 #include <name_code.h>
 #include <warn_stat.h>
-#include <clean_env.h>
-#include <maillog_client.h>
 
 /* Global library. */
 
@@ -497,10 +474,8 @@
 #include <deliver_request.h>
 #include <mime_state.h>
 #include <header_opts.h>
-#include <mail_dict.h>
 #include <user_acl.h>
 #include <dsn_mask.h>
-#include <mail_parm_split.h>
 
 /* Application-specific. */
 
@@ -692,8 +667,7 @@ static void enqueue(const int flags, const char *encoding,
      * Stop run-away process accidents by limiting the queue file size. This
      * is not a defense against DOS attack.
      */
-    if (ENFORCING_SIZE_LIMIT(var_message_limit)
-	&& get_file_limit() > var_message_limit)
+    if (var_message_limit > 0 && get_file_limit() > var_message_limit)
 	set_file_limit((off_t) var_message_limit);
 
     /*
@@ -1011,7 +985,6 @@ int     main(int argc, char **argv)
     int     dsn_ret = 0;
     const char *dsn_envid = 0;
     int     saved_optind;
-    ARGV   *import_env;
 
     /*
      * Fingerprint executables and core dumps.
@@ -1052,15 +1025,15 @@ int     main(int argc, char **argv)
 	debug_me = 1;
 
     /*
-     * Initialize. Set up logging. Read the global configuration file after
-     * command-line processing. Set up signal handlers so that we can clean
-     * up incomplete output.
+     * Initialize. Set up logging, read the global configuration file and
+     * extract configuration information. Set up signal handlers so that we
+     * can clean up incomplete output.
      */
     if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
 	argv[0] = slash + 1;
     msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_cleanup(tempfail);
-    maillog_client_init(mail_task("sendmail"), MAILLOG_CLIENT_FLAG_NONE);
+    msg_syslog_init(mail_task("sendmail"), LOG_PID, LOG_FACILITY);
     set_mail_conf_str(VAR_PROCNAME, var_procname = mystrdup(argv[0]));
 
     /*
@@ -1097,28 +1070,19 @@ int     main(int argc, char **argv)
 	    break;
 	if (c == 'C') {
 	    VSTRING *buf = vstring_alloc(1);
-	    char   *dir;
 
-	    dir = strcmp(sane_basename(buf, optarg), MAIN_CONF_FILE) == 0 ?
-		sane_dirname(buf, optarg) : optarg;
-	    if (strcmp(dir, DEF_CONFIG_DIR) != 0 && geteuid() != 0)
-		mail_conf_checkdir(dir);
-	    if (setenv(CONF_ENV_PATH, dir, 1) < 0)
+	    if (setenv(CONF_ENV_PATH,
+		   strcmp(sane_basename(buf, optarg), MAIN_CONF_FILE) == 0 ?
+		       sane_dirname(buf, optarg) : optarg, 1) < 0)
 		msg_fatal_status(EX_UNAVAILABLE, "out of memory");
 	    vstring_free(buf);
 	}
     }
     optind = saved_optind;
     mail_conf_read();
-    /* Enforce consistent operation of different Postfix parts.	 */
-    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
-    update_env(import_env->argv);
-    argv_free(import_env);
     /* Re-evaluate mail_task() after reading main.cf. */
-    maillog_client_init(mail_task("sendmail"), MAILLOG_CLIENT_FLAG_NONE);
+    msg_syslog_init(mail_task("sendmail"), LOG_PID, LOG_FACILITY);
     get_mail_conf_str_table(str_table);
-
-    mail_dict_init();
 
     if (chdir(var_queue_dir))
 	msg_fatal_status(EX_UNAVAILABLE, "chdir %s: %m", var_queue_dir);

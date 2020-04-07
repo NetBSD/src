@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.8 2020/03/18 19:05:13 christos Exp $
+#	$NetBSD: main.cf,v 1.7 2017/02/21 01:13:21 pgoyette Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -262,7 +262,7 @@ unknown_local_recipient_reject_code = 550
 #
 # By default (mynetworks_style = subnet), Postfix "trusts" SMTP
 # clients in the same IP subnetworks as the local machine.
-# On Linux, this works correctly only with interfaces specified
+# On Linux, this does works correctly only with interfaces specified
 # with the "ifconfig" command.
 # 
 # Specify "mynetworks_style = class" when Postfix should "trust" SMTP
@@ -636,7 +636,7 @@ debugger_command =
 #	>$config_directory/$process_name.$process_id.log & sleep 5
 #
 # Another possibility is to run gdb under a detached screen session.
-# To attach to the screen session, su root and run "screen -r
+# To attach to the screen sesssion, su root and run "screen -r
 # <id_string>" where <id_string> uniquely matches one of the detached
 # sessions (from "screen -list").
 #

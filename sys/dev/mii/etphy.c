@@ -1,4 +1,4 @@
-/*	$NetBSD: etphy.c,v 1.9 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: etphy.c,v 1.8 2020/02/28 05:13:19 msaitoh Exp $	*/
 /*	$OpenBSD: etphy.c,v 1.4 2008/04/02 20:12:58 brad Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.9 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.8 2020/02/28 05:13:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,8 +166,6 @@ etphy_attach(device_t parent, device_t self, void *aux)
 
 	sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
 
-	mii_lock(mii);
-
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
@@ -178,8 +176,6 @@ etphy_attach(device_t parent, device_t self, void *aux)
 		sc->mii_extcapabilities &= ~EXTSR_1000THDX;
 	}
 
-	mii_unlock(mii);
-
 	mii_phy_add_media(sc);
 }
 
@@ -188,8 +184,6 @@ etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t bmcr;
-
-	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -264,8 +258,6 @@ etphy_reset(struct mii_softc *sc)
 	uint16_t reg;
 	int i;
 
-	KASSERT(mii_locked(sc->mii_pdata));
-
 	if (sc->mii_mpd_model == MII_MODEL_AGERE_ET1011) {
 		mii_phy_reset(sc);
 		return;
@@ -317,8 +309,6 @@ etphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t bmsr, bmcr, sr;
-
-	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;

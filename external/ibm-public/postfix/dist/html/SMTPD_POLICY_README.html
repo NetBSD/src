@@ -31,7 +31,7 @@ can be found in the Postfix source code, in the directory
 examples/smtpd-policy. </p>
 
 <p> Another example of policy delegation is the SPF policy server
-at https://web.archive.org/web/20190221142057/<a href="http://www.openspf.org/Software">http://www.openspf.org/Software</a>.  </p>
+at <a href="http://www.openspf.org/Software">http://www.openspf.org/Software</a>.  </p>
 
 <p> Policy delegation is now the preferred method for adding policies
 to Postfix. It's much easier to develop a new feature in few lines
@@ -65,14 +65,11 @@ multiple times, for up to $<a href="postconf.5.html#max_use">max_use</a> incomin
 
 <h2><a name="protocol">Protocol description</a></h2>
 
-<p> The Postfix policy delegation protocol is really simple. The client
-sends a request and the server sends a response. Unless there was an
-error, the server must not close the connection, so that the same
-connection can be used multiple times. </p>
-
-<p> The client request is a sequence of name=value attributes separated
-by newline, and is terminated by an empty line. The server reply is one
-name=value attribute and it, too, is terminated by an empty line. </p>
+<p> The Postfix policy delegation protocol is really simple. The
+client request is a sequence of name=value attributes separated by
+newline, and is terminated by an empty line. The server reply is
+one name=value attribute and it, too, is terminated by an empty
+line. </p>
 
 <p> Here is an example of all the attributes that the Postfix SMTP
 server sends in a delegated SMTPD access policy request: </p>
@@ -113,9 +110,6 @@ ccert_pubkey_fingerprint=68:B3:29:DA:98:93:E3:40:99:C7:D8:AD:5C:B9:C9:40
 client_port=1234
 <b>Postfix version 3.1 and later:</b>
 policy_context=submission
-<b>Postfix version 3.2 and later:</b>
-server_address=10.3.2.1
-server_port=54321
 [empty line]
 </pre>
 </blockquote>
@@ -143,23 +137,16 @@ server_port=54321
     <li> <p> The "recipient" attribute is available in the "RCPT
     TO" stage. It is also available in the "DATA" and "END-OF-MESSAGE"
     stages if Postfix accepted only one recipient for the current
-    message.
-    The DATA protocol state also applies to email that is received
-    with BDAT commands (Postfix 3.4 and later). </p>
+    message.  </p>
 
     <li> <p> The "recipient_count" attribute (Postfix 2.3 and later)
     is non-zero only in the "DATA" and "END-OF-MESSAGE" stages. It
     specifies the number of recipients that Postfix accepted for
-    the current message.
-    The DATA protocol state also applies to email that is received
-    with BDAT commands (Postfix 3.4 and later). </p>
+    the current message.  </p>
 
-    <li> <p> The remote client or local server IP address is an
-    IPv4 dotted quad in the form 1.2.3.4 or it is an IPv6 address
-    in the form 1:2:3::4:5:6.  </p>
-
-    <li> <p> The remote client or local server port is a decimal
-    number in the range 0-65535.  </p>
+    <li> <p> The client address is an IPv4 dotted quad in the form
+    1.2.3.4 or it is an IPv6 address in the form 1:2:3::4:5:6.
+    </p>
 
     <li> <p> For a discussion of the differences between reverse
     and verified client_name information, see the
@@ -180,7 +167,8 @@ server_port=54321
     <li> <p> The "size" attribute value specifies the message size
     that the client specified in the MAIL FROM command (zero if
     none was specified). With Postfix 2.2 and later, it specifies
-    the actual message size after the client sends the END-OF-MESSAGE.
+    the actual message size when the client sends the END-OF-DATA
+    command.
     </p>
 
     <li> <p> The "sasl_*" attributes (Postfix 2.2 and later) specify
@@ -226,8 +214,6 @@ server_port=54321
     DATA, END-OF-MESSAGE, VRFY or ETRN; these are the SMTP protocol
     states where
     the Postfix SMTP server makes an OK/REJECT/HOLD/etc. decision.
-    The DATA protocol state also applies to email that is received
-    with BDAT commands (Postfix 3.4 and later).
     </p>
 
 </ul>
@@ -424,12 +410,11 @@ the result. </p>
 <blockquote>
 <pre>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-2     mua_recipient_restrictions = 
+2     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
 3         ...
 4         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
 5         <a href="postconf.5.html#check_policy_service">check_policy_service</a> { inet:host:port, 
-6             timeout=10s, default_action=DUNNO
-7             policy_context=submission }
+6             timeout=10s, default_action=DUNNO }
 8         ...
 </pre>
 </blockquote>
@@ -442,7 +427,7 @@ the result. </p>
 This supports the exact same "inet" and "unix" syntax as described
 earlier. </p>
 
-<li> <p> Line 6-7: The remainder of the list contains per-client
+<li> <p> Line 6: The remainder of the list contains per-client
 settings. These settings override global <a href="postconf.5.html">main.cf</a> parameters,
 and have the same name as those parameters, without the
 "smtpd_policy_service_" prefix.  </p>

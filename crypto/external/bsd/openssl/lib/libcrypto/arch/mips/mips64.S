@@ -568,11 +568,6 @@ bn_sub_words_internal:
 	move	$4,$2
 .end	bn_sub_words_internal
 
-#if 0
-/*
- * The bn_div_3_words entry point is re-used for constant-time interface.
- * Implementation is retained as historical reference.
- */
 .align 5
 .globl	bn_div_3_words
 .ent	bn_div_3_words
@@ -629,7 +624,6 @@ bn_div_3_words_internal:
 	jr	$31
 	move	$4,$2
 .end	bn_div_3_words_internal
-#endif
 
 .align	5
 .globl	bn_div_words

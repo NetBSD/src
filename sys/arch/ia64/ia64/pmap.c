@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.40 2020/03/14 14:05:42 ad Exp $ */
+/* $NetBSD: pmap.c,v 1.39 2019/11/30 16:23:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2020/03/14 14:05:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2019/11/30 16:23:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1856,11 +1856,10 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
  *	entries in pmap will be removed before any more entries are
  *	entered.
  */
-bool
+void
 pmap_remove_all(pmap_t pmap)
 {
 	/* XXX do nothing */
-	return false;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_uart.c,v 1.3 2020/03/17 21:24:30 skrll Exp $ */
+/* $NetBSD: exynos_uart.c,v 1.2 2018/09/11 10:05:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013-2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.3 2020/03/17 21:24:30 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.2 2018/09/11 10:05:31 jmcneill Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -301,7 +301,7 @@ exynos_uart_cnputc(dev_t dev, int c)
 
 	splx(s);
 }
-
+	
 
 static void
 exynos_uart_cnpollc(dev_t dev, int on)

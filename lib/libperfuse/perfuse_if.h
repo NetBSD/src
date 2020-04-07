@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.23 2020/03/05 15:56:20 msaitoh Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.22 2016/10/19 01:30:35 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -50,7 +50,7 @@ extern int perfuse_diagflags;
 #define PDF_READDIR	0x0040	/* readdir operations */
 #define PDF_REQUEUE	0x0080	/* reueued messages */
 #define PDF_SYNC	0x0100	/* fsync and dirty flags */
-#define PDF_MISC	0x0200	/* Miscellaneous messages */
+#define PDF_MISC	0x0200	/* Miscelaneous messages */
 #define PDF_SYSLOG	0x0400	/* use syslog */
 #define PDF_FILENAME	0x0800	/* File names */
 #define PDF_RESIZE	0x1000	/* Resize operations */

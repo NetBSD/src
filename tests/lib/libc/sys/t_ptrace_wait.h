@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.27 2020/03/08 15:07:44 martin Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.22 2020/02/22 19:44:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -463,33 +463,6 @@ await_stopped_child(pid_t process)
 	return child;
 }
 
-static void __used
-await_collected(pid_t process)
-{
-	struct kinfo_proc2 p;
-	size_t len = sizeof(p);
-
-	const int name[] = {
-		[0] = CTL_KERN,
-		[1] = KERN_PROC2,
-		[2] = KERN_PROC_PID,
-		[3] = process,
-		[4] = sizeof(p),
-		[5] = 1
-	};
-
-	const size_t namelen = __arraycount(name);
-
-	/* Await the process to disappear */
-	while(1) {
-		FORKEE_ASSERT_EQ(sysctl(name, namelen, &p, &len, NULL, 0), 0);
-		if (len == 0)
-			break;
-
-		ATF_REQUIRE(usleep(1000) == 0);
-	}
-}
-
 /* Happy number sequence -- this function is used to just consume cpu cycles */
 #define	HAPPY_NUMBER	1
 
@@ -654,16 +627,10 @@ trigger_ill(void)
 #endif
 }
 
-#ifdef __HAVE_FENV
-#include <fenv.h>
-#endif
-
-#if (__arm__ && !__SOFTFP__) || __aarch64__
-#include <ieeefp.h> /* only need for ARM Cortex/Neon hack */
-
 static bool __used
 are_fpu_exceptions_supported(void)
 {
+#if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
 	 * Some NEON fpus do not trap on IEEE 754 FP exceptions.
 	 * Skip these tests if running on them and compiled for
@@ -671,11 +638,9 @@ are_fpu_exceptions_supported(void)
 	 */
 	if (0 == fpsetmask(fpsetmask(FP_X_INV)))
 		return false;
+#endif
 	return true;
 }
-#else
-#define are_fpu_exceptions_supported() 1
-#endif
 
 static void __used
 trigger_fpe(void)
@@ -719,7 +684,7 @@ struct lwp_event_count {
 	int lec_count;
 };
 
-static int * __used
+static int *
 find_event_count(struct lwp_event_count list[], lwpid_t lwp, size_t max_lwps)
 {
 	size_t i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.89 2020/03/08 15:05:18 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.88 2020/01/27 21:05:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -108,6 +108,8 @@ do {								\
 #endif
 
 extern __cpu_simple_lock_t kernel_lock[];
+
+void	kernel_lock_plug_leak(void);
 
 #endif /* _KERNEL */
 

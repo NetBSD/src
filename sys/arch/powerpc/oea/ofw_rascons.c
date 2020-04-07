@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.14 2020/03/16 22:02:37 macallan Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.13 2018/09/03 16:29:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.14 2020/03/16 22:02:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.13 2018/09/03 16:29:26 riastradh Exp $");
 
 #include "wsdisplay.h"
 
@@ -65,9 +65,6 @@ static vaddr_t fbaddr;
 static int romfont_loaded = 0;
 static int needs_finalize = 0;
 
-#define FONTBUFSIZE (2048)	/* enough for 96 6x11 bitmap characters */ 
-static uint8_t fontbuf[FONTBUFSIZE];
-
 struct vcons_screen rascons_console_screen;
 
 struct wsscreen_descr rascons_stdscreen = {
@@ -89,10 +86,8 @@ rascons_cnattach(void)
 	OF_interpret("line#", 0, 1, &crow);
 
 	/* move (rom monitor) cursor to the lowest line - 1 */
-	/* XXXX - Why? */
-#if 0
 	OF_interpret("#lines 2 - to line#", 0, 0);
-#endif
+
 	wsfont_init();
 	if (copy_rom_font() == 0) {
 #if !defined(OFWOEA_WSCONS_NO_ROM_FONT)
@@ -147,37 +142,23 @@ rascons_cnattach(void)
 }
 
 void
-rascons_add_rom_font(void)
-{
-	wsfont_init();
-	if (romfont_loaded) {
-		wsfont_add(&openfirm6x11, 0);
-	}
-}
-
-void
 rascons_finalize(void)
 {
 	struct rasops_info *ri = &rascons_console_screen.scr_ri;
 	long defattr;
-	int crow = 0;
 
 	if (needs_finalize == 0) return;
-
-	/* get current cursor position */
-	if (romfont_loaded) OF_interpret("line#", 0, 1, &crow);
-
+	
 	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
-	wsdisplay_preattach(&rascons_stdscreen, ri, 0, uimax(0,
-		    uimin(crow, ri->ri_rows - 1)), defattr);
+	wsdisplay_preattach(&rascons_stdscreen, ri, 0, 0, defattr);
 }
 
 static int
 copy_rom_font(void)
 {
 	u_char *romfont;
-	int char_width, char_height, stride;
-	int chosen, mmu, m, e, size;
+	int char_width, char_height;
+	int chosen, mmu, m, e;
 
 	/* Get ROM FONT address. */
 	OF_interpret("font-adr", 0, 1, &romfont);
@@ -197,22 +178,16 @@ copy_rom_font(void)
 	OF_interpret("char-width", 0, 1, &char_width);
 	OF_interpret("char-height", 0, 1, &char_height);
 
-	stride = (char_width + 7) >> 3;
-	size = stride * char_height * 96;
-	if (size > FONTBUFSIZE) return -1;
-	
-	memcpy(fontbuf, romfont, size);
-
 	openfirm6x11.name = "Open Firmware";
 	openfirm6x11.firstchar = 32;
 	openfirm6x11.numchars = 96;
 	openfirm6x11.encoding = WSDISPLAY_FONTENC_ISO;
 	openfirm6x11.fontwidth = char_width;
 	openfirm6x11.fontheight = char_height;
-	openfirm6x11.stride = stride;
+	openfirm6x11.stride = 1;
 	openfirm6x11.bitorder = WSDISPLAY_FONTORDER_L2R;
 	openfirm6x11.byteorder = WSDISPLAY_FONTORDER_L2R;
-	openfirm6x11.data = fontbuf;
+	openfirm6x11.data = romfont;
 
 	return 0;
 }
@@ -248,7 +223,7 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 
 	/* mimic firmware output if we can find the ROM font */
 	if (romfont_loaded) {
-		int cols = 0, rows = 0;
+		int cols, rows;
 
 		/*
 		 * XXX this assumes we're the console which may or may not
@@ -259,12 +234,12 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 		ri->ri_font = &openfirm6x11;
 		ri->ri_wsfcookie = -1;		/* not using wsfont */
 		rasops_init(ri, rows, cols);
-#ifdef RASCONS_DEBUG
-		char buffer[128];
-		snprintf(buffer, 128, "bits %08x c %d w %d -> %d %d\n",
-		    (uint32_t)ri->ri_bits, cols, width, ri->ri_xorigin, ri->ri_yorigin);
-		OF_write(console_instance, buffer, strlen(buffer));
-#endif
+
+		ri->ri_xorigin = (width - cols * ri->ri_font->fontwidth) >> 1;
+		ri->ri_yorigin = (height - rows * ri->ri_font->fontheight)
+		    >> 1;
+		ri->ri_bits = (char *)fbaddr + ri->ri_xorigin +
+			      ri->ri_stride * ri->ri_yorigin;
 	} else {
 		/* use as much of the screen as the font permits */
 		rasops_init(ri, height/8, width/8);

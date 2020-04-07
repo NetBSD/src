@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.170 2020/03/08 15:05:18 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.169 2020/02/10 22:11:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.170 2020/03/08 15:05:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.169 2020/02/10 22:11:09 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -342,4 +342,24 @@ bool
 _kernel_locked_p(void)
 {
 	return __SIMPLELOCK_LOCKED_P(kernel_lock);
+}
+
+void
+kernel_lock_plug_leak(void)
+{
+#ifndef LOCKDEBUG
+# ifdef DIAGNOSTIC
+	int biglocks = 0;
+	KERNEL_UNLOCK_ALL(curlwp, &biglocks);
+	if (biglocks != 0) {
+		const char *sym = "(unknown)";
+		ksyms_getname(NULL, &sym, (vaddr_t)curlwp->l_ld_wanted,
+		    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
+		printf("kernel_lock leak detected. last acquired: %s / %p\n",
+		    sym, curlwp->l_ld_wanted);
+	}
+# else
+	KERNEL_UNLOCK_ALL(curlwp, NULL);
+# endif
+#endif
 }

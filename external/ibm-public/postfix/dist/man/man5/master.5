@@ -1,4 +1,4 @@
-.\"	$NetBSD: master.5,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: master.5,v 1.2 2017/02/14 01:16:44 christos Exp $
 .\"
 .TH MASTER 5 
 .ad
@@ -69,8 +69,8 @@ via the network.
 The service name is specified as \fIhost:port\fR, denoting
 the host and port on which new connections should be
 accepted. The host part (and colon) may be omitted.  Either
-host or port may be given in symbolic form (see \fBhosts\fR(5) or
-\fBservices\fR(5)) or in numeric form (IP address or port number).
+host or port may be given in symbolic form (host or service
+name) or in numeric form (IP address or port number).
 Host information may be enclosed inside "[]"; this form
 is necessary only with IPv6 addresses.
 .sp
@@ -87,8 +87,8 @@ Note: with Postfix version 2.2 and later specify
 of hard\-coding loopback IP address information in master.cf
 or in main.cf.
 .IP \fBunix\fR
-The service listens on a UNIX\-domain stream socket and is
-accessible for local clients only.
+The service listens on a UNIX\-domain socket and is accessible
+for local clients only.
 
 The service name is a pathname relative to the Postfix
 queue directory (pathname controlled with the \fBqueue_directory\fR
@@ -96,14 +96,7 @@ configuration parameter in main.cf).
 .sp
 On Solaris 8 and earlier systems the \fBunix\fR type is
 implemented with streams sockets.
-.IP \fBunix\-dgram\fR
-The service listens on a UNIX\-domain datagram socket and is
-accessible for local clients only.
-
-The service name is a pathname relative to the Postfix
-queue directory (pathname controlled with the \fBqueue_directory\fR
-configuration parameter in main.cf).
-.IP "\fBfifo\fR (obsolete)"
+.IP \fBfifo\fR
 The service listens on a FIFO (named pipe) and is accessible
 for local clients only.
 
@@ -111,9 +104,9 @@ The service name is a pathname relative to the Postfix
 queue directory (pathname controlled with the \fBqueue_directory\fR
 configuration parameter in main.cf).
 .IP \fBpass\fR
-The service listens on a UNIX\-domain stream socket, and is
-accessible to local clients only. It receives one open
-connection (file descriptor passing) per connection request.
+The service listens on a UNIX\-domain socket, and is accessible
+to local clients only. It receives one open connection (file
+descriptor passing) per connection request.
 
 The service name is a pathname relative to the Postfix
 queue directory (pathname controlled with the \fBqueue_directory\fR
@@ -148,7 +141,7 @@ most of the purpose of having that service in the first
 place.
 .sp
 The files in the examples/chroot\-setup subdirectory of the
-Postfix source show how to set up a Postfix chroot environment
+Postfix source archive show set up a Postfix chroot environment
 on a variety of systems. See also BASIC_CONFIGURATION_README
 for issues related to running daemons chrooted.
 .IP "\fBWake up time (default: 0)\fR"

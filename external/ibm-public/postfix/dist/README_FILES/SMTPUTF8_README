@@ -18,14 +18,13 @@ Topics covered in this document:
   * SMTPUTF8 autodetection
   * Limitations of the current implementation
   * Compatibility with pre-SMTPUTF8 environments
-  * Compatibility with IDNA2003
   * Credits
 
 BBuuiillddiinngg PPoossttffiixx wwiitthh//wwiitthhoouutt SSMMTTPPUUTTFF88 ssuuppppoorrtt
 
-Postfix will build with SMTPUTF8 support if the ICU version >= 46 library and
-header files are installed on the system. The package name varies with the OS
-distribution. The table shows package names for a number of platforms at the
+Postfix will build with SMTPUTF8 support if the ICU library and header files
+are installed on the system. The package name varies with the OS distribution
+(and version). The table shows package names for a number of platforms at the
 time this text was written.
 
      _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
@@ -60,10 +59,6 @@ main.cf:
 
     # ppoossttccoonnff ""ssmmttppuuttff88__eennaabbllee == yyeess""
     # ppoossttffiixx rreellooaadd
-
-(With Postfix <= 3.1, you may also need to specify "ooppttiioonn__ggrroouupp == cclliieenntt" in
-Postfix MySQL client files, to enable UTF8 support in MySQL queries. This
-setting is the default as of Postfix 3.2.)
 
 With SMTPUTF8 support enabled, Postfix changes behavior with respect to earlier
 Postfix releases:
@@ -253,33 +248,12 @@ localparts (and in headers) as before. The vast majority of email software is
 perfectly capable of handling such email, even if pre-SMTPUTF8 standards do not
 support such practice.
 
-RReejjeeccttiinngg nnoonn--UUTTFF88 aaddddrreesssseess
-
-With "smtputf8_enable = yes", Postfix requires that non-ASCII address
-information is encoded in UTF-8 and will reject other encodings such as ISO-
-8859. It is not practical for Postfix to support multiple encodings at the same
-time. There is no problem with RFC 2047 encodings such as "=?ISO-8859-
-1?Q?text?=", because those use only characters from the ASCII characterset.
-
-RReejjeeccttiinngg nnoonn--AASSCCIIII aaddddrreesssseess iinn nnoonn--SSMMTTPPUUTTFF88 ttrraannssaaccttiioonnss
-
-Setting "strict_smtputf8 = yes" in addition to "smtputf8_enable = yes" will
-enable stricter enforcement of the SMTPUTF8 protocol. Specifically, the Postfix
-SMTP server will not only reject non-UTF8 sender or recipient addresses, it
-will in addition accept UTF-8 sender or recipient addresses only when the
-client requests an SMTPUTF8 mail transaction.
-
-CCoommppaattiibbiilliittyy wwiitthh IIDDNNAA22000033
-
-Postfix >= 3.2 by default disables the 'transitional' compatibility between
-IDNA2003 and IDNA2008, when converting UTF-8 domain names to/from the ASCII
-form that is used in DNS lookups. This makes Postfix behavior consistent with
-current versions of the Firefox and Chrome web browsers. Specify
-"enable_idna2003_compatibility = yes" to get the historical behavior.
-
-This affects the conversion of domain names that contain for example the German
-sz (ß) and the Greek zeta (ς). See http://unicode.org/cldr/utility/idna.jsp
-for more examples.
+However, when you specify "smtputf8_enable = yes", Postfix requires that non-
+ASCII address information is encoded in UTF-8 and will reject other encodings
+such as ISO-8859. It is not practical for Postfix to support multiple encodings
+at the same time. There is no problem with RFC 2047 encodings such as "=?ISO-
+8859-1?Q?text?=", because those use only characters from the ASCII
+characterset.
 
 CCrreeddiittss
 

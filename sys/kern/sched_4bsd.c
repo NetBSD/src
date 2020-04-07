@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.43 2020/03/12 10:44:00 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.42 2020/01/09 16:35:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.43 2020/03/12 10:44:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.42 2020/01/09 16:35:03 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -147,7 +147,6 @@ sched_tick(struct cpu_info *ci)
 			 * Indicate that the process should yield.
 			 */
 			pri = MAXPRI_KTHREAD;
-			spc->spc_flags |= SPCF_SHOULDYIELD;
 		} else if ((spc->spc_flags & SPCF_1STCLASS) == 0) {
 			/*
 			 * For SMT or assymetric systems push a little
@@ -155,7 +154,6 @@ sched_tick(struct cpu_info *ci)
 			 * find a better one to run this LWP.
 			 */
 			pri = MAXPRI_KTHREAD;
-			spc->spc_flags |= SPCF_SHOULDYIELD;
 		} else {
 			spc->spc_flags |= SPCF_SEENRR;
 		}

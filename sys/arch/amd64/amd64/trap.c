@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.127 2020/03/09 21:49:26 pgoyette Exp $	*/
+/*	$NetBSD: trap.c,v 1.125 2019/11/21 19:23:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127 2020/03/09 21:49:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2019/11/21 19:23:58 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -83,10 +83,13 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127 2020/03/09 21:49:26 pgoyette Exp $");
 #include <sys/syscall.h>
 #include <sys/cpu.h>
 #include <sys/ucontext.h>
-#include <sys/module_hook.h>
-#include <sys/compat_stub.h>
 
 #include <uvm/uvm_extern.h>
+
+#ifdef COMPAT_NETBSD32
+#include <sys/exec.h>
+#include <compat/netbsd32/netbsd32_exec.h>
+#endif
 
 #include <machine/cpufunc.h>
 #include <x86/fpu.h>
@@ -114,11 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127 2020/03/09 21:49:26 pgoyette Exp $");
 dtrace_trap_func_t dtrace_trap_func = NULL;
 dtrace_doubletrap_func_t dtrace_doubletrap_func = NULL;
 #endif
-
-/*
- * Module hook for amd64_oosyscall
- */
-struct amd64_oosyscall_hook_t amd64_oosyscall_hook;
 
 void nmitrap(struct trapframe *);
 void doubletrap(struct trapframe *);
@@ -344,16 +342,32 @@ trap(struct trapframe *frame)
 		goto we_re_toast;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
-	{	int hook_ret;
+#if defined(COMPAT_NETBSD32) && defined(COMPAT_10)
 
-		MODULE_HOOK_CALL(amd64_oosyscall_hook, (p, frame),
-			ENOSYS, hook_ret);
-		if (hook_ret == 0) {
-			/* Do the syscall */
+/*
+ * XXX This code currently not included in loadable module;  it is
+ * only included in built-in modules.
+ */
+	{
+		static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
+		const size_t sz = sizeof(lcall);
+		char tmp[sizeof(lcall) /* Avoids VLA */];
+
+		/* Check for the oosyscall lcall instruction. */
+		if (p->p_emul == &emul_netbsd32 &&
+		    frame->tf_rip < VM_MAXUSER_ADDRESS32 - sz &&
+		    copyin((void *)frame->tf_rip, tmp, sz) == 0 &&
+		    memcmp(tmp, lcall, sz) == 0) {
+
+			/* Advance past the lcall. */
+			frame->tf_rip += sz;
+
+			/* Do the syscall. */
 			p->p_md.md_syscall(frame);
 			goto out;
 		}
 	}
+#endif
 		/* FALLTHROUGH */
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:

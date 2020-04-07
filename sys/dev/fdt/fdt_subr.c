@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.36 2020/03/08 08:26:54 skrll Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.35 2020/02/24 12:38:57 rin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.36 2020/03/08 08:26:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.35 2020/02/24 12:38:57 rin Exp $");
 
 #include "opt_fdt.h"
 
@@ -51,6 +51,9 @@ fdtbus_init(const void *data)
 		return false;
 	}
 	fdt_data = data;
+
+	/* Now that we have a FDT blob, initialize other bits that need it. */
+	fdtbus_intr_init();
 
 	return true;
 }

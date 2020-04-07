@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.41 2020/03/13 18:17:40 christos Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.40 2019/09/14 12:48:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.41 2020/03/13 18:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.40 2019/09/14 12:48:51 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -124,7 +124,7 @@ ugensa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	DPRINTFN(20,("ugensa: vendor=%#x, product=%#x\n",
+	DPRINTFN(20,("ugensa: vendor=0x%x, product=0x%x\n",
 		     uaa->uaa_vendor, uaa->uaa_product));
 
 	return ugensa_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
@@ -235,7 +235,7 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_init_state = UGENSA_INIT_INITED;
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
-	DPRINTF(("ugensa: in=%#x out=%#x\n", ucaa.ucaa_bulkin,
+	DPRINTF(("ugensa: in=0x%x out=0x%x\n", ucaa.ucaa_bulkin,
 	    ucaa.ucaa_bulkout));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);

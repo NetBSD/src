@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,7 @@ extern char                 *DtCompilerParsertext;
 extern DT_FIELD             *AslGbl_CurrentField;
 
 extern int                  DtLabelByteOffset;
+extern UINT64               DtCompilerParserResult; /* Expression return value */
 extern UINT64               DtCompilerParserlineno; /* Current line number */
 
 extern UINT32               DtTokenFirstLine;

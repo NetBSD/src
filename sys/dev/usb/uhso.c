@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.34 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: uhso.c,v 1.32 2020/01/29 06:39:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.34 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.32 2020/01/29 06:39:07 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"

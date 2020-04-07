@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_uic.c,v 1.5 2020/03/05 11:33:14 rin Exp $	*/
+/*	$NetBSD: pic_uic.c,v 1.4 2013/11/19 12:46:43 kiyohara Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.5 2020/03/05 11:33:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.4 2013/11/19 12:46:43 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -294,6 +294,12 @@ struct pic_ops pic_uic2 = {
 
 #endif /* MULTIUIC */
 #endif /* !PPC_IBM403 */
+
+/* Write External Enable Immediate */
+#define	wrteei(en) 		__asm volatile ("wrteei %0" : : "K"(en))
+
+/* Enforce In Order Execution of I/O */
+#define	eieio() 		__asm volatile ("eieio")
 
 /*
  * Set up interrupt mapping array.

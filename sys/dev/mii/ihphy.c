@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.18 2020/03/28 18:37:18 thorpej Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.16 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.18 2020/03/28 18:37:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.16 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.18 2020/03/28 18:37:18 thorpej Exp $");
 static int	ihphymatch(device_t, cfdata_t, void *);
 static void	ihphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(ihphy, sizeof(struct mii_softc),
-    ihphymatch, ihphyattach, mii_phy_detach, mii_phy_activate);
+CFATTACH_DECL3_NEW(ihphy, sizeof(struct mii_softc),
+    ihphymatch, ihphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 static int	ihphy_service(struct mii_softc *, struct mii_data *, int);
 static void	ihphy_status(struct mii_softc *);
@@ -135,8 +136,6 @@ ihphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 
-	mii_lock(mii);
-
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
@@ -144,17 +143,13 @@ ihphyattach(device_t parent, device_t self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
-	mii_unlock(mii);
-
 	mii_phy_add_media(sc);
 
-	mii_lock(mii);
 	/* Link setup (as done by Intel's Linux driver for the 82577). */
 	PHY_READ(sc, IHPHY_MII_CFG, &reg);
 	reg |= IHPHY_CFG_TX_CRS;
 	reg |= IHPHY_CFG_DOWN_SHIFT;
 	PHY_WRITE(sc, IHPHY_MII_CFG, reg);
-	mii_unlock(mii);
 }
 
 static int
@@ -162,8 +157,6 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg;
-
-	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -229,8 +222,6 @@ ihphy_status(struct mii_softc *sc)
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t esr, bmcr, gtsr;
 
-	KASSERT(mii_locked(mii));
-
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
@@ -291,8 +282,6 @@ ihphy_reset(struct mii_softc *sc)
 {
 	int i;
 	uint16_t reg;
-
-	KASSERT(mii_locked(sc->mii_pdata));
 
 	PHY_WRITE(sc, MII_BMCR, BMCR_RESET | BMCR_ISO);
 

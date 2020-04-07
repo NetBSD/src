@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.48 2020/03/15 12:46:02 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.46 2020/02/27 20:54:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.48 2020/03/15 12:46:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.46 2020/02/27 20:54:24 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -916,6 +916,26 @@ compat_50_netbsd32_getitimer(struct lwp *l, const struct compat_50_netbsd32_geti
 	return copyout(&s32it, SCARG_P32(uap, itv), sizeof(s32it));
 }
 
+#ifdef QUOTA
+int
+compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quotactl_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const netbsd32_charp) path;
+		syscallarg(int) cmd;
+		syscallarg(int) uid;
+		syscallarg(netbsd32_voidp) arg;
+	} */
+	struct compat_50_sys_quotactl_args ua;
+
+	NETBSD32TOP_UAP(path, const char);
+	NETBSD32TO64_UAP(cmd);
+	NETBSD32TO64_UAP(uid);
+	NETBSD32TOP_UAP(arg, void *);
+	return (compat_50_sys_quotactl(l, &ua, retval));
+}
+#endif
+
 #ifdef NTP
 int
 compat_50_netbsd32_ntp_gettime(struct lwp *l,
@@ -1006,6 +1026,10 @@ static struct syscall_package compat_netbsd32_50_syscalls[] = {
 	    (sy_call_t *)compat_50_netbsd32_setitimer }, 
 	{ NETBSD32_SYS_compat_50_netbsd32_getitimer, 0,
 	    (sy_call_t *)compat_50_netbsd32_getitimer }, 
+#ifdef QUOTA
+	{ NETBSD32_SYS_compat_50_netbsd32_quotactl, 0,
+	    (sy_call_t *)compat_50_netbsd32_quotactl }, 
+#endif
 #ifdef NTP
 	{ NETBSD32_SYS_compat_50_netbsd32_ntp_gettime, 0,
 	    (sy_call_t *)compat_50_netbsd32_ntp_gettime }, 
@@ -1013,7 +1037,9 @@ static struct syscall_package compat_netbsd32_50_syscalls[] = {
 	{ 0, 0, NULL }
 }; 
 
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32_50, "compat_netbsd32_60,compat_50");
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_50,
+    "compat_netbsd32_60,compat_50,compat_50_quota");
+
 
 static int
 compat_netbsd32_50_modcmd(modcmd_t cmd, void *arg)

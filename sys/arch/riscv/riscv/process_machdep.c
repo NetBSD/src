@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: process_machdep.c,v 1.3 2020/03/14 16:12:16 skrll Exp $");
+__RCSID("$NetBSD: process_machdep.c,v 1.2 2017/03/16 16:13:21 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/ptrace.h>
@@ -92,7 +92,7 @@ int
 process_set_pc(struct lwp *l, void *addr)
 {
 	//struct trapframe * const tf = l->l_md.md_utf;
-
+	
 	l->l_md.md_utf->tf_pc = (register_t)addr;
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.89 2020/03/19 14:10:56 thorpej Exp $	*/
+/*	$NetBSD: i82586.c,v 1.88 2020/01/29 14:49:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.89 2020/03/19 14:10:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.88 2020/01/29 14:49:44 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -663,6 +663,7 @@ i82586_tint(struct ie_softc *sc, int scbstatus)
 	int status;
 
 	ifp->if_timer = 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 #if I82586_DEBUG
 	if (sc->xmit_busy <= 0) {
@@ -1128,10 +1129,15 @@ i82586_start(struct ifnet *ifp)
 	u_short	len;
 	int	s;
 
-	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	while (sc->xmit_busy < NTXBUF) {
+	for (;;) {
+		if (sc->xmit_busy == NTXBUF) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
 		head = sc->xchead;
 		xbase = sc->xbds;
 
@@ -1238,7 +1244,9 @@ i82586_reset(struct ie_softc *sc, int hard)
 	if (hard)
 		printf("%s: reset\n", device_xname(sc->sc_dev));
 
+	/* Clear OACTIVE in case we're called from watchdog (frozen xmit). */
 	sc->sc_ethercom.ec_if.if_timer = 0;
+	sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Stop i82586 dead in its tracks.
@@ -1649,6 +1657,7 @@ i82586_init(struct ifnet *ifp)
 		(sc->hwinit)(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	if (NTXBUF < 2)
 		sc->do_xmitnopchain = 0;

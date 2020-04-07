@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.76 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_url.c,v 1.73 2020/01/29 06:39:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.76 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.73 2020/01/29 06:39:07 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -72,16 +72,17 @@ static void	url_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(url, sizeof(struct usbnet), url_match, url_attach,
     usbnet_detach, usbnet_activate);
 
-static unsigned	url_uno_tx_prepare(struct usbnet *, struct mbuf *,
-				   struct usbnet_chain *);
-static void url_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
-static int url_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
-static int url_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
-static int url_uno_ioctl(struct ifnet *, u_long, void *);
-static void url_uno_stop(struct ifnet *, int);
-static void url_uno_mii_statchg(struct ifnet *);
-static int url_uno_init(struct ifnet *);
+static unsigned	url_tx_prepare(struct usbnet *, struct mbuf *,
+			       struct usbnet_chain *);
+static void url_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
+static int url_int_mii_read_reg(struct usbnet *, int, int, uint16_t *);
+static int url_int_mii_write_reg(struct usbnet *, int, int, uint16_t);
+static int url_ioctl_cb(struct ifnet *, u_long, void *);
+static void url_stop_cb(struct ifnet *, int);
+static void url_mii_statchg_cb(struct ifnet *);
+static int url_init(struct ifnet *);
 static void url_setiff_locked(struct usbnet *);
+static void url_setiff(struct usbnet *);
 static void url_reset(struct usbnet *);
 
 static int url_csr_read_1(struct usbnet *, int);
@@ -92,14 +93,14 @@ static int url_csr_write_4(struct usbnet *, int, int);
 static int url_mem(struct usbnet *, int, int, void *, int);
 
 static const struct usbnet_ops url_ops = {
-	.uno_stop = url_uno_stop,
-	.uno_ioctl = url_uno_ioctl,
-	.uno_read_reg = url_uno_mii_read_reg,
-	.uno_write_reg = url_uno_mii_write_reg,
-	.uno_statchg = url_uno_mii_statchg,
-	.uno_tx_prepare = url_uno_tx_prepare,
-	.uno_rx_loop = url_uno_rx_loop,
-	.uno_init = url_uno_init,
+	.uno_stop = url_stop_cb,
+	.uno_ioctl = url_ioctl_cb,
+	.uno_read_reg = url_int_mii_read_reg,
+	.uno_write_reg = url_int_mii_write_reg,
+	.uno_statchg = url_mii_statchg_cb,
+	.uno_tx_prepare = url_tx_prepare,
+	.uno_rx_loop = url_rx_loop,
+	.uno_init = url_init,
 };
 
 /* Macros */
@@ -243,17 +244,16 @@ url_attach(device_t parent, device_t self, void *aux)
 	/* Set these up now for url_mem().  */
 	usbnet_attach(un, "urldet");
 
-	usbnet_lock_core(un);
-	usbnet_busy(un);
-
 	/* reset the adapter */
+	usbnet_lock(un);
 	url_reset(un);
+	usbnet_unlock(un);
 
 	/* Get Ethernet Address */
+	usbnet_lock_mii(un);
 	err = url_mem(un, URL_CMD_READMEM, URL_IDR0, (void *)un->un_eaddr,
 		      ETHER_ADDR_LEN);
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
+	usbnet_unlock_mii(un);
 	if (err) {
 		aprint_error_dev(self, "read MAC address failed\n");
 		goto bad;
@@ -277,7 +277,7 @@ url_mem(struct usbnet *un, int cmd, int offset, void *buf, int len)
 	usb_device_request_t req;
 	usbd_status err;
 
-	usbnet_isowned_core(un);
+	usbnet_isowned_mii(un);
 
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(un->un_dev), __func__));
@@ -379,13 +379,15 @@ url_init_locked(struct ifnet *ifp)
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
-	usbnet_isowned_core(un);
+	usbnet_isowned(un);
 
 	if (usbnet_isdying(un))
 		return EIO;
 
 	/* Cancel pending I/O and free all TX/RX buffers */
 	usbnet_stop(un, ifp, 1);
+
+	usbnet_lock_mii_un_locked(un);
 
 	eaddr = CLLADDR(ifp->if_sadl);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
@@ -416,19 +418,19 @@ url_init_locked(struct ifnet *ifp)
 	/* Enable RX and TX */
 	URL_SETBIT(un, URL_CR, URL_CR_TE | URL_CR_RE);
 
+	usbnet_unlock_mii_un_locked(un);
+
 	return usbnet_init_rx_tx(un);
 }
 
 static int
-url_uno_init(struct ifnet *ifp)
+url_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
-	usbnet_lock_core(un);
-	usbnet_busy(un);
+	usbnet_lock(un);
 	int ret = url_init_locked(ifp);
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
+	usbnet_unlock(un);
 
 	return ret;
 }
@@ -443,6 +445,7 @@ url_reset(struct usbnet *un)
 	if (usbnet_isdying(un))
 		return;
 
+	usbnet_lock_mii_un_locked(un);
 	URL_SETBIT(un, URL_CR, URL_CR_SOFT_RST);
 
 	for (i = 0; i < URL_TX_TIMEOUT; i++) {
@@ -452,6 +455,7 @@ url_reset(struct usbnet *un)
 	}
 
 	delay(10000);		/* XXX */
+	usbnet_unlock_mii_un_locked(un);
 }
 
 #define url_calchash(addr) (ether_crc32_be((addr), ETHER_ADDR_LEN) >> 26)
@@ -469,7 +473,7 @@ url_setiff_locked(struct usbnet *un)
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
-	usbnet_isowned_core(un);
+	usbnet_isowned_mii(un);
 
 	if (usbnet_isdying(un))
 		return;
@@ -522,10 +526,22 @@ allmulti:
 	url_csr_write_4(un, URL_MAR4, hashes[1]);
 }
 
+static void
+url_setiff(struct usbnet *un)
+{
+	usbnet_lock(un);
+	usbnet_lock_mii_un_locked(un);
+	url_setiff_locked(un);
+	usbnet_unlock_mii_un_locked(un);
+	usbnet_unlock(un);
+}
+
 static unsigned
-url_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
+url_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 {
 	int total_len;
+
+	usbnet_isowned_tx(un);
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev),__func__));
 
@@ -550,10 +566,12 @@ url_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 }
 
 static void
-url_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
+url_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet *ifp = usbnet_ifp(un);
 	url_rxhdr_t rxhdr;
+
+	usbnet_isowned_rx(un);
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev),__func__));
 
@@ -591,33 +609,29 @@ static void url_intr(void)
 #endif
 
 static int
-url_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+url_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct usbnet * const un = ifp->if_softc;
-
-	usbnet_lock_core(un);
-	usbnet_busy(un);
 
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		url_setiff_locked(un);
+		url_setiff(un);
 		break;
 	default:
 		break;
 	}
-
-	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
 
 	return 0;
 }
 
 /* Stop the adapter and free any mbufs allocated to the RX and TX lists. */
 static void
-url_uno_stop(struct ifnet *ifp, int disable)
+url_stop_cb(struct ifnet *ifp, int disable)
 {
 	struct usbnet * const un = ifp->if_softc;
+
+	usbnet_isowned(un);
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
@@ -625,10 +639,12 @@ url_uno_stop(struct ifnet *ifp, int disable)
 }
 
 static int
-url_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
+url_int_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint16_t data;
 	usbd_status err = USBD_NORMAL_COMPLETION;
+
+	usbnet_isowned_mii(un);
 
 	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x\n",
 		 device_xname(un->un_dev), __func__, phy, reg));
@@ -681,8 +697,9 @@ url_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 }
 
 static int
-url_uno_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
+url_int_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
+	usbnet_isowned_mii(un);
 
 	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x val=0x%04hx\n",
 		 device_xname(un->un_dev), __func__, phy, reg, val));
@@ -728,7 +745,7 @@ url_uno_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 }
 
 static void
-url_uno_mii_statchg(struct ifnet *ifp)
+url_mii_statchg_cb(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 

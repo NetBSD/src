@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_state.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mime_state.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -239,11 +239,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -514,7 +509,6 @@ MIME_STATE *mime_state_alloc(int flags,
     state->prev_rec_type = 0;
     state->stack = 0;
     state->token_buffer = vstring_alloc(1);
-    state->nesting_level = -1;			/* BC Fix 20170512 */
 
     /* Static members. */
     state->static_flags = flags;
@@ -948,7 +942,7 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 
 	/*
 	 * Find out if the next body starts with its own message headers. In
-	 * aggressive mode, examine headers of partial and external-body
+	 * agressive mode, examine headers of partial and external-body
 	 * messages. Otherwise, treat such headers as part of the "body". Set
 	 * the proper encoding information for the multipart prolog.
 	 * 
@@ -1051,7 +1045,7 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 
 	/*
 	 * Body text. Look for message boundaries, and recover from missing
-	 * boundary strings. Missing boundaries can happen in aggressive mode
+	 * boundary strings. Missing boundaries can happen in agressive mode
 	 * with text/rfc822-headers or with message/partial. Ignore non-space
 	 * cruft after --boundary or --boundary--, because some MUAs do, and
 	 * because only perverse software would take advantage of this to

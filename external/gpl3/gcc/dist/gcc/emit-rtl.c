@@ -3940,7 +3940,6 @@ try_split (rtx pat, rtx_insn *trial, int last)
 	  break;
 
 	case REG_NON_LOCAL_GOTO:
-	case REG_LABEL_TARGET:
 	  for (insn = insn_last; insn != NULL_RTX; insn = PREV_INSN (insn))
 	    {
 	      if (JUMP_P (insn))

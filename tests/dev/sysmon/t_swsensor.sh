@@ -1,4 +1,4 @@
-# $NetBSD: t_swsensor.sh,v 1.11 2020/03/21 04:50:21 pgoyette Exp $
+# $NetBSD: t_swsensor.sh,v 1.9 2015/04/23 23:23:28 pgoyette Exp $
 
 get_sensor_info() {
 	rump.envstat -x | \

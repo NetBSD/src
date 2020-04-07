@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_clnt.h,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: resolve_clnt.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
 
 #ifndef _RESOLVE_CLNT_H_INCLUDED_
 #define _RESOLVE_CLNT_H_INCLUDED_
@@ -55,6 +55,11 @@ extern void resolve_clnt_free(RESOLVE_REPLY *);
 
 #define RESOLVE_NULL_FROM	""
 
+#define resolve_clnt_query(a, r) \
+	resolve_clnt(RESOLVE_REGULAR, RESOLVE_NULL_FROM, (a), (r))
+#define resolve_clnt_verify(a, r) \
+	resolve_clnt(RESOLVE_VERIFY, RESOLVE_NULL_FROM, (a), (r))
+
 #define resolve_clnt_query_from(f, a, r) \
 	resolve_clnt(RESOLVE_REGULAR, (f), (a), (r))
 #define resolve_clnt_verify_from(f, a, r) \
@@ -75,11 +80,6 @@ extern void resolve_clnt_free(RESOLVE_REPLY *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 #endif

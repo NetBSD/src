@@ -1,4 +1,4 @@
-/*	$NetBSD: unknown.c,v 1.7 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: unknown.c,v 1.6 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -47,11 +47,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -80,13 +75,10 @@
 #include <sent.h>
 #include <deliver_pass.h>
 #include <defer.h>
-#include <canon_addr.h>
 
 /* Application-specific. */
 
 #include "local.h"
-
-#define STREQ(x,y) (strcasecmp((x),(y)) == 0)
 
 /* deliver_unknown - delivery for unknown recipients */
 
@@ -95,7 +87,6 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
     const char *myname = "deliver_unknown";
     int     status;
     VSTRING *expand_luser;
-    VSTRING *canon_luser;
     static MAPS *transp_maps;
     const char *map_transport;
 
@@ -150,20 +141,8 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
     if (*var_luser_relay) {
 	state.msg_attr.unmatched = 0;
 	expand_luser = vstring_alloc(100);
-	canon_luser = vstring_alloc(100);
 	local_expand(expand_luser, var_luser_relay, &state, &usr_attr, (void *) 0);
-	/* In case luser_relay specifies a domain-less address. */
-	canon_addr_external(canon_luser, vstring_str(expand_luser));
-	/* Assumes that the address resolver won't change the address. */
-	if (STREQ(vstring_str(canon_luser), state.msg_attr.rcpt.address)) {
-	    dsb_simple(state.msg_attr.why, "5.1.1",
-		       "unknown user: \"%s\"", state.msg_attr.user);
-	    status = bounce_append(BOUNCE_FLAGS(state.request),
-				   BOUNCE_ATTR(state.msg_attr));
-	} else {
-	    status = deliver_resolve_addr(state, usr_attr, STR(expand_luser));
-	}
-	vstring_free(canon_luser);
+	status = deliver_resolve_addr(state, usr_attr, STR(expand_luser));
 	vstring_free(expand_luser);
 	return (status);
     }
@@ -172,6 +151,8 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
      * If no alias was found for a required reserved name, toss the message
      * into the bit bucket, and issue a warning instead.
      */
+#define STREQ(x,y) (strcasecmp(x,y) == 0)
+
     if (STREQ(state.msg_attr.user, MAIL_ADDR_MAIL_DAEMON)
 	|| STREQ(state.msg_attr.user, MAIL_ADDR_POSTMASTER)) {
 	msg_warn("required alias not found: %s", state.msg_attr.user);

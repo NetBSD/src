@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.36 2020/03/19 14:01:48 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.35 2020/01/29 05:39:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.36 2020/03/19 14:01:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.35 2020/01/29 05:39:48 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -86,7 +86,6 @@ struct ec_softc {
 	bus_space_tag_t sc_iot;	/* bus space tag */
 	bus_space_handle_t sc_ioh;	/* bus space handle */
 
-	bool sc_txbusy;
 	u_char sc_jammed;	/* nonzero if the net is jammed */
 	u_char sc_colliding;	/* nonzero if the net is colliding */
 	uint32_t sc_backoff_seed;	/* seed for the backoff PRNG */
@@ -282,7 +281,7 @@ ec_init(struct ifnet *ifp)
 
 	/* Set flags appropriately. */
 	ifp->if_flags |= IFF_RUNNING;
-	sc->sc_txbusy = false;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* Start output. */
 	ec_start(ifp);
@@ -306,7 +305,7 @@ ec_start(struct ifnet *ifp)
 	s = splnet();
 
 	/* Don't do anything if output is active. */
-	if (sc->sc_txbusy) {
+	if ((ifp->if_flags & IFF_OACTIVE) != 0) {
 		splx(s);
 		return;
 	}
@@ -335,7 +334,7 @@ ec_start(struct ifnet *ifp)
 	/* Enable the transmitter. */
 	ECREG_CSR_WR((ECREG_CSR_RD & EC_CSR_PA) |
 	    EC_CSR_TBSW | EC_CSR_TINT | EC_CSR_JINT);
-	sc->sc_txbusy = true;
+	ifp->if_flags |= IFF_OACTIVE;
 
 	/* Done. */
 	splx(s);
@@ -414,7 +413,7 @@ ec_intr(void *arg)
 		retval++;
 	}
 	/* Check for a transmitted packet. */
-	if (sc->sc_txbusy) {
+	if (ifp->if_flags & IFF_OACTIVE) {
 
 		/* If we got a collision. */
 		if (ECREG_CSR_RD & EC_CSR_JAM) {
@@ -432,7 +431,7 @@ ec_intr(void *arg)
 			retval++;
 			if_statinc(ifp, if_opackets);
 			sc->sc_jammed = 0;
-			sc->sc_txbusy = false;
+			ifp->if_flags &= ~IFF_OACTIVE;
 			if_schedule_deferred_start(ifp);
 		}
 	} else {
@@ -636,7 +635,7 @@ ec_coll(struct ec_softc *sc)
 			    device_xname(sc->sc_dev));
 		sc->sc_jammed = 1;
 		sc->sc_colliding = 0;
-		sc->sc_txbusy = false;
+		ifp->if_flags &= ~IFF_OACTIVE;
 		if_schedule_deferred_start(ifp);
 	} else {
 		jams = MAX(sc->sc_colliding, EC_BACKOFF_PRNG_COLL_MAX);

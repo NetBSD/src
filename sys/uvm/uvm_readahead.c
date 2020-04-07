@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.12 2020/03/08 18:40:29 ad Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.11 2020/02/23 15:46:43 ad Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005, 2009 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.12 2020/03/08 18:40:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.11 2020/02/23 15:46:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -133,7 +133,7 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 	 * too. This speeds up I/O using cache, since it avoids lookups and temporary
 	 * allocations done by full pgo_get.
 	 */
-	rw_enter(uobj->vmobjlock, RW_READER);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	struct vm_page *pg = uvm_pagelookup(uobj, trunc_page(endoff - 1));
 	rw_exit(uobj->vmobjlock);
 	if (pg != NULL) {

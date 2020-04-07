@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.21 2020/03/25 21:02:26 christos Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.19 2013/08/28 17:47:07 riastradh Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.21 2020/03/25 21:02:26 christos Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.19 2013/08/28 17:47:07 riastradh Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>

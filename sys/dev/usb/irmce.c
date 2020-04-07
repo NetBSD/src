@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.6 2020/03/14 02:35:33 christos Exp $ */
+/* $NetBSD: irmce.c,v 1.4 2018/01/21 13:57:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.6 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.4 2018/01/21 13:57:12 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

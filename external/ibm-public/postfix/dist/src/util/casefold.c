@@ -1,4 +1,4 @@
-/*	$NetBSD: casefold.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: casefold.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -85,11 +85,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -194,7 +189,7 @@ char   *casefoldx(int flags, VSTRING *dest, const char *src, ssize_t len)
      * with space_needed below) does not include storage for the null
      * terminator. The terminator is written only when the output buffer is
      * large enough. This is why we overallocate space when the output does
-     * not fit. But if the output fits exactly, then the output will be
+     * not fit. But if the output fits exactly, then the ouput will be
      * unterminated, and we have to terminate the output ourselves.
      */
     for (n = 0; n < 3; n++) {
@@ -202,7 +197,7 @@ char   *casefoldx(int flags, VSTRING *dest, const char *src, ssize_t len)
 	space_needed = ucasemap_utf8FoldCase(csm, STR(dest) + old_len,
 				     vstring_avail(dest), src, len, &error);
 	if (U_SUCCESS(error)) {
-	    vstring_set_payload_size(dest, old_len + space_needed);
+	    VSTRING_AT_OFFSET(dest, old_len + space_needed);
 	    if (vstring_avail(dest) == 0)	/* exact fit, no terminator */
 		VSTRING_TERMINATE(dest);	/* add terminator */
 	    break;

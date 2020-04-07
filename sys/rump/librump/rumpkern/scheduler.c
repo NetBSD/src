@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.51 2020/03/14 18:08:39 ad Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.50 2020/02/15 18:12:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.51 2020/03/14 18:08:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.50 2020/02/15 18:12:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -596,17 +596,4 @@ sched_dequeue(struct lwp *l)
 {
 
 	panic("sched_dequeue not implemented");
-}
-
-void
-preempt_point(void)
-{
-
-}
-
-bool
-preempt_needed(void)
-{
-
-	return false;
 }

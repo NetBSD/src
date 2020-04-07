@@ -15,6 +15,15 @@
 
 <hr>
 
+<h2>Warning</h2>
+
+<p> People who go to the trouble of installing Postfix may have the
+expectation that Postfix is more secure than some other mailers.
+The Cyrus SASL library contains a lot of code. With this, Postfix
+becomes as secure as other mail systems that use the Cyrus SASL
+library.  Dovecot provides an alternative that may be worth
+considering. </p>
+
 <h2><a name="intro">How Postfix uses SASL authentication</a></h2>
 
 <p> SMTP servers need to decide whether an SMTP client is authorized
@@ -37,13 +46,6 @@ configuration files will belong to Postfix, while other
 configuration files belong to the specific SASL
 implementation that Postfix will use. This document covers both the
 Postfix and non-Postfix configuration.  </p>
-
-<p> NOTE: People who go to the trouble of installing Postfix may
-have the expectation that Postfix is more secure than some other
-mailers.  The Cyrus SASL library contains a lot of code. With this,
-Postfix becomes as secure as other mail systems that use the Cyrus
-SASL library.  Dovecot provides an alternative that may be worth
-considering. </p>
 
 <p> You can read more about the following topics: </p>
 

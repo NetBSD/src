@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.327 2020/03/03 00:38:12 christos Exp $
+# $NetBSD: shl.mi,v 1.326 2019/08/23 08:17:27 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -21,7 +21,6 @@
 ./usr/lib/libbz2_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libc++_pic.a				comp-c-piclib		compatfile,picinstall,libcxx
 ./usr/lib/libc_pic.a				comp-c-piclib		compatfile,picinstall
-./usr/lib/libcbor_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libcdk_pic.a				comp-obsolete		obsolete
 ./usr/lib/libcom_err_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libcompat_pic.a			comp-c-piclib		compatfile,picinstall
@@ -45,7 +44,6 @@
 ./usr/lib/libexecinfo_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libexpat_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libfetch_pic.a			comp-c-piclib		compatfile,picinstall
-./usr/lib/libfido2_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libform_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libg++_pic.a				comp-obsolete		obsolete
 ./usr/lib/libg2c_pic.a				comp-obsolete		obsolete

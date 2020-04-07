@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.13 2020/03/14 18:08:39 ad Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.12 2020/02/22 21:59:30 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008, 2019
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.13 2020/03/14 18:08:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.12 2020/02/22 21:59:30 chs Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 #define	__UCAS_PRIVATE
@@ -123,7 +123,9 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		if (cnt > n)
 			cnt = n;
 		if (!VMSPACE_IS_KERNEL_P(vm)) {
-			preempt_point();
+			if (curcpu()->ci_schedstate.spc_flags &
+			    SPCF_SHOULDYIELD)
+				preempt();
 		}
 
 		if (uio->uio_rw == UIO_READ) {

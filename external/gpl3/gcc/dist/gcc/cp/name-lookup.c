@@ -907,7 +907,7 @@ name_lookup::adl_expr (tree expr)
 
   if (TREE_TYPE (expr) != unknown_type_node)
     {
-      adl_type (unlowered_expr_type (expr));
+      adl_type (TREE_TYPE (expr));
       return;
     }
 
@@ -4198,46 +4198,38 @@ is_nested_namespace (tree ancestor, tree descendant, bool inline_only)
   return ancestor == descendant;
 }
 
-/* Returns true if ROOT (a non-alias namespace, class, or function)
-   encloses CHILD.  CHILD may be either a class type or a namespace
-   (maybe alias).  */
+/* Returns true if ROOT (a namespace, class, or function) encloses
+   CHILD.  CHILD may be either a class type or a namespace.  */
 
 bool
 is_ancestor (tree root, tree child)
 {
-  gcc_checking_assert ((TREE_CODE (root) == NAMESPACE_DECL
-			&& !DECL_NAMESPACE_ALIAS (root))
-		       || TREE_CODE (root) == FUNCTION_DECL
-		       || CLASS_TYPE_P (root));
-  gcc_checking_assert (TREE_CODE (child) == NAMESPACE_DECL
-		       || CLASS_TYPE_P (child));
+  gcc_assert ((TREE_CODE (root) == NAMESPACE_DECL
+	       || TREE_CODE (root) == FUNCTION_DECL
+	       || CLASS_TYPE_P (root)));
+  gcc_assert ((TREE_CODE (child) == NAMESPACE_DECL
+	       || CLASS_TYPE_P (child)));
 
-  /* The global namespace encloses everything.  Early-out for the
-     common case.  */
+  /* The global namespace encloses everything.  */
   if (root == global_namespace)
     return true;
 
-  /* Search CHILD until we reach namespace scope.  */
+  /* Search until we reach namespace scope.  */
   while (TREE_CODE (child) != NAMESPACE_DECL)
     {
       /* If we've reached the ROOT, it encloses CHILD.  */
       if (root == child)
 	return true;
-
       /* Go out one level.  */
       if (TYPE_P (child))
 	child = TYPE_NAME (child);
       child = CP_DECL_CONTEXT (child);
     }
 
-  if (TREE_CODE (root) != NAMESPACE_DECL)
-    /* Failed to meet the non-namespace we were looking for.  */
-    return false;
+  if (TREE_CODE (root) == NAMESPACE_DECL)
+    return is_nested_namespace (root, child);
 
-  if (tree alias = DECL_NAMESPACE_ALIAS (child))
-    child = alias;
-
-  return is_nested_namespace (root, child);
+  return false;
 }
 
 /* Enter the class or namespace scope indicated by T suitable for name
@@ -5517,7 +5509,7 @@ get_std_name_hint (const char *name)
     {"bitset", "<bitset>", cxx11},
     /* <complex>.  */
     {"complex", "<complex>", cxx98},
-    {"complex_literals", "<complex>", cxx14},
+    {"complex_literals", "<complex>", cxx98},
     /* <condition_variable>. */
     {"condition_variable", "<condition_variable>", cxx11},
     {"condition_variable_any", "<condition_variable>", cxx11},
@@ -5579,7 +5571,7 @@ get_std_name_hint (const char *name)
     {"multimap", "<map>", cxx98},
     /* <memory>.  */
     {"make_shared", "<memory>", cxx11},
-    {"make_unique", "<memory>", cxx14},
+    {"make_unique", "<memory>", cxx11},
     {"shared_ptr", "<memory>", cxx11},
     {"unique_ptr", "<memory>", cxx11},
     {"weak_ptr", "<memory>", cxx11},

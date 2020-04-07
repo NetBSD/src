@@ -184,6 +184,7 @@ pseudo-device	nsmb			# SMB requester
 pseudo-device   bpfilter        8       # Berkeley packet filter
 #pseudo-device	npf			# NPF packet filter
 
+options		OFWOEA_WSCONS_NO_ROM_FONT
 options		EXSTORAGE_MAX=24
 
 # Enable the hooks used for initializing the ram-disk.

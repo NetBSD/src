@@ -2580,7 +2580,7 @@ if test $in_tree_ld != yes ; then
       ld_vers=`echo $ld_ver | sed -n \
 	  -e 's,^.*[	 ]\([0-9][0-9]*\.[0-9][0-9]*.*\)$,\1,p'`
     fi
-    ld_date=`echo $ld_ver | sed -n 's,^.*\([2-9][0-9][0-9][0-9]\)\(-*\)\([01][0-9]\)\2\([0-3][0-9]\).*$,\1\3\4,p'`
+    ld_date=`echo $ld_ver | sed -n 's,^.*\([2-9][0-9][0-9][0-9]\)[-]*\([01][0-9]\)[-]*\([0-3][0-9]\).*$,\1\2\3,p'`
     ld_vers_major=`expr "$ld_vers" : '\([0-9]*\)'`
     ld_vers_minor=`expr "$ld_vers" : '[0-9]*\.\([0-9]*\)'`
     ld_vers_patch=`expr "$ld_vers" : '[0-9]*\.[0-9]*\.\([0-9]*\)'`
@@ -2595,13 +2595,17 @@ if test $in_tree_ld != yes ; then
 	#
 	# ld: Software Generation Utilities - Solaris Link Editors: 5.11-1.1701:onnv-ab196087-6931056-03/25/10
 	#
+	# In Solaris 11.4, this was changed to
+	#
+	# ld: Solaris ELF Utilities: 11.4-1.3123
+	#
 	# ld and ld.so.1 are guaranteed to be updated in lockstep, so ld version
 	# numbers can be used in ld.so.1 feature checks even if a different
 	# linker is configured.
 	ld_ver=`$gcc_cv_ld -V 2>&1`
-	if echo "$ld_ver" | grep 'Solaris Link Editors' > /dev/null; then
+	if echo "$ld_ver" | $EGREP 'Solaris Link Editors|Solaris ELF Utilities' > /dev/null; then
 	  ld_vers=`echo $ld_ver | sed -n \
-	    -e 's,^.*: 5\.[0-9][0-9]*-\([0-9]\.[0-9][0-9]*\).*$,\1,p'`
+	    -e 's,^.*: \(5\|1[0-9]\)\.[0-9][0-9]*-\([0-9]\.[0-9][0-9]*\).*$,\2,p'`
 	  ld_vers_major=`expr "$ld_vers" : '\([0-9]*\)'`
 	  ld_vers_minor=`expr "$ld_vers" : '[0-9]*\.\([0-9]*\)'`
 	fi
@@ -6139,8 +6143,7 @@ lang_tree_files=
 all_languages=
 all_compilers=
 all_outputs='Makefile'
-# List of language configure and makefile fragments.
-all_lang_configurefrags=
+# List of language makefile fragments.
 all_lang_makefrags=
 # Additional files for gengtype
 all_gtfiles="$target_gtfiles"
@@ -6228,7 +6231,6 @@ changequote([,])dnl
 	esac
 	$ok || continue
 
-	all_lang_configurefrags="$all_lang_configurefrags \$(srcdir)/$gcc_subdir/config-lang.in"
 	all_lang_makefrags="$all_lang_makefrags \$(srcdir)/$gcc_subdir/Make-lang.in"
 	if test -f $srcdir/$gcc_subdir/lang.opt; then
 	    lang_opt_files="$lang_opt_files $srcdir/$gcc_subdir/lang.opt"
@@ -6330,7 +6332,6 @@ AC_SUBST(subdirs)
 AC_SUBST(srcdir)
 AC_SUBST(all_compilers)
 AC_SUBST(all_gtfiles)
-AC_SUBST(all_lang_configurefrags)
 AC_SUBST(all_lang_makefrags)
 AC_SUBST(all_languages)
 AC_SUBST(all_selected_languages)

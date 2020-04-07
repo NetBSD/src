@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.39 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_run.c,v 1.36 2020/01/29 06:35:28 thorpej Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.39 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.36 2020/01/29 06:35:28 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -733,11 +733,7 @@ run_attach(device_t parent, device_t self, void *aux)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = run_newstate;
-
-	/* XXX media locking needs revisiting */
-	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTUSB);
-	ieee80211_media_init_with_lock(ic,
-	    run_media_change, ieee80211_media_status, &sc->sc_media_mtx);
+	ieee80211_media_init(ic, run_media_change, ieee80211_media_status);
 
 	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,

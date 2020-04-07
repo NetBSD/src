@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.42 2020/03/30 11:38:29 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.41 2020/02/15 08:16:10 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.42 2020/03/30 11:38:29 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.41 2020/02/15 08:16:10 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.42 2020/03/30 11:38:29 jmcneill Exp $");
 #include <aarch64/armreg.h>
 #include <aarch64/cpu.h>
 #include <aarch64/cpufunc.h>
-#include <aarch64/cpu_counter.h>
 #include <aarch64/machdep.h>
 
 #include <arm/cpu_topology.h>
@@ -65,7 +64,6 @@ static void identify_aarch64_model(uint32_t, char *, size_t);
 static void cpu_identify(device_t self, struct cpu_info *);
 static void cpu_identify1(device_t self, struct cpu_info *);
 static void cpu_identify2(device_t self, struct cpu_info *);
-static void cpu_init_counter(struct cpu_info *);
 static void cpu_setup_id(struct cpu_info *);
 static void cpu_setup_sysctl(device_t, struct cpu_info *);
 
@@ -109,6 +107,8 @@ cpu_attach(device_t dv, cpuid_t id)
 
 		ci->ci_cpl = IPL_HIGH;
 		ci->ci_cpuid = id;
+		// XXX big.LITTLE
+		ci->ci_data.cpu_cc_freq = cpu_info_store[0].ci_data.cpu_cc_freq;
 		/* ci_id is stored by own cpus when hatching */
 
 		cpu_info[ncpu] = ci;
@@ -149,8 +149,6 @@ cpu_attach(device_t dv, cpuid_t id)
 	/* aarch64_getcacheinfo(0) was called by locore.S */
 	aarch64_printcacheinfo(dv);
 	cpu_identify2(dv, ci);
-
-	cpu_init_counter(ci);
 
 	cpu_setup_sysctl(dv, ci);
 }
@@ -425,21 +423,6 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 }
 
 /*
- * Enable the performance counter, then estimate frequency for
- * the current PE and store the result in cpu_cc_freq.
- */
-static void
-cpu_init_counter(struct cpu_info *ci)
-{
-	reg_pmcr_el0_write(PMCR_E | PMCR_C);
-	reg_pmcntenset_el0_write(PMCNTEN_C);
-
-	const uint32_t prev = cpu_counter32();
-	delay(100000);
-	ci->ci_data.cpu_cc_freq = (cpu_counter32() - prev) * 10;
-}
-
-/*
  * Fill in this CPUs id data.  Must be called from hatched cpus.
  */
 static void
@@ -516,8 +499,6 @@ cpu_hatch(struct cpu_info *ci)
 	cpu_identify2(ci->ci_dev, ci);
 
 	mutex_exit(&cpu_hatch_lock);
-
-	cpu_init_counter(ci);
 
 	intr_cpu_init(ci);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.36 2020/03/14 14:05:43 ad Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.35 2020/02/01 06:17:11 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -204,11 +204,10 @@ extern struct pv_header	*pv_table;	/* array of entries, one per page */
 
 #define	pmap_update(pmap)		__nothing	/* nothing (yet) */
 
-static __inline bool
+static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
-	return false;
 }
 
 extern paddr_t		Sysseg_pa;

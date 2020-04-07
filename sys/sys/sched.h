@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.88 2020/03/14 18:08:39 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.87 2020/01/12 22:03:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019, 2020
@@ -268,8 +268,6 @@ void		sched_print_runqueue(void (*pr)(const char *, ...)
 /* Dispatching */
 bool		kpreempt(uintptr_t);
 void		preempt(void);
-bool		preempt_needed(void);
-void		preempt_point(void);
 void		yield(void);
 void		mi_switch(struct lwp *);
 void		updatertime(lwp_t *, const struct bintime *);

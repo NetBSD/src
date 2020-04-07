@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.147 2020/03/15 23:04:50 thorpej Exp $*/
+/*$NetBSD: ixv.c,v 1.146 2020/02/05 10:07:47 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -989,6 +989,7 @@ ixv_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct adapter *adapter = ifp->if_softc;
 
 	INIT_DEBUGOUT("ixv_media_status: begin");
+	IXGBE_CORE_LOCK(adapter);
 	ixv_update_link_status(adapter);
 
 	ifmr->ifm_status = IFM_AVALID;
@@ -996,6 +997,7 @@ ixv_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	if (adapter->link_active != LINK_STATE_UP) {
 		ifmr->ifm_active |= IFM_NONE;
+		IXGBE_CORE_UNLOCK(adapter);
 		return;
 	}
 
@@ -1023,6 +1025,8 @@ ixv_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	}
 
 	ifp->if_baudrate = ifmedia_baudrate(ifmr->ifm_active);
+
+	IXGBE_CORE_UNLOCK(adapter);
 } /* ixv_media_status */
 
 /************************************************************************
@@ -1627,8 +1631,8 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	 * callbacks to update media and link information
 	 */
 	ec->ec_ifmedia = &adapter->media;
-	ifmedia_init_with_lock(&adapter->media, IFM_IMASK, ixv_media_change,
-	    ixv_media_status, &adapter->core_mtx);
+	ifmedia_init(&adapter->media, IFM_IMASK, ixv_media_change,
+	    ixv_media_status);
 	ifmedia_add(&adapter->media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&adapter->media, IFM_ETHER | IFM_AUTO);
 

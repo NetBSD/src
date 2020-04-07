@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: dict.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -641,7 +641,6 @@ static const NAME_MASK dict_mask[] = {
     "multi_writer", DICT_FLAG_MULTI_WRITER,	/* multi-writer safe */
     "utf8_request", DICT_FLAG_UTF8_REQUEST,	/* request UTF-8 activation */
     "utf8_active", DICT_FLAG_UTF8_ACTIVE,	/* UTF-8 is activated */
-    "src_rhs_is_file", DICT_FLAG_SRC_RHS_IS_FILE,	/* value from file */
     0,
 };
 

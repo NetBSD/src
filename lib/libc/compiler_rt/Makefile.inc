@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.37 2020/03/08 06:30:06 rin Exp $
+# $NetBSD: Makefile.inc,v 1.36 2019/10/29 16:08:50 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -170,16 +170,9 @@ GENERIC_SRCS+= \
 GENERIC_SRCS+= \
 	divmodsi4.c \
 	divsi3.c \
-	udivmodsi4.c \
-
-. if ${LIBC_MACHINE_ARCH} != "m68000"
-# Our __{,u}modsi3 codes assume that __udivsi3 returns remainder to
-# %d1 (volatile register). __udivsi3 in libgcc does not, and therefore
-# mixing them up results in mess.
-GENERIC_SRCS+= \
 	modsi3.c \
+	udivmodsi4.c \
 	umodsi3.c
-. endif
 
 . if ${LIBC_MACHINE_CPU} != "sh3"
 # On sh3 __udivsi3 is gcc "millicode" with special calling convention

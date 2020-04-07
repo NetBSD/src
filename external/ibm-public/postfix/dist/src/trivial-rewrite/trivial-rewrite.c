@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: trivial-rewrite.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -69,8 +69,7 @@
 /*	By default, this daemon does not talk to remote or local users.
 /*	It can run at a fixed low privilege in a chrooted environment.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8)
-/*	or \fBpostlogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
@@ -251,23 +250,18 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* .PP
 /*	Available in Postfix version 2.0 and later:
 /* .IP "\fBhelpful_warnings (yes)\fR"
 /*	Log warnings about problematic configuration settings, and provide
 /*	helpful suggestions.
-/* .PP
-/*	Available in Postfix 3.3 and later:
-/* .IP "\fBservice_name (read-only)\fR"
-/*	The master.cf service name of a Postfix daemon process.
 /* SEE ALSO
 /*	postconf(5), configuration parameters
 /*	transport(5), transport table format
 /*	relocated(5), format of the "user has moved" table
 /*	master(8), process manager
-/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README FILES
 /* .ad

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.6 2020/03/14 16:12:16 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.4 2019/06/16 07:42:52 maxv Exp $ */
 
 /*
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: pmap_machdep.c,v 1.6 2020/03/14 16:12:16 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.4 2019/06/16 07:42:52 maxv Exp $");
 
 #include <sys/param.h>
 
@@ -45,13 +45,6 @@ int riscv_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
 
 vaddr_t pmap_direct_base __read_mostly;
 vaddr_t pmap_direct_end __read_mostly;
-
-void
-pmap_bootstrap(void)
-{
-
-	pmap_bootstrap_common();
-}
 
 void
 pmap_zero_page(paddr_t pa)
@@ -141,7 +134,7 @@ pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 {
 	return false;
 }
-
+ 
 void
 pmap_md_pdetab_activate(struct pmap *pmap)
 {

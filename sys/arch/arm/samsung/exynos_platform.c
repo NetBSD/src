@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.28 2020/03/19 08:33:04 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.27 2020/02/15 08:16:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,14 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.28 2020/03/19 08:33:04 skrll Exp $");
-
-
-/*
- * Booting a CA7 core on Exynos5422 is currently broken, disable starting CA7 secondaries.
- */
-#define        EXYNOS5422_DISABLE_CA7_CLUSTER
-
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.27 2020/02/15 08:16:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -149,11 +142,6 @@ exynos5800_mpstart(void)
 		const u_int cluster = __SHIFTOUT(mpidr, MPIDR_AFF1);
 		const u_int aff0 = __SHIFTOUT(mpidr, MPIDR_AFF0);
 		const u_int cpu = cluster * 4 + aff0;
-
-#if defined(EXYNOS5422_DISABLE_CA7_CLUSTER)
-		if (cluster == 1)
-			continue;
-#endif
 
 		val = bus_space_read_4(bst, pmu_bsh, EXYNOS5800_PMU_CORE_STATUS(cpu));
 		bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_CORE_CONFIG(cpu),
@@ -338,27 +326,6 @@ exynos5_platform_bootstrap(void)
 {
 
 	exynos_bootstrap(5);
-
-#if defined(MULTIPROCESSOR) && defined(EXYNOS5422_DISABLE_CA7_CLUSTER)
-	const struct of_compat_data *cd = of_search_compatible(OF_finddevice("/"), mp_compat_data);
-	if (cd && cd->data == (uintptr_t)exynos5800_mpstart) {
-		void *fdt_data = __UNCONST(fdtbus_get_data());
-		int cpu_off, cpus_off, len;
-
-		cpus_off = fdt_path_offset(fdt_data, "/cpus");
-		if (cpus_off < 0)
-			return;
-
-		fdt_for_each_subnode(cpu_off, fdt_data, cpus_off) {
-			const void *prop = fdt_getprop(fdt_data, cpu_off, "reg", &len);
-			if (len != 4)
-				continue;
-			const uint32_t mpidr = be32dec(prop);
-			if (mpidr != cpu_mpidr_aff_read() && __SHIFTOUT(mpidr, MPIDR_AFF1) == 1)
-				fdt_setprop_string(fdt_data, cpu_off, "status", "fail");
-		}
-	}
-#endif
 
 	arm_fdt_cpu_bootstrap();
 }

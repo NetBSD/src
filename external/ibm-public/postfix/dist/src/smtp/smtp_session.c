@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_session.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp_session.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -38,9 +38,8 @@
 /*	case of a null stream and will assume it was given a different
 /*	purpose.
 /*
-/*	smtp_session_passivate() flattens an SMTP session (including
-/*	TLS context) so that it can be cached. The SMTP_SESSION
-/*	structure is destroyed.
+/*	smtp_session_passivate() flattens an SMTP session so that
+/*	it can be cached. The SMTP_SESSION structure is destroyed.
 /*
 /*	smtp_session_activate() inflates a flattened SMTP session
 /*	so that it can be used. The input property arguments are
@@ -87,11 +86,6 @@
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
-/*
 /*	Viktor Dukhovni
 /*--*/
 
@@ -116,27 +110,10 @@
 #include <debug_peer.h>
 #include <mail_params.h>
 
-/* TLS Library. */
-
-#include <tls_proxy.h>
-
 /* Application-specific. */
 
 #include "smtp.h"
 #include "smtp_sasl.h"
-
- /*
-  * Local, because these are meaningful only for code in this file.
-  */
-#define SESS_ATTR_DEST		"destination"
-#define SESS_ATTR_HOST		"host_name"
-#define SESS_ATTR_ADDR		"host_addr"
-#define SESS_ATTR_DEST_FEATURES	"destination_features"
-
-#define SESS_ATTR_TLS_LEVEL	"tls_level"
-#define SESS_ATTR_REUSE_COUNT	"reuse_count"
-#define SESS_ATTR_ENDP_FEATURES	"endpoint_features"
-#define SESS_ATTR_EXPIRE_TIME	"expire_time"
 
 /* smtp_session_alloc - allocate and initialize SMTP_SESSION structure */
 
@@ -201,12 +178,7 @@ void    smtp_session_free(SMTP_SESSION *session)
 #ifdef USE_TLS
     if (session->stream) {
 	vstream_fflush(session->stream);
-    }
-    if (session->tls_context) {
-	if (session->features &
-	    (SMTP_FEATURE_FROM_CACHE | SMTP_FEATURE_FROM_PROXY))
-	    tls_proxy_context_free(session->tls_context);
-	else
+	if (session->tls_context)
 	    tls_client_stop(smtp_tls_ctx, session->stream,
 			  var_smtp_starttls_tmout, 0, session->tls_context);
     }
@@ -241,72 +213,54 @@ int     smtp_session_passivate(SMTP_SESSION *session, VSTRING *dest_prop,
 			               VSTRING *endp_prop)
 {
     SMTP_ITERATOR *iter = session->iterator;
-    VSTREAM *mp;
     int     fd;
 
     /*
-     * Encode the delivery request next-hop to endpoint binding properties:
-     * whether or not this server is best MX host for the delivery request
-     * next-hop or fall-back logical destination (this information is needed
-     * for loop handling in smtp_proto()).
+     * Encode the local-to-physical binding properties: whether or not this
+     * server is best MX host for the next-hop or fall-back logical
+     * destination (this information is needed for loop handling in
+     * smtp_proto()).
+     * 
+     * XXX It would be nice to have a VSTRING to VSTREAM adapter so that we can
+     * serialize the properties with attr_print() instead of using ad-hoc,
+     * non-reusable, code and hard-coded format strings.
      * 
      * TODO: save SASL username and password information so that we can
      * correctly save a reused authenticated connection.
      * 
-     * These memory writes should never fail.
      */
-    if ((mp = vstream_memopen(dest_prop, O_WRONLY)) == 0
-	|| attr_print_plain(mp, ATTR_FLAG_NONE,
-			    SEND_ATTR_STR(SESS_ATTR_DEST, STR(iter->dest)),
-			    SEND_ATTR_STR(SESS_ATTR_HOST, STR(iter->host)),
-			    SEND_ATTR_STR(SESS_ATTR_ADDR, STR(iter->addr)),
-			    SEND_ATTR_INT(SESS_ATTR_DEST_FEATURES,
-			 session->features & SMTP_FEATURE_DESTINATION_MASK),
-			    ATTR_TYPE_END) != 0
-	|| vstream_fclose(mp) != 0)
-	msg_fatal("smtp_session_passivate: can't save dest properties: %m");
+    vstring_sprintf(dest_prop, "%s\n%s\n%s\n%u",
+		    STR(iter->dest), STR(iter->host), STR(iter->addr),
+		    session->features & SMTP_FEATURE_DESTINATION_MASK);
 
     /*
      * Encode the physical endpoint properties: all the session properties
-     * except for "session from cache", "best MX", or "RSET failure". Plus
-     * the TLS level, reuse count, and connection expiration time.
+     * except for "session from cache", "best MX", or "RSET failure".
      * 
-     * XXX Should also record how many non-delivering mail transactions there
-     * were during this session, and perhaps other statistics, so that we
-     * don't reuse a session too much.
+     * XXX It would be nice to have a VSTRING to VSTREAM adapter so that we can
+     * serialize the properties with attr_print() instead of using obscure
+     * hard-coded format strings.
      * 
-     * TODO: passivate SASL username and password information so that we can
-     * correctly save a reused authenticated connection.
+     * XXX Should also record an absolute time when a session must be closed,
+     * how many non-delivering mail transactions there were during this
+     * session, and perhaps other statistics, so that we don't reuse a
+     * session too much.
      * 
-     * These memory writes should never fail.
+     * XXX Be sure to use unsigned types in the format string. Sign characters
+     * would be rejected by the alldig() test on the reading end.
      */
-    if ((mp = vstream_memopen(endp_prop, O_WRONLY)) == 0
-	|| attr_print_plain(mp, ATTR_FLAG_NONE,
-#ifdef USE_TLS
-			    SEND_ATTR_INT(SESS_ATTR_TLS_LEVEL,
-					  session->state->tls->level),
-#endif
-			    SEND_ATTR_INT(SESS_ATTR_REUSE_COUNT,
-					  session->reuse_count),
-			    SEND_ATTR_INT(SESS_ATTR_ENDP_FEATURES,
-			    session->features & SMTP_FEATURE_ENDPOINT_MASK),
-			    SEND_ATTR_LONG(SESS_ATTR_EXPIRE_TIME,
-					   (long) session->expire_time),
-			    ATTR_TYPE_END) != 0
+    vstring_sprintf(endp_prop, "%u\n%u\n%lu",
+		    session->reuse_count,
+		    session->features & SMTP_FEATURE_ENDPOINT_MASK,
+		    (long) session->expire_time);
 
     /*
-     * Append the passivated TLS context. These memory writes should never
-     * fail.
+     * Append the passivated SASL attributes.
      */
-#ifdef USE_TLS
-	|| (session->tls_context
-	    && attr_print_plain(mp, ATTR_FLAG_NONE,
-				SEND_ATTR_FUNC(tls_proxy_context_print,
-					     (void *) session->tls_context),
-				ATTR_TYPE_END) != 0)
+#ifdef notdef
+    if (smtp_sasl_enable)
+	smtp_sasl_passivate(endp_prop, session);
 #endif
-	|| vstream_fclose(mp) != 0)
-	msg_fatal("smtp_session_passivate: cannot save TLS context: %m");
 
     /*
      * Salvage the underlying file descriptor, and destroy the session
@@ -327,66 +281,52 @@ SMTP_SESSION *smtp_session_activate(int fd, SMTP_ITERATOR *iter,
 				            VSTRING *endp_prop)
 {
     const char *myname = "smtp_session_activate";
-    VSTREAM *mp;
     SMTP_SESSION *session;
-    int     endp_features;		/* server features */
-    int     dest_features;		/* server features */
-    long    expire_time;		/* session re-use expiration time */
-    int     reuse_count;		/* # times reused */
-
-#ifdef USE_TLS
-    TLS_SESS_STATE *tls_context = 0;
-    SMTP_TLS_POLICY *tls = iter->parent->tls;
-
-#define TLS_PROXY_CONTEXT_FREE() do { \
-    if (tls_context) \
-	tls_proxy_context_free(tls_context); \
-   } while (0)
-#else
-#define TLS_PROXY_CONTEXT_FREE()		/* nothing */
-#endif
-
-#define SMTP_SESSION_ACTIVATE_ERR_RETURN() do { \
-	TLS_PROXY_CONTEXT_FREE(); \
-	return (0); \
-   } while (0)
+    char   *dest_props;
+    char   *endp_props;
+    const char *prop;
+    const char *dest;
+    const char *host;
+    const char *addr;
+    unsigned features;			/* server features */
+    time_t  expire_time;		/* session re-use expiration time */
+    unsigned reuse_count;		/* # times reused */
 
     /*
-     * Sanity check: if TLS is required, the cached properties must contain a
-     * TLS context.
+     * XXX it would be nice to have a VSTRING to VSTREAM adapter so that we
+     * can de-serialize the properties with attr_scan(), instead of using
+     * ad-hoc, non-reusable code.
+     * 
+     * XXX As a preliminary solution we use mystrtok(), but that function is not
+     * suitable for zero-length fields.
      */
-    if ((mp = vstream_memopen(endp_prop, O_RDONLY)) == 0
-	|| attr_scan_plain(mp, ATTR_FLAG_NONE,
-#ifdef USE_TLS
-			   RECV_ATTR_INT(SESS_ATTR_TLS_LEVEL,
-					 &tls->level),
-#endif
-			   RECV_ATTR_INT(SESS_ATTR_REUSE_COUNT,
-					 &reuse_count),
-			   RECV_ATTR_INT(SESS_ATTR_ENDP_FEATURES,
-					 &endp_features),
-			   RECV_ATTR_LONG(SESS_ATTR_EXPIRE_TIME,
-					  &expire_time),
-			   ATTR_TYPE_END) != 4
-#ifdef USE_TLS
-	|| ((tls->level > TLS_LEV_MAY
-	     || (tls->level == TLS_LEV_MAY && vstream_peek(mp) > 0))
-	    && attr_scan_plain(mp, ATTR_FLAG_NONE,
-			       RECV_ATTR_FUNC(tls_proxy_context_scan,
-					      (void *) &tls_context),
-			       ATTR_TYPE_END) != 1)
-#endif
-	|| vstream_fclose(mp) != 0) {
-	msg_warn("smtp_session_activate: bad cached endp properties");
-	SMTP_SESSION_ACTIVATE_ERR_RETURN();
+    endp_props = STR(endp_prop);
+    if ((prop = mystrtok(&endp_props, "\n")) == 0 || !alldig(prop)) {
+	msg_warn("%s: bad cached session reuse count property", myname);
+	return (0);
     }
+    reuse_count = atoi(prop);
+    if ((prop = mystrtok(&endp_props, "\n")) == 0 || !alldig(prop)) {
+	msg_warn("%s: bad cached session features property", myname);
+	return (0);
+    }
+    features = atoi(prop);
+    if ((prop = mystrtok(&endp_props, "\n")) == 0 || !alldig(prop)) {
+	msg_warn("%s: bad cached session expiration time property", myname);
+	return (0);
+    }
+#ifdef MISSING_STRTOUL
+    expire_time = strtol(prop, 0, 10);
+#else
+    expire_time = strtoul(prop, 0, 10);
+#endif
 
     /*
      * Clobber the iterator's current nexthop, host and address fields with
      * cached-connection information. This is done when a session is looked
-     * up by delivery request nexthop instead of address and port. It is the
-     * caller's responsibility to save and restore the delivery request
-     * nexthop with SMTP_ITER_SAVE_DEST() and SMTP_ITER_RESTORE_DEST().
+     * up by request nexthop instead of address and port. It is the caller's
+     * responsibility to save and restore the request nexthop with
+     * SMTP_ITER_SAVE_DEST() and SMTP_ITER_RESTORE_DEST().
      * 
      * TODO: Eliminate the duplication between SMTP_ITERATOR and SMTP_SESSION.
      * 
@@ -394,25 +334,26 @@ SMTP_SESSION *smtp_session_activate(int fd, SMTP_ITERATOR *iter,
      * correctly save a reused authenticated connection.
      */
     if (dest_prop && VSTRING_LEN(dest_prop)) {
-	if ((mp = vstream_memopen(dest_prop, O_RDONLY)) == 0
-	    || attr_scan_plain(mp, ATTR_FLAG_NONE,
-			       RECV_ATTR_STR(SESS_ATTR_DEST, iter->dest),
-			       RECV_ATTR_STR(SESS_ATTR_HOST, iter->host),
-			       RECV_ATTR_STR(SESS_ATTR_ADDR, iter->addr),
-			       RECV_ATTR_INT(SESS_ATTR_DEST_FEATURES,
-					     &dest_features),
-			       ATTR_TYPE_END) != 4
-	    || vstream_fclose(mp) != 0) {
-	    msg_warn("smtp_session_passivate: bad cached dest properties");
-	    SMTP_SESSION_ACTIVATE_ERR_RETURN();
+	dest_props = STR(dest_prop);
+	if ((dest = mystrtok(&dest_props, "\n")) == 0) {
+	    msg_warn("%s: missing cached session destination property", myname);
+	    return (0);
 	}
-    } else {
-	dest_features = 0;
+	if ((host = mystrtok(&dest_props, "\n")) == 0) {
+	    msg_warn("%s: missing cached session hostname property", myname);
+	    return (0);
+	}
+	if ((addr = mystrtok(&dest_props, "\n")) == 0) {
+	    msg_warn("%s: missing cached session address property", myname);
+	    return (0);
+	}
+	if ((prop = mystrtok(&dest_props, "\n")) == 0 || !alldig(prop)) {
+	    msg_warn("%s: bad cached destination features property", myname);
+	    return (0);
+	}
+	features |= atoi(prop);
+	SMTP_ITER_CLOBBER(iter, dest, host, addr);
     }
-#ifdef USE_TLS
-    if (msg_verbose)
-	msg_info("%s: tls_level=%d", myname, tls->level);
-#endif
 
     /*
      * Allright, bundle up what we have sofar.
@@ -421,11 +362,7 @@ SMTP_SESSION *smtp_session_activate(int fd, SMTP_ITERATOR *iter,
 
     session = smtp_session_alloc(vstream_fdopen(fd, O_RDWR), iter,
 				 (time_t) 0, NO_FLAGS);
-    session->features =
-	(endp_features | dest_features | SMTP_FEATURE_FROM_CACHE);
-#ifdef USE_TLS
-    session->tls_context = tls_context;
-#endif
+    session->features = (features | SMTP_FEATURE_FROM_CACHE);
     CACHE_THIS_SESSION_UNTIL(expire_time);
     session->reuse_count = ++reuse_count;
 
@@ -433,15 +370,20 @@ SMTP_SESSION *smtp_session_activate(int fd, SMTP_ITERATOR *iter,
 	msg_info("%s: dest=%s host=%s addr=%s port=%u features=0x%x, "
 		 "ttl=%ld, reuse=%d",
 		 myname, STR(iter->dest), STR(iter->host),
-		 STR(iter->addr), ntohs(iter->port),
-		 endp_features | dest_features,
+		 STR(iter->addr), ntohs(iter->port), features,
 		 (long) (expire_time - time((time_t *) 0)),
 		 reuse_count);
 
-#if USE_TLS
-    if (tls_context)
-	tls_log_summary(TLS_ROLE_CLIENT, TLS_USAGE_USED,
-			session->tls_context);
+    /*
+     * Re-activate the SASL attributes.
+     */
+#ifdef notdef
+    if (smtp_sasl_enable && smtp_sasl_activate(session, endp_props) < 0) {
+	vstream_fdclose(session->stream);
+	session->stream = 0;
+	smtp_session_free(session);
+	return (0);
+    }
 #endif
 
     return (session);

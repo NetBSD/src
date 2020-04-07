@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.44 2020/03/15 20:10:26 martin Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.42 2018/06/19 09:20:46 gson Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -77,10 +77,6 @@ FSPROTOS(zfs);
 
 #define FSTEST_CONSTRUCTOR(_tc_, _fs_, _args_)				\
 do {									\
-	struct statvfs fsstat;						\
-	if (statvfs(".", &fsstat) == 0 &&				\
-	    (fsstat.f_frsize * fsstat.f_bfree) <= FSTEST_IMGSIZE)	\
-		atf_tc_skip("not enough free space in work directory");	\
 	if (_fs_##_fstest_newfs(_tc_, &_args_,				\
 	    FSTEST_IMGNAME, FSTEST_IMGSIZE, NULL) != 0)			\
 		atf_tc_fail_errno("newfs failed");			\
@@ -253,14 +249,6 @@ static __inline bool
 atf_check_fstype(const atf_tc_t *tc, const char *fs)
 {
 	const char *fstype;
-	struct statvfs fsstat;
-
-	if (strcmp(fs, "zfs") == 0) {
-		/* XXX ZFS hardcodes a minimal size */
-		if (statvfs(".", &fsstat) == 0 &&
-		    (fsstat.f_frsize * fsstat.f_bfree) <= 64*1024*1024)
-			atf_tc_skip("not enough free space in work directory");
-	}
 
 	if (!atf_tc_has_config_var(tc, "fstype"))
 		return true;

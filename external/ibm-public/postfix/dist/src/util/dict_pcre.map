@@ -20,8 +20,3 @@ endif
 endif	 
 # trailing whitespace above
 !
-# dangling endif and if
-endif
-endif
-if /./
-if /./

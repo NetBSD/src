@@ -61,16 +61,13 @@ Safford, Douglas Schales, and Leendert van Doorn.  I also appreciate
 the support by Charles Palmer under whose leadership I began this
 project, and who had the privilege to name the software, twice.
 
-Postcards
-=========
-
 If you wish to express your appreciation for the Postfix software,
 you are welcome to send a postcard to:
 
 	Wietse Venema
-	Google
-	111 8th Avenue, 4th floor
-	New York, NY 10011
+	IBM T.J Watson Research Center
+	P.O. Box 704, 
+	Yorktown Heights, NY 10598
 	USA
 
 Roadmap of the Postfix source distribution
@@ -149,7 +146,6 @@ Postfix daemons:
     src/oqmgr/		Old queue manager
     src/pickup/		Local pickup
     src/pipe/		Pipe delivery
-    src/postlogd/	Syslog alternative, logs to file or stdout
     src/postscreen/	Zombie blocker
     src/proxymap/	Table lookup proxy agent
     src/qmgr/		Queue manager
@@ -160,7 +156,7 @@ Postfix daemons:
     src/smtpd/		SMTP server
     src/spawn/		Run non-Postfix server
     src/tlsmgr/		TLS session keys and random pool
-    src/tlsproxy/	TLS proxy for postscreen and outbound connection reuse
+    src/tlsproxy/	TLS proxy for postscreen
     src/trivial-rewrite/ Address rewriting and resolving
     src/verify/		address verification service
     src/virtual/	virtual mailbox-only delivery agent

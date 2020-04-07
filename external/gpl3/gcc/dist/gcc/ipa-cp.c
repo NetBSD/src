@@ -1082,6 +1082,7 @@ ipcp_bits_lattice::meet_with (ipcp_bits_lattice& other, unsigned precision,
   if (TREE_CODE_CLASS (code) == tcc_binary)
     {
       tree type = TREE_TYPE (operand);
+      gcc_assert (INTEGRAL_TYPE_P (type));
       widest_int o_value, o_mask;
       get_value_and_mask (operand, &o_value, &o_mask);
 
@@ -2851,18 +2852,11 @@ perform_estimation_of_a_value (cgraph_node *node, vec<tree> known_csts,
   base_time -= time;
   if (base_time > 65535)
     base_time = 65535;
-
-  /* Extern inline functions have no cloning local time benefits because they
-     will be inlined anyway.  The only reason to clone them is if it enables
-     optimization in any of the functions they call.  */
-  if (DECL_EXTERNAL (node->decl) && DECL_DECLARED_INLINE_P (node->decl))
-    time_benefit = 0;
-  else
-    time_benefit = base_time.to_int ()
-      + devirtualization_time_bonus (node, known_csts, known_contexts,
-				     known_aggs_ptrs)
-      + hint_time_bonus (hints)
-      + removable_params_cost + est_move_cost;
+  time_benefit = base_time.to_int ()
+    + devirtualization_time_bonus (node, known_csts, known_contexts,
+				   known_aggs_ptrs)
+    + hint_time_bonus (hints)
+    + removable_params_cost + est_move_cost;
 
   gcc_checking_assert (size >=0);
   /* The inliner-heuristics based estimates may think that in certain
@@ -4477,6 +4471,7 @@ cgraph_edge_brings_all_agg_vals_for_node (struct cgraph_edge *cs,
 
   for (i = 0; i < count; i++)
     {
+      static vec<ipa_agg_jf_item> values = vec<ipa_agg_jf_item>();
       struct ipcp_param_lattices *plats;
       bool interesting = false;
       for (struct ipa_agg_replacement_value *av = aggval; av; av = av->next)
@@ -4492,8 +4487,7 @@ cgraph_edge_brings_all_agg_vals_for_node (struct cgraph_edge *cs,
       if (plats->aggs_bottom)
 	return false;
 
-      vec<ipa_agg_jf_item> values
-	= intersect_aggregates_with_edge (cs, i, vNULL);
+      values = intersect_aggregates_with_edge (cs, i, values);
       if (!values.exists ())
 	return false;
 
@@ -4517,7 +4511,6 @@ cgraph_edge_brings_all_agg_vals_for_node (struct cgraph_edge *cs,
 		return false;
 	      }
 	  }
-      values.release ();
     }
   return true;
 }

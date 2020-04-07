@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.c,v 1.5 2020/03/17 00:30:17 ad Exp $	*/
+/*	$NetBSD: uvm_page_array.c,v 1.4 2020/02/23 15:46:43 ad Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.5 2020/03/17 00:30:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.4 2020/02/23 15:46:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
 		maxpages = nwant;
 	}
 #if 0 /* called from DDB for "show obj/f" without lock */
-	KASSERT(rw_lock_held(uobj->vmobjlock));
+	KASSERT(rw_write_held(uobj->vmobjlock));
 #endif
 	KASSERT(uvm_page_array_peek(ar) == NULL);
 	if ((flags & UVM_PAGE_ARRAY_FILL_DIRTY) != 0) {

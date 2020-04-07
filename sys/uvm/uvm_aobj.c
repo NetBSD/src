@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.139 2020/03/22 18:32:42 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.136 2020/02/24 12:38:57 rin Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.139 2020/03/22 18:32:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.136 2020/02/24 12:38:57 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -621,7 +621,9 @@ uao_detach(struct uvm_object *uobj)
 		uvm_page_array_advance(&a);
 		pmap_page_protect(pg, VM_PROT_NONE);
 		if (pg->flags & PG_BUSY) {
-			uvm_pagewait(pg, uobj->vmobjlock, "uao_det");
+			pg->flags |= PG_WANTED;
+			UVM_UNLOCK_AND_WAIT_RW(pg, uobj->vmobjlock, false,
+			    "uao_det", 0);
 			uvm_page_array_clear(&a);
 			rw_enter(uobj->vmobjlock, RW_WRITER);
 			continue;
@@ -713,7 +715,9 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		 */
 
 		if (pg->flags & PG_BUSY) {
-			uvm_pagewait(pg, uobj->vmobjlock, "uao_put");
+			pg->flags |= PG_WANTED;
+			UVM_UNLOCK_AND_WAIT_RW(pg, uobj->vmobjlock, 0,
+			    "uao_put", 0);
 			uvm_page_array_clear(&a);
 			rw_enter(uobj->vmobjlock, RW_WRITER);
 			continue;
@@ -807,16 +811,6 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		    (uintptr_t)uobj, offset, flags,0);
 
 	/*
-	 * the object must be locked.  it can only be a read lock when
-	 * processing a read fault with PGO_LOCKED | PGO_NOBUSY.
-	 */
-
-	KASSERT(rw_lock_held(uobj->vmobjlock));
-	KASSERT(rw_write_held(uobj->vmobjlock) ||
-	   ((~flags & (PGO_LOCKED | PGO_NOBUSY)) == 0 &&
-	   (access_type & VM_PROT_WRITE) == 0));
-
-	/*
  	 * get number of pages
  	 */
 
@@ -845,12 +839,10 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 			/*
  			 * if page is new, attempt to allocate the page,
-			 * zero-fill'd.  we can only do this if busying
-			 * pages, as otherwise the object is read locked.
+			 * zero-fill'd.
  			 */
 
-			if ((flags & PGO_NOBUSY) == 0 && ptmp == NULL &&
-			    uao_find_swslot(uobj,
+			if (ptmp == NULL && uao_find_swslot(uobj,
 			    current_offset >> PAGE_SHIFT) == 0) {
 				ptmp = uao_pagealloc(uobj, current_offset,
 				    UVM_FLAG_COLORMATCH|UVM_PGA_ZERO);
@@ -882,11 +874,9 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			KASSERT(uvm_pagegetdirty(ptmp) !=
 			    UVM_PAGE_STATUS_CLEAN);
 
-			if ((flags & PGO_NOBUSY) == 0) {
-				/* caller must un-busy this page */
-				ptmp->flags |= PG_BUSY;
-				UVM_PAGE_OWN(ptmp, "uao_get1");
-			}
+			/* caller must un-busy this page */
+			ptmp->flags |= PG_BUSY;
+			UVM_PAGE_OWN(ptmp, "uao_get1");
 gotpage:
 			pps[lcv] = ptmp;
 			gotpages++;
@@ -974,10 +964,12 @@ gotpage:
 
 			/* page is there, see if we need to wait on it */
 			if ((ptmp->flags & PG_BUSY) != 0) {
+				ptmp->flags |= PG_WANTED;
 				UVMHIST_LOG(pdhist,
 				    "sleeping, ptmp->flags %#jx\n",
 				    ptmp->flags,0,0,0);
-				uvm_pagewait(ptmp, uobj->vmobjlock, "uao_get");
+				UVM_UNLOCK_AND_WAIT_RW(ptmp, uobj->vmobjlock,
+				    false, "uao_get", 0);
 				rw_enter(uobj->vmobjlock, RW_WRITER);
 				continue;
 			}
@@ -1046,6 +1038,8 @@ gotpage:
 			if (error != 0) {
 				UVMHIST_LOG(pdhist, "<- done (error=%jd)",
 				    error,0,0,0);
+				if (ptmp->flags & PG_WANTED)
+					wakeup(ptmp);
 
 				/*
 				 * remove the swap slot from the aobj
@@ -1314,10 +1308,12 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	 */
 	uvm_pagelock(pg);
 	uvm_pageenqueue(pg);
-	uvm_pagewakeup(pg);
 	uvm_pageunlock(pg);
 
-	pg->flags &= ~(PG_BUSY|PG_FAKE);
+	if (pg->flags & PG_WANTED) {
+		wakeup(pg);
+	}
+	pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
 	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	UVM_PAGE_OWN(pg, NULL);
 

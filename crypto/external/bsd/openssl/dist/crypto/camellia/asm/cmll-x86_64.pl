@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -125,13 +125,11 @@ $code=<<___;
 .type	Camellia_EncryptBlock,\@abi-omnipotent
 .align	16
 Camellia_EncryptBlock:
-.cfi_startproc
 	movl	\$128,%eax
 	subl	$arg0d,%eax
 	movl	\$3,$arg0d
 	adcl	\$0,$arg0d	# keyBitLength==128?3:4
 	jmp	.Lenc_rounds
-.cfi_endproc
 .size	Camellia_EncryptBlock,.-Camellia_EncryptBlock
 # V2
 .globl	Camellia_EncryptBlock_Rounds
@@ -200,7 +198,6 @@ Camellia_EncryptBlock_Rounds:
 .type	_x86_64_Camellia_encrypt,\@abi-omnipotent
 .align	16
 _x86_64_Camellia_encrypt:
-.cfi_startproc
 	xor	0($key),@S[1]
 	xor	4($key),@S[0]		# ^=key[0-3]
 	xor	8($key),@S[3]
@@ -244,7 +241,6 @@ $code.=<<___;
 	mov	$t3,@S[3]
 
 	.byte	0xf3,0xc3		# rep ret
-.cfi_endproc
 .size	_x86_64_Camellia_encrypt,.-_x86_64_Camellia_encrypt
 
 # V1.x API
@@ -252,13 +248,11 @@ $code.=<<___;
 .type	Camellia_DecryptBlock,\@abi-omnipotent
 .align	16
 Camellia_DecryptBlock:
-.cfi_startproc
 	movl	\$128,%eax
 	subl	$arg0d,%eax
 	movl	\$3,$arg0d
 	adcl	\$0,$arg0d	# keyBitLength==128?3:4
 	jmp	.Ldec_rounds
-.cfi_endproc
 .size	Camellia_DecryptBlock,.-Camellia_DecryptBlock
 # V2
 .globl	Camellia_DecryptBlock_Rounds
@@ -327,7 +321,6 @@ Camellia_DecryptBlock_Rounds:
 .type	_x86_64_Camellia_decrypt,\@abi-omnipotent
 .align	16
 _x86_64_Camellia_decrypt:
-.cfi_startproc
 	xor	0($key),@S[1]
 	xor	4($key),@S[0]		# ^=key[0-3]
 	xor	8($key),@S[3]
@@ -372,7 +365,6 @@ $code.=<<___;
 	mov	$t1,@S[3]
 
 	.byte	0xf3,0xc3		# rep ret
-.cfi_endproc
 .size	_x86_64_Camellia_decrypt,.-_x86_64_Camellia_decrypt
 ___
 
@@ -1150,4 +1142,4 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
-close STDOUT or die "error closing STDOUT: $!";
+close STDOUT;

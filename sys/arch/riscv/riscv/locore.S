@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.12 2020/03/14 16:12:16 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.11 2020/01/08 20:59:19 skrll Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 ENTRY_NP(start)
 	// We get loaded and starting running at or near 0, not where we
 	// should be. We need to construct an initial PDETAB
-
+	
 #ifdef _LP64
 	li	t0, SR_U64|SR_S64
 	li	t1, SR_IM|SR_VM|SR_EI
@@ -182,7 +182,7 @@ ENTRY_NP(cpu_switchto)
 	REG_S	s11, TF_S11(sp)		// save callee saved address
 	csrr	t4, sstatus		// get status for intr state
 	REG_S	t4, TF_SR(sp)		// save it
-
+	
 	REG_S	sp, L_MD_KTF(a0)	// record trapframe pointer
 
 	csrrci	t0, sstatus, SR_EI	// # disable interrupts
@@ -364,7 +364,7 @@ ENTRY_NP(cpu_exception_handler)
 	REG_S	t5, TF_T5(sp)		// save t5
 	REG_S	t6, TF_T6(sp)		// save t6
 
-	// Now we get the
+	// Now we get the 
 	move	a0, sp			// trapframe pointer
 	csrr	a1, sepc		// get execption pc
 	csrr	a2, sstatus		// get status

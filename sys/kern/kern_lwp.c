@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.231 2020/03/26 21:31:55 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.228 2020/02/27 20:52:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.231 2020/03/26 21:31:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.228 2020/02/27 20:52:25 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -274,7 +274,7 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 	.l_stat = LSONPROC,
 	.l_ts = &turnstile0,
 	.l_syncobj = &sched_syncobj,
-	.l_refcnt = 0,
+	.l_refcnt = 1,
 	.l_priority = PRI_USER + NPRI_USER - 1,
 	.l_inheritedprio = -1,
 	.l_class = SCHED_OTHER,
@@ -677,13 +677,12 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		}
 
 		/*
-		 * Break out if the process is exiting, or if all LWPs are
-		 * in _lwp_wait().  There are other ways to hang the process
-		 * with _lwp_wait(), but the sleep is interruptable so
-		 * little point checking for them.
+		 * If all other LWPs are waiting for exits or suspends
+		 * and the supply of zombies and potential zombies is
+		 * exhausted, then we are about to deadlock.
 		 */
 		if ((p->p_sflag & PS_WEXIT) != 0 ||
-		    p->p_nlwpwait == p->p_nlwps) {
+		    p->p_nrlwps + p->p_nzlwps - p->p_ndlwps <= p->p_nlwpwait) {
 			error = EDEADLK;
 			break;
 		}
@@ -821,7 +820,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 
 	l2->l_stat = LSIDL;
 	l2->l_proc = p2;
-	l2->l_refcnt = 0;
+	l2->l_refcnt = 1;
 	l2->l_class = sclass;
 
 	/*
@@ -1180,27 +1179,19 @@ lwp_exit(struct lwp *l)
 	 * mark it waiting for collection in the proc structure.  Note that
 	 * before we can do that, we need to free any other dead, deatched
 	 * LWP waiting to meet its maker.
-	 *
-	 * All conditions need to be observed upon under the same hold of
-	 * p_lock, because if the lock is dropped any of them can change.
 	 */
 	mutex_enter(p->p_lock);
-	for (;;) {
-		if (l->l_refcnt > 0) {
+	lwp_drainrefs(l);
+
+	if ((l->l_prflag & LPR_DETACHED) != 0) {
+		while ((l2 = p->p_zomblwp) != NULL) {
+			p->p_zomblwp = NULL;
+			lwp_free(l2, false, false);/* releases proc mutex */
+			mutex_enter(p->p_lock);
+			l->l_refcnt++;
 			lwp_drainrefs(l);
-			continue;
 		}
-		if ((l->l_prflag & LPR_DETACHED) != 0) {
-			if ((l2 = p->p_zomblwp) != NULL) {
-				p->p_zomblwp = NULL;
-				lwp_free(l2, false, false);
-				/* proc now unlocked */
-				mutex_enter(p->p_lock);
-				continue;
-			}
-			p->p_zomblwp = l;
-		}
-		break;
+		p->p_zomblwp = l;
 	}
 
 	/*
@@ -1601,6 +1592,12 @@ lwp_userret(struct lwp *l)
 	KASSERT(l->l_stat == LSONPROC);
 	p = l->l_proc;
 
+#ifndef __HAVE_FAST_SOFTINTS
+	/* Run pending soft interrupts. */
+	if (l->l_cpu->ci_data.cpu_softints != 0)
+		softint_overlay();
+#endif
+
 	/*
 	 * It is safe to do this read unlocked on a MP system..
 	 */
@@ -1700,6 +1697,7 @@ lwp_addref(struct lwp *l)
 
 	KASSERT(mutex_owned(l->l_proc->p_lock));
 	KASSERT(l->l_stat != LSZOMB);
+	KASSERT(l->l_refcnt != 0);
 
 	l->l_refcnt++;
 }
@@ -1731,7 +1729,6 @@ lwp_delref2(struct lwp *l)
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat != LSZOMB);
 	KASSERT(l->l_refcnt > 0);
-
 	if (--l->l_refcnt == 0)
 		cv_broadcast(&p->p_lwpcv);
 }
@@ -1745,8 +1742,10 @@ lwp_drainrefs(struct lwp *l)
 	struct proc *p = l->l_proc;
 
 	KASSERT(mutex_owned(p->p_lock));
+	KASSERT(l->l_refcnt != 0);
 
-	while (l->l_refcnt > 0)
+	l->l_refcnt--;
+	while (l->l_refcnt != 0)
 		cv_wait(&p->p_lwpcv, p->p_lock);
 }
 

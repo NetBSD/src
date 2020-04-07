@@ -2352,33 +2352,13 @@ merge_decls (tree newdecl, tree olddecl, tree newtype, tree oldtype)
       if (TYPE_NAME (TREE_TYPE (newdecl)) == newdecl)
 	{
 	  tree remove = TREE_TYPE (newdecl);
-	  if (TYPE_MAIN_VARIANT (remove) == remove)
-	    {
-	      gcc_assert (TYPE_NEXT_VARIANT (remove) == NULL_TREE);
-	      /* If remove is the main variant, no need to remove that
-		 from the list.  One of the DECL_ORIGINAL_TYPE
-		 variants, e.g. created for aligned attribute, might still
-		 refer to the newdecl TYPE_DECL though, so remove that one
-		 in that case.  */
-	      if (DECL_ORIGINAL_TYPE (newdecl)
-		  && DECL_ORIGINAL_TYPE (newdecl) != remove)
-		for (tree t = TYPE_MAIN_VARIANT (DECL_ORIGINAL_TYPE (newdecl));
-		     t; t = TYPE_MAIN_VARIANT (t))
-		  if (TYPE_NAME (TYPE_NEXT_VARIANT (t)) == newdecl)
-		    {
-		      TYPE_NEXT_VARIANT (t)
-			= TYPE_NEXT_VARIANT (TYPE_NEXT_VARIANT (t));
-		      break;
-		    }
-	    }	    
-	  else
-	    for (tree t = TYPE_MAIN_VARIANT (remove); ;
-		 t = TYPE_NEXT_VARIANT (t))
-	      if (TYPE_NEXT_VARIANT (t) == remove)
-		{
-		  TYPE_NEXT_VARIANT (t) = TYPE_NEXT_VARIANT (remove);
-		  break;
-		}
+	  for (tree t = TYPE_MAIN_VARIANT (remove); ;
+	       t = TYPE_NEXT_VARIANT (t))
+	    if (TYPE_NEXT_VARIANT (t) == remove)
+	      {
+		TYPE_NEXT_VARIANT (t) = TYPE_NEXT_VARIANT (remove);
+		break;
+	      }
 	}
     }
 
@@ -2884,7 +2864,7 @@ pushdecl (tree x)
      unless they have initializers (which generate code).  */
   if (current_function_decl
       && (!VAR_OR_FUNCTION_DECL_P (x)
-	  || DECL_INITIAL (x) || !TREE_PUBLIC (x)))
+	  || DECL_INITIAL (x) || !DECL_EXTERNAL (x)))
     DECL_CONTEXT (x) = current_function_decl;
 
   /* Anonymous decls are just inserted in the scope.  */
@@ -6227,14 +6207,11 @@ grokdeclarator (const struct c_declarator *declarator,
 		  }
 		if (this_size_varies)
 		  {
-		    if (TREE_SIDE_EFFECTS (size))
-		      {
-			if (*expr)
-			  *expr = build2 (COMPOUND_EXPR, TREE_TYPE (size),
-					  *expr, size);
-			else
-			  *expr = size;
-		      }
+		    if (*expr)
+		      *expr = build2 (COMPOUND_EXPR, TREE_TYPE (size),
+				      *expr, size);
+		    else
+		      *expr = size;
 		    *expr_const_operands &= size_maybe_const;
 		  }
 	      }
@@ -6459,12 +6436,10 @@ grokdeclarator (const struct c_declarator *declarator,
 		  quals_used &= TYPE_QUAL_ATOMIC;
 		if (quals_used && VOID_TYPE_P (type) && really_funcdef)
 		  pedwarn (specs_loc, 0,
-			   "function definition has qualified void "
-			   "return type");
+			   "function definition has qualified void return type");
 		else
 		  warning_at (specs_loc, OPT_Wignored_qualifiers,
-			      "type qualifiers ignored on function "
-			      "return type");
+			   "type qualifiers ignored on function return type");
 
 		/* Ensure an error for restrict on invalid types; the
 		   DR#423 resolution is not entirely clear about
@@ -6474,7 +6449,8 @@ grokdeclarator (const struct c_declarator *declarator,
 		    && (!POINTER_TYPE_P (type)
 			|| !C_TYPE_OBJECT_OR_INCOMPLETE_P (TREE_TYPE (type))))
 		  error_at (loc, "invalid use of %<restrict%>");
-		type = c_build_qualified_type (type, quals_used);
+		if (quals_used)
+		  type = c_build_qualified_type (type, quals_used);
 	      }
 	    type_quals = TYPE_UNQUALIFIED;
 
@@ -9509,8 +9485,7 @@ finish_function (void)
       && !C_FUNCTION_IMPLICIT_INT (fndecl)
       /* Normally, with -Wreturn-type, flow will complain, but we might
          optimize out static functions.  */
-      && !TREE_PUBLIC (fndecl)
-      && targetm.warn_func_return (fndecl))
+      && !TREE_PUBLIC (fndecl))
     {
       warning (OPT_Wreturn_type,
 	       "no return statement in function returning non-void");

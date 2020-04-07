@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.61 2020/03/22 17:33:58 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.60 2019/12/06 06:38:39 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -102,8 +102,5 @@ typedef __uint32_t tlb_asid_t;		/* for booke */
 #if defined(_KERNEL)
 #define	__HAVE_RAS
 #endif
-
-/* XXX temporary */
-#define	__HAVE_UNLOCKED_PMAP
 
 #endif	/* _POWERPC_TYPES_H_ */

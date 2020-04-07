@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_task.c,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_task.c,v 1.1.1.2 2009/08/31 17:54:01 tron Exp $	*/
 
 /*++
 /* NAME
@@ -17,10 +17,8 @@
 /*	are easier to recognize. The mail system name is specified
 /*	with the "syslog_name" configuration parameter.
 /*
-/*	The result is overwritten with each call.
-/*
-/*	A null argv0 argument requests that the current
-/*	result is returned.
+/*	The result is volatile.  Make a copy of the result if it is
+/*	to be used for any appreciable amount of time.
 /* LICENSE
 /* .ad
 /* .fi
@@ -30,11 +28,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -61,17 +54,15 @@ const char *mail_task(const char *argv0)
     const char *slash;
     const char *tag;
 
-    if (argv0) {
-	if (canon_name == 0)
-	    canon_name = vstring_alloc(10);
-	if ((slash = strrchr(argv0, '/')) != 0 && slash[1])
-	    argv0 = slash + 1;
-	/* Setenv()-ed from main.cf, or inherited from master. */
-	if ((tag = safe_getenv(CONF_ENV_LOGTAG)) == 0)
-	    /* Check main.cf settings directly, in case set-gid. */
-	    tag = var_syslog_name ? var_syslog_name :
-		mail_conf_eval(DEF_SYSLOG_NAME);
-	vstring_sprintf(canon_name, "%s/%s", tag, argv0);
-    }
+    if (canon_name == 0)
+	canon_name = vstring_alloc(10);
+    if ((slash = strrchr(argv0, '/')) != 0 && slash[1])
+	argv0 = slash + 1;
+    /* Setenv()-ed from main.cf, or inherited from master. */
+    if ((tag = safe_getenv(CONF_ENV_LOGTAG)) == 0)
+	/* Check main.cf settings directly, in case set-gid. */
+	tag = var_syslog_name ? var_syslog_name :
+	    mail_conf_eval(DEF_SYSLOG_NAME);
+    vstring_sprintf(canon_name, "%s/%s", tag, argv0);
     return (vstring_str(canon_name));
 }

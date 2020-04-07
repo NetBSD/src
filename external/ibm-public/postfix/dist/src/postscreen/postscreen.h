@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen.h,v 1.3 2020/03/18 19:05:19 christos Exp $	*/
+/*	$NetBSD: postscreen.h,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -100,6 +100,19 @@ typedef struct {
     VSTRING *expand_buf;		/* macro expansion */
     const char *where;			/* SMTP protocol state */
 } PSC_STATE;
+
+ /*
+  * Emulate legacy ad-hoc variables on top of indexable time stamps. This
+  * avoids massive scar tissue during initial feature development.
+  */
+#define pregr_stamp	client_info->expire_time[PSC_TINDX_PREGR]
+#define dnsbl_stamp	client_info->expire_time[PSC_TINDX_DNSBL]
+#define pipel_stamp	client_info->expire_time[PSC_TINDX_PIPEL]
+#define nsmtp_stamp	client_info->expire_time[PSC_TINDX_NSMTP]
+#define barlf_stamp	client_info->expire_time[PSC_TINDX_BARLF]
+
+ /* Minize the patch size for stable releases. */
+#define client_concurrency client_info->concurrency
 
  /*
   * Special expiration time values.
@@ -458,11 +471,6 @@ extern HTABLE *psc_client_concurrency;	/* per-client concurrency */
 	(state)->smtp_server_fd = (fd); \
 	psc_post_queue_length++; \
     } while (0)
-#define PSC_DEL_SERVER_STATE(state) do { \
-	close((state)->smtp_server_fd); \
-	(state)->smtp_server_fd = (-1); \
-	psc_post_queue_length--; \
-    } while (0)
 #define PSC_DEL_CLIENT_STATE(state) do { \
 	event_server_disconnect((state)->smtp_client_stream); \
 	(state)->smtp_client_stream = 0; \
@@ -547,7 +555,6 @@ extern void psc_hangup_event(PSC_STATE *);
   * postscreen_send.c
   */
 #define PSC_SEND_REPLY psc_send_reply	/* legacy macro */
-extern void pcs_send_pre_jail_init(void);
 extern int psc_send_reply(PSC_STATE *, const char *);
 extern void psc_send_socket(PSC_STATE *);
 
@@ -570,7 +577,6 @@ typedef void (*PSC_ENDPT_LOOKUP_FN) (int, VSTREAM *,
 			             MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *,
 			            MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *);
 extern void psc_endpt_lookup(VSTREAM *, PSC_ENDPT_LOOKUP_FN);
-extern void psc_endpt_local_lookup(VSTREAM *, PSC_ENDPT_LOOKUP_FN);
 
  /*
   * postscreen_access emulation.

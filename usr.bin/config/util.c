@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.21 2020/03/07 19:26:13 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.20 2015/09/01 13:42:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.21 2020/03/07 19:26:13 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.20 2015/09/01 13:42:48 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <assert.h>
@@ -57,8 +57,6 @@ __RCSID("$NetBSD: util.c,v 1.21 2020/03/07 19:26:13 christos Exp $");
 #include <util.h>
 #include <err.h>
 #include "defs.h"
-
-extern const char *yyfile;
 
 static void cfgvxerror(const char *, int, const char *, va_list)
 	     __printflike(3, 0);
@@ -200,8 +198,6 @@ newnv(const char *name, const char *str, void *ptr, long long i, struct nvlist *
 	nv->nv_str = str;
 	nv->nv_ptr = ptr;
 	nv->nv_num = i;
-	nv->nv_where.w_srcfile = yyfile;
-	nv->nv_where.w_srcline = currentline();
 	return nv;
 }
 
@@ -259,8 +255,6 @@ defoptlist_create(const char *name, const char *val, const char *lintval)
 	dl->dl_lintvalue = lintval;
 	dl->dl_obsolete = 0;
 	dl->dl_depends = NULL;
-	dl->dl_where.w_srcfile = yyfile;
-	dl->dl_where.w_srcline = currentline();
 	return dl;
 }
 

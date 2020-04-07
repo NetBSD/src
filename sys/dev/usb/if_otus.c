@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.44 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.41 2020/01/29 06:35:28 thorpej Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.44 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.41 2020/01/29 06:35:28 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -600,7 +600,7 @@ otus_match(device_t parent, cfdata_t match, void *aux)
 	uaa = aux;
 
 	DPRINTFN(DBG_FN, DBG_NO_SC,
-	    "otus_match: vendor=%#x product=%#x revision=%#x\n",
+	    "otus_match: vendor=0x%x product=0x%x revision=0x%x\n",
 		    uaa->uaa_vendor, uaa->uaa_product, uaa->uaa_release);
 
 	return usb_lookup(otus_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL ?
@@ -880,11 +880,7 @@ otus_attachhook(device_t arg)
 	/* Override state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = otus_newstate;
-
-	/* XXX media locking needs revisiting */
-	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTUSB);
-	ieee80211_media_init_with_lock(ic,
-	    otus_media_change, ieee80211_media_status, &sc->sc_media_mtx);
+	ieee80211_media_init(ic, otus_media_change, ieee80211_media_status);
 
 	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
@@ -1439,7 +1435,7 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 		mutex_exit(&sc->sc_cmd_mtx);
 #if defined(DIAGNOSTIC) || defined(OTUS_DEBUG)	/* XXX: kill some noise */
 		aprint_error_dev(sc->sc_dev,
-		    "could not send command %#x (error=%s)\n",
+		    "could not send command 0x%x (error=%s)\n",
 		    code, usbd_errstr(error));
 #endif
 		return EIO;
@@ -1459,7 +1455,7 @@ Static void
 otus_write(struct otus_softc *sc, uint32_t reg, uint32_t val)
 {
 
-	DPRINTFN(DBG_FN | DBG_REG, sc, "reg=%#x, val=%#x\n", reg, val);
+	DPRINTFN(DBG_FN | DBG_REG, sc, "reg=0x%x, val=0x%x\n", reg, val);
 
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 	KASSERT(sc->sc_write_idx < __arraycount(sc->sc_write_buf));
@@ -1676,7 +1672,7 @@ otus_cmd_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 
 		tx = (void *)&hdr[1];
 
-		DPRINTFN(DBG_RX, sc, "tx completed %s status=%d phy=%#x\n",
+		DPRINTFN(DBG_RX, sc, "tx completed %s status=%d phy=0x%x\n",
 		    ether_sprintf(tx->macaddr), le16toh(tx->status),
 		    le32toh(tx->phy));
 		s = splnet();
@@ -1871,7 +1867,7 @@ otus_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	while (len >= sizeof(*head)) {
 		head = (void *)buf;
 		if (__predict_false(head->tag != htole16(AR_RX_HEAD_TAG))) {
-			DPRINTFN(DBG_RX, sc, "tag not valid %#x\n",
+			DPRINTFN(DBG_RX, sc, "tag not valid 0x%x\n",
 			    le16toh(head->tag));
 			break;
 		}
@@ -2196,7 +2192,7 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	sc = ifp->if_softc;
 
-	DPRINTFN(DBG_FN, sc, "%#lx\n", cmd);
+	DPRINTFN(DBG_FN, sc, "0x%lx\n", cmd);
 
 	ic = &sc->sc_ic;
 
@@ -2894,14 +2890,14 @@ otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c, int assoc)
 		return error;
 
 	if ((rsp.status & htole32(AR_CAL_ERR_AGC | AR_CAL_ERR_NF_VAL)) != 0) {
-		DPRINTFN(DBG_CHAN, sc, "status=%#x\n", le32toh(rsp.status));
+		DPRINTFN(DBG_CHAN, sc, "status=0x%x\n", le32toh(rsp.status));
 		/* Force cold reset on next channel. */
 		sc->sc_bb_reset = 1;
 	}
 
 #ifdef OTUS_DEBUG
 	if (otus_debug & DBG_CHAN) {
-		DPRINTFN(DBG_CHAN, sc, "calibration status=%#x\n",
+		DPRINTFN(DBG_CHAN, sc, "calibration status=0x%x\n",
 		    le32toh(rsp.status));
 		for (i = 0; i < 2; i++) {	/* 2 Rx chains */
 			/* Sign-extend 9-bit NF values. */

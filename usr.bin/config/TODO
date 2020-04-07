@@ -259,7 +259,7 @@ o Control ELF sections using linker script.
 		     *.ko --->      *.ro	Modular MI linkage
 		     *.ro --->      *.kmod	Modular MD linkage
 
-  Generic MI linkage is for processing MI linkage that can be applied generally.
+  Genric MI linkage is for processing MI linkage that can be applied generally.
   Data section alignment (.data.read_mostly and .data.cacheline_aligned) is
   processed here.
 

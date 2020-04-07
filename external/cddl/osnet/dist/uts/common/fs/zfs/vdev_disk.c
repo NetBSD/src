@@ -151,7 +151,6 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	unsigned secsize;
 	struct disk *pdk;
 	struct dkwedge_info dkw;
-	struct disk_sectoralign dsa;
 
 	/*
 	 * We must have a pathname, and it must be absolute.
@@ -261,23 +260,7 @@ skip_open:
 	*max_psize = *psize;
 
 	*ashift = highbit(MAX(secsize, SPA_MINBLOCKSIZE)) - 1;
-
-	/*
-	 * Try to determine whether the disk has a preferred physical
-	 * sector size even if it can emulate a smaller logical sector
-	 * size with r/m/w cycles, e.g. a disk with 4096-byte sectors
-	 * that for compatibility claims to support 512-byte ones.
-	 */
-	if (VOP_IOCTL(vp, DIOCGSECTORALIGN, &dsa, FREAD, NOCRED) == 0) {
-		*pashift = highbit(dsa.dsa_alignment * secsize) - 1;
-		if (dsa.dsa_firstaligned % dsa.dsa_alignment)
-			printf("ZFS WARNING: vdev %s: sectors are misaligned"
-			    " (alignment=%"PRIu32", firstaligned=%"PRIu32")\n",
-			    vd->vdev_path,
-			    dsa.dsa_alignment, dsa.dsa_firstaligned);
-	} else {
-		*pashift = *ashift;
-	}
+	*pashift = *ashift;
 
 	vd->vdev_wholedisk = 0;
 	if (getdiskinfo(vp, &dkw) != 0 &&

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2020/03/17 01:36:29 fox Exp $
+#	$NetBSD: Makefile,v 1.26 2019/12/03 22:10:56 jmcneill Exp $
 
 # $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -93,12 +93,6 @@ COPTS.dt_consume.c	+= ${${ACTIVE_CC} == "gcc" :? -Wno-maybe-uninitialized :}
 COPTS.dt_options.c	+= -Wno-parentheses
 COPTS.dt_pid.c		+= ${${ACTIVE_CC} == "gcc" :? -Wno-unused-but-set-variable :}
 COPTS.dt_isadep.c	+= -Wno-unused-variable
-
-.if (${MKLIBCSANITIZER:Uno} == "yes")
-.if (${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8)
-COPTS.dt_proc.c+=	-Wno-error=maybe-uninitialized
-.endif
-.endif
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel

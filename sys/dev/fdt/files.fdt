@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.52 2020/03/24 22:09:50 tnn Exp $
+# $NetBSD: files.fdt,v 1.51 2020/02/22 00:28:35 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -115,14 +115,6 @@ file	dev/fdt/simplefb.c			simplefb
 # Designware APB UART
 attach	com at fdt with dw_apb_uart
 file	dev/fdt/dw_apb_uart.c			dw_apb_uart
-
-# EHCI
-attach	ehci at fdt with ehci_fdt
-file	dev/fdt/ehci_fdt.c			ehci_fdt
-
-# OHCI
-attach	ohci at fdt with ohci_fdt
-file	dev/fdt/ohci_fdt.c			ohci_fdt
 
 # Designware USB2 OTG
 attach	dwctwo at fdt with dwc2_fdt

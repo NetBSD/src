@@ -53,10 +53,10 @@ namespace {
 typedef std::map< std::string, std::string > vars_map;
 
 static
-std::unique_ptr< std::ofstream >
+std::auto_ptr< std::ofstream >
 new_atffile(void)
 {
-    std::unique_ptr< std::ofstream > os(new std::ofstream("Atffile"));
+    std::auto_ptr< std::ofstream > os(new std::ofstream("Atffile"));
     ATF_REQUIRE(*os);
 
     (*os) << "Content-Type: application/X-atf-atffile; version=\"1\"\n\n";
@@ -519,7 +519,7 @@ ATF_TEST_CASE_BODY(atffile_getters) {
 
 ATF_TEST_CASE_WITHOUT_HEAD(read_ok_simple);
 ATF_TEST_CASE_BODY(read_ok_simple) {
-    std::unique_ptr< std::ofstream > os = new_atffile();
+    std::auto_ptr< std::ofstream > os = new_atffile();
     (*os) << "prop: test-suite = foo\n";
     (*os) << "tp: tp-1\n";
     (*os) << "conf: var1 = value1\n";
@@ -549,7 +549,7 @@ ATF_TEST_CASE_BODY(read_ok_simple) {
 
 ATF_TEST_CASE_WITHOUT_HEAD(read_ok_some_globs);
 ATF_TEST_CASE_BODY(read_ok_some_globs) {
-    std::unique_ptr< std::ofstream > os = new_atffile();
+    std::auto_ptr< std::ofstream > os = new_atffile();
     (*os) << "prop: test-suite = foo\n";
     (*os) << "tp: foo\n";
     (*os) << "tp-glob: *K*\n";
@@ -576,7 +576,7 @@ ATF_TEST_CASE_BODY(read_ok_some_globs) {
 
 ATF_TEST_CASE_WITHOUT_HEAD(read_missing_test_suite);
 ATF_TEST_CASE_BODY(read_missing_test_suite) {
-    std::unique_ptr< std::ofstream > os = new_atffile();
+    std::auto_ptr< std::ofstream > os = new_atffile();
     (*os).close();
 
     try {
@@ -589,7 +589,7 @@ ATF_TEST_CASE_BODY(read_missing_test_suite) {
 
 ATF_TEST_CASE_WITHOUT_HEAD(read_missing_test_program);
 ATF_TEST_CASE_BODY(read_missing_test_program) {
-    std::unique_ptr< std::ofstream > os = new_atffile();
+    std::auto_ptr< std::ofstream > os = new_atffile();
     (*os) << "tp: foo\n";
     (*os) << "tp: bar\n";
     (*os) << "tp: baz\n";

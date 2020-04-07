@@ -41,7 +41,6 @@ int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
 int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bags,
                          const char *pass, int passlen,
                          int options, char *pempass, const EVP_CIPHER *enc);
-void print_attribute(BIO *out, const ASN1_TYPE *av);
 int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
                   const char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
@@ -879,38 +878,6 @@ int cert_load(BIO *in, STACK_OF(X509) *sk)
     return ret;
 }
 
-/* Generalised x509 attribute value print */
-
-void print_attribute(BIO *out, const ASN1_TYPE *av)
-{
-    char *value;
-
-    switch (av->type) {
-    case V_ASN1_BMPSTRING:
-        value = OPENSSL_uni2asc(av->value.bmpstring->data,
-                                av->value.bmpstring->length);
-        BIO_printf(out, "%s\n", value);
-        OPENSSL_free(value);
-        break;
-
-    case V_ASN1_OCTET_STRING:
-        hex_prin(out, av->value.octet_string->data,
-                 av->value.octet_string->length);
-        BIO_printf(out, "\n");
-        break;
-
-    case V_ASN1_BIT_STRING:
-        hex_prin(out, av->value.bit_string->data,
-                 av->value.bit_string->length);
-        BIO_printf(out, "\n");
-        break;
-
-    default:
-        BIO_printf(out, "<Unsupported tag %d>\n", av->type);
-        break;
-    }
-}
-
 /* Generalised attribute print: handle PKCS#8 and bag attributes */
 
 int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
@@ -918,7 +885,8 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
 {
     X509_ATTRIBUTE *attr;
     ASN1_TYPE *av;
-    int i, j, attr_nid;
+    char *value;
+    int i, attr_nid;
     if (!attrlst) {
         BIO_printf(out, "%s: <No Attributes>\n", name);
         return 1;
@@ -942,10 +910,30 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
         }
 
         if (X509_ATTRIBUTE_count(attr)) {
-            for (j = 0; j < X509_ATTRIBUTE_count(attr); j++)
-            {
-                av = X509_ATTRIBUTE_get0_type(attr, j);
-                print_attribute(out, av);
+            av = X509_ATTRIBUTE_get0_type(attr, 0);
+            switch (av->type) {
+            case V_ASN1_BMPSTRING:
+                value = OPENSSL_uni2asc(av->value.bmpstring->data,
+                                        av->value.bmpstring->length);
+                BIO_printf(out, "%s\n", value);
+                OPENSSL_free(value);
+                break;
+
+            case V_ASN1_OCTET_STRING:
+                hex_prin(out, av->value.octet_string->data,
+                         av->value.octet_string->length);
+                BIO_printf(out, "\n");
+                break;
+
+            case V_ASN1_BIT_STRING:
+                hex_prin(out, av->value.bit_string->data,
+                         av->value.bit_string->length);
+                BIO_printf(out, "\n");
+                break;
+
+            default:
+                BIO_printf(out, "<Unsupported tag %d>\n", av->type);
+                break;
             }
         } else {
             BIO_printf(out, "<No Values>\n");

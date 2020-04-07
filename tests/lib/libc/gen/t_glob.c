@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob.c,v 1.10 2020/03/13 23:27:54 rillig Exp $	*/
+/*	$NetBSD: t_glob.c,v 1.6 2017/04/26 14:52:57 christos Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob.c,v 1.10 2020/03/13 23:27:54 rillig Exp $");
+__RCSID("$NetBSD: t_glob.c,v 1.6 2017/04/26 14:52:57 christos Exp $");
 
 #include <atf-c.h>
 
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: t_glob.c,v 1.10 2020/03/13 23:27:54 rillig Exp $");
 
 #include <dirent.h>
 #include <glob.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,50 +55,50 @@ __RCSID("$NetBSD: t_glob.c,v 1.10 2020/03/13 23:27:54 rillig Exp $");
 #define DPRINTF(a)
 #endif
 
-struct vfs_file {
-	char type;		/* 'd' or '-', like in ls(1) */
+struct gl_file {
 	const char *name;
+	int dir;
 };
 
-static struct vfs_file a[] = {
-	{ '-', "1" },
-	{ 'd', "b" },
-	{ '-', "3" },
-	{ '-', "4" },
+static struct gl_file a[] = {
+	{ "1", 0 },
+	{ "b", 1 },
+	{ "3", 0 },
+	{ "4", 0 },
 };
 
-static struct vfs_file b[] = {
-	{ '-', "x" },
-	{ '-', "y" },
-	{ '-', "z" },
-	{ '-', "w" },
+static struct gl_file b[] = {
+	{ "x", 0 },
+	{ "y", 0 },
+	{ "z", 0 },
+	{ "w", 0 },
 };
 
-static struct vfs_file hidden_dir[] = {
-	{ '-', "visible-file" },
-	{ '-', ".hidden-file" },
+struct gl_dir {
+	const char *name;	/* directory name */
+	const struct gl_file *dir;
+	size_t len, pos;
 };
 
-static struct vfs_file dot[] = {
-	{ 'd', "a" },
-	{ 'd', ".hidden-dir" },
+static struct gl_dir d[] = {
+	{ "a", a, __arraycount(a), 0 },
+	{ "a/b", b, __arraycount(b), 0 },
 };
 
-struct vfs_dir {
-	const char *name;	/* full directory name */
-	const struct vfs_file *entries;
-	size_t entries_len;
-	size_t pos;		/* only between opendir/closedir */
+static const char *glob_range[] = {
+	"a/b/x", "a/b/y", "a/b/z",
 };
 
-#define VFS_DIR_INIT(name, entries) \
-    { name, entries, __arraycount(entries), 0 }
+static const char *glob_range_not[] = {
+	"a/b/w",
+};
 
-static struct vfs_dir d[] = {
-	VFS_DIR_INIT("a", a),
-	VFS_DIR_INIT("a/b", b),
-	VFS_DIR_INIT(".", dot),
-	VFS_DIR_INIT(".hidden-dir", hidden_dir),
+static const char *glob_star[] = {
+	"a/1", "a/3", "a/4", "a/b", "a/b/w", "a/b/x", "a/b/y", "a/b/z",
+};
+
+static const char *glob_star_not[] = {
+	"a/1", "a/3", "a/4", "a/b",
 };
 
 static void
@@ -114,7 +113,7 @@ trim(char *buf, size_t len, const char *name)
 }
 
 static void *
-vfs_opendir(const char *dir)
+gl_opendir(const char *dir)
 {
 	size_t i;
 	char buf[MAXPATHLEN];
@@ -122,25 +121,24 @@ vfs_opendir(const char *dir)
 
 	for (i = 0; i < __arraycount(d); i++)
 		if (strcmp(buf, d[i].name) == 0) {
-			DPRINTF(("opendir %s %p\n", buf, &d[i]));
+			DPRINTF(("opendir %s %zu\n", buf, i));
 			return &d[i];
 		}
-	DPRINTF(("opendir %s ENOENT\n", buf));
 	errno = ENOENT;
 	return NULL;
 }
 
 static struct dirent *
-vfs_readdir(void *v)
+gl_readdir(void *v)
 {
 	static struct dirent dir;
-	struct vfs_dir *dd = v;
-	if (dd->pos < dd->entries_len) {
-		const struct vfs_file *f = &dd->entries[dd->pos++];
+	struct gl_dir *dd = v;
+	if (dd->pos < dd->len) {
+		const struct gl_file *f = &dd->dir[dd->pos++];
 		strcpy(dir.d_name, f->name);
 		dir.d_namlen = strlen(f->name);
 		dir.d_ino = dd->pos;
-		dir.d_type = f->type == 'd' ? DT_DIR : DT_REG;
+		dir.d_type = f->dir ? DT_DIR : DT_REG;
 		DPRINTF(("readdir %s %d\n", dir.d_name, dir.d_type));
 		dir.d_reclen = _DIRENT_RECLEN(&dir, dir.d_namlen);
 		return &dir;
@@ -149,59 +147,56 @@ vfs_readdir(void *v)
 }
 
 static int
-vfs_stat(const char *name , __gl_stat_t *st)
+gl_stat(const char *name , __gl_stat_t *st)
 {
 	char buf[MAXPATHLEN];
 	trim(buf, sizeof(buf), name);
 	memset(st, 0, sizeof(*st));
 
-	for (size_t i = 0; i < __arraycount(d); i++)
-		if (strcmp(buf, d[i].name) == 0) {
-			st->st_mode = S_IFDIR | 0755;
-			goto out;
-		}
-
-	for (size_t i = 0; i < __arraycount(d); i++) {
-		size_t dir_len = strlen(d[i].name);
-		if (strncmp(buf, d[i].name, dir_len) != 0)
-			continue;
-		if (buf[dir_len] != '/')
-			continue;
-		const char *base = buf + dir_len + 1;
-
-		for (size_t j = 0; j < d[i].entries_len; j++) {
-			const struct vfs_file *f = &d[i].entries[j];
-			if (strcmp(f->name, base) != 0)
-				continue;
-			ATF_CHECK(f->type != 'd'); // handled above
-			st->st_mode = S_IFREG | 0644;
-			goto out;
-		}
+	if (strcmp(buf, "a") == 0 || strcmp(buf, "a/b") == 0) {
+		st->st_mode |= S_IFDIR;
+		return 0;
 	}
-	DPRINTF(("stat %s ENOENT\n", buf));
+
+	if (buf[0] == 'a' && buf[1] == '/') {
+		struct gl_file *f;
+		size_t offs, count;
+
+		if (buf[2] == 'b' && buf[3] == '/') {
+			offs = 4;
+			count = __arraycount(b);
+			f = b;
+		} else {
+			offs = 2;
+			count = __arraycount(a);
+			f = a;
+		}
+		
+		for (size_t i = 0; i < count; i++)
+			if (strcmp(f[i].name, buf + offs) == 0)
+				return 0;
+	}
+	DPRINTF(("stat %s %d\n", buf, st->st_mode));
 	errno = ENOENT;
 	return -1;
-out:
-	DPRINTF(("stat %s %06o\n", buf, st->st_mode));
-	return 0;
 }
 
 static int
-vfs_lstat(const char *name , __gl_stat_t *st)
+gl_lstat(const char *name , __gl_stat_t *st)
 {
-	return vfs_stat(name, st);
+	return gl_stat(name, st);
 }
 
 static void
-vfs_closedir(void *v)
+gl_closedir(void *v)
 {
-	struct vfs_dir *dd = v;
+	struct gl_dir *dd = v;
 	dd->pos = 0;
 	DPRINTF(("closedir %p\n", dd));
 }
 
 static void
-run(const char *p, int flags, /* const char *res */ ...)
+run(const char *p, int flags, const char **res, size_t len)
 {
 	glob_t gl;
 	size_t i;
@@ -209,11 +204,11 @@ run(const char *p, int flags, /* const char *res */ ...)
 
 	DPRINTF(("pattern %s\n", p));
 	memset(&gl, 0, sizeof(gl));
-	gl.gl_opendir = vfs_opendir;
-	gl.gl_readdir = vfs_readdir;
-	gl.gl_closedir = vfs_closedir;
-	gl.gl_stat = vfs_stat;
-	gl.gl_lstat = vfs_lstat;
+	gl.gl_opendir = gl_opendir;
+	gl.gl_readdir = gl_readdir;
+	gl.gl_closedir = gl_closedir;
+	gl.gl_stat = gl_stat;
+	gl.gl_lstat = gl_lstat;
 
 	switch ((e = glob(p, GLOB_ALTDIRFUNC | flags, NULL, &gl))) {
 	case 0:
@@ -236,21 +231,11 @@ run(const char *p, int flags, /* const char *res */ ...)
 	}
 
 	for (i = 0; i < gl.gl_pathc; i++)
-		DPRINTF(("glob result %zu: %s\n", i, gl.gl_pathv[i]));
+		DPRINTF(("%s\n", gl.gl_pathv[i]));
 
-	va_list res;
-	va_start(res, flags);
-	i = 0;
-	const char *name;
-	while ((name = va_arg(res, const char *)) != NULL && i < gl.gl_pathc) {
-		ATF_CHECK_STREQ(gl.gl_pathv[i], name);
-		i++;
-	}
-	va_end(res);
-	ATF_CHECK_EQ_MSG(i, gl.gl_pathc,
-	    "expected %zu results, got %zu", i, gl.gl_pathc);
-	ATF_CHECK_EQ_MSG(name, NULL,
-	    "\"%s\" should have been found, but wasn't", name);
+	ATF_CHECK(len == gl.gl_pathc);
+	for (i = 0; i < gl.gl_pathc && i < len; i++)
+		ATF_CHECK_STREQ(gl.gl_pathv[i], res[i]);
 
 	globfree(&gl);
 	return;
@@ -258,7 +243,6 @@ bad:
 	ATF_REQUIRE_MSG(e == 0, "No match for `%s'", p);
 }
 
-#define run(p, flags, ...) (run)(p, flags, __VA_ARGS__, (const char *) 0)
 
 ATF_TC(glob_range);
 ATF_TC_HEAD(glob_range, tc)
@@ -269,8 +253,7 @@ ATF_TC_HEAD(glob_range, tc)
 
 ATF_TC_BODY(glob_range, tc)
 {
-	run("a/b/[x-z]", 0,
-	    "a/b/x", "a/b/y", "a/b/z");
+	run("a/b/[x-z]", 0, glob_range, __arraycount(glob_range));
 }
 
 ATF_TC(glob_range_not);
@@ -282,8 +265,7 @@ ATF_TC_HEAD(glob_range_not, tc)
 
 ATF_TC_BODY(glob_range_not, tc)
 {
-	run("a/b/[!x-z]", 0,
-	    "a/b/w");
+	run("a/b/[!x-z]", 0, glob_range_not, __arraycount(glob_range_not));
 }
 
 ATF_TC(glob_star);
@@ -295,8 +277,7 @@ ATF_TC_HEAD(glob_star, tc)
 
 ATF_TC_BODY(glob_star, tc)
 {
-	run("a/**", GLOB_STAR,
-	    "a/1", "a/3", "a/4", "a/b", "a/b/w", "a/b/x", "a/b/y", "a/b/z");
+	run("a/**", GLOB_STAR, glob_star, __arraycount(glob_star));
 }
 
 ATF_TC(glob_star_not);
@@ -306,39 +287,10 @@ ATF_TC_HEAD(glob_star_not, tc)
 	    "Test glob(3) ** without GLOB_STAR");
 }
 
+
 ATF_TC_BODY(glob_star_not, tc)
 {
-	run("a/**", 0,
-	    "a/1", "a/3", "a/4", "a/b");
-}
-
-ATF_TC(glob_star_star);
-ATF_TC_HEAD(glob_star_star, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Test glob(3) with star-star");
-}
-
-ATF_TC_BODY(glob_star_star, tc)
-{
-	run("**", GLOB_STAR,
-	    "a",
-	    "a/1", "a/3", "a/4", "a/b",
-	    "a/b/w", "a/b/x", "a/b/y", "a/b/z");
-}
-
-ATF_TC(glob_hidden);
-ATF_TC_HEAD(glob_hidden, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Test glob(3) with hidden directory");
-}
-
-ATF_TC_BODY(glob_hidden, tc)
-{
-	run(".**", GLOB_STAR,
-	    ".hidden-dir",
-	    ".hidden-dir/visible-file");
+	run("a/**", 0, glob_star_not, __arraycount(glob_star_not));
 }
 
 #if 0
@@ -367,8 +319,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, glob_star_not);
 	ATF_TP_ADD_TC(tp, glob_range);
 	ATF_TP_ADD_TC(tp, glob_range_not);
-	ATF_TP_ADD_TC(tp, glob_star_star);
-	ATF_TP_ADD_TC(tp, glob_hidden);
 /*
  * Remove this test for now - the GLOB_NOCHECK return value has been
  * re-defined to return a modified pattern in revision 1.33 of glob.c

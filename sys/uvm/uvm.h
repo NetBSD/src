@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.76 2020/03/14 20:23:51 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.75 2020/02/23 15:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -171,6 +171,13 @@ extern struct evcnt uvm_ra_miss;
 #define	UVM_UNLOCK_AND_WAIT(event, slock, intr, msg, timo)		\
 do {									\
 	(void) mtsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
+	    msg, timo, slock);						\
+} while (/*CONSTCOND*/ 0)
+
+/* XXX temporary */
+#define	UVM_UNLOCK_AND_WAIT_RW(event, slock, intr, msg, timo)		\
+do {									\
+	(void) rwtsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
 	    msg, timo, slock);						\
 } while (/*CONSTCOND*/ 0)
 

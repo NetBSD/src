@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reply_footer.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: smtp_reply_footer.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -259,7 +259,7 @@ static const char *lookup(const char *name, int unused_mode, void *context)
 
 int     main(int argc, char **argv)
 {
-    const struct test_case *tp;
+    struct test_case *tp;
     int     status;
     VSTRING *buf = vstring_alloc(10);
     void   *context = 0;

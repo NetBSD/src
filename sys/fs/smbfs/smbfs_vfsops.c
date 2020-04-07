@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.109 2020/03/16 21:20:10 pgoyette Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.108 2020/02/27 22:12:54 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.109 2020/03/16 21:20:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.108 2020/02/27 22:12:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.109 2020/03/16 21:20:10 pgoyette 
 MODULE(MODULE_CLASS_VFS, smbfs, "nsmb");
 
 VFS_PROTOS(smbfs);
+
+static struct sysctllog *smbfs_sysctl_log;
 
 static int smbfs_setroot(struct mount *);
 
@@ -102,30 +104,10 @@ struct vfsops smbfs_vfsops = {
 	.vfs_opv_descs = smbfs_vnodeopv_descs
 };
 
-SYSCTL_SETUP(smbfs_sysctl_setpu, "smbfs sysctl")
-{
-	const struct sysctlnode *smb = NULL;
-
-	sysctl_createv(clog, 0, NULL, &smb,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "samba",
-		       SYSCTL_DESCR("SMB/CIFS remote file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_CREATE, CTL_EOL);
-
-	if (smb != NULL) {
-		sysctl_createv(clog, 0, &smb, NULL,
-			       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-			       CTLTYPE_INT, "version",
-			       SYSCTL_DESCR("smbfs version"),
-			       NULL, SMBFS_VERSION, NULL, 0,
-			       CTL_CREATE, CTL_EOL);
-	}
-}
-
 static int
 smbfs_modcmd(modcmd_t cmd, void *arg)
 {
+	const struct sysctlnode *smb = NULL;
 	int error;
 
 	switch (cmd) {
@@ -133,11 +115,27 @@ smbfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&smbfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_createv(&smbfs_sysctl_log, 0, NULL, &smb,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "samba",
+			       SYSCTL_DESCR("SMB/CIFS remote file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_CREATE, CTL_EOL);
+
+		if (smb != NULL) {
+			sysctl_createv(&smbfs_sysctl_log, 0, &smb, NULL,
+				       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+				       CTLTYPE_INT, "version",
+				       SYSCTL_DESCR("smbfs version"),
+				       NULL, SMBFS_VERSION, NULL, 0,
+				       CTL_CREATE, CTL_EOL);
+		}
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&smbfs_vfsops);
 		if (error != 0)
 			break;
+		sysctl_teardown(&smbfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

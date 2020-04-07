@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.5 2020/03/29 13:20:04 jmcneill Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.5 2020/03/29 13:20:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -626,17 +626,7 @@ genet_rxintr(struct genet_softc *sc, int qid)
 		status = RD4(sc, GENET_RX_DESC_STATUS(index));
 		len = __SHIFTOUT(status, GENET_RX_DESC_STATUS_BUFLEN);
 
-		m = sc->sc_rx.buf_map[index].mbuf;
-
-		if ((m0 = genet_alloc_mbufcl(sc)) == NULL) {
-			if_statinc(ifp, if_ierrors);
-			goto next;
-		}
-		error = genet_setup_rxbuf(sc, index, m0);
-		if (error != 0) {
-			if_statinc(ifp, if_ierrors);
-			goto next;
-		}
+		/* XXX check for errors */
 
 		bus_dmamap_sync(sc->sc_rx.buf_tag, sc->sc_rx.buf_map[index].map,
 		    0, sc->sc_rx.buf_map[index].map->dm_mapsize,
@@ -647,6 +637,8 @@ genet_rxintr(struct genet_softc *sc, int qid)
 		    n, index, status, len, len - ETHER_ALIGN);
 
 		if (len > ETHER_ALIGN) {
+			m = sc->sc_rx.buf_map[index].mbuf;
+
 			m_adj(m, ETHER_ALIGN);
 
 			m_set_rcvif(m, ifp);
@@ -656,7 +648,15 @@ genet_rxintr(struct genet_softc *sc, int qid)
 			if_percpuq_enqueue(ifp->if_percpuq, m);
 		}
 
-next:
+		if ((m0 = genet_alloc_mbufcl(sc)) != NULL) {
+			error = genet_setup_rxbuf(sc, index, m0);
+			if (error != 0) {
+				/* XXX hole in RX ring */
+			}
+		} else {
+			if_statinc(ifp, if_ierrors);
+		}
+
 		index = RX_NEXT(index);
 
 		sc->sc_rx.cidx = (sc->sc_rx.cidx + 1) & 0xffff;
@@ -823,38 +823,28 @@ static void
 genet_get_eaddr(struct genet_softc *sc, uint8_t *eaddr)
 {
 	prop_dictionary_t prop = device_properties(sc->sc_dev);
-	uint32_t maclo, machi, val;
+	uint32_t maclo, machi;
 	prop_data_t eaprop;
 
 	eaprop = prop_dictionary_get(prop, "mac-address");
-	if (eaprop != NULL) {
+	if (eaprop == NULL) {
+		/* Create one */
+		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
+		machi = cprng_strong32() & 0xffff;
+
+		eaddr[0] = maclo & 0xff;
+		eaddr[1] = (maclo >> 8) & 0xff;
+		eaddr[2] = (maclo >> 16) & 0xff;
+		eaddr[3] = (maclo >> 24) & 0xff;
+		eaddr[4] = machi & 0xff;
+		eaddr[5] = (machi >> 8) & 0xff;
+	} else {
 		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
 		memcpy(eaddr, prop_data_data_nocopy(eaprop),
 		    ETHER_ADDR_LEN);
-		return;
 	}
 
-	maclo = machi = 0;
-
-	val = RD4(sc, GENET_SYS_RBUF_FLUSH_CTRL);
-	if ((val & GENET_SYS_RBUF_FLUSH_RESET) == 0) {
-		maclo = htobe32(RD4(sc, GENET_UMAC_MAC0));
-		machi = htobe16(RD4(sc, GENET_UMAC_MAC1) & 0xffff);
-	}
-
-	if (maclo == 0 && machi == 0) {
-		/* Create one */
-		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
-		machi = cprng_strong32() & 0xffff;
-	}
-
-	eaddr[0] = maclo & 0xff;
-	eaddr[1] = (maclo >> 8) & 0xff;
-	eaddr[2] = (maclo >> 16) & 0xff;
-	eaddr[3] = (maclo >> 24) & 0xff;
-	eaddr[4] = machi & 0xff;
-	eaddr[5] = (machi >> 8) & 0xff;
 }
 
 static int

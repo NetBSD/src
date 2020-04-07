@@ -282,8 +282,7 @@ int ts_main(int argc, char **argv)
         goto end;
     }
 
-    if ((conf = load_config_file(configfile)) == NULL)
-        goto end;
+    conf = load_config_file(configfile);
     if (configfile != default_config_file && !app_load_modules(conf))
         goto end;
 

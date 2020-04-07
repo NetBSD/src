@@ -264,18 +264,17 @@ clients that send mail from outside an authorized network block.
 This is explained in the <a href="SASL_README.html">SASL_README</a> and <a href="TLS_README.html">TLS_README</a> documents. </p>
 
 <p> IMPORTANT: If your machine is connected to a wide area network
-then the "<a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = host" setting may be too friendly. </p>
+then your default <a href="postconf.5.html#mynetworks">mynetworks</a> setting may be too friendly. </p>
 
 <p> Examples (specify only one of the following): </p>
 
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = subnet  (not safe on a wide area network)
-    <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = host    (authorize local machine only)
-    <a href="postconf.5.html#mynetworks">mynetworks</a> = 127.0.0.0/8   (authorize local machine only)
+    <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = subnet  (default: authorize subnetworks)
+    <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = host    (safe: authorize local machine only)
+    <a href="postconf.5.html#mynetworks">mynetworks</a> = 127.0.0.0/8   (safe: authorize local machine only)
     <a href="postconf.5.html#mynetworks">mynetworks</a> = 127.0.0.0/8 168.100.189.2/32 (authorize local machine) 
-    <a href="postconf.5.html#mynetworks">mynetworks</a> = 127.0.0.0/8 168.100.189.2/28 (authorize local networks) 
 </pre>
 </blockquote>
 

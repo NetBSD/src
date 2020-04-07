@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.28 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.27 2020/01/07 06:42:26 maxv Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.28 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.27 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -139,7 +139,7 @@ uipaq_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	DPRINTFN(20,("uipaq: vendor=%#x, product=%#x\n",
+	DPRINTFN(20,("uipaq: vendor=0x%x, product=0x%x\n",
 	    uaa->uaa_vendor, uaa->uaa_product));
 
 	return uipaq_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?

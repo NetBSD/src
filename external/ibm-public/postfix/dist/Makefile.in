@@ -1,5 +1,3 @@
-# To test with valgrind:
-# make -i tests VALGRIND="valgrind --tool=memcheck --log-file=/some/where.%p" 
 SHELL	= /bin/sh
 WARN    = -Wmissing-prototypes -Wformat -Wno-comment
 OPTS	= 'WARN=$(WARN)'
@@ -12,7 +10,7 @@ DIRS	= src/util src/global src/dns src/tls src/xsasl src/master src/milter \
 	src/postsuper src/qmqpd src/spawn src/flush src/verify \
 	src/virtual src/proxymap src/anvil src/scache src/discard src/tlsmgr \
 	src/postmulti src/postscreen src/dnsblog src/tlsproxy \
-	src/posttls-finger src/postlogd
+	src/posttls-finger
 MANDIRS	= proto man html
 LIBEXEC	= libexec/post-install libexec/postfix-script libexec/postfix-wrapper \
 	libexec/postmulti-script libexec/postfix-tls-script
@@ -124,23 +122,23 @@ printfck: update
 install: update
 	SHLIB_ENV_VAR= SHLIB_ENV_VAL= \
 	$(SHLIB_ENV) shlib_directory=$(SHLIB_DIR_OVERRIDE) $(SHELL) \
-		postfix-install $(POSTFIX_INSTALL_OPTS)
+		postfix-install
 
 package: update
 	SHLIB_ENV_VAR= SHLIB_ENV_VAL= \
 	$(SHLIB_ENV) shlib_directory=$(SHLIB_DIR_OVERRIDE) $(SHELL) \
-		postfix-install -package $(POSTFIX_INSTALL_OPTS)
+		postfix-install -package
 
 upgrade: update
 	SHLIB_ENV_VAR= SHLIB_ENV_VAL= \
 	$(SHLIB_ENV) shlib_directory=$(SHLIB_DIR_OVERRIDE) $(SHELL) \
-		postfix-install -non-interactive $(POSTFIX_INSTALL_OPTS)
+		postfix-install -non-interactive
 	
 
 non-interactive-package: update
 	SHLIB_ENV_VAR= SHLIB_ENV_VAL= \
 	$(SHLIB_ENV) shlib_directory=$(SHLIB_DIR_OVERRIDE) $(SHELL) \
-		postfix-install -non-interactive -package $(POSTFIX_INSTALL_OPTS)
+		postfix-install -non-interactive -package
 
 depend clean:
 	set -e; for i in $(DIRS); do \
@@ -155,7 +153,7 @@ depend_update:
 
 tidy:	clean
 	rm -f Makefile */Makefile src/*/Makefile
-	cp -p Makefile.init Makefile
+	cp Makefile.init Makefile
 	rm -f README_FILES/RELEASE_NOTES
 	ln -s ../RELEASE_NOTES README_FILES
 	rm -f bin/[!CRS]* lib/[!CRS]* include/[!CRS]* libexec/[!CRS]* \

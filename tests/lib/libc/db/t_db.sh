@@ -1,4 +1,4 @@
-# $NetBSD: t_db.sh,v 1.9 2020/03/12 14:10:59 martin Exp $
+# $NetBSD: t_db.sh,v 1.7 2016/09/24 20:12:33 christos Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -919,15 +919,7 @@ bsize_torture_body()
 {
 	TMPDIR="$(pwd)/db_dir"; export TMPDIR
 	mkdir ${TMPDIR}
-	AVAIL=$( df -m ${TMPDIR} | awk '{if (int($4) > 0) print $4}' )
-	LIST="2048 4096 8192 16384"
-	if [ $AVAIL -gt 30 ]; then
-		LIST="$LIST 32768"
-	fi
-	if [ $AVAIL -gt 60 ]; then
-		LIST="$LIST 65536"
-	fi
-	for i in $LIST
+	for i in 2048 4096 8192 16384 32768 65536
 	do
 		atf_check "$(prog_lfsr)" $i
 	done
@@ -942,7 +934,6 @@ btree_weird_page_split_head()
 	    "be the only item on the left page results in index 0 of " \
 	    "the right page being erroneously skipped; this only " \
 	    "happens with one particular key+data length for each page size."
-	atf_set "timeout" "900"
 }
 btree_weird_page_split_body()
 {

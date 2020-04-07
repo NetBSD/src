@@ -2875,13 +2875,9 @@ const struct gcc_debug_hooks dwarf2_lineno_debug_hooks =
    separate comdat sections since the linker will then be able to
    remove duplicates.  But not all tools support .debug_types sections
    yet.  For Dwarf V5 or higher .debug_types doesn't exist any more,
-   it is DW_UT_type unit type in .debug_info section.  For late LTO
-   debug there should be almost no types emitted so avoid enabling
-   -fdebug-types-section there.  */
+   it is DW_UT_type unit type in .debug_info section.  */
 
-#define use_debug_types (dwarf_version >= 4 \
-			 && flag_debug_types_section \
-			 && !in_lto_p)
+#define use_debug_types (dwarf_version >= 4 && flag_debug_types_section)
 
 /* Various DIE's use offsets relative to the beginning of the
    .debug_info section to refer to each other.  */
@@ -3717,7 +3713,7 @@ static void output_die_abbrevs (unsigned long, dw_die_ref);
 static void output_die (dw_die_ref);
 static void output_compilation_unit_header (enum dwarf_unit_type);
 static void output_comp_unit (dw_die_ref, int, const unsigned char *);
-static void output_comdat_type_unit (comdat_type_node *, bool);
+static void output_comdat_type_unit (comdat_type_node *);
 static const char *dwarf2_name (tree, int);
 static void add_pubname (tree, dw_die_ref);
 static void add_enumerator_pubname (const char *, dw_die_ref);
@@ -9343,6 +9339,7 @@ size_of_die (dw_die_ref die)
 	  }
 	  break;
 	case dw_val_class_loc_list:
+	case dw_val_class_view_list:
 	  if (dwarf_split_debug_info && dwarf_version >= 5)
 	    {
 	      gcc_assert (AT_loc_list (a)->num_assigned);
@@ -9350,9 +9347,6 @@ size_of_die (dw_die_ref die)
 	    }
           else
             size += DWARF_OFFSET_SIZE;
-	  break;
-	case dw_val_class_view_list:
-	  size += DWARF_OFFSET_SIZE;
 	  break;
 	case dw_val_class_range_list:
 	  if (value_format (a) == DW_FORM_rnglistx)
@@ -9431,7 +9425,7 @@ size_of_die (dw_die_ref die)
 		 we use DW_FORM_ref_addr.  In DWARF2, DW_FORM_ref_addr
 		 is sized by target address length, whereas in DWARF3
 		 it's always sized as an offset.  */
-	      if (AT_ref (a)->comdat_type_p)
+	      if (use_debug_types)
 		size += DWARF_TYPE_SIGNATURE_SIZE;
 	      else if (dwarf_version == 2)
 		size += DWARF2_ADDR_SIZE;
@@ -9727,12 +9721,12 @@ value_format (dw_attr_node *a)
 	  gcc_unreachable ();
 	}
     case dw_val_class_loc_list:
+    case dw_val_class_view_list:
       if (dwarf_split_debug_info
 	  && dwarf_version >= 5
 	  && AT_loc_list (a)->num_assigned)
 	return DW_FORM_loclistx;
       /* FALLTHRU */
-    case dw_val_class_view_list:
     case dw_val_class_range_list:
       /* For range lists in DWARF 5, use DW_FORM_rnglistx from .debug_info.dwo
 	 but in .debug_info use DW_FORM_sec_offset, which is shorter if we
@@ -9875,12 +9869,7 @@ value_format (dw_attr_node *a)
       return DW_FORM_flag;
     case dw_val_class_die_ref:
       if (AT_ref_external (a))
-	{
-	  if (AT_ref (a)->comdat_type_p)
-	    return DW_FORM_ref_sig8;
-	  else
-	    return DW_FORM_ref_addr;
-	}
+	return use_debug_types ? DW_FORM_ref_sig8 : DW_FORM_ref_addr;
       else
 	return DW_FORM_ref;
     case dw_val_class_fde_ref:
@@ -11228,8 +11217,7 @@ output_skeleton_debug_sections (dw_die_ref comp_unit,
 /* Output a comdat type unit DIE and its children.  */
 
 static void
-output_comdat_type_unit (comdat_type_node *node,
-			 bool early_lto_debug ATTRIBUTE_UNUSED)
+output_comdat_type_unit (comdat_type_node *node)
 {
   const char *secname;
   char *tmp;
@@ -11256,16 +11244,14 @@ output_comdat_type_unit (comdat_type_node *node,
   if (dwarf_version >= 5)
     {
       if (!dwarf_split_debug_info)
-	secname = early_lto_debug ? DEBUG_LTO_INFO_SECTION : DEBUG_INFO_SECTION;
+	secname = ".debug_info";
       else
-	secname = (early_lto_debug
-		   ? DEBUG_LTO_DWO_INFO_SECTION : DEBUG_DWO_INFO_SECTION);
+	secname = ".debug_info.dwo";
     }
   else if (!dwarf_split_debug_info)
-    secname = early_lto_debug ? ".gnu.debuglto_.debug_types" : ".debug_types";
+    secname = ".debug_types";
   else
-    secname = (early_lto_debug
-	       ? ".gnu.debuglto_.debug_types.dwo" : ".debug_types.dwo");
+    secname = ".debug_types.dwo";
 
   tmp = XALLOCAVEC (char, 4 + DWARF_TYPE_SIGNATURE_SIZE * 2);
   sprintf (tmp, dwarf_version >= 5 ? "wi." : "wt.");
@@ -17893,8 +17879,6 @@ resolve_args_picking_1 (dw_loc_descr_ref loc, unsigned initial_frame_offset,
 	case DW_OP_push_object_address:
 	case DW_OP_call_frame_cfa:
 	case DW_OP_GNU_variable_value:
-	case DW_OP_GNU_addr_index:
-	case DW_OP_GNU_const_index:
 	  ++frame_offset_;
 	  break;
 
@@ -19677,9 +19661,6 @@ add_const_value_attribute (dw_die_ref die, rtx rtl)
 
     case HIGH:
     case CONST_FIXED:
-    case MINUS:
-    case SIGN_EXTEND:
-    case ZERO_EXTEND:
       return false;
 
     case MEM:
@@ -22221,18 +22202,19 @@ gen_formal_parameter_die (tree node, tree origin, bool emit_name_p,
       /* If the contexts differ, we may not be talking about the same
 	 thing.
 	 ???  When in LTO the DIE parent is the "abstract" copy and the
-	 context_die is the specification "copy".  */
-      if (parm_die
-	  && parm_die->die_parent != context_die
-	  && (parm_die->die_parent->die_tag != DW_TAG_GNU_formal_parameter_pack
-	      || parm_die->die_parent->die_parent != context_die)
-	  && !in_lto_p)
+	 context_die is the specification "copy".  But this whole block
+	 should eventually be no longer needed.  */
+      if (parm_die && parm_die->die_parent != context_die && !in_lto_p)
 	{
-	  gcc_assert (!DECL_ABSTRACT_P (node));
-	  /* This can happen when creating a concrete instance, in
-	     which case we need to create a new DIE that will get
-	     annotated with DW_AT_abstract_origin.  */
-	  parm_die = NULL;
+	  if (!DECL_ABSTRACT_P (node))
+	    {
+	      /* This can happen when creating an inlined instance, in
+		 which case we need to create a new DIE that will get
+		 annotated with DW_AT_abstract_origin.  */
+	      parm_die = NULL;
+	    }
+	  else
+	    gcc_unreachable ();
 	}
 
       if (parm_die && parm_die->die_parent == NULL)
@@ -26591,12 +26573,16 @@ dwarf2out_late_global_decl (tree decl)
     {
       dw_die_ref die = lookup_decl_die (decl);
 
-      /* We may have to generate full debug late for LTO in case debug
+      /* We may have to generate early debug late for LTO in case debug
          was not enabled at compile-time or the target doesn't support
 	 the LTO early debug scheme.  */
       if (! die && in_lto_p)
-	dwarf2out_decl (decl);
-      else if (die)
+	{
+	  dwarf2out_decl (decl);
+	  die = lookup_decl_die (decl);
+	}
+
+      if (die)
 	{
 	  /* We get called via the symtab code invoking late_global_decl
 	     for symbols that are optimized out.
@@ -26998,9 +26984,6 @@ lookup_filename (const char *file_name)
 
   if (!file_name)
     return NULL;
-
-  if (!file_name[0])
-    file_name = "<stdin>";
 
   dwarf_file_data **slot
     = file_table->find_slot_with_hash (file_name, htab_hash_string (file_name),
@@ -27627,7 +27610,6 @@ dwarf2out_inline_entry (tree block)
 static void
 dwarf2out_size_function (tree decl)
 {
-  set_early_dwarf s;
   function_to_dwarf_procedure (decl);
 }
 
@@ -29428,9 +29410,9 @@ prune_unused_types (void)
   for (i = 0; base_types.iterate (i, &base_type); i++)
     prune_unused_types_mark (base_type, 1);
 
-  /* Also set the mark on nodes that could be referenced by
-     DW_TAG_call_site DW_AT_call_origin (i.e. direct call callees) or
-     by DW_TAG_inlined_subroutine origins.  */
+  /* For -fvar-tracking-assignments, also set the mark on nodes that could be
+     referenced by DW_TAG_call_site DW_AT_call_origin (i.e. direct call
+     callees).  */
   cgraph_node *cnode;
   FOR_EACH_FUNCTION (cnode)
     if (cnode->referred_to_p (false))
@@ -29439,7 +29421,8 @@ prune_unused_types (void)
 	if (die == NULL || die->die_mark)
 	  continue;
 	for (cgraph_edge *e = cnode->callers; e; e = e->next_caller)
-	  if (e->caller != cnode)
+	  if (e->caller != cnode
+	      && opt_for_fn (e->caller->decl, flag_var_tracking_assignments))
 	    {
 	      prune_unused_types_mark (die, 1);
 	      break;
@@ -31415,7 +31398,7 @@ dwarf2out_finish (const char *)
                          ? dl_section_ref
                          : debug_skeleton_line_section_label));
 
-      output_comdat_type_unit (ctnode, false);
+      output_comdat_type_unit (ctnode);
       *slot = ctnode;
     }
 
@@ -32056,7 +32039,7 @@ dwarf2out_early_finish (const char *filename)
                          ? debug_line_section_label
                          : debug_skeleton_line_section_label));
 
-      output_comdat_type_unit (ctnode, true);
+      output_comdat_type_unit (ctnode);
       *slot = ctnode;
     }
 

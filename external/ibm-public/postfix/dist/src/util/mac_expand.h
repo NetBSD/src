@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_expand.h,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: mac_expand.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 #ifndef _MAC_EXPAND_H_INCLUDED_
 #define _MAC_EXPAND_H_INCLUDED_
@@ -47,11 +47,6 @@ extern int mac_expand(VSTRING *, const char *, int, const char *, MAC_EXP_LOOKUP
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 #endif

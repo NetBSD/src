@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.31 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.29 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.31 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.29 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"

@@ -556,6 +556,7 @@ Objective-C and Objective-C++ Dialects}.
 -fdisable-tree-@var{pass_name} @gol
 -fdisable-tree-@var{pass-name}=@var{range-list} @gol
 -fdump-noaddr  -fdump-unnumbered  -fdump-unnumbered-links @gol
+-fdump-class-hierarchy@r{[}-@var{n}@r{]} @gol
 -fdump-final-insns@r{[}=@var{file}@r{]} @gol
 -fdump-ipa-all  -fdump-ipa-cgraph  -fdump-ipa-inline @gol
 -fdump-lang-all @gol
@@ -678,7 +679,7 @@ Objective-C and Objective-C++ Dialects}.
 -mn_flash=@var{size}  -mno-interrupts @gol
 -mmain-is-OS_task -mrelax  -mrmw  -mstrict-X  -mtiny-stack @gol
 -mfract-convert-truncate @gol
--mshort-calls -nodevicelib  -nodevicespecs @gol
+-mshort-calls  -nodevicelib @gol
 -Waddr-space-convert  -Wmisspelled-isr}
 
 @emph{Blackfin Options}
@@ -7375,7 +7376,7 @@ consumers are not expected to support this extended format, and they
 would be rendered unable to decode location lists using it.
 
 @item -ginternal-reset-location-views
-@itemx -gno-internal-reset-location-views
+@itemx -gnointernal-reset-location-views
 @opindex ginternal-reset-location-views
 @opindex gno-internal-reset-location-views
 Attempt to determine location views that can be omitted from location
@@ -7682,7 +7683,8 @@ do not typically increase code size.
 
 @option{-Os} disables the following optimization flags:
 @gccoptlist{-falign-functions  -falign-jumps  -falign-loops @gol
--falign-labels  -fprefetch-loop-arrays}
+-falign-labels  -freorder-blocks  -freorder-blocks-algorithm=stc @gol
+-freorder-blocks-and-partition  -fprefetch-loop-arrays}
 
 It also enables @option{-finline-functions}, causes the compiler to tune for
 code size rather than execution speed, and performs further optimizations
@@ -14749,7 +14751,6 @@ Specify the name of the target processor for which GCC should tune the
 performance of the code.  Permissible values for this option are:
 @samp{generic}, @samp{cortex-a35}, @samp{cortex-a53}, @samp{cortex-a55},
 @samp{cortex-a57}, @samp{cortex-a72}, @samp{cortex-a73}, @samp{cortex-a75},
-@samp{cortex-a76}, @samp{ares}, @samp{neoverse-n1}
 @samp{exynos-m1}, @samp{falkor}, @samp{qdf24xx}, @samp{saphira},
 @samp{xgene1}, @samp{vulcan}, @samp{thunderx},
 @samp{thunderxt88}, @samp{thunderxt88p1}, @samp{thunderxt81},
@@ -16887,13 +16888,6 @@ Allow to use truncation instead of rounding towards zero for fractional fixed-po
 @item -nodevicelib
 @opindex nodevicelib
 Don't link against AVR-LibC's device specific library @code{lib<mcu>.a}.
-
-@item -nodevicespecs
-@opindex nodevicespecs
-Don't add @option{-specs=device-specs/specs-<mcu>} to the compiler driver's
-command line.  The user takes responsibility for supplying the sub-processes
-like compiler proper, assembler and linker with appropriate command line
-options.
 
 @item -Waddr-space-convert
 @opindex Waddr-space-convert

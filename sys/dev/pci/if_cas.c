@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.42 2020/03/08 03:16:20 thorpej Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.41 2020/03/01 05:39:05 thorpej Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.42 2020/03/08 03:16:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.41 2020/03/01 05:39:05 thorpej Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -1211,28 +1211,25 @@ cas_init(struct ifnet *ifp)
 	/* step 6 & 7. Program Descriptor Ring Base Addresses */
 	KASSERT((CAS_CDTXADDR(sc, 0) & 0x1fff) == 0);
 	bus_space_write_4(t, h, CAS_TX_RING_PTR_HI,
-	    BUS_ADDR_HI32(CAS_CDTXADDR(sc, 0)));
-	bus_space_write_4(t, h, CAS_TX_RING_PTR_LO,
-	    BUS_ADDR_LO32(CAS_CDTXADDR(sc, 0)));
+	    (((uint64_t)CAS_CDTXADDR(sc, 0)) >> 32));
+	bus_space_write_4(t, h, CAS_TX_RING_PTR_LO, CAS_CDTXADDR(sc, 0));
 
 	KASSERT((CAS_CDRXADDR(sc, 0) & 0x1fff) == 0);
 	bus_space_write_4(t, h, CAS_RX_DRING_PTR_HI,
-	    BUS_ADDR_HI32(CAS_CDRXADDR(sc, 0)));
-	bus_space_write_4(t, h, CAS_RX_DRING_PTR_LO,
-	    BUS_ADDR_LO32(CAS_CDRXADDR(sc, 0)));
+	    (((uint64_t)CAS_CDRXADDR(sc, 0)) >> 32));
+	bus_space_write_4(t, h, CAS_RX_DRING_PTR_LO, CAS_CDRXADDR(sc, 0));
 
 	KASSERT((CAS_CDRXCADDR(sc, 0) & 0x1fff) == 0);
 	bus_space_write_4(t, h, CAS_RX_CRING_PTR_HI,
-	    BUS_ADDR_HI32(CAS_CDRXCADDR(sc, 0)));
-	bus_space_write_4(t, h, CAS_RX_CRING_PTR_LO,
-	    BUS_ADDR_LO32(CAS_CDRXCADDR(sc, 0)));
+	    (((uint64_t)CAS_CDRXCADDR(sc, 0)) >> 32));
+	bus_space_write_4(t, h, CAS_RX_CRING_PTR_LO, CAS_CDRXCADDR(sc, 0));
 
 	if (CAS_PLUS(sc)) {
 		KASSERT((CAS_CDRXADDR2(sc, 0) & 0x1fff) == 0);
 		bus_space_write_4(t, h, CAS_RX_DRING_PTR_HI2,
-		    BUS_ADDR_HI32(CAS_CDRXADDR2(sc, 0)));
+		    (((uint64_t)CAS_CDRXADDR2(sc, 0)) >> 32));
 		bus_space_write_4(t, h, CAS_RX_DRING_PTR_LO2,
-		    BUS_ADDR_LO32(CAS_CDRXADDR2(sc, 0)));
+		    CAS_CDRXADDR2(sc, 0));
 	}
 
 	/* step 8. Global Configuration & Interrupt Mask */

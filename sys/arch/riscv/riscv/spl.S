@@ -1,4 +1,4 @@
-/* $NetBSD: spl.S,v 1.3 2020/03/14 16:12:16 skrll Exp $ */
+/* $NetBSD: spl.S,v 1.2 2015/03/31 01:15:26 matt Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-__RCSID("$NetBSD: spl.S,v 1.3 2020/03/14 16:12:16 skrll Exp $")
+__RCSID("$NetBSD: spl.S,v 1.2 2015/03/31 01:15:26 matt Exp $")
 
 	.data
 	.globl	_C_LABEL(ipl_sr_map)
@@ -94,7 +94,7 @@ ENTRY_NP(splhigh)
 	PTR_L	a3, L_CPU(tp)		// get curcpu()
 	INT_L	a0, CI_CPL(a3)		// get current IPL
 	li	t1, SR_IM		// load SR_IM
-	li	t0, IPL_HIGH		//
+	li	t0, IPL_HIGH		// 
 	csrc	sstatus, t1		// mask all interrupts
 	INT_S	t0, CI_CPL(a3)		// set it to IPL_HIGH
 	ret

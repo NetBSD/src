@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.26 2020/03/20 17:20:30 skrll Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.22 2020/01/23 23:53:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.26 2020/03/20 17:20:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.22 2020/01/23 23:53:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -439,7 +439,7 @@ dwc_mmc_bus_width(sdmmc_chipset_handle_t sch, int width)
 	}
 
 	sc->sc_mmc_width = width;
-
+	
 	return 0;
 }
 
@@ -662,21 +662,11 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		MMC_WRITE(sc, DWC_MMC_BLKSZ, cmd->c_blklen);
 		MMC_WRITE(sc, DWC_MMC_BYTECNT,
 		    nblks > 1 ? nblks * cmd->c_blklen : cmd->c_datalen);
-
-#if 0
-		/*
-		 * The following doesn't work on the 250a verid IP in Odroid-XU4.
-		*
-		 * thrctl should only be used for UHS/HS200 and faster timings on
-		 * >=240a
-		 */
-
 		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
 			MMC_WRITE(sc, DWC_MMC_CARDTHRCTL,
 			    __SHIFTIN(cmd->c_blklen, DWC_MMC_CARDTHRCTL_RDTHR) |
 			    DWC_MMC_CARDTHRCTL_RDTHREN);
 		}
-#endif
 	}
 
 	MMC_WRITE(sc, DWC_MMC_IMASK, imask | sc->sc_intr_card);
@@ -727,7 +717,6 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		if (error != 0) {
 			cmd->c_error = error;
 			SET(cmd->c_flags, SCF_ITSDONE);
-			mutex_exit(&sc->sc_intr_lock);
 			goto done;
 		}
 	}
@@ -817,11 +806,11 @@ dwc_mmc_init(struct dwc_mmc_softc *sc)
 {
 	uint32_t val;
 
-	val = MMC_READ(sc, DWC_MMC_VERID);
-	sc->sc_verid = __SHIFTOUT(val, DWC_MMC_VERID_ID);
-
 	if (sc->sc_fifo_reg == 0) {
-		if (sc->sc_verid < DWC_MMC_VERID_240A)
+		val = MMC_READ(sc, DWC_MMC_VERID);
+		const u_int id = __SHIFTOUT(val, DWC_MMC_VERID_ID);
+
+		if (id < DWC_MMC_VERID_240A)
 			sc->sc_fifo_reg = 0x100;
 		else
 			sc->sc_fifo_reg = 0x200;

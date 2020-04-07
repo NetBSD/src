@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.5 2020/03/14 16:12:16 skrll Exp $ */
+/* $NetBSD: locore.h,v 1.4 2019/04/11 11:23:51 kamil Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 struct trapframe {
 	struct reg tf_regs;
-	register_t tf_badaddr;
+	register_t tf_badaddr;	
 	uint32_t tf_cause;		// 32-bit register
 	uint32_t tf_sr;			// 32-bit register
 #define tf_reg		tf_regs.r_reg
@@ -80,7 +80,7 @@ struct trapframe {
 // For COMPAT_NETBSD32 coredumps
 struct trapframe32 {
 	struct reg32 tf_regs;
-	register32_t tf_badaddr;
+	register32_t tf_badaddr;	
 	uint32_t tf_cause;		// 32-bit register
 	uint32_t tf_sr;			// 32-bit register
 };

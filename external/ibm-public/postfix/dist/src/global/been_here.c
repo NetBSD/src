@@ -1,4 +1,4 @@
-/*	$NetBSD: been_here.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: been_here.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -53,7 +53,7 @@
 /*	Arguments:
 /* .IP size
 /*	Upper bound on the table size; at most \fIsize\fR strings will
-/*	be remembered.  Specify BH_BOUND_NONE to disable the upper bound.
+/*	be remembered.  Specify a value <= 0 to disable the upper bound.
 /* .IP flags
 /*	Requests for special processing. Specify the bitwise OR of zero
 /*	or more flags:

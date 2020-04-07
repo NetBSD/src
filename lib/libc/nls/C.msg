@@ -118,7 +118,7 @@ $ ESHUTDOWN
 $ ETOOMANYREFS
 59 Too many references: can't splice
 $ ETIMEDOUT
-60 Operation timed out
+60 Connection timed out
 $ ECONNREFUSED
 61 Connection refused
 $ ELOOP
@@ -172,7 +172,7 @@ $ EILSEQ
 $ ENOTSUP
 86 Not supported
 $ ECANCELED
-87 Operation canceled
+87 Operation Canceled
 $ EBADMSG
 88 Bad or Corrupt message
 $ ENODATA
@@ -191,10 +191,6 @@ $ ENOLINK
 95 Link has been severed
 $ EPROTO
 96 Protocol error
-$ EOWNERDEAD
-97 Previous owner died
-$ ENOTRECOVERABLE
-98 State not recoverable
 $set 2
 $ SIGHUP
 1 Hangup
@@ -229,9 +225,9 @@ $ SIGTERM
 $ SIGURG
 16 Urgent I/O condition
 $ SIGSTOP
-17 Suspended (signal)
+17 Stopped (signal)
 $ SIGTSTP
-18 Suspended
+18 Stopped
 $ SIGCONT
 19 Continued
 $ SIGCHLD
@@ -243,15 +239,15 @@ $ SIGTTOU
 $ SIGIO
 23 I/O possible
 $ SIGXCPU
-24 CPU time limit exceeded
+24 Cputime limit exceeded
 $ SIGXFSZ
-25 File size limit exceeded
+25 Filesize limit exceeded
 $ SIGVTALRM
 26 Virtual timer expired
 $ SIGPROF
 27 Profiling timer expired
 $ SIGWINCH
-28 Window size changed
+28 Window size changes
 $ SIGINFO
 29 Information request
 $ SIGUSR1

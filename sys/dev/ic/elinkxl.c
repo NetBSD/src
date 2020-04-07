@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.138 2020/03/12 03:01:46 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.137 2020/02/10 07:48:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.138 2020/03/12 03:01:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.137 2020/02/10 07:48:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1084,7 +1084,6 @@ ex_start(struct ifnet *ifp)
 				aprint_error("aborting\n");
 				goto out;
 			}
-			MCLAIM(mn, &sc->sc_ethercom.ec_tx_mowner);
 			if (mb_head->m_pkthdr.len > MHLEN) {
 				MCLGET(mn, M_DONTWAIT);
 				if ((mn->m_flags & M_EXT) == 0) {
@@ -1802,7 +1801,6 @@ ex_add_rxbuf(struct ex_softc *sc, struct ex_rxdesc *rxd)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m != NULL) {
-		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);

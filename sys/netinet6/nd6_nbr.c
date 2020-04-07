@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.177 2020/03/09 21:20:56 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.176 2020/01/20 18:38:22 thorpej Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.177 2020/03/09 21:20:56 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.176 2020/01/20 18:38:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -887,7 +887,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		struct sockaddr_in6 sin6;
 
 		sockaddr_in6_init(&sin6, &ln->r_l3addr.addr6, 0, 0, 0);
-		rt_clonedmsg(rt_cmd, sin6tosa(&ssin6), sin6tosa(&sin6),
+		rt_clonedmsg(rt_cmd, sin6tosa(&sin6),
 		    (char *)&ln->ll_addr, ln->lle_tbl->llt_ifp);
 	}
 

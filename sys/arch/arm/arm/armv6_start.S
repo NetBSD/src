@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.16 2020/03/20 19:48:03 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.15 2020/02/15 08:16:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -257,8 +257,8 @@ arm_build_translation_table:
 	ldr	r0, =(L1_S_SIZE - 1)
 	bic	R_PA, R_PA, r0
 
-	// attribute to map kernel
-	ldr     R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)
+	// attribute to map kernel - run without L1_S_CACHEABLE
+	ldr     R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW)
 	bl	arm_boot_l1pt_init
 
 	/*
@@ -287,8 +287,8 @@ arm_build_translation_table:
 	adr	R_PA, generic_start	// PA of kernel
 	bic	R_PA, r2		// ...rounded down to L1_S boundary
 
-	// attribute to map kernel
-	ldr     R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)
+	// attribute to map kernel - run without L1_S_CACHEABLE
+	ldr     R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW)
 	bl	arm_boot_l1pt_entry
 
 #if defined(FDTBASE)

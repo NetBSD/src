@@ -26,41 +26,70 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
        The file /etc/postfix/mysql-aliases.cf has the same format as the Post-
        fix <a href="postconf.5.html">main.cf</a> file, and can specify the parameters described below.
 
+<b>BACKWARDS COMPATIBILITY</b>
+       For  compatibility  with  other Postfix lookup tables, MySQL parameters
+       can also be defined in <a href="postconf.5.html">main.cf</a>.  In order to do that, specify as  MySQL
+       source  a  name  that  doesn't  begin with a slash or a dot.  The MySQL
+       parameters will then be accessible as the name you've given the  source
+       in  its  definition, an underscore, and the name of the parameter.  For
+       example, if the map is specified as  "<a href="mysql_table.5.html">mysql</a>:<i>mysqlname</i>",  the  parameter
+       "hosts" below would be defined in <a href="postconf.5.html">main.cf</a> as "<i>mysqlname</i>_hosts".
+
+       Note:  with  this form, the passwords for the MySQL sources are written
+       in <a href="postconf.5.html">main.cf</a>, which is normally world-readable.  Support  for  this  form
+       will be removed in a future Postfix version.
+
+       Normally,  the  SQL  query  is  specified  via a single <b>query</b> parameter
+       (described in more detail below).  When this parameter is not specified
+       in  the map definition, Postfix reverts to an older interface, with the
+       SQL query constructed from the  <b>select_field</b>,  <b>table</b>,  <b>where_field</b>  and
+       <b>additional_conditions</b>  parameters.  The old interface will be gradually
+       phased out. To migrate to the new interface set:
+
+           <b>query</b> = SELECT [<i>select</i><b>_</b><i>field</i>]
+               FROM [<i>table</i>]
+               WHERE [<i>where</i><b>_</b><i>field</i>] = '%s'
+                   [<i>additional</i><b>_</b><i>conditions</i>]
+
+       Insert the value, not the name, of each legacy parameter. Note that the
+       <b>additional_conditions</b>  parameter  is  optional  and  if not empty, will
+       always start with <b>AND</b>.
+
 <b>LIST MEMBERSHIP</b>
-       When  using  SQL  to  store  lists such as $<a href="postconf.5.html#mynetworks">mynetworks</a>, $<a href="postconf.5.html#mydestination">mydestination</a>,
-       $<a href="postconf.5.html#relay_domains">relay_domains</a>, $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, etc., it is important to  under-
+       When using SQL to store  lists  such  as  $<a href="postconf.5.html#mynetworks">mynetworks</a>,  $<a href="postconf.5.html#mydestination">mydestination</a>,
+       $<a href="postconf.5.html#relay_domains">relay_domains</a>,  $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, etc., it is important to under-
        stand that the table must store each list member as a separate key. The
-       table lookup verifies the *existence* of the key.  See  "Postfix  lists
+       table  lookup  verifies  the *existence* of the key. See "Postfix lists
        versus tables" in the <a href="DATABASE_README.html">DATABASE_README</a> document for a discussion.
 
-       Do  NOT create tables that return the full list of domains in $<a href="postconf.5.html#mydestination">mydesti</a>-
+       Do NOT create tables that return the full list of domains in  $<a href="postconf.5.html#mydestination">mydesti</a>-
        <a href="postconf.5.html#mydestination">nation</a> or $<a href="postconf.5.html#relay_domains">relay_domains</a> etc., or IP addresses in $<a href="postconf.5.html#mynetworks">mynetworks</a>.
 
        DO create tables with each matching item as a key and with an arbitrary
-       value.  With  SQL databases it is not uncommon to return the key itself
+       value. With SQL databases it is not uncommon to return the  key  itself
        or a constant value.
 
 <b>MYSQL PARAMETERS</b>
-       <b>hosts</b>  The hosts that Postfix will try to connect to  and  query  from.
+       <b>hosts</b>  The  hosts  that  Postfix will try to connect to and query from.
               Specify <i>unix:</i> for UNIX domain sockets, <i>inet:</i> for TCP connections
               (default).  Example:
                   hosts = host1.some.domain host2.some.domain:port
                   hosts = unix:/file/name
 
-              The hosts are tried in random order, with all  connections  over
+              The  hosts  are tried in random order, with all connections over
               UNIX domain sockets being tried before those over TCP.  The con-
-              nections are automatically closed after being idle for  about  1
+              nections  are  automatically closed after being idle for about 1
               minute, and are re-opened as necessary. Postfix versions 2.0 and
               earlier do not randomize the host order.
 
               NOTE: if you specify localhost as a hostname (even if you prefix
-              it  with  <i>inet:</i>),  MySQL will connect to the default UNIX domain
+              it with <i>inet:</i>), MySQL will connect to the  default  UNIX  domain
               socket.  In order to instruct MySQL to connect to localhost over
               TCP you have to specify
                   hosts = 127.0.0.1
 
        <b>user, password</b>
-              The  user name and password to log into the mysql server.  Exam-
+              The user name and password to log into the mysql server.   Exam-
               ple:
                   user = someone
                   password = some_password
@@ -68,14 +97,9 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
        <b>dbname</b> The database name on the servers. Example:
                   dbname = customer_database
 
-       <b>query</b>  The SQL query template used to search the database, where <b>%s</b>  is
-              a  substitute for the address Postfix is trying to resolve, e.g.
+       <b>query</b>  The  SQL query template used to search the database, where <b>%s</b> is
+              a substitute for the address Postfix is trying to resolve,  e.g.
                   query = SELECT replacement FROM aliases WHERE mailbox = '%s'
-
-              By default, every query must return a  result  set  (instead  of
-              storing  its results in a table); with "<b>require_result_set = no</b>"
-              (Postfix 3.2 and later), the absence of a result set is  treated
-              as "not found".
 
               This parameter supports the following '%' expansions:
 
@@ -201,32 +225,19 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
 
        <b>option_file</b>
               Read  options  from the given file instead of the default my.cnf
-              location. This reads options from  the  <b>[client]</b>  option  group,
-              optionally  followed  by  options  from  the  group  given  with
-              <b>option_group</b>.
+              location.
 
               This parameter is available with Postfix 2.11 and later.
 
-       <b>option_group (default: Postfix</b> &gt;<b>=3.2: client,</b> &lt;<b>= 3.1: empty)</b>
-              Read options from the given group of  the  mysql  options  file,
-              after reading options from the <b>[client]</b> group.
+       <b>option_group</b>
+              Read options from the given group.
 
-              Postfix  3.2  and  later  read <b>[client]</b> option group settings by
-              default. To disable this  specify  no  <b>option_file</b>  and  specify
-              "<b>option_group =</b>" (i.e. an empty value).
-
-              Postfix  3.1  and  earlier don't read <b>[client]</b> option group set-
-              tings unless a non-empty <b>option_file</b> or <b>option_group</b>  value  are
+              Postfix 3.1 and earlier don't read <b>[client]</b>  option  group  set-
+              tings  unless  a non-empty <b>option_file</b> or <b>option_group</b> value are
               specified. To enable this, specify, for example, "<b>option_group =</b>
               <b>client</b>".
 
               This parameter is available with Postfix 2.11 and later.
-
-       <b>require_result_set (default: yes)</b>
-              If "<b>yes</b>", require that every query returns  a  result  set.   If
-              "<b>no</b>", treat the absence of a result set as "not found".
-
-              This parameter is available with Postfix 3.2 and later.
 
        <b>tls_cert_file</b>
               File containing client's X509 certificate.
@@ -257,57 +268,14 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
 
               This parameter is available with Postfix 2.11 and later.
 
-<b>USING MYSQL STORED PROCEDURES</b>
-       Postfix 3.2 and later support calling a  stored  procedure  instead  of
-       using a SELECT statement in the query, e.g.
-
-           <b>query</b> = CALL lookup('%s')
-
-       The previously described '%' expansions can be used in the parameter(s)
-       to the stored procedure.
-
-       By default, every stored procedure call must return a result set,  i.e.
-       every  code  path must execute a SELECT statement that returns a result
-       set   (instead   of   storing   its   results   in   a   table).   With
-       "<b>require_result_set  =  no</b>",  the absence of a result set is treated as
-       "not found".
-
-       A stored procedure must not return  multiple  result  sets.   That  is,
-       there  must  be  no  code path that executes multiple SELECT statements
-       that return a result (instead of storing their results in a table).
-
-       The following is an example of a stored procedure  returning  a  single
-       result set:
-
-       CREATE [DEFINER=`user`@`host`] PROCEDURE
-       `lookup`(IN `param` VARCHAR(255))
-           READS SQL DATA
-           SQL SECURITY INVOKER
-           BEGIN
-               select goto from alias where address=param;
-           END
-
-<b>OBSOLETE MAIN.CF PARAMETERS</b>
-       For  compatibility  with  other Postfix lookup tables, MySQL parameters
-       can also be defined in <a href="postconf.5.html">main.cf</a>.  In order to do that, specify as  MySQL
-       source  a  name  that  doesn't  begin with a slash or a dot.  The MySQL
-       parameters will then be accessible as the name you've given the  source
-       in  its  definition, an underscore, and the name of the parameter.  For
-       example, if the map is specified as  "<a href="mysql_table.5.html">mysql</a>:<i>mysqlname</i>",  the  parameter
-       "hosts" would be defined in <a href="postconf.5.html">main.cf</a> as "<i>mysqlname</i>_hosts".
-
-       Note:  with  this form, the passwords for the MySQL sources are written
-       in <a href="postconf.5.html">main.cf</a>, which is normally world-readable.  Support  for  this  form
-       will be removed in a future Postfix version.
-
 <b>OBSOLETE QUERY INTERFACE</b>
-       This  section  describes  an interface that is deprecated as of Postfix
-       2.2. It is replaced by  the  more  general  <b>query</b>  interface  described
-       above.  If  the  <b>query</b>  parameter  is  defined,  the  legacy parameters
-       described here ignored.  Please migrate to the  new  interface  as  the
+       This section describes an interface that is deprecated  as  of  Postfix
+       2.2.  It  is  replaced  by  the  more general <b>query</b> interface described
+       above.  If the  <b>query</b>  parameter  is  defined,  the  legacy  parameters
+       described  here  ignored.   Please  migrate to the new interface as the
        legacy interface may be removed in a future release.
 
-       The  following  parameters  can  be  used  to fill in a SELECT template
+       The following parameters can be used  to  fill  in  a  SELECT  template
        statement of the form:
 
            SELECT [<b>select_field</b>]
@@ -316,7 +284,7 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
                  [<b>additional_conditions</b>]
 
        The specifier %s is replaced by the search string, and is escaped so if
-       it  contains single quotes or other odd characters, it will not cause a
+       it contains single quotes or other odd characters, it will not cause  a
        parse error, or worse, a security problem.
 
        <b>select_field</b>
@@ -361,13 +329,6 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
        Institute of Mathematics of the Romanian Academy
        P.O. BOX 1-764
        RO-014700 Bucharest, ROMANIA
-
-       Stored-procedure support by John Fawcett.
-
-       Wietse Venema
-       Google, Inc.
-       111 8th Avenue
-       New York, NY 10011, USA
 
                                                                 MYSQL_TABLE(5)
 </pre> </body> </html>

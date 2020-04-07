@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.163 2020/03/13 04:44:58 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.162 2020/02/27 06:17:50 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.166 2020/03/13 04:44:34 msaitoh Exp
+ *	NetBSD: miidevs,v 1.164 2020/02/27 06:17:28 msaitoh Exp
  */
 
 /*-
@@ -60,12 +60,10 @@
 #define	MII_OUI_TRIDIUM	0x0001f0	/* Tridium */
 #define	MII_OUI_DATATRACK	0x0002c6	/* Data Track Technology */
 #define	MII_OUI_AGERE	0x00053d	/* Agere */
-#define	MII_OUI_QUAKE	0x000897	/* Quake Technologies */
 #define	MII_OUI_BANKSPEED	0x0006b8	/* Bankspeed Pty */
 #define	MII_OUI_NETEXCELL	0x0008bb	/* NetExcell */
 #define	MII_OUI_NETAS	0x0009c3	/* Netas */
 #define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom Corporation */
-#define	MII_OUI_AELUROS	0x000b25	/* Aeluros */
 #define	MII_OUI_RALINK	0x000c43	/* Ralink Technology */
 #define	MII_OUI_ASIX	0x000ec6	/* ASIX */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
@@ -73,6 +71,7 @@
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_SUNPLUS	0x001105	/* Sunplus Technology */
+#define	MII_OUI_ATHEROS	0x001374	/* Atheros */
 #define	MII_OUI_TERANETICS	0x0014a6	/* Teranetics */
 #define	MII_OUI_RALINK2	0x0017a5	/* Ralink Technology */
 #define	MII_OUI_AQUANTIA	0x0017b6	/* Aquantia Corporation */
@@ -169,7 +168,13 @@
 #define	MII_MODEL_xxAMLOGIC_GXL	0x0000
 #define	MII_STR_xxAMLOGIC_GXL	"Meson GXL internal PHY"
 
-/* Attansic/Atheros PHYs */
+/* Atheros PHYs */
+#define	MII_MODEL_ATHEROS_F1	0x0001
+#define	MII_STR_ATHEROS_F1	"F1 10/100/1000 PHY"
+#define	MII_MODEL_ATHEROS_F2	0x0002
+#define	MII_STR_ATHEROS_F2	"F2 10/100 PHY"
+
+/* Attansic PHYs */
 #define	MII_MODEL_ATTANSIC_L1	0x0001
 #define	MII_STR_ATTANSIC_L1	"L1 10/100/1000 PHY"
 #define	MII_MODEL_ATTANSIC_L2	0x0002
@@ -596,10 +601,6 @@
 #define	MII_STR_SMSC_LAN8741A	"SMSC LAN8741A 10/100 media interface"
 #define	MII_MODEL_SMSC_LAN8742	0x0013
 #define	MII_STR_SMSC_LAN8742	"SMSC LAN8742 10/100 media interface"
-
-/* Teranetics PHY */
-#define	MII_MODEL_TERANETICS_TN1010	0x0001
-#define	MII_STR_TERANETICS_TN1010	"Teranetics TN1010 10GBase-T PHY"
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_TI_TLAN10T	0x0001

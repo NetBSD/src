@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.47 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: uirda.c,v 1.45 2019/12/06 07:12:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.47 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.45 2019/12/06 07:12:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -258,7 +258,7 @@ uirda_attach(device_t parent, device_t self, void *aux)
 		}
 		memcpy(&sc->sc_irdadesc, d, USB_IRDA_DESCRIPTOR_SIZE);
 	}
-	DPRINTF(("uirda_attach: bDescriptorSize %d bDescriptorType %#x "
+	DPRINTF(("uirda_attach: bDescriptorSize %d bDescriptorType 0x%x "
 		 "bmDataSize=0x%02x bmWindowSize=0x%02x "
 		 "bmMinTurnaroundTime=0x%02x wBaudRate=0x%04x "
 		 "bmAdditionalBOFs=0x%02x bIrdaSniff=%d bMaxUnicastList=%d\n",
@@ -703,10 +703,10 @@ uirda_set_params(void *h, struct irda_params *p)
 	if (p->ebofs != sc->sc_params.ebofs) {
 		/* round up ebofs */
 		mask = 1 /* sc->sc_irdadesc.bmAdditionalBOFs*/;
-		DPRINTF(("u.s.p.: mask=%#x, sc->ebofs=%d, p->ebofs=%d\n",
+		DPRINTF(("u.s.p.: mask=0x%x, sc->ebofs=%d, p->ebofs=%d\n",
 			mask, sc->sc_params.ebofs, p->ebofs));
 		for (i = 0; i < UIRDA_NEBOFS; i++) {
-			DPRINTF(("u.s.p.: u_e[%d].mask=%#x, count=%d\n",
+			DPRINTF(("u.s.p.: u_e[%d].mask=0x%x, count=%d\n",
 				i, uirda_ebofs[i].mask, uirda_ebofs[i].count));
 			if ((mask & uirda_ebofs[i].mask) &&
 			    uirda_ebofs[i].count >= p->ebofs) {
@@ -715,7 +715,7 @@ uirda_set_params(void *h, struct irda_params *p)
 			}
 		}
 		for (i = 0; i < UIRDA_NEBOFS; i++) {
-			DPRINTF(("u.s.p.: u_e[%d].mask=%#x, count=%d\n",
+			DPRINTF(("u.s.p.: u_e[%d].mask=0x%x, count=%d\n",
 				i, uirda_ebofs[i].mask, uirda_ebofs[i].count));
 			if ((mask & uirda_ebofs[i].mask)) {
 				hdr = uirda_ebofs[i].header;
@@ -832,7 +832,7 @@ uirda_get_speeds(void *h, int *speeds)
 	if (usp & UI_BR_9600)    isp |= IRDA_SPEED_9600;
 	if (usp & UI_BR_2400)    isp |= IRDA_SPEED_2400;
 	*speeds = isp;
-	DPRINTF(("%s: speeds = %#x\n", __func__, isp));
+	DPRINTF(("%s: speeds = 0x%x\n", __func__, isp));
 	return 0;
 }
 

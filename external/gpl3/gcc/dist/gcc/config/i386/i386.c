@@ -1024,8 +1024,16 @@ dimode_scalar_to_vector_candidate_p (rtx_insn *insn)
 
     case ASHIFT:
     case LSHIFTRT:
-      if (!CONST_INT_P (XEXP (src, 1))
-	  || !IN_RANGE (INTVAL (XEXP (src, 1)), 0, 63))
+      if (!REG_P (XEXP (src, 1))
+	  && (!SUBREG_P (XEXP (src, 1))
+	      || SUBREG_BYTE (XEXP (src, 1)) != 0
+	      || !REG_P (SUBREG_REG (XEXP (src, 1))))
+	  && (!CONST_INT_P (XEXP (src, 1))
+	      || !IN_RANGE (INTVAL (XEXP (src, 1)), 0, 63)))
+	return false;
+
+      if (GET_MODE (XEXP (src, 1)) != QImode
+	  && !CONST_INT_P (XEXP (src, 1)))
 	return false;
       break;
 
@@ -1622,10 +1630,15 @@ dimode_scalar_chain::compute_convert_gain ()
 	{
     	  if (CONST_INT_P (XEXP (src, 0)))
 	    gain -= vector_const_cost (XEXP (src, 0));
-
-	  gain += ix86_cost->shift_const;
-	  if (INTVAL (XEXP (src, 1)) >= 32)
-	    gain -= COSTS_N_INSNS (1);
+	  if (CONST_INT_P (XEXP (src, 1)))
+	    {
+	      gain += ix86_cost->shift_const;
+	      if (INTVAL (XEXP (src, 1)) >= 32)
+		gain -= COSTS_N_INSNS (1);
+	    }
+	  else
+	    /* Additional gain for omitting two CMOVs.  */
+	    gain += ix86_cost->shift_var + COSTS_N_INSNS (2);
 	}
       else if (GET_CODE (src) == PLUS
 	       || GET_CODE (src) == MINUS
@@ -1741,14 +1754,60 @@ dimode_scalar_chain::make_vector_copies (unsigned regno)
 {
   rtx reg = regno_reg_rtx[regno];
   rtx vreg = gen_reg_rtx (DImode);
+  bool count_reg = false;
   df_ref ref;
 
   for (ref = DF_REG_DEF_CHAIN (regno); ref; ref = DF_REF_NEXT_REG (ref))
     if (!bitmap_bit_p (insns, DF_REF_INSN_UID (ref)))
       {
-	start_sequence ();
+	df_ref use;
 
-	if (!TARGET_INTER_UNIT_MOVES_TO_VEC)
+	/* Detect the count register of a shift instruction.  */
+	for (use = DF_REG_USE_CHAIN (regno); use; use = DF_REF_NEXT_REG (use))
+	  if (bitmap_bit_p (insns, DF_REF_INSN_UID (use)))
+	    {
+	      rtx_insn *insn = DF_REF_INSN (use);
+	      rtx def_set = single_set (insn);
+
+	      gcc_assert (def_set);
+
+	      rtx src = SET_SRC (def_set);
+
+	      if ((GET_CODE (src) == ASHIFT
+		   || GET_CODE (src) == ASHIFTRT
+		   || GET_CODE (src) == LSHIFTRT)
+		  && !CONST_INT_P (XEXP (src, 1))
+		  && reg_or_subregno (XEXP (src, 1)) == regno)
+		count_reg = true;
+	    }
+
+	start_sequence ();
+	if (count_reg)
+	  {
+	    rtx qreg = gen_lowpart (QImode, reg);
+	    rtx tmp = gen_reg_rtx (SImode);
+
+	    if (TARGET_ZERO_EXTEND_WITH_AND
+		&& optimize_function_for_speed_p (cfun))
+	      {
+		emit_move_insn (tmp, const0_rtx);
+		emit_insn (gen_movstrictqi
+			   (gen_lowpart (QImode, tmp), qreg));
+	      }
+	    else
+	      emit_insn (gen_rtx_SET
+			 (tmp, gen_rtx_ZERO_EXTEND (SImode, qreg)));
+
+	    if (!TARGET_INTER_UNIT_MOVES_TO_VEC)
+	      {
+		rtx slot = assign_386_stack_local (SImode, SLOT_STV_TEMP);
+		emit_move_insn (slot, tmp);
+		tmp = copy_rtx (slot);
+	      }
+
+	    emit_insn (gen_zero_extendsidi2 (vreg, tmp));
+	  }
+	else if (!TARGET_INTER_UNIT_MOVES_TO_VEC)
 	  {
 	    rtx tmp = assign_386_stack_local (DImode, SLOT_STV_TEMP);
 	    emit_move_insn (adjust_address (tmp, SImode, 0),
@@ -1796,8 +1855,22 @@ dimode_scalar_chain::make_vector_copies (unsigned regno)
     if (bitmap_bit_p (insns, DF_REF_INSN_UID (ref)))
       {
 	rtx_insn *insn = DF_REF_INSN (ref);
+	if (count_reg)
+	  {
+	    rtx def_set = single_set (insn);
+	    gcc_assert (def_set);
 
-	replace_with_subreg_in_insn (insn, reg, vreg);
+	    rtx src = SET_SRC (def_set);
+
+	    if ((GET_CODE (src) == ASHIFT
+		 || GET_CODE (src) == ASHIFTRT
+		 || GET_CODE (src) == LSHIFTRT)
+		&& !CONST_INT_P (XEXP (src, 1))
+		&& reg_or_subregno (XEXP (src, 1)) == regno)
+	      XEXP (src, 1) = vreg;
+	  }
+	else
+	  replace_with_subreg_in_insn (insn, reg, vreg);
 
 	if (dump_file)
 	  fprintf (dump_file, "  Replaced r%d with r%d in insn %d\n",
@@ -1900,7 +1973,42 @@ dimode_scalar_chain::convert_reg (unsigned regno)
 	    rtx src = SET_SRC (def_set);
 	    rtx dst = SET_DEST (def_set);
 
-	    if (!MEM_P (dst) || !REG_P (src))
+	    if ((GET_CODE (src) == ASHIFT
+		 || GET_CODE (src) == ASHIFTRT
+		 || GET_CODE (src) == LSHIFTRT)
+		&& !CONST_INT_P (XEXP (src, 1))
+		&& reg_or_subregno (XEXP (src, 1)) == regno)
+	      {
+		rtx tmp2 = gen_reg_rtx (V2DImode);
+
+		start_sequence ();
+
+		if (TARGET_SSE4_1)
+		  emit_insn (gen_sse4_1_zero_extendv2qiv2di2
+			     (tmp2, gen_rtx_SUBREG (V16QImode, reg, 0)));
+		else
+		  {
+		    rtx vec_cst
+		      = gen_rtx_CONST_VECTOR (V2DImode,
+					      gen_rtvec (2, GEN_INT (0xff),
+							 const0_rtx));
+		    vec_cst
+		      = validize_mem (force_const_mem (V2DImode, vec_cst));
+
+		    emit_insn (gen_rtx_SET
+			       (tmp2,
+				gen_rtx_AND (V2DImode,
+					     gen_rtx_SUBREG (V2DImode, reg, 0),
+					     vec_cst)));
+		  }
+		rtx_insn *seq = get_insns ();
+		end_sequence ();
+
+		emit_insn_before (seq, insn);
+
+		XEXP (src, 1) = gen_rtx_SUBREG (DImode, tmp2, 0);
+	      }
+	    else if (!MEM_P (dst) || !REG_P (src))
 	      replace_with_subreg_in_insn (insn, reg, reg);
 
 	    bitmap_clear_bit (conv, INSN_UID (insn));
@@ -3380,7 +3488,7 @@ ix86_option_override_internal (bool main_args_p,
     | PTA_AVX512VBMI | PTA_AVX512IFMA | PTA_SHA;
   const wide_int_bitmask PTA_ICELAKE_CLIENT = PTA_CANNONLAKE | PTA_AVX512VNNI
     | PTA_GFNI | PTA_VAES | PTA_AVX512VBMI2 | PTA_VPCLMULQDQ | PTA_AVX512BITALG
-    | PTA_RDPID | PTA_CLWB | PTA_AVX512VPOPCNTDQ;
+    | PTA_RDPID | PTA_CLWB;
   const wide_int_bitmask PTA_ICELAKE_SERVER = PTA_ICELAKE_CLIENT | PTA_PCONFIG
     | PTA_WBNOINVD;
   const wide_int_bitmask PTA_KNL = PTA_BROADWELL | PTA_AVX512PF | PTA_AVX512ER
@@ -4850,12 +4958,6 @@ ix86_option_override_internal (bool main_args_p,
 			   opts->x_param_values,
 			   opts_set->x_param_values);
 
-  /* PR86952: jump table usage with retpolines is slow.
-     The PR provides some numbers about the slowness.  */
-  if (ix86_indirect_branch != indirect_branch_keep
-      && !opts_set->x_flag_jump_tables)
-    opts->x_flag_jump_tables = 0;
-
   return true;
 }
 
@@ -5450,25 +5552,7 @@ ix86_valid_target_attribute_inner_p (tree args, char *p_strings[],
 	      ret = false;
 	    }
 	  else
-	    {
-	      p_strings[opt] = xstrdup (p + opt_len);
-	      if (opt == IX86_FUNCTION_SPECIFIC_ARCH)
-		{
-		  /* If arch= is set,  clear all bits in x_ix86_isa_flags,
-		     except for ISA_64BIT, ABI_64, ABI_X32, and CODE16
-		     and all bits in x_ix86_isa_flags2.  */
-		  opts->x_ix86_isa_flags &= (OPTION_MASK_ISA_64BIT
-					     | OPTION_MASK_ABI_64
-					     | OPTION_MASK_ABI_X32
-					     | OPTION_MASK_CODE16);
-		  opts->x_ix86_isa_flags_explicit &= (OPTION_MASK_ISA_64BIT
-						      | OPTION_MASK_ABI_64
-						      | OPTION_MASK_ABI_X32
-						      | OPTION_MASK_CODE16);
-		  opts->x_ix86_isa_flags2 = 0;
-		  opts->x_ix86_isa_flags2_explicit = 0;
-		}
-	    }
+	    p_strings[opt] = xstrdup (p + opt_len);
 	}
 
       else if (type == ix86_opt_enum)
@@ -5543,8 +5627,18 @@ ix86_valid_target_attribute_tree (tree args,
       /* If we are using the default tune= or arch=, undo the string assigned,
 	 and use the default.  */
       if (option_strings[IX86_FUNCTION_SPECIFIC_ARCH])
-	opts->x_ix86_arch_string
-	  = ggc_strdup (option_strings[IX86_FUNCTION_SPECIFIC_ARCH]);
+	{
+	  opts->x_ix86_arch_string
+	    = ggc_strdup (option_strings[IX86_FUNCTION_SPECIFIC_ARCH]);
+
+	  /* If arch= is set,  clear all bits in x_ix86_isa_flags,
+	     except for ISA_64BIT, ABI_64, ABI_X32, and CODE16.  */
+	  opts->x_ix86_isa_flags &= (OPTION_MASK_ISA_64BIT
+				     | OPTION_MASK_ABI_64
+				     | OPTION_MASK_ABI_X32
+				     | OPTION_MASK_CODE16);
+	  opts->x_ix86_isa_flags2 = 0;
+	}
       else if (!orig_arch_specified)
 	opts->x_ix86_arch_string = NULL;
 
@@ -10005,7 +10099,6 @@ ix86_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
   tree ptrtype;
   machine_mode nat_mode;
   unsigned int arg_boundary;
-  unsigned int type_align;
 
   /* Only 64bit target needs something special.  */
   if (is_va_list_char_pointer (TREE_TYPE (valist)))
@@ -10063,7 +10156,6 @@ ix86_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
   /* Pull the value out of the saved registers.  */
 
   addr = create_tmp_var (ptr_type_node, "addr");
-  type_align = TYPE_ALIGN (type);
 
   if (container)
     {
@@ -10234,9 +10326,6 @@ ix86_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
 	  t = build2 (PLUS_EXPR, TREE_TYPE (gpr), gpr,
 		      build_int_cst (TREE_TYPE (gpr), needed_intregs * 8));
 	  gimplify_assign (gpr, t, pre_p);
-	  /* The GPR save area guarantees only 8-byte alignment.  */
-	  if (!need_temp)
-	    type_align = MIN (type_align, 64);
 	}
 
       if (needed_sseregs)
@@ -10281,7 +10370,6 @@ ix86_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
   if (container)
     gimple_seq_add_stmt (pre_p, gimple_build_label (lab_over));
 
-  type = build_aligned_type (type, type_align);
   ptrtype = build_pointer_type_for_mode (type, ptr_mode, true);
   addr = fold_convert (ptrtype, addr);
 
@@ -17225,7 +17313,7 @@ output_pic_addr_const (FILE *file, rtx x, int code)
       break;
 
     case SYMBOL_REF:
-      if (TARGET_64BIT || ! TARGET_MACHO_SYMBOL_STUBS)
+      if (TARGET_64BIT || ! TARGET_MACHO_BRANCH_ISLANDS)
 	output_addr_const (file, x);
       else
 	{
@@ -18033,7 +18121,6 @@ print_reg (rtx x, int code, FILE *file)
    ; -- print a semicolon (after prefixes due to bug in older gas).
    ~ -- print "i" if TARGET_AVX2, "f" otherwise.
    ^ -- print addr32 prefix if TARGET_64BIT and Pmode != word_mode
-   M -- print addr32 prefix for TARGET_X32 with VSIB address.
    ! -- print MPX prefix for jxx/call/ret instructions if required.
  */
 
@@ -18579,26 +18666,6 @@ ix86_print_operand (FILE *file, rtx x, int code)
 
 	case '~':
 	  putc (TARGET_AVX2 ? 'i' : 'f', file);
-	  return;
-
-	case 'M':
-	  if (TARGET_X32)
-	    {
-	      /* NB: 32-bit indices in VSIB address are sign-extended
-		 to 64 bits. In x32, if 32-bit address 0xf7fa3010 is
-		 sign-extended to 0xfffffffff7fa3010 which is invalid
-		 address.  Add addr32 prefix if there is no base
-		 register nor symbol.  */
-	      bool ok;
-	      struct ix86_address parts;
-	      ok = ix86_decompose_address (x, &parts);
-	      gcc_assert (ok && parts.index == NULL_RTX);
-	      if (parts.base == NULL_RTX
-		  && (parts.disp == NULL_RTX
-		      || !symbolic_operand (parts.disp,
-					    GET_MODE (parts.disp))))
-		fputs ("addr32 ", file);
-	    }
 	  return;
 
 	case '^':
@@ -23995,8 +24062,6 @@ ix86_expand_sse_fp_minmax (rtx dest, enum rtx_code code, rtx cmp_op0,
   else
     {
       code = is_min ? SMIN : SMAX;
-      if (MEM_P (if_true) && MEM_P (if_false))
-	if_true = force_reg (mode, if_true);
       tmp = gen_rtx_fmt_ee (code, mode, if_true, if_false);
     }
 
@@ -28692,25 +28757,6 @@ ix86_nopic_noplt_attribute_p (rtx call_op)
   return false;
 }
 
-/* Helper to output the jmp/call.  */
-static void
-ix86_output_jmp_thunk_or_indirect (const char *thunk_name,
-				   enum indirect_thunk_prefix need_prefix,
-				   const int regno)
-{
-  if (thunk_name != NULL)
-    {
-      if (need_prefix == indirect_thunk_prefix_bnd)
-	fprintf (asm_out_file, "\tbnd jmp\t");
-      else
-	fprintf (asm_out_file, "\tjmp\t");
-      assemble_name (asm_out_file, thunk_name);
-      putc ('\n', asm_out_file);
-    }
-  else
-    output_indirect_thunk (need_prefix, regno);
-}
-
 /* Output indirect branch via a call and return thunk.  CALL_OP is a
    register which contains the branch target.  XASM is the assembly
    template for CALL_OP.  Branch is a tail call if SIBCALL_P is true.
@@ -28752,17 +28798,25 @@ ix86_output_indirect_branch_via_reg (rtx call_op, bool sibcall_p)
     thunk_name = NULL;
 
   if (sibcall_p)
-    ix86_output_jmp_thunk_or_indirect (thunk_name, need_prefix, regno);
+    {
+      if (thunk_name != NULL)
+	{
+	  if (need_prefix == indirect_thunk_prefix_bnd)
+	    fprintf (asm_out_file, "\tbnd jmp\t%s\n", thunk_name);
+	  else
+	    fprintf (asm_out_file, "\tjmp\t%s\n", thunk_name);
+	}
+      else
+	output_indirect_thunk (need_prefix, regno);
+    }
   else
     {
       if (thunk_name != NULL)
 	{
 	  if (need_prefix == indirect_thunk_prefix_bnd)
-	    fprintf (asm_out_file, "\tbnd call\t");
+	    fprintf (asm_out_file, "\tbnd call\t%s\n", thunk_name);
 	  else
-	    fprintf (asm_out_file, "\tcall\t");
-	  assemble_name (asm_out_file, thunk_name);
-	  putc ('\n', asm_out_file);
+	    fprintf (asm_out_file, "\tcall\t%s\n", thunk_name);
 	  return;
 	}
 
@@ -28786,7 +28840,15 @@ ix86_output_indirect_branch_via_reg (rtx call_op, bool sibcall_p)
 
       ASM_OUTPUT_INTERNAL_LABEL (asm_out_file, indirectlabel1);
 
-      ix86_output_jmp_thunk_or_indirect (thunk_name, need_prefix, regno);
+      if (thunk_name != NULL)
+	{
+	  if (need_prefix == indirect_thunk_prefix_bnd)
+	    fprintf (asm_out_file, "\tbnd jmp\t%s\n", thunk_name);
+	  else
+	    fprintf (asm_out_file, "\tjmp\t%s\n", thunk_name);
+	}
+      else
+	output_indirect_thunk (need_prefix, regno);
 
       ASM_OUTPUT_INTERNAL_LABEL (asm_out_file, indirectlabel2);
 
@@ -28851,7 +28913,15 @@ ix86_output_indirect_branch_via_push (rtx call_op, const char *xasm,
   if (sibcall_p)
     {
       output_asm_insn (push_buf, &call_op);
-      ix86_output_jmp_thunk_or_indirect (thunk_name, need_prefix, regno);
+      if (thunk_name != NULL)
+	{
+	  if (need_prefix == indirect_thunk_prefix_bnd)
+	    fprintf (asm_out_file, "\tbnd jmp\t%s\n", thunk_name);
+	  else
+	    fprintf (asm_out_file, "\tjmp\t%s\n", thunk_name);
+	}
+      else
+	output_indirect_thunk (need_prefix, regno);
     }
   else
     {
@@ -28910,7 +28980,15 @@ ix86_output_indirect_branch_via_push (rtx call_op, const char *xasm,
 
       output_asm_insn (push_buf, &call_op);
 
-      ix86_output_jmp_thunk_or_indirect (thunk_name, need_prefix, regno);
+      if (thunk_name != NULL)
+	{
+	  if (need_prefix == indirect_thunk_prefix_bnd)
+	    fprintf (asm_out_file, "\tbnd jmp\t%s\n", thunk_name);
+	  else
+	    fprintf (asm_out_file, "\tjmp\t%s\n", thunk_name);
+	}
+      else
+	output_indirect_thunk (need_prefix, regno);
 
       ASM_OUTPUT_INTERNAL_LABEL (asm_out_file, indirectlabel2);
 
@@ -28979,15 +29057,13 @@ ix86_output_function_return (bool long_p)
 	  if (need_prefix == indirect_thunk_prefix_bnd)
 	    {
 	      indirect_return_bnd_needed |= need_thunk;
-	      fprintf (asm_out_file, "\tbnd jmp\t");
+	      fprintf (asm_out_file, "\tbnd jmp\t%s\n", thunk_name);
 	    }
 	  else
 	    {
 	      indirect_return_needed |= need_thunk;
-	      fprintf (asm_out_file, "\tjmp\t");
+	      fprintf (asm_out_file, "\tjmp\t%s\n", thunk_name);
 	    }
-	  assemble_name (asm_out_file, thunk_name);
-	  putc ('\n', asm_out_file);
 	}
       else
 	output_indirect_thunk (need_prefix, INVALID_REGNUM);
@@ -29028,7 +29104,7 @@ ix86_output_indirect_function_return (rtx ret_op)
 		  indirect_return_via_cx_bnd = true;
 		  indirect_thunks_bnd_used |= 1 << CX_REG;
 		}
-	      fprintf (asm_out_file, "\tbnd jmp\t");
+	      fprintf (asm_out_file, "\tbnd jmp\t%s\n", thunk_name);
 	    }
 	  else
 	    {
@@ -29037,10 +29113,8 @@ ix86_output_indirect_function_return (rtx ret_op)
 		  indirect_return_via_cx = true;
 		  indirect_thunks_used |= 1 << CX_REG;
 		}
-	      fprintf (asm_out_file, "\tjmp\t");
+	      fprintf (asm_out_file, "\tjmp\t%s\n", thunk_name);
 	    }
-	  assemble_name (asm_out_file, thunk_name);
-	  putc ('\n', asm_out_file);
 	}
       else
 	output_indirect_thunk (need_prefix, regno);
@@ -30479,14 +30553,9 @@ ix86_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
 	 the stack, we need to skip the first insn which pushes the
 	 (call-saved) register static chain; this push is 1 byte.  */
       offset += 5;
-      int skip = MEM_P (chain) ? 1 : 0;
-      /* Skip ENDBR32 at the entry of the target function.  */
-      if (need_endbr
-	  && !cgraph_node::get (fndecl)->only_called_directly_p ())
-	skip += 4;
       disp = expand_binop (SImode, sub_optab, fnaddr,
 			   plus_constant (Pmode, XEXP (m_tramp, 0),
-					  offset - skip),
+					  offset - (MEM_P (chain) ? 1 : 0)),
 			   NULL_RTX, 1, OPTAB_DIRECT);
       emit_move_insn (mem, disp);
     }
@@ -32854,7 +32923,6 @@ make_resolver_func (const tree default_decl,
     }
   /* Build result decl and add to function_decl. */
   t = build_decl (UNKNOWN_LOCATION, RESULT_DECL, NULL_TREE, ptr_type_node);
-  DECL_CONTEXT (t) = decl;
   DECL_ARTIFICIAL (t) = 1;
   DECL_IGNORED_P (t) = 1;
   DECL_RESULT (decl) = t;
@@ -39573,7 +39641,7 @@ ix86_vectorize_builtin_scatter (const_tree vectype,
 static bool
 use_rsqrt_p ()
 {
-  return (TARGET_SSE && TARGET_SSE_MATH
+  return (TARGET_SSE_MATH
 	  && flag_finite_math_only
 	  && !flag_trapping_math
 	  && flag_unsafe_math_optimizations);
@@ -44785,15 +44853,11 @@ ix86_md_asm_adjust (vec<rtx> &outputs, vec<rtx> &/*inputs*/,
 	    {
 	      x = force_reg (dest_mode, const0_rtx);
 
-	      emit_insn (gen_movstrictqi (gen_lowpart (QImode, x), destqi));
+	      emit_insn (gen_movstrictqi
+			 (gen_lowpart (QImode, x), destqi));
 	    }
 	  else
-	    {
-	      x = gen_rtx_ZERO_EXTEND (dest_mode, destqi);
-	      if (dest_mode == GET_MODE (dest)
-		  && !register_operand (dest, GET_MODE (dest)))
-		x = force_reg (dest_mode, x);
-	    }
+	    x = gen_rtx_ZERO_EXTEND (dest_mode, destqi);
 	}
 
       if (dest_mode != GET_MODE (dest))
@@ -45641,10 +45705,8 @@ ix86_expand_floorceildf_32 (rtx operand0, rtx operand1, bool do_floor)
           x2 -= 1;
      Compensate.  Ceil:
         if (x2 < x)
-          x2 += 1;
-	if (HONOR_SIGNED_ZEROS (mode))
-	  x2 = copysign (x2, x);
-	return x2;
+          x2 -= -1;
+        return x2;
    */
   machine_mode mode = GET_MODE (operand0);
   rtx xa, TWO52, tmp, one, res, mask;
@@ -45670,16 +45732,17 @@ ix86_expand_floorceildf_32 (rtx operand0, rtx operand1, bool do_floor)
   /* xa = copysign (xa, operand1) */
   ix86_sse_copysign_to_positive (xa, xa, res, mask);
 
-  /* generate 1.0 */
-  one = force_reg (mode, const_double_from_real_value (dconst1, mode));
+  /* generate 1.0 or -1.0 */
+  one = force_reg (mode,
+	           const_double_from_real_value (do_floor
+						 ? dconst1 : dconstm1, mode));
 
   /* Compensate: xa = xa - (xa > operand1 ? 1 : 0) */
   tmp = ix86_expand_sse_compare_mask (UNGT, xa, res, !do_floor);
   emit_insn (gen_rtx_SET (tmp, gen_rtx_AND (mode, one, tmp)));
-  tmp = expand_simple_binop (mode, do_floor ? MINUS : PLUS,
+  /* We always need to subtract here to preserve signed zero.  */
+  tmp = expand_simple_binop (mode, MINUS,
 			     xa, tmp, NULL_RTX, 0, OPTAB_DIRECT);
-  if (!do_floor && HONOR_SIGNED_ZEROS (mode))
-    ix86_sse_copysign_to_positive (tmp, tmp, res, mask);
   emit_move_insn (res, tmp);
 
   emit_label (label);
@@ -46316,8 +46379,7 @@ static bool
 expand_vec_perm_blend (struct expand_vec_perm_d *d)
 {
   machine_mode mmode, vmode = d->vmode;
-  unsigned i, nelt = d->nelt;
-  unsigned HOST_WIDE_INT mask;
+  unsigned i, mask, nelt = d->nelt;
   rtx target, op0, op1, maskop, x;
   rtx rperm[32], vperm;
 
@@ -46371,7 +46433,7 @@ expand_vec_perm_blend (struct expand_vec_perm_d *d)
     case E_V16SImode:
     case E_V8DImode:
       for (i = 0; i < nelt; ++i)
-	mask |= ((unsigned HOST_WIDE_INT) (d->perm[i] >= nelt)) << i;
+	mask |= (d->perm[i] >= nelt) << i;
       break;
 
     case E_V2DImode:
@@ -50937,7 +50999,7 @@ ix86_float_exceptions_rounding_supported_p (void)
      there is no adddf3 pattern (since x87 floating point only has
      XFmode operations) so the default hook implementation gets this
      wrong.  */
-  return TARGET_80387 || (TARGET_SSE && TARGET_SSE_MATH);
+  return TARGET_80387 || TARGET_SSE_MATH;
 }
 
 /* Implement TARGET_ATOMIC_ASSIGN_EXPAND_FENV.  */
@@ -50945,7 +51007,7 @@ ix86_float_exceptions_rounding_supported_p (void)
 static void
 ix86_atomic_assign_expand_fenv (tree *hold, tree *clear, tree *update)
 {
-  if (!TARGET_80387 && !(TARGET_SSE && TARGET_SSE_MATH))
+  if (!TARGET_80387 && !TARGET_SSE_MATH)
     return;
   tree exceptions_var = create_tmp_var_raw (integer_type_node);
   if (TARGET_80387)
@@ -50980,7 +51042,7 @@ ix86_atomic_assign_expand_fenv (tree *hold, tree *clear, tree *update)
       tree update_fldenv = build_call_expr (fldenv, 1, fenv_addr);
       *update = build2 (COMPOUND_EXPR, void_type_node, *update, update_fldenv);
     }
-  if (TARGET_SSE && TARGET_SSE_MATH)
+  if (TARGET_SSE_MATH)
     {
       tree mxcsr_orig_var = create_tmp_var_raw (unsigned_type_node);
       tree mxcsr_mod_var = create_tmp_var_raw (unsigned_type_node);
@@ -51337,7 +51399,7 @@ ix86_excess_precision (enum excess_precision_type type)
 	  return FLT_EVAL_METHOD_PROMOTE_TO_FLOAT;
 	else if (!TARGET_MIX_SSE_I387)
 	  {
-	    if (!(TARGET_SSE && TARGET_SSE_MATH))
+	    if (!TARGET_SSE_MATH)
 	      return FLT_EVAL_METHOD_PROMOTE_TO_LONG_DOUBLE;
 	    else if (TARGET_SSE2)
 	      return FLT_EVAL_METHOD_PROMOTE_TO_FLOAT;

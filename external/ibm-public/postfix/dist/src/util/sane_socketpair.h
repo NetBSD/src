@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_socketpair.h,v 1.3 2020/03/18 19:05:22 christos Exp $	*/
+/*	$NetBSD: sane_socketpair.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 #ifndef _SANE_SOCKETPAIR_H_
 #define _SANE_SOCKETPAIR_H_
@@ -26,11 +26,6 @@ extern int WARN_UNUSED_RESULT sane_socketpair(int, int, int, int *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 #endif

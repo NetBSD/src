@@ -1,4 +1,4 @@
-/*	$NetBSD: log_adhoc.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: log_adhoc.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -29,8 +29,9 @@
 /*	Time stamps from different message delivery stages
 /*	and session reuse count.
 /* .IP recipient
-/*	Recipient information, see recipient_list(3). The address
-/*	is formatted by the info_log_addr_form(3) routines.
+/*	Recipient information. See recipient_list(3).
+/* .IP sender
+/*	The sender envelope address.
 /* .IP relay
 /*	Host we could (not) talk to.
 /* .IP status
@@ -49,11 +50,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -72,7 +68,6 @@
 
 #include <log_adhoc.h>
 #include <mail_params.h>
-#include <info_log_addr_form.h>
 
  /*
   * Don't use "struct timeval" for time differences; use explicit signed
@@ -110,12 +105,10 @@ void    log_adhoc(const char *id, MSG_STATS *stats, RECIPIENT *recipient,
      * First, critical information that identifies the nature of the
      * transaction.
      */
-    vstring_sprintf(buf, "%s: to=<%s>", id,
-		    info_log_addr_form_recipient(recipient->address));
+    vstring_sprintf(buf, "%s: to=<%s>", id, recipient->address);
     if (recipient->orig_addr && *recipient->orig_addr
 	&& strcasecmp_utf8(recipient->address, recipient->orig_addr) != 0)
-	vstring_sprintf_append(buf, ", orig_to=<%s>",
-			info_log_addr_form_recipient(recipient->orig_addr));
+	vstring_sprintf_append(buf, ", orig_to=<%s>", recipient->orig_addr);
     vstring_sprintf_append(buf, ", relay=%s", relay);
     if (stats->reuse_count > 0)
 	vstring_sprintf_append(buf, ", conn_use=%d", stats->reuse_count + 1);

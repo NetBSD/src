@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.h,v 1.3 2020/03/21 16:17:08 pgoyette Exp $ */
+/*	$NetBSD: netbsd32_sysctl.h,v 1.1 2008/11/19 18:36:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _NETBSD32_SYSCTL_H
 #define _NETBSD32_SYSCTL_H
 
+void	netbsd32_sysctl_init(void);
 void	netbsd32_sysctl_fini(void);
 
 #endif /* !_NETBSD32_SYSCTL_H */

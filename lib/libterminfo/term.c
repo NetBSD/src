@@ -1,7 +1,7 @@
-/* $NetBSD: term.c,v 1.32 2020/03/27 17:39:53 christos Exp $ */
+/* $NetBSD: term.c,v 1.29 2018/10/08 20:44:34 roy Exp $ */
 
 /*
- * Copyright (c) 2009, 2010, 2011, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.32 2020/03/27 17:39:53 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.29 2018/10/08 20:44:34 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -44,11 +44,7 @@ __RCSID("$NetBSD: term.c,v 1.32 2020/03/27 17:39:53 christos Exp $");
 #include <term_private.h>
 #include <term.h>
 
-/*
- * Although we can read v1 structure (which includes v2 alias records)
- * we really want a v3 structure to get numerics of type int rather than short.
- */
-#define _PATH_TERMINFO	"/usr/share/misc/terminfo"
+#define _PATH_TERMINFO		"/usr/share/misc/terminfo"
 
 static char __ti_database[PATH_MAX];
 const char *_ti_database;
@@ -76,17 +72,17 @@ allocset(void *pp, int init, size_t nelem, size_t elemsize)
 static int
 _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 {
-	char rtype;
+	char ver;
 	uint16_t ind, num;
 	size_t len;
 	TERMUSERDEF *ud;
 
 	if (caplen == 0)
 		goto out;
-	rtype = *cap++;
+	ver = *cap++;
 	caplen--;
-	/* Only read type 1 or 3 records */
-	if (rtype != TERMINFO_RTYPE && rtype != TERMINFO_RTYPE_O1)
+	/* Only read version 1 structures */
+	if (ver != 1)
 		goto out;
 
 	if (allocset(&term->flags, 0, TIFLAGMAX+1, sizeof(*term->flags)) == -1)
@@ -107,17 +103,20 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 	memcpy(term->_area, cap, term->_arealen);
 
 	cap = term->_area;
-	len = _ti_decode_16(&cap);
+	len = le16dec(cap);
+	cap += sizeof(uint16_t);
 	term->name = cap;
 	cap += len;
-	len = _ti_decode_16(&cap);
+	len = le16dec(cap);
+	cap += sizeof(uint16_t);
 	if (len == 0)
 		term->_alias = NULL;
 	else {
 		term->_alias = cap;
 		cap += len;
 	}
-	len = _ti_decode_16(&cap);
+	len = le16dec(cap);
+	cap += sizeof(uint16_t);
 	if (len == 0)
 		term->desc = NULL;
 	else {
@@ -125,34 +124,45 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 		cap += len;
 	}
 
-	num = _ti_decode_16(&cap);
+	num = le16dec(cap);
+	cap += sizeof(uint16_t);
 	if (num != 0) {
-		num = _ti_decode_16(&cap);
+		num = le16dec(cap);
+		cap += sizeof(uint16_t);
 		for (; num != 0; num--) {
-			ind = _ti_decode_16(&cap);
+			ind = le16dec(cap);
+			cap += sizeof(uint16_t);
 			term->flags[ind] = *cap++;
 			if (flags == 0 && !VALID_BOOLEAN(term->flags[ind]))
 				term->flags[ind] = 0;
 		}
 	}
 
-	num = _ti_decode_16(&cap);
+	num = le16dec(cap);
+	cap += sizeof(uint16_t);
 	if (num != 0) {
-		num = _ti_decode_16(&cap);
+		num = le16dec(cap);
+		cap += sizeof(uint16_t);
 		for (; num != 0; num--) {
-			ind = _ti_decode_16(&cap);
-			term->nums[ind] = _ti_decode_num(&cap, rtype);
+			ind = le16dec(cap);
+			cap += sizeof(uint16_t);
+			term->nums[ind] = (short)le16dec(cap);
 			if (flags == 0 && !VALID_NUMERIC(term->nums[ind]))
 				term->nums[ind] = ABSENT_NUMERIC;
+			cap += sizeof(uint16_t);
 		}
 	}
 
-	num = _ti_decode_16(&cap);
+	num = le16dec(cap);
+	cap += sizeof(uint16_t);
 	if (num != 0) {
-		num = _ti_decode_16(&cap);
+		num = le16dec(cap);
+		cap += sizeof(uint16_t);
 		for (; num != 0; num--) {
-			ind = _ti_decode_16(&cap);
-			len = _ti_decode_16(&cap);
+			ind = le16dec(cap);
+			cap += sizeof(uint16_t);
+			len = le16dec(cap);
+			cap += sizeof(uint16_t);
 			if (len > 0)
 				term->strs[ind] = cap;
 			else if (flags == 0)
@@ -163,9 +173,11 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 		}
 	}
 
-	num = _ti_decode_16(&cap);
+	num = le16dec(cap);
+	cap += sizeof(uint16_t);
 	if (num != 0) {
-		num = _ti_decode_16(&cap);
+		num = le16dec(cap);
+		cap += sizeof(uint16_t);
 		if (num != term->_nuserdefs) {
 			free(term->_userdefs);
 			term->_userdefs = NULL;
@@ -176,7 +188,8 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 			return -1;
 		for (num = 0; num < term->_nuserdefs; num++) {
 			ud = &term->_userdefs[num];
-			len = _ti_decode_16(&cap);
+			len = le16dec(cap);
+			cap += sizeof(uint16_t);
 			ud->id = cap;
 			cap += len;
 			ud->type = *cap++;
@@ -191,16 +204,18 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 				break;
 			case 'n':
 				ud->flag = ABSENT_BOOLEAN;
-				ud->num = _ti_decode_num(&cap, rtype);
+				ud->num = (short)le16dec(cap);
 				if (flags == 0 &&
 				    !VALID_NUMERIC(ud->num))
 					ud->num = ABSENT_NUMERIC;
 				ud->str = ABSENT_STRING;
+				cap += sizeof(uint16_t);
 				break;
 			case 's':
 				ud->flag = ABSENT_BOOLEAN;
 				ud->num = ABSENT_NUMERIC;
-				len = _ti_decode_16(&cap);
+				len = le16dec(cap);
+				cap += sizeof(uint16_t);
 				if (len > 0)
 					ud->str = cap;
 				else if (flags == 0)
@@ -294,7 +309,7 @@ _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 		goto out;
 
 	/* If the entry is an alias, load the indexed terminfo description. */
-	if (data8[0] == TERMINFO_ALIAS) {
+	if (data8[0] == 2) {
 		if (cdbr_get(db, le32dec(data8 + 1), &data, &len))
 			goto out;
 		data8 = data;
@@ -424,15 +439,6 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 	int r;
 	size_t i;
 	const struct compiled_term *t;
-	char *namev3;
-
-	namev3 = _ti_getname(TERMINFO_RTYPE, name);
-	if (namev3 != NULL) {
-		r = _ti_findterm(term, namev3, flags);
-		free(namev3);
-		if (r == 1)
-			return r;
-	}
 
 	r = _ti_findterm(term, name, flags);
 	if (r == 1)

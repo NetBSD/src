@@ -445,7 +445,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     /// Open for output.  Default for @c ofstream and fstream.
     static const openmode out =		_S_out;
 
-    /// Truncate an existing stream when opening.  Default for @c ofstream.
+    /// Open for input.  Default for @c ofstream.
     static const openmode trunc =	_S_trunc;
 
     // 27.4.2.1.5  Type ios_base::seekdir

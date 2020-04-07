@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.312 2020/03/14 14:05:43 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.311 2019/12/15 21:11:34 ad Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.312 2020/03/14 14:05:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.311 2019/12/15 21:11:34 ad Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2018,7 +2018,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	return error;
 }
 
-bool
+void
 pmap_remove_all(struct pmap *pm)
 {
 #ifdef MULTIPROCESSOR
@@ -2027,7 +2027,7 @@ pmap_remove_all(struct pmap *pm)
 #endif
 
 	if (pm == pmap_kernel()) {
-		return false;
+		return;
 	}
 	write_user_windows();
 	pm->pm_refs = 0;
@@ -2063,7 +2063,6 @@ pmap_remove_all(struct pmap *pm)
 	 * only flush the right context on each CPU?
 	 */
 	blast_dcache();
-	return false;
 }
 
 /*

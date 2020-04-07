@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.55 2020/03/22 00:25:01 kamil Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.53 2017/08/10 19:03:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

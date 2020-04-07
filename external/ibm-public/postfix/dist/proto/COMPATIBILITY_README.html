@@ -48,7 +48,7 @@ continuity of service.  Based on this logging the system administrator
 can decide if any backwards-compatible settings need to be made
 permanent in main.cf or master.cf, before <a href="#turnoff">turning
 off the backwards-compatibility safety net</a> as described at the
-end of this document. </p>
+end of this document.  </p>
 
 <p> The following messages may be logged: </p>
 
@@ -59,9 +59,6 @@ default setting append_dot_mydomain=yes </a> </p>
 
 <li> <p> <a href="#chroot"> Using backwards-compatible default setting
 chroot=y</a> </p>
-
-<li><p> <a href="#relay_restrictions"> Using backwards-compatible
-default setting smtpd_relay_restrictions = (empty)</a> </p>
 
 <li> <p> <a href="#mynetworks_style"> Using backwards-compatible
 default setting mynetworks_style=subnet </a> </p>
@@ -82,19 +79,15 @@ sections that follow. </p>
 <p> When no more backwards-compatible settings need to be made
 permanent, the system administrator should <a href="#turnoff">turn
 off the backwards-compatibility safety net</a> as described at the
-end of this document. </p>
+end of this document.  </p>
 
 <h2> <a name="append_dot_mydomain"> Using backwards-compatible default
 setting append_dot_mydomain=yes</a> </h2>
 
 <p> The append_dot_mydomain default value has changed from "yes"
-to "no". This could result in unexpected non-delivery of email after
-Postfix is updated from an older version. The backwards-compatibility
-safety net is designed to prevent such surprises. </p>
-
-<p> As long as the append_dot_mydomain parameter is left at
-its implicit default value, and the compatibility_level setting is
-less than 1, Postfix may log one of the following messages:</p>
+to "no". As long as the append_dot_mydomain parameter is left at
+its implicit default value, and the backwards-compatible default
+setting is turned on, Postfix may log one of the following messages:</p>
 
 <ul>
 
@@ -143,16 +136,9 @@ in main.cf: </p>
 setting chroot=y</a> </h2>
 
 <p> The master.cf chroot default value has changed from "y" (yes)
-to "n" (no). The new default avoids the need for copies of system
-files under the Postfix queue directory. However, sites with strict
-security requirements may want to keep the chroot feature enabled
-after updating Postfix from an older version. The backwards-compatibility
-safety net is designed allow the administrator to choose if they
-want to keep the old behavior. </p>
-
-<p> As long as a master.cf chroot field is left at its
-implicit default value, and the compatibility_level setting
-is less than 1, Postfix may log the following message while it
+to "n" (no). As long as a master.cf chroot field is left at its
+implicit default value, and the backwards-compatible default setting
+is turned on, Postfix may log the following message while it
 reads the master.cf file: </p>
 
 <blockquote>
@@ -174,58 +160,15 @@ setting for the "smtp inet" service: </p>
 </pre>
 </blockquote>
 
-<h2> <a name="relay_restrictions"> Using backwards-compatible default
-setting smtpd_relay_restrictions = (empty)</a> </h2>
-
-<p> The smtpd_relay_restrictions feature was introduced with Postfix
-version 2.10, as a safety mechanism for configuration errors in
-smtpd_recipient_restrictions that could make Postfix an open relay.
-</p>
-
-<p> The smtpd_relay_restrictions implicit default setting forbids
-mail to remote destinations from clients that don't match
-permit_mynetworks or permit_sasl_authenticated. This could result
-in unexpected 'Relay access denied' errors after Postfix is updated
-from an older Postfix version. The backwards-compatibility safety
-net is designed to prevent such surprises. </p>
-
-<p> When the compatibility_level less than 1, and the
-smtpd_relay_restrictions parameter is left at its implicit default
-setting, Postfix may log the following message: </p>
-
-<blockquote>
-<pre>
-postfix/smtpd[38463]: using backwards-compatible default setting
-    "smtpd_relay_restrictions = (empty)" to avoid "Relay access
-    denied" error for recipient "user@example.com" from client
-    "host.example.net[10.0.0.2]"
-</pre>
-</blockquote>
-
-<p> If this request should not be blocked, then the system
-administrator should make the backwards-compatible setting
-"smtpd_relay_restrictions=" (i.e. empty) permanent in main.cf:
-
-<blockquote>
-<pre>
-# <b>postconf smtpd_relay_restrictions=</b>
-# <b>postfix reload</b>
-</pre>
-</blockquote>
-
 <h2> <a name="mynetworks_style"> Using backwards-compatible default
 setting mynetworks_style=subnet</a> </h2>
 
 <p> The mynetworks_style default value has changed from "subnet"
 to "host". This parameter is used to implement the "permit_mynetworks"
-feature. The change could in unexpected 'access denied' errors after
-Postfix is updated from an older version. The backwards-compatibility
-safety net is designed to prevent such surprises. </p>
-
-<p> As long as the mynetworks and mynetworks_style parameters are
-left at their implicit default values, and the compatibility_level
-setting is less than 2, the Postfix SMTP server may log one of the
-following messages: </p>
+feature. As long as the mynetworks and mynetworks_style parameters
+are left at their implicit default values, and the backwards-compatible
+default setting is turned on, the Postfix SMTP server may log one
+of the following messages: </p>
 
 <blockquote>
 <pre>
@@ -258,14 +201,10 @@ administrator should make the backwards-compatible setting
 setting relay_domains=$mydestination </a> </h2>
 
 <p> The relay_domains default value has changed from "$mydestination"
-to the empty value. This could result in unexpected 'Relay access
-denied' errors or ETRN errors after Postfix is updated from an older
-version. The backwards-compatibility safety net is designed to
-prevent such surprises. </p>
-
-<p> As long as the relay_domains parameter is left at its implicit
-default value, and the compatibility_level setting is less than 2,
-Postfix may log one of the following messages.  </p>
+to the empty value. As long as the relay_domains parameter is left
+at its implicit default value, and the backwards-compatible default
+setting is turned on, Postfix may log one of the following messages.
+</p>
 
 <ul>
 
@@ -329,13 +268,13 @@ setting smtputf8_enable=no</a> </h2>
 
 <p> The smtputf8_enable default value has changed from "no" to "yes.
 With the new "yes" setting, the Postfix SMTP server rejects non-ASCII
-addresses from clients that don't request SMTPUTF8 support, after
-Postfix is updated from an older version. The backwards-compatibility
-safety net is designed to prevent such surprises. </p>
+addresses from clients that don't request SMTPUTF8 support. With
+the old "no" setting, Postfix will accept such addresses, even if
+such addresses are not permitted by traditional SMTP standards. </p>
 
 <p> As long as the smtputf8_enable parameter is left at its implicit
-default value, and the compatibility_level setting is
-less than 1, Postfix logs a warning each time an SMTP command uses a
+default value, and the backwards-compatible default setting is
+turned on, Postfix logs a warning each time an SMTP command uses a
 non-ASCII address localpart without requesting SMTPUTF8 support: </p>
 
 <blockquote>

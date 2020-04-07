@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.19 2020/03/24 07:12:16 maxv Exp $ */
+/*	$NetBSD: if_umb.c,v 1.12 2020/02/04 05:46:32 thorpej Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.19 2020/03/24 07:12:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.12 2020/02/04 05:46:32 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -372,7 +372,7 @@ umb_attach(device_t parent, device_t self, void *aux)
 				/* cont. anyway */
 			}
 			sc->sc_maxpktlen = UGETW(md->wMaxSegmentSize);
-			DPRINTFN(2, "%s: ctrl_len=%d, maxpktlen=%d, cap=%#x\n",
+			DPRINTFN(2, "%s: ctrl_len=%d, maxpktlen=%d, cap=0x%x\n",
 			    DEVNAM(sc), sc->sc_ctrl_len, sc->sc_maxpktlen,
 			    md->bmNetworkCapabilities);
 			break;
@@ -569,7 +569,7 @@ fail:
 Static int
 umb_detach(device_t self, int flags)
 {
-	struct umb_softc *sc = device_private(self);
+	struct umb_softc *sc = (struct umb_softc *)self;
 	struct ifnet *ifp = GET_IFP(sc);
 	int	 s;
 
@@ -948,12 +948,9 @@ Static void
 umb_statechg_timeout(void *arg)
 {
 	struct umb_softc *sc = arg;
-	struct ifnet *ifp = GET_IFP(sc);
 
 	if (sc->sc_info.regstate != MBIM_REGSTATE_ROAMING || sc->sc_roaming)
-		if (ifp->if_flags & IFF_DEBUG)
-			log(LOG_DEBUG, "%s: state change timeout\n",
-			    DEVNAM(sc));
+		printf("%s: state change timeout\n",DEVNAM(sc));
 	usb_add_task(sc->sc_udev, &sc->sc_umb_task, USB_TASKQ_DRIVER);
 }
 
@@ -1403,7 +1400,7 @@ umb_decode_register_state(struct umb_softc *sc, void *data, int len)
 	umb_getinfobuf(data, len, rs->roamingtxt_offs, rs->roamingtxt_size,
 	    sc->sc_info.roamingtxt, sizeof(sc->sc_info.roamingtxt));
 
-	DPRINTFN(2, "%s: %s, availclass %#x, class %#x, regmode %d\n",
+	DPRINTFN(2, "%s: %s, availclass 0x%x, class 0x%x, regmode %d\n",
 	    DEVNAM(sc), umb_regstate(sc->sc_info.regstate),
 	    le32toh(rs->availclasses), sc->sc_info.cellclass,
 	    sc->sc_info.regmode);
@@ -1435,7 +1432,7 @@ umb_decode_devices_caps(struct umb_softc *sc, void *data, int len)
 	    sc->sc_info.fwinfo, sizeof(sc->sc_info.fwinfo));
 	umb_getinfobuf(data, len, dc->hwinfo_offs, dc->hwinfo_size,
 	    sc->sc_info.hwinfo, sizeof(sc->sc_info.hwinfo));
-	DPRINTFN(2, "%s: max sessions %d, supported classes %#x\n",
+	DPRINTFN(2, "%s: max sessions %d, supported classes 0x%x\n",
 	    DEVNAM(sc), sc->sc_maxsessions, sc->sc_info.supportedclasses);
 	return 1;
 }
@@ -1714,8 +1711,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 	 * IPv4 configuration
 	 */
 	avail = le32toh(ic->ipv4_available);
-	if ((avail & (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) ==
-	    (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) {
+	if (avail & MBIM_IPCONF_HAS_ADDRINFO) {
 		n = le32toh(ic->ipv4_naddr);
 		off = le32toh(ic->ipv4_addroffs);
 
@@ -1735,8 +1731,10 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		sin = (struct sockaddr_in *)&ifra.ifra_dstaddr;
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(ifra.ifra_dstaddr);
-		off = le32toh(ic->ipv4_gwoffs);
-		sin->sin_addr.s_addr = *((uint32_t *)((char *)data + off));
+		if (avail & MBIM_IPCONF_HAS_GWINFO) {
+			off = le32toh(ic->ipv4_gwoffs);
+			sin->sin_addr.s_addr = *((uint32_t *)((char *)data + off));
+		}
 
 		sin = (struct sockaddr_in *)&ifra.ifra_mask;
 		sin->sin_family = AF_INET;
@@ -2560,7 +2558,7 @@ umb_decode_qmi(struct umb_softc *sc, uint8_t *data, int len)
 			case 0x0022:	/* Allocate CID */
 				if (val != 0) {
 					log(LOG_ERR, "%s: allocation of QMI CID"
-					    " failed, error %#x\n", DEVNAM(sc),
+					    " failed, error 0x%x\n", DEVNAM(sc),
 					    val);
 					/* XXX how to proceed? */
 					return;
@@ -2568,16 +2566,16 @@ umb_decode_qmi(struct umb_softc *sc, uint8_t *data, int len)
 				break;
 			case 0x555f:	/* Send FCC Authentication */
 				if (val == 0)
-					DPRINTF("%s: send FCC "
+					log(LOG_INFO, "%s: send FCC "
 					    "Authentication succeeded\n",
 					    DEVNAM(sc));
 				else if (val == 0x001a0001)
-					DPRINTF("%s: FCC Authentication "
+					log(LOG_INFO, "%s: FCC Authentication "
 					    "not required\n", DEVNAM(sc));
 				else
 					log(LOG_INFO, "%s: send FCC "
 					    "Authentication failed, "
-					    "error %#x\n", DEVNAM(sc), val);
+					    "error 0x%x\n", DEVNAM(sc), val);
 
 				/* FCC Auth is needed only once after power-on*/
 				sc->sc_flags &= ~UMBFLG_FCC_AUTH_REQUIRED;
@@ -2760,7 +2758,7 @@ inet_ntop(int af, const void *src, char *dst, socklen_t size)
 Static const char *
 inet_ntop4(const u_char *src, char *dst, size_t size)
 {
-	char tmp[sizeof("255.255.255.255")];
+	char tmp[sizeof "255.255.255.255"];
 	int l;
 
 	l = snprintf(tmp, sizeof(tmp), "%u.%u.%u.%u",
@@ -2789,7 +2787,7 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 	 * Keep this in mind if you think this function should have been coded
 	 * to use pointer overlays.  All the world's not a VAX.
 	 */
-	char tmp[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
+	char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
 	char *tp, *ep;
 	struct { int base, len; } best, cur;
 #define IN6ADDRSZ	16
@@ -2803,7 +2801,7 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 	 *	Copy the input (bytewise) array into a wordwise array.
 	 *	Find the longest run of 0x00's in src[] for :: shorthanding.
 	 */
-	memset(words, '\0', sizeof(words));
+	memset(words, '\0', sizeof words);
 	for (i = 0; i < IN6ADDRSZ; i++)
 		words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;

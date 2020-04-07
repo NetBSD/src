@@ -1,4 +1,4 @@
-/*	$NetBSD: extpar.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: extpar.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -41,7 +41,7 @@
 /*	In case of error the result value is a dynamically-allocated
 /*	string with a description of the problem that includes a
 /*	copy of the offending input.  A non-null result value should
-/*	be destroyed with myfree(). The following describes the errors
+/*	be destroyed with myfree(). The following decribes the errors
 /*	and the state of the buffer and buffer pointer.
 /* .IP "missing closing parenthesis"
 /*	The buffer pointer points to text as if a closing parenthesis

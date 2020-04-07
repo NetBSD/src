@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf_nint.c,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_conf_nint.c,v 1.1.1.2 2011/03/02 19:32:15 tron Exp $	*/
 
 /*++
 /* NAME
@@ -80,11 +80,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -193,21 +188,9 @@ void    set_mail_conf_nint(const char *name, const char *value)
 
 void    set_mail_conf_nint_int(const char *name, int value)
 {
-    const char myname[] = "set_mail_conf_nint_int";
     char    buf[BUFSIZ];		/* yeah! crappy code! */
 
-#ifndef NO_SNPRINTF
-    ssize_t ret;
-
-    ret = snprintf(buf, sizeof(buf), "%d", value);
-    if (ret < 0)
-	msg_panic("%s: output error for %%d", myname);
-    if (ret >= sizeof(buf))
-	msg_panic("%s: output for %%d exceeds space %ld",
-		  myname, (long) sizeof(buf));
-#else
     sprintf(buf, "%d", value);			/* yeah! more crappy code! */
-#endif
     mail_conf_update(name, buf);
 }
 

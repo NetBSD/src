@@ -979,11 +979,10 @@ is_multivariate_chrec (const_tree chrec)
     return false;
 }
 
-/* Determines whether the chrec contains symbolic names or not.  If LOOP isn't
-   NULL, we also consider chrec wrto outer loops of LOOP as symbol.  */
+/* Determines whether the chrec contains symbolic names or not.  */
 
 bool
-chrec_contains_symbols (const_tree chrec, struct loop *loop)
+chrec_contains_symbols (const_tree chrec)
 {
   int i, n;
 
@@ -1000,14 +999,9 @@ chrec_contains_symbols (const_tree chrec, struct loop *loop)
       || TREE_CODE (chrec) == FIELD_DECL)
     return true;
 
-  if (loop != NULL
-      && TREE_CODE (chrec) == POLYNOMIAL_CHREC
-      && flow_loop_nested_p (get_chrec_loop (chrec), loop))
-    return true;
-
   n = TREE_OPERAND_LENGTH (chrec);
   for (i = 0; i < n; i++)
-    if (chrec_contains_symbols (TREE_OPERAND (chrec, i), loop))
+    if (chrec_contains_symbols (TREE_OPERAND (chrec, i)))
       return true;
   return false;
 }

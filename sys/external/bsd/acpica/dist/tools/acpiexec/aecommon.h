@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,9 +87,7 @@ typedef struct ae_debug_regions
 typedef struct init_file_entry
 {
     char                    *Name;
-    char                    *Value;
     ACPI_OPERAND_OBJECT     *ObjDesc;
-    BOOLEAN                 IsUsed;
 
 } INIT_FILE_ENTRY;
 
@@ -240,22 +238,18 @@ int
 AeOpenInitializationFile (
     char                    *Filename);
 
-ACPI_STATUS
+void
 AeProcessInitFile (
     void);
+
+ACPI_STATUS
+AeSetupConfiguration (
+    void                    *RegionAddr);
 
 ACPI_STATUS
 AeLookupInitFileEntry (
     char                    *Pathname,
     ACPI_OPERAND_OBJECT     **ObjDesc);
-
-void
-AeDisplayUnusedInitFileItems (
-    void);
-
-void
-AeDeleteInitFileList (
-    void);
 
 /* aeexec */
 
@@ -273,10 +267,6 @@ AeGetDevices (
     UINT32                  NestingLevel,
     void                    *Context,
     void                    **ReturnValue);
-
-ACPI_STATUS
-AeSetupConfiguration (
-    void                    *RegionAddr);
 
 ACPI_STATUS
 ExecuteOSI (

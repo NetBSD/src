@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.22 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.21 2020/02/08 07:53:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.22 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.21 2020/02/08 07:53:23 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -348,7 +348,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 		ucaa.ucaa_methods = &uhmodem_methods;
 		ucaa.ucaa_arg = sc;
 		ucaa.ucaa_info = comname;
-		DPRINTF(("uhmodem: int#=%d, in = %#x, out = %#x, intr = %#x\n",
+		DPRINTF(("uhmodem: int#=%d, in = 0x%x, out = 0x%x, intr = 0x%x\n",
 		    i, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
 		    sc->sc_intr_number));
 		sc->sc_subdevs[i] = config_found_sm_loc(self, "ucombus", NULL,
@@ -607,7 +607,7 @@ a2502_init(struct usbd_device *dev)
 #ifdef UHMODEM_DEBUG
 	printf("%s: readdata: ", __func__);
 	for (i = 0; i < 7; i++)
-		printf("%#x ", data[i]);
+		printf("0x%x ", data[i]);
 #endif
 	if (uhmodem_regwrite(dev, init_cmd, sizeof(init_cmd)) ) {
 		DPRINTF(("%s: write fail\n", __func__));
@@ -622,7 +622,7 @@ a2502_init(struct usbd_device *dev)
 	printf("%s: readdata: ", __func__);
 	printf(" => ");
 	for (i = 0; i < 7; i++)
-		printf("%#x ", data[i]);
+		printf("0x%x ", data[i]);
 	printf("\n");
 #endif
 	return 0;

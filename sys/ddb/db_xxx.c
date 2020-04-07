@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.74 2020/03/10 15:58:37 christos Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.73 2020/02/01 02:23:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.74 2020/03/10 15:58:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.73 2020/02/01 02:23:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -133,7 +133,7 @@ db_kill_proc(db_expr_t addr, bool haddr,
 	if (t)
 		mutex_exit(proc_lock);
 #else
-	db_kernelonly();
+	db_printf("This command is not currently supported.\n");
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68 2020/03/17 17:18:49 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.67 2019/12/08 11:53:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,9 +83,6 @@ x86_curlwp(void)
 #endif /* XENPV */
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 #define LWP_PC(l)		((l)->l_md.md_regs->tf_rip)
-
-void *cpu_uarea_alloc(bool);		
-bool cpu_uarea_free(void *);
 
 #endif	/* _KERNEL */
 

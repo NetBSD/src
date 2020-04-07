@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.484 2020/03/14 20:45:23 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.483 2020/03/01 21:39:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.484 2020/03/14 20:45:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.483 2020/03/01 21:39:07 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -422,8 +422,10 @@ brelvp(struct buf *bp)
 		bufremvn(bp);
 
 	if ((vp->v_iflag & (VI_ONWORKLST | VI_PAGES)) == VI_ONWORKLST &&
-	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
+	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+	    	KASSERT((vp->v_iflag & VI_WRMAPDIRTY) == 0);
 		vn_syncer_remove_from_worklist(vp);
+	}
 
 	bp->b_objlock = &buffer_lock;
 	bp->b_vp = NULL;
@@ -461,8 +463,10 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 		listheadp = &vp->v_cleanblkhd;
 		if ((vp->v_iflag & (VI_ONWORKLST | VI_PAGES)) ==
 		    VI_ONWORKLST &&
-		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
+		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+		    	KASSERT((vp->v_iflag & VI_WRMAPDIRTY) == 0);
 			vn_syncer_remove_from_worklist(vp);
+		}
 	} else {
 		listheadp = &vp->v_dirtyblkhd;
 		if ((vp->v_iflag & VI_ONWORKLST) == 0) {

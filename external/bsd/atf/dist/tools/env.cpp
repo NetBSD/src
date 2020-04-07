@@ -48,16 +48,9 @@ namespace impl = tools::env;
 std::string
 impl::get(const std::string& name)
 {
-    const char *n =name.c_str();
-    const char* val = getenv(n);
-    if (val != NULL)
-	return val;
-    if (strcmp(n, "PATH") == 0)
-	return "/bin:/usr/bin";
-	
-    throw tools::system_error(IMPL_NAME "::set",
-			    "Cannot get environment variable '" + name +
-			    "'", errno);
+    const char* val = getenv(name.c_str());
+    assert(val != NULL);
+    return val;
 }
 
 bool

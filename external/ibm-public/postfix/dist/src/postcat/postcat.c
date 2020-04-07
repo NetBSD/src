@@ -1,4 +1,4 @@
-/*	$NetBSD: postcat.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: postcat.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -69,10 +69,6 @@
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
-/* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-/*	The list of environment parameters that a privileged Postfix
-/*	process will import from a non-Postfix parent process, or name=value
-/*	environment overrides.
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* FILES
@@ -116,7 +112,6 @@
 #include <vstring_vstream.h>
 #include <stringops.h>
 #include <warn_stat.h>
-#include <clean_env.h>
 
 /* Global library. */
 
@@ -129,7 +124,6 @@
 #include <mail_proto.h>
 #include <is_header.h>
 #include <lex_822.h>
-#include <mail_parm_split.h>
 
 /* Application-specific. */
 
@@ -432,7 +426,6 @@ int     main(int argc, char **argv)
     };
     char  **cpp;
     int     tries;
-    ARGV   *import_env;
 
     /*
      * Fingerprint executables and core dumps.
@@ -495,9 +488,6 @@ int     main(int argc, char **argv)
      * Further initialization...
      */
     mail_conf_read();
-    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
-    update_env(import_env->argv);
-    argv_free(import_env);
 
     /*
      * Initialize.

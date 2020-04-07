@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.26 2020/03/08 08:25:36 skrll Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.25 2020/02/16 20:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.26 2020/03/08 08:25:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.25 2020/02/16 20:28:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -73,7 +73,7 @@ void
 fdtbus_intr_init(void)
 {
 
-	mutex_init(&fdtbus_interrupt_cookie_mutex, MUTEX_DEFAULT, IPL_HIGH);
+	mutex_init(&fdtbus_interrupt_cookie_mutex, MUTEX_SPIN, IPL_HIGH);
 	cv_init(&fdtbus_interrupt_cookie_wait, "fdtintr");
 }
 

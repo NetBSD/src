@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_map.h,v 1.2 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: mail_addr_map.h,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
 
 #ifndef _MAIL_ADDR_MAP_H_INCLUDED_
 #define _MAIL_ADDR_MAP_H_INCLUDED_
@@ -21,18 +21,12 @@
  /*
   * Global library.
   */
-#include <mail_addr_form.h>
 #include <maps.h>
 
  /*
   * External interface.
   */
-extern ARGV *mail_addr_map_opt(MAPS *, const char *, int, int, int, int);
-
- /* The least-overhead form. */
-#define mail_addr_map_internal(path, address, propagate) \
-	mail_addr_map_opt((path), (address), (propagate), \
-		  MA_FORM_INTERNAL, MA_FORM_EXTERNAL, MA_FORM_INTERNAL)
+extern ARGV *mail_addr_map(MAPS *, const char *, int);
 
 /* LICENSE
 /* .ad
@@ -43,11 +37,6 @@ extern ARGV *mail_addr_map_opt(MAPS *, const char *, int, int, int, int);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 #endif

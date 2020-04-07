@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.162 2020/03/14 18:08:39 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.161 2019/02/03 03:19:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.162 2020/03/14 18:08:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.161 2019/02/03 03:19:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -635,8 +635,10 @@ nfssvc_nfsd(struct nfssvc_copy_ops *ops, struct nfsd_srvargs *nsd,
 	for (;;) {
 		bool dummy;
 
-		preempt_point();
-
+		if ((curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		    != 0) {
+			preempt();
+		}
 		if (nfsd->nfsd_slp == NULL) {
 			mutex_enter(&nfsd_lock);
 			while (nfsd->nfsd_slp == NULL &&

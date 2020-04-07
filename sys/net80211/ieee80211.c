@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.59 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.58 2020/02/04 05:46:32 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.59 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.58 2020/02/04 05:46:32 thorpej Exp $");
 #endif
 
 /*
@@ -346,9 +346,8 @@ ieee80211_ieee2mhz(u_int chan, u_int flags)
  * ieee80211_attach and before most anything else.
  */
 void
-ieee80211_media_init_with_lock(struct ieee80211com *ic,
-	ifm_change_cb_t media_change, ifm_stat_cb_t media_stat,
-	ieee80211_media_lock_t *lock)
+ieee80211_media_init(struct ieee80211com *ic,
+	ifm_change_cb_t media_change, ifm_stat_cb_t media_stat)
 {
 #define	ADD(_ic, _s, _o) \
 	ifmedia_add(&(_ic)->ic_media, \
@@ -372,8 +371,7 @@ ieee80211_media_init_with_lock(struct ieee80211com *ic,
 	/*
 	 * Fill in media characteristics.
 	 */
-	ifmedia_init_with_lock(&ic->ic_media, 0,
-	    media_change, media_stat, lock);
+	ifmedia_init(&ic->ic_media, 0, media_change, media_stat);
 	maxrate = 0;
 	memset(&allrates, 0, sizeof(allrates));
 	for (mode = IEEE80211_MODE_AUTO; mode < IEEE80211_MODE_MAX; mode++) {
@@ -454,14 +452,6 @@ ieee80211_media_init_with_lock(struct ieee80211com *ic,
 	if (maxrate)
 		ifp->if_baudrate = IF_Mbps(maxrate);
 #undef ADD
-}
-
-void
-ieee80211_media_init(struct ieee80211com *ic,
-	ifm_change_cb_t media_change, ifm_stat_cb_t media_stat)
-{
-
-	ieee80211_media_init_with_lock(ic, media_change, media_stat, NULL);
 }
 
 void

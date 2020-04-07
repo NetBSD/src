@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.23 2020/03/20 17:19:25 sevan Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.22 2018/08/20 04:50:56 riastradh Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -171,8 +171,6 @@ struct wpi_softc {
 	int			sc_tx_timer;
 
 	struct bpf_if *		sc_drvbpf;
-
-	kmutex_t 		sc_media_mtx;	/* XXX */
 
 	union {
 		struct wpi_rx_radiotap_header th;

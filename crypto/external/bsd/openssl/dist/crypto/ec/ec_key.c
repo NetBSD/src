@@ -10,7 +10,7 @@
 
 #include "internal/cryptlib.h"
 #include <string.h>
-#include "ec_local.h"
+#include "ec_lcl.h"
 #include "internal/refcount.h"
 #include <openssl/err.h>
 #include <openssl/engine.h>
@@ -121,7 +121,6 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
                 return NULL;
         }
     }
-
 
     /* copy the rest */
     dest->enc_flag = src->enc_flag;

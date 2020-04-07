@@ -61,46 +61,48 @@ POSTCONF(1)                                                        POSTCONF(1)
 <b>DESCRIPTION</b>
        By default, the <a href="postconf.1.html"><b>postconf</b>(1)</a> command displays the values of <a href="postconf.5.html"><b>main.cf</b></a> con-
        figuration  parameters,  and  warns  about possible mis-typed parameter
-       names (Postfix 2.9 and later).  The command  can  also  change  <a href="postconf.5.html"><b>main.cf</b></a>
-       configuration parameter values, or display other configuration informa-
-       tion about the Postfix mail system.
+       names (Postfix 2.9 and later).  It can also change  <a href="postconf.5.html"><b>main.cf</b></a>  configura-
+       tion parameter values, or display other configuration information about
+       the Postfix mail system.
 
        Options:
 
-       <b>-a</b>     List the available SASL  plug-in  types  for  the  Postfix  SMTP
-              server.  The  plug-in  type is selected with the <b><a href="postconf.5.html#smtpd_sasl_type">smtpd_sasl_type</a></b>
-              configuration parameter by specifying one of  the  names  listed
-              below.
+       <b>-a</b>     List the available SASL server plug-in types.  The SASL  plug-in
+              type  is selected with the <b><a href="postconf.5.html#smtpd_sasl_type">smtpd_sasl_type</a></b> configuration parame-
+              ter by specifying one of the names listed below.
 
-              <b>cyrus</b>  This  server  plug-in  is available when Postfix is built
+              <b>cyrus</b>  This server plug-in is available when  Postfix  is  built
                      with Cyrus SASL support.
 
               <b>dovecot</b>
                      This  server  plug-in  uses  the  Dovecot  authentication
-                     server,  and  is available when Postfix is built with any
+                     server, and is available when Postfix is built  with  any
                      form of SASL support.
 
               This feature is available with Postfix 2.3 and later.
 
-       <b>-A</b>     List the available SASL  plug-in  types  for  the  Postfix  SMTP
-              client.  The plug-in type is selected with the <b><a href="postconf.5.html#smtp_sasl_type">smtp_sasl_type</a></b> or
-              <b><a href="postconf.5.html#lmtp_sasl_type">lmtp_sasl_type</a></b> configuration parameters by specifying one of the
-              names listed below.
+       <b>-A</b>     List  the available SASL client plug-in types.  The SASL plug-in
+              type is selected with the <b><a href="postconf.5.html#smtp_sasl_type">smtp_sasl_type</a></b> or <b><a href="postconf.5.html#lmtp_sasl_type">lmtp_sasl_type</a></b>  con-
+              figuration  parameters  by  specifying  one  of the names listed
+              below.
 
-              <b>cyrus</b>  This  client  plug-in  is available when Postfix is built
+              <b>cyrus</b>  This client plug-in is available when  Postfix  is  built
                      with Cyrus SASL support.
 
               This feature is available with Postfix 2.3 and later.
 
        <b>-b</b> [<i>template</i><b>_</b><i>file</i>]
               Display the message text that appears at the beginning of deliv-
-              ery  status notification (DSN) messages, expanding $<b>name</b> expres-
+              ery status notification (DSN) messages, replacing $<b>name</b>  expres-
               sions with actual values as described in <a href="bounce.5.html"><b>bounce</b>(5)</a>.
 
-              To override the <b><a href="postconf.5.html#bounce_template_file">bounce_template_file</a></b> parameter setting,  specify
-              a  template  file  name  at the end of the "<b>postconf -b</b>" command
-              line. Specify an empty file name to display  built-in  templates
-              (in shell language: "").
+              To override the built-in templates, specify a template file name
+              at the end of the <a href="postconf.1.html"><b>postconf</b>(1)</a> command line, or  specify  a  file
+              name in <a href="postconf.5.html"><b>main.cf</b></a> with the <b><a href="postconf.5.html#bounce_template_file">bounce_template_file</a></b> parameter.
+
+              To  force  selection of the built-in templates, specify an empty
+              template file name on the <a href="postconf.1.html"><b>postconf</b>(1)</a>  command  line  (in  shell
+              language: "").
 
               This feature is available with Postfix 2.3 and later.
 
@@ -140,7 +142,7 @@ POSTCONF(1)                                                        POSTCONF(1)
               <i>vice/type=value</i>" on the <a href="postconf.1.html"><b>postconf</b>(1)</a> command line.
 
               With <b>-F</b>, edit the <a href="master.5.html"><b>master.cf</b></a> configuration file, and replace  one
-              or  more  service fields with new values as specified with "<i>ser-</i>
+              or  more  service  fields  with new values as specied with "<i>ser-</i>
               <i>vice/type/field=value</i>" on the  <a href="postconf.1.html"><b>postconf</b>(1)</a>  command  line.  Cur-
               rently,  the  "command" field contains the command name and com-
               mand arguments.  this may change in the near future, so that the
@@ -149,7 +151,7 @@ POSTCONF(1)                                                        POSTCONF(1)
 
               With <b>-P</b>, edit the  <a href="master.5.html"><b>master.cf</b></a>  configuration  file,  and  add  or
               update  one  or  more  service  parameter  settings  (-o parame-
-              ter=value settings) with new  values  as  specified  with  "<i>ser-</i>
+              ter=value settings)  with  new  values  as  specied  with  "<i>ser-</i>
               <i>vice/type/parameter=value</i>" on the <a href="postconf.1.html"><b>postconf</b>(1)</a> command line.
 
               In all cases the file is copied to a temporary file then renamed
@@ -213,43 +215,33 @@ POSTCONF(1)                                                        POSTCONF(1)
                      tal updates.  Available on systems with support  for  CDB
                      databases.
 
-                     This feature is available with Postfix 2.2 and later.
-
               <b>cidr</b>   A   table   that   associates   values   with   Classless
                      Inter-Domain Routing (CIDR) patterns. This  is  described
                      in <a href="cidr_table.5.html"><b>cidr_table</b>(5)</a>.
-
-                     This feature is available with Postfix 2.2 and later.
 
               <b>dbm</b>    An indexed file type based on hashing.  Available on sys-
                      tems with support for DBM databases.
 
               <b>environ</b>
                      The UNIX process environment array. The lookup key is the
-                     environment  variable  name;  the  table name is ignored.
-                     Originally implemented for testing, someone may find this
-                     useful someday.
+                     variable  name. Originally implemented for testing, some-
+                     one may find this useful someday.
 
-              <b>fail</b>   A  table that reliably fails all requests. The lookup ta-
-                     ble name is used for logging. This table exists  to  sim-
+              <b>fail</b>   A table that reliably fails all requests. The lookup  ta-
+                     ble  name  is used for logging. This table exists to sim-
                      plify Postfix error tests.
-
-                     This feature is available with Postfix 2.9 and later.
 
               <b>hash</b>   An indexed file type based on hashing.  Available on sys-
                      tems with support for Berkeley DB databases.
 
               <b>inline</b> (read-only)
-                     A non-shared, in-memory lookup table. Example:  "<b><a href="DATABASE_README.html#types">inline</a>:{</b>
-                     <i>key</i><b>=</b><i>value</i><b>,  {</b>  <i>key</i>  <b>=</b>  <i>text with whitespace or comma</i> <b>}}</b>".
-                     Key-value pairs are separated  by  whitespace  or  comma;
-                     with  a key-value pair inside "<b>{}</b>", whitespace is ignored
-                     after the opening "<b>{</b>", around the  "<b>=</b>"  between  key  and
-                     value,  and  before the closing "<b>}</b>". Inline tables elimi-
-                     nate the need to create a database file for  just  a  few
-                     fixed elements.  See also the <i><a href="DATABASE_README.html#types">static</a>:</i> map type.
-
-                     This feature is available with Postfix 3.0 and later.
+                     A  non-shared, in-memory lookup table. Example: "<b><a href="DATABASE_README.html#types">inline</a>:{</b>
+                     <i>key</i><b>=</b><i>value</i><b>, {</b> <i>key</i> <b>=</b> <i>text with  whitespace  or  comma</i>  <b>}}</b>".
+                     Key-value  pairs  are  separated  by whitespace or comma;
+                     whitespace after "<b>{</b>" and before "<b>}</b>"  is  ignored.  Inline
+                     tables  eliminate  the need to create a database file for
+                     just a few fixed elements.   See  also  the  <i><a href="DATABASE_README.html#types">static</a>:</i>  map
+                     type.
 
               <b>internal</b>
                      A  non-shared, in-memory hash table. Its content are lost
@@ -259,16 +251,12 @@ POSTCONF(1)                                                        POSTCONF(1)
                      file).   Available on systems with support for LMDB data-
                      bases.  This is described in <a href="lmdb_table.5.html"><b>lmdb_table</b>(5)</a>.
 
-                     This feature is available with Postfix 2.11 and later.
-
               <b>ldap</b> (read-only)
                      LDAP database client. This is described in <a href="ldap_table.5.html"><b>ldap_table</b>(5)</a>.
 
               <b>memcache</b>
                      Memcache  database  client.  This  is  described  in <a href="memcache_table.5.html"><b>mem-</b></a>
                      <a href="memcache_table.5.html"><b>cache_table</b>(5)</a>.
-
-                     This feature is available with Postfix 2.9 and later.
 
               <b>mysql</b> (read-only)
                      MySQL database client.  Available on systems with support
@@ -283,8 +271,6 @@ POSTCONF(1)                                                        POSTCONF(1)
                      PostgreSQL   database   client.   This  is  described  in
                      <a href="pgsql_table.5.html"><b>pgsql_table</b>(5)</a>.
 
-                     This feature is available with Postfix 2.1 and later.
-
               <b>pipemap</b> (read-only)
                      A lookup table that  constructs  a  pipeline  of  tables.
                      Example:  "<b><a href="DATABASE_README.html#types">pipemap</a>:{</b><i>type</i><b>_</b><i>1:name</i><b>_</b><i>1,  ..., type</i><b>_</b><i>n:name</i><b>_</b><i>n</i><b>}</b>".
@@ -296,12 +282,8 @@ POSTCONF(1)                                                        POSTCONF(1)
                      "<a href="DATABASE_README.html#types">pipemap</a>:" table name must be "<b>{</b>" and "<b>}</b>".  Within these,
                      individual maps are separated with comma or whitespace.
 
-                     This feature is available with Postfix 3.0 and later.
-
               <b>proxy</b>  Postfix <a href="proxymap.8.html"><b>proxymap</b>(8)</a> client for shared access  to  Postfix
                      databases. The table name syntax is <i>type</i><b>:</b><i>name</i>.
-
-                     This feature is available with Postfix 2.0 and later.
 
               <b>randmap</b> (read-only)
                      An  in-memory table that performs random selection. Exam-
@@ -312,8 +294,6 @@ POSTCONF(1)                                                        POSTCONF(1)
                      results are separated with comma or whitespace. To give a
                      specific result more weight, specify it multiple times.
 
-                     This feature is available with Postfix 3.0 and later.
-
               <b>regexp</b> (read-only)
                      A  lookup  table  based  on regular expressions. The file
                      format is described in <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a>.
@@ -321,92 +301,75 @@ POSTCONF(1)                                                        POSTCONF(1)
               <b>sdbm</b>   An indexed file type based on hashing.  Available on sys-
                      tems with support for SDBM databases.
 
-                     This feature is available with Postfix 2.2 and later.
-
               <b>socketmap</b> (read-only)
                      Sendmail-style   socketmap  client.  The  table  name  is
                      <b>inet</b>:<i>host</i>:<i>port</i>:<i>name</i> for a TCP/IP  server,  or  <b>unix</b>:<i>path-</i>
                      <i>name</i>:<i>name</i>  for a UNIX-domain server. This is described in
                      <a href="socketmap_table.5.html"><b>socketmap_table</b>(5)</a>.
 
-                     This feature is available with Postfix 2.10 and later.
-
               <b>sqlite</b> (read-only)
                      SQLite database. This is described in <a href="sqlite_table.5.html"><b>sqlite_table</b>(5)</a>.
-
-                     This feature is available with Postfix 2.8 and later.
 
               <b>static</b> (read-only)
                      A table that always returns its name  as  lookup  result.
                      For example, <b><a href="DATABASE_README.html#types">static</a>:foobar</b> always returns the string <b>foo-</b>
                      <b>bar</b> as lookup result. Specify "<b><a href="DATABASE_README.html#types">static</a>:{</b> <i>text with  white-</i>
                      <i>space</i>  <b>}</b>"  when the result contains whitespace; this form
-                     ignores whitespace after the opening "<b>{</b>" and  before  the
-                     closing "<b>}</b>". See also the <i><a href="DATABASE_README.html#types">inline</a>:</i> map.
-
-                     The form "<b><a href="DATABASE_README.html#types">static</a>:{</b><i>text</i><b>}</b> is available with Postfix 3.0 and
-                     later.
+                     ignores whitespace after "<b>{</b>" and before "<b>}</b>". See also the
+                     <i><a href="DATABASE_README.html#types">inline</a>:</i> map.
 
               <b>tcp</b> (read-only)
                      TCP/IP client. The protocol is described in <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.
 
               <b>texthash</b> (read-only)
-                     Produces  similar results as <a href="DATABASE_README.html#types">hash</a>: files, except that you
-                     don't need to run the <a href="postmap.1.html"><b>postmap</b>(1)</a> command before  you  can
-                     use  the  file, and that it does not detect changes after
+                     Produces similar results as <a href="DATABASE_README.html#types">hash</a>: files, except that  you
+                     don't  need  to run the <a href="postmap.1.html"><b>postmap</b>(1)</a> command before you can
+                     use the file, and that it does not detect  changes  after
                      the file is read.
 
-                     This feature is available with Postfix 2.8 and later.
-
               <b>unionmap</b> (read-only)
-                     A table that sends each query to multiple  lookup  tables
-                     and  that  concatenates  all  found results, separated by
+                     A  table  that sends each query to multiple lookup tables
+                     and that concatenates all  found  results,  separated  by
                      comma.  The table name syntax is the same as for <b>pipemap</b>.
 
-                     This feature is available with Postfix 3.0 and later.
-
               <b>unix</b> (read-only)
-                     A  limited  view of the UNIX authentication database. The
+                     A limited view of the UNIX authentication  database.  The
                      following tables are implemented:
 
                      <b>unix:passwd.byname</b>
-                            The table is the UNIX password database.  The  key
-                            is  a  login  name.  The result is a password file
+                            The  table  is the UNIX password database. The key
+                            is a login name.  The result is  a  password  file
                             entry in <b>passwd</b>(5) format.
 
                      <b>unix:group.byname</b>
                             The table is the UNIX group database. The key is a
-                            group  name.   The result is a group file entry in
+                            group name.  The result is a group file  entry  in
                             <b>group</b>(5) format.
 
-              Other table types may exist depending on how Postfix was  built.
+              Other  table types may exist depending on how Postfix was built.
 
-       <b>-M</b>     Show  <a href="master.5.html"><b>master.cf</b></a>  file contents instead of <a href="postconf.5.html"><b>main.cf</b></a> file contents.
+       <b>-M</b>     Show <a href="master.5.html"><b>master.cf</b></a> file contents instead of <a href="postconf.5.html"><b>main.cf</b></a>  file  contents.
               Specify <b>-Mf</b> to fold long lines for human readability.
 
               Specify zero or more arguments, each with a <i>service-name</i> or <i>ser-</i>
-              <i>vice-name/service-type</i>  pair,  where  <i>service-name</i>  is the first
-              field of a <a href="master.5.html">master.cf</a> entry and <i>service-type</i>  is  one  of  (<b>inet</b>,
+              <i>vice-name/service-type</i> pair, where  <i>service-name</i>  is  the  first
+              field  of  a  <a href="master.5.html">master.cf</a>  entry and <i>service-type</i> is one of (<b>inet</b>,
               <b>unix</b>, <b>fifo</b>, or <b>pass</b>).
 
-              If  <i>service-name</i> or <i>service-name/service-type</i> is specified, only
-              the matching <a href="master.5.html">master.cf</a> entries  will  be  output.  For  example,
-              "<b>postconf  -Mf  smtp</b>" will output all services named "smtp", and
-              "<b>postconf -Mf smtp/inet</b>" will output only the smtp service  that
-              listens  on  the network.  Trailing service type fields that are
+              If <i>service-name</i> or <i>service-name/service-type</i> is specified,  only
+              the  matching  <a href="master.5.html">master.cf</a>  entries  will  be output. For example,
+              "<b>postconf -Mf smtp</b>" will output all services named  "smtp",  and
+              "<b>postconf  -Mf smtp/inet</b>" will output only the smtp service that
+              listens on the network.  Trailing service type fields  that  are
               omitted will be handled as "*" wildcard fields.
 
               This feature is available with Postfix 2.9 and later. The syntax
-              was  changed  from  "<i>name.type</i>" to "<i>name/type</i>", and "*" wildcard
+              was changed from "<i>name.type</i>" to "<i>name/type</i>",  and  "*"  wildcard
               support was added with Postfix 2.11.
 
        <b>-n</b>     Show only configuration parameters that have explicit <i>name=value</i>
-              settings  in  <a href="postconf.5.html"><b>main.cf</b></a>.  Specify <b>-nf</b> to fold long lines for human
-              readability (Postfix 2.9 and later). To show settings that  dif-
-              fer from built-in defaults only, use the following bash syntax:
-                  comm -23 &lt;(postconf -n) &lt;(postconf -d)
-              Replace  "-23"  with  "-12"  to  show  settings  that  duplicate
-              built-in defaults.
+              settings in <a href="postconf.5.html"><b>main.cf</b></a>.  Specify <b>-nf</b> to fold long lines  for  human
+              readability (Postfix 2.9 and later).
 
        <b>-o</b> <i>name=value</i>
               Override <a href="postconf.5.html"><b>main.cf</b></a> parameter settings.
@@ -417,26 +380,29 @@ POSTCONF(1)                                                        POSTCONF(1)
 
               This feature is available with Postfix 2.11 and later.
 
-       <b>-P</b>     Show <a href="master.5.html"><b>master.cf</b></a> service parameter settings (by default  all  ser-
-              vices  and  all  parameters), formatted as "<i>service/type/parame-</i>
+       <b>-P</b>     Show  <a href="master.5.html"><b>master.cf</b></a>  service parameter settings (by default all ser-
+              vices and all parameters),  formatted  as  "<i>service/type/parame-</i>
               <i>ter=value</i>", one per line.  Specify <b>-Pf</b> to fold long lines.
 
-              Specify one or more "<i>service/type/parameter</i>"  instances  on  the
-              <a href="postconf.1.html"><b>postconf</b>(1)</a>  command  line  to limit the output to parameters of
-              interest.  Trailing parameter name or service type  fields  that
+              Specify  one  or  more "<i>service/type/parameter</i>" instances on the
+              <a href="postconf.1.html"><b>postconf</b>(1)</a> command line to limit the output  to  parameters  of
+              interest.   Trailing  parameter name or service type fields that
               are omitted will be handled as "*" wildcard fields.
 
               This feature is available with Postfix 2.11 and later.
 
        <b>-t</b> [<i>template</i><b>_</b><i>file</i>]
-              Display  the templates for text that appears at the beginning of
-              delivery status notification (DSN) messages,  without  expanding
+              Display the templates for text that appears at the beginning  of
+              delivery  status  notification (DSN) messages, without expanding
               $<b>name</b> expressions.
 
-              To  override the <b><a href="postconf.5.html#bounce_template_file">bounce_template_file</a></b> parameter setting, specify
-              a template file name at the end of  the  "<b>postconf  -t</b>"  command
-              line.  Specify  an empty file name to display built-in templates
-              (in shell language: "").
+              To override the built-in templates, specify a template file name
+              at  the  end  of the <a href="postconf.1.html"><b>postconf</b>(1)</a> command line, or specify a file
+              name in <a href="postconf.5.html"><b>main.cf</b></a> with the <b><a href="postconf.5.html#bounce_template_file">bounce_template_file</a></b> parameter.
+
+              To force selection of the built-in templates, specify  an  empty
+              template  file  name  on  the <a href="postconf.1.html"><b>postconf</b>(1)</a> command line (in shell
+              language: "").
 
               This feature is available with Postfix 2.3 and later.
 
@@ -479,8 +445,8 @@ POSTCONF(1)                                                        POSTCONF(1)
 
               With <b>-P</b>, edit the <a href="master.5.html"><b>master.cf</b></a> configuration file, and  remove  one
               or more service parameter settings (-o parameter=value settings)
-              as specified with "<i>service/type/parameter</i>"  on  the  <a href="postconf.1.html"><b>postconf</b>(1)</a>
-              command line.
+              as specied with "<i>service/type/parameter</i>" on the <a href="postconf.1.html"><b>postconf</b>(1)</a> com-
+              mand line.
 
               In all cases the file is copied to a temporary file then renamed
               into place.  Specify quotes to protect special characters on the

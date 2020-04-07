@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2020/03/25 17:11:06 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2019/10/21 02:36:48 jhigh Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ LDADD+=		-largon2
 
 WARNS?=	5
 
-MAN=	crypt.3 pw_gensalt.3
+MAN=	crypt.3
 MLINKS= crypt.3 encrypt.3 crypt.3 setkey.3
 
 

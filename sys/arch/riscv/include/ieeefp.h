@@ -1,6 +1,6 @@
-/*	$NetBSD: ieeefp.h,v 1.2 2020/03/14 16:12:16 skrll Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.1 2014/09/19 17:36:26 matt Exp $	*/
 
-/*
+/* 
  * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995
  * Public domain.
  */

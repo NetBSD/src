@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_expand.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: mac_expand.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -18,7 +18,7 @@
 /* DESCRIPTION
 /*	This module implements parameter-less named attribute
 /*	expansions, both conditional and unconditional. As of Postfix
-/*	3.0 this code supports relational expression evaluation.
+/*	3.0 this code supports logical expression evaluation.
 /*
 /*	In this text, an attribute is considered "undefined" when its value
 /*	is a null pointer.  Otherwise, the attribute is considered "defined"
@@ -26,9 +26,7 @@
 /*
 /*	In the text below, the legacy form $(...) is equivalent to
 /*	${...}. The legacy form $(...) may eventually disappear
-/*	from documentation. In the text below, the name in $name
-/*	and ${name...} must contain only characters from the set
-/*	[a-zA-Z0-9_].
+/*	from documentation.
 /*
 /*	The following substitutions are supported:
 /* .IP "$name, ${name}"
@@ -38,28 +36,28 @@
 /* .IP "${name?text}, ${name?{text}}"
 /*	Conditional attribute-based substition. If the named attribute
 /*	value is non-empty, the result is the given text, after
-/*	named attribute expansion and relational expression evaluation.
+/*	named attribute expansion and logical expression evaluation.
 /*	Otherwise, the result is empty.  Whitespace before or after
 /*	{text} is ignored.
 /* .IP "${name:text}, ${name:{text}}"
 /*	Conditional attribute-based substition. If the attribute
 /*	value is empty or undefined, the expansion is the given
-/*	text, after named attribute expansion and relational expression
+/*	text, after named attribute expansion and logical expression
 /*	evaluation.  Otherwise, the result is empty.  Whitespace
 /*	before or after {text} is ignored.
 /* .IP "${name?{text1}:{text2}}, ${name?{text1}:text2}"
 /*	Conditional attribute-based substition. If the named attribute
 /*	value is non-empty, the result is text1.  Otherwise, the
 /*	result is text2. In both cases the result is subject to
-/*	named attribute expansion and relational expression evaluation.
+/*	named attribute expansion and logical expression evaluation.
 /*	Whitespace before or after {text1} or {text2} is ignored.
 /* .IP "${{text1} == ${text2} ? {text3} : {text4}}"
-/*	Relational expression-based substition.  First, the content
+/*	Logical expression-based substition.  First, the content
 /*	of {text1} and ${text2} is subjected to named attribute and
-/*	relational expression-based substitution.  Next, the relational
+/*	logical expression-based substitution.  Next, the logical
 /*	expression is evaluated. If it evaluates to "true", the
 /*	result is the content of {text3}, otherwise it is the content
-/*	of {text4}, after named attribute and relational expression-based
+/*	of {text4}, after named attribute and logical expression-based
 /*	substitution. In addition to ==, this supports !=, <, <=,
 /*	>=, and >. Comparisons are numerical when both operands are
 /*	all digits, otherwise the comparisons are lexicographical.
@@ -121,18 +119,12 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
 
 #include <sys_defs.h>
 #include <ctype.h>
-#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -160,22 +152,21 @@ typedef struct {
 } MAC_EXP_CONTEXT;
 
  /*
-  * Support for relational expressions.
+  * Support for logical expressions.
   * 
   * As of Postfix 2.2, ${attr-name?result} or ${attr-name:result} return the
   * result respectively when the parameter value is non-empty, or when the
   * parameter value is undefined or empty; support for the ternary ?:
   * operator was anticipated, but not implemented for 10 years.
   * 
-  * To make ${relational-expr?result} and ${relational-expr:result} work as
-  * expected without breaking the way that ? and : work, relational
-  * expressions evaluate to a non-empty or empty value. It does not matter
-  * what non-empty value we use for TRUE. However we must not use the
-  * undefined (null pointer) value for FALSE - that would raise the
-  * MAC_PARSE_UNDEF flag.
+  * To make ${logical-expr?result} and ${logical-expr:result} work as expected
+  * without breaking the way that ? and : work, logical expressions evaluate
+  * to a non-empty or empty value. It does not matter what non-empty value we
+  * use for TRUE. However we must not use the undefined (null pointer) value
+  * for FALSE - that would raise the MAC_PARSE_UNDEF flag.
   * 
-  * The value of a relational expression can be exposed with ${relational-expr},
-  * i.e. a relational expression that is not followed by ? or : conditional
+  * The value of a logical expression can be exposed with ${logical-expr}, i.e.
+  * a logical expression that is not followed by ? or : conditional
   * expansion.
   */
 #define MAC_EXP_BVAL_TRUE	"true"
@@ -221,19 +212,6 @@ static const NAME_CODE mac_exp_op_table[] =
   */
 #define MAC_EXP_WHITESPACE	CHARS_SPACE
 
-/* atol_or_die - convert or die */
-
-static long atol_or_die(const char *strval)
-{
-    long    result;
-    char   *remainder;
-
-    result = strtol(strval, &remainder, 10);
-    if (*strval == 0 /* can't happen */ || *remainder != 0 || errno == ERANGE)
-	msg_fatal("mac_exp_eval: bad conversion: %s", strval);
-    return (result);
-}
-
 /* mac_exp_eval - evaluate binary expression */
 
 static int mac_exp_eval(const char *left, int tok_val,
@@ -246,7 +224,7 @@ static int mac_exp_eval(const char *left, int tok_val,
      * Numerical or string comparison.
      */
     if (alldig(left) && alldig(rite)) {
-	delta = atol_or_die(left) - atol_or_die(rite);
+	delta = atol(left) - atol(rite);
     } else {
 	delta = strcmp(left, rite);
     }
@@ -289,14 +267,14 @@ static int PRINTFLIKE(2, 3) mac_exp_parse_error(MAC_EXP_CONTEXT *mc,
     } while (0)
 
  /*
-  * Postfix 3.0 introduces support for {text} operands. Only with these do we
-  * support the ternary ?: operator and relational operators.
+  * Postfix 3.0 introduces support for {text} operands. Only with these do
+  * we support the ternary ?: operator and logical operators.
   * 
   * We cannot support operators in random text, because that would break Postfix
   * 2.11 compatibility. For example, with the expression "${name?value}", the
   * value is random text that may contain ':', '?', '{' and '}' characters.
   * In particular, with Postfix 2.2 .. 2.11, "${name??foo:{b}ar}" evaluates
-  * to "?foo:{b}ar" or empty. There are explicit tests in this directory and
+  * to "??foo:{b}ar" or empty. There are explicit tests in this directory and
   * the postconf directory to ensure that Postfix 2.11 compatibility is
   * maintained.
   * 
@@ -346,10 +324,10 @@ static char *mac_exp_extract_curly_payload(MAC_EXP_CONTEXT *mc, char **bp)
     return (payload);
 }
 
-/* mac_exp_parse_relational - parse relational expression, advance read ptr */
+/* mac_exp_parse_logical - parse logical expression, advance read ptr */
 
-static int mac_exp_parse_relational(MAC_EXP_CONTEXT *mc, const char **lookup,
-				            char **bp)
+static int mac_exp_parse_logical(MAC_EXP_CONTEXT *mc, const char **lookup,
+				         char **bp)
 {
     char   *cp = *bp;
     VSTRING *left_op_buf;
@@ -394,7 +372,7 @@ static int mac_exp_parse_relational(MAC_EXP_CONTEXT *mc, const char **lookup,
 	return (mc->status);
 
     /*
-     * Evaluate the relational expression. Todo: regexp support.
+     * Evaluate the logical expression. Todo: regexp support.
      */
     mc->status |=
 	mac_expand(left_op_buf = vstring_alloc(100), left_op_strval,
@@ -444,7 +422,7 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	return (mc->status);
 
     /*
-     * Named parameter or relational expression. In case of a syntax error,
+     * Named parameter or logical expression. In case of a syntax error,
      * return without doing damage, and issue a warning instead.
      */
     if (type == MAC_PARSE_EXPR) {
@@ -452,11 +430,11 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	cp = vstring_str(buf);
 
 	/*
-	 * Relational expression. If recursion is disabled, perform only one
+	 * Logical expression. If recursion is disabled, perform only one
 	 * level of $name expansion.
 	 */
 	if (MAC_EXP_FIND_LEFT_CURLY(tmp_len, cp)) {
-	    if (mac_exp_parse_relational(mc, &lookup, &cp) != 0)
+	    if (mac_exp_parse_logical(mc, &lookup, &cp) != 0)
 		return (mc->status);
 
 	    /*
@@ -474,26 +452,21 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	 * Named parameter.
 	 */
 	else {
-	    char   *start;
 
 	    /*
 	     * Look for the ? or : operator. In case of a syntax error,
 	     * return without doing damage, and issue a warning instead.
 	     */
-	    start = (cp += strspn(cp, MAC_EXP_WHITESPACE));
 	    for ( /* void */ ; /* void */ ; cp++) {
-		if ((ch = cp[tmp_len = strspn(cp, MAC_EXP_WHITESPACE)]) == 0) {
-		    *cp = 0;
+		if ((ch = *cp) == 0) {
 		    lookup_mode = MAC_EXP_MODE_USE;
 		    break;
 		}
 		if (ch == '?' || ch == ':') {
 		    *cp++ = 0;
-		    cp += tmp_len;
 		    lookup_mode = MAC_EXP_MODE_TEST;
 		    break;
 		}
-		ch = *cp;
 		if (!ISALNUM(ch) && ch != '_') {
 		    MAC_EXP_ERR_RETURN(mc, "attribute name syntax error at: "
 				       "\"...%.*s>>>%.20s\"",
@@ -506,7 +479,7 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	     * Look up the named parameter. Todo: allow the lookup function
 	     * to specify if the result is safe for $name expanson.
 	     */
-	    lookup = mc->lookup(start, lookup_mode, mc->context);
+	    lookup = mc->lookup(vstring_str(buf), lookup_mode, mc->context);
 	}
 
 	/*

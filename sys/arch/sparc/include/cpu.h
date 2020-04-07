@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.105 2020/03/10 03:48:05 christos Exp $ */
+/*	$NetBSD: cpu.h,v 1.104 2019/12/30 22:13:47 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -397,11 +397,6 @@ struct cpu_info {
 	struct evcnt ci_sintrcnt[16];
 };
 
-#endif /* _KERNEL || _KMEMUSER */
-
-/* Kernel only things. */
-#if defined(_KERNEL)
-
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
@@ -413,6 +408,10 @@ struct cpu_info {
 
 #define	cpu_number()		(cpuinfo.ci_cpuid)
 
+#endif /* _KERNEL || _KMEMUSER */
+
+/* Kernel only things. */
+#if defined(_KERNEL)
 void	cpu_proc_fork(struct proc *, struct proc *);
 
 #if defined(MULTIPROCESSOR)

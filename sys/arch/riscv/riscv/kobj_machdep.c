@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: kobj_machdep.c,v 1.3 2020/03/14 16:12:16 skrll Exp $");
+__RCSID("$NetBSD: kobj_machdep.c,v 1.2 2017/11/03 09:59:08 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		*wwhere = ((addend & 0xfff) << 20) | (*wwhere & 0xfffff);
 		break;
 	case R_RISCV_PCREL_LO12_S:
-		addend +=
+		addend += 
 		    __SHIFTIN(__SHIFTOUT(addend, __BITS(31,25)), __BITS(11,5))
 		    | __SHIFTIN(__SHIFTOUT(addend, __BITS(11,7)), __BITS(4,0));
 		/* FALLTHROUGH */

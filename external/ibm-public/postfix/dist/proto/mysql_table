@@ -22,6 +22,41 @@
 #	The file /etc/postfix/mysql-aliases.cf has the same format as
 #	the Postfix main.cf file, and can specify the parameters
 #	described below.
+# BACKWARDS COMPATIBILITY
+# .ad
+# .fi
+#	For compatibility with other Postfix lookup tables, MySQL
+#	parameters can also be defined in main.cf.  In order to do that,
+#	specify as MySQL source a name that doesn't begin with a slash
+#	or a dot.  The MySQL parameters will then be accessible as the
+#	name you've given the source in its definition, an underscore,
+#	and the name of the parameter.	For example, if the map is
+#	specified as "mysql:\fImysqlname\fR", the parameter "hosts"
+#	below would be defined in main.cf as "\fImysqlname\fR_hosts".
+#
+#	Note: with this form, the passwords for the MySQL sources are
+#	written in main.cf, which is normally world-readable.  Support
+#	for this form will be removed in a future Postfix version.
+#
+#	Normally, the SQL query is specified via a single \fBquery\fR
+#	parameter (described in more detail below).  When this
+#	parameter is not specified in the map definition, Postfix
+#	reverts to an older interface, with the SQL query constructed
+#	from the \fBselect_field\fR, \fBtable\fR, \fBwhere_field\fR
+#	and \fBadditional_conditions\fR parameters.  The old interface
+#	will be gradually phased out. To migrate to the new interface
+#	set:
+#
+# .nf
+#	    \fBquery\fR = SELECT [\fIselect_field\fR]
+#	        FROM [\fItable\fR]
+#	        WHERE [\fIwhere_field\fR] = '%s'
+#	            [\fIadditional_conditions\fR]
+# .fi
+#
+#	Insert the value, not the name, of each legacy parameter. Note
+#	that the \fBadditional_conditions\fR parameter is optional
+#	and if not empty, will always start with \fBAND\fR.
 # LIST MEMBERSHIP
 # .ad
 # .fi
@@ -84,11 +119,6 @@
 # .nf
 #	    query = SELECT replacement FROM aliases WHERE mailbox = '%s'
 # .fi
-#
-#	By default, every query must return a result set (instead
-#	of storing its results in a table); with "\fBrequire_result_set
-#	= no\fR" (Postfix 3.2 and later), the absence of a result
-#	set is treated as "not found".
 #
 #	This parameter supports the following '%' expansions:
 # .RS
@@ -216,18 +246,11 @@
 #	values.
 # .IP "\fBoption_file\fR"
 #	Read options from the given file instead of the default my.cnf
-#	location. This reads options from the \fB[client]\fR option
-#	group, optionally followed by options from the group given
-#	with \fBoption_group\fR.
+#	location.
 # .sp
 #	This parameter is available with Postfix 2.11 and later.
-# .IP "\fBoption_group (default: Postfix >=3.2: client, <= 3.1: empty)\fR"
-#	Read options from the given group of the mysql options file,
-#	after reading options from the \fB[client]\fR group.
-# .sp
-#	Postfix 3.2 and later read \fB[client]\fR option group
-#	settings by default. To disable this specify no \fBoption_file\fR
-#	and specify "\fBoption_group =\fR" (i.e. an empty value).
+# .IP "\fBoption_group\fR"
+#	Read options from the given group.
 # .sp
 #	Postfix 3.1 and earlier don't read \fB[client]\fR option
 #	group settings unless a non-empty \fBoption_file\fR or
@@ -235,12 +258,6 @@
 #	specify, for example, "\fBoption_group = client\fR".
 # .sp
 #	This parameter is available with Postfix 2.11 and later.
-# .IP "\fBrequire_result_set (default: yes)\fR"
-#	If "\fByes\fR", require that every query returns a result
-#	set.  If "\fBno\fR", treat the absence of a result set as
-#	"not found".
-# .sp
-#	This parameter is available with Postfix 3.2 and later.
 # .IP "\fBtls_cert_file\fR"
 #	File containing client's X509 certificate.
 # .sp
@@ -265,63 +282,12 @@
 #	certificate.
 # .sp
 #	This parameter is available with Postfix 2.11 and later.
-# USING MYSQL STORED PROCEDURES
-# .ad
-# .fi
-#	Postfix 3.2 and later support calling a stored procedure
-#	instead of using a SELECT statement in the query, e.g.
-#
-# .nf
-#	    \fBquery\fR = CALL lookup('%s')
-# .fi
-#
-#	The previously described '%' expansions can be used in the
-#	parameter(s) to the stored procedure.
-#
-#	By default, every stored procedure call must return a result
-#	set, i.e. every code path must execute a SELECT statement
-#	that returns a result set (instead of storing its results
-#	in a table). With "\fBrequire_result_set = no\fR", the
-#	absence of a result set is treated as "not found".
-#
-#	A stored procedure must not return multiple result sets.
-#	That is, there must be no code path that executes multiple
-#	SELECT statements that return a result (instead of storing
-#	their results in a table).
-#
-#	The following is an example of a stored procedure returning
-#	a single result set:
-#
-# .nf
-#	CREATE [DEFINER=`user`@`host`] PROCEDURE
-#	`lookup`(IN `param` VARCHAR(255))
-#	    READS SQL DATA
-#	    SQL SECURITY INVOKER
-#	    BEGIN
-#	        select goto from alias where address=param;
-#	    END
-# .fi
-# OBSOLETE MAIN.CF PARAMETERS
-# .ad
-# .fi
-#	For compatibility with other Postfix lookup tables, MySQL
-#	parameters can also be defined in main.cf.  In order to do that,
-#	specify as MySQL source a name that doesn't begin with a slash
-#	or a dot.  The MySQL parameters will then be accessible as the
-#	name you've given the source in its definition, an underscore,
-#	and the name of the parameter.	For example, if the map is
-#	specified as "mysql:\fImysqlname\fR", the parameter "hosts"
-#	would be defined in main.cf as "\fImysqlname\fR_hosts".
-#
-#	Note: with this form, the passwords for the MySQL sources are
-#	written in main.cf, which is normally world-readable.  Support
-#	for this form will be removed in a future Postfix version.
 # OBSOLETE QUERY INTERFACE
 # .ad
 # .fi
 #	This section describes an interface that is deprecated as
 #	of Postfix 2.2. It is replaced by the more general \fBquery\fR
-#	interface described above. If the \fBquery\fR parameter
+#	interface described above.  If the \fBquery\fR parameter
 #	is defined, the legacy parameters described here ignored.
 #	Please migrate to the new interface as the legacy interface
 #	may be removed in a future release.
@@ -390,11 +356,4 @@
 #	Institute of Mathematics of the Romanian Academy
 #	P.O. BOX 1-764
 #	RO-014700 Bucharest, ROMANIA
-#
-#	Stored-procedure support by John Fawcett.
-#
-#	Wietse Venema
-#	Google, Inc.
-#	111 8th Avenue
-#	New York, NY 10011, USA
 #--

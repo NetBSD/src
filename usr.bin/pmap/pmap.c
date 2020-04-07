@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.55 2020/03/22 14:41:32 ad Exp $ */
+/*	$NetBSD: pmap.c,v 1.54 2018/05/09 01:04:01 christos Exp $ */
 
 /*
- * Copyright (c) 2002, 2003, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.55 2020/03/22 14:41:32 ad Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.54 2018/05/09 01:04:01 christos Exp $");
 #endif
 
 #include <string.h>
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: pmap.c,v 1.55 2020/03/22 14:41:32 ad Exp $");
 static void dump_vm_anon(kvm_t *, struct vm_anon **, int);
 static char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
 	struct kbit *, struct kbit *);
-static int search_cache(kvm_t *, struct vnode *, char **, char *, size_t);
+static int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
 
 /* when recursing, output is indented */
 #define indent(n) ((n) * (recurse > 1 ? recurse - 1 : 0))
@@ -680,15 +680,13 @@ findname(kvm_t *kd, struct kbit *vmspace,
 	static char buf[1024], *name;
 	struct vm_map_entry *vme;
 	size_t l;
-	int rv;
 
 	vme = D(vm_map_entry, vm_map_entry);
 
 	if (UVM_ET_ISOBJ(vme)) {
 		if (A(vfs)) {
 			l = (unsigned)strlen(D(vfs, mount)->mnt_stat.f_mntonname);
-			rv = search_cache(kd, P(vp), &name, buf, sizeof(buf));
-			switch (rv) {
+			switch (search_cache(kd, vp, &name, buf, sizeof(buf))) { 
 			    case 0: /* found something */
                                 name--;
                                 *name = '/';
@@ -778,38 +776,32 @@ findname(kvm_t *kd, struct kbit *vmspace,
 }
 
 static int
-search_cache(kvm_t *kd, struct vnode *vp, char **name, char *buf, size_t blen)
+search_cache(kvm_t *kd, struct kbit *vp, char **name, char *buf, size_t blen)
 {
 	char *o, *e;
-	struct namecache nc;
-	struct vnode_impl vi;
-	u_long vip, ncp, ncp2;
+	struct cache_entry *ce;
+	struct kbit svp;
 
-	vip = (u_long)vp;
+	if (nchashtbl == NULL)
+		load_name_cache(kd);
+
+	P(&svp) = P(vp);
+	S(&svp) = sizeof(struct vnode);
+
 	e = &buf[blen - 1];
 	o = e;
-	ncp2 = 0;
 	do {
-		/* Pull down vnode_impl for vnode. */
-		_KDEREF(kd, vip, &vi, sizeof(vi));
-
-		/* From that, get first cached name for vnode. */
-		ncp = (u_long)vi.vi_nc_list.tqh_first;
-		if (ncp != 0 && ncp != ncp2) {
-			/* Pull down the cache entry. */
-			_KDEREF(kd, ncp, &nc, sizeof(nc));
-			/* Done if own parent or at the root. */
-			if ((u_long)nc.nc_dvp == vip ||
-			    (vi.vi_vnode.v_vflag & VV_ROOT) != 0)
+		LIST_FOREACH(ce, &lcache, ce_next)
+			if (ce->ce_vp == P(&svp))
 				break;
-			/* Otherwise pull first NCHNAMLEN chars of name. */
+		if (ce && ce->ce_vp == P(&svp)) {
 			if (o != e)
 				*(--o) = '/';
-			o -= MIN((size_t)nc.nc_nlen, NCHNAMLEN);
-			memcpy(o, nc.nc_name, (unsigned)nc.nc_nlen);
-			vip = (u_long)nc.nc_dvp;
-			ncp2 = ncp;
-		} else
+			o -= ce->ce_nlen;
+			memcpy(o, ce->ce_name, (unsigned)ce->ce_nlen);
+			P(&svp) = ce->ce_pvp;
+		}
+		else
 			break;
 	} while (1/*CONSTCOND*/);
 	*e = '\0';
@@ -818,5 +810,6 @@ search_cache(kvm_t *kd, struct vnode *vp, char **name, char *buf, size_t blen)
 	if (e == o)
 		return (2);
 
-	return (vi.vi_vnode.v_vflag & VV_ROOT);
+	KDEREF(kd, &svp);
+	return (D(&svp, vnode)->v_vflag & VV_ROOT);
 }

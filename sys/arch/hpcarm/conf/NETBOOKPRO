@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.31 2020/03/24 17:38:33 sevan Exp $
+#	$NetBSD: NETBOOKPRO,v 1.30 2020/01/19 01:25:05 thorpej Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.31 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 # estimated number of users
 maxusers	32
@@ -268,6 +268,8 @@ ubt*	at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+# On ugen bulk endpoints, perform read-ahead and write-behind.
+options 	UGEN_BULK_RA_WB
 
 # Bluetooth Device Hub
 bthub* at bcsp?

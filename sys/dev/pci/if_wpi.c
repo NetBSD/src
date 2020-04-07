@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.89 2020/03/20 17:19:25 sevan Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.88 2020/01/30 06:10:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.89 2020/03/20 17:19:25 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.88 2020/01/30 06:10:26 thorpej Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -387,11 +387,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = wpi_newstate;
-
-	/* XXX media locking needs revisiting */
-	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTNET);
-	ieee80211_media_init_with_lock(ic,
-	    wpi_media_change, ieee80211_media_status, &sc->sc_media_mtx);
+	ieee80211_media_init(ic, wpi_media_change, ieee80211_media_status);
 
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 15;

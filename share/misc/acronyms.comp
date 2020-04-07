@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.300 2020/03/26 18:28:09 leot Exp $
+$NetBSD: acronyms.comp,v 1.299 2020/02/26 23:38:08 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -668,7 +668,6 @@ HMI	human-machine interface
 HOOD	hierarchical object oriented design
 HP	Hewlett-Packard
 HPC	high performance computing
-HPD	hot plug detection
 HPET	high precision event timer
 HSM	hardware security module
 HSM	hierarchical storage management 

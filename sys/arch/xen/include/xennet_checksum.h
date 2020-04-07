@@ -1,4 +1,4 @@
-/*	$NetBSD: xennet_checksum.h,v 1.4 2020/03/22 11:20:59 jdolecek Exp $	*/
+/*	$NetBSD: xennet_checksum.h,v 1.1 2006/07/12 15:02:15 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -29,9 +29,8 @@
 #ifndef _XEN_XENNET_CHECKSUM_H_
 #define	_XEN_XENNET_CHECKSUM_H_
 
-struct ifnet;
 struct mbuf;
 
-int xennet_checksum_fill(struct ifnet *, struct mbuf *);
+int xennet_checksum_fill(struct mbuf **);
 
 #endif /* !_XEN_XENNET_CHECKSUM_H_ */

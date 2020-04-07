@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.116 2020/03/22 00:16:16 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.110 2020/02/23 15:46:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,6 +66,8 @@
 
 #ifndef _X86_PMAP_H_
 #define	_X86_PMAP_H_
+
+#include <sys/radixtree.h>
 
 /*
  * pl*_pi: index in the ptp page for a pde mapping a VA.
@@ -248,8 +250,6 @@ extern struct pool_cache pmap_cache;
  * (the other object locks are only used when uvm_pagealloc is called)
  */
 
-struct pv_page;
-
 struct pmap {
 	struct uvm_object pm_obj[PTP_LEVELS-1];/* objects for lvl >= 1) */
 	LIST_ENTRY(pmap) pm_list;	/* list of all pmaps */
@@ -257,12 +257,13 @@ struct pmap {
 	paddr_t pm_pdirpa[PDP_SIZE];	/* PA of PDs (read-only after create) */
 	struct vm_page *pm_ptphint[PTP_LEVELS-1];
 					/* pointer to a PTP in our pmap */
+	struct radix_tree pm_pvtree;	/* tree of non-embedded pv entries */
 	struct pmap_statistics pm_stats;  /* pmap stats */
-	struct pv_entry *pm_pve;	/* spare pv_entry */
 
 #if !defined(__x86_64__)
 	vaddr_t pm_hiexec;		/* highest executable mapping */
 #endif /* !defined(__x86_64__) */
+	struct lwp *pm_remove_all;	/* who's emptying the pmap */
 
 	union descriptor *pm_ldt;	/* user-set LDT */
 	size_t pm_ldt_len;		/* size of LDT in bytes */
@@ -368,7 +369,7 @@ bool		pmap_test_attrs(struct vm_page *, unsigned);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_load(void);
 paddr_t		pmap_init_tmp_pgtbl(paddr_t);
-bool		pmap_remove_all(struct pmap *);
+void		pmap_remove_all(struct pmap *);
 void		pmap_ldt_cleanup(struct lwp *);
 void		pmap_ldt_sync(struct pmap *);
 void		pmap_kremove_local(vaddr_t, vsize_t);
@@ -399,15 +400,18 @@ vaddr_t		slotspace_rand(int, size_t, size_t);
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
 typedef enum tlbwhy {
-	TLBSHOOT_REMOVE_ALL,
+	TLBSHOOT_APTE,
 	TLBSHOOT_KENTER,
 	TLBSHOOT_KREMOVE,
-	TLBSHOOT_FREE_PTP,
+	TLBSHOOT_FREE_PTP1,
+	TLBSHOOT_FREE_PTP2,
 	TLBSHOOT_REMOVE_PTE,
-	TLBSHOOT_SYNC_PV,
+	TLBSHOOT_REMOVE_PTES,
+	TLBSHOOT_SYNC_PV1,
+	TLBSHOOT_SYNC_PV2,
 	TLBSHOOT_WRITE_PROTECT,
 	TLBSHOOT_ENTER,
-	TLBSHOOT_NVMM,
+	TLBSHOOT_UPDATE,
 	TLBSHOOT_BUS_DMA,
 	TLBSHOOT_BUS_SPACE,
 	TLBSHOOT__MAX,

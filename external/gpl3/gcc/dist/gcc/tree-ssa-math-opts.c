@@ -334,8 +334,7 @@ is_division_by (gimple *use_stmt, tree def)
 	 /* Do not recognize x / x as valid division, as we are getting
 	    confused later by replacing all immediate uses x in such
 	    a stmt.  */
-	 && gimple_assign_rhs1 (use_stmt) != def
-	 && !stmt_can_throw_internal (use_stmt);
+	 && gimple_assign_rhs1 (use_stmt) != def;
 }
 
 /* Return whether USE_STMT is DEF * DEF.  */
@@ -360,12 +359,13 @@ is_division_by_square (gimple *use_stmt, tree def)
 {
   if (gimple_code (use_stmt) == GIMPLE_ASSIGN
       && gimple_assign_rhs_code (use_stmt) == RDIV_EXPR
-      && gimple_assign_rhs1 (use_stmt) != gimple_assign_rhs2 (use_stmt)
-      && !stmt_can_throw_internal (use_stmt))
+      && gimple_assign_rhs1 (use_stmt) != gimple_assign_rhs2 (use_stmt))
     {
       tree denominator = gimple_assign_rhs2 (use_stmt);
       if (TREE_CODE (denominator) == SSA_NAME)
-	return is_square_of (SSA_NAME_DEF_STMT (denominator), def);
+	{
+	  return is_square_of (SSA_NAME_DEF_STMT (denominator), def);
+	}
     }
   return 0;
 }
@@ -603,7 +603,7 @@ execute_cse_reciprocals_1 (gimple_stmt_iterator *def_gsi, tree def)
 
   /* If it is more profitable to optimize 1 / x, don't optimize 1 / (x * x).  */
   if (sqrt_recip_count > square_recip_count)
-    goto out;
+    return;
 
   /* Do the expensive part only if we can hope to optimize something.  */
   if (count + square_recip_count >= threshold && count >= 1)
@@ -646,7 +646,6 @@ execute_cse_reciprocals_1 (gimple_stmt_iterator *def_gsi, tree def)
 	}
     }
 
-out:
   for (occ = occ_head; occ; )
     occ = free_bb (occ);
 

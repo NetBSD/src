@@ -1,4 +1,4 @@
-/*	$NetBSD: discard.c,v 1.3 2020/03/18 19:05:15 christos Exp $	*/
+/*	$NetBSD: discard.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -33,8 +33,7 @@
 /* STANDARDS
 /*	RFC 3463 (Enhanced Status Codes)
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8)
-/*	or \fBpostlogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*
 /*	Depending on the setting of the \fBnotify_classes\fR parameter,
 /*	the postmaster is notified of bounces and of other trouble.
@@ -77,12 +76,8 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	A prefix that is prepended to the process name in syslog
-/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
-/* .PP
-/*	Available in Postfix 3.3 and later:
-/* .IP "\fBservice_name (read-only)\fR"
-/*	The master.cf service name of a Postfix daemon process.
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
 /* SEE ALSO
 /*	qmgr(8), queue manager
 /*	bounce(8), delivery status reports
@@ -90,7 +85,6 @@
 /*	postconf(5), configuration parameters
 /*	master(5), generic daemon options
 /*	master(8), process manager
-/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* LICENSE
 /* .ad

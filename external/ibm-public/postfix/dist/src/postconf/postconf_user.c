@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_user.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: postconf_user.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -37,11 +37,6 @@
 /*	name spaces for user-defined parameters and flags parameters
 /*	as "valid" in the global name space (pcf_param_table) or
 /*	in the per-service name space (valid_params).
-/*
-/*	This function also invokes pcf_register_dbms_parameters() to
-/*	to instantiate legacy per-dbms parameters, and to examine
-/*	per-dbms configuration files. This is limited to the content
-/*	of global and local, built-in and per-service, parameters.
 /* DIAGNOSTICS
 /*	Problems are reported to the standard error stream.
 /* LICENSE
@@ -53,11 +48,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -302,16 +292,8 @@ static void pcf_scan_user_parameter_namespace(const char *dict_name,
 	}
 	SCAN_USER_PARAMETER_VALUE(cparam_value, PCF_PARAM_FLAG_USER, local_scope);
 #ifdef LEGACY_DBMS_SUPPORT
-
-	/*
-	 * Scan global or local parameters that are built-in or per-service
-	 * (when node == 0, the parameter doesn't exist in the global
-	 * namespace and therefore it can't be built-in or per-service).
-	 */
-	if (node != 0
-	    && (PCF_BUILTIN_PARAMETER(node) || PCF_SERVICE_PARAMETER(node)))
-	    pcf_register_dbms_parameters(cparam_value, pcf_flag_user_parameter,
-					 local_scope);
+	pcf_register_dbms_parameters(cparam_value, pcf_flag_user_parameter,
+				     local_scope);
 #endif
     }
 }

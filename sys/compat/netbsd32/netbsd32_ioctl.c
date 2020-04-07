@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.112 2020/03/16 01:37:51 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.109 2020/02/11 06:33:51 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.112 2020/03/16 01:37:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.109 2020/02/11 06:33:51 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -63,10 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.112 2020/03/16 01:37:51 christo
 #include <sys/ksyms.h>
 #include <sys/drvctlio.h>
 #include <sys/compat_stub.h>
-
-#include <sys/vnode.h>
-#include <sys/conf.h>
-#include <miscfs/specfs/specdev.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -1045,29 +1041,12 @@ netbsd32_from_dkwedge_list(const struct dkwedge_list *p,
 
 #ifdef NTP
 static int
-netbsd32_do_clockctl_ntp_adjtime(struct file *fp,
-    struct clockctl_ntp_adjtime *args)
+netbsd32_do_clockctl_ntp_adjtime(struct clockctl_ntp_adjtime *args)
 {
-	struct vnode *vp;
-	struct specnode *sn;
-	const char *name;
 
 	struct netbsd32_timex ntv32;
 	struct timex ntv;
 	int error;
-
-	/* Verify that the file descriptor is is to the clockctl device */
-	if (fp->f_type != DTYPE_VNODE)
-		return EINVAL;
-
-	vp = fp->f_vnode;
-	if (vp->v_type != VCHR)
-		return EINVAL;
-
-	sn = vp->v_specnode;
-	name = cdevsw_getname(major(sn->sn_rdev));
-	if (name == NULL || strcmp(name, "clockctl") != 0)
-		return EINVAL;
 
 	if (vec_ntp_adjtime1 == NULL)
 		return EINVAL;
@@ -1080,7 +1059,7 @@ netbsd32_do_clockctl_ntp_adjtime(struct file *fp,
 	(*vec_ntp_adjtime1)(&ntv);
 	netbsd32_from_timex(&ntv, &ntv32);
 
-	error = copyout(&ntv32, args->tp, sizeof(ntv32));
+	error = copyout(&ntv32, args->tp, sizeof(ntv));
 	if (error == 0)
 		args->retval = ntp_timestatus();
 
@@ -1490,7 +1469,7 @@ netbsd32_ioctl(struct lwp *l,
 				(const struct netbsd32_clockctl_ntp_adjtime *)data32,
 				(struct clockctl_ntp_adjtime *)data,
 				CLOCKCTL_NTP_ADJTIME);
-			error = netbsd32_do_clockctl_ntp_adjtime(fp,
+			error = netbsd32_do_clockctl_ntp_adjtime(
 				(struct clockctl_ntp_adjtime *)data);
 			netbsd32_from_clockctl_ntp_adjtime(
 				(const struct clockctl_ntp_adjtime *)data,

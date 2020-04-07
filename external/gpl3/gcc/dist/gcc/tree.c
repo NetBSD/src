@@ -5133,7 +5133,8 @@ free_lang_data_in_type (tree type)
 	  free_lang_data_in_binfo (TYPE_BINFO (type));
 	  /* We need to preserve link to bases and virtual table for all
 	     polymorphic types to make devirtualization machinery working.  */
-	  if (!BINFO_VTABLE (TYPE_BINFO (type)))
+	  if (!BINFO_VTABLE (TYPE_BINFO (type))
+	      || !flag_devirtualize)
 	    TYPE_BINFO (type) = NULL;
 	}
     }

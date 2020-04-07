@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.172 2020/03/22 14:27:33 ad Exp $
+#	$NetBSD: Makefile,v 1.171 2019/12/14 15:30:37 ad Exp $
 
 .include <bsd.own.mk>
 
@@ -45,7 +45,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h \
 	timex.h tls.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h utsname.h uuid.h \
-	verified_exec.h videoio.h vmmeter.h vnode.h vnode_if.h vnode_impl.h \
+	verified_exec.h videoio.h vmmeter.h vnode.h vnode_if.h \
 	wait.h wapbl.h wapbl_replay.h wdog.h xattr.h
 
 INCSYMLINKS=\

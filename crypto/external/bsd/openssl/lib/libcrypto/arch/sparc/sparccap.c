@@ -1,5 +1,5 @@
 #include "e_os.h"
-#include "crypto/cryptlib.h"
+#include "internal/cryptlib_int.h"
 
 uint32_t OPENSSL_rdtsc(void)
 {

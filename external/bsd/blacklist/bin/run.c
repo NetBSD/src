@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.15 2020/03/10 13:36:07 roy Exp $	*/
+/*	$NetBSD: run.c,v 1.14 2016/04/04 15:52:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.15 2020/03/10 13:36:07 roy Exp $");
+__RCSID("$NetBSD: run.c,v 1.14 2016/04/04 15:52:56 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
@@ -75,7 +75,7 @@ run(const char *cmd, const char *name, ...)
 	    (argv[i] = va_arg(ap, char *)) != NULL; i++)
 		continue;
 	va_end(ap);
-
+		
 	if (debug) {
 		size_t z;
 		int r;

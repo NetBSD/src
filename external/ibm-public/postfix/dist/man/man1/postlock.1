@@ -1,4 +1,4 @@
-.\"	$NetBSD: postlock.1,v 1.3 2020/03/18 19:05:14 christos Exp $
+.\"	$NetBSD: postlock.1,v 1.2 2017/02/14 01:16:44 christos Exp $
 .\"
 .TH POSTLOCK 1 
 .ad
@@ -100,10 +100,6 @@ The delay between attempts to fork() a child process.
 .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 The default location of the Postfix main.cf and master.cf
 configuration files.
-.IP "\fBimport_environment (see 'postconf -d' output)\fR"
-The list of environment parameters that a privileged Postfix
-process will import from a non\-Postfix parent process, or name=value
-environment overrides.
 .SH "SEE ALSO"
 .na
 .nf

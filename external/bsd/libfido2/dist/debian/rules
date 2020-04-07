@@ -1,9 +1,0 @@
-#!/usr/bin/make -f
-
-DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-
-%:
-	dh $@
-
-override_dh_auto_configure:
-	dh_auto_configure -- -DUDEV_RULES_DIR=/lib/udev/rules.d

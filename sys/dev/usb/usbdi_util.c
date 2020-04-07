@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.82 2020/03/13 18:17:41 christos Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.81 2020/02/16 09:53:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.82 2020/03/13 18:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.81 2020/02/16 09:53:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -102,7 +102,7 @@ usbd_get_config_desc(struct usbd_device *dev, int confidx,
 	if (err)
 		return err;
 	if (d->bDescriptorType != UDESC_CONFIG) {
-		DPRINTFN(1, "confidx=%jd, bad desc len=%jd type=%jd",
+		DPRINTFN(1, "confidx=%jd, bad desc len=%d type=%d",
 		    confidx, d->bLength, d->bDescriptorType, 0);
 		return USBD_INVAL;
 	}
@@ -130,7 +130,7 @@ usbd_get_bos_desc(struct usbd_device *dev, int confidx,
 	if (err)
 		return err;
 	if (d->bDescriptorType != UDESC_BOS) {
-		DPRINTFN(1, "confidx=%jd, bad desc len=%jd type=%jd",
+		DPRINTFN(1, "confidx=%jd, bad desc len=%d type=%d",
 		    confidx, d->bLength, d->bDescriptorType, 0);
 		return USBD_INVAL;
 	}
@@ -665,7 +665,7 @@ usbd_bulk_transfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
 	if (err) {
 		usbd_clear_endpoint_stall(pipe);
 	}
-	USBHIST_LOG(usbdebug, "<- done xfer %#jx err %jd", (uintptr_t)xfer,
+	USBHIST_LOG(usbdebug, "<- done xfer %#jx err %d", (uintptr_t)xfer,
 	    err, 0, 0);
 
 	return err;

@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.307 2020/03/11 21:07:40 mrg Exp $
+$NetBSD: UPDATING,v 1.306 2019/11/18 15:42:26 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,10 +18,6 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
-
-20200311:
-	GCC 8 ports will need cleaning in src/tools/gcc and
-	src/external/gpl3/gcc due to GCC 8.4 update.
 
 20191118:
 	More architectures were switched to gcc8:

@@ -51,7 +51,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  @{
    */
 
-#define __cpp_lib_optional 201606L
+#define __cpp_lib_optional 201603
 
   template<typename _Tp>
     class optional;
@@ -1256,7 +1256,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	}
 
       template<typename _Up>
-	constexpr _Tp
+	_Tp
 	value_or(_Up&& __u) &&
 	{
 	  static_assert(is_move_constructible_v<_Tp>);

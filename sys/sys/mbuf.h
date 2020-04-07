@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.226 2020/03/15 23:14:41 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.223 2020/02/29 16:59:00 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -412,7 +412,6 @@ extern const char * const mbuftypes[];
 
 #ifdef MBUFTRACE
 /* Mbuf allocation tracing. */
-void mowner_init_owner(struct mowner *, const char *, const char *);
 void mowner_init(struct mbuf *, int);
 void mowner_ref(struct mbuf *, int);
 void m_claim(struct mbuf *, struct mowner *);
@@ -421,7 +420,6 @@ void mowner_attach(struct mowner *);
 void mowner_detach(struct mowner *);
 void m_claimm(struct mbuf *, struct mowner *);
 #else
-#define mowner_init_owner(mo, n, d)	__nothing
 #define mowner_init(m, type)		__nothing
 #define mowner_ref(m, flags)		__nothing
 #define mowner_revoke(m, all, flags)	__nothing

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2020/03/09 17:10:31 martin Exp $ */
+/*	$NetBSD: md.c,v 1.7 2019/12/15 13:39:24 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -126,7 +126,7 @@ bool
 md_pre_disklabel(struct install_partition_desc *install,
     struct disk_partitions *part)
 {
-	return true;
+	return 0;
 }
 
 /*

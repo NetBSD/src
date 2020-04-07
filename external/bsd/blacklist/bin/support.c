@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.10 2020/03/10 13:36:07 roy Exp $	*/
+/*	$NetBSD: support.c,v 1.9 2018/09/18 22:12:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: support.c,v 1.10 2020/03/10 13:36:07 roy Exp $");
+__RCSID("$NetBSD: support.c,v 1.9 2018/09/18 22:12:19 christos Exp $");
 
 #include <time.h>
 #include <string.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: support.c,v 1.10 2020/03/10 13:36:07 roy Exp $");
 #include "support.h"
 
 static __attribute__((__format_arg__(3))) const char *
-expandm(char *buf, size_t len, const char *fmt)
+expandm(char *buf, size_t len, const char *fmt) 
 {
 	char *p;
 	size_t r;

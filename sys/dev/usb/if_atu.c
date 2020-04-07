@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.72 2020/03/15 23:04:50 thorpej Exp $ */
+/*	$NetBSD: if_atu.c,v 1.70 2020/01/29 06:24:10 thorpej Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.72 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.70 2020/01/29 06:24:10 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -325,7 +325,7 @@ atu_usb_request(struct atu_softc *sc, uint8_t type,
 #ifdef ATU_DEBUG
 	if (atudebug) {
 		if (type & UT_READ) {
-			DPRINTFN(20, ("%s: transferred %#x bytes in\n",
+			DPRINTFN(20, ("%s: transferred 0x%x bytes in\n",
 			    device_xname(sc->atu_dev), total_len));
 		} else {
 			if (total_len != length)
@@ -719,7 +719,7 @@ atu_initial_config(struct atu_softc *sc)
 		DPRINTF(("%s: could not get regdomain!\n",
 		    device_xname(sc->atu_dev)));
 	} else {
-		DPRINTF(("%s: in reg domain %#x according to the "
+		DPRINTF(("%s: in reg domain 0x%x according to the "
 		    "adapter\n", device_xname(sc->atu_dev), reg_domain));
 	}
 
@@ -1456,10 +1456,7 @@ atu_complete_attach(struct atu_softc *sc)
 	ic->ic_newstate = atu_newstate;
 
 	/* setup ifmedia interface */
-	/* XXX media locking needs revisiting */
-	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTUSB);
-	ieee80211_media_init_with_lock(ic,
-	    atu_media_change, atu_media_status, &sc->sc_media_mtx);
+	ieee80211_media_init(ic, atu_media_change, atu_media_status);
 
 	usb_init_task(&sc->sc_task, atu_task, sc, 0);
 

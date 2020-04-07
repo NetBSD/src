@@ -1,7 +1,7 @@
-/*	$NetBSD: bus_dma.c,v 1.121 2020/03/14 18:08:38 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.120 2020/02/22 08:22:09 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.121 2020/03/14 18:08:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.120 2020/02/22 08:22:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1790,8 +1790,10 @@ _bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
 			continue;
 		cnt = MIN(resid, iov->iov_len);
 
-		if (!VMSPACE_IS_KERNEL_P(vm)) {
-			preempt_point();
+		if (!VMSPACE_IS_KERNEL_P(vm) &&
+		    (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		    != 0) {
+			preempt();
 		}
 		if (direction == UIO_READ) {
 			error = copyout_vmspace(vm, cp, iov->iov_base, cnt);

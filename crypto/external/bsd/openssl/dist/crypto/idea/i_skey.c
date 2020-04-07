@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <inttypes.h>
 #include <openssl/idea.h>
-#include "idea_local.h"
+#include <inttypes.h>
+#include "idea_lcl.h"
 
 static IDEA_INT inverse(unsigned int xin);
 void IDEA_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)

@@ -1,4 +1,4 @@
-/* $NetBSD: bsd44.h,v 1.7 2020/03/16 21:20:12 pgoyette Exp $ */
+/* $NetBSD: bsd44.h,v 1.6 2011/12/04 19:25:00 jym Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,5 +35,7 @@
 void secmodel_bsd44_init(void);
 void secmodel_bsd44_start(void);
 void secmodel_bsd44_stop(void);
+
+void sysctl_security_bsd44_setup(struct sysctllog **);
 
 #endif /* !_SECMODEL_BSD44_BSD44_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_clnt.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: resolve_clnt.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -20,8 +20,16 @@
 /*	void	resolve_clnt_init(reply)
 /*	RESOLVE_REPLY *reply;
 /*
+/*	void	resolve_clnt_query(address, reply)
+/*	const char *address;
+/*	RESOLVE_REPLY *reply;
+/*
 /*	void	resolve_clnt_query_from(sender, address, reply)
 /*	const char *sender;
+/*	const char *address;
+/*	RESOLVE_REPLY *reply;
+/*
+/*	void	resolve_clnt_verify(address, reply)
 /*	const char *address;
 /*	RESOLVE_REPLY *reply;
 /*
@@ -39,16 +47,18 @@
 /*	by resolve_clnt_query(). The structure is destroyed by passing
 /*	it to resolve_clnt_free().
 /*
-/*	resolve_clnt_query_from() sends an internal-form recipient address
+/*	resolve_clnt_query() sends an internal-form recipient address
 /*	(user@domain) to the resolver daemon and returns the resulting
 /*	transport name, next_hop host name, and internal-form recipient
 /*	address. In case of communication failure the program keeps trying
-/*	until the mail system goes down. The internal-form sender
-/*	information is used for sender-dependent relayhost lookup.
-/*	Specify RESOLVE_NULL_FROM when the sender is unavailable.
+/*	until the mail system goes down.
 /*
-/*	resolve_clnt_verify_from() implements an alternative version that can
+/*	resolve_clnt_verify() implements an alternative version that can
 /*	be used for address verification.
+/*
+/*	resolve_clnt_query_from() and resolve_clnt_verify_from()
+/*	allow the caller to supply sender context that will be used
+/*	for sender-dependent relayhost lookup.
 /*
 /*	In the resolver reply, the flags member is the bit-wise OR of
 /*	zero or more of the following:
@@ -101,11 +111,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */

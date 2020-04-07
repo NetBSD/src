@@ -22,8 +22,8 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
 
        This program should not be used on SMTP ports that  receive  mail  from
        end-user clients (MUAs). In a typical deployment, <a href="postscreen.8.html"><b>postscreen</b>(8)</a> handles
-       the MX service on TCP port 25, and <a href="smtpd.8.html"><b>smtpd</b>(8)</a> receives mail from MUAs  on
-       the <b>submission</b> service (TCP port 587) which requires client authentica-
+       the MX service on TCP port 25, while MUA clients submit  mail  via  the
+       <b>submission</b>  service  on  TCP port 587 which requires client authentica-
        tion.  Alternatively, a site could set up a dedicated,  non-postscreen,
        "port  25" server that provides <b>submission</b> service and client authenti-
        cation, but no MX service.
@@ -64,41 +64,45 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
        <a href="http://tools.ietf.org/html/rfc2034">RFC 2034</a> (SMTP Enhanced Status Codes)
        <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a> (SMTP protocol)
        Not: <a href="http://tools.ietf.org/html/rfc2920">RFC 2920</a> (SMTP Pipelining)
-       <a href="http://tools.ietf.org/html/rfc3030">RFC 3030</a> (CHUNKING without BINARYMIME)
        <a href="http://tools.ietf.org/html/rfc3207">RFC 3207</a> (STARTTLS command)
        <a href="http://tools.ietf.org/html/rfc3461">RFC 3461</a> (SMTP DSN Extension)
        <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced Status Codes)
        <a href="http://tools.ietf.org/html/rfc5321">RFC 5321</a> (SMTP protocol, including multi-line 220 banners)
 
 <b>DIAGNOSTICS</b>
-       Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
+       Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>BUGS</b>
        The  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  built-in  SMTP  protocol  engine currently does not
        announce support for AUTH, XCLIENT or XFORWARD.  If you  need  to  make
        these  services  available  on port 25, then do not enable the optional
-       "after 220 server greeting" tests.
+       "after 220 server greeting" tests, and do not use  DNSBLs  that  reject
+       traffic from dial-up and residential networks.
 
-       The optional "after 220 server greeting" tests may result in unexpected
-       delivery delays from senders that retry email delivery from a different
-       IP address.  Reason: after passing these tests a new client  must  dis-
-       connect,  and  reconnect from the same IP address before it can deliver
-       mail. See <a href="POSTSCREEN_README.html">POSTSCREEN_README</a>, section "Tests after the 220  SMTP  server
-       greeting", for a discussion.
+       The  optional "after 220 server greeting" tests involve <a href="postscreen.8.html"><b>postscreen</b>(8)</a>'s
+       built-in SMTP protocol engine. When these tests succeed,  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>
+       adds  the client to the temporary whitelist, but it cannot hand off the
+       "live" connection to a Postfix SMTP server process in the middle  of  a
+       session.  Instead, <a href="postscreen.8.html"><b>postscreen</b>(8)</a> defers attempts to deliver mail with a
+       4XX status, and waits for the client to disconnect.   When  the  client
+       connects  again, <a href="postscreen.8.html"><b>postscreen</b>(8)</a> will allow the client to talk to a Post-
+       fix SMTP server process (provided that the  whitelist  status  has  not
+       expired).   <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  mitigates  the  impact of this limitation by
+       giving the "after 220 server greeting" tests a long expiration time.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes  to  <a href="postconf.5.html">main.cf</a>  are not picked up automatically, as <a href="postscreen.8.html"><b>postscreen</b>(8)</a>
-       processes may run for several hours.  Use the command "postfix  reload"
+       Changes to <a href="postconf.5.html">main.cf</a> are not picked up  automatically,  as  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>
+       processes  may run for several hours.  Use the command "postfix reload"
        after a configuration change.
 
-       The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
+       The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
        more details including examples.
 
-       NOTE: Some <a href="postscreen.8.html"><b>postscreen</b>(8)</a> parameters implement  stress-dependent  behav-
-       ior.   This  is  supported  only  when  the  default parameter value is
-       stress-dependent (that is, it looks like ${stress?{X}:{Y}},  or  it  is
-       the  $<i>name</i>  of  an  smtpd  parameter  with a stress-dependent default).
-       Other parameters always evaluate as if the <b>stress</b>  parameter  value  is
+       NOTE:  Some  <a href="postscreen.8.html"><b>postscreen</b>(8)</a> parameters implement stress-dependent behav-
+       ior.  This is supported  only  when  the  default  parameter  value  is
+       stress-dependent  (that  is,  it looks like ${stress?{X}:{Y}}, or it is
+       the $<i>name</i> of an  smtpd  parameter  with  a  stress-dependent  default).
+       Other  parameters  always  evaluate as if the <b>stress</b> parameter value is
        the empty string.
 
 <b>COMPATIBILITY CONTROLS</b>
@@ -107,26 +111,20 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
 
        <b><a href="postconf.5.html#postscreen_discard_ehlo_keyword_address_maps">postscreen_discard_ehlo_keyword_address_maps</a>  ($<a href="postconf.5.html#smtpd_discard_ehlo_keyword_address_maps">smtpd_discard_ehlo_key</a>-</b>
        <b><a href="postconf.5.html#smtpd_discard_ehlo_keyword_address_maps">word_address_maps</a>)</b>
-              Lookup  tables,  indexed by the remote SMTP client address, with
-              case insensitive lists of EHLO keywords  (pipelining,  starttls,
-              auth,  etc.)  that the <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server will not send in the
+              Lookup tables, indexed by the remote SMTP client  address,  with
+              case  insensitive  lists of EHLO keywords (pipelining, starttls,
+              auth, etc.) that the <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server will not send  in  the
               EHLO response to a remote SMTP client.
 
        <b><a href="postconf.5.html#postscreen_discard_ehlo_keywords">postscreen_discard_ehlo_keywords</a> ($<a href="postconf.5.html#smtpd_discard_ehlo_keywords">smtpd_discard_ehlo_keywords</a>)</b>
-              A case insensitive list of EHLO keywords (pipelining,  starttls,
-              auth,  etc.)  that the <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server will not send in the
+              A  case insensitive list of EHLO keywords (pipelining, starttls,
+              auth, etc.) that the <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server will not send  in  the
               EHLO response to a remote SMTP client.
 
        Available in Postfix version 3.1 and later:
 
        <b><a href="postconf.5.html#dns_ncache_ttl_fix_enable">dns_ncache_ttl_fix_enable</a> (no)</b>
               Enable a workaround for future libc incompatibility.
-
-       Available in Postfix version 3.4 and later:
-
-       <b><a href="postconf.5.html#postscreen_reject_footer_maps">postscreen_reject_footer_maps</a> ($<a href="postconf.5.html#smtpd_reject_footer_maps">smtpd_reject_footer_maps</a>)</b>
-              Optional lookup table for information that is appended  after  a
-              4XX or 5XX <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server response.
 
 <b>TROUBLE SHOOTING CONTROLS</b>
        <b><a href="postconf.5.html#postscreen_expansion_filter">postscreen_expansion_filter</a> (see 'postconf -d' output)</b>
@@ -401,25 +399,14 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A prefix that  is  prepended  to  the  process  name  in  syslog
-              records, so that, for example, "smtpd" becomes "prefix/smtpd".
-
-       Available in Postfix 3.3 and later:
-
-       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
-              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
-
-       Available in Postfix 3.5 and later:
-
-       <b>info_log_address_format (external)</b>
-              The  email  address  form that will be used in non-debug logging
-              (info, warning, etc.).
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              fix/smtpd".
 
 <b>SEE ALSO</b>
        <a href="smtpd.8.html">smtpd(8)</a>, Postfix SMTP server
        <a href="tlsproxy.8.html">tlsproxy(8)</a>, Postfix TLS proxy server
        <a href="dnsblog.8.html">dnsblog(8)</a>, DNS black/whitelist logger
-       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
        syslogd(8), system logging
 
 <b>README FILES</b>

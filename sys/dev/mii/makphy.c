@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.65 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: makphy.c,v 1.64 2020/01/28 05:08:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.65 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.64 2020/01/28 05:08:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,8 +181,6 @@ makphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 
-	mii_lock(mii);
-
 	switch (model) {
 	case MII_MODEL_xxMARVELL_E1000:
 		if ((maksc->sc_flags & MAKPHY_F_I210) != 0)
@@ -257,7 +255,6 @@ page0:
 			sc->mii_flags &= ~MIIF_IS_1000X;
 		}
 	}
-	mii_unlock(mii);
 	mii_phy_add_media(sc);
 }
 
@@ -266,8 +263,6 @@ makphy_reset(struct mii_softc *sc)
 {
 	struct makphy_softc *maksc = (struct makphy_softc *)sc;
 	uint16_t reg;
-
-	KASSERT(mii_locked(sc->mii_pdata));
 
 	mii_phy_reset(sc);
 
@@ -350,8 +345,6 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	if (!device_is_active(sc->mii_dev))
 		return ENXIO;
 
-	KASSERT(mii_locked(mii));
-
 	switch (cmd) {
 	case MII_POLLSTAT:
 		/* If we're not polling our PHY instance, just return. */
@@ -419,8 +412,6 @@ makphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t bmcr, gsr, pssr, essr;
-
-	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;

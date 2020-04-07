@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2020, Intel Corp.
+ * Copyright (C) 2000 - 2019, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -122,7 +122,8 @@ CvIsFilename (
  * FUNCTION:    CvInitFileTree
  *
  * PARAMETERS:  Table      - input table
- *              RootFile   - Output file that defines the DefinitionBlock
+ *              AmlStart   - Address of the starting point of the AML.
+ *              AmlLength  - Length of the AML file.
  *
  * RETURN:      None
  *
@@ -134,7 +135,8 @@ CvIsFilename (
 void
 CvInitFileTree (
     ACPI_TABLE_HEADER       *Table,
-    FILE                    *RootFile)
+    UINT8                   *AmlStart,
+    UINT32                  AmlLength)
 {
     UINT8                   *TreeAml;
     UINT8                   *FileEnd;
@@ -142,8 +144,6 @@ CvInitFileTree (
     char                    *PreviousFilename = NULL;
     char                    *ParentFilename = NULL;
     char                    *ChildFilename = NULL;
-    UINT8                   *AmlStart;
-    UINT32                  AmlLength;
 
 
     if (!AcpiGbl_CaptureComments)
@@ -151,13 +151,9 @@ CvInitFileTree (
         return;
     }
 
-
-    AmlLength = Table->Length - sizeof (ACPI_TABLE_HEADER);
-    AmlStart = ((UINT8 *) Table + sizeof (ACPI_TABLE_HEADER));
-
     CvDbgPrint ("AmlLength: %x\n", AmlLength);
     CvDbgPrint ("AmlStart:  %p\n", AmlStart);
-    CvDbgPrint ("AmlEnd:    %p\n", AmlStart+AmlLength);
+    CvDbgPrint ("AmlEnd?:   %p\n", AmlStart+AmlLength);
 
     AcpiGbl_FileTreeRoot = AcpiOsAcquireObject (AcpiGbl_FileCache);
 
@@ -169,7 +165,7 @@ CvInitFileTree (
 
     /* Set the root file to the current open file */
 
-    AcpiGbl_FileTreeRoot->File = RootFile;
+    AcpiGbl_FileTreeRoot->File = AcpiGbl_OutputFile;
 
     /*
      * Set this to true because we don't need to output

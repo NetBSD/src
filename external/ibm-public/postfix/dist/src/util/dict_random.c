@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_random.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: dict_random.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -33,11 +33,6 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
-/*
-/*	Wietse Venema
-/*	Google, Inc.
-/*	111 8th Avenue
-/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -78,39 +73,8 @@ static void dict_random_close(DICT *dict)
 {
     DICT_RANDOM *dict_random = (DICT_RANDOM *) dict;
 
-    if (dict_random->replies)
-	argv_free(dict_random->replies);
+    argv_free(dict_random->replies);
     dict_free(dict);
-}
-
-static char *dict_random_parse_name(DICT *dict, ARGV **argv,
-				            const char *string,
-				            const char *delim,
-				            const char *parens)
-{
-    ARGV   *argvp = argv_alloc(1);
-    char   *saved_string = mystrdup(string);
-    char   *bp = saved_string;
-    char   *arg;
-    VSTRING *b64 = 0;
-    char   *err = 0;
-
-    while ((arg = mystrtokq(&bp, delim, parens)) != 0) {
-	if (dict->flags & DICT_FLAG_SRC_RHS_IS_FILE) {
-	    if ((b64 = dict_file_to_b64(dict, arg)) != 0) {
-		argv_add(argvp, vstring_str(b64), (char *) 0);
-	    } else {
-		err = dict_file_get_error(dict);
-		break;
-	    }
-	} else {
-	    argv_add(argvp, arg, (char *) 0);
-	}
-    }
-    argv_terminate(argvp);
-    myfree(saved_string);
-    *argv = argvp;
-    return (err);
 }
 
 /* dict_random_open - open a randomized table */
@@ -119,19 +83,16 @@ DICT   *dict_random_open(const char *name, int open_flags, int dict_flags)
 {
     DICT_RANDOM *dict_random;
     char   *saved_name = 0;
+    ARGV   *argv;
     size_t  len;
-    char   *err = 0;
 
     /*
      * Clarity first. Let the optimizer worry about redundant code.
      */
 #define DICT_RANDOM_RETURN(x) do { \
-	DICT *__d = (x); \
 	if (saved_name != 0) \
 	    myfree(saved_name); \
-	if (err != 0) \
-	    myfree(err); \
-	return (__d); \
+	return (x); \
     } while (0)
 
     /*
@@ -144,38 +105,30 @@ DICT   *dict_random_open(const char *name, int open_flags, int dict_flags)
 					  DICT_TYPE_RANDOM, name));
 
     /*
-     * Bundle up preliminary results.
+     * Split the name name into its constituent parts.
+     */
+    if ((len = balpar(name, CHARS_BRACE)) == 0 || name[len] != 0
+	|| *(saved_name = mystrndup(name + 1, len - 2)) == 0
+	|| ((argv = argv_splitq(saved_name, CHARS_COMMA_SP, CHARS_BRACE)),
+	    (argv->argc == 0)))
+	DICT_RANDOM_RETURN(dict_surrogate(DICT_TYPE_RANDOM, name,
+					  open_flags, dict_flags,
+					  "bad syntax: \"%s:%s\"; "
+					  "need \"%s:{value...}\"",
+					  DICT_TYPE_RANDOM, name,
+					  DICT_TYPE_RANDOM));
+
+    /*
+     * Bundle up the result.
      */
     dict_random =
 	(DICT_RANDOM *) dict_alloc(DICT_TYPE_RANDOM, name, sizeof(*dict_random));
     dict_random->dict.lookup = dict_random_lookup;
     dict_random->dict.close = dict_random_close;
     dict_random->dict.flags = dict_flags | DICT_FLAG_PATTERN;
-    dict_random->replies = 0;
+    dict_random->replies = argv;
     dict_random->dict.owner.status = DICT_OWNER_TRUSTED;
     dict_random->dict.owner.uid = 0;
 
-    /*
-     * Split the name name into its constituent parts.
-     */
-    if ((len = balpar(name, CHARS_BRACE)) == 0 || name[len] != 0
-	|| *(saved_name = mystrndup(name + 1, len - 2)) == 0
-	|| (err = dict_random_parse_name(&dict_random->dict,
-					 &dict_random->replies, saved_name,
-					 CHARS_COMMA_SP, CHARS_BRACE)) != 0
-	|| dict_random->replies->argc == 0) {
-	dict_random_close(&dict_random->dict);
-	DICT_RANDOM_RETURN(err == 0 ?
-			   dict_surrogate(DICT_TYPE_RANDOM, name,
-					  open_flags, dict_flags,
-					  "bad syntax: \"%s:%s\"; "
-					  "need \"%s:{value...}\"",
-					  DICT_TYPE_RANDOM, name,
-					  DICT_TYPE_RANDOM) :
-			   dict_surrogate(DICT_TYPE_RANDOM, name,
-					  open_flags, dict_flags,
-					  "%s", err));
-    }
-    dict_file_purge_buffers(&dict_random->dict);
     DICT_RANDOM_RETURN(DICT_DEBUG (&dict_random->dict));
 }

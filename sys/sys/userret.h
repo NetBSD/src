@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.33 2020/03/26 20:19:06 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.32 2020/01/22 12:23:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008, 2019, 2020
@@ -91,7 +91,11 @@ mi_userret(struct lwp *l)
 		preempt();
 		ci = l->l_cpu;
 	}
+#ifdef __HAVE_FAST_SOFTINTS
 	if (__predict_false(l->l_flag & LW_USERRET)) {
+#else
+	if (((l->l_flag & LW_USERRET) | ci->ci_data.cpu_softints) != 0) {
+#endif
 		KPREEMPT_ENABLE(l);
 		lwp_userret(l);
 		KPREEMPT_DISABLE(l);
