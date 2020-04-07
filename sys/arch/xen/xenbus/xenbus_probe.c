@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.44 2020/04/07 14:07:01 jdolecek Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.45 2020/04/07 15:40:14 jdolecek Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.44 2020/04/07 14:07:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.45 2020/04/07 15:40:14 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -313,6 +313,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 {
 	int err, i, pos, msize;
 	int *lookup = NULL;
+	size_t lookup_sz = 0;
 	unsigned long state;
 	char **dir;
 	unsigned int dir_n = 0;
@@ -331,16 +332,13 @@ xenbus_probe_device_type(const char *path, const char *type,
 		int minp;
 		unsigned long minv;
 		unsigned long *id;
+		size_t id_sz;
 
-		lookup = malloc(sizeof(int) * dir_n, M_DEVBUF,
-		    M_WAITOK | M_ZERO);
-		if (lookup == NULL)
-			panic("can't malloc lookup");
+		lookup_sz = sizeof(int) * dir_n;
+		lookup = kmem_zalloc(lookup_sz, KM_SLEEP);
 
-		id = malloc(sizeof(unsigned long) * dir_n, M_DEVBUF,
-		    M_WAITOK | M_ZERO);
-		if (id == NULL)
-			panic("can't malloc id");
+		id_sz = sizeof(unsigned long) * dir_n;
+		id = kmem_zalloc(id_sz, KM_SLEEP);
 
 		/* Convert string values to numeric; skip invalid */
 		for (i = 0; i < dir_n; i++) {
@@ -370,8 +368,9 @@ xenbus_probe_device_type(const char *path, const char *type,
 			else
 				break;
 		}
-		
-		free(id, M_DEVBUF);
+
+		kmem_free(id, id_sz);
+
 		/* Adjust in case we had to skip non-numeric entries */
 		dir_n = pos;
 	}
@@ -387,15 +386,14 @@ xenbus_probe_device_type(const char *path, const char *type,
 		 * already has room for one char in xbusd_path.
 		 */
 		msize = sizeof(*xbusd) + strlen(path) + strlen(dir[i]) + 2;
-		xbusd = malloc(msize, M_DEVBUF, M_WAITOK | M_ZERO);
-		if (xbusd == NULL)
-			panic("can't malloc xbusd");
-			
+		xbusd = kmem_zalloc(msize, KM_SLEEP);
+		xbusd->xbusd_sz = msize;
+
 		snprintf(__UNCONST(xbusd->xbusd_path),
 		    msize - sizeof(*xbusd) + 1, "%s/%s", path, dir[i]);
 		if (xenbus_lookup_device_path(xbusd->xbusd_path) != NULL) {
 			/* device already registered */
-			free(xbusd, M_DEVBUF);
+			kmem_free(xbusd, xbusd->xbusd_sz);
 			continue;
 		}
 		err = xenbus_read_ul(NULL, xbusd->xbusd_path, "state",
@@ -403,13 +401,13 @@ xenbus_probe_device_type(const char *path, const char *type,
 		if (err) {
 			printf("xenbus: can't get state "
 			    "for %s (%d)\n", xbusd->xbusd_path, err);
-			free(xbusd, M_DEVBUF);
+			kmem_free(xbusd, xbusd->xbusd_sz);
 			err = 0;
 			continue;
 		}
 		if (state != XenbusStateInitialising) {
 			/* device is not new */
-			free(xbusd, M_DEVBUF);
+			kmem_free(xbusd, xbusd->xbusd_sz);
 			continue;
 		}
 
@@ -425,7 +423,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 				break;
 			}
 			if (create(xbusd)) {
-				free(xbusd, M_DEVBUF);
+				kmem_free(xbusd, xbusd->xbusd_sz);
 				continue;
 			}
 		} else {
@@ -437,19 +435,20 @@ xenbus_probe_device_type(const char *path, const char *type,
 				printf("xenbus device type %s: id %s is not a"
 				    " number\n", type, dir[i]);
 				err = EFTYPE;
-				free(xbusd, M_DEVBUF);
+				kmem_free(xbusd, xbusd->xbusd_sz);
 				break;
 			}
 			err = read_backend_details(xbusd);
 			if (err != 0) {
 				printf("xenbus: can't get backend details "
 				    "for %s (%d)\n", xbusd->xbusd_path, err);
+				kmem_free(xbusd, xbusd->xbusd_sz);
 				break;
 			}
 			xbusd->xbusd_u.f.f_dev = config_found_ia(xenbus_dev,
 			    "xenbus", &xa, xenbus_print);
 			if (xbusd->xbusd_u.f.f_dev == NULL) {
-				free(xbusd, M_DEVBUF);
+				kmem_free(xbusd, xbusd->xbusd_sz);
 				continue;
 			}
 		}
@@ -459,7 +458,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 	}
 	free(dir, M_DEVBUF);
 	if (lookup)
-		free(lookup, M_DEVBUF);
+		kmem_free(lookup, lookup_sz);
 	
 	return err;
 }
@@ -569,7 +568,7 @@ xenbus_free_device(struct xenbus_device *xbusd)
 	free_otherend_watch(xbusd);
 	free_otherend_details(xbusd);
 	xenbus_switch_state(xbusd, NULL, XenbusStateClosed);
-	free(xbusd, M_DEVBUF);
+	kmem_free(xbusd, xbusd->xbusd_sz);
 	return 0;
 }
 
