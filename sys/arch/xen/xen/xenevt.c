@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.55 2020/04/06 17:55:51 jdolecek Exp $      */
+/*      $NetBSD: xenevt.c,v 1.56 2020/04/07 10:19:53 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,12 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.55 2020/04/06 17:55:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.56 2020/04/07 10:19:53 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -307,7 +306,7 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 		if ((error = fd_allocfile(&fp, &fd)) != 0)
 			return error;
 
-		d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_ZERO);
+		d = kmem_zalloc(sizeof(*d), KM_SLEEP);
 		d->ci = &cpu_info_primary;
 		mutex_init(&d->lock, MUTEX_DEFAULT, IPL_HIGH);
 		cv_init(&d->cv, "xenevt");
@@ -392,7 +391,7 @@ xenevt_free(struct xenevt_d *d)
 	seldestroy(&d->sel);
 	cv_destroy(&d->cv);
 	mutex_destroy(&d->lock);
-	free(d, M_DEVBUF);
+	kmem_free(d, sizeof(*d));
 }
 
 static int
