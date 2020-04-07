@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.18 2020/04/07 13:38:50 jdolecek Exp $ */
+/* $NetBSD: xenbus.h,v 1.19 2020/04/07 14:07:01 jdolecek Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -58,6 +58,7 @@ struct xenbus_watch {
 
 	/* Path being watched. */
 	char *node;
+	size_t node_sz;
 
 	/* Callback (executed in a process context with no locks held). */
 	void (*xbw_callback)(struct xenbus_watch *,
@@ -180,6 +181,8 @@ int xenbus_watch_path2(struct xenbus_device *dev, const char *path,
 		       void (*callback)(struct xenbus_watch *,
 					const char **, unsigned int));
 
+/* Unregister the watch, and free associated internal structures. */
+void xenbus_unwatch_path(struct xenbus_watch *);
 
 /**
  * Advertise in the store a change of the given driver to the given new_state.

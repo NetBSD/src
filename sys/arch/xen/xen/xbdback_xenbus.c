@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.76 2020/04/07 13:36:22 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.77 2020/04/07 14:07:01 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.76 2020/04/07 13:36:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.77 2020/04/07 14:07:01 jdolecek Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -487,11 +487,9 @@ xbdback_xenbus_destroy(void *arg)
 	xbdback_disconnect(xbdi);
 
 	/* unregister watch */
-	if (xbdi->xbdi_watch.node) {
-		unregister_xenbus_watch(&xbdi->xbdi_watch);
-		free(xbdi->xbdi_watch.node, M_DEVBUF);
-		xbdi->xbdi_watch.node = NULL;
-	}
+	if (xbdi->xbdi_watch.node)
+		xenbus_unwatch_path(&xbdi->xbdi_watch);
+
 	/* unmap ring */
 	if (xbdi->xbdi_ring_va != 0) {
 		ungrop.host_addr = xbdi->xbdi_ring_va;

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_client.c,v 1.15 2020/04/07 13:38:50 jdolecek Exp $ */
+/* $NetBSD: xenbus_client.c,v 1.16 2020/04/07 14:07:01 jdolecek Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.15 2020/04/07 13:38:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.16 2020/04/07 14:07:01 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.15 2020/04/07 13:38:50 jdolecek 
 #include <sys/null.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <xen/xen.h>
@@ -49,30 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.15 2020/04/07 13:38:50 jdolecek 
 #include <xen/evtchn.h>
 #include <xen/xenbus.h>
 #include <xen/granttables.h>
-
-
-static int
-xenbus_watch_path(struct xenbus_device *dev, char *path,
-		      struct xenbus_watch *watch, 
-		      void (*callback)(struct xenbus_watch *,
-				       const char **, unsigned int))
-{
-	int err;
-
-	watch->node = path;
-	watch->xbw_callback = callback;
-
-	err = register_xenbus_watch(watch);
-
-	if (err) {
-		watch->node = NULL;
-		watch->xbw_callback = NULL;
-		xenbus_dev_fatal(dev, err, "adding watch on %s", path);
-	}
-	err = 0;
-
-	return err;
-}
 
 int
 xenbus_watch_path2(struct xenbus_device *dev, const char *path,
@@ -84,21 +61,37 @@ xenbus_watch_path2(struct xenbus_device *dev, const char *path,
 	char *state;
 
 	DPRINTK("xenbus_watch_path2 path %s path2 %s\n", path, path2);
-	state =
-		malloc(strlen(path) + 1 + strlen(path2) + 1, M_DEVBUF,
-		    M_WAITOK);
+
+	watch->node_sz = strlen(path) + 1 + strlen(path2) + 1;
+	state = kmem_alloc(watch->node_sz, KM_SLEEP);
 	strcpy(state, path);
 	strcat(state, "/");
 	strcat(state, path2);
 
-	err = xenbus_watch_path(dev, state, watch, callback);
+	watch->node = state;
+	watch->xbw_callback = callback;
+
+	err = register_xenbus_watch(watch);
 
 	if (err) {
-		free(state, M_DEVBUF);
+		watch->node = NULL;
+		watch->node_sz = 0;
+		watch->xbw_callback = NULL;
+		xenbus_dev_fatal(dev, err, "adding watch on %s", state);
+		kmem_free(state, watch->node_sz);
 	}
 	return err;
 }
 
+void
+xenbus_unwatch_path(struct xenbus_watch *watch)
+{
+	if (watch->node != NULL) {
+		unregister_xenbus_watch(watch);
+		kmem_free(watch->node, watch->node_sz);
+		watch->node = NULL;
+	}
+}
 
 int
 xenbus_switch_state(struct xenbus_device *dev,
