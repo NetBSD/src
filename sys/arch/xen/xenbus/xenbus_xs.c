@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.25 2020/04/07 15:59:57 jdolecek Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.26 2020/04/07 16:10:48 jdolecek Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.25 2020/04/07 15:59:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.26 2020/04/07 16:10:48 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -173,6 +173,12 @@ xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void**reply)
 	splx(s);
 
 	return err;
+}
+
+void
+xenbus_dev_reply_free(struct xsd_sockmsg *msg, void *reply)
+{
+	free(reply, M_DEVBUF);
 }
 
 /* Send message to xs, get kmalloc'ed reply.  ERR_PTR() on error. */
