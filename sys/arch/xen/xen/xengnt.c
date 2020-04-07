@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.28 2020/04/05 17:48:30 jdolecek Exp $      */
+/*      $NetBSD: xengnt.c,v 1.29 2020/04/07 09:05:14 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,12 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.28 2020/04/05 17:48:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.29 2020/04/07 09:05:14 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/extent.h>
 #include <sys/kernel.h>
@@ -97,8 +97,8 @@ xengnt_init(void)
 	    gnt_max_grant_frames * PAGE_SIZE, 0, UVM_KMF_VAONLY);
 	if (grant_table == NULL)
 		panic("xengnt_init() no VM space");
-	gnt_entries = malloc((nr_grant_entries + 1) * sizeof(grant_ref_t),
-	    M_DEVBUF, M_WAITOK);
+	gnt_entries = kmem_alloc((nr_grant_entries + 1) * sizeof(grant_ref_t),
+	    KM_SLEEP);
 	for (i = 0; i <= nr_grant_entries; i++)
 		gnt_entries[i] = XENGNT_NO_ENTRY;
 
@@ -163,12 +163,14 @@ xengnt_more_entries(void)
 	u_long *pages;
 	int nframes_new = gnt_nr_grant_frames + 1;
 	int i, start_gnt;
+	size_t sz;
 	KASSERT(mutex_owned(&grant_lock));
 
 	if (gnt_nr_grant_frames == gnt_max_grant_frames)
 		return ENOMEM;
 
-	pages = malloc(nframes_new * sizeof(u_long), M_DEVBUF, M_NOWAIT);
+	sz = nframes_new * sizeof(u_long);
+	pages = kmem_alloc(sz, KM_NOSLEEP);
 	if (pages == NULL)
 		return ENOMEM;
 
@@ -207,7 +209,7 @@ xengnt_more_entries(void)
 		if (setup.status != GNTST_okay) {
 			aprint_error("%s: setup table returned %d\n",
 			    __func__, setup.status);
-			free(pages, M_DEVBUF);
+			kmem_free(pages, sz);
 			return ENOMEM;
 		}
 	}
@@ -242,7 +244,7 @@ xengnt_more_entries(void)
 		last_gnt_entry++;
 	}
 	gnt_nr_grant_frames = nframes_new;
-	free(pages, M_DEVBUF);
+	kmem_free(pages, sz);
 	return 0;
 }
 
