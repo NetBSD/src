@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.16 2020/04/07 15:43:42 jdolecek Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.17 2020/04/07 16:10:48 jdolecek Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.16 2020/04/07 15:43:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.17 2020/04/07 16:10:48 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.16 2020/04/07 15:43:42 jdolecek Exp
 #include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
@@ -312,7 +311,8 @@ xenbus_dev_write(void *v)
 			queue_reply(xlwp, (char *)&xlwp->u.msg,
 						sizeof(xlwp->u.msg));
 			queue_reply(xlwp, (char *)reply, xlwp->u.msg.len);
-			free(reply, M_DEVBUF);
+
+			xenbus_dev_reply_free(&xlwp->u.msg, reply);
 		}
 		break;
 
