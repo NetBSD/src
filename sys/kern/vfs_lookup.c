@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.215 2020/04/04 20:49:30 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.216 2020/04/07 18:28:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.215 2020/04/04 20:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.216 2020/04/07 18:28:31 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -961,7 +961,7 @@ lookup_crossmount(struct namei_state *state,
 		error = vn_lock(foundobj, LK_SHARED);
 		if (error != 0) {
 			vrele(foundobj);
-			*foundobj_ret = NULL;
+			foundobj = NULL;
 			break;
 		}
 
@@ -975,7 +975,7 @@ lookup_crossmount(struct namei_state *state,
 		error = vfs_busy(mp);
 		vput(foundobj);
 		if (error != 0) {
-			*foundobj_ret = NULL;
+			foundobj = NULL;
 			break;
 		}
 
@@ -983,7 +983,7 @@ lookup_crossmount(struct namei_state *state,
 		error = VFS_ROOT(mp, LK_NONE, &foundobj);
 		vfs_unbusy(mp);
 		if (error) {
-			*foundobj_ret = NULL;
+			foundobj = NULL;
 			break;
 		}
 
@@ -1005,7 +1005,6 @@ lookup_crossmount(struct namei_state *state,
 		} else if (foundobj->v_type == VDIR) {
 			vrele(searchdir);
 			*searchdir_ret = searchdir = NULL;
-			*foundobj_ret = foundobj;
 			lktype = LK_NONE;
 		}
 	}
@@ -1015,6 +1014,7 @@ lookup_crossmount(struct namei_state *state,
 		vn_lock(searchdir, lktype | LK_RETRY);
 		*searchdir_locked = true;
 	}
+	*foundobj_ret = foundobj;
 	return error;
 }
 
@@ -1472,7 +1472,7 @@ namei_oneroot(struct namei_state *state,
 		 * If we didn't get a good answer from the namecache, then
 		 * go directly to the file system.
 		 */
-		if (error != 0 && error != ENOENT) {
+		if (error == EOPNOTSUPP) {
 			error = lookup_once(state, searchdir, &searchdir,
 			    &foundobj, &searchdir_locked);
 		}
