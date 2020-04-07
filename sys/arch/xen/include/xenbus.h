@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.14 2019/02/02 12:32:55 cherry Exp $ */
+/* $NetBSD: xenbus.h,v 1.15 2020/04/07 09:18:00 jdolecek Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -57,7 +57,7 @@ struct xenbus_watch {
 	SLIST_ENTRY(xenbus_watch) watch_next;
 
 	/* Path being watched. */
-	char *node;
+	const char *node;
 
 	/* Callback (executed in a process context with no locks held). */
 	void (*xbw_callback)(struct xenbus_watch *,
