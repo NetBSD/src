@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.22.12.1 2020/04/07 18:32:20 is Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.22.12.2 2020/04/07 18:47:43 is Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -47,7 +47,7 @@ struct slcp {
 	int	max_failure;
 	/* multilink variables */
 	u_long	mrru;		/* our   max received reconstructed unit */
-	u_long	their_mrru;	/* their max receive dreconstructed unit */
+	u_long	their_mrru;	/* their max received reconstructed unit */
 };
 
 #define IDX_IPCP 1		/* idx into state table */
