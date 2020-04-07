@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.22 2019/02/02 12:32:55 cherry Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.23 2020/04/07 11:47:06 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.22 2019/02/02 12:32:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.23 2020/04/07 11:47:06 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -33,7 +33,6 @@ __KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.22 2019/02/02 12:32:55 cherry Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/bus.h>
 
@@ -290,7 +289,6 @@ xpci_connect(struct xpci_xenbus_softc *sc)
 {
 	u_long num_roots;
 	int err;
-	char *string;
 	char *domain, *bus, *ep;
 	char node[10];
 	u_long busn;
@@ -316,13 +314,14 @@ xpci_connect(struct xpci_xenbus_softc *sc)
 	    (num_roots > 1) ? "ses" : "");
 
 	for (i = 0; i < num_roots; i++) {
+		char root[32];
 		snprintf(node, sizeof(node), "root-%d", i);
 		xenbus_read(NULL, sc->sc_xbusd->xbusd_otherend, node,
-		    NULL, &string);
+		    root, sizeof(root));
 		/* split dddd:bb in 2 strings, a la strtok */
-		domain = string;
-		string[4] = '\0';
-		bus = &string[5];
+		domain = dev;
+		root[4] = '\0';
+		bus = &root[5];
 		if (strcmp(domain, "0000") != 0) {
 			aprint_error_dev(sc->sc_dev,
 			   "non-zero PCI domain %s not supported\n", domain);
@@ -337,7 +336,6 @@ xpci_connect(struct xpci_xenbus_softc *sc)
 				splx(s);
 			}
 		}
-		free(string, M_DEVBUF);
 	}
 
 	xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
@@ -515,9 +513,10 @@ xpci_enumerate_bus(struct pci_softc *sc, const int *locators,
 		return err;
 	}
 	for (i = 0; i < num_devs; i++) {
+		char string[32];
 		snprintf(node, sizeof(node), "dev-%d", i);
 		xenbus_read(NULL, xpci_sc->sc_xbusd->xbusd_otherend,
-		   node, NULL, &string);
+		   node, string, sizeof(string));
 		/* split dddd:bb:dd:ff in 4 strings, a la strtok */
 		domain = string;
 		string[4] = '\0';
@@ -556,7 +555,6 @@ xpci_enumerate_bus(struct pci_softc *sc, const int *locators,
 				return (err);
 		}
 endfor:
-		free(string, M_DEVBUF);
 	}
 	return (0);
 #else

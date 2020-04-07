@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.15 2020/04/07 09:18:00 jdolecek Exp $ */
+/* $NetBSD: xenbus.h,v 1.16 2020/04/07 11:47:05 jdolecek Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -78,7 +78,7 @@ typedef enum {
 
 struct xenbus_device {
 	SLIST_ENTRY(xenbus_device) xbusd_entries;
-	char *xbusd_otherend; /* the otherend path */
+	char xbusd_otherend[64]; /* the otherend path (size arbitrary) */
 	int xbusd_otherend_id; /* the otherend's id */
 	/* callback for otherend change */
 	void (*xbusd_otherend_changed)(void *, XenbusState);
@@ -118,9 +118,8 @@ struct xenbus_transaction;
 int xenbus_directory(struct xenbus_transaction *t,
 			const char *dir, const char *node, unsigned int *num,
 			char ***);
-int xenbus_read(struct xenbus_transaction *t,
-		  const char *dir, const char *node, unsigned int *len,
-		  char **);
+int xenbus_read(struct xenbus_transaction *,
+		  const char *, const char *, char *, size_t);
 int xenbus_read_ul(struct xenbus_transaction *,
 		  const char *, const char *, unsigned long *, int);
 int xenbus_read_ull(struct xenbus_transaction *,
@@ -135,19 +134,10 @@ int xenbus_rm(struct xenbus_transaction *t, const char *dir, const char *node);
 struct xenbus_transaction *xenbus_transaction_start(void);
 int xenbus_transaction_end(struct xenbus_transaction *t, int abort);
 
-/* Single read and scanf: returns -errno or num scanned if > 0. */
-int xenbus_scanf(struct xenbus_transaction *t,
-		 const char *dir, const char *node, const char *fmt, ...)
-	__attribute__((format(scanf, 4, 5)));
-
 /* Single printf and write: returns -errno or 0. */
 int xenbus_printf(struct xenbus_transaction *t,
 		  const char *dir, const char *node, const char *fmt, ...)
 	__attribute__((format(printf, 4, 5)));
-
-/* Generic read function: NULL-terminated triples of name,
- * sprintf-style type string, and pointer. Returns 0 or errno.*/
-int xenbus_gather(struct xenbus_transaction *t, const char *dir, ...);
 
 /* notifer routines for when the xenstore comes up */
 // XXX int register_xenstore_notifier(struct notifier_block *nb);

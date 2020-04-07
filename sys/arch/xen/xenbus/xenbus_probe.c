@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.41 2020/04/07 09:18:00 jdolecek Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.42 2020/04/07 11:47:06 jdolecek Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.41 2020/04/07 09:18:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.42 2020/04/07 11:47:06 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -171,9 +171,9 @@ read_otherend_details(struct xenbus_device *xendev,
 				 const char *id_node, const char *path_node)
 {
 	int err;
-	char *val, *ep;
+	unsigned long id;
 
-	err = xenbus_read(NULL, xendev->xbusd_path, id_node, NULL, &val);
+	err = xenbus_read_ul(NULL, xendev->xbusd_path, id_node, &id, 10);
 	if (err) {
 		printf("reading other end details %s from %s\n",
 		    id_node, xendev->xbusd_path);
@@ -182,17 +182,10 @@ read_otherend_details(struct xenbus_device *xendev,
 				 id_node, xendev->xbusd_path);
 		return err;
 	}
-	xendev->xbusd_otherend_id = strtoul(val, &ep, 10);
-	if (val[0] == '\0' || *ep != '\0') {
-		printf("reading other end details %s from %s: %s is not a number\n", id_node, xendev->xbusd_path, val);
-		xenbus_dev_fatal(xendev, err,
-		    "reading other end details %s from %s: %s is not a number",
-		    id_node, xendev->xbusd_path, val);
-		free(val, M_DEVBUF);
-		return EFTYPE;
-	}
-	free(val, M_DEVBUF);
-	err = xenbus_read(NULL, xendev->xbusd_path, path_node, NULL, &val);
+	xendev->xbusd_otherend_id = (int)id;
+
+	err = xenbus_read(NULL, xendev->xbusd_path, path_node,
+	    xendev->xbusd_otherend, sizeof(xendev->xbusd_otherend));
 	if (err) {
 		printf("reading other end details %s from %s (%d)\n",
 		    path_node, xendev->xbusd_path, err);
@@ -203,7 +196,6 @@ read_otherend_details(struct xenbus_device *xendev,
 	}
 	DPRINTK("read_otherend_details: read %s/%s returned %s\n",
 	    xendev->xbusd_path, path_node, val);
-	xendev->xbusd_otherend = val;
 
 	if (strlen(xendev->xbusd_otherend) == 0 ||
 	    !xenbus_exists(NULL, xendev->xbusd_otherend, "")) {
@@ -233,8 +225,8 @@ read_frontend_details(struct xenbus_device *xendev)
 static void
 free_otherend_details(struct xenbus_device *dev)
 {
-	free(dev->xbusd_otherend, M_DEVBUF);
-	dev->xbusd_otherend = NULL;
+	/* Nothing to free */
+	dev->xbusd_otherend[0] = '\0';
 }
 
 static void

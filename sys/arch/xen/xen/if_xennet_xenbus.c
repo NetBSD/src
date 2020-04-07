@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.108 2020/04/06 19:58:09 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.109 2020/04/07 11:47:06 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.108 2020/04/06 19:58:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.109 2020/04/07 11:47:06 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -268,9 +268,10 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	netif_tx_sring_t *tx_ring;
 	netif_rx_sring_t *rx_ring;
 	RING_IDX i;
-	char *val, *e, *p;
+	char *e, *p;
 	unsigned long uval;
 	extern int ifqmaxlen; /* XXX */
+	char mac[32];
 #ifdef XENNET_DEBUG
 	char **dir;
 	int dir_n = 0;
@@ -280,28 +281,6 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Xen Virtual Network Interface\n");
 	sc->sc_dev = self;
 
-#ifdef XENNET_DEBUG
-	printf("path: %s\n", xa->xa_xbusd->xbusd_path);
-	snprintf(id_str, sizeof(id_str), "%d", xa->xa_id);
-	err = xenbus_directory(NULL, "device/vif", id_str, &dir_n, &dir);
-	if (err) {
-		aprint_error_dev(self, "xenbus_directory err %d\n", err);
-	} else {
-		printf("%s/\n", xa->xa_xbusd->xbusd_path);
-		for (i = 0; i < dir_n; i++) {
-			printf("\t/%s", dir[i]);
-			err = xenbus_read(NULL, xa->xa_xbusd->xbusd_path,
-				          dir[i], NULL, &val);
-			if (err) {
-				aprint_error_dev(self, "xenbus_read err %d\n",
-					         err);
-			} else {
-				printf(" = %s\n", val);
-				free(val, M_DEVBUF);
-			}
-		}
-	}
-#endif /* XENNET_DEBUG */
 	sc->sc_xbusd = xa->xa_xbusd;
 	sc->sc_xbusd->xbusd_otherend_changed = xennet_backend_changed;
 
@@ -340,22 +319,21 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* read mac address */
-	err = xenbus_read(NULL, sc->sc_xbusd->xbusd_path, "mac", NULL, &val);
+	err = xenbus_read(NULL, sc->sc_xbusd->xbusd_path, "mac",
+	    mac, sizeof(mac));
 	if (err) {
 		aprint_error_dev(self, "can't read mac address, err %d\n", err);
 		return;
 	}
-	for (i = 0, p = val; i < 6; i++) {
+	for (i = 0, p = mac; i < ETHER_ADDR_LEN; i++) {
 		sc->sc_enaddr[i] = strtoul(p, &e, 16);
 		if ((e[0] == '\0' && i != 5) && e[0] != ':') {
 			aprint_error_dev(self,
-			    "%s is not a valid mac address\n", val);
-			free(val, M_DEVBUF);
+			    "%s is not a valid mac address\n", mac);
 			return;
 		}
 		p = &e[1];
 	}
-	free(val, M_DEVBUF);
 	aprint_normal_dev(self, "MAC address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.93 2020/04/06 19:52:38 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.94 2020/04/07 11:47:06 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,14 +25,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.93 2020/04/06 19:52:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.94 2020/04/07 11:47:06 jdolecek Exp $");
 
 #include "opt_xen.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/kernel.h>
@@ -176,7 +175,8 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	long domid, handle;
 	struct ifnet *ifp;
 	extern int ifqmaxlen; /* XXX */
-	char *val, *e, *p;
+	char *e, *p;
+	char mac[32];
 	int i, err;
 	struct xenbus_transaction *xbt;
 
@@ -211,23 +211,22 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	    (int)domid, (int)handle);
 
 	/* read mac address */
-	if ((err = xenbus_read(NULL, xbusd->xbusd_path, "mac", NULL, &val))) {
+	err = xenbus_read(NULL, xbusd->xbusd_path, "mac", mac, sizeof(mac));
+	if (err) {
 		aprint_error_ifnet(ifp, "can't read %s/mac: %d\n",
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}
-	for (i = 0, p = val; i < 6; i++) {
+	for (i = 0, p = mac; i < ETHER_ADDR_LEN; i++) {
 		xneti->xni_enaddr[i] = strtoul(p, &e, 16);
 		if ((e[0] == '\0' && i != 5) && e[0] != ':') {
 			aprint_error_ifnet(ifp,
-			    "%s is not a valid mac address\n", val);
-			free(val, M_DEVBUF);
+			    "%s is not a valid mac address\n", mac);
 			err = EINVAL;
 			goto fail;
 		}
 		p = &e[1];
 	}
-	free(val, M_DEVBUF);
 
 	/* we can't use the same MAC addr as our guest */
 	xneti->xni_enaddr[3]++;

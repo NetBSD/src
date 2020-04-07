@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.96 2020/03/13 00:32:05 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.97 2020/04/07 11:47:06 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.96 2020/03/13 00:32:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.97 2020/04/07 11:47:06 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -261,28 +261,6 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	dk_init(&sc->sc_dksc, self, DKTYPE_ESDI);
 	disk_init(&sc->sc_dksc.sc_dkdev, device_xname(self), &xbddkdriver);
 
-#ifdef XBD_DEBUG
-	printf("path: %s\n", xa->xa_xbusd->xbusd_path);
-	snprintf(id_str, sizeof(id_str), "%d", xa->xa_id);
-	err = xenbus_directory(NULL, "device/vbd", id_str, &dir_n, &dir);
-	if (err) {
-		aprint_error_dev(self, "xenbus_directory err %d\n", err);
-	} else {
-		printf("%s/\n", xa->xa_xbusd->xbusd_path);
-		for (i = 0; i < dir_n; i++) {
-			printf("\t/%s", dir[i]);
-			err = xenbus_read(NULL, xa->xa_xbusd->xbusd_path,
-					  dir[i], NULL, &val);
-			if (err) {
-				aprint_error_dev(self, "xenbus_read err %d\n",
-						 err);
-			} else {
-				printf(" = %s\n", val);
-				free(val, M_DEVBUF);
-			}
-		}
-	}
-#endif /* XBD_DEBUG */
 	sc->sc_xbusd = xa->xa_xbusd;
 	sc->sc_xbusd->xbusd_otherend_changed = xbd_backend_changed;
 
