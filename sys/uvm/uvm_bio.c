@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.106 2020/03/17 18:31:39 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.107 2020/04/07 19:11:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.106 2020/03/17 18:31:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.107 2020/04/07 19:11:13 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -734,8 +734,25 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 	    ((flags & UBC_READ) != 0 && uio->uio_rw == UIO_READ));
 
 #ifdef UBC_USE_PMAP_DIRECT
-	if (ubc_direct) {
-		return ubc_uiomove_direct(uobj, uio, todo, advice, flags);
+	if (ubc_direct && UVM_OBJ_IS_VNODE(uobj)) {
+		/*
+		 * during direct access pages need to be held busy to
+		 * prevent them disappearing.  if the LWP reads or writes
+		 * a vnode into a mapped view of same it could deadlock.
+		 * prevent this by disallowing direct access if the vnode
+		 * is visible somewhere via mmap().
+		 *
+		 * the vnode flags are tested here, but at all points UBC is
+		 * called for vnodes, the vnode is locked (thus preventing a
+		 * new mapping via mmap() while busy here).
+		 */
+
+		struct vnode *vp = (struct vnode *)uobj;
+		KASSERT(VOP_ISLOCKED(vp) != LK_NONE);
+		if ((vp->v_vflag & VV_MAPPED) == 0) {
+			return ubc_uiomove_direct(uobj, uio, todo, advice,
+			    flags);
+		}
 	}
 #endif
 
