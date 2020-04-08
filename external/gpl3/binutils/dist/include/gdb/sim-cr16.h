@@ -1,6 +1,6 @@
 /* This file defines the interface between the cr16 simulator and gdb.
 
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

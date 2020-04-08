@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.68.2.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: an.c,v 1.68.2.2 2020/04/08 14:08:06 martin Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.68.2.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.68.2.2 2020/04/08 14:08:06 martin Exp $");
 
 
 #include <sys/param.h>
@@ -755,7 +755,7 @@ an_start(struct ifnet *ifp)
 			break;
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		bpf_mtap(ifp, m, BPF_D_OUT);
 		eh = mtod(m, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
@@ -853,7 +853,7 @@ an_start(struct ifnet *ifp)
 		sc->sc_txnext = cur;
 		continue;
 bad:
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		m_freem(m);
 	}
 }
@@ -891,7 +891,7 @@ an_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", ifp->if_xname);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			an_init(ifp);
 			return;
 		}
@@ -1389,7 +1389,7 @@ an_rx_intr(struct an_softc *sc)
 	/* First read in the frame header */
 	if (an_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0) {
 		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		DPRINTF(("an_rx_intr: read fid %x failed\n", fid));
 		return;
 	}
@@ -1413,7 +1413,7 @@ an_rx_intr(struct an_softc *sc)
 	if ((status & AN_STAT_ERRSTAT) != 0 &&
 	    ic->ic_opmode != IEEE80211_M_MONITOR) {
 		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		DPRINTF(("an_rx_intr: fid %x status %x\n", fid, status));
 		return;
 	}
@@ -1425,7 +1425,7 @@ an_rx_intr(struct an_softc *sc)
 	if (off + len > MCLBYTES) {
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			DPRINTF(("an_rx_intr: oversized packet %d\n", len));
 			return;
 		}
@@ -1435,7 +1435,7 @@ an_rx_intr(struct an_softc *sc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
 		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		DPRINTF(("an_rx_intr: MGET failed\n"));
 		return;
 	}
@@ -1444,7 +1444,7 @@ an_rx_intr(struct an_softc *sc)
 		if ((m->m_flags & M_EXT) == 0) {
 			CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
 			m_freem(m);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			DPRINTF(("an_rx_intr: MCLGET failed\n"));
 			return;
 		}
@@ -1456,7 +1456,7 @@ an_rx_intr(struct an_softc *sc)
 		if (gaplen > AN_GAPLEN_MAX) {
 			CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
 			m_freem(m);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			DPRINTF(("%s: gap too long\n", __func__));
 			return;
 		}
@@ -1548,9 +1548,9 @@ an_tx_intr(struct an_softc *sc, int status)
 	CSR_WRITE_2(sc, AN_EVENT_ACK, status & (AN_EV_TX | AN_EV_TX_EXC));
 
 	if (status & AN_EV_TX_EXC)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	else
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 	cur = sc->sc_txcur;
 	if (sc->sc_txd[cur].d_fid == fid) {

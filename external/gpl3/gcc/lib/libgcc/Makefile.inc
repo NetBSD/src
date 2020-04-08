@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.35.14.1 2019/06/10 21:55:06 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.35.14.2 2020/04/08 14:06:39 martin Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -111,6 +111,10 @@ LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T:Nlibunwind.S}
 .else
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
 LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T}
+
+INCSDIR=	/usr/include
+# originally copied from unwind-*.h
+INCS+=		unwind.h
 .endif
 
 # We have to weed out any existing func.S file that may exist

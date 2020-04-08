@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.69 2018/03/24 18:34:43 jdolecek Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.69.2.1 2020/04/08 14:08:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.69 2018/03/24 18:34:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.69.2.1 2020/04/08 14:08:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ lpt_port_test(bus_space_tag_t iot, bus_space_handle_t ioh,
  *
  *	2) You should be able to write to and read back the same value
  *	   to the control port lower 5 bits, the upper 3 bits are reserved
- *	   per the IBM PC technical reference manauls and different boards
+ *	   per the IBM PC technical reference manuals and different boards
  *	   do different things with them.  Do an alternating zeros, alternating
  *	   ones, walking zero, and walking one test to check for stuck bits.
  *

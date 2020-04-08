@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_verify.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: tls_verify.c,v 1.2.12.1 2020/04/08 14:06:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -430,7 +430,7 @@ const char *tls_dns_name(const GENERAL_NAME * gn,
 	msg_panic("%s: Non DNS input argument", myname);
 
     /*
-     * We expect the OpenSSL library to construct GEN_DNS extesion objects as
+     * We expect the OpenSSL library to construct GEN_DNS extension objects as
      * ASN1_IA5STRING values. Check we got the right union member.
      */
     if (ASN1_STRING_type(gn->d.ia5) != V_ASN1_IA5STRING) {

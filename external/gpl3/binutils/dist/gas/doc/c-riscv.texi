@@ -1,4 +1,4 @@
-@c Copyright (C) 2016-2018 Free Software Foundation, Inc.
+@c Copyright (C) 2016-2020 Free Software Foundation, Inc.
 @c This is part of the GAS anual.
 @c For copying conditions, see the file as.texinfo
 @c man end
@@ -18,6 +18,7 @@
 * RISC-V-Options::        RISC-V Options
 * RISC-V-Directives::     RISC-V Directives
 * RISC-V-Formats::        RISC-V Instruction Formats
+* RISC-V-ATTRIBUTE::      RISC-V Object Attribute
 @end menu
 
 @node RISC-V-Options
@@ -168,6 +169,15 @@ instruction formats for @samp{.insn} (@ref{RISC-V-Formats}).
 For example, the instruction @samp{add a0, a1, a2} could be written as
 @samp{.insn r 0x33, 0, 0, a0, a1, a2}.
 
+@cindex @code{.attribute} directive, RISC-V
+@item .attribute @var{tag}, @var{value}
+Set the object attribute @var{tag} to @var{value}.
+
+The @var{tag} is either an attribute number, or one of the following:
+@code{Tag_RISCV_arch}, @code{Tag_RISCV_stack_align},
+@code{Tag_RISCV_unaligned_access}, @code{Tag_RISCV_priv_spec},
+@code{Tag_RISCV_priv_spec_minor}, @code{Tag_RISCV_priv_spec_revision}.
+
 @end table
 
 @node RISC-V-Formats
@@ -190,6 +200,7 @@ instruction formats:
 @item opcode @tab Unsigned immediate or opcode name for 7-bits opcode.
 @item opcode2 @tab Unsigned immediate or opcode name for 2-bits opcode.
 @item func7 @tab Unsigned immediate for 7-bits function code.
+@item func6 @tab Unsigned immediate for 6-bits function code.
 @item func4 @tab Unsigned immediate for 4-bits function code.
 @item func3 @tab Unsigned immediate for 3-bits function code.
 @item func2 @tab Unsigned immediate for 2-bits function code.
@@ -275,7 +286,7 @@ Opcode space for msub instruction.
 @item AMO
 Opcode space for atomic memory operation instructions.
 
-@item MISC_IMM
+@item MISC_MEM
 Opcode space for misc instructions.
 
 @item SYSTEM
@@ -307,6 +318,7 @@ with the @samp{.insn} pseudo directive:
 @end verbatim
 
 @item R type with 4 register operands: .insn r opcode, func3, func2, rd, rs1, rs2, rs3
+@itemx R4 type: .insn r4 opcode, func3, func2, rd, rs1, rs2, rs3
 @verbatim
 +-----+-------+-----+-----+-------+----+-------------+
 | rs3 | func2 | rs2 | rs1 | func3 | rd |      opcode |
@@ -332,11 +344,13 @@ with the @samp{.insn} pseudo directive:
 
 @item SB type: .insn sb opcode, func3, rd, rs1, symbol
 @itemx SB type: .insn sb opcode, func3, rd, simm12(rs1)
+@itemx B type: .insn s opcode, func3, rd, rs1, symbol
+@itemx B type: .insn s opcode, func3, rd, simm12(rs1)
 @verbatim
-+--------------+-----+-----+-------+-------------+-------------+
-| simm21[11:5] | rs2 | rs1 | func3 | simm12[4:0] |      opcode |
-+--------------+-----+-----+-------+-------------+-------------+
-31             25    20    15      12            7             0
++------------+--------------+-----+-----+-------+-------------+-------------+--------+
+| simm12[12] | simm12[10:5] | rs2 | rs1 | func3 | simm12[4:1] | simm12[11]] | opcode |
++------------+--------------+-----+-----+-------+-------------+-------------+--------+
+31          30            25    20    15      12           7            0
 @end verbatim
 
 @item U type: .insn u opcode, rd, simm20
@@ -348,6 +362,7 @@ with the @samp{.insn} pseudo directive:
 @end verbatim
 
 @item UJ type: .insn uj opcode, rd, symbol
+@itemx J type: .insn j opcode, rd, symbol
 @verbatim
 +------------+--------------+------------+---------------+----+-------------+
 | simm20[20] | simm20[10:1] | simm20[11] | simm20[19:12] | rd |      opcode |
@@ -355,7 +370,7 @@ with the @samp{.insn} pseudo directive:
 31           30             21           20              12   7             0
 @end verbatim
 
-@item CR type: .insn cr opcode2, func4, rd, rs1
+@item CR type: .insn cr opcode2, func4, rd, rs2
 @verbatim
 +---------+--------+-----+---------+
 |   func4 | rd/rs1 | rs2 | opcode2 |
@@ -379,6 +394,14 @@ with the @samp{.insn} pseudo directive:
 15        13             7     2         0
 @end verbatim
 
+@item CA type: .insn ca opcode2, func6, func2, rd, rs2
+@verbatim
++---------+----------+-------+------+--------+
+|   func6 | rd'/rs1' | func2 | rs2' | opcode |
++---------+----------+-------+------+--------+
+15        10         7       5      2        0
+@end verbatim
+
 @item CB type: .insn cb opcode2, func3, rs1, symbol
 @verbatim
 +---------+--------+------+--------+---------+
@@ -400,3 +423,46 @@ with the @samp{.insn} pseudo directive:
 
 For the complete list of all instruction format variants see
 The RISC-V Instruction Set Manual Volume I: User-Level ISA.
+
+@node RISC-V-ATTRIBUTE
+@section RISC-V Object Attribute
+@cindex Object Attribute, RISC-V
+
+RISC-V attributes have a string value if the tag number is odd and an integer
+value if the tag number is even.
+
+@table @r
+@item Tag_RISCV_stack_align (4)
+Tag_RISCV_strict_align records the N-byte stack alignment for this object.  The
+default value is 16 for RV32I or RV64I, and 4 for RV32E.
+
+The smallest value will be used if object files with different
+Tag_RISCV_stack_align values are merged.
+
+@item Tag_RISCV_arch (5)
+Tag_RISCV_arch contains a string for the target architecture taken from the
+option @option{-march}.  Different architectures will be integrated into a
+superset when object files are merged.
+
+Note that the version information of the target architecture must be presented
+explicitly in the attribute and abbreviations must be expanded.  The version
+information, if not given by @option{-march}, must be in accordance with the
+default specified by the tool.  For example, the architecture @code{RV32I} has
+to be recorded in the attribute as @code{RV32I2P0} in which @code{2P0} stands
+for the default version of its base ISA.  On the other hand, the architecture
+@code{RV32G} has to be presented as @code{RV32I2P0_M2P0_A2P0_F2P0_D2P0} in
+which the abbreviation @code{G} is expanded to the @code{IMAFD} combination
+with default versions of the standard extensions.
+
+@item Tag_RISCV_unaligned_access (6)
+Tag_RISCV_unaligned_access is 0 for files that do not allow any unaligned
+memory accesses, and 1 for files that do allow unaligned memory accesses.
+
+@item Tag_RISCV_priv_spec (8)
+@item Tag_RISCV_priv_spec_minor (10)
+@item Tag_RISCV_priv_spec_revision (12)
+Tag_RISCV_priv_spec contains the major/minor/revision version information of
+the privileged specification.  It will report errors if object files of
+different privileged specification versions are merged.
+
+@end table

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pmax,v 1.22.16.1 2019/06/10 22:06:37 christos Exp $
+#	$NetBSD: majors.pmax,v 1.22.16.2 2020/04/08 14:07:48 martin Exp $
 #
 # Device majors for pmax
 #
@@ -55,7 +55,7 @@ device-major	wsfont		char 102		wsfont
 #device-major	obsolete	char 103		obsolete (systrace)
 device-major	cgd		char 104  block 33	cgd
 device-major	ksyms		char 105		ksyms
-device-major	nsmb		char 106		nsmb
+#device-major	obsolete	char 106		obsolete (nsmb)
 #device-major	obsolete	char 107		obsolete (opencrypto)
 
 # Majors up to 143 are reserved for machine-dependent drivers.

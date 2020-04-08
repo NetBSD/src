@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: mail_conf.h,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _MAIL_CONF_H_INCLUDED_
 #define _MAIL_CONF_H_INCLUDED_
@@ -38,6 +38,7 @@
 extern void mail_conf_read(void);
 extern void mail_conf_suck(void);
 extern void mail_conf_flush(void);
+extern void mail_conf_checkdir(const char *);
 
 extern void mail_conf_update(const char *, const char *);
 extern const char *mail_conf_lookup(const char *);
@@ -240,6 +241,11 @@ extern void get_mail_conf_nbool_fn_table(const CONFIG_NBOOL_FN_TABLE *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

@@ -280,6 +280,13 @@ their data fields are:
 
 Name                    Format        Description
 -----------------------------------------------------------------------------
+no-presence-required    empty         Flag indicating that signatures made
+                                      with this certificate need not assert
+                                      user presence. This option only make
+                                      sense for the U2F/FIDO security key
+                                      types that support this feature in
+                                      their signature formats.
+
 permit-X11-forwarding   empty         Flag indicating that X11 forwarding
                                       should be permitted. X11 forwarding will
                                       be refused if this option is absent.
@@ -305,4 +312,5 @@ permit-user-rc          empty         Flag indicating that execution of
                                       this option is not present.
 
 $OpenBSD: PROTOCOL.certkeys,v 1.16 2018/10/26 01:23:03 djm Exp $
-$NetBSD: PROTOCOL.certkeys,v 1.9.2.1 2019/06/10 21:41:11 christos Exp $
+$OpenBSD: PROTOCOL.certkeys,v 1.17 2019/11/25 00:57:51 djm Exp $
+$NetBSD: PROTOCOL.certkeys,v 1.9.2.2 2020/04/08 14:03:18 martin Exp $

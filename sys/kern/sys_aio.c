@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.43.10.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.43.10.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.43.10.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.43.10.2 2020/04/08 14:08:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -73,7 +73,6 @@ u_int			aio_listio_max = AIO_LISTIO_MAX;
 static u_int		aio_max = AIO_MAX;
 static u_int		aio_jobs_count;
 
-static struct sysctllog	*aio_sysctl;
 static struct pool	aio_job_pool;
 static struct pool	aio_lio_pool;
 static void *		aio_ehook;
@@ -86,7 +85,6 @@ static void		aio_exit(proc_t *, void *);
 
 static int		sysctl_aio_listio_max(SYSCTLFN_PROTO);
 static int		sysctl_aio_max(SYSCTLFN_PROTO);
-static int		sysctl_aio_init(void);
 
 static const struct syscall_package aio_syscalls[] = {
 	{ SYS_aio_cancel, 0, (sy_call_t *)sys_aio_cancel },
@@ -127,8 +125,6 @@ aio_fini(bool interface)
 			return EBUSY;
 		}
 	}
-	if (aio_sysctl != NULL)
-		sysctl_teardown(&aio_sysctl);
 
 	KASSERT(aio_jobs_count == 0);
 	exithook_disestablish(aio_ehook);
@@ -151,11 +147,6 @@ aio_init(void)
 	    "aio_lio_pool", &pool_allocator_nointr, IPL_NONE);
 	aio_ehook = exithook_establish(aio_exit, NULL);
 
-	error = sysctl_aio_init();
-	if (error != 0) {
-		(void)aio_fini(false);
-		return error;
-	}
 	error = syscall_establish(NULL, aio_syscalls);
 	if (error != 0)
 		(void)aio_fini(false);
@@ -229,10 +220,9 @@ aio_procinit(struct proc *p)
 	/* Complete the initialization of thread, and run it */
 	aio->aio_worker = l;
 	lwp_lock(l);
-	l->l_stat = LSRUN;
-	l->l_priority = MAXPRI_USER;
-	sched_enqueue(l, false);
-	lwp_unlock(l);
+	lwp_changepri(l, MAXPRI_USER);
+	setrunnable(l);
+	/* LWP now unlocked */
 	mutex_exit(p->p_lock);
 
 	return 0;
@@ -631,7 +621,7 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 
 	/* Check for invalid file descriptor */
 	fildes = (unsigned int)SCARG(uap, fildes);
-	dt = fdp->fd_dt;
+	dt = atomic_load_consume(&fdp->fd_dt);
 	if (fildes >= dt->dt_nfiles)
 		return EBADF;
 	if (dt->dt_ff[fildes] == NULL || dt->dt_ff[fildes]->ff_file == NULL)
@@ -1089,14 +1079,11 @@ sysctl_aio_max(SYSCTLFN_ARGS)
 	return 0;
 }
 
-static int
-sysctl_aio_init(void)
+SYSCTL_SETUP(sysctl_aio_init, "aio sysctl")
 {
 	int rv;
 
-	aio_sysctl = NULL;
-
-	rv = sysctl_createv(&aio_sysctl, 0, NULL, NULL,
+	rv = sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
 		CTLTYPE_INT, "posix_aio",
 		SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
@@ -1106,9 +1093,9 @@ sysctl_aio_init(void)
 		CTL_KERN, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
-		return rv;
+		return;
 
-	rv = sysctl_createv(&aio_sysctl, 0, NULL, NULL,
+	rv = sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "aio_listio_max",
 		SYSCTL_DESCR("Maximum number of asynchronous I/O "
@@ -1117,9 +1104,9 @@ sysctl_aio_init(void)
 		CTL_KERN, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
-		return rv;
+		return;
 
-	rv = sysctl_createv(&aio_sysctl, 0, NULL, NULL,
+	rv = sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "aio_max",
 		SYSCTL_DESCR("Maximum number of asynchronous I/O "
@@ -1127,7 +1114,7 @@ sysctl_aio_init(void)
 		sysctl_aio_max, 0, &aio_max, 0,
 		CTL_KERN, CTL_CREATE, CTL_EOL);
 
-	return rv;
+	return;
 }
 
 /*

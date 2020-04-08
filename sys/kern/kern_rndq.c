@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.89.18.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.89.18.2 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.18.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.18.2 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1241,9 +1241,11 @@ rnd_extract_data(void *p, uint32_t len, uint32_t flags)
 
 	mutex_spin_enter(&rnd_global.lock);
 	if (__predict_false(!timed_in)) {
-		if (boottime.tv_sec) {
-			rndpool_add_data(&rnd_global.pool, &boottime,
-			    sizeof(boottime), 0);
+		struct timespec tv;
+		getnanoboottime(&tv);
+		if (tv.tv_sec) {
+			rndpool_add_data(&rnd_global.pool, &tv,
+			    sizeof(tv), 0);
 		}
 		timed_in++;
 	}

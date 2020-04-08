@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cs.c,v 1.1.1.1.32.1 2019/06/10 22:08:26 christos Exp $	*/
+/*	$NetBSD: radeon_cs.c,v 1.1.1.1.32.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2008 Jerome Glisse.
@@ -27,7 +27,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cs.c,v 1.1.1.1.32.1 2019/06/10 22:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cs.c,v 1.1.1.1.32.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <linux/list_sort.h>
 #include <drm/drmP.h>
@@ -83,7 +83,7 @@ static int radeon_cs_parser_relocs(struct radeon_cs_parser *p)
 	struct radeon_cs_chunk *chunk;
 	struct radeon_cs_buckets buckets;
 	unsigned i;
-	bool need_mmap_lock __diagused = false;
+	bool need_mmap_lock = false;
 	int r;
 
 	if (p->chunk_relocs == NULL) {
@@ -182,9 +182,8 @@ static int radeon_cs_parser_relocs(struct radeon_cs_parser *p)
 		p->vm_bos = radeon_vm_get_bos(p->rdev, p->ib.vm,
 					      &p->validated);
 #ifdef __NetBSD__
-	KASSERTMSG(!need_mmap_lock,
-	    "someone didn't finish adding support for userptr"
-	    " and it wasn't me");
+	if (need_mmap_lock)
+		vm_map_lock_read(&curproc->p_vmspace->vm_map);
 #else
 	if (need_mmap_lock)
 		down_read(&current->mm->mmap_sem);
@@ -192,7 +191,10 @@ static int radeon_cs_parser_relocs(struct radeon_cs_parser *p)
 
 	r = radeon_bo_list_validate(p->rdev, &p->ticket, &p->validated, p->ring);
 
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+	if (need_mmap_lock)
+		vm_map_unlock_read(&curproc->p_vmspace->vm_map);
+#else
 	if (need_mmap_lock)
 		up_read(&current->mm->mmap_sem);
 #endif

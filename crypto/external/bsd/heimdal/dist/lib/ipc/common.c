@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.2.12.1 2020/04/08 14:03:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -96,7 +96,9 @@ _heim_ipc_create_cred(uid_t uid, gid_t gid, pid_t pid, pid_t session, heim_icred
 #ifndef HAVE_GCD
 struct heim_isemaphore {
     HEIMDAL_MUTEX mutex;
+#ifdef ENABLE_PTHREAD_SUPPORT
     pthread_cond_t cond;
+#endif
     long counter;
 };
 #endif

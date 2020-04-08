@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.141.4.1 2019/06/10 22:07:34 christos Exp $        */
+/*      $NetBSD: ukbd.c,v 1.141.4.2 2020/04/08 14:08:13 martin Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.141.4.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.141.4.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -121,16 +121,16 @@ Static const struct ukbd_keycodetrans trtab_apple_fn[] = {
 	{ 0x33, 0x56 },	/* ; -> KP - */
 	{ 0x37, 0x63 },	/* . -> KP . */
 	{ 0x38, 0x57 },	/* / -> KP + */
-	{ 0x3a, 0xd1 },	/* F1..F12 mapped to reserved codes 0xd1..0xdc */
-	{ 0x3b, 0xd2 },
-	{ 0x3c, 0xd3 },
-	{ 0x3d, 0xd4 },
-	{ 0x3e, 0xd5 },
-	{ 0x3f, 0xd6 },
+	{ 0x3a, IS_PMF | PMFE_DISPLAY_BRIGHTNESS_DOWN },
+	{ 0x3b, IS_PMF | PMFE_DISPLAY_BRIGHTNESS_UP },
+	{ 0x3c, IS_PMF | PMFE_AUDIO_VOLUME_TOGGLE },
+	{ 0x3d, IS_PMF | PMFE_AUDIO_VOLUME_DOWN },
+	{ 0x3e, IS_PMF | PMFE_AUDIO_VOLUME_UP },
+	{ 0x3f, 0xd6 },	/* num lock */
 	{ 0x40, 0xd7 },
 	{ 0x41, 0xd8 },
-	{ 0x42, 0xd9 },
-	{ 0x43, 0xda },
+	{ 0x42, 0xd9 },	/* kbd light down */
+	{ 0x43, 0xda },	/* kbd light up */
 	{ 0x44, 0xdb },
 	{ 0x45, 0xdc },
 	{ 0x4f, 0x4d },	/* Right -> End */
@@ -258,7 +258,9 @@ struct ukbd_softc {
 	int sc_console_keyboard;	/* we are the console keyboard */
 
 	struct callout sc_delay;	/* for quirk handling */
-	struct ukbd_data sc_data;	/* for quirk handling */
+#define MAXPENDING 32
+	struct ukbd_data sc_data[MAXPENDING];
+	size_t sc_data_w, sc_data_r;
 
 	struct hid_location sc_apple_fn;
 	struct hid_location sc_numloc;
@@ -475,6 +477,9 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&sc->sc_delay, 0);
 
+	sc->sc_data_w = 0;
+	sc->sc_data_r = 0;
+
 	usb_init_task(&sc->sc_ledtask, ukbd_set_leds_task, sc, 0);
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
@@ -686,8 +691,14 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		 * generate a key up followed by a key down for the same
 		 * key after about 10 ms.
 		 * We avoid this bug by holding off decoding for 20 ms.
+		 * Note that this comes at a cost: we deliberately overwrite
+		 * the data for any keyboard event that is followed by
+		 * another one within this time window.
 		 */
-		sc->sc_data = *ud;
+		if (sc->sc_data_w == sc->sc_data_r) {
+			sc->sc_data_w = (sc->sc_data_w + 1) % MAXPENDING;
+		}
+		sc->sc_data[sc->sc_data_w] = *ud;
 		callout_reset(&sc->sc_delay, hz / 50, ukbd_delayed_decode, sc);
 #ifdef DDB
 	} else if (sc->sc_console_keyboard && !(sc->sc_flags & FLAG_POLLING)) {
@@ -697,8 +708,9 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		 * polling from inside the interrupt routine and that
 		 * loses bigtime.
 		 */
-		sc->sc_data = *ud;
-		callout_reset(&sc->sc_delay, 1, ukbd_delayed_decode, sc);
+		sc->sc_data_w = (sc->sc_data_w + 1) % MAXPENDING;
+		sc->sc_data[sc->sc_data_w] = *ud;
+		callout_reset(&sc->sc_delay, 0, ukbd_delayed_decode, sc);
 #endif
 	} else {
 		ukbd_decode(sc, ud);
@@ -710,7 +722,10 @@ ukbd_delayed_decode(void *addr)
 {
 	struct ukbd_softc *sc = addr;
 
-	ukbd_decode(sc, &sc->sc_data);
+	while (sc->sc_data_r != sc->sc_data_w) {
+		sc->sc_data_r = (sc->sc_data_r + 1) % MAXPENDING;
+		ukbd_decode(sc, &sc->sc_data[sc->sc_data_r]);
+	}
 }
 
 void
@@ -1028,7 +1043,7 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 	sc->sc_nkeycode = 0;
 	d = hid_start_parse(desc, size, hid_input);
 	while (hid_get_item(d, &h)) {
-		/*printf("ukbd: id=%d kind=%d usage=0x%x flags=0x%x pos=%d size=%d cnt=%d\n",
+		/*printf("ukbd: id=%d kind=%d usage=%#x flags=%#x pos=%d size=%d cnt=%d\n",
 		  h.report_ID, h.kind, h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count);*/
 
 		/* Check for special Apple notebook FN key */
@@ -1043,7 +1058,7 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 		    HID_GET_USAGE_PAGE(h.usage) != HUP_KEYBOARD ||
 		    h.report_ID != sc->sc_hdev.sc_report_id)
 			continue;
-		DPRINTF(("%s: ikey=%d usage=0x%x flags=0x%x pos=%d size=%d "
+		DPRINTF(("%s: ikey=%d usage=%#x flags=%#x pos=%d size=%d "
 		    "cnt=%d\n", __func__, ikey, h.usage, h.flags, h.loc.pos,
 		    h.loc.size, h.loc.count));
 		if (h.flags & HIO_VARIABLE) {

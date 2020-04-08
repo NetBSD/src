@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.142 2017/01/25 17:56:45 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.142.14.1 2020/04/08 14:08:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.142 2017/01/25 17:56:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.142.14.1 2020/04/08 14:08:51 martin Exp $");
 
 #define	ELFSIZE	32
 
@@ -43,13 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.142 2017/01/25 17:56:45 christos Ex
 #define ELF32_AUXSIZE (ELF_AUX_ENTRIES * sizeof(Aux32Info) \
     + MAXPATHLEN + ALIGN(1))
 
-#ifdef COREDUMP
-#define	DEP	"coredump"
-#else
-#define	DEP	NULL
-#endif
-
-MODULE(MODULE_CLASS_EXEC, exec_elf32, DEP);
+MODULE(MODULE_CLASS_EXEC, exec_elf32, NULL);
 
 static struct execsw exec_elf32_execsw[] = {
 	{

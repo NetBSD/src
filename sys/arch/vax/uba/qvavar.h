@@ -1,4 +1,4 @@
-/*	$NetBSD: qvavar.h,v 1.1 2015/07/05 03:07:21 matt Exp $	*/
+/*	$NetBSD: qvavar.h,v 1.1.22.1 2020/04/08 14:07:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 
 struct	qvaux_softc {
 	device_t	    sc_dev;	  /* Autoconf blaha */
-	struct	evcnt	    sc_rintrcnt;  /* recevive interrupt counts */
+	struct	evcnt	    sc_rintrcnt;  /* receive interrupt counts */
 	struct	evcnt	    sc_tintrcnt;  /* transmit interrupt counts */
 	struct	qvaux_regs  sc_qr;	  /* reg pointers */
 	bus_space_tag_t	    sc_iot;

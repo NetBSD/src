@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.7 2012/01/30 23:34:58 matt Exp $ */
+/*	$NetBSD: pio.h,v 1.7.48.1 2020/04/08 14:07:49 martin Exp $ */
 /*	$OpenBSD: pio.h,v 1.1 1997/10/13 10:53:47 pefo Exp $ */
 
 /*
@@ -39,6 +39,13 @@
  * I/O macros.
  */
 
+#if defined(PPC_IBM4XX) && !defined(PPC_IBM440)
+/* eieio is implemented as sync */
+#define IO_BARRIER() __asm volatile("sync")
+#else
+#define IO_BARRIER() __asm volatile("eieio; sync")
+#endif
+
 static __inline void __outb(volatile uint8_t *a, uint8_t v);
 static __inline void __outw(volatile uint16_t *a, uint16_t v);
 static __inline void __outl(volatile uint32_t *a, uint32_t v);
@@ -64,35 +71,35 @@ static __inline void
 __outb(volatile uint8_t *a, uint8_t v)
 {
 	*a = v;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
 __outw(volatile uint16_t *a, uint16_t v)
 {
 	*a = v;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
 __outl(volatile uint32_t *a, uint32_t v)
 {
 	*a = v;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
 __outwrb(volatile uint16_t *a, uint16_t v)
 {
 	__asm volatile("sthbrx %0, 0, %1" :: "r"(v), "r"(a));
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
 __outlrb(volatile uint32_t *a, uint32_t v)
 {
 	__asm volatile("stwbrx %0, 0, %1" :: "r"(v), "r"(a));
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline uint8_t
@@ -101,7 +108,7 @@ __inb(volatile uint8_t *a)
 	uint8_t _v_;
 
 	_v_ = *a;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 	return _v_;
 }
 
@@ -111,7 +118,7 @@ __inw(volatile uint16_t *a)
 	uint16_t _v_;
 
 	_v_ = *a;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 	return _v_;
 }
 
@@ -121,7 +128,7 @@ __inl(volatile uint32_t *a)
 	uint32_t _v_;
 
 	_v_ = *a;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 	return _v_;
 }
 
@@ -131,7 +138,7 @@ __inwrb(volatile uint16_t *a)
 	uint16_t _v_;
 
 	__asm volatile("lhbrx %0, 0, %1" : "=r"(_v_) : "r"(a));
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 	return _v_;
 }
 
@@ -141,7 +148,7 @@ __inlrb(volatile uint32_t *a)
 	uint32_t _v_;
 
 	__asm volatile("lwbrx %0, 0, %1" : "=r"(_v_) : "r"(a));
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 	return _v_;
 }
 
@@ -175,7 +182,7 @@ __outsb(volatile uint8_t *a, const uint8_t *s, size_t c)
 {
 	while (c--)
 		*a = *s++;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
@@ -183,7 +190,7 @@ __outsw(volatile uint16_t *a, const uint16_t *s, size_t c)
 {
 	while (c--)
 		*a = *s++;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
@@ -191,7 +198,7 @@ __outsl(volatile uint32_t *a, const uint32_t *s, size_t c)
 {
 	while (c--)
 		*a = *s++;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
@@ -199,7 +206,7 @@ __outswrb(volatile uint16_t *a, const uint16_t *s, size_t c)
 {
 	while (c--)
 		__asm volatile("sthbrx %0, 0, %1" :: "r"(*s++), "r"(a));
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
@@ -207,7 +214,7 @@ __outslrb(volatile uint32_t *a, const uint32_t *s, size_t c)
 {
 	while (c--)
 		__asm volatile("stwbrx %0, 0, %1" :: "r"(*s++), "r"(a));
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
@@ -215,7 +222,7 @@ __insb(volatile uint8_t *a, uint8_t *d, size_t c)
 {
 	while (c--)
 		*d++ = *a;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
@@ -223,7 +230,7 @@ __insw(volatile uint16_t *a, uint16_t *d, size_t c)
 {
 	while (c--)
 		*d++ = *a;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
@@ -231,7 +238,7 @@ __insl(volatile uint32_t *a, uint32_t *d, size_t c)
 {
 	while (c--)
 		*d++ = *a;
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
@@ -239,7 +246,7 @@ __inswrb(volatile uint16_t *a, uint16_t *d, size_t c)
 {
 	while (c--)
 		__asm volatile("lhbrx %0, 0, %1" : "=r"(*d++) : "r"(a));
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 static __inline void
@@ -247,7 +254,7 @@ __inslrb(volatile uint32_t *a, uint32_t *d, size_t c)
 {
 	while (c--)
 		__asm volatile("lwbrx %0, 0, %1" : "=r"(*d++) : "r"(a));
-	__asm volatile("eieio; sync");
+	IO_BARRIER();
 }
 
 #define	outsb(a,s,c)	(__outsb((volatile uint8_t *)(a), s, c))
@@ -273,5 +280,7 @@ __inslrb(volatile uint32_t *a, uint32_t *d, size_t c)
 #define	ins16rb(a,d,c)	inswrb(a,d,c)
 #define	inslrb(a,d,c)	(__inslrb((volatile uint32_t *)(a), d, c))
 #define	ins32rb(a,d,c)	inslrb(a,d,c)
+
+#undef IO_BARRIER
 
 #endif /*_POWERPC_PIO_H_*/

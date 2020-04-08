@@ -1,4 +1,4 @@
-/*	$NetBSD: md2.c,v 1.3 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: md2.c,v 1.3.12.1 2020/04/08 14:03:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -92,7 +92,7 @@ calc(struct md2 *m, const void *v)
     }
 
     memcpy(m->state, x, 16);
-    memset(x, 0, sizeof(x));
+    memset_s(x, sizeof(x), 0, sizeof(x));
 }
 
 int

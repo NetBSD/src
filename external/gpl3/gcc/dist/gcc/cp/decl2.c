@@ -1728,6 +1728,17 @@ mark_vtable_entries (tree decl)
     }
 }
 
+/* Adjust the TLS model on variable DECL if need be, typically after
+   the linkage of DECL has been modified.  */
+
+static void
+adjust_var_decl_tls_model (tree decl)
+{
+  if (CP_DECL_THREAD_LOCAL_P (decl)
+      && !lookup_attribute ("tls_model", DECL_ATTRIBUTES (decl)))
+    set_decl_tls_model (decl, decl_default_tls_model (decl));
+}
+
 /* Set DECL up to have the closest approximation of "initialized common"
    linkage available.  */
 
@@ -1778,6 +1789,9 @@ comdat_linkage (tree decl)
 
   if (TREE_PUBLIC (decl))
     DECL_COMDAT (decl) = 1;
+
+  if (VAR_P (decl))
+    adjust_var_decl_tls_model (decl);
 }
 
 /* For win32 we also want to put explicit instantiations in
@@ -1816,6 +1830,8 @@ maybe_make_one_only (tree decl)
 	  /* Mark it needed so we don't forget to emit it.  */
           node->forced_by_abi = true;
 	  TREE_USED (decl) = 1;
+
+	  adjust_var_decl_tls_model (decl);
 	}
     }
 }
@@ -3255,7 +3271,7 @@ get_tls_init_fn (tree var)
    VAR and then returns a reference to VAR.  The wrapper function is used
    in place of VAR everywhere VAR is mentioned.  */
 
-tree
+static tree
 get_tls_wrapper_fn (tree var)
 {
   /* Only C++11 TLS vars need this wrapper fn.  */
@@ -3305,6 +3321,22 @@ get_tls_wrapper_fn (tree var)
       SET_IDENTIFIER_GLOBAL_VALUE (sname, fn);
     }
   return fn;
+}
+
+/* If EXPR is a thread_local variable that should be wrapped by init
+   wrapper function, return a call to that function, otherwise return
+   NULL.  */
+
+tree
+maybe_get_tls_wrapper_call (tree expr)
+{
+  if (VAR_P (expr)
+      && !processing_template_decl
+      && !cp_unevaluated_operand
+      && CP_DECL_THREAD_LOCAL_P (expr))
+    if (tree wrap = get_tls_wrapper_fn (expr))
+      return build_cxx_call (wrap, 0, NULL, tf_warning_or_error);
+  return NULL;
 }
 
 /* At EOF, generate the definition for the TLS wrapper function FN:
@@ -4725,11 +4757,6 @@ c_parse_final_cleanups (void)
 	      /* Generate RTL for this function now that we know we
 		 need it.  */
 	      expand_or_defer_fn (decl);
-	      /* If we're compiling -fsyntax-only pretend that this
-		 function has been written out so that we don't try to
-		 expand it again.  */
-	      if (flag_syntax_only)
-		TREE_ASM_WRITTEN (decl) = 1;
 	      reconsider = true;
 	    }
 	}
@@ -4742,7 +4769,10 @@ c_parse_final_cleanups (void)
 	{
 	  if (var_finalized_p (decl) || DECL_REALLY_EXTERN (decl)
 	      /* Don't write it out if we haven't seen a definition.  */
-	      || (DECL_IN_AGGR_P (decl) && !DECL_INLINE_VAR_P (decl)))
+	      || (DECL_IN_AGGR_P (decl) && !DECL_INLINE_VAR_P (decl))
+	      /* Or haven't instantiated it.  */
+	      || (DECL_TEMPLATE_INSTANTIATION (decl)
+		  && !DECL_TEMPLATE_INSTANTIATED (decl)))
 	    continue;
 	  import_export_decl (decl);
 	  /* If this static data member is needed, provide it to the

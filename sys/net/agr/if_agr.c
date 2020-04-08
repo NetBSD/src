@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.47.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.47.2.2 2020/04/08 14:08:57 martin Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.47.2.1 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.47.2.2 2020/04/08 14:08:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -156,7 +156,7 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 	ifp = port->port_agrifp;
 	if ((port->port_flags & AGRPORT_COLLECTING) == 0) {
 		m_freem(m);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -390,19 +390,21 @@ agr_start(struct ifnet *ifp)
 		}
 		bpf_mtap(ifp, m, BPF_D_OUT);
 		port = agr_select_tx_port(sc, m);
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (port) {
 			int error;
 
 			error = agr_xmit_frame(port->port_ifp, m);
 			if (error) {
-				ifp->if_oerrors++;
+				if_statinc_ref(nsr, if_oerrors);
 			} else {
-				ifp->if_opackets++;
+				if_statinc_ref(nsr, if_opackets);
 			}
 		} else {
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc_ref(nsr, if_oerrors);
 		}
+		IF_STAT_PUTREF(ifp);
 	}
 
 	AGR_UNLOCK(sc);

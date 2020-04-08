@@ -1,4 +1,4 @@
-$ NetBSD $
+$NetBSD: version,v 1.2.204.1 2020/04/08 14:07:57 martin Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -9,3 +9,4 @@ is taken as the current.
 	/boot.
 	Add LFS support (not tested yet).
 1.1:	Add LFSv2 support
+1.2:	Initialize the screen.

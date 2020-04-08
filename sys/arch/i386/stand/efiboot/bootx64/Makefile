@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2017/01/24 11:09:14 nonaka Exp $
+#	$NetBSD: Makefile,v 1.1.22.1 2020/04/08 14:07:41 martin Exp $
 
 PROG=		bootx64.efi
 OBJFMT=		pei-x86-64
@@ -8,5 +8,10 @@ EXTRA_SOURCES=	efibootx64.c startprog64.S
 
 COPTS+=		-mno-red-zone
 CPPFLAGS+=	-DEFI_FUNCTION_WRAPPER
+
+# Follow the suit of Makefile.kern.inc; needed for the lfs64 union
+# accessors -- they don't actually dereference the resulting pointer,
+# just use it for type-checking.
+CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 
 .include "${.CURDIR}/../Makefile.efiboot"

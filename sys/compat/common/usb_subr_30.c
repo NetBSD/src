@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr_30.c,v 1.4.4.2 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: usb_subr_30.c,v 1.4.4.3 2020/04/08 14:08:00 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr_30.c,v 1.4.4.2 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr_30.c,v 1.4.4.3 2020/04/08 14:08:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -232,9 +232,8 @@ void
 usb_30_init(void)
 {
 
-	MODULE_HOOK_SET(usb_subr_fill_30_hook, "usb_30",
-	    usbd_fill_deviceinfo_old);
-	MODULE_HOOK_SET(usb_subr_copy_30_hook, "usb_30", usb_copy_to_old30);
+	MODULE_HOOK_SET(usb_subr_fill_30_hook, usbd_fill_deviceinfo_old);
+	MODULE_HOOK_SET(usb_subr_copy_30_hook, usb_copy_to_old30);
 }
 
 void

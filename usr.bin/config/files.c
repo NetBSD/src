@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.36 2016/09/09 21:09:11 christos Exp $	*/
+/*	$NetBSD: files.c,v 1.36.14.1 2020/04/08 14:09:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.36 2016/09/09 21:09:11 christos Exp $");
+__RCSID("$NetBSD: files.c,v 1.36.14.1 2020/04/08 14:09:15 martin Exp $");
 
 #include <sys/param.h>
 #include <assert.h>
@@ -158,19 +158,19 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 		 * options for specific files.
 		 */
 		if (rule != NULL && optx == NULL && flags == 0 &&
-		    yyfile != fi->fi_srcfile) {
+		    yyfile != fi->fi_where.w_srcfile) {
 			fi->fi_mkrule = rule;
 			return;
 		}
 		cfgerror("duplicate file %s", path);
-		cfgxerror(fi->fi_srcfile, fi->fi_srcline,
+		cfgxerror(fi->fi_where.w_srcfile, fi->fi_where.w_srcline,
 		    "here is the original definition");
 		goto bad;
 	}
 	memcpy(base, tail, baselen);
 	base[baselen] = '\0';
-	fi->fi_srcfile = yyfile;
-	fi->fi_srcline = currentline();
+	fi->fi_where.w_srcfile = yyfile;
+	fi->fi_where.w_srcline = currentline();
 	fi->fi_flags = flags;
 	fi->fi_path = path;
 	fi->fi_tail = tail;
@@ -204,7 +204,7 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 		TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
 		break;
 	default:
-		cfgxerror(fi->fi_srcfile, fi->fi_srcline,
+		cfgxerror(fi->fi_where.w_srcfile, fi->fi_where.w_srcline,
 		    "unknown suffix");
 		break;
 	}
@@ -262,7 +262,7 @@ checkaux(const char *name, void *context)
 	struct files *fi = context;
 
 	if (ht_lookup(devbasetab, name) == NULL) {
-		cfgxerror(fi->fi_srcfile, fi->fi_srcline,
+		cfgxerror(fi->fi_where.w_srcfile, fi->fi_where.w_srcline,
 		    "`%s' is not a countable device",
 		    name);
 		/* keep fixfiles() from complaining again */
@@ -356,10 +356,10 @@ fixfiles(void)
 				ofi->fi_flags &= (u_char)~FI_SEL;
 				ofi->fi_flags |= FI_HIDDEN;
 			} else {
-				cfgxerror(fi->fi_srcfile, fi->fi_srcline,
+				cfgxerror(fi->fi_where.w_srcfile, fi->fi_where.w_srcline,
 				    "object file collision on %s.o, from %s",
 				    fi->fi_base, fi->fi_path);
-				cfgxerror(ofi->fi_srcfile, ofi->fi_srcline,
+				cfgxerror(ofi->fi_where.w_srcfile, ofi->fi_where.w_srcline,
 				    "here is the previous file: %s",
 				    ofi->fi_path);
 				err = 1;
@@ -412,22 +412,25 @@ fixdevsw(void)
 		if (res != NULL) {
 			if (res->dm_cmajor != dm->dm_cmajor ||
 			    res->dm_bmajor != dm->dm_bmajor) {
-				cfgxerror(res->dm_srcfile, res->dm_srcline,
-					"device-major '%s' "
-					"block %d, char %d redefined"
-					" at %s:%d as block %d, char %d",
-					res->dm_name,
-					res->dm_bmajor, res->dm_cmajor,
-					dm->dm_srcfile, dm->dm_srcline,
-					dm->dm_bmajor, dm->dm_cmajor);
+				cfgxerror(res->dm_where.w_srcfile,
+				    res->dm_where.w_srcline,
+				    "device-major '%s' "
+				    "block %d, char %d redefined"
+				    " at %s:%d as block %d, char %d",
+				    res->dm_name,
+				    res->dm_bmajor, res->dm_cmajor,
+				    dm->dm_where.w_srcfile, dm->dm_where.w_srcline,
+				    dm->dm_bmajor, dm->dm_cmajor);
 			} else {
-				cfgxerror(res->dm_srcfile, res->dm_srcline,
-					"device-major '%s' "
-					"(block %d, char %d) duplicated"
-					" at %s:%d",
-					dm->dm_name, dm->dm_bmajor,
-					dm->dm_cmajor,
-					dm->dm_srcfile, dm->dm_srcline);
+				cfgxerror(res->dm_where.w_srcfile,
+				    res->dm_where.w_srcline,
+				    "device-major '%s' "
+				    "(block %d, char %d) duplicated"
+				    " at %s:%d",
+				    dm->dm_name, dm->dm_bmajor,
+				    dm->dm_cmajor,
+				    dm->dm_where.w_srcfile,
+				    dm->dm_where.w_srcline);
 			}
 			error = 1;
 			goto out;
@@ -443,15 +446,16 @@ fixdevsw(void)
 
 		if (dm->dm_cmajor != NODEVMAJOR) {
 			if (ht_lookup(cdevmtab, intern(dm->dm_name)) != NULL) {
-				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
-				       "device-major of character device '%s' "
-				       "is already defined", dm->dm_name);
+				cfgxerror(dm->dm_where.w_srcfile,
+				    dm->dm_where.w_srcline,
+				   "device-major of character device '%s' "
+				   "is already defined", dm->dm_name);
 				error = 1;
 				goto out;
 			}
 			(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_cmajor);
 			if (ht_lookup(cdevmtab, intern(mstr)) != NULL) {
-				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
+				cfgxerror(dm->dm_where.w_srcfile, dm->dm_where.w_srcline,
 				       "device-major of character major '%d' "
 				       "is already defined", dm->dm_cmajor);
 				error = 1;
@@ -465,7 +469,7 @@ fixdevsw(void)
 		}
 		if (dm->dm_bmajor != NODEVMAJOR) {
 			if (ht_lookup(bdevmtab, intern(dm->dm_name)) != NULL) {
-				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
+				cfgxerror(dm->dm_where.w_srcfile, dm->dm_where.w_srcline,
 				       "device-major of block device '%s' "
 				       "is already defined", dm->dm_name);
 				error = 1;
@@ -473,7 +477,7 @@ fixdevsw(void)
 			}
 			(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_bmajor);
 			if (ht_lookup(bdevmtab, intern(mstr)) != NULL) {
-				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
+				cfgxerror(dm->dm_where.w_srcfile, dm->dm_where.w_srcline,
 				       "device-major of block major '%d' "
 				       "is already defined", dm->dm_bmajor);
 				error = 1;

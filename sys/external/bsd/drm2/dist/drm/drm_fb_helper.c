@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.8.18.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.8.18.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.8.18.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.8.18.2 2020/04/08 14:08:22 martin Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -39,13 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.8.18.1 2019/06/10 22:07:57 chris
 #include <linux/slab.h>
 #include <linux/fb.h>
 #include <linux/module.h>
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/list.h>
-#include <linux/notifier.h>
-#include <linux/printk.h>
 #include <linux/sysrq.h>
-#include <asm/bug.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_fb_helper.h>
@@ -584,7 +578,7 @@ static struct sysrq_key_op sysrq_drm_fb_helper_restore_op = {
 	.action_msg = "Restore framebuffer console",
 };
 #else
-static struct sysrq_key_op sysrq_drm_fb_helper_restore_op;
+static struct sysrq_key_op sysrq_drm_fb_helper_restore_op = { };
 #endif
 
 #ifndef __NetBSD__		/* XXX fb info */
@@ -864,7 +858,11 @@ void drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
 }
 EXPORT_SYMBOL(drm_fb_helper_fini);
 
-#ifndef __NetBSD__		/* XXX fb info */
+#ifdef __NetBSD__		/* XXX fb info */
+void drm_fb_helper_set_suspend(struct drm_fb_helper *fb_helper, int state)
+{
+}
+#else
 /**
  * drm_fb_helper_unlink_fbi - wrapper around unlink_framebuffer
  * @fb_helper: driver-allocated fbdev helper

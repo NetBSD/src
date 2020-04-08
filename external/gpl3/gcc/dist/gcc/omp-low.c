@@ -406,18 +406,30 @@ use_pointer_for_field (tree decl, omp_context *shared_ctx)
 	  omp_context *up;
 
 	  for (up = shared_ctx->outer; up; up = up->outer)
-	    if (is_taskreg_ctx (up) && maybe_lookup_decl (decl, up))
+	    if ((is_taskreg_ctx (up)
+		 || (gimple_code (up->stmt) == GIMPLE_OMP_TARGET
+		     && is_gimple_omp_offloaded (up->stmt)))
+		&& maybe_lookup_decl (decl, up))
 	      break;
 
 	  if (up)
 	    {
 	      tree c;
 
-	      for (c = gimple_omp_taskreg_clauses (up->stmt);
-		   c; c = OMP_CLAUSE_CHAIN (c))
-		if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_SHARED
-		    && OMP_CLAUSE_DECL (c) == decl)
-		  break;
+	      if (gimple_code (up->stmt) == GIMPLE_OMP_TARGET)
+		{
+		  for (c = gimple_omp_target_clauses (up->stmt);
+		       c; c = OMP_CLAUSE_CHAIN (c))
+		    if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_MAP
+			&& OMP_CLAUSE_DECL (c) == decl)
+		      break;
+		}
+	      else
+		for (c = gimple_omp_taskreg_clauses (up->stmt);
+		     c; c = OMP_CLAUSE_CHAIN (c))
+		  if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_SHARED
+		      && OMP_CLAUSE_DECL (c) == decl)
+		    break;
 
 	      if (c)
 		goto maybe_mark_addressable_and_ret;
@@ -853,6 +865,7 @@ new_omp_context (gimple *stmt, omp_context *outer_ctx)
       ctx->cb.copy_decl = omp_copy_decl;
       ctx->cb.eh_lp_nr = 0;
       ctx->cb.transform_call_graph_edges = CB_CGE_MOVE;
+      ctx->cb.dont_remap_vla_if_no_change = true;
       ctx->depth = 1;
     }
 
@@ -3215,7 +3228,14 @@ scan_omp_1_stmt (gimple_stmt_iterator *gsi, bool *handled_ops_p,
       break;
 
     case GIMPLE_OMP_TARGET:
-      scan_omp_target (as_a <gomp_target *> (stmt), ctx);
+      if (is_gimple_omp_offloaded (stmt))
+	{
+	  taskreg_nesting_level++;
+	  scan_omp_target (as_a <gomp_target *> (stmt), ctx);
+	  taskreg_nesting_level--;
+	}
+      else
+	scan_omp_target (as_a <gomp_target *> (stmt), ctx);
       break;
 
     case GIMPLE_OMP_TEAMS:

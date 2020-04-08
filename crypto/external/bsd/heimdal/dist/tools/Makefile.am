@@ -40,7 +40,7 @@ subst = sed	-e "s!@PACKAGE\@!$(PACKAGE)!g" \
 		-e "s!@LIBS\@!$(LIBS)!g"
 
 krb5-config: krb5-config.in
-	$(subst) $(srcdir)/krb5-config.in > $@.new
+	$(subst) $(srcdir)/krb5-config.in | /bin/sh > $@.new
 	mv $@.new $@
 	chmod +x $@
 

@@ -1,9 +1,8 @@
-/*	$NetBSD: intel_ringbuffer.h,v 1.4.30.1 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: intel_ringbuffer.h,v 1.4.30.2 2020/04/08 14:08:23 martin Exp $	*/
 
 #ifndef _INTEL_RINGBUFFER_H_
 #define _INTEL_RINGBUFFER_H_
 
-#include <asm/bug.h>
 #include <linux/hashtable.h>
 #include "i915_gem_batch_pool.h"
 
@@ -327,7 +326,8 @@ struct  intel_engine_cs {
 		volatile u32 *cpu_page;
 	} scratch;
 
-	bool needs_cmd_parser;
+	bool using_cmd_parser;
+	bool requires_cmd_parser;
 
 	/*
 	 * Table of commands the command parser needs to know about

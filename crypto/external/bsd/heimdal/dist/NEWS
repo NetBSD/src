@@ -1,3 +1,212 @@
+Release Notes - Heimdal - Version Heimdal 7.7
+
+ Bug fixes
+
+ - PKCS#11 hcrypto back-end
+   . initialize the p11_module_load function list
+   . verify that not only is a mechanism present but that its mechanism
+     info states that it offers the required encryption, decryption or
+     digest services
+ - krb5:
+   . Starting with 7.6, Heimdal permitted requesting authenticated
+     anonymous tickets.  However, it did not verify that a KDC in fact
+     returned an anonymous ticket when one was requested.
+   - Cease setting the KDCOption reaquest_anonymous flag when issuing
+     S4UProxy (constrained delegation) TGS requests.
+   . when the Win2K PKINIT compatibility option is set, do
+     not require krbtgt otherName to match when validating KDC
+     certificate.
+   . set PKINIT_BTMM flag per Apple implementation
+   . use memset_s() instead of memset()
+ - kdc:
+   . When generating KRB5SignedPath in the AS, use the reply client name
+     rather than the one from the request, so validation will work
+     correctly in the TGS.
+   . allow checksum of PA-FOR-USER to be HMAC_MD5.  Even if tgt used
+     an enctype with a different checksum.  Per [MS-SFU] 2.2.1
+     PA-FOR-USER the checksum is always HMAC_MD5, and that's what
+     Windows and MIT clients send.
+
+     In heimdal both the client and kdc use instead the
+     checksum of the tgt, and therefore work with each other
+     but Windows and MIT clients fail against heimdal KDC.
+
+     Both Windows and MIT KDCs would allow any keyed checksum
+     to be used so Heimdal client interoperates with them.
+
+     Change Heimdal KDC to allow HMAC_MD5 even for non RC4
+     based tgt in order to support per-spec clients.
+   . use memset_s() instead of memset().
+   - Detect Heimdal 1.0 through 7.6 clients that issue S4UProxy
+     (constrained delegation) TGS Requests with the request
+     anonymous flag set.  These requests will be treated as
+     S4UProxy requests and not anonymous requests.
+ - HDB:
+   . Set SQLite3 backend default page size to 8KB.
+   . Add hdb_set_sync() method
+ - kadmind:
+   . disable HDB sync during database load avoiding unnecessary disk i/o.
+ - ipropd:
+   . disable HDB sync during receive_everything.  Doing an fsync
+     per-record when receiving the complete HDB is a performance
+     disaster.  Among other things, if the HDB is very large, then
+     one slave receving a full HDB can cause other slaves to timeout
+     and, if HDB write activity is high enough to cause iprop log
+     truncation, then also need full syncs, which leads to a cycle of
+     full syncs for all slaves until HDB write activity drops.
+     Allowing the iprop log to be larger helps, but improving
+     receive_everything() performance helps even more.
+ - kinit:
+   . Anonymous PKINIT tickets discard the realm information used
+     to locate the issuing AS. Store the issuing realm in the
+     credentials cache in order to locate a KDC which can renew them.
+   . Do not leak the result of krb5_cc_get_config() when determining
+     anonymous PKINIT start realm.
+  - klist:
+    . Show transited-policy-checked, ok-as-delegate and anonymous
+      flags when listing credentials.
+ - tests:
+   . Regenerate certs so that they expire before the 2038 armageddon
+     so the test suite will pass on 32-bit operating systems until the
+     underlying issues can be resolved.
+ - Solaris:
+   . Define _STDC_C11_BCI for memset_s prototype
+ - build tooling:
+   . Convert from python 2 to python 3
+ - documentation
+   . rename verify-password to verify-password-quality
+   . hprop default mode is encrypt
+   . kadmind "all" permission does not include "get-keys"
+   . verify-password-quality might not be stateless
+
+Release Notes - Heimdal - Version Heimdal 7.6
+
+ Security
+
+ - CVE-2018-16860 Heimdal KDC: Reject PA-S4U2Self with unkeyed checksum
+
+    When the Heimdal KDC checks the checksum that is placed on the
+    S4U2Self packet by the server to protect the requested principal
+    against modification, it does not confirm that the checksum
+    algorithm that protects the user name (principal) in the request
+    is keyed.  This allows a man-in-the-middle attacker who can
+    intercept the request to the KDC to modify the packet by replacing
+    the user name (principal) in the request with any desired user
+    name (principal) that exists in the KDC and replace the checksum
+    protecting that name with a CRC32 checksum (which requires no
+    prior knowledge to compute).
+
+    This would allow a S4U2Self ticket requested on behalf of user
+    name (principal) user@EXAMPLE.COM to any service to be changed
+    to a S4U2Self ticket with a user name (principal) of
+    Administrator@EXAMPLE.COM. This ticket would then contain the
+    PAC of the modified user name (principal).
+
+ - CVE-2019-12098, client-only:
+
+    RFC8062 Section 7 requires verification of the PA-PKINIT-KX key excahnge
+    when anonymous PKINIT is used.  Failure to do so can permit an active
+    attacker to become a man-in-the-middle.
+
+ Bug fixes
+     
+ - Happy eyeballs: Don't wait for responses from known-unreachable KDCs.
+ - kdc: check return copy_Realm, copy_PrincipalName, copy_EncryptionKey
+ - kinit:
+   . cleanup temporary ccaches
+   . see man page for "kinit --anonymous" command line syntax change
+ - kdc: Make anonymous AS-requests more RFC8062-compliant.
+ - Updated expired test certificates
+ - Solaris:
+   . PKCS#11 hcrypto backend broken since 7.0.1
+   . Building with Sun Pro C
+
+ Features
+
+ - kuser: support authenticated anonymous AS-REQs in kinit
+ - kdc: support for anonymous TGS-REQs
+ - kgetcred support for anonymous service tickets
+ - Support builds with OpenSSL 1.1.1
+
+Release Notes - Heimdal - Version Heimdal 7.5
+
+ Security
+
+ - Fix CVE-2017-17439, which is a remote denial of service
+   vulnerability:
+
+     In Heimdal 7.1 through 7.4, remote unauthenticated attackers
+     are able to crash the KDC by sending a crafted UDP packet
+     containing empty data fields for client name or realm.
+
+ Bug fixes
+
+ - Handle long input lines when reloading database dumps.
+
+ - In pre-forked mode (default on Unix), correctly clear
+   the process ids of exited children, allowing new child processes
+   to replace the old.
+
+ - Fixed incorrect KDC response when no-cross realm TGT exists,
+   allowing client requests to fail quickly rather than time
+   out after trying to get a correct answer from each KDC.
+
+Release Notes - Heimdal - Version Heimdal 7.4
+
+ Security
+
+ - Fix CVE-2017-11103: Orpheus' Lyre KDC-REP service name validation
+
+   This is a critical vulnerability.
+
+   In _krb5_extract_ticket() the KDC-REP service name must be obtained from
+   encrypted version stored in 'enc_part' instead of the unencrypted version
+   stored in 'ticket'.  Use of the unecrypted version provides an
+   opportunity for successful server impersonation and other attacks.
+
+   Identified by Jeffrey Altman, Viktor Duchovni and Nico Williams.
+
+   See https://www.orpheus-lyre.info/ for more details.
+
+Release Notes - Heimdal - Version Heimdal 7.3
+
+ Security
+
+ - Fix transit path validation.  Commit f469fc6 (2010-10-02) inadvertently
+   caused the previous hop realm to not be added to the transit path
+   of issued tickets.  This may, in some cases, enable bypass of capath
+   policy in Heimdal versions 1.5 through 7.2.
+
+   Note, this may break sites that rely on the bug.  With the bug some
+   incomplete [capaths] worked, that should not have.  These may now break
+   authentication in some cross-realm configurations.
+   (CVE-2017-6594)
+
+Release Notes - Heimdal - Version Heimdal 7.2
+
+ Bug fixes
+ - Portability improvements
+ - More strict parsing of encoded URI components in HTTP KDC
+ - Fixed memory leak in malloc error recovery in NTLM GSSAPI mechanism
+ - Avoid overly specific CPU info in krb5-config in aid of reproducible builds
+ - Don't do AFS string-to-key tests when feature is disabled
+ - Skip mdb_stat test when the command is not available
+ - Windows: update SHA2 timestamp server
+ - hdb: add missing export hdb_generate_key_set_password_with_ks_tuple
+ - Fix signature of hdb_generate_key_set_password()
+ - Windows: enable KX509 support in the KDC
+ - kdc: fix kx509 service principal match
+ - iprop: handle case where master sends nothing new
+ - ipropd-slave: fix incorrect error codes
+ - Allow choice of sqlite for HDB pref
+ - check-iprop: don't fail to kill daemons
+ - roken: pidfile -> rk_pidfile
+ - kdc: _kdc_do_kx509 fix use after free error
+ - Do not detect x32 as 64-bit platform.
+ - No sys/ttydefaults.h on CYGWIN
+ - Fix check-iprop races
+ - roken_detach_prep() close pipe
+
 Release Notes - Heimdal - Version Heimdal 7.1
 
  Security

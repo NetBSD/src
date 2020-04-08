@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA820,v 1.39.4.1 2019/06/10 22:06:16 christos Exp $
+#	$NetBSD: JORNADA820,v 1.39.4.2 2020/04/08 14:07:38 martin Exp $
 #
 #	JORNADA -- Windows-CE based jornada 820
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.39.4.1 $"
+#ident 		"GENERIC-$Revision: 1.39.4.2 $"
 
 # estimated number of users
 maxusers	32
@@ -232,7 +232,6 @@ saost*	at saip? addr 0x90000000 size 0x20
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	strip			# STarmode Radio IP (Metricon Ricochet)
 
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals

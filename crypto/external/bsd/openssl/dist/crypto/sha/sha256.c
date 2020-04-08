@@ -128,7 +128,7 @@ static
 #endif
 void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
-#include "internal/md32_common.h"
+#include "crypto/md32_common.h"
 
 #ifndef SHA256_ASM
 static const SHA_LONG K256[64] = {
@@ -168,7 +168,7 @@ static const SHA_LONG K256[64] = {
 static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
                                     size_t num)
 {
-    MD32_REG_T a, b, c, d, e, f, g, h, s0, s1, T1, T2;
+    unsigned MD32_REG_T a, b, c, d, e, f, g, h, s0, s1, T1, T2;
     SHA_LONG X[16], l;
     int i;
     const unsigned char *data = in;
@@ -246,7 +246,7 @@ static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
 static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
                                     size_t num)
 {
-    MD32_REG_T a, b, c, d, e, f, g, h, s0, s1, T1;
+    unsigned MD32_REG_T a, b, c, d, e, f, g, h, s0, s1, T1;
     SHA_LONG X[16];
     int i;
     const unsigned char *data = in;

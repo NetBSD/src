@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.88.12.1 2019/06/10 22:05:22 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.88.12.2 2020/04/08 14:07:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.88.12.1 2019/06/10 22:05:22 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.88.12.2 2020/04/08 14:07:14 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1436,7 +1436,7 @@ domvcur(WINDOW *win, int oy, int ox, int ny, int nx)
 {
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_REFRESH, "domvcur: (%d,%d)=>(%d,%d) win 0x%p\n",
+	__CTRACE(__CTRACE_REFRESH, "domvcur: (%d,%d)=>(%d,%d) win %p\n",
 	    oy, ox, ny, nx, win );
 #endif /* DEBUG */
 

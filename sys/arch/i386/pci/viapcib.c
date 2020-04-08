@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.15.18.1 2019/06/10 22:06:21 christos Exp $ */
+/* $NetBSD: viapcib.c,v 1.15.18.2 2020/04/08 14:07:40 martin Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.15.18.1 2019/06/10 22:06:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.15.18.2 2020/04/08 14:07:40 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,8 +90,6 @@ struct viapcib_softc {
 	struct i2c_controller sc_i2c;
 
 	int sc_revision;
-
-	kmutex_t sc_lock;
 };
 
 static int	viapcib_match(device_t, cfdata_t, void *);
@@ -107,8 +105,6 @@ static int	viapcib_busy(struct viapcib_softc *);
 
 #define	VIAPCIB_SMBUS_TIMEOUT	10000
 
-static int	viapcib_acquire_bus(void *, int);
-static void	viapcib_release_bus(void *, int);
 static int	viapcib_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 			     size_t, void *, size_t, int);
 
@@ -171,8 +167,6 @@ viapcib_attach(device_t parent, device_t self, void *opaque)
 		goto core_pcib;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-
 	val = pci_conf_read(pa->pa_pc, pa->pa_tag, SMB_HOST_CONFIG);
 	if ((val & 0x10000) == 0) {
 		printf(": SMBus is disabled\n");
@@ -214,15 +208,10 @@ core_pcib:
 		b = viapcib_smbus_read(sc, SMBSLVCNT);
 		viapcib_smbus_write(sc, SMBSLVCNT, b & ~1);
 
-		memset(&sc->sc_i2c, 0, sizeof(sc->sc_i2c));
 		memset(&iba, 0, sizeof(iba));
-#ifdef I2C_TYPE_SMBUS
-		iba.iba_type = I2C_TYPE_SMBUS;
-#endif
 		iba.iba_tag = &sc->sc_i2c;
+		iic_tag_init(&sc->sc_i2c);
 		iba.iba_tag->ic_cookie = (void *)sc;
-		iba.iba_tag->ic_acquire_bus = viapcib_acquire_bus;
-		iba.iba_tag->ic_release_bus = viapcib_release_bus;
 		iba.iba_tag->ic_exec = viapcib_exec;
 
 		config_found_ia(self, "i2cbus", &iba, iicbus_print);
@@ -276,26 +265,6 @@ viapcib_busy(struct viapcib_softc *sc)
 	val = viapcib_smbus_read(sc, SMBHSTSTS);
 
 	return (val & SMBHSTSTS_BUSY);
-}
-
-static int
-viapcib_acquire_bus(void *opaque, int flags)
-{
-	struct viapcib_softc *sc = (struct viapcib_softc *)opaque;
-
-	DPRINTF(("viapcib_i2c_acquire_bus(%p, 0x%x)\n", opaque, flags));
-	mutex_enter(&sc->sc_lock);
-
-	return 0;
-}
-
-static void
-viapcib_release_bus(void *opaque, int flags)
-{
-	struct viapcib_softc *sc = (struct viapcib_softc *)opaque;
-
-	mutex_exit(&sc->sc_lock);
-	DPRINTF(("viapcib_i2c_release_bus(%p, 0x%x)\n", opaque, flags));
 }
 
 static int

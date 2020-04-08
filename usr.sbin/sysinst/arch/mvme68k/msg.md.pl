@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.1.28.1 2020/04/08 14:09:23 martin Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/03/24 22:04:06 scw Exp */
 
@@ -56,11 +56,7 @@ taka etykiete.
 }
 
 message ordering
-{Uklad partycji %c jest bledny. Edytowac jeszcze raz?}
-
-message emptypart
-{Istnieje poprawna partycja %c po pustych partycjach.
-Wyedytuj jeszcze raz tablice partycji.}
+{Uklad partycji %s jest bledny. Edytowac jeszcze raz?}
 
 message set_kernel_1
 {Kernel (GENERIC)}

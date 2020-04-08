@@ -1,4 +1,4 @@
-/*	$NetBSD: ssc.c,v 1.3 2009/07/20 04:59:04 kiyohara Exp $	*/
+/*	$NetBSD: ssc.c,v 1.3.64.1 2020/04/08 14:07:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -41,6 +41,8 @@
  * PSR.dt across the SSC call. We do this by saving and restoring psr.l
  * completely.
  */
+
+__attribute__((__noinline__))
 u_int64_t
 ssc(u_int64_t in0, u_int64_t in1, u_int64_t in2, u_int64_t in3, int which)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.36 2009/11/21 04:16:52 rmind Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.36.64.1 2020/04/08 14:07:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.36 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.36.64.1 2020/04/08 14:07:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,7 +527,7 @@ si_obio_dma_stop(struct ncr5380_softc *ncr_sc)
 				(si->fifo_data & 0xff00) >> 8;
 			goto out;
 		}
-		/* UDC might not have transfered the last word. */
+		/* UDC might not have transferred the last word. */
 		udc_cnt = si_obio_udc_read(si, UDC_ADR_COUNT);
 		if (((udc_cnt * 2) - resid) == 2) {
 			NCR_TRACE("si_dma_stop: leftover 2 at 0x%x\n",

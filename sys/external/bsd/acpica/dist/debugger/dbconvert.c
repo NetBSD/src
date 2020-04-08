@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -165,6 +165,10 @@ AcpiDbConvertToBuffer (
     UINT8                   *Buffer;
     ACPI_STATUS             Status;
 
+
+    /* Skip all preceding white space*/
+
+    AcpiUtRemoveWhitespace (&String);
 
     /* Generate the final buffer length */
 

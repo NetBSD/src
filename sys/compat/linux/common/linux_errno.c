@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_errno.c,v 1.15 2013/12/22 17:14:22 njoly Exp $	*/
+/*	$NetBSD: linux_errno.c,v 1.15.30.1 2020/04/08 14:08:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_errno.c,v 1.15 2013/12/22 17:14:22 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_errno.c,v 1.15.30.1 2020/04/08 14:08:00 martin Exp $");
 
 #include <sys/errno.h>
 
@@ -138,5 +138,7 @@ const int native_to_linux_errno[] = {
 	LINUX_SCERR_SIGN LINUX_EMULTIHOP,
 	LINUX_SCERR_SIGN LINUX_ENOLINK,
 	LINUX_SCERR_SIGN LINUX_EPROTO,		/* 96 */
+	LINUX_SCERR_SIGN LINUX_EOWNERDEAD,
+	LINUX_SCERR_SIGN LINUX_ENOTRECOVERABLE,
 };
 __CTASSERT(__arraycount(native_to_linux_errno) == ELAST + 1);

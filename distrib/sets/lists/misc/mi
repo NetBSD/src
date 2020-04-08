@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.207.2.1 2019/06/10 21:42:31 christos Exp $
+# $NetBSD: mi,v 1.207.2.2 2020/04/08 14:03:53 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1602,9 +1602,12 @@
 ./usr/share/examples/racoon/roadwarrior/server/phase1-down.sh	misc-obsolete		obsolete
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf		misc-netutil-examples	share
 ./usr/share/examples/racoon/roadwarrior/server/racoon.conf-radius	misc-netutil-examples	share
+./usr/share/examples/rpcapd/rpcapd.inetd.conf	misc-netutil-examples	share
+./usr/share/examples/rpcapd/rpcapd.socket	misc-netutil-examples	share
+./usr/share/examples/rpcapd/rpcapd@.service	misc-netutil-examples	share
 ./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples	use_inet6,share
 ./usr/share/examples/slip/slip.login		misc-slip-examples	share
-./usr/share/examples/smbfs/dot.nsmbrc		misc-sysutil-examples	share
+./usr/share/examples/smbfs/dot.nsmbrc		misc-obsolete		obsolete
 ./usr/share/examples/supfiles/ftp.cs.umn.edu	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/skarven.itea.unit.no	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.au.netbsd.org	misc-obsolete		obsolete

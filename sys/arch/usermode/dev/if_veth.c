@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.10.2.1 2019/06/10 22:06:50 christos Exp $ */
+/* $NetBSD: if_veth.c,v 1.10.2.2 2020/04/08 14:07:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.10.2.1 2019/06/10 22:06:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.10.2.2 2020/04/08 14:07:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -225,14 +225,14 @@ veth_softrx(void *priv)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
 			vethprintf("MGETHDR failed (input error)\n");
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			continue;
 		}
 		if (len > MHLEN) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				m_freem(m);
-				++ifp->if_ierrors;
+				if_statinc(ifp, if_ierrors);
 				vethprintf("M_EXT not set (input error)\n");
 				continue;
 			}
@@ -297,9 +297,9 @@ veth_start(struct ifnet *ifp)
 		    m0->m_pkthdr.len);
 		vethprintf("write returned %d\n", len);
 		if (len > 0)
-			++ifp->if_opackets;
+			if_statinc(ifp, if_opackets);
 		else
-			++ifp->if_oerrors;
+			if_statinc(ifp, if_oerrors);
 		m_freem(m0);
 	}
 }
@@ -316,7 +316,7 @@ static void
 veth_watchdog(struct ifnet *ifp)
 {
 	vethprintf("%s: %s flags=%x\n", __func__, ifp->if_xname, ifp->if_flags);
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 	veth_init(ifp);
 }
 

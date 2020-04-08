@@ -53,7 +53,7 @@
 #  endif
 # endif
 
-# include "ui_locl.h"
+# include "ui_local.h"
 # include "internal/cryptlib.h"
 
 # ifdef OPENSSL_SYS_VMS          /* prototypes for sys$whatever */
@@ -79,7 +79,7 @@
  * systems that require something different.
  *
  * Note: we do not use SGTTY unless it's defined by the configuration.  We
- * may eventually opt to remove it's use entirely.
+ * may eventually opt to remove its use entirely.
  */
 
 # if !defined(TERMIOS) && !defined(TERMIO) && !defined(SGTTY)

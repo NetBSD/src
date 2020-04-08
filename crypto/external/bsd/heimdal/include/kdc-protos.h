@@ -19,6 +19,12 @@ kdc_check_flags (
 	const char */*server_name*/,
 	krb5_boolean /*is_as_req*/);
 
+krb5_error_code
+kdc_kx509_verify_service_principal (
+	krb5_context /*context*/,
+	const char */*cname*/,
+	krb5_principal /*sprincipal*/);
+
 void
 kdc_log (
 	krb5_context /*context*/,

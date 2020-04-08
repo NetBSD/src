@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.14 2011/02/02 20:10:09 chuck Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.14.56.1 2020/04/08 14:08:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,9 +45,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.14 2011/02/02 20:10:09 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.14.56.1 2020/04/08 14:08:01 martin Exp $");
+
+#include <sys/lwp.h>
 
 #define	CORENAME(x)	__CONCAT(x,32)
 #define	COREINC		<compat/netbsd32/netbsd32.h>
 
+struct coredump_iostate;
+
+int	CORENAME(real_coredump_netbsd)(struct lwp *, struct coredump_iostate *);
+
 #include "../../kern/core_netbsd.c"
+
+int
+CORENAME(coredump_netbsd)(struct lwp *l, struct coredump_iostate *iocookie)     
+{
+	return CORENAME(real_coredump_netbsd)(l, iocookie);
+}
+

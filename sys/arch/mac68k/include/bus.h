@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.26 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.26.88.1 2020/04/08 14:07:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -535,9 +535,9 @@ void mac68k_bswms4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplimented !!!
+			!!! bus_space_write_multi_8 unimplemented !!!
 #define	bus_space_write_multi_stream_8(t, h, o, a, c)			\
-			!!! bus_space_write_multi_stream_8 unimplimented !!!
+			!!! bus_space_write_multi_stream_8 unimplemented !!!
 #endif
 
 /*

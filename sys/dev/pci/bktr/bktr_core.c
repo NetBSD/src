@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.54.38.1 2019/06/10 22:07:27 christos Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.54.38.2 2020/04/08 14:08:10 martin Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.54.38.1 2019/06/10 22:07:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.54.38.2 2020/04/08 14:08:10 martin Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -2977,7 +2977,7 @@ rgb_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace)
 
 	buffer = target_buffer;
 
-	/* contruct sync : for video packet format */
+	/* construct sync : for video packet format */
 	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM1);
 
 	/* sync, mode indicator packed data */
@@ -3132,7 +3132,7 @@ yuvpack_prog(bktr_ptr_t bktr, char i_flag,
 
 	buffer = target_buffer;
 
-	/* contruct sync : for video packet format */
+	/* construct sync : for video packet format */
 	/* sync, mode indicator packed data */
 	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM1);
 	*dma_prog++ = htole32(0);  /* NULL WORD */
@@ -3255,7 +3255,7 @@ yuv422_prog(bktr_ptr_t bktr, char i_flag,
 
 	t1 = buffer;
 
-	/* contruct sync : for video packet format */
+	/* construct sync : for video packet format */
 	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM3); /*sync, mode indicator packed data*/
 	*dma_prog++ = htole32(0);  /* NULL WORD */
 

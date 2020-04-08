@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.28.6.1 2019/06/10 22:10:24 christos Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.28.6.2 2020/04/08 14:09:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.28.6.1 2019/06/10 22:10:24 christos Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.28.6.2 2020/04/08 14:09:18 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -290,8 +290,8 @@ again:
 	}
 	if (sysctl(mib, 6, buffers, &size, NULL, 0) < 0) {
 		free(buffers);
-		if (extraslop == 0) {
-			extraslop = 100;
+		if (extraslop < 1000) {
+			extraslop += 100;
 			goto again;
 		}
 		error("can't get buffers: %s\n", strerror(errno));

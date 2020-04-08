@@ -1,27 +1,41 @@
-/*	$NetBSD: tls_proxy_clnt.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: tls_proxy_clnt.c,v 1.2.12.1 2020/04/08 14:06:58 martin Exp $	*/
 
 /*++
 /* NAME
 /*	tlsproxy_clnt 3
 /* SUMMARY
-/*	postscreen TLS proxy support
+/*	tlsproxy(8) client support
 /* SYNOPSIS
 /*	#include <tlsproxy_clnt.h>
 /*
 /*	VSTREAM *tls_proxy_open(service, flags, peer_stream, peer_addr,
-/*			          peer_port, timeout)
+/*				peer_port, handshake_timeout, session_timeout,
+/*				serverid, tls_params, init_props, start_props)
+/*	const char *service;
+/*	int	flags;
+/*	VSTREAM *peer_stream;
+/*	const char *peer_addr;
+/*	const char *peer_port;
+/*	int	handshake_timeout;
+/*	int	session_timeout;
+/*	const char *serverid;
+/*	void	*tls_params;
+/*	void	*init_props;
+/*	void	*start_props;
+/*
+/*	TLS_SESS_STATE *tls_proxy_context_receive(proxy_stream)
+/*	VSTREAM *proxy_stream;
+/* AUXILIARY FUNCTIONS
+/*	VSTREAM *tls_proxy_legacy_open(service, flags, peer_stream,
+/*					peer_addr, peer_port,
+/*					timeout, serverid)
 /*	const char *service;
 /*	int	flags;
 /*	VSTREAM *peer_stream;
 /*	const char *peer_addr;
 /*	const char *peer_port;
 /*	int	timeout;
-/*
-/*	TLS_SESS_STATE *tls_proxy_context_receive(proxy_stream)
-/*	VSTREAM *proxy_stream;
-/*
-/*	void	tls_proxy_context_free(tls_context)
-/*	TLS_SESS_STATE *tls_context;
+/*	const char *serverid;
 /* DESCRIPTION
 /*	tls_proxy_open() prepares for inserting the tlsproxy(8)
 /*	daemon between the current process and a remote peer (the
@@ -46,8 +60,8 @@
 /*
 /*	After this, the proxy_stream is ready for plain-text I/O.
 /*
-/*	tls_proxy_context_free() destroys a TLS context object that
-/*	was received with tls_proxy_context_receive().
+/*	tls_proxy_legacy_open() is a backwards-compatibility feature
+/*	that provides a historical interface.
 /*
 /*	Arguments:
 /* .IP service
@@ -68,8 +82,20 @@
 /*	Printable IP address of the remote peer_stream endpoint.
 /* .IP peer_port
 /*	Printable TCP port of the remote peer_stream endpoint.
-/* .IP timeout
-/*	Time limit that the tlsproxy(8) daemon should use.
+/* .IP handshake_timeout
+/*	Time limit that the tlsproxy(8) daemon should use during
+/*	the TLS handshake.
+/* .IP session_timeout
+/*	Time limit that the tlsproxy(8) daemon should use after the
+/*	TLS handshake.
+/* .IP serverid
+/*	Unique service identifier.
+/* .IP tls_params
+/*	Pointer to TLS_CLIENT_PARAMS or TLS_SERVER_PARAMS.
+/* .IP init_props
+/*	Pointer to TLS_CLIENT_INIT_PROPS or TLS_SERVER_INIT_PROPS.
+/* .IP start_props
+/*	Pointer to TLS_CLIENT_START_PROPS or TLS_SERVER_START_PROPS.
 /* .IP proxy_stream
 /*	Stream from tls_proxy_open().
 /* .IP tls_context
@@ -83,6 +109,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #ifdef USE_TLS
@@ -121,8 +152,14 @@ VSTREAM *tls_proxy_open(const char *service, int flags,
 			        VSTREAM *peer_stream,
 			        const char *peer_addr,
 			        const char *peer_port,
-			        int timeout)
+			        int handshake_timeout,
+			        int session_timeout,
+			        const char *serverid,
+			        void *tls_params,
+			        void *init_props,
+			        void *start_props)
 {
+    const char myname[] = "tls_proxy_open";
     VSTREAM *tlsproxy_stream;
     int     status;
     int     fd;
@@ -148,19 +185,45 @@ VSTREAM *tls_proxy_open(const char *service, int flags,
     }
 
     /*
-     * Initial handshake. Send the data attributes now, and send the client
-     * file descriptor in a later transaction.
-     * 
-     * XXX The formatted endpoint should be a state member. Then, we can
-     * simplify all the format strings throughout the program.
+     * Initial handshake. Send common data attributes now, and send the
+     * remote peer file descriptor in a later transaction.
      */
     tlsproxy_stream = vstream_fdopen(fd, O_RDWR);
     vstring_sprintf(remote_endpt, "[%s]:%s", peer_addr, peer_port);
     attr_print(tlsproxy_stream, ATTR_FLAG_NONE,
-	       SEND_ATTR_STR(MAIL_ATTR_REMOTE_ENDPT, STR(remote_endpt)),
-	       SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
-	       SEND_ATTR_INT(MAIL_ATTR_TIMEOUT, timeout),
+	       SEND_ATTR_STR(TLS_ATTR_REMOTE_ENDPT, STR(remote_endpt)),
+	       SEND_ATTR_INT(TLS_ATTR_FLAGS, flags),
+	       SEND_ATTR_INT(TLS_ATTR_TIMEOUT, handshake_timeout),
+	       SEND_ATTR_INT(TLS_ATTR_TIMEOUT, session_timeout),
+	       SEND_ATTR_STR(TLS_ATTR_SERVERID, serverid),
 	       ATTR_TYPE_END);
+    /* Do not flush the stream yet. */
+    if (vstream_ferror(tlsproxy_stream) != 0) {
+	msg_warn("error sending request to %s service: %m",
+		 STR(tlsproxy_service));
+	vstream_fclose(tlsproxy_stream);
+	return (0);
+    }
+    switch (flags & (TLS_PROXY_FLAG_ROLE_CLIENT | TLS_PROXY_FLAG_ROLE_SERVER)) {
+    case TLS_PROXY_FLAG_ROLE_CLIENT:
+	attr_print(tlsproxy_stream, ATTR_FLAG_NONE,
+		   SEND_ATTR_FUNC(tls_proxy_client_param_print, tls_params),
+		   SEND_ATTR_FUNC(tls_proxy_client_init_print, init_props),
+		   SEND_ATTR_FUNC(tls_proxy_client_start_print, start_props),
+		   ATTR_TYPE_END);
+	break;
+    case TLS_PROXY_FLAG_ROLE_SERVER:
+#if 0
+	attr_print(tlsproxy_stream, ATTR_FLAG_NONE,
+		   SEND_ATTR_FUNC(tls_proxy_server_param_print, tls_params),
+		   SEND_ATTR_FUNC(tls_proxy_server_init_print, init_props),
+		   SEND_ATTR_FUNC(tls_proxy_server_start_print, start_props),
+		   ATTR_TYPE_END);
+#endif
+	break;
+    default:
+	msg_panic("%s: bad flags: 0x%x", myname, flags);
+    }
     if (vstream_fflush(tlsproxy_stream) != 0) {
 	msg_warn("error sending request to %s service: %m",
 		 STR(tlsproxy_service));
@@ -172,11 +235,12 @@ VSTREAM *tls_proxy_open(const char *service, int flags,
      * Receive the "TLS is available" indication.
      * 
      * This may seem out of order, but we must have a read transaction between
-     * sending the request attributes and sending the SMTP client file
+     * sending the request attributes and sending the plaintext file
      * descriptor. We can't assume UNIX-domain socket semantics here.
      */
     if (attr_scan(tlsproxy_stream, ATTR_FLAG_STRICT,
 		  RECV_ATTR_INT(MAIL_ATTR_STATUS, &status),
+    /* TODO: informative message. */
 		  ATTR_TYPE_END) != 1 || status == 0) {
 
 	/*
@@ -193,7 +257,7 @@ VSTREAM *tls_proxy_open(const char *service, int flags,
     }
 
     /*
-     * Send the remote SMTP client file descriptor.
+     * Send the remote peer file descriptor.
      */
     if (LOCAL_SEND_FD(vstream_fileno(tlsproxy_stream),
 		      vstream_fileno(peer_stream)) < 0) {
@@ -209,39 +273,22 @@ VSTREAM *tls_proxy_open(const char *service, int flags,
     return (tlsproxy_stream);
 }
 
+
 /* tls_proxy_context_receive - receive TLS session object from tlsproxy(8) */
 
 TLS_SESS_STATE *tls_proxy_context_receive(VSTREAM *proxy_stream)
 {
-    TLS_SESS_STATE *tls_context;
-
-    tls_context = (TLS_SESS_STATE *) mymalloc(sizeof(*tls_context));
+    TLS_SESS_STATE *tls_context = 0;
 
     if (attr_scan(proxy_stream, ATTR_FLAG_STRICT,
-	       RECV_ATTR_FUNC(tls_proxy_context_scan, (void *) tls_context),
+	      RECV_ATTR_FUNC(tls_proxy_context_scan, (void *) &tls_context),
 		  ATTR_TYPE_END) != 1) {
-	tls_proxy_context_free(tls_context);
+	if (tls_context)
+	    tls_proxy_context_free(tls_context);
 	return (0);
     } else {
 	return (tls_context);
     }
-}
-
-/* tls_proxy_context_free - destroy object from tls_proxy_context_receive() */
-
-void    tls_proxy_context_free(TLS_SESS_STATE *tls_context)
-{
-    if (tls_context->peer_CN)
-	myfree(tls_context->peer_CN);
-    if (tls_context->issuer_CN)
-	myfree(tls_context->issuer_CN);
-    if (tls_context->peer_cert_fprint)
-	myfree(tls_context->peer_cert_fprint);
-    if (tls_context->protocol)
-	myfree((void *) tls_context->protocol);
-    if (tls_context->cipher_name)
-	myfree((void *) tls_context->cipher_name);
-    myfree((void *) tls_context);
 }
 
 #endif

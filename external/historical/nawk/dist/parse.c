@@ -37,7 +37,7 @@ Node *nodealloc(int n)
 {
 	Node *x;
 
-	x = malloc(sizeof(Node) + (n-1)*sizeof(Node *));
+	x = malloc(sizeof(*x) + (n-1) * sizeof(x));
 	if (x == NULL)
 		FATAL("out of space in nodealloc");
 	x->nnext = NULL;
@@ -187,7 +187,7 @@ Node *op5(int a, Node *b, Node *c, Node *d, Node *e, Node *f)
 {
 	Node *x;
 
-	x = node5(a,b,c,d,e, f);
+	x = node5(a,b,c,d,e,f);
 	x->ntype = NEXPR;
 	return(x);
 }
@@ -286,7 +286,7 @@ int isarg(const char *s)		/* is s in argument list for current function? */
 	Node *p = arglist;
 	int n;
 
-	for (n = 0; p != 0; p = p->nnext, n++)
+	for (n = 0; p != NULL; p = p->nnext, n++)
 		if (strcmp(((Cell *)(p->narg[0]))->nval, s) == 0)
 			return n;
 	return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.87.14.1 2019/06/10 22:09:54 christos Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.87.14.2 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.87.14.1 2019/06/10 22:09:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.87.14.2 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -399,6 +399,13 @@ rump_vp_interlock(struct vnode *vp)
 	mutex_enter(vp->v_interlock);
 }
 
+void
+rump_vp_vmobjlock(struct vnode *vp, int write)
+{
+
+	rw_enter(vp->v_uobj.vmobjlock, write ? RW_WRITER : RW_READER);
+}
+
 int
 rump_vfs_unmount(struct mount *mp, int mntflags)
 {
@@ -411,7 +418,7 @@ rump_vfs_root(struct mount *mp, struct vnode **vpp, int lock)
 {
 	int rv;
 
-	rv = VFS_ROOT(mp, vpp);
+	rv = VFS_ROOT(mp, LK_EXCLUSIVE, vpp);
 	if (rv)
 		return rv;
 
@@ -439,7 +446,7 @@ int
 rump_vfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 {
 
-	return VFS_FHTOVP(mp, fid, vpp);
+	return VFS_FHTOVP(mp, fid, LK_EXCLUSIVE, vpp);
 }
 
 int

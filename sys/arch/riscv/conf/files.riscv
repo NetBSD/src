@@ -1,4 +1,4 @@
-#	$NetBSD: files.riscv,v 1.1.22.1 2019/06/10 22:06:41 christos Exp $
+#	$NetBSD: files.riscv,v 1.1.22.2 2020/04/08 14:07:50 martin Exp $
 #
 
 maxpartitions	16
@@ -21,7 +21,7 @@ file	arch/riscv/riscv/syscall.c		# syscall handler
 file	arch/riscv/riscv/trap.c			# trap handlers
 
 file	arch/riscv/riscv/core_machdep.c		coredump
-file	arch/riscv/riscv/clock_machdep.c	coredump
+file	arch/riscv/riscv/clock_machdep.c
 file	arch/riscv/riscv/db_machdep.c		ddb | kgdb
 file	arch/riscv/riscv/exec_machdep.c
 file	arch/riscv/riscv/kgdb_machdep.c		kgdb

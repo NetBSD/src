@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.64.2.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.64.2.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.64.2.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.64.2.2 2020/04/08 14:08:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -97,18 +97,27 @@ typedef _TAILQ_HEAD(lockdebuglist, struct lockdebug, volatile) lockdebuglist_t;
 
 __cpu_simple_lock_t	ld_mod_lk;
 lockdebuglist_t		ld_free = TAILQ_HEAD_INITIALIZER(ld_free);
+#ifdef _KERNEL
 lockdebuglist_t		ld_all = TAILQ_HEAD_INITIALIZER(ld_all);
+#else
+extern lockdebuglist_t	ld_all;
+#define cpu_name(a)	"?"
+#define cpu_index(a)	-1
+#define curlwp		NULL
+#endif /* _KERNEL */
 int			ld_nfree;
 int			ld_freeptr;
 int			ld_recurse;
 bool			ld_nomore;
 lockdebug_t		ld_prime[LD_BATCH];
 
+#ifdef _KERNEL
 static void	lockdebug_abort1(const char *, size_t, lockdebug_t *, int,
     const char *, bool);
 static int	lockdebug_more(int);
 static void	lockdebug_init(void);
-static void	lockdebug_dump(lockdebug_t *, void (*)(const char *, ...)
+static void	lockdebug_dump(lwp_t *, lockdebug_t *,
+    void (*)(const char *, ...)
     __printflike(1, 2));
 
 static signed int
@@ -468,6 +477,9 @@ lockdebug_wantlock(const char *func, size_t line,
 		    true);
 		return;
 	}
+	if (l->l_ld_wanted == NULL) {
+		l->l_ld_wanted = ld;
+	}
 	__cpu_simple_unlock(&ld->ld_spinlock);
 	splx(s);
 }
@@ -529,6 +541,9 @@ lockdebug_locked(const char *func, size_t line,
 	ld->ld_cpu = (uint16_t)cpu_index(curcpu());
 	ld->ld_lwp = l;
 	__cpu_simple_unlock(&ld->ld_spinlock);
+	if (l->l_ld_wanted == ld) {
+		l->l_ld_wanted = NULL;
+	}
 	splx(s);
 }
 
@@ -647,11 +662,11 @@ lockdebug_wakeup(const char *func, size_t line, volatile void *lock,
 /*
  * lockdebug_barrier:
  *	
- *	Panic if we hold more than one specified spin lock, and optionally,
- *	if we hold sleep locks.
+ *	Panic if we hold more than one specified lock, and optionally, if we
+ *	hold any sleep locks.
  */
 void
-lockdebug_barrier(const char *func, size_t line, volatile void *spinlock,
+lockdebug_barrier(const char *func, size_t line, volatile void *onelock,
     int slplocks)
 {
 	struct lwp *l = curlwp;
@@ -664,7 +679,7 @@ lockdebug_barrier(const char *func, size_t line, volatile void *spinlock,
 	s = splhigh();
 	if ((l->l_pflag & LP_INTR) == 0) {
 		TAILQ_FOREACH(ld, &curcpu()->ci_data.cpu_ld_locks, ld_chain) {
-			if (ld->ld_lock == spinlock) {
+			if (ld->ld_lock == onelock) {
 				continue;
 			}
 			__cpu_simple_lock(&ld->ld_spinlock);
@@ -678,7 +693,7 @@ lockdebug_barrier(const char *func, size_t line, volatile void *spinlock,
 		return;
 	}
 	ld = TAILQ_FIRST(&l->l_ld_locks);
-	if (__predict_false(ld != NULL)) {
+	if (__predict_false(ld != NULL && ld->ld_lock != onelock)) {
 		__cpu_simple_lock(&ld->ld_spinlock);
 		lockdebug_abort1(func, line, ld, s, "sleep lock held", true);
 		return;
@@ -686,10 +701,13 @@ lockdebug_barrier(const char *func, size_t line, volatile void *spinlock,
 	splx(s);
 	if (l->l_shlocks != 0) {
 		TAILQ_FOREACH(ld, &ld_all, ld_achain) {
+			if (ld->ld_lock == onelock) {
+				continue;
+			}
 			if (ld->ld_lockops->lo_type == LOCKOPS_CV)
 				continue;
 			if (ld->ld_lwp == l)
-				lockdebug_dump(ld, printf);
+				lockdebug_dump(l, ld, printf);
 		}
 		panic("%s,%zu: holding %d shared locks", func, line,
 		    l->l_shlocks);
@@ -734,6 +752,13 @@ lockdebug_mem_check(const char *func, size_t line, void *base, size_t sz)
 	}
 	splx(s);
 }
+#endif /* _KERNEL */
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_access.h>
+#endif
 
 /*
  * lockdebug_dump:
@@ -741,10 +766,11 @@ lockdebug_mem_check(const char *func, size_t line, void *base, size_t sz)
  *	Dump information about a lock on panic, or for DDB.
  */
 static void
-lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...)
+lockdebug_dump(lwp_t *l, lockdebug_t *ld, void (*pr)(const char *, ...)
     __printflike(1, 2))
 {
 	int sleeper = (ld->ld_flags & LD_SLEEPER);
+	lockops_t *lo = ld->ld_lockops;
 
 	(*pr)(
 	    "lock address : %#018lx type     : %18s\n"
@@ -752,34 +778,41 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...)
 	    (long)ld->ld_lock, (sleeper ? "sleep/adaptive" : "spin"),
 	    (long)ld->ld_initaddr);
 
-	if (ld->ld_lockops->lo_type == LOCKOPS_CV) {
+#ifndef _KERNEL
+	lockops_t los;
+	lo = &los;
+	db_read_bytes((db_addr_t)ld->ld_lockops, sizeof(los), (char *)lo);
+#endif
+	if (lo->lo_type == LOCKOPS_CV) {
 		(*pr)(" interlock: %#018lx\n", (long)ld->ld_locked);
 	} else {
 		(*pr)("\n"
 		    "shared holds : %18u exclusive: %18u\n"
 		    "shares wanted: %18u exclusive: %18u\n"
-		    "current cpu  : %18u last held: %18u\n"
-		    "current lwp  : %#018lx last held: %#018lx\n"
+		    "relevant cpu : %18u last held: %18u\n"
+		    "relevant lwp : %#018lx last held: %#018lx\n"
 		    "last locked%c : %#018lx unlocked%c: %#018lx\n",
 		    (unsigned)ld->ld_shares, ((ld->ld_flags & LD_LOCKED) != 0),
 		    (unsigned)ld->ld_shwant, (unsigned)ld->ld_exwant,
-		    (unsigned)cpu_index(curcpu()), (unsigned)ld->ld_cpu,
-		    (long)curlwp, (long)ld->ld_lwp,
+		    (unsigned)cpu_index(l->l_cpu), (unsigned)ld->ld_cpu,
+		    (long)l, (long)ld->ld_lwp,
 		    ((ld->ld_flags & LD_LOCKED) ? '*' : ' '),
 		    (long)ld->ld_locked,
 		    ((ld->ld_flags & LD_LOCKED) ? ' ' : '*'),
 		    (long)ld->ld_unlocked);
 	}
 
-	if (ld->ld_lockops->lo_dump != NULL)
-		(*ld->ld_lockops->lo_dump)(ld->ld_lock, pr);
+#ifdef _KERNEL
+	if (lo->lo_dump != NULL)
+		(*lo->lo_dump)(ld->ld_lock, pr);
 
 	if (sleeper) {
-		(*pr)("\n");
 		turnstile_print(ld->ld_lock, pr);
 	}
+#endif
 }
 
+#ifdef _KERNEL
 /*
  * lockdebug_abort1:
  *
@@ -803,7 +836,7 @@ lockdebug_abort1(const char *func, size_t line, lockdebug_t *ld, int s,
 
 	printf_nolog("%s error: %s,%zu: %s\n\n", ld->ld_lockops->lo_name,
 	    func, line, msg);
-	lockdebug_dump(ld, printf_nolog);
+	lockdebug_dump(curlwp, ld, printf_nolog);
 	__cpu_simple_unlock(&ld->ld_spinlock);
 	splx(s);
 	printf_nolog("\n");
@@ -812,6 +845,7 @@ lockdebug_abort1(const char *func, size_t line, lockdebug_t *ld, int s,
 		    ld->ld_lockops->lo_name, func, line, msg);
 }
 
+#endif /* _KERNEL */
 #endif	/* LOCKDEBUG */
 
 /*
@@ -820,21 +854,20 @@ lockdebug_abort1(const char *func, size_t line, lockdebug_t *ld, int s,
  *	Handle the DDB 'show lock' command.
  */
 #ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_interface.h>
-
 void
 lockdebug_lock_print(void *addr,
     void (*pr)(const char *, ...) __printflike(1, 2))
 {
 #ifdef LOCKDEBUG
-	lockdebug_t *ld;
+	lockdebug_t *ld, lds;
 
 	TAILQ_FOREACH(ld, &ld_all, ld_achain) {
+		db_read_bytes((db_addr_t)ld, sizeof(lds), __UNVOLATILE(&lds));
+		ld = &lds;
 		if (ld->ld_lock == NULL)
 			continue;
 		if (addr == NULL || ld->ld_lock == addr) {
-			lockdebug_dump(ld, pr);
+			lockdebug_dump(curlwp, ld, pr);
 			if (addr != NULL)
 				return;
 		}
@@ -848,17 +881,20 @@ lockdebug_lock_print(void *addr,
 #endif	/* LOCKDEBUG */
 }
 
+#ifdef _KERNEL
 #ifdef LOCKDEBUG
 static void
-lockdebug_show_one(lockdebug_t *ld, int i,
+lockdebug_show_one(lwp_t *l, lockdebug_t *ld, int i,
     void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	const char *sym;
 
+#ifdef _KERNEL
 	ksyms_getname(NULL, &sym, (vaddr_t)ld->ld_initaddr,
 	    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
-	(*pr)("Lock %d (initialized at %s)\n", i++, sym);
-	lockdebug_dump(ld, pr);
+#endif
+	(*pr)("* Lock %d (initialized at %s)\n", i++, sym);
+	lockdebug_dump(l, ld, pr);
 }
 
 static void
@@ -879,16 +915,34 @@ lockdebug_show_all_locks_lwp(void (*pr)(const char *, ...) __printflike(1, 2),
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lockdebug_t *ld;
 			int i = 0;
-			if (TAILQ_EMPTY(&l->l_ld_locks))
-				continue;
-			(*pr)("Locks held by an LWP (%s):\n",
-			    l->l_name ? l->l_name : p->p_comm);
-			TAILQ_FOREACH(ld, &l->l_ld_locks, ld_chain) {
-				lockdebug_show_one(ld, i++, pr);
+			if (TAILQ_EMPTY(&l->l_ld_locks) &&
+			    l->l_ld_wanted == NULL) {
+			    	continue;
 			}
-			if (show_trace)
+			(*pr)("\n****** LWP %d.%d (%s) @ %p, l_stat=%d\n",
+			    p->p_pid, l->l_lid,
+			    l->l_name ? l->l_name : p->p_comm, l, l->l_stat);
+			if (!TAILQ_EMPTY(&l->l_ld_locks)) {
+				(*pr)("\n*** Locks held: \n");
+				TAILQ_FOREACH(ld, &l->l_ld_locks, ld_chain) {
+					(*pr)("\n");
+					lockdebug_show_one(l, ld, i++, pr);
+				}
+			} else {
+				(*pr)("\n*** Locks held: none\n");
+			}
+
+			if (l->l_ld_wanted != NULL) {
+				(*pr)("\n*** Locks wanted: \n\n");
+				lockdebug_show_one(l, l->l_ld_wanted, 0, pr);
+			} else {
+				(*pr)("\n*** Locks wanted: none\n");
+			}
+			if (show_trace) {
+				(*pr)("\n*** Traceback: \n\n");
 				lockdebug_show_trace(l, pr);
-			(*pr)("\n");
+				(*pr)("\n");
+			}
 		}
 	}
 }
@@ -905,21 +959,25 @@ lockdebug_show_all_locks_cpu(void (*pr)(const char *, ...) __printflike(1, 2),
 		int i = 0;
 		if (TAILQ_EMPTY(&ci->ci_data.cpu_ld_locks))
 			continue;
-		(*pr)("Locks held on CPU %u:\n", ci->ci_index);
+		(*pr)("\n******* Locks held on %s:\n", cpu_name(ci));
 		TAILQ_FOREACH(ld, &ci->ci_data.cpu_ld_locks, ld_chain) {
-			lockdebug_show_one(ld, i++, pr);
-			if (show_trace)
+			(*pr)("\n");
 #ifdef MULTIPROCESSOR
+			lockdebug_show_one(ci->ci_curlwp, ld, i++, pr);
+			if (show_trace)
 				lockdebug_show_trace(ci->ci_curlwp, pr);
 #else
+			lockdebug_show_one(curlwp, ld, i++, pr);
+			if (show_trace)
 				lockdebug_show_trace(curlwp, pr);
 #endif
-			(*pr)("\n");
 		}
 	}
 }
+#endif /* _KERNEL */
 #endif	/* LOCKDEBUG */
 
+#ifdef _KERNEL
 void
 lockdebug_show_all_locks(void (*pr)(const char *, ...) __printflike(1, 2),
     const char *modif)
@@ -990,8 +1048,10 @@ lockdebug_show_lockstats(void (*pr)(const char *, ...) __printflike(1, 2))
 	(*pr)("Sorry, kernel not built with the LOCKDEBUG option.\n");
 #endif	/* LOCKDEBUG */
 }
+#endif /* _KERNEL */
 #endif	/* DDB */
 
+#ifdef _KERNEL
 /*
  * lockdebug_dismiss:
  *
@@ -1047,3 +1107,4 @@ lockdebug_abort(const char *func, size_t line, const volatile void *lock,
 	panic("lock error: %s: %s,%zu: %s: lock %p cpu %d lwp %p",
 	    ops->lo_name, func, line, msg, lock, cpu_index(curcpu()), curlwp);
 }
+#endif /* _KERNEL */

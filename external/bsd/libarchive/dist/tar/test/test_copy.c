@@ -256,13 +256,13 @@ verify_tree(size_t limit)
 					continue;
 				switch(dp[0]) {
 				case 'l': case 'm': case 'd':
-					failure("strlen(p)=%d", strlen(p));
+					failure("strlen(p)=%zu", strlen(p));
 					assert(strlen(p) < limit);
 					assertEqualString(p,
 					    filenames[strlen(p)]);
 					break;
 				case 'f': case 's':
-					failure("strlen(p)=%d", strlen(p));
+					failure("strlen(p)=%zu", strlen(p));
 					assert(strlen(p) < limit + 1);
 					assertEqualString(p,
 					    filenames[strlen(p)]);
@@ -306,6 +306,19 @@ copy_basic(void)
 
 	/*
 	 * Use tar to unpack the archive into another directory.
+	 */
+	r = systemf("%s xf archive >unpack.out 2>unpack.err", testprog);
+	failure("Error invoking %s xf archive", testprog);
+	assertEqualInt(r, 0);
+
+	/* Verify that nothing went to stdout or stderr. */
+	assertEmptyFile("unpack.err");
+	assertEmptyFile("unpack.out");
+
+	verify_tree(LIMIT_NONE);
+
+	/*
+	 * Unpack a second time to make sure that things are still ok
 	 */
 	r = systemf("%s xf archive >unpack.out 2>unpack.err", testprog);
 	failure("Error invoking %s xf archive", testprog);

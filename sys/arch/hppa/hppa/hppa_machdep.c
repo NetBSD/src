@@ -1,7 +1,7 @@
-/*	$NetBSD: hppa_machdep.c,v 1.29 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.29.30.1 2020/04/08 14:07:39 martin Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.29 2014/02/24 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.29.30.1 2020/04/08 14:07:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,20 +292,14 @@ hppa_ras(struct lwp *l)
  * or after the current trap/syscall if in system mode.
  */
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
-	bool immed = (flags & RESCHED_IMMED) != 0;
 
-	if (ci->ci_want_resched && !immed)
-		return;
-	ci->ci_want_resched = 1;
-	setsoftast(ci->ci_data.cpu_onproc);
-
+	if ((flags & RESCHED_REMOTE) != 0) {
 #ifdef MULTIPROCESSOR
-	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
-		if (immed && ci != curcpu()) {
-			/* XXX send IPI */
-		}
-	}
+		/* XXX send IPI */
 #endif
+	} else {
+		setsoftast(l);
+	}
 }

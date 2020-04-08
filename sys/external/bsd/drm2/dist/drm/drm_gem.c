@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.6.16.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.6.16.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.6.16.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.6.16.2 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.6.16.1 2019/06/10 22:07:57 christos Ex
 #include <linux/pagemap.h>
 #include <linux/shmem_fs.h>
 #include <linux/dma-buf.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <asm/bug.h>
 #include <drm/drmP.h>
 #include <drm/drm_vma_manager.h>
 #include <drm/drm_gem.h>
@@ -51,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.6.16.1 2019/06/10 22:07:57 christos Ex
 
 #ifdef __NetBSD__
 #include <uvm/uvm_extern.h>
+#include <linux/nbsd-namespace.h>
 #endif
 
 /** @file drm_gem.c
@@ -107,11 +105,7 @@ drm_gem_init(struct drm_device *dev)
 {
 	struct drm_vma_offset_manager *vma_offset_manager;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&dev->object_name_lock);
-#else
 	mutex_init(&dev->object_name_lock);
-#endif
 	idr_init(&dev->object_name_idr);
 
 	vma_offset_manager = kzalloc(sizeof(*vma_offset_manager), GFP_KERNEL);
@@ -137,9 +131,7 @@ drm_gem_destroy(struct drm_device *dev)
 	dev->vma_offset_manager = NULL;
 
 	idr_destroy(&dev->object_name_idr);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev->object_name_lock);
-#endif
+	mutex_destroy(&dev->object_name_lock);
 }
 
 /**
@@ -171,7 +163,7 @@ int drm_gem_object_init(struct drm_device *dev,
 	 * set the uao to have the main uvm object's lock.  However,
 	 * uvm_obj_setlock is not safe on uvm_aobjs.
 	 */
-	mutex_obj_hold(obj->filp->vmobjlock);
+	rw_obj_hold(obj->filp->vmobjlock);
 	uvm_obj_setlock(&obj->gemo_uvmobj, obj->filp->vmobjlock);
 #else
 	filp = shmem_file_setup("drm mm object", size, VM_NORESERVE);
@@ -612,8 +604,12 @@ drm_gem_put_pages(struct drm_gem_object *obj, struct page **pages, bool dirty,
 	unsigned i;
 
 	for (i = 0; i < (obj->size >> PAGE_SHIFT); i++) {
-		if (dirty)
-			pages[i]->p_vmp.flags &= ~PG_CLEAN;
+		if (dirty) {
+			rw_enter(obj->filp->vmobjlock, RW_WRITER);
+			uvm_pagemarkdirty(&pages[i]->p_vmp,
+			    UVM_PAGE_STATUS_DIRTY);
+			rw_exit(obj->filp->vmobjlock);
+		}
 	}
 
 	uvm_obj_unwirepages(obj->filp, 0, obj->size);

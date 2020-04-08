@@ -1,4 +1,4 @@
-#	$NetBSD: cgdroot.rc,v 1.1.32.1 2019/06/10 21:42:19 christos Exp $
+#	$NetBSD: cgdroot.rc,v 1.1.32.2 2020/04/08 14:03:44 martin Exp $
 #
 # Copyright (c) 2013 Pierre Pronchery <khorben@defora.org>
 # All rights reserved.
@@ -36,17 +36,20 @@ export EDITOR
 
 umask 022
 
-mounted=
+# Mount /etc/cgd.
+etc_cgd_mount=
 for dev in NAME=cgd.conf /dev/wd0a /dev/ld0a ; do
 	if mount -o ro $dev /etc/cgd 2>/dev/null ; then
-		mounted=$dev
+		etc_cgd_mount=$dev
 		break
 	fi
 done
-if [ -z "$mounted" ]; then
+if [ -z "${etc_cgd_mount}" ]; then
 	echo "Could not mount the boot partition" 1>&2
 	exit 2
 fi
+
+# Configure cgd device(s).
 /sbin/wsconsctl -d -w splash.enable=0 > /dev/null 2>&1
 cgdconfig -C
 if [ $? -ne 0 ]; then
@@ -54,13 +57,32 @@ if [ $? -ne 0 ]; then
 	umount /etc/cgd
 	exit 2
 fi
-mount -o ro /dev/cgd0a /altroot
-if [ $? -ne 0 ]; then
+
+# Select candidates for a root mount.
+root_mounts=
+if [ -z "${etc_cgd_mount##NAME=*}" ]; then
+	root_mounts="NAME=cgdroot /dev/cgd0a"
+else
+	root_mounts=/dev/cgd0a
+fi
+
+# Mount the root filesystem.
+mounted=
+for dev in ${root_mounts} ; do
+	if mount -o ro $dev /altroot 2>/dev/null ; then
+		mounted=$dev
+		break
+	fi
+done
+
+if [ -z "$mounted" ]; then
 	echo "Could not mount the root partition" 1>&2
 	cgdconfig -U
 	umount /etc/cgd
 	exit 2
 fi
+
+# Boot into /altroot.
 umount /etc/cgd
 /sbin/wsconsctl -d -w splash.enable=1 > /dev/null 2>&1
 sysctl -w init.root=/altroot

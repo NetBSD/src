@@ -1,6 +1,6 @@
-/*	$NetBSD: sifive-fu540-prci.h,v 1.1.1.1.2.2 2019/06/10 22:08:54 christos Exp $	*/
+/*	$NetBSD: sifive-fu540-prci.h,v 1.1.1.1.2.3 2020/04/08 14:08:45 martin Exp $	*/
 
-/* SPDX-License-Identifier: GPL-2.0 */
+/* SPDX-License-Identifier: (GPL-2.0 OR MIT) */
 /*
  * Copyright (C) 2018-2019 SiFive, Inc.
  * Wesley Terpstra

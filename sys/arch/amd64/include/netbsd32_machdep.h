@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.22.14.1 2019/06/10 22:05:47 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.22.14.2 2020/04/08 14:07:26 martin Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -6,6 +6,8 @@
 #include <sys/ucontext.h>
 #include <compat/sys/ucontext.h>
 #include <compat/sys/siginfo.h>
+
+#include <x86/fpu.h>
 
 /*
  * i386 ptrace constants
@@ -133,6 +135,11 @@ struct fpreg32 {
 struct dbreg32 {
 	int	dr[8];
 };
+
+struct xmmregs32 {
+	struct fxsave fxstate;
+};
+__CTASSERT(sizeof(struct xmmregs32) == 512);
 
 struct x86_get_ldt_args32 {
 	int32_t start;

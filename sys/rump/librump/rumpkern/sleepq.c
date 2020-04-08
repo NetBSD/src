@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.17 2016/01/26 23:12:18 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.17.18.1 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.17 2016/01/26 23:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.17.18.1 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -58,7 +58,7 @@ sleepq_init(sleepq_t *sq)
 
 	RUN_ONCE(&sqctl, sqinit1);
 
-	TAILQ_INIT(sq);
+	LIST_INIT(sq);
 }
 
 void
@@ -69,7 +69,7 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wc, const char *wmsg, syncobj_t *sob)
 	l->l_wchan = wc;
 	l->l_wmesg = wmsg;
 	l->l_sleepq = sq;
-	TAILQ_INSERT_TAIL(sq, l, l_sleepchain);
+	LIST_INSERT_HEAD(sq, l, l_sleepchain);
 }
 
 int
@@ -85,7 +85,7 @@ sleepq_block(int timo, bool catch)
 		error = cv_timedwait(&sq_cv, mp, timo);
 		if (error == EWOULDBLOCK || error == EINTR) {
 			if (l->l_wchan) {
-				TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
+				LIST_REMOVE(l, l_sleepchain);
 				l->l_wchan = NULL;
 				l->l_wmesg = NULL;
 			}
@@ -105,13 +105,13 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 	struct lwp *l, *l_next;
 	bool found = false;
 
-	for (l = TAILQ_FIRST(sq); l; l = l_next) {
-		l_next = TAILQ_NEXT(l, l_sleepchain);
+	for (l = LIST_FIRST(sq); l; l = l_next) {
+		l_next = LIST_NEXT(l, l_sleepchain);
 		if (l->l_wchan == wchan) {
 			found = true;
 			l->l_wchan = NULL;
 			l->l_wmesg = NULL;
-			TAILQ_REMOVE(sq, l, l_sleepchain);
+			LIST_REMOVE(l, l_sleepchain);
 			if (--expected == 0)
 				break;
 		}
@@ -128,7 +128,7 @@ sleepq_unsleep(struct lwp *l, bool cleanup)
 
 	l->l_wchan = NULL;
 	l->l_wmesg = NULL;
-	TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
+	LIST_REMOVE(l, l_sleepchain);
 	cv_broadcast(&sq_cv);
 
 	if (cleanup) {

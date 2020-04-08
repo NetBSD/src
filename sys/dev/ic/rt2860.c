@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.32.2.1 2019/06/10 22:07:11 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.32.2.2 2020/04/08 14:08:06 martin Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: head/sys/dev/ral/rt2860.c 306591 2016-10-02 20:35:55Z avos $ */
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.32.2.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.32.2.2 2020/04/08 14:08:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1266,7 +1266,7 @@ rt2860_drain_stats_fifo(struct rt2860_softc *sc)
 				amn->amn_retrycnt++;
 		} else {
 			amn->amn_retrycnt++;
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		}
 	}
 }
@@ -1300,7 +1300,7 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 			SLIST_INSERT_HEAD(&sc->data_pool, data, next);
 			ring->data[ring->next] = NULL;
 
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		}
 		ring->queued--;
 		ring->next = (ring->next + 1) % RT2860_TX_RING_COUNT;
@@ -1366,7 +1366,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		if (__predict_false(rxd->flags &
 		    htole32(RT2860_RX_CRCERR | RT2860_RX_ICVERR))) {
 			DPRINTF(("error %#x\n", rxd->flags));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 
@@ -1374,14 +1374,14 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		MGETHDR(m1, M_DONTWAIT, MT_DATA);
 		if (__predict_false(m1 == NULL)) {
 			DPRINTF(("error2 %#x\n", rxd->flags));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 		MCLGET(m1, M_DONTWAIT);
 		if (__predict_false((m1->m_flags & M_EXT) == 0)) {
 			DPRINTF(("no mbuf\n"));
 			m_freem(m1);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 
@@ -1406,7 +1406,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 			}
 			/* physical address may have changed */
 			rxd->sdp0 = htole32(data->map->dm_segs[0].ds_addr);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 
@@ -1446,7 +1446,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 			/* report MIC failures to net80211 for TKIP */
 			ieee80211_notify_michael_failure(ic, wh, 0/* XXX */);
 			DPRINTF(("error2 %#x\n", rxd->flags));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 #endif
@@ -1906,7 +1906,7 @@ rt2860_start(struct ifnet *ifp)
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
 			DPRINTF(("%s: nothing to send\n", __func__));
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -1916,7 +1916,7 @@ rt2860_start(struct ifnet *ifp)
 		if (ni == NULL) {
 			DPRINTF(("%s: can't find tx node\n", __func__));
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -1925,7 +1925,7 @@ rt2860_start(struct ifnet *ifp)
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			DPRINTF(("%s: can't encap\n", __func__));
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 sendit:
@@ -1935,7 +1935,7 @@ sendit:
 			DPRINTF(("%s: can't tx\n", __func__));
 			m_freem(m);
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -1957,7 +1957,7 @@ rt2860_watchdog(struct ifnet *ifp)
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			rt2860_stop(ifp, 0);
 			rt2860_init(ifp);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;

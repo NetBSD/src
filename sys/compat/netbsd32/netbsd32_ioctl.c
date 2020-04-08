@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.92.2.1 2019/06/10 22:07:01 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.92.2.2 2020/04/08 14:08:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,13 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.92.2.1 2019/06/10 22:07:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.92.2.2 2020/04/08 14:08:01 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
 #endif
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
@@ -62,6 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.92.2.1 2019/06/10 22:07:01 chri
 #include <sys/ksyms.h>
 #include <sys/drvctlio.h>
 #include <sys/compat_stub.h>
+
+#include <sys/vnode.h>
+#include <sys/conf.h>
+#include <miscfs/specfs/specdev.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -146,7 +151,7 @@ netbsd32_to_if_addrprefreq(const struct netbsd32_if_addrprefreq *ifap32,
     struct if_addrprefreq *ifap, u_long cmd)
 {
 
-	strlcpy(ifap->ifap_name, ifap32->ifap_name, sizeof(ifap->ifap_name));
+	memcpy(ifap->ifap_name, ifap32->ifap_name, IFNAMSIZ);
 	ifap->ifap_preference = ifap32->ifap_preference;
 	memcpy(&ifap->ifap_addr, &ifap32->ifap_addr,
 	    uimin(ifap32->ifap_addr.ss_len, _SS_MAXSIZE));
@@ -385,7 +390,7 @@ netbsd32_to_ieee80211req(struct netbsd32_ieee80211req *ireq32,
     struct ieee80211req *ireq, u_long cmd)
 {
 
-	strlcpy(ireq->i_name, ireq32->i_name, IFNAMSIZ);
+	memcpy(ireq->i_name, ireq32->i_name, IFNAMSIZ);
 	ireq->i_type = ireq32->i_type;
 	ireq->i_val = ireq32->i_val;
 	ireq->i_len = ireq32->i_len;
@@ -398,7 +403,7 @@ netbsd32_to_ieee80211_nwkey(struct netbsd32_ieee80211_nwkey *nwk32,
 {
 	int i;
 
-	strlcpy(nwk->i_name, nwk32->i_name, IFNAMSIZ);
+	memcpy(nwk->i_name, nwk32->i_name, IFNAMSIZ);
 	nwk->i_wepon = nwk32->i_wepon;
 	nwk->i_defkid = nwk32->i_defkid;
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
@@ -629,7 +634,7 @@ netbsd32_from_if_addrprefreq(const struct if_addrprefreq *ifap,
     struct netbsd32_if_addrprefreq *ifap32, u_long cmd)
 {
 
-	strlcpy(ifap32->ifap_name, ifap->ifap_name, sizeof(ifap32->ifap_name));
+	memcpy(ifap32->ifap_name, ifap->ifap_name, IFNAMSIZ);
 	ifap32->ifap_preference = ifap->ifap_preference;
 	memcpy(&ifap32->ifap_addr, &ifap->ifap_addr,
 	    uimin(ifap->ifap_addr.ss_len, _SS_MAXSIZE));
@@ -864,7 +869,7 @@ netbsd32_from_ieee80211req(struct ieee80211req *ireq,
     struct netbsd32_ieee80211req *ireq32, u_long cmd)
 {
 
-	strlcpy(ireq32->i_name, ireq->i_name, IFNAMSIZ);
+	memcpy(ireq32->i_name, ireq->i_name, IFNAMSIZ);
 	ireq32->i_type = ireq->i_type;
 	ireq32->i_val = ireq->i_val;
 	ireq32->i_len = ireq->i_len;
@@ -877,7 +882,7 @@ netbsd32_from_ieee80211_nwkey(struct ieee80211_nwkey *nwk,
 {
 	int i;
 
-	strlcpy(nwk32->i_name, nwk->i_name, IFNAMSIZ);
+	memcpy(nwk32->i_name, nwk->i_name, IFNAMSIZ);
 	nwk32->i_wepon = nwk->i_wepon;
 	nwk32->i_defkid = nwk->i_defkid;
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
@@ -1040,12 +1045,29 @@ netbsd32_from_dkwedge_list(const struct dkwedge_list *p,
 
 #ifdef NTP
 static int
-netbsd32_do_clockctl_ntp_adjtime(struct clockctl_ntp_adjtime *args)
+netbsd32_do_clockctl_ntp_adjtime(struct file *fp,
+    struct clockctl_ntp_adjtime *args)
 {
+	struct vnode *vp;
+	struct specnode *sn;
+	const char *name;
 
 	struct netbsd32_timex ntv32;
 	struct timex ntv;
 	int error;
+
+	/* Verify that the file descriptor is is to the clockctl device */
+	if (fp->f_type != DTYPE_VNODE)
+		return EINVAL;
+
+	vp = fp->f_vnode;
+	if (vp->v_type != VCHR)
+		return EINVAL;
+
+	sn = vp->v_specnode;
+	name = cdevsw_getname(major(sn->sn_rdev));
+	if (name == NULL || strcmp(name, "clockctl") != 0)
+		return EINVAL;
 
 	if (vec_ntp_adjtime1 == NULL)
 		return EINVAL;
@@ -1058,7 +1080,7 @@ netbsd32_do_clockctl_ntp_adjtime(struct clockctl_ntp_adjtime *args)
 	(*vec_ntp_adjtime1)(&ntv);
 	netbsd32_from_timex(&ntv, &ntv32);
 
-	error = copyout(&ntv32, args->tp, sizeof(ntv));
+	error = copyout(&ntv32, args->tp, sizeof(ntv32));
 	if (error == 0)
 		args->retval = ntp_timestatus();
 
@@ -1132,7 +1154,7 @@ netbsd32_ioctl(struct lwp *l,
 		goto out;
 	}
 
-	ff = fdp->fd_dt->dt_ff[SCARG(uap, fd)];
+	ff = atomic_load_consume(&fdp->fd_dt)->dt_ff[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
 	case FIOCLEX:
 		ff->ff_exclose = true;
@@ -1468,7 +1490,7 @@ netbsd32_ioctl(struct lwp *l,
 				(const struct netbsd32_clockctl_ntp_adjtime *)data32,
 				(struct clockctl_ntp_adjtime *)data,
 				CLOCKCTL_NTP_ADJTIME);
-			error = netbsd32_do_clockctl_ntp_adjtime(
+			error = netbsd32_do_clockctl_ntp_adjtime(fp,
 				(struct clockctl_ntp_adjtime *)data);
 			netbsd32_from_clockctl_ntp_adjtime(
 				(const struct clockctl_ntp_adjtime *)data,

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_errno.c,v 1.1 2011/05/01 17:07:05 jruoho Exp $ */
+/*	$NetBSD: t_errno.c,v 1.1.44.1 2020/04/08 14:09:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_errno.c,v 1.1 2011/05/01 17:07:05 jruoho Exp $");
+__RCSID("$NetBSD: t_errno.c,v 1.1.44.1 2020/04/08 14:09:08 martin Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -48,7 +48,6 @@ ATF_TC_BODY(errno_constants, tc)
 	 * The following definitions should be available
 	 * according to IEEE Std 1003.1-2008, issue 7.
 	 */
-	atf_tc_expect_fail("PR standards/44921");
 
 	fail = true;
 

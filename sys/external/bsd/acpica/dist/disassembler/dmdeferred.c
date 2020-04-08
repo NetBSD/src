@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -201,6 +201,10 @@ AcpiDmDeferredParse (
     WalkState->ParseFlags &= ~ACPI_PARSE_DELETE_TREE;
     WalkState->ParseFlags |= ACPI_PARSE_DISASSEMBLE;
     Status = AcpiPsParseAml (WalkState);
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS(Status);
+    }
 
     StartOp = (Op->Common.Value.Arg)->Common.Next;
     SearchOp = StartOp;

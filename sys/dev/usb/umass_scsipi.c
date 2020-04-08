@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.55.4.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.55.4.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.55.4.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.55.4.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -112,12 +112,12 @@ Static struct umass_scsipi_softc *umass_scsipi_setup(struct umass_softc *);
 Static void umass_atapi_probe_device(struct atapibus_softc *, int);
 
 const struct scsipi_bustype umass_atapi_bustype = {
-	SCSIPI_BUSTYPE_ATAPI,
-	atapi_scsipi_cmd,
-	atapi_interpret_sense,
-	atapi_print_addr,
-	scsi_kill_pending,
-	NULL,
+	.bustype_type = SCSIPI_BUSTYPE_ATAPI,
+	.bustype_cmd = atapi_scsipi_cmd,
+	.bustype_interpret_sense = atapi_interpret_sense,
+	.bustype_printaddr = atapi_print_addr,
+	.bustype_kill_pending = scsi_kill_pending,
+	.bustype_async_event_xfer_mode = NULL,
 };
 #endif
 
@@ -262,7 +262,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 		DPRINTFM(UDMASS_CMD, "sc %#jxp: %jd:%jd xs=%#jxp",
 		    (uintptr_t)sc, periph->periph_target, periph->periph_lun,
 		    (uintptr_t)xs);
-		DPRINTFM(UDMASS_CMD, "cmd=0x%02jx datalen=%jd (quirks=0x%jx, "
+		DPRINTFM(UDMASS_CMD, "cmd=0x%02jx datalen=%jd (quirks=%#jx, "
 		    "poll=%jd)", xs->cmd->opcode, xs->datalen,
 		    periph->periph_quirks, !!(xs->xs_control & XS_CTL_POLL));
 #if defined(UMASS_DEBUG) && defined(SCSIPI_DEBUG)
@@ -483,7 +483,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 			device_xname(sc->sc_dev), status);
 	}
 
-	DPRINTFM(UDMASS_CMD, "return xs->error=%jd, xs->xs_status=0x%jx"
+	DPRINTFM(UDMASS_CMD, "return xs->error=%jd, xs->xs_status=%#jx"
 	    " xs->resid=%jd", xs->error, xs->xs_status, xs->resid, 0);
 
 	scsipi_done(xs);
@@ -522,7 +522,7 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 		break;
 	}
 
-	DPRINTFM(UDMASS_CMD, "return xs->error=%jd, xs->xs_status=0x%jx"
+	DPRINTFM(UDMASS_CMD, "return xs->error=%jd, xs->xs_status=%#jx"
 	    " xs->resid=%jd", xs->error, xs->xs_status, xs->resid, 0);
 
 	scsipi_done(xs);

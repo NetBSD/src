@@ -566,6 +566,14 @@ _krb5_pk_kdf (
 	krb5_keyblock */*key*/);
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_pk_kx_confirm (
+	krb5_context /*context*/,
+	krb5_pk_init_ctx /*ctx*/,
+	krb5_keyblock */*reply_key*/,
+	krb5_keyblock */*session_key*/,
+	PA_DATA */*pa_pkinit_kx*/);
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_pk_load_id (
 	krb5_context /*context*/,
 	struct krb5_pk_identity **/*ret_id*/,

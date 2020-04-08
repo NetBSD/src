@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.h,v 1.5 2014/10/07 08:30:05 skrll Exp $	*/
+/*	$NetBSD: bcm2835_mbox.h,v 1.5.20.1 2020/04/08 14:07:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -43,11 +43,28 @@
 #define	BCM2835_MBOX_MSG(chan, data) \
     (BCM2835_MBOX_CHAN(chan) | BCM2835_MBOX_DATA(data))
 
+struct bcm2835mbox_softc {
+	device_t sc_dev;
+	device_t sc_platdev;
+
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	bus_dma_tag_t sc_dmat;
+	void *sc_intrh;
+
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
+	kcondvar_t sc_chan[BCM2835_MBOX_NUMCHANNELS];
+	uint32_t sc_mbox[BCM2835_MBOX_NUMCHANNELS];
+};
+
 void bcm2835_mbox_read(bus_space_tag_t, bus_space_handle_t, uint8_t,
     uint32_t *);
 void bcm2835_mbox_write(bus_space_tag_t, bus_space_handle_t, uint8_t,
     uint32_t);
 
+void bcmmbox_attach(struct bcm2835mbox_softc *);
+int bcmmbox_intr(void *);
 void bcmmbox_read(uint8_t, uint32_t *);
 void bcmmbox_write(uint8_t, uint32_t);
 

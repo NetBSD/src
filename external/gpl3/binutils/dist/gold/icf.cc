@@ -1,6 +1,6 @@
 // icf.cc -- Identical Code Folding.
 //
-// Copyright (C) 2009-2018 Free Software Foundation, Inc.
+// Copyright (C) 2009-2020 Free Software Foundation, Inc.
 // Written by Sriraman Tallam <tmsriram@google.com>.
 
 // This file is part of gold.
@@ -130,6 +130,26 @@
 // folded causing unpredictable run-time behaviour if the pointers were used
 // in comparisons.
 //
+// Notes regarding C++ exception handling :
+// --------------------------------------
+//
+// It is possible for two sections to have identical text, identical
+// relocations, but different exception handling metadata (unwind
+// information in the .eh_frame section, and/or handler information in
+// a .gcc_except_table section).  Thus, if a foldable section is
+// referenced from a .eh_frame FDE, we must include in its checksum
+// the contents of that FDE as well as of the CIE that the FDE refers
+// to.  The CIE and FDE in turn probably contain relocations to the
+// personality routine and LSDA, which are handled like any other
+// relocation for ICF purposes.  This logic is helped by the fact that
+// gcc with -ffunction-sections puts each function's LSDA in its own
+// .gcc_except_table.<functionname> section.  Given sections for two
+// functions with nontrivial exception handling logic, we will
+// determine on the first iteration that their .gcc_except_table
+// sections are identical and can be folded, and on the second
+// iteration that their .text and .eh_frame contents (including the
+// now-merged .gcc_except_table relocations for the LSDA) are
+// identical and can be folded.
 //
 //
 // How to run  : --icf=[safe|all|none]
@@ -147,6 +167,8 @@
 #include "demangle.h"
 #include "elfcpp.h"
 #include "int_encoding.h"
+
+#include <limits>
 
 namespace gold
 {
@@ -259,29 +281,35 @@ get_rel_addend(const unsigned char* reloc_addend_ptr,
 // subsequent invocations of this function.
 // Parameters  :
 // FIRST_ITERATION    : true if it is the first invocation.
+// FIXED_CACHE        : String that stores the portion of the result that
+//                      does not change from iteration to iteration;
+//                      written if first_iteration is true, read if it's false.
 // SECN               : Section for which contents are desired.
-// SECTION_NUM        : Unique section number of this section.
+// SELF_SECN          : Relocations that target this section will be
+//                      considered "relocations to self" so that recursive
+//                      functions can be folded. Should normally be the
+//                      same as `secn` except when processing extra identity
+//                      regions.
 // NUM_TRACKED_RELOCS : Vector reference to store the number of relocs
 //                      to ICF sections.
 // KEPT_SECTION_ID    : Vector which maps folded sections to kept sections.
-// SECTION_CONTENTS   : Store the section's text and relocs to non-ICF
-//                      sections.
+// START_OFFSET       : Only consider the part of the section at and after
+//                      this offset.
+// END_OFFSET         : Only consider the part of the section before this
+//                      offset.
 
 static std::string
 get_section_contents(bool first_iteration,
+		     std::string* fixed_cache,
                      const Section_id& secn,
-                     unsigned int section_num,
+		     const Section_id& self_secn,
                      unsigned int* num_tracked_relocs,
                      Symbol_table* symtab,
                      const std::vector<unsigned int>& kept_section_id,
-                     std::vector<std::string>* section_contents)
+		     section_offset_type start_offset = 0,
+		     section_offset_type end_offset =
+		       std::numeric_limits<section_offset_type>::max())
 {
-  // Lock the object so we can read from it.  This is only called
-  // single-threaded from queue_middle_tasks, so it is OK to lock.
-  // Unfortunately we have no way to pass in a Task token.
-  const Task* dummy_task = reinterpret_cast<const Task*>(-1);
-  Task_lock_obj<Object> tl(dummy_task, secn.first);
-
   section_size_type plen;
   const unsigned char* contents = NULL;
   if (first_iteration)
@@ -291,9 +319,6 @@ get_section_contents(bool first_iteration,
   // is then computed on this buffer.
   std::string buffer;
   std::string icf_reloc_buffer;
-
-  if (num_tracked_relocs)
-    *num_tracked_relocs = 0;
 
   Icf::Reloc_info_list& reloc_info_list = 
     symtab->icf()->reloc_info_list();
@@ -329,6 +354,11 @@ get_section_contents(bool first_iteration,
         {
 	  Symbol* gsym = *it_s;
 	  bool is_section_symbol = false;
+
+	  // Ignore relocations outside the region we were told to look at
+	  if (static_cast<section_offset_type>(*it_o) < start_offset
+	      || static_cast<section_offset_type>(*it_o) >= end_offset)
+	    continue;
 
 	  // A -1 value in the symbol vector indicates a local section symbol.
 	  if (gsym == reinterpret_cast<Symbol*>(-1))
@@ -367,7 +397,7 @@ get_section_contents(bool first_iteration,
           snprintf(addend_str, sizeof(addend_str), "%llx %llx %llx",
                    static_cast<long long>((*it_a).first),
 		   static_cast<long long>((*it_a).second),
-		   static_cast<unsigned long long>(*it_o));
+		   static_cast<unsigned long long>(*it_o - start_offset));
 
 	  // If the symbol pointed to by the reloc is not in an ordinary
 	  // section or if the symbol type is not FROM_OBJECT, then the
@@ -390,8 +420,8 @@ get_section_contents(bool first_iteration,
 
           // If this reloc turns back and points to the same section,
           // like a recursive call, use a special symbol to mark this.
-          if (reloc_secn.first == secn.first
-              && reloc_secn.second == secn.second)
+          if (reloc_secn.first == self_secn.first
+              && reloc_secn.second == self_secn.second)
             {
               if (first_iteration)
                 {
@@ -568,16 +598,48 @@ get_section_contents(bool first_iteration,
   if (first_iteration)
     {
       buffer.append("Contents = ");
-      buffer.append(reinterpret_cast<const char*>(contents), plen);
+
+      const unsigned char* slice_end =
+	contents + std::min<section_offset_type>(plen, end_offset);
+
+      if (contents + start_offset < slice_end)
+	{
+	  buffer.append(reinterpret_cast<const char*>(contents + start_offset),
+			slice_end - (contents + start_offset));
+	}
+    }
+
+  // Add any extra identity regions.
+  std::pair<Icf::Extra_identity_list::const_iterator,
+	    Icf::Extra_identity_list::const_iterator>
+    extra_range = symtab->icf()->extra_identity_list().equal_range(secn);
+  for (Icf::Extra_identity_list::const_iterator it_ext = extra_range.first;
+       it_ext != extra_range.second; ++it_ext)
+    {
+      std::string external_fixed;
+      std::string external_all =
+	get_section_contents(first_iteration, &external_fixed,
+			     it_ext->second.section, self_secn,
+			     num_tracked_relocs, symtab,
+			     kept_section_id, it_ext->second.offset,
+			     it_ext->second.offset + it_ext->second.length);
+      buffer.append(external_fixed);
+      icf_reloc_buffer.append(external_all, external_fixed.length(),
+			      std::string::npos);
+    }
+
+  if (first_iteration)
+    {
       // Store the section contents that don't change to avoid recomputing
       // during the next call to this function.
-      (*section_contents)[section_num] = buffer;
+      *fixed_cache = buffer;
     }
   else
     {
       gold_assert(buffer.empty());
+
       // Reuse the contents computed in the previous iteration.
-      buffer.append((*section_contents)[section_num]);
+      buffer.append(*fixed_cache);
     }
 
   buffer.append(icf_reloc_buffer);
@@ -641,14 +703,22 @@ match_sections(unsigned int iteration_num,
         continue;
 
       Section_id secn = id_section[i];
+
+      // Lock the object so we can read from it.  This is only called
+      // single-threaded from queue_middle_tasks, so it is OK to lock.
+      // Unfortunately we have no way to pass in a Task token.
+      const Task* dummy_task = reinterpret_cast<const Task*>(-1);
+      Task_lock_obj<Object> tl(dummy_task, secn.first);
+
       std::string this_secn_contents;
       uint32_t cksum;
+      std::string* this_secn_cache = &((*section_contents)[i]);
       if (iteration_num == 1)
         {
           unsigned int num_relocs = 0;
-          this_secn_contents = get_section_contents(true, secn, i, &num_relocs,
-                                                    symtab, (*kept_section_id),
-                                                    section_contents);
+          this_secn_contents = get_section_contents(true, this_secn_cache,
+						    secn, secn, &num_relocs,
+						    symtab, (*kept_section_id));
           (*num_tracked_relocs)[i] = num_relocs;
         }
       else
@@ -658,9 +728,9 @@ match_sections(unsigned int iteration_num,
               // This section is already folded into something.
               continue;
             }
-          this_secn_contents = get_section_contents(false, secn, i, NULL,
-                                                    symtab, (*kept_section_id),
-                                                    section_contents);
+          this_secn_contents = get_section_contents(false, this_secn_cache,
+						    secn, secn, NULL,
+						    symtab, (*kept_section_id));
         }
 
       const unsigned char* this_secn_contents_array =
@@ -766,8 +836,115 @@ is_function_ctor_or_dtor(const std::string& section_name)
   return false;
 }
 
+// Iterate through the .eh_frame section that has index
+// `ehframe_shndx` in `object`, adding entries to extra_identity_list_
+// that will cause the contents of each FDE and its CIE to be included
+// in the logical ICF identity of the function that the FDE refers to.
+
+bool
+Icf::add_ehframe_links(Relobj* object, unsigned int ehframe_shndx,
+		       Reloc_info& relocs)
+{
+  section_size_type contents_len;
+  const unsigned char* pcontents = object->section_contents(ehframe_shndx,
+							    &contents_len,
+							    false);
+  const unsigned char* p = pcontents;
+  const unsigned char* pend = pcontents + contents_len;
+
+  Sections_reachable_info::iterator it_target = relocs.section_info.begin();
+  Sections_reachable_info::iterator it_target_end = relocs.section_info.end();
+  Offset_info::iterator it_offset = relocs.offset_info.begin();
+  Offset_info::iterator it_offset_end = relocs.offset_info.end();
+
+  // Maps section offset to the length of the CIE defined at that offset.
+  typedef Unordered_map<section_offset_type, section_size_type> Cie_map;
+  Cie_map cies;
+
+  uint32_t (*read_swap_32)(const unsigned char*);
+  if (object->is_big_endian())
+    read_swap_32 = &elfcpp::Swap<32, true>::readval;
+  else
+    read_swap_32 = &elfcpp::Swap<32, false>::readval;
+
+  // TODO: The logic for parsing the CIE/FDE framing is copied from
+  // Eh_frame::do_add_ehframe_input_section() and might want to be
+  // factored into a shared helper function.
+  while (p < pend)
+    {
+      if (pend - p < 4)
+	return false;
+
+      unsigned int len = read_swap_32(p);
+      p += 4;
+      if (len == 0)
+	{
+	  // We should only find a zero-length entry at the end of the
+	  // section.
+	  if (p < pend)
+	    return false;
+	  break;
+	}
+      // We don't support a 64-bit .eh_frame.
+      if (len == 0xffffffff)
+	return false;
+      if (static_cast<unsigned int>(pend - p) < len)
+	return false;
+
+      const unsigned char* const pentend = p + len;
+
+      if (pend - p < 4)
+	return false;
+
+      unsigned int id = read_swap_32(p);
+      p += 4;
+
+      if (id == 0)
+	{
+	  // CIE.
+	  cies.insert(std::make_pair(p - pcontents, len - 4));
+	}
+      else
+	{
+	  // FDE.
+	  Cie_map::const_iterator it;
+	  it = cies.find((p - pcontents) - (id - 4));
+	  if (it == cies.end())
+	    return false;
+
+	  // Figure out which section this FDE refers into. The word at `p`
+	  // is an address, and we expect to see a relocation there. If not,
+	  // this FDE isn't ICF-relevant.
+	  while (it_offset != it_offset_end
+		 && it_target != it_target_end
+		 && static_cast<ptrdiff_t>(*it_offset) < (p - pcontents))
+	    {
+	      ++it_offset;
+	      ++it_target;
+	    }
+	  if (it_offset != it_offset_end
+	      && it_target != it_target_end
+	      && static_cast<ptrdiff_t>(*it_offset) == (p - pcontents))
+	    {
+	      // Found a reloc. Add this FDE and its CIE as extra identity
+	      // info for the section it refers to.
+	      Extra_identity_info rec_fde = {Section_id(object, ehframe_shndx),
+					     p - pcontents, len - 4};
+	      Extra_identity_info rec_cie = {Section_id(object, ehframe_shndx),
+					     it->first, it->second};
+	      extra_identity_list_.insert(std::make_pair(*it_target, rec_fde));
+	      extra_identity_list_.insert(std::make_pair(*it_target, rec_cie));
+	    }
+	}
+
+      p = pentend;
+    }
+
+  return true;
+}
+
 // This is the main ICF function called in gold.cc.  This does the
-// initialization and calls match_sections repeatedly (twice by default)
+// initialization and calls match_sections repeatedly (thrice by default)
 // which computes the crc checksums and detects identical functions.
 
 void
@@ -792,12 +969,18 @@ Icf::find_identical_sections(const Input_objects* input_objects,
       // Unfortunately we have no way to pass in a Task token.
       const Task* dummy_task = reinterpret_cast<const Task*>(-1);
       Task_lock_obj<Object> tl(dummy_task, *p);
+      std::vector<unsigned int> eh_frame_ind;
 
-      for (unsigned int i = 0;i < (*p)->shnum(); ++i)
+      for (unsigned int i = 0; i < (*p)->shnum(); ++i)
         {
 	  const std::string section_name = (*p)->section_name(i);
           if (!is_section_foldable_candidate(section_name))
-            continue;
+	    {
+	      if (is_prefix_of(".eh_frame", section_name.c_str()))
+		eh_frame_ind.push_back(i);
+	      continue;
+	    }
+
           if (!(*p)->is_section_included(i))
             continue;
           if (parameters->options().gc_sections()
@@ -822,14 +1005,39 @@ Icf::find_identical_sections(const Input_objects* input_objects,
           section_contents.push_back("");
           section_num++;
         }
+
+      for (std::vector<unsigned int>::iterator it_eh_ind = eh_frame_ind.begin();
+	   it_eh_ind != eh_frame_ind.end(); ++it_eh_ind)
+	{
+	  // gc_process_relocs() recorded relocations for this
+	  // section even though we can't fold it. We need to
+	  // use those relocations to associate other foldable
+	  // sections with the FDEs and CIEs that are relevant
+	  // to them, so we can avoid merging sections that
+	  // don't have identical exception-handling behavior.
+
+	  Section_id sect(*p, *it_eh_ind);
+	  Reloc_info_list::iterator it_rel = this->reloc_info_list().find(sect);
+	  if (it_rel != this->reloc_info_list().end())
+	    {
+	      if (!add_ehframe_links(*p, *it_eh_ind, it_rel->second))
+		{
+		  gold_warning(_("could not parse eh_frame section %s(%s); ICF "
+				 "might not preserve exception handling "
+				 "behavior"),
+			       (*p)->name().c_str(),
+			       (*p)->section_name(*it_eh_ind).c_str());
+		}
+	    }
+	}
     }
 
   unsigned int num_iterations = 0;
 
-  // Default number of iterations to run ICF is 2.
+  // Default number of iterations to run ICF is 3.
   unsigned int max_iterations = (parameters->options().icf_iterations() > 0)
                             ? parameters->options().icf_iterations()
-                            : 2;
+                            : 3;
 
   bool converged = false;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.166.2.1 2019/06/10 22:05:47 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.166.2.2 2020/04/08 14:07:25 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1062,8 +1062,8 @@ END(dumpsys)
  * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
  *     bool returning)
  *
- *	1. if (oldlwp != NULL), save its context.
- *	2. then, restore context of newlwp.
+ *	1. save context of oldlwp.
+ *	2. restore context of newlwp.
  *
  * Note that the stack frame layout is known to "struct switchframe" in
  * <machine/frame.h> and to the code in cpu_lwp_fork() which initializes
@@ -1079,14 +1079,10 @@ ENTRY(cpu_switchto)
 	movq	%rdi,%r13	/* oldlwp */
 	movq	%rsi,%r12	/* newlwp */
 
-	testq	%r13,%r13	/* oldlwp = NULL ? */
-	jz	.Lskip_save
-
 	/* Save old context. */
 	movq	L_PCB(%r13),%rax
 	movq	%rsp,PCB_RSP(%rax)
 	movq	%rbp,PCB_RBP(%rax)
-.Lskip_save:
 
 	/* Switch to newlwp's stack. */
 	movq	L_PCB(%r12),%r14
@@ -1513,7 +1509,7 @@ ENTRY(sse2_idlezero_page)
 	xorq	%rax, %rax
 	.align	16
 1:
-	testl	$RESCHED_KPREEMPT, CPUVAR(RESCHED)
+	cmpl	$0, CPUVAR(RESCHED)
 	jnz	2f
 	movnti	%rax, 0(%rdi)
 	movnti	%rax, 8(%rdi)
@@ -1539,24 +1535,16 @@ END(sse2_idlezero_page)
 /*
  * void pagezero(vaddr_t va)
  *
- * Zero a page without polluting the cache.
+ * Zero a page.
  */
 ENTRY(pagezero)
-	movq	$-PAGE_SIZE,%rdx
-	subq	%rdx,%rdi
+	pushq	%rbp
+	movq	%rsp,%rbp
+	movq	$(PAGE_SIZE / 8),%rcx
 	xorq	%rax,%rax
-1:
-	movnti	%rax,(%rdi,%rdx)
-	movnti	%rax,8(%rdi,%rdx)
-	movnti	%rax,16(%rdi,%rdx)
-	movnti	%rax,24(%rdi,%rdx)
-	movnti	%rax,32(%rdi,%rdx)
-	movnti	%rax,40(%rdi,%rdx)
-	movnti	%rax,48(%rdi,%rdx)
-	movnti	%rax,56(%rdi,%rdx)
-	addq	$64,%rdx
-	jne	1b
-	sfence
+	rep
+	stosq
+	leave
 	ret
 END(pagezero)
 

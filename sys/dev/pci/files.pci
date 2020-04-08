@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.397.2.1 2019/06/10 22:07:15 christos Exp $
+#	$NetBSD: files.pci,v 1.397.2.2 2020/04/08 14:08:09 martin Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -167,10 +167,11 @@ device	mpii: scsi
 attach	mpii at pci
 file	dev/pci/mpii.c			mpii
 
-# Ethernet driver for DC21040-based boards
-device	de: ether, ifnet, arp
-attach	de at pci
-file	dev/pci/if_de.c			de
+# Aquantia/Atlantic 10-Gigabit Ethernet
+device	aq: ether, ifnet, arp, sysmon_envsys
+attach	aq at pci
+file	dev/pci/if_aq.c			aq
+defflag opt_if_aq.h	AQ_EVENT_COUNTERS
 
 # 3Com 3c590 and 3c595 Ethernet controllers
 # device declaration in sys/conf/files
@@ -182,18 +183,7 @@ file	dev/pci/if_ep_pci.c		ep_pci
 attach	ex at pci with ex_pci
 file	dev/pci/if_ex_pci.c		ex_pci
 
-# Digital DEFPA PCI FDDI Controller
-device	fpa: pdq, fddi, ifnet, arp
-attach	fpa at pci
-file	dev/pci/if_fpa.c		fpa
-
-# AMD am7990 (LANCE) -based Ethernet controllers
-# device declaration in sys/conf/files
-attach	le at pci with le_pci: le32
-file	dev/pci/if_le_pci.c		le_pci
-
 # AMD PCnet-PCI Ethernet controller family
-# Supersedes if_le_pci.c
 device	pcn: ether, ifnet, arp, mii
 attach	pcn at pci
 file	dev/pci/if_pcn.c		pcn
@@ -426,11 +416,6 @@ file	dev/pci/if_tl.c			tl
 attach	ntwoc at pci with ntwoc_pci
 file	dev/pci/if_ntwoc_pci.c		ntwoc_pci
 
-# Essential Communications HIPPI interface
-# device declaration in sys/conf/files
-attach	esh at pci with esh_pci
-file	dev/pci/if_esh_pci.c		esh_pci
-
 # generic PCI VGA
 defflag	opt_vga.h	VGA_POST:	X86EMU
 attach	vga at pci with vga_pci
@@ -514,12 +499,6 @@ file	dev/pci/auvia.c			auvia
 device	auixp: audiobus, ac97, aurateconv
 attach	auixp at pci
 file	dev/pci/auixp.c			auixp
-
-# High Definition Audio
-device	azalia: audiobus, ac97, aurateconv
-attach	azalia at pci
-file	dev/pci/azalia.c		azalia
-file	dev/pci/azalia_codec.c		azalia
 
 # AMD Geode CS5536 Companion Audio
 device	gcscaudio: audiobus, ac97, aurateconv
@@ -960,7 +939,7 @@ attach  nfe at pci
 file    dev/pci/if_nfe.c                nfe
 
 # MICREL Etherent
-device	kse: ether, ifnet, arp
+device	kse: ether, ifnet, arp, mii
 attach	kse at pci
 file	dev/pci/if_kse.c		kse
 
@@ -1157,3 +1136,23 @@ attach	ena at pci
 file	dev/pci/if_ena.c			ena
 file	external/bsd/ena-com/ena_com.c		ena
 file	external/bsd/ena-com/ena_eth_com.c	ena
+
+# Intel QuickAssist
+device qat: opencrypto, firmload
+attach qat at pci
+file	dev/pci/qat/qat.c		qat
+file	dev/pci/qat/qat_ae.c		qat
+file	dev/pci/qat/qat_hw15.c		qat
+file	dev/pci/qat/qat_hw17.c		qat
+file	dev/pci/qat/qat_c2xxx.c		qat
+file	dev/pci/qat/qat_c3xxx.c		qat
+file	dev/pci/qat/qat_c62x.c		qat
+file	dev/pci/qat/qat_d15xx.c		qat
+
+# Intel Ethernet 700 Series
+device	ixl: ether, ifnet, arp
+attach	ixl at pci
+file	dev/pci/if_ixl.c	ixl
+defflag	opt_if_ixl.h	IXL_DEBUG
+defparam opt_if_ixl.h	IXL_STATS_INTERVAL_MSEC
+			IXL_QUEUE_NUM

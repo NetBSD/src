@@ -1,12 +1,8 @@
-/*	$NetBSD: r8a7791-clock.h,v 1.1.1.3 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: r8a7791-clock.h,v 1.1.1.3.6.1 2020/04/08 14:08:44 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 2013 Ideas On Board SPRL
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
  */
 
 #ifndef __DT_BINDINGS_CLOCK_R8A7791_H__

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool_cache.9,v 1.19 2011/11/15 00:32:34 jym Exp $
+.\"	$NetBSD: pool_cache.9,v 1.19.34.1 2020/04/08 14:07:22 martin Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -274,7 +274,6 @@ should be physical address of the object
 .Fa object
 or
 .Dv POOL_PADDR_INVALID .
-.Fa pp .
 If the number of available items in the backing pool exceeds the maximum
 pool size set by
 .Fn pool_cache_sethiwat

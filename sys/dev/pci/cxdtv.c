@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.15.10.1 2019/06/10 22:07:15 christos Exp $ */
+/* $NetBSD: cxdtv.c,v 1.15.10.2 2020/04/08 14:08:09 martin Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.15.10.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.15.10.2 2020/04/08 14:08:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,8 +70,6 @@ static int cxdtv_intr(void *);
 
 static bool cxdtv_resume(device_t, const pmf_qual_t *);
 
-static int	cxdtv_iic_acquire_bus(void *, int);
-static void	cxdtv_iic_release_bus(void *, int);
 static int	cxdtv_iic_send_start(void *, int);
 static int	cxdtv_iic_send_stop(void *, int);
 static int	cxdtv_iic_initiate_xfer(void *, i2c_addr_t, int);
@@ -233,11 +231,8 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	reg |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
 
-	mutex_init(&sc->sc_i2c_buslock, MUTEX_DRIVER, IPL_NONE);
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_exec = NULL;
-	sc->sc_i2c.ic_acquire_bus = cxdtv_iic_acquire_bus;
-	sc->sc_i2c.ic_release_bus = cxdtv_iic_release_bus;
 	sc->sc_i2c.ic_send_start = cxdtv_iic_send_start;
 	sc->sc_i2c.ic_send_stop = cxdtv_iic_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = cxdtv_iic_initiate_xfer;
@@ -282,7 +277,7 @@ cxdtv_detach(device_t self, int flags)
 	if (sc->sc_mems)
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
 
-	mutex_destroy(&sc->sc_i2c_buslock);
+	iic_tag_fini(&sc->sc_i2c);
 
 	return 0;
 }
@@ -377,26 +372,6 @@ cxdtv_i2cbb_read_bits(void *cookie)
 	    CXDTV_I2C_C_DATACONTROL);
 
 	return value;
-}
-
-static int
-cxdtv_iic_acquire_bus(void *cookie, int flags)
-{
-	struct cxdtv_softc *sc = cookie;
-
-	mutex_enter(&sc->sc_i2c_buslock);
-
-	return 0;
-}
-
-static void
-cxdtv_iic_release_bus(void *cookie, int flags)
-{
-	struct cxdtv_softc *sc = cookie;
-
-	mutex_exit(&sc->sc_i2c_buslock);
-
-	return;
 }
 
 static int
@@ -1109,13 +1084,13 @@ cxdtv_card_init_hdtvwonder(struct cxdtv_softc *sc)
 	na = 0x0a; /* Nxt2004 address */
  	x = 0;
 
-	iic_acquire_bus(&sc->sc_i2c, I2C_F_POLL);
+	iic_acquire_bus(&sc->sc_i2c, 0);
 
 	for(i = 0; i < 5; i++)
 		x |= iic_exec(&sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, na,
-		    nb[i], 2, NULL, 0, I2C_F_POLL);
+		    nb[i], 2, NULL, 0, 0);
 
-	iic_release_bus(&sc->sc_i2c, I2C_F_POLL);
+	iic_release_bus(&sc->sc_i2c, 0);
 
 	if (x)
 		aprint_error_dev(sc->sc_dev, "HDTV Wonder tuner init failed");

@@ -592,6 +592,8 @@ pages_boot(void) {
 		mmap_flags |= MAP_NORESERVE;
 	}
 #  endif
+#elif defined(__NetBSD__)
+	os_overcommits = true;
 #else
 	os_overcommits = false;
 #endif

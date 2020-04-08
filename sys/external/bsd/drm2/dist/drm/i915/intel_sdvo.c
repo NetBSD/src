@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sdvo.c,v 1.8.4.1 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: intel_sdvo.c,v 1.8.4.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
@@ -28,15 +28,12 @@
  *	Eric Anholt <eric@anholt.net>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.8.4.1 2019/06/10 22:08:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.8.4.2 2020/04/08 14:08:23 martin Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
-#include <linux/module.h>
 #include <linux/export.h>
-#include <linux/bitops.h>
-#include <linux/module.h>
 #include <drm/drmP.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>
@@ -654,12 +651,7 @@ intel_sdvo_get_value(struct intel_sdvo *intel_sdvo, u8 cmd, void *value, int len
 
 static bool intel_sdvo_set_target_input(struct intel_sdvo *intel_sdvo)
 {
-#ifdef __NetBSD__
-	static const struct intel_sdvo_set_target_input_args zero_targets;
-	struct intel_sdvo_set_target_input_args targets = zero_targets;
-#else
 	struct intel_sdvo_set_target_input_args targets = {0};
-#endif
 	return intel_sdvo_set_value(intel_sdvo,
 				    SDVO_CMD_SET_TARGET_INPUT,
 				    &targets, sizeof(targets));
@@ -884,8 +876,7 @@ static void intel_sdvo_get_dtd_from_mode(struct intel_sdvo_dtd *dtd,
 static void intel_sdvo_get_mode_from_dtd(struct drm_display_mode *pmode,
 					 const struct intel_sdvo_dtd *dtd)
 {
-	static const struct drm_display_mode zero_mode;
-	struct drm_display_mode mode = zero_mode;
+	struct drm_display_mode mode = {};
 
 	mode.hdisplay = dtd->part1.h_active;
 	mode.hdisplay += ((dtd->part1.h_high >> 4) & 0x0f) << 8;
@@ -1346,7 +1337,7 @@ static bool intel_sdvo_connector_get_hw_state(struct intel_connector *connector)
 }
 
 static bool intel_sdvo_get_hw_state(struct intel_encoder *encoder,
-				    enum i915_pipe *pipe)
+				    enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;

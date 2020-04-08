@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_connector.c,v 1.3.18.1 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: nouveau_connector.c,v 1.3.18.2 2020/04/08 14:08:24 martin Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.
@@ -27,13 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_connector.c,v 1.3.18.1 2019/06/10 22:08:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_connector.c,v 1.3.18.2 2020/04/08 14:08:24 martin Exp $");
 
 #include <acpi/button.h>
 
-#include <linux/err.h>
 #include <linux/pm_runtime.h>
-#include <linux/string.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>

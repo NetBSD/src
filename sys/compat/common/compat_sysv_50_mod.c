@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysv_50_mod.c,v 1.4.4.2 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: compat_sysv_50_mod.c,v 1.4.4.3 2020/04/08 14:08:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysv_50_mod.c,v 1.4.4.2 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysv_50_mod.c,v 1.4.4.3 2020/04/08 14:08:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -75,8 +75,7 @@ compat_sysv_50_modcmd(modcmd_t cmd, void *arg)
 		if (error != 0) {
 			break;
 		}
-		MODULE_HOOK_SET(sysvipc_sysctl_50_hook, "sysv50",
-		    sysctl_kern_sysvipc50);
+		MODULE_HOOK_SET(sysvipc_sysctl_50_hook, sysctl_kern_sysvipc50);
 		break;
 
 	case MODULE_CMD_FINI:

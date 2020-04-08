@@ -1,4 +1,4 @@
-/*	$NetBSD: init_creds_pw.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: init_creds_pw.c,v 1.2.12.1 2020/04/08 14:03:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -164,7 +164,9 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
     if (ctx->keytab_data)
 	free(ctx->keytab_data);
     if (ctx->password) {
-	memset(ctx->password, 0, strlen(ctx->password));
+	size_t len;
+	len = strlen(ctx->password);
+	memset_s(ctx->password, len, 0, len);
 	free(ctx->password);
     }
     /*
@@ -191,7 +193,7 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
 	free_paid(context, ctx->ppaid);
 	free(ctx->ppaid);
     }
-    memset(ctx, 0, sizeof(*ctx));
+    memset_s(ctx, sizeof(*ctx), 0, sizeof(*ctx));
 }
 
 static int
@@ -631,8 +633,8 @@ change_password (krb5_context context,
     }
 
 out:
-    memset (buf1, 0, sizeof(buf1));
-    memset (buf2, 0, sizeof(buf2));
+    memset_s(buf1, sizeof(buf1), 0, sizeof(buf1));
+    memset_s(buf2, sizeof(buf2), 0, sizeof(buf2));
     krb5_data_free (&result_string);
     krb5_data_free (&result_code_string);
     krb5_free_cred_contents (context, &cpw_cred);
@@ -758,7 +760,7 @@ init_as_req (krb5_context context,
     return 0;
  fail:
     free_AS_REQ(a);
-    memset(a, 0, sizeof(*a));
+    memset_s(a, sizeof(*a), 0, sizeof(*a));
     return ret;
 }
 
@@ -1503,7 +1505,9 @@ krb5_init_creds_set_password(krb5_context context,
 			     const char *password)
 {
     if (ctx->password) {
-	memset(ctx->password, 0, strlen(ctx->password));
+	size_t len;
+	len = strlen(ctx->password);
+	memset_s(ctx->password, len, 0, len);
 	free(ctx->password);
     }
     if (password) {
@@ -2246,6 +2250,8 @@ krb5_init_creds_step(krb5_context context,
 	    }
 	    if (ctx->ic_flags & KRB5_INIT_CREDS_NO_C_CANON_CHECK)
 		eflags |= EXTRACT_TICKET_ALLOW_CNAME_MISMATCH;
+	    if (ctx->flags.request_anonymous)
+		eflags |= EXTRACT_TICKET_MATCH_ANON;
 
 	    ret = process_pa_data_to_key(context, ctx, &ctx->cred,
 					 &ctx->as_req, &rep.kdc_rep,
@@ -2269,6 +2275,26 @@ krb5_init_creds_step(krb5_context context,
 				       &ctx->req_buffer,
 				       NULL,
 				       NULL);
+	    if (ret == 0 && ctx->pk_init_ctx) {
+		PA_DATA *pa_pkinit_kx;
+		int idx = 0;
+
+		pa_pkinit_kx =
+		    krb5_find_padata(rep.kdc_rep.padata->val,
+				     rep.kdc_rep.padata->len,
+				     KRB5_PADATA_PKINIT_KX,
+				     &idx);
+
+		ret = _krb5_pk_kx_confirm(context, ctx->pk_init_ctx,
+					  ctx->fast_state.reply_key,
+					  &ctx->cred.session,
+					  pa_pkinit_kx);
+		if (ret)
+		    krb5_set_error_message(context, ret,
+					   N_("Failed to confirm PA-PKINIT-KX", ""));
+		else if (pa_pkinit_kx != NULL)
+		    ctx->ic_flags |= KRB5_INIT_CREDS_PKINIT_KX_VALID;
+	    }
 	    if (ret == 0)
 		ret = copy_EncKDCRepPart(&rep.enc_part, &ctx->enc_part);
 
@@ -2319,7 +2345,7 @@ krb5_init_creds_step(krb5_context context,
 	    if (ret == KRB5KDC_ERR_PREAUTH_REQUIRED) {
 
 	        free_METHOD_DATA(&ctx->md);
-	        memset(&ctx->md, 0, sizeof(ctx->md));
+		memset_s(&ctx->md, sizeof(ctx->md), 0, sizeof(ctx->md));
 
 		if (ctx->error.e_data) {
 		    ret = decode_METHOD_DATA(ctx->error.e_data->data,
@@ -2373,7 +2399,7 @@ krb5_init_creds_step(krb5_context context,
 		}
 
 		free_AS_REQ(&ctx->as_req);
-		memset(&ctx->as_req, 0, sizeof(ctx->as_req));
+		memset_s(&ctx->as_req, sizeof(ctx->as_req), 0, sizeof(ctx->as_req));
 
 		ctx->used_pa_types = 0;
 	    } else if (ret == KRB5KDC_ERR_KEY_EXP && ctx->runflags.change_password == 0 && ctx->prompter) {
@@ -2687,7 +2713,7 @@ krb5_get_init_creds_password(krb5_context context,
 	ret = (*prompter) (context, data, NULL, NULL, 1, &prompt);
 	free (q);
 	if (ret) {
-	    memset (buf, 0, sizeof(buf));
+	    memset_s(buf, sizeof(buf), 0, sizeof(buf));
 	    ret = KRB5_LIBOS_PWDINTR;
 	    krb5_clear_error_message (context);
 	    goto out;
@@ -2743,8 +2769,8 @@ krb5_get_init_creds_password(krb5_context context,
     if (ctx)
 	krb5_init_creds_free(context, ctx);
 
-    memset(buf, 0, sizeof(buf));
-    memset(buf2, 0, sizeof(buf2));
+    memset_s(buf, sizeof(buf), 0, sizeof(buf));
+    memset_s(buf2, sizeof(buf), 0, sizeof(buf2));
     return ret;
 }
 

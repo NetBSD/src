@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.8 2016/01/07 19:49:45 jakllsch Exp $	*/
+/*	$NetBSD: data.c,v 1.8.16.1 2020/04/08 14:07:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: data.c,v 1.8 2016/01/07 19:49:45 jakllsch Exp $");
+__RCSID("$NetBSD: data.c,v 1.8.16.1 2020/04/08 14:07:16 martin Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -55,7 +55,7 @@ hid_get_data(const void *p, const hid_item_t *h)
 	end = (hpos + hsize + 7) / 8 - offs;
 	data = 0;
 	for (i = 0; i < end; i++)
-		data |= buf[offs + i] << (i*8);
+		data |= ((uint32_t)buf[offs + i]) << (i*8);
 	data >>= hpos % 8;
 	if (hsize < 32) {
 		data &= (1 << hsize) - 1;
@@ -88,8 +88,8 @@ hid_set_data(void *p, const hid_item_t *h, int data)
 	} else
 		mask = ~0;
 
-	data <<= (hpos % 8);
-	mask <<= (hpos % 8);
+	data = ((uint32_t)data) << (hpos % 8);
+	mask = ((uint32_t)mask) << (hpos % 8);
 	mask = ~mask;
 
 	offs = hpos / 8;

@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_state.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: postscreen_state.c,v 1.2.12.1 2020/04/08 14:06:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -26,6 +26,9 @@
 /*	void	PSC_ADD_SERVER_STATE(state, server_fd)
 /*	PSC_STATE *state;
 /*	int	server_fd;
+/*
+/*	void	PSC_DEL_SERVER_STATE(state)
+/*	PSC_STATE *state;
 /*
 /*	void	PSC_DEL_CLIENT_STATE(state)
 /*	PSC_STATE *state;
@@ -90,6 +93,10 @@
 /*	increments the global psc_post_queue_length file descriptor
 /*	counter.
 /*
+/*	PSC_DEL_SERVER_STATE() closes the specified session state
+/*	object's server file descriptor, and decrements the global
+/*	psc_post_queue_length file descriptor counter.
+/*
 /*	PSC_DEL_CLIENT_STATE() updates the specified session state
 /*	object, closes the client stream, and decrements the global
 /*	psc_check_queue_length file descriptor counter.
@@ -118,6 +125,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -224,12 +236,10 @@ void    psc_free_session_state(PSC_STATE *state)
 	htable_delete(psc_client_concurrency, state->smtp_client_addr, myfree);
 
     if (state->smtp_client_stream != 0) {
-	event_server_disconnect(state->smtp_client_stream);
-	psc_check_queue_length--;
+	PSC_DEL_CLIENT_STATE(state);
     }
     if (state->smtp_server_fd >= 0) {
-	close(state->smtp_server_fd);
-	psc_post_queue_length--;
+	PSC_DEL_SERVER_STATE(state);
     }
     if (state->send_buf != 0)
 	state->send_buf = vstring_free(state->send_buf);

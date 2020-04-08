@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2017/05/21 15:28:41 riastradh Exp $
+# $NetBSD: Makefile,v 1.19.10.1 2020/04/08 14:07:15 martin Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -43,12 +43,15 @@ NOPROFILE=	# Don't build a profiling library
 DIST=   ${NETBSDSRCDIR}/external/bsd/openpam/dist
 LIB=	pam
 NOPROFILE=
+# XXX: returns no value
+#LINTFLAGS+=     -X 217 -X 284
 
 WARNS=	6
 # 233: Struct/union never defined
 LINTFLAGS+= -Sw -X 233
 
 CPPFLAGS+= -DLIB_MAJ=${SHLIB_MAJOR} -DHAVE_CONFIG_H -I${.CURDIR}
+#CPPFLAGS+= -DOPENPAM_DEBUG
 
 SRCS=	openpam_borrow_cred.c \
 	openpam_check_owner_perms.c \

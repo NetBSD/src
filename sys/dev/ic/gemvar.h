@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.25 2015/04/13 16:33:24 riastradh Exp $ */
+/*	$NetBSD: gemvar.h,v 1.25.18.1 2020/04/08 14:08:06 martin Exp $ */
 
 /*
  *
@@ -245,8 +245,6 @@ struct gem_softc {
 
 #define	GEM_CDTXADDR(sc, x)	((sc)->sc_cddma + GEM_CDTXOFF((x)))
 #define	GEM_CDRXADDR(sc, x)	((sc)->sc_cddma + GEM_CDRXOFF((x)))
-
-#define	GEM_CDADDR(sc)	((sc)->sc_cddma + GEM_CDOFF)
 
 #define	GEM_CDTXSYNC(sc, x, n, ops)					\
 do {									\

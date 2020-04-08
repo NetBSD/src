@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_14.c,v 1.5.16.1 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: rtsock_14.c,v 1.5.16.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.5.16.1 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.5.16.2 2020/04/08 14:08:00 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -99,6 +99,7 @@ void
 compat_14_rt_oifmsg(struct ifnet *ifp)
 {
 	struct if_msghdr14 oifm;
+	struct if_data ifi;
 	struct mbuf *m;
 	struct rt_addrinfo info;
 	struct timeval tv;
@@ -107,26 +108,27 @@ compat_14_rt_oifmsg(struct ifnet *ifp)
 		return;
 	(void)memset(&info, 0, sizeof(info));
 	(void)memset(&oifm, 0, sizeof(oifm));
+	if_export_if_data(ifp, &ifi, false);
 	oifm.ifm_index = ifp->if_index;
 	oifm.ifm_flags = ifp->if_flags;
-	oifm.ifm_data.ifi_type = ifp->if_data.ifi_type;
-	oifm.ifm_data.ifi_addrlen = ifp->if_data.ifi_addrlen;
-	oifm.ifm_data.ifi_hdrlen = ifp->if_data.ifi_hdrlen;
-	oifm.ifm_data.ifi_mtu = ifp->if_data.ifi_mtu;
-	oifm.ifm_data.ifi_metric = ifp->if_data.ifi_metric;
-	oifm.ifm_data.ifi_baudrate = ifp->if_data.ifi_baudrate;
-	oifm.ifm_data.ifi_ipackets = ifp->if_data.ifi_ipackets;
-	oifm.ifm_data.ifi_ierrors = ifp->if_data.ifi_ierrors;
-	oifm.ifm_data.ifi_opackets = ifp->if_data.ifi_opackets;
-	oifm.ifm_data.ifi_oerrors = ifp->if_data.ifi_oerrors;
-	oifm.ifm_data.ifi_collisions = ifp->if_data.ifi_collisions;
-	oifm.ifm_data.ifi_ibytes = ifp->if_data.ifi_ibytes;
-	oifm.ifm_data.ifi_obytes = ifp->if_data.ifi_obytes;
-	oifm.ifm_data.ifi_imcasts = ifp->if_data.ifi_imcasts;
-	oifm.ifm_data.ifi_omcasts = ifp->if_data.ifi_omcasts;
-	oifm.ifm_data.ifi_iqdrops = ifp->if_data.ifi_iqdrops;
-	oifm.ifm_data.ifi_noproto = ifp->if_data.ifi_noproto;
-	TIMESPEC_TO_TIMEVAL(&tv, &ifp->if_data.ifi_lastchange);
+	oifm.ifm_data.ifi_type = ifi.ifi_type;
+	oifm.ifm_data.ifi_addrlen = ifi.ifi_addrlen;
+	oifm.ifm_data.ifi_hdrlen = ifi.ifi_hdrlen;
+	oifm.ifm_data.ifi_mtu = ifi.ifi_mtu;
+	oifm.ifm_data.ifi_metric = ifi.ifi_metric;
+	oifm.ifm_data.ifi_baudrate = ifi.ifi_baudrate;
+	oifm.ifm_data.ifi_ipackets = ifi.ifi_ipackets;
+	oifm.ifm_data.ifi_ierrors = ifi.ifi_ierrors;
+	oifm.ifm_data.ifi_opackets = ifi.ifi_opackets;
+	oifm.ifm_data.ifi_oerrors = ifi.ifi_oerrors;
+	oifm.ifm_data.ifi_collisions = ifi.ifi_collisions;
+	oifm.ifm_data.ifi_ibytes = ifi.ifi_ibytes;
+	oifm.ifm_data.ifi_obytes = ifi.ifi_obytes;
+	oifm.ifm_data.ifi_imcasts = ifi.ifi_imcasts;
+	oifm.ifm_data.ifi_omcasts = ifi.ifi_omcasts;
+	oifm.ifm_data.ifi_iqdrops = ifi.ifi_iqdrops;
+	oifm.ifm_data.ifi_noproto = ifi.ifi_noproto;
+	TIMESPEC_TO_TIMEVAL(&tv, &ifi.ifi_lastchange);
 	timeval_to_timeval50(&tv, &oifm.ifm_data.ifi_lastchange);
 	oifm.ifm_addrs = 0;
 	m = compat_50_rt_msg1(RTM_OOIFINFO, &info, (void *)&oifm, sizeof(oifm));
@@ -140,30 +142,32 @@ compat_14_iflist(struct ifnet *ifp, struct rt_walkarg *w,
     struct rt_addrinfo *info, size_t len)
 {
 	struct if_msghdr14 *ifm;
+	struct if_data ifi;
 	struct timeval tv;
 	int error;
 
 	ifm = (struct if_msghdr14 *)w->w_tmem;
+	if_export_if_data(ifp, &ifi, false);
 	ifm->ifm_index = ifp->if_index;
 	ifm->ifm_flags = ifp->if_flags;
-	ifm->ifm_data.ifi_type = ifp->if_data.ifi_type;
-	ifm->ifm_data.ifi_addrlen = ifp->if_data.ifi_addrlen;
-	ifm->ifm_data.ifi_hdrlen = ifp->if_data.ifi_hdrlen;
-	ifm->ifm_data.ifi_mtu = ifp->if_data.ifi_mtu;
-	ifm->ifm_data.ifi_metric = ifp->if_data.ifi_metric;
-	ifm->ifm_data.ifi_baudrate = ifp->if_data.ifi_baudrate;
-	ifm->ifm_data.ifi_ipackets = ifp->if_data.ifi_ipackets;
-	ifm->ifm_data.ifi_ierrors = ifp->if_data.ifi_ierrors;
-	ifm->ifm_data.ifi_opackets = ifp->if_data.ifi_opackets;
-	ifm->ifm_data.ifi_oerrors = ifp->if_data.ifi_oerrors;
-	ifm->ifm_data.ifi_collisions = ifp->if_data.ifi_collisions;
-	ifm->ifm_data.ifi_ibytes = ifp->if_data.ifi_ibytes;
-	ifm->ifm_data.ifi_obytes = ifp->if_data.ifi_obytes;
-	ifm->ifm_data.ifi_imcasts = ifp->if_data.ifi_imcasts;
-	ifm->ifm_data.ifi_omcasts = ifp->if_data.ifi_omcasts;
-	ifm->ifm_data.ifi_iqdrops = ifp->if_data.ifi_iqdrops;
-	ifm->ifm_data.ifi_noproto = ifp->if_data.ifi_noproto;
-	TIMESPEC_TO_TIMEVAL(&tv, &ifp->if_data.ifi_lastchange);
+	ifm->ifm_data.ifi_type = ifi.ifi_type;
+	ifm->ifm_data.ifi_addrlen = ifi.ifi_addrlen;
+	ifm->ifm_data.ifi_hdrlen = ifi.ifi_hdrlen;
+	ifm->ifm_data.ifi_mtu = ifi.ifi_mtu;
+	ifm->ifm_data.ifi_metric = ifi.ifi_metric;
+	ifm->ifm_data.ifi_baudrate = ifi.ifi_baudrate;
+	ifm->ifm_data.ifi_ipackets = ifi.ifi_ipackets;
+	ifm->ifm_data.ifi_ierrors = ifi.ifi_ierrors;
+	ifm->ifm_data.ifi_opackets = ifi.ifi_opackets;
+	ifm->ifm_data.ifi_oerrors = ifi.ifi_oerrors;
+	ifm->ifm_data.ifi_collisions = ifi.ifi_collisions;
+	ifm->ifm_data.ifi_ibytes = ifi.ifi_ibytes;
+	ifm->ifm_data.ifi_obytes = ifi.ifi_obytes;
+	ifm->ifm_data.ifi_imcasts = ifi.ifi_imcasts;
+	ifm->ifm_data.ifi_omcasts = ifi.ifi_omcasts;
+	ifm->ifm_data.ifi_iqdrops = ifi.ifi_iqdrops;
+	ifm->ifm_data.ifi_noproto = ifi.ifi_noproto;
+	TIMESPEC_TO_TIMEVAL(&tv, &ifi.ifi_lastchange);
 	timeval_to_timeval50(&tv, &ifm->ifm_data.ifi_lastchange);
 	ifm->ifm_addrs = info->rti_addrs;
 	error = copyout(ifm, w->w_where, len);
@@ -177,8 +181,8 @@ void
 rtsock_14_init(void)
 {
 
-	MODULE_HOOK_SET(rtsock_oifmsg_14_hook, "rts_14", compat_14_rt_oifmsg);
-	MODULE_HOOK_SET(rtsock_iflist_14_hook, "rts_14", compat_14_iflist);
+	MODULE_HOOK_SET(rtsock_oifmsg_14_hook, compat_14_rt_oifmsg);
+	MODULE_HOOK_SET(rtsock_iflist_14_hook, compat_14_iflist);
 }
 
 void

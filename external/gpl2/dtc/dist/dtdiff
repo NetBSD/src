@@ -1,4 +1,5 @@
 #! /bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 
 # This script uses the bash <(...) extension.
 # If you want to change this to work with a generic /bin/sh, make sure

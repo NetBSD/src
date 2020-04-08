@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.121.14.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.121.14.2 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.121.14.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.121.14.2 2020/04/08 14:09:04 martin Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -379,7 +379,7 @@ WRITE(void *v)
 		if (error)
 			goto out;
 		if (flags & B_SYNC) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			VOP_PUTPAGES(vp, trunc_page(osize & fs->fs_bmask),
 			    round_page(eob),
 			    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
@@ -473,7 +473,7 @@ WRITE(void *v)
 
 #ifndef LFS_READWRITE
 		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16,
 			    PGO_CLEANIT | PGO_JOURNALLOCKED | PGO_LAZY);
@@ -483,7 +483,7 @@ WRITE(void *v)
 #endif
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(vp, trunc_page(origoff & fs->fs_bmask),
 		    round_page(ufs_blkroundup(fs, uio->uio_offset)),
 		    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);

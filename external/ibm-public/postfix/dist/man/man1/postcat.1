@@ -1,4 +1,4 @@
-.\"	$NetBSD: postcat.1,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: postcat.1,v 1.2.12.1 2020/04/08 14:06:50 martin Exp $
 .\"
 .TH POSTCAT 1 
 .ad
@@ -81,6 +81,10 @@ The text below provides only a parameter summary. See
 .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 The default location of the Postfix main.cf and master.cf
 configuration files.
+.IP "\fBimport_environment (see 'postconf -d' output)\fR"
+The list of environment parameters that a privileged Postfix
+process will import from a non\-Postfix parent process, or name=value
+environment overrides.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 The location of the Postfix top\-level queue directory.
 .SH "FILES"

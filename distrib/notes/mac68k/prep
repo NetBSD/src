@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.17 2015/05/19 19:30:28 snj Exp $
+.\"	$NetBSD: prep,v 1.17.16.1 2020/04/08 14:03:50 martin Exp $
 .
 No matter which installation method you use, there is some planning
 and preparation that is required beforehand.  First and foremost,
@@ -117,9 +117,9 @@ Once you have decided how to lay out your partitions, you need to calculate
 how much space to allocate to each partition. A minimal install of
 .Nx
 (i.e.
-.Pa base.tgz , etc.tgz, No and either
-.Pa kern-GENERIC.tgz No or
-.Pa kern-GENERICSBC.tgz )
+.Pa base.\*[setsuffix] , etc.\*[setsuffix], No and either
+.Pa kern-GENERIC.\*[setsuffix] No or
+.Pa kern-GENERICSBC.\*[setsuffix] )
 requires about 140MB.
 A general rule of thumb for sizing the swap partition is to allocate
 twice as much swap space as you have real memory.

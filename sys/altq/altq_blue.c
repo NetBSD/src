@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.24 2016/04/20 08:58:48 knakahara Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.24.18.1 2020/04/08 14:07:23 martin Exp $	*/
 /*	$KAME: altq_blue.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.24 2016/04/20 08:58:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.24.18.1 2020/04/08 14:07:23 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.24 2016/04/20 08:58:48 knakahara Exp
 /* fixed-point uses 12-bit decimal places */
 #define	FP_SHIFT	12	/* fixed-point shift */
 
-#define	BLUE_LIMIT	200	/* default max queue lenght */
+#define	BLUE_LIMIT	200	/* default max queue length */
 #define	BLUE_STATS		/* collect statistics */
 
 /* blue_list keeps all blue_state_t's allocated. */

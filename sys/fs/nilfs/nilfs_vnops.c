@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.37 2017/05/26 14:34:19 riastradh Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.37.10.1 2020/04/08 14:08:49 martin Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.37 2017/05/26 14:34:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.37.10.1 2020/04/08 14:08:49 martin Exp $");
 #endif /* not lint */
 
 
@@ -591,7 +591,7 @@ nilfs_readdir(void *v)
 			diroffset += nilfs_rw16(ndirent->rec_len);
 			blkoff    += nilfs_rw16(ndirent->rec_len);
 
-			/* remember the last entry we transfered */
+			/* remember the last entry we transferred */
 			transoffset = diroffset;
 		}
 		brelse(bp, BC_AGE);

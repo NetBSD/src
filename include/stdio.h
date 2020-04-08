@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.97 2016/03/17 00:42:49 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.97.16.1 2020/04/08 14:07:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,6 +40,13 @@
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <sys/ansi.h>
+
+#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)) || ((_POSIX_C_SOURCE - 0) >= 200809L || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
+     (__cplusplus - 0) >= 201103L || defined(_NETBSD_SOURCE))
+#define __STDIO_C99_FEATURES
+#endif
 
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;
@@ -193,7 +200,7 @@ __END_DECLS
 
 /* System V/ANSI C; this is the wrong way to do this, do *not* use these. */
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-#define	P_tmpdir	"/var/tmp/"
+#define	P_tmpdir	"/tmp/"
 #endif
 #define	L_tmpnam	1024	/* XXX must be == PATH_MAX */
 /* Always ensure that this is consistent with <limits.h> */
@@ -307,8 +314,8 @@ __END_DECLS
 /*
  * IEEE Std 1003.1c-95, also adopted by X/Open CAE Spec Issue 5 Version 2
  */
-#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
-    defined(_REENTRANT) || defined(_NETBSD_SOURCE)
+#if defined(__STDIO_C99_FEATURES) || (_POSIX_C_SOURCE - 0) >= 199506L || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_REENTRANT)
 __BEGIN_DECLS
 void	flockfile(FILE *);
 int	ftrylockfile(FILE *);
@@ -318,7 +325,7 @@ int	getchar_unlocked(void);
 int	putc_unlocked(int, FILE *);
 int	putchar_unlocked(int);
 __END_DECLS
-#endif /* _POSIX_C_SOURCE >= 1995056 || _XOPEN_SOURCE >= 500 || ... */
+#endif /* C99 || _POSIX_C_SOURCE >= 1995056 || _XOPEN_SOURCE >= 500 || ... */
 
 /*
  * Functions defined in POSIX 1003.2 and XPG2 or later.
@@ -339,11 +346,9 @@ __END_DECLS
 /*
  * Functions defined in ISO XPG4.2, ISO C99, POSIX 1003.1-2001 or later.
  */
-#if ((__STDC_VERSION__ - 0) >= 199901L) || \
-    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+#if defined(__STDIO_C99_FEATURES) || (_POSIX_C_SOURCE - 0) >= 200112L || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    ((_XOPEN_SOURCE - 0) >= 500) || \
-    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+    (_XOPEN_SOURCE - 0) >= 500
 __BEGIN_DECLS
 int	 snprintf(char * __restrict, size_t, const char * __restrict, ...)
 		__printflike(3, 4);
@@ -387,7 +392,7 @@ __END_DECLS
  * Functions defined in ISO C99.  Still put under _NETBSD_SOURCE due to
  * backward compatible.
  */
-#if defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(__STDIO_C99_FEATURES)
 __BEGIN_DECLS
 int	 vscanf(const char * __restrict, __va_list)
 		__scanflike(1, 0);
@@ -397,7 +402,7 @@ int	 vsscanf(const char * __restrict, const char * __restrict,
     __va_list)
     __scanflike(2, 0);
 __END_DECLS
-#endif /* _ISOC99_SOURCE || _NETBSD_SOURCE */
+#endif /* C99 */
 
 /*
  * Routines that are purely local.

@@ -50,7 +50,8 @@ typedef enum OPTION_choice {
 
 const OPTIONS enc_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"ciphers", OPT_LIST, '-', "List ciphers"},
+    {"list", OPT_LIST, '-', "List ciphers"},
+    {"ciphers", OPT_LIST, '-', "Alias for -list"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
     {"pass", OPT_PASS, 's', "Passphrase source"},
@@ -586,7 +587,7 @@ int enc_main(int argc, char **argv)
     if (benc != NULL)
         wbio = BIO_push(benc, wbio);
 
-    for (;;) {
+    while (BIO_pending(rbio) || !BIO_eof(rbio)) {
         inl = BIO_read(rbio, (char *)buff, bsize);
         if (inl <= 0)
             break;

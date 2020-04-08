@@ -1,4 +1,4 @@
-/*	$NetBSD: l32_105.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: l32_105.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -126,7 +126,7 @@ fromstruct_l32(ARGS_FROMSTRUCT) {
 	uint32_t n;
 
 	REQUIRE(type == dns_rdatatype_l32);
-	REQUIRE(source != NULL);
+	REQUIRE(l32 != NULL);
 	REQUIRE(l32->common.rdtype == type);
 	REQUIRE(l32->common.rdclass == rdclass);
 
@@ -145,7 +145,7 @@ tostruct_l32(ARGS_TOSTRUCT) {
 	uint32_t n;
 
 	REQUIRE(rdata->type == dns_rdatatype_l32);
-	REQUIRE(target != NULL);
+	REQUIRE(l32 != NULL);
 	REQUIRE(rdata->length == 6);
 
 	UNUSED(mctx);
@@ -165,7 +165,7 @@ static inline void
 freestruct_l32(ARGS_FREESTRUCT) {
 	dns_rdata_l32_t *l32 = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(l32 != NULL);
 	REQUIRE(l32->common.rdtype == dns_rdatatype_l32);
 
 	return;

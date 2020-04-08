@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.155.2.1 2019/06/10 22:05:54 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.155.2.2 2020/04/08 14:07:29 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -221,7 +221,7 @@ struct pmap_devmap {
 		.pd_pa = DEVMAP_ALIGN(pa),		\
 		.pd_size = DEVMAP_SIZE(sz),		\
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,	\
-		.pd_cache = PTE_NOCACHE			\
+		.pd_cache = PTE_DEV			\
 	}
 #define	DEVMAP_ENTRY_END	{ 0 }
 
@@ -229,9 +229,8 @@ struct pmap_devmap {
  * The pmap structure itself
  */
 struct pmap {
-	struct uvm_object	pm_obj;
-	kmutex_t		pm_obj_lock;
-#define	pm_lock pm_obj.vmobjlock
+	kmutex_t		pm_lock;
+	u_int			pm_refs;
 #ifndef ARM_HAS_VBAR
 	pd_entry_t		*pm_pl1vec;
 	pd_entry_t		pm_l1vec;
@@ -302,6 +301,7 @@ extern bool arm_has_tlbiasid_p;	/* also in <arm/locore.h> */
 #define	PTE_NOCACHE	0
 #define	PTE_CACHE	1
 #define	PTE_PAGETABLE	2
+#define	PTE_DEV		3
 
 /*
  * Flags that indicate attributes of pages or mappings of pages.
@@ -366,12 +366,15 @@ u_int arm32_mmap_flags(paddr_t);
 #define pmap_mmap_flags(ppn)		arm32_mmap_flags(ppn)
 
 #define	PMAP_PTE			0x10000000 /* kenter_pa */
+#define	PMAP_DEV			0x20000000 /* kenter_pa */
+#define	PMAP_DEV_SO			0x40000000 /* kenter_pa */
+#define	PMAP_DEV_MASK			(PMAP_DEV | PMAP_DEV_SO)
 
 /*
  * Functions that we need to export
  */
 void	pmap_procwr(struct proc *, vaddr_t, int);
-void	pmap_remove_all(pmap_t);
+bool	pmap_remove_all(pmap_t);
 bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 
 #define	PMAP_NEED_PROCWR
@@ -381,6 +384,10 @@ bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 #define	PMAP_PREFER(hint, vap, sz, td)	pmap_prefer((hint), (vap), (td))
 void	pmap_prefer(vaddr_t, vaddr_t *, int);
+#endif
+
+#ifdef ARM_MMU_EXTENDED
+int	pmap_maxproc_set(int);
 #endif
 
 void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
@@ -549,8 +556,6 @@ pmap_ptesync(pt_entry_t *ptep, size_t cnt)
 #define l1pte_fpage_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_F)
 #define l1pte_pa(pde)		((pde) & L1_C_ADDR_MASK)
 #define l1pte_index(v)		((vaddr_t)(v) >> L1_S_SHIFT)
-#define l1pte_pgindex(v)	l1pte_index((v) & L1_ADDR_BITS \
-		& ~(PAGE_SIZE * PAGE_SIZE / sizeof(pt_entry_t) - 1))
 
 static inline void
 l1pte_setone(pt_entry_t *pdep, pt_entry_t pde)
@@ -564,13 +569,13 @@ l1pte_set(pt_entry_t *pdep, pt_entry_t pde)
 	*pdep = pde;
 	if (l1pte_page_p(pde)) {
 		KASSERTMSG((((uintptr_t)pdep / sizeof(pde)) & (PAGE_SIZE / L2_T_SIZE - 1)) == 0, "%p", pdep);
-		for (size_t k = 1; k < PAGE_SIZE / L2_T_SIZE; k++) {
+		for (int k = 1; k < PAGE_SIZE / L2_T_SIZE; k++) {
 			pde += L2_T_SIZE;
 			pdep[k] = pde;
 		}
 	} else if (l1pte_supersection_p(pde)) {
 		KASSERTMSG((((uintptr_t)pdep / sizeof(pde)) & (L1_SS_SIZE / L1_S_SIZE - 1)) == 0, "%p", pdep);
-		for (size_t k = 1; k < L1_SS_SIZE / L1_S_SIZE; k++) {
+		for (int k = 1; k < L1_SS_SIZE / L1_S_SIZE; k++) {
 			pdep[k] = pde;
 		}
 	}
@@ -589,12 +594,12 @@ l2pte_set(pt_entry_t *ptep, pt_entry_t pte, pt_entry_t opte)
 {
 	if (l1pte_lpage_p(pte)) {
 		KASSERTMSG((((uintptr_t)ptep / sizeof(pte)) & (L2_L_SIZE / L2_S_SIZE - 1)) == 0, "%p", ptep);
-		for (size_t k = 0; k < L2_L_SIZE / L2_S_SIZE; k++) {
+		for (int k = 0; k < L2_L_SIZE / L2_S_SIZE; k++) {
 			*ptep++ = pte;
 		}
 	} else {
 		KASSERTMSG((((uintptr_t)ptep / sizeof(pte)) & (PAGE_SIZE / L2_S_SIZE - 1)) == 0, "%p", ptep);
-		for (size_t k = 0; k < PAGE_SIZE / L2_S_SIZE; k++) {
+		for (int k = 0; k < PAGE_SIZE / L2_S_SIZE; k++) {
 			KASSERTMSG(*ptep == opte, "%#x [*%p] != %#x", *ptep, ptep, opte);
 			*ptep++ = pte;
 			pte += L2_S_SIZE;
@@ -609,7 +614,7 @@ l2pte_reset(pt_entry_t *ptep)
 {
 	KASSERTMSG((((uintptr_t)ptep / sizeof(*ptep)) & (PAGE_SIZE / L2_S_SIZE - 1)) == 0, "%p", ptep);
 	*ptep = 0;
-	for (vsize_t k = 1; k < PAGE_SIZE / L2_S_SIZE; k++) {
+	for (int k = 1; k < PAGE_SIZE / L2_S_SIZE; k++) {
 		ptep[k] = 0;
 	}
 }
@@ -658,6 +663,9 @@ void	pmap_pte_init_arm11(void);
 #if defined(CPU_ARM11MPCORE)	/* ARM_MMU_V6 */
 void	pmap_pte_init_arm11mpcore(void);
 #endif
+#if ARM_MMU_V6 == 1
+void	pmap_pte_init_armv6(void);
+#endif /* ARM_MMU_V6 */
 #if ARM_MMU_V7 == 1
 void	pmap_pte_init_armv7(void);
 #endif /* ARM_MMU_V7 */
@@ -679,14 +687,13 @@ void	xscale_setup_minidata(vaddr_t, vaddr_t, paddr_t);
 void	pmap_uarea(vaddr_t);
 #endif /* ARM_MMU_XSCALE == 1 */
 
+extern pt_entry_t		pte_l1_s_nocache_mode;
+extern pt_entry_t		pte_l2_l_nocache_mode;
+extern pt_entry_t		pte_l2_s_nocache_mode;
+
 extern pt_entry_t		pte_l1_s_cache_mode;
-extern pt_entry_t		pte_l1_s_cache_mask;
-
 extern pt_entry_t		pte_l2_l_cache_mode;
-extern pt_entry_t		pte_l2_l_cache_mask;
-
 extern pt_entry_t		pte_l2_s_cache_mode;
-extern pt_entry_t		pte_l2_s_cache_mask;
 
 extern pt_entry_t		pte_l1_s_cache_mode_pt;
 extern pt_entry_t		pte_l2_l_cache_mode_pt;
@@ -695,6 +702,10 @@ extern pt_entry_t		pte_l2_s_cache_mode_pt;
 extern pt_entry_t		pte_l1_s_wc_mode;
 extern pt_entry_t		pte_l2_l_wc_mode;
 extern pt_entry_t		pte_l2_s_wc_mode;
+
+extern pt_entry_t		pte_l1_s_cache_mask;
+extern pt_entry_t		pte_l2_l_cache_mask;
+extern pt_entry_t		pte_l2_s_cache_mask;
 
 extern pt_entry_t		pte_l1_s_prot_u;
 extern pt_entry_t		pte_l1_s_prot_w;
@@ -1158,7 +1169,7 @@ struct vm_page_md {
  */
 #if ARM_MMU_V6 > 0
 #define	VM_MDPAGE_PVH_ATTRS_INIT(pg) \
-	(pg)->mdpage.pvh_attrs = (pg)->phys_addr & arm_cache_prefer_mask
+	(pg)->mdpage.pvh_attrs = VM_PAGE_TO_PHYS(pg) & arm_cache_prefer_mask
 #else
 #define	VM_MDPAGE_PVH_ATTRS_INIT(pg) \
 	(pg)->mdpage.pvh_attrs = 0
@@ -1172,6 +1183,12 @@ do {									\
 	(pg)->mdpage.urw_mappings = 0;					\
 	(pg)->mdpage.k_mappings = 0;					\
 } while (/*CONSTCOND*/0)
+
+#ifndef	__BSD_PTENTRY_T__
+#define	__BSD_PTENTRY_T__
+typedef uint32_t pt_entry_t;
+#define PRIxPTE		PRIx32
+#endif
 
 #endif /* !_LOCORE */
 

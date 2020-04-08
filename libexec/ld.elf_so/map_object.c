@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.58.6.1 2019/06/10 22:05:29 christos Exp $	 */
+/*	$NetBSD: map_object.c,v 1.58.6.2 2020/04/08 14:07:17 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.58.6.1 2019/06/10 22:05:29 christos Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.58.6.2 2020/04/08 14:07:17 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -406,8 +406,9 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	obj->relocbase = mapbase - base_vaddr;
 
 #ifdef GNU_RELRO
-	obj->relro_page = obj->relocbase + round_down(relro_page);
-	obj->relro_size = round_up(relro_size);
+	/* rounding happens later. */
+	obj->relro_page = obj->relocbase + relro_page;
+	obj->relro_size = relro_size;
 #endif
 
 	if (obj->dynamic)

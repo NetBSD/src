@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_runtime_pm.c,v 1.6.4.2 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: intel_runtime_pm.c,v 1.6.4.3 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2012-2014 Intel Corporation
@@ -29,13 +29,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.6.4.2 2019/06/10 22:08:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.6.4.3 2020/04/08 14:08:23 martin Exp $");
 
 #include <linux/pm_runtime.h>
 #include <linux/vgaarb.h>
 
 #include "i915_drv.h"
 #include "intel_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * DOC: runtime pm
@@ -893,7 +895,7 @@ static bool vlv_power_well_enabled(struct drm_i915_private *dev_priv,
 
 static void vlv_display_power_well_init(struct drm_i915_private *dev_priv)
 {
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	/*
 	 * Enable the CRI clock source so we can get at the
@@ -985,7 +987,7 @@ static void vlv_dpio_cmn_power_well_enable(struct drm_i915_private *dev_priv,
 static void vlv_dpio_cmn_power_well_disable(struct drm_i915_private *dev_priv,
 					    struct i915_power_well *power_well)
 {
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	WARN_ON_ONCE(power_well->data != PUNIT_POWER_WELL_DPIO_CMN_BC);
 
@@ -1126,7 +1128,7 @@ static void chv_dpio_cmn_power_well_enable(struct drm_i915_private *dev_priv,
 					   struct i915_power_well *power_well)
 {
 	enum dpio_phy phy;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	uint32_t tmp;
 
 	WARN_ON_ONCE(power_well->data != PUNIT_POWER_WELL_DPIO_CMN_BC &&
@@ -1216,7 +1218,7 @@ static void chv_dpio_cmn_power_well_disable(struct drm_i915_private *dev_priv,
 static void assert_chv_phy_powergate(struct drm_i915_private *dev_priv, enum dpio_phy phy,
 				     enum dpio_channel ch, bool override, unsigned int mask)
 {
-	enum i915_pipe pipe = phy == DPIO_PHY0 ? PIPE_A : PIPE_C;
+	enum pipe pipe = phy == DPIO_PHY0 ? PIPE_A : PIPE_C;
 	u32 reg, val, expected, actual;
 
 	/*
@@ -1339,7 +1341,7 @@ void chv_phy_powergate_lanes(struct intel_encoder *encoder,
 static bool chv_pipe_power_well_enabled(struct drm_i915_private *dev_priv,
 					struct i915_power_well *power_well)
 {
-	enum i915_pipe pipe = power_well->data;
+	enum pipe pipe = power_well->data;
 	bool enabled;
 	u32 state, ctrl;
 
@@ -1369,7 +1371,7 @@ static void chv_set_pipe_power_well(struct drm_i915_private *dev_priv,
 				    struct i915_power_well *power_well,
 				    bool enable)
 {
-	enum i915_pipe pipe = power_well->data;
+	enum pipe pipe = power_well->data;
 	u32 state;
 	u32 ctrl;
 
@@ -1879,11 +1881,7 @@ int intel_power_domains_init(struct drm_i915_private *dev_priv)
 
 	BUILD_BUG_ON(POWER_DOMAIN_NUM > 31);
 
-#ifdef __NetBSD__
-	linux_mutex_init(&power_domains->lock);
-#else
 	mutex_init(&power_domains->lock);
-#endif
 
 	/*
 	 * The enabling order will be from lower to higher indexed wells,
@@ -1940,11 +1938,7 @@ void intel_power_domains_fini(struct drm_i915_private *dev_priv)
 	 * we're going to unload/reload. */
 	intel_display_set_init_power(dev_priv, true);
 
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev_priv->power_domains.lock);
-#else
 	mutex_destroy(&dev_priv->power_domains.lock);
-#endif
 }
 
 static void intel_power_domains_resume(struct drm_i915_private *dev_priv)

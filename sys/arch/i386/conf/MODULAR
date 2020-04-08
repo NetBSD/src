@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.5 2017/08/09 18:45:30 maxv Exp $
+# $NetBSD: MODULAR,v 1.5.4.1 2020/04/08 14:07:39 martin Exp $
 #
 # MODULAR kernel
 # This kernel config prefers loading kernel drivers from file system.
@@ -30,7 +30,6 @@ no file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 no file-system	UMAPFS		# NULLFS + uid and gid remapping
 no file-system	UNION		# union file system
 no file-system	CODA		# Coda File System; also needs vcoda (below)
-no file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 
 # accept filters, built as modules
 #
@@ -40,7 +39,6 @@ no pseudo-device	accf_http	       # "httpready" accept filter
 # pseudo devices, available as modules
 #
 no pseudo-device	vcoda		       # coda minicache <-> venus comm.
-no pseudo-device	nsmb		       # experimental - SMB requester
 
 # these drivers are available as modules
 #

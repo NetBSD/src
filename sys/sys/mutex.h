@@ -1,7 +1,7 @@
-/*	$NetBSD: mutex.h,v 1.22 2017/09/16 23:25:35 christos Exp $	*/
+/*	$NetBSD: mutex.h,v 1.22.4.1 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,13 +62,6 @@
  *
  *		[additionally:]
  *		volatile integer	mtx_id
- *
- *	MUTEX_RECEIVE(mtx)
- *		Post a load fence after acquiring the mutex, if necessary.
- *
- *	MUTEX_GIVE(mtx)
- *		Post a load/store fence after releasing the mutex, if
- *		necessary.
  *
  * 	MUTEX_CAS(ptr, old, new)
  *		Perform an atomic "compare and swap" operation and
@@ -206,11 +199,14 @@ int	mutex_tryenter(kmutex_t *);
 int	mutex_owned(const kmutex_t *);
 int	mutex_ownable(const kmutex_t *);
 lwp_t	*mutex_owner(const kmutex_t *);
+bool	mutex_owner_running(const kmutex_t *);
 
 void	mutex_obj_init(void);
 kmutex_t *mutex_obj_alloc(kmutex_type_t, int);
 void	mutex_obj_hold(kmutex_t *);
 bool	mutex_obj_free(kmutex_t *);
+u_int	mutex_obj_refcnt(kmutex_t *);
+kmutex_t *mutex_obj_tryalloc(kmutex_type_t, int);
 
 #endif /* _KERNEL */
 

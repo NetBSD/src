@@ -1,4 +1,4 @@
-/*	$NetBSD: vmpagemd.h,v 1.8 2018/04/19 21:50:10 christos Exp $	*/
+/*	$NetBSD: vmpagemd.h,v 1.8.2.1 2020/04/08 14:09:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ pmap_pvlist_locked_p(struct vm_page_md *mdpg)
 do {									\
 	(pg)->mdpage.mdpg_first.pv_next = NULL;				\
 	(pg)->mdpage.mdpg_first.pv_pmap = NULL;				\
-	(pg)->mdpage.mdpg_first.pv_va = (pg)->phys_addr;		\
+	(pg)->mdpage.mdpg_first.pv_va = VM_PAGE_TO_PHYS(pg);		\
 	(pg)->mdpage.mdpg_attrs = 0;					\
 	VM_PAGEMD_PVLIST_LOCK_INIT(&(pg)->mdpage);			\
 } while (/* CONSTCOND */ 0)

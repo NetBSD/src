@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.3.2.2 2019/06/10 22:04:36 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.3.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,6 +23,7 @@
 #include <isc/netaddr.h>
 #include <isc/platform.h>
 #include <isc/print.h>
+#include <isc/random.h>
 #include <isc/serial.h>
 #include <isc/stats.h>
 #include <isc/stdtime.h>
@@ -1373,6 +1374,25 @@ struct dns_update_state {
 	       sign_nsec, update_nsec3, process_nsec3, sign_nsec3 } state;
 };
 
+static uint32_t
+dns__jitter_expire(dns_zone_t *zone, uint32_t sigvalidityinterval) {
+	/* Spread out signatures over time */
+	if (sigvalidityinterval >= 3600U) {
+		uint32_t expiryinterval = dns_zone_getsigresigninginterval(zone);
+
+		if (sigvalidityinterval < 7200U) {
+			expiryinterval = 1200;
+		} else if (expiryinterval > sigvalidityinterval) {
+			expiryinterval = sigvalidityinterval;
+		} else {
+			expiryinterval = sigvalidityinterval - expiryinterval;
+		}
+		uint32_t jitter = isc_random_uniform(expiryinterval);
+		sigvalidityinterval -= jitter;
+	}
+	return (sigvalidityinterval);
+}
+
 isc_result_t
 dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 			 dns_dbversion_t *oldver, dns_dbversion_t *newver,
@@ -1426,7 +1446,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 
 		isc_stdtime_get(&now);
 		state->inception = now - 3600; /* Allow for some clock skew. */
-		state->expire = now + sigvalidityinterval;
+		state->expire = now + dns__jitter_expire(zone, sigvalidityinterval);
 		state->keyexpire = dns_zone_getkeyvalidityinterval(zone);
 		if (state->keyexpire == 0) {
 			state->keyexpire = state->expire;

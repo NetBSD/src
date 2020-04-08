@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.4.2.2 2019/06/10 22:04:35 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.4.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -932,21 +932,12 @@ client_resfind(resctx_t *rctx, dns_fetchevent_t *event) {
 			 * Otherwise, get some resource for copying the
 			 * result.
 			 */
-			ansname = isc_mem_get(mctx, sizeof(*ansname));
-			if (ansname == NULL)
-				tresult = ISC_R_NOMEMORY;
-			else {
-				dns_name_t *aname;
+			dns_name_t *aname = dns_fixedname_name(&rctx->name);
 
-				aname = dns_fixedname_name(&rctx->name);
-				dns_name_init(ansname, NULL);
-				tresult = dns_name_dup(aname, mctx, ansname);
-				if (tresult != ISC_R_SUCCESS)
-					isc_mem_put(mctx, ansname,
-						    sizeof(*ansname));
-			}
-			if (tresult != ISC_R_SUCCESS)
-				result = tresult;
+			ansname = isc_mem_get(mctx, sizeof(*ansname));
+			dns_name_init(ansname, NULL);
+
+			(void)dns_name_dup(aname, mctx, ansname);
 		}
 
 		switch (result) {
@@ -983,12 +974,9 @@ client_resfind(resctx_t *rctx, dns_fetchevent_t *event) {
 			dns_rdata_reset(&rdata);
 			if (tresult != ISC_R_SUCCESS)
 				goto done;
-			tresult = dns_name_copy(&cname.cname, name, NULL);
+			dns_name_copynf(&cname.cname, name);
 			dns_rdata_freestruct(&cname);
-			if (tresult == ISC_R_SUCCESS)
-				want_restart = true;
-			else
-				result = tresult;
+			want_restart = true;
 			goto done;
 		case DNS_R_DNAME:
 			/*
@@ -1412,9 +1400,7 @@ dns_client_startresolve(dns_client_t *client, const dns_name_t *name,
 	rctx->sigrdataset = sigrdataset;
 
 	dns_fixedname_init(&rctx->name);
-	result = dns_name_copy(name, dns_fixedname_name(&rctx->name), NULL);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
+	dns_name_copynf(name, dns_fixedname_name(&rctx->name));
 
 	rctx->client = client;
 	ISC_LINK_INIT(rctx, link);
@@ -2240,9 +2226,7 @@ process_soa(updatectx_t *uctx, dns_rdataset_t *soaset,
 
 	if (uctx->zonename == NULL) {
 		uctx->zonename = dns_fixedname_name(&uctx->zonefname);
-		result = dns_name_copy(soaname, uctx->zonename, NULL);
-		if (result != ISC_R_SUCCESS)
-			goto out;
+		dns_name_copynf(soaname, uctx->zonename);
 	}
 
 	if (uctx->currentserver != NULL)
@@ -2279,7 +2263,6 @@ process_soa(updatectx_t *uctx, dns_rdataset_t *soaset,
 		UNLOCK(&uctx->lock);
 	}
 
- out:
 	dns_rdata_freestruct(&soa);
 
 	return (result);
@@ -2619,9 +2602,7 @@ copy_name(isc_mem_t *mctx, dns_message_t *msg, const dns_name_t *name,
 	dns_name_init(newname, NULL);
 	dns_name_setbuffer(newname, namebuf);
 	dns_message_takebuffer(msg, &namebuf);
-	result = dns_name_copy(name, newname, NULL);
-	if (result != ISC_R_SUCCESS)
-		goto fail;
+	dns_name_copynf(name, newname);
 
 	for (rdataset = ISC_LIST_HEAD(name->list); rdataset != NULL;
 	     rdataset = ISC_LIST_NEXT(rdataset, link)) {
@@ -2920,7 +2901,7 @@ dns_client_startupdate(dns_client_t *client, dns_rdataclass_t rdclass,
 		goto fail;
 	if (zonename != NULL) {
 		uctx->zonename = dns_fixedname_name(&uctx->zonefname);
-		result = dns_name_copy(zonename, uctx->zonename, NULL);
+		dns_name_copynf(zonename, uctx->zonename);
 	}
 	if (servers != NULL) {
 		for (server = ISC_LIST_HEAD(*servers);

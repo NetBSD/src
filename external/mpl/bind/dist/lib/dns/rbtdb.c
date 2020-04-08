@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.4.2.2 2019/06/10 22:04:35 christos Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.4.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2919,8 +2919,7 @@ zone_zonecut_callback(dns_rbtnode_t *node, dns_name_t *name, void *arg) {
 			 * is, we need to remember the node name.
 			 */
 			zcname = dns_fixedname_name(&search->zonecut_name);
-			RUNTIME_CHECK(dns_name_copy(name, zcname, NULL) ==
-				      ISC_R_SUCCESS);
+			dns_name_copynf(name, zcname);
 			search->copy_name = true;
 		}
 	} else {
@@ -3024,7 +3023,6 @@ setup_delegation(rbtdb_search_t *search, dns_dbnode_t **nodep,
 		 dns_name_t *foundname, dns_rdataset_t *rdataset,
 		 dns_rdataset_t *sigrdataset)
 {
-	isc_result_t result;
 	dns_name_t *zcname;
 	rbtdb_rdatatype_t type;
 	dns_rbtnode_t *node;
@@ -3045,9 +3043,7 @@ setup_delegation(rbtdb_search_t *search, dns_dbnode_t **nodep,
 	 */
 	if (foundname != NULL && search->copy_name) {
 		zcname = dns_fixedname_name(&search->zonecut_name);
-		result = dns_name_copy(zcname, foundname, NULL);
-		if (result != ISC_R_SUCCESS)
-			return (result);
+		dns_name_copynf(zcname, foundname);
 	}
 	if (nodep != NULL) {
 		/*
@@ -3890,9 +3886,7 @@ zone_find(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 			 */
 			result = find_wildcard(&search, &node, name);
 			if (result == ISC_R_SUCCESS) {
-				result = dns_name_copy(name, foundname, NULL);
-				if (result != ISC_R_SUCCESS)
-					goto tree_exit;
+				dns_name_copynf(name, foundname);
 				wild = true;
 				goto found;
 			}
@@ -4541,22 +4535,23 @@ find_deepest_zonecut(rbtdb_search_t *search, dns_rbtnode_t *node,
 			if (foundname != NULL) {
 				dns_name_init(&name, NULL);
 				dns_rbt_namefromnode(node, &name);
-				result = dns_name_copy(&name, foundname, NULL);
-				while (result == ISC_R_SUCCESS && i > 0) {
+				dns_name_copynf(&name, foundname);
+				while (i > 0) {
 					i--;
 					level_node = search->chain.levels[i];
 					dns_name_init(&name, NULL);
 					dns_rbt_namefromnode(level_node,
 							     &name);
-					result =
-						dns_name_concatenate(foundname,
-								     &name,
-								     foundname,
-								     NULL);
-				}
-				if (result != ISC_R_SUCCESS) {
-					*nodep = NULL;
-					goto node_exit;
+					result = dns_name_concatenate(foundname,
+								      &name,
+								      foundname,
+								      NULL);
+					if (result != ISC_R_SUCCESS) {
+						if (nodep != NULL) {
+							*nodep = NULL;
+						}
+						goto node_exit;
+					}
 				}
 			}
 			result = DNS_R_DELEGATION;
@@ -5094,7 +5089,7 @@ cache_findzonecut(dns_db_t *db, const dns_name_t *name, unsigned int options,
 	} else if (result != ISC_R_SUCCESS) {
 		goto tree_exit;
 	} else if (!dcnull) {
-		dns_name_copy(dcname, foundname, NULL);
+		dns_name_copynf(dcname, foundname);
 	}
 	/*
 	 * We now go looking for an NS rdataset at the node.
@@ -7107,17 +7102,14 @@ rbt_datafixer(dns_rbtnode_t *rbtnode, void *base, size_t filesize,
 	dns_rbtdb_t *rbtdb = (dns_rbtdb_t *) arg;
 	rdatasetheader_t *header;
 	unsigned char *limit = ((unsigned char *) base) + filesize;
-	unsigned char *p;
-	size_t size;
-	unsigned int count;
 
 	REQUIRE(rbtnode != NULL);
+	REQUIRE(VALID_RBTDB(rbtdb));
 
 	for (header = rbtnode->data; header != NULL; header = header->next) {
-		p = (unsigned char *) header;
-
-		size = dns_rdataslab_size(p, sizeof(*header));
-		count = dns_rdataslab_count(p, sizeof(*header));;
+		unsigned char *p = (unsigned char *) header;
+		size_t size = dns_rdataslab_size(p, sizeof(*header));
+		unsigned int count = dns_rdataslab_count(p, sizeof(*header));;
 		rbtdb->current_version->records += count;
 		rbtdb->current_version->bytes += size;
 		isc_crc64_update(crc, p, size);
@@ -7131,7 +7123,7 @@ rbt_datafixer(dns_rbtnode_t *rbtnode, void *base, size_t filesize,
 		header->node = rbtnode;
 		header->node_is_relative = 0;
 
-		if (rbtdb != NULL && RESIGN(header) &&
+		if (RESIGN(header) &&
 		    (header->resign != 0 || header->resign_lsb != 0))
 		{
 			int idx = header->node->locknum;
@@ -9364,7 +9356,8 @@ dbiterator_origin(dns_dbiterator_t *iterator, dns_name_t *name) {
 	if (rbtdbiter->result != ISC_R_SUCCESS)
 		return (rbtdbiter->result);
 
-	return (dns_name_copy(origin, name, NULL));
+	dns_name_copynf(origin, name);
+	return (ISC_R_SUCCESS);
 }
 
 static void
@@ -9739,7 +9732,7 @@ glue_nsdname_cb(void *arg, const dns_name_t *name, dns_rdatatype_t qtype) {
 		}
 
 		gluename = dns_fixedname_initname(&glue->fixedname);
-		dns_name_copy(name_a, gluename, NULL);
+		dns_name_copynf(name_a, gluename);
 
 		dns_rdataset_init(&glue->rdataset_a);
 		dns_rdataset_init(&glue->sigrdataset_a);
@@ -9767,7 +9760,7 @@ glue_nsdname_cb(void *arg, const dns_name_t *name, dns_rdatatype_t qtype) {
 			}
 
 			gluename = dns_fixedname_initname(&glue->fixedname);
-			dns_name_copy(name_aaaa, gluename, NULL);
+			dns_name_copynf(name_aaaa, gluename);
 
 			dns_rdataset_init(&glue->rdataset_a);
 			dns_rdataset_init(&glue->sigrdataset_a);

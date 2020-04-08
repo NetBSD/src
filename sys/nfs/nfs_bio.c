@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.191 2015/07/15 03:28:55 manu Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.191.18.1 2020/04/08 14:08:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.191 2015/07/15 03:28:55 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.191.18.1 2020/04/08 14:08:59 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -539,7 +539,7 @@ nfs_write(void *v)
 				 * backout size and free pages past eof.
 				 */
 				np->n_size = oldsize;
-				mutex_enter(vp->v_interlock);
+				rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 				(void)VOP_PUTPAGES(vp, round_page(vp->v_size),
 				    0, PGO_SYNCIO | PGO_FREE);
 			}
@@ -559,7 +559,7 @@ nfs_write(void *v)
 
 		if ((oldoff & ~(nmp->nm_wsize - 1)) !=
 		    (uio->uio_offset & ~(nmp->nm_wsize - 1))) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp,
 			    trunc_page(oldoff & ~(nmp->nm_wsize - 1)),
 			    round_page((uio->uio_offset + nmp->nm_wsize - 1) &
@@ -569,7 +569,7 @@ nfs_write(void *v)
 	if (wrotedata)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error == 0 && (ioflag & IO_SYNC) != 0) {
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(vp,
 		    trunc_page(origoff & ~(nmp->nm_wsize - 1)),
 		    round_page((uio->uio_offset + nmp->nm_wsize - 1) &
@@ -988,7 +988,7 @@ again:
 			/*
 			 * this page belongs to our object.
 			 */
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_WRITER);
 			/*
 			 * write out the page stably if it's about to
 			 * be released because we can't resend it
@@ -1005,19 +1005,19 @@ again:
 			 */
 			if ((pgs[i]->flags & PG_NEEDCOMMIT) == 0)
 				needcommit = false;
-			mutex_exit(uobj->vmobjlock);
+			rw_exit(uobj->vmobjlock);
 		} else {
 			iomode = NFSV3WRITE_FILESYNC;
 			needcommit = false;
 		}
 	}
 	if (!needcommit && iomode == NFSV3WRITE_UNSTABLE) {
-		mutex_enter(uobj->vmobjlock);
+		rw_enter(uobj->vmobjlock, RW_WRITER);
 		for (i = 0; i < npages; i++) {
 			pgs[i]->flags |= PG_NEEDCOMMIT | PG_RDONLY;
 			pmap_page_protect(pgs[i], VM_PROT_READ);
 		}
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 		pageprotected = true; /* pages can't be modified during i/o. */
 	} else
 		pageprotected = false;
@@ -1069,11 +1069,11 @@ again:
 			 * pages are now on stable storage.
 			 */
 			uiop->uio_resid = 0;
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_WRITER);
 			for (i = 0; i < npages; i++) {
 				pgs[i]->flags &= ~(PG_NEEDCOMMIT | PG_RDONLY);
 			}
-			mutex_exit(uobj->vmobjlock);
+			rw_exit(uobj->vmobjlock);
 			goto out;
 		} else if (error == NFSERR_STALEWRITEVERF) {
 			nfs_clearcommit(vp->v_mount);
@@ -1118,11 +1118,12 @@ again:
 			 * re-dirty pages so that they will be passed
 			 * to us later again.
 			 */
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_WRITER);
 			for (i = 0; i < npages; i++) {
-				pgs[i]->flags &= ~PG_CLEAN;
+				uvm_pagemarkdirty(pgs[i],
+				    UVM_PAGE_STATUS_DIRTY);
 			}
-			mutex_exit(uobj->vmobjlock);
+			rw_exit(uobj->vmobjlock);
 		}
 		mutex_exit(&np->n_commitlock);
 	} else
@@ -1134,11 +1135,11 @@ again:
 		mutex_enter(&np->n_commitlock);
 		nfs_del_committed_range(vp, off, cnt);
 		mutex_exit(&np->n_commitlock);
-		mutex_enter(uobj->vmobjlock);
+		rw_enter(uobj->vmobjlock, RW_WRITER);
 		for (i = 0; i < npages; i++) {
 			pgs[i]->flags &= ~(PG_NEEDCOMMIT | PG_RDONLY);
 		}
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 	} else {
 		/*
 		 * we got an error.
@@ -1259,6 +1260,19 @@ nfs_getpages(void *v)
 	bool v3 = NFS_ISV3(vp);
 	bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	bool locked = (ap->a_flags & PGO_LOCKED) != 0;
+	bool nobusy = (ap->a_flags & PGO_NOBUSY);
+
+	/*
+	 * XXX NFS wants to modify the pages below and that can't be done
+	 * with a read lock.  We can't upgrade the lock here because it
+	 * would screw up UVM fault processing.  Have NFS take the I/O
+	 * path.
+	 */
+	if (locked && rw_lock_op(uobj->vmobjlock) == RW_READER) {
+		*ap->a_count = 0;
+		ap->a_m[ap->a_centeridx] = NULL;
+		return EBUSY;
+	}
 
 	/*
 	 * If we are not locked we are not really using opgs,
@@ -1304,7 +1318,7 @@ nfs_getpages(void *v)
 
 	if (!write && (np->n_flag & NMODIFIED) == 0 && pgs != NULL) {
 		if (!locked) {
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_WRITER);
 		}
 		for (i = 0; i < npages; i++) {
 			pg = pgs[i];
@@ -1314,7 +1328,7 @@ nfs_getpages(void *v)
 			pg->flags |= PG_RDONLY;
 		}
 		if (!locked) {
-			mutex_exit(uobj->vmobjlock);
+			rw_exit(uobj->vmobjlock);
 		}
 	}
 	if (!write)
@@ -1340,9 +1354,8 @@ nfs_getpages(void *v)
 				 * available and put back original pgs array.
 				 */
 
-				mutex_enter(&uvm_pageqlock);
-				uvm_page_unbusy(pgs, npages);
-				mutex_exit(&uvm_pageqlock);
+				if (nobusy == false)
+					uvm_page_unbusy(pgs, npages);
 				*ap->a_count = 0;
 				memcpy(pgs, opgs,
 				    npages * sizeof(struct vm_pages *));
@@ -1355,7 +1368,7 @@ nfs_getpages(void *v)
 	}
 	np->n_flag |= NMODIFIED;
 	if (!locked) {
-		mutex_enter(uobj->vmobjlock);
+		rw_enter(uobj->vmobjlock, RW_WRITER);
 	}
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
@@ -1365,7 +1378,7 @@ nfs_getpages(void *v)
 		pg->flags &= ~(PG_NEEDCOMMIT | PG_RDONLY);
 	}
 	if (!locked) {
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 	}
 	if (v3) {
 		mutex_exit(&np->n_commitlock);

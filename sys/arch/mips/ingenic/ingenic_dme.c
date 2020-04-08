@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dme.c,v 1.3 2017/05/19 07:43:31 skrll Exp $ */
+/*	$NetBSD: ingenic_dme.c,v 1.3.12.1 2020/04/08 14:07:45 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,14 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dme.c,v 1.3 2017/05/19 07:43:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dme.c,v 1.3.12.1 2020/04/08 14:07:45 martin Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/mutex.h>
+#include <sys/intr.h>
 #include <sys/bus.h>
-#include <sys/workqueue.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
 #include <mips/ingenic/ingenic_var.h>
 #include <mips/ingenic/ingenic_regs.h>
@@ -42,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ingenic_dme.c,v 1.3 2017/05/19 07:43:31 skrll Exp $"
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <dev/mii/miivar.h>
 
 #include <dev/ic/dm9000var.h>
 #include <dev/ic/dm9000reg.h>
@@ -132,7 +132,7 @@ ingenic_dme_attach(device_t parent, device_t self, void *aux)
 		     13);
 		goto fail;
 	}
-
+#if 0
 	eaddrprop = prop_dictionary_get(device_properties(self), "mac-address");
 
 	if (eaddrprop != NULL && prop_data_size(eaddrprop) == ETHER_ADDR_LEN) {
@@ -148,6 +148,13 @@ ingenic_dme_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "reading MAC address from chip\n");
 		dme_read_c(sc, DM9000_PAB0, enaddr, 6);
 	}
+#else
+	(void)eaddrprop;
+	/*
+	 * dme_attach checks dictionary, then previous setting, then roll
+	 * a dice to make random MAC address
+	 */
+#endif
 	dme_attach(sc, enaddr);
 	return;
 fail:

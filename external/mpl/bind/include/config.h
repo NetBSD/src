@@ -73,9 +73,6 @@
 /* Use CMocka */
 /* #undef HAVE_CMOCKA */
 
-/* Define to 1 if you have the <cmocka.h> header file. */
-/* #undef HAVE_CMOCKA_H */
-
 /* Define to 1 if you have the `cpuset_setaffinity' function. */
 /* #undef HAVE_CPUSET_SETAFFINITY */
 

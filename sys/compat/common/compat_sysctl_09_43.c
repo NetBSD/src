@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysctl_09_43.c,v 1.2.4.2 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: compat_sysctl_09_43.c,v 1.2.4.3 2020/04/08 14:08:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysctl_09_43.c,v 1.2.4.2 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysctl_09_43.c,v 1.2.4.3 2020/04/08 14:08:00 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -101,10 +101,20 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 /*
  * Top level filesystem related information gathering.
  */
-static int
-compat_sysctl_vfs(struct sysctllog **clog)
+SYSCTL_SETUP(compat_sysctl_vfs, "Top-level filesystem info")
 {
 	int error;
+
+	error = sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT, 
+			CTLTYPE_NODE, "generic",
+			SYSCTL_DESCR("Non-specific vfs related information"),
+			NULL, 0, NULL, 0,
+			CTL_VFS, VFS_GENERIC, CTL_EOL);
+	if (error == EEXIST)
+		error = 0;
+	if (error != 0)
+		return;
 
 	error = sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
@@ -115,7 +125,7 @@ compat_sysctl_vfs(struct sysctllog **clog)
 	if (error == EEXIST)
 		error = 0;
 	if (error != 0)
-		return error;
+		return;
 
 	error = sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -124,25 +134,20 @@ compat_sysctl_vfs(struct sysctllog **clog)
 		       sysctl_vfs_generic_conf, 0, NULL,
 		       sizeof(struct vfsconf),
 		       CTL_VFS, VFS_GENERIC, VFS_CONF, CTL_EOL);
-
-	return error;
 }
 #endif
-
-static struct sysctllog *clog = NULL;
 
 int
 compat_sysctl_09_43_init(void)
 {
 
-	return compat_sysctl_vfs(&clog);
+	return 0;
 }
 
 int
 compat_sysctl_09_43_fini(void)
 {
 
-	sysctl_teardown(&clog);
 	return 0;
 }
 

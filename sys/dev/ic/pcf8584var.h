@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584var.h,v 1.5 2016/01/03 17:32:17 jdc Exp $	*/
+/*	$NetBSD: pcf8584var.h,v 1.5.18.1 2020/04/08 14:08:06 martin Exp $	*/
 /*	$OpenBSD: pcf8584var.h,v 1.5 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -31,7 +31,6 @@ struct pcfiic_softc {
 	int			sc_poll;
 
 	struct i2c_controller	sc_i2c;
-	krwlock_t		sc_lock;
 };
 
 void	pcfiic_attach(struct pcfiic_softc *, i2c_addr_t, u_int8_t, int);

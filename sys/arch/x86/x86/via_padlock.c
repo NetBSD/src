@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.25.18.1 2019/06/10 22:06:54 christos Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.25.18.2 2020/04/08 14:07:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.25.18.1 2019/06/10 22:06:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.25.18.2 2020/04/08 14:07:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,18 +370,13 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
     struct via_padlock_session *ses, struct via_padlock_softc *sc, void *buf)
 {
 	uint32_t *key;
-	int err = 0;
 
-	if ((crd->crd_len % 16) != 0) {
-		err = EINVAL;
-		return (err);
-	}
+	if ((crd->crd_len % 16) != 0)
+		return (EINVAL);
 
 	sc->op_buf = malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
-	if (sc->op_buf == NULL) {
-		err = ENOMEM;
-		return (err);
-	}
+	if (sc->op_buf == NULL)
+		return (ENOMEM);
 
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
 		sc->op_cw[0] = ses->ses_cw0 | C3_CRYPT_CWLO_ENCRYPT;
@@ -465,7 +460,7 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		sc->op_buf = NULL;
 	}
 
-	return (err);
+	return 0;
 }
 
 int

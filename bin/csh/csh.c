@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.46.28.1 2019/06/10 21:41:02 christos Exp $ */
+/* $NetBSD: csh.c,v 1.46.28.2 2020/04/08 14:03:04 martin Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.46.28.1 2019/06/10 21:41:02 christos Exp $");
+__RCSID("$NetBSD: csh.c,v 1.46.28.2 2020/04/08 14:03:04 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,97 @@ __RCSID("$NetBSD: csh.c,v 1.46.28.1 2019/06/10 21:41:02 christos Exp $");
  * June, 1991
  */
 
+FILE *cshin, *cshout, *csherr;
+struct timespec time0;
+struct rusage ru0;
+struct varent shvhed, aliases;
+Char HISTSUB;
+int editing;
+
+int child;
+int chkstop;
+int didfds;
+int doneinp;
+int exiterr;
+int haderr;
+int havhash;
+int intact;
+int intty;
+int justpr;
+int loginsh;
+int neednote;
+int noexec;
+int pjobs;
+int setintr;
+int timflg;
+
+Char *arginp;
+Char *ffile;
+int onelflg;
+Char *shtemp;
+
+time_t chktim;
+Char *doldol;
+pid_t backpid;
+gid_t egid, gid;
+uid_t euid, uid;
+int shpgrp;
+int tpgrp;
+
+int opgrp;
+
+int SHIN;
+int SHOUT;
+int SHERR;
+int OLDSTD;
+
+jmp_buf reslab;
+
+Char *gointr;
+
+sig_t parintr;
+sig_t parterm;
+
+struct Bin B;
+
+struct Ain lineloc;
+int cantell;
+Char *lap;
+struct whyle *whyles;
+
+struct wordent *alhistp,*alhistt;
+
+int AsciiOnly;
+int gflag;
+long pnleft;
+Char *pargs;
+Char *pargcp;
+struct Hist Histlist;
+struct wordent paraml;
+int eventno;
+int lastev;
+Char HIST;
+Char HISTSUB;
+const char *bname;
+Char *Vsav;
+Char *Vdp;
+Char *Vexpath;
+char **Vt;
+Char **evalvec;
+Char *evalp;
+Char *word_chars;
+Char *STR_SHELLPATH;
+#ifdef _PATH_BSHELL
+Char *STR_BSHELL;
+#endif
+Char *STR_WORD_CHARS;
+Char **STR_environ;
+#ifdef EDIT
+EditLine *el;
+History *hi;
+#endif
+int editing;
+
 Char *dumphist[] = {STRhistory, STRmh, 0, 0};
 Char *tildehist[] = {STRsource, STRmh, STRtildothist, 0};
 
@@ -104,9 +195,6 @@ static void srcunit(int, int, int);
 static void mailchk(void);
 #ifndef _PATH_DEFPATH
 static Char **defaultpath(void);
-#endif
-#ifdef EDITING
-int	editing = 0;
 #endif
 
 int

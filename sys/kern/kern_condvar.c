@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_condvar.c,v 1.41 2018/01/30 07:52:22 ozaki-r Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.41.4.1 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.41 2018/01/30 07:52:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.41.4.1 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,20 +48,19 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.41 2018/01/30 07:52:22 ozaki-r Ex
 /*
  * Accessors for the private contents of the kcondvar_t data type.
  *
- *	cv_opaque[0]	sleepq...
- *	cv_opaque[1]	...pointers
- *	cv_opaque[2]	description for ps(1)
+ *	cv_opaque[0]	sleepq_t
+ *	cv_opaque[1]	description for ps(1)
  *
- * cv_opaque[0..1] is protected by the interlock passed to cv_wait() (enqueue
- * only), and the sleep queue lock acquired with sleeptab_lookup() (enqueue
+ * cv_opaque[0] is protected by the interlock passed to cv_wait() (enqueue
+ * only), and the sleep queue lock acquired with sleepq_hashlock() (enqueue
  * and dequeue).
  *
- * cv_opaque[2] (the wmesg) is static and does not change throughout the life
+ * cv_opaque[1] (the wmesg) is static and does not change throughout the life
  * of the CV.
  */
 #define	CV_SLEEPQ(cv)		((sleepq_t *)(cv)->cv_opaque)
-#define	CV_WMESG(cv)		((const char *)(cv)->cv_opaque[2])
-#define	CV_SET_WMESG(cv, v) 	(cv)->cv_opaque[2] = __UNCONST(v)
+#define	CV_WMESG(cv)		((const char *)(cv)->cv_opaque[1])
+#define	CV_SET_WMESG(cv, v) 	(cv)->cv_opaque[1] = __UNCONST(v)
 
 #define	CV_DEBUG_P(cv)	(CV_WMESG(cv) != nodebug)
 #define	CV_RA		((uintptr_t)__builtin_return_address(0))
@@ -70,7 +69,7 @@ static void		cv_unsleep(lwp_t *, bool);
 static inline void	cv_wakeup_one(kcondvar_t *);
 static inline void	cv_wakeup_all(kcondvar_t *);
 
-static syncobj_t cv_syncobj = {
+syncobj_t cv_syncobj = {
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
 	.sobj_unsleep	= cv_unsleep,
 	.sobj_changepri	= sleepq_changepri,
@@ -210,10 +209,10 @@ cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
  *	Remove an LWP from the condition variable and sleep queue.  This
  *	is called when the LWP has not been awoken normally but instead
  *	interrupted: for example, when a signal is received.  Must be
- *	called with the LWP locked, and must return it unlocked.
+ *	called with the LWP locked.  Will unlock if "unlock" is true.
  */
 static void
-cv_unsleep(lwp_t *l, bool cleanup)
+cv_unsleep(lwp_t *l, bool unlock)
 {
 	kcondvar_t *cv __diagused;
 
@@ -224,7 +223,7 @@ cv_unsleep(lwp_t *l, bool cleanup)
 	KASSERT(cv_is_valid(cv));
 	KASSERT(cv_has_waiters(cv));
 
-	sleepq_unsleep(l, cleanup);
+	sleepq_unsleep(l, unlock);
 }
 
 /*
@@ -486,11 +485,18 @@ cv_signal(kcondvar_t *cv)
 	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
 	KASSERT(cv_is_valid(cv));
 
-	if (__predict_false(!TAILQ_EMPTY(CV_SLEEPQ(cv))))
+	if (__predict_false(!LIST_EMPTY(CV_SLEEPQ(cv))))
 		cv_wakeup_one(cv);
 }
 
-static inline void
+/*
+ * cv_wakeup_one:
+ *
+ *	Slow path for cv_signal().  Deliberately marked __noinline to
+ *	prevent the compiler pulling it in to cv_signal(), which adds
+ *	extra prologue and epilogue code.
+ */
+static __noinline void
 cv_wakeup_one(kcondvar_t *cv)
 {
 	sleepq_t *sq;
@@ -501,8 +507,8 @@ cv_wakeup_one(kcondvar_t *cv)
 
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
-	l = TAILQ_FIRST(sq);
-	if (l == NULL) {
+	l = LIST_FIRST(sq);
+	if (__predict_false(l == NULL)) {
 		mutex_spin_exit(mp);
 		return;
 	}
@@ -529,11 +535,18 @@ cv_broadcast(kcondvar_t *cv)
 	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
 	KASSERT(cv_is_valid(cv));
 
-	if (__predict_false(!TAILQ_EMPTY(CV_SLEEPQ(cv))))  
+	if (__predict_false(!LIST_EMPTY(CV_SLEEPQ(cv))))  
 		cv_wakeup_all(cv);
 }
 
-static inline void
+/*
+ * cv_wakeup_all:
+ *
+ *	Slow path for cv_broadcast().  Deliberately marked __noinline to
+ *	prevent the compiler pulling it in to cv_broadcast(), which adds
+ *	extra prologue and epilogue code.
+ */
+static __noinline void
 cv_wakeup_all(kcondvar_t *cv)
 {
 	sleepq_t *sq;
@@ -544,11 +557,11 @@ cv_wakeup_all(kcondvar_t *cv)
 
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
-	for (l = TAILQ_FIRST(sq); l != NULL; l = next) {
+	for (l = LIST_FIRST(sq); l != NULL; l = next) {
 		KASSERT(l->l_sleepq == sq);
 		KASSERT(l->l_mutex == mp);
 		KASSERT(l->l_wchan == cv);
-		next = TAILQ_NEXT(l, l_sleepchain);
+		next = LIST_NEXT(l, l_sleepchain);
 		CV_LOCKDEBUG_PROCESS(l, cv);
 		sleepq_remove(sq, l);
 	}
@@ -567,7 +580,7 @@ bool
 cv_has_waiters(kcondvar_t *cv)
 {
 
-	return !TAILQ_EMPTY(CV_SLEEPQ(cv));
+	return !LIST_EMPTY(CV_SLEEPQ(cv));
 }
 
 /*

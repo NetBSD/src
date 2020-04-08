@@ -24,8 +24,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "diagnostic.h"
 #include "tm.h"
 
-// Remove -nodevicelib from the command line if not needed
-#define X_NODEVLIB "%<nodevicelib"
+// Remove -nodevicelib and -nodevicespecs from the command line if not needed.
+#define X_NODEVLIB "%<nodevicelib %<nodevicespecs"
 
 static const char dir_separator_str[] = { DIR_SEPARATOR, 0 };
 
@@ -100,8 +100,8 @@ avr_devicespecs_file (int argc, const char **argv)
         return X_NODEVLIB;
       }
 
-  return concat ("-specs=device-specs", dir_separator_str, "specs-",
-                 mmcu, "%s"
+  return concat ("%{!nodevicespecs:-specs=device-specs", dir_separator_str,
+				 "specs-", mmcu, "%s} %<nodevicespecs"
 #if defined (WITH_AVRLIBC)
                  " %{mmcu=avr*:" X_NODEVLIB "} %{!mmcu=*:" X_NODEVLIB "}",
 #else

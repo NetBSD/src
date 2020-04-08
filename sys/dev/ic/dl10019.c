@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.12.40.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.12.40.2 2020/04/08 14:08:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.12.40.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.12.40.2 2020/04/08 14:08:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ dl10019_media_fini(struct dp8390_softc *sc)
 {
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	ifmedia_fini(&sc->sc_mii.mii_media);
 }
 
 int

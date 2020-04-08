@@ -1,4 +1,4 @@
-#	$NetBSD: LINKITSMART7688,v 1.6.6.1 2019/06/10 22:06:12 christos Exp $
+#	$NetBSD: LINKITSMART7688,v 1.6.6.2 2020/04/08 14:07:36 martin Exp $
 #
 # MediaTek MT7688
 #
@@ -81,7 +81,6 @@ file-system	KERNFS		# /kern
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
-#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 
@@ -242,7 +241,6 @@ pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #options	PPPOE_SERVER		# Enable PPPoE server via link0
 pseudo-device	sl			# Serial Line IP
-pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	tun			# network tunneling over tty

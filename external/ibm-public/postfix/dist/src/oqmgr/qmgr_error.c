@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_error.c,v 1.1.1.1 2009/06/23 10:08:50 tron Exp $	*/
+/*	$NetBSD: qmgr_error.c,v 1.1.1.1.50.1 2020/04/08 14:06:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -24,7 +24,7 @@
 /*
 /*	qmgr_error_queue() looks up an error queue for the specified
 /*	service and problem. The result is null if the queue is not
-/*	availabe.
+/*	available.
 /*
 /*	qmgr_error_nexthop() computes the next-hop information for
 /*	the specified problem. The result must be passed to myfree().

@@ -1,5 +1,5 @@
-/*	$NetBSD: myproposal.h,v 1.17.4.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: myproposal.h,v 1.58 2019/02/23 08:20:43 djm Exp $ */
+/*	$NetBSD: myproposal.h,v 1.17.4.2 2020/04/08 14:03:18 martin Exp $	*/
+/* $OpenBSD: myproposal.h,v 1.67 2020/01/24 00:28:57 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,8 +25,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef WITH_OPENSSL
-
 #define KEX_SERVER_KEX	\
 	"curve25519-sha256," \
 	"curve25519-sha256@libssh.org," \
@@ -36,8 +34,7 @@
 	"diffie-hellman-group-exchange-sha256," \
 	"diffie-hellman-group16-sha512," \
 	"diffie-hellman-group18-sha512," \
-	"diffie-hellman-group14-sha256," \
-	"diffie-hellman-group14-sha1"
+	"diffie-hellman-group14-sha256"
 
 #define KEX_CLIENT_KEX KEX_SERVER_KEX
 
@@ -45,14 +42,18 @@
 	"ecdsa-sha2-nistp256-cert-v01@openssh.com," \
 	"ecdsa-sha2-nistp384-cert-v01@openssh.com," \
 	"ecdsa-sha2-nistp521-cert-v01@openssh.com," \
+	"sk-ecdsa-sha2-nistp256-cert-v01@openssh.com," \
 	"ssh-ed25519-cert-v01@openssh.com," \
+	"sk-ssh-ed25519-cert-v01@openssh.com," \
 	"rsa-sha2-512-cert-v01@openssh.com," \
 	"rsa-sha2-256-cert-v01@openssh.com," \
 	"ssh-rsa-cert-v01@openssh.com," \
 	"ecdsa-sha2-nistp256," \
 	"ecdsa-sha2-nistp384," \
 	"ecdsa-sha2-nistp521," \
+	"sk-ecdsa-sha2-nistp256@openssh.com," \
 	"ssh-ed25519," \
+	"sk-ssh-ed25519@openssh.com," \
 	"rsa-sha2-512," \
 	"rsa-sha2-256," \
 	"ssh-rsa"
@@ -83,41 +84,11 @@
 	"ecdsa-sha2-nistp256," \
 	"ecdsa-sha2-nistp384," \
 	"ecdsa-sha2-nistp521," \
+	"sk-ecdsa-sha2-nistp256@openssh.com," \
 	"ssh-ed25519," \
+	"sk-ssh-ed25519@openssh.com," \
 	"rsa-sha2-512," \
-	"rsa-sha2-256," \
-	"ssh-rsa"
-
-#else /* WITH_OPENSSL */
-
-#define KEX_SERVER_KEX		\
-	"curve25519-sha256," \
-	"curve25519-sha256@libssh.org"
-#define	KEX_DEFAULT_PK_ALG	\
-	"ssh-ed25519-cert-v01@openssh.com," \
-	"ssh-ed25519"
-#define	KEX_SERVER_ENCRYPT \
-	"chacha20-poly1305@openssh.com," \
-	"aes128-ctr,aes192-ctr,aes256-ctr"
-#define	KEX_SERVER_MAC \
-	"umac-64-etm@openssh.com," \
-	"umac-128-etm@openssh.com," \
-	"hmac-sha2-256-etm@openssh.com," \
-	"hmac-sha2-512-etm@openssh.com," \
-	"hmac-sha1-etm@openssh.com," \
-	"umac-64@openssh.com," \
-	"umac-128@openssh.com," \
-	"hmac-sha2-256," \
-	"hmac-sha2-512," \
-	"hmac-sha1"
-
-#define KEX_CLIENT_KEX KEX_SERVER_KEX
-#define	KEX_CLIENT_ENCRYPT KEX_SERVER_ENCRYPT
-#define KEX_CLIENT_MAC KEX_SERVER_MAC
-
-#define	SSH_ALLOWED_CA_SIGALGS	"ssh-ed25519"
-
-#endif /* WITH_OPENSSL */
+	"rsa-sha2-256"
 
 #define KEX_CLIENT_ENCRYPT_INCLUDE_NONE KEX_CLIENT_ENCRYPT \
 	",none"

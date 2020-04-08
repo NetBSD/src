@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.1.28.1 2020/04/08 14:09:23 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,11 +53,7 @@ sysinst écrit un label de disque.
 }
 
 message ordering
-{L'ordre de la partition %c est erroné.  Modifier à nouveau ?}
-
-message emptypart
-{Il y a une partition valide %c après une (ou plusieurs) partition(s) vide(s).
-Veuillez modifier la table des partitions.}
+{L'ordre de la partition %s est erroné.  Modifier à nouveau ?}
 
 message set_kernel_1
 {Kernel (GENERIC)}

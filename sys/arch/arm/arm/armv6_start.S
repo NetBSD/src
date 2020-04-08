@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.12.4.2 2019/06/10 22:05:51 christos Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.12.4.3 2020/04/08 14:07:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -178,14 +178,6 @@ arm_bad_vtopdiff:
 1:	b	 1b
 ASEND(generic_start)
 
-generic_vstart:
-	VPRINTF("go\n\r")
-
-	/*
-	 * Jump to start in locore.S, which in turn will call initarm and main.
-	 */
-	b	start
-
 /*
  * Save the u-boot arguments (including FDT address) and the virtual to physical
  * offset.
@@ -265,8 +257,8 @@ arm_build_translation_table:
 	ldr	r0, =(L1_S_SIZE - 1)
 	bic	R_PA, R_PA, r0
 
-	// attribute to map kernel - run without L1_S_CACHEABLE
-	ldr     R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW)
+	// attribute to map kernel
+	ldr     R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)
 	bl	arm_boot_l1pt_init
 
 	/*
@@ -295,8 +287,8 @@ arm_build_translation_table:
 	adr	R_PA, generic_start	// PA of kernel
 	bic	R_PA, r2		// ...rounded down to L1_S boundary
 
-	// attribute to map kernel - run without L1_S_CACHEABLE
-	ldr     R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW)
+	// attribute to map kernel
+	ldr     R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)
 	bl	arm_boot_l1pt_entry
 
 #if defined(FDTBASE)
@@ -464,9 +456,30 @@ generic_startv7:
 	sub	r0, R_VTOPDIFF
 
 	// Return to virtual addess after the call to armv7_mmuinit
-	movw	lr, #:lower16:generic_vstart
-	movt	lr, #:upper16:generic_vstart
+	movw	lr, #:lower16:generic_vstartv7
+	movt	lr, #:upper16:generic_vstartv7
 	b	armv7_mmuinit
+
+generic_vstartv7:
+
+	/* r0 = &cpu_info_store[0] */
+	movw	r0, #:lower16:cpu_info_store
+	movt	r0, #:upper16:cpu_info_store
+
+	mrc	p15, 0, r1, c0, c0, 0	// MIDR get
+	str	r1, [r0, #CI_MIDR]
+	mrc	p15, 0, r1, c0, c0, 5	// MPIDR get
+	str	r1, [r0, #CI_MPIDR]
+
+	mov	r2, #0
+	bl	arm_cpu_topology_set
+
+	VPRINTF("go\n\r")
+
+	/*
+	 * Jump to start in locore.S, which in turn will call initarm and main.
+	 */
+	b	start
 
 	/* NOTREACHED */
 	.ltorg
@@ -491,8 +504,16 @@ generic_startv6:
 	ldr	r0, =TEMP_L1_TABLE
 	sub	r0, R_VTOPDIFF
 
-	ldr	lr, =generic_vstart
+	ldr	lr, =generic_vstartv6
 	b	armv6_mmuinit
+
+generic_vstartv6:
+	VPRINTF("go\n\r")
+
+	/*
+	 * Jump to start in locore.S, which in turn will call initarm and main.
+	 */
+	b	start
 
 	/* NOTREACHED */
 	.ltorg
@@ -851,20 +872,38 @@ armv7_mpcontinuation:
 
 	VPRINTF("go\n\r")
 
-	mov	r0, R_INDEX			// index into cpu_mpidr[] or cpu_number if not found
+	// index into cpu_mpidr[] or cpu_number if not found
+	mov	r0, R_INDEX
 	bl	cpu_init_secondary_processor
 
+	/* r0 = &cpu_info_store[0] */
+	movw	r0, #:lower16:cpu_info_store
+	movt	r0, #:upper16:cpu_info_store
+
+	mov	r4, #CPU_INFO_SIZE
+	mul	r5, r4, R_INDEX
+	add	r0, r5
+
+	mrc	p15, 0, r1, c0, c0, 0	// MIDR get
+	str	r1, [r0, #CI_MIDR]
+	mrc	p15, 0, r1, c0, c0, 5	// MPIDR get
+	str	r1, [r0, #CI_MPIDR]
+
+	mov	r2, #0
+	bl	arm_cpu_topology_set
+
 	/*
-	 * Wait for cpu_boot_secondary_processors when cpu_info has
-	 * been allocated, etc
+	 * Wait for cpu_boot_secondary_processors
 	 */
 
+	/* r6 = &arm_cpu_mbox[0] */
 	movw	r6, #:lower16:arm_cpu_mbox
 	movt	r6, #:upper16:arm_cpu_mbox
 
 	mov	r5, #1				// bitmask...
 	lsl	r5, R_INDEX			// ... for our cpu
 
+	/* wait for the mailbox start bit to become true */
 1:	dmb					// data memory barrier
 	ldr	r2, [r6]			// load mbox
 	tst	r2, r5				// is our bit set?
@@ -872,7 +911,7 @@ armv7_mpcontinuation:
 	beq	1b				//    no, and try again
 
 	movw	r0, #:lower16:cpu_info
-	movt	r0, #:upper16:cpu_info		// get pointer to cpu_infos
+	movt	r0, #:upper16:cpu_info		// get pointer to cpu_info
 	ldr	r5, [r0, R_INDEX, lsl #2]	// load our cpu_info
 	ldr	r6, [r5, #CI_IDLELWP]		// get the idlelwp
 	ldr	r7, [r6, #L_PCB]		// now get its pcb

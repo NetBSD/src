@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.5 2014/01/01 18:57:16 dsl Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.5.30.1 2020/04/08 14:07:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2014/01/01 18:57:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5.30.1 2020/04/08 14:07:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2014/01/01 18:57:16 dsl Exp $")
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
+#include <sys/compat_stub.h>
 
 #include <sh3/reg.h>
 
@@ -126,11 +127,13 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE, &cseg,
+	    chdr->c_seghdrsize), ENOSYS, error);
 	if (error)
 		return error;
 
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE, &md_core,
+	    sizeof(md_core)), ENOSYS, error);
+
+	return error;
 }

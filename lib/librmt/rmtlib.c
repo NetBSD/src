@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.26 2012/03/21 10:10:37 matt Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.26.32.1 2020/04/08 14:07:16 martin Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rmtlib.c,v 1.26 2012/03/21 10:10:37 matt Exp $");
+__RCSID("$NetBSD: rmtlib.c,v 1.26.32.1 2020/04/08 14:07:16 martin Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
@@ -500,7 +500,7 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
 	_DIAGASSERT(arg != NULL);
 
 /*
- *	MTIOCOP is the easy one. nothing is transfered in binary
+ *	MTIOCOP is the easy one. nothing is transferred in binary
  */
 
 	if (op == MTIOCTOP) {

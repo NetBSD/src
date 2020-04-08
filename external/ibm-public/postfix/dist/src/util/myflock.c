@@ -1,4 +1,4 @@
-/*	$NetBSD: myflock.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: myflock.c,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -16,7 +16,7 @@
 /*	myflock() locks or unlocks an entire open file.
 /*
 /*	In the case of a blocking request, a call that fails due to
-/*	forseeable transient problems is retried once per second.
+/*	foreseeable transient problems is retried once per second.
 /*
 /*	Arguments:
 /* .IP fd

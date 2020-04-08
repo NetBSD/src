@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.79.2.1 2019/06/10 22:06:56 christos Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.79.2.2 2020/04/08 14:07:59 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.79.2.1 2019/06/10 22:06:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.79.2.2 2020/04/08 14:07:59 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -860,7 +860,7 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCCACHESYNC:
 		if (sc->sc_cache_flush <= 0) {
 			if (sc->sc_cache_flush == 0) {
-				aprint_error_dev(sc->sc_dksc.sc_dev,
+				aprint_verbose_dev(sc->sc_dksc.sc_dev,
 				    "WARNING: cache flush not supported "
 				    "by backend\n");
 				sc->sc_cache_flush = -1;
@@ -930,7 +930,7 @@ xbddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 
 	DPRINTF(("xbddump(%d, %" PRId64 ", %p, %lu)\n", dev, blkno, va,
 	    (unsigned long)size));
-	return dk_dump(&sc->sc_dksc, dev, blkno, va, size);
+	return dk_dump(&sc->sc_dksc, dev, blkno, va, size, 0);
 }
 
 static int

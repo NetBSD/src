@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.124.14.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.124.14.2 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.124.14.1 2019/06/10 22:09:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.124.14.2 2020/04/08 14:09:03 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -279,7 +279,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 				return error;
 			}
 			if (ioflag & IO_SYNC) {
-				mutex_enter(ovp->v_interlock);
+				rw_enter(ovp->v_uobj.vmobjlock, RW_WRITER);
 				VOP_PUTPAGES(ovp,
 				    trunc_page(osize & fs->fs_bmask),
 				    round_page(eob), PGO_CLEANIT | PGO_SYNCIO |
@@ -331,7 +331,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		ubc_zerorange(&ovp->v_uobj, length, eoz - length,
 		    UBC_UNMAP_FLAG(ovp));
 		if (round_page(eoz) > round_page(length)) {
-			mutex_enter(ovp->v_interlock);
+			rw_enter(ovp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(ovp, round_page(length),
 			    round_page(eoz),
 			    PGO_CLEANIT | PGO_DEACTIVATE | PGO_JOURNALLOCKED |

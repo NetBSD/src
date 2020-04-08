@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.18.18.1 2019/06/10 22:08:05 christos Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.18.18.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.18.18.1 2019/06/10 22:08:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.18.18.2 2020/04/08 14:08:23 martin Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.18.18.1 2019/06/10 22:08:05 christos 
 #include <linux/pm_runtime.h>
 #include <linux/oom.h>
 
+#include <linux/nbsd-namespace.h>
 
 static int i915_getparam(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv)
@@ -138,11 +139,7 @@ static int i915_getparam(struct drm_device *dev, void *data,
 		value = 1;
 		break;
 	case I915_PARAM_HAS_SECURE_BATCHES:
-#ifdef __NetBSD__
-		value = DRM_SUSER();
-#else
-		value = capable(CAP_SYS_ADMIN);
-#endif
+		value = HAS_SECURE_BATCHES(dev_priv) && capable(CAP_SYS_ADMIN);
 		break;
 	case I915_PARAM_HAS_PINNED_BATCHES:
 		value = 1;
@@ -154,7 +151,7 @@ static int i915_getparam(struct drm_device *dev, void *data,
 		value = 1;
 		break;
 	case I915_PARAM_CMD_PARSER_VERSION:
-		value = i915_cmd_parser_get_version();
+		value = i915_cmd_parser_get_version(dev_priv);
 		break;
 	case I915_PARAM_HAS_COHERENT_PHYS_GTT:
 		value = 1;
@@ -792,7 +789,7 @@ static void intel_device_info_runtime_init(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_device_info *info;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	info = (struct intel_device_info *)&dev_priv->info;
 
@@ -915,25 +912,14 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 
 	spin_lock_init(&dev_priv->irq_lock);
 	spin_lock_init(&dev_priv->gpu_error.lock);
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->backlight_lock);
-#else
 	mutex_init(&dev_priv->backlight_lock);
-#endif
 	spin_lock_init(&dev_priv->uncore.lock);
 	spin_lock_init(&dev_priv->mm.object_stat_lock);
 	spin_lock_init(&dev_priv->mmio_flip_lock);
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->sb_lock);
-	linux_mutex_init(&dev_priv->modeset_restore_lock);
-	linux_mutex_init(&dev_priv->csr_lock);
-	linux_mutex_init(&dev_priv->av_mutex);
-#else
 	mutex_init(&dev_priv->sb_lock);
 	mutex_init(&dev_priv->modeset_restore_lock);
 	mutex_init(&dev_priv->csr_lock);
 	mutex_init(&dev_priv->av_mutex);
-#endif
 
 	intel_pm_setup(dev);
 
@@ -1156,13 +1142,11 @@ out_gem_unload:
 	WARN_ON(unregister_oom_notifier(&dev_priv->mm.oom_notifier));
 	unregister_shrinker(&dev_priv->mm.shrinker);
 	/* XXX i915_gem_unload */
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev_priv->fb_tracking.lock);
+	mutex_destroy(&dev_priv->fb_tracking.lock);
 	DRM_DESTROY_WAITQUEUE(&dev_priv->pending_flip_queue);
 	spin_lock_destroy(&dev_priv->pending_flip_lock);
 	DRM_DESTROY_WAITQUEUE(&dev_priv->gpu_error.reset_queue);
 	spin_lock_destroy(&dev_priv->gpu_error.reset_lock);
-#endif
 	kmem_cache_destroy(dev_priv->requests);
 	kmem_cache_destroy(dev_priv->vmas);
 	kmem_cache_destroy(dev_priv->objects);
@@ -1196,23 +1180,19 @@ put_bridge:
 	pci_dev_put(dev_priv->bridge_dev);
 free_priv:
 	/* XXX intel_pm_fini */
-#ifdef __NetBSD__
 	spin_lock_destroy(&dev_priv->rps.client_lock);
-	linux_mutex_destroy(&dev_priv->rps.hw_lock);
-#endif
+	mutex_destroy(&dev_priv->rps.hw_lock);
 	/* XXX end intel_pm_fini */
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev_priv->av_mutex);
-	linux_mutex_destroy(&dev_priv->csr_lock);
-	linux_mutex_destroy(&dev_priv->modeset_restore_lock);
-	linux_mutex_destroy(&dev_priv->sb_lock);
+	mutex_destroy(&dev_priv->av_mutex);
+	mutex_destroy(&dev_priv->csr_lock);
+	mutex_destroy(&dev_priv->modeset_restore_lock);
+	mutex_destroy(&dev_priv->sb_lock);
 	spin_lock_destroy(&dev_priv->mmio_flip_lock);
 	spin_lock_destroy(&dev_priv->mm.object_stat_lock);
 	spin_lock_destroy(&dev_priv->uncore.lock);
-	linux_mutex_destroy(&dev_priv->backlight_lock);
+	mutex_destroy(&dev_priv->backlight_lock);
 	spin_lock_destroy(&dev_priv->gpu_error.lock);
 	spin_lock_destroy(&dev_priv->irq_lock);
-#endif
 	kfree(dev_priv);
 	return ret;
 }
@@ -1305,22 +1285,18 @@ int i915_driver_unload(struct drm_device *dev)
 		pci_iounmap(dev->pdev, dev_priv->regs);
 
 	/* XXX i915_gem_unload */
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev_priv->fb_tracking.lock);
+	mutex_destroy(&dev_priv->fb_tracking.lock);
 	DRM_DESTROY_WAITQUEUE(&dev_priv->pending_flip_queue);
 	spin_lock_destroy(&dev_priv->pending_flip_lock);
 	DRM_DESTROY_WAITQUEUE(&dev_priv->gpu_error.reset_queue);
 	spin_lock_destroy(&dev_priv->gpu_error.reset_lock);
-#endif
 	/* XXX end i915_gem_unload */
 	kmem_cache_destroy(dev_priv->requests);
 	kmem_cache_destroy(dev_priv->vmas);
 	kmem_cache_destroy(dev_priv->objects);
 	/* XXX intel_pm_fini */
-#ifdef __NetBSD__
 	spin_lock_destroy(&dev_priv->rps.client_lock);
-	linux_mutex_destroy(&dev_priv->rps.hw_lock);
-#endif
+	mutex_destroy(&dev_priv->rps.hw_lock);
 	/* XXX end intel_pm_fini */
 	pci_dev_put(dev_priv->bridge_dev);
 	kfree(dev_priv);

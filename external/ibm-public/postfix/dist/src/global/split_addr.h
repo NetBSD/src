@@ -1,4 +1,4 @@
-/*	$NetBSD: split_addr.h,v 1.1.1.2 2014/07/06 19:27:52 tron Exp $	*/
+/*	$NetBSD: split_addr.h,v 1.1.1.2.24.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _SPLIT_ADDR_H_INCLUDED_
 #define _SPLIT_ADDR_H_INCLUDED_
@@ -15,7 +15,11 @@
 
  /* External interface. */
 
-extern char *split_addr(char *, const char *);
+extern char *split_addr_internal(char *, const char *);
+
+ /* Legacy API. */
+
+#define split_addr	split_addr_internal
 
 /* LICENSE
 /* .ad
@@ -26,6 +30,11 @@ extern char *split_addr(char *, const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

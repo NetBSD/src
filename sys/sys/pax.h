@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.26 2017/05/06 21:34:52 joerg Exp $ */
+/* $NetBSD: pax.h,v 1.26.10.1 2020/04/08 14:09:03 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -52,6 +52,8 @@ struct vmspace;
 #ifdef PAX_ASLR_DEBUG
 extern int pax_aslr_debug;
 #endif
+
+void	pax_segvguard_cleanup(struct vnode *);
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 void pax_init(void);

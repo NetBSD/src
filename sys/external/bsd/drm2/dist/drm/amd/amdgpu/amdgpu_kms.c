@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_kms.c,v 1.3.6.2 2019/06/10 22:07:58 christos Exp $	*/
+/*	$NetBSD: amdgpu_kms.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_kms.c,v 1.3.6.2 2019/06/10 22:07:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_kms.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <drm/drmP.h>
 #include "amdgpu.h"
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_kms.c,v 1.3.6.2 2019/06/10 22:07:58 christos 
 #include <linux/slab.h>
 #include <linux/pm_runtime.h>
 #include "amdgpu_amdkfd.h"
+
+#include <linux/nbsd-namespace.h>
 
 #if defined(CONFIG_VGA_SWITCHEROO)
 bool amdgpu_has_atpx(void);
@@ -535,11 +537,7 @@ int amdgpu_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 	if (r)
 		goto error_free;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&fpriv->bo_list_lock);
-#else
 	mutex_init(&fpriv->bo_list_lock);
-#endif
 	idr_init(&fpriv->bo_list_handles);
 
 	amdgpu_ctx_mgr_init(&fpriv->ctx_mgr);
@@ -583,11 +581,7 @@ void amdgpu_driver_postclose_kms(struct drm_device *dev,
 		amdgpu_bo_list_free(list);
 
 	idr_destroy(&fpriv->bo_list_handles);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&fpriv->bo_list_lock);
-#else
 	mutex_destroy(&fpriv->bo_list_lock);
-#endif
 
 	kfree(fpriv);
 	file_priv->driver_priv = NULL;

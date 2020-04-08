@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.115 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.115.2.1 2020/04/08 14:08:58 martin Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.115 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.115.2.1 2020/04/08 14:08:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,6 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 	switch (ifp->if_type) {
 	/* IEEE802/EUI64 cases - what others? */
 	case IFT_ETHER:
-	case IFT_FDDI:
 	case IFT_ATM:
 	case IFT_IEEE1394:
 	case IFT_IEEE80211:

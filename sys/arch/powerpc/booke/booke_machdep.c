@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.25.16.1 2019/06/10 22:06:38 christos Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.25.16.2 2020/04/08 14:07:48 martin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.25.16.1 2019/06/10 22:06:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.25.16.2 2020/04/08 14:07:48 martin Exp $");
 
 #include "opt_modular.h"
 
@@ -191,7 +191,7 @@ booke_cpu_startup(const char *model)
 	 * pool pages.
 	 */
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 
 	/*
@@ -515,7 +515,7 @@ cpu_boot_secondary_processors(void)
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		/*
-		 * Skip this CPU if it didn't sucessfully hatch.
+		 * Skip this CPU if it didn't successfully hatch.
 		 */
 		if (!kcpuset_isset(csi->cpus_hatched, cpu_index(ci)))
 			continue;

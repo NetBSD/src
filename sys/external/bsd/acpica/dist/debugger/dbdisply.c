@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -605,7 +605,6 @@ AcpiDbDisplayResults (
         return;
     }
 
-    ObjDesc = WalkState->MethodDesc;
     Node  = WalkState->MethodNode;
 
     if (WalkState->Results)
@@ -665,7 +664,6 @@ AcpiDbDisplayCallingTree (
         return;
     }
 
-    Node = WalkState->MethodNode;
     AcpiOsPrintf ("Current Control Method Call Tree\n");
 
     while (WalkState)

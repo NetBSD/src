@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.69.4.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: TS7200,v 1.69.4.2 2020/04/08 14:07:34 martin Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -355,9 +355,6 @@ uhub*	at uhub? port ?
 #uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 #ucom*	at uvscom? portno ?
 #atu*	at uhub? port ?		# Atmel AT76C50XX 802.11b adapter
-
-# Diamond Multimedia Rio 500
-# urio*	at uhub? port ?
 
 # USB Handspring Visor
 # uvisor*	at uhub? port ?

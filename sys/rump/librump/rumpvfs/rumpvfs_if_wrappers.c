@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.15 2016/01/26 23:25:41 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.15.18.1 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
@@ -140,6 +140,15 @@ rump_pub_vp_interlock(struct vnode *arg1)
 
 	rump_schedule();
 	rump_vp_interlock(arg1);
+	rump_unschedule();
+}
+
+void
+rump_pub_vp_vmobjlock(struct vnode *arg1, int arg2)
+{
+
+	rump_schedule();
+	rump_vp_vmobjlock(arg1, arg2);
 	rump_unschedule();
 }
 

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.190.2.1 2019/06/10 21:42:39 christos Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.190.2.2 2020/04/08 14:03:55 martin Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -180,7 +180,6 @@
 #	uhid*	USB generic HID devices
 #	ulpt*	USB printer devices
 #	ugen*	USB generic devices
-#	urio*	USB Diamond Rio 500 devices
 #	uscanner*	USB scanners
 #	ttyHS*	USB Option N.V. modems
 #	ttyU*	USB modems
@@ -256,7 +255,6 @@
 #	mly*	Mylex AcceleRAID/eXtremeRAID control interface
 #	np*	UNIBUS Ethernet co-processor interface, for downloading.
 #	npf	NPF packet filter
-#	nsmb*	SMB requester
 #	nvme*	Non-Volatile Memory Host Controller Interface device driver
 #	nvme*ns* Non-Volatile Memory namespace
 #	nvmm	NetBSD Virtual Machine Monitor
@@ -266,6 +264,7 @@
 #	pf	PF packet filter
 #	putter	Pass-to-Userspace Transporter
 #	px*	PixelStamp Xserver access
+#	qemufwcfg* QEMU Firmware Configuration
 #	radio*	radio devices
 #	random	Random number generator
 #	rtc*	RealTimeClock
@@ -813,8 +812,7 @@ all)
 	makedev dk16 dk17 dk18 dk19 dk20 dk21 dk22 dk23
 	makedev dk24 dk25 dk26 dk27 dk28 dk29 dk30 dk31
 	makedev ccd0 ccd1 ccd2 ccd3
-	makedev cgd0 cgd1 cgd2 cgd3
-	makedev filemon
+	makedev cgd0 cgd1 cgd2 cgd3 cgd4 cgd5 cgd6 cgd7
 	makedev fss0 fss1 fss2 fss3
 	makedev md0 md1
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
@@ -844,6 +842,8 @@ all)
 	makedev veriexec
 	makedev autofs
 	makedev fw0 fw1 fw2 fw3
+	makedev ipmi0
+	makedev qemufwcfg
 	makedev local # do this last
 	;;
 
@@ -921,7 +921,6 @@ usbs)
 	makedev ttyU0 ttyU1 ttyU2 ttyU3 ttyU4 ttyU5 ttyU6 ttyU7
 	makedev ttyY0 ttyY1
 	makedev ttyHS0
-	makedev urio0
 	makedev uscanner0 uscanner1
 	makedev utoppy0 utoppy1
 	makedev ugen0 ugen1 ugen2 ugen3
@@ -967,11 +966,6 @@ ulpt[0-9]*)
 	unit=${i#ulpt}
 	mkdev ulpt$unit c %ulpt_chr% $unit
 	mkdev ulpn$unit c %ulpt_chr% $(($unit + 64))
-	;;
-
-urio[0-9]*)
-	unit=${i#urio}
-	mkdev urio$unit c %urio_chr% $unit 666
 	;;
 
 uscanner[0-9]*)
@@ -1770,15 +1764,6 @@ clockctl)
 	mkdev clockctl c %clockctl_chr% 0 660 $g_ntpd
 	;;
 
-nsmb)
-	makedev nsmb0 nsmb1 nsmb2 nsmb3
-	;;
-
-nsmb[0-9]*)
-	unit=${i#nsmb}
-	mkdev nsmb$unit c %nsmb_chr% $unit 644
-	;;
-
 kttcp)
 	mkdev kttcp c %kttcp_chr% 0
 	;;
@@ -2167,10 +2152,6 @@ tpm)
 dtrace)
 	makedir dtrace 755
 	mkdev dtrace/dtrace c %dtrace_chr% 0 600
-	;;
-
-filemon)
-	mkdev filemon c %filemon_chr% 0 666
 	;;
 
 fw[0-9]*)

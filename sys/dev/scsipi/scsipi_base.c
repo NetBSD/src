@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.178.6.1 2019/06/10 22:07:32 christos Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.178.6.2 2020/04/08 14:08:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.178.6.1 2019/06/10 22:07:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.178.6.2 2020/04/08 14:08:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.178.6.1 2019/06/10 22:07:32 christ
 #include <sys/hash.h>
 #include <sys/atomic.h>
 
+#include <dev/scsipi/scsi_sdt.h>
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_disk.h>
@@ -61,6 +62,38 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.178.6.1 2019/06/10 22:07:32 christ
 #include <dev/scsipi/scsi_message.h>
 
 #include <machine/param.h>
+
+SDT_PROVIDER_DEFINE(scsi);
+
+SDT_PROBE_DEFINE3(scsi, base, tag, get,
+    "struct scsipi_xfer *"/*xs*/, "uint8_t"/*tag*/, "uint8_t"/*type*/);
+SDT_PROBE_DEFINE3(scsi, base, tag, put,
+    "struct scsipi_xfer *"/*xs*/, "uint8_t"/*tag*/, "uint8_t"/*type*/);
+
+SDT_PROBE_DEFINE3(scsi, base, adapter, request__start,
+    "struct scsipi_channel *"/*chan*/,
+    "scsipi_adapter_req_t"/*req*/,
+    "void *"/*arg*/);
+SDT_PROBE_DEFINE3(scsi, base, adapter, request__done,
+    "struct scsipi_channel *"/*chan*/,
+    "scsipi_adapter_req_t"/*req*/,
+    "void *"/*arg*/);
+
+SDT_PROBE_DEFINE1(scsi, base, queue, batch__start,
+    "struct scsipi_channel *"/*chan*/);
+SDT_PROBE_DEFINE2(scsi, base, queue, run,
+    "struct scsipi_channel *"/*chan*/,
+    "struct scsipi_xfer *"/*xs*/);
+SDT_PROBE_DEFINE1(scsi, base, queue, batch__done,
+    "struct scsipi_channel *"/*chan*/);
+
+SDT_PROBE_DEFINE1(scsi, base, xfer, execute,  "struct scsipi_xfer *"/*xs*/);
+SDT_PROBE_DEFINE1(scsi, base, xfer, enqueue,  "struct scsipi_xfer *"/*xs*/);
+SDT_PROBE_DEFINE1(scsi, base, xfer, done,  "struct scsipi_xfer *"/*xs*/);
+SDT_PROBE_DEFINE1(scsi, base, xfer, redone,  "struct scsipi_xfer *"/*xs*/);
+SDT_PROBE_DEFINE1(scsi, base, xfer, complete,  "struct scsipi_xfer *"/*xs*/);
+SDT_PROBE_DEFINE1(scsi, base, xfer, restart,  "struct scsipi_xfer *"/*xs*/);
+SDT_PROBE_DEFINE1(scsi, base, xfer, free,  "struct scsipi_xfer *"/*xs*/);
 
 static int	scsipi_complete(struct scsipi_xfer *);
 static void	scsipi_request_sense(struct scsipi_xfer *);
@@ -378,6 +411,8 @@ scsipi_get_tag(struct scsipi_xfer *xs)
 	}
 
 	xs->xs_tag_id = tag;
+	SDT_PROBE3(scsi, base, tag, get,
+	    xs, xs->xs_tag_id, xs->xs_tag_type);
 }
 
 /*
@@ -394,6 +429,9 @@ scsipi_put_tag(struct scsipi_xfer *xs)
 	int word, bit;
 
 	KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
+
+	SDT_PROBE3(scsi, base, tag, put,
+	    xs, xs->xs_tag_id, xs->xs_tag_type);
 
 	word = xs->xs_tag_id >> 5;
 	bit = xs->xs_tag_id & 0x1f;
@@ -541,6 +579,7 @@ scsipi_put_xs(struct scsipi_xfer *xs)
 	struct scsipi_periph *periph = xs->xs_periph;
 	int flags = xs->xs_control;
 
+	SDT_PROBE1(scsi, base, xfer, free,  xs);
 	SC_DEBUG(periph, SCSIPI_DB3, ("scsipi_free_xs\n"));
 	KASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
 
@@ -1567,6 +1606,7 @@ scsipi_done(struct scsipi_xfer *xs)
 #endif
 
 	mutex_enter(chan_mtx(chan));
+	SDT_PROBE1(scsi, base, xfer, done,  xs);
 	/*
 	 * The resource this command was using is now free.
 	 */
@@ -1581,6 +1621,7 @@ scsipi_done(struct scsipi_xfer *xs)
 		 * that this won't ever happen (and can be turned into
 		 * a KASSERT().
 		 */
+		SDT_PROBE1(scsi, base, xfer, redone,  xs);
 		mutex_exit(chan_mtx(chan));
 		goto out;
 	}
@@ -1711,6 +1752,8 @@ scsipi_complete(struct scsipi_xfer *xs)
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
 	int error;
+
+	SDT_PROBE1(scsi, base, xfer, complete,  xs);
 
 #ifdef DIAGNOSTIC
 	if ((xs->xs_control & XS_CTL_ASYNC) != 0 && xs->bp == NULL)
@@ -1880,6 +1923,7 @@ scsipi_complete(struct scsipi_xfer *xs)
 
 	mutex_enter(chan_mtx(chan));
 	if (error == ERESTART) {
+		SDT_PROBE1(scsi, base, xfer, restart,  xs);
 		/*
 		 * If we get here, the periph has been thawed and frozen
 		 * again if we had to issue recovery commands.  Alternatively,
@@ -1989,6 +2033,8 @@ scsipi_enqueue(struct scsipi_xfer *xs)
 	struct scsipi_channel *chan = xs->xs_periph->periph_channel;
 	struct scsipi_xfer *qxs;
 
+	SDT_PROBE1(scsi, base, xfer, enqueue,  xs);
+
 	/*
 	 * If the xfer is to be polled, and there are already jobs on
 	 * the queue, we can't proceed.
@@ -2050,6 +2096,7 @@ scsipi_run_queue(struct scsipi_channel *chan)
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
 
+	SDT_PROBE1(scsi, base, queue, batch__start,  chan);
 	for (;;) {
 		mutex_enter(chan_mtx(chan));
 
@@ -2059,7 +2106,7 @@ scsipi_run_queue(struct scsipi_channel *chan)
 		 */
 		if (chan->chan_qfreeze != 0) {
 			mutex_exit(chan_mtx(chan));
-			return;
+			break;
 		}
 
 		/*
@@ -2089,7 +2136,7 @@ scsipi_run_queue(struct scsipi_channel *chan)
 		 * Can't find any work to do right now.
 		 */
 		mutex_exit(chan_mtx(chan));
-		return;
+		break;
 
  got_one:
 		/*
@@ -2119,7 +2166,7 @@ scsipi_run_queue(struct scsipi_channel *chan)
 				 * XXX: We should be able to note that
 				 * XXX: that resources are needed here!
 				 */
-				return;
+				break;
 			}
 			/*
 			 * scsipi_grow_resources() allocated the resource
@@ -2143,11 +2190,10 @@ scsipi_run_queue(struct scsipi_channel *chan)
 		periph->periph_sent++;
 		mutex_exit(chan_mtx(chan));
 
+		SDT_PROBE2(scsi, base, queue, run,  chan, xs);
 		scsipi_adapter_request(chan, ADAPTER_REQ_RUN_XFER, xs);
 	}
-#ifdef DIAGNOSTIC
-	panic("scsipi_run_queue: impossible");
-#endif
+	SDT_PROBE1(scsi, base, queue, batch__done,  chan);
 }
 
 /*
@@ -2172,6 +2218,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	xs->error = XS_NOERROR;
 	xs->resid = xs->datalen;
 	xs->status = SCSI_OK;
+	SDT_PROBE1(scsi, base, xfer, execute,  xs);
 
 #ifdef SCSIPI_DEBUG
 	if (xs->xs_periph->periph_dbflags & SCSIPI_DB3) {
@@ -2791,7 +2838,9 @@ scsipi_adapter_request(struct scsipi_channel *chan,
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 
 	scsipi_adapter_lock(adapt);
+	SDT_PROBE3(scsi, base, adapter, request__start,  chan, req, arg);
 	(adapt->adapt_request)(chan, req, arg);
+	SDT_PROBE3(scsi, base, adapter, request__done,  chan, req, arg);
 	scsipi_adapter_unlock(adapt);
 }
 

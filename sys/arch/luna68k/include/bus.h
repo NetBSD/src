@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 2012/05/07 18:16:38 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.13.40.1 2020/04/08 14:07:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -343,7 +343,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplimented !!!
+			!!! bus_space_write_multi_8 unimplemented !!!
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gem.c,v 1.4.6.2 2019/06/10 22:07:58 christos Exp $	*/
+/*	$NetBSD: amdgpu_gem.c,v 1.4.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,12 +28,14 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.4.6.2 2019/06/10 22:07:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.4.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/ktime.h>
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
+
+#include <linux/nbsd-namespace.h>
 
 void amdgpu_gem_object_free(struct drm_gem_object *gobj)
 {
@@ -226,15 +228,6 @@ error_unlock:
 int amdgpu_gem_userptr_ioctl(struct drm_device *dev, void *data,
 			     struct drm_file *filp)
 {
-#ifdef __NetBSD__
-	/*
-	 * XXX Too painful to contemplate for now.  If you add this,
-	 * make sure to update amdgpu_cs.c amdgpu_cs_parser_relocs
-	 * (need_mmap_lock), and anything else using
-	 * amdgpu_ttm_tt_has_userptr.
-	 */
-	return -ENODEV;
-#else
 	struct amdgpu_device *adev = dev->dev_private;
 	struct drm_amdgpu_gem_userptr *args = data;
 	struct drm_gem_object *gobj;
@@ -279,17 +272,29 @@ int amdgpu_gem_userptr_ioctl(struct drm_device *dev, void *data,
 	}
 
 	if (args->flags & AMDGPU_GEM_USERPTR_VALIDATE) {
+#ifdef __NetBSD__
+		vm_map_lock_read(&curproc->p_vmspace->vm_map);
+#else
 		down_read(&current->mm->mmap_sem);
+#endif
 		r = amdgpu_bo_reserve(bo, true);
 		if (r) {
+#ifdef __NetBSD__
+			vm_map_unlock_read(&curproc->p_vmspace->vm_map);
+#else
 			up_read(&current->mm->mmap_sem);
+#endif
 			goto release_object;
 		}
 
 		amdgpu_ttm_placement_from_domain(bo, AMDGPU_GEM_DOMAIN_GTT);
 		r = ttm_bo_validate(&bo->tbo, &bo->placement, true, false);
 		amdgpu_bo_unreserve(bo);
+#ifdef __NetBSD__
+		vm_map_unlock_read(&curproc->p_vmspace->vm_map);
+#else
 		up_read(&current->mm->mmap_sem);
+#endif
 		if (r)
 			goto release_object;
 	}
@@ -310,7 +315,6 @@ handle_lockup:
 	r = amdgpu_gem_handle_lockup(adev, r);
 
 	return r;
-#endif
 }
 
 int amdgpu_mode_dumb_mmap(struct drm_file *filp,
@@ -687,11 +691,7 @@ int amdgpu_mode_dumb_create(struct drm_file *file_priv,
 
 	args->pitch = amdgpu_align_pitch(adev, args->width, args->bpp, 0) * ((args->bpp + 1) / 8);
 	args->size = (u64)args->pitch * args->height;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	args->size = round_up(args->size, PAGE_SIZE);
-#else
 	args->size = ALIGN(args->size, PAGE_SIZE);
-#endif
 
 	r = amdgpu_gem_object_create(adev, args->size, 0,
 				     AMDGPU_GEM_DOMAIN_VRAM,

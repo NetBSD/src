@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_syslog.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: msg_syslog.c,v 1.1.1.1.50.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -13,18 +13,26 @@
 /*	int	log_opt;
 /*	int	facility;
 /*
-/*	int     msg_syslog_facility(facility_name)
+/*	int     msg_syslog_set_facility(facility_name)
 /*	const char *facility_name;
+/*
+/*	void	msg_syslog_disable(void)
 /* DESCRIPTION
 /*	This module implements support to report msg(3) diagnostics
 /*	via the syslog daemon.
 /*
 /*	msg_syslog_init() is a wrapper around the openlog(3) routine
 /*	that directs subsequent msg(3) output to the syslog daemon.
+/*	This function may also be called to update msg_syslog
+/*	settings. If the program name appears to contain a process ID
+/*	then msg_syslog_init will attempt to suppress its own PID.
 /*
-/*	msg_syslog_facility() is a helper routine that overrides the
+/*	msg_syslog_set_facility() is a helper routine that overrides the
 /*	logging facility that is specified with msg_syslog_init().
 /*	The result is zero in case of an unknown facility name.
+/*
+/*	msg_syslog_disable() turns off the msg_syslog client,
+/*	until a subsequent msg_syslog_init() call.
 /* SEE ALSO
 /*	syslog(3) syslog library
 /*	msg(3)	diagnostics module
@@ -41,6 +49,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System libraries. */
@@ -61,6 +74,7 @@
 #include "msg_output.h"
 #include "msg_syslog.h"
 #include "safe.h"
+#include <mymalloc.h>
 
  /*
   * Stay a little below the 2048-byte limit of older syslog()
@@ -140,7 +154,8 @@ static struct facility_list facility_list[] = {
     0,
 };
 
-static int syslog_facility;
+static int msg_syslog_facility;
+static int msg_syslog_enable;
 
 /* msg_syslog_print - log info to syslog daemon */
 
@@ -153,14 +168,17 @@ static void msg_syslog_print(int level, const char *text)
 	"info", "warning", "error", "fatal", "panic",
     };
 
+    if (msg_syslog_enable == 0)
+	return;
+
     if (level < 0 || level >= (int) (sizeof(log_level) / sizeof(log_level[0])))
 	msg_panic("msg_syslog_print: invalid severity level: %d", level);
 
     if (level == MSG_INFO) {
-	syslog(syslog_facility | log_level[level], "%.*s",
+	syslog(msg_syslog_facility | log_level[level], "%.*s",
 	       (int) MSG_SYSLOG_RECLEN, text);
     } else {
-	syslog(syslog_facility | log_level[level], "%s: %.*s",
+	syslog(msg_syslog_facility | log_level[level], "%s: %.*s",
 	       severity_name[level], (int) MSG_SYSLOG_RECLEN, text);
     }
 }
@@ -170,34 +188,52 @@ static void msg_syslog_print(int level, const char *text)
 void    msg_syslog_init(const char *name, int logopt, int facility)
 {
     static int first_call = 1;
+    extern char **environ;
 
     /*
      * XXX If this program is set-gid, then TZ must not be trusted. This
      * scrubbing code is in the wrong place.
      */
-    if (unsafe())
-	putenv("TZ=UTC");
-    tzset();
+    if (first_call) {
+	if (unsafe())
+	    while (getenv("TZ"))		/* There may be multiple. */
+		if (unsetenv("TZ") < 0) {	/* Desperate measures. */
+		    environ[0] = 0;
+		    msg_fatal("unsetenv: %m");
+		}
+	tzset();
+    }
+    /* Hack for internal logging forwarding after config change. */
+    if (strchr(name, '[') != 0)
+	logopt &= ~LOG_PID;
     openlog(name, LOG_NDELAY | logopt, facility);
     if (first_call) {
 	first_call = 0;
 	msg_output(msg_syslog_print);
     }
+    msg_syslog_enable = 1;
 }
 
-/* msg_syslog_facility - set logging facility by name */
+/* msg_syslog_set_facility - set logging facility by name */
 
-int     msg_syslog_facility(const char *facility_name)
+int     msg_syslog_set_facility(const char *facility_name)
 {
     struct facility_list *fnp;
 
     for (fnp = facility_list; fnp->name; ++fnp) {
 	if (!strcmp(fnp->name, facility_name)) {
-	    syslog_facility = fnp->facility;
+	    msg_syslog_facility = fnp->facility;
 	    return (1);
 	}
     }
     return 0;
+}
+
+/* msg_syslog_disable - disable the msg_syslog client */
+
+void    msg_syslog_disable(void)
+{
+    msg_syslog_enable = 0;
 }
 
 #ifdef TEST

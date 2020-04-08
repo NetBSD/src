@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/06 23:45:26 he Exp $
+#	$NetBSD: Makefile,v 1.4.46.1 2020/04/08 14:09:19 martin Exp $
 
 PROG=	altqstat
 SRCS=	altqstat.c quip_client.c qdisc_conf.c qdisc_cbq.c qdisc_hfsc.c \
@@ -9,5 +9,7 @@ CPPFLAGS+= -DALTQ -I${.CURDIR}/../libaltq
 
 DPADD+=	${LIBCURSES} ${LIBTERMINFO} ${LIBMATH}
 LDADD+=	-lcurses -lterminfo -lm
+
+COPTS.quip_client.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

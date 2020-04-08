@@ -1,4 +1,4 @@
-/*	$NetBSD: nimloc_32.c,v 1.4.2.2 2019/06/10 22:04:39 christos Exp $	*/
+/*	$NetBSD: nimloc_32.c,v 1.4.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -114,7 +114,7 @@ fromstruct_in_nimloc(ARGS_FROMSTRUCT) {
 
 	REQUIRE(type == dns_rdatatype_nimloc);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
+	REQUIRE(nimloc != NULL);
 	REQUIRE(nimloc->common.rdtype == type);
 	REQUIRE(nimloc->common.rdclass == rdclass);
 	REQUIRE(nimloc->nimloc != NULL || nimloc->nimloc_len == 0);
@@ -132,7 +132,7 @@ tostruct_in_nimloc(ARGS_TOSTRUCT) {
 
 	REQUIRE(rdata->type == dns_rdatatype_nimloc);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
+	REQUIRE(nimloc != NULL);
 	REQUIRE(rdata->length != 0);
 
 	nimloc->common.rdclass = rdata->rdclass;
@@ -154,7 +154,7 @@ static inline void
 freestruct_in_nimloc(ARGS_FREESTRUCT) {
 	dns_rdata_in_nimloc_t *nimloc = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(nimloc != NULL);
 	REQUIRE(nimloc->common.rdclass == dns_rdataclass_in);
 	REQUIRE(nimloc->common.rdtype == dns_rdatatype_nimloc);
 

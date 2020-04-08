@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.45 2015/10/03 08:30:13 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.45.16.1 2020/04/08 14:07:18 martin Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -48,7 +48,6 @@
 #include <util.h>
 
 #include "bufcache.h"
-#include "vnode.h"
 #include "lfs_user.h"
 
 #include "fsck.h"
@@ -307,7 +306,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	 */
 	if (lfs_dino_getnlink(fs, dp) <= 0) {
 		LFS_IENTRY(ifp, fs, inumber, bp);
-		if (lfs_if_getnextfree(fs, ifp) == LFS_ORPHAN_NEXTFREE) {
+		if (lfs_if_getnextfree(fs, ifp) == LFS_ORPHAN_NEXTFREE(fs)) {
 			statemap[inumber] = (mode == LFS_IFDIR ? DCLEAR : FCLEAR);
 			/* Add this to our list of orphans */
 			zlnp = emalloc(sizeof *zlnp);

@@ -10,7 +10,7 @@ _kdc_add_KRB5SignedPath (
 	krb5_kdc_configuration */*config*/,
 	hdb_entry_ex */*krbtgt*/,
 	krb5_enctype /*enctype*/,
-	krb5_principal /*client*/,
+	krb5_const_principal /*client*/,
 	krb5_const_principal /*server*/,
 	krb5_principals /*principals*/,
 	EncTicketPart */*tkt*/);
@@ -47,6 +47,13 @@ _kdc_check_addresses (
 	krb5_kdc_configuration */*config*/,
 	HostAddresses */*addresses*/,
 	const struct sockaddr */*from*/);
+
+krb5_error_code
+_kdc_check_anon_policy (
+	krb5_context /*context*/,
+	krb5_kdc_configuration */*config*/,
+	hdb_entry_ex */*client*/,
+	hdb_entry_ex */*server*/);
 
 krb5_error_code
 _kdc_db_fetch (
@@ -173,12 +180,9 @@ _kdc_get_preferred_key (
 	Key **/*key*/);
 
 krb5_boolean
-_kdc_is_anon_request (const KDC_REQ_BODY */*b*/);
-
-krb5_boolean
 _kdc_is_anonymous (
 	krb5_context /*context*/,
-	krb5_principal /*principal*/);
+	krb5_const_principal /*principal*/);
 
 krb5_boolean
 _kdc_is_weak_exception (

@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328-rock64.dts,v 1.1.4.1 2019/06/10 22:05:53 christos Exp $ */
+/* $NetBSD: rk3328-rock64.dts,v 1.1.4.2 2020/04/08 14:07:28 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,8 +31,4 @@
 
 &usbdrd3 {
 	status = "okay";
-	snps,phyif-utmi-bits = <16>;
-	snps,dis-enblslpm-quirk;
-	snps,dis-u2-freeclk-exists-quirk;
-	snps,dis_u2_susphy_quirk;
 };

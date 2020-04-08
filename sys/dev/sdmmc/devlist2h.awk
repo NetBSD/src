@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.2 2017/06/03 14:46:29 christos Exp $
+#	$NetBSD: devlist2h.awk,v 1.2.10.1 2020/04/08 14:08:12 martin Exp $
 #	$OpenBSD: devlist2h.awk,v 1.2 2006/06/02 21:16:44 uwe Exp $
 #	NetBSD: devlist2h.awk,v 1.2 1998/07/22 11:47:13 christos Exp
 #
@@ -17,7 +17,6 @@
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
 #      This product includes software developed by Christopher G. Demetriou.
-#      This product includes software developed by Christos Zoulas
 # 4. The name of the author(s) may not be used to endorse or promote products
 #    derived from this software without specific prior written permission
 #
@@ -66,7 +65,7 @@ NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
 
-	printf("/*\t$NetBSD: devlist2h.awk,v 1.2 2017/06/03 14:46:29 christos Exp $\t*/\n\n") > hfile
+	printf("/*\t$NetBSD: devlist2h.awk,v 1.2.10.1 2020/04/08 14:08:12 martin Exp $\t*/\n\n") > hfile
 	printf("/*\n") > hfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > hfile

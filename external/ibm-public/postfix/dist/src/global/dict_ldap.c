@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -155,6 +155,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*
 /*	John Hensley
 /*	john@sunislelodge.com
@@ -1354,10 +1359,10 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
      * Optionally fold the key.
      */
     if (dict->flags & DICT_FLAG_FOLD_FIX) {
-        if (dict->fold_buf == 0)
-            dict->fold_buf = vstring_alloc(10);
-        vstring_strcpy(dict->fold_buf, name);
-        name = lowercase(vstring_str(dict->fold_buf));
+	if (dict->fold_buf == 0)
+	    dict->fold_buf = vstring_alloc(10);
+	vstring_strcpy(dict->fold_buf, name);
+	name = lowercase(vstring_str(dict->fold_buf));
     }
 
     /*
@@ -1772,17 +1777,9 @@ DICT   *dict_ldap_open(const char *ldapsource, int open_flags, int dict_flags)
      * set.
      */
     dict_ldap->timeout = cfg_get_int(dict_ldap->parser, "timeout", 10, 0, 0);
-
-#if 0						/* No benefit from changing
-						 * this to match the
-						 * MySQL/PGSQL syntax */
-    if ((dict_ldap->query =
-	 cfg_get_str(dict_ldap->parser, "query", 0, 0, 0)) == 0)
-#endif
-	dict_ldap->query =
-	    cfg_get_str(dict_ldap->parser, "query_filter",
-			"(mailacceptinggeneralid=%s)", 0, 0);
-
+    dict_ldap->query =
+	cfg_get_str(dict_ldap->parser, "query_filter",
+		    "(mailacceptinggeneralid=%s)", 0, 0);
     if ((dict_ldap->result_format =
 	 cfg_get_str(dict_ldap->parser, "result_format", 0, 0, 0)) == 0)
 	dict_ldap->result_format =

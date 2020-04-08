@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.37 2017/10/02 19:23:16 maxv Exp $	*/
+/*	$NetBSD: tsc.c,v 1.37.4.1 2020/04/08 14:07:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.37 2017/10/02 19:23:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.37.4.1 2020/04/08 14:07:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ tsc_is_invariant(void)
 		x86_cpuid(0x80000000, descs);
 		if (descs[0] >= 0x80000007) {
 			x86_cpuid(0x80000007, descs);
-			invariant = (descs[3] & CPUID_APM_TSC) != 0;
+			invariant = (descs[3] & CPUID_APM_ITSC) != 0;
 		}
 	}
 
@@ -201,13 +201,13 @@ tsc_read_bp(struct cpu_info *ci, uint64_t *bptscp, uint64_t *aptscp)
 
 	/* Flag it and read our TSC. */
 	atomic_or_uint(&ci->ci_flags, CPUF_SYNCTSC);
-	bptsc = cpu_counter_serializing() >> 1;
+	bptsc = (rdtsc() >> 1);
 
 	/* Wait for remote to complete, and read ours again. */
 	while ((ci->ci_flags & CPUF_SYNCTSC) != 0) {
 		__insn_barrier();
 	}
-	bptsc += (cpu_counter_serializing() >> 1);
+	bptsc += (rdtsc() >> 1);
 
 	/* Wait for the results to come in. */
 	while (tsc_sync_cpu == ci) {
@@ -246,11 +246,11 @@ tsc_post_ap(struct cpu_info *ci)
 	while ((ci->ci_flags & CPUF_SYNCTSC) == 0) {
 		__insn_barrier();
 	}
-	tsc = (cpu_counter_serializing() >> 1);
+	tsc = (rdtsc() >> 1);
 
 	/* Instruct primary to read its counter. */
 	atomic_and_uint(&ci->ci_flags, ~CPUF_SYNCTSC);
-	tsc += (cpu_counter_serializing() >> 1);
+	tsc += (rdtsc() >> 1);
 
 	/* Post result.  Ensure the whole value goes out atomically. */
 	(void)atomic_swap_64(&tsc_sync_val, tsc);
@@ -271,7 +271,7 @@ tsc_sync_ap(struct cpu_info *ci)
 static void
 tsc_apply_cpu(void *arg1, void *arg2)
 {
-	bool enable = (bool)arg1;
+	bool enable = arg1 != NULL;
 	if (enable) {
 		lcr4(rcr4() & ~CR4_TSD);
 	} else {

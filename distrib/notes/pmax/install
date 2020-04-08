@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.42 2017/06/22 16:46:52 flxd Exp $
+.\"	$NetBSD: install,v 1.42.6.1 2020/04/08 14:03:51 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -203,7 +203,7 @@ The diskimage file can be found on the CD-ROM at the following location
 .Pp
 and the diskless boot tar file can be found at
 .Pp
-.Dl Pa \*M/installation/netboot/diskimage.tgz
+.Dl Pa \*M/installation/netboot/diskimage.\*[setsuffix]
 .Pp
 Once you have located these files, continue on to either
 .Sx Install via netboot install kernel ,

@@ -1,5 +1,5 @@
 /* ALPHA ELF support for BFD.
-   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+   Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
    By Eric Youngdale, <eric@aib.com>.  No processor supplement available
    for this platform.

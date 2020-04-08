@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.22.1 2020/04/08 14:07:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.22.1 2020/04/08 14:07:51 martin Exp $");
 
 #define _PMAP_PRIVATE
 
@@ -263,7 +263,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 }
 
 int
-mm_md_physacc(paddr_t pa, vm_prot_t prot) 
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
         return (atop(pa) < physmem) ? 0 : EFAULT;
 }

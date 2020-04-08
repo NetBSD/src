@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.24 2018/02/04 17:33:34 jmcneill Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.24.4.1 2020/04/08 14:09:17 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.24 2018/02/04 17:33:34 jmcneill Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.24.4.1 2020/04/08 14:09:17 martin Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -74,6 +74,7 @@ static uint32_t image_entrypoint = 0;
 static char *image_name;
 static uint32_t image_magic = IH_MAGIC;
 static enum image_format image_format = FMT_UIMG;
+static int update_image = 0;
 
 static const struct uboot_image_format {
 	enum image_format format;
@@ -263,14 +264,12 @@ get_comp_name(enum uboot_image_comp comp)
 __dead static void
 usage(void)
 {
-	fprintf(stderr, "usage: mkubootimage -A "
-	    "<arm|arm64|i386|mips|mips64|or1k|powerpc|sh>");
-	fprintf(stderr, " -C <none|bz2|gz|lzma|lzo>");
-	fprintf(stderr, " -O <openbsd|netbsd|freebsd|linux>");
-	fprintf(stderr, " -T <standalone|kernel|kernel_noload|ramdisk|fs|script>");
-	fprintf(stderr, " -a <addr> [-e <ep>] [-m <magic>] -n <name>");
-	fprintf(stderr, " [-f <uimg|arm64>]");
-	fprintf(stderr, " <srcfile> <dstfile>\n");
+	fprintf(stderr, "usage: mkubootimage [-hu] -A "
+	    "<arm|arm64|i386|mips|mips64|or1k|powerpc|sh> -a address\n");
+	fprintf(stderr, "\t-C <bz2|gz|lzma|lzo|none> [-E address] [-e address]\n");
+	fprintf(stderr, "\t[-f <arm64|uimg>] [-m magic] -n image -O <freebsd|linux|netbsd|openbsd>\n");
+	fprintf(stderr, "\t-T <fs|kernel|kernel_noload|ramdisk|script|standalone>\n");
+	fprintf(stderr, "\tsource destination\n");
 
 	exit(EXIT_FAILURE);
 }
@@ -335,7 +334,8 @@ generate_header_uimg(struct uboot_image_header *hdr, int kernel_fd)
 		iov[2].iov_len = st.st_size;
 		crc = crc32v(iov, 3);
 	} else {
-		dsize = st.st_size;
+		dsize = update_image ?
+		    (uint32_t)st.st_size - sizeof(*hdr) : (uint32_t)st.st_size;
 		crc = crc32(p, st.st_size);
 	}
 	munmap(p, st.st_size);
@@ -388,10 +388,13 @@ generate_header_arm64(struct arm64_image_header *hdr, int kernel_fd)
 	flags |= ARM64_FLAGS_PHYS_PLACEMENT_ANY;
 #endif
 
+	const uint64_t dsize = update_image ?
+	    (uint64_t)st.st_size : (uint64_t)st.st_size + sizeof(*hdr);
+
 	memset(hdr, 0, sizeof(*hdr));
 	hdr->code0 = htole32(ARM64_CODE0);
 	hdr->text_offset = htole64(image_entrypoint);
-	hdr->image_size = htole64(st.st_size + sizeof(*hdr));
+	hdr->image_size = htole64(dsize);
 	hdr->flags = htole32(flags);
 	hdr->magic = htole32(ARM64_MAGIC);
 
@@ -431,6 +434,13 @@ write_image(void *hdr, size_t hdrlen, int kernel_fd, int image_fd)
 		}
 	}
 
+	if (update_image) {
+		if (lseek(kernel_fd, hdrlen, SEEK_SET) != (off_t)hdrlen) {
+			perror("seek failed");
+			return errno;
+		}
+	}
+
 	while ((rlen = read(kernel_fd, buf, sizeof(buf))) > 0) {
 		wlen = write(image_fd, buf, rlen);
 		if (wlen != rlen) {
@@ -453,7 +463,7 @@ main(int argc, char *argv[])
 	int ch;
 	unsigned long long num;
 
-	while ((ch = getopt(argc, argv, "A:C:E:O:T:a:e:f:hm:n:")) != -1) {
+	while ((ch = getopt(argc, argv, "A:C:E:O:T:a:e:f:hm:n:u")) != -1) {
 		switch (ch) {
 		case 'A':	/* arch */
 			image_arch = get_arch(optarg);
@@ -503,6 +513,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':	/* name */
 			image_name = strdup(optarg);
+			break;
+		case 'u':	/* update image */
+			update_image = 1;
 			break;
 		case 'h':
 		default:

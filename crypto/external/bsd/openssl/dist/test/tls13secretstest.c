@@ -15,7 +15,7 @@
 # pragma names as_is,shortened
 #endif
 
-#include "../ssl/ssl_locl.h"
+#include "../ssl/ssl_local.h"
 
 #ifdef __VMS
 # pragma names restore
@@ -27,7 +27,7 @@
 #define KEYLEN  16
 
 /*
- * Based on the test vectors availble in:
+ * Based on the test vectors available in:
  * https://tools.ietf.org/html/draft-ietf-tls-tls13-vectors-06
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.6 2017/05/22 17:00:55 ragge Exp $ */
+/*	$NetBSD: start.S,v 1.6.10.1 2020/04/08 14:07:56 martin Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,7 +52,7 @@ _C_LABEL(start):
 
 # At offset 0x02 we have a dual used area: VMB.EXE starts execution here,
 # and uVAX-ROM looks for a pointer to a parameter block. We arrange for
-# the parameter block offset to disassmble as a CASEL instructions which
+# the parameter block offset to disassemble as a CASEL instructions which
 # falls through to 0x08.
 .org	0x02			# information used by uVAX-ROM
 	.byte	0xcf		# offset in words to identification area

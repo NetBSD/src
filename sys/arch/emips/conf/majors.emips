@@ -1,4 +1,4 @@
-#	$NetBSD: majors.emips,v 1.2 2011/06/30 20:09:22 wiz Exp $
+#	$NetBSD: majors.emips,v 1.2.54.1 2020/04/08 14:07:33 martin Exp $
 #
 # Device majors for emips
 #
@@ -43,7 +43,7 @@ device-major	clockctl	char 100		clockctl
 device-major	systrace	char 103		systrace
 device-major	cgd		char 104  block 33	cgd
 device-major	ksyms		char 105		ksyms
-device-major	nsmb		char 106		nsmb
+#device-major	obsolete	char 106		obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

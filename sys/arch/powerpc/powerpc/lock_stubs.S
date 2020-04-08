@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.10 2014/02/28 05:38:15 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.10.30.1 2020/04/08 14:07:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ ENTRY(_lock_cas)
 	lptrarx	%r10,0,%r3
 	cmpptr	%r10,%r4
 	bne-	2f
+	IBM405_ERRATA77_DCBT(0,%r3)
 	stptrcx. %r5,0,%r3
 	bne-	1b
 	SYNC
@@ -73,6 +74,7 @@ ENTRY(mutex_enter)
 	lptrarx	%r10,0,%r3
 	cmpptri	%r10,0
 	bne-	2f
+	IBM405_ERRATA77_DCBT(0,%r3)
 	stptrcx. %r13,0,%r3
 	bne-	1b
 	ISYNC
@@ -90,6 +92,7 @@ ENTRY(mutex_exit)
 	lptrarx	%r10,0,%r3
 	cmpptr	%r10,%r13
 	bne-	2f
+	IBM405_ERRATA77_DCBT(0,%r3)
 	stptrcx. %r7,0,%r3
 	bne-	1b
 	blr
@@ -101,8 +104,8 @@ ENTRY(mutex_exit)
 /*
  * void rw_enter(krwlock_t *krw, krw_t op);
  */
-#if RW_READ_INCR != 16
-#error RW_READ_INCR != 16, clrrXi need fixing
+#if RW_READ_INCR != 32
+#error RW_READ_INCR != 32, clrrXi need fixing
 #endif
 #if RW_OWNER != 0
 #error RW_OWNER != 0, ldptr should be ldptru
@@ -115,7 +118,7 @@ ENTRY(rw_enter)
 	bne-	1f
 
 	ldptr	%r9,RW_OWNER(%r3)
-	clrrptri %r9,%r9,4		/* clear low 4 bits */
+	clrrptri %r9,%r9,5		/* clear low 5 bits */
 	addi	%r7,%r9,RW_READ_INCR
 	b	2f
 1:
@@ -125,6 +128,7 @@ ENTRY(rw_enter)
 2:	lptrarx	%r10,0,%r3
 	cmpptr	%r10,%r9
 	bne-	3f
+	IBM405_ERRATA77_DCBT(0,%r3)
 	stptrcx. %r7,0,%r3
 	bne-	2b
 	ISYNC
@@ -140,7 +144,7 @@ ENTRY(rw_tryenter)
 	bne-	1f
 
 	ldptr	%r9,RW_OWNER(%r3)
-	clrrptri %r9,%r9,4		/* clear low 4 bits */
+	clrrptri %r9,%r9,5		/* clear low 5 bits */
 	addi	%r7,%r9,RW_READ_INCR
 	b	2f
 
@@ -150,6 +154,7 @@ ENTRY(rw_tryenter)
 2:	lptrarx	%r10,0,%r3
 	cmpptr	%r10,%r9
 	bne-	3f
+	IBM405_ERRATA77_DCBT(0,%r3)
 	stptrcx. %r7,0,%r3
 	bne-	2b
 
@@ -169,7 +174,7 @@ ENTRY(rw_exit)
 	andi.	%r0,%r9,RW_WRITE_LOCKED
 	bne-	1f
 
-	clrrptri. %r9,%r9,4		/* clear low 4 bits */
+	clrrptri. %r9,%r9,5		/* clear low 5 bits */
 	beq-	3f			/* if 0, no reader, go slow */
 
 	addi	%r7,%r9,-RW_READ_INCR
@@ -181,6 +186,7 @@ ENTRY(rw_exit)
 2:	lptrarx	%r10,0,%r3
 	cmpptr	%r10,%r9
 	bne-	3f
+	IBM405_ERRATA77_DCBT(0,%r3)
 	stptrcx. %r7,0,%r3
 	bne-	2b
 

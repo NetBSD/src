@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.43 2018/04/21 15:10:28 mlelstv Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.43.2.1 2020/04/08 14:08:07 martin Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.43 2018/04/21 15:10:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.43.2.1 2020/04/08 14:08:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,8 @@ pcdisplay_init(struct pcdisplay_config *dc, bus_space_tag_t iot,
 	dc->mono = mono;
 
 	if (bus_space_map(memt, mono ? 0xb0000 : 0xb8000, 0x8000,
-			  0, &ph->ph_memh))
+	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE,
+	    &ph->ph_memh))
 		panic("pcdisplay_init: cannot map memory");
 	if (bus_space_map(iot, mono ? 0x3b0 : 0x3d0, 0x10,
 			  0, &ph->ph_ioh_6845))

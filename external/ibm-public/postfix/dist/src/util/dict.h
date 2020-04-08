@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict.h,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -96,6 +96,8 @@ typedef struct DICT {
     int     error;			/* last operation only */
     DICT_JMP_BUF *jbuf;			/* exception handling */
     struct DICT_UTF8_BACKUP *utf8_backup;	/* see below */
+    struct VSTRING *file_buf;		/* dict_file_to_buf() */
+    struct VSTRING *file_b64;		/* dict_file_to_b64() */
 } DICT;
 
 extern DICT *dict_alloc(const char *, const char *, ssize_t);
@@ -131,6 +133,8 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_MULTI_WRITER	(1<<18)	/* multi-writer safe map */
 #define DICT_FLAG_UTF8_REQUEST	(1<<19)	/* activate UTF-8 if possible */
 #define DICT_FLAG_UTF8_ACTIVE	(1<<20)	/* UTF-8 proxy layer is present */
+#define DICT_FLAG_SRC_RHS_IS_FILE \
+				(1<<21)	/* Map source RHS is a file */
 
 #define DICT_FLAG_UTF8_MASK	(DICT_FLAG_UTF8_REQUEST)
 
@@ -155,7 +159,7 @@ extern DICT *dict_debug(DICT *);
   * changes to its copy of some of these flags). The proxymap server opens
   * only one map instance for all client requests with the same values of
   * these flags, and the proxymap client uses its own saved copy of these
-  * flags.
+  * flags. DICT_FLAG_SRC_RHS_IS_FILE is an example of such a flag.
   */
 #define DICT_FLAG_PARANOID \
 	(DICT_FLAG_NO_REGSUB | DICT_FLAG_NO_PROXY | DICT_FLAG_NO_UNAUTH)
@@ -255,7 +259,7 @@ typedef struct DICT_UTF8_BACKUP {
     const char *(*lookup) (struct DICT *, const char *);
     int     (*update) (struct DICT *, const char *, const char *);
     int     (*delete) (struct DICT *, const char *);
-} DICT_UTF8_BACKUP;
+}       DICT_UTF8_BACKUP;
 
 extern DICT *dict_utf8_activate(DICT *);
 
@@ -302,6 +306,16 @@ extern DICT *PRINTFLIKE(5, 6) dict_surrogate(const char *, const char *, int, in
   */
 extern void dict_jmp_alloc(DICT *);
 
+ /*
+  * dict_file(3).
+  */
+extern struct VSTRING *dict_file_to_buf(DICT *, const char *);
+extern struct VSTRING *dict_file_to_b64(DICT *, const char *);
+extern struct VSTRING *dict_file_from_b64(DICT *, const char *);
+extern char *dict_file_get_error(DICT *);
+extern void dict_file_purge_buffers(DICT *);
+extern const char *dict_file_lookup(DICT *dict, const char *);
+
 /* LICENSE
 /* .ad
 /* .fi
@@ -311,6 +325,11 @@ extern void dict_jmp_alloc(DICT *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

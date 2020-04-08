@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_kthread.c,v 1.43 2018/01/09 22:58:45 pgoyette Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.43.4.1 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2007, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.43 2018/01/09 22:58:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.43.4.1 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,10 +108,10 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	}
 	mutex_enter(proc0.p_lock);
 	lwp_lock(l);
-	l->l_priority = pri;
+	lwp_changepri(l, pri);
 	if (ci != NULL) {
 		if (ci != l->l_cpu) {
-			lwp_unlock_to(l, ci->ci_schedstate.spc_mutex);
+			lwp_unlock_to(l, ci->ci_schedstate.spc_lwplock);
 			lwp_lock(l);
 		}
 		l->l_pflag |= LP_BOUND;
@@ -133,15 +133,12 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	 * Set the new LWP running, unless the caller has requested
 	 * otherwise.
 	 */
+	KASSERT(l->l_stat == LSIDL);
 	if ((flag & KTHREAD_IDLE) == 0) {
-		l->l_stat = LSRUN;
-		sched_enqueue(l, false);
-		lwp_unlock(l);
+		setrunnable(l);
+		/* LWP now unlocked */
 	} else {
-		if (ci != NULL)
-			lwp_unlock_to(l, ci->ci_schedstate.spc_lwplock);
-		else
-			lwp_unlock(l);
+		lwp_unlock(l);
 	}
 	mutex_exit(proc0.p_lock);
 
@@ -179,6 +176,11 @@ kthread_exit(int ecode)
 		kthread_jtarget = NULL;
 		cv_broadcast(&kthread_cv);
 		mutex_exit(&kthread_lock);
+	}
+
+	/* If the kernel lock is held, we need to drop it now. */
+	if ((l->l_pflag & LP_MPSAFE) == 0) {
+		KERNEL_UNLOCK_LAST(l);
 	}
 
 	/* And exit.. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.143.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.143.2.2 2020/04/08 14:08:57 martin Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.143.2.1 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.143.2.2 2020/04/08 14:08:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.143.2.1 2019/06/10 22:09:45 christos Ex
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -229,22 +230,20 @@ gifinit(void)
 static int
 gifdetach(void)
 {
-	int error = 0;
 
 	mutex_enter(&gif_softcs.lock);
 	if (!LIST_EMPTY(&gif_softcs.list)) {
 		mutex_exit(&gif_softcs.lock);
-		error = EBUSY;
+		return EBUSY;
 	}
 
-	if (error == 0) {
-		psref_class_destroy(gv_psref_class);
+	psref_class_destroy(gv_psref_class);
 
-		if_clone_detach(&gif_cloner);
-		sysctl_teardown(&gif_sysctl);
-	}
-
-	return error;
+	if_clone_detach(&gif_cloner);
+	sysctl_teardown(&gif_sysctl);
+	mutex_exit(&gif_softcs.lock);
+	mutex_destroy(&gif_softcs.lock);
+	return 0;
 }
 
 static int
@@ -493,7 +492,7 @@ end:
 	if (var != NULL)
 		gif_putref_variant(var, &psref);
 	if (error)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	return error;
 }
 
@@ -523,7 +522,7 @@ gif_start(struct ifnet *ifp)
 		if (sizeof(int) > m->m_len) {
 			m = m_pullup(m, sizeof(int));
 			if (!m) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				continue;
 			}
 		}
@@ -535,11 +534,9 @@ gif_start(struct ifnet *ifp)
 
 		error = var->gv_output(var, family, m);
 		if (error)
-			ifp->if_oerrors++;
-		else {
-			ifp->if_opackets++;
-			ifp->if_obytes += len;
-		}
+			if_statinc(ifp, if_oerrors);
+		else
+			if_statadd2(ifp, if_opackets, 1, if_obytes, len);
 	}
 
 	gif_putref_variant(var, &psref);
@@ -581,7 +578,7 @@ gif_transmit_direct(struct gif_variant *var, struct mbuf *m)
 	if (sizeof(int) > m->m_len) {
 		m = m_pullup(m, sizeof(int));
 		if (!m) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return ENOBUFS;
 		}
 	}
@@ -593,11 +590,9 @@ gif_transmit_direct(struct gif_variant *var, struct mbuf *m)
 
 	error = var->gv_output(var, family, m);
 	if (error)
-		ifp->if_oerrors++;
-	else {
-		ifp->if_opackets++;
-		ifp->if_obytes += len;
-	}
+		if_statinc(ifp, if_oerrors);
+	else
+		if_statadd2(ifp, if_opackets, 1, if_obytes, len);
 
 	return error;
 }
@@ -647,8 +642,7 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 	const uint32_t h = pktq_rps_hash(m);
 #endif
 	if (__predict_true(pktq_enqueue(pktq, m, h))) {
-		ifp->if_ibytes += pktlen;
-		ifp->if_ipackets++;
+		if_statadd2(ifp, if_ibytes, pktlen, if_ipackets, 1);
 	} else {
 		m_freem(m);
 	}
@@ -1060,7 +1054,6 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	if (error)
 		goto out;
 	psref_target_init(&nvar->gv_psref, gv_psref_class);
-	membar_producer();
 	gif_update_variant(sc, nvar);
 
 	mutex_exit(&sc->gif_lock);
@@ -1137,7 +1130,6 @@ gif_delete_tunnel(struct ifnet *ifp)
 	nvar->gv_encap_cookie6 = NULL;
 	nvar->gv_output = NULL;
 	psref_target_init(&nvar->gv_psref, gv_psref_class);
-	membar_producer();
 	gif_update_variant(sc, nvar);
 
 	mutex_exit(&sc->gif_lock);
@@ -1170,7 +1162,7 @@ gif_update_variant(struct gif_softc *sc, struct gif_variant *nvar)
 
 	KASSERT(mutex_owned(&sc->gif_lock));
 
-	sc->gif_var = nvar;
+	atomic_store_release(&sc->gif_var, nvar);
 	pserialize_perform(sc->gif_psz);
 	psref_target_destroy(&ovar->gv_psref, gv_psref_class);
 

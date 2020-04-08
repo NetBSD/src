@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.5.20.1 2019/06/10 22:07:44 christos Exp $	*/
+/*	$NetBSD: list.h,v 1.5.20.2 2020/04/08 14:08:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@ struct list_head {
 };
 
 #define	LIST_HEAD_INIT(name)	{ .prev = &(name), .next = &(name) }
+
+#define	LINUX_LIST_HEAD(name)	struct list_head name = LIST_HEAD_INIT(name)
 
 static inline void
 INIT_LIST_HEAD(struct list_head *head)

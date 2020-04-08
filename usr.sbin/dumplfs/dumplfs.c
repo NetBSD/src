@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.64 2018/06/15 15:16:05 christos Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.64.2.1 2020/04/08 14:09:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.64 2018/06/15 15:16:05 christos Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.64.2.1 2020/04/08 14:09:19 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ print_ientry(int i, struct lfs *lfsp, IFILE *ip)
 	else
 		printf("%d\tINUSE\t%u\t%8jX\t%s\n",
 		    i, version, (intmax_t)daddr,
-		    nextfree == LFS_ORPHAN_NEXTFREE ? "FFFFFFFF" : "-");
+		    nextfree == LFS_ORPHAN_NEXTFREE(lfsp) ? "orphan" : "-");
 }
 
 /*

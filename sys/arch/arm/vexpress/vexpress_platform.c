@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.8.2.1 2019/06/10 22:05:57 christos Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.8.2.2 2020/04/08 14:07:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.8.2.1 2019/06/10 22:05:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.8.2.2 2020/04/08 14:07:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,11 +122,6 @@ vexpress_a15_smp_init(void)
 #ifdef MULTIPROCESSOR
 	bus_space_tag_t gicd_bst = &armv7_generic_bs_tag;
 	bus_space_handle_t gicd_bsh;
-	int started = 0;
-
-	/* Bitmask of CPUs (non-BSP) to start */
-	for (int i = 1; i < arm_cpu_max; i++)
-		started |= __BIT(i);
 
 	/* Write init vec to SYS_FLAGS register */
 	SYSREG_WRITE(SYS_FLAGSCLR, 0xffffffff);
@@ -144,16 +139,19 @@ vexpress_a15_smp_init(void)
 	const uint32_t sgir = GICD_SGIR_TargetListFilter_NotMe;
 	bus_space_write_4(gicd_bst, gicd_bsh, GICD_SGIR, sgir);
 
-	/* Wait for APs to start */
-	u_int i;
-	for (i = 0x10000000; i > 0; i--) {
-		arm_dmb();
-		if (arm_cpu_hatched == started)
-			break;
-	}
-	if (i == 0) {
-		aprint_error("WARNING: AP failed to start\n");
-		ret++;
+	/* Bitmask of CPUs (non-BSP) to start */
+	for (u_int cpuindex = 1; cpuindex < arm_cpu_max; cpuindex++) {
+		u_int i;
+		for (i = 0x10000000; i > 0; i--) {
+			if (cpu_hatched_p(cpuindex))
+				break;
+		}
+
+		if (i == 0) {
+			ret++;
+			aprint_error("cpu%d: WARNING: AP failed to start\n",
+			    cpuindex);
+		}
 	}
 
 	/* Disable GIC distributor */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3.16.1 2019/06/10 22:06:12 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3.16.2 2020/04/08 14:07:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,8 +86,8 @@ extern volatile unsigned int interrupt_depth;
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	cpu_need_resched(ci, flags)	\
-	do { ci->ci_want_resched++; aston(); } while (/* CONSTCOND */0)
+#define	cpu_need_resched(ci,l,flags)	\
+	do { aston(); } while (/* CONSTCOND */0)
 
 /*
  * Give a profiling tick to the current process when the user profiling

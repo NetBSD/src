@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sw_offload.c,v 1.6.6.2 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: ether_sw_offload.c,v 1.6.6.3 2020/04/08 14:08:57 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.6.6.2 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.6.6.3 2020/04/08 14:08:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -96,11 +96,7 @@ ether_sw_offload_tx(struct ifnet *ifp, struct mbuf *m)
 		goto quit;
 
 	KASSERT(m->m_pkthdr.len >= sizeof(*ep));
-	if (m->m_len < sizeof(*ep)) {
-		m = m_pullup(m, sizeof(*ep));
-		if (m == NULL)
-			return NULL;
-	}
+	KASSERT(m->m_len >= sizeof(*ep));
 	ep = mtod(m, struct ether_header *);
 	switch (type = ntohs(ep->ether_type)) {
 	case ETHERTYPE_IP:

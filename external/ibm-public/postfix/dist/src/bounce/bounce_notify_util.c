@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_notify_util.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: bounce_notify_util.c,v 1.2.12.1 2020/04/08 14:06:52 martin Exp $	*/
 
 /*++
 /* NAME
@@ -157,6 +157,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -639,7 +644,9 @@ int     bounce_header_dsn(VSTREAM *bounce, BOUNCE_INFO *bounce_info)
 		      (bounce_info->smtputf8 & SMTPUTF8_FLAG_REQUESTED) ?
 		      "global-" : "");
     /* Fix 20140709: addresses may be 8bit. */
-    if (NOT_7BIT_MIME(bounce_info))
+    if (NOT_7BIT_MIME(bounce_info)
+    /* BC Fix 20170610: prevent MIME downgrade of message/delivery-status. */
+	&& (bounce_info->smtputf8 & SMTPUTF8_FLAG_REQUESTED))
 	post_mail_fprintf(bounce, "Content-Transfer-Encoding: %s",
 			  bounce_info->mime_encoding);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: securelevel.h,v 1.4 2011/12/04 19:25:00 jym Exp $ */
+/* $NetBSD: securelevel.h,v 1.4.48.1 2020/04/08 14:09:02 martin Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -37,8 +37,6 @@ int secmodel_securelevel_sysctl(SYSCTLFN_PROTO);
 void secmodel_securelevel_init(void);
 void secmodel_securelevel_start(void);
 void secmodel_securelevel_stop(void);
-
-void sysctl_security_securelevel_setup(struct sysctllog **);
 
 int secmodel_securelevel_system_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);

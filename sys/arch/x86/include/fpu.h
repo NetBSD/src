@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.12.2.1 2019/06/10 22:06:53 christos Exp $	*/
+/*	$NetBSD: fpu.h,v 1.12.2.2 2020/04/08 14:07:58 martin Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -31,6 +31,9 @@ void fpu_clear(struct lwp *, unsigned int);
 void fpu_sigreset(struct lwp *);
 
 void fpu_save_area_fork(struct pcb *, const struct pcb *);
+
+void fpu_kern_enter(void);
+void fpu_kern_leave(void);
 
 void process_write_fpregs_xmm(struct lwp *, const struct fxsave *);
 void process_write_fpregs_s87(struct lwp *, const struct save87 *);

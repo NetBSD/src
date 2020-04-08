@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.8.2.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.8.2.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008, 2019
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.8.2.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.8.2.2 2020/04/08 14:08:52 martin Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 #define	__UCAS_PRIVATE
@@ -123,9 +123,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		if (cnt > n)
 			cnt = n;
 		if (!VMSPACE_IS_KERNEL_P(vm)) {
-			if (curcpu()->ci_schedstate.spc_flags &
-			    SPCF_SHOULDYIELD)
-				preempt();
+			preempt_point();
 		}
 
 		if (uio->uio_rw == UIO_READ) {
@@ -321,13 +319,14 @@ copyin_pid(pid_t pid, const void *uaddr, void *kaddr, size_t len)
 		return ESRCH;
 	}
 	mutex_enter(p->p_lock);
-	proc_vmspace_getref(p, &vm);
+	error = proc_vmspace_getref(p, &vm);
 	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
 
-	error = copyin_vmspace(vm, uaddr, kaddr, len);
-
-	uvmspace_free(vm);
+	if (error == 0) {
+		error = copyin_vmspace(vm, uaddr, kaddr, len);
+		uvmspace_free(vm);
+	}
 	return error;
 }
 

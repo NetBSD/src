@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.27.2.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.27.2.2 2020/04/08 14:08:06 martin Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.27.2.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.27.2.2 2020/04/08 14:08:06 martin Exp $");
 
 /*
  * The LAN9118 Family
@@ -328,17 +328,17 @@ lan9118_intr(void *arg)
 		}
 #endif
 		if (int_sts & LAN9118_INT_RXE) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			aprint_error_ifnet(ifp, "Receive Error\n");
 		}
 		if (int_sts & (LAN9118_INT_TSFL|LAN9118_INT_SW_INT)) /* TX Status FIFO Level */
 			lan9118_txintr(sc);
 		if (int_sts & LAN9118_INT_RXDF_INT) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			aprint_error_ifnet(ifp, "RX Dropped Frame Interrupt\n");
 		}
 		if (int_sts & LAN9118_INT_RSFF) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			aprint_error_ifnet(ifp, "RX Status FIFO Full\n");
 		}
 		if (int_sts & LAN9118_INT_RSFL) /* RX Status FIFO Level */
@@ -691,7 +691,7 @@ lan9118_watchdog(struct ifnet *ifp)
 	lan9118_txintr(sc);
 
 	aprint_error_ifnet(ifp, "watchdog timeout\n");
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	lan9118_init(ifp);
 }
@@ -968,7 +968,7 @@ lan9118_rxintr(struct lan9118_softc *sc)
 				aprint_error_dev(sc->sc_dev, "CRC Error\n");
 
 dropit:
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			/*
 			 * Receive Data FIFO Fast Forward
 			 * When performing a fast-forward, there must be at
@@ -1054,7 +1054,7 @@ lan9118_txintr(struct lan9118_softc *sc)
 				    "Late Collision\n");
 			if (tx_status & LAN9118_TXS_ECOL) {
 				/* Rearch 16 collision */
-				ifp->if_collisions += 16;
+				if_statadd(ifp, if_collisions, 16);
 				aprint_error_dev(sc->sc_dev,
 				    "Excessive Collision\n");
 			}
@@ -1067,9 +1067,9 @@ lan9118_txintr(struct lan9118_softc *sc)
 				    "Excessive Deferral\n");
 			if (tx_status & LAN9118_TXS_DEFERRED)
 				aprint_error_dev(sc->sc_dev, "Deferred\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		} else
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 	}
 
 	tdfree = LAN9118_TX_FIFO_INF_TDFREE(tx_fifo_inf);

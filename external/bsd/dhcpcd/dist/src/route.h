@@ -1,6 +1,6 @@
 /*
  * dhcpcd - route management
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * rEDISTRIBUTION AND USE IN SOURCE AND BINARY FORMS, WITH OR WITHOUT

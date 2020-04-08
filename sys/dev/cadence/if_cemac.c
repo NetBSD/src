@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.13.2.1 2019/06/10 22:07:06 christos Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.13.2.2 2020/04/08 14:08:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.13.2.1 2019/06/10 22:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.13.2.2 2020/04/08 14:08:03 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -296,20 +296,21 @@ cemac_intr(void *arg)
 #endif
 	DPRINTFN(2, ("%s: isr=0x%08X rsr=0x%08X imr=0x%08X\n", __FUNCTION__, isr, rsr, imr));
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (isr & ETH_ISR_RBNA) {		// out of receive buffers
 		CEMAC_WRITE(ETH_RSR, ETH_RSR_BNA);	// clear interrupt
 		ctl = CEMAC_READ(ETH_CTL);		// get current control register value
 		CEMAC_WRITE(ETH_CTL, ctl & ~ETH_CTL_RE);	// disable receiver
 		CEMAC_WRITE(ETH_RSR, ETH_RSR_BNA);	// clear BNA bit
 		CEMAC_WRITE(ETH_CTL, ctl |  ETH_CTL_RE);	// re-enable receiver
-		ifp->if_ierrors++;
-		ifp->if_ipackets++;
+		if_statinc_ref(nsr, if_ierrors);
+		if_statinc_ref(nsr, if_ipackets);
 		DPRINTFN(1,("%s: out of receive buffers\n", __FUNCTION__));
 	}
 	if (isr & ETH_ISR_ROVR) {
 		CEMAC_WRITE(ETH_RSR, ETH_RSR_OVR);	// clear interrupt
-		ifp->if_ierrors++;
-		ifp->if_ipackets++;
+		if_statinc_ref(nsr, if_ierrors);
+		if_statinc_ref(nsr, if_ipackets);
 		DPRINTFN(1,("%s: receive overrun\n", __FUNCTION__));
 	}
 
@@ -373,11 +374,13 @@ cemac_intr(void *arg)
 				 */
 				if (m != NULL)
 					m_freem(m);
-				ifp->if_ierrors++;
+				if_statinc_ref(nsr, if_ierrors);
 			}
 			sc->rxqi++;
 		}
 	}
+
+	IF_STAT_PUTREF(ifp);
 
 	if (cemac_gctx(sc) > 0)
 		if_schedule_deferred_start(ifp);
@@ -719,9 +722,11 @@ cemac_tick(void *arg)
 	int s;
 
 	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM))
-		ifp->if_collisions += CEMAC_READ(GEM_SCOL) + CEMAC_READ(GEM_MCOL);
+		if_statadd(ifp, if_collisions,
+		    CEMAC_READ(GEM_SCOL) + CEMAC_READ(GEM_MCOL));
 	else
-		ifp->if_collisions += CEMAC_READ(ETH_SCOL) + CEMAC_READ(ETH_MCOL);
+		if_statadd(ifp, if_collisions,
+		    CEMAC_READ(ETH_SCOL) + CEMAC_READ(ETH_MCOL));
 
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
 	if (!ISSET(sc->cemac_flags, CEMAC_FLAG_GEM)) {

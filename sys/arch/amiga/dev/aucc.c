@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.43.30.1 2019/06/10 22:05:48 christos Exp $ */
+/*	$NetBSD: aucc.c,v 1.43.30.2 2020/04/08 14:07:26 martin Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -46,7 +46,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.43.30.1 2019/06/10 22:05:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.43.30.2 2020/04/08 14:07:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,8 +404,11 @@ aucc_round_blocksize(void *addr, int blk,
 		     int mode, const audio_params_t *param)
 {
 
-	/* round up to even size */
-	return blk > AUDIO_BUF_SIZE ? AUDIO_BUF_SIZE : blk;
+	if (blk > AUDIO_BUF_SIZE)
+		blk = AUDIO_BUF_SIZE;
+
+	blk = rounddown(blk, param->channels * param->precision / NBBY);
+	return blk;
 }
 
 int

@@ -80,6 +80,7 @@
 #endif
 #ifdef __NetBSD__
 #include <sys/disklabel.h>
+#include <sys/ioctl.h>
 #endif
 
 #include "zpool_util.h"

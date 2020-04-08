@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.31.2.1 2019/06/10 22:09:56 christos Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.31.2.2 2020/04/08 14:09:02 martin Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.31.2.1 2019/06/10 22:09:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.31.2.2 2020/04/08 14:09:02 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -65,7 +65,6 @@ static kauth_listener_t l_system, l_process, l_network, l_machdep, l_device,
     l_vnode;
 
 static secmodel_t securelevel_sm;
-static struct sysctllog *securelevel_sysctl_log;
 
 /*
  * Sysctl helper routine for securelevel. Ensures that the value only rises
@@ -92,8 +91,7 @@ secmodel_securelevel_sysctl(SYSCTLFN_ARGS)
 	return (error);
 }
 
-void
-sysctl_security_securelevel_setup(struct sysctllog **clog)
+SYSCTL_SETUP(sysctl_security_securelevel_setup, "securelevel sysctl")
 {
 	const struct sysctlnode *rnode, *rnode2;
 
@@ -219,11 +217,9 @@ securelevel_modcmd(modcmd_t cmd, void *arg)
 			    "returned %d\n", error);
 
 		secmodel_securelevel_start();
-		sysctl_security_securelevel_setup(&securelevel_sysctl_log);
 		break;
 
 	case MODULE_CMD_FINI:
-		sysctl_teardown(&securelevel_sysctl_log);
 		secmodel_securelevel_stop();
 
 		error = secmodel_deregister(securelevel_sm);
@@ -260,7 +256,7 @@ secmodel_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 	enum kauth_system_req req;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_system_req)arg0;
+	req = (enum kauth_system_req)(uintptr_t)arg0;
 
 	switch (action) {
 	case KAUTH_SYSTEM_CHSYSFLAGS:
@@ -376,7 +372,7 @@ secmodel_securelevel_process_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_PROCESS_PROCFS: {
 		enum kauth_process_req req;
 
-		req = (enum kauth_process_req)arg2;
+		req = (enum kauth_process_req)(uintptr_t)arg2;
 		switch (req) {
 		case KAUTH_REQ_PROCESS_PROCFS_READ:
 			break;
@@ -428,7 +424,7 @@ secmodel_securelevel_network_cb(kauth_cred_t cred, kauth_action_t action,
 	enum kauth_network_req req;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_network_req)arg0;
+	req = (enum kauth_network_req)(uintptr_t)arg0;
 
 	switch (action) {
 	case KAUTH_NETWORK_FIREWALL:
@@ -520,7 +516,7 @@ secmodel_securelevel_device_cb(kauth_cred_t cred, kauth_action_t action,
 		struct vnode *vp;
 		enum kauth_device_req req;
 
-		req = (enum kauth_device_req)arg0;
+		req = (enum kauth_device_req)(uintptr_t)arg0;
 		vp = arg1;
 
 		KASSERT(vp != NULL);

@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-tipc.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-tipc.c,v 1.3.18.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: Transparent Inter-Process Communication (TIPC) protocol printer */
@@ -225,6 +225,7 @@ trunc:
 	ND_PRINT((ndo, "%s", tstr));
 }
 
+UNALIGNED_OK
 static void
 print_internal(netdissect_options *ndo, const struct internal_tipc_pkthdr *ap)
 {
@@ -339,6 +340,7 @@ trunc:
 	ND_PRINT((ndo, "%s", tstr));
 }
 
+UNALIGNED_OK
 void
 tipc_print(netdissect_options *ndo, const u_char *bp, u_int length _U_,
     u_int caplen _U_)
@@ -387,4 +389,3 @@ trunc:
  * c-style: bsd
  * End:
  */
-

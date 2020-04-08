@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.27 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.27.18.1 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.27 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.27.18.1 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,7 +49,6 @@ RUMP_COMPONENT(RUMP__FACTION_DEV)
 	KERNEL_LOCK(1, curlwp);
 
 	rump_mainbus_init();
-	config_init_mi();
 
 	rump_component_init(RUMP_COMPONENT_DEV);
 

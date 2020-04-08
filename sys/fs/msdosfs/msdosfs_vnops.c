@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.98 2017/04/26 03:02:48 riastradh Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.98.12.1 2020/04/08 14:08:49 martin Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.98 2017/04/26 03:02:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.98.12.1 2020/04/08 14:08:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -641,7 +641,7 @@ msdosfs_write(void *v)
 		 */
 
 		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16,
 			    PGO_CLEANIT | PGO_LAZY);
@@ -651,7 +651,7 @@ msdosfs_write(void *v)
 	/* set final size */
 	uvm_vnp_setsize(vp, dep->de_FileSize);
 	if (error == 0 && ioflag & IO_SYNC) {
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(vp, trunc_page(oldoff),
 		    round_page(oldoff + bytelen), PGO_CLEANIT | PGO_SYNCIO);
 	}

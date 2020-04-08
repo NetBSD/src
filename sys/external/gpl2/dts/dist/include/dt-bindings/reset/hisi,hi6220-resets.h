@@ -1,4 +1,4 @@
-/*	$NetBSD: hisi,hi6220-resets.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: hisi,hi6220-resets.h,v 1.1.1.2.6.1 2020/04/08 14:08:47 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /**
@@ -74,5 +74,12 @@
 #define MEDIA_ADE                       5
 #define MEDIA_MMU                       6
 #define MEDIA_XG2RAM1                   7
+
+#define AO_G3D                          1
+#define AO_CODECISP                     2
+#define AO_MCPU                         4
+#define AO_BBPHARQMEM                   5
+#define AO_HIFI                         8
+#define AO_ACPUSCUL2C                   12
 
 #endif /*_DT_BINDINGS_RESET_CONTROLLER_HI6220*/

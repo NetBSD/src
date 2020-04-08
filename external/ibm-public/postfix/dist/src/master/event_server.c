@@ -1,4 +1,4 @@
-/*	$NetBSD: event_server.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: event_server.c,v 1.2.12.1 2020/04/08 14:06:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,7 @@
 /*
 /*	void	event_server_drain()
 /* DESCRIPTION
-/*	This module implements a skeleton for multi-threaded
+/*	This module implements a skeleton for event-driven
 /*	mail subsystems: mail subsystem programs that service multiple
 /*	clients at the same time. The resulting program expects to be run
 /*	from the \fBmaster\fR process.
@@ -143,6 +143,11 @@
 /* .IP "CA_MAIL_SERVER_BOUNCE_INIT(const char *, const char **)"
 /*	Initialize the DSN filter for the bounce/defer service
 /*	clients with the specified map source and map names.
+/* .IP "CA_MAIL_SERVER_RETIRE_ME"
+/*	Prevent a process from being reused indefinitely. After
+/*	(var_max_use * var_max_idle) seconds or some sane constant,
+/*	stop accepting new connections and terminate voluntarily
+/*	when the process becomes idle.
 /* .PP
 /*	event_server_disconnect() should be called by the application
 /*	to close a client connection.
@@ -154,7 +159,7 @@
 /*	result means this call should be tried again later.
 /*
 /*	The var_use_limit variable limits the number of clients
-/*	that a server can service before it commits suicide.  This
+/*	that a server can service before it commits suicide. This
 /*	value is taken from the global \fBmain.cf\fR configuration
 /*	file. Setting \fBvar_use_limit\fR to zero disables the
 /*	client limit.
@@ -165,10 +170,12 @@
 /*	configuration file. Setting \fBvar_idle_limit\fR to zero
 /*	disables the idle limit.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* SEE ALSO
 /*	master(8), master process
-/*	syslogd(8) system logging
+/*	postlogd(8), Postfix logging
+/*	syslogd(8), system logging
 /* LICENSE
 /* .ad
 /* .fi
@@ -178,6 +185,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -187,7 +199,6 @@
 #include <sys/time.h>			/* select() */
 #include <unistd.h>
 #include <signal.h>
-#include <syslog.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
@@ -206,7 +217,6 @@
 /* Utility library. */
 
 #include <msg.h>
-#include <msg_syslog.h>
 #include <msg_vstream.h>
 #include <chroot_uid.h>
 #include <listen.h>
@@ -236,6 +246,7 @@
 #include <mail_flow.h>
 #include <mail_version.h>
 #include <bounce.h>
+#include <maillog_client.h>
 
 /* Process manager. */
 
@@ -275,12 +286,27 @@ static NORETURN event_server_exit(void)
     exit(0);
 }
 
+/* event_server_retire - retire when idle */
+
+static void event_server_retire(int unused_event, void *unused_context)
+{
+    if (msg_verbose)
+	msg_info("time to retire -- %s", event_server_slow_exit ?
+		 "draining" : "exiting");
+    event_disable_readwrite(MASTER_STATUS_FD);
+    if (event_server_slow_exit)
+	event_server_slow_exit(event_server_name, event_server_argv);
+    else
+	event_server_exit();
+}
+
 /* event_server_abort - terminate after abnormal master exit */
 
 static void event_server_abort(int unused_event, void *unused_context)
 {
     if (msg_verbose)
-	msg_info("master disconnect -- exiting");
+	msg_info("master disconnect -- %s", event_server_slow_exit ?
+		 "draining" : "exiting");
     event_disable_readwrite(MASTER_STATUS_FD);
     if (event_server_slow_exit)
 	event_server_slow_exit(event_server_name, event_server_argv);
@@ -561,9 +587,10 @@ NORETURN event_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     const char *err;
     char   *generation;
     int     msg_vstream_needed = 0;
-    int     redo_syslog_init = 0;
     const char *dsn_filter_title;
     const char **dsn_filter_maps;
+    int     retire_me_from_flags = 0;
+    int     retire_me = 0;
 
     /*
      * Process environment options as early as we can.
@@ -595,7 +622,7 @@ NORETURN event_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
      * Initialize logging and exit handler. Do the syslog first, so that its
      * initialization completes before we enter the optional chroot jail.
      */
-    msg_syslog_init(mail_task(var_procname), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task(var_procname), MAILLOG_CLIENT_FLAG_NONE);
     if (msg_verbose)
 	msg_info("daemon started");
 
@@ -621,7 +648,7 @@ NORETURN event_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
      * stderr, because no-one is going to see them.
      */
     opterr = 0;
-    while ((c = GETOPT(argc, argv, "cdDi:lm:n:o:s:St:uvVz")) > 0) {
+    while ((c = GETOPT(argc, argv, "cdDi:lm:n:o:r:s:St:uvVz")) > 0) {
 	switch (c) {
 	case 'c':
 	    root_dir = "setme";
@@ -649,9 +676,11 @@ NORETURN event_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    if ((err = split_nameval(oname_val, &oname, &oval)) != 0)
 		msg_fatal("invalid \"-o %s\" option value: %s", optarg, err);
 	    mail_conf_update(oname, oval);
-	    if (strcmp(oname, VAR_SYSLOG_NAME) == 0)
-		redo_syslog_init = 1;
 	    myfree(oname_val);
+	    break;
+	case 'r':
+	    if ((retire_me_from_flags = atoi(optarg)) <= 0)
+		msg_fatal("invalid retirement time: %s", optarg);
 	    break;
 	case 's':
 	    if ((socket_count = atoi(optarg)) <= 0)
@@ -677,17 +706,18 @@ NORETURN event_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    zerolimit = 1;
 	    break;
 	default:
-	    msg_fatal("invalid option: %c", c);
+	    msg_fatal("invalid option: %c", optopt);
 	    break;
 	}
     }
+    set_mail_conf_str(VAR_SERVNAME, service_name);
 
     /*
-     * Initialize generic parameters.
+     * Initialize generic parameters and re-initialize logging in case of a
+     * non-default program name or logging destination.
      */
     mail_params_init();
-    if (redo_syslog_init)
-	msg_syslog_init(mail_task(var_procname), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task(var_procname), MAILLOG_CLIENT_FLAG_NONE);
 
     /*
      * Register higher-level dictionaries and initialize the support for
@@ -779,6 +809,15 @@ NORETURN event_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    dsn_filter_title = va_arg(ap, const char *);
 	    dsn_filter_maps = va_arg(ap, const char **);
 	    bounce_client_init(dsn_filter_title, *dsn_filter_maps);
+	    break;
+	case MAIL_SERVER_RETIRE_ME:
+	    if (retire_me_from_flags > 0)
+		retire_me = retire_me_from_flags;
+	    else if (var_idle_limit == 0 || var_use_limit == 0
+		     || var_idle_limit > 18000 / var_use_limit)
+		retire_me = 18000;
+	    else
+		retire_me = var_idle_limit * var_use_limit;
 	    break;
 	default:
 	    msg_panic("%s: unknown argument type: %d", myname, key);
@@ -903,6 +942,8 @@ NORETURN event_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
      */
     if (var_idle_limit > 0)
 	event_request_timer(event_server_timeout, (void *) 0, var_idle_limit);
+    if (retire_me)
+	event_request_timer(event_server_retire, (void *) 0, retire_me);
     for (fd = MASTER_LISTEN_FD; fd < MASTER_LISTEN_FD + socket_count; fd++) {
 	event_enable_read(fd, event_server_accept, CAST_INT_TO_VOID_PTR(fd));
 	close_on_exec(fd, CLOSE_ON_EXEC);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.28.2.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uhso.c,v 1.28.2.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.28.2.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.28.2.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -333,9 +333,9 @@ struct uhso_softc {
 
 #define UHSO_CONFIG_NO		1
 
-int uhso_match(device_t, cfdata_t, void *);
-void uhso_attach(device_t, device_t, void *);
-int uhso_detach(device_t, int);
+static int uhso_match(device_t, cfdata_t, void *);
+static void uhso_attach(device_t, device_t, void *);
+static int uhso_detach(device_t, int);
 
 
 
@@ -372,14 +372,14 @@ Static void uhso_tty_detach(struct uhso_port *);
 Static void uhso_tty_read_cb(struct usbd_xfer *, void *, usbd_status);
 Static void uhso_tty_write_cb(struct usbd_xfer *, void *, usbd_status);
 
-dev_type_open(uhso_tty_open);
-dev_type_close(uhso_tty_close);
-dev_type_read(uhso_tty_read);
-dev_type_write(uhso_tty_write);
-dev_type_ioctl(uhso_tty_ioctl);
-dev_type_stop(uhso_tty_stop);
-dev_type_tty(uhso_tty_tty);
-dev_type_poll(uhso_tty_poll);
+static dev_type_open(uhso_tty_open);
+static dev_type_close(uhso_tty_close);
+static dev_type_read(uhso_tty_read);
+static dev_type_write(uhso_tty_write);
+static dev_type_ioctl(uhso_tty_ioctl);
+static dev_type_stop(uhso_tty_stop);
+static dev_type_tty(uhso_tty_tty);
+static dev_type_poll(uhso_tty_poll);
 
 const struct cdevsw uhso_cdevsw = {
 	.d_open = uhso_tty_open,
@@ -435,7 +435,7 @@ Static int  uhso_ifnet_output(struct ifnet *, struct mbuf *,
  *
  */
 
-int
+static int
 uhso_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -453,7 +453,7 @@ uhso_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void
+static void
 uhso_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhso_softc *sc = device_private(self);
@@ -528,7 +528,7 @@ uhso_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-int
+static int
 uhso_detach(device_t self, int flags)
 {
 	struct uhso_softc *sc = device_private(self);
@@ -1477,7 +1477,7 @@ uhso_tty_read_cb(struct usbd_xfer *xfer, void * p, usbd_status status)
  *
  */
 
-int
+static int
 uhso_tty_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uhso_softc *sc;
@@ -1579,7 +1579,7 @@ uhso_tty_init(struct uhso_port *hp)
 	return 0;
 }
 
-int
+static int
 uhso_tty_close(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));
@@ -1630,7 +1630,7 @@ uhso_tty_clean(struct uhso_port *hp)
 	}
 }
 
-int
+static int
 uhso_tty_read(dev_t dev, struct uio *uio, int flag)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));
@@ -1653,7 +1653,7 @@ uhso_tty_read(dev_t dev, struct uio *uio, int flag)
 	return error;
 }
 
-int
+static int
 uhso_tty_write(dev_t dev, struct uio *uio, int flag)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));
@@ -1676,7 +1676,7 @@ uhso_tty_write(dev_t dev, struct uio *uio, int flag)
 	return error;
 }
 
-int
+static int
 uhso_tty_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));
@@ -1761,7 +1761,7 @@ uhso_tty_do_ioctl(struct uhso_port *hp, u_long cmd, void *data, int flag,
 }
 
 /* this is called with tty_lock held */
-void
+static void
 uhso_tty_stop(struct tty *tp, int flag)
 {
 #if 0
@@ -1771,7 +1771,7 @@ uhso_tty_stop(struct tty *tp, int flag)
 #endif
 }
 
-struct tty *
+static struct tty *
 uhso_tty_tty(dev_t dev)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));
@@ -1780,7 +1780,7 @@ uhso_tty_tty(dev_t dev)
 	return hp->hp_tp;
 }
 
-int
+static int
 uhso_tty_poll(dev_t dev, int events, struct lwp *l)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));
@@ -2024,7 +2024,7 @@ uhso_ifnet_write_cb(struct usbd_xfer *xfer, void * p, usbd_status status)
 		else
 			return;
 
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	} else {
 		usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
 		DPRINTF(5, "wrote %d bytes (of %zd)\n", cc, hp->hp_wlen);
@@ -2032,7 +2032,7 @@ uhso_ifnet_write_cb(struct usbd_xfer *xfer, void * p, usbd_status status)
 		if (cc != hp->hp_wlen)
 			DPRINTF(0, "cc=%u, wlen=%zd\n", cc, hp->hp_wlen);
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 	}
 
 	s = splnet();
@@ -2065,7 +2065,7 @@ uhso_ifnet_read_cb(struct usbd_xfer *xfer, void * p,
 		else
 			return;
 
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		hp->hp_rlen = 0;
 	} else {
 		usbd_get_xfer_status(xfer, NULL, (void **)&cp, &cc, NULL);
@@ -2097,14 +2097,14 @@ uhso_ifnet_input(struct ifnet *ifp, struct mbuf **mb, uint8_t *cp, size_t cc)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				aprint_error_ifnet(ifp, "no mbufs\n");
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				break;
 			}
 
 			MCLGET(m, M_DONTWAIT);
 			if (!ISSET(m->m_flags, M_EXT)) {
 				aprint_error_ifnet(ifp, "no mbuf clusters\n");
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				m_freem(m);
 				break;
 			}
@@ -2127,7 +2127,7 @@ uhso_ifnet_input(struct ifnet *ifp, struct mbuf **mb, uint8_t *cp, size_t cc)
 			    "bad IP header (v=%d, hl=%zd)\n",
 			    mtod(m, struct ip *)->ip_v, want);
 
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			m_freem(m);
 			break;
 		}
@@ -2179,8 +2179,7 @@ uhso_ifnet_input(struct ifnet *ifp, struct mbuf **mb, uint8_t *cp, size_t cc)
 		if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 			m_freem(m);
 		} else {
-			ifp->if_ipackets++;
-			ifp->if_ibytes += got;
+			if_statadd2(ifp, if_ipackets, 1, if_ibytes, got);
 		}
 		splx(s);
 	}
@@ -2339,7 +2338,7 @@ uhso_ifnet_start(struct ifnet *ifp)
 	m_freem(m);
 
 	if ((*hp->hp_write)(hp) != 0) {
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		CLR(ifp->if_flags, IFF_OACTIVE);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.101.4.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.101.4.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.101.4.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.101.4.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -104,6 +104,7 @@ struct uhid_softc {
 #define UHID_IMMED	0x02	/* return read data immediately */
 
 	int sc_refcnt;
+	int sc_raw;
 	u_char sc_dying;
 };
 
@@ -111,13 +112,13 @@ struct uhid_softc {
 #define	UHID_CHUNK	128	/* chunk size for read */
 #define	UHID_BSIZE	1020	/* buffer size */
 
-dev_type_open(uhidopen);
-dev_type_close(uhidclose);
-dev_type_read(uhidread);
-dev_type_write(uhidwrite);
-dev_type_ioctl(uhidioctl);
-dev_type_poll(uhidpoll);
-dev_type_kqfilter(uhidkqfilter);
+static dev_type_open(uhidopen);
+static dev_type_close(uhidclose);
+static dev_type_read(uhidread);
+static dev_type_write(uhidwrite);
+static dev_type_ioctl(uhidioctl);
+static dev_type_poll(uhidpoll);
+static dev_type_kqfilter(uhidkqfilter);
 
 const struct cdevsw uhid_cdevsw = {
 	.d_open = uhidopen,
@@ -141,15 +142,15 @@ Static int uhid_do_read(struct uhid_softc *, struct uio *, int);
 Static int uhid_do_write(struct uhid_softc *, struct uio *, int);
 Static int uhid_do_ioctl(struct uhid_softc*, u_long, void *, int, struct lwp *);
 
-int	uhid_match(device_t, cfdata_t, void *);
-void	uhid_attach(device_t, device_t, void *);
-int	uhid_detach(device_t, int);
-int	uhid_activate(device_t, enum devact);
+static int	uhid_match(device_t, cfdata_t, void *);
+static void	uhid_attach(device_t, device_t, void *);
+static int	uhid_detach(device_t, int);
+static int	uhid_activate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(uhid, sizeof(struct uhid_softc), uhid_match, uhid_attach,
     uhid_detach, uhid_activate);
 
-int
+static int
 uhid_match(device_t parent, cfdata_t match, void *aux)
 {
 #ifdef UHID_DEBUG
@@ -164,7 +165,7 @@ uhid_match(device_t parent, cfdata_t match, void *aux)
 		return UMATCH_IFACECLASS_GENERIC;
 }
 
-void
+static void
 uhid_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhid_softc *sc = device_private(self);
@@ -184,6 +185,8 @@ uhid_attach(device_t parent, device_t self, void *aux)
 	sc->sc_isize = hid_report_size(desc, size, hid_input,   repid);
 	sc->sc_osize = hid_report_size(desc, size, hid_output,  repid);
 	sc->sc_fsize = hid_report_size(desc, size, hid_feature, repid);
+	sc->sc_raw =  hid_is_collection(desc, size, uha->reportid,
+	    HID_USAGE2(HUP_FIDO, HUF_U2FHID));
 
 	aprint_naive("\n");
 	aprint_normal(": input=%d, output=%d, feature=%d\n",
@@ -200,7 +203,7 @@ uhid_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 uhid_activate(device_t self, enum devact act)
 {
 	struct uhid_softc *sc = device_private(self);
@@ -214,7 +217,7 @@ uhid_activate(device_t self, enum devact act)
 	}
 }
 
-int
+static int
 uhid_detach(device_t self, int flags)
 {
 	struct uhid_softc *sc = device_private(self);
@@ -304,7 +307,7 @@ uhid_softintr(void *cookie)
 	mutex_exit(proc_lock);
 }
 
-int
+static int
 uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uhid_softc *sc;
@@ -357,7 +360,7 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uhid_softc *sc;
@@ -385,7 +388,7 @@ uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+Static int
 uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 {
 	int error = 0;
@@ -398,6 +401,8 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 	if (sc->sc_state & UHID_IMMED) {
 		DPRINTFN(1, ("uhidread immed\n"));
 		extra = sc->sc_hdev.sc_report_id != 0;
+		if (sc->sc_isize + extra > sizeof(buffer))
+			return ENOBUFS;
 		err = uhidev_get_report(&sc->sc_hdev, UHID_INPUT_REPORT,
 					buffer, sc->sc_isize + extra);
 		if (err)
@@ -444,7 +449,7 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 	return error;
 }
 
-int
+static int
 uhidread(dev_t dev, struct uio *uio, int flag)
 {
 	struct uhid_softc *sc;
@@ -467,7 +472,7 @@ uhidread(dev_t dev, struct uio *uio, int flag)
 	return error;
 }
 
-int
+Static int
 uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 {
 	int error;
@@ -480,15 +485,32 @@ uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 		return EIO;
 
 	size = sc->sc_osize;
-	error = 0;
 	if (uio->uio_resid != size || size == 0)
 		return EINVAL;
 	error = uiomove(sc->sc_obuf, size, uio);
+#ifdef UHID_DEBUG
+	if (uhiddebug > 5) {
+		uint32_t i;
+
+		DPRINTF(("%s: outdata[%d] =", device_xname(sc->sc_hdev.sc_dev),
+		    error));
+		for (i = 0; i < size; i++)
+			DPRINTF((" %02x", sc->sc_obuf[i]));
+		DPRINTF(("\n"));
+	}
+#endif
 	if (!error) {
-		err = uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-					sc->sc_obuf, size);
-		if (err)
+		if (sc->sc_raw)
+			err = uhidev_write(sc->sc_hdev.sc_parent, sc->sc_obuf,
+			    size);
+		else
+			err = uhidev_set_report(&sc->sc_hdev,
+			    UHID_OUTPUT_REPORT, sc->sc_obuf, size);
+		if (err) {
+			DPRINTF(("%s: err = %d\n",
+			    device_xname(sc->sc_hdev.sc_dev), err));
 			error = EIO;
+		}
 	}
 
 	return error;
@@ -541,8 +563,10 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 	case FIOASYNC:
 		mutex_enter(proc_lock);
 		if (*(int *)addr) {
-			if (sc->sc_async != NULL)
+			if (sc->sc_async != NULL) {
+				mutex_exit(proc_lock);
 				return EBUSY;
+			}
 			sc->sc_async = l->l_proc;
 			DPRINTF(("uhid_do_ioctl: FIOASYNC %p\n", l->l_proc));
 		} else
@@ -578,6 +602,14 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 		mutex_exit(proc_lock);
 		break;
 
+	case USB_HID_GET_RAW:
+		*(int *)addr = sc->sc_raw;
+		break;
+
+	case USB_HID_SET_RAW:
+		sc->sc_raw = *(int *)addr;
+		break;
+
 	case USB_GET_REPORT_DESC:
 		uhidev_get_report_desc(sc->sc_hdev.sc_parent, &desc, &size);
 		rd = (struct usb_ctl_report_desc *)addr;
@@ -589,6 +621,8 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 	case USB_SET_IMMED:
 		if (*(int *)addr) {
 			extra = sc->sc_hdev.sc_report_id != 0;
+			if (sc->sc_isize + extra > sizeof(buffer))
+				return ENOBUFS;
 			err = uhidev_get_report(&sc->sc_hdev, UHID_INPUT_REPORT,
 						buffer, sc->sc_isize + extra);
 			if (err)
@@ -615,6 +649,8 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 			return EINVAL;
 		}
 		extra = sc->sc_hdev.sc_report_id != 0;
+		if (size + extra > sizeof(re->ucr_data))
+			return ENOBUFS;
 		err = uhidev_get_report(&sc->sc_hdev, re->ucr_report,
 		    re->ucr_data, size + extra);
 		if (extra)
@@ -638,6 +674,8 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 		default:
 			return EINVAL;
 		}
+		if (size > sizeof(re->ucr_data))
+			return ENOBUFS;
 		err = uhidev_set_report(&sc->sc_hdev, re->ucr_report,
 		    re->ucr_data, size);
 		if (err)
@@ -683,7 +721,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 	return 0;
 }
 
-int
+static int
 uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct uhid_softc *sc;
@@ -711,7 +749,7 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	return error;
 }
 
-int
+static int
 uhidpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct uhid_softc *sc;
@@ -771,7 +809,7 @@ static const struct filterops uhid_seltrue_filtops = {
 	.f_event = filt_seltrue,
 };
 
-int
+static int
 uhidkqfilter(dev_t dev, struct knote *kn)
 {
 	struct uhid_softc *sc;

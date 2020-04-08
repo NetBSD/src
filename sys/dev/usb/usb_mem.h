@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.31 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.31.18.1 2020/04/08 14:08:13 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -41,15 +41,16 @@ typedef struct usb_dma_block {
 	size_t size;
 	size_t align;
 	int flags;
-#define USB_DMA_FULLBLOCK	0x0001
+#define USB_DMA_FULLBLOCK	__BIT(0)
+#define USB_DMA_COHERENT	__BIT(1)
+
 	LIST_ENTRY(usb_dma_block) next;
 } usb_dma_block_t;
 
-#define USBMALLOC_MULTISEG	1
+#define USBMALLOC_MULTISEG	__BIT(0)
+#define USBMALLOC_COHERENT	__BIT(1)
 
-usbd_status	usb_allocmem(struct usbd_bus *, size_t, size_t, usb_dma_t *);
-usbd_status	usb_allocmem_flags(struct usbd_bus *, size_t, size_t, usb_dma_t *,
-			int);
+usbd_status	usb_allocmem(struct usbd_bus *, size_t, size_t, u_int, usb_dma_t *);
 void		usb_freemem(struct usbd_bus *, usb_dma_t *);
 void		usb_syncmem(usb_dma_t *, bus_addr_t, bus_size_t, int);
 

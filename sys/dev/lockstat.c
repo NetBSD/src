@@ -1,7 +1,7 @@
-/*	$NetBSD: lockstat.c,v 1.25 2017/06/01 02:45:09 chs Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.25.10.1 2020/04/08 14:08:02 martin Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,10 +37,11 @@
  * Only one thread can hold the device at a time, providing a global lock.
  *
  * XXX Timings for contention on sleep locks are currently incorrect.
+ * XXX Convert this to use timecounters!
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.25 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.25.10.1 2020/04/08 14:08:02 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.25 2017/06/01 02:45:09 chs Exp $");
 #endif
 
 #define	LOCKSTAT_MINBUFS	1000
-#define	LOCKSTAT_DEFBUFS	10000
+#define	LOCKSTAT_DEFBUFS	20000
 #define	LOCKSTAT_MAXBUFS	1000000
 
 #define	LOCKSTAT_HASH_SIZE	128
@@ -453,6 +454,10 @@ lockstat_close(dev_t dev, int flag, int mode, lwp_t *l)
 {
 
 	lockstat_lwp = NULL;
+	if (lockstat_dev_enabled) {
+		lockstat_stop(NULL);
+		lockstat_free();
+	}
 	__cpu_simple_unlock(&lockstat_lock);
 	return 0;
 }
@@ -490,9 +495,10 @@ lockstat_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		/*
 		 * Sanitize the arguments passed in and set up filtering.
 		 */
-		if (le->le_nbufs == 0)
-			le->le_nbufs = LOCKSTAT_DEFBUFS;
-		else if (le->le_nbufs > LOCKSTAT_MAXBUFS ||
+		if (le->le_nbufs == 0) {
+			le->le_nbufs = MIN(LOCKSTAT_DEFBUFS * ncpu,
+			    LOCKSTAT_MAXBUFS);
+		} else if (le->le_nbufs > LOCKSTAT_MAXBUFS ||
 		    le->le_nbufs < LOCKSTAT_MINBUFS) {
 			error = EINVAL;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.4.1 2019/06/10 22:07:05 christos Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.4.2 2020/04/08 14:08:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.4.1 2019/06/10 22:07:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.4.2 2020/04/08 14:08:03 martin Exp $");
 
 #include "opt_ata.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.4.1 2019/06/10 22:07:05 christos Exp $
 #include <sys/bus.h>
 #include <sys/once.h>
 #include <sys/bitops.h>
+#include <sys/cpu.h>
 
 #define ATABUS_PRIVATE
 
@@ -229,9 +230,6 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	int i, error;
 
 	/* we are in the atabus's thread context */
-	ata_channel_lock(chp);
-	chp->ch_flags |= ATACH_TH_RUN;
-	ata_channel_unlock(chp);
 
 	/*
 	 * Probe for the drives attached to controller, unless a PMP
@@ -247,11 +245,6 @@ atabusconfig(struct atabus_softc *atabus_sc)
 		    DEBUG_PROBE);
 	}
 
-	/* next operations will occurs in a separate thread */
-	ata_channel_lock(chp);
-	chp->ch_flags &= ~ATACH_TH_RUN;
-	ata_channel_unlock(chp);
-
 	/* Make sure the devices probe in atabus order to avoid jitter. */
 	mutex_enter(&atabus_qlock);
 	for (;;) {
@@ -263,6 +256,8 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	mutex_exit(&atabus_qlock);
 
 	ata_channel_lock(chp);
+
+	KASSERT(ata_is_thread_run(chp));
 
 	/* If no drives, abort here */
 	if (chp->ch_drive == NULL)
@@ -444,7 +439,7 @@ atabus_thread(void *arg)
 	int i, rv;
 
 	ata_channel_lock(chp);
-	chp->ch_flags |= ATACH_TH_RUN;
+	KASSERT(ata_is_thread_run(chp));
 
 	/*
 	 * Probe the drives.  Reset type to indicate to controllers
@@ -466,9 +461,7 @@ atabus_thread(void *arg)
 		if ((chp->ch_flags & (ATACH_TH_RESET | ATACH_TH_DRIVE_RESET
 		    | ATACH_TH_RECOVERY | ATACH_SHUTDOWN)) == 0 &&
 		    (chq->queue_active == 0 || chq->queue_freeze == 0)) {
-			chp->ch_flags &= ~ATACH_TH_RUN;
 			cv_wait(&chp->ch_thr_idle, &chp->ch_lock);
-			chp->ch_flags |= ATACH_TH_RUN;
 		}
 		if (chp->ch_flags & ATACH_SHUTDOWN) {
 			break;
@@ -545,6 +538,14 @@ atabus_thread(void *arg)
 	cv_signal(&chp->ch_thr_idle);
 	ata_channel_unlock(chp);
 	kthread_exit(0);
+}
+
+bool
+ata_is_thread_run(struct ata_channel *chp)
+{
+	KASSERT(mutex_owned(&chp->ch_lock));
+
+	return (chp->ch_thread == curlwp && !cpu_intr_p());
 }
 
 static void
@@ -1892,7 +1893,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			 */
 			if (atac->atac_set_modes)
 				/*
-				 * It's OK to pool here, it's fast enough
+				 * It's OK to poll here, it's fast enough
 				 * to not bother waiting for interrupt
 				 */
 				if (ata_set_mode(drvp, 0x08 | (i + 3),

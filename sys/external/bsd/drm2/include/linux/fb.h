@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.h,v 1.2.36.1 2019/06/10 22:08:31 christos Exp $	*/
+/*	$NetBSD: fb.h,v 1.2.36.2 2020/04/08 14:08:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,5 +37,8 @@
 
 #define	PICOS2KHZ(PICOS)	(1000000000ul / (PICOS))
 #define	KHZ2PICOS(KHZ)		(1000000000ul / (KHZ))
+
+#define	FBINFO_STATE_RUNNING	0
+#define	FBINFO_STATE_SUSPENDED	1
 
 #endif  /* _LINUX_FB_H_ */

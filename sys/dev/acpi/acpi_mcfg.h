@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.h,v 1.1.22.1 2019/06/10 22:07:05 christos Exp $	*/
+/*	$NetBSD: acpi_mcfg.h,v 1.1.22.2 2020/04/08 14:08:02 martin Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -36,6 +36,7 @@ int	acpimcfg_configure_bus(device_t, pci_chipset_tag_t, ACPI_HANDLE, int, int);
 
 int	acpimcfg_conf_read(pci_chipset_tag_t, pcitag_t, int, pcireg_t *);
 int	acpimcfg_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+bool	acpimcfg_conf_valid(pci_chipset_tag_t, pcitag_t, int);
 
 struct acpimcfg_ops {
 	/* validate MCFG memory region */

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2011/01/22 19:19:22 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.56.1 2020/04/08 14:07:51 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -169,7 +169,7 @@ boot(void *iplcb_p, void *extiplcb_p)
 	printf("\n");
 	//setled(0x31100000); /* we have the console */
 
-	printf("IPLCB ptr = 0x%p\n", iplcb_p);
+	printf("IPLCB ptr = %p\n", iplcb_p);
 
 	infop = (struct ipl_info *)((char *)iplcb_p + dirp->iplinfo_off);
 	printf("Machine model = 0x%x\n", infop->model);

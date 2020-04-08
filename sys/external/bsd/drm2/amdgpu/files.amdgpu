@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.7.6.2 2019/06/10 22:07:56 christos Exp $
+#	$NetBSD: files.amdgpu,v 1.7.6.3 2020/04/08 14:08:21 martin Exp $
 
 version	20180827
 
@@ -19,6 +19,7 @@ makeoptions	amdgpu	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/amd/scheduler"
 
 makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-missing-field-initializers"
 makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-shadow"
+makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-pointer-arith"
 
 # Local additions.
 file	external/bsd/drm2/amdgpu/amdgpu_module.c	amdgpu

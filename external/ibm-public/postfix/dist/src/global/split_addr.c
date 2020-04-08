@@ -1,4 +1,4 @@
-/*	$NetBSD: split_addr.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: split_addr.c,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -8,13 +8,22 @@
 /* SYNOPSIS
 /*	#include <split_addr.h>
 /*
+/*	char	*split_addr_internal(localpart, delimiter_set)
+/*	char	*localpart;
+/*	const char *delimiter_set;
+/* LEGACY SUPPORT
 /*	char	*split_addr(localpart, delimiter_set)
 /*	char	*localpart;
 /*	const char *delimiter_set;
 /* DESCRIPTION
-/*	split_addr() null-terminates \fIlocalpart\fR at the first
+/*	split_addr*() null-terminates \fIlocalpart\fR at the first
 /*	occurrence of the \fIdelimiter\fR character(s) found, and
 /*	returns a pointer to the remainder.
+/*
+/*	With split_addr_internal(), the address must be in internal
+/*	(unquoted) form.
+/*
+/*	split_addr() is a backwards-compatible form for legacy code.
 /*
 /*	Reserved addresses are not split: postmaster, mailer-daemon,
 /*	double-bounce. Addresses that begin with owner-, or addresses
@@ -29,6 +38,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -51,9 +65,9 @@
 #include <mail_addr.h>
 #include <split_addr.h>
 
-/* split_addr - split address with extreme prejudice */
+/* split_addr_internal - split address with extreme prejudice */
 
-char   *split_addr(char *localpart, const char *delimiter_set)
+char   *split_addr_internal(char *localpart, const char *delimiter_set)
 {
     ssize_t len;
 

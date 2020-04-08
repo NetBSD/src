@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.9.6.2 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.9.6.3 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.9.6.2 2019/06/10 22:08:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.9.6.3 2020/04/08 14:08:23 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -143,6 +143,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.9.6.2 2019/06/10 22:08:06 christos E
 #include "i915_trace.h"
 #include "intel_drv.h"
 #include "intel_mocs.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define GEN9_LR_CONTEXT_RENDER_SIZE (22 * PAGE_SIZE)
 #define GEN8_LR_CONTEXT_RENDER_SIZE (20 * PAGE_SIZE)
@@ -1197,11 +1199,7 @@ static inline uint32_t wa_ctx_start(struct i915_wa_ctx_bb *wa_ctx,
 				    uint32_t offset,
 				    uint32_t start_alignment)
 {
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-	return wa_ctx->offset = round_up(offset, start_alignment);
-#else
 	return wa_ctx->offset = ALIGN(offset, start_alignment);
-#endif
 }
 
 static inline int wa_ctx_end(struct i915_wa_ctx_bb *wa_ctx,

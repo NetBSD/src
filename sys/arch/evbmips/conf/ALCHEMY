@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.63.4.1 2019/06/10 22:06:12 christos Exp $
+#	$NetBSD: ALCHEMY,v 1.63.4.2 2020/04/08 14:07:36 martin Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.63.4.1 $"
+#ident 		"ALCHEMY-$Revision: 1.63.4.2 $"
 
 maxusers	32
 
@@ -237,7 +237,6 @@ pseudo-device	npf			# NPF packet filter
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	sl				# Serial Line IP
-#pseudo-device	strip				# Starmode Radio IP (Metricom)
 #pseudo-device	tun				# network tunneling over tty
 #pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre				# generic L3 over IP tunnel

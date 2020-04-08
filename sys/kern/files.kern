@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.16.4.2 2019/06/10 22:09:03 christos Exp $
+#	$NetBSD: files.kern,v 1.16.4.3 2020/04/08 14:08:51 martin Exp $
 
 #
 # kernel sources
@@ -16,7 +16,7 @@ file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
 file	kern/compat_stub.c		kern
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
-file	kern/core_netbsd.c		exec_aout | exec_coff | exec_ecoff
+file	kern/core_netbsd.c		coredump
 file	kern/cnmagic.c			kern
 file	kern/exec_aout.c		exec_aout
 file	kern/exec_ecoff.c		exec_ecoff
@@ -54,6 +54,7 @@ file	kern/kern_lock.c		kern
 file	kern/kern_lwp.c			kern
 file	kern/kern_malloc.c		kern
 file	kern/kern_module.c		kern
+file	kern/kern_module_hook.c		kern
 file	kern/kern_module_vfs.c		kern
 file	kern/kern_mutex.c		kern
 file	kern/kern_mutex_obj.c		kern
@@ -76,7 +77,7 @@ file	kern/kern_rwlock.c		kern
 file	kern/kern_rwlock_obj.c		kern
 file	kern/kern_scdebug.c		kern
 file	kern/kern_sdt.c			kdtrace_hooks
-file	kern/kern_crashme.c		debug
+file	kern/kern_crashme.c		kern
 file	kern/kern_sig.c			kern
 file	kern/kern_sleepq.c		kern
 file	kern/kern_softint.c		kern
@@ -103,6 +104,7 @@ file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c		kern
 file	kern/subr_callback.c		kern
 file	kern/subr_cprng.c		kern
+file	kern/subr_cpu.c			kern
 file	kern/subr_cpufreq.c		kern
 file	kern/subr_copy.c		kern
 file	kern/subr_debug.c		debug
@@ -121,7 +123,6 @@ file	kern/subr_interrupt.c		kern
 file	kern/subr_iostat.c		kern
 file	kern/subr_ipi.c			kern
 file	kern/subr_kcpuset.c		kern
-file	kern/subr_kleak.c		kleak
 file	kern/subr_kcov.c		kcov
 defflag	opt_kmem.h			KMEM_GUARD
 					KMEM_SIZE
@@ -160,6 +161,7 @@ file	kern/sys_mqueue.c		mqueue
 file	kern/sys_lwp.c			kern
 file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_process.c		ptrace_hooks | ktrace
+file	kern/sys_process_lwpstatus.c	kern
 file	kern/sys_ptrace.c		ptrace
 file	kern/sys_ptrace_common.c	ptrace
 file	kern/sys_pset.c			kern

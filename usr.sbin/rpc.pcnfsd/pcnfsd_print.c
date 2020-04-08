@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.14 2018/01/23 21:06:25 sevan Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.14.4.1 2020/04/08 14:09:22 martin Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -329,7 +329,7 @@ pr_start2(char *sys, char *pr, char *user, char *fname, char *opts, char **id)
 	if (!xcmd) {
 #ifdef	SVR4
 		/*
-			 * Use the copy option so we can remove the orignal
+			 * Use the copy option so we can remove the original
 			 * spooled nfs file from the spool directory.
 			 */
 		snprintf(cmdbuf, sizeof(cmdbuf), "/usr/bin/lp -c -d%s %s",

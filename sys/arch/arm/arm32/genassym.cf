@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.78.2.1 2019/06/10 22:05:51 christos Exp $
+#	$NetBSD: genassym.cf,v 1.78.2.2 2020/04/08 14:07:28 martin Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -30,6 +30,12 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+if defined(_KERNEL_OPT)
+include "opt_multiprocessor.h"
+include "opt_compat_netbsd.h"
+include "opt_execfmt.h"
+endif
+
 include <sys/param.h>
 include <sys/systm.h>
 include <sys/mbuf.h>
@@ -54,12 +60,6 @@ include <arm/arm32/pte.h>
 include <machine/pmap.h>
 include <machine/pcb.h>
 include <machine/vmparam.h>
-
-if defined(_KERNEL_OPT)
-include "opt_multiprocessor.h"
-include "opt_compat_netbsd.h"
-include "opt_execfmt.h"
-endif
 
 define	__PROG32		1
 ifdef __ARM_FIQ_INDIRECT
@@ -94,7 +94,6 @@ define	KERNEL_BASE		KERNEL_BASE
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 
-define	PV_PA			offsetof(pv_addr_t, pv_pa)
 define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
 define	DOMAIN_CLIENT		DOMAIN_CLIENT
 define	DOMAIN_DEFAULT		DOMAIN_DEFAULT
@@ -110,6 +109,7 @@ define	L1_S_FRAME		L1_S_FRAME
 define	L1_S_SHIFT		L1_S_SHIFT
 define	L1_S_SIZE		L1_S_SIZE
 define	L1_S_CACHEABLE		L1_S_C|L1_S_B|L1_S_V6_S
+define	L1_S_NOCACHE		L1_S_XS_TEX(1)
 define	L1_S_B			L1_S_B
 define	L1_S_C			L1_S_C
 define	L1_S_V6_S		L1_S_V6_S
@@ -156,11 +156,7 @@ define	MAXCPUS			MAXCPUS
 # Important offsets into the lwp and proc structs & associated constants
 define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_CPU			offsetof(struct lwp, l_cpu)
-define	L_PRIORITY		offsetof(struct lwp, l_priority)
-define	L_WCHAN			offsetof(struct lwp, l_wchan)
-define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
-define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_PRIVATE		offsetof(struct lwp, l_private)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
@@ -220,29 +216,28 @@ define	CF_CONTEXT_SWITCH	offsetof(struct cpu_functions, cf_context_switch)
 define	CF_SLEEP		offsetof(struct cpu_functions, cf_sleep)
 define	CF_CONTROL		offsetof(struct cpu_functions, cf_control)
 
-define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
+define	CPU_INFO_SIZE		sizeof(struct cpu_info)
 define	CI_ARM_CPUID		offsetof(struct cpu_info, ci_arm_cpuid)
-define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
-define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
+define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
+define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
+define	CI_MIDR			offsetof(struct cpu_info, ci_midr)
+define	CI_MPIDR		offsetof(struct cpu_info, ci_mpidr)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
+define	CI_LASTLWP		offsetof(struct cpu_info, ci_lastlwp)
 define	CI_UNDEFSAVE		offsetof(struct cpu_info, ci_undefsave[0])
+define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
+define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 if defined(EXEC_AOUT)
 define	CI_CTRL			offsetof(struct cpu_info, ci_ctrl)
 endif
 ifdef __HAVE_FAST_SOFTINTS
 define	CI_SOFTINTS		offsetof(struct cpu_info, ci_softints)
 endif
-define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
-define	CI_CC_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
-define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
-define	CI_CC_NSOFT		offsetof(struct cpu_info, ci_data.cpu_nsoft)
 ifdef FPU_VFP
 define	CI_VFP_ID		offsetof(struct cpu_info, ci_vfp_id)
 endif
-define	CI_LASTLWP		offsetof(struct cpu_info, ci_lastlwp)
 
 define	VFP_FPEXC_EN		VFP_FPEXC_EN
 

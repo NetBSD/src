@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.107.18.1 2019/06/10 22:06:19 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.107.18.2 2020/04/08 14:07:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107.18.1 2019/06/10 22:06:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107.18.2 2020/04/08 14:07:39 martin Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -198,19 +198,16 @@ u_int rctr_next_iioq;
 #endif
 
 static inline void
-userret(struct lwp *l, register_t pc, u_quad_t oticks)
+userret(struct lwp *l, struct trapframe *tf)
 {
 	struct proc *p = l->l_proc;
+	int oticks = 0; /* XXX why zero? */
 
-	if (l->l_md.md_astpending) {
+	do {
 		l->l_md.md_astpending = 0;
 		//curcpu()->ci_data.cpu_nast++;
-
-		if (curcpu()->ci_want_resched)
-			preempt();
-	}
-
-	mi_userret(l);
+		mi_userret(l);
+	} while (l->l_md.md_astpending);
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
@@ -218,7 +215,8 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 	if (p->p_stflag & PST_PROFIL) {
 		extern int psratio;
 
-		addupc_task(l, pc, (int)(p->p_sticks - oticks) * psratio);
+		addupc_task(l, tf->tf_iioq_head,
+		    (int)(p->p_sticks - oticks) * psratio);
 	}
 }
 
@@ -966,7 +964,7 @@ do_onfault:
 #endif
 
 	if (type & T_USER)
-		userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+		userret(l, l->l_md.md_regs);
 
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, type, frame, l);
@@ -983,7 +981,7 @@ md_child_return(struct lwp *l)
 	 * Return values in the frame set by cpu_lwp_fork().
 	 */
 
-	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+	userret(l, l->l_md.md_regs);
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, 0, l->l_md.md_regs, l);
 #endif /* DEBUG */
@@ -996,7 +994,7 @@ void
 cpu_spawn_return(struct lwp *l)
 {
 
-	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+	userret(l, l->l_md.md_regs);
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, 0, l->l_md.md_regs, l);
 #endif /* DEBUG */
@@ -1268,7 +1266,7 @@ syscall(struct trapframe *frame, int *args)
 		break;
 	}
 
-	userret(l, frame->tf_iioq_head, 0);
+	userret(l, frame);
 
 #ifdef DIAGNOSTIC
 	if (ci->ci_cpl != oldcpl) {
@@ -1298,5 +1296,5 @@ startlwp(void *arg)
 	KASSERT(error == 0);
 
 	kmem_free(uc, sizeof(ucontext_t));
-	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+	userret(l, l->l_md.md_regs);
 }

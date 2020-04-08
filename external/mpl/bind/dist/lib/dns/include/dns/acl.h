@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.h,v 1.3.2.2 2019/06/10 22:04:36 christos Exp $	*/
+/*	$NetBSD: acl.h,v 1.3.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -190,7 +190,7 @@ dns_acl_isinsecure(const dns_acl_t *a);
  */
 
 bool
-dns_acl_allowed(isc_netaddr_t *addr, dns_name_t *signer,
+dns_acl_allowed(isc_netaddr_t *addr, const dns_name_t *signer,
 		dns_acl_t *acl, dns_aclenv_t *aclenv);
 /*%<
  * Return #true iff the 'addr', 'signer', or ECS values are

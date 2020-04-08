@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs.h,v 1.1 2018/01/09 03:31:14 christos Exp $	*/
+/*	$NetBSD: autofs.h,v 1.1.4.1 2020/04/08 14:08:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -111,7 +111,6 @@ struct autofs_node {
 	    autofs_node)		an_children;
 	struct autofs_mount		*an_mount;
 	struct vnode			*an_vnode;
-	kmutex_t			an_vnode_lock;
 	bool				an_cached;
 	bool				an_wildcards;
 	struct callout			an_callout;
@@ -120,7 +119,6 @@ struct autofs_node {
 };
 
 struct autofs_mount {
-	TAILQ_ENTRY(autofs_mount)	am_next;
 	struct autofs_node		*am_root;
 	struct mount			*am_mp;
 	kmutex_t			am_lock;
@@ -146,7 +144,7 @@ struct autofs_request {
 	char				ar_key[AUTOFS_MAXPATHLEN];
 	char				ar_options[AUTOFS_MAXPATHLEN];
 	struct callout			ar_callout;
-	volatile u_int			ar_refcount;
+	volatile unsigned int		ar_refcount;
 };
 
 struct autofs_softc {

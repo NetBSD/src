@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ci_smc.c,v 1.2.6.2 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: amdgpu_ci_smc.c,v 1.2.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,10 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ci_smc.c,v 1.2.6.2 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ci_smc.c,v 1.2.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/firmware.h>
-#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "cikd.h"

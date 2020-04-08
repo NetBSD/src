@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.15.16.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.15.16.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.15.16.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.15.16.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -348,7 +348,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 		ucaa.ucaa_methods = &uhmodem_methods;
 		ucaa.ucaa_arg = sc;
 		ucaa.ucaa_info = comname;
-		DPRINTF(("uhmodem: int#=%d, in = 0x%x, out = 0x%x, intr = 0x%x\n",
+		DPRINTF(("uhmodem: int#=%d, in = %#x, out = %#x, intr = %#x\n",
 		    i, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
 		    sc->sc_intr_number));
 		sc->sc_subdevs[i] = config_found_sm_loc(self, "ucombus", NULL,
@@ -506,7 +506,6 @@ e220_modechange_request(struct usbd_device *dev)
 static  usbd_status
 uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 {
-	usb_device_request_t req;
 	usb_endpoint_descriptor_t *ed;
 	usb_interface_descriptor_t *id;
 	usbd_status err;
@@ -521,13 +520,8 @@ uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 			return EIO;
 
 		if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			/* issue ENDPOINT_HALT request */
-			req.bmRequestType = UT_WRITE_ENDPOINT;
-			req.bRequest = UR_CLEAR_FEATURE;
-			USETW(req.wValue, UF_ENDPOINT_HALT);
-			USETW(req.wIndex, ed->bEndpointAddress);
-			USETW(req.wLength, 0);
-			err = usbd_do_request(sc->sc_udev, &req, 0);
+			err = usbd_clear_endpoint_feature(sc->sc_udev,
+			    ed->bEndpointAddress, UF_ENDPOINT_HALT);
 			if (err) {
 				DPRINTF(("%s: ENDPOINT_HALT to EP:%d fail\n",
 					__func__, ed->bEndpointAddress));
@@ -613,7 +607,7 @@ a2502_init(struct usbd_device *dev)
 #ifdef UHMODEM_DEBUG
 	printf("%s: readdata: ", __func__);
 	for (i = 0; i < 7; i++)
-		printf("0x%x ", data[i]);
+		printf("%#x ", data[i]);
 #endif
 	if (uhmodem_regwrite(dev, init_cmd, sizeof(init_cmd)) ) {
 		DPRINTF(("%s: write fail\n", __func__));
@@ -628,7 +622,7 @@ a2502_init(struct usbd_device *dev)
 	printf("%s: readdata: ", __func__);
 	printf(" => ");
 	for (i = 0; i < 7; i++)
-		printf("0x%x ", data[i]);
+		printf("%#x ", data[i]);
 	printf("\n");
 #endif
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: load.c,v 1.2.12.1 2020/04/08 14:03:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -32,6 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <limits.h>
 
 #include "kadmin_locl.h"
 #include "kadmin-commands.h"
@@ -310,9 +312,11 @@ parse_generation(char *str, GENERATION **gen)
     return 0;
 }
 
+/* On error modify strp to point to the problem element */
 static int
-parse_extensions(char *str, HDB_extensions **e)
+parse_extensions(char **strp, HDB_extensions **e)
 {
+    char *str = *strp;
     char *p;
     int ret;
 
@@ -330,18 +334,21 @@ parse_extensions(char *str, HDB_extensions **e)
 	void *d;
 
 	len = strlen(p);
-	d = malloc(len);
+	d = emalloc(len);
 
 	len = hex_decode(p, d, len);
 	if (len < 0) {
 	    free(d);
+            *strp = p;
 	    return -1;
 	}
 
 	ret = decode_HDB_extension(d, len, &ext, NULL);
 	free(d);
-	if (ret)
+	if (ret) {
+            *strp = p;
 	    return -1;
+        }
 	d = realloc((*e)->val, ((*e)->len + 1) * sizeof((*e)->val[0]));
 	if (d == NULL)
 	    abort();
@@ -355,6 +362,45 @@ parse_extensions(char *str, HDB_extensions **e)
     return 0;
 }
 
+/* XXX: Principal names with '\n' cannot be dumped or loaded */
+static int
+my_fgetln(FILE *f, char **bufp, size_t *szp, size_t *lenp)
+{
+    size_t len;
+    size_t sz = *szp;
+    char *buf = *bufp;
+    char *p, *n;
+
+    if (!buf) {
+        buf = malloc(sz ? sz : 8192);
+        if (!buf)
+            return ENOMEM;
+        if (!sz)
+            sz = 8192;
+    }
+
+    len = 0;
+    while ((p = fgets(&buf[len], sz-len, f)) != NULL) {
+        len += strlen(&buf[len]);
+        if (buf[len-1] == '\n')
+            break;
+        if (feof(f))
+            break;
+        if (sz > SIZE_MAX/2 ||
+            (n = realloc(buf, sz += 1 + (sz >> 1))) == NULL) {
+            free(buf);
+            *bufp = NULL;
+            *szp = 0;
+            *lenp = 0;
+            return ENOMEM;
+        }
+        buf = n;
+    }
+    *bufp = buf;
+    *szp = sz;
+    *lenp = len;
+    return 0; /* *len == 0 || no EOL -> EOF */
+}
 
 /*
  * Parse the dump file in `filename' and create the database (merging
@@ -365,17 +411,20 @@ static int
 doit(const char *filename, int mergep)
 {
     krb5_error_code ret = 0;
+    krb5_error_code ret2 = 0;
     FILE *f;
-    char s[8192]; /* XXX should fix this properly */
+    char *line = NULL;
+    size_t linesz = 0;
+    size_t linelen = 0;
     char *p;
-    int line;
+    int lineno;
     int flags = O_RDWR;
     struct entry e;
     hdb_entry_ex ent;
     HDB *db = _kadm5_s_get_db(kadm_handle);
 
     f = fopen(filename, "r");
-    if(f == NULL){
+    if (f == NULL) {
 	krb5_warn(context, errno, "fopen(%s)", filename);
 	return 1;
     }
@@ -398,28 +447,27 @@ doit(const char *filename, int mergep)
 	return 1;
     }
 
-    if(!mergep)
+    if (!mergep)
 	flags |= O_CREAT | O_TRUNC;
     ret = db->hdb_open(context, db, flags, 0600);
-    if(ret){
+    if (ret){
 	krb5_warn(context, ret, "hdb_open");
 	fclose(f);
 	return 1;
     }
-    line = 0;
-    ret = 0;
-    while(fgets(s, sizeof(s), f) != NULL) {
-	line++;
-
-	p = s;
+    (void) db->hdb_set_sync(context, db, 0);
+    for (lineno = 1;
+         (ret2 = my_fgetln(f, &line, &linesz, &linelen)) == 0 && linelen > 0;
+	 ++lineno) {
+	p = line;
 	while (isspace((unsigned char)*p))
 	    p++;
 
 	e.principal = p;
-	for(p = s; *p; p++){
-	    if(*p == '\\')
+	for (p = line; *p; p++){
+	    if (*p == '\\') /* Support '\n' escapes??? */
 		p++;
-	    else if(isspace((unsigned char)*p)) {
+	    else if (isspace((unsigned char)*p)) {
 		*p = 0;
 		break;
 	    }
@@ -460,97 +508,117 @@ doit(const char *filename, int mergep)
 	skip_next(p);
 
 	memset(&ent, 0, sizeof(ent));
-	ret = krb5_parse_name(context, e.principal, &ent.entry.principal);
-	if(ret) {
+	ret2 = krb5_parse_name(context, e.principal, &ent.entry.principal);
+	if (ret2) {
 	    const char *msg = krb5_get_error_message(context, ret);
 	    fprintf(stderr, "%s:%d:%s (%s)\n",
-		    filename, line, msg, e.principal);
+		    filename, lineno, msg, e.principal);
 	    krb5_free_error_message(context, msg);
+            ret = 1;
 	    continue;
 	}
 
 	if (parse_keys(&ent.entry, e.key)) {
 	    fprintf (stderr, "%s:%d:error parsing keys (%s)\n",
-		     filename, line, e.key);
+		     filename, lineno, e.key);
 	    hdb_free_entry (context, &ent);
+            ret = 1;
 	    continue;
 	}
 
 	if (parse_event(&ent.entry.created_by, e.created) == -1) {
 	    fprintf (stderr, "%s:%d:error parsing created event (%s)\n",
-		     filename, line, e.created);
+		     filename, lineno, e.created);
 	    hdb_free_entry (context, &ent);
+            ret = 1;
 	    continue;
 	}
 	if (parse_event_alloc (&ent.entry.modified_by, e.modified) == -1) {
 	    fprintf (stderr, "%s:%d:error parsing event (%s)\n",
-		     filename, line, e.modified);
+		     filename, lineno, e.modified);
 	    hdb_free_entry (context, &ent);
+            ret = 1;
 	    continue;
 	}
 	if (parse_time_string_alloc (&ent.entry.valid_start, e.valid_start) == -1) {
 	    fprintf (stderr, "%s:%d:error parsing time (%s)\n",
-		     filename, line, e.valid_start);
+		     filename, lineno, e.valid_start);
 	    hdb_free_entry (context, &ent);
+            ret = 1;
 	    continue;
 	}
 	if (parse_time_string_alloc (&ent.entry.valid_end,   e.valid_end) == -1) {
 	    fprintf (stderr, "%s:%d:error parsing time (%s)\n",
-		     filename, line, e.valid_end);
+		     filename, lineno, e.valid_end);
 	    hdb_free_entry (context, &ent);
+            ret = 1;
 	    continue;
 	}
 	if (parse_time_string_alloc (&ent.entry.pw_end,      e.pw_end) == -1) {
 	    fprintf (stderr, "%s:%d:error parsing time (%s)\n",
-		     filename, line, e.pw_end);
+		     filename, lineno, e.pw_end);
 	    hdb_free_entry (context, &ent);
+            ret = 1;
 	    continue;
 	}
 
 	if (parse_integer_alloc (&ent.entry.max_life,  e.max_life) == -1) {
 	    fprintf (stderr, "%s:%d:error parsing lifetime (%s)\n",
-		     filename, line, e.max_life);
+		     filename, lineno, e.max_life);
 	    hdb_free_entry (context, &ent);
+            ret = 1;
 	    continue;
 
 	}
 	if (parse_integer_alloc (&ent.entry.max_renew, e.max_renew) == -1) {
 	    fprintf (stderr, "%s:%d:error parsing lifetime (%s)\n",
-		     filename, line, e.max_renew);
+		     filename, lineno, e.max_renew);
 	    hdb_free_entry (context, &ent);
+            ret = 1;
 	    continue;
 	}
 
 	if (parse_hdbflags2int (&ent.entry.flags, e.flags) != 1) {
 	    fprintf (stderr, "%s:%d:error parsing flags (%s)\n",
-		     filename, line, e.flags);
+		     filename, lineno, e.flags);
 	    hdb_free_entry (context, &ent);
+            ret = 1;
 	    continue;
 	}
 
 	if(parse_generation(e.generation, &ent.entry.generation) == -1) {
 	    fprintf (stderr, "%s:%d:error parsing generation (%s)\n",
-		     filename, line, e.generation);
+		     filename, lineno, e.generation);
 	    hdb_free_entry (context, &ent);
+            ret = 1;
 	    continue;
 	}
 
-	if(parse_extensions(e.extensions, &ent.entry.extensions) == -1) {
+	if (parse_extensions(&e.extensions, &ent.entry.extensions) == -1) {
 	    fprintf (stderr, "%s:%d:error parsing extension (%s)\n",
-		     filename, line, e.extensions);
+		     filename, lineno, e.extensions);
 	    hdb_free_entry (context, &ent);
+            ret = 1;
 	    continue;
 	}
 
-	ret = db->hdb_store(context, db, HDB_F_REPLACE, &ent);
+	ret2 = db->hdb_store(context, db, HDB_F_REPLACE, &ent);
 	hdb_free_entry (context, &ent);
-	if (ret) {
-	    krb5_warn(context, ret, "db_store");
+	if (ret2) {
+	    krb5_warn(context, ret2, "db_store");
 	    break;
 	}
     }
+    free(line);
+    if (ret2)
+	ret = ret2;
+    ret2 = db->hdb_set_sync(context, db, 1);
+    if (ret2)
+        krb5_err(context, 1, ret, "failed to sync the HDB");
     (void) kadm5_log_end(kadm_handle);
-    db->hdb_close(context, db);
+    ret2 = db->hdb_close(context, db);
+    if (ret2)
+        ret = ret2;
     fclose(f);
     return ret != 0;
 }

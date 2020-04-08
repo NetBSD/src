@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.46.16.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.46.16.2 2020/04/08 14:08:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011-2015 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.46.16.1 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.46.16.2 2020/04/08 14:08:57 martin Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.46.16.1 2019/06/10 22:09:45 christos Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.46.16.2 2020/04/08 14:08:57 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -231,9 +231,8 @@ bpfjit_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		bpfjit_module_ops.bj_free_code = &bpfjit_free_code;
-		membar_producer();
-		bpfjit_module_ops.bj_generate_code = &bpfjit_generate_code;
-		membar_producer();
+		atomic_store_release(&bpfjit_module_ops.bj_generate_code,
+		    &bpfjit_generate_code);
 		return 0;
 
 	case MODULE_CMD_FINI:

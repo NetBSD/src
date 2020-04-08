@@ -1,4 +1,4 @@
-.\"	$NetBSD: dksubr.9,v 1.6 2017/10/21 21:18:33 wiz Exp $
+.\"	$NetBSD: dksubr.9,v 1.6.4.1 2020/04/08 14:07:22 martin Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -307,11 +307,3 @@ to support other disk drivers.
 The callback interface used by the
 .Xr disk 9
 framework has been merged as well.
-.Sh BUGS
-The framework includes a
-.Nm dk_lookup
-helper function, that is used by the
-.Xr cgd 4
-driver to open a vnode for a block device.
-This looks too generic
-and should be put somewhere better (and be renamed).

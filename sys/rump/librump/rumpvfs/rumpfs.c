@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.153 2018/06/04 02:29:53 chs Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.153.2.1 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.153 2018/06/04 02:29:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.153.2.1 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -977,7 +977,8 @@ rump_vop_setattr(void *v)
 			return ENOSPC;
 
 		copylen = MIN(rn->rn_dlen, newlen);
-		memcpy(newdata, rn->rn_data, copylen);
+		if (copylen > 0)
+			memcpy(newdata, rn->rn_data, copylen);
 		memset((char *)newdata + copylen, 0, newlen - copylen);
 
 		if ((rn->rn_flags & RUMPNODE_EXTSTORAGE) == 0) {
@@ -1492,7 +1493,8 @@ rump_vop_write(void *v)
 			return ENOSPC;
 		rn->rn_dlen = newlen;
 		memset(rn->rn_data, 0, newlen);
-		memcpy(rn->rn_data, olddata, oldlen);
+		if (oldlen > 0)
+			memcpy(rn->rn_data, olddata, oldlen);
 		allocd = true;
 		uvm_vnp_setsize(vp, newlen);
 	}
@@ -1917,18 +1919,18 @@ rumpfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-rumpfs_root(struct mount *mp, struct vnode **vpp)
+rumpfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct rumpfs_mount *rfsmp = mp->mnt_data;
 
 	vref(rfsmp->rfsmp_rvp);
-	vn_lock(rfsmp->rfsmp_rvp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(rfsmp->rfsmp_rvp, lktype | LK_RETRY);
 	*vpp = rfsmp->rfsmp_rvp;
 	return 0;
 }
 
 int
-rumpfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+rumpfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 
 	return EOPNOTSUPP;

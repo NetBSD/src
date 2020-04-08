@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsa_52.c,v 1.4.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: tlsa_52.c,v 1.4.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -190,7 +190,7 @@ static inline isc_result_t
 generic_fromstruct_tlsa(ARGS_FROMSTRUCT) {
 	dns_rdata_tlsa_t *tlsa = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(tlsa != NULL);
 	REQUIRE(tlsa->common.rdtype == type);
 	REQUIRE(tlsa->common.rdclass == rdclass);
 
@@ -209,7 +209,7 @@ generic_tostruct_tlsa(ARGS_TOSTRUCT) {
 	dns_rdata_tlsa_t *tlsa = target;
 	isc_region_t region;
 
-	REQUIRE(rdata != NULL);
+	REQUIRE(tlsa != NULL);
 	REQUIRE(rdata->length != 0);
 
 	REQUIRE(tlsa != NULL);
@@ -262,7 +262,7 @@ tostruct_tlsa(ARGS_TOSTRUCT) {
 	dns_rdata_tlsa_t *tlsa = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_tlsa);
-	REQUIRE(target != NULL);
+	REQUIRE(tlsa != NULL);
 
 	tlsa->common.rdclass = rdata->rdclass;
 	tlsa->common.rdtype = rdata->type;
@@ -275,7 +275,7 @@ static inline void
 freestruct_tlsa(ARGS_FREESTRUCT) {
 	dns_rdata_tlsa_t *tlsa = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(tlsa != NULL);
 	REQUIRE(tlsa->common.rdtype == dns_rdatatype_tlsa);
 
 	generic_freestruct_tlsa(source);

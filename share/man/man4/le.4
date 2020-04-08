@@ -1,4 +1,4 @@
-.\"	$NetBSD: le.4,v 1.23 2008/08/10 14:43:53 fair Exp $
+.\"	$NetBSD: le.4,v 1.23.62.1 2020/04/08 14:07:21 martin Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,12 +34,12 @@
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd April 27, 2001
+.Dd January 25, 2020
 .Dt LE 4
 .Os
 .Sh NAME
 .Nm le
-.Nd AMD 7990, 79C90, 79C960, 79C970 LANCE Ethernet interface driver
+.Nd AMD 7990, 79C90, 79C960 LANCE Ethernet interface driver
 .Sh SYNOPSIS
 .Ss ISA boards
 .Cd "nele0 at isa? port 0x320 irq 9 drq 7    # NE2100"
@@ -54,8 +54,6 @@
 .Cd "le* at depca?"
 .Ss MCA boards
 .Cd "le* at mca? slot ?                      # SKNET Personal/MC2+"
-.Ss PCI boards and mainboard adapters
-.Cd "le* at pci? dev? function ?"
 .Ss TURBOchannel PMAD-A or onboard (alpha, pmax)
 .Cd "le* at tc? slot ? offset ?"
 .Ss alpha
@@ -96,15 +94,22 @@ Am7990 and Am79C90 (CMOS, pin-compatible)
 .Tn LANCE
 (Local Area Network Controller - Ethernet) chip set.
 .Pp
-The
+In previous releases of
+.Nx ,
+the
 .Nm
-driver also supports PCnet-PCI cards based on the
+driver also supported PCnet-PCI cards based on the
 .Tn AMD 79c970
-chipset, which is a single-chip implementation of a
+chipset, which is a single-chip implementation of an
+Ethernet interface that has a
 .Tn LANCE
-chip and
+compatibility mode combined with a
 .Tn PCI
 bus interface.
+PCnet-PCI interfaces have been supported by the
+.Xr pcn 4
+driver since
+.Nx 1.6 .
 .Pp
 Each of the host's network addresses
 is specified at boot time with an
@@ -344,6 +349,7 @@ transmitter was turned off due to an error.
 .Xr inet 4 ,
 .Xr intro 4 ,
 .Xr mca 4 ,
+.Xr pcn 4 ,
 .Xr ifconfig 8
 .Rs
 .%R "Am79C90 - CMOS Local Area Network Controller for Ethernet"

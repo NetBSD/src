@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.46 2015/09/21 01:24:23 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.46.16.1 2020/04/08 14:07:18 martin Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -45,7 +45,6 @@
 #include <string.h>
 
 #include "bufcache.h"
-#include "vnode.h"
 #include "lfs_user.h"
 
 #include "fsck.h"
@@ -53,7 +52,6 @@
 #include "extern.h"
 
 const char *lfname = "lost+found";
-int lfmode = 01700;
 #if 0
 struct lfs_dirtemplate emptydir = {
 	.dot_ino = 0,

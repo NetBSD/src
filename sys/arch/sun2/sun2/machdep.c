@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77.30.1 2019/06/10 22:06:49 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77.30.2 2020/04/08 14:07:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,67 +149,68 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77.30.1 2019/06/10 22:06:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77.30.2 2020/04/08 14:07:55 martin Exp $");
 
 #include "opt_ddb.h"
-#include "opt_kgdb.h"
 #include "opt_fpu_emulate.h"
+#include "opt_kgdb.h"
 #include "opt_modular.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
-#include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
+#include <sys/core.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/extent.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
-#include <sys/core.h>
+#include <sys/extent.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
 #include <sys/kcore.h>
-#include <sys/vnode.h>
-#include <sys/syscallargs.h>
+#include <sys/kernel.h>
 #include <sys/ksyms.h>
-#include <sys/cpu.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/module.h>
+#include <sys/mount.h>
+#include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/syscallargs.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
+#include <sys/vnode.h>
+
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
 
 #include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */
 
-#include <sys/sysctl.h>
-
 #include <dev/cons.h>
 #include <dev/mm.h>
 
-#include <machine/promlib.h>
-#include <machine/cpu.h>
-#include <machine/dvma.h>
-#include <machine/idprom.h>
-#include <machine/kcore.h>
-#include <machine/reg.h>
-#include <machine/pcb.h>
-#include <machine/psl.h>
-#include <machine/pte.h>
 #define _SUN68K_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/cpu.h>
+#include <machine/dvma.h>
+#include <machine/idprom.h>
 #include <machine/intr.h>
+#include <machine/kcore.h>
+#include <machine/pcb.h>
 #include <machine/pmap.h>
+#include <machine/promlib.h>
+#include <machine/psl.h>
+#include <machine/pte.h>
+#include <machine/reg.h>
 
 #if defined(DDB)
 #include <machine/db_machdep.h>
-#include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#include <ddb/db_sym.h>
 #endif
 
 #include <dev/vme/vmereg.h>
@@ -336,7 +337,7 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 
 	/*
@@ -1167,3 +1168,13 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		return 0;
 	return EFAULT;
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
+#endif

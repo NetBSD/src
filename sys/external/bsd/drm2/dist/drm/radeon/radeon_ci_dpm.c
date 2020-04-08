@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ci_dpm.c,v 1.1.6.2 2019/06/10 22:08:26 christos Exp $	*/
+/*	$NetBSD: radeon_ci_dpm.c,v 1.1.6.3 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ci_dpm.c,v 1.1.6.2 2019/06/10 22:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ci_dpm.c,v 1.1.6.3 2020/04/08 14:08:26 martin Exp $");
 
 #include <linux/firmware.h>
 #include "drmP.h"
@@ -386,29 +386,29 @@ static int ci_min_max_v_gnbl_pm_lid_from_bapm_vddc(struct radeon_device *rdev)
 	struct ci_power_info *pi = ci_get_pi(rdev);
 	u8 *hi_vid = pi->smc_powertune_table.BapmVddCVidHiSidd;
 	u8 *lo_vid = pi->smc_powertune_table.BapmVddCVidLoSidd;
-	int i, vmin, vmax;
+	int i, min, max;
 
-	vmin = vmax = hi_vid[0];
+	min = max = hi_vid[0];
 	for (i = 0; i < 8; i++) {
 		if (0 != hi_vid[i]) {
-			if (vmin > hi_vid[i])
-				vmin = hi_vid[i];
-			if (vmax < hi_vid[i])
-				vmax = hi_vid[i];
+			if (min > hi_vid[i])
+				min = hi_vid[i];
+			if (max < hi_vid[i])
+				max = hi_vid[i];
 		}
 
 		if (0 != lo_vid[i]) {
-			if (vmin > lo_vid[i])
-				vmin = lo_vid[i];
-			if (vmax < lo_vid[i])
-				vmax = lo_vid[i];
+			if (min > lo_vid[i])
+				min = lo_vid[i];
+			if (max < lo_vid[i])
+				max = lo_vid[i];
 		}
 	}
 
-	if ((vmin == 0) || (vmax == 0))
+	if ((min == 0) || (max == 0))
 		return -EINVAL;
-	pi->smc_powertune_table.GnbLPMLMaxVid = (u8)vmax;
-	pi->smc_powertune_table.GnbLPMLMinVid = (u8)vmin;
+	pi->smc_powertune_table.GnbLPMLMaxVid = (u8)max;
+	pi->smc_powertune_table.GnbLPMLMinVid = (u8)min;
 
 	return 0;
 }
@@ -2443,15 +2443,15 @@ static u8 ci_get_sleep_divider_id_from_clock(struct radeon_device *rdev,
 {
 	u32 i;
 	u32 tmp;
-	u32 vmin = (min_sclk_in_sr > CISLAND_MINIMUM_ENGINE_CLOCK) ?
+	u32 min = (min_sclk_in_sr > CISLAND_MINIMUM_ENGINE_CLOCK) ?
 		min_sclk_in_sr : CISLAND_MINIMUM_ENGINE_CLOCK;
 
-	if (sclk < vmin)
+	if (sclk < min)
 		return 0;
 
 	for (i = CISLAND_MAX_DEEPSLEEP_DIVIDER_ID;  ; i--) {
 		tmp = sclk / (1 << i);
-		if (tmp >= vmin || i == 0)
+		if (tmp >= min || i == 0)
 			break;
 	}
 
@@ -5664,22 +5664,18 @@ int ci_dpm_init(struct radeon_device *rdev)
 	u8 frev, crev;
 	struct ci_power_info *pi;
 	int ret;
-#ifndef __NetBSD__
 	u32 mask;
-#endif
 
 	pi = kzalloc(sizeof(struct ci_power_info), GFP_KERNEL);
 	if (pi == NULL)
 		return -ENOMEM;
 	rdev->pm.dpm.priv = pi;
 
-#ifndef __NetBSD__
 	ret = drm_pcie_get_speed_cap_mask(rdev->ddev, &mask);
 	if (ret)
 		pi->sys_pcie_mask = 0;
 	else
 		pi->sys_pcie_mask = mask;
-#endif
 	pi->force_pcie_gen = RADEON_PCIE_GEN_INVALID;
 
 	pi->pcie_gen_performance.max = RADEON_PCIE_GEN1;

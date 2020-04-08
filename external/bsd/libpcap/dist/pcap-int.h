@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-int.h,v 1.4.12.1 2019/06/10 21:44:59 christos Exp $	*/
+/*	$NetBSD: pcap-int.h,v 1.4.12.2 2020/04/08 14:04:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -177,9 +177,9 @@ struct pcap {
 
 	void *priv;		/* private data for methods */
 
-#ifdef ENABLE_REMOTE
+// #ifdef ENABLE_REMOTE
 	struct pcap_samp rmt_samp;	/* parameters related to the sampling process. */
-#endif
+// #endif
 
 	int swapped;
 	FILE *rfile;		/* null if live capture, non-null if savefile */

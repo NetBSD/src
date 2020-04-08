@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30.16.1 2019/06/10 22:06:39 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.30.16.2 2020/04/08 14:07:49 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -67,7 +67,7 @@
 
 #ifdef PPC_IBM4XX
 #define	PGSHIFT		14	/* Use 16KB to reduce TLB thrashing */
-#define	UPAGES		2
+#define	UPAGES		1
 #else
 #define	PGSHIFT		12
 #define	UPAGES		4

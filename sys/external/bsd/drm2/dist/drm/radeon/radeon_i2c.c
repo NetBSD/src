@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_i2c.c,v 1.3.18.1 2019/06/10 22:08:26 christos Exp $	*/
+/*	$NetBSD: radeon_i2c.c,v 1.3.18.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,16 +26,17 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_i2c.c,v 1.3.18.1 2019/06/10 22:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_i2c.c,v 1.3.18.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <linux/export.h>
-#include <linux/module.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>
 #include <drm/radeon_drm.h>
 #include "radeon.h"
 #include "atom.h"
+
+#include <linux/nbsd-namespace.h>
 
 extern int radeon_atom_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
 				   struct i2c_msg *msgs, int num);
@@ -933,11 +934,7 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 	i2c->adapter.dev.parent = dev->dev;
 	i2c->dev = dev;
 	i2c_set_adapdata(&i2c->adapter, i2c);
-#ifdef __NetBSD__
-	linux_mutex_init(&i2c->mutex);
-#else
 	mutex_init(&i2c->mutex);
-#endif
 	if (rec->mm_i2c ||
 	    (rec->hw_capable &&
 	     radeon_hw_i2c &&
@@ -987,11 +984,7 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 
 	return i2c;
 out_free:
-#ifdef __NetBSD__
-	linux_mutex_destroy(&i2c->mutex);
-#else
 	mutex_destroy(&i2c->mutex);
-#endif
 	kfree(i2c);
 	return NULL;
 
@@ -1004,11 +997,7 @@ void radeon_i2c_destroy(struct radeon_i2c_chan *i2c)
 	i2c_del_adapter(&i2c->adapter);
 	if (i2c->has_aux)
 		drm_dp_aux_unregister(&i2c->aux);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&i2c->mutex);
-#else
 	mutex_destroy(&i2c->mutex);
-#endif
 	kfree(i2c);
 }
 

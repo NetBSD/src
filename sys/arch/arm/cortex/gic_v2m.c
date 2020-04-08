@@ -1,4 +1,4 @@
-/* $NetBSD: gic_v2m.c,v 1.5.4.2 2019/06/10 22:05:52 christos Exp $ */
+/* $NetBSD: gic_v2m.c,v 1.5.4.3 2020/04/08 14:07:28 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.5.4.2 2019/06/10 22:05:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.5.4.3 2020/04/08 14:07:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -245,7 +245,7 @@ gic_v2m_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 		return NULL;
 
 	tbl = pci_conf_read(pa->pa_pc, pa->pa_tag, off + PCI_MSIX_TBLOFFSET);
-	bar = PCI_BAR0 + (4 * (tbl & PCI_MSIX_PBABIR_MASK));
+	bar = PCI_BAR0 + (4 * (tbl & PCI_MSIX_TBLBIR_MASK));
 	table_offset = tbl & PCI_MSIX_TBLOFFSET_MASK;
 	table_size = pci_msix_count(pa->pa_pc, pa->pa_tag) * PCI_MSIX_TABLE_ENTRY_SIZE;
 	if (table_size == 0)

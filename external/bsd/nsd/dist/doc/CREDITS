@@ -24,6 +24,7 @@ Aaron Glenn                                     - DragonflyBSD, BSD/sparc64 test
 Ben Laurie                                      - NSEC3 patch.
 Bin Zhang                                       - NSD 3 prerelease testing.
 Colm MacCárthaigh,                              - IPv6 binding and cleanups.
+Greg Bock                                       - confine-to-zone feature.
 Farkas Levente                                  - rpm specfile improvements.
 Jakob Schlyter, Kirei                           - chroot and several other patches
 Jun-ichiro itojun Hagino, IIJLab                - IPv6 transport

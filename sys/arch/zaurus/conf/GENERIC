@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.77.2.1 2019/06/10 22:06:56 christos Exp $
+#	$NetBSD: GENERIC,v 1.77.2.2 2020/04/08 14:07:59 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -391,9 +391,6 @@ pseudo-device	putter			# for puffs and pud
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.
-
-# a pseudo device needed for SMBFS
-#pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

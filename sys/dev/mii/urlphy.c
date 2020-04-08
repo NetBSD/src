@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.31.18.1 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.31.18.2 2020/04/08 14:08:08 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.31.18.1 2019/06/10 22:07:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.31.18.2 2020/04/08 14:08:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,6 @@ urlphy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &urlphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	/* Don't do loopback on this PHY. */
 	sc->mii_flags |= MIIF_NOLOOP;
@@ -123,12 +122,8 @@ urlphy_attach(device_t parent, device_t self, void *aux)
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
-	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
+
+	mii_phy_add_media(sc);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.34.14.1 2019/06/10 22:05:54 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.34.14.2 2020/04/08 14:07:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,18 +79,19 @@ typedef	int		__register_t;
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
-#define	__HAVE_SYSCALL_INTERN
-#define	__HAVE_NEW_STYLE_BUS_H
-#define	__HAVE_MINIMAL_EMUL
-#define __HAVE_CPU_DATA_FIRST
-#define	__HAVE___LWP_GETPRIVATE_FAST
 #define	__HAVE_COMMON___TLS_GET_ADDR
-#define	__HAVE_TLS_VARIANT_I
+#define	__HAVE_CPU_DATA_FIRST
+#define	__HAVE_MINIMAL_EMUL
+#define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_OLD_DISKLABEL
+#define	__HAVE_SYSCALL_INTERN
+#define	__HAVE_TLS_VARIANT_I
+#define	__HAVE___LWP_GETPRIVATE_FAST
 #if defined(__ARM_EABI__) && defined(_ARM_ARCH_6)
 #define	__HAVE_ATOMIC64_OPS
 #endif
 #if defined(_ARM_ARCH_6)
+#define	__HAVE_MAXPROC_HOOK
 #define	__HAVE_UCAS_MP
 #endif
 

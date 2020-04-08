@@ -63,7 +63,6 @@
   geniuskb19e     Genius KB-19e NB
   geniuskkb2050hs Genius KKB-2050HS
   gyration        Gyration
-  htcdream        HTC Dream
   kinesis         Kinesis
   logitech_base   Logitech
   logitech_g15    Logitech G15 extra keys via G15daemon
@@ -122,6 +121,7 @@
   microsoftprose  Microsoft Internet Pro (Swedish)
   microsoftoffice Microsoft Office Keyboard
   microsoftmult   Microsoft Wireless Multimedia 1.0A
+  microsoftsurface Microsoft Surface
   microsoftelite  Microsoft Natural Elite
   microsoftccurve2k Microsoft Comfort Curve 2000
   oretec          Ortek Multimedia/Internet MCK-800
@@ -183,7 +183,6 @@
   unitekkb1925    Unitek KB-1925
   compalfl90      FL90
   creativedw7000  Creative Desktop Wireless 7000
-  htcdream        Htc Dream phone
   teck227         Truly Ergonomic 227
   teck229         Truly Ergonomic 229
   apex300         SteelSeries Apex 300 (Apex RAW)
@@ -288,7 +287,8 @@
   bw              Tswana
   ph              Filipino
   md              Moldavian
-  id              Indonesian (Jawi)
+  id              Indonesian (Arab Melayu, phonetic)
+  jv              Indonesian (Javanese)
   my              Malay (Jawi, Arabic Keyboard)
 
 ! variant
@@ -309,6 +309,7 @@
   altgr-intl      us: English (intl., with AltGr dead keys)
   olpc2           us: English (the divide/multiply keys toggle the layout)
   hbs             us: Serbo-Croatian (US)
+  norman          us: English (Norman)
   workman         us: English (Workman)
   workman-intl    us: English (Workman, intl., with dead keys)
   ps              af: Pashto
@@ -325,6 +326,7 @@
   olpc            ara: Arabic (OLPC)
   mac             ara: Arabic (Macintosh)
   plisi           al: Albanian (Plisi)
+  veqilharxhi     al: Albanian (Veqilharxhi)
   phonetic        am: Armenian (phonetic)
   phonetic-alt    am: Armenian (alt. phonetic)
   eastern         am: Armenian (eastern)
@@ -355,7 +357,6 @@
   guru            in: Punjabi (Gurmukhi)
   jhelum          in: Punjabi (Gurmukhi Jhelum)
   kan             in: Kannada
-  kan-kagapa      in: Kannada (KaGaPa phonetic)
   kan-kagapa      in: Kannada (KaGaPa phonetic)
   mal             in: Malayalam
   mal_lalitha     in: Malayalam (Lalitha)
@@ -414,6 +415,13 @@
   multi-2gr       ca: Canadian Multilingual (2nd part)
   ike             ca: Inuktitut
   eng             ca: English (Canada)
+  mon_trad        cn: Mongolian (Bichig)
+  mon_trad_todo   cn: Mongolian Todo
+  mon_trad_xibe   cn: Mongolian Xibe
+  mon_trad_manchu cn: Mongolian Manchu
+  mon_trad_galik  cn: Mongolian Galik
+  mon_todo_galik  cn: Mongolian Todo Galik
+  mon_manchu_galik cn: Mongolian Manchu Galik
   tib             cn: Tibetan
   tib_asciinum    cn: Tibetan (with ASCII numerals)
   ug              cn: Uyghur
@@ -425,6 +433,7 @@
   bksl            cz: Czech (with &lt;\|&gt; key)
   qwerty          cz: Czech (QWERTY)
   qwerty_bksl     cz: Czech (QWERTY, extended backslash)
+  qwerty-mac      cz: Czech (QWERTY, Macintosh)
   ucw             cz: Czech (UCW, only accented letters)
   dvorak-ucw      cz: Czech (US, Dvorak, UCW support)
   rus             cz: Russian (Czech, phonetic)
@@ -449,9 +458,9 @@
   ku_alt          iq: Kurdish (Iraq, Latin Alt-Q)
   ku_ara          iq: Kurdish (Iraq, Arabic-Latin)
   nodeadkeys      fo: Faroese (no dead keys)
+  winkeys         fi: Finnish (Winkeys)
   classic         fi: Finnish (classic)
   nodeadkeys      fi: Finnish (classic, no dead keys)
-  winkeys         fi: Finnish (Winkeys)
   smi             fi: Northern Saami (Finland)
   mac             fi: Finnish (Macintosh)
   nodeadkeys      fr: French (no dead keys)
@@ -465,9 +474,11 @@
   latin9_sundeadkeys fr: French (legacy, alt., with Sun dead keys)
   bepo            fr: French (Bepo, ergonomic, Dvorak way)
   bepo_latin9     fr: French (Bepo, ergonomic, Dvorak way, Latin-9 only)
+  bepo_afnor      fr: French (Bepo, ergonomic, Dvorak way, AFNOR)
   dvorak          fr: French (Dvorak)
   mac             fr: French (Macintosh)
   azerty          fr: French (AZERTY)
+  afnor           fr: French (AFNOR standardized AZERTY)
   bre             fr: French (Breton)
   oci             fr: Occitan
   geo             fr: Georgian (France, AZERTY Tskapo)
@@ -540,6 +551,7 @@
   ibm             it: Italian (IBM 142)
   intl            it: Italian (intl., with dead keys)
   scn             it: Sicilian
+  fur             it: Friulian (Italy)
   kana            jp: Japanese (Kana)
   kana86          jp: Japanese (Kana 86)
   OADG109A        jp: Japanese (OADG 109A)
@@ -562,6 +574,7 @@
   ibm             lt: Lithuanian (IBM LST 1205-92)
   lekp            lt: Lithuanian (LEKP)
   lekpa           lt: Lithuanian (LEKPa)
+  sgs             lt: Samogitian
   apostrophe      lv: Latvian (apostrophe)
   tilde           lv: Latvian (tilde)
   fkey            lv: Latvian (F)
@@ -577,6 +590,8 @@
   latinalternatequotes me: Montenegrin (Latin with guillemets)
   nodeadkeys      mk: Macedonian (no dead keys)
   us              mt: Maltese (with US layout)
+  alt-us          mt: Maltese (US layout with AltGr overrides)
+  alt-gb          mt: Maltese (UK layout with AltGr overrides)
   nodeadkeys      no: Norwegian (no dead keys)
   winkeys         no: Norwegian (Win keys)
   dvorak          no: Norwegian (Dvorak)
@@ -741,6 +756,7 @@
   dvorak          ph: Filipino (Dvorak, Latin)
   dvorak-bay      ph: Filipino (Dvorak, Baybayin)
   gag             md: Moldavian (Gagauz)
+  phoneticx       id: Indonesian (Arab Melayu, ext. phonetic)
   phonetic        my: Malay (Jawi, phonetic)
 
 ! option
@@ -748,7 +764,7 @@
   grp:switch           Right Alt (while pressed)
   grp:lswitch          Left Alt (while pressed)
   grp:lwin_switch      Left Win (while pressed)
-  grp:rwin_switch      Left Win (while pressed)
+  grp:rwin_switch      Right Win (while pressed)
   grp:win_switch       Any Win (while pressed)
   grp:menu_switch      Menu (while pressed), Shift+Menu for Menu
   grp:caps_switch      Caps Lock (while pressed), Alt+Caps Lock for the original Caps Lock action
@@ -804,6 +820,7 @@
   ctrl:nocaps          Caps Lock as Ctrl
   ctrl:lctrl_meta      Left Ctrl as Meta
   ctrl:swapcaps        Swap Ctrl and Caps Lock
+  ctrl:swapcaps_hyper  Caps Lock as Control, Control as Hyper
   ctrl:ac_ctrl         At left of 'A'
   ctrl:aa_ctrl         At bottom left
   ctrl:rctrl_ralt      Right Ctrl as Right Alt
@@ -816,6 +833,8 @@
   grp_led:num          Num Lock
   grp_led:caps         Caps Lock
   grp_led:scroll       Scroll Lock
+  mod_led              Use keyboard LED to indicate modifiers
+  mod_led:compose      Compose
   keypad               Layout of numeric keypad
   keypad:legacy        Legacy
   keypad:oss           Unicode additions (arrows and math operators)
@@ -843,6 +862,7 @@
   caps:shiftlock       Caps Lock toggles ShiftLock (affects all keys)
   caps:swapescape      Swap ESC and Caps Lock
   caps:escape          Make Caps Lock an additional Esc
+  caps:escape_shifted_capslock Make unmodified Caps Lock an additional Esc, but Shift + Caps Lock behaves like regular Caps Lock
   caps:backspace       Make Caps Lock an additional Backspace
   caps:super           Make Caps Lock an additional Super
   caps:hyper           Make Caps Lock an additional Hyper
@@ -852,6 +872,7 @@
   caps:none            Caps Lock is disabled
   altwin               Alt/Win key behavior
   altwin:menu          Add the standard behavior to Menu key
+  altwin:menu_win      Menu is mapped to Win
   altwin:meta_alt      Alt and Meta are on Alt
   altwin:alt_win       Alt is mapped to Win and the usual Alt
   altwin:ctrl_win      Ctrl is mapped to Win and the usual Ctrl keys
@@ -904,6 +925,15 @@
   eurosign:5           Euro on 5
   rupeesign:4          Rupee on 4
   lv5                  Key to choose 5th level
+  lv5:lsgt_switch      &lt;Less/Greater&gt; chooses 5th level
+  lv5:ralt_switch      Right Alt chooses 5th level
+  lv5:lsgt_switch_lock &lt;Less/Greater&gt; chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser
+  lv5:ralt_switch_lock Right Alt chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser
+  lv5:lwin_switch_lock Left Win chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser
+  lv5:rwin_switch_lock Right Win chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser
+  lv5:lsgt_switch_lock_cancel &lt;Less/Greater&gt; chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser
+  lv5:lsgt_switch      &lt;Less/Greater&gt; chooses 5th level
+  lv5:ralt_switch      Right Alt chooses 5th level
   lv5:lsgt_switch_lock &lt;Less/Greater&gt; chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser
   lv5:ralt_switch_lock Right Alt chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser
   lv5:lwin_switch_lock Left Win chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser
@@ -930,8 +960,10 @@
   japan:nicola_f_bs    NICOLA-F style Backspace
   japan:hztg_escape    Make Zenkaku Hankaku an additional Esc
   korean               Korean Hangul/Hanja keys
-  korean:ralt_rctrl    Right Alt as Hangul, right Ctrl as Hanja
-  korean:rctrl_ralt    Right Ctrl as Hangul, right Alt as Hanja
+  korean:ralt_hangul   Make right Alt a Hangul key
+  korean:rctrl_hangul  Make right Ctrl a Hangul key
+  korean:ralt_hanja    Make right Alt a Hanja key
+  korean:rctrl_hanja   Make right Ctrl a Hanja key
   esperanto            Adding Esperanto supersigned letters
   esperanto:qwerty     To the corresponding key in a QWERTY layout
   esperanto:dvorak     To the corresponding key in a Dvorak layout

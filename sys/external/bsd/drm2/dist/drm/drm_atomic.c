@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic.c,v 1.7.6.2 2019/06/10 22:07:56 christos Exp $	*/
+/*	$NetBSD: drm_atomic.c,v 1.7.6.3 2020/04/08 14:08:21 martin Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,9 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.7.6.2 2019/06/10 22:07:56 christos Exp $");
-
-#include <linux/export.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.7.6.3 2020/04/08 14:08:21 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_atomic.h>

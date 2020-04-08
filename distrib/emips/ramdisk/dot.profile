@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.2 2011/06/19 02:40:38 tsutsui Exp $
+# $NetBSD: dot.profile,v 1.2.44.1 2020/04/08 14:03:44 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -60,5 +60,5 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount -u $ROOTDEV /
 
 	# run the installation program
-	sysinst
+	sysinst || stty sane
 fi

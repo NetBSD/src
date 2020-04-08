@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.23.12.1 2019/06/10 22:05:22 christos Exp $
+.\"	$NetBSD: curses_screen.3,v 1.23.12.2 2020/04/08 14:07:14 martin Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd October 2, 2018
+.Dd March 12, 2020
 .Dt CURSES_SCREEN 3
 .Os
 .Sh NAME
@@ -267,7 +267,10 @@ of the current screen to
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL
-if an error is detected.
+if an error is detected with the exception of
+.Fn initscr
+which will log a diagnostic to standard error output and then call
+.Xr exit 3 .
 The functions that return an int will return one of the following
 values:
 .Pp

@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.9.2.1 2019/06/10 22:07:09 christos Exp $ */
+/* $NetBSD: tcakp.c,v 1.9.2.2 2020/04/08 14:08:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.9.2.1 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.9.2.2 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,7 @@ struct tcakp_softc {
 	uint16_t	sc_keymap[128];
 
 	void		*sc_ih;
+	void		*sc_sih;
 
 	int		sc_enabled;
 	device_t	sc_wskbddev;
@@ -106,6 +107,9 @@ struct tcakp_softc {
 
 static int	tcakp_match(device_t, cfdata_t, void *);
 static void	tcakp_attach(device_t, device_t, void *);
+
+static int	tcakp_i2c_lock(struct tcakp_softc *);
+static void	tcakp_i2c_unlock(struct tcakp_softc *);
 
 static int	tcakp_read(struct tcakp_softc *, uint8_t, uint8_t *);
 static int	tcakp_write(struct tcakp_softc *, uint8_t, uint8_t);
@@ -137,8 +141,28 @@ static int
 tcakp_intr(void *priv)
 {
 	struct tcakp_softc * const sc = priv;
+
+	/*
+	 * Schedule our soft interrupt handler.  We can't access the i2c
+	 * from hard interrupt context, so just go ahead and claim the
+	 * interrupt.
+	 *
+	 * XXX If we ever end up with an instance that uses
+	 * level-sensitive interrupts, we will need to mask
+	 * the interrupt source.
+	 */
+	softint_schedule(sc->sc_sih);
+	return 1;
+}
+
+static void
+tcakp_softintr(void *priv)
+{
+	struct tcakp_softc * const sc = priv;
 	uint8_t stat, ev;
-	int ret = 0;
+
+	if (tcakp_i2c_lock(sc) != 0)
+		return;
 
 	tcakp_read(sc, TCA_INT_STAT, &stat);
 	if (stat & INT_STAT_K_INT) {
@@ -146,6 +170,8 @@ tcakp_intr(void *priv)
 		while (ev != 0) {
 			const bool pressed = __SHIFTOUT(ev, TCA_EVENT_STATE);
 			const uint8_t code = __SHIFTOUT(ev, TCA_EVENT_CODE);
+
+			tcakp_i2c_unlock(sc);
 
 			/* Translate raw code to keymap index */
 			const u_int index = tcakp_decode(sc, code);
@@ -157,13 +183,13 @@ tcakp_intr(void *priv)
 			if (sc->sc_wskbddev)
 				wskbd_input(sc->sc_wskbddev, type, key);
 
+			if (tcakp_i2c_lock(sc) != 0)
+				return;
 			tcakp_read(sc, TCA_EVENT('A'), &ev);
 		}
-		ret = 1;
 	}
 	tcakp_write(sc, TCA_INT_STAT, stat);
-
-	return ret;
+	tcakp_i2c_unlock(sc);
 }
 
 static int
@@ -171,6 +197,7 @@ tcakp_init(struct tcakp_softc *sc)
 {
 	uint32_t mask;
 	uint8_t val;
+	int error;
 
 	if (sc->sc_rows == 0 || sc->sc_cols == 0) {
 		aprint_error_dev(sc->sc_dev, "not configured\n");
@@ -179,6 +206,10 @@ tcakp_init(struct tcakp_softc *sc)
 
 	mask = __BITS(sc->sc_rows - 1, 0);
 	mask += __BITS(sc->sc_cols - 1, 0) << 8;
+
+	error = tcakp_i2c_lock(sc);
+	if (error)
+		return error;
 
 	/* Lock the keyboard */
 	tcakp_write(sc, TCA_KEY_LCK_EC, KEY_LCK_EC_K_LCK_EN);
@@ -195,6 +226,8 @@ tcakp_init(struct tcakp_softc *sc)
 	/* Clear interrupts */
 	tcakp_read(sc, TCA_INT_STAT, &val);
 	tcakp_write(sc, TCA_INT_STAT, val);
+
+	tcakp_i2c_unlock(sc);
 
 	return 0;
 }
@@ -234,6 +267,11 @@ static int
 tcakp_enable(void *v, int on)
 {
 	struct tcakp_softc * const sc = v;
+	int error;
+
+	error = tcakp_i2c_lock(sc);
+	if (error)
+		return error;
 
 	if (on) {
 		/* Disable key lock */
@@ -243,6 +281,7 @@ tcakp_enable(void *v, int on)
 		tcakp_write(sc, TCA_KEY_LCK_EC, KEY_LCK_EC_K_LCK_EN);
 	}
 
+	tcakp_i2c_unlock(sc);
 	return 0;
 }
 
@@ -276,6 +315,8 @@ tcakp_cngetc(void *v, u_int *type, int *data)
 	struct tcakp_softc * const sc = v;
 	uint8_t ev = 0;
 
+	/* XXX i2c bus acquire */
+
 	do {
 		tcakp_read(sc, TCA_EVENT('A'), &ev);
 	} while (ev == 0);
@@ -287,6 +328,8 @@ tcakp_cngetc(void *v, u_int *type, int *data)
 	*type = pressed ? WSCONS_EVENT_KEY_DOWN :
 			  WSCONS_EVENT_KEY_UP;
 	*data = sc->sc_keymap[index];
+
+	/* XXX i2c bus release */
 }
 
 static void
@@ -345,6 +388,21 @@ tcakp_attach(device_t parent, device_t self, void *aux)
 #ifdef FDT
 	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM, 0,
 	    tcakp_intr, sc);
+	/*
+	 * XXX This is an edge-sensitive interrupt, but we'd like to
+	 * be able to check at run-time just to be sure.
+	 */
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
+		return;
+	}
+
+	sc->sc_sih = softint_establish(SOFTINT_SERIAL, tcakp_softintr, sc);
+	if (sc->sc_sih == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to establish soft interupt\n");
+		return;
+	}
 
 	tcakp_configure_fdt(sc);
 #endif
@@ -362,28 +420,36 @@ tcakp_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-tcakp_read(struct tcakp_softc *sc, uint8_t reg, uint8_t *val)
+tcakp_i2c_lock(struct tcakp_softc *sc)
 {
 	int error;
 
-	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
-	error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &reg, 1, val, 1, I2C_F_POLL);
-	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
-
+	error = iic_acquire_bus(sc->sc_i2c, 0);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to acquire bus lock (%d)\n", error);
+	}
 	return error;
+}
+
+static void
+tcakp_i2c_unlock(struct tcakp_softc *sc)
+{
+	iic_release_bus(sc->sc_i2c, 0);
+}
+
+static int
+tcakp_read(struct tcakp_softc *sc, uint8_t reg, uint8_t *val)
+{
+	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+	    &reg, 1, val, 1, 0);
 }
 
 static int
 tcakp_write(struct tcakp_softc *sc, uint8_t reg, uint8_t val)
 {
 	uint8_t buf[2] = { reg, val };
-	int error;
 
-	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
-	error = iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
-	    NULL, 0, buf, 2, I2C_F_POLL);
-	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
-
-	return error;
+	return iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_addr, NULL, 0, buf, 2, 0);
 }

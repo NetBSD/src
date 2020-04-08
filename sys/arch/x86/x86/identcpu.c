@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.77.2.1 2019/06/10 22:06:53 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.77.2.2 2020/04/08 14:07:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.77.2.1 2019/06/10 22:06:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.77.2.2 2020/04/08 14:07:58 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -361,19 +361,17 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 }
 
 static void
-cpu_probe_amd(struct cpu_info *ci)
+cpu_probe_amd_errata(struct cpu_info *ci)
 {
+	u_int model;
 	uint64_t val;
 	int flag;
 
-	if (cpu_vendor != CPUVENDOR_AMD)
-		return;
-	if (CPUID_TO_FAMILY(ci->ci_signature) < 5)
-		return;
+	model = CPUID_TO_MODEL(ci->ci_signature);
 
 	switch (CPUID_TO_FAMILY(ci->ci_signature)) {
 	case 0x05: /* K5 */
-		if (CPUID_TO_MODEL(ci->ci_signature) == 0) {
+		if (model == 0) {
 			/*
 			 * According to the AMD Processor Recognition App Note,
 			 * the AMD-K5 Model 0 uses the wrong bit to indicate
@@ -401,9 +399,34 @@ cpu_probe_amd(struct cpu_info *ci)
 			wrmsr(MSR_BU_CFG2, val);
 		}
 		break;
+
+	case 0x17:
+		/*
+		 * "Revision Guide for AMD Family 17h Models 00h-0Fh
+		 * Processors" revision 1.12:
+		 *
+		 * 1057 MWAIT or MWAITX Instructions May Fail to Correctly
+		 * Exit From the Monitor Event Pending State
+		 *
+		 * 1109 MWAIT Instruction May Hang a Thread
+		 */
+		if (model == 0x01) {
+			cpu_feature[1] &= ~CPUID2_MONITOR;
+			ci->ci_feat_val[1] &= ~CPUID2_MONITOR;
+		}
+		break;
 	}
+}
+
+static void
+cpu_probe_amd(struct cpu_info *ci)
+{
+
+	if (cpu_vendor != CPUVENDOR_AMD)
+		return;
 
 	cpu_probe_amd_cache(ci);
+	cpu_probe_amd_errata(ci);
 }
 
 static inline uint8_t
@@ -935,7 +958,9 @@ cpu_probe(struct cpu_info *ci)
 
 	cpu_probe_fpu(ci);
 
+#ifndef XEN
 	x86_cpu_topology(ci);
+#endif
 
 	if (cpu_vendor != CPUVENDOR_AMD && (ci->ci_feat_val[0] & CPUID_TM) &&
 	    (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) == 0) {
@@ -987,8 +1012,8 @@ cpu_identify(struct cpu_info *ci)
 	if (ci->ci_signature != 0)
 		aprint_normal(", id 0x%x", ci->ci_signature);
 	aprint_normal("\n");
-	aprint_normal_dev(ci->ci_dev, "package %lu, core %lu, smt %lu\n",
-	    ci->ci_package_id, ci->ci_core_id, ci->ci_smt_id);
+	aprint_normal_dev(ci->ci_dev, "node %u, package %u, core %u, smt %u\n",
+	    ci->ci_numa_id, ci->ci_package_id, ci->ci_core_id, ci->ci_smt_id);
 	if (cpu_brand_string[0] == '\0') {
 		strlcpy(cpu_brand_string, cpu_getmodel(),
 		    sizeof(cpu_brand_string));

@@ -1,4 +1,4 @@
-.\"	$NetBSD: postmulti.1,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: postmulti.1,v 1.2.12.1 2020/04/08 14:06:50 martin Exp $
 .\"
 .TH POSTMULTI 1 
 .ad
@@ -23,10 +23,10 @@ Postfix multi\-instance manager
 [\fB\-i \fIname\fR]
 
 \fBpostmulti\fR \fB\-p\fR [\fB\-av\fR] [\fB\-g \fIgroup\fR]
-[\fB\-i \fIname\fR] \fIcommand...\fR
+[\fB\-i \fIname\fR] \fIpostfix\-command...\fR
 
 \fBpostmulti\fR \fB\-x\fR [\fB\-aRv\fR] [\fB\-g \fIgroup\fR]
-[\fB\-i \fIname\fR] \fIcommand...\fR
+[\fB\-i \fIname\fR] \fIunix\-command...\fR
 
 .ti -4
 \fBLife\-cycle management:\fR
@@ -117,8 +117,8 @@ This option cannot be used with \fB\-p\fR.
 List Postfix instances with their instance name, instance
 group name, enable/disable status and configuration directory.
 .SH "Postfix\-wrapper mode"
-.IP \fB\-p\fR
-Invoke \fBpostfix(1)\fR to execute the specified \fIcommand\fR.
+.IP "\fB\-p \fIpostfix\-command\fR"
+Invoke \fBpostfix(1)\fR to execute \fIpostfix\-command\fR.
 This option implements the \fBpostfix\-wrapper\fR(5) interface.
 .RS
 .IP \(bu
@@ -148,8 +148,8 @@ invoke \fBpostmulti\fR(1) as follows:
 # postmulti \-g msa \-p start
 .RE
 .SH "Command mode"
-.IP \fB\-x\fR
-Execute the specified \fIcommand\fR for all Postfix instances.
+.IP "\fB\-x \fIunix\-command\fR"
+Execute the specified \fIunix\-command\fR for all Postfix instances.
 The command runs with appropriate environment settings for
 MAIL_CONFIG, command_directory, daemon_directory,
 config_directory, queue_directory, data_directory,
@@ -344,8 +344,9 @@ configuration files.
 .IP "\fBdaemon_directory (see 'postconf -d' output)\fR"
 The directory with Postfix support programs and daemon programs.
 .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-The list of environment parameters that a Postfix process will
-import from a non\-Postfix parent process.
+The list of environment parameters that a privileged Postfix
+process will import from a non\-Postfix parent process, or name=value
+environment overrides.
 .IP "\fBmulti_instance_directories (empty)\fR"
 An optional list of non\-default Postfix configuration directories;
 these directories belong to additional Postfix instances that share
@@ -371,8 +372,8 @@ treats as "control" commands, that operate on running instances.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-The mail system name that is prepended to the process name in syslog
-records, so that "smtpd" becomes, for example, "postfix/smtpd".
+A prefix that is prepended to the process name in syslog
+records, so that, for example, "smtpd" becomes "prefix/smtpd".
 .PP
 Available in Postfix 3.0 and later:
 .IP "\fBmeta_directory (see 'postconf -d' output)\fR"
@@ -428,3 +429,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

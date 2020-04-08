@@ -1,5 +1,5 @@
 /* as.c - GAS main program.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -31,6 +31,10 @@
 
 #define COMMON
 
+/* Disable code to set FAKE_LABEL_NAME in obj-multi.h, to avoid circular
+   reference.  */
+#define INITIALIZING_EMULS
+
 #include "as.h"
 #include "subsegs.h"
 #include "output-file.h"
@@ -39,17 +43,12 @@
 #include "dwarf2dbg.h"
 #include "dw2gencfi.h"
 #include "bfdver.h"
+#include "write.h"
 
 #ifdef HAVE_ITBL_CPU
 #include "itbl-ops.h"
 #else
 #define itbl_init()
-#endif
-
-#ifdef HAVE_SBRK
-#ifdef NEED_DECLARATION_SBRK
-extern void *sbrk ();
-#endif
 #endif
 
 #ifdef USING_CGEN
@@ -98,6 +97,7 @@ int verbose = 0;
 
 #if defined OBJ_ELF || defined OBJ_MAYBE_ELF
 int flag_use_elf_stt_common = DEFAULT_GENERATE_ELF_STT_COMMON;
+bfd_boolean flag_generate_build_notes = DEFAULT_GENERATE_BUILD_NOTES;
 #endif
 
 /* Keep the output file.  */
@@ -125,9 +125,6 @@ static struct itbl_file_list *itbl_files;
 #endif
 
 static long start_time;
-#ifdef HAVE_SBRK
-char *start_sbrk;
-#endif
 
 static int flag_macro_alternate;
 
@@ -208,10 +205,10 @@ common_emul_init (void)
   if (this_emulation->fake_label_name == 0)
     {
       if (this_emulation->leading_underscore)
-	this_emulation->fake_label_name = "L0\001";
+	this_emulation->fake_label_name = FAKE_LABEL_NAME;
       else
 	/* What other parameters should we test?  */
-	this_emulation->fake_label_name = ".L0\001";
+	this_emulation->fake_label_name = "." FAKE_LABEL_NAME;
     }
 }
 #endif
@@ -308,7 +305,18 @@ Options:\n\
                           generate ELF common symbols with STT_COMMON type\n"));
   fprintf (stream, _("\
   --sectname-subst        enable section name substitution sequences\n"));
+
+  fprintf (stream, _("\
+  --generate-missing-build-notes=[no|yes] "));
+#if DEFAULT_GENERATE_BUILD_NOTES
+  fprintf (stream, _("(default: yes)\n"));
+#else
+  fprintf (stream, _("(default: no)\n"));
 #endif
+  fprintf (stream, _("\
+                          generate GNU Build notes if none are present in the input\n"));
+#endif /* OBJ_ELF */
+
   fprintf (stream, _("\
   -f                      skip whitespace and comment preprocessing\n"));
   fprintf (stream, _("\
@@ -474,6 +482,7 @@ parse_args (int * pargc, char *** pargv)
       OPTION_NOEXECSTACK,
       OPTION_SIZE_CHECK,
       OPTION_ELF_STT_COMMON,
+      OPTION_ELF_BUILD_NOTES,
       OPTION_SECTNAME_SUBST,
       OPTION_ALTERNATE,
       OPTION_AL,
@@ -512,6 +521,7 @@ parse_args (int * pargc, char *** pargv)
     ,{"size-check", required_argument, NULL, OPTION_SIZE_CHECK}
     ,{"elf-stt-common", required_argument, NULL, OPTION_ELF_STT_COMMON}
     ,{"sectname-subst", no_argument, NULL, OPTION_SECTNAME_SUBST}
+    ,{"generate-missing-build-notes", required_argument, NULL, OPTION_ELF_BUILD_NOTES}
 #endif
     ,{"fatal-warnings", no_argument, NULL, OPTION_WARN_FATAL}
     ,{"gdwarf-2", no_argument, NULL, OPTION_GDWARF2}
@@ -660,7 +670,7 @@ parse_args (int * pargc, char *** pargv)
 	case OPTION_VERSION:
 	  /* This output is intended to follow the GNU standards document.  */
 	  printf (_("GNU assembler %s\n"), BFD_VERSION_STRING);
-	  printf (_("Copyright (C) 2016 Free Software Foundation, Inc.\n"));
+	  printf (_("Copyright (C) 2018 Free Software Foundation, Inc.\n"));
 	  printf (_("\
 This program is free software; you may redistribute it under the terms of\n\
 the GNU General Public License version 3 or later.\n\
@@ -904,7 +914,19 @@ This program has absolutely no warranty.\n"));
 	case OPTION_SECTNAME_SUBST:
 	  flag_sectname_subst = 1;
 	  break;
-#endif
+
+	case OPTION_ELF_BUILD_NOTES:
+	  if (strcasecmp (optarg, "no") == 0)
+	    flag_generate_build_notes = FALSE;
+	  else if (strcasecmp (optarg, "yes") == 0)
+	    flag_generate_build_notes = TRUE;
+	  else
+	    as_fatal (_("Invalid --generate-missing-build-notes option: `%s'"),
+		      optarg);
+	  break;
+
+#endif /* OBJ_ELF */
+
 	case 'Z':
 	  flag_always_generate_output = 1;
 	  break;
@@ -1043,17 +1065,10 @@ This program has absolutely no warranty.\n"));
 static void
 dump_statistics (void)
 {
-#ifdef HAVE_SBRK
-  char *lim = (char *) sbrk (0);
-#endif
   long run_time = get_run_time () - start_time;
 
   fprintf (stderr, _("%s: total time in assembly: %ld.%06ld\n"),
 	   myname, run_time / 1000000, run_time % 1000000);
-#ifdef HAVE_SBRK
-  fprintf (stderr, _("%s: data size %ld\n"),
-	   myname, (long) (lim - start_sbrk));
-#endif
 
   subsegs_print_statistics (stderr);
   write_print_statistics (stderr);
@@ -1182,13 +1197,12 @@ int
 main (int argc, char ** argv)
 {
   char ** argv_orig = argv;
+  struct stat sob;
 
   int macro_strip_at;
 
   start_time = get_run_time ();
-#ifdef HAVE_SBRK
-  start_sbrk = (char *) sbrk (0);
-#endif
+  signal_init ();
 
 #if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
   setlocale (LC_MESSAGES, "");
@@ -1231,6 +1245,27 @@ main (int argc, char ** argv)
   /* Call parse_args before any of the init/begin functions
      so that switches like --hash-size can be honored.  */
   parse_args (&argc, &argv);
+
+  if (argc > 1 && stat (out_file_name, &sob) == 0)
+    {
+      int i;
+
+      for (i = 1; i < argc; ++i)
+	{
+	  struct stat sib;
+
+	  if (stat (argv[i], &sib) == 0)
+	    {
+	      if (sib.st_ino == sob.st_ino && sib.st_ino != 0)
+		{
+		  /* Don't let as_fatal remove the output file!  */
+		  out_file_name = NULL;
+		  as_fatal (_("The input and output files must be distinct"));
+		}
+	    }
+	}
+    }
+
   symbol_begin ();
   frag_init ();
   subsegs_begin ();
@@ -1334,15 +1369,10 @@ main (int argc, char ** argv)
       n_warns = had_warnings ();
       n_errs = had_errors ();
 
-      if (n_warns == 1)
-	sprintf (warn_msg, _("%d warning"), n_warns);
-      else
-	sprintf (warn_msg, _("%d warnings"), n_warns);
-      if (n_errs == 1)
-	sprintf (err_msg, _("%d error"), n_errs);
-      else
-	sprintf (err_msg, _("%d errors"), n_errs);
-
+      sprintf (warn_msg,
+	       ngettext ("%d warning", "%d warnings", n_warns), n_warns);
+      sprintf (err_msg,
+	       ngettext ("%d error", "%d errors", n_errs), n_errs);
       if (flag_fatal_warnings && n_warns != 0)
 	{
 	  if (n_errs == 0)

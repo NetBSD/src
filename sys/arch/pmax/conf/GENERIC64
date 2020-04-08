@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.28.4.1 2019/06/10 22:06:37 christos Exp $
+# $NetBSD: GENERIC64,v 1.28.4.2 2020/04/08 14:07:48 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/pmax/conf/std.pmax64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.28.4.1 $"
+#ident		"GENERIC-$Revision: 1.28.4.2 $"
 
 maxusers	64
 
@@ -205,7 +205,6 @@ pxg*	at	tc? slot ? offset ?	# PMAG-D,E,F 3D accelerator
 xcfb*	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
 asc*	at	tc? slot ? offset ?	# PMAZ-A single channel SCSI
 le*	at	tc? slot ? offset ?	# PMAD-A LANCE
-fta*	at	tc? slot ? offset ?	# PMAF-F FDDI
 tcds*	at	tc? slot ? offset ?	# PMAZB/PMAZC dual channel SCSI
 asc*	at	tcds? chip ?
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.118.16.1 2019/06/10 22:06:20 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.118.16.2 2020/04/08 14:07:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -294,10 +294,11 @@
 #ifndef XENPV
 #define pmap_pa2pte(a)			(a)
 #define pmap_pte2pa(a)			((a) & PTE_FRAME)
-#define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
 #define pmap_pte_flush()		/* nothing */
 
 #ifdef PAE
+#define pmap_pte_set(p, n)		\
+    (void)atomic_swap_64((volatile uint64_t *)p, n)
 #define pmap_pte_cas(p, o, n)		atomic_cas_64((p), (o), (n))
 #define pmap_pte_testset(p, n)		\
     atomic_swap_64((volatile uint64_t *)p, n)
@@ -306,6 +307,8 @@
 #define pmap_pte_clearbits(p, b)	\
     atomic_and_64((volatile uint64_t *)p, ~(b))
 #else /* PAE */
+#define pmap_pte_set(p, n)		\
+    (void)atomic_swap_ulong((volatile unsigned long *)p, n)
 #define pmap_pte_cas(p, o, n)		atomic_cas_32((p), (o), (n))
 #define pmap_pte_testset(p, n)		\
     atomic_swap_ulong((volatile unsigned long *)p, n)

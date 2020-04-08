@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.25.16.1 2019/06/10 22:06:38 christos Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.25.16.2 2020/04/08 14:07:48 martin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.25.16.1 2019/06/10 22:06:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.25.16.2 2020/04/08 14:07:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -48,10 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.25.16.1 2019/06/10 22:06:38 christo
 #include <uvm/uvm.h>
 
 #include <machine/pmap.h>
-
-#if defined(MULTIPROCESSOR)
-kmutex_t pmap_tlb_miss_lock;
-#endif
 
 PMAP_COUNTER(zeroed_pages, "pages zeroed");
 PMAP_COUNTER(copied_pages, "pages copied");
@@ -154,12 +150,11 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 
 	KASSERT(endkernel == trunc_page(endkernel));
 
+	/* common initialization */
+	pmap_bootstrap_common();
+
 	/* init the lock */
 	pmap_tlb_info_init(&pmap_tlb0_info);
-
-#if defined(MULTIPROCESSOR)
-	mutex_init(&pmap_tlb_miss_lock, MUTEX_SPIN, IPL_HIGH);
-#endif
 
 	/*
 	 * Compute the number of pages kmem_arena will have.
@@ -421,19 +416,5 @@ void
 pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 {
 	/* nothing */
-}
-
-void
-pmap_md_tlb_miss_lock_enter(void)
-{
-
-	mutex_spin_enter(&pmap_tlb_miss_lock);
-}
-
-void
-pmap_md_tlb_miss_lock_exit(void)
-{
-
-	mutex_spin_exit(&pmap_tlb_miss_lock);
 }
 #endif /* MULTIPROCESSOR */

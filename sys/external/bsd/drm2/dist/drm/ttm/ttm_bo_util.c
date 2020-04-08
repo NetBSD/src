@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.6.18.1 2019/06/10 22:08:28 christos Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.6.18.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.6.18.1 2019/06/10 22:08:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.6.18.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -43,12 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.6.18.1 2019/06/10 22:08:28 christo
 #include <linux/vmalloc.h>
 #include <linux/module.h>
 #include <linux/reservation.h>
-#include <linux/export.h>
-#include <asm/barrier.h>
 
 #ifdef __NetBSD__		/* PMAP_* caching flags for ttm_io_prot */
 #include <uvm/uvm_pmap.h>
-#include <drm/drm_auth_netbsd.h>
+#include <linux/nbsd-namespace.h>
 #endif
 
 void ttm_bo_free_old_node(struct ttm_buffer_object *bo)
@@ -533,14 +531,13 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 	INIT_LIST_HEAD(&fbo->lru);
 	INIT_LIST_HEAD(&fbo->swap);
 	INIT_LIST_HEAD(&fbo->io_reserve_lru);
+	mutex_init(&fbo->wu_mutex);
 #ifdef __NetBSD__
-	linux_mutex_init(&fbo->wu_mutex);
 	drm_vma_node_init(&fbo->vma_node);
 	uvm_obj_init(&fbo->uvmobj, bo->bdev->driver->ttm_uvm_ops, true, 1);
-	mutex_obj_hold(bo->uvmobj.vmobjlock);
+	rw_obj_hold(bo->uvmobj.vmobjlock);
 	uvm_obj_setlock(&fbo->uvmobj, bo->uvmobj.vmobjlock);
 #else
-	mutex_init(&fbo->wu_mutex);
 	drm_vma_node_reset(&fbo->vma_node);
 #endif
 	atomic_set(&fbo->cpu_writers, 0);
@@ -565,17 +562,11 @@ pgprot_t ttm_io_prot(uint32_t caching_flags, pgprot_t tmp)
 		return tmp;
 
 #ifdef __NetBSD__
-	switch (caching_flags & TTM_PL_MASK_CACHING) {
-	case TTM_PL_FLAG_CACHED:
-		return (tmp | PMAP_WRITE_BACK);
-	case TTM_PL_FLAG_WC:
+	tmp &= ~PMAP_CACHE_MASK;
+	if (caching_flags & TTM_PL_FLAG_WC)
 		return (tmp | PMAP_WRITE_COMBINE);
-	case TTM_PL_FLAG_UNCACHED:
+	else
 		return (tmp | PMAP_NOCACHE);
-	default:
-		panic("invalid caching flags: %"PRIx32"\n",
-		    (caching_flags & TTM_PL_MASK_CACHING));
-	}
 #else
 #if defined(__i386__) || defined(__x86_64__)
 	if (caching_flags & TTM_PL_FLAG_WC)
@@ -644,8 +635,7 @@ static int ttm_bo_kmap_ttm(struct ttm_buffer_object *bo,
 			   unsigned long num_pages,
 			   struct ttm_bo_kmap_obj *map)
 {
-	struct ttm_mem_reg *mem = &bo->mem;
-	pgprot_t prot;
+	struct ttm_mem_reg *mem = &bo->mem; pgprot_t prot;
 	struct ttm_tt *ttm = bo->ttm;
 	int ret;
 

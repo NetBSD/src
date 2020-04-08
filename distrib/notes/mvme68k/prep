@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.14 2008/09/06 22:19:03 tsutsui Exp $
+.\"	$NetBSD: prep,v 1.14.62.1 2020/04/08 14:03:50 martin Exp $
 .
 \*M machines usually need little or no preparation before installing
 .Nx ,
@@ -178,7 +178,7 @@ to be saved to NVRAM.
 .Pp
 The following installation instructions will assume that your target
 SCSI disk drive appears at SCSI-ID 0.
-If you have a tape drive, the instructions assume is is configured
+If you have a tape drive, the instructions assume is configured
 for SCSI-ID 5.
 When the RAMDISK root boots,
 .Nx

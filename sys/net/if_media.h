@@ -1,7 +1,7 @@
-/*	$NetBSD: if_media.h,v 1.61.4.2 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if_media.h,v 1.61.4.3 2020/04/08 14:08:57 martin Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2001, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,10 +78,6 @@
  * Many thanks to Matt Thomas for providing the information necessary
  * to implement this interface.
  */
-
-#ifdef _KERNEL
-#include <sys/queue.h>
-#endif /*_KERNEL */
 
 /*
  * Status bits. THIS IS NOT A MEDIA WORD.
@@ -262,6 +258,7 @@
 #define	IFM_25G_AOC	_IFM_EX(43)	/* 25G active optical cable */
 #define	IFM_25G_AUI	_IFM_EX(44)	/* 25G-AUI-C2C (chip to chip) */
 #define	IFM_25G_CR	_IFM_EX(45)	/* 25GBASE-CR (twinax) */
+#define	IFM_25G_ACC	_IFM_EX(46)	/* 25GBASE-ACC */
 #define	IFM_25G_CR_S	_IFM_EX(47)	/* 25GBASE-CR-S (CR short) */
 #define	IFM_25G_ER	_IFM_EX(48)	/* 25GBASE-ER */
 #define	IFM_25G_KR	_IFM_EX(49)	/* 25GBASE-KR */
@@ -286,8 +283,8 @@
 #define	IFM_50G_KR	_IFM_EX(68)	/* 50GBASE-KR */
 #define	IFM_50G_KR2	_IFM_EX(69)	/* 50GBASE-KR2 */
 #define	IFM_50G_LAUI2	_IFM_EX(70)	/* 50GLAUI-2 */
-#define	IFM_50G_LR	_IFM_EX(71)	/* 50GBASE-LR (2Km) */
-#define	IFM_50G_LR10	_IFM_EX(72)	/* 50GBASE-LR10 (10Km) */
+#define	IFM_50G_LR	_IFM_EX(71)	/* 50GBASE-LR */
+		     /* _IFM_EX(72) Not defined yet */
 #define	IFM_50G_SR	_IFM_EX(73)	/* 50GBASE-SR */
 #define	IFM_50G_SR2	_IFM_EX(74)	/* 50GBASE-SR2 */
 #define	IFM_56G_R4	_IFM_EX(75)	/* 56GBASE-R4 */
@@ -317,6 +314,17 @@
 #define	IFM_400G_KR4	_IFM_EX(99)	/* 400GBASE-KR4 */
 #define	IFM_400G_LR8	_IFM_EX(100)	/* 400GBASE-LR8 */
 #define	IFM_400G_SR16	_IFM_EX(101)	/* 400GBASE-SR16 */
+#define	IFM_100G_ACC	_IFM_EX(102)	/* 100GBASE-ACC */
+#define	IFM_100G_AOC	_IFM_EX(103)	/* 100GBASE-AOC */
+#define	IFM_100G_FR	_IFM_EX(104)	/* 100GBASE-FR */
+#define	IFM_100G_LR	_IFM_EX(105)	/* 100GBASE-LR */
+#define	IFM_200G_ER4	_IFM_EX(106)	/* 200GBASE-ER4 */
+#define	IFM_400G_ER8	_IFM_EX(107)	/* 400GBASE-ER8 */
+#define	IFM_400G_FR4	_IFM_EX(108)	/* 400GBASE-FR4 */
+#define	IFM_400G_LR4	_IFM_EX(109)	/* 400GBASE-LR4 */
+#define	IFM_400G_SR4_2	_IFM_EX(110)	/* 400GBASE-SR4.2 */
+#define	IFM_400G_SR8	_IFM_EX(111)	/* 400GBASE-SR8 */
+
 /* IFM_OMASK bits */
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
@@ -523,6 +531,7 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_10G_SFI | IFM_FDX,	"10GBASE-SFI" },	\
 	{ IFM_ETHER | IFM_10G_ZR | IFM_FDX,	"10GBASE-ZR" },		\
 	{ IFM_ETHER | IFM_20G_KR2 | IFM_FDX,	"20GBASE-KR2" },	\
+	{ IFM_ETHER | IFM_25G_ACC | IFM_FDX,	"25GBASE-ACC" },	\
 	{ IFM_ETHER | IFM_25G_AOC | IFM_FDX,	"25GBASE-AOC" },	\
 	{ IFM_ETHER | IFM_25G_AUI | IFM_FDX,	"25G-AUI" },	\
 	{ IFM_ETHER | IFM_25G_CR | IFM_FDX,	"25GBASE-CR" },		\
@@ -551,18 +560,21 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_50G_KR2 | IFM_FDX,	"50GBASE-KR2" },	\
 	{ IFM_ETHER | IFM_50G_LAUI2 | IFM_FDX,	"50GLAUI-2" },		\
 	{ IFM_ETHER | IFM_50G_LR | IFM_FDX,	"50GBASE-LR" },		\
-	{ IFM_ETHER | IFM_50G_LR10 | IFM_FDX,	"50GBASE-LR10" },	\
 	{ IFM_ETHER | IFM_50G_SR | IFM_FDX,	"50GBASE-SR" },		\
 	{ IFM_ETHER | IFM_50G_SR2 | IFM_FDX,	"50GBASE-SR2" },	\
 	{ IFM_ETHER | IFM_56G_R4 | IFM_FDX,	"56GBASE-R4" },		\
+	{ IFM_ETHER | IFM_100G_ACC | IFM_FDX,	"100GBASE-ACC" },	\
+	{ IFM_ETHER | IFM_100G_AOC | IFM_FDX,	"100GBASE-AOC" },	\
 	{ IFM_ETHER | IFM_100G_CR2 | IFM_FDX,	"100GBASE-CR2" },	\
 	{ IFM_ETHER | IFM_100G_CR4 | IFM_FDX,	"100GBASE-CR4" },	\
 	{ IFM_ETHER | IFM_100G_CR10 | IFM_FDX,	"100GBASE-CR10" },	\
 	{ IFM_ETHER | IFM_100G_DR | IFM_FDX,	"100GBASE-DR" },	\
 	{ IFM_ETHER | IFM_100G_ER4 | IFM_FDX,	"100GBASE-ER4" },	\
+	{ IFM_ETHER | IFM_100G_FR | IFM_FDX,	"100GBASE-FR" },	\
 	{ IFM_ETHER | IFM_100G_KP4 | IFM_FDX,	"100GBASE-KP4" },	\
 	{ IFM_ETHER | IFM_100G_KR2 | IFM_FDX,	"100GBASE-KR2" },	\
 	{ IFM_ETHER | IFM_100G_KR4 | IFM_FDX,	"100GBASE-KR4" },	\
+	{ IFM_ETHER | IFM_100G_LR | IFM_FDX,	"100GBASE-LR" },	\
 	{ IFM_ETHER | IFM_100G_LR4 | IFM_FDX,	"100GBASE-LR4" },	\
 	{ IFM_ETHER | IFM_100G_SR2 | IFM_FDX,	"100GBASE-SR2" },	\
 	{ IFM_ETHER | IFM_100G_SR4 | IFM_FDX,	"100GBASE-SR4" },	\
@@ -570,6 +582,7 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_200G_CR2 | IFM_FDX,	"200GBASE-CR2" },	\
 	{ IFM_ETHER | IFM_200G_CR4 | IFM_FDX,	"200GBASE-CR4" },	\
 	{ IFM_ETHER | IFM_200G_DR4 | IFM_FDX,	"200GBASE-DR4" },	\
+	{ IFM_ETHER | IFM_200G_ER4 | IFM_FDX,	"200GBASE-ER4" },	\
 	{ IFM_ETHER | IFM_200G_FR4 | IFM_FDX,	"200GBASE-FR4" },	\
 	{ IFM_ETHER | IFM_200G_KR2 | IFM_FDX,	"200GBASE-KR2" },	\
 	{ IFM_ETHER | IFM_200G_KR4 | IFM_FDX,	"200GBASE-KR4" },	\
@@ -577,9 +590,14 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_200G_SR4 | IFM_FDX,	"200GBASE-SR4" },	\
 	{ IFM_ETHER | IFM_400G_CR4 | IFM_FDX,	"400GBASE-CR4" },	\
 	{ IFM_ETHER | IFM_400G_DR4 | IFM_FDX,	"400GBASE-DR4" },	\
+	{ IFM_ETHER | IFM_400G_ER8 | IFM_FDX,	"400GBASE-ER8" },	\
+	{ IFM_ETHER | IFM_400G_FR4 | IFM_FDX,	"400GBASE-FR4" },	\
 	{ IFM_ETHER | IFM_400G_FR8 | IFM_FDX,	"400GBASE-FR8" },	\
 	{ IFM_ETHER | IFM_400G_KR4 | IFM_FDX,	"400GBASE-KR4" },	\
+	{ IFM_ETHER | IFM_400G_LR4 | IFM_FDX,	"400GBASE-LR4" },	\
 	{ IFM_ETHER | IFM_400G_LR8 | IFM_FDX,	"400GBASE-LR8" },	\
+	{ IFM_ETHER | IFM_400G_SR4_2 | IFM_FDX,	"400GBASE-SR4.2" },	\
+	{ IFM_ETHER | IFM_400G_SR8 | IFM_FDX,	"400GBASE-SR8" },	\
 	{ IFM_ETHER | IFM_400G_SR16 | IFM_FDX,	"400GBASE-SR16" },	\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"DB9/4Mbit" },			\
@@ -736,6 +754,7 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_10G_SFI,	IF_Gbps(10) },			\
 	{ IFM_ETHER | IFM_10G_ZR,	IF_Gbps(10) },			\
 	{ IFM_ETHER | IFM_20G_KR2,	IF_Gbps(20) },			\
+	{ IFM_ETHER | IFM_25G_ACC,	IF_Gbps(25) },			\
 	{ IFM_ETHER | IFM_25G_AOC,	IF_Gbps(25) },			\
 	{ IFM_ETHER | IFM_25G_AUI,	IF_Gbps(25) },			\
 	{ IFM_ETHER | IFM_25G_CR,	IF_Gbps(25) },			\
@@ -764,18 +783,21 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_50G_KR2,	IF_Gbps(50) },			\
 	{ IFM_ETHER | IFM_50G_LAUI2,	IF_Gbps(50) },			\
 	{ IFM_ETHER | IFM_50G_LR,	IF_Gbps(50) },			\
-	{ IFM_ETHER | IFM_50G_LR10,	IF_Gbps(50) },			\
 	{ IFM_ETHER | IFM_50G_SR,	IF_Gbps(50) },			\
 	{ IFM_ETHER | IFM_50G_SR2,	IF_Gbps(50) },			\
 	{ IFM_ETHER | IFM_56G_R4,	IF_Gbps(56) },			\
+	{ IFM_ETHER | IFM_100G_ACC,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_AOC,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_CR2,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_CR4,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_CR10,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_DR,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_ER4,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_FR,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_KP4,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_KR2,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_KR4,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_LR,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_LR4,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_SR2,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_SR4,	IF_Gbps(100) },			\
@@ -783,6 +805,7 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_200G_CR2,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_200G_CR4,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_200G_DR4,	IF_Gbps(200) },			\
+	{ IFM_ETHER | IFM_200G_ER4,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_200G_FR4,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_200G_KR2,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_200G_KR4,	IF_Gbps(200) },			\
@@ -790,9 +813,14 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_200G_SR4,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_400G_CR4,	IF_Gbps(400) },			\
 	{ IFM_ETHER | IFM_400G_DR4,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_ER8,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_FR4,	IF_Gbps(400) },			\
 	{ IFM_ETHER | IFM_400G_FR8,	IF_Gbps(400) },			\
 	{ IFM_ETHER | IFM_400G_KR4,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_LR4,	IF_Gbps(400) },			\
 	{ IFM_ETHER | IFM_400G_LR8,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_SR4_2,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_SR8,	IF_Gbps(400) },			\
 	{ IFM_ETHER | IFM_400G_SR16,	IF_Gbps(400) },			\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	IF_Mbps(4) },			\
@@ -861,6 +889,9 @@ struct ifmedia_status_description {
 }
 
 #ifdef _KERNEL
+#include <sys/mutex.h>
+#include <sys/queue.h>
+
 /*
  * Driver callbacks for media status and change requests.
  */
@@ -872,7 +903,7 @@ typedef	void (*ifm_stat_cb_t)(struct ifnet *, struct ifmediareq *);
  */
 struct ifmedia_entry {
 	TAILQ_ENTRY(ifmedia_entry) ifm_list;
-	u_int	ifm_media;	/* description of this media attachment */
+	u_int	ifm_media;	/* IFMWD: description of this media */
 	u_int	ifm_data;	/* for driver-specific use */
 	void	*ifm_aux;	/* for driver-specific use */
 };
@@ -880,20 +911,79 @@ struct ifmedia_entry {
 /*
  * One of these goes into a network interface's softc structure.
  * It is used to keep general media state.
+ *
+ * LOCKING
+ * =======
+ * The ifmedia is protected by a lock provided by the interface
+ * driver.  All ifmedia API entry points (with the exception of one)
+ * are expect to be called with this mutex NOT HELD.
+ *
+ * ifmedia_ioctl() is called with the interface's if_ioctl_lock held,
+ * and thus the locking order is:
+ *
+ *	IFNET_LOCK -> ifm_lock
+ *
+ * Driver callbacks (ifm_change / ifm_status) are called with ifm_lock HELD.
+ *
+ * Field markings and the corresponding locks:
+ *
+ * m:	ifm_lock
+ * ::	unlocked, stable
  */
 struct ifmedia {
-	u_int	ifm_mask;	/* mask of changes we don't care about */
-	u_int	ifm_media;	/* current user-set media word */
-	struct ifmedia_entry *ifm_cur;	/* currently selected media */
-	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
-	ifm_change_cb_t	ifm_change;	/* media change driver callback */
-	ifm_stat_cb_t	ifm_status;	/* media status driver callback */
+	kmutex_t *ifm_lock;	/* :: mutex (provided by interface driver) */
+	u_int	ifm_mask;	/* :: IFMWD: mask of changes we don't care */
+	u_int	ifm_media;	/*
+				 * m: IFMWD: current user-set media word.
+				 *
+				 * XXX some drivers misuse this entry as
+				 * current active media word. Don't use this
+				 * entry as this purpose but use driver
+				 * specific entry if you don't use mii(4).
+				 */
+	struct ifmedia_entry *ifm_cur;	/*
+					 * m: entry corresponding to
+					 * ifm_media
+					 */
+	TAILQ_HEAD(, ifmedia_entry) ifm_list; /*
+					       * m: list of all supported
+					       * media
+					       */
+	ifm_change_cb_t	ifm_change;	/* :: media change driver callback */
+	ifm_stat_cb_t	ifm_status;	/* :: media status driver callback */
+	uintptr_t	ifm_legacy;	/* m: legacy driver handling */
 };
+
+#define	ifmedia_lock(ifm)	mutex_enter((ifm)->ifm_lock)
+#define	ifmedia_unlock(ifm)	mutex_exit((ifm)->ifm_lock)
+#define	ifmedia_locked(ifm)	mutex_owned((ifm)->ifm_lock)
+
+#ifdef __IFMEDIA_PRIVATE
+#define	ifmedia_islegacy(ifm)	((ifm)->ifm_legacy)
+void	ifmedia_lock_for_legacy(struct ifmedia *);
+void	ifmedia_unlock_for_legacy(struct ifmedia *);
+
+#define	IFMEDIA_LOCK_FOR_LEGACY(ifm)					\
+do {									\
+	if (ifmedia_islegacy(ifm))					\
+		ifmedia_lock_for_legacy(ifm);				\
+} while (/*CONSTCOND*/0)
+
+#define	IFMEDIA_UNLOCK_FOR_LEGACY(ifm)					\
+do {									\
+	if (ifmedia_islegacy(ifm))					\
+		ifmedia_unlock_for_legacy(ifm);				\
+} while (/*CONSTCOND*/0)
+#endif /* __IFMEDIA_PRIVATE */
 
 /* Initialize an interface's struct if_media field. */
 void	ifmedia_init(struct ifmedia *, int, ifm_change_cb_t, ifm_stat_cb_t);
+void	ifmedia_init_with_lock(struct ifmedia *, int, ifm_change_cb_t,
+	    ifm_stat_cb_t, kmutex_t *);
 
-int	ifmedia_change(struct ifmedia *, struct ifnet *);
+/* Release resourecs associated with an ifmedia. */
+void	ifmedia_fini(struct ifmedia *);
+
 
 /* Add one supported medium to a struct ifmedia. */
 void	ifmedia_add(struct ifmedia *, int, int, void *);
@@ -913,11 +1003,20 @@ struct ifmedia_entry *ifmedia_match(struct ifmedia *, u_int, u_int);
 /* Delete all media for a given media instance */
 void	ifmedia_delete_instance(struct ifmedia *, u_int);
 
+/* Remove all media */
+void	ifmedia_removeall(struct ifmedia *);
+
 /* Compute baudrate for a given media. */
 uint64_t ifmedia_baudrate(int);
 
-/* Remove all media */
-void	ifmedia_removeall(struct ifmedia *);
+/*
+ * This is a thin wrapper around the ifmedia "change" callback that
+ * is available to drivers to use within their own initialization
+ * routines.
+ *
+ * IFMEDIA must be LOCKED.
+ */
+int	ifmedia_change(struct ifmedia *, struct ifnet *);
 
 #else
 /* Functions for converting media to/from strings, in libutil/if_media.c */

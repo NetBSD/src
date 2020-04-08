@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.37 2017/04/10 15:04:32 dholland Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.37.14.1 2020/04/08 14:08:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.37 2017/04/10 15:04:32 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.37.14.1 2020/04/08 14:08:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.37 2017/04/10 15:04:32 dholland Ex
 #include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/atomic.h>
+#include <sys/sched.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_emuldata.h>
@@ -801,7 +802,7 @@ release_futexes(struct lwp *l)
 		if (!--limit)
 			break;
 
-		yield();	/* XXX why? */
+		preempt_point();
 	}
 
 	if (pending)

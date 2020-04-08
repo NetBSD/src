@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_global.c,v 1.3.34.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_global.c,v 1.3.34.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /**************************************************************************
  *
@@ -31,15 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_global.c,v 1.3.34.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_global.c,v 1.3.34.2 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/mutex.h>
 #include <linux/slab.h>
 #include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
 #include <asm/bug.h>
 #include <drm/drm_global.h>
+
+#include <linux/nbsd-namespace.h>
 
 struct drm_global_item {
 	struct mutex mutex;
@@ -55,11 +55,7 @@ void drm_global_init(void)
 
 	for (i = 0; i < DRM_GLOBAL_NUM; ++i) {
 		struct drm_global_item *item = &glob[i];
-#ifdef __NetBSD__
-		linux_mutex_init(&item->mutex);
-#else
 		mutex_init(&item->mutex);
-#endif
 		item->object = NULL;
 		item->refcount = 0;
 	}
@@ -70,9 +66,9 @@ void drm_global_release(void)
 	int i;
 	for (i = 0; i < DRM_GLOBAL_NUM; ++i) {
 		struct drm_global_item *item = &glob[i];
-		(void)item;	/* ignore */
 		BUG_ON(item->object != NULL);
 		BUG_ON(item->refcount != 0);
+		mutex_destroy(&item->mutex);
 	}
 }
 

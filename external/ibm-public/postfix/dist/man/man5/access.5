@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.5,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: access.5,v 1.2.12.1 2020/04/08 14:06:50 martin Exp $
 .\"
 .TH ACCESS 5 
 .ad
@@ -123,43 +123,33 @@ string \fBsmtpd_access_maps\fR is not listed in the Postfix
 .IP \fInet.work.addr\fR
 .IP \fInet.work\fR
 .IP \fInet\fR
-Matches the specified IPv4 host address or subnetwork. An
-IPv4 host address is a sequence of four decimal octets
-separated by ".".
+Matches a remote IPv4 host address or network address range.
+Specify one to four decimal octets separated by ".". Do not
+specify "[]" , "/", leading zeros, or hexadecimal forms.
 
-Subnetworks are matched by repeatedly truncating the last
-".octet" from the remote IPv4 host address string until a
+Network ranges are matched by repeatedly truncating the last
+".octet" from a remote IPv4 host address string, until a
 match is found in the access table, or until further
 truncation is not possible.
 
-NOTE 1: The access map lookup key must be in canonical form:
-do not specify unnecessary null characters, and do not
-enclose network address information with "[]" characters.
-
-NOTE 2: use the \fBcidr\fR lookup table type to specify
+NOTE: use the \fBcidr\fR lookup table type to specify
 network/netmask patterns. See \fBcidr_table\fR(5) for details.
 .IP \fInet:work:addr:ess\fR
 .IP \fInet:work:addr\fR
 .IP \fInet:work\fR
 .IP \fInet\fR
-Matches the specified IPv6 host address or subnetwork. An
-IPv6 host address is a sequence of three to eight hexadecimal
-octet pairs separated by ":".
+Matches a remote IPv6 host address or network address range.
+Specify three to eight hexadecimal octet pairs separated
+by ":", using the compressed form "::" for a sequence of
+zero\-valued octet pairs. Do not specify "[]", "/", leading
+zeros, or non\-compressed forms.
 
-Subnetworks are matched by repeatedly truncating the last
-":octetpair" from the remote IPv6 host address string until
-a match is found in the access table, or until further
-truncation is not possible.
+A network range is matched by repeatedly truncating the
+last ":octetpair" from the compressed\-form remote IPv6 host
+address string, until a match is found in the access table,
+or until further truncation is not possible.
 
-NOTE 1: the truncation and comparison are done with the
-string representation of the IPv6 host address. Thus, not
-all the ":" subnetworks will be tried.
-
-NOTE 2: The access map lookup key must be in canonical form:
-do not specify unnecessary null characters, and do not
-enclose network address information with "[]" characters.
-
-NOTE 3: use the \fBcidr\fR lookup table type to specify
+NOTE: use the \fBcidr\fR lookup table type to specify
 network/netmask patterns. See \fBcidr_table\fR(5) for details.
 
 IPv6 support is available in Postfix 2.2 and later.
@@ -255,7 +245,8 @@ Apply the named UCE restriction(s) (\fBpermit\fR, \fBreject\fR,
 Send one copy of the message to the specified recipient.
 .sp
 If multiple BCC actions are specified within the same SMTP
-MAIL transaction, only the last action will be used.
+MAIL transaction, with Postfix 3.0 only the last action
+will be used.
 .sp
 This feature is available in Postfix 3.0 and later.
 .IP "\fBDISCARD \fIoptional text...\fR

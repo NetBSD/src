@@ -1,14 +1,10 @@
-/*	$NetBSD: imx25-pinfunc.h,v 1.1.1.3 2018/04/28 18:25:52 jmcneill Exp $	*/
+/*	$NetBSD: imx25-pinfunc.h,v 1.1.1.3.2.1 2020/04/08 14:08:31 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2013 Eukréa Electromatique <denis@eukrea.com>
  * Based on imx35-pinfunc.h in the same directory Which is:
  * Copyright 2013 Freescale Semiconductor, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
  */
 
 #ifndef __DTS_IMX25_PINFUNC_H

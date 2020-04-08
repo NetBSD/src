@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.30 2018/03/04 10:02:10 jdolecek Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.30.4.1 2020/04/08 14:07:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2000, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.30 2018/03/04 10:02:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.30.4.1 2020/04/08 14:07:59 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -124,7 +124,7 @@ static struct mtrr_state *mtrr_fixed_raw;
 static struct mtrr *mtrr_fixed;
 static struct mtrr *mtrr_var;
 
-struct mtrr_funcs i686_mtrr_funcs = {
+const struct mtrr_funcs i686_mtrr_funcs = {
 	i686_mtrr_init_cpu,
 	i686_mtrr_reload_cpu,
 	i686_mtrr_clean,

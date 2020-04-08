@@ -41,7 +41,7 @@ EGREP="@EGREP@"
 default_db_type=@default_db_type@
 db_type=${1:-${default_db_type}}
 
-# If there is no useful db support compile in, disable test
+# If there is no useful db support compiled in, disable test
 ./have-db || exit 77
 
 R=EXAMPLE.ORG

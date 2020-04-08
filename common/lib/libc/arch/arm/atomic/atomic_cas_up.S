@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_up.S,v 1.7 2014/03/04 03:36:24 matt Exp $	*/
+/*	$NetBSD: atomic_cas_up.S,v 1.7.26.1 2020/04/08 14:03:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ RAS_START_ASM_HIDDEN(_atomic_cas)
 	cmp	r0, r1
 #if defined(__thumb__)
 	beq	1f
+	str	r2, [r3]
 #else
 	streq	r2, [r3]
 #endif
@@ -75,6 +76,7 @@ RAS_START_ASM_HIDDEN(_atomic_cas_16)
 	cmp	r0, r1
 #if defined(__thumb__)
 	beq	1f
+	strh	r2, [r3]
 #else
 	strheq	r2, [r3]
 #endif
@@ -91,6 +93,7 @@ RAS_START_ASM_HIDDEN(_atomic_cas_8)
 	cmp	r0, r1
 #if defined(__thumb__)
 	beq	1f
+	strb	r2, [r3]
 #else
 	strbeq	r2, [r3]
 #endif

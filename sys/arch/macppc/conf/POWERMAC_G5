@@ -191,7 +191,6 @@ wskbd*	at ukbd? console ?
 ums*	at uhidev? reportid ?				# USB Mice
 wsmouse* at ums?
 
-options		OFWOEA_WSCONS_NO_ROM_FONT
 genfb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 radeonfb*	at pci? dev ? function ?
 options 	RADEONFB_ALWAYS_ACCEL_PUTCHAR
@@ -229,7 +228,6 @@ pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	nsmb			# SMB requester
 #pseudo-device	npf			# NPF packet filter
 
 # Enable the hooks used for initializing the ram-disk.

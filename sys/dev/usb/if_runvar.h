@@ -1,4 +1,4 @@
-/*	$NetBSD: if_runvar.h,v 1.4 2017/11/17 13:08:48 skrll Exp $	*/
+/*	$NetBSD: if_runvar.h,v 1.4.4.1 2020/04/08 14:08:13 martin Exp $	*/
 /*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ struct run_tx_ring {
 	struct run_tx_data	data[RUN_TX_RING_COUNT];
 	struct usbd_pipe *	pipeh;
 	int			cur;
-	int			queued;
+	volatile unsigned	queued;
 	uint8_t			pipe_no;
 };
 
@@ -143,6 +143,8 @@ struct run_softc {
 					    enum ieee80211_state, int);
 	int				(*sc_srom_read)(struct run_softc *,
 					    uint16_t, uint16_t *);
+
+	kmutex_t			sc_media_mtx;	/* XXX */
 
 	struct usbd_device *		sc_udev;
 	struct usbd_interface *		sc_iface;

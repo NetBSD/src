@@ -96,6 +96,14 @@ zone "nsec3.nsec3.example" {
 	auto-dnssec maintain;
 };
 
+zone "jitter.nsec3.example" {
+	type master;
+	file "jitter.nsec3.example.db";
+	allow-update { any; };
+	auto-dnssec maintain;
+	sig-validity-interval 10 2;
+};
+
 zone "secure.nsec3.example" {
 	type master;
 	file "secure.nsec3.example.db";
@@ -179,6 +187,7 @@ zone "oldsigs.example" {
 	file "oldsigs.example.db";
 	allow-update { any; };
 	auto-dnssec maintain;
+	sig-validity-interval 10 2;
 };
 
 zone "prepub.example" {

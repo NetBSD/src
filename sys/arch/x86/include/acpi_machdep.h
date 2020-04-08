@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.12.2.1 2019/06/10 22:06:53 christos Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.12.2.2 2020/04/08 14:07:58 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -72,6 +72,8 @@ void		acpi_md_OsEnableInterrupt(void);
 
 void *		acpi_md_intr_establish(uint32_t, int, int, int (*)(void *),
 		    void *, bool, const char *);
+void		acpi_md_intr_mask(void *);
+void		acpi_md_intr_unmask(void *);
 void		acpi_md_intr_disestablish(void *);
 
 int		acpi_md_sleep(int);

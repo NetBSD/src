@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.46.2.1 2019/06/10 22:05:47 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.46.2.2 2020/04/08 14:07:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -186,7 +186,8 @@ extern bool svs_pcid;
 #ifndef XENPV
 #define pmap_pa2pte(a)			(a)
 #define pmap_pte2pa(a)			((a) & PTE_FRAME)
-#define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
+#define pmap_pte_set(p, n)		\
+    (void)atomic_swap_ulong((volatile unsigned long *)p, n)
 #define pmap_pte_cas(p, o, n)		atomic_cas_64((p), (o), (n))
 #define pmap_pte_testset(p, n)		\
     atomic_swap_ulong((volatile unsigned long *)p, n)

@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2015/10/19 16:16:37 pooka Exp $
+#	$NetBSD: Makefile,v 1.4.18.1 2020/04/08 14:09:01 martin Exp $
 #
 
-.PATH:	${.CURDIR}/../../../../crypto/arc4				\
-	${.CURDIR}/../../../../crypto/blowfish				\
+.PATH:	${.CURDIR}/../../../../crypto/blowfish				\
 	${.CURDIR}/../../../../crypto/camellia				\
 	${.CURDIR}/../../../../crypto/cast128				\
 	${.CURDIR}/../../../../crypto/des				\
@@ -11,9 +10,6 @@
 
 LIB=	rumpkern_crypto
 COMMENT=Cryptographic routines
-
-# arc4
-SRCS+=	arc4.c
 
 # blowfish
 SRCS+=	bf_ecb.c bf_enc.c bf_cbc.c bf_skey.c bf_module.c

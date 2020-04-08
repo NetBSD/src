@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_regexp.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_regexp.c,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -33,6 +33,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -64,6 +69,7 @@
 #include "dict_regexp.h"
 #include "mac_parse.h"
 #include "warn_stat.h"
+#include "mvect.h"
 
  /*
   * Support for IF/ENDIF based on an idea by Bert Driehuis.
@@ -86,7 +92,6 @@ typedef struct {
   */
 typedef struct DICT_REGEXP_RULE {
     int     op;				/* DICT_REGEXP_OP_MATCH/IF/ENDIF */
-    int     nesting;			/* Level of search nesting */
     int     lineno;			/* source file line number */
     struct DICT_REGEXP_RULE *next;	/* next rule in dict */
 } DICT_REGEXP_RULE;
@@ -105,6 +110,7 @@ typedef struct {
     DICT_REGEXP_RULE rule;		/* generic members */
     regex_t *expr;			/* the condition */
     int     match;			/* positive or negative match */
+    struct DICT_REGEXP_RULE *endif_rule;/* matching endif rule */
 } DICT_REGEXP_IF_RULE;
 
  /*
@@ -218,7 +224,6 @@ static const char *dict_regexp_lookup(DICT *dict, const char *lookup_string)
     DICT_REGEXP_MATCH_RULE *match_rule;
     DICT_REGEXP_EXPAND_CONTEXT expand_context;
     int     error;
-    int     nesting = 0;
 
     dict->error = 0;
 
@@ -235,12 +240,6 @@ static const char *dict_regexp_lookup(DICT *dict, const char *lookup_string)
 	lookup_string = lowercase(vstring_str(dict->fold_buf));
     }
     for (rule = dict_regexp->head; rule; rule = rule->next) {
-
-	/*
-	 * Skip rules inside failed IF/ENDIF.
-	 */
-	if (nesting < rule->nesting)
-	    continue;
 
 	switch (rule->op) {
 
@@ -303,14 +302,16 @@ static const char *dict_regexp_lookup(DICT *dict, const char *lookup_string)
 	    if (DICT_REGEXP_REGEXEC(error, dict->name, rule->lineno,
 			       if_rule->expr, if_rule->match, lookup_string,
 				    NULL_SUBSTITUTIONS, NULL_MATCH_RESULT))
-		nesting++;
-	    continue;
+		continue;
+	    /* An IF without matching ENDIF has no "endif" rule. */
+	    if ((rule = if_rule->endif_rule) == 0)
+		return (0);
+	    /* FALLTHROUGH */
 
 	    /*
-	     * ENDIF after successful IF.
+	     * ENDIF after IF.
 	     */
 	case DICT_REGEXP_OP_ENDIF:
-	    nesting--;
 	    continue;
 
 	default:
@@ -381,16 +382,13 @@ static int dict_regexp_get_pat(const char *mapname, int lineno, char **bufp,
      * Process negation operators.
      */
     pat->match = 1;
-    while (*p == '!') {
-	pat->match = !pat->match;
+    for (;;) {
+	if (*p == '!')
+	    pat->match = !pat->match;
+	else if (!ISSPACE(*p))
+	    break;
 	p++;
     }
-
-    /*
-     * Grr...aceful handling of whitespace after '!'.
-     */
-    while (*p && ISSPACE(*p))
-	p++;
     if (*p == 0) {
 	msg_warn("regexp map %s, line %d: no regexp: skipping this rule",
 		 mapname, lineno);
@@ -536,15 +534,12 @@ static regex_t *dict_regexp_compile_pat(const char *mapname, int lineno,
 
 /* dict_regexp_rule_alloc - fill in a generic rule structure */
 
-static DICT_REGEXP_RULE *dict_regexp_rule_alloc(int op, int nesting,
-						        int lineno,
-						        size_t size)
+static DICT_REGEXP_RULE *dict_regexp_rule_alloc(int op, int lineno, size_t size)
 {
     DICT_REGEXP_RULE *rule;
 
     rule = (DICT_REGEXP_RULE *) mymalloc(size);
     rule->op = op;
-    rule->nesting = nesting;
     rule->lineno = lineno;
     rule->next = 0;
 
@@ -553,9 +548,9 @@ static DICT_REGEXP_RULE *dict_regexp_rule_alloc(int op, int nesting,
 
 /* dict_regexp_parseline - parse one rule */
 
-static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
-					            char *line, int nesting,
-					               int dict_flags)
+static DICT_REGEXP_RULE *dict_regexp_parseline(DICT *dict, const char *mapname,
+					             int lineno, char *line,
+					               int nesting)
 {
     char   *p;
 
@@ -584,8 +579,8 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 	while (*p && ISSPACE(*p))
 	    ++p;
 	if (!*p) {
-	    msg_warn("regexp map %s, line %d: using empty replacement string",
-		     mapname, lineno);
+	    msg_warn("regexp map %s, line %d: no replacement text: "
+		     "using empty string", mapname, lineno);
 	}
 
 	/*
@@ -614,6 +609,19 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 	return (rval); \
     } while (0)
 
+	if (dict->flags & DICT_FLAG_SRC_RHS_IS_FILE) {
+	    VSTRING *base64_buf;
+	    char   *err;
+
+	    if ((base64_buf = dict_file_to_b64(dict, p)) == 0) {
+		err = dict_file_get_error(dict);
+		msg_warn("regexp map %s, line %d: %s: skipping this rule",
+			 mapname, lineno, err);
+		myfree(err);
+		CREATE_MATCHOP_ERROR_RETURN(0);
+	    }
+	    p = vstring_str(base64_buf);
+	}
 	if (mac_parse(p, dict_regexp_prescan, (void *) &prescan_context)
 	    & MAC_PARSE_ERROR) {
 	    msg_warn("regexp map %s, line %d: bad replacement syntax: "
@@ -634,7 +642,7 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 		   "replacement text: skipping this rule", mapname, lineno);
 	    CREATE_MATCHOP_ERROR_RETURN(0);
 	}
-	if (prescan_context.max_sub > 0 && (dict_flags & DICT_FLAG_NO_REGSUB)) {
+	if (prescan_context.max_sub > 0 && (dict->flags & DICT_FLAG_NO_REGSUB)) {
 	    msg_warn("regexp map %s, line %d: "
 		     "regular expression substitution is not allowed: "
 		     "skipping this rule", mapname, lineno);
@@ -658,7 +666,7 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 	    second_exp = 0;
 	}
 	match_rule = (DICT_REGEXP_MATCH_RULE *)
-	    dict_regexp_rule_alloc(DICT_REGEXP_OP_MATCH, nesting, lineno,
+	    dict_regexp_rule_alloc(DICT_REGEXP_OP_MATCH, lineno,
 				   sizeof(DICT_REGEXP_MATCH_RULE));
 	match_rule->first_exp = first_exp;
 	match_rule->first_match = first_pat.match;
@@ -696,10 +704,11 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 	if ((expr = dict_regexp_compile_pat(mapname, lineno, &pattern)) == 0)
 	    return (0);
 	if_rule = (DICT_REGEXP_IF_RULE *)
-	    dict_regexp_rule_alloc(DICT_REGEXP_OP_IF, nesting, lineno,
+	    dict_regexp_rule_alloc(DICT_REGEXP_OP_IF, lineno,
 				   sizeof(DICT_REGEXP_IF_RULE));
 	if_rule->expr = expr;
 	if_rule->match = pattern.match;
+	if_rule->endif_rule = 0;
 	return ((DICT_REGEXP_RULE *) if_rule);
     }
 
@@ -720,7 +729,7 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 	if (*p)
 	    msg_warn("regexp map %s, line %d: ignoring extra text after ENDIF",
 		     mapname, lineno);
-	rule = dict_regexp_rule_alloc(DICT_REGEXP_OP_ENDIF, nesting, lineno,
+	rule = dict_regexp_rule_alloc(DICT_REGEXP_OP_ENDIF, lineno,
 				      sizeof(DICT_REGEXP_RULE));
 	return (rule);
     }
@@ -739,6 +748,7 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 
 DICT   *dict_regexp_open(const char *mapname, int open_flags, int dict_flags)
 {
+    const char myname[] = "dict_regexp_open";
     DICT_REGEXP *dict_regexp;
     VSTREAM *map_fp = 0;
     struct stat st;
@@ -750,6 +760,8 @@ DICT   *dict_regexp_open(const char *mapname, int open_flags, int dict_flags)
     size_t  max_sub = 0;
     int     nesting = 0;
     char   *p;
+    DICT_REGEXP_RULE **rule_stack = 0;
+    MVECT   mvect;
 
     /*
      * Let the optimizer worry about eliminating redundant code.
@@ -805,16 +817,34 @@ DICT   *dict_regexp_open(const char *mapname, int open_flags, int dict_flags)
 	trimblanks(p, 0)[0] = 0;
 	if (*p == 0)
 	    continue;
-	rule = dict_regexp_parseline(mapname, lineno, p, nesting, dict_flags);
+	rule = dict_regexp_parseline(&dict_regexp->dict, mapname, lineno,
+				     p, nesting);
 	if (rule == 0)
 	    continue;
 	if (rule->op == DICT_REGEXP_OP_MATCH) {
 	    if (((DICT_REGEXP_MATCH_RULE *) rule)->max_sub > max_sub)
 		max_sub = ((DICT_REGEXP_MATCH_RULE *) rule)->max_sub;
 	} else if (rule->op == DICT_REGEXP_OP_IF) {
+	    if (rule_stack == 0)
+		rule_stack = (DICT_REGEXP_RULE **) mvect_alloc(&mvect,
+					   sizeof(*rule_stack), nesting + 1,
+						(MVECT_FN) 0, (MVECT_FN) 0);
+	    else
+		rule_stack =
+		    (DICT_REGEXP_RULE **) mvect_realloc(&mvect, nesting + 1);
+	    rule_stack[nesting] = rule;
 	    nesting++;
 	} else if (rule->op == DICT_REGEXP_OP_ENDIF) {
-	    nesting--;
+	    DICT_REGEXP_IF_RULE *if_rule;
+
+	    if (nesting-- <= 0)
+		/* Already handled in dict_regexp_parseline(). */
+		msg_panic("%s: ENDIF without IF", myname);
+	    if (rule_stack[nesting]->op != DICT_REGEXP_OP_IF)
+		msg_panic("%s: unexpected rule stack element type %d",
+			  myname, rule_stack[nesting]->op);
+	    if_rule = (DICT_REGEXP_IF_RULE *) rule_stack[nesting];
+	    if_rule->endif_rule = rule;
 	}
 	if (last_rule == 0)
 	    dict_regexp->head = rule;
@@ -823,9 +853,12 @@ DICT   *dict_regexp_open(const char *mapname, int open_flags, int dict_flags)
 	last_rule = rule;
     }
 
-    if (nesting)
-	msg_warn("regexp map %s, line %d: more IFs than ENDIFs",
-		 mapname, lineno);
+    while (nesting-- > 0)
+	msg_warn("regexp map %s, line %d: IF has no matching ENDIF",
+		 mapname, rule_stack[nesting]->lineno);
+
+    if (rule_stack)
+	(void) mvect_free(&mvect);
 
     /*
      * Allocate space for only as many matched substrings as used in the
@@ -835,6 +868,7 @@ DICT   *dict_regexp_open(const char *mapname, int open_flags, int dict_flags)
 	dict_regexp->pmatch =
 	    (regmatch_t *) mymalloc(sizeof(regmatch_t) * (max_sub + 1));
 
+    dict_file_purge_buffers(&dict_regexp->dict);
     DICT_REGEXP_OPEN_RETURN(DICT_DEBUG (&dict_regexp->dict));
 }
 

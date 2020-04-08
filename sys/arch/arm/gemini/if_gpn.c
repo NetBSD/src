@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.9.2.1 2019/06/10 22:05:53 christos Exp $ */
+/* $NetBSD: if_gpn.c,v 1.9.2.2 2020/04/08 14:07:29 martin Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.9.2.1 2019/06/10 22:05:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.9.2.2 2020/04/08 14:07:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -252,12 +252,12 @@ gpn_process_data(struct gpn_softc *sc, const ipm_gpn_desc_t *gd)
 	bool ok;
 
 	if ((subtype & GPN_SOF) == 0 && sc->sc_rxmbuf == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto out;
 	}
 
 	if ((subtype & GPN_SOF) && sc->sc_rxmbuf != NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		m_freem(sc->sc_rxmbuf);
 		sc->sc_rxmbuf = NULL;
 	}
@@ -266,13 +266,13 @@ gpn_process_data(struct gpn_softc *sc, const ipm_gpn_desc_t *gd)
 		struct mbuf *m;
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto out;
 		}
 		if (pktlen > MHLEN - 2) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				m_free(m);
 				goto out;
 			}
@@ -287,7 +287,7 @@ gpn_process_data(struct gpn_softc *sc, const ipm_gpn_desc_t *gd)
 	if (ok && gd->gd_addr2 && gd->gd_len2)
 		ok = gpn_add_data(sc, gd->gd_addr2, gd->gd_len2);
 	if (!ok) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		m_freem(sc->sc_rxmbuf);
 		sc->sc_rxmbuf = NULL;
 		goto out;
@@ -412,6 +412,7 @@ gpn_ifstart(struct ifnet *ifp)
 		gd.gd_tag = IPM_TAG_GPN;
 		gd.gd_subtype = GPN_SOF;
 		gd.gd_pktlen64 = (m->m_pkthdr.len + 63) >> 6;
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		for (; m != NULL; m = m0) {
 			struct gpn_txinfo *ti;
 			bus_dmamap_t map;
@@ -443,7 +444,7 @@ gpn_ifstart(struct ifnet *ifp)
 			    mtod(m, void *), m->m_len, NULL,
 			    BUS_DMA_READ | BUS_DMA_NOWAIT);
 			if (error) {
-				ifp->if_oerrors++;
+				if_statinc_ref(nsr, if_oerrors);
 				m_freem(m);
 				break;
 			}
@@ -466,9 +467,10 @@ gpn_ifstart(struct ifnet *ifp)
 			gd.gd_txid = id;
 			ti->ti_mbuf = m;
 			last_gd = &gd;
-			ifp->if_obytes += m->m_len;
+			if_statadd_ref(nsr, if_obytes, m->m_len);
 		}
-		ifp->if_opackets++;
+		if_statinc_ref(nsr, if_opackets);
+		IF_STAT_PUTREF(ifp);
 
 		/*
 		 * XXX XXX 'last_gd' could be NULL
@@ -609,8 +611,6 @@ gpn_ifstop(struct ifnet *ifp, int disable)
 static int
 gpn_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct gpn_softc * const sc = ifp->if_softc;
-	struct ifreq * const ifr = data;
 	struct ifaliasreq * const ifra = data;
 	int s, error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: minfo_14.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: minfo_14.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -179,7 +179,7 @@ fromstruct_minfo(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_minfo);
-	REQUIRE(source != NULL);
+	REQUIRE(minfo != NULL);
 	REQUIRE(minfo->common.rdtype == type);
 	REQUIRE(minfo->common.rdclass == rdclass);
 
@@ -200,7 +200,7 @@ tostruct_minfo(ARGS_TOSTRUCT) {
 	isc_result_t result;
 
 	REQUIRE(rdata->type == dns_rdatatype_minfo);
-	REQUIRE(target != NULL);
+	REQUIRE(minfo != NULL);
 	REQUIRE(rdata->length != 0);
 
 	minfo->common.rdclass = rdata->rdclass;
@@ -232,7 +232,7 @@ static inline void
 freestruct_minfo(ARGS_FREESTRUCT) {
 	dns_rdata_minfo_t *minfo = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(minfo != NULL);
 	REQUIRE(minfo->common.rdtype == dns_rdatatype_minfo);
 
 	if (minfo->mctx == NULL)

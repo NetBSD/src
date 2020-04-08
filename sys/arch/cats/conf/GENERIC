@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.166.4.1 2019/06/10 22:05:59 christos Exp $
+# $NetBSD: GENERIC,v 1.166.4.2 2020/04/08 14:07:32 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -288,10 +288,8 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 ep*	at pci? dev ? function ?	# 3C590 ethernet cards
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-#esh*	at pci? dev ? function ?	# Essential HIPPI card
-#fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-#le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+#pcn*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
@@ -397,9 +395,6 @@ ucom*	at uplcom? portno ?
 
 umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
 
 # USB Handspring Visor
 uvisor*	at uhub? port ?
@@ -542,7 +537,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre			# generic L3 over IP tunnel

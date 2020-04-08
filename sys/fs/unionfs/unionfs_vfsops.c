@@ -353,7 +353,7 @@ unionfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-unionfs_root(struct mount *mp, struct vnode **vpp)
+unionfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct unionfs_mount *ump;
 	struct vnode   *vp;
@@ -365,7 +365,7 @@ unionfs_root(struct mount *mp, struct vnode **vpp)
 	    vp, VOP_ISLOCKED(vp));
 
 	vref(vp);
-	vn_lock(vp, LK_EXCLUSIVE);
+	vn_lock(vp, lktype);
 
 	*vpp = vp;
 
@@ -442,13 +442,13 @@ unionfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 }
 
 int
-unionfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+unionfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	return (EOPNOTSUPP);
 }
 
 int
-unionfs_fhtovp(struct mount *mp, struct fid *fidp, struct vnode **vpp)
+unionfs_fhtovp(struct mount *mp, struct fid *fidp, int lktype, struct vnode **vpp)
 {
 	return (EOPNOTSUPP);
 }

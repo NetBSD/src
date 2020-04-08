@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-m3ua.c,v 1.5 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-m3ua.c,v 1.5.4.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: Message Transfer Part 3 (MTP3) User Adaptation Layer (M3UA) printer */
@@ -301,6 +301,7 @@ trunc:
  *    \                                                               \
  *    /                                                               /
  */
+UNALIGNED_OK
 void
 m3ua_print(netdissect_options *ndo,
            const u_char *buf, const u_int size)
@@ -341,4 +342,3 @@ invalid:
 trunc:
   ND_PRINT((ndo, "%s", tstr));
 }
-

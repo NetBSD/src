@@ -1,5 +1,5 @@
 /* tc-ia64.c -- Assembler for the HP/Intel IA-64 architecture.
-   Copyright (C) 1998-2016 Free Software Foundation, Inc.
+   Copyright (C) 1998-2018 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -234,7 +234,7 @@ static struct
     struct hash_control *const_hash;	/* constant hash table */
     struct hash_control *entry_hash;    /* code entry hint hash table */
 
-    /* If X_op is != O_absent, the registername for the instruction's
+    /* If X_op is != O_absent, the register name for the instruction's
        qualifying predicate.  If NULL, p0 is assumed for instructions
        that are predictable.  */
     expressionS qp;
@@ -1139,7 +1139,7 @@ obj_elf_vms_common (int ignore ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 
   obj_elf_change_section
-    (sec_name, SHT_NOBITS,
+    (sec_name, SHT_NOBITS, 0,
      SHF_ALLOC | SHF_WRITE | SHF_IA_64_VMS_OVERLAID | SHF_IA_64_VMS_GLOBAL,
      0, NULL, 1, 0);
 
@@ -2738,6 +2738,7 @@ slot_index (unsigned long slot_addr,
 		as_fatal (_("Only constant offsets are supported"));
 		break;
 	      }
+	    /* Fall through.  */
 	  case rs_fill:
 	    s_index += 3 * (first_frag->fr_offset >> 4);
 	    break;
@@ -2800,7 +2801,7 @@ fixup_unw_records (unw_rec_list *list, int before_relax)
   for (ptr = list; ptr; ptr = ptr->next)
     {
       if (ptr->slot_number == SLOT_NUM_NOT_SET)
-	as_bad (_(" Insn slot not set in unwind record."));
+	as_bad (_("Insn slot not set in unwind record."));
       t = slot_index (ptr->slot_number, ptr->slot_frag,
 		      first_addr, first_frag, before_relax);
       switch (ptr->r.type)
@@ -3372,7 +3373,7 @@ dot_save (int dummy ATTRIBUTE_UNUSED)
     e2.X_op = O_absent;
 
   reg1 = e1.X_add_number;
-  /* Make sure its a valid ar.xxx reg, OR its br0, aka 'rp'.  */
+  /* Make sure it's a valid ar.xxx reg, OR its br0, aka 'rp'.  */
   if (e1.X_op != O_register)
     {
       as_bad (_("First operand to .save not a register"));
@@ -3764,7 +3765,7 @@ dot_savemem (int psprel)
   reg1 = e1.X_add_number;
   val = e2.X_add_number;
 
-  /* Make sure its a valid ar.xxx reg, OR its br0, aka 'rp'.  */
+  /* Make sure it's a valid ar.xxx reg, OR its br0, aka 'rp'.  */
   if (e1.X_op != O_register)
     {
       as_bad (_("First operand to .%s not a register"), po);
@@ -5635,6 +5636,7 @@ operand_match (const struct ia64_opcode *idesc, int res_index, expressionS *e)
       /* SOR must be an integer multiple of 8 */
       if (e->X_op == O_constant && e->X_add_number & 0x7)
 	return OPERAND_OUT_OF_RANGE;
+      /* Fall through.  */
     case IA64_OPND_SOF:
     case IA64_OPND_SOL:
       if (e->X_op == O_constant)
@@ -5790,6 +5792,7 @@ operand_match (const struct ia64_opcode *idesc, int res_index, expressionS *e)
     case IA64_OPND_IMM14:
     case IA64_OPND_IMM22:
       relocatable = 1;
+      /* Fall through.  */
     case IA64_OPND_IMM1:
     case IA64_OPND_IMM8:
     case IA64_OPND_IMM8U4:
@@ -5929,6 +5932,7 @@ operand_match (const struct ia64_opcode *idesc, int res_index, expressionS *e)
 	  ++CURR_SLOT.num_fixups;
 	  return OPERAND_MATCH;
 	}
+      /* Fall through.  */
     case IA64_OPND_TAG13:
     case IA64_OPND_TAG13b:
       switch (e->X_op)
@@ -9281,6 +9285,7 @@ dep->name, idesc->name, (rsrc_write?"write":"read"), note)
 		    {
 		      specs[count++] = tmpl;
 		    }
+		  /* Fall through.  */
 		case AR_RSC:
 		  if (!rsrc_write &&
 		      (regno == AR_BSPSTORE
@@ -10263,7 +10268,7 @@ remove_marked_resource (struct rsrc *rs)
     case IA64_DVS_SPECIFIC:
       if (md.debug_dv)
 	fprintf (stderr, "Implementation-specific, assume worst case...\n");
-      /* ...fall through...  */
+      /* Fall through.  */
     case IA64_DVS_INSTR:
       if (md.debug_dv)
 	fprintf (stderr, "Inserting instr serialization\n");

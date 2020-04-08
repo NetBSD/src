@@ -21,10 +21,12 @@ typedef	struct timespec	timestruc_t;
 #define __defined_ts_t
 typedef	struct timespec	timespec_t;
 #endif
+#ifndef HAVE_NBTOOL_CONFIG_H
 typedef unsigned int	uint_t;
 typedef unsigned char	uchar_t;
 typedef unsigned short	ushort_t;
 typedef unsigned long	ulong_t;
+#endif
 typedef off_t		off64_t;
 typedef id_t		taskid_t;
 typedef id_t		projid_t;

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.24.2.1 2019/06/10 22:05:55 christos Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.24.2.2 2020/04/08 14:07:30 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,18 +27,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.24.2.1 2019/06/10 22:05:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.24.2.2 2020/04/08 14:07:30 martin Exp $");
 
 #include <sys/param.h>
+
 #include <sys/bus.h>
 #include <sys/device.h>
-#include <sys/intr.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/extent.h>
-#include <sys/queue.h>
-#include <sys/mutex.h>
+#include <sys/intr.h>
 #include <sys/kmem.h>
+#include <sys/kernel.h>
+#include <sys/lwp.h>
+#include <sys/mutex.h>
+#include <sys/queue.h>
+#include <sys/systm.h>
 
 #include <machine/cpu.h>
 
@@ -188,8 +190,8 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map pads registers: %d\n", error);
 		return;
 	}
-	error = bus_space_map(sc->sc_bst, cs_addr, cs_size, 0,
-	    &sc->sc_bsh_rpconf);
+	error = bus_space_map(sc->sc_bst, cs_addr, cs_size,
+	    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, &sc->sc_bsh_rpconf);
 	if (error) {
 		aprint_error(": couldn't map cs registers: %d\n", error);
 		return;
@@ -565,7 +567,8 @@ tegra_pcie_conf_frag_map(struct tegra_pcie_softc * const sc, uint bus,
 	}
 
 	a = TEGRA_PCIE_EXTC_BASE + (bus << 16) + (frg << 24);
-	if (bus_space_map(sc->sc_bst, a, 1 << 16, 0,
+	if (bus_space_map(sc->sc_bst, a, 1 << 16,
+	    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED,
 	    &sc->sc_bsh_extc[bus-1][frg]) != 0)
 		device_printf(sc->sc_dev, "couldn't map PCIE "
 		    "configuration for bus %u fragment %#x", bus, frg);

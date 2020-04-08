@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.80 2018/06/01 07:26:15 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.80.2.1 2020/04/08 14:07:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.80 2018/06/01 07:26:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.80.2.1 2020/04/08 14:07:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -182,9 +182,8 @@ cpu_reboot(int howto, char *bootstr)
 }
 
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
-	ci->ci_want_resched |= flags;
 	aston(ci);
 }
 
@@ -529,11 +528,17 @@ cpu_rootconf(void)
 bool
 cpu_intr_p(void)
 {
+	uint64_t ncsw;
 	int idepth;
+	lwp_t *l;
 
-	kpreempt_disable();
-	idepth = curcpu()->ci_idepth;
-	kpreempt_enable();
+	l = curlwp;
+	do {
+		ncsw = l->l_ncsw;
+		__insn_barrier();
+		idepth = l->l_cpu->ci_idepth;
+		__insn_barrier();
+	} while (__predict_false(ncsw != l->l_ncsw));
 
-	return (idepth >= 0);
+	return idepth >= 0;
 }

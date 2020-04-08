@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.128.2.1 2019/06/10 22:07:11 christos Exp $ */
+/* $NetBSD: rtw.c,v 1.128.2.2 2020/04/08 14:08:06 martin Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.128.2.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.128.2.2 2020/04/08 14:08:06 martin Exp $");
 
 
 #include <sys/param.h>
@@ -1530,7 +1530,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			aprint_error_dev(sc->sc_dev,
 			    "DMA error/FIFO overflow %08" PRIx32 ", "
 			    "rx descriptor %d\n", hstat, next);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
 
@@ -1544,7 +1544,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			    "rx frame too long, %d > %d, %08" PRIx32
 			    ", desc %d\n",
 			    len, rs->rs_mbuf->m_len, hstat, next);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
 
@@ -1553,7 +1553,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			aprint_error_dev(sc->sc_dev,
 			    "unknown rate #%" __PRIuBITS "\n",
 			    __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
 		rate = ratetbl[hwrate];
@@ -1729,12 +1729,13 @@ rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *tdb,
 	rts_retry = __SHIFTOUT(hstat, RTW_TXSTAT_RTSRETRY_MASK);
 	data_retry = __SHIFTOUT(hstat, RTW_TXSTAT_DRC_MASK);
 
-	ifp->if_collisions += rts_retry + data_retry;
+	if (rts_retry + data_retry)
+		if_statadd(ifp, if_collisions, rts_retry + data_retry);
 
 	if ((hstat & RTW_TXSTAT_TOK) != 0)
 		condstring = "ok";
 	else {
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		condstring = "error";
 	}
 
@@ -3191,7 +3192,7 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 		return 0;
 	}
 	DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue data frame\n", __func__));
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 	bpf_mtap(ifp, m0, BPF_D_OUT);
 	eh = mtod(m0, struct ether_header *);
 	*nip = ieee80211_find_txnode(&sc->sc_ic, eh->ether_dhost);
@@ -3202,7 +3203,7 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 	}
 	if ((m0 = ieee80211_encap(&sc->sc_ic, m0, *nip)) == NULL) {
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: encap error\n", __func__));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		return -1;
 	}
 	DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: leave\n", __func__));
@@ -3587,7 +3588,7 @@ rtw_watchdog(struct ifnet *ifp)
 				continue;
 			printf("%s: transmit timeout, priority %d\n",
 			    ifp->if_xname, pri);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			if (pri != RTW_TXPRIBCN)
 				tx_timeouts++;
 		} else

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2016/01/23 21:22:48 christos Exp $
+#	$NetBSD: Makefile,v 1.7.16.1 2020/04/08 14:09:06 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -15,10 +15,8 @@ SCSITESTDIR!= cd ${.CURDIR}/libscsitest && ${PRINTOBJDIR}
 LDFLAGS+= -L${SCSITESTDIR}
 LDADD+=	-Wl,--whole-archive -lrumpdev_scsitest -Wl,--no-whole-archive
 
-LDADD+= -lrumpdev_scsipi -lrumpdev_disk -lrumpdev -lrumpvfs
-LDADD+=	-lrump -lutil
-LDADD+=	-lrumpuser -lpthread
-LDADD+= -lrump
+LDADD+= -lrumpdev_scsipi -lrumpdev_disk -lrumpdev ${LIBRUMPBASE}
+LDADD+=	-lutil
 
 WARNS=	4
 

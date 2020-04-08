@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.6 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.6.88.1 2020/04/08 14:07:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -32,22 +32,6 @@
 #ifndef _VAX_RWLOCK_H_
 #define	_VAX_RWLOCK_H_
 
-struct krwlock {
-	volatile uintptr_t rw_owner;
-};
-
-#ifdef __RWLOCK_PRIVATE
-
-#include <sys/atomic.h>
-
 #define	__HAVE_RW_STUBS		1
-#define __HAVE_SIMPLE_RW_LOCKS	1
-
-#define RW_RECEIVE(rw)		/* nothing */
-#define RW_GIVE(rw)		/* nothing */
-
-#define RW_CAS(p, o, n)		(atomic_cas_ulong((p), (o), (n)) == (o))
-
-#endif  /* __RWLOCK_PRIVATE */
 
 #endif /* _VAX_RWLOCK_H_ */

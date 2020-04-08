@@ -53,6 +53,7 @@ LINE("-isoC-tcor1",	"ISO/IEC 9899/TCOR1:1994 (\\(lqISO\\~C90, Technical Corrigen
 LINE("-isoC-tcor2",	"ISO/IEC 9899/TCOR2:1995 (\\(lqISO\\~C90, Technical Corrigendum 2\\(rq)")
 LINE("-isoC-99",	"ISO/IEC 9899:1999 (\\(lqISO\\~C99\\(rq)")
 LINE("-isoC-2011",	"ISO/IEC 9899:2011 (\\(lqISO\\~C11\\(rq)")
+LINE("-isoC-2018",	"ISO/IEC 9899:2018 (\\(lqISO\\~C18\\(rq)")
 LINE("-iso9945-1-90",	"ISO/IEC 9945-1:1990 (\\(lqPOSIX.1\\(rq)")
 LINE("-iso9945-1-96",	"ISO/IEC 9945-1:1996 (\\(lqPOSIX.1\\(rq)")
 LINE("-iso9945-2-93",	"ISO/IEC 9945-2:1993 (\\(lqPOSIX.2\\(rq)")

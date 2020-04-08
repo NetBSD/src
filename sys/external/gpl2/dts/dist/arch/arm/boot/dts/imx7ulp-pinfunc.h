@@ -1,13 +1,9 @@
-/*	$NetBSD: imx7ulp-pinfunc.h,v 1.1.1.1.6.1 2019/06/10 22:08:43 christos Exp $	*/
+/*	$NetBSD: imx7ulp-pinfunc.h,v 1.1.1.1.6.2 2020/04/08 14:08:33 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2016 Freescale Semiconductor, Inc.
  * Copyright 2017 NXP
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
  */
 
 #ifndef __DTS_IMX7ULP_PINFUNC_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.11.2.1 2019/06/10 21:44:47 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.11.2.2 2020/04/08 14:04:05 martin Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: file.c,v 1.181 2019/03/28 20:54:03 christos Exp $")
+FILE_RCSID("@(#)$File: file.c,v 1.184 2019/08/03 11:51:59 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.11.2.1 2019/06/10 21:44:47 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.11.2.2 2020/04/08 14:04:05 martin Exp $");
 #endif
 #endif	/* lint */
 
@@ -82,13 +82,7 @@ int getopt_long(int, char * const *, const char *,
 # define IFLNK_L ""
 #endif
 
-#ifdef HAVE_LIBSECCOMP
-# define SECCOMP_S "S"
-#else
-# define SECCOMP_S ""
-#endif
-
-#define FILE_FLAGS	"bcCdE" IFLNK_h "ik" IFLNK_L "lNnprs" SECCOMP_S "vzZ0"
+#define FILE_FLAGS	"bcCdE" IFLNK_h "ik" IFLNK_L "lNnprsSvzZ0"
 #define OPTSTRING	"bcCde:Ef:F:hiklLm:nNpP:rsSvzZ0"
 
 # define USAGE  \
@@ -130,6 +124,7 @@ private const struct {
 	{ "ascii",	MAGIC_NO_CHECK_ASCII },
 	{ "cdf",	MAGIC_NO_CHECK_CDF },
 	{ "compress",	MAGIC_NO_CHECK_COMPRESS },
+	{ "csv",	MAGIC_NO_CHECK_CSV },
 	{ "elf",	MAGIC_NO_CHECK_ELF },
 	{ "encoding",	MAGIC_NO_CHECK_ENCODING },
 	{ "soft",	MAGIC_NO_CHECK_SOFT },
@@ -303,11 +298,11 @@ main(int argc, char *argv[])
 		case 's':
 			flags |= MAGIC_DEVICES;
 			break;
-#ifdef HAVE_LIBSECCOMP
 		case 'S':
+#ifdef HAVE_LIBSECCOMP
 			sandbox = 0;
-			break;
 #endif
+			break;
 		case 'v':
 			if (magicfile == NULL)
 				magicfile = magic_getpath(magicfile, action);
@@ -315,6 +310,9 @@ main(int argc, char *argv[])
 			    VERSION);
 			(void)fprintf(stdout, "magic file from %s\n",
 			    magicfile);
+#ifdef HAVE_LIBSECCOMP
+			(void)fprintf(stdout, "seccomp support included\n");
+#endif
 			return 0;
 		case 'z':
 			flags |= MAGIC_COMPRESS;

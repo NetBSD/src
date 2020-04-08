@@ -280,9 +280,12 @@ int arc_procfd;
 #ifndef btop
 #define	btop(x)		((x) / PAGE_SIZE)
 #endif
-//#define	needfree	(uvmexp.free < uvmexp.freetarg ? uvmexp.freetarg : 0)
+#ifndef ptob
+#define ptob(x)		((x) * PAGE_SIZE)
+#endif
+//#define	needfree	(uvm_availmem() < uvmexp.freetarg ? uvmexp.freetarg : 0)
 #define	buf_init	arc_buf_init
-#define	freemem		uvmexp.free
+#define	freemem		uvm_availmem()
 #define	minfree		uvmexp.freemin
 #define	desfree		uvmexp.freetarg
 #define	lotsfree	(desfree * 2)
@@ -6215,6 +6218,7 @@ arc_init(void)
 	}
 
 #ifdef _KERNEL
+#ifdef __FreeBSD__
 	if (TUNABLE_INT_FETCH("vfs.zfs.prefetch_disable", &zfs_prefetch_disable))
 		prefetch_tunable_set = 1;
 
@@ -6236,6 +6240,7 @@ arc_init(void)
 		zfs_prefetch_disable = 1;
 	}
 #endif
+#endif
 	/* Warn about ZFS memory and address space requirements. */
 	if (((uint64_t)physmem * PAGESIZE) < (256 + 128 + 64) * (1 << 20)) {
 		printf("ZFS WARNING: Recommended minimum RAM size is 512MB; "
@@ -6244,9 +6249,11 @@ arc_init(void)
 	if (kmem_size() < 512 * (1 << 20)) {
 		printf("ZFS WARNING: Recommended minimum kmem_size is 512MB; "
 		    "expect unstable behavior.\n");
+#ifdef __FreeBSD__
 		printf("             Consider tuning vm.kmem_size and "
 		    "vm.kmem_size_max\n");
 		printf("             in /boot/loader.conf.\n");
+#endif
 	}
 #endif
 }

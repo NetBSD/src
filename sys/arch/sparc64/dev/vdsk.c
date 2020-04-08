@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.3 2017/03/03 21:09:25 palle Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.3.16.1 2020/04/08 14:07:54 martin Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -1096,6 +1096,7 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 		case START_STOP:
 		case SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL:
 		case SCSI_MODE_SENSE_6:
+		case SCSI_MAINTENANCE_IN:
 			vdsk_scsi_done(xs, XS_NOERROR);
 			return;
 

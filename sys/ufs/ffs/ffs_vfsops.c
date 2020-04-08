@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.357.2.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.357.2.2 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.357.2.1 2019/06/10 22:09:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.357.2.2 2020/04/08 14:09:03 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -119,8 +119,6 @@ static int ffs_is_appleufs(struct vnode *, struct fs *);
 
 static int ffs_init_vnode(struct ufsmount *, struct vnode *, ino_t);
 static void ffs_deinit_vnode(struct ufsmount *, struct vnode *);
-
-static struct sysctllog *ffs_sysctl_log;
 
 static kauth_listener_t ffs_snapshot_listener;
 
@@ -254,6 +252,63 @@ ffs_snapshot_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	return result;
 }
 
+SYSCTL_SETUP(ffs_sysctl_setup, "ffs sysctls")
+{
+#ifdef UFS_EXTATTR
+	extern int ufs_extattr_autocreate;
+#endif
+	extern int ffs_log_changeopt;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ffs",
+		       SYSCTL_DESCR("Berkeley Fast File System"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 1, CTL_EOL);
+	/*
+	 * @@@ should we even bother with these first three?
+	 */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "doclusterread", NULL,
+		       sysctl_notavail, 0, NULL, 0,
+		       CTL_VFS, 1, FFS_CLUSTERREAD, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "doclusterwrite", NULL,
+		       sysctl_notavail, 0, NULL, 0,
+		       CTL_VFS, 1, FFS_CLUSTERWRITE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "doreallocblks", NULL,
+		       sysctl_notavail, 0, NULL, 0,
+		       CTL_VFS, 1, FFS_REALLOCBLKS, CTL_EOL);
+#if 0
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "doasyncfree",
+		       SYSCTL_DESCR("Release dirty blocks asynchronously"),
+		       NULL, 0, &doasyncfree, 0,
+		       CTL_VFS, 1, FFS_ASYNCFREE, CTL_EOL);
+#endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "log_changeopt",
+		       SYSCTL_DESCR("Log changes in optimization strategy"),
+		       NULL, 0, &ffs_log_changeopt, 0,
+		       CTL_VFS, 1, FFS_LOG_CHANGEOPT, CTL_EOL);
+#ifdef UFS_EXTATTR
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "extattr_autocreate",
+		       SYSCTL_DESCR("Size of attribute for "
+				    "backing file autocreation"),
+		       NULL, 0, &ufs_extattr_autocreate, 0,
+		       CTL_VFS, 1, FFS_EXTATTR_AUTOCREATE, CTL_EOL);
+
+#endif /* UFS_EXTATTR */
+}
+
 static int
 ffs_modcmd(modcmd_t cmd, void *arg)
 {
@@ -262,65 +317,12 @@ ffs_modcmd(modcmd_t cmd, void *arg)
 #if 0
 	extern int doasyncfree;
 #endif
-#ifdef UFS_EXTATTR
-	extern int ufs_extattr_autocreate;
-#endif
-	extern int ffs_log_changeopt;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = vfs_attach(&ffs_vfsops);
 		if (error != 0)
 			break;
-
-		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "ffs",
-			       SYSCTL_DESCR("Berkeley Fast File System"),
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, 1, CTL_EOL);
-		/*
-		 * @@@ should we even bother with these first three?
-		 */
-		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			       CTLTYPE_INT, "doclusterread", NULL,
-			       sysctl_notavail, 0, NULL, 0,
-			       CTL_VFS, 1, FFS_CLUSTERREAD, CTL_EOL);
-		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			       CTLTYPE_INT, "doclusterwrite", NULL,
-			       sysctl_notavail, 0, NULL, 0,
-			       CTL_VFS, 1, FFS_CLUSTERWRITE, CTL_EOL);
-		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			       CTLTYPE_INT, "doreallocblks", NULL,
-			       sysctl_notavail, 0, NULL, 0,
-			       CTL_VFS, 1, FFS_REALLOCBLKS, CTL_EOL);
-#if 0
-		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			       CTLTYPE_INT, "doasyncfree",
-			       SYSCTL_DESCR("Release dirty blocks asynchronously"),
-			       NULL, 0, &doasyncfree, 0,
-			       CTL_VFS, 1, FFS_ASYNCFREE, CTL_EOL);
-#endif
-		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			       CTLTYPE_INT, "log_changeopt",
-			       SYSCTL_DESCR("Log changes in optimization strategy"),
-			       NULL, 0, &ffs_log_changeopt, 0,
-			       CTL_VFS, 1, FFS_LOG_CHANGEOPT, CTL_EOL);
-#ifdef UFS_EXTATTR
-		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			       CTLTYPE_INT, "extattr_autocreate",
-			       SYSCTL_DESCR("Size of attribute for "
-					    "backing file autocreation"),
-			       NULL, 0, &ufs_extattr_autocreate, 0,
-			       CTL_VFS, 1, FFS_EXTATTR_AUTOCREATE, CTL_EOL);
-		
-#endif /* UFS_EXTATTR */
 
 		ffs_snapshot_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
 		    ffs_snapshot_cb, NULL);
@@ -332,7 +334,6 @@ ffs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_detach(&ffs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_teardown(&ffs_sysctl_log);
 		if (ffs_snapshot_listener != NULL)
 			kauth_unlisten_scope(ffs_snapshot_listener);
 		break;
@@ -1453,7 +1454,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO | IMNT_SHRLOOKUP |
+	    IMNT_NCLOOKUP;
 #ifdef FFS_EI
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;
@@ -1864,7 +1866,7 @@ ffs_sync_selector(void *cl, struct vnode *vp)
 	if ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE |
 	    IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) == 0 &&
 	    (c->waitfor == MNT_LAZY || (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-	    UVM_OBJ_IS_CLEAN(&vp->v_uobj))))
+	    (vp->v_iflag & VI_ONWORKLST) == 0)))
 		return false;
 
 	return true;
@@ -2082,6 +2084,7 @@ ffs_loadvnode(struct mount *mp, struct vnode *vp,
 		ip->i_gid = ip->i_ffs1_ogid;			/* XXX */
 	}							/* XXX */
 	uvm_vnp_setsize(vp, ip->i_size);
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
 	*new_key = &ip->i_number;
 	return 0;
 }
@@ -2203,6 +2206,7 @@ ffs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	}
 
 	uvm_vnp_setsize(vp, ip->i_size);
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
 	*new_key = &ip->i_number;
 	return 0;
 }
@@ -2218,7 +2222,7 @@ ffs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
  *   those rights via. exflagsp and credanonp
  */
 int
-ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+ffs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, struct vnode **vpp)
 {
 	struct ufid ufh;
 	int error;
@@ -2230,7 +2234,7 @@ ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	if ((error = ffs_checkrange(mp, ufh.ufid_ino)) != 0)
 		return error;
 
-	return (ufs_fhtovp(mp, &ufh, vpp));
+	return (ufs_fhtovp(mp, &ufh, lktype, vpp));
 }
 
 /*
@@ -2400,7 +2404,7 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 	pflags = PGO_ALLPAGES | PGO_CLEANIT;
 	if ((flags & FSYNC_WAIT) != 0)
 		pflags |= PGO_SYNCIO;
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	error = VOP_PUTPAGES(vp, 0, 0, pflags);
 	if (error)
 		return error;

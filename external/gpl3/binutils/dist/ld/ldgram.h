@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.0.5.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -314,7 +314,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 60 "ldgram.y" /* yacc.c:1909  */
+#line 61 "ldgram.y" /* yacc.c:1910  */
 
   bfd_vma integer;
   struct big_int
@@ -345,7 +345,7 @@ union YYSTYPE
   struct bfd_elf_version_expr *versyms;
   struct bfd_elf_version_tree *versnode;
 
-#line 349 "ldgram.h" /* yacc.c:1909  */
+#line 349 "ldgram.h" /* yacc.c:1910  */
 };
 
 typedef union YYSTYPE YYSTYPE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.10.18.1 2019/06/10 22:08:33 christos Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.10.18.2 2020/04/08 14:08:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,10 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.10.18.1 2019/06/10 22:08:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.10.18.2 2020/04/08 14:08:28 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
+#if defined(__arm__) || defined(__aarch64__)
+#include "opt_fdt.h"
+#endif
 #endif
 
 #include <sys/types.h>
@@ -58,6 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.10.18.1 2019/06/10 22:08:33 christo
 #include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
+#endif
+
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
 #endif
 
 #include <drm/drmP.h>
@@ -199,6 +206,15 @@ radeon_attach(device_t parent, device_t self, void *aux)
 	if (rv != 0)
 		aprint_error_dev(self, "unable to reserve VGA registers for "
 				       "i386 radeondrmkms hack\n");
+#endif
+
+#ifdef FDT
+	/*
+	 * XXX Remove the simple framebuffer, assuming that this device
+	 * will take over.
+	 */
+	const char *fb_compatible[] = { "simple-framebuffer", NULL };
+	fdt_remove_bycompat(fb_compatible);
 #endif
 
 	config_mountroot(self, &radeon_attach_real);

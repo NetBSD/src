@@ -145,10 +145,10 @@ nbsd_nat_target::thread_alive (ptid_t ptid)
 {
   if (ptid.lwp_p ())
     {
-      struct ptrace_lwpinfo pl;
+      struct ptrace_lwpstatus pl;
 
       pl.pl_lwpid = ptid.lwp ();
-      if (ptrace (PT_LWPINFO, ptid.pid (), (caddr_t) &pl, sizeof pl)
+      if (ptrace (PT_LWPSTATUS, ptid.pid (), (caddr_t) &pl, sizeof pl)
 	  == -1)
 	return 0;
     }
@@ -254,10 +254,10 @@ static void
 nbsd_add_threads (pid_t pid)
 {
   int val;
-  struct ptrace_lwpinfo pl;
+  struct ptrace_lwpstatus pl;
 
   pl.pl_lwpid = 0;
-  while ((val = ptrace (PT_LWPINFO, pid, (void *)&pl, sizeof(pl))) != -1
+  while ((val = ptrace (PT_LWPNEXT, pid, (void *)&pl, sizeof(pl))) != -1
     && pl.pl_lwpid != 0)
     {
       ptid_t ptid = ptid_t (pid, pl.pl_lwpid, 0);

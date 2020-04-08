@@ -1,5 +1,5 @@
 /* BFD back-end for MS-DOS executables.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Bryan Ford of the University of Utah.
 
    Contributed by the Center for Software Science at the
@@ -109,7 +109,7 @@ msdos_object_p (bfd *abfd)
       return NULL;
     }
 
-  bfd_set_section_size (abfd, section, size);
+  bfd_set_section_size (section, size);
   section->alignment_power = 4;
 
   return abfd->xvec;
@@ -135,16 +135,16 @@ msdos_write_object_contents (bfd *abfd)
     {
       if (sec->size == 0)
 	continue;
-      if (bfd_get_section_flags (abfd, sec) & SEC_ALLOC)
+      if (bfd_section_flags (sec) & SEC_ALLOC)
 	{
-	  bfd_vma sec_vma = bfd_get_section_vma (abfd, sec) + sec->size;
+	  bfd_vma sec_vma = bfd_section_vma (sec) + sec->size;
 	  if (sec_vma > high_vma)
 	    high_vma = sec_vma;
 	}
-      if (bfd_get_section_flags (abfd, sec) & SEC_LOAD)
+      if (bfd_section_flags (sec) & SEC_LOAD)
 	{
 	  file_ptr sec_end = (sizeof (hdr)
-			      + bfd_get_section_vma (abfd, sec)
+			      + bfd_section_vma (sec)
 			      + sec->size);
 	  if (sec_end > outfile_size)
 	    outfile_size = sec_end;
@@ -195,9 +195,9 @@ msdos_set_section_contents (bfd *abfd,
   if (count == 0)
     return TRUE;
 
-  section->filepos = EXE_PAGE_SIZE + bfd_get_section_vma (abfd, section);
+  section->filepos = EXE_PAGE_SIZE + bfd_section_vma (section);
 
-  if (bfd_get_section_flags (abfd, section) & SEC_LOAD)
+  if (bfd_section_flags (section) & SEC_LOAD)
     {
       if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
 	  || bfd_bwrite (location, count, abfd) != count)
@@ -226,6 +226,7 @@ msdos_set_section_contents (bfd *abfd,
 #define msdos_bfd_lookup_section_flags bfd_generic_lookup_section_flags
 #define msdos_bfd_merge_sections bfd_generic_merge_sections
 #define msdos_bfd_is_group_section bfd_generic_is_group_section
+#define msdos_bfd_group_name bfd_generic_group_name
 #define msdos_bfd_discard_group bfd_generic_discard_group
 #define msdos_section_already_linked \
   _bfd_generic_section_already_linked

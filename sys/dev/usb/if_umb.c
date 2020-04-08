@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.8.4.2 2019/06/10 22:07:33 christos Exp $ */
+/*	$NetBSD: if_umb.c,v 1.8.4.3 2020/04/08 14:08:13 martin Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.8.4.2 2019/06/10 22:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.8.4.3 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -372,7 +372,7 @@ umb_attach(device_t parent, device_t self, void *aux)
 				/* cont. anyway */
 			}
 			sc->sc_maxpktlen = UGETW(md->wMaxSegmentSize);
-			DPRINTFN(2, "%s: ctrl_len=%d, maxpktlen=%d, cap=0x%x\n",
+			DPRINTFN(2, "%s: ctrl_len=%d, maxpktlen=%d, cap=%#x\n",
 			    DEVNAM(sc), sc->sc_ctrl_len, sc->sc_maxpktlen,
 			    md->bmNetworkCapabilities);
 			break;
@@ -569,7 +569,7 @@ fail:
 Static int
 umb_detach(device_t self, int flags)
 {
-	struct umb_softc *sc = (struct umb_softc *)self;
+	struct umb_softc *sc = device_private(self);
 	struct ifnet *ifp = GET_IFP(sc);
 	int	 s;
 
@@ -601,7 +601,7 @@ umb_detach(device_t self, int flags)
 		sc->sc_resp_buf = NULL;
 	}
 	if (ifp->if_softc) {
-		ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
+		ifmedia_fini(&sc->sc_im);
 	}
 	if (sc->sc_attached) {
 		rnd_detach_source(&sc->sc_rnd_source);
@@ -779,6 +779,12 @@ umb_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		usb_add_task(sc->sc_udev, &sc->sc_umb_task, USB_TASKQ_DRIVER);
 		break;
 	case SIOCGUMBINFO:
+		error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
+		    NULL);
+		if (error)
+			break;
 		error = copyout(&sc->sc_info, ifr->ifr_data,
 		    sizeof(sc->sc_info));
 		break;
@@ -883,7 +889,7 @@ umb_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 	if (pktlen < sizeof(struct ip)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		DPRINTFN(4, "%s: dropping short packet (len %zd)\n", __func__,
 		    pktlen);
 		m_freem(m);
@@ -891,11 +897,10 @@ umb_input(struct ifnet *ifp, struct mbuf *m)
 	}
 	s = splnet();
 	if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
-		ifp->if_iqdrops++;
+		if_statinc(ifp, if_iqdrops);
 		m_freem(m);
 	} else {
-		ifp->if_ipackets++;
-		ifp->if_ibytes += pktlen;
+		if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
 	}
 	splx(s);
 }
@@ -933,7 +938,7 @@ umb_watchdog(struct ifnet *ifp)
 	if (sc->sc_dying)
 		return;
 
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	printf("%s: watchdog timeout\n", DEVNAM(sc));
 	usbd_abort_pipe(sc->sc_tx_pipe);
 	return;
@@ -943,9 +948,12 @@ Static void
 umb_statechg_timeout(void *arg)
 {
 	struct umb_softc *sc = arg;
+	struct ifnet *ifp = GET_IFP(sc);
 
 	if (sc->sc_info.regstate != MBIM_REGSTATE_ROAMING || sc->sc_roaming)
-		printf("%s: state change timeout\n",DEVNAM(sc));
+		if (ifp->if_flags & IFF_DEBUG)
+			log(LOG_DEBUG, "%s: state change timeout\n",
+			    DEVNAM(sc));
 	usb_add_task(sc->sc_udev, &sc->sc_umb_task, USB_TASKQ_DRIVER);
 }
 
@@ -1395,7 +1403,7 @@ umb_decode_register_state(struct umb_softc *sc, void *data, int len)
 	umb_getinfobuf(data, len, rs->roamingtxt_offs, rs->roamingtxt_size,
 	    sc->sc_info.roamingtxt, sizeof(sc->sc_info.roamingtxt));
 
-	DPRINTFN(2, "%s: %s, availclass 0x%x, class 0x%x, regmode %d\n",
+	DPRINTFN(2, "%s: %s, availclass %#x, class %#x, regmode %d\n",
 	    DEVNAM(sc), umb_regstate(sc->sc_info.regstate),
 	    le32toh(rs->availclasses), sc->sc_info.cellclass,
 	    sc->sc_info.regmode);
@@ -1427,7 +1435,7 @@ umb_decode_devices_caps(struct umb_softc *sc, void *data, int len)
 	    sc->sc_info.fwinfo, sizeof(sc->sc_info.fwinfo));
 	umb_getinfobuf(data, len, dc->hwinfo_offs, dc->hwinfo_size,
 	    sc->sc_info.hwinfo, sizeof(sc->sc_info.hwinfo));
-	DPRINTFN(2, "%s: max sessions %d, supported classes 0x%x\n",
+	DPRINTFN(2, "%s: max sessions %d, supported classes %#x\n",
 	    DEVNAM(sc), sc->sc_maxsessions, sc->sc_info.supportedclasses);
 	return 1;
 }
@@ -1706,7 +1714,8 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 	 * IPv4 configuation
 	 */
 	avail = le32toh(ic->ipv4_available);
-	if (avail & MBIM_IPCONF_HAS_ADDRINFO) {
+	if ((avail & (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) ==
+	    (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) {
 		n = le32toh(ic->ipv4_naddr);
 		off = le32toh(ic->ipv4_addroffs);
 
@@ -1726,10 +1735,8 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		sin = (struct sockaddr_in *)&ifra.ifra_dstaddr;
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(ifra.ifra_dstaddr);
-		if (avail & MBIM_IPCONF_HAS_GWINFO) {
-			off = le32toh(ic->ipv4_gwoffs);
-			sin->sin_addr.s_addr = *((uint32_t *)((char *)data + off));
-		}
+		off = le32toh(ic->ipv4_gwoffs);
+		sin->sin_addr.s_addr = *((uint32_t *)((char *)data + off));
 
 		sin = (struct sockaddr_in *)&ifra.ifra_mask;
 		sin->sin_family = AF_INET;
@@ -1888,7 +1895,7 @@ umb_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status != USBD_NOT_STARTED && status != USBD_CANCELLED) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			DPRINTF("%s: tx error: %s\n", DEVNAM(sc),
 			    usbd_errstr(status));
 			if (status == USBD_STALLED)
@@ -2010,7 +2017,7 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 			doff = UGETDW(dgram32->dwDatagramIndex);
 			break;
 		default:
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto done;
 		}
 
@@ -2028,7 +2035,7 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 		DPRINTFN(3, "%s: decap %d bytes\n", DEVNAM(sc), dlen);
 		m = m_devget(dp, dlen, 0, ifp);
 		if (m == NULL) {
-			ifp->if_iqdrops++;
+			if_statinc(ifp, if_iqdrops);
 			continue;
 		}
 
@@ -2040,7 +2047,7 @@ done:
 toosmall:
 	DPRINTF("%s: packet too small (%d)\n", DEVNAM(sc), len);
 fail:
-	ifp->if_ierrors++;
+	if_statinc(ifp, if_ierrors);
 	splx(s);
 }
 
@@ -2553,7 +2560,7 @@ umb_decode_qmi(struct umb_softc *sc, uint8_t *data, int len)
 			case 0x0022:	/* Allocate CID */
 				if (val != 0) {
 					log(LOG_ERR, "%s: allocation of QMI CID"
-					    " failed, error 0x%x\n", DEVNAM(sc),
+					    " failed, error %#x\n", DEVNAM(sc),
 					    val);
 					/* XXX how to proceed? */
 					return;
@@ -2561,16 +2568,16 @@ umb_decode_qmi(struct umb_softc *sc, uint8_t *data, int len)
 				break;
 			case 0x555f:	/* Send FCC Authentication */
 				if (val == 0)
-					log(LOG_INFO, "%s: send FCC "
+					DPRINTF("%s: send FCC "
 					    "Authentication succeeded\n",
 					    DEVNAM(sc));
 				else if (val == 0x001a0001)
-					log(LOG_INFO, "%s: FCC Authentication "
+					DPRINTF("%s: FCC Authentication "
 					    "not required\n", DEVNAM(sc));
 				else
 					log(LOG_INFO, "%s: send FCC "
 					    "Authentication failed, "
-					    "error 0x%x\n", DEVNAM(sc), val);
+					    "error %#x\n", DEVNAM(sc), val);
 
 				/* FCC Auth is needed only once after power-on*/
 				sc->sc_flags &= ~UMBFLG_FCC_AUTH_REQUIRED;
@@ -2753,7 +2760,7 @@ inet_ntop(int af, const void *src, char *dst, socklen_t size)
 Static const char *
 inet_ntop4(const u_char *src, char *dst, size_t size)
 {
-	char tmp[sizeof "255.255.255.255"];
+	char tmp[sizeof("255.255.255.255")];
 	int l;
 
 	l = snprintf(tmp, sizeof(tmp), "%u.%u.%u.%u",
@@ -2782,7 +2789,7 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 	 * Keep this in mind if you think this function should have been coded
 	 * to use pointer overlays.  All the world's not a VAX.
 	 */
-	char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
+	char tmp[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
 	char *tp, *ep;
 	struct { int base, len; } best, cur;
 #define IN6ADDRSZ	16
@@ -2796,7 +2803,7 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 	 *	Copy the input (bytewise) array into a wordwise array.
 	 *	Find the longest run of 0x00's in src[] for :: shorthanding.
 	 */
-	memset(words, '\0', sizeof words);
+	memset(words, '\0', sizeof(words));
 	for (i = 0; i < IN6ADDRSZ; i++)
 		words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;

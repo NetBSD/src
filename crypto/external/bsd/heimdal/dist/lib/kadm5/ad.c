@@ -1,4 +1,4 @@
-/*	$NetBSD: ad.c,v 1.4 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: ad.c,v 1.4.12.1 2020/04/08 14:03:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -49,7 +49,7 @@
 #include <krb5/base64.h>
 #endif
 
-__RCSID("$NetBSD: ad.c,v 1.4 2017/01/28 21:31:49 christos Exp $");
+__RCSID("$NetBSD: ad.c,v 1.4.12.1 2020/04/08 14:03:13 martin Exp $");
 
 #ifdef OPENLDAP
 
@@ -1288,45 +1288,44 @@ kadm5_ad_randkey_principal(void *server_handle,
 	return ret;
     }
 
-    krb5_data_zero (&result_code_string);
-    krb5_data_zero (&result_string);
+    krb5_data_zero(&result_code_string);
+    krb5_data_zero(&result_string);
 
-    ret = krb5_set_password_using_ccache (context->context,
-					  context->ccache,
-					  password,
-					  principal,
-					  &result_code,
-					  &result_code_string,
-					  &result_string);
+    ret = krb5_set_password_using_ccache(context->context,
+					 context->ccache,
+					 password,
+					 principal,
+					 &result_code,
+					 &result_code_string,
+					 &result_string);
+    krb5_data_free(&result_code_string);
+    krb5_data_free(&result_string);
 
-    krb5_data_free (&result_code_string);
-    krb5_data_free (&result_string);
+    if (ret)
+        goto out;
 
-    if (ret == 0) {
-
-	*keys = malloc(sizeof(**keys) * 1);
-	if (*keys == NULL) {
-	    ret = ENOMEM;
-	    goto out;
-	}
-	*n_keys = 1;
-
-	ret = krb5_string_to_key(context->context,
-				 ENCTYPE_ARCFOUR_HMAC_MD5,
-				 password,
-				 principal,
-				 &(*keys)[0]);
-	memset(password, 0, plen);
-	if (ret) {
-	    free(*keys);
-	    *keys = NULL;
-	    *n_keys = 0;
-	    goto out;
-	}
+    *keys = malloc(sizeof(**keys) * 1);
+    if (*keys == NULL) {
+        ret = ENOMEM;
+        goto out;
     }
+    *n_keys = 1;
+
+    ret = krb5_string_to_key(context->context,
+                             ENCTYPE_ARCFOUR_HMAC_MD5,
+                             password,
+                             principal,
+                             &(*keys)[0]);
+    if (ret) {
+        free(*keys);
+        *keys = NULL;
+        *n_keys = 0;
+        goto out;
+    }
+
+ out:
     memset(password, 0, plen);
     free(password);
- out:
     return ret;
 #else
     *keys = NULL;

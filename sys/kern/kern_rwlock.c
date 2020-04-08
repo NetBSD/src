@@ -1,7 +1,8 @@
-/*	$NetBSD: kern_rwlock.c,v 1.50.4.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.50.4.2 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,10 +36,18 @@
  *
  *	Solaris Internals: Core Kernel Architecture, Jim Mauro and
  *	    Richard McDougall.
+ *
+ * The NetBSD implementation differs from that described in the book, in
+ * that the locks are partially adaptive.  Lock waiters spin wait while a
+ * lock is write held and the holder is still running on a CPU.  The method
+ * of choosing which threads to awaken when a lock is released also differs,
+ * mainly to take account of the partially adaptive behaviour.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.50.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.50.4.2 2020/04/08 14:08:51 martin Exp $");
+
+#include "opt_lockdebug.h"
 
 #define	__RWLOCK_PRIVATE
 
@@ -56,84 +65,50 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.50.4.1 2019/06/10 22:09:03 christo
 
 #include <dev/lockstat.h>
 
+#include <machine/rwlock.h>
+
 /*
  * LOCKDEBUG
  */
 
-#if defined(LOCKDEBUG)
+#define	RW_DEBUG_P(rw)		(((rw)->rw_owner & RW_NODEBUG) == 0)
 
-#define	RW_WANTLOCK(rw, op)						\
-	LOCKDEBUG_WANTLOCK(RW_DEBUG_P(rw), (rw),			\
-	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
-#define	RW_LOCKED(rw, op)						\
-	LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw), NULL,			\
-	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
-#define	RW_UNLOCKED(rw, op)						\
-	LOCKDEBUG_UNLOCKED(RW_DEBUG_P(rw), (rw),			\
-	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
-#define	RW_DASSERT(rw, cond)						\
-do {									\
-	if (__predict_false(!(cond)))					\
-		rw_abort(__func__, __LINE__, rw, "assertion failed: " #cond);\
-} while (/* CONSTCOND */ 0);
-
-#else	/* LOCKDEBUG */
-
-#define	RW_WANTLOCK(rw, op)	/* nothing */
-#define	RW_LOCKED(rw, op)	/* nothing */
-#define	RW_UNLOCKED(rw, op)	/* nothing */
-#define	RW_DASSERT(rw, cond)	/* nothing */
-
-#endif	/* LOCKDEBUG */
+#define	RW_WANTLOCK(rw, op) \
+    LOCKDEBUG_WANTLOCK(RW_DEBUG_P(rw), (rw), \
+        (uintptr_t)__builtin_return_address(0), op == RW_READER);
+#define	RW_LOCKED(rw, op) \
+    LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw), NULL, \
+        (uintptr_t)__builtin_return_address(0), op == RW_READER);
+#define	RW_UNLOCKED(rw, op) \
+    LOCKDEBUG_UNLOCKED(RW_DEBUG_P(rw), (rw), \
+        (uintptr_t)__builtin_return_address(0), op == RW_READER);
 
 /*
  * DIAGNOSTIC
  */
 
 #if defined(DIAGNOSTIC)
-
-#define	RW_ASSERT(rw, cond)						\
-do {									\
-	if (__predict_false(!(cond)))					\
+#define	RW_ASSERT(rw, cond) \
+do { \
+	if (__predict_false(!(cond))) \
 		rw_abort(__func__, __LINE__, rw, "assertion failed: " #cond);\
 } while (/* CONSTCOND */ 0)
-
 #else
-
 #define	RW_ASSERT(rw, cond)	/* nothing */
-
 #endif	/* DIAGNOSTIC */
 
-#define	RW_SETDEBUG(rw, on)		((rw)->rw_owner |= (on) ? 0 : RW_NODEBUG)
-#define	RW_DEBUG_P(rw)			(((rw)->rw_owner & RW_NODEBUG) == 0)
-#if defined(LOCKDEBUG)
-#define	RW_INHERITDEBUG(n, o)		(n) |= (o) & RW_NODEBUG
-#else /* defined(LOCKDEBUG) */
-#define	RW_INHERITDEBUG(n, o)		/* nothing */
-#endif /* defined(LOCKDEBUG) */
-
-static void	rw_abort(const char *, size_t, krwlock_t *, const char *);
-static void	rw_dump(const volatile void *, lockop_printer_t);
-static lwp_t	*rw_owner(wchan_t);
-
-static inline uintptr_t
-rw_cas(krwlock_t *rw, uintptr_t o, uintptr_t n)
-{
-
-	RW_INHERITDEBUG(n, o);
-	return (uintptr_t)atomic_cas_ptr((volatile void *)&rw->rw_owner,
-	    (void *)o, (void *)n);
-}
-
-static inline void
-rw_swap(krwlock_t *rw, uintptr_t o, uintptr_t n)
-{
-
-	RW_INHERITDEBUG(n, o);
-	n = (uintptr_t)atomic_swap_ptr((volatile void *)&rw->rw_owner,
-	    (void *)n);
-	RW_DASSERT(rw, n == o);
-}
+/*
+ * Memory barriers.
+ */
+#ifdef __HAVE_ATOMIC_AS_MEMBAR
+#define	RW_MEMBAR_ENTER()
+#define	RW_MEMBAR_EXIT()
+#define	RW_MEMBAR_PRODUCER()
+#else
+#define	RW_MEMBAR_ENTER()		membar_enter()
+#define	RW_MEMBAR_EXIT()		membar_exit()
+#define	RW_MEMBAR_PRODUCER()		membar_producer()
+#endif
 
 /*
  * For platforms that do not provide stubs, or for the LOCKDEBUG case.
@@ -148,6 +123,10 @@ __strong_alias(rw_exit,rw_vector_exit);
 __strong_alias(rw_tryenter,rw_vector_tryenter);
 #endif
 
+static void	rw_abort(const char *, size_t, krwlock_t *, const char *);
+static void	rw_dump(const volatile void *, lockop_printer_t);
+static lwp_t	*rw_owner(wchan_t);
+
 lockops_t rwlock_lockops = {
 	.lo_name = "Reader / writer lock",
 	.lo_type = LOCKOPS_SLEEP,
@@ -161,6 +140,37 @@ syncobj_t rw_syncobj = {
 	.sobj_lendpri	= sleepq_lendpri,
 	.sobj_owner	= rw_owner,
 };
+
+/*
+ * rw_cas:
+ *
+ *	Do an atomic compare-and-swap on the lock word.
+ */
+static inline uintptr_t
+rw_cas(krwlock_t *rw, uintptr_t o, uintptr_t n)
+{
+
+	return (uintptr_t)atomic_cas_ptr((volatile void *)&rw->rw_owner,
+	    (void *)o, (void *)n);
+}
+
+/*
+ * rw_swap:
+ *
+ *	Do an atomic swap of the lock word.  This is used only when it's
+ *	known that the lock word is set up such that it can't be changed
+ *	behind us (assert this), so there's no point considering the result.
+ */
+static inline void
+rw_swap(krwlock_t *rw, uintptr_t o, uintptr_t n)
+{
+
+	n = (uintptr_t)atomic_swap_ptr((volatile void *)&rw->rw_owner,
+	    (void *)n);
+
+	RW_ASSERT(rw, n == o);
+	RW_ASSERT(rw, (o & RW_HAS_WAITERS) != 0);
+}
 
 /*
  * rw_dump:
@@ -198,16 +208,19 @@ rw_abort(const char *func, size_t line, krwlock_t *rw, const char *msg)
  *
  *	Initialize a rwlock for use.
  */
-void _rw_init(krwlock_t *, uintptr_t);
 void
 _rw_init(krwlock_t *rw, uintptr_t return_address)
 {
-	bool dodebug;
 
-	memset(rw, 0, sizeof(*rw));
-
-	dodebug = LOCKDEBUG_ALLOC(rw, &rwlock_lockops, return_address);
-	RW_SETDEBUG(rw, dodebug);
+#ifdef LOCKDEBUG
+	/* XXX only because the assembly stubs can't handle RW_NODEBUG */
+	if (LOCKDEBUG_ALLOC(rw, &rwlock_lockops, return_address))
+		rw->rw_owner = 0;
+	else
+		rw->rw_owner = RW_NODEBUG;
+#else
+	rw->rw_owner = 0;
+#endif
 }
 
 void
@@ -227,7 +240,7 @@ rw_destroy(krwlock_t *rw)
 {
 
 	RW_ASSERT(rw, (rw->rw_owner & ~RW_NODEBUG) == 0);
-	LOCKDEBUG_FREE(RW_DEBUG_P(rw), rw);
+	LOCKDEBUG_FREE((rw->rw_owner & RW_NODEBUG) == 0, rw);
 }
 
 /*
@@ -311,7 +324,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		need_wait = RW_WRITE_LOCKED | RW_WRITE_WANTED;
 		queue = TS_READER_Q;
 	} else {
-		RW_DASSERT(rw, op == RW_WRITER);
+		RW_ASSERT(rw, op == RW_WRITER);
 		incr = curthread | RW_WRITE_LOCKED;
 		set_wait = RW_HAS_WAITERS | RW_WRITE_WANTED;
 		need_wait = RW_WRITE_LOCKED | RW_THREAD;
@@ -321,7 +334,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	LOCKSTAT_ENTER(lsflag);
 
 	KPREEMPT_DISABLE(curlwp);
-	for (owner = rw->rw_owner; ;) {
+	for (owner = rw->rw_owner;;) {
 		/*
 		 * Read the lock owner field.  If the need-to-wait
 		 * indicator is clear, then try to acquire the lock.
@@ -331,7 +344,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			    ~RW_WRITE_WANTED);
 			if (__predict_true(next == owner)) {
 				/* Got it! */
-				membar_enter();
+				RW_MEMBAR_ENTER();
 				break;
 			}
 
@@ -341,10 +354,6 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			 */
 			owner = next;
 			continue;
-		}
-		if (__predict_false(panicstr != NULL)) {
-			KPREEMPT_ENABLE(curlwp);
-			return;
 		}
 		if (__predict_false(RW_OWNER(rw) == curthread)) {
 			rw_abort(__func__, __LINE__, rw,
@@ -409,12 +418,16 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	}
 	KPREEMPT_ENABLE(curlwp);
 
-	LOCKSTAT_EVENT(lsflag, rw, LB_RWLOCK |
-	    (op == RW_WRITER ? LB_SLEEP1 : LB_SLEEP2), slpcnt, slptime);
-	LOCKSTAT_EVENT(lsflag, rw, LB_RWLOCK | LB_SPIN, spincnt, spintime);
+	LOCKSTAT_EVENT_RA(lsflag, rw, LB_RWLOCK |
+	    (op == RW_WRITER ? LB_SLEEP1 : LB_SLEEP2), slpcnt, slptime,
+	    (l->l_rwcallsite != 0 ? l->l_rwcallsite :
+	      (uintptr_t)__builtin_return_address(0)));
+	LOCKSTAT_EVENT_RA(lsflag, rw, LB_RWLOCK | LB_SPIN, spincnt, spintime,
+	    (l->l_rwcallsite != 0 ? l->l_rwcallsite :
+	      (uintptr_t)__builtin_return_address(0)));
 	LOCKSTAT_EXIT(lsflag);
 
-	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
+	RW_ASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
 	RW_LOCKED(rw, op);
 }
@@ -432,11 +445,9 @@ rw_vector_exit(krwlock_t *rw)
 	int rcnt, wcnt;
 	lwp_t *l;
 
-	curthread = (uintptr_t)curlwp;
+	l = curlwp;
+	curthread = (uintptr_t)l;
 	RW_ASSERT(rw, curthread != 0);
-
-	if (__predict_false(panicstr != NULL))
-		return;
 
 	/*
 	 * Again, we use a trick.  Since we used an add operation to
@@ -460,7 +471,7 @@ rw_vector_exit(krwlock_t *rw)
 	 * proceed to do direct handoff if there are waiters, and if the
 	 * lock would become unowned.
 	 */
-	membar_exit();
+	RW_MEMBAR_EXIT();
 	for (;;) {
 		newown = (owner - decr);
 		if ((newown & (RW_THREAD | RW_HAS_WAITERS)) == RW_HAS_WAITERS)
@@ -478,8 +489,8 @@ rw_vector_exit(krwlock_t *rw)
 	 */
 	ts = turnstile_lookup(rw);
 	owner = rw->rw_owner;
-	RW_DASSERT(rw, ts != NULL);
-	RW_DASSERT(rw, (owner & RW_HAS_WAITERS) != 0);
+	RW_ASSERT(rw, ts != NULL);
+	RW_ASSERT(rw, (owner & RW_HAS_WAITERS) != 0);
 
 	wcnt = TS_WAITERS(ts, TS_WRITER_Q);
 	rcnt = TS_WAITERS(ts, TS_READER_Q);
@@ -496,31 +507,35 @@ rw_vector_exit(krwlock_t *rw)
 	 * do the work of acquiring the lock in rw_vector_enter().
 	 */
 	if (rcnt == 0 || decr == RW_READ_INCR) {
-		RW_DASSERT(rw, wcnt != 0);
-		RW_DASSERT(rw, (owner & RW_WRITE_WANTED) != 0);
+		RW_ASSERT(rw, wcnt != 0);
+		RW_ASSERT(rw, (owner & RW_WRITE_WANTED) != 0);
 
 		if (rcnt != 0) {
 			/* Give the lock to the longest waiting writer. */
 			l = TS_FIRST(ts, TS_WRITER_Q);
-			newown = (uintptr_t)l | RW_WRITE_LOCKED | RW_HAS_WAITERS;
+			newown = (uintptr_t)l | (owner & RW_NODEBUG);
+			newown |= RW_WRITE_LOCKED | RW_HAS_WAITERS;
 			if (wcnt > 1)
 				newown |= RW_WRITE_WANTED;
 			rw_swap(rw, owner, newown);
 			turnstile_wakeup(ts, TS_WRITER_Q, 1, l);
 		} else {
 			/* Wake all writers and let them fight it out. */
-			rw_swap(rw, owner, RW_WRITE_WANTED);
+			newown = owner & RW_NODEBUG;
+			newown |= RW_WRITE_WANTED;
+			rw_swap(rw, owner, newown);
 			turnstile_wakeup(ts, TS_WRITER_Q, wcnt, NULL);
 		}
 	} else {
-		RW_DASSERT(rw, rcnt != 0);
+		RW_ASSERT(rw, rcnt != 0);
 
 		/*
 		 * Give the lock to all blocked readers.  If there
 		 * is a writer waiting, new readers that arrive
 		 * after the release will be blocked out.
 		 */
-		newown = rcnt << RW_READ_COUNT_SHIFT;
+		newown = owner & RW_NODEBUG;
+		newown += rcnt << RW_READ_COUNT_SHIFT;
 		if (wcnt != 0)
 			newown |= RW_HAS_WAITERS | RW_WRITE_WANTED;
 			
@@ -539,8 +554,10 @@ int
 rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 {
 	uintptr_t curthread, owner, incr, need_wait, next;
+	lwp_t *l;
 
-	curthread = (uintptr_t)curlwp;
+	l = curlwp;
+	curthread = (uintptr_t)l;
 
 	RW_ASSERT(rw, curthread != 0);
 
@@ -548,28 +565,27 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 		incr = RW_READ_INCR;
 		need_wait = RW_WRITE_LOCKED | RW_WRITE_WANTED;
 	} else {
-		RW_DASSERT(rw, op == RW_WRITER);
+		RW_ASSERT(rw, op == RW_WRITER);
 		incr = curthread | RW_WRITE_LOCKED;
 		need_wait = RW_WRITE_LOCKED | RW_THREAD;
 	}
 
 	for (owner = rw->rw_owner;; owner = next) {
-		owner = rw->rw_owner;
 		if (__predict_false((owner & need_wait) != 0))
 			return 0;
 		next = rw_cas(rw, owner, owner + incr);
 		if (__predict_true(next == owner)) {
 			/* Got it! */
-			membar_enter();
 			break;
 		}
 	}
 
 	RW_WANTLOCK(rw, op);
 	RW_LOCKED(rw, op);
-	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
+	RW_ASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
 
+	RW_MEMBAR_ENTER();
 	return 1;
 }
 
@@ -584,58 +600,64 @@ rw_downgrade(krwlock_t *rw)
 	uintptr_t owner, curthread, newown, next;
 	turnstile_t *ts;
 	int rcnt, wcnt;
+	lwp_t *l;
 
-	curthread = (uintptr_t)curlwp;
+	l = curlwp;
+	curthread = (uintptr_t)l;
 	RW_ASSERT(rw, curthread != 0);
-	RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
+	RW_ASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
 	RW_ASSERT(rw, RW_OWNER(rw) == curthread);
 	RW_UNLOCKED(rw, RW_WRITER);
 #if !defined(DIAGNOSTIC)
 	__USE(curthread);
 #endif
 
+	RW_MEMBAR_PRODUCER();
 
-	membar_producer();
-	owner = rw->rw_owner;
-	if ((owner & RW_HAS_WAITERS) == 0) {
+	for (owner = rw->rw_owner;; owner = next) {
 		/*
-		 * There are no waiters, so we can do this the easy way.
-		 * Try swapping us down to one read hold.  If it fails, the
-		 * lock condition has changed and we most likely now have
+		 * If there are no waiters we can do this the easy way.  Try
+		 * swapping us down to one read hold.  If it fails, the lock
+		 * condition has changed and we most likely now have
 		 * waiters.
 		 */
-		next = rw_cas(rw, owner, RW_READ_INCR);
-		if (__predict_true(next == owner)) {
-			RW_LOCKED(rw, RW_READER);
-			RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
-			RW_DASSERT(rw, RW_COUNT(rw) != 0);
-			return;
+		if ((owner & RW_HAS_WAITERS) == 0) {
+			newown = (owner & RW_NODEBUG);
+			next = rw_cas(rw, owner, newown + RW_READ_INCR);
+			if (__predict_true(next == owner)) {
+				RW_LOCKED(rw, RW_READER);
+				RW_ASSERT(rw,
+				    (rw->rw_owner & RW_WRITE_LOCKED) == 0);
+				RW_ASSERT(rw, RW_COUNT(rw) != 0);
+				return;
+			}
+			continue;
 		}
-		owner = next;
-	}
 
-	/*
-	 * Grab the turnstile chain lock.  This gets the interlock
-	 * on the sleep queue.  Once we have that, we can adjust the
-	 * waiter bits.
-	 */
-	for (;; owner = next) {
+		/*
+		 * Grab the turnstile chain lock.  This gets the interlock
+		 * on the sleep queue.  Once we have that, we can adjust the
+		 * waiter bits.
+		 */
 		ts = turnstile_lookup(rw);
-		RW_DASSERT(rw, ts != NULL);
+		RW_ASSERT(rw, ts != NULL);
 
 		rcnt = TS_WAITERS(ts, TS_READER_Q);
 		wcnt = TS_WAITERS(ts, TS_WRITER_Q);
 
-		/*
-		 * If there are no readers, just preserve the waiters
-		 * bits, swap us down to one read hold and return.
-		 */
 		if (rcnt == 0) {
-			RW_DASSERT(rw, wcnt != 0);
-			RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_WANTED) != 0);
-			RW_DASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
+			/*
+			 * If there are no readers, just preserve the
+			 * waiters bits, swap us down to one read hold and
+			 * return.
+			 */
+			RW_ASSERT(rw, wcnt != 0);
+			RW_ASSERT(rw, (rw->rw_owner & RW_WRITE_WANTED) != 0);
+			RW_ASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
 
-			newown = RW_READ_INCR | RW_HAS_WAITERS | RW_WRITE_WANTED;
+			newown = owner & RW_NODEBUG;
+			newown |= RW_READ_INCR | RW_HAS_WAITERS |
+			    RW_WRITE_WANTED;
 			next = rw_cas(rw, owner, newown);
 			turnstile_exit(rw);
 			if (__predict_true(next == owner))
@@ -643,11 +665,12 @@ rw_downgrade(krwlock_t *rw)
 		} else {
 			/*
 			 * Give the lock to all blocked readers.  We may
-			 * retain one read hold if downgrading.  If there
-			 * is a writer waiting, new readers will be blocked
+			 * retain one read hold if downgrading.  If there is
+			 * a writer waiting, new readers will be blocked
 			 * out.
 			 */
-			newown = (rcnt << RW_READ_COUNT_SHIFT) + RW_READ_INCR;
+			newown = owner & RW_NODEBUG;
+			newown += (rcnt << RW_READ_COUNT_SHIFT) + RW_READ_INCR;
 			if (wcnt != 0)
 				newown |= RW_HAS_WAITERS | RW_WRITE_WANTED;
 
@@ -663,44 +686,46 @@ rw_downgrade(krwlock_t *rw)
 
 	RW_WANTLOCK(rw, RW_READER);
 	RW_LOCKED(rw, RW_READER);
-	RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
-	RW_DASSERT(rw, RW_COUNT(rw) != 0);
+	RW_ASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
+	RW_ASSERT(rw, RW_COUNT(rw) != 0);
 }
 
 /*
  * rw_tryupgrade:
  *
- *	Try to upgrade a read lock to a write lock.  We must be the
- *	only reader.
+ *	Try to upgrade a read lock to a write lock.  We must be the only
+ *	reader.
  */
 int
 rw_tryupgrade(krwlock_t *rw)
 {
 	uintptr_t owner, curthread, newown, next;
+	struct lwp *l;
 
-	curthread = (uintptr_t)curlwp;
+	l = curlwp;
+	curthread = (uintptr_t)l;
 	RW_ASSERT(rw, curthread != 0);
 	RW_ASSERT(rw, rw_read_held(rw));
 
-	for (owner = rw->rw_owner;; owner = next) {
-		RW_ASSERT(rw, (owner & RW_WRITE_LOCKED) == 0);
-		if (__predict_false((owner & RW_THREAD) != RW_READ_INCR)) {
-			RW_ASSERT(rw, (owner & RW_THREAD) != 0);
-			return 0;
-		}
+	for (owner = RW_READ_INCR;; owner = next) {
 		newown = curthread | RW_WRITE_LOCKED | (owner & ~RW_THREAD);
 		next = rw_cas(rw, owner, newown);
 		if (__predict_true(next == owner)) {
-			membar_producer();
+			RW_MEMBAR_PRODUCER();
 			break;
+		}
+		RW_ASSERT(rw, (next & RW_WRITE_LOCKED) == 0);
+		if (__predict_false((next & RW_THREAD) != RW_READ_INCR)) {
+			RW_ASSERT(rw, (next & RW_THREAD) != 0);
+			return 0;
 		}
 	}
 
 	RW_UNLOCKED(rw, RW_READER);
 	RW_WANTLOCK(rw, RW_WRITER);
 	RW_LOCKED(rw, RW_WRITER);
-	RW_DASSERT(rw, rw->rw_owner & RW_WRITE_LOCKED);
-	RW_DASSERT(rw, RW_OWNER(rw) == curthread);
+	RW_ASSERT(rw, rw->rw_owner & RW_WRITE_LOCKED);
+	RW_ASSERT(rw, RW_OWNER(rw) == curthread);
 
 	return 1;
 }
@@ -717,8 +742,6 @@ rw_read_held(krwlock_t *rw)
 {
 	uintptr_t owner;
 
-	if (panicstr != NULL)
-		return 1;
 	if (rw == NULL)
 		return 0;
 	owner = rw->rw_owner;
@@ -736,8 +759,6 @@ int
 rw_write_held(krwlock_t *rw)
 {
 
-	if (panicstr != NULL)
-		return 1;
 	if (rw == NULL)
 		return 0;
 	return (rw->rw_owner & (RW_WRITE_LOCKED | RW_THREAD)) ==
@@ -755,11 +776,24 @@ int
 rw_lock_held(krwlock_t *rw)
 {
 
-	if (panicstr != NULL)
-		return 1;
 	if (rw == NULL)
 		return 0;
 	return (rw->rw_owner & RW_THREAD) != 0;
+}
+
+/*
+ * rw_lock_op:
+ *
+ *	For a rwlock that is known to be held by the caller, return
+ *	RW_READER or RW_WRITER to describe the hold type.
+ */
+krw_t
+rw_lock_op(krwlock_t *rw)
+{
+
+	RW_ASSERT(rw, rw_lock_held(rw));
+
+	return (rw->rw_owner & RW_WRITE_LOCKED) != 0 ? RW_WRITER : RW_READER;
 }
 
 /*
@@ -778,4 +812,27 @@ rw_owner(wchan_t obj)
 		return NULL;
 
 	return (void *)(owner & RW_THREAD);
+}
+
+/*
+ * rw_owner_running:
+ *
+ *	Return true if a RW lock is unheld, or write held and the owner is
+ *	running on a CPU.  For the pagedaemon.
+ */
+bool
+rw_owner_running(const krwlock_t *rw)
+{
+#ifdef MULTIPROCESSOR
+	uintptr_t owner;
+	bool rv;
+
+	kpreempt_disable();
+	owner = rw->rw_owner;
+	rv = (owner & RW_THREAD) == 0 || rw_oncpu(owner);
+	kpreempt_enable();
+	return rv;
+#else
+	return rw_owner(rw) == curlwp;
+#endif
 }

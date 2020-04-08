@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.192.2.1 2019/06/10 22:05:29 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.192.2.2 2020/04/08 14:07:17 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.192.2.1 2019/06/10 22:05:29 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.192.2.2 2020/04/08 14:07:17 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1092,16 +1092,17 @@ dlopen(const char *name, int mode)
 void *
 _rtld_objmain_sym(const char *name)
 {
-	unsigned long hash;
+	Elf_Hash hash;
 	const Elf_Sym *def;
 	const Obj_Entry *obj;
 	DoneList donelist;
 
-	hash = _rtld_elf_hash(name);
+	hash.sysv = _rtld_sysv_hash(name);
+	hash.gnu = _rtld_gnu_hash(name);
 	obj = _rtld_objmain;
 	_rtld_donelist_init(&donelist);
 
-	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, 0,
+	def = _rtld_symlook_list(name, &hash, &_rtld_list_main, &obj, 0,
 	    NULL, &donelist);
 
 	if (def != NULL)
@@ -1136,7 +1137,7 @@ static void *
 do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 {
 	const Obj_Entry *obj;
-	unsigned long hash;
+	Elf_Hash hash;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	DoneList donelist;
@@ -1147,7 +1148,8 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 
 	lookup_mutex_enter();
 
-	hash = _rtld_elf_hash(name);
+	hash.sysv = _rtld_sysv_hash(name);
+	hash.gnu = _rtld_gnu_hash(name);
 	def = NULL;
 	defobj = NULL;
 
@@ -1164,7 +1166,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 
 		switch ((intptr_t)handle) {
 		case (intptr_t)NULL:	 /* Just the caller's shared object. */
-			def = _rtld_symlook_obj(name, hash, obj, flags, ventry);
+			def = _rtld_symlook_obj(name, &hash, obj, flags, ventry);
 			defobj = obj;
 			break;
 
@@ -1174,7 +1176,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 
 		case (intptr_t)RTLD_SELF:	/* Caller included */
 			for (; obj; obj = obj->next) {
-				if ((def = _rtld_symlook_obj(name, hash, obj,
+				if ((def = _rtld_symlook_obj(name, &hash, obj,
 				    flags, ventry)) != NULL) {
 					defobj = obj;
 					break;
@@ -1188,7 +1190,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 			 */
 			if (!def || ELF_ST_BIND(def->st_info) == STB_WEAK) {
 				const Elf_Sym *symp = _rtld_symlook_obj(name,
-				    hash, &_rtld_objself, flags, ventry);
+				    &hash, &_rtld_objself, flags, ventry);
 				if (symp != NULL) {
 					def = symp;
 					defobj = &_rtld_objself;
@@ -1197,7 +1199,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 			break;
 
 		case (intptr_t)RTLD_DEFAULT:
-			def = _rtld_symlook_default(name, hash, obj, &defobj,
+			def = _rtld_symlook_default(name, &hash, obj, &defobj,
 			    flags, ventry);
 			break;
 
@@ -1216,7 +1218,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 
 		if (obj->mainprog) {
 			/* Search main program and all libraries loaded by it */
-			def = _rtld_symlook_list(name, hash, &_rtld_list_main,
+			def = _rtld_symlook_list(name, &hash, &_rtld_list_main,
 			    &defobj, flags, ventry, &donelist);
 		} else {
 			Needed_Entry fake;
@@ -1228,7 +1230,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 			fake.name = 0;
 
 			_rtld_donelist_init(&depth);
-			def = _rtld_symlook_needed(name, hash, &fake, &defobj,
+			def = _rtld_symlook_needed(name, &hash, &fake, &defobj,
 			    flags, ventry, &donelist, &depth);
 		}
 
@@ -1295,7 +1297,7 @@ dlvsym(void *handle, const char *name, const char *version)
 	if (version != NULL) {
 		ver_entry.name = version;
 		ver_entry.file = NULL;
-		ver_entry.hash = _rtld_elf_hash(version);
+		ver_entry.hash = _rtld_sysv_hash(version);
 		ver_entry.flags = 0;
 		ventry = &ver_entry;
 	}
@@ -1751,13 +1753,25 @@ int
 _rtld_relro(const Obj_Entry *obj, bool wantmain)
 {
 #ifdef GNU_RELRO
-	if (obj->relro_size == 0)
+	/*
+	 * If our VM page size is larger than the page size used by the
+	 * linker when laying out the object, we could end up making data
+	 * read-only that is unintended.  Detect and avoid this situation.
+	 * It may mean we are unable to protect everything we'd like, but
+	 * it's better than crashing.
+	 */
+	uintptr_t relro_end = (uintptr_t)obj->relro_page + obj->relro_size;
+	uintptr_t relro_start = round_down((uintptr_t)obj->relro_page);
+	assert(relro_end >= relro_start);
+	size_t relro_size = round_down(relro_end) - relro_start;
+
+	if (relro_size == 0)
 		return 0;
 	if (wantmain != (obj ==_rtld_objmain))
 		return 0;
 
-	dbg(("RELRO %s %p %lx\n", obj->path, obj->relro_page, obj->relro_size));
-	if (mprotect(obj->relro_page, obj->relro_size, PROT_READ) == -1) {
+	dbg(("RELRO %s %p %zx\n", obj->path, (void *)relro_start, relro_size));
+	if (mprotect((void *)relro_start, relro_size, PROT_READ) == -1) {
 		_rtld_error("%s: Cannot enforce relro " "protection: %s",
 		    obj->path, xstrerror(errno));
 		return -1;

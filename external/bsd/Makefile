@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.59.2.1 2019/06/10 21:42:47 christos Exp $
+#	$NetBSD: Makefile,v 1.59.2.2 2020/04/08 14:04:01 martin Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	acpica am-utils bc byacc cron dhcpcd ekermit elftosb \
 	fetch file flex jemalloc less \
-	libarchive libevent liblzf libpcap mdocml \
+	libarchive libevent libfido2 liblzf libpcap mdocml \
 	ntp openresolv tcpdump tmux top tre wpa
 
 .if (${MKATF} != "no")
@@ -33,6 +33,9 @@ SUBDIR+= llvm
 .if (${MKNSD} != "no")
 SUBDIR+= nsd
 .endif
+.if ${MKPAM} != "no"
+SUBDIR+= pam-u2f
+.endif
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
 .endif
@@ -44,6 +47,6 @@ SUBDIR+= librtld_db
 SUBDIR+= unbound
 .endif
 
-SUBDIR+= blacklist pdisk nvi ppp smbfs libnv
+SUBDIR+= blacklist pdisk nvi ppp libnv
 
 .include <bsd.subdir.mk>

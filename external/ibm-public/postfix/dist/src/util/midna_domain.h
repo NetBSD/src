@@ -1,4 +1,4 @@
-/*	$NetBSD: midna_domain.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: midna_domain.h,v 1.2.16.1 2020/04/08 14:06:59 martin Exp $	*/
 
 #ifndef _MIDNA_H_INCLUDED_
 #define _MIDNA_H_INCLUDED_
@@ -21,6 +21,8 @@ extern const char *midna_domain_to_utf8(const char *);
 extern const char *midna_domain_suffix_to_ascii(const char *);
 extern const char *midna_domain_suffix_to_utf8(const char *);
 
+extern int midna_domain_cache_size;
+extern int midna_domain_transitional;
 /* LICENSE
 /* .ad
 /* .fi
@@ -32,6 +34,11 @@ extern const char *midna_domain_suffix_to_utf8(const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

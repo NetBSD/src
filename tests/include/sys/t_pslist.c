@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pslist.c,v 1.1 2016/04/09 04:39:47 riastradh Exp $	*/
+/*	$NetBSD: t_pslist.c,v 1.1.16.1 2020/04/08 14:09:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,15 +29,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/pslist.h>
-
-#include <atf-c.h>
-
 /*
  * XXX This is a limited test to make sure the operations behave as
  * described on a sequential machine.  It does nothing to test the
- * pserialize-safety of any operations.
+ * pserialize-safety of any operations.  The following definitions must
+ * be replaced in any parallel tests.
  */
+
+#define	atomic_load_relaxed(p)		(*(p))
+#define	atomic_load_acquire(p)		(*(p))
+#define	atomic_load_consume(p)		(*(p))
+#define	atomic_store_relaxed(p,v)	(*(p) = (v))
+#define	atomic_store_release(p,v)	(*(p) = (v))
+
+#include <sys/pslist.h>
+
+#include <atf-c.h>
 
 ATF_TC(misc);
 ATF_TC_HEAD(misc, tc)

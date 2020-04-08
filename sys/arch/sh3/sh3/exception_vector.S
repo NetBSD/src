@@ -1,7 +1,7 @@
-/*	$NetBSD: exception_vector.S,v 1.50 2016/11/02 00:11:59 pgoyette Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.50.16.1 2020/04/08 14:07:52 martin Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.50 2016/11/02 00:11:59 pgoyette Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.50.16.1 2020/04/08 14:07:52 martin Exp $")
 
 
 /*
@@ -86,18 +86,25 @@ NENTRY(sh_vector_generic)
 	/* Check TLB exception or not */
 	mov.l	.Lg_TLB_PROT_ST, r1
 	cmp/hi	r1, r0
-	bt	1f
+	bt/s	1f
+	 mov	r4, r8	/* preserve curlwp across call */
 
 	/* tlb_exception(curlwp, tf, TEA); */
 	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 	mov.l	.Lg_tlb_exception, r0
 	jsr	@r0
 	 mov	r14, r5			/* 2nd arg */
+
+	/* Check for ASTs on exit to user mode. */
+	__INTR_MASK(r0, r1)
+	mov.l	.Lg_ast, r0
+	mov	r8, r4
+	jsr	@r0
+	 mov	r14, r5
 	bra	.Lg_return_from_exception
 	 nop
 
-	/* general_exception(curlwp, tf, TEA); */
-1:	mov	r4, r8
+1:	/* general_exception(curlwp, tf, TEA); */
 #if defined(PTRACE_HOOKS) || defined(DDB)
 	mov	#0, r2
 	MOV	(BBRA, r1)
@@ -110,8 +117,9 @@ NENTRY(sh_vector_generic)
 	 mov	r14, r5			/* 2nd arg */
 
 	/* Check for ASTs on exit to user mode. */
-	mov	r8, r4
+	__INTR_MASK(r0, r1)
 	mov.l	.Lg_ast, r0
+	mov	r8, r4
 	jsr	@r0
 	 mov	r14, r5
 
@@ -271,7 +279,15 @@ NENTRY(sh3_vector_tlbmiss)
 	mov.l	@r1, r4			! arg1: curlwp
 	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 	mov.l	.L3_tlb_exception, r0
+	mov	r4, r8			! save curlwp across the call
 	mov.l	r2, @(TF_EXPEVT, r14)	! tf->tf_expevt = EXPEVT
+	jsr	@r0
+	 mov	r14, r5			! arg2: trapframe
+
+	/* Check for ASTs on exit to user mode. */
+	__INTR_MASK(r0, r1)
+	mov.l	.L3_ast, r0
+	mov	r8, r4			! arg1: curlwp
 	jsr	@r0
 	 mov	r14, r5			! arg2: trapframe
 	__EXCEPTION_RETURN
@@ -289,6 +305,7 @@ NENTRY(sh3_vector_tlbmiss)
 .L3_SH3_EXPEVT:			.long	SH3_EXPEVT
 .L3_curlwp:			.long	_C_LABEL(curlwp)
 .L3_tlb_exception:		.long	_C_LABEL(tlb_exception)
+.L3_ast:			.long	_C_LABEL(ast)
 
 /* LINTSTUB: Var: char sh3_vector_tlbmiss_end[1]; */
 VECTOR_END_MARKER(sh3_vector_tlbmiss_end)
@@ -421,7 +438,15 @@ NENTRY(sh4_vector_tlbmiss)
 	mov.l	@r1, r4			! arg1: curlwp
 	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 	mov.l	.L4_tlb_exception, r0
+	mov	r4, r8			! save curlwp across the call
 	mov.l	r2, @(TF_EXPEVT, r14)	! tf->tf_expevt = EXPEVT
+	jsr	@r0
+	 mov	r14, r5			! arg2: trapframe
+
+	/* Check for ASTs on exit to user mode. */
+	__INTR_MASK(r0, r1)
+	mov.l	.L4_ast, r0
+	mov	r8, r4			! arg1: curlwp
 	jsr	@r0
 	 mov	r14, r5			! arg2: trapframe
 	__EXCEPTION_RETURN
@@ -439,6 +464,7 @@ NENTRY(sh4_vector_tlbmiss)
 .L4_clear_ASID:			.long	~SH4_PTEH_ASID_MASK
 .L4_curlwp:			.long	_C_LABEL(curlwp)
 .L4_tlb_exception:		.long	_C_LABEL(tlb_exception)
+.L4_ast:			.long	_C_LABEL(ast)
 
 /* LINTSTUB: Var: char sh4_vector_tlbmiss_end[1]; */
 VECTOR_END_MARKER(sh4_vector_tlbmiss_end)

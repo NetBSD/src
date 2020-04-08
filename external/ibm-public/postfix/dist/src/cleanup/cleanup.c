@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.c,v 1.6 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: cleanup.c,v 1.6.12.1 2020/04/08 14:06:52 martin Exp $	*/
 
 /*++
 /* NAME
@@ -56,7 +56,8 @@
 /*	RFC 3464 (Delivery status notifications)
 /*	RFC 5322 (Internet Message Format)
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* BUGS
 /*	Table-driven rewriting rules make it hard to express \fBif then
 /*	else\fR and other logical relationships.
@@ -262,7 +263,7 @@
 /*	off in email addresses.
 /* .IP "\fBmasquerade_exceptions (empty)\fR"
 /*	Optional list of user names that are not subjected to address
-/*	masquerading, even when their address matches $masquerade_domains.
+/*	masquerading, even when their addresses match $masquerade_domains.
 /* .IP "\fBpropagate_unmatched_extensions (canonical, virtual)\fR"
 /*	What address lookup tables copy an address extension from the lookup
 /*	key to the lookup result.
@@ -342,6 +343,12 @@
 /* .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
 /*	Detect that a message requires SMTPUTF8 support for the specified
 /*	mail origin classes.
+/* .PP
+/*	Available in Postfix version 3.2 and later:
+/* .IP "\fBenable_idna2003_compatibility (no)\fR"
+/*	Enable 'transitional' compatibility between IDNA2003 and IDNA2008,
+/*	when converting UTF-8 domain names to/from the ASCII form that is
+/*	used for DNS lookups.
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -383,12 +390,23 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
 /* .PP
 /*	Available in Postfix version 2.1 and later:
 /* .IP "\fBenable_original_recipient (yes)\fR"
-/*	Enable support for the X-Original-To message header.
+/*	Enable support for the original recipient address after an
+/*	address is rewritten to a different address (for example with
+/*	aliasing or with canonical mapping).
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
+/* .PP
+/*	Available in Postfix 3.5 and later:
+/* .IP "\fBinfo_log_address_format (external)\fR"
+/*	The email address form that will be used in non-debug logging
+/*	(info, warning, etc.).
 /* FILES
 /*	/etc/postfix/canonical*, canonical mapping table
 /*	/etc/postfix/virtual*, virtual mapping table
@@ -402,6 +420,7 @@
 /*	postconf(5), configuration parameters
 /*	master(5), generic daemon options
 /*	master(8), process manager
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README FILES
 /* .ad

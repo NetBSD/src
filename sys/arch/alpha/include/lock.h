@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.29 2017/09/17 00:01:07 christos Exp $ */
+/* $NetBSD: lock.h,v 1.29.4.1 2020/04/08 14:07:25 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -173,24 +173,5 @@ do {									\
 } while (0)
 #define	SPINLOCK_BACKOFF_HOOK	(void)nullop((void *)0)
 #endif /* MULTIPROCESSOR */
-
-static __inline void
-mb_read(void)
-{
-	__asm __volatile("mb" : : : "memory");
-}
-
-static __inline void
-mb_write(void)
-{
-	/* XXX wmb */
-	__asm __volatile("mb" : : : "memory");
-}
-
-static __inline void
-mb_memory(void)
-{
-	__asm __volatile("mb" : : : "memory");
-}
 
 #endif /* _ALPHA_LOCK_H_ */

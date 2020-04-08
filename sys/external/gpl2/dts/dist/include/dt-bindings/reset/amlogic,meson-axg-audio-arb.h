@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic,meson-axg-audio-arb.h,v 1.1.1.1.6.2 2019/06/10 22:08:57 christos Exp $	*/
+/*	$NetBSD: amlogic,meson-axg-audio-arb.h,v 1.1.1.1.6.3 2020/04/08 14:08:47 martin Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0 OR MIT)
  *
@@ -15,5 +15,7 @@
 #define AXG_ARB_FRDDR_A	3
 #define AXG_ARB_FRDDR_B	4
 #define AXG_ARB_FRDDR_C	5
+#define AXG_ARB_TODDR_D	6
+#define AXG_ARB_FRDDR_D	7
 
 #endif /* _DT_BINDINGS_AMLOGIC_MESON_AXG_AUDIO_ARB_H */

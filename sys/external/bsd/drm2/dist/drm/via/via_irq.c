@@ -1,4 +1,4 @@
-/*	$NetBSD: via_irq.c,v 1.5.18.1 2019/06/10 22:08:28 christos Exp $	*/
+/*	$NetBSD: via_irq.c,v 1.5.18.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /* via_irq.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_irq.c,v 1.5.18.1 2019/06/10 22:08:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_irq.c,v 1.5.18.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/via_drm.h>
@@ -256,13 +256,13 @@ via_driver_irq_wait(struct drm_device *dev, unsigned int irq, int force_sequence
 	spin_lock(&cur_irq->irq_lock);
 	if (masks[real_irq][2] && !force_sequence) {
 		DRM_SPIN_WAIT_ON(ret, &cur_irq->irq_queue, &cur_irq->irq_lock,
-		    3 * DRM_HZ,
+		    3 * HZ,
 		    ((VIA_READ(masks[irq][2]) & masks[irq][3]) ==
 			masks[irq][4]));
 		cur_irq_sequence = cur_irq->irq_received;
 	} else {
 		DRM_SPIN_WAIT_ON(ret, &cur_irq->irq_queue, &cur_irq->irq_lock,
-		    3 * DRM_HZ,
+		    3 * HZ,
 		    (((cur_irq_sequence = cur_irq->irq_received) -
 			*sequence) <= (1 << 23)));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: oiocsc.c,v 1.3 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: oiocsc.c,v 1.3.18.1 2020/04/08 14:07:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oiocsc.c,v 1.3 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oiocsc.c,v 1.3.18.1 2020/04/08 14:07:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ struct oiocsc_softc {
 		uint32_t		sc_dmalow;
 		int			sc_ndesc;
 		bus_dmamap_t		sc_dmamap;
-		ssize_t			sc_dlen;	/* # bytes transfered */
+		ssize_t			sc_dlen;    /* # bytes transferred */
 	} sc_oiocdma;
 };
 

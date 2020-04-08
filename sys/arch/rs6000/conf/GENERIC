@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.39.4.1 2019/06/10 22:06:41 christos Exp $
+# $NetBSD: GENERIC,v 1.39.4.2 2020/04/08 14:07:51 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.39.4.1 $"
+#ident		"GENERIC-$Revision: 1.39.4.2 $"
 
 maxusers	32
 
@@ -222,7 +222,6 @@ pseudo-device	npf			# NPF packet filter
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre			# generic L3 over IP tunnel

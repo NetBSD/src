@@ -1,6 +1,6 @@
 #! /bin/sh
 
-. ./tests.sh
+. ./testutils.sh
 
 LOG=tmp.log.$$
 EXPECT=tmp.expect.$$

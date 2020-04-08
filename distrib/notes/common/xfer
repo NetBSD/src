@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.75 2018/06/24 09:17:59 martin Exp $
+.\"	$NetBSD: xfer,v 1.75.2.1 2020/04/08 14:03:48 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,9 +75,9 @@ The steps for the various media are outlined below.
 .(Note
 If you are installing the 32-bit sparc distribution sets, you will need to 
 rename
-.Pa sparc/binary/sets/kern-GENERIC_SUN4U.tgz
+.Pa sparc/binary/sets/kern-GENERIC_SUN4U.\*[setsuffix]
 to
-.Pa kern-GENERIC.tgz
+.Pa kern-GENERIC.\*[setsuffix]
 since the \*M installation tools would otherwise attempt to install the 
 kernel for 32-bit sparc computers which does not boot on \*M systems.
 .Note)
@@ -270,7 +270,7 @@ you would do the following:
 .Pp
 .Dl # Ic "cd \&.../NetBSD-\*V"
 .Dl # Ic "cd \*M/binary"
-.Dl # Ic "tar -cf" Ar tape_device Ic "kern-GENERIC.tgz base.tgz etc.tgz"
+.Dl # Ic "tar -cf" Ar tape_device Ic "kern-GENERIC.\*[setsuffix] base.\*[setsuffix] etc.\*[setsuffix]"
 .Pp
 .(Note
 You still need to fill in

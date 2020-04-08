@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.33 2017/05/26 14:21:02 riastradh Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.33.10.1 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -90,6 +90,10 @@ chfs_lookup(void *v)
 		return (*vpp == NULLVP ? ENOENT : 0);
 	}
 
+	/* May need to restart the lookup with an exclusive lock. */
+	if (VOP_ISLOCKED(dvp) != LK_EXCLUSIVE)
+		return ENOLCK;
+
 	ip = VTOI(dvp);
 	ump = VFSTOUFS(dvp->v_mount);
 	chmp = ump->um_chfs;
@@ -106,7 +110,8 @@ chfs_lookup(void *v)
 
 	if (cnp->cn_flags & ISDOTDOT) {
 		VOP_UNLOCK(dvp);
-		error = VFS_VGET(dvp->v_mount, ip->chvc->pvno, vpp);
+		error = VFS_VGET(dvp->v_mount, ip->chvc->pvno, LK_EXCLUSIVE,
+		    vpp);
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		vref(dvp);
@@ -147,7 +152,8 @@ chfs_lookup(void *v)
 
 			dbg("vno@allocating new vnode: %llu\n",
 				(unsigned long long)fd->vno);
-			error = VFS_VGET(dvp->v_mount, fd->vno, vpp);
+			error = VFS_VGET(dvp->v_mount, fd->vno, LK_EXCLUSIVE,
+			    vpp);
 		}
 	}
 	/* Store the result of this lookup in the cache.  Avoid this if the
@@ -857,7 +863,7 @@ chfs_write(void *v)
 		if (error)
 			goto out;
 		if (flags & B_SYNC) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			VOP_PUTPAGES(vp,
 			    trunc_page(osize & chmp->chm_fs_bmask),
 			    round_page(eob),
@@ -952,7 +958,7 @@ chfs_write(void *v)
 		 */
 
 		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16,
 			    PGO_CLEANIT | PGO_JOURNALLOCKED);
@@ -962,7 +968,7 @@ chfs_write(void *v)
 	}
 out:
 	if (error == 0 && ioflag & IO_SYNC) {
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(vp,
 		    trunc_page(origoff & chmp->chm_fs_bmask),
 		    round_page(chfs_blkroundup(chmp, uio->uio_offset)),
@@ -1140,7 +1146,7 @@ chfs_rename(void *v)
 		    newparent, tcnp->cn_nameptr, tcnp->cn_namelen);
 		vput(tvp);
 	}
-	VFS_VGET(tdvp->v_mount, old->ino, &tvp);
+	VFS_VGET(tdvp->v_mount, old->ino, LK_EXCLUSIVE, &tvp);
 	ip = VTOI(tvp);
 
 	/* link new */

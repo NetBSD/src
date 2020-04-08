@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -235,7 +235,7 @@ fromstruct_opt(ARGS_FROMSTRUCT) {
 	uint16_t length;
 
 	REQUIRE(type == dns_rdatatype_opt);
-	REQUIRE(source != NULL);
+	REQUIRE(opt != NULL);
 	REQUIRE(opt->common.rdtype == type);
 	REQUIRE(opt->common.rdclass == rdclass);
 	REQUIRE(opt->options != NULL || opt->length == 0);
@@ -265,7 +265,7 @@ tostruct_opt(ARGS_TOSTRUCT) {
 	isc_region_t r;
 
 	REQUIRE(rdata->type == dns_rdatatype_opt);
-	REQUIRE(target != NULL);
+	REQUIRE(opt != NULL);
 
 	opt->common.rdclass = rdata->rdclass;
 	opt->common.rdtype = rdata->type;
@@ -286,7 +286,7 @@ static inline void
 freestruct_opt(ARGS_FREESTRUCT) {
 	dns_rdata_opt_t *opt = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(opt != NULL);
 	REQUIRE(opt->common.rdtype == dns_rdatatype_opt);
 
 	if (opt->mctx == NULL)

@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -145,7 +145,7 @@ AcpiDbLoadTables (
     {
         Table = TableListHead->Table;
 
-        Status = AcpiLoadTable (Table);
+        Status = AcpiLoadTable (Table, NULL);
         if (ACPI_FAILURE (Status))
         {
             if (Status == AE_ALREADY_EXISTS)

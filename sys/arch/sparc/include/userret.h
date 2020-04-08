@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.8 2007/11/05 20:37:48 ad Exp $ */
+/*	$NetBSD: userret.h,v 1.8.108.1 2020/04/08 14:07:53 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -62,23 +62,15 @@ static __inline void
 userret(struct lwp *l, int pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
-	
- again:
-	mi_userret(l);
 
-	if (cpuinfo.ci_want_ast) {
+	do {
 		cpuinfo.ci_want_ast = 0;
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-	}
-	if (cpuinfo.ci_want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt();
-		goto again;
+		mi_userret(l);
+	} while (cpuinfo.ci_want_ast);
+
+	if (l->l_pflag & LP_OWEUPC) {
+		l->l_pflag &= ~LP_OWEUPC;
+		ADDUPROF(l);
 	}
 
 	/*

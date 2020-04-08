@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt_serialize_test.c,v 1.3.2.2 2019/06/10 22:04:39 christos Exp $	*/
+/*	$NetBSD: rbt_serialize_test.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -174,7 +174,7 @@ write_data(FILE *file, unsigned char *datap, void *arg, uint64_t *crc) {
 
 static isc_result_t
 fix_data(dns_rbtnode_t *p, void *base, size_t max, void *arg, uint64_t *crc) {
-	data_holder_t *data = p->data;
+	data_holder_t *data;
 	size_t size;
 
 	UNUSED(base);
@@ -184,6 +184,7 @@ fix_data(dns_rbtnode_t *p, void *base, size_t max, void *arg, uint64_t *crc) {
 	REQUIRE(crc != NULL);
 	REQUIRE(p != NULL);
 
+	data = p->data;
 
 	if (data == NULL ||
 	    (data->len == 0 && data->data != NULL) ||

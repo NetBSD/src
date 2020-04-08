@@ -289,7 +289,7 @@
 		status = "disabled";
 	};
 
-	soc {
+	soc@20000 {
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -331,8 +331,12 @@
 			snps,fixed-burst;
 			snps,force_sf_dma_mode;
 			status = "disabled";
-			#address-cells = <1>;
-			#size-cells = <0>;
+
+			mdio: mdio {
+				compatible = "snps,dwmac-mdio";
+				#address-cells = <1>;
+				#size-cells = <0>;
+			};
 		};
 
 		ehci0: usb@a00000 {
@@ -453,6 +457,15 @@
 			reg = <0x01700000 0x100>;
 		};
 
+		crypto: crypto@1c02000 {
+			compatible = "allwinner,sun9i-a80-crypto";
+			reg = <0x01c02000 0x1000>;
+			interrupts = <GIC_SPI 80 IRQ_TYPE_LEVEL_HIGH>;
+			resets = <&ccu RST_BUS_SS>;
+			clocks = <&ccu CLK_BUS_SS>, <&ccu CLK_SS>;
+			clock-names = "bus", "mod";
+		};
+
 		mmc0: mmc@1c0f000 {
 			compatible = "allwinner,sun9i-a80-mmc";
 			reg = <0x01c0f000 0x1000>;
@@ -527,7 +540,7 @@
 		};
 
 		gic: interrupt-controller@1c41000 {
-			compatible = "arm,cortex-a7-gic", "arm,cortex-a15-gic";
+			compatible = "arm,gic-400";
 			reg = <0x01c41000 0x1000>,
 			      <0x01c42000 0x2000>,
 			      <0x01c44000 0x2000>,
@@ -596,12 +609,9 @@
 				#size-cells = <0>;
 
 				fe0_out: port@1 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <1>;
 
-					fe0_out_deu0: endpoint@0 {
-						reg = <0>;
+					fe0_out_deu0: endpoint {
 						remote-endpoint = <&deu0_in_fe0>;
 					};
 				};
@@ -623,12 +633,9 @@
 				#size-cells = <0>;
 
 				fe1_out: port@1 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <1>;
 
-					fe1_out_deu1: endpoint@0 {
-						reg = <0>;
+					fe1_out_deu1: endpoint {
 						remote-endpoint = <&deu1_in_fe1>;
 					};
 				};
@@ -666,12 +673,9 @@
 				};
 
 				be0_out: port@1 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <1>;
 
-					be0_out_drc0: endpoint@0 {
-						reg = <0>;
+					be0_out_drc0: endpoint {
 						remote-endpoint = <&drc0_in_be0>;
 					};
 				};
@@ -709,12 +713,9 @@
 				};
 
 				be1_out: port@1 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <1>;
 
-					be1_out_drc1: endpoint@0 {
-						reg = <0>;
+					be1_out_drc1: endpoint {
 						remote-endpoint = <&drc1_in_be1>;
 					};
 				};
@@ -738,12 +739,9 @@
 				#size-cells = <0>;
 
 				deu0_in: port@0 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <0>;
 
-					deu0_in_fe0: endpoint@0 {
-						reg = <0>;
+					deu0_in_fe0: endpoint {
 						remote-endpoint = <&fe0_out_deu0>;
 					};
 				};
@@ -783,12 +781,9 @@
 				#size-cells = <0>;
 
 				deu1_in: port@0 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <0>;
 
-					deu1_in_fe1: endpoint@0 {
-						reg = <0>;
+					deu1_in_fe1: endpoint {
 						remote-endpoint = <&fe1_out_deu1>;
 					};
 				};
@@ -828,23 +823,17 @@
 				#size-cells = <0>;
 
 				drc0_in: port@0 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <0>;
 
-					drc0_in_be0: endpoint@0 {
-						reg = <0>;
+					drc0_in_be0: endpoint {
 						remote-endpoint = <&be0_out_drc0>;
 					};
 				};
 
 				drc0_out: port@1 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <1>;
 
-					drc0_out_tcon0: endpoint@0 {
-						reg = <0>;
+					drc0_out_tcon0: endpoint {
 						remote-endpoint = <&tcon0_in_drc0>;
 					};
 				};
@@ -868,23 +857,17 @@
 				#size-cells = <0>;
 
 				drc1_in: port@0 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <0>;
 
-					drc1_in_be1: endpoint@0 {
-						reg = <0>;
+					drc1_in_be1: endpoint {
 						remote-endpoint = <&be1_out_drc1>;
 					};
 				};
 
 				drc1_out: port@1 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <1>;
 
-					drc1_out_tcon1: endpoint@0 {
-						reg = <0>;
+					drc1_out_tcon1: endpoint {
 						remote-endpoint = <&tcon1_in_drc1>;
 					};
 				};
@@ -900,25 +883,21 @@
 			resets = <&ccu RST_BUS_LCD0>, <&ccu RST_BUS_EDP>;
 			reset-names = "lcd", "edp";
 			clock-output-names = "tcon0-pixel-clock";
+			#clock-cells = <0>;
 
 			ports {
 				#address-cells = <1>;
 				#size-cells = <0>;
 
 				tcon0_in: port@0 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <0>;
 
-					tcon0_in_drc0: endpoint@0 {
-						reg = <0>;
+					tcon0_in_drc0: endpoint {
 						remote-endpoint = <&drc0_out_tcon0>;
 					};
 				};
 
 				tcon0_out: port@1 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <1>;
 				};
 			};
@@ -938,19 +917,14 @@
 				#size-cells = <0>;
 
 				tcon1_in: port@0 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <0>;
 
-					tcon1_in_drc1: endpoint@0 {
-						reg = <0>;
+					tcon1_in_drc1: endpoint {
 						remote-endpoint = <&drc1_out_tcon1>;
 					};
 				};
 
 				tcon1_out: port@1 {
-					#address-cells = <1>;
-					#size-cells = <0>;
 					reg = <1>;
 				};
 			};
@@ -982,6 +956,7 @@
 			compatible = "allwinner,sun6i-a31-wdt";
 			reg = <0x06000ca0 0x20>;
 			interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&osc24M>;
 		};
 
 		pio: pinctrl@6000800 {
@@ -997,15 +972,13 @@
 			gpio-controller;
 			interrupt-controller;
 			#interrupt-cells = <3>;
-			#size-cells = <0>;
 			#gpio-cells = <3>;
 
 			gmac_rgmii_pins: gmac-rgmii-pins {
-				allwinner,pins = "PA0", "PA1", "PA2", "PA3",
-						 "PA4", "PA5", "PA7", "PA8",
-						 "PA9", "PA10", "PA12", "PA13",
-						 "PA15", "PA16", "PA17";
-				allwinner,function = "gmac";
+				pins = "PA0", "PA1", "PA2", "PA3", "PA4", "PA5",
+				       "PA7", "PA8", "PA9", "PA10", "PA12",
+				       "PA13", "PA15", "PA16", "PA17";
+				function = "gmac";
 				/*
 				 * data lines in RGMII mode use DDR mode
 				 * and need a higher signal drive strength
@@ -1191,6 +1164,7 @@
 			compatible = "allwinner,sun6i-a31-wdt";
 			reg = <0x08001000 0x20>;
 			interrupts = <GIC_SPI 36 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&osc24M>;
 		};
 
 		prcm@8001400 {
@@ -1213,7 +1187,7 @@
 		};
 
 		r_ir: ir@8002000 {
-			compatible = "allwinner,sun5i-a13-ir";
+			compatible = "allwinner,sun6i-a31-ir";
 			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&r_ir_pins>;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.33 2012/09/14 22:20:50 rmind Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.33.38.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -31,7 +31,7 @@
 #define _UVM_UVM_OBJECT_H_
 
 #include <sys/queue.h>
-#include <sys/rbtree.h>
+#include <sys/radixtree.h>
 #include <uvm/uvm_pglist.h>
 
 /*
@@ -53,15 +53,22 @@
  * For other objects, it is arbitrary (may use the lock or atomics).
  */
 
+struct krwlock;
 struct uvm_object {
-	kmutex_t *		vmobjlock;	/* lock on memq */
+	struct krwlock *	vmobjlock;	/* lock on object */
 	const struct uvm_pagerops *pgops;	/* pager ops */
-	struct pglist		memq;		/* pages in this object */
-	int			uo_npages;	/* # of pages in memq */
+	int			uo_npages;	/* # of pages in uo_pages */
 	unsigned		uo_refs;	/* reference count */
-	struct rb_tree		rb_tree;	/* tree of pages */
+	struct radix_tree	uo_pages;	/* tree of pages */
 	LIST_HEAD(,ubc_map)	uo_ubc;		/* ubc mappings */
 };
+
+/*
+ * tags for uo_pages
+ */
+
+#define	UVM_PAGE_DIRTY_TAG	1	/* might be dirty (!PG_CLEAN) */
+#define	UVM_PAGE_WRITEBACK_TAG	2	/* being written back */
 
 /*
  * UVM_OBJ_KERN is a 'special' uo_refs value which indicates that the
@@ -107,12 +114,10 @@ extern const struct uvm_pagerops aobj_pager;
  */
 
 #define	UVM_OBJ_NEEDS_WRITEFAULT(uobj)					\
-	(UVM_OBJ_IS_VNODE(uobj) && uvn_needs_writefault_p(uobj))
+	(UVM_OBJ_IS_VNODE(uobj) && uvn_clean_p(uobj))
 
 #define	UVM_OBJ_IS_AOBJ(uobj)						\
 	((uobj)->pgops == &aobj_pager)
-
-extern const rb_tree_ops_t uvm_page_tree_ops;
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_getcpuclockid.c,v 1.2 2017/03/04 11:16:33 njoly Exp $	*/
+/*	$NetBSD: pthread_getcpuclockid.c,v 1.2.12.1 2020/04/08 14:07:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_getcpuclockid.c,v 1.2 2017/03/04 11:16:33 njoly Exp $");
+__RCSID("$NetBSD: pthread_getcpuclockid.c,v 1.2.12.1 2020/04/08 14:07:15 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,6 +44,9 @@ int
 pthread_getcpuclockid(pthread_t thread, clockid_t *clock_id)
 {
 	int error = 0, saved_errno;
+
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
 
 	saved_errno = errno;
 	if (clock_getcpuclockid2(P_LWPID, (id_t)thread->pt_lid, clock_id) == -1)

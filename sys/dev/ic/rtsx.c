@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsx.c,v 1.3 2018/04/24 18:34:30 maya Exp $	*/
+/*	$NetBSD: rtsx.c,v 1.3.2.1 2020/04/08 14:08:06 martin Exp $	*/
 /*	$OpenBSD: rtsx.c,v 1.10 2014/08/19 17:55:03 phessler Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx.c,v 1.3 2018/04/24 18:34:30 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx.c,v 1.3.2.1 2020/04/08 14:08:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1044,7 +1044,7 @@ rtsx_read_cfg(struct rtsx_softc *sc, uint8_t func, uint16_t addr, uint32_t *val)
 	RTSX_READ(sc, RTSX_CFGDATA1, &data1);
 	RTSX_READ(sc, RTSX_CFGDATA2, &data2);
 	RTSX_READ(sc, RTSX_CFGDATA3, &data3);
-	*val = (data3 << 24) | (data2 << 16) | (data1 << 8) | data0;
+	*val = ((uint32_t)data3 << 24) | (data2 << 16) | (data1 << 8) | data0;
 
 	return 0;
 }

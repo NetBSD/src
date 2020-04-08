@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.80.4.1 2019/06/10 22:06:16 christos Exp $
+#	$NetBSD: IPAQ,v 1.80.4.2 2020/04/08 14:07:38 martin Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -185,7 +185,6 @@ pseudo-device	tun			# network tunneling over tty
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	strip			# STarmode Radio IP (Metricon Ricochet)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 pseudo-device	pty			# pseudo-terminals

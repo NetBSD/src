@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.9.2.1 2019/06/10 22:07:35 christos Exp $	*/
+/*	$NetBSD: uts.c,v 1.9.2.2 2020/04/08 14:08:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.9.2.1 2019/06/10 22:07:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.9.2.2 2020/04/08 14:08:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -388,7 +388,7 @@ uts_intr(struct uhidev *addr, void *ibuf, u_int len)
 		buttons |= 1;
 
 	if (dx != 0 || dy != 0 || dz != 0 || buttons != sc->sc_buttons) {
-		DPRINTFN(10,("uts_intr: x:%d y:%d z:%d buttons:0x%x\n",
+		DPRINTFN(10,("uts_intr: x:%d y:%d z:%d buttons:%#x\n",
 		    dx, dy, dz, buttons));
 		sc->sc_buttons = buttons;
 		if (sc->sc_wsmousedev != NULL) {

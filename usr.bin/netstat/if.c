@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.94.12.1 2019/06/10 22:10:22 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.94.12.2 2020/04/08 14:09:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.94.12.1 2019/06/10 22:10:22 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.94.12.2 2020/04/08 14:09:17 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,9 +289,34 @@ union ifaddr_u {
 };
 
 static void
+ifnet_to_ifdata_kvm(const struct ifnet * const ifp, struct if_data * const ifd)
+{
+
+	/*
+	 * Interface statistics are no longer kept in struct ifnet,
+	 * and thus an if_data is no longer embedded in struct ifnet.
+	 * We cannot read stats via kvm without chasing per-cpu data,
+	 * and maybe someday we could do that.  But for now, this is
+	 * what we have.
+	 *
+	 * Just copy the fields that do exist.
+	 */
+	memset(ifd, 0, sizeof(*ifd));
+	ifd->ifi_type = ifp->if_type;
+	ifd->ifi_addrlen = ifp->if_addrlen;
+	ifd->ifi_hdrlen = ifp->if_hdrlen;
+	ifd->ifi_link_state = ifp->if_link_state;
+	ifd->ifi_mtu = ifp->if_mtu;
+	ifd->ifi_metric = ifp->if_metric;
+	ifd->ifi_baudrate = ifp->if_baudrate;
+	ifd->ifi_lastchange = ifp->if_lastchange;
+}
+
+static void
 intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 {
 	struct ifnet ifnet;
+	struct if_data ifd;
 	union ifaddr_u ifaddr;
 	u_long ifaddraddr;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
@@ -358,8 +383,9 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 			cp = (CP(ifaddr.ifa.ifa_addr) - CP(ifaddraddr)) +
 			    CP(&ifaddr);
 			sa = (struct sockaddr *)cp;
+			ifnet_to_ifdata_kvm(&ifnet, &ifd);
 			print_addr(ifnet.if_index, sa, (void *)&ifaddr,
-			    &ifnet.if_data, &ifnet);
+			    &ifd, &ifnet);
 		}
 		ifaddraddr = (u_long)ifaddr.ifa.ifa_list.tqe_next;
 	}
@@ -787,6 +813,7 @@ sidewaysintpr_kvm(unsigned interval, u_long off)
 	sigset_t emptyset;
 	sigset_t noalrm;
 	struct ifnet ifnet;
+	struct if_data ifd;
 	u_long firstifnet;
 	struct iftot *ip, *total;
 	unsigned line;
@@ -906,53 +933,54 @@ loop:
 			off = 0;
 			continue;
 		}
+		ifnet_to_ifdata_kvm(&ifnet, &ifd);
 		if (ip == interesting) {
 			if (bflag) {
 				char humbuf[HUMBUF_SIZE];
 
 				if (hflag && humanize_number(humbuf,
 				    sizeof(humbuf),
-				    ifnet.if_ibytes - ip->ift_ib, "",
+				    ifd.ifi_ibytes - ip->ift_ib, "",
 				    HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
 					printf("%10s %8.8s ", humbuf, " ");
 				else
 					printf("%10llu %8.8s ", 
 					    (unsigned long long)
-					    (ifnet.if_ibytes-ip->ift_ib), " ");
+					    (ifd.ifi_ibytes-ip->ift_ib), " ");
 
 				if (hflag && humanize_number(humbuf,
 				    sizeof(humbuf),
-				    ifnet.if_obytes - ip->ift_ob, "",
+				    ifd.ifi_obytes - ip->ift_ob, "",
 				    HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
 					printf("%10s %5.5s", humbuf, " ");
 				else
 					printf("%10llu %5.5s", 
 					    (unsigned long long)
-					    (ifnet.if_obytes-ip->ift_ob), " ");
+					    (ifd.ifi_obytes-ip->ift_ob), " ");
 			} else {
 				printf("%8llu %5llu %8llu %5llu %5llu",
 				    (unsigned long long)
-					(ifnet.if_ipackets - ip->ift_ip),
+					(ifd.ifi_ipackets - ip->ift_ip),
 				    (unsigned long long)
-					(ifnet.if_ierrors - ip->ift_ie),
+					(ifd.ifi_ierrors - ip->ift_ie),
 				    (unsigned long long)
-					(ifnet.if_opackets - ip->ift_op),
+					(ifd.ifi_opackets - ip->ift_op),
 				    (unsigned long long)
-					(ifnet.if_oerrors - ip->ift_oe),
+					(ifd.ifi_oerrors - ip->ift_oe),
 				    (unsigned long long)
-					(ifnet.if_collisions - ip->ift_co));
+					(ifd.ifi_collisions - ip->ift_co));
 			}
 			if (dflag)
 				printf(" %5" PRIu64,
 					ifnet.if_snd.ifq_drops - ip->ift_dr);
 		}
-		ip->ift_ip = ifnet.if_ipackets;
-		ip->ift_ib = ifnet.if_ibytes;
-		ip->ift_ie = ifnet.if_ierrors;
-		ip->ift_op = ifnet.if_opackets;
-		ip->ift_ob = ifnet.if_obytes;
-		ip->ift_oe = ifnet.if_oerrors;
-		ip->ift_co = ifnet.if_collisions;
+		ip->ift_ip = ifd.ifi_ipackets;
+		ip->ift_ib = ifd.ifi_ibytes;
+		ip->ift_ie = ifd.ifi_ierrors;
+		ip->ift_op = ifd.ifi_opackets;
+		ip->ift_ob = ifd.ifi_obytes;
+		ip->ift_oe = ifd.ifi_oerrors;
+		ip->ift_co = ifd.ifi_collisions;
 		ip->ift_dr = ifnet.if_snd.ifq_drops;
 		sum->ift_ip += ip->ift_ip;
 		sum->ift_ib += ip->ift_ib;

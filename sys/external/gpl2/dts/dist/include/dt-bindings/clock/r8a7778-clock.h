@@ -1,12 +1,8 @@
-/*	$NetBSD: r8a7778-clock.h,v 1.1.1.1.12.1 2019/06/10 22:08:54 christos Exp $	*/
+/*	$NetBSD: r8a7778-clock.h,v 1.1.1.1.12.2 2020/04/08 14:08:44 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2014 Ulrich Hecht
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
  */
 
 #ifndef __DT_BINDINGS_CLOCK_R8A7778_H__

@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: postscreen.c,v 1.2.12.1 2020/04/08 14:06:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -18,9 +18,9 @@
 /*
 /*	This program should not be used on SMTP ports that receive
 /*	mail from end-user clients (MUAs). In a typical deployment,
-/*	\fBpostscreen\fR(8) handles the MX service on TCP port 25,
-/*	while MUA clients submit mail via the \fBsubmission\fR
-/*	service on TCP port 587 which requires client authentication.
+/*	\fBpostscreen\fR(8) handles the MX service on TCP port 25, and
+/*	\fBsmtpd\fR(8) receives mail from MUAs on the \fBsubmission\fR
+/*	service (TCP port 587) which requires client authentication.
 /*	Alternatively, a site could set up a dedicated, non-postscreen,
 /*	"port 25" server that provides \fBsubmission\fR service and
 /*	client authentication, but no MX service.
@@ -63,34 +63,28 @@
 /*	RFC 2034 (SMTP Enhanced Status Codes)
 /*	RFC 2821 (SMTP protocol)
 /*	Not: RFC 2920 (SMTP Pipelining)
+/*	RFC 3030 (CHUNKING without BINARYMIME)
 /*	RFC 3207 (STARTTLS command)
 /*	RFC 3461 (SMTP DSN Extension)
 /*	RFC 3463 (Enhanced Status Codes)
 /*	RFC 5321 (SMTP protocol, including multi-line 220 banners)
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* BUGS
 /*	The \fBpostscreen\fR(8) built-in SMTP protocol engine
 /*	currently does not announce support for AUTH, XCLIENT or
 /*	XFORWARD.
 /*	If you need to make these services available
 /*	on port 25, then do not enable the optional "after 220
-/*	server greeting" tests, and do not use DNSBLs that reject
-/*	traffic from dial-up and residential networks.
+/*	server greeting" tests.
 /*
-/*	The optional "after 220 server greeting" tests involve
-/*	\fBpostscreen\fR(8)'s built-in SMTP protocol engine. When
-/*	these tests succeed, \fBpostscreen\fR(8) adds the client
-/*	to the temporary whitelist, but it cannot hand off the
-/*	"live" connection to a Postfix SMTP server process in the
-/*	middle of a session.  Instead, \fBpostscreen\fR(8) defers
-/*	attempts to deliver mail with a 4XX status, and waits for
-/*	the client to disconnect.  When the client connects again,
-/*	\fBpostscreen\fR(8) will allow the client to talk to a
-/*	Postfix SMTP server process (provided that the whitelist
-/*	status has not expired).  \fBpostscreen\fR(8) mitigates
-/*	the impact of this limitation by giving the "after 220
-/*	server greeting" tests a long expiration time.
+/*	The optional "after 220 server greeting" tests may result in
+/*	unexpected delivery delays from senders that retry email delivery
+/*	from a different IP address.  Reason: after passing these tests a
+/*	new client must disconnect, and reconnect from the same IP
+/*	address before it can deliver mail. See POSTSCREEN_README, section
+/*	"Tests after the 220 SMTP server greeting", for a discussion.
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
@@ -127,6 +121,11 @@
 /*	Available in Postfix version 3.1 and later:
 /* .IP "\fBdns_ncache_ttl_fix_enable (no)\fR"
 /*	Enable a workaround for future libc incompatibility.
+/* .PP
+/*	Available in Postfix version 3.4 and later:
+/* .IP "\fBpostscreen_reject_footer_maps ($smtpd_reject_footer_maps)\fR"
+/*	Optional lookup table for information that is appended after a 4XX
+/*	or 5XX \fBpostscreen\fR(8) server response.
 /* TROUBLE SHOOTING CONTROLS
 /* .ad
 /* .fi
@@ -367,12 +366,22 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
+/* .PP
+/*	Available in Postfix 3.5 and later:
+/* .IP "\fBinfo_log_address_format (external)\fR"
+/*	The email address form that will be used in non-debug logging
+/*	(info, warning, etc.).
 /* SEE ALSO
 /*	smtpd(8), Postfix SMTP server
 /*	tlsproxy(8), Postfix TLS proxy server
 /*	dnsblog(8), DNS black/whitelist logger
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README FILES
 /* .ad
@@ -509,13 +518,14 @@ char   *var_psc_barlf_action;
 int     var_psc_barlf_ttl;
 
 int     var_psc_cmd_count;
-char   *var_psc_cmd_time;
+int     var_psc_cmd_time;
 
 char   *var_dnsblog_service;
 char   *var_tlsproxy_service;
 
 char   *var_smtpd_rej_footer;
 char   *var_psc_rej_footer;
+char   *var_psc_rej_ftr_maps;
 
 int     var_smtpd_cconn_limit;
 int     var_psc_cconn_limit;
@@ -602,6 +612,9 @@ static void psc_drain(char *unused_service, char **unused_argv)
      * 
      * XXX Some Berkeley DB versions break with close-after-fork. Every new
      * version is an improvement over its predecessor.
+     * 
+     * XXX Don't assume that it is OK to share the same LMDB lockfile descriptor
+     * between different processes.
      */
     if (psc_cache_map != 0			/* XXX && psc_cache_map
 	    requires locking */ ) {
@@ -698,7 +711,7 @@ static void psc_endpt_lookup_done(int endpt_status,
      * Reply with 421 when the client has too many open connections.
      */
     if (var_psc_cconn_limit > 0
-	&& state->client_concurrency > var_psc_cconn_limit) {
+	&& state->client_info->concurrency > var_psc_cconn_limit) {
 	msg_info("NOQUEUE: reject: CONNECT from [%s]:%s: too many connections",
 		 state->smtp_client_addr, state->smtp_client_port);
 	PSC_DROP_SESSION_STATE(state,
@@ -847,7 +860,7 @@ static int psc_cache_validator(const char *client_addr,
 			               const char *stamp_str,
 			               void *unused_context)
 {
-    PSC_STATE dummy;
+    PSC_STATE dummy_state;
     PSC_CLIENT_INFO dummy_client_info;
 
     /*
@@ -858,9 +871,9 @@ static int psc_cache_validator(const char *client_addr,
      * silly logging we remove the cache entry only after all tests have
      * expired longer ago than the cache retention time.
      */
-    dummy.client_info = &dummy_client_info;
-    psc_parse_tests(&dummy, stamp_str, event_time() - var_psc_cache_ret);
-    return ((dummy.flags & PSC_STATE_MASK_ANY_TODO) == 0);
+    dummy_state.client_info = &dummy_client_info;
+    psc_parse_tests(&dummy_state, stamp_str, event_time() - var_psc_cache_ret);
+    return ((dummy_state.flags & PSC_STATE_MASK_ANY_TODO) == 0);
 }
 
 /* pre_jail_init - pre-jail initialization */
@@ -1126,6 +1139,7 @@ int     main(int argc, char **argv)
 	VAR_TLSPROXY_SERVICE, DEF_TLSPROXY_SERVICE, &var_tlsproxy_service, 1, 0,
 	VAR_PSC_WLIST_IF, DEF_PSC_WLIST_IF, &var_psc_wlist_if, 0, 0,
 	VAR_PSC_UPROXY_PROTO, DEF_PSC_UPROXY_PROTO, &var_psc_uproxy_proto, 0, 0,
+	VAR_PSC_REJ_FTR_MAPS, DEF_PSC_REJ_FTR_MAPS, &var_psc_rej_ftr_maps, 0, 0,
 	0,
     };
     static const CONFIG_INT_TABLE int_table[] = {
@@ -1142,6 +1156,7 @@ int     main(int argc, char **argv)
 	0,
     };
     static const CONFIG_TIME_TABLE time_table[] = {
+	VAR_PSC_CMD_TIME, DEF_PSC_CMD_TIME, &var_psc_cmd_time, 1, 0,
 	VAR_PSC_GREET_WAIT, DEF_PSC_GREET_WAIT, &var_psc_greet_wait, 1, 0,
 	VAR_PSC_PREGR_TTL, DEF_PSC_PREGR_TTL, &var_psc_pregr_ttl, 1, 0,
 	VAR_PSC_DNSBL_MIN_TTL, DEF_PSC_DNSBL_MIN_TTL, &var_psc_dnsbl_min_ttl, 1, 0,
@@ -1168,7 +1183,6 @@ int     main(int argc, char **argv)
 	0,
     };
     static const CONFIG_RAW_TABLE raw_table[] = {
-	VAR_PSC_CMD_TIME, DEF_PSC_CMD_TIME, &var_psc_cmd_time, 1, 0,
 	VAR_SMTPD_REJ_FOOTER, DEF_SMTPD_REJ_FOOTER, &var_smtpd_rej_footer, 0, 0,
 	VAR_PSC_REJ_FOOTER, DEF_PSC_REJ_FOOTER, &var_psc_rej_footer, 0, 0,
 	VAR_SMTPD_EXP_FILTER, DEF_SMTPD_EXP_FILTER, &var_smtpd_exp_filter, 1, 0,

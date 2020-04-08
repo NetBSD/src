@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3param_51.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: nsec3param_51.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -200,7 +200,7 @@ fromstruct_nsec3param(ARGS_FROMSTRUCT) {
 	dns_rdata_nsec3param_t *nsec3param = source;
 
 	REQUIRE(type == dns_rdatatype_nsec3param);
-	REQUIRE(source != NULL);
+	REQUIRE(nsec3param != NULL);
 	REQUIRE(nsec3param->common.rdtype == type);
 	REQUIRE(nsec3param->common.rdclass == rdclass);
 
@@ -222,7 +222,7 @@ tostruct_nsec3param(ARGS_TOSTRUCT) {
 	dns_rdata_nsec3param_t *nsec3param = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_nsec3param);
-	REQUIRE(target != NULL);
+	REQUIRE(nsec3param != NULL);
 	REQUIRE(rdata->length != 0);
 
 	nsec3param->common.rdclass = rdata->rdclass;
@@ -250,7 +250,7 @@ static inline void
 freestruct_nsec3param(ARGS_FREESTRUCT) {
 	dns_rdata_nsec3param_t *nsec3param = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(nsec3param != NULL);
 	REQUIRE(nsec3param->common.rdtype == dns_rdatatype_nsec3param);
 
 	if (nsec3param->mctx == NULL)

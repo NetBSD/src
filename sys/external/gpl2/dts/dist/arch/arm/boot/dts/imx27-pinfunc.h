@@ -1,14 +1,8 @@
-/*	$NetBSD: imx27-pinfunc.h,v 1.1.1.1 2017/06/15 20:14:24 jmcneill Exp $	*/
+/*	$NetBSD: imx27-pinfunc.h,v 1.1.1.1.12.1 2020/04/08 14:08:31 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 2013 Markus Pargmann <mpa@pengutronix.de>, Pengutronix
- *
- * The code contained herein is licensed under the GNU General Public
- * License. You may obtain a copy of the GNU General Public License
- * Version 2 or later at the following locations:
- *
- * http://www.opensource.org/licenses/gpl-license.html
- * http://www.gnu.org/copyleft/gpl.html
  */
 
 #ifndef __DTS_IMX27_PINFUNC_H

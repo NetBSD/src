@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.121.20.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.121.20.2 2020/04/08 14:08:12 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.121.20.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.121.20.2 2020/04/08 14:08:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -443,12 +443,12 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	if (pb == NULL) {
 		retcode = ENOMEM;
 	} else {
-		retcode = dk_lookup(pb, curlwp, &vp);
+		retcode = vn_bdev_openpath(pb, &vp, curlwp);
 		pathbuf_destroy(pb);
 	}
 
 	if (retcode) {
-		printf("raid%d: rebuilding: dk_lookup on device: %s failed: %d!\n",raidPtr->raidid,
+		printf("raid%d: rebuilding: open device: %s failed: %d!\n",raidPtr->raidid,
 		       raidPtr->Disks[col].devname, retcode);
 
 		/* the component isn't responding properly...

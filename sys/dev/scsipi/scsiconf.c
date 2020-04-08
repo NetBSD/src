@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.280.6.1 2019/06/10 22:07:32 christos Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.280.6.2 2020/04/08 14:08:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.280.6.1 2019/06/10 22:07:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.280.6.2 2020/04/08 14:08:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,39 +126,43 @@ static void	scsibus_discover_thread(void *);
 static void	scsibus_config(struct scsibus_softc *);
 
 const struct scsipi_bustype scsi_bustype = {
-	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_PSCSI),
-	scsi_scsipi_cmd,
-	scsipi_interpret_sense,
-	scsi_print_addr,
-	scsi_kill_pending,
-	scsi_async_event_xfer_mode,
+	.bustype_type = SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI,
+	    SCSIPI_BUSTYPE_SCSI_PSCSI),
+	.bustype_cmd = scsi_scsipi_cmd,
+	.bustype_interpret_sense = scsipi_interpret_sense,
+	.bustype_printaddr = scsi_print_addr,
+	.bustype_kill_pending = scsi_kill_pending,
+	.bustype_async_event_xfer_mode = scsi_async_event_xfer_mode,
 };
 
 const struct scsipi_bustype scsi_fc_bustype = {
-	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_FC),
-	scsi_scsipi_cmd,
-	scsipi_interpret_sense,
-	scsi_print_addr,
-	scsi_kill_pending,
-	scsi_fc_sas_async_event_xfer_mode,
+	.bustype_type = SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI,
+	    SCSIPI_BUSTYPE_SCSI_FC),
+	.bustype_cmd = scsi_scsipi_cmd,
+	.bustype_interpret_sense = scsipi_interpret_sense,
+	.bustype_printaddr = scsi_print_addr,
+	.bustype_kill_pending = scsi_kill_pending,
+	.bustype_async_event_xfer_mode = scsi_fc_sas_async_event_xfer_mode,
 };
 
 const struct scsipi_bustype scsi_sas_bustype = {
-	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_SAS),
-	scsi_scsipi_cmd,
-	scsipi_interpret_sense,
-	scsi_print_addr,
-	scsi_kill_pending,
-	scsi_fc_sas_async_event_xfer_mode,
+	.bustype_type = SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI,
+	    SCSIPI_BUSTYPE_SCSI_SAS),
+	.bustype_cmd = scsi_scsipi_cmd,
+	.bustype_interpret_sense = scsipi_interpret_sense,
+	.bustype_printaddr = scsi_print_addr,
+	.bustype_kill_pending = scsi_kill_pending,
+	.bustype_async_event_xfer_mode = scsi_fc_sas_async_event_xfer_mode,
 };
 
 const struct scsipi_bustype scsi_usb_bustype = {
-	SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI, SCSIPI_BUSTYPE_SCSI_USB),
-	scsi_scsipi_cmd,
-	scsipi_interpret_sense,
-	scsi_print_addr,
-	scsi_kill_pending,
-	NULL,
+	.bustype_type = SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI,
+	    SCSIPI_BUSTYPE_SCSI_USB),
+	.bustype_cmd = scsi_scsipi_cmd,
+	.bustype_interpret_sense = scsipi_interpret_sense,
+	.bustype_printaddr = scsi_print_addr,
+	.bustype_kill_pending = scsi_kill_pending,
+	.bustype_async_event_xfer_mode = NULL,
 };
 
 static int

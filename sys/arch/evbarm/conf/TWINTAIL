@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.72.4.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: TWINTAIL,v 1.72.4.2 2020/04/08 14:07:34 martin Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -258,9 +258,6 @@ opio0 	at obio?  intr 2
 #uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 #ucom*	at uvscom? portno ?
 
-# Diamond Multimedia Rio 500
-#urio*	at uhub? port ?
-
 # USB Handspring Visor
 #uvisor*	at uhub? port ?
 #ucom*	at uvisor?
@@ -325,8 +322,6 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
-# tr at pcmcia has problems with Cardbus bridges
-tr*	at pcmcia? function ?		# TROPIC based Token-Ring
 wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 com*	at xirc?
@@ -368,7 +363,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tap			# virtual Ethernet
 #pseudo-device	tun			# network tunneling over tty

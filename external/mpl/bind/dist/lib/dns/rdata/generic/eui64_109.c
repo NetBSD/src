@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64_109.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: eui64_109.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -120,7 +120,7 @@ fromstruct_eui64(ARGS_FROMSTRUCT) {
 	dns_rdata_eui64_t *eui64 = source;
 
 	REQUIRE(type == dns_rdatatype_eui64);
-	REQUIRE(source != NULL);
+	REQUIRE(eui64 != NULL);
 	REQUIRE(eui64->common.rdtype == type);
 	REQUIRE(eui64->common.rdclass == rdclass);
 
@@ -135,7 +135,7 @@ tostruct_eui64(ARGS_TOSTRUCT) {
 	dns_rdata_eui64_t *eui64 = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_eui64);
-	REQUIRE(target != NULL);
+	REQUIRE(eui64 != NULL);
 	REQUIRE(rdata->length == 8);
 
 	UNUSED(mctx);
@@ -152,7 +152,7 @@ static inline void
 freestruct_eui64(ARGS_FREESTRUCT) {
 	dns_rdata_eui64_t *eui64 = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(eui64 != NULL);
 	REQUIRE(eui64->common.rdtype == dns_rdatatype_eui64);
 
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lookup.c,v 1.3.2.2 2019/06/10 22:04:35 christos Exp $	*/
+/*	$NetBSD: lookup.c,v 1.3.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -273,12 +273,10 @@ lookup_find(dns_lookup_t *lookup, dns_fetchevent_t *event) {
 			dns_rdata_reset(&rdata);
 			if (result != ISC_R_SUCCESS)
 				break;
-			result = dns_name_copy(&cname.cname, name, NULL);
+			dns_name_copynf(&cname.cname, name);
 			dns_rdata_freestruct(&cname);
-			if (result == ISC_R_SUCCESS) {
-				want_restart = true;
-				send_event = false;
-			}
+			want_restart = true;
+			send_event = false;
 			break;
 		case DNS_R_DNAME:
 			namereln = dns_name_fullcompare(name, fname, &order,
@@ -416,9 +414,7 @@ dns_lookup_create(isc_mem_t *mctx, const dns_name_t *name, dns_rdatatype_t type,
 
 	dns_fixedname_init(&lookup->name);
 
-	result = dns_name_copy(name, dns_fixedname_name(&lookup->name), NULL);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup_lock;
+	dns_name_copynf(name, dns_fixedname_name(&lookup->name));
 
 	lookup->type = type;
 	lookup->view = NULL;
@@ -435,14 +431,6 @@ dns_lookup_create(isc_mem_t *mctx, const dns_name_t *name, dns_rdatatype_t type,
 	lookup_find(lookup, NULL);
 
 	return (ISC_R_SUCCESS);
-
- cleanup_lock:
-	isc_mutex_destroy(&lookup->lock);
-	ievent = (isc_event_t *)lookup->event;
-	isc_event_free(&ievent);
-	lookup->event = NULL;
-
-	isc_task_detach(&lookup->task);
 
  cleanup_lookup:
 	isc_mem_putanddetach(&mctx, lookup, sizeof(*lookup));

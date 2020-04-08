@@ -1,4 +1,4 @@
-.\"	$NetBSD: slattach.8,v 1.28.86.1 2019/06/10 22:05:36 christos Exp $
+.\"	$NetBSD: slattach.8,v 1.28.86.2 2020/04/08 14:07:20 martin Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)slattach.8	8.2 (Berkeley) 4/1/94
 .\"
-.Dd November 11, 2018
+.Dd January 18, 2020
 .Dt SLATTACH 8
 .Os
 .Sh NAME
@@ -50,11 +50,9 @@ Currently the
 .Nm
 command is used to attach
 .Xr sl 4
-or
-.Xr strip 4
 interfaces.
 These interfaces have to be created using the
-.Xr ifconfig 8
+.Xr ifconfig 8 .
 The resulting point-to-point link is not a broadcast interface
 and normally has a netmask of 255.255.255.255.
 .Cm create
@@ -91,13 +89,11 @@ Supported line disciplines are
 .Dq slip
 (creates a
 .Xr sl 4
-instance) and
-.Dq strip
-(creates a
-.Xr strip 4
 instance).
 If this option is not specified, the default is
 .Dq slip .
+This option is retained for backwards compatibility with existing
+scripts.
 .It Ar ttyname
 Specifies the name of the tty device.
 .Ar ttyname
@@ -141,7 +137,6 @@ but tried to alter an interface's configuration.
 .Xr daemon 3 ,
 .Xr netintro 4 ,
 .Xr sl 4 ,
-.Xr strip 4 ,
 .Xr ifconfig 8 ,
 .Xr rc 8 ,
 .Xr sliplogin 8 ,

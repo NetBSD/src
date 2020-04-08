@@ -1,4 +1,4 @@
-#	$NetBSD: DB120,v 1.19.4.1 2019/06/10 22:06:12 christos Exp $
+#	$NetBSD: DB120,v 1.19.4.2 2020/04/08 14:07:36 martin Exp $
 #
 # Qualcomm Atheros AR9344 DB120 evaluation board.
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DB120-$Revision: 1.19.4.1 $"
+#ident 		"DB120-$Revision: 1.19.4.2 $"
 
 maxusers	32
 
@@ -190,7 +190,6 @@ pseudo-device 	carp				# Common Address Redundancy Protocol
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	sl				# Serial Line IP
-#pseudo-device	strip				# Starmode Radio IP (Metricom)
 #pseudo-device	tun				# network tunneling over tty
 #pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre				# generic L3 over IP tunnel

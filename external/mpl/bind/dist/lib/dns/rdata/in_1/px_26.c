@@ -1,4 +1,4 @@
-/*	$NetBSD: px_26.c,v 1.3.2.2 2019/06/10 22:04:39 christos Exp $	*/
+/*	$NetBSD: px_26.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -226,7 +226,7 @@ fromstruct_in_px(ARGS_FROMSTRUCT) {
 
 	REQUIRE(type == dns_rdatatype_px);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
+	REQUIRE(px != NULL);
 	REQUIRE(px->common.rdtype == type);
 	REQUIRE(px->common.rdclass == rdclass);
 
@@ -249,7 +249,7 @@ tostruct_in_px(ARGS_TOSTRUCT) {
 
 	REQUIRE(rdata->type == dns_rdatatype_px);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
+	REQUIRE(px != NULL);
 	REQUIRE(rdata->length != 0);
 
 	px->common.rdclass = rdata->rdclass;
@@ -285,7 +285,7 @@ static inline void
 freestruct_in_px(ARGS_FREESTRUCT) {
 	dns_rdata_in_px_t *px = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(px != NULL);
 	REQUIRE(px->common.rdclass == dns_rdataclass_in);
 	REQUIRE(px->common.rdtype == dns_rdatatype_px);
 

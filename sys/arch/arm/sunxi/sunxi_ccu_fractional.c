@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_fractional.c,v 1.2.2.1 2019/06/10 22:05:56 christos Exp $ */
+/* $NetBSD: sunxi_ccu_fractional.c,v 1.2.2.2 2020/04/08 14:07:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_fractional.c,v 1.2.2.1 2019/06/10 22:05:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_fractional.c,v 1.2.2.2 2020/04/08 14:07:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -137,9 +137,12 @@ sunxi_ccu_fractional_set_rate(struct sunxi_ccu_softc *sc,
 
 	for (i = 0; i < __arraycount(fractional->frac); i++) {
 		if (fractional->frac[i] == new_rate) {
+			val &= ~fractional->prediv;
 			val &= ~fractional->div_en;
 			val &= ~fractional->frac_sel;
 			val |= __SHIFTIN(i, fractional->frac_sel);
+			if (fractional->flags & SUNXI_CCU_FRACTIONAL_SET_ENABLE)
+				val |= fractional->enable;
 			CCU_WRITE(sc, fractional->reg, val);
 			return 0;
 		}

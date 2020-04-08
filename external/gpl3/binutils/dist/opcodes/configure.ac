@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -51,8 +51,6 @@ AC_ARG_ENABLE(targets,
 esac])dnl
 
 AM_BINUTILS_WARNINGS
-ACX_PROG_CC_WARNING_OPTS([-Wno-missing-field-initializers],
-			 [NO_WMISSING_FIELD_INITIALIZERS])
 
 AC_CONFIG_HEADERS(config.h:config.in)
 
@@ -111,11 +109,17 @@ AC_ARG_ENABLE(cgen-maint,
   yes)	cgen_maint=yes ;;
   no)	cgen_maint=no ;;
   *)
-	# argument is cgen install directory (not implemented yet).
-	# Having a `share' directory might be more appropriate for the .scm,
-	# .cpu, etc. files.
+	# Argument is a directory where cgen can be found.  In some
+	# future world cgen could be installable, but right now this
+	# is not the case.  Instead we assume the directory is a path
+	# to the cgen source tree.
 	cgen_maint=yes
-	cgendir=${cgen_maint}/lib/cgen
+        if test -r ${enableval}/iformat.scm; then
+          # This looks like a cgen source tree.
+	  cgendir=${enableval}
+        else
+	  AC_MSG_ERROR(${enableval} doesn't look like a cgen source tree)
+        fi
 	;;
 esac])dnl
 AM_CONDITIONAL(CGEN_MAINT, test x${cgen_maint} = xyes)
@@ -260,6 +264,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_cr16_arch)		ta="$ta cr16-dis.lo cr16-opc.lo" ;;
 	bfd_cris_arch)		ta="$ta cris-dis.lo cris-opc.lo cgen-bitset.lo" ;;
 	bfd_crx_arch)		ta="$ta crx-dis.lo crx-opc.lo" ;;
+	bfd_csky_arch)		ta="$ta csky-dis.lo" ;;
 	bfd_d10v_arch)		ta="$ta d10v-dis.lo d10v-opc.lo" ;;
 	bfd_d30v_arch)		ta="$ta d30v-dis.lo d30v-opc.lo" ;;
 	bfd_dlx_arch)		ta="$ta dlx-dis.lo" ;;
@@ -282,7 +287,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_m68hc12_arch)	ta="$ta m68hc11-dis.lo m68hc11-opc.lo" ;;
 	bfd_m9s12x_arch)	ta="$ta m68hc11-dis.lo m68hc11-opc.lo" ;;
 	bfd_m9s12xg_arch)	ta="$ta m68hc11-dis.lo m68hc11-opc.lo" ;;
-	bfd_s12z_arch)	ta="$ta s12z-dis.lo m68hc11-opc.lo" ;;
+	bfd_s12z_arch)		ta="$ta s12z-dis.lo s12z-opc.lo" ;;
 	bfd_m68k_arch)		ta="$ta m68k-dis.lo m68k-opc.lo" ;;
 	bfd_mcore_arch)		ta="$ta mcore-dis.lo" ;;
 	bfd_mep_arch)		ta="$ta mep-asm.lo mep-desc.lo mep-dis.lo mep-ibld.lo mep-opc.lo" using_cgen=yes ;;
@@ -319,7 +324,6 @@ if test x${all_targets} = xfalse ; then
 	bfd_tic4x_arch)		ta="$ta tic4x-dis.lo" ;;
 	bfd_tic54x_arch)	ta="$ta tic54x-dis.lo tic54x-opc.lo" ;;
 	bfd_tic6x_arch)		ta="$ta tic6x-dis.lo" ;;
-	bfd_tic80_arch)		ta="$ta tic80-dis.lo tic80-opc.lo" ;;
 	bfd_tilegx_arch)	ta="$ta tilegx-dis.lo tilegx-opc.lo" ;;
 	bfd_tilepro_arch)	ta="$ta tilepro-dis.lo tilepro-opc.lo" ;;
 	bfd_v850_arch)		ta="$ta v850-opc.lo v850-dis.lo" ;;
@@ -335,6 +339,7 @@ if test x${all_targets} = xfalse ; then
 	bfd_xtensa_arch)	ta="$ta xtensa-dis.lo" ;;
 	bfd_z80_arch)		ta="$ta z80-dis.lo" ;;
 	bfd_z8k_arch)		ta="$ta z8k-dis.lo" ;;
+	bfd_bpf_arch)		ta="$ta bpf-asm.lo bpf-desc.lo bpf-dis.lo bpf-ibld.lo bpf-opc.lo" using_cgen=yes ;;
 
 	"")			;;
 	*)		AC_MSG_ERROR(*** unknown target architecture $arch) ;;

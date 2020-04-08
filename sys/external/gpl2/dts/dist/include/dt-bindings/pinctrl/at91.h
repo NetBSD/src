@@ -1,11 +1,10 @@
-/*	$NetBSD: at91.h,v 1.1.1.1.12.1 2019/06/10 22:08:57 christos Exp $	*/
+/*	$NetBSD: at91.h,v 1.1.1.1.12.2 2020/04/08 14:08:47 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * This header provides constants for most at91 pinctrl bindings.
  *
  * Copyright (C) 2013 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
- *
- * GPLv2 only
  */
 
 #ifndef __DT_BINDINGS_AT91_PINCTRL_H__
@@ -30,8 +29,8 @@
 #define AT91_PINCTRL_DRIVE_STRENGTH_MED			(0x2 << 5)
 #define AT91_PINCTRL_DRIVE_STRENGTH_HI			(0x3 << 5)
 
-#define AT91_PINCTRL_SLEWRATE_DIS	(0x0 << 9)
-#define AT91_PINCTRL_SLEWRATE_ENA	(0x1 << 9)
+#define AT91_PINCTRL_SLEWRATE_ENA	(0x0 << 9)
+#define AT91_PINCTRL_SLEWRATE_DIS	(0x1 << 9)
 
 #define AT91_PIOA	0
 #define AT91_PIOB	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i-h3-ccu.h,v 1.1.1.3 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: sun8i-h3-ccu.h,v 1.1.1.3.2.1 2020/04/08 14:08:45 martin Exp $	*/
 
 /*
  * Copyright (C) 2016 Maxime Ripard <maxime.ripard@free-electrons.com>
@@ -145,7 +145,7 @@
 #define CLK_AVS			110
 #define CLK_HDMI		111
 #define CLK_HDMI_DDC		112
-
+#define CLK_MBUS		113
 #define CLK_GPU			114
 
 /* New clocks imported in H5 */

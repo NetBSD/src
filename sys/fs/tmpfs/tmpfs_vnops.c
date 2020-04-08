@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.133 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.133.10.1 2020/04/08 14:08:50 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.133 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.133.10.1 2020/04/08 14:08:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1040,6 +1040,7 @@ tmpfs_inactive(void *v)
 	} */ *ap = v;
 	vnode_t *vp = ap->a_vp;
 	tmpfs_node_t *node;
+	int error = 0;
 
 	KASSERT(VOP_ISLOCKED(vp));
 
@@ -1049,12 +1050,21 @@ tmpfs_inactive(void *v)
 		 * Mark node as dead by setting its generation to zero.
 		 */
 		atomic_and_32(&node->tn_gen, ~TMPFS_NODE_GEN_MASK);
+
+		/*
+		 * If the file has been deleted, truncate it, otherwise VFS
+		 * will quite rightly try to write back dirty data, which in
+		 * the case of tmpfs/UAO means needless page deactivations.
+		 */
+		if (vp->v_type == VREG) {
+			error = tmpfs_reg_resize(vp, 0);
+		}
 		*ap->a_recycle = true;
 	} else {
 		*ap->a_recycle = false;
 	}
 
-	return 0;
+	return error;
 }
 
 int
@@ -1164,14 +1174,14 @@ tmpfs_getpages(void *v)
 	struct uvm_object *uobj;
 
 	KASSERT(vp->v_type == VREG);
-	KASSERT(mutex_owned(vp->v_interlock));
+	KASSERT(rw_lock_held(vp->v_uobj.vmobjlock));
 
 	/*
 	 * Currently, PGO_PASTEOF is not supported.
 	 */
 	if (vp->v_size <= offset + (centeridx << PAGE_SHIFT)) {
 		if ((flags & PGO_LOCKED) == 0)
-			mutex_exit(vp->v_interlock);
+			rw_exit(vp->v_uobj.vmobjlock);
 		return EINVAL;
 	}
 
@@ -1182,7 +1192,10 @@ tmpfs_getpages(void *v)
 	if ((flags & PGO_LOCKED) != 0)
 		return EBUSY;
 
-	if (vdead_check(vp, VDEAD_NOWAIT) != 0)
+	mutex_enter(vp->v_interlock);
+	error = vdead_check(vp, VDEAD_NOWAIT);
+	mutex_exit(vp->v_interlock);
+	if (error != 0)
 		return ENOENT;
 
 	node = VP_TO_TMPFS_NODE(vp);
@@ -1211,7 +1224,7 @@ tmpfs_getpages(void *v)
 	if (pgs) {
 		memset(pgs, 0, sizeof(struct vm_pages *) * npages);
 	}
-	KASSERT(vp->v_interlock == uobj->vmobjlock);
+	KASSERT(vp->v_uobj.vmobjlock == uobj->vmobjlock);
 
 	error = (*uobj->pgops->pgo_get)(uobj, offset, pgs, &npages, centeridx,
 	    access_type, advice, flags | PGO_ALLPAGES);
@@ -1243,17 +1256,17 @@ tmpfs_putpages(void *v)
 	struct uvm_object *uobj;
 	int error;
 
-	KASSERT(mutex_owned(vp->v_interlock));
+	KASSERT(rw_write_held(vp->v_uobj.vmobjlock));
 
 	if (vp->v_type != VREG) {
-		mutex_exit(vp->v_interlock);
+		rw_exit(vp->v_uobj.vmobjlock);
 		return 0;
 	}
 
 	node = VP_TO_TMPFS_NODE(vp);
 	uobj = node->tn_spec.tn_reg.tn_aobj;
 
-	KASSERT(vp->v_interlock == uobj->vmobjlock);
+	KASSERT(vp->v_uobj.vmobjlock == uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_put)(uobj, offlo, offhi, flags);
 
 	/* XXX mtime */

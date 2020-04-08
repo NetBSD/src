@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.5.2.2 2019/06/10 22:03:23 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.5.2.3 2020/04/08 14:07:05 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -103,6 +103,7 @@ add_name(struct dlz_example_data *state, struct record *list,
 	int first_empty = -1;
 
 	for (i = 0; i < MAX_RECORDS; i++) {
+		INSIST(list[i].name != NULL);
 		if (first_empty == -1 && strlen(list[i].name) == 0U) {
 			first_empty = i;
 		}

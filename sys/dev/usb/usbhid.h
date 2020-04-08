@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.h,v 1.17.4.1 2019/06/10 22:07:35 christos Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.17.4.2 2020/04/08 14:08:14 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
 /*
@@ -36,6 +36,7 @@
 #define _DEV_USB_USBHID_H_
 
 #include <dev/hid/hid.h>
+#include <sys/ioccom.h>
 
 #define UR_GET_HID_DESCRIPTOR	0x06
 #define  UDESC_HID		0x21
@@ -65,5 +66,8 @@ typedef struct usb_hid_descriptor {
 #define UHID_INPUT_REPORT 0x01
 #define UHID_OUTPUT_REPORT 0x02
 #define UHID_FEATURE_REPORT 0x03
+
+#define USB_HID_GET_RAW	_IOR('h', 1, int)
+#define USB_HID_SET_RAW	_IOW('h', 2, int)
 
 #endif /* _DEV_USB_USBHID_H_ */

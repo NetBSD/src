@@ -1,4 +1,4 @@
-/*	$NetBSD: t_builtin.c,v 1.3.14.1 2019/06/10 22:10:08 christos Exp $	*/
+/*	$NetBSD: t_builtin.c,v 1.3.14.2 2020/04/08 14:09:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.  All rights reserved.
@@ -140,6 +140,7 @@ ATF_TC_HEAD(disabledstat, tc)
 ATF_TC_BODY(disabledstat, tc)
 {
 	modstat_t *ms;
+	modstat_t m;
 	struct iovec iov;
 	size_t len;
 	int count;
@@ -171,8 +172,9 @@ ATF_TC_BODY(disabledstat, tc)
 	count = *(int *)iov.iov_base;
 	ms = (modstat_t *)((char *)iov.iov_base + sizeof(int));
 	while ( count ) {
-		if (strcmp(ms->ms_name, kernfs) == 0) {
-			ATF_REQUIRE_EQ(ms->ms_refcnt, (u_int)-1);
+		memcpy(&m, ms, sizeof(m));		
+		if (strcmp(m.ms_name, kernfs) == 0) {
+			ATF_REQUIRE_EQ(m.ms_refcnt, (u_int)-1);
 			found = true;
 			break;
 		}

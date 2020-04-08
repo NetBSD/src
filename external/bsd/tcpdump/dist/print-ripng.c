@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ripng.c,v 1.7 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-ripng.c,v 1.7.4.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: IPv6 Routing Information Protocol (RIPng) printer */
@@ -110,6 +110,7 @@ rip6_entry_print(netdissect_options *ndo, register const struct netinfo6 *ni, in
 	return l;
 }
 
+UNALIGNED_OK
 void
 ripng_print(netdissect_options *ndo, const u_char *dat, unsigned int length)
 {

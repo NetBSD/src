@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.9 2018/06/10 14:59:23 jakllsch Exp $	*/
+/*	$NetBSD: viomb.c,v 1.9.2.1 2020/04/08 14:08:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.9 2018/06/10 14:59:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.9.2.1 2020/04/08 14:08:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ inflate(struct viomb_softc *sc)
 	b->bl_nentries = nvpages;
 	i = 0;
 	TAILQ_FOREACH(p, &b->bl_pglist, pageq.queue) {
-		b->bl_pages[i++] = p->phys_addr / VIRTIO_PAGE_SIZE;
+		b->bl_pages[i++] = VM_PAGE_TO_PHYS(p) / VIRTIO_PAGE_SIZE;
 	}
 	KASSERT(i == nvpages);
 
@@ -387,7 +387,7 @@ deflate(struct viomb_softc *sc)
 			break;
 		TAILQ_REMOVE(&sc->sc_balloon_pages, p, pageq.queue);
 		TAILQ_INSERT_TAIL(&b->bl_pglist, p, pageq.queue);
-		b->bl_pages[i] = p->phys_addr / VIRTIO_PAGE_SIZE;
+		b->bl_pages[i] = VM_PAGE_TO_PHYS(p) / VIRTIO_PAGE_SIZE;
 	}
 
 	if (virtio_enqueue_prep(vsc, vq, &slot) != 0) {

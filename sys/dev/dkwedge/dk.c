@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.97 2018/05/12 10:33:06 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.97.2.1 2020/04/08 14:08:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.97 2018/05/12 10:33:06 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.97.2.1 2020/04/08 14:08:03 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1152,21 +1152,23 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 static int
 dklastclose(struct dkwedge_softc *sc)
 {
-	int error = 0, doclose;
+	struct vnode *vp;
+	int error = 0;
 
-	doclose = 0;
+	vp = NULL;
 	if (sc->sc_parent->dk_rawopens > 0) {
-		if (--sc->sc_parent->dk_rawopens == 0)
-			doclose = 1;
+		if (--sc->sc_parent->dk_rawopens == 0) {
+			KASSERT(sc->sc_parent->dk_rawvp != NULL);
+			vp = sc->sc_parent->dk_rawvp;
+			sc->sc_parent->dk_rawvp = NULL;
+		}
 	}
 
 	mutex_exit(&sc->sc_parent->dk_rawlock);
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
-	if (doclose) {
-		KASSERT(sc->sc_parent->dk_rawvp != NULL);
-		dk_close_parent(sc->sc_parent->dk_rawvp, FREAD | FWRITE);
-		sc->sc_parent->dk_rawvp = NULL;
+	if (vp) {
+		dk_close_parent(vp, FREAD | FWRITE);
 	}
 
 	return error;
@@ -1501,7 +1503,24 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		break;
 	    }
+	case DIOCGSECTORALIGN:
+	    {
+		struct disk_sectoralign *dsa = data;
+		uint32_t r;
 
+		error = VOP_IOCTL(sc->sc_parent->dk_rawvp, cmd, dsa, flag,
+		    l != NULL ? l->l_cred : NOCRED);
+		if (error)
+			break;
+
+		r = sc->sc_offset % dsa->dsa_alignment;
+		if (r < dsa->dsa_firstaligned)
+			dsa->dsa_firstaligned = dsa->dsa_firstaligned - r;
+		else
+			dsa->dsa_firstaligned = (dsa->dsa_firstaligned +
+			    dsa->dsa_alignment) - r;
+		break;
+	    }
 	default:
 		error = ENOTTY;
 	}
@@ -1605,7 +1624,8 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	/* Our content type is static, no need to open the device. */
 
 	if (strcmp(sc->sc_ptype, DKW_PTYPE_SWAP) != 0 &&
-	    strcmp(sc->sc_ptype, DKW_PTYPE_RAID) != 0) {
+	    strcmp(sc->sc_ptype, DKW_PTYPE_RAID) != 0 &&
+	    strcmp(sc->sc_ptype, DKW_PTYPE_CGD) != 0) {
 		rv = ENXIO;
 		goto out;
 	}

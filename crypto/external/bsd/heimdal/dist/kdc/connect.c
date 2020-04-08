@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.3 2018/04/29 05:36:04 spz Exp $	*/
+/*	$NetBSD: connect.c,v 1.3.2.1 2020/04/08 14:03:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -517,15 +517,21 @@ static int
 de_http(char *buf)
 {
     unsigned char *p, *q;
-    for(p = q = (unsigned char *)buf; *p; p++, q++) {
-	if(*p == '%' && isxdigit(p[1]) && isxdigit(p[2])) {
-	    unsigned int x;
-	    if(sscanf((char *)p + 1, "%2x", &x) != 1)
+    unsigned int x;
+
+    for (p = q = (unsigned char *)buf; *p; p++, q++) {
+	if (*p == '%') {
+	    if (!(isxdigit(p[1]) && isxdigit(p[2])))
 		return -1;
+
+	    if (sscanf((char *)p + 1, "%2x", &x) != 1)
+		return -1;
+
 	    *q = x;
 	    p += 2;
-	} else
+	} else {
 	    *q = *p;
+	}
     }
     *q = '\0';
     return 0;
@@ -1056,7 +1062,7 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
         bonjour_pid = (pid_t)-1;
         return 0;
     } else {
-        pids[i] = (pid_t)-1;
+        pids[i] = (pid_t)0;
         return 1;
     }
 }
@@ -1128,7 +1134,7 @@ start_kdc(krb5_context context,
      * on their end and be able to cleanly exit.
      */
 
-    if (socketpair(PF_LOCAL, SOCK_STREAM, 0, islive) == -1)
+    if (socketpair(PF_UNIX, SOCK_STREAM, 0, islive) == -1)
 	krb5_errx(context, 1, "socketpair");
     socket_set_nonblocking(islive[1], 1);
 #endif

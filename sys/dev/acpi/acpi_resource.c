@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.37.18.1 2019/06/10 22:07:05 christos Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.37.18.2 2020/04/08 14:08:02 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.37.18.1 2019/06/10 22:07:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.37.18.2 2020/04/08 14:08:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,7 +147,8 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 		if (ops->memory)
 			(*ops->memory)(arg->dev, arg->context,
 			    res->Data.FixedMemory32.Address,
-			    res->Data.FixedMemory32.AddressLength);
+			    res->Data.FixedMemory32.AddressLength,
+			    res->Data.FixedMemory32.Address);
 		break;
 
 	case ACPI_RESOURCE_TYPE_MEMORY32:
@@ -160,7 +161,8 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 			if (ops->memory)
 				(*ops->memory)(arg->dev, arg->context,
 				    res->Data.Memory32.Minimum,
-				    res->Data.Memory32.AddressLength);
+				    res->Data.Memory32.AddressLength,
+				    res->Data.Memory32.Minimum);
 		} else {
 			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 					     "Memory32 0x%x-0x%x/%u\n",
@@ -186,7 +188,8 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 			if (ops->memory)
 				(*ops->memory)(arg->dev, arg->context,
 				    res->Data.Memory24.Minimum,
-				    res->Data.Memory24.AddressLength);
+				    res->Data.Memory24.AddressLength,
+				    res->Data.Memory24.Minimum);
 		} else {
 			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 					     "Memory24 0x%x-0x%x/%u\n",
@@ -255,7 +258,9 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 				if (ops->memory)
 					(*ops->memory)(arg->dev, arg->context,
 					    res->Data.Address32.Address.Minimum,
-					    res->Data.Address32.Address.AddressLength);
+					    res->Data.Address32.Address.AddressLength,
+					    res->Data.Address32.Address.Minimum +
+					        res->Data.Address32.Address.TranslationOffset);
 			} else {
 				if (ops->memrange)
 					(*ops->memrange)(arg->dev, arg->context,
@@ -308,7 +313,9 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 				if (ops->memory)
 					(*ops->memory)(arg->dev, arg->context,
 					    res->Data.Address64.Address.Minimum,
-					    res->Data.Address64.Address.AddressLength);
+					    res->Data.Address64.Address.AddressLength,
+					    res->Data.Address64.Address.Minimum +
+					        res->Data.Address64.Address.TranslationOffset);
 			} else {
 				if (ops->memrange)
 					(*ops->memrange)(arg->dev, arg->context,
@@ -647,7 +654,7 @@ static void	acpi_res_parse_iorange(device_t, void *, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
 
 static void	acpi_res_parse_memory(device_t, void *, uint64_t,
-		    uint64_t);
+		    uint64_t, uint64_t);
 static void	acpi_res_parse_memrange(device_t, void *, uint64_t,
 		    uint64_t, uint64_t, uint64_t);
 
@@ -797,7 +804,7 @@ acpi_res_parse_iorange(device_t dev, void *context, uint32_t low,
 
 static void
 acpi_res_parse_memory(device_t dev, void *context, uint64_t base,
-    uint64_t length)
+    uint64_t length, uint64_t xbase)
 {
 	struct acpi_resources *res = context;
 	struct acpi_mem *ar;
@@ -813,6 +820,7 @@ acpi_res_parse_memory(device_t dev, void *context, uint64_t base,
 	ar->ar_index = res->ar_nmem++;
 	ar->ar_base = base;
 	ar->ar_length = length;
+	ar->ar_xbase = xbase;
 
 	SIMPLEQ_INSERT_TAIL(&res->ar_mem, ar, ar_list);
 }

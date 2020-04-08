@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.35.16.1 2019/06/10 22:07:04 christos Exp $ */
+/*      $NetBSD: clockctl.c,v 1.35.16.2 2020/04/08 14:08:02 martin Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.16.1 2019/06/10 22:07:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.16.2 2020/04/08 14:08:02 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -90,13 +90,13 @@ clockctl_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	bool device_context;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_system_req)arg0;
+	req = (enum kauth_system_req)(uintptr_t)arg0;
 
 	if ((action != KAUTH_SYSTEM_TIME) ||
 	    (req != KAUTH_REQ_SYSTEM_TIME_SYSTEM))
 		return result;
 
-	device_context = (bool)arg3;
+	device_context = arg3 != NULL;
 
 	/* Device is controlled by permissions, so allow. */
 	if (device_context)

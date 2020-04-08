@@ -1,4 +1,4 @@
-#	$NetBSD: files.opencrypto,v 1.26.10.1 2019/06/10 22:09:49 christos Exp $
+#	$NetBSD: files.opencrypto,v 1.26.10.2 2020/04/08 14:08:59 martin Exp $
 #
 #
 
@@ -26,6 +26,7 @@ file	opencrypto/gmac.c		swcrypto
 defpseudo crypto: opencrypto
 file	opencrypto/cryptodev.c		crypto
 file	opencrypto/ocryptodev.c		compat_50 & crypto
+file	opencrypto/compat_crypto_50.c	compat_50 & crypto
 
 defflag opt_ocf.h	CRYPTO_DEBUG CRYPTO_TIMING
 defparam opt_ocf.h	CRYPTO_RET_Q_MAXLEN CRYPTO_RET_KQ_MAXLEN

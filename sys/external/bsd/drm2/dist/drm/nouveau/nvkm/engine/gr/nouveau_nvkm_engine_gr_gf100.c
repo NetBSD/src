@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.3.6.2 2019/06/10 22:08:18 christos Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.3.6.3 2020/04/08 14:08:25 martin Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,9 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.3.6.2 2019/06/10 22:08:18 christos Exp $");
-
-#include <linux/string.h>	/* XXX */
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.3.6.3 2020/04/08 14:08:25 martin Exp $");
 
 #include "gf100.h"
 #include "ctxgf100.h"

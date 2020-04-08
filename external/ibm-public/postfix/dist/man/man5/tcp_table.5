@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp_table.5,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: tcp_table.5,v 1.2.12.1 2020/04/08 14:06:51 martin Exp $
 .\"
 .TH TCP_TABLE 5 
 .ad
@@ -43,12 +43,17 @@ Send and receive operations must complete in 100 seconds.
 .nf
 .ad
 .fi
-Each request specifies a command, a lookup key, and possibly a
-lookup result.
+The tcp_table protocol supports only the lookup request.
+The request has the following form:
 .IP "\fBget\fR SPACE \fIkey\fR NEWLINE"
 Look up data under the specified key.
-.IP "\fBput\fR SPACE \fIkey\fR SPACE \fIvalue\fR NEWLINE"
-This request is currently not implemented.
+.PP
+Postfix will not generate partial search keys such as domain
+names without one or more subdomains, network addresses
+without one or more least\-significant octets, or email
+addresses without the localpart, address extension or domain
+portion. This behavior is also found with cidr:, pcre:, and
+regexp: tables.
 .SH "REPLY FORMAT"
 .na
 .nf
@@ -58,7 +63,6 @@ Each reply specifies a status code and text. Replies must be no
 longer than 4096 characters including the newline terminator.
 .IP "\fB500\fR SPACE \fItext\fR NEWLINE"
 In case of a lookup request, the requested data does not exist.
-In case of an update request, the request was rejected.
 The text describes the nature of the problem.
 .IP "\fB400\fR SPACE \fItext\fR NEWLINE"
 This indicates an error condition. The text describes the nature of

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_kern_proc.c,v 1.4.4.2 2019/06/10 22:07:02 christos Exp $	*/
+/*	$NetBSD: netbsd32_kern_proc.c,v 1.4.4.3 2020/04/08 14:08:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_kern_proc.c,v 1.4.4.2 2019/06/10 22:07:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_kern_proc.c,v 1.4.4.3 2020/04/08 14:08:01 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -139,9 +139,8 @@ netbsd32_kern_proc_32_init(void)
 {
 
 #if !defined(_RUMPSERVER)
-	MODULE_HOOK_SET(kern_proc32_copyin_hook, "kern_proc_32",
-	    copyin_psstrings_32);
-	MODULE_HOOK_SET(kern_proc32_base_hook, "kern_proc_32", get_base32);
+	MODULE_HOOK_SET(kern_proc32_copyin_hook, copyin_psstrings_32);
+	MODULE_HOOK_SET(kern_proc32_base_hook, get_base32);
 #endif
 }
 

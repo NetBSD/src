@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.111 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.111.4.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.111 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.111.4.1 2020/04/08 14:09:04 martin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.111 2017/10/28 00:37:13 pgoyette Exp
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 
@@ -77,7 +78,7 @@ const struct uvm_pagerops * const uvmpagerops[] = {
  */
 
 struct vm_map *pager_map;		/* XXX */
-kmutex_t pager_map_wanted_lock;
+kmutex_t pager_map_wanted_lock __cacheline_aligned;
 bool pager_map_wanted;	/* locked by pager map */
 static vaddr_t emergva;
 static int emerg_ncolors;
@@ -145,12 +146,6 @@ uvm_pager_init(void)
 	uvm_pager_realloc_emerg();
 
 	/*
-	 * init ASYNC I/O queue
-	 */
-
-	TAILQ_INIT(&uvm.aio_done);
-
-	/*
 	 * call pager init functions
 	 */
 	for (lcv = 0 ; lcv < __arraycount(uvmpagerops); lcv++) {
@@ -175,10 +170,10 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	struct vm_page *pp;
 	vm_prot_t prot;
 	const bool pdaemon = (curlwp == uvm.pagedaemon_lwp);
-	const u_int first_color = VM_PGCOLOR_BUCKET(*pps);
+	const u_int first_color = VM_PGCOLOR(*pps);
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(pps=0x%#jx, npages=%jd, first_color=%ju)",
+	UVMHIST_LOG(maphist,"(pps=%#jx, npages=%jd, first_color=%ju)",
 		(uintptr_t)pps, npages, first_color, 0);
 
 	/*
@@ -235,7 +230,7 @@ enter:
 	}
 	pmap_update(vm_map_pmap(pager_map));
 
-	UVMHIST_LOG(maphist, "<- done (KVA=0x%jx)", kva,0,0,0);
+	UVMHIST_LOG(maphist, "<- done (KVA=%#jx)", kva,0,0,0);
 	return(kva);
 }
 
@@ -253,7 +248,7 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	struct vm_map_entry *entries;
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, " (kva=0x%jx, npages=%jd)", kva, npages,0,0);
+	UVMHIST_LOG(maphist, " (kva=%#jx, npages=%jd)", kva, npages,0,0);
 
 	/*
 	 * duplicate uvm_unmap, but add in pager_map_wanted handling.
@@ -285,26 +280,12 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
 }
 
-/*
- * interrupt-context iodone handler for single-buf i/os
- * or the top-level buf of a nested-buf i/o.
- */
-
-void
-uvm_aio_biodone(struct buf *bp)
-{
-	/* reset b_iodone for when this is a single-buf i/o. */
-	bp->b_iodone = uvm_aio_aiodone;
-
-	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work, NULL);
-}
-
 void
 uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 {
 	struct uvm_object *uobj;
 	struct vm_page *pg;
-	kmutex_t *slock;
+	krwlock_t *slock;
 	int pageout_done;	/* number of PG_PAGEOUT pages processed */
 	int swslot;
 	int i;
@@ -317,12 +298,11 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 	uobj = NULL;
 	pg = pgs[0];
 	swap = (pg->uanon != NULL && pg->uobject == NULL) ||
-		(pg->pqflags & PQ_AOBJ) != 0;
+		(pg->flags & PG_AOBJ) != 0;
 	if (!swap) {
 		uobj = pg->uobject;
 		slock = uobj->vmobjlock;
-		mutex_enter(slock);
-		mutex_enter(&uvm_pageqlock);
+		rw_enter(slock, RW_WRITER);
 	} else {
 #if defined(VMSWAP)
 		if (error) {
@@ -360,13 +340,19 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 			} else {
 				slock = pg->uanon->an_lock;
 			}
-			mutex_enter(slock);
-			mutex_enter(&uvm_pageqlock);
+			rw_enter(slock, RW_WRITER);
 			anon_disposed = (pg->flags & PG_RELEASED) != 0;
 			KASSERT(!anon_disposed || pg->uobject != NULL ||
 			    pg->uanon->an_ref == 0);
 		}
 #endif /* defined(VMSWAP) */
+
+		if (write && uobj != NULL) {
+			KASSERT(radix_tree_get_tag(&uobj->uo_pages,
+			    pg->offset >> PAGE_SHIFT, UVM_PAGE_WRITEBACK_TAG));
+			radix_tree_clear_tag(&uobj->uo_pages,
+			    pg->offset >> PAGE_SHIFT, UVM_PAGE_WRITEBACK_TAG);
+		}
 
 		/*
 		 * process errors.  for reads, just mark the page to be freed.
@@ -387,8 +373,10 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 					pg->flags &= ~PG_PAGEOUT;
 					pageout_done++;
 				}
-				pg->flags &= ~PG_CLEAN;
+				uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
+				uvm_pagelock(pg);
 				uvm_pageactivate(pg);
+				uvm_pageunlock(pg);
 				slot = 0;
 			} else
 				slot = SWSLOT_BAD;
@@ -412,20 +400,19 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		/*
 		 * if the page is PG_FAKE, this must have been a read to
 		 * initialize the page.  clear PG_FAKE and activate the page.
-		 * we must also clear the pmap "modified" flag since it may
-		 * still be set from the page's previous identity.
 		 */
 
 		if (pg->flags & PG_FAKE) {
 			KASSERT(!write);
 			pg->flags &= ~PG_FAKE;
 #if defined(READAHEAD_STATS)
-			pg->pqflags |= PQ_READAHEAD;
+			pg->flags |= PG_READAHEAD;
 			uvm_ra_total.ev_count++;
 #endif /* defined(READAHEAD_STATS) */
-			KASSERT((pg->flags & PG_CLEAN) != 0);
+			KASSERT(uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN);
+			uvm_pagelock(pg);
 			uvm_pageenqueue(pg);
-			pmap_clear_modify(pg);
+			uvm_pageunlock(pg);
 		}
 
 		/*
@@ -436,7 +423,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		if (pg->flags & PG_PAGEOUT) {
 			pg->flags &= ~PG_PAGEOUT;
 			pageout_done++;
-			uvmexp.pdfreed++;
+			atomic_inc_uint(&uvmexp.pdfreed);
 			pg->flags |= PG_RELEASED;
 		}
 
@@ -447,12 +434,10 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 
 		if (swap) {
 			if (pg->uobject == NULL && anon_disposed) {
-				mutex_exit(&uvm_pageqlock);
 				uvm_anon_release(pg->uanon);
 			} else {
 				uvm_page_unbusy(&pg, 1);
-				mutex_exit(&uvm_pageqlock);
-				mutex_exit(slock);
+				rw_exit(slock);
 			}
 		}
 #endif /* defined(VMSWAP) */
@@ -460,26 +445,22 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 	uvm_pageout_done(pageout_done);
 	if (!swap) {
 		uvm_page_unbusy(pgs, npages);
-		mutex_exit(&uvm_pageqlock);
-		mutex_exit(slock);
+		rw_exit(slock);
 	} else {
 #if defined(VMSWAP)
 		KASSERT(write);
 
 		/* these pages are now only in swap. */
-		mutex_enter(&uvm_swap_data_lock);
 		if (error != ENOMEM) {
-			KASSERT(uvmexp.swpgonly + npages <= uvmexp.swpginuse);
-			uvmexp.swpgonly += npages;
+			atomic_add_int(&uvmexp.swpgonly, npages);
 		}
-		mutex_exit(&uvm_swap_data_lock);
 		if (error) {
 			if (error != ENOMEM)
 				uvm_swap_markbad(swslot, npages);
 			else
 				uvm_swap_free(swslot, npages);
 		}
-		uvmexp.pdpending--;
+		atomic_dec_uint(&uvmexp.pdpending);
 #endif /* defined(VMSWAP) */
 	}
 }

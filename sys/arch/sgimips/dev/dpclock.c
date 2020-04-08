@@ -1,4 +1,4 @@
-/*	$NetBSD: dpclock.c,v 1.6 2015/02/18 16:47:58 macallan Exp $	*/
+/*	$NetBSD: dpclock.c,v 1.6.18.1 2020/04/08 14:07:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Erik Reid
@@ -60,8 +60,10 @@ struct dpclock_softc {
 
 static int	dpclock_match(device_t, cfdata_t, void *);
 static void	dpclock_attach(device_t, device_t, void *);
-static int	dpclock_gettime(struct todr_chip_handle *, struct timeval *);
-static int	dpclock_settime(struct todr_chip_handle *, struct timeval *);
+static int	dpclock_gettime_ymdhms(struct todr_chip_handle *,
+				       struct clock_ymdhms *);
+static int	dpclock_settime_ymdhms(struct todr_chip_handle *,
+				       struct clock_ymdhms *);
 
 CFATTACH_DECL_NEW(dpclock, sizeof(struct dpclock_softc),
     dpclock_match, dpclock_attach, NULL, NULL);
@@ -127,8 +129,10 @@ dpclock_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_todrch.cookie = sc;
-	sc->sc_todrch.todr_gettime = dpclock_gettime;
-	sc->sc_todrch.todr_settime = dpclock_settime;
+	sc->sc_todrch.todr_gettime = NULL;
+	sc->sc_todrch.todr_settime = NULL;
+	sc->sc_todrch.todr_gettime_ymdhms = dpclock_gettime_ymdhms;
+	sc->sc_todrch.todr_settime_ymdhms = dpclock_settime_ymdhms;
 	sc->sc_todrch.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todrch);
@@ -138,10 +142,9 @@ dpclock_attach(device_t parent, device_t self, void *aux)
  * Get the time of day, based on the clock's value and/or the base value.
  */
 static int 
-dpclock_gettime(struct todr_chip_handle *todrch, struct timeval *tv)
+dpclock_gettime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 {
 	struct dpclock_softc *sc = (struct dpclock_softc *)todrch->cookie;
-	struct clock_ymdhms dt;
 	int s;
 	u_int8_t i, j;
 	u_int8_t regs[32];
@@ -156,11 +159,11 @@ dpclock_gettime(struct todr_chip_handle *todrch, struct timeval *tv)
 	for (i = 0; i < 32; i++)
 		regs[i] = readreg(sc, i);
 
-	dt.dt_sec = bcdtobin(regs[DP8573A_SAVE_SEC]);
-	dt.dt_min = bcdtobin(regs[DP8573A_SAVE_MIN]);
+	dt->dt_sec = bcdtobin(regs[DP8573A_SAVE_SEC]);
+	dt->dt_min = bcdtobin(regs[DP8573A_SAVE_MIN]);
 
 	if (regs[DP8573A_RT_MODE] & DP8573A_RT_MODE_1224) {
-		dt.dt_hour = bcdtobin(regs[DP8573A_SAVE_HOUR] &
+		dt->dt_hour = bcdtobin(regs[DP8573A_SAVE_HOUR] &
 						DP8573A_HOUR_12HR_MASK) +
 		    ((regs[DP8573A_SAVE_HOUR] & DP8573A_RT_MODE_1224) ? 0 : 12);
 
@@ -170,27 +173,17 @@ dpclock_gettime(struct todr_chip_handle *todrch, struct timeval *tv)
 		 * 24 to hour 0.
 		 */
 
-		if (dt.dt_hour == 24)
-			dt.dt_hour = 0;
+		if (dt->dt_hour == 24)
+			dt->dt_hour = 0;
 	} else {
-		dt.dt_hour = bcdtobin(regs[DP8573A_SAVE_HOUR] &
+		dt->dt_hour = bcdtobin(regs[DP8573A_SAVE_HOUR] &
 							DP8573A_HOUR_24HR_MASK);
 	}
 
-	dt.dt_wday = bcdtobin(regs[DP8573A_DOW]);    /* Not from time saved */
-	dt.dt_day = bcdtobin(regs[DP8573A_SAVE_DOM]);
-	dt.dt_mon = bcdtobin(regs[DP8573A_SAVE_MONTH]);
-	dt.dt_year = FROM_IRIX_YEAR(bcdtobin(regs[DP8573A_YEAR]));
-
-	/* simple sanity checks */
-	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
-	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
-		return (EIO);
-
-	tv->tv_sec = (long)clock_ymdhms_to_secs(&dt);
-	if (tv->tv_sec == -1)
-		return (ERANGE);
-	tv->tv_usec = 0;
+	dt->dt_wday = bcdtobin(regs[DP8573A_DOW]);    /* Not from time saved */
+	dt->dt_day = bcdtobin(regs[DP8573A_SAVE_DOM]);
+	dt->dt_mon = bcdtobin(regs[DP8573A_SAVE_MONTH]);
+	dt->dt_year = FROM_IRIX_YEAR(bcdtobin(regs[DP8573A_YEAR]));
 
 	return (0);
 }
@@ -199,15 +192,12 @@ dpclock_gettime(struct todr_chip_handle *todrch, struct timeval *tv)
  * Reset the TODR based on the time value.
  */
 static int
-dpclock_settime(struct todr_chip_handle *todrch, struct timeval *tv)
+dpclock_settime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 {
 	struct dpclock_softc *sc = (struct dpclock_softc *)todrch->cookie;
-	struct clock_ymdhms dt;
 	int s;
 	u_int8_t i, j;
 	u_int8_t regs[32];
-
-	clock_secs_to_ymdhms((time_t)(tv->tv_sec + (tv->tv_usec > 500000)),&dt);
 
 	s = splhigh();
 	i = readreg(sc, DP8573A_TIMESAVE_CTL);
@@ -220,13 +210,13 @@ dpclock_settime(struct todr_chip_handle *todrch, struct timeval *tv)
 		regs[i] = readreg(sc, i);
 
 	regs[DP8573A_SUBSECOND] = 0;
-	regs[DP8573A_SECOND] = bintobcd(dt.dt_sec);
-	regs[DP8573A_MINUTE] = bintobcd(dt.dt_min);
-	regs[DP8573A_HOUR] = bintobcd(dt.dt_hour) & DP8573A_HOUR_24HR_MASK;
-	regs[DP8573A_DOW] = bintobcd(dt.dt_wday);
-	regs[DP8573A_DOM] = bintobcd(dt.dt_day);
-	regs[DP8573A_MONTH] = bintobcd(dt.dt_mon);
-	regs[DP8573A_YEAR] = bintobcd(TO_IRIX_YEAR(dt.dt_year));
+	regs[DP8573A_SECOND] = bintobcd(dt->dt_sec);
+	regs[DP8573A_MINUTE] = bintobcd(dt->dt_min);
+	regs[DP8573A_HOUR] = bintobcd(dt->dt_hour) & DP8573A_HOUR_24HR_MASK;
+	regs[DP8573A_DOW] = bintobcd(dt->dt_wday);
+	regs[DP8573A_DOM] = bintobcd(dt->dt_day);
+	regs[DP8573A_MONTH] = bintobcd(dt->dt_mon);
+	regs[DP8573A_YEAR] = bintobcd(TO_IRIX_YEAR(dt->dt_year));
 
 	s = splhigh();
 	i = readreg(sc, DP8573A_RT_MODE);

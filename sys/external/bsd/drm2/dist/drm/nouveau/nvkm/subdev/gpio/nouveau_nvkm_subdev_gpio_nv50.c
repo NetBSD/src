@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_gpio_nv50.c,v 1.2.6.2 2019/06/10 22:08:22 christos Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_gpio_nv50.c,v 1.2.6.3 2020/04/08 14:08:25 martin Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_gpio_nv50.c,v 1.2.6.2 2019/06/10 22:08:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_gpio_nv50.c,v 1.2.6.3 2020/04/08 14:08:25 martin Exp $");
 
 #include "priv.h"
 
@@ -55,7 +55,7 @@ nv50_gpio_reset(struct nvkm_gpio *gpio, u8 match)
 
 		nvkm_gpio_set(gpio, 0, func, line, defs);
 
-		nvkm_mask(device, reg, 0x00010001 << lsh, val << lsh);
+		nvkm_mask(device, reg, 0x00010001U << lsh, val << lsh);
 	}
 }
 

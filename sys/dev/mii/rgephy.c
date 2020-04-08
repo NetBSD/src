@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.44.2.1 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.44.2.2 2020/04/08 14:08:08 martin Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.44.2.1 2019/06/10 22:07:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.44.2.2 2020/04/08 14:08:08 martin Exp $");
 
 
 /*
@@ -109,16 +109,17 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
-	int rev;
-	const char *sep = "";
 
-	rev = MII_REV(ma->mii_id2);
 	mpd = mii_phy_match(ma, rgephys);
 	aprint_naive(": Media interface\n");
 
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_funcs = &rgephy_funcs;
+	sc->mii_pdata = mii;
+	sc->mii_flags = ma->mii_flags;
+
 	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
 	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
 	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
@@ -128,49 +129,37 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 		if (sc->mii_mpd_rev != 0)
 			aprint_normal("%c",'@' + sc->mii_mpd_rev);
 		aprint_normal(" 1000BASE-T media interface\n");
-	} else
-		aprint_normal(": %s, rev. %d\n", mpd->mpd_name, rev);
-
-	sc->mii_pdata = mii;
-	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
-
-	sc->mii_funcs = &rgephy_funcs;
+	} else {
+		aprint_normal(": %s, rev. %d\n", mpd->mpd_name,
+		    sc->mii_mpd_rev);
+	}
 
 	prop_dictionary_get_bool(prop, "no-rx-delay", &rsc->mii_no_rx_delay);
-
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-#define	PRINT(n)	aprint_normal("%s%s", sep, (n)); sep = ", "
 
 #ifdef __FreeBSD__
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
 	    BMCR_LOOP | BMCR_S100);
 #endif
 
+	mii_lock(mii);
+
+	PHY_RESET(sc);
+
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
-	sc->mii_capabilities &= ~BMSR_ANEG;
+	/* RTL8169S does not report auto-sense; add manually.  */
+	sc->mii_capabilities |= BMSR_ANEG;
 
 	/*
 	 * FreeBSD does not check EXSTAT, but instead adds gigabit
 	 * media explicitly. Why?
 	 */
-	aprint_normal_dev(self, "");
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
+	mii_unlock(mii);
+
 	mii_phy_add_media(sc);
-
-	/* rtl8169S does not report auto-sense; add manually.  */
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst), MII_NMEDIA);
-	sep =", ";
-	PRINT("auto");
-
-#undef	ADD
-#undef	PRINT
-
-	rgephy_reset(sc);
-	aprint_normal("\n");
 }
 
 static int
@@ -178,6 +167,8 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg, speed, gig, anar;
+
+	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -350,6 +341,8 @@ rgephy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t gstat, bmsr, bmcr, physr, ssr;
+
+	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -631,6 +624,8 @@ rgephy_reset(struct mii_softc *sc)
 {
 	struct rgephy_softc *rsc = (struct rgephy_softc *)sc;
 	uint16_t ssr, phycr1;
+
+	KASSERT(mii_locked(sc->mii_pdata));
 
 	mii_phy_reset(sc);
 	DELAY(1000);

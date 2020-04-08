@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.25.54.1 2019/06/10 22:05:43 christos Exp $
+#	$NetBSD: majors.acorn32,v 1.25.54.2 2020/04/08 14:07:24 martin Exp $
 #
 # Device majors for acorn32
 #
@@ -71,7 +71,7 @@ device-major	clockctl	char 84			clockctl
 #device-major	obsolete	char 85			obsolete (systrace)
 device-major	ksyms		char 86			ksyms
 device-major	wsfont		char 87			wsfont
-device-major	nsmb		char 88			nsmb
+#device-major	obsolete	char 88			obsolete (nsmb)
 #device-major	obsolete	char 89			obsolete (pf)
 #device-major	obsolete	char 90			obsolete (opencrypto)
 

@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.8.2.1 2019/06/10 22:05:43 christos Exp $ */
+/* $NetBSD: types.h,v 1.8.2.2 2020/04/08 14:07:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -92,20 +92,19 @@ typedef __uint64_t __register_t;
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0
 
+#define __HAVE_ATOMIC64_OPS
+#define __HAVE_COMMON___TLS_GET_ADDR
+#define __HAVE_CPU_COUNTER
+#define __HAVE_CPU_DATA_FIRST
 #define __HAVE_FAST_SOFTINTS
+#define __HAVE_MINIMAL_EMUL
 #define __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define __HAVE_MM_MD_KERNACC
-#define __HAVE_CPU_COUNTER
-#define __HAVE_SYSCALL_INTERN
 #define __HAVE_NEW_STYLE_BUS_H
-#define __HAVE_MINIMAL_EMUL
-#define __HAVE_CPU_DATA_FIRST
-#define __HAVE_CPU_LWP_SETPRIVATE
-#define __HAVE___LWP_GETPRIVATE_FAST
-#define __HAVE_COMMON___TLS_GET_ADDR
-#define __HAVE_TLS_VARIANT_I
 #define __HAVE_OLD_DISKLABEL	/* compatibility */
-#define __HAVE_ATOMIC64_OPS
+#define __HAVE_SYSCALL_INTERN
+#define __HAVE_TLS_VARIANT_I
+#define __HAVE___LWP_GETPRIVATE_FAST
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #define PCU_FPU			0

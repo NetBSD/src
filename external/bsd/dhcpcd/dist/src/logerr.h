@@ -1,6 +1,6 @@
 /*
  * logerr: errx with logging
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -38,18 +38,44 @@
 #endif
 #endif /* !__printflike */
 
-__printflike(1, 2) typedef void logfunc_t(const char *, ...);
-
-__printflike(1, 2) void logdebug(const char *, ...);
-__printflike(1, 2) void logdebugx(const char *, ...);
-__printflike(1, 2) void loginfo(const char *, ...);
-__printflike(1, 2) void loginfox(const char *, ...);
-__printflike(1, 2) void logwarn(const char *, ...);
-__printflike(1, 2) void logwarnx(const char *, ...);
-__printflike(1, 2) void logerr(const char *, ...);
+/* Please do not call log_* functions directly, use macros below */
+__printflike(1, 2) void log_debug(const char *, ...);
+__printflike(1, 2) void log_debugx(const char *, ...);
+__printflike(1, 2) void log_info(const char *, ...);
+__printflike(1, 2) void log_infox(const char *, ...);
+__printflike(1, 2) void log_warn(const char *, ...);
+__printflike(1, 2) void log_warnx(const char *, ...);
+__printflike(1, 2) void log_err(const char *, ...);
+__printflike(1, 2) void log_errx(const char *, ...);
 #define	LOGERROR	logerr("%s: %d", __FILE__, __LINE__)
-__printflike(1, 2) void logerrx(const char *, ...);
 
+__printflike(2, 3) void logmessage(int pri, const char *fmt, ...);
+__printflike(2, 3) void logerrmessage(int pri, const char *fmt, ...);
+
+/*
+ * These are macros to prevent taking address of them so
+ * __FILE__, __LINE__, etc can easily be added.
+ *
+ * We should be using
+ * #define loginfox(fmt, __VA_OPT__(,) __VA_ARGS__)
+ * but that requires gcc-8 or clang-6 and we still have a need to support
+ * old OS's without modern compilers.
+ *
+ * Likewise, ##__VA_ARGS__ can't be used as that's a gcc only extension.
+ *
+ * The solution is to put fmt into __VA_ARGS__.
+ * It's not pretty but it's 100% portable.
+ */
+#define logdebug(...)	log_debug(__VA_ARGS__)
+#define logdebugx(...)	log_debugx(__VA_ARGS__)
+#define loginfo(...)	log_info(__VA_ARGS__)
+#define loginfox(...)	log_infox(__VA_ARGS__)
+#define logwarn(...)	log_warn(__VA_ARGS__)
+#define logwarnx(...)	log_warnx(__VA_ARGS__)
+#define logerr(...)	log_err(__VA_ARGS__)
+#define logerrx(...)	log_errx(__VA_ARGS__)
+
+unsigned int loggetopts(void);
 void logsetopts(unsigned int);
 #define	LOGERR_DEBUG	(1U << 6)
 #define	LOGERR_QUIET	(1U << 7)

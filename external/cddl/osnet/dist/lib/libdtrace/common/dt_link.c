@@ -550,7 +550,9 @@ dump_elf32(dtrace_hdl_t *dtp, const dof_hdr_t *dof, int fd)
 	elf_file.ehdr.e_ident[EI_OSABI] = ELFOSABI_FREEBSD;
 #endif
 	elf_file.ehdr.e_type = ET_REL;
-#if defined(__arm__)
+#if defined(__aarch64__)
+	elf_file.ehdr.e_machine = EM_AARCH64;
+#elif defined(__arm__)
 	elf_file.ehdr.e_machine = EM_ARM;
 #elif defined(__mips__)
 	elf_file.ehdr.e_machine = EM_MIPS;
@@ -1262,7 +1264,9 @@ process_obj(dtrace_hdl_t *dtp, const char *obj, int *eprobesp)
 
 	if (dtp->dt_oflags & DTRACE_O_LP64) {
 		eclass = ELFCLASS64;
-#if defined(__mips__)
+#if defined(__aarch64__)
+		emachine1 = emachine2 = EM_AARCH64;
+#elif defined(__mips__)
 		emachine1 = emachine2 = EM_MIPS;
 #elif defined(__powerpc__)
 		emachine1 = emachine2 = EM_PPC64;
@@ -1274,7 +1278,7 @@ process_obj(dtrace_hdl_t *dtp, const char *obj, int *eprobesp)
 		symsize = sizeof (Elf64_Sym);
 	} else {
 		eclass = ELFCLASS32;
-#if defined(__arm__)
+#if defined(__arm__) || defined(__aarch64__)
 		emachine1 = emachine2 = EM_ARM;
 #elif defined(__mips__)
 		emachine1 = emachine2 = EM_MIPS;

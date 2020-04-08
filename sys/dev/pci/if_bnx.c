@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.65.2.1 2019/06/10 22:07:16 christos Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.65.2.2 2020/04/08 14:08:09 martin Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.65.2.1 2019/06/10 22:07:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.65.2.2 2020/04/08 14:08:09 martin Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -916,6 +916,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, sc->eaddr);
 
 	callout_init(&sc->bnx_timeout, 0);
+	callout_setfunc(&sc->bnx_timeout, bnx_tick, sc);
 
 	/* Hookup IRQ last. */
 	sc->bnx_intrhand = pci_intr_establish_xname(pc, ih, IPL_NET, bnx_intr,
@@ -979,11 +980,11 @@ bnx_detach(device_t dev, int flags)
 	ether_ifdetach(ifp);
 	workqueue_destroy(sc->bnx_wq);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->bnx_mii.mii_media, IFM_INST_ANY);
-
 	if_detach(ifp);
 	mii_detach(&sc->bnx_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->bnx_mii.mii_media);
 
 	/* Release all remaining resources. */
 	bnx_release_resources(sc);
@@ -1331,7 +1332,7 @@ bnx_miibus_statchg(struct ifnet *ifp)
 		BNX_CLRBIT(sc, BNX_EMAC_TX_MODE, BNX_EMAC_TX_MODE_FLOW_EN);
 	}
 
-	/* Only make changes if the recive mode has actually changed. */
+	/* Only make changes if the receive mode has actually changed. */
 	if (rx_mode != sc->rx_mode) {
 		DBPRINT(sc, BNX_VERBOSE, "Enabling new receive mode: 0x%08X\n",
 		    rx_mode);
@@ -4689,7 +4690,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 			    len < (BNX_MIN_MTU - ETHER_CRC_LEN) ||
 			    len >
 			    (BNX_MAX_JUMBO_ETHER_MTU_VLAN - ETHER_CRC_LEN)) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				DBRUNIF(1, sc->l2fhdr_status_errors++);
 
 				/* Reuse the mbuf for a new frame. */
@@ -4714,7 +4715,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 				    "Failed to allocate "
 				    "new mbuf, incoming frame dropped!\n"));
 
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 
 				/* Try and reuse the exisitng mbuf. */
 				if (bnx_add_buf(sc, m, &sw_prod,
@@ -4915,7 +4916,7 @@ bnx_tx_intr(struct bnx_softc *sc)
 			m_freem(pkt->pkt_mbuf);
 			DBRUNIF(1, sc->tx_mbuf_alloc--);
 
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 
 			mutex_enter(&sc->tx_pkt_mtx);
 			TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
@@ -5064,12 +5065,12 @@ bnx_init(struct ifnet *ifp)
 	/* Enable host interrupts. */
 	bnx_enable_intr(sc);
 
-	bnx_ifmedia_upd(ifp);
+	mii_ifmedia_change(&sc->bnx_mii);
 
 	SET(ifp->if_flags, IFF_RUNNING);
 	CLR(ifp->if_flags, IFF_OACTIVE);
 
-	callout_reset(&sc->bnx_timeout, hz, bnx_tick, sc);
+	callout_schedule(&sc->bnx_timeout, hz);
 
 bnx_init_exit:
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
@@ -5103,7 +5104,7 @@ bnx_mgmt_init(struct bnx_softc *sc)
 	REG_RD(sc, BNX_MISC_ENABLE_SET_BITS);
 	DELAY(20);
 
-	bnx_ifmedia_upd(ifp);
+	mii_ifmedia_change(&sc->bnx_mii);
 
 bnx_mgmt_init_exit:
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
@@ -5460,7 +5461,7 @@ bnx_watchdog(struct ifnet *ifp)
 
 	bnx_init(ifp);
 
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 }
 
 /*
@@ -5642,7 +5643,7 @@ allmulti:
 		sort_mode |= BNX_RPM_SORT_USER0_MC_HSH_EN;
 	}
 
-	/* Only make changes if the recive mode has actually changed. */
+	/* Only make changes if the receive mode has actually changed. */
 	if (rx_mode != sc->rx_mode) {
 		DBPRINT(sc, BNX_VERBOSE, "Enabling new receive mode: 0x%08X\n",
 		    rx_mode);
@@ -5676,22 +5677,31 @@ bnx_stats_update(struct bnx_softc *sc)
 
 	stats = (struct statistics_block *)sc->stats_block;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	uint64_t value;
+
 	/*
 	 * Update the interface statistics from the
 	 * hardware statistics.
 	 */
-	ifp->if_collisions = (u_long)stats->stat_EtherStatsCollisions;
+	value = (u_long)stats->stat_EtherStatsCollisions;
+	if_statadd_ref(nsr, if_collisions, value - sc->if_stat_collisions);
+	sc->if_stat_collisions = value;
 
-	ifp->if_ierrors = (u_long)stats->stat_EtherStatsUndersizePkts +
+	value = (u_long)stats->stat_EtherStatsUndersizePkts +
 	    (u_long)stats->stat_EtherStatsOverrsizePkts +
 	    (u_long)stats->stat_IfInMBUFDiscards +
 	    (u_long)stats->stat_Dot3StatsAlignmentErrors +
 	    (u_long)stats->stat_Dot3StatsFCSErrors;
+	if_statadd_ref(nsr, if_ierrors, value - sc->if_stat_ierrors);
+	sc->if_stat_ierrors = value;
 
-	ifp->if_oerrors = (u_long)
+	value = (u_long)
 	    stats->stat_emac_tx_stat_dot3statsinternalmactransmiterrors +
 	    (u_long)stats->stat_Dot3StatsExcessiveCollisions +
 	    (u_long)stats->stat_Dot3StatsLateCollisions;
+	if_statadd_ref(nsr, if_oerrors, value - sc->if_stat_oerrors);
+	sc->if_stat_oerrors = value;
 
 	/*
 	 * Certain controllers don't report
@@ -5699,8 +5709,12 @@ bnx_stats_update(struct bnx_softc *sc)
 	 * See errata E11_5708CA0_1165.
 	 */
 	if (!(BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5706) &&
-	    !(BNX_CHIP_ID(sc) == BNX_CHIP_ID_5708_A0))
-		ifp->if_oerrors += (u_long) stats->stat_Dot3StatsCarrierSenseErrors;
+	    !(BNX_CHIP_ID(sc) == BNX_CHIP_ID_5708_A0)) {
+		if_statadd_ref(nsr, if_oerrors,
+		    (u_long) stats->stat_Dot3StatsCarrierSenseErrors);
+	}
+
+	IF_STAT_PUTREF(ifp);
 
 	/*
 	 * Update the sysctl statistics from the
@@ -5885,7 +5899,7 @@ bnx_tick(void *xsc)
 
 	/* Schedule the next tick. */
 	if (!sc->bnx_detaching)
-		callout_reset(&sc->bnx_timeout, hz, bnx_tick, sc);
+		callout_schedule(&sc->bnx_timeout, hz);
 
 	if (sc->bnx_link)
 		goto bnx_tick_exit;

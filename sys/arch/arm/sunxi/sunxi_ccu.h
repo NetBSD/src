@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.18.2.1 2019/06/10 22:05:56 christos Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.18.2.2 2020/04/08 14:07:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -405,6 +405,7 @@ const char *sunxi_ccu_fractional_get_parent(struct sunxi_ccu_softc *,
 		.u.fractional.frac[0] = (_frac0),			\
 		.u.fractional.frac[1] = (_frac1),			\
 		.u.fractional.enable = (_enable),			\
+		.u.fractional.flags = (_flags),				\
 		.enable = sunxi_ccu_fractional_enable,			\
 		.get_rate = sunxi_ccu_fractional_get_rate,		\
 		.set_rate = sunxi_ccu_fractional_set_rate,		\

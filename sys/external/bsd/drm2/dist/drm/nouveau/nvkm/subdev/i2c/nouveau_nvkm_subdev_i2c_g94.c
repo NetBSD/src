@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_i2c_g94.c,v 1.2.6.2 2019/06/10 22:08:22 christos Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_i2c_g94.c,v 1.2.6.3 2020/04/08 14:08:25 martin Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_g94.c,v 1.2.6.2 2019/06/10 22:08:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_g94.c,v 1.2.6.3 2020/04/08 14:08:25 martin Exp $");
 
 #include "priv.h"
 #include "pad.h"
@@ -39,7 +39,7 @@ g94_aux_stat(struct nvkm_i2c *i2c, u32 *hi, u32 *lo, u32 *rq, u32 *tx)
 		if ((stat & (1 << (i * 4)))) *hi |= 1 << i;
 		if ((stat & (2 << (i * 4)))) *lo |= 1 << i;
 		if ((stat & (4 << (i * 4)))) *rq |= 1 << i;
-		if ((stat & (8 << (i * 4)))) *tx |= 1 << i;
+		if ((stat & (8U << (i * 4)))) *tx |= 1 << i;
 	}
 	nvkm_wr32(device, 0x00e06c, intr);
 }

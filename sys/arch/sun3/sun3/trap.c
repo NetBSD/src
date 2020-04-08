@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.144.18.1 2019/06/10 22:06:49 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.144.18.2 2020/04/08 14:07:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.144.18.1 2019/06/10 22:06:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.144.18.2 2020/04/08 14:07:55 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -463,8 +463,6 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
 		}
-		if (curcpu()->ci_want_resched)
-			preempt();
 		goto douret;
 
 	case T_MMUFLT:		/* kernel mode page fault */

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.26 2016/08/07 10:37:24 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.26.14.1 2020/04/08 14:09:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.26 2016/08/07 10:37:24 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.26.14.1 2020/04/08 14:09:15 martin Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -62,52 +62,62 @@ int	yyline;
 const char *yyfile;
 const char *lastfile;
 char curinclpath[PATH_MAX];
-int ifdefstate = -1;
-int st;
-#define IDS_PARENT_DISABLED \
-    ((ifdefstate > 6) && ((((ifdefstate/6)-1) & 1) == 1))
-#define IDS_MAX_DEPTH		362797056 /* 6^11 */
-/* States for ifdefstate:
+uint64_t ifdefstate;
+int	 ifdefshift = -1;
 
-  0  -> matched ifdef
-  1  -> unmatched ifdef
-  2  -> matched elifdef
-  3  -> unmatched elifdef
-  4  -> matched else
-  5  -> unmatched else
+/*
+ * The state is represented by 3 bits.
+ */
+#define	IDS_ENABLED	1ll
+#define	IDS_MATCH	2ll
+#define	IDS_ELIF	4ll
+#define	IDS_ELSE	8ll
 
-  Upon "ifdef", add one and multiply by 6.
-  Upon "endif", divide by 6, remove 1.
+#define	IDS_BITS	0xf
+#define	IDS_SHIFT	4
 
-  ifdef -> MATCH => continue
-           MISMATCH => set to 1
-  elifdef -> if (!1) -> MISMATCH
-             MATCH => set to 2
-             MISMATCH => if (2 || 3) set to 3, else set to 1
-  else -> if (1) -> MATCH
-          MATCH => set to 4
-          MISMATCH => set to 5
+#define	IDS_ISMATCH(st) (((st) & IDS_MATCH) != 0)
+#define	IDS_ISENABLED(st) (((st) & IDS_ENABLED) != 0)
+#define	IDS_PARENT_DISABLED \
+	(ifdefshift > 0 && !IDS_ISENABLED(ifdefstate >> IDS_SHIFT))
+#define IDS_MAX_DEPTH	16 /* 64 / 4 */
 
-  in each case, if parent & 1 == 1, MISMATCH
-*/
- 
+#ifdef	IDS_DEBUG
+# define IDS_PRINT(s, st, x) \
+	do { \
+		for (int i = 0; i < ifdefshift + 1; i++) \
+			fprintf(stderr, " "); \
+		printf("%s%s [%d,%d,%d] %#" PRIx64 "\n", x, # s, \
+		    IDS_PARENT_DISABLED, IDS_ISMATCH(st), getcurifdef(), \
+		    ifdefstate); \
+	} while (/*CONSTCOND*/0)
+#else
+# define IDS_PRINT(s, st, x) ((void)0)
+#endif
+
+#define	IDS_ENTER(s, st) \
+	IDS_PRINT(s, st, ">")
+#define	IDS_EXIT(s, st) \
+	IDS_PRINT(s, st, "<")
+
 /*
  * Data for returning to previous files from include files.
  */
 struct incl {
 	struct	incl *in_prev;	/* previous includes in effect, if any */
 	YY_BUFFER_STATE in_buf;	/* previous lex state */
-	const char *in_fname;	/* previous file name */
-	int	in_lineno;	/* previous line number */
+	struct where in_where;
 	int	in_ateof;	/* token to insert at EOF */
 	int	in_interesting;	/* previous value for "interesting" */
-	int	in_ifdefstate;	/* conditional level */
+	uint64_t	in_ifdefstate;	/* conditional level */
+	int	in_ifdefshift;	/* conditional level */
 };
 static struct incl *incl;
 static int endinclude(void);
 static int getincludepath(void);
 static int getcurifdef(void);
 
+SLIST_HEAD(, prefix)	curdirs;	/* curdir stack */
 
 %}
 
@@ -118,6 +128,7 @@ QCHARS	\"(\\.|[^\\"])*\"
 WORD	[A-Za-z_][-A-Za-z_0-9]*
 FILENAME	({PATH}|{QCHARS})
 RESTOFLINE	[ \t]*(#[^\n]*)?\n
+WS	^[ \t]*
 
 %x	IGNORED
 
@@ -180,98 +191,106 @@ with		return WITH;
 \+=		return PLUSEQ;
 :=		return COLONEQ;
 
-<*>ifdef[ \t]+{WORD}{RESTOFLINE} {
-		ifdefstate = (ifdefstate + 1) * 6;
-		if (ifdefstate >= IDS_MAX_DEPTH) {
+<*>{WS}ifdef[ \t]+{WORD}{RESTOFLINE} {
+		ifdefstate <<= IDS_SHIFT;
+		if (++ifdefshift >= IDS_MAX_DEPTH) {
 			yyerror("too many levels of conditional");
 		}
-		if (!IDS_PARENT_DISABLED && getcurifdef()) {
-			BEGIN(INITIAL);
-		} else {
-			ifdefstate++;
+		IDS_ENTER(ifdef, 0);
+		if (IDS_PARENT_DISABLED || !getcurifdef()) {
+			ifdefstate &= (uint64_t)~IDS_ENABLED;
 			BEGIN(IGNORED);
+		} else {
+			ifdefstate |= IDS_MATCH|IDS_ENABLED;
+			BEGIN(INITIAL);
 		}
+		IDS_EXIT(ifdef, 0);
 		yyline++;
 	}
 
-<*>ifndef[ \t]+{WORD}{RESTOFLINE} {
-		ifdefstate = (ifdefstate + 1) * 6;
-		if (ifdefstate >= IDS_MAX_DEPTH) {
+<*>{WS}ifndef[ \t]+{WORD}{RESTOFLINE} {
+		ifdefstate <<= IDS_SHIFT;
+		if (++ifdefshift >= IDS_MAX_DEPTH) {
 			yyerror("too many levels of conditional");
 		}
-		if (!IDS_PARENT_DISABLED && !getcurifdef()) {
-			BEGIN(INITIAL);
-		} else {
-			ifdefstate++;
+		IDS_ENTER(ifndef, 0);
+		if (IDS_PARENT_DISABLED || getcurifdef()) {
+			ifdefstate &= (uint64_t)~IDS_ENABLED;
 			BEGIN(IGNORED);
+		} else {
+			ifdefstate |= IDS_MATCH|IDS_ENABLED;
+			BEGIN(INITIAL);
 		}
+		IDS_EXIT(ifndef, 0);
 		yyline++;
 	}
 
 
-<*>elifdef[ \t]+{WORD}{RESTOFLINE} {
-		st = ifdefstate % 6;
-		if (ifdefstate < 0 || st > 3) {
+<*>{WS}elifdef[ \t]+{WORD}{RESTOFLINE} {
+		int st = ifdefstate & IDS_BITS;
+		IDS_ENTER(elifdef, st);
+		if (ifdefshift == -1 || (st & IDS_ELSE) != 0) {
 			yyerror("mismatched elifdef");
 		}
-		if (IDS_PARENT_DISABLED ||
-		    st != 1 || !getcurifdef()) {
-			if (st == 2 || st == 3) {
-				ifdefstate += 3 - st;
-			} else {
-				ifdefstate += 1 - st;
-			}
+		if (IDS_PARENT_DISABLED || IDS_ISMATCH(st) || !getcurifdef()) {
+			ifdefstate &= (uint64_t)~IDS_ENABLED;
 			BEGIN(IGNORED);
 		} else {
-			ifdefstate++;
+			ifdefstate |= IDS_MATCH|IDS_ENABLED;
 			BEGIN(INITIAL);
 		}
+		ifdefstate |= IDS_ELIF;
+		IDS_EXIT(elifdef, st);
 		yyline++;
 	}
 
-<*>elifndef[ \t]+{WORD}{RESTOFLINE} {
-		st = ifdefstate % 6;
-		if (ifdefstate < 0 || st > 3) {
+<*>{WS}elifndef[ \t]+{WORD}{RESTOFLINE} {
+		int st = ifdefstate & IDS_BITS;
+		IDS_ENTER(elifndef, st);
+		if (ifdefshift == -1 || (st & IDS_ELSE) != 0) {
 			yyerror("mismatched elifndef");
 		}
-		if (IDS_PARENT_DISABLED ||
-		    st != 1 || getcurifdef()) {
-			if (st == 2 || st == 3) {
-				ifdefstate += 3 - st;
-			} else {
-				ifdefstate += 1 - st;
-			}
+		if (IDS_PARENT_DISABLED || IDS_ISMATCH(st) || getcurifdef()) {
+			ifdefstate &= (uint64_t)~IDS_ENABLED;
 			BEGIN(IGNORED);
 		} else {
-			ifdefstate++;
+			ifdefstate |= IDS_MATCH|IDS_ENABLED;
 			BEGIN(INITIAL);
 		}
+		ifdefstate |= IDS_ELIF;
+		IDS_EXIT(elifndef, st);
 		yyline++;
 	}
 
-<*>else{RESTOFLINE} {
-		st = ifdefstate % 6;
-		if (ifdefstate < 0 || st > 3) {
+<*>{WS}else{RESTOFLINE} {
+		int st = ifdefstate & IDS_BITS;
+		IDS_ENTER(else, st);
+		if (ifdefshift == -1 || (st & IDS_ELSE) != 0) {
 			yyerror("mismatched else");
 		}
-		if (!IDS_PARENT_DISABLED && (st == 1)) {
-			ifdefstate += 3;
-			BEGIN(INITIAL);
-		} else {
-			ifdefstate += 5 - st;
+		if (IDS_PARENT_DISABLED || IDS_ISMATCH(st)) {
+			ifdefstate &= (uint64_t)~IDS_ENABLED;
 			BEGIN(IGNORED);
+		} else {
+			ifdefstate |= IDS_MATCH|IDS_ENABLED;
+			BEGIN(INITIAL);
 		}
+		ifdefstate |= IDS_ELSE;
+		IDS_ENTER(else, st);
 		yyline++;
 	}
 
-<*>endif{RESTOFLINE} {
-		if (ifdefstate < 0) {
+<*>{WS}endif{RESTOFLINE} {
+		IDS_ENTER(endif, 0);
+		if (ifdefshift == -1) {
 			yyerror("mismatched endif");
 		}
 		if (!IDS_PARENT_DISABLED) {
 			BEGIN(INITIAL);
 		}
-		ifdefstate = (ifdefstate/6) - 1;
+		IDS_EXIT(endif, 0);
+		ifdefshift--;
+		ifdefstate >>= IDS_SHIFT;
 		yyline++;
 	}
 
@@ -370,7 +389,7 @@ package[ \t]+{FILENAME}{RESTOFLINE}	{
 [ \t]+	{ /* ignored (white space) */; }
 .	{ return yytext[0]; }
 <*><<EOF>> {
-		if (ifdefstate > (incl == NULL ? -1 : incl->in_ifdefstate)) {
+		if (ifdefshift > (incl == NULL ? -1 : incl->in_ifdefshift)) {
 			yyerror("reached EOF while looking for endif");
 		}
 		if (incl == NULL)
@@ -526,11 +545,12 @@ include(const char *fname, int ateof, int conditional, int direct)
 	in = ecalloc(1, sizeof *in);
 	in->in_prev = incl;
 	in->in_buf = YY_CURRENT_BUFFER;
-	in->in_fname = yyfile;
-	in->in_lineno = yyline;
+	in->in_where.w_srcfile = yyfile;
+	in->in_where.w_srcline = (u_short)yyline;
 	in->in_ateof = ateof;
 	in->in_interesting = interesting;
 	in->in_ifdefstate = ifdefstate;
+	in->in_ifdefshift = ifdefshift;
 	interesting = direct & interesting;
 	if (interesting)
 		logconfig_include(fp, fname);
@@ -597,10 +617,12 @@ endinclude(void)
 	yy_delete_buffer(YY_CURRENT_BUFFER);
 	(void)fclose(yyin);
 	yy_switch_to_buffer(in->in_buf);
-	yyfile = in->in_fname;
-	yyline = in->in_lineno;
+	yyfile = in->in_where.w_srcfile;
+	yyline = in->in_where.w_srcline;
 	ateof  = in->in_ateof;
 	interesting = in->in_interesting;
+	ifdefstate = in->in_ifdefstate;
+	ifdefshift = in->in_ifdefshift;
 	free(in);
 
 	includedepth--;

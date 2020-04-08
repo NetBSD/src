@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.3 2015/03/31 01:14:02 matt Exp $ */
+/* $NetBSD: sysreg.h,v 1.3.20.1 2020/04/08 14:07:50 martin Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -178,7 +178,7 @@ riscvreg_cycle_read(void)
 	uint32_t __hi0, __hi1, __lo0;
 	do {
 		__asm __volatile(
-			"csrr\t%[__hi0], cycleh" 
+			"csrr\t%[__hi0], cycleh"
 		"\n\t"	"csrr\t%[__lo0], cycle"
 		"\n\t"	"csrr\t%[__hi1], cycleh"
 		   :	[__hi0] "=r"(__hi0),

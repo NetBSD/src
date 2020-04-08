@@ -1,4 +1,4 @@
-/*	$NetBSD: killme_after.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: killme_after.c,v 1.1.1.1.50.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -26,6 +26,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -48,11 +53,17 @@ void    killme_after(unsigned int seconds)
      * Schedule an ALARM signal, and make sure the signal will be delivered
      * even if we are being called from a signal handler and SIGALRM delivery
      * is blocked.
+     * 
+     * Undocumented: when a process runs with PID 1, Linux won't deliver a
+     * signal unless the process specifies a handler (i.e. SIG_DFL is treated
+     * as SIG_IGN). Conveniently, _exit() can be used directly as a signal
+     * handler. This changes the wait status that a parent would see, but in
+     * the case of "init" mode on Linux, no-one would care.
      */
     alarm(0);
     sigemptyset(&sig_action.sa_mask);
     sig_action.sa_flags = 0;
-    sig_action.sa_handler = SIG_DFL;
+    sig_action.sa_handler = (getpid() == 1 ? _exit : SIG_DFL);
     sigaction(SIGALRM, &sig_action, (struct sigaction *) 0);
     alarm(seconds);
     sigaddset(&sig_action.sa_mask, SIGALRM);

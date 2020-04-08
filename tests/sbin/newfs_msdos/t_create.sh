@@ -1,4 +1,4 @@
-# $NetBSD: t_create.sh,v 1.3 2014/01/05 12:59:03 martin Exp $
+# $NetBSD: t_create.sh,v 1.3.26.1 2020/04/08 14:09:12 martin Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,6 +30,11 @@ validfat32_head() {
 	atf_set "descr" "Verifies that fat32 created filesystems are valid"
 }
 validfat32_body() {
+
+	AVAIL=$( df -m ${TMPDIR} | awk '{if (int($4) > 0) print $4}' )
+	if [ $AVAIL -lt 34 ]; then
+		atf_skip "not enough free space in working directory"
+	fi
 
 	atf_check -s eq:0 -o ignore -e ignore \
 	    newfs_msdos -b 512 -C 33m -F 32 msdos.img

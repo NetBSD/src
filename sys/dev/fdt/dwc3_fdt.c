@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.2.2.1 2019/06/10 22:07:07 christos Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.2.2.2 2020/04/08 14:08:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.2.2.1 2019/06/10 22:07:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.2.2.2 2020/04/08 14:08:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.2.2.1 2019/06/10 22:07:07 christos Ex
 #define	  GCTL_PRTCAP_DEVICE		2
 #define	  GCTL_PRTCAP_OTG		3
 #define	 GCTL_CORESOFTRESET		__BIT(11)
+
+#define	DWC3_GUCTL1			0xc11c
+#define	 GUCTL1_TX_IPGAP_LINECHECK_DIS	__BIT(28)
 
 #define	DWC3_SNPSID			0xc120
 #define	 DWC3_SNPSID_REV		__BITS(15,0)
@@ -120,7 +123,7 @@ dwc3_fdt_soft_reset(struct xhci_softc *sc)
 }
 
 static void
-dwc3_fdt_enable_phy(struct xhci_softc *sc, const int phandle)
+dwc3_fdt_enable_phy(struct xhci_softc *sc, const int phandle, u_int rev)
 {
 	const char *max_speed, *phy_type;
 	u_int phyif_utmi_bits;
@@ -162,6 +165,13 @@ dwc3_fdt_enable_phy(struct xhci_softc *sc, const int phandle)
 		val &= ~GUSB3PIPECTL_DEPOCHANGE;
 	WR4(sc, DWC3_GUSB3PIPECTL(0), val);
 
+	if (rev >= 0x250a) {
+		val = RD4(sc, DWC3_GUCTL1);
+		if (of_hasprop(phandle, "snps,dis-tx-ipgap-linecheck-quirk"))
+			val |= GUCTL1_TX_IPGAP_LINECHECK_DIS;
+		WR4(sc, DWC3_GUCTL1, val);
+	}
+
 	max_speed = fdtbus_get_string(phandle, "maximum-speed");
 	if (max_speed == NULL)
 		max_speed = "super-speed";
@@ -198,9 +208,11 @@ dwc3_fdt_match(device_t parent, cfdata_t cf, void *aux)
 	const char * const compatible[] = {
 		"allwinner,sun50i-h6-dwc3",
 		"amlogic,meson-gxl-dwc3",
+		"fsl,imx8mq-dwc3",
 		"rockchip,rk3328-dwc3",
 		"rockchip,rk3399-dwc3",
 		"samsung,exynos5250-dwusb3",
+		"snps,dwc3",
 		NULL
 	};
 	struct fdt_attach_args * const faa = aux;
@@ -211,6 +223,7 @@ dwc3_fdt_match(device_t parent, cfdata_t cf, void *aux)
 static void
 dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 {
+	const char * const dwc3_compatible[] = { "snps,dwc3", NULL };
 	struct xhci_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
@@ -220,12 +233,16 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
-	int error;
+	int error, dwc3_phandle;
 	void *ih;
 	u_int n;
 
 	/* Find dwc3 sub-node */
-	const int dwc3_phandle = of_find_firstchild_byname(phandle, "dwc3");
+	if (of_match_compatible(phandle, dwc3_compatible) > 0) {
+		dwc3_phandle = phandle;
+	} else {
+		dwc3_phandle = of_find_firstchild_byname(phandle, "dwc3");
+	}
 	if (dwc3_phandle <= 0) {
 		aprint_error(": couldn't find dwc3 child node\n");
 		return;
@@ -239,6 +256,7 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Enable clocks */
+	fdtbus_clock_assign(phandle);
 	for (n = 0; (clk = fdtbus_clock_get_index(phandle, n)) != NULL; n++)
 		if (clk_enable(clk) != 0) {
 			aprint_error(": couldn't enable clock #%d\n", n);
@@ -279,7 +297,7 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	dwc3_fdt_soft_reset(sc);
-	dwc3_fdt_enable_phy(sc, dwc3_phandle);
+	dwc3_fdt_enable_phy(sc, dwc3_phandle, rev);
 	dwc3_fdt_set_mode(sc, GCTL_PRTCAP_HOST);
 
 	if (!fdtbus_intr_str(dwc3_phandle, 0, intrstr, sizeof(intrstr))) {

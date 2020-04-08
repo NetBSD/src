@@ -36,6 +36,12 @@ my $server_pss_only = {
     "PrivateKey" => test_pem("server-pss-key.pem"),
 };
 
+my $server_pss_restrict_only = {
+    "Certificate" => test_pem("server-pss-restrict-cert.pem"),
+    "PrivateKey" => test_pem("server-pss-restrict-key.pem"),
+};
+
+
 my $server_rsa_all = {
     "PSS.Certificate" => test_pem("server-pss-cert.pem"),
     "PSS.PrivateKey" => test_pem("server-pss-key.pem"),
@@ -128,7 +134,8 @@ our @tests = (
             "CipherString" => "aECDSA",
             "MaxProtocol" => "TLSv1.2",
             "SignatureAlgorithms" => "ed448:ECDSA+SHA256",
-            "RequestCAFile" => test_pem("root-cert.pem"),
+            "RequestCAFile" => test_pem("root-ed448-cert.pem"),
+            "VerifyCAFile" => test_pem("root-ed448-cert.pem"),
         },
         test   => {
             "ExpectedServerCertType" =>, "Ed448",
@@ -225,6 +232,7 @@ our @tests = (
             "CipherString" => "aECDSA",
             "MaxProtocol" => "TLSv1.2",
             "SignatureAlgorithms" => "ECDSA+SHA256:ed448",
+            "VerifyCAFile" => test_pem("root-ed448-cert.pem"),
             # Excluding P-256 from the supported curves list means server
             # certificate should be Ed25519 and not P-256
             "Curves" => "X448"
@@ -380,10 +388,70 @@ our @tests = (
         },
     },
     {
+        name => "Only RSA-PSS Certificate Valid Signature Algorithms",
+        server => $server_pss_only,
+        client => {
+            "SignatureAlgorithms" => "rsa_pss_pss_sha512",
+        },
+        test   => {
+            "ExpectedServerCertType" => "RSA-PSS",
+            "ExpectedServerSignHash" => "SHA512",
+            "ExpectedServerSignType" => "RSA-PSS",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
         name => "RSA-PSS Certificate, no PSS signature algorithms",
         server => $server_pss_only,
         client => {
             "SignatureAlgorithms" => "RSA+SHA256",
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
+    {
+        name => "Only RSA-PSS Restricted Certificate",
+        server => $server_pss_restrict_only,
+        client => {},
+        test   => {
+            "ExpectedServerCertType" => "RSA-PSS",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "RSA-PSS",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "RSA-PSS Restricted Certificate Valid Signature Algorithms",
+        server => $server_pss_restrict_only,
+        client => {
+            "SignatureAlgorithms" => "rsa_pss_pss_sha256:rsa_pss_pss_sha512",
+        },
+        test   => {
+            "ExpectedServerCertType" => "RSA-PSS",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "RSA-PSS",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "RSA-PSS Restricted Cert client prefers invalid Signature Algorithm",
+        server => $server_pss_restrict_only,
+        client => {
+            "SignatureAlgorithms" => "rsa_pss_pss_sha512:rsa_pss_pss_sha256",
+        },
+        test   => {
+            "ExpectedServerCertType" => "RSA-PSS",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "RSA-PSS",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "RSA-PSS Restricted Certificate Invalid Signature Algorithms",
+        server => $server_pss_restrict_only,
+        client => {
+            "SignatureAlgorithms" => "rsa_pss_pss_sha512",
         },
         test   => {
             "ExpectedResult" => "ServerFail"
@@ -661,6 +729,7 @@ my @tests_tls_1_3 = (
         server => $server_tls_1_3,
         client => {
             "SignatureAlgorithms" => "ed448",
+            "VerifyCAFile" => test_pem("root-ed448-cert.pem"),
         },
         test   => {
             "ExpectedServerCertType" => "Ed448",

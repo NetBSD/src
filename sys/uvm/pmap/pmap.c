@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 2017/10/30 03:25:14 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40.6.1 2020/04/08 14:09:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2017/10/30 03:25:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40.6.1 2020/04/08 14:09:05 martin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -102,14 +102,12 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2017/10/30 03:25:14 pgoyette Exp $");
 #define __PMAP_PRIVATE
 
 #include <sys/param.h>
+
 #include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/cpu.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
-#include <sys/atomic.h>
-#include <sys/mutex.h>
-#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_physseg.h>
@@ -264,10 +262,49 @@ struct pool_allocator pmap_pv_page_allocator = {
 #define	pmap_pv_alloc()		pool_get(&pmap_pv_pool, PR_NOWAIT)
 #define	pmap_pv_free(pv)	pool_put(&pmap_pv_pool, (pv))
 
-#if !defined(MULTIPROCESSOR) || !defined(PMAP_MD_NEED_TLB_MISS_LOCK)
-#define	pmap_md_tlb_miss_lock_enter()	do { } while(/*CONSTCOND*/0)
-#define	pmap_md_tlb_miss_lock_exit()	do { } while(/*CONSTCOND*/0)
-#endif /* !MULTIPROCESSOR || !PMAP_MD_NEED_TLB_MISS_LOCK */
+#ifndef PMAP_NEED_TLB_MISS_LOCK
+
+#if defined(PMAP_MD_NEED_TLB_MISS_LOCK) || defined(DEBUG)
+#define	PMAP_NEED_TLB_MISS_LOCK
+#endif /* PMAP_MD_NEED_TLB_MISS_LOCK || DEBUG */
+
+#endif /* PMAP_NEED_TLB_MISS_LOCK */
+
+#ifdef PMAP_NEED_TLB_MISS_LOCK
+
+#ifdef PMAP_MD_NEED_TLB_MISS_LOCK
+#define	pmap_tlb_miss_lock_init()	__nothing /* MD code deals with this */
+#define	pmap_tlb_miss_lock_enter()	pmap_md_tlb_miss_lock_enter()
+#define	pmap_tlb_miss_lock_exit()	pmap_md_tlb_miss_lock_exit()
+#else
+kmutex_t pmap_tlb_miss_lock 		__cacheline_aligned;
+
+static void
+pmap_tlb_miss_lock_init(void)
+{
+	mutex_init(&pmap_tlb_miss_lock, MUTEX_SPIN, IPL_HIGH);
+}
+
+static inline void
+pmap_tlb_miss_lock_enter(void)
+{
+	mutex_spin_enter(&pmap_tlb_miss_lock);
+}
+
+static inline void
+pmap_tlb_miss_lock_exit(void)
+{
+	mutex_spin_exit(&pmap_tlb_miss_lock);
+}
+#endif /* PMAP_MD_NEED_TLB_MISS_LOCK */
+
+#else
+
+#define	pmap_tlb_miss_lock_init()	__nothing
+#define	pmap_tlb_miss_lock_enter()	__nothing
+#define	pmap_tlb_miss_lock_exit()	__nothing
+
+#endif /* PMAP_NEED_TLB_MISS_LOCK */
 
 #ifndef MULTIPROCESSOR
 kmutex_t pmap_pvlist_mutex	__cacheline_aligned;
@@ -524,6 +561,16 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 }
 
 /*
+ *	Bootstrap the system enough to run with virtual memory.
+ *	(Common routine called by machine-dependent bootstrap code.)
+ */
+void
+pmap_bootstrap_common(void)
+{
+	pmap_tlb_miss_lock_init();
+}
+
+/*
  *	Initialize the pmap module.
  *	Called by vm_init, to initialize any structures that the pmap
  *	system needs to map virtual memory.
@@ -623,10 +670,10 @@ pmap_destroy(pmap_t pmap)
 	PMAP_COUNT(destroy);
 	KASSERT(pmap->pm_count == 0);
 	kpreempt_disable();
-	pmap_md_tlb_miss_lock_enter();
+	pmap_tlb_miss_lock_enter();
 	pmap_tlb_asid_release_all(pmap);
 	pmap_segtab_destroy(pmap, NULL, 0);
-	pmap_md_tlb_miss_lock_exit();
+	pmap_tlb_miss_lock_exit();
 
 #ifdef MULTIPROCESSOR
 	kcpuset_destroy(pmap->pm_active);
@@ -672,12 +719,12 @@ pmap_activate(struct lwp *l)
 	PMAP_COUNT(activate);
 
 	kpreempt_disable();
-	pmap_md_tlb_miss_lock_enter();
+	pmap_tlb_miss_lock_enter();
 	pmap_tlb_asid_acquire(pmap, l);
 	if (l == curlwp) {
 		pmap_segtab_activate(pmap, l);
 	}
-	pmap_md_tlb_miss_lock_exit();
+	pmap_tlb_miss_lock_exit();
 	kpreempt_enable();
 
 	UVMHIST_LOG(pmaphist, " <-- done (%ju:%ju)", l->l_proc->p_pid,
@@ -774,7 +821,7 @@ pmap_page_remove(struct vm_page *pg)
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
 
-		pmap_md_tlb_miss_lock_enter();
+		pmap_tlb_miss_lock_enter();
 		const pt_entry_t npte = pte_nv_entry(is_kernel_pmap_p);
 		pte_set(ptep, npte);
 		if (__predict_true(!(pmap->pm_flags & PMAP_DEFERRED_ACTIVATE))) {
@@ -783,7 +830,7 @@ pmap_page_remove(struct vm_page *pg)
 			 */
 			pmap_tlb_invalidate_addr(pmap, va);
 		}
-		pmap_md_tlb_miss_lock_exit();
+		pmap_tlb_miss_lock_exit();
 
 		/*
 		 * non-null means this is a non-pvh_first pv, so we should
@@ -822,13 +869,13 @@ pmap_deactivate(struct lwp *l)
 
 	kpreempt_disable();
 	KASSERT(l == curlwp || l->l_cpu == curlwp->l_cpu);
-	pmap_md_tlb_miss_lock_enter();
+	pmap_tlb_miss_lock_enter();
 	curcpu()->ci_pmap_user_segtab = PMAP_INVALID_SEGTAB_ADDRESS;
 #ifdef _LP64
 	curcpu()->ci_pmap_user_seg0tab = NULL;
 #endif
 	pmap_tlb_asid_deactivate(pmap);
-	pmap_md_tlb_miss_lock_exit();
+	pmap_tlb_miss_lock_exit();
 	kpreempt_enable();
 
 	UVMHIST_LOG(pmaphist, " <-- done (%ju:%ju)", l->l_proc->p_pid,
@@ -848,7 +895,7 @@ pmap_update(struct pmap *pmap)
 	if (pending && pmap_tlb_shootdown_bystanders(pmap))
 		PMAP_COUNT(shootdown_ipis);
 #endif
-	pmap_md_tlb_miss_lock_enter();
+	pmap_tlb_miss_lock_enter();
 #if defined(DEBUG) && !defined(MULTIPROCESSOR)
 	pmap_tlb_check(pmap, pmap_md_tlb_check_entry);
 #endif /* DEBUG */
@@ -862,7 +909,7 @@ pmap_update(struct pmap *pmap)
 		pmap_tlb_asid_acquire(pmap, curlwp);
 		pmap_segtab_activate(pmap, curlwp);
 	}
-	pmap_md_tlb_miss_lock_exit();
+	pmap_tlb_miss_lock_exit();
 	kpreempt_enable();
 
 	UVMHIST_LOG(pmaphist, " <-- done (kernel=%#jx)",
@@ -907,7 +954,7 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 		if (__predict_true(pg != NULL)) {
 			pmap_remove_pv(pmap, sva, pg, pte_modified_p(pte));
 		}
-		pmap_md_tlb_miss_lock_enter();
+		pmap_tlb_miss_lock_enter();
 		pte_set(ptep, npte);
 		if (__predict_true(!(pmap->pm_flags & PMAP_DEFERRED_ACTIVATE))) {
 
@@ -916,7 +963,7 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 			 */
 			pmap_tlb_invalidate_addr(pmap, sva);
 		}
-		pmap_md_tlb_miss_lock_exit();
+		pmap_tlb_miss_lock_exit();
 	}
 
 	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
@@ -1063,13 +1110,13 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 		}
 		pte = pte_prot_downgrade(pte, prot);
 		if (*ptep != pte) {
-			pmap_md_tlb_miss_lock_enter();
+			pmap_tlb_miss_lock_enter();
 			pte_set(ptep, pte);
 			/*
 			 * Update the TLB if needed.
 			 */
 			pmap_tlb_update_addr(pmap, sva, pte, PMAP_TLB_NEED_IPI);
-			pmap_md_tlb_miss_lock_exit();
+			pmap_tlb_miss_lock_exit();
 		}
 	}
 
@@ -1145,10 +1192,10 @@ pmap_page_cache(struct vm_page *pg, bool cached)
 		pt_entry_t pte = *ptep;
 		if (pte_valid_p(pte)) {
 			pte = pte_cached_change(pte, cached);
-			pmap_md_tlb_miss_lock_enter();
+			pmap_tlb_miss_lock_enter();
 			pte_set(ptep, pte);
 			pmap_tlb_update_addr(pmap, va, pte, PMAP_TLB_NEED_IPI);
-			pmap_md_tlb_miss_lock_exit();
+			pmap_tlb_miss_lock_exit();
 		}
 	}
 
@@ -1279,10 +1326,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 	KASSERT(pte_valid_p(npte));
 
-	pmap_md_tlb_miss_lock_enter();
+	pmap_tlb_miss_lock_enter();
 	pte_set(ptep, npte);
 	pmap_tlb_update_addr(pmap, va, npte, update_flags);
-	pmap_md_tlb_miss_lock_exit();
+	pmap_tlb_miss_lock_exit();
 	kpreempt_enable();
 
 	if (pg != NULL && (prot == (VM_PROT_READ | VM_PROT_EXECUTE))) {
@@ -1364,10 +1411,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * We have the option to force this mapping into the TLB but we
 	 * don't.  Instead let the next reference to the page do it.
 	 */
-	pmap_md_tlb_miss_lock_enter();
+	pmap_tlb_miss_lock_enter();
 	pte_set(ptep, npte);
 	pmap_tlb_update_addr(pmap_kernel(), va, npte, 0);
-	pmap_md_tlb_miss_lock_exit();
+	pmap_tlb_miss_lock_exit();
 	kpreempt_enable();
 #if DEBUG > 1
 	for (u_int i = 0; i < PAGE_SIZE / sizeof(long); i++) {
@@ -1415,10 +1462,10 @@ pmap_pte_kremove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 		}
 #endif
 
-		pmap_md_tlb_miss_lock_enter();
+		pmap_tlb_miss_lock_enter();
 		pte_set(ptep, new_pte);
 		pmap_tlb_invalidate_addr(pmap, sva);
-		pmap_md_tlb_miss_lock_exit();
+		pmap_tlb_miss_lock_exit();
 	}
 
 	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
@@ -1442,7 +1489,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
 }
 
-void
+bool
 pmap_remove_all(struct pmap *pmap)
 {
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
@@ -1455,7 +1502,7 @@ pmap_remove_all(struct pmap *pmap)
 	 * Free all of our ASIDs which means we can skip doing all the
 	 * tlb_invalidate_addrs().
 	 */
-	pmap_md_tlb_miss_lock_enter();
+	pmap_tlb_miss_lock_enter();
 #ifdef MULTIPROCESSOR
 	// This should be the last CPU with this pmap onproc
 	KASSERT(!kcpuset_isotherset(pmap->pm_onproc, cpu_index(curcpu())));
@@ -1466,7 +1513,7 @@ pmap_remove_all(struct pmap *pmap)
 	KASSERT(kcpuset_iszero(pmap->pm_onproc));
 #endif
 	pmap_tlb_asid_release_all(pmap);
-	pmap_md_tlb_miss_lock_exit();
+	pmap_tlb_miss_lock_exit();
 	pmap->pm_flags |= PMAP_DEFERRED_ACTIVATE;
 
 #ifdef PMAP_FAULTINFO
@@ -1477,6 +1524,7 @@ pmap_remove_all(struct pmap *pmap)
 	kpreempt_enable();
 
 	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
+	return false;
 }
 
 /*
@@ -1508,9 +1556,9 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	    pmap, va, pte_value(pte), ptep);
 
 	if (pte_wired_p(pte)) {
-		pmap_md_tlb_miss_lock_enter();
+		pmap_tlb_miss_lock_enter();
 		pte_set(ptep, pte_unwire_entry(pte));
-		pmap_md_tlb_miss_lock_exit();
+		pmap_tlb_miss_lock_exit();
 		pmap->pm_stats.wired_count--;
 	}
 #ifdef DIAGNOSTIC
@@ -1675,10 +1723,10 @@ pmap_clear_modify(struct vm_page *pg)
 		}
 		KASSERT(pte_valid_p(pte));
 		const uintptr_t gen = VM_PAGEMD_PVLIST_UNLOCK(mdpg);
-		pmap_md_tlb_miss_lock_enter();
+		pmap_tlb_miss_lock_enter();
 		pte_set(ptep, pte);
 		pmap_tlb_invalidate_addr(pmap, va);
-		pmap_md_tlb_miss_lock_exit();
+		pmap_tlb_miss_lock_exit();
 		pmap_update(pmap);
 		if (__predict_false(gen != VM_PAGEMD_PVLIST_READLOCK(mdpg))) {
 			/*

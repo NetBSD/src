@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun3,v 1.20.54.1 2019/06/10 22:06:49 christos Exp $
+#	$NetBSD: majors.sun3,v 1.20.54.2 2020/04/08 14:07:55 martin Exp $
 #
 # Device majors for sun3/sun3x
 #
@@ -65,7 +65,7 @@ device-major	ksyms		char 87			ksyms
 #device-major	obsolete	char 88			obsolete (pf)
 #device-major	obsolete	char 89			obsolete (opencrytpo)
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

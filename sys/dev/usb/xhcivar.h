@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.9.2.1 2019/06/10 22:07:35 christos Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.9.2.2 2020/04/08 14:08:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -32,6 +32,7 @@
 #include <sys/pool.h>
 
 #define XHCI_XFER_NTRB	20
+#define XHCI_MAX_DCI	31
 
 struct xhci_soft_trb {
 	uint64_t trb_0;
@@ -70,7 +71,8 @@ struct xhci_endpoint {
 struct xhci_slot {
 	usb_dma_t xs_dc_dma;		/* device context page */
 	usb_dma_t xs_ic_dma;		/* input context page */
-	struct xhci_endpoint xs_ep[32]; /* endpoints */
+	struct xhci_ring *xs_xr[XHCI_MAX_DCI + 1];
+					/* transfer rings */
 	u_int xs_idx;			/* slot index */
 };
 
@@ -114,8 +116,8 @@ struct xhci_softc {
 
 	struct xhci_slot * sc_slots;
 
-	struct xhci_ring sc_cr;		/* command ring */
-	struct xhci_ring sc_er;		/* event ring */
+	struct xhci_ring *sc_cr;	/* command ring */
+	struct xhci_ring *sc_er;	/* event ring */
 
 	usb_dma_t sc_eventst_dma;
 	usb_dma_t sc_dcbaa_dma;

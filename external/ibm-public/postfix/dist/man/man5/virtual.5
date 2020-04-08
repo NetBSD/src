@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtual.5,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: virtual.5,v 1.2.12.1 2020/04/08 14:06:51 martin Exp $
 .\"
 .TH VIRTUAL 5 
 .ad
@@ -88,8 +88,12 @@ starts with whitespace continues a logical line.
 .ad
 .fi
 With lookups from indexed files such as DB or DBM, or from networked
-tables such as NIS, LDAP or SQL, patterns are tried in the order as
-listed below:
+tables such as NIS, LDAP or SQL, each \fIuser\fR@\fIdomain\fR
+query produces a sequence of query patterns as described below.
+
+Each query pattern is sent to each specified lookup table
+before trying the next query pattern, until a match is
+found.
 .IP "\fIuser\fR@\fIdomain address, address, ...\fR"
 Redirect mail for \fIuser\fR@\fIdomain\fR to \fIaddress\fR.
 This form has the highest precedence.
@@ -113,6 +117,23 @@ that recipient exists.  This may turn your mail system into
 a backscatter source: Postfix first accepts mail for
 non\-existent recipients and then tries to return that mail
 as "undeliverable" to the often forged sender address.
+.sp
+To avoid backscatter with mail for a wild\-card domain,
+replace the wild\-card mapping with explicit 1:1 mappings,
+or add a reject_unverified_recipient restriction for that
+domain:
+
+.nf
+    smtpd_recipient_restrictions =
+        ...
+        reject_unauth_destination
+        check_recipient_access
+            inline:{example.com=reject_unverified_recipient}
+    unverified_recipient_reject_code = 550
+.fi
+
+In the above example, Postfix may contact a remote server
+if the recipient is aliased to a remote address.
 .SH "RESULT ADDRESS REWRITING"
 .na
 .nf
@@ -248,31 +269,35 @@ The following \fBmain.cf\fR parameters are especially relevant to
 this topic. See the Postfix \fBmain.cf\fR file for syntax details
 and for default values. Use the "\fBpostfix reload\fR" command after
 a configuration change.
-.IP \fBvirtual_alias_maps\fR
-List of virtual aliasing tables.
-.IP \fBvirtual_alias_domains\fR
-List of virtual alias domains. This uses the same syntax
-as the \fBmydestination\fR parameter.
-.IP \fBpropagate_unmatched_extensions\fR
-A list of address rewriting or forwarding mechanisms that propagate
-an address extension from the original address to the result.
-Specify zero or more of \fBcanonical\fR, \fBvirtual\fR, \fBalias\fR,
-\fBforward\fR, \fBinclude\fR, or \fBgeneric\fR.
+.IP "\fBvirtual_alias_maps ($virtual_maps)\fR"
+Optional lookup tables that alias specific mail addresses or domains
+to other local or remote address.
+.IP "\fBvirtual_alias_domains ($virtual_alias_maps)\fR"
+Postfix is final destination for the specified list of virtual
+alias domains, that is, domains for which all addresses are aliased
+to addresses in other local or remote domains.
+.IP "\fBpropagate_unmatched_extensions (canonical, virtual)\fR"
+What address lookup tables copy an address extension from the lookup
+key to the lookup result.
 .PP
 Other parameters of interest:
-.IP \fBinet_interfaces\fR
-The network interface addresses that this system receives mail on.
-You need to stop and start Postfix when this parameter changes.
-.IP \fBmydestination\fR
-List of domains that this mail system considers local.
-.IP \fBmyorigin\fR
-The domain that is appended to any address that does not have a domain.
-.IP \fBowner_request_special\fR
-Give special treatment to \fBowner\-\fIxxx\fR and \fIxxx\fB\-request\fR
-addresses.
-.IP \fBproxy_interfaces\fR
-Other interfaces that this machine receives mail on by way of a
-proxy agent or network address translator.
+.IP "\fBinet_interfaces (all)\fR"
+The network interface addresses that this mail system receives
+mail on.
+.IP "\fBmydestination ($myhostname, localhost.$mydomain, localhost)\fR"
+The list of domains that are delivered via the $local_transport
+mail delivery transport.
+.IP "\fBmyorigin ($myhostname)\fR"
+The domain name that locally\-posted mail appears to come
+from, and that locally posted mail is delivered to.
+.IP "\fBowner_request_special (yes)\fR"
+Enable special treatment for owner\-\fIlistname\fR entries in the
+\fBaliases\fR(5) file, and don't split owner\-\fIlistname\fR and
+\fIlistname\fR\-request address localparts when the recipient_delimiter
+is set to "\-".
+.IP "\fBproxy_interfaces (empty)\fR"
+The network interface addresses that this mail system receives mail
+on by way of a proxy or network address translation unit.
 .SH "SEE ALSO"
 .na
 .nf

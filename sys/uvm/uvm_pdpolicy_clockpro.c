@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.17 2011/06/20 23:18:58 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.17.54.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.17 2011/06/20 23:18:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.17.54.1 2020/04/08 14:09:04 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -121,16 +121,13 @@ PDPOL_EVCNT_DEFINE(speculativemiss)
 PDPOL_EVCNT_DEFINE(locksuccess)
 PDPOL_EVCNT_DEFINE(lockfail)
 
-#define	PQ_REFERENCED	PQ_PRIVATE1
-#define	PQ_HOT		PQ_PRIVATE2
-#define	PQ_TEST		PQ_PRIVATE3
-#define	PQ_INITIALREF	PQ_PRIVATE4
-#if PQ_PRIVATE6 != PQ_PRIVATE5 * 2 || PQ_PRIVATE7 != PQ_PRIVATE6 * 2
-#error PQ_PRIVATE
-#endif
-#define	PQ_QMASK	(PQ_PRIVATE5|PQ_PRIVATE6|PQ_PRIVATE7)
-#define	PQ_QFACTOR	PQ_PRIVATE5
-#define	PQ_SPECULATIVE	PQ_PRIVATE8
+#define	PQ_REFERENCED	0x000000010
+#define	PQ_HOT		0x000000020
+#define	PQ_TEST		0x000000040
+#define	PQ_INITIALREF	0x000000080
+#define	PQ_QMASK	0x000000700
+#define	PQ_QFACTOR	0x000000100
+#define	PQ_SPECULATIVE	0x000000800
 
 #define	CLOCKPRO_NOQUEUE	0
 #define	CLOCKPRO_NEWQ		1	/* small queue to clear initial ref. */
@@ -143,6 +140,8 @@ PDPOL_EVCNT_DEFINE(lockfail)
 #endif /* defined(LISTQ) */
 #define	CLOCKPRO_LISTQ		4
 #define	CLOCKPRO_NQUEUE		4
+
+static bool	uvmpdpol_pagerealize_locked(struct vm_page *);
 
 static inline void
 clockpro_setq(struct vm_page *pg, int qidx)
@@ -170,6 +169,7 @@ typedef struct {
 } pageq_t;
 
 struct clockpro_state {
+	kmutex_t lock;
 	int s_npages;
 	int s_coldtarget;
 	int s_ncold;
@@ -203,7 +203,7 @@ clockpro_switchqueue(void)
 
 #endif /* !defined(LISTQ) */
 
-static struct clockpro_state clockpro;
+static struct clockpro_state clockpro __cacheline_aligned;
 static struct clockpro_scanstate {
 	int ss_nscanned;
 } scanstate;
@@ -236,7 +236,7 @@ static void
 pageq_insert_tail(pageq_t *q, struct vm_page *pg)
 {
 
-	TAILQ_INSERT_TAIL(&q->q_q, pg, pageq.queue);
+	TAILQ_INSERT_TAIL(&q->q_q, pg, pdqueue);
 	q->q_len++;
 }
 
@@ -245,7 +245,7 @@ static void
 pageq_insert_head(pageq_t *q, struct vm_page *pg)
 {
 
-	TAILQ_INSERT_HEAD(&q->q_q, pg, pageq.queue);
+	TAILQ_INSERT_HEAD(&q->q_q, pg, pdqueue);
 	q->q_len++;
 }
 #endif
@@ -258,7 +258,7 @@ pageq_remove(pageq_t *q, struct vm_page *pg)
 	KASSERT(clockpro_queue(&clockpro, clockpro_getq(pg)) == q);
 #endif
 	KASSERT(q->q_len > 0);
-	TAILQ_REMOVE(&q->q_q, pg, pageq.queue);
+	TAILQ_REMOVE(&q->q_q, pg, pdqueue);
 	q->q_len--;
 }
 
@@ -585,6 +585,8 @@ static void
 clockpro_reinit(void)
 {
 
+	KASSERT(mutex_owned(&clockpro.lock));
+
 	clockpro_hashinit(uvmexp.npages);
 }
 
@@ -594,6 +596,7 @@ clockpro_init(void)
 	struct clockpro_state *s = &clockpro;
 	int i;
 
+	mutex_init(&s->lock, MUTEX_DEFAULT, IPL_NONE);
 	for (i = 0; i < CLOCKPRO_NQUEUE; i++) {
 		pageq_init(&s->s_q[i]);
 	}
@@ -607,6 +610,8 @@ clockpro_tune(void)
 {
 	struct clockpro_state *s = &clockpro;
 	int coldtarget;
+
+	KASSERT(mutex_owned(&s->lock));
 
 #if defined(ADAPTIVE)
 	int coldmax = s->s_npages * CLOCKPRO_COLDPCTMAX / 100;
@@ -639,9 +644,26 @@ clockpro_movereferencebit(struct vm_page *pg, bool locked)
 	kmutex_t *lock;
 	bool referenced;
 
-	KASSERT(!locked || uvm_page_locked_p(pg));
+	KASSERT(mutex_owned(&clockpro.lock));
+	KASSERT(!locked || uvm_page_owner_locked_p(pg, false));
 	if (!locked) {
+		/*
+		 * acquire interlock to stablize page identity.
+		 * if we have caught the page in a state of flux
+		 * and it should be dequeued, abort.  it will be
+		 * dequeued later.
+		 */
+		mutex_enter(&pg->interlock);
+	        if ((pg->uobject == NULL && pg->uanon == NULL) ||
+	            pg->wire_count > 0) {
+	            	mutex_exit(&pg->interlock);
+			PDPOL_EVCNT_INCR(lockfail);
+			return;
+		}
+		mutex_exit(&clockpro.lock);	/* XXX */
 		lock = uvmpd_trylockowner(pg);
+		/* pg->interlock now dropped */
+		mutex_enter(&clockpro.lock);	/* XXX */
 		if (lock == NULL) {
 			/*
 			 * XXXuvmplock
@@ -664,6 +686,8 @@ static void
 clockpro_clearreferencebit(struct vm_page *pg, bool locked)
 {
 
+	KASSERT(mutex_owned(&clockpro.lock));
+
 	clockpro_movereferencebit(pg, locked);
 	pg->pqflags &= ~PQ_REFERENCED;
 }
@@ -674,6 +698,8 @@ clockpro___newqrotate(int len)
 	struct clockpro_state * const s = &clockpro;
 	pageq_t * const newq = clockpro_queue(s, CLOCKPRO_NEWQ);
 	struct vm_page *pg;
+
+	KASSERT(mutex_owned(&s->lock));
 
 	while (pageq_len(newq) > len) {
 		pg = pageq_remove_head(newq);
@@ -693,6 +719,8 @@ clockpro_newqrotate(void)
 {
 	struct clockpro_state * const s = &clockpro;
 
+	KASSERT(mutex_owned(&s->lock));
+
 	check_sanity();
 	clockpro___newqrotate(s->s_newqlenmax);
 	check_sanity();
@@ -701,6 +729,8 @@ clockpro_newqrotate(void)
 static void
 clockpro_newqflush(int n)
 {
+
+	KASSERT(mutex_owned(&clockpro.lock));
 
 	check_sanity();
 	clockpro___newqrotate(n);
@@ -711,6 +741,8 @@ static void
 clockpro_newqflushone(void)
 {
 	struct clockpro_state * const s = &clockpro;
+
+	KASSERT(mutex_owned(&s->lock));
 
 	clockpro_newqflush(
 	    MAX(pageq_len(clockpro_queue(s, CLOCKPRO_NEWQ)) - 1, 0));
@@ -725,6 +757,7 @@ clockpro___enqueuetail(struct vm_page *pg)
 {
 	struct clockpro_state * const s = &clockpro;
 
+	KASSERT(mutex_owned(&s->lock));
 	KASSERT(clockpro_getq(pg) == CLOCKPRO_NOQUEUE);
 
 	check_sanity();
@@ -748,7 +781,7 @@ clockpro_pageenqueue(struct vm_page *pg)
 	bool speculative = (pg->pqflags & PQ_SPECULATIVE) != 0; /* XXX */
 
 	KASSERT((~pg->pqflags & (PQ_INITIALREF|PQ_SPECULATIVE)) != 0);
-	KASSERT(mutex_owned(&uvm_pageqlock));
+	KASSERT(mutex_owned(&s->lock));
 	check_sanity();
 	KASSERT(clockpro_getq(pg) == CLOCKPRO_NOQUEUE);
 	s->s_npages++;
@@ -805,6 +838,8 @@ clockpro_pagequeue(struct vm_page *pg)
 	struct clockpro_state * const s = &clockpro;
 	int qidx;
 
+	KASSERT(mutex_owned(&s->lock));
+
 	qidx = clockpro_getq(pg);
 	KASSERT(qidx != CLOCKPRO_NOQUEUE);
 
@@ -816,6 +851,8 @@ clockpro_pagedequeue(struct vm_page *pg)
 {
 	struct clockpro_state * const s = &clockpro;
 	pageq_t *q;
+
+	KASSERT(mutex_owned(&s->lock));
 
 	KASSERT(s->s_npages > 0);
 	check_sanity();
@@ -838,6 +875,8 @@ clockpro_pagerequeue(struct vm_page *pg)
 	struct clockpro_state * const s = &clockpro;
 	int qidx;
 
+	KASSERT(mutex_owned(&s->lock));
+
 	qidx = clockpro_getq(pg);
 	KASSERT(qidx == CLOCKPRO_HOTQ || qidx == CLOCKPRO_COLDQ);
 	pageq_remove(clockpro_queue(s, qidx), pg);
@@ -850,6 +889,8 @@ clockpro_pagerequeue(struct vm_page *pg)
 static void
 handhot_endtest(struct vm_page *pg)
 {
+
+	KASSERT(mutex_owned(&clockpro.lock));
 
 	KASSERT((pg->pqflags & PQ_HOT) == 0);
 	if ((pg->pqflags & PQ_TEST) != 0) {
@@ -868,6 +909,8 @@ handhot_advance(void)
 	struct vm_page *pg;
 	pageq_t *hotq;
 	int hotqlen;
+
+	KASSERT(mutex_owned(&s->lock));
 
 	clockpro_tune();
 
@@ -973,6 +1016,8 @@ handcold_advance(void)
 {
 	struct clockpro_state * const s = &clockpro;
 	struct vm_page *pg;
+
+	KASSERT(mutex_owned(&s->lock));
 
 	for (;;) {
 #if defined(LISTQ)
@@ -1086,8 +1131,8 @@ done:;
 	return pg;
 }
 
-void
-uvmpdpol_pageactivate(struct vm_page *pg)
+static void
+uvmpdpol_pageactivate_locked(struct vm_page *pg)
 {
 
 	if (!uvmpdpol_pageisqueued_p(pg)) {
@@ -1105,14 +1150,28 @@ uvmpdpol_pageactivate(struct vm_page *pg)
 }
 
 void
-uvmpdpol_pagedeactivate(struct vm_page *pg)
+uvmpdpol_pageactivate(struct vm_page *pg)
+{
+
+	uvmpdpol_set_intent(pg, PQ_INTENT_A);
+}
+
+static void
+uvmpdpol_pagedeactivate_locked(struct vm_page *pg)
 {
 
 	clockpro_clearreferencebit(pg, true);
 }
 
 void
-uvmpdpol_pagedequeue(struct vm_page *pg)
+uvmpdpol_pagedeactivate(struct vm_page *pg)
+{
+
+	uvmpdpol_set_intent(pg, PQ_INTENT_I);
+}
+
+static void
+uvmpdpol_pagedequeue_locked(struct vm_page *pg)
 {
 
 	if (!uvmpdpol_pageisqueued_p(pg)) {
@@ -1123,7 +1182,14 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 }
 
 void
-uvmpdpol_pageenqueue(struct vm_page *pg)
+uvmpdpol_pagedequeue(struct vm_page *pg)
+{
+
+	uvmpdpol_set_intent(pg, PQ_INTENT_D);
+}
+
+static void
+uvmpdpol_pageenqueue_locked(struct vm_page *pg)
 {
 
 #if 1
@@ -1134,18 +1200,68 @@ uvmpdpol_pageenqueue(struct vm_page *pg)
 	pg->pqflags |= PQ_SPECULATIVE;
 	clockpro_pageenqueue(pg);
 #else
-	uvmpdpol_pageactivate(pg);
+	uvmpdpol_pageactivate_locked(pg);
 #endif
+}
+
+void
+uvmpdpol_pageenqueue(struct vm_page *pg)
+{
+
+	uvmpdpol_set_intent(pg, PQ_INTENT_D);
+}
+
+static bool
+uvmpdpol_pagerealize_locked(struct vm_page *pg)
+{
+	uint32_t pqflags;
+
+	KASSERT(mutex_owned(&clockpro.lock));
+	KASSERT(mutex_owned(&pg->interlock));
+
+	/* XXX this needs to be called from elsewhere, like uvmpdpol_clock. */
+
+	pqflags = pg->pqflags;
+	pq->pqflags &= ~(PQ_INTENT_SET | PQ_INTENT_QUEUED);
+	switch (pqflags & (PQ_INTENT_MASK | PQ_INTENT_SET)) {
+	case PQ_INTENT_A | PQ_INTENT_SET:
+		uvmpdpol_pageactivate_locked(pg);
+		return true;
+	case PQ_INTENT_E | PQ_INTENT_SET:
+		uvmpdpol_pageenqueue_locked(pg);
+		return true;
+	case PQ_INTENT_I | PQ_INTENT_SET:
+		uvmpdpol_pagedeactivate_locked(pg);
+		return true;
+	case PQ_INTENT_D | PQ_INTENT_SET:
+		uvmpdpol_pagedequeue_locked(pg);
+		return true;
+	default:
+		return false;
+	}
+}
+
+void
+uvmpdpol_pagerealize(struct vm_page *pg)
+{
+	struct clockpro_state * const s = &clockpro;
+
+	mutex_enter(&s->lock);
+	uvmpdpol_pagerealize_locked(pg);
+	mutex_exit(&s->lock);
 }
 
 void
 uvmpdpol_anfree(struct vm_anon *an)
 {
+	struct clockpro_state * const s = &clockpro;
 
 	KASSERT(an->an_page == NULL);
+	mutex_enter(&s->lock);
 	if (nonresident_lookupremove((objid_t)an, 0)) {
 		PDPOL_EVCNT_INCR(nresanonfree);
 	}
+	mutex_exit(&s->lock);
 }
 
 void
@@ -1158,8 +1274,11 @@ uvmpdpol_init(void)
 void
 uvmpdpol_reinit(void)
 {
+	struct clockpro_state * const s = &clockpro;
 
+	mutex_enter(&s->lock);
 	clockpro_reinit();
+	mutex_exit(&s->lock);
 }
 
 void
@@ -1167,6 +1286,11 @@ uvmpdpol_estimatepageable(int *active, int *inactive)
 {
 	struct clockpro_state * const s = &clockpro;
 
+	/*
+	 * Don't take any locks here.  This can be called from DDB, and in
+	 * any case the numbers are stale the instant the lock is dropped,
+	 * so it just doesn't matter.
+	 */
 	if (active) {
 		*active = s->s_npages - s->s_ncold;
 	}
@@ -1179,30 +1303,67 @@ bool
 uvmpdpol_pageisqueued_p(struct vm_page *pg)
 {
 
+	/* Unlocked check OK due to page lifecycle. */
 	return clockpro_getq(pg) != CLOCKPRO_NOQUEUE;
 }
 
 void
 uvmpdpol_scaninit(void)
 {
+	struct clockpro_state * const s = &clockpro;
 	struct clockpro_scanstate * const ss = &scanstate;
 
+	mutex_enter(&s->lock);
 	ss->ss_nscanned = 0;
+	mutex_exit(&s->lock);
+}
+
+void
+uvmpdpol_scanfini(void)
+{
+
 }
 
 struct vm_page *
-uvmpdpol_selectvictim(void)
+uvmpdpol_selectvictim(kmutex_t **plock)
 {
 	struct clockpro_state * const s = &clockpro;
 	struct clockpro_scanstate * const ss = &scanstate;
 	struct vm_page *pg;
+	kmutex_t *lock = NULL;
 
-	if (ss->ss_nscanned > s->s_npages) {
-		DPRINTF("scan too much\n");
-		return NULL;
-	}
-	pg = handcold_advance();
-	ss->ss_nscanned++;
+	do {
+		mutex_enter(&s->lock);
+		if (ss->ss_nscanned > s->s_npages) {
+			DPRINTF("scan too much\n");
+			mutex_exit(&s->lock);
+			return NULL;
+		}
+		pg = handcold_advance();
+		if (pg == NULL) {
+			mutex_exit(&s->lock);
+			break;
+		}
+		ss->ss_nscanned++;
+		/*
+		 * acquire interlock to stablize page identity.
+		 * if we have caught the page in a state of flux
+		 * and it should be dequeued, do it now and then
+		 * move on to the next.
+		 */
+		mutex_enter(&pg->interlock);
+	        if ((pg->uobject == NULL && pg->uanon == NULL) ||
+	            pg->wire_count > 0) {
+	            	mutex_exit(&pg->interlock);
+			clockpro_pagedequeue(pg);
+			pg->pqflags &= ~(PQ_INITIALREF|PQ_SPECULATIVE);
+	            	continue;
+		}
+		mutex_exit(&s->lock);
+		lock = uvmpd_trylockowner(pg);
+		/* pg->interlock now dropped */
+	} while (lock == NULL);
+	*plock = lock;
 	return pg;
 }
 
@@ -1210,20 +1371,46 @@ static void
 clockpro_dropswap(pageq_t *q, int *todo)
 {
 	struct vm_page *pg;
+	kmutex_t *lock;
 
-	TAILQ_FOREACH_REVERSE(pg, &q->q_q, pglist, pageq.queue) {
+	KASSERT(mutex_owned(&clockpro.lock));
+
+	TAILQ_FOREACH_REVERSE(pg, &q->q_q, pglist, pdqueue) {
 		if (*todo <= 0) {
 			break;
 		}
 		if ((pg->pqflags & PQ_HOT) == 0) {
 			continue;
 		}
-		if ((pg->pqflags & PQ_SWAPBACKED) == 0) {
+		mutex_enter(&pg->interlock);
+		if ((pg->flags & PG_SWAPBACKED) == 0) {
+			mutex_exit(&pg->interlock);
 			continue;
 		}
-		if (uvmpd_trydropswap(pg)) {
-			(*todo)--;
+
+		/*
+		 * try to lock the object that owns the page.
+	         */
+	        mutex_exit(&clockpro.lock);
+        	lock = uvmpd_trylockowner(pg);
+        	/* pg->interlock now released */
+        	mutex_enter(&clockpro.lock);
+		if (lock == NULL) {
+			/* didn't get it - try the next page. */
+			/* XXXAD lost position in queue */
+			continue;
 		}
+
+		/*
+		 * if there's a shortage of swap slots, try to free it.
+		 */
+		if ((pg->flags & PG_SWAPBACKED) != 0 &&
+		    (pg->flags & PG_BUSY) == 0) {
+			if (uvmpd_dropswap(pg)) {
+				(*todo)--;
+			}
+		}
+		mutex_exit(lock);
 	}
 }
 
@@ -1243,9 +1430,11 @@ uvmpdpol_balancequeue(int swap_shortage)
 
 	DPRINTF("%s: swap_shortage=%d\n", __func__, swap_shortage);
 
+	mutex_enter(&s->lock);
 	clockpro_dropswap(clockpro_queue(s, CLOCKPRO_NEWQ), &todo);
 	clockpro_dropswap(clockpro_queue(s, CLOCKPRO_COLDQ), &todo);
 	clockpro_dropswap(clockpro_queue(s, CLOCKPRO_HOTQ), &todo);
+	mutex_exit(&s->lock);
 
 	DPRINTF("%s: done=%d\n", __func__, swap_shortage - todo);
 }
@@ -1255,17 +1444,24 @@ uvmpdpol_needsscan_p(void)
 {
 	struct clockpro_state * const s = &clockpro;
 
-	if (s->s_ncold < s->s_coldtarget) {
-		return true;
-	}
-	return false;
+	/* This must be an unlocked check: can be called from interrupt. */
+	return s->s_ncold < s->s_coldtarget;
 }
 
 void
 uvmpdpol_tune(void)
 {
+	struct clockpro_state * const s = &clockpro;
 
+	mutex_enter(&s->lock);
 	clockpro_tune();
+	mutex_exit(&s->lock);
+}
+
+void
+uvmpdpol_idle(void)
+{
+
 }
 
 #if !defined(PDSIM)
@@ -1336,7 +1532,7 @@ clockpro_dump(void)
 	    (name), nhot, ncold, ntest, nspeculative, ninitialref, nref)
 
 	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_NEWQ)->q_q, pageq.queue) {
+	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_NEWQ)->q_q, pdqueue) {
 		if (clockpro_getq(pg) != CLOCKPRO_NEWQ) {
 			printf("newq corrupt %p\n", pg);
 		}
@@ -1346,7 +1542,7 @@ clockpro_dump(void)
 	PRINTCOUNT("newq");
 
 	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_COLDQ)->q_q, pageq.queue) {
+	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_COLDQ)->q_q, pdqueue) {
 		if (clockpro_getq(pg) != CLOCKPRO_COLDQ) {
 			printf("coldq corrupt %p\n", pg);
 		}
@@ -1356,7 +1552,7 @@ clockpro_dump(void)
 	PRINTCOUNT("coldq");
 
 	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_HOTQ)->q_q, pageq.queue) {
+	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_HOTQ)->q_q, pdqueue) {
 		if (clockpro_getq(pg) != CLOCKPRO_HOTQ) {
 			printf("hotq corrupt %p\n", pg);
 		}
@@ -1371,7 +1567,7 @@ clockpro_dump(void)
 	PRINTCOUNT("hotq");
 
 	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_LISTQ)->q_q, pageq.queue) {
+	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_LISTQ)->q_q, pdqueue) {
 #if !defined(LISTQ)
 		printf("listq %p\n", pg);
 #endif /* !defined(LISTQ) */
@@ -1401,7 +1597,7 @@ pdsim_dumpq(int qidx)
 	pageq_t *q = clockpro_queue(s, qidx);
 	struct vm_page *pg;
 
-	TAILQ_FOREACH(pg, &q->q_q, pageq.queue) {
+	TAILQ_FOREACH(pg, &q->q_q, pdqueue) {
 		DPRINTF(" %" PRIu64 "%s%s%s%s%s%s",
 		    pg->offset >> PAGE_SHIFT,
 		    (pg->pqflags & PQ_HOT) ? "H" : "",

@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.h,v 1.19 2016/12/12 15:58:45 maya Exp $	*/
+/*	$NetBSD: slcompress.h,v 1.19.16.1 2020/04/08 14:08:57 martin Exp $	*/
 /*	Id: slcompress.h,v 1.4 1994/09/21 06:50:08 paulus Exp 	*/
 
 /*
@@ -41,6 +41,10 @@
 
 #ifndef _NET_SLCOMPRESS_H_
 #define _NET_SLCOMPRESS_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#endif
 
 #define MAX_STATES 16		/* must be > 2 and < 256 */
 #define MAX_HDR MLEN		/* XXX 4bsd-ism: should really be 128 */

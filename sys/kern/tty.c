@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.276.2.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.276.2.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.276.2.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.276.2.2 2020/04/08 14:08:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -226,7 +226,7 @@ int tty_qsize = TTY_MINQSIZE;
 static int
 tty_get_qsize(int *qsize, int newsize)
 {
-	newsize = 1 << ilog2(newsize);	/* Make it a power of two */ 
+	newsize = 1 << ilog2(newsize);	/* Make it a power of two */
 
 	if (newsize < TTY_MINQSIZE || newsize > TTY_MAXQSIZE)
 		return EINVAL;
@@ -2530,14 +2530,16 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 	struct timeval	utime, stime;
 	int		tmp;
 	fixpt_t		pctcpu = 0;
-	const char	*msg;
+	const char	*msg = NULL;
 	char		lmsg[100];
 	long		rss;
+	bool		again = false;
 
 	KASSERT(mutex_owned(proc_lock));
 
 	*buf = '\0';
 
+ retry:
 	if (tp->t_session == NULL)
 		msg = "not a controlling terminal\n";
 	else if (tp->t_pgrp == NULL)
@@ -2568,11 +2570,25 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 			if (p->p_lock != oldpick->p_lock)
 				mutex_exit(oldpick->p_lock);
 		}
-		if (fromsig &&
-		    (SIGACTION_PS(pick->p_sigacts, SIGINFO).sa_flags &
-		    SA_NOKERNINFO))
-			return;
-		msg = NULL;
+
+		if (pick != NULL) {
+			mutex_enter(pick->p_lock);
+			if (P_ZOMBIE(pick)) {
+				mutex_exit(pick->p_lock);
+				pick = NULL;
+				if (!again) {
+					again = true;
+					goto retry;
+				}
+				msg = "found only zombie processes\n";
+			}
+			if (pick && fromsig &&
+			    (SIGACTION_PS(pick->p_sigacts, SIGINFO).sa_flags &
+			    SA_NOKERNINFO)) {
+				mutex_exit(pick->p_lock);
+				return;
+			}
+		}
 	}
 
 	/* Print load average. */
@@ -2589,7 +2605,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 	    pick->p_pid);
 	strlcat(buf, lmsg, bufsz);
 
-	mutex_enter(pick->p_lock);
+	KASSERT(mutex_owned(pick->p_lock));
 	LIST_FOREACH(l, &pick->p_lwps, l_sibling) {
 		const char *lp;
 		lwp_lock(l);
@@ -2615,7 +2631,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 		default:
 			lp = l->l_wchan ? l->l_wmesg : "iowait";
 			break;
-		} 
+		}
 		strlcat(buf, lp, bufsz);
 		strlcat(buf, LIST_NEXT(l, l_sibling) != NULL ? " " : "] ",
 		    bufsz);
@@ -2679,11 +2695,8 @@ proc_compare_wrapper(struct proc *p1, struct proc *p2)
 	KASSERT(mutex_owned(p1->p_lock));
 	KASSERT(mutex_owned(p2->p_lock));
 
-	if ((l1 = LIST_FIRST(&p1->p_lwps)) == NULL)
-		return 1;
-
-	if ((l2 = LIST_FIRST(&p2->p_lwps)) == NULL)
-		return 0;
+	l1 = LIST_FIRST(&p1->p_lwps);
+	l2 = LIST_FIRST(&p2->p_lwps);
 
 	return proc_compare(p1, l1, p2, l2);
 }
@@ -2840,7 +2853,7 @@ tty_free(struct tty *tp)
 
 	mutex_enter(proc_lock);
 	mutex_enter(&tty_lock);
-	for (i = 0; i < TTYSIG_COUNT; i++) 
+	for (i = 0; i < TTYSIG_COUNT; i++)
 		sigemptyset(&tp->t_sigs[i]);
 	if (tp->t_sigcount != 0)
 		TAILQ_REMOVE(&tty_sigqueue, tp, t_sigqueue);
@@ -2981,7 +2994,7 @@ ttysigintr(void *cookie)
 		pgrp = tp->t_pgrp;
 		sess = tp->t_session;
 		lflag = tp->t_lflag;
-		if  (sig == SIGINFO) {
+		if (sig == SIGINFO) {
 			if (ISSET(tp->t_state, TS_SIGINFO)) {
 				/* Via ioctl: ignore tty option. */
 				tp->t_state &= ~TS_SIGINFO;

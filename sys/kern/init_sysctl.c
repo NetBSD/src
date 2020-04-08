@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.214.4.1 2019/06/10 22:09:03 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.214.4.2 2020/04/08 14:08:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.214.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.214.4.2 2020/04/08 14:08:51 martin Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -110,6 +110,7 @@ dcopyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 
 static int sysctl_kern_maxvnodes(SYSCTLFN_PROTO);
 static int sysctl_kern_messages(SYSCTLFN_PROTO);
+static int sysctl_kern_boottime(SYSCTLFN_PROTO);
 static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
 static int sysctl_kern_hostid(SYSCTLFN_PROTO);
@@ -235,7 +236,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "boottime",
 		       SYSCTL_DESCR("System boot time"),
-		       NULL, 0, &boottime, sizeof(boottime),
+		       sysctl_kern_boottime, 0, NULL, sizeof(struct timespec),
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
@@ -731,7 +732,6 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 		return (error);
 	}
 	vfs_reinit();
-	nchreinit();
 
 	return (0);
 }
@@ -803,6 +803,21 @@ sysctl_kern_messages(SYSCTLFN_ARGS)
 }
 
 /*
+ * sysctl helper routine for the kern.boottime node
+ */
+static int
+sysctl_kern_boottime(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct timespec ts;
+
+	getnanoboottime(&ts);
+	node = *rnode;
+	node.sysctl_data = &ts;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+/*
  * sysctl helper routine for rtc_offset - set time after changes
  */
 static int
@@ -858,6 +873,13 @@ sysctl_kern_maxproc(SYSCTLFN_ARGS)
 	if (nmaxproc > cpu_maxproc())
 		return (EINVAL);
 #endif
+	error = 0;
+#ifdef __HAVE_MAXPROC_HOOK
+	error = cpu_maxproc_hook(nmaxproc);
+#endif
+	if (error)
+		return error;
+
 	maxproc = nmaxproc;
 
 	return (0);

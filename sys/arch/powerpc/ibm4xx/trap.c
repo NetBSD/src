@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69.16.1 2019/06/10 22:06:38 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.69.16.2 2020/04/08 14:07:49 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69.16.1 2019/06/10 22:06:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69.16.2 2020/04/08 14:07:49 martin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -76,13 +76,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69.16.1 2019/06/10 22:06:38 christos Exp 
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/param.h>
+#include <sys/cpu.h>
+#include <sys/kauth.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
 #include <sys/systm.h>
-#include <sys/userret.h>
-#include <sys/kauth.h>
-#include <sys/cpu.h>
 
 #if defined(KGDB)
 #include <sys/kgdb.h>
@@ -100,10 +99,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69.16.1 2019/06/10 22:06:38 christos Exp 
 
 #include <powerpc/db_machdep.h>
 #include <powerpc/spr.h>
-#include <powerpc/ibm4xx/spr.h>
+#include <powerpc/userret.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/pmap.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/tlb.h>
 
 #include <powerpc/fpu/fpu_extern.h>
@@ -116,9 +116,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69.16.1 2019/06/10 22:06:38 christos Exp 
 static int fix_unaligned(struct lwp *l, struct trapframe *tf);
 
 void trap(struct trapframe *);	/* Called from locore / trap_subr */
-/* Why are these not defined in a header? */
+#if 0
+/* Not currently used nor exposed externally in any header file */
 int badaddr(void *, size_t);
 int badaddr_read(void *, size_t, int *);
+#endif
 int ctx_setup(int, int);
 
 #ifdef DEBUG
@@ -180,7 +182,15 @@ trap(struct trapframe *tf)
 		{
 			struct vm_map *map;
 			vaddr_t va;
-			struct faultbuf *fb = NULL;
+			struct faultbuf *fb;
+
+			pcb = lwp_getpcb(l);
+			fb = pcb->pcb_onfault;
+
+			if (curcpu()->ci_idepth >= 0) {
+				rv = EFAULT;
+				goto out;
+			}
 
 			va = tf->tf_dear;
 			if (tf->tf_pid == KERNEL_PID) {
@@ -198,13 +208,12 @@ trap(struct trapframe *tf)
 			    (ftype & VM_PROT_WRITE) ? "write" : "read",
 			    (void *)va, tf->tf_esr));
 
-			pcb = lwp_getpcb(l);
-			fb = pcb->pcb_onfault;
 			pcb->pcb_onfault = NULL;
 			rv = uvm_fault(map, trunc_page(va), ftype);
 			pcb->pcb_onfault = fb;
 			if (rv == 0)
 				return;
+out:
 			if (fb != NULL) {
 				tf->tf_pid = KERNEL_PID;
 				tf->tf_srr0 = fb->fb_pc;
@@ -348,8 +357,8 @@ brain_damage:
 		panic("trap");
 	}
 
-	/* Invoke MI userret code */
-	mi_userret(l);
+	/* Invoke powerpc userret code */
+	userret(l, tf);
 }
 
 int
@@ -416,43 +425,53 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 	}
 
 	__asm volatile(
-		"   mfmsr %[msr];"          /* Save MSR */
-		"   li %[pid],0x20; "
-		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];"   /* Disable IMMU */
-		"   mfpid %[pid];"          /* Save old PID */
+		"   mfmsr %[msr];"		/* Save MSR */
+		"   li %[pid],0x20;"
+		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];" /* Disable IMMU */
+		"   mfpid %[pid];"		/* Save old PID */
 		"   sync; isync;"
 
-		"   srwi. %[count],%[len],0x2;"     /* How many words? */
-		"   beq-  2f;"              /* No words. Go do bytes */
+		"   srwi. %[count],%[len],0x2;"	/* How many words? */
+		"   beq- 2f;"			/* No words. Go do bytes */
 		"   mtctr %[count];"
 		"1: mtpid %[ctx]; sync;"
-		"   lswi %[tmp],%[udaddr],4;"       /* Load user word */
-		"   addi %[udaddr],%[udaddr],0x4;"  /* next udaddr word */
-		"   sync; isync;"
-		"   mtpid %[pid];sync;"
-		"   stswi %[tmp],%[kaddr],4;"        /* Store kernel word */
-		"   dcbf 0,%[kaddr];"           /* flush cache */
-		"   addi %[kaddr],%[kaddr],0x4;"    /* next udaddr word */
-		"   sync; isync;"
-		"   bdnz 1b;"               /* repeat */
-
-		"2: andi. %[count],%[len],0x3;"     /* How many remaining bytes? */
-		"   addi %[count],%[count],0x1;"
-		"   mtctr %[count];"
-		"3: bdz 10f;"               /* while count */
-		"   mtpid %[ctx];sync;"
-		"   lbz %[tmp],0(%[udaddr]);"       /* Load user byte */
-		"   addi %[udaddr],%[udaddr],0x1;"  /* next udaddr byte */
+#ifdef PPC_IBM403
+		"   lswi %[tmp],%[udaddr],4;"	/* Load user word */
+#else
+		"   lwz %[tmp],0(%[udaddr]);"
+#endif
+		"   addi %[udaddr],%[udaddr],0x4;" /* next udaddr word */
 		"   sync; isync;"
 		"   mtpid %[pid]; sync;"
-		"   stb %[tmp],0(%[kaddr]);"        /* Store kernel byte */
-		"   dcbf 0,%[kaddr];"           /* flush cache */
+#ifdef PPC_IBM403
+		"   stswi %[tmp],%[kaddr],4;"	/* Store kernel word */
+#else
+		"   stw %[tmp],0(%[kaddr]);"
+#endif
+		"   dcbst 0,%[kaddr];"		/* flush cache */
+		"   addi %[kaddr],%[kaddr],0x4;" /* next udaddr word */
+		"   sync; isync;"
+		"   bdnz 1b;"			/* repeat */
+
+		"2: andi. %[count],%[len],0x3;"	/* How many remaining bytes? */
+		"   addi %[count],%[count],0x1;"
+		"   mtctr %[count];"
+		"3: bdz 10f;"			/* while count */
+		"   mtpid %[ctx]; sync;"
+		"   lbz %[tmp],0(%[udaddr]);"	/* Load user byte */
+		"   addi %[udaddr],%[udaddr],0x1;" /* next udaddr byte */
+		"   sync; isync;"
+		"   mtpid %[pid]; sync;"
+		"   stb %[tmp],0(%[kaddr]);"	/* Store kernel byte */
+		"   dcbst 0,%[kaddr];"		/* flush cache */
 		"   addi %[kaddr],%[kaddr],0x1;"
 		"   sync; isync;"
 		"   b 3b;"
-		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;" /* Restore PID and MSR */
+		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;"
+						/* Restore PID and MSR */
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
-		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count));
+		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
+		  [len] "b" (len), [count] "b" (count));
 
 	curpcb->pcb_onfault = NULL;
 	return 0;
@@ -513,43 +532,53 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 	}
 
 	__asm volatile(
-		"   mfmsr %[msr];"          /* Save MSR */ \
-		"   li %[pid],0x20; " \
-		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];"   /* Disable IMMU */ \
-		"   mfpid %[pid];"          /* Save old PID */ \
+		"   mfmsr %[msr];"		/* Save MSR */
+		"   li %[pid],0x20;"
+		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];" /* Disable IMMU */
+		"   mfpid %[pid];"		/* Save old PID */
 		"   sync; isync;"
 
-		"   srwi. %[count],%[len],0x2;"     /* How many words? */
-		"   beq-  2f;"              /* No words. Go do bytes */
+		"   srwi. %[count],%[len],0x2;"	/* How many words? */
+		"   beq- 2f;"			/* No words. Go do bytes */
 		"   mtctr %[count];"
-		"1: mtpid %[pid];sync;"
-		"   lswi %[tmp],%[kaddr],4;"        /* Load kernel word */
-		"   addi %[kaddr],%[kaddr],0x4;"    /* next kaddr word */
+		"1: mtpid %[pid]; sync;"
+#ifdef PPC_IBM403
+		"   lswi %[tmp],%[kaddr],4;"	/* Load kernel word */
+#else
+		"   lwz %[tmp],0(%[kaddr]);"
+#endif
+		"   addi %[kaddr],%[kaddr],0x4;" /* next kaddr word */
 		"   sync; isync;"
 		"   mtpid %[ctx]; sync;"
-		"   stswi %[tmp],%[udaddr],4;"       /* Store user word */
-		"   dcbf 0,%[udaddr];"          /* flush cache */
-		"   addi %[udaddr],%[udaddr],0x4;"  /* next udaddr word */
+#ifdef PPC_IBM403
+		"   stswi %[tmp],%[udaddr],4;"	/* Store user word */
+#else
+		"   stw %[tmp],0(%[udaddr]);"
+#endif
+		"   dcbst 0,%[udaddr];"		/* flush cache */
+		"   addi %[udaddr],%[udaddr],0x4;" /* next udaddr word */
 		"   sync; isync;"
-		"   bdnz 1b;"               /* repeat */
+		"   bdnz 1b;"			/* repeat */
 
-		"2: andi. %[count],%[len],0x3;"     /* How many remaining bytes? */
+		"2: andi. %[count],%[len],0x3;"	/* How many remaining bytes? */
 		"   addi %[count],%[count],0x1;"
 		"   mtctr %[count];"
-		"3: bdz  10f;"              /* while count */
-		"   mtpid %[pid];sync;"
-		"   lbz %[tmp],0(%[kaddr]);"        /* Load kernel byte */
-		"   addi %[kaddr],%[kaddr],0x1;"    /* next kaddr byte */
+		"3: bdz  10f;"			/* while count */
+		"   mtpid %[pid]; sync;"
+		"   lbz %[tmp],0(%[kaddr]);"	/* Load kernel byte */
+		"   addi %[kaddr],%[kaddr],0x1;" /* next kaddr byte */
 		"   sync; isync;"
 		"   mtpid %[ctx]; sync;"
-		"   stb %[tmp],0(%[udaddr]);"       /* Store user byte */
-		"   dcbf 0,%[udaddr];"          /* flush cache */
+		"   stb %[tmp],0(%[udaddr]);"	/* Store user byte */
+		"   dcbst 0,%[udaddr];"		/* flush cache */
 		"   addi %[udaddr],%[udaddr],0x1;"
 		"   sync; isync;"
 		"   b 3b;"
-		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;" /* Restore PID and MSR */
+		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;"
+						/* Restore PID and MSR */
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
-		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count));
+		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
+		  [len] "b" (len), [count] "b" (count));
 
 	curpcb->pcb_onfault = NULL;
 	return 0;
@@ -616,6 +645,7 @@ kcopy(const void *src, void *dst, size_t len)
 	return 0;
 }
 
+#if 0
 int
 badaddr(void *addr, size_t size)
 {
@@ -666,6 +696,7 @@ badaddr_read(void *addr, size_t size, int *rptr)
 
 	return 0;
 }
+#endif
 
 /*
  * For now, this only deals with the particular unaligned access case

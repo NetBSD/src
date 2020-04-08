@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.70 2017/11/14 09:55:41 maxv Exp $	*/
+/*	$NetBSD: boot2.c,v 1.70.4.1 2020/04/08 14:07:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -252,6 +252,12 @@ bootit(const char *filename, int howto)
 	if (howto & AB_VERBOSE)
 		printf("booting %s (howto 0x%x)\n", sprint_bootsel(filename),
 		    howto);
+#ifdef KERNEL_DIR
+	char path[512];
+	strcpy(path, filename);
+	strcat(path, "/kernel");
+	(void)exec_netbsd(path, 0, howto, boot_biosdev < 0x80, clearit);
+#endif
 
 	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80, clearit) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),

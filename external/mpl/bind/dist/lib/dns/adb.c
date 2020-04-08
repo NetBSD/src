@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.3.2.2 2019/06/10 22:04:34 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.3.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3209,9 +3209,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 	find->partial_result |= (adbname->partial_result & wanted_addresses);
 	if (alias) {
 		if (target != NULL) {
-			result = dns_name_copy(&adbname->target, target, NULL);
-			if (result != ISC_R_SUCCESS)
-				goto out;
+			dns_name_copynf(&adbname->target, target);
 		}
 		result = DNS_R_ALIAS;
 	} else
@@ -4179,7 +4177,9 @@ dns_adb_changeflags(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
 }
 
 /*
- * (10000 / ((10 + n) / 10)^(3/2)) for n in 0..99.
+ * The polynomial backoff curve (10000 / ((10 + n) / 10)^(3/2)) <0..99> drops
+ * fairly aggressively at first, then slows down and tails off at around 2-3%.
+ *
  * These will be used to make quota adjustments.
  */
 static int quota_adj[] = {

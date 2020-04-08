@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3.22.1 2019/06/10 22:06:41 christos Exp $
+#	$NetBSD: genassym.cf,v 1.3.22.2 2020/04/08 14:07:51 martin Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -111,7 +111,6 @@ define	TF_BADADDR	offsetof(struct trapframe, tf_badaddr)
 define	TF_SR		offsetof(struct trapframe, tf_sr)
 
 define	L_CPU		offsetof(struct lwp, l_cpu)
-define	L_CTXSWTCH	offsetof(struct lwp, l_ctxswtch)
 define	L_MD_ASTPENDING	offsetof(struct lwp, l_md.md_astpending)
 define	L_MD_ONFAULT	offsetof(struct lwp, l_md.md_onfault)
 define	L_MD_USP	offsetof(struct lwp, l_md.md_usp)
@@ -130,7 +129,6 @@ define	CI_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CI_SOFTINTS	offsetof(struct cpu_info, ci_softints)
-define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 
 define	FB_A0		offsetof(struct faultbuf, fb_reg[FB_A0])
 define	FB_RA		offsetof(struct faultbuf, fb_reg[FB_RA])

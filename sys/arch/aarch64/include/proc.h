@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.2.2.1 2019/06/10 22:05:43 christos Exp $ */
+/* $NetBSD: proc.h,v 1.2.2.2 2020/04/08 14:07:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,6 +34,10 @@
 
 #ifdef __aarch64__
 
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd32.h"
+#endif
+
 struct mdlwp {
 	void *md_onfault;
 	struct trapframe *md_utf;
@@ -43,7 +47,12 @@ struct mdlwp {
 
 struct mdproc {
 	void (*md_syscall)(struct trapframe *);
+	char md_march32[12];	/* machine arch of executable */
 };
+
+#ifdef COMPAT_NETBSD32
+#define PROC0_MD_INITIALIZERS	.p_md = { .md_march32 = MACHINE32_ARCH },
+#endif
 
 #elif defined(__arm__)
 

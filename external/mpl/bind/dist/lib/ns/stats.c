@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.3.2.2 2019/06/10 22:04:49 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.3.2.3 2020/04/08 14:07:10 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -124,4 +124,21 @@ ns_stats_get(ns_stats_t *stats) {
 	REQUIRE(NS_STATS_VALID(stats));
 
 	return (stats->counters);
+}
+
+void ns_stats_update_if_greater(ns_stats_t *stats,
+			     isc_statscounter_t counter,
+			     isc_statscounter_t value)
+{
+	REQUIRE(NS_STATS_VALID(stats));
+
+	isc_stats_update_if_greater(stats->counters, counter, value);
+}
+
+isc_statscounter_t
+ns_stats_get_counter(ns_stats_t *stats, isc_statscounter_t counter)
+{
+	REQUIRE(NS_STATS_VALID(stats));
+
+	return (isc_stats_get_counter(stats->counters, counter));
 }

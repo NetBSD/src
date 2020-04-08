@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.15 2011/01/22 19:19:17 joerg Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.15.56.1 2020/04/08 14:07:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -111,6 +111,12 @@ void	zmemcpy(unsigned char *, unsigned char *, unsigned int);
 void	main(void);
 void	gzcopy(void *, const void *, size_t);
 
+#ifdef GZSRCADDR
+#define	compressed_image	(void *)GZSRCADDR
+#else
+#define	compressed_image	md_root_image
+#endif
+
 void
 main(void)
 {
@@ -131,11 +137,14 @@ main(void)
 	 * decompressing from an image which was concatenated onto
 	 * the end of the gzboot binary.
 	 */
+#ifdef GZSRCADDR
+	printf(">> Image address: %p\n", compressed_image);
+#endif
 	if (md_root_size != 0)
 		printf(">> Image size: %u\n", md_root_size);
 
 	printf("Uncompressing image...");
-	gzcopy((void *) loadaddr, md_root_image, md_root_size);
+	gzcopy((void *) loadaddr, compressed_image, md_root_size);
 	printf("done.\n");
 
 	printf("Jumping to image @ 0x%x...\n", md_root_loadaddr);

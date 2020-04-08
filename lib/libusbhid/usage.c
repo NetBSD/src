@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.10 2016/01/02 21:58:10 christos Exp $	*/
+/*	$NetBSD: usage.c,v 1.10.16.1 2020/04/08 14:07:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: usage.c,v 1.10 2016/01/02 21:58:10 christos Exp $");
+__RCSID("$NetBSD: usage.c,v 1.10.16.1 2020/04/08 14:07:16 martin Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -232,7 +232,7 @@ hid_parse_usage_in_page(const char *name)
 		if (strncmp(pages[k].name, name, len) == 0)
 			goto found;
 	if (sscanf(name, "%x:%x", &k, &j) == 2) {
-		return (k << 16) | j;
+		return (((uint32_t)k) << 16) | j;
 	}
 	return -1;
  found:
@@ -241,9 +241,9 @@ hid_parse_usage_in_page(const char *name)
 		if (pages[k].page_contents[j].usage == -1) {
 			if (sscanf(sep, fmtcheck(
 			    pages[k].page_contents[j].name, "%u"), &l) == 1) {
-				return (pages[k].usage << 16) | l;
+				return (((uint32_t)pages[k].usage) << 16) | l;
 			}
 		} else if (strcmp(pages[k].page_contents[j].name, sep) == 0)
-			return (pages[k].usage << 16) | pages[k].page_contents[j].usage;
+			return (((uint32_t)pages[k].usage) << 16) | pages[k].page_contents[j].usage;
 	return (-1);
 }

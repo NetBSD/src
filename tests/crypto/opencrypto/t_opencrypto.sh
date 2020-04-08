@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.8 2017/06/09 06:09:02 knakahara Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.8.6.1 2020/04/08 14:09:05 martin Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -269,6 +269,19 @@ sha1_hmac_cleanup() {
 	common_cleanup
 }
 
+atf_test_case sha2_hmac cleanup
+sha2_hmac_head() {
+	common_head "Test SHA2_HMAC crypto"
+}
+
+sha2_hmac_body() {
+	common_body h_sha2hmac
+}
+
+sha2_hmac_cleanup() {
+	common_cleanup
+}
+
 atf_test_case xcbcmac cleanup
 xcbcmac_head() {
 	common_head "Test XCBC_MAC_96 crypto"
@@ -313,6 +326,7 @@ atf_init_test_cases() {
 	atf_add_test_case md5_hmac
 	atf_add_test_case null
 	atf_add_test_case sha1_hmac
+	atf_add_test_case sha2_hmac
 	atf_add_test_case xcbcmac
 	atf_add_test_case ioctl
 }

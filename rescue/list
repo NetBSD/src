@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.49.2.1 2019/06/10 22:05:31 christos Exp $
+#	$NetBSD: list,v 1.49.2.2 2020/04/08 14:07:17 martin Exp $
 
 SRCDIRS	bin
 
@@ -85,9 +85,6 @@ PROG	mount_ntfs
 PROG	mount_null
 PROG	mount_overlay
 PROG	mount_procfs
-PROG	mount_smbfs
-SPECIAL	mount_smbfs	srcdir	external/bsd/smbfs/sbin/mount_smbfs
-LIBS	${SMB_LIBDIR}/libsmb.a
 PROG	mount_tmpfs
 PROG	mount_umap
 PROG	mount_union

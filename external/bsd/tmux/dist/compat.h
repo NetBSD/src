@@ -67,6 +67,7 @@ void	warnx(const char *, ...);
 #define _PATH_DEVNULL	"/dev/null"
 #define _PATH_TTY	"/dev/tty"
 #define _PATH_DEV	"/dev/"
+#define _PATH_DEFPATH	"/usr/bin:/bin"
 #endif
 
 #ifndef __OpenBSD__
@@ -310,10 +311,6 @@ int		 vasprintf(char **, const char *, va_list);
 #ifndef HAVE_FGETLN
 /* fgetln.c */
 char		*fgetln(FILE *, size_t *);
-#endif
-
-#ifndef HAVE_FPARSELN
-char		*fparseln(FILE *, size_t *, size_t *, const char *, int);
 #endif
 
 #ifndef HAVE_SETENV

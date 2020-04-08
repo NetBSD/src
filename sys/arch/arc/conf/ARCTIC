@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.71.4.1 2019/06/10 22:05:49 christos Exp $
+#	$NetBSD: ARCTIC,v 1.71.4.2 2020/04/08 14:07:27 martin Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -237,7 +237,6 @@ pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)

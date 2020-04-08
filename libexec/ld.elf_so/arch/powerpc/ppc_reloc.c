@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.57.2.1 2019/06/10 22:05:30 christos Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.57.2.2 2020/04/08 14:07:17 martin Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.57.2.1 2019/06/10 22:05:30 christos Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.57.2.2 2020/04/08 14:07:17 martin Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -197,6 +197,9 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		case R_TYPE(ADDR32):	/* <address> S + A */
 #endif
 		case R_TYPE(GLOB_DAT):	/* <address> S + A */
+		case R_TYPE(ADDR16_LO):
+		case R_TYPE(ADDR16_HI):
+		case R_TYPE(ADDR16_HA):
 		case R_TYPE(DTPMOD):
 		case R_TYPE(DTPREL):
 		case R_TYPE(TPREL):
@@ -233,6 +236,50 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
 			break;
+
+		/*
+		 * Recent GNU ld does not resolve ADDR16_{LO,HI,HA} if
+		 * the reloc is in a writable section and the symbol
+		 * is not already referenced from text.
+		 */
+		case R_TYPE(ADDR16_LO): {
+			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
+			    rela->r_addend);
+
+			uint16_t tmp16 = lo(tmp);
+
+			uint16_t *where16 = (uint16_t *)where;
+			if (*where16 != tmp16)
+				*where16 = tmp16;
+			rdbg(("ADDR16_LO %s in %s --> #lo(%p) = 0x%x in %s",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			      obj->path, (void *)tmp, tmp16, defobj->path));
+			break;
+		}
+
+		case R_TYPE(ADDR16_HI):
+		case R_TYPE(ADDR16_HA): {
+			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
+			    rela->r_addend);
+
+			uint16_t tmp16 = hi(tmp);
+			if (ELF_R_TYPE(rela->r_info) == R_TYPE(ADDR16_HA)
+			    && (tmp & __ha16))
+				++tmp16; /* adjust to ha(tmp) */
+
+			uint16_t *where16 = (uint16_t *)where;
+			if (*where16 != tmp16)
+				*where16 = tmp16;
+			rdbg(("ADDR16_H%c %s in %s --> #h%c(%p) = 0x%x in %s",
+			      (ELF_R_TYPE(rela->r_info) == R_TYPE(ADDR16_HI)
+			           ? 'I' : 'A'),
+			      obj->strtab + obj->symtab[symnum].st_name,
+			      obj->path,
+			      (ELF_R_TYPE(rela->r_info) == R_TYPE(ADDR16_HI)
+			           ? 'i' : 'a'),
+			      (void *)tmp, tmp16, defobj->path));
+			break;
+		}
 
 		case R_TYPE(RELATIVE):	/* <address> B + A */
 			*where = (Elf_Addr)(obj->relocbase + rela->r_addend);

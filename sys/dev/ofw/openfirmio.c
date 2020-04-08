@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.c,v 1.13.28.1 2019/06/10 22:07:15 christos Exp $ */
+/*	$NetBSD: openfirmio.c,v 1.13.28.2 2020/04/08 14:08:08 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.13.28.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.13.28.2 2020/04/08 14:08:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,11 +122,7 @@ static int
 openfirmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
-#ifdef __OPENFIRMIO_OPEN_CHECK_BROKEN
-	return __openfirmio_open_check_broken();
-#else
 	return 0;
-#endif
 }
 
 static int

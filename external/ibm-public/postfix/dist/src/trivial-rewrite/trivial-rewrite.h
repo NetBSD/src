@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.h,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: trivial-rewrite.h,v 1.2.12.1 2020/04/08 14:06:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -25,7 +25,7 @@
  /*
   * Connection management.
   */
-int     server_flags;
+extern int server_flags;
 
  /*
   * rewrite.c
@@ -86,4 +86,9 @@ extern int resolve_class(const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/

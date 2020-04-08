@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3.60.1 2019/06/10 22:09:24 christos Exp $
+#	$NetBSD: Makefile,v 1.3.60.2 2020/04/08 14:08:56 martin Exp $
 
 .include "../Makefile.inc"
 
 KMOD=	exec_elf32
 
-CPPFLAGS+=	-DEXEC_ELF32 -DCOREDUMP
+CPPFLAGS+=	-DEXEC_ELF32
 .if ${MACHINE_ARCH} != "arm" && \
     ${MACHINE_ARCH} != "armeb" && \
     ${MACHINE_ARCH} != "m68000" && \

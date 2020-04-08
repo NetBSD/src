@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5 2018/05/28 21:05:09 chs Exp $	*/
+/*	$NetBSD: misc.c,v 1.5.2.1 2020/04/08 14:04:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ opensolaris_utsname_init(void *arg)
 	strlcpy(utsname.sysname, ostype, sizeof(utsname.sysname));
 	strlcpy(utsname.nodename, hostname, sizeof(utsname.nodename));
 	strlcpy(utsname.release, osrelease, sizeof(utsname.release));
-	strlcpy(utsname.version, "OpenSolaris", sizeof(utsname.version));
+	strlcpy(utsname.version, version, sizeof(utsname.version));
 	strlcpy(utsname.machine, machine, sizeof(utsname.machine));
 }
 
@@ -130,7 +130,7 @@ kmem_reap(void)
 	int bufcnt;
 	struct pool *pp;
 	
-	bufcnt = uvmexp.freetarg - uvmexp.free;
+	bufcnt = uvmexp.freetarg - uvm_availmem();
 	if (bufcnt < 0)
 		bufcnt = 0;
 

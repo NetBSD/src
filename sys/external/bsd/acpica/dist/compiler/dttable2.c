@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1366,13 +1366,14 @@ DtCompileSdev (
                         Namesp->DeviceIdOffset + Namesp->DeviceIdLength;
                     Namesp->VendorDataLength =
                         (UINT16) Subtable->Length;
+
+                    /* Final size of entire namespace structure */
+
+                    SdevHeader->Length = (UINT16)(sizeof(ACPI_SDEV_NAMESPACE) +
+                        Subtable->Length + Namesp->DeviceIdLength);
                 }
             }
 
-            /* Final size of entire namespace structure */
-
-            SdevHeader->Length = (UINT16) (sizeof (ACPI_SDEV_NAMESPACE) +
-                Subtable->Length + Namesp->DeviceIdLength);
             break;
 
         case ACPI_SDEV_TYPE_PCIE_ENDPOINT_DEVICE:
@@ -1512,7 +1513,9 @@ DtCompileSlit (
     DT_SUBTABLE             *ParentTable;
     DT_FIELD                **PFieldList = (DT_FIELD **) List;
     DT_FIELD                *FieldList;
+    DT_FIELD                *EndOfFieldList = NULL;
     UINT32                  Localities;
+    UINT32                  LocalityListLength;
     UINT8                   *LocalityBuffer;
 
 
@@ -1528,6 +1531,7 @@ DtCompileSlit (
 
     Localities = *ACPI_CAST_PTR (UINT32, Subtable->Buffer);
     LocalityBuffer = UtLocalCalloc (Localities);
+    LocalityListLength = 0;
 
     /* Compile each locality buffer */
 
@@ -1537,9 +1541,21 @@ DtCompileSlit (
         DtCompileBuffer (LocalityBuffer,
             FieldList->Value, FieldList, Localities);
 
+        LocalityListLength++;
         DtCreateSubtable (LocalityBuffer, Localities, &Subtable);
         DtInsertSubtable (ParentTable, Subtable);
+        EndOfFieldList = FieldList;
         FieldList = FieldList->Next;
+    }
+
+    if (LocalityListLength != Localities)
+    {
+        sprintf(AslGbl_MsgBuffer,
+            "Found %u entries, must match LocalityCount: %u",
+            LocalityListLength, Localities);
+        DtError (ASL_ERROR, ASL_MSG_ENTRY_LIST, EndOfFieldList, AslGbl_MsgBuffer);
+        ACPI_FREE (LocalityBuffer);
+        return (AE_LIMIT);
     }
 
     ACPI_FREE (LocalityBuffer);

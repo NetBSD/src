@@ -1,4 +1,4 @@
-/* $NetBSD: mii_ethersubr.c,v 1.1.106.1 2019/06/10 22:07:14 christos Exp $ */
+/* $NetBSD: mii_ethersubr.c,v 1.1.106.2 2020/04/08 14:08:08 martin Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_ethersubr.c,v 1.1.106.1 2019/06/10 22:07:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_ethersubr.c,v 1.1.106.2 2020/04/08 14:08:08 martin Exp $");
+
+#define	__IFMEDIA_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +86,8 @@ ether_mediachange(struct ifnet *ifp)
 	int rc;
 
 	KASSERT(ec->ec_mii != NULL);
+	KASSERT(mii_locked(ec->ec_mii) ||
+		ifmedia_islegacy(&ec->ec_mii->mii_media));
 
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return 0;
@@ -99,6 +103,8 @@ ether_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct mii_data		*mii;
 
 	KASSERT(ec->ec_mii != NULL);
+	KASSERT(mii_locked(ec->ec_mii) ||
+		ifmedia_islegacy(&ec->ec_mii->mii_media));
 
 #ifdef notyet
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {

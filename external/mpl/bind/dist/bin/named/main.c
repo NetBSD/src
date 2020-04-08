@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4.2.2 2019/06/10 22:02:59 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.4.2.3 2020/04/08 14:07:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -68,6 +68,7 @@
 #include <ns/interfacemgr.h>
 
 #include <named/builtin.h>
+#include <named/config.h>
 #include <named/control.h>
 #include <named/fuzz.h>
 #include <named/globals.h>	/* Explicit, though named/log.h includes it. */
@@ -453,6 +454,12 @@ set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
 static void
 printversion(bool verbose) {
 	char rndcconf[PATH_MAX], *dot = NULL;
+#if defined(HAVE_GEOIP2)
+	isc_mem_t *mctx = NULL;
+	cfg_parser_t *parser = NULL;
+	cfg_obj_t *config = NULL;
+	const cfg_obj_t *defaults = NULL, *obj = NULL;
+#endif
 
 	printf("%s %s%s%s <id:%s>\n",
 	       named_g_product, named_g_version,
@@ -539,7 +546,20 @@ OPENSSL_VERSION_NUMBER >= 0x10100000L /* 1.1.0 or higher */
 	printf("  nsupdate session key: %s\n", named_g_defaultsessionkeyfile);
 	printf("  named PID file:       %s\n", named_g_defaultpidfile);
 	printf("  named lock file:      %s\n", named_g_defaultlockfile);
-
+#if defined(HAVE_GEOIP2)
+#define RTC(x) RUNTIME_CHECK((x) == ISC_R_SUCCESS)
+	RTC(isc_mem_create(0, 0, &mctx));
+	RTC(cfg_parser_create(mctx, named_g_lctx, &parser));
+	RTC(named_config_parsedefaults(parser, &config));
+	RTC(cfg_map_get(config, "options", &defaults));
+	RTC(cfg_map_get(defaults, "geoip-directory", &obj));
+	if (cfg_obj_isstring(obj)) {
+		printf("  geoip-directory:      %s\n", cfg_obj_asstring(obj));
+	}
+	cfg_obj_destroy(parser, &config);
+	cfg_parser_destroy(&parser);
+	isc_mem_detach(&mctx);
+#endif /* HAVE_GEOIP2 */
 }
 
 static void

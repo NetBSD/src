@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu_subr.c,v 1.33.4.1 2019/06/10 22:06:30 christos Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.33.4.2 2020/04/08 14:07:45 martin Exp $	*/
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.33.4.1 2019/06/10 22:06:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.33.4.2 2020/04/08 14:07:45 martin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -182,15 +182,14 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	KASSERT(cpu_id != 0);
 	ci->ci_cpuid = cpu_id;
 	ci->ci_pmap_kern_segtab = &pmap_kern_segtab,
-	ci->ci_package_id = cpu_package_id;
-	ci->ci_core_id = cpu_core_id;
-	ci->ci_smt_id = cpu_smt_id;
 	ci->ci_cpu_freq = cpu_info_store.ci_cpu_freq;
 	ci->ci_cctr_freq = cpu_info_store.ci_cctr_freq;
 	ci->ci_cycles_per_hz = cpu_info_store.ci_cycles_per_hz;
 	ci->ci_divisor_delay = cpu_info_store.ci_divisor_delay;
 	ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
 	ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
+
+	cpu_topology_set(ci, cpu_package_id, cpu_core_id, cpu_smt_id, 0);
 
 	pmap_md_alloc_ephemeral_address_space(ci);
 
@@ -338,7 +337,7 @@ cpu_startup_common(void)
 	 * map those pages.)
 	 */
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 
 #if defined(__mips_n32)
@@ -481,62 +480,27 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 }
 
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
-	struct lwp * const l = ci->ci_data.cpu_onproc;
-#ifdef MULTIPROCESSOR
-	struct cpu_info * const cur_ci = curcpu();
-#endif
-
 	KASSERT(kpreempt_disabled());
 
-	ci->ci_want_resched |= flags;
-
-	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
-		/*
-		 * No point doing anything, it will switch soon.
-		 * Also here to prevent an assertion failure in
-		 * kpreempt() due to preemption being set on a
-		 * soft interrupt LWP.
-		 */
-		return;
-	}
-
-	if (__predict_false(l == ci->ci_data.cpu_idlelwp)) {
-#ifdef MULTIPROCESSOR
-		/*
-		 * If the other CPU is idling, it must be waiting for an
-		 * interrupt.  So give it one.
-		 */
-		if (__predict_false(ci != cur_ci))
-			cpu_send_ipi(ci, IPI_NOP);
-#endif
-		return;
-	}
-
-#ifdef MULTIPROCESSOR
-	atomic_or_uint(&ci->ci_want_resched, flags);
-#else
-	ci->ci_want_resched |= flags;
-#endif
-
-	if (flags & RESCHED_KPREEMPT) {
+	if ((flags & RESCHED_KPREEMPT) != 0) {
 #ifdef __HAVE_PREEMPTION
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
-		if (ci == cur_ci) {
-			softint_trigger(SOFTINT_KPREEMPT);
-		} else {
+		if ((flags & RESCHED_REMOTE) != 0) {
 			cpu_send_ipi(ci, IPI_KPREEMPT);
+		} else {
+			softint_trigger(SOFTINT_KPREEMPT);
 		}
 #endif
 		return;
 	}
-	l->l_md.md_astpending = 1;		/* force call to ast() */
+	if ((flags & RESCHED_REMOTE) != 0) {
 #ifdef MULTIPROCESSOR
-	if (ci != cur_ci && (flags & RESCHED_IMMED)) {
 		cpu_send_ipi(ci, IPI_AST);
-	}
 #endif
+	} else {
+		l->l_md.md_astpending = 1;		/* force call to ast() */
+	}
 }
 
 uint32_t
@@ -552,9 +516,14 @@ cpu_signotify(struct lwp *l)
 #ifdef __HAVE_FAST_SOFTINTS
 	KASSERT(lwp_locked(l, NULL));
 #endif
-	KASSERT(l->l_stat == LSONPROC || l->l_stat == LSRUN || l->l_stat == LSSTOP);
 
-	l->l_md.md_astpending = 1; 		/* force call to ast() */
+	if (l->l_cpu != curcpu()) {
+#ifdef MULTIPROCESSOR
+		cpu_send_ipi(l->l_cpu, IPI_AST);
+#endif
+	} else {
+		l->l_md.md_astpending = 1; 	/* force call to ast() */
+	}
 }
 
 void
@@ -566,15 +535,6 @@ cpu_need_proftick(struct lwp *l)
 	l->l_pflag |= LP_OWEUPC;
 	l->l_md.md_astpending = 1;		/* force call to ast() */
 }
-
-void
-cpu_set_curpri(int pri)
-{
-	kpreempt_disable();
-	curcpu()->ci_schedstate.spc_curpriority = pri;
-	kpreempt_enable();
-}
-
 
 #ifdef __HAVE_PREEMPTION
 bool
@@ -643,11 +603,19 @@ cpu_idle(void)
 bool
 cpu_intr_p(void)
 {
-	bool rv;
-	kpreempt_disable();
-	rv = (curcpu()->ci_idepth != 0);
-	kpreempt_enable();
-	return rv;
+	uint64_t ncsw;
+	int idepth;
+	lwp_t *l;
+
+	l = curlwp;
+	do {
+		ncsw = l->l_ncsw;
+		__insn_barrier();
+		idepth = l->l_cpu->ci_idepth;
+		__insn_barrier();
+	} while (__predict_false(ncsw != l->l_ncsw));
+
+	return idepth != 0;
 }
 
 #ifdef MULTIPROCESSOR
@@ -994,7 +962,7 @@ cpu_boot_secondary_processors(void)
 		KASSERT(ci->ci_data.cpu_idlelwp);
 
 		/*
-		 * Skip this CPU if it didn't sucessfully hatch.
+		 * Skip this CPU if it didn't successfully hatch.
 		 */
 		if (!kcpuset_isset(cpus_hatched, cpu_index(ci)))
 			continue;

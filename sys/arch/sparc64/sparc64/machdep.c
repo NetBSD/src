@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.287.16.1 2019/06/10 22:06:48 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.287.16.2 2020/04/08 14:07:54 martin Exp $ */
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.287.16.1 2019/06/10 22:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.287.16.2 2020/04/08 14:07:54 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -195,7 +195,7 @@ cpu_startup(void)
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 
 #if 0
@@ -2624,19 +2624,16 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
  * or after the current trap/syscall if in system mode.
  */
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
 
-	ci->ci_want_resched = 1;
 	ci->ci_want_ast = 1;
 
 #ifdef MULTIPROCESSOR
-	if (ci == curcpu())
-		return;
-	/* Just interrupt the target CPU, so it can notice its AST */
-	if ((flags & RESCHED_IMMED) != 0 &&
-	    ci->ci_data.cpu_onproc != ci->ci_data.cpu_idlelwp)
+	if ((flags & RESCHED_REMOTE) != 0) {
+		/* Just interrupt the target CPU, so it can notice its AST */
 		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop, 0, 0);
+	}
 #endif
 }
 
@@ -2650,16 +2647,28 @@ cpu_signotify(struct lwp *l)
 
 	ci->ci_want_ast = 1;
 #ifdef MULTIPROCESSOR
-	if (ci != curcpu())
+	if (ci != curcpu()) {
 		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop, 0, 0);
+	}
 #endif
 }
 
 bool
 cpu_intr_p(void)
 {
+	uint64_t ncsw;
+	int idepth;
+	lwp_t *l;
 
-	return curcpu()->ci_idepth >= 0;
+	l = curlwp;
+	do {
+		ncsw = l->l_ncsw;
+		__insn_barrier();
+		idepth = l->l_cpu->ci_idepth;
+		__insn_barrier();
+	} while (__predict_false(ncsw != l->l_ncsw));
+
+	return idepth >= 0;
 }
 
 #ifdef MODULAR

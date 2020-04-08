@@ -1,4 +1,4 @@
-.\"	$NetBSD: rand48.3,v 1.11 2006/03/31 11:43:54 drochner Exp $
+.\"	$NetBSD: rand48.3,v 1.11.86.1 2020/04/08 14:07:13 martin Exp $
 .\"
 .\" Copyright (c) 1993 Martin Birgmeier
 .\" All rights reserved.
@@ -11,7 +11,7 @@
 .\" of any kind. I shall in no event be liable for anything that happens
 .\" to anyone/anything when using this software.
 .\"
-.Dd October 8, 1993
+.Dd February 22, 2020
 .Dt RAND48 3
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ On the other hand,
 and
 .Fn jrand48
 use a user-supplied buffer to store the seed r(n), which consists
-of an array of 3 shorts, where the zeroth member holds the least
+of an array of 3 unsigned shorts, where the zeroth member holds the least
 significant bits.
 .Pp
 All functions share the same multiplicand and addend.
@@ -120,12 +120,12 @@ also initializes the internal buffer r(n) of
 .Fn lrand48 ,
 and
 .Fn mrand48 ,
-but here all 48 bits of the seed can be specified in an array of 3 shorts,
+but here all 48 bits of the seed can be specified in an array of 3 unsigned shorts,
 where the zeroth member specifies the lowest bits.
 Again, the constant multiplicand and addend of the algorithm are
 reset to the default values given above.
 .Fn seed48
-returns a pointer to an array of 3 shorts which contains the old seed.
+returns a pointer to an array of 3 unsigned shorts which contains the old seed.
 This array is statically allocated, thus its contents are lost after
 each new call to
 .Fn seed48 .
@@ -145,7 +145,7 @@ and the seed used in
 .Fn lrand48 ,
 and
 .Fn mrand48 .
-An array of 7 shorts is passed as parameter; the first three shorts are
+An array of 7 unsigned shorts is passed as parameter; the first three shorts are
 used to initialize the seed; the second three are used to initialize the
 multiplicand; and the last short is used to initialize the addend.
 It is thus not possible to use values greater than 0xffff as the addend.

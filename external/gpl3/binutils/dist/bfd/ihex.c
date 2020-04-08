@@ -1,5 +1,5 @@
 /* BFD back-end for Intel Hex objects.
-   Copyright (C) 1995-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor of Cygnus Support <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -777,6 +777,28 @@ ihex_write_object_contents (bfd *abfd)
       bfd_size_type count;
 
       where = l->where;
+
+#ifdef BFD64
+      /* IHex only supports 32-bit addresses, and we want to check
+	 that 64-bit addresses are in range.  This isn't quite as
+	 obvious as it may seem, since some targets have 32-bit
+	 addresses that are sign extended to 64 bits.  So complain
+	 only if addresses overflow both unsigned and signed 32-bit
+	 integers.  */
+      if (where > 0xffffffff
+	  && where + 0x80000000 > 0xffffffff)
+	{
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%pB 64-bit address %#" PRIx64
+	       " out of range for Intel Hex file"),
+	     abfd, (uint64_t) where);
+	  bfd_set_error (bfd_error_bad_value);
+	  return FALSE;
+	}
+      where &= 0xffffffff;
+#endif
+
       p = l->data;
       count = l->size;
 
@@ -940,6 +962,7 @@ ihex_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 #define ihex_bfd_lookup_section_flags		  bfd_generic_lookup_section_flags
 #define ihex_bfd_merge_sections			  bfd_generic_merge_sections
 #define ihex_bfd_is_group_section		  bfd_generic_is_group_section
+#define ihex_bfd_group_name			  bfd_generic_group_name
 #define ihex_bfd_discard_group			  bfd_generic_discard_group
 #define ihex_section_already_linked		  _bfd_generic_section_already_linked
 #define ihex_bfd_define_common_symbol		  bfd_generic_define_common_symbol

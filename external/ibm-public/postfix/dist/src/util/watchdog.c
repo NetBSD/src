@@ -1,4 +1,4 @@
-/*	$NetBSD: watchdog.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: watchdog.c,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -76,6 +76,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -218,6 +223,8 @@ WATCHDOG *watchdog_create(unsigned timeout, WATCHDOG_FN action, char *context)
 	    msg_fatal("%s: pipe: %m", myname);
 	non_blocking(watchdog_pipe[0], NON_BLOCKING);
 	non_blocking(watchdog_pipe[1], NON_BLOCKING);
+	close_on_exec(watchdog_pipe[0], CLOSE_ON_EXEC);	/* Fix 20190126 */
+	close_on_exec(watchdog_pipe[1], CLOSE_ON_EXEC);	/* Fix 20190126 */
 	event_enable_read(watchdog_pipe[0], watchdog_read, (void *) 0);
     }
 #endif

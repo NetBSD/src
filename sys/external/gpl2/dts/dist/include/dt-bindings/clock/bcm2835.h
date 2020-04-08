@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835.h,v 1.1.1.1.12.1 2019/06/10 22:08:54 christos Exp $	*/
+/*	$NetBSD: bcm2835.h,v 1.1.1.1.12.2 2020/04/08 14:08:44 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -60,3 +60,5 @@
 #define BCM2835_CLOCK_DSI1E		48
 #define BCM2835_CLOCK_DSI0P		49
 #define BCM2835_CLOCK_DSI1P		50
+
+#define BCM2711_CLOCK_EMMC2		51

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_i2c_bus.c,v 1.3.6.2 2019/06/10 22:08:22 christos Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_i2c_bus.c,v 1.3.6.3 2020/04/08 14:08:25 martin Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,12 +24,14 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_bus.c,v 1.3.6.2 2019/06/10 22:08:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_bus.c,v 1.3.6.3 2020/04/08 14:08:25 martin Exp $");
 
 #include "bus.h"
 #include "pad.h"
 
 #include <core/option.h>
+
+#include <linux/nbsd-namespace.h>
 
 /*******************************************************************************
  * i2c-algo-bit
@@ -184,11 +186,7 @@ nvkm_i2c_bus_del(struct nvkm_i2c_bus **pbus)
 		BUS_TRACE(bus, "dtor");
 		list_del(&bus->head);
 		i2c_del_adapter(&bus->i2c);
-#ifdef __NetBSD__
-		linux_mutex_destroy(&bus->mutex);
-#else
 		mutex_destroy(&bus->mutex);
-#endif
 		kfree(bus->i2c.algo_data);
 		kfree(*pbus);
 		*pbus = NULL;
@@ -212,11 +210,7 @@ nvkm_i2c_bus_ctor(const struct nvkm_i2c_bus_func *func,
 	bus->func = func;
 	bus->pad = pad;
 	bus->id = id;
-#ifdef __NetBSD__
-	linux_mutex_init(&bus->mutex);
-#else
 	mutex_init(&bus->mutex);
-#endif
 	list_add_tail(&bus->head, &pad->i2c->bus);
 	BUS_TRACE(bus, "ctor");
 

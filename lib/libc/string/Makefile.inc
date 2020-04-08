@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.83 2017/01/12 00:35:38 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.83.14.1 2020/04/08 14:07:13 martin Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -63,6 +63,7 @@ MLINKS+=strchr.3 strchrnul.3
 MLINKS+=memchr.3 memrchr.3
 MLINKS+=strtok.3 strtok_r.3
 MLINKS+=strerror.3 strerror_r.3 strerror.3 perror.3 \
+	strerror.3 strerror_l.3 \
 	strerror.3 sys_errlist.3 strerror.3 sys_nerr.3
 MLINKS+=strdup.3 strndup.3
 MLINKS+=strsep.3 stresep.3

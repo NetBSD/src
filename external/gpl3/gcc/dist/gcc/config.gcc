@@ -632,7 +632,7 @@ x86_cpus="generic intel"
 # Common parts for widely ported systems.
 case ${target} in
 *-*-darwin*)
-  tmake_file="t-darwin ${cpu_type}/t-darwin"
+  tmake_file="t-darwin "
   tm_file="${tm_file} darwin.h"
   case ${target} in
   *-*-darwin9*)
@@ -1487,16 +1487,25 @@ hppa[12]*-*-hpux11*)
 		dwarf2=no
 	fi
 	;;
+i[34567]86-*-darwin1[89]*)
+	echo "Error: 32bit target is not supported after Darwin17" 1>&2
+	;;
 i[34567]86-*-darwin*)
 	need_64bit_isa=yes
 	# Baseline choice for a machine that allows m64 support.
+	with_cpu=${with_cpu:-core2}
+	tmake_file="${tmake_file} ${cpu_type}/t-darwin32-biarch t-slibgcc"
+	tm_file="${tm_file} ${cpu_type}/darwin32-biarch.h"
+	;;
+x86_64-*-darwin1[89]* | x86_64-*-darwin2[01]*)
+	# Only 64b from now
 	with_cpu=${with_cpu:-core2}
 	tmake_file="${tmake_file} t-slibgcc"
 	;;
 x86_64-*-darwin*)
 	with_cpu=${with_cpu:-core2}
-	tmake_file="${tmake_file} ${cpu_type}/t-darwin64 t-slibgcc"
-	tm_file="${tm_file} ${cpu_type}/darwin64.h"
+	tmake_file="${tmake_file} ${cpu_type}/t-darwin64-biarch t-slibgcc"
+	tm_file="${tm_file} ${cpu_type}/darwin64-biarch.h"
 	;;
 i[34567]86-*-elfiamcu)
 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h newlib-stdint.h i386/iamcu.h"
@@ -2479,16 +2488,23 @@ pdp11-*-*)
 #	extra_headers=
 #	;;
 powerpc-*-darwin*)
-	extra_options="${extra_options} rs6000/darwin.opt"
+	extra_options="${extra_options} ${cpu_type}/darwin.opt"
 	case ${target} in
-	  *-darwin1[0-9]* | *-darwin[8-9]*)
-	    tmake_file="${tmake_file} rs6000/t-darwin8"
-	    tm_file="${tm_file} rs6000/darwin8.h"
+	  *-darwin1[0-9]* | *-darwin9*)
+	    tmake_file="${tmake_file} ${cpu_type}/t-darwin32-biarch"
+	    tm_file="${tm_file} ${cpu_type}/darwin32-biarch.h"
+	    ;;
+	  *-darwin8*)
+	    tmake_file="${tmake_file} ${cpu_type}/t-darwin32-biarch"
+	    tm_file="${tm_file} ${cpu_type}/darwin32-biarch.h"
+	    tm_file="${tm_file} ${cpu_type}/darwin8.h"
 	    ;;
 	  *-darwin7*)
-	    tm_file="${tm_file} rs6000/darwin7.h"
+	    tm_file="${tm_file} ${cpu_type}/darwin7.h"
 	    ;;
-	  *-darwin[0-6]*)
+	  *-darwin[456]*)
+	    # Earlier - ingle arch, with 32b only
+	    # OS X 10.0, the first edition is Darwin4
 	    ;;
 	esac
 	tmake_file="${tmake_file} t-slibgcc"
@@ -2496,8 +2512,8 @@ powerpc-*-darwin*)
 	;;
 powerpc64-*-darwin*)
 	extra_options="${extra_options} ${cpu_type}/darwin.opt"
-	tmake_file="${tmake_file} ${cpu_type}/t-darwin64 t-slibgcc"
-	tm_file="${tm_file} ${cpu_type}/darwin8.h ${cpu_type}/darwin64.h"
+	tmake_file="${tmake_file} ${cpu_type}/t-darwin64-biarch t-slibgcc"
+	tm_file="${tm_file} ${cpu_type}/darwin64-biarch.h"
 	extra_headers=altivec.h
 	;;
 powerpc*-*-freebsd*)
@@ -4468,14 +4484,12 @@ case "${target}" in
 			 echo "#undef  LINK_OS_EXTRA_SPEC32"
 			 echo "#define LINK_OS_EXTRA_SPEC32" \
 			      "\"%(link_os_new_dtags)" \
-			      "-rpath $prefix/lib -rpath $at/lib" \
-			      "-L $prefix/lib -L $at/lib\""
+			      "-rpath $prefix/lib -rpath $at/lib\""
 			 echo
 			 echo "#undef  LINK_OS_EXTRA_SPEC64"
 			 echo "#define LINK_OS_EXTRA_SPEC64" \
 			      "\"%(link_os_new_dtags)" \
-			      "-rpath $prefix/lib64 -rpath $at/lib64" \
-			      "-L $prefix/lib64 -L $at/lib64\""
+			      "-rpath $prefix/lib64 -rpath $at/lib64\""
 			 echo
 			 echo "#undef  LINK_OS_NEW_DTAGS_SPEC"
 			 echo "#define LINK_OS_NEW_DTAGS_SPEC" \
@@ -4488,7 +4502,10 @@ case "${target}" in
 			 echo "#define MD_EXEC_PREFIX \"$at/bin/\""
 			 echo
 			 echo "#undef  MD_STARTFILE_PREFIX"
-			 echo "#define MD_STARTFILE_PREFIX \"$at/lib/\"") \
+			 echo "#define MD_STARTFILE_PREFIX \"$prefix/lib/\""
+			 echo
+			 echo "#undef  MD_STARTFILE_PREFIX_1"
+			 echo "#define MD_STARTFILE_PREFIX_1 \"$at/lib/\"") \
 			    > advance-toolchain.h
 		    else
 			echo "Unknown advance-toolchain $with_advance_toolchain"
@@ -4687,7 +4704,10 @@ case ${target} in
 		;;
 	i[34567]86-*-dragonfly* | x86_64-*-dragonfly*)
 		;;
-	i[34567]86-*-freebsd* | x86_64-*-freebsd*)
+	i[34567]86-*-freebsd*)
+		;;
+	x86_64-*-freebsd*)
+		tmake_file="${tmake_file} i386/t-freebsd64"
 		;;
 	ia64*-*-linux*)
 		;;

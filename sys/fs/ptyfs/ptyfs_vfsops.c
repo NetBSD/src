@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.56 2017/02/17 08:31:24 hannken Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.56.14.1 2020/04/08 14:08:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.56 2017/02/17 08:31:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.56.14.1 2020/04/08 14:08:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,6 @@ MALLOC_JUSTDEFINE(M_PTYFSMNT, "ptyfs mount", "ptyfs mount structures");
 MALLOC_JUSTDEFINE(M_PTYFSTMP, "ptyfs temp", "ptyfs temporary structures");
 
 VFS_PROTOS(ptyfs);
-
-static struct sysctllog *ptyfs_sysctl_log;
 
 static int ptyfs__allocvp(struct mount *, struct lwp *, struct vnode **,
     dev_t, char);
@@ -388,7 +386,7 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-ptyfs_root(struct mount *mp, struct vnode **vpp)
+ptyfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	int error;
 
@@ -396,7 +394,7 @@ ptyfs_root(struct mount *mp, struct vnode **vpp)
 	error = ptyfs_allocvp(mp, vpp, PTYFSroot, 0);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -460,7 +458,7 @@ ptyfs_loadvnode(struct mount *mp, struct vnode *vp,
  */
 /*ARGSUSED*/
 int
-ptyfs_vget(struct mount *mp, ino_t ino,
+ptyfs_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 	return EOPNOTSUPP;
@@ -499,6 +497,22 @@ struct vfsops ptyfs_vfsops = {
 	.vfs_opv_descs = ptyfs_vnodeopv_descs
 };
 
+SYSCTL_SETUP(ptyfs_sysctl_setup, "ptyfs sysctl")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ptyfs",
+		       SYSCTL_DESCR("Pty file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 23, CTL_EOL);
+	/*
+	 * XXX the "23" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "23" is the order as taken from sys/mount.h
+	 */
+}
+
 static int
 ptyfs_modcmd(modcmd_t cmd, void *arg)
 {
@@ -509,23 +523,11 @@ ptyfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&ptyfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&ptyfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "ptyfs",
-			       SYSCTL_DESCR("Pty file system"),
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, 23, CTL_EOL);
-		/*
-		 * XXX the "23" above could be dynamic, thereby eliminating
-		 * one more instance of the "number to vfs" mapping problem,
-		 * but "23" is the order as taken from sys/mount.h
-		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&ptyfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_teardown(&ptyfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

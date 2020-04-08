@@ -1,4 +1,4 @@
-.\"	$NetBSD: aliases.5,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: aliases.5,v 1.2.12.1 2020/04/08 14:06:50 martin Exp $
 .\"
 .TH ALIASES 5 
 .ad
@@ -58,9 +58,12 @@ Use double quotes when the name contains any special characters
 such as whitespace, `#', `:', or `@'. The \fIname\fR is folded to
 lowercase, in order to make database lookups case insensitive.
 .PP
-In addition, when an alias exists for \fBowner\-\fIname\fR, delivery
-diagnostics are directed to that address, instead of to the originator
-of the message.
+In addition, when an alias exists for \fBowner\-\fIname\fR,
+this will override the envelope sender address, so that
+delivery diagnostics are directed to \fBowner\-\fIname\fR,
+instead of the originator of the message (for details, see
+\fBowner_request_special\fR, \fBexpand_owner_alias\fR and
+\fBreset_owner_alias\fR).
 This is typically used to direct delivery errors to the maintainer of
 a mailing list, who is in a better position to deal with mailing
 list delivery problems than the originator of the undelivered mail.
@@ -157,37 +160,37 @@ agent will terminate with a fatal error.
 The following \fBmain.cf\fR parameters are especially relevant.
 The text below provides only a parameter summary. See
 \fBpostconf\fR(5) for more details including examples.
-.IP \fBalias_database\fR
-List of alias databases that are updated by the
-\fBnewaliases\fR(1) command.
-.IP \fBalias_maps\fR
-List of alias databases queried by the \fBlocal\fR(8) delivery agent.
-.IP \fBallow_mail_to_commands\fR
-Restrict the usage of mail delivery to external command.
-.IP \fBallow_mail_to_files\fR
-Restrict the usage of mail delivery to external file.
-.IP \fBexpand_owner_alias\fR
-When delivering to an alias that has an \fBowner\-\fR companion alias,
-set the envelope sender address to the right\-hand side of the
-owner alias, instead using of the left\-hand side address.
-.IP \fBpropagate_unmatched_extensions\fR
-A list of address rewriting or forwarding mechanisms that
-propagate an address extension from the original address
-to the result. Specify zero or more of \fBcanonical\fR,
-\fBvirtual\fR, \fBalias\fR, \fBforward\fR, \fBinclude\fR,
-or \fBgeneric\fR.
-.IP \fBowner_request_special\fR
-Give special treatment to \fBowner\-\fIlistname\fR and
-\fIlistname\fB\-request\fR
-addresses.
-.IP \fBrecipient_delimiter\fR
-Delimiter that separates recipients from address extensions.
+.IP "\fBalias_database (see 'postconf -d' output)\fR"
+The alias databases for \fBlocal\fR(8) delivery that are updated with
+"\fBnewaliases\fR" or with "\fBsendmail \-bi\fR".
+.IP "\fBalias_maps (see 'postconf -d' output)\fR"
+The alias databases that are used for \fBlocal\fR(8) delivery.
+.IP "\fBallow_mail_to_commands (alias, forward)\fR"
+Restrict \fBlocal\fR(8) mail delivery to external commands.
+.IP "\fBallow_mail_to_files (alias, forward)\fR"
+Restrict \fBlocal\fR(8) mail delivery to external files.
+.IP "\fBexpand_owner_alias (no)\fR"
+When delivering to an alias "\fIaliasname\fR" that has an
+"owner\-\fIaliasname\fR" companion alias, set the envelope sender
+address to the expansion of the "owner\-\fIaliasname\fR" alias.
+.IP "\fBpropagate_unmatched_extensions (canonical, virtual)\fR"
+What address lookup tables copy an address extension from the lookup
+key to the lookup result.
+.IP "\fBowner_request_special (yes)\fR"
+Enable special treatment for owner\-\fIlistname\fR entries in the
+\fBaliases\fR(5) file, and don't split owner\-\fIlistname\fR and
+\fIlistname\fR\-request address localparts when the recipient_delimiter
+is set to "\-".
+.IP "\fBrecipient_delimiter (empty)\fR"
+The set of characters that can separate a user name from its
+extension (example: user+foo), or a .forward file name from its
+extension (example: .forward+foo).
 .PP
 Available in Postfix version 2.3 and later:
-.IP \fBfrozen_delivered_to\fR
-Update the local(8) delivery agent's Delivered\-To: address
-(see prepend_delivered_header) only once, at the start of
-a delivery; do not update the Delivered\-To: address while
+.IP "\fBfrozen_delivered_to (yes)\fR"
+Update the \fBlocal\fR(8) delivery agent's idea of the Delivered\-To:
+address (see prepend_delivered_header) only once, at the start of
+a delivery attempt; do not update the Delivered\-To: address while
 expanding aliases or .forward files.
 .SH "STANDARDS"
 .na

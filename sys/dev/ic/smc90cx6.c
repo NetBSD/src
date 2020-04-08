@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.73.2.1 2019/06/10 22:07:11 christos Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.73.2.2 2020/04/08 14:08:06 martin Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.73.2.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.73.2.2 2020/04/08 14:08:06 martin Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -523,7 +523,7 @@ bah_srint(void *vsc)
 		 * count it as input error (we dont have any other
 		 * detectable)
 	 	 */
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto cleanup;
 	}
 
@@ -548,7 +548,7 @@ bah_srint(void *vsc)
 		MCLGET(m, M_DONTWAIT);
 
 	if (m == 0) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto cleanup;
 	}
 
@@ -575,7 +575,7 @@ bah_srint(void *vsc)
 			MGET(m, M_DONTWAIT, MT_DATA);
 
 			if (m == 0) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				goto cleanup;
 			}
 
@@ -654,7 +654,7 @@ bah_tint(struct bah_softc *sc, int isr)
 	 */
 
 	if (isr & BAH_TMA || sc->sc_broadcast[buffer])
-		sc->sc_arccom.ac_if.if_opackets++;
+		if_statinc(ifp, if_opackets);
 #ifdef BAHRETRANSMIT
 	else if (ifp->if_flags & IFF_LINK2 && ifp->if_timer > 0
 	    && --sc->sc_retransmits[buffer] > 0) {
@@ -664,7 +664,7 @@ bah_tint(struct bah_softc *sc, int isr)
 	}
 #endif
 	else
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 
 	/* We know we can accept another buffer at this point. */
@@ -760,7 +760,7 @@ bahintr(void *arg)
 			 * PUTREG(BAHCMD, BAH_CONF(CONF_LONG));
 			 */
 			PUTREG(BAHCMD, BAH_CLR(CLR_RECONFIG));
-			sc->sc_arccom.ac_if.if_collisions++;
+			if_statinc(&sc->sc_arccom.ac_if, if_collisions);
 
 			/*
 			 * If less than 2 seconds per reconfig:

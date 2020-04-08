@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.2.12.1 2020/04/08 14:06:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -129,7 +129,8 @@
 /*	does not talk to the outside world, and it can be run at fixed low
 /*	privilege in a chrooted environment.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to the \fBsyslog\fR(8) daemon.
+/*	Problems and transactions are logged to the \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8) daemon.
 /*	Corrupted message files are saved to the \fBcorrupt\fR queue
 /*	for further inspection.
 /*
@@ -190,31 +191,44 @@
 /* .IP "\fBdefault_destination_concurrency_limit (20)\fR"
 /*	The default maximal number of parallel deliveries to the same
 /*	destination.
-/* .IP "\fItransport\fB_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
-/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBtransport_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
+/*	A transport-specific override for the
+/*	default_destination_concurrency_limit parameter value, where
+/*	\fItransport\fR is the master.cf name of the message delivery
+/*	transport.
 /* .PP
 /*	Available in Postfix version 2.5 and later:
-/* .IP "\fItransport\fB_initial_destination_concurrency ($initial_destination_concurrency)\fR"
-/*	Initial concurrency for delivery via the named message
-/*	\fItransport\fR.
+/* .IP "\fBtransport_initial_destination_concurrency ($initial_destination_concurrency)\fR"
+/*	A transport-specific override for the initial_destination_concurrency
+/*	parameter value, where \fItransport\fR is the master.cf name of
+/*	the message delivery transport.
 /* .IP "\fBdefault_destination_concurrency_failed_cohort_limit (1)\fR"
 /*	How many pseudo-cohorts must suffer connection or handshake
 /*	failure before a specific destination is considered unavailable
 /*	(and further delivery is suspended).
-/* .IP "\fItransport\fB_destination_concurrency_failed_cohort_limit ($default_destination_concurrency_failed_cohort_limit)\fR"
-/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBtransport_destination_concurrency_failed_cohort_limit ($default_destination_concurrency_failed_cohort_limit)\fR"
+/*	A transport-specific override for the
+/*	default_destination_concurrency_failed_cohort_limit parameter value,
+/*	where \fItransport\fR is the master.cf name of the message delivery
+/*	transport.
 /* .IP "\fBdefault_destination_concurrency_negative_feedback (1)\fR"
 /*	The per-destination amount of delivery concurrency negative
 /*	feedback, after a delivery completes with a connection or handshake
 /*	failure.
-/* .IP "\fItransport\fB_destination_concurrency_negative_feedback ($default_destination_concurrency_negative_feedback)\fR"
-/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBtransport_destination_concurrency_negative_feedback ($default_destination_concurrency_negative_feedback)\fR"
+/*	A transport-specific override for the
+/*	default_destination_concurrency_negative_feedback parameter value,
+/*	where \fItransport\fR is the master.cf name of the message delivery
+/*	transport.
 /* .IP "\fBdefault_destination_concurrency_positive_feedback (1)\fR"
 /*	The per-destination amount of delivery concurrency positive
 /*	feedback, after a delivery completes without connection or handshake
 /*	failure.
-/* .IP "\fItransport\fB_destination_concurrency_positive_feedback ($default_destination_concurrency_positive_feedback)\fR"
-/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBtransport_destination_concurrency_positive_feedback ($default_destination_concurrency_positive_feedback)\fR"
+/*	A transport-specific override for the
+/*	default_destination_concurrency_positive_feedback parameter value,
+/*	where \fItransport\fR is the master.cf name of the message delivery
+/*	transport.
 /* .IP "\fBdestination_concurrency_feedback_debug (no)\fR"
 /*	Make the queue manager's feedback algorithm verbose for performance
 /*	analysis purposes.
@@ -223,8 +237,11 @@
 /* .fi
 /* .IP "\fBdefault_destination_recipient_limit (50)\fR"
 /*	The default maximal number of recipients per message delivery.
-/* .IP \fItransport\fB_destination_recipient_limit\fR
-/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBtransport_destination_recipient_limit ($default_destination_recipient_limit)\fR"
+/*	A transport-specific override for the
+/*	default_destination_recipient_limit parameter value, where
+/*	\fItransport\fR is the master.cf name of the message delivery
+/*	transport.
 /* OTHER RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi
@@ -253,18 +270,22 @@
 /*	Available in Postfix version 2.5 and later:
 /* .IP "\fBdefault_destination_rate_delay (0s)\fR"
 /*	The default amount of delay that is inserted between individual
-/*	deliveries to the same destination; the resulting behavior depends
-/*	on the value of the corresponding per-destination recipient limit.
-/* .IP "\fItransport\fB_destination_rate_delay $default_destination_rate_delay\fR"
-/*	Idem, for delivery via the named message \fItransport\fR.
+/*	message deliveries to the same destination and over the same message
+/*	delivery transport.
+/* .IP "\fBtransport_destination_rate_delay ($default_destination_rate_delay)\fR"
+/*	A transport-specific override for the default_destination_rate_delay
+/*	parameter value, where \fItransport\fR is the master.cf name of
+/*	the message delivery transport.
 /* .PP
 /*	Available in Postfix version 3.1 and later:
 /* .IP "\fBdefault_transport_rate_delay (0s)\fR"
 /*	The default amount of delay that is inserted between individual
-/*	deliveries over the same message delivery transport, regardless of
-/*	destination.
-/* .IP "\fItransport\fB_transport_rate_delay $default_transport_rate_delay\fR"
-/*	Idem, for delivery via the named message \fItransport\fR.
+/*	message deliveries over the same message delivery transport,
+/*	regardless of destination.
+/* .IP "\fBtransport_transport_rate_delay ($default_transport_rate_delay)\fR"
+/*	A transport-specific override for the default_transport_rate_delay
+/*	parameter value, where the initial \fItransport\fR in the parameter
+/*	name is the master.cf name of the message delivery transport.
 /* SAFETY CONTROLS
 /* .ad
 /* .fi
@@ -303,13 +324,22 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
 /* .PP
 /*	Available in Postfix version 3.0 and later:
 /* .IP "\fBconfirm_delay_cleared (no)\fR"
 /*	After sending a "your message is delayed" notification, inform
 /*	the sender when the delay clears up.
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
+/* .PP
+/*	Available in Postfix 3.5 and later:
+/* .IP "\fBinfo_log_address_format (external)\fR"
+/*	The email address form that will be used in non-debug logging
+/*	(info, warning, etc.).
 /* FILES
 /*	/var/spool/postfix/incoming, incoming queue
 /*	/var/spool/postfix/active, active queue
@@ -323,6 +353,7 @@
 /*	postconf(5), configuration parameters
 /*	master(5), generic daemon options
 /*	master(8), process manager
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README FILES
 /* .ad

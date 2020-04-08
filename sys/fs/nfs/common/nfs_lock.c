@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_lock.c,v 1.2 2016/12/13 22:41:46 pgoyette Exp $	*/
+/*	$NetBSD: nfs_lock.c,v 1.2.16.1 2020/04/08 14:08:49 martin Exp $	*/
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
  *
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nfs/nfs_lock.c 303382 2016-07-27 11:08:59Z kib "); */
-__RCSID("$NetBSD: nfs_lock.c,v 1.2 2016/12/13 22:41:46 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_lock.c,v 1.2.16.1 2020/04/08 14:08:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +243,7 @@ nfs_dolock(struct vop_advlock_args *ap)
 	struct flock *fl;
 	struct proc *p;
 	struct nfsmount *nmp;
-	struct timeval boottime;
+	struct timeval btv;
 
 	td = curthread;
 	p = td->td_proc;
@@ -287,8 +287,8 @@ nfs_dolock(struct vop_advlock_args *ap)
 		p->p_nlminfo = malloc(sizeof(struct nlminfo),
 		    M_NLMINFO, M_WAITOK | M_ZERO);
 		p->p_nlminfo->pid_start = p->p_stats->p_start;
-		getboottime(&boottime);
-		timevaladd(&p->p_nlminfo->pid_start, &boottime);
+		getmicroboottime(&btv);
+		timevaladd(&p->p_nlminfo->pid_start, &btv);
 	}
 	msg.lm_msg_ident.pid_start = p->p_nlminfo->pid_start;
 	msg.lm_msg_ident.msg_seq = ++(p->p_nlminfo->msg_seq);

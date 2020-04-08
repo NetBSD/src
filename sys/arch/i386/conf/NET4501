@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.100.4.1 2019/06/10 22:06:20 christos Exp $
+# $NetBSD: NET4501,v 1.100.4.2 2020/04/08 14:07:39 martin Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.100.4.1 $"
+#ident 		"NET4501-$Revision: 1.100.4.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -244,7 +244,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre			# generic L3 over IP tunnel

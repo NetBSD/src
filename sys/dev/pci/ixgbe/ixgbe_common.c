@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.22 2018/04/04 08:59:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.22.2.1 2020/04/08 14:08:11 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -462,6 +462,8 @@ s32 ixgbe_start_hw_gen2(struct ixgbe_hw *hw)
 {
 	u32 i;
 	u32 regval;
+
+	DEBUGFUNC("ixgbe_start_hw_gen2");
 
 	/* Clear the rate limiters */
 	for (i = 0; i < hw->mac.max_tx_queues; i++) {
@@ -5457,7 +5459,7 @@ s32 ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
 
 		goto out;
 	}
-	
+
 	/* We didn't get link.  Configure back to the highest speed we tried,
 	 * (if there was more than one).  We call ourselves back with just the
 	 * single highest speed that the user requested.

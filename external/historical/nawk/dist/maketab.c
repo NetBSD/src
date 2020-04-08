@@ -22,15 +22,15 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 /*
  * this program makes the table to link function names
  * and type indices that is used by execute() in run.c.
  * it finds the indices in ytab.h, produced by yacc.
  */
-
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -66,6 +66,7 @@ struct xx
 	{ DIVIDE, "arith", " / " },
 	{ MOD, "arith", " % " },
 	{ UMINUS, "arith", " -" },
+	{ UPLUS, "arith", " +" },
 	{ POWER, "arith", " **" },
 	{ PREINCR, "incrdecr", "++" },
 	{ POSTINCR, "incrdecr", "++" },
@@ -122,24 +123,46 @@ int main(int argc, char *argv[])
 	char c;
 	FILE *fp;
 	char buf[200], name[200], def[200];
+	enum { TOK_UNKNOWN, TOK_ENUM, TOK_DEFINE } tokentype = TOK_UNKNOWN;
 
 	printf("#include <stdio.h>\n");
 	printf("#include \"awk.h\"\n");
-	printf("#include \"awkgram.h\"\n\n");
-	for (i = SIZE; --i >= 0; )
-		names[i] = "";
+	printf("#include \"ytab.h\"\n\n");
 
-	if ((fp = fopen("awkgram.h", "r")) == NULL) {
-		fprintf(stderr, "maketab can't open awkgram.h!\n");
+	if (argc != 2) {
+		fprintf(stderr, "usage: maketab YTAB_H\n");
+		exit(1);
+	}
+	if ((fp = fopen(argv[1], "r")) == NULL) {
+		fprintf(stderr, "maketab can't open %s!\n", argv[1]);
 		exit(1);
 	}
 	printf("static const char * const printname[%d] = {\n", SIZE);
 	i = 0;
 	while (fgets(buf, sizeof buf, fp) != NULL) {
-		n = sscanf(buf, "%1c %199s %199s %d", &c, def, name, &tok);
-		if (c != '#' || (n != 4 && strcmp(def,"define") != 0))	/* not a valid #define */
+		// 199 is sizeof(def) - 1
+		if (tokentype != TOK_ENUM) {
+			n = sscanf(buf, "%1c %199s %199s %d", &c, def, name,
+			    &tok);
+			if (n == 4 && c == '#' && strcmp(def, "define") == 0) {
+				tokentype = TOK_DEFINE;
+			} else if (tokentype != TOK_UNKNOWN) {
+				continue;
+			}
+		}
+		if (tokentype != TOK_DEFINE) {
+			/* not a valid #define, bison uses enums now */
+			n = sscanf(buf, "%199s = %d,\n", name, &tok);
+			if (n != 2)
+				continue;
+			tokentype = TOK_ENUM;
+		}
+		if (strcmp(name, "YYSTYPE_IS_DECLARED") == 0) {
+			tokentype = TOK_UNKNOWN;
 			continue;
+		}
 		if (tok < FIRSTTOKEN || tok > LASTTOKEN) {
+			tokentype = TOK_UNKNOWN;
 			/* fprintf(stderr, "maketab funny token %d %s ignored\n", tok, buf); */
 			continue;
 		}
@@ -157,20 +180,18 @@ int main(int argc, char *argv[])
 		table[p->token-FIRSTTOKEN] = p->name;
 	printf("\nCell *(*proctab[%d])(Node **, int) = {\n", SIZE);
 	for (i=0; i<SIZE; i++)
-		if (table[i]==0)
-			printf("\tnullproc,\t/* %s */\n", names[i]);
-		else
-			printf("\t%s,\t/* %s */\n", table[i], names[i]);
+		printf("\t%s,\t/* %s */\n",
+		    table[i] ? table[i] : "nullproc", names[i] ? names[i] : "");
 	printf("};\n\n");
 
 	printf("const char *tokname(int n)\n");	/* print a tokname() function */
 	printf("{\n");
-	printf("	static char buf[100];\n\n");
-	printf("	if (n < FIRSTTOKEN || n > LASTTOKEN) {\n");
-	printf("		snprintf(buf, sizeof(buf), \"token %%d\", n);\n");
-	printf("		return buf;\n");
-	printf("	}\n");
-	printf("	return printname[n-FIRSTTOKEN];\n");
+	printf("\tstatic char buf[100];\n\n");
+	printf("\tif (n < FIRSTTOKEN || n > LASTTOKEN) {\n");
+	printf("\t\tsnprintf(buf, sizeof(buf), \"token %%d\", n);\n");
+	printf("\t\treturn buf;\n");
+	printf("\t}\n");
+	printf("\treturn printname[n-FIRSTTOKEN];\n");
 	printf("}\n");
 	return 0;
 }

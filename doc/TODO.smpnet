@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.20.2.1 2019/06/10 21:42:38 christos Exp $
+$NetBSD: TODO.smpnet,v 1.20.2.2 2020/04/08 14:03:55 martin Exp $
 
 MP-safe components
 ==================
@@ -7,10 +7,12 @@ They work without the big kernel lock (KERNEL_LOCK), i.e., with NET_MPSAFE
 kernel option.  Some components scale up and some don't.
 
  - Device drivers
+   - aq(4)
    - vioif(4)
    - vmx(4)
    - wm(4)
    - ixg(4)
+   - ixl(4)
    - ixv(4)
  - Layer 2
    - Ethernet (if_ethersubr.c)
@@ -60,11 +62,8 @@ Unprotected ones
  - Layer 2
    - ARCNET (if_arcsubr.c)
    - BRIDGE_IPF
-   - FDDI (if_fddisubr.c)
-   - HIPPI (if_hippisubr.c)
    - IEEE 1394 (if_ieee1394subr.c)
    - IEEE 802.11 (ieee80211(4))
-   - Token ring (if_tokensubr.c)
  - Layer 3
    - IPSELSRC
    - MROUTING
@@ -172,15 +171,6 @@ Scalability
    is O(n)
  - opencrypto(9)'s crypto_newsession()/crypto_freesession() aren't scalable
    as they are serialized by one mutex
-
-ec_multi* of ethercom
----------------------
-
-ec_multiaddrs and ec_multicnt of struct ethercom and items listed in
-ec_multiaddrs must be protected by ec_lock.  The core of ethernet subsystem is
-already MP-safe, however, device drivers that use the data should also be fixed.
-A typical change should be to protect manipulations of the data via ETHER_*
-macros such as ETHER_FIRST_MULTI by ETHER_LOCK and ETHER_UNLOCK.
 
 ALTQ
 ----

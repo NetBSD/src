@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.43.4.1 2019/06/10 22:07:35 christos Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.43.4.2 2020/04/08 14:08:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.43.4.1 2019/06/10 22:07:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.43.4.2 2020/04/08 14:08:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -151,17 +151,17 @@ Static callback usscanner_data_cb;
 Static callback usscanner_sensecmd_cb;
 Static callback usscanner_sensedata_cb;
 
-int usscanner_match(device_t, cfdata_t, void *);
-void usscanner_attach(device_t, device_t, void *);
-void usscanner_childdet(device_t, device_t);
-int usscanner_detach(device_t, int);
-int usscanner_activate(device_t, enum devact);
+static int usscanner_match(device_t, cfdata_t, void *);
+static void usscanner_attach(device_t, device_t, void *);
+static void usscanner_childdet(device_t, device_t);
+static int usscanner_detach(device_t, int);
+static int usscanner_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(usscanner, sizeof(struct usscanner_softc),
     usscanner_match, usscanner_attach, usscanner_detach, usscanner_activate,
     NULL, usscanner_childdet);
 
-int
+static int
 usscanner_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -175,7 +175,7 @@ usscanner_match(device_t parent, cfdata_t match, void *aux)
 		return UMATCH_NONE;
 }
 
-void
+static void
 usscanner_attach(device_t parent, device_t self, void *aux)
 {
 	struct usscanner_softc *sc = device_private(self);
@@ -349,7 +349,7 @@ usscanner_attach(device_t parent, device_t self, void *aux)
 #endif
 }
 
-void
+static void
 usscanner_childdet(device_t self, device_t child)
 {
 	struct usscanner_softc *sc = device_private(self);
@@ -358,7 +358,7 @@ usscanner_childdet(device_t self, device_t child)
 	sc->sc_child = NULL;
 }
 
-int
+static int
 usscanner_detach(device_t self, int flags)
 {
 	struct usscanner_softc *sc = device_private(self);
@@ -421,7 +421,7 @@ usscanner_cleanup(struct usscanner_softc *sc)
 	}
 }
 
-int
+static int
 usscanner_activate(device_t self, enum devact act)
 {
 	struct usscanner_softc *sc = device_private(self);
@@ -709,7 +709,7 @@ usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		xs = arg;
 
 		DPRINTFN(8, ("%s: usscanner_scsipi_request: %d:%d "
-		    "xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
+		    "xs=%p cmd=0x%02x datalen=%d (quirks=%#x, poll=%d)\n",
 		    device_xname(sc->sc_dev),
 		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun,
 		    xs, xs->cmd->opcode, xs->datalen,

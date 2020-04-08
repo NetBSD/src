@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.49 2017/09/23 10:38:59 maxv Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.49.4.1 2020/04/08 14:07:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.49 2017/09/23 10:38:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.49.4.1 2020/04/08 14:07:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.49 2017/09/23 10:38:59 maxv Exp $"
 #include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_page.h>
 
 #ifdef __i386__
 #include "opt_mtrr.h"

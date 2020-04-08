@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.96.2.1 2019/06/10 22:07:12 christos Exp $	*/
+/*	$NetBSD: if_el.c,v 1.96.2.2 2020/04/08 14:08:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.96.2.1 2019/06/10 22:07:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.96.2.2 2020/04/08 14:08:07 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -415,7 +415,7 @@ elstart(struct ifnet *ifp)
 			bus_space_write_1(iot, ioh, EL_GPBL, off & 0xff);
 			bus_space_write_1(iot, ioh, EL_GPBH, (off >> 8) & 0xff);
 			if (el_xmit(sc)) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 			/* Check out status. */
@@ -424,7 +424,7 @@ elstart(struct ifnet *ifp)
 			if ((i & EL_TXS_READY) == 0) {
 				DPRINTF(("el: err txs=%x\n", i));
 				if (i & (EL_TXS_COLL | EL_TXS_COLL16)) {
-					ifp->if_collisions++;
+					if_statinc(ifp, if_collisions);
 					if ((i & EL_TXC_DCOLL16) == 0 &&
 					    retries < 15) {
 						retries++;
@@ -432,11 +432,11 @@ elstart(struct ifnet *ifp)
 						    EL_AC, EL_AC_HOST);
 					}
 				} else {
-					ifp->if_oerrors++;
+					if_statinc(ifp, if_oerrors);
 					break;
 				}
 			} else {
-				ifp->if_opackets++;
+				if_statinc(ifp, if_opackets);
 				break;
 			}
 		}
@@ -569,14 +569,14 @@ elread(struct el_softc *sc, int len)
 	    len > ETHER_MAX_LEN) {
 		printf("%s: invalid packet size %d; dropping\n",
 		    device_xname(sc->sc_dev), len);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
 	/* Pull packet off interface. */
 	m = elget(sc, len);
 	if (m == 0) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -716,7 +716,7 @@ elwatchdog(struct ifnet *ifp)
 	struct el_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	sc->sc_ethercom.ec_if.if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	elreset(sc);
 }

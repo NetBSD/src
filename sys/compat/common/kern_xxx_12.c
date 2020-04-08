@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.15.58.1 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.15.58.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.15.58.1 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.15.58.2 2020/04/08 14:08:00 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -68,9 +68,7 @@ compat_12_sys_reboot(struct lwp *l,
 	if ((error = kauth_authorize_system(l->l_cred,
 	    KAUTH_SYSTEM_REBOOT, 0, NULL, NULL, NULL)) != 0)
 		return (error);
-	KERNEL_LOCK(1, NULL);
-	cpu_reboot(SCARG(uap, opt), NULL);
-	KERNEL_UNLOCK_ONE(NULL);
+	kern_reboot(SCARG(uap, opt), NULL);
 	return (0);
 }
 

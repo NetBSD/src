@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 2015/04/22 17:38:33 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22.18.1 2020/04/08 14:09:00 martin Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -44,6 +44,7 @@ struct cpu_info {
 	struct cpu_data ci_data;
 	cpuid_t ci_cpuid;
 	struct lwp *ci_curlwp;
+	struct lwp *ci_onproc;
 
 	struct cpu_info *ci_next;
 
@@ -78,7 +79,7 @@ void __syncicache(void *, size_t);
 #define curlwp rump_curlwp_fast()
 
 #define curcpu() (curlwp->l_cpu)
-#define cpu_number() (cpu_index(curcpu))
+#define cpu_number() (cpu_index(curcpu()))
 
 extern struct cpu_info *rumpcpu_info_list;
 #define CPU_INFO_ITERATOR		int __unused

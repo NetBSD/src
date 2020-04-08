@@ -1,4 +1,4 @@
-/* $NetBSD: nxt2k.c,v 1.5 2017/06/01 02:45:10 chs Exp $ */
+/* $NetBSD: nxt2k.c,v 1.5.10.1 2020/04/08 14:08:05 martin Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nxt2k.c,v 1.5 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nxt2k.c,v 1.5.10.1 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,16 +74,16 @@ nxt2k_writedata(struct nxt2k *nxt, uint8_t reg, uint8_t *data, size_t len)
 
 	KASSERT((len + 1) <= 384);
 
-	if (iic_acquire_bus(nxt->tag, I2C_F_POLL) != 0)
-		return false;
+	if ((error = iic_acquire_bus(nxt->tag, 0)) != 0)
+		return error;
 
 	buffer[0] = reg;
 	memcpy(&buffer[1], data, len);
 	
 	error = iic_exec(nxt->tag, I2C_OP_WRITE_WITH_STOP, nxt->addr,
-			 buffer, len + 1, NULL, 0, I2C_F_POLL);
+			 buffer, len + 1, NULL, 0, 0);
 	
-	iic_release_bus(nxt->tag, I2C_F_POLL);
+	iic_release_bus(nxt->tag, 0);
 
 	return error;
 }
@@ -93,13 +93,13 @@ nxt2k_readdata(struct nxt2k *nxt, uint8_t reg, uint8_t *data, size_t len)
 {
 	int error;
 
-	if (iic_acquire_bus(nxt->tag, I2C_F_POLL) != 0)
-		return false;
+	if ((error = iic_acquire_bus(nxt->tag, 0)) != 0)
+		return error;
 
 	error = iic_exec(nxt->tag, I2C_OP_READ_WITH_STOP, nxt->addr,
-			 &reg, 1, data, len, I2C_F_POLL);
+			 &reg, 1, data, len, 0);
 
-	iic_release_bus(nxt->tag, I2C_F_POLL);
+	iic_release_bus(nxt->tag, 0);
 
 	return error;
 }

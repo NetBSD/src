@@ -1,5 +1,5 @@
 /* alpha-opc.c -- Alpha AXP opcode list
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@cygnus.com>,
    patterned after the PPC opcode handling written by Ian Lance Taylor.
 
@@ -332,7 +332,7 @@ const unsigned alpha_num_operands = sizeof(alpha_operands)/sizeof(*alpha_operand
 /* Macros used to form opcodes.  */
 
 /* The main opcode.  */
-#define OP(x)		(((x) & 0x3F) << 26)
+#define OP(x)		(((x) & 0x3Fu) << 26)
 #define OP_MASK		0xFC000000
 
 /* Branch format instructions.  */

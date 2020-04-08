@@ -2598,6 +2598,7 @@ s32 ixgbe_reset_hw_X550em(struct ixgbe_hw *hw)
 {
 	ixgbe_link_speed link_speed;
 	s32 status;
+	s32 phy_status = IXGBE_SUCCESS;
 	u32 ctrl = 0;
 	u32 i;
 	bool link_up = FALSE;
@@ -2617,16 +2618,16 @@ s32 ixgbe_reset_hw_X550em(struct ixgbe_hw *hw)
 	ixgbe_set_mdio_speed(hw);
 
 	/* PHY ops must be identified and initialized prior to reset */
-	status = hw->phy.ops.init(hw);
+	phy_status = hw->phy.ops.init(hw);
 
-	if (status)
+	if (phy_status)
 		DEBUGOUT1("Failed to initialize PHY ops, STATUS = %d\n",
 			  status);
 
-	if (status == IXGBE_ERR_SFP_NOT_SUPPORTED ||
-	    status == IXGBE_ERR_PHY_ADDR_INVALID) {
+	if (phy_status == IXGBE_ERR_SFP_NOT_SUPPORTED ||
+	    phy_status == IXGBE_ERR_PHY_ADDR_INVALID) {
 		DEBUGOUT("Returning from reset HW due to PHY init failure\n");
-		return status;
+		goto mac_reset_top;
 	}
 
 	/* start the external PHY */
@@ -2641,12 +2642,12 @@ s32 ixgbe_reset_hw_X550em(struct ixgbe_hw *hw)
 
 	/* Setup SFP module if there is one present. */
 	if (hw->phy.sfp_setup_needed) {
-		status = hw->mac.ops.setup_sfp(hw);
+		phy_status = hw->mac.ops.setup_sfp(hw);
 		hw->phy.sfp_setup_needed = FALSE;
 	}
 
-	if (status == IXGBE_ERR_SFP_NOT_SUPPORTED)
-		return status;
+	if (phy_status == IXGBE_ERR_SFP_NOT_SUPPORTED)
+		goto mac_reset_top;
 
 	/* Reset PHY */
 	if (!hw->phy.reset_disable && hw->phy.ops.reset) {
@@ -2719,6 +2720,9 @@ mac_reset_top:
 
 	if (status != IXGBE_SUCCESS)
 		DEBUGOUT1("Reset HW failed, STATUS = %d\n", status);
+
+	if (phy_status != IXGBE_SUCCESS)
+		status = phy_status;
 
 	return status;
 }
@@ -2885,7 +2889,7 @@ static s32 ixgbe_setup_sfi_x550a(struct ixgbe_hw *hw, ixgbe_link_speed *speed)
  *  @speed: new link speed
  *  @autoneg_wait_to_complete: unused
  *
- *  Configure the the integrated PHY for SFP support.
+ *  Configure the integrated PHY for SFP support.
  **/
 static s32 ixgbe_setup_mac_link_sfp_x550a(struct ixgbe_hw *hw,
 				    ixgbe_link_speed speed,
@@ -4833,4 +4837,3 @@ bool ixgbe_fw_recovery_mode_X550(struct ixgbe_hw *hw)
 
 	return !!(fwsm & IXGBE_FWSM_FW_NVM_RECOVERY_MODE);
 }
-

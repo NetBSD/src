@@ -2253,10 +2253,7 @@ int s_client_main(int argc, char **argv)
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
             }
-            while (mbuf_len > 3 && (!isdigit((unsigned char)mbuf[0]) ||
-				    !isdigit((unsigned char)mbuf[1]) ||
-				    !isdigit((unsigned char)mbuf[2]) ||
-				    mbuf[3] != ' '));
+            while (mbuf_len > 3 && (!isdigit((unsigned char)mbuf[0]) || !isdigit((unsigned char)mbuf[1]) || !isdigit((unsigned char)mbuf[2]) || mbuf[3] != ' '));
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
@@ -2348,7 +2345,7 @@ int s_client_main(int argc, char **argv)
             (void)BIO_flush(fbio);
             /*
              * The first line is the HTTP response.  According to RFC 7230,
-             * it's formated exactly like this:
+             * it's formatted exactly like this:
              *
              * HTTP/d.d ddd Reason text\r\n
              */
@@ -2807,7 +2804,7 @@ int s_client_main(int argc, char **argv)
                  * set the flag so we exit.
                  */
                 if (read_tty && !at_eof)
-                    openssl_fdset(fileno_stdin(), &readfds);
+                    openssl_fdset(fdin, &readfds);
 #if !defined(OPENSSL_SYS_VMS)
                 if (write_tty)
                     openssl_fdset(fdout, &writefds);

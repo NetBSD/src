@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.138.4.1 2019/06/10 22:05:48 christos Exp $
+# $NetBSD: GENERIC.in,v 1.138.4.2 2020/04/08 14:07:26 martin Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138.4.1 $"
+#ident 		"GENERIC-$Revision: 1.138.4.2 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -147,7 +147,6 @@ file-system 	OVERLAY		# overlay filesystem
 file-system 	PROCFS		# /proc filesystem
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
-file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
@@ -698,7 +697,6 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
-pseudo-device	nsmb			# experimental - SMB requester
 ')m4_dnl
 m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 pseudo-device   bcsp                    # BlueCore Serial Protocol

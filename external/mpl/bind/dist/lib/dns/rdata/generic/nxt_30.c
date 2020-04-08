@@ -1,4 +1,4 @@
-/*	$NetBSD: nxt_30.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: nxt_30.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -199,7 +199,7 @@ fromstruct_nxt(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_nxt);
-	REQUIRE(source != NULL);
+	REQUIRE(nxt != NULL);
 	REQUIRE(nxt->common.rdtype == type);
 	REQUIRE(nxt->common.rdclass == rdclass);
 	REQUIRE(nxt->typebits != NULL || nxt->len == 0);
@@ -224,7 +224,7 @@ tostruct_nxt(ARGS_TOSTRUCT) {
 	dns_name_t name;
 
 	REQUIRE(rdata->type == dns_rdatatype_nxt);
-	REQUIRE(target != NULL);
+	REQUIRE(nxt != NULL);
 	REQUIRE(rdata->length != 0);
 
 	nxt->common.rdclass = rdata->rdclass;
@@ -256,7 +256,7 @@ static inline void
 freestruct_nxt(ARGS_FREESTRUCT) {
 	dns_rdata_nxt_t *nxt = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(nxt != NULL);
 	REQUIRE(nxt->common.rdtype == dns_rdatatype_nxt);
 
 	if (nxt->mctx == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: openpgpkey_61.c,v 1.4.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: openpgpkey_61.c,v 1.4.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -118,7 +118,7 @@ fromstruct_openpgpkey(ARGS_FROMSTRUCT) {
 	dns_rdata_openpgpkey_t *sig = source;
 
 	REQUIRE(type == dns_rdatatype_openpgpkey);
-	REQUIRE(source != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(sig->common.rdtype == type);
 	REQUIRE(sig->common.rdclass == rdclass);
 	REQUIRE(sig->keyring != NULL && sig->length != 0);
@@ -138,7 +138,7 @@ tostruct_openpgpkey(ARGS_TOSTRUCT) {
 	dns_rdata_openpgpkey_t *sig = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
-	REQUIRE(target != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(rdata->length != 0);
 
 	sig->common.rdclass = rdata->rdclass;
@@ -166,7 +166,7 @@ static inline void
 freestruct_openpgpkey(ARGS_FREESTRUCT) {
 	dns_rdata_openpgpkey_t *sig = (dns_rdata_openpgpkey_t *) source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(sig->common.rdtype == dns_rdatatype_openpgpkey);
 
 	if (sig->mctx == NULL)

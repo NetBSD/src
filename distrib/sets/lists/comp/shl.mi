@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.319.2.1 2019/06/10 21:42:30 christos Exp $
+# $NetBSD: shl.mi,v 1.319.2.2 2020/04/08 14:03:53 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -21,6 +21,7 @@
 ./usr/lib/libbz2_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libc++_pic.a				comp-c-piclib		compatfile,picinstall,libcxx
 ./usr/lib/libc_pic.a				comp-c-piclib		compatfile,picinstall
+./usr/lib/libcbor_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libcdk_pic.a				comp-obsolete		obsolete
 ./usr/lib/libcom_err_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libcompat_pic.a			comp-c-piclib		compatfile,picinstall
@@ -44,6 +45,7 @@
 ./usr/lib/libexecinfo_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libexpat_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libfetch_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libfido2_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libform_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libg++_pic.a				comp-obsolete		obsolete
 ./usr/lib/libg2c_pic.a				comp-obsolete		obsolete
@@ -55,6 +57,8 @@
 ./usr/lib/libgmp.so.10				comp-obsolete		obsolete
 ./usr/lib/libgmp.so.10.2			comp-obsolete		obsolete
 ./usr/lib/libgmp_pic.a				comp-obsolete		obsolete
+./usr/lib/libgnuctf.so.0			base-sys-shlib		compatfile,binutils=234
+./usr/lib/libgnuctf.so.0.0			base-sys-shlib		compatfile,binutils=234
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libgomp_pic.a				comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
@@ -119,6 +123,8 @@
 ./usr/lib/libobjc_pic.a				comp-objc-piclib	compatfile,picinstall,gcccmds
 ./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=231
+./usr/lib/libopcodes.so.10			comp-c-shlib		compatfile,binutils=234
+./usr/lib/libopcodes.so.10.0			comp-c-shlib		compatfile,binutils=234
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib	compatfile,picinstall,rump
@@ -159,7 +165,7 @@
 ./usr/lib/librumpdev_drvctl_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_fss_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_md_pic.a			comp-c-piclib		picinstall,rump
-./usr/lib/librumpdev_netsmb_pic.a		comp-c-piclib		picinstall,rump
+./usr/lib/librumpdev_netsmb_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpdev_opencrypto_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_pad_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_pic.a			comp-c-piclib		compatfile,picinstall,rump
@@ -196,7 +202,7 @@
 ./usr/lib/librumpfs_null_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpfs_nullfs_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpfs_ptyfs_pic.a			comp-c-piclib		picinstall,rump
-./usr/lib/librumpfs_smbfs_pic.a			comp-c-piclib		picinstall,rump
+./usr/lib/librumpfs_smbfs_pic.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_syspuffs_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpfs_sysvbfs_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpfs_tmpfs_pic.a			comp-c-piclib		picinstall,rump

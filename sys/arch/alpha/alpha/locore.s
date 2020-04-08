@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.122.40.1 2019/06/10 22:05:45 christos Exp $ */
+/* $NetBSD: locore.s,v 1.122.40.2 2020/04/08 14:07:25 martin Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.122.40.1 2019/06/10 22:05:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.122.40.2 2020/04/08 14:07:25 martin Exp $");
 
 #include "assym.h"
 
@@ -663,8 +663,6 @@ LEAF(savectx, 1)
 LEAF(cpu_switchto, 0)
 	LDGP(pv)
 
-	beq	a0, 1f
-
 	/*
 	 * do an inline savectx(), to save old context
 	 */
@@ -679,7 +677,6 @@ LEAF(cpu_switchto, 0)
 	stq	s6, PCB_CONTEXT+(6 * 8)(a2)
 	stq	ra, PCB_CONTEXT+(7 * 8)(a2)	/* store ra */
 
-1:
 	mov	a0, s4				/* save old curlwp */
 	mov	a1, s2				/* save new lwp */
 	ldq	a0, L_MD_PCBPADDR(s2)		/* save new pcbpaddr */

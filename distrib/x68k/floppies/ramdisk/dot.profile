@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.15 2010/05/15 06:36:12 isaki Exp $
+# $NetBSD: dot.profile,v 1.15.48.1 2020/04/08 14:03:55 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -71,6 +71,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		echo "Could not determine root device."
 	else
 		# run sysinst.
-		sysinst
+		sysinst || stty sane
 	fi
 fi

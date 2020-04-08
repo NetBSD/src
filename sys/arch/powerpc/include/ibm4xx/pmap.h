@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18.2.1 2020/04/08 14:07:49 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
  * Pmap stuff
  */
 struct pmap {
-	volatile tlbpid_t pm_ctx;	/* PID to identify PMAP's entries in TLB */
+	volatile int pm_ctx;	/* PID to identify PMAP's entries in TLB */
 	int pm_refs;			/* ref count */
 	struct pmap_statistics pm_stats; /* pmap statistics */
 	volatile u_int *pm_ptbl[STSZ];	/* Array of 64 pointers to page tables. */
@@ -172,10 +172,11 @@ bool pmap_check_attr(struct vm_page *, u_int, int);
 void pmap_real_memory(paddr_t *, psize_t *);
 int pmap_tlbmiss(vaddr_t va, int ctx);
 
-static __inline void
+static __inline bool
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
+	return false;
 }
 
 int	ctx_alloc(struct pmap *);

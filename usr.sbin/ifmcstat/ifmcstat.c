@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.21 2017/02/23 07:57:10 ozaki-r Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.21.12.1 2020/04/08 14:09:20 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifmcstat.c,v 1.21 2017/02/23 07:57:10 ozaki-r Exp $");
+__RCSID("$NetBSD: ifmcstat.c,v 1.21.12.1 2020/04/08 14:09:20 martin Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -114,7 +114,7 @@ static void
 print_hwaddr(const uint8_t *hwaddr, size_t len)
 {
 	while (len)
-		printf("%02x%s", *hwaddr++, len-- == 0 ? "" : ":");
+		printf("%02x%s", *hwaddr++, --len > 0 ? ":" : "");
 }
 
 static void
@@ -167,10 +167,10 @@ print_ether_mcast(u_short ifindex)
 
 	for (i = 0; i < ems_len; ++i) {
 		printf("\t\t");
-		print_hwaddr(ems[i].enm_addrlo, sizeof(ems[i].enm_addrlo));
+		print_hwaddr(ems[i].enm_addrlo, sdl_len);
 		printf(" -- ");
-		print_hwaddr(ems[i].enm_addrhi, sizeof(ems[i].enm_addrhi));
-		printf(" %d\n", ems[i].enm_refcount);
+		print_hwaddr(ems[i].enm_addrhi, sdl_len);
+		printf(" refcount %d\n", ems[i].enm_refcount);
 	}
 	free(ems);
 	free(hwaddr);

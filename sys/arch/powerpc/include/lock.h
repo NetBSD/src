@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.13 2017/09/17 00:01:08 christos Exp $	*/
+/*	$NetBSD: lock.h,v 1.13.4.1 2020/04/08 14:07:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,11 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 2:	lwzx	%0,0,%1		\n\
 	cmpwi	%0,%2		\n\
 	beq+	1b		\n\
-	b	2b		\n\
+	b	2b		\n"
+#ifdef IBM405_ERRATA77
+	"dcbt	0,%1		\n"
+#endif
+"				\
 3:	stwcx.	%3,0,%1		\n\
 	bne-	1b		\n\
 	isync			\n\
@@ -99,9 +103,16 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 				\n\
 1:	lwarx	%0,0,%1		\n\
 	cmpwi	%0,%2		\n\
-	bne	2f		\n\
-	stwcx.	%3,0,%1		\n\
-	bne-	1b		\n\
+	bne	2f		\n"
+#ifdef IBM405_ERRATA77
+	"dcbt	0,%1		\n"
+#endif
+	"stwcx.	%3,0,%1		\n\
+	bne-	1b		\n"
+#ifdef IBM405_ERRATA77
+	"dcbt	0,%4		\n"
+#endif
+"				\
 2:	stwcx.	%3,0,%4		\n\
 	isync			\n\
 				\n"
@@ -118,24 +129,6 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 	__asm volatile ("sync");
 	*alp = __SIMPLELOCK_UNLOCKED;
-}
-
-static __inline void
-mb_read(void)
-{
-	__asm volatile ("isync" ::: "memory");
-}
-
-static __inline void
-mb_write(void)
-{
-	__asm volatile ("sync" ::: "memory");
-}
-
-static __inline void
-mb_memory(void)
-{
-	__asm volatile ("sync" ::: "memory");
 }
 
 #endif /* _POWERPC_LOCK_H_ */

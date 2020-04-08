@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pinebook.dts,v 1.11.2.1 2019/06/10 22:05:53 christos Exp $ */
+/* $NetBSD: sun50i-a64-pinebook.dts,v 1.11.2.2 2020/04/08 14:07:28 martin Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -54,6 +54,17 @@
 	sound_spdif {
 		status = "disabled";
 	};
+
+	hdmi-connector {
+		compatible = "hdmi-connector";
+		type = "c";
+
+		port {
+			hdmi_con_in: endpoint {
+				remote-endpoint = <&hdmi_out_con>;
+			};
+		};
+	};
 };
 
 &cpu0 {
@@ -99,17 +110,6 @@
 	status = "okay";
 };
 
-&pio {
-	lcd_rgb666_pins: lcd-rgb666 {
-		pins = "PD0", "PD1", "PD2", "PD3", "PD4",
-		       "PD5", "PD6", "PD7", "PD8", "PD9",
-		       "PD10", "PD11", "PD12", "PD13",
-		       "PD14", "PD15", "PD16", "PD17",
-		       "PD18", "PD19", "PD20", "PD21";
-		function = "lcd0";
-	};
-};
-
 &tcon0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&lcd_rgb666_pins>;
@@ -150,4 +150,29 @@
 			};
 		};
 	};
+};
+
+&reg_dldo1 {
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-hdmi";
+};
+
+&hdmi {
+	hvcc-supply = <&reg_dldo1>;
+	status = "okay";
+};
+
+&hdmi_out {
+	hdmi_out_con: endpoint {
+		remote-endpoint = <&hdmi_con_in>;
+	};
+};
+
+&i2s2 {
+	status = "okay";
+};
+
+&sound_hdmi {
+	status = "okay";
 };

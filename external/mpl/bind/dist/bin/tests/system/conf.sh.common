@@ -9,17 +9,14 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-if test -n "$PERL"
-then
-	if $PERL -e "use IO::Socket::INET6;" 2> /dev/null
+testsock6() {
+	if test -n "$PERL" && $PERL -e "use IO::Socket::INET6;" 2> /dev/null
 	then
-		TESTSOCK6="$PERL $TOP/bin/tests/system/testsock6.pl"
+		$PERL "$TOP/bin/tests/system/testsock6.pl" "$@"
 	else
-		TESTSOCK6=false
+		false
 	fi
-else
-	TESTSOCK6=false
-fi
+}
 
 TESTSOCK6="$TESTSOCK6"
 
@@ -130,6 +127,24 @@ digcomp() {
 #
 # Useful functions in test scripts
 #
+
+# assert_int_equal: compare two integer variables, $1 and $2
+#
+# If $1 and $2 are equal, return 0; if $1 and $2 are not equal, report
+# the error using the description of the tested variable provided in $3
+# and return 1.
+assert_int_equal() {
+	expected="$1"
+	found="$2"
+	description="$3"
+
+	if [ "${expected}" -ne "${found}" ]; then
+		echo_i "incorrect ${description}: expected ${expected}, got ${found}"
+		return 1
+	fi
+
+	return 0
+}
 
 # keyfile_to_keys_section: helper function for keyfile_to_*_keys() which
 # converts keyfile data into a configuration section using the supplied
@@ -321,6 +336,5 @@ export RRCHECKER
 export SAMPLEUPDATE
 export SIGNER
 export SUBDIRS
-export TESTSOCK6
 export TSIGKEYGEN
 export WIRETEST

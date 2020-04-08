@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2017/05/27 21:02:56 bouyer Exp $
+# $NetBSD: Makefile,v 1.2.10.1 2020/04/08 14:09:11 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -16,6 +16,6 @@ SRCS.t_canfilter=	t_canfilter.c h_canutils.c
 # which is NULL if rumpnet_netinet is not inclued.
 # 
 LDADD+=		-lrumpnet_netcan -lrumpnet_netinet -lrumpnet_net -lrumpnet
-LDADD+=		-lrump -lrumpuser -lrump -lpthread -lrumpdev -lrumpvfs
+LDADD+=		${LIBRUMPBASE}
 
 .include <bsd.test.mk>

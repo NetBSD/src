@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.101.6.1 2019/06/10 22:06:51 christos Exp $      */
+/*      $NetBSD: cpu.h,v 1.101.6.2 2020/04/08 14:07:56 martin Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -133,6 +133,7 @@ struct cpu_info {
 	vaddr_t ci_istack;		/* Interrupt stack location */
 	const char *ci_cpustr;
 	int ci_slotid;			/* cpu slot */
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 #if defined(MULTIPROCESSOR)
 	struct lwp *ci_curlwp;		/* current lwp (for other cpus) */
 	volatile int ci_flags;		/* See below */
@@ -151,10 +152,9 @@ extern int cpu_printfataltraps;
 #define	curcpu()		(curlwp->l_cpu + 0)
 #define	curlwp			((struct lwp *)mfpr(PR_SSP))
 #define	cpu_number()		(curcpu()->ci_cpuid)
-#define	cpu_need_resched(ci, flags)		\
+#define	cpu_need_resched(ci, l, flags)		\
 	do {					\
 		__USE(flags);			\
-		(ci)->ci_want_resched = 1;	\
 		mtpr(AST_OK,PR_ASTLVL);		\
 	} while (/*CONSTCOND*/ 0)
 #define	cpu_proc_fork(x, y)	do { } while (/*CONSCOND*/0)

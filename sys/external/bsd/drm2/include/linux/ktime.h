@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.3.30.1 2019/06/10 22:08:31 christos Exp $	*/
+/*	$NetBSD: ktime.h,v 1.3.30.2 2020/04/08 14:08:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <sys/kernel.h>
 #include <sys/time.h>
 
+#include <linux/jiffies.h>
 #include <linux/time.h>
 
 union ktime {
@@ -131,15 +132,21 @@ ktime_get_raw_ns(void)
 static inline ktime_t
 ktime_get_monotonic_offset(void)
 {
-	return timespec_to_ktime(boottime);
+	struct timespec ts;
+
+	getnanoboottime(&ts);
+
+	return timespec_to_ktime(ts);
 }
 
 static inline ktime_t
 ktime_mono_to_real(ktime_t kt)
 {
 	struct timespec ts = ktime_to_timespec(kt);
+	struct timespec bts;
 
-	timespecadd(&ts, &boottime, &ts);
+	getnanoboottime(&bts);
+	timespecadd(&ts, &bts, &ts);
 
 	return timespec_to_ktime(ts);
 }

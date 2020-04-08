@@ -1,4 +1,4 @@
-/*	$NetBSD: nslookup.c,v 1.4.2.2 2019/06/10 22:02:58 christos Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.4.2.3 2020/04/08 14:07:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -427,7 +427,7 @@ chase_cnamechain(dns_message_t *msg, dns_name_t *qname) {
 		dns_rdataset_current(rdataset, &rdata);
 		result = dns_rdata_tostruct(&rdata, &cname, NULL);
 		check_result(result, "dns_rdata_tostruct");
-		dns_name_copy(&cname.cname, qname, NULL);
+		dns_name_copynf(&cname.cname, qname);
 		dns_rdata_freestruct(&cname);
 	}
 }
@@ -480,7 +480,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, bool headers) {
 
 		/* Add AAAA lookup. */
 		name = dns_fixedname_initname(&fixed);
-		dns_name_copy(query->lookup->name, name, NULL);
+		dns_name_copynf(query->lookup->name, name);
 		chase_cnamechain(msg, name);
 		dns_name_format(name, namestr, sizeof(namestr));
 		lookup = clone_lookup(query->lookup, false);

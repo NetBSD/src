@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecreg.h,v 1.1 1997/11/02 00:44:26 thorpej Exp $	*/
+/*	$NetBSD: if_ecreg.h,v 1.1.238.1 2020/04/08 14:08:07 martin Exp $	*/
 
 /*
  * 3Com Etherlink II (3c503) register definitions.
@@ -44,7 +44,7 @@
 #define ELINK2_PSPR		1
 
 /*
- * DrQ Timer Register.  Determines number of bytes to be transfered during a
+ * DrQ Timer Register.  Determines number of bytes to be transferred during a
  * DMA burst.
  */
 #define ELINK2_DQTR		2

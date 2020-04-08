@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr50.c,v 1.3.4.2 2019/06/10 22:06:58 christos Exp $	 */
+/*	$NetBSD: if_spppsubr50.c,v 1.3.4.3 2020/04/08 14:08:00 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr50.c,v 1.3.4.2 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr50.c,v 1.3.4.3 2020/04/08 14:08:00 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -158,7 +158,7 @@ void
 if_spppsubr_50_init(void)
 {
 
-	MODULE_HOOK_SET(sppp_params_50_hook, "sppp60", sppp_compat50_params);
+	MODULE_HOOK_SET(sppp_params_50_hook, sppp_compat50_params);
 }
 
 void

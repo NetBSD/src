@@ -1,4 +1,4 @@
-# $NetBSD: majors.usb,v 1.1 2014/09/19 17:32:34 matt Exp $
+# $NetBSD: majors.usb,v 1.1.22.1 2020/04/08 14:08:01 martin Exp $
 #
 # MI major assignments for USB devices
 #
@@ -7,5 +7,5 @@ device-major	uhid		char 221		uhid
 device-major	ulpt		char 222		ulpt
 device-major	ugen		char 223		ugen
 device-major	ucom		char 224		ucom
-device-major	urio		char 225		urio
+#device-major	urio		char 225		urio
 device-major	uscanner	char 226		uscanner

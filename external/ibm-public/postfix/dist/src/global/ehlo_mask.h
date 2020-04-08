@@ -1,4 +1,4 @@
-/*	$NetBSD: ehlo_mask.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: ehlo_mask.h,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _EHLO_MASK_H_INCLUDED_
 #define _EHLO_MASK_H_INCLUDED_
@@ -30,6 +30,7 @@
 #define EHLO_MASK_ENHANCEDSTATUSCODES	(1<<10)
 #define EHLO_MASK_DSN		(1<<11)
 #define EHLO_MASK_SMTPUTF8	(1<<12)
+#define EHLO_MASK_CHUNKING	(1<<13)
 #define EHLO_MASK_SILENT	(1<<15)
 
 extern int ehlo_mask(const char *);
@@ -44,6 +45,11 @@ extern const char *str_ehlo_mask(int);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.39 2016/09/05 20:41:59 dholland Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.39.14.1 2020/04/08 14:07:16 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -342,7 +342,7 @@ dosend(struct spclient *spc, struct iovec *iov, size_t iovlen)
 		}
 
 		/* ok, need to adjust iovec for potential next round */
-		while (n >= (ssize_t)iov[0].iov_len && iovlen) {
+		while (iovlen && n >= (ssize_t)iov[0].iov_len) {
 			n -= iov[0].iov_len;
 			iov++;
 			iovlen--;

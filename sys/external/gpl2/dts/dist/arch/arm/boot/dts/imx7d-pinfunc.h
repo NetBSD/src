@@ -1,12 +1,8 @@
-/*	$NetBSD: imx7d-pinfunc.h,v 1.1.1.3 2018/06/27 16:27:07 jmcneill Exp $	*/
+/*	$NetBSD: imx7d-pinfunc.h,v 1.1.1.3.2.1 2020/04/08 14:08:33 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
  */
 
 #ifndef __DTS_IMX7D_PINFUNC_H

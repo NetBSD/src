@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/06/10 04:28:39 he Exp $
+#	$NetBSD: Makefile,v 1.5.24.1 2020/04/08 14:09:07 martin Exp $
 #
 
 TESTSDIR=	${TESTSBASE}/fs/ptyfs
@@ -9,7 +9,7 @@ TESTS_C+=	t_nullpts
 
 LDADD+=	-lrumpfs_ptyfs						# fs drivers
 LDADD+=	-lrumpkern_tty						# tty support
-LDADD+=	-lrumpvfs -lrump -lrumpuser -lrump -lpthread		# base
+LDADD+=	${LIBRUMPBASE}						# base
 
 LDADD.t_nullpts+= -lrumpfs_null -lrumpvfs_layerfs
 

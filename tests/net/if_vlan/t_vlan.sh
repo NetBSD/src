@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.11.2.1 2019/06/10 22:10:10 christos Exp $
+#	$NetBSD: t_vlan.sh,v 1.11.2.2 2020/04/08 14:09:11 martin Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -665,7 +665,7 @@ vlan_multicast_body_common()
 	# add an address to different interfaces
 	$atf_siocXmulti add vlan0 $mcaddr
 	$atf_siocXmulti add vlan1 $mcaddr
-	atf_check -s exit:0 -o match:"${eth_mcaddr}: 2" $HIJACKING ifmcstat
+	atf_check -s exit:0 -o match:"${eth_mcaddr} refcount 2" $HIJACKING ifmcstat
 	$atf_siocXmulti del vlan0 $mcaddr
 
 	# delete the address with invalid interface
@@ -678,7 +678,7 @@ vlan_multicast_body_common()
 	$atf_siocXmulti add vlan0 $mcaddr
 	$atf_siocXmulti add vlan0 $mcaddr
 	$atf_siocXmulti add vlan0 $mcaddr
-	atf_check -s exit:0 -o match:"${eth_mcaddr}: 3" $HIJACKING ifmcstat
+	atf_check -s exit:0 -o match:"${eth_mcaddr} refcount 3" $HIJACKING ifmcstat
 	$atf_siocXmulti del vlan0 $mcaddr
 	$atf_siocXmulti del vlan0 $mcaddr
 	$atf_siocXmulti del vlan0 $mcaddr

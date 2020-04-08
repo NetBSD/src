@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.7.4.1 2019/06/10 22:09:53 christos Exp $	*/
+/*	$NetBSD: cons.c,v 1.7.4.2 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.7.4.1 2019/06/10 22:09:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.7.4.2 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -137,11 +137,14 @@ rumpcons_ioctl(struct file *fp, u_long cmd, void *data)
 static int
 rumpcons_stat(struct file *fp, struct stat *sb)
 {
+	struct timespec ts;
+
+	getnanoboottime(&ts);
 
 	memset(sb, 0, sizeof(*sb));
 	sb->st_mode = 0600 | _S_IFCHR;
-	sb->st_atimespec = sb->st_mtimespec = sb->st_ctimespec = boottime;
-	sb->st_birthtimespec = boottime;
+	sb->st_atimespec = sb->st_mtimespec = sb->st_ctimespec = ts;
+	sb->st_birthtimespec = ts;
 
 	return 0;
 }

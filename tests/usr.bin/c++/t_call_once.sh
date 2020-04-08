@@ -1,4 +1,4 @@
-#	$NetBSD: t_call_once.sh,v 1.1.4.1 2019/06/10 22:10:11 christos Exp $
+#	$NetBSD: t_call_once.sh,v 1.1.4.2 2020/04/08 14:09:13 martin Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -112,6 +112,11 @@ int main(void) {
 }
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -pg -o call_once test.cpp -pthread
+	case `uname -p` in
+	aarch64)
+		atf_expect_fail 'cc -pg is busted on aarch64'
+		;;
+	esac
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once
 }
 
@@ -228,6 +233,11 @@ EOF
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -pg -o call_once test.cpp -L. -ltest -pthread
 
+	case `uname -p` in
+	aarch64)
+		atf_expect_fail 'cc -pg is busted on aarch64'
+		;;
+	esac
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once
 }

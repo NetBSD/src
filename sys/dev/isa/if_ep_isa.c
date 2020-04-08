@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.45 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.45.18.1 2020/04/08 14:08:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.45 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.45.18.1 2020/04/08 14:08:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ epaddcard(int bus, int iobase, int irq, int model)
 /*
  * 3c509 cards on the ISA bus are probed in ethernet address order.
  * The probe sequence requires careful orchestration, and we'd like
- * like to allow the irq and base address to be wildcarded. So, we
+ * to allow the irq and base address to be wildcarded. So, we
  * probe all the cards the first time epprobe() is called. On subsequent
  * calls we look for matching cards.
  */

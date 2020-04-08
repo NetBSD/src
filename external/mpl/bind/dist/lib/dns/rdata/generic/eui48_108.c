@@ -1,4 +1,4 @@
-/*	$NetBSD: eui48_108.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: eui48_108.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -115,7 +115,7 @@ fromstruct_eui48(ARGS_FROMSTRUCT) {
 	dns_rdata_eui48_t *eui48 = source;
 
 	REQUIRE(type == dns_rdatatype_eui48);
-	REQUIRE(source != NULL);
+	REQUIRE(eui48 != NULL);
 	REQUIRE(eui48->common.rdtype == type);
 	REQUIRE(eui48->common.rdclass == rdclass);
 
@@ -130,7 +130,7 @@ tostruct_eui48(ARGS_TOSTRUCT) {
 	dns_rdata_eui48_t *eui48 = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_eui48);
-	REQUIRE(target != NULL);
+	REQUIRE(eui48 != NULL);
 	REQUIRE(rdata->length == 6);
 
 	UNUSED(mctx);
@@ -147,7 +147,7 @@ static inline void
 freestruct_eui48(ARGS_FREESTRUCT) {
 	dns_rdata_eui48_t *eui48 = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(eui48 != NULL);
 	REQUIRE(eui48->common.rdtype == dns_rdatatype_eui48);
 
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.54 2015/09/01 06:12:04 dholland Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.54.18.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.54 2015/09/01 06:12:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.54.18.1 2020/04/08 14:09:04 martin Exp $");
 
 #ifdef DEBUG
 
@@ -84,16 +84,12 @@ struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 int
 lfs_bwrite_log(struct buf *bp, const char *file, int line)
 {
-	struct vop_bwrite_args a;
-
-	a.a_desc = VDESC(vop_bwrite);
-	a.a_bp = bp;
 
 	if (!(bp->b_flags & B_GATHERED) && !(bp->b_oflags & BO_DELWRI)) {
 		LFS_ENTER_LOG("write", file, line, bp->b_lblkno, bp->b_flags,
 			curproc->p_pid);
 	}
-	return (VCALL(bp->b_vp, VOFFSET(vop_bwrite), &a));
+	return VOP_BWRITE(bp->b_vp, bp);
 }
 
 void

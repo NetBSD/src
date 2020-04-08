@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_rsa.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: tls_rsa.c,v 1.2.12.1 2020/04/08 14:06:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -78,7 +78,6 @@ RSA    *tls_tmp_rsa_cb(SSL *unused_ssl, int export, int keylength)
 		 export ? "" : "non-", keylength);
 	return 0;
     }
-#if OPENSSL_VERSION_NUMBER >= 0x10000000L
     if (rsa_tmp == 0) {
 	BIGNUM *e = BN_new();
 
@@ -90,11 +89,6 @@ RSA    *tls_tmp_rsa_cb(SSL *unused_ssl, int export, int keylength)
 	if (e)
 	    BN_free(e);
     }
-#else
-    if (rsa_tmp == 0)
-	rsa_tmp = RSA_generate_key(keylength, RSA_F4, NULL, NULL);
-#endif
-
     return (rsa_tmp);
 }
 

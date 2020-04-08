@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_execbuf_util.c,v 1.2.30.1 2019/06/10 22:08:28 christos Exp $	*/
+/*	$NetBSD: ttm_execbuf_util.c,v 1.2.30.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /**************************************************************************
  *
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_execbuf_util.c,v 1.2.30.1 2019/06/10 22:08:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_execbuf_util.c,v 1.2.30.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <drm/ttm/ttm_execbuf_util.h>
 #include <drm/ttm/ttm_bo_driver.h>
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_execbuf_util.c,v 1.2.30.1 2019/06/10 22:08:28 ch
 #include <linux/wait.h>
 #include <linux/sched.h>
 #include <linux/module.h>
-#include <linux/export.h>
 
 static void ttm_eu_backoff_reservation_reverse(struct list_head *list,
 					      struct ttm_validate_buffer *entry)

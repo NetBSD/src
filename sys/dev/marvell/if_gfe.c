@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.49.2.1 2019/06/10 22:07:13 christos Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.49.2.2 2020/04/08 14:08:07 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.49.2.1 2019/06/10 22:07:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.49.2.2 2020/04/08 14:08:07 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -747,7 +747,7 @@ gfe_ifwatchdog(struct ifnet *ifp)
 		GE_TXDPRESYNC(sc, txq, curtxdnum);
 	}
 	aprint_error("\n");
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	(void) gfe_whack(sc, GE_WHACK_RESTART);
 	GE_FUNC_EXIT(sc, "");
 }
@@ -906,8 +906,8 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		    (buflen > sc->sc_max_frame_length)) {
 			GE_DPRINTF(sc, ("!"));
 			--rxq->rxq_active;
-			ifp->if_ipackets++;
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ipackets);
+			if_statinc(ifp, if_ierrors);
 			goto give_it_back;
 		}
 
@@ -1008,7 +1008,7 @@ gfe_rx_process(struct gfe_softc *sc, uint32_t cause, uint32_t intrmask)
 			sc->sc_tickflags |= GE_TICK_RX_RESTART;
 			callout_reset(&sc->sc_co, 1, gfe_tick, sc);
 		}
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		GE_DPRINTF(sc, ("%s: rx queue %d filled at %u\n",
 		    device_xname(sc->sc_dev), rxprio, rxq->rxq_fi));
 		memset(masks, 0, sizeof(masks));
@@ -1249,9 +1249,9 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 		txq->txq_nactive--;
 
 		/* statistics */
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		if (cmdsts & TX_STS_ES)
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		GE_DPRINTF(sc, ("%%"));
 	}
 
@@ -1424,9 +1424,9 @@ gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 		txq->txq_inptr += roundup(pktlen, dcache_line_size);
 
 		/* statistics */
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		if (cmdsts & TX_STS_ES)
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 
 		/* txd->ed_bufptr = 0; */
 

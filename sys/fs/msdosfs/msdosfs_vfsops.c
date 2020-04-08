@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.129.4.1 2019/06/10 22:09:00 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.129.4.2 2020/04/08 14:08:49 martin Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.129.4.1 2019/06/10 22:09:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.129.4.2 2020/04/08 14:08:49 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -106,8 +106,6 @@ MALLOC_JUSTDEFINE(M_MSDOSFSMNT, "MSDOSFS mount", "MSDOS FS mount structure");
 MALLOC_JUSTDEFINE(M_MSDOSFSFAT, "MSDOSFS FAT", "MSDOS FS FAT table");
 MALLOC_JUSTDEFINE(M_MSDOSFSTMP, "MSDOSFS temp", "MSDOS FS temp. structures");
 
-static struct sysctllog *msdosfs_sysctl_log;
-
 extern const struct vnodeopv_desc msdosfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const msdosfs_vnodeopv_descs[] = {
@@ -142,6 +140,21 @@ struct vfsops msdosfs_vfsops = {
 	.vfs_opv_descs = msdosfs_vnodeopv_descs
 };
 
+SYSCTL_SETUP(msdosfs_sysctl_setup, "msdosfs sysctl")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "msdosfs",
+		       SYSCTL_DESCR("MS-DOS file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 4, CTL_EOL);
+	/*
+	 * XXX the "4" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "4" is the order as taken from sys/mount.h
+	 */
+}
+
 static int
 msdos_modcmd(modcmd_t cmd, void *arg)
 {
@@ -152,23 +165,11 @@ msdos_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&msdosfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&msdosfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "msdosfs",
-			       SYSCTL_DESCR("MS-DOS file system"),
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, 4, CTL_EOL);
-		/*
-		 * XXX the "4" above could be dynamic, thereby eliminating one
-		 * more instance of the "number to vfs" mapping problem, but
-		 * "4" is the order as taken from sys/mount.h
-		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&msdosfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_teardown(&msdosfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;
@@ -209,7 +210,8 @@ update_mp(struct mount *mp, struct msdosfs_args *argp)
 		if (FAT32(pmp))
 			pmp->pm_flags |= MSDOSFSMNT_LONGNAME;
 		else {
-			if ((error = msdosfs_root(mp, &rtvp)) != 0)
+			error = msdosfs_root(mp, LK_EXCLUSIVE, &rtvp);
+			if (error != 0)
 				return error;
 			pmp->pm_flags |= findwin95(VTODE(rtvp))
 				? MSDOSFSMNT_LONGNAME
@@ -866,6 +868,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = MSDOSFS_NAMEMAX(pmp);
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_iflag |= IMNT_SHRLOOKUP;
 	mp->mnt_dev_bshift = pmp->pm_bnshift;
 	mp->mnt_fs_bshift = pmp->pm_cnshift;
 
@@ -950,7 +953,7 @@ msdosfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-msdosfs_root(struct mount *mp, struct vnode **vpp)
+msdosfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error;
@@ -960,7 +963,7 @@ msdosfs_root(struct mount *mp, struct vnode **vpp)
 #endif
 	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, vpp)) != 0)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -1007,7 +1010,7 @@ msdosfs_sync_selector(void *cl, struct vnode *vp)
 	    dep == NULL || (((dep->de_flag &
 	    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
 	     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-	      UVM_OBJ_IS_CLEAN(&vp->v_uobj))))
+	      (vp->v_iflag & VI_ONWORKLST) == 0)))
 		return false;
 	return true;
 }
@@ -1064,7 +1067,7 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 }
 
 int
-msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+msdosfs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, struct vnode **vpp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct defid defh;
@@ -1090,7 +1093,7 @@ msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 		*vpp = NULLVP;
 		return error;
 	}
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULLVP;
@@ -1125,7 +1128,7 @@ msdosfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 }
 
 int
-msdosfs_vget(struct mount *mp, ino_t ino,
+msdosfs_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 

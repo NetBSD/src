@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.23.4.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.23.4.2 2020/04/08 14:07:34 martin Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -279,7 +279,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	tun			# network tunneling over tty
@@ -301,9 +300,6 @@ pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.
-
-# a pseudo device needed for SMBFS
-#pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
 #pseudo-device	wsmux			# mouse & keyboard multiplexor

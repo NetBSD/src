@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.19 2017/05/23 08:54:39 nonaka Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.19.10.1 2020/04/08 14:07:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,6 @@ extern void lapic_initclocks(void);
 extern uint32_t lapic_readreg(u_int);
 extern void lapic_writereg(u_int, uint32_t);
 extern void lapic_write_tpri(uint32_t);
-extern void lapic_eoi(void);
 extern uint32_t lapic_cpu_number(void);
 extern bool lapic_is_x2apic(void);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.30 2017/11/01 19:15:31 mlelstv Exp $ */
+/* $NetBSD: dkvar.h,v 1.30.4.1 2020/04/08 14:08:02 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,6 +83,8 @@ struct dk_softc {
 	((_dksc)->sc_dkdev.dk_bopenmask & (_pmask)  &&	\
 	((_dksc)->sc_dkdev.dk_copenmask & (_pmask))))
 
+#define	DK_DUMP_RECURSIVE	__BIT(0) /* this is a virtual disk */
+
 /*
  * Functions that are exported to the pseudo disk implementations:
  */
@@ -106,10 +108,8 @@ int	dk_size(struct dk_softc *, dev_t);
 int	dk_ioctl(struct dk_softc *, dev_t,
 		 u_long, void *, int, struct lwp *);
 int	dk_dump(struct dk_softc *, dev_t,
-		daddr_t, void *, size_t);
+		daddr_t, void *, size_t, int);
 void	dk_getdisklabel(struct dk_softc *, dev_t);
 void	dk_getdefaultlabel(struct dk_softc *, struct disklabel *);
-
-int	dk_lookup(struct pathbuf *, struct lwp *, struct vnode **);
 
 #endif /* ! _DEV_DKVAR_H_ */   

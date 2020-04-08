@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_softint.c,v 1.45.4.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.45.4.2 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -170,19 +170,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.45.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.45.4.2 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/intr.h>
 #include <sys/ipi.h>
+#include <sys/lock.h>
 #include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
 #include <sys/xcall.h>
-#include <sys/pserialize.h>
 
 #include <net/netisr.h>
 
@@ -196,7 +196,7 @@ typedef struct softint {
 	uintptr_t		si_machdep;
 	struct evcnt		si_evcnt;
 	struct evcnt		si_evcnt_block;
-	int			si_active;
+	volatile int		si_active;
 	char			si_name[8];
 	char			si_name_block[8+6];
 } softint_t;
@@ -479,6 +479,11 @@ softint_schedule(void *arg)
 	uintptr_t offset;
 	int s;
 
+	/*
+	 * If this assert fires, rather than disabling preemption explicitly
+	 * to make it stop, consider that you are probably using a softint
+	 * when you don't need to.
+	 */	
 	KASSERT(kpreempt_disabled());
 
 	/* Find the handler record for this CPU. */
@@ -547,18 +552,11 @@ static inline void
 softint_execute(softint_t *si, lwp_t *l, int s)
 {
 	softhand_t *sh;
-	bool havelock;
 
-#ifdef __HAVE_FAST_SOFTINTS
 	KASSERT(si->si_lwp == curlwp);
-#else
-	/* May be running in user context. */
-#endif
 	KASSERT(si->si_cpu == curcpu());
 	KASSERT(si->si_lwp->l_wchan == NULL);
 	KASSERT(si->si_active);
-
-	havelock = false;
 
 	/*
 	 * Note: due to priority inheritance we may have interrupted a
@@ -580,17 +578,14 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 		splx(s);
 
 		/* Run the handler. */
-		if (sh->sh_flags & SOFTINT_MPSAFE) {
-			if (havelock) {
-				KERNEL_UNLOCK_ONE(l);
-				havelock = false;
-			}
-		} else if (!havelock) {
+		if (__predict_true((sh->sh_flags & SOFTINT_MPSAFE) != 0)) {
+			(*sh->sh_func)(sh->sh_arg);
+		} else {
 			KERNEL_LOCK(1, l);
-			havelock = true;
+			(*sh->sh_func)(sh->sh_arg);
+			KERNEL_UNLOCK_ONE(l);
 		}
-		(*sh->sh_func)(sh->sh_arg);
-
+		
 		/* Diagnostic: check that spin-locks have not leaked. */
 		KASSERTMSG(curcpu()->ci_mtx_count == 0,
 		    "%s: ci_mtx_count (%d) != 0, sh_func %p\n",
@@ -606,15 +601,7 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 
 	PSREF_DEBUG_BARRIER();
 
-	if (havelock) {
-		KERNEL_UNLOCK_ONE(l);
-	}
-
-	/*
-	 * Unlocked, but only for statistics.
-	 * Should be per-CPU to prevent cache ping-pong.
-	 */
-	curcpu()->ci_data.cpu_nsoft++;
+	CPU_COUNT(CPU_COUNT_NSOFT, 1);
 
 	KASSERT(si->si_cpu == curcpu());
 	KASSERT(si->si_lwp->l_wchan == NULL);
@@ -663,19 +650,20 @@ schednetisr(int isr)
 void
 softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 {
+	struct proc *p;
 	softint_t *si;
 
 	*machdep = (1 << level);
 	si = l->l_private;
+	p = l->l_proc;
 
-	lwp_lock(l);
-	lwp_unlock_to(l, l->l_cpu->ci_schedstate.spc_mutex);
+	mutex_enter(p->p_lock);
 	lwp_lock(l);
 	/* Cheat and make the KASSERT in softint_thread() happy. */
 	si->si_active = 1;
-	l->l_stat = LSRUN;
-	sched_enqueue(l, false);
-	lwp_unlock(l);
+	setrunnable(l);
+	/* LWP now unlocked */
+	mutex_exit(p->p_lock);
 }
 
 /*
@@ -690,14 +678,25 @@ softint_trigger(uintptr_t machdep)
 	struct cpu_info *ci;
 	lwp_t *l;
 
-	l = curlwp;
-	ci = l->l_cpu;
+	ci = curcpu();
 	ci->ci_data.cpu_softints |= machdep;
+	l = ci->ci_onproc;
+
+	/*
+	 * Arrange for mi_switch() to be called.  If called from interrupt
+	 * mode, we don't know if curlwp is executing in kernel or user, so
+	 * post an AST and have it take a trip through userret().  If not in
+	 * interrupt mode, curlwp is running in kernel and will notice the
+	 * resched soon enough; avoid the AST.
+	 */
 	if (l == ci->ci_data.cpu_idlelwp) {
-		cpu_need_resched(ci, 0);
+		atomic_or_uint(&ci->ci_want_resched,
+		    RESCHED_IDLE | RESCHED_UPREEMPT);
 	} else {
-		/* MI equivalent of aston() */
-		cpu_signotify(l);
+		atomic_or_uint(&ci->ci_want_resched, RESCHED_UPREEMPT);
+		if (cpu_intr_p()) {
+			cpu_signotify(l);
+		}
 	}
 }
 
@@ -717,19 +716,16 @@ softint_thread(void *cookie)
 	si = l->l_private;
 
 	for (;;) {
-		/*
-		 * Clear pending status and run it.  We must drop the
-		 * spl before mi_switch(), since IPL_HIGH may be higher
-		 * than IPL_SCHED (and it is not safe to switch at a
-		 * higher level).
-		 */
+		/* Clear pending status and run it. */
 		s = splhigh();
 		l->l_cpu->ci_data.cpu_softints &= ~si->si_machdep;
 		softint_execute(si, l, s);
 		splx(s);
 
+		/* Interrupts allowed to run again before switching. */
 		lwp_lock(l);
 		l->l_stat = LSIDL;
+		spc_lock(l->l_cpu);
 		mi_switch(l);
 	}
 }
@@ -767,65 +763,6 @@ softint_picklwp(void)
 	return l;
 }
 
-/*
- * softint_overlay:
- *
- *	Slow path: called from lwp_userret() to run a soft interrupt
- *	within the context of a user thread.
- */
-void
-softint_overlay(void)
-{
-	struct cpu_info *ci;
-	u_int softints, oflag;
-	softint_t *si;
-	pri_t obase;
-	lwp_t *l;
-	int s;
-
-	l = curlwp;
-	KASSERT((l->l_pflag & LP_INTR) == 0);
-
-	/*
-	 * Arrange to elevate priority if the LWP blocks.  Also, bind LWP
-	 * to the CPU.  Note: disable kernel preemption before doing that.
-	 */
-	s = splhigh();
-	ci = l->l_cpu;
-	si = ((softcpu_t *)ci->ci_data.cpu_softcpu)->sc_int;
-
-	obase = l->l_kpribase;
-	l->l_kpribase = PRI_KERNEL_RT;
-	oflag = l->l_pflag;
-	l->l_pflag = oflag | LP_INTR | LP_BOUND;
-
-	while ((softints = ci->ci_data.cpu_softints) != 0) {
-		if ((softints & (1 << SOFTINT_SERIAL)) != 0) {
-			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_SERIAL);
-			softint_execute(&si[SOFTINT_SERIAL], l, s);
-			continue;
-		}
-		if ((softints & (1 << SOFTINT_NET)) != 0) {
-			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_NET);
-			softint_execute(&si[SOFTINT_NET], l, s);
-			continue;
-		}
-		if ((softints & (1 << SOFTINT_BIO)) != 0) {
-			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_BIO);
-			softint_execute(&si[SOFTINT_BIO], l, s);
-			continue;
-		}
-		if ((softints & (1 << SOFTINT_CLOCK)) != 0) {
-			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_CLOCK);
-			softint_execute(&si[SOFTINT_CLOCK], l, s);
-			continue;
-		}
-	}
-	l->l_pflag = oflag;
-	l->l_kpribase = obase;
-	splx(s);
-}
-
 #else	/*  !__HAVE_FAST_SOFTINTS */
 
 /*
@@ -855,7 +792,24 @@ softint_dispatch(lwp_t *pinned, int s)
 	u_int timing;
 	lwp_t *l;
 
-	KASSERT((pinned->l_pflag & LP_RUNNING) != 0);
+#ifdef DIAGNOSTIC
+	if ((pinned->l_pflag & LP_RUNNING) == 0 || curlwp->l_stat != LSIDL) {
+		struct lwp *onproc = curcpu()->ci_onproc;
+		int s2 = splhigh();
+		printf("curcpu=%d, spl=%d curspl=%d\n"
+			"onproc=%p => l_stat=%d l_flag=%08x l_cpu=%d\n"
+			"curlwp=%p => l_stat=%d l_flag=%08x l_cpu=%d\n"
+			"pinned=%p => l_stat=%d l_flag=%08x l_cpu=%d\n",
+			cpu_index(curcpu()), s, s2, onproc, onproc->l_stat,
+			onproc->l_flag, cpu_index(onproc->l_cpu), curlwp,
+			curlwp->l_stat, curlwp->l_flag,
+			cpu_index(curlwp->l_cpu), pinned, pinned->l_stat,
+			pinned->l_flag, cpu_index(pinned->l_cpu));
+		splx(s2);
+		panic("softint screwup");
+	}
+#endif
+
 	l = curlwp;
 	si = l->l_private;
 
@@ -865,17 +819,20 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * the LWP locked, at this point no external agents will want to
 	 * modify the interrupt LWP's state.
 	 */
-	timing = (softint_timing ? LP_TIMEINTR : 0);
+	timing = softint_timing;
 	l->l_switchto = pinned;
 	l->l_stat = LSONPROC;
-	l->l_pflag |= (LP_RUNNING | timing);
 
 	/*
 	 * Dispatch the interrupt.  If softints are being timed, charge
 	 * for it.
 	 */
-	if (timing)
+	if (timing) {
 		binuptime(&l->l_stime);
+		membar_producer();	/* for calcru */
+		l->l_pflag |= LP_TIMEINTR;
+	}
+	l->l_pflag |= LP_RUNNING;
 	softint_execute(si, l, s);
 	if (timing) {
 		binuptime(&now);
@@ -883,27 +840,18 @@ softint_dispatch(lwp_t *pinned, int s)
 		l->l_pflag &= ~LP_TIMEINTR;
 	}
 
-	/* Indicate a soft-interrupt switch. */
-	pserialize_switchpoint();
-
 	/*
 	 * If we blocked while handling the interrupt, the pinned LWP is
-	 * gone so switch to the idle LWP.  It will select a new LWP to
-	 * run.
-	 *
-	 * We must drop the priority level as switching at IPL_HIGH could
-	 * deadlock the system.  We have already set si->si_active = 0,
-	 * which means another interrupt at this level can be triggered. 
-	 * That's not be a problem: we are lowering to level 's' which will
-	 * prevent softint_dispatch() from being reentered at level 's',
-	 * until the priority is finally dropped to IPL_NONE on entry to
-	 * the LWP chosen by lwp_exit_switchaway().
+	 * gone, so find another LWP to run.  It will select a new LWP to
+	 * run.  softint_dispatch() won't be reentered until the priority
+	 * is finally dropped to IPL_NONE on entry to the LWP chosen by
+	 * mi_switch().
 	 */
 	l->l_stat = LSIDL;
 	if (l->l_switchto == NULL) {
-		splx(s);
-		pmap_deactivate(l);
-		lwp_exit_switchaway(l);
+		lwp_lock(l);
+		spc_lock(l->l_cpu);
+		mi_switch(l);
 		/* NOTREACHED */
 	}
 	l->l_switchto = NULL;

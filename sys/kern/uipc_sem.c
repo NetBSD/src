@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.51.2.1 2019/06/10 22:09:04 christos Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.51.2.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.51.2.1 2019/06/10 22:09:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.51.2.2 2020/04/08 14:08:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -92,7 +92,6 @@ MODULE(MODULE_CLASS_MISC, ksem, NULL);
 
 #define	SEM_MAX_NAMELEN		NAME_MAX
 
-#define	SEM_NSEMS_MAX		256
 #define	KS_UNLINKED		0x01
 
 static kmutex_t		ksem_lock	__cacheline_aligned;
@@ -144,7 +143,7 @@ static const struct syscall_package ksem_syscalls[] = {
 };
 
 struct sysctllog *ksem_clog;
-int ksem_max;
+int ksem_max = KSEM_MAX;
 
 static int
 name_copyin(const char *uname, char **name)
@@ -205,17 +204,11 @@ ksem_sysinit(void)
 	    true, &ksem_pshared_hashmask);
 	KASSERT(ksem_pshared_hashtab != NULL);
 
-	error = syscall_establish(NULL, ksem_syscalls);
-	if (error) {
-		(void)ksem_sysfini(false);
-	}
-
 	ksem_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
 	    ksem_listener_cb, NULL);
 
 	/* Define module-specific sysctl tree */
 
-	ksem_max = KSEM_MAX;
 	ksem_clog = NULL;
 
 	sysctl_createv(&ksem_clog, 0, NULL, &rnode,
@@ -236,6 +229,11 @@ ksem_sysinit(void)
 			SYSCTL_DESCR("Current number of semaphores"),
 			NULL, 0, &nsems, 0,
 			CTL_CREATE, CTL_EOL);
+
+	error = syscall_establish(NULL, ksem_syscalls);
+	if (error) {
+		(void)ksem_sysfini(false);
+	}
 
 	return error;
 }
@@ -468,14 +466,7 @@ ksem_create(lwp_t *l, const char *name, ksem_t **ksret, mode_t mode, u_int val)
 		len = 0;
 	}
 
-	u_int cnt;
-	uid_t uid = kauth_cred_getuid(l->l_cred);
-	if ((cnt = chgsemcnt(uid, 1)) > SEM_NSEMS_MAX) {
-		chgsemcnt(uid, -1);
-		if (kname != NULL)
-			kmem_free(kname, len);
-		return ENOSPC;
-	}
+	chgsemcnt(kauth_cred_getuid(l->l_cred), 1);
 
 	ks = kmem_zalloc(sizeof(ksem_t), KM_SLEEP);
 	mutex_init(&ks->ks_lock, MUTEX_DEFAULT, IPL_NONE);

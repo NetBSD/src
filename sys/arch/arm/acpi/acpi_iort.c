@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_iort.c,v 1.1.6.2 2019/06/10 22:05:50 christos Exp $ */
+/* $NetBSD: acpi_iort.c,v 1.1.6.3 2020/04/08 14:07:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_iort.c,v 1.1.6.2 2019/06/10 22:05:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_iort.c,v 1.1.6.3 2020/04/08 14:07:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,7 @@ acpi_iort_id_map(ACPI_IORT_NODE *node, uint32_t *id)
 	for (n = 0; n < node->MappingCount; n++) {
 		map = ACPI_ADD_PTR(ACPI_IORT_ID_MAPPING, node, offset);
 		if (map->Flags & ACPI_IORT_ID_SINGLE_MAPPING) {
-			*id = map->InputBase;
+			*id = map->OutputBase;
 			return map;
 		}
 		if (*id >= map->InputBase && *id <= map->InputBase + map->IdCount) {
@@ -99,7 +99,7 @@ acpi_iort_pci_root_map(u_int seg, uint32_t devid)
 				do {
 					node = acpi_iort_find_ref(iort, node, &devid);
 				} while (node != NULL);
-				aprint_debug("ACPI: IORT remapped devid %#x -> %#x\n", odevid, devid);
+				aprint_debug("ACPI: IORT mapped devid %#x -> devid %#x\n", odevid, devid);
 				return devid;
 			}
 		}
@@ -107,4 +107,45 @@ acpi_iort_pci_root_map(u_int seg, uint32_t devid)
 	}
 
 	return devid;
+}
+
+uint32_t
+acpi_iort_its_id_map(u_int seg, uint32_t devid)
+{
+	ACPI_TABLE_IORT *iort;
+	ACPI_IORT_NODE *node;
+	ACPI_IORT_ROOT_COMPLEX *root;
+	ACPI_IORT_ITS_GROUP *its_group;
+	uint32_t offset, n;
+	ACPI_STATUS rv;
+
+	rv = AcpiGetTable(ACPI_SIG_IORT, 0, (ACPI_TABLE_HEADER **)&iort);
+	if (ACPI_FAILURE(rv))
+		return 0;
+
+	offset = iort->NodeOffset;
+	for (n = 0; n < iort->NodeCount; n++) {
+		node = ACPI_ADD_PTR(ACPI_IORT_NODE, iort, offset);
+		if (node->Type == ACPI_IORT_NODE_PCI_ROOT_COMPLEX) {
+			root = (ACPI_IORT_ROOT_COMPLEX *)node->NodeData;
+			if (root->PciSegmentNumber == seg) {
+				const uint32_t odevid = devid;
+				do {
+					node = acpi_iort_find_ref(iort, node, &devid);
+					if (node != NULL && node->Type == ACPI_IORT_NODE_ITS_GROUP) {
+						its_group = (ACPI_IORT_ITS_GROUP *)node->NodeData;
+						if (its_group->ItsCount == 0)
+							return 0;
+						aprint_debug("ACPI: IORT mapped devid %#x -> ITS %#x\n",
+						    odevid, its_group->Identifiers[0]);
+						return its_group->Identifiers[0];
+					}
+				} while (node != NULL);
+				return 0;
+			}
+		}
+		offset += node->Length;
+	}
+
+	return 0;
 }

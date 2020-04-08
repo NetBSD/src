@@ -1,4 +1,4 @@
-/*	$NetBSD: milter.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: milter.c,v 1.2.12.1 2020/04/08 14:06:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -335,18 +335,21 @@ static ARGV *milter_macro_lookup(MILTERS *milters, const char *macro_names)
     VSTRING *canon_buf = vstring_alloc(20);
     const char *value;
     const char *name;
+    const char *cname;
 
     while ((name = mystrtok(&cp, CHARS_COMMA_SP)) != 0) {
 	if (msg_verbose)
 	    msg_info("%s: \"%s\"", myname, name);
 	if (*name != '{')			/* } */
-	    name = STR(vstring_sprintf(canon_buf, "{%s}", name));
-	if ((value = milters->mac_lookup(name, milters->mac_context)) != 0) {
+	    cname = STR(vstring_sprintf(canon_buf, "{%s}", name));
+	else
+	    cname = name;
+	if ((value = milters->mac_lookup(cname, milters->mac_context)) != 0) {
 	    if (msg_verbose)
 		msg_info("%s: result \"%s\"", myname, value);
 	    argv_add(argv, name, value, (char *) 0);
 	} else if (milters->macro_defaults != 0
-	     && (value = htable_find(milters->macro_defaults, name)) != 0) {
+	    && (value = htable_find(milters->macro_defaults, cname)) != 0) {
 	    if (msg_verbose)
 		msg_info("%s: using default \"%s\"", myname, value);
 	    argv_add(argv, name, value, (char *) 0);
@@ -416,6 +419,8 @@ const char *milter_conn_event(MILTERS *milters,
     if (msg_verbose)
 	msg_info("report connect to all milters");
     for (resp = 0, m = milters->milter_list; resp == 0 && m != 0; m = m->next) {
+	if (m->connect_on_demand != 0)
+	    m->connect_on_demand(m);
 	any_macros = MILTER_MACRO_EVAL(global_macros, m, milters, conn_macros);
 	resp = m->conn_event(m, client_name, client_addr, client_port,
 			     addr_family, any_macros);

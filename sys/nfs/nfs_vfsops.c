@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.236.2.1 2019/06/10 22:09:49 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.236.2.2 2020/04/08 14:08:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.236.2.1 2019/06/10 22:09:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.236.2.2 2020/04/08 14:08:59 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -131,12 +131,9 @@ struct vfsops nfs_vfsops = {
 
 extern u_int32_t nfs_procids[NFS_NPROCS];
 extern u_int32_t nfs_prog, nfs_vers;
-static struct sysctllog *nfs_clog;
 
 static int nfs_mount_diskless(struct nfs_dlmount *, const char *,
     struct mount **, struct vnode **, struct lwp *);
-static void nfs_sysctl_init(void);
-static void nfs_sysctl_fini(void);
 
 static int
 nfs_modcmd(modcmd_t cmd, void *arg)
@@ -146,15 +143,9 @@ nfs_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = vfs_attach(&nfs_vfsops);
-		if (error == 0) {
-			nfs_sysctl_init();
-		}
 		return error;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&nfs_vfsops);
-		if (error == 0) {
-			nfs_sysctl_fini();
-		}
 		return error;
 	default:
 		return ENOTTY;
@@ -937,7 +928,7 @@ err:
  * Return root of a filesystem
  */
 int
-nfs_root(struct mount *mp, struct vnode **vpp)
+nfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *vp;
 	struct nfsmount *nmp;
@@ -946,7 +937,7 @@ nfs_root(struct mount *mp, struct vnode **vpp)
 	nmp = VFSTONFS(mp);
 	vp = nmp->nm_vnode;
 	vref(vp);
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = vn_lock(vp, lktype | LK_RETRY);
 	if (error != 0) {
 		vrele(vp);
 		return error;
@@ -963,7 +954,8 @@ nfs_sync_selector(void *cl, struct vnode *vp)
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
-	return !LIST_EMPTY(&vp->v_dirtyblkhd) || !UVM_OBJ_IS_CLEAN(&vp->v_uobj);
+	return !LIST_EMPTY(&vp->v_dirtyblkhd) ||
+	    (vp->v_iflag & VI_ONWORKLST) != 0;
 }
 
 /*
@@ -1005,7 +997,7 @@ nfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
  */
 /* ARGSUSED */
 int
-nfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+nfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 
 	return (EOPNOTSUPP);
@@ -1031,11 +1023,10 @@ sysctl_vfs_nfs_iothreads(SYSCTLFN_ARGS)
 	return nfs_set_niothreads(val);
 }
 
-static void
-nfs_sysctl_init(void)
+SYSCTL_SETUP(nfs_sysctl_init, "nfs sysctl")
 {
 
-	sysctl_createv(&nfs_clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "nfs",
 		       SYSCTL_DESCR("NFS vfs options"),
@@ -1047,13 +1038,13 @@ nfs_sysctl_init(void)
 	 * "2" is the order as taken from sys/mount.h
 	 */
 
-	sysctl_createv(&nfs_clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "nfsstats",
 		       SYSCTL_DESCR("NFS operation statistics"),
 		       NULL, 0, &nfsstats, sizeof(nfsstats),
 		       CTL_VFS, 2, NFS_NFSSTATS, CTL_EOL);
-	sysctl_createv(&nfs_clog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "iothreads",
 		       SYSCTL_DESCR("Number of NFS client processes desired"),
@@ -1061,16 +1052,9 @@ nfs_sysctl_init(void)
 		       CTL_VFS, 2, NFS_IOTHREADS, CTL_EOL);
 }
 
-static void
-nfs_sysctl_fini(void)
-{
-
-	sysctl_teardown(&nfs_clog);
-}
-
 /* ARGSUSED */
 int
-nfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
+nfs_fhtovp(struct mount *mp, struct fid *fid, int lktype, struct vnode **vpp)
 {
 	size_t fidsize;
 	size_t fhsize;
@@ -1095,6 +1079,7 @@ nfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 			return EINVAL;
 		}
 	}
+	/* XXX lktype ignored */
 	error = nfs_nget(mp, (void *)fid->fid_data, fhsize, &np);
 	if (error) {
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_spin.c,v 1.6 2012/08/16 04:49:47 matt Exp $	*/
+/*	$NetBSD: pthread_spin.c,v 1.6.32.1 2020/04/08 14:07:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_spin.c,v 1.6 2012/08/16 04:49:47 matt Exp $");
+__RCSID("$NetBSD: pthread_spin.c,v 1.6.32.1 2020/04/08 14:07:15 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/ras.h>
@@ -53,11 +53,10 @@ int
 pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 {
 
-#ifdef ERRORCHECK
-	if (lock == NULL || (pshared != PTHREAD_PROCESS_PRIVATE &&
-	    pshared != PTHREAD_PROCESS_SHARED))
-		return EINVAL;
-#endif
+	pthread__error(EINVAL, "Invalid pshared",
+	    pshared == PTHREAD_PROCESS_PRIVATE ||
+	    pshared == PTHREAD_PROCESS_SHARED);
+
 	lock->pts_magic = _PT_SPINLOCK_MAGIC;
 
 	/*
@@ -75,12 +74,11 @@ int
 pthread_spin_destroy(pthread_spinlock_t *lock)
 {
 
-#ifdef ERRORCHECK
-	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
-		return EINVAL;
+	pthread__error(EINVAL, "Invalid spinlock",
+	    lock->pts_magic == _PT_SPINLOCK_MAGIC);
+
 	if (!__SIMPLELOCK_UNLOCKED_P(&lock->pts_spin))
 		return EBUSY;
-#endif
 
 	lock->pts_magic = _PT_SPINLOCK_DEAD;
 
@@ -92,10 +90,8 @@ pthread_spin_lock(pthread_spinlock_t *lock)
 {
 	pthread_t self;
 
-#ifdef ERRORCHECK
-	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
-		return EINVAL;
-#endif
+	pthread__error(EINVAL, "Invalid spinlock",
+	    lock->pts_magic == _PT_SPINLOCK_MAGIC);
 
 	self = pthread__self();
 	while (pthread__spintrylock(self, &lock->pts_spin) == 0) {
@@ -110,10 +106,8 @@ pthread_spin_trylock(pthread_spinlock_t *lock)
 {
 	pthread_t self;
 
-#ifdef ERRORCHECK
-	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
-		return EINVAL;
-#endif
+	pthread__error(EINVAL, "Invalid spinlock",
+	    lock->pts_magic == _PT_SPINLOCK_MAGIC);
 
 	self = pthread__self();
 	if (pthread__spintrylock(self, &lock->pts_spin) == 0)
@@ -126,10 +120,8 @@ pthread_spin_unlock(pthread_spinlock_t *lock)
 {
 	pthread_t self;
 
-#ifdef ERRORCHECK
-	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
-		return EINVAL;
-#endif
+	pthread__error(EINVAL, "Invalid spinlock",
+	    lock->pts_magic == _PT_SPINLOCK_MAGIC);
 
 	self = pthread__self();
 	pthread__spinunlock(self, &lock->pts_spin);

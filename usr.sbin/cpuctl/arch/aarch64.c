@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.2.4.1 2019/06/10 22:10:29 christos Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.2.4.2 2020/04/08 14:09:19 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.2.4.1 2019/06/10 22:10:29 christos Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.2.4.2 2020/04/08 14:09:19 martin Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -158,6 +158,41 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 	{ .bitwidth = 0 }	/* end of table */
 };
 
+/* ID_AA64PFR1_EL1 - AArch64 Processor Feature Register 1 */
+struct fieldinfo id_aa64pfr1_fieldinfo[] = {
+	{
+		.bitpos = 0, .bitwidth = 4, .name = "BT",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Branch Target Identification not implemented",
+			[1] = "Branch Target Identification implemented",
+		}
+	},
+	{
+		.bitpos = 4, .bitwidth = 4, .name = "SSBS",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Speculative Store Bypassing control not implemented",
+			[1] = "Speculative Store Bypassing control implemented",
+			[2] = "Speculative Store Bypassing control implemented, plus MSR/MRS"
+		}
+	},
+	{
+		.bitpos = 8, .bitwidth = 4, .name = "MTE",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Tagged Memory Extension not implemented",
+			[1] = "Tagged Memory Extension implemented, EL0 only",
+			[2] = "Tagged Memory Extension implemented"
+		}
+	},
+	{
+		.bitpos = 12, .bitwidth = 4, .name = "RAS_frac",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Regular RAS",
+			[1] = "RAS plus registers",
+		}
+	},
+	{ .bitwidth = 0 }	/* end of table */
+};
+
 /* ID_AA64ISAR0_EL1 - AArch64 Instruction Set Attribute Register 0 */
 struct fieldinfo id_aa64isar0_fieldinfo[] = {
 	{
@@ -253,6 +288,70 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 		.info = (const char *[16]) { /* 16=4bit */
 			[0] = "4KB granule",
 			[15] = "No 4KB granule"
+		}
+	},
+	{ .bitwidth = 0 }	/* end of table */
+};
+
+/* ID_AA64MMFR1_EL1 - AArch64 Memory Model Feature Register 1 */
+struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
+	{
+		.bitpos = 0, .bitwidth = 4, .name = "HAFDBS",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Access and Dirty flags not supported",
+			[1] = "Access flag supported",
+			[2] = "Access and Dirty flags supported",
+		}
+	},
+	{
+		.bitpos = 4, .bitwidth = 4, .name = "VMIDBits",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "8bits",
+			[2] = "16bits"
+		}
+	},
+	{
+		.bitpos = 8, .bitwidth = 4, .name = "VH",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Virtualization Host Extensions not supported",
+			[1] = "Virtualization Host Extensions supported",
+		}
+	},
+	{
+		.bitpos = 12, .bitwidth = 4, .name = "HPDS",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Disabling of hierarchical controls not supported",
+			[1] = "Disabling of hierarchical controls supported",
+			[2] = "Disabling of hierarchical controls supported, plus PTD"
+		}
+	},
+	{
+		.bitpos = 16, .bitwidth = 4, .name = "LO",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "LORegions not supported",
+			[1] = "LORegions supported"
+		}
+	},
+	{
+		.bitpos = 20, .bitwidth = 4, .name = "PAN",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "PAN not supported",
+			[1] = "PAN supported",
+			[2] = "PAN supported, and instructions supported"
+		}
+	},
+	{
+		.bitpos = 24, .bitwidth = 4, .name = "SpecSEI",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "SError interrupt not supported",
+			[1] = "SError interrupt supported"
+		}
+	},
+	{
+		.bitpos = 28, .bitwidth = 4, .name = "XNX",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Distinction between EL0 and EL1 XN control at stage 2 not supported",
+			[1] = "Distinction between EL0 and EL1 XN control at stage 2 supported"
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -610,8 +709,12 @@ identifycpu(int fd, const char *cpuname)
 	    id_aa64isar0_fieldinfo, id->ac_aa64isar0);
 	print_fieldinfo(cpuname, "memory model 0",
 	    id_aa64mmfr0_fieldinfo, id->ac_aa64mmfr0);
+	print_fieldinfo(cpuname, "memory model 1",
+	    id_aa64mmfr1_fieldinfo, id->ac_aa64mmfr1);
 	print_fieldinfo(cpuname, "processor feature 0",
 	    id_aa64pfr0_fieldinfo, id->ac_aa64pfr0);
+	print_fieldinfo(cpuname, "processor feature 1",
+	    id_aa64pfr1_fieldinfo, id->ac_aa64pfr1);
 	identify_dfr0(cpuname, id->ac_aa64dfr0);
 
 	print_fieldinfo(cpuname, "media and VFP features 0",

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reuse.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtp_reuse.c,v 1.2.12.1 2020/04/08 14:06:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -25,25 +25,26 @@
 /*	This module implements the SMTP client specific interface to
 /*	the generic session cache infrastructure.
 /*
-/*	A cached connection is closed when the TLS policy requires
-/*	that TLS is enabled.
+/*	The caller needs to include additional state in _key_flags
+/*	to avoid false sharing of SASL-authenticated or TLS-authenticated
+/*	sessions.
 /*
 /*	smtp_save_session() stores the current session under the
-/*	next-hop logical destination (if available) and under the
-/*	remote server address.  The SMTP_SESSION object is destroyed.
+/*	delivery request next-hop logical destination (if applicable)
+/*	and under the remote server address. The SMTP_SESSION object
+/*	is destroyed.
 /*
-/*	smtp_reuse_nexthop() looks up a cached session by its logical
-/*	destination, and verifies that the session is still alive.
-/*	The restored session information includes the "best MX" bit
-/*	and overrides the iterator dest, host and addr fields.
-/*	The result is null in case of failure.
+/*	smtp_reuse_nexthop() looks up a cached session by its
+/*	delivery request next-hop destination, and verifies that
+/*	the session is still alive. The restored session information
+/*	includes the "best MX" bit and overrides the iterator dest,
+/*	host and addr fields. The result is null in case of failure.
 /*
 /*	smtp_reuse_addr() looks up a cached session by its server
 /*	address, and verifies that the session is still alive.
 /*	The restored session information does not include the "best
 /*	MX" bit, and does not override the iterator dest, host and
-/*	addr fields.
-/*	The result is null in case of failure.
+/*	addr fields. The result is null in case of failure.
 /*
 /*	Arguments:
 /* .IP state
@@ -66,6 +67,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -111,10 +117,16 @@ void    smtp_save_session(SMTP_STATE *state, int name_key_flags,
     int     fd;
 
     /*
-     * Encode the next-hop logical destination, if available. Reuse storage
-     * that is also used for cache lookup queries.
+     * Encode the delivery request next-hop destination, if applicable. Reuse
+     * storage that is also used for cache lookup queries.
+     * 
+     * HAVE_SCACHE_REQUEST_NEXTHOP() controls whether or not to reuse or cache a
+     * connection by its delivery request next-hop destination. The idea is
+     * 1) to allow a reuse request to skip over bad hosts, and 2) to avoid
+     * caching a less-preferred connection when a more-preferred connection
+     * was possible.
      */
-    if (HAVE_NEXTHOP_STATE(state))
+    if (HAVE_SCACHE_REQUEST_NEXTHOP(state))
 	smtp_key_prefix(state->dest_label, SMTP_REUSE_KEY_DELIM_NA,
 			state->iterator, name_key_flags);
 
@@ -133,16 +145,18 @@ void    smtp_save_session(SMTP_STATE *state, int name_key_flags,
     state->session = 0;
 
     /*
-     * Save the session under the next-hop name, if available.
+     * Save the session under the delivery request next-hop name, if
+     * applicable.
      * 
      * XXX The logical to physical binding can be kept for as long as the DNS
      * allows us to (but that could result in the caching of lots of unused
      * bindings). The session should be idle for no more than 30 seconds or
      * so.
      */
-    if (HAVE_NEXTHOP_STATE(state))
-	scache_save_dest(smtp_scache, var_smtp_cache_conn, STR(state->dest_label),
-			 STR(state->dest_prop), STR(state->endp_label));
+    if (HAVE_SCACHE_REQUEST_NEXTHOP(state))
+	scache_save_dest(smtp_scache, var_smtp_cache_conn,
+			 STR(state->dest_label), STR(state->dest_prop),
+			 STR(state->endp_label));
 
     /*
      * Save every good session under its physical endpoint address.
@@ -159,16 +173,6 @@ static SMTP_SESSION *smtp_reuse_common(SMTP_STATE *state, int fd,
     const char *myname = "smtp_reuse_common";
     SMTP_ITERATOR *iter = state->iterator;
     SMTP_SESSION *session;
-
-    /*
-     * Can't happen. Both smtp_reuse_nexthop() and smtp_reuse_addr() decline
-     * the request when the TLS policy is not TLS_LEV_NONE.
-     */
-#ifdef USE_TLS
-    if (state->tls->level > TLS_LEV_NONE)
-	msg_panic("%s: unexpected plain-text cached session to %s",
-		  myname, label);
-#endif
 
     /*
      * Re-activate the SMTP_SESSION object.
@@ -213,15 +217,6 @@ SMTP_SESSION *smtp_reuse_nexthop(SMTP_STATE *state, int name_key_flags)
     int     fd;
 
     /*
-     * Don't look up an existing plaintext connection when a new connection
-     * would (try to) use TLS.
-     */
-#ifdef USE_TLS
-    if (state->tls->level > TLS_LEV_NONE)
-	return (0);
-#endif
-
-    /*
      * Look up the session by its logical name.
      */
     smtp_key_prefix(state->dest_label, SMTP_REUSE_KEY_DELIM_NA,
@@ -246,13 +241,13 @@ SMTP_SESSION *smtp_reuse_addr(SMTP_STATE *state, int endp_key_flags)
     int     fd;
 
     /*
-     * Don't look up an existing plaintext connection when a new connection
-     * would (try to) use TLS.
+     * Address-based reuse is safe for security levels that require TLS
+     * certificate checks, as long as the current nexhop is included in the
+     * cache lookup key (COND_TLS_SMTP_KEY_FLAG_CUR_NEXTHOP). This is
+     * sufficient to prevent the reuse of a TLS-authenticated connection to
+     * the same MX hostname, IP address, and port, but for a different
+     * current nexthop destination with a different TLS policy.
      */
-#ifdef USE_TLS
-    if (state->tls->level > TLS_LEV_NONE)
-	return (0);
-#endif
 
     /*
      * Look up the session by its IP address. This means that we have no

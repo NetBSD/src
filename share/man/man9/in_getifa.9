@@ -1,4 +1,4 @@
-.\" $NetBSD: in_getifa.9,v 1.9 2017/07/03 21:28:48 wiz Exp $
+.\" $NetBSD: in_getifa.9,v 1.9.6.1 2020/04/08 14:07:22 martin Exp $
 .\"
 .\" Copyright (c) 2006 David Young.  All rights reserved.
 .\"
@@ -157,10 +157,9 @@ The kernel breaks ties by choosing the source with the least
 .Pp
 The operator may set a policy on individual interfaces.
 The operator may also set a global policy that applies to all
-interfaces whose policy he does not set individually.
+interfaces whose policy they do not set individually.
 .Pp
 Here is the sysctl tree for the policy at system startup:
-.Pp
 .Bd -literal -offset indent
 net.inet.ip.selectsrc.default = index
 net.inet.ip.interfaces.ath0.selectsrc =

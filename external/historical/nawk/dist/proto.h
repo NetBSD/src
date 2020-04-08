@@ -38,9 +38,9 @@ extern	int	yylook(void);
 extern	int	yyback(int *, int);
 extern	int	yyinput(void);
 
-extern	fa	*makedfa(const char *, int);
-extern	fa	*mkdfa(const char *, int);
-extern	int	makeinit(fa *, int);
+extern	fa	*makedfa(const char *, bool);
+extern	fa	*mkdfa(const char *, bool);
+extern	int	makeinit(fa *, bool);
 extern	void	penter(Node *);
 extern	void	freetr(Node *);
 extern	int	hexstr(const uschar **);
@@ -54,7 +54,7 @@ extern	int	member(int, const char *);
 extern	int	match(fa *, const char *);
 extern	int	pmatch(fa *, const char *);
 extern	int	nematch(fa *, const char *);
-extern	int	fnematch(fa *, FILE *, uschar **, int *, int);
+extern	bool	fnematch(fa *, FILE *, char **, int *, int);
 extern	Node	*reparse(const char *);
 extern	Node	*regexp(void);
 extern	Node	*primary(void);
@@ -91,7 +91,7 @@ extern	Node	*pa2stat(Node *, Node *, Node *);
 extern	Node	*linkum(Node *, Node *);
 extern	void	defn(Cell *, Node *, Node *);
 extern	int	isarg(const char *);
-extern	const char	*tokname(int);
+extern	const char *tokname(int);
 extern	Cell	*(*proctab[])(Node **, int);
 extern	int	ptoi(void *);
 extern	Node	*itonp(int);
@@ -113,7 +113,7 @@ extern	double	getfval(Cell *);
 extern	char	*getsval(Cell *);
 extern	char	*getpssval(Cell *);     /* for print */
 extern	char	*tostring(const char *);
-extern	char	*tostringN(const char *, size_t n);
+extern	char	*tostringN(const char *, size_t);
 extern	char	*qstring(const char *, int);
 extern	Cell	*catstr(Cell *, Cell *);
 
@@ -121,9 +121,10 @@ extern	void	recinit(unsigned int);
 extern	void	initgetrec(void);
 extern	void	makefields(int, int);
 extern	void	growfldtab(int n);
-extern	int	getrec(uschar **, int *, int);
+extern	void	savefs(void);
+extern	int	getrec(char **, int *, bool);
 extern	void	nextfile(void);
-extern	int	readrec(uschar **buf, int *, FILE *, int);
+extern	int	readrec(char **, int *, FILE *, bool);
 extern	char	*getargv(int);
 extern	void	setclvar(char *);
 extern	void	fldbld(void);
@@ -138,7 +139,7 @@ extern	void	bracecheck(void);
 extern	void	bcheck2(int, int, int);
 extern	void	SYNTAX(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-extern	void	FATAL(const char *, ...) __dead
+extern	void	FATAL(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2), __noreturn__));
 extern	void	WARNING(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
@@ -149,7 +150,7 @@ extern	double	errcheck(double, const char *);
 extern	int	isclvar(const char *);
 extern	int	is_number(const char *);
 
-extern	int	adjbuf(uschar **, int *, int, int, uschar **, const char *);
+extern	int	adjbuf(char **, int *, int, int, char **, const char *);
 extern	void	run(Node *);
 extern	Cell	*execute(Node *);
 extern	Cell	*program(Node **, int);
@@ -192,7 +193,7 @@ extern	Cell	*bltin(Node **, int);
 extern	Cell	*printstat(Node **, int);
 extern	Cell	*nullproc(Node **, int);
 extern	FILE	*redirect(int, Node *);
-extern	FILE	*openfile(int, const char *, int *);
+extern	FILE	*openfile(int, const char *, bool *);
 extern	const char	*filename(FILE *);
 extern	Cell	*closefile(Node **, int);
 extern	void	closeall(void);
@@ -202,3 +203,5 @@ extern	Cell	*gensub(Node **, int);
 
 extern	FILE	*popen(const char *, const char *);
 extern	int	pclose(FILE *);
+
+extern  const char	*flags2str(int flags);

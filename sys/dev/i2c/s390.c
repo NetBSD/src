@@ -1,4 +1,4 @@
-/*	$NetBSD: s390.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: s390.c,v 1.4.2.1 2020/04/08 14:08:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.4 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.4.2.1 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,10 @@ static void s390rtc_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(s390rtc, sizeof(struct s390rtc_softc),
     s390rtc_match, s390rtc_attach, NULL, NULL);
 
-static int s390rtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int s390rtc_settime(struct todr_chip_handle *, struct timeval *);
-static int s390rtc_clock_read(struct s390rtc_softc *, struct clock_ymdhms *);
-static int s390rtc_clock_write(struct s390rtc_softc *, struct clock_ymdhms *);
+static int s390rtc_gettime_ymdhms(struct todr_chip_handle *,
+				  struct clock_ymdhms *);
+static int s390rtc_settime_ymdhms(struct todr_chip_handle *,
+				  struct clock_ymdhms *);
 static int s390rtc_read(struct s390rtc_softc *, int, uint8_t *, size_t);
 static int s390rtc_write(struct s390rtc_softc *, int, uint8_t *, size_t);
 static uint8_t bitreverse(uint8_t);
@@ -93,68 +93,42 @@ s390rtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_dev = self;
 
 	/* Reset the chip and turn on 24h mode, after power-off or battery. */
-	if (!s390rtc_read(sc, S390_STATUS1, reg, sizeof(reg)))
+	if (s390rtc_read(sc, S390_STATUS1, reg, sizeof(reg)))
 		return;
 	if (reg[0] & (S390_ST1_POC | S390_ST1_BLD)) {
 		reg[0] |= S390_ST1_24H | S390_ST1_RESET;
-		if (!s390rtc_write(sc, S390_STATUS1, reg, sizeof(reg)))
+		if (s390rtc_write(sc, S390_STATUS1, reg, sizeof(reg)))
 			return;
 	}
 
 	/* Disable the test mode, when enabled. */
-	if (!s390rtc_read(sc, S390_STATUS2, reg, sizeof(reg)))
+	if (s390rtc_read(sc, S390_STATUS2, reg, sizeof(reg)))
 		return;
 	if ((reg[0] & S390_ST2_TEST)) {
 		reg[0] &= ~S390_ST2_TEST;
-		if (!s390rtc_write(sc, S390_STATUS2, reg, sizeof(reg)))
+		if (s390rtc_write(sc, S390_STATUS2, reg, sizeof(reg)))
 			return;
 	}
 
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = s390rtc_gettime;
-	sc->sc_todr.todr_settime = s390rtc_settime;
+	sc->sc_todr.todr_gettime = NULL;
+	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_gettime_ymdhms = s390rtc_gettime_ymdhms;
+	sc->sc_todr.todr_settime_ymdhms = s390rtc_settime_ymdhms;
 	sc->sc_todr.todr_setwen = NULL;
 	todr_attach(&sc->sc_todr);
 }
 
 static int
-s390rtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+s390rtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
 	struct s390rtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
-
-	memset(&dt, 0, sizeof(dt));
-
-	if (!s390rtc_clock_read(sc, &dt))
-		return -1;
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
-
-	return 0;
-}
-
-static int
-s390rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
-{
-	struct s390rtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
-
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
-	if (!s390rtc_clock_write(sc, &dt))
-		return -1;
-
-	return 0;
-}
-
-static int
-s390rtc_clock_read(struct s390rtc_softc *sc, struct clock_ymdhms *dt)
-{
 	uint8_t bcd[S390_RT1_NBYTES];
+	int error;
 
-	if (!s390rtc_read(sc, S390_REALTIME1, bcd, S390_RT1_NBYTES))
-		return 0;
+	if ((error = s390rtc_read(sc, S390_REALTIME1, bcd,
+				  S390_RT1_NBYTES)) != 0)
+		return error;
 
 	/*
 	 * Convert the register values into something useable.
@@ -166,12 +140,13 @@ s390rtc_clock_read(struct s390rtc_softc *sc, struct clock_ymdhms *dt)
 	dt->dt_mon = bcdtobin(bcd[S390_RT1_MONTH]);
 	dt->dt_year = bcdtobin(bcd[S390_RT1_YEAR]) + 2000;
 
-	return 1;
+	return 0;
 }
 
 static int
-s390rtc_clock_write(struct s390rtc_softc *sc, struct clock_ymdhms *dt)
+s390rtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
+	struct s390rtc_softc *sc = ch->cookie;
 	uint8_t bcd[S390_RT1_NBYTES];
 
 	/*
@@ -192,56 +167,56 @@ s390rtc_clock_write(struct s390rtc_softc *sc, struct clock_ymdhms *dt)
 static int
 s390rtc_read(struct s390rtc_softc *sc, int reg, uint8_t *buf, size_t len)
 {
-	int i;
+	int i, error;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "%s: failed to acquire I2C bus\n", __func__);
-		return 0;
+		return error;
 	}
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr + reg,
-	    NULL, 0, buf, len, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+			      sc->sc_addr + reg, NULL, 0, buf, len, 0)) != 0) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "%s: failed to read reg%d\n", __func__, reg);
-		return 0;
+		return error;
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	/* this chip returns each byte in reverse order */
 	for (i = 0; i < len; i++)
 		buf[i] = bitreverse(buf[i]);
 
-	return 1;
+	return 0;
 }
 
 static int
 s390rtc_write(struct s390rtc_softc *sc, int reg, uint8_t *buf, size_t len)
 {
-	int i;
+	int i, error;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "%s: failed to acquire I2C bus\n", __func__);
-		return 0;
+		return error;
 	}
 
 	/* this chip expects each byte in reverse order */
 	for (i = 0; i < len; i++)
 		buf[i] = bitreverse(buf[i]);
 
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr + reg,
-	    NULL, 0, buf, len, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+			      sc->sc_addr + reg, NULL, 0, buf, len, 0)) != 0) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "%s: failed to write reg%d\n", __func__, reg);
-		return 0;
+		return error;
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
-	return 1;
+	iic_release_bus(sc->sc_tag, 0);
+	return 0;
 }
 
 static uint8_t

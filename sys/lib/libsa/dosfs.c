@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.21.18.1 2019/06/10 22:09:05 christos Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.21.18.2 2020/04/08 14:08:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -108,12 +108,18 @@ static const struct direntry dot[2] = {
 		{0, 0}, {0x21, 0}, {0, 0}, {0, 0, 0, 0}}
 };
 
+#ifdef SA_DOSFS_NO_BIG_PART_SUPPORT
+#define	BYTE_OFF_T	u_int
+#else
+#define	BYTE_OFF_T	uint64_t
+#endif
+
 /* The usual conversion macros to avoid multiplication and division */
 #define bytsec(n)      ((n) >> SSHIFT)
-#define secbyt(s)      ((s) << SSHIFT)
+#define secbyt(s)      ((BYTE_OFF_T)(s) << SSHIFT)
 #define entsec(e)      ((e) >> DSHIFT)
 #define bytblk(fs, n)  ((n) >> (fs)->bshift)
-#define blkbyt(fs, b)  ((b) << (fs)->bshift)
+#define blkbyt(fs, b)  ((BYTE_OFF_T)(b) << (fs)->bshift)
 #define secblk(fs, s)  ((s) >> ((fs)->bshift - SSHIFT))
 #define blksec(fs, b)  ((b) << ((fs)->bshift - SSHIFT))
 
@@ -146,7 +152,7 @@ static off_t fsize(DOS_FS *, struct direntry *);
 static int fatcnt(DOS_FS *, u_int);
 static int fatget(DOS_FS *, u_int *);
 static int fatend(u_int, u_int);
-static int ioread(DOS_FS *, u_int, void *, u_int);
+static int ioread(DOS_FS *, BYTE_OFF_T, void *, u_int);
 static int iobuf(DOS_FS *, u_int);
 static int ioget(struct open_file *, u_int, void *, u_int);
 
@@ -733,7 +739,7 @@ fatend(u_int sz, u_int c)
  * Offset-based I/O primitive
  */
 static int
-ioread(DOS_FS *fs, u_int offset, void *buf, u_int nbyte)
+ioread(DOS_FS *fs, BYTE_OFF_T offset, void *buf, u_int nbyte)
 {
 	char   *s;
 	u_int   off, n;

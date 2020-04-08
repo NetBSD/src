@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-wb.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-wb.c,v 1.8.4.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: White Board printer */
@@ -399,6 +399,7 @@ wb_drawop(netdissect_options *ndo,
 /*
  * Print whiteboard multicast packets.
  */
+UNALIGNED_OK
 void
 wb_print(netdissect_options *ndo,
          register const void *hdr, register u_int len)

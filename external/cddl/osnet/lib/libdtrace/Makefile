@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.2.1 2019/06/10 21:52:03 christos Exp $
+#	$NetBSD: Makefile,v 1.19.2.2 2020/04/08 14:04:20 martin Exp $
 
 # $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -92,6 +92,12 @@ COPTS.dt_options.c	+= -Wno-parentheses
 COPTS.dt_pid.c		+= ${${ACTIVE_CC} == "gcc" :? -Wno-unused-but-set-variable :}
 COPTS.dt_isadep.c	+= -Wno-unused-variable
 
+.if (${MKLIBCSANITIZER:Uno} == "yes")
+.if (${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8)
+COPTS.dt_proc.c+=	-Wno-error=maybe-uninitialized
+.endif
+.endif
+
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel
 CPPFLAGS+=	-I${.CURDIR}/../../dev/dtrace/x86
@@ -101,6 +107,9 @@ COPTS.dis_tables.c	+= -Wno-parentheses
 COPTS.dis_tables.c	+= ${${ACTIVE_CC} == "gcc" :? -Wno-maybe-uninitialized :}
 .elif ${MACHINE_ARCH} == "sparc64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/sparc
+.elif ${MACHINE_ARCH} == "aarch64"
+CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/aarch64
+.PATH:		${.CURDIR}/../../dist/lib/libdtrace/aarch64
 .elif ${MACHINE_CPU} == "arm"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/arm
 .PATH:		${.CURDIR}/../../dist/lib/libdtrace/arm

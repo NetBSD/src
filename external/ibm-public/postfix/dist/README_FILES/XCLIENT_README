@@ -50,25 +50,35 @@ are in fact case insensitive.
 
     xclient-command = XCLIENT 1*( SP attribute-name"="attribute-value )
 
-    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO | LOGIN )
+    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO | LOGIN | DESTADDR |
+    DESTPORT )
 
     attribute-value = xtext
 
   * Attribute values are xtext encoded as per RFC 1891.
 
-  * The NAME attribute specifies an SMTP client hostname (not an SMTP client
-    address), [UNAVAILABLE] when client hostname lookup failed due to a
+  * The NAME attribute specifies a remote SMTP client hostname (not an SMTP
+    client address), [UNAVAILABLE] when client hostname lookup failed due to a
     permanent error, or [TEMPUNAVAIL] when the lookup error condition was
     transient.
 
-  * The ADDR attribute specifies an SMTP client numerical IPv4 network address,
-    an IPv6 address prefixed with IPV6:, or [UNAVAILABLE] when the address
-    information is unavailable. Address information is not enclosed with [].
+  * The ADDR attribute specifies a remote SMTP client numerical IPv4 network
+    address, an IPv6 address prefixed with IPV6:, or [UNAVAILABLE] when the
+    address information is unavailable. Address information is not enclosed
+    with [].
 
-  * The PORT attribute specifies the SMTP client TCP port number as a decimal
-    number, or [UNAVAILABLE] when the information is unavailable.
+  * The PORT attribute specifies a remote SMTP client TCP port number as a
+    decimal number, or [UNAVAILABLE] when the information is unavailable.
 
   * The PROTO attribute specifies either SMTP or ESMTP.
+
+  * The DESTADDR attribute specifies a local SMTP server numerical IPv4 network
+    address, an IPv6 address prefixed with IPV6:, or [UNAVAILABLE] when the
+    address information is unavailable. Address information is not enclosed
+    with [].
+
+  * The DESTPORT attribute specifies a local SMTP server TCP port number as a
+    decimal number, or [UNAVAILABLE] when the information is unavailable.
 
   * The HELO attribute specifies an SMTP HELO parameter value, or the value
     [UNAVAILABLE] when the information is unavailable.

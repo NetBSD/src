@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_cprman.c,v 1.1.4.1 2019/06/10 22:05:52 christos Exp $ */
+/* $NetBSD: bcm2835_cprman.c,v 1.1.4.2 2020/04/08 14:07:28 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_cprman.c,v 1.1.4.1 2019/06/10 22:05:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_cprman.c,v 1.1.4.2 2020/04/08 14:07:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ enum {
 	CPRMAN_CLOCK_PERIIMAGE = 29,
 	CPRMAN_CLOCK_PWM = 30,
 	CPRMAN_CLOCK_PCM = 31,
+	CPRMAN_CLOCK_EMMC2 = 51,
 	CPRMAN_NCLOCK
 };
 
@@ -133,6 +134,8 @@ cprman_get_rate(void *priv, struct clk *baseclk)
 		return bcm283x_clk_get_rate_vpu();
 	case CPRMAN_CLOCK_EMMC:
 		return bcm283x_clk_get_rate_emmc();
+	case CPRMAN_CLOCK_EMMC2:
+		return bcm283x_clk_get_rate_emmc2();
 	default:
 		panic("unsupported clock id %d\n", clk->id);
 	}
@@ -155,7 +158,10 @@ cprman_add_clock(struct cprman_softc *sc, u_int id, const char *name)
 static int
 cprman_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2835-cprman", NULL };
+	const char * const compatible[] = {
+	    "brcm,bcm2835-cprman",
+	    "brcm,bcm2711-cprman",
+	    NULL };
 	const struct fdt_attach_args *faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
@@ -176,6 +182,7 @@ cprman_attach(device_t parent, device_t self, void *aux)
 	cprman_add_clock(sc, CPRMAN_CLOCK_UART, "uart");
 	cprman_add_clock(sc, CPRMAN_CLOCK_VPU, "vpu");
 	cprman_add_clock(sc, CPRMAN_CLOCK_EMMC, "emmc");
+	cprman_add_clock(sc, CPRMAN_CLOCK_EMMC2, "emmc2");
 
 	aprint_naive("\n");
 	aprint_normal(": BCM283x Clock Controller\n");

@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.19 2012/10/27 17:18:18 chs Exp $        */
+/*      $NetBSD: advlib.h,v 1.19.38.1 2020/04/08 14:08:05 martin Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -449,7 +442,7 @@ typedef struct asc_scisq_1
 	u_int8_t	sg_queue_cnt;	/* number of SG entries */
 	u_int8_t	target_id;
 	u_int8_t	target_lun;
-	u_int32_t	data_addr; /* physical address of first segment to transef */
+	u_int32_t	data_addr; /* physical address of first segment to transfer */
 	u_int32_t	data_cnt;  /* byte count of first segment to transfer */
 	u_int32_t	sense_addr; /* physical address of the sense buffer */
 	u_int8_t	sense_len; /* length of sense buffer */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2017/04/08 19:53:23 christos Exp $
+#	$NetBSD: Makefile,v 1.24.14.1 2020/04/08 14:07:57 martin Exp $
 
 NOMAN=		# defined
 
@@ -10,9 +10,9 @@ VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
 			END { print it }' ${VERSIONFILE}
 NEWVERSWHAT=	"${BOOT}"
 
-# text and bss addresses in hex
-TEXT=		002000		# Primary (me)
-BOOT_TEXT=	006000		# Secondary (/boot)
+# text and bss addresses
+TEXT=		0x2000		# Primary (me)
+BOOT_TEXT=	0x6000		# Secondary (/boot)
 
 BOOT_MAXSIZE=	65536		# size enough to read /boot whole
 
@@ -30,41 +30,23 @@ SRCS=	boot_ustar.S
 
 .include "${S}/conf/newvers_stand.mk"
 
-CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
+CPPFLAGS+= -DTEXTADDR="$(TEXT)" -DBOOT_TEXTADDR="$(BOOT_TEXT)"
 CPPFLAGS+= -DBOOT_MAXSIZE="$(BOOT_MAXSIZE)"
 CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 CFLAGS+=   -m68000
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 AFLAGS+=   -Wa,-march=m68000 -Wa,-mcpu=m68000
-LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
-LINKFLAGS+=  -noinhibit-exec	# XXX
+LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript
+LINKFLAGS+=  --defsym=TEXTADDR=$(TEXT)
+LINKFLAGS+=  --defsym=BOOT_TEXTADDR=$(BOOT_TEXT)
 
 .include "${.CURDIR}/../Makefile.booters"
 .include "${S}/../common/lib/libc/Makefile.inc"
 
-CLEANFILES+=	${PROG}.x $(PROG).map
-
 
 ${PROG}: $(OBJS)
 	${_MKTARGET_LINK}
-	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDADD) > $(PROG).map
-	@grep first_kbyte $(PROG).map
-	@if [ `(echo ibase=16; 						   \
-	    ${TOOL_SED} -n						   \
-		's/^.*0x\([0-9a-f]*\).* first_kbyte$$/\1-$(TEXT)-400/p'    \
-		$(PROG).map | 						   \
-	    tr a-f A-F) | bc` -gt 0 ]; 					   \
-	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
-	    rm $(PROG) ; exit 1; 					   \
-	fi
-	@if [ `(echo ibase=16; 						   \
-	    ${TOOL_SED} -n						   \
-		's/^.*0x\([0-9a-f]*\).* _edata *= *\.$$/\1-$(TEXT)-2000/p' \
-		$(PROG).map | 						   \
-	    tr a-f A-F) | bc` -gt 0 ]; 					   \
-	then echo '$(BOOT): text+data is too large';			   \
-	    rm $(PROG) ; exit 1; 					   \
-	fi
+	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDADD)
 
 .include <bsd.prog.mk>

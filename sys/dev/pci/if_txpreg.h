@@ -1,4 +1,4 @@
-/* $NetBSD: if_txpreg.h,v 1.6 2012/10/27 17:18:34 chs Exp $ */
+/* $NetBSD: if_txpreg.h,v 1.6.38.1 2020/04/08 14:08:09 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -25,6 +25,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_PCI_IF_TXPREG_H_
+#define	_DEV_PCI_IF_TXPREG_H_
 
 #define	TXP_PCI_LOMEM			0x14	/* pci conf, memory map BAR */
 #define	TXP_PCI_LOIO			0x10	/* pci conf, IO map BAR */
@@ -525,9 +528,9 @@ struct txp_hostvar {
 #define	TXP_OFFSET2IDX(off)	((off) >> 4)
 
 struct txp_dma_alloc {
-	u_int64_t		dma_paddr;
 	void *			dma_vaddr;
 	bus_dmamap_t		dma_map;
+#define	dma_paddr		dma_map->dm_segs[0].ds_addr
 	bus_dma_segment_t	dma_seg;
 	int			dma_nseg;
 };
@@ -581,6 +584,9 @@ struct txp_softc {
 	struct txp_tx_ring	sc_txhir, sc_txlor;
 	struct txp_rxbuf_desc	*sc_rxbufs;
 	struct txp_rx_ring	sc_rxhir, sc_rxlor;
+	struct txp_swdesc	sc_rxd[RXBUF_ENTRIES];
+	struct txp_swdesc	*sc_rxd_pool[RXBUF_ENTRIES];
+	unsigned int		sc_txd_pool_ptr;
 	u_int16_t		sc_xcvr;
 	u_int16_t		sc_seq;
 	struct txp_dma_alloc	sc_boot_dma, sc_host_dma, sc_zero_dma;
@@ -603,6 +609,7 @@ struct txp_fw_file_header {
 	u_int32_t	version;
 	u_int32_t	nsections;
 	u_int32_t	addr;
+	u_int32_t	hmac[5];
 };
 
 struct txp_fw_section_header {
@@ -615,8 +622,11 @@ struct txp_fw_section_header {
 #define	TXP_MAX_SEGLEN	0xffff
 #define	TXP_MAX_PKTLEN	0x0800
 
+#define	TXP_MAXTXSEGS	16
+
 #define	WRITE_REG(sc,reg,val) \
     bus_space_write_4((sc)->sc_bt, (sc)->sc_bh, reg, val)
 #define	READ_REG(sc,reg) \
     bus_space_read_4((sc)->sc_bt, (sc)->sc_bh, reg)
 
+#endif /* _DEV_PCI_IF_TXPREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.30 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.30.18.1 2020/04/08 14:08:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.30 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.30.18.1 2020/04/08 14:08:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -152,6 +152,9 @@ cd9660_lookup(void *v)
 			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
 		return *vpp == NULLVP ? ENOENT : 0;
 	}
+	/* May need to restart the lookup with an exclusive lock. */
+	if (VOP_ISLOCKED(vdp) != LK_EXCLUSIVE)
+		return ENOLCK;
 
 	len = cnp->cn_namelen;
 	name = cnp->cn_nameptr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.32.30.1 2019/06/10 22:06:26 christos Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.32.30.2 2020/04/08 14:07:43 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -89,14 +89,6 @@ GLOBAL(_Idle)				/* For sun2/sun3's clock.c ... */
  */
 ENTRY(cpu_switchto)
 	movl	4(%sp),%a1		| fetch `current' lwp
-#ifdef M68010
-	movl	%a1,%d0
-	tstl	%d0
-#else
-	tstl	%a1			| Old LWP exited?
-#endif
-	jeq	.Lcpu_switch_noctxsave	| Yup. Don't bother saving context
-
 	/*
 	 * Save state of previous process in its pcb.
 	 */
@@ -140,7 +132,6 @@ ENTRY(cpu_switchto)
 #endif	/* FPCOPROC */
 #endif	/* !_M68K_CUSTOM_FPU_CTX */
 
-.Lcpu_switch_noctxsave:
 	movl	8(%sp),%a0		| get newlwp
 	movl	%a0,_C_LABEL(curlwp)
 	movl	L_PCB(%a0),%a1		| get its pcb

@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_endpt.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: postscreen_endpt.c,v 1.2.12.1 2020/04/08 14:06:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -18,6 +18,17 @@
 /*	MAI_SERVPORT_STR *smtp_client_port;
 /*	MAI_HOSTADDR_STR *smtp_server_addr;
 /*	MAI_SERVPORT_STR *smtp_server_port;
+/* AUXILIARY METHODS
+/*	void	psc_endpt_local_lookup(smtp_client_stream, lookup_done)
+/*	VSTREAM	*smtp_client_stream;
+/*	void	(*lookup_done)(status, smtp_client_stream,
+/*				smtp_client_addr, smtp_client_port,
+/*				smtp_server_addr, smtp_server_port)
+/*	int	status;
+/*	MAI_HOSTADDR_STR *smtp_client_addr;
+/*	MAI_SERVPORT_STR *smtp_client_port;
+/*	MAI_HOSTADDR_STR *smtp_server_addr;
+/*	MAI_SERVPORT_STR *smtp_server_port;
 /* DESCRIPTION
 /*	psc_endpt_lookup() looks up remote and local connection
 /*	endpoint information, either through local system calls,
@@ -27,6 +38,10 @@
 /*	expects from a proxy protocol adapter routine.
 /* .IP \(bu
 /*	Accept the same arguments as psc_endpt_lookup().
+/* .IP \(bu
+/*	Call psc_endpt_local_lookup() to look up connection info
+/*	when the upstream proxy indicates that the connection is
+/*	not proxied (e.g., health check probe).
 /* .IP \(bu
 /*	Validate protocol, address and port syntax. Permit only
 /*	protocols that are configured with the main.cf:inet_protocols
@@ -43,10 +58,16 @@
 /*	Arguments:
 /* .IP client_stream
 /*	A brand-new stream that is connected to the remote client.
+/*	This argument MUST be passed to psc_endpt_local_lookup()
+/*	if the up-stream proxy indicates that a connection is not
+/*	proxied.
 /* .IP lookup
 /*	Call-back routine that reports the result status, address
 /*	and port information. The result status is -1 in case of
-/*	error, 0 in case of success.
+/*	error, 0 in case of success. This MUST NOT be called directly
+/*	if the up-stream proxy indicates that a connection is not
+/*	proxied; instead this MUST be called indirectly by
+/*	psc_endpt_local_lookup().
 /* LICENSE
 /* .ad
 /* .fi
@@ -56,6 +77,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -107,8 +133,8 @@ static int psc_sockaddr_to_hostaddr(struct sockaddr *addr_storage,
 
 /* psc_endpt_local_lookup - look up local system connection information */
 
-static void psc_endpt_local_lookup(VSTREAM *smtp_client_stream,
-				           PSC_ENDPT_LOOKUP_FN lookup_done)
+void    psc_endpt_local_lookup(VSTREAM *smtp_client_stream,
+			               PSC_ENDPT_LOOKUP_FN lookup_done)
 {
     struct sockaddr_storage addr_storage;
     SOCKADDR_SIZE addr_storage_len = sizeof(addr_storage);

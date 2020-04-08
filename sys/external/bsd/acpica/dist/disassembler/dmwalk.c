@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -849,7 +849,6 @@ AcpiDmDescendingOp (
                  * the buffer size Op. Open up a new block
                  */
                 NextOp->Common.DisasmFlags |= ACPI_PARSEOP_IGNORE;
-                NextOp = NextOp->Common.Next;
                 ASL_CV_CLOSE_PAREN (Op, Level);
 
                 /* Emit description comment for Name() with a predefined ACPI name */

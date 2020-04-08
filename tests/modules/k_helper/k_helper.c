@@ -1,4 +1,4 @@
-/*	$NetBSD: k_helper.c,v 1.6 2012/06/03 10:59:44 dsl Exp $	*/
+/*	$NetBSD: k_helper.c,v 1.6.32.1 2020/04/08 14:09:10 martin Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: k_helper.c,v 1.6 2012/06/03 10:59:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: k_helper.c,v 1.6.32.1 2020/04/08 14:09:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/sysctl.h>
+#include <sys/evcnt.h>
 
 #include <prop/proplib.h>
 
@@ -45,13 +46,17 @@ MODULE(MODULE_CLASS_MISC, k_helper, NULL);
 /* TODO: Change the integer variables below that represent booleans to
  * bools, once sysctl(8) supports CTLTYPE_BOOL nodes. */
 
-static struct sysctllog *clogp;
 static int present = 1;
 static int prop_str_ok;
 static char prop_str_val[128];
 static int prop_int_ok;
 static int64_t prop_int_val;
 static int prop_int_load;
+
+static struct evcnt my_counter =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "k_helper", "my_counter");
+
+EVCNT_ATTACH_STATIC(my_counter);
 
 #define K_HELPER 0x12345678
 #define K_HELPER_PRESENT 0
@@ -163,8 +168,6 @@ k_helper_init(prop_dictionary_t props)
 	} else
 		prop_int_load = -2;
 
-	sysctl_k_helper_setup(&clogp);
-
 	return 0;
 }
 
@@ -172,8 +175,6 @@ static
 int
 k_helper_fini(void *arg)
 {
-
-	sysctl_teardown(&clogp);
 
 	return 0;
 }

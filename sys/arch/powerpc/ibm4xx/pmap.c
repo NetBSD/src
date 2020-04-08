@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 2016/12/24 19:02:16 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.76.16.1 2020/04/08 14:07:49 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2016/12/24 19:02:16 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76.16.1 2020/04/08 14:07:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1021,7 +1021,7 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 	int s;
 
 	s = splvm();
-	if (pm->pm_ptbl[seg] && (pa = pm->pm_ptbl[seg][ptn])) {
+	if (pm->pm_ptbl[seg] && (pa = pm->pm_ptbl[seg][ptn]) && pap) {
 		*pap = TTE_PA(pa) | (va & PGOFSET);
 	}
 	splx(s);
@@ -1173,16 +1173,18 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		ctx_alloc(pm);
 		ctx = pm->pm_ctx;
 	}
-	__asm volatile("mfmsr %0;"
-		"li %1, %7;"
+	__asm volatile(
+		"mfmsr %0;"
+		"li %1,0x20;"		/* Turn off IMMU */
 		"andc %1,%0,%1;"
+		"ori %1,%1,0x10;"	/* Turn on DMMU for sure */
 		"mtmsr %1;"
 		"sync;isync;"
 		"mfpid %1;"
 		"mtpid %2;"
 		"sync; isync;"
 		"1:"
-		"dcbf 0,%3;"
+		"dcbst 0,%3;"
 		"icbi 0,%3;"
 		"add %3,%3,%5;"
 		"addc. %4,%4,%6;"
@@ -1191,8 +1193,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		"mtmsr %0;"
 		"sync; isync"
 		: "=&r" (msr), "=&r" (opid)
-		: "r" (ctx), "r" (va), "r" (len), "r" (step), "r" (-step),
-		  "K" (PSL_IR | PSL_DR));
+		: "r" (ctx), "r" (va), "r" (len), "r" (step), "r" (-step));
 }
 
 
@@ -1207,7 +1208,8 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 	if (!pid)
 		return;
 
-	__asm( 	"mfpid %1;"		/* Save PID */
+	__asm volatile(
+		"mfpid %1;"		/* Save PID */
 		"mfmsr %2;"		/* Save MSR */
 		"li %0,0;"		/* Now clear MSR */
 		"mtmsr %0;"
@@ -1225,7 +1227,6 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 		: "=&r" (i), "=&r" (found), "=&r" (msr)
 		: "r" (va), "r" (pid));
 	if (found && !TLB_LOCKED(i)) {
-
 		/* Now flush translation */
 		__asm volatile(
 			"tlbwe %0,%1,0;"
@@ -1276,7 +1277,7 @@ ppc4xx_tlb_find_victim(void)
 			    (tlb_info[tlbnext].ti_ctx == KERNEL_PID) &&
 			     (flags & TLBF_USED)) {
 				/* Kernel stack page */
-				flags |= TLBF_USED;
+				flags |= TLBF_REF;
 				tlb_info[tlbnext].ti_flags = flags;
 			} else {
 				/* Found it! */
@@ -1292,8 +1293,7 @@ void
 ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 {
 	u_long th, tl, idx;
-	tlbpid_t pid;
-	u_short msr;
+	int msr, pid;
 	paddr_t pa;
 	int sz;
 
@@ -1308,7 +1308,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	idx = ppc4xx_tlb_find_victim();
 
 #ifdef DIAGNOSTIC
-	if ((idx < tlb_nreserved) || (idx >= NTLB)) {
+	if ((idx < tlb_nreserved) || (idx >= NTLB) || (idx & 63) == 0) {
 		panic("ppc4xx_tlb_enter: replacing entry %ld", idx);
 	}
 #endif
@@ -1320,15 +1320,11 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	__asm volatile(
 		"mfmsr %0;"			/* Save MSR */
 		"li %1,0;"
-		"tlbwe %1,%3,0;"		/* Invalidate old entry. */
 		"mtmsr %1;"			/* Clear MSR */
+		"tlbwe %1,%3,0;"		/* Invalidate old entry. */
 		"mfpid %1;"			/* Save old PID */
 		"mtpid %2;"			/* Load translation ctx */
 		"sync; isync;"
-#ifdef DEBUG
-		"andi. %3,%3,63;"
-		"tweqi %3,0;" 			/* XXXXX DEBUG trap on index 0 */
-#endif
 		"tlbwe %4,%3,1; tlbwe %5,%3,0;"	/* Set TLB */
 		"sync; isync;"
 		"mtpid %1; mtmsr %0;"		/* Restore PID and MSR */
@@ -1535,6 +1531,7 @@ ctx_flush(int cnum)
 #endif
 			/* Invalidate particular TLB entry regardless of locked status */
 			__asm volatile("tlbwe %0,%1,0" : :"r"(0),"r"(i));
+			tlb_info[i].ti_ctx = 0;
 			tlb_info[i].ti_flags = 0;
 		}
 	}
@@ -1563,7 +1560,7 @@ ctx_alloc(struct pmap *pm)
 	/* Find a likely context. */
 	cnum = next;
 	do {
-		if ((++cnum) > NUMCTX)
+		if ((++cnum) >= NUMCTX)
 			cnum = MINCTX;
 	} while (ctxbusy[cnum] != NULL && cnum != next);
 
@@ -1573,7 +1570,7 @@ oops:
 		cnum = MINCTX; /* Never steal ctx 0 or 1 */
 	if (ctx_flush(cnum)) {
 		/* oops -- something's wired. */
-		if ((++cnum) > NUMCTX)
+		if ((++cnum) >= NUMCTX)
 			cnum = MINCTX;
 		goto oops;
 	}

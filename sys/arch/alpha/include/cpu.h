@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.83.16.1 2019/06/10 22:05:46 christos Exp $ */
+/* $NetBSD: cpu.h,v 1.83.16.2 2020/04/08 14:07:25 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -108,6 +108,7 @@ struct cpu_info {
 	 * Public members.
 	 */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 	struct cpu_data ci_data;	/* MI per-cpu data */
 #if !defined(_KMEMUSER)
 	struct cctr_state ci_cc;	/* cycle counter state */
@@ -121,7 +122,8 @@ struct cpu_info {
 	struct mchkinfo ci_mcinfo;	/* machine check info */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	struct cpu_softc *ci_softc;	/* pointer to our device */
-	u_long ci_want_resched;		/* preempt current process */
+	u_int ci_want_resched;		/* preempt current process */
+	u_int ci_unused;		/* unused */
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 	uint64_t ci_pcc_freq;		/* cpu cycles/second */

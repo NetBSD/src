@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.58 2014/11/05 07:34:21 snj Exp $
+.\"	$NetBSD: install,v 1.58.16.1 2020/04/08 14:03:51 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -234,7 +234,7 @@ Insert the second floppy and run the following commands:
 .No # Ic "eject floppy"
 .disp)
 .Pp
-Note that disk2 may be a symlink to .tgz file; do not uncompress it,
+Note that disk2 may be a symlink to .\*[setsuffix] file; do not uncompress it,
 just follow the instructions above, verbatim.
 After writing the two floppies,
 be sure to label them so you can later identify them.
@@ -341,7 +341,7 @@ distribution sets from
 .Pq Pa binary/sets
 to the tape by using a series of additional
 .(disp
-.No # Ic "dd if=\*[Lt]aset\*[Gt].tgz of=/dev/nrst0 bs=4k conv=osync"
+.No # Ic "dd if=\*[Lt]aset\*[Gt].\*[setsuffix] of=/dev/nrst0 bs=4k conv=osync"
 .disp)
 commands.
 See also the section

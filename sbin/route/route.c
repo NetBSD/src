@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.159.2.1 2019/06/10 22:05:36 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.159.2.2 2020/04/08 14:07:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.159.2.1 2019/06/10 22:05:36 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.159.2.2 2020/04/08 14:07:20 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: route.c,v 1.159.2.1 2019/06/10 22:05:36 christos Exp $");
 #include <net/if_dl.h>
 #include <net80211/ieee80211_netbsd.h>
 #include <netinet/in.h>
+#include <netinet/in_var.h>
 #include <netatalk/at.h>
 #include <netmpls/mpls.h>
 #include <arpa/inet.h>
@@ -207,8 +208,14 @@ main(int argc, char * const *argv)
 	pid = prog_getpid();
 	if (tflag)
 		sock = prog_open("/dev/null", O_WRONLY, 0);
-	else
+	else {
+		int on = 1;
+
 		sock = prog_socket(PF_ROUTE, SOCK_RAW, 0);
+		if (prog_setsockopt(sock, SOL_SOCKET, SO_RERROR,
+		    &on, sizeof(on)) == -1)
+			warn("SO_RERROR");
+	}
 	if (sock < 0)
 		err(EXIT_FAILURE, "socket");
 
@@ -1301,9 +1308,12 @@ const char * const msgtypes[] = {
 	[RTM_CHGADDR] = "RTM_CHGADDR: address being changed on iface",
 };
 
+const char unknownflags[] = "\020";
 const char metricnames[] = RTVBITS;
 const char routeflags[] = RTFBITS;
 const char ifnetflags[] = IFFBITS;
+const char in_ifflags[] = IN_IFFBITS;
+const char in6_ifflags[] = IN6_IFFBITS;
 const char addrnames[] = RTABITS;
 
 
@@ -1371,9 +1381,22 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	case RTM_DELADDR:
 	case RTM_CHGADDR:
 		ifam = (struct ifa_msghdr *)rtm;
-		(void)printf("pid %d, metric %d, flags: ",
+		(void)printf("pid %d, metric %d, addrflags: ",
 		    ifam->ifam_pid, ifam->ifam_metric);
-		bprintf(stdout, ifam->ifam_flags, routeflags);
+		struct sockaddr *sa = (struct sockaddr *)(ifam + 1);
+		const char *bits;
+		switch (sa->sa_family) {
+		case AF_INET:
+			bits = in_ifflags;
+			break;
+		case AF_INET6:
+			bits = in6_ifflags;
+			break;
+		default:
+			bits = unknownflags;
+			break;
+		}
+		bprintf(stdout, ifam->ifam_addrflags, bits);
 		pmsg_addrs((char *)(ifam + 1), ifam->ifam_addrs);
 		break;
 	case RTM_IEEE80211:
@@ -1478,7 +1501,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 	struct sockaddr_dl *ifp = NULL;
 	struct sockaddr *sa;
 	char *cp;
-	int i;
+	unsigned int i;
 
 	if (! shortoutput) {
 		(void)printf("   route to: %s\n",

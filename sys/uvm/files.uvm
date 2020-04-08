@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.29 2018/05/19 11:39:37 jdolecek Exp $
+#	$NetBSD: files.uvm,v 1.29.2.1 2020/04/08 14:09:04 martin Exp $
 
 #
 # UVM options
@@ -23,7 +23,7 @@ file	uvm/uvm_amap.c			uvm
 file	uvm/uvm_anon.c			uvm
 file	uvm/uvm_aobj.c			uvm
 file	uvm/uvm_bio.c			uvm
-file	uvm/uvm_coredump.c		coredump
+file	uvm/uvm_coredump.c		uvm & coredump
 file	uvm/uvm_device.c		uvm
 file	uvm/uvm_fault.c			uvm
 file	uvm/uvm_glue.c			uvm
@@ -37,10 +37,13 @@ file	uvm/uvm_mmap.c			uvm
 file	uvm/uvm_mremap.c		uvm
 file	uvm/uvm_object.c		uvm
 file	uvm/uvm_page.c			uvm
+file	uvm/uvm_page_array.c		uvm
+file	uvm/uvm_page_status.c		uvm
 file	uvm/uvm_pager.c			uvm
 file	uvm/uvm_pdaemon.c		uvm
 file	uvm/uvm_pdpolicy_clock.c	!pdpolicy_clockpro
 file	uvm/uvm_pdpolicy_clockpro.c	pdpolicy_clockpro
+file	uvm/uvm_pgflcache.c		uvm
 file	uvm/uvm_pglist.c		uvm
 file	uvm/uvm_physseg.c		uvm
 file	uvm/uvm_readahead.c		uvm

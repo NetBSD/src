@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2014/02/24 07:23:43 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.1.36.1 2020/04/08 14:07:39 martin Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -38,7 +38,6 @@ include "opt_multiprocessor.h"
 endif
 
 quote #define __MUTEX_PRIVATE
-quote #define __RWLOCK_PRIVATE
 
 include <sys/param.h>
 include <sys/systm.h>
@@ -48,7 +47,6 @@ include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
 include <sys/mutex.h>
-include <sys/rwlock.h>
 include <sys/device.h>
 
 include <uvm/uvm.h>
@@ -107,15 +105,6 @@ define	MTX_IPL			offsetof(struct kmutex, mtx_ipl)
 define	MTX_LOCK		offsetof(struct kmutex, mtx_lock)
 define	MTX_OWNER		offsetof(struct kmutex, mtx_owner)
 define	MTX_WAITERS		offsetof(struct kmutex, mtx_waiters)
-
-define	RW_OWNER		offsetof(struct krwlock, rw_owner)
-define	RW_WRITE_LOCKED		RW_WRITE_LOCKED
-define	RW_WRITE_WANTED		RW_WRITE_WANTED
-define	RW_READ_INCR		RW_READ_INCR
-define	RW_HAS_WAITERS		RW_HAS_WAITERS
-define	RW_THREAD		RW_THREAD
-define	RW_READER		RW_READER
-define	RW_WRITER		RW_WRITER
 
 # saved state fields
 struct	trapframe
@@ -191,12 +180,8 @@ struct	lwp
 member	L_PROC		l_proc
 member	L_CPU		l_cpu
 member	L_PCB		l_addr
-member	L_PRIORITY	l_priority
-member	L_STAT		l_stat
-member	L_WCHAN		l_wchan
 member	L_MD		l_md
 member	L_MD_REGS	l_md.md_regs
-member	L_CTXSWTCH	l_ctxswtch
 
 struct	pcb
 member	PCB_FPREGS	pcb_fpregs

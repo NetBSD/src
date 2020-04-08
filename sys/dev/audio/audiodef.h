@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.4.2.2 2019/06/10 22:07:06 christos Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.4.2.3 2020/04/08 14:08:03 martin Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -29,6 +29,10 @@
 #ifndef _SYS_DEV_AUDIO_AUDIODEF_H_
 #define _SYS_DEV_AUDIO_AUDIODEF_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_audio.h"
+#endif
+
 /* Number of HW buffer's blocks. */
 #define NBLKHW (3)
 
@@ -40,13 +44,21 @@
 
 /*
  * Hardware blocksize in msec.
- * We use 40 msec as default.  (1 / 40ms) = 25 = 5^2.
+ * We use 10 msec as default for most platforms.  But it's too severe for
+ * most m68k.
+ *
+ * 40 msec was initially choosen for the following reason:
+ * (1 / 40ms) = 25 = 5^2.  Thus, the frequency is factored by 5.
  * In this case, the number of frames in a block can be an integer
  * even if the frequency is a multiple of 100 (44100, 48000, etc),
  * or even if 15625Hz (vs(4)).
  */
 #if !defined(AUDIO_BLK_MS)
-#define AUDIO_BLK_MS 40
+# if defined(__m68k__)
+#  define AUDIO_BLK_MS 40
+# else
+#  define AUDIO_BLK_MS 10
+# endif
 #endif
 
 /*
@@ -182,6 +194,9 @@ struct audio_file {
 	/* process who wants audio SIGIO. */
 	pid_t		async_audio;
 
+	/* true when closing */
+	bool		dying;
+
 	SLIST_ENTRY(audio_file) entry;
 };
 
@@ -267,8 +282,9 @@ static __inline int
 auring_round(const audio_ring_t *ring, int idx)
 {
 	DIAGNOSTIC_ring(ring);
-	KASSERT(idx >= 0);
-	KASSERT(idx < ring->capacity * 2);
+	KASSERTMSG(idx >= 0, "idx=%d", idx);
+	KASSERTMSG(idx < ring->capacity * 2,
+	    "idx=%d ring->capacity=%d", idx, ring->capacity);
 
 	if (idx < ring->capacity) {
 		return idx;
@@ -295,7 +311,9 @@ auring_tail(const audio_ring_t *ring)
 static __inline aint_t *
 auring_headptr_aint(const audio_ring_t *ring)
 {
-	KASSERT(ring->fmt.stride == sizeof(aint_t) * NBBY);
+	KASSERTMSG(ring->fmt.stride == sizeof(aint_t) * NBBY,
+	    "ring->fmt.stride=%d sizeof(aint_t)*NBBY=%zd",
+	    ring->fmt.stride, sizeof(aint_t) * NBBY);
 
 	return (aint_t *)ring->mem + ring->head * ring->fmt.channels;
 }
@@ -308,7 +326,9 @@ auring_headptr_aint(const audio_ring_t *ring)
 static __inline aint_t *
 auring_tailptr_aint(const audio_ring_t *ring)
 {
-	KASSERT(ring->fmt.stride == sizeof(aint_t) * NBBY);
+	KASSERTMSG(ring->fmt.stride == sizeof(aint_t) * NBBY,
+	    "ring->fmt.stride=%d sizeof(aint_t)*NBBY=%zd",
+	    ring->fmt.stride, sizeof(aint_t) * NBBY);
 
 	return (aint_t *)ring->mem + auring_tail(ring) * ring->fmt.channels;
 }

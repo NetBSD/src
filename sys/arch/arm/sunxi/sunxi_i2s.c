@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_i2s.c,v 1.2.4.1 2019/06/10 22:05:56 christos Exp $ */
+/* $NetBSD: sunxi_i2s.c,v 1.2.4.2 2020/04/08 14:07:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2.4.1 2019/06/10 22:05:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_i2s.c,v 1.2.4.2 2020/04/08 14:07:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -302,16 +302,6 @@ sunxi_i2s_get_props(void *priv)
 }
 
 static int
-sunxi_i2s_round_blocksize(void *priv, int bs, int mode,
-    const audio_params_t *params)
-{
-	bs &= ~3;
-	if (bs == 0)
-		bs = 4;
-	return bs;
-}
-
-static int
 sunxi_i2s_trigger_output(void *priv, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *params)
 {
@@ -487,7 +477,6 @@ static const struct audio_hw_if sunxi_i2s_hw_if = {
 	.allocm = sunxi_i2s_allocm,
 	.freem = sunxi_i2s_freem,
 	.get_props = sunxi_i2s_get_props,
-	.round_blocksize = sunxi_i2s_round_blocksize,
 	.trigger_output = sunxi_i2s_trigger_output,
 	.trigger_input = sunxi_i2s_trigger_input,
 	.halt_output = sunxi_i2s_halt_output,

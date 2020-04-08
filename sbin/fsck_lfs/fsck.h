@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.26 2015/10/03 08:30:13 dholland Exp $	 */
+/* $NetBSD: fsck.h,v 1.26.16.1 2020/04/08 14:07:18 martin Exp $	 */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ struct zlncnt {
 /*
  * Inode cache data structures.
  */
-struct inoinfo {
+extern struct inoinfo {
 	struct inoinfo *i_nexthash;	/* next entry in hash chain */
 	struct inoinfo *i_child, *i_sibling, *i_parentp;
 	ino_t i_number;		/* inode number of this entry */
@@ -163,7 +163,7 @@ struct inoinfo {
 #define	clrbmap(blkno)		blockmap[blkno] = 0
 #endif
 
-int	Uflag;			/* resolve user names */
+extern int	Uflag;			/* resolve user names */
 
 #define	STOP	0x01
 #define	SKIP	0x02

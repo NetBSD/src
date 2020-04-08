@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap-ptr_23.c,v 1.3.2.2 2019/06/10 22:04:39 christos Exp $	*/
+/*	$NetBSD: nsap-ptr_23.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -131,7 +131,7 @@ fromstruct_in_nsap_ptr(ARGS_FROMSTRUCT) {
 
 	REQUIRE(type == dns_rdatatype_nsap_ptr);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
+	REQUIRE(nsap_ptr != NULL);
 	REQUIRE(nsap_ptr->common.rdtype == type);
 	REQUIRE(nsap_ptr->common.rdclass == rdclass);
 
@@ -150,7 +150,7 @@ tostruct_in_nsap_ptr(ARGS_TOSTRUCT) {
 
 	REQUIRE(rdata->type == dns_rdatatype_nsap_ptr);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
+	REQUIRE(nsap_ptr != NULL);
 	REQUIRE(rdata->length != 0);
 
 	nsap_ptr->common.rdclass = rdata->rdclass;
@@ -170,7 +170,7 @@ static inline void
 freestruct_in_nsap_ptr(ARGS_FREESTRUCT) {
 	dns_rdata_in_nsap_ptr_t *nsap_ptr = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(nsap_ptr != NULL);
 	REQUIRE(nsap_ptr->common.rdclass == dns_rdataclass_in);
 	REQUIRE(nsap_ptr->common.rdtype == dns_rdatatype_nsap_ptr);
 

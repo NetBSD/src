@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.7.4.1 2019/06/10 22:06:41 christos Exp $ */
+/* $NetBSD: locore.S,v 1.7.4.2 2020/04/08 14:07:51 martin Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 ENTRY_NP(start)
 	// We get loaded and starting running at or near 0, not where we
 	// should be. We need to construct an initial PDETAB
-	
+
 #ifdef _LP64
 	li	t0, SR_U64|SR_S64
 	li	t1, SR_IM|SR_VM|SR_EI
@@ -165,8 +165,6 @@ END(start)
 ENTRY_NP(cpu_switchto)
 	addi	sp, sp, -TF_LEN		// allocate trapframe
 
-	beqz	a0, .Lswitchto_newlwp	// can skip saving oldl state?
-
 	REG_S	ra, TF_RA(sp)		// save return address
 	REG_S	s0, TF_S0(sp)		// save callee saved address
 	REG_S	s1, TF_S1(sp)		// save callee saved address
@@ -182,9 +180,9 @@ ENTRY_NP(cpu_switchto)
 	REG_S	s11, TF_S11(sp)		// save callee saved address
 	csrr	t4, sstatus		// get status for intr state
 	REG_S	t4, TF_SR(sp)		// save it
-	
+
 	REG_S	sp, L_MD_KTF(a0)	// record trapframe pointer
-.Lswitchto_newlwp:
+
 	csrrci	t0, sstatus, SR_EI	// # disable interrupts
 
 	move	tp, a1			// # put the new lwp in thread pointer
@@ -237,7 +235,6 @@ ENTRY_NP(cpu_fast_switchto_cleanup)
 	REG_L	a0, CALLFRAME_S0(sp)	// get pinned LWP
 	addi	t0, t0, 1		// increment mutex count
 	INT_S	t0, CI_MTX_COUNT(a1)	// save it
-	PTR_S	zero, L_CTXSWTCH(a0)	// clear l_ctxswitch
 	addi	sp, sp, CALLFRAME_SIZ	// remove callframe
 #if IPL_SCHED != IPL_HIGH
 	tail	_C_LABEL(splhigh)	// go back to IPL HIGH
@@ -365,7 +362,7 @@ ENTRY_NP(cpu_exception_handler)
 	REG_S	t5, TF_T5(sp)		// save t5
 	REG_S	t6, TF_T6(sp)		// save t6
 
-	// Now we get the 
+	// Now we get the
 	move	a0, sp			// trapframe pointer
 	csrr	a1, sepc		// get execption pc
 	csrr	a2, sstatus		// get status

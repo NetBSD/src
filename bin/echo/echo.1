@@ -1,4 +1,4 @@
-.\"	$NetBSD: echo.1,v 1.17 2017/07/04 06:48:41 wiz Exp $
+.\"	$NetBSD: echo.1,v 1.17.6.1 2020/04/08 14:03:04 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)echo.1	8.1 (Berkeley) 7/22/93
 .\"
-.Dd August 14, 2016
+.Dd February 26, 2020
 .Dt ECHO 1
 .Os
 .Sh NAME
@@ -54,9 +54,20 @@ The following option is available:
 .It Fl n
 Do not print the trailing newline character.
 .El
+.Pp
+Note that many shells (e.g.,
+.Xr csh 1
+and
+.Xr ksh 1 )
+provide a built-in
+.Nm
+command which tends to differ from this utility in the treatment of options
+and backslashes.
 .Sh EXIT STATUS
 .Ex -std echo
 .Sh SEE ALSO
+.Xr csh 1 ,
+.Xr ksh 1 ,
 .Xr printf 1
 .Sh STANDARDS
 The

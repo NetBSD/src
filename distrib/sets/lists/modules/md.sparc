@@ -1,7 +1,7 @@
-# $NetBSD: md.sparc,v 1.5 2014/08/10 11:51:40 bad Exp $
-./@MODULEDIR@/bpfjit				base-kernel-modules	kmod,sljit
-./@MODULEDIR@/bpfjit/bpfjit.kmod		base-kernel-modules	kmod,sljit
-./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
-./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/sljit				base-kernel-modules	kmod,sljit
-./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod,sljit
+# $NetBSD: md.sparc,v 1.5.24.1 2020/04/08 14:03:54 martin Exp $
+./@MODULEDIR@/bpfjit				modules-base-kernel	kmod,sljit
+./@MODULEDIR@/bpfjit/bpfjit.kmod		modules-base-kernel	kmod,sljit
+./@MODULEDIR@/exec_elf32			modules-base-kernel	kmod
+./@MODULEDIR@/exec_elf32/exec_elf32.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/sljit				modules-base-kernel	kmod,sljit
+./@MODULEDIR@/sljit/sljit.kmod			modules-base-kernel	kmod,sljit

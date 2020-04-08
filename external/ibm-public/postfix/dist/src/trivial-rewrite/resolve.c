@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: resolve.c,v 1.2.12.1 2020/04/08 14:06:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -34,7 +34,8 @@
 /*	nexthop, internalized recipient) triple.
 /* STANDARDS
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to the syslog daemon.
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* BUGS
 /* SEE ALSO
 /* LICENSE

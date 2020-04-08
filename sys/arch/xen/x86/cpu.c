@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.122.2.1 2019/06/10 22:06:56 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.122.2.2 2020/04/08 14:07:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.122.2.1 2019/06/10 22:06:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.122.2.2 2020/04/08 14:07:59 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -505,7 +505,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		struct pcb *pcb = lwp_getpcb(l);
 
 		aprint_verbose_dev(self,
-		    "idle lwp at %p, idle sp at 0x%p\n",
+		    "idle lwp at %p, idle sp at %p\n",
 		    l,
 #ifdef i386
 		    (void *)pcb->pcb_esp
@@ -716,9 +716,10 @@ cpu_hatch(void *v)
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
+	KASSERT(ci->ci_curlwp == ci->ci_data.cpu_idlelwp);
+	KASSERT(curlwp == ci->ci_data.cpu_idlelwp);
 	pcb = lwp_getpcb(curlwp);
 	pcb->pcb_cr3 = pmap_pdirpa(pmap_kernel(), 0);
-	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 
 	xen_ipi_init();
 
@@ -739,8 +740,7 @@ cpu_hatch(void *v)
 
 	aprint_debug_dev(ci->ci_dev, "running\n");
 
-	cpu_switchto(NULL, ci->ci_data.cpu_idlelwp, true);
-
+	KASSERT(ci->ci_curlwp == ci->ci_data.cpu_idlelwp);
 	idle_loop(NULL);
 	KASSERT(false);
 }
@@ -1276,11 +1276,11 @@ cpu_broadcast_halt(void)
 }
 
 /*
- * Send a dummy ipi to a cpu.
+ * Send a dummy ipi to a cpu, and raise an AST on the running LWP.
  */
 
 void
 cpu_kick(struct cpu_info *ci)
 {
-	(void)xen_send_ipi(ci, XEN_IPI_KICK);
+	(void)xen_send_ipi(ci, XEN_IPI_AST);
 }

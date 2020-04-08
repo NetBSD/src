@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-importkey.c,v 1.3.2.2 2019/06/10 22:02:59 christos Exp $	*/
+/*	$NetBSD: dnssec-importkey.c,v 1.3.2.3 2020/04/08 14:07:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -183,9 +183,7 @@ loadkey(char *filename, unsigned char *key_buf, unsigned int key_buf_size,
 	rdclass = dst_key_class(key);
 
 	name = dns_fixedname_initname(&fixed);
-	result = dns_name_copy(dst_key_name(key), name, NULL);
-	if (result != ISC_R_SUCCESS)
-		fatal("can't copy name");
+	dns_name_copynf(dst_key_name(key), name);
 
 	dst_key_free(&key);
 }

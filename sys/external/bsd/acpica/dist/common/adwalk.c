@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -484,7 +484,9 @@ AcpiDmFindOrphanDescending (
         return (AE_OK);
     }
 
+#ifdef ACPI_UNDER_DEVELOPMENT
     OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
+#endif
 
     switch (Op->Common.AmlOpcode)
     {
@@ -983,7 +985,7 @@ AcpiDmCommonDescendingOp (
     /* Switch/Case conversion */
 
     Status = AcpiDmProcessSwitch (Op);
-    return (AE_OK);
+    return (Status);
 }
 
 

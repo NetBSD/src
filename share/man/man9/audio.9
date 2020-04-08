@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.47.2.1 2019/06/10 22:05:41 christos Exp $
+.\"	$NetBSD: audio.9,v 1.47.2.2 2020/04/08 14:07:22 martin Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -344,8 +344,12 @@ or
 and
 .Va param ,
 encoding parameters for the hardware.
+.Va bs
+passed is always non-zero and a multiple of the frame size represented by
+param->channels * param->precision / 8.
 It should return a block size, possibly changed according to the needs
 of the hardware driver.
+The return value also must be non-zero and a multiple of the frame size.
 It is called in the Attach or Closed phases.
 .It Dv int commit_settings(void *hdl)
 optional, is called after all calls to
@@ -395,6 +399,7 @@ Calling
 will normally initiate another call to
 .Va start_output .
 Return 0 on success, otherwise an error code.
+This field is optional only if the driver doesn't support playback.
 It is called in the Opened phase.
 .It Dv int start_input(void *hdl, void *block, int blksize,
 .Dv "void (*intr)(void*), void *intrarg)"
@@ -415,18 +420,21 @@ Calling
 will normally initiate another call to
 .Va start_input .
 Return 0 on success, otherwise an error code.
+This field is optional only if the driver doesn't support recording.
 It is called in the Opened phase.
 .It Dv int halt_output(void *hdl)
 is called to abort the output transfer (started by
 .Va start_output )
 in progress.
 Return 0 on success, otherwise an error code.
+This field is optional only if the driver doesn't support playback.
 It is called in the Opened phase.
 .It Dv int halt_input(void *hdl)
 is called to abort the input transfer (started by
 .Va start_input )
 in progress.
 Return 0 on success, otherwise an error code.
+This field is optional only if the driver doesn't support recording,
 It is called in the Opened phase.
 .It Dv int speaker_ctl(void *hdl, int on)
 optional, is called when a half duplex device changes between

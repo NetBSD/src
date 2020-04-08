@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.750.2.1 2019/06/10 22:07:34 christos Exp $
+$NetBSD: usbdevs,v 1.750.2.2 2020/04/08 14:08:13 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -537,6 +537,7 @@ vendor ANYDATA		0x16d5	AnyDATA Inc.
 vendor JABLOTRON	0x16d6	Jablotron
 vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
+vendor ASMEDIA		0x174c	ASMedia
 vendor ASUSTEK2		0x1761	ASUSTeK Computer
 vendor SWEEX2		0x177f	Sweex
 vendor MISC		0x1781	Misc Vendors
@@ -577,6 +578,7 @@ vendor ARDUINO		0x2341	Arduino SA
 vendor TPLINK		0x2357	TP-Link
 vendor WMR		0x2405	West Mountain Radio
 vendor TRIPPLITE	0x2478	Tripp-Lite
+vendor HAILUCK		0x258a	HAILUCK Co., Ltd
 vendor HIROSE		0x2631	Hirose Electric
 vendor NHJ		0x2770	NHJ
 vendor PLANEX		0x2c02	Planex Communications
@@ -927,6 +929,9 @@ product ASIX AX88772		0x7720	AX88772 USB 2.0 10/100 ethernet controller
 product ASIX AX88772A		0x772a	AX88772A USB 2.0 10/100 Ethernet adapter
 product ASIX AX88772B		0x772b	AX88772B USB 2.0 10/100 Ethernet adapter
 product ASIX AX88772B_1		0x7e2b	AX88772B1 USB 2.0 10/100 Ethernet adapter
+
+/* ASMedia products */
+product ASMEDIA ASM1051	0x55aa	ASM1051,1053,1153 SATA Bridge
 
 /* ASUSTeK computer products */
 product ASUSTEK RT2570		0x1706	RT2570
@@ -1394,6 +1399,7 @@ product DLINK RTL8192CU_4	0x330b	RTL8192CU
 product DLINK DWA131B		0x330d	DWA-131 rev B
 product DLINK DWA125D1		0x330f	DWA-125 rev D1
 product DLINK DWA131E		0x3319	DWA-131 rev E
+product DLINK DWA121B1		0x331b	DWA-121 rev B1
 product DLINK DWL122		0x3700	Wireless DWL122
 product DLINK DWLG120		0x3701	DWL-G120
 product DLINK DWL120F		0x3702	DWL-120 rev F
@@ -1420,8 +1426,10 @@ product DLINK DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
 product DLINK DSB650TX3		0x400b	10/100 ethernet adapter
 product DLINK DSB650TX2		0x4102	10/100 ethernet adapter
 product DLINK DSB650		0xabc1	10/100 ethernet adapter
+product DLINK DWM157E_CD	0xa407	DWM-157 CD-ROM Mode
 product DLINK DWM157_CD		0xa707	DWM-157 CD-ROM Mode
 product DLINK DWM157		0x7d02	DWM-157 LTE
+product DLINK DWM157E		0x7d0e	DWM-157 LTE
 product DLINK DWM222_CD		0xab00	DWM-222 CD-ROM Mode
 product DLINK DWM222		0x7e35	DWM-222 LTE
 product DLINK DWR510_CD		0xa805	DWR-510 CD-ROM Mode
@@ -1484,6 +1492,8 @@ product EDIMAX EW7718		0x7718	EW-7718
 product EDIMAX EW7722UTN	0x7722	EW-7722UTn
 product EDIMAX RTL8188CU	0x7811	RTL8188CU
 product EDIMAX RTL8192CU	0x7822	RTL8192CU
+product EDIMAX EW7811UTC_1	0xa811	EW-7811UTC
+product EDIMAX EW7811UTC_2	0xa812	EW-7811UTC
 product EDIMAX ELECOM_WDC433SU2M 0xb711	ELECOM WDC-433SU2M
 
 /* eGalax Products */
@@ -1729,6 +1739,9 @@ product GUILLEMOT RTL8192CU	0xe035	RTL8192CU
 product HAGIWARA FGSM		0x0002	FlashGate SmartMedia Card Reader
 product HAGIWARA FGCF		0x0003	FlashGate CompactFlash Card Reader
 product HAGIWARA FG		0x0005	FlashGate
+
+/* HAILUCK Co., Ltd products */
+product HAILUCK KEYBOARD	0x001e	Keyboard
 
 /* HAL Corporation products */
 product HAL IMR001		0x0011	Crossam2+USB IR commander

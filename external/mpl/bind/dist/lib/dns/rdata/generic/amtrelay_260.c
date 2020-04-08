@@ -1,4 +1,4 @@
-/*	$NetBSD: amtrelay_260.c,v 1.1.1.1.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: amtrelay_260.c,v 1.1.1.1.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -271,7 +271,7 @@ fromstruct_amtrelay(ARGS_FROMSTRUCT) {
 	uint32_t n;
 
 	REQUIRE(type == dns_rdatatype_amtrelay);
-	REQUIRE(source != NULL);
+	REQUIRE(amtrelay != NULL);
 	REQUIRE(amtrelay->common.rdtype == type);
 	REQUIRE(amtrelay->common.rdclass == rdclass);
 
@@ -312,7 +312,7 @@ tostruct_amtrelay(ARGS_TOSTRUCT) {
 	uint32_t n;
 
 	REQUIRE(rdata->type == dns_rdatatype_amtrelay);
-	REQUIRE(target != NULL);
+	REQUIRE(amtrelay != NULL);
 	REQUIRE(rdata->length >= 2);
 
 	amtrelay->common.rdclass = rdata->rdclass;
@@ -372,7 +372,7 @@ static inline void
 freestruct_amtrelay(ARGS_FREESTRUCT) {
 	dns_rdata_amtrelay_t *amtrelay = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(amtrelay != NULL);
 	REQUIRE(amtrelay->common.rdtype == dns_rdatatype_amtrelay);
 
 	if (amtrelay->mctx == NULL)

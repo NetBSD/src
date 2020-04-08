@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.6 2008/04/30 13:10:49 martin Exp $
+.\"	$NetBSD: upgrade,v 1.6.64.1 2020/04/08 14:03:52 martin Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,4 +26,3 @@
 .\"
 .
 .so ../common/upgrade
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.34.2.1 2019/06/10 22:07:15 christos Exp $	*/
+/*	$NetBSD: auacer.c,v 1.34.2.2 2020/04/08 14:08:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.34.2.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.34.2.2 2020/04/08 14:08:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,8 +154,6 @@ static int	auacer_query_format(void *, audio_format_query_t *);
 static int	auacer_set_format(void *, int,
 				 const audio_params_t *, const audio_params_t *,
 				 audio_filter_reg_t *, audio_filter_reg_t *);
-static int	auacer_round_blocksize(void *, int, int,
-				       const audio_params_t *);
 static int	auacer_halt_output(void *);
 static int	auacer_halt_input(void *);
 static int	auacer_getdev(void *, struct audio_device *);
@@ -188,7 +186,6 @@ static void auacer_reset(struct auacer_softc *sc);
 static const struct audio_hw_if auacer_hw_if = {
 	.query_format		= auacer_query_format,
 	.set_format		= auacer_set_format,
-	.round_blocksize	= auacer_round_blocksize,
 	.halt_output		= auacer_halt_output,
 	.halt_input		= auacer_halt_input,
 	.getdev			= auacer_getdev,
@@ -560,14 +557,6 @@ auacer_set_format(void *v, int setmode,
 	}
 
 	return 0;
-}
-
-static int
-auacer_round_blocksize(void *v, int blk, int mode,
-    const audio_params_t *param)
-{
-
-	return blk & ~0x3f;		/* keep good alignment */
 }
 
 static void

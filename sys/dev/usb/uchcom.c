@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.17.16.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.17.16.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.17.16.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.17.16.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -185,7 +185,7 @@ static int	find_endpoints(struct uchcom_softc *,
 static void	close_intr_pipe(struct uchcom_softc *);
 
 
-struct	ucom_methods uchcom_methods = {
+static const struct	ucom_methods uchcom_methods = {
 	.ucom_get_status	= uchcom_get_status,
 	.ucom_set		= uchcom_set,
 	.ucom_param		= uchcom_param,

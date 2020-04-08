@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2018/06/10 17:55:11 christos Exp $
+#	$NetBSD: Makefile,v 1.38.2.1 2020/04/08 14:09:16 martin Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -52,8 +52,8 @@ CPPFLAGS+=	-DMIME_SUPPORT
 CPPFLAGS+=	-DCHARSET_SUPPORT
 .endif
 
-LDADD+=		-lmagic -lz
-DPADD+=		${LIBMAGIC} ${LIBZ}
+LDADD+=		-lmagic -llzma -lbz2 -lz
+DPADD+=		${LIBMAGIC} ${LIBLZMA} ${LIBBZ2} ${LIBZ}
 .endif
 .endif
 

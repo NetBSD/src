@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_netbsd.h,v 1.2 2017/12/10 21:38:27 skrll Exp $ */
+/* $NetBSD: vchiq_netbsd.h,v 1.2.4.1 2020/04/08 14:08:29 martin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,10 +32,22 @@
 #ifndef _VCHIQ_NETBSD_H
 #define _VCHIQ_NETBSD_H
 
+struct vchiq_softc {
+	device_t sc_dev;
+	device_t sc_audiodev;
+
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	void *sc_ih;
+};
+
 struct vchiq_attach_args {
 	const char	*vaa_name;
 };
 
+int	vchiq_intr(void *);
+int	vchiq_print(void *, const char *);
+void	vchiq_set_softc(struct vchiq_softc *);
 void	vchiq_platform_attach(bus_dma_tag_t tag);
 
 #endif /* !_VCHIQ_NETBSD_H */

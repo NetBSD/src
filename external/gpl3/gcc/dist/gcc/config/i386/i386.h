@@ -590,7 +590,7 @@ extern tree x86_mfence;
 /* Replace MACH-O, ifdefs by in-line tests, where possible. 
    (a) Macros defined in config/i386/darwin.h  */
 #define TARGET_MACHO 0
-#define TARGET_MACHO_BRANCH_ISLANDS 0
+#define TARGET_MACHO_SYMBOL_STUBS 0
 #define MACHOPIC_ATT_STUB 0
 /* (b) Macros defined in config/darwin.h  */
 #define MACHO_DYNAMIC_NO_PIC_P 0
@@ -1045,9 +1045,9 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 /*xmm8,xmm9,xmm10,xmm11,xmm12,xmm13,xmm14,xmm15*/		\
      6,   6,    6,    6,    6,    6,    6,    6,		\
 /*xmm16,xmm17,xmm18,xmm19,xmm20,xmm21,xmm22,xmm23*/		\
-     6,    6,     6,    6,    6,    6,    6,    6,		\
+     1,    1,     1,    1,    1,    1,    1,    1,		\
 /*xmm24,xmm25,xmm26,xmm27,xmm28,xmm29,xmm30,xmm31*/		\
-     6,    6,     6,    6,    6,    6,    6,    6,		\
+     1,    1,     1,    1,    1,    1,    1,    1,		\
  /* k0,  k1,  k2,  k3,  k4,  k5,  k6,  k7*/			\
      1,   1,   1,   1,   1,   1,   1,   1,			\
 /*   b0, b1, b2, b3*/						\
@@ -2276,6 +2276,31 @@ do {									\
 #undef ASM_OUTPUT_FUNCTION_LABEL
 #define ASM_OUTPUT_FUNCTION_LABEL(FILE, NAME, DECL) \
   ix86_asm_output_function_label ((FILE), (NAME), (DECL))
+
+/* A C statement (sans semicolon) to output a reference to SYMBOL_REF SYM.
+   If not defined, assemble_name will be used to output the name of the
+   symbol.  This macro may be used to modify the way a symbol is referenced
+   depending on information encoded by TARGET_ENCODE_SECTION_INFO.  */
+
+#ifndef ASM_OUTPUT_SYMBOL_REF
+#define ASM_OUTPUT_SYMBOL_REF(FILE, SYM) \
+  do {							\
+    const char *name					\
+      = assemble_name_resolve (XSTR (x, 0));		\
+    /* In -masm=att wrap identifiers that start with $	\
+       into parens.  */					\
+    if (ASSEMBLER_DIALECT == ASM_ATT			\
+	&& name[0] == '$'				\
+	&& user_label_prefix[0] == '\0')		\
+      {							\
+	fputc ('(', (FILE));				\
+	assemble_name_raw ((FILE), name);		\
+	fputc (')', (FILE));				\
+      }							\
+    else						\
+      assemble_name_raw ((FILE), name);			\
+  } while (0)
+#endif
 
 /* Under some conditions we need jump tables in the text section,
    because the assembler cannot handle label differences between

@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.1.22.1 2019/06/10 22:06:41 christos Exp $ */
+/* $NetBSD: pte.h,v 1.1.22.2 2020/04/08 14:07:50 martin Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -129,8 +129,8 @@ pte_wire_entry(pt_entry_t pte)
 {
 	return pte | PTE_WIRED;
 }
-        
-static inline pt_entry_t   
+
+static inline pt_entry_t
 pte_unwire_entry(pt_entry_t pte)
 {
 	return pte & ~PTE_WIRED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.27.2.1 2019/06/10 22:07:16 christos Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.27.2.2 2020/04/08 14:08:09 martin Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.27.2.1 2019/06/10 22:07:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.27.2.2 2020/04/08 14:08:09 martin Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -114,7 +114,7 @@ CFATTACH_DECL3_NEW(cas, sizeof(struct cas_softc),
     cas_match, cas_attach, cas_detach, NULL, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
 
-int	cas_pci_enaddr(struct cas_softc *, struct pci_attach_args *, uint8_t *);
+int	cas_pci_readvpd(struct cas_softc *, struct pci_attach_args *, uint8_t *);
 
 void		cas_config(struct cas_softc *, const uint8_t *);
 void		cas_start(struct ifnet *);
@@ -163,18 +163,32 @@ int		cas_intr(void *);
 #define	DPRINTF(sc, x)	/* nothing */
 #endif
 
+static const struct cas_pci_dev {
+	uint16_t cpd_vendor;
+	uint16_t cpd_device;
+	int cpd_variant;
+} cas_pci_devlist[] = {
+	{ PCI_VENDOR_SUN, PCI_PRODUCT_SUN_CASSINI, CAS_CAS },
+	{ PCI_VENDOR_NS, PCI_PRODUCT_NS_SATURN, CAS_SATURN },
+	{ 0, 0, 0 }
+};
+
+#define	CAS_LOCAL_MAC_ADDRESS	"local-mac-address"
+#define	CAS_PHY_INTERFACE	"phy-interface"
+#define	CAS_PHY_TYPE		"phy-type"
+#define	CAS_PHY_TYPE_PCS	"pcs"
+
 int
 cas_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+	int i;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_CASSINI))
-		return 1;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NS &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NS_SATURN))
-		return 1;
+	for (i = 0; cas_pci_devlist[i].cpd_vendor != 0; i++) {
+		if ((PCI_VENDOR(pa->pa_id) == cas_pci_devlist[i].cpd_vendor) &&
+		    (PCI_PRODUCT(pa->pa_id) == cas_pci_devlist[i].cpd_device))
+			return 1;
+	}
 
 	return 0;
 }
@@ -205,7 +219,7 @@ static const uint8_t cas_promdat2[] = {
 
 #define CAS_LMA_MAXNUM	4
 int
-cas_pci_enaddr(struct cas_softc *sc, struct pci_attach_args *pa,
+cas_pci_readvpd(struct cas_softc *sc, struct pci_attach_args *pa,
     uint8_t *enaddr)
 {
 	struct pci_vpd_largeres *res;
@@ -214,9 +228,10 @@ cas_pci_enaddr(struct cas_softc *sc, struct pci_attach_args *pa,
 	bus_space_tag_t romt;
 	bus_size_t romsize = 0;
 	uint8_t enaddrs[CAS_LMA_MAXNUM][ETHER_ADDR_LEN];
+	bool pcs[4] = {false, false, false, false};
 	uint8_t buf[32], *desc;
 	pcireg_t address;
-	int dataoff, vpdoff, len, lma = 0;
+	int dataoff, vpdoff, len, lma = 0, phy = 0;
 	int i, rv = -1;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_ROM, PCI_MAPREG_TYPE_MEM, 0,
@@ -261,6 +276,20 @@ next:
 		goto next;
 
 	case PCI_VPDRES_TYPE_VPD:
+#ifdef CAS_DEBUG
+	printf("\n");
+	for (i = 0; i < len; i++) {
+		uint8_t byte;
+		if (i % 16 == 0)
+			printf("%04x :", i);
+		byte = bus_space_read_1(romt, romh, vpdoff + i);
+		printf(" %02x", byte);
+		if (i % 16 == 15)
+			printf("\n");
+	}
+	printf("\n");
+#endif
+
 		while (len > 0) {
 			bus_space_read_region_1(romt, romh, vpdoff,
 			     buf, sizeof(buf));
@@ -284,26 +313,57 @@ next:
 				continue;
 			desc += 3;
 
-			/*
-			 * ...that's a byte array with the proper
-			 * length for a MAC address...
-			 */
-			if (desc[0] != 'B' || desc[1] != ETHER_ADDR_LEN)
-				continue;
-			desc += 2;
+			if (desc[0] == 'B' || desc[1] == ETHER_ADDR_LEN) {
+				/*
+				 * ...that's a byte array with the proper
+				 * length for a MAC address...
+				 */
+				desc += 2;
 
-			/*
-			 * ...named "local-mac-address".
-			 */
-			if (strcmp(desc, "local-mac-address") != 0)
-				continue;
-			desc += strlen("local-mac-address") + 1;
+				/*
+				 * ...named "local-mac-address".
+				 */
+				if (strcmp(desc, CAS_LOCAL_MAC_ADDRESS) != 0)
+					continue;
+				desc += sizeof(CAS_LOCAL_MAC_ADDRESS);
 
-			memcpy(enaddrs[lma], desc, ETHER_ADDR_LEN);
-			lma++;
-			rv = 0;
-			if (lma == CAS_LMA_MAXNUM)
-				break;
+				if (lma == CAS_LMA_MAXNUM)
+					continue;
+
+				memcpy(enaddrs[lma], desc, ETHER_ADDR_LEN);
+				lma++;
+				rv = 0;
+				continue;
+			} else if (desc[0] == 'S') {
+				size_t k;
+
+				/* String */
+				desc += 2;
+#ifdef CAS_DEBUG
+				/* ...named "pcs". */
+				printf("STR: \"%s\"\n", desc);
+				if (strcmp(desc, CAS_PHY_TYPE_PCS) != 0)
+					continue;
+				desc += sizeof(CAS_PHY_TYPE_PCS);
+				printf("STR: \"%s\"\n", desc);
+#endif
+				/* ...named "phy-interface" or "phy-type". */
+				if (strcmp(desc, CAS_PHY_INTERFACE) == 0)
+					k = sizeof(CAS_PHY_INTERFACE);
+				else if (strcmp(desc, CAS_PHY_TYPE) == 0)
+					k = sizeof(CAS_PHY_TYPE);
+				else
+					continue;
+
+				desc += k;
+#ifdef CAS_DEBUG
+				printf("STR: \"%s\"\n", desc);
+#endif
+				if (strcmp(desc, CAS_PHY_TYPE_PCS) == 0)
+					pcs[phy] = true;
+				phy++;
+				continue;
+			}
 		}
 		break;
 
@@ -311,7 +371,6 @@ next:
 		goto fail;
 	}
 
-	i = 0;
 	/*
 	 * Multi port card has bridge chip. The device number is fixed:
 	 * e.g.
@@ -320,10 +379,15 @@ next:
 	 * p2: 006:02:0
 	 * p3: 006:03:0
 	 */
-	if ((lma > 1) && (pa->pa_device < CAS_LMA_MAXNUM)
-	    && (pa->pa_device < lma))
-		i = pa->pa_device;
-	memcpy(enaddr, enaddrs[i], ETHER_ADDR_LEN);
+	if (enaddr != 0) {
+		i = 0;
+		if ((lma > 1) && (pa->pa_device < CAS_LMA_MAXNUM)
+		    && (pa->pa_device < lma))
+			i = pa->pa_device;
+		memcpy(enaddr, enaddrs[i], ETHER_ADDR_LEN);
+	}
+	if (pcs[pa->pa_device])
+		sc->sc_flags |= CAS_SERDES;
  fail:
 	if (romsize != 0)
 		bus_space_unmap(romt, romh, romsize);
@@ -340,13 +404,32 @@ cas_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct cas_softc *sc = device_private(self);
+	int i;
 	prop_data_t data;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	sc->sc_dev = self;
 	pci_aprint_devinfo(pa, NULL);
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
-	sc->sc_dmatag = pa->pa_dmat;
+
+	if (pci_dma64_available(pa))
+		sc->sc_dmatag = pa->pa_dmat64;
+	else
+		sc->sc_dmatag = pa->pa_dmat;
+
+	sc->sc_variant = CAS_UNKNOWN;
+	for (i = 0; cas_pci_devlist[i].cpd_vendor != 0; i++) {
+		if ((PCI_VENDOR(pa->pa_id) == cas_pci_devlist[i].cpd_vendor) &&
+		    (PCI_PRODUCT(pa->pa_id) == cas_pci_devlist[i].cpd_device)) {
+			sc->sc_variant = cas_pci_devlist[i].cpd_variant;
+			break;
+		}
+	}
+	aprint_debug_dev(sc->sc_dev, "variant = %d\n", sc->sc_variant);
+	if (sc->sc_variant == CAS_UNKNOWN) {
+		aprint_error_dev(sc->sc_dev, "unknown adaptor\n");
+		return;
+	}
 
 #define PCI_CAS_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_CAS_BASEADDR, PCI_MAPREG_TYPE_MEM, 0,
@@ -359,7 +442,7 @@ cas_attach(device_t parent, device_t self, void *aux)
 	if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
 	    "mac-address")) != NULL)
 		memcpy(enaddr, prop_data_data_nocopy(data), ETHER_ADDR_LEN);
-	else if (cas_pci_enaddr(sc, pa, enaddr) != 0) {
+	if (cas_pci_readvpd(sc, pa, (data == NULL) ? enaddr : 0) != 0) {
 		aprint_error_dev(sc->sc_dev, "no Ethernet address found\n");
 		memset(enaddr, 0, sizeof(enaddr));
 	}
@@ -409,6 +492,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
 	struct mii_softc *child;
+	uint32_t reg;
 	int i, error;
 
 	/* Make sure the chip is stopped. */
@@ -555,10 +639,25 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 
 	cas_mifinit(sc);
 
-	if (sc->sc_mif_config & CAS_MIF_CONFIG_MDI1) {
-		sc->sc_mif_config |= CAS_MIF_CONFIG_PHY_SEL;
-		bus_space_write_4(sc->sc_memt, sc->sc_memh,
-		    CAS_MIF_CONFIG, sc->sc_mif_config);
+	if (sc->sc_mif_config & (CAS_MIF_CONFIG_MDI1 | CAS_MIF_CONFIG_MDI0)) {
+		if (sc->sc_mif_config & CAS_MIF_CONFIG_MDI1) {
+			sc->sc_mif_config |= CAS_MIF_CONFIG_PHY_SEL;
+			bus_space_write_4(sc->sc_memt, sc->sc_memh,
+			    CAS_MIF_CONFIG, sc->sc_mif_config);
+		}
+		/* Enable/unfreeze the GMII pins of Saturn. */
+		if (sc->sc_variant == CAS_SATURN) {
+			reg = bus_space_read_4(sc->sc_memt, sc->sc_memh,
+			    CAS_SATURN_PCFG) & ~CAS_SATURN_PCFG_FSI;
+			if ((sc->sc_mif_config & CAS_MIF_CONFIG_MDI0) != 0)
+				reg |= CAS_SATURN_PCFG_FSI;
+			bus_space_write_4(sc->sc_memt, sc->sc_memh,
+			    CAS_SATURN_PCFG, reg);
+			/* Read to flush */
+			bus_space_read_4(sc->sc_memt, sc->sc_memh,
+			    CAS_SATURN_PCFG);
+			DELAY(10000);
+		}
 	}
 
 	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
@@ -637,6 +736,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	    NULL, device_xname(sc->sc_dev), "interrupts");
 
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, cas_tick, sc);
 
 	return;
 }
@@ -665,7 +765,7 @@ cas_detach(device_t self, int flags)
 
 		ether_ifdetach(ifp);
 		if_detach(ifp);
-		ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+		ifmedia_fini(&sc->sc_mii.mii_media);
 
 		callout_destroy(&sc->sc_tick_ch);
 
@@ -747,20 +847,24 @@ cas_tick(void *arg)
 	int s;
 	uint32_t v;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	/* unload collisions counters */
 	v = bus_space_read_4(t, mac, CAS_MAC_EXCESS_COLL_CNT) +
 	    bus_space_read_4(t, mac, CAS_MAC_LATE_COLL_CNT);
-	ifp->if_collisions += v +
+	if_statadd_ref(nsr, if_collisions, v +
 	    bus_space_read_4(t, mac, CAS_MAC_NORM_COLL_CNT) +
-	    bus_space_read_4(t, mac, CAS_MAC_FIRST_COLL_CNT);
-	ifp->if_oerrors += v;
+	    bus_space_read_4(t, mac, CAS_MAC_FIRST_COLL_CNT));
+	if_statadd_ref(nsr, if_oerrors, v);
 
 	/* read error counters */
-	ifp->if_ierrors +=
+	if_statadd_ref(nsr, if_ierrors,
 	    bus_space_read_4(t, mac, CAS_MAC_RX_LEN_ERR_CNT) +
 	    bus_space_read_4(t, mac, CAS_MAC_RX_ALIGN_ERR) +
 	    bus_space_read_4(t, mac, CAS_MAC_RX_CRC_ERR_CNT) +
-	    bus_space_read_4(t, mac, CAS_MAC_RX_CODE_VIOL);
+	    bus_space_read_4(t, mac, CAS_MAC_RX_CODE_VIOL));
+
+	IF_STAT_PUTREF(ifp);
 
 	/* clear the hardware counters */
 	bus_space_write_4(t, mac, CAS_MAC_NORM_COLL_CNT, 0);
@@ -776,7 +880,7 @@ cas_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, cas_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 int
@@ -1107,25 +1211,28 @@ cas_init(struct ifnet *ifp)
 	/* step 6 & 7. Program Descriptor Ring Base Addresses */
 	KASSERT((CAS_CDTXADDR(sc, 0) & 0x1fff) == 0);
 	bus_space_write_4(t, h, CAS_TX_RING_PTR_HI,
-	    (((uint64_t)CAS_CDTXADDR(sc, 0)) >> 32));
-	bus_space_write_4(t, h, CAS_TX_RING_PTR_LO, CAS_CDTXADDR(sc, 0));
+	    BUS_ADDR_HI32(CAS_CDTXADDR(sc, 0)));
+	bus_space_write_4(t, h, CAS_TX_RING_PTR_LO,
+	    BUS_ADDR_LO32(CAS_CDTXADDR(sc, 0)));
 
 	KASSERT((CAS_CDRXADDR(sc, 0) & 0x1fff) == 0);
 	bus_space_write_4(t, h, CAS_RX_DRING_PTR_HI,
-	    (((uint64_t)CAS_CDRXADDR(sc, 0)) >> 32));
-	bus_space_write_4(t, h, CAS_RX_DRING_PTR_LO, CAS_CDRXADDR(sc, 0));
+	    BUS_ADDR_HI32(CAS_CDRXADDR(sc, 0)));
+	bus_space_write_4(t, h, CAS_RX_DRING_PTR_LO,
+	    BUS_ADDR_LO32(CAS_CDRXADDR(sc, 0)));
 
 	KASSERT((CAS_CDRXCADDR(sc, 0) & 0x1fff) == 0);
 	bus_space_write_4(t, h, CAS_RX_CRING_PTR_HI,
-	    (((uint64_t)CAS_CDRXCADDR(sc, 0)) >> 32));
-	bus_space_write_4(t, h, CAS_RX_CRING_PTR_LO, CAS_CDRXCADDR(sc, 0));
+	    BUS_ADDR_HI32(CAS_CDRXCADDR(sc, 0)));
+	bus_space_write_4(t, h, CAS_RX_CRING_PTR_LO,
+	    BUS_ADDR_LO32(CAS_CDRXCADDR(sc, 0)));
 
 	if (CAS_PLUS(sc)) {
 		KASSERT((CAS_CDRXADDR2(sc, 0) & 0x1fff) == 0);
 		bus_space_write_4(t, h, CAS_RX_DRING_PTR_HI2,
-		    (((uint64_t)CAS_CDRXADDR2(sc, 0)) >> 32));
+		    BUS_ADDR_HI32(CAS_CDRXADDR2(sc, 0)));
 		bus_space_write_4(t, h, CAS_RX_DRING_PTR_LO2,
-		    CAS_CDRXADDR2(sc, 0));
+		    BUS_ADDR_LO32(CAS_CDRXADDR2(sc, 0)));
 	}
 
 	/* step 8. Global Configuration & Interrupt Mask */
@@ -1178,7 +1285,7 @@ cas_init(struct ifnet *ifp)
 		bus_space_write_4(t, h, CAS_RX_KICK2, 4);
 
 	/* Start the one second timer. */
-	callout_reset(&sc->sc_tick_ch, hz, cas_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1321,7 +1428,7 @@ cas_rint(struct cas_softc *sc)
 				m->m_pkthdr.csum_flags = 0;
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 		}
 
 		len = CAS_RC0_DATA_LEN(word[0]);
@@ -1351,7 +1458,7 @@ cas_rint(struct cas_softc *sc)
 				m->m_pkthdr.csum_flags = 0;
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 		}
 
 		if (word[0] & CAS_RC0_SPLIT)
@@ -1491,7 +1598,7 @@ cas_intr(void *v)
 		 * due to a silicon bug so handle them silently.
 		 */
 		if (rxstat & CAS_MAC_RX_OVERFLOW) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			cas_init(ifp);
 		}
 #ifdef CAS_DEBUG
@@ -1517,7 +1624,7 @@ cas_watchdog(struct ifnet *ifp)
 		bus_space_read_4(sc->sc_memt, sc->sc_memh, CAS_MAC_RX_CONFIG)));
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	/* Try to get more packets going. */
 	cas_init(ifp);
@@ -1905,52 +2012,62 @@ cas_iff(struct cas_softc *sc)
 	    CAS_MAC_RX_PROMISC_GRP);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
-			rxcfg |= CAS_MAC_RX_PROMISCUOUS;
-		else
-			rxcfg |= CAS_MAC_RX_PROMISC_GRP;
-	} else {
-		/*
-		 * Set up multicast address filter by passing all multicast
-		 * addresses through a crc generator, and then using the
-		 * high order 8 bits as an index into the 256 bit logical
-		 * address filter.  The high order 4 bits selects the word,
-		 * while the other 4 bits select the bit within the word
-		 * (where bit 0 is the MSB).
-		 */
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		goto update;
 
-		rxcfg |= CAS_MAC_RX_HASH_FILTER;
+	/*
+	 * Set up multicast address filter by passing all multicast
+	 * addresses through a crc generator, and then using the
+	 * high order 8 bits as an index into the 256 bit logical
+	 * address filter.  The high order 4 bits selects the word,
+	 * while the other 4 bits select the bit within the word
+	 * (where bit 0 is the MSB).
+	 */
 
-		/* Clear hash table */
-		for (i = 0; i < 16; i++)
-			hash[i] = 0;
+	/* Clear hash table */
+	for (i = 0; i < 16; i++)
+		hash[i] = 0;
 
-		ETHER_LOCK(ec);
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			crc = ether_crc32_le(enm->enm_addrlo,
-			    ETHER_ADDR_LEN);
-
-			/* Just want the 8 most significant bits. */
-			crc >>= 24;
-
-			/* Set the corresponding bit in the filter. */
-			hash[crc >> 4] |= 1 << (15 - (crc & 15));
-
-			ETHER_NEXT_MULTI(step, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			goto update;
 		}
-		ETHER_UNLOCK(ec);
 
-		/* Now load the hash table into the chip (if we are using it) */
-		for (i = 0; i < 16; i++) {
-			bus_space_write_4(t, h,
-			    CAS_MAC_HASH0 + i * (CAS_MAC_HASH1 - CAS_MAC_HASH0),
-			    hash[i]);
-		}
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		/* Just want the 8 most significant bits. */
+		crc >>= 24;
+
+		/* Set the corresponding bit in the filter. */
+		hash[crc >> 4] |= 1 << (15 - (crc & 15));
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ETHER_UNLOCK(ec);
+
+	rxcfg |= CAS_MAC_RX_HASH_FILTER;
+
+	/* Now load the hash table into the chip (if we are using it) */
+	for (i = 0; i < 16; i++) {
+		bus_space_write_4(t, h,
+		    CAS_MAC_HASH0 + i * (CAS_MAC_HASH1 - CAS_MAC_HASH0),
+		    hash[i]);
 	}
 
+update:
+	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if (ifp->if_flags & IFF_PROMISC) {
+			rxcfg |= CAS_MAC_RX_PROMISCUOUS;
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+		} else
+			rxcfg |= CAS_MAC_RX_PROMISC_GRP;
+	}
 	bus_space_write_4(t, h, CAS_MAC_RX_CONFIG, rxcfg);
 }
 
@@ -2026,7 +2143,7 @@ cas_tint(struct cas_softc *sc, uint32_t status)
 			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
 			m_freem(sd->sd_mbuf);
 			sd->sd_mbuf = NULL;
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		}
 		sc->sc_tx_cnt--;
 		if (++cons == CAS_NTXDESC)

@@ -3,9 +3,9 @@
 # '*' pattern is for.
 case ${target} in
     arceb-*)
-        ARC_ENDIAN="big"
-        ;;
+	ARC_ENDIAN="big"
+	;;
     arc-* | * )
-        ARC_ENDIAN="little"
-        ;;
+	ARC_ENDIAN="little"
+	;;
 esac

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.73.4.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.73.4.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.73.4.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.73.4.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -85,16 +85,16 @@ Static void uhidev_intr(struct usbd_xfer *, void *, usbd_status);
 Static int uhidev_maxrepid(void *, int);
 Static int uhidevprint(void *, const char *);
 
-int uhidev_match(device_t, cfdata_t, void *);
-void uhidev_attach(device_t, device_t, void *);
-void uhidev_childdet(device_t, device_t);
-int uhidev_detach(device_t, int);
-int uhidev_activate(device_t, enum devact);
+static int uhidev_match(device_t, cfdata_t, void *);
+static void uhidev_attach(device_t, device_t, void *);
+static void uhidev_childdet(device_t, device_t);
+static int uhidev_detach(device_t, int);
+static int uhidev_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(uhidev, sizeof(struct uhidev_softc), uhidev_match,
     uhidev_attach, uhidev_detach, uhidev_activate, NULL, uhidev_childdet);
 
-int
+static int
 uhidev_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
@@ -113,7 +113,7 @@ uhidev_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_IFACECLASS_GENERIC;
 }
 
-void
+static void
 uhidev_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhidev_softc *sc = device_private(self);
@@ -413,7 +413,7 @@ uhidevprint(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-int
+static int
 uhidev_activate(device_t self, enum devact act)
 {
 	struct uhidev_softc *sc = device_private(self);
@@ -427,7 +427,7 @@ uhidev_activate(device_t self, enum devact act)
 	}
 }
 
-void
+static void
 uhidev_childdet(device_t self, device_t child)
 {
 	int i;
@@ -441,7 +441,7 @@ uhidev_childdet(device_t self, device_t child)
 	sc->sc_subdevs[i] = NULL;
 }
 
-int
+static int
 uhidev_detach(device_t self, int flags)
 {
 	struct uhidev_softc *sc = device_private(self);
@@ -521,7 +521,7 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	if (!cdev)
 		return;
 	scd = device_private(cdev);
-	DPRINTFN(5,("uhidev_intr: rep=%d, scd=%p state=0x%x\n",
+	DPRINTFN(5,("uhidev_intr: rep=%d, scd=%p state=%#x\n",
 		    rep, scd, scd ? scd->sc_state : 0));
 	if (!(scd->sc_state & UHIDEV_OPEN))
 		return;

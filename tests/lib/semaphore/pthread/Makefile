@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4.16.1 2019/06/10 22:10:08 christos Exp $
+# $NetBSD: Makefile,v 1.4.16.2 2020/04/08 14:09:10 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ TESTS_C=	t_sem_pth
 
 CPPFLAGS+=	-I${.CURDIR}/.. -D_KERNTYPES
 
-LDADD+=		-lrump -lrumpuser -lrump -lrumpvfs -lpthread
+LDADD+=		${LIBRUMPBASE}
 
 WARNS=	4
 

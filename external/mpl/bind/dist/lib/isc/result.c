@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.5.2.2 2019/06/10 22:04:43 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.5.2.3 2020/04/08 14:07:09 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -103,6 +103,8 @@ static const char *description[ISC_R_NRESULTS] = {
 	"crypto failure",			/*%< 65 */
 	"disc quota",				/*%< 66 */
 	"disc full",				/*%< 67 */
+	"default",				/*%< 68 */
+	"IPv4 prefix",				/*%< 69 */
 };
 
 static const char *identifier[ISC_R_NRESULTS] = {
@@ -174,6 +176,8 @@ static const char *identifier[ISC_R_NRESULTS] = {
 	"ISC_R_CRYPTOFAILURE",
 	"ISC_R_DISCQUOTA",
 	"ISC_R_DISCFULL",
+	"ISC_R_DEFAULT",
+	"ISC_R_IPV4PREFIX",
 };
 
 #define ISC_RESULT_RESULTSET			2

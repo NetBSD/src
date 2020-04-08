@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.68.2.1 2019/06/10 22:05:47 christos Exp $
+#	$NetBSD: genassym.cf,v 1.68.2.2 2020/04/08 14:07:25 martin Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -124,9 +124,6 @@ endif
 
 include <sys/bus.h>
 
-define	LSRUN			LSRUN
-define	LSONPROC		LSONPROC
-
 define	UPAGES			UPAGES
 define	USPACE			USPACE
 
@@ -150,7 +147,6 @@ define	VM_MAXUSER_ADDRESS	(unsigned long long)VM_MAXUSER_ADDRESS
 define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
-define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_NCSW			offsetof(struct lwp, l_ncsw)
 define	L_NOPREEMPT		offsetof(struct lwp, l_nopreempt)
 define	L_DOPREEMPT		offsetof(struct lwp, l_dopreempt)
@@ -251,6 +247,7 @@ define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 if !defined(XENPV)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
+define	CPU_INFO_IMASKED	offsetof(struct cpu_info, ci_imasked)
 define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
 define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
@@ -320,7 +317,8 @@ define	IS_FLAGS	offsetof(struct intrsource, is_flags)
 define	IS_PIN		offsetof(struct intrsource, is_pin)
 define	IS_TYPE		offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
-define	IS_LWP			offsetof(struct intrsource, is_lwp)
+define	IS_LWP		offsetof(struct intrsource, is_lwp)
+define	IS_MASK_COUNT	offsetof(struct intrsource, is_mask_count)
 
 define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
@@ -383,7 +381,5 @@ define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
 
 define	VM_SPACE_SEP_HIGH32	(0xFFFF800000000000 >> 32)
-
-define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
 
 define	SEL_RPL_MASK		SEL_RPL

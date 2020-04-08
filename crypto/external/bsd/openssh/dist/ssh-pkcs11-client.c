@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-client.c,v 1.12.2.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-client.c,v 1.15 2019/01/21 12:53:35 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11-client.c,v 1.12.2.2 2020/04/08 14:03:18 martin Exp $	*/
+/* $OpenBSD: ssh-pkcs11-client.c,v 1.16 2020/01/25 00:03:36 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  * Copyright (c) 2014 Pedro Martelletto. All rights reserved.
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.12.2.1 2019/06/10 21:41:12 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.12.2.2 2020/04/08 14:03:18 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -299,11 +299,13 @@ pkcs11_start_helper(void)
 }
 
 int
-pkcs11_add_provider(char *name, char *pin, struct sshkey ***keysp)
+pkcs11_add_provider(char *name, char *pin, struct sshkey ***keysp,
+    char ***labelsp)
 {
 	struct sshkey *k;
 	int r, type;
 	u_char *blob;
+	char *label;
 	size_t blen;
 	u_int nkeys, i;
 	struct sshbuf *msg;
@@ -325,16 +327,22 @@ pkcs11_add_provider(char *name, char *pin, struct sshkey ***keysp)
 		if ((r = sshbuf_get_u32(msg, &nkeys)) != 0)
 			fatal("%s: buffer error: %s", __func__, ssh_err(r));
 		*keysp = xcalloc(nkeys, sizeof(struct sshkey *));
+		if (labelsp)
+			*labelsp = xcalloc(nkeys, sizeof(char *));
 		for (i = 0; i < nkeys; i++) {
 			/* XXX clean up properly instead of fatal() */
 			if ((r = sshbuf_get_string(msg, &blob, &blen)) != 0 ||
-			    (r = sshbuf_skip_string(msg)) != 0)
+			    (r = sshbuf_get_cstring(msg, &label, NULL)) != 0)
 				fatal("%s: buffer error: %s",
 				    __func__, ssh_err(r));
 			if ((r = sshkey_from_blob(blob, blen, &k)) != 0)
 				fatal("%s: bad key: %s", __func__, ssh_err(r));
 			wrap_key(k);
 			(*keysp)[i] = k;
+			if (labelsp)
+				(*labelsp)[i] = label;
+			else
+				free(label);
 			free(blob);
 		}
 	} else if (type == SSH2_AGENT_FAILURE) {

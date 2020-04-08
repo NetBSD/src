@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.2.1 2020/04/08 14:07:49 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -128,10 +128,11 @@ extern int pmap_use_altivec;
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 /* ARGSUSED */
-static __inline void
+static __inline bool
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
+	return false;
 }
 
 #if (defined(PPC_OEA) + defined(PPC_OEA64) + defined(PPC_OEA64_BRIDGE)) != 1

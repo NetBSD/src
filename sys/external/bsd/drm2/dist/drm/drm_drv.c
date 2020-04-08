@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.1.1.2.30.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.1.1.2.30.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,21 +29,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.1.2.30.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.1.1.2.30.2 2020/04/08 14:08:22 martin Exp $");
 
-#include <linux/err.h>
-#include <linux/export.h>
 #include <linux/debugfs.h>
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/mount.h>
-#include <linux/printk.h>
 #include <linux/slab.h>
 #include <drm/drmP.h>
 #include <drm/drm_core.h>
 #include "drm_legacy.h"
 #include "drm_internal.h"
+
+#include <linux/nbsd-namespace.h>
 
 unsigned int drm_debug = 0;	/* bitmask of DRM_UT_x */
 EXPORT_SYMBOL(drm_debug);
@@ -541,16 +540,14 @@ EXPORT_SYMBOL(drm_unplug_dev);
 
 #ifdef __NetBSD__
 
-struct inode;
-
-static struct inode *
+static void *
 drm_fs_inode_new(void)
 {
 	return NULL;
 }
 
 static void
-drm_fs_inode_free(struct inode *inode)
+drm_fs_inode_free(void *inode)
 {
 	KASSERT(inode == NULL);
 }
@@ -672,15 +669,9 @@ struct drm_device *drm_dev_alloc(struct drm_driver *driver,
 
 	spin_lock_init(&dev->buf_lock);
 	spin_lock_init(&dev->event_lock);
-#ifdef __NetBSD__
-	linux_mutex_init(&dev->struct_mutex);
-	linux_mutex_init(&dev->ctxlist_mutex);
-	linux_mutex_init(&dev->master_mutex);
-#else
 	mutex_init(&dev->struct_mutex);
 	mutex_init(&dev->ctxlist_mutex);
 	mutex_init(&dev->master_mutex);
-#endif
 
 	dev->anon_inode = drm_fs_inode_new();
 	if (IS_ERR(dev->anon_inode)) {
@@ -731,17 +722,11 @@ err_minors:
 	drm_minor_free(dev, DRM_MINOR_CONTROL);
 	drm_fs_inode_free(dev->anon_inode);
 err_free:
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev->master_mutex);
-	linux_mutex_destroy(&dev->ctxlist_mutex);
-	linux_mutex_destroy(&dev->struct_mutex);
 	spin_lock_destroy(&dev->event_lock);
 	spin_lock_destroy(&dev->buf_lock);
-#else
 	mutex_destroy(&dev->master_mutex);
 	mutex_destroy(&dev->ctxlist_mutex);
 	mutex_destroy(&dev->struct_mutex);
-#endif
 	kfree(dev);
 	return NULL;
 }
@@ -762,17 +747,11 @@ static void drm_dev_release(struct kref *ref)
 	drm_minor_free(dev, DRM_MINOR_RENDER);
 	drm_minor_free(dev, DRM_MINOR_CONTROL);
 
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev->master_mutex);
-	linux_mutex_destroy(&dev->ctxlist_mutex);
-	linux_mutex_destroy(&dev->struct_mutex);
 	spin_lock_destroy(&dev->event_lock);
 	spin_lock_destroy(&dev->buf_lock);
-#else
 	mutex_destroy(&dev->master_mutex);
 	mutex_destroy(&dev->ctxlist_mutex);
 	mutex_destroy(&dev->struct_mutex);
-#endif
 	kfree(dev->unique);
 	kfree(dev);
 }

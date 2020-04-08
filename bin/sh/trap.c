@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41.6.1 2019/06/10 21:41:04 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.41.6.2 2020/04/08 14:03:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.41.6.1 2019/06/10 21:41:04 christos Exp $");
+__RCSID("$NetBSD: trap.c,v 1.41.6.2 2020/04/08 14:03:04 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -853,6 +853,12 @@ exitshell_savedstatus(void)
 			exiting_status = exitstatus;
 	}
 	exitstatus = exiting_status;
+
+	if (pendingsigs && !setjmp(loc.loc)) {
+		handler = &loc;
+
+		dotrap();
+	}
 
 	if (!setjmp(loc.loc)) {
 		handler = &loc;

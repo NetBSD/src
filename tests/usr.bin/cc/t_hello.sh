@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.6.10.1 2019/06/10 22:10:12 christos Exp $
+#	$NetBSD: t_hello.sh,v 1.6.10.2 2020/04/08 14:09:13 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -72,6 +72,11 @@ hello_profile_body() {
 int main(void) {printf("hello world\n");exit(0);}
 EOF
 	atf_check -s exit:0 -o ignore -e ignore cc -o hello -pg test.c
+	case `uname -p` in
+	aarch64)
+		atf_expect_fail 'cc -pg is busted on aarch64'
+		;;
+	esac
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 	atf_check -s exit:0 -o ignore -e ignore cc -o hello2 -fprofile-generate test.c
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello2

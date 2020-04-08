@@ -1,4 +1,4 @@
-/*	$NetBSD: hvs.c,v 1.1.6.2 2019/06/10 22:07:09 christos Exp $	*/
+/*	$NetBSD: hvs.c,v 1.1.6.3 2020/04/08 14:08:05 martin Exp $	*/
 /*	$OpenBSD: hvs.c,v 1.17 2017/08/10 17:22:48 mikeb Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 /* #define HVS_DEBUG_IO */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvs.c,v 1.1.6.2 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvs.c,v 1.1.6.3 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1095,7 +1095,8 @@ hvs_free_ccbs(struct hvs_softc *sc)
 		if (ccb->ccb_dmap == NULL)
 			continue;
 
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmap, 0, 0,
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmap,
+		    0, ccb->ccb_dmap->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmap);
 		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmap);

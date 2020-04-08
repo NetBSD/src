@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.10.16.3 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.10.16.4 2020/04/08 14:08:13 martin Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -127,11 +127,13 @@ struct urtwn_softc {
 	callout_t			sc_scan_to;
 	callout_t			sc_calib_to;
 
+	kcondvar_t			sc_task_cv;
 	kmutex_t			sc_task_mtx;
 	kmutex_t			sc_fwcmd_mtx;
 	kmutex_t			sc_tx_mtx;
 	kmutex_t			sc_rx_mtx;
 	kmutex_t			sc_write_mtx;
+	kmutex_t			sc_media_mtx;	/* XXX */
 
 	struct usbd_pipe *		rx_pipe[R92C_MAX_EPIN];
 	int				rx_npipe;

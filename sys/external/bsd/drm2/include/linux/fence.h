@@ -1,4 +1,4 @@
-/*	$NetBSD: fence.h,v 1.15.6.2 2019/06/10 22:08:31 christos Exp $	*/
+/*	$NetBSD: fence.h,v 1.15.6.3 2020/04/08 14:08:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ long	fence_wait(struct fence *, bool);
 long	fence_wait_any_timeout(struct fence **, uint32_t, bool, long);
 long	fence_wait_timeout(struct fence *, bool, long);
 
-static inline void
+static inline void __printflike(2, 3)
 FENCE_TRACE(struct fence *f, const char *fmt, ...)
 {
 	va_list va;

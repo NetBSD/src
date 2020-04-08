@@ -1,4 +1,4 @@
-/*	$NetBSD: recv_pass_attr.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: recv_pass_attr.c,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -39,6 +39,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */

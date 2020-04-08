@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+#   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -19,7 +19,7 @@
 # MA 02110-1301, USA.
 #
 
-# This file is sourced from elf32.em.  It is used by targets for
+# This file is sourced from elf.em.  It is used by targets for
 # which relaxation is not just an optimization, but for correctness.
 
 LDEMUL_BEFORE_ALLOCATION=need_relax_${EMULATION_NAME}_before_allocation

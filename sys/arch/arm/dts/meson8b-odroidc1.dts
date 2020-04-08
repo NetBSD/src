@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b-odroidc1.dts,v 1.3.6.2 2019/06/10 22:05:53 christos Exp $ */
+/* $NetBSD: meson8b-odroidc1.dts,v 1.3.6.3 2020/04/08 14:07:28 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#include_next "meson8b-odroidc1.dts"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/meson8b-odroidc1.dts"
 #include "meson8b.dtsi"
 
 &genfb {

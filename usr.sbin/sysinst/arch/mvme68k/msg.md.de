@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.1.28.1 2020/04/08 14:09:23 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,12 +55,7 @@ wird ein neues erstellen.
 }
 
 message ordering
-{Die Anordnung der Partition %c ist falsch. Erneut editieren?}
-
-
-message emptypart
-{Nach der oder den leeren Partition(en) besteht eine gültige Partition %c.
-Bitte editieren Sie die Partitionstabelle noch einmal.}
+{Die Anordnung der Partition %s ist falsch. Erneut editieren?}
 
 
 message set_kernel_1
@@ -68,6 +63,10 @@ message set_kernel_1
 
 .if notyet
 /* XXX: not yet implemented */
+message emptypart
+{Nach der oder den leeren Partition(en) existiert eine gültige Partition %c.
+Bitte editieren Sie die Partitionstabelle noch einmal.}
+
 message existing
 {Wollen Sie die vorhandene(n) BSD Partition(en) beibehalten?}
 

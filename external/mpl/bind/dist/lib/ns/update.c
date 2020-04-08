@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.4.2.2 2019/06/10 22:04:49 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.4.2.3 2020/04/08 14:07:10 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -710,7 +710,7 @@ foreach_rr(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 		add_rr_prepare_ctx_t *ctx = rr_action_data;
 
 		ctx->oldname = dns_fixedname_initname(&fixed);
-		dns_name_copy(name, ctx->oldname, NULL);
+		dns_name_copynf(name, ctx->oldname);
 		dns_rdataset_getownercase(&rdataset, ctx->oldname);
 	}
 
@@ -1044,7 +1044,7 @@ temp_check(isc_mem_t *mctx, dns_diff_t *temp, dns_db_t *db,
 	t = ISC_LIST_HEAD(temp->tuples);
 	while (t != NULL) {
 		name = &t->name;
-		(void)dns_name_copy(name, tmpname, NULL);
+		dns_name_copynf(name, tmpname);
 		*typep = t->rdata.type;
 
 		/* A new unique name begins here. */
@@ -3190,14 +3190,14 @@ update_action(isc_task_t *task, isc_event_t *event) {
 			 CHECK(dns_nsec3param_deletechains(db, ver, zone,
 							   true, &diff));
 		} else if (has_dnskey && isdnssec(db, ver, privatetype)) {
-			uint32_t interval;
 			dns_update_log_t log;
+			uint32_t interval = dns_zone_getsigvalidityinterval(zone);
 
-			interval = dns_zone_getsigvalidityinterval(zone);
 			log.func = update_log_cb;
 			log.arg = client;
 			result = dns_update_signatures(&log, zone, db, oldver,
-						       ver, &diff, interval);
+						       ver, &diff,
+						       interval);
 
 			if (result != ISC_R_SUCCESS) {
 				update_log(client, zone,

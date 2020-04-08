@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.18 2015/08/12 18:28:00 dholland Exp $	 */
+/* $NetBSD: vars.c,v 1.18.16.1 2020/04/08 14:07:18 martin Exp $	 */
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,7 +52,6 @@ int bflag;			/* location of alternate super block */
 int debug;			/* output debugging info */
 int exitonfail;
 int preen;			/* just fix normal inconsistencies */
-int quiet;			/* don't report clean filesystems */
 char havesb;			/* superblock has been read */
 char skipclean;			/* skip clean file systems if preening */
 int fsmodified;			/* 1 => write done to file system */
@@ -72,9 +71,11 @@ char *typemap;			/* ptr to inode type table */
 int16_t *lncntp;		/* ptr to link count table */
 
 ino_t lfdir;			/* lost & found directory inode number */
-int lfmode;			/* lost & found directory creation mode */
+int lfmode = 01700;		/* lost & found directory creation mode */
 
 daddr_t n_blks;			/* number of blocks in use */
 ino_t n_files;			/* number of files in use */
 
 int no_roll_forward = 0;	/* don't roll forward */
+
+struct inoinfo **inphead, **inpsort;

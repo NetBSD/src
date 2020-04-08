@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.103.2.1 2019/06/10 22:09:01 christos Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.103.2.2 2020/04/08 14:08:50 martin Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.103.2.1 2019/06/10 22:09:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.103.2.2 2020/04/08 14:08:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -106,14 +106,14 @@ static void	tmpfs_dir_putseq(tmpfs_node_t *, tmpfs_dirent_t *);
 static void
 tmpfs_init_vnode(struct vnode *vp, tmpfs_node_t *node)
 {
-	kmutex_t *slock;
+	krwlock_t *slock;
 
 	KASSERT(node->tn_vnode == NULL);
 
 	/* Share the interlock with the node. */
 	if (node->tn_type == VREG) {
 		slock = node->tn_spec.tn_reg.tn_aobj->vmobjlock;
-		mutex_obj_hold(slock);
+		rw_obj_hold(slock);
 		uvm_obj_setlock(&vp->v_uobj, slock);
 	}
 
@@ -147,6 +147,8 @@ tmpfs_init_vnode(struct vnode *vp, tmpfs_node_t *node)
 	vp->v_data = node;
 	node->tn_vnode = vp;
 	uvm_vnp_setsize(vp, node->tn_size);
+	KASSERT(node->tn_mode != VNOVAL);
+	cache_enter_id(vp, node->tn_mode, node->tn_uid, node->tn_gid);
 }
 
 /*
@@ -913,6 +915,10 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	newpages = round_page(newsize) >> PAGE_SHIFT;
 	KASSERT(oldpages == node->tn_spec.tn_reg.tn_aobj_pages);
 
+	if (newsize == oldsize) {
+		return 0;
+	}
+
 	if (newpages > oldpages) {
 		/* Increase the used-memory counter if getting extra pages. */
 		if (!tmpfs_mem_incr(tmp, (newpages - oldpages) << PAGE_SHIFT)) {
@@ -933,11 +939,9 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	 * Free "backing store".
 	 */
 	if (newpages < oldpages) {
-		KASSERT(uobj->vmobjlock == vp->v_interlock);
-
-		mutex_enter(uobj->vmobjlock);
+		rw_enter(uobj->vmobjlock, RW_WRITER);
 		uao_dropswap_range(uobj, newpages, oldpages);
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 
 		/* Decrease the used-memory counter. */
 		tmpfs_mem_decr(tmp, (oldpages - newpages) << PAGE_SHIFT);
@@ -1036,6 +1040,7 @@ tmpfs_chmod(vnode_t *vp, mode_t mode, kauth_cred_t cred, lwp_t *l)
 	node->tn_mode = (mode & ALLPERMS);
 	tmpfs_update(vp, TMPFS_UPDATE_CTIME);
 	VN_KNOTE(vp, NOTE_ATTRIB);
+	cache_enter_id(vp, node->tn_mode, node->tn_uid, node->tn_gid);
 	return 0;
 }
 
@@ -1080,6 +1085,7 @@ tmpfs_chown(vnode_t *vp, uid_t uid, gid_t gid, kauth_cred_t cred, lwp_t *l)
 	node->tn_gid = gid;
 	tmpfs_update(vp, TMPFS_UPDATE_CTIME);
 	VN_KNOTE(vp, NOTE_ATTRIB);
+	cache_enter_id(vp, node->tn_mode, node->tn_uid, node->tn_gid);
 	return 0;
 }
 

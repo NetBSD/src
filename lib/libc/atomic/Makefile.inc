@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2016/08/27 08:03:13 dholland Exp $
+#	$NetBSD: Makefile.inc,v 1.3.14.1 2020/04/08 14:07:12 martin Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -79,4 +79,5 @@ MLINKS+=atomic_add.3 atomic_add_32.3 \
 	membar_ops.3 membar_exit.3 \
 	membar_ops.3 membar_producer.3 \
 	membar_ops.3 membar_consumer.3 \
+	membar_ops.3 membar_datadep_consumer.3 \
 	membar_ops.3 membar_sync.3

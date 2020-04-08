@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.27.16.1 2019/06/10 22:05:47 christos Exp $
+#	$NetBSD: majors.amd64,v 1.27.16.2 2020/04/08 14:07:25 martin Exp $
 #
 # Device majors for amd64
 #
@@ -64,7 +64,7 @@ device-major	ucom		char 66			ucom
 device-major	sysmon		char 67			sysmon
 
 device-major	ld		char 69  block 19	ld
-device-major	urio		char 70			urio
+#device-major	obsolete	char 70			obsolete (urio)
 device-major	bktr		char 71			bktr
 
 device-major	cz		char 73			cz
@@ -90,7 +90,7 @@ device-major	kttcp		char 92			kttcp
 
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 #
 # Device majors for Xen. These are assigned here so that:

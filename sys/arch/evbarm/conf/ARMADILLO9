@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.58.2.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: ARMADILLO9,v 1.58.2.2 2020/04/08 14:07:34 martin Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -261,7 +261,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tap			# virtual Ethernet
 #pseudo-device	tun			# network tunneling over tty

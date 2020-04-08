@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.36.20.1 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.36.20.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.36.20.1 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.36.20.2 2020/04/08 14:08:00 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -180,14 +180,15 @@ compat_30_sys_fhstat(struct lwp *l,
 		return (ESTALE);
 	if (mp->mnt_op->vfs_fhtovp == NULL)
 		return EOPNOTSUPP;
-	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
+	error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, LK_EXCLUSIVE, &vp);
+	if (error != 0)
 		return (error);
 	error = vn_stat(vp, &sb);
 	vput(vp);
 	if (error)
 		return (error);
 	cvtstat(&osb, &sb);
-	error = copyout(&osb, SCARG(uap, sb), sizeof(sb));
+	error = copyout(&osb, SCARG(uap, sb), sizeof(osb));
 	return (error);
 }
 

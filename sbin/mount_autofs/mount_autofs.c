@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_autofs.c,v 1.3 2018/01/23 15:02:03 wiz Exp $	*/
+/*	$NetBSD: mount_autofs.c,v 1.3.4.1 2020/04/08 14:07:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_autofs.c,v 1.3 2018/01/23 15:02:03 wiz Exp $");
+__RCSID("$NetBSD: mount_autofs.c,v 1.3.4.1 2020/04/08 14:07:19 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -91,7 +91,6 @@ mount_autofs_parseargs(int argc, char *argv[], void *v, int *mntflags,
 		case 'p':
 			strlcpy(am->master_prefix, optarg, MAXPATHLEN);
 			break;
-			
 		case '?':
 		default:
 			usage();

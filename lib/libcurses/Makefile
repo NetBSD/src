@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.85.2.1 2019/06/10 22:05:22 christos Exp $
+#	$NetBSD: Makefile,v 1.85.2.2 2020/04/08 14:07:14 martin Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 	flushok.c fullname.c getch.c getstr.c getyx.c id_subwins.c idlok.c \
 	idcok.c immedok.c inch.c inchstr.c initscr.c insch.c insdelln.c \
 	insertln.c insstr.c instr.c keypad.c keyname.c leaveok.c line.c \
-	meta.c move.c \
+	meta.c mouse.c move.c \
 	mvwin.c newwin.c nodelay.c notimeout.c overlay.c overwrite.c pause.c \
 	printw.c putchar.c refresh.c resize.c ripoffline.c scanw.c screen.c \
 	scroll.c scrollok.c setterm.c slk.c standout.c syncok.c timeout.c \
@@ -34,7 +34,8 @@ MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_cursor.3 curses_default_colors.3 \
 	curses_delch.3 curses_deleteln.3 curses_echochar.3 curses_fileio.3 \
 	curses_inch.3 curses_input.3 curses_insch.3 curses_insertln.3 \
-	curses_insdelln.3 curses_keyname.3 curses_line.3 curses_pad.3 \
+	curses_insdelln.3 curses_keyname.3 curses_line.3 \
+	curses_mouse.3 curses_pad.3 \
 	curses_print.3 curses_refresh.3 curses_scanw.3 curses_screen.3 \
 	curses_scroll.3 curses_slk.3 curses_standout.3 curses_termcap.3 \
 	curses_touch.3 curses_tty.3 curses_underscore.3 curses_window.3
@@ -202,7 +203,11 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_standout.3 wstandout.3 curses_touch.3 wsyncup.3 \
 	 curses_input.3 wtimeout.3 \
 	 curses_touch.3 wtouchln.3 curses_underscore.3 wunderend.3 \
-	 curses_underscore.3 wunderscore.3 curses_line.3 wvline.3
+	 curses_underscore.3 wunderscore.3 curses_line.3 wvline.3 \
+	 curses_mouse.3 has_mouse.3 \
+	 curses_mouse.3 getmouse.3 curses_mouse.3 ungetmouse.3 \
+	 curses_mouse.3 mouse_trafo.3 curses_mouse.3 wmouse_trafo.3 \
+	 curses_mouse.3 wenclose.3 curses_mouse.3 mouseinterval.3
 
 SUBDIR.roff+= PSD.doc
 

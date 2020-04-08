@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.10.18.1 2019/06/10 22:07:05 christos Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.10.18.2 2020/04/08 14:08:02 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.10.18.1 2019/06/10 22:07:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.10.18.2 2020/04/08 14:08:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -210,14 +210,14 @@ ACPI_STATUS
 AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, UINT64 *Value,
     UINT32 Width)
 {
+	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	pcireg_t tmp;
-	pci_chipset_tag_t pc = acpi_softc ? acpi_softc->sc_pc : NULL;
-
-	/* XXX Need to deal with "segment" ("hose" in Alpha terminology). */
 
 	if (PciId->Bus >= 256 || PciId->Device >= 32 || PciId->Function >= 8)
 		return AE_BAD_PARAMETER;
+
+	pc = acpi_pcidev_get_tag(PciId->Segment, PciId->Bus, PciId->Device, PciId->Function);
 
 	tag = pci_make_tag(pc, PciId->Bus, PciId->Device, PciId->Function);
 	tmp = pci_conf_read(pc, tag, Register & ~3);
@@ -251,12 +251,11 @@ ACPI_STATUS
 AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
     ACPI_INTEGER Value, UINT32 Width)
 {
+	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	pcireg_t tmp;
-	pci_chipset_tag_t pc = acpi_softc ? acpi_softc->sc_pc : NULL;
 
-	/* XXX Need to deal with "segment" ("hose" in Alpha terminology). */
-
+	pc = acpi_pcidev_get_tag(PciId->Segment, PciId->Bus, PciId->Device, PciId->Function);
 	tag = pci_make_tag(pc, PciId->Bus, PciId->Device, PciId->Function);
 
 	switch (Width) {

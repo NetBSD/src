@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16.4.1 2019/06/10 22:10:11 christos Exp $
+# $NetBSD: Makefile,v 1.16.4.2 2020/04/08 14:09:12 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -20,10 +20,9 @@ TESTS_SH=	t_sp
 
 SUBDIR+=	h_client h_server
 
-ADD_TO_LD=	-lrumpvfs -lrump -lrumpuser -lrump -lpthread
 LDADD.t_modlinkset+=	-lukfs -lrumpdev_disk -lrumpdev -lrumpfs_msdos 
-LDADD.t_modlinkset+=	-lrumpfs_cd9660 ${ADD_TO_LD}
-LDADD+=			${ADD_TO_LD}
+LDADD.t_modlinkset+=	-lrumpfs_cd9660 ${LIBRUMPBASE}
+LDADD+=			${LIBRUMPBASE}
 
 KERNSPACE != cd ${.CURDIR}/../kernspace && ${PRINTOBJDIR}
 LDADD+=	-L${KERNSPACE} -lkernspace -lrump

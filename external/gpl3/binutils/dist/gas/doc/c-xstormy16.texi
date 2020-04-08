@@ -1,4 +1,4 @@
-@c Copyright (C) 2010-2018 Free Software Foundation, Inc.
+@c Copyright (C) 2010-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -52,17 +52,17 @@ line.
 
 @cindex @code{16bit_pointers} directive, XStormy16
 @item .16bit_pointers
-Like the @option{--16bit-pointers} command line option this directive
+Like the @option{--16bit-pointers} command-line option this directive
 indicates that the assembly code makes use of 16-bit pointers.
 
 @cindex @code{32bit_pointers} directive, XStormy16
 @item .32bit_pointers
-Like the @option{--32bit-pointers} command line option this directive
+Like the @option{--32bit-pointers} command-line option this directive
 indicates that the assembly code makes use of 32-bit pointers.
 
 @cindex @code{.no_pointers} directive, XStormy16
 @item .no_pointers
-Like the @option{--no-pointers} command line option this directive
+Like the @option{--no-pointers} command-line option this directive
 indicates that the assembly code does not makes use pointers.
 
 @end table

@@ -12,8 +12,8 @@
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
-#include "../ssl_locl.h"
-#include "statem_locl.h"
+#include "../ssl_local.h"
+#include "statem_local.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
@@ -473,12 +473,6 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_KEY_UPDATE:
-        if (s->key_update != SSL_KEY_UPDATE_NONE) {
-            st->hand_state = TLS_ST_CW_KEY_UPDATE;
-            return WRITE_TRAN_CONTINUE;
-        }
-        /* Fall through */
-
     case TLS_ST_CW_KEY_UPDATE:
     case TLS_ST_CR_SESSION_TICKET:
     case TLS_ST_CW_FINISHED:

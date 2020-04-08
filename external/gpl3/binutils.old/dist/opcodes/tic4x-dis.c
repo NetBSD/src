@@ -1,6 +1,6 @@
 /* Print instructions for the Texas TMS320C[34]X, for GDB and GNU Binutils.
 
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2018 Free Software Foundation, Inc.
 
    Contributed by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -24,7 +24,7 @@
 #include "sysdep.h"
 #include <math.h>
 #include "libiberty.h"
-#include "dis-asm.h"
+#include "disassemble.h"
 #include "opcode/tic4x.h"
 
 #define TIC4X_DEBUG 0
@@ -467,6 +467,7 @@ tic4x_print_op (struct disassemble_info *info,
                 return 0;
               break;
             }
+	  /* Fall through.  */
 
 	case 'J': /* Indirect (short) 8--15.  */
 	  if (! tic4x_print_indirect (info, INDIRECT_SHORT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.h,v 1.19 2011/08/26 06:18:17 dholland Exp $	*/
+/*	$NetBSD: mille.h,v 1.19.42.1 2020/04/08 14:07:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -56,7 +56,7 @@
 
 #define HAND_SZ		7	/* number of cards in a hand	*/
 #define DECK_SZ		101	/* number of cards in decks	*/
-#define NUM_SAFE	4	/* number of saftey cards	*/
+#define NUM_SAFE	4	/* number of safety cards	*/
 #define NUM_MILES	5	/* number of milestones types	*/
 #define NUM_CARDS	20	/* number of types of cards	*/
 #define BOARD_Y		17	/* size of board screen		*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.69 2017/10/07 10:26:38 maxv Exp $	 */
+/*	$NetBSD: exec.c,v 1.69.4.1 2020/04/08 14:07:41 martin Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ static void	module_add_common(const char *, uint8_t);
 static void	userconf_init(void);
 
 static void	extract_device(const char *, char *, size_t);
-static void	module_base_path(char *, size_t);
+static void	module_base_path(char *, size_t, const char *);
 static int	module_open(boot_module_t *, int, const char *, const char *,
 		    bool);
 
@@ -285,7 +285,7 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 	/* Load the prekern (static) */
 	flags = LOAD_KERNEL & ~(LOAD_HDR|COUNT_HDR|LOAD_SYM|COUNT_SYM);
 	if ((fd = loadfile(prekernpath, marks, flags)) == -1)
-		return EIO;
+		return errno;
 	close(fd);
 
 	marks[MARK_END] = (1UL << 21); /* the kernel starts at 2MB XXX */
@@ -294,7 +294,7 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 	/* Load the kernel (dynamic) */
 	flags = (LOAD_KERNEL | LOAD_DYN) & ~(floppy ? LOAD_BACKWARDS : 0);
 	if ((fd = loadfile(file, marks, flags)) == -1)
-		return EIO;
+		return errno;
 	close(fd);
 
 	kernpa_end = marks[MARK_END];
@@ -358,7 +358,7 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 		 */
 		marks[MARK_START] = loadaddr;
 		if ((fd = loadfile(file, marks, COUNT_KERNEL)) == -1)
-			return EIO;
+			return errno;
 		close(fd);
 
 		kernsize = marks[MARK_END];
@@ -372,7 +372,7 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 	marks[MARK_START] = loadaddr;
 	if ((fd = loadfile(file, marks,
 	    LOAD_KERNEL & ~(floppy ? LOAD_BACKWARDS : 0))) == -1)
-		return EIO;
+		return errno;
 
 	close(fd);
 
@@ -661,8 +661,15 @@ module_open(boot_module_t *bm, int mode, const char *kdev,
 }
 
 static void
-module_base_path(char *buf, size_t bufsize)
+module_base_path(char *buf, size_t bufsize, const char *kernel_path)
 {
+#ifdef KERNEL_DIR
+	/* we cheat here, because %.* does not work with the mini printf */
+	char *ptr = strrchr(kernel_path, '/');
+	if (ptr) *ptr = '\0';
+	snprintf(buf, bufsize, "%s/modules", kernel_path);
+	if (ptr) *ptr = '/';
+#else
 	const char *machine;
 
 	switch (netbsd_elf_class) {
@@ -690,6 +697,7 @@ module_base_path(char *buf, size_t bufsize)
 		    netbsd_version / 100000000,
 		    netbsd_version / 1000000 % 100);
 	}
+#endif
 }
 
 static void
@@ -705,7 +713,7 @@ module_init(const char *kernel_path)
 	int err, fd, nfail = 0;
 
 	extract_device(kernel_path, kdev, sizeof(kdev));
-	module_base_path(module_base, sizeof(module_base));
+	module_base_path(module_base, sizeof(module_base), kernel_path);
 
 	/* First, see which modules are valid and calculate btinfo size */
 	len = sizeof(struct btinfo_modulelist);

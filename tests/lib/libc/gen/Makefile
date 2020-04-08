@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.51.12.1 2019/06/10 22:10:03 christos Exp $
+# $NetBSD: Makefile,v 1.51.12.2 2020/04/08 14:09:09 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -38,6 +38,10 @@ TESTS_C+=	t_syslog
 TESTS_C+=	t_time
 TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
+
+.if ${MKSANITIZER:Uno} != "yes" && ${MKLIBCSANITIZER:Uno} != "yes"
+COPTS.t_siginfo.c+=	-DENABLE_TESTS
+.endif
 
 CPPFLAGS.t_siginfo.c+=-D__TEST_FENV
 COPTS.t_fpsetround.c+=${${ACTIVE_CC} == "gcc":? -frounding-math :}

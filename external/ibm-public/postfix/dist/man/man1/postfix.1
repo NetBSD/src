@@ -1,4 +1,4 @@
-.\"	$NetBSD: postfix.1,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: postfix.1,v 1.2.12.1 2020/04/08 14:06:50 martin Exp $
 .\"
 .TH POSTFIX 1 
 .ad
@@ -39,6 +39,17 @@ and create missing directories.
 .IP \fBstart\fR
 Start the Postfix mail system. This also runs the configuration
 check described above.
+.IP \fBstart\-fg\fR
+Like \fBstart\fR, but keep the \fBmaster\fR(8) daemon running
+in the foreground, and enable \fBmaster\fR(8) "init" mode
+when running as PID 1.
+This command requires that multi\-instance support is
+disabled (i.e. the multi_instance_directories parameter
+value must be empty). When running Postfix inside a container,
+mount the container host's /dev/log socket inside the
+container (example: "docker run \-v /dev/log:/dev/log ...")
+and specify a distinct Postfix "syslog_name" prefix that
+identifies logging from the Postfix instance.
 .IP \fBstop\fR
 Stop the Postfix mail system in an orderly fashion. If
 possible, running processes are allowed to terminate at
@@ -74,6 +85,14 @@ already installed Postfix system.
 This feature is available in Postfix 2.1 and later.  With
 Postfix 2.0 and earlier, use "\fB$config_directory/post\-install
 set\-permissions\fR".
+.IP "\fBlogrotate\fR"
+Rotate the logfile specified with $maillog_file, by appending
+a time\-stamp suffix that is formatted according to
+$maillog_file_rotate_suffix, and by compressing the file
+with the command specified with $maillog_file_compressor.
+This will not rotate /dev/* files.
+.sp
+This feature is available in Postfix 3.4 and later.
 .IP "\fBtls\fR \fIsubcommand\fR"
 Enable opportunistic TLS in the Postfix SMTP client or
 server, and manage Postfix SMTP server TLS private keys and
@@ -127,6 +146,15 @@ commands that run as a descendant of the current process.
 This is set when the \-v command\-line option is present.
 .IP \fBMAIL_DEBUG\fR
 This is set when the \-D command\-line option is present.
+.PP
+When the internal logging service is enabled (by setting a
+non\-empty maillog_file parameter value) the postfix(1)
+command exports settings that are used by child processes
+before they have processed main.cf or command\-line settings.
+.IP \fBPOSTLOG_SERVICE
+The name of the public postlog service endpoint.
+.IP \fBPOSTLOG_HOSTNAME
+The hostname to prepend to internal logging.
 .SH "CONFIGURATION PARAMETERS"
 .na
 .nf
@@ -189,13 +217,14 @@ The location of the OpenSSL command line program \fBopenssl\fR(1).
 .PP
 Other configuration parameters:
 .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-The list of environment parameters that a Postfix process will
-import from a non\-Postfix parent process.
+The list of environment parameters that a privileged Postfix
+process will import from a non\-Postfix parent process, or name=value
+environment overrides.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-The mail system name that is prepended to the process name in syslog
-records, so that "smtpd" becomes, for example, "postfix/smtpd".
+A prefix that is prepended to the process name in syslog
+records, so that, for example, "smtpd" becomes "prefix/smtpd".
 .PP
 Available in Postfix version 2.6 and later:
 .IP "\fBmulti_instance_directories (empty)\fR"
@@ -215,6 +244,21 @@ The optional instance name of this Postfix instance.
 .IP "\fBmulti_instance_enable (no)\fR"
 Allow this Postfix instance to be started, stopped, etc., by a
 multi\-instance manager.
+.PP
+Available in Postfix version 3.4 and later:
+.IP "\fBmaillog_file (empty)\fR"
+The name of an optional logfile that is written by the Postfix
+\fBpostlogd\fR(8) service.
+.IP "\fBmaillog_file_compressor (gzip)\fR"
+The program to run after rotating $maillog_file with "postfix
+logrotate".
+.IP "\fBmaillog_file_prefixes (/var, /dev/stdout)\fR"
+A list of allowed prefixes for a maillog_file value.
+.IP "\fBmaillog_file_rotate_suffix (%Y%M%d\-%H%M%S)\fR"
+The format of the suffix to append to $maillog_file while rotating
+the file with "postfix logrotate".
+.IP "\fBpostlog_service_name (postlog)\fR"
+The name of the \fBpostlogd\fR(8) service entry in master.cf.
 .SH "FILES"
 .na
 .nf
@@ -300,6 +344,7 @@ master(8), Postfix master daemon
 oqmgr(8), old Postfix queue manager
 pickup(8), Postfix local mail pickup
 pipe(8), deliver mail to non\-Postfix command
+postlogd(8), Postfix internal logging service
 postscreen(8), Postfix zombie blocker
 proxymap(8), Postfix lookup table proxy server
 qmgr(8), Postfix queue manager

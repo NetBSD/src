@@ -1,5 +1,5 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Metin G. Ozisik, Mimi Phuong-Thao Vo, and John Gilmore.
    Archive support from Damon A. Permezel.
    Contributed by IBM Corporation and Cygnus Support.
@@ -271,8 +271,8 @@ typedef union
 #define CORE_COMMONSZ  ((long) &((struct core_dumpx *) 0)->c_entries \
 			+ sizeof (((struct core_dumpx *) 0)->c_entries))
 #else
-#define CORE_COMMONSZ   ((int) &((struct core_dump *) 0)->c_entries \
-		       + sizeof (((struct core_dump *) 0)->c_entries)
+#define CORE_COMMONSZ  ((int) &((struct core_dump *) 0)->c_entries \
+			+ sizeof (((struct core_dump *) 0)->c_entries))
 #endif
 /* Define prototypes for certain functions, to avoid a compiler warning
    saying that they are missing.  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.94.12.1 2019/06/10 22:09:06 christos Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.94.12.2 2020/04/08 14:08:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.94.12.1 2019/06/10 22:09:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.94.12.2 2020/04/08 14:08:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.94.12.1 2019/06/10 22:09:06 christ
 MODULE(MODULE_CLASS_VFS, null, "layerfs");
 
 VFS_PROTOS(nullfs);
-
-static struct sysctllog *nullfs_sysctl_log;
 
 int
 nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
@@ -140,6 +138,8 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/* Create the mount point. */
 	nmp = kmem_zalloc(sizeof(struct null_mount), KM_SLEEP);
 	mp->mnt_data = nmp;
+	mp->mnt_iflag |= IMNT_MPSAFE;
+	mp->mnt_iflag |= lowerrootvp->v_mount->mnt_iflag & IMNT_SHRLOOKUP;
 
 	/*
 	 * Make sure that the mount point is sufficiently initialized
@@ -168,7 +168,6 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vp->v_vflag |= VV_ROOT;
 	nmp->nullm_rootvp = vp;
-	mp->mnt_iflag |= IMNT_MPSAFE;
 	VOP_UNLOCK(vp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
@@ -238,6 +237,22 @@ struct vfsops nullfs_vfsops = {
 	.vfs_opv_descs = nullfs_vnodeopv_descs
 };
 
+SYSCTL_SETUP(nullfs_sysctl_setup, "nullfs sysctl")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "null",
+	    SYSCTL_DESCR("Loopback file system"),
+	    NULL, 0, NULL, 0,
+	    CTL_VFS, 9, CTL_EOL);
+	/*
+	 * XXX the "9" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "9" is the order as taken from sys/mount.h
+	 */
+}
+
 static int
 null_modcmd(modcmd_t cmd, void *arg)
 {
@@ -248,23 +263,11 @@ null_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&nullfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&nullfs_sysctl_log, 0, NULL, NULL,
-		    CTLFLAG_PERMANENT,
-		    CTLTYPE_NODE, "null",
-		    SYSCTL_DESCR("Loopback file system"),
-		    NULL, 0, NULL, 0,
-		    CTL_VFS, 9, CTL_EOL);
-		/*
-		 * XXX the "9" above could be dynamic, thereby eliminating
-		 * one more instance of the "number to vfs" mapping problem,
-		 * but "9" is the order as taken from sys/mount.h
-		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&nullfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_teardown(&nullfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

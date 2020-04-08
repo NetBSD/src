@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -166,7 +166,7 @@ cat <<EOF
 ${RELOCATING+/* Linker script for 68HC12 executable (PROM).  */}
 ${RELOCATING-/* Linker script for 68HC12 object file (ld -r).  */}
 
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -306,7 +306,7 @@ SECTIONS
 
   .init	${RELOCATING-0} :
   {
-    *(.init)
+    KEEP (*(SORT_NONE(.init)))
   } ${RELOCATING+=${NOP-0}}
 
   ${RELOCATING-${INSTALL_RELOC}}
@@ -317,15 +317,15 @@ SECTIONS
     /* Put startup code at beginning so that _start keeps same address.  */
     ${RELOCATING+${STARTUP_CODE}}
 
-    ${RELOCATING+*(.init)}
     *(.text)
     ${RELOCATING+*(.text.*)}
-    /* .gnu.warning sections are handled specially by elf32.em.  */
+    /* .gnu.warning sections are handled specially by elf.em.  */
     *(.gnu.warning)
     ${RELOCATING+*(.gnu.linkonce.t.*)}
     ${RELOCATING+*(.tramp)}
     ${RELOCATING+*(.tramp.*)}
 
+    ${RELOCATING+KEEP (*(SORT_NONE(.fini)))}
     ${RELOCATING+${FINISH_CODE}}
 
     ${RELOCATING+_etext = .;}
@@ -413,12 +413,11 @@ SECTIONS
     ${RELOCATING+*(.softregs)}
     ${RELOCATING+*(.sbss)}
     ${RELOCATING+*(.scommon)}
-
-    *(.dynbss)
+    ${RELOCATING+*(.dynbss)}
     *(.bss)
     ${RELOCATING+*(.bss.*)}
     ${RELOCATING+*(.gnu.linkonce.b.*)}
-    *(COMMON)
+    ${RELOCATING+*(COMMON)}
     ${RELOCATING+PROVIDE (_end = .);}
   } ${RELOCATING+ > ${DATA_MEMORY}}
   ${RELOCATING+__bss_size = SIZEOF(.bss);}
@@ -427,7 +426,7 @@ SECTIONS
   .eeprom ${RELOCATING-0} :
   {
     *(.eeprom)
-    *(.eeprom.*)
+    ${RELOCATING+*(.eeprom.*)}
   } ${RELOCATING+ > ${EEPROM_MEMORY}}
 
   ${RELOCATING+${VECTORS}}

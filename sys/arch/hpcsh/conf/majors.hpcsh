@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcsh,v 1.23.54.1 2019/06/10 22:06:18 christos Exp $
+#	$NetBSD: majors.hpcsh,v 1.23.54.2 2020/04/08 14:07:39 martin Exp $
 #
 # Device majors for hpcsh
 #
@@ -46,7 +46,7 @@ device-major	wsfont		char 39			wsfont
 device-major	apmdev		char 40			apmdev
 device-major	audio		char 42			audio
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

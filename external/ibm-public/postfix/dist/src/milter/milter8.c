@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: milter8.c,v 1.2.12.1 2020/04/08 14:06:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -53,6 +53,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -665,14 +670,11 @@ static int vmilter8_read_data(MILTER8 *milter, ssize_t *data_len, va_list ap)
 		return (milter8_comm_error(milter));
 	    }
 	    buf = va_arg(ap, VSTRING *);
-	    VSTRING_RESET(buf);
-	    VSTRING_SPACE(buf, *data_len);
-	    if (vstream_fread(milter->fp, (void *) STR(buf), *data_len)
+	    if (vstream_fread_buf(milter->fp, buf, *data_len)
 		!= *data_len) {
 		msg_warn("milter %s: EOF while reading data: %m", milter->m.name);
 		return (milter8_comm_error(milter));
 	    }
-	    VSTRING_AT_OFFSET(buf, *data_len);
 	    *data_len = 0;
 	    break;
 
@@ -1918,15 +1920,6 @@ static const char *milter8_conn_event(MILTER *m,
 #define STR_NE(x,y)	(strcmp((x), (y)) != 0)
 
     /*
-     * XXX Sendmail 8 libmilter closes the MTA-to-filter socket when it finds
-     * out that the SMTP client has disconnected. Because of this, Postfix
-     * has to open a new MTA-to-filter socket for each SMTP client.
-     */
-#ifdef LIBMILTER_AUTO_DISCONNECT
-    milter8_connect(milter);
-#endif
-
-    /*
      * Report the event.
      */
     switch (milter->state) {
@@ -2835,6 +2828,10 @@ static MILTER8 *milter8_alloc(const char *name, int conn_timeout,
 
     /*
      * Fill in the structure. Note: all strings must be copied.
+     * 
+     * XXX Sendmail 8 libmilter closes the MTA-to-filter socket when it finds
+     * out that the SMTP client has disconnected. Because of this, Postfix
+     * has to open a new MTA-to-filter socket for each SMTP client.
      */
     milter = (MILTER8 *) mymalloc(sizeof(*milter));
     milter->m.name = mystrdup(name);
@@ -2842,6 +2839,11 @@ static MILTER8 *milter8_alloc(const char *name, int conn_timeout,
     milter->m.next = 0;
     milter->m.parent = parent;
     milter->m.macros = 0;
+#ifdef LIBMILTER_AUTO_DISCONNECT
+    milter->m.connect_on_demand = (void (*) (struct MILTER *)) milter8_connect;
+#else
+    milter->m.connect_on_demand = 0;
+#endif
     milter->m.conn_event = milter8_conn_event;
     milter->m.helo_event = milter8_helo_event;
     milter->m.mail_event = milter8_mail_event;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.80 2018/05/09 06:35:10 maxv Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.80.2.1 2020/04/08 14:08:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.80 2018/05/09 06:35:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.80.2.1 2020/04/08 14:08:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -358,7 +358,7 @@ arc_defrag(struct ifnet *ifp, struct mbuf *m)
 	if (m->m_len < ARC_HDRNEWLEN) {
 		m = m_pullup(m, ARC_HDRNEWLEN);
 		if (m == NULL) {
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			return NULL;
 		}
 	}
@@ -378,7 +378,7 @@ arc_defrag(struct ifnet *ifp, struct mbuf *m)
 		if (m->m_len < ARC_HDRNEWLEN) {
 			m = m_pullup(m, ARC_HDRNEWLEN);
 			if (m == NULL) {
-				++ifp->if_ierrors;
+				if_statinc(ifp, if_ierrors);
 				return NULL;
 			}
 		}
@@ -524,11 +524,11 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 
 	ah = mtod(m, struct arc_header *);
 
-	ifp->if_ibytes += m->m_pkthdr.len;
+	if_statadd(ifp, if_ibytes, m->m_pkthdr.len);
 
 	if (arcbroadcastaddr == ah->arc_dhost) {
 		m->m_flags |= M_BCAST|M_MCAST;
-		ifp->if_imcasts++;
+		if_statinc(ifp, if_imcasts);
 	}
 
 	atype = ah->arc_type;

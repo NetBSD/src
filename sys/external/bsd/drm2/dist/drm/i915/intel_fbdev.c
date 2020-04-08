@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.5.32.1 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.5.32.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.5.32.1 2019/06/10 22:08:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.5.32.2 2020/04/08 14:08:23 martin Exp $");
 
 #include <linux/async.h>
 #include <linux/module.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.5.32.1 2019/06/10 22:08:06 christo
 #include <linux/fb.h>
 #include <linux/init.h>
 #include <linux/vga_switcheroo.h>
-#include <linux/err.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -53,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.5.32.1 2019/06/10 22:08:06 christo
 
 #ifdef __NetBSD__
 #include "intelfb.h"
+#include <linux/nbsd-namespace.h>
 #endif
 
 #ifndef __NetBSD__
@@ -134,8 +134,7 @@ static int intelfb_alloc(struct drm_fb_helper *helper,
 	struct drm_framebuffer *fb;
 	struct drm_device *dev = helper->dev;
 	struct drm_i915_private *dev_priv = to_i915(dev);
-	static const struct drm_mode_fb_cmd2 zero_mode_cmd;
-	struct drm_mode_fb_cmd2 mode_cmd = zero_mode_cmd;
+	struct drm_mode_fb_cmd2 mode_cmd = {};
 	struct drm_i915_gem_object *obj = NULL;
 	int size, ret;
 
@@ -146,13 +145,8 @@ static int intelfb_alloc(struct drm_fb_helper *helper,
 	mode_cmd.width = sizes->surface_width;
 	mode_cmd.height = sizes->surface_height;
 
-#ifdef __NetBSD__
-	mode_cmd.pitches[0] = round_up(mode_cmd.width *
-				    DIV_ROUND_UP(sizes->surface_bpp, 8), 64);
-#else
 	mode_cmd.pitches[0] = ALIGN(mode_cmd.width *
 				    DIV_ROUND_UP(sizes->surface_bpp, 8), 64);
-#endif
 	mode_cmd.pixel_format = drm_mode_legacy_fb_format(sizes->surface_bpp,
 							  sizes->surface_depth);
 
@@ -214,6 +208,7 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	bool prealloc = false;
 
 	mutex_lock(&dev->struct_mutex);
+
 	if (intel_fb &&
 	    (sizes->fb_width > intel_fb->base.width ||
 	     sizes->fb_height > intel_fb->base.height)) {
@@ -790,9 +785,9 @@ void intel_fbdev_fini(struct drm_device *dev)
 	dev_priv->fbdev = NULL;
 }
 
-#ifndef __NetBSD__		/* XXX fb suspend */
 void intel_fbdev_set_suspend(struct drm_device *dev, int state, bool synchronous)
 {
+#ifndef __NetBSD__		/* XXX fb suspend */
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_fbdev *ifbdev = dev_priv->fbdev;
 	struct fb_info *info;
@@ -838,8 +833,8 @@ void intel_fbdev_set_suspend(struct drm_device *dev, int state, bool synchronous
 
 	drm_fb_helper_set_suspend(&ifbdev->helper, state);
 	console_unlock();
-}
 #endif
+}
 
 void intel_fbdev_output_poll_changed(struct drm_device *dev)
 {

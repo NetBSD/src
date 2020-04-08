@@ -1,5 +1,5 @@
-/*	$Id: at91twivar.h,v 1.2 2008/07/03 01:15:39 matt Exp $	*/
-/*	$NetBSD: at91twivar.h,v 1.2 2008/07/03 01:15:39 matt Exp $	*/
+/*	$Id: at91twivar.h,v 1.2.86.1 2020/04/08 14:07:28 martin Exp $	*/
+/*	$NetBSD: at91twivar.h,v 1.2.86.1 2020/04/08 14:07:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -40,7 +40,6 @@ struct at91twi_softc {
 
 	int			sc_pid;		/* peripheral id	*/
 	struct i2c_controller	sc_i2c;		/* I2C device desc	*/
-	kmutex_t		sc_buslock;	/* bus lock		*/
 
 	void			*sc_ih;		/* interrupt handle	*/
 

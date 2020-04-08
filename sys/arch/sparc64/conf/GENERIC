@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.204.4.1 2019/06/10 22:06:47 christos Exp $
+# $NetBSD: GENERIC,v 1.204.4.2 2020/04/08 14:07:53 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.204.4.1 $"
+#ident		"GENERIC-$Revision: 1.204.4.2 $"
 
 maxusers	64
 
@@ -481,16 +481,12 @@ cas*	at pci? dev ? function ?	# Sun Cassini/Cassini+ Ethernet
 # XXX causes ICE
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-esh*	at pci? dev ? function ?	# Essential HIPPI card UT
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
-fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 gem*	at sbus? slot ? offset ?
 gsip*	at pci? dev ? function ?	# National Semiconductor DP83820 GigE
 ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
-# XXX lacks bus_dmamap_sync()
-#le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
@@ -639,9 +635,6 @@ ucom*	at uplcom? portno ?
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
 
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
-
 # USB Handspring Visor
 uvisor* at uhub? port ?
 ucom*	at uvisor?
@@ -683,9 +676,6 @@ pseudo-device	ppp
 
 ## PPP over Ethernet (RFC 2516)
 pseudo-device	pppoe
-
-## Starmode Radio IP, a special hardware network device.
-pseudo-device	strip
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
@@ -791,8 +781,6 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 #ray*	at pcmcia? function ?		# Raytheon Raylink (802.11) UT
 #sm*	at pcmcia? function ?		# Megahertz Ethernet UT
-# tr at pcmcia has problems with Cardbus bridges
-#tr*	at pcmcia? function ?		# TROPIC based Token-Ring UT
 #wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 #xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet UT
 #com*	at xirc?

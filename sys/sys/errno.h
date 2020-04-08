@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.40 2013/01/02 18:51:53 dsl Exp $	*/
+/*	$NetBSD: errno.h,v 1.40.38.1 2020/04/08 14:09:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -168,11 +168,15 @@
 #define	ENOATTR		93		/* Attribute not found */
 
 /* Realtime, XSI STREAMS option errors */
-#define	EMULTIHOP	94		/* Multihop attempted */ 
+#define	EMULTIHOP	94		/* Multihop attempted */
 #define	ENOLINK		95		/* Link has been severed */
 #define	EPROTO		96		/* Protocol error */
 
-#define	ELAST		96		/* Must equal largest errno */
+/* Robust mutexes */
+#define	EOWNERDEAD	97		/* Previous owner died */
+#define	ENOTRECOVERABLE	98		/* State not recoverable */
+
+#define	ELAST		98		/* Must equal largest errno */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 /* pseudo-errors returned inside kernel to modify return to process */

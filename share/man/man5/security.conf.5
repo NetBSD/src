@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.40 2013/11/06 19:37:06 spz Exp $
+.\"	$NetBSD: security.conf.5,v 1.40.26.1 2020/04/08 14:07:22 martin Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -282,6 +282,17 @@ for maintaining backup copies of files noted in
 and
 .Sy check_changelist
 instead of just keeping a current copy and a backup copy.
+.It Sy random_file
+Name of the entropy seed file used at boot.
+Default is
+.Pa /var/db/entropy-file
+as used by
+.Pa /etc/rc.d/random_seed .
+Set
+.Sy random_file
+to empty to disable saving a seed every time
+.Pa /etc/security
+runs.
 .El
 .Sh FILES
 .Bl -tag -width /etc/defaults/security.conf -compact

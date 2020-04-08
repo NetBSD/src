@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.20.4.1 2019/06/10 22:07:07 christos Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.20.4.2 2020/04/08 14:08:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.20.4.1 2019/06/10 22:07:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.20.4.2 2020/04/08 14:08:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ static const struct {
 	{ GPT_ENT_TYPE_VMWARE_RESERVED,		DKW_PTYPE_VMWRESV },
 	{ GPT_ENT_TYPE_MS_BASIC_DATA,		DKW_PTYPE_NTFS },
 	{ GPT_ENT_TYPE_LINUX_DATA,		DKW_PTYPE_EXT2FS },
+	{ GPT_ENT_TYPE_FREEBSD_ZFS,		DKW_PTYPE_ZFS },
 };
 
 static const char *

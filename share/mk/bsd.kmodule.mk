@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.59.14.1 2019/06/10 22:05:42 christos Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.59.14.2 2020/04/08 14:07:23 martin Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -37,7 +37,9 @@ CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
 # The real solution to this involves generating trampolines for those
 # relocations inside the loader and removing this workaround, as the
 # resulting code would be much faster.
-.if ${MACHINE_CPU} == "arm"
+.if ${MACHINE_CPU} == "aarch64"
+CFLAGS+=	-march=armv8-a+nofp+nosimd
+.elif ${MACHINE_CPU} == "arm"
 CFLAGS+=	-fno-common -fno-unwind-tables
 .elif ${MACHINE_CPU} == "hppa"
 CFLAGS+=	-mlong-calls
@@ -165,13 +167,20 @@ ${PROG}: ${OBJS} ${DPADD} ${KMODSCRIPT}
 ##### Install rules
 .if !target(kmodinstall)
 .if !defined(KMODULEDIR)
-_OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh -k
+.if ${KERNEL_DIR:Uno} == "yes"
+KMODULEDIR=	${DESTDIR}/netbsd/modules/${KMOD}
+_INST_DIRS=	${DESTDIR}/netbsd
+_INST_DIRS+=	${DESTDIR}/netbsd/modules
+_INST_DIRS+=	${DESTDIR}/netbsd/modules/${KMOD}
+.else
 # Ensure these are recorded properly in METALOG on unprived installes:
+_OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh -k
 KMODULEARCHDIR?= ${MACHINE}
 _INST_DIRS=	${DESTDIR}/stand/${KMODULEARCHDIR}
 _INST_DIRS+=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}
 _INST_DIRS+=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}/modules
 KMODULEDIR=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}/modules/${KMOD}
+.endif
 .endif
 _PROG:=		${KMODULEDIR}/${PROG} # installed path
 

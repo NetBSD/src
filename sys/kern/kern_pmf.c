@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.40 2018/04/08 11:46:13 mlelstv Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.40.2.1 2020/04/08 14:08:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.40 2018/04/08 11:46:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.40.2.1 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -351,6 +351,7 @@ shutdown_all(int how)
 	device_t curdev;
 	bool progress = false;
 
+	KERNEL_LOCK(1, NULL);
 	for (curdev = shutdown_first(&s); curdev != NULL;
 	     curdev = shutdown_next(&s)) {
 		aprint_debug(" shutting down %s, ", device_xname(curdev));
@@ -369,6 +370,7 @@ shutdown_all(int how)
 			aprint_debug("success.");
 		}
 	}
+	KERNEL_UNLOCK_ONE(NULL);
 	return progress;
 }
 

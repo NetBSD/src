@@ -1,4 +1,4 @@
-/*	$NetBSD: bio_30.c,v 1.3.4.2 2019/06/10 22:06:57 christos Exp $ */
+/*	$NetBSD: bio_30.c,v 1.3.4.3 2020/04/08 14:08:00 martin Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio_30.c,v 1.3.4.2 2019/06/10 22:06:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio_30.c,v 1.3.4.3 2020/04/08 14:08:00 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -96,7 +96,7 @@ void
 bio_30_init(void)
 {
 
-	MODULE_HOOK_SET(compat_bio_30_hook, "bio_30", compat_30_bio);
+	MODULE_HOOK_SET(compat_bio_30_hook, compat_30_bio);
 }
 
 void

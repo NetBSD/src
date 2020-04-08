@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.25.38.1 2019/06/10 22:06:56 christos Exp $      */
+/*      $NetBSD: xengnt.c,v 1.25.38.2 2020/04/08 14:07:59 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.25.38.1 2019/06/10 22:06:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.25.38.2 2020/04/08 14:07:59 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -330,59 +330,6 @@ xengnt_revoke_access(grant_ref_t entry)
 		    flags, 0);
 	} while (nflags != flags);
 	xengnt_free_entry(entry);
-}
-
-int
-xengnt_grant_transfer(domid_t dom, grant_ref_t *entryp)
-{
-	mutex_enter(&grant_lock);
-
-	*entryp = xengnt_get_entry();
-	if (__predict_false(*entryp == XENGNT_NO_ENTRY)) {
-		mutex_exit(&grant_lock);
-		return ENOMEM;
-	}
-
-	grant_table[*entryp].frame = 0;
-	grant_table[*entryp].domid = dom;
-	/*
-	 * ensure that the above values reach global visibility 
-	 * before permitting frame's transfer (done when we set flags)
-	 */
-	xen_rmb();
-	grant_table[*entryp].flags = GTF_accept_transfer;
-	mutex_exit(&grant_lock);
-	return 0;
-}
-
-paddr_t
-xengnt_revoke_transfer(grant_ref_t entry)
-{
-	paddr_t page;
-	uint16_t flags;
-
-	/* if the transfer has not started, free the entry and return 0 */
-	while (!((flags = grant_table[entry].flags) & GTF_transfer_committed)) {
-		if (xen_atomic_cmpxchg16(&grant_table[entry].flags,
-		    flags, 0) == flags ) {
-			xengnt_free_entry(entry);
-			return 0;
-		}
-		HYPERVISOR_yield();
-	}
-
-	/* If transfer in progress, wait for completion */
-	while (!((flags = grant_table[entry].flags) & GTF_transfer_completed))
-		HYPERVISOR_yield();
-
-	/* Read the frame number /after/ reading completion status. */
-	__insn_barrier();
-	page = grant_table[entry].frame;
-	if (page == 0)
-		printf("xengnt_revoke_transfer: guest sent pa 0\n");
-
-	xengnt_free_entry(entry);
-	return page;
 }
 
 int

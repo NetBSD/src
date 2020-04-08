@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.2.12.1 2020/04/08 14:03:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
@@ -236,7 +236,7 @@ validate_print(hx509_validate_ctx ctx, int flags, const char *fmt, ...)
 }
 
 /*
- * Dont Care, SHOULD critical, SHOULD NOT critical, MUST critical,
+ * Don't Care, SHOULD critical, SHOULD NOT critical, MUST critical,
  * MUST NOT critical
  */
 enum critical_flag { D_C = 0, S_C, S_N_C, M_C, M_N_C };

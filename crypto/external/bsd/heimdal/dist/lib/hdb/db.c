@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.2.12.1 2020/04/08 14:03:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -46,6 +46,7 @@
 typedef struct {
     HDB hdb;            /* generic members */
     int lock_fd;        /* DB-specific */
+    int do_sync;        /* DB-specific */
 } DB1_HDB;
 
 static krb5_error_code
@@ -75,6 +76,25 @@ DB_destroy(krb5_context context, HDB *db)
     ret = hdb_clear_master_key (context, db);
     free(db->hdb_name);
     free(db);
+    return ret;
+}
+
+static krb5_error_code
+DB_set_sync(krb5_context context, HDB *db, int on)
+{
+    DB1_HDB *db1 = (DB1_HDB *)db;
+    DB *d = (DB*)db->hdb_db;
+    krb5_error_code ret = 0;
+
+    db1->do_sync = on;
+    if (on) {
+        ret = (*d->sync)(d, 0);
+        if (ret == -1) {
+            ret = errno;
+            krb5_set_error_message(context, ret, "Database %s put sync error: %s",
+                                   db->hdb_name, strerror(ret));
+        }
+    }
     return ret;
 }
 
@@ -205,6 +225,7 @@ static krb5_error_code
 DB__put(krb5_context context, HDB *db, int replace,
 	krb5_data key, krb5_data value)
 {
+    DB1_HDB *db1 = (DB1_HDB *)db;
     DB *d = (DB*)db->hdb_db;
     DBT k, v;
     int code;
@@ -224,19 +245,14 @@ DB__put(krb5_context context, HDB *db, int replace,
     if(code == 1) {
 	return HDB_ERR_EXISTS;
     }
-    code = (*d->sync)(d, 0);
-    if (code == -1) {
-	code = errno;
-	krb5_set_error_message(context, code, "Database %s put sync error: %s",
-			       db->hdb_name, strerror(code));
-	return code;
-    }
-    return 0;
+
+    return db->hdb_set_sync(context, db, db1->do_sync);
 }
 
 static krb5_error_code
 DB__del(krb5_context context, HDB *db, krb5_data key)
 {
+    DB1_HDB *db1 = (DB1_HDB *)db;
     DB *d = (DB*)db->hdb_db;
     DBT k;
     krb5_error_code code;
@@ -252,14 +268,7 @@ DB__del(krb5_context context, HDB *db, krb5_data key)
 			       db->hdb_name, strerror(code));
 	return code;
     }
-    code = (*d->sync)(d, 0);
-    if (code == -1) {
-	code = errno;
-	krb5_set_error_message(context, code, "Database %s del sync error: %s",
-			       db->hdb_name, strerror(code));
-	return code;
-    }
-    return 0;
+    return db->hdb_set_sync(context, db, db1->do_sync);
 }
 
 static DB *
@@ -373,8 +382,10 @@ hdb_db1_create(krb5_context context, HDB **db,
     (*db)->hdb__put = DB__put;
     (*db)->hdb__del = DB__del;
     (*db)->hdb_destroy = DB_destroy;
+    (*db)->hdb_set_sync = DB_set_sync;
 
     (*db1)->lock_fd = -1;
+    (*db1)->do_sync = 1;
     return 0;
 }
 

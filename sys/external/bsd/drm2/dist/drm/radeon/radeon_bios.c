@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_bios.c,v 1.4.18.1 2019/06/10 22:08:26 christos Exp $	*/
+/*	$NetBSD: radeon_bios.c,v 1.4.18.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.4.18.1 2019/06/10 22:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.4.18.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <drm/drmP.h>
 #include "radeon_reg.h"
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.4.18.1 2019/06/10 22:08:26 christo
 
 #include <linux/slab.h>
 #include <linux/acpi.h>
-#include <linux/string.h>
 /*
  * BIOS.
  */

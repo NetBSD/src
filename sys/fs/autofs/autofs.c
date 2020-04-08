@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs.c,v 1.3 2018/01/09 16:19:39 christos Exp $	*/
+/*	$NetBSD: autofs.c,v 1.3.4.1 2020/04/08 14:08:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.3 2018/01/09 16:19:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.3.4.1 2020/04/08 14:08:48 martin Exp $");
 
 #include "autofs.h"
 
@@ -78,9 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.3 2018/01/09 16:19:39 christos Exp $");
 #include <sys/queue.h>
 #include <sys/signalvar.h>
 
-dev_type_open(autofs_open);
-dev_type_close(autofs_close);
-dev_type_ioctl(autofs_ioctl);
+static dev_type_open(autofs_open);
+static dev_type_close(autofs_close);
+static dev_type_ioctl(autofs_ioctl);
 
 const struct cdevsw autofs_cdevsw = {
 	.d_open = autofs_open,
@@ -376,8 +376,9 @@ autofs_trigger_one(struct autofs_node *anp, const char *component,
 
 	request_error = ar->ar_error;
 	if (request_error)
-		AUTOFS_WARN("request for %s completed with error %d",
-		    ar->ar_path, request_error);
+		AUTOFS_WARN("request for %s completed with error %d, "
+		    "pid %d (%s)", ar->ar_path, request_error,
+		    curproc->p_pid, curproc->p_comm);
 
 	wildcards = ar->ar_wildcards;
 
@@ -519,7 +520,7 @@ autofs_ioctl_done(struct autofs_daemon_done *add)
 	return 0;
 }
 
-int
+static int
 autofs_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
@@ -543,7 +544,7 @@ autofs_open(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 autofs_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
@@ -555,7 +556,7 @@ autofs_close(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 autofs_ioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 {
 

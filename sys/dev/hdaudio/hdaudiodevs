@@ -1,4 +1,4 @@
-$NetBSD: hdaudiodevs,v 1.2 2015/05/30 14:12:42 jmcneill Exp $
+$NetBSD: hdaudiodevs,v 1.2.20.1 2020/04/08 14:08:05 martin Exp $
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,16 +28,21 @@ $NetBSD: hdaudiodevs,v 1.2 2015/05/30 14:12:42 jmcneill Exp $
  * SUCH DAMAGE.
  */
 
-/* The following is duplicated from pci except SIGMATEL* and CMEDIA */
-vendor	ATI		0x1002	ATI Technologies
+/*
+ * Try to keep vendor and product names 15 characters or less. They are
+ * used by the AUDIO_GETDEV ioctl and copied into buffers that are
+ * constrained by MAX_AUDIO_DEV_LEN (sys/audioio.h).
+ */
+
+vendor	ATI		0x1002	ATI
 vendor	NVIDIA		0x10de	NVIDIA
-vendor	REALTEK		0x10ec	Realtek Semiconductor
-vendor	VIATECH		0x1106	VIA TeCHnologies
+vendor	REALTEK		0x10ec	Realtek
+vendor	VIATECH		0x1106	VIA
 vendor	SIGMATEL2	0x111d	Sigmatel
 vendor	ANALOG		0x11d4	Analog Devices
-vendor	CONEXANT	0x14f1	Conexant Systems
+vendor	CONEXANT	0x14f1	Conexant
 vendor	VMWARE		0x15ad	VMware
-vendor	CMEDIA		0x434d	C-Media Electronics
+vendor	CMEDIA		0x434d	C-Media
 vendor	INTEL		0x8086	Intel
 vendor	SIGMATEL	0x8384	Sigmatel
 

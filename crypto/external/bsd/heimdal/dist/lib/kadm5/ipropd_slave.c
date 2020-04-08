@@ -1,4 +1,4 @@
-/*	$NetBSD: ipropd_slave.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: ipropd_slave.c,v 1.2.12.1 2020/04/08 14:03:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "iprop.h"
 
-__RCSID("$NetBSD: ipropd_slave.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
+__RCSID("$NetBSD: ipropd_slave.c,v 1.2.12.1 2020/04/08 14:03:13 martin Exp $");
 
 static const char *config_name = "ipropd-slave";
 
@@ -514,6 +514,8 @@ receive_everything(krb5_context context, int fd,
     if (ret)
         krb5_err(context, IPROPD_RESTART, ret, "db->open");
 
+    (void) mydb->hdb_set_sync(context, mydb, 0);
+
     sp = NULL;
     krb5_data_zero(&data);
     do {
@@ -565,6 +567,9 @@ receive_everything(krb5_context context, int fd,
 
     reinit_log(context, server_context, vno);
 
+    ret = mydb->hdb_set_sync(context, mydb, 1);
+    if (ret)
+        krb5_err(context, IPROPD_RESTART_SLOW, ret, "failed to sync the received HDB");
     ret = mydb->hdb_close(context, mydb);
     if (ret)
         krb5_err(context, IPROPD_RESTART_SLOW, ret, "db->close");

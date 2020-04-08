@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.16 2015/11/18 18:22:42 christos Exp $	*/
+/*	$NetBSD: hash.h,v 1.16.16.1 2020/04/08 14:07:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -156,9 +156,9 @@ typedef struct htab	 {		/* Memory resident data structure */
 #define BITS_PER_MAP	32
 
 /* Given the address of the beginning of a big map, clear/set the nth bit */
-#define CLRBIT(A, N)	((A)[(N)/BITS_PER_MAP] &= ~(1<<((N)%BITS_PER_MAP)))
-#define SETBIT(A, N)	((A)[(N)/BITS_PER_MAP] |= (1<<((N)%BITS_PER_MAP)))
-#define ISSET(A, N)	((A)[(N)/BITS_PER_MAP] & (1<<((N)%BITS_PER_MAP)))
+#define CLRBIT(A, N)	((A)[(N)/BITS_PER_MAP] &= ~(1U<<((N)%BITS_PER_MAP)))
+#define SETBIT(A, N)	((A)[(N)/BITS_PER_MAP] |= (1U<<((N)%BITS_PER_MAP)))
+#define ISSET(A, N)	((A)[(N)/BITS_PER_MAP] & (1U<<((N)%BITS_PER_MAP)))
 
 /* Overflow management */
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.14 2009/03/25 01:26:12 darran Exp $ */
+/* $NetBSD: zlib.h,v 1.14.64.1 2020/04/08 14:08:57 martin Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.4, March 11th, 2002
@@ -43,7 +43,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.h,v 1.14 2009/03/25 01:26:12 darran Exp $ */
+/* @(#) $Id: zlib.h,v 1.14.64.1 2020/04/08 14:08:57 martin Exp $ */
 
 #ifndef ZCONF_H
 #define ZCONF_H
@@ -135,6 +135,7 @@
 #if defined(__MWERKS__) || defined(applec) ||defined(THINK_C) ||defined(__SC__)
 #  define NO_DUMMY_DECL
 #endif
+#define NO_DUMMY_DECL
 
 /* Old Borland C incorrectly complains about missing returns: */
 #if defined(__BORLANDC__) && (__BORLANDC__ < 0x500)

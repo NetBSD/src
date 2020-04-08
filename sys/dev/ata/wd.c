@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.439.2.1 2019/06/10 22:07:06 christos Exp $ */
+/*	$NetBSD: wd.c,v 1.439.2.2 2020/04/08 14:08:03 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.439.2.1 2019/06/10 22:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.439.2.2 2020/04/08 14:08:03 martin Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -232,7 +232,7 @@ static void bad144intern(struct wd_softc *);
 
 #define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
 
-#define	WD_QUIRK_FMT "\20\1SPLIT_MOD15_WRITE\2FORCE_LBA48"
+#define	WD_QUIRK_FMT "\20\1SPLIT_MOD15_WRITE"
 
 /*
  * Quirk table for IDE drives.  Put more-specific matches first, since
@@ -259,12 +259,9 @@ static const struct wd_quirk {
 	 * Seagate Barracuda Serial ATA V family.
 	 *
 	 */
-	{ "ST3120023AS",
-	  WD_QUIRK_SPLIT_MOD15_WRITE },
-	{ "ST380023AS",
-	  WD_QUIRK_SPLIT_MOD15_WRITE },
-	{ "ST360015AS",
-	  WD_QUIRK_SPLIT_MOD15_WRITE },
+	{ "ST3120023AS", WD_QUIRK_SPLIT_MOD15_WRITE },
+	{ "ST380023AS", WD_QUIRK_SPLIT_MOD15_WRITE },
+	{ "ST360015AS", WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ NULL,
 	  0 }
 };
@@ -430,16 +427,40 @@ wdattach(device_t parent, device_t self, void *aux)
 	} else {
 		wd->sc_blksize = 512;
 	}
+	wd->sc_sectoralign.dsa_firstaligned = 0;
+	wd->sc_sectoralign.dsa_alignment = 1;
+	if ((wd->sc_params.atap_secsz & ATA_SECSZ_VALID_MASK) == ATA_SECSZ_VALID
+	    && ((wd->sc_params.atap_secsz & ATA_SECSZ_LPS) != 0)) {
+		wd->sc_sectoralign.dsa_alignment = 1 <<
+		    (wd->sc_params.atap_secsz & ATA_SECSZ_LPS_SZMSK);
+		if ((wd->sc_params.atap_logical_align & ATA_LA_VALID_MASK) ==
+		    ATA_LA_VALID) {
+			wd->sc_sectoralign.dsa_firstaligned =
+			    (wd->sc_sectoralign.dsa_alignment -
+				(wd->sc_params.atap_logical_align &
+				    ATA_LA_MASK));
+		}
+	}
 	wd->sc_capacity512 = (wd->sc_capacity * wd->sc_blksize) / DEV_BSIZE;
 	format_bytes(pbuf, sizeof(pbuf), wd->sc_capacity * wd->sc_blksize);
 	aprint_normal_dev(self, "%s, %d cyl, %d head, %d sec, "
-	    "%d bytes/sect x %llu sectors\n",
+	    "%d bytes/sect x %llu sectors",
 	    pbuf,
 	    (wd->sc_flags & WDF_LBA) ? (int)(wd->sc_capacity /
 		(wd->sc_params.atap_heads * wd->sc_params.atap_sectors)) :
 		wd->sc_params.atap_cylinders,
 	    wd->sc_params.atap_heads, wd->sc_params.atap_sectors,
 	    wd->sc_blksize, (unsigned long long)wd->sc_capacity);
+	if (wd->sc_sectoralign.dsa_alignment != 1) {
+		aprint_normal(" (%d bytes/physsect",
+		    wd->sc_sectoralign.dsa_alignment & wd->sc_blksize);
+		if (wd->sc_sectoralign.dsa_firstaligned != 0) {
+			aprint_normal("; first aligned sector: %jd",
+			    (intmax_t)wd->sc_sectoralign.dsa_firstaligned);
+		}
+		aprint_normal(")");
+	}
+	aprint_normal("\n");
 
 	ATADEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
 	    device_xname(self), wd->sc_params.atap_dmatiming_mimi,
@@ -983,7 +1004,7 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 		/*
 		 * the disk or controller sometimes report a complete
 		 * xfer, when there has been an error. This is wrong,
-		 * assume nothing got transfered in this case
+		 * assume nothing got transferred in this case
 		 */
 		bp->b_resid = bp->b_bcount;
 	}
@@ -1409,6 +1430,27 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return(error1);
 		}
 
+	case DIOCGSECTORALIGN: {
+		struct disk_sectoralign *dsa = addr;
+		int part = WDPART(dev);
+
+		*dsa = wd->sc_sectoralign;
+		if (part != RAW_PART) {
+			struct disklabel *lp = dksc->sc_dkdev.dk_label;
+			daddr_t offset = lp->d_partitions[part].p_offset;
+			uint32_t r = offset % dsa->dsa_alignment;
+
+			if (r < dsa->dsa_firstaligned)
+				dsa->dsa_firstaligned = dsa->dsa_firstaligned
+				    - r;
+			else
+				dsa->dsa_firstaligned = (dsa->dsa_firstaligned
+				    + dsa->dsa_alignment) - r;
+		}
+
+		return 0;
+	}
+
 	default:
 		return dk_ioctl(dksc, dev, cmd, addr, flag, l);
 	}
@@ -1525,7 +1567,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		return (ENXIO);
 	dksc = &wd->sc_dksc;
 
-	return dk_dump(dksc, dev, blkno, va, size);
+	return dk_dump(dksc, dev, blkno, va, size, 0);
 }
 
 static int

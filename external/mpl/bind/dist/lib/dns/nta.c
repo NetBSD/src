@@ -1,4 +1,4 @@
-/*	$NetBSD: nta.c,v 1.3.2.2 2019/06/10 22:04:35 christos Exp $	*/
+/*	$NetBSD: nta.c,v 1.3.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -331,7 +331,7 @@ nta_create(dns_ntatable_t *ntatable, const dns_name_t *name,
 	isc_refcount_init(&nta->refcount, 1);
 
 	nta->name = dns_fixedname_initname(&nta->fn);
-	dns_name_copy(name, nta->name, NULL);
+	dns_name_copynf(name, nta->name);
 
 	nta->magic = NTA_MAGIC;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.54.2.1 2019/06/10 22:06:28 christos Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.54.2.2 2020/04/08 14:07:44 martin Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.54.2.1 2019/06/10 22:06:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.54.2.2 2020/04/08 14:07:44 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -441,7 +441,7 @@ bmac_intr(void *v)
 	if (stat & IntFrameSent) {
 		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 		sc->sc_if.if_timer = 0;
-		sc->sc_if.if_opackets++;
+		if_statinc(&sc->sc_if, if_opackets);
 		if_schedule_deferred_start(&sc->sc_if);
 	}
 
@@ -495,7 +495,7 @@ bmac_rint(void *v)
 
 		m = bmac_get(sc, data, datalen);
 		if (m == NULL) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
 
@@ -581,7 +581,7 @@ bmac_start(struct ifnet *ifp)
 
 		/* 5 seconds to watch for failing to transmit */
 		ifp->if_timer = 5;
-		ifp->if_opackets++;		/* # of pkts */
+		if_statinc(ifp, if_opackets);		/* # of pkts */
 
 		bmac_transmit_packet(sc, sc->sc_txbuf, tlen);
 	}
@@ -685,7 +685,7 @@ bmac_watchdog(struct ifnet *ifp)
 	bmac_reset_bits(sc, TXCFG, TxMACEnable);
 
 	printf("%s: device timeout\n", ifp->if_xname);
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	bmac_reset(sc);
 }

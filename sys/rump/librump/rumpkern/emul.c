@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.185.4.1 2019/06/10 22:09:53 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.185.4.2 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.185.4.1 2019/06/10 22:09:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.185.4.2 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -64,9 +64,8 @@ struct vnode *rootvp;
 dev_t rootdev = NODEV;
 
 const int schedppq = 1;
-bool mp_online = false;
-struct timespec boottime;
 int cold = 1;
+int shutting_down;
 int boothowto = AB_SILENT;
 struct tty *constty;
 
@@ -416,11 +415,4 @@ cpu_reboot(int howto, char *bootstr)
  out:
 	rump_sysproxy_fini(finiarg);
 	rumpuser_exit(ruhow);
-}
-
-const char *
-cpu_getmodel(void)
-{
-
-	return "rumpcore (virtual)";
 }

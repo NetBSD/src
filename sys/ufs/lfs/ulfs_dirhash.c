@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.c,v 1.17 2016/06/20 01:53:38 dholland Exp $	*/
+/*	$NetBSD: ulfs_dirhash.c,v 1.17.18.1 2020/04/08 14:09:04 martin Exp $	*/
 /*  from NetBSD: ufs_dirhash.c,v 1.37 2014/12/20 00:28:05 christos Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.17 2016/06/20 01:53:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.17.18.1 2020/04/08 14:09:04 martin Exp $");
 
 /*
  * This implements a hash-based lookup scheme for ULFS directories.
@@ -214,10 +214,8 @@ ulfsdirhash_build(struct inode *ip)
 	bmask = VFSTOULFS(vp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
 	pos = 0;
 	while (pos < ip->i_size) {
-		if ((curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-		    != 0) {
-			preempt();
-		}
+		preempt_point();
+
 		/* If necessary, get the next directory block. */
 		if ((pos & bmask) == 0) {
 			if (bp != NULL)

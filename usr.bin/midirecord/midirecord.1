@@ -1,6 +1,6 @@
-.\"	$NetBSD: midirecord.1,v 1.6 2016/12/11 08:40:10 mrg Exp $
+.\"	$NetBSD: midirecord.1,v 1.6.14.1 2020/04/08 14:09:17 martin Exp $
 .\"
-.\" Copyright (c) 1998, 1999, 2001, 2002, 2010, 2014, 2015 Matthew R. Green
+.\" Copyright (c) 1998, 1999, 2001, 2002, 2010, 2014, 2015, 2020 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 22, 2015
+.Dd March 13, 2020
 .Dt MIDIRECORD 1
 .Os
 .Sh NAME
@@ -110,6 +110,35 @@ Be verbose.
 .It Ev MIDIDEVICE
 the midi device to be used.
 .El
+.Sh EXAMPLES
+You can use
+.Nm
+to observe activity on a MIDI bus using the
+.Fl D
+and
+.Fl V
+options and learn about device-specific MIDI messages.
+.Pp
+For instance, to determine the MIDI messages needed to switch to ARP mode
+on a Korg minilogue XD synthesizer, which does not document any control
+change or non-registered parameter numbers for this function but does
+document that ARP is part of the
+.Dq VOICE TYPE MODE ,
+parameter these messages were seen:
+.Pp
+.Dl midi_event_chn_common_to_output:444: MIDI_CTL_CHANGE: channel 0 ctrl 62 val 10
+.Dl midi_event_chn_common_to_output:444: MIDI_CTL_CHANGE: channel 0 ctrl 6 val 1
+.Pp
+which shows that CC#62 (hexadecimal) was set to value 10 (also
+hexadecimal), and that CC#6 was set to value 1.
+As CC#62 is also the least significant byte of the non-registered
+parameter number, we can guess that NRPN 0,62 controls the
+.Dq VOICE MODE TYPE
+parameter documented in the synthesizer manual, and that the value 1
+set to CC#6 (Control Data Entry MSB) turns on ARP mode.
+For completeness, setting both CC#62 and CC#63 for the parameter
+number, as well as CC#6 and CC#26 (Control Data Entry MSB) to 0
+provides a complete NRPN control message.
 .Sh SEE ALSO
 .Xr midiplay 1 ,
 .Xr midi 4 ,
@@ -129,3 +158,7 @@ SYSEX, LOCAL and FULLSIZE messages are not currently handled, but the
 .Nx
 .Xr sequencer 4
 device does not generate them.
+.Pp
+.Nm
+will hang after the timeout waiting for the very next message before
+it will exit and finish writing the file.

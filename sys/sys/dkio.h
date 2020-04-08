@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.24.14.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: dkio.h,v 1.24.14.2 2020/04/08 14:09:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -132,5 +132,8 @@
 
 		/* mass removal */
 #define	DIOCRMWEDGES	_IOR('d', 134, int)	/* remove all wedges */
+
+		/* sector alignment */
+#define	DIOCGSECTORALIGN _IOR('d', 135, struct disk_sectoralign)
 
 #endif /* _SYS_DKIO_H_ */

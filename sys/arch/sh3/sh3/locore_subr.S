@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.56.4.1 2019/06/10 22:06:45 christos Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.56.4.2 2020/04/08 14:07:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.56.4.1 2019/06/10 22:06:45 christos Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.56.4.2 2020/04/08 14:07:53 martin Exp $")
 
 
 /*
@@ -86,13 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.56.4.1 2019/06/10 22:06:45 christo
  *	Return olwp (in the nlwp context).
  */
 ENTRY(cpu_switchto)
-	tst	r4, r4			! olwp can be NULL
-	bt	.L_saved
-
 	!! save old lwp's context to switchframe
 	mov.l	@(L_MD_PCB, r4), r1	! olwp->l_md.md_pcb
 	SAVEPCB(r1)
-.L_saved:
+
 	!! free to use callee-save registers now
 
 	mov.l	.L_curlwp, r2

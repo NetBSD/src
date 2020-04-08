@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: frame.h,v 1.1.22.1 2020/04/08 14:07:50 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 struct trapframe {
 	struct reg tf_regs __aligned(8);
-	register_t tf_badvaddr;	
+	register_t tf_badvaddr;
 	register_t tf_pc;
 	uint32_t tf_cause;		// 32-bit register
 	uint32_t tf_sr;			// 32-bit register

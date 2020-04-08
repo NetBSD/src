@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.6 2014/03/07 07:17:54 matt Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.6.26.1 2020/04/08 14:03:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ ENTRY(_atomic_##op##_32)	; \
 	mr	%r10,%r3	; \
 1:	lwarx	%r3,0,%r10	; \
 	insn	%r5,%r3,arg	; \
+	IBM405_ERRATA77_DCBT(0,%r10) ; \
 	stwcx.	%r5,0,%r10	; \
 	beqlr+			; \
 	b	1b		; \
@@ -71,6 +72,7 @@ ENTRY(_atomic_##op##_32_nv)	; \
 	mr	%r10,%r3	; \
 1:	lwarx	%r3,0,%r10	; \
 	insn	%r3,%r3,arg	; \
+	IBM405_ERRATA77_DCBT(0,%r10) ; \
 	stwcx.	%r3,0,%r10	; \
 	beqlr+			; \
 	b	1b		; \

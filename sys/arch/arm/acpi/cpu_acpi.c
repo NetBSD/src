@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.6.2.2 2019/06/10 22:05:50 christos Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.6.2.3 2020/04/08 14:07:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.6.2.2 2019/06/10 22:05:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.6.2.3 2020/04/08 14:07:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.6.2.2 2019/06/10 22:05:50 christos Ex
 #include <arm/armreg.h>
 #include <arm/cpu.h>
 #include <arm/cpufunc.h>
+#include <arm/cpuvar.h>
 #include <arm/locore.h>
 
 #include <arm/arm/psci.h>
@@ -55,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.6.2.2 2019/06/10 22:05:50 christos Ex
 #if NTPROF > 0
 #include <dev/tprof/tprof_armv8.h>
 #endif
-
-extern struct cpu_info cpu_info_store[];
 
 static int	cpu_acpi_match(device_t, cfdata_t, void *);
 static void	cpu_acpi_attach(device_t, device_t, void *);

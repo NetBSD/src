@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_tests.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: postscreen_tests.c,v 1.2.12.1 2020/04/08 14:06:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -81,6 +81,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -135,6 +140,7 @@
 
 void    psc_new_tests(PSC_STATE *state)
 {
+    time_t *expire_time = state->client_info->expire_time;
 
     /*
      * Give all tests a PSC_TIME_STAMP_NEW time stamp, so that we can later
@@ -142,11 +148,11 @@ void    psc_new_tests(PSC_STATE *state)
      * write a cache entry to the database, any new-but-disabled tests will
      * get a PSC_TIME_STAMP_DISABLED time stamp.
      */
-    state->pregr_stamp = PSC_TIME_STAMP_NEW;
-    state->dnsbl_stamp = PSC_TIME_STAMP_NEW;
-    state->pipel_stamp = PSC_TIME_STAMP_NEW;
-    state->nsmtp_stamp = PSC_TIME_STAMP_NEW;
-    state->barlf_stamp = PSC_TIME_STAMP_NEW;
+    expire_time[PSC_TINDX_PREGR] = PSC_TIME_STAMP_NEW;
+    expire_time[PSC_TINDX_DNSBL] = PSC_TIME_STAMP_NEW;
+    expire_time[PSC_TINDX_PIPEL] = PSC_TIME_STAMP_NEW;
+    expire_time[PSC_TINDX_NSMTP] = PSC_TIME_STAMP_NEW;
+    expire_time[PSC_TINDX_BARLF] = PSC_TIME_STAMP_NEW;
 
     /*
      * Determine what tests need to be completed.
@@ -192,7 +198,7 @@ void    psc_parse_tests(PSC_STATE *state,
 
 void    psc_todo_tests(PSC_STATE *state, time_t time_value)
 {
-    time_t *time_stamps = state->client_info->expire_time;
+    time_t *expire_time = state->client_info->expire_time;
     time_t *sp;
 
     /*
@@ -205,7 +211,7 @@ void    psc_todo_tests(PSC_STATE *state, time_t time_value)
      * enabled tests, but the remote SMTP client has not yet passed all those
      * tests.
      */
-    for (sp = time_stamps; sp < time_stamps + PSC_TINDX_COUNT; sp++) {
+    for (sp = expire_time; sp < expire_time + PSC_TINDX_COUNT; sp++) {
 	if (*sp == PSC_TIME_STAMP_NEW)
 	    state->flags |= PSC_STATE_FLAG_NEW;
     }
@@ -214,15 +220,15 @@ void    psc_todo_tests(PSC_STATE *state, time_t time_value)
      * Don't flag disabled tests as "todo", because there would be no way to
      * make those bits go away.
      */
-    if (PSC_PREGR_TEST_ENABLE() && time_value > state->pregr_stamp)
+    if (PSC_PREGR_TEST_ENABLE() && time_value > expire_time[PSC_TINDX_PREGR])
 	state->flags |= PSC_STATE_FLAG_PREGR_TODO;
-    if (PSC_DNSBL_TEST_ENABLE() && time_value > state->dnsbl_stamp)
+    if (PSC_DNSBL_TEST_ENABLE() && time_value > expire_time[PSC_TINDX_DNSBL])
 	state->flags |= PSC_STATE_FLAG_DNSBL_TODO;
-    if (var_psc_pipel_enable && time_value > state->pipel_stamp)
+    if (var_psc_pipel_enable && time_value > expire_time[PSC_TINDX_PIPEL])
 	state->flags |= PSC_STATE_FLAG_PIPEL_TODO;
-    if (var_psc_nsmtp_enable && time_value > state->nsmtp_stamp)
+    if (var_psc_nsmtp_enable && time_value > expire_time[PSC_TINDX_NSMTP])
 	state->flags |= PSC_STATE_FLAG_NSMTP_TODO;
-    if (var_psc_barlf_enable && time_value > state->barlf_stamp)
+    if (var_psc_barlf_enable && time_value > expire_time[PSC_TINDX_BARLF])
 	state->flags |= PSC_STATE_FLAG_BARLF_TODO;
 
     /*
@@ -237,15 +243,15 @@ void    psc_todo_tests(PSC_STATE *state, time_t time_value)
 	&& var_psc_refresh_time > 0) {
 	time_t  refresh_time = time_value + var_psc_refresh_time;
 
-	if (PSC_PREGR_TEST_ENABLE() && refresh_time > state->pregr_stamp)
+	if (PSC_PREGR_TEST_ENABLE() && refresh_time > expire_time[PSC_TINDX_PREGR])
 	    state->flags |= PSC_STATE_FLAG_PREGR_TODO;
-	if (PSC_DNSBL_TEST_ENABLE() && refresh_time > state->dnsbl_stamp)
+	if (PSC_DNSBL_TEST_ENABLE() && refresh_time > expire_time[PSC_TINDX_DNSBL])
 	    state->flags |= PSC_STATE_FLAG_DNSBL_TODO;
-	if (var_psc_pipel_enable && refresh_time > state->pipel_stamp)
+	if (var_psc_pipel_enable && refresh_time > expire_time[PSC_TINDX_PIPEL])
 	    state->flags |= PSC_STATE_FLAG_PIPEL_TODO;
-	if (var_psc_nsmtp_enable && refresh_time > state->nsmtp_stamp)
+	if (var_psc_nsmtp_enable && refresh_time > expire_time[PSC_TINDX_NSMTP])
 	    state->flags |= PSC_STATE_FLAG_NSMTP_TODO;
-	if (var_psc_barlf_enable && refresh_time > state->barlf_stamp)
+	if (var_psc_barlf_enable && refresh_time > expire_time[PSC_TINDX_BARLF])
 	    state->flags |= PSC_STATE_FLAG_BARLF_TODO;
     }
 #endif
@@ -273,6 +279,7 @@ void    psc_todo_tests(PSC_STATE *state, time_t time_value)
 char   *psc_print_tests(VSTRING *buf, PSC_STATE *state)
 {
     const char *myname = "psc_print_tests";
+    time_t *expire_time = state->client_info->expire_time;
 
     /*
      * Sanity check.
@@ -285,23 +292,23 @@ char   *psc_print_tests(VSTRING *buf, PSC_STATE *state)
      * with "pass new" when some disabled test becomes enabled at some later
      * time.
      */
-    if (PSC_PREGR_TEST_ENABLE() == 0 && state->pregr_stamp == PSC_TIME_STAMP_NEW)
-	state->pregr_stamp = PSC_TIME_STAMP_DISABLED;
-    if (PSC_DNSBL_TEST_ENABLE() == 0 && state->dnsbl_stamp == PSC_TIME_STAMP_NEW)
-	state->dnsbl_stamp = PSC_TIME_STAMP_DISABLED;
-    if (var_psc_pipel_enable == 0 && state->pipel_stamp == PSC_TIME_STAMP_NEW)
-	state->pipel_stamp = PSC_TIME_STAMP_DISABLED;
-    if (var_psc_nsmtp_enable == 0 && state->nsmtp_stamp == PSC_TIME_STAMP_NEW)
-	state->nsmtp_stamp = PSC_TIME_STAMP_DISABLED;
-    if (var_psc_barlf_enable == 0 && state->barlf_stamp == PSC_TIME_STAMP_NEW)
-	state->barlf_stamp = PSC_TIME_STAMP_DISABLED;
+    if (PSC_PREGR_TEST_ENABLE() == 0 && expire_time[PSC_TINDX_PREGR] == PSC_TIME_STAMP_NEW)
+	expire_time[PSC_TINDX_PREGR] = PSC_TIME_STAMP_DISABLED;
+    if (PSC_DNSBL_TEST_ENABLE() == 0 && expire_time[PSC_TINDX_DNSBL] == PSC_TIME_STAMP_NEW)
+	expire_time[PSC_TINDX_DNSBL] = PSC_TIME_STAMP_DISABLED;
+    if (var_psc_pipel_enable == 0 && expire_time[PSC_TINDX_PIPEL] == PSC_TIME_STAMP_NEW)
+	expire_time[PSC_TINDX_PIPEL] = PSC_TIME_STAMP_DISABLED;
+    if (var_psc_nsmtp_enable == 0 && expire_time[PSC_TINDX_NSMTP] == PSC_TIME_STAMP_NEW)
+	expire_time[PSC_TINDX_NSMTP] = PSC_TIME_STAMP_DISABLED;
+    if (var_psc_barlf_enable == 0 && expire_time[PSC_TINDX_BARLF] == PSC_TIME_STAMP_NEW)
+	expire_time[PSC_TINDX_BARLF] = PSC_TIME_STAMP_DISABLED;
 
     vstring_sprintf(buf, "%lu;%lu;%lu;%lu;%lu",
-		    (unsigned long) state->pregr_stamp,
-		    (unsigned long) state->dnsbl_stamp,
-		    (unsigned long) state->pipel_stamp,
-		    (unsigned long) state->nsmtp_stamp,
-		    (unsigned long) state->barlf_stamp);
+		    (unsigned long) expire_time[PSC_TINDX_PREGR],
+		    (unsigned long) expire_time[PSC_TINDX_DNSBL],
+		    (unsigned long) expire_time[PSC_TINDX_PIPEL],
+		    (unsigned long) expire_time[PSC_TINDX_NSMTP],
+		    (unsigned long) expire_time[PSC_TINDX_BARLF]);
     return (STR(buf));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.43.2.1 2019/06/10 22:06:20 christos Exp $	*/
+/*	$NetBSD: spl.S,v 1.43.2.2 2020/04/08 14:07:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.43.2.1 2019/06/10 22:06:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.43.2.2 2020/04/08 14:07:40 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -399,7 +399,6 @@ IDTVEC_END(softintr)
  */
 ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
-	movl	$0,L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
 	cli
 	jmp	*%esi			/* back to splx/doreti */
 END(softintr_ret)

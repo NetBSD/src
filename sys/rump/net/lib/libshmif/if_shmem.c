@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.75.2.1 2019/06/10 22:09:55 christos Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.75.2.2 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.75.2.1 2019/06/10 22:09:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.75.2.2 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -101,7 +101,7 @@ struct shmif_sc {
 	struct lwp *sc_rcvl;
 	bool sc_dying;
 
-	uint64_t sc_uuid;
+	uint64_t sc_uid;
 };
 
 static void shmif_rcv(void *);
@@ -163,16 +163,16 @@ allocif(int unit, struct shmif_sc **scp)
 	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0xa0, 0x00, 0x00, 0x00, 0x00 };
 	struct shmif_sc *sc;
 	struct ifnet *ifp;
-	uint32_t randnum;
+	uint64_t randnum;
 	int error;
 
-	randnum = cprng_fast32();
-	memcpy(&enaddr[2], &randnum, sizeof(randnum));
+	randnum = cprng_strong64();
+	memcpy(&enaddr[2], &randnum, 4);
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	sc->sc_memfd = -1;
 	sc->sc_unit = unit;
-	sc->sc_uuid = cprng_fast64();
+	sc->sc_uid = randnum;
 
 	ifp = &sc->sc_ec.ec_if;
 
@@ -561,7 +561,7 @@ shmif_start(struct ifnet *ifp)
 
 		m = ether_sw_offload_tx(ifp, m);
 		if (m == NULL) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			break;
 		}
 
@@ -605,7 +605,7 @@ shmif_snd(struct ifnet *ifp, struct mbuf *m0)
 	sp.sp_len = pktsize;
 	sp.sp_sec = tv.tv_sec;
 	sp.sp_usec = tv.tv_usec;
-	sp.sp_sender = sc->sc_uuid;
+	sp.sp_sender = sc->sc_uid;
 
 	bpf_mtap(ifp, m0, BPF_D_OUT);
 
@@ -630,7 +630,7 @@ shmif_snd(struct ifnet *ifp, struct mbuf *m0)
 	shmif_unlockbus(busmem);
 
 	m_freem(m0);
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	DPRINTF(("shmif_start: send %d bytes at off %d\n", pktsize,
 	    busmem->shm_last));
@@ -798,7 +798,7 @@ shmif_rcv(void *arg)
 		 * Test if we want to pass the packet upwards
 		 */
 		eth = mtod(m, struct ether_header *);
-		if (sp.sp_sender == sc->sc_uuid) {
+		if (sp.sp_sender == sc->sc_uid) {
 			passup = false;
 		} else if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) == 0) {

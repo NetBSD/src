@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_guc_submission.c,v 1.8.6.2 2019/06/10 22:08:05 christos Exp $	*/
+/*	$NetBSD: i915_guc_submission.c,v 1.8.6.3 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -24,7 +24,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_guc_submission.c,v 1.8.6.2 2019/06/10 22:08:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_guc_submission.c,v 1.8.6.3 2020/04/08 14:08:23 martin Exp $");
 
 #include <linux/bitmap.h>
 #include <linux/firmware.h>
@@ -194,7 +194,7 @@ static void guc_init_doorbell(struct intel_guc *guc,
 	void *base;
 
 	base = kmap_atomic(i915_gem_object_get_page(client->client_obj, 0));
-	doorbell = (void *)((char *)base + client->doorbell_offset);
+	doorbell = base + client->doorbell_offset;
 
 	doorbell->db_status = 1;
 	doorbell->cookie = 0;
@@ -211,7 +211,7 @@ static int guc_ring_doorbell(struct i915_guc_client *gc)
 	int attempt = 2, ret = -EAGAIN;
 
 	base = kmap_atomic(i915_gem_object_get_page(gc->client_obj, 0));
-	desc = (void *)((char *)base + gc->proc_desc_offset);
+	desc = base + gc->proc_desc_offset;
 
 	/* Update the tail so it is visible to GuC */
 	desc->tail = gc->wq_tail;
@@ -227,7 +227,7 @@ static int guc_ring_doorbell(struct i915_guc_client *gc)
 		db_exc.cookie = 1;
 
 	/* pointer of current doorbell cacheline */
-	db = (void *)((char *)base + gc->doorbell_offset);
+	db = base + gc->doorbell_offset;
 
 	while (attempt--) {
 		/* lets ring the doorbell */
@@ -270,7 +270,7 @@ static void guc_disable_doorbell(struct intel_guc *guc,
 	int value;
 
 	base = kmap_atomic(i915_gem_object_get_page(client->client_obj, 0));
-	doorbell = (void *)((char *)base + client->doorbell_offset);
+	doorbell = base + client->doorbell_offset;
 
 	doorbell->db_status = 0;
 
@@ -361,7 +361,7 @@ static void guc_init_proc_desc(struct intel_guc *guc,
 	void *base;
 
 	base = kmap_atomic(i915_gem_object_get_page(client->client_obj, 0));
-	desc = (void *)((char *)base + client->proc_desc_offset);
+	desc = base + client->proc_desc_offset;
 
 	memset(desc, 0, sizeof(*desc));
 
@@ -560,7 +560,7 @@ static int guc_get_workqueue_space(struct i915_guc_client *gc, u32 *offset)
 	int ret = 0, timeout_counter = 200;
 
 	base = kmap_atomic(i915_gem_object_get_page(gc->client_obj, 0));
-	desc = (void *)((char *)base + gc->proc_desc_offset);
+	desc = base + gc->proc_desc_offset;
 
 	while (timeout_counter-- > 0) {
 		ret = wait_for_atomic(CIRC_SPACE(gc->wq_tail, desc->head,

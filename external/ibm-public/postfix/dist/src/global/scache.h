@@ -1,4 +1,4 @@
-/*	$NetBSD: scache.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: scache.h,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _SCACHE_H_INCLUDED_
 #define _SCACHE_H_INCLUDED_
@@ -94,7 +94,7 @@ typedef int (*SCACHE_FIND_DEST_FN) (SCACHE *, const char *, VSTRING *, VSTRING *
   */
 struct SCACHE_SIZE {
     int     dest_count;			/* Nr of destination names */
-    int     endp_count;			/* Nr of endpoint adresses */
+    int     endp_count;			/* Nr of endpoint addresses */
     int     sess_count;			/* Nr of cached sessions */
 };
 
@@ -157,6 +157,11 @@ extern SCACHE *scache_multi_create(void);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

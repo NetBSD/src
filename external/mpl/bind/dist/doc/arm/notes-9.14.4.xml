@@ -1,0 +1,73 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<section xml:id="relnotes-9.14.4"><info><title>Notes for BIND 9.14.4</title></info>
+
+  <section xml:id="relnotes-9.14.4-features"><info><title>New Features</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          The new GeoIP2 API from MaxMind is now supported when BIND
+          is compiled using <command>configure --with-geoip2</command>.
+          The legacy GeoIP API can be used by compiling with
+          <command>configure --with-geoip</command> instead.  (Note that
+          the databases for the legacy API are no longer maintained by
+          MaxMind.)
+        </para>
+        <para>
+          The default path to the GeoIP2 databases will be set based
+          on the location of the <command>libmaxminddb</command> library;
+          for example, if it is in <filename>/usr/local/lib</filename>,
+          then the default path will be
+          <filename>/usr/local/share/GeoIP</filename>.
+          This value can be overridden in <filename>named.conf</filename>
+          using the <command>geoip-directory</command> option.
+        </para>
+        <para>
+          Some <command>geoip</command> ACL settings that were available with
+          legacy GeoIP, including searches for <command>netspeed</command>,
+          <command>org</command>, and three-letter ISO country codes, will
+          no longer work when using GeoIP2. Supported GeoIP2 database
+          types are <command>country</command>, <command>city</command>,
+          <command>domain</command>, <command>isp</command>, and
+          <command>as</command>. All of the databases support both IPv4
+          and IPv6 lookups. [GL #182]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Two new metrics have been added to the
+          <command>statistics-channel</command> to report DNSSEC
+          signing operations.  For each key in each zone, the
+          <command>dnssec-sign</command> counter indicates the total
+          number of signatures <command>named</command> has generated
+          using that key since server startup, and the
+          <command>dnssec-refresh</command> counter indicates how
+          many of those signatures were refreshed during zone
+          maintenance, as opposed to having been generated
+          as a result of a zone update.  [GL #513]
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes-9.14.4-bugs"><info><title>Bug Fixes</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          Glue address records were not being returned in responses
+          to root priming queries; this has been corrected. [GL #1092]
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+</section>

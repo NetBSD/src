@@ -1,4 +1,4 @@
-/*	$NetBSD: showq_json.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: showq_json.c,v 1.2.16.1 2020/04/08 14:06:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -36,6 +36,7 @@
 #include <string.h>
 #include <sysexits.h>
 #include <ctype.h>
+#include <errno.h>
 
 /* Utility library. */
 
@@ -135,6 +136,7 @@ static void format_json(VSTREAM *showq_stream)
     long    message_size;
     int     showq_status;
     int     rcpt_count = 0;
+    int     forced_expire;
 
     /*
      * One-time initialization.
@@ -155,8 +157,9 @@ static void format_json(VSTREAM *showq_stream)
 		  RECV_ATTR_STR(MAIL_ATTR_QUEUEID, queue_id),
 		  RECV_ATTR_LONG(MAIL_ATTR_TIME, &arrival_time),
 		  RECV_ATTR_LONG(MAIL_ATTR_SIZE, &message_size),
+		  RECV_ATTR_INT(MAIL_ATTR_FORCED_EXPIRE, &forced_expire),
 		  RECV_ATTR_STR(MAIL_ATTR_SENDER, addr),
-		  ATTR_TYPE_END) != 5)
+		  ATTR_TYPE_END) != 6)
 	msg_fatal_status(EX_SOFTWARE, "malformed showq server response");
     vstream_printf("{");
     vstream_printf("\"queue_name\": \"%s\", ",
@@ -165,11 +168,12 @@ static void format_json(VSTREAM *showq_stream)
 		   json_quote(quote_buf, STR(queue_id)));
     vstream_printf("\"arrival_time\": %ld, ", arrival_time);
     vstream_printf("\"message_size\": %ld, ", message_size);
+    vstream_printf("\"forced_expire\": %s, ", forced_expire ? "true" : "false");
     vstream_printf("\"sender\": \"%s\", ",
 		   json_quote(quote_buf, STR(addr)));
 
     /*
-     Read zero or more (recipient, reason) pair(s) until attr_scan_more()
+     * Read zero or more (recipient, reason) pair(s) until attr_scan_more()
      * consumes a terminator. If the showq daemon messes up, don't try to
      * resynchronize.
      */
@@ -194,7 +198,8 @@ static void format_json(VSTREAM *showq_stream)
     if (showq_status < 0)
 	msg_fatal_status(EX_SOFTWARE, "malformed showq server response");
     vstream_printf("}\n");
-    vstream_fflush(VSTREAM_OUT);
+    if (vstream_fflush(VSTREAM_OUT) && errno != EPIPE)
+	msg_fatal_status(EX_IOERR, "output write error: %m");
 }
 
 /* showq_json - streaming JSON-format output adapter */
@@ -204,10 +209,11 @@ void    showq_json(VSTREAM *showq_stream)
     int     showq_status;
 
     /*
-     * Emit zero or more queue file objects until attr_scan_more()
-     * consumes a terminator.
+     * Emit zero or more queue file objects until attr_scan_more() consumes a
+     * terminator.
      */
-    while ((showq_status = attr_scan_more(showq_stream)) > 0) {
+    while ((showq_status = attr_scan_more(showq_stream)) > 0
+	   && vstream_ferror(VSTREAM_OUT) == 0) {
 	format_json(showq_stream);
     }
     if (showq_status < 0)

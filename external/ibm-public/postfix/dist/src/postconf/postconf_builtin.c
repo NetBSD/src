@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_builtin.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: postconf_builtin.c,v 1.2.12.1 2020/04/08 14:06:55 martin Exp $	*/
 
 /*++
 /* NAME
@@ -175,6 +175,7 @@ static const CONFIG_STR_FN_TABLE pcf_str_fn_table[] = {
   * effects, then those side effects must happen only once.
   */
 static CONFIG_STR_TABLE pcf_adhoc_procname = {VAR_PROCNAME};
+static CONFIG_STR_TABLE pcf_adhoc_servname = {VAR_SERVNAME};
 static CONFIG_INT_TABLE pcf_adhoc_pid = {VAR_PID};
 
 #define STR(x) vstring_str(x)
@@ -447,6 +448,10 @@ void    pcf_register_builtin_parameters(const char *procname, pid_t pid)
     PCF_PARAM_TABLE_ENTER(pcf_param_table, pcf_adhoc_procname.name,
 			  PCF_PARAM_FLAG_BUILTIN | PCF_PARAM_FLAG_READONLY,
 		      (void *) &pcf_adhoc_procname, pcf_conv_str_parameter);
+    pcf_adhoc_servname.defval = mystrdup("");
+    PCF_PARAM_TABLE_ENTER(pcf_param_table, pcf_adhoc_servname.name,
+			  PCF_PARAM_FLAG_BUILTIN | PCF_PARAM_FLAG_READONLY,
+		      (void *) &pcf_adhoc_servname, pcf_conv_str_parameter);
     pcf_adhoc_pid.defval = pid;
     PCF_PARAM_TABLE_ENTER(pcf_param_table, pcf_adhoc_pid.name,
 			  PCF_PARAM_FLAG_BUILTIN | PCF_PARAM_FLAG_READONLY,

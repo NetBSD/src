@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp.8,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: smtp.8,v 1.2.12.1 2020/04/08 14:06:51 martin Exp $
 .\"
 .TH SMTP 8 
 .ad
@@ -10,7 +10,7 @@ Postfix SMTP+LMTP client
 .SH "SYNOPSIS"
 .na
 .nf
-\fBsmtp\fR [generic Postfix daemon options]
+\fBsmtp\fR [generic Postfix daemon options] [flags=DORX]
 .SH DESCRIPTION
 .ad
 .fi
@@ -48,6 +48,8 @@ specific destinations.
 .nf
 .ad
 .fi
+The Postfix SMTP+LMTP client supports multiple destinations
+separated by comma or whitespace (Postfix 3.5 and later).
 SMTP destinations have the following form:
 .IP \fIdomainname\fR
 .IP \fIdomainname\fR:\fIport\fR
@@ -67,6 +69,8 @@ must be formatted as [\fBipv6\fR:\fIaddress\fR].
 .nf
 .ad
 .fi
+The Postfix SMTP+LMTP client supports multiple destinations
+separated by comma or whitespace (Postfix 3.5 and later).
 LMTP destinations have the following form:
 .IP \fBunix\fR:\fIpathname\fR
 Connect to the local UNIX\-domain server that is bound to the specified
@@ -82,12 +86,68 @@ remote host. If no port is specified, connect to the port defined as
 If no such service is found, the \fBlmtp_tcp_port\fR configuration
 parameter (default value of 24) will be used.
 An IPv6 address must be formatted as [\fBipv6\fR:\fIaddress\fR].
-.PP
-.SH "SECURITY"
+.SH "SINGLE-RECIPIENT DELIVERY"
 .na
 .nf
 .ad
 .fi
+By default, the Postfix SMTP+LMTP client delivers mail to
+multiple recipients per delivery request. This is undesirable
+when prepending a \fBDelivered\-to:\fR or \fBX\-Original\-To:\fR
+message header. To prevent Postfix from sending multiple
+recipients per delivery request, specify
+.sp
+.nf
+    \fItransport\fB_destination_recipient_limit = 1\fR
+.fi
+
+in the Postfix \fBmain.cf\fR file, where \fItransport\fR
+is the name in the first column of the Postfix \fBmaster.cf\fR
+entry for this mail delivery service.
+.SH "COMMAND ATTRIBUTE SYNTAX"
+.na
+.nf
+.ad
+.fi
+.IP "\fBflags=DORX\fR (optional)"
+Optional message processing flags.
+.RS
+.IP \fBD\fR
+Prepend a "\fBDelivered\-To: \fIrecipient\fR" message header
+with the envelope recipient address. Note: for this to work,
+the \fItransport\fB_destination_recipient_limit\fR must be
+1 (see SINGLE\-RECIPIENT DELIVERY above for details).
+.sp
+The \fBD\fR flag also enforces loop detection: if a message
+already contains a \fBDelivered\-To:\fR header with the same
+recipient address, then the message is returned as
+undeliverable. The address comparison is case insensitive.
+.sp
+This feature is available as of Postfix 3.5.
+.IP \fBO\fR
+Prepend an "\fBX\-Original\-To: \fIrecipient\fR" message
+header with the recipient address as given to Postfix. Note:
+for this to work, the
+\fItransport\fB_destination_recipient_limit\fR must be 1
+(see SINGLE\-RECIPIENT DELIVERY above for details).
+.sp
+This feature is available as of Postfix 3.5.
+.IP \fBR\fR
+Prepend a "\fBReturn\-Path: <\fIsender\fB>\fR" message header
+with the envelope sender address.
+.sp
+This feature is available as of Postfix 3.5.
+.IP \fBX\fR
+Indicates that the delivery is final. This flag affects
+the status reported in "success" DSN (delivery status
+notification) messages, and changes it from "relayed" into
+"delivered".
+.sp
+This feature is available as of Postfix 3.5.
+.RE
+.SH "SECURITY"
+.na
+.nf
 The SMTP+LMTP client is moderately security\-sensitive. It
 talks to SMTP or LMTP servers and to DNS servers on the
 network. The SMTP+LMTP client can be run chrooted at fixed
@@ -118,7 +178,8 @@ RFC 7672 (SMTP security via opportunistic DANE TLS)
 .SH DIAGNOSTICS
 .ad
 .fi
-Problems and transactions are logged to \fBsyslogd\fR(8).
+Problems and transactions are logged to \fBsyslogd\fR(8)
+or \fBpostlogd\fR(8).
 Corrupted message files are marked so that the queue manager can
 move them to the \fBcorrupt\fR queue for further inspection.
 
@@ -128,11 +189,10 @@ other trouble.
 .SH BUGS
 .ad
 .fi
-SMTP and LMTP connection caching does not work with TLS. The necessary
-support for TLS object passivation and re\-activation does not
-exist without closing the session, which defeats the purpose.
+SMTP and LMTP connection reuse for TLS (without closing the
+SMTP or LMTP connection) is not supported before Postfix 3.4.
 
-SMTP and LMTP connection caching assumes that SASL credentials
+SMTP and LMTP connection reuse assumes that SASL credentials
 are valid for all destinations that map onto the same IP
 address and TCP port.
 .SH "CONFIGURATION PARAMETERS"
@@ -287,6 +347,17 @@ delivery status code or explanatory text of successful or unsuccessful
 deliveries.
 .IP "\fBsmtp_dns_reply_filter (empty)\fR"
 Optional filter for Postfix SMTP client DNS lookup results.
+.PP
+Available in Postfix version 3.3 and later:
+.IP "\fBsmtp_balance_inet_protocols (yes)\fR"
+When a remote destination resolves to a combination of IPv4 and
+IPv6 addresses, ensure that the Postfix SMTP client can try both
+address types before it runs into the smtp_mx_address_limit.
+.PP
+Available in Postfix 3.5 and later:
+.IP "\fBinfo_log_address_format (external)\fR"
+The email address form that will be used in non\-debug logging
+(info, warning, etc.).
 .SH "MIME PROCESSING CONTROLS"
 .na
 .nf
@@ -484,6 +555,13 @@ Available in Postfix version 2.8 and later:
 .IP "\fBtls_disable_workarounds (see 'postconf -d' output)\fR"
 List or bit\-mask of OpenSSL bug work\-arounds to disable.
 .PP
+Available in Postfix version 2.11\-3.1:
+.IP "\fBtls_dane_digest_agility (on)\fR"
+Configure RFC7671 DANE TLSA digest algorithm agility.
+.IP "\fBtls_dane_trust_anchor_digest_enable (yes)\fR"
+Enable support for RFC 6698 (DANE TLSA) DNS records that contain
+digests of trust\-anchors with certificate usage "2".
+.PP
 Available in Postfix version 2.11 and later:
 .IP "\fBsmtp_tls_trust_anchor_file (empty)\fR"
 Zero or more PEM\-format files with trust\-anchor certificates
@@ -491,8 +569,6 @@ and/or public keys.
 .IP "\fBsmtp_tls_force_insecure_host_tlsa_lookup (no)\fR"
 Lookup the associated DANE TLSA RRset even when a hostname is
 not an alias and its address records lie in an unsigned zone.
-.IP "\fBtls_dane_trust_anchor_digest_enable (yes)\fR"
-RFC 6698 trust\-anchor digest support in the Postfix TLS library.
 .IP "\fBtlsmgr_service_name (tlsmgr)\fR"
 The name of the \fBtlsmgr\fR(8) service entry in master.cf.
 .PP
@@ -506,6 +582,21 @@ Available in Postfix version 3.1 and later:
 The TLS policy for MX hosts with "secure" TLSA records when the
 nexthop destination security level is \fBdane\fR, but the MX
 record was found via an "insecure" MX lookup.
+.PP
+Available in Postfix version 3.4 and later:
+.IP "\fBsmtp_tls_connection_reuse (no)\fR"
+Try to make multiple deliveries per TLS\-encrypted connection.
+.IP "\fBsmtp_tls_chain_files (empty)\fR"
+List of one or more PEM files, each holding one or more private keys
+directly followed by a corresponding certificate chain.
+.IP "\fBsmtp_tls_servername (empty)\fR"
+Optional name to send to the remote SMTP server in the TLS Server
+Name Indication (SNI) extension.
+.PP
+Available in Postfix 3.5, 3.4.6, 3.3.5, 3.2.10, 3.1.13 and later:
+.IP "\fBtls_fast_shutdown_enable (yes)\fR"
+A workaround for implementations that hang Postfix while shutting
+down a TLS session, until Postfix times out.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -535,12 +626,6 @@ cipher list.
 .nf
 .ad
 .fi
-.IP "\fBsmtp_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
-The maximal number of parallel deliveries to the same destination
-via the smtp message delivery transport.
-.IP "\fBsmtp_destination_recipient_limit ($default_destination_recipient_limit)\fR"
-The maximal number of recipients per message for the smtp
-message delivery transport.
 .IP "\fBsmtp_connect_timeout (30s)\fR"
 The Postfix SMTP client time limit for completing a TCP connection, or
 zero (use the operating system built\-in time limit).
@@ -621,6 +706,22 @@ Available in Postfix version 2.11 and later:
 When SMTP connection caching is enabled, the number of times
 that an SMTP session may be reused before it is closed, or zero (no
 limit).
+.PP
+Available in Postfix version 3.4 and later:
+.IP "\fBsmtp_tls_connection_reuse (no)\fR"
+Try to make multiple deliveries per TLS\-encrypted connection.
+.PP
+Implemented in the qmgr(8) daemon:
+.IP "\fBtransport_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
+A transport\-specific override for the
+default_destination_concurrency_limit parameter value, where
+\fItransport\fR is the master.cf name of the message delivery
+transport.
+.IP "\fBtransport_destination_recipient_limit ($default_destination_recipient_limit)\fR"
+A transport\-specific override for the
+default_destination_recipient_limit parameter value, where
+\fItransport\fR is the master.cf name of the message delivery
+transport.
 .SH "SMTPUTF8 CONTROLS"
 .na
 .nf
@@ -633,6 +734,12 @@ in RFC 6531..6533.
 .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
 Detect that a message requires SMTPUTF8 support for the specified
 mail origin classes.
+.PP
+Available in Postfix version 3.2 and later:
+.IP "\fBenable_idna2003_compatibility (no)\fR"
+Enable 'transitional' compatibility between IDNA2003 and IDNA2008,
+when converting UTF\-8 domain names to/from the ASCII form that is
+used for DNS lookups.
 .SH "TROUBLE SHOOTING CONTROLS"
 .na
 .nf
@@ -725,8 +832,8 @@ Randomize the order of equal\-preference MX host addresses.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-The mail system name that is prepended to the process name in syslog
-records, so that "smtpd" becomes, for example, "postfix/smtpd".
+A prefix that is prepended to the process name in syslog
+records, so that, for example, "smtpd" becomes "prefix/smtpd".
 .PP
 Available with Postfix 2.2 and earlier:
 .IP "\fBfallback_relay (empty)\fR"
@@ -747,6 +854,14 @@ Available with Postfix 3.1 and later:
 .IP "\fBlmtp_fallback_relay (empty)\fR"
 Optional list of relay hosts for LMTP destinations that can't be
 found or that are unreachable.
+.PP
+Available with Postfix 3.2 and later:
+.IP "\fBsmtp_tcp_port (smtp)\fR"
+The default TCP port that the Postfix SMTP client connects to.
+.PP
+Available in Postfix 3.3 and later:
+.IP "\fBservice_name (read\-only)\fR"
+The master.cf service name of a Postfix daemon process.
 .SH "SEE ALSO"
 .na
 .nf
@@ -760,6 +875,7 @@ postconf(5), configuration parameters
 master(5), generic daemon options
 master(8), process manager
 tlsmgr(8), TLS session and PRNG management
+postlogd(8), Postfix logging
 syslogd(8), system logging
 .SH "README FILES"
 .na

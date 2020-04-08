@@ -1,7 +1,8 @@
-/*	$NetBSD: pthread_int.h,v 1.94.6.1 2019/06/10 22:05:26 christos Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.94.6.2 2020/04/08 14:07:15 martin Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +36,6 @@
 #include <sys/tls.h>
 
 /* #define PTHREAD__DEBUG */
-#define ERRORCHECK
 
 #include "pthread_types.h"
 #include "pthread_queue.h"
@@ -46,6 +46,7 @@
 
 #include <sys/atomic.h>
 #include <sys/rbtree.h>
+#include <sys/param.h>
 
 #include <limits.h>
 #include <lwp.h>
@@ -58,7 +59,7 @@
 #define	PTHREAD_HIDE	/* nothing */
 #endif
 
-#define	PTHREAD__UNPARK_MAX	32
+#define	PTHREAD__UNPARK_MAX	128
 
 /*
  * The size of this structure needs to be no larger than struct
@@ -95,7 +96,6 @@ struct	__pthread_st {
 #endif
 	unsigned int	pt_magic;	/* Magic number */
 	int		pt_state;	/* running, blocked, etc. */
-	pthread_mutex_t	pt_lock;	/* lock on state */
 	int		pt_flags;	/* see PT_FLAG_* below */
 	int		pt_cancel;	/* Deferred cancellation */
 	int		pt_errno;	/* Thread-specific errno. */
@@ -107,8 +107,6 @@ struct	__pthread_st {
 	int		pt_willpark;	/* About to park */
 	lwpid_t		pt_unpark;	/* Unpark this when parking */
 	struct pthread_lock_ops pt_lockops;/* Cached to avoid PIC overhead */
-	pthread_mutex_t	*pt_droplock;	/* Drop this lock if cancelled */
-	pthread_cond_t	pt_joiners;	/* Threads waiting to join. */
 	void		*(*pt_func)(void *);/* Function to call at start. */
 	void		*pt_arg;	/* Argument to pass at start. */
 
@@ -121,17 +119,26 @@ struct	__pthread_st {
 
 	/* LWP ID and entry on the list of all threads. */
 	lwpid_t		pt_lid;
-	rb_node_t	pt_alltree;
-	PTQ_ENTRY(__pthread_st) pt_allq;
 	PTQ_ENTRY(__pthread_st)	pt_deadq;
+
+	/*
+	 * rbtree node and entry on the list of all threads.  pt_alltree in
+	 * its own cacheline, so pthread__find() is not needlessly impacted
+	 * by threads going about their normal business.  pt_allq is
+	 * adjusted at the same time as pt_alltree.
+	 */
+	rb_node_t	pt_alltree __aligned(COHERENCY_UNIT);
+	PTQ_ENTRY(__pthread_st) pt_allq;
+
+	/* Lock on state also gets its own line. */
+	pthread_mutex_t	pt_lock __aligned(COHERENCY_UNIT);
 
 	/*
 	 * General synchronization data.  We try to align, as threads
 	 * on other CPUs will access this data frequently.
 	 */
-	int		pt_dummy1 __aligned(128);
+	int		pt_dummy1 __aligned(COHERENCY_UNIT);
 	struct lwpctl 	*pt_lwpctl;	/* Kernel/user comms area */
-	volatile int	pt_blocking;	/* Blocking in userspace */
 	volatile int	pt_rwlocked;	/* Handed rwlock successfully */
 	volatile int	pt_signalled;	/* Received pthread_cond_signal() */
 	volatile int	pt_mutexwait;	/* Waiting to acquire mutex */
@@ -139,10 +146,9 @@ struct	__pthread_st {
 	void * volatile	pt_sleepobj;	/* Object slept on */
 	PTQ_ENTRY(__pthread_st) pt_sleep;
 	void		(*pt_early)(void *);
-	int		pt_dummy2 __aligned(128);
 
 	/* Thread-specific data.  Large so it sits close to the end. */
-	int		pt_havespecific;
+	int		pt_havespecific __aligned(COHERENCY_UNIT);
 	struct pt_specific {
 		void *pts_value;
 		PTQ_ENTRY(pt_specific) pts_next;
@@ -324,8 +330,5 @@ int	pthread__add_specific(pthread_t, pthread_key_t, const void *) PTHREAD_HIDE;
 #define	RW_READ_COUNT_SHIFT	4
 #define	RW_READ_INCR		(1 << RW_READ_COUNT_SHIFT)
 #define	RW_THREAD		((uintptr_t)-RW_READ_INCR)
-#define	RW_OWNER(rw)		((rw)->rw_owner & RW_THREAD)
-#define	RW_COUNT(rw)		((rw)->rw_owner & RW_THREAD)
-#define	RW_FLAGS(rw)		((rw)->rw_owner & ~RW_THREAD)
 
 #endif /* _LIB_PTHREAD_INT_H */

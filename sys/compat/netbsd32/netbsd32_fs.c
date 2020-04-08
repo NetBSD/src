@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.80.10.1 2019/06/10 22:07:01 christos Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.80.10.2 2020/04/08 14:08:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.80.10.1 2019/06/10 22:07:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.80.10.2 2020/04/08 14:08:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,7 @@ netbsd32___fhstat50(struct lwp *l, const struct netbsd32___fhstat50_args *uap, r
 	error = do_fhstat(l, SCARG_P32(uap, fhp), SCARG(uap, fh_size), &sb);
 	if (error == 0) {
 		netbsd32_from_stat(&sb, &sb32);
-		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb));
+		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
 	}
 	return error;
 }
@@ -734,13 +734,12 @@ netbsd32___getcwd(struct lwp *l, const struct netbsd32___getcwd_args *uap, regis
 		syscallarg(char *) bufp;
 		syscallarg(size_t) length;
 	} */
-	struct proc *p = l->l_proc;
 	int     error;
 	char   *path;
 	char   *bp, *bend;
 	int     len = (int)SCARG(uap, length);
 	int	lenused;
-	struct	cwdinfo *cwdi;
+	struct	vnode *dvp;
 
 	if (len > MAXPATHLEN*4)
 		len = MAXPATHLEN*4;
@@ -758,11 +757,10 @@ netbsd32___getcwd(struct lwp *l, const struct netbsd32___getcwd_args *uap, regis
 	 * limit it to N/2 vnodes for an N byte buffer.
 	 */
 #define GETCWD_CHECK_ACCESS 0x0001
-	cwdi = p->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	error = getcwd_common (cwdi->cwdi_cdir, NULL, &bp, path, len/2,
+	dvp = cwdcdir();
+	error = getcwd_common (dvp, NULL, &bp, path, len/2,
 			       GETCWD_CHECK_ACCESS, l);
-	rw_exit(&cwdi->cwdi_lock);
+	vrele(dvp);
 
 	if (error)
 		goto out;

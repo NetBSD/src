@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casvar.h,v 1.5.18.1 2019/06/10 22:07:16 christos Exp $ */
+/*	$NetBSD: if_casvar.h,v 1.5.18.2 2020/04/08 14:08:09 martin Exp $ */
 /*	$OpenBSD: if_casvar.h,v 1.6 2009/06/13 12:18:58 kettenis Exp $	*/
 
 /*
@@ -158,6 +158,17 @@ struct cas_softc {
 	int		sc_burst;	/* DVMA burst size in effect */
 	int		sc_phys[2];	/* MII instance -> PHY map */
 
+	u_int		sc_variant;
+#define	CAS_UNKNOWN	0		/* don't know */
+#define	CAS_CAS		1		/* Sun Cassini */
+#if 0 /* notyet */
+#define	CAS_CASPLUS	2		/* Sun Cassini+ */
+#endif
+#define	CAS_SATURN	3		/* National Semiconductor Saturn */
+
+	u_int		sc_flags;
+#define	CAS_SERDES	(1 << 4)	/* use the SERDES */
+
 	int		sc_mif_config;	/* Selected MII reg setting */
 
 	/*
@@ -172,7 +183,7 @@ struct cas_softc {
 	 * Software state for transmit and receive descriptors.
 	 */
 	struct cas_sxd sc_txd[CAS_NTXDESC];
-	u_int32_t sc_tx_cnt, sc_tx_prod, sc_tx_cons;
+	uint32_t sc_tx_cnt, sc_tx_prod, sc_tx_cons;
 
 	struct cas_rxsoft sc_rxsoft[CAS_NRXDESC];
 	struct cas_rxsoft sc_rxsoft2[CAS_NRXDESC];

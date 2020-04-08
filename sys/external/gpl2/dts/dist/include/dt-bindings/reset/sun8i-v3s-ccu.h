@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i-v3s-ccu.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: sun8i-v3s-ccu.h,v 1.1.1.1.12.1 2020/04/08 14:08:48 martin Exp $	*/
 
 /*
  * Copyright (C) 2016 Icenowy Zheng <icenowy@aosc.xyz>
@@ -76,5 +76,8 @@
 #define RST_BUS_UART0		49
 #define RST_BUS_UART1		50
 #define RST_BUS_UART2		51
+
+/* Reset lines not available on V3s */
+#define RST_BUS_I2S0		52
 
 #endif /* _DT_BINDINGS_RST_SUN8I_H3_H_ */

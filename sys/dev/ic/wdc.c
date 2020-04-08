@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.288.4.1 2019/06/10 22:07:11 christos Exp $ */
+/*	$NetBSD: wdc.c,v 1.288.4.2 2020/04/08 14:08:06 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288.4.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288.4.2 2020/04/08 14:08:06 martin Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -203,6 +203,7 @@ wdc_allocate_regs(struct wdc_softc *wdc)
 void
 wdc_sataprobe(struct ata_channel *chp)
 {
+	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	uint8_t st = 0, sc __unused, sn __unused, cl, ch;
 	int i;
@@ -243,7 +244,7 @@ wdc_sataprobe(struct ata_channel *chp)
 		    "cl=0x%x ch=0x%x\n",
 		    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
 		    sc, sn, cl, ch), DEBUG_PROBE);
-		if (atabus_alloc_drives(chp, 1) != 0)
+		if (atabus_alloc_drives(chp, wdc->wdc_maxdrives) != 0)
 			return;
 		/*
 		 * sc and sn are supposed to be 0x1 for ATAPI, but in some
@@ -1269,8 +1270,7 @@ wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int flags,
 	else {
 		error = __wdcwait(chp, mask, bits, WDCDELAY_POLL, tfd);
 		if (error != 0) {
-			if ((chp->ch_flags & ATACH_TH_RUN) ||
-			    (flags & AT_WAIT)) {
+			if (ata_is_thread_run(chp) || (flags & AT_WAIT)) {
 				/*
 				 * we're running in the channel thread
 				 * or some userland thread context
@@ -1520,7 +1520,7 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 				chp->ch_drive[xfer->c_drive].drive_flags;
 	} else {
 		/*
-		 * Other data structure are opaque and should be transfered
+		 * Other data structure are opaque and should be transferred
 		 * as is.
 		 */
 		drive_flags = chp->ch_drive[xfer->c_drive].drive_flags;

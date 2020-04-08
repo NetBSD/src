@@ -1,7 +1,7 @@
-/*	$NetBSD: miivar.h,v 1.62.28.1 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: miivar.h,v 1.62.28.2 2020/04/08 14:08:08 martin Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,6 +35,7 @@
 
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/condvar.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/mii_verbose.h>
@@ -57,31 +58,52 @@ typedef	void (*mii_statchg_t)(struct ifnet *);
  * A network interface driver has one of these structures in its softc.
  * It is the interface from the network interface driver to the MII
  * layer.
+ *
+ * LOCKING
+ * =======
+ *
+ * The MII shares the lock with its ifmedia (which in turn shares the
+ * lock with its driver).
+ *
+ * MII routines can be called from a driver's interrupt handler, as well
+ * as via administrative input (e.g. ifmedia_ioctl()).  We therefore require
+ * that most MII APIs are called with the ifmedia lock HELD.  (See below.)
+ *
+ * Field markings and the corresponding locks:
+ *
+ * m:	ifmedia lock
+ * ::	unlocked, stable
  */
 struct mii_data {
-	struct ifmedia mii_media;	/* media information */
-	struct ifnet *mii_ifp;		/* pointer back to network interface */
+	struct ifmedia mii_media;	/* m: media information */
+	struct ifnet *mii_ifp;		/* :: pointer back to interface */
 
-	int mii_flags;			/* misc. flags; see below */
+	kcondvar_t mii_probe_cv;	/* m: serialize probing the MII */
+	u_int mii_probe_waiters;	/* m: # threads waiting to probe */
+	int mii_flags;			/* m: misc. flags; see below */
 
 	/*
-	 * For network interfaces with multiple PHYs, a list of all
+	 * m: For network interfaces with multiple PHYs, a list of all
 	 * PHYs is required so they can all be notified when a media
 	 * request is made.
 	 */
 	LIST_HEAD(mii_listhead, mii_softc) mii_phys;
 	u_int mii_instance;
 
-	/* PHY driver fills this in with active media status. */
+	/* m: PHY driver fills this in with active media status. */
 	int mii_media_status;
 	u_int mii_media_active;
 
-	/* Calls from MII layer into network interface driver. */
+	/* :: Calls from MII layer into network interface driver. */
 	mii_readreg_t mii_readreg;
 	mii_writereg_t mii_writereg;
 	mii_statchg_t mii_statchg;
 };
 typedef struct mii_data mii_data_t;
+
+#define	mii_lock(mii)		ifmedia_lock(&(mii)->mii_media)
+#define	mii_unlock(mii)		ifmedia_unlock(&(mii)->mii_media)
+#define	mii_locked(mii)		ifmedia_locked(&(mii)->mii_media)
 
 /*
  * Functions provided by the PHY to perform various functions.
@@ -108,30 +130,30 @@ struct mii_phy_funcs {
 struct mii_softc {
 	device_t mii_dev;		/* generic device glue */
 
-	LIST_ENTRY(mii_softc) mii_list;	/* entry on parent's PHY list */
+	LIST_ENTRY(mii_softc) mii_list;	/* m: entry on parent's PHY list */
 
-	uint32_t mii_mpd_oui;		/* the PHY's OUI (MII_OUI())*/
-	uint32_t mii_mpd_model;		/* the PHY's model (MII_MODEL())*/
-	uint32_t mii_mpd_rev;		/* the PHY's revision (MII_REV())*/
-	int mii_phy;			/* our MII address */
-	int mii_offset;			/* first PHY, second PHY, etc. */
-	u_int mii_inst;			/* instance for ifmedia */
+	uint32_t mii_mpd_oui;		/* :: the PHY's OUI (MII_OUI())*/
+	uint32_t mii_mpd_model;		/* :: the PHY's model (MII_MODEL())*/
+	uint32_t mii_mpd_rev;		/* :: the PHY's revision (MII_REV())*/
+	int mii_phy;			/* :: our MII address */
+	int mii_offset;			/* :: first PHY, second PHY, etc. */
+	u_int mii_inst;			/* :: instance for ifmedia */
 
-	/* Our PHY functions. */
+	/* :: Our PHY functions. */
 	const struct mii_phy_funcs *mii_funcs;
 
-	struct mii_data *mii_pdata;	/* pointer to parent's mii_data */
+	struct mii_data *mii_pdata;	/* :: pointer to parent's mii_data */
 
-	int mii_flags;			/* misc. flags; see below */
-	uint16_t mii_capabilities;	/* capabilities from BMSR */
-	uint16_t mii_extcapabilities;	/* extended capabilities from EXTSR */
-	int mii_ticks;			/* MII_TICK counter */
-	int mii_anegticks;		/* ticks before retrying aneg */
+	int mii_flags;			/* m: misc. flags; see below */
+	uint16_t mii_capabilities;	/* :: capabilities from BMSR */
+	uint16_t mii_extcapabilities;	/* :: extended caps from EXTSR */
+	int mii_ticks;			/* m: MII_TICK counter */
+	int mii_anegticks;		/* m: ticks before retrying aneg */
 
-	struct callout mii_nway_ch;	/* NWAY callout */
+	struct callout mii_nway_ch;	/* m: NWAY callout */
 
-	u_int mii_media_active;		/* last active media */
-	int mii_media_status;		/* last active status */
+	u_int mii_media_active;		/* m: last active media */
+	int mii_media_status;		/* m: last active status */
 };
 typedef struct mii_softc mii_softc_t;
 
@@ -144,13 +166,15 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_NOISOLATE	0x0002		/* do not isolate the PHY */
 #define	MIIF_NOLOOP	0x0004		/* no loopback capability */
 #define	MIIF_DOINGAUTO	0x0008		/* doing autonegotiation (mii_softc) */
-#define MIIF_AUTOTSLEEP	0x0010		/* use tsleep(), not callout() */
+#define MIIF_AUTOTSLEEP	0x0010		/* use kpause(), not callout() */
 #define MIIF_HAVEFIBER	0x0020		/* from parent: has fiber interface */
 #define	MIIF_HAVE_GTCR	0x0040		/* has 100base-T2/1000base-T CR */
 #define	MIIF_IS_1000X	0x0080		/* is a 1000BASE-X device */
 #define	MIIF_DOPAUSE	0x0100		/* advertise PAUSE capability */
 #define	MIIF_IS_HPNA	0x0200		/* is a HomePNA device */
 #define	MIIF_FORCEANEG	0x0400		/* force auto-negotiation */
+#define	MIIF_PROBING	0x0800		/* PHY probe in-progress */
+#define	MIIF_EXITING	0x1000		/* MII is exiting */
 
 #define	MIIF_INHERIT_MASK (MIIF_NOISOLATE | MIIF_NOLOOP | MIIF_AUTOTSLEEP)
 
@@ -270,47 +294,54 @@ MMD_INDIRECT_WRITE(struct mii_softc *sc, uint16_t daddr, uint16_t regnum,
 	return PHY_WRITE(sc, MII_MMDAADR, val);
 }
 
+/* MII must be LOCKED. */
 #define	PHY_SERVICE(p, d, o) \
 	(*(p)->mii_funcs->pf_service)((p), (d), (o))
-
 #define	PHY_STATUS(p) \
 	(*(p)->mii_funcs->pf_status)((p))
-
 #define	PHY_RESET(p) \
 	(*(p)->mii_funcs->pf_reset)((p))
 
+/* MII must be UNLOCKED */
 void	mii_attach(device_t, struct mii_data *, int, int, int, int);
 void	mii_detach(struct mii_data *, int, int);
-bool	mii_phy_resume(device_t, const pmf_qual_t *);
 
+/* MII must be LOCKED. */
 int	mii_mediachg(struct mii_data *);
 void	mii_tick(struct mii_data *);
 void	mii_pollstat(struct mii_data *);
 void	mii_down(struct mii_data *);
-uint16_t mii_anar(int);
-
 int	mii_ifmedia_change(struct mii_data *);
 
+uint16_t mii_anar(struct ifmedia_entry *);
+
+/* MII must be UNLOCKED */
 int	mii_phy_activate(device_t, enum devact);
 int	mii_phy_detach(device_t, int);
+bool	mii_phy_resume(device_t, const pmf_qual_t *);
 
 const struct mii_phydesc *mii_phy_match(const struct mii_attach_args *,
 	    const struct mii_phydesc *);
 
+/* MII must be UNLOCKED */
 void	mii_phy_add_media(struct mii_softc *);
 void	mii_phy_delete_media(struct mii_softc *);
 
+/* MII must be LOCKED */
 void	mii_phy_setmedia(struct mii_softc *);
 int	mii_phy_auto(struct mii_softc *, int);
 void	mii_phy_reset(struct mii_softc *);
 void	mii_phy_down(struct mii_softc *);
 int	mii_phy_tick(struct mii_softc *);
 
+/* MII must be LOCKED */
 void	mii_phy_status(struct mii_softc *);
 void	mii_phy_update(struct mii_softc *, int);
 
+/* MII must be LOCKED */
 u_int	mii_phy_flowstatus(struct mii_softc *);
 
+/* MII must be LOCKED */
 void	ukphy_status(struct mii_softc *);
 
 u_int	mii_oui(uint16_t, uint16_t);

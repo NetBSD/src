@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.19 2017/05/22 16:53:05 ragge Exp $	*/
+/*	$NetBSD: ka88.c,v 1.19.10.1 2020/04/08 14:07:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.19 2017/05/22 16:53:05 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.19.10.1 2020/04/08 14:07:56 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -364,7 +364,7 @@ rxchar(void)
 static void
 ka88_startslave(struct cpu_info *ci)
 {
-	const struct pcb *pcb = lwp_getpcb(ci->ci_data.cpu_onproc);
+	const struct pcb *pcb = lwp_getpcb(ci->ci_onproc);
 	const int id = ci->ci_slotid;
 	int i;
 

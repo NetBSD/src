@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.13 2011/07/24 08:55:30 uch Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.13.42.1 2020/04/08 14:09:22 martin Exp $
 #
 
 IFS=' '
 COPYRIGHT='.\"	WARNING: GENERATED FILE, DO NOT EDIT
 .\"	INSTEAD, EDIT makerumpmanpages.sh AND REGEN
-.\"	from: $NetBSD: makerumpmanpages.sh,v 1.13 2011/07/24 08:55:30 uch Exp $
+.\"	from: $NetBSD: makerumpmanpages.sh,v 1.13.42.1 2020/04/08 14:09:22 martin Exp $
 .\"
 .\" Copyright (c) 2008-2010 Antti Kantee.  All rights reserved.
 .\"
@@ -157,7 +157,7 @@ utility first appeared in
 
 # vary manpages slightly based on the type of server in question
 disk="cd9660 efs ext2fs ffs hfs lfs msdos ntfs sysvbfs udf v7fs"
-net="nfs smbfs"
+net="nfs"
 fictional="fdesc kernfs tmpfs"
 special="au-naturel nqmfs syspuffs"
 
@@ -220,7 +220,7 @@ do
 	fsc=`echo $fs | tr '[:lower:]' '[:upper:]'`
 	eval sedstr="${sedsub}"
 
-	printf '.\\"	$NetBSD: makerumpmanpages.sh,v 1.13 2011/07/24 08:55:30 uch Exp $\n.\\"\n' > rump_${fs}/rump_${fs}.8
+	printf '.\\"	$NetBSD: makerumpmanpages.sh,v 1.13.42.1 2020/04/08 14:09:22 martin Exp $\n.\\"\n' > rump_${fs}/rump_${fs}.8
 	echo ${COPYRIGHT} | sed -e 's/\$//g' >> rump_${fs}/rump_${fs}.8
 
 	echo ${MANTMPL1} | sed -e "$sedstr" >> rump_${fs}/rump_${fs}.8

@@ -1,4 +1,4 @@
-/*	$NetBSD: postalias.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: postalias.c,v 1.2.12.1 2020/04/08 14:06:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -81,6 +81,10 @@
 /*	found to the standard output stream. The exit status is zero
 /*	when the requested information was found.
 /*
+/*	Note: this performs a single query with the key as specified,
+/*	and does not make iterative queries with substrings of the
+/*	key as described in the aliases(5) manual page.
+/*
 /*	If a key value of \fB-\fR is specified, the program reads key
 /*	values from the standard input stream and writes one line of
 /*	\fIkey: value\fR output for each key that was found. The exit
@@ -145,7 +149,7 @@
 /*	The name of the alias database source file when creating a database.
 /* DIAGNOSTICS
 /*	Problems are logged to the standard error stream and to
-/*	\fBsyslogd\fR(8).  No output means that
+/*	\fBsyslogd\fR(8) or \fBpostlogd\fR(8). No output means that
 /*	no problems were detected. Duplicate entries are skipped and are
 /*	flagged with a warning.
 /*
@@ -182,14 +186,18 @@
 /* .IP "\fBdefault_database_type (see 'postconf -d' output)\fR"
 /*	The default database type for use in \fBnewaliases\fR(1), \fBpostalias\fR(1)
 /*	and \fBpostmap\fR(1) commands.
+/* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
+/*	The list of environment parameters that a privileged Postfix
+/*	process will import from a non-Postfix parent process, or name=value
+/*	environment overrides.
 /* .IP "\fBsmtputf8_enable (yes)\fR"
 /*	Enable preliminary SMTPUTF8 support for the protocols described
 /*	in RFC 6531..6533.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
 /* STANDARDS
 /*	RFC 822 (ARPA Internet Text Messages)
 /* SEE ALSO
@@ -199,6 +207,7 @@
 /*	postconf(5), configuration parameters
 /*	postmap(1), create/update/query lookup tables
 /*	newaliases(1), Sendmail compatibility interface.
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README FILES
 /* .ad
@@ -241,13 +250,13 @@
 #include <vstring.h>
 #include <vstream.h>
 #include <msg_vstream.h>
-#include <msg_syslog.h>
 #include <readlline.h>
 #include <stringops.h>
 #include <split_at.h>
 #include <vstring_vstream.h>
 #include <set_eugid.h>
 #include <warn_stat.h>
+#include <clean_env.h>
 
 /* Global library. */
 
@@ -259,6 +268,8 @@
 #include <mkmap.h>
 #include <mail_task.h>
 #include <dict_proxy.h>
+#include <mail_parm_split.h>
+#include <maillog_client.h>
 
 /* Application-specific. */
 
@@ -501,8 +512,8 @@ static int postalias_queries(VSTREAM *in, char **maps, const int map_count,
 	dicts[n] = 0;
 
     /*
-     * Perform all queries. Open maps on the fly, to avoid opening unecessary
-     * maps.
+     * Perform all queries. Open maps on the fly, to avoid opening
+     * unnecessary maps.
      */
     while (vstring_get_nonl(keybuf, in) != VSTREAM_EOF) {
 	for (n = 0; n < map_count; n++) {
@@ -702,6 +713,7 @@ int     main(int argc, char **argv)
     char   *delkey = 0;
     int     sequence = 0;
     int     found;
+    ARGV   *import_env;
 
     /*
      * Fingerprint executables and core dumps.
@@ -731,13 +743,13 @@ int     main(int argc, char **argv)
 	msg_verbose = 1;
 
     /*
-     * Initialize. Set up logging, read the global configuration file and
-     * extract configuration information.
+     * Initialize. Set up logging. Read the global configuration file after
+     * parsing command-line arguments.
      */
     if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
 	argv[0] = slash + 1;
     msg_vstream_init(argv[0], VSTREAM_ERR);
-    msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task(argv[0]), MAILLOG_CLIENT_FLAG_NONE);
 
     /*
      * Check the Postfix library version as soon as we enable logging.
@@ -808,8 +820,12 @@ int     main(int argc, char **argv)
 	}
     }
     mail_conf_read();
+    /* Enforce consistent operation of different Postfix parts. */
+    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
+    update_env(import_env->argv);
+    argv_free(import_env);
     /* Re-evaluate mail_task() after reading main.cf. */
-    msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
+    maillog_client_init(mail_task(argv[0]), MAILLOG_CLIENT_FLAG_NONE);
     mail_dict_init();
 
     /*

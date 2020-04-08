@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.8 2015/04/27 06:54:12 skrll Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.8.18.1 2020/04/08 14:07:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8 2015/04/27 06:54:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8.18.1 2020/04/08 14:07:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8 2015/04/27 06:54:12 skrll Exp $
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
+#include <sys/compat_stub.h>
 
 #include <sys/exec_aout.h>	/* for MID_* */
 
@@ -104,13 +105,15 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = coredump_write(iocookie, UIO_SYSSPACE,
-	    &cseg, chdr->c_seghdrsize);
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE,
+	    &cseg, chdr->c_seghdrsize), ENOSYS, error);
 	if (error)
 		return error;
 
-	return coredump_write(iocookie, UIO_SYSSPACE,
-	    &cpustate, sizeof(cpustate));
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE,
+	    &cpustate, sizeof(cpustate)), ENOSYS, error);
+
+	return error;
 }
 
 #ifdef EXEC_ELF32

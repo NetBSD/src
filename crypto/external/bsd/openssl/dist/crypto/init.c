@@ -8,25 +8,25 @@
  */
 
 #include "e_os.h"
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 #include <openssl/err.h>
-#include "internal/rand_int.h"
+#include "crypto/rand.h"
 #include "internal/bio.h"
 #include <openssl/evp.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/conf.h"
-#include "internal/async.h"
-#include "internal/engine.h"
+#include "crypto/async.h"
+#include "crypto/engine.h"
 #include "internal/comp.h"
 #include "internal/err.h"
-#include "internal/err_int.h"
-#include "internal/objects.h"
+#include "crypto/err.h"
+#include "crypto/objects.h"
 #include <stdlib.h>
 #include <assert.h>
 #include "internal/thread_once.h"
-#include "internal/dso_conf.h"
+#include "crypto/dso_conf.h"
 #include "internal/dso.h"
-#include "internal/store.h"
+#include "crypto/store.h"
 
 static int stopped = 0;
 
@@ -40,7 +40,7 @@ static int stopped = 0;
  * destructor for threads terminating before libcrypto is initialized or
  * after it's de-initialized. Access to the key doesn't have to be
  * serialized for the said threads, because they didn't use libcrypto
- * and it doesn't matter if they pick "impossible" or derefernce real
+ * and it doesn't matter if they pick "impossible" or dereference real
  * key value and pull NULL past initialization in the first thread that
  * intends to use libcrypto.
  */
@@ -847,6 +847,5 @@ void OPENSSL_fork_parent(void)
 
 void OPENSSL_fork_child(void)
 {
-    rand_fork();
 }
 #endif

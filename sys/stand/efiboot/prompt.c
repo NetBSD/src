@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.4.4.2 2019/06/10 22:09:56 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.4.4.3 2020/04/08 14:09:02 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -74,23 +74,27 @@ awaitkey(int timeout, int tell)
 {
 	int i = timeout * POLL_FREQ;
 	int last_secs = -1, secs;
+	int last_len = -1, n;
+	char buf[32];
 	char c = 0;
 
 	for (;;) {
 		if (tell) {
-			char buf[32];
 			int len;
 
 			secs = (i + POLL_FREQ - 1) / POLL_FREQ;
 			if (secs != last_secs) {
-				len = snprintf(buf, sizeof(buf), "%d seconds. ", (i + POLL_FREQ - 1) / POLL_FREQ);
-				if (len > 0 && len < sizeof(buf)) {
+				if (last_len != -1) {
 					char *p = buf;
-					printf("%s", buf);
-					while (*p)
+					for (n = 0; n < last_len; n++)
 						*p++ = '\b';
+					*p = '\0';
 					printf("%s", buf);
 				}
+				len = snprintf(buf, sizeof(buf), "%d seconds. ", (i + POLL_FREQ - 1) / POLL_FREQ);
+				if (len > 0 && len < sizeof(buf))
+					printf("%s", buf);
+				last_len = len;
 				last_secs = secs;
 			}
 		}
@@ -108,8 +112,16 @@ awaitkey(int timeout, int tell)
 	}
 
 out:
-	if (tell)
+	if (tell) {
+		if (last_len != -1) {
+			char *p = buf;
+			for (n = 0; n < last_len; n++)
+				*p++ = '\b';
+			*p = '\0';
+			printf("%s", buf);
+		}
 		printf("0 seconds.     \n");
+	}
 
 	return c;
 }

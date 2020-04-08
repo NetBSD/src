@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.168.2.1 2019/06/10 22:05:51 christos Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.168.2.2 2020/04/08 14:07:27 martin Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.168.2.1 2019/06/10 22:05:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.168.2.2 2020/04/08 14:07:27 martin Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -1776,7 +1776,7 @@ set_cpufuncs(void)
 #ifdef ARM11_CACHE_WRITE_THROUGH
 		pmap_pte_init_arm11();
 #else
-		pmap_pte_init_generic();
+		pmap_pte_init_armv6();
 #endif
 		if (arm_cache_prefer_mask)
 			uvmexp.ncolors = (arm_cache_prefer_mask >> PGSHIFT) + 1;

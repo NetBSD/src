@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.rump,v 1.3 2014/04/23 17:05:18 pooka Exp $	*/
+/*	$NetBSD: ldscript.rump,v 1.3.28.1 2020/04/08 14:08:59 martin Exp $	*/
 
 /*
  * From binutils 2.19 onwards (in NetBSD) binutils ld PROVIDEs
@@ -23,6 +23,20 @@ SECTIONS
 		__start_link_set_rump_components = .;
 		*(link_set_rump_components);
 		__stop_link_set_rump_components = .;
+	}
+
+	link_set_sysctl_funcs :
+	{
+		__start_link_set_sysctl_funcs = .;
+		*(link_set_sysctl_funcs);
+		__stop_link_set_sysctl_funcs = .;
+	}
+
+	link_set_rump_components :
+	{
+		__start_link_set_evcnts = .;
+		*(link_set_evcnts);
+		__stop_link_set_evcnts = .;
 	}
 }
 INSERT AFTER .data;

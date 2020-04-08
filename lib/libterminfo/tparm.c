@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.17 2017/05/04 09:42:23 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.17.10.1 2020/04/08 14:07:16 martin Exp $ */
 
 /*
  * Copyright (c) 2009, 2011, 2013 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.17 2017/05/04 09:42:23 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.17.10.1 2020/04/08 14:07:16 martin Exp $");
 #include <sys/param.h>
 
 #include <assert.h>
@@ -265,7 +265,8 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 		/* Handle formatting. */
 		fp = fmt;
 		*fp++ = '%';
-		done = dot = minus = width = precision = 0;
+		done = dot = minus = 0;
+		width = precision = 0;
 		val = 0;
 		while (done == 0 && (size_t)(fp - fmt) < sizeof(fmt)) {
 			switch (c) {

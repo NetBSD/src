@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.100.4.1 2019/06/10 22:06:46 christos Exp $ */
+/*	$NetBSD: cpu.h,v 1.100.4.2 2020/04/08 14:07:53 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -240,6 +240,7 @@ struct cpu_info {
 	 * etc.
 	 */
 	struct	lwp	*ci_curlwp;		/* CPU owner */
+	struct	lwp	*ci_onproc;		/* current user LWP / kthread */
 	struct	lwp 	*fplwp;			/* FPU owner */
 
 	int		ci_mtx_count;
@@ -373,7 +374,7 @@ struct cpu_info {
 	 * unrecoverable faults end up here.
 	 */
 	void		(*memerr)(unsigned, u_int, u_int, struct trapframe *);
-	void		(*idlespin)(struct cpu_info *);
+	void		(*idlespin)(void);
 	/* Module Control Registers */
 	/*bus_space_handle_t*/ long ci_mbusport;
 	/*bus_space_handle_t*/ long ci_mxccregs;
@@ -396,6 +397,11 @@ struct cpu_info {
 	struct evcnt ci_sintrcnt[16];
 };
 
+#endif /* _KERNEL || _KMEMUSER */
+
+/* Kernel only things. */
+#if defined(_KERNEL)
+
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
@@ -407,10 +413,6 @@ struct cpu_info {
 
 #define	cpu_number()		(cpuinfo.ci_cpuid)
 
-#endif /* _KERNEL || _KMEMUSER */
-
-/* Kernel only things. */
-#if defined(_KERNEL)
 void	cpu_proc_fork(struct proc *, struct proc *);
 
 #if defined(MULTIPROCESSOR)
@@ -451,13 +453,12 @@ void	sparc_softintr_init(void);
  * Preempt the current process on the target CPU if in interrupt from
  * user mode, or after the current trap/syscall if in system mode.
  */
-#define cpu_need_resched(ci, flags) do {				\
+#define cpu_need_resched(ci, l, flags) do {				\
 	__USE(flags);							\
-	(ci)->ci_want_resched = 1;					\
 	(ci)->ci_want_ast = 1;						\
 									\
 	/* Just interrupt the target CPU, so it can notice its AST */	\
-	if (((flags) & RESCHED_IMMED) || (ci)->ci_cpuid != cpu_number()) \
+	if ((flags & RESCHED_REMOTE) != 0)				\
 		XCALL0(sparc_noop, 1U << (ci)->ci_cpuid);		\
 } while (/*CONSTCOND*/0)
 

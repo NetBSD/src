@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.104 2017/08/20 09:47:13 maya Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.104.4.1 2020/04/08 14:07:45 martin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1826,7 +1826,7 @@ END(MIPSX(cache_exception))
  *	virtual address.
  *
  *	If we are page sizes which use both TLB LO entries, either both
- *	are valid or neither are.  So this expection should never happen.
+ *	are valid or neither are.  So this exception should never happen.
  *
  * Results:
  *	None.
@@ -1960,7 +1960,7 @@ MIPSX(kern_tlbi_odd):
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of wired bit
 	_SRL	k0, k0, WIRED_SHIFT
 #endif
-	_MTC0	k0, MIPS_COP_0_TLB_LO1		# save PTE entry
+	_MTC0	k0, MIPS_COP_0_TLB_LO1		# load PTE entry
 	COP0_SYNC
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
 #ifdef MIPS3
@@ -1981,7 +1981,7 @@ MIPSX(kern_tlbi_odd):
 	sltiu	k1, k1, MIPS3_TLB_WIRED_UPAGES	# Luckily this is MIPS3_PG_G
 	or	k1, k1, k0
 #endif
-	_MTC0	k0, MIPS_COP_0_TLB_LO0		# save PTE entry
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
 	COP0_SYNC
 #ifdef MIPS3
 	nop					# required for QED5230

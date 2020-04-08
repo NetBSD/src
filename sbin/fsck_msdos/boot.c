@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.21 2018/02/08 09:05:17 dholland Exp $");
+__RCSID("$NetBSD: boot.c,v 1.21.4.1 2020/04/08 14:07:19 martin Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -81,8 +81,8 @@ readboot(int dosfs, struct bootblock *boot)
 	boot->FATsmall = block[22] + (block[23] << 8);
 	boot->SecPerTrack = block[24] + (block[25] << 8);
 	boot->Heads = block[26] + (block[27] << 8);
-	boot->HiddenSecs = block[28] + (block[29] << 8) + (block[30] << 16) + (block[31] << 24);
-	boot->HugeSectors = block[32] + (block[33] << 8) + (block[34] << 16) + (block[35] << 24);
+	boot->HiddenSecs = block[28] + (block[29] << 8) + (block[30] << 16) + ((uint32_t)block[31] << 24);
+	boot->HugeSectors = block[32] + (block[33] << 8) + (block[34] << 16) + ((uint32_t)block[35] << 24);
 
 	boot->FATsecs = boot->FATsmall;
 
@@ -90,7 +90,7 @@ readboot(int dosfs, struct bootblock *boot)
 		boot->flags |= FAT32;
 	if (boot->flags & FAT32) {
 		boot->FATsecs = block[36] + (block[37] << 8)
-				+ (block[38] << 16) + (block[39] << 24);
+				+ (block[38] << 16) + ((uint32_t)block[39] << 24);
 		if (block[40] & 0x80)
 			boot->ValidFat = block[40] & 0x0f;
 
@@ -102,7 +102,7 @@ readboot(int dosfs, struct bootblock *boot)
 			return FSFATAL;
 		}
 		boot->RootCl = block[44] + (block[45] << 8)
-			       + (block[46] << 16) + (block[47] << 24);
+			       + (block[46] << 16) + ((uint32_t)block[47] << 24);
 		boot->FSInfo = block[48] + (block[49] << 8);
 		boot->Backup = block[50] + (block[51] << 8);
 
@@ -147,10 +147,10 @@ readboot(int dosfs, struct bootblock *boot)
 		if (boot->FSInfo) {
 			boot->FSFree = fsinfo[0x1e8] + (fsinfo[0x1e9] << 8)
 				       + (fsinfo[0x1ea] << 16)
-				       + (fsinfo[0x1eb] << 24);
+				       + ((uint32_t)fsinfo[0x1eb] << 24);
 			boot->FSNext = fsinfo[0x1ec] + (fsinfo[0x1ed] << 8)
 				       + (fsinfo[0x1ee] << 16)
-				       + (fsinfo[0x1ef] << 24);
+				       + ((uint32_t)fsinfo[0x1ef] << 24);
 		}
 
 		if (lseek(dosfs, boot->Backup * boot->BytesPerSec, SEEK_SET)
@@ -210,8 +210,12 @@ readboot(int dosfs, struct bootblock *boot)
 		return FSFATAL;
 	}
 
-	boot->NumClusters = (boot->NumSectors - boot->FirstCluster) / boot->SecPerClust
-			    + CLUST_FIRST;
+	/*
+	 * The number of clusters is derived from available data sectors,
+	 * divided by sectors per cluster.
+	 */
+	boot->NumClusters =
+	    (boot->NumSectors - boot->FirstCluster) / boot->SecPerClust;
 
 	if (boot->flags&FAT32)
 		boot->ClustMask = CLUST32_MASK;
@@ -237,11 +241,19 @@ readboot(int dosfs, struct bootblock *boot)
 		break;
 	}
 
-	if (boot->NumFatEntries < boot->NumClusters - CLUST_FIRST) {
+	if (boot->NumFatEntries < boot->NumClusters) {
 		pfatal("FAT size too small, %u entries won't fit into %u sectors\n",
 		       boot->NumClusters, boot->FATsecs);
 		return FSFATAL;
 	}
+
+	/*
+	 * There are two reserved clusters. To avoid adding CLUST_FIRST every
+	 * time we perform boundary checks, we increment the NumClusters by 2,
+	 * which is CLUST_FIRST to denote the first out-of-range cluster number.
+	 */
+	boot->NumClusters += CLUST_FIRST;
+
 	boot->ClusterSize = boot->BytesPerSec * boot->SecPerClust;
 
 	boot->NumFiles = 1;

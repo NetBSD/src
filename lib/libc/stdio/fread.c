@@ -1,4 +1,4 @@
-/*	$NetBSD: fread.c,v 1.22 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: fread.c,v 1.22.32.1 2020/04/08 14:07:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fread.c	8.2 (Berkeley) 12/11/93";
 #else
-__RCSID("$NetBSD: fread.c,v 1.22 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: fread.c,v 1.22.32.1 2020/04/08 14:07:13 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,16 +68,21 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 	_DIAGASSERT(buf != NULL);
 
 	FLOCKFILE(fp);
-	if (fp->_r < 0)
-		fp->_r = 0;
 	total = resid;
 	p = buf;
+
+	if (fp->_r <= 0) {
+		/* Nothing to read on enter, refill the buffers. */
+		goto refill;
+	}
+
 	while (resid > (size_t)(r = fp->_r)) {
 		(void)memcpy(p, fp->_p, (size_t)r);
 		fp->_p += r;
 		/* fp->_r = 0 ... done in __srefill */
 		p += r;
 		resid -= r;
+refill:
 		if (__srefill(fp)) {
 			/* no more input: return partial result */
 			FUNLOCKFILE(fp);

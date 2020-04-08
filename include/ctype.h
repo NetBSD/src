@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.34 2013/04/28 19:39:56 joerg Exp $	*/
+/*	$NetBSD: ctype.h,v 1.34.28.1 2020/04/08 14:07:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -86,8 +86,11 @@ int	_tolower(int);
 int	_toupper(int);
 #endif
 
-#if defined(_ISOC99_SOURCE) || (_POSIX_C_SOURCE - 0) > 200112L || \
-    (_XOPEN_SOURCE - 0) > 600 || defined(_NETBSD_SOURCE)
+#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)) || ((_POSIX_C_SOURCE - 0) >= 200112L || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
+     (__cplusplus - 0) >= 201103L || (_XOPEN_SOURCE - 0) > 600 || \
+     defined(_NETBSD_SOURCE))
 int	isblank(int);
 #endif
 __END_DECLS

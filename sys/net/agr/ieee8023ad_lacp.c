@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp.c,v 1.10 2011/07/01 02:46:24 joerg Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp.c,v 1.10.54.1 2020/04/08 14:08:57 martin Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.10 2011/07/01 02:46:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.10.54.1 2020/04/08 14:08:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -503,7 +503,7 @@ ieee8023ad_select_tx_port(struct agr_softc *sc, struct mbuf *m)
 	if (__predict_false(lsc->lsc_suppress_distributing &&
 	    !AGR_ROUNDROBIN(sc))) {
 		LACP_DPRINTF((NULL, "%s: waiting transit\n", __func__));
-		sc->sc_if.if_collisions++; /* XXX abuse */
+		if_statinc(&sc->sc_if, if_collisions);	/* XXX abuse */
 		return NULL;
 	}
 

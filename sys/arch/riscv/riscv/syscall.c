@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1 2015/03/28 16:13:56 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1.22.1 2020/04/08 14:07:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.22.1 2020/04/08 14:07:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -67,7 +67,7 @@ EMULNAME(syscall_intern)(struct proc *p)
  * System calls are strange beasts.  They are passed the syscall number
  * in t6, and the arguments in the registers (as normal).
  * The return value (if any) in a0 and possibly a1.  The instruction
- * directly after the syscall is excepted to contain a jump instruction 
+ * directly after the syscall is excepted to contain a jump instruction
  * for an error handler.  If the syscall completes with no error, the PC
  * will be advanced past that instruction.
  */
@@ -142,7 +142,7 @@ EMULNAME(syscall)(struct trapframe *tf)
 		 * values and synthesize the 64bit argument.
 		 */
 		for (i = 0; i < nargs + narg64; ) {
-			register_t arg = *args32++; 
+			register_t arg = *args32++;
 			if (__predict_true((arg64mask & 1) == 0)) {
 				/*
 				 * Just copy it with sign extension on
@@ -211,7 +211,7 @@ EMULNAME(syscall)(struct trapframe *tf)
 			 */
 			register_t tmp = retval[0];
 			tf->tf_reg[_X_A0 + _QUAD_LOWWORD] = (int32_t) tmp;
-			tf->tf_reg[_X_A0 + _QUAD_HIGHWORD] = tmp >> 32; 
+			tf->tf_reg[_X_A0 + _QUAD_HIGHWORD] = tmp >> 32;
 		}
 #endif
 #ifdef RISCV_SYSCALL_DEBUG

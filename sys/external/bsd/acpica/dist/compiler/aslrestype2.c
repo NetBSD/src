@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -379,10 +379,7 @@ RsDoInterruptDescriptor (
 
     if (StringLength && ResSourceString)
     {
-
         strcpy ((char *) Rover, (char *) ResSourceString);
-        Rover = ACPI_ADD_PTR (
-                    AML_RESOURCE, &(Rover->ByteItem), StringLength);
 
         Descriptor->ExtendedIrq.ResourceLength = (UINT16)
             (Descriptor->ExtendedIrq.ResourceLength + StringLength);

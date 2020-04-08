@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.4.1 2019/06/10 22:02:41 christos Exp $
+#	$NetBSD: Makefile,v 1.2.4.2 2020/04/08 14:07:02 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -73,7 +73,6 @@ CPPFLAGS+=	\
 	-DHAVE_DRM_PLATFORM \
 	-DENABLE_SHADER_CACHE \
 	-DHAVE_MINCORE \
-	-DHAVE_LLVM=0x0700 \
 	-DMESA_LLVM_VERSION_PATCH=0 \
 	-I. \
 	-DSTDC_HEADERS=1 \

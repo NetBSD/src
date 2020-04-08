@@ -1,4 +1,4 @@
-/*	$NetBSD: header_body_checks.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: header_body_checks.c,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -156,6 +156,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -283,12 +288,16 @@ static char *hbc_action(void *context, HBC_CALL_BACKS *cb,
 	}
 	return ((char *) line);
     }
+    if (STREQUAL(cmd, "STRIP", cmd_len)) {
+	cb->logger(context, "strip", where, line, cmd_args);
+	return (HBC_CHECKS_STAT_IGNORE);
+    }
     /* Allow and ignore optional text after the action. */
 
     if (STREQUAL(cmd, "IGNORE", cmd_len))
 	/* XXX Not logged for compatibility with cleanup(8). */
 	return (HBC_CHECKS_STAT_IGNORE);
-
+ 
     if (STREQUAL(cmd, "DUNNO", cmd_len)		/* preferred */
 	||STREQUAL(cmd, "OK", cmd_len))		/* compatibility */
 	return ((char *) line);

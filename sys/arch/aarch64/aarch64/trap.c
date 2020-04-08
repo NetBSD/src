@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.4.2.1 2019/06/10 22:05:43 christos Exp $ */
+/* $NetBSD: trap.c,v 1.4.2.2 2020/04/08 14:07:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.4.2.1 2019/06/10 22:05:43 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.4.2.2 2020/04/08 14:07:23 martin Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -73,9 +74,18 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.4.2.1 2019/06/10 22:05:43 christos Exp $"
 #include <ddb/db_output.h>
 #include <machine/db_machdep.h>
 #endif
+#ifdef KDTRACE_HOOKS
+#include <sys/dtrace_bsd.h>
+#endif
 
 #ifdef DDB
 int sigill_debug = 0;
+#endif
+
+#ifdef KDTRACE_HOOKS
+dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
+dtrace_trap_func_t		dtrace_trap_func = NULL;
+int (*dtrace_invop_jump_addr)(struct trapframe *);
 #endif
 
 const char * const trap_names[] = {
@@ -83,6 +93,8 @@ const char * const trap_names[] = {
 	[ESR_EC_SERROR]		= "SError Interrupt",
 	[ESR_EC_WFX]		= "WFI or WFE instruction execution",
 	[ESR_EC_ILL_STATE]	= "Illegal Execution State",
+
+	[ESR_EC_BTE_A64]	= "Branch Target Exception",
 
 	[ESR_EC_SYS_REG]	= "MSR/MRS/SYS instruction",
 	[ESR_EC_SVC_A64]	= "SVC Instruction Execution",
@@ -158,7 +170,6 @@ trap_doast(struct trapframe *tf)
 	ci->ci_data.cpu_ntrap++;
 
 	KDASSERT(ci->ci_cpl == IPL_NONE);
-	const int want_resched = ci->ci_want_resched;
 #ifdef __HAVE_PREEMPTION
 	kpreempt_enable();
 #endif
@@ -168,9 +179,6 @@ trap_doast(struct trapframe *tf)
 		ADDUPROF(l);
 	}
 
-	/* Allow a forced task switch. */
-	if (want_resched)
-		preempt();
 	userret(l);
 }
 
@@ -186,16 +194,29 @@ trap_el1h_sync(struct trapframe *tf)
 	else
 		daif_enable(DAIF_D|DAIF_A);
 
+#ifdef KDTRACE_HOOKS
+	if (dtrace_trap_func != NULL && (*dtrace_trap_func)(tf, eclass))
+		return;
+#endif
+
 	switch (eclass) {
 	case ESR_EC_INSN_ABT_EL1:
 	case ESR_EC_DATA_ABT_EL1:
 		data_abort_handler(tf, eclass);
 		break;
 
+	case ESR_EC_BKPT_INSN_A64:
+#ifdef KDTRACE_HOOKS
+		if (__SHIFTOUT(esr, ESR_ISS) == 0x40d &&
+		    dtrace_invop_jump_addr != 0) {
+			(*dtrace_invop_jump_addr)(tf);
+			break;
+		}
+		/* FALLTHROUGH */
+#endif
 	case ESR_EC_BRKPNT_EL1:
 	case ESR_EC_SW_STEP_EL1:
 	case ESR_EC_WTCHPNT_EL1:
-	case ESR_EC_BKPT_INSN_A64:
 #ifdef DDB
 		if (eclass == ESR_EC_BRKPNT_EL1)
 			kdb_trap(DB_TRAP_BREAKPOINT, tf);
@@ -325,6 +346,111 @@ interrupt(struct trapframe *tf)
 	cpu_dosoftints();
 }
 
+#ifdef COMPAT_NETBSD32
+
+/*
+ * 32-bit length Thumb instruction. See ARMv7 DDI0406A A6.3.
+ */
+#define THUMB_32BIT(hi) (((hi) & 0xe000) == 0xe000 && ((hi) & 0x1800))
+
+static int
+fetch_arm_insn(struct trapframe *tf, uint32_t *insn)
+{
+
+	/* THUMB? */
+	if (tf->tf_spsr & SPSR_A32_T) {
+		uint16_t *pc = (uint16_t *)(tf->tf_pc & ~1UL); /* XXX */
+		uint16_t hi, lo;
+
+		if (ufetch_16(pc, &hi))
+			return -1;
+
+		if (!THUMB_32BIT(hi)) {
+			/* 16-bit Thumb instruction */
+			*insn = hi;
+			return 2;
+		}
+
+		/* 32-bit Thumb instruction */
+		if (ufetch_16(pc + 1, &lo))
+			return -1;
+
+		*insn = ((uint32_t)hi << 16) | lo;
+		return 4;
+	}
+
+	if (ufetch_32((uint32_t *)tf->tf_pc, insn))
+		return -1;
+
+	return 4;
+}
+
+enum emul_arm_result {
+	EMUL_ARM_SUCCESS = 0,
+	EMUL_ARM_UNKNOWN,
+	EMUL_ARM_FAULT,
+};
+
+static enum emul_arm_result
+emul_arm_insn(struct trapframe *tf)
+{
+	uint32_t insn;
+	int insn_size;
+
+	insn_size = fetch_arm_insn(tf, &insn);
+
+	switch (insn_size) {
+	case 2:
+		/* T32-16bit instruction */
+
+		/* XXX: some T32 IT instruction deprecated should be emulated */
+		break;
+	case 4:
+		/* T32-32bit instruction, or A32 instruction */
+
+		/*
+		 * Emulate ARMv6 instructions with cache operations
+		 * register (c7), that can be used in user mode.
+		 */
+		switch (insn & 0x0fff0fff) {
+		case 0x0e070f95:
+			/*
+			 * mcr p15, 0, <Rd>, c7, c5, 4
+			 * (flush prefetch buffer)
+			 */
+			__asm __volatile("isb sy" ::: "memory");
+			goto emulated;
+		case 0x0e070f9a:
+			/*
+			 * mcr p15, 0, <Rd>, c7, c10, 4
+			 * (data synchronization barrier)
+			 */
+			__asm __volatile("dsb sy" ::: "memory");
+			goto emulated;
+		case 0x0e070fba:
+			/*
+			 * mcr p15, 0, <Rd>, c7, c10, 5
+			 * (data memory barrier)
+			 */
+			__asm __volatile("dmb sy" ::: "memory");
+			goto emulated;
+		default:
+			break;
+		}
+		break;
+	default:
+		return EMUL_ARM_FAULT;
+	}
+
+	/* unknown, or unsupported instruction */
+	return EMUL_ARM_UNKNOWN;
+
+ emulated:
+	tf->tf_pc += insn_size;
+	return EMUL_ARM_SUCCESS;
+}
+#endif /* COMPAT_NETBSD32 */
+
 void
 trap_el0_32sync(struct trapframe *tf)
 {
@@ -371,11 +497,26 @@ trap_el0_32sync(struct trapframe *tf)
 		userret(l);
 		break;
 
+	case ESR_EC_UNKNOWN:
+		switch (emul_arm_insn(tf)) {
+		case EMUL_ARM_SUCCESS:
+			break;
+		case EMUL_ARM_UNKNOWN:
+			goto unknown;
+		case EMUL_ARM_FAULT:
+			do_trapsignal(l, SIGSEGV, SEGV_MAPERR,
+			    (void *)tf->tf_pc, esr);
+			break;
+		}
+		userret(l);
+		break;
+
 	case ESR_EC_CP15_RT:
 	case ESR_EC_CP15_RRT:
 	case ESR_EC_CP14_RT:
 	case ESR_EC_CP14_DT:
 	case ESR_EC_CP14_RRT:
+unknown:
 #endif /* COMPAT_NETBSD32 */
 	default:
 #ifdef DDB
@@ -491,4 +632,32 @@ void do_trapsignal1(
 	sigdebug(tf, &ksi);
 #endif
 	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
+}
+
+bool
+cpu_intr_p(void)
+{
+	uint64_t ncsw;
+	int idepth;
+	lwp_t *l;
+
+#ifdef __HAVE_PIC_FAST_SOFTINTS
+	/* XXX Copied from cpu.h.  Looks incomplete - needs fixing. */
+	if (ci->ci_cpl < IPL_VM)
+		return false;
+#endif
+
+	l = curlwp;
+	if (__predict_false(l->l_cpu == NULL)) {
+		KASSERT(l == &lwp0);
+		return false;
+	}
+	do {
+		ncsw = l->l_ncsw;
+		__insn_barrier();
+		idepth = l->l_cpu->ci_intr_depth;
+		__insn_barrier();
+	} while (__predict_false(ncsw != l->l_ncsw));
+
+	return idepth > 0;
 }

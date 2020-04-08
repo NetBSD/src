@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.4.2.1 2019/06/10 22:05:43 christos Exp $ */
+/* $NetBSD: vmparam.h,v 1.4.2.2 2020/04/08 14:07:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -40,6 +40,17 @@
  * Default pager_map of 16MB is small and we have plenty of VA to burn.
  */
 #define	PAGER_MAP_DEFAULT_SIZE	(512 * 1024 * 1024)
+
+/*
+ * Defaults for Unified Buffer Cache parameters.
+ */
+
+#ifndef UBC_WINSHIFT
+#define	UBC_WINSHIFT	16	/* 64kB */
+#endif
+#ifndef UBC_NWINS
+#define	UBC_NWINS	4096	/* 256MB */
+#endif
 
 /*
  * AARCH64 supports 3 page sizes: 4KB, 16KB, 64KB.  Each page table can
@@ -119,10 +130,17 @@
 #define VM_MAXUSER_ADDRESS32	((vaddr_t) 0xfffff000)
 
 /*
- * Give ourselves 64GB of mappable kernel space.  That leaves the rest
- * to be user for directly mapped (block addressable) addresses.
+ * kernel virtual space layout:
+ *   0xffff000000000000-   64T KSEG(direct mapping)
+ *   0xffff400000000000-   32T (KASAN SHADOW MAP)
+ *   0xffff600000000000-   32T (not used)
+ *   0xffff800000000000-    1G EFI_RUNTIME
+ *   0xffff800040000000-   64T (not used)
+ *   0xffffc00000000000-   64T KERNEL VM Space (including kernel text/data/bss)
+ *   0xfffffffff0000000-  254M KERNEL_IO for pmap_devmap
+ *   0xffffffffffe00000-    2M RESERVED
  */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 0xffffffc000000000L)
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 0xffffc00000000000L)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffffffe00000L)
 
 /*
@@ -153,7 +171,7 @@
  * using block page table entries.
  */
 #define AARCH64_KSEG_MASK	((vaddr_t) 0xffff000000000000L)
-#define AARCH64_KSEG_SIZE	(1UL << 39)	/* 512GB */
+#define AARCH64_KSEG_SIZE	(1UL << 46)	/* 64TB */
 #define AARCH64_KSEG_START	AARCH64_KSEG_MASK
 #define AARCH64_KSEG_END	(AARCH64_KSEG_START + AARCH64_KSEG_SIZE)
 #define AARCH64_KMEMORY_BASE	AARCH64_KSEG_MASK
@@ -165,10 +183,8 @@
 #define VM_PHYSSEG_MAX		64              /* XXX */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
-#define VM_NFREELIST		3
+#define VM_NFREELIST		1
 #define VM_FREELIST_DEFAULT	0
-#define VM_FREELIST_FIRST4GB	1
-#define VM_FREELIST_HIGHMEM	2
 
 #elif defined(__arm__)
 

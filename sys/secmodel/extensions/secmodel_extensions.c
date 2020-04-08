@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.8.2.1 2019/06/10 22:09:55 christos Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.8.2.2 2020/04/08 14:09:02 martin Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.8.2.1 2019/06/10 22:09:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.8.2.2 2020/04/08 14:09:02 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,7 +57,6 @@ int user_set_dbregs;
 static kauth_listener_t l_system, l_process, l_network;
 
 static secmodel_t extensions_sm;
-static struct sysctllog *extensions_sysctl_log;
 
 static void secmodel_extensions_init(void);
 static void secmodel_extensions_start(void);
@@ -75,8 +74,8 @@ static int secmodel_extensions_process_cb(kauth_cred_t, kauth_action_t,
 static int secmodel_extensions_network_cb(kauth_cred_t, kauth_action_t,
     void *, void *, void *, void *, void *);
 
-static void
-sysctl_security_extensions_setup(struct sysctllog **clog)
+SYSCTL_SETUP(sysctl_security_extensions_setup,
+    "security extensions sysctl")
 {
 	const struct sysctlnode *rnode, *rnode2;
 
@@ -308,11 +307,9 @@ extensions_modcmd(modcmd_t cmd, void *arg)
 
 		secmodel_extensions_init();
 		secmodel_extensions_start();
-		sysctl_security_extensions_setup(&extensions_sysctl_log);
 		break;
 
 	case MODULE_CMD_FINI:
-		sysctl_teardown(&extensions_sysctl_log);
 		secmodel_extensions_stop();
 
 		error = secmodel_deregister(extensions_sm);
@@ -346,7 +343,7 @@ secmodel_extensions_system_cb(kauth_cred_t cred, kauth_action_t action,
 	enum kauth_system_req req;
 	int error;
 
-	req = (enum kauth_system_req)arg0;
+	req = (enum kauth_system_req)(uintptr_t)arg0;
 	result = KAUTH_RESULT_DEFER;
 
 	switch (action) {
@@ -420,7 +417,7 @@ secmodel_extensions_process_cb(kauth_cred_t cred, kauth_action_t action,
 	enum kauth_process_req req;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_process_req)arg1;
+	req = (enum kauth_process_req)(uintptr_t)arg1;
 
 	switch (action) {
 	case KAUTH_PROCESS_CANSEE:
@@ -481,7 +478,7 @@ secmodel_extensions_network_cb(kauth_cred_t cred, kauth_action_t action,
 	enum kauth_network_req req;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_network_req)arg0;
+	req = (enum kauth_network_req)(uintptr_t)arg0;
 
 	if (action != KAUTH_NETWORK_SOCKET ||
 	    req != KAUTH_REQ_NETWORK_SOCKET_CANSEE)

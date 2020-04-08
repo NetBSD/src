@@ -1,7 +1,7 @@
-/*	$NetBSD: init_main.c,v 1.497.2.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.497.2.2 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.497.2.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.497.2.2 2020/04/08 14:08:51 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -170,6 +170,7 @@ extern void *_binary_splash_image_end;
 #include <sys/disk.h>
 #include <sys/msgbuf.h>
 #include <sys/module.h>
+#include <sys/module_hook.h>
 #include <sys/event.h>
 #include <sys/lockf.h>
 #include <sys/once.h>
@@ -196,11 +197,14 @@ extern void *_binary_splash_image_end;
 #include <net80211/ieee80211_netbsd.h>
 #include <sys/cprng.h>
 #include <sys/psref.h>
+#include <sys/radixtree.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
 #include <sys/pax.h>
+
+#include <dev/clock_subr.h>
 
 #include <secmodel/secmodel.h>
 
@@ -237,7 +241,7 @@ struct	proc *initproc;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold __read_mostly = 1;		/* still working on startup */
-struct timespec boottime;	        /* time at system startup - will only follow settime deltas */
+int	shutting_down __read_mostly;	/* system is shutting down */
 
 int	start_init_exec;		/* semaphore for start_init() */
 
@@ -296,6 +300,7 @@ main(void)
 
 	kernel_lock_init();
 	once_init();
+	todr_init();
 
 	mi_cpu_init();
 	kernconfig_lock_init();
@@ -323,6 +328,9 @@ main(void)
 	/* Initialize lock caches. */
 	mutex_obj_init();
 	rw_obj_init();
+
+	/* Initialize radix trees (used by numerous subsystems). */
+	radix_tree_init();
 
 	/* Passive serialization. */
 	pserialize_init();
@@ -354,6 +362,7 @@ main(void)
 
 	/* Start module system. */
 	module_init();
+	module_hook_init();
 
 	/*
 	 * Initialize the kernel authorization subsystem and start the
@@ -456,6 +465,9 @@ main(void)
 
 	/* Second part of module system initialization. */
 	module_start_unload_thread();
+
+	/* Initialize autoconf data structures before any modules are loaded */
+	config_init_mi();
 
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
@@ -680,16 +692,6 @@ main(void)
 	 * munched in mi_switch() after the time got set.
 	 */
 	getnanotime(&time);
-	{
-		struct timespec ut;
-		/*
-		 * was:
-		 *	boottime = time;
-		 * but we can do better
-		 */
-		nanouptime(&ut);
-		timespecsub(&time, &ut, &boottime);
-	}
 
 	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
@@ -721,11 +723,6 @@ main(void)
 	    NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
-	/* Create the aiodone daemon kernel thread. */
-	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    uvm_aiodone_worker, NULL, PRI_VM, IPL_NONE, WQ_MPSAFE))
-		panic("fork aiodoned");
-
 	/* Wait for final configure threads to complete. */
 	config_finalize_mountroot();
 
@@ -749,8 +746,6 @@ static void
 configure(void)
 {
 
-	/* Initialize autoconf data structures. */
-	config_init_mi();
 	/*
 	 * XXX
 	 * callout_setfunc() requires mutex(9) so it can't be in config_init()
@@ -788,6 +783,9 @@ configure2(void)
 	struct cpu_info *ci;
 	int s;
 
+	/* Fix up CPU topology info, which has all been collected by now. */
+	cpu_topology_init();
+
 	/*
 	 * Now that we've found all the hardware, start the real time
 	 * and statistics clocks.
@@ -799,18 +797,22 @@ configure2(void)
 	curcpu()->ci_schedstate.spc_flags |= SPCF_RUNNING;
 	splx(s);
 
+	/* Setup the runqueues and scheduler. */
+	runq_init();
+	synch_init();
+
 	/* Boot the secondary processors. */
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		uvm_cpu_attach(ci);
 	}
+
+	/* Decide how to partition free memory. */
+	uvm_page_rebucket();
+
 	mp_online = true;
 #if defined(MULTIPROCESSOR)
 	cpu_boot_secondary_processors();
 #endif
-
-	/* Setup the runqueues and scheduler. */
-	runq_init();
-	synch_init();
 
 	/*
 	 * Bus scans can make it appear as if the system has paused, so
@@ -1001,9 +1003,9 @@ start_init(void *arg)
 			printf(": ");
 			len = cngetsn(ipath, sizeof(ipath)-1);
 			if (len == 4 && strcmp(ipath, "halt") == 0) {
-				cpu_reboot(RB_HALT, NULL);
+				kern_reboot(RB_HALT, NULL);
 			} else if (len == 6 && strcmp(ipath, "reboot") == 0) {
-				cpu_reboot(0, NULL);
+				kern_reboot(0, NULL);
 #if defined(DDB)
 			} else if (len == 3 && strcmp(ipath, "ddb") == 0) {
 				console_debugger();
@@ -1167,6 +1169,6 @@ banner(void)
 	(*pr)("%s%s", copyright, version);
 	format_bytes(pbuf, MEM_PBUFSIZE, ctob((uint64_t)physmem));
 	(*pr)("total memory = %s\n", pbuf);
-	format_bytes(pbuf, MEM_PBUFSIZE, ctob((uint64_t)uvmexp.free));
+	format_bytes(pbuf, MEM_PBUFSIZE, ctob((uint64_t)uvm_availmem()));
 	(*pr)("avail memory = %s\n", pbuf);
 }

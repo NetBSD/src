@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.8.2.1 2019/06/10 22:05:51 christos Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.8.2.2 2020/04/08 14:07:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.8.2.1 2019/06/10 22:05:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.8.2.2 2020/04/08 14:07:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ armv7_generic_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 	else if (flag & BUS_SPACE_MAP_CACHEABLE)
 		pmapflags = 0;
 	else
-		pmapflags = PMAP_NOCACHE;
+		pmapflags = PMAP_DEV;
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);

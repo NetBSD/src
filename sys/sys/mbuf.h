@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.207.2.2 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.207.2.3 2020/04/08 14:09:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -218,6 +218,7 @@ struct pkthdr {
 #define M_CSUM_TSOv6		0x00000200	/* TCPv6 segmentation offload */
 
 /* Checksum-assist quirks: keep separate from jump-table bits. */
+#define M_CSUM_BLANK		0x40000000	/* csum is missing */
 #define M_CSUM_NO_PSEUDOHDR	0x80000000	/* Rx csum_data does not include
 						 * the UDP/TCP pseudo-hdr, and
 						 * is not yet 1s-complemented.
@@ -225,7 +226,7 @@ struct pkthdr {
 
 #define M_CSUM_BITS \
     "\20\1TCPv4\2UDPv4\3TCP_UDP_BAD\4DATA\5TCPv6\6UDPv6\7IPv4\10IPv4_BAD" \
-    "\11TSOv4\12TSOv6\40NO_PSEUDOHDR"
+    "\11TSOv4\12TSOv6\39BLANK\40NO_PSEUDOHDR"
 
 /*
  * Macros for manipulating csum_data on outgoing packets. These are
@@ -319,9 +320,9 @@ struct _m_ext {
 MBUF_DEFINE(_mbuf_dummy, 1, 1);
 
 /* normal data len */
-#define MLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_dat))
+#define MLEN		((int)(MSIZE - offsetof(struct _mbuf_dummy, m_dat)))
 /* data len w/pkthdr */
-#define MHLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_pktdat))
+#define MHLEN		((int)(MSIZE - offsetof(struct _mbuf_dummy, m_pktdat)))
 
 #define MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
 
@@ -417,6 +418,7 @@ extern const char * const mbuftypes[];
 
 #ifdef MBUFTRACE
 /* Mbuf allocation tracing. */
+void mowner_init_owner(struct mowner *, const char *, const char *);
 void mowner_init(struct mbuf *, int);
 void mowner_ref(struct mbuf *, int);
 void m_claim(struct mbuf *, struct mowner *);
@@ -425,6 +427,7 @@ void mowner_attach(struct mowner *);
 void mowner_detach(struct mowner *);
 void m_claimm(struct mbuf *, struct mowner *);
 #else
+#define mowner_init_owner(mo, n, d)	__nothing
 #define mowner_init(m, type)		__nothing
 #define mowner_ref(m, flags)		__nothing
 #define mowner_revoke(m, all, flags)	__nothing

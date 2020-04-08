@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.231.2.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.231.2.2 2020/04/08 14:08:58 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.231.2.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.231.2.2 2020/04/08 14:08:58 martin Exp $");
 
 #include "arp.h"
 
@@ -1219,10 +1219,15 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
 	if (ifp->if_flags & IFF_BROADCAST) {
-		ia->ia_broadaddr.sin_addr.s_addr =
-			ia->ia_subnet | ~ia->ia_subnetmask;
-		ia->ia_netbroadcast.s_addr =
-			ia->ia_net | ~ia->ia_netmask;
+		if (ia->ia_subnetmask == IN_RFC3021_MASK) {
+			ia->ia_broadaddr.sin_addr.s_addr = INADDR_BROADCAST;
+			ia->ia_netbroadcast.s_addr = INADDR_BROADCAST;
+		} else {
+			ia->ia_broadaddr.sin_addr.s_addr =
+				ia->ia_subnet | ~ia->ia_subnetmask;
+			ia->ia_netbroadcast.s_addr =
+				ia->ia_net | ~ia->ia_netmask;
+		}
 	} else if (ifp->if_flags & IFF_LOOPBACK) {
 		ia->ia_dstaddr = ia->ia_addr;
 		flags |= RTF_HOST;
@@ -1426,8 +1431,10 @@ in_broadcast(struct in_addr in, struct ifnet *ifp)
 		     in_hosteq(in, ia->ia_netbroadcast) ||
 		     (hostzeroisbroadcast &&
 		      /*
-		       * Check for old-style (host 0) broadcast.
+		       * Check for old-style (host 0) broadcast, but
+		       * taking into account that RFC 3021 obsoletes it.
 		       */
+		      ia->ia_subnetmask != IN_RFC3021_MASK &&
 		      (in.s_addr == ia->ia_subnet ||
 		       in.s_addr == ia->ia_net)))) {
 			pserialize_read_exit(s);

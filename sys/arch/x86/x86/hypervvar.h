@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervvar.h,v 1.1.2.2 2019/06/10 22:06:53 christos Exp $	*/
+/*	$NetBSD: hypervvar.h,v 1.1.2.3 2020/04/08 14:07:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016 Microsoft Corp.
@@ -32,6 +32,7 @@
 #define _X86_HYPERVVAR_H_
 
 void		hyperv_early_init(void);
+void		hyperv_init_cpu(struct cpu_info *);
 device_t	device_hyperv_register(device_t, void *);
 
 #endif /* _X86_HYPERVVAR_H_ */

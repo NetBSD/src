@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.17.2.1 2019/06/10 22:07:09 christos Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.17.2.2 2020/04/08 14:08:05 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -39,6 +39,7 @@
 #define	_DEV_I2C_I2CVAR_H_
 
 #include <sys/device.h>
+#include <sys/mutex.h>
 #include <dev/i2c/i2c_io.h>
 #include <prop/proplib.h>
 
@@ -90,10 +91,12 @@ typedef struct i2c_controller {
 	 * the driver is finished, it should release the
 	 * bus.
 	 *
-	 * This is provided by the back-end since a single
-	 * controller may present e.g. i2c and smbus views
-	 * of the same set of i2c wires.
+	 * The main synchronization logic is handled by the
+	 * generic i2c layer, but optional hooks to back-end
+	 * drivers are provided in case additional processing
+	 * is needed (e.g. enabling the i2c controller).
 	 */
+	kmutex_t ic_bus_lock;
 	int	(*ic_acquire_bus)(void *, int);
 	void	(*ic_release_bus)(void *, int);
 
@@ -119,13 +122,9 @@ typedef struct i2c_controller {
 	const char *ic_devname;
 } *i2c_tag_t;
 
-/* I2C bus types */
-#define	I2C_TYPE_SMBUS	1
-
 /* Used to attach the i2c framework to the controller. */
 struct i2cbus_attach_args {
 	i2c_tag_t iba_tag;		/* the controller */
-	int iba_type;			/* bus type */
 	prop_array_t iba_child_devices;	/* child devices (direct config) */
 };
 
@@ -159,6 +158,8 @@ struct i2c_attach_args {
  * API presented to i2c controllers.
  */
 int	iicbus_print(void *, const char *);
+void	iic_tag_init(i2c_tag_t);
+void	iic_tag_fini(i2c_tag_t);
 
 /*
  * API presented to i2c devices.

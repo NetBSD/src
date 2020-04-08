@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.3.2.2 2019/06/10 22:04:43 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.3.2.3 2020/04/08 14:07:09 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -560,9 +560,10 @@ isc_buffer_allocate(isc_mem_t *mctx, isc_buffer_t **dynbuffer,
 	}
 
 	isc_buffer_init(dbuf, bdata, length);
-	dbuf->mctx = mctx;
 
 	ENSURE(ISC_BUFFER_VALID(dbuf));
+
+	dbuf->mctx = mctx;
 
 	*dynbuffer = dbuf;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_acpi.c,v 1.3.6.2 2019/06/10 22:05:50 christos Exp $ */
+/* $NetBSD: gicv3_acpi.c,v 1.3.6.3 2020/04/08 14:07:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.3.6.2 2019/06/10 22:05:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.3.6.3 2020/04/08 14:07:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -297,7 +297,8 @@ gicv3_acpi_map_gits(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		return AE_OK;
 	}
 
-	aprint_normal_dev(sc->sc_gic.sc_dev, "ITS #%#x at 0x%" PRIx64 "\n", gits->TranslationId, gits->BaseAddress);
+	aprint_normal_dev(sc->sc_gic.sc_dev, "ITS #%d at 0x%" PRIx64 "\n",
+	    gits->TranslationId, gits->BaseAddress);
 
 	gicv3_its_init(&sc->sc_gic, bsh, gits->BaseAddress, gits->TranslationId);
 

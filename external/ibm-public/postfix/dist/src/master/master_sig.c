@@ -1,4 +1,4 @@
-/*	$NetBSD: master_sig.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: master_sig.c,v 1.2.12.1 2020/04/08 14:06:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -35,6 +35,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System libraries. */
@@ -200,6 +205,15 @@ static void master_sigdeath(int sig)
      * for usage by signal handlers that terminate the process.
      */
     msg_info("terminating on signal %d", sig);
+
+    /*
+     * Undocumented: when a process runs with PID 1, Linux won't deliver a
+     * signal unless the process specifies a handler (i.e. SIG_DFL is treated
+     * as SIG_IGN).
+     */
+    if (init_mode)
+	/* Don't call exit() from a signal handler. */
+	_exit(0);
 
     /*
      * Deliver the signal to ourselves and clean up. XXX We're running as a

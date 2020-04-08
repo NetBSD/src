@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.56.14.1 2019/06/10 22:06:39 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.56.14.2 2020/04/08 14:07:49 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -87,8 +87,6 @@ typedef __uint32_t tlb_asid_t;		/* for booke */
 #define	__HAVE___LWP_GETTCB_FAST
 #define	__HAVE___LWP_SETTCB
 #define	__HAVE_TLS_VARIANT_I
-#define	__OPENFIRMIO_OPEN_CHECK_BROKEN
-int __openfirmio_open_check_broken(void);
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #define	PCU_FPU		0	/* FPU */
@@ -104,5 +102,8 @@ int __openfirmio_open_check_broken(void);
 #if defined(_KERNEL)
 #define	__HAVE_RAS
 #endif
+
+/* XXX temporary */
+#define	__HAVE_UNLOCKED_PMAP
 
 #endif	/* _POWERPC_TYPES_H_ */

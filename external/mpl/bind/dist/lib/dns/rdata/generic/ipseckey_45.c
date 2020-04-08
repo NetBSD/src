@@ -1,4 +1,4 @@
-/*	$NetBSD: ipseckey_45.c,v 1.4.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.4.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -284,7 +284,7 @@ fromstruct_ipseckey(ARGS_FROMSTRUCT) {
 	uint32_t n;
 
 	REQUIRE(type == dns_rdatatype_ipseckey);
-	REQUIRE(source != NULL);
+	REQUIRE(ipseckey != NULL);
 	REQUIRE(ipseckey->common.rdtype == type);
 	REQUIRE(ipseckey->common.rdclass == rdclass);
 
@@ -328,7 +328,7 @@ tostruct_ipseckey(ARGS_TOSTRUCT) {
 	uint32_t n;
 
 	REQUIRE(rdata->type == dns_rdatatype_ipseckey);
-	REQUIRE(target != NULL);
+	REQUIRE(ipseckey != NULL);
 	REQUIRE(rdata->length >= 3);
 
 	if (rdata->data[1] > 3U)
@@ -394,7 +394,7 @@ static inline void
 freestruct_ipseckey(ARGS_FREESTRUCT) {
 	dns_rdata_ipseckey_t *ipseckey = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(ipseckey != NULL);
 	REQUIRE(ipseckey->common.rdtype == dns_rdatatype_ipseckey);
 
 	if (ipseckey->mctx == NULL)

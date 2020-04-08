@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.39.4.1 2019/06/10 22:07:07 christos Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.39.4.2 2020/04/08 14:08:03 martin Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,6 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -67,8 +66,7 @@ static int dmdestroy(void);
 static void dm_doinit(void);
 
 static int dm_cmd_to_fun(prop_dictionary_t);
-static int disk_ioctl_switch(dev_t, u_long, void *);
-static int dm_ioctl_switch(u_long);
+static int disk_ioctl_switch(dev_t, unsigned long, void *);
 static void dmminphys(struct buf *);
 
 /* CF attach/detach functions used for power management */
@@ -111,8 +109,13 @@ CFATTACH_DECL3_NEW(dm, 0,
      dm_match, dm_attach, dm_detach, NULL, NULL, NULL,
      DVF_DETACH_SHUTDOWN);
 
-extern uint32_t dm_dev_counter;
-
+/*
+ * This structure is used to translate command sent to kernel driver in
+ * <key>command</key>
+ * <value></value>
+ * to function which I can call, and if the command is allowed for
+ * non-superusers.
+ */
 /*
  * This array is used to translate cmd to function pointer.
  *
@@ -122,8 +125,12 @@ extern uint32_t dm_dev_counter;
  * ioctl to kernel but will do another things in userspace.
  *
  */
-static const struct cmd_function cmd_fn[] = {
-	{ .cmd = "version", .fn = dm_get_version_ioctl,	  .allowed = 1 },
+static const struct cmd_function {
+	const char *cmd;
+	int  (*fn)(prop_dictionary_t);
+	int  allowed;
+} cmd_fn[] = {
+	{ .cmd = "version", .fn = NULL,                   .allowed = 1 },
 	{ .cmd = "targets", .fn = dm_list_versions_ioctl, .allowed = 1 },
 	{ .cmd = "create",  .fn = dm_dev_create_ioctl,    .allowed = 0 },
 	{ .cmd = "info",    .fn = dm_dev_status_ioctl,    .allowed = 1 },
@@ -138,7 +145,7 @@ static const struct cmd_function cmd_fn[] = {
 	{ .cmd = "reload",  .fn = dm_table_load_ioctl,    .allowed = 0 },
 	{ .cmd = "status",  .fn = dm_table_status_ioctl,  .allowed = 1 },
 	{ .cmd = "table",   .fn = dm_table_status_ioctl,  .allowed = 1 },
-	{ .cmd = NULL, 	    .fn = NULL,			  .allowed = 0 }
+	{ .cmd = NULL,      .fn = NULL,                   .allowed = 0 },
 };
 
 #ifdef _MODULE
@@ -183,11 +190,8 @@ dm_modcmd(modcmd_t cmd, void *arg)
 			config_cfdriver_detach(&dm_cd);
 			break;
 		}
-
 		dm_doinit();
-
 		break;
-
 	case MODULE_CMD_FINI:
 		/*
 		 * Disable unloading of dm module if there are any devices
@@ -197,6 +201,7 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		 */
 		if (dm_dev_counter > 0)
 			return EBUSY;
+		/* race window here */
 
 		error = dmdestroy();
 		if (error)
@@ -208,7 +213,6 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		break;
 	case MODULE_CMD_STAT:
 		return ENOTTY;
-
 	default:
 		return ENOTTY;
 	}
@@ -230,7 +234,7 @@ dm_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	/* Pseudo-device; always present. */
-	return (1);
+	return 1;
 }
 
 /*
@@ -241,9 +245,10 @@ dm_match(device_t parent, cfdata_t match, void *aux)
 static void
 dm_attach(device_t parent, device_t self, void *aux)
 {
-	return;
-}
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
 
 /*
  * dm_detach:
@@ -256,6 +261,8 @@ static int
 dm_detach(device_t self, int flags)
 {
 	dm_dev_t *dmv;
+
+	pmf_device_deregister(self);
 
 	/* Detach device from global device list */
 	if ((dmv = dm_dev_detach(self)) == NULL)
@@ -274,7 +281,7 @@ dm_detach(device_t self, int flags)
 	disk_destroy(dmv->diskp);
 
 	/* Destroy device */
-	(void)dm_dev_free(dmv);
+	dm_dev_free(dmv);
 
 	/* Decrement device counter After removing device */
 	atomic_dec_32(&dm_dev_counter);
@@ -285,6 +292,7 @@ dm_detach(device_t self, int flags)
 static void
 dm_doinit(void)
 {
+
 	dm_target_init();
 	dm_dev_init();
 	dm_pdev_init();
@@ -297,12 +305,11 @@ dmattach(int n)
 	int error;
 
 	error = config_cfattach_attach(dm_cd.cd_name, &dm_ca);
-	if (error) {
+	if (error)
 		aprint_error("%s: unable to register cfattach\n",
 		    dm_cd.cd_name);
-	} else {
+	else
 		dm_doinit();
-	}
 }
 
 #ifdef _MODULE
@@ -347,20 +354,23 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 	int r;
 	prop_dictionary_t dm_dict_in;
 
-	r = 0;
-
 	aprint_debug("dmioctl called\n");
 	KASSERT(data != NULL);
 
-	if (( r = disk_ioctl_switch(dev, cmd, data)) == ENOTTY) {
-		struct plistref *pref = (struct plistref *) data;
+	if ((r = disk_ioctl_switch(dev, cmd, data)) == ENOTTY) {
+		struct plistref *pref = (struct plistref *)data;
 
-		/* Check if we were called with NETBSD_DM_IOCTL ioctl
-		   otherwise quit. */
-		if ((r = dm_ioctl_switch(cmd)) != 0)
-			return r;
+		switch(cmd) {
+		case NETBSD_DM_IOCTL:
+			aprint_debug("dm NETBSD_DM_IOCTL called\n");
+			break;
+		default:
+			aprint_debug("dm unknown ioctl called\n");
+			return ENOTTY;
+			break; /* NOT REACHED */
+		}
 
-		if((r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in))
+		if ((r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in))
 		    != 0)
 			return r;
 
@@ -384,16 +394,14 @@ cleanup_exit:
  */
 static int
 dm_cmd_to_fun(prop_dictionary_t dm_dict)
- {
+{
 	int i, r;
 	prop_string_t command;
-
-	r = 0;
 
 	if ((command = prop_dictionary_get(dm_dict, DM_IOCTL_COMMAND)) == NULL)
 		return EINVAL;
 
-	for(i = 0; cmd_fn[i].cmd != NULL; i++)
+	for (i = 0; cmd_fn[i].cmd != NULL; i++)
 		if (prop_string_equals_cstring(command, cmd_fn[i].cmd))
 			break;
 
@@ -405,37 +413,18 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict)
 	if (cmd_fn[i].cmd == NULL)
 		return EINVAL;
 
-	aprint_debug("ioctl %s called\n", cmd_fn[i].cmd);
-	r = cmd_fn[i].fn(dm_dict);
+	aprint_debug("ioctl %s called %p\n", cmd_fn[i].cmd, cmd_fn[i].fn);
+	if (cmd_fn[i].fn == NULL)
+		return 0;
 
-	return r;
+	return cmd_fn[i].fn(dm_dict);
 }
 
-/* Call apropriate ioctl handler function. */
+/*
+ * Check for disk specific ioctls.
+ */
 static int
-dm_ioctl_switch(u_long cmd)
-{
-
-	switch(cmd) {
-
-	case NETBSD_DM_IOCTL:
-		aprint_debug("dm NetBSD_DM_IOCTL called\n");
-		break;
-	default:
-		 aprint_debug("dm unknown ioctl called\n");
-		 return ENOTTY;
-		 break; /* NOT REACHED */
-	}
-
-	 return 0;
-}
-
- /*
-  * Check for disk specific ioctls.
-  */
-
-static int
-disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
+disk_ioctl_switch(dev_t dev, unsigned long cmd, void *data)
 {
 	dm_dev_t *dmv;
 
@@ -447,7 +436,6 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	case DIOCGWEDGEINFO:
 	{
 		struct dkwedge_info *dkw = (void *) data;
-		unsigned secsize;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
@@ -459,19 +447,20 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		strlcpy(dkw->dkw_parent, dmv->name, 16);
 
 		dkw->dkw_offset = 0;
-		dm_table_disksize(&dmv->table_head, &dkw->dkw_size, &secsize);
+		dm_table_disksize(&dmv->table_head, &dkw->dkw_size, NULL);
 		strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
 
 		dm_dev_unbusy(dmv);
 		break;
 	}
-
 	case DIOCGDISKINFO:
 	{
 		struct plistref *pref = (struct plistref *) data;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
+
+		aprint_debug("DIOCGDISKINFO ioctl called\n");
 
 		if (dmv->diskp->dk_info == NULL) {
 			dm_dev_unbusy(dmv);
@@ -483,7 +472,6 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		dm_dev_unbusy(dmv);
 		break;
 	}
-
 	case DIOCCACHESYNC:
 	{
 		dm_table_entry_t *table_en;
@@ -491,6 +479,8 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
+
+		aprint_debug("DIOCCACHESYNC ioctl called\n");
 
 		/* Select active table */
 		tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
@@ -500,51 +490,43 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		 * routine basically call DIOCCACHESYNC on underlying devices.
 		 */
 		SLIST_FOREACH(table_en, tbl, next)
-		{
-			(void)table_en->target->sync(table_en);
-		}
+			if (table_en->target->sync)
+				table_en->target->sync(table_en);
 		dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
 		dm_dev_unbusy(dmv);
 		break;
 	}
-
 	case DIOCGSECTORSIZE:
 	{
-		u_int *valp = data;
-		uint64_t numsec;
-		unsigned int secsize;
+		unsigned int secsize, *valp = data;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
 
 		aprint_debug("DIOCGSECTORSIZE ioctl called\n");
 
-		dm_table_disksize(&dmv->table_head, &numsec, &secsize);
+		dm_table_disksize(&dmv->table_head, NULL, &secsize);
 		*valp = secsize;
 
 		dm_dev_unbusy(dmv);
 		break;
 	}
-
 	case DIOCGMEDIASIZE:
 	{
 		off_t *valp = data;
 		uint64_t numsec;
-		unsigned int secsize;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
 
 		aprint_debug("DIOCGMEDIASIZE ioctl called\n");
 
-		dm_table_disksize(&dmv->table_head, &numsec, &secsize);
+		dm_table_disksize(&dmv->table_head, &numsec, NULL);
 		*valp = numsec;
 
 		dm_dev_unbusy(dmv);
 		break;
 	}
-
-
 	default:
 		aprint_debug("unknown disk_ioctl called\n");
 		return ENOTTY;
@@ -561,7 +543,7 @@ static void
 dmstrategy(struct buf *bp)
 {
 	dm_dev_t *dmv;
-	dm_table_t  *tbl;
+	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
 	struct buf *nestbuf;
 
@@ -571,8 +553,6 @@ dmstrategy(struct buf *bp)
 
 	buf_start = bp->b_blkno * DEV_BSIZE;
 	buf_len = bp->b_bcount;
-
-	tbl = NULL;
 
 	table_end = 0;
 	issued_len = 0;
@@ -610,18 +590,15 @@ dmstrategy(struct buf *bp)
 	/*
 	 * Find out what tables I want to select.
 	 */
-	SLIST_FOREACH(table_en, tbl, next)
-	{
-		/* I need need number of bytes not blocks. */
+	SLIST_FOREACH(table_en, tbl, next) {
+		/* I need number of bytes not blocks. */
 		table_start = table_en->start * DEV_BSIZE;
 		/*
 		 * I have to sub 1 from table_en->length to prevent
 		 * off by one error
 		 */
-		table_end = table_start + (table_en->length)* DEV_BSIZE;
-
+		table_end = table_start + table_en->length * DEV_BSIZE;
 		start = MAX(table_start, buf_start);
-
 		end = MIN(table_end, buf_start + buf_len);
 
 		aprint_debug("----------------------------------------\n");
@@ -631,22 +608,18 @@ dmstrategy(struct buf *bp)
 		    PRIu64"\n", buf_start, buf_len);
 		aprint_debug("start-buf_start %010"PRIu64", end %010"
 		    PRIu64"\n", start - buf_start, end);
-		aprint_debug("start %010" PRIu64" , end %010"
+		aprint_debug("start %010" PRIu64", end %010"
                     PRIu64"\n", start, end);
-		aprint_debug("\n----------------------------------------\n");
+		aprint_debug("----------------------------------------\n");
 
 		if (start < end) {
 			/* create nested buffer  */
 			nestbuf = getiobuf(NULL, true);
-
 			nestiobuf_setup(bp, nestbuf, start - buf_start,
-			    (end - start));
-
+			    end - start);
 			issued_len += end - start;
-
 			/* I need number of blocks. */
 			nestbuf->b_blkno = (start - table_start) / DEV_BSIZE;
-
 			table_en->target->strategy(table_en, nestbuf);
 		}
 	}
@@ -655,13 +628,11 @@ dmstrategy(struct buf *bp)
 		nestiobuf_done(bp, buf_len - issued_len, EINVAL);
 
 	mutex_enter(&dmv->diskp_mtx);
-	disk_unbusy(dmv->diskp, buf_len, bp != NULL ? bp->b_flags & B_READ : 0);
+	disk_unbusy(dmv->diskp, buf_len, bp ? (bp->b_flags & B_READ) : 0);
 	mutex_exit(&dmv->diskp_mtx);
 
 	dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
 	dm_dev_unbusy(dmv);
-
-	return;
 }
 
 
@@ -669,14 +640,14 @@ static int
 dmread(dev_t dev, struct uio *uio, int flag)
 {
 
-	return (physio(dmstrategy, NULL, dev, B_READ, dmminphys, uio));
+	return physio(dmstrategy, NULL, dev, B_READ, dmminphys, uio);
 }
 
 static int
 dmwrite(dev_t dev, struct uio *uio, int flag)
 {
 
-	return (physio(dmstrategy, NULL, dev, B_WRITE, dmminphys, uio));
+	return physio(dmstrategy, NULL, dev, B_WRITE, dmminphys, uio);
 }
 
 static int
@@ -685,15 +656,13 @@ dmsize(dev_t dev)
 	dm_dev_t *dmv;
 	uint64_t size;
 
-	size = 0;
-
 	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
-			return -ENOENT;
+		return -ENOENT;
 
 	size = dm_table_size(&dmv->table_head);
 	dm_dev_unbusy(dmv);
 
-  	return size;
+	return size;
 }
 
 static void
@@ -707,11 +676,12 @@ void
 dmgetproperties(struct disk *disk, dm_table_head_t *head)
 {
 	uint64_t numsec;
-	unsigned secsize;
+	unsigned int secsize;
+	struct disk_geom *dg;
 
 	dm_table_disksize(head, &numsec, &secsize);
 
-	struct disk_geom *dg = &disk->dk_geom;
+	dg = &disk->dk_geom;
 
 	memset(dg, 0, sizeof(*dg));
 	dg->dg_secperunit = numsec;
@@ -720,4 +690,24 @@ dmgetproperties(struct disk *disk, dm_table_head_t *head)
 	dg->dg_ntracks = 64;
 
 	disk_set_info(NULL, disk, "ESDI");
+}
+
+/*
+ * Transform char s to uint64_t offset number.
+ */
+uint64_t
+atoi64(const char *s)
+{
+	uint64_t n;
+	n = 0;
+
+	while (*s != '\0') {
+		if (!isdigit(*s))
+			break;
+
+		n = (10 * n) + (*s - '0');
+		s++;
+	}
+
+	return n;
 }

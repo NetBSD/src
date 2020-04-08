@@ -1,4 +1,4 @@
-#	$NetBSD: files.eisa,v 1.27 2005/12/11 12:21:20 christos Exp $
+#	$NetBSD: files.eisa,v 1.27.164.1 2020/04/08 14:08:04 martin Exp $
 #
 # Config file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -48,11 +48,6 @@ file	dev/eisa/depca_eisa.c		depca_eisa
 # DEC DE425 EISA Ethernet controller
 attach	tlp at eisa with tlp_eisa
 file	dev/eisa/if_tlp_eisa.c		tlp_eisa
-
-# DEC DEFEA EISA FDDI controller
-device	fea: pdq, fddi, ifnet, arp
-attach	fea at eisa
-file	dev/eisa/if_fea.c		fea
 
 # Mylex RAID controllers
 attach	mlx at eisa with mlx_eisa

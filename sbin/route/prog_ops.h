@@ -1,4 +1,4 @@
-/*      $NetBSD: prog_ops.h,v 1.3 2014/11/06 21:29:32 christos Exp $	*/
+/*      $NetBSD: prog_ops.h,v 1.3.16.1 2020/04/08 14:07:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,44 +30,79 @@
 #define _PROG_OPS_H_
 
 #include <sys/types.h>
+#include <sys/sysctl.h>
 
 #ifndef CRUNCHOPS
-/* XXX: Keep same order with netstat! */
+/*
+ * This is shared between netstat and route (as they share some code)
+ */
+struct sysctlnode;
 struct prog_ops {
 	int (*op_init)(void);
 
-	int (*op_sysctl)(const int *, u_int, void *, size_t *,
-			 const void *, size_t);
-
 	int (*op_socket)(int, int, int);
+	int (*op_setsockopt)(int, int, int, const void *, socklen_t);
+
+
 	int (*op_open)(const char *, int, ...);
 	pid_t (*op_getpid)(void);
 
 	ssize_t (*op_read)(int, void *, size_t);
 	ssize_t (*op_write)(int, const void *, size_t);
 
-
 	int (*op_shutdown)(int, int);
+
+	int (*op_sysctl)(const int *, u_int, void *, size_t *,
+			 const void *, size_t);
+
+	int (*op_sysctlbyname)(const char *, void *, size_t *,
+			 const void *, size_t);
+
+	int (*op_sysctlgetmibinfo)(const char *, int *, u_int *,
+			 char *, size_t *, struct sysctlnode **, int);
+
+	int (*op_sysctlnametomib)(const char *, int *, size_t *);
 };
 extern const struct prog_ops prog_ops;
 
 #define prog_init prog_ops.op_init
+
 #define prog_socket prog_ops.op_socket
+#define prog_setsockopt prog_ops.op_setsockopt
+
 #define prog_open prog_ops.op_open
 #define prog_getpid prog_ops.op_getpid
+
 #define prog_read prog_ops.op_read
 #define prog_write prog_ops.op_write
-#define prog_sysctl prog_ops.op_sysctl
+
 #define prog_shutdown prog_ops.op_shutdown
+
+#define prog_sysctl prog_ops.op_sysctl
+
+#define prog_sysctlbyname prog_ops.op_sysctlbyname
+#define prog_sysctlgetmibinfo prog_ops.op_sysctlgetmibinfo
+#define prog_sysctlnametomib prog_ops.op_sysctlnametomib
+
 #else
 #define prog_init ((int (*)(void))NULL)
+
 #define prog_socket socket
+#define prog_setsockopt setsockopt
+
 #define prog_open open
 #define prog_getpid getpid
+
 #define prog_read read
 #define prog_write write
-#define prog_sysctl sysctl
+
 #define prog_shutdown shutdown
+
+#define prog_sysctl sysctl
+#define prog_sysctlbyname sysctlbyname
+#define prog_sysctlgetmibinfo sysctlgetmibinfo
+#define prog_sysctlnametomib sysctlnametomib
+
 #endif
 
 #endif /* _PROG_OPS_H_ */

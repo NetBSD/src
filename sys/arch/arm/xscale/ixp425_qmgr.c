@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_qmgr.c,v 1.7.54.1 2019/06/10 22:05:57 christos Exp $	*/
+/*	$NetBSD: ixp425_qmgr.c,v 1.7.54.2 2020/04/08 14:07:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -60,7 +60,7 @@
 */
 #include <sys/cdefs.h>
 /*__FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_qmgr.c,v 1.1 2006/11/19 23:55:23 sam Exp $");*/
-__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.7.54.1 2019/06/10 22:05:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.7.54.2 2020/04/08 14:07:31 martin Exp $");
 
 /*
  * Intel XScale Queue Manager support.
@@ -334,7 +334,7 @@ ixpqmgr_init(bus_space_tag_t iot)
 	
 	sc->aqmFreeSramAddress = 0x100;	/* Q buffer space starts at 0x2100 */
 
-	ixpqmgr_rebuild(sc);		/* build inital priority table */
+	ixpqmgr_rebuild(sc);		/* build initial priority table */
 	aqm_reset(sc);			/* reset h/w */
 
 	return (sc);

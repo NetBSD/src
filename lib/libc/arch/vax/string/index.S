@@ -1,4 +1,4 @@
-/*	$NetBSD: index.S,v 1.4 2011/01/25 02:38:15 matt Exp $	*/
+/*	$NetBSD: index.S,v 1.4.44.1 2020/04/08 14:07:12 martin Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 #include "DEFS.h"
 
 #ifdef LIBC_SCCS
-RCSID("$NetSBD$")
+RCSID("$NetBSD: index.S,v 1.4.44.1 2020/04/08 14:07:12 martin Exp $")
 #endif
 
 /* Alas not quite twice as fast as the generic C version on a uvax2 */

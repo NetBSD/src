@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.12.16.1 2019/06/10 22:07:27 christos Exp $	*/
+/*	$NetBSD: voyager.c,v 1.12.16.2 2020/04/08 14:08:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.12.16.1 2019/06/10 22:07:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.12.16.2 2020/04/08 14:08:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,8 +250,8 @@ voyager_attach(device_t parent, device_t self, void *aux)
 		voyager_gpio_dir(sc, 0xffffffff, GPIO_I2C_BITS);
 		
 		/* Fill in the i2c tag */
-		memset(&sc->sc_i2c, 0, sizeof(sc->sc_i2c));
 		memset(&iba, 0, sizeof(iba));
+		iic_tag_init(&sc->sc_i2c);
 		sc->sc_i2c.ic_cookie = sc;
 		sc->sc_i2c.ic_acquire_bus = voyager_i2c_acquire_bus;
 		sc->sc_i2c.ic_release_bus = voyager_i2c_release_bus;
@@ -260,7 +260,6 @@ voyager_attach(device_t parent, device_t self, void *aux)
 		sc->sc_i2c.ic_initiate_xfer = voyager_i2c_initiate_xfer;
 		sc->sc_i2c.ic_read_byte = voyager_i2c_read_byte;
 		sc->sc_i2c.ic_write_byte = voyager_i2c_write_byte;
-		sc->sc_i2c.ic_exec = NULL;
 		iba.iba_tag = &sc->sc_i2c;
 		config_found_ia(self, "i2cbus", &iba, iicbus_print);
 	}
@@ -322,6 +321,7 @@ voyager_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct voyager_softc *sc = cookie;
 
+	/* We also have to serialize against voyager_twiddle_bits() */
 	mutex_enter(&sc->sc_i2c_lock);
 	return 0;
 }

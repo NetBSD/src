@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.48.2.1 2019/06/10 22:07:28 christos Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.48.2.2 2020/04/08 14:08:11 martin Exp $ */
 
 /******************************************************************************
 
@@ -148,7 +148,7 @@ ixgbe_legacy_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 		return (ENETDOWN);
 	if (txr->txr_no_space)
 		return (ENETDOWN);
-	
+
 	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		if (txr->tx_avail <= IXGBE_QUEUE_MIN_FREE)
 			break;
@@ -537,12 +537,11 @@ retry:
 	++txr->total_packets.ev_count;
 	IXGBE_WRITE_REG(&adapter->hw, txr->tail, i);
 
-	/*
-	 * XXXX NOMPSAFE: ifp->if_data should be percpu.
-	 */
-	ifp->if_obytes += m_head->m_pkthdr.len;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_obytes, m_head->m_pkthdr.len);
 	if (m_head->m_flags & M_MCAST)
-		ifp->if_omcasts++;
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(ifp);
 
 	/* Mark queue as having work */
 	if (txr->busy == 0)
@@ -1195,7 +1194,7 @@ ixgbe_txeof(struct tx_ring *txr)
 		}
 		++txr->packets;
 		++processed;
-		++ifp->if_opackets;
+		if_statinc(ifp, if_opackets);
 
 		/* Try the next packet */
 		++txd;
@@ -1565,7 +1564,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		rxbuf->addr = htole64(rxbuf->pmap->dm_segs[0].ds_addr);
 	}
 
-
 	/* Setup our descriptor indices */
 	rxr->next_to_check = 0;
 	rxr->next_to_refresh = 0;
@@ -1621,6 +1619,7 @@ ixgbe_setup_receive_structures(struct adapter *adapter)
 	struct rx_ring *rxr = adapter->rx_rings;
 	int            j;
 
+	INIT_DEBUGOUT("ixgbe_setup_receive_structures");
 	for (j = 0; j < adapter->num_queues; j++, rxr++)
 		if (ixgbe_setup_receive_ring(rxr))
 			goto fail;
@@ -1689,6 +1688,10 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 				rxbuf->pmap = NULL;
 			}
 		}
+
+		/* NetBSD specific. See ixgbe_netbsd.c */
+		ixgbe_jcl_destroy(adapter, rxr);
+
 		if (rxr->rx_buffers != NULL) {
 			free(rxr->rx_buffers, M_DEVBUF);
 			rxr->rx_buffers = NULL;
@@ -2375,3 +2378,24 @@ tx_fail:
 fail:
 	return (error);
 } /* ixgbe_allocate_queues */
+
+/************************************************************************
+ * ixgbe_free_queues
+ *
+ *   Free descriptors for the transmit and receive rings, and then
+ *   the memory associated with each.
+ ************************************************************************/
+void
+ixgbe_free_queues(struct adapter *adapter)
+{
+	struct ix_queue *que;
+	int i;
+
+	ixgbe_free_transmit_structures(adapter);
+	ixgbe_free_receive_structures(adapter);
+	for (i = 0; i < adapter->num_queues; i++) {
+		que = &adapter->queues[i];
+		mutex_destroy(&que->dc_mtx);
+	}
+	free(adapter->queues, M_DEVBUF);
+} /* ixgbe_free_queues */

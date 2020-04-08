@@ -1,4 +1,4 @@
-/*	$NetBSD: if_canloop.c,v 1.5.4.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: if_canloop.c,v 1.5.4.2 2020/04/08 14:08:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.5.4.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.5.4.2 2020/04/08 14:08:58 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_can.h"
@@ -170,8 +170,7 @@ canloop_ifstart(struct ifnet *ifp)
 			can_bpf_mtap(ifp, m, 0);
 
 		pktlen = m->m_pkthdr.len;
-		ifp->if_opackets++;
-		ifp->if_obytes += pktlen;
+		if_statadd2(ifp, if_opackets, 1, if_obytes, pktlen);
 
 #ifdef CAN
 		can_mbuf_tag_clean(m);

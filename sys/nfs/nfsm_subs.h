@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.53 2013/09/14 22:29:08 martin Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.53.30.1 2020/04/08 14:08:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,6 +53,14 @@
 #define	NFSMADV(m, s)	(m)->m_data += (s)
 #define	NFSMSIZ(m)	((M_HASCL(m)) ? (m)->m_ext.ext_size : \
 				(((m)->m_flags & M_PKTHDR) ? MHLEN : MLEN))
+
+/*
+ * NFSv2 can only handle signed 32bit quantities and some clients
+ * get confused by larger than 16bit block sizes. Limit values
+ * for better compatibility.
+ */
+#define NFS_V2CLAMP32(x) ((x) > INT32_MAX ? INT32_MAX : (int32_t)(x))
+#define NFS_V2CLAMP16(x) ((x) > INT16_MAX ? INT16_MAX : (int32_t)(x))
 
 /*
  * Now for the macros that do the simple stuff and call the functions

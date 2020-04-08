@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.5.4.2 2019/06/10 22:08:23 christos Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.5.4.3 2020/04/08 14:08:25 martin Exp $	*/
 
 /*
  * Copyright 2010 Red Hat Inc.
@@ -24,12 +24,14 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.5.4.2 2019/06/10 22:08:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.5.4.3 2020/04/08 14:08:25 martin Exp $");
 
 #include "priv.h"
 
 #include <core/gpuobj.h>
 #include <subdev/fb.h>
+
+#include <linux/nbsd-namespace.h>
 
 void
 nvkm_vm_map_at(struct nvkm_vma *vma, u64 delta, struct nvkm_mem *node)
@@ -436,11 +438,7 @@ nvkm_vm_create(struct nvkm_mmu *mmu, u64 offset, u64 length, u64 mm_offset,
 
 	vm->pgt  = vzalloc((vm->lpde - vm->fpde + 1) * sizeof(*vm->pgt));
 	if (!vm->pgt) {
-#ifdef __NetBSD__
-		linux_mutex_destroy(&vm->mutex);
-#else
 		mutex_destroy(&vm->mutex);
-#endif
 		kfree(vm);
 		return -ENOMEM;
 	}
@@ -449,11 +447,7 @@ nvkm_vm_create(struct nvkm_mmu *mmu, u64 offset, u64 length, u64 mm_offset,
 			   block >> 12);
 	if (ret) {
 		vfree(vm->pgt);
-#ifdef __NetBSD__
-		linux_mutex_destroy(&vm->mutex);
-#else
 		mutex_destroy(&vm->mutex);
-#endif
 		kfree(vm);
 		return ret;
 	}
@@ -528,11 +522,7 @@ nvkm_vm_del(struct kref *kref)
 
 	nvkm_mm_fini(&vm->mm);
 	vfree(vm->pgt);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&vm->mutex);
-#else
 	mutex_destroy(&vm->mutex);
-#endif
 	kfree(vm);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.6.2.2 2019/06/10 22:03:00 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.6.2.3 2020/04/08 14:07:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2429,15 +2429,17 @@ configure_rpz(dns_view_t *view, const cfg_obj_t **maps,
 	} else {
 		old = NULL;
 	}
-	if (old == NULL)
+	if (old == NULL) {
 		*old_rpz_okp = false;
-	else
+	} else {
 		*old_rpz_okp = true;
+	}
 
 	for (i = 0;
 	     zone_element != NULL;
-	     ++i, zone_element = cfg_list_next(zone_element)) {
-		INSIST(old != NULL || !*old_rpz_okp);
+	     ++i, zone_element = cfg_list_next(zone_element))
+	{
+		INSIST(!*old_rpz_okp || old != NULL);
 		if (*old_rpz_okp && i < old->p.num_zones) {
 			old_zone = old->zones[i];
 		} else {
@@ -2462,24 +2464,21 @@ configure_rpz(dns_view_t *view, const cfg_obj_t **maps,
 	 * zones are unchanged, then use the same policy data.
 	 * Data for individual zones that must be reloaded will be merged.
 	 */
-	if (*old_rpz_okp &&
-	    old != NULL && memcmp(&old->p, &zones->p, sizeof(zones->p)) != 0)
-	{
-		*old_rpz_okp = false;
-	}
-
-	if (*old_rpz_okp &&
-	    (old == NULL ||
-	     old->rps_cstr == NULL) != (zones->rps_cstr == NULL))
-	{
-		*old_rpz_okp = false;
-	}
-
-	if (*old_rpz_okp &&
-	    (zones->rps_cstr != NULL &&
-	     strcmp(old->rps_cstr, zones->rps_cstr) != 0))
-	{
-		*old_rpz_okp = false;
+	if (*old_rpz_okp) {
+		if (old != NULL &&
+		    memcmp(&old->p, &zones->p, sizeof(zones->p)) != 0)
+		{
+			*old_rpz_okp = false;
+		} else if ((old == NULL || old->rps_cstr == NULL) !=
+			   (zones->rps_cstr == NULL))
+		{
+			*old_rpz_okp = false;
+		} else if (old != NULL &&
+			   zones->rps_cstr != NULL &&
+			   strcmp(old->rps_cstr, zones->rps_cstr) != 0)
+		{
+			*old_rpz_okp = false;
+		}
 	}
 
 	if (*old_rpz_okp) {
@@ -2493,8 +2492,9 @@ configure_rpz(dns_view_t *view, const cfg_obj_t **maps,
 			    view->rpzs->rpz_ver);
 	}
 
-	if (pview != NULL)
+	if (pview != NULL) {
 		dns_view_detach(&pview);
+	}
 
 	return (ISC_R_SUCCESS);
 }
@@ -3419,7 +3419,7 @@ configure_dnstap(const cfg_obj_t **maps, dns_view_t *view) {
 	isc_result_t result;
 	const cfg_obj_t *obj, *obj2;
 	const cfg_listelt_t *element;
-	const char *dpath = named_g_defaultdnstap;
+	const char *dpath;
 	const cfg_obj_t *dlist = NULL;
 	dns_dtmsgtype_t dttypes = 0;
 	unsigned int i;
@@ -6797,7 +6797,7 @@ dotat(dns_keytable_t *keytable, dns_keynode_t *keynode, void *arg) {
 
 	REQUIRE(keytable != NULL);
 	REQUIRE(keynode != NULL);
-	REQUIRE(arg != NULL);
+	REQUIRE(dotat_arg != NULL);
 
 	view = dotat_arg->view;
 	task = dotat_arg->task;
@@ -8138,6 +8138,7 @@ load_configuration(const char *filename, named_server_t *server,
 	INSIST(result == ISC_R_SUCCESS);
 	CHECKM(setstring(server, &server->bindkeysfile,
 	       cfg_obj_asstring(obj)), "strdup");
+	INSIST(server->bindkeysfile != NULL);
 
 	if (access(server->bindkeysfile, R_OK) == 0) {
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
@@ -9625,7 +9626,7 @@ get_matching_view(isc_netaddr_t *srcaddr, isc_netaddr_t *destaddr,
 		if (message->rdclass == view->rdclass ||
 		    message->rdclass == dns_rdataclass_any)
 		{
-			dns_name_t *tsig = NULL;
+			const dns_name_t *tsig = NULL;
 
 			*sigresult = dns_message_rechecksig(message, view);
 			if (*sigresult == ISC_R_SUCCESS) {
@@ -11496,6 +11497,11 @@ named_server_status(named_server_t *server, isc_buffer_t **text) {
 	snprintf(line, sizeof(line), "tcp clients: %u/%u\n",
 		     isc_quota_getused(&server->sctx->tcpquota),
 		     isc_quota_getmax(&server->sctx->tcpquota));
+	CHECK(putstr(text, line));
+
+	snprintf(line, sizeof(line), "TCP high-water: %u\n",
+		     (unsigned)ns_stats_get_counter(server->sctx->nsstats,
+					  ns_statscounter_tcphighwater));
 	CHECK(putstr(text, line));
 
 	if (server->reload_in_progress) {

@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.46 2017/06/10 08:13:15 pgoyette Exp $ */
+/* $NetBSD: segwrite.c,v 1.46.6.1 2020/04/08 14:07:18 martin Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -86,13 +86,11 @@
 #include <util.h>
 
 #include "bufcache.h"
-#include "vnode.h"
+#include "extern.h"
 #include "lfs_user.h"
 #include "segwrite.h"
 
 /* Compatibility definitions */
-extern off_t locked_queue_bytes;
-int locked_queue_count;
 off_t written_bytes = 0;
 off_t written_data = 0;
 off_t written_indir = 0;
@@ -101,10 +99,6 @@ int written_inodes = 0;
 
 /* Global variables */
 time_t write_time;
-
-extern u_int32_t cksum(void *, size_t);
-extern u_int32_t lfs_sb_cksum(struct lfs *);
-extern int preen;
 
 static void lfs_shellsort(struct lfs *,
 			  struct ubuf **, union lfs_blocks *, int, int);

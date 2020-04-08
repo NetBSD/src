@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: mail_params.c,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -38,6 +38,7 @@
 /*	int	var_event_drain;
 /*	int	var_bundle_rcpt;
 /*	char	*var_procname;
+/*	char	*var_servname;
 /*	int	var_pid;
 /*	int	var_ipc_timeout;
 /*	char	*var_pid_dir;
@@ -129,8 +130,11 @@
 /*	int	var_smtputf8_enable
 /*	int	var_strict_smtputf8;
 /*	char	*var_smtputf8_autoclass;
+/*	int     var_idna2003_compat;
 /*	int     var_compat_level;
 /*	char	*var_drop_hdrs;
+/*	char	*var_info_log_addr_form;
+/*	bool	var_enable_orcpt;
 /*
 /*	void	mail_params_init()
 /*
@@ -139,10 +143,17 @@
 /*	int	warn_compat_break_app_dot_mydomain;
 /*	int	warn_compat_break_smtputf8_enable;
 /*	int	warn_compat_break_chroot;
+/*	int	warn_compat_break_relay_restrictions;
 /*
 /*	int	warn_compat_break_relay_domains;
 /*	int	warn_compat_break_flush_domains;
 /*	int	warn_compat_break_mynetworks_style;
+/*
+/*	char	*var_maillog_file;
+/*	char	*var_maillog_file_pfxs;
+/*	char	*var_maillog_file_comp;
+/*	char	*var_maillog_file_stamp;
+/*	char	*var_postlog_service;
 /* DESCRIPTION
 /*	This module (actually the associated include file) defines
 /*	the names and defaults of all mail configuration parameters.
@@ -169,6 +180,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -198,6 +214,7 @@
 #include <inet_proto.h>
 #include <vstring_vstream.h>
 #include <iostuff.h>
+#include <midna_domain.h>
 
 /* Global library. */
 
@@ -242,6 +259,7 @@ int     var_event_drain;
 int     var_idle_limit;
 int     var_bundle_rcpt;
 char   *var_procname;
+char   *var_servname;
 int     var_pid;
 int     var_ipc_timeout;
 char   *var_pid_dir;
@@ -334,8 +352,17 @@ char   *var_dsn_filter;
 int     var_smtputf8_enable;
 int     var_strict_smtputf8;
 char   *var_smtputf8_autoclass;
+int     var_idna2003_compat;
 int     var_compat_level;
 char   *var_drop_hdrs;
+char   *var_info_log_addr_form;
+bool    var_enable_orcpt;
+
+char	*var_maillog_file;
+char	*var_maillog_file_pfxs;
+char	*var_maillog_file_comp;
+char	*var_maillog_file_stamp;
+char	*var_postlog_service;
 
 const char null_format_string[1] = "";
 
@@ -352,6 +379,7 @@ int     warn_compat_break_mynetworks_style;
 int     warn_compat_break_app_dot_mydomain;
 int     warn_compat_break_smtputf8_enable;
 int     warn_compat_break_chroot;
+int     warn_compat_break_relay_restrictions;
 
 /* check_myhostname - lookup hostname and validate */
 
@@ -605,6 +633,10 @@ static void check_legacy_defaults(void)
 	if (mail_conf_lookup(VAR_MYNETWORKS) == 0
 	    && mail_conf_lookup(VAR_MYNETWORKS_STYLE) == 0)
 	    warn_compat_break_mynetworks_style = 1;
+    } else {					/* for 'postfix reload' */
+	warn_compat_break_relay_domains = 0;
+	warn_compat_break_flush_domains = 0;
+	warn_compat_break_mynetworks_style = 0;
     }
 
     /*
@@ -623,6 +655,17 @@ static void check_legacy_defaults(void)
 	if (mail_conf_lookup(VAR_SMTPUTF8_ENABLE) == 0)
 	    warn_compat_break_smtputf8_enable = 1;
 	warn_compat_break_chroot = 1;
+
+	/*
+	 * Grandfathered in to help sites migrating from Postfix <2.10.
+	 */
+	if (mail_conf_lookup(VAR_RELAY_CHECKS) == 0)
+	    warn_compat_break_relay_restrictions = 1;
+    } else {					/* for 'postfix reload' */
+	warn_compat_break_app_dot_mydomain = 0;
+	warn_compat_break_smtputf8_enable = 0;
+	warn_compat_break_chroot = 0;
+	warn_compat_break_relay_restrictions = 0;
     }
 }
 
@@ -643,6 +686,11 @@ void    mail_params_init()
 	/* multi_instance_wrapper may have dependencies but not dependents. */
 	VAR_MULTI_GROUP, DEF_MULTI_GROUP, &var_multi_group, 0, 0,
 	VAR_MULTI_NAME, DEF_MULTI_NAME, &var_multi_name, 0, 0,
+	VAR_MAILLOG_FILE, DEF_MAILLOG_FILE, &var_maillog_file, 0, 0,
+	VAR_MAILLOG_FILE_PFXS, DEF_MAILLOG_FILE_PFXS, &var_maillog_file_pfxs, 1, 0,
+	VAR_MAILLOG_FILE_COMP, DEF_MAILLOG_FILE_COMP, &var_maillog_file_comp, 1, 0,
+	VAR_MAILLOG_FILE_STAMP, DEF_MAILLOG_FILE_STAMP, &var_maillog_file_stamp, 1, 0,
+	VAR_POSTLOG_SERVICE, DEF_POSTLOG_SERVICE, &var_postlog_service, 1, 0,
 	0,
     };
     static const CONFIG_BOOL_TABLE first_bool_defaults[] = {
@@ -654,6 +702,7 @@ void    mail_params_init()
     static const CONFIG_NBOOL_TABLE first_nbool_defaults[] = {
 	/* read and process the following before opening tables. */
 	VAR_SMTPUTF8_ENABLE, DEF_SMTPUTF8_ENABLE, &var_smtputf8_enable,
+	VAR_IDNA2003_COMPAT, DEF_IDNA2003_COMPAT, &var_idna2003_compat,
 	0,
     };
     static const CONFIG_STR_FN_TABLE function_str_defaults[] = {
@@ -714,6 +763,7 @@ void    mail_params_init()
 	VAR_DSN_FILTER, DEF_DSN_FILTER, &var_dsn_filter, 0, 0,
 	VAR_SMTPUTF8_AUTOCLASS, DEF_SMTPUTF8_AUTOCLASS, &var_smtputf8_autoclass, 1, 0,
 	VAR_DROP_HDRS, DEF_DROP_HDRS, &var_drop_hdrs, 0, 0,
+	VAR_INFO_LOG_ADDR_FORM, DEF_INFO_LOG_ADDR_FORM, &var_info_log_addr_form, 1, 0,
 	0,
     };
     static const CONFIG_STR_FN_TABLE function_str_defaults_2[] = {
@@ -776,6 +826,7 @@ void    mail_params_init()
 	VAR_MULTI_ENABLE, DEF_MULTI_ENABLE, &var_multi_enable,
 	VAR_LONG_QUEUE_IDS, DEF_LONG_QUEUE_IDS, &var_long_queue_ids,
 	VAR_STRICT_SMTPUTF8, DEF_STRICT_SMTPUTF8, &var_strict_smtputf8,
+	VAR_ENABLE_ORCPT, DEF_ENABLE_ORCPT, &var_enable_orcpt,
 	0,
     };
     const char *cp;
@@ -793,7 +844,7 @@ void    mail_params_init()
      */
     get_mail_conf_str_table(first_str_defaults);
 
-    if (!msg_syslog_facility(var_syslog_facility))
+    if (!msg_syslog_set_facility(var_syslog_facility))
 	msg_fatal("file %s/%s: parameter %s: unrecognized value: %s",
 		  var_config_dir, MAIN_CONF_FILE,
 		  VAR_SYSLOG_FACILITY, var_syslog_facility);
@@ -820,6 +871,8 @@ void    mail_params_init()
 	msg_warn("%s is true, but EAI support is not compiled in",
 		 VAR_SMTPUTF8_ENABLE);
     var_smtputf8_enable = 0;
+#else
+    midna_domain_transitional = var_idna2003_compat;
 #endif
     util_utf8_enable = var_smtputf8_enable;
 
@@ -922,10 +975,6 @@ void    mail_params_init()
     if (var_myorigin[strcspn(var_myorigin, CHARS_COMMA_SP)])
 	msg_fatal("%s parameter setting must not contain multiple values: %s",
 		  VAR_MYORIGIN, var_myorigin);
-
-    if (var_relayhost[strcspn(var_relayhost, CHARS_COMMA_SP)])
-	msg_fatal("%s parameter setting must not contain multiple values: %s",
-		  VAR_RELAYHOST, var_relayhost);
 
     /*
      * One more sanity check.

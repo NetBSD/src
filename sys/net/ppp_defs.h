@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_defs.h,v 1.13 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: ppp_defs.h,v 1.13.98.1 2020/04/08 14:08:57 martin Exp $	*/
 /*	Id: ppp_defs.h,v 1.11 1997/04/30 05:46:24 paulus Exp 	*/
 
 /*
@@ -84,6 +84,7 @@
 #define PPP_IPX		0x002b		/* IPX protocol */
 #define	PPP_VJC_COMP	0x002d		/* VJ compressed TCP */
 #define	PPP_VJC_UNCOMP	0x002f		/* VJ uncompressed TCP */
+#define PPP_MP		0x003d		/* Multilink PPP Fragment */
 #define PPP_IPV6	0x0057		/* Internet Protocol Version 6 */
 #define PPP_COMP	0x00fd		/* compressed packet */
 #define PPP_IPCP	0x8021		/* IP Control Protocol */

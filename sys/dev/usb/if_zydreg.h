@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.9 2018/04/30 01:14:07 maya Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.9.2.1 2020/04/08 14:08:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1182,6 +1182,8 @@ struct zyd_softc {
 					    enum ieee80211_state, int);
 	struct zyd_rf			sc_rf;
 
+	kmutex_t			sc_media_mtx;	/* XXX */
+
 	struct usb_task			sc_task;
 	struct usbd_device *		sc_udev;
 	struct usbd_interface *		sc_iface;
@@ -1194,6 +1196,9 @@ struct zyd_softc {
 	struct callout			sc_amrr_ch;
 
 	struct ieee80211_amrr		amrr;
+
+	kmutex_t			sc_lock;
+	kcondvar_t			sc_cmdcv;
 
 	SIMPLEQ_HEAD(rqh, rq) sc_rqh;
 

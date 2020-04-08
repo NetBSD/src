@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.31 2014/03/07 01:34:29 christos Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.31.30.1 2020/04/08 14:08:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,11 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.31 2014/03/07 01:34:29 christos Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_coredump.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.31.30.1 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,13 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.31 2014/03/07 01:34:29 christos Exp
 #include <sys/exec.h>
 #include <sys/exec_ecoff.h>
 
-#ifdef COREDUMP
-#define	DEP	"coredump"
-#else
-#define	DEP	NULL
-#endif
-
-MODULE(MODULE_CLASS_EXEC, exec_ecoff, DEP)
+MODULE(MODULE_CLASS_EXEC, exec_ecoff, NULL);
 
 static struct execsw exec_ecoff_execsw = {
 	.es_hdrsz = ECOFF_HDR_SIZE,

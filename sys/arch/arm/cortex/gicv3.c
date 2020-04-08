@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.13.4.2 2019/06/10 22:05:52 christos Exp $ */
+/* $NetBSD: gicv3.c,v 1.13.4.3 2020/04/08 14:07:28 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.13.4.2 2019/06/10 22:05:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.13.4.3 2020/04/08 14:07:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.13.4.2 2019/06/10 22:05:52 christos Exp 
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/vmem.h>
 
 #include <arm/locore.h>
 #include <arm/armreg.h>
@@ -349,7 +350,7 @@ gicv3_find_redist(struct gicv3_softc *sc)
 static uint64_t
 gicv3_sgir(struct gicv3_softc *sc)
 {
-	const uint64_t cpu_identity = gicv3_cpu_identity();	
+	const uint64_t cpu_identity = gicv3_cpu_identity();
 
 	const u_int aff0 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff0);
 	const u_int aff1 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff1);
@@ -359,7 +360,7 @@ gicv3_sgir(struct gicv3_softc *sc)
 	return __SHIFTIN(__BIT(aff0), ICC_SGIR_EL1_TargetList) |
 	       __SHIFTIN(aff1, ICC_SGIR_EL1_Aff1) |
 	       __SHIFTIN(aff2, ICC_SGIR_EL1_Aff2) |
-	       __SHIFTIN(aff3, ICC_SGIR_EL1_Aff3); 
+	       __SHIFTIN(aff3, ICC_SGIR_EL1_Aff3);
 }
 
 static void
@@ -603,6 +604,7 @@ gicv3_lpi_get_affinity(struct pic_softc *pic, size_t irq, kcpuset_t *affinity)
 	struct gicv3_softc * const sc = LPITOSOFTC(pic);
 	struct gicv3_lpi_callback *cb;
 
+	kcpuset_zero(affinity);
 	LIST_FOREACH(cb, &sc->sc_lpi_callbacks, list)
 		cb->get_affinity(cb->priv, irq, affinity);
 }
@@ -616,11 +618,11 @@ gicv3_lpi_set_affinity(struct pic_softc *pic, size_t irq, const kcpuset_t *affin
 
 	LIST_FOREACH(cb, &sc->sc_lpi_callbacks, list) {
 		error = cb->set_affinity(cb->priv, irq, affinity);
-		if (error)
+		if (error != EPASSTHROUGH)
 			return error;
 	}
 
-	return error;
+	return EINVAL;
 }
 #endif
 
@@ -741,6 +743,11 @@ gicv3_init(struct gicv3_softc *sc)
 		sc->sc_lpi.pic_maxsources = 8192;	/* Min. required by GICv3 spec */
 		snprintf(sc->sc_lpi.pic_name, sizeof(sc->sc_lpi.pic_name), "gicv3-lpi");
 		pic_add(&sc->sc_lpi, GIC_LPI_BASE);
+
+		sc->sc_lpi_pool = vmem_create("gicv3-lpi", 0, sc->sc_lpi.pic_maxsources,
+		    1, NULL, NULL, NULL, 0, VM_SLEEP, IPL_HIGH);
+		if (sc->sc_lpi_pool == NULL)
+			panic("failed to create gicv3 lpi pool\n");
 
 		gicv3_lpi_init(sc);
 	}

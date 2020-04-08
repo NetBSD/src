@@ -1,4 +1,4 @@
-/*	$NetBSD: uipad.c,v 1.6.4.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uipad.c,v 1.6.4.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific pipadr written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.6.4.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.6.4.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -95,11 +88,9 @@ static const struct usb_devno uipad_devs[] = {
 
 #define uipad_lookup(v, p) usb_lookup(uipad_devs, v, p)
 
-int	uipad_match(device_t, cfdata_t, void *);
-void	uipad_attach(device_t, device_t, void *);
-int	uipad_detach(device_t, int);
-int	uipad_activate(device_t, enum devact);
-
+static int	uipad_match(device_t, cfdata_t, void *);
+static void	uipad_attach(device_t, device_t, void *);
+static int	uipad_detach(device_t, int);
 
 CFATTACH_DECL_NEW(uipad, sizeof(struct uipad_softc), uipad_match,
     uipad_attach, uipad_detach, NULL);
@@ -131,7 +122,7 @@ uipad_charge(struct uipad_softc *sc)
 		uipad_cmd(sc, UT_VENDOR | UT_WRITE, 0x40, 0x6400, 0x6400);
 }
 
-int
+static int
 uipad_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -141,7 +132,7 @@ uipad_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 uipad_attach(device_t parent, device_t self, void *aux)
 {
 	struct uipad_softc *sc = device_private(self);
@@ -172,7 +163,7 @@ uipad_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 uipad_detach(device_t self, int flags)
 {
 	struct uipad_softc *sc = device_private(self);

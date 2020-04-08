@@ -1,4 +1,4 @@
-.\" $NetBSD: p5pb.4,v 1.15 2017/02/18 22:39:00 wiz Exp $
+.\" $NetBSD: p5pb.4,v 1.15.12.1 2020/04/08 14:07:21 martin Exp $
 .\"
 .\" Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@ BlizzardVisionPPC, allowing the attachment of the
 .Xr genfb 4
 driver.
 3Dfx Voodoo 3 boards installed in G-REX are also supported as console by
-this option in conjuction with the
+this option in conjunction with the
 .Xr voodoofb 4
 driver.
 .Pp
@@ -64,11 +64,16 @@ option.
 The
 .Nm
 driver supports the following hardware:
-.Bl -tag -offset indent
-.It Phase5 BlizzardVisionPPC graphics card
-.It Phase5 CyberVisionPPC graphics card
-.It DCE Computer G-REX 1200
-.It DCE Computer G-REX 4000
+.Pp
+.Bl -dash -compact
+.It
+Phase5 BlizzardVisionPPC graphics card
+.It
+Phase5 CyberVisionPPC graphics card
+.It
+DCE Computer G-REX 1200
+.It
+DCE Computer G-REX 4000
 .El
 .Sh SEE ALSO
 .Xr amiga/cv3dpb 4 ,

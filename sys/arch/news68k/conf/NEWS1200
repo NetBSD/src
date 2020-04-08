@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.66.4.1 2019/06/10 22:06:34 christos Exp $
+# 	$NetBSD: NEWS1200,v 1.66.4.2 2020/04/08 14:07:46 martin Exp $
 
 #	news1200 config file
 #
@@ -127,7 +127,6 @@ pseudo-device	tun			# Network "tunnel" device
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley Packet Filter
 pseudo-device	npf			# NPF packet filter
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	vcoda			# coda minicache <-> venus comm.

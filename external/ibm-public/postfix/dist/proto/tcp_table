@@ -8,16 +8,16 @@
 #
 #	\fBpostmap -q - tcp:\fIhost:port\fB <\fIinputfile\fR
 # DESCRIPTION
-#       The Postfix mail system uses optional tables for address
-#       rewriting or mail routing. These tables are usually in
-#       \fBdbm\fR or \fBdb\fR format. Alternatively, table lookups
-#       can be directed to a TCP server.
+#	The Postfix mail system uses optional tables for address
+#	rewriting or mail routing. These tables are usually in
+#	\fBdbm\fR or \fBdb\fR format. Alternatively, table lookups
+#	can be directed to a TCP server.
 #
-#       To find out what types of lookup tables your Postfix system
-#       supports use the "\fBpostconf -m\fR" command.
+#	To find out what types of lookup tables your Postfix system
+#	supports use the "\fBpostconf -m\fR" command.
 #
-#       To test lookup tables, use the "\fBpostmap -q\fR" command as
-#       described in the SYNOPSIS above.
+#	To test lookup tables, use the "\fBpostmap -q\fR" command as
+#	described in the SYNOPSIS above.
 # PROTOCOL DESCRIPTION
 # .ad
 # .fi
@@ -31,12 +31,17 @@
 # REQUEST FORMAT
 # .ad
 # .fi
-#	Each request specifies a command, a lookup key, and possibly a
-#	lookup result.
+#	The tcp_table protocol supports only the lookup request.
+#	The request has the following form:
 # .IP "\fBget\fR SPACE \fIkey\fR NEWLINE"
 #	Look up data under the specified key.
-# .IP "\fBput\fR SPACE \fIkey\fR SPACE \fIvalue\fR NEWLINE"
-#	This request is currently not implemented.
+# .PP
+#	Postfix will not generate partial search keys such as domain
+#	names without one or more subdomains, network addresses
+#	without one or more least-significant octets, or email
+#	addresses without the localpart, address extension or domain
+#	portion. This behavior is also found with cidr:, pcre:, and
+#	regexp: tables.
 # REPLY FORMAT
 # .ad
 # .fi
@@ -44,7 +49,6 @@
 #	longer than 4096 characters including the newline terminator.
 # .IP "\fB500\fR SPACE \fItext\fR NEWLINE"
 #	In case of a lookup request, the requested data does not exist.
-#	In case of an update request, the request was rejected.
 #	The text describes the nature of the problem.
 # .IP "\fB400\fR SPACE \fItext\fR NEWLINE"
 #	This indicates an error condition. The text describes the nature of

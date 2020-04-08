@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.11.18.1 2019/06/10 22:08:30 christos Exp $
+#	$NetBSD: files.i915drmkms,v 1.11.18.2 2020/04/08 14:08:27 martin Exp $
 
 version	20180827
 
@@ -18,6 +18,7 @@ makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT=0"
 makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_FBDEV_EMULATION=1"
 
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-shadow"
+makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-pointer-arith"
 
 makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == gcc:? -Wno-override-init :}"
 makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == clang:? -Wno-initializer-overrides :}"

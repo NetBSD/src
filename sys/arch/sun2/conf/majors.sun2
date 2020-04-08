@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun2,v 1.20.54.1 2019/06/10 22:06:48 christos Exp $
+#	$NetBSD: majors.sun2,v 1.20.54.2 2020/04/08 14:07:54 martin Exp $
 #
 # Device majors for sun2
 #
@@ -59,7 +59,7 @@ device-major	ksyms		char 92			ksyms
 #device-major	obsolete	char 93			obsolete (pf)
 #device-major	obsolete	char 94			obsolete (opencrypto)
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

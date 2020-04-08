@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_debug.c,v 1.5.30.1 2019/06/10 22:07:05 christos Exp $ */
+/* $NetBSD: acpi_debug.c,v 1.5.30.2 2020/04/08 14:08:02 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.5.30.1 2019/06/10 22:07:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.5.30.2 2020/04/08 14:08:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -124,8 +124,8 @@ acpi_debug_init(void)
 	layer = acpi_debug_getkey(acpi_debug_layer_d, AcpiDbgLayer);
 	level = acpi_debug_getkey(acpi_debug_level_d, AcpiDbgLevel);
 
-	(void)memcpy(acpi_debug_layer_s, layer, ACPI_DEBUG_MAX);
-	(void)memcpy(acpi_debug_level_s, level, ACPI_DEBUG_MAX);
+	strlcpy(acpi_debug_layer_s, layer, ACPI_DEBUG_MAX);
+	strlcpy(acpi_debug_level_s, level, ACPI_DEBUG_MAX);
 
 	return;
 

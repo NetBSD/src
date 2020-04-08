@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.1 2019/06/10 22:06:39 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.2 2020/04/08 14:07:50 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.1 2019/06/10 22:06:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.2 2020/04/08 14:07:50 martin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -71,8 +71,6 @@ static int emulated_opcode(struct lwp *, struct trapframe *);
 static int fix_unaligned(struct lwp *, struct trapframe *);
 static inline vaddr_t setusr(vaddr_t, size_t *);
 static inline void unsetusr(void);
-
-extern int do_ucas_32(volatile int32_t *, int32_t, int32_t, int32_t *);
 
 void trap(struct trapframe *);	/* Called from locore / trap_subr */
 /* Why are these not defined in a header? */
@@ -686,6 +684,7 @@ kcopy(const void *src, void *dst, size_t len)
 int
 _ucas_32(volatile uint32_t *uptr, uint32_t old, uint32_t new, uint32_t *ret)
 {
+	extern int do_ucas_32(volatile int32_t *, int32_t, int32_t, int32_t *);
 	vaddr_t uva = (vaddr_t)uptr;
 	vaddr_t p;
 	struct faultbuf env;

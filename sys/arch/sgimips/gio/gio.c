@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.35 2016/07/20 22:16:37 macallan Exp $	*/
+/*	$NetBSD: gio.c,v 1.35.16.1 2020/04/08 14:07:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.35 2016/07/20 22:16:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.35.16.1 2020/04/08 14:07:52 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -329,7 +329,7 @@ gio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 		ga->ga_slot = cf->cf_loc[GIOCF_SLOT];
 		ga->ga_addr = cf->cf_loc[GIOCF_ADDR];
-		ga->ga_iot = 0;
+		ga->ga_iot = normal_memt;
 		ga->ga_ioh = MIPS_PHYS_TO_KSEG1(ga->ga_addr);
 
 		if (config_match(parent, cf, ga) > 0)

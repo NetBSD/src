@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.120.4.1 2019/06/10 21:42:38 christos Exp $
+#	$NetBSD: RESPONSIBLE,v 1.120.4.2 2020/04/08 14:03:55 martin Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -15,7 +15,7 @@ amd		christos
 atf		jmmv
 audioplay	mrg
 audiorecord	mrg
-awk		jdolecek*
+awk		jdolecek
 bc		phil*, simonb
 config		cube*
 csh		christos
@@ -24,7 +24,7 @@ dhcp		mellon*
 edquota		dholland
 error		christos
 etcupdate	[nobody]
-expr		jdolecek*
+expr		jdolecek
 file		christos, pooka
 gpioctl		mbalmer
 grep		simonb, wiz
@@ -61,7 +61,7 @@ ppp(sync)	martin?
 racoon		manu
 routed		christos
 sh		christos, dsl, kre
-sort		jdolecek*
+sort		jdolecek
 sysctl		atatat*
 talk/talkd	dholland
 tcpdump		core
@@ -81,7 +81,7 @@ Userland Libraries:
 atf		jmmv
 citrus		core
 curses		blymn, jdc
-edit		christos, jdolecek*
+edit		christos, jdolecek
 kerberos	lha*, joda*
 openssl		thorpej*, christos
 pcap		core
@@ -125,7 +125,7 @@ gpio		mbalmer
 ide/atapi	bouyer
 irda		augustss*, kenh
 keylock		mbalmer
-mca		jdolecek*
+mca		jdolecek
 nand		ahoka
 net80211	dyoung
 onewire		riz
@@ -198,16 +198,15 @@ hfs		dillo*
 kernfs		?
 lfs		dholland, perseant
 mfs		[nobody in particular]
-msdosfs		jdolecek*
+msdosfs		jdolecek
 nilfs		reinoud
 nfs		fvdl*
-ntfs		jdolecek*
+ntfs		jdolecek
 nullfs/layerfs	dholland, pooka
 overlay		[nobody]
 procfs		?
 ptyfs		christos
 puffs		pooka
-smbfs		jdolecek*
 sysvbfs		?
 tmpfs		rmind
 udf		reinoud
@@ -230,20 +229,20 @@ misc		dholland, pooka
 kern/general:
 
 ddb		jhawk, mrg
-emulation	christos, fvdl*, manu, jdolecek*, mrg
-kevents		jdolecek*
+emulation	christos, fvdl*, manu, jdolecek, mrg
+kevents		jdolecek
 ksyms		ragge*
 modules		jnemeth, pgoyette
 lwp/pthread	nathanw*
 ntp		simonb, jonathan*
-pipes		jdolecek*
+pipes		jdolecek
 splash		jmcneill
 uvm		chuck, chs, mrg, atatat*
 
 kern/compat:
 
 linux-alpha	erh
-linux-i386	fvdl*, jdolecek*
+linux-i386	fvdl*, jdolecek
 linux-m68k	itohy*
 linux-mips	manu
 linux-powerpc	manu

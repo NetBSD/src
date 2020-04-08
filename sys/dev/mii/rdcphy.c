@@ -1,4 +1,4 @@
-/*      $NetBSD: rdcphy.c,v 1.1.62.1 2019/06/10 22:07:14 christos Exp $        */
+/*      $NetBSD: rdcphy.c,v 1.1.62.2 2020/04/08 14:08:08 martin Exp $        */
 
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -33,7 +33,7 @@
  * Driver for the RDC Semiconductor R6040 10/100 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rdcphy.c,v 1.1.62.1 2019/06/10 22:07:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rdcphy.c,v 1.1.62.2 2020/04/08 14:08:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ static const struct mii_phy_funcs rdcphy_funcs = {
 };
 
 static const struct mii_phydesc rdcphys[] = {
-	MII_PHY_DESC(RDC, R6040),
+	MII_PHY_DESC(xxRDC, R6040),
 	MII_PHY_END,
 };
 
@@ -109,7 +109,8 @@ rdcphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &rdcphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
+
+	mii_lock(mii);
 
 	PHY_RESET(sc);
 
@@ -117,13 +118,10 @@ rdcphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
-	aprint_normal_dev(self, "");
+
+	mii_unlock(mii);
+
 	mii_phy_add_media(sc);
-	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-
 }
 
 static int
@@ -131,6 +129,8 @@ rdcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct rdcphy_softc *rsc = (struct rdcphy_softc *)sc;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+
+	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -202,6 +202,8 @@ rdcphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t bmsr, bmcr, physts;
+
+	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;

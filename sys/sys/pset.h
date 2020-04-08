@@ -1,4 +1,4 @@
-/*	$NetBSD: pset.h,v 1.6 2018/05/28 21:05:02 chs Exp $	*/
+/*	$NetBSD: pset.h,v 1.6.2.1 2020/04/08 14:09:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -56,9 +56,6 @@ int	_pset_bind(idtype_t, id_t, id_t, psetid_t, psetid_t *);
 typedef struct {
 	int		ps_flags;
 } pset_info_t;
-
-/* Flags */
-#define	PSET_BUSY	0x01
 
 void	psets_init(void);
 

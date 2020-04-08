@@ -1,4 +1,4 @@
-/*	$NetBSD: timed_wait.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: timed_wait.h,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 #ifndef _TIMED_WAIT_H_INCLUDED_
 #define _TIMED_WAIT_H_INCLUDED_
@@ -27,6 +27,11 @@ extern int WARN_UNUSED_RESULT timed_waitpid(pid_t, WAIT_STATUS_T *, int, int);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

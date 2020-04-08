@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.21.16.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uep.c,v 1.21.16.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  *  eGalax USB touchpanel controller driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.21.16.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.21.16.2 2020/04/08 14:08:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,22 +95,22 @@ Static int	uep_enable(void *);
 Static void	uep_disable(void *);
 Static int	uep_ioctl(void *, u_long, void *, int, struct lwp *);
 
-const struct wsmouse_accessops uep_accessops = {
+static const struct wsmouse_accessops uep_accessops = {
 	uep_enable,
 	uep_ioctl,
 	uep_disable,
 };
 
-int uep_match(device_t, cfdata_t, void *);
-void uep_attach(device_t, device_t, void *);
-void uep_childdet(device_t, device_t);
-int uep_detach(device_t, int);
-int uep_activate(device_t, enum devact);
+static int uep_match(device_t, cfdata_t, void *);
+static void uep_attach(device_t, device_t, void *);
+static void uep_childdet(device_t, device_t);
+static int uep_detach(device_t, int);
+static int uep_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(uep, sizeof(struct uep_softc), uep_match, uep_attach,
     uep_detach, uep_activate, NULL, uep_childdet);
 
-int
+static int
 uep_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -128,7 +128,7 @@ uep_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void
+static void
 uep_attach(device_t parent, device_t self, void *aux)
 {
 	struct uep_softc *sc = device_private(self);
@@ -232,7 +232,7 @@ uep_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 uep_detach(device_t self, int flags)
 {
 	struct uep_softc *sc = device_private(self);
@@ -255,7 +255,7 @@ uep_detach(device_t self, int flags)
 	return rv;
 }
 
-void
+static void
 uep_childdet(device_t self, device_t child)
 {
 	struct uep_softc *sc = device_private(self);
@@ -264,7 +264,7 @@ uep_childdet(device_t self, device_t child)
 	sc->sc_wsmousedev = NULL;
 }
 
-int
+static int
 uep_activate(device_t self, enum devact act)
 {
 	struct uep_softc *sc = device_private(self);

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_dwhdmi.c,v 1.3.4.2 2019/06/10 22:05:56 christos Exp $ */
+/* $NetBSD: sunxi_dwhdmi.c,v 1.3.4.3 2020/04/08 14:07:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.3.4.2 2019/06/10 22:05:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.3.4.3 2020/04/08 14:07:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,6 +62,7 @@ struct sunxi_dwhdmi_softc {
 	int			sc_phandle;
 	struct fdtbus_phy	*sc_phy;
 	struct fdtbus_regulator	*sc_regulator;
+	struct clk		*sc_clk;
 
 	struct fdt_device_ports	sc_ports;
 	struct drm_display_mode	sc_curmode;
@@ -101,13 +102,6 @@ sunxi_dwhdmi_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	if (encoder == NULL)
 		return EINVAL;
 
-	sc->sc_phy = fdtbus_phy_get(sc->sc_phandle, "hdmi-phy");
-	if (sc->sc_phy == NULL) {
-		device_printf(dev, "couldn't find hdmi-phy\n");
-		return ENXIO;
-	}
-
-	sc->sc_regulator = fdtbus_regulator_acquire(sc->sc_phandle, "hvcc-supply");
 	if (sc->sc_regulator != NULL) {
 		error = fdtbus_regulator_enable(sc->sc_regulator);
 		if (error != 0) {
@@ -193,6 +187,15 @@ sunxi_dwhdmi_mode_set(struct dwhdmi_softc *dsc, struct drm_display_mode *mode,
     struct drm_display_mode *adjusted_mode)
 {
 	struct sunxi_dwhdmi_softc * const sc = to_sunxi_dwhdmi_softc(dsc);
+	int error;
+
+	if (sc->sc_clk != NULL) {
+		error = clk_set_rate(sc->sc_clk, adjusted_mode->clock * 1000);
+		if (error != 0)
+			device_printf(sc->sc_base.sc_dev,
+			    "couldn't set pixel clock to %u Hz: %d\n",
+			    adjusted_mode->clock * 1000, error);
+	}
 
 	sc->sc_curmode = *adjusted_mode;
 }
@@ -210,20 +213,22 @@ sunxi_dwhdmi_attach(device_t parent, device_t self, void *aux)
 {
 	struct sunxi_dwhdmi_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	prop_dictionary_t prop = device_properties(self);
 	const int phandle = faa->faa_phandle;
-	struct clk *clk_iahb, *clk_isfr;
+	struct clk *clk_iahb, *clk_isfr, *clk_tmds;
 	struct fdtbus_reset *rst;
+	bool is_disabled;
 	bus_addr_t addr;
 	bus_size_t size;
 
-	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
-		aprint_error(": couldn't get registers\n");
+	if (prop_dictionary_get_bool(prop, "disabled", &is_disabled) && is_disabled) {
+		aprint_naive("\n");
+		aprint_normal(": HDMI TX (disabled)\n");
 		return;
 	}
 
-	rst = fdtbus_reset_get(phandle, "ctrl");
-	if (rst == NULL || fdtbus_reset_deassert(rst) != 0) {
-		aprint_error(": couldn't de-assert reset\n");
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
 		return;
 	}
 
@@ -239,6 +244,12 @@ sunxi_dwhdmi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	clk_tmds = fdtbus_clock_get(phandle, "tmds");
+	if (clk_tmds == NULL || clk_enable(clk_tmds) != 0) {
+		aprint_error(": couldn't enable tmds clock\n");
+		return;
+	}
+
 	sc->sc_base.sc_dev = self;
 	sc->sc_base.sc_reg_width = 1;
 	sc->sc_base.sc_bst = faa->faa_bst;
@@ -250,10 +261,31 @@ sunxi_dwhdmi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_base.sc_enable = sunxi_dwhdmi_enable;
 	sc->sc_base.sc_disable = sunxi_dwhdmi_disable;
 	sc->sc_base.sc_mode_set = sunxi_dwhdmi_mode_set;
+	sc->sc_base.sc_scl_hcnt = 0xd8;
+	sc->sc_base.sc_scl_lcnt = 0xfe;
 	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_clk = clk_tmds;
 
 	aprint_naive("\n");
 	aprint_normal(": HDMI TX\n");
+
+	sc->sc_regulator = fdtbus_regulator_acquire(sc->sc_phandle, "hvcc-supply");
+
+	sc->sc_phy = fdtbus_phy_get(sc->sc_phandle, "hdmi-phy");
+	if (sc->sc_phy == NULL)
+		sc->sc_phy = fdtbus_phy_get(sc->sc_phandle, "phy");
+	if (sc->sc_phy == NULL) {
+		device_printf(self, "couldn't find PHY\n");
+		return;
+	}
+
+	rst = fdtbus_reset_get(phandle, "ctrl");
+	if (rst == NULL || fdtbus_reset_deassert(rst) != 0) {
+		aprint_error_dev(self, "couldn't de-assert reset\n");
+		return;
+	}
+
+	sunxi_hdmiphy_init(sc->sc_phy);
 
 	if (dwhdmi_attach(&sc->sc_base) != 0) {
 		aprint_error_dev(self, "failed to attach driver\n");

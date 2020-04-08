@@ -1,4 +1,4 @@
-#	$NetBSD: vchain,v 1.9 2017/04/13 09:52:18 hannken Exp $
+#	$NetBSD: vchain,v 1.9.12.1 2020/04/08 14:08:51 martin Exp $
 
 #	@(#)vchain	8.1 (Berkeley) 6/10/93
 #
@@ -6,14 +6,15 @@
 define vchain
 	set $num = 0
 
-	set $vp=(struct vnode *)$arg0
-	set $vi=(struct vnode_impl *)$arg0
-	while ($vp)
-		printf "vp: 0x%lx lrulist_next: 0x%lx usecount: %d flags: i:0x%x v:0x%x u:0x%x\n",\
-		       $vp, $vi->vi_lrulist.tqe_next, $vp->v_uobj.uo_refs, \
+	set $vi = (struct vnode_impl *)$arg0
+	printf "lrulist_next: 0x%lx\n", $vi->vi_lrulist.tqe_next
+	while ($vi)
+		set $vp = &$vi->vi_vnode
+		printf "vp: 0x%lx usecount: %d flags: i:0x%x v:0x%x u:0x%x\n",\
+		       $vp, $vp->v_uobj.uo_refs, \
 		       $vp->v_iflag, $vp->v_vflag, $vp->v_uflag
 		set $num++
-		set $vp = $vp->v_mntvnodes.tqe_next
+		set $vi = $vi->vi_mntvnodes.tqe_next
 	end
 	printf "Number of vnodes: %d\n", $num
 end
@@ -28,23 +29,26 @@ define vprint
 end
 
 define mp_vchain
-	set $mp = (struct mount *)$arg0
-	vchain $mp->mnt_vnodelist.tqh_first
+	set $mp = $arg0->me_mount
+	set $first = $mp->mnt_vnodelist.tqh_first
+	if ($first)
+		vchain $mp->mnt_vnodelist.tqh_first
+	end
 end
 document mp_vchain
 print the vnode chain for a given mount point
 end
 
 define vall
-	set $mp=mountlist.tqh_first
-	while ($mp)
-		printf "\tmount point at 0x%x\n", $mp
-		mp_vchain $mp
-		set $mp=$mp->mnt_list.tqe_next
+	set $mpe=mountlist.tqh_first
+	while ($mpe)
+		printf "\tmount point at 0x%lx\n", $mpe
+		mp_vchain $mpe
+		set $mpe = $mpe->me_list.tqe_next
 
 		# "break"
-		if ((const void *)$mp == (const void *)&mountlist)
-			set $mp = 0
+		if ((const void *)$mpe == (const void *)&mountlist)
+			set $mpe = 0
 		end
 	end
 end
@@ -53,17 +57,17 @@ print vnode chains for all mount points
 end
 
 define mountdump
-	set $me=mount_list.tqh_first
+	set $me=mountlist.tqh_first
 	while ($me)
 		if ($me->me_type == ME_MOUNT)
 			set $mp = $me->me_mount
-			printf "%s on %s type %s, (mp 0x%x, privdata 0x%x)\n", \
+			printf "%s on %s type %s, (mp 0x%lx, privdata 0x%lx)\n", \
 			    $mp->mnt_stat->f_mntfromname, \
 			    $mp->mnt_stat->f_mntonname, \
 			    $mp->mnt_op->vfs_name, $mp, $mp->mnt_data
 		end
 		set $me=$me->me_list.tqe_next
-		if ((const void *)$me == (const void *)&mount_list)
+		if ((const void *)$me == (const void *)&mountlist)
 			set $me = 0
 		end
 	end

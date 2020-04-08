@@ -1,4 +1,4 @@
-/* $NetBSD: tvpll.c,v 1.7 2017/06/01 02:45:10 chs Exp $ */
+/* $NetBSD: tvpll.c,v 1.7.10.1 2020/04/08 14:08:05 martin Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.7 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.7.10.1 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,11 +63,11 @@ tvpll_open(device_t parent, i2c_tag_t t, i2c_addr_t a, struct tvpll_data *p)
 	tvpll->pll = p;
 
 	if (tvpll->pll->initdata) {
-		iic_acquire_bus(tvpll->tag, I2C_F_POLL);
+		iic_acquire_bus(tvpll->tag, 0);
 		(void)iic_exec(tvpll->tag, I2C_OP_WRITE_WITH_STOP, tvpll->addr,
 		    &tvpll->pll->initdata[1], tvpll->pll->initdata[0],
-		    NULL, 0, I2C_F_POLL);
-		iic_release_bus(tvpll->tag, I2C_F_POLL);
+		    NULL, 0, 0);
+		iic_release_bus(tvpll->tag, 0);
 	}
 
 	device_printf(parent, "tvpll: %s\n", tvpll->pll->name);
@@ -132,15 +132,15 @@ tvpll_tune_dtv(struct tvpll *tvpll,
 	if((rv = tvpll_algo(tvpll, b, params, &fr)) != 0)
 		return rv;
 
-	iic_acquire_bus(tvpll->tag, I2C_F_POLL);
+	iic_acquire_bus(tvpll->tag, 0);
 	/* gate ctrl? */
 	if (b[4] != TVPLL_IGNORE_AUX) {
 		ab[0] = b[2] | 0x18;
 		ab[1] = b[4];
-		rv = iic_exec(tvpll->tag, I2C_OP_WRITE_WITH_STOP, tvpll->addr, ab, 2, NULL, 0, I2C_F_POLL);
+		rv = iic_exec(tvpll->tag, I2C_OP_WRITE_WITH_STOP, tvpll->addr, ab, 2, NULL, 0, 0);
 	}
-	rv = iic_exec(tvpll->tag, I2C_OP_WRITE_WITH_STOP, tvpll->addr, b, 4, NULL, 0, I2C_F_POLL);
-	iic_release_bus(tvpll->tag, I2C_F_POLL);
+	rv = iic_exec(tvpll->tag, I2C_OP_WRITE_WITH_STOP, tvpll->addr, b, 4, NULL, 0, 0);
+	iic_release_bus(tvpll->tag, 0);
 
 	if (rv != 0)
 		printf("%s\n", __func__);

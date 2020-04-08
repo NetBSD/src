@@ -1,4 +1,4 @@
-/* $NetBSD: mcontext.h,v 1.5 2018/02/15 15:53:56 kamil Exp $ */
+/* $NetBSD: mcontext.h,v 1.5.4.1 2020/04/08 14:07:50 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #define	_NFREG	33		/* F0-31, FCSR */
 
 /*
- * This fragment is common to <riscv/mcontext.h> and <riscv/reg.h>  
+ * This fragment is common to <riscv/mcontext.h> and <riscv/reg.h>
  */
 #ifndef _BSD_FPREG_T_
 union __fpreg {

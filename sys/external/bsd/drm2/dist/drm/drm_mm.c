@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mm.c,v 1.3.30.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_mm.c,v 1.3.30.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /**************************************************************************
  *
@@ -44,16 +44,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.3.30.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.3.30.2 2020/04/08 14:08:22 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_mm.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/export.h>
-#include <linux/printk.h>
-#include <asm/bug.h>
-#include <asm/div64.h>
 
 /**
  * DOC: Overview

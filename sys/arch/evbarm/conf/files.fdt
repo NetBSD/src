@@ -1,8 +1,9 @@
-#	$NetBSD: files.fdt,v 1.4.2.1 2019/06/10 22:06:05 christos Exp $
+#	$NetBSD: files.fdt,v 1.4.2.2 2020/04/08 14:07:34 martin Exp $
 #
 # FDT-based kernel configuration info
 #
 
+file	arch/evbarm/fdt/fdt_dma_machdep.c	fdt
 file	arch/evbarm/fdt/fdt_machdep.c		fdt
 file	arch/evbarm/fdt/fdt_memory.c		fdt
 

@@ -816,7 +816,8 @@ enum operand_equal_flag {
   /* Internal within inchash::add_expr:  */
   OEP_HASH_CHECK = 32,
   /* Makes operand_equal_p handle more expressions:  */
-  OEP_LEXICOGRAPHIC = 64
+  OEP_LEXICOGRAPHIC = 64,
+  OEP_BITWISE = 128
 };
 
 /* Enum and arrays used for tree allocation stats.
@@ -977,7 +978,9 @@ struct GTY(()) tree_base {
        expression trees and specify known data non-dependences.  For
        two memory references in a function they are known to not
        alias if dependence_info.clique are equal and dependence_info.base
-       are distinct.  */
+       are distinct.  Clique number zero means there is no information,
+       clique number one is populated from function global information
+       and thus needs no remapping on transforms like loop unrolling.  */
     struct {
       unsigned short clique;
       unsigned short base;
@@ -1611,6 +1614,7 @@ struct GTY(()) tree_decl_common {
   /* In a VAR_DECL and PARM_DECL, this is DECL_READ_P.  */
   unsigned decl_read_flag : 1;
   /* In a VAR_DECL or RESULT_DECL, this is DECL_NONSHAREABLE.  */
+  /* In a PARM_DECL, this is DECL_HIDDEN_STRING_LENGTH.  */
   unsigned decl_nonshareable_flag : 1;
 
   /* DECL_OFFSET_ALIGN, used only for FIELD_DECLs.  */

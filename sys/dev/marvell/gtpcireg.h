@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcireg.h,v 1.6 2010/06/02 06:02:20 kiyohara Exp $	*/
+/*	$NetBSD: gtpcireg.h,v 1.6.60.1 2020/04/08 14:08:07 martin Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -78,7 +78,7 @@
 #define GTPCI_P2PM0BARL(p)	(0x0d5c | ((p) << 7))	/*   P2P Mem0 (Low) */
 #define GTPCI_P2PM0BARH(p)	(0x0d60 | ((p) << 7))	/*   P2P Mem0 (High) */
 #define GTPCI_P2PIOBAR(p)	(0x0d6c | ((p) << 7))	/*   P2P I/O */
-#define GTPCI_EROMBAR(p)	(0x0f38 | ((p) << 7))	/*   Expresion ROM */
+#define GTPCI_EROMBAR(p)	(0x0f38 | ((p) << 7))	/*   Expression ROM */
 #define GTPCI_DRAMBARBS(p)	(0x0c1c | ((p) << 7))	/*DRAM BAR Bank Select*/
 #define GTPCI_ADC(p)		(0x0d3c | ((p) << 7))	/* Addr Decode Ctrl */
 #define GTPCI_ADC_REMAPWRDIS		(1 << 0)

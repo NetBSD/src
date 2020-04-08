@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.83 2018/04/09 17:46:56 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.83.2.1 2020/04/08 14:09:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.83 2018/04/09 17:46:56 christos Exp $");
+__RCSID("$NetBSD: sem.c,v 1.83.2.1 2020/04/08 14:09:15 martin Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -276,17 +276,24 @@ setdefmaxusers(int min, int def, int max)
 	}
 }
 
+static const char *maxusers_srcfile;
+static u_short maxusers_srcline;
+
 void
 setmaxusers(int n)
 {
 
 	if (maxusers == n) {
-		cfgerror("duplicate maxusers parameter");
+		cfgerror("duplicate maxusers parameter at %s:%hu",
+		    maxusers_srcfile, maxusers_srcline);
 		return;
 	}
 	if (vflag && maxusers != 0)
-		cfgwarn("warning: maxusers already defined");
+		cfgwarn("warning: maxusers already defined at %s:%hu",
+		    maxusers_srcfile, maxusers_srcline);
 	maxusers = n;
+	maxusers_srcfile = yyfile;
+	maxusers_srcline = currentline();
 	if (n < minmaxusers) {
 		cfgerror("warning: minimum of %d maxusers assumed",
 		    minmaxusers);
@@ -338,7 +345,8 @@ defattr(const char *name, struct loclist *locs, struct attrlist *deps,
 	struct attrlist *al;
 
 	if (getrefattr(name, &a)) {
-		cfgerror("attribute `%s' already defined", name);
+		cfgerror("attribute `%s' already defined at %s:%hu", name,
+		    a->a_where.w_srcfile, a->a_where.w_srcline);
 		loclist_destroy(locs);
 		return (1);
 	}
@@ -380,6 +388,8 @@ mkattr(const char *name)
 		return NULL;
 	}
 	a->a_name = name;
+	a->a_where.w_srcfile = yyfile;
+	a->a_where.w_srcline = currentline();
 	TAILQ_INIT(&a->a_files);
 	CFGDBG(3, "attr `%s' allocated", name);
 
@@ -510,7 +520,7 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 		goto bad;
 	if (dev->d_isdef) {
 		cfgerror("redefinition of `%s' (previously defined at %s:%d)",
-		    dev->d_name, dev->d_srcfile, dev->d_srcline);
+		    dev->d_name, dev->d_where.w_srcfile, dev->d_where.w_srcline);
 		goto bad;
 	}
 
@@ -625,8 +635,8 @@ getdevbase(const char *name)
 		dev->d_ahead = NULL;
 		dev->d_app = &dev->d_ahead;
 		dev->d_umax = 0;
-		dev->d_srcfile = yyfile;
-		dev->d_srcline = currentline();
+		dev->d_where.w_srcfile = yyfile;
+		dev->d_where.w_srcline = currentline();
 		TAILQ_INSERT_TAIL(&allbases, dev, d_next);
 		if (ht_insert(devbasetab, name, dev))
 			panic("%s: Can't insert %s", __func__, name);
@@ -659,7 +669,7 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 	}
 	if (deva->d_isdef) {
 		cfgerror("redefinition of `%s' (previously defined at %s:%d)",
-		    deva->d_name, deva->d_srcfile, deva->d_srcline);
+		    deva->d_name, deva->d_where.w_srcfile, deva->d_where.w_srcline);
 		goto bad;
 	}
 	if (dev->d_ispseudo) {
@@ -768,8 +778,8 @@ getdevattach(const char *name)
 		deva->d_attrs = NULL;
 		deva->d_ihead = NULL;
 		deva->d_ipp = &deva->d_ihead;
-		deva->d_srcfile = yyfile;
-		deva->d_srcline = currentline();
+		deva->d_where.w_srcfile = yyfile;
+		deva->d_where.w_srcline = currentline();
 		TAILQ_INSERT_TAIL(&alldevas, deva, d_next);
 		if (ht_insert(devatab, name, deva))
 			panic("%s: Can't insert %s", __func__, name);
@@ -1039,13 +1049,18 @@ addconf(struct config *cf0)
 	const char *name;
 
 	name = cf0->cf_name;
-	cf = ecalloc(1, sizeof *cf);
-	if (ht_insert(cfhashtab, name, cf)) {
-		cfgerror("configuration `%s' already defined", name);
-		free(cf);
+	if ((cf = ht_lookup(cfhashtab, name)) != NULL) {
+		cfgerror("configuration `%s' already defined %s:%hu", name,
+			cf->cf_where.w_srcfile, cf->cf_where.w_srcline);
 		goto bad;
 	}
+	cf = ecalloc(1, sizeof *cf);
+	if (ht_insert(cfhashtab, name, cf)) {
+		free(cf);
+	}
 	*cf = *cf0;
+	cf->cf_where.w_srcfile = yyfile;
+	cf->cf_where.w_srcline = currentline();
 
 	/*
 	 * Resolve the root device.
@@ -1157,11 +1172,13 @@ newdevi(const char *name, int unit, struct devbase *d)
 	i->i_atdeva = NULL;
 	i->i_locs = NULL;
 	i->i_cfflags = 0;
-	i->i_lineno = currentline();
-	i->i_srcfile = yyfile;
+	i->i_where.w_srcline = currentline();
+	i->i_where.w_srcfile = yyfile;
 	i->i_active = DEVI_ORPHAN; /* Proper analysis comes later */
 	i->i_level = devilevel;
 	i->i_pseudoroot = 0;
+	i->i_where.w_srcfile = yyfile;
+	i->i_where.w_srcline = currentline();
 	if (unit >= d->d_umax)
 		d->d_umax = unit + 1;
 	return (i);
@@ -1796,8 +1813,9 @@ addpseudo(const char *name, int number)
 		cfgerror("%s is a real device, not a pseudo-device", name);
 		return;
 	}
-	if (ht_lookup(devitab, name) != NULL) {
-		cfgerror("`%s' already defined", name);
+	if ((i = ht_lookup(devitab, name)) != NULL) {
+		cfgerror("`%s' already defined at %s:%hu", name,
+		    i->i_where.w_srcfile, i->i_where.w_srcline);
 		return;
 	}
 	i = newdevi(name, number - 1, d);	/* foo 16 => "foo0..foo15" */
@@ -1855,8 +1873,8 @@ adddevm(const char *name, devmajor_t cmajor, devmajor_t bmajor,
 	}
 
 	dm = ecalloc(1, sizeof(*dm));
-	dm->dm_srcfile = yyfile;
-	dm->dm_srcline = currentline();
+	dm->dm_where.w_srcfile = yyfile;
+	dm->dm_where.w_srcline = currentline();
 	dm->dm_name = name;
 	dm->dm_cmajor = cmajor;
 	dm->dm_bmajor = bmajor;
@@ -1890,11 +1908,11 @@ fixdevis(void)
 			p = i->i_pspec;
 			msg = p == NULL ? "no parent" :
 			    (p->p_atunit == WILD ? "nothing matching" : "no");
-			cfgxerror(i->i_srcfile, i->i_lineno,
+			cfgxerror(i->i_where.w_srcfile, i->i_where.w_srcline,
 			    "`%s at %s' is orphaned (%s `%s' found)", 
 			    i->i_name, i->i_at, msg, i->i_at);
 		} else if (vflag && i->i_active == DEVI_IGNORED)
-			cfgxwarn(i->i_srcfile, i->i_lineno, "ignoring "
+			cfgxwarn(i->i_where.w_srcfile, i->i_where.w_srcline, "ignoring "
 			    "explicitly orphaned instance `%s at %s'",
 			    i->i_name, i->i_at);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rand.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
+/*	$NetBSD: rand.c,v 1.2.12.1 2020/04/08 14:03:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -44,7 +44,7 @@ void ROKEN_LIB_FUNCTION
 rk_random_init(void)
 {
 #if defined(HAVE_ARC4RANDOM)
-    arc4random_stir();
+    /* nothing to do */;
 #elif defined(HAVE_SRANDOMDEV)
     srandomdev();
 #elif defined(HAVE_RANDOM)

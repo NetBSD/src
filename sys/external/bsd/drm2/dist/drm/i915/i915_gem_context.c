@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_context.c,v 1.6.30.1 2019/06/10 22:08:05 christos Exp $	*/
+/*	$NetBSD: i915_gem_context.c,v 1.6.30.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2011-2012 Intel Corporation
@@ -88,9 +88,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.6.30.1 2019/06/10 22:08:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.6.30.2 2020/04/08 14:08:23 martin Exp $");
 
-#include <linux/err.h>
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
@@ -162,6 +161,8 @@ void i915_gem_context_free(struct kref *ctx_ref)
 
 	if (i915.enable_execlists)
 		intel_lr_context_free(ctx);
+
+	kfree(ctx->jump_whitelist);
 
 	/*
 	 * This context is going away and we need to remove all VMAs still
@@ -251,6 +252,9 @@ __create_hw_context(struct drm_device *dev,
 	ctx->remap_slice = (1 << NUM_L3_SLICES(dev)) - 1;
 
 	ctx->hang_stats.ban_period_seconds = DRM_I915_CTX_BAN_PERIOD;
+
+	ctx->jump_whitelist = NULL;
+	ctx->jump_whitelist_cmds = 0;
 
 	return ctx;
 
@@ -970,15 +974,9 @@ int i915_gem_context_setparam_ioctl(struct drm_device *dev, void *data,
 	case I915_CONTEXT_PARAM_BAN_PERIOD:
 		if (args->size)
 			ret = -EINVAL;
-#ifdef __NetBSD__
-		else if (args->value < ctx->hang_stats.ban_period_seconds &&
-			 !DRM_SUSER())
-			ret = -EPERM;
-#else
 		else if (args->value < ctx->hang_stats.ban_period_seconds &&
 			 !capable(CAP_SYS_ADMIN))
 			ret = -EPERM;
-#endif
 		else
 			ctx->hang_stats.ban_period_seconds = args->value;
 		break;

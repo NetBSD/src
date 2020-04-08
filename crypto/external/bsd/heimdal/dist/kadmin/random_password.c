@@ -1,4 +1,4 @@
-/*	$NetBSD: random_password.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: random_password.c,v 1.2.12.1 2020/04/08 14:03:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
@@ -70,7 +70,8 @@ random_password(char *pw, size_t len)
 		      "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2,
 		      "@$%&*()-+=:,/<>1234567890", 1);
     strlcpy(pw, pass, len);
-    memset(pass, 0, strlen(pass));
+    len = strlen(pass);
+    memset_s(pass, len, 0, len);
     free(pass);
 #endif
 }
@@ -157,7 +158,7 @@ generate_password(char **pw, int num_classes, ...)
 	}
     }
     (*pw)[len] = '\0';
-    memset(rbuf, 0, sizeof(rbuf));
+    memset_s(rbuf, sizeof(rbuf), 0, sizeof(rbuf));
     free(classes);
 }
 #endif

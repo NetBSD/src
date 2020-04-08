@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -350,7 +350,7 @@ ApCheckPackage (
 
         for (i = 0; i < Package->RetInfo4.Count1; ++i)
         {
-            Status = ApCheckObjectType (Predefined->Info.Name, Op,
+            ApCheckObjectType (Predefined->Info.Name, Op,
                 Package->RetInfo4.ObjectType1, i);
             Op = Op->Asl.Next;
         }

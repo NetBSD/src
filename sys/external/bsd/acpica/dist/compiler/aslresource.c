@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1118,7 +1118,7 @@ RsDoResourceTemplate (
     BufferOp->Asl.AmlOpcode           = AML_RAW_DATA_CHAIN;
     BufferOp->Asl.AmlOpcodeLength     = 0;
     BufferOp->Asl.AmlLength           = CurrentByteOffset;
-    BufferOp->Asl.Value.Buffer        = (UINT8 *) HeadRnode.Next;
+    BufferOp->Asl.Value.Buffer        = ACPI_CAST_PTR (UINT8,  HeadRnode.Next);
     BufferOp->Asl.CompileFlags       |= OP_IS_RESOURCE_DATA;
     UtSetParseOpName (BufferOp);
 

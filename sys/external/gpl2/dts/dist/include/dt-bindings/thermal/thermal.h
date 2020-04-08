@@ -1,12 +1,11 @@
-/*	$NetBSD: thermal.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: thermal.h,v 1.1.1.1.12.1 2020/04/08 14:08:48 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * This header provides constants for most thermal bindings.
  *
  * Copyright (C) 2013 Texas Instruments
  *	Eduardo Valentin <eduardo.valentin@ti.com>
- *
- * GPLv2 only
  */
 
 #ifndef _DT_BINDINGS_THERMAL_THERMAL_H

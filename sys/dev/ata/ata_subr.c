@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.4.6.1 2019/06/10 22:07:06 christos Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.4.6.2 2020/04/08 14:08:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.4.6.1 2019/06/10 22:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.4.6.2 2020/04/08 14:08:03 martin Exp $");
 
 #include "opt_ata.h"
 
@@ -234,6 +234,11 @@ ata_timeout(void *v)
 	s = splbio();				/* XXX MPSAFE */
 
 	callout_ack(&chp->c_timo_callout);
+
+	if (chp->ch_flags & ATACH_RECOVERING) {
+		/* Do nothing, recovery will requeue the xfers */
+		return;
+	}
 
 	/*
 	 * If there is a timeout, means the last enqueued command

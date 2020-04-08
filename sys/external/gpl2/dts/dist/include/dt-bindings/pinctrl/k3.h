@@ -1,4 +1,4 @@
-/*	$NetBSD: k3.h,v 1.1.1.1.2.2 2019/06/10 22:08:57 christos Exp $	*/
+/*	$NetBSD: k3.h,v 1.1.1.1.2.3 2020/04/08 14:08:47 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -33,5 +33,8 @@
 
 #define AM65X_IOPAD(pa, val, muxmode)		(((pa) & 0x1fff)) ((val) | (muxmode))
 #define AM65X_WKUP_IOPAD(pa, val, muxmode)	(((pa) & 0x1fff)) ((val) | (muxmode))
+
+#define J721E_IOPAD(pa, val, muxmode)		(((pa) & 0x1fff)) ((val) | (muxmode))
+#define J721E_WKUP_IOPAD(pa, val, muxmode)	(((pa) & 0x1fff)) ((val) | (muxmode))
 
 #endif

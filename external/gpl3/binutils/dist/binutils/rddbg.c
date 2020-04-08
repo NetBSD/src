@@ -1,5 +1,5 @@
 /* rddbg.c -- Read debugging information into a generic form.
-   Copyright (C) 1995-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -121,23 +121,28 @@ read_section_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
 	  bfd_byte *stab;
 	  bfd_size_type stroff, next_stroff;
 
-	  stabsize = bfd_section_size (abfd, sec);
+	  stabsize = bfd_section_size (sec);
 	  stabs = (bfd_byte *) xmalloc (stabsize);
 	  if (! bfd_get_section_contents (abfd, sec, stabs, 0, stabsize))
 	    {
 	      fprintf (stderr, "%s: %s: %s\n",
 		       bfd_get_filename (abfd), names[i].secname,
 		       bfd_errmsg (bfd_get_error ()));
+	      free (shandle);
+	      free (stabs);
 	      return FALSE;
 	    }
 
-	  strsize = bfd_section_size (abfd, strsec);
+	  strsize = bfd_section_size (strsec);
 	  strings = (bfd_byte *) xmalloc (strsize + 1);
 	  if (! bfd_get_section_contents (abfd, strsec, strings, 0, strsize))
 	    {
 	      fprintf (stderr, "%s: %s: %s\n",
 		       bfd_get_filename (abfd), names[i].strsecname,
 		       bfd_errmsg (bfd_get_error ()));
+	      free (shandle);
+	      free (strings);
+	      free (stabs);
 	      return FALSE;
 	    }
 	  /* Zero terminate the strings table, just in case.  */
@@ -146,7 +151,11 @@ read_section_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
 	    {
 	      shandle = start_stab (dhandle, abfd, TRUE, syms, symcount);
 	      if (shandle == NULL)
-		return FALSE;
+		{
+		  free (strings);
+		  free (stabs);
+		  return FALSE;
+		}
 	    }
 
 	  *pfound = TRUE;
@@ -213,17 +222,16 @@ read_section_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
 				   (long) (stab - stabs) / 12);
 			  break;
 			}
-		      else
-			s = concat (s, (char *) strings + strx,
-				    (const char *) NULL);
+
+		      s = concat (s, (char *) strings + strx,
+				  (const char *) NULL);
 
 		      /* We have to restore the backslash, because, if
 			 the linker is hashing stabs strings, we may
 			 see the same string more than once.  */
 		      *p = '\\';
 
-		      if (f != NULL)
-			free (f);
+		      free (f);
 		      f = s;
 		    }
 
@@ -233,6 +241,10 @@ read_section_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
 		    {
 		      stab_context ();
 		      free_saved_stabs ();
+		      free (f);
+		      free (shandle);
+		      free (stabs);
+		      free (strings);
 		      return FALSE;
 		    }
 

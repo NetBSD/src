@@ -43,6 +43,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple-match.h"
 #include "gimple-fold.h"
 #include "tree-ssa-loop-niter.h"
+#include "tree-into-ssa.h"
+#include "tree-cfgcleanup.h"
 
 
 /* The set of blocks in that at least one of the following changes happened:
@@ -676,7 +678,7 @@ cleanup_tree_cfg_bb (basic_block bb)
 /* Iterate the cfg cleanups, while anything changes.  */
 
 static bool
-cleanup_tree_cfg_1 (void)
+cleanup_tree_cfg_1 (unsigned ssa_update_flags)
 {
   bool retval = false;
   basic_block bb;
@@ -707,6 +709,8 @@ cleanup_tree_cfg_1 (void)
 
   /* After doing the above SSA form should be valid (or an update SSA
      should be required).  */
+  if (ssa_update_flags)
+    update_ssa (ssa_update_flags);
 
   /* Continue by iterating over all basic blocks looking for BB merging
      opportunities.  */
@@ -749,7 +753,7 @@ mfb_keep_latches (edge e)
    Return true if the flowgraph was modified, false otherwise.  */
 
 static bool
-cleanup_tree_cfg_noloop (void)
+cleanup_tree_cfg_noloop (unsigned ssa_update_flags)
 {
   bool changed;
 
@@ -829,7 +833,7 @@ cleanup_tree_cfg_noloop (void)
 	  }
     }
 
-  changed |= cleanup_tree_cfg_1 ();
+  changed |= cleanup_tree_cfg_1 (ssa_update_flags);
 
   gcc_assert (dom_info_available_p (CDI_DOMINATORS));
   compact_blocks ();
@@ -878,9 +882,9 @@ repair_loop_structures (void)
 /* Cleanup cfg and repair loop structures.  */
 
 bool
-cleanup_tree_cfg (void)
+cleanup_tree_cfg (unsigned ssa_update_flags)
 {
-  bool changed = cleanup_tree_cfg_noloop ();
+  bool changed = cleanup_tree_cfg_noloop (ssa_update_flags);
 
   if (current_loops != NULL
       && loops_state_satisfies_p (LOOPS_NEED_FIXUP))

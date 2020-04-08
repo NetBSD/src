@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.11.4.1 2019/06/10 22:07:17 christos Exp $ */
+/* $NetBSD: mpii.c,v 1.11.4.2 2020/04/08 14:08:09 martin Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.11.4.1 2019/06/10 22:07:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.11.4.2 2020/04/08 14:08:09 martin Exp $");
 
 #include "bio.h"
 
@@ -248,101 +248,101 @@ struct mpii_softc {
 	envsys_data_t		*sc_sensors;
 };
 
-int	mpii_match(device_t, cfdata_t, void *);
-void	mpii_attach(device_t, device_t, void *);
-int	mpii_detach(device_t, int);
-void	mpii_childdetached(device_t, device_t);
-int	mpii_rescan(device_t, const char *, const int *);
+static int	mpii_match(device_t, cfdata_t, void *);
+static void	mpii_attach(device_t, device_t, void *);
+static int	mpii_detach(device_t, int);
+static void	mpii_childdetached(device_t, device_t);
+static int	mpii_rescan(device_t, const char *, const int *);
 
-int	mpii_intr(void *);
+static int	mpii_intr(void *);
 
 CFATTACH_DECL3_NEW(mpii, sizeof(struct mpii_softc),
     mpii_match, mpii_attach, mpii_detach, NULL, mpii_rescan,
     mpii_childdetached, DVF_DETACH_SHUTDOWN);
 
-void		mpii_scsipi_request(struct scsipi_channel *,
+static void		mpii_scsipi_request(struct scsipi_channel *,
 			scsipi_adapter_req_t, void *);
-void		mpii_scsi_cmd_done(struct mpii_ccb *);
+static void		mpii_scsi_cmd_done(struct mpii_ccb *);
 
-struct mpii_dmamem *
+static struct mpii_dmamem *
 		mpii_dmamem_alloc(struct mpii_softc *, size_t);
-void		mpii_dmamem_free(struct mpii_softc *,
+static void		mpii_dmamem_free(struct mpii_softc *,
 		    struct mpii_dmamem *);
-int		mpii_alloc_ccbs(struct mpii_softc *);
-struct mpii_ccb *mpii_get_ccb(struct mpii_softc *);
-void		mpii_put_ccb(struct mpii_softc *, struct mpii_ccb *);
-int		mpii_alloc_replies(struct mpii_softc *);
-int		mpii_alloc_queues(struct mpii_softc *);
-void		mpii_push_reply(struct mpii_softc *, struct mpii_rcb *);
-void		mpii_push_replies(struct mpii_softc *);
+static int		mpii_alloc_ccbs(struct mpii_softc *);
+static struct mpii_ccb *mpii_get_ccb(struct mpii_softc *);
+static void		mpii_put_ccb(struct mpii_softc *, struct mpii_ccb *);
+static int		mpii_alloc_replies(struct mpii_softc *);
+static int		mpii_alloc_queues(struct mpii_softc *);
+static void		mpii_push_reply(struct mpii_softc *, struct mpii_rcb *);
+static void		mpii_push_replies(struct mpii_softc *);
 
-void		mpii_scsi_cmd_tmo(void *);
-void		mpii_scsi_cmd_tmo_handler(struct work *, void *);
-void		mpii_scsi_cmd_tmo_done(struct mpii_ccb *);
+static void		mpii_scsi_cmd_tmo(void *);
+static void		mpii_scsi_cmd_tmo_handler(struct work *, void *);
+static void		mpii_scsi_cmd_tmo_done(struct mpii_ccb *);
 
-int		mpii_insert_dev(struct mpii_softc *, struct mpii_device *);
-int		mpii_remove_dev(struct mpii_softc *, struct mpii_device *);
-struct mpii_device *
+static int		mpii_insert_dev(struct mpii_softc *, struct mpii_device *);
+static int		mpii_remove_dev(struct mpii_softc *, struct mpii_device *);
+static struct mpii_device *
 		mpii_find_dev(struct mpii_softc *, u_int16_t);
 
-void		mpii_start(struct mpii_softc *, struct mpii_ccb *);
-int		mpii_poll(struct mpii_softc *, struct mpii_ccb *);
-void		mpii_poll_done(struct mpii_ccb *);
-struct mpii_rcb *
+static void		mpii_start(struct mpii_softc *, struct mpii_ccb *);
+static int		mpii_poll(struct mpii_softc *, struct mpii_ccb *);
+static void		mpii_poll_done(struct mpii_ccb *);
+static struct mpii_rcb *
 		mpii_reply(struct mpii_softc *, struct mpii_reply_descr *);
 
-void		mpii_wait(struct mpii_softc *, struct mpii_ccb *);
-void		mpii_wait_done(struct mpii_ccb *);
+static void		mpii_wait(struct mpii_softc *, struct mpii_ccb *);
+static void		mpii_wait_done(struct mpii_ccb *);
 
-void		mpii_init_queues(struct mpii_softc *);
+static void		mpii_init_queues(struct mpii_softc *);
 
-int		mpii_load_xs(struct mpii_ccb *);
-int		mpii_load_xs_sas3(struct mpii_ccb *);
+static int		mpii_load_xs(struct mpii_ccb *);
+static int		mpii_load_xs_sas3(struct mpii_ccb *);
 
-u_int32_t	mpii_read(struct mpii_softc *, bus_size_t);
-void		mpii_write(struct mpii_softc *, bus_size_t, u_int32_t);
-int		mpii_wait_eq(struct mpii_softc *, bus_size_t, u_int32_t,
+static u_int32_t	mpii_read(struct mpii_softc *, bus_size_t);
+static void		mpii_write(struct mpii_softc *, bus_size_t, u_int32_t);
+static int		mpii_wait_eq(struct mpii_softc *, bus_size_t, u_int32_t,
 		    u_int32_t);
-int		mpii_wait_ne(struct mpii_softc *, bus_size_t, u_int32_t,
+static int		mpii_wait_ne(struct mpii_softc *, bus_size_t, u_int32_t,
 		    u_int32_t);
 
-int		mpii_init(struct mpii_softc *);
-int		mpii_reset_soft(struct mpii_softc *);
-int		mpii_reset_hard(struct mpii_softc *);
+static int		mpii_init(struct mpii_softc *);
+static int		mpii_reset_soft(struct mpii_softc *);
+static int		mpii_reset_hard(struct mpii_softc *);
 
-int		mpii_handshake_send(struct mpii_softc *, void *, size_t);
-int		mpii_handshake_recv_dword(struct mpii_softc *,
+static int		mpii_handshake_send(struct mpii_softc *, void *, size_t);
+static int		mpii_handshake_recv_dword(struct mpii_softc *,
 		    u_int32_t *);
-int		mpii_handshake_recv(struct mpii_softc *, void *, size_t);
+static int		mpii_handshake_recv(struct mpii_softc *, void *, size_t);
 
-void		mpii_empty_done(struct mpii_ccb *);
+static void		mpii_empty_done(struct mpii_ccb *);
 
-int		mpii_iocinit(struct mpii_softc *);
-int		mpii_iocfacts(struct mpii_softc *);
-int		mpii_portfacts(struct mpii_softc *);
-int		mpii_portenable(struct mpii_softc *);
-int		mpii_cfg_coalescing(struct mpii_softc *);
-int		mpii_board_info(struct mpii_softc *);
-int		mpii_target_map(struct mpii_softc *);
+static int		mpii_iocinit(struct mpii_softc *);
+static int		mpii_iocfacts(struct mpii_softc *);
+static int		mpii_portfacts(struct mpii_softc *);
+static int		mpii_portenable(struct mpii_softc *);
+static int		mpii_cfg_coalescing(struct mpii_softc *);
+static int		mpii_board_info(struct mpii_softc *);
+static int		mpii_target_map(struct mpii_softc *);
 
-int		mpii_eventnotify(struct mpii_softc *);
-void		mpii_eventnotify_done(struct mpii_ccb *);
-void		mpii_eventack(struct work *, void *);
-void		mpii_eventack_done(struct mpii_ccb *);
-void		mpii_event_process(struct mpii_softc *, struct mpii_rcb *);
-void		mpii_event_done(struct mpii_softc *, struct mpii_rcb *);
-void		mpii_event_sas(struct mpii_softc *, struct mpii_rcb *);
-void		mpii_event_sas_work(struct work *, void *);
-void		mpii_event_raid(struct mpii_softc *,
+static int		mpii_eventnotify(struct mpii_softc *);
+static void		mpii_eventnotify_done(struct mpii_ccb *);
+static void		mpii_eventack(struct work *, void *);
+static void		mpii_eventack_done(struct mpii_ccb *);
+static void		mpii_event_process(struct mpii_softc *, struct mpii_rcb *);
+static void		mpii_event_done(struct mpii_softc *, struct mpii_rcb *);
+static void		mpii_event_sas(struct mpii_softc *, struct mpii_rcb *);
+static void		mpii_event_sas_work(struct work *, void *);
+static void		mpii_event_raid(struct mpii_softc *,
 		    struct mpii_msg_event_reply *);
-void		mpii_event_discovery(struct mpii_softc *,
+static void		mpii_event_discovery(struct mpii_softc *,
 		    struct mpii_msg_event_reply *);
 
-void		mpii_sas_remove_device(struct mpii_softc *, u_int16_t);
+static void		mpii_sas_remove_device(struct mpii_softc *, u_int16_t);
 
-int		mpii_req_cfg_header(struct mpii_softc *, u_int8_t,
+static int		mpii_req_cfg_header(struct mpii_softc *, u_int8_t,
 		    u_int8_t, u_int32_t, int, void *);
-int		mpii_req_cfg_page(struct mpii_softc *, u_int32_t, int,
+static int		mpii_req_cfg_page(struct mpii_softc *, u_int32_t, int,
 		    void *, int, void *, size_t);
 
 #if 0
@@ -350,21 +350,21 @@ int		mpii_ioctl_cache(struct scsi_link *, u_long, struct dk_cache *);
 #endif
 
 #if NBIO > 0
-int		mpii_ioctl(device_t, u_long, void *);
-int		mpii_ioctl_inq(struct mpii_softc *, struct bioc_inq *);
-int		mpii_ioctl_vol(struct mpii_softc *, struct bioc_vol *);
-int		mpii_ioctl_disk(struct mpii_softc *, struct bioc_disk *);
-int		mpii_bio_hs(struct mpii_softc *, struct bioc_disk *, int,
+static int		mpii_ioctl(device_t, u_long, void *);
+static int		mpii_ioctl_inq(struct mpii_softc *, struct bioc_inq *);
+static int		mpii_ioctl_vol(struct mpii_softc *, struct bioc_vol *);
+static int		mpii_ioctl_disk(struct mpii_softc *, struct bioc_disk *);
+static int		mpii_bio_hs(struct mpii_softc *, struct bioc_disk *, int,
 		    int, int *);
-int		mpii_bio_disk(struct mpii_softc *, struct bioc_disk *,
+static int		mpii_bio_disk(struct mpii_softc *, struct bioc_disk *,
 		    u_int8_t);
-struct mpii_device *
+static struct mpii_device *
 		mpii_find_vol(struct mpii_softc *, int);
 #ifndef SMALL_KERNEL
- int		mpii_bio_volstate(struct mpii_softc *, struct bioc_vol *);
-int		mpii_create_sensors(struct mpii_softc *);
-void		mpii_refresh_sensors(struct sysmon_envsys *, envsys_data_t *);
-int		mpii_destroy_sensors(struct mpii_softc *);
+static int		mpii_bio_volstate(struct mpii_softc *, struct bioc_vol *);
+static int		mpii_create_sensors(struct mpii_softc *);
+static void		mpii_refresh_sensors(struct sysmon_envsys *, envsys_data_t *);
+static int		mpii_destroy_sensors(struct mpii_softc *);
 #endif /* SMALL_KERNEL */
 #endif /* NBIO > 0 */
 
@@ -437,7 +437,7 @@ static const struct mpii_pci_product {
 	{ 0, 0}
 };
 
-int
+static int
 mpii_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -451,7 +451,7 @@ mpii_match(device_t parent, cfdata_t match, void *aux)
 	return (0);
 }
 
-void
+static void
 mpii_attach(device_t parent, device_t self, void *aux)
 {
 	struct mpii_softc		*sc = device_private(self);
@@ -674,7 +674,7 @@ unmap:
 	sc->sc_ios = 0;
 }
 
-int
+static int
 mpii_detach(device_t self, int flags)
 {
 	struct mpii_softc	*sc = device_private(self);
@@ -721,7 +721,7 @@ mpii_detach(device_t self, int flags)
 	return (0);
 }
 
-int
+static int
 mpii_rescan(device_t self, const char *ifattr, const int *locators)     
 {
 	struct mpii_softc *sc = device_private(self);
@@ -735,7 +735,7 @@ mpii_rescan(device_t self, const char *ifattr, const int *locators)
 	return 0;
 }
 
-void
+static void
 mpii_childdetached(device_t self, device_t child)
 {
 	struct mpii_softc *sc = device_private(self);
@@ -748,7 +748,7 @@ mpii_childdetached(device_t self, device_t child)
 }
 
 
-int
+static int
 mpii_intr(void *arg)
 {
 	struct mpii_rcb_list		evts = SIMPLEQ_HEAD_INITIALIZER(evts);
@@ -823,7 +823,7 @@ mpii_intr(void *arg)
 	return (1);
 }
 
-int
+static int
 mpii_load_xs_sas3(struct mpii_ccb *ccb)
 {
 	struct mpii_softc	*sc = ccb->ccb_sc;
@@ -881,7 +881,7 @@ mpii_load_xs_sas3(struct mpii_ccb *ccb)
 	return (0);
 }
 
-int
+static int
 mpii_load_xs(struct mpii_ccb *ccb)
 {
 	struct mpii_softc	*sc = ccb->ccb_sc;
@@ -947,7 +947,7 @@ mpii_load_xs(struct mpii_ccb *ccb)
 	return (0);
 }
 
-u_int32_t
+static u_int32_t
 mpii_read(struct mpii_softc *sc, bus_size_t r)
 {
 	u_int32_t			rv;
@@ -961,7 +961,7 @@ mpii_read(struct mpii_softc *sc, bus_size_t r)
 	return (rv);
 }
 
-void
+static void
 mpii_write(struct mpii_softc *sc, bus_size_t r, u_int32_t v)
 {
 	DNPRINTF(MPII_D_RW, "%s: mpii_write %#lx %#x\n", DEVNAME(sc), r, v);
@@ -972,7 +972,7 @@ mpii_write(struct mpii_softc *sc, bus_size_t r, u_int32_t v)
 }
 
 
-int
+static int
 mpii_wait_eq(struct mpii_softc *sc, bus_size_t r, u_int32_t mask,
     u_int32_t target)
 {
@@ -990,7 +990,7 @@ mpii_wait_eq(struct mpii_softc *sc, bus_size_t r, u_int32_t mask,
 	return (1);
 }
 
-int
+static int
 mpii_wait_ne(struct mpii_softc *sc, bus_size_t r, u_int32_t mask,
     u_int32_t target)
 {
@@ -1008,7 +1008,7 @@ mpii_wait_ne(struct mpii_softc *sc, bus_size_t r, u_int32_t mask,
 	return (1);
 }
 
-int
+static int
 mpii_init(struct mpii_softc *sc)
 {
 	u_int32_t		db;
@@ -1066,7 +1066,7 @@ mpii_init(struct mpii_softc *sc)
 	return (1);
 }
 
-int
+static int
 mpii_reset_soft(struct mpii_softc *sc)
 {
 	DNPRINTF(MPII_D_MISC, "%s: mpii_reset_soft\n", DEVNAME(sc));
@@ -1092,7 +1092,7 @@ mpii_reset_soft(struct mpii_softc *sc)
 	return (0);
 }
 
-int
+static int
 mpii_reset_hard(struct mpii_softc *sc)
 {
 	u_int16_t		i;
@@ -1145,7 +1145,7 @@ mpii_reset_hard(struct mpii_softc *sc)
 	return(0);
 }
 
-int
+static int
 mpii_handshake_send(struct mpii_softc *sc, void *buf, size_t dwords)
 {
 	u_int32_t		*query = buf;
@@ -1188,7 +1188,7 @@ mpii_handshake_send(struct mpii_softc *sc, void *buf, size_t dwords)
 	return (0);
 }
 
-int
+static int
 mpii_handshake_recv_dword(struct mpii_softc *sc, u_int32_t *dword)
 {
 	u_int16_t		*words = (u_int16_t *)dword;
@@ -1204,7 +1204,7 @@ mpii_handshake_recv_dword(struct mpii_softc *sc, u_int32_t *dword)
 	return (0);
 }
 
-int
+static int
 mpii_handshake_recv(struct mpii_softc *sc, void *buf, size_t dwords)
 {
 	struct mpii_msg_reply	*reply = buf;
@@ -1247,13 +1247,13 @@ mpii_handshake_recv(struct mpii_softc *sc, void *buf, size_t dwords)
 	return (0);
 }
 
-void
+static void
 mpii_empty_done(struct mpii_ccb *ccb)
 {
 	/* nothing to do */
 }
 
-int
+static int
 mpii_iocfacts(struct mpii_softc *sc)
 {
 	struct mpii_msg_iocfacts_request	ifq;
@@ -1390,7 +1390,7 @@ mpii_iocfacts(struct mpii_softc *sc)
 	return (0);
 }
 
-int
+static int
 mpii_iocinit(struct mpii_softc *sc)
 {
 	struct mpii_msg_iocinit_request		iiq;
@@ -1473,7 +1473,7 @@ mpii_iocinit(struct mpii_softc *sc)
 	return (0);
 }
 
-void
+static void
 mpii_push_reply(struct mpii_softc *sc, struct mpii_rcb *rcb)
 {
 	u_int32_t		*rfp;
@@ -1495,7 +1495,7 @@ mpii_push_reply(struct mpii_softc *sc, struct mpii_rcb *rcb)
 	mutex_exit(&sc->sc_reply_free_mtx);
 }
 
-int
+static int
 mpii_portfacts(struct mpii_softc *sc)
 {
 	struct mpii_msg_portfacts_request	*pfq;
@@ -1547,7 +1547,7 @@ err:
 	return (rv);
 }
 
-void
+static void
 mpii_eventack(struct work *wk, void * cookie)
 {
 	struct mpii_softc			*sc = cookie;
@@ -1582,7 +1582,7 @@ mpii_eventack(struct work *wk, void * cookie)
 	}
 }
 
-void
+static void
 mpii_eventack_done(struct mpii_ccb *ccb)
 {
 	struct mpii_softc			*sc = ccb->ccb_sc;
@@ -1593,7 +1593,7 @@ mpii_eventack_done(struct mpii_ccb *ccb)
 	mpii_put_ccb(sc, ccb);
 }
 
-int
+static int
 mpii_portenable(struct mpii_softc *sc)
 {
 	struct mpii_msg_portenable_request	*peq;
@@ -1632,7 +1632,7 @@ mpii_portenable(struct mpii_softc *sc)
 	return (0);
 }
 
-int
+static int
 mpii_cfg_coalescing(struct mpii_softc *sc)
 {
 	struct mpii_cfg_hdr			hdr;
@@ -1677,7 +1677,7 @@ mpii_cfg_coalescing(struct mpii_softc *sc)
 		    htole32(~(1 << (evt % 32)));		\
 	} while (0)
 
-int
+static int
 mpii_eventnotify(struct mpii_softc *sc)
 {
 	struct mpii_msg_event_request		*enq;
@@ -1746,7 +1746,7 @@ mpii_eventnotify(struct mpii_softc *sc)
 	return (0);
 }
 
-void
+static void
 mpii_eventnotify_done(struct mpii_ccb *ccb)
 {
 	struct mpii_softc			*sc = ccb->ccb_sc;
@@ -1758,7 +1758,7 @@ mpii_eventnotify_done(struct mpii_ccb *ccb)
 	mpii_event_process(sc, rcb);
 }
 
-void
+static void
 mpii_event_raid(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 {
 	struct mpii_evt_ir_cfg_change_list	*ccl;
@@ -1867,7 +1867,7 @@ mpii_event_raid(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 	}
 }
 
-void
+static void
 mpii_event_sas(struct mpii_softc *sc, struct mpii_rcb *rcb)
 {
 	struct mpii_msg_event_reply 	*enp;
@@ -1947,7 +1947,7 @@ mpii_event_sas(struct mpii_softc *sc, struct mpii_rcb *rcb)
 		mpii_event_done(sc, rcb);
 }
 
-void
+static void
 mpii_event_sas_work(struct work *wq, void *xsc)
 {
 	struct mpii_softc *sc = xsc;
@@ -2013,7 +2013,7 @@ mpii_event_sas_work(struct work *wq, void *xsc)
 	}
 }
 
-void
+static void
 mpii_event_discovery(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 {
 	struct mpii_evt_sas_discovery *esd =
@@ -2028,7 +2028,7 @@ mpii_event_discovery(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 	}
 }
 
-void
+static void
 mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 {
 	struct mpii_msg_event_reply		*enp;
@@ -2116,7 +2116,7 @@ mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 	mpii_event_done(sc, rcb);
 }
 
-void
+static void
 mpii_event_done(struct mpii_softc *sc, struct mpii_rcb *rcb)
 {
 	struct mpii_msg_event_reply *enp = rcb->rcb_reply;
@@ -2134,7 +2134,7 @@ mpii_event_done(struct mpii_softc *sc, struct mpii_rcb *rcb)
 		mpii_push_reply(sc, rcb);
 }
 
-void
+static void
 mpii_sas_remove_device(struct mpii_softc *sc, u_int16_t handle)
 {
 	struct mpii_msg_scsi_task_request	*stq;
@@ -2174,7 +2174,7 @@ mpii_sas_remove_device(struct mpii_softc *sc, u_int16_t handle)
 	mpii_put_ccb(sc, ccb);
 }
 
-int
+static int
 mpii_board_info(struct mpii_softc *sc)
 {
 	struct mpii_msg_iocfacts_request	ifq;
@@ -2220,7 +2220,7 @@ mpii_board_info(struct mpii_softc *sc)
 	return (0);
 }
 
-int
+static int
 mpii_target_map(struct mpii_softc *sc)
 {
 	struct mpii_cfg_hdr			hdr;
@@ -2258,7 +2258,7 @@ mpii_target_map(struct mpii_softc *sc)
 	return (0);
 }
 
-int
+static int
 mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
     u_int32_t address, int flags, void *p)
 {
@@ -2353,7 +2353,7 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	return (rv);
 }
 
-int
+static int
 mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
     void *p, int read, void *page, size_t len)
 {
@@ -2461,7 +2461,7 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	return (rv);
 }
 
-struct mpii_rcb *
+static struct mpii_rcb *
 mpii_reply(struct mpii_softc *sc, struct mpii_reply_descr *rdp)
 {
 	struct mpii_rcb		*rcb = NULL;
@@ -2492,7 +2492,7 @@ mpii_reply(struct mpii_softc *sc, struct mpii_reply_descr *rdp)
 	return (rcb);
 }
 
-struct mpii_dmamem *
+static struct mpii_dmamem *
 mpii_dmamem_alloc(struct mpii_softc *sc, size_t size)
 {
 	struct mpii_dmamem	*mdm;
@@ -2536,7 +2536,7 @@ mdmfree:
 	return (NULL);
 }
 
-void
+static void
 mpii_dmamem_free(struct mpii_softc *sc, struct mpii_dmamem *mdm)
 {
 	DNPRINTF(MPII_D_MEM, "%s: mpii_dmamem_free %p\n", DEVNAME(sc), mdm);
@@ -2548,7 +2548,7 @@ mpii_dmamem_free(struct mpii_softc *sc, struct mpii_dmamem *mdm)
 	free(mdm, M_DEVBUF);
 }
 
-int
+static int
 mpii_insert_dev(struct mpii_softc *sc, struct mpii_device *dev)
 {
 	int		slot;	/* initial hint */
@@ -2575,7 +2575,7 @@ mpii_insert_dev(struct mpii_softc *sc, struct mpii_device *dev)
 	return (0);
 }
 
-int
+static int
 mpii_remove_dev(struct mpii_softc *sc, struct mpii_device *dev)
 {
 	int			i;
@@ -2597,7 +2597,7 @@ mpii_remove_dev(struct mpii_softc *sc, struct mpii_device *dev)
 	return (1);
 }
 
-struct mpii_device *
+static struct mpii_device *
 mpii_find_dev(struct mpii_softc *sc, u_int16_t handle)
 {
 	int			i;
@@ -2614,7 +2614,7 @@ mpii_find_dev(struct mpii_softc *sc, u_int16_t handle)
 	return (NULL);
 }
 
-int
+static int
 mpii_alloc_ccbs(struct mpii_softc *sc)
 {
 	struct mpii_ccb		*ccb;
@@ -2696,7 +2696,7 @@ free_ccbs:
 	return (1);
 }
 
-void
+static void
 mpii_put_ccb(struct mpii_softc *sc, struct mpii_ccb *ccb)
 {
 	DNPRINTF(MPII_D_CCB, "%s: mpii_put_ccb %p\n", DEVNAME(sc), ccb);
@@ -2712,7 +2712,7 @@ mpii_put_ccb(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	mutex_exit(&sc->sc_ccb_free_mtx);
 }
 
-struct mpii_ccb *
+static struct mpii_ccb *
 mpii_get_ccb(struct mpii_softc *sc)
 {
 	struct mpii_ccb		*ccb;
@@ -2731,7 +2731,7 @@ mpii_get_ccb(struct mpii_softc *sc)
 	return (ccb);
 }
 
-int
+static int
 mpii_alloc_replies(struct mpii_softc *sc)
 {
 	DNPRINTF(MPII_D_MISC, "%s: mpii_alloc_replies\n", DEVNAME(sc));
@@ -2751,7 +2751,7 @@ mpii_alloc_replies(struct mpii_softc *sc)
 	return (0);
 }
 
-void
+static void
 mpii_push_replies(struct mpii_softc *sc)
 {
 	struct mpii_rcb		*rcb;
@@ -2772,7 +2772,7 @@ mpii_push_replies(struct mpii_softc *sc)
 	}
 }
 
-void
+static void
 mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 {
 	struct mpii_request_header	*rhp;
@@ -2837,7 +2837,7 @@ mpii_start(struct mpii_softc *sc, struct mpii_ccb *ccb)
 #endif
 }
 
-int
+static int
 mpii_poll(struct mpii_softc *sc, struct mpii_ccb *ccb)
 {
 	void				(*done)(struct mpii_ccb *);
@@ -2868,7 +2868,7 @@ mpii_poll(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	return (0);
 }
 
-void
+static void
 mpii_poll_done(struct mpii_ccb *ccb)
 {
 	int				*rv = ccb->ccb_cookie;
@@ -2876,7 +2876,7 @@ mpii_poll_done(struct mpii_ccb *ccb)
 	*rv = 0;
 }
 
-int
+static int
 mpii_alloc_queues(struct mpii_softc *sc)
 {
 	u_int32_t		*rfp;
@@ -2910,7 +2910,7 @@ free_reply_freeq:
 	return (1);
 }
 
-void
+static void
 mpii_init_queues(struct mpii_softc *sc)
 {
 	DNPRINTF(MPII_D_MISC, "%s:  mpii_init_queues\n", DEVNAME(sc));
@@ -2921,7 +2921,7 @@ mpii_init_queues(struct mpii_softc *sc)
 	mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
 }
 
-void
+static void
 mpii_wait(struct mpii_softc *sc, struct mpii_ccb *ccb)
 {
 	void			(*done)(struct mpii_ccb *);
@@ -2946,7 +2946,7 @@ mpii_wait(struct mpii_softc *sc, struct mpii_ccb *ccb)
 	done(ccb);
 }
 
-void
+static void
 mpii_wait_done(struct mpii_ccb *ccb)
 {
 	mutex_enter(&ccb->ccb_mtx);
@@ -2955,7 +2955,7 @@ mpii_wait_done(struct mpii_ccb *ccb)
 	mutex_exit(&ccb->ccb_mtx);
 }
 
-void
+static void
 mpii_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
     void *arg)
 {
@@ -3088,7 +3088,7 @@ done:
 	scsipi_done(xs);
 }
 
-void
+static void
 mpii_scsi_cmd_tmo(void *xccb)
 {
 	struct mpii_ccb		*ccb = xccb;
@@ -3110,7 +3110,7 @@ mpii_scsi_cmd_tmo(void *xccb)
 	}
 }
 
-void
+static void
 mpii_scsi_cmd_tmo_handler(struct work *wk, void *cookie)
 {
 	struct mpii_softc			*sc = cookie;
@@ -3140,7 +3140,7 @@ mpii_scsi_cmd_tmo_handler(struct work *wk, void *cookie)
 	}
 }
 
-void
+static void
 mpii_scsi_cmd_tmo_done(struct mpii_ccb *tccb)
 {
 	mpii_put_ccb(tccb->ccb_sc, tccb);
@@ -3199,7 +3199,7 @@ map_scsi_status(u_int8_t mpii_scsi_status)
 	return scsi_status;
 }
 
-void
+static void
 mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 {
 	struct mpii_msg_scsi_io_error	*sie;
@@ -3451,7 +3451,7 @@ done:
 #endif /* 0 */
 
 #if NBIO > 0
-int
+static int
 mpii_ioctl(device_t dev, u_long cmd, void *addr)
 {
 	struct mpii_softc	*sc = device_private(dev);
@@ -3480,7 +3480,7 @@ mpii_ioctl(device_t dev, u_long cmd, void *addr)
 	return (error);
 }
 
-int
+static int
 mpii_ioctl_inq(struct mpii_softc *sc, struct bioc_inq *bi)
 {
 	int			i;
@@ -3497,7 +3497,7 @@ mpii_ioctl_inq(struct mpii_softc *sc, struct bioc_inq *bi)
 	return (0);
 }
 
-int
+static int
 mpii_ioctl_vol(struct mpii_softc *sc, struct bioc_vol *bv)
 {
 	struct mpii_cfg_raid_vol_pg0	*vpg;
@@ -3596,7 +3596,7 @@ mpii_ioctl_vol(struct mpii_softc *sc, struct bioc_vol *bv)
 	return (0);
 }
 
-int
+static int
 mpii_ioctl_disk(struct mpii_softc *sc, struct bioc_disk *bd)
 {
 	struct mpii_cfg_raid_vol_pg0		*vpg;
@@ -3657,7 +3657,7 @@ mpii_ioctl_disk(struct mpii_softc *sc, struct bioc_disk *bd)
 	return (mpii_bio_disk(sc, bd, dn));
 }
 
-int
+static int
 mpii_bio_hs(struct mpii_softc *sc, struct bioc_disk *bd, int nvdsk,
      int hsmap, int *hscnt)
 {
@@ -3727,7 +3727,7 @@ mpii_bio_hs(struct mpii_softc *sc, struct bioc_disk *bd, int nvdsk,
 	return (0);
 }
 
-int
+static int
 mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 {
 	struct mpii_cfg_raid_physdisk_pg0	*ppg;
@@ -3818,7 +3818,7 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 	return (0);
 }
 
-struct mpii_device *
+static struct mpii_device *
 mpii_find_vol(struct mpii_softc *sc, int volid)
 {
 	struct mpii_device	*dev = NULL;
@@ -3835,7 +3835,7 @@ mpii_find_vol(struct mpii_softc *sc, int volid)
 /*
  * Non-sleeping lightweight version of the mpii_ioctl_vol
  */
-int
+static int
 mpii_bio_volstate(struct mpii_softc *sc, struct bioc_vol *bv)
 {
 	struct mpii_cfg_raid_vol_pg0	*vpg;
@@ -3903,7 +3903,7 @@ mpii_bio_volstate(struct mpii_softc *sc, struct bioc_vol *bv)
 	return (0);
 }
 
-int
+static int
 mpii_create_sensors(struct mpii_softc *sc)
 {
 	int			i, rv;
@@ -3954,7 +3954,7 @@ out:
 	return 1;
 }
 
-int
+static int
 mpii_destroy_sensors(struct mpii_softc *sc)
 {
 	if (sc->sc_sme == NULL)       
@@ -3966,7 +3966,7 @@ mpii_destroy_sensors(struct mpii_softc *sc)
 
 }
 
-void
+static void
 mpii_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct mpii_softc	*sc = sme->sme_cookie;

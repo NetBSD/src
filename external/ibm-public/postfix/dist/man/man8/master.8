@@ -1,4 +1,4 @@
-.\"	$NetBSD: master.8,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: master.8,v 1.2.12.1 2020/04/08 14:06:51 martin Exp $
 .\"
 .TH MASTER 8 
 .ad
@@ -10,7 +10,7 @@ Postfix master process
 .SH "SYNOPSIS"
 .na
 .nf
-\fBmaster\fR [\fB\-Ddtvw\fR] [\fB\-c \fIconfig_dir\fR] [\fB\-e \fIexit_time\fR]
+\fBmaster\fR [\fB\-Dditvw\fR] [\fB\-c \fIconfig_dir\fR] [\fB\-e \fIexit_time\fR]
 .SH DESCRIPTION
 .ad
 .fi
@@ -45,6 +45,18 @@ for debugging only.
 .IP "\fB\-e \fIexit_time\fR"
 Terminate the master process after \fIexit_time\fR seconds. Child
 processes terminate at their convenience.
+.IP \fB\-i\fR
+Enable \fBinit\fR mode: do not become a session or process
+group leader; and similar to \fB\-s\fR, do not redirect stdout
+to /dev/null, so that "maillog_file = /dev/stdout" works.
+This mode is allowed only if the process ID equals 1.
+.sp
+This feature is available in Postfix 3.3 and later.
+.IP \fB\-s\fR
+Do not redirect stdout to /dev/null, so that "maillog_file
+= /dev/stdout" works.
+.sp
+This feature is available in Postfix 3.4 and later.
 .IP \fB\-t\fR
 Test mode. Return a zero exit status when the \fBmaster.pid\fR lock
 file does not exist or when that file is not locked.  This is evidence
@@ -81,7 +93,8 @@ processes to finish what they are doing.
 .SH DIAGNOSTICS
 .ad
 .fi
-Problems are reported to \fBsyslogd\fR(8). The exit status
+Problems are reported to \fBsyslogd\fR(8) or \fBpostlogd\fR(8).
+The exit status
 is non\-zero in case of problems, including problems while
 initializing as a master daemon process in the background.
 .SH "ENVIRONMENT"
@@ -146,8 +159,9 @@ mail on.
 The Internet protocols Postfix will attempt to use when making
 or accepting connections.
 .IP "\fBimport_environment (see 'postconf -d' output)\fR"
-The list of environment parameters that a Postfix process will
-import from a non\-Postfix parent process.
+The list of environment parameters that a privileged Postfix
+process will import from a non\-Postfix parent process, or name=value
+environment overrides.
 .IP "\fBmail_owner (postfix)\fR"
 The UNIX system account that owns the Postfix queue and most Postfix
 daemon processes.
@@ -160,8 +174,12 @@ The location of the Postfix top\-level queue directory.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-The mail system name that is prepended to the process name in syslog
-records, so that "smtpd" becomes, for example, "postfix/smtpd".
+A prefix that is prepended to the process name in syslog
+records, so that, for example, "smtpd" becomes "prefix/smtpd".
+.PP
+Available in Postfix 3.3 and later:
+.IP "\fBservice_name (read\-only)\fR"
+The master.cf service name of a Postfix daemon process.
 .SH "FILES"
 .na
 .nf
@@ -183,6 +201,7 @@ qmgr(8), queue manager
 verify(8), address verification
 master(5), master.cf configuration file syntax
 postconf(5), main.cf configuration file syntax
+postlogd(8), Postfix logging
 syslogd(8), system logging
 .SH "LICENSE"
 .na

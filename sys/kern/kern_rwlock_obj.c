@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_rwlock_obj.c,v 1.4 2018/02/05 04:25:04 ozaki-r Exp $	*/
+/*	$NetBSD: kern_rwlock_obj.c,v 1.4.4.1 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock_obj.c,v 1.4 2018/02/05 04:25:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock_obj.c,v 1.4.4.1 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -81,7 +81,7 @@ rw_obj_ctor(void *arg, void *obj, int flags)
 /*
  * rw_obj_alloc:
  *
- *	Allocate a single lock object.
+ *	Allocate a single lock object, waiting for memory if needed.
  */
 krwlock_t *
 rw_obj_alloc(void)
@@ -92,6 +92,26 @@ rw_obj_alloc(void)
 	ro = pool_cache_get(rw_obj_cache, PR_WAITOK);
 	_rw_init(&ro->ro_lock, (uintptr_t)__builtin_return_address(0));
 	ro->ro_refcnt = 1;
+
+	return (krwlock_t *)ro;
+}
+
+/*
+ * rw_obj_tryalloc:
+ *
+ *	Allocate a single lock object, but fail if no memory is available.
+ */
+krwlock_t *
+rw_obj_tryalloc(void)
+{
+	struct krwobj *ro;
+	extern void _rw_init(krwlock_t *, uintptr_t);
+
+	ro = pool_cache_get(rw_obj_cache, PR_NOWAIT);
+	if (__predict_true(ro != NULL)) {
+		_rw_init(&ro->ro_lock, (uintptr_t)__builtin_return_address(0));
+		ro->ro_refcnt = 1;
+	}
 
 	return (krwlock_t *)ro;
 }
@@ -133,4 +153,17 @@ rw_obj_free(krwlock_t *lock)
 	rw_destroy(&ro->ro_lock);
 	pool_cache_put(rw_obj_cache, ro);
 	return true;
+}
+
+/*
+ * rw_obj_refcnt:
+ *
+ *	Return the reference count for a lock object.
+ */
+u_int
+rw_obj_refcnt(krwlock_t *lock)
+{
+	struct krwobj *ro = (struct krwobj *)lock;
+
+	return ro->ro_refcnt;
 }

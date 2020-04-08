@@ -1,4 +1,4 @@
-#	$NetBSD: ZYXELKX,v 1.12.4.1 2019/06/10 22:06:12 christos Exp $
+#	$NetBSD: ZYXELKX,v 1.12.4.2 2020/04/08 14:07:36 martin Exp $
 
 include 	"arch/evbmips/conf/std.rasoc"
 
@@ -78,7 +78,6 @@ file-system	KERNFS		# /kern
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
-#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 #file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.69.16.1 2019/06/10 22:07:32 christos Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.69.16.2 2020/04/08 14:08:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.69.16.1 2019/06/10 22:07:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.69.16.2 2020/04/08 14:08:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_freebsd.h"
@@ -215,7 +215,7 @@ scsipi_user_done(struct scsipi_xfer *xs)
 
 /* Pseudo strategy function
  * Called by scsipi_do_ioctl() via physio/physstrat if there is to
- * be data transfered, and directly if there is no data transfer.
+ * be data transferred, and directly if there is no data transfer.
  *
  * Should I reorganize this so it returns to physio instead
  * of sleeping in scsiio_scsipi_cmd?  Is there any advantage, other

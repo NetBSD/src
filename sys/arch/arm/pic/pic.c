@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.42.2.1 2019/06/10 22:05:55 christos Exp $	*/
+/*	$NetBSD: pic.c,v 1.42.2.2 2020/04/08 14:07:30 martin Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,20 +33,20 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.42.2.1 2019/06/10 22:05:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.42.2.2 2020/04/08 14:07:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
+#include <sys/interrupt.h>
 #include <sys/intr.h>
+#include <sys/ipi.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/once.h>
-#include <sys/interrupt.h>
 #include <sys/xcall.h>
-#include <sys/ipi.h>
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
@@ -81,8 +81,20 @@ static void
 
 #ifdef MULTIPROCESSOR
 percpu_t *pic_pending_percpu;
+static struct pic_pending *
+pic_pending_get(void)
+{
+	return percpu_getref(pic_pending_percpu);
+}
+static void
+pic_pending_put(struct pic_pending *pend)
+{
+	percpu_putref(pic_pending_percpu);
+}
 #else
 struct pic_pending pic_pending;
+#define	pic_pending_get()	(&pic_pending)
+#define	pic_pending_put(pend)	__nothing
 #endif /* MULTIPROCESSOR */
 #endif /* __HAVE_PIC_PENDING_INTRS */
 
@@ -98,7 +110,8 @@ struct intrsource **pic_iplsource[NIPL] = {
 size_t pic_ipl_offset[NIPL+1];
 
 static kmutex_t pic_lock;
-size_t pic_sourcebase;
+static size_t pic_sourcebase;
+static int pic_lastbase;
 static struct evcnt pic_deferral_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "deferred", "intr");
 EVCNT_ATTACH_STATIC(pic_deferral_ev);
@@ -243,16 +256,10 @@ pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is)
 	    __BIT(is->is_irq & 0x1f));
 
 	atomic_or_32(&pic->pic_pending_ipls, ipl_mask);
-#ifdef MULTIPROCESSOR
-	struct pic_pending *pend = percpu_getref(pic_pending_percpu);
-#else
-	struct pic_pending *pend = &pic_pending;
-#endif
+	struct pic_pending *pend = pic_pending_get();
 	atomic_or_32(&pend->pending_ipls, ipl_mask);
 	atomic_or_32(&pend->pending_pics, __BIT(pic->pic_id));
-#ifdef MULTIPROCESSOR
-	percpu_putref(pic_pending_percpu);
-#endif
+	pic_pending_put(pend);
 }
 
 void
@@ -295,16 +302,10 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 	}
 
 	atomic_or_32(&pic->pic_pending_ipls, ipl_mask);
-#ifdef MULTIPROCESSOR
-	struct pic_pending *pend = percpu_getref(pic_pending_percpu);
-#else
-	struct pic_pending *pend = &pic_pending;
-#endif
+	struct pic_pending *pend = pic_pending_get();
 	atomic_or_32(&pend->pending_ipls, ipl_mask);
 	atomic_or_32(&pend->pending_pics, __BIT(pic->pic_id));
-#ifdef MULTIPROCESSOR
-	percpu_putref(pic_pending_percpu);
-#endif
+	pic_pending_put(pend);
 	return ipl_mask;
 }
 
@@ -364,7 +365,6 @@ pic_dispatch(struct intrsource *is, void *frame)
 	} else
 #endif
 		(void)(*func)(arg);
-
 
 	struct pic_percpu * const pcpu = percpu_getref(is->is_pic->pic_percpu);
 	KASSERT(pcpu->pcpu_magic == PICPERCPU_MAGIC);
@@ -508,7 +508,6 @@ pic_list_unblock_irqs(struct pic_pending *pend)
 	}
 }
 
-
 struct pic_softc *
 pic_list_find_pic_by_pending_ipl(struct pic_pending *pend, uint32_t ipl_mask)
 {
@@ -552,11 +551,7 @@ pic_do_pending_ints(register_t psw, int newipl, void *frame)
 		return;
 	}
 #if defined(__HAVE_PIC_PENDING_INTRS)
-#ifdef MULTIPROCESSOR
-	struct pic_pending *pend = percpu_getref(pic_pending_percpu);
-#else
-	struct pic_pending *pend = &pic_pending;
-#endif
+	struct pic_pending *pend = pic_pending_get();
 	while ((pend->pending_ipls & ~__BIT(newipl)) > __BIT(newipl)) {
 		KASSERT(pend->pending_ipls < __BIT(NIPL));
 		for (;;) {
@@ -570,9 +565,7 @@ pic_do_pending_ints(register_t psw, int newipl, void *frame)
 			pic_list_unblock_irqs(pend);
 		}
 	}
-#ifdef MULTIPROCESSOR
-	percpu_putref(pic_pending_percpu);
-#endif
+	pic_pending_put(pend);
 #endif /* __HAVE_PIC_PENDING_INTRS */
 #ifdef __HAVE_PREEMPTION
 	if (newipl == IPL_NONE && (ci->ci_astpending & __BIT(1))) {
@@ -615,15 +608,6 @@ pic_percpu_allocate(void *v0, void *v1, struct cpu_info *ci)
 #endif
 }
 
-#if defined(__HAVE_PIC_PENDING_INTRS) && defined(MULTIPROCESSOR)
-static void
-pic_pending_zero(void *v0, void *v1, struct cpu_info *ci)
-{
-	struct pic_pending * const p = v0;
-	memset(p, 0, sizeof(*p));
-}
-#endif /* __HAVE_PIC_PENDING_INTRS && MULTIPROCESSOR */
-
 static int
 pic_init(void)
 {
@@ -633,7 +617,7 @@ pic_init(void)
 	return 0;
 }
 
-void
+int
 pic_add(struct pic_softc *pic, int irqbase)
 {
 	int slot, maybe_slot = -1;
@@ -645,17 +629,14 @@ pic_add(struct pic_softc *pic, int irqbase)
 	KASSERT(strlen(pic->pic_name) > 0);
 
 #if defined(__HAVE_PIC_PENDING_INTRS) && defined(MULTIPROCESSOR)
-	if (__predict_false(pic_pending_percpu == NULL)) {
+	if (__predict_false(pic_pending_percpu == NULL))
 		pic_pending_percpu = percpu_alloc(sizeof(struct pic_pending));
-
-		/*
-		 * Now zero the per-cpu pending data.
-		 */
-		percpu_foreach(pic_pending_percpu, pic_pending_zero, NULL);
-	}
 #endif /* __HAVE_PIC_PENDING_INTRS && MULTIPROCESSOR */
 
 	mutex_enter(&pic_lock);
+	if (irqbase == PIC_IRQBASE_ALLOC) {
+		irqbase = pic_lastbase;
+	}
 	for (slot = 0; slot < PIC_MAXPICS; slot++) {
 		struct pic_softc * const xpic = pic_list[slot];
 		if (xpic == NULL) {
@@ -686,7 +667,8 @@ pic_add(struct pic_softc *pic, int irqbase)
 	KASSERT(pic_sourcebase + pic->pic_maxsources <= PIC_MAXMAXSOURCES);
 	sourcebase = pic_sourcebase;
 	pic_sourcebase += pic->pic_maxsources;
-
+        if (pic_lastbase < irqbase + pic->pic_maxsources)
+                pic_lastbase = irqbase + pic->pic_maxsources;
 	mutex_exit(&pic_lock);
 
 	/*
@@ -697,12 +679,8 @@ pic_add(struct pic_softc *pic, int irqbase)
 	 * corrupt the pointers in the evcnts themselves.  Remember, any
 	 * problem can be solved with sufficient indirection.
 	 */
-	pic->pic_percpu = percpu_alloc(sizeof(struct pic_percpu));
-
-	/*
-	 * Now allocate the per-cpu evcnts.
-	 */
-	percpu_foreach(pic->pic_percpu, pic_percpu_allocate, pic);
+	pic->pic_percpu = percpu_create(sizeof(struct pic_percpu),
+	    pic_percpu_allocate, NULL, pic);
 
 	pic->pic_sources = &pic_sources[sourcebase];
 	pic->pic_irqbase = irqbase;
@@ -714,6 +692,8 @@ pic_add(struct pic_softc *pic, int irqbase)
 	KASSERT((pic->pic_cpus != NULL) == (pic->pic_ops->pic_ipi_send != NULL));
 #endif
 	pic_list[slot] = pic;
+	
+	return irqbase;
 }
 
 int
@@ -900,6 +880,28 @@ intr_disestablish(void *ih)
 	KASSERT(!cpu_softintr_p());
 
 	pic_disestablish_source(is);
+}
+
+void
+intr_mask(void *ih)
+{
+	struct intrsource * const is = ih;
+	struct pic_softc * const pic = is->is_pic;
+	const int irq = is->is_irq;
+
+	if (atomic_inc_32_nv(&is->is_mask_count) == 1)
+		(*pic->pic_ops->pic_block_irqs)(pic, irq & ~0x1f, __BIT(irq & 0x1f));
+}
+
+void
+intr_unmask(void *ih)
+{
+	struct intrsource * const is = ih;
+	struct pic_softc * const pic = is->is_pic;
+	const int irq = is->is_irq;
+
+	if (atomic_dec_32_nv(&is->is_mask_count) == 0)
+		(*pic->pic_ops->pic_unblock_irqs)(pic, irq & ~0x1f, __BIT(irq & 0x1f));
 }
 
 const char *

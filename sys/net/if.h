@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.263.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.263.2.2 2020/04/08 14:08:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -168,6 +168,8 @@ struct if_clonereq {
 /*
  * Structure defining statistics and other data kept regarding a network
  * interface.
+ *
+ * Only used for exporting data from the interface.
  */
 struct if_data {
 	/* generic interface information */
@@ -216,6 +218,7 @@ struct ifqueue {
 #include <sys/percpu.h>
 #include <sys/callout.h>
 #include <sys/rwlock.h>
+#include <sys/workqueue.h>
 
 #endif /* _KERNEL */
 
@@ -268,7 +271,20 @@ typedef struct ifnet {
 	short		if_timer;	/* ?: time 'til if_slowtimo called */
 	unsigned short	if_flags;	/* i: up/down, broadcast, etc. */
 	short		if_extflags;	/* :: if_output MP-safe, etc. */
-	struct if_data	if_data;	/* ?: statistics and other data about if */
+	u_char		if_type;	/* :: ethernet, tokenring, etc. */
+	u_char		if_addrlen;	/* :: media address length */
+	u_char		if_hdrlen;	/* :: media header length */
+	/* XXX audit :? fields here. */
+	int		if_link_state;	/* :? current link state */
+	uint64_t	if_mtu;		/* :? maximum transmission unit */
+	uint64_t	if_metric;	/* :? routing metric (external only) */
+	uint64_t	if_baudrate;	/* :? linespeed */
+	struct timespec	if_lastchange;	/* :? last operational state change */
+#ifdef _KERNEL
+	percpu_t	*if_stats;	/* :: statistics */
+#else
+	void		*if_stats;	/* opaque to user-space */
+#endif /* _KERNEL */
 	/*
 	 * Procedure handles.  If you add more of these, don't forget the
 	 * corresponding NULL stub in if.c.
@@ -370,8 +386,12 @@ typedef struct ifnet {
 	struct krwlock	*if_afdata_lock;/* :: */
 	struct if_percpuq
 			*if_percpuq;	/* :: we should remove it in the future */
-	void		*if_link_si;	/* :: softint to handle link state changes */
+	struct work	if_link_work;	/* q: linkage on link state work queue */
 	uint16_t	if_link_queue;	/* q: masked link state change queue */
+					/* q: is link state work scheduled? */
+	bool		if_link_scheduled;
+					/* q: can link state work be scheduled? */
+	bool		if_link_cansched;
 	struct pslist_entry
 			if_pslist_entry;/* i: */
 	struct psref_target
@@ -386,26 +406,9 @@ typedef struct ifnet {
 			if_multiaddrs;	/* 6: */
 #endif
 } ifnet_t;
+
+#include <net/if_stats.h>
  
-#define	if_mtu		if_data.ifi_mtu
-#define	if_type		if_data.ifi_type
-#define	if_addrlen	if_data.ifi_addrlen
-#define	if_hdrlen	if_data.ifi_hdrlen
-#define	if_metric	if_data.ifi_metric
-#define	if_link_state	if_data.ifi_link_state
-#define	if_baudrate	if_data.ifi_baudrate
-#define	if_ipackets	if_data.ifi_ipackets
-#define	if_ierrors	if_data.ifi_ierrors
-#define	if_opackets	if_data.ifi_opackets
-#define	if_oerrors	if_data.ifi_oerrors
-#define	if_collisions	if_data.ifi_collisions
-#define	if_ibytes	if_data.ifi_ibytes
-#define	if_obytes	if_data.ifi_obytes
-#define	if_imcasts	if_data.ifi_imcasts
-#define	if_omcasts	if_data.ifi_omcasts
-#define	if_iqdrops	if_data.ifi_iqdrops
-#define	if_noproto	if_data.ifi_noproto
-#define	if_lastchange	if_data.ifi_lastchange
 #define	if_name(ifp)	((ifp)->if_xname)
 
 #define	IFF_UP		0x0001		/* interface is up */
@@ -1083,12 +1086,12 @@ int	if_attach(struct ifnet *); /* Deprecated. Use if_initialize and if_register 
 void	if_attachdomain(void);
 void	if_deactivate(struct ifnet *);
 bool	if_is_deactivated(const struct ifnet *);
+void	if_export_if_data(struct ifnet *, struct if_data *, bool);
 void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
 void	if_down_locked(struct ifnet *);
 void	if_link_state_change(struct ifnet *, int);
-void	if_link_state_change_softint(struct ifnet *, int);
 void	if_up(struct ifnet *);
 void	ifinit(void);
 void	ifinit1(void);

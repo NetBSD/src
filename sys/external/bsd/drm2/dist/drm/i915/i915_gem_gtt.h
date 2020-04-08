@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.h,v 1.7.6.2 2019/06/10 22:08:05 christos Exp $	*/
+/*	$NetBSD: i915_gem_gtt.h,v 1.7.6.3 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -325,6 +325,9 @@ struct i915_address_space {
 	 * freed, and we'll pull it off the list in the free path.
 	 */
 	struct list_head inactive_list;
+
+	/* Some systems support read-only mappings for GGTT and/or PPGTT */
+	bool has_read_only:1;
 
 	/* FIXME: Need a more generic return type */
 	gen6_pte_t (*pte_encode)(dma_addr_t addr,

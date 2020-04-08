@@ -1,10 +1,10 @@
-.\"     $NetBSD: cpu_need_resched.9,v 1.9 2011/10/24 07:30:29 yamt Exp $
+.\"     $NetBSD: cpu_need_resched.9,v 1.9.42.1 2020/04/08 14:07:22 martin Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Gregory McGarry.
+.\" by Gregory McGarry, and Andrew Doran.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 31, 2010
+.Dd November 17, 2019
 .Dt CPU_NEED_RESCHED 9
 .Os
 .Sh NAME
@@ -36,19 +36,26 @@
 .Sh SYNOPSIS
 .In sys/cpu.h
 .Ft void
-.Fn cpu_need_resched "struct cpu_info *ci" "int flags"
+.Fn cpu_need_resched "struct cpu_info *ci" "struct lwp *l" "int flags"
 .Sh DESCRIPTION
 The
 .Fn cpu_need_resched
 function is the machine-independent interface for the scheduler to
 notify machine-dependent code that a context switch from the current
-LWP, on the cpu
+LWP
+.Fa l ,
+on the cpu
 .Fa ci ,
 is required.
 This event may occur if a higher priority LWP appears on the run
 queue or if the current LWP has exceeded its time slice.
+.Fa l
+is the last LWP observed running on the CPU.
+It may no longer be running, as
+.Fn cpu_need_resched
+can be called without holding scheduler locks.
 .Pp
-If
+If the
 .Dv RESCHED_KPREEMPT
 flag is specified in
 .Fa flags
@@ -57,19 +64,34 @@ and
 C pre-processor macro is defined in
 .In machine/intr.h ,
 machine-dependent code should make a context switch happen as soon as possible
-even if the cpu is running the kernel code.
+even if the CPU is running in kernel mode.
+If the
+.Dv RESCHED_KPREEMPT
+flag is not specified, then
+.Dv RESCHED_UPREEMPT
+is specified instead.
 .Pp
-If
-.Dv RESCHED_IMMED
+If the
+.Dv RESCHED_IDLE
 flag is specified in
 .Fa flags ,
-machine-dependent code should make a context switch happen as soon as possible.
-In that case, for example, if
+the last thread observed running on the CPU was the idle LWP.
+.Pp
+If
+.Dv RESCHED_REMOTE
+flag is specified in
+.Fa flags ,
+the request is not for the current CPU.
+The opposite also holds true.
+If
 .Fa ci
 is not the current processor,
 .Fn cpu_need_resched
 typically issues an inter processor call to the processor to make it
 notice the need of a context switch as soon as possible.
+.Pp
+.Fn cpu_need_resched
+is always called with kernel preemption disabled.
 .Pp
 Typically, the
 .Fn cpu_need_resched
@@ -84,7 +106,10 @@ Post an asynchronous software trap
 .Pq Tn AST .
 .It
 Send an inter processor interrupt to wake up
-.Xr cpu_idle 9 .
+.Xr cpu_idle 9
+and/or force an user process across the user/kernel boundary, thus making a
+trip through
+.Fn userret .
 .El
 .Sh SEE ALSO
 .Xr sched_4bsd 9 ,

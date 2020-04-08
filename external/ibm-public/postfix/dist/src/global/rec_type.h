@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_type.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: rec_type.h,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _REC_TYPE_H_INCLUDED_
 #define _REC_TYPE_H_INCLUDED_
@@ -137,7 +137,7 @@
  /*
   * The warn record specifies when the next warning that the message was
   * deferred should be sent.  It is updated in place by qmgr, so changing
-  * this value when there are deferred mesages in the queue is dangerous!
+  * this value when there are deferred messages in the queue is dangerous!
   */
 #define REC_TYPE_WARN_FORMAT	"%15ld"	/* warning time format */
 #define REC_TYPE_WARN_ARG(tv)	((long) (tv))

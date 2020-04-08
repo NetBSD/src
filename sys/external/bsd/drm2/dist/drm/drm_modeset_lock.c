@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_modeset_lock.c,v 1.3.6.2 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_modeset_lock.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -24,9 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_modeset_lock.c,v 1.3.6.2 2019/06/10 22:07:57 christos Exp $");
-
-#include <linux/export.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_modeset_lock.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>

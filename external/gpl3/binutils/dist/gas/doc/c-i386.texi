@@ -1,4 +1,4 @@
-@c Copyright (C) 1991-2018 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2020 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -141,6 +141,10 @@ accept various extension mnemonics.  For example,
 @code{no287},
 @code{no387},
 @code{no687},
+@code{cmov},
+@code{nocmov},
+@code{fxsr},
+@code{nofxsr},
 @code{mmx},
 @code{nommx},
 @code{sse},
@@ -179,6 +183,7 @@ accept various extension mnemonics.  For example,
 @code{clwb},
 @code{movdiri},
 @code{movdir64b},
+@code{enqcmd},
 @code{avx512f},
 @code{avx512cd},
 @code{avx512er},
@@ -194,6 +199,7 @@ accept various extension mnemonics.  For example,
 @code{avx512_vbmi2},
 @code{avx512_vnni},
 @code{avx512_bitalg},
+@code{avx512_bf16},
 @code{noavx512f},
 @code{noavx512cd},
 @code{noavx512er},
@@ -209,6 +215,9 @@ accept various extension mnemonics.  For example,
 @code{noavx512_vbmi2},
 @code{noavx512_vnni},
 @code{noavx512_bitalg},
+@code{noavx512_vp2intersect},
+@code{noavx512_bf16},
+@code{noenqcmd},
 @code{vmx},
 @code{vmfunc},
 @code{smx},
@@ -236,6 +245,8 @@ accept various extension mnemonics.  For example,
 @code{pconfig},
 @code{waitpkg},
 @code{cldemote},
+@code{rdpru},
+@code{mcommit},
 @code{lwp},
 @code{fma4},
 @code{xop},
@@ -293,6 +304,22 @@ instructions.  @option{-mavxscalar=@var{128}} will encode scalar
 AVX instructions with 128bit vector length, which is the default.
 @option{-mavxscalar=@var{256}} will encode scalar AVX instructions
 with 256bit vector length.
+
+WARNING: Don't use this for production code - due to CPU errata the
+resulting code may not work on certain models.
+
+@cindex @samp{-mvexwig=} option, i386
+@cindex @samp{-mvexwig=} option, x86-64
+@item -mvexwig=@var{0}
+@itemx -mvexwig=@var{1}
+These options control how the assembler should encode VEX.W-ignored (WIG)
+VEX instructions.  @option{-mvexwig=@var{0}} will encode WIG VEX
+instructions with vex.w = 0, which is the default.
+@option{-mvexwig=@var{1}} will encode WIG EVEX instructions with
+vex.w = 1.
+
+WARNING: Don't use this for production code - due to CPU errata the
+resulting code may not work on certain models.
 
 @cindex @samp{-mevexlig=} option, i386
 @cindex @samp{-mevexlig=} option, x86-64
@@ -396,6 +423,52 @@ R_X86_64_REX_GOTPCRELX, in 64-bit mode.
 relocations.  The default can be controlled by a configure option
 @option{--enable-x86-relax-relocations}.
 
+@cindex @samp{-malign-branch-boundary=} option, i386
+@cindex @samp{-malign-branch-boundary=} option, x86-64
+@item -malign-branch-boundary=@var{NUM}
+This option controls how the assembler should align branches with segment
+prefixes or NOP.  @var{NUM} must be a power of 2.  It should be 0 or
+no less than 16.  Branches will be aligned within @var{NUM} byte
+boundary.  @option{-malign-branch-boundary=0}, which is the default,
+doesn't align branches.
+
+@cindex @samp{-malign-branch=} option, i386
+@cindex @samp{-malign-branch=} option, x86-64
+@item -malign-branch=@var{TYPE}[+@var{TYPE}...]
+This option specifies types of branches to align. @var{TYPE} is
+combination of @samp{jcc}, which aligns conditional jumps,
+@samp{fused}, which aligns fused conditional jumps, @samp{jmp},
+which aligns unconditional jumps, @samp{call} which aligns calls,
+@samp{ret}, which aligns rets, @samp{indirect}, which aligns indirect
+jumps and calls.  The default is @option{-malign-branch=jcc+fused+jmp}.
+
+@cindex @samp{-malign-branch-prefix-size=} option, i386
+@cindex @samp{-malign-branch-prefix-size=} option, x86-64
+@item -malign-branch-prefix-size=@var{NUM}
+This option specifies the maximum number of prefixes on an instruction
+to align branches.  @var{NUM} should be between 0 and 5.  The default
+@var{NUM} is 5.
+
+@cindex @samp{-mbranches-within-32B-boundaries} option, i386
+@cindex @samp{-mbranches-within-32B-boundaries} option, x86-64
+@item -mbranches-within-32B-boundaries
+This option aligns conditional jumps, fused conditional jumps and
+unconditional jumps within 32 byte boundary with up to 5 segment prefixes
+on an instruction.  It is equivalent to
+@option{-malign-branch-boundary=32}
+@option{-malign-branch=jcc+fused+jmp}
+@option{-malign-branch-prefix-size=5}.
+The default doesn't align branches.
+
+@cindex @samp{-mx86-used-note=} option, i386
+@cindex @samp{-mx86-used-note=} option, x86-64
+@item -mx86-used-note=@var{no}
+@itemx -mx86-used-note=@var{yes}
+These options control whether the assembler should generate
+GNU_PROPERTY_X86_ISA_1_USED and GNU_PROPERTY_X86_FEATURE_2_USED
+GNU property notes.  The default can be controlled by the
+@option{--enable-x86-used-note} configure option.
+
 @cindex @samp{-mevexrcig=} option, i386
 @cindex @samp{-mevexrcig=} option, x86-64
 @item -mevexrcig=@var{rne}
@@ -430,10 +503,22 @@ Intel64 ISA in 64-bit mode.  The default is to accept both.
 Optimize instruction encoding with smaller instruction size.  @samp{-O}
 and @samp{-O1} encode 64-bit register load instructions with 64-bit
 immediate as 32-bit register load instructions with 31-bit or 32-bits
-immediates and encode 64-bit register clearing instructions with 32-bit
-register clearing instructions.  @samp{-O2} includes @samp{-O1}
-optimization plus encodes 256-bit and 512-bit vector register clearing
-instructions with 128-bit vector register clearing instructions.
+immediates, encode 64-bit register clearing instructions with 32-bit
+register clearing instructions, encode 256-bit/512-bit VEX/EVEX vector
+register clearing instructions with 128-bit VEX vector register
+clearing instructions, encode 128-bit/256-bit EVEX vector
+register load/store instructions with VEX vector register load/store
+instructions, and encode 128-bit/256-bit EVEX packed integer logical
+instructions with 128-bit/256-bit VEX packed integer logical.
+
+@samp{-O2} includes @samp{-O1} optimization plus encodes
+256-bit/512-bit EVEX vector register clearing instructions with 128-bit
+EVEX vector register clearing instructions.  In 64-bit mode VEX encoded
+instructions with commutative source operands will also have their
+source operands swapped if this allows using the 2-byte VEX prefix form
+instead of the 3-byte one.  Certain forms of AND as well as OR with the
+same (register) operand specified twice will also be changed to TEST.
+
 @samp{-Os} includes @samp{-O2} optimization plus encodes 16-bit, 32-bit
 and 64-bit register tests with immediate as 8-bit register test with
 immediate.  @samp{-O0} turns off this optimization.
@@ -469,6 +554,12 @@ the @var{.bss} section @ref{Comm}.
 The directive is intended to be used for data which requires a large
 amount of space, and it is only available for ELF based x86_64
 targets.
+
+@cindex @code{value} directive
+@item .value @var{expression} [, @var{expression}]
+This directive behaves in the same way as the @code{.short} directive,
+taking a series of comma separated expressions and storing them as
+two-byte wide values into the current section.
 
 @c FIXME: Document other x86 specific directives ?  Eg: .code16gcc,
 
@@ -552,11 +643,16 @@ instruction, do @emph{not} have reversed order.  @ref{i386-Bugs}.
 In AT&T syntax the size of memory operands is determined from the last
 character of the instruction mnemonic.  Mnemonic suffixes of @samp{b},
 @samp{w}, @samp{l} and @samp{q} specify byte (8-bit), word (16-bit), long
-(32-bit) and quadruple word (64-bit) memory references.  Intel syntax accomplishes
-this by prefixing memory operands (@emph{not} the instruction mnemonics) with
-@samp{byte ptr}, @samp{word ptr}, @samp{dword ptr} and @samp{qword ptr}.  Thus,
-Intel @samp{mov al, byte ptr @var{foo}} is @samp{movb @var{foo}, %al} in AT&T
-syntax.
+(32-bit) and quadruple word (64-bit) memory references.  Mnemonic suffixes
+of @samp{x}, @samp{y} and @samp{z} specify xmm (128-bit vector), ymm
+(256-bit vector) and zmm (512-bit vector) memory references, only when there's
+no other way to disambiguate an instruction.  Intel syntax accomplishes this by
+prefixing memory operands (@emph{not} the instruction mnemonics) with
+@samp{byte ptr}, @samp{word ptr}, @samp{dword ptr}, @samp{qword ptr},
+@samp{xmmword ptr}, @samp{ymmword ptr} and @samp{zmmword ptr}.  Thus, Intel
+syntax @samp{mov al, byte ptr @var{foo}} is @samp{movb @var{foo}, %al} in AT&T
+syntax.  In Intel syntax, @samp{fword ptr}, @samp{tbyte ptr} and
+@samp{oword ptr} specify 48-bit, 80-bit and 128-bit memory references.
 
 In 64-bit code, @samp{movabs} can be used to encode the @samp{mov}
 instruction with the 64-bit displacement or immediate operand.
@@ -596,7 +692,7 @@ line is treated as a comment, but in this case the line can also be a
 logical line number directive (@pxref{Comments}) or a preprocessor
 control command (@pxref{Preprocessing}).
 
-If the @option{--divide} command line option has not been specified
+If the @option{--divide} command-line option has not been specified
 then the @samp{/} character appearing anywhere on a line also
 introduces a line comment.
 
@@ -662,10 +758,10 @@ Different encoding options can be specified via pseudo prefixes:
 @samp{@{store@}} -- prefer store-form instruction.
 
 @item
-@samp{@{vex2@}} -- prefer 2-byte VEX prefix for VEX instruction.
+@samp{@{vex@}} --  encode with VEX prefix.
 
 @item
-@samp{@{vex3@}} -- prefer 3-byte VEX prefix for VEX instruction.
+@samp{@{vex3@}} -- encode with 3-byte VEX prefix.
 
 @item
 @samp{@{evex@}} --  encode with EVEX prefix.
@@ -1256,12 +1352,13 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{i486} @tab @samp{i586} @tab @samp{i686} @tab @samp{pentium}
 @item @samp{pentiumpro} @tab @samp{pentiumii} @tab @samp{pentiumiii} @tab @samp{pentium4}
 @item @samp{prescott} @tab @samp{nocona} @tab @samp{core} @tab @samp{core2}
-@item @samp{corei7} @tab @samp{l1om} @tab @samp{k1om} @samp{iamcu}
+@item @samp{corei7} @tab @samp{l1om} @tab @samp{k1om} @tab @samp{iamcu}
 @item @samp{k6} @tab @samp{k6_2} @tab @samp{athlon} @tab @samp{k8}
 @item @samp{amdfam10} @tab @samp{bdver1} @tab @samp{bdver2} @tab @samp{bdver3}
 @item @samp{bdver4} @tab @samp{znver1} @tab @samp{znver2} @tab @samp{btver1}
-@item @samp{btver2} @samp{generic32} @tab @samp{generic64}
-@item @samp{.mmx} @tab @samp{.sse} @tab @samp{.sse2} @tab @samp{.sse3}
+@item @samp{btver2} @tab @samp{generic32} @tab @samp{generic64}
+@item @samp{.cmov} @tab @samp{.fxsr} @tab @samp{.mmx}
+@item @samp{.sse} @tab @samp{.sse2} @tab @samp{.sse3}
 @item @samp{.ssse3} @tab @samp{.sse4.1} @tab @samp{.sse4.2} @tab @samp{.sse4}
 @item @samp{.avx} @tab @samp{.vmx} @tab @samp{.smx} @tab @samp{.ept}
 @item @samp{.clflush} @tab @samp{.movbe} @tab @samp{.xsave} @tab @samp{.xsaveopt}
@@ -1275,15 +1372,16 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{.avx512vl} @tab @samp{.avx512bw} @tab @samp{.avx512dq} @tab @samp{.avx512ifma}
 @item @samp{.avx512vbmi} @tab @samp{.avx512_4fmaps} @tab @samp{.avx512_4vnniw}
 @item @samp{.avx512_vpopcntdq} @tab @samp{.avx512_vbmi2} @tab @samp{.avx512_vnni}
-@item @samp{.avx512_bitalg}
+@item @samp{.avx512_bitalg} @tab @samp{.avx512_bf16} @tab @samp{.avx512_vp2intersect}
 @item @samp{.clwb} @tab @samp{.rdpid} @tab @samp{.ptwrite} @tab @item @samp{.ibt}
 @item @samp{.wbnoinvd} @tab @samp{.pconfig} @tab @samp{.waitpkg} @tab @samp{.cldemote}
 @item @samp{.shstk} @tab @samp{.gfni} @tab @samp{.vaes} @tab @samp{.vpclmulqdq}
-@item @samp{.movdiri} @tab @samp{.movdir64b}
+@item @samp{.movdiri} @tab @samp{.movdir64b} @tab @samp{.enqcmd}
 @item @samp{.3dnow} @tab @samp{.3dnowa} @tab @samp{.sse4a} @tab @samp{.sse5}
 @item @samp{.syscall} @tab @samp{.rdtscp} @tab @samp{.svme} @tab @samp{.abm}
 @item @samp{.lwp} @tab @samp{.fma4} @tab @samp{.xop} @tab @samp{.cx16}
-@item @samp{.padlock} @tab @samp{.clzero} @tab @samp{.mwaitx}
+@item @samp{.padlock} @tab @samp{.clzero} @tab @samp{.mwaitx} @tab @samp{.rdpru}
+@item @samp{.mcommit}
 @end multitable
 
 Apart from the warning, there are only two other effects on

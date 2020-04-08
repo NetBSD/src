@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.56.2.1 2019/06/10 22:06:39 christos Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.56.2.2 2020/04/08 14:07:50 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -156,7 +156,7 @@ GLOBAL(powersave)
  * struct lwp *
  * cpu_switchto(struct lwp *current, struct lwp *new)
  * switch to the indicated new LWP.
- * 	r3 - current LWP (maybe NULL, if so don't save state)
+ * 	r3 - current LWP
  * 	r4 - LWP to switch to
  *	scheduler lock held
  *	SPL is IPL_SCHED.
@@ -179,12 +179,6 @@ ENTRY(cpu_switchto)
 	tweqi	%r0,0	
 #endif
 
-	/* 
-	 * If the oldlwp was null, don't bother saving the switch state.
-	 */
-	cmpwi	%r30,0
-	beq	switchto_restore
-
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else
@@ -202,7 +196,6 @@ ENTRY(cpu_switchto)
 	streg	%r9,PCB_USPRG0(%r4)	/* save in PCB, not switchframe. */
 #endif
 
-switchto_restore:
 /* Lock the scheduler. */
 #if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
 	wrteei	0			/* disable interrupts while
@@ -288,6 +281,7 @@ switchto_restore:
  */
 	ldreg	%r31,CFRAME_R31(%r1)	/* restore saved registers */
 	ldreg	%r30,CFRAME_R30(%r1)
+	IBM405_ERRATA77_DCBT(0,%r1)
 	stwcx.	%r1,0,%r1		/* clear reservation */
 #if 1
 	addi	%r1,%r1,CALLFRAMELEN
@@ -319,8 +313,6 @@ _ENTRY(softint_cleanup)
 	ldint	%r5, CI_MTX_COUNT(%r7)
 	addi	%r5, %r5, 1
 	stint	%r5, CI_MTX_COUNT(%r7)
-	li	%r0, 0
-	stptr	%r0, L_CTXSWTCH(%r3)	/* clear ctxswitch of old lwp */
 	ldreg	%r0, CFRAME_R31(%r1)	/* get saved MSR */
 #if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
 	wrtee	%r0			/* restore EE */
@@ -329,6 +321,7 @@ _ENTRY(softint_cleanup)
 	mtmsr	%r0
 	isync
 #endif
+	IBM405_ERRATA77_DCBT(0,%r1)
 	stwcx.	%r1,0,%r1		/* clear reservation */
 	addi	%r1, %r1, CALLFRAMELEN
 	ldreg	%r0, CFRAME_LR(%r1)
@@ -480,6 +473,7 @@ _ENTRY(softint_fast_dispatch)
 	ldreg	%r29,SFRAME_R29(%r1)	/* R29 */
 	ldreg	%r31,SFRAMELEN+CFRAME_R31(%r1)	/* restore saved registers */
 	ldreg	%r30,SFRAMELEN+CFRAME_R30(%r1)
+	IBM405_ERRATA77_DCBT(0,%r1)
 	stwcx.	%r1,0,%r1		/* clear reservation */
 	addi	%r1,%r1,SFRAMELEN+2*CALLFRAMELEN /* remove switch & callframes */
 #endif
@@ -579,6 +573,7 @@ ENTRY(cpu_spinstart)
 
 #endif /*MULTIPROCESSOR + OEA*/
 
+#if 0 /* XXX CPU configuration spaghetti */
 /*
  * int do_ucas_32(uint32_t *uptr, uint32_t old, uint32_t new, uint32_t *ret);
  */
@@ -587,6 +582,7 @@ ENTRY(do_ucas_32)
 	lwarx	%r10,0,%r3
 	cmpw	%r10, %r4
 	bne	2f
+	IBM405_ERRATA77_DCBT(0,%r3)
 	stwcx.	%r5,0,%r3
 	bne	1b
 	mr	%r5,%r10
@@ -594,3 +590,4 @@ ENTRY(do_ucas_32)
 	li	%r3,0
 	stw	%r10,0(%r6)
 	blr
+#endif

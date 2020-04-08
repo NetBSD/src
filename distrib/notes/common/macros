@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.43 2018/01/24 09:04:41 skrll Exp $
+.\"	$NetBSD: macros,v 1.43.4.1 2020/04/08 14:03:48 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -309,42 +309,102 @@
 .\" XXX To should be unnecessary if we handle parseable/callable.
 .\"   .Tc			import the TOC
 .\"   .Ti depth page "item"	(internal) output an entry
-.if dTOC \{
+.ds toc-file INSTALL.\*[format].toc
+.if dTOC \{\
+.tm ...writing \*[toc-file].tmp
+.open toc-tmp \*[toc-file].tmp
+.de mktoc
+.nr mktoc-level \\$1
+.shift
+.write toc-tmp .Ti \\n[mktoc-level] \\n% "\\$*"
+..
 .rn Ss Ss-toc
 .de Ss
-.Ss-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
-\.tm .Ti 0 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+.Ss-toc \\$@
+.mktoc 0 \\$@
 ..
 .rn Ss2 Ss2-toc
 .de Ss2
-.Ss2-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
-\.tm .Ti 1 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+.Ss2-toc \\$@
+.mktoc 1 \\$@
 ..
 .\}
 .de Te
-.ie rHTML <a name="\\$2">\\$2</a>
-.el \\$2
-.if dTOC \.tm .Ti \\$1 \\n% \\$2
+.nr Te-toc-level \\$1
+.shift
+.ie rHTML <a name="\\$*">\\$*</a>
+.el \\$*
+.if dTOC .mktoc \\n[Te-toc-level] \\$@
 ..
 .de To
-.if rHTML <a name="\\$2"></a>
-.if dTOC \.tm .Ti \\$1 \\n% \\$2
+.nr To-toc-level \\$1
+.shift
+.if rHTML <a name="\\$*"></a>
+.if dTOC .mktoc \\n[To-toc-level] \\$@
 ..
+.
+.\" .Tc and .Ti for PostScript
+.
+.ie '\*[format]'PostScript' \{\
 .de Ti
-.ie rHTML \{.ta (\n(.lu+\w'<a href="#\\$3"></a>'u)R
-\h'3n*\\$1u' <a href="#\\$3">\\$3</a>\a\\$2
+.nr Ti-toc-level \\$1
+.nr Ti-page \\$2
+.shift 2
+.nr Ti-indent (\\n[Tc-saved-indent]+(3n*\\n[Ti-toc-level]))
+.in \\n[Ti-indent]u
+\\$* \c
+'nr Ti-eol-pos (\\n(.l-\\n(.i-\\n(.k)
+'ta (\\n[Ti-eol-pos]u-\w'099'u)R (\\n[Ti-eol-pos]u)R
+\a\t\\n[Ti-page]
+.br
+..
+.
+.de Tc
+.nr Tc-saved-indent \\n(.i
+.tm ...reading \*[toc-file]
+.\" Use so-real here because toc-file is in objdir not .CURDIR
+.so-real \*[toc-file]
+.in \\n[Tc-saved-indent]u
+..
 .\}
-.el \h'3n*\\$1u' \\$3\a\\$2
+.
+.\"  .Tc and .Ti for HTML
+.
+.el .ie rHTML \{\
+.de Ti
+.nr Ti-toc-level \\$1
+.\"nr Ti-page \\$2
+.shift 2
+\h'3n*\\n[Ti-toc-level]u' <a href="#\\$*">\\$*</a>
+..
+.
+.de Tc
+.tm ...reading \*[toc-file]
+.nf
+.\" Use so-real here because toc-file is in objdir not .CURDIR
+.so-real \*[toc-file]
+.fi
+..
+.\}
+.
+.\" .Tc and .Ti for unpaginated text
+.
+.el \{\
+.de Ti
+.nr Ti-toc-level \\$1
+.\"nr Ti-page \\$2
+.shift 2
+\h'3n*\\n[Ti-toc-level]u'\\$*
+.br
 ..
 .de Tc
 .Bd -literal
-.ta (\n(.lu)R
-\.tm ...reading INSTALL.\*[format].toc
-.       Pp
-.\" Use so-real here because otherwise we lose on objdirs
-\.so-real INSTALL.\*[format].toc
+.tm ...reading \*[toc-file]
+.\" Use so-real here because toc-file is in objdir not .CURDIR
+.so-real \*[toc-file]
 .Ed
 ..
+.\}
 .
 .
 .\"	--------------------  MISC  --------------------

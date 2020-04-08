@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.36 2015/05/19 19:30:27 snj Exp $
+.\"	$NetBSD: netboot,v 1.36.16.1 2020/04/08 14:03:48 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,8 +40,8 @@ Additionally, you may wish to look at the
 manual page and the manual pages for each daemon you'll be configuring.
 If the server(s) are another operating system, you should consult the
 NetBSD Diskless HOW-TO, which will walk you through the steps necessary to
-configure the netboot services on a variety of platforms.
-.Lk http://www.NetBSD.org/docs/network/netboot/
+configure the netboot services on a variety of platforms:
+.Lk https://www.NetBSD.org/docs/network/netboot/
 .if !\n[hppa]:\n[next68k] \{\
 .Pp
 You may either netboot the installer so you can install onto a locally
@@ -236,8 +236,8 @@ YAMAMORI Takenori's
 package instead of native
 .Xr rbootd 8 .
 Please refer the "Setting up the rbootd server" section
-in the NetBSD Diskless HOW-TO
-.Lk http://www.NetBSD.org/docs/network/netboot/rbootd/
+in the
+.Lk https://www.NetBSD.org/docs/network/netboot/rbootd/ "NetBSD Diskless HOW-TO"
 for details.
 .Pp
 .It
@@ -673,7 +673,7 @@ To use the RAM disk-based installer, uncompress and rename the kernel.
 Also, copy the distribution files to the client's root directory.
 .Pp
 .(disp
-.No # Ic "cp *tgz /export/client/root"
+.No # Ic "cp *.\*[setsuffix] /export/client/root"
 .No # Ic "gunzip netbsd-RAMDISK.gz"
 .No # Ic "mv netbsd-RAMDISK /export/client/root/netbsd"
 .disp)
@@ -702,7 +702,7 @@ a kernel, try uncompressing it with
 .Note)
 .Pp
 .(disp
-.No # Ic "cp *tgz /export/client/root"
+.No # Ic "cp *.\*[setsuffix] /export/client/root"
 .No # Ic "gunzip netbsd-GENERIC_MD.gz"
 .No # Ic "mv netbsd-GENERIC_MD /export/client/root/netbsd"
 .disp)
@@ -730,14 +730,14 @@ Use
 .Pp
 If you are netbooting the installer, copy the distribution files to
 the client's root directory and extract the tools from
-.if \n[sparc] .Pa installation/netboot/rootfs.tgz .
-.if \n[sparc64] .Pa installation/misc/instfs.tgz .
+.if \n[sparc] .Pa installation/netboot/rootfs.\*[setsuffix] .
+.if \n[sparc64] .Pa installation/misc/instfs.\*[setsuffix] .
 .Pp
 .(disp
-.No # Ic "cp *tgz /export/client/root"
+.No # Ic "cp *.\*[setsuffix] /export/client/root"
 .No # Ic "cd /export/client/root"
-.if \n[sparc] .No # Ic "tar -xpzf rootfs.tgz"
-.if \n[sparc64] .No # Ic "tar -xpzf instfs.tgz"
+.if \n[sparc] .No # Ic "tar -xpzf rootfs.\*[setsuffix]"
+.if \n[sparc64] .No # Ic "tar -xpzf instfs.\*[setsuffix]"
 .disp)
 .\}
 .if \n[evbppc] \{\
@@ -747,7 +747,7 @@ If you are netbooting the installer, use
 Also, copy the distribution files to the client's root directory.
 .Pp
 .(disp
-.No # Ic "cp *tgz /export/client/root"
+.No # Ic "cp *.\*[setsuffix] /export/client/root"
 .No # Ic "gunzip netbsd-INSTALL.img.gz"
 .No # Ic "mv netbsd-INSTALL.img /export/client/root/netbsd"
 .disp)
@@ -769,15 +769,14 @@ need to extract and set up the client's installation of
 The Diskless HOW-TO describes how to provide better security and save
 space on the NFS server over the procedure listed here.
 See
-.Lk http://www.NetBSD.org/docs/network/netboot/nfs.html
-for details.
+.Lk https://www.NetBSD.org/docs/network/netboot/nfs.html "for details" .
 .(bullet -compact
 Extracting distribution sets
 .Pp
 .(disp
 .No # Ic "cd /export/client/root"
-.No # Ic "tar -xpzf /path/to/files/base.tgz"
-.No # Ic "tar -xpzf /path/to/files/etc.tgz"
+.No # Ic "tar -xpzf /path/to/files/base.\*[setsuffix]"
+.No # Ic "tar -xpzf /path/to/files/etc.\*[setsuffix]"
 .disp)
 .Pp
 Continue with the other non-essential distribution sets if desired.

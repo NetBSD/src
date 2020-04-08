@@ -1,4 +1,4 @@
-	$NetBSD: TODO,v 1.1 2005/06/29 21:06:12 perry Exp $
+	$NetBSD: TODO,v 1.1.86.1 2020/04/08 14:09:18 martin Exp $
 
 Things to do with spell(1)
 
@@ -15,7 +15,7 @@ e) The way this works is bad. All the rules of how to deal with
    spelling, suffixes, etc, are hard-coded in. That made sense in v7,
    but it doesn't any more.
 f) The word search algorithm might be made better. millert turned it
-   into a binary search from the orignal hash mechanism.
+   into a binary search from the original hash mechanism.
 g) Also, the general mode that this program works in is VERY 1970s --
    it just spits out a list of words that are misspelled without
    context. By merging spell and spellprog, and doing a wee bit of

@@ -120,7 +120,7 @@ test_basic(void)
 	verify_basic(a, 1);
 
 	/* Verify with streaming reader. */
-	p = slurpfile(&s, refname);
+	p = slurpfile(&s, "%s", refname);
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -190,7 +190,7 @@ test_info_zip_ux(void)
 	verify_info_zip_ux(a, 1);
 
 	/* Verify with streaming reader. */
-	p = slurpfile(&s, refname);
+	p = slurpfile(&s, "%s", refname);
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -254,7 +254,7 @@ test_extract_length_at_end(void)
 	verify_extract_length_at_end(a, 1);
 
 	/* Verify extraction with streaming reader. */
-	p = slurpfile(&s, refname);
+	p = slurpfile(&s, "%s", refname);
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
@@ -273,7 +273,7 @@ test_symlink(void)
 	struct archive_entry *ae;
 
 	extract_reference_file(refname);
-	p = slurpfile(&s, refname);
+	p = slurpfile(&s, "%s", refname);
 
 	/* Symlinks can only be extracted with the seeking reader. */
 	assert((a = archive_read_new()) != NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.38.4.1 2019/06/10 22:06:48 christos Exp $ */
+/*	$NetBSD: vmparam.h,v 1.38.4.2 2020/04/08 14:07:54 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,17 @@
  * of VA so use it.
  */
 #define        PAGER_MAP_DEFAULT_SIZE (512 * 1024 * 1024)
+
+/*
+ * Defaults for Unified Buffer Cache parameters.
+ */
+
+#ifndef UBC_WINSHIFT
+#define	UBC_WINSHIFT	16	/* 64kB */
+#endif
+#ifndef UBC_NWINS
+#define	UBC_NWINS	4096	/* 256MB */
+#endif
 
 /*
  * The kernel itself is mapped by the boot loader with 4Mb locked VM pages,

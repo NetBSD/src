@@ -1,6 +1,6 @@
 %{ /* deffilep.y - parser for .def files */
 
-/*   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+/*   Copyright (C) 1995-2018 Free Software Foundation, Inc.
 
      This file is part of GNU Binutils.
 
@@ -193,18 +193,18 @@ implist:
 	;
 
 impline:
-               ID '=' ID '.' ID '.' ID opt_equalequal_name
-                 { def_import ($1, $3, $5, $7, -1, $8); }
+	       ID '=' ID '.' ID '.' ID opt_equalequal_name
+		 { def_import ($1, $3, $5, $7, -1, $8); }
        |       ID '=' ID '.' ID '.' NUMBER opt_equalequal_name
 				 { def_import ($1, $3, $5,  0, $7, $8); }
        |       ID '=' ID '.' ID opt_equalequal_name
-                 { def_import ($1, $3,  0, $5, -1, $6); }
+		 { def_import ($1, $3,	0, $5, -1, $6); }
        |       ID '=' ID '.' NUMBER opt_equalequal_name
-                 { def_import ($1, $3,  0,  0, $5, $6); }
+		 { def_import ($1, $3,	0,  0, $5, $6); }
        |       ID '.' ID '.' ID opt_equalequal_name
-                 { def_import( 0, $1, $3, $5, -1, $6); }
+		 { def_import( 0, $1, $3, $5, -1, $6); }
        |       ID '.' ID opt_equalequal_name
-                 { def_import ( 0, $1,  0, $3, -1, $4); }
+		 { def_import ( 0, $1,	0, $3, -1, $4); }
 ;
 
 seclist:
@@ -309,8 +309,8 @@ opt_ordinal:
 	;
 
 opt_equal_name:
-          '=' opt_name2	{ $$ = $2; }
-        | 		{ $$ =  0; }
+	  '=' opt_name2	{ $$ = $2; }
+	|		{ $$ =	0; }
 	;
 
 opt_base: BASE	'=' VMA	{ $$ = $3;}
@@ -636,7 +636,7 @@ find_export_in_list (def_file_export *b, int max,
   if ((e = cmp_export_elem (b, ex_name, in_name, its_name, ord)) <= 0)
     {
       if (!e)
-        *is_ident = 1;
+	*is_ident = 1;
       return 0;
     }
   if (max == 1)
@@ -655,14 +655,14 @@ find_export_in_list (def_file_export *b, int max,
       p = (l + r) / 2;
       e = cmp_export_elem (b + p, ex_name, in_name, its_name, ord);
       if (!e)
-        {
-          *is_ident = 1;
-          return p;
-        }
+	{
+	  *is_ident = 1;
+	  return p;
+	}
       else if (e < 0)
-        r = p - 1;
+	r = p - 1;
       else if (e > 0)
-        l = p + 1;
+	l = p + 1;
     }
   if ((e = cmp_export_elem (b + l, ex_name, in_name, its_name, ord)) > 0)
     ++l;
@@ -781,7 +781,7 @@ find_import_in_list (def_file_import *b, int max,
   if ((e = cmp_import_elem (b, ex_name, in_name, module, ord)) <= 0)
     {
       if (!e)
-        *is_ident = 1;
+	*is_ident = 1;
       return 0;
     }
   if (max == 1)
@@ -791,7 +791,7 @@ find_import_in_list (def_file_import *b, int max,
   else if (!e || max == 2)
     {
       if (!e)
-        *is_ident = 1;
+	*is_ident = 1;
       return max - 1;
     }
   l = 0; r = max - 1;
@@ -800,20 +800,40 @@ find_import_in_list (def_file_import *b, int max,
       p = (l + r) / 2;
       e = cmp_import_elem (b + p, ex_name, in_name, module, ord);
       if (!e)
-        {
-          *is_ident = 1;
-          return p;
-        }
+	{
+	  *is_ident = 1;
+	  return p;
+	}
       else if (e < 0)
-        r = p - 1;
+	r = p - 1;
       else if (e > 0)
-        l = p + 1;
+	l = p + 1;
     }
   if ((e = cmp_import_elem (b + l, ex_name, in_name, module, ord)) > 0)
     ++l;
   else if (!e)
     *is_ident = 1;
   return l;
+}
+
+static void
+fill_in_import (def_file_import *i,
+		const char *name,
+		def_file_module *module,
+		int ordinal,
+		const char *internal_name,
+		const char *its_name)
+{
+  memset (i, 0, sizeof (def_file_import));
+  if (name)
+    i->name = xstrdup (name);
+  i->module = module;
+  i->ordinal = ordinal;
+  if (internal_name)
+    i->internal_name = xstrdup (internal_name);
+  else
+    i->internal_name = i->name;
+  i->its_name = (its_name ? xstrdup (its_name) : NULL);
 }
 
 def_file_import *
@@ -850,18 +870,74 @@ def_file_add_import (def_file *fdef,
     }
   i = fdef->imports + pos;
   if (pos != fdef->num_imports)
-    memmove (&i[1], i, (sizeof (def_file_import) * (fdef->num_imports - pos)));
-  memset (i, 0, sizeof (def_file_import));
-  if (name)
-    i->name = xstrdup (name);
-  if (module)
-    i->module = def_stash_module (fdef, module);
-  i->ordinal = ordinal;
-  if (internal_name)
-    i->internal_name = xstrdup (internal_name);
-  else
-    i->internal_name = i->name;
-  i->its_name = (its_name ? xstrdup (its_name) : NULL);
+    memmove (i + 1, i, sizeof (def_file_import) * (fdef->num_imports - pos));
+
+  fill_in_import (i, name, def_stash_module (fdef, module), ordinal,
+		  internal_name, its_name);
+  fdef->num_imports++;
+
+  return i;
+}
+
+int
+def_file_add_import_from (def_file *fdef,
+			  int num_imports,
+			  const char *name,
+			  const char *module,
+			  int ordinal,
+			  const char *internal_name,
+			  const char *its_name ATTRIBUTE_UNUSED)
+{
+  def_file_import *i;
+  int is_dup;
+  int pos;
+  int max_imports = ROUND_UP (fdef->num_imports, 16);
+
+  /* We need to avoid here duplicates.  */
+  is_dup = 0;
+  pos = find_import_in_list (fdef->imports, fdef->num_imports,
+			     name, internal_name ? internal_name : name,
+			     module, ordinal, &is_dup);
+  if (is_dup != 0)
+    return -1;
+  if (fdef->imports && pos != fdef->num_imports)
+    {
+      i = fdef->imports + pos;
+      if (i->module && strcmp (i->module->name, module) == 0)
+	return -1;
+    }
+
+  if (fdef->num_imports + num_imports - 1 >= max_imports)
+    {
+      max_imports = ROUND_UP (fdef->num_imports + num_imports, 16);
+
+      if (fdef->imports)
+	fdef->imports = xrealloc (fdef->imports,
+				 max_imports * sizeof (def_file_import));
+      else
+	fdef->imports = xmalloc (max_imports * sizeof (def_file_import));
+    }
+  i = fdef->imports + pos;
+  if (pos != fdef->num_imports)
+    memmove (i + num_imports, i,
+	     sizeof (def_file_import) * (fdef->num_imports - pos));
+
+  return pos;
+}
+
+def_file_import *
+def_file_add_import_at (def_file *fdef,
+			int pos,
+			const char *name,
+			const char *module,
+			int ordinal,
+			const char *internal_name,
+			const char *its_name)
+{
+  def_file_import *i = fdef->imports + pos;
+
+  fill_in_import (i, name, def_stash_module (fdef, module), ordinal,
+		  internal_name, its_name);
   fdef->num_imports++;
 
   return i;
@@ -902,10 +978,10 @@ def_file_add_directive (def_file *my_def, const char *param, int len)
 	break;
 
       /* Scan forward until we encounter any of:
-          - the end of the buffer
+	  - the end of the buffer
 	  - the start of a new option
-	  - a newline seperating options
-          - a NUL seperating options.  */
+	  - a newline separating options
+	  - a NUL separating options.  */
       for (tend = (char *) (param + 1);
 	   (tend < pend
 	    && !(ISSPACE (tend[-1]) && *tend == '-')
@@ -981,7 +1057,7 @@ def_image_name (const char *name, bfd_vma base, int is_dll)
 
 	  def->name = xmalloc (strlen (image_name) + strlen (suffix) + 1);
 	  sprintf (def->name, "%s%s", image_name, suffix);
-        }
+	}
       else
 	def->name = xstrdup (image_name);
     }
@@ -1176,7 +1252,7 @@ def_aligncomm (char *str, int align)
 	    return;
 	}
       if (e > 0)
-        break;
+	break;
       c = (p = c)->next;
     }
 
@@ -1367,12 +1443,12 @@ def_lex (void)
 
       if (q == '@')
 	{
-          if (ISBLANK (c) ) /* '@' followed by whitespace.  */
+	  if (ISBLANK (c) ) /* '@' followed by whitespace.  */
 	    return (q);
-          else if (ISDIGIT (c)) /* '@' followed by digit.  */
-            {
+	  else if (ISDIGIT (c)) /* '@' followed by digit.  */
+	    {
 	      def_ungetc (c);
-              return (q);
+	      return (q);
 	    }
 #if TRACE
 	  printf ("lex: @ returns itself\n");
@@ -1388,7 +1464,7 @@ def_lex (void)
 	def_ungetc (c);
       if (ISALPHA (q)) /* Check for tokens.  */
 	{
-          for (i = 0; tokens[i].name; i++)
+	  for (i = 0; tokens[i].name; i++)
 	    if (strcmp (tokens[i].name, buffer) == 0)
 	      {
 #if TRACE
@@ -1426,12 +1502,12 @@ def_lex (void)
     {
       c = def_getc ();
       if (c == '=')
-        {
+	{
 #if TRACE
-          printf ("lex: `==' returns EQUAL\n");
+	  printf ("lex: `==' returns EQUAL\n");
 #endif
-		  return EQUAL;
-        }
+	  return EQUAL;
+	}
       def_ungetc (c);
 #if TRACE
       printf ("lex: `=' returns itself\n");

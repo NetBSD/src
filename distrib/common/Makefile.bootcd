@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.40.2.1 2019/06/10 21:42:19 christos Exp $
+#	$NetBSD: Makefile.bootcd,v 1.40.2.2 2020/04/08 14:03:44 martin Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -22,6 +22,8 @@
 #			stuff to put on CD (use in Makefiles)
 #	CDEXTRA_SKIP	A list of file exclusion paths to exclude when copying
 #			directories of extra stuff in CDEXTRA AND CDBUILDEXTRA
+#	CDDEV_POPULATE	Set to 'true' to fully populate /dev on the CD (and
+#			safe a tmpfs union mount)
 #	BOOT		Defaults to $DESTDIR/usr/mdec/boot
 #	BOOTXX_CD9660	Defaults to $DESTDIR/usr/mdec/bootxx_cd9660
 #	CDBOOTOPTIONS	Options for installboot, eg -o console=com0,speed=9600
@@ -44,6 +46,7 @@ BOOT?=		${DESTDIR}/usr/mdec/boot
 BOOTXX_CD9660?=	${DESTDIR}/usr/mdec/bootxx_cd9660
 CDRELEASE?=	false
 CDSOURCE?=	false
+CDDEV_POPULATE?=false
 .if ${CDRELEASE} == false
 CDROMS_RELEASEDIR?=	${MACHINE}/installation/cdrom
 .else
@@ -269,15 +272,21 @@ copy-releasedir:
 	fi
 .endif
 
+.if ${CDDEV_POPULATE} != true
+DELDEV=-e '/^\.\/dev\/.*type=char/d'
+.endif
+
 image:
 	@echo Preparing spec files for makefs...
 	${RM} -f ${WORKSPEC}
 	if [ -d cdrom/etc/mtree ]; then				\
 		cat cdrom/etc/mtree/* |				\
 		    ${TOOL_SED} -e 's/ size=[0-9]*//'		\
+		     ${DELDEV}					\
 		     -e '/^\.\/etc\/gettytab/d' > ${WORKSPEC};	\
 	fi
-	if [ -r cdrom/dev/MAKEDEV ]; then			\
+	if [ -r cdrom/dev/MAKEDEV ] &&				\
+		 ${CDDEV_POPULATE} == true; then		\
 		${HOST_SH} cdrom/dev/MAKEDEV -s init |		\
 		    ${TOOL_SED} -e '/^\. type=dir/d' 		\
 			-e 's,^\.,./dev,' >> ${WORKSPEC};	\

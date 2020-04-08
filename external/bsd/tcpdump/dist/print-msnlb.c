@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-msnlb.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-msnlb.c,v 1.3.18.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: MS Network Load Balancing's (NLB) heartbeat printer */
@@ -52,6 +52,7 @@ struct msnlb_heartbeat_pkt {
 	/* the protocol is undocumented so we ignore the rest */
 };
 
+UNALIGNED_OK
 void
 msnlb_print(netdissect_options *ndo, const u_char *bp)
 {

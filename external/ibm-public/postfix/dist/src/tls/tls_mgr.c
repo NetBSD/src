@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_mgr.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: tls_mgr.c,v 1.2.12.1 2020/04/08 14:06:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -443,7 +443,7 @@ int     main(int unused_ac, char **av)
 
 	    status = tls_mgr_lookup(argv->argv[1], argv->argv[2], buf);
 	    vstream_printf("status=%d session=%.*s\n",
-			   status, LEN(buf), STR(buf));
+			   status, (int) LEN(buf), STR(buf));
 	    vstring_free(buf);
 	} else if (COMMAND(argv, "update", 4)) {
 	    status = tls_mgr_update(argv->argv[1], argv->argv[2],

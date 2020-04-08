@@ -1,7 +1,7 @@
-/*	$NetBSD: exec_elf.c,v 1.97.2.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.97.2.2 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
- * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2000, 2005, 2015, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.97.2.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.97.2.2 2020/04/08 14:08:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -328,6 +328,8 @@ elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	long diff, offset;
 	int vmprot = 0;
 
+	KASSERT(VOP_ISLOCKED(vp) != LK_NONE);
+
 	/*
 	 * If the user specified an address, then we load there.
 	 */
@@ -460,14 +462,15 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	 */
 	if (vp->v_type != VREG) {
 		error = EACCES;
-		goto badunlock;
+		goto bad;
 	}
 	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred)) != 0)
-		goto badunlock;
+		goto bad;
 
 	/* get attributes */
+	/* XXX VOP_GETATTR() is the only thing that needs LK_EXCLUSIVE ^ */
 	if ((error = VOP_GETATTR(vp, &attr, l->l_cred)) != 0)
-		goto badunlock;
+		goto bad;
 
 	/*
 	 * Check mount point.  Though we're not trying to exec this binary,
@@ -476,18 +479,17 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	 */
 	if (vp->v_mount->mnt_flag & MNT_NOEXEC) {
 		error = EACCES;
-		goto badunlock;
+		goto bad;
 	}
 	if (vp->v_mount->mnt_flag & MNT_NOSUID)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
 	error = vn_marktext(vp);
 	if (error)
-		goto badunlock;
+		goto bad;
 
-	VOP_UNLOCK(vp);
-
-	if ((error = exec_read_from(l, vp, 0, &eh, sizeof(eh))) != 0)
+	error = exec_read(l, vp, 0, &eh, sizeof(eh), IO_NODELOCKED);
+	if (error != 0)
 		goto bad;
 
 	if ((error = elf_check_header(&eh)) != 0)
@@ -501,7 +503,8 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
 	ph = kmem_alloc(phsize, KM_SLEEP);
 
-	if ((error = exec_read_from(l, vp, eh.e_phoff, ph, phsize)) != 0)
+	error = exec_read(l, vp, eh.e_phoff, ph, phsize, IO_NODELOCKED);
+	if (error != 0)
 		goto bad;
 
 #ifdef ELF_INTERP_NON_RELOCATABLE
@@ -627,16 +630,13 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	 * This value is ignored if TOPDOWN.
 	 */
 	*last = addr;
-	vrele(vp);
+	vput(vp);
 	return 0;
-
-badunlock:
-	VOP_UNLOCK(vp);
 
 bad:
 	if (ph != NULL)
 		kmem_free(ph, phsize);
-	vrele(vp);
+	vput(vp);
 	return error;
 }
 
@@ -681,9 +681,13 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		return ENOEXEC;
 	}
 
+	/* XXX only LK_EXCLUSIVE to match all others - allow spinning */
+	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	error = vn_marktext(epp->ep_vp);
-	if (error)
+	if (error) {
+		VOP_UNLOCK(epp->ep_vp);
 		return error;
+	}
 
 	/*
 	 * Allocate space to hold all the program headers, and read them
@@ -692,9 +696,12 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = kmem_alloc(phsize, KM_SLEEP);
 
-	if ((error = exec_read_from(l, epp->ep_vp, eh->e_phoff, ph, phsize)) !=
-	    0)
+	error = exec_read(l, epp->ep_vp, eh->e_phoff, ph, phsize,
+	    IO_NODELOCKED);
+	if (error != 0) {
+		VOP_UNLOCK(epp->ep_vp);
 		goto bad;
+	}
 
 	epp->ep_taddr = epp->ep_tsize = ELFDEFNNAME(NO_ADDR);
 	epp->ep_daddr = epp->ep_dsize = ELFDEFNNAME(NO_ADDR);
@@ -706,16 +713,21 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 				DPRINTF("bad interpreter namelen %#jx",
 				    (uintmax_t)pp->p_filesz);
 				error = ENOEXEC;
+				VOP_UNLOCK(epp->ep_vp);
 				goto bad;
 			}
 			interp = PNBUF_GET();
-			if ((error = exec_read_from(l, epp->ep_vp,
-			    pp->p_offset, interp, pp->p_filesz)) != 0)
+			error = exec_read(l, epp->ep_vp, pp->p_offset, interp,
+			    pp->p_filesz, IO_NODELOCKED);
+			if (error != 0) {
+				VOP_UNLOCK(epp->ep_vp);
 				goto bad;
+			}
 			/* Ensure interp is NUL-terminated and of the expected length */
 			if (strnlen(interp, pp->p_filesz) != pp->p_filesz - 1) {
 				DPRINTF("bad interpreter name");
 				error = ENOEXEC;
+				VOP_UNLOCK(epp->ep_vp);
 				goto bad;
 			}
 			break;
@@ -736,13 +748,17 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 
 		error = (*epp->ep_esch->u.elf_probe_func)(l, epp, eh, interp,
 							  &startp);
-		if (error)
+		if (error) {
+			VOP_UNLOCK(epp->ep_vp);
 			goto bad;
+		}
 		pos = (Elf_Addr)startp;
 	}
 
-	if (is_dyn && (error = elf_placedynexec(epp, eh, ph)) != 0)
+	if (is_dyn && (error = elf_placedynexec(epp, eh, ph)) != 0) {
+		VOP_UNLOCK(epp->ep_vp);
 		goto bad;
+	}
 
 	/*
 	 * Load all the necessary sections
@@ -755,8 +771,10 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		case PT_LOAD:
 			if ((error = elf_load_psection(&epp->ep_vmcmds,
 			    epp->ep_vp, &ph[i], &addr, &size, VMCMD_FIXED))
-			    != 0)
+			    != 0) {
+				VOP_UNLOCK(epp->ep_vp);
 				goto bad;
+			}
 
 			/*
 			 * Consider this as text segment, if it is executable.
@@ -798,6 +816,9 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			break;
 		}
 	}
+
+	/* Now done with the vnode. */
+	VOP_UNLOCK(epp->ep_vp);
 
 	if (epp->ep_vmcmds.evs_used == 0) {
 		/* No VMCMD; there was no PT_LOAD section, or those
@@ -898,7 +919,8 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = kmem_alloc(phsize, KM_SLEEP);
-	error = exec_read_from(l, epp->ep_vp, eh->e_phoff, ph, phsize);
+	error = exec_read(l, epp->ep_vp, eh->e_phoff, ph, phsize,
+	    IO_NODELOCKED);
 	if (error)
 		goto out;
 
@@ -912,8 +934,8 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			continue;
 
 		nlen = ph[i].p_filesz;
-		error = exec_read_from(l, epp->ep_vp, ph[i].p_offset,
-				       nbuf, nlen);
+		error = exec_read(l, epp->ep_vp, ph[i].p_offset, nbuf, nlen,
+		    IO_NODELOCKED);
 		if (error)
 			continue;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.18.4.1 2019/06/10 22:08:33 christos Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.18.4.2 2020/04/08 14:08:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.18.4.1 2019/06/10 22:08:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.18.4.2 2020/04/08 14:08:28 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -299,4 +299,11 @@ drm_pci_set_unique(struct drm_device *dev, struct drm_master *master,
 
 	/* Success!  */
 	return 0;
+}
+
+int
+drm_pcie_get_speed_cap_mask(struct drm_device *dev, u32 *speed_mask)
+{
+
+	return -ENOSYS;
 }

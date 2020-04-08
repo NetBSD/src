@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.71 2016/11/04 18:06:08 phx Exp $
+# $NetBSD: WSCONS,v 1.71.16.1 2020/04/08 14:07:26 martin Exp $
 
 # GENERIC with wscons(4)
 #
@@ -13,7 +13,7 @@ options 	FONT_VT220ISO8x16
 
 wskbd0		at kbd0 console ?
 
-ukbd*		at uhidev? reportid ?  
+ukbd*		at uhidev? reportid ?
 wskbd*		at ukbd? console ?
 
 wsmouse*	at ms?
@@ -43,8 +43,8 @@ no ite5		at grf5
 no ite6		at grf6
 no ite7		at grf7
 
-mntva*          at zbus?                # MNTMN VA2000
-#options         MNTVA_CONSOLE
+mntva*		at zbus?		# MNTMN VA2000
+#options	MNTVA_CONSOLE
 
 # PCI framebuffers
 #genfb*		at pci?			# CyberVisionPPC/BlizzardVisionPPC only

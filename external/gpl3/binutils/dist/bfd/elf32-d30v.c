@@ -1,5 +1,5 @@
 /* D30V-specific support for 32-bit ELF
-   Copyright (C) 1997-2018 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -561,6 +561,5 @@ d30v_info_to_howto_rela (bfd *abfd,
 #define elf_info_to_howto	d30v_info_to_howto_rela
 #define elf_info_to_howto_rel	d30v_info_to_howto_rel
 #define elf_backend_object_p	0
-#define elf_backend_final_write_processing	0
 
 #include "elf32-target.h"

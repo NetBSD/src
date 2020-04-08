@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2017/05/21 15:28:43 riastradh Exp $
+#	$NetBSD: Makefile,v 1.18.10.1 2020/04/08 14:09:22 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,6 @@ SUBDIR=	mount_9p mount_psshfs mount_sysctlfs
 SUBDIR+=rump_cd9660 rump_efs rump_ext2fs rump_ffs rump_hfs rump_lfs
 SUBDIR+=rump_msdos rump_nfs rump_ntfs rump_syspuffs rump_sysvbfs
 SUBDIR+=rump_tmpfs rump_udf rump_v7fs
-SUBDIR+=rump_smbfs
 
 #
 # The following are not built by default

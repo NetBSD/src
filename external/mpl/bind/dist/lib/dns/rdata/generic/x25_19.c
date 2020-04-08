@@ -1,4 +1,4 @@
-/*	$NetBSD: x25_19.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: x25_19.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -104,7 +104,7 @@ fromstruct_x25(ARGS_FROMSTRUCT) {
 	uint8_t i;
 
 	REQUIRE(type == dns_rdatatype_x25);
-	REQUIRE(source != NULL);
+	REQUIRE(x25 != NULL);
 	REQUIRE(x25->common.rdtype == type);
 	REQUIRE(x25->common.rdclass == rdclass);
 	REQUIRE(x25->x25 != NULL && x25->x25_len != 0);
@@ -129,7 +129,7 @@ tostruct_x25(ARGS_TOSTRUCT) {
 	isc_region_t r;
 
 	REQUIRE(rdata->type == dns_rdatatype_x25);
-	REQUIRE(target != NULL);
+	REQUIRE(x25 != NULL);
 	REQUIRE(rdata->length != 0);
 
 	x25->common.rdclass = rdata->rdclass;
@@ -150,7 +150,8 @@ tostruct_x25(ARGS_TOSTRUCT) {
 static inline void
 freestruct_x25(ARGS_FREESTRUCT) {
 	dns_rdata_x25_t *x25 = source;
-	REQUIRE(source != NULL);
+
+	REQUIRE(x25 != NULL);
 	REQUIRE(x25->common.rdtype == dns_rdatatype_x25);
 
 	if (x25->mctx == NULL)

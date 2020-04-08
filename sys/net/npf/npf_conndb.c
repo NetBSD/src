@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.3.16.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.3.16.2 2020/04/08 14:08:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -307,7 +307,7 @@ npf_conndb_gc(npf_t *npf, npf_conndb_t *cd, bool flush, bool sync)
 	 * Note: drop the conn_lock (see the lock order).
 	 */
 	gcref = thmap_stage_gc(cd->cd_map);
-	if (sync) {
+	if (sync && (gcref || !LIST_EMPTY(&cd->cd_gclist))) {
 		npf_config_enter(npf);
 		npf_config_sync(npf);
 		npf_config_exit(npf);

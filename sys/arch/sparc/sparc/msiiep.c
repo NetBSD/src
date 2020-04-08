@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.46 2015/10/04 08:17:43 joerg Exp $ */
+/*	$NetBSD: msiiep.c,v 1.46.18.1 2020/04/08 14:07:53 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.46 2015/10/04 08:17:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.46.18.1 2020/04/08 14:07:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -72,7 +72,7 @@ CFATTACH_DECL_NEW(msiiep, 0, msiiep_match, msiiep_attach, NULL, NULL);
 
 
 /* sleep in idle spin */
-static void	msiiep_cpu_sleep(struct cpu_info *);
+static void	msiiep_cpu_sleep(void);
 volatile uint32_t *msiiep_mid = NULL;
 
 
@@ -241,7 +241,7 @@ msiiep_attach(device_t parent, device_t self, void *aux)
 
 /* ARGSUSED */
 void
-msiiep_cpu_sleep(struct cpu_info *ci)
+msiiep_cpu_sleep(void)
 {
 	uint32_t reg;
 

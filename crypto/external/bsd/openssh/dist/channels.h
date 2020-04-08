@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.h,v 1.14.4.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: channels.h,v 1.132 2018/10/04 00:10:11 djm Exp $ */
+/*	$NetBSD: channels.h,v 1.14.4.2 2020/04/08 14:03:18 martin Exp $	*/
+/* $OpenBSD: channels.h,v 1.133 2020/01/25 22:49:38 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -107,8 +107,16 @@ struct channel_connect {
 /* Callbacks for mux channels back into client-specific code */
 typedef int mux_callback_fn(struct ssh *, struct Channel *);
 
+/*
+ * NB. channel IDs on the wire and in c->remote_id are uint32, but local
+ * channel IDs (e.g. c->self) only ever use the int32 subset of this range,
+ * because we use local channel ID -1 for housekeeping. Remote channels have
+ * a dedicated "have_remote_id" flag to indicate their validity.
+ */
+
 struct Channel {
 	int     type;		/* channel type/state */
+
 	int     self;		/* my own channel identifier */
 	uint32_t remote_id;	/* channel identifier for remote peer */
 	int	have_remote_id;	/* non-zero if remote_id is valid */

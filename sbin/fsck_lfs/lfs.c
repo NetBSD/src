@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.74 2018/06/12 20:12:21 zafer Exp $ */
+/* $NetBSD: lfs.c,v 1.74.2.1 2020/04/08 14:07:18 martin Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,20 +88,12 @@
 #include <util.h>
 
 #include "bufcache.h"
-#include "vnode.h"
+#include "extern.h"
 #include "lfs_user.h"
 #include "segwrite.h"
 #include "kernelops.h"
 
 #define panic call_panic
-
-extern u_int32_t cksum(void *, size_t);
-extern u_int32_t lfs_sb_cksum(struct lfs *);
-extern void pwarn(const char *, ...);
-
-extern struct uvnodelst vnodelist;
-extern struct uvnodelst getvnodelist[VNODE_HASH_MAX];
-extern int nvnodes;
 
 long dev_bsize = DEV_BSIZE;
 

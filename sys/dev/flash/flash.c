@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.14 2017/11/13 17:35:58 jmcneill Exp $	*/
+/*	$NetBSD: flash.c,v 1.14.4.1 2020/04/08 14:08:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.14 2017/11/13 17:35:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.14.4.1 2020/04/08 14:08:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -349,7 +349,7 @@ flashstrategy(struct buf * const bp)
 		goto done;
 	}
 
-	/* zero lenght i/o */
+	/* zero length i/o */
 	if (bp->b_bcount == 0) {
 		goto done;
 	}

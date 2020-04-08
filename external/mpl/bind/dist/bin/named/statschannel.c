@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.3.2.2 2019/06/10 22:03:00 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.3.2.3 2020/04/08 14:07:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -236,6 +236,8 @@ init_desc(void) {
 	SET_NSSTATDESC(invalidsig, "requests with invalid signature",
 		       "ReqBadSIG");
 	SET_NSSTATDESC(requesttcp, "TCP requests received", "ReqTCP");
+	SET_NSSTATDESC(tcphighwater, "TCP connection high-water",
+		       "TCPConnHighWater");
 	SET_NSSTATDESC(authrej, "auth queries rejected", "AuthQryRej");
 	SET_NSSTATDESC(recurserej, "recursive queries rejected", "RecQryRej");
 	SET_NSSTATDESC(xfrrej, "transfer requests rejected", "XfrRej");
@@ -317,6 +319,7 @@ init_desc(void) {
 		       "QryUsedStale");
 	SET_NSSTATDESC(prefetch, "queries triggered prefetch", "Prefetch");
 	SET_NSSTATDESC(keytagopt, "Keytag option received", "KeyTagOpt");
+
 	INSIST(i == ns_statscounter_max);
 
 	/* Initialize resolver statistics */

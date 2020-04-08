@@ -537,6 +537,7 @@ dns_name_clone
 dns_name_compare
 dns_name_concatenate
 dns_name_copy
+dns_name_copynf
 dns_name_countlabels
 dns_name_destroy
 dns_name_digest
@@ -1018,6 +1019,7 @@ dns_tsigkey_create
 dns_tsigkey_createfromkey
 dns_tsigkey_detach
 dns_tsigkey_find
+dns_tsigkey_identity
 dns_tsigkey_setdeleted
 dns_tsigkeyring_add
 dns_tsigkeyring_attach

@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.54.6.1 2019/06/10 22:05:23 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.54.6.2 2020/04/08 14:07:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.54.6.1 2019/06/10 22:05:23 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.54.6.2 2020/04/08 14:07:14 martin Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: refresh.c,v 1.54.6.1 2019/06/10 22:05:23 christos Exp $");
  * refresh.c: Lower level screen refreshing functions
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 

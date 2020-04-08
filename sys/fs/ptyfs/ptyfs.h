@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.14 2014/08/15 13:40:39 hannken Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.14.20.1 2020/04/08 14:08:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -168,7 +168,7 @@ void ptyfs_itimes(struct ptyfsnode *, const struct timespec *,
 extern int (**ptyfs_vnodeop_p)(void *);
 extern struct vfsops ptyfs_vfsops;
 
-int	ptyfs_root(struct mount *, struct vnode **);
+int	ptyfs_root(struct mount *, int, struct vnode **);
 
 #endif /* _KERNEL */
 #endif /* _FS_PTYFS_PTYFS_H_ */

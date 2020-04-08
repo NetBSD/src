@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.7 2015/08/23 10:59:15 joerg Exp $	*/
+/*	$NetBSD: srt0.s,v 1.7.18.1 2020/04/08 14:07:53 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,7 +63,10 @@ _esym:	.word	0			/* end of symbol table */
 	_C_LABEL(kernel_text) = _start
 _start:
 	nop			! For some reason this is needed to fixup the text section
-
+	b 1f
+	 nop
+	.zero 8192-(.-_start)	/* hack for OpenBIOS, see port-sparc64/54719 */
+1:
 	/*
 	 * Start by creating a stack for ourselves.
 	 */

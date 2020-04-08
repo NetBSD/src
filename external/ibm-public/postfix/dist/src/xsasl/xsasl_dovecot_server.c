@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_dovecot_server.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: xsasl_dovecot_server.c,v 1.2.12.1 2020/04/08 14:07:00 martin Exp $	*/
 
 /*++
 /* NAME
@@ -586,10 +586,20 @@ static int xsasl_dovecot_handle_reply(XSASL_DOVECOT_SERVER *server,
 	    if (xsasl_dovecot_parse_reply(server, &line) == 0) {
 		/* authentication successful */
 		xsasl_dovecot_parse_reply_args(server, line, reply, 1);
+		if (server->username == 0) {
+		    msg_warn("missing Dovecot server %s username field", cmd);
+		    vstring_strcpy(reply, "Authentication backend error");
+		    return XSASL_AUTH_FAIL;
+		}
 		return XSASL_AUTH_DONE;
 	    }
 	} else if (strcmp(cmd, "CONT") == 0) {
 	    if (xsasl_dovecot_parse_reply(server, &line) == 0) {
+		if (line == 0) {
+		    msg_warn("missing Dovecot server %s reply field", cmd);
+		    vstring_strcpy(reply, "Authentication backend error");
+		    return XSASL_AUTH_FAIL;
+		}
 		vstring_strcpy(reply, line);
 		return XSASL_AUTH_MORE;
 	    }

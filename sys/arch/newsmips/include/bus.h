@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.20 2012/02/12 16:34:10 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.20.48.1 2020/04/08 14:07:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -273,7 +273,7 @@ __NEWSMIPS_bus_space_write_multi(4,32)
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplimented !!!
+			!!! bus_space_write_multi_8 unimplemented !!!
 #endif
 
 #undef __NEWSMIPS_bus_space_write_multi

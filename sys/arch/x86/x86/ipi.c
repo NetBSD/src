@@ -1,7 +1,7 @@
-/*	$NetBSD: ipi.c,v 1.27 2017/02/08 10:08:26 maxv Exp $	*/
+/*	$NetBSD: ipi.c,v 1.27.14.1 2020/04/08 14:07:59 martin Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.27 2017/02/08 10:08:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.27.14.1 2020/04/08 14:07:59 martin Exp $");
 
 #include "opt_mtrr.h"
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.27 2017/02/08 10:08:26 maxv Exp $");
 
 #include <x86/fpu.h>
 
+static void	x86_ipi_ast(struct cpu_info *);
 static void	x86_ipi_halt(struct cpu_info *);
 static void	x86_ipi_kpreempt(struct cpu_info *);
 static void	x86_ipi_xcall(struct cpu_info *);
@@ -81,7 +82,7 @@ static void	x86_ipi_synch_fpu(struct cpu_info *);
 void (* const ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	x86_ipi_halt,		/* X86_IPI_HALT */
-	NULL,			/* X86_IPI_MICROSET */
+	x86_ipi_ast,		/* X86_IPI_AST */
 	x86_ipi_generic,	/* X86_IPI_GENERIC */
 	x86_ipi_synch_fpu,	/* X86_IPI_SYNCH_FPU */
 	x86_ipi_reload_mtrr,	/* X86_IPI_MTRR */
@@ -98,20 +99,30 @@ void (* const ipifunc[X86_NIPI])(struct cpu_info *) =
 int
 x86_send_ipi(struct cpu_info *ci, int ipimask)
 {
-	int ret;
-
-	atomic_or_32(&ci->ci_ipis, ipimask);
+	uint32_t o, n;
+	int ret = 0;
 
 	/* Don't send IPI to CPU which isn't (yet) running. */
-	if (!(ci->ci_flags & CPUF_RUNNING))
+	if (__predict_false((ci->ci_flags & CPUF_RUNNING) == 0))
 		return ENOENT;
 
-	ret = x86_ipi(LAPIC_IPI_VECTOR, ci->ci_cpuid, LAPIC_DLMODE_FIXED);
-	if (ret != 0) {
-		printf("ipi of %x from %s to %s failed\n",
-		    ipimask,
-		    device_xname(curcpu()->ci_dev),
-		    device_xname(ci->ci_dev));
+	/* Set in new IPI bit, and capture previous state. */
+	for (o = 0;; o = n) {
+		n = atomic_cas_32(&ci->ci_ipis, o, o | ipimask);
+		if (__predict_true(o == n)) {
+			break;
+		}
+	}
+
+	/* If no IPI already pending, send one. */
+	if (o == 0) {
+		ret = x86_ipi(LAPIC_IPI_VECTOR, ci->ci_cpuid, LAPIC_DLMODE_FIXED);
+		if (ret != 0) {
+			printf("ipi of %x from %s to %s failed\n",
+			    ipimask,
+			    device_xname(curcpu()->ci_dev),
+			    device_xname(ci->ci_dev));
+		}
 	}
 
 	return ret;
@@ -199,6 +210,13 @@ x86_ipi_kpreempt(struct cpu_info *ci)
 {
 
 	softint_trigger(1 << SIR_PREEMPT);
+}
+
+static void
+x86_ipi_ast(struct cpu_info *ci)
+{
+
+	aston(ci->ci_onproc);
 }
 
 /*

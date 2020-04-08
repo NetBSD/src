@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.71.2.1 2019/06/10 22:06:21 christos Exp $
+# $NetBSD: Makefile.boot,v 1.71.2.2 2020/04/08 14:07:40 martin Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -51,6 +51,10 @@ COPTS+=    -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
+
+.if ${KERNEL_DIR:Uno} == "yes"
+CPPFLAGS+= -DKERNEL_DIR
+.endif
 
 CPPFLAGS+= -DSUPPORT_PS2
 CPPFLAGS+= -DDIRECT_SERIAL

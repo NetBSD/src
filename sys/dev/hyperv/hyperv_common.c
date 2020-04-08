@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv_common.c,v 1.2.2.2 2019/06/10 22:07:09 christos Exp $	*/
+/*	$NetBSD: hyperv_common.c,v 1.2.2.3 2020/04/08 14:08:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperv_common.c,v 1.2.2.2 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv_common.c,v 1.2.2.3 2020/04/08 14:08:05 martin Exp $");
 
 #include "hyperv.h"
 
@@ -56,6 +56,7 @@ __weak_alias(hyperv_set_event_proc, hyperv_voidop);
 __weak_alias(hyperv_set_message_proc, hyperv_voidop);
 __weak_alias(hyperv_send_eom, hyperv_voidop);
 __weak_alias(hyperv_intr, hyperv_voidop);
+__weak_alias(hyperv_get_vcpuid, hyperv_nullop);
 __weak_alias(vmbus_init_interrupts_md, hyperv_voidop);
 __weak_alias(vmbus_deinit_interrupts_md, hyperv_voidop);
 __weak_alias(vmbus_init_synic_md, hyperv_voidop);
@@ -110,17 +111,18 @@ hyperv_guid2str(const struct hyperv_guid *guid, char *buf, size_t sz)
  */
 void *
 hyperv_dma_alloc(bus_dma_tag_t dmat, struct hyperv_dma *dma, bus_size_t size,
-    bus_size_t alignment, bus_size_t boundary, int nsegs)
+    bus_size_t alignment, bus_size_t boundary, int nsegs, int flags)
 {
-	const int kmemflags = cold ? KM_NOSLEEP : KM_SLEEP;
-	const int dmaflags = cold ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK;
+	const int waitok = (flags & HYPERV_DMA_NOSLEEP) != HYPERV_DMA_NOSLEEP;
+	const int kmemflags = waitok ? KM_SLEEP: KM_NOSLEEP;
+	const int dmaflags = waitok ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT;
 	int rseg, error;
 
 	KASSERT(dma != NULL);
 	KASSERT(dma->segs == NULL);
 	KASSERT(nsegs > 0);
 
-	dma->segs = kmem_zalloc(sizeof(*dma->segs) * nsegs, kmemflags);
+	dma->segs = kmem_intr_zalloc(sizeof(*dma->segs) * nsegs, kmemflags);
 	if (dma->segs == NULL)
 		return NULL;
 
@@ -154,6 +156,10 @@ hyperv_dma_alloc(bus_dma_tag_t dmat, struct hyperv_dma *dma, bus_size_t size,
 		    __func__, error);
 		goto fail4;
 	}
+
+	memset(dma->addr, 0, dma->map->dm_mapsize);
+	bus_dmamap_sync(dmat, dma->map, 0, dma->map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return dma->addr;
 

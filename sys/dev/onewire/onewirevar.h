@@ -1,4 +1,4 @@
-/* $NetBSD: onewirevar.h,v 1.5 2007/09/05 15:39:22 xtraeme Exp $ */
+/* $NetBSD: onewirevar.h,v 1.5.112.1 2020/04/08 14:08:08 martin Exp $ */
 /*	$OpenBSD: onewirevar.h,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -29,7 +29,8 @@ struct onewire_bus {
 	void *	bus_cookie;
 
 	int	(*bus_reset)(void *);
-	int	(*bus_bit)(void *, int);
+	int	(*bus_read_bit)(void *);
+	void	(*bus_write_bit)(void *, int);
 	int	(*bus_read_byte)(void *);
 	void	(*bus_write_byte)(void *, int);
 	int	(*bus_triplet)(void *, int);
@@ -39,7 +40,8 @@ struct onewire_bus {
 void		onewire_lock(void *);
 void		onewire_unlock(void *);
 int		onewire_reset(void *);
-int		onewire_bit(void *, int);
+int		onewire_read_bit(void *);
+void		onewire_write_bit(void *, int);
 int		onewire_read_byte(void *);
 void		onewire_write_byte(void *, int);
 int		onewire_triplet(void *, int);
@@ -80,6 +82,7 @@ struct onewire_bbops {
 };
 
 int		onewire_bb_reset(const struct onewire_bbops *, void *);
-int		onewire_bb_bit(const struct onewire_bbops *, void *, int);
+int		onewire_bb_read_bit(const struct onewire_bbops *, void *);
+void		onewire_bb_write_bit(const struct onewire_bbops *, void *, int);
 
 #endif	/* !_DEV_ONEWIRE_ONEWIREVAR_H_ */

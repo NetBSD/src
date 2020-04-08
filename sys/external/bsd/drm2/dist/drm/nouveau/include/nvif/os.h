@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.4.6.2 2019/06/10 22:08:14 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.4.6.3 2020/04/08 14:08:24 martin Exp $	*/
 
 #ifndef __NOUVEAU_OS_H__
 #define __NOUVEAU_OS_H__
@@ -72,6 +72,16 @@
 #define iowrite32_native iowrite32
 #endif /* def __BIG_ENDIAN else */
 #endif /* !ioread32_native */
+#endif
+
+#ifdef __NetBSD__
+#include <sys/bus.h>
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define	bus_space_read_stream_2	bus_space_read_2
+#define	bus_space_read_stream_4	bus_space_read_4
+#define	bus_space_write_stream_2 bus_space_write_2
+#define	bus_space_write_stream_4 bus_space_write_4
+#endif
 #endif
 
 #endif

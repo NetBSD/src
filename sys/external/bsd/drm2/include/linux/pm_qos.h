@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_qos.h,v 1.1 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: pm_qos.h,v 1.1.32.1 2020/04/08 14:08:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef	_LINUX_PM_QOS_H_
 #define	_LINUX_PM_QOS_H_
+
+#include <linux/notifier.h>
 
 struct pm_qos_request {
 	char dummy;

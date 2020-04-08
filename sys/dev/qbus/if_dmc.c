@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.26 2016/07/20 07:37:51 ozaki-r Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.26.16.1 2020/04/08 14:08:11 martin Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.26 2016/07/20 07:37:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.26.16.1 2020/04/08 14:08:11 martin Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -580,7 +580,7 @@ dmcxint(void *a)
 			 * Pass packet to type specific
 			 * higher-level input routine.
 			 */
-			ifp->if_ipackets++;
+			if_statinc(ifp, if_ipackets);
 			/* find location in dmcuba struct */
 			ifrw= &sc->sc_ifr[0];
 			for (rp = &sc->sc_rbufs[0]; rp < &sc->sc_rbufs[NRCV]; rp++) {
@@ -595,7 +595,7 @@ dmcxint(void *a)
 
 			len = (arg & DMC_CCOUNT) - sizeof (struct dmc_header);
 			if (len < 0 || len > DMCMTU) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 #ifdef DMCDEBUG
 				printd("%s: bad rcv pkt addr 0x%x len 0x%x\n",
 				    device_xname(sc->sc_dev), pkaddr, len);
@@ -653,7 +653,7 @@ dmcxint(void *a)
 			 * A write has completed, start another
 			 * transfer if there is more data to send.
 			 */
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 			/* find associated dmcbuf structure */
 			ifxp = &sc->sc_ifw[0];
 			for (rp = &sc->sc_xbufs[0]; rp < &sc->sc_xbufs[NXMT]; rp++) {
@@ -704,7 +704,7 @@ dmcxint(void *a)
 			/* ACCUMULATE STATISTICS */
 			switch(arg) {
 			case DMC_NOBUFS:
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				if ((sc->sc_nobuf++ % DMC_RPNBFS) == 0)
 					goto report;
 				break;
@@ -717,7 +717,7 @@ dmcxint(void *a)
 					goto report;
 				break;
 			case DMC_DATACK:
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				if ((sc->sc_datck++ % DMC_RPDCK) == 0)
 					goto report;
 				break;

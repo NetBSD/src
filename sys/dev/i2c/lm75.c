@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.33.2.1 2019/06/10 22:07:09 christos Exp $	*/
+/*	$NetBSD: lm75.c,v 1.33.2.2 2020/04/08 14:08:05 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.33.2.1 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.33.2.2 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_lmtemp_decode = lmtemptbl[i].lmtemp_decode;
 	sc->sc_lmtemp_encode = lmtemptbl[i].lmtemp_encode;
 
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+	iic_acquire_bus(sc->sc_tag, 0);
 
 	/* Read temperature limit(s) and remember initial value(s). */
 	if (i == lmtemp_lm77) {
@@ -214,28 +214,28 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 		    &sc->sc_scrit, 1) != 0) {
 			aprint_error_dev(self,
 			    "unable to read low register\n");
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			iic_release_bus(sc->sc_tag, 0);
 			return;
 		}
 		if (lmtemp_temp_read(sc, LM77_REG_TLOW_SET_POINT,
 		    &sc->sc_smin, 1) != 0) {
 			aprint_error_dev(self,
 			    "unable to read low register\n");
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			iic_release_bus(sc->sc_tag, 0);
 			return;
 		}
 		if (lmtemp_temp_read(sc, LM77_REG_THIGH_SET_POINT,
 		    &sc->sc_smax, 1) != 0) {
 			aprint_error_dev(self,
 			    "unable to read high register\n");
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			iic_release_bus(sc->sc_tag, 0);
 			return;
 		}
 	} else {	/* LM75 or compatible */
 		if (lmtemp_temp_read(sc, LM75_REG_TOS_SET_POINT,
 		    &sc->sc_smax, 1) != 0) {
 			aprint_error_dev(self, "unable to read Tos register\n");
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			iic_release_bus(sc->sc_tag, 0);
 			return;
 		}
 	}
@@ -247,10 +247,10 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	/* Set the configuration of the LM75 to defaults. */
 	if (lmtemp_config_write(sc, LM75_CONFIG_FAULT_QUEUE_4) != 0) {
 		aprint_error_dev(self, "unable to write config register\n");
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		iic_release_bus(sc->sc_tag, 0);
 		return;
 	}
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	sc->sc_sme = sysmon_envsys_create();
 	/* Initialize sensor data. */
@@ -297,7 +297,7 @@ lmtemp_config_write(struct lmtemp_softc *sc, uint8_t val)
 	cmdbuf[1] = val;
 
 	return iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-	    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL);
+	    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 1, 0);
 }
 
 static int
@@ -309,7 +309,7 @@ lmtemp_temp_write(struct lmtemp_softc *sc, uint8_t reg, uint32_t val, int degc)
 	sc->sc_lmtemp_encode(val, &cmdbuf[1], degc);
 
 	return iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-	    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 2, I2C_F_POLL);
+	    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 2, 0);
 }
 
 static int
@@ -596,12 +596,12 @@ sysctl_lm75_temp(SYSCTLFN_ARGS)
 
 			temp = *(int *)node.sysctl_data;
 			sc->sc_tmax = temp;
-			iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+			iic_acquire_bus(sc->sc_tag, 0);
 			lmtemp_temp_write(sc, LM75_REG_THYST_SET_POINT,
 			    sc->sc_tmax - 5, 1);
 			lmtemp_temp_write(sc, LM75_REG_TOS_SET_POINT,
 			    sc->sc_tmax, 1);
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			iic_release_bus(sc->sc_tag, 0);
 
 			/* Synchronise envsys - calls lmtemp_getlim_lm75() */
 			sysmon_envsys_update_limits(sc->sc_sme, &sc->sc_sensor);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1 2012/02/18 15:56:31 christos Exp $ */
+/*	$NetBSD: db_machdep.c,v 1.1.44.1 2020/04/08 14:07:54 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1 2012/02/18 15:56:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1.44.1 2020/04/08 14:07:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1 2012/02/18 15:56:31 christos Exp 
 #include <sys/cpu.h>
 #include <ddb/ddb.h>
 
+#ifdef _KERNEL
 static int
 db_sparc_charop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
@@ -220,6 +221,7 @@ const struct db_variable db_regs[] = {
 	{ "gsr",	dbregfp(gsr),		db_sparc_intop, 0 },
 };
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+#endif
 
 #ifndef	DDB
 const struct db_command db_machine_command_table[] = {

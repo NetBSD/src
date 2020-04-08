@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_mutex.c,v 1.73.4.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.73.4.2 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.73.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.73.4.2 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -60,9 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.73.4.1 2019/06/10 22:09:03 christos
 #include <dev/lockstat.h>
 
 #include <machine/lock.h>
-
-#define MUTEX_PANIC_SKIP_SPIN 1
-#define MUTEX_PANIC_SKIP_ADAPTIVE 1
 
 /*
  * When not running a debug kernel, spin mutexes are not much
@@ -168,6 +165,17 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 /*
+ * Memory barriers.
+ */
+#ifdef __HAVE_ATOMIC_AS_MEMBAR
+#define	MUTEX_MEMBAR_ENTER()
+#define	MUTEX_MEMBAR_EXIT()
+#else
+#define	MUTEX_MEMBAR_ENTER()		membar_enter()
+#define	MUTEX_MEMBAR_EXIT()		membar_exit()
+#endif
+
+/*
  * For architectures that provide 'simple' mutexes: they provide a
  * CAS function that is either MP-safe, or does not need to be MP
  * safe.  Adaptive mutexes on these architectures do not require an
@@ -201,10 +209,10 @@ do {									\
 	(mtx)->mtx_owner = MUTEX_THREAD;				\
 } while (/* CONSTCOND */ 0)
 
-#define	MUTEX_SPIN_P(mtx)		\
-    (((mtx)->mtx_owner & MUTEX_BIT_SPIN) != 0)
-#define	MUTEX_ADAPTIVE_P(mtx)		\
-    (((mtx)->mtx_owner & MUTEX_BIT_SPIN) == 0)
+#define	MUTEX_SPIN_P(owner)		\
+    (((owner) & MUTEX_BIT_SPIN) != 0)
+#define	MUTEX_ADAPTIVE_P(owner)		\
+    (((owner) & MUTEX_BIT_SPIN) == 0)
 
 #define	MUTEX_DEBUG_P(mtx)	(((mtx)->mtx_owner & MUTEX_BIT_NODEBUG) == 0)
 #if defined(LOCKDEBUG)
@@ -225,7 +233,7 @@ MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
 	MUTEX_INHERITDEBUG(oldown, mtx->mtx_owner);
 	MUTEX_INHERITDEBUG(newown, oldown);
 	rv = MUTEX_CAS(&mtx->mtx_owner, oldown, newown);
-	MUTEX_RECEIVE(mtx);
+	MUTEX_MEMBAR_ENTER();
 	return rv;
 }
 
@@ -234,7 +242,7 @@ MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
 {
 	int rv;
 	rv = MUTEX_CAS(&mtx->mtx_owner, owner, owner | MUTEX_BIT_WAITERS);
-	MUTEX_RECEIVE(mtx);
+	MUTEX_MEMBAR_ENTER();
 	return rv;
 }
 
@@ -243,7 +251,7 @@ MUTEX_RELEASE(kmutex_t *mtx)
 {
 	uintptr_t newown;
 
-	MUTEX_GIVE(mtx);
+	MUTEX_MEMBAR_EXIT();
 	newown = 0;
 	MUTEX_INHERITDEBUG(newown, mtx->mtx_owner);
 	mtx->mtx_owner = newown;
@@ -302,10 +310,11 @@ static void
 mutex_dump(const volatile void *cookie, lockop_printer_t pr)
 {
 	const volatile kmutex_t *mtx = cookie;
+	uintptr_t owner = mtx->mtx_owner;
 
 	pr("owner field  : %#018lx wait/spin: %16d/%d\n",
-	    (long)MUTEX_OWNER(mtx->mtx_owner), MUTEX_HAS_WAITERS(mtx),
-	    MUTEX_SPIN_P(mtx));
+	    (long)MUTEX_OWNER(owner), MUTEX_HAS_WAITERS(mtx),
+	    MUTEX_SPIN_P(owner));
 }
 
 /*
@@ -319,7 +328,7 @@ static void __noinline
 mutex_abort(const char *func, size_t line, const kmutex_t *mtx, const char *msg)
 {
 
-	LOCKDEBUG_ABORT(func, line, mtx, (MUTEX_SPIN_P(mtx) ?
+	LOCKDEBUG_ABORT(func, line, mtx, (MUTEX_SPIN_P(mtx->mtx_owner) ?
 	    &mutex_spin_lockops : &mutex_adaptive_lockops), msg);
 }
 
@@ -337,46 +346,23 @@ void
 _mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl,
     uintptr_t return_address)
 {
+	lockops_t *lockops __unused;
 	bool dodebug;
 
 	memset(mtx, 0, sizeof(*mtx));
 
-	switch (type) {
-	case MUTEX_ADAPTIVE:
-		KASSERT(ipl == IPL_NONE);
-		break;
-	case MUTEX_DEFAULT:
-	case MUTEX_DRIVER:
-		if (ipl == IPL_NONE || ipl == IPL_SOFTCLOCK ||
-		    ipl == IPL_SOFTBIO || ipl == IPL_SOFTNET ||
-		    ipl == IPL_SOFTSERIAL) {
-			type = MUTEX_ADAPTIVE;
-		} else {
-			type = MUTEX_SPIN;
-		}
-		break;
-	default:
-		break;
-	}
-
-	switch (type) {
-	case MUTEX_NODEBUG:
-		dodebug = LOCKDEBUG_ALLOC(mtx, NULL, return_address);
-		MUTEX_INITIALIZE_SPIN(mtx, dodebug, ipl);
-		break;
-	case MUTEX_ADAPTIVE:
-		dodebug = LOCKDEBUG_ALLOC(mtx, &mutex_adaptive_lockops,
-		    return_address);
+	if (ipl == IPL_NONE || ipl == IPL_SOFTCLOCK ||
+	    ipl == IPL_SOFTBIO || ipl == IPL_SOFTNET ||
+	    ipl == IPL_SOFTSERIAL) {
+		lockops = (type == MUTEX_NODEBUG ?
+		    NULL : &mutex_adaptive_lockops);
+		dodebug = LOCKDEBUG_ALLOC(mtx, lockops, return_address);
 		MUTEX_INITIALIZE_ADAPTIVE(mtx, dodebug);
-		break;
-	case MUTEX_SPIN:
-		dodebug = LOCKDEBUG_ALLOC(mtx, &mutex_spin_lockops,
-		    return_address);
+	} else {
+		lockops = (type == MUTEX_NODEBUG ?
+		    NULL : &mutex_spin_lockops);
+		dodebug = LOCKDEBUG_ALLOC(mtx, lockops, return_address);
 		MUTEX_INITIALIZE_SPIN(mtx, dodebug, ipl);
-		break;
-	default:
-		panic("mutex_init: impossible type");
-		break;
 	}
 }
 
@@ -395,10 +381,11 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 void
 mutex_destroy(kmutex_t *mtx)
 {
+	uintptr_t owner = mtx->mtx_owner;
 
-	if (MUTEX_ADAPTIVE_P(mtx)) {
-		MUTEX_ASSERT(mtx, !MUTEX_OWNED(mtx->mtx_owner) &&
-		    !MUTEX_HAS_WAITERS(mtx));
+	if (MUTEX_ADAPTIVE_P(owner)) {
+		MUTEX_ASSERT(mtx, !MUTEX_OWNED(owner));
+		MUTEX_ASSERT(mtx, !MUTEX_HAS_WAITERS(mtx));
 	} else {
 		MUTEX_ASSERT(mtx, !MUTEX_SPINBIT_LOCKED_P(mtx));
 	}
@@ -469,7 +456,8 @@ mutex_vector_enter(kmutex_t *mtx)
 	/*
 	 * Handle spin mutexes.
 	 */
-	if (MUTEX_SPIN_P(mtx)) {
+	owner = mtx->mtx_owner;
+	if (MUTEX_SPIN_P(owner)) {
 #if defined(LOCKDEBUG) && defined(MULTIPROCESSOR)
 		u_int spins = 0;
 #endif
@@ -493,10 +481,6 @@ mutex_vector_enter(kmutex_t *mtx)
 		 * to reduce cache line ping-ponging between CPUs.
 		 */
 		do {
-#if MUTEX_PANIC_SKIP_SPIN
-			if (panicstr != NULL)
-				break;
-#endif
 			while (MUTEX_SPINBIT_LOCKED_P(mtx)) {
 				SPINLOCK_BACKOFF(count);
 #ifdef LOCKDEBUG
@@ -520,7 +504,7 @@ mutex_vector_enter(kmutex_t *mtx)
 
 	curthread = (uintptr_t)curlwp;
 
-	MUTEX_DASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
+	MUTEX_DASSERT(mtx, MUTEX_ADAPTIVE_P(owner));
 	MUTEX_ASSERT(mtx, curthread != 0);
 	MUTEX_ASSERT(mtx, !cpu_intr_p());
 	MUTEX_WANTLOCK(mtx);
@@ -538,7 +522,7 @@ mutex_vector_enter(kmutex_t *mtx)
 	 * then we stop spinning, and sleep instead.
 	 */
 	KPREEMPT_DISABLE(curlwp);
-	for (owner = mtx->mtx_owner;;) {
+	for (;;) {
 		if (!MUTEX_OWNED(owner)) {
 			/*
 			 * Mutex owner clear could mean two things:
@@ -554,12 +538,6 @@ mutex_vector_enter(kmutex_t *mtx)
 			owner = mtx->mtx_owner;
 			continue;
 		}
-#if MUTEX_PANIC_SKIP_ADAPTIVE
-		if (__predict_false(panicstr != NULL)) {
-			KPREEMPT_ENABLE(curlwp);
-			return;
-		}
-#endif
 		if (__predict_false(MUTEX_OWNER(owner) == curthread)) {
 			MUTEX_ABORT(mtx, "locking against myself");
 		}
@@ -692,8 +670,14 @@ mutex_vector_enter(kmutex_t *mtx)
 		 * If the waiters bit is not set it's unsafe to go asleep,
 		 * as we might never be awoken.
 		 */
-		if ((membar_consumer(), mutex_oncpu(owner)) ||
-		    (membar_consumer(), !MUTEX_HAS_WAITERS(mtx))) {
+		membar_consumer();
+		if (mutex_oncpu(owner)) {
+			turnstile_exit(mtx);
+			owner = mtx->mtx_owner;
+			continue;
+		}
+		membar_consumer();
+		if (!MUTEX_HAS_WAITERS(mtx)) {
 			turnstile_exit(mtx);
 			owner = mtx->mtx_owner;
 			continue;
@@ -732,13 +716,9 @@ mutex_vector_exit(kmutex_t *mtx)
 	turnstile_t *ts;
 	uintptr_t curthread;
 
-	if (MUTEX_SPIN_P(mtx)) {
+	if (MUTEX_SPIN_P(mtx->mtx_owner)) {
 #ifdef FULL
 		if (__predict_false(!MUTEX_SPINBIT_LOCKED_P(mtx))) {
-#if MUTEX_PANIC_SKIP_SPIN
-			if (panicstr != NULL)
-				return;
-#endif
 			MUTEX_ABORT(mtx, "exiting unheld spin mutex");
 		}
 		MUTEX_UNLOCKED(mtx);
@@ -748,8 +728,13 @@ mutex_vector_exit(kmutex_t *mtx)
 		return;
 	}
 
-#ifdef MUTEX_PANIC_SKIP_ADAPTIVE
-	if (__predict_false((uintptr_t)panicstr | cold)) {
+#ifndef __HAVE_MUTEX_STUBS
+	/*
+	 * On some architectures without mutex stubs, we can enter here to
+	 * release mutexes before interrupts and whatnot are up and running. 
+	 * We need this hack to keep them sweet.
+	 */
+	if (__predict_false(cold)) {
 		MUTEX_UNLOCKED(mtx);
 		MUTEX_RELEASE(mtx);
 		return;
@@ -834,7 +819,7 @@ mutex_owned(const kmutex_t *mtx)
 
 	if (mtx == NULL)
 		return 0;
-	if (MUTEX_ADAPTIVE_P(mtx))
+	if (MUTEX_ADAPTIVE_P(mtx->mtx_owner))
 		return MUTEX_OWNER(mtx->mtx_owner) == (uintptr_t)curlwp;
 #ifdef FULL
 	return MUTEX_SPINBIT_LOCKED_P(mtx);
@@ -853,8 +838,33 @@ lwp_t *
 mutex_owner(const kmutex_t *mtx)
 {
 
-	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
+	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx->mtx_owner));
 	return (struct lwp *)MUTEX_OWNER(mtx->mtx_owner);
+}
+
+/*
+ * mutex_owner_running:
+ *
+ *	Return true if an adaptive mutex is unheld, or held and the owner is
+ *	running on a CPU.  For the pagedaemon only - do not document or use
+ *	in other code.
+ */
+bool
+mutex_owner_running(const kmutex_t *mtx)
+{
+#ifdef MULTIPROCESSOR
+	uintptr_t owner;
+	bool rv;
+
+	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx->mtx_owner));
+	kpreempt_disable();
+	owner = mtx->mtx_owner;
+	rv = !MUTEX_OWNED(owner) || mutex_oncpu(MUTEX_OWNER(owner));
+	kpreempt_enable();
+	return rv;
+#else
+	return mutex_owner(mtx) == curlwp;
+#endif
 }
 
 /*
@@ -887,7 +897,7 @@ mutex_tryenter(kmutex_t *mtx)
 	/*
 	 * Handle spin mutexes.
 	 */
-	if (MUTEX_SPIN_P(mtx)) {
+	if (MUTEX_SPIN_P(mtx->mtx_owner)) {
 		MUTEX_SPIN_SPLRAISE(mtx);
 #ifdef FULL
 		if (MUTEX_SPINBIT_LOCK_TRY(mtx)) {
@@ -945,10 +955,6 @@ mutex_spin_retry(kmutex_t *mtx)
 	 * to reduce cache line ping-ponging between CPUs.
 	 */
 	do {
-#if MUTEX_PANIC_SKIP_SPIN
-		if (panicstr != NULL)
-			break;
-#endif
 		while (MUTEX_SPINBIT_LOCKED_P(mtx)) {
 			SPINLOCK_BACKOFF(count);
 #ifdef LOCKDEBUG

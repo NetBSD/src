@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.33.2.1 2019/06/10 22:05:46 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.33.2.2 2020/04/08 14:07:25 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.33.2.1 2019/06/10 22:05:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.33.2.2 2020/04/08 14:07:25 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -150,7 +150,9 @@ db_suspend_others(void)
 		xen_broadcast_ipi(XEN_IPI_DDB);
 #else
 #if NLAPIC > 0
-		x86_ipi(ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
+		if (ddb_vec != 0)
+			x86_ipi(ddb_vec, LAPIC_DEST_ALLEXCL,
+			    LAPIC_DLMODE_FIXED);
 #endif
 #endif /* XENPV */
 	}

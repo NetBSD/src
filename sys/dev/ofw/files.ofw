@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofw,v 1.14 2015/12/16 12:22:48 jmcneill Exp $
+#	$NetBSD: files.ofw,v 1.14.18.1 2020/04/08 14:08:08 martin Exp $
 #
 # First cut on Openfirmware interface
 #
@@ -9,6 +9,7 @@ define	ofw_subr
 
 defpseudo openfirm
 file	dev/ofw/openfirmio.c		openfirm needs-flag
+file 	dev/ofw/ofw_sysctl.c		openfirm | ofw_subr
 
 file	dev/ofw/ofw_subr.c		ofbus | openfirm | ofw_subr
 

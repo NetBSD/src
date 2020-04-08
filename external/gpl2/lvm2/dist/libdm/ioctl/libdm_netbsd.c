@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm_netbsd.c,v 1.7 2011/02/08 03:26:12 haad Exp $        */
+/*      $NetBSD: libdm_netbsd.c,v 1.7.44.1 2020/04/08 14:04:22 martin Exp $        */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -345,9 +345,10 @@ dm_table_status(libdm_task_t task, struct dm_ioctl *dmi)
 		type = libdm_table_get_target(table);
 		params = libdm_table_get_params(table);
 
-		if (params != NULL)
-			plen = strlen(params) + 1;
+		if (params == NULL)
+			params = "";
 
+		plen = strlen(params) + 1;
 		rec_size = sizeof(struct dm_target_spec) + plen;
 
 		/*
@@ -357,17 +358,17 @@ dm_table_status(libdm_task_t task, struct dm_ioctl *dmi)
 		 */
 		next += rec_size;
 
-		if (rec_size > dmi->data_size)
+		if (rec_size > dmi->data_size) {
+			libdm_table_destroy(table);
+			libdm_iter_destroy(iter);
 			return -ENOMEM;
+		}
 
 		dmts->next = next;
 		strlcpy(dmts->target_type, type, DM_MAX_TYPE_NAME);
 		params_start = (char *)dmts + sizeof(struct dm_target_spec);
 
-		if (params != NULL)
-			strlcpy(params_start, params, plen);
-		else
-			params_start = "\0";
+		strlcpy(params_start, params, plen);
 
 		odmts = dmts;
 		dmts = (struct dm_target_spec *)((uint8_t *)dmts + rec_size);

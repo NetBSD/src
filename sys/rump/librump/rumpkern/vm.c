@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.173 2017/05/14 13:49:55 nat Exp $	*/
+/*	$NetBSD: vm.c,v 1.173.10.1 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.173 2017/05/14 13:49:55 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.173.10.1 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.173 2017/05/14 13:49:55 nat Exp $");
 #include <sys/mman.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
+#include <sys/radixtree.h>
 
 #include <machine/pmap.h>
 
@@ -67,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.173 2017/05/14 13:49:55 nat Exp $");
 
 #include <rump/rumpuser.h>
 
-kmutex_t uvm_pageqlock; /* non-free page lock */
+kmutex_t vmpage_lruqueue_lock; /* non-free page lock */
 kmutex_t uvm_fpageqlock; /* free page lock, non-gpl license */
 kmutex_t uvm_swap_data_lock;
 
@@ -125,34 +126,6 @@ static unsigned long dddlim;		/* 90% of memory limit used */
 static struct pglist vmpage_lruqueue;
 static unsigned vmpage_onqueue;
 
-static int
-pg_compare_key(void *ctx, const void *n, const void *key)
-{
-	voff_t a = ((const struct vm_page *)n)->offset;
-	voff_t b = *(const voff_t *)key;
-
-	if (a < b)
-		return -1;
-	else if (a > b)
-		return 1;
-	else
-		return 0;
-}
-
-static int
-pg_compare_nodes(void *ctx, const void *n1, const void *n2)
-{
-
-	return pg_compare_key(ctx, n1, &((const struct vm_page *)n2)->offset);
-}
-
-const rb_tree_ops_t uvm_page_tree_ops = {
-	.rbto_compare_nodes = pg_compare_nodes,
-	.rbto_compare_key = pg_compare_key,
-	.rbto_node_offset = offsetof(struct vm_page, rb_node),
-	.rbto_context = NULL
-};
-
 /*
  * vm pages 
  */
@@ -187,24 +160,36 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 {
 	struct vm_page *pg;
 
-	KASSERT(uobj && mutex_owned(uobj->vmobjlock));
+	KASSERT(uobj && rw_write_held(uobj->vmobjlock));
 	KASSERT(anon == NULL);
 
 	pg = pool_cache_get(&pagecache, PR_NOWAIT);
 	if (__predict_false(pg == NULL)) {
 		return NULL;
 	}
+	mutex_init(&pg->interlock, MUTEX_DEFAULT, IPL_NONE);
 
 	pg->offset = off;
 	pg->uobject = uobj;
+
+	if (UVM_OBJ_IS_VNODE(uobj) && uobj->uo_npages == 0) {
+		struct vnode *vp = (struct vnode *)uobj;
+		mutex_enter(vp->v_interlock);
+		vp->v_iflag |= VI_PAGES;
+		mutex_exit(vp->v_interlock);
+	}
+
+	if (radix_tree_insert_node(&uobj->uo_pages, off >> PAGE_SHIFT,
+	    pg) != 0) {
+		pool_cache_put(&pagecache, pg);
+		return NULL;
+	}
+	uobj->uo_npages++;
 
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
 	if (flags & UVM_PGA_ZERO) {
 		uvm_pagezero(pg);
 	}
-
-	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
-	(void)rb_tree_insert_node(&uobj->rb_tree, pg);
 
 	/*
 	 * Don't put anons on the LRU page queue.  We can't flush them
@@ -213,12 +198,10 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 	 */
 	if (!UVM_OBJ_IS_AOBJ(uobj)) {
 		atomic_inc_uint(&vmpage_onqueue);
-		mutex_enter(&uvm_pageqlock);
+		mutex_enter(&vmpage_lruqueue_lock);
 		TAILQ_INSERT_TAIL(&vmpage_lruqueue, pg, pageq.queue);
-		mutex_exit(&uvm_pageqlock);
+		mutex_exit(&vmpage_lruqueue_lock);
 	}
-
-	uobj->uo_npages++;
 
 	return pg;
 }
@@ -232,23 +215,36 @@ void
 uvm_pagefree(struct vm_page *pg)
 {
 	struct uvm_object *uobj = pg->uobject;
+	struct vm_page *pg2 __unused;
 
-	KASSERT(mutex_owned(&uvm_pageqlock));
-	KASSERT(mutex_owned(uobj->vmobjlock));
+	KASSERT(rw_write_held(uobj->vmobjlock));
 
-	if (pg->flags & PG_WANTED)
+	mutex_enter(&pg->interlock);
+	if (pg->pqflags & PQ_WANTED) {
+		pg->pqflags &= ~PQ_WANTED;
 		wakeup(pg);
-
-	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
+	}
+	mutex_exit(&pg->interlock);
 
 	uobj->uo_npages--;
-	rb_tree_remove_node(&uobj->rb_tree, pg);
+	pg2 = radix_tree_remove_node(&uobj->uo_pages, pg->offset >> PAGE_SHIFT);
+	KASSERT(pg == pg2);
 
 	if (!UVM_OBJ_IS_AOBJ(uobj)) {
+		mutex_enter(&vmpage_lruqueue_lock);
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
+		mutex_exit(&vmpage_lruqueue_lock);
 		atomic_dec_uint(&vmpage_onqueue);
 	}
 
+	if (UVM_OBJ_IS_VNODE(uobj) && uobj->uo_npages == 0) {
+		struct vnode *vp = (struct vnode *)uobj;
+		mutex_enter(vp->v_interlock);
+		vp->v_iflag &= ~VI_PAGES;
+		mutex_exit(vp->v_interlock);
+	}
+
+	mutex_destroy(&pg->interlock);
 	pool_cache_put(&pagecache, pg);
 }
 
@@ -256,20 +252,23 @@ void
 uvm_pagezero(struct vm_page *pg)
 {
 
-	pg->flags &= ~PG_CLEAN;
+	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	memset((void *)pg->uanon, 0, PAGE_SIZE);
 }
 
 /*
- * uvm_page_locked_p: return true if object associated with page is
+ * uvm_page_owner_locked_p: return true if object associated with page is
  * locked.  this is a weak check for runtime assertions only.
  */
 
 bool
-uvm_page_locked_p(struct vm_page *pg)
+uvm_page_owner_locked_p(struct vm_page *pg, bool exclusive)
 {
 
-	return mutex_owned(pg->uobject->vmobjlock);
+	if (exclusive)
+		return rw_write_held(pg->uobject->vmobjlock);
+	else
+		return rw_lock_held(pg->uobject->vmobjlock);
 }
 
 /*
@@ -366,7 +365,7 @@ uvm_init(void)
 #endif
 
 	mutex_init(&pagermtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&vmpage_lruqueue_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* just to appease linkage */
@@ -394,6 +393,8 @@ uvm_init(void)
 
 	pool_cache_bootstrap(&pagecache, sizeof(struct vm_page), 0, 0, 0,
 	    "page$", NULL, IPL_NONE, pgctor, pgdtor, NULL);
+
+	radix_tree_init();
 
 	/* create vmspace used by local clients */
 	rump_vmspace_local = kmem_zalloc(sizeof(*rump_vmspace_local), KM_SLEEP);
@@ -428,6 +429,48 @@ uvm_pageunwire(struct vm_page *pg)
 {
 
 	/* nada */
+}
+
+int
+uvm_availmem(void)
+{
+
+	return uvmexp.free;
+}
+
+void
+uvm_pagelock(struct vm_page *pg)
+{
+
+	mutex_enter(&pg->interlock);
+}
+
+void
+uvm_pagelock2(struct vm_page *pg1, struct vm_page *pg2)
+{
+
+	if (pg1 < pg2) {
+		mutex_enter(&pg1->interlock);
+		mutex_enter(&pg2->interlock);
+	} else {
+		mutex_enter(&pg2->interlock);
+		mutex_enter(&pg1->interlock);
+	}
+}
+
+void
+uvm_pageunlock(struct vm_page *pg)
+{
+
+	mutex_exit(&pg->interlock);
+}
+
+void
+uvm_pageunlock2(struct vm_page *pg1, struct vm_page *pg2)
+{
+
+	mutex_exit(&pg1->interlock);
+	mutex_exit(&pg2->interlock);
 }
 
 /* where's your schmonz now? */
@@ -617,12 +660,12 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 	struct vm_page *pg;
 	bool ispagedaemon = curlwp == uvm.pagedaemon_lwp;
 
-	pg = rb_tree_find_node(&uobj->rb_tree, &off);
+	pg = radix_tree_lookup_node(&uobj->uo_pages, off >> PAGE_SHIFT);
 	if (pg && !UVM_OBJ_IS_AOBJ(pg->uobject) && !ispagedaemon) {
-		mutex_enter(&uvm_pageqlock);
+		mutex_enter(&vmpage_lruqueue_lock);
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
 		TAILQ_INSERT_TAIL(&vmpage_lruqueue, pg, pageq.queue);
-		mutex_exit(&uvm_pageqlock);
+		mutex_exit(&vmpage_lruqueue_lock);
 	}
 
 	return pg;
@@ -635,7 +678,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 	int i;
 
 	KASSERT(npgs > 0);
-	KASSERT(mutex_owned(pgs[0]->uobject->vmobjlock));
+	KASSERT(rw_write_held(pgs[0]->uobject->vmobjlock));
 
 	for (i = 0; i < npgs; i++) {
 		pg = pgs[i];
@@ -643,12 +686,39 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			continue;
 
 		KASSERT(pg->flags & PG_BUSY);
-		if (pg->flags & PG_WANTED)
-			wakeup(pg);
-		if (pg->flags & PG_RELEASED)
+		if (pg->flags & PG_RELEASED) {
 			uvm_pagefree(pg);
-		else
-			pg->flags &= ~(PG_WANTED|PG_BUSY);
+		} else {
+			pg->flags &= ~PG_BUSY;
+			uvm_pagelock(pg);
+			uvm_pagewakeup(pg);
+			uvm_pageunlock(pg);
+		}
+	}
+}
+
+void
+uvm_pagewait(struct vm_page *pg, krwlock_t *lock, const char *wmesg)
+{
+
+	KASSERT(rw_lock_held(lock));
+	KASSERT((pg->flags & PG_BUSY) != 0);
+
+	mutex_enter(&pg->interlock);
+	pg->pqflags |= PQ_WANTED;
+	rw_exit(lock);
+	UVM_UNLOCK_AND_WAIT(pg, &pg->interlock, false, wmesg, 0);
+}
+
+void
+uvm_pagewakeup(struct vm_page *pg)
+{
+
+	KASSERT(mutex_owned(&pg->interlock));
+
+	if ((pg->pqflags & PQ_WANTED) != 0) {
+		pg->pqflags &= ~PQ_WANTED;
+		wakeup(pg);
 	}
 }
 
@@ -659,16 +729,6 @@ uvm_estimatepageable(int *active, int *inactive)
 	/* XXX: guessing game */
 	*active = 1024;
 	*inactive = 1024;
-}
-
-bool
-vm_map_starved_p(struct vm_map *map)
-{
-
-	if (map->flags & VM_MAP_WANTVA)
-		return true;
-
-	return false;
 }
 
 int
@@ -1045,33 +1105,21 @@ uvm_pageout_done(int npages)
 }
 
 static bool
-processpage(struct vm_page *pg, bool *lockrunning)
+processpage(struct vm_page *pg)
 {
 	struct uvm_object *uobj;
 
 	uobj = pg->uobject;
-	if (mutex_tryenter(uobj->vmobjlock)) {
+	if (rw_tryenter(uobj->vmobjlock, RW_WRITER)) {
 		if ((pg->flags & PG_BUSY) == 0) {
-			mutex_exit(&uvm_pageqlock);
+			mutex_exit(&vmpage_lruqueue_lock);
 			uobj->pgops->pgo_put(uobj, pg->offset,
 			    pg->offset + PAGE_SIZE,
 			    PGO_CLEANIT|PGO_FREE);
-			KASSERT(!mutex_owned(uobj->vmobjlock));
+			KASSERT(!rw_write_held(uobj->vmobjlock));
 			return true;
 		} else {
-			mutex_exit(uobj->vmobjlock);
-		}
-	} else if (*lockrunning == false && ncpu > 1) {
-		CPU_INFO_ITERATOR cii;
-		struct cpu_info *ci;
-		struct lwp *l;
-
-		l = mutex_owner(uobj->vmobjlock);
-		for (CPU_INFO_FOREACH(cii, ci)) {
-			if (ci->ci_curlwp == l) {
-				*lockrunning = true;
-				break;
-			}
+			rw_exit(uobj->vmobjlock);
 		}
 	}
 
@@ -1090,7 +1138,6 @@ uvm_pageout(void *arg)
 	struct pool *pp, *pp_first;
 	int cleaned, skip, skipped;
 	bool succ;
-	bool lockrunning;
 
 	mutex_enter(&pdaemonmtx);
 	for (;;) {
@@ -1128,9 +1175,8 @@ uvm_pageout(void *arg)
 		 */
 		cleaned = 0;
 		skip = 0;
-		lockrunning = false;
  again:
-		mutex_enter(&uvm_pageqlock);
+		mutex_enter(&vmpage_lruqueue_lock);
 		while (cleaned < PAGEDAEMON_OBJCHUNK) {
 			skipped = 0;
 			TAILQ_FOREACH(pg, &vmpage_lruqueue, pageq.queue) {
@@ -1144,7 +1190,7 @@ uvm_pageout(void *arg)
 				while (skipped++ < skip)
 					continue;
 
-				if (processpage(pg, &lockrunning)) {
+				if (processpage(pg)) {
 					cleaned++;
 					goto again;
 				}
@@ -1153,20 +1199,18 @@ uvm_pageout(void *arg)
 			}
 			break;
 		}
-		mutex_exit(&uvm_pageqlock);
+		mutex_exit(&vmpage_lruqueue_lock);
 
 		/*
 		 * Ok, someone is running with an object lock held.
 		 * We want to yield the host CPU to make sure the
-		 * thread is not parked on the host.  Since sched_yield()
-		 * doesn't appear to do anything on NetBSD, nanosleep
+		 * thread is not parked on the host.  nanosleep
 		 * for the smallest possible time and hope we're back in
 		 * the game soon.
 		 */
-		if (cleaned == 0 && lockrunning) {
+		if (cleaned == 0) {
 			rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, 0, 1);
 
-			lockrunning = false;
 			skip = 0;
 
 			/* and here we go again */

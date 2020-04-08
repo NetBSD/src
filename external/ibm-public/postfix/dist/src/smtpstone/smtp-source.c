@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp-source.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtp-source.c,v 1.2.12.1 2020/04/08 14:06:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -306,14 +306,13 @@ static RESPONSE *response(VSTREAM *stream, VSTRING *buf)
     char   *cp;
 
     /*
-     * Initialize the response data buffer. Defend against a denial of
-     * service attack by limiting the amount of multi-line text that we are
+     * Initialize the response data buffer. smtp_get() defends against a
+     * denial of service attack by limiting the amount of single-line text,
+     * and the loop below limits the amount of multi-line text that we are
      * willing to store.
      */
-    if (rdata.buf == 0) {
+    if (rdata.buf == 0)
 	rdata.buf = vstring_alloc(100);
-	vstring_ctl(rdata.buf, CA_VSTRING_CTL_MAXLEN(var_line_limit), 0);
-    }
 
     /*
      * Censor out non-printable characters in server responses. Concatenate
@@ -337,10 +336,12 @@ static RESPONSE *response(VSTREAM *stream, VSTRING *buf)
 	    cp++;
 	while (ISSPACE(*cp))
 	    cp++;
-	vstring_strcat(rdata.buf, cp);
+	if (VSTRING_LEN(rdata.buf) < var_line_limit)
+	    vstring_strcat(rdata.buf, cp);
 	if (more == 0)
 	    break;
-	VSTRING_ADDCH(rdata.buf, '\n');
+	if (VSTRING_LEN(rdata.buf) < var_line_limit)
+	    VSTRING_ADDCH(rdata.buf, '\n');
     }
     VSTRING_TERMINATE(rdata.buf);
     rdata.str = vstring_str(rdata.buf);
@@ -1144,13 +1145,11 @@ int     main(int argc, char **argv)
     }
 
     /*
-     * Make sure the SMTP server cannot run us out of memory by sending
-     * never-ending lines of text.
+     * smtp_get() makes sure the SMTP server cannot run us out of memory by
+     * sending never-ending lines of text.
      */
-    if (buffer == 0) {
+    if (buffer == 0)
 	buffer = vstring_alloc(100);
-	vstring_ctl(buffer, CA_VSTRING_CTL_MAXLEN(var_line_limit), 0);
-    }
 
     /*
      * Make sure we have sender and recipient addresses.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_gpio.c,v 1.6.16.1 2019/06/10 22:06:30 christos Exp $	*/
+/*	$NetBSD: ralink_gpio.c,v 1.6.16.2 2020/04/08 14:07:45 martin Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_gpio.c -- Ralink 3052 gpio driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.6.16.1 2019/06/10 22:06:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.6.16.2 2020/04/08 14:07:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1580,7 +1580,7 @@ ra_gpio_toggle_LED(void *arg)
 	    (1 << (led_array1[led_index++] - SS_OFFSET)));
 #endif
 
-	if (led_index == (sizeof(led_array1))) {
+	if (led_index >= (sizeof(led_array1))) {
 		led_index = 0;
 		for (int i = 0; i < sizeof(led_array1); i++) {
 			ra_gpio_pin_write(sc, led_array1[i], 1);

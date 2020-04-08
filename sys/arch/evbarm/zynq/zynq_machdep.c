@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_machdep.c,v 1.1.24.1 2019/06/10 22:06:12 christos Exp $	*/
+/*	$NetBSD: zynq_machdep.c,v 1.1.24.2 2020/04/08 14:07:36 martin Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.1.24.1 2019/06/10 22:06:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.1.24.2 2020/04/08 14:07:36 martin Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -234,7 +234,7 @@ zynq_mpstart(void)
 				break;
 	}
 	for (size_t i = 1; i < arm_cpu_max; i++) {
-		if ((arm_cpu_hatched & __BIT(i)) == 0) {
+		if (cpu_hatched_p(i)) {
 			ret++;
 			printf("%s: warning: cpu%zu failed to hatch\n",
 			    __func__, i);

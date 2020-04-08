@@ -1,4 +1,4 @@
-/*	$NetBSD: pca9564.c,v 1.2 2016/02/14 19:54:21 chs Exp $	*/
+/*	$NetBSD: pca9564.c,v 1.2.18.1 2020/04/08 14:08:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pca9564.c,v 1.2 2016/02/14 19:54:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pca9564.c,v 1.2.18.1 2020/04/08 14:08:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,8 +67,7 @@ pca9564_attach(struct pca9564_softc *sc)
 	aprint_naive("\n");
 	aprint_normal(": PCA9564 I2C Controller\n");
 
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
-
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = pca9564_acquire_bus;
 	sc->sc_i2c.ic_release_bus = pca9564_release_bus;
@@ -77,7 +76,6 @@ pca9564_attach(struct pca9564_softc *sc)
 	sc->sc_i2c.ic_initiate_xfer = pca9564_initiate_xfer;
 	sc->sc_i2c.ic_read_byte = pca9564_read_byte;
 	sc->sc_i2c.ic_write_byte = pca9564_write_byte;
-	sc->sc_i2c.ic_exec = NULL;
 
 	/* set serial clock rate */
 	switch (sc->sc_i2c_clock) {
@@ -124,8 +122,6 @@ pca9564_acquire_bus(void *cookie, int flags)
 	struct pca9564_softc *sc = cookie;
 	uint8_t control;
 
-	mutex_enter(&sc->sc_buslock);
-
 	/* Enable SIO and set clock */
 	control = CSR_READ(sc, PCA9564_I2CCON);
 	control |= I2CCON_ENSIO;
@@ -148,8 +144,6 @@ pca9564_release_bus(void *cookie, int flags)
 	control = CSR_READ(sc, PCA9564_I2CCON);
 	control &= ~I2CCON_ENSIO;
 	CSR_WRITE(sc, PCA9564_I2CCON, control);
-
-	mutex_exit(&sc->sc_buslock);
 }
 
 #define	PCA9564_TIMEOUT		100	/* protocol timeout, in uSecs */

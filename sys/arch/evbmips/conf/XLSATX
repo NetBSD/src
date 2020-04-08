@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.25.4.1 2019/06/10 22:06:12 christos Exp $
+#	$NetBSD: XLSATX,v 1.25.4.2 2020/04/08 14:07:36 martin Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.25.4.1 $"
+#ident 		"XLSATX-$Revision: 1.25.4.2 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -190,7 +190,6 @@ pseudo-device	npf			# NPF packet filter
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	sl				# Serial Line IP
-#pseudo-device	strip				# Starmode Radio IP (Metricom)
 #pseudo-device	tun				# network tunneling over tty
 #pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre				# generic L3 over IP tunnel

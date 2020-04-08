@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.6.4.2 2019/06/10 22:05:50 christos Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.6.4.3 2020/04/08 14:07:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,13 +32,14 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6.4.2 2019/06/10 22:05:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6.4.3 2020/04/08 14:07:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -57,6 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6.4.2 2019/06/10 22:05:50 christo
 #include <machine/acpi_machdep.h>
 
 extern struct bus_space arm_generic_bs_tag;
+extern struct arm32_bus_dma_tag acpi_coherent_dma_tag;
+extern struct arm32_bus_dma_tag arm_generic_dma_tag;
+
+bus_dma_tag_t	arm_acpi_dma32_tag(struct acpi_softc *, struct acpi_devnode *);
+bus_dma_tag_t	arm_acpi_dma64_tag(struct acpi_softc *, struct acpi_devnode *);
 
 ACPI_STATUS
 acpi_md_OsInitialize(void)
@@ -202,6 +208,18 @@ acpi_md_intr_establish(uint32_t irq, int ipl, int type, int (*handler)(void *), 
 }
 
 void
+acpi_md_intr_mask(void *ih)
+{
+	intr_mask(ih);
+}
+
+void
+acpi_md_intr_unmask(void *ih)
+{
+	intr_unmask(ih);
+}
+
+void
 acpi_md_intr_disestablish(void *ih)
 {
 	intr_disestablish(ih);
@@ -258,13 +276,27 @@ acpi_md_gtdt_probe(ACPI_GTDT_HEADER *hdrp, void *aux)
 	return AE_OK;
 }
 
+#if NPCI > 0
+static struct bus_space acpi_md_mcfg_bs_tag;
+
+static int
+acpi_md_mcfg_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
+    bus_space_handle_t *bshp)
+{
+	return arm_generic_bs_tag.bs_map(t, bpa, size,
+	    flag | _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, bshp);
+}
+#endif
+
 void
 acpi_md_callback(struct acpi_softc *sc)
 {
 	ACPI_TABLE_HEADER *hdrp;
 
 #if NPCI > 0
-	acpimcfg_init(&arm_generic_bs_tag, NULL);
+	acpi_md_mcfg_bs_tag = arm_generic_bs_tag;
+	acpi_md_mcfg_bs_tag.bs_map = acpi_md_mcfg_bs_map;
+	acpimcfg_init(&acpi_md_mcfg_bs_tag, NULL);
 #endif
 
 	if (acpi_madt_map() != AE_OK)
@@ -281,3 +313,147 @@ acpi_md_callback(struct acpi_softc *sc)
 	if (ACPI_SUCCESS(AcpiGetTable(ACPI_SIG_GTDT, 0, &hdrp)))
 		config_found_ia(sc->sc_dev, "acpisdtbus", hdrp, NULL);
 }
+
+static const char * const module_hid[] = {
+	"ACPI0004",	/* Module device */
+	NULL
+};
+
+static ACPI_HANDLE
+arm_acpi_dma_module(struct acpi_softc *sc, struct acpi_devnode *ad)
+{
+	ACPI_HANDLE tmp;
+	ACPI_STATUS rv;
+
+	/*
+	 * Search up the tree for a module device with a _DMA method.
+	 */
+	for (; ad != NULL; ad = ad->ad_parent) {
+		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
+			continue;
+		if (!acpi_match_hid(ad->ad_devinfo, module_hid))
+			continue;
+		rv = AcpiGetHandle(ad->ad_handle, "_DMA", &tmp);
+		if (ACPI_SUCCESS(rv))
+			return ad->ad_handle;
+	}
+
+	return NULL;
+}
+
+static void
+arm_acpi_dma_init_ranges(struct acpi_softc *sc, struct acpi_devnode *ad,
+    struct arm32_bus_dma_tag *dmat, uint32_t flags)
+{
+	struct acpi_resources res;
+	struct acpi_mem *mem;
+	ACPI_HANDLE module;
+	ACPI_STATUS rv;
+	int n;
+
+	module = arm_acpi_dma_module(sc, ad->ad_parent);
+	if (module == NULL) {
+default_tag:
+		/* No translation required */
+		dmat->_nranges = 1;
+		dmat->_ranges = kmem_zalloc(sizeof(*dmat->_ranges), KM_SLEEP);
+		dmat->_ranges[0].dr_sysbase = 0;
+		dmat->_ranges[0].dr_busbase = 0;
+		dmat->_ranges[0].dr_len = UINTPTR_MAX;
+		dmat->_ranges[0].dr_flags = flags;
+		return;
+	}
+
+	rv = acpi_resource_parse(sc->sc_dev, module, "_DMA", &res,
+	    &acpi_resource_parse_ops_quiet);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to parse _DMA on %s: %s\n",
+		    acpi_name(module), AcpiFormatException(rv));
+		goto default_tag;
+	}
+	if (res.ar_nmem == 0) {
+		acpi_resource_cleanup(&res);
+		goto default_tag;
+	}
+
+	dmat->_nranges = res.ar_nmem;
+	dmat->_ranges = kmem_zalloc(sizeof(*dmat->_ranges) * res.ar_nmem,
+	    KM_SLEEP);
+
+	for (n = 0; n < res.ar_nmem; n++) {
+		mem = acpi_res_mem(&res, n);
+		dmat->_ranges[n].dr_busbase = mem->ar_base;
+		dmat->_ranges[n].dr_sysbase = mem->ar_xbase;
+		dmat->_ranges[n].dr_len = mem->ar_length;
+		dmat->_ranges[n].dr_flags = flags;
+
+		aprint_debug_dev(sc->sc_dev,
+		    "%s: DMA sys %#lx-%#lx bus %#lx-%#lx%s\n",
+		    acpi_name(ad->ad_handle),
+		    dmat->_ranges[n].dr_sysbase,
+		    dmat->_ranges[n].dr_sysbase + dmat->_ranges[n].dr_len - 1,
+		    dmat->_ranges[n].dr_busbase,
+		    dmat->_ranges[n].dr_busbase + dmat->_ranges[n].dr_len - 1,
+		    flags ? " (coherent)" : "");
+	}
+
+	acpi_resource_cleanup(&res);
+}
+
+static uint32_t
+arm_acpi_dma_flags(struct acpi_softc *sc, struct acpi_devnode *ad)
+{
+	ACPI_INTEGER cca = 1;	/* default cache coherent */
+	ACPI_STATUS rv;
+
+	for (; ad != NULL; ad = ad->ad_parent) {
+		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
+			continue;
+
+		rv = acpi_eval_integer(ad->ad_handle, "_CCA", &cca);
+		if (ACPI_SUCCESS(rv))
+			break;
+	}
+
+	return cca ? _BUS_DMAMAP_COHERENT : 0;
+}
+
+bus_dma_tag_t
+arm_acpi_dma32_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
+{
+	bus_dma_tag_t dmat64, dmat32;
+	int error;
+
+	if (ad->ad_dmat != NULL)
+		return ad->ad_dmat;
+
+	dmat64 = arm_acpi_dma64_tag(sc, ad);
+
+	const uint32_t flags = arm_acpi_dma_flags(sc, ad);
+	error = bus_dmatag_subregion(dmat64, 0, UINT32_MAX, &dmat32, flags);
+	if (error != 0)
+		panic("arm_acpi_dma32_tag: bus_dmatag_subregion returned %d",
+		    error);
+
+	return dmat32;
+}
+__strong_alias(acpi_get_dma_tag,arm_acpi_dma32_tag);
+
+bus_dma_tag_t
+arm_acpi_dma64_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
+{
+	struct arm32_bus_dma_tag *dmat;
+
+	if (ad->ad_dmat64 != NULL)
+		return ad->ad_dmat64;
+		
+	dmat = kmem_alloc(sizeof(*dmat), KM_SLEEP);
+	*dmat = arm_generic_dma_tag;
+
+	const uint32_t flags = arm_acpi_dma_flags(sc, ad);
+	arm_acpi_dma_init_ranges(sc, ad, dmat, flags);
+
+	return dmat;
+}
+__strong_alias(acpi_get_dma64_tag,arm_acpi_dma64_tag);

@@ -1,4 +1,4 @@
-/*	$NetBSD: px30-cru.h,v 1.1.1.1.6.2 2019/06/10 22:08:54 christos Exp $	*/
+/*	$NetBSD: px30-cru.h,v 1.1.1.1.6.3 2020/04/08 14:08:44 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 
@@ -87,6 +87,8 @@
 #define SCLK_EMMC_DIV50		83
 #define SCLK_DDRCLK		84
 #define SCLK_UART1_SRC		85
+#define SCLK_SDMMC_DIV		86
+#define SCLK_SDMMC_DIV50	87
 
 /* dclk gates */
 #define DCLK_VOPB		150

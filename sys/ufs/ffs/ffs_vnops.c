@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.129 2017/05/26 14:21:02 riastradh Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.129.10.1 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.129 2017/05/26 14:21:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.129.10.1 2020/04/08 14:09:03 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -358,7 +358,7 @@ ffs_fsync(void *v)
 	 * First, flush all pages in range.
 	 */
 
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
 	    round_page(ap->a_offhi), PGO_CLEANIT |
 	    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
@@ -473,7 +473,7 @@ ffs_full_fsync(struct vnode *vp, int flags)
 				pflags |= PGO_LAZY;
 			if ((flags & FSYNC_WAIT))
 				pflags |= PGO_SYNCIO;
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, 0, 0, pflags);
 			if (error)
 				return error;

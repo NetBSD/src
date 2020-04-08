@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.7 2012/06/03 21:42:45 joerg Exp $
+# $NetBSD: dot.profile,v 1.7.34.1 2020/04/08 14:03:54 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -91,14 +91,11 @@ EOM
 	# examine the dmesg state
 	mount -t kernfs /kern /kern
 
-	# hack to get around bugs in kernfs's rootdev/rrootdev lookup.
-	ls -l /dev/* > /dev/null 2>&1
-
 	# mount the ramdisk read write
 	mount -t ffs -u /kern/rootdev /
 
 	# run the installation or upgrade script.
-	sysinst
+	sysinst || stty sane
 	if [ $? = 4 ]; then
 		echo "Oops, something went wrong - we will try again"
 		exit

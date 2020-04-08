@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.94 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.94.6.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.94 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.94.6.1 2020/04/08 14:09:04 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -660,9 +660,10 @@ lfs_register_block(struct vnode *vp, daddr_t lbn)
 static void
 lfs_do_deregister(struct lfs *fs, struct inode *ip, struct lbnentry *lbp)
 {
+
+	KASSERT(mutex_owned(&lfs_lock));
 	ASSERT_MAYBE_SEGLOCK(fs);
 
-	mutex_enter(&lfs_lock);
 	--ip->i_lfs_nbtree;
 	SPLAY_REMOVE(lfs_splay, &ip->i_lfs_lbtree, lbp);
 	if (fs->lfs_favail > lfs_btofsb(fs, (1 << lfs_sb_getbshift(fs))))
@@ -671,9 +672,12 @@ lfs_do_deregister(struct lfs *fs, struct inode *ip, struct lbnentry *lbp)
 	if (locked_fakequeue_count > 0)
 		--locked_fakequeue_count;
 	lfs_subsys_pages -= lfs_sb_getbsize(fs) >> PAGE_SHIFT;
-	mutex_exit(&lfs_lock);
 
+	mutex_exit(&lfs_lock);
 	pool_put(&lfs_lbnentry_pool, lbp);
+	mutex_enter(&lfs_lock);
+
+	KASSERT(mutex_owned(&lfs_lock));
 }
 
 void
@@ -690,19 +694,18 @@ lfs_deregister_block(struct vnode *vp, daddr_t lbn)
 	if (lbn < 0 || vp->v_type != VREG || ip->i_number == LFS_IFILE_INUM)
 		return;
 
+	mutex_enter(&lfs_lock);
 	fs = ip->i_lfs;
 	tmp.lbn = lbn;
-	lbp = SPLAY_FIND(lfs_splay, &ip->i_lfs_lbtree, &tmp);
-	if (lbp == NULL)
-		return;
-
-	lfs_do_deregister(fs, ip, lbp);
+	if ((lbp = SPLAY_FIND(lfs_splay, &ip->i_lfs_lbtree, &tmp)) != NULL)
+		lfs_do_deregister(fs, ip, lbp);
+	mutex_exit(&lfs_lock);
 }
 
 void
 lfs_deregister_all(struct vnode *vp)
 {
-	struct lbnentry *lbp, *nlbp;
+	struct lbnentry *lbp;
 	struct lfs_splay *hd;
 	struct lfs *fs;
 	struct inode *ip;
@@ -711,8 +714,8 @@ lfs_deregister_all(struct vnode *vp)
 	fs = ip->i_lfs;
 	hd = &ip->i_lfs_lbtree;
 
-	for (lbp = SPLAY_MIN(lfs_splay, hd); lbp != NULL; lbp = nlbp) {
-		nlbp = SPLAY_NEXT(lfs_splay, hd, lbp);
+	mutex_enter(&lfs_lock);
+	while ((lbp = SPLAY_MIN(lfs_splay, hd)) != NULL)
 		lfs_do_deregister(fs, ip, lbp);
-	}
+	mutex_exit(&lfs_lock);
 }

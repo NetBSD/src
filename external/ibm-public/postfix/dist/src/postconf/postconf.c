@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: postconf.c,v 1.2.12.1 2020/04/08 14:06:55 martin Exp $	*/
 
 /*++
 /* NAME
@@ -81,14 +81,14 @@
 /*	By default, the \fBpostconf\fR(1) command displays the
 /*	values of \fBmain.cf\fR configuration parameters, and warns
 /*	about possible mis-typed parameter names (Postfix 2.9 and later).
-/*	It can also change \fBmain.cf\fR configuration
+/*	The command can also change \fBmain.cf\fR configuration
 /*	parameter values, or display other configuration information
 /*	about the Postfix mail system.
 /*
 /*	Options:
 /* .IP \fB-a\fR
-/*	List the available SASL server plug-in types.  The SASL
-/*	plug-in type is selected with the \fBsmtpd_sasl_type\fR
+/*	List the available SASL plug-in types for the Postfix SMTP
+/*	server. The plug-in type is selected with the \fBsmtpd_sasl_type\fR
 /*	configuration parameter by specifying one of the names
 /*	listed below.
 /* .RS
@@ -103,9 +103,9 @@
 /* .IP
 /*	This feature is available with Postfix 2.3 and later.
 /* .IP \fB-A\fR
-/*	List the available SASL client plug-in types.  The SASL
-/*	plug-in type is selected with the \fBsmtp_sasl_type\fR or
-/*	\fBlmtp_sasl_type\fR configuration parameters by specifying
+/*	List the available SASL plug-in types for the Postfix SMTP
+/*	client.  The plug-in type is selected with the \fBsmtp_sasl_type\fR
+/*	or \fBlmtp_sasl_type\fR configuration parameters by specifying
 /*	one of the names listed below.
 /* .RS
 /* .IP \fBcyrus\fR
@@ -116,18 +116,14 @@
 /*	This feature is available with Postfix 2.3 and later.
 /* .IP "\fB-b\fR [\fItemplate_file\fR]"
 /*	Display the message text that appears at the beginning of
-/*	delivery status notification (DSN) messages, replacing
+/*	delivery status notification (DSN) messages, expanding
 /*	$\fBname\fR expressions with actual values as described in
 /*	\fBbounce\fR(5).
 /*
-/*	To override the built-in templates, specify a template file
-/*	name at the end of the \fBpostconf\fR(1) command line, or
-/*	specify a file name in \fBmain.cf\fR with the
-/*	\fBbounce_template_file\fR parameter.
-/*
-/*	To force selection of the built-in templates, specify an
-/*	empty template file name on the \fBpostconf\fR(1) command
-/*	line (in shell language: "").
+/*	To override the \fBbounce_template_file\fR parameter setting,
+/*	specify a template file name at the end of the "\fBpostconf
+/*	-b\fR" command line. Specify an empty file name to display
+/*	built-in templates (in shell language: "").
 /*
 /*	This feature is available with Postfix 2.3 and later.
 /* .IP "\fB-c \fIconfig_dir\fR"
@@ -169,7 +165,7 @@
 /*
 /*	With \fB-F\fR, edit the \fBmaster.cf\fR configuration file,
 /*	and replace one or more service fields with new values as
-/*	specied with "\fIservice/type/field=value\fR" on the
+/*	specified with "\fIservice/type/field=value\fR" on the
 /*	\fBpostconf\fR(1) command line. Currently, the "command"
 /*	field contains the command name and command arguments.  this
 /*	may change in the near future, so that the "command" field
@@ -178,7 +174,7 @@
 /*
 /*	With \fB-P\fR, edit the \fBmaster.cf\fR configuration file,
 /*	and add or update one or more service parameter settings
-/*	(-o parameter=value settings) with new values as specied
+/*	(-o parameter=value settings) with new values as specified
 /*	with "\fIservice/type/parameter=value\fR" on the \fBpostconf\fR(1)
 /*	command line.
 /*
@@ -247,20 +243,26 @@
 /* .IP \fBcdb\fR
 /*	A read-optimized structure with no support for incremental
 /*	updates.  Available on systems with support for CDB databases.
+/*
+/*	This feature is available with Postfix 2.2 and later.
 /* .IP \fBcidr\fR
 /*	A table that associates values with Classless Inter-Domain
 /*	Routing (CIDR) patterns. This is described in \fBcidr_table\fR(5).
+/*
+/*	This feature is available with Postfix 2.2 and later.
 /* .IP \fBdbm\fR
 /*	An indexed file type based on hashing.  Available on systems
 /*	with support for DBM databases.
 /* .IP \fBenviron\fR
 /*	The UNIX process environment array. The lookup key is the
-/*	variable name. Originally implemented for testing, someone
-/*	may find this useful someday.
+/*	environment variable name; the table name is ignored.  Originally
+/*	implemented for testing, someone may find this useful someday.
 /* .IP \fBfail\fR
 /*	A table that reliably fails all requests. The lookup table
 /*	name is used for logging. This table exists to simplify
 /*	Postfix error tests.
+/*
+/*	This feature is available with Postfix 2.9 and later.
 /* .IP \fBhash\fR
 /*	An indexed file type based on hashing.  Available on systems
 /*	with support for Berkeley DB databases.
@@ -268,10 +270,14 @@
 /*	A non-shared, in-memory lookup table. Example: "\fBinline:{
 /*	\fIkey\fB=\fIvalue\fB, { \fIkey\fB = \fItext with whitespace
 /*	or comma\fB }}\fR". Key-value pairs are separated by
-/*	whitespace or comma; whitespace after "\fB{\fR" and before "\fB}\fR"
-/*	is ignored. Inline tables eliminate the need to create a
+/*	whitespace or comma; with a key-value pair inside "\fB{}\fR",
+/*	whitespace is ignored after the opening "\fB{\fR", around
+/*	the "\fB=\fR" between key and value, and before the closing
+/*	"\fB}\fR". Inline tables eliminate the need to create a
 /*	database file for just a few fixed elements.  See also the
 /*	\fIstatic:\fR map type.
+/*
+/*	This feature is available with Postfix 3.0 and later.
 /* .IP \fBinternal\fR
 /*	A non-shared, in-memory hash table. Its content are lost
 /*	when a process terminates.
@@ -279,11 +285,15 @@
 /*	OpenLDAP LMDB database (a memory-mapped, persistent file).
 /*	Available on systems with support for LMDB databases.  This
 /*	is described in \fBlmdb_table\fR(5).
+/*
+/*	This feature is available with Postfix 2.11 and later.
 /* .IP "\fBldap\fR (read-only)"
 /*	LDAP database client. This is described in \fBldap_table\fR(5).
 /* .IP "\fBmemcache\fR"
 /*	Memcache database client. This is described in
 /*	\fBmemcache_table\fR(5).
+/*
+/*	This feature is available with Postfix 2.9 and later.
 /* .IP "\fBmysql\fR (read-only)"
 /*	MySQL database client.  Available on systems with support
 /*	for MySQL databases.  This is described in \fBmysql_table\fR(5).
@@ -293,6 +303,8 @@
 /* .IP "\fBpgsql\fR (read-only)"
 /*	PostgreSQL database client. This is described in
 /*	\fBpgsql_table\fR(5).
+/*
+/*	This feature is available with Postfix 2.1 and later.
 /* .IP "\fBpipemap\fR (read-only)"
 /*	A lookup table that constructs a pipeline of tables.  Example:
 /*	"\fBpipemap:{\fItype_1:name_1,  ..., type_n:name_n\fB}\fR".
@@ -304,9 +316,13 @@
 /*	"pipemap:" table name must be "\fB{\fR" and "\fB}\fR".
 /*	Within these, individual maps are separated with comma or
 /*	whitespace.
+/*
+/*	This feature is available with Postfix 3.0 and later.
 /* .IP "\fBproxy\fR"
 /*	Postfix \fBproxymap\fR(8) client for shared access to Postfix
 /*	databases. The table name syntax is \fItype\fB:\fIname\fR.
+/*
+/*	This feature is available with Postfix 2.0 and later.
 /* .IP "\fBrandmap\fR (read-only)"
 /*	An in-memory table that performs random selection. Example:
 /*	"\fBrandmap:{\fIresult_1, ..., result_n\fB}\fR". Each table query
@@ -315,26 +331,38 @@
 /*	"\fB{\fR" and "\fB}\fR".  Within these, individual results
 /*	are separated with comma or whitespace. To give a specific
 /*	result more weight, specify it multiple times.
+/*
+/*	This feature is available with Postfix 3.0 and later.
 /* .IP "\fBregexp\fR (read-only)"
 /*	A lookup table based on regular expressions. The file format
 /*	is described in \fBregexp_table\fR(5).
 /* .IP \fBsdbm\fR
 /*	An indexed file type based on hashing.  Available on systems
 /*	with support for SDBM databases.
+/*
+/*	This feature is available with Postfix 2.2 and later.
 /* .IP "\fBsocketmap\fR (read-only)"
 /*	Sendmail-style socketmap client. The table name is
 /*	\fBinet\fR:\fIhost\fR:\fIport\fR:\fIname\fR for a TCP/IP
 /*	server, or \fBunix\fR:\fIpathname\fR:\fIname\fR for a
 /*	UNIX-domain server. This is described in \fBsocketmap_table\fR(5).
+/*
+/*	This feature is available with Postfix 2.10 and later.
 /* .IP "\fBsqlite\fR (read-only)"
 /*	SQLite database. This is described in \fBsqlite_table\fR(5).
+/*
+/*	This feature is available with Postfix 2.8 and later.
 /* .IP "\fBstatic\fR (read-only)"
 /*	A table that always returns its name as lookup result. For
 /*	example, \fBstatic:foobar\fR always returns the string
 /*	\fBfoobar\fR as lookup result. Specify "\fBstatic:{ \fItext
 /*	with whitespace\fB }\fR" when the result contains whitespace;
-/*	this form ignores whitespace after "\fB{\fR" and before
+/*	this form ignores whitespace after the opening "\fB{\fR"
+/*	and before the closing
 /*	"\fB}\fR". See also the \fIinline:\fR map.
+/*
+/*	The form "\fBstatic:{\fItext\fB}\fR is available with Postfix
+/*	3.0 and later.
 /* .IP "\fBtcp\fR (read-only)"
 /*	TCP/IP client. The protocol is described in \fBtcp_table\fR(5).
 /* .IP "\fBtexthash\fR (read-only)"
@@ -342,10 +370,14 @@
 /*	don't need to run the \fBpostmap\fR(1) command before you
 /*	can use the file, and that it does not detect changes after
 /*	the file is read.
+/*
+/*	This feature is available with Postfix 2.8 and later.
 /* .IP "\fBunionmap\fR (read-only)"
 /*	A table that sends each query to multiple lookup tables and
 /*	that concatenates all found results, separated by comma.
 /*	The table name syntax is the same as for \fBpipemap\fR.
+/*
+/*	This feature is available with Postfix 3.0 and later.
 /* .IP "\fBunix\fR (read-only)"
 /*	A limited view of the UNIX authentication database. The
 /*	following tables are implemented:
@@ -388,7 +420,13 @@
 /*	Show only configuration parameters that have explicit
 /*	\fIname=value\fR settings in \fBmain.cf\fR.  Specify \fB-nf\fR
 /*	to fold long lines for human readability (Postfix 2.9 and
-/*	later).
+/*	later). To show settings that differ from built-in defaults
+/*	only, use the following bash syntax:
+/* .nf
+/*	    comm -23 <(postconf -n) <(postconf -d)
+/* .fi
+/*	Replace "-23" with "-12" to show settings that duplicate
+/*	built-in defaults.
 /* .IP "\fB-o \fIname=value\fR"
 /*	Override \fBmain.cf\fR parameter settings.
 /*
@@ -415,14 +453,10 @@
 /*	of delivery status notification (DSN) messages, without
 /*	expanding $\fBname\fR expressions.
 /*
-/*	To override the built-in templates, specify a template file
-/*	name at the end of the \fBpostconf\fR(1) command line, or
-/*	specify a file name in \fBmain.cf\fR with the
-/*	\fBbounce_template_file\fR parameter.
-/*
-/*	To force selection of the built-in templates, specify an
-/*	empty template file name on the \fBpostconf\fR(1) command
-/*	line (in shell language: "").
+/*	To override the \fBbounce_template_file\fR parameter setting,
+/*	specify a template file name at the end of the "\fBpostconf
+/*	-t\fR" command line. Specify an empty file name to display
+/*	built-in templates (in shell language: "").
 /*
 /*	This feature is available with Postfix 2.3 and later.
 /* .IP "\fB-T \fImode\fR"
@@ -464,7 +498,7 @@
 /*
 /*	With \fB-P\fR, edit the \fBmaster.cf\fR configuration file,
 /*	and remove one or more service parameter settings (-o
-/*	parameter=value settings) as specied with
+/*	parameter=value settings) as specified with
 /*	"\fIservice/type/parameter\fR" on the \fBpostconf\fR(1)
 /*	command line.
 /*
@@ -897,6 +931,20 @@ int     main(int argc, char **argv)
     }
 
     /*
+     * We don't enforce import_environment consistency in this program.
+     * 
+     * We don't extract import_environment from main.cf, because the postconf
+     * command must be able to extract parameter settings from main.cf before
+     * all installation parameters such as mail_owner or setgid_group have a
+     * legitimate value.
+     * 
+     * We would need the functionality of mail_params_init() including all the
+     * side effects of populating the CONFIG_DICT with default values so that
+     * $name expansion works correctly, but excluding all the parameter value
+     * sanity checks so that it would not abort at installation time.
+     */
+
+    /*
      * Make all options explicit, before checking their compatibility.
      */
 #define PCF_MAIN_OR_MASTER \
@@ -975,6 +1023,7 @@ int     main(int argc, char **argv)
 	else
 	    pcf_show_master_entries(VSTREAM_OUT, pcf_cmd_mode, argc - optind,
 				    argv + optind);
+	pcf_flag_unused_master_parameters();
     }
 
     /*

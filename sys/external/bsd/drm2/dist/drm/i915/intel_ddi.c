@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ddi.c,v 1.5.20.1 2019/06/10 22:08:05 christos Exp $	*/
+/*	$NetBSD: intel_ddi.c,v 1.5.20.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ddi.c,v 1.5.20.1 2019/06/10 22:08:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ddi.c,v 1.5.20.2 2020/04/08 14:08:23 martin Exp $");
 
 #include <linux/math64.h>
 
@@ -1860,7 +1860,7 @@ void intel_ddi_enable_transcoder_func(struct drm_crtc *crtc)
 	struct drm_encoder *encoder = &intel_encoder->base;
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	enum transcoder cpu_transcoder = intel_crtc->config->cpu_transcoder;
 	enum port port = intel_ddi_get_encoder_port(intel_encoder);
 	int type = intel_encoder->type;
@@ -1973,7 +1973,7 @@ bool intel_ddi_connector_get_hw_state(struct intel_connector *intel_connector)
 	struct intel_encoder *intel_encoder = intel_connector->encoder;
 	int type = intel_connector->base.connector_type;
 	enum port port = intel_ddi_get_encoder_port(intel_encoder);
-	enum i915_pipe pipe = 0;
+	enum pipe pipe = 0;
 	enum transcoder cpu_transcoder;
 	enum intel_display_power_domain power_domain;
 	uint32_t tmp;
@@ -2015,7 +2015,7 @@ bool intel_ddi_connector_get_hw_state(struct intel_connector *intel_connector)
 }
 
 bool intel_ddi_get_hw_state(struct intel_encoder *encoder,
-			    enum i915_pipe *pipe)
+			    enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;

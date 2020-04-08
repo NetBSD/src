@@ -1,8 +1,8 @@
-This is gprof.info, produced by makeinfo version 6.4 from gprof.texi.
+This is gprof.info, produced by makeinfo version 6.5 from gprof.texi.
 
 This file documents the gprof profiler of the GNU system.
 
-   Copyright (C) 1988-2018 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -27,7 +27,7 @@ to determine which parts of a program are taking most of the execution
 time.  We assume that you know how to write, compile, and execute
 programs.  GNU 'gprof' was written by Jay Fenlason.
 
-   This manual is for 'gprof' (GNU Binutils) version 2.30.90.
+   This manual is for 'gprof' (GNU Binutils) version 2.34.
 
    This document is distributed under the terms of the GNU Free
 Documentation License version 1.3.  A copy of the license is included in
@@ -167,7 +167,7 @@ initialised.  This is usually detected by the program encountering a
 segmentation fault as soon as it is run.  The solution is to link
 against a static version of the library containing the profiling support
 code, which for 'gcc' users can be done via the '-static' or
-'-static-libgcc' command line option.  For example:
+'-static-libgcc' command-line option.  For example:
 
      gcc -g -pg -static-libgcc myprog.c utils.c -o myprog
 
@@ -190,7 +190,7 @@ support for displaying this kind of information in 'gprof'.  *Note
 Line-by-line Profiling: Line-by-line.
 
    It also worth noting that 'gcc' implements a '-finstrument-functions'
-command line option which will insert calls to special user supplied
+command-line option which will insert calls to special user supplied
 instrumentation routines at the entry and exit of every function in
 their program.  This can be used to implement an alternative profiling
 scheme.
@@ -1208,8 +1208,8 @@ line-by-line profiling information.
    With the older versions of 'gcc' the program usually has to be
 compiled with a '-g' option, in addition to '-pg', in order to generate
 debugging symbols for tracking source code lines.  Note, in much older
-versions of 'gcc' the program had to be compiled with the '-a' command
-line option as well.
+versions of 'gcc' the program had to be compiled with the '-a'
+command-line option as well.
 
    The flat profile is the most useful output table in line-by-line
 mode.  The call graph isn't as useful as normal, since the current
@@ -2425,34 +2425,34 @@ their use in free software.
 
 Tag Table:
 Node: Top719
-Node: Introduction2045
-Node: Compiling4536
-Node: Executing8592
-Node: Invoking11380
-Node: Output Options12795
-Node: Analysis Options19887
-Node: Miscellaneous Options23807
-Node: Deprecated Options25061
-Node: Symspecs27124
-Node: Output28950
-Node: Flat Profile29990
-Node: Call Graph34943
-Node: Primary38175
-Node: Callers40763
-Node: Subroutines42881
-Node: Cycles44722
-Node: Line-by-line51499
-Node: Annotated Source55575
-Node: Inaccuracy58573
-Node: Sampling Error58831
-Node: Assumptions61735
-Node: How do I?63205
-Node: Incompatibilities64762
-Node: Details66256
-Node: Implementation66649
-Node: File Format72548
-Node: Internals76836
-Node: Debugging85326
-Node: GNU Free Documentation License86916
+Node: Introduction2042
+Node: Compiling4533
+Node: Executing8589
+Node: Invoking11377
+Node: Output Options12792
+Node: Analysis Options19884
+Node: Miscellaneous Options23804
+Node: Deprecated Options25058
+Node: Symspecs27121
+Node: Output28947
+Node: Flat Profile29987
+Node: Call Graph34940
+Node: Primary38172
+Node: Callers40760
+Node: Subroutines42878
+Node: Cycles44719
+Node: Line-by-line51496
+Node: Annotated Source55572
+Node: Inaccuracy58570
+Node: Sampling Error58828
+Node: Assumptions61732
+Node: How do I?63202
+Node: Incompatibilities64759
+Node: Details66253
+Node: Implementation66646
+Node: File Format72545
+Node: Internals76833
+Node: Debugging85323
+Node: GNU Free Documentation License86913
 
 End Tag Table

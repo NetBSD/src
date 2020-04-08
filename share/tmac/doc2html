@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.67 2016/11/22 00:36:49 kamil Exp $
+.\" $NetBSD: doc2html,v 1.67.14.1 2020/04/08 14:07:23 martin Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -263,12 +263,21 @@ TODO:
 .	fl
 ..
 .em end-macro
+.
+.\" map groff -Tencoding argument to the charset name
+.       ie '\*(.T'ascii'  .ds html-charset US-ASCII
+.el \{ .ie '\*(.T'latin1' .ds html-charset ISO-8859-1
+.el \{ .ie '\*(.T'utf8'   .ds html-charset UTF-8
+.el    .ab unsupported encoding \*(.T
+.\}\}
+.
 .de init-html
 <html>
 <head>
+	<meta charset="\\*[html-charset]"/>
 	<title>
-		\\*[document-title]\\$*
-		\\*[title-section]
+.ie '\\*[title-section]'' \\*[document-title]\\$*
+.el  \\*[title-section]
 	</title>
 	<style type="text/css">
 	<!--
@@ -788,12 +797,12 @@ AT&T UNIX\\$*
 .	as doc-pcresult \\*[an-eol]
 .	pc-fin
 ..
-.de Lk
-.	as doc-pcresult <a href="\\$1">\\$1</a>
-.	shift
-.	recurse \\$@
-.	pc-fin
-..
+.\".de Lk
+.\".	as doc-pcresult <a href="\\$1">\\$1</a>
+.\".	shift
+.\".	recurse \\$@
+.\".	pc-fin
+.\"..
 .de Mt
 .	as doc-pcresult <a href="mailto:\\$1">\\$1</a>
 .	shift

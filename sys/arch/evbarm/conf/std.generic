@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic,v 1.1.4.1 2019/06/10 22:06:05 christos Exp $
+#	$NetBSD: std.generic,v 1.1.4.2 2020/04/08 14:07:34 martin Exp $
 #
 # 	generic NetBSD/evbarm with FDT support
 
@@ -26,9 +26,9 @@ options 	TPIDRPRW_IS_CURCPU
 options 	__BUS_SPACE_HAS_STREAM_METHODS
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_GENERIC_START
 options 	__HAVE_GENERIC_CPU_INITCLOCKS
-options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_PCI_CONF_HOOK
 options 	__HAVE_PCI_MSI_MSIX
 

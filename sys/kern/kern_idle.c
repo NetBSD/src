@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.25 2012/01/29 22:55:40 rmind Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.25.48.1 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.25 2012/01/29 22:55:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.25.48.1 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.25 2012/01/29 22:55:40 rmind Exp $")
 #include <sys/proc.h>
 #include <sys/atomic.h>
 
-#include <uvm/uvm.h>	/* uvm_pageidlezero */
+#include <uvm/uvm.h>	/* uvm_idle */
 #include <uvm/uvm_extern.h>
 
 void
@@ -49,27 +49,25 @@ idle_loop(void *dummy)
 	struct schedstate_percpu *spc;
 	struct lwp *l = curlwp;
 
-	kcpuset_atomic_set(kcpuset_running, cpu_index(ci));
-	ci->ci_data.cpu_onproc = l;
-
-	/* Update start time for this thread. */
 	lwp_lock(l);
+	spc = &ci->ci_schedstate;
+	KASSERT(lwp_locked(l, spc->spc_lwplock));
+	kcpuset_atomic_set(kcpuset_running, cpu_index(ci));
+	/* Update start time for this thread. */
 	binuptime(&l->l_stime);
+	spc->spc_flags |= SPCF_RUNNING;
+	KASSERT((l->l_pflag & LP_RUNNING) != 0);
+	l->l_stat = LSIDL;
 	lwp_unlock(l);
 
 	/*
 	 * Use spl0() here to ensure that we have the correct interrupt
 	 * priority.  This may be the first thread running on the CPU,
-	 * in which case we took a dirtbag route to get here.
+	 * in which case we took an odd route to get here.
 	 */
-	spc = &ci->ci_schedstate;
-	(void)splsched();
-	spc->spc_flags |= SPCF_RUNNING;
 	spl0();
-
 	KERNEL_UNLOCK_ALL(l, NULL);
-	l->l_stat = LSONPROC;
-	l->l_pflag |= LP_RUNNING;
+
 	for (;;) {
 		LOCKDEBUG_BARRIER(NULL, 0);
 		KASSERT((l->l_flag & LW_IDLE) != 0);
@@ -81,7 +79,7 @@ idle_loop(void *dummy)
 		sched_idle();
 		if (!sched_curcpu_runnable_p()) {
 			if ((spc->spc_flags & SPCF_OFFLINE) == 0) {
-				uvm_pageidlezero();
+				uvm_idle();
 			}
 			if (!sched_curcpu_runnable_p()) {
 				cpu_idle();
@@ -93,9 +91,10 @@ idle_loop(void *dummy)
 		}
 		KASSERT(l->l_mutex == l->l_cpu->ci_schedstate.spc_lwplock);
 		lwp_lock(l);
+		spc_lock(l->l_cpu);
 		mi_switch(l);
 		KASSERT(curlwp == l);
-		KASSERT(l->l_stat == LSONPROC);
+		KASSERT(l->l_stat == LSIDL);
 	}
 }
 
@@ -112,8 +111,18 @@ create_idle_lwp(struct cpu_info *ci)
 		panic("create_idle_lwp: error %d", error);
 	lwp_lock(l);
 	l->l_flag |= LW_IDLE;
+	if (ci != lwp0.l_cpu) {
+		/*
+		 * For secondary CPUs, the idle LWP is the first to run, and
+		 * it's directly entered from MD code without a trip through
+		 * mi_switch().  Make the picture look good in case the CPU
+		 * takes an interrupt before it calls idle_loop().
+		 */
+		l->l_stat = LSIDL;
+		l->l_pflag |= LP_RUNNING;
+		ci->ci_onproc = l;
+	}
 	lwp_unlock(l);
-	l->l_cpu = ci;
 	ci->ci_data.cpu_idlelwp = l;
 
 	return error;

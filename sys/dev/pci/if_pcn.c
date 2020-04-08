@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.65.2.1 2019/06/10 22:07:16 christos Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.65.2.2 2020/04/08 14:08:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.65.2.1 2019/06/10 22:07:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.65.2.2 2020/04/08 14:08:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,6 @@ struct pcn_softc {
 
 #ifdef PCN_EVENT_COUNTERS
 	/* Event counters. */
-	struct evcnt sc_ev_txsstall;	/* Tx stalled due to no txs */
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
 	struct evcnt sc_ev_txintr;	/* Tx interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
@@ -582,6 +581,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, pcn_tick, sc);
 
 	aprint_normal(": AMD PCnet-PCI Ethernet\n");
 
@@ -820,8 +820,6 @@ pcn_attach(device_t parent, device_t self, void *aux)
 
 #ifdef PCN_EVENT_COUNTERS
 	/* Attach event counters. */
-	evcnt_attach_dynamic(&sc->sc_ev_txsstall, EVCNT_TYPE_MISC,
-	    NULL, device_xname(self), "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
 	    NULL, device_xname(self), "txdstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txintr, EVCNT_TYPE_INTR,
@@ -921,7 +919,7 @@ pcn_start(struct ifnet *ifp)
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, ofree, seg;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
 		return;
 
 	/*
@@ -935,18 +933,12 @@ pcn_start(struct ifnet *ifp)
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
-	for (;;) {
+	while (sc->sc_txsfree != 0) {
 		/* Grab a packet off the queue. */
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 		m = NULL;
-
-		/* Get a work queue entry. */
-		if (sc->sc_txsfree == 0) {
-			PCN_EVCNT_INCR(&sc->sc_ev_txsstall);
-			break;
-		}
 
 		txs = &sc->sc_txsoft[sc->sc_txsnext];
 		dmamap = txs->txs_dmamap;
@@ -998,15 +990,8 @@ pcn_start(struct ifnet *ifp)
 		if (dmamap->dm_nsegs > (sc->sc_txfree - 1)) {
 			/*
 			 * Not enough free descriptors to transmit this
-			 * packet.  We haven't committed anything yet,
-			 * so just unload the DMA map, put the packet
-			 * back on the queue, and punt.  Notify the upper
-			 * layer that there are not more slots left.
-			 *
-			 * XXX We could allocate an mbuf and copy, but
-			 * XXX is it worth it?
+			 * packet.
 			 */
-			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			if (m != NULL)
 				m_freem(m);
@@ -1133,11 +1118,6 @@ pcn_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
-	if (sc->sc_txsfree == 0 || sc->sc_txfree == 0) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
-	}
-
 	if (sc->sc_txfree != ofree) {
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
@@ -1163,7 +1143,7 @@ pcn_watchdog(struct ifnet *ifp)
 	if (sc->sc_txfree != PCN_NTXDESC) {
 		printf("%s: device timeout (txfree %d txsfree %d)\n",
 		    device_xname(sc->sc_dev), sc->sc_txfree, sc->sc_txsfree);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 		/* Reset the interface. */
 		(void) pcn_init(ifp);
@@ -1248,11 +1228,11 @@ pcn_intr(void *arg)
 		if (csr0 & LE_C0_ERR) {
 			if (csr0 & LE_C0_BABL) {
 				PCN_EVCNT_INCR(&sc->sc_ev_babl);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 			}
 			if (csr0 & LE_C0_MISS) {
 				PCN_EVCNT_INCR(&sc->sc_ev_miss);
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 			}
 			if (csr0 & LE_C0_MERR) {
 				PCN_EVCNT_INCR(&sc->sc_ev_merr);
@@ -1266,14 +1246,14 @@ pcn_intr(void *arg)
 		if ((csr0 & LE_C0_RXON) == 0) {
 			printf("%s: receiver disabled\n",
 			    device_xname(sc->sc_dev));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			wantinit = 1;
 		}
 
 		if ((csr0 & LE_C0_TXON) == 0) {
 			printf("%s: transmitter disabled\n",
 			    device_xname(sc->sc_dev));
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			wantinit = 1;
 		}
 	}
@@ -1324,8 +1304,6 @@ pcn_txintr(struct pcn_softc *sc)
 	uint32_t tmd1, tmd2, tmd;
 	int i, j;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
-
 	/*
 	 * Go through our Tx list and free mbufs for those
 	 * frames which have been transmitted.
@@ -1349,7 +1327,7 @@ pcn_txintr(struct pcn_softc *sc)
 		for (j = txs->txs_firstdesc;; j = PCN_NEXTTX(j)) {
 			tmd = le32toh(sc->sc_txdescs[j].tmd1);
 			if (tmd & LE_T1_ERR) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				if (sc->sc_swstyle == LE_B20_SSTYLE_PCNETPCI3)
 					tmd2 = le32toh(sc->sc_txdescs[j].tmd0);
 				else
@@ -1380,21 +1358,21 @@ pcn_txintr(struct pcn_softc *sc)
 					    device_xname(sc->sc_dev));
 				}
 				if (tmd2 & LE_T2_LCOL)
-					ifp->if_collisions++;
+					if_statinc(ifp, if_collisions);
 				if (tmd2 & LE_T2_RTRY)
-					ifp->if_collisions += 16;
+					if_statadd(ifp, if_collisions, 16);
 				goto next_packet;
 			}
 			if (j == txs->txs_lastdesc)
 				break;
 		}
 		if (tmd1 & LE_T1_ONE)
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 		else if (tmd & LE_T1_MORE) {
 			/* Real number is unknown. */
-			ifp->if_collisions += 2;
+			if_statadd(ifp, if_collisions, 2);
 		}
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
  next_packet:
 		sc->sc_txfree += txs->txs_dmamap->dm_nsegs;
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,
@@ -1461,7 +1439,7 @@ pcn_rxintr(struct pcn_softc *sc)
 			 * buffer.
 			 */
 			if (rmd1 & LE_R1_ERR) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				/*
 				 * If we got an overflow error, chances
 				 * are there will be a CRC error.  In
@@ -1530,7 +1508,7 @@ pcn_rxintr(struct pcn_softc *sc)
 			m = rxs->rxs_mbuf;
 			if (pcn_add_rxbuf(sc, i) != 0) {
  dropit:
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				PCN_INIT_RXDESC(sc, i);
 				bus_dmamap_sync(sc->sc_dmat,
 				    rxs->rxs_dmamap, 0,
@@ -1567,7 +1545,7 @@ pcn_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, pcn_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 /*
@@ -1810,12 +1788,11 @@ pcn_init(struct ifnet *ifp)
 
 	if (sc->sc_flags & PCN_F_HAS_MII) {
 		/* Start the one second MII clock. */
-		callout_reset(&sc->sc_tick_ch, hz, pcn_tick, sc);
+		callout_schedule(&sc->sc_tick_ch, hz);
 	}
 
 	/* ...all done! */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
 	if (error)
@@ -1878,7 +1855,7 @@ pcn_stop(struct ifnet *ifp, int disable)
 	}
 
 	/* Mark the interface as down and cancel the watchdog timer. */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
 	if (disable)

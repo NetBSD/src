@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.50.38.1 2019/06/10 22:06:48 christos Exp $ */
+/*	$NetBSD: db_trace.c,v 1.50.38.2 2020/04/08 14:07:54 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50.38.1 2019/06/10 22:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50.38.2 2020/04/08 14:07:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -202,6 +202,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 }
 
 
+#ifdef _KERNEL
 void
 db_dump_window(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
@@ -222,6 +223,7 @@ db_dump_window(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 	db_printf("Window %lx ", (long)addr);
 	db_print_window(frame);
 }
+#endif
 
 void 
 db_print_window(uint64_t frame)
@@ -307,6 +309,7 @@ db_print_window(uint64_t frame)
 	}
 }
 
+#ifdef _KERNEL
 void
 db_dump_stack(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
@@ -549,3 +552,4 @@ db_dump_ts(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	}
 
 }
+#endif

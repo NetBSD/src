@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.59.2.1 2019/06/10 22:07:15 christos Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.59.2.2 2020/04/08 14:08:08 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.59.2.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.59.2.2 2020/04/08 14:08:08 martin Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -156,7 +156,7 @@ ofnet_read(struct ofnet_softc *of)
 		if (len == -2 || len == 0)
 			break;
 		if (len < sizeof(struct ether_header)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			continue;
 		}
 		bufp = buf;
@@ -175,7 +175,7 @@ ofnet_read(struct ofnet_softc *of)
 		/* Allocate a header mbuf */
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			continue;
 		}
 		m_set_rcvif(m, ifp);
@@ -189,7 +189,7 @@ ofnet_read(struct ofnet_softc *of)
 			if (head) {
 				MGET(m, M_DONTWAIT, MT_DATA);
 				if (m == 0) {
-					ifp->if_ierrors++;
+					if_statinc(ifp, if_ierrors);
 					m_freem(head);
 					head = 0;
 					break;
@@ -199,7 +199,7 @@ ofnet_read(struct ofnet_softc *of)
 			if (len >= MINCLSIZE) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
-					ifp->if_ierrors++;
+					if_statinc(ifp, if_ierrors);
 					m_free(m);
 					m_freem(head);
 					head = 0;
@@ -297,7 +297,7 @@ ofnet_start(struct ifnet *ifp)
 
 		if (len > ETHERMTU + sizeof(struct ether_header)) {
 			/* packet too large, toss it */
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			m_freem(m0);
 			continue;
 		}
@@ -321,9 +321,9 @@ ofnet_start(struct ifnet *ifp)
 			len = bufp - buf;
 
 		if (OF_write(of->sc_ihandle, buf, len) != len)
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		else
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 	}
 }
 
@@ -381,7 +381,7 @@ ofnet_watchdog(struct ifnet *ifp)
 	struct ofnet_softc *of = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(of->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	ofnet_stop(of);
 	ofnet_init(of);
 }

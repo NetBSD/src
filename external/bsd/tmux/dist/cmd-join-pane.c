@@ -71,7 +71,7 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	int			 size, percentage, dst_idx;
 	enum layout_type	 type;
 	struct layout_cell	*lc;
-	int			 not_same_window;
+	int			 not_same_window, flags;
 
 	if (self->entry == &cmd_join_pane_entry)
 		not_same_window = 1;
@@ -123,7 +123,11 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 		else
 			size = (dst_wp->sx * percentage) / 100;
 	}
-	lc = layout_split_pane(dst_wp, type, size, args_has(args, 'b'), 0);
+	if (args_has(args, 'b'))
+		flags = SPAWN_BEFORE;
+	else
+		flags = 0;
+	lc = layout_split_pane(dst_wp, type, size, flags);
 	if (lc == NULL) {
 		cmdq_error(item, "create pane failed: pane too small");
 		return (CMD_RETURN_ERROR);
@@ -135,6 +139,8 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	TAILQ_REMOVE(&src_w->panes, src_wp, entry);
 
 	src_wp->window = dst_w;
+	options_set_parent(src_wp->options, dst_w->options);
+	src_wp->flags |= PANE_STYLECHANGED;
 	TAILQ_INSERT_AFTER(&dst_w->panes, dst_wp, src_wp, entry);
 	layout_assign_pane(lc, src_wp);
 
@@ -144,7 +150,7 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	server_redraw_window(dst_w);
 
 	if (!args_has(args, 'd')) {
-		window_set_active_pane(dst_w, src_wp);
+		window_set_active_pane(dst_w, src_wp, 1);
 		session_select(dst_s, dst_idx);
 		cmd_find_from_session(current, dst_s, 0);
 		server_redraw_session(dst_s);

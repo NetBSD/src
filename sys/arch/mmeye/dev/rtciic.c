@@ -1,4 +1,4 @@
-/*	$NetBSD: rtciic.c,v 1.1 2011/02/19 10:46:28 kiyohara Exp $	*/
+/*	$NetBSD: rtciic.c,v 1.1.62.1 2020/04/08 14:07:46 martin Exp $	*/
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtciic.c,v 1.1 2011/02/19 10:46:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtciic.c,v 1.1.62.1 2020/04/08 14:07:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtciic.c,v 1.1 2011/02/19 10:46:28 kiyohara Exp $");
 #define DPRINTF(x)
 #endif
 
-#define RTCIIC_SDAR	(1 << 3)	/* recived serial data */
+#define RTCIIC_SDAR	(1 << 3)	/* received serial data */
 #define RTCIIC_SDAW	(1 << 2)	/* sended serial data */
 #define RTCIIC_SCL	(1 << 1)	/* serial clock */
 #define RTCIIC_RW	(1 << 0)	/* data direction (0:write, 1:read) */
@@ -72,8 +72,6 @@ struct rtciic_softc {
 static int rtciic_match(device_t, cfdata_t , void *);
 static void rtciic_attach(device_t, device_t, void *);
 
-static int rtciic_acquire_bus(void *, int);
-static void rtciic_release_bus(void *, int);
 static int rtciic_send_start(void *, int);
 static int rtciic_send_stop(void *, int);
 static int rtciic_initiate_xfer(void *, i2c_addr_t, int);
@@ -127,10 +125,8 @@ rtciic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_rw = RTCIIC_READ(sc) & RTCIIC_RW;
 
 	/* register with iic */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = rtciic_acquire_bus;
-	sc->sc_i2c.ic_release_bus = rtciic_release_bus;
-	sc->sc_i2c.ic_exec = NULL;
 	sc->sc_i2c.ic_send_start = rtciic_send_start;
 	sc->sc_i2c.ic_send_stop = rtciic_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = rtciic_initiate_xfer;
@@ -148,20 +144,6 @@ rtciic_attach(device_t parent, device_t self, void *aux)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
-}
-
-
-static int
-rtciic_acquire_bus(void *cookie, int flags)
-{
-
-	return 0;
-}
-
-static void
-rtciic_release_bus(void *cookie, int flags)
-{
-	/* nothing */
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.15.4.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uatp.c,v 1.15.4.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.15.4.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.15.4.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -184,22 +184,29 @@ __KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.15.4.1 2019/06/10 22:07:34 christos Exp $
 	}								\
 } while (0)
 
-#define UATP_DEBUG_ATTACH	(1 << 0)
-#define UATP_DEBUG_MISC		(1 << 1)
-#define UATP_DEBUG_WSMOUSE	(1 << 2)
-#define UATP_DEBUG_IOCTL	(1 << 3)
-#define UATP_DEBUG_RESET	(1 << 4)
-#define UATP_DEBUG_INTR		(1 << 5)
-#define UATP_DEBUG_PARSE	(1 << 6)
-#define UATP_DEBUG_TAP		(1 << 7)
-#define UATP_DEBUG_EMUL_BUTTON	(1 << 8)
-#define UATP_DEBUG_ACCUMULATE	(1 << 9)
-#define UATP_DEBUG_STATUS	(1 << 10)
-#define UATP_DEBUG_SPURINTR	(1 << 11)
-#define UATP_DEBUG_MOVE		(1 << 12)
-#define UATP_DEBUG_ACCEL	(1 << 13)
-#define UATP_DEBUG_TRACK_DIST	(1 << 14)
-#define UATP_DEBUG_PALM		(1 << 15)
+#define UATP_DEBUG_ATTACH	__BIT(0)
+#define UATP_DEBUG_MISC		__BIT(1)
+#define UATP_DEBUG_WSMOUSE	__BIT(2)
+#define UATP_DEBUG_IOCTL	__BIT(3)
+#define UATP_DEBUG_RESET	__BIT(4)
+#define UATP_DEBUG_INTR		__BIT(5)
+#define UATP_DEBUG_PARSE	__BIT(6)
+#define UATP_DEBUG_TAP		__BIT(7)
+#define UATP_DEBUG_EMUL_BUTTON	__BIT(8)
+#define UATP_DEBUG_ACCUMULATE	__BIT(9)
+#define UATP_DEBUG_STATUS	__BIT(10)
+#define UATP_DEBUG_SPURINTR	__BIT(11)
+#define UATP_DEBUG_MOVE		__BIT(12)
+#define UATP_DEBUG_ACCEL	__BIT(13)
+#define UATP_DEBUG_TRACK_DIST	__BIT(14)
+#define UATP_DEBUG_PALM		__BIT(15)
+
+/*
+ * Unconditionally enable the debug output so you don't have to
+ * recompile the kernel to diagnose it.  This is not a high-throughput
+ * NIC driver or anything that will be hurt by a few conditionals.
+ */
+#define	UATP_DEBUG	1
 
 #if UATP_DEBUG
 #  define DPRINTF(sc, flags, format) do {				\
@@ -239,9 +246,9 @@ __KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.15.4.1 2019/06/10 22:07:34 christos Exp $
 #define UATP_MAX_MOTION_MULTIPLIER	16
 
 /* Status bits transmitted in the last byte of an input packet.  */
-#define UATP_STATUS_BUTTON	(1 << 0)	/* Button pressed */
-#define UATP_STATUS_BASE	(1 << 2)	/* Base sensor data */
-#define UATP_STATUS_POST_RESET	(1 << 4)	/* Post-reset */
+#define UATP_STATUS_BUTTON	__BIT(0)	/* Button pressed */
+#define UATP_STATUS_BASE	__BIT(2)	/* Base sensor data */
+#define UATP_STATUS_POST_RESET	__BIT(4)	/* Post-reset */
 
 /* Forward declarations */
 
@@ -507,9 +514,9 @@ struct uatp_softc {
 	unsigned int sc_track_distance;	/* Distance^2 finger has tracked,
 					 * squared to avoid sqrt in kernel.  */
 	uint32_t sc_status;		/* Status flags:  */
-#define UATP_ENABLED	(1 << 0)	/* . Is the wsmouse enabled?  */
-#define UATP_DYING	(1 << 1)	/* . Have we been deactivated?  */
-#define UATP_VALID	(1 << 2)	/* . Do we have valid sensor data?  */
+#define UATP_ENABLED	__BIT(0)	/* . Is the wsmouse enabled?  */
+#define UATP_DYING	__BIT(1)	/* . Have we been deactivated?  */
+#define UATP_VALID	__BIT(2)	/* . Do we have valid sensor data?  */
 	struct usb_task sc_reset_task;	/* Task for resetting device.  */
 
 	callout_t sc_untap_callout;	/* Releases button after tap.  */
@@ -1416,6 +1423,19 @@ uatp_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 		    (sc->sc_input_index + len));
 		sc->sc_input_index = 0;
 		return;
+	} else if (sc->sc_input_size == 81 && len == 17 &&
+	    sc->sc_input_index != 64) {
+		/*
+		 * Quirk of Fountain and Geyser 1 devices: a 17-byte
+		 * packet seems to mean the last one, but sometimes we
+		 * get desynchronized, so drop this one and start over
+		 * if we see a 17-byte packet that's not at the end.
+		 */
+		aprint_error_dev(uatp_dev(sc),
+		    "discarding 17-byte nonterminal input at %u\n",
+		    sc->sc_input_index);
+		sc->sc_input_index = 0;
+		return;
 	}
 
 #if UATP_DEBUG
@@ -1433,8 +1453,8 @@ uatp_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 	sc->sc_input_index += len;
 	if (sc->sc_input_index != sc->sc_input_size) {
 		/* Wait until packet is complete.  */
-		aprint_verbose_dev(uatp_dev(sc), "partial packet: %u bytes\n",
-		    len);
+		DPRINTF(sc, UATP_DEBUG_INTR, ("partial packet: %u bytes\n",
+		    len));
 		return;
 	}
 

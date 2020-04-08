@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.89.16.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.89.16.2 2020/04/08 14:08:11 martin Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.89.16.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.89.16.2 2020/04/08 14:08:11 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -604,10 +604,10 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		       diskPtr->devname);
 		return ENOMEM;
 	}
-	error = dk_lookup(pb, curlwp, &vp);
+	error = vn_bdev_openpath(pb, &vp, curlwp);
 	pathbuf_destroy(pb);
 	if (error) {
-		printf("dk_lookup on device: %s failed!\n", diskPtr->devname);
+		printf("open device: %s failed!\n", diskPtr->devname);
 		if (error == ENXIO) {
 			/* the component isn't there... must be dead :-( */
 			diskPtr->status = rf_ds_failed;

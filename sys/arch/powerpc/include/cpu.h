@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.106.2.1 2019/06/10 22:06:39 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.106.2.2 2020/04/08 14:07:49 martin Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -67,7 +67,7 @@ struct cpu_info {
 	device_t ci_dev;		/* device of corresponding cpu */
 	struct cpu_softc *ci_softc;	/* private cpu info */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
-
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
 	struct lwp *ci_softlwps[SOFTINT_COUNT];
@@ -434,10 +434,8 @@ vaddr_t	cpu_lwp_pc(struct lwp *);
 void	cpu_ast(struct lwp *, struct cpu_info *);
 void *	cpu_uarea_alloc(bool);
 bool	cpu_uarea_free(void *);
-void	cpu_need_resched(struct cpu_info *, int);
 void	cpu_signotify(struct lwp *);
 void	cpu_need_proftick(struct lwp *);
-#define	cpu_did_resched(l)			((l)->l_md.md_astpending = 0)
 
 void	cpu_fixup_stubs(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.10.18.1 2019/06/10 22:08:05 christos Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.10.18.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,18 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.10.18.1 2019/06/10 22:08:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.10.18.2 2020/04/08 14:08:23 martin Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/export.h>
 #include <linux/notifier.h>
 #include <linux/reboot.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/printk.h>
-#include <linux/pm_qos.h>
-#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>
@@ -138,7 +133,7 @@ static bool edp_panel_vdd_on(struct intel_dp *intel_dp);
 static void edp_panel_vdd_off(struct intel_dp *intel_dp, bool sync);
 static void vlv_init_panel_power_sequencer(struct intel_dp *intel_dp);
 static void vlv_steal_power_sequencer(struct drm_device *dev,
-				      enum i915_pipe pipe);
+				      enum pipe pipe);
 
 static unsigned int intel_dp_unused_lane_mask(int lane_count)
 {
@@ -313,7 +308,7 @@ vlv_power_sequencer_kick(struct intel_dp *intel_dp)
 	struct intel_digital_port *intel_dig_port = dp_to_dig_port(intel_dp);
 	struct drm_device *dev = intel_dig_port->base.base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum i915_pipe pipe = intel_dp->pps_pipe;
+	enum pipe pipe = intel_dp->pps_pipe;
 	bool pll_enabled, release_cl_override = false;
 	enum dpio_phy phy = DPIO_PHY(pipe);
 	enum dpio_channel ch = vlv_pipe_to_channel(pipe);
@@ -377,7 +372,7 @@ vlv_power_sequencer_kick(struct intel_dp *intel_dp)
 	}
 }
 
-static enum i915_pipe
+static enum pipe
 vlv_power_sequencer_pipe(struct intel_dp *intel_dp)
 {
 	struct intel_digital_port *intel_dig_port = dp_to_dig_port(intel_dp);
@@ -385,7 +380,7 @@ vlv_power_sequencer_pipe(struct intel_dp *intel_dp)
 	struct drm_i915_private *dev_priv __lockdep_used = dev->dev_private;
 	struct intel_encoder *encoder;
 	unsigned int pipes = (1 << PIPE_A) | (1 << PIPE_B);
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	lockdep_assert_held(&dev_priv->pps_mutex);
 
@@ -442,32 +437,32 @@ vlv_power_sequencer_pipe(struct intel_dp *intel_dp)
 }
 
 typedef bool (*vlv_pipe_check)(struct drm_i915_private *dev_priv,
-			       enum i915_pipe pipe);
+			       enum pipe pipe);
 
 static bool vlv_pipe_has_pp_on(struct drm_i915_private *dev_priv,
-			       enum i915_pipe pipe)
+			       enum pipe pipe)
 {
 	return I915_READ(VLV_PIPE_PP_STATUS(pipe)) & PP_ON;
 }
 
 static bool vlv_pipe_has_vdd_on(struct drm_i915_private *dev_priv,
-				enum i915_pipe pipe)
+				enum pipe pipe)
 {
 	return I915_READ(VLV_PIPE_PP_CONTROL(pipe)) & EDP_FORCE_VDD;
 }
 
 static bool vlv_pipe_any(struct drm_i915_private *dev_priv,
-			 enum i915_pipe pipe)
+			 enum pipe pipe)
 {
 	return true;
 }
 
-static enum i915_pipe
+static enum pipe
 vlv_initial_pps_pipe(struct drm_i915_private *dev_priv,
 		     enum port port,
 		     vlv_pipe_check pipe_check)
 {
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	for (pipe = PIPE_A; pipe <= PIPE_B; pipe++) {
 		u32 port_sel = I915_READ(VLV_PIPE_PP_ON_DELAYS(pipe)) &
@@ -591,7 +586,7 @@ static int edp_notify_handler(struct notifier_block *this, unsigned long code,
 	pps_lock(intel_dp);
 
 	if (IS_VALLEYVIEW(dev)) {
-		enum i915_pipe pipe = vlv_power_sequencer_pipe(intel_dp);
+		enum pipe pipe = vlv_power_sequencer_pipe(intel_dp);
 		u32 pp_ctrl_reg, pp_div_reg;
 		u32 pp_div;
 
@@ -2267,7 +2262,7 @@ void intel_dp_sink_dpms(struct intel_dp *intel_dp, int mode)
 }
 
 static bool intel_dp_get_hw_state(struct intel_encoder *encoder,
-				  enum i915_pipe *pipe)
+				  enum pipe *pipe)
 {
 	struct intel_dp *intel_dp = enc_to_intel_dp(&encoder->base);
 	enum port port = dp_to_dig_port(intel_dp)->port;
@@ -2288,7 +2283,7 @@ static bool intel_dp_get_hw_state(struct intel_encoder *encoder,
 	if (IS_GEN7(dev) && port == PORT_A) {
 		*pipe = PORT_TO_PIPE_CPT(tmp);
 	} else if (HAS_PCH_CPT(dev) && port != PORT_A) {
-		enum i915_pipe p;
+		enum pipe p;
 
 		for_each_pipe(dev_priv, p) {
 			u32 trans_dp = I915_READ(TRANS_DP_CTL(p));
@@ -2444,7 +2439,7 @@ static void chv_data_lane_soft_reset(struct intel_encoder *encoder,
 	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 	enum dpio_channel ch = vlv_dport_to_channel(enc_to_dig_port(&encoder->base));
 	struct intel_crtc *crtc = to_intel_crtc(encoder->base.crtc);
-	enum i915_pipe pipe = crtc->pipe;
+	enum pipe pipe = crtc->pipe;
 	uint32_t val;
 
 	val = vlv_dpio_read(dev_priv, pipe, VLV_PCS01_DW0(ch));
@@ -2685,7 +2680,7 @@ static void vlv_detach_power_sequencer(struct intel_dp *intel_dp)
 {
 	struct intel_digital_port *intel_dig_port = dp_to_dig_port(intel_dp);
 	struct drm_i915_private *dev_priv = intel_dig_port->base.base.dev->dev_private;
-	enum i915_pipe pipe = intel_dp->pps_pipe;
+	enum pipe pipe = intel_dp->pps_pipe;
 	int pp_on_reg = VLV_PIPE_PP_ON_DELAYS(pipe);
 
 	edp_panel_vdd_off_sync(intel_dp);
@@ -2708,7 +2703,7 @@ static void vlv_detach_power_sequencer(struct intel_dp *intel_dp)
 }
 
 static void vlv_steal_power_sequencer(struct drm_device *dev,
-				      enum i915_pipe pipe)
+				      enum pipe pipe)
 {
 	struct drm_i915_private *dev_priv __lockdep_used = dev->dev_private;
 	struct intel_encoder *encoder;
@@ -2941,7 +2936,7 @@ static void chv_dp_pre_pll_enable(struct intel_encoder *encoder)
 	struct intel_crtc *intel_crtc =
 		to_intel_crtc(encoder->base.crtc);
 	enum dpio_channel ch = vlv_dport_to_channel(dport);
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	unsigned int lane_mask =
 		intel_dp_unused_lane_mask(intel_crtc->config->lane_count);
 	u32 val;
@@ -3019,7 +3014,7 @@ static void chv_dp_pre_pll_enable(struct intel_encoder *encoder)
 static void chv_dp_post_pll_disable(struct intel_encoder *encoder)
 {
 	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
-	enum i915_pipe pipe = to_intel_crtc(encoder->base.crtc)->pipe;
+	enum pipe pipe = to_intel_crtc(encoder->base.crtc)->pipe;
 	u32 val;
 
 	mutex_lock(&dev_priv->sb_lock);
@@ -3300,7 +3295,7 @@ static uint32_t chv_signal_levels(struct intel_dp *intel_dp)
 	u32 deemph_reg_value, margin_reg_value, val;
 	uint8_t train_set = intel_dp->train_set[0];
 	enum dpio_channel ch = vlv_dport_to_channel(dport);
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	int i;
 
 	switch (train_set & DP_TRAIN_PRE_EMPHASIS_MASK) {
@@ -5336,7 +5331,7 @@ intel_dp_init_panel_power_sequencer(struct drm_device *dev,
 		pp_off_reg = PCH_PP_OFF_DELAYS;
 		pp_div_reg = PCH_PP_DIVISOR;
 	} else {
-		enum i915_pipe pipe = vlv_power_sequencer_pipe(intel_dp);
+		enum pipe pipe = vlv_power_sequencer_pipe(intel_dp);
 
 		pp_ctrl_reg = VLV_PIPE_PP_CONTROL(pipe);
 		pp_on_reg = VLV_PIPE_PP_ON_DELAYS(pipe);
@@ -5456,7 +5451,7 @@ intel_dp_init_panel_power_sequencer_registers(struct drm_device *dev,
 		pp_off_reg = PCH_PP_OFF_DELAYS;
 		pp_div_reg = PCH_PP_DIVISOR;
 	} else {
-		enum i915_pipe pipe = vlv_power_sequencer_pipe(intel_dp);
+		enum pipe pipe = vlv_power_sequencer_pipe(intel_dp);
 
 		pp_on_reg = VLV_PIPE_PP_ON_DELAYS(pipe);
 		pp_off_reg = VLV_PIPE_PP_OFF_DELAYS(pipe);
@@ -5731,7 +5726,7 @@ void intel_edp_drrs_invalidate(struct drm_device *dev,
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	if (dev_priv->drrs.type == DRRS_NOT_SUPPORTED)
 		return;
@@ -5776,7 +5771,7 @@ void intel_edp_drrs_flush(struct drm_device *dev,
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	if (dev_priv->drrs.type == DRRS_NOT_SUPPORTED)
 		return;
@@ -5910,7 +5905,7 @@ static bool intel_edp_init_connector(struct intel_dp *intel_dp,
 	bool has_dpcd;
 	struct drm_display_mode *scan;
 	struct edid *edid;
-	enum i915_pipe pipe = INVALID_PIPE;
+	enum pipe pipe = INVALID_PIPE;
 
 	if (!is_edp(intel_dp))
 		return true;

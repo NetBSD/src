@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.c,v 1.4.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: keydata_65533.c,v 1.4.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -277,7 +277,7 @@ fromstruct_keydata(ARGS_FROMSTRUCT) {
 	dns_rdata_keydata_t *keydata = source;
 
 	REQUIRE(type == dns_rdatatype_keydata);
-	REQUIRE(source != NULL);
+	REQUIRE(keydata != NULL);
 	REQUIRE(keydata->common.rdtype == type);
 	REQUIRE(keydata->common.rdclass == rdclass);
 
@@ -312,7 +312,7 @@ tostruct_keydata(ARGS_TOSTRUCT) {
 	isc_region_t sr;
 
 	REQUIRE(rdata->type == dns_rdatatype_keydata);
-	REQUIRE(target != NULL);
+	REQUIRE(keydata != NULL);
 
 	keydata->common.rdclass = rdata->rdclass;
 	keydata->common.rdtype = rdata->type;
@@ -370,7 +370,7 @@ static inline void
 freestruct_keydata(ARGS_FREESTRUCT) {
 	dns_rdata_keydata_t *keydata = (dns_rdata_keydata_t *) source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(keydata != NULL);
 	REQUIRE(keydata->common.rdtype == dns_rdatatype_keydata);
 
 	if (keydata->mctx == NULL)

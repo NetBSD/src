@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.26.2.1 2019/06/10 22:07:17 christos Exp $ */
+/*      $NetBSD: if_xge.c,v 1.26.2.2 2020/04/08 14:08:09 martin Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.26.2.1 2019/06/10 22:07:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.26.2.2 2020/04/08 14:08:09 martin Exp $");
 
 
 #include <sys/param.h>
@@ -287,7 +287,11 @@ xge_attach(device_t parent, device_t self, void *aux)
 
 	sc = device_private(self);
 	sc->sc_dev = self;
-	sc->sc_dmat = pa->pa_dmat;
+
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	/* Get BAR0 address */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, XGE_PIF_BAR);
@@ -741,7 +745,7 @@ xge_intr(void *pv)
 		}
 		bus_dmamap_unload(sc->sc_dmat, dmp);
 		m_freem(sc->sc_txb[i]);
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		sc->sc_lasttx = i;
 	}
 	if (i == sc->sc_nexttx) {
@@ -803,7 +807,7 @@ xge_intr(void *pv)
 #endif
 			XGE_RXSYNC(sc->sc_nextrx,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			break;
 		}
 

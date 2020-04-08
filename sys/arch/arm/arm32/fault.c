@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.105.4.1 2019/06/10 22:05:51 christos Exp $	*/
+/*	$NetBSD: fault.c,v 1.105.4.2 2020/04/08 14:07:28 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.105.4.1 2019/06/10 22:05:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.105.4.2 2020/04/08 14:07:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,6 +468,33 @@ data_abort_handler(trapframe_t *tf)
 		dab_fatal(tf, fsr, far, l, NULL);
 	}
 
+#ifdef PMAP_FAULTINFO
+	struct pcb_faultinfo * const pfi = &pcb->pcb_faultinfo;
+	struct proc * const p = curproc;
+
+	if (p->p_pid == pfi->pfi_lastpid && va == pfi->pfi_faultaddr) {
+		if (++pfi->pfi_repeats > 4) {
+			tlb_asid_t asid = tlb_get_asid();
+			pt_entry_t *ptep = pfi->pfi_faultptep;
+
+			printf("%s: fault #%u (%x/%s) for %#" PRIxVADDR
+			    "(%#x) at pc %#" PRIxREGISTER " curpid=%u/%u "
+			    "ptep@%p=%#" PRIxPTE ")\n", __func__,
+			    pfi->pfi_repeats, fsr & FAULT_TYPE_MASK,
+			    data_aborts[fsr & FAULT_TYPE_MASK].desc, va,
+			    far, tf->tf_pc, map->pmap->pm_pai[0].pai_asid,
+			    asid, ptep, ptep ? *ptep : 0);
+			cpu_Debugger();
+		}
+	} else {
+		pfi->pfi_lastpid = p->p_pid;
+		pfi->pfi_faultaddr = va;
+		pfi->pfi_repeats = 0;
+		pfi->pfi_faultptep = NULL;
+		pfi->pfi_faulttype = fsr & FAULT_TYPE_MASK;
+	}
+#endif /* PMAP_FAULTINFO */
+
 	onfault = pcb->pcb_onfault;
 	pcb->pcb_onfault = NULL;
 	error = uvm_fault(map, va, ftype);
@@ -835,9 +862,12 @@ prefetch_abort_handler(trapframe_t *tf)
 	/* Get fault address */
 	fault_pc = tf->tf_pc;
 	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
-	UVMHIST_LOG(maphist, " (pc=0x%jx, l=0x%#jx, tf=0x%#jx)",
+	UVMHIST_LOG(maphist, " (pc=%#jx, l=%#jx, tf=%#jx)",
 	    fault_pc, (uintptr_t)l, (uintptr_t)tf, 0);
 
+#ifdef THUMB_CODE
+ recheck:
+#endif
 	/* Ok validate the address, can only execute in USER space */
 	if (__predict_false(fault_pc >= VM_MAXUSER_ADDRESS ||
 	    (fault_pc < VM_MIN_ADDRESS && vector_page == ARM_VECTORS_LOW))) {
@@ -897,6 +927,18 @@ do_trapsignal:
 	call_trapsignal(l, tf, &ksi);
 
 out:
+
+#ifdef THUMB_CODE
+#define THUMB_32BIT(hi) (((hi) & 0xe000) == 0xe000 && ((hi) & 0x1800))
+	/* thumb-32 instruction was located on page boundary? */
+	if ((tf->tf_spsr & PSR_T_bit) &&
+	    ((fault_pc & PAGE_MASK) == (PAGE_SIZE - THUMB_INSN_SIZE)) &&
+	    THUMB_32BIT(*(uint16_t *)tf->tf_pc)) {
+		fault_pc = tf->tf_pc + THUMB_INSN_SIZE;
+		goto recheck;
+	}
+#endif /* THUMB_CODE */
+
 	KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
 	userret(l);
 }

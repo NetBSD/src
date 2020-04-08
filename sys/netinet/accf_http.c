@@ -1,4 +1,4 @@
-/*	$NetBSD: accf_http.c,v 1.9 2015/08/20 14:40:19 christos Exp $	*/
+/*	$NetBSD: accf_http.c,v 1.9.18.1 2020/04/08 14:08:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Paycounter, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.9 2015/08/20 14:40:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.9.18.1 2020/04/08 14:08:58 martin Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -80,51 +80,48 @@ accf_httpattach(int junk)
 
 }
 
+SYSCTL_SETUP(accf_sysctl_setup, "accf sysctl")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	       CTLFLAG_PERMANENT,
+	       CTLTYPE_NODE, "inet", NULL,
+	       NULL, 0, NULL, 0,
+	       CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+	       CTLFLAG_PERMANENT,
+	       CTLTYPE_NODE, "accf", NULL,
+	       NULL, 0, NULL, 0,
+	       CTL_NET, PF_INET, SO_ACCEPTFILTER, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+	       CTLFLAG_PERMANENT,
+	       CTLTYPE_NODE, "http",
+	       SYSCTL_DESCR("HTTP accept filter"),
+	       NULL, 0, NULL, 0,
+	       CTL_NET, PF_INET, SO_ACCEPTFILTER, ACCF_HTTP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+	       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	       CTLTYPE_INT, "parsehttpversion",
+	       SYSCTL_DESCR("Parse http version so that non "
+			    "1.x requests work"),
+	       NULL, 0, &parse_http_version, 0,
+	       CTL_NET, PF_INET, SO_ACCEPTFILTER, ACCF_HTTP,
+	       ACCFCTL_PARSEVER, CTL_EOL);
+}
+
 static int
 accf_httpready_modcmd(modcmd_t cmd, void *arg)
 {
-	static struct sysctllog *clog;
 	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = accept_filt_add(&accf_http_filter);
-		if (error != 0) {
-			return error;
-		}
-		sysctl_createv(&clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "inet", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, PF_INET, CTL_EOL);
-		sysctl_createv(&clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "accf", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, PF_INET, SO_ACCEPTFILTER, CTL_EOL);
-		sysctl_createv(&clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "http",
-		       SYSCTL_DESCR("HTTP accept filter"),
-		       NULL, 0, NULL, 0,
-		       CTL_NET, PF_INET, SO_ACCEPTFILTER, ACCF_HTTP, CTL_EOL);
-		sysctl_createv(&clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "parsehttpversion",
-		       SYSCTL_DESCR("Parse http version so that non "
-				    "1.x requests work"),
-		       NULL, 0, &parse_http_version, 0,
-		       CTL_NET, PF_INET, SO_ACCEPTFILTER, ACCF_HTTP,
-		       ACCFCTL_PARSEVER, CTL_EOL);
 		return 0;
 
 	case MODULE_CMD_FINI:
 		error = accept_filt_del(&accf_http_filter);
-		if (error != 0) {
-			return error;
-		}
-		sysctl_teardown(&clog);
-		return 0;
+		return error;
 
 	default:
 		return ENOTTY;

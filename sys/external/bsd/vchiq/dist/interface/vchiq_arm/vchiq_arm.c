@@ -461,8 +461,8 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 #define	_IOC_TYPE(x)	IOCGROUP(x)
 
 	vchiq_log_trace(vchiq_arm_log_level,
-		 "vchiq_ioctl - instance %x, cmd %s, arg %p",
-		(unsigned int)instance,
+		 "vchiq_ioctl - instance %p, cmd %s, arg %p",
+		instance,
 		((_IOC_TYPE(cmd) == VCHIQ_IOC_MAGIC) &&
 		(_IOC_NR(cmd) <= VCHIQ_IOC_MAX)) ?
 		ioctl_names[_IOC_NR(cmd)] : "<invalid>", arg);
@@ -755,8 +755,8 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 				break;
 			}
 			vchiq_log_info(vchiq_arm_log_level,
-				"found bulk_waiter %x for pid %d",
-				(unsigned int)waiter, current->l_proc->p_pid);
+				"found bulk_waiter %p for pid %d",
+				waiter, current->l_proc->p_pid);
 			args.userdata = &waiter->bulk_waiter;
 		}
 		status = vchiq_bulk_transfer
@@ -786,8 +786,8 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			list_add(&waiter->list, &instance->bulk_waiter_list);
 			lmutex_unlock(&instance->bulk_waiter_list_mutex);
 			vchiq_log_info(vchiq_arm_log_level,
-				"saved bulk_waiter %x for pid %d",
-				(unsigned int)waiter, current->l_proc->p_pid);
+				"saved bulk_waiter %p for pid %d",
+				waiter, current->l_proc->p_pid);
 
 			pargs->mode = mode_waiting;
 		}
@@ -864,9 +864,9 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 					if (args.msgbufsize < msglen) {
 						vchiq_log_error(
 							vchiq_arm_log_level,
-							"header %x: msgbufsize"
+							"header %p: msgbufsize"
 							" %x < msglen %x",
-							(unsigned int)header,
+							header,
 							args.msgbufsize,
 							msglen);
 						WARN(1, "invalid message "
@@ -1010,8 +1010,8 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 				ret = -EFAULT;
 		} else {
 			vchiq_log_error(vchiq_arm_log_level,
-				"header %x: bufsize %x < size %x",
-				(unsigned int)header, args.bufsize,
+				"header %p: bufsize %x < size %x",
+				header, args.bufsize,
 				header->size);
 			WARN(1, "invalid size\n");
 			ret = -EMSGSIZE;
@@ -1070,7 +1070,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 	} break;
 
 	case VCHIQ_IOC_LIB_VERSION: {
-		unsigned int lib_version = (unsigned int)arg;
+		unsigned int lib_version = (uintptr_t)arg;
 
 		if (lib_version < VCHIQ_VERSION_MIN)
 			ret = -EINVAL;
@@ -1148,7 +1148,15 @@ vchiq_open(dev_t dev, int flags, int mode, lwp_t *l)
 
 	/* XXXBSD: do we really need this check? */
 	if (device_lookup_private(&vchiq_cd, minor(dev)) != NULL) {
-		VCHIQ_STATE_T *state = vchiq_get_state();
+		VCHIQ_STATE_T *state;
+		int i;
+
+		for (i=0; i<10; ++i) {
+			state = vchiq_get_state();
+			if (state)
+				break;
+			delay(500);
+		}
 
 		if (!state) {
 			vchiq_log_error(vchiq_arm_log_level,
@@ -1313,9 +1321,9 @@ vchiq_close(struct file *fp)
 					list);
 				list_del(pos);
 				vchiq_log_info(vchiq_arm_log_level,
-					"bulk_waiter - cleaned up %x "
+					"bulk_waiter - cleaned up %p "
 					"for pid %d",
-					(unsigned int)waiter, waiter->pid);
+					waiter, waiter->pid);
 		                _sema_destroy(&waiter->bulk_waiter.event);
 				kfree(waiter);
 			}
@@ -1406,9 +1414,9 @@ vchiq_dump_platform_instances(void *dump_context)
 			instance = service->instance;
 			if (instance && !instance->mark) {
 				len = snprintf(buf, sizeof(buf),
-					"Instance %x: pid %d,%s completions "
+					"Instance %p: pid %d,%s completions "
 						"%d/%d",
-					(unsigned int)instance, instance->pid,
+					instance, instance->pid,
 					instance->connected ? " connected, " :
 						"",
 					instance->completion_insert -
@@ -1436,8 +1444,8 @@ vchiq_dump_platform_service_state(void *dump_context, VCHIQ_SERVICE_T *service)
 	char buf[80];
 	int len;
 
-	len = snprintf(buf, sizeof(buf), "  instance %x",
-		(unsigned int)service->instance);
+	len = snprintf(buf, sizeof(buf), "  instance %p",
+		service->instance);
 
 	if ((service->base.callback == service_callback) &&
 		user_service->is_vchi) {

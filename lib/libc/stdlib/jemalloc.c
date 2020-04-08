@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.44.4.1 2019/06/10 22:05:21 christos Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.44.4.2 2020/04/08 14:07:13 martin Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.44.4.1 2019/06/10 22:05:21 christos Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.44.4.2 2020/04/08 14:07:13 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -216,7 +216,7 @@ __RCSID("$NetBSD: jemalloc.c,v 1.44.4.1 2019/06/10 22:05:21 christos Exp $");
 #ifdef __aarch64__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	3
-#  define NO_TLS
+#  define TINY_MIN_2POW		3
 #endif
 #ifdef __alpha__
 #  define QUANTUM_2POW_MIN	4
@@ -3986,16 +3986,17 @@ _malloc_prefork(void)
 	unsigned i;
 
 	/* Acquire all mutexes in a safe order. */
-
+	malloc_mutex_lock(&init_lock);
 	malloc_mutex_lock(&arenas_mtx);
 	for (i = 0; i < narenas; i++) {
 		if (arenas[i] != NULL)
 			malloc_mutex_lock(&arenas[i]->mtx);
 	}
-
-	malloc_mutex_lock(&base_mtx);
-
 	malloc_mutex_lock(&chunks_mtx);
+	malloc_mutex_lock(&base_mtx);
+#ifdef USE_BRK
+	malloc_mutex_lock(&brk_mtx);
+#endif
 }
 
 void
@@ -4004,16 +4005,18 @@ _malloc_postfork(void)
 	unsigned i;
 
 	/* Release all mutexes, now that fork() has completed. */
-
+#ifdef USE_BRK
+	malloc_mutex_unlock(&brk_mtx);
+#endif
+	malloc_mutex_unlock(&base_mtx);
 	malloc_mutex_unlock(&chunks_mtx);
 
-	malloc_mutex_unlock(&base_mtx);
-
-	for (i = 0; i < narenas; i++) {
+	for (i = narenas; i-- > 0; ) {
 		if (arenas[i] != NULL)
 			malloc_mutex_unlock(&arenas[i]->mtx);
 	}
 	malloc_mutex_unlock(&arenas_mtx);
+	malloc_mutex_unlock(&init_lock);
 }
 
 /*

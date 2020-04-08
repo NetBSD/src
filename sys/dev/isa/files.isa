@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.169.4.1 2019/06/10 22:07:12 christos Exp $
+#	$NetBSD: files.isa,v 1.169.4.2 2020/04/08 14:08:07 martin Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -269,13 +269,6 @@ file	dev/isa/if_ai.c			ai
 device	ix: ether, ifnet, arp, i82586
 attach	ix at isa
 file	dev/isa/if_ix.c			ix
-
-# TROPIC based Token-Ring (IBM/3COM)
-define	tr_isa
-file	dev/isa/if_tr_isa.c		tr_isa
-attach	tr at isa with tr_isa: tr_isa, elink
-file	dev/isa/if_tribm_isa.c		tr_isa
-file	dev/isa/if_trtcm_isa.c		tr_isa
 
 #
 # ISA Sound hardware

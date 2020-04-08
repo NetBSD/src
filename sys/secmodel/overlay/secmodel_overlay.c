@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_overlay.c,v 1.13 2014/02/25 18:30:13 pooka Exp $ */
+/* $NetBSD: secmodel_overlay.c,v 1.13.30.1 2020/04/08 14:09:02 martin Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.13 2014/02/25 18:30:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.13.30.1 2020/04/08 14:09:02 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +68,6 @@ static kauth_listener_t l_generic, l_system, l_process, l_network, l_machdep,
     l_device, l_vnode;
 
 static secmodel_t overlay_sm;
-static struct sysctllog *sysctl_overlay_log;
 
 /*
  * Initialize the overlay security model.
@@ -127,8 +126,7 @@ secmodel_overlay_init(void)
 	    secmodel_securelevel_device_cb, NULL);
 }
 
-void
-sysctl_security_overlay_setup(struct sysctllog **clog)
+SYSCTL_SETUP(sysctl_security_overlay_setup, "secmod overlay sysctl")
 {
 	const struct sysctlnode *rnode;
 
@@ -207,11 +205,9 @@ secmodel_overlay_modcmd(modcmd_t cmd, void *arg)
 		secmodel_suser_stop();
 		secmodel_securelevel_stop();
 		secmodel_overlay_start();
-		sysctl_security_overlay_setup(&sysctl_overlay_log);
 		break;
 
 	case MODULE_CMD_FINI:
-		sysctl_teardown(&sysctl_overlay_log);
 		secmodel_overlay_stop();
 
 		error = secmodel_deregister(overlay_sm);

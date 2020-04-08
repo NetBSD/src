@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: spawn.c,v 1.2.12.1 2020/04/08 14:06:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -45,7 +45,7 @@
 /*	replaced by a more structural solution.
 /* DIAGNOSTICS
 /*	The \fBspawn\fR(8) daemon reports abnormal child exits.
-/*	Problems are logged to \fBsyslogd\fR(8).
+/*	Problems are logged to \fBsyslogd\fR(8) or \fBpostlogd\fR(8).
 /* SECURITY
 /* .fi
 /* .ad
@@ -68,13 +68,10 @@
 /* RESOURCE AND RATE CONTROL
 /* .ad
 /* .fi
-/* .IP "\fItransport\fB_time_limit ($command_time_limit)\fR"
-/*	The amount of time the command is allowed to run before it is
-/*	terminated.
-/*
-/*	Postfix 2.4 and later support a suffix that specifies the
-/*	time unit: s (seconds), m (minutes), h (hours), d (days),
-/*	w (weeks). The default time unit is seconds.
+/* .IP "\fBtransport_time_limit ($command_time_limit)\fR"
+/*	A transport-specific override for the command_time_limit parameter
+/*	value, where \fItransport\fR is the master.cf name of the message
+/*	delivery transport.
 /* MISCELLANEOUS
 /* .ad
 /* .fi
@@ -108,11 +105,16 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
 /* SEE ALSO
 /*	postconf(5), configuration parameters
 /*	master(8), process manager
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* LICENSE
 /* .ad

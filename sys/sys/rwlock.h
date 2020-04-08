@@ -1,7 +1,7 @@
-/*	$NetBSD: rwlock.h,v 1.10 2010/02/08 09:54:27 skrll Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.10.62.1 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,10 +45,6 @@
  *	rw_tryenter()
  */
 
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#endif
-
 #if !defined(_KERNEL)
 #include <sys/types.h>
 #include <sys/inttypes.h>
@@ -67,21 +63,17 @@ typedef struct krwlock krwlock_t;
  * WRITE_LOCKED bit is clear, then the owner field is actually a count of
  * the number of readers.  The rw_owner field is laid out like so:
  *
- *	 N                    4        3        2        1        0
- *	+---------------------------------------------------------+
- *	| owner or read count | nodbug | wrlock | wrwant |  wait  |
- *	+---------------------------------------------------------+
+ *  N                     5        4        3        2        1        0
+ *  +------------------------------------------------------------------+
+ *  | owner or read count | nodbug | <free> | wrlock | wrwant |  wait  |
+ *  +------------------------------------------------------------------+
  */
 #define	RW_HAS_WAITERS		0x01UL	/* lock has waiters */
 #define	RW_WRITE_WANTED		0x02UL	/* >= 1 waiter is a writer */
 #define	RW_WRITE_LOCKED		0x04UL	/* lock is currently write locked */
-#if defined(LOCKDEBUG)
-#define	RW_NODEBUG		0x08UL	/* LOCKDEBUG disabled */
-#else
-#define	RW_NODEBUG		0x00UL	/* do nothing */
-#endif	/* LOCKDEBUG */
+#define	RW_NODEBUG		0x10UL	/* LOCKDEBUG disabled */
 
-#define	RW_READ_COUNT_SHIFT	4
+#define	RW_READ_COUNT_SHIFT	5
 #define	RW_READ_INCR		(1UL << RW_READ_COUNT_SHIFT)
 #define	RW_THREAD		((uintptr_t)-RW_READ_INCR)
 #define	RW_OWNER(rw)		((rw)->rw_owner & RW_THREAD)
@@ -91,9 +83,13 @@ typedef struct krwlock krwlock_t;
 void	rw_vector_enter(krwlock_t *, const krw_t);
 void	rw_vector_exit(krwlock_t *);
 int	rw_vector_tryenter(krwlock_t *, const krw_t);
+void	_rw_init(krwlock_t *, uintptr_t);
+bool	rw_owner_running(const krwlock_t *);
 #endif	/* __RWLOCK_PRIVATE */
 
-#include <machine/rwlock.h>
+struct krwlock {
+	volatile uintptr_t	rw_owner;
+};
 
 #ifdef _KERNEL
 
@@ -107,6 +103,7 @@ void	rw_downgrade(krwlock_t *);
 int	rw_read_held(krwlock_t *);
 int	rw_write_held(krwlock_t *);
 int	rw_lock_held(krwlock_t *);
+krw_t	rw_lock_op(krwlock_t *);
 
 void	rw_enter(krwlock_t *, const krw_t);
 void	rw_exit(krwlock_t *);
@@ -115,6 +112,8 @@ void	rw_obj_init(void);
 krwlock_t *rw_obj_alloc(void);
 void	rw_obj_hold(krwlock_t *);
 bool	rw_obj_free(krwlock_t *);
+u_int	rw_obj_refcnt(krwlock_t *);
+krwlock_t *rw_obj_tryalloc(void);
 
 #endif	/* _KERNEL */
 

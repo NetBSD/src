@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.52.4.1 2019/06/10 22:06:31 christos Exp $
+#	$NetBSD: MMTA,v 1.52.4.2 2020/04/08 14:07:46 martin Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -207,7 +207,6 @@ pseudo-device	vnd			# disk-like interface to files
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
 
 # miscellaneous pseudo-devices

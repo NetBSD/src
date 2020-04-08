@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.24.4.1 2019/06/10 22:06:01 christos Exp $	*/
+/*	$NetBSD: aica.c,v 1.24.4.2 2020/04/08 14:07:33 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.24.4.1 2019/06/10 22:06:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.24.4.2 2020/04/08 14:07:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,10 +135,7 @@ int aica_round_blocksize(void *, int, int, const audio_params_t *);
 size_t aica_round_buffersize(void *, int, size_t);
 int aica_trigger_output(void *, void *, void *, int, void (*)(void *), void *,
     const audio_params_t *);
-int aica_trigger_input(void *, void *, void *, int, void (*)(void *), void *,
-    const audio_params_t *);
 int aica_halt_output(void *);
-int aica_halt_input(void *);
 int aica_getdev(void *, struct audio_device *);
 int aica_set_port(void *, mixer_ctrl_t *);
 int aica_get_port(void *, mixer_ctrl_t *);
@@ -154,7 +151,6 @@ const struct audio_hw_if aica_hw_if = {
 	.set_format		= aica_set_format,
 	.round_blocksize	= aica_round_blocksize,
 	.halt_output		= aica_halt_output,
-	.halt_input		= aica_halt_input,
 	.getdev			= aica_getdev,
 	.set_port		= aica_set_port,
 	.get_port		= aica_get_port,
@@ -162,7 +158,6 @@ const struct audio_hw_if aica_hw_if = {
 	.round_buffersize	= aica_round_buffersize,
 	.get_props		= aica_get_props,
 	.trigger_output		= aica_trigger_output,
-	.trigger_input		= aica_trigger_input,
 	.get_locks		= aica_get_locks,
 };
 
@@ -609,14 +604,6 @@ aica_trigger_output(void *addr, void *start, void *end, int blksize,
 }
 
 int
-aica_trigger_input(void *addr, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, const audio_params_t *param)
-{
-
-	return ENODEV;
-}
-
-int
 aica_halt_output(void *addr)
 {
 	struct aica_softc *sc;
@@ -624,13 +611,6 @@ aica_halt_output(void *addr)
 	sc = addr;
 	aica_command(sc, AICA_COMMAND_STOP);
 	return 0;
-}
-
-int
-aica_halt_input(void *addr)
-{
-
-	return ENODEV;
 }
 
 int

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2018/05/01 19:59:47 christos Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2020/04/08 14:09:13 martin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -20,7 +20,7 @@ config/config.status: ${LLVM_SRCDIR}/configure
 	    --with-python=${.OBJDIR}/config/python
 # --disable-assertions
 
-need-dl:
+need-dl: Makefile
 	printf '#include <dlfcn.h>\nint main(void){void *p; return dladdr(p, p);}' > need-dl.c
 	if ${HOST_CC} -o need-dl.out -D_GNU_SOURCE need-dl.c > /dev/null 2>&1; then \
 		echo > ${.TARGET}; \
@@ -30,8 +30,8 @@ need-dl:
 		echo > ${.TARGET}; \
 	fi
 
-need-terminfo:
-	printf '#include <term.h>\nint main(void){return setupterm(0, 0, 0);}' > need-terminfo.c
+need-terminfo: Makefile
+	printf 'int setupterm(char *, int, int *);\nint main(void){return setupterm("", 0, 0);}' > need-terminfo.c
 	for lib in tinfo terminfo ncurses curses; do \
 		if ${HOST_CC} -o need-terminfo.out need-terminfo.c -l$$lib > /dev/null 2>&1; then \
 			echo -l$$lib > ${.TARGET}; \

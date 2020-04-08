@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.35 2017/03/10 07:35:58 ryo Exp $	*/
+/*	$NetBSD: pfil.c,v 1.35.14.1 2020/04/08 14:08:57 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.35 2017/03/10 07:35:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.35.14.1 2020/04/08 14:08:57 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -232,8 +232,7 @@ pfil_list_add(pfil_listset_t *phlistset, pfil_polyfunc_t func, void *arg,
 	pfh->pfil_arg  = arg;
 
 	/* switch from oldlist to newlist */
-	membar_producer();
-	phlistset->active = newlist;
+	atomic_store_release(&phlistset->active, newlist);
 #ifdef NET_MPSAFE
 	pserialize_perform(pfil_psz);
 #endif
@@ -336,8 +335,7 @@ pfil_list_remove(pfil_listset_t *phlistset, pfil_polyfunc_t func, void *arg)
 		newlist->nhooks--;
 
 		/* switch from oldlist to newlist */
-		phlistset->active = newlist;
-		membar_producer();
+		atomic_store_release(&phlistset->active, newlist);
 #ifdef NET_MPSAFE
 		pserialize_perform(pfil_psz);
 #endif
@@ -406,8 +404,7 @@ pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
-	phlist = phlistset->active;
-	membar_datadep_consumer();
+	phlist = atomic_load_consume(&phlistset->active);
 	psref_acquire(&psref, &phlist->psref, pfil_psref_class);
 	pserialize_read_exit(s);
 	for (u_int i = 0; i < phlist->nhooks; i++) {
@@ -436,8 +433,7 @@ pfil_run_arg(pfil_listset_t *phlistset, u_long cmd, void *arg)
 
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
-	phlist = phlistset->active;
-	membar_datadep_consumer();
+	phlist = atomic_load_consume(&phlistset->active);
 	psref_acquire(&psref, &phlist->psref, pfil_psref_class);
 	pserialize_read_exit(s);
 	for (u_int i = 0; i < phlist->nhooks; i++) {

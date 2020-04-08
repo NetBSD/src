@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.45.2.1 2019/06/10 22:07:06 christos Exp $ */
+/*	$NetBSD: ld_ataraid.c,v 1.45.2.2 2020/04/08 14:08:03 martin Exp $ */
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.45.2.1 2019/06/10 22:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.45.2.2 2020/04/08 14:08:03 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -500,6 +500,7 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 	int s, iodone;
 
 	s = splbio();
+	KERNEL_LOCK(1, NULL);		/* XXXSMP */
 
 	iodone = cbp->cb_flags & CBUF_IODONE;
 	other_cbp = cbp->cb_other;
@@ -571,6 +572,7 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 		lddone(&sc->sc_ld, bp);
 
 out:
+	KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 	splx(s);
 }
 

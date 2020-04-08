@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.66.2.1 2019/06/10 22:07:09 christos Exp $	*/
+/*	$NetBSD: i2c.c,v 1.66.2.2 2020/04/08 14:08:05 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.66.2.1 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.66.2.2 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.66.2.1 2019/06/10 22:07:09 christos Exp $"
 struct iic_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
-	int sc_type;
 	device_t sc_devices[I2C_MAX_ADDR + 1];
 };
 
@@ -285,7 +284,6 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	}
 
 	ia.ia_tag = sc->sc_tag;
-	ia.ia_type = sc->sc_type;
 
 	ia.ia_name = NULL;
 	ia.ia_ncompat = 0;
@@ -355,7 +353,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		 * to see if it looks like something is really there.
 		 */
 		if (match_result == I2C_MATCH_ADDRESS_ONLY &&
-		    (error = (*probe_func)(sc, &ia, I2C_F_POLL)) != 0)
+		    (error = (*probe_func)(sc, &ia, 0)) != 0)
 			continue;
 
 		sc->sc_devices[ia.ia_addr] =
@@ -409,7 +407,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_tag = iba->iba_tag;
-	sc->sc_type = iba->iba_type;
 	ic = sc->sc_tag;
 	ic->ic_devname = device_xname(self);
 
@@ -464,7 +461,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 
 			memset(&ia, 0, sizeof ia);
 			ia.ia_addr = addr;
-			ia.ia_type = sc->sc_type;
 			ia.ia_tag = ic;
 			ia.ia_name = name;
 			ia.ia_cookie = cookie;
@@ -719,8 +715,6 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 		     const struct device_compatible_entry *compats,
 		     int *match_resultp)
 {
-	int res;
-
 	KASSERT(match_resultp != NULL);
 
 	if (ia->ia_name != NULL &&
@@ -730,11 +724,8 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 	}
 
 	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
-		res = iic_compatible_match(ia, compats, NULL);
-		if (res) {
-			*match_resultp = res;
-			return true;
-		}
+		*match_resultp = iic_compatible_match(ia, compats, NULL);
+		return true;
 	}
 
 	return false;

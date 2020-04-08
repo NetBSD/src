@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73.16.1 2019/06/10 22:05:32 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.73.16.2 2020/04/08 14:07:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.73.16.1 2019/06/10 22:05:32 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.73.16.2 2020/04/08 14:07:18 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,43 @@ __RCSID("$NetBSD: main.c,v 1.73.16.1 2019/06/10 22:05:32 christos Exp $");
 #include "dump.h"
 #include "pathnames.h"
 #include "snapshot.h"
+
+union u_spcl u_spcl;
+struct ufsi *ufsib;
+int	mapsize;
+char	*usedinomap;
+char	*dumpdirmap;
+char	*dumpinomap;
+char	*disk;
+char	*disk_dev;
+const char *tape;
+const char *dumpdates;
+const char *temp;
+char	lastlevel;
+char	level;
+int	uflag;
+const char *dumpdev;
+int	eflag;
+int	lflag;
+int	diskfd;
+int	tapefd;
+int	pipeout;
+int	trueinc;
+ino_t	curino;
+int	newtape;
+u_int64_t	tapesize;
+long	tsize;
+long	asize;
+int	etapes;
+int	nonodump;
+int	unlimited;
+time_t	tstart_writing;
+time_t	tstart_volume;
+int	xferrate;
+char	sblock_buf[MAXBSIZE];
+int	dev_bshift;
+int	tp_bshift;
+int needswap;
 
 int	timestamp;		/* print message timestamps */
 int	notify;			/* notify operator flag */

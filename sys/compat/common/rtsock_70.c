@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_70.c,v 1.2.4.1 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: rtsock_70.c,v 1.2.4.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.2.4.1 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.2.4.2 2020/04/08 14:08:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -119,9 +119,8 @@ void
 rtsock_70_init(void)
 {
 
-	MODULE_HOOK_SET(rtsock_newaddr_70_hook, "rts_70",
-	    compat_70_rt_newaddrmsg1);
-	MODULE_HOOK_SET(rtsock_iflist_70_hook, "rts_70", compat_70_iflist_addr);
+	MODULE_HOOK_SET(rtsock_newaddr_70_hook, compat_70_rt_newaddrmsg1);
+	MODULE_HOOK_SET(rtsock_iflist_70_hook, compat_70_iflist_addr);
 }
 
 void

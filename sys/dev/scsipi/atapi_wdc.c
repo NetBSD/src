@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.129.4.1 2019/06/10 22:07:32 christos Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.129.4.2 2020/04/08 14:08:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.4.1 2019/06/10 22:07:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.4.2 2020/04/08 14:08:12 martin Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -101,12 +101,12 @@ static void	wdc_atapi_polldsc(void *arg);
 #define MAX_SIZE MAXPHYS
 
 static const struct scsipi_bustype wdc_atapi_bustype = {
-	SCSIPI_BUSTYPE_ATAPI,
-	atapi_scsipi_cmd,
-	atapi_interpret_sense,
-	atapi_print_addr,
-	wdc_atapi_kill_pending,
-	NULL,
+	.bustype_type = SCSIPI_BUSTYPE_ATAPI,
+	.bustype_cmd = atapi_scsipi_cmd,
+	.bustype_interpret_sense = atapi_interpret_sense,
+	.bustype_printaddr = atapi_print_addr,
+	.bustype_kill_pending = wdc_atapi_kill_pending,
+	.bustype_async_event_xfer_mode = NULL,
 };
 
 void
@@ -138,7 +138,7 @@ wdc_atapibus_attach(struct atabus_softc *ata_sc)
 	chan->chan_flags = SCSIPI_CHAN_OPENINGS;
 	chan->chan_openings = 1;
 	chan->chan_max_periph = 1;
-	chan->chan_ntargets = 2;
+	chan->chan_ntargets = chp->ch_ndrives;
 	chan->chan_nluns = 1;
 
 	chp->atapibus = config_found_ia(ata_sc->sc_dev, "atapi", chan,
@@ -507,10 +507,9 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	/* Do control operations specially. */
 	if (__predict_false(drvp->state < READY)) {
 		/* If it's not a polled command, we need the kernel thread */
-		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0 &&
-		    (chp->ch_flags & ATACH_TH_RUN) == 0) {
+		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0
+		    && !ata_is_thread_run(chp))
 			return ATASTART_TH;
-		}
 		/*
 		 * disable interrupts, all commands here should be quick
 		 * enough to be able to poll, and we don't go here that often

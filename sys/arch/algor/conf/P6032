@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.76.4.1 2019/06/10 22:05:45 christos Exp $
+#	$NetBSD: P6032,v 1.76.4.2 2020/04/08 14:07:24 martin Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.76.4.1 $"
+#ident 		"P6032-$Revision: 1.76.4.2 $"
 
 maxusers 32
 
@@ -122,7 +122,6 @@ pci*	at	bonito?
 #epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
 #eso*	at	pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 #ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
-#fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 #fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 #gsip*	at	pci? dev ? function ?		# NS DP83820 Gigabit Ethernet
 #isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI

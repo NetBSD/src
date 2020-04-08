@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.30.18.1 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.30.18.2 2020/04/08 14:08:08 martin Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.30.18.1 2019/06/10 22:07:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.30.18.2 2020/04/08 14:08:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,14 +137,16 @@ rlphyattach(device_t parent, device_t self, void *aux)
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
+	mii_lock(mii);
+
 	PHY_RESET(sc);
 
-	aprint_normal_dev(self, "");
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
-	if (sc->mii_capabilities & BMSR_MEDIAMASK)
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
+
+	mii_unlock(mii);
+
+	mii_phy_add_media(sc);
 }
 
 static int
@@ -155,6 +157,8 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	/* Can't isolate the RTL8139 phy, so it has to be the only one. */
 	if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 		panic("rlphy_service: attempt to isolate phy");
+
+	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -203,6 +207,8 @@ rlphy_status(struct mii_softc *sc)
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t bmsr, bmcr, anar, anlpar, result, reg;
+
+	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -301,6 +307,8 @@ rlphy_status(struct mii_softc *sc)
 static void
 rlphy_reset(struct mii_softc *sc)
 {
+
+	KASSERT(mii_locked(sc->mii_pdata));
 
 	mii_phy_reset(sc);
 

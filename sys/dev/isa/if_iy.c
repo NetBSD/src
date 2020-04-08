@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.102.2.1 2019/06/10 22:07:12 christos Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.102.2.2 2020/04/08 14:08:07 martin Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.102.2.1 2019/06/10 22:07:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.102.2.2 2020/04/08 14:08:07 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -671,7 +671,7 @@ iystart(struct ifnet *ifp)
 
 		if (len + pad > ETHER_MAX_LEN) {
 			/* packet is obviously too large: toss it */
-			++ifp->if_oerrors;
+			if_statinc(ifp, if_oerrors);
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			m_freem(m0);
 			continue;
@@ -818,7 +818,7 @@ iystart(struct ifnet *ifp)
 
 		/* XXX todo: enable ints here if disabled */
 
-		++ifp->if_opackets;
+		if_statinc(ifp, if_opackets);
 
 		if (sc->tx_start == sc->tx_end) {
 			bus_space_write_2(iot, ioh, XMT_ADDR_REG, last);
@@ -920,7 +920,7 @@ iywatchdog(struct ifnet *ifp)
 	struct iy_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	if_statinc(ifp, if_oerrors);
 	iyreset(sc);
 }
 
@@ -1047,7 +1047,7 @@ iyget(struct iy_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh,
 	return;
 
 dropped:
-	++ifp->if_ierrors;
+	if_statinc(ifp, if_ierrors);
 	return;
 }
 
@@ -1149,12 +1149,12 @@ iy_intr_tx(struct iy_softc *sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 		if (txstat2 & 0x0020)
-			ifp->if_collisions += 16;
+			if_statadd(ifp, if_collisions, 16);
 		else
-			ifp->if_collisions += txstat2 & 0x000f;
+			if_statadd(ifp, if_collisions, txstat2 & 0x000f);
 
 		if ((txstat2 & 0x2000) == 0)
-			++ifp->if_oerrors;
+			if_statinc(ifp, if_oerrors);
 	}
 }
 
@@ -1304,6 +1304,7 @@ iy_mc_setup(struct iy_softc *sc)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
+	ETHER_LOCK(ecp);
 	len = 6 * ecp->ec_multicnt;
 
 	avail = sc->tx_start - sc->tx_end;
@@ -1329,7 +1330,6 @@ iy_mc_setup(struct iy_softc *sc)
 	bus_space_write_2(iot, ioh, MEM_PORT_REG, 0);
 	bus_space_write_stream_2(iot, ioh, MEM_PORT_REG, htole16(len));
 
-	ETHER_LOCK(ecp);
 	ETHER_FIRST_MULTI(step, ecp, enm);
 	while (enm) {
 		/*

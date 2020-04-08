@@ -1,4 +1,4 @@
-#	$NetBSD: README.seagate,v 1.5 2005/12/11 12:22:02 christos Exp $
+#	$NetBSD: README.seagate,v 1.5.164.1 2020/04/08 14:08:07 martin Exp $
 
 The hardware:
 
@@ -39,7 +39,7 @@ The data transfers may be done in two different ways: Blind and polled
 transfers. They differ in the way the driver does it handshaking with the
 target. During a blind transfer, the driver code blindly transfers a block
 of data without checking for changed phase. During polled transfers, the
-phase is checked between every character transfered. The polled transfers
+phase is checked between every character transferred. The polled transfers
 are always used for status information and command transfers.
 
 Because the card does not use DMA in any way, there is no need to handle

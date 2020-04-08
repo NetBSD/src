@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.15 2017/11/06 19:20:54 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.15.4.1 2020/04/08 14:07:49 martin Exp $	*/
 
 #ifndef _POWERPC_ELF_MACHDEP_H_
 #define _POWERPC_ELF_MACHDEP_H_
@@ -71,7 +71,7 @@
 // 
 // #lo(x) = (x & 0xffff)
 // #hi(x) = ((x >> 16) & 0xffff)
-// #ha(x) = (((x >> 16) + ((x & 0x80000) == 0x8000)) & 0xffff)
+// #ha(x) = (((x >> 16) + ((x & 0x8000) == 0x8000)) & 0xffff)
 // #higher(x) = ((x >> 32) & 0xffff)
 // #highera(x) =
 //    (((x >> 32) + ((x & 0xffff8000) == 0xffff8000)) & 0xffff)

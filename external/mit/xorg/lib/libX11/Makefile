@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2015/07/19 08:18:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.13.16.1 2020/04/08 14:07:02 martin Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=		dynamic .WAIT libX11-xcb static \
-		ximcp xlcDef xlcUTF8Load xlibi18n xomGeneric
+		ximcp xlcDef xlcUTF8Load xlibi18n xomGeneric \
+		extensions
 
 INCS=		ImUtil.h XKBlib.h Xcms.h Xlib-xcb.h Xlib.h XlibConf.h \
 		Xlibint.h Xlocale.h Xregion.h Xresource.h Xutil.h \

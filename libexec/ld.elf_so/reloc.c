@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.112.2.1 2019/06/10 22:05:29 christos Exp $	 */
+/*	$NetBSD: reloc.c,v 1.112.2.2 2020/04/08 14:07:17 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.112.2.1 2019/06/10 22:05:29 christos Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.112.2.2 2020/04/08 14:07:17 martin Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -67,11 +67,14 @@ _rtld_do_copy_relocation(const Obj_Entry *dstobj, const Elf_Rela *rela)
 	void           *dstaddr = (void *)(dstobj->relocbase + rela->r_offset);
 	const Elf_Sym  *dstsym = dstobj->symtab + ELF_R_SYM(rela->r_info);
 	const char     *name = dstobj->strtab + dstsym->st_name;
-	unsigned long   hash = _rtld_elf_hash(name);
+	Elf_Hash        hash;
 	size_t          size = dstsym->st_size;
 	const void     *srcaddr;
 	const Elf_Sym  *srcsym = NULL;
 	Obj_Entry      *srcobj;
+
+	hash.sysv = _rtld_sysv_hash(name);
+	hash.gnu = _rtld_gnu_hash(name);
 
 	if (__predict_false(size == 0)) {
 #if defined(__powerpc__) && !defined(__LP64) /* PR port-macppc/47464 */
@@ -90,7 +93,7 @@ _rtld_do_copy_relocation(const Obj_Entry *dstobj, const Elf_Rela *rela)
 	}
 
 	for (srcobj = dstobj->next; srcobj != NULL; srcobj = srcobj->next) {
-		srcsym = _rtld_symlook_obj(name, hash, srcobj, 0,
+		srcsym = _rtld_symlook_obj(name, &hash, srcobj, 0,
 		    _rtld_fetch_ventry(dstobj, ELF_R_SYM(rela->r_info)));
 		if (srcsym != NULL)
 			break;
@@ -171,9 +174,8 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 	int ok = 1;
 
 	for (obj = first; obj != NULL; obj = obj->next) {
-		if (obj->nbuckets == 0 || obj->nchains == 0 ||
-		    obj->buckets == NULL || obj->symtab == NULL ||
-		    obj->strtab == NULL) {
+		if ((!obj->sysv_hash && !obj->gnu_hash) ||
+		    obj->symtab == NULL || obj->strtab == NULL) {
 			_rtld_error("%s: Shared object has no run-time"
 			    " symbol table", obj->path);
 			return -1;

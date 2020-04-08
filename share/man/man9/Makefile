@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.427.2.1 2019/06/10 22:05:41 christos Exp $
+#       $NetBSD: Makefile,v 1.427.2.2 2020/04/08 14:07:22 martin Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -34,7 +34,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 locking.9 log.9 ltsleep.9 \
 	localcount.9 LWP_CACHE_CREDS.9 \
 	makeiplcookie.9 \
-	malloc.9 mb.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memoryallocators.9 \
+	malloc.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memoryallocators.9 \
 	memmove.9 memset.9 \
 	microseq.9 microtime.9 microuptime.9 mi_switch.9 module.9 \
 	mstohz.9 mutex.9 m_tag.9 namecache.9 \
@@ -66,6 +66,13 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	vmem.9 wapbl.9 wdc.9 workqueue.9 \
 	wsbell.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
 	xcall.9
+
+MAN+=	atomic_loadstore.9
+MLINKS+=atomic_loadstore.9 atomic_load_acquire.9 \
+	atomic_loadstore.9 atomic_load_consume.9 \
+	atomic_loadstore.9 atomic_load_relaxed.9 \
+	atomic_loadstore.9 atomic_store_relaxed.9 \
+	atomic_loadstore.9 atomic_store_release.9
 
 MAN+=	boothowto.9
 MLINKS+=boothowto.9 BOOT_FLAG.9
@@ -312,9 +319,7 @@ MLINKS+=dofileread.9 dofilewrite.9 \
 MLINKS+=do_setresuid.9 do_setresgid.9
 MLINKS+=ethersubr.9 ether_ifattach.9 ethersubr.9 ether_addmulti.9 \
 	ethersubr.9 ether_delmulti.9 ethersubr.9 ETHER_IS_MULTICAST.9 \
-	ethersubr.9 ETHER_FIRST_MULTI.9 ethersubr.9 ETHER_NEXT_MULTI.9 \
-	ethersubr.9 fddi_ifattach.9 \
-	ethersubr.9 fddi_addmulti.9 ethersubr.9 fddi_delmulti.9
+	ethersubr.9 ETHER_FIRST_MULTI.9 ethersubr.9 ETHER_NEXT_MULTI.9
 MLINKS+=evcnt.9 evcnt_attach_dynamic.9 evcnt.9 evcnt_attach_static.9 \
 	evcnt.9 evcnt_detach.9
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
@@ -487,7 +492,6 @@ MLINKS+=malloc.9 malloc_type_attach.9
 MLINKS+=malloc.9 malloc_type_detach.9
 MLINKS+=malloc.9 MALLOC_DEFINE.9
 MLINKS+=malloc.9 MALLOC_DECLARE.9
-MLINKS+=mb.9 mb_memory.9 mb.9 mb_read.9 mb.9 mb_write.9
 MLINKS+=mbuf.9 m_get.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_copym.9 mbuf.9 m_copypacket.9 mbuf.9 m_copydata.9 \
 	mbuf.9 m_copyback.9 mbuf.9 m_cat.9 mbuf.9 m_dup.9 mbuf.9 m_prepend.9 \
@@ -659,10 +663,12 @@ MLINKS+=pcmcia.9 pcmcia_function_init.9 \
 	pcmcia.9 pcmcia_cis_read_n.9 \
 	pcmcia.9 pcmcia_scan_cis.9
 MLINKS+=percpu.9 percpu_alloc.9 \
+	percpu.9 percpu_create.9 \
 	percpu.9 percpu_free.9 \
 	percpu.9 percpu_getref.9 \
 	percpu.9 percpu_putref.9 \
-	percpu.9 percpu_foreach.9
+	percpu.9 percpu_foreach.9 \
+	percpu.9 percpu_foreach_xcall.9
 MLINKS+=pfil.9 pfil_hook_get.9 \
 	pfil.9 pfil_add_hook.9 \
 	pfil.9 pfil_remove_hook.9 \
@@ -801,7 +807,8 @@ MLINKS+=rwlock.9 rw.9 rwlock.9 rw_init.9 rwlock.9 rw_destroy.9 \
 	rwlock.9 rw_enter.9 rwlock.9 rw_exit.9 \
 	rwlock.9 rw_tryenter.9 rwlock.9 rw_tryupgrade.9 \
 	rwlock.9 rw_downgrade.9 rwlock.9 rw_read_held.9 \
-	rwlock.9 rw_write_held.9 rwlock.9 rw_lock_held.9
+	rwlock.9 rw_write_held.9 rwlock.9 rw_lock_held.9 \
+	rwlock.9 rw_lock_op.9
 MLINKS+=STACK.9 STACK_ALLOC.9 \
 	STACK.9 STACK_MAX.9 \
 	STACK.9 STACK_ALIGN.9 \

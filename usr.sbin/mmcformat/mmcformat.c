@@ -1,4 +1,4 @@
-/* $NetBSD: mmcformat.c,v 1.4.26.1 2019/06/10 22:10:33 christos Exp $ */
+/* $NetBSD: mmcformat.c,v 1.4.26.2 2020/04/08 14:09:21 martin Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -343,7 +343,7 @@ print_format(int format_tp, uint32_t num_blks, uint32_t param,
 		break;
 	case  0x05 :
 		format_str = "fixed length zone'd format";
-		nblks_str  = "zone lenght";
+		nblks_str  = "zone length";
 		param_str  = "last zone number";
 		*supported = 0;
 		break;

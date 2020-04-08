@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpvfs_if_pub.h,v 1.14 2016/01/26 23:25:40 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_pub.h,v 1.14.18.1 2020/04/08 14:09:00 martin Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
@@ -18,6 +18,7 @@ void rump_pub_vp_incref(struct vnode *);
 int rump_pub_vp_getref(struct vnode *);
 void rump_pub_vp_rele(struct vnode *);
 void rump_pub_vp_interlock(struct vnode *);
+void rump_pub_vp_vmobjlock(struct vnode *, int);
 void rump_pub_freecn(struct componentname *, int);
 int rump_pub_namei(uint32_t, uint32_t, const char *, struct vnode **, struct vnode **, struct componentname **);
 struct componentname * rump_pub_makecn(u_long, u_long, const char *, size_t, struct kauth_cred *, struct lwp *);

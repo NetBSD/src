@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.15.2.1 2019/06/10 22:09:47 christos Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.15.2.2 2020/04/08 14:08:58 martin Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.15.2.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.15.2.2 2020/04/08 14:08:58 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1761,7 +1761,7 @@ sctp_choose_v6_boundall(struct sctp_inpcb *inp,
 			/* by definition the scope (from to->sin6_scopeid)
 			 * must match that of the interface. If not then
 			 * we could pick a wrong scope for the address.
-			 * Ususally we don't hit plan-b since the route
+			 * Usually we don't hit plan-b since the route
 			 * handles this. However we can hit plan-b when
 			 * we send to local-host so the route is the
 			 * loopback interface, but the destination is a
@@ -5782,7 +5782,7 @@ sctp_med_chunk_output(struct sctp_inpcb *inp,
 						}
 						return (ENOMEM);
 					}
-					/* upate our MTU size */
+					/* update our MTU size */
 					/* Do clear IP_DF ? */
 					if (chk->flags & CHUNK_FLAGS_FRAGMENT_OK) {
 						no_fragmentflg = 0;
@@ -6681,7 +6681,7 @@ sctp_chunk_retransmission(struct sctp_inpcb *inp,
 			if (m == NULL) {
 				return (ENOMEM);
 			}
-			/* upate our MTU size */
+			/* update our MTU size */
 			/* Do clear IP_DF ? */
 			if (chk->flags & CHUNK_FLAGS_FRAGMENT_OK) {
 				no_fragmentflg = 0;
@@ -6712,7 +6712,7 @@ sctp_chunk_retransmission(struct sctp_inpcb *inp,
 					if (m == NULL) {
 						return (ENOMEM);
 					}
-					/* upate our MTU size */
+					/* update our MTU size */
 					/* Do clear IP_DF ? */
 					if (fwd->flags & CHUNK_FLAGS_FRAGMENT_OK) {
 						no_fragmentflg = 0;

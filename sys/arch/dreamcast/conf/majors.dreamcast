@@ -1,4 +1,4 @@
-#	$NetBSD: majors.dreamcast,v 1.22.54.1 2019/06/10 22:06:01 christos Exp $
+#	$NetBSD: majors.dreamcast,v 1.22.54.2 2020/04/08 14:07:33 martin Exp $
 #
 # Device majors for dreamcast
 #
@@ -59,7 +59,7 @@ device-major	ksyms		char 64			ksyms
 device-major	wsfont		char 65			wsfont
 #device-major	obsolete	char 66			obsolete (opencrypto)
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

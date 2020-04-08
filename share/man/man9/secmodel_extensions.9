@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel_extensions.9,v 1.5 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: secmodel_extensions.9,v 1.5.26.1 2020/04/08 14:07:22 martin Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,7 +95,7 @@ of the system is above 0.
 .Sh Non-superuser control of CPU sets
 When enabled, an ordinary user is allowed to control the CPU
 .Xr affinity 3
-of the processes and threads he owns.
+of the processes and threads they own.
 .Pp
 This extension is enabled by setting
 .Pa security.models.extensions.user_set_cpu_affinity

@@ -1,8 +1,8 @@
-/*	$NetBSD: openpam_version.h,v 1.6 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: openpam_version.h,v 1.6.10.1 2020/04/08 14:04:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
- * Copyright (c) 2004-2017 Dag-Erling Smørgrav
+ * Copyright (c) 2004-2019 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -34,14 +34,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenPAM: openpam_version.h 938 2017-04-30 21:34:42Z des $
+ * $OpenPAM: openpam_version.h 945 2019-02-22 09:52:46Z des $
  */
 
 #ifndef SECURITY_OPENPAM_VERSION_H_INCLUDED
 #define SECURITY_OPENPAM_VERSION_H_INCLUDED
 
 #define OPENPAM
-#define OPENPAM_VERSION	20170430
-#define OPENPAM_RELEASE	"Resedacea"
+#define OPENPAM_VERSION	20190224
+#define OPENPAM_RELEASE	"Tabebuia"
 
 #endif /* !SECURITY_OPENPAM_VERSION_H_INCLUDED */

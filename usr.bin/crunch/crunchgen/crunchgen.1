@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.35.2.1 2019/06/10 22:10:18 christos Exp $
+.\"	$NetBSD: crunchgen.1,v 1.35.2.2 2020/04/08 14:09:15 martin Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -24,7 +24,7 @@
 .\"			   Computer Science Department
 .\"			   University of Maryland at College Park
 .\"
-.Dd June 21, 2018
+.Dd January 2, 2020
 .Dt CRUNCHGEN 1
 .Os
 .Sh NAME
@@ -32,14 +32,14 @@
 .Nd generates build environment for a crunched binary
 .Sh SYNOPSIS
 .Nm
-.Op Fl fOopqSs
+.Op Fl FfOoq
 .Op Fl c Ar c-file-name
 .Op Fl D Ar src-root
-.Op Fl d Ar build-options
 .Op Fl e Ar exec-file-name
 .Op Fl L Ar lib-dir
 .Op Fl m Ar makefile-name
 .Op Fl v Ar var-spec
+.Op Fl V Ar var-spec
 .Ar conf-file
 .Sh DESCRIPTION
 A crunched binary is a program made up of many other programs linked
@@ -92,15 +92,13 @@ The default name is
 .It Fl D Ar src-root
 Assume that relative source directory specifications begin with
 .Ar src-root .
-.It Fl d Ar build-options
-Set the DBG variable in the generated makefile to
-.Ar build-options .
-The default flags are -Os.
 .It Fl e Ar exec-file-name
 Set crunched binary executable file name to
 .Ar exec-file-name .
 The default name is
 .Dq Aq Mt conf-name .
+.It Fl F
+Enable fortify.
 .It Fl f
 Flush cache.
 Forces the recalculation of cached parameters.
@@ -124,17 +122,15 @@ the program objects into a single relocatable.
 Use existing object files.
 Rather than rebuilding object files via reach-over
 makefiles, instead search for and use existing object files.
-.It Fl p
-Produce static pie (position independent executables).
 .It Fl q
 Quiet operation.
 Status messages are suppressed.
-.It Fl S
-Enable sanitization with a sanitizer in libc.
-.It Fl s
-Enable sanitization.
 .It Fl v Ar varspec
-Append a variable specification to the on-the fly generated Makefile.
+Append a variable specification to the on-the fly generated Makefiles
+for the individual programs.
+.It Fl V ar varspec
+Set the variable in the top level Makefile, and pass it in the command
+line of all sub-makes, so that it cannot be overwriten.
 .El
 .Sh CRUNCHGEN CONFIGURATION FILE COMMANDS
 .Nm
@@ -373,6 +369,54 @@ At this point the binary
 .Dq kcopy
 can be copied onto an install floppy
 and hard-linked to the names of the component programs.
+.Sh MIGRATION GUIDE
+.Nm
+used to have builtin entries for some Makefile variables, namely it
+set by default:
+.Bd -literal -offset indent
+DBG=-Os
+LDSTATIC=-static
+NOPIE=
+NOMAN=
+NOFORT=
+NOLIBCSANITIZER=
+NOSANITIZER=
+NOSSP=
+.Ed
+.Pp
+To set those defaults again, use:
+.Bd -literal -offset indent
+-V DBG=-Os \e
+-V LDSTATIC=-static -V NOPIE= \e
+-V NOMAN= \e
+-V NOFORT= -V NOLIBCSANITIZER= -V NOSANITIZER= -V NOSSP=
+.Ed
+.Pp
+The
+.Fl p
+flag that set pic mode internally set:
+.Bd -literal -offset indent
+LDSTATIC="-static -pie"
+.Ed
+.Pp
+and did not set:
+.Bd -literal -offset indent
+NOPIE=
+.Ed
+.Pp
+The remaining flags just disabled setting the variables that turned off various
+sanitizers, fortify, and stack protector.
+The mapping of those variables to the old options is:
+.Bl -tag -width XX -offset indent
+.It Fl F
+.Dv NOFORT
+.It Fl P
+.Dv NOSSP
+.It Fl S
+.Dv NOLIBCSANITIZER
+.It Fl s
+.Dv NOSANITIZER
+.El
 .Sh SEE ALSO
 .Xr crunchide 1 ,
 .Xr make 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.39 2017/07/26 06:44:50 knakahara Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.39.4.1 2020/04/08 14:08:59 martin Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -262,7 +262,7 @@ struct crypt_sgop {
 	struct session_n_op * sessions;
 };
 
-#define CRYPTO_MAX_MAC_LEN	20
+#define CRYPTO_MAX_MAC_LEN	32 /* Keep this updated */
 
 /* bignum parameter, in packed bytes, ... */
 struct crparam {

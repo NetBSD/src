@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.35 2016/01/30 09:59:27 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.35.18.1 2020/04/08 14:08:49 martin Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.35 2016/01/30 09:59:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.35.18.1 2020/04/08 14:08:49 martin Exp $");
 
 #include <sys/param.h>
 
@@ -160,6 +160,10 @@ msdosfs_lookup(void *v)
 			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
 		return *vpp == NULLVP ? ENOENT: 0;
 	}
+
+	/* May need to restart the lookup with an exclusive lock. */
+	if (VOP_ISLOCKED(vdp) != LK_EXCLUSIVE)
+		return ENOLCK;
 
 	/*
 	 * If they are going after the . or .. entry in the root directory,

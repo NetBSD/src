@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpexreg.h,v 1.2 2015/08/08 14:35:06 kiyohara Exp $	*/
+/*	$NetBSD: mvpexreg.h,v 1.2.18.1 2020/04/08 14:08:07 martin Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define MVPEX_BARC_BAREN		(1 << 0)
 #define MVPEX_BARC_BARSIZE_MASK	0xffff0000
 #define MVPEX_BARC_BARSIZE(s)	(((s) - 1) & MVPEX_BARC_BARSIZE_MASK)
-#define MVPEX_ERBARC	0x180c	/* Expresion ROM BAR Control */
+#define MVPEX_ERBARC	0x180c	/* Expression ROM BAR Control */
 #define MVPEX_ERBARC_EXPROMEN	(1 << 0)
 #define MVPEX_ERBARC_EXPROMSZ_05M	(0 << 19)
 #define MVPEX_ERBARC_EXPROMSZ_1M	(1 << 19)
@@ -87,8 +87,8 @@
 #define MVPEX_WR_REMAP_REMAPEN	(1 << 0)
 #define MVPEX_WR_REMAP(a)		((a) & 0xffff0000)
 #define MVPEX_DWC		0x18b0	/* Default Window Control */
-#define MVPEX_EROMWC		0x18c0	/* Expresion ROM Win Control */
-#define MVPEX_EROMWR		0x18c4	/* Expresion ROM Win Remap */
+#define MVPEX_EROMWC		0x18c0	/* Expression ROM Win Control */
+#define MVPEX_EROMWR		0x18c4	/* Expression ROM Win Remap */
 /* PCI Express Control and Status Registers */
 #define MVPEX_CTRL		0x1a00	/* Control */
 #define MVPEX_CTRL_CONFROOTCOMPLEX	(1 << 1)

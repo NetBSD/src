@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.44.2.1 2019/06/10 22:06:29 christos Exp $ */
+/* $NetBSD: if_aumac.c,v 1.44.2.2 2020/04/08 14:07:44 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.44.2.1 2019/06/10 22:06:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.44.2.2 2020/04/08 14:07:44 martin Exp $");
 
 
 
@@ -565,16 +565,18 @@ aumac_txintr(struct aumac_softc *sc)
 		stat = bus_space_read_4(sc->sc_st, sc->sc_dma_sh,
 		    MACDMA_TX_STAT(i));
 
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (stat & TX_STAT_FA) {
 			/* XXX STATS */
-			ifp->if_oerrors++;
+			if_statinc_ref(nsr, if_oerrors);
 		} else
-			ifp->if_opackets++;
+			if_statinc_ref(nsr, if_opackets);
 
 		if (stat & TX_STAT_EC)
-			ifp->if_collisions += 16;
-		else
-			ifp->if_collisions += TX_STAT_CC(stat);
+			if_statadd_ref(nsr, if_collisions, 16);
+		else if (TX_STAT_CC(stat))
+			if_statadd_ref(nsr, if_collisions, TX_STAT_CC(stat));
+		IF_STAT_PUTREF(ifp);
 
 		sc->sc_txfree++;
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -670,7 +672,7 @@ aumac_rxintr(struct aumac_softc *sc)
 					PRINTERR("dribbling bit");
 			}
 #undef PRINTERR
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 
  dropit:
 			/* reuse the current descriptor */

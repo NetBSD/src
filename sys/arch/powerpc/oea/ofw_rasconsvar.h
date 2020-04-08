@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rasconsvar.h,v 1.2 2018/03/02 14:37:18 macallan Exp $	*/
+/*	$NetBSD: ofw_rasconsvar.h,v 1.2.4.1 2020/04/08 14:07:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,5 +34,6 @@ extern struct vcons_screen rascons_console_screen;
 extern struct wsscreen_descr rascons_stdscreen;
 int rascons_init_rasops(int, struct rasops_info *);
 void rascons_finalize(void);
+void rascons_add_rom_font(void);
 
 #endif /* _OFW_RASCONSVAR_H_ */

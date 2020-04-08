@@ -45,13 +45,13 @@ import stringprep
 import util
 
 if len(sys.argv) != 3:
-    print "usage: %s rfc3454.txt out-dir" % sys.argv[0]
+    print("usage: %s rfc3454.txt out-dir" % sys.argv[0])
     sys.exit(1)
 
 tables = rfc3454.read(sys.argv[1])
 t2 = rfc4518.read()
 
-for x in t2.iterkeys():
+for x in t2:
     tables[x] = t2[x]
 
 map_list = stringprep.get_maplist()
@@ -88,7 +88,7 @@ const struct translation _wind_map_table[] = {
 
 trans=[]
 
-for t in map_list.iterkeys():
+for t in map_list:
     for l in tables[t]:
         m = re.search('^ *([0-9A-F]+)-([0-9A-F]+); *([^;]+); *(.*) *$', l)
         if m:
@@ -96,7 +96,7 @@ for t in map_list.iterkeys():
             end   = int(m.group(2), 0x10)
             value = m.group(3)
             desc  = m.group(4)
-            for key in xrange(start,end,1):
+            for key in range(start,end,1):
                 trans.append((key, value, desc, [t]))
             continue
         m = re.search('^ *([^;]+); *([^;]+); *(.*) *$', l)
@@ -114,7 +114,7 @@ trans = stringprep.sort_merge_trans(trans)
 
 for x in trans:
     if x[0] == 0xad:
-        print "fooresult %s" % ",".join(x[3])
+        print("fooresult %s" % ",".join(x[3]))
 
 for x in trans:
     (key, value, description, table) = x
@@ -130,7 +130,7 @@ for x in trans:
     (key, value, description, tables) = x
     symbols = stringprep.symbols(map_list, tables)
     if len(symbols) == 0:
-        print "no symbol for %s %s (%s)" % (key, description, tables)
+        print("no symbol for %s %s (%s)" % (key, description, tables))
         sys.exit(1)
     v = value.split()
     map_c.file.write("  {0x%x, %u, %u, %s}, /* %s: %s */\n"

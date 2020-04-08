@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon.h,v 1.3.32.1 2019/06/10 22:08:25 christos Exp $	*/
+/*	$NetBSD: radeon.h,v 1.3.32.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -62,7 +62,6 @@
  *                          are considered as fatal)
  */
 
-#include <asm/byteorder.h>
 #include <linux/atomic.h>
 #include <linux/wait.h>
 #include <linux/list.h>
@@ -70,11 +69,6 @@
 #include <linux/interval_tree.h>
 #include <linux/hashtable.h>
 #include <linux/fence.h>
-#include <linux/device.h>
-#include <linux/log2.h>
-#include <linux/notifier.h>
-#include <linux/printk.h>
-#include <linux/rwsem.h>
 
 #include <ttm/ttm_bo_api.h>
 #include <ttm/ttm_bo_driver.h>
@@ -127,7 +121,7 @@ extern int radeon_mst;
  * symbol;
  */
 #define RADEON_MAX_USEC_TIMEOUT			100000	/* 100 ms */
-#define RADEON_FENCE_JIFFIES_TIMEOUT		(DRM_HZ / 2)
+#define RADEON_FENCE_JIFFIES_TIMEOUT		(HZ / 2)
 /* RADEON_IB_POOL_SIZE must be a power of 2 */
 #define RADEON_IB_POOL_SIZE			16
 #define RADEON_DEBUGFS_MAX_COMPONENTS		32
@@ -259,6 +253,7 @@ struct radeon_dummy_page {
 #ifdef __NetBSD__
 	bus_dma_segment_t	rdp_seg;
 	bus_dmamap_t		rdp_map;
+	void		*rdp_addr;
 #else
 	struct page	*page;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.h,v 1.3.4.1 2019/06/10 22:07:01 christos Exp $ */
+/*	$NetBSD: linux32_sysctl.h,v 1.3.4.2 2020/04/08 14:08:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -44,7 +44,6 @@ extern char linux32_version[];
 #define EMUL_LINUX32_KERN_OSRELEASE	2
 #define EMUL_LINUX32_KERN_VERSION	3
 
-void	linux32_sysctl_init(void);
 void	linux32_sysctl_fini(void);
 
 int	linux32_sysctl_enable(SYSCTLFN_PROTO);

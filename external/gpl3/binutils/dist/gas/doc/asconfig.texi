@@ -1,4 +1,4 @@
-@c Copyright (C) 1992-2018 Free Software Foundation, Inc.
+@c Copyright (C) 1992-2020 Free Software Foundation, Inc.
 @c This file is part of the documentation for the GAS manual
 
 @c Configuration settings for all-inclusive version of manual
@@ -30,8 +30,10 @@
 @set ARM
 @set AVR
 @set Blackfin
+@set BPF
 @set CR16
 @set CRIS
+@set CSKY
 @set D10V
 @set D30V
 @set EPIPHANY
@@ -58,6 +60,7 @@
 @set NIOSII
 @set NDS32
 @set NS32K
+@set OPENRISC
 @set PDP11
 @set PJ
 @set PPC

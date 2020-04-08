@@ -1,4 +1,4 @@
-# $NetBSD: etc.rc,v 1.1 2012/01/22 03:53:29 tsutsui Exp $
+# $NetBSD: etc.rc,v 1.1.44.1 2020/04/08 14:03:43 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -35,9 +35,6 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-
-# hack to get around bugs in kernfs's rootdev/rrootdev lookup.
-ls -l /dev/* > /dev/null 2>&1
 
 mount -u /
 mount -t tmpfs tmpfs /tmp

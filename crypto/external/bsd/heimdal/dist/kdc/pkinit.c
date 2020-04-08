@@ -1,4 +1,4 @@
-/*	$NetBSD: pkinit.c,v 1.4 2018/02/09 23:22:12 christos Exp $	*/
+/*	$NetBSD: pkinit.c,v 1.4.4.1 2020/04/08 14:03:08 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2016 Kungliga Tekniska Högskolan
@@ -489,7 +489,7 @@ _kdc_pk_rd_padata(krb5_context context,
 
 	type = "PK-INIT-Win2k";
 
-	if (_kdc_is_anon_request(&req->req_body)) {
+	if (_kdc_is_anonymous(context, client->entry.principal)) {
 	    ret = KRB5_KDC_ERR_PUBLIC_KEY_ENCRYPTION_NOT_SUPPORTED;
 	    krb5_set_error_message(context, ret,
 				   "Anon not supported in RSA mode");
@@ -635,7 +635,7 @@ _kdc_pk_rd_padata(krb5_context context,
 	hx509_certs signer_certs;
 	int flags = HX509_CMS_VS_ALLOW_DATA_OID_MISMATCH; /* BTMM */
 
-	if (_kdc_is_anon_request(&req->req_body))
+	if (_kdc_is_anonymous(context, client->entry.principal))
 	    flags |= HX509_CMS_VS_ALLOW_ZERO_SIGNER;
 
 	ret = hx509_cms_verify_signed(context->hx509ctx,
@@ -720,7 +720,7 @@ _kdc_pk_rd_padata(krb5_context context,
 	    goto out;
 	}
 
-	if (_kdc_is_anon_request(&req->req_body) &&
+	if (_kdc_is_anonymous(context, client->entry.principal) &&
 	    ap.clientPublicValue == NULL) {
 	    free_AuthPack(&ap);
 	    ret = KRB5_KDC_ERR_PUBLIC_KEY_ENCRYPTION_NOT_SUPPORTED;
@@ -1694,8 +1694,10 @@ _kdc_pk_check_client(krb5_context context,
     size_t i;
 
     if (cp->cert == NULL) {
+	if (!_kdc_is_anonymous(context, client->entry.principal))
+	    return KRB5KDC_ERR_BADOPTION;
 
-	*subject_name = strdup("anonymous client client");
+	*subject_name = strdup("<unauthenticated anonymous client>");
 	if (*subject_name == NULL)
 	    return ENOMEM;
 	return 0;

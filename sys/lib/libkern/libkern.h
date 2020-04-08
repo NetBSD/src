@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.126.4.1 2019/06/10 22:09:04 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.126.4.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -355,14 +355,6 @@ tolower(int ch)
     ((const TYPE *)(((const char *)(PTR)) - offsetof(TYPE, FIELD))	\
 	+ __validate_const_container_of(PTR, TYPE, FIELD))
 
-#define	MTPRNG_RLEN		624
-struct mtprng_state {
-	unsigned int mt_idx;
-	uint32_t mt_elem[MTPRNG_RLEN];
-	uint32_t mt_count;
-	uint32_t mt_sparse[3];
-};
-
 /* Prototypes for which GCC built-ins exist. */
 void	*memcpy(void *, const void *, size_t);
 int	 memcmp(const void *, const void *, size_t);
@@ -409,13 +401,29 @@ size_t	 kasan_strlen(const char *);
 #endif
 
 /* These exist in GCC 3.x, but we don't bother. */
+#if defined(_KERNEL) && defined(KASAN)
+char	*kasan_strcat(char *, const char *);
+char	*kasan_strchr(const char *, int);
+char	*kasan_strrchr(const char *, int);
+#define	strcat(d, s)		kasan_strcat(d, s)
+#define	strchr(s, c)		kasan_strchr(s, c)
+#define	strrchr(s, c)		kasan_strrchr(s, c)
+#elif defined(_KERNEL) && defined(KMSAN)
+char	*kmsan_strcat(char *, const char *);
+char	*kmsan_strchr(const char *, int);
+char	*kmsan_strrchr(const char *, int);
+#define	strcat(d, s)		kmsan_strcat(d, s)
+#define	strchr(s, c)		kmsan_strchr(s, c)
+#define	strrchr(s, c)		kmsan_strrchr(s, c)
+#else
 char	*strcat(char *, const char *);
+char	*strchr(const char *, int);
+char	*strrchr(const char *, int);
+#endif
 size_t	 strcspn(const char *, const char *);
 char	*strncpy(char *, const char *, size_t);
 char	*strncat(char *, const char *, size_t);
 int	 strncmp(const char *, const char *, size_t);
-char	*strchr(const char *, int);
-char	*strrchr(const char *, int);
 char	*strstr(const char *, const char *);
 char	*strpbrk(const char *, const char *);
 size_t	 strspn(const char *, const char *);
@@ -447,10 +455,6 @@ char	*setstate(char *);
 long	 random(void);
 void	 mi_vector_hash(const void * __restrict, size_t, uint32_t,
 	    uint32_t[3]);
-void	 mtprng_init32(struct mtprng_state *, uint32_t);
-void	 mtprng_initarray(struct mtprng_state *, const uint32_t *, size_t);
-uint32_t mtprng_rawrandom(struct mtprng_state *);
-uint32_t mtprng_random(struct mtprng_state *);
 int	 scanc(u_int, const u_char *, const u_char *, int);
 int	 skpc(int, size_t, u_char *);
 int	 strcasecmp(const char *, const char *);
@@ -495,24 +499,5 @@ int	strnvisx(char *, size_t, const char *, size_t, int);
 #define VIS_OCTAL	0x01
 #define VIS_SAFE	0x20
 #define VIS_TRIM	0x40
-
-#ifdef notyet
-/*
- * LZF hashtable/state size: on uncompressible data and on a system with
- * a sufficiently large d-cache, a larger table produces a considerable
- * speed benefit.  On systems with small memory and caches, however...
- */
-#if defined(__vax__) || defined(__m68k__)
-#define LZF_HLOG 14
-#else
-#define LZF_HLOG 15
-#endif
-typedef const uint8_t *LZF_STATE[1 << LZF_HLOG];
-
-unsigned int lzf_compress_r (const void *const, unsigned int, void *,
-			     unsigned int, LZF_STATE);
-unsigned int lzf_decompress (const void *const, unsigned int, void *,
-			     unsigned int);
-#endif
 
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

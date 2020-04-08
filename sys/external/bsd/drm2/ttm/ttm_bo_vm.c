@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.10.18.1 2019/06/10 22:08:33 christos Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.10.18.2 2020/04/08 14:08:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.10.18.1 2019/06/10 22:08:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.10.18.2 2020/04/08 14:08:28 martin Exp $");
 
 #include <sys/types.h>
 
@@ -89,11 +89,10 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 	unsigned i;
 	vm_prot_t vm_prot;	/* VM_PROT_* */
 	pgprot_t pgprot;	/* VM_PROT_* | PMAP_* cacheability flags */
-	unsigned mmapflags;
 	int ret;
 
 	/* Thanks, uvm, but we don't need this lock.  */
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
 	/* Copy-on-write mappings make no sense for the graphics aperture.  */
 	if (UVM_ET_ISCOPYONWRITE(ufi->entry)) {
@@ -189,13 +188,11 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 			    0);
 
 			paddr = pmap_phys_address(cookie);
-			mmapflags = pmap_mmap_flags(cookie);
 		} else {
 			paddr = page_to_phys(u.ttm->pages[startpage + i]);
-			mmapflags = 0;
 		}
 		ret = -pmap_enter(ufi->orig_map->pmap, vaddr + i*PAGE_SIZE,
-		    paddr, vm_prot, (PMAP_CANFAIL | pgprot | mmapflags));
+		    paddr, vm_prot, (PMAP_CANFAIL | pgprot));
 		if (ret)
 			goto out3;
 	}

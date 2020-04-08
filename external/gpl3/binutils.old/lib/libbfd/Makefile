@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2018/04/14 17:53:00 christos Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2020/04/08 14:06:06 martin Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -27,12 +27,14 @@ BINDIR=/usr/bin
 .if exists(${DEFS_MK})
 .include "${DEFS_MK}"
 
-SHLIB_MAJOR=	15
+SHLIB_MAJOR=	16
 SHLIB_MINOR=	0
 
 LIBDPLIBS+=	z	${.CURDIR}/../../../../../lib/libz
 
 GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}
+GCPPFLAGS+=	${G_HAVEVECS}
+
 CPPFLAGS+=	-I${.CURDIR}/arch/${BFD_MACHINE_ARCH} -I${DIST}/include -I. \
 		-I${DIST}/bfd ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
 		-DDEBUGDIR=\"${DEBUGDIR}\" -DBINDIR=\"${BINDIR}\"

@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic64,v 1.1.4.1 2019/06/10 22:06:05 christos Exp $
+#	$NetBSD: std.generic64,v 1.1.4.2 2020/04/08 14:07:34 martin Exp $
 #
 #	generic NetBSD/evbarm64 with FDT support
 
@@ -21,6 +21,7 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 options 	PCI_NETBSD_CONFIGURE
 options 	__HAVE_PCI_CONF_HOOK
 options 	__HAVE_PCI_MSI_MSIX
+options 	__BUS_SPACE_HAS_PROBING_METHODS
 
 # XXXNH not yet
 #options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP

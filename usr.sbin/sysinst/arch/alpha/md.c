@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 2018/05/18 12:23:22 joerg Exp $ */
+/*	$NetBSD: md.c,v 1.3.2.1 2020/04/08 14:09:22 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -126,7 +126,7 @@ md_check_partitions(void)
 int
 md_pre_disklabel(void)
 {
-	return 0;
+	return true;
 }
 
 /*
@@ -164,6 +164,11 @@ md_post_newfs(void)
 	if (error != 0)
 		process_menu(MENU_ok,
 		    __UNCONST("Warning: disk is probably not bootable"));
+
+	wclear(stdscr);
+	touchwin(stdscr);
+	clearok(stdscr, 1);
+	refresh();
 
 	return 0;
 }

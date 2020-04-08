@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.69.2.1 2019/06/10 22:06:04 christos Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.69.2.2 2020/04/08 14:07:34 martin Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.69.2.1 2019/06/10 22:06:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.69.2.2 2020/04/08 14:07:34 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -487,25 +487,26 @@ beagle_mpstart(void)
 	arm_dsb();
 	__asm __volatile("sev" ::: "memory");
 
-	for (int loop = 0; loop < 16; loop++) {
-		VPRINTF("%u hatched %#x\n", loop, arm_cpu_hatched);
-		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
-			break;
-		int timo = 1500000;
-		while (arm_cpu_hatched != __BITS(arm_cpu_max - 1, 1))
-			if (--timo == 0)
+	u_int hatched = 0;
+	for (u_int cpuindex = 1; cpuindex < arm_cpu_max; cpuindex++) {
+		/* Wait for AP to start */
+		u_int i;
+		for (i = 1500000; i > 0; i--) {
+			if (cpu_hatched_p(cpuindex)) {
+				hatched |= __BIT(cpuindex);
 				break;
-	}
-	for (size_t i = 1; i < arm_cpu_max; i++) {
-		if ((arm_cpu_hatched & __BIT(i)) == 0) {
-		printf("%s: warning: cpu%zu failed to hatch\n",
-			    __func__, i);
+			}
 		}
+
+		if (i == 0) {
+			aprint_error("cpu%d: WARNING: AP failed to start\n", cpuindex);
+		}
+
+		cpuindex++;
 	}
 
-	VPRINTF(" (%u cpu%s, hatched %#x)",
-	    arm_cpu_max, arm_cpu_max ? "s" : "",
-	    arm_cpu_hatched);
+	VPRINTF(" (%u cpu%s, hatched %#x)", arm_cpu_max,
+	    arm_cpu_max ? "s" : "", hatched);
 #endif
 }
 
@@ -1169,6 +1170,7 @@ beagle_device_register(device_t self, void *aux)
 		prop_dictionary_set_int16(dict, "port2-gpio", -1);
 #endif
 #if defined(OMAP_5430)
+		int rv __diagused;
 		bus_space_tag_t iot = &omap_bs_tag;
 		bus_space_handle_t ioh;
 		omap2_gpio_ctl(80, GPIO_PIN_OUTPUT);
@@ -1180,7 +1182,7 @@ beagle_device_register(device_t self, void *aux)
 		prop_dictionary_set_int16(dict, "port0-gpio", 80);
 		prop_dictionary_set_bool(dict, "port0-gpioval", true);
 #endif
-		int rv = bus_space_map(iot, OMAP5_CM_CTL_WKUP_REF_CLK0_OUT_REF_CLK1_OUT, 4, 0, &ioh);
+		rv = bus_space_map(iot, OMAP5_CM_CTL_WKUP_REF_CLK0_OUT_REF_CLK1_OUT, 4, 0, &ioh);
 		KASSERT(rv == 0);
 		uint32_t v = bus_space_read_4(iot, ioh, 0);
 		v &= 0xffff;

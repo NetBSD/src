@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.142 2018/06/09 18:48:31 zafer Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.142.2.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.142 2018/06/09 18:48:31 zafer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.142.2.1 2020/04/08 14:09:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -653,9 +653,14 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	/* If there are too many pending dirops, we have to flush them. */
 	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
+		KASSERT(fs->lfs_dirops == 0);
+		fs->lfs_writer++;
 		mutex_exit(&lfs_lock);
 		lfs_flush_dirops(fs);
 		mutex_enter(&lfs_lock);
+		if (--fs->lfs_writer == 0)
+			cv_broadcast(&fs->lfs_diropscv);
+		KASSERT(fs->lfs_dirops == 0);
 	} else if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 	    lfs_subsys_pages > LFS_MAX_PAGES ||
@@ -729,8 +734,8 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bp->b_blkno = daddr;
 	bp->b_error = 0;
 	bp->b_resid = 0;
-	bp->b_iodone = lfs_callback;
-	bp->b_cflags = BC_BUSY | BC_NOCACHE;
+	bp->b_iodone = lfs_free_aiodone;
+	bp->b_cflags |= BC_BUSY | BC_NOCACHE;
 	bp->b_private = fs;
 
 	mutex_enter(&bufcache_lock);
@@ -767,7 +772,7 @@ lfs_wait_pages(void)
 	int active, inactive;
 
 	uvm_estimatepageable(&active, &inactive);
-	return LFS_WAIT_RESOURCE(active + inactive + uvmexp.free, 1);
+	return LFS_WAIT_RESOURCE(active + inactive + uvm_availmem(), 1);
 }
 
 int
@@ -776,5 +781,5 @@ lfs_max_pages(void)
 	int active, inactive;
 
 	uvm_estimatepageable(&active, &inactive);
-	return LFS_MAX_RESOURCE(active + inactive + uvmexp.free, 1);
+	return LFS_MAX_RESOURCE(active + inactive + uvm_availmem(), 1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ctx.c,v 1.4.6.2 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: amdgpu_ctx.c,v 1.4.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -25,10 +25,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ctx.c,v 1.4.6.2 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ctx.c,v 1.4.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <drm/drmP.h>
 #include "amdgpu.h"
+
+#include <linux/nbsd-namespace.h>
 
 int amdgpu_ctx_init(struct amdgpu_device *adev, bool kernel,
 		    struct amdgpu_ctx *ctx)
@@ -295,11 +297,7 @@ struct fence *amdgpu_ctx_get_fence(struct amdgpu_ctx *ctx,
 
 void amdgpu_ctx_mgr_init(struct amdgpu_ctx_mgr *mgr)
 {
-#ifdef __NetBSD__
-	linux_mutex_init(&mgr->lock);
-#else
 	mutex_init(&mgr->lock);
-#endif
 	idr_init(&mgr->ctx_handles);
 }
 
@@ -317,9 +315,5 @@ void amdgpu_ctx_mgr_fini(struct amdgpu_ctx_mgr *mgr)
 	}
 
 	idr_destroy(&mgr->ctx_handles);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&mgr->lock);
-#else
 	mutex_destroy(&mgr->lock);
-#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: doa_259.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: doa_259.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -193,7 +193,7 @@ fromstruct_doa(ARGS_FROMSTRUCT) {
 	dns_rdata_doa_t *doa = source;
 
 	REQUIRE(type == dns_rdatatype_doa);
-	REQUIRE(source != NULL);
+	REQUIRE(doa != NULL);
 	REQUIRE(doa->common.rdtype == dns_rdatatype_doa);
 	REQUIRE(doa->common.rdclass == rdclass);
 
@@ -212,6 +212,7 @@ tostruct_doa(ARGS_TOSTRUCT) {
 
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_doa);
+	REQUIRE(doa != NULL);
 	REQUIRE(rdata->length != 0);
 
 	doa->common.rdclass = rdata->rdclass;
@@ -290,7 +291,7 @@ static inline void
 freestruct_doa(ARGS_FREESTRUCT) {
 	dns_rdata_doa_t *doa = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(doa != NULL);
 	REQUIRE(doa->common.rdtype == dns_rdatatype_doa);
 
 	if (doa->mctx == NULL) {

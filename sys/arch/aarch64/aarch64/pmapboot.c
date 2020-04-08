@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.3.4.2 2019/06/10 22:05:43 christos Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.3.4.3 2020/04/08 14:07:23 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.3.4.2 2019/06/10 22:05:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.3.4.3 2020/04/08 14:07:23 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.3.4.2 2019/06/10 22:05:43 christos Ex
 
 
 #define OPTIMIZE_TLB_CONTIG
-
 
 static void
 pmapboot_protect_entry(pt_entry_t *pte, vm_prot_t clrprot)
@@ -77,17 +76,21 @@ pmapboot_protect(vaddr_t sva, vaddr_t eva, vm_prot_t clrprot)
 	paddr_t pa;
 	pd_entry_t *l0, *l1, *l2, *l3;
 
-	for (va = sva; va < eva;) {
-		/*
-		 * 0x0000xxxxxxxxxxxx -> l0 = (ttbr0_el1 & TTBR_BADDR)
-		 * 0xffffxxxxxxxxxxxx -> l0 = (ttbr1_el1 & TTBR_BADDR)
-		 */
-		if (va & TTBR_SEL_VA)
-			pa = (reg_ttbr1_el1_read() & TTBR_BADDR);
-		else
-			pa = (reg_ttbr0_el1_read() & TTBR_BADDR);
-		l0 = (pd_entry_t *)AARCH64_PA_TO_KVA(pa);
+	switch (aarch64_addressspace(sva)) {
+	case AARCH64_ADDRSPACE_LOWER:
+		/* 0x0000xxxxxxxxxxxx */
+		pa = (reg_ttbr0_el1_read() & TTBR_BADDR);
+		break;
+	case AARCH64_ADDRSPACE_UPPER:
+		/* 0xFFFFxxxxxxxxxxxx */
+		pa = (reg_ttbr1_el1_read() & TTBR_BADDR);
+		break;
+	default:
+		return -1;
+	}
+	l0 = (pd_entry_t *)AARCH64_PA_TO_KVA(pa);
 
+	for (va = sva; va < eva;) {
 		idx = l0pde_index(va);
 		if (!l0pde_valid(l0[idx]))
 			return -1;
@@ -233,19 +236,22 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 
 	attr |= LX_BLKPAG_OS_BOOT;
 
-	while (va <= va_end) {
-		/*
-		 * 0x0000xxxxxxxxxxxx -> l0 = (ttbr0_el1 & TTBR_BADDR)
-		 * 0xffffxxxxxxxxxxxx -> l0 = (ttbr1_el1 & TTBR_BADDR)
-		 */
-		if (va & TTBR_SEL_VA) {
-			l0 = (pd_entry_t *)(reg_ttbr1_el1_read() & TTBR_BADDR);
-			ttbr = 1;
-		} else {
-			l0 = (pd_entry_t *)(reg_ttbr0_el1_read() & TTBR_BADDR);
-			ttbr = 0;
-		}
+	switch (aarch64_addressspace(va)) {
+	case AARCH64_ADDRSPACE_LOWER:
+		/* 0x0000xxxxxxxxxxxx */
+		l0 = (pd_entry_t *)(reg_ttbr0_el1_read() & TTBR_BADDR);
+		ttbr = 0;
+		break;
+	case AARCH64_ADDRSPACE_UPPER:
+		/* 0xFFFFxxxxxxxxxxxx */
+		l0 = (pd_entry_t *)(reg_ttbr1_el1_read() & TTBR_BADDR);
+		ttbr = 1;
+		break;
+	default:
+		return -1;
+	}
 
+	while (va <= va_end) {
 #ifdef OPTIMIZE_TLB_CONTIG
 		ll = NULL;
 		llidx = -1;
@@ -418,6 +424,86 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 			pa += L3_SIZE;
 			break;
 		}
+	}
+
+	return nskip;
+}
+
+int
+pmapboot_enter_range(vaddr_t va, paddr_t pa, psize_t size, pt_entry_t attr,
+    uint64_t flags, pd_entry_t *(*physpage_allocator)(void),
+    void (*pr)(const char *, ...) __printflike(1, 2))
+{
+	vaddr_t vend;
+	vsize_t left, mapsize, nblocks;
+	int nskip = 0;
+
+	va = trunc_page(va);
+	vend = round_page(va + size);
+	left = vend - va;
+
+	/* align the start address to L2 blocksize */
+	nblocks = ulmin(left / L3_SIZE,
+	    Ln_ENTRIES - __SHIFTOUT(va, L3_ADDR_BITS));
+	if (((va & L3_ADDR_BITS) != 0) && (nblocks > 0)) {
+		mapsize = nblocks * L3_SIZE;
+		VPRINTF("Creating L3 tables: %016lx-%016lx : %016lx-%016lx\n",
+		    va, va + mapsize - 1, pa, pa + mapsize - 1);
+		nskip += pmapboot_enter(va, pa, mapsize, L3_SIZE, attr, flags,
+		    physpage_allocator, NULL);
+		va += mapsize;
+		pa += mapsize;
+		left -= mapsize;
+	}
+
+	/* align the start address to L1 blocksize */
+	nblocks = ulmin(left / L2_SIZE,
+	    Ln_ENTRIES - __SHIFTOUT(va, L2_ADDR_BITS));
+	if (((va & L2_ADDR_BITS) != 0) && (nblocks > 0)) {
+		mapsize = nblocks * L2_SIZE;
+		VPRINTF("Creating L2 tables: %016lx-%016lx : %016lx-%016lx\n",
+		    va, va + mapsize - 1, pa, pa + mapsize - 1);
+		nskip += pmapboot_enter(va, pa, mapsize, L2_SIZE, attr, flags,
+		    physpage_allocator, NULL);
+		va += mapsize;
+		pa += mapsize;
+		left -= mapsize;
+	}
+
+	nblocks = left / L1_SIZE;
+	if (nblocks > 0) {
+		mapsize = nblocks * L1_SIZE;
+		VPRINTF("Creating L1 tables: %016lx-%016lx : %016lx-%016lx\n",
+		    va, va + mapsize - 1, pa, pa + mapsize - 1);
+		nskip += pmapboot_enter(va, pa, mapsize, L1_SIZE, attr, flags,
+		    physpage_allocator, NULL);
+		va += mapsize;
+		pa += mapsize;
+		left -= mapsize;
+	}
+
+	if ((left & L2_ADDR_BITS) != 0) {
+		nblocks = left / L2_SIZE;
+		mapsize = nblocks * L2_SIZE;
+		VPRINTF("Creating L2 tables: %016lx-%016lx : %016lx-%016lx\n",
+		    va, va + mapsize - 1, pa, pa + mapsize - 1);
+		nskip += pmapboot_enter(va, pa, mapsize, L2_SIZE, attr, flags,
+		    physpage_allocator, NULL);
+		va += mapsize;
+		pa += mapsize;
+		left -= mapsize;
+	}
+
+	if ((left & L3_ADDR_BITS) != 0) {
+		nblocks = left / L3_SIZE;
+		mapsize = nblocks * L3_SIZE;
+		VPRINTF("Creating L3 tables: %016lx-%016lx : %016lx-%016lx\n",
+		    va, va + mapsize - 1, pa, pa + mapsize - 1);
+		nskip += pmapboot_enter(va, pa, mapsize, L3_SIZE, attr, flags,
+		    physpage_allocator, NULL);
+		va += mapsize;
+		pa += mapsize;
+		left -= mapsize;
 	}
 
 	return nskip;
