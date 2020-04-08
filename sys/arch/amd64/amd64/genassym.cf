@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.82 2020/02/17 09:09:48 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.82.4.1 2020/04/08 17:59:16 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -359,6 +359,8 @@ define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
 define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
 
 define	BST_TYPE		offsetof(struct bus_space_tag, bst_type)
+
+define	VM_GUEST_XENPV		VM_GUEST_XENPV
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)

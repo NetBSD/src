@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.76 2019/12/01 08:23:09 maxv Exp $	*/
+/*	$NetBSD: lapic.c,v 1.76.6.1 2020/04/08 17:59:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76 2019/12/01 08:23:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76.6.1 2020/04/08 17:59:16 bouyer Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -278,7 +278,7 @@ lapic_setup_bsp(paddr_t lapic_base)
 			    !ISSET(regs[0], VCPUINFO_LEGACY_X2APIC))
 				reason = "inside VMWare without intr "
 				    "redirection";
-		} else if (vm_guest == VM_GUEST_XEN) {
+		} else if (vm_guest == VM_GUEST_XENHVM) {
 			reason = "due to running under XEN";
 		} else if (vm_guest == VM_GUEST_NO &&
 		    CPUID_TO_FAMILY(curcpu()->ci_signature) == 6 &&

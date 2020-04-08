@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.117 2020/01/15 13:22:03 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.117.4.1 2020/04/08 17:59:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -496,7 +496,9 @@ void	identify_hypervisor(void);
 typedef enum vm_guest {
 	VM_GUEST_NO = 0,
 	VM_GUEST_VM,
-	VM_GUEST_XEN,
+	VM_GUEST_XENPV,
+	VM_GUEST_XENPVH,
+	VM_GUEST_XENHVM,
 	VM_GUEST_XENPVHVM,
 	VM_GUEST_HV,
 	VM_GUEST_VMWARE,

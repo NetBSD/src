@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.200 2020/01/15 18:47:23 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.200.4.1 2020/04/08 17:59:16 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -941,6 +941,8 @@ longmode_hi:
 	xorl	%eax,%eax
 	cpuid
 	movl	%eax,_C_LABEL(cpuid_level)
+
+	movl	$VM_GUEST_XENPV, _C_LABEL(vm_guest)
 
 	movq	$cpu_info_primary,%rdi
 	movq	%rdi,CPU_INFO_SELF(%rdi) /* ci->ci_self = ci */
