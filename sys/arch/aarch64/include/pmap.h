@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.36 2020/02/29 21:32:22 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.37 2020/04/08 00:13:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ struct pmap_page {
 
 	/* VM_PROT_READ means referenced, VM_PROT_WRITE means modified */
 	uint32_t pp_flags;
-#define PMAP_PAGE_FLAGS_PV_TRACKED	0x80000000
 };
 
 struct vm_page_md {
@@ -109,6 +108,10 @@ struct vm_page_md {
 		(pg)->mdpage.mdpg_pp.pp_flags = 0;		\
 	} while (/*CONSTCOND*/ 0)
 
+#define PMAP_PAGE_INIT(pp)						\
+	do {								\
+		mutex_init(&(pp)->pp_pvlock, MUTEX_SPIN, IPL_VM);	\
+	} while (/*CONSTCOND*/ 0)
 
 /* saved permission bit for referenced/modified emulation */
 #define LX_BLKPAG_OS_READ		LX_BLKPAG_OS_0
