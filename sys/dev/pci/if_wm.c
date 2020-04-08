@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.671 2020/04/08 21:51:42 jdolecek Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.672 2020/04/08 21:56:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.671 2020/04/08 21:51:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.672 2020/04/08 21:56:01 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7403,7 +7403,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 
 	default:
 		/* Don't support this protocol or encapsulation. */
- 		txq->txq_last_hw_cmd = txq->last_hw_fields = 0;
+ 		txq->txq_last_hw_cmd = txq->txq_last_hw_fields = 0;
  		txq->txq_last_hw_ipcs = 0;
  		txq->txq_last_hw_tucs = 0;
 		*fieldsp = 0;
@@ -7882,8 +7882,8 @@ retry:
 				continue;
 			}
 		} else {
- 			txq->txq_last_hw_cmd = txq->last_hw_fields = 0;
- 			txq->txq_last_hw_ipcs = txq->last_hw_tucs = 0;
+ 			txq->txq_last_hw_cmd = txq->txq_last_hw_fields = 0;
+ 			txq->txq_last_hw_ipcs = txq->txq_last_hw_tucs = 0;
 			cksumcmd = 0;
 			cksumfields = 0;
 		}
