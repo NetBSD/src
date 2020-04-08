@@ -1,5 +1,0 @@
-./boot
-./boot.*
-./netbsd*
-./ofwboot*
-./mac68k/installation/misc/*.bin

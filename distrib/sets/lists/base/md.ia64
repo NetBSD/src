@@ -1,9 +1,0 @@
-# $NetBSD: md.ia64,v 1.1 2016/08/05 16:21:09 scole Exp $
-#
-# XXX add skiload for now
-#
-# XXX loader.sym probaby not necessary
-#
-./usr/mdec/loader.efi		base-sysutil-bin
-./usr/mdec/loader.sym		base-sysutil-bin
-./usr/mdec/skiload		base-sysutil-bin

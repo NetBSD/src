@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_PVHVM,v 1.3 2020/04/06 19:28:21 bouyer Exp $
+# $NetBSD: XEN3_PVHVM,v 1.3.2.1 2020/04/08 17:56:08 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,7 +12,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_PVHVM-$Revision: 1.3 $"
+#ident		"XEN3_PVHVM-$Revision: 1.3.2.1 $"
 
 maxusers	32		# estimated number of users
 options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
@@ -52,7 +52,7 @@ options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 options DDB_COMMANDONENTER="show registers"
 

@@ -1,9 +1,0 @@
-banner=Welcome to the NetBSD/@@MACHINE@@ @@VERSION@@ installation image
-banner================================================================================
-banner=
-banner=If you encounter a problem while booting, report a bug at
-banner=https://www.NetBSD.org/.
-menu=Install NetBSD:boot netbsd
-menu=Drop to boot prompt:prompt
-timeout=30
-clear=1

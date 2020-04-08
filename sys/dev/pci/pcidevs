@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1405 2020/04/10 18:23:22 christos Exp $
+$NetBSD: pcidevs,v 1.1404 2020/04/07 12:31:13 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7085,7 +7085,7 @@ product RDC	R6013_PCIB	0x6013	R6013 PCI-ISA bridge
 product RDC	R6021_HB	0x6021	R6021 Host
 product RDC	R6023_HB	0x6023	R6023 Host
 product RDC	R6025_HB	0x6025	R6025 Host
-product RDC	R6026_HB	0x6026	R6026 Host
+product RDC	R6026_HB	0x6026i	R6026 Host
 product RDC	R6031_PCIB	0x6031	R6031 PCI-ISA bridge
 product RDC	R6035_PCIB	0x6035	R6035 PCI-ISA bridge
 product RDC	R6036_PCIB	0x6036	R6036 PCI-ISA bridge

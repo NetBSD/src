@@ -1,3 +1,0 @@
-# $NetBSD: md.sun3,v 1.3 2017/01/05 13:45:51 wiz Exp $
-./usr/libdata/debug/sbin/edlabel.debug		comp-obsolete	obsolete
-./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug

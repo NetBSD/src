@@ -1,7 +1,0 @@
-Copyright (C) Internet Systems Consortium, Inc. ("ISC")
-
-See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
-
-This directory has a key set which is valid, but will expire within
-the rollover period. The prepublication interval in policy.conf is a
-nonstandard value.

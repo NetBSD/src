@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.105 2020/04/09 02:07:01 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.102 2020/04/04 14:49:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.105 2020/04/09 02:07:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.102 2020/04/04 14:49:35 ad Exp $");
 
 #include "opt_xen.h"
 
@@ -727,7 +727,7 @@ cpu_probe_vortex86(struct cpu_info *ci)
 #define PCI_MODE1_DATA_REG	0x0cfc
 #define PCI_MODE1_ENABLE	0x80000000UL
 
-	uint32_t reg, idx;
+	uint32_t reg;
 
 	if (cpu_vendor != CPUVENDOR_VORTEX86)
 		return;
@@ -741,18 +741,17 @@ cpu_probe_vortex86(struct cpu_info *ci)
 	outl(PCI_MODE1_ADDRESS_REG, PCI_MODE1_ENABLE | 0x90);
 	reg = inl(PCI_MODE1_DATA_REG);
 
-	if ((reg & 0xf0ffffff) != 0x30504d44) {
-		idx = 0;
+	if ((reg & 0xf8ffffff) != 0x30504d44) {
+		reg = 0;
 	} else {
-		idx = (reg >> 24) & 0xf;
+		reg = (reg >> 24) & 7;
 	}
 
 	static const char *cpu_vortex86_flavor[] = {
-	    "??", "SX", "DX", "MX", "DX2", "MX+", "DX3", "EX", "EX2",
+	    "??", "SX", "DX", "MX", "DX2", "MX+", "DX3", "EX",
 	};
-	idx = idx < __arraycount(cpu_vortex86_flavor) ? idx : 0;
 	snprintf(cpu_brand_string, sizeof(cpu_brand_string), "Vortex86%s",
-	    cpu_vortex86_flavor[idx]);
+	    cpu_vortex86_flavor[reg]);
 
 #undef PCI_MODE1_ENABLE
 #undef PCI_MODE1_ADDRESS_REG

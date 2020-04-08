@@ -1,5 +1,0 @@
-include addchstr
-call OK move 0 2
-call `\004c` inch
-call OK move 0 6
-call `\006g` inch

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.23 2020/04/10 14:54:34 jdolecek Exp $ */
+/* $NetBSD: xenbus.h,v 1.22 2020/04/07 16:10:48 jdolecek Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -33,7 +33,6 @@
 #define _ASM_XEN_XENBUS_H
 
 #include <sys/device.h>
-#include <sys/bus.h>
 #include <sys/queue.h>
 #include <xen/include/public/xen.h>
 #include <xen/include/public/io/xenbus.h>
@@ -44,7 +43,6 @@
 struct xenbus_attach_args {
 	const char 		*xa_device;
 	int			xa_handle;
-	bus_dma_tag_t		xa_dmat;
 };
 
 /* devices to xenbus attach */
@@ -52,7 +50,6 @@ struct xenbusdev_attach_args {
 	const char		*xa_type;
 	int 			xa_id;
 	struct xenbus_device	*xa_xbusd;
-	bus_dma_tag_t		xa_dmat;
 };
 
 /* Register callback to watch this node. */

@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.95 2020/04/09 10:57:02 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.94 2020/04/07 11:47:06 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.95 2020/04/09 10:57:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.94 2020/04/07 11:47:06 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -664,6 +664,17 @@ xennetback_tx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
 		}
 
 		xennetback_tx_response(xneti, req->id, NETIF_RSP_OKAY);
+
+		if ((ifp->if_flags & IFF_PROMISC) == 0) {
+			struct ether_header *eh =
+			    mtod(m, struct ether_header *);
+			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
+			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
+			    ETHER_ADDR_LEN) != 0) {
+				m_freem(m);
+				continue; /* packet is not for us */
+			}
+		}
 
 		if (req->flags & NETTXF_csum_blank)
 			xennet_checksum_fill(ifp, m);

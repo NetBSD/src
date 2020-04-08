@@ -1,4 +1,0 @@
-#	$NetBSD: list64,v 1.2 2011/02/20 08:26:09 matt Exp $
-
-COPY	${OBJDIR}/netbsd-INSTALL64_IP2x.gz	netbsd
-COPY	${OBJDIR}/netbsd-INSTALL64_IP3x.gz	netbsd

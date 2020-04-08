@@ -1,4 +1,0 @@
-include start
-call OK insch `\001E`
-call OK refresh
-compare insch.chk

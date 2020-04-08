@@ -1,2 +1,0 @@
-# $NetBSD: md.x68k,v 1.5 2019/12/31 01:20:06 uki Exp $
-./usr/libdata/debug/usr/X11R7/bin/X68k.debug	xdebug-xorg-server-debug	xorg,debug

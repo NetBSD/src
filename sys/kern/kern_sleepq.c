@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.64 2020/04/10 17:16:21 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.63 2020/03/26 19:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.64 2020/04/10 17:16:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.63 2020/03/26 19:46:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -254,10 +254,7 @@ sleepq_block(int timo, bool catch_p)
 
 	/*
 	 * If sleeping interruptably, check for pending signals, exits or
-	 * core dump events.  XXX The set of LW_SINTR here assumes no unlock
-	 * between sleepq_enqueue() and sleepq_block().  Unlock between
-	 * those only happens with turnstiles, which never set catch_p. 
-	 * Ugly but safe.
+	 * core dump events.
 	 */
 	if (catch_p) {
 		l->l_flag |= LW_SINTR;
@@ -274,7 +271,6 @@ sleepq_block(int timo, bool catch_p)
 		lwp_unsleep(l, true);
 	} else {
 		if (timo) {
-			l->l_flag &= ~LW_STIMO;
 			callout_schedule(&l->l_timeout_ch, timo);
 		}
 		spc_lock(l->l_cpu);
@@ -290,8 +286,8 @@ sleepq_block(int timo, bool catch_p)
 			 * order to keep the callout & its cache lines
 			 * co-located on the CPU with the LWP.
 			 */
-			(void)callout_halt(&l->l_timeout_ch, NULL);
-			error = (l->l_flag & LW_STIMO) ? EWOULDBLOCK : 0;
+			if (callout_halt(&l->l_timeout_ch, NULL))
+				error = EWOULDBLOCK;
 		}
 	}
 
@@ -394,7 +390,6 @@ sleepq_timeout(void *arg)
 		return;
 	}
 
-	l->l_flag |= LW_STIMO;
 	lwp_unsleep(l, true);
 }
 

@@ -1,3 +1,0 @@
-# $NetBSD: md.mvme68k,v 1.2 2017/01/05 13:45:51 wiz Exp $
-./usr/libdata/debug/sbin/edlabel.debug		comp-obsolete	obsolete
-./usr/libdata/debug/usr/mdec/installboot.debug	comp-sysutil-debug	debug

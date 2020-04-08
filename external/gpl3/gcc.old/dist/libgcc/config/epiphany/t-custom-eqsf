@@ -1,1 +1,0 @@
-FPBIT_FUNCS := $(filter-out _eq_sf,$(FPBIT_FUNCS))

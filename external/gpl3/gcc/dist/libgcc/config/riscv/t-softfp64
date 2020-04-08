@@ -1,3 +1,0 @@
-include $(srcdir)/config/riscv/t-softfp32
-
-softfp_int_modes += ti

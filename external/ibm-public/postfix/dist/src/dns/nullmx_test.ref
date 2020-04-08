@@ -1,8 +1,0 @@
-./test_dns_lookup: lookup nullmx.porcupine.org type MX flags RES_USE_DNSSEC
-./test_dns_lookup: dns_query: nullmx.porcupine.org (MX): OK
-./test_dns_lookup: dns_get_answer: type MX for nullmx.porcupine.org
-./test_dns_lookup: lookup nullmx.porcupine.org type A flags RES_USE_DNSSEC
-./test_dns_lookup: dns_query: nullmx.porcupine.org (A): OK
-./test_dns_lookup: dns_get_answer: type A for nullmx.porcupine.org
-nullmx.porcupine.org: fqdn: nullmx.porcupine.org
-ad: 0, rr: nullmx.porcupine.org. 3600 IN A 168.100.189.13

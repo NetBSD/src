@@ -1,2 +1,0 @@
-include window
-call 6 getmaxx $win1

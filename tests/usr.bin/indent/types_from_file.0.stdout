@@ -1,4 +1,0 @@
-/*	$NetBSD: types_from_file.0.stdout,v 1.1 2019/04/04 15:27:35 kamil Exp $	*/
-/* $FreeBSD: head/usr.bin/indent/tests/types_from_file.0.stdout 313544 2017-02-10 09:31:39Z pstef $ */
-/* See r303735 */
-void		t(a *x, b *y, c * z);
