@@ -1,4 +1,4 @@
-/*	$NetBSD: apc.c,v 1.1 2010/01/15 20:57:12 bouyer Exp $	*/
+/*	$NetBSD: apc.c,v 1.1.70.1 2020/04/08 14:07:53 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apc.c,v 1.1 2010/01/15 20:57:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apc.c,v 1.1.70.1 2020/04/08 14:07:53 martin Exp $");
 
 
 /*
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: apc.c,v 1.1 2010/01/15 20:57:12 bouyer Exp $");
 
 static int apcmatch(device_t, struct cfdata *, void *);
 static void apcattach(device_t, device_t, void *);
-static void apc_cpu_sleep(struct cpu_info *);
+static void apc_cpu_sleep(void);
 
 struct apc_softc {
 	device_t	sc_dev;
@@ -86,7 +86,7 @@ apcattach(device_t parent, device_t self, void *aux)
 }
 
 static void
-apc_cpu_sleep(struct cpu_info *ci)
+apc_cpu_sleep(void)
 {
 	uint8_t val;
 	if (apc == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_http.c,v 1.5 2017/01/31 23:17:40 christos Exp $	*/
+/*	$NetBSD: regress_http.c,v 1.5.12.1 2020/04/08 14:04:07 martin Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -35,7 +35,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_http.c,v 1.5 2017/01/31 23:17:40 christos Exp $");
+__RCSID("$NetBSD: regress_http.c,v 1.5.12.1 2020/04/08 14:04:07 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1426,7 +1426,7 @@ http_cancel_test(void *arg)
 	struct event_base *base_to_fill = data->base;
 
 	enum http_cancel_test_type type =
-		(enum http_cancel_test_type)data->setup_data;
+		(enum http_cancel_test_type)(uintptr_t)data->setup_data;
 	struct evhttp *http = http_setup(&port, data->base, 0);
 
 	if (type & BY_HOST) {

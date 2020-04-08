@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.16.2.1 2019/06/10 22:06:02 christos Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.16.2.2 2020/04/08 14:07:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.16.2.1 2019/06/10 22:06:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.16.2.2 2020/04/08 14:07:33 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -554,7 +554,7 @@ enic_watchdog(struct ifnet *ifp)
 	printf("enic_watch ctl=%x\n", sc->sc_regs->Control);
 #endif
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	enic_reset(ifp);
 }
@@ -591,42 +591,11 @@ enic_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 int
 enic_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct enic_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-#if 0 /*DEBUG*/
-	    {
-		extern int ei_drops[];
-		static int flip = 0;
-		if (flip++ == 2) {
-			int i;
-			flip = 0;
-			printf("enic_ioctl(%x) %qd/%qd %qd/%qd %d/%d %d:%d "
-			    "%d+%d %d/%d/%d\n", ifp->if_flags,
-			    ifp->if_ierrors, ifp->if_oerrors,
-			    ifp->if_ipackets, ifp->if_opackets,
-			    sc->sc_no_rd, sc->sc_no_td,
-			    sc->xhit, sc->xmiss,
-			    sc->tfull, sc->tfull2,
-			    sc->brh, sc->rf, sc->bxh);
-			printf(" Ctl %x lt %x tim %d\n",
-			    sc->sc_regs->Control, sc->it, ifp->if_timer);
-
-			for (i = 0; i < 64; i++)
-				if (ei_drops[i])
-					printf(" %d.%d", i, ei_drops[i]);
-			printf("\n");
-		}
-	    }
-#endif
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (cmd == SIOCSIFADDR) {
@@ -724,7 +693,7 @@ enic_rint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 	/* uhu?? */
 	printf("%s: bad recv phys %llx\n", device_xname(sc->sc_dev),
 	    (long long)phys);
-	ifp->if_ierrors++;
+	if_statinc(ifp, if_ierrors);
 	return;
 
 	/* got it, pop it */
@@ -745,7 +714,7 @@ enic_rint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 	    len > ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
 		ETHER_VLAN_ENCAP_LEN + ETHERMTU + sizeof(struct ether_header) :
 		ETHERMTU + sizeof(struct ether_header))) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 
 		/* reuse it */
 		enic_post_recv(sc, m);
@@ -786,7 +755,7 @@ void enic_tint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 	/* uhu?? */
 	printf("%s: bad xmit phys %llx\n", device_xname(sc->sc_dev),
 	    (long long)phys);
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	return;
 
 	/* got it, pop it */
@@ -802,7 +771,7 @@ void enic_tint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 		sc->bxh++;
 #endif
 	m_freem(m);
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	if (--sc->sc_no_td == 0)
 		ifp->if_timer = 0;

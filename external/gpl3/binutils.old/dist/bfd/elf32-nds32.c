@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2016 Free Software Foundation, Inc.
+   Copyright (C) 2012-2018 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -56,78 +56,14 @@ static bfd_reloc_status_type nds32_elf_sda15_reloc
 static bfd_reloc_status_type nds32_elf_do_9_pcrel_reloc
   (bfd *, reloc_howto_type *, asection *, bfd_byte *, bfd_vma,
    asection *, bfd_vma, bfd_vma);
-static void nds32_elf_relocate_hi20
-  (bfd *, int, Elf_Internal_Rela *, Elf_Internal_Rela *, bfd_byte *, bfd_vma);
-static reloc_howto_type *bfd_elf32_bfd_reloc_type_table_lookup
-  (enum elf_nds32_reloc_type);
-static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
-  (bfd *, bfd_reloc_code_real_type);
-
-/* Target hooks.  */
-static void nds32_info_to_howto_rel
-  (bfd *, arelent *, Elf_Internal_Rela *dst);
-static void nds32_info_to_howto
-  (bfd *, arelent *, Elf_Internal_Rela *dst);
-static bfd_boolean nds32_elf_add_symbol_hook
-  (bfd *, struct bfd_link_info *, Elf_Internal_Sym *, const char **,
-   flagword *, asection **, bfd_vma *);
-static bfd_boolean nds32_elf_relocate_section
-  (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
-   Elf_Internal_Rela *, Elf_Internal_Sym *, asection **);
-static bfd_boolean nds32_elf_object_p (bfd *);
-static void nds32_elf_final_write_processing (bfd *, bfd_boolean);
-static bfd_boolean nds32_elf_set_private_flags (bfd *, flagword);
-static bfd_boolean nds32_elf_merge_private_bfd_data (bfd *, bfd *);
-static bfd_boolean nds32_elf_print_private_bfd_data (bfd *, void *);
-static bfd_boolean nds32_elf_gc_sweep_hook
-  (bfd *, struct bfd_link_info *, asection *, const Elf_Internal_Rela *);
-static bfd_boolean nds32_elf_check_relocs
-  (bfd *, struct bfd_link_info *, asection *, const Elf_Internal_Rela *);
-static asection *nds32_elf_gc_mark_hook
-  (asection *, struct bfd_link_info *, Elf_Internal_Rela *,
-   struct elf_link_hash_entry *, Elf_Internal_Sym *);
-static bfd_boolean nds32_elf_adjust_dynamic_symbol
-  (struct bfd_link_info *, struct elf_link_hash_entry *);
-static bfd_boolean nds32_elf_size_dynamic_sections
-  (bfd *, struct bfd_link_info *);
-static bfd_boolean nds32_elf_create_dynamic_sections
-  (bfd *, struct bfd_link_info *);
-static bfd_boolean nds32_elf_finish_dynamic_sections
-  (bfd *, struct bfd_link_info *info);
-static bfd_boolean nds32_elf_finish_dynamic_symbol
-  (bfd *, struct bfd_link_info *, struct elf_link_hash_entry *,
-   Elf_Internal_Sym *);
-static bfd_boolean nds32_elf_mkobject (bfd *);
 
 /* Nds32 helper functions.  */
-static bfd_reloc_status_type nds32_elf_final_sda_base
-  (bfd *, struct bfd_link_info *, bfd_vma *, bfd_boolean);
-static bfd_boolean allocate_dynrelocs (struct elf_link_hash_entry *, void *);
-static bfd_boolean readonly_dynrelocs (struct elf_link_hash_entry *, void *);
-static Elf_Internal_Rela *find_relocs_at_address
-  (Elf_Internal_Rela *, Elf_Internal_Rela *,
-   Elf_Internal_Rela *, enum elf_nds32_reloc_type);
 static bfd_vma calculate_memory_address
 (bfd *, Elf_Internal_Rela *, Elf_Internal_Sym *, Elf_Internal_Shdr *);
 static int nds32_get_section_contents (bfd *, asection *,
 				       bfd_byte **, bfd_boolean);
-static bfd_boolean nds32_elf_ex9_build_hash_table
-(bfd *, asection *, struct bfd_link_info *);
-static bfd_boolean nds32_elf_ex9_itb_base (struct bfd_link_info *);
-static void nds32_elf_ex9_import_table (struct bfd_link_info *);
-static void nds32_elf_ex9_finish (struct bfd_link_info *);
-static void nds32_elf_ex9_reloc_jmp (struct bfd_link_info *);
-static void nds32_elf_get_insn_with_reg
-  (Elf_Internal_Rela *, uint32_t, uint32_t *);
 static int nds32_get_local_syms (bfd *, asection *ATTRIBUTE_UNUSED,
 				 Elf_Internal_Sym **);
-static bfd_boolean nds32_elf_ex9_replace_instruction
-  (struct bfd_link_info *, bfd *, asection *);
-static bfd_boolean nds32_elf_ifc_calc (struct bfd_link_info *, bfd *,
-				       asection *);
-static bfd_boolean nds32_elf_ifc_finish (struct bfd_link_info *);
-static bfd_boolean nds32_elf_ifc_replace (struct bfd_link_info *);
-static bfd_boolean nds32_elf_ifc_reloc (void);
 static bfd_boolean  nds32_relax_fp_as_gp
   (struct bfd_link_info *link_info, bfd *abfd, asection *sec,
    Elf_Internal_Rela *internal_relocs, Elf_Internal_Rela *irelend,
@@ -135,13 +71,6 @@ static bfd_boolean  nds32_relax_fp_as_gp
 static bfd_boolean nds32_fag_remove_unused_fpbase
   (bfd *abfd, asection *sec, Elf_Internal_Rela *internal_relocs,
    Elf_Internal_Rela *irelend);
-static bfd_byte *
-nds32_elf_get_relocated_section_contents (bfd *abfd,
-					  struct bfd_link_info *link_info,
-					  struct bfd_link_order *link_order,
-					  bfd_byte *data,
-					  bfd_boolean relocatable,
-					  asymbol **symbols);
 
 enum
 {
@@ -169,32 +98,32 @@ enum
 /* The first entry in a procedure linkage table are reserved,
    and the initial contents are unimportant (we zero them out).
    Subsequent entries look like this.  */
-#define PLT0_ENTRY_WORD0  0x46f00000		/* sethi   r15, HI20(.got+4)      */
-#define PLT0_ENTRY_WORD1  0x58f78000		/* ori     r15, r25, LO12(.got+4) */
-#define PLT0_ENTRY_WORD2  0x05178000		/* lwi     r17, [r15+0]           */
-#define PLT0_ENTRY_WORD3  0x04f78001		/* lwi     r15, [r15+4]           */
-#define PLT0_ENTRY_WORD4  0x4a003c00		/* jr      r15                    */
+#define PLT0_ENTRY_WORD0  0x46f00000		/* sethi   r15, HI20(.got+4)	  */
+#define PLT0_ENTRY_WORD1  0x58f78000		/* ori	   r15, r25, LO12(.got+4) */
+#define PLT0_ENTRY_WORD2  0x05178000		/* lwi	   r17, [r15+0]		  */
+#define PLT0_ENTRY_WORD3  0x04f78001		/* lwi	   r15, [r15+4]		  */
+#define PLT0_ENTRY_WORD4  0x4a003c00		/* jr	   r15			  */
 
 /* $ta is change to $r15 (from $r25).  */
 #define PLT0_PIC_ENTRY_WORD0  0x46f00000	/* sethi   r15, HI20(got[1]@GOT)  */
-#define PLT0_PIC_ENTRY_WORD1  0x58f78000	/* ori     r15, r15, LO12(got[1]@GOT) */
-#define PLT0_PIC_ENTRY_WORD2  0x40f7f400	/* add     r15, gp, r15           */
-#define PLT0_PIC_ENTRY_WORD3  0x05178000	/* lwi     r17, [r15+0]           */
-#define PLT0_PIC_ENTRY_WORD4  0x04f78001	/* lwi     r15, [r15+4]           */
-#define PLT0_PIC_ENTRY_WORD5  0x4a003c00	/* jr      r15                    */
+#define PLT0_PIC_ENTRY_WORD1  0x58f78000	/* ori	   r15, r15, LO12(got[1]@GOT) */
+#define PLT0_PIC_ENTRY_WORD2  0x40f7f400	/* add	   r15, gp, r15		  */
+#define PLT0_PIC_ENTRY_WORD3  0x05178000	/* lwi	   r17, [r15+0]		  */
+#define PLT0_PIC_ENTRY_WORD4  0x04f78001	/* lwi	   r15, [r15+4]		  */
+#define PLT0_PIC_ENTRY_WORD5  0x4a003c00	/* jr	   r15			  */
 
-#define PLT_ENTRY_WORD0  0x46f00000		/* sethi   r15, HI20(&got[n+3])      */
-#define PLT_ENTRY_WORD1  0x04f78000		/* lwi     r15, r15, LO12(&got[n+3]) */
-#define PLT_ENTRY_WORD2  0x4a003c00		/* jr      r15                       */
-#define PLT_ENTRY_WORD3  0x45000000		/* movi    r16, sizeof(RELA) * n     */
-#define PLT_ENTRY_WORD4  0x48000000		/* j      .plt0.                     */
+#define PLT_ENTRY_WORD0	 0x46f00000		/* sethi   r15, HI20(&got[n+3])	     */
+#define PLT_ENTRY_WORD1	 0x04f78000		/* lwi	   r15, r15, LO12(&got[n+3]) */
+#define PLT_ENTRY_WORD2	 0x4a003c00		/* jr	   r15			     */
+#define PLT_ENTRY_WORD3	 0x45000000		/* movi	   r16, sizeof(RELA) * n     */
+#define PLT_ENTRY_WORD4	 0x48000000		/* j	  .plt0.		     */
 
 #define PLT_PIC_ENTRY_WORD0  0x46f00000		/* sethi  r15, HI20(got[n+3]@GOT)    */
-#define PLT_PIC_ENTRY_WORD1  0x58f78000		/* ori    r15, r15,    LO12(got[n+3]@GOT) */
-#define PLT_PIC_ENTRY_WORD2  0x38febc02		/* lw     r15, [gp+r15]              */
-#define PLT_PIC_ENTRY_WORD3  0x4a003c00		/* jr     r15                        */
-#define PLT_PIC_ENTRY_WORD4  0x45000000		/* movi   r16, sizeof(RELA) * n      */
-#define PLT_PIC_ENTRY_WORD5  0x48000000		/* j      .plt0                      */
+#define PLT_PIC_ENTRY_WORD1  0x58f78000		/* ori	  r15, r15,    LO12(got[n+3]@GOT) */
+#define PLT_PIC_ENTRY_WORD2  0x38febc02		/* lw	  r15, [gp+r15]		     */
+#define PLT_PIC_ENTRY_WORD3  0x4a003c00		/* jr	  r15			     */
+#define PLT_PIC_ENTRY_WORD4  0x45000000		/* movi	  r16, sizeof(RELA) * n	     */
+#define PLT_PIC_ENTRY_WORD5  0x48000000		/* j	  .plt0			     */
 
 /* These are macros used to get the relocation accurate value.  */
 #define ACCURATE_8BIT_S1	(0x100)
@@ -219,7 +148,6 @@ enum
 /* Size of small data/bss sections, used to calculate SDA_BASE.  */
 static long got_size = 0;
 static int is_SDA_BASE_set = 0;
-static int is_ITB_BASE_set = 0;
 
 /* Convert ELF-VER in eflags to string for debugging purpose.  */
 static const char *const nds32_elfver_strtab[] =
@@ -248,26 +176,6 @@ struct elf_nds32_pcrel_relocs_copied
   bfd_size_type count;
 };
 
-/* The sh linker needs to keep track of the number of relocs that it
-   decides to copy as dynamic relocs in check_relocs for each symbol.
-   This is so that it can later discard them if they are found to be
-   unnecessary.  We store the information in a field extending the
-   regular ELF linker hash table.  */
-
-struct elf_nds32_dyn_relocs
-{
-  struct elf_nds32_dyn_relocs *next;
-
-  /* The input section of the reloc.  */
-  asection *sec;
-
-  /* Total number of relocs copied for the input section.  */
-  bfd_size_type count;
-
-  /* Number of pc-relative relocs copied for the input section.  */
-  bfd_size_type pc_count;
-};
-
 /* Nds32 ELF linker hash entry.  */
 
 struct elf_nds32_link_hash_entry
@@ -275,7 +183,7 @@ struct elf_nds32_link_hash_entry
   struct elf_link_hash_entry root;
 
   /* Track dynamic relocs copied for this symbol.  */
-  struct elf_nds32_dyn_relocs *dyn_relocs;
+  struct elf_dyn_relocs *dyn_relocs;
 
   /* For checking relocation type.  */
 #define GOT_UNKNOWN     0
@@ -288,7 +196,6 @@ struct elf_nds32_link_hash_entry
 
 #define FP_BASE_NAME "_FP_BASE_"
 static int check_start_export_sym = 0;
-static size_t ex9_relax_size = 0;		/* Save ex9 predicted reducing size.  */
 
 /* The offset for executable tls relaxation.  */
 #define TP_OFFSET 0x0
@@ -2960,8 +2867,8 @@ bfd_elf32_bfd_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an NDS32 ELF reloc.  */
 
-static void
-nds32_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
+static bfd_boolean
+nds32_info_to_howto_rel (bfd *abfd, arelent *cache_ptr,
 			 Elf_Internal_Rela *dst)
 {
   enum elf_nds32_reloc_type r_type;
@@ -2969,20 +2876,34 @@ nds32_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type > R_NDS32_GNU_VTENTRY)
     {
-      _bfd_error_handler (_("%B: invalid NDS32 reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = bfd_elf32_bfd_reloc_type_table_lookup (r_type);
+  return TRUE;
 }
 
-static void
+static bfd_boolean
 nds32_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
 		     Elf_Internal_Rela *dst)
 {
-  BFD_ASSERT ((ELF32_R_TYPE (dst->r_info) == R_NDS32_NONE)
-	      || ((ELF32_R_TYPE (dst->r_info) > R_NDS32_GNU_VTENTRY)
-		  && (ELF32_R_TYPE (dst->r_info) < R_NDS32_max)));
-  cache_ptr->howto = bfd_elf32_bfd_reloc_type_table_lookup (ELF32_R_TYPE (dst->r_info));
+  unsigned int r_type = ELF32_R_TYPE (dst->r_info);
+
+  if ((r_type == R_NDS32_NONE)
+      || ((r_type > R_NDS32_GNU_VTENTRY)
+	  && (r_type < R_NDS32_max)))
+    {
+      cache_ptr->howto = bfd_elf32_bfd_reloc_type_table_lookup (r_type);
+      return TRUE;
+    }
+
+  /* xgettext:c-format */
+  _bfd_error_handler (_("%pB: unsupported relocation type %#x"), abfd, r_type);
+  bfd_set_error (bfd_error_bad_value);
+  return FALSE;  
 }
 
 /* Support for core dump NOTE sections.
@@ -3046,6 +2967,7 @@ nds32_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 	_bfd_elfcore_strndup (abfd, note->descdata + 28, 16);
       elf_tdata (abfd)->core->command =
 	_bfd_elfcore_strndup (abfd, note->descdata + 44, 80);
+      break;
 
     default:
       return FALSE;
@@ -3292,7 +3214,7 @@ nds32_elf_final_sda_base (bfd *output_bfd, struct bfd_link_info *info,
 	}
     }
 
-  if (add_symbol == TRUE)
+  if (add_symbol)
     {
       if (h)
 	{
@@ -3303,7 +3225,7 @@ nds32_elf_final_sda_base (bfd *output_bfd, struct bfd_link_info *info,
 	}
       else
 	{
-	  (*_bfd_error_handler) (_("error: Can't find symbol: _SDA_BASE_."));
+	  _bfd_error_handler (_("error: can't find symbol: %s"), "_SDA_BASE_");
 	  return bfd_reloc_dangerous;
 	}
     }
@@ -3377,48 +3299,7 @@ nds32_elf_link_hash_table_create (bfd *abfd)
       return NULL;
     }
 
-  ret->sgot = NULL;
-  ret->sgotplt = NULL;
-  ret->srelgot = NULL;
-  ret->splt = NULL;
-  ret->srelplt = NULL;
-  ret->sdynbss = NULL;
-  ret->srelbss = NULL;
-  ret->sym_ld_script = NULL;
-  ret->ex9_export_file = NULL;
-  ret->ex9_import_file = NULL;
-
   return &ret->root.root;
-}
-
-/* Create .got, .gotplt, and .rela.got sections in DYNOBJ, and set up
-   shortcuts to them in our hash table.  */
-
-static bfd_boolean
-create_got_section (bfd *dynobj, struct bfd_link_info *info)
-{
-  struct elf_nds32_link_hash_table *htab;
-
-  if (!_bfd_elf_create_got_section (dynobj, info))
-    return FALSE;
-
-  htab = nds32_elf_hash_table (info);
-  htab->sgot = bfd_get_section_by_name (dynobj, ".got");
-  htab->sgotplt = bfd_get_section_by_name (dynobj, ".got.plt");
-  if (!htab->sgot || !htab->sgotplt)
-    abort ();
-
-  /* _bfd_elf_create_got_section will create it for us.  */
-  htab->srelgot = bfd_get_section_by_name (dynobj, ".rela.got");
-  if (htab->srelgot == NULL
-      || !bfd_set_section_flags (dynobj, htab->srelgot,
-				 (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
-				  | SEC_IN_MEMORY | SEC_LINKER_CREATED
-				  | SEC_READONLY))
-      || !bfd_set_section_alignment (dynobj, htab->srelgot, 2))
-    return FALSE;
-
-  return TRUE;
 }
 
 /* Create dynamic sections when linking against a dynamic object.  */
@@ -3450,7 +3331,7 @@ nds32_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
     pltflags |= SEC_READONLY;
 
   s = bfd_make_section (abfd, ".plt");
-  htab->splt = s;
+  htab->root.splt = s;
   if (s == NULL
       || !bfd_set_section_flags (abfd, s, pltflags)
       || !bfd_set_section_alignment (abfd, s, bed->plt_alignment))
@@ -3479,13 +3360,13 @@ nds32_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 
   s = bfd_make_section (abfd,
 			bed->default_use_rela_p ? ".rela.plt" : ".rel.plt");
-  htab->srelplt = s;
+  htab->root.srelplt = s;
   if (s == NULL
       || !bfd_set_section_flags (abfd, s, flags | SEC_READONLY)
       || !bfd_set_section_alignment (abfd, s, ptralign))
     return FALSE;
 
-  if (htab->sgot == NULL && !create_got_section (abfd, info))
+  if (htab->root.sgot == NULL && !_bfd_elf_create_got_section (abfd, info))
     return FALSE;
 
   {
@@ -3568,8 +3449,8 @@ nds32_elf_copy_indirect_symbol (struct bfd_link_info *info,
     {
       if (edir->dyn_relocs != NULL)
 	{
-	  struct elf_nds32_dyn_relocs **pp;
-	  struct elf_nds32_dyn_relocs *p;
+	  struct elf_dyn_relocs **pp;
+	  struct elf_dyn_relocs *p;
 
 	  if (ind->root.type == bfd_link_hash_indirect)
 	    abort ();
@@ -3578,7 +3459,7 @@ nds32_elf_copy_indirect_symbol (struct bfd_link_info *info,
 	     list.  Merge any entries against the same section.  */
 	  for (pp = &eind->dyn_relocs; (p = *pp) != NULL;)
 	    {
-	      struct elf_nds32_dyn_relocs *q;
+	      struct elf_dyn_relocs *q;
 
 	      for (q = edir->dyn_relocs; q != NULL; q = q->next)
 		if (q->sec == p->sec)
@@ -3601,6 +3482,22 @@ nds32_elf_copy_indirect_symbol (struct bfd_link_info *info,
   _bfd_elf_link_hash_copy_indirect (info, dir, ind);
 }
 
+/* Find dynamic relocs for H that apply to read-only sections.  */
+
+static asection *
+readonly_dynrelocs (struct elf_link_hash_entry *h)
+{
+  struct elf_dyn_relocs *p;
+
+  for (p = elf32_nds32_hash_entry (h)->dyn_relocs; p != NULL; p = p->next)
+    {
+      asection *s = p->sec->output_section;
+
+      if (s != NULL && (s->flags & SEC_READONLY) != 0)
+	return p->sec;
+    }
+  return NULL;
+}
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
    regular object.  The current definition is in some section of the
@@ -3613,8 +3510,6 @@ nds32_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 				 struct elf_link_hash_entry *h)
 {
   struct elf_nds32_link_hash_table *htab;
-  struct elf_nds32_link_hash_entry *eh;
-  struct elf_nds32_dyn_relocs *p;
   bfd *dynobj;
   asection *s;
   unsigned int power_of_two;
@@ -3624,7 +3519,7 @@ nds32_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   /* Make sure we know what is going on here.  */
   BFD_ASSERT (dynobj != NULL
 	      && (h->needs_plt
-		  || h->u.weakdef != NULL
+		  || h->is_weakalias
 		  || (h->def_dynamic && h->ref_regular && !h->def_regular)));
 
 
@@ -3656,12 +3551,12 @@ nds32_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   /* If this is a weak symbol, and there is a real definition, the
      processor independent code will have arranged for us to see the
      real definition first, and we can just use the same value.  */
-  if (h->u.weakdef != NULL)
+  if (h->is_weakalias)
     {
-      BFD_ASSERT (h->u.weakdef->root.type == bfd_link_hash_defined
-		  || h->u.weakdef->root.type == bfd_link_hash_defweak);
-      h->root.u.def.section = h->u.weakdef->root.u.def.section;
-      h->root.u.def.value = h->u.weakdef->root.u.def.value;
+      struct elf_link_hash_entry *def = weakdef (h);
+      BFD_ASSERT (def->root.type == bfd_link_hash_defined);
+      h->root.u.def.section = def->root.u.def.section;
+      h->root.u.def.value = def->root.u.def.value;
       return TRUE;
     }
 
@@ -3681,24 +3576,15 @@ nds32_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
     return TRUE;
 
   /* If -z nocopyreloc was given, we won't generate them either.  */
-  if (info->nocopyreloc)
+  if (0 && info->nocopyreloc)
     {
       h->non_got_ref = 0;
       return TRUE;
     }
 
-  eh = (struct elf_nds32_link_hash_entry *) h;
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
-    {
-      s = p->sec->output_section;
-      if (s != NULL && (s->flags & (SEC_READONLY | SEC_HAS_CONTENTS)) != 0)
-	break;
-    }
-
-  /* If we didn't find any dynamic relocs in sections which needs the
-     copy reloc, then we'll be keeping the dynamic relocs and avoiding
-     the copy reloc.  */
-  if (p == NULL)
+  /* If we don't find any dynamic relocs in read-only sections, then
+     we'll be keeping the dynamic relocs and avoiding the copy reloc.  */
+  if (0 && !readonly_dynrelocs (h))
     {
       h->non_got_ref = 0;
       return TRUE;
@@ -3765,7 +3651,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   struct bfd_link_info *info;
   struct elf_nds32_link_hash_table *htab;
   struct elf_nds32_link_hash_entry *eh;
-  struct elf_nds32_dyn_relocs *p;
+  struct elf_dyn_relocs *p;
 
   if (h->root.type == bfd_link_hash_indirect)
     return TRUE;
@@ -3793,7 +3679,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 
       if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (1, bfd_link_pic (info), h))
 	{
-	  asection *s = htab->splt;
+	  asection *s = htab->root.splt;
 
 	  /* If this is the first .plt entry, make room for the special
 	     first entry.  */
@@ -3818,10 +3704,10 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 
 	  /* We also need to make an entry in the .got.plt section, which
 	     will be placed in the .got section by the linker script.  */
-	  htab->sgotplt->size += 4;
+	  htab->root.sgotplt->size += 4;
 
 	  /* We also need to make an entry in the .rel.plt section.  */
-	  htab->srelplt->size += sizeof (Elf32_External_Rela);
+	  htab->root.srelplt->size += sizeof (Elf32_External_Rela);
 	}
       else
 	{
@@ -3849,7 +3735,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	    return FALSE;
 	}
 
-      s = htab->sgot;
+      s = htab->root.sgot;
       h->got.offset = s->size;
 
       if (tls_type == GOT_UNKNOWN)
@@ -3861,7 +3747,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 
       dyn = htab->root.dynamic_sections_created;
       if (WILL_CALL_FINISH_DYNAMIC_SYMBOL (dyn, bfd_link_pic (info), h))
-	htab->srelgot->size += sizeof (Elf32_External_Rela);
+	htab->root.srelgot->size += sizeof (Elf32_External_Rela);
     }
   else
     h->got.offset = (bfd_vma) - 1;
@@ -3879,7 +3765,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
     {
       if (h->def_regular && (h->forced_local || info->symbolic))
 	{
-	  struct elf_nds32_dyn_relocs **pp;
+	  struct elf_dyn_relocs **pp;
 
 	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL;)
 	    {
@@ -3933,31 +3819,29 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   return TRUE;
 }
 
-/* Find any dynamic relocs that apply to read-only sections.  */
+/* Set DF_TEXTREL if we find any dynamic relocs that apply to
+   read-only sections.  */
 
 static bfd_boolean
-readonly_dynrelocs (struct elf_link_hash_entry *h, void *inf)
+maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
 {
-  struct elf_nds32_link_hash_entry *eh;
-  struct elf_nds32_dyn_relocs *p;
+  asection *sec;
 
-  if (h->root.type == bfd_link_hash_warning)
-    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+  if (h->root.type == bfd_link_hash_indirect)
+    return TRUE;
 
-  eh = (struct elf_nds32_link_hash_entry *) h;
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
+  sec = readonly_dynrelocs (h);
+  if (sec != NULL)
     {
-      asection *s = p->sec->output_section;
+      struct bfd_link_info *info = (struct bfd_link_info *) info_p;
 
-      if (s != NULL && (s->flags & SEC_READONLY) != 0)
-	{
-	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
+      info->flags |= DF_TEXTREL;
+      info->callbacks->minfo
+	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
+	 sec->owner, h->root.root.string, sec);
 
-	  info->flags |= DF_TEXTREL;
-
-	  /* Not an error, just cut short the traversal.  */
-	  return FALSE;
-	}
+      /* Not an error, just cut short the traversal.  */
+      return FALSE;
     }
   return TRUE;
 }
@@ -3981,7 +3865,7 @@ nds32_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (htab->root.dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (!bfd_link_pic (info) && !info->nointerp)
+      if (bfd_link_executable (info) && !info->nointerp)
 	{
 	  s = bfd_get_section_by_name (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -4005,9 +3889,9 @@ nds32_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       for (s = ibfd->sections; s != NULL; s = s->next)
 	{
-	  struct elf_nds32_dyn_relocs *p;
+	  struct elf_dyn_relocs *p;
 
-	  for (p = ((struct elf_nds32_dyn_relocs *)
+	  for (p = ((struct elf_dyn_relocs *)
 		    elf_section_data (s)->local_dynrel);
 	       p != NULL; p = p->next)
 	    {
@@ -4036,8 +3920,8 @@ nds32_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       symtab_hdr = &elf_tdata (ibfd)->symtab_hdr;
       locsymcount = symtab_hdr->sh_info;
       end_local_got = local_got + locsymcount;
-      s = htab->sgot;
-      srel = htab->srelgot;
+      s = htab->root.sgot;
+      srel = htab->root.srelgot;
       for (; local_got < end_local_got; ++local_got)
 	{
 	  if (*local_got > 0)
@@ -4064,22 +3948,22 @@ nds32_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       if ((s->flags & SEC_LINKER_CREATED) == 0)
 	continue;
 
-      if (s == htab->splt)
+      if (s == htab->root.splt)
 	{
 	  /* Strip this section if we don't need it; see the
 	     comment below.  */
 	}
-      else if (s == htab->sgot)
+      else if (s == htab->root.sgot)
 	{
 	  got_size += s->size;
 	}
-      else if (s == htab->sgotplt)
+      else if (s == htab->root.sgotplt)
 	{
 	  got_size += s->size;
 	}
       else if (strncmp (bfd_get_section_name (dynobj, s), ".rela", 5) == 0)
 	{
-	  if (s->size != 0 && s != htab->srelplt)
+	  if (s->size != 0 && s != htab->root.srelplt)
 	    relocs = TRUE;
 
 	  /* We use the reloc_count field as a counter if we need
@@ -4134,7 +4018,7 @@ nds32_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    return FALSE;
 	}
 
-      if (htab->splt->size != 0)
+      if (htab->root.splt->size != 0)
 	{
 	  if (!add_dynamic_entry (DT_PLTGOT, 0)
 	      || !add_dynamic_entry (DT_PLTRELSZ, 0)
@@ -4153,7 +4037,7 @@ nds32_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  /* If any dynamic relocs apply to a read-only section,
 	     then we need a DT_TEXTREL entry.  */
 	  if ((info->flags & DF_TEXTREL) == 0)
-	    elf_link_hash_traverse (&htab->root, readonly_dynrelocs,
+	    elf_link_hash_traverse (&htab->root, maybe_set_textrel,
 				    (void *) info);
 
 	  if ((info->flags & DF_TEXTREL) != 0)
@@ -4350,12 +4234,7 @@ nds32_elf_final_link_relocate (reloc_howto_type *howto, bfd *input_bfd,
 
   /* If the relocation is PC relative, we want to set RELOCATION to
      the distance between the symbol (currently in RELOCATION) and the
-     location we are relocating.  Some targets (e.g., i386-aout)
-     arrange for the contents of the section to be the negative of the
-     offset of the location within the section; for such targets
-     pcrel_offset is FALSE.  Other targets (e.g., m88kbcs or ELF)
-     simply leave the contents of the section as zero; for such
-     targets pcrel_offset is TRUE.  If pcrel_offset is FALSE we do not
+     location we are relocating.  If pcrel_offset is FALSE we do not
      need to subtract out the offset of the location within the
      section (which is just ADDRESS).  */
   if (howto->pc_relative)
@@ -4462,14 +4341,14 @@ dtpoff_base (struct bfd_link_info *info)
 }
 
 static bfd_boolean
-nds32_elf_relocate_section (bfd *                  output_bfd ATTRIBUTE_UNUSED,
+nds32_elf_relocate_section (bfd *		   output_bfd ATTRIBUTE_UNUSED,
 			    struct bfd_link_info * info,
-			    bfd *                  input_bfd,
-			    asection *             input_section,
-			    bfd_byte *             contents,
-			    Elf_Internal_Rela *    relocs,
-			    Elf_Internal_Sym *     local_syms,
-			    asection **            local_sections)
+			    bfd *		   input_bfd,
+			    asection *		   input_section,
+			    bfd_byte *		   contents,
+			    Elf_Internal_Rela *	   relocs,
+			    Elf_Internal_Sym *	   local_syms,
+			    asection **		   local_sections)
 {
   Elf_Internal_Shdr *symtab_hdr;
   struct elf_link_hash_entry **sym_hashes;
@@ -4496,8 +4375,8 @@ nds32_elf_relocate_section (bfd *                  output_bfd ATTRIBUTE_UNUSED,
   dynobj = htab->root.dynobj;
   local_got_offsets = elf_local_got_offsets (input_bfd);
 
-  sgot = htab->sgot;
-  splt = htab->splt;
+  sgot = htab->root.sgot;
+  splt = htab->root.splt;
   sreloc = NULL;
 
   rel = relocs;
@@ -4513,26 +4392,6 @@ nds32_elf_relocate_section (bfd *                  output_bfd ATTRIBUTE_UNUSED,
       if (r != bfd_reloc_ok)
 	return FALSE;
     }
-
-  if (is_ITB_BASE_set == 0)
-    {
-      /* Set the _ITB_BASE_.  */
-      if (!nds32_elf_ex9_itb_base (info))
-	{
-	  (*_bfd_error_handler) (_("%B: error: Cannot set _ITB_BASE_"),
-				 output_bfd);
-	  bfd_set_error (bfd_error_bad_value);
-	}
-    }
-
-  if (table->target_optimize & NDS32_RELAX_JUMP_IFC_ON)
-    if (!nds32_elf_ifc_reloc ())
-      (*_bfd_error_handler) (_("error: IFC relocation error."));
-
- /* Relocation for .ex9.itable.  */
-  if (table->target_optimize & NDS32_RELAX_EX9_ON
-      || (table->ex9_import_file && table->update_ex9_table))
-    nds32_elf_ex9_reloc_jmp (info);
 
   /* Use gp as fp to prevent truncated fit.  Because in relaxation time
      the fp value is set as gp, and it has be reverted for instruction
@@ -4560,8 +4419,9 @@ nds32_elf_relocate_section (bfd *                  output_bfd ATTRIBUTE_UNUSED,
       r_type = ELF32_R_TYPE (rel->r_info);
       if (r_type >= R_NDS32_max)
 	{
-	  (*_bfd_error_handler) (_("%B: error: unknown relocation type %d."),
-				 input_bfd, r_type);
+	  /* xgettext:c-format */
+	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			      input_bfd, r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  ret = FALSE;
 	  continue;
@@ -4863,7 +4723,7 @@ nds32_elf_relocate_section (bfd *                  output_bfd ATTRIBUTE_UNUSED,
 
 		      /* We need to generate a R_NDS32_RELATIVE reloc
 			 for the dynamic linker.  */
-		      srelgot = bfd_get_section_by_name (dynobj, ".rela.got");
+		      srelgot = htab->root.srelgot;
 		      BFD_ASSERT (srelgot != NULL);
 
 		      outrel.r_offset = (elf_gp (output_bfd)
@@ -5005,9 +4865,9 @@ nds32_elf_relocate_section (bfd *                  output_bfd ATTRIBUTE_UNUSED,
 	case R_NDS32_25_ABS_RELA:
 	  if (bfd_link_pic (info))
 	    {
-	      (*_bfd_error_handler)
-		(_("%s: warning: cannot deal R_NDS32_25_ABS_RELA in shared "
-		   "mode."), bfd_get_filename (input_bfd));
+	      _bfd_error_handler
+		(_("%pB: warning: %s unsupported in shared mode"),
+		 input_bfd, "R_NDS32_25_ABS_RELA");
 	      return FALSE;
 	    }
 	  break;
@@ -5117,7 +4977,7 @@ nds32_elf_relocate_section (bfd *                  output_bfd ATTRIBUTE_UNUSED,
 
 			  /* We need to generate a R_NDS32_RELATIVE reloc
 			     for the dynamic linker.  */
-			  srelgot = bfd_get_section_by_name (dynobj, ".rela.got");
+			  srelgot = htab->root.srelgot;
 			  BFD_ASSERT (srelgot != NULL);
 
 			  outrel.r_offset = (elf_gp (output_bfd)
@@ -5139,8 +4999,8 @@ nds32_elf_relocate_section (bfd *                  output_bfd ATTRIBUTE_UNUSED,
 	  if (relocation & align)
 	    {
 	      /* Incorrect alignment.  */
-	      (*_bfd_error_handler)
-		(_("%B: warning: unaligned access to GOT entry."), input_bfd);
+	      _bfd_error_handler
+		(_("%pB: warning: unaligned access to GOT entry"), input_bfd);
 	      ret = FALSE;
 	      r = bfd_reloc_dangerous;
 	      goto check_reloc;
@@ -5181,8 +5041,8 @@ handle_sda:
 	      r = nds32_elf_final_sda_base (output_bfd, info, &gp, FALSE);
 	      if (r != bfd_reloc_ok)
 		{
-		  (*_bfd_error_handler)
-		    (_("%B: warning: relocate SDA_BASE failed."), input_bfd);
+		  _bfd_error_handler
+		    (_("%pB: warning: relocate SDA_BASE failed"), input_bfd);
 		  ret = FALSE;
 		  goto check_reloc;
 		}
@@ -5202,8 +5062,10 @@ handle_sda:
 	      if (relocation & align)
 		{
 		  /* Incorrect alignment.  */
-		  (*_bfd_error_handler)
-		    (_("%B(%A): warning: unaligned small data access of type %d."),
+		  _bfd_error_handler
+		    /* xgettext:c-format */
+		    (_("%pB(%pA): warning: unaligned small data access"
+		       " of type %d"),
 		     input_bfd, input_section, r_type);
 		  ret = FALSE;
 		  goto check_reloc;
@@ -5274,7 +5136,7 @@ handle_sda:
 	    else
 	      {
 		bfd_boolean need_relocs = FALSE;
-		srelgot = htab->srelgot;
+		srelgot = htab->root.srelgot;
 		if ((bfd_link_pic (info) || indx != 0)
 		    && (h == NULL
 			|| ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
@@ -5489,9 +5351,9 @@ nds32_elf_finish_dynamic_symbol (bfd *output_bfd, struct bfd_link_info *info,
 
       BFD_ASSERT (h->dynindx != -1);
 
-      splt = htab->splt;
-      sgot = htab->sgotplt;
-      srela = htab->srelplt;
+      splt = htab->root.splt;
+      sgot = htab->root.sgotplt;
+      srela = htab->root.srelplt;
       BFD_ASSERT (splt != NULL && sgot != NULL && srela != NULL);
 
       /* Get the index in the procedure linkage table which
@@ -5598,8 +5460,8 @@ nds32_elf_finish_dynamic_symbol (bfd *output_bfd, struct bfd_link_info *info,
       /* This symbol has an entry in the global offset table.
 	 Set it up.  */
 
-      sgot = htab->sgot;
-      srela = htab->srelgot;
+      sgot = htab->root.sgot;
+      srela = htab->root.srelgot;
       BFD_ASSERT (sgot != NULL && srela != NULL);
 
       rela.r_offset = (sgot->output_section->vma
@@ -5681,7 +5543,7 @@ nds32_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
   htab = nds32_elf_hash_table (info);
   dynobj = htab->root.dynobj;
 
-  sgot = htab->sgotplt;
+  sgot = htab->root.sgotplt;
   sdyn = bfd_get_section_by_name (dynobj, ".dynamic");
 
   if (htab->root.dynamic_sections_created)
@@ -5707,43 +5569,25 @@ nds32_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 	      break;
 
 	    case DT_PLTGOT:
-	      s = htab->sgotplt;
+	      s = htab->root.sgotplt;
 	      goto get_vma;
 	    case DT_JMPREL:
-	      s = htab->srelplt;
+	      s = htab->root.srelplt;
 	    get_vma:
 	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 
 	    case DT_PLTRELSZ:
-	      s = htab->srelplt;
+	      s = htab->root.srelplt;
 	      dyn.d_un.d_val = s->size;
-	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
-	      break;
-
-	    case DT_RELASZ:
-	      /* My reading of the SVR4 ABI indicates that the
-		 procedure linkage table relocs (DT_JMPREL) should be
-		 included in the overall relocs (DT_RELA).  This is
-		 what Solaris does.  However, UnixWare can not handle
-		 that case.  Therefore, we override the DT_RELASZ entry
-		 here to make it not include the JMPREL relocs.  Since
-		 the linker script arranges for .rela.plt to follow all
-		 other relocation sections, we don't have to worry
-		 about changing the DT_RELA entry.  */
-	      if (htab->srelplt != NULL)
-		{
-		  s = htab->srelplt;
-		  dyn.d_un.d_val -= s->size;
-		}
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 	    }
 	}
 
       /* Fill in the first entry in the procedure linkage table.  */
-      splt = htab->splt;
+      splt = htab->root.splt;
       if (splt && splt->size > 0)
 	{
 	  if (bfd_link_pic (info))
@@ -5967,11 +5811,13 @@ nds32_check_vec_size (bfd *ibfd)
 	nds32_vec_size = (flag_t & 0x3);
       else if (nds32_vec_size != (flag_t & 0x3))
 	{
-	  (*_bfd_error_handler) (_("%B: ISR vector size mismatch"
-				   " with previous modules, previous %u-byte, current %u-byte"),
-				 ibfd,
-				 nds32_vec_size == 1 ? 4 : nds32_vec_size == 2 ? 16 : 0xffffffff,
-				 (flag_t & 0x3) == 1 ? 4 : (flag_t & 0x3) == 2 ? 16 : 0xffffffff);
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%pB: ISR vector size mismatch"
+	       " with previous modules, previous %u-byte, current %u-byte"),
+	     ibfd,
+	     nds32_vec_size == 1 ? 4 : nds32_vec_size == 2 ? 16 : 0xffffffff,
+	     (flag_t & 0x3) == 1 ? 4 : (flag_t & 0x3) == 2 ? 16 : 0xffffffff);
 	  return FALSE;
 	}
       else
@@ -5986,8 +5832,9 @@ nds32_check_vec_size (bfd *ibfd)
    object file when linking.  */
 
 static bfd_boolean
-nds32_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
+nds32_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
+  bfd *obfd = info->output_bfd;
   flagword out_flags;
   flagword in_flags;
   flagword out_16regs;
@@ -6009,8 +5856,8 @@ nds32_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 
   if (bfd_little_endian (ibfd) != bfd_little_endian (obfd))
     {
-      (*_bfd_error_handler)
-	(_("%B: warning: Endian mismatch with previous modules."), ibfd);
+      _bfd_error_handler
+	(_("%pB: warning: endian mismatch with previous modules"), ibfd);
 
       bfd_set_error (bfd_error_bad_value);
       return FALSE;
@@ -6019,9 +5866,9 @@ nds32_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
   in_version = elf_elfheader (ibfd)->e_flags & EF_NDS32_ELF_VERSION;
   if (in_version == E_NDS32_ELF_VER_1_2)
     {
-      (*_bfd_error_handler)
-	(_("%B: warning: Older version of object file encountered, "
-	   "Please recompile with current tool chain."), ibfd);
+      _bfd_error_handler
+	(_("%pB: warning: older version of object file encountered, "
+	   "please recompile with current tool chain"), ibfd);
     }
 
   /* We may need to merge V1 and V2 arch object files to V2.  */
@@ -6097,8 +5944,8 @@ nds32_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
   /* Check flag compatibility.  */
   if ((in_flags & EF_NDS_ABI) != (out_flags & EF_NDS_ABI))
     {
-      (*_bfd_error_handler)
-	(_("%B: error: ABI mismatch with previous modules."), ibfd);
+      _bfd_error_handler
+	(_("%pB: error: ABI mismatch with previous modules"), ibfd);
 
       bfd_set_error (bfd_error_bad_value);
       return FALSE;
@@ -6108,8 +5955,9 @@ nds32_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
     {
       if (((in_flags & EF_NDS_ARCH) != E_N1_ARCH))
 	{
-	  (*_bfd_error_handler)
-	    (_("%B: error: Instruction set mismatch with previous modules."), ibfd);
+	  _bfd_error_handler
+	    (_("%pB: error: instruction set mismatch with previous modules"),
+	     ibfd);
 
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
@@ -6133,9 +5981,11 @@ nds32_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
   else
     {
       if (in_version != out_version)
-	(*_bfd_error_handler) (_("%B: warning: Incompatible elf-versions %s and  %s."),
-				 ibfd, nds32_elfver_strtab[out_version],
-				 nds32_elfver_strtab[in_version]);
+	_bfd_error_handler
+	  /* xgettext:c-format */
+	  (_("%pB: warning: incompatible elf-versions %s and %s"),
+	   ibfd, nds32_elfver_strtab[out_version],
+	   nds32_elfver_strtab[in_version]);
 
       elf_elfheader (obfd)->e_flags = in_flags | out_flags
 	| (in_16regs & out_16regs) | (in_no_mac & out_no_mac)
@@ -6204,136 +6054,6 @@ nds32_elf_gc_mark_hook (asection *sec, struct bfd_link_info *info,
   return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
 }
 
-static bfd_boolean
-nds32_elf_gc_sweep_hook (bfd *abfd, struct bfd_link_info *info, asection *sec,
-			 const Elf_Internal_Rela *relocs)
-{
-  /* Update the got entry reference counts for the section being removed.  */
-  Elf_Internal_Shdr *symtab_hdr;
-  struct elf_link_hash_entry **sym_hashes;
-  bfd_signed_vma *local_got_refcounts;
-  const Elf_Internal_Rela *rel, *relend;
-
-  elf_section_data (sec)->local_dynrel = NULL;
-
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  sym_hashes = elf_sym_hashes (abfd);
-  local_got_refcounts = elf_local_got_refcounts (abfd);
-
-  relend = relocs + sec->reloc_count;
-  for (rel = relocs; rel < relend; rel++)
-    {
-      unsigned long r_symndx;
-      struct elf_link_hash_entry *h = NULL;
-
-      r_symndx = ELF32_R_SYM (rel->r_info);
-      if (r_symndx >= symtab_hdr->sh_info)
-	{
-	  /* External symbol.  */
-	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-	  while (h->root.type == bfd_link_hash_indirect
-		 || h->root.type == bfd_link_hash_warning)
-	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-	}
-
-      switch (ELF32_R_TYPE (rel->r_info))
-	{
-	case R_NDS32_GOT_HI20:
-	case R_NDS32_GOT_LO12:
-	case R_NDS32_GOT_LO15:
-	case R_NDS32_GOT_LO19:
-	case R_NDS32_GOT17S2_RELA:
-	case R_NDS32_GOT15S2_RELA:
-	case R_NDS32_GOTOFF:
-	case R_NDS32_GOTOFF_HI20:
-	case R_NDS32_GOTOFF_LO12:
-	case R_NDS32_GOTOFF_LO15:
-	case R_NDS32_GOTOFF_LO19:
-	case R_NDS32_GOT20:
-	case R_NDS32_GOTPC_HI20:
-	case R_NDS32_GOTPC_LO12:
-	case R_NDS32_GOTPC20:
-	  if (h != NULL)
-	    {
-	      if (h->got.refcount > 0)
-		h->got.refcount--;
-	    }
-	  else
-	    {
-	      if (local_got_refcounts && local_got_refcounts[r_symndx] > 0)
-		local_got_refcounts[r_symndx]--;
-	    }
-	  break;
-
-	case R_NDS32_16_RELA:
-	case R_NDS32_20_RELA:
-	case R_NDS32_5_RELA:
-	case R_NDS32_32_RELA:
-	case R_NDS32_HI20_RELA:
-	case R_NDS32_LO12S3_RELA:
-	case R_NDS32_LO12S2_RELA:
-	case R_NDS32_LO12S2_DP_RELA:
-	case R_NDS32_LO12S2_SP_RELA:
-	case R_NDS32_LO12S1_RELA:
-	case R_NDS32_LO12S0_RELA:
-	case R_NDS32_LO12S0_ORI_RELA:
-	case R_NDS32_SDA16S3_RELA:
-	case R_NDS32_SDA17S2_RELA:
-	case R_NDS32_SDA18S1_RELA:
-	case R_NDS32_SDA19S0_RELA:
-	case R_NDS32_SDA15S3_RELA:
-	case R_NDS32_SDA15S2_RELA:
-	case R_NDS32_SDA12S2_DP_RELA:
-	case R_NDS32_SDA12S2_SP_RELA:
-	case R_NDS32_SDA15S1_RELA:
-	case R_NDS32_SDA15S0_RELA:
-	case R_NDS32_SDA_FP7U2_RELA:
-	case R_NDS32_15_PCREL_RELA:
-	case R_NDS32_17_PCREL_RELA:
-	case R_NDS32_25_PCREL_RELA:
-	  if (h != NULL)
-	    {
-	      struct elf_nds32_link_hash_entry *eh;
-	      struct elf_nds32_dyn_relocs **pp;
-	      struct elf_nds32_dyn_relocs *p;
-
-	      if (!bfd_link_pic (info) && h->plt.refcount > 0)
-		h->plt.refcount -= 1;
-
-	      eh = (struct elf_nds32_link_hash_entry *) h;
-
-	      for (pp = &eh->dyn_relocs; (p = *pp) != NULL; pp = &p->next)
-		if (p->sec == sec)
-		  {
-		    if (ELF32_R_TYPE (rel->r_info) == R_NDS32_15_PCREL_RELA
-			|| ELF32_R_TYPE (rel->r_info) == R_NDS32_17_PCREL_RELA
-			|| ELF32_R_TYPE (rel->r_info) == R_NDS32_25_PCREL_RELA)
-		      p->pc_count -= 1;
-		    p->count -= 1;
-		    if (p->count == 0)
-		      *pp = p->next;
-		    break;
-		  }
-	    }
-	  break;
-
-	case R_NDS32_9_PLTREL:
-	case R_NDS32_25_PLTREL:
-	  if (h != NULL)
-	    {
-	      if (h->plt.refcount > 0)
-		h->plt.refcount--;
-	    }
-	  break;
-
-	default:
-	  break;
-	}
-    }
-
-  return TRUE;
-}
-
 /* Look through the relocs for a section during the first phase.
    Since we don't do .gots or .plts, we just need to consider the
    virtual table relocs for gc.  */
@@ -6351,6 +6071,15 @@ nds32_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
   asection *sreloc = NULL;
 
   if (bfd_link_relocatable (info))
+    return TRUE;
+
+  /* Don't do anything special with non-loaded, non-alloced sections.
+     In particular, any relocs in such sections should not affect GOT
+     and PLT reference counting (ie. we don't allow them to create GOT
+     or PLT entries), there's no possibility or desire to optimize TLS
+     relocs, and there's not much point in propagating relocs to shared
+     libs that the dynamic linker won't relocate.  */
+  if ((sec->flags & SEC_ALLOC) == 0)
     return TRUE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -6386,7 +6115,7 @@ nds32_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
       /* Some relocs require a global offset table.  We create
 	 got section here, since these relocation need got section
 	 and it is not created yet.  */
-      if (htab->sgot == NULL)
+      if (htab->root.sgot == NULL)
 	{
 	  switch (r_type)
 	    {
@@ -6409,7 +6138,7 @@ nds32_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	    case R_NDS32_TLS_IE_LO12S2:
 	      if (dynobj == NULL)
 		htab->root.dynobj = dynobj = abfd;
-	      if (!create_got_section (dynobj, info))
+	      if (!_bfd_elf_create_got_section (dynobj, info))
 		return FALSE;
 	      break;
 
@@ -6574,8 +6303,8 @@ nds32_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  && (h->root.type == bfd_link_hash_defweak
 		      || !h->def_regular)))
 	    {
-	      struct elf_nds32_dyn_relocs *p;
-	      struct elf_nds32_dyn_relocs **head;
+	      struct elf_dyn_relocs *p;
+	      struct elf_dyn_relocs **head;
 
 	      if (dynobj == NULL)
 		htab->root.dynobj = dynobj = abfd;
@@ -6624,6 +6353,7 @@ nds32_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      else
 		{
 		  asection *s;
+		  void *vpp;
 
 		  Elf_Internal_Sym *isym;
 		  isym = bfd_sym_from_r_symndx (&htab->sym_cache, abfd, r_symndx);
@@ -6635,15 +6365,15 @@ nds32_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  if (s == NULL)
 		    return FALSE;
 
-		  head = ((struct elf_nds32_dyn_relocs **)
-			&elf_section_data (s)->local_dynrel);
+		  vpp = &elf_section_data (s)->local_dynrel;
+		  head = (struct elf_dyn_relocs **) vpp;
 		}
 
 	      p = *head;
 	      if (p == NULL || p->sec != sec)
 		{
 		  bfd_size_type amt = sizeof (*p);
-		  p = (struct elf_nds32_dyn_relocs *) bfd_alloc (dynobj, amt);
+		  p = (struct elf_dyn_relocs *) bfd_alloc (dynobj, amt);
 		  if (p == NULL)
 		    return FALSE;
 		  p->next = *head;
@@ -6814,7 +6544,7 @@ calculate_plt_memory_address (bfd *abfd, struct bfd_link_info *link_info,
       h = elf_sym_hashes (abfd)[indx];
       BFD_ASSERT (h != NULL);
       htab = nds32_elf_hash_table (link_info);
-      splt = htab->splt;
+      splt = htab->root.splt;
 
       while (h->root.type == bfd_link_hash_indirect
 	     || h->root.type == bfd_link_hash_warning)
@@ -7078,7 +6808,7 @@ nds32_convert_32_to_16 (bfd *abfd, uint32_t insn, uint16_t *pinsn16,
 {
   int op6;
   uint16_t insn16 = 0;
-  int insn_type;
+  int insn_type = 0;
   unsigned long mach = bfd_get_mach (abfd);
 
   /* Decode 32-bit instruction.  */
@@ -7391,7 +7121,7 @@ nds32_convert_32_to_16 (bfd *abfd, uint32_t insn, uint16_t *pinsn16,
       if (!IS_WITHIN_S (N32_IMM14S (insn), 8))
 	goto done;
 
-      if ((insn & __BIT (14)) == 0)
+      if ((insn & N32_BIT (14)) == 0)
 	{
 	  /* N32_BR1_BEQ */
 	  if (N32_IS_RT3 (insn) && N32_RA5 (insn) == REG_R5
@@ -7459,7 +7189,7 @@ nds32_convert_32_to_16 (bfd *abfd, uint32_t insn, uint16_t *pinsn16,
       break;
 
     case N32_OP6_JI:
-      if ((insn & __BIT (24)) == 0)
+      if ((insn & N32_BIT (24)) == 0)
 	{
 	  /* N32_JI_J */
 	  if (IS_WITHIN_S (N32_IMM24S (insn), 8))
@@ -7695,7 +7425,7 @@ nds32_convert_16_to_32 (bfd *abfd, uint16_t insn16, uint32_t *pinsn)
       insn = N32_TYPE2 (SLTI, REG_TA, N16_RT4 (insn16), N16_IMM5U (insn16));
       goto done;
     case 0x34:			/* beqzs8, bnezs8 */
-      if (insn16 & __BIT (8))
+      if (insn16 & N32_BIT (8))
 	insn = N32_BR2 (BNEZ, REG_TA, N16_IMM8S (insn16));
       else
 	insn = N32_BR2 (BEQZ, REG_TA, N16_IMM8S (insn16));
@@ -7795,7 +7525,7 @@ nds32_convert_16_to_32 (bfd *abfd, uint16_t insn16, uint32_t *pinsn)
   switch (__GF (insn16, 11, 4))
     {
     case 0x7:			/* lwi37.fp/swi37.fp */
-      if (insn16 & __BIT (7))	/* swi37.fp */
+      if (insn16 & N32_BIT (7))	/* swi37.fp */
 	insn = N32_TYPE2 (SWI, N16_RT38 (insn16), REG_FP, N16_IMM7U (insn16));
       else			/* lwi37.fp */
 	insn = N32_TYPE2 (LWI, N16_RT38 (insn16), REG_FP, N16_IMM7U (insn16));
@@ -7898,7 +7628,7 @@ turn_insn_to_sda_access (uint32_t insn, bfd_signed_vma type, uint32_t *pinsn)
 	  break;
 	case N32_OP6_LBSI:
 	  /* lbsi.gp */
-	  oinsn = N32_TYPE1 (LBGP, N32_RT5 (insn), __BIT (19));
+	  oinsn = N32_TYPE1 (LBGP, N32_RT5 (insn), N32_BIT (19));
 	  break;
 	case N32_OP6_SBI:
 	  /* sbi.gp */
@@ -7906,7 +7636,7 @@ turn_insn_to_sda_access (uint32_t insn, bfd_signed_vma type, uint32_t *pinsn)
 	  break;
 	case N32_OP6_ORI:
 	  /* addi.gp */
-	  oinsn = N32_TYPE1 (SBGP, N32_RT5 (insn), __BIT (19));
+	  oinsn = N32_TYPE1 (SBGP, N32_RT5 (insn), N32_BIT (19));
 	  break;
 	}
       break;
@@ -7920,11 +7650,11 @@ turn_insn_to_sda_access (uint32_t insn, bfd_signed_vma type, uint32_t *pinsn)
 	  break;
 	case N32_OP6_LHSI:
 	  /* lhsi.gp */
-	  oinsn = N32_TYPE1 (HWGP, N32_RT5 (insn), __BIT (18));
+	  oinsn = N32_TYPE1 (HWGP, N32_RT5 (insn), N32_BIT (18));
 	  break;
 	case N32_OP6_SHI:
 	  /* shi.gp */
-	  oinsn = N32_TYPE1 (HWGP, N32_RT5 (insn), __BIT (19));
+	  oinsn = N32_TYPE1 (HWGP, N32_RT5 (insn), N32_BIT (19));
 	  break;
 	}
       break;
@@ -8090,15 +7820,17 @@ calculate_got_memory_address (bfd *abfd, struct bfd_link_info *link_info,
   if (symndx >= 0)
     {
       BFD_ASSERT (h != NULL);
-      return htab->sgot->output_section->vma + htab->sgot->output_offset
-	     + h->got.offset;
+      return (htab->root.sgot->output_section->vma
+	      + htab->root.sgot->output_offset
+	      + h->got.offset);
     }
   else
     {
       local_got_offsets = elf_local_got_offsets (abfd);
       BFD_ASSERT (local_got_offsets != NULL);
-      return htab->sgot->output_section->vma + htab->sgot->output_offset
-	     + local_got_offsets[ELF32_R_SYM (irel->r_info)];
+      return (htab->root.sgot->output_section->vma
+	      + htab->root.sgot->output_offset
+	      + local_got_offsets[ELF32_R_SYM (irel->r_info)]);
     }
 
   /* The _GLOBAL_OFFSET_TABLE_ may be undefweak(or should be?).  */
@@ -8742,8 +8474,8 @@ nds32_elf_relax_delete_blanks (bfd *abfd, asection *sec,
 	      unsigned long before, between;
 	      bfd_byte *endp, *p;
 
-	      val = read_unsigned_leb128 (abfd, contents + irel->r_offset,
-					  &len);
+	      val = _bfd_read_unsigned_leb128 (abfd, contents + irel->r_offset,
+					       &len);
 
 	      before = get_nds32_elf_blank_total (&blank_t, irel->r_addend, 0);
 	      between = get_nds32_elf_blank_total (&blank_t,
@@ -8772,9 +8504,9 @@ done_adjust_diff:
 	      if (blank_t2 && blank_t2->next
 		  && (blank_t2->offset > raddr
 		      || blank_t2->next->offset <= raddr))
-		(*_bfd_error_handler)
-		  (_("%B: %s\n"), abfd,
-		   "Error: search_nds32_elf_blank reports wrong node");
+		_bfd_error_handler
+		  (_("%pB: error: search_nds32_elf_blank reports wrong node"),
+		   abfd);
 
 	      /* Mark reloc in deleted portion as NONE.
 		 For some relocs like R_NDS32_LABEL that doesn't modify the
@@ -9031,6 +8763,10 @@ relax_range_measurement (bfd *abfd)
 #define IS_OPTIMIZE(addend)     ((addend) & 0x40000000)
 #define IS_16BIT_ON(addend)     ((addend) & 0x20000000)
 
+static const char * unrecognized_reloc_msg =
+  /* xgettext:c-format */
+  N_("%pB: warning: %s points to unrecognized reloc at %#" PRIx64);
+
 /* Relax LONGCALL1 relocation for nds32_elf_relax_section.  */
 
 static bfd_boolean
@@ -9041,19 +8777,19 @@ nds32_elf_relax_longcall1 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 {
   /* There are 3 variations for LONGCALL1
      case 4-4-2; 16-bit on, optimize off or optimize for space
-     sethi ta, hi20(symbol)     ; LONGCALL1/HI20
+     sethi ta, hi20(symbol)	; LONGCALL1/HI20
      ori   ta, ta, lo12(symbol) ; LO12S0
-     jral5 ta                   ;
+     jral5 ta			;
 
      case 4-4-4; 16-bit off, optimize don't care
-     sethi ta, hi20(symbol)     ; LONGCALL1/HI20
+     sethi ta, hi20(symbol)	; LONGCALL1/HI20
      ori   ta, ta, lo12(symbol) ; LO12S0
-     jral  ta                   ;
+     jral  ta			;
 
      case 4-4-4; 16-bit on, optimize for speed
-     sethi ta, hi20(symbol)     ; LONGCALL1/HI20
+     sethi ta, hi20(symbol)	; LONGCALL1/HI20
      ori   ta, ta, lo12(symbol) ; LO12S0
-     jral  ta                   ;
+     jral  ta			;
      Check code for -mlong-calls output.  */
 
   /* Get the reloc for the address from which the register is
@@ -9081,9 +8817,8 @@ nds32_elf_relax_longcall1 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (hi_irelfn == irelend || lo_irelfn == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGCALL1 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGCALL1",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -9163,9 +8898,8 @@ nds32_elf_relax_longcall2 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (i1_irelfn == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGCALL2 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGCALL2",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -9224,24 +8958,24 @@ nds32_elf_relax_longcall3 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 {
   /* There are 3 variations for LONGCALL3
      case 4-4-4-2; 16-bit on, optimize off or optimize for space
-     bltz  rt,   $1                ; LONGCALL3
-     sethi ta,   hi20(symbol)      ; HI20
+     bltz  rt,	 $1		   ; LONGCALL3
+     sethi ta,	 hi20(symbol)	   ; HI20
      ori   ta, ta,  lo12(symbol)   ; LO12S0
-     jral5 ta                      ;
+     jral5 ta			   ;
      $1
 
      case 4-4-4-4; 16-bit off, optimize don't care
-     bltz  rt,   $1                ; LONGCALL3
-     sethi ta,   hi20(symbol)      ; HI20
+     bltz  rt,	 $1		   ; LONGCALL3
+     sethi ta,	 hi20(symbol)	   ; HI20
      ori   ta, ta,  lo12(symbol)   ; LO12S0
-     jral  ta                      ;
+     jral  ta			   ;
      $1
 
      case 4-4-4-4; 16-bit on, optimize for speed
-     bltz  rt,   $1                ; LONGCALL3
-     sethi ta,   hi20(symbol)      ; HI20
+     bltz  rt,	 $1		   ; LONGCALL3
+     sethi ta,	 hi20(symbol)	   ; HI20
      ori   ta, ta,  lo12(symbol)   ; LO12S0
-     jral  ta                      ;
+     jral  ta			   ;
      $1 */
 
   /* Get the reloc for the address from which the register is
@@ -9270,9 +9004,8 @@ nds32_elf_relax_longcall3 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (hi_irelfn == irelend || lo_irelfn == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGCALL3 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGCALL3",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -9363,19 +9096,19 @@ nds32_elf_relax_longjump1 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 {
   /* There are 3 variations for LONGJUMP1
      case 4-4-2; 16-bit bit on, optimize off or optimize for space
-     sethi ta, hi20(symbol)      ; LONGJUMP1/HI20
-     ori   ta, ta, lo12(symbol)  ; LO12S0
-     jr5   ta                    ;
+     sethi ta, hi20(symbol)	 ; LONGJUMP1/HI20
+     ori   ta, ta, lo12(symbol)	 ; LO12S0
+     jr5   ta			 ;
 
      case 4-4-4; 16-bit off, optimize don't care
-     sethi ta, hi20(symbol)      ; LONGJUMP1/HI20
-     ori   ta, ta, lo12(symbol)  ; LO12S0
-     jr    ta                    ;
+     sethi ta, hi20(symbol)	 ; LONGJUMP1/HI20
+     ori   ta, ta, lo12(symbol)	 ; LO12S0
+     jr	   ta			 ;
 
      case 4-4-4; 16-bit on, optimize for speed
-     sethi ta, hi20(symbol)      ; LONGJUMP1/HI20
-     ori   ta, ta, lo12(symbol)  ; LO12S0
-     jr    ta                    ;	*/
+     sethi ta, hi20(symbol)	 ; LONGJUMP1/HI20
+     ori   ta, ta, lo12(symbol)	 ; LO12S0
+     jr	   ta			 ;	*/
 
   /* Get the reloc for the address from which the register is
      being loaded.  This reloc will tell us which function is
@@ -9405,9 +9138,8 @@ nds32_elf_relax_longjump1 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 				 R_NDS32_LO12S0_ORI_RELA, laddr + 4);
   if (hi_irelfn == irelend || lo_irelfn == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGJUMP1 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGJUMP1",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -9612,9 +9344,8 @@ nds32_elf_relax_longjump2 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (i2_irelfn == irelend || cond_irelfn == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGJUMP2 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGJUMP2",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -9719,42 +9450,42 @@ nds32_elf_relax_longjump3 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
   /* There are 5 variations for LONGJUMP3
      case 1: 2-4-4-2; 1st insn convertible, 16-bit on,
      optimize off or optimize for space
-     bnes38   rt, ra, $1            ; LONGJUMP3
-     sethi    ta, hi20(symbol)      ; HI20
+     bnes38   rt, ra, $1	    ; LONGJUMP3
+     sethi    ta, hi20(symbol)	    ; HI20
      ori      ta, ta, lo12(symbol)  ; LO12S0
-     jr5      ta                    ;
-     $1:                            ;
+     jr5      ta		    ;
+     $1:			    ;
 
      case 2: 2-4-4-2; 1st insn convertible, 16-bit on, optimize for speed
-     bnes38   rt, ra, $1           ; LONGJUMP3
-     sethi    ta, hi20(symbol)     ; HI20
+     bnes38   rt, ra, $1	   ; LONGJUMP3
+     sethi    ta, hi20(symbol)	   ; HI20
      ori      ta, ta, lo12(symbol) ; LO12S0
-     jr5      ta                   ;
-     $1:                           ; LABEL
+     jr5      ta		   ;
+     $1:			   ; LABEL
 
      case 3: 4-4-4-2; 1st insn not convertible, 16-bit on,
      optimize off or optimize for space
-     bne   rt, ra, $1           ; LONGJUMP3
-     sethi ta, hi20(symbol)     ; HI20
+     bne   rt, ra, $1		; LONGJUMP3
+     sethi ta, hi20(symbol)	; HI20
      ori   ta, ta, lo12(symbol) ; LO12S0
-     jr5   ta                   ;
-     $1:                        ;
+     jr5   ta			;
+     $1:			;
 
      case 4: 4-4-4-4; 1st insn don't care, 16-bit off, optimize don't care
      16-bit off if no INSN16
-     bne   rt, ra, $1           ; LONGJUMP3
-     sethi ta, hi20(symbol)     ; HI20
+     bne   rt, ra, $1		; LONGJUMP3
+     sethi ta, hi20(symbol)	; HI20
      ori   ta, ta, lo12(symbol) ; LO12S0
-     jr    ta                   ;
-     $1:                        ;
+     jr	   ta			;
+     $1:			;
 
      case 5: 4-4-4-4; 1st insn not convertible, 16-bit on, optimize for speed
      16-bit off if no INSN16
-     bne   rt, ra, $1           ; LONGJUMP3
-     sethi ta, hi20(symbol)     ; HI20
+     bne   rt, ra, $1		; LONGJUMP3
+     sethi ta, hi20(symbol)	; HI20
      ori   ta, ta, lo12(symbol) ; LO12S0
-     jr    ta                   ;
-     $1:                        ; LABEL */
+     jr	   ta			;
+     $1:			; LABEL */
 
   /* Get the reloc for the address from which the register is
      being loaded.  This reloc will tell us which function is
@@ -9805,9 +9536,8 @@ nds32_elf_relax_longjump3 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (hi_irelfn == irelend || lo_irelfn == irelend || cond_irelfn == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGJUMP3 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGJUMP3",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -9934,7 +9664,6 @@ nds32_elf_relax_longjump3 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
     else
       {
 	irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info), reloc);
-	irel->r_addend = irel->r_addend;
 	hi_irelfn->r_info = ELF32_R_INFO (ELF32_R_SYM (hi_irelfn->r_info),
 					  cond_reloc);
       }
@@ -9986,9 +9715,8 @@ nds32_elf_relax_longcall4 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (hi_irel == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGCALL4 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGCALL4",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -10017,9 +9745,8 @@ nds32_elf_relax_longcall4 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (ptr_irel == irelend || em_irel == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGCALL4 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGCALL4",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
   /* Check these is enough space to insert jal in R_NDS32_EMPTY.  */
@@ -10089,9 +9816,8 @@ nds32_elf_relax_longcall5 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 				 R_NDS32_25_PCREL_RELA, irel->r_addend);
   if (cond_irel == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGCALL5 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGCALL5",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -10168,9 +9894,8 @@ nds32_elf_relax_longcall6 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (em_irel == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGCALL6 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGCALL6",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -10207,9 +9932,8 @@ nds32_elf_relax_longcall6 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 				     R_NDS32_PTR_RESOLVED, irel->r_addend);
       if (cond_irel == irelend)
 	{
-	  (*_bfd_error_handler)
-	    ("%B: warning: R_NDS32_LONGCALL6 points to unrecognized"
-	     "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+	  _bfd_error_handler (unrecognized_reloc_msg, abfd,
+			      "R_NDS32_LONGCALL6", (uint64_t) irel->r_offset);
 	  return FALSE;
 	}
       cond_irel->r_addend = 1;
@@ -10257,9 +9981,8 @@ nds32_elf_relax_longcall6 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 				     R_NDS32_PTR_RESOLVED, irel->r_addend);
       if (cond_irel == irelend)
 	{
-	  (*_bfd_error_handler)
-	    ("%B: warning: R_NDS32_LONGCALL6 points to unrecognized"
-	     "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+	  _bfd_error_handler (unrecognized_reloc_msg, abfd,
+			      "R_NDS32_LONGCALL6", (uint64_t) irel->r_offset);
 	  return FALSE;
 	}
       cond_irel->r_addend = 1;
@@ -10308,9 +10031,8 @@ nds32_elf_relax_longjump4 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (hi_irel == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGJUMP4 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGJUMP4",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -10331,9 +10053,8 @@ nds32_elf_relax_longjump4 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (ptr_irel == irelend || em_irel == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGJUMP4 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGJUMP4",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -10406,9 +10127,8 @@ nds32_elf_relax_longjump5 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 				 R_NDS32_25_PCREL_RELA, irel->r_addend);
   if (cond_irel == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGJUMP5 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGJUMP5",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -10536,9 +10256,8 @@ nds32_elf_relax_longjump6 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (em_irel == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGJUMP6 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGJUMP6",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -10707,9 +10426,8 @@ nds32_elf_relax_longjump7 (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 				 R_NDS32_15_PCREL_RELA, irel->r_addend);
   if (cond_irel == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LONGJUMP7 points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LONGJUMP7",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -10813,9 +10531,8 @@ nds32_elf_relax_loadstore (struct bfd_link_info *link_info, bfd *abfd,
 
   if (hi_irelfn == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_LOADSTORE points to unrecognized"
-	 "reloc at 0x%lx.", abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_LOADSTORE",
+			  (uint64_t) irel->r_offset);
 	return FALSE;
     }
 
@@ -10862,7 +10579,7 @@ nds32_elf_relax_loadstore (struct bfd_link_info *link_info, bfd *abfd,
 	break;
 
       if (range_type == NDS32_LOADSTORE_FLOAT_S
-	  || range_type == NDS32_LOADSTORE_FLOAT_S)
+	  || range_type == NDS32_LOADSTORE_FLOAT_D)
 	{
 	  range_l = sdata_range[0][0];
 	  range_h = sdata_range[0][1];
@@ -11149,9 +10866,9 @@ nds32_elf_relax_letlsadd (struct bfd_link_info *link_info, bfd *abfd,
 			  Elf_Internal_Shdr *symtab_hdr, bfd_boolean *again)
 {
   /* Local TLS non-pic
-     sethi    ta, hi20(symbol@tpoff)      ; TLS_LE_HI20
+     sethi    ta, hi20(symbol@tpoff)	  ; TLS_LE_HI20
      ori      ta, ta, lo12(symbol@tpoff)  ; TLS_LE_LO12
-     add      ra, ta, tp                  ; TLS_LE_ADD */
+     add      ra, ta, tp		  ; TLS_LE_ADD */
 
   uint32_t insn;
   bfd_vma laddr;
@@ -11226,6 +10943,7 @@ nds32_elf_relax_letlsls (struct bfd_link_info *link_info, bfd *abfd,
 	  success = 1;
 	  break;
 	}
+      /* Fall through.  */
     case (N32_OP6_MEM << 8) | N32_MEM_LH:
     case (N32_OP6_MEM << 8) | N32_MEM_SH:
     case (N32_OP6_MEM << 8) | N32_MEM_LHS:
@@ -11240,6 +10958,7 @@ nds32_elf_relax_letlsls (struct bfd_link_info *link_info, bfd *abfd,
 	  success = 1;
 	  break;
 	}
+      /* Fall through.  */
     case (N32_OP6_MEM << 8) | N32_MEM_LW:
     case (N32_OP6_MEM << 8) | N32_MEM_SW:
       /* The range is +/-64k.  */
@@ -11253,6 +10972,7 @@ nds32_elf_relax_letlsls (struct bfd_link_info *link_info, bfd *abfd,
 	  success = 1;
 	  break;
 	}
+      /* Fall through.  */
     default:
       break;
     }
@@ -11285,9 +11005,8 @@ nds32_elf_relax_ptr (bfd *abfd, asection *sec, Elf_Internal_Rela *irel,
 
   if (re_irel == irelend)
     {
-      (*_bfd_error_handler)
-	("%B: warning: R_NDS32_PTR points to unrecognized reloc at 0x%lx.",
-	 abfd, (long) irel->r_offset);
+      _bfd_error_handler (unrecognized_reloc_msg, abfd, "R_NDS32_PTR",
+			  (uint64_t) irel->r_offset);
       return FALSE;
     }
 
@@ -11378,7 +11097,7 @@ nds32_elf_relax_pltgot_suff (struct bfd_link_info *link_info, bfd *abfd,
       irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
 				   R_NDS32_PLT_GOTREL_LO19);
       /* addi.gp */
-      insn = N32_TYPE1 (SBGP, N32_RT5 (insn), __BIT (19));
+      insn = N32_TYPE1 (SBGP, N32_RT5 (insn), N32_BIT (19));
     }
   else if (N32_OP6 (insn) == N32_OP6_JREG
 	   && N32_SUB5 (insn) == N32_JREG_JRAL)
@@ -11511,12 +11230,12 @@ nds32_elf_relax_gotoff_suff (struct bfd_link_info *link_info, bfd *abfd,
 	ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_NDS32_SDA18S1_RELA);
       break;
     case (N32_OP6_MEM << 8) | N32_MEM_LHS:
-      insn = N32_TYPE1 (HWGP, N32_RT5 (insn), __BIT (18));
+      insn = N32_TYPE1 (HWGP, N32_RT5 (insn), N32_BIT (18));
       irel->r_info =
 	ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_NDS32_SDA18S1_RELA);
       break;
     case (N32_OP6_MEM << 8) | N32_MEM_SH:
-      insn = N32_TYPE1 (HWGP, N32_RT5 (insn), __BIT (19));
+      insn = N32_TYPE1 (HWGP, N32_RT5 (insn), N32_BIT (19));
       irel->r_info =
 	ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_NDS32_SDA18S1_RELA);
       break;
@@ -11527,7 +11246,7 @@ nds32_elf_relax_gotoff_suff (struct bfd_link_info *link_info, bfd *abfd,
 	ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_NDS32_SDA19S0_RELA);
       break;
     case (N32_OP6_MEM << 8) | N32_MEM_LBS:
-      insn = N32_TYPE1 (LBGP, N32_RT5 (insn), __BIT (19));
+      insn = N32_TYPE1 (LBGP, N32_RT5 (insn), N32_BIT (19));
       irel->r_info =
 	ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_NDS32_SDA19S0_RELA);
       break;
@@ -11537,7 +11256,7 @@ nds32_elf_relax_gotoff_suff (struct bfd_link_info *link_info, bfd *abfd,
 	ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_NDS32_SDA19S0_RELA);
       break;
     case (N32_OP6_ALU1 << 8) | N32_ALU1_ADD:
-      insn = N32_TYPE1 (SBGP, N32_RT5 (insn), __BIT (19));
+      insn = N32_TYPE1 (SBGP, N32_RT5 (insn), N32_BIT (19));
       irel->r_info =
 	ELF32_R_INFO (ELF32_R_SYM (irel->r_info), R_NDS32_SDA19S0_RELA);
       break;
@@ -11568,12 +11287,12 @@ nds32_relax_adjust_label (bfd *abfd, asection *sec,
      of instruction a time.
 
      It recognizes three types of relocations.
-     1. R_NDS32_LABEL - a aligment.
+     1. R_NDS32_LABEL - a alignment.
      2. R_NDS32_INSN16 - relax a 32-bit instruction to 16-bit.
      3. is_16bit_NOP () - remove a 16-bit instruction.  */
 
-  /* TODO: It seems currently implementation only support 4-byte aligment.
-     We should handle any-aligment.  */
+  /* TODO: It seems currently implementation only support 4-byte alignment.
+     We should handle any-alignment.  */
 
   Elf_Internal_Rela *insn_rel = NULL, *label_rel = NULL, *irel;
   Elf_Internal_Rela *tmp_rel, *tmp2_rel = NULL;
@@ -11822,118 +11541,6 @@ nds32_relax_adjust_label (bfd *abfd, asection *sec,
   return TRUE;
 }
 
-/* Pick relaxation round.  */
-
-static int
-nds32_elf_pick_relax (bfd_boolean init, asection *sec, bfd_boolean *again,
-		      struct elf_nds32_link_hash_table *table,
-		      struct bfd_link_info *link_info)
-{
-  static asection *final_sec, *first_sec = NULL;
-  static bfd_boolean normal_again = FALSE;
-  static bfd_boolean set = FALSE;
-  static bfd_boolean first = TRUE;
-  int round_table[] = {
-      NDS32_RELAX_NORMAL_ROUND,
-      NDS32_RELAX_JUMP_IFC_ROUND,
-      NDS32_RELAX_EX9_BUILD_ROUND,
-      NDS32_RELAX_EX9_REPLACE_ROUND,
-  };
-  static int pass = 0;
-  static int relax_round;
-
-  /* The new round.  */
-  if (init && first_sec == sec)
-    {
-      set = TRUE;
-      normal_again = FALSE;
-    }
-
-  if (first)
-    {
-      /* Run an empty run to get the final section.  */
-      relax_round = NDS32_RELAX_EMPTY_ROUND;
-
-      /* It has to enter relax again because we can
-	 not make sure what the final turn is.  */
-      *again = TRUE;
-
-      first = FALSE;
-      first_sec = sec;
-    }
-
-  if (!set)
-    {
-      /* Not reenter yet.  */
-      final_sec = sec;
-      return relax_round;
-    }
-
-  relax_round = round_table[pass];
-
-  if (!init && relax_round == NDS32_RELAX_NORMAL_ROUND && *again)
-    normal_again = TRUE;
-
-  if (!init && final_sec == sec)
-    {
-      switch (relax_round)
-	{
-	case NDS32_RELAX_NORMAL_ROUND:
-	  if (!normal_again)
-	    {
-	      /* Normal relaxation done.  */
-	      if (table->target_optimize & NDS32_RELAX_JUMP_IFC_ON)
-		{
-		  pass++;
-		  *again = TRUE;
-		}
-	      else if (table->target_optimize & NDS32_RELAX_EX9_ON)
-		{
-		  pass += 2;	/* NDS32_RELAX_EX9_BUILD_ROUND */
-		  *again = TRUE;
-		}
-	      else if (table->ex9_import_file)
-		{
-		  /* Import ex9 table.  */
-		  if (table->update_ex9_table)
-		    pass += 2;	/* NDS32_RELAX_EX9_BUILD_ROUND */
-		  else
-		    pass += 3;	/* NDS32_RELAX_EX9_REPLACE_ROUND */
-		  nds32_elf_ex9_import_table (link_info);
-		  *again = TRUE;
-		}
-	    }
-	  break;
-	case NDS32_RELAX_JUMP_IFC_ROUND:
-	  if (!nds32_elf_ifc_finish (link_info))
-	    (*_bfd_error_handler) (_("error: Jump IFC Fail."));
-	  if (table->target_optimize & NDS32_RELAX_EX9_ON)
-	    {
-	      pass++;
-	      *again = TRUE;
-	    }
-	  break;
-	case NDS32_RELAX_EX9_BUILD_ROUND:
-	  nds32_elf_ex9_finish (link_info);
-	  pass++;
-	  *again = TRUE;
-	  break;
-	case NDS32_RELAX_EX9_REPLACE_ROUND:
-	  if (table->target_optimize & NDS32_RELAX_JUMP_IFC_ON)
-	    {
-	      /* Do jump IFC optimization again.  */
-	      if (!nds32_elf_ifc_finish (link_info))
-		(*_bfd_error_handler) (_("error: Jump IFC Fail."));
-	    }
-	  break;
-	default:
-	  break;
-	}
-    }
-
-  return relax_round;
-}
-
 static bfd_boolean
 nds32_elf_relax_section (bfd *abfd, asection *sec,
 			 struct bfd_link_info *link_info, bfd_boolean *again)
@@ -11954,7 +11561,6 @@ nds32_elf_relax_section (bfd *abfd, asection *sec,
   /* Target dependnet option.  */
   struct elf_nds32_link_hash_table *table;
   int load_store_relax;
-  int relax_round;
 
   relax_blank_list = NULL;
 
@@ -11968,7 +11574,7 @@ nds32_elf_relax_section (bfd *abfd, asection *sec,
    * no reloc entry.  */
   if (bfd_link_relocatable (link_info)
       || (sec->flags & SEC_RELOC) == 0
-      || (sec->flags & SEC_EXCLUDE) == 1
+      || (sec->flags & SEC_EXCLUDE) != 0
       || (sec->flags & SEC_CODE) == 0
       || sec->size == 0)
     return TRUE;
@@ -11982,41 +11588,6 @@ nds32_elf_relax_section (bfd *abfd, asection *sec,
   /* The optimization type to do.  */
 
   table = nds32_elf_hash_table (link_info);
-  relax_round = nds32_elf_pick_relax (TRUE, sec, again, table, link_info);
-  switch (relax_round)
-    {
-    case NDS32_RELAX_JUMP_IFC_ROUND:
-      /* Here is the entrance of ifc jump relaxation.  */
-      if (!nds32_elf_ifc_calc (link_info, abfd, sec))
-	return FALSE;
-      nds32_elf_pick_relax (FALSE, sec, again, table, link_info);
-      return TRUE;
-
-    case NDS32_RELAX_EX9_BUILD_ROUND:
-      /* Here is the entrance of ex9 relaxation.  There are two pass of
-	 ex9 relaxation.  The one is to traverse all instructions and build
-	 the hash table.  The other one is to compare instructions and replace
-	 it by ex9.it.  */
-      if (!nds32_elf_ex9_build_hash_table (abfd, sec, link_info))
-	return FALSE;
-      nds32_elf_pick_relax (FALSE, sec, again, table, link_info);
-      return TRUE;
-
-    case NDS32_RELAX_EX9_REPLACE_ROUND:
-      if (!nds32_elf_ex9_replace_instruction (link_info, abfd, sec))
-	return FALSE;
-      return TRUE;
-
-    case NDS32_RELAX_EMPTY_ROUND:
-      nds32_elf_pick_relax (FALSE, sec, again, table, link_info);
-      return TRUE;
-
-    case NDS32_RELAX_NORMAL_ROUND:
-    default:
-      if (sec->reloc_count == 0)
-	return TRUE;
-      break;
-    }
 
   /* The begining of general relaxation.  */
 
@@ -12027,16 +11598,6 @@ nds32_elf_relax_section (bfd *abfd, asection *sec,
       nds32_elf_final_sda_base (sec->output_section->owner, link_info,
 				&gp, FALSE);
       relax_range_measurement (abfd);
-    }
-
-  if (is_ITB_BASE_set == 0)
-    {
-      /* Set the _ITB_BASE_.  */
-      if (!nds32_elf_ex9_itb_base (link_info))
-	{
-	  (*_bfd_error_handler) (_("%B: error: Cannot set _ITB_BASE_"), abfd);
-	  bfd_set_error (bfd_error_bad_value);
-	}
     }
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -12056,10 +11617,7 @@ nds32_elf_relax_section (bfd *abfd, asection *sec,
   if (ELF32_R_TYPE (irel->r_info) == R_NDS32_RELAX_ENTRY)
     {
       if (irel->r_addend & R_NDS32_RELAX_ENTRY_DISABLE_RELAX_FLAG)
-	{
-	  nds32_elf_pick_relax (FALSE, sec, again, table, link_info);
-	  return TRUE;
-	}
+	return TRUE;
 
       if (irel->r_addend & R_NDS32_RELAX_ENTRY_OPTIMIZE_FLAG)
 	optimize = 1;
@@ -12305,7 +11863,7 @@ nds32_elf_relax_section (bfd *abfd, asection *sec,
 				 irelend, isymbuf))
 	goto error_return;
 
-      if (*again == FALSE)
+      if (!*again)
 	{
 	  if (!nds32_fag_remove_unused_fpbase (abfd, sec, internal_relocs,
 					       irelend))
@@ -12313,9 +11871,7 @@ nds32_elf_relax_section (bfd *abfd, asection *sec,
 	}
     }
 
-  nds32_elf_pick_relax (FALSE, sec, again, table, link_info);
-
-  if (*again == FALSE)
+  if (!*again)
     {
       if (!nds32_relax_adjust_label (abfd, sec, internal_relocs, contents,
 				     &relax_blank_list, optimize, opt_size))
@@ -12332,7 +11888,7 @@ nds32_elf_relax_section (bfd *abfd, asection *sec,
       relax_blank_list = NULL;
     }
 
-  if (*again == FALSE)
+  if (!*again)
     {
       /* Closing the section, so we don't relax it anymore.  */
       bfd_vma sec_size_align;
@@ -12779,7 +12335,8 @@ nds32_relax_fp_as_gp (struct bfd_link_info *link_info,
 	{
 	  /* Begin of the region.  */
 	  if (begin_rel)
-	    (*_bfd_error_handler) (_("%B: Nested OMIT_FP in %A."), abfd, sec);
+	    /* xgettext:c-format */
+	    _bfd_error_handler (_("%pB: nested OMIT_FP in %pA"), abfd, sec);
 
 	  begin_rel = irel;
 	  nds32_fag_init (&fag_head);
@@ -12797,7 +12354,9 @@ nds32_relax_fp_as_gp (struct bfd_link_info *link_info,
 
 	  if (begin_rel == NULL)
 	    {
-	      (*_bfd_error_handler) (_("%B: Unmatched OMIT_FP in %A."), abfd, sec);
+	      /* xgettext:c-format */
+	      _bfd_error_handler (_("%pB: unmatched OMIT_FP in %pA"),
+				  abfd, sec);
 	      continue;
 	    }
 
@@ -13079,7 +12638,8 @@ nds32_elf_get_relocated_section_contents (bfd *abfd,
 		     complete binaries.  Do not abort, but issue an error
 		     message instead.  */
 		  link_info->callbacks->einfo
-		    (_("%X%P: %B(%A): relocation \"%R\" goes out of range\n"),
+		    /* xgettext:c-format */
+		    (_("%X%P: %pB(%pA): relocation \"%pR\" goes out of range\n"),
 		     abfd, input_section, * parent);
 		  goto error_return;
 
@@ -13099,2590 +12659,11 @@ error_return:
   return NULL;
 }
 
-/* Link-time IFC relaxation.
-   In this optimization, we chains jump instructions
-   of the same destination with ifcall.  */
-
-
-/* List to save jal and j relocation.  */
-struct elf_nds32_ifc_symbol_entry
-{
-  asection *sec;
-  struct elf_link_hash_entry *h;
-  struct elf_nds32_ifc_irel_list *irel_head;
-  unsigned long insn;
-  int times;
-  int enable;		/* Apply ifc.  */
-  int ex9_enable;	/* Apply ifc after ex9.  */
-  struct elf_nds32_ifc_symbol_entry *next;
-};
-
-struct elf_nds32_ifc_irel_list
-{
-  Elf_Internal_Rela *irel;
-  asection *sec;
-  bfd_vma addr;
-  /* If this is set, then it is the last instruction for
-     ifc-chain, so it must be keep for the actual branching.  */
-  int keep;
-  struct elf_nds32_ifc_irel_list *next;
-};
-
-static struct elf_nds32_ifc_symbol_entry *ifc_symbol_head = NULL;
-
-/* Insert symbol of jal and j for ifc.  */
-
-static void
-nds32_elf_ifc_insert_symbol (asection *sec,
-			     struct elf_link_hash_entry *h,
-			     Elf_Internal_Rela *irel,
-			     unsigned long insn)
-{
-  struct elf_nds32_ifc_symbol_entry *ptr = ifc_symbol_head;
-
-  /* Check there is target of existing entry the same as the new one.  */
-  while (ptr != NULL)
-    {
-      if (((h == NULL && ptr->sec == sec
-	    && ELF32_R_SYM (ptr->irel_head->irel->r_info) == ELF32_R_SYM (irel->r_info)
-	    && ptr->irel_head->irel->r_addend == irel->r_addend)
-	   || h != NULL)
-	  && ptr->h == h
-	  && ptr->insn == insn)
-	{
-	  /* The same target exist, so insert into list.  */
-	  struct elf_nds32_ifc_irel_list *irel_list = ptr->irel_head;
-
-	  while (irel_list->next != NULL)
-	    irel_list = irel_list->next;
-	  irel_list->next = bfd_malloc (sizeof (struct elf_nds32_ifc_irel_list));
-	  irel_list = irel_list->next;
-	  irel_list->irel = irel;
-	  irel_list->keep = 1;
-
-	  if (h == NULL)
-	    irel_list->sec = NULL;
-	  else
-	    irel_list->sec = sec;
-	  irel_list->next = NULL;
-	  return;
-	}
-      if (ptr->next == NULL)
-	break;
-      ptr = ptr->next;
-    }
-
-  /* There is no same target entry, so build a new one.  */
-  if (ifc_symbol_head == NULL)
-    {
-      ifc_symbol_head = bfd_malloc (sizeof (struct elf_nds32_ifc_symbol_entry));
-      ptr = ifc_symbol_head;
-    }
-  else
-    {
-      ptr->next = bfd_malloc (sizeof (struct elf_nds32_ifc_symbol_entry));
-      ptr = ptr->next;
-    }
-
-  ptr->h = h;
-  ptr->irel_head = bfd_malloc (sizeof (struct elf_nds32_ifc_irel_list));
-  ptr->irel_head->irel = irel;
-  ptr->insn = insn;
-  ptr->irel_head->keep = 1;
-
-  if (h == NULL)
-    {
-      /* Local symbols.  */
-      ptr->sec = sec;
-      ptr->irel_head->sec = NULL;
-    }
-  else
-    {
-      /* Global symbol.  */
-      ptr->sec = NULL;
-      ptr->irel_head->sec = sec;
-    }
-
-  ptr->irel_head->next = NULL;
-  ptr->times = 0;
-  ptr->enable = 0;
-  ptr->ex9_enable = 0;
-  ptr->next = NULL;
-}
-
-/* Gather all jal and j instructions.  */
-
-static bfd_boolean
-nds32_elf_ifc_calc (struct bfd_link_info *info,
-		    bfd *abfd, asection *sec)
-{
-  Elf_Internal_Rela *internal_relocs;
-  Elf_Internal_Rela *irelend;
-  Elf_Internal_Rela *irel;
-  Elf_Internal_Shdr *symtab_hdr;
-  bfd_byte *contents = NULL;
-  uint32_t insn, insn_with_reg;
-  unsigned long r_symndx;
-  struct elf_link_hash_entry *h;
-  struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (abfd);
-  struct elf_nds32_link_hash_table *table;
-  bfd_boolean ifc_loop_aware;
-
-  internal_relocs = _bfd_elf_link_read_relocs (abfd, sec, NULL, NULL,
-					       TRUE /* keep_memory */);
-  irelend = internal_relocs + sec->reloc_count;
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-
-  /* Check if the object enable ifc.  */
-  irel = find_relocs_at_address (internal_relocs, internal_relocs, irelend,
-				 R_NDS32_RELAX_ENTRY);
-
-  if (irel == NULL
-      || irel >= irelend
-      || ELF32_R_TYPE (irel->r_info) != R_NDS32_RELAX_ENTRY
-      || (ELF32_R_TYPE (irel->r_info) == R_NDS32_RELAX_ENTRY
-	  && !(irel->r_addend & R_NDS32_RELAX_ENTRY_IFC_FLAG)))
-    return TRUE;
-
-  if (!nds32_get_section_contents (abfd, sec, &contents, TRUE))
-    return FALSE;
-
-  table = nds32_elf_hash_table (info);
-  ifc_loop_aware = table->ifc_loop_aware;
-  while (irel != NULL && irel < irelend)
-    {
-      /* Traverse all relocation and gather all of them to build the list.  */
-
-      if (ELF32_R_TYPE (irel->r_info) == R_NDS32_RELAX_REGION_BEGIN)
-	{
-	  if (ifc_loop_aware == 1
-	      && (irel->r_addend & R_NDS32_RELAX_REGION_INNERMOST_LOOP_FLAG) != 0)
-	    {
-	      /* Check the region if loop or not.  If it is true and
-		 ifc-loop-aware is true, ignore the region till region end.  */
-	      while (irel != NULL
-		     && irel < irelend
-		     && (ELF32_R_TYPE (irel->r_info) != R_NDS32_RELAX_REGION_END
-			 || (irel->r_addend & R_NDS32_RELAX_REGION_INNERMOST_LOOP_FLAG) != 0))
-		irel++;
-	    }
-	}
-
-      if (ELF32_R_TYPE (irel->r_info) == R_NDS32_25_PCREL_RELA)
-	{
-	  insn = bfd_getb32 (contents + irel->r_offset);
-	  nds32_elf_get_insn_with_reg (irel, insn, &insn_with_reg);
-	  r_symndx = ELF32_R_SYM (irel->r_info);
-	  if (r_symndx < symtab_hdr->sh_info)
-	    {
-	      /* Local symbol.  */
-	      nds32_elf_ifc_insert_symbol (sec, NULL, irel, insn_with_reg);
-	    }
-	  else
-	    {
-	      /* External symbol.  */
-	      h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-	      nds32_elf_ifc_insert_symbol (sec, h, irel, insn_with_reg);
-	    }
-	}
-      irel++;
-    }
-  return TRUE;
-}
-
-/* Determine whether j and jal should be substituted.  */
-
-static void
-nds32_elf_ifc_filter (struct bfd_link_info *info)
-{
-  struct elf_nds32_ifc_symbol_entry *ptr = ifc_symbol_head;
-  struct elf_nds32_ifc_irel_list *irel_ptr = NULL;
-  struct elf_nds32_ifc_irel_list *irel_keeper = NULL;
-  struct elf_nds32_link_hash_table *table;
-  int target_optimize;
-  bfd_vma address;
-
-  table = nds32_elf_hash_table (info);
-  target_optimize = table->target_optimize;
-  while (ptr)
-    {
-      irel_ptr = ptr->irel_head;
-      if (ptr->h == NULL)
-	{
-	  /* Local symbol.  */
-	  irel_keeper = irel_ptr;
-	  while (irel_ptr && irel_ptr->next)
-	    {
-	      /* Check there is jump target can be used.  */
-	      if ((irel_ptr->next->irel->r_offset
-		   - irel_keeper->irel->r_offset) > 1022)
-		irel_keeper = irel_ptr->next;
-	      else
-		{
-		  ptr->enable = 1;
-		  irel_ptr->keep = 0;
-		}
-	      irel_ptr = irel_ptr->next;
-	    }
-	}
-      else
-	{
-	  /* Global symbol.  */
-	  /* We have to get the absolute address and decide
-	     whether to keep it or not.  */
-	  while (irel_ptr)
-	    {
-	      address = (irel_ptr->irel->r_offset
-			 + irel_ptr->sec->output_section->vma
-			 + irel_ptr->sec->output_offset);
-	      irel_ptr->addr = address;
-	      irel_ptr = irel_ptr->next;
-	    }
-
-	  irel_ptr = ptr->irel_head;
-	  while (irel_ptr)
-	    {
-	      /* Sort by address.  */
-	      struct elf_nds32_ifc_irel_list *irel_dest = irel_ptr;
-	      struct elf_nds32_ifc_irel_list *irel_temp = irel_ptr;
-	      struct elf_nds32_ifc_irel_list *irel_ptr_prev = NULL;
-	      struct elf_nds32_ifc_irel_list *irel_dest_prev = NULL;
-
-	      /* Get the smallest one.  */
-	      while (irel_temp->next)
-		{
-		  if (irel_temp->next->addr < irel_dest->addr)
-		    {
-		      irel_dest_prev = irel_temp;
-		      irel_dest = irel_temp->next;
-		    }
-		  irel_temp = irel_temp->next;
-		}
-
-	      if (irel_dest != irel_ptr)
-		{
-		  if (irel_ptr_prev)
-		    irel_ptr_prev->next = irel_dest;
-		  if (irel_dest_prev)
-		    irel_dest_prev->next = irel_ptr;
-		  irel_temp = irel_ptr->next;
-		  irel_ptr->next = irel_dest->next;
-		  irel_dest->next = irel_temp;
-		}
-	      irel_ptr_prev = irel_ptr;
-	      irel_ptr = irel_ptr->next;
-	    }
-
-	  irel_ptr = ptr->irel_head;
-	  irel_keeper = irel_ptr;
-	  while (irel_ptr && irel_ptr->next)
-	    {
-	      if ((irel_ptr->next->addr - irel_keeper->addr) > 1022)
-		irel_keeper = irel_ptr->next;
-	      else
-		{
-		  ptr->enable = 1;
-		  irel_ptr->keep = 0;
-		}
-	      irel_ptr = irel_ptr->next;
-	    }
-	}
-
-	/* Ex9 enable.  Reserve it for ex9.  */
-      if ((target_optimize & NDS32_RELAX_EX9_ON)
-	  && ptr->irel_head != irel_keeper)
-	ptr->enable = 0;
-      ptr = ptr->next;
-    }
-}
-
-/* Determine whether j and jal should be substituted after ex9 done.  */
-
-static void
-nds32_elf_ifc_filter_after_ex9 (void)
-{
-  struct elf_nds32_ifc_symbol_entry *ptr = ifc_symbol_head;
-  struct elf_nds32_ifc_irel_list *irel_ptr = NULL;
-
-  while (ptr)
-    {
-      if (ptr->enable == 0)
-	{
-	  /* Check whether ifc is applied or not.  */
-	  irel_ptr = ptr->irel_head;
-	  ptr->ex9_enable = 1;
-	  while (irel_ptr)
-	    {
-	      if (ELF32_R_TYPE (irel_ptr->irel->r_info) == R_NDS32_TRAN)
-		{
-		  /* Ex9 already.  */
-		  ptr->ex9_enable = 0;
-		  break;
-		}
-	      irel_ptr = irel_ptr->next;
-	    }
-	}
-      ptr = ptr->next;
-    }
-}
-
-/* Wrapper to do ifc relaxation.  */
-
-bfd_boolean
-nds32_elf_ifc_finish (struct bfd_link_info *info)
-{
-  int relax_status;
-  struct elf_nds32_link_hash_table *table;
-
-  table = nds32_elf_hash_table (info);
-  relax_status = table->relax_status;
-
-  if (!(relax_status & NDS32_RELAX_JUMP_IFC_DONE))
-    nds32_elf_ifc_filter (info);
-  else
-    nds32_elf_ifc_filter_after_ex9 ();
-
-  if (!nds32_elf_ifc_replace (info))
-    return FALSE;
-
-  if (table)
-    table->relax_status |= NDS32_RELAX_JUMP_IFC_DONE;
-  return TRUE;
-}
-
-/* Traverse the result of ifc filter and replace it with ifcall9.  */
-
-static bfd_boolean
-nds32_elf_ifc_replace (struct bfd_link_info *info)
-{
-  struct elf_nds32_ifc_symbol_entry *ptr = ifc_symbol_head;
-  struct elf_nds32_ifc_irel_list *irel_ptr = NULL;
-  nds32_elf_blank_t *relax_blank_list = NULL;
-  bfd_byte *contents = NULL;
-  Elf_Internal_Rela *internal_relocs;
-  Elf_Internal_Rela *irel;
-  Elf_Internal_Rela *irelend;
-  unsigned short insn16 = INSN_IFCALL9;
-  struct elf_nds32_link_hash_table *table;
-  int relax_status;
-
-  table = nds32_elf_hash_table (info);
-  relax_status = table->relax_status;
-
-  while (ptr)
-    {
-      /* Traverse the ifc gather list, and replace the
-	 filter entries by ifcall9.  */
-      if ((!(relax_status & NDS32_RELAX_JUMP_IFC_DONE) && ptr->enable == 1)
-	  || ((relax_status & NDS32_RELAX_JUMP_IFC_DONE)
-	      && ptr->ex9_enable == 1))
-	{
-	  irel_ptr = ptr->irel_head;
-	  if (ptr->h == NULL)
-	    {
-	      /* Local symbol.  */
-	      internal_relocs = _bfd_elf_link_read_relocs
-		(ptr->sec->owner, ptr->sec, NULL, NULL, TRUE /* keep_memory */);
-	      irelend = internal_relocs + ptr->sec->reloc_count;
-
-	      if (!nds32_get_section_contents (ptr->sec->owner, ptr->sec,
-					       &contents, TRUE))
-		return FALSE;
-
-	      while (irel_ptr)
-		{
-		  if (irel_ptr->keep == 0 && irel_ptr->next)
-		    {
-		      /* The one can be replaced.  We have to check whether
-			 there is any alignment point in the region.  */
-		      irel = irel_ptr->irel;
-		      while (((irel_ptr->next->keep == 0
-			       && irel < irel_ptr->next->irel)
-			      || (irel_ptr->next->keep == 1 && irel < irelend))
-			     && !(ELF32_R_TYPE (irel->r_info) == R_NDS32_LABEL
-				  && (irel->r_addend & 0x1f) == 2))
-			irel++;
-		      if (irel >= irelend
-			  || !(ELF32_R_TYPE (irel->r_info) == R_NDS32_LABEL
-			       && (irel->r_addend & 0x1f) == 2
-			       && ((irel->r_offset - get_nds32_elf_blank_total
-				    (&relax_blank_list, irel->r_offset, 1))
-				   & 0x02) == 0))
-			{
-			  /* Replace by ifcall9.  */
-			  bfd_putb16 (insn16, contents + irel_ptr->irel->r_offset);
-			  if (!insert_nds32_elf_blank_recalc_total
-			      (&relax_blank_list, irel_ptr->irel->r_offset + 2, 2))
-			    return FALSE;
-			  irel_ptr->irel->r_info =
-			    ELF32_R_INFO (ELF32_R_SYM (irel_ptr->irel->r_info),
-					  R_NDS32_10IFCU_PCREL_RELA);
-			}
-		    }
-		  irel_ptr = irel_ptr->next;
-		}
-
-	      /* Delete the redundant code.  */
-	      if (relax_blank_list)
-		{
-		  nds32_elf_relax_delete_blanks (ptr->sec->owner, ptr->sec,
-						 relax_blank_list);
-		  relax_blank_list = NULL;
-		}
-	    }
-	  else
-	    {
-	      /* Global symbol.  */
-	      while (irel_ptr)
-		{
-		  if (irel_ptr->keep == 0 && irel_ptr->next)
-		    {
-		      /* The one can be replaced, and we have to check
-			 whether there is any alignment point in the region.  */
-		      internal_relocs = _bfd_elf_link_read_relocs
-			(irel_ptr->sec->owner, irel_ptr->sec, NULL, NULL,
-			 TRUE /* keep_memory */);
-		      irelend = internal_relocs + irel_ptr->sec->reloc_count;
-		      if (!nds32_get_section_contents (irel_ptr->sec->owner,
-						       irel_ptr->sec, &contents,
-						       TRUE))
-			return FALSE;
-
-		      irel = irel_ptr->irel;
-		      while (((irel_ptr->sec == irel_ptr->next->sec
-			       && irel_ptr->next->keep == 0
-			       && irel < irel_ptr->next->irel)
-			      || ((irel_ptr->sec != irel_ptr->next->sec
-				   || irel_ptr->next->keep == 1)
-				  && irel < irelend))
-			     && !(ELF32_R_TYPE (irel->r_info) == R_NDS32_LABEL
-				  && (irel->r_addend & 0x1f) == 2))
-			irel++;
-		      if (irel >= irelend
-			  || !(ELF32_R_TYPE (irel->r_info) == R_NDS32_LABEL
-			       && (irel->r_addend & 0x1f) == 2
-			       && ((irel->r_offset
-				    - get_nds32_elf_blank_total (&relax_blank_list,
-							    irel->r_offset, 1)) & 0x02) == 0))
-			{
-			  /* Replace by ifcall9.  */
-			  bfd_putb16 (insn16, contents + irel_ptr->irel->r_offset);
-			  if (!insert_nds32_elf_blank_recalc_total
-			      (&relax_blank_list, irel_ptr->irel->r_offset + 2, 2))
-			    return FALSE;
-
-			  /* Delete the redundant code, and clear the relocation.  */
-			  nds32_elf_relax_delete_blanks (irel_ptr->sec->owner,
-							 irel_ptr->sec,
-							 relax_blank_list);
-			  irel_ptr->irel->r_info =
-			    ELF32_R_INFO (ELF32_R_SYM (irel_ptr->irel->r_info),
-					  R_NDS32_10IFCU_PCREL_RELA);
-			  relax_blank_list = NULL;
-			}
-		    }
-
-		  irel_ptr = irel_ptr->next;
-		}
-	    }
-	}
-      ptr = ptr->next;
-    }
-
-  return TRUE;
-}
-
-/* Relocate ifcall.  */
-
-static bfd_boolean
-nds32_elf_ifc_reloc (void)
-{
-  struct elf_nds32_ifc_symbol_entry *ptr = ifc_symbol_head;
-  struct elf_nds32_ifc_irel_list *irel_ptr = NULL;
-  struct elf_nds32_ifc_irel_list *irel_keeper = NULL;
-  bfd_vma relocation, address;
-  unsigned short insn16;
-  bfd_byte *contents = NULL;
-  static bfd_boolean done = FALSE;
-
-  if (done)
-    return TRUE;
-
-  done = TRUE;
-
-  while (ptr)
-    {
-      /* Check the entry is enable ifcall.  */
-      if (ptr->enable == 1 || ptr->ex9_enable == 1)
-	{
-	  /* Get the reserve jump.  */
-	  irel_ptr = ptr->irel_head;
-	  while (irel_ptr)
-	    {
-	      if (irel_ptr->keep == 1)
-		{
-		  irel_keeper = irel_ptr;
-		  break;
-		}
-	      irel_ptr = irel_ptr->next;
-	    }
-
-	  irel_ptr = ptr->irel_head;
-	  if (ptr->h == NULL)
-	    {
-	      /* Local symbol.  */
-	      if (!nds32_get_section_contents (ptr->sec->owner, ptr->sec,
-					       &contents, TRUE))
-		return FALSE;
-
-	      while (irel_ptr)
-		{
-		  if (irel_ptr->keep == 0
-		      && ELF32_R_TYPE (irel_ptr->irel->r_info) == R_NDS32_10IFCU_PCREL_RELA)
-		    {
-		      relocation = irel_keeper->irel->r_offset;
-		      relocation = relocation - irel_ptr->irel->r_offset;
-		      while (irel_keeper && relocation > 1022)
-			{
-			  irel_keeper = irel_keeper->next;
-			  if (irel_keeper && irel_keeper->keep == 1)
-			    {
-			      relocation = irel_keeper->irel->r_offset;
-			      relocation = relocation - irel_ptr->irel->r_offset;
-			    }
-			}
-		      if (relocation > 1022)
-			{
-			  /* Double check.  */
-			  irel_keeper = ptr->irel_head;
-			  while (irel_keeper)
-			    {
-			      if (irel_keeper->keep == 1)
-				{
-				  relocation = irel_keeper->irel->r_offset;
-				  relocation = relocation - irel_ptr->irel->r_offset;
-				}
-			      if (relocation <= 1022)
-				break;
-			      irel_keeper = irel_keeper->next;
-			    }
-			  if (!irel_keeper)
-			    return FALSE;
-			}
-		      irel_ptr->irel->r_info =
-			ELF32_R_INFO (ELF32_R_SYM (irel_ptr->irel->r_info),
-				      R_NDS32_NONE);
-		      insn16 = INSN_IFCALL9 | (relocation >> 1);
-		      bfd_putb16 (insn16, contents + irel_ptr->irel->r_offset);
-		    }
-		  irel_ptr = irel_ptr->next;
-		}
-	    }
-	  else
-	    {
-	      /* Global symbol.  */
-	      while (irel_ptr)
-		{
-		  if (irel_ptr->keep == 0
-		      && ELF32_R_TYPE (irel_ptr->irel->r_info) == R_NDS32_10IFCU_PCREL_RELA)
-		    {
-		      /* Get the distance between ifcall and jump.  */
-		      relocation = (irel_keeper->irel->r_offset
-				    + irel_keeper->sec->output_section->vma
-				    + irel_keeper->sec->output_offset);
-		      address = (irel_ptr->irel->r_offset
-				 + irel_ptr->sec->output_section->vma
-				 + irel_ptr->sec->output_offset);
-		      relocation = relocation - address;
-
-		      /* The distance is over ragne, find callee again.  */
-		      while (irel_keeper && relocation > 1022)
-			{
-			  irel_keeper = irel_keeper->next;
-			  if (irel_keeper && irel_keeper->keep ==1)
-			    {
-			      relocation = (irel_keeper->irel->r_offset
-					    + irel_keeper->sec->output_section->vma
-					    + irel_keeper->sec->output_offset);
-			      relocation = relocation - address;
-			    }
-			}
-
-		      if (relocation > 1022)
-			{
-			  /* Double check.  */
-			  irel_keeper = ptr->irel_head;
-			  while (irel_keeper)
-			    {
-			      if (irel_keeper->keep == 1)
-				{
-
-				  relocation = (irel_keeper->irel->r_offset
-						+ irel_keeper->sec->output_section->vma
-						+ irel_keeper->sec->output_offset);
-				  relocation = relocation - address;
-				}
-			      if (relocation <= 1022)
-				break;
-			      irel_keeper = irel_keeper->next;
-			    }
-			  if (!irel_keeper)
-			    return FALSE;
-			}
-		      if (!nds32_get_section_contents
-			  (irel_ptr->sec->owner, irel_ptr->sec, &contents, TRUE))
-			return FALSE;
-		      insn16 = INSN_IFCALL9 | (relocation >> 1);
-		      bfd_putb16 (insn16, contents + irel_ptr->irel->r_offset);
-		      irel_ptr->irel->r_info =
-			ELF32_R_INFO (ELF32_R_SYM (irel_ptr->irel->r_info),
-				      R_NDS32_NONE);
-		    }
-		  irel_ptr =irel_ptr->next;
-		}
-	    }
-	}
-      ptr = ptr->next;
-    }
-
-  return TRUE;
-}
-
-/* End of IFC relaxation.  */
-
-/* EX9 Instruction Table Relaxation.  */
-
-/* Global hash list.  */
-struct elf_link_hash_entry_list
-{
-  struct elf_link_hash_entry *h;
-  struct elf_link_hash_entry_list *next;
-};
-
-/* Save different destination but same insn.  */
-struct elf_link_hash_entry_mul_list
-{
-  /* Global symbol times.  */
-  int times;
-  /* Save relocation for each global symbol but useful??  */
-  Elf_Internal_Rela *irel;
-  /* For sethi, two sethi may have the same high-part but different low-parts.  */
-  Elf_Internal_Rela rel_backup;
-  struct elf_link_hash_entry_list *h_list;
-  struct elf_link_hash_entry_mul_list *next;
-};
-
-/* Instruction hash table.  */
-struct elf_nds32_code_hash_entry
-{
-  struct bfd_hash_entry root;
-  int times;
-  /* For insn that can use relocation or constant ex: sethi.  */
-  int const_insn;
-  asection *sec;
-  struct elf_link_hash_entry_mul_list *m_list;
-  /* Using r_addend.  */
-  Elf_Internal_Rela *irel;
-  /* Using r_info.  */
-  Elf_Internal_Rela rel_backup;
-};
-
-/* Instruction count list.  */
-struct elf_nds32_insn_times_entry
-{
-  const char *string;
-  int times;
-  int order;
-  asection *sec;
-  struct elf_link_hash_entry_mul_list *m_list;
-  Elf_Internal_Rela *irel;
-  Elf_Internal_Rela rel_backup;
-  struct elf_nds32_insn_times_entry *next;
-};
-
-/* J and JAL symbol list.  */
-struct elf_nds32_symbol_entry
-{
-  char *string;
-  unsigned long insn;
-  struct elf_nds32_symbol_entry *next;
-};
-
-/* Relocation list.  */
-struct elf_nds32_irel_entry
-{
-  Elf_Internal_Rela *irel;
-  struct elf_nds32_irel_entry *next;
-};
-
-/* ex9.it insn need to be fixed.  */
-struct elf_nds32_ex9_refix
-{
-  Elf_Internal_Rela *irel;
-  asection *sec;
-  struct elf_link_hash_entry *h;
-  int order;
-  struct elf_nds32_ex9_refix *next;
-};
-
-static struct bfd_hash_table ex9_code_table;
-static struct elf_nds32_insn_times_entry *ex9_insn_head = NULL;
-static struct elf_nds32_ex9_refix *ex9_refix_head = NULL;
-
-/* EX9 hash function.  */
-
-static struct bfd_hash_entry *
-nds32_elf_code_hash_newfunc (struct bfd_hash_entry *entry,
-			     struct bfd_hash_table *table,
-			     const char *string)
-{
-  struct elf_nds32_code_hash_entry *ret;
-
-  /* Allocate the structure if it has not already been allocated by a
-     subclass.  */
-  if (entry == NULL)
-    {
-      entry = (struct bfd_hash_entry *)
-	bfd_hash_allocate (table, sizeof (*ret));
-      if (entry == NULL)
-	return entry;
-    }
-
-  /* Call the allocation method of the superclass.  */
-  entry = bfd_hash_newfunc (entry, table, string);
-  if (entry == NULL)
-    return entry;
-
-  ret = (struct elf_nds32_code_hash_entry*) entry;
-  ret->times = 0;
-  ret->const_insn = 0;
-  ret->m_list = NULL;
-  ret->sec = NULL;
-  ret->irel = NULL;
-  return &ret->root;
-}
-
-/* Insert ex9 entry
-   this insert must be stable sorted by times.  */
-
-static void
-nds32_elf_ex9_insert_entry (struct elf_nds32_insn_times_entry *ptr)
-{
-  struct elf_nds32_insn_times_entry *temp;
-  struct elf_nds32_insn_times_entry *temp2;
-
-  if (ex9_insn_head == NULL)
-    {
-      ex9_insn_head = ptr;
-      ptr->next = NULL;
-    }
-  else
-    {
-      temp = ex9_insn_head;
-      temp2 = ex9_insn_head;
-      while (temp->next &&
-	     (temp->next->times >= ptr->times
-	      || temp->times == -1))
-	{
-	  if (temp->times == -1)
-	    temp2 = temp;
-	  temp = temp->next;
-	}
-      if (ptr->times > temp->times && temp->times != -1)
-	{
-	  ptr->next = temp;
-	  if (temp2->times == -1)
-	    temp2->next = ptr;
-	  else
-	    ex9_insn_head = ptr;
-	}
-      else if (temp->next == NULL)
-	{
-	  temp->next = ptr;
-	  ptr->next = NULL;
-	}
-      else
-	{
-	  ptr->next = temp->next;
-	  temp->next = ptr;
-	}
-    }
-}
-
-/* Examine each insn times in hash table.
-   Handle multi-link hash entry.
-
-   TODO: This function doesn't assign so much info since it is fake.  */
-
-static int
-nds32_elf_examine_insn_times (struct elf_nds32_code_hash_entry *h)
-{
-  struct elf_nds32_insn_times_entry *ptr;
-  int times;
-
-  if (h->m_list == NULL)
-    {
-      /* Local symbol insn or insn without relocation.  */
-      if (h->times < 3)
-	return TRUE;
-
-      ptr = (struct elf_nds32_insn_times_entry *)
-	bfd_malloc (sizeof (struct elf_nds32_insn_times_entry));
-      ptr->times = h->times;
-      ptr->string = h->root.string;
-      ptr->m_list = NULL;
-      ptr->sec = h->sec;
-      ptr->irel = h->irel;
-      ptr->rel_backup = h->rel_backup;
-      nds32_elf_ex9_insert_entry (ptr);
-    }
-  else
-    {
-      /* Global symbol insn.  */
-      /* Only sethi insn has multiple m_list.  */
-      struct elf_link_hash_entry_mul_list *m_list = h->m_list;
-
-      times = 0;
-      while (m_list)
-	{
-	  times += m_list->times;
-	  m_list = m_list->next;
-	}
-      if (times >= 3)
-	{
-	  m_list = h->m_list;
-	  ptr = (struct elf_nds32_insn_times_entry *)
-	    bfd_malloc (sizeof (struct elf_nds32_insn_times_entry));
-	  ptr->times = times; /* Use the total times.  */
-	  ptr->string = h->root.string;
-	  ptr->m_list = m_list;
-	  ptr->sec = h->sec;
-	  ptr->irel = m_list->irel;
-	  ptr->rel_backup = m_list->rel_backup;
-	  nds32_elf_ex9_insert_entry (ptr);
-	}
-      if (h->const_insn == 1)
-	{
-	  /* sethi with constant value.  */
-	  if (h->times < 3)
-	    return TRUE;
-
-	  ptr = (struct elf_nds32_insn_times_entry *)
-	    bfd_malloc (sizeof (struct elf_nds32_insn_times_entry));
-	  ptr->times = h->times;
-	  ptr->string = h->root.string;
-	  ptr->m_list = NULL;
-	  ptr->sec = NULL;
-	  ptr->irel = NULL;
-	  ptr->rel_backup = h->rel_backup;
-	  nds32_elf_ex9_insert_entry (ptr);
-	}
-    }
-  return TRUE;
-}
-
-/* Count each insn times in hash table.
-   Handle multi-link hash entry.  */
-
-static int
-nds32_elf_count_insn_times (struct elf_nds32_code_hash_entry *h)
-{
-  int reservation, times;
-  unsigned long relocation, min_relocation;
-  struct elf_nds32_insn_times_entry *ptr;
-
-  if (h->m_list == NULL)
-    {
-      /* Local symbol insn or insn without relocation.  */
-      if (h->times < 3)
-	return TRUE;
-      ptr = (struct elf_nds32_insn_times_entry *)
-	bfd_malloc (sizeof (struct elf_nds32_insn_times_entry));
-      ptr->times = h->times;
-      ptr->string = h->root.string;
-      ptr->m_list = NULL;
-      ptr->sec = h->sec;
-      ptr->irel = h->irel;
-      ptr->rel_backup = h->rel_backup;
-      nds32_elf_ex9_insert_entry (ptr);
-    }
-  else
-    {
-      /* Global symbol insn.  */
-      /* Only sethi insn has multiple m_list.  */
-      struct elf_link_hash_entry_mul_list *m_list = h->m_list;
-
-      if (ELF32_R_TYPE (m_list->rel_backup.r_info) == R_NDS32_HI20_RELA
-	  && m_list->next != NULL)
-	{
-	  /* Sethi insn has different symbol or addend but has same hi20.  */
-	  times = 0;
-	  reservation = 1;
-	  relocation = 0;
-	  min_relocation = 0xffffffff;
-	  while (m_list)
-	    {
-	      /* Get the minimum sethi address
-		 and calculate how many entry the sethi-list have to use.  */
-	      if ((m_list->h_list->h->root.type == bfd_link_hash_defined
-		   || m_list->h_list->h->root.type == bfd_link_hash_defweak)
-		  && (m_list->h_list->h->root.u.def.section != NULL
-		      && m_list->h_list->h->root.u.def.section->output_section != NULL))
-		{
-		  relocation = (m_list->h_list->h->root.u.def.value +
-				m_list->h_list->h->root.u.def.section->output_section->vma +
-				m_list->h_list->h->root.u.def.section->output_offset);
-		  relocation += m_list->irel->r_addend;
-		}
-	      else
-		relocation = 0;
-	      if (relocation < min_relocation)
-		min_relocation = relocation;
-	      times += m_list->times;
-	      m_list = m_list->next;
-	    }
-	  if (min_relocation < ex9_relax_size)
-	    reservation = (min_relocation >> 12) + 1;
-	  else
-	    reservation = (min_relocation >> 12)
-			  - ((min_relocation - ex9_relax_size) >> 12) + 1;
-	  if (reservation < (times / 3))
-	    {
-	      /* Efficient enough to use ex9.  */
-	      int i;
-
-	      for (i = reservation ; i > 0; i--)
-		{
-		  /* Allocate number of reservation ex9 entry.  */
-		  ptr = (struct elf_nds32_insn_times_entry *)
-		    bfd_malloc (sizeof (struct elf_nds32_insn_times_entry));
-		  ptr->times = h->m_list->times / reservation;
-		  ptr->string = h->root.string;
-		  ptr->m_list = h->m_list;
-		  ptr->sec = h->sec;
-		  ptr->irel = h->m_list->irel;
-		  ptr->rel_backup = h->m_list->rel_backup;
-		  nds32_elf_ex9_insert_entry (ptr);
-		}
-	    }
-	}
-      else
-	{
-	  /* Normal global symbol that means no different address symbol
-	     using same ex9 entry.  */
-	  if (m_list->times >= 3)
-	    {
-	      ptr = (struct elf_nds32_insn_times_entry *)
-		bfd_malloc (sizeof (struct elf_nds32_insn_times_entry));
-	      ptr->times = m_list->times;
-	      ptr->string = h->root.string;
-	      ptr->m_list = h->m_list;
-	      ptr->sec = h->sec;
-	      ptr->irel = h->m_list->irel;
-	      ptr->rel_backup = h->m_list->rel_backup;
-	      nds32_elf_ex9_insert_entry (ptr);
-	    }
-	}
-
-      if (h->const_insn == 1)
-	{
-	  /* sethi with constant value.  */
-	  if (h->times < 3)
-	    return TRUE;
-
-	  ptr = (struct elf_nds32_insn_times_entry *)
-	    bfd_malloc (sizeof (struct elf_nds32_insn_times_entry));
-	  ptr->times = h->times;
-	  ptr->string = h->root.string;
-	  ptr->m_list = NULL;
-	  ptr->sec = NULL;
-	  ptr->irel = NULL;
-	  ptr->rel_backup = h->rel_backup;
-	  nds32_elf_ex9_insert_entry (ptr);
-	}
-    }
-
-  return TRUE;
-}
-
-/* Hash table traverse function.  */
-
-static void
-nds32_elf_code_hash_traverse (int (*func) (struct elf_nds32_code_hash_entry*))
-{
-  unsigned int i;
-
-  ex9_code_table.frozen = 1;
-  for (i = 0; i < ex9_code_table.size; i++)
-    {
-      struct bfd_hash_entry *p;
-
-      for (p = ex9_code_table.table[i]; p != NULL; p = p->next)
-	if (!func ((struct elf_nds32_code_hash_entry *) p))
-	  goto out;
-    }
-out:
-  ex9_code_table.frozen = 0;
-}
-
-
-/* Give order number to insn list.  */
-
-static void
-nds32_elf_order_insn_times (struct bfd_link_info *info)
-{
-  struct elf_nds32_insn_times_entry *ex9_insn;
-  struct elf_nds32_insn_times_entry *temp = NULL;
-  struct elf_nds32_link_hash_table *table;
-  int ex9_limit;
-  int number = 0;
-
-  if (ex9_insn_head == NULL)
-    return;
-
-/* The max number of entries is 512.  */
-  ex9_insn = ex9_insn_head;
-  table = nds32_elf_hash_table (info);
-  ex9_limit = table->ex9_limit;
-
-  ex9_insn = ex9_insn_head;
-
-  while (ex9_insn != NULL && number < ex9_limit)
-    {
-      ex9_insn->order = number;
-      number++;
-      temp = ex9_insn;
-      ex9_insn = ex9_insn->next;
-    }
-
-  if (ex9_insn && temp)
-    temp->next = NULL;
-
-  while (ex9_insn != NULL)
-    {
-      /* Free useless entry.  */
-      temp = ex9_insn;
-      ex9_insn = ex9_insn->next;
-      free (temp);
-    }
-}
-
-/* Build .ex9.itable section.  */
-
-static void
-nds32_elf_ex9_build_itable (struct bfd_link_info *link_info)
-{
-  asection *table_sec;
-  struct elf_nds32_insn_times_entry *ptr;
-  bfd *it_abfd;
-  int number = 0;
-  bfd_byte *contents = NULL;
-
-  for (it_abfd = link_info->input_bfds; it_abfd != NULL;
-       it_abfd = it_abfd->link.next)
-    {
-      /* Find the section .ex9.itable, and put all entries into it.  */
-      table_sec = bfd_get_section_by_name (it_abfd, ".ex9.itable");
-      if (table_sec != NULL)
-	{
-	  if (!nds32_get_section_contents (it_abfd, table_sec, &contents, TRUE))
-	    return;
-
-	  for (ptr = ex9_insn_head; ptr !=NULL ; ptr = ptr->next)
-	    number++;
-
-	  table_sec->size = number * 4;
-
-	  if (number == 0)
-	    return;
-
-	  elf_elfheader (link_info->output_bfd)->e_flags |= E_NDS32_HAS_EX9_INST;
-	  number = 0;
-	  for (ptr = ex9_insn_head; ptr !=NULL ; ptr = ptr->next)
-	    {
-	      long val;
-
-	      val = strtol (ptr->string, NULL, 16);
-	      bfd_putb32 ((bfd_vma) val, (char *) contents + (number * 4));
-	      number++;
-	    }
-	  break;
-	}
-    }
-}
-
-/* Get insn with regs according to relocation type.  */
-
-static void
-nds32_elf_get_insn_with_reg (Elf_Internal_Rela *irel,
-			     uint32_t insn, uint32_t *insn_with_reg)
-{
-  reloc_howto_type *howto = NULL;
-
-  if (irel == NULL
-      || (ELF32_R_TYPE (irel->r_info) >= (int) ARRAY_SIZE (nds32_elf_howto_table)
-	  && (ELF32_R_TYPE (irel->r_info) - R_NDS32_RELAX_ENTRY)
-	     >= (int) ARRAY_SIZE (nds32_elf_relax_howto_table)))
-    {
-      *insn_with_reg = insn;
-      return;
-    }
-
-  howto = bfd_elf32_bfd_reloc_type_table_lookup (ELF32_R_TYPE (irel->r_info));
-  *insn_with_reg = insn & (0xffffffff ^ howto->dst_mask);
-}
-
-/* Mask number of address bits according to relocation.  */
-
-static unsigned long
-nds32_elf_irel_mask (Elf_Internal_Rela *irel)
-{
-  reloc_howto_type *howto = NULL;
-
-  if (irel == NULL
-      || (ELF32_R_TYPE (irel->r_info) >= (int) ARRAY_SIZE (nds32_elf_howto_table)
-	  && (ELF32_R_TYPE (irel->r_info) - R_NDS32_RELAX_ENTRY)
-	     >= (int) ARRAY_SIZE (nds32_elf_relax_howto_table)))
-    return 0;
-
-  howto = bfd_elf32_bfd_reloc_type_table_lookup (ELF32_R_TYPE (irel->r_info));
-  return howto->dst_mask;
-}
-
-static void
-nds32_elf_insert_irel_entry (struct elf_nds32_irel_entry **irel_list,
-			     struct elf_nds32_irel_entry *irel_ptr)
-{
-  if (*irel_list == NULL)
-    {
-      *irel_list = irel_ptr;
-      irel_ptr->next = NULL;
-    }
-  else
-    {
-      irel_ptr->next = *irel_list;
-      *irel_list = irel_ptr;
-    }
-}
-
-static void
-nds32_elf_ex9_insert_fix (asection * sec, Elf_Internal_Rela * irel,
-			  struct elf_link_hash_entry *h, int order)
-{
-  struct elf_nds32_ex9_refix *ptr;
-
-  ptr = bfd_malloc (sizeof (struct elf_nds32_ex9_refix));
-  ptr->sec = sec;
-  ptr->irel = irel;
-  ptr->h = h;
-  ptr->order = order;
-  ptr->next = NULL;
-
-  if (ex9_refix_head == NULL)
-    ex9_refix_head = ptr;
-  else
-    {
-      struct elf_nds32_ex9_refix *temp = ex9_refix_head;
-
-      while (temp->next != NULL)
-	temp = temp->next;
-      temp->next = ptr;
-    }
-}
-
-enum
-{
-  DATA_EXIST = 1,
-  CLEAN_PRE = 1 << 1,
-  PUSH_PRE = 1 << 2
-};
-
-/* Check relocation type if supporting for ex9.  */
-
-static int
-nds32_elf_ex9_relocation_check (struct bfd_link_info *info,
-				Elf_Internal_Rela **irel,
-				Elf_Internal_Rela *irelend,
-				nds32_elf_blank_t *relax_blank_list,
-				asection *sec,bfd_vma *off,
-				bfd_byte *contents)
-{
-  /* Suppress ex9 if `.no_relax ex9' or inner loop.  */
-  bfd_boolean nested_ex9, nested_loop;
-  bfd_boolean ex9_loop_aware;
-  /* We use the highest 1 byte of result to record
-     how many bytes location counter has to move.  */
-  int result = 0;
-  Elf_Internal_Rela *irel_save = NULL;
-  struct elf_nds32_link_hash_table *table;
-
-  table = nds32_elf_hash_table (info);
-  ex9_loop_aware = table->ex9_loop_aware;
-
-  while ((*irel) != NULL && (*irel) < irelend && *off == (*irel)->r_offset)
-    {
-      switch (ELF32_R_TYPE ((*irel)->r_info))
-	{
-	case R_NDS32_RELAX_REGION_BEGIN:
-	  /* Ignore code block.  */
-	  nested_ex9 = FALSE;
-	  nested_loop = FALSE;
-	  if (((*irel)->r_addend & R_NDS32_RELAX_REGION_NO_EX9_FLAG)
-	      || (ex9_loop_aware
-		  && ((*irel)->r_addend & R_NDS32_RELAX_REGION_INNERMOST_LOOP_FLAG)))
-	    {
-	      /* Check the region if loop or not.  If it is true and
-		 ex9-loop-aware is true, ignore the region till region end.  */
-	      /* To save the status for in .no_relax ex9 region and
-		 loop region to conform the block can do ex9 relaxation.  */
-	      nested_ex9 = ((*irel)->r_addend & R_NDS32_RELAX_REGION_NO_EX9_FLAG);
-	      nested_loop = (ex9_loop_aware
-			     && ((*irel)->r_addend & R_NDS32_RELAX_REGION_INNERMOST_LOOP_FLAG));
-	      while ((*irel) && (*irel) < irelend && (nested_ex9 || nested_loop))
-		{
-		  (*irel)++;
-		  if (ELF32_R_TYPE ((*irel)->r_info) == R_NDS32_RELAX_REGION_BEGIN)
-		    {
-		      /* There may be nested region.  */
-		      if (((*irel)->r_addend & R_NDS32_RELAX_REGION_NO_EX9_FLAG) != 0)
-			nested_ex9 = TRUE;
-		      else if (ex9_loop_aware
-			       && ((*irel)->r_addend & R_NDS32_RELAX_REGION_INNERMOST_LOOP_FLAG))
-			nested_loop = TRUE;
-		    }
-		  else if (ELF32_R_TYPE ((*irel)->r_info) == R_NDS32_RELAX_REGION_END)
-		    {
-		      /* The end of region.  */
-		      if (((*irel)->r_addend & R_NDS32_RELAX_REGION_NO_EX9_FLAG) != 0)
-			nested_ex9 = FALSE;
-		      else if (ex9_loop_aware
-			       && ((*irel)->r_addend & R_NDS32_RELAX_REGION_INNERMOST_LOOP_FLAG))
-			nested_loop = FALSE;
-		    }
-		  else if (ELF32_R_TYPE ((*irel)->r_info) == R_NDS32_LABEL
-			   && ((*irel)->r_addend & 0x1f) == 2)
-		    {
-		      /* Alignment exist in the region.  */
-		      result |= CLEAN_PRE;
-		      if (((*irel)->r_offset -
-			   get_nds32_elf_blank_total (&relax_blank_list,
-						      (*irel)->r_offset, 0)) & 0x02)
-			result |= PUSH_PRE;
-		    }
-		}
-	      if ((*irel) >= irelend)
-		*off = sec->size;
-	      else
-		*off = (*irel)->r_offset;
-
-	      /* The final instruction in the region, regard this one as data to ignore it.  */
-	      result |= DATA_EXIST;
-	      return result;
-	    }
-	  break;
-
-	case R_NDS32_LABEL:
-	  if (((*irel)->r_addend & 0x1f) == 2)
-	    {
-	      /* Check this point is align and decide to do ex9 or not.  */
-	      result |= CLEAN_PRE;
-	      if (((*irel)->r_offset -
-		   get_nds32_elf_blank_total (&relax_blank_list,
-					      (*irel)->r_offset, 0)) & 0x02)
-		result |= PUSH_PRE;
-	    }
-	  break;
-	case R_NDS32_32_RELA:
-	  /* Data.  */
-	  result |= (4 << 24);
-	  result |= DATA_EXIST;
-	  break;
-	case R_NDS32_16_RELA:
-	  /* Data.  */
-	  result |= (2 << 24);
-	  result |= DATA_EXIST;
-	  break;
-	case R_NDS32_DATA:
-	  /* Data.  */
-	  /* The least code alignment is 2.  If the data is only one byte,
-	     we have to shift one more byte.  */
-	  if ((*irel)->r_addend == 1)
-	    result |= ((*irel)->r_addend << 25) ;
-	  else
-	    result |= ((*irel)->r_addend << 24) ;
-
-	  result |= DATA_EXIST;
-	  break;
-
-	case R_NDS32_25_PCREL_RELA:
-	case R_NDS32_SDA16S3_RELA:
-	case R_NDS32_SDA15S3_RELA:
-	case R_NDS32_SDA15S3:
-	case R_NDS32_SDA17S2_RELA:
-	case R_NDS32_SDA15S2_RELA:
-	case R_NDS32_SDA12S2_SP_RELA:
-	case R_NDS32_SDA12S2_DP_RELA:
-	case R_NDS32_SDA15S2:
-	case R_NDS32_SDA18S1_RELA:
-	case R_NDS32_SDA15S1_RELA:
-	case R_NDS32_SDA15S1:
-	case R_NDS32_SDA19S0_RELA:
-	case R_NDS32_SDA15S0_RELA:
-	case R_NDS32_SDA15S0:
-	case R_NDS32_HI20_RELA:
-	case R_NDS32_LO12S0_ORI_RELA:
-	case R_NDS32_LO12S0_RELA:
-	case R_NDS32_LO12S1_RELA:
-	case R_NDS32_LO12S2_RELA:
-	  /* These relocation is supported ex9 relaxation currently.  */
-	  /* We have to save the relocation for using later, since we have
-	     to check there is any alignment in the same address.  */
-	  irel_save = *irel;
-	  break;
-	default:
-	  /* Not support relocations.  */
-	  if (ELF32_R_TYPE ((*irel)->r_info) < ARRAY_SIZE (nds32_elf_howto_table)
-	      && ELF32_R_TYPE ((*irel)->r_info) != R_NDS32_NONE
-	      && ELF32_R_TYPE ((*irel)->r_info) != R_NDS32_INSN16)
-	    {
-	      /* Note: To optimize aggressively, it maybe can ignore R_NDS32_INSN16 here.
-		 But we have to consider if there is any side-effect.  */
-	      if (!(result & DATA_EXIST))
-		{
-		  /* We have to confirm there is no data relocation in the
-		     same address.  In general case, this won't happen.  */
-		  /* We have to do ex9 conservative, for those relocation not
-		     considerd we ignore instruction.  */
-		  result |= DATA_EXIST;
-		  if (*(contents + *off) & 0x80)
-		    result |= (2 << 24);
-		  else
-		    result |= (4 << 24);
-		  break;
-		}
-	    }
-	}
-      if ((*irel) < irelend
-	  && ((*irel) + 1) < irelend
-	  && (*irel)->r_offset == ((*irel) + 1)->r_offset)
-	/* There are relocations pointing to the same address, we have to
-	   check all of them.  */
-	(*irel)++;
-      else
-	{
-	  if (irel_save)
-	    *irel = irel_save;
-	  return result;
-	}
-    }
-  return result;
-}
-
-/* Replace with ex9 instruction.  */
-
-static bfd_boolean
-nds32_elf_ex9_push_insn (uint16_t insn16, bfd_byte *contents, bfd_vma pre_off,
-			 nds32_elf_blank_t **relax_blank_list,
-			 struct elf_nds32_irel_entry *pre_irel_ptr,
-			 struct elf_nds32_irel_entry **irel_list)
-{
-  if (insn16 != 0)
-    {
-      /* Implement the ex9 relaxation.  */
-      bfd_putb16 (insn16, contents + pre_off);
-      if (!insert_nds32_elf_blank_recalc_total (relax_blank_list,
-						pre_off + 2, 2))
-	return FALSE;
-      if (pre_irel_ptr != NULL)
-	nds32_elf_insert_irel_entry (irel_list, pre_irel_ptr);
-    }
-  return TRUE;
-}
-
-/* Replace input file instruction which is in ex9 itable.  */
-
-static bfd_boolean
-nds32_elf_ex9_replace_instruction (struct bfd_link_info *info, bfd *abfd, asection *sec)
-{
-  struct elf_nds32_insn_times_entry *ex9_insn = ex9_insn_head;
-  bfd_byte *contents = NULL;
-  bfd_vma off;
-  uint16_t insn16, insn_ex9;
-  /* `pre_*' are used to track previous instruction that can use ex9.it.  */
-  bfd_vma pre_off = -1;
-  uint16_t pre_insn16 = 0;
-  struct elf_nds32_irel_entry *pre_irel_ptr = NULL;
-  Elf_Internal_Rela *internal_relocs;
-  Elf_Internal_Rela *irel;
-  Elf_Internal_Rela *irelend;
-  Elf_Internal_Shdr *symtab_hdr;
-  Elf_Internal_Sym *isym = NULL;
-  nds32_elf_blank_t *relax_blank_list = NULL;
-  uint32_t insn = 0;
-  uint32_t insn_with_reg = 0;
-  uint32_t it_insn;
-  uint32_t it_insn_with_reg;
-  unsigned long r_symndx;
-  asection *isec;
-  struct elf_nds32_irel_entry *irel_list = NULL;
-  struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (abfd);
-  int data_flag, do_replace, save_irel;
-  struct elf_link_hash_entry_list *h_list;
-
-
-  /* Load section instructions, relocations, and symbol table.  */
-  if (!nds32_get_section_contents (abfd, sec, &contents, TRUE)
-      || !nds32_get_local_syms (abfd, sec, &isym))
-    return FALSE;
-  internal_relocs =
-    _bfd_elf_link_read_relocs (abfd, sec, NULL, NULL, TRUE /* keep_memory */);
-  irelend = internal_relocs + sec->reloc_count;
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-
-  off = 0;
-
-  /* Check if the object enable ex9.  */
-  irel = find_relocs_at_address (internal_relocs, internal_relocs,
-				 irelend, R_NDS32_RELAX_ENTRY);
-
-  /* Check this section trigger ex9 relaxation.  */
-  if (irel == NULL
-      || irel >= irelend
-      || ELF32_R_TYPE (irel->r_info) != R_NDS32_RELAX_ENTRY
-      || (ELF32_R_TYPE (irel->r_info) == R_NDS32_RELAX_ENTRY
-	  && !(irel->r_addend & R_NDS32_RELAX_ENTRY_EX9_FLAG)))
-    return TRUE;
-
-  irel = internal_relocs;
-
-  /* Check alignment and fetch proper relocation.  */
-  while (off < sec->size)
-    {
-      struct elf_link_hash_entry *h = NULL;
-      struct elf_nds32_irel_entry *irel_ptr = NULL;
-
-      /* Syn the instruction and the relocation.  */
-      while (irel != NULL && irel < irelend && irel->r_offset < off)
-	irel++;
-
-      data_flag = nds32_elf_ex9_relocation_check (info, &irel, irelend,
-						  relax_blank_list, sec,
-						  &off, contents);
-      if (data_flag & PUSH_PRE)
-	if (!nds32_elf_ex9_push_insn (pre_insn16, contents, pre_off,
-				      &relax_blank_list, pre_irel_ptr,
-				      &irel_list))
-	  return FALSE;
-
-      if (data_flag & CLEAN_PRE)
-	{
-	  pre_off = 0;
-	  pre_insn16 = 0;
-	  pre_irel_ptr = NULL;
-	}
-      if (data_flag & DATA_EXIST)
-	{
-	  /* We save the move offset in the highest byte.  */
-	  off += (data_flag >> 24);
-	  continue;
-	}
-
-      if (*(contents + off) & 0x80)
-	{
-	  /* 2-byte instruction.  */
-	  off += 2;
-	  continue;
-	}
-
-      /* Load the instruction and its opcode with register for comparing.  */
-      ex9_insn = ex9_insn_head;
-      insn = bfd_getb32 (contents + off);
-      insn_with_reg = 0;
-      while (ex9_insn)
-	{
-	  it_insn = strtol (ex9_insn->string, NULL, 16);
-	  it_insn_with_reg = 0;
-	  do_replace = 0;
-	  save_irel = 0;
-
-	  if (irel != NULL && irel < irelend && irel->r_offset == off)
-	    {
-	      /* Insn with relocation.  */
-	      nds32_elf_get_insn_with_reg (irel, insn, &insn_with_reg);
-
-	      if (ex9_insn->irel != NULL)
-		nds32_elf_get_insn_with_reg (ex9_insn->irel, it_insn,
-					     &it_insn_with_reg);
-
-	      if (ex9_insn->irel != NULL
-		  && (ELF32_R_TYPE (irel->r_info) ==
-		      ELF32_R_TYPE (ex9_insn->irel->r_info))
-		  && (insn_with_reg == it_insn_with_reg))
-		{
-		  /* Insn relocation and format is the same as table entry.  */
-
-		  if (ELF32_R_TYPE (irel->r_info) == R_NDS32_25_PCREL_RELA
-		      || ELF32_R_TYPE (irel->r_info) == R_NDS32_LO12S0_ORI_RELA
-		      || ELF32_R_TYPE (irel->r_info) == R_NDS32_LO12S0_RELA
-		      || ELF32_R_TYPE (irel->r_info) == R_NDS32_LO12S1_RELA
-		      || ELF32_R_TYPE (irel->r_info) == R_NDS32_LO12S2_RELA
-		      || (ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA15S3
-			  && ELF32_R_TYPE (irel->r_info) <= R_NDS32_SDA15S0)
-		      || (ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA15S3_RELA
-			  && ELF32_R_TYPE (irel->r_info) <= R_NDS32_SDA15S0_RELA)
-		      || (ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA12S2_DP_RELA
-			  && ELF32_R_TYPE (irel->r_info) <=
-			  R_NDS32_SDA12S2_SP_RELA)
-		      || (ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA16S3_RELA
-			  && ELF32_R_TYPE (irel->r_info) <= R_NDS32_SDA19S0_RELA))
-		    {
-		      r_symndx = ELF32_R_SYM (irel->r_info);
-		      if (r_symndx < symtab_hdr->sh_info)
-			{
-			  /* Local symbol.  */
-			  int shndx = isym[r_symndx].st_shndx;
-
-			  isec = elf_elfsections (abfd)[shndx]->bfd_section;
-			  if (ex9_insn->sec == isec
-			      && ex9_insn->irel->r_addend == irel->r_addend
-			      && ex9_insn->irel->r_info == irel->r_info)
-			    {
-			      do_replace = 1;
-			      save_irel = 1;
-			    }
-			}
-		      else
-			{
-			  /* External symbol.  */
-			  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-			  if (ex9_insn->m_list)
-			    {
-			      h_list = ex9_insn->m_list->h_list;
-			      while (h_list)
-				{
-				  if (h == h_list->h
-				      && (ex9_insn->m_list->irel->r_addend ==
-					  irel->r_addend))
-				    {
-				      do_replace = 1;
-				      save_irel = 1;
-				      break;
-				    }
-				  h_list = h_list->next;
-				}
-			    }
-			}
-		    }
-		  else if (ELF32_R_TYPE (irel->r_info) == R_NDS32_HI20_RELA)
-		    {
-		      r_symndx = ELF32_R_SYM (irel->r_info);
-		      if (r_symndx < symtab_hdr->sh_info)
-			{
-			  /* Local symbols.  Compare its base symbol and offset.  */
-			  int shndx = isym[r_symndx].st_shndx;
-
-			  isec = elf_elfsections (abfd)[shndx]->bfd_section;
-			  if (ex9_insn->sec == isec
-			      && ex9_insn->irel->r_addend == irel->r_addend
-			      && ex9_insn->irel->r_info == irel->r_info)
-			    {
-			      do_replace = 1;
-			      save_irel = 1;
-			    }
-			}
-		      else
-			{
-			  /* External symbol.  */
-			  struct elf_link_hash_entry_mul_list *m_list;
-
-			  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-			  m_list = ex9_insn->m_list;
-
-			  while (m_list)
-			    {
-			      h_list = m_list->h_list;
-
-			      while (h_list)
-				{
-				  if (h == h_list->h
-				      && (m_list->irel->r_addend
-					  == irel->r_addend))
-				    {
-				      do_replace = 1;
-				      save_irel = 1;
-				      if (ex9_insn->next
-					  && ex9_insn->m_list
-					  && ex9_insn->m_list == ex9_insn->next->m_list)
-					{
-					  /* sethi multiple entry must be fixed */
-					  nds32_elf_ex9_insert_fix (sec, irel,
-								    h, ex9_insn->order);
-					}
-				      break;
-				    }
-				  h_list = h_list->next;
-				}
-			      m_list = m_list->next;
-			    }
-			}
-		    }
-		}
-
-	      /* Import table: Check the symbol hash table and the
-		 jump target.  Only R_NDS32_25_PCREL_RELA now.  */
-	      else if (ex9_insn->times == -1
-		       && ELF32_R_TYPE (irel->r_info) == R_NDS32_25_PCREL_RELA)
-		{
-		  nds32_elf_get_insn_with_reg (irel, it_insn, &it_insn_with_reg);
-		  if (insn_with_reg == it_insn_with_reg)
-		    {
-		      char code[10];
-		      bfd_vma relocation;
-
-		      r_symndx = ELF32_R_SYM (irel->r_info);
-		      if (r_symndx >= symtab_hdr->sh_info)
-			{
-			  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-			  if ((h->root.type == bfd_link_hash_defined
-			       || h->root.type == bfd_link_hash_defweak)
-			      && h->root.u.def.section != NULL
-			      && h->root.u.def.section->output_section != NULL
-			      && h->root.u.def.section->gc_mark == 1
-			      && bfd_is_abs_section (h->root.u.def.section)
-			      && h->root.u.def.value > sec->size)
-			    {
-			      relocation = h->root.u.def.value +
-				h->root.u.def.section->output_section->vma +
-				h->root.u.def.section->output_offset;
-			      relocation += irel->r_addend;
-			      insn = insn_with_reg
-				| ((relocation >> 1) & 0xffffff);
-			      snprintf (code, sizeof (code), "%08x", insn);
-			      if (strcmp (code, ex9_insn->string) == 0)
-				{
-				  do_replace = 1;
-				  save_irel = 1;
-				}
-			    }
-			}
-		    }
-		}
-	      else if (ELF32_R_TYPE (irel->r_info) == R_NDS32_RELAX_REGION_BEGIN
-		       || ELF32_R_TYPE (irel->r_info) == R_NDS32_RELAX_REGION_END
-		       || ELF32_R_TYPE (irel->r_info) == R_NDS32_NONE)
-		{
-		  /* These relocations do not have to relocate contens, so it can
-		     be regard as instruction without relocation.  */
-		  if (insn == it_insn && ex9_insn->irel == NULL)
-		    do_replace = 1;
-		}
-	    }
-	  else
-	    {
-	      /* Instruction without relocation, we only
-		 have to compare their byte code.  */
-	      if (insn == it_insn && ex9_insn->irel == NULL)
-		do_replace = 1;
-	    }
-
-	  /* Insntruction match so replacing the code here.  */
-	  if (do_replace == 1)
-	    {
-	      /* There are two formats of ex9 instruction.  */
-	      if (ex9_insn->order < 32)
-		insn_ex9 = INSN_EX9_IT_2;
-	      else
-		insn_ex9 = INSN_EX9_IT_1;
-	      insn16 = insn_ex9 | ex9_insn->order;
-
-	      /* Insert ex9 instruction.  */
-	      nds32_elf_ex9_push_insn (pre_insn16, contents, pre_off,
-				       &relax_blank_list, pre_irel_ptr,
-				       &irel_list);
-	      pre_off = off;
-	      pre_insn16 = insn16;
-
-	      if (save_irel)
-		{
-		  /* For instuction with relocation do relax.  */
-		  irel_ptr = (struct elf_nds32_irel_entry *)
-		    bfd_malloc (sizeof (struct elf_nds32_irel_entry));
-		  irel_ptr->irel = irel;
-		  irel_ptr->next = NULL;
-		  pre_irel_ptr = irel_ptr;
-		}
-	      else
-		pre_irel_ptr = NULL;
-	      break;
-	    }
-	  ex9_insn = ex9_insn->next;
-	}
-      off += 4;
-    }
-
-  /* Insert ex9 instruction.  */
-  nds32_elf_ex9_push_insn (pre_insn16, contents, pre_off,
-			   &relax_blank_list, pre_irel_ptr,
-			   &irel_list);
-
-  /* Delete the redundant code.  */
-  if (relax_blank_list)
-    {
-      nds32_elf_relax_delete_blanks (abfd, sec, relax_blank_list);
-      relax_blank_list = NULL;
-    }
-
-  /* Clear the relocation that is replaced by ex9.  */
-  while (irel_list)
-    {
-      struct elf_nds32_irel_entry *irel_ptr;
-
-      irel_ptr = irel_list;
-      irel_list = irel_ptr->next;
-      irel_ptr->irel->r_info =
-	ELF32_R_INFO (ELF32_R_SYM (irel_ptr->irel->r_info), R_NDS32_TRAN);
-      free (irel_ptr);
-    }
-  return TRUE;
-}
-
-/* Initialize ex9 hash table.  */
-
-int
-nds32_elf_ex9_init (void)
-{
-  if (!bfd_hash_table_init_n (&ex9_code_table, nds32_elf_code_hash_newfunc,
-			      sizeof (struct elf_nds32_code_hash_entry),
-			      1023))
-    {
-      (*_bfd_error_handler) (_("Linker: cannot init ex9 hash table error \n"));
-      return FALSE;
-    }
-  return TRUE;
-}
-
-/* Predict how many bytes will be relaxed with ex9 and ifc.  */
-
-static void
-nds32_elf_ex9_total_relax (struct bfd_link_info *info)
-{
-  struct elf_nds32_insn_times_entry *ex9_insn;
-  struct elf_nds32_insn_times_entry *temp;
-  int target_optimize;
-  struct elf_nds32_link_hash_table *table;
-
-  if (ex9_insn_head == NULL)
-    return;
-
-  table = nds32_elf_hash_table (info);
-  target_optimize  = table->target_optimize;
-  ex9_insn = ex9_insn_head;
-  while (ex9_insn)
-    {
-      ex9_relax_size = ex9_insn->times * 2 + ex9_relax_size;
-      temp = ex9_insn;
-      ex9_insn = ex9_insn->next;
-      free (temp);
-    }
-  ex9_insn_head = NULL;
-
-  if ((target_optimize & NDS32_RELAX_JUMP_IFC_ON))
-    {
-      /* Examine ifc reduce size.  */
-      struct elf_nds32_ifc_symbol_entry *ifc_ent = ifc_symbol_head;
-      struct elf_nds32_ifc_irel_list *irel_ptr = NULL;
-      int size = 0;
-
-      while (ifc_ent)
-	{
-	  if (ifc_ent->enable == 0)
-	    {
-	      /* Not ifc yet.  */
-	      irel_ptr = ifc_ent->irel_head;
-	      while (irel_ptr)
-		{
-		  size += 2;
-		  irel_ptr = irel_ptr->next;
-		}
-	    }
-	  size -= 2;
-	  ifc_ent = ifc_ent->next;
-	}
-      ex9_relax_size += size;
-    }
-}
-
-/* Finish ex9 table.  */
-
-void
-nds32_elf_ex9_finish (struct bfd_link_info *link_info)
-{
-  nds32_elf_code_hash_traverse (nds32_elf_examine_insn_times);
-  nds32_elf_order_insn_times (link_info);
-  nds32_elf_ex9_total_relax (link_info);
-  /* Traverse the hash table and count its times.  */
-  nds32_elf_code_hash_traverse (nds32_elf_count_insn_times);
-  nds32_elf_order_insn_times (link_info);
-  nds32_elf_ex9_build_itable (link_info);
-}
-
-/* Relocate the entries in ex9 table.  */
-
-static bfd_vma
-nds32_elf_ex9_reloc_insn (struct elf_nds32_insn_times_entry *ptr,
-			  struct bfd_link_info *link_info)
-{
-  Elf_Internal_Sym *isym = NULL;
-  bfd_vma relocation = -1;
-  struct elf_link_hash_entry *h;
-
-  if (ptr->m_list != NULL)
-    {
-      /* Global symbol.  */
-      h = ptr->m_list->h_list->h;
-      if ((h->root.type == bfd_link_hash_defined
-	   || h->root.type == bfd_link_hash_defweak)
-	  && h->root.u.def.section != NULL
-	  && h->root.u.def.section->output_section != NULL)
-	{
-
-	  relocation = h->root.u.def.value +
-	    h->root.u.def.section->output_section->vma +
-	    h->root.u.def.section->output_offset;
-	  relocation += ptr->m_list->irel->r_addend;
-	}
-      else
-	relocation = 0;
-    }
-  else if (ptr->sec !=NULL)
-    {
-      /* Local symbol.  */
-      Elf_Internal_Sym sym;
-      asection *sec = NULL;
-      asection isec;
-      asection *isec_ptr = &isec;
-      Elf_Internal_Rela irel_backup = *(ptr->irel);
-      asection *sec_backup = ptr->sec;
-      bfd *abfd = ptr->sec->owner;
-
-      if (!nds32_get_local_syms (abfd, sec, &isym))
-	return FALSE;
-      isym = isym + ELF32_R_SYM (ptr->irel->r_info);
-
-      sec = bfd_section_from_elf_index (abfd, isym->st_shndx);
-      if (sec != NULL)
-	*isec_ptr = *sec;
-      sym = *isym;
-
-      /* The purpose is same as elf_link_input_bfd.  */
-      if (isec_ptr != NULL
-	  && isec_ptr->sec_info_type == SEC_INFO_TYPE_MERGE
-	  && ELF_ST_TYPE (isym->st_info) != STT_SECTION)
-	{
-	  sym.st_value =
-	    _bfd_merged_section_offset (ptr->sec->output_section->owner, &isec_ptr,
-					elf_section_data (isec_ptr)->sec_info,
-					isym->st_value);
-	}
-      relocation = _bfd_elf_rela_local_sym (link_info->output_bfd, &sym,
-					    &ptr->sec, ptr->irel);
-      if (ptr->irel != NULL)
-	relocation += ptr->irel->r_addend;
-
-      /* Restore origin value since there may be some insntructions that
-	 could not be replaced with ex9.it.  */
-      *(ptr->irel) = irel_backup;
-      ptr->sec = sec_backup;
-    }
-
-  return relocation;
-}
-
-/* Import ex9 table and build list.  */
-
-void
-nds32_elf_ex9_import_table (struct bfd_link_info *info)
-{
-  int num = 0;
-  bfd_byte *contents;
-  unsigned long insn;
-  FILE *ex9_import_file;
-  int update_ex9_table;
-  struct elf_nds32_link_hash_table *table;
-
-  table = nds32_elf_hash_table (info);
-  ex9_import_file = table->ex9_import_file;
-  rewind (table->ex9_import_file);
-
-  contents = bfd_malloc (sizeof (bfd_byte) * 4);
-
-  /* Read instructions from the input file and build the list.  */
-  while (!feof (ex9_import_file))
-    {
-      char *code;
-      struct elf_nds32_insn_times_entry *ptr;
-      size_t nread;
-
-      nread = fread (contents, sizeof (bfd_byte) * 4, 1, ex9_import_file);
-      /* Ignore the final byte 0x0a.  */
-      if (nread < 1)
-	break;
-      insn = bfd_getb32 (contents);
-      code = bfd_malloc (sizeof (char) * 9);
-      snprintf (code, 9, "%08lx", insn);
-      ptr = bfd_malloc (sizeof (struct elf_nds32_insn_times_entry));
-      ptr->string = code;
-      ptr->order = num;
-      ptr->times = -1;
-      ptr->sec = NULL;
-      ptr->m_list = NULL;
-      ptr->rel_backup.r_offset = 0;
-      ptr->rel_backup.r_info = 0;
-      ptr->rel_backup.r_addend = 0;
-      ptr->irel = NULL;
-      ptr->next = NULL;
-      nds32_elf_ex9_insert_entry (ptr);
-      num++;
-    }
-
-  update_ex9_table = table->update_ex9_table;
-  if (update_ex9_table == 1)
-    {
-      /* It has to consider of sethi need to use multiple page
-	 but it not be done yet.  */
-      nds32_elf_code_hash_traverse (nds32_elf_examine_insn_times);
-      nds32_elf_order_insn_times (info);
-    }
-}
-
-/* Export ex9 table.  */
-
-static void
-nds32_elf_ex9_export (struct bfd_link_info *info,
-		      bfd_byte *contents, int size)
-{
-  FILE *ex9_export_file;
-  struct elf_nds32_link_hash_table *table;
-
-  table = nds32_elf_hash_table (info);
-  ex9_export_file = table->ex9_export_file;
-  fwrite (contents, sizeof (bfd_byte), size, ex9_export_file);
-  fclose (ex9_export_file);
-}
-
-/* Adjust relocations of J and JAL in ex9.itable.
-   Export ex9 table.  */
-
-static void
-nds32_elf_ex9_reloc_jmp (struct bfd_link_info *link_info)
-{
-  asection *table_sec = NULL;
-  struct elf_nds32_insn_times_entry *ex9_insn = ex9_insn_head;
-  struct elf_nds32_insn_times_entry *temp_ptr, *temp_ptr2;
-  bfd *it_abfd;
-  uint32_t insn, insn_with_reg, source_insn;
-  bfd_byte *contents = NULL, *source_contents = NULL;
-  int size = 0;
-  bfd_vma gp;
-  int shift, update_ex9_table, offset = 0;
-  reloc_howto_type *howto = NULL;
-  Elf_Internal_Rela rel_backup;
-  unsigned short insn_ex9;
-  struct elf_nds32_link_hash_table *table;
-  FILE *ex9_export_file;
-  static bfd_boolean done = FALSE;
-
-  if (done)
-    return;
-
-  done = TRUE;
-
-  table = nds32_elf_hash_table (link_info);
-  if (table)
-    table->relax_status |= NDS32_RELAX_EX9_DONE;
-
-
-  update_ex9_table = table->update_ex9_table;
-  /* Generated ex9.itable exactly.  */
-  if (update_ex9_table == 0)
-    {
-      for (it_abfd = link_info->input_bfds; it_abfd != NULL;
-	   it_abfd = it_abfd->link.next)
-	{
-	  table_sec = bfd_get_section_by_name (it_abfd, ".ex9.itable");
-	  if (table_sec != NULL)
-	    break;
-	}
-
-      if (table_sec != NULL)
-	{
-	  bfd *output_bfd;
-
-	  output_bfd = table_sec->output_section->owner;
-	  nds32_elf_final_sda_base (output_bfd, link_info, &gp, FALSE);
-	  if (table_sec->size == 0)
-	    return;
-
-	  if (!nds32_get_section_contents (it_abfd, table_sec, &contents, TRUE))
-	    return;
-	}
-    }
-  else
-    {
-      /* Set gp.  */
-      bfd *output_bfd;
-
-      output_bfd = link_info->input_bfds->sections->output_section->owner;
-      nds32_elf_final_sda_base (output_bfd, link_info, &gp, FALSE);
-      contents = bfd_malloc (sizeof (bfd_byte) * 2048);
-    }
-
-  /* Relocate instruction.  */
-  while (ex9_insn)
-    {
-      bfd_vma relocation, min_relocation = 0xffffffff;
-
-      insn = strtol (ex9_insn->string, NULL, 16);
-      insn_with_reg = 0;
-      if (ex9_insn->m_list != NULL || ex9_insn->sec != NULL)
-	{
-	  if (ex9_insn->m_list)
-	    rel_backup = ex9_insn->m_list->rel_backup;
-	  else
-	    rel_backup = ex9_insn->rel_backup;
-
-	  nds32_elf_get_insn_with_reg (&rel_backup, insn, &insn_with_reg);
-	  howto =
-	    bfd_elf32_bfd_reloc_type_table_lookup (ELF32_R_TYPE
-						   (rel_backup.r_info));
-	  shift = howto->rightshift;
-	  if (ELF32_R_TYPE (rel_backup.r_info) == R_NDS32_25_PCREL_RELA
-	      || ELF32_R_TYPE (rel_backup.r_info) == R_NDS32_LO12S0_ORI_RELA
-	      || ELF32_R_TYPE (rel_backup.r_info) == R_NDS32_LO12S0_RELA
-	      || ELF32_R_TYPE (rel_backup.r_info) == R_NDS32_LO12S1_RELA
-	      || ELF32_R_TYPE (rel_backup.r_info) == R_NDS32_LO12S2_RELA)
-	    {
-	      relocation = nds32_elf_ex9_reloc_insn (ex9_insn, link_info);
-	      insn =
-		insn_with_reg | ((relocation >> shift) &
-				 nds32_elf_irel_mask (&rel_backup));
-	      bfd_putb32 (insn, contents + (ex9_insn->order) * 4);
-	    }
-	  else if ((ELF32_R_TYPE (rel_backup.r_info) >= R_NDS32_SDA15S3
-		    && ELF32_R_TYPE (rel_backup.r_info) <= R_NDS32_SDA15S0)
-		   || (ELF32_R_TYPE (rel_backup.r_info) >= R_NDS32_SDA15S3_RELA
-		       && ELF32_R_TYPE (rel_backup.r_info) <= R_NDS32_SDA15S0_RELA)
-		   || (ELF32_R_TYPE (rel_backup.r_info) >= R_NDS32_SDA12S2_DP_RELA
-		       && ELF32_R_TYPE (rel_backup.r_info) <= R_NDS32_SDA12S2_SP_RELA)
-		   || (ELF32_R_TYPE (rel_backup.r_info) >= R_NDS32_SDA16S3_RELA
-		       && ELF32_R_TYPE (rel_backup.r_info) <= R_NDS32_SDA19S0_RELA))
-	    {
-	      relocation = nds32_elf_ex9_reloc_insn (ex9_insn, link_info);
-	      insn =
-		insn_with_reg | (((relocation - gp) >> shift) &
-				 nds32_elf_irel_mask (&rel_backup));
-	      bfd_putb32 (insn, contents + (ex9_insn->order) * 4);
-	    }
-	  else if (ELF32_R_TYPE (rel_backup.r_info) == R_NDS32_HI20_RELA)
-	    {
-	      /* Sethi may be multiple entry for one insn.  */
-	      if (ex9_insn->next && ex9_insn->m_list
-		  && ex9_insn->m_list == ex9_insn->next->m_list)
-		{
-		  struct elf_link_hash_entry_mul_list *m_list;
-		  struct elf_nds32_ex9_refix *fix_ptr;
-		  struct elf_link_hash_entry *h;
-
-		  temp_ptr = ex9_insn;
-		  temp_ptr2 = ex9_insn;
-		  m_list = ex9_insn->m_list;
-		  while (m_list)
-		    {
-		      h = m_list->h_list->h;
-		      relocation = h->root.u.def.value +
-			h->root.u.def.section->output_section->vma +
-			h->root.u.def.section->output_offset;
-		      relocation += m_list->irel->r_addend;
-
-		      if (relocation < min_relocation)
-			min_relocation = relocation;
-		      m_list = m_list->next;
-		    }
-		  relocation = min_relocation;
-
-		  /* Put insntruction into ex9 table.  */
-		  insn = insn_with_reg
-		    | ((relocation >> shift) & nds32_elf_irel_mask (&rel_backup));
-		  bfd_putb32 (insn, contents + (ex9_insn->order) * 4);
-		  relocation = relocation + 0x1000;	/* hi20 */
-
-		  while (ex9_insn->next && ex9_insn->m_list
-			 && ex9_insn->m_list == ex9_insn->next->m_list)
-		    {
-		      /* Multiple sethi.  */
-		      ex9_insn = ex9_insn->next;
-		      size += 4;
-		      insn =
-			insn_with_reg | ((relocation >> shift) &
-					 nds32_elf_irel_mask (&rel_backup));
-		      bfd_putb32 (insn, contents + (ex9_insn->order) * 4);
-		      relocation = relocation + 0x1000;	/* hi20 */
-		    }
-
-		  fix_ptr = ex9_refix_head;
-		  while (fix_ptr)
-		    {
-		      /* Fix ex9 insn.  */
-		      /* temp_ptr2 points to the head of multiple sethi.  */
-		      temp_ptr = temp_ptr2;
-		      while (fix_ptr->order != temp_ptr->order && fix_ptr->next)
-			{
-			  fix_ptr = fix_ptr->next;
-			}
-		      if (fix_ptr->order != temp_ptr->order)
-			break;
-
-		      /* Set source insn.  */
-		      relocation =
-			fix_ptr->h->root.u.def.value +
-			fix_ptr->h->root.u.def.section->output_section->vma +
-			fix_ptr->h->root.u.def.section->output_offset;
-		      relocation += fix_ptr->irel->r_addend;
-		      /* sethi imm is imm20s.  */
-		      source_insn = insn_with_reg | ((relocation >> shift) & 0xfffff);
-
-		      while (temp_ptr)
-			{
-			  /* Match entry and source code.  */
-			  insn = bfd_getb32 (contents + (temp_ptr->order) * 4 + offset);
-			  if (insn == source_insn)
-			    {
-			      /* Fix the ex9 insn.  */
-			      if (temp_ptr->order != fix_ptr->order)
-				{
-				  if (!nds32_get_section_contents
-					 (fix_ptr->sec->owner, fix_ptr->sec,
-					  &source_contents, TRUE))
-				    (*_bfd_error_handler)
-				      (_("Linker: error cannot fixed ex9 relocation \n"));
-				  if (temp_ptr->order < 32)
-				    insn_ex9 = INSN_EX9_IT_2;
-				  else
-				    insn_ex9 = INSN_EX9_IT_1;
-				  insn_ex9 = insn_ex9 | temp_ptr->order;
-				  bfd_putb16 (insn_ex9, source_contents + fix_ptr->irel->r_offset);
-				}
-				break;
-			    }
-			  else
-			    {
-			      if (!temp_ptr->next || temp_ptr->m_list != temp_ptr->next->m_list)
-				(*_bfd_error_handler)
-				  (_("Linker: error cannot fixed ex9 relocation \n"));
-			      else
-				temp_ptr = temp_ptr->next;
-			    }
-			}
-		      fix_ptr = fix_ptr->next;
-		    }
-		}
-	      else
-		{
-		  relocation = nds32_elf_ex9_reloc_insn (ex9_insn, link_info);
-		  insn = insn_with_reg
-			 | ((relocation >> shift) & nds32_elf_irel_mask (&rel_backup));
-		  bfd_putb32 (insn, contents + (ex9_insn->order) * 4);
-		}
-	    }
-	}
-      else
-	{
-	  /* Insn without relocation does not have to be fixed
-	     if need to update export table.  */
-	  if (update_ex9_table == 1)
-	    bfd_putb32 (insn, contents + (ex9_insn->order) * 4);
-	}
-      ex9_insn = ex9_insn->next;
-      size += 4;
-    }
-
-  ex9_export_file = table->ex9_export_file;
-  if (ex9_export_file != NULL)
-    nds32_elf_ex9_export (link_info, contents, table_sec->size);
-  else if (update_ex9_table == 1)
-    {
-      table->ex9_export_file = table->ex9_import_file;
-      rewind (table->ex9_export_file);
-      nds32_elf_ex9_export (link_info, contents, size);
-    }
-}
-
-/* Generate ex9 hash table.  */
-
-static bfd_boolean
-nds32_elf_ex9_build_hash_table (bfd *abfd, asection *sec,
-				struct bfd_link_info *link_info)
-{
-  Elf_Internal_Rela *internal_relocs;
-  Elf_Internal_Rela *irelend;
-  Elf_Internal_Rela *irel;
-  Elf_Internal_Rela *jrel;
-  Elf_Internal_Rela rel_backup;
-  Elf_Internal_Shdr *symtab_hdr;
-  Elf_Internal_Sym *isym = NULL;
-  asection *isec;
-  struct elf_link_hash_entry **sym_hashes;
-  bfd_byte *contents = NULL;
-  bfd_vma off = 0;
-  unsigned long r_symndx;
-  uint32_t insn, insn_with_reg;
-  struct elf_link_hash_entry *h;
-  int data_flag, shift, align;
-  bfd_vma relocation;
-  /* Suppress ex9 if `.no_relax ex9' or inner loop.  */
-  reloc_howto_type *howto = NULL;
-
-  sym_hashes = elf_sym_hashes (abfd);
-  /* Load section instructions, relocations, and symbol table.  */
-  if (!nds32_get_section_contents (abfd, sec, &contents, TRUE))
-    return FALSE;
-
-  internal_relocs = _bfd_elf_link_read_relocs (abfd, sec, NULL, NULL,
-					       TRUE /* keep_memory */);
-  irelend = internal_relocs + sec->reloc_count;
-  symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  if (!nds32_get_local_syms (abfd, sec, &isym))
-    return FALSE;
-
-  /* Check the object if enable ex9.  */
-  irel = find_relocs_at_address (internal_relocs, internal_relocs, irelend,
-				 R_NDS32_RELAX_ENTRY);
-
-  /* Check this section trigger ex9 relaxation.  */
-  if (irel == NULL
-      || irel >= irelend
-      || ELF32_R_TYPE (irel->r_info) != R_NDS32_RELAX_ENTRY
-      || (ELF32_R_TYPE (irel->r_info) == R_NDS32_RELAX_ENTRY
-	  && !(irel->r_addend & R_NDS32_RELAX_ENTRY_EX9_FLAG)))
-    return TRUE;
-
-  irel = internal_relocs;
-
-  /* Push each insn into hash table.  */
-  while (off < sec->size)
-    {
-      char code[10];
-      struct elf_nds32_code_hash_entry *entry;
-
-      while (irel != NULL && irel < irelend && irel->r_offset < off)
-	irel++;
-
-      data_flag = nds32_elf_ex9_relocation_check (link_info, &irel, irelend,
-						  NULL, sec, &off, contents);
-      if (data_flag & DATA_EXIST)
-	{
-	  /* We save the move offset in the highest byte.  */
-	  off += (data_flag >> 24);
-	  continue;
-	}
-
-      if (*(contents + off) & 0x80)
-	{
-	  off += 2;
-	}
-      else
-	{
-	  h = NULL;
-	  isec = NULL;
-	  jrel = NULL;
-	  rel_backup.r_info = 0;
-	  rel_backup.r_offset = 0;
-	  rel_backup.r_addend = 0;
-	  /* Load the instruction and its opcode with register for comparing.  */
-	  insn = bfd_getb32 (contents + off);
-	  insn_with_reg = 0;
-	  if (irel != NULL && irel < irelend && irel->r_offset == off)
-	    {
-	      nds32_elf_get_insn_with_reg (irel, insn, &insn_with_reg);
-	      howto = bfd_elf32_bfd_reloc_type_table_lookup (ELF32_R_TYPE (irel->r_info));
-	      shift = howto->rightshift;
-	      align = (1 << shift) - 1;
-	      if (ELF32_R_TYPE (irel->r_info) == R_NDS32_25_PCREL_RELA
-		  || ELF32_R_TYPE (irel->r_info) == R_NDS32_HI20_RELA
-		  || ELF32_R_TYPE (irel->r_info) == R_NDS32_LO12S0_ORI_RELA
-		  || ELF32_R_TYPE (irel->r_info) == R_NDS32_LO12S0_RELA
-		  || ELF32_R_TYPE (irel->r_info) == R_NDS32_LO12S1_RELA
-		  || ELF32_R_TYPE (irel->r_info) == R_NDS32_LO12S2_RELA
-		  ||(ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA15S3
-		     && ELF32_R_TYPE (irel->r_info) <= R_NDS32_SDA15S0)
-		  || (ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA15S3_RELA
-		      && ELF32_R_TYPE (irel->r_info) <= R_NDS32_SDA15S0_RELA)
-		  || (ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA12S2_DP_RELA
-		      && ELF32_R_TYPE (irel->r_info) <= R_NDS32_SDA12S2_SP_RELA)
-		  || (ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA16S3_RELA
-		      && ELF32_R_TYPE (irel->r_info) <= R_NDS32_SDA19S0_RELA))
-		{
-		  r_symndx = ELF32_R_SYM (irel->r_info);
-		  jrel = irel;
-		  rel_backup = *irel;
-		  if (r_symndx < symtab_hdr->sh_info)
-		    {
-		      /* Local symbol.  */
-		      int shndx = isym[r_symndx].st_shndx;
-
-		      bfd_vma st_value = (isym + r_symndx)->st_value;
-		      isec = elf_elfsections (abfd)[shndx]->bfd_section;
-		      relocation = (isec->output_section->vma + isec->output_offset
-				    + st_value + irel->r_addend);
-		    }
-		  else
-		    {
-		      /* External symbol.  */
-		      bfd_boolean warned ATTRIBUTE_UNUSED;
-		      bfd_boolean ignored ATTRIBUTE_UNUSED;
-		      bfd_boolean unresolved_reloc ATTRIBUTE_UNUSED;
-		      asection *sym_sec;
-
-		      /* Maybe there is a better way to get h and relocation */
-		      RELOC_FOR_GLOBAL_SYMBOL (link_info, abfd, sec, irel,
-					       r_symndx, symtab_hdr, sym_hashes,
-					       h, sym_sec, relocation,
-					       unresolved_reloc, warned, ignored);
-		      relocation += irel->r_addend;
-		      if ((h->root.type != bfd_link_hash_defined
-			   && h->root.type != bfd_link_hash_defweak)
-			  || strcmp (h->root.root.string, "_FP_BASE_") == 0)
-			{
-			  off += 4;
-			  continue;
-			}
-		    }
-
-		  /* Check for gp relative instruction alignment.  */
-		  if ((ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA15S3
-		       && ELF32_R_TYPE (irel->r_info) <= R_NDS32_SDA15S0)
-		      || (ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA15S3_RELA
-			  && ELF32_R_TYPE (irel->r_info) <= R_NDS32_SDA15S0_RELA)
-		      || (ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA12S2_DP_RELA
-			  && ELF32_R_TYPE (irel->r_info) <= R_NDS32_SDA12S2_SP_RELA)
-		      || (ELF32_R_TYPE (irel->r_info) >= R_NDS32_SDA16S3_RELA
-			  && ELF32_R_TYPE (irel->r_info) <= R_NDS32_SDA19S0_RELA))
-		    {
-		      bfd_vma gp;
-		      bfd *output_bfd = sec->output_section->owner;
-		      bfd_reloc_status_type r;
-
-		      /* If the symbol is in the abs section, the out_bfd will be null.
-			 This happens when the relocation has a symbol@GOTOFF.  */
-		      r = nds32_elf_final_sda_base (output_bfd, link_info, &gp, FALSE);
-		      if (r != bfd_reloc_ok)
-			{
-			  off += 4;
-			  continue;
-			}
-
-		      relocation -= gp;
-
-		      /* Make sure alignment is correct.  */
-		      if (relocation & align)
-			{
-			  /* Incorrect alignment.  */
-			  (*_bfd_error_handler)
-			    (_("%s: warning: unaligned small data access. "
-			       "For entry: {%d, %d, %d}, addr = 0x%x, align = 0x%x."),
-			     bfd_get_filename (abfd), irel->r_offset,
-			     irel->r_info, irel->r_addend, relocation, align);
-			  off += 4;
-			  continue;
-			}
-		    }
-
-		  insn = insn_with_reg
-		    | ((relocation >> shift) & nds32_elf_irel_mask (irel));
-		}
-	      else if (ELF32_R_TYPE (irel->r_info) == R_NDS32_RELAX_REGION_BEGIN
-		       || ELF32_R_TYPE (irel->r_info) == R_NDS32_RELAX_REGION_END
-		       || ELF32_R_TYPE (irel->r_info) == R_NDS32_NONE)
-		{
-		  /* These relocations do not have to relocate contens, so it can
-		     be regard as instruction without relocation.  */
-		}
-	      else
-		{
-		  off += 4;
-		  continue;
-		}
-	    }
-
-	  snprintf (code, sizeof (code), "%08x", insn);
-	  /* Copy "code".  */
-	  entry = (struct elf_nds32_code_hash_entry*)
-	    bfd_hash_lookup (&ex9_code_table, code, TRUE, TRUE);
-	  if (entry == NULL)
-	    {
-	      (*_bfd_error_handler)
-		(_("%P%F: failed creating ex9.it %s hash table: %E\n"), code);
-	      return FALSE;
-	    }
-	  if (h)
-	    {
-	      if (h->root.type == bfd_link_hash_undefined)
-		return TRUE;
-	      /* Global symbol.  */
-	      /* In order to do sethi with different symbol but same value.  */
-	      if (entry->m_list == NULL)
-		{
-		  struct elf_link_hash_entry_mul_list *m_list_new;
-		  struct elf_link_hash_entry_list *h_list_new;
-
-		  m_list_new = (struct elf_link_hash_entry_mul_list *)
-		    bfd_malloc (sizeof (struct elf_link_hash_entry_mul_list));
-		  h_list_new = (struct elf_link_hash_entry_list *)
-		    bfd_malloc (sizeof (struct elf_link_hash_entry_list));
-		  entry->m_list = m_list_new;
-		  m_list_new->h_list = h_list_new;
-		  m_list_new->rel_backup = rel_backup;
-		  m_list_new->times = 1;
-		  m_list_new->irel = jrel;
-		  m_list_new->next = NULL;
-		  h_list_new->h = h;
-		  h_list_new->next = NULL;
-		}
-	      else
-		{
-		  struct elf_link_hash_entry_mul_list *m_list = entry->m_list;
-		  struct elf_link_hash_entry_list *h_list;
-
-		  while (m_list)
-		    {
-		      /* Build the different symbols that point to the same address.  */
-		      h_list = m_list->h_list;
-		      if (h_list->h->root.u.def.value == h->root.u.def.value
-			  && h_list->h->root.u.def.section->output_section->vma
-			     == h->root.u.def.section->output_section->vma
-			  && h_list->h->root.u.def.section->output_offset
-			     == h->root.u.def.section->output_offset
-			  && m_list->rel_backup.r_addend == rel_backup.r_addend)
-			{
-			  m_list->times++;
-			  m_list->irel = jrel;
-			  while (h_list->h != h && h_list->next)
-			    h_list = h_list->next;
-			  if (h_list->h != h)
-			    {
-			      struct elf_link_hash_entry_list *h_list_new;
-
-			      h_list_new = (struct elf_link_hash_entry_list *)
-				bfd_malloc (sizeof (struct elf_link_hash_entry_list));
-			      h_list->next = h_list_new;
-			      h_list_new->h = h;
-			      h_list_new->next = NULL;
-			    }
-			  break;
-			}
-		      /* The sethi case may have different address but the
-			 hi20 is the same.  */
-		      else if (ELF32_R_TYPE (jrel->r_info) == R_NDS32_HI20_RELA
-			       && m_list->next == NULL)
-			{
-			  struct elf_link_hash_entry_mul_list *m_list_new;
-			  struct elf_link_hash_entry_list *h_list_new;
-
-			  m_list_new = (struct elf_link_hash_entry_mul_list *)
-			    bfd_malloc (sizeof (struct elf_link_hash_entry_mul_list));
-			  h_list_new = (struct elf_link_hash_entry_list *)
-			    bfd_malloc (sizeof (struct elf_link_hash_entry_list));
-			  m_list->next = m_list_new;
-			  m_list_new->h_list = h_list_new;
-			  m_list_new->rel_backup = rel_backup;
-			  m_list_new->times = 1;
-			  m_list_new->irel = jrel;
-			  m_list_new->next = NULL;
-			  h_list_new->h = h;
-			  h_list_new->next = NULL;
-			  break;
-			}
-		      m_list = m_list->next;
-		    }
-		  if (!m_list)
-		    {
-		      off += 4;
-		      continue;
-		    }
-		}
-	    }
-	  else
-	    {
-	      /* Local symbol and insn without relocation*/
-	      entry->times++;
-	      entry->rel_backup = rel_backup;
-	    }
-
-	  /* Use in sethi insn with constant and global symbol in same format.  */
-	  if (!jrel)
-	    entry->const_insn = 1;
-	  else
-	    entry->irel = jrel;
-	  entry->sec = isec;
-	  off += 4;
-	}
-    }
-  return TRUE;
-}
-
-/* Set the _ITB_BASE, and point it to ex9 table.  */
-
-bfd_boolean
-nds32_elf_ex9_itb_base (struct bfd_link_info *link_info)
-{
-  bfd *abfd;
-  asection *sec;
-  bfd *output_bfd = NULL;
-  struct bfd_link_hash_entry *bh = NULL;
-
-  if (is_ITB_BASE_set == 1)
-    return TRUE;
-
-  is_ITB_BASE_set = 1;
-
-  bh = bfd_link_hash_lookup (link_info->hash, "_ITB_BASE_", FALSE, FALSE, TRUE);
-
-  if (bh && (bh->type == bfd_link_hash_defined
-	     || bh->type == bfd_link_hash_defweak))
-    return TRUE;
-
-  for (abfd = link_info->input_bfds; abfd != NULL;
-       abfd = abfd->link.next)
-    {
-      sec = bfd_get_section_by_name (abfd, ".ex9.itable");
-      if (sec != NULL)
-	{
-	  output_bfd = sec->output_section->owner;
-	  break;
-	}
-    }
-  if (output_bfd == NULL)
-    {
-      output_bfd = link_info->output_bfd;
-      if (output_bfd->sections == NULL)
-	return TRUE;
-      else
-	sec = bfd_abs_section_ptr;
-    }
-  bh = bfd_link_hash_lookup (link_info->hash, "_ITB_BASE_",
-			     FALSE, FALSE, TRUE);
-  return (_bfd_generic_link_add_one_symbol
-	  (link_info, output_bfd, "_ITB_BASE_",
-	   BSF_GLOBAL | BSF_WEAK, sec, 0,
-	   (const char *) NULL, FALSE, get_elf_backend_data
-	   (output_bfd)->collect, &bh));
-} /* End EX9.IT  */
-
 
 #define ELF_ARCH				bfd_arch_nds32
 #define ELF_MACHINE_CODE			EM_NDS32
 #define ELF_MAXPAGESIZE				0x1000
-#define ELF_TARGET_ID                           NDS32_ELF_DATA
+#define ELF_TARGET_ID				NDS32_ELF_DATA
 
 #define TARGET_BIG_SYM				nds32_elf32_be_vec
 #define TARGET_BIG_NAME				"elf32-nds32be"
@@ -15698,7 +12679,7 @@ nds32_elf_ex9_itb_base (struct bfd_link_info *link_info)
 #define bfd_elf32_bfd_relax_section		nds32_elf_relax_section
 #define bfd_elf32_bfd_set_private_flags		nds32_elf_set_private_flags
 
-#define bfd_elf32_mkobject		        nds32_elf_mkobject
+#define bfd_elf32_mkobject			nds32_elf_mkobject
 #define elf_backend_action_discarded		nds32_elf_action_discarded
 #define elf_backend_add_symbol_hook		nds32_elf_add_symbol_hook
 #define elf_backend_check_relocs		nds32_elf_check_relocs
@@ -15709,7 +12690,6 @@ nds32_elf_ex9_itb_base (struct bfd_link_info *link_info)
 #define elf_backend_size_dynamic_sections	nds32_elf_size_dynamic_sections
 #define elf_backend_relocate_section		nds32_elf_relocate_section
 #define elf_backend_gc_mark_hook		nds32_elf_gc_mark_hook
-#define elf_backend_gc_sweep_hook		nds32_elf_gc_sweep_hook
 #define elf_backend_grok_prstatus		nds32_elf_grok_prstatus
 #define elf_backend_grok_psinfo			nds32_elf_grok_psinfo
 #define elf_backend_reloc_type_class		nds32_elf_reloc_type_class
@@ -15720,7 +12700,7 @@ nds32_elf_ex9_itb_base (struct bfd_link_info *link_info)
 #define elf_backend_final_write_processing	nds32_elf_final_write_processing
 #define elf_backend_special_sections		nds32_elf_special_sections
 #define bfd_elf32_bfd_get_relocated_section_contents \
-                                nds32_elf_get_relocated_section_contents
+				nds32_elf_get_relocated_section_contents
 
 #define elf_backend_can_gc_sections		1
 #define elf_backend_can_refcount		1
@@ -15731,6 +12711,7 @@ nds32_elf_ex9_itb_base (struct bfd_link_info *link_info)
 #define elf_backend_may_use_rel_p		1
 #define elf_backend_default_use_rela_p		1
 #define elf_backend_may_use_rela_p		1
+#define elf_backend_dtrel_excludes_plt		1
 
 #include "elf32-target.h"
 

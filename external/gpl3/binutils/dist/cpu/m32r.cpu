@@ -478,13 +478,13 @@
 (dnf f-hi16      "high 16 bits"        (SIGN-OPT) 16 16)
 (df f-disp8      "disp8, slot unknown" (PCREL-ADDR RELOC) 8 8 INT
     ((value pc) (sra WI (sub WI value (and WI pc (const -4))) (const 2)))
-    ((value pc) (add WI (sll WI value (const 2)) (and WI pc (const -4)))))
+    ((value pc) (add WI (mul WI value (const 4)) (and WI pc (const -4)))))
 (df f-disp16     "disp16"              (PCREL-ADDR RELOC) 16 16 INT
     ((value pc) (sra WI (sub WI value pc) (const 2)))
-    ((value pc) (add WI (sll WI value (const 2)) pc)))
+    ((value pc) (add WI (mul WI value (const 4)) pc)))
 (df f-disp24     "disp24"              (PCREL-ADDR RELOC) 8 24 INT
     ((value pc) (sra WI (sub WI value pc) (const 2)))
-    ((value pc) (add WI (sll WI value (const 2)) pc)))
+    ((value pc) (add WI (mul WI value (const 4)) pc)))
 
 (dnf f-op23      "op2.3"               ()  9 3)
 (dnf f-op3       "op3"                 () 14 2)

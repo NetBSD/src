@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2018/01/23 22:12:52 sevan Exp $	*/
+/*	$NetBSD: main.c,v 1.7.4.1 2020/04/08 14:09:17 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior

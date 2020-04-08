@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.5 2018/06/24 09:38:47 leot Exp $
+.\"	$NetBSD: contents,v 1.5.2.1 2020/04/08 14:03:50 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,8 +31,7 @@ The \*M-specific portion of the
 \*V release is found in the
 .Pa \*M
 subdirectory of the distribution:
-.ie \n[FOR_RELEASE] .Pa \&.../NetBSD-\*V/\*M/ .
-.el .Pa Pf \&.../arch/\*M/snapshot/ Ar yyyymmdd/ .
+.Pa \&.../NetBSD-\*V/\*M/ .
 It contains the following files and directories:
 .Pp
 .(tag INSTALL.html -compact \" top level
@@ -188,6 +187,11 @@ the typesettable document set, and other files from
 .It Sy modules
 This set includes kernel modules to add functionality to a running system.
 .
+.It Sy rescue
+This set includes the statically linked emergency recover binaries installed
+in
+.Pa /rescue .
+.
 .It Sy text
 This set includes
 .Nx Ns 's
@@ -248,9 +252,9 @@ The X server.
 .Pp
 The \*M binary distribution sets are distributed as gzipped tar files
 named with the extension
-.Sy .tgz ,
+.Sy .\*[setsuffix] ,
 e.g.
-.Pa base.tgz .
+.Pa base.\*[setsuffix] .
 .
 .
 .Pp

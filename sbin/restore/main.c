@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2013/01/22 09:39:13 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.35.30.1 2020/04/08 14:07:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.35 2013/01/22 09:39:13 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.35.30.1 2020/04/08 14:07:20 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,9 @@ __RCSID("$NetBSD: main.c,v 1.35 2013/01/22 09:39:13 dholland Exp $");
 #include "restore.h"
 #include "extern.h"
 
+struct context curfile;
+union u_spcl u_spcl;
+int	uflag;
 int	bflag = 0, cvtflag = 0, dflag = 0, vflag = 0, yflag = 0;
 int	hflag = 1, mflag = 1, Dflag = 0, Nflag = 0;
 char	command = '\0';

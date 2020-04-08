@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28.2.1 2019/06/10 22:10:13 christos Exp $
+#	$NetBSD: Makefile,v 1.28.2.2 2020/04/08 14:09:13 martin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -34,7 +34,8 @@ INSTALL_TARGET+=install-gprof
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=	-I${DESTDIR}/usr/include -B${DESTDIR}/usr/lib/
+CCADDFLAGS=	-I${GNUHOSTDIST}/include  -I${DESTDIR}/usr/include
+CCADDFLAGS+=	-B${DESTDIR}/usr/lib/
 LDADDFLAGS=	-L${DESTDIR}/lib -L${DESTDIR}/usr/lib
 
 # Force avoiding possibly non-executable install-sh.

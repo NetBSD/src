@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2016/01/23 21:22:49 christos Exp $
+#	$NetBSD: Makefile,v 1.32.16.1 2020/04/08 14:09:16 martin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT & NETBSDSRCDIR
@@ -6,6 +6,8 @@
 USE_FORT?= yes	# cryptographic software
 
 PROG=	kdump
+LINKS=	${BINDIR}/kdump ${BINDIR}/ioctlprint
+MAN=	kdump.1 ioctlprint.1
 SRCS=	kdump.c subr.c setemul.c siginfo.c
 .PATH:	${NETBSDSRCDIR}/usr.bin/ktrace
 CLEANFILES+=siginfo.c

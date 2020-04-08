@@ -39,7 +39,10 @@ SRCS	= alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	dict_sockmap.c line_number.c recv_pass_attr.c pass_accept.c \
 	poll_fd.c timecmp.c slmdb.c dict_pipe.c dict_random.c \
 	valid_utf8_hostname.c midna_domain.c argv_splitq.c balpar.c dict_union.c \
-	extpar.c dict_inline.c casefold.c dict_utf8.c strcasecmp_utf8.c
+	extpar.c dict_inline.c casefold.c dict_utf8.c strcasecmp_utf8.c \
+	split_qnameval.c argv_attr_print.c argv_attr_scan.c dict_file.c \
+	msg_logger.c logwriter.c unix_dgram_connect.c unix_dgram_listen.c \
+	byte_mask.c
 OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	attr_print64.o attr_print_plain.o attr_scan0.o attr_scan64.o \
 	attr_scan_plain.o auto_clnt.o base64_code.o basename.o binhash.o \
@@ -80,7 +83,10 @@ OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	dict_sockmap.o line_number.o recv_pass_attr.o pass_accept.o \
 	poll_fd.o timecmp.o $(NON_PLUGIN_MAP_OBJ) dict_pipe.o dict_random.o \
 	valid_utf8_hostname.o midna_domain.o argv_splitq.o balpar.o dict_union.o \
-	extpar.o dict_inline.o casefold.o dict_utf8.o strcasecmp_utf8.o
+	extpar.o dict_inline.o casefold.o dict_utf8.o strcasecmp_utf8.o \
+	split_qnameval.o argv_attr_print.o argv_attr_scan.o dict_file.o \
+	msg_logger.o logwriter.o unix_dgram_connect.o unix_dgram_listen.o \
+	byte_mask.o
 # MAP_OBJ is for maps that may be dynamically loaded with dynamicmaps.cf.
 # When hard-linking these, makedefs sets NON_PLUGIN_MAP_OBJ=$(MAP_OBJ),
 # otherwise it sets the PLUGIN_* macros.
@@ -109,7 +115,8 @@ HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	edit_file.h dict_cache.h dict_thash.h ip_match.h nbbio.h base32_code.h \
 	dict_fail.h warn_stat.h dict_sockmap.h line_number.h timecmp.h \
 	slmdb.h compat_va_copy.h dict_pipe.h dict_random.h \
-	valid_utf8_hostname.h midna_domain.h dict_union.h dict_inline.h check_arg.h
+	valid_utf8_hostname.h midna_domain.h dict_union.h dict_inline.h \
+	check_arg.h argv_attr.h msg_logger.h logwriter.h byte_mask.h
 TESTSRC	= fifo_open.c fifo_rdwr_bug.c fifo_rdonly_bug.c select_bug.c \
 	stream_test.c dup2_pass_on_exec.c
 DEFS	= -I. -D$(SYSTYPE)
@@ -128,7 +135,8 @@ TESTPROG= dict_open dup2_pass_on_exec events exec_command fifo_open \
 	unix_recv_fd unix_send_fd stream_recv_fd stream_send_fd hex_code \
 	myaddrinfo myaddrinfo4 inet_proto sane_basename format_tv \
 	valid_utf8_string ip_match base32_code msg_rate_delay netstring \
-	vstream timecmp dict_cache midna_domain casefold strcasecmp_utf8
+	vstream timecmp dict_cache midna_domain casefold strcasecmp_utf8 \
+	vbuf_print split_qnameval vstream msg_logger byte_mask
 PLUGIN_MAP_SO = $(LIB_PREFIX)pcre$(LIB_SUFFIX)
 
 LIB_DIR	= ../../lib
@@ -209,6 +217,11 @@ dup2_pass_on_exec: dup2_pass_on_exec.c
 	$(CC) $(CFLAGS) -o $@ $@.c $(SYSLIBS)
 
 vstring: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+msg_logger: msg_logger.c $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
@@ -336,6 +349,11 @@ hex_quote: $(LIB)
 	mv junk $@.o
 
 name_mask: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+byte_mask: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
@@ -519,6 +537,16 @@ strcasecmp_utf8: $(LIB)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
+vbuf_print: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+split_qnameval: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
 tests: all valid_hostname_test mac_expand_test dict_test unescape_test \
 	hex_quote_test ctable_test inet_addr_list_test base64_code_test \
 	attr_scan64_test attr_scan0_test dict_pcre_test host_port_test \
@@ -526,135 +554,185 @@ tests: all valid_hostname_test mac_expand_test dict_test unescape_test \
 	myaddrinfo_test format_tv_test ip_match_test name_mask_tests \
 	base32_code_test dict_thash_test surrogate_test timecmp_test \
 	dict_static_test dict_inline_test midna_domain_test casefold_test \
-	dict_utf8_test strcasecmp_utf8_test
+	dict_utf8_test strcasecmp_utf8_test vbuf_print_test dict_regexp_test \
+	dict_union_test dict_pipe_test miss_endif_cidr_test \
+	miss_endif_pcre_test miss_endif_regexp_test split_qnameval_test \
+	vstring_test vstream_test dict_pcre_file_test dict_regexp_file_test \
+	dict_cidr_file_test dict_static_file_test dict_random_test \
+	dict_random_file_test dict_inline_file_test byte_mask_tests
 
 root_tests:
 
 valid_hostname_test: valid_hostname valid_hostname.in valid_hostname.ref
-	$(SHLIB_ENV) ./valid_hostname <valid_hostname.in 2>valid_hostname.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./valid_hostname <valid_hostname.in 2>valid_hostname.tmp
 	diff valid_hostname.ref valid_hostname.tmp
 	rm -f valid_hostname.tmp
 
 mac_expand_test: mac_expand mac_expand.in mac_expand.ref
-	$(SHLIB_ENV) ./mac_expand <mac_expand.in >mac_expand.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./mac_expand <mac_expand.in >mac_expand.tmp 2>&1
 	diff mac_expand.ref mac_expand.tmp
 	rm -f mac_expand.tmp
 
 unescape_test: unescape unescape.in unescape.ref
-	$(SHLIB_ENV) ./unescape <unescape.in | od -cb >unescape.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./unescape <unescape.in | od -cb >unescape.tmp
 	diff -b unescape.ref unescape.tmp
-#	$(SHLIB_ENV) ./unescape <unescape.in | $(SHLIB_ENV) ./unescape -e >unescape.tmp
+#	$(SHLIB_ENV) ${VALGRIND} ./unescape <unescape.in | $(SHLIB_ENV) ./unescape -e >unescape.tmp
 #	diff unescape.in unescape.tmp
 	rm -f unescape.tmp
 
 hex_quote_test: hex_quote
-	$(SHLIB_ENV) ./hex_quote <hex_quote.c | od -cb >hex_quote.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./hex_quote <hex_quote.c | od -cb >hex_quote.tmp
 	od -cb <hex_quote.c >hex_quote.ref
 	cmp hex_quote.ref hex_quote.tmp
 	rm -f hex_quote.ref hex_quote.tmp
 
 ctable_test: ctable
-	$(SHLIB_ENV) ./ctable <ctable.in >ctable.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./ctable <ctable.in >ctable.tmp 2>&1
 	diff ctable.ref ctable.tmp
 	rm -f ctable.tmp
 
 # On Linux, following test may require "modprobe ipv6" to enable IPv6.
 
 inet_addr_list_test: inet_addr_list
-	$(SHLIB_ENV) ./inet_addr_list `cat inet_addr_list.in` >inet_addr_list.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./inet_addr_list `cat inet_addr_list.in` >inet_addr_list.tmp 2>&1
 	diff inet_addr_list.ref inet_addr_list.tmp
 	rm -f inet_addr_list.tmp
 
 sane_basename_test: sane_basename
-	$(SHLIB_ENV) ./sane_basename <sane_basename.in >sane_basename.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./sane_basename <sane_basename.in >sane_basename.tmp 2>&1
 	diff sane_basename.ref sane_basename.tmp
 	rm -f sane_basename.tmp
 
 base64_code_test: base64_code
-	$(SHLIB_ENV) ./base64_code
+	$(SHLIB_ENV) ${VALGRIND} ./base64_code
 
 attr_scan64_test: attr_print64 attr_scan64 attr_scan64.ref
-	($(SHLIB_ENV) ./attr_print64 2>&3 | (sleep 1;  $(SHLIB_ENV) ./attr_scan64)) >attr_scan64.tmp 2>&1 3>&1
+	($(SHLIB_ENV) ${VALGRIND} ./attr_print64 2>&3 | (sleep 1;  $(SHLIB_ENV) ./attr_scan64)) >attr_scan64.tmp 2>&1 3>&1
 	diff attr_scan64.ref attr_scan64.tmp
 	rm -f attr_scan64.tmp
 
 attr_scan0_test: attr_print0 attr_scan0 attr_scan0.ref
-	($(SHLIB_ENV) ./attr_print0 2>&3 | (sleep 1;  $(SHLIB_ENV) ./attr_scan0)) >attr_scan0.tmp 2>&1 3>&1
+	($(SHLIB_ENV) ${VALGRIND} ./attr_print0 2>&3 | (sleep 1;  $(SHLIB_ENV) ./attr_scan0)) >attr_scan0.tmp 2>&1 3>&1
 	diff attr_scan0.ref attr_scan0.tmp
 	rm -f attr_scan0.tmp
 
 dict_test: dict_open testdb dict_test.in dict_test.ref
 	rm -f testdb.db testdb.dir testdb.pag
 	$(SHLIB_ENV) ../postmap/postmap -N hash:testdb
-	$(SHLIB_ENV) ./dict_open hash:testdb write < dict_test.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_test.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open hash:testdb write < dict_test.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_test.tmp
 	diff dict_test.ref dict_test.tmp
 	$(SHLIB_ENV) ../postmap/postmap -n hash:testdb
-	$(SHLIB_ENV) ./dict_open hash:testdb write < dict_test.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_test.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open hash:testdb write < dict_test.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_test.tmp
 	diff dict_test.ref dict_test.tmp
 	rm -f testdb.db testdb.dir testdb.pag dict_test.tmp
 
 dict_pcre_test: dict_open dict_pcre.in dict_pcre.map dict_pcre.ref
-	$(SHLIB_ENV) ./dict_open pcre:dict_pcre.map read <dict_pcre.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_pcre.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open pcre:dict_pcre.map read <dict_pcre.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_pcre.tmp
 	diff dict_pcre.ref dict_pcre.tmp
 	rm -f dict_pcre.tmp
 
+dict_pcre_file_test: dict_open dict_pcre_file.in dict_pcre_file.map dict_pcre_file.ref
+	echo this-is-file1 > dict_pcre_file1
+	echo this-is-file2 > dict_pcre_file2
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open pcre:dict_pcre_file.map \
+	    read src_rhs_is_file <dict_pcre_file.in 2>&1 | \
+	    sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_pcre_file.tmp
+	diff dict_pcre_file.ref dict_pcre_file.tmp
+	rm -f dict_pcre_file.tmp dict_pcre_file1 dict_pcre_file2
+
 dict_regexp_test: dict_open dict_regexp.in dict_regexp.map dict_regexp.ref
-	$(SHLIB_ENV) ./dict_open regexp:dict_regexp.map read <dict_regexp.in | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_regexp.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open regexp:dict_regexp.map read <dict_regexp.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_regexp.tmp
 	diff dict_regexp.ref dict_regexp.tmp
 	rm -f dict_regexp.tmp
 
+dict_regexp_file_test: dict_open dict_regexp_file.in dict_regexp_file.map dict_regexp_file.ref
+	echo this-is-file1 > dict_regexp_file1
+	echo this-is-file2 > dict_regexp_file2
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open regexp:dict_regexp_file.map \
+	    read src_rhs_is_file <dict_regexp_file.in 2>&1 | \
+	    sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_regexp_file.tmp
+	diff dict_regexp_file.ref dict_regexp_file.tmp
+	rm -f dict_regexp_file.tmp dict_regexp_file1 dict_regexp_file2
+
 dict_cidr_test: dict_open dict_cidr.in dict_cidr.map dict_cidr.ref
-	$(SHLIB_ENV) ./dict_open cidr:dict_cidr.map read <dict_cidr.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_cidr.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open cidr:dict_cidr.map read <dict_cidr.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_cidr.tmp
 	diff dict_cidr.ref dict_cidr.tmp
 	rm -f dict_cidr.tmp
 
+dict_cidr_file_test: dict_open dict_cidr_file.in dict_cidr_file.map dict_cidr_file.ref
+	echo this-is-file1 > dict_cidr_file1
+	echo this-is-file2 > dict_cidr_file2
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open cidr:dict_cidr_file.map \
+	    read src_rhs_is_file <dict_cidr_file.in 2>&1 | \
+	    sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_cidr_file.tmp
+	diff dict_cidr_file.ref dict_cidr_file.tmp
+	rm -f dict_cidr_file.tmp dict_cidr_file1 dict_cidr_file2
+
+miss_endif_cidr_test: dict_open miss_endif_cidr.map miss_endif_cidr.ref
+	echo get 1.2.3.5 | $(SHLIB_ENV) ${VALGRIND} ./dict_open cidr:miss_endif_cidr.map read 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_cidr.tmp
+	diff miss_endif_cidr.ref dict_cidr.tmp
+	rm -f dict_cidr.tmp
+
+miss_endif_pcre_test: dict_open miss_endif_re.map miss_endif_pcre.ref
+	echo get 1.2.3.5 | $(SHLIB_ENV) ${VALGRIND} ./dict_open pcre:miss_endif_re.map read 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_pcre.tmp
+	diff miss_endif_pcre.ref dict_pcre.tmp
+	rm -f dict_pcre.tmp
+
+miss_endif_regexp_test: dict_open miss_endif_re.map miss_endif_regexp.ref
+	echo get 1.2.3.5 | $(SHLIB_ENV) ${VALGRIND} ./dict_open regexp:miss_endif_re.map read 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' >dict_regexp.tmp
+	diff miss_endif_regexp.ref dict_regexp.tmp
+	rm -f dict_regexp.tmp
+
+split_qnameval_test: split_qnameval update
+	$(SHLIB_ENV) ${VALGRIND} ./split_qnameval
+
 dict_seq_test: dict_open testdb dict_seq.in dict_seq.ref
 	rm -f testdb.db testdb.dir testdb.pag
-	$(SHLIB_ENV) ./dict_open hash:testdb create sync < dict_seq.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' > dict_seq.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open hash:testdb create sync < dict_seq.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' > dict_seq.tmp
 	diff dict_seq.ref dict_seq.tmp
 	rm -f testdb.db testdb.dir testdb.pag dict_seq.tmp
 
 host_port_test: host_port host_port.in host_port.ref
-	$(SHLIB_ENV) ./host_port <host_port.in >host_port.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./host_port <host_port.in >host_port.tmp 2>&1
 	diff host_port.ref host_port.tmp
 	rm -f host_port.tmp
 
 attr_scan_plain_test: attr_print_plain attr_scan_plain attr_scan_plain.ref
-	($(SHLIB_ENV) ./attr_print_plain 2>&3 | (sleep 1;  $(SHLIB_ENV) ./attr_scan_plain)) >attr_scan_plain.tmp 2>&1 3>&1
+	($(SHLIB_ENV) ${VALGRIND} ./attr_print_plain 2>&3 | (sleep 1;  $(SHLIB_ENV) ./attr_scan_plain)) >attr_scan_plain.tmp 2>&1 3>&1
 	diff attr_scan_plain.ref attr_scan_plain.tmp
 	rm -f attr_scan_plain.tmp
 
 htable_test: htable /usr/share/dict/words
-	$(SHLIB_ENV) ./htable < /usr/share/dict/words
+	$(SHLIB_ENV) ${VALGRIND} ./htable < /usr/share/dict/words
 
 hex_code_test: hex_code
-	$(SHLIB_ENV) ./hex_code
+	$(SHLIB_ENV) ${VALGRIND} ./hex_code
 
 timecmp_test: timecmp
-	$(SHLIB_ENV) ./timecmp
+	$(SHLIB_ENV) ${VALGRIND} ./timecmp
 
 myaddrinfo_test: myaddrinfo myaddrinfo.ref myaddrinfo.ref2
-	$(SHLIB_ENV) ./myaddrinfo all belly.porcupine.org 168.100.189.2 >myaddrinfo.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./myaddrinfo all belly.porcupine.org 168.100.189.2 >myaddrinfo.tmp 2>&1
 	diff myaddrinfo.ref myaddrinfo.tmp
 	rm -f myaddrinfo.tmp
-	$(SHLIB_ENV) ./myaddrinfo all null.porcupine.org 10.0.0.0 >myaddrinfo.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./myaddrinfo all null.porcupine.org 10.0.0.0 >myaddrinfo.tmp 2>&1
 	diff myaddrinfo.ref2 myaddrinfo.tmp
 	rm -f myaddrinfo.tmp
 
 myaddrinfo4_test: myaddrinfo4 myaddrinfo4.ref myaddrinfo4.ref2
-	$(SHLIB_ENV) ./myaddrinfo4 all belly.porcupine.org 168.100.189.2 >myaddrinfo4.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./myaddrinfo4 all belly.porcupine.org 168.100.189.2 >myaddrinfo4.tmp 2>&1
 	diff myaddrinfo4.ref myaddrinfo4.tmp
-	$(SHLIB_ENV) ./myaddrinfo4 all null.porcupine.org 10.0.0.0 >myaddrinfo4.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./myaddrinfo4 all null.porcupine.org 10.0.0.0 >myaddrinfo4.tmp 2>&1
 	diff myaddrinfo4.ref2 myaddrinfo4.tmp
 	rm -f myaddrinfo4.tmp
 
 format_tv_test: format_tv format_tv.in format_tv.ref
-	$(SHLIB_ENV) ./format_tv <format_tv.in >format_tv.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./format_tv <format_tv.in >format_tv.tmp
 	diff format_tv.ref format_tv.tmp
 	rm -f format_tv.tmp
 
 ip_match_test: ip_match ip_match.in ip_match.ref
-	$(SHLIB_ENV) ./ip_match <ip_match.in >ip_match.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./ip_match <ip_match.in >ip_match.tmp
 	diff ip_match.ref ip_match.tmp
 	rm -f ip_match.tmp
 
@@ -663,113 +741,183 @@ name_mask_tests: name_mask_test0 name_mask_test1 name_mask_test2 \
 	name_mask_test7 name_mask_test8 name_mask_test9
 
 name_mask_test0: name_mask name_mask.in name_mask.ref0
-	$(SHLIB_ENV) ./name_mask IGNORE IGNORE < name_mask.in > name_mask.tmp 2>&0
+	$(SHLIB_ENV) ${VALGRIND} ./name_mask IGNORE IGNORE < name_mask.in > name_mask.tmp 2>&1
 	diff name_mask.ref0 name_mask.tmp
 	rm -f name_mask.tmp
 
 name_mask_test1: name_mask name_mask.in name_mask.ref1
-	$(SHLIB_ENV) ./name_mask NUMBER,WARN NUMBER < name_mask.in > name_mask.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./name_mask NUMBER,WARN NUMBER < name_mask.in > name_mask.tmp 2>&1
 	diff name_mask.ref1 name_mask.tmp
 	rm -f name_mask.tmp
 
 name_mask_test2: name_mask name_mask.in name_mask.ref2
-	$(SHLIB_ENV) ./name_mask NUMBER,RETURN NUMBER < name_mask.in > name_mask.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./name_mask NUMBER,RETURN NUMBER < name_mask.in > name_mask.tmp 2>&1
 	diff name_mask.ref2 name_mask.tmp
 	rm -f name_mask.tmp
 
 name_mask_test3: name_mask name_mask.in name_mask.ref3
-	$(SHLIB_ENV) ./name_mask WARN NUMBER < name_mask.in > name_mask.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./name_mask WARN NUMBER < name_mask.in > name_mask.tmp 2>&1
 	diff name_mask.ref3 name_mask.tmp
 	rm -f name_mask.tmp
 
 name_mask_test4: name_mask name_mask.in name_mask.ref4
-	$(SHLIB_ENV) ./name_mask RETURN NUMBER < name_mask.in > name_mask.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./name_mask RETURN NUMBER < name_mask.in > name_mask.tmp 2>&1
 	diff name_mask.ref4 name_mask.tmp
 	rm -f name_mask.tmp
 
 name_mask_test5: name_mask name_mask.in name_mask.ref5
-	$(SHLIB_ENV) ./name_mask NUMBER,WARN RETURN < name_mask.in > name_mask.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./name_mask NUMBER,WARN RETURN < name_mask.in > name_mask.tmp 2>&1
 	diff name_mask.ref5 name_mask.tmp
 	rm -f name_mask.tmp
 
 name_mask_test6: name_mask name_mask.in name_mask.ref6
-	$(SHLIB_ENV) ./name_mask NUMBER,WARN WARN < name_mask.in > name_mask.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./name_mask NUMBER,WARN WARN < name_mask.in > name_mask.tmp 2>&1
 	diff name_mask.ref6 name_mask.tmp
 	rm -f name_mask.tmp
 
 name_mask_test7: name_mask name_mask.in name_mask.ref7
-	$(SHLIB_ENV) ./name_mask NUMBER,WARN IGNORE < name_mask.in > name_mask.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./name_mask NUMBER,WARN IGNORE < name_mask.in > name_mask.tmp 2>&1
 	diff name_mask.ref7 name_mask.tmp
 	rm -f name_mask.tmp
 
 name_mask_test8: name_mask name_mask.in name_mask.ref8
-	$(SHLIB_ENV) ./name_mask NUMBER,WARN NUMBER,COMMA < name_mask.in > name_mask.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./name_mask NUMBER,WARN NUMBER,COMMA < name_mask.in > name_mask.tmp 2>&1
 	diff name_mask.ref8 name_mask.tmp
 	rm -f name_mask.tmp
 
 name_mask_test9: name_mask name_mask.in name_mask.ref9
-	$(SHLIB_ENV) ./name_mask NUMBER,WARN NUMBER,PIPE < name_mask.in > name_mask.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./name_mask NUMBER,WARN NUMBER,PIPE < name_mask.in > name_mask.tmp 2>&1
 	diff name_mask.ref9 name_mask.tmp
 	rm -f name_mask.tmp
 
-base32_code_test: base32_code
-	$(SHLIB_ENV) ./base32_code
+byte_mask_tests: byte_mask_test0 byte_mask_test1 byte_mask_test2
 
-dict_thash_test: ../postmap/postmap dict_thash.map
-	$(SHLIB_ENV) ../postmap/postmap -s texthash:dict_thash.map | sort >dict_thash.tmp 2>&1
-	tr '[A-Z]' '[a-z]' <dict_thash.map | sort | diff -b dict_thash.tmp -
+byte_mask_test0: byte_mask byte_mask.in byte_mask.ref0
+	while read line; do \
+	    echo "$$line" | $(SHLIB_ENV) ${VALGRIND} ./byte_mask IGNORE IGNORE; \
+	done < byte_mask.in > byte_mask.tmp 2>&1
+	diff byte_mask.ref0 byte_mask.tmp
+	rm -f byte_mask.tmp
+
+byte_mask_test1: byte_mask byte_mask.in byte_mask.ref1
+	while read line; do \
+	    echo "$$line" | $(SHLIB_ENV) ${VALGRIND} ./byte_mask WARN WARN; \
+	done < byte_mask.in > byte_mask.tmp 2>&1
+	diff byte_mask.ref1 byte_mask.tmp
+	rm -f byte_mask.tmp
+
+byte_mask_test2: byte_mask byte_mask.in byte_mask.ref2
+	-while read line; do \
+	    echo "$$line" | $(SHLIB_ENV) ${VALGRIND} ./byte_mask FATAL FATAL; \
+	done < byte_mask.in > byte_mask.tmp 2>&1
+	diff byte_mask.ref2 byte_mask.tmp
+	rm -f byte_mask.tmp
+
+base32_code_test: base32_code
+	$(SHLIB_ENV) ${VALGRIND} ./base32_code
+
+dict_thash_test: ../postmap/postmap dict_thash.map dict_thash.in dict_thash.ref
+	$(SHLIB_ENV) ../postmap/postmap -fs texthash:dict_thash.map 2>&1 | \
+	    LANG=C sort | diff dict_thash.map -
+	$(SHLIB_ENV) ../postmap/postmap -fs texthash:dict_thash.in >dict_thash.tmp 2>&1
+	diff dict_thash.ref dict_thash.tmp
 	rm -f dict_thash.tmp
 
 surrogate_test: dict_open surrogate.ref
 	cp /dev/null surrogate.tmp
-	echo get foo|$(SHLIB_ENV) ./dict_open cidr:/xx write >>surrogate.tmp 2>&1
-	echo get foo|$(SHLIB_ENV) ./dict_open cidr:/xx read >>surrogate.tmp 2>&1
-	echo get foo|$(SHLIB_ENV) ./dict_open pcre:/xx write >>surrogate.tmp 2>&1
-	echo get foo|$(SHLIB_ENV) ./dict_open pcre:/xx read >>surrogate.tmp 2>&1
-	echo get foo|$(SHLIB_ENV) ./dict_open regexp:/xx write >>surrogate.tmp 2>&1
-	echo get foo|$(SHLIB_ENV) ./dict_open regexp:/xx read >>surrogate.tmp 2>&1
-	echo get foo|$(SHLIB_ENV) ./dict_open unix:xx write >>surrogate.tmp 2>&1
-	echo get foo|$(SHLIB_ENV) ./dict_open unix:xx read >>surrogate.tmp 2>&1
-	echo get foo|$(SHLIB_ENV) ./dict_open texthash:/xx write >>surrogate.tmp 2>&1
-	echo get foo|$(SHLIB_ENV) ./dict_open texthash:/xx read >>surrogate.tmp 2>&1
-	echo get foo|$(SHLIB_ENV) ./dict_open hash:/xx read >>surrogate.tmp 2>&1
+	echo get foo|$(SHLIB_ENV) ${VALGRIND} ./dict_open cidr:/xx write >>surrogate.tmp 2>&1
+	echo get foo|$(SHLIB_ENV) ${VALGRIND} ./dict_open cidr:/xx read >>surrogate.tmp 2>&1
+	echo get foo|$(SHLIB_ENV) ${VALGRIND} ./dict_open pcre:/xx write >>surrogate.tmp 2>&1
+	echo get foo|$(SHLIB_ENV) ${VALGRIND} ./dict_open pcre:/xx read >>surrogate.tmp 2>&1
+	echo get foo|$(SHLIB_ENV) ${VALGRIND} ./dict_open regexp:/xx write >>surrogate.tmp 2>&1
+	echo get foo|$(SHLIB_ENV) ${VALGRIND} ./dict_open regexp:/xx read >>surrogate.tmp 2>&1
+	echo get foo|$(SHLIB_ENV) ${VALGRIND} ./dict_open unix:xx write >>surrogate.tmp 2>&1
+	echo get foo|$(SHLIB_ENV) ${VALGRIND} ./dict_open unix:xx read >>surrogate.tmp 2>&1
+	echo get foo|$(SHLIB_ENV) ${VALGRIND} ./dict_open texthash:/xx write >>surrogate.tmp 2>&1
+	echo get foo|$(SHLIB_ENV) ${VALGRIND} ./dict_open texthash:/xx read >>surrogate.tmp 2>&1
+	echo get foo|$(SHLIB_ENV) ${VALGRIND} ./dict_open hash:/xx read >>surrogate.tmp 2>&1
 	diff surrogate.ref surrogate.tmp
 	rm -f surrogate.tmp
 
 dict_static_test: dict_open dict_static.ref
 	(set -e; \
 	(echo get foo; echo get bar) | $(SHLIB_ENV) \
-	    ./dict_open static:fooxx read; \
-	$(SHLIB_ENV) ./dict_open static:'{ foo xx ' read </dev/null; \
-	$(SHLIB_ENV) ./dict_open static:'{ foo xx }x' read </dev/null; \
+	    ${VALGRIND} ./dict_open static:fooxx read; \
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open static:'{ foo xx ' read </dev/null; \
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open static:'{ foo xx }x' read </dev/null; \
 	(echo get foo; echo get bar) | $(SHLIB_ENV) \
-	    ./dict_open static:'{ foo xx }' read; \
+	    ${VALGRIND} ./dict_open static:'{ foo xx }' read; \
 	) >dict_static.tmp 2>&1
 	diff dict_static.ref dict_static.tmp
 	rm -f dict_static.tmp
 
+dict_static_file_test: dict_open dict_static_file.ref
+	echo this-is-file1 > dict_static_file1
+	(set -e; \
+	echo get foo | $(SHLIB_ENV) \
+	    ${VALGRIND} ./dict_open static:fooxx read src_rhs_is_file; \
+	(echo get file1; echo get file2) | $(SHLIB_ENV) \
+	    ${VALGRIND} ./dict_open static:'{ dict_static_file1 }' read src_rhs_is_file; \
+	) >dict_static_file.tmp 2>&1
+	diff dict_static_file.ref dict_static_file.tmp
+	rm -f dict_static_file.tmp dict_static_file1
+
+dict_random_test: dict_open dict_random.ref
+	(set -e; \
+	(echo get foo; echo get bar) | $(SHLIB_ENV) \
+	    ${VALGRIND} ./dict_open randmap:'{123 123}' read; \
+	echo get foo | $(SHLIB_ENV) ${VALGRIND} ./dict_open randmap:123 read; \
+	echo get foo | $(SHLIB_ENV) ${VALGRIND} ./dict_open randmap:'{ 123 ' read; \
+	echo get foo | $(SHLIB_ENV) ${VALGRIND} ./dict_open randmap:'{ 123 }x' read; \
+	) >dict_random.tmp 2>&1
+	diff dict_random.ref dict_random.tmp
+	rm -f dict_random.tmp
+
+dict_random_file_test: dict_open dict_random_file.ref
+	echo this-is-file1 > dict_random_file1
+	(set -e; \
+	echo get foo | $(SHLIB_ENV) \
+	    ${VALGRIND} ./dict_open randmap:'{fooxx}' read src_rhs_is_file; \
+	(echo get foo; echo get bar) | $(SHLIB_ENV) \
+	    ${VALGRIND} ./dict_open randmap:'{ dict_random_file1 }' read src_rhs_is_file; \
+	) >dict_random_file.tmp 2>&1
+	diff dict_random_file.ref dict_random_file.tmp
+	rm -f dict_random_file.tmp dict_random_file1
+
 dict_inline_test: dict_open dict_inline.ref
 	(set -e; \
-	$(SHLIB_ENV) ./dict_open inline:'{ }' read </dev/null; \
-	$(SHLIB_ENV) ./dict_open inline:'{ foo = xx }' read </dev/null; \
-	$(SHLIB_ENV) ./dict_open inline:'{ foo=xx }x' read </dev/null; \
-	$(SHLIB_ENV) ./dict_open inline:'{ foo=xx x' read </dev/null; \
-	$(SHLIB_ENV) ./dict_open inline:'{ foo=xx {x=y}x}' read </dev/null; \
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open inline:'{ }' read </dev/null; \
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open inline:'{ foo = xx }' read </dev/null; \
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open inline:'{ foo=xx }x' read </dev/null; \
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open inline:'{ foo=xx x' read </dev/null; \
+	$(SHLIB_ENV) ${VALGRIND} ./dict_open inline:'{ foo=xx {x=y}x}' read </dev/null; \
 	(echo get foo; echo get bar; echo get baz) | $(SHLIB_ENV) \
-	    ./dict_open inline:'{ foo=XX, { bAr = lotsa stuff }}' read fold_fix; \
+	    ${VALGRIND} ./dict_open inline:'{ foo=XX, { bAr = lotsa stuff }}' read fold_fix; \
 	(echo get foo; echo get bar; echo get baz) | $(SHLIB_ENV) \
-	    ./dict_open inline:'{ foo=XX, { bAr = lotsa stuff }}' read 'fold_fix,utf8_request'; \
+	    ${VALGRIND} ./dict_open inline:'{ foo=XX, { bAr = lotsa stuff }}' read 'fold_fix,utf8_request'; \
 	) >dict_inline.tmp 2>&1
 	diff dict_inline.ref dict_inline.tmp
 	rm -f dict_inline.tmp
 
+dict_inline_file_test: dict_open dict_inline_file.ref
+	(set -e; \
+	echo get foo | $(SHLIB_ENV) ${VALGRIND} \
+	    ./dict_open inline:'{ foo=xx, bar=yy }' read src_rhs_is_file; \
+	echo this-is-file1 > dict_inline_file1; \
+	echo this-is-file2 > dict_inline_file2; \
+	(echo get file1; echo get file2; echo get file3) | $(SHLIB_ENV) \
+	    ${VALGRIND} ./dict_open inline:'{ file1=dict_inline_file1, file2=dict_inline_file2}' read src_rhs_is_file; \
+	) >dict_inline_file.tmp 2>&1
+	diff dict_inline_file.ref dict_inline_file.tmp
+	rm -f dict_inline_file.tmp dict_inline_file1 dict_inline_file2
+
 midna_domain_test: midna_domain midna_domain_test.in midna_domain_test.ref
-	$(SHLIB_ENV) ./midna_domain <midna_domain_test.in >midna_domain_test.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./midna_domain <midna_domain_test.in >midna_domain_test.tmp 2>&1
 	diff midna_domain_test.ref midna_domain_test.tmp
 	rm -f midna_domain_test.tmp
 
 casefold_test: casefold casefold_test.in casefold_test.ref
-	$(SHLIB_ENV) ./casefold <casefold_test.in >casefold_test.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./casefold <casefold_test.in >casefold_test.tmp 2>&1
 	diff casefold_test.ref casefold_test.tmp
 	rm -f casefold_test.tmp
 
@@ -780,9 +928,34 @@ dict_utf8_test: dict_open dict_utf8_test.in dict_utf8_test.ref
 
 strcasecmp_utf8_test: strcasecmp_utf8 strcasecmp_utf8_test.in \
 	strcasecmp_utf8_test.ref
-	$(SHLIB_ENV) ./strcasecmp_utf8 <strcasecmp_utf8_test.in >strcasecmp_utf8_test.tmp 2>&1
+	$(SHLIB_ENV) ${VALGRIND} ./strcasecmp_utf8 <strcasecmp_utf8_test.in >strcasecmp_utf8_test.tmp 2>&1
 	diff strcasecmp_utf8_test.ref strcasecmp_utf8_test.tmp
 	rm -f strcasecmp_utf8_test.tmp
+
+vbuf_print_test: vbuf_print vbuf_print_test.in vbuf_print_test.ref
+	$(SHLIB_ENV) ${VALGRIND} ./vbuf_print <vbuf_print_test.in >vbuf_print_test.tmp 2>&1
+	diff vbuf_print_test.ref vbuf_print_test.tmp
+	rm -f vbuf_print_test.tmp
+
+dict_union_test: dict_open dict_union_test.in dict_union_test.ref
+	 $(SHLIB_ENV) sh -x dict_union_test.in >dict_union_test.tmp 2>&1
+	diff dict_union_test.ref dict_union_test.tmp
+	rm -f dict_union_test.tmp
+
+dict_pipe_test: dict_open dict_pipe_test.in dict_pipe_test.ref
+	 $(SHLIB_ENV) sh -x dict_pipe_test.in >dict_pipe_test.tmp 2>&1
+	diff dict_pipe_test.ref dict_pipe_test.tmp
+	rm -f dict_pipe_test.tmp
+
+vstring_test: dict_open vstring vstring_test.ref
+	 $(SHLIB_ENV) ./vstring one two three >vstring_test.tmp 2>&1
+	diff vstring_test.ref vstring_test.tmp
+	rm -f vstring_test.tmp
+
+vstream_test: dict_open vstream vstream_test.in vstream_test.ref
+	$(SHLIB_ENV) ./vstream <vstream_test.in >vstream_test.tmp 2>&1
+	diff vstream_test.ref vstream_test.tmp
+	rm -f vstream_test.tmp
 
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
@@ -790,7 +963,7 @@ depend: $(MAKES)
 	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' \
 	    -e 's/o: \.\//o: /' -e p -e '}' ; \
-	done | sort -u) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
+	done | LANG=C sort -u) | grep -v '[.][o][:][ ][/]' >$$$$ && mv $$$$ Makefile.in
 	@$(EXPORT) make -f Makefile.in Makefile 1>&2
 
 # do not edit below this line - it is generated by 'make depend'
@@ -823,6 +996,32 @@ argv.o: argv.h
 argv.o: msg.h
 argv.o: mymalloc.h
 argv.o: sys_defs.h
+argv_attr_print.o: argv.h
+argv_attr_print.o: argv_attr.h
+argv_attr_print.o: argv_attr_print.c
+argv_attr_print.o: attr.h
+argv_attr_print.o: check_arg.h
+argv_attr_print.o: htable.h
+argv_attr_print.o: msg.h
+argv_attr_print.o: mymalloc.h
+argv_attr_print.o: nvtable.h
+argv_attr_print.o: sys_defs.h
+argv_attr_print.o: vbuf.h
+argv_attr_print.o: vstream.h
+argv_attr_print.o: vstring.h
+argv_attr_scan.o: argv.h
+argv_attr_scan.o: argv_attr.h
+argv_attr_scan.o: argv_attr_scan.c
+argv_attr_scan.o: attr.h
+argv_attr_scan.o: check_arg.h
+argv_attr_scan.o: htable.h
+argv_attr_scan.o: msg.h
+argv_attr_scan.o: mymalloc.h
+argv_attr_scan.o: nvtable.h
+argv_attr_scan.o: sys_defs.h
+argv_attr_scan.o: vbuf.h
+argv_attr_scan.o: vstream.h
+argv_attr_scan.o: vstring.h
 argv_split.o: argv.h
 argv_split.o: argv_split.c
 argv_split.o: check_arg.h
@@ -974,6 +1173,15 @@ binhash.o: binhash.h
 binhash.o: msg.h
 binhash.o: mymalloc.h
 binhash.o: sys_defs.h
+byte_mask.o: byte_mask.c
+byte_mask.o: byte_mask.h
+byte_mask.o: check_arg.h
+byte_mask.o: msg.h
+byte_mask.o: mymalloc.h
+byte_mask.o: stringops.h
+byte_mask.o: sys_defs.h
+byte_mask.o: vbuf.h
+byte_mask.o: vstring.h
 casefold.o: casefold.c
 casefold.o: check_arg.h
 casefold.o: msg.h
@@ -1088,6 +1296,7 @@ dict_cidr.o: dict.h
 dict_cidr.o: dict_cidr.c
 dict_cidr.o: dict_cidr.h
 dict_cidr.o: msg.h
+dict_cidr.o: mvect.h
 dict_cidr.o: myaddrinfo.h
 dict_cidr.o: myflock.h
 dict_cidr.o: mymalloc.h
@@ -1152,6 +1361,18 @@ dict_fail.o: sys_defs.h
 dict_fail.o: vbuf.h
 dict_fail.o: vstream.h
 dict_fail.o: vstring.h
+dict_file.o: argv.h
+dict_file.o: base64_code.h
+dict_file.o: check_arg.h
+dict_file.o: dict.h
+dict_file.o: dict_file.c
+dict_file.o: msg.h
+dict_file.o: myflock.h
+dict_file.o: mymalloc.h
+dict_file.o: sys_defs.h
+dict_file.o: vbuf.h
+dict_file.o: vstream.h
+dict_file.o: vstring.h
 dict_ht.o: argv.h
 dict_ht.o: check_arg.h
 dict_ht.o: dict.h
@@ -1269,6 +1490,7 @@ dict_pcre.o: dict_pcre.c
 dict_pcre.o: dict_pcre.h
 dict_pcre.o: mac_parse.h
 dict_pcre.o: msg.h
+dict_pcre.o: mvect.h
 dict_pcre.o: myflock.h
 dict_pcre.o: mymalloc.h
 dict_pcre.o: readlline.h
@@ -1314,6 +1536,7 @@ dict_regexp.o: dict_regexp.c
 dict_regexp.o: dict_regexp.h
 dict_regexp.o: mac_parse.h
 dict_regexp.o: msg.h
+dict_regexp.o: mvect.h
 dict_regexp.o: myflock.h
 dict_regexp.o: mymalloc.h
 dict_regexp.o: readlline.h
@@ -1726,9 +1949,18 @@ load_file.o: vbuf.h
 load_file.o: vstream.h
 load_file.o: warn_stat.h
 load_lib.o: load_lib.c
-load_lib.o: load_lib.h
-load_lib.o: msg.h
 load_lib.o: sys_defs.h
+logwriter.o: check_arg.h
+logwriter.o: iostuff.h
+logwriter.o: logwriter.c
+logwriter.o: logwriter.h
+logwriter.o: msg.h
+logwriter.o: mymalloc.h
+logwriter.o: safe_open.h
+logwriter.o: sys_defs.h
+logwriter.o: vbuf.h
+logwriter.o: vstream.h
+logwriter.o: vstring.h
 lowercase.o: check_arg.h
 lowercase.o: lowercase.c
 lowercase.o: stringops.h
@@ -1809,6 +2041,7 @@ midna_domain.o: midna_domain.c
 midna_domain.o: midna_domain.h
 midna_domain.o: msg.h
 midna_domain.o: mymalloc.h
+midna_domain.o: name_mask.h
 midna_domain.o: stringops.h
 midna_domain.o: sys_defs.h
 midna_domain.o: valid_hostname.h
@@ -1818,6 +2051,20 @@ msg.o: msg.c
 msg.o: msg.h
 msg.o: msg_output.h
 msg.o: sys_defs.h
+msg_logger.o: check_arg.h
+msg_logger.o: connect.h
+msg_logger.o: iostuff.h
+msg_logger.o: logwriter.h
+msg_logger.o: msg.h
+msg_logger.o: msg_logger.c
+msg_logger.o: msg_logger.h
+msg_logger.o: msg_output.h
+msg_logger.o: mymalloc.h
+msg_logger.o: safe.h
+msg_logger.o: sys_defs.h
+msg_logger.o: vbuf.h
+msg_logger.o: vstream.h
+msg_logger.o: vstring.h
 msg_output.o: check_arg.h
 msg_output.o: msg_output.c
 msg_output.o: msg_output.h
@@ -1841,6 +2088,7 @@ msg_syslog.o: msg.h
 msg_syslog.o: msg_output.h
 msg_syslog.o: msg_syslog.c
 msg_syslog.o: msg_syslog.h
+msg_syslog.o: mymalloc.h
 msg_syslog.o: safe.h
 msg_syslog.o: stringops.h
 msg_syslog.o: sys_defs.h
@@ -2125,6 +2373,13 @@ split_nameval.o: stringops.h
 split_nameval.o: sys_defs.h
 split_nameval.o: vbuf.h
 split_nameval.o: vstring.h
+split_qnameval.o: check_arg.h
+split_qnameval.o: msg.h
+split_qnameval.o: split_qnameval.c
+split_qnameval.o: stringops.h
+split_qnameval.o: sys_defs.h
+split_qnameval.o: vbuf.h
+split_qnameval.o: vstring.h
 stat_as.o: msg.h
 stat_as.o: set_eugid.h
 stat_as.o: stat_as.c
@@ -2225,6 +2480,17 @@ unix_connect.o: sane_connect.h
 unix_connect.o: sys_defs.h
 unix_connect.o: timed_connect.h
 unix_connect.o: unix_connect.c
+unix_dgram_connect.o: connect.h
+unix_dgram_connect.o: iostuff.h
+unix_dgram_connect.o: msg.h
+unix_dgram_connect.o: sys_defs.h
+unix_dgram_connect.o: unix_dgram_connect.c
+unix_dgram_listen.o: htable.h
+unix_dgram_listen.o: iostuff.h
+unix_dgram_listen.o: listen.h
+unix_dgram_listen.o: msg.h
+unix_dgram_listen.o: sys_defs.h
+unix_dgram_listen.o: unix_dgram_listen.c
 unix_listen.o: htable.h
 unix_listen.o: iostuff.h
 unix_listen.o: listen.h
@@ -2298,6 +2564,7 @@ vbuf.o: vbuf.c
 vbuf.o: vbuf.h
 vbuf_print.o: check_arg.h
 vbuf_print.o: msg.h
+vbuf_print.o: mymalloc.h
 vbuf_print.o: sys_defs.h
 vbuf_print.o: vbuf.h
 vbuf_print.o: vbuf_print.c

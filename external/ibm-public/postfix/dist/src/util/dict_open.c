@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_open.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_open.c,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -164,6 +164,26 @@
 /*	request with a non-UTF-8 key, skip an update request with
 /*	a non-UTF-8 value, and fail a lookup request with a non-UTF-8
 /*	value.
+/* .IP DICT_FLAG_SRC_RHS_IS_FILE
+/*	With dictionaries that are created from source text, each
+/*	value in the source of a dictionary specifies a list of
+/*	file names separated by comma and/or whitespace. The file
+/*	contents are concatenated with a newline inserted between
+/*	files, and the base64-encoded result is stored under the
+/*	key.
+/* .sp
+/*	NOTE 1: it is up to the application to decode lookup results
+/*	with dict_file_lookup() or equivalent (this requires that
+/*	the dictionary is opened with DICT_FLAG_SRC_RHS_IS_FILE).
+/*	Decoding is not built into the normal dictionary lookup
+/*	method, because that would complicate dictionary nesting,
+/*	pipelining, and proxying.
+/* .sp
+/*	NOTE 2: it is up to the application to convert file names
+/*	into base64-encoded file content before calling the dictionary
+/*	update method (see dict_file(3) for support). Automatic
+/*	file content encoding is available only when a dictionary
+/*	is created from source text.
 /* .PP
 /*	Specify DICT_FLAG_NONE for no special processing.
 /*
@@ -284,6 +304,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */

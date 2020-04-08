@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_bios.c,v 1.5.30.1 2019/06/10 22:08:05 christos Exp $	*/
+/*	$NetBSD: intel_bios.c,v 1.5.30.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2006 Intel Corporation
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_bios.c,v 1.5.30.1 2019/06/10 22:08:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_bios.c,v 1.5.30.2 2020/04/08 14:08:23 martin Exp $");
 
 #include <linux/dmi.h>
 #include <drm/drm_dp_helper.h>
@@ -1248,7 +1248,7 @@ static const struct dmi_system_id intel_no_opregion_vbt[] = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "97027RG"),
 		},
 	},
-	{ 	.callback = NULL, }
+	{ }
 };
 
 static const struct bdb_header *validate_vbt(const void *base,
@@ -1256,7 +1256,7 @@ static const struct bdb_header *validate_vbt(const void *base,
 					     const void *_vbt,
 					     const char *source)
 {
-	size_t offset = (const char *)_vbt - (const char *)base;
+	size_t offset = _vbt - base;
 	const struct vbt_header *vbt = _vbt;
 	const struct bdb_header *bdb;
 
@@ -1276,7 +1276,7 @@ static const struct bdb_header *validate_vbt(const void *base,
 		return NULL;
 	}
 
-	bdb = (const void *)((const char *)base + offset);
+	bdb = base + offset;
 	if (offset + bdb->bdb_size > size) {
 		DRM_DEBUG_DRIVER("BDB incomplete\n");
 		return NULL;
@@ -1318,7 +1318,7 @@ static const struct bdb_header *find_vbt(void __iomem *bios, size_t size)
 			 */
 			void *_bios = (void __force *) bios;
 
-			bdb = validate_vbt(_bios, size, (char *)_bios + i, "PCI ROM");
+			bdb = validate_vbt(_bios, size, _bios + i, "PCI ROM");
 			break;
 		}
 	}

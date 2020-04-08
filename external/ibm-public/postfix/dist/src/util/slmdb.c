@@ -1,4 +1,4 @@
-/*	$NetBSD: slmdb.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: slmdb.c,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -158,7 +158,7 @@
 /*	result value.
 /* .IP "CA_SLMDB_CTL_NOTIFY_FN(void (*)(void *, int, ...))"
 /*	Call-back function pointer. The function is called to report
-/*	succesful error recovery. The arguments are the application
+/*	successful error recovery. The arguments are the application
 /*	context, the MDB error code, and additional arguments that
 /*	depend on the error code.  Details are given in the section
 /*	"ERROR RECOVERY".

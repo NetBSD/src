@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-des-common.c,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
+/*	$NetBSD: crypto-des-common.c,v 1.3.4.1 2020/04/08 14:03:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -79,7 +79,7 @@ _krb5_des_checksum(krb5_context context,
     EVP_DigestUpdate(m, data, len);
     EVP_DigestFinal_ex (m, p + 8, NULL);
     EVP_MD_CTX_destroy(m);
-    memset (&ivec, 0, sizeof(ivec));
+    memset_s (&ivec, sizeof(ivec), 0, sizeof(ivec));
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
     ctx->ectx = malloc(sizeof(*ctx->ectx));
@@ -113,7 +113,7 @@ _krb5_des_verify(krb5_context context,
     if (m == NULL)
 	return krb5_enomem(context);
 
-    memset(&ivec, 0, sizeof(ivec));
+    memset_s (&ivec, sizeof(ivec), 0, sizeof(ivec));
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
     ctx->dctx = malloc(sizeof(*ctx->dctx));
     EVP_CIPHER_CTX_init(ctx->dctx);
@@ -132,8 +132,8 @@ _krb5_des_verify(krb5_context context,
 	krb5_clear_error_message (context);
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
     }
-    memset(tmp, 0, sizeof(tmp));
-    memset(res, 0, sizeof(res));
+    memset_s (tmp, sizeof(tmp), 0, sizeof(tmp));
+    memset_s (res, sizeof(res), 0, sizeof(res));
     return ret;
 }
 

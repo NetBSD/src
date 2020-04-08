@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.7 2017/05/22 16:39:40 ragge Exp $	     */
+/*	$NetBSD: core_machdep.c,v 1.7.10.1 2020/04/08 14:07:56 martin Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -26,13 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.7 2017/05/22 16:39:40 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.7.10.1 2020/04/08 14:07:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/core.h>
+#include <sys/compat_stub.h>
 
 #include <sys/exec_aout.h>
 
@@ -67,11 +68,13 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE, &cseg,
+	    chdr->c_seghdrsize), ENOSYS, error);
 	if (error)
 		return error;
 
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE, &md_core,
+	    sizeof(md_core)), ENOSYS, error);
+
+	return error;
 }

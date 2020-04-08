@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.82.4.1 2019/06/10 21:42:27 christos Exp $
+.\"	$NetBSD: postinstall,v 1.82.4.2 2020/04/08 14:03:48 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -288,14 +288,12 @@ if you want to edit the password database.
 The X Window System
 .Pp
 If you installed the X Window System, you may want to read the
-chapter about X in the NetBSD Guide:
-.Lk http://www.NetBSD.org/docs/guide/en/chap-x.html
+chapter about X in the
+.Lk https://www.NetBSD.org/docs/guide/en/chap-x.html "NetBSD Guide" :
 .if \n[hp300] \{\
 Also, you may want to read through the
 .Nx*M
-FAQ entry on X11.
-.br
-.Lk http://www.NetBSD.org/ports/hp300/faq.html#x11
+.Lk https://www.NetBSD.org/ports/hp300/faq.html#x11 "FAQ entry on X11" .
 .\}
 .if \n[mac68k] \{\
 .(tag [Color_X]
@@ -325,13 +323,13 @@ packages the software may depend upon.
 .Pp
 .(bullet
 More information on the package system is available at
-.Lk http://www.NetBSD.org/docs/software/packages.html
+.Lk https://www.NetBSD.org/docs/software/packages.html
 .It
 A list of available packages suitable for browsing is at
-.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/current/pkgsrc/README.html
+.Lk https://cdn.NetBSD.org/pub/pkgsrc/current/pkgsrc/README.html
 .It
 Precompiled binaries can be found at
-.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/
+.Lk https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/
 usually in the
 .Pa \*M/\*V/All
 subdir.
@@ -371,7 +369,7 @@ post-installation configuration menu, the
 .Xr pkgsrc 7
 framework for compiling packages can be obtained by
 retrieving the file
-.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/pkgsrc.tar.gz .
+.Lk https://cdn.NetBSD.org/pub/pkgsrc/pkgsrc.tar.gz .
 It is typically extracted into
 .Pa /usr/pkgsrc
 (though other locations work fine) with the commands:

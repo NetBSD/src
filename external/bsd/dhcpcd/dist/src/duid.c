@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,6 @@
 
 #define	UUID_LEN	36
 #define	DUID_TIME_EPOCH 946684800
-#define	DUID_LLT	1
-#define	DUID_LL		3
-#define	DUID_UUID	4
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -121,33 +118,36 @@ duid_make_uuid(uint8_t *d)
 	return l;
 }
 
-static size_t
-duid_make(uint8_t *d, const struct interface *ifp, uint16_t type)
+size_t
+duid_make(void *d, const struct interface *ifp, uint16_t type)
 {
 	uint8_t *p;
 	uint16_t u16;
 	time_t t;
 	uint32_t u32;
 
+	if (ifp->hwlen == 0)
+		return 0;
+
 	p = d;
 	u16 = htons(type);
-	memcpy(p, &u16, 2);
-	p += 2;
+	memcpy(p, &u16, sizeof(u16));
+	p += sizeof(u16);
 	u16 = htons(ifp->family);
-	memcpy(p, &u16, 2);
-	p += 2;
+	memcpy(p, &u16, sizeof(u16));
+	p += sizeof(u16);
 	if (type == DUID_LLT) {
 		/* time returns seconds from jan 1 1970, but DUID-LLT is
 		 * seconds from jan 1 2000 modulo 2^32 */
 		t = time(NULL) - DUID_TIME_EPOCH;
 		u32 = htonl((uint32_t)t & 0xffffffff);
-		memcpy(p, &u32, 4);
-		p += 4;
+		memcpy(p, &u32, sizeof(u32));
+		p += sizeof(u32);
 	}
 	/* Finally, add the MAC address of the interface */
 	memcpy(p, ifp->hwaddr, ifp->hwlen);
 	p += ifp->hwlen;
-	return (size_t)(p - d);
+	return (size_t)(p - (uint8_t *)d);
 }
 
 #define DUID_STRLEN DUID_LEN * 3

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.239.4.1 2019/06/10 22:07:00 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.239.4.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.239.4.1 2019/06/10 22:07:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.239.4.2 2020/04/08 14:08:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1351,7 +1351,7 @@ linux_sys_sysinfo(struct lwp *l, const struct linux_sys_sysinfo_args *uap, regis
 	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[2] = la->ldavg[2] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.totalram = ctob((u_long)physmem);
-	si.freeram = (u_long)uvmexp.free * uvmexp.pagesize;
+	si.freeram = (u_long)uvm_availmem() * uvmexp.pagesize;
 	si.sharedram = 0;	/* XXX */
 	si.bufferram = (u_long)uvmexp.filepages * uvmexp.pagesize;
 	si.totalswap = (u_long)uvmexp.swpages * uvmexp.pagesize;

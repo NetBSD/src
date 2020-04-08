@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11.h,v 1.6.12.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11.h,v 1.5 2019/01/20 22:51:37 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11.h,v 1.6.12.2 2020/04/08 14:03:18 martin Exp $	*/
+/* $OpenBSD: ssh-pkcs11.h,v 1.6 2020/01/25 00:03:36 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 int	pkcs11_init(int);
 void	pkcs11_terminate(void);
-int	pkcs11_add_provider(char *, char *, struct sshkey ***);
+int	pkcs11_add_provider(char *, char *, struct sshkey ***, char ***);
 int	pkcs11_del_provider(char *);
 #ifdef WITH_PKCS11_KEYGEN
 struct sshkey *

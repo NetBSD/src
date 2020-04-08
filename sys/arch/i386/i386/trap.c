@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.295.2.1 2019/06/10 22:06:20 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.295.2.2 2020/04/08 14:07:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.295.2.1 2019/06/10 22:06:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.295.2.2 2020/04/08 14:07:40 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -536,10 +536,6 @@ kernelfault:
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
-		}
-		/* Allow a forced task switch. */
-		if (curcpu()->ci_want_resched) {
-			preempt();
 		}
 		goto out;
 

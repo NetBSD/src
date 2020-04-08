@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent_50.c,v 1.4.4.2 2019/06/10 22:07:36 christos Exp $ */
+/* $NetBSD: wsevent_50.c,v 1.4.4.3 2020/04/08 14:08:14 martin Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent_50.c,v 1.4.4.2 2019/06/10 22:07:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent_50.c,v 1.4.4.3 2020/04/08 14:08:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -148,7 +148,7 @@ void
 wsevent_50_init(void)
 {
 
-	MODULE_HOOK_SET(wscons_copyout_events_50_hook, "wsc_50",
+	MODULE_HOOK_SET(wscons_copyout_events_50_hook,
 	    wsevent_copyout_events50);
 }
 

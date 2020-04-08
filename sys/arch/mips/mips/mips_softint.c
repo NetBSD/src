@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_softint.c,v 1.7 2015/06/06 04:43:41 matt Exp $	*/
+/*	$NetBSD: mips_softint.c,v 1.7.18.1 2020/04/08 14:07:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.7 2015/06/06 04:43:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.7.18.1 2020/04/08 14:07:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -100,7 +100,6 @@ softint_trigger(uintptr_t si)
 		ci->ci_softints ^= SOFTINT_##level##_MASK; \
 		softint_fast_dispatch(ci->ci_softlwps[SOFTINT_##level], \
 		    IPL_SOFT##level); \
-		KASSERT(ci->ci_softlwps[SOFTINT_##level]->l_ctxswtch == 0); \
 		KASSERTMSG(ci->ci_cpl == IPL_HIGH, "cpl (%d) != HIGH", ci->ci_cpl); \
 		continue; \
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf_print.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: vbuf_print.c,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -43,6 +43,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -56,11 +61,12 @@
 #include <stdio.h>			/* sprintf() prototype */
 #include <float.h>			/* range of doubles */
 #include <errno.h>
-#include <limits.h>			/* CHAR_BIT */
+#include <limits.h>			/* CHAR_BIT, INT_MAX */
 
 /* Application-specific. */
 
 #include "msg.h"
+#include "mymalloc.h"
 #include "vbuf.h"
 #include "vstring.h"
 #include "vbuf_print.h"
@@ -70,16 +76,19 @@
   * in 4.4 BSD). However, that functionality is not widely available, and I
   * have no plans to maintain a complete 4.4 BSD *sprintf() alternative.
   * 
-  * This means we're stuck with plain old ugly sprintf() for all non-trivial
-  * conversions. We cannot use snprintf() even if it is available, because
-  * that routine truncates output, and we want everything. Therefore, it is
-  * up to us to ensure that sprintf() output always stays within bounds.
+  * Postfix vbuf_print() was implemented when many mainstream systems had no
+  * usable snprintf() implementation (usable means: return the length,
+  * excluding terminator, that the output would have if the buffer were large
+  * enough). For example, GLIBC before 2.1 (1999) snprintf() did not
+  * distinguish between formatting error and buffer size error, while SUN had
+  * no snprintf() implementation before Solaris 2.6 (1997).
   * 
-  * Due to the complexity of *printf() format strings we cannot easily predict
-  * how long results will be without actually doing the conversions. A trick
-  * used by some people is to print to a temporary file and to read the
-  * result back. In programs that do a lot of formatting, that might be too
-  * expensive.
+  * For the above reasons, vbuf_print() was implemented with sprintf() and a
+  * generously-sized output buffer. Current vbuf_print() implementations use
+  * snprintf(), and report an error if the output does not fit (in that case,
+  * the old sprintf()-based implementation would have had a buffer overflow
+  * vulnerability). The old implementation is still available for building
+  * Postfix on ancient systems.
   * 
   * Guessing the output size of a string (%s) conversion is not hard. The
   * problem is with numerical results. Instead of making an accurate guess we
@@ -97,23 +106,43 @@
   * Helper macros... Note that there is no need to check the result from
   * VSTRING_SPACE() because that always succeeds or never returns.
   */
-#define VBUF_SKIP(bp)	{ \
+#ifndef NO_SNPRINTF
+#define VBUF_SNPRINTF(bp, sz, fmt, arg) do { \
+	ssize_t _ret; \
+	if (VBUF_SPACE((bp), (sz)) != 0) \
+	    return (bp); \
+	_ret = snprintf((char *) (bp)->ptr, (bp)->cnt, (fmt), (arg)); \
+	if (_ret < 0) \
+	    msg_panic("%s: output error for '%s'", myname, mystrdup(fmt)); \
+	if (_ret >= (bp)->cnt) \
+	    msg_panic("%s: output for '%s' exceeds space %ld", \
+		      myname, mystrdup(fmt), (long) (bp)->cnt); \
+	VBUF_SKIP(bp); \
+    } while (0)
+#else
+#define VBUF_SNPRINTF(bp, sz, fmt, arg) do { \
+	if (VBUF_SPACE((bp), (sz)) != 0) \
+	    return (bp); \
+	sprintf((char *) (bp)->ptr, (fmt), (arg)); \
+	VBUF_SKIP(bp); \
+    } while (0)
+#endif
+
+#define VBUF_SKIP(bp) do { \
 	while ((bp)->cnt > 0 && *(bp)->ptr) \
 	    (bp)->ptr++, (bp)->cnt--; \
-    }
+    } while (0)
 
-#define VSTRING_ADDNUM(vp, n) { \
-	VSTRING_SPACE(vp, INT_SPACE); \
-	sprintf(vstring_end(vp), "%d", n); \
-	VBUF_SKIP(&vp->vbuf); \
-    }
+#define VSTRING_ADDNUM(vp, n) do { \
+	VBUF_SNPRINTF(&(vp)->vbuf, INT_SPACE, "%d", n); \
+    } while (0)
 
-#define VBUF_STRCAT(bp, s) { \
+#define VBUF_STRCAT(bp, s) do { \
 	unsigned char *_cp = (unsigned char *) (s); \
 	int _ch; \
 	while ((_ch = *_cp++) != 0) \
 	    VBUF_PUT((bp), _ch); \
-    }
+    } while (0)
 
 /* vbuf_print - format string, vsprintf-like interface */
 
@@ -153,7 +182,7 @@ VBUF   *vbuf_print(VBUF *bp, const char *format, va_list ap)
 	     * strings, since we are ging to let sprintf() do the hard work.
 	     * In regular expression notation, we recognize:
 	     * 
-	     * %-?0?([0-9]+|\*)?\.(?[0-9]+|\*)?l?[a-zA-Z]
+	     * %-?+?0?([0-9]+|\*)?(\.([0-9]+|\*))?l?[a-zA-Z]
 	     * 
 	     * which includes some combinations that do not make sense. Garbage
 	     * in, garbage out.
@@ -168,33 +197,47 @@ VBUF   *vbuf_print(VBUF *bp, const char *format, va_list ap)
 		VSTRING_ADDCH(fmt, *cp++);
 	    if (*cp == '*') {			/* dynamic field width */
 		width = va_arg(ap, int);
-		VSTRING_ADDNUM(fmt, width);
+		if (width < 0) {
+		    msg_warn("%s: bad width %d in %.50s",
+			     myname, width, format);
+		    width = 0;
+		} else
+		    VSTRING_ADDNUM(fmt, width);
 		cp++;
 	    } else {				/* hard-coded field width */
 		for (width = 0; ch = *cp, ISDIGIT(ch); cp++) {
-		    width = width * 10 + ch - '0';
+		    int     digit = ch - '0';
+
+		    if (width > INT_MAX / 10
+			|| (width *= 10) > INT_MAX - digit)
+			msg_panic("%s: bad width %d... in %.50s",
+				  myname, width, format);
+		    width += digit;
 		    VSTRING_ADDCH(fmt, ch);
 		}
-	    }
-	    if (width < 0) {
-		msg_warn("%s: bad width %d in %.50s", myname, width, format);
-		width = 0;
 	    }
 	    if (*cp == '.') {			/* width/precision separator */
 		VSTRING_ADDCH(fmt, *cp++);
 		if (*cp == '*') {		/* dynamic precision */
 		    prec = va_arg(ap, int);
-		    VSTRING_ADDNUM(fmt, prec);
+		    if (prec < 0) {
+			msg_warn("%s: bad precision %d in %.50s",
+				 myname, prec, format);
+			prec = -1;
+		    } else
+			VSTRING_ADDNUM(fmt, prec);
 		    cp++;
 		} else {			/* hard-coded precision */
 		    for (prec = 0; ch = *cp, ISDIGIT(ch); cp++) {
-			prec = prec * 10 + ch - '0';
+			int     digit = ch - '0';
+
+			if (prec > INT_MAX / 10
+			    || (prec *= 10) > INT_MAX - digit)
+			    msg_panic("%s: bad precision %d... in %.50s",
+				      myname, prec, format);
+			prec += digit;
 			VSTRING_ADDCH(fmt, ch);
 		    }
-		}
-		if (prec < 0) {
-		    msg_warn("%s: bad precision %d in %.50s", myname, prec, format);
-		    prec = -1;
 		}
 	    } else {
 		prec = -1;
@@ -214,46 +257,48 @@ VBUF   *vbuf_print(VBUF *bp, const char *format, va_list ap)
 	     */
 	    switch (*cp) {
 	    case 's':				/* string-valued argument */
+		if (long_flag)
+		    msg_panic("%s: %%l%c is not supported", myname, *cp);
 		s = va_arg(ap, char *);
 		if (prec >= 0 || (width > 0 && width > strlen(s))) {
-		    if (VBUF_SPACE(bp, (width > prec ? width : prec) + INT_SPACE))
-			return (bp);
-		    sprintf((char *) bp->ptr, vstring_str(fmt), s);
-		    VBUF_SKIP(bp);
+		    VBUF_SNPRINTF(bp, (width > prec ? width : prec) + INT_SPACE,
+				  vstring_str(fmt), s);
 		} else {
 		    VBUF_STRCAT(bp, s);
 		}
 		break;
 	    case 'c':				/* integral-valued argument */
+		if (long_flag)
+		    msg_panic("%s: %%l%c is not supported", myname, *cp);
+		/* FALLTHROUGH */
 	    case 'd':
 	    case 'u':
 	    case 'o':
 	    case 'x':
 	    case 'X':
-		if (VBUF_SPACE(bp, (width > prec ? width : prec) + INT_SPACE))
-		    return (bp);
 		if (long_flag)
-		    sprintf((char *) bp->ptr, vstring_str(fmt), va_arg(ap, long));
+		    VBUF_SNPRINTF(bp, (width > prec ? width : prec) + INT_SPACE,
+				  vstring_str(fmt), va_arg(ap, long));
 		else
-		    sprintf((char *) bp->ptr, vstring_str(fmt), va_arg(ap, int));
-		VBUF_SKIP(bp);
+		    VBUF_SNPRINTF(bp, (width > prec ? width : prec) + INT_SPACE,
+				  vstring_str(fmt), va_arg(ap, int));
 		break;
 	    case 'e':				/* float-valued argument */
 	    case 'f':
 	    case 'g':
-		if (VBUF_SPACE(bp, (width > prec ? width : prec) + DBL_SPACE))
-		    return (bp);
-		sprintf((char *) bp->ptr, vstring_str(fmt), va_arg(ap, double));
-		VBUF_SKIP(bp);
+		/* C99 *printf ignore the 'l' modifier. */
+		VBUF_SNPRINTF(bp, (width > prec ? width : prec) + DBL_SPACE,
+			      vstring_str(fmt), va_arg(ap, double));
 		break;
 	    case 'm':
+		/* Ignore the 'l' modifier, width and precision. */
 		VBUF_STRCAT(bp, strerror(saved_errno));
 		break;
 	    case 'p':
-		if (VBUF_SPACE(bp, (width > prec ? width : prec) + PTR_SPACE))
-		    return (bp);
-		sprintf((char *) bp->ptr, vstring_str(fmt), va_arg(ap, char *));
-		VBUF_SKIP(bp);
+		if (long_flag)
+		    msg_panic("%s: %%l%c is not supported", myname, *cp);
+		VBUF_SNPRINTF(bp, (width > prec ? width : prec) + PTR_SPACE,
+			      vstring_str(fmt), va_arg(ap, char *));
 		break;
 	    default:				/* anything else is bad */
 		msg_panic("vbuf_print: unknown format type: %c", *cp);
@@ -264,3 +309,78 @@ VBUF   *vbuf_print(VBUF *bp, const char *format, va_list ap)
     }
     return (bp);
 }
+
+#ifdef TEST
+#include <argv.h>
+#include <msg_vstream.h>
+#include <vstring.h>
+#include <vstring_vstream.h>
+
+int     main(int argc, char **argv)
+{
+    VSTRING *ibuf = vstring_alloc(100);
+
+    msg_vstream_init(argv[0], VSTREAM_ERR);
+
+    while (vstring_fgets_nonl(ibuf, VSTREAM_IN)) {
+	ARGV   *args = argv_split(vstring_str(ibuf), CHARS_SPACE);
+	char   *cp;
+
+	if (args->argc == 0 || *(cp = args->argv[0]) == '#') {
+	     /* void */ ;
+	} else if (args->argc != 2 || *cp != '%') {
+	    msg_warn("usage: format number");
+	} else {
+	    char   *fmt = cp++;
+	    int     lflag;
+
+	    /* Determine the vstring_sprintf() argument type. */
+	    cp += strspn(cp, "+-*0123456789.");
+	    if ((lflag = (*cp == 'l')) != 0)
+		cp++;
+	    if (cp[1] != 0) {
+		msg_warn("bad format: \"%s\"", fmt);
+	    } else {
+		VSTRING *obuf = vstring_alloc(1);
+		char   *val = args->argv[1];
+
+		/* Test the worst-case memory allocation. */
+#ifdef CA_VSTRING_CTL_EXACT
+		vstring_ctl(obuf, CA_VSTRING_CTL_EXACT, CA_VSTRING_CTL_END);
+#endif
+		switch (*cp) {
+		case 'c':
+		case 'd':
+		case 'o':
+		case 'u':
+		case 'x':
+		case 'X':
+		    if (lflag)
+			vstring_sprintf(obuf, fmt, atol(val));
+		    else
+			vstring_sprintf(obuf, fmt, atoi(val));
+		    msg_info("\"%s\"", vstring_str(obuf));
+		    break;
+		case 's':
+		    vstring_sprintf(obuf, fmt, val);
+		    msg_info("\"%s\"", vstring_str(obuf));
+		    break;
+		case 'f':
+		case 'g':
+		    vstring_sprintf(obuf, fmt, atof(val));
+		    msg_info("\"%s\"", vstring_str(obuf));
+		    break;
+		default:
+		    msg_warn("bad format: \"%s\"", fmt);
+		    break;
+		}
+		vstring_free(obuf);
+	    }
+	}
+	argv_free(args);
+    }
+    vstring_free(ibuf);
+    return (0);
+}
+
+#endif

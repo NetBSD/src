@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.22.4.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: MINI2440,v 1.22.4.2 2020/04/08 14:07:34 martin Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -320,9 +320,6 @@ umass*	at uhub? port ? configuration ? interface ?
 #uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 #ucom*	at uvscom? portno ?
 
-# Diamond Multimedia Rio 500
-#urio*	at uhub? port ?
-
 # USB Handspring Visor
 #uvisor*	at uhub? port ?
 #ucom*	at uvisor?
@@ -362,7 +359,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	tap			# virtual Ethernet

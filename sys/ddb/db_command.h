@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.35 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_command.h,v 1.35.64.1 2020/04/08 14:08:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -147,5 +147,10 @@ struct db_command {
 void	*db_alloc(size_t);
 void	*db_zalloc(size_t);
 void	db_free(void *, size_t);
+
+#ifndef _KERNEL
+#define db_kernelonly() \
+    db_printf("%s: can only be used in-kernel.\n", __func__)
+#endif
 
 #endif /*_DDB_COMMAND_*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.4.20.1 2019/06/10 22:08:04 christos Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.4.20.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,9 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.4.20.1 2019/06/10 22:08:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.4.20.2 2020/04/08 14:08:22 martin Exp $");
 
 #include "i915_drv.h"
+#include <linux/bitmap.h>
 
 /**
  * DOC: batch buffer command parser
@@ -55,13 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.4.20.1 2019/06/10 22:08:04 chr
  * granting userspace undue privileges. There are three categories of privilege.
  *
  * First, commands which are explicitly defined as privileged or which should
- * only be used by the kernel driver. The parser generally rejects such
- * commands, though it may allow some from the drm master process.
+ * only be used by the kernel driver. The parser rejects such commands
  *
  * Second, commands which access registers. To support correct/enhanced
  * userspace functionality, particularly certain OpenGL extensions, the parser
- * provides a whitelist of registers which userspace may safely access (for both
- * normal and drm master processes).
+ * provides a whitelist of registers which userspace may safely access
  *
  * Third, commands which access privileged memory (i.e. GGTT, HWS page, etc).
  * The parser always rejects such commands.
@@ -86,9 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.4.20.1 2019/06/10 22:08:04 chr
  * in the per-ring command tables.
  *
  * Other command table entries map fairly directly to high level categories
- * mentioned above: rejected, master-only, register whitelist. The parser
- * implements a number of checks, including the privileged memory checks, via a
- * general bitmasking mechanism.
+ * mentioned above: rejected, register whitelist. The parser implements a number
+ * of checks, including the privileged memory checks, via a general bitmasking
+ * mechanism.
  */
 
 #define STD_MI_OPCODE_MASK  0xFF800000
@@ -99,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.4.20.1 2019/06/10 22:08:04 chr
 #define CMD(op, opm, f, lm, fl, ...)				\
 	{							\
 		.flags = (fl) | ((f) ? CMD_DESC_FIXED : 0),	\
-		.cmd = { (op), (opm) },				\
+		.cmd = { (op) & (opm), (opm) },			\
 		.length = { (lm) },				\
 		__VA_ARGS__					\
 	}
@@ -114,14 +113,13 @@ __KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.4.20.1 2019/06/10 22:08:04 chr
 #define R CMD_DESC_REJECT
 #define W CMD_DESC_REGISTER
 #define B CMD_DESC_BITMASK
-#define M CMD_DESC_MASTER
 
 /*            Command                          Mask   Fixed Len   Action
 	      ---------------------------------------------------------- */
-static const struct drm_i915_cmd_descriptor common_cmds[] = {
+static const struct drm_i915_cmd_descriptor gen7_common_cmds[] = {
 	CMD(  MI_NOOP,                          SMI,    F,  1,      S  ),
 	CMD(  MI_USER_INTERRUPT,                SMI,    F,  1,      R  ),
-	CMD(  MI_WAIT_FOR_EVENT,                SMI,    F,  1,      M  ),
+	CMD(  MI_WAIT_FOR_EVENT,                SMI,    F,  1,      R  ),
 	CMD(  MI_ARB_CHECK,                     SMI,    F,  1,      S  ),
 	CMD(  MI_REPORT_HEAD,                   SMI,    F,  1,      S  ),
 	CMD(  MI_SUSPEND_FLUSH,                 SMI,    F,  1,      S  ),
@@ -151,7 +149,7 @@ static const struct drm_i915_cmd_descriptor common_cmds[] = {
 	CMD(  MI_BATCH_BUFFER_START,            SMI,   !F,  0xFF,   S  ),
 };
 
-static const struct drm_i915_cmd_descriptor render_cmds[] = {
+static const struct drm_i915_cmd_descriptor gen7_render_cmds[] = {
 	CMD(  MI_FLUSH,                         SMI,    F,  1,      S  ),
 	CMD(  MI_ARB_ON_OFF,                    SMI,    F,  1,      R  ),
 	CMD(  MI_PREDICATE,                     SMI,    F,  1,      S  ),
@@ -218,7 +216,7 @@ static const struct drm_i915_cmd_descriptor hsw_render_cmds[] = {
 	CMD(  MI_URB_ATOMIC_ALLOC,              SMI,    F,  1,      S  ),
 	CMD(  MI_SET_APPID,                     SMI,    F,  1,      S  ),
 	CMD(  MI_RS_CONTEXT,                    SMI,    F,  1,      S  ),
-	CMD(  MI_LOAD_SCAN_LINES_INCL,          SMI,   !F,  0x3F,   M  ),
+	CMD(  MI_LOAD_SCAN_LINES_INCL,          SMI,   !F,  0x3F,   R  ),
 	CMD(  MI_LOAD_SCAN_LINES_EXCL,          SMI,   !F,  0x3F,   R  ),
 	CMD(  MI_LOAD_REGISTER_REG,             SMI,   !F,  0xFF,   R  ),
 	CMD(  MI_RS_STORE_DATA_IMM,             SMI,   !F,  0xFF,   S  ),
@@ -234,7 +232,7 @@ static const struct drm_i915_cmd_descriptor hsw_render_cmds[] = {
 	CMD(  GFX_OP_3DSTATE_BINDING_TABLE_EDIT_PS,  S3D,   !F,  0x1FF,  S  ),
 };
 
-static const struct drm_i915_cmd_descriptor video_cmds[] = {
+static const struct drm_i915_cmd_descriptor gen7_video_cmds[] = {
 	CMD(  MI_ARB_ON_OFF,                    SMI,    F,  1,      R  ),
 	CMD(  MI_SET_APPID,                     SMI,    F,  1,      S  ),
 	CMD(  MI_STORE_DWORD_IMM,               SMI,   !F,  0xFF,   B,
@@ -278,7 +276,7 @@ static const struct drm_i915_cmd_descriptor video_cmds[] = {
 	CMD(  MFX_WAIT,                         SMFX,   F,  1,      S  ),
 };
 
-static const struct drm_i915_cmd_descriptor vecs_cmds[] = {
+static const struct drm_i915_cmd_descriptor gen7_vecs_cmds[] = {
 	CMD(  MI_ARB_ON_OFF,                    SMI,    F,  1,      R  ),
 	CMD(  MI_SET_APPID,                     SMI,    F,  1,      S  ),
 	CMD(  MI_STORE_DWORD_IMM,               SMI,   !F,  0xFF,   B,
@@ -316,7 +314,7 @@ static const struct drm_i915_cmd_descriptor vecs_cmds[] = {
 	      }},						       ),
 };
 
-static const struct drm_i915_cmd_descriptor blt_cmds[] = {
+static const struct drm_i915_cmd_descriptor gen7_blt_cmds[] = {
 	CMD(  MI_DISPLAY_FLIP,                  SMI,   !F,  0xFF,   R  ),
 	CMD(  MI_STORE_DWORD_IMM,               SMI,   !F,  0x3FF,  B,
 	      .bits = {{
@@ -350,8 +348,60 @@ static const struct drm_i915_cmd_descriptor blt_cmds[] = {
 };
 
 static const struct drm_i915_cmd_descriptor hsw_blt_cmds[] = {
-	CMD(  MI_LOAD_SCAN_LINES_INCL,          SMI,   !F,  0x3F,   M  ),
+	CMD(  MI_LOAD_SCAN_LINES_INCL,          SMI,   !F,  0x3F,   R  ),
 	CMD(  MI_LOAD_SCAN_LINES_EXCL,          SMI,   !F,  0x3F,   R  ),
+};
+
+/*
+ * For Gen9 we can still rely on the h/w to enforce cmd security, and only
+ * need to re-enforce the register access checks. We therefore only need to
+ * teach the cmdparser how to find the end of each command, and identify
+ * register accesses. The table doesn't need to reject any commands, and so
+ * the only commands listed here are:
+ *   1) Those that touch registers
+ *   2) Those that do not have the default 8-bit length
+ *
+ * Note that the default MI length mask chosen for this table is 0xFF, not
+ * the 0x3F used on older devices. This is because the vast majority of MI
+ * cmds on Gen9 use a standard 8-bit Length field.
+ * All the Gen9 blitter instructions are standard 0xFF length mask, and
+ * none allow access to non-general registers, so in fact no BLT cmds are
+ * included in the table at all.
+ *
+ */
+static const struct drm_i915_cmd_descriptor gen9_blt_cmds[] = {
+	CMD(  MI_NOOP,                          SMI,    F,  1,      S  ),
+	CMD(  MI_USER_INTERRUPT,                SMI,    F,  1,      S  ),
+	CMD(  MI_WAIT_FOR_EVENT,                SMI,    F,  1,      S  ),
+	CMD(  MI_FLUSH,                         SMI,    F,  1,      S  ),
+	CMD(  MI_ARB_CHECK,                     SMI,    F,  1,      S  ),
+	CMD(  MI_REPORT_HEAD,                   SMI,    F,  1,      S  ),
+	CMD(  MI_ARB_ON_OFF,                    SMI,    F,  1,      S  ),
+	CMD(  MI_SUSPEND_FLUSH,                 SMI,    F,  1,      S  ),
+	CMD(  MI_LOAD_SCAN_LINES_INCL,          SMI,   !F,  0x3F,   S  ),
+	CMD(  MI_LOAD_SCAN_LINES_EXCL,          SMI,   !F,  0x3F,   S  ),
+	CMD(  MI_STORE_DWORD_IMM,               SMI,   !F,  0x3FF,  S  ),
+	CMD(  MI_LOAD_REGISTER_IMM(1),          SMI,   !F,  0xFF,   W,
+	      .reg = { .offset = 1, .mask = 0x007FFFFC, .step = 2 }    ),
+	CMD(  MI_UPDATE_GTT,                    SMI,   !F,  0x3FF,  S  ),
+	CMD(  MI_STORE_REGISTER_MEM_GEN8,       SMI,    F,  4,      W,
+	      .reg = { .offset = 1, .mask = 0x007FFFFC }               ),
+	CMD(  MI_FLUSH_DW,                      SMI,   !F,  0x3F,   S  ),
+	CMD(  MI_LOAD_REGISTER_MEM_GEN8,        SMI,    F,  4,      W,
+	      .reg = { .offset = 1, .mask = 0x007FFFFC }               ),
+	CMD(  MI_LOAD_REGISTER_REG,             SMI,    !F,  0xFF,  W,
+	      .reg = { .offset = 1, .mask = 0x007FFFFC, .step = 1 }    ),
+
+	/*
+	 * We allow BB_START but apply further checks. We just sanitize the
+	 * basic fields here.
+	 */
+	CMD( MI_BATCH_BUFFER_START_GEN8,       SMI,    !F,  0xFF,  B,
+	     .bits = {{
+			.offset = 0,
+			.mask = ~SMI,
+			.expected = (MI_BATCH_PPGTT_HSW | 1),
+	      }},					     ),
 };
 
 #undef CMD
@@ -364,39 +414,43 @@ static const struct drm_i915_cmd_descriptor hsw_blt_cmds[] = {
 #undef R
 #undef W
 #undef B
-#undef M
 
-static const struct drm_i915_cmd_table gen7_render_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ render_cmds, ARRAY_SIZE(render_cmds) },
+static const struct drm_i915_cmd_table gen7_render_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_render_cmds, ARRAY_SIZE(gen7_render_cmds) },
 };
 
-static const struct drm_i915_cmd_table hsw_render_ring_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ render_cmds, ARRAY_SIZE(render_cmds) },
+static const struct drm_i915_cmd_table hsw_render_ring_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_render_cmds, ARRAY_SIZE(gen7_render_cmds) },
 	{ hsw_render_cmds, ARRAY_SIZE(hsw_render_cmds) },
 };
 
-static const struct drm_i915_cmd_table gen7_video_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ video_cmds, ARRAY_SIZE(video_cmds) },
+static const struct drm_i915_cmd_table gen7_video_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_video_cmds, ARRAY_SIZE(gen7_video_cmds) },
 };
 
-static const struct drm_i915_cmd_table hsw_vebox_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ vecs_cmds, ARRAY_SIZE(vecs_cmds) },
+static const struct drm_i915_cmd_table hsw_vebox_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_vecs_cmds, ARRAY_SIZE(gen7_vecs_cmds) },
 };
 
-static const struct drm_i915_cmd_table gen7_blt_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ blt_cmds, ARRAY_SIZE(blt_cmds) },
+static const struct drm_i915_cmd_table gen7_blt_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_blt_cmds, ARRAY_SIZE(gen7_blt_cmds) },
 };
 
-static const struct drm_i915_cmd_table hsw_blt_ring_cmds[] = {
-	{ common_cmds, ARRAY_SIZE(common_cmds) },
-	{ blt_cmds, ARRAY_SIZE(blt_cmds) },
+static const struct drm_i915_cmd_table hsw_blt_ring_cmd_table[] = {
+	{ gen7_common_cmds, ARRAY_SIZE(gen7_common_cmds) },
+	{ gen7_blt_cmds, ARRAY_SIZE(gen7_blt_cmds) },
 	{ hsw_blt_cmds, ARRAY_SIZE(hsw_blt_cmds) },
 };
+
+static const struct drm_i915_cmd_table gen9_blt_cmd_table[] = {
+	{ gen9_blt_cmds, ARRAY_SIZE(gen9_blt_cmds) },
+};
+
 
 /*
  * Register whitelists, sorted by increasing register offset.
@@ -430,6 +484,10 @@ struct drm_i915_reg_descriptor {
  */
 #define REG64(addr)                                     \
 	REG32(addr), REG32(addr + sizeof(u32))
+
+#define REG64_IDX(_reg, idx) \
+	{ .addr = _reg(idx) }, \
+	{ .addr = _reg ## _UDW(idx) }
 
 static const struct drm_i915_reg_descriptor gen7_render_regs[] = {
 	REG64(GPGPU_THREADS_DISPATCHED),
@@ -484,17 +542,27 @@ static const struct drm_i915_reg_descriptor gen7_blt_regs[] = {
 	REG32(BCS_SWCTRL),
 };
 
-static const struct drm_i915_reg_descriptor ivb_master_regs[] = {
-	REG32(FORCEWAKE_MT),
-	REG32(DERRMR),
-	REG32(GEN7_PIPE_DE_LOAD_SL(PIPE_A)),
-	REG32(GEN7_PIPE_DE_LOAD_SL(PIPE_B)),
-	REG32(GEN7_PIPE_DE_LOAD_SL(PIPE_C)),
-};
-
-static const struct drm_i915_reg_descriptor hsw_master_regs[] = {
-	REG32(FORCEWAKE_MT),
-	REG32(DERRMR),
+static const struct drm_i915_reg_descriptor gen9_blt_regs[] = {
+	REG64_IDX(RING_TIMESTAMP, RENDER_RING_BASE),
+	REG64_IDX(RING_TIMESTAMP, BSD_RING_BASE),
+	REG32(BCS_SWCTRL),
+	REG64_IDX(RING_TIMESTAMP, BLT_RING_BASE),
+	REG64_IDX(BCS_GPR, 0),
+	REG64_IDX(BCS_GPR, 1),
+	REG64_IDX(BCS_GPR, 2),
+	REG64_IDX(BCS_GPR, 3),
+	REG64_IDX(BCS_GPR, 4),
+	REG64_IDX(BCS_GPR, 5),
+	REG64_IDX(BCS_GPR, 6),
+	REG64_IDX(BCS_GPR, 7),
+	REG64_IDX(BCS_GPR, 8),
+	REG64_IDX(BCS_GPR, 9),
+	REG64_IDX(BCS_GPR, 10),
+	REG64_IDX(BCS_GPR, 11),
+	REG64_IDX(BCS_GPR, 12),
+	REG64_IDX(BCS_GPR, 13),
+	REG64_IDX(BCS_GPR, 14),
+	REG64_IDX(BCS_GPR, 15),
 };
 
 #undef REG64
@@ -549,6 +617,17 @@ static u32 gen7_blt_get_cmd_length_mask(u32 cmd_header)
 	if (client == INSTR_MI_CLIENT)
 		return 0x3F;
 	else if (client == INSTR_BC_CLIENT)
+		return 0xFF;
+
+	DRM_DEBUG_DRIVER("CMD: Abnormal blt cmd length! 0x%08X\n", cmd_header);
+	return 0;
+}
+
+static u32 gen9_blt_get_cmd_length_mask(u32 cmd_header)
+{
+	u32 client = (cmd_header & INSTR_CLIENT_MASK) >> INSTR_CLIENT_SHIFT;
+
+	if (client == INSTR_MI_CLIENT || client == INSTR_BC_CLIENT)
 		return 0xFF;
 
 	DRM_DEBUG_DRIVER("CMD: Abnormal blt cmd length! 0x%08X\n", cmd_header);
@@ -615,9 +694,7 @@ static bool check_sorted(int ring_id,
 __diagused
 static bool validate_regs_sorted(struct intel_engine_cs *ring)
 {
-	return check_sorted(ring->id, ring->reg_table, ring->reg_count) &&
-		check_sorted(ring->id, ring->master_reg_table,
-			     ring->master_reg_count);
+	return check_sorted(ring->id, ring->reg_table, ring->reg_count);
 }
 
 struct cmd_node {
@@ -698,63 +775,61 @@ int i915_cmd_parser_init_ring(struct intel_engine_cs *ring)
 	int cmd_table_count;
 	int ret;
 
-	if (!IS_GEN7(ring->dev))
+	if (!IS_GEN7(ring->dev) && !(IS_GEN9(ring->dev) && ring->id == BCS))
 		return 0;
 
 	switch (ring->id) {
 	case RCS:
 		if (IS_HASWELL(ring->dev)) {
-			cmd_tables = hsw_render_ring_cmds;
+			cmd_tables = hsw_render_ring_cmd_table;
 			cmd_table_count =
-				ARRAY_SIZE(hsw_render_ring_cmds);
+				ARRAY_SIZE(hsw_render_ring_cmd_table);
 		} else {
-			cmd_tables = gen7_render_cmds;
-			cmd_table_count = ARRAY_SIZE(gen7_render_cmds);
+			cmd_tables = gen7_render_cmd_table;
+			cmd_table_count = ARRAY_SIZE(gen7_render_cmd_table);
 		}
 
 		ring->reg_table = gen7_render_regs;
 		ring->reg_count = ARRAY_SIZE(gen7_render_regs);
 
-		if (IS_HASWELL(ring->dev)) {
-			ring->master_reg_table = hsw_master_regs;
-			ring->master_reg_count = ARRAY_SIZE(hsw_master_regs);
-		} else {
-			ring->master_reg_table = ivb_master_regs;
-			ring->master_reg_count = ARRAY_SIZE(ivb_master_regs);
-		}
-
 		ring->get_cmd_length_mask = gen7_render_get_cmd_length_mask;
 		break;
 	case VCS:
-		cmd_tables = gen7_video_cmds;
-		cmd_table_count = ARRAY_SIZE(gen7_video_cmds);
+		cmd_tables = gen7_video_cmd_table;
+		cmd_table_count = ARRAY_SIZE(gen7_video_cmd_table);
 		ring->get_cmd_length_mask = gen7_bsd_get_cmd_length_mask;
 		break;
 	case BCS:
-		if (IS_HASWELL(ring->dev)) {
-			cmd_tables = hsw_blt_ring_cmds;
-			cmd_table_count = ARRAY_SIZE(hsw_blt_ring_cmds);
-		} else {
-			cmd_tables = gen7_blt_cmds;
-			cmd_table_count = ARRAY_SIZE(gen7_blt_cmds);
-		}
-
-		ring->reg_table = gen7_blt_regs;
-		ring->reg_count = ARRAY_SIZE(gen7_blt_regs);
-
-		if (IS_HASWELL(ring->dev)) {
-			ring->master_reg_table = hsw_master_regs;
-			ring->master_reg_count = ARRAY_SIZE(hsw_master_regs);
-		} else {
-			ring->master_reg_table = ivb_master_regs;
-			ring->master_reg_count = ARRAY_SIZE(ivb_master_regs);
-		}
-
 		ring->get_cmd_length_mask = gen7_blt_get_cmd_length_mask;
+		if (IS_GEN9(ring->dev)) {
+			cmd_tables = gen9_blt_cmd_table;
+			cmd_table_count = ARRAY_SIZE(gen9_blt_cmd_table);
+			ring->get_cmd_length_mask =
+				gen9_blt_get_cmd_length_mask;
+
+			/* BCS Engine unsafe without parser */
+			ring->requires_cmd_parser = 1;
+		}
+		else if (IS_HASWELL(ring->dev)) {
+			cmd_tables = hsw_blt_ring_cmd_table;
+			cmd_table_count = ARRAY_SIZE(hsw_blt_ring_cmd_table);
+		} else {
+			cmd_tables = gen7_blt_cmd_table;
+			cmd_table_count = ARRAY_SIZE(gen7_blt_cmd_table);
+		}
+
+		if (IS_GEN9(ring->dev)) {
+			ring->reg_table = gen9_blt_regs;
+			ring->reg_count = ARRAY_SIZE(gen9_blt_regs);
+		} else {
+			ring->reg_table = gen7_blt_regs;
+			ring->reg_count = ARRAY_SIZE(gen7_blt_regs);
+		}
+
 		break;
 	case VECS:
-		cmd_tables = hsw_vebox_cmds;
-		cmd_table_count = ARRAY_SIZE(hsw_vebox_cmds);
+		cmd_tables = hsw_vebox_cmd_table;
+		cmd_table_count = ARRAY_SIZE(hsw_vebox_cmd_table);
 		/* VECS can use the same length_mask function as VCS */
 		ring->get_cmd_length_mask = gen7_bsd_get_cmd_length_mask;
 		break;
@@ -776,7 +851,7 @@ int i915_cmd_parser_init_ring(struct intel_engine_cs *ring)
 		return ret;
 	}
 
-	ring->needs_cmd_parser = true;
+	ring->using_cmd_parser = true;
 
 	return 0;
 }
@@ -790,7 +865,7 @@ int i915_cmd_parser_init_ring(struct intel_engine_cs *ring)
  */
 void i915_cmd_parser_fini_ring(struct intel_engine_cs *ring)
 {
-	if (!ring->needs_cmd_parser)
+	if (!ring->using_cmd_parser)
 		return;
 
 	fini_hash_table(ring);
@@ -985,7 +1060,7 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 	}
 #endif
 
-	src = (const char *)src_base + offset_in_page(batch_start_offset);
+	src = src_base + offset_in_page(batch_start_offset);
 	if (needs_clflush)
 		drm_clflush_virt_range(src, batch_len);
 
@@ -1011,40 +1086,13 @@ unpin_src:
 	return ret ? ERR_PTR(ret) : dst;
 }
 
-/**
- * i915_needs_cmd_parser() - should a given ring use software command parsing?
- * @ring: the ring in question
- *
- * Only certain platforms require software batch buffer command parsing, and
- * only when enabled via module parameter.
- *
- * Return: true if the ring requires software command parsing
- */
-bool i915_needs_cmd_parser(struct intel_engine_cs *ring)
-{
-	if (!ring->needs_cmd_parser)
-		return false;
-
-	if (!USES_PPGTT(ring->dev))
-		return false;
-
-	return (i915.enable_cmd_parser == 1);
-}
-
-static bool check_cmd(const struct intel_engine_cs *ring,
+static int check_cmd(const struct intel_engine_cs *ring,
 		      const struct drm_i915_cmd_descriptor *desc,
 		      const u32 *cmd, u32 length,
-		      const bool is_master,
 		      bool *oacontrol_set)
 {
 	if (desc->flags & CMD_DESC_REJECT) {
 		DRM_DEBUG_DRIVER("CMD: Rejected command: 0x%08X\n", *cmd);
-		return false;
-	}
-
-	if ((desc->flags & CMD_DESC_MASTER) && !is_master) {
-		DRM_DEBUG_DRIVER("CMD: Rejected master-only command: 0x%08X\n",
-				 *cmd);
 		return false;
 	}
 
@@ -1063,11 +1111,6 @@ static bool check_cmd(const struct intel_engine_cs *ring,
 			const struct drm_i915_reg_descriptor *reg =
 				find_reg(ring->reg_table, ring->reg_count,
 					 reg_addr);
-
-			if (!reg && is_master)
-				reg = find_reg(ring->master_reg_table,
-					       ring->master_reg_count,
-					       reg_addr);
 
 			if (!reg) {
 				DRM_DEBUG_DRIVER("CMD: Rejected register 0x%08X in command: 0x%08X (ring=%d)\n",
@@ -1153,16 +1196,113 @@ static bool check_cmd(const struct intel_engine_cs *ring,
 	return true;
 }
 
+static int check_bbstart(struct intel_context *ctx,
+			 u32 *cmd, u64 offset, u32 length,
+			 u32 batch_len,
+			 u64 batch_start,
+			 u64 shadow_batch_start)
+{
+
+	u64 jump_offset, jump_target;
+	u32 target_cmd_offset, target_cmd_index;
+
+	/* For igt compatibility on older platforms */
+	if (CMDPARSER_USES_GGTT(ctx->i915)) {
+		DRM_DEBUG("CMD: Rejecting BB_START for ggtt based submission\n");
+		return -EACCES;
+	}
+
+	if (length != 3) {
+		DRM_DEBUG("CMD: Recursive BB_START with bad length(%u)\n",
+				 length);
+		return -EINVAL;
+	}
+
+	jump_target = *(u64*)(cmd+1);
+	jump_offset = jump_target - batch_start;
+
+	/*
+	 * Any underflow of jump_target is guaranteed to be outside the range
+	 * of a u32, so >= test catches both too large and too small
+	 */
+	if (jump_offset >= batch_len) {
+		DRM_DEBUG("CMD: BB_START to 0x%"PRIx64" jumps out of BB\n",
+			  jump_target);
+		return -EINVAL;
+	}
+
+	/*
+	 * This cannot overflow a u32 because we already checked jump_offset
+	 * is within the BB, and the batch_len is a u32
+	 */
+	target_cmd_offset = lower_32_bits(jump_offset);
+	target_cmd_index = target_cmd_offset / sizeof(u32);
+
+	*(u64*)(cmd + 1) = shadow_batch_start + target_cmd_offset;
+
+	if (target_cmd_index == offset)
+		return 0;
+
+	if (ctx->jump_whitelist_cmds <= target_cmd_index) {
+		DRM_DEBUG("CMD: Rejecting BB_START - truncated whitelist array\n");
+		return -EINVAL;
+	} else if (!test_bit(target_cmd_index, ctx->jump_whitelist)) {
+		DRM_DEBUG("CMD: BB_START to 0x%"PRIx64" not a previously executed cmd\n",
+			  jump_target);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static void init_whitelist(struct intel_context *ctx, u32 batch_len)
+{
+	const u32 batch_cmds = DIV_ROUND_UP(batch_len, sizeof(u32));
+	const u32 exact_size = BITS_TO_LONGS(batch_cmds);
+	u32 next_size = BITS_TO_LONGS(roundup_pow_of_two(batch_cmds));
+	unsigned long *next_whitelist;
+
+	if (CMDPARSER_USES_GGTT(ctx->i915))
+		return;
+
+	if (batch_cmds <= ctx->jump_whitelist_cmds) {
+		bitmap_zero(ctx->jump_whitelist, batch_cmds);
+		return;
+	}
+
+again:
+	next_whitelist = kcalloc(next_size, sizeof(long), GFP_KERNEL);
+	if (next_whitelist) {
+		kfree(ctx->jump_whitelist);
+		ctx->jump_whitelist = next_whitelist;
+		ctx->jump_whitelist_cmds =
+			next_size * BITS_PER_BYTE * sizeof(long);
+		return;
+	}
+
+	if (next_size > exact_size) {
+		next_size = exact_size;
+		goto again;
+	}
+
+	DRM_DEBUG("CMD: Failed to extend whitelist. BB_START may be disallowed\n");
+	bitmap_zero(ctx->jump_whitelist, ctx->jump_whitelist_cmds);
+
+	return;
+}
+
 #define LENGTH_BIAS 2
 
 /**
  * i915_parse_cmds() - parse a submitted batch buffer for privilege violations
+ * @ctx: the context in which the batch is to execute
  * @ring: the ring on which the batch is to execute
  * @batch_obj: the batch buffer in question
- * @shadow_batch_obj: copy of the batch buffer in question
+ * @user_batch_start: Canonical base address of original user batch
  * @batch_start_offset: byte offset in the batch at which execution starts
  * @batch_len: length of the commands in batch_obj
- * @is_master: is the submitting process the drm master?
+ * @shadow_batch_obj: copy of the batch buffer in question
+ * @shadow_batch_start: Canonical base address of shadow_batch_obj
  *
  * Parses the specified batch buffer looking for privilege violations as
  * described in the overview.
@@ -1170,14 +1310,16 @@ static bool check_cmd(const struct intel_engine_cs *ring,
  * Return: non-zero if the parser finds violations or otherwise fails; -EACCES
  * if the batch appears legal but should use hardware parsing
  */
-int i915_parse_cmds(struct intel_engine_cs *ring,
+int i915_parse_cmds(struct intel_context *ctx,
+		    struct intel_engine_cs *ring,
 		    struct drm_i915_gem_object *batch_obj,
-		    struct drm_i915_gem_object *shadow_batch_obj,
+		    u64 user_batch_start,
 		    u32 batch_start_offset,
 		    u32 batch_len,
-		    bool is_master)
+		    struct drm_i915_gem_object *shadow_batch_obj,
+		    u64 shadow_batch_start)
 {
-	u32 *cmd, *batch_base, *batch_end;
+	u32 *cmd, *batch_base, *batch_end, offset = 0;
 	static const struct drm_i915_cmd_descriptor zero_default_desc;
 	struct drm_i915_cmd_descriptor default_desc = zero_default_desc;
 	bool oacontrol_set = false; /* OACONTROL tracking. See check_cmd() */
@@ -1189,6 +1331,8 @@ int i915_parse_cmds(struct intel_engine_cs *ring,
 		DRM_DEBUG_DRIVER("CMD: Failed to copy batch\n");
 		return PTR_ERR(batch_base);
 	}
+
+	init_whitelist(ctx, batch_len);
 
 	/*
 	 * We use the batch length as size because the shadow object is as
@@ -1213,16 +1357,6 @@ int i915_parse_cmds(struct intel_engine_cs *ring,
 			break;
 		}
 
-		/*
-		 * If the batch buffer contains a chained batch, return an
-		 * error that tells the caller to abort and dispatch the
-		 * workload as a non-secure batch.
-		 */
-		if (desc->cmd.value == MI_BATCH_BUFFER_START) {
-			ret = -EACCES;
-			break;
-		}
-
 		if (desc->flags & CMD_DESC_FIXED)
 			length = desc->length.fixed;
 		else
@@ -1237,13 +1371,23 @@ int i915_parse_cmds(struct intel_engine_cs *ring,
 			break;
 		}
 
-		if (!check_cmd(ring, desc, cmd, length, is_master,
-			       &oacontrol_set)) {
-			ret = -EINVAL;
+		if (!check_cmd(ring, desc, cmd, length, &oacontrol_set)) {
+			ret = CMDPARSER_USES_GGTT(ring->dev) ? -EINVAL : -EACCES;
 			break;
 		}
 
+		if (desc->cmd.value == MI_BATCH_BUFFER_START) {
+			ret = check_bbstart(ctx, cmd, offset, length,
+					    batch_len, user_batch_start,
+					    shadow_batch_start);
+			break;
+		}
+
+		if (ctx->jump_whitelist_cmds > offset)
+			set_bit(offset, ctx->jump_whitelist);
+
 		cmd += length;
+		offset += length;
 	}
 
 	if (oacontrol_set) {
@@ -1274,7 +1418,7 @@ int i915_parse_cmds(struct intel_engine_cs *ring,
  *
  * Return: the current version number of the cmd parser
  */
-int i915_cmd_parser_get_version(void)
+int i915_cmd_parser_get_version(struct drm_i915_private *dev_priv)
 {
 	/*
 	 * Command parser version history
@@ -1286,6 +1430,7 @@ int i915_cmd_parser_get_version(void)
 	 * 3. Allow access to the GPGPU_THREADS_DISPATCHED register.
 	 * 4. L3 atomic chicken bits of HSW_SCRATCH1 and HSW_ROW_CHICKEN3.
 	 * 5. GPGPU dispatch compute indirect registers.
+	 * 10. Gen9 only - Supports the new ppgtt based BLIT parser
 	 */
-	return 5;
+	return CMDPARSER_USES_GGTT(dev_priv) ? 5 : 10;
 }

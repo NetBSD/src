@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_globals.h,v 1.5 2015/05/30 15:57:32 joerg Exp $	*/
+/*	$NetBSD: iscsic_globals.h,v 1.5.16.1 2020/04/08 14:07:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -72,8 +72,8 @@ typedef struct {
 
 /* -------------------------  Global Variables  ----------------------------- */
 
-int driver;						/* handle to driver (for ioctls) */
-uint8_t buf[BUF_SIZE];			/* buffer for daemon comm and driver I/O */
+extern int driver;			/* handle to driver (for ioctls) */
+extern uint8_t buf[BUF_SIZE];		/* buffer for daemon comm and driver I/O */
 
 /* -------------------------  Global Functions  ----------------------------- */
 

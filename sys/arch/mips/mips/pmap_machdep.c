@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.22.2.1 2019/06/10 22:06:30 christos Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.22.2.2 2020/04/08 14:07:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.22.2.1 2019/06/10 22:06:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.22.2.2 2020/04/08 14:07:45 martin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -358,6 +358,9 @@ pmap_bootstrap(void)
 	kcpuset_set(pm->pm_onproc, cpu_number());
 	kcpuset_set(pm->pm_active, cpu_number());
 #endif
+
+	pmap_bootstrap_common();
+
 	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.51.2.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.51.2.2 2020/04/08 14:08:58 martin Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -643,7 +643,8 @@ struct	rtentry;
 void	icmp6_init(void);
 void	icmp6_paramerror(struct mbuf *, int);
 void	icmp6_error(struct mbuf *, int, int, int);
-void	icmp6_error2(struct mbuf *, int, int, int, struct ifnet *);
+void	icmp6_error2(struct mbuf *, int, int, int, struct ifnet *,
+	    struct in6_addr *);
 int	icmp6_input(struct mbuf **, int *, int);
 void	icmp6_fasttimo(void);
 void	icmp6_prepare(struct mbuf *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.8 2018/06/08 11:52:30 nonaka Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.8.2.1 2020/04/08 14:07:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -110,8 +110,6 @@ efi_cleanup(void)
 	UINT32 DescriptorVersion;
 	struct btinfo_efimemmap *bim;
 	size_t allocsz;
-
-	clearit();
 
 	memset(&btinfo_efi, 0, sizeof(btinfo_efi));
 	btinfo_efi.systblpa = (intptr_t)ST;

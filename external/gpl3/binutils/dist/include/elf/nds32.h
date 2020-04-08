@@ -1,5 +1,5 @@
 /* NDS32 ELF support for BFD.
-   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,8 +24,8 @@
 
 #include "elf/reloc-macros.h"
 
-/* Relocations.  */
 START_RELOC_NUMBERS (elf_nds32_reloc_type)
+  /* These used for relocations.  */
   RELOC_NUMBER (R_NDS32_NONE, 0)
   /* REL relocations.  */
   RELOC_NUMBER (R_NDS32_16, 1)
@@ -46,7 +46,6 @@ START_RELOC_NUMBERS (elf_nds32_reloc_type)
   RELOC_NUMBER (R_NDS32_SDA15S0, 16)
   RELOC_NUMBER (R_NDS32_GNU_VTINHERIT, 17)
   RELOC_NUMBER (R_NDS32_GNU_VTENTRY, 18)
-
   /* RELA relocations.  */
   RELOC_NUMBER (R_NDS32_16_RELA, 19)
   RELOC_NUMBER (R_NDS32_32_RELA, 20)
@@ -66,7 +65,7 @@ START_RELOC_NUMBERS (elf_nds32_reloc_type)
   RELOC_NUMBER (R_NDS32_SDA15S0_RELA, 34)
   RELOC_NUMBER (R_NDS32_RELA_GNU_VTINHERIT, 35)
   RELOC_NUMBER (R_NDS32_RELA_GNU_VTENTRY, 36)
-
+  /* GOT and PLT.  */
   RELOC_NUMBER (R_NDS32_GOT20, 37)
   RELOC_NUMBER (R_NDS32_25_PLTREL, 38)
   RELOC_NUMBER (R_NDS32_COPY, 39)
@@ -81,15 +80,17 @@ START_RELOC_NUMBERS (elf_nds32_reloc_type)
   RELOC_NUMBER (R_NDS32_GOTPC_LO12, 48)
   RELOC_NUMBER (R_NDS32_GOTOFF_HI20, 49)
   RELOC_NUMBER (R_NDS32_GOTOFF_LO12, 50)
+  /* 32_to_16 relaxations.  */
   RELOC_NUMBER (R_NDS32_INSN16, 51)
+  /* Alignment tag.  */
   RELOC_NUMBER (R_NDS32_LABEL, 52)
-  RELOC_NUMBER (R_NDS32_LONGCALL1, 53)
-  RELOC_NUMBER (R_NDS32_LONGCALL2, 54)
-  RELOC_NUMBER (R_NDS32_LONGCALL3, 55)
-  RELOC_NUMBER (R_NDS32_LONGJUMP1, 56)
-  RELOC_NUMBER (R_NDS32_LONGJUMP2, 57)
-  RELOC_NUMBER (R_NDS32_LONGJUMP3, 58)
-  RELOC_NUMBER (R_NDS32_LOADSTORE, 59)
+  RELOC_NUMBER (R_NDS32_LONGCALL1, 53)		/* This is obsoleted.  */
+  RELOC_NUMBER (R_NDS32_LONGCALL2, 54)		/* This is obsoleted.  */
+  RELOC_NUMBER (R_NDS32_LONGCALL3, 55)		/* This is obsoleted.  */
+  RELOC_NUMBER (R_NDS32_LONGJUMP1, 56)		/* This is obsoleted.  */
+  RELOC_NUMBER (R_NDS32_LONGJUMP2, 57)		/* This is obsoleted.  */
+  RELOC_NUMBER (R_NDS32_LONGJUMP3, 58)		/* This is obsoleted.  */
+  RELOC_NUMBER (R_NDS32_LOADSTORE, 59)		/* This is obsoleted.  */
   RELOC_NUMBER (R_NDS32_9_FIXED_RELA, 60)
   RELOC_NUMBER (R_NDS32_15_FIXED_RELA, 61)
   RELOC_NUMBER (R_NDS32_17_FIXED_RELA, 62)
@@ -107,9 +108,9 @@ START_RELOC_NUMBERS (elf_nds32_reloc_type)
   RELOC_NUMBER (R_NDS32_SDA17S2_RELA, 74)
   RELOC_NUMBER (R_NDS32_SDA18S1_RELA, 75)
   RELOC_NUMBER (R_NDS32_SDA19S0_RELA, 76)
-  RELOC_NUMBER (R_NDS32_DWARF2_OP1_RELA, 77)
-  RELOC_NUMBER (R_NDS32_DWARF2_OP2_RELA, 78)
-  RELOC_NUMBER (R_NDS32_DWARF2_LEB_RELA, 79)
+  RELOC_NUMBER (R_NDS32_DWARF2_OP1_RELA, 77)	/* This is obsoleted.  */
+  RELOC_NUMBER (R_NDS32_DWARF2_OP2_RELA, 78)	/* This is obsoleted.  */
+  RELOC_NUMBER (R_NDS32_DWARF2_LEB_RELA, 79)	/* This is obsoleted.  */
   RELOC_NUMBER (R_NDS32_UPDATE_TA_RELA, 80)	/* This is obsoleted.  */
   RELOC_NUMBER (R_NDS32_9_PLTREL, 81)
   RELOC_NUMBER (R_NDS32_PLT_GOTREL_LO20, 82)
@@ -126,8 +127,9 @@ START_RELOC_NUMBERS (elf_nds32_reloc_type)
   RELOC_NUMBER (R_NDS32_SDA_FP7U2_RELA, 93)
   RELOC_NUMBER (R_NDS32_WORD_9_PCREL_RELA, 94)
   RELOC_NUMBER (R_NDS32_25_ABS_RELA, 95)
-  RELOC_NUMBER (R_NDS32_17IFC_PCREL_RELA, 96)
-  RELOC_NUMBER (R_NDS32_10IFCU_PCREL_RELA, 97)
+  RELOC_NUMBER (R_NDS32_17IFC_PCREL_RELA, 96)	/* This is obsoleted.  */
+  RELOC_NUMBER (R_NDS32_10IFCU_PCREL_RELA, 97)	/* This is obsoleted.  */
+  /* TLS support.  */
   RELOC_NUMBER (R_NDS32_TLS_LE_HI20, 98)
   RELOC_NUMBER (R_NDS32_TLS_LE_LO12, 99)
   RELOC_NUMBER (R_NDS32_TLS_IE_HI20, 100)
@@ -144,7 +146,20 @@ START_RELOC_NUMBERS (elf_nds32_reloc_type)
   RELOC_NUMBER (R_NDS32_LONGJUMP5, 111)
   RELOC_NUMBER (R_NDS32_LONGJUMP6, 112)
   RELOC_NUMBER (R_NDS32_LONGJUMP7, 113)
+  /* Reserved numbers: 114.  */
+  /* TLS support */
+  RELOC_NUMBER (R_NDS32_TLS_IE_LO12, 115)
+  RELOC_NUMBER (R_NDS32_TLS_IEGP_HI20, 116)
+  RELOC_NUMBER (R_NDS32_TLS_IEGP_LO12, 117)
+  RELOC_NUMBER (R_NDS32_TLS_IEGP_LO12S2, 118)
+  RELOC_NUMBER (R_NDS32_TLS_DESC, 119)
+  RELOC_NUMBER (R_NDS32_TLS_DESC_HI20, 120)
+  RELOC_NUMBER (R_NDS32_TLS_DESC_LO12, 121)
+  RELOC_NUMBER (R_NDS32_TLS_DESC_20, 122)
+  RELOC_NUMBER (R_NDS32_TLS_DESC_SDA17S2, 123)
+  /* Reserved numbers: 124-191.  */
 
+  /* These used only for relaxations  */
   RELOC_NUMBER (R_NDS32_RELAX_ENTRY, 192)
   RELOC_NUMBER (R_NDS32_GOT_SUFF, 193)
   RELOC_NUMBER (R_NDS32_GOTOFF_SUFF, 194)
@@ -164,9 +179,19 @@ START_RELOC_NUMBERS (elf_nds32_reloc_type)
   RELOC_NUMBER (R_NDS32_DIFF_ULEB128, 208)
   RELOC_NUMBER (R_NDS32_DATA, 209)
   RELOC_NUMBER (R_NDS32_TRAN, 210)
+  /* TLS support */
   RELOC_NUMBER (R_NDS32_TLS_LE_ADD, 211)
   RELOC_NUMBER (R_NDS32_TLS_LE_LS, 212)
   RELOC_NUMBER (R_NDS32_EMPTY, 213)
+  RELOC_NUMBER (R_NDS32_TLS_DESC_ADD, 214)
+  RELOC_NUMBER (R_NDS32_TLS_DESC_FUNC, 215)
+  RELOC_NUMBER (R_NDS32_TLS_DESC_CALL, 216)
+  RELOC_NUMBER (R_NDS32_TLS_DESC_MEM, 217)
+  RELOC_NUMBER (R_NDS32_RELAX_REMOVE, 218)
+  RELOC_NUMBER (R_NDS32_RELAX_GROUP, 219)
+  RELOC_NUMBER (R_NDS32_TLS_IEGP_LW, 220)
+  RELOC_NUMBER (R_NDS32_LSI, 221)
+  /* Reserved numbers: 222-255.  */
 
 END_RELOC_NUMBERS (R_NDS32_max)
 
@@ -217,7 +242,6 @@ END_RELOC_NUMBERS (R_NDS32_max)
 /* MFUSR rt, PC and correct ISYNC, MSYNC instructions.
    Old N1213HC has no such instructions.  */
 #define E_NDS32_HAS_MFUSR_PC_INST		0x00000100 /* Reclaimed.  */
-#define E_NDS32_HAS_EX9_INST			0x00000100 /* v3, ELF 1.4.  */
 /* C/C++ performance extension instructions.  */
 #define E_NDS32_HAS_EXT_INST			0x00000200
 /* Performance extension set II instructions.  */
@@ -232,7 +256,6 @@ END_RELOC_NUMBERS (R_NDS32_max)
 #define E_NDS32_HAS_DIV_DX_INST			0x00002000 /* v2.  */
 /* 16-bit instructions.  */
 #define E_NDS32_HAS_16BIT_INST			0x00004000 /* Reclaimed.  */
-#define E_NDS32_HAS_IFC_INST			0x00004000 /* v3, ELF 1.4.  */
 /* String operation instructions.  */
 #define E_NDS32_HAS_STRING_INST			0x00008000
 /* Reduced register file.  */
@@ -259,12 +282,14 @@ END_RELOC_NUMBERS (R_NDS32_max)
 #define E_NDS32_FPU_REG_32SP_32DP		0x3
 /* FPU MAC instruction used.  */
 #define E_NDS32_HAS_FPU_MAC_INST		0x01000000
-/* <<<Empty Check>>>.  */
-#define E_NDS32_NULL				0x02000000
+/* DSP extension.  */
+#define E_NDS32_HAS_DSP_INST			0x02000000
 /* PIC enabled.  */
 #define E_NDS32_HAS_PIC				0x04000000
 /* Use custom section.  */
 #define E_NDS32_HAS_CUSTOM_SEC			0x08000000
+/* Hardware zero-overhead loop enabled.  */
+#define E_NDS32_HAS_ZOL				(1 << 26)
 
 /* 4-bit for ABI signature, allow up to 16 ABIs
    0: for OLD ABI V0, phase out
@@ -293,7 +318,7 @@ END_RELOC_NUMBERS (R_NDS32_max)
 /* Andes ELF Version 1.31.  */
 #define E_NDS32_ELF_VER_1_3			0x1
 /* Andes ELF Version 1.4. Change the way we fix .debug_* and .gcc_except_table.
-   Change three bit for EX9, IFC and SAT.  */
+   Change three bit for SAT.  */
 #define E_NDS32_ELF_VER_1_4			0x2
 
 #endif

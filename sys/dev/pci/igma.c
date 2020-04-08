@@ -1,4 +1,4 @@
-/*	$NetBSD: igma.c,v 1.3 2016/02/14 19:54:21 chs Exp $	*/
+/*	$NetBSD: igma.c,v 1.3.18.1 2020/04/08 14:08:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 Michael van Elst
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igma.c,v 1.3 2016/02/14 19:54:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igma.c,v 1.3.18.1 2020/04/08 14:08:09 martin Exp $");
 
 #include "vga.h"
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: igma.c,v 1.3 2016/02/14 19:54:21 chs Exp $");
 
 struct igma_softc;
 struct igma_i2c {
-	kmutex_t		ii_lock;
 	struct igma_softc	*ii_sc;
 	bus_addr_t		ii_reg;
 	struct i2c_controller	ii_i2c;
@@ -457,21 +456,16 @@ igma_i2c_attach(struct igma_softc *sc)
 			panic("don't know GMBUS %d\n",i);
 		}
 
-		mutex_init(&ii->ii_lock, MUTEX_DEFAULT, IPL_NONE);
-
+		iic_tag_init(&ii->ii_i2c);
 		ii->ii_i2c.ic_cookie = ii;
-		ii->ii_i2c.ic_acquire_bus = igma_i2c_acquire_bus;
-		ii->ii_i2c.ic_release_bus = igma_i2c_release_bus;
 		ii->ii_i2c.ic_send_start = igma_i2c_send_start;
 		ii->ii_i2c.ic_send_stop = igma_i2c_send_stop;
 		ii->ii_i2c.ic_initiate_xfer = igma_i2c_initiate_xfer;
 		ii->ii_i2c.ic_read_byte = igma_i2c_read_byte;
 		ii->ii_i2c.ic_write_byte = igma_i2c_write_byte;
-		ii->ii_i2c.ic_exec = NULL;
 
 #if 0
 		memset(&iba, 0, sizeof(iba));
-		iba.iba_type = I2C_TYPE_SMBUS;
 		iba.iba_tag = &ii->ii_i2c;
 		config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 #endif
@@ -481,21 +475,6 @@ igma_i2c_attach(struct igma_softc *sc)
 /*
  * I2C interface
  */
-
-static int
-igma_i2c_acquire_bus(void *cookie, int flags)
-{
-	struct igma_i2c *ii = cookie;
-	mutex_enter(&ii->ii_lock);
-	return 0;
-}
-
-static void
-igma_i2c_release_bus(void *cookie, int flags)
-{
-	struct igma_i2c *ii = cookie;
-	mutex_exit(&ii->ii_lock);
-}
 
 static int
 igma_i2c_send_start(void *cookie, int flags)

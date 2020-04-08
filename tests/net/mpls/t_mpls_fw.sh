@@ -1,4 +1,4 @@
-# $NetBSD: t_mpls_fw.sh,v 1.5.14.1 2019/06/10 22:10:10 christos Exp $
+# $NetBSD: t_mpls_fw.sh,v 1.5.14.2 2020/04/08 14:09:12 martin Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,31 +36,12 @@
 # Do the same for the reverse direction (R4 to R1)
 # ping from R1 to R4 right hand side interface
 
-
-RUMP_SERVER1=unix://./r1
-RUMP_SERVER2=unix://./r2
-RUMP_SERVER3=unix://./r3
-RUMP_SERVER4=unix://./r4
-
-RUMP_FLAGS="-lrumpnet -lrumpnet_net -lrumpnet_netinet	\
-            -lrumpnet_netmpls -lrumpnet_shmif"
-
 atf_test_case mplsfw4 cleanup
 mplsfw4_head()
 {
 
 	atf_set "descr" "IP/MPLS forwarding test using PHP"
 	atf_set "require.progs" "rump_server"
-}
-
-startservers()
-{
-
-	ulimit -r 300
-	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${RUMP_SERVER1}
-	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${RUMP_SERVER2}
-	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${RUMP_SERVER3}
-	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${RUMP_SERVER4}
 }
 
 configservers()
@@ -133,19 +114,10 @@ doping()
 	unset RUMP_SERVER
 }
 
-docleanup()
-{
-
-	RUMP_SERVER=${RUMP_SERVER1} rump.halt
-	RUMP_SERVER=${RUMP_SERVER2} rump.halt
-	RUMP_SERVER=${RUMP_SERVER3} rump.halt
-	RUMP_SERVER=${RUMP_SERVER4} rump.halt
-}
-
 mplsfw4_body()
 {
 
-	startservers
+	dostart
 	configservers 3
 	doping
 }
@@ -168,7 +140,7 @@ mplsfw4_expl_head()
 mplsfw4_expl_body()
 {
 
-	startservers
+	dostart
 	configservers 0
 	doping
 }

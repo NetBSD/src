@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.22 2014/02/23 12:01:51 njoly Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.22.30.1 2020/04/08 14:08:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.22 2014/02/23 12:01:51 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.22.30.1 2020/04/08 14:08:00 martin Exp $");
 
 #define ELFSIZE 64
 
@@ -156,7 +156,7 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	if (ap == NULL) {
 		phsize = eh->e_phnum * sizeof(Elf_Phdr);
 		ph = (Elf_Phdr *)kmem_alloc(phsize, KM_SLEEP);
-		error = exec_read_from(l, pack->ep_vp, eh->e_phoff, ph, phsize);
+		error = exec_read(l, pack->ep_vp, eh->e_phoff, ph, phsize, 0);
 		if (error != 0) {
 			for (i = 0; i < eh->e_phnum; i++) {
 				if (ph[i].p_type == PT_PHDR) {

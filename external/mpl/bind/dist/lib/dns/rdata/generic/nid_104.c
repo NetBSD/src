@@ -1,4 +1,4 @@
-/*	$NetBSD: nid_104.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: nid_104.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -124,7 +124,7 @@ fromstruct_nid(ARGS_FROMSTRUCT) {
 	dns_rdata_nid_t *nid = source;
 
 	REQUIRE(type == dns_rdatatype_nid);
-	REQUIRE(source != NULL);
+	REQUIRE(nid != NULL);
 	REQUIRE(nid->common.rdtype == type);
 	REQUIRE(nid->common.rdclass == rdclass);
 
@@ -141,7 +141,7 @@ tostruct_nid(ARGS_TOSTRUCT) {
 	dns_rdata_nid_t *nid = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_nid);
-	REQUIRE(target != NULL);
+	REQUIRE(nid != NULL);
 	REQUIRE(rdata->length == 10);
 
 	UNUSED(mctx);
@@ -160,7 +160,7 @@ static inline void
 freestruct_nid(ARGS_FREESTRUCT) {
 	dns_rdata_nid_t *nid = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(nid != NULL);
 	REQUIRE(nid->common.rdtype == dns_rdatatype_nid);
 
 	return;

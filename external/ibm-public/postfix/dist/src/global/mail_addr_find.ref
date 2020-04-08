@@ -1,0 +1,63 @@
+==== no search string extension
+inline:{plain1@1.example=plain2@2.example,{"aa bb"@cc.example="dd ee"@dd.example}}
+internal:plain1@1.example -external-> external:plain2@2.example (null extension)
+internal:aa bb@cc.example -external-> external:"dd ee"@dd.example (null extension)
+external:"aa bb"@cc.example -external-> external:"dd ee"@dd.example (null extension)
+external:"aa bb"@cc.example -external-> internal:dd ee@dd.example (null extension)
+internal:plain1@1.example -internal-> external:plain2@2.example (null extension)
+internal:aa bb@cc.example -internal-> external:(not found) (null extension)
+internal:"aa bb"@cc.example -internal-> external:"dd ee"@dd.example (null extension)
+==== with search string extension
+inline:{plain1@1.example=plain2@2.example,{"aa bb"@cc.example="dd ee"@dd.example}}
+internal:plain1+ext@1.example -external-> external:plain2@2.example (+ext)
+internal:aa bb+ax bx@cc.example -external-> external:"dd ee"@dd.example (+ax bx)
+external:"aa bb+ax bx"@cc.example -external-> external:"dd ee"@dd.example (+ax bx)
+external:"aa bb+ax bx"@cc.example -external-> internal:dd ee@dd.example (+ax bx)
+internal:plain1+ext@1.example -internal-> external:plain2@2.example (+ext)
+internal:"aa bb+ax bx"@cc.example -internal-> external:(not found) (null extension)
+internal:"aa bb"+ax bx@cc.example -internal-> external:"dd ee"@dd.example (+ax bx)
+==== at in localpart
+inline:{"a@b"=foo@example,"a.b."=bar@example}
+external:"a@b"@localhost.localdomain -external-> external:foo@example (null extension)
+external:"a@b+ext"@localhost.localdomain -external-> external:foo@example (+ext)
+external:"a.b."@localhost.localdomain -external-> external:bar@example (null extension)
+==== legacy support
+inline:{"a@b"=extern-1@example,a@b=intern-1@example,a.b.=intern-2@example}
+internal:a@b@localhost.localdomain -external-first-> external:extern-1@example (null extension)
+internal:a.b.@localhost.localdomain -external-first-> external:intern-2@example (null extension)
+==== at_domain test
+inline:{plain1@1.example=plain2@2.example,@3.example=plain4@4.example,plain5@3.example=plain6@6.example}
+external:plain1+ext@1.example -external-> external:plain2@2.example (+ext)
+external:plain2@2.example -external-> external:(not found) (null extension)
+external:plain3@3.example -external-> external:plain4@4.example (null extension)
+external:plain5@3.example -external-> external:plain6@6.example (null extension)
+==== domain test
+inline:{plain1@1.example=plain2@2.example,3.example=plain4@4.example,plain5@3.example=plain6@6.example}
+external:plain1+ext@1.example -external-> external:plain2@2.example (+ext)
+external:plain2@2.example -external-> external:(not found) (null extension)
+external:plain3@3.example -external-> external:plain4@4.example (null extension)
+external:plain5@3.example -external-> external:plain6@6.example (null extension)
+==== at_domain for local domain
+inline:{ab=foo@example,@localhost.localdomain=@bar.example}
+external:ab@localhost.localdomain -external-> external:foo@example (null extension)
+external:cd@localhost.localdomain -external-> external:@bar.example (null extension)
+==== localpart_at_if_local and domain test
+inline:{ab@=foo@example,localhost.localdomain=@bar.example}
+internal:ab@localhost.localdomain -external-> external:foo@example (null extension)
+internal:ab+ext@localhost.localdomain -external-> external:foo@example (+ext)
+internal:cd@localhost.localdomain -external-> external:@bar.example (null extension)
+==== localpart_at has less precedence than domain test
+inline:{ab@=foo@example,localhost.localdomain=@bar.example}
+external:ab@localhost.localdomain -external-> external:@bar.example (null extension)
+external:ab@foo -external-> external:foo@example (null extension)
+==== domain and subdomain test
+inline:{example=example-result,.example=dot-example-result}
+external:plain1+ext@1.example -external-> external:(not found) (null extension)
+external:foo@sub.example -external-> external:(not found) (null extension)
+external:foo@example -external-> external:example-result (null extension)
+external:foo@example -external-> external:example-result (null extension)
+external:foo@sub.example -external-> external:example-result (null extension)
+external:foo@sub.sub.example -external-> external:example-result (null extension)
+external:foo@example -external-> external:example-result (null extension)
+external:foo@sub.example -external-> external:dot-example-result (null extension)
+external:foo@sub.sub.example -external-> external:dot-example-result (null extension)

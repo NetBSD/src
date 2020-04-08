@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13.4.1 2019/06/10 22:10:01 christos Exp $
+# $NetBSD: Makefile,v 1.13.4.2 2020/04/08 14:09:08 martin Exp $
 
 NOMAN=		# defined
 
@@ -21,7 +21,7 @@ LDADD.t_bitops+=	-lm
 TESTS_C+= t_socket
 CPPFLAGS.t_socket.c+=	-D_KERNTYPES
 LDADD.t_socket+=	-lrumpnet_local -lrumpnet_net -lrumpnet
-LDADD.t_socket+=	-lrumpvfs -lrump -lrumpuser -lpthread
+LDADD.t_socket+=	${LIBRUMPBASE}
 .endif
 
 .include <bsd.test.mk>

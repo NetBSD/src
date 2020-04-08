@@ -1,4 +1,4 @@
-.\"     $NetBSD: install,v 1.5 2009/04/23 01:56:50 snj Exp $
+.\"     $NetBSD: install,v 1.5.48.1 2020/04/08 14:03:51 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,8 +49,8 @@ Unpack the distribution sets into the client's root directory
 on the server.
 .Pp
 .Dl server# Ic cd /export/client/shark
-.Dl server# Ic gzcat .../base.tgz | tar xvpf -
-.Dl server# Ic gzcat .../etc.tgz | tar xvpf -
+.Dl server# Ic gzcat .../base.\*[setsuffix] | tar xvpf -
+.Dl server# Ic gzcat .../etc.\*[setsuffix] | tar xvpf -
 .Dl [ repeat for all sets you wish to unpack ]
 .It
 Load the kernel from the TFTP server.

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.73.6.1 2019/06/10 21:42:45 christos Exp $
+# $NetBSD: network,v 1.73.6.2 2020/04/08 14:03:58 martin Exp $
 #
 
 # PROVIDE: network
@@ -447,10 +447,9 @@ network_start_ipv6_autoconf()
 
 network_wait_dad()
 {
-	# Wait for the DAD flags to clear form all addresses.
+	# Wait for the DAD flags to clear from all addresses.
 	if [ -n "$ifconfig_wait_dad_flags" ]; then
-		echo 'Waiting for DAD to complete for' \
-		    'statically configured addresses...'
+		echo "Waiting for duplicate address detection to finish..."
 		ifconfig $ifconfig_wait_dad_flags
 	fi
 }

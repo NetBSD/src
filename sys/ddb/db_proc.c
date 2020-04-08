@@ -1,7 +1,7 @@
-/*	$NetBSD: db_proc.c,v 1.6.54.1 2019/06/10 22:07:04 christos Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.6.54.2 2020/04/08 14:08:02 martin Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.6.54.1 2019/06/10 22:07:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.6.54.2 2020/04/08 14:08:02 martin Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -233,7 +233,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 				wbuf[0] = '\0';
 			}
 			db_printf("%8d %8d %10d %d %#7x %4d %16s %7.7s\n",
-			    p.p_pptr != NULL ? p.p_pid : -1, pgrp.pg_id,
+			    p.p_pptr != NULL ? p.p_pptr->p_pid : -1, pgrp.pg_id,
 #ifdef _KERNEL
 			    kauth_cred_getuid(p.p_cred),
 #else
@@ -348,8 +348,8 @@ db_show_proc(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 			    sizeof(cpuno), (char *)&cpuno);
 		} else
 			cpuno = -1;
-		db_printf("    stat %d flags %x cpu %d pri %d \n",
-		    l.l_stat, l.l_flag, cpuno, l.l_priority);
+		db_printf("    stat %d flags %x cpu %d pri %d ref %d\n",
+		    l.l_stat, l.l_flag, cpuno, l.l_priority, l.l_refcnt);
 
 		if (l.l_wchan && l.l_wmesg) {
 			db_read_string(l.l_wmesg, MAXCOMLEN, wbuf);

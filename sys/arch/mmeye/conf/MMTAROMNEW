@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.53.4.1 2019/06/10 22:06:31 christos Exp $
+#	$NetBSD: MMTAROMNEW,v 1.53.4.2 2020/04/08 14:07:46 martin Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -211,7 +211,6 @@ cinclude "arch/mmeye/conf/GENERIC.local"
 #pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	tun			# network tunneling over tty
 
 # miscellaneous pseudo-devices

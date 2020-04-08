@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sec_context.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: init_sec_context.c,v 1.2.12.1 2020/04/08 14:03:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -74,11 +74,11 @@ from_file(const char *fn, const char *target_domain,
 
 	heim_ntlm_nt_key(p, key);
 
-	memset(buf, 0, sizeof(buf));
+	memset_s(buf, sizeof(buf), 0, sizeof(buf));
 	fclose(f);
 	return 0;
     }
-    memset(buf, 0, sizeof(buf));
+    memset_s(buf, sizeof(buf), 0, sizeof(buf));
     fclose(f);
     return ENOENT;
 }
@@ -468,7 +468,7 @@ _gss_ntlm_init_sec_context
 	    ret = heim_ntlm_build_ntlm1_master(ntlmv2, sizeof(ntlmv2),
 					       &sessionkey,
 					       &type3.sessionkey);
-	    memset(ntlmv2, 0, sizeof(ntlmv2));
+	    memset_s(ntlmv2, sizeof(ntlmv2), 0, sizeof(ntlmv2));
 	    if (ret) {
 		_gss_ntlm_delete_sec_context(minor_status,
 					     context_handle, NULL);

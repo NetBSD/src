@@ -1,4 +1,4 @@
-/*	$NetBSD: readhappy_mpsafe.c,v 1.1 2018/04/20 00:06:45 kamil Exp $    */
+/*	$NetBSD: readhappy_mpsafe.c,v 1.1.4.1 2020/04/08 14:08:56 martin Exp $    */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: readhappy_mpsafe.c,v 1.1 2018/04/20 00:06:45 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: readhappy_mpsafe.c,v 1.1.4.1 2020/04/08 14:08:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: readhappy_mpsafe.c,v 1.1 2018/04/20 00:06:45 kamil E
  * Create a device /dev/happy_mpsafe from which you can read sequential happy numbers.
  *
  * To use this device you need to do:
- *     mknod /dev/happy_mpsafe c 210 0
+ *     mknod /dev/happy_mpsafe c 351 0
  *
  * To test whether the device is MPSAFE. Compile and run the test_readhappy file
  * provided.
@@ -219,7 +219,7 @@ MODULE(MODULE_CLASS_MISC, happy_mpsafe, NULL);
 static int
 happy_mpsafe_modcmd(modcmd_t cmd, void *arg __unused)
 {
-	int cmajor = 210, bmajor = -1;
+	int cmajor = 351, bmajor = -1;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.163.18.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.163.18.2 2020/04/08 14:09:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163.18.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163.18.2 2020/04/08 14:09:04 martin Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163.18.1 2019/06/10 22:09:58 christos
 #include <sys/asan.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pdpolicy.h>
+#include <uvm/uvm_pgflcache.h>
 
 /*
  * uvm_kernacc: test if kernel can access a memory region.
@@ -223,9 +225,6 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * the specified entry point will be executed.
 	 */
 	cpu_lwp_fork(l1, l2, stack, stacksize, func, arg);
-
-	/* Inactive emap for new LWP. */
-	l2->l_emap_gen = UVM_EMAP_INACTIVE;
 }
 
 #ifndef USPACE_ALIGN
@@ -246,7 +245,8 @@ uarea_poolpage_alloc(struct pool *pp, int flags)
 	KASSERT((flags & PR_WAITOK) != 0);
 
 #if defined(PMAP_MAP_POOLPAGE)
-	while (USPACE == PAGE_SIZE && USPACE_ALIGN == 0) {
+	while (USPACE == PAGE_SIZE &&
+	    (USPACE_ALIGN == 0 || USPACE_ALIGN == PAGE_SIZE)) {
 		struct vm_page *pg;
 		vaddr_t va;
 #if defined(PMAP_ALLOC_POOLPAGE)
@@ -276,7 +276,8 @@ static void
 uarea_poolpage_free(struct pool *pp, void *addr)
 {
 #if defined(PMAP_MAP_POOLPAGE)
-	if (USPACE == PAGE_SIZE && USPACE_ALIGN == 0) {
+	if (USPACE == PAGE_SIZE &&
+	    (USPACE_ALIGN == 0 || USPACE_ALIGN == PAGE_SIZE)) {
 		paddr_t pa;
 
 		pa = PMAP_UNMAP_POOLPAGE((vaddr_t) addr);
@@ -481,8 +482,8 @@ uvm_init_limits(struct proc *p)
 	p->p_rlimit[RLIMIT_DATA].rlim_max = maxdmap;
 	p->p_rlimit[RLIMIT_AS].rlim_cur = RLIM_INFINITY;
 	p->p_rlimit[RLIMIT_AS].rlim_max = RLIM_INFINITY;
-	p->p_rlimit[RLIMIT_RSS].rlim_cur = MIN(
-	    VM_MAXUSER_ADDRESS, ctob((rlim_t)uvmexp.free));
+	p->p_rlimit[RLIMIT_RSS].rlim_cur = MIN(VM_MAXUSER_ADDRESS,
+	    ctob((rlim_t)uvm_availmem()));
 }
 
 /*
@@ -497,12 +498,41 @@ uvm_scheduler(void)
 	lwp_t *l = curlwp;
 
 	lwp_lock(l);
-	l->l_priority = PRI_VM;
 	l->l_class = SCHED_FIFO;
+	lwp_changepri(l, PRI_VM);
 	lwp_unlock(l);
 
+	/* Start the freelist cache. */
+	uvm_pgflcache_start();
+
 	for (;;) {
+		/* Update legacy stats for post-mortem debugging. */
+		uvm_update_uvmexp();
+
+		/* See if the pagedaemon needs to generate some free pages. */
+		uvm_kick_pdaemon();
+
+		/* Calculate process statistics. */
 		sched_pstats();
 		(void)kpause("uvm", false, hz, NULL);
 	}
+}
+
+/*
+ * uvm_idle: called from the idle loop.
+ */
+
+void
+uvm_idle(void)
+{
+	struct cpu_info *ci = curcpu();
+	struct uvm_cpu *ucpu = ci->ci_data.cpu_uvm;
+
+	KASSERT(kpreempt_disabled());
+
+	if (!ci->ci_want_resched)
+		uvmpdpol_idle(ucpu);
+	if (!ci->ci_want_resched)
+		uvm_pageidlezero();
+
 }

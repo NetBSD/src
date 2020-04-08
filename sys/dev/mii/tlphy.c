@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.62.28.1 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.62.28.2 2020/04/08 14:08:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.62.28.1 2019/06/10 22:07:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.62.28.2 2020/04/08 14:08:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,8 @@ tlphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &tlphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
+
+	mii_lock(mii);
 
 	PHY_RESET(sc);
 
@@ -160,12 +161,16 @@ tlphyattach(device_t parent, device_t self, void *aux)
 	} else
 		sc->mii_capabilities = 0;
 
+	mii_unlock(mii);
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 #define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
-	aprint_normal_dev(self, "");
 	if (tsc->sc_tlphycap) {
+		mii_lock(mii);
+		sc->mii_anegticks = MII_ANEGTICKS;
+		mii_unlock(mii);
+		aprint_normal_dev(self, "");
 		if (tsc->sc_tlphycap & TLPHY_MEDIA_10_2) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0, sc->mii_inst),
 			    0);
@@ -175,25 +180,23 @@ tlphyattach(device_t parent, device_t self, void *aux)
 			    0);
 			PRINT("10base5");
 		}
+		aprint_normal("\n");
 	}
-	if (sc->mii_capabilities & BMSR_MEDIAMASK) {
-		aprint_normal("%s", sep);
+	if (sc->mii_capabilities & BMSR_MEDIAMASK)
 		mii_phy_add_media(sc);
-	} else {
+	else {
 		if ((tsc->sc_tlphycap &
 		    (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5)) == 0)
-			aprint_error("no media present");
+			aprint_error_dev(self, "no media present\n");
 		/*
 		 * mii_phy_add_media() automatically install power handler,
 		 * but if_media_add() doesn't. Do it now.
 		 */
 		if (!pmf_device_register(self, NULL, mii_phy_resume)) {
-			aprint_normal("\n");
 			aprint_error_dev(self,
-			    "couldn't establish power handler");
+			    "couldn't establish power handler\n");
 		}
 	}
-	aprint_normal("\n");
 #undef ADD
 #undef PRINT
 }
@@ -204,6 +207,8 @@ tlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	struct tlphy_softc *tsc = (struct tlphy_softc *)sc;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg;
+
+	KASSERT(mii_locked(mii));
 
 	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0 && tsc->sc_need_acomp)
 		tlphy_acomp(tsc);
@@ -284,6 +289,8 @@ tlphy_status(struct mii_softc *sc)
 	struct tlphy_softc *tsc = (struct tlphy_softc *)sc;
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t bmsr, bmcr, tlctrl;
+
+	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;

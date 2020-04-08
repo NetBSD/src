@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.129.4.1 2019/06/10 22:05:41 christos Exp $
+.\"	$NetBSD: hier.7,v 1.129.4.2 2020/04/08 14:07:22 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd March 25, 2019
+.Dd January 10, 2020
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -504,6 +504,8 @@ Installed third-party software packages.
 .Bl -tag -width "include/" -compact
 .It Pa bin/
 Package binaries.
+.It Pa etc/
+Package configuration files.
 .It Pa include/
 Package include files.
 .It Pa lib/
@@ -662,6 +664,8 @@ Apache 2.0 license.
 BSD (or equivalent) licensed software,
 possibly with the
 .Dq advertising clause .
+.It Pa broadcom/
+Broadcom firmware license.
 .It Pa cddl/
 Common Development and Distribution License (the Sun license which is
 based on the Mozilla Public License version 1.1).
@@ -681,8 +685,12 @@ terms similar to BSD licensed software.
 .It Pa intel-public/
 Intel license permitting redistribution with terms similar to
 BSD licensed software.
+.It Pa lgpl3/
+GNU lesser general public license, version 3.
 .It Pa mit/
 MIT (X11) style license.
+.It Pa mpl/
+Mozilla Public License.
 .It Pa zlib/
 BSD-like zlib license.
 .El
@@ -690,13 +698,6 @@ BSD-like zlib license.
 .It Pa games/
 Source for utilities/files in
 .Pa /usr/games .
-.It Pa gnu/
-Source for programs covered by the GNU license (or similar)
-(deprecated; use
-.Pa external/gpl2/
-or
-.Pa external/gpl3/
-as appropriate).
 .It Pa include/
 Source for files in
 .Pa /usr/include .
@@ -937,9 +938,6 @@ NTFS file system support; see
 .It Pa ptyfs/
 Pseudo-terminal device file system; see
 .Xr mount_ptyfs 8 .
-.It Pa smbfs/
-SMB/CIFS file system support; see
-.Xr mount_smbfs 8 .
 .It Pa union/
 Union file system; see
 .Xr mount_union 8 .

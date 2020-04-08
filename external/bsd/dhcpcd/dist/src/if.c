@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -53,11 +53,13 @@
 #include <errno.h>
 #include <ifaddrs.h>
 #include <inttypes.h>
+#include <fcntl.h>
 #include <fnmatch.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -71,6 +73,7 @@
 #include "ipv4ll.h"
 #include "ipv6nd.h"
 #include "logerr.h"
+#include "privsep.h"
 
 void
 if_free(struct interface *ifp)
@@ -126,6 +129,17 @@ if_closesockets(struct dhcpcd_ctx *ctx)
 }
 
 int
+if_ioctl(struct dhcpcd_ctx *ctx, ioctl_request_t req, void *data, size_t len)
+{
+
+#ifdef PRIVSEP
+	if (ctx->options & DHCPCD_PRIVSEP)
+		return (int)ps_root_ioctl(ctx, req, data, len);
+#endif
+	return ioctl(ctx->pf_inet_fd, req, data, len);
+}
+
+int
 if_getflags(struct interface *ifp)
 {
 	struct ifreq ifr = { .ifr_flags = 0 };
@@ -138,7 +152,7 @@ if_getflags(struct interface *ifp)
 }
 
 int
-if_setflag(struct interface *ifp, short flag)
+if_setflag(struct interface *ifp, short setflag, short unsetflag)
 {
 	struct ifreq ifr = { .ifr_flags = 0 };
 	short f;
@@ -147,16 +161,58 @@ if_setflag(struct interface *ifp, short flag)
 		return -1;
 
 	f = (short)ifp->flags;
-	if ((f & flag) == flag)
+	if ((f & setflag) == setflag && (f & unsetflag) == 0)
 		return 0;
 
 	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-	ifr.ifr_flags = f | flag;
-	if (ioctl(ifp->ctx->pf_inet_fd, SIOCSIFFLAGS, &ifr) == -1)
+	ifr.ifr_flags |= setflag;
+	ifr.ifr_flags &= (short)~unsetflag;
+	if (if_ioctl(ifp->ctx, SIOCSIFFLAGS, &ifr, sizeof(ifr)) == -1)
 		return -1;
 
 	ifp->flags = (unsigned int)ifr.ifr_flags;
 	return 0;
+}
+
+int
+if_randomisemac(struct interface *ifp)
+{
+	uint32_t randnum;
+	size_t hwlen = ifp->hwlen, rlen = 0;
+	uint8_t buf[HWADDR_LEN], *bp = buf, *rp = (uint8_t *)&randnum;
+	char sbuf[HWADDR_LEN * 3];
+	int retval;
+
+	if (hwlen == 0) {
+		errno = ENOTSUP;
+		return -1;
+	}
+	if (hwlen > sizeof(buf)) {
+		errno = ENOBUFS;
+		return -1;
+	}
+
+	for (; hwlen != 0; hwlen--) {
+		if (rlen == 0) {
+			randnum = arc4random();
+			rp = (uint8_t *)&randnum;
+			rlen = sizeof(randnum);
+		}
+		*bp++ = *rp++;
+		rlen--;
+	}
+
+	/* Unicast address and locally administered. */
+	buf[0] &= 0xFC;
+	buf[0] |= 0x02;
+
+	logdebugx("%s: hardware address randomised to %s",
+	    ifp->name,
+	    hwaddr_ntoa(buf, ifp->hwlen, sbuf, sizeof(sbuf)));
+	retval = if_setmac(ifp, buf, ifp->hwlen);
+	if (retval == 0)
+		memcpy(ifp->hwaddr, buf, ifp->hwlen);
+	return retval;
 }
 
 static int
@@ -221,8 +277,15 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 			addrflags = if_addrflags(ifp, &addr->sin_addr,
 			    ifa->ifa_name);
 			if (addrflags == -1) {
-				if (errno != EEXIST && errno != EADDRNOTAVAIL)
-					logerr("%s: if_addrflags", __func__);
+				if (errno != EEXIST && errno != EADDRNOTAVAIL) {
+					char dbuf[INET_ADDRSTRLEN];
+					const char *dbp;
+
+					dbp = inet_ntop(AF_INET, &addr->sin_addr,
+					    dbuf, sizeof(dbuf));
+					logerr("%s: if_addrflags: %s%%%s",
+					    __func__, dbp, ifp->name);
+				}
 				continue;
 			}
 #endif
@@ -245,8 +308,15 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 			addrflags = if_addrflags6(ifp, &sin6->sin6_addr,
 			    ifa->ifa_name);
 			if (addrflags == -1) {
-				if (errno != EEXIST && errno != EADDRNOTAVAIL)
-					logerr("%s: if_addrflags6", __func__);
+				if (errno != EEXIST && errno != EADDRNOTAVAIL) {
+					char dbuf[INET6_ADDRSTRLEN];
+					const char *dbp;
+
+					dbp = inet_ntop(AF_INET6, &sin6->sin6_addr,
+					    dbuf, sizeof(dbuf));
+					logerr("%s: if_addrflags6: %s%%%s",
+					    __func__, dbp, ifp->name);
+				}
 				continue;
 			}
 #endif
@@ -407,8 +477,9 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 		}
 
 		if (if_vimaster(ctx, spec.devname) == 1) {
-			logfunc_t *logfunc = argc != 0 ? logerrx : logdebugx;
-			logfunc("%s: is a Virtual Interface Master, skipping",
+			int loglevel = argc != 0 ? LOG_ERR : LOG_DEBUG;
+			logmessage(loglevel,
+			    "%s: is a Virtual Interface Master, skipping",
 			    spec.devname);
 			continue;
 		}
@@ -593,11 +664,18 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 	return ifs;
 }
 
-/* Decode bge0:1 as dev = bge, ppa = 0 and lun = 1 */
+/*
+ * eth0.100:2 OR eth0i100:2 (seems to be NetBSD xvif(4) only)
+ *
+ * drvname == eth
+ * devname == eth0.100 OR eth0i100
+ * ppa = 0
+ * lun = 2
+ */
 int
 if_nametospec(const char *ifname, struct if_spec *spec)
 {
-	char *ep;
+	char *ep, *pp;
 	int e;
 
 	if (ifname == NULL || *ifname == '\0' ||
@@ -609,6 +687,8 @@ if_nametospec(const char *ifname, struct if_spec *spec)
 		errno = EINVAL;
 		return -1;
 	}
+
+	/* :N is an alias */
 	ep = strchr(spec->drvname, ':');
 	if (ep) {
 		spec->lun = (int)strtoi(ep + 1, NULL, 10, 0, INT_MAX, &e);
@@ -621,17 +701,27 @@ if_nametospec(const char *ifname, struct if_spec *spec)
 		spec->lun = -1;
 		ep = spec->drvname + strlen(spec->drvname) - 1;
 	}
+
 	strlcpy(spec->devname, spec->drvname, sizeof(spec->devname));
-	while (ep > spec->drvname && isdigit((int)*ep))
-		ep--;
-	if (*ep++ == ':') {
-		errno = EINVAL;
-		return -1;
+	for (ep = spec->drvname; *ep != '\0' && !isdigit((int)*ep); ep++) {
+		if (*ep == ':') {
+			errno = EINVAL;
+			return -1;
+		}
 	}
-	spec->ppa = (int)strtoi(ep, NULL, 10, 0, INT_MAX, &e);
-	if (e != 0)
-		spec->ppa = -1;
+	spec->ppa = (int)strtoi(ep, &pp, 10, 0, INT_MAX, &e);
 	*ep = '\0';
+
+	/*
+	 * . is used for VLAN style names
+	 * i is used on NetBSD for xvif interfaces
+	 */
+	if (pp != NULL && (*pp == '.' || *pp == 'i')) {
+		spec->vlid = (int)strtoi(pp + 1, NULL, 10, 0, INT_MAX, &e);
+		if (e)
+			spec->vlid = -1;
+	} else
+		spec->vlid = -1;
 
 	return 0;
 }
@@ -698,7 +788,10 @@ if_domtu(const struct interface *ifp, short int mtu)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
 	ifr.ifr_mtu = mtu;
-	r = ioctl(ifp->ctx->pf_inet_fd, mtu ? SIOCSIFMTU : SIOCGIFMTU, &ifr);
+	if (mtu != 0)
+		r = if_ioctl(ifp->ctx, SIOCSIFMTU, &ifr, sizeof(ifr));
+	else
+		r = ioctl(ifp->ctx->pf_inet_fd, SIOCGIFMTU, &ifr);
 	if (r == -1)
 		return -1;
 	return ifr.ifr_mtu;

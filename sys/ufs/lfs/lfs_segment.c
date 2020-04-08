@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.277.2.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.277.2.2 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.277.2.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.277.2.2 2020/04/08 14:09:04 martin Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -109,11 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.277.2.1 2019/06/10 22:09:58 christ
 
 MALLOC_JUSTDEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
 
-static void lfs_generic_callback(struct buf *, void (*)(struct buf *));
-static void lfs_free_aiodone(struct buf *);
 static void lfs_super_aiodone(struct buf *);
 static void lfs_cluster_aiodone(struct buf *);
-static void lfs_cluster_callback(struct buf *);
 
 /*
  * Determine if it's OK to start a partial in this segment, or if we need
@@ -136,7 +133,6 @@ static void lfs_cluster_callback(struct buf *);
 
 int	 lfs_match_fake(struct lfs *, struct buf *);
 void	 lfs_newseg(struct lfs *);
-void	 lfs_supercallback(struct buf *);
 void	 lfs_updatemeta(struct segment *);
 void	 lfs_writesuper(struct lfs *, daddr_t);
 int	 lfs_writevnodes(struct lfs *fs, struct mount *mp,
@@ -241,7 +237,8 @@ lfs_vflush(struct vnode *vp)
 					pg = uvm_pagelookup(&vp->v_uobj, off);
 					if (pg == NULL)
 						continue;
-					if ((pg->flags & PG_CLEAN) == 0 ||
+					if (uvm_pagegetdirty(pg)
+					    == UVM_PAGE_STATUS_DIRTY ||
 					    pmap_is_modified(pg)) {
 						lfs_sb_addavail(fs,
 							lfs_btofsb(fs,
@@ -399,7 +396,7 @@ lfs_vflush(struct vnode *vp)
 					 * still not done with this vnode.
 					 * XXX we can do better than this.
 					 */
-					KDASSERT(ip->i_number != LFS_IFILE_INUM);
+					KASSERT(ip->i_number != LFS_IFILE_INUM);
 					lfs_writeinode(fs, sp, ip);
 					mutex_enter(&lfs_lock);
 					LFS_SET_UINO(ip, IN_MODIFIED);
@@ -624,6 +621,15 @@ lfs_segwrite(struct mount *mp, int flags)
 	 */
 	do_ckp = LFS_SHOULD_CHECKPOINT(fs, flags);
 
+	/*
+	 * If we know we're gonna need the writer lock, take it now to
+	 * preserve the lock order lfs_writer -> lfs_seglock.
+	 */
+	if (do_ckp) {
+		lfs_writer_enter(fs, "ckpwriter");
+		writer_set = 1;
+	}
+
 	/* We can't do a partial write and checkpoint at the same time. */
 	if (do_ckp)
 		flags &= ~SEGM_SINGLE;
@@ -653,11 +659,10 @@ lfs_segwrite(struct mount *mp, int flags)
 				break;
 			}
 
-			if (do_ckp || fs->lfs_dirops == 0) {
-				if (!writer_set) {
-					lfs_writer_enter(fs, "lfs writer");
-					writer_set = 1;
-				}
+			if (do_ckp ||
+			    (writer_set = lfs_writer_tryenter(fs)) != 0) {
+				KASSERT(writer_set);
+				KASSERT(fs->lfs_writer);
 				error = lfs_writevnodes(fs, mp, sp, VN_DIROP);
 				if (um_error == 0)
 					um_error = error;
@@ -884,7 +889,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		 * everything we've got.
 		 */
 		if (!IS_FLUSHING(fs, vp)) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, 0, 0,
 				PGO_CLEANIT | PGO_ALLPAGES | PGO_LOCKED);
 		}
@@ -2006,7 +2011,7 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr,
 	bp = getiobuf(vp, true);
 	bp->b_dev = NODEV;
 	bp->b_blkno = bp->b_lblkno = addr;
-	bp->b_iodone = lfs_cluster_callback;
+	bp->b_iodone = lfs_cluster_aiodone;
 	bp->b_private = cl;
 
 	return bp;
@@ -2429,7 +2434,7 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	bp->b_flags = (bp->b_flags & ~B_READ) | B_ASYNC;
 	bp->b_oflags &= ~(BO_DONE | BO_DELWRI);
 	bp->b_error = 0;
-	bp->b_iodone = lfs_supercallback;
+	bp->b_iodone = lfs_super_aiodone;
 
 	if (fs->lfs_sp != NULL && fs->lfs_sp->seg_flags & SEGM_SYNC)
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
@@ -2507,7 +2512,7 @@ lfs_match_tindir(struct lfs *fs, struct buf *bp)
 	return (lbn < 0 && (-lbn - ULFS_NDADDR) % LFS_NINDIR(fs) == 2);
 }
 
-static void
+void
 lfs_free_aiodone(struct buf *bp)
 {
 	struct lfs *fs;
@@ -2516,7 +2521,7 @@ lfs_free_aiodone(struct buf *bp)
 	fs = bp->b_private;
 	ASSERT_NO_SEGLOCK(fs);
 	lfs_freebuf(fs, bp);
-	KERNEL_UNLOCK_LAST(curlwp);
+	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 static void
@@ -2534,7 +2539,7 @@ lfs_super_aiodone(struct buf *bp)
 	wakeup(&fs->lfs_sbactive);
 	mutex_exit(&lfs_lock);
 	lfs_freebuf(fs, bp);
-	KERNEL_UNLOCK_LAST(curlwp);
+	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 static void
@@ -2667,48 +2672,11 @@ lfs_cluster_aiodone(struct buf *bp)
 		wakeup(&fs->lfs_iocount);
 	mutex_exit(&lfs_lock);
 
-	KERNEL_UNLOCK_LAST(curlwp);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	pool_put(&fs->lfs_bpppool, cl->bpp);
 	cl->bpp = NULL;
 	pool_put(&fs->lfs_clpool, cl);
-}
-
-static void
-lfs_generic_callback(struct buf *bp, void (*aiodone)(struct buf *))
-{
-	/* reset b_iodone for when this is a single-buf i/o. */
-	bp->b_iodone = aiodone;
-
-	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work, NULL);
-}
-
-static void
-lfs_cluster_callback(struct buf *bp)
-{
-
-	lfs_generic_callback(bp, lfs_cluster_aiodone);
-}
-
-void
-lfs_supercallback(struct buf *bp)
-{
-
-	lfs_generic_callback(bp, lfs_super_aiodone);
-}
-
-/*
- * The only buffers that are going to hit these functions are the
- * segment write blocks, or the segment summaries, or the superblocks.
- *
- * All of the above are created by lfs_newbuf, and so do not need to be
- * released via brelse.
- */
-void
-lfs_callback(struct buf *bp)
-{
-
-	lfs_generic_callback(bp, lfs_free_aiodone);
 }
 
 /*

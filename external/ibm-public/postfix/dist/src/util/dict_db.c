@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_db.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_db.c,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -55,6 +55,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #include "sys_defs.h"
@@ -124,6 +129,9 @@
 typedef struct {
     DICT    dict;			/* generic members */
     DB     *db;				/* open db file */
+#if DB_VERSION_MAJOR > 2
+    DB_ENV *dbenv;
+#endif
 #if DB_VERSION_MAJOR > 1
     DBC    *cursor;			/* dict_db_sequence() */
 #endif
@@ -555,6 +563,9 @@ static void dict_db_close(DICT *dict)
     if (DICT_DB_CLOSE(dict_db->db) < 0)
 	msg_info("close database %s: %m (possible Berkeley DB bug)",
 		 dict_db->dict.name);
+#if DB_VERSION_MAJOR > 2
+    dict_db->dbenv->close(dict_db->dbenv, 0);
+#endif
     if (dict_db->key_buf)
 	vstring_free(dict_db->key_buf);
     if (dict_db->val_buf)
@@ -563,6 +574,44 @@ static void dict_db_close(DICT *dict)
 	vstring_free(dict->fold_buf);
     dict_free(dict);
 }
+
+#if DB_VERSION_MAJOR > 2
+
+/* dict_db_new_env - workaround for undocumented ./DB_CONFIG read */
+
+static DB_ENV *dict_db_new_env(const char *db_path)
+{
+    VSTRING *db_home_buf;
+    DB_ENV *dbenv;
+    u_int32_t cache_size_gbytes;
+    u_int32_t cache_size_bytes;
+    int     ncache;
+
+    if ((errno = db_env_create(&dbenv, 0)) != 0)
+	msg_fatal("create DB environment: %m");
+#if DB_VERSION_MAJOR > 4 || (DB_VERSION_MAJOR == 4 && DB_VERSION_MINOR >= 7)
+    if ((errno = dbenv->get_cachesize(dbenv, &cache_size_gbytes,
+				      &cache_size_bytes, &ncache)) != 0)
+	msg_fatal("get DB cache size: %m");
+    if (cache_size_gbytes == 0 && cache_size_bytes < dict_db_cache_size) {
+	if ((errno = dbenv->set_cache_max(dbenv, cache_size_gbytes,
+					  dict_db_cache_size)) != 0)
+	    msg_fatal("set DB max cache size %d: %m", dict_db_cache_size);
+	if ((errno = dbenv->set_cachesize(dbenv, cache_size_gbytes,
+					  dict_db_cache_size, ncache)) != 0)
+	    msg_fatal("set DB cache size %d: %m", dict_db_cache_size);
+    }
+#endif
+    /* XXX db_home is also the default directory for the .db file. */
+    db_home_buf = vstring_alloc(100);
+    if ((errno = dbenv->open(dbenv, sane_dirname(db_home_buf, db_path),
+			   DB_INIT_MPOOL | DB_CREATE | DB_PRIVATE, 0)) != 0)
+	msg_fatal("open DB environment: %m");
+    vstring_free(db_home_buf);
+    return (dbenv);
+}
+
+#endif
 
 /* dict_db_open - open data base */
 
@@ -573,11 +622,16 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
     struct stat st;
     DB     *db = 0;
     char   *db_path = 0;
+    VSTRING *db_base_buf = 0;
     int     lock_fd = -1;
     int     dbfd;
 
 #if DB_VERSION_MAJOR > 1
     int     db_flags;
+
+#endif
+#if DB_VERSION_MAJOR > 2
+    DB_ENV *dbenv = 0;
 
 #endif
 
@@ -622,11 +676,22 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
      * db_open() create a non-existent file for us.
      */
 #define LOCK_OPEN_FLAGS(f) ((f) & ~(O_CREAT|O_TRUNC))
+#if DB_VERSION_MAJOR <= 2
 #define FREE_RETURN(e) do { \
 	DICT *_dict = (e); if (db) DICT_DB_CLOSE(db); \
 	if (lock_fd >= 0) (void) close(lock_fd); \
+	if (db_base_buf) vstring_free(db_base_buf); \
 	if (db_path) myfree(db_path); return (_dict); \
     } while (0)
+#else
+#define FREE_RETURN(e) do { \
+	DICT *_dict = (e); if (db) DICT_DB_CLOSE(db); \
+	if (dbenv) dbenv->close(dbenv, 0); \
+	if (lock_fd >= 0) (void) close(lock_fd); \
+	if (db_base_buf) vstring_free(db_base_buf); \
+	if (db_path) myfree(db_path); return (_dict); \
+    } while (0)
+#endif
 
     if (dict_flags & DICT_FLAG_LOCK) {
 	if ((lock_fd = open(db_path, LOCK_OPEN_FLAGS(open_flags), 0644)) < 0) {
@@ -683,26 +748,28 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 	db_flags |= DB_CREATE;
     if (open_flags & O_TRUNC)
 	db_flags |= DB_TRUNCATE;
-    if ((errno = db_create(&db, 0, 0)) != 0)
+    if ((errno = db_create(&db, dbenv = dict_db_new_env(db_path), 0)) != 0)
 	msg_fatal("create DB database: %m");
     if (db == 0)
 	msg_panic("db_create null result");
-    if ((errno = db->set_cachesize(db, 0, dict_db_cache_size, 0)) != 0)
-	msg_fatal("set DB cache size %d: %m", dict_db_cache_size);
     if (type == DB_HASH && db->set_h_nelem(db, DICT_DB_NELM) != 0)
 	msg_fatal("set DB hash element count %d: %m", DICT_DB_NELM);
+    db_base_buf = vstring_alloc(100);
 #if DB_VERSION_MAJOR == 6 || DB_VERSION_MAJOR == 5 || \
 	(DB_VERSION_MAJOR == 4 && DB_VERSION_MINOR > 0)
-    if ((errno = db->open(db, 0, db_path, 0, type, db_flags, 0644)) != 0)
+    if ((errno = db->open(db, 0, sane_basename(db_base_buf, db_path),
+			  0, type, db_flags, 0644)) != 0)
 	FREE_RETURN(dict_surrogate(class, path, open_flags, dict_flags,
 				   "open database %s: %m", db_path));
 #elif (DB_VERSION_MAJOR == 3 || DB_VERSION_MAJOR == 4)
-    if ((errno = db->open(db, db_path, 0, type, db_flags, 0644)) != 0)
+    if ((errno = db->open(db, sane_basename(db_base_buf, db_path), 0,
+			  type, db_flags, 0644)) != 0)
 	FREE_RETURN(dict_surrogate(class, path, open_flags, dict_flags,
 				   "open database %s: %m", db_path));
 #else
 #error "Unsupported Berkeley DB version"
 #endif
+    vstring_free(db_base_buf);
     if ((errno = db->fd(db, &dbfd)) != 0)
 	msg_fatal("get database file descriptor: %m");
 #endif
@@ -745,6 +812,9 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
     if (dict_flags & DICT_FLAG_FOLD_FIX)
 	dict_db->dict.fold_buf = vstring_alloc(10);
     dict_db->db = db;
+#if DB_VERSION_MAJOR > 2
+    dict_db->dbenv = dbenv;
+#endif
 #if DB_VERSION_MAJOR > 1
     dict_db->cursor = 0;
 #endif

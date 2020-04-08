@@ -1,0 +1,4 @@
+./dict_open: warning: pcre map miss_endif_re.map, line 1: IF has no matching ENDIF
+owner=untrusted (uid=USER)
+> get 1.2.3.5
+1.2.3.5: not found

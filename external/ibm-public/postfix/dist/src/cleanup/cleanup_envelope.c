@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_envelope.c,v 1.4 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: cleanup_envelope.c,v 1.4.12.1 2020/04/08 14:06:52 martin Exp $	*/
 
 /*++
 /* NAME
@@ -39,6 +39,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -408,31 +413,21 @@ static void cleanup_envelope_process(CLEANUP_STATE *state, int type,
 	return;
     }
     if (mapped_type == REC_TYPE_DSN_ENVID) {
-	/* Allow only one instance. */
-	if (state->dsn_envid != 0) {
-	    msg_warn("%s: message rejected: multiple DSN envelope ID records",
-		     state->queue_id);
-	    state->errs |= CLEANUP_STAT_BAD;
-	    return;
-	}
+	/* Don't break "postsuper -r" after Milter overrides ENVID. */
 	if (!allprint(mapped_buf)) {
 	    msg_warn("%s: message rejected: bad DSN envelope ID record",
 		     state->queue_id);
 	    state->errs |= CLEANUP_STAT_BAD;
 	    return;
 	}
+	if (state->dsn_envid != 0)
+	    myfree(state->dsn_envid);
 	state->dsn_envid = mystrdup(mapped_buf);
 	cleanup_out(state, type, buf, len);
 	return;
     }
     if (mapped_type == REC_TYPE_DSN_RET) {
-	/* Allow only one instance. */
-	if (state->dsn_ret != 0) {
-	    msg_warn("%s: message rejected: multiple DSN RET records",
-		     state->queue_id);
-	    state->errs |= CLEANUP_STAT_BAD;
-	    return;
-	}
+	/* Don't break "postsuper -r" after Milter overrides RET. */
 	if (!alldig(mapped_buf) || (junk = atoi(mapped_buf)) == 0
 	    || DSN_RET_OK(junk) == 0) {
 	    msg_warn("%s: message rejected: bad DSN RET record <%.200s>",

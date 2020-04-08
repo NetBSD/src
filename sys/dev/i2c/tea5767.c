@@ -1,4 +1,4 @@
-/*	$NetBSD: tea5767.c,v 1.1.8.2 2019/06/10 22:07:09 christos Exp $	*/
+/*	$NetBSD: tea5767.c,v 1.1.8.3 2020/04/08 14:08:05 martin Exp $	*/
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tea5767.c,v 1.1.8.2 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tea5767.c,v 1.1.8.3 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/proc.h>
 #include <sys/kernel.h>
@@ -151,22 +151,22 @@ tea5767_write(struct tea5767_softc *sc, uint8_t *reg)
 {
 	int exec_result;
 
-	if (iic_acquire_bus(sc->sc_i2c_tag, I2C_F_POLL)) {
+	if (iic_acquire_bus(sc->sc_i2c_tag, 0)) {
 		device_printf(sc->sc_dev, "bus acquiration failed.\n");
 		return 1;
 	}
 
 	exec_result = iic_exec(sc->sc_i2c_tag, I2C_OP_WRITE_WITH_STOP,
-	    sc->sc_addr, NULL, 0, reg, 5, I2C_F_POLL);
+	    sc->sc_addr, NULL, 0, reg, 5, 0);
 
 	if (exec_result) {
-		iic_release_bus(sc->sc_i2c_tag, I2C_F_POLL);
+		iic_release_bus(sc->sc_i2c_tag, 0);
 		device_printf(sc->sc_dev, "write operation failed %d.\n",
 		    exec_result);
 		return 1;
 	}
 
-	iic_release_bus(sc->sc_i2c_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c_tag, 0);
 
 	return 0;
 }
@@ -177,21 +177,21 @@ tea5767_read(struct tea5767_softc *sc, uint8_t *reg)
 {
 	int exec_result;
 
-	if (iic_acquire_bus(sc->sc_i2c_tag, I2C_F_POLL)) {
+	if (iic_acquire_bus(sc->sc_i2c_tag, 0)) {
 		device_printf(sc->sc_dev, "bus acquiration failed.\n");
 		return 1;
 	}
 
-	iic_exec(sc->sc_i2c_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    NULL, 0, reg, 5, I2C_F_POLL);
+	exec_result = iic_exec(sc->sc_i2c_tag, I2C_OP_READ_WITH_STOP,
+	    sc->sc_addr, NULL, 0, reg, 5, 0);
 
 	if (exec_result) {
-		iic_release_bus(sc->sc_i2c_tag, I2C_F_POLL);
+		iic_release_bus(sc->sc_i2c_tag, 0);
 		device_printf(sc->sc_dev, "read operation failed.\n");
 		return 1;
 	}
 
-	iic_release_bus(sc->sc_i2c_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c_tag, 0);
 	return 0;
 }
 

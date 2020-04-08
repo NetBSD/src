@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.106.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.106.2.2 2020/04/08 14:08:57 martin Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.106.2.1 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.106.2.2 2020/04/08 14:08:57 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -451,7 +451,7 @@ tap_detach(device_t self, int flags)
 		    "sysctl_destroyv returned %d, ignoring\n", error);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	ifmedia_removeall(&sc->sc_im);
+	ifmedia_fini(&sc->sc_im);
 	seldestroy(&sc->sc_rsel);
 	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_cv);
@@ -524,7 +524,7 @@ tap_start(struct ifnet *ifp)
 			if (m0 == NULL)
 				goto done;
 
-			ifp->if_opackets++;
+			if_statadd2(ifp, if_opackets, 1, if_obytes, m0->m_len);
 			bpf_mtap(ifp, m0, BPF_D_OUT);
 
 			m_freem(m0);
@@ -886,7 +886,7 @@ tap_dev_close(struct tap_softc *sc)
 			if (m == NULL)
 				break;
 
-			ifp->if_opackets++;
+			if_statadd2(ifp, if_opackets, 1, if_obytes, m->m_len);
 			bpf_mtap(ifp, m, BPF_D_OUT);
 			m_freem(m);
 		}
@@ -972,8 +972,13 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 		goto out;
 	}
 
-	ifp->if_opackets++;
+	if_statadd2(ifp, if_opackets, 1,
+	    if_obytes, m->m_len);		/* XXX only first in chain */
 	bpf_mtap(ifp, m, BPF_D_OUT);
+	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
+		goto out;
+	if (m == NULL)
+		goto out;
 
 	/*
 	 * One read is one packet.
@@ -1044,6 +1049,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	    device_lookup_private(&tap_cd, unit);
 	struct ifnet *ifp;
 	struct mbuf *m, **mp;
+	size_t len = 0;
 	int error = 0;
 
 	if (sc == NULL)
@@ -1055,7 +1061,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	/* One write, one packet, that's the rule */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return ENOBUFS;
 	}
 	m->m_pkthdr.len = uio->uio_resid;
@@ -1070,16 +1076,24 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 			}
 		}
 		(*mp)->m_len = uimin(MHLEN, uio->uio_resid);
+		len += (*mp)->m_len;
 		error = uiomove(mtod(*mp, void *), (*mp)->m_len, uio);
 		mp = &(*mp)->m_next;
 	}
 	if (error) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		m_freem(m);
 		return error;
 	}
 
 	m_set_rcvif(m, ifp);
+
+	if_statadd2(ifp, if_ipackets, 1, if_ibytes, len);
+	bpf_mtap(ifp, m, BPF_D_IN);
+	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_IN)) != 0)
+		return error;
+	if (m == NULL)
+		return 0;
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 

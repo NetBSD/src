@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.24 2016/02/14 19:54:21 chs Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.24.18.1 2020/04/08 14:08:09 martin Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.24 2016/02/14 19:54:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.24.18.1 2020/04/08 14:08:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,7 +73,6 @@ struct nfsmb_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct i2c_controller sc_i2c;	/* i2c controller info */
-	kmutex_t sc_mutex;
 };
 
 
@@ -83,8 +82,6 @@ static int nfsmbc_print(void *, const char *);
 
 static int nfsmb_match(device_t, cfdata_t, void *);
 static void nfsmb_attach(device_t, device_t, void *);
-static int nfsmb_acquire_bus(void *, int);
-static void nfsmb_release_bus(void *, int);
 static int nfsmb_exec(
     void *, i2c_op_t, i2c_addr_t, const void *, size_t, void *, size_t, int);
 static int nfsmb_check_done(struct nfsmb_softc *);
@@ -227,17 +224,9 @@ nfsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = nfsmbcap->nfsmb_iot;
 
 	/* register with iic */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = nfsmb_acquire_bus;
-	sc->sc_i2c.ic_release_bus = nfsmb_release_bus;
-	sc->sc_i2c.ic_send_start = NULL;
-	sc->sc_i2c.ic_send_stop = NULL;
-	sc->sc_i2c.ic_initiate_xfer = NULL;
-	sc->sc_i2c.ic_read_byte = NULL;
-	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = nfsmb_exec;
-
-	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	if (bus_space_map(sc->sc_iot, nfsmbcap->nfsmb_addr, NFORCE_SMBSIZE, 0,
 	    &sc->sc_ioh) != 0) {
@@ -246,7 +235,6 @@ nfsmb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	memset(&iba, 0, sizeof(iba));
-	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 
@@ -255,23 +243,6 @@ nfsmb_attach(device_t parent, device_t self, void *aux)
 	 * are sufficent. */
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-}
-
-static int
-nfsmb_acquire_bus(void *cookie, int flags)
-{
-	struct nfsmb_softc *sc = cookie;
-
-	mutex_enter(&sc->sc_mutex);
-	return 0;
-}
-
-static void
-nfsmb_release_bus(void *cookie, int flags)
-{
-	struct nfsmb_softc *sc = cookie;
-
-	mutex_exit(&sc->sc_mutex);
 }
 
 static int

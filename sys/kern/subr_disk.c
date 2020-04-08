@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.122.2.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.122.2.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.122.2.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.122.2.2 2020/04/08 14:08:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -440,6 +440,10 @@ int
 disk_read_sectors(void (*strat)(struct buf *), const struct disklabel *lp,
     struct buf *bp, unsigned int sector, int count)
 {
+
+	if ((lp->d_secsize / DEV_BSIZE) == 0 || lp->d_secpercyl == 0)
+		return EINVAL;
+
 	bp->b_blkno = btodb((off_t)sector * lp->d_secsize);
 	bp->b_bcount = count * lp->d_secsize;
 	bp->b_flags = (bp->b_flags & ~B_WRITE) | B_READ;

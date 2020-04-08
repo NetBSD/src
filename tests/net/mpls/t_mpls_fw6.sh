@@ -1,4 +1,4 @@
-# $NetBSD: t_mpls_fw6.sh,v 1.3.14.1 2019/06/10 22:10:10 christos Exp $
+# $NetBSD: t_mpls_fw6.sh,v 1.3.14.2 2020/04/08 14:09:12 martin Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,30 +38,12 @@
 #
 # redo the test using IPv6 explicit null label
 
-RUMP_SERVER1=unix://./r1
-RUMP_SERVER2=unix://./r2
-RUMP_SERVER3=unix://./r3
-RUMP_SERVER4=unix://./r4
-
-RUMP_FLAGS6="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 \
-             -lrumpnet_shmif -lrumpnet_netmpls"
-
 atf_test_case mplsfw6 cleanup
 mplsfw6_head()
 {
 
 	atf_set "descr" "IP6/MPLS forwarding test using PHP"
 	atf_set "require.progs" "rump_server"
-}
-
-startservers()
-{
-
-	ulimit -r 300
-	atf_check -s exit:0 rump_server ${RUMP_FLAGS6} ${RUMP_SERVER1}
-	atf_check -s exit:0 rump_server ${RUMP_FLAGS6} ${RUMP_SERVER2}
-	atf_check -s exit:0 rump_server ${RUMP_FLAGS6} ${RUMP_SERVER3}
-	atf_check -s exit:0 rump_server ${RUMP_FLAGS6} ${RUMP_SERVER4}
 }
 
 configservers()
@@ -163,19 +145,10 @@ do_check_route()
 	unset RUMP_SERVER
 }
 
-docleanup()
-{
-
-	RUMP_SERVER=${RUMP_SERVER1} rump.halt
-	RUMP_SERVER=${RUMP_SERVER2} rump.halt
-	RUMP_SERVER=${RUMP_SERVER3} rump.halt
-	RUMP_SERVER=${RUMP_SERVER4} rump.halt
-}
-
 mplsfw6_body()
 {
 
-	startservers
+	dostart
 	configservers 3
 	do_check_route
 	doping
@@ -199,7 +172,7 @@ mplsfw4_expl_head()
 mplsfw6_expl_body()
 {
 
-	startservers
+	dostart
 	configservers 2
 	do_check_route
 	doping

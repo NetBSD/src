@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.18.2.1 2019/06/10 22:06:54 christos Exp $	*/
+/*	$NetBSD: svs.c,v 1.18.2.2 2020/04/08 14:07:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.18.2.1 2019/06/10 22:06:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.18.2.2 2020/04/08 14:07:59 martin Exp $");
 
 #include "opt_svs.h"
 
@@ -484,7 +484,7 @@ svs_pmap_sync(struct pmap *pmap, int index)
 
 	KASSERT(pmap != NULL);
 	KASSERT(pmap != pmap_kernel());
-	KASSERT(mutex_owned(pmap->pm_lock));
+	KASSERT(mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 	KASSERT(index < PDIR_SLOT_USERLIM);
 
@@ -519,7 +519,7 @@ svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	}
 
 #ifdef DIAGNOSTIC
-	if (oldlwp != NULL && !(oldlwp->l_flag & LW_SYSTEM)) {
+	if (!(oldlwp->l_flag & LW_SYSTEM)) {
 		pcb = lwp_getpcb(oldlwp);
 		rsp0 = pcb->pcb_rsp0;
 		va = rounddown(rsp0, PAGE_SIZE);

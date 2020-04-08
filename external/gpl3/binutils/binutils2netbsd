@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: binutils2netbsd,v 1.1 2016/10/26 18:00:56 christos Exp $
+#	$NetBSD: binutils2netbsd,v 1.1.16.1 2020/04/08 14:04:22 martin Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,6 +45,7 @@ DIR="$1"
 cleantags "$DIR"
 
 find "$DIR" -name testsuite -exec rm -fr {} +
+find "$DIR" -name .gitignore -rm
 
 echo You can import now.  Use the following command:
 echo cvs import src/external/gpl3/binutils/dist FSF binutils-X-YY-Z

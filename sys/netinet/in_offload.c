@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.c,v 1.7.18.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: in_offload.c,v 1.7.18.2 2020/04/08 14:08:58 martin Exp $	*/
 
 /*
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.7.18.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.7.18.2 2020/04/08 14:08:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -197,15 +197,29 @@ ip_tso_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
  * hardware offloading.
  */
 void
-in_undefer_cksum(struct mbuf *m, size_t hdrlen, int csum_flags)
+in_undefer_cksum(struct mbuf *mh, size_t hdrlen, int csum_flags)
 {
-	const size_t iphdrlen = M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
+	const size_t iphdrlen = M_CSUM_DATA_IPv4_IPHL(mh->m_pkthdr.csum_data);
 	uint16_t csum;
 	uint16_t ip_len;
 	uint16_t *csump;
+	struct mbuf *m = mh;
 
-	KASSERT(m->m_flags & M_PKTHDR);
-	KASSERT((m->m_pkthdr.csum_flags & csum_flags) == csum_flags);
+	KASSERT(mh->m_flags & M_PKTHDR);
+	KASSERT(mh->m_pkthdr.len > hdrlen);
+	KASSERT((mh->m_pkthdr.csum_flags & csum_flags) == csum_flags);
+
+	/*
+	 * Deal with prepended frame header as done by e.g. ether_output().
+	 * If first mbuf in chain has just the header, use second mbuf
+	 * for the actual checksum. in4_csum() expects the passed mbuf
+	 * to have the whole (struct ip) area contiguous.
+	 */
+	if (m->m_len <= hdrlen) {
+		hdrlen -= m->m_len;
+		m = m->m_next;
+		KASSERT(m != NULL);
+	}
 
 	if (__predict_true(hdrlen + sizeof(struct ip) <= m->m_len)) {
 		struct ip *ip = (struct ip *)(mtod(m, uint8_t *) + hdrlen);
@@ -249,7 +263,7 @@ in_undefer_cksum(struct mbuf *m, size_t hdrlen, int csum_flags)
 		}
 	}
 
-	m->m_pkthdr.csum_flags ^= csum_flags;
+	mh->m_pkthdr.csum_flags ^= csum_flags;
 }
 
 /*

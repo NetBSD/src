@@ -1,4 +1,4 @@
-/*	$NetBSD: set_keys.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: set_keys.c,v 1.2.12.1 2020/04/08 14:03:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001, 2003 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: set_keys.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
+__RCSID("$NetBSD: set_keys.c,v 1.2.12.1 2020/04/08 14:03:13 martin Exp $");
 
 /*
  * Set the keys of `ent' to the string-to-key of `password'
@@ -52,11 +52,11 @@ _kadm5_set_keys(kadm5_server_context *context,
     size_t num_keys;
     kadm5_ret_t ret;
 
-    ret = hdb_generate_key_set_password(context->context,
-					ent->principal,
-					password,
-					ks_tuple, n_ks_tuple,
-					&keys, &num_keys);
+    ret = hdb_generate_key_set_password_with_ks_tuple(context->context,
+						      ent->principal,
+						      password,
+						      ks_tuple, n_ks_tuple,
+						      &keys, &num_keys);
     if (ret)
 	return ret;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: t_zpool.sh,v 1.3.40.1 2019/06/10 22:10:01 christos Exp $
+#	$NetBSD: t_zpool.sh,v 1.3.40.2 2020/04/08 14:09:08 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,6 +42,11 @@ jippo on /jippo type zfs (local)
 
 create_body()
 {
+
+	AVAIL=$( df -m ${TMPDIR} | awk '{if (int($4) > 0) print $4}' )
+	if [ $AVAIL -lt 65 ]; then
+		atf_skip "not enough free space in working directory"
+	fi
 
 	atf_check -s exit:0 -o ignore -e ignore ${server} ${RUMP_SERVER}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_session.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_session.c,v 1.1.1.1.50.1 2020/04/08 14:06:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -52,6 +52,11 @@
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
+/*
 /*	Victor Duchovni
 /*	Morgan Stanley
 /*--*/
@@ -67,6 +72,10 @@
 #include <vstream.h>
 #include <msg.h>
 #include <mymalloc.h>
+
+/* Global library. */
+
+#include <mail_params.h>
 
 /* TLS library. */
 
@@ -92,6 +101,18 @@ void    tls_session_stop(TLS_APPL_STATE *unused_ctx, VSTREAM *stream, int timeou
 	msg_panic("%s: stream has no active TLS context", myname);
 
     /*
+     * According to RFC 2246 (TLS 1.0), there is no requirement to wait for
+     * the peer's close-notify. If the application protocol provides
+     * sufficient session termination signaling, then there's no need to
+     * duplicate that at the TLS close-notify layer.
+     * 
+     * https://tools.ietf.org/html/rfc2246#section-7.2.1
+     * https://tools.ietf.org/html/rfc4346#section-7.2.1
+     * https://tools.ietf.org/html/rfc5246#section-7.2.1
+     * 
+     * Specify 'tls_fast_shutdown = no' to enable the historical behavior
+     * described below.
+     * 
      * Perform SSL_shutdown() twice, as the first attempt will send out the
      * shutdown alert but it will not wait for the peer's shutdown alert.
      * Therefore, when we are the first party to send the alert, we must call
@@ -101,7 +122,7 @@ void    tls_session_stop(TLS_APPL_STATE *unused_ctx, VSTREAM *stream, int timeou
      */
     if (!failure) {
 	retval = tls_bio_shutdown(vstream_fileno(stream), timeout, TLScontext);
-	if (retval == 0)
+	if (!var_tls_fast_shutdown && retval == 0)
 	    tls_bio_shutdown(vstream_fileno(stream), timeout, TLScontext);
     }
     tls_free_context(TLScontext);
@@ -140,7 +161,7 @@ VSTRING *tls_session_passivate(SSL_SESSION *session)
 	vstring_free(session_data);
 	return (0);
     }
-    VSTRING_AT_OFFSET(session_data, actual_size);	/* XXX not public */
+    vstring_set_payload_size(session_data, actual_size);
 
     return (session_data);
 }
@@ -149,18 +170,13 @@ VSTRING *tls_session_passivate(SSL_SESSION *session)
 
 SSL_SESSION *tls_session_activate(const char *session_data, int session_data_len)
 {
-#if (OPENSSL_VERSION_NUMBER < 0x0090707fL)
-#define BOGUS_CONST
-#else
-#define BOGUS_CONST const
-#endif
     SSL_SESSION *session;
-    BOGUS_CONST unsigned char *ptr;
+    const unsigned char *ptr;
 
     /*
      * Activate the SSL_SESSION object.
      */
-    ptr = (BOGUS_CONST unsigned char *) session_data;
+    ptr = (const unsigned char *) session_data;
     session = d2i_SSL_SESSION((SSL_SESSION **) 0, &ptr, session_data_len);
     if (!session)
 	tls_print_errors();

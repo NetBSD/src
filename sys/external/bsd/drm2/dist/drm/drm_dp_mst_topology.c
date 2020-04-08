@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_topology.c,v 1.3.6.2 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_dp_mst_topology.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.3.6.2 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/kernel.h>
 #include <linux/delay.h>
@@ -32,13 +32,12 @@ __KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.3.6.2 2019/06/10 22:07:57 
 #include <linux/sched.h>
 #include <linux/seq_file.h>
 #include <linux/i2c.h>
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/module.h>
 #include <drm/drm_dp_mst_helper.h>
 #include <drm/drmP.h>
 
 #include <drm/drm_fixed.h>
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * DOC: dp mst helper
@@ -2966,17 +2965,10 @@ int drm_dp_mst_topology_mgr_init(struct drm_dp_mst_topology_mgr *mgr,
 				 int max_dpcd_transaction_bytes,
 				 int max_payloads, int conn_base_id)
 {
-#ifdef __NetBSD__
-	linux_mutex_init(&mgr->lock);
-	linux_mutex_init(&mgr->qlock);
-	linux_mutex_init(&mgr->payload_lock);
-	linux_mutex_init(&mgr->destroy_connector_lock);
-#else
 	mutex_init(&mgr->lock);
 	mutex_init(&mgr->qlock);
 	mutex_init(&mgr->payload_lock);
 	mutex_init(&mgr->destroy_connector_lock);
-#endif
 	INIT_LIST_HEAD(&mgr->tx_msg_downq);
 	INIT_LIST_HEAD(&mgr->destroy_connector_list);
 	INIT_WORK(&mgr->work, drm_dp_mst_link_probe_work);
@@ -3022,16 +3014,11 @@ void drm_dp_mst_topology_mgr_destroy(struct drm_dp_mst_topology_mgr *mgr)
 	mgr->aux = NULL;
 #ifdef __NetBSD__
 	DRM_DESTROY_WAITQUEUE(&mgr->tx_waitq);
-	linux_mutex_destroy(&mgr->destroy_connector_lock);
-	linux_mutex_destroy(&mgr->payload_lock);
-	linux_mutex_destroy(&mgr->qlock);
-	linux_mutex_destroy(&mgr->lock);
-#else
+#endif
 	mutex_destroy(&mgr->destroy_connector_lock);
 	mutex_destroy(&mgr->payload_lock);
 	mutex_destroy(&mgr->qlock);
 	mutex_destroy(&mgr->lock);
-#endif
 }
 EXPORT_SYMBOL(drm_dp_mst_topology_mgr_destroy);
 

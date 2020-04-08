@@ -1,7 +1,7 @@
-/* $NetBSD: machdep.c,v 1.350.14.1 2019/06/10 22:05:45 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.350.14.2 2020/04/08 14:07:25 martin Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.350.14.1 2019/06/10 22:05:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.350.14.2 2020/04/08 14:07:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,8 +216,9 @@ const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 };
 
 void
-alpha_init(u_long pfn, u_long ptb, u_long bim, u_long bip, u_long biv)
-	/* pfn:		 first free PFN number */
+alpha_init(u_long xxx_pfn __unused, u_long ptb, u_long bim, u_long bip,
+    u_long biv)
+	/* pfn:		 first free PFN number (no longer used) */
 	/* ptb:		 PFN of current level 1 page table */
 	/* bim:		 bootinfo magic */
 	/* bip:		 bootinfo pointer */
@@ -456,7 +457,7 @@ nobootinfo:
 	}
 
 #if 0
-	printf("Memory cluster count: %d\n", mddtp->mddt_cluster_cnt);
+	printf("Memory cluster count: %" PRIu64 "\n", mddtp->mddt_cluster_cnt);
 #endif
 
 	for (i = 0; i < mddtp->mddt_cluster_cnt; i++) {
@@ -600,7 +601,7 @@ nobootinfo:
 	maxmem = physmem;
 #if 0
 	printf("totalphysmem = %d\n", totalphysmem);
-	printf("physmem = %d\n", physmem);
+	printf("physmem = %lu\n", physmem);
 	printf("resvmem = %d\n", resvmem);
 	printf("unusedmem = %d\n", unusedmem);
 	printf("unknownmem = %d\n", unknownmem);
@@ -868,7 +869,7 @@ cpu_startup(void)
 #if defined(DEBUG)
 	pmapdebug = opmapdebug;
 #endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 #if 0
 	{
@@ -1866,19 +1867,15 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
  * or after the current trap/syscall if in system mode.
  */
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
+	if ((flags & RESCHED_IDLE) == 0) {
+		if ((flags & RESCHED_REMOTE) != 0) {
 #if defined(MULTIPROCESSOR)
-	bool immed = (flags & RESCHED_IMMED) != 0;
+			alpha_send_ipi(ci->ci_cpuid, ALPHA_IPI_AST);
 #endif /* defined(MULTIPROCESSOR) */
-
-	aston(ci->ci_data.cpu_onproc);
-	ci->ci_want_resched = 1;
-	if (ci->ci_data.cpu_onproc != ci->ci_data.cpu_idlelwp) {
-#if defined(MULTIPROCESSOR)
-		if (immed && ci != curcpu()) {
-			alpha_send_ipi(ci->ci_cpuid, 0);
+		} else {
+			aston(l);
 		}
-#endif /* defined(MULTIPROCESSOR) */
 	}
 }

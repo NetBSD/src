@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.15 2005/07/01 06:04:54 jmc Exp $	*/
+/*	$NetBSD: parse.c,v 1.15.84.1 2020/04/08 14:07:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: parse.c,v 1.15 2005/07/01 06:04:54 jmc Exp $");
+__RCSID("$NetBSD: parse.c,v 1.15.84.1 2020/04/08 14:07:10 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -120,7 +120,7 @@ parse(void)
 			for (i = n + 1; i < wordcount; i++) {
 				wordtype[i - 1] = wordtype[i];
 				wordvalue[i - 1] = wordvalue[i];
-				strcpy(words[i - 1], words[i]);
+				strlcpy(words[i - 1], words[i], WORDLEN);
 			}
 			wordcount--;
 		}
@@ -140,7 +140,7 @@ parse(void)
 			for (i = n + 1; i < wordcount; i++) {
 				wordtype[i - 1] = wordtype[i];
 				wordvalue[i - 1] = wordvalue[i];
-				strcpy(words[i - 1], words[i]);
+				strlcpy(words[i - 1], words[i], WORDLEN);
 			}
 			wordcount--;
 		}
@@ -164,7 +164,7 @@ parse(void)
 				wordtype[n + 1] = wordtype[n - 1];
 				wordtype[n - 1] = OBJECT;
 				strcpy(tmpword, words[n - 1]);
-				strcpy(words[n - 1], words[n + 1]);
+				strlcpy(words[n - 1], words[n + 1], WORDLEN);
 				strcpy(words[n + 1], tmpword);
 				flag = 1;
 		}
@@ -177,7 +177,7 @@ parse(void)
 				for (i = n + 1; i < wordcount; i++) {
 					wordtype[i - 1] = wordtype[i + 1];
 					wordvalue[i - 1] = wordvalue[i + 1];
-					strcpy(words[i - 1], words[i + 1]);
+					strlcpy(words[i - 1], words[i + 1], WORDLEN);
 				}
 				wordcount--;
 				wordcount--;

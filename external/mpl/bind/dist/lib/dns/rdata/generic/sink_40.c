@@ -1,4 +1,4 @@
-/*	$NetBSD: sink_40.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: sink_40.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -148,7 +148,7 @@ fromstruct_sink(ARGS_FROMSTRUCT) {
 	dns_rdata_sink_t *sink = source;
 
 	REQUIRE(type == dns_rdatatype_sink);
-	REQUIRE(source != NULL);
+	REQUIRE(sink != NULL);
 	REQUIRE(sink->common.rdtype == type);
 	REQUIRE(sink->common.rdclass == rdclass);
 
@@ -174,7 +174,7 @@ tostruct_sink(ARGS_TOSTRUCT) {
 	isc_region_t sr;
 
 	REQUIRE(rdata->type == dns_rdatatype_sink);
-	REQUIRE(target != NULL);
+	REQUIRE(sink != NULL);
 	REQUIRE(rdata->length >= 3);
 
 	sink->common.rdclass = rdata->rdclass;
@@ -215,7 +215,7 @@ static inline void
 freestruct_sink(ARGS_FREESTRUCT) {
 	dns_rdata_sink_t *sink = (dns_rdata_sink_t *) source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(sink != NULL);
 	REQUIRE(sink->common.rdtype == dns_rdatatype_sink);
 
 	if (sink->mctx == NULL)

@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.2.4.1 2019/06/10 22:10:00 christos Exp $
+#	$NetBSD: Makefile,v 1.2.4.2 2020/04/08 14:09:06 martin Exp $
 #
 
-PROG= t_hid
 NOMAN=
+.include <bsd.own.mk>
+
+PROG= t_hid
 
 .PATH: ${.CURDIR}/..
 
@@ -10,20 +12,14 @@ CPPFLAGS.t_hid.c= -I${.CURDIR}/../../../../sys/dev/hid
 CPPFLAGS.t_hid.c+= -I${.CURDIR}/../../../../sys/dev/usb
 CPPFLAGS.t_hid.c+= -D_RUMPKERNEL
 
-.include <bsd.own.mk>
-
 BINDIR= ${TESTSBASE}/dev/usb
 
 LIBHIDDIR!= cd ${.CURDIR}/../libhid && ${PRINTOBJDIR}
 LDFLAGS+= -L${LIBHIDDIR}
 LDADD+= -Wl,--whole-archive -lrumpdev_hid -Wl,--no-whole-archive
 DPADD+= ${LIBHIDDIR}/librumpdev_hid.a
-DPADD+= ${ATF_C}
+DPADD+= ${ATF_C} 
 
-LDADD+= -latf-c
-LDADD+= -lrump
-LDADD+= -lrumpuser
-LDADD+= -lrumpvfs
-LDADD+= -lpthread
+LDADD+= ${LIBRUMPBASE} -latf-c
 
 .include <bsd.prog.mk>

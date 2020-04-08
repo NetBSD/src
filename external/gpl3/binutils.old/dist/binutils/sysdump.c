@@ -1,5 +1,5 @@
 /* Sysroff object format dumper.
-   Copyright (C) 1994-2016 Free Software Foundation, Inc.
+   Copyright (C) 1994-2018 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -38,21 +38,7 @@ static int code;
 static int addrsize = 4;
 static FILE *file;
 
-static void dh (unsigned char *, int);
-static void itheader (char *, int);
-static void p (void);
-static void tabout (void);
-static void pbarray (barray *);
-static int getone (int);
-static int opt (int);
-static void must (int);
-static void tab (int, char *);
-static void dump_symbol_info (void);
 static void derived_type (void);
-static void module (void);
-static void show_usage (FILE *, int);
-
-extern int main (int, char **);
 
 static char *
 getCHARS (unsigned char *ptr, int *idx, int size, int max)
@@ -649,7 +635,7 @@ module (void)
 
 char *program_name;
 
-static void
+ATTRIBUTE_NORETURN static void
 show_usage (FILE *ffile, int status)
 {
   fprintf (ffile, _("Usage: %s [option(s)] in-file\n"), program_name);

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipsec,v 1.14.14.1 2019/06/10 21:42:45 christos Exp $
+# $NetBSD: ipsec,v 1.14.14.2 2020/04/08 14:03:57 martin Exp $
 #
 
 # PROVIDE: ipsec
@@ -34,7 +34,7 @@ ipsec_getip() {
 		case "$what" in
 		inet)	echo "local v4_addr=$address;";;
 		inet6)	case "$address" in
-			fe80:)	;;
+			fe80:*)	;;
 			*)	echo "local v6_addr=$address;";;
 			esac;;
 		esac

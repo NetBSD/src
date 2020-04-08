@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.104.4.1 2019/06/10 22:07:04 christos Exp $	*/
+/*	$NetBSD: fss.c,v 1.104.4.2 2020/04/08 14:08:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.104.4.1 2019/06/10 22:07:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.104.4.2 2020/04/08 14:08:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1087,7 +1087,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 	    IO_ADV_ENCODE(POSIX_FADV_NOREUSE) | IO_NODELOCKED,
 	    sc->sc_bs_lwp->l_cred, resid, NULL);
 	if (error == 0) {
-		mutex_enter(sc->sc_bs_vp->v_interlock);
+		rw_enter(sc->sc_bs_vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(off),
 		    round_page(off+len), PGO_CLEANIT | PGO_FREE | PGO_SYNCIO);
 	}

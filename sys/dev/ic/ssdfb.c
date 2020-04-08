@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.6.2.2 2019/06/10 22:07:11 christos Exp $ */
+/* $NetBSD: ssdfb.c,v 1.6.2.3 2020/04/08 14:08:06 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.6.2.2 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.6.2.3 2020/04/08 14:08:06 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -353,9 +353,9 @@ ssdfb_detach(struct ssdfb_softc *sc)
 	kthread_join(sc->sc_thread);
 
 	if (sc->sc_uobj != NULL) {
-		mutex_enter(sc->sc_uobj->vmobjlock);
+		rw_enter(sc->sc_uobj->vmobjlock, RW_WRITER);
 		sc->sc_uobj->uo_refs--;
-		mutex_exit(sc->sc_uobj->vmobjlock);
+		rw_exit(sc->sc_uobj->vmobjlock);
 	}
 	config_detach(sc->sc_wsdisplay, DETACH_FORCE);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pip.c,v 1.2 2018/02/06 09:33:45 mrg Exp $	*/
+/*	$NetBSD: octeon_pip.c,v 1.2.4.1 2020/04/08 14:07:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.2 2018/02/06 09:33:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.2.4.1 2020/04/08 14:07:45 martin Exp $");
 
 #include "opt_octeon.h"
 
@@ -245,7 +245,7 @@ octeon_pip_stats(struct octeon_pip_softc *sc, struct ifnet *ifp, int gmx_port)
 	reg = &octeon_pip_dump_stats_[gmx_port];
 	tmp = _PIP_RD8(sc, reg->offset);
 	pkts = (tmp & 0xffffffff00000000ULL) >> 32;
-	ifp->if_iqdrops += pkts;
+	if_statadd(ifp, if_iqdrops, pkts);
 
 	_PIP_WR8(sc, PIP_STAT_CTL_OFFSET, pip_stat_ctl);
 }

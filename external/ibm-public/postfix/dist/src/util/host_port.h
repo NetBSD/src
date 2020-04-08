@@ -1,4 +1,4 @@
-/*	$NetBSD: host_port.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: host_port.h,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 #ifndef _HOST_PORT_H_INCLUDED_
 #define _HOST_PORT_H_INCLUDED_
@@ -27,6 +27,11 @@ extern const char *WARN_UNUSED_RESULT host_port(char *, char **, char *,
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

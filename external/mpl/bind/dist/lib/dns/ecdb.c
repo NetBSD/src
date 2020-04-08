@@ -1,4 +1,4 @@
-/*	$NetBSD: ecdb.c,v 1.3.2.2 2019/06/10 22:04:35 christos Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.3.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -788,28 +788,30 @@ rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp) {
 
 static isc_result_t
 rdatasetiter_first(dns_rdatasetiter_t *iterator) {
+	REQUIRE(DNS_RDATASETITER_VALID(iterator));
+
 	ecdb_rdatasetiter_t *ecdbiterator = (ecdb_rdatasetiter_t *)iterator;
 	dns_ecdbnode_t *ecdbnode = (dns_ecdbnode_t *)iterator->node;
 
-	REQUIRE(DNS_RDATASETITER_VALID(iterator));
-
-	if (ISC_LIST_EMPTY(ecdbnode->rdatasets))
+	if (ISC_LIST_EMPTY(ecdbnode->rdatasets)) {
 		return (ISC_R_NOMORE);
+	}
 	ecdbiterator->current = ISC_LIST_HEAD(ecdbnode->rdatasets);
 	return (ISC_R_SUCCESS);
 }
 
 static isc_result_t
 rdatasetiter_next(dns_rdatasetiter_t *iterator) {
-	ecdb_rdatasetiter_t *ecdbiterator = (ecdb_rdatasetiter_t *)iterator;
-
 	REQUIRE(DNS_RDATASETITER_VALID(iterator));
 
+	ecdb_rdatasetiter_t *ecdbiterator = (ecdb_rdatasetiter_t *)iterator;
+
 	ecdbiterator->current = ISC_LIST_NEXT(ecdbiterator->current, link);
-	if (ecdbiterator->current == NULL)
+	if (ecdbiterator->current == NULL) {
 		return (ISC_R_NOMORE);
-	else
+	} else {
 		return (ISC_R_SUCCESS);
+	}
 }
 
 static void

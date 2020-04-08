@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.20 2009/04/23 01:56:49 snj Exp $
+.\"	$NetBSD: xfer,v 1.20.48.1 2020/04/08 14:03:50 martin Exp $
 .
 There are currently two installation methods available for initial
 installation of NetBSD on Apple Macintosh 68000-based systems. Neither
@@ -48,7 +48,7 @@ extension installed, you can disable this in the
 .Dq "Helpers"
 dialog
 by removing the entry associated with
-.Dq ".tgz"
+.Dq ".\*[setsuffix]"
 files.  Other FTP
 clients may require separate changes; consult your package's
 documentation.

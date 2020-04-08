@@ -1,25 +1,10 @@
-/*	$NetBSD: dumptrees.c,v 1.1.1.2 2017/06/08 15:59:26 skrll Exp $	*/
+/*	$NetBSD: dumptrees.c,v 1.1.1.2.6.1 2020/04/08 14:04:21 martin Exp $	*/
 
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * dumptrees - utility for libfdt testing
  *
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2006.
- *
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
- *                                                                   USA
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,10 +20,12 @@ static struct {
 	void *blob;
 	const char *filename;
 } trees[] = {
-#define TREE(name)	{ &_##name, #name ".dtb" }
+#define TREE(name)	{ &name, #name ".dtb" }
 	TREE(test_tree1),
 	TREE(bad_node_char), TREE(bad_node_format), TREE(bad_prop_char),
 	TREE(ovf_size_strings),
+	TREE(truncated_property), TREE(truncated_string),
+	TREE(truncated_memrsv),
 };
 
 #define NUM_TREES	(sizeof(trees) / sizeof(trees[0]))

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.50.28.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.50.28.2 2020/04/08 14:08:11 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.50.28.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.50.28.2 2020/04/08 14:08:11 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -144,11 +144,11 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 		       ENOMEM);
 		return;
 	}
-	retcode = dk_lookup(dev_pb, curlwp, &vp);
+	retcode = vn_bdev_openpath(dev_pb, &vp, curlwp);
 	pathbuf_destroy(dev_pb);
 
 	if (retcode) {
-		printf("raid%d: copyback: dk_lookup on device: %s failed: %d!\n",
+		printf("raid%d: copyback: open device: %s failed: %d!\n",
 		       raidPtr->raidid, raidPtr->Disks[fcol].devname,
 		       retcode);
 

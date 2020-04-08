@@ -77,7 +77,6 @@ geniuscomfy2	Genius Comfy KB-21e-Scroll
 geniuskb19e	Genius KB-19e NB
 geniuskkb2050hs	Genius KKB-2050HS
 gyration	Gyration
-htcdream	HTC Dream
 kinesis	Kinesis
 logitech_base	Logitech
 logitech_g15	Logitech G15 extra keys via G15daemon
@@ -136,6 +135,7 @@ vsonku306	ViewSonic KU-306 Internet
 microsoftprose	Microsoft Internet Pro (Swedish)
 microsoftoffice	Microsoft Office Keyboard
 microsoftmult	Microsoft Wireless Multimedia 1.0A
+microsoftsurface	Microsoft Surface
 microsoftelite	Microsoft Natural Elite
 microsoftccurve2k	Microsoft Comfort Curve 2000
 oretec	Ortek Multimedia/Internet MCK-800
@@ -197,7 +197,6 @@ targa_v811	Targa Visionary 811
 unitekkb1925	Unitek KB-1925
 compalfl90	FL90
 creativedw7000	Creative Desktop Wireless 7000
-htcdream	Htc Dream phone
 teck227	Truly Ergonomic 227
 teck229	Truly Ergonomic 229
 apex300	SteelSeries Apex 300 (Apex RAW)
@@ -231,6 +230,7 @@ us(mac)	English (Macintosh)
 us(altgr-intl)	English (intl., with AltGr dead keys)
 us(olpc2)	English (the divide/multiply keys toggle the layout)
 us(hbs)	Serbo-Croatian (US)
+us(norman)	English (Norman)
 us(workman)	English (Workman)
 us(workman-intl)	English (Workman, intl., with dead keys)
 
@@ -256,6 +256,7 @@ ara(mac)	Arabic (Macintosh)
 _
 al	Albanian
 al(plisi)	Albanian (Plisi)
+al(veqilharxhi)	Albanian (Veqilharxhi)
 
 _
 am	Armenian
@@ -310,7 +311,6 @@ in(guj)	Gujarati
 in(guru)	Punjabi (Gurmukhi)
 in(jhelum)	Punjabi (Gurmukhi Jhelum)
 in(kan)	Kannada
-in(kan-kagapa)	Kannada (KaGaPa phonetic)
 in(kan-kagapa)	Kannada (KaGaPa phonetic)
 in(mal)	Malayalam
 in(mal_lalitha)	Malayalam (Lalitha)
@@ -399,6 +399,13 @@ cd	French (Democratic Republic of the Congo)
 
 _
 cn	Chinese
+cn(mon_trad)	Mongolian (Bichig)
+cn(mon_trad_todo)	Mongolian Todo
+cn(mon_trad_xibe)	Mongolian Xibe
+cn(mon_trad_manchu)	Mongolian Manchu
+cn(mon_trad_galik)	Mongolian Galik
+cn(mon_todo_galik)	Mongolian Todo Galik
+cn(mon_manchu_galik)	Mongolian Manchu Galik
 cn(tib)	Tibetan
 cn(tib_asciinum)	Tibetan (with ASCII numerals)
 cn(ug)	Uyghur
@@ -416,6 +423,7 @@ cz	Czech
 cz(bksl)	Czech (with <\|> key)
 cz(qwerty)	Czech (QWERTY)
 cz(qwerty_bksl)	Czech (QWERTY, extended backslash)
+cz(qwerty-mac)	Czech (QWERTY, Macintosh)
 cz(ucw)	Czech (UCW, only accented letters)
 cz(dvorak-ucw)	Czech (US, Dvorak, UCW support)
 cz(rus)	Russian (Czech, phonetic)
@@ -464,9 +472,9 @@ fo(nodeadkeys)	Faroese (no dead keys)
 
 _
 fi	Finnish
+fi(winkeys)	Finnish (Winkeys)
 fi(classic)	Finnish (classic)
 fi(nodeadkeys)	Finnish (classic, no dead keys)
-fi(winkeys)	Finnish (Winkeys)
 fi(smi)	Northern Saami (Finland)
 fi(mac)	Finnish (Macintosh)
 
@@ -483,9 +491,11 @@ fr(latin9_nodeadkeys)	French (legacy, alt., no dead keys)
 fr(latin9_sundeadkeys)	French (legacy, alt., with Sun dead keys)
 fr(bepo)	French (Bepo, ergonomic, Dvorak way)
 fr(bepo_latin9)	French (Bepo, ergonomic, Dvorak way, Latin-9 only)
+fr(bepo_afnor)	French (Bepo, ergonomic, Dvorak way, AFNOR)
 fr(dvorak)	French (Dvorak)
 fr(mac)	French (Macintosh)
 fr(azerty)	French (AZERTY)
+fr(afnor)	French (AFNOR standardized AZERTY)
 fr(bre)	French (Breton)
 fr(oci)	Occitan
 fr(geo)	Georgian (France, AZERTY Tskapo)
@@ -585,6 +595,7 @@ it(geo)	Georgian (Italy)
 it(ibm)	Italian (IBM 142)
 it(intl)	Italian (intl., with dead keys)
 it(scn)	Sicilian
+it(fur)	Friulian (Italy)
 
 _
 jp	Japanese
@@ -628,6 +639,7 @@ lt(us)	Lithuanian (US, with Lithuanian letters)
 lt(ibm)	Lithuanian (IBM LST 1205-92)
 lt(lekp)	Lithuanian (LEKP)
 lt(lekpa)	Lithuanian (LEKPa)
+lt(sgs)	Samogitian
 
 _
 lv	Latvian
@@ -658,6 +670,8 @@ mk(nodeadkeys)	Macedonian (no dead keys)
 _
 mt	Maltese
 mt(us)	Maltese (with US layout)
+mt(alt-us)	Maltese (US layout with AltGr overrides)
+mt(alt-gb)	Maltese (UK layout with AltGr overrides)
 
 _
 mn	Mongolian
@@ -950,7 +964,11 @@ md	Moldavian
 md(gag)	Moldavian (Gagauz)
 
 _
-id	Indonesian (Jawi)
+id	Indonesian (Arab Melayu, phonetic)
+id(phoneticx)	Indonesian (Arab Melayu, ext. phonetic)
+
+_
+jv	Indonesian (Javanese)
 
 _
 my	Malay (Jawi, Arabic Keyboard)
@@ -973,7 +991,7 @@ Option	Description
 grp:switch	Right Alt (while pressed)
 grp:lswitch	Left Alt (while pressed)
 grp:lwin_switch	Left Win (while pressed)
-grp:rwin_switch	Left Win (while pressed)
+grp:rwin_switch	Right Win (while pressed)
 grp:win_switch	Any Win (while pressed)
 grp:menu_switch	Menu (while pressed), Shift+Menu for Menu
 grp:caps_switch	Caps Lock (while pressed), Alt+Caps Lock for the original Caps Lock action
@@ -1053,6 +1071,7 @@ Option	Description
 ctrl:nocaps	Caps Lock as Ctrl
 ctrl:lctrl_meta	Left Ctrl as Meta
 ctrl:swapcaps	Swap Ctrl and Caps Lock
+ctrl:swapcaps_hyper	Caps Lock as Control, Control as Hyper
 ctrl:ac_ctrl	At left of 'A'
 ctrl:aa_ctrl	At bottom left
 ctrl:rctrl_ralt	Right Ctrl as Right Alt
@@ -1077,6 +1096,20 @@ Option	Description
 grp_led:num	Num Lock
 grp_led:caps	Caps Lock
 grp_led:scroll	Scroll Lock
+
+.TE
+
+
+.SS
+Use keyboard LED to indicate modifiers
+.BR
+.TS
+left,box;
+lB lB
+___
+lB l.
+Option	Description
+mod_led:compose	Compose
 
 .TE
 
@@ -1140,6 +1173,7 @@ caps:capslock	Caps Lock toggles normal capitalization of alphabetic characters
 caps:shiftlock	Caps Lock toggles ShiftLock (affects all keys)
 caps:swapescape	Swap ESC and Caps Lock
 caps:escape	Make Caps Lock an additional Esc
+caps:escape_shifted_capslock	Make unmodified Caps Lock an additional Esc, but Shift + Caps Lock behaves like regular Caps Lock
 caps:backspace	Make Caps Lock an additional Backspace
 caps:super	Make Caps Lock an additional Super
 caps:hyper	Make Caps Lock an additional Hyper
@@ -1161,6 +1195,7 @@ ___
 lB l.
 Option	Description
 altwin:menu	Add the standard behavior to Menu key
+altwin:menu_win	Menu is mapped to Win
 altwin:meta_alt	Alt and Meta are on Alt
 altwin:alt_win	Alt is mapped to Win and the usual Alt
 altwin:ctrl_win	Ctrl is mapped to Win and the usual Ctrl keys
@@ -1261,6 +1296,8 @@ lB lB
 ___
 lB l.
 Option	Description
+lv5:lsgt_switch	<Less/Greater> chooses 5th level
+lv5:ralt_switch	Right Alt chooses 5th level
 lv5:lsgt_switch_lock	<Less/Greater> chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser
 lv5:ralt_switch_lock	Right Alt chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser
 lv5:lwin_switch_lock	Left Win chooses 5th level; acts as onetime lock when pressed together with another 5th level chooser
@@ -1323,8 +1360,10 @@ lB lB
 ___
 lB l.
 Option	Description
-korean:ralt_rctrl	Right Alt as Hangul, right Ctrl as Hanja
-korean:rctrl_ralt	Right Ctrl as Hangul, right Alt as Hanja
+korean:ralt_hangul	Make right Alt a Hangul key
+korean:rctrl_hangul	Make right Ctrl a Hangul key
+korean:ralt_hanja	Make right Alt a Hanja key
+korean:rctrl_hanja	Make right Ctrl a Hanja key
 
 .TE
 

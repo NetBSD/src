@@ -1,4 +1,4 @@
-/* $NetBSD: sem.c,v 1.29.44.1 2019/06/10 21:41:02 christos Exp $ */
+/* $NetBSD: sem.c,v 1.29.44.2 2020/04/08 14:03:04 martin Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.29.44.1 2019/06/10 21:41:02 christos Exp $");
+__RCSID("$NetBSD: sem.c,v 1.29.44.2 2020/04/08 14:03:04 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ execute(struct command *t, int wtty, int *pipein, int *pipeout)
     struct biltins * volatile bifunc;
     int pv[2], pid;
     sigset_t nsigset;
-    int forked;
+    volatile int forked;
 
     UNREGISTER(forked);
     UNREGISTER(bifunc);

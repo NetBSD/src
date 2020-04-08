@@ -1,2 +1,2 @@
-. ${srcdir}/emulparams/m32relf_linux.sh
+source_sh ${srcdir}/emulparams/m32relf_linux.sh
 OUTPUT_FORMAT="elf32-m32rle-linux"

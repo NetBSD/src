@@ -1,5 +1,6 @@
-/*	$NetBSD: ti-sysc.h,v 1.1.1.1.4.1 2019/06/10 22:08:53 christos Exp $	*/
+/*	$NetBSD: ti-sysc.h,v 1.1.1.1.4.2 2020/04/08 14:08:44 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 /* TI sysc interconnect target module defines */
 
 /* Generic sysc found on omap2 and later, also known as type1 */

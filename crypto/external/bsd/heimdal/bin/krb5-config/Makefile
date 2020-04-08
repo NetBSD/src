@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/04/24 13:50:53 pettai Exp $
+#	$NetBSD: Makefile,v 1.3.24.1 2020/04/08 14:03:06 martin Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -11,8 +11,9 @@ MAN=		krb5-config.1
 CLEANFILES+=	krb5-config
 
 krb5-config: krb5-config.in
-	${TOOL_SED} -e "s!@PACKAGE\@!heimdal!g" \
-	        -e "s!@VERSION\@!1.5.3!g" \
+	${TOOL_SED} \
+		-e "s!@PACKAGE\@!heimdal!g" \
+	        -e "s!@VERSION\@!${VERSION}!g" \
 	        -e "s!@prefix\@!/!g" \
 	        -e "s!@exec_prefix\@!/!g" \
 	        -e "s!@libdir\@!/usr/lib!g" \
@@ -26,7 +27,7 @@ krb5-config: krb5-config.in
 	        -e "s!@LIB_pkinit\@!-lhx509!g" \
 	        -e "s!@PTHREAD_LIBADD\@!!g" \
 	        -e "s!@LIBS\@!!g" \
-	        ${HEIMDIST}/tools/krb5-config.in > $@
+	        ${HEIMDIST}/tools/krb5-config.in | sh > $@
 	chmod +x $@
 
 .include <bsd.prog.mk>

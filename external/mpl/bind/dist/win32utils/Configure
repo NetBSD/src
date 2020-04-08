@@ -364,7 +364,6 @@ my @enablelist = ("developer",
 # with-xxx/without-xxx
 
 my @withlist = ("aes",
-                "cc-alg",
                 "cross-compile",
                 "ecdsa",
                 "eddsa",
@@ -424,7 +423,6 @@ my @help = (
 "  with-openssl[=PATH]   build with OpenSSL yes|path (mandatory)\n",
 "  with-pkcs11[=PATH]    build with PKCS#11 support yes|no|provider-path\n",
 "  with-eddsa            crypto EDDSA yes|all|no\n",
-"  with-cc-alg           choose the algorithm for cookies aes|sha1|sha256\n",
 "  with-gssapi[=PATH]    build with MIT KfW GSSAPI yes|no|path\n",
 "  with-libxml2[=PATH]   build with libxml2 library yes|no|path\n",
 "  with-geoip[=PATH]     build with GeoIP support yes|no|path\n",
@@ -469,7 +467,6 @@ my $pkcs11_path = "unknown";
 my $use_eddsa = "auto";
 my $use_ed448 = "auto";
 my $use_aes = "auto";
-my $cookie_algorithm = "aes";
 my $use_gssapi = "no";
 my $validation_default = "auto";
 my $gssapi_path = "C:\\Program\ Files\\MIT\\Kerberos\\";
@@ -761,8 +758,6 @@ sub mywith {
         } elsif ($val =~ /^yes$/i) {
             $use_aes = "yes";
         }
-    } elsif ($key =~ /^cc-alg$/i) {
-        $cookie_algorithm = $val;
     } elsif ($key =~ /^gssapi$/i) {
         if ($val !~ /^no$/i) {
             $use_gssapi = "yes";
@@ -934,7 +929,6 @@ if ($verbose) {
     } else {
         print "querytrace: disabled\n";
     }
-    print "cookie algorithm: $cookie_algorithm\n";
     print "openssl-path: $openssl_path\n";
     if ($use_tests eq "yes") {
         print "tests: enabled\n";
@@ -2949,7 +2943,6 @@ exit 0;
 #  --with-ecdsa supported
 #  --with-eddsa supported
 #  --with-aes supported
-#  --with-cc-alg supported
 #  --with-randomdev not supported on WIN32 (makes no sense)
 #  --with-geoip supported
 #  --with-gssapi supported with MIT (K)erberos (f)or (W)indows

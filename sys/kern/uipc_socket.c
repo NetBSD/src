@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.264.2.1 2019/06/10 22:09:04 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.264.2.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.264.2.1 2019/06/10 22:09:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.264.2.2 2020/04/08 14:08:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -382,7 +382,7 @@ socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	enum kauth_network_req req;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_network_req)arg0;
+	req = (enum kauth_network_req)(uintptr_t)arg0;
 
 	if ((action != KAUTH_NETWORK_SOCKET) &&
 	    (action != KAUTH_NETWORK_BIND))
@@ -1168,6 +1168,9 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			    MIN(uio->uio_resid, m->m_len), uio);
 			m = m_free(m);
 		} while (uio->uio_resid > 0 && error == 0 && m);
+		/* We consumed the oob data, no more oobmark.  */
+		so->so_oobmark = 0;
+		so->so_state &= ~SS_RCVATMARK;
 bad:
 		if (m != NULL)
 			m_freem(m);
@@ -1979,6 +1982,7 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 		optval = (opt == SO_SNDTIMEO ?
 		     so->so_snd.sb_timeo : so->so_rcv.sb_timeo);
 
+		memset(&tv, 0, sizeof(tv));
 		tv.tv_sec = optval / hz;
 		tv.tv_usec = (optval % hz) * tick;
 

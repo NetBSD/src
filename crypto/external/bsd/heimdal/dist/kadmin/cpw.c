@@ -1,4 +1,4 @@
-/*	$NetBSD: cpw.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: cpw.c,v 1.2.12.1 2020/04/08 14:03:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -78,7 +78,7 @@ set_random_password (krb5_principal principal, int keepold)
 	printf ("%s's password set to \"%s\"\n", princ_name, pw);
 	free (princ_name);
     }
-    memset (pw, 0, sizeof(pw));
+    memset_s(pw, sizeof(pw), 0, sizeof(pw));
     return ret;
 }
 
@@ -110,7 +110,7 @@ set_password (krb5_principal principal, char *password, int keepold)
     if(ret == 0)
 	ret = kadm5_chpass_principal_3(kadm_handle, principal, keepold, 0, NULL,
 				       password);
-    memset(pwbuf, 0, sizeof(pwbuf));
+    memset_s(pwbuf, sizeof(pwbuf), 0, sizeof(pwbuf));
     return ret;
 }
 

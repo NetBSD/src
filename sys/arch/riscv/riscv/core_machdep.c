@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef CORENAME
-__RCSID("$NetBSD: core_machdep.c,v 1.1.22.1 2019/06/10 22:06:41 christos Exp $");
+__RCSID("$NetBSD: core_machdep.c,v 1.1.22.2 2020/04/08 14:07:51 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: core_machdep.c,v 1.1.22.1 2019/06/10 22:06:41 christos Exp $")
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/cpu.h>
+#include <sys/compat_stub.h>
 
 #include <riscv/locore.h>
 
@@ -92,11 +93,13 @@ CORENAME(cpu_coredump)(struct lwp *l, struct coredump_iostate *iocookie,
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE, &cseg,
+	    chdr->c_seghdrsize), ENOSYS, error);
 	if (error)
 		return error;
 
-	return coredump_write(iocookie, UIO_SYSSPACE, &cpustate,
-	    chdr->c_cpusize);
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE,
+	    &cpustate, chdr->c_cpusize), ENOSYS, error);
+
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_10.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: null_10.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -82,7 +82,7 @@ fromstruct_null(ARGS_FROMSTRUCT) {
 	dns_rdata_null_t *null = source;
 
 	REQUIRE(type == dns_rdatatype_null);
-	REQUIRE(source != NULL);
+	REQUIRE(null != NULL);
 	REQUIRE(null->common.rdtype == type);
 	REQUIRE(null->common.rdclass == rdclass);
 	REQUIRE(null->data != NULL || null->length == 0);
@@ -99,7 +99,7 @@ tostruct_null(ARGS_TOSTRUCT) {
 	isc_region_t r;
 
 	REQUIRE(rdata->type == dns_rdatatype_null);
-	REQUIRE(target != NULL);
+	REQUIRE(null != NULL);
 
 	null->common.rdclass = rdata->rdclass;
 	null->common.rdtype = rdata->type;
@@ -119,7 +119,7 @@ static inline void
 freestruct_null(ARGS_FREESTRUCT) {
 	dns_rdata_null_t *null = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(null != NULL);
 	REQUIRE(null->common.rdtype == dns_rdatatype_null);
 
 	if (null->mctx == NULL)

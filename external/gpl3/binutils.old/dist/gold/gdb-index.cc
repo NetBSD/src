@@ -1,6 +1,6 @@
 // gdb-index.cc -- generate .gdb_index section for fast debug lookup
 
-// Copyright (C) 2012-2016 Free Software Foundation, Inc.
+// Copyright (C) 2012-2018 Free Software Foundation, Inc.
 // Written by Cary Coutant <ccoutant@google.com>.
 
 // This file is part of gold.

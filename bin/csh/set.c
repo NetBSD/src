@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.33.28.1 2019/06/10 21:41:02 christos Exp $ */
+/* $NetBSD: set.c,v 1.33.28.2 2020/04/08 14:03:04 martin Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.33.28.1 2019/06/10 21:41:02 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.33.28.2 2020/04/08 14:03:04 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,9 +43,7 @@ __RCSID("$NetBSD: set.c,v 1.33.28.1 2019/06/10 21:41:02 christos Exp $");
 #include <stdarg.h>
 #include <stdlib.h>
 
-#ifndef SHORT_STRINGS
 #include <string.h>
-#endif /* SHORT_STRINGS */
 
 #include "csh.h"
 #include "extern.h"
@@ -60,6 +58,41 @@ static struct varent *madrof(Char *, struct varent *);
 static void unsetv1(struct varent *);
 static void exportpath(Char **);
 static void balance(struct varent *, int, int);
+
+#ifdef EDIT
+static const char *
+alias_text(void *dummy __unused, const char *name)
+{
+	static char *buf;
+	struct varent *vp;
+	Char **av;
+	char *p;
+	size_t len;
+
+	vp = adrof1(str2short(name), &aliases);
+	if (vp == NULL)
+	    return NULL;
+
+	len = 0;
+	for (av = vp->vec; *av; av++) {
+	    len += strlen(vis_str(*av));
+	    if (av[1])
+		len++;
+	}
+	len++;
+	free(buf);
+	p = buf = xmalloc(len);
+	for (av = vp->vec; *av; av++) {
+	    const char *s = vis_str(*av);
+	    while ((*p++ = *s++) != '\0')
+		continue;
+	    if (av[1])
+		*p++ = ' ';
+	}
+	*p = '\0';
+	return buf;
+}
+#endif
 
 /*
  * C Shell
@@ -117,11 +150,18 @@ update_vars(Char *vp)
 #ifdef EDIT
     else if (eq(vp, STRedit)) {
 	HistEvent ev;
+	Char *vn = value(STRhistchars);
+
 	editing = 1;
 	el = el_init_fd(getprogname(), cshin, cshout, csherr,
 	    SHIN, SHOUT, SHERR);
-	el_set(el, EL_EDITOR, "emacs");
+	el_set(el, EL_EDITOR, *vn ? short2str(vn) : "emacs");
 	el_set(el, EL_PROMPT, printpromptstr);
+	el_set(el, EL_ALIAS_TEXT, alias_text, NULL);
+	el_set(el, EL_ADDFN, "rl-complete",
+	    "ReadLine compatible completion function", _el_fn_complete);
+	el_set(el, EL_BIND, "^I", adrof(STRfilec) ? "rl-complete" : "ed-insert",
+	    NULL);
 	hi = history_init();
 	history(hi, &ev, H_SETSIZE, getn(value(STRhistory)));
 	loadhist(Histlist.Hnext);
@@ -518,16 +558,18 @@ unset(Char **v, struct command *t)
 	HIST = '!';
 	HISTSUB = '^';
     }
-    else if (adrof(STRwordchars) == 0)
+    if (adrof(STRwordchars) == 0)
 	word_chars = STR_WORD_CHARS;
 #ifdef FILEC
-    else if (adrof(STRfilec) == 0)
+    if (adrof(STRfilec) == 0)
 	filec = 0;
 #endif
 #ifdef EDIT
-    else if (adrof(STRedit) == 0) {
-	el_end(el);
-	history_end(hi);
+    if (adrof(STRedit) == 0) {
+	if (el)
+	    el_end(el);
+	if (hi)
+	    history_end(hi);
 	el = NULL;
 	hi = NULL;
 	editing = 0;

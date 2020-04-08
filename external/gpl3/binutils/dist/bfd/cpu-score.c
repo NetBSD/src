@@ -1,5 +1,5 @@
 /* BFD support for the score processor
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -43,11 +43,11 @@ compatible (const bfd_arch_info_type * a, const bfd_arch_info_type * b)
   return a;
 }
 
-#define N(addr_bits, machine, print, default, next)		\
+#define N(machine, print, default, next)			\
 {								\
-  32,				/* 16 bits in a word.  */	\
+  32,				/* Bits in a word.  */		\
   32,				/* Bits in an address.  */	\
-  8,				/* 8 bits in a byte.  */	\
+  8,				/* Bits in a byte.  */		\
   bfd_arch_score,						\
   machine,			/* Machine number.  */		\
   "score",			/* Architecture name.   */	\
@@ -57,13 +57,14 @@ compatible (const bfd_arch_info_type * a, const bfd_arch_info_type * b)
   compatible,							\
   bfd_default_scan,						\
   bfd_arch_default_fill,					\
-  next								\
+  next,								\
+  0 /* Maximum offset of a reloc from the start of an insn.  */ \
 }
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  N (16, bfd_mach_score3, "score3", FALSE, NULL),
+  N (bfd_mach_score3, "score3", FALSE, NULL),
 };
 
 const bfd_arch_info_type bfd_score_arch =
-  N (16, bfd_mach_score7, "score7", TRUE, & arch_info_struct[0]);
+  N (bfd_mach_score7, "score7", TRUE, & arch_info_struct[0]);

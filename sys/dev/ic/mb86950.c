@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.28.2.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.28.2.2 2020/04/08 14:08:06 martin Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.28.2.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.28.2.2 2020/04/08 14:08:06 martin Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -415,7 +415,7 @@ mb86950_watchdog(struct ifnet *ifp)
 	 * Don't know how many packets are lost by this accident.
 	 *  ... So just errors = errors + 1
 	 */
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	mb86950_reset(sc);
 }
@@ -735,12 +735,12 @@ mb86950_tint(struct mb86950_softc *sc, u_int8_t tstat)
 
 	if (tstat & (TX_UNDERFLO | TX_BUS_WR_ERR)) {
 		/* XXX What do we need to do here? reset ? */
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	}
 
 	/* Excessive collision */
 	if (tstat & TX_16COL) {
-		ifp->if_collisions += 16;
+		if_statadd(ifp, if_collisions, 16);
 		/* 16 collisions means that the packet has been thrown away. */
 		if (sc->txb_sched > 0)
 			sc->txb_sched--;
@@ -749,7 +749,7 @@ mb86950_tint(struct mb86950_softc *sc, u_int8_t tstat)
 	/* Transmission complete. */
 	if (tstat & TX_DONE) {
 		/* Successfully transmitted packets ++. */
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		if (sc->txb_sched > 0)
 			sc->txb_sched--;
 
@@ -757,7 +757,7 @@ mb86950_tint(struct mb86950_softc *sc, u_int8_t tstat)
 		if (tstat & TX_COL) {
 			col = (bus_space_read_1(bst, bsh, DLCR_TX_MODE)
 			    & COL_MASK) >> 4;
-			ifp->if_collisions = ifp->if_collisions + col;
+			if_statadd(ifp, if_collisions, col);
 		}
 	}
 
@@ -786,7 +786,7 @@ mb86950_rint(struct mb86950_softc *sc, u_int8_t rstat)
 		 * count everything else
 		 */
 		if ((rstat & RX_BUS_RD_ERR) == 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 		}
 	}
 
@@ -810,7 +810,7 @@ mb86950_rint(struct mb86950_softc *sc, u_int8_t rstat)
 
 		/* Bad packet? */
 		if ((status & GOOD_PKT) == 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			mb86950_drain_fifo(sc);
 			continue;
 		}
@@ -820,14 +820,14 @@ mb86950_rint(struct mb86950_softc *sc, u_int8_t rstat)
 
 		if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN)
 		    || len < ETHER_HDR_LEN) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			mb86950_drain_fifo(sc);
 			continue;
 		}
 
 		if (mb86950_get_fifo(sc, len) != 0) {
 			/* No mbufs? Drop packet. */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			mb86950_drain_fifo(sc);
 			return;
 		}
@@ -965,14 +965,14 @@ mb86950_detach(struct mb86950_softc *sc)
 	if ((sc->sc_stat & ESTAR_STAT_ATTACHED) == 0)
 		return 0;
 
-	/* Delete all media. */
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
-
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all media. */
+	ifmedia_fini(&sc->sc_media);
 
 	return 0;
 }

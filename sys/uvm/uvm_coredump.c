@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_coredump.c,v 1.6.30.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: uvm_coredump.c,v 1.6.30.2 2020/04/08 14:09:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.6.30.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.6.30.2 2020/04/08 14:09:04 martin Exp $");
 
 /*
  * uvm_coredump.c: glue functions for coredump
@@ -156,7 +156,7 @@ uvm_coredump_walkmap(struct proc *p, int (*func)(struct uvm_coredump_state *),
 			if (entry->object.uvm_obj == NULL) {
 				vaddr_t end;
 
-				amap_lock(entry->aref.ar_amap);
+				amap_lock(entry->aref.ar_amap, RW_READER);
 				for (end = state.start;
 				     end < state.end; end += PAGE_SIZE) {
 					struct vm_anon *anon;

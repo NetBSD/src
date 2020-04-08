@@ -1,4 +1,4 @@
-/*	$NetBSD: stringops.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: stringops.h,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 #ifndef _STRINGOPS_H_INCLUDED_
 #define _STRINGOPS_H_INCLUDED_
@@ -22,7 +22,7 @@
   * External interface.
   */
 extern int util_utf8_enable;
-extern char *printable(char *, int);
+extern char *printable_except(char *, int, const char *);
 extern char *neuter(char *, const char *, int);
 extern char *lowercase(char *);
 extern char *casefoldx(int, VSTRING *, const char *, ssize_t);
@@ -33,6 +33,9 @@ extern char *concatenate(const char *,...);
 extern char *mystrtok(char **, const char *);
 extern char *mystrtokq(char **, const char *, const char *);
 extern char *translit(char *, const char *, const char *);
+
+#define printable(string, replacement) \
+	printable_except((string), (replacement), (char *) 0)
 
 #ifndef HAVE_BASENAME
 #define basename postfix_basename
@@ -48,6 +51,7 @@ extern int allprint(const char *);
 extern int allspace(const char *);
 extern int allascii_len(const char *, ssize_t);
 extern const char *WARN_UNUSED_RESULT split_nameval(char *, char **, char **);
+extern const char *WARN_UNUSED_RESULT split_qnameval(char *, char **, char **);
 extern int valid_utf8_string(const char *, ssize_t);
 extern size_t balpar(const char *, const char *);
 extern char *WARN_UNUSED_RESULT extpar(char **, const char *, int);
@@ -87,6 +91,11 @@ extern int strncasecmp_utf8x(int, const char *, const char *, ssize_t);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

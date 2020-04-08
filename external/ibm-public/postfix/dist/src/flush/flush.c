@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: flush.c,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -55,7 +55,8 @@
 /*	talk to the network, and it does not talk to local users.
 /*	The fast flush server can run chrooted at fixed low privilege.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* BUGS
 /*	Fast flush logfiles are truncated only after a "send"
 /*	request, not when mail is actually delivered, and therefore can
@@ -116,8 +117,12 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
 /* FILES
 /*	/var/spool/postfix/flush, "fast flush" logfiles.
 /* SEE ALSO
@@ -126,6 +131,7 @@
 /*	postconf(5), configuration parameters
 /*	master(5), generic daemon options
 /*	master(8), process manager
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README FILES
 /* .ad

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.19.6.1 2019/06/10 22:05:51 christos Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.19.6.2 2020/04/08 14:07:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.19.6.1 2019/06/10 22:05:51 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.19.6.2 2020/04/08 14:07:27 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -156,10 +156,6 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.19.6.1 2019/06/10 22:05:51 christos
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
 #define VPRINTF(...)	__nothing
-#endif
-
-#ifdef MULTIPROCESSOR
-static kmutex_t cpu_hatch_lock;
 #endif
 
 vaddr_t
@@ -323,8 +319,6 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 #endif
 
 #ifdef MULTIPROCESSOR
-	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_NONE);
-
 	/*
 	 * Ensure BP cache is flushed to memory so that APs start cache
 	 * coherency with correct view.
@@ -354,18 +348,8 @@ cpu_hatch(struct cpu_info *ci, u_int cpuindex, void (*md_cpu_init)(struct cpu_in
 	splhigh();
 
 	VPRINTF("%s(%s): ", __func__, cpu_name(ci));
+	/* mpidr/midr filled in by armv7_mpcontinuation */
 	ci->ci_ctrl = armreg_sctlr_read();
-	uint32_t mpidr = armreg_mpidr_read();
-	ci->ci_mpidr = mpidr;
-	if (mpidr & MPIDR_MT) {
-		ci->ci_smt_id = __SHIFTOUT(mpidr, MPIDR_AFF0);
-		ci->ci_core_id = __SHIFTOUT(mpidr, MPIDR_AFF1);
-		ci->ci_package_id = __SHIFTOUT(mpidr, MPIDR_AFF2);
-	} else {
-		ci->ci_core_id = __SHIFTOUT(mpidr, MPIDR_AFF0);
-		ci->ci_package_id = __SHIFTOUT(mpidr, MPIDR_AFF1);
-	}
-
 	ci->ci_arm_cpuid = cpu_idnum();
 	ci->ci_arm_cputype = ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
 	ci->ci_arm_cpurev = ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
@@ -433,9 +417,6 @@ cpu_hatch(struct cpu_info *ci, u_int cpuindex, void (*md_cpu_init)(struct cpu_in
 
 	VPRINTF(" done!\n");
 
-	/* Notify cpu_boot_secondary_processors that we're done */
-	atomic_and_32(&arm_cpu_mbox, ~__BIT(cpuindex));
-	membar_producer();
-	__asm __volatile("sev; sev; sev");
+	cpu_clr_mbox(cpuindex);
 }
 #endif /* MULTIPROCESSOR */

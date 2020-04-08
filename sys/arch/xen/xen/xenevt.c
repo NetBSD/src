@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.48.4.1 2019/06/10 22:06:56 christos Exp $      */
+/*      $NetBSD: xenevt.c,v 1.48.4.2 2020/04/08 14:07:59 martin Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.48.4.1 2019/06/10 22:06:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.48.4.2 2020/04/08 14:07:59 martin Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -161,9 +161,8 @@ static evtchn_port_t xenevt_alloc_event(void)
 void
 xenevtattach(int n)
 {
-	struct intrhand *ih;
+	struct intrhand *ih __diagused;
 	int level = IPL_HIGH;
-	bool mpsafe = (level != IPL_VM);
 
 	mutex_init(&devevent_lock, MUTEX_DEFAULT, IPL_HIGH);
 	STAILQ_INIT(&devevent_pending);
@@ -184,7 +183,7 @@ xenevtattach(int n)
 
 	/* The real objective here is to wiggle into the ih callchain for IPL level */
 	ih = xen_intr_establish_xname(-1, &xen_pic, evtchn,  IST_LEVEL, level,
-	    xenevt_processevt, NULL, mpsafe, "xenevt");
+	    xenevt_processevt, NULL, true, "xenevt");
 
 	KASSERT(ih != NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_x86_64.c,v 1.10 2014/02/19 20:21:22 dsl Exp $	*/
+/*	$NetBSD: kvm_x86_64.c,v 1.10.26.1 2020/04/08 14:07:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_x86_64.c,v 1.10 2014/02/19 20:21:22 dsl Exp $");
+__RCSID("$NetBSD: kvm_x86_64.c,v 1.10.26.1 2020/04/08 14:07:14 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -186,6 +186,36 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	return (0);
 }
 
+struct p2o {
+	paddr_t pa;
+	psize_t sz;
+	off_t off;
+};
+
+static int
+cmp_p2o(const void *a, const void *b)
+{
+	const struct p2o *p1 = a;
+	const struct p2o *p2 = b;
+
+	/* If one range contains the start of the other, it's a match. */
+	if (p1->pa >= p2->pa && p1->pa < p2->pa + p2->sz) {
+		return 0;
+	}
+	if (p2->pa >= p1->pa && p2->pa < p1->pa + p1->sz) {
+		return 0;
+	}
+
+	/* Otherwise sort by pa. */
+	if (p1->pa < p2->pa)
+		return -1;
+	else if (p1->pa > p2->pa)
+		return 1;
+	else
+		return 0;
+}
+
+
 /*
  * Translate a physical address to a file-offset in the crash dump.
  */
@@ -197,18 +227,35 @@ _kvm_pa2off(kvm_t *kd, paddr_t pa)
 	off_t off;
 	int i;
 
+	static struct p2o *map;
+	struct p2o key, *val;
+
 	cpu_kh = kd->cpu_data;
 	ramsegs = (void *)((char *)(void *)cpu_kh + ALIGN(sizeof *cpu_kh));
 
-	off = 0;
-	for (i = 0; i < cpu_kh->nmemsegs; i++) {
-		if (pa >= ramsegs[i].start &&
-		    (pa - ramsegs[i].start) < ramsegs[i].size) {
-			off += (pa - ramsegs[i].start);
-			break;
+	if (map == NULL) {
+		map = calloc(sizeof *map, cpu_kh->nmemsegs);
+		off = 0;
+		for (i = 0; i < cpu_kh->nmemsegs; i++) {
+			map[i].pa = ramsegs[i].start;
+			map[i].sz = ramsegs[i].size;
+			map[i].off = off;
+			off += ramsegs[i].size;
 		}
-		off += ramsegs[i].size;
+#if 0
+		/* The array appears to be sorted already */
+		qsort(map, cpu_kh->nmemsegs, sizeof(*map), cmp_p2o);
+#endif
 	}
+
+	key.pa = pa;
+	key.sz = 1;
+	key.off = -1;
+	val = bsearch(&key, map, cpu_kh->nmemsegs, sizeof (key), cmp_p2o);
+	if (val)
+		off = val->off + pa - val->pa;
+	else
+		off = 0;
 
 	return (kd->dump_off + off);
 }

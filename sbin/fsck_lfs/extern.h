@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.15 2015/10/03 08:29:06 dholland Exp $	 */
+/* $NetBSD: extern.h,v 1.15.16.1 2020/04/08 14:07:18 martin Exp $	 */
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -24,19 +24,29 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdarg.h>
+#include "vnode.h"
+
+struct inodesc;
+union lfs_dinode;
+struct inode;
+struct lfs;
+union lfs_dirheader;
+
 void adjust(struct inodesc *, short);
 int allocblk(long);
 int allocdir(ino_t, ino_t, int);
 void blkerror(ino_t, const char *, daddr_t);
 void cacheino(union lfs_dinode *, ino_t);
 int changeino(ino_t, const char *, ino_t);
+u_int32_t cksum(void *, size_t);
 struct fstab;
 void checkinode(ino_t, struct inodesc *);
 int chkrange(daddr_t, int);
 void ckfini(int);
 int ckinode(union lfs_dinode *, struct inodesc *);
 void clri(struct inodesc *, const char *, int);
-int dircheck(struct inodesc *, LFS_DIRHEADER *);
+int dircheck(struct inodesc *, union lfs_dirheader *);
 void direrror(ino_t, const char *);
 int dirscan(struct inodesc *);
 int dofix(struct inodesc *, const char *);
@@ -51,6 +61,7 @@ void getpathname(char *, size_t, ino_t, ino_t);
 void inocleanup(void);
 void inodirty(struct inode *);
 int linkup(ino_t, ino_t);
+ u_int32_t lfs_sb_cksum(struct lfs *);
 int makeentry(ino_t, ino_t, const char *);
 void pass0(void);
 void pass1(void);
@@ -65,6 +76,17 @@ void pass6(void);
 int pass6check(struct inodesc *);
 void pinode(ino_t);
 void propagate(void);
+void pwarn(const char *, ...);
 int reply(const char *);
 void resetinodebuf(void);
 int setup(const char *);
+
+extern struct uvnodelst vnodelist;
+extern struct uvnodelst getvnodelist[VNODE_HASH_MAX];
+extern int nvnodes;
+extern void (*panic_func)(int, const char *, va_list);
+extern int fake_cleanseg;
+extern off_t locked_queue_bytes;
+extern int locked_queue_count;
+extern int preen;
+extern time_t write_time;

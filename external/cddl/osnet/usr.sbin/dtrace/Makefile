@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.1 2019/06/10 21:52:04 christos Exp $
+#	$NetBSD: Makefile,v 1.12.2.2 2020/04/08 14:04:21 martin Exp $
 
 # $FreeBSD: head/cddl/usr.sbin/dtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -43,6 +43,7 @@ LDFLAGS+=	-pthread
 PROGDPLIBS+=	ctf ${.CURDIR}/../../lib/libctf
 PROGDPLIBS+=	dtrace ${.CURDIR}/../../lib/libdtrace
 PROGDPLIBS+=	elf ${NETBSDSRCDIR}/external/bsd/elftoolchain/lib/libelf
+PROGDPLIBS+=	proc ${NETBSDSRCDIR}/external/bsd/libproc/lib
 PROGDPLIBS+=	y ${NETBSDSRCDIR}/lib/liby
 PROGDPLIBS+=	l ${NETBSDSRCDIR}/external/bsd/flex/lib
 PROGDPLIBS+=	z ${NETBSDSRCDIR}/lib/libz

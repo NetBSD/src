@@ -1,4 +1,4 @@
-/* $NetBSD: video_if.h,v 1.7 2010/12/24 20:54:28 jmcneill Exp $ */
+/* $NetBSD: video_if.h,v 1.7.60.1 2020/04/08 14:08:02 martin Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -378,7 +378,7 @@ struct video_format {
 				 * Must be set to zero if not used. */
 };
 
-/* A payload is the smallest unit transfered from the hardware driver
+/* A payload is the smallest unit transferred from the hardware driver
  * to the video layer. Multiple video payloads make up one video
  * sample. */
 struct video_payload {

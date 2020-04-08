@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.127.2.1 2019/06/10 22:06:27 christos Exp $
+#	$NetBSD: INSTALL,v 1.127.2.2 2020/04/08 14:07:44 martin Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -123,6 +123,7 @@ icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
@@ -203,6 +204,7 @@ udav*	at uhub? port ?		# Davicom DM9601 based adapters
 pseudo-device	md			# memory disk
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# network loopback
+pseudo-device	bpfilter		# packet filter
 pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	wsmux			# mouse and keyboard multiplexor

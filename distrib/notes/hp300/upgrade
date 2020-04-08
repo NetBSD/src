@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.19 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: upgrade,v 1.19.64.1 2020/04/08 14:03:49 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@ partition and boot from that.
 Download the files you'll need to upgrade
 .Pp
 In particular, make sure you have on your locally mounted file systems
-.Pa base.tgz
+.Pa base.\*[setsuffix]
 and
 .Pa miniroot.fs.gz
 .It
@@ -69,7 +69,7 @@ Extract and install a new boot block:
 Make sure you install the bootstrap program distributed with this version of
 .Nx*M .
 .(disp
-.No # Ic "tar -xpvzf base.tgz ./usr/mdec"
+.No # Ic "tar -xpvzf base.\*[setsuffix] ./usr/mdec"
 .No # Ic "disklabel -B -b ./usr/mdec/uboot.lif " Ar root-disk
 .disp)
 E.g.:
@@ -168,7 +168,7 @@ Extract and install a new boot block:
 Make sure you install the bootstrap program distributed with this version of
 .Nx*M .
 .(disp
-.No # Ic "tar -xpvzf base.tgz ./usr/mdec"
+.No # Ic "tar -xpvzf base.\*[setsuffix] ./usr/mdec"
 .No # Ic "disklabel -B -b ./usr/mdec/uboot.lif " Ar root-disk
 .disp)
 E.g.:
@@ -206,7 +206,7 @@ the
 binary set:
 .Pp
 .Dl # Ic "cd /"
-.Dl # Ic "pax -zrvpe -f" Em /path/to/ Ns Ic base.tgz
+.Dl # Ic "pax -zrvpe -f" Em /path/to/ Ns Ic base.\*[setsuffix]
 .if \n[mvme68k] \{\
 .It
 Install a new boot block:

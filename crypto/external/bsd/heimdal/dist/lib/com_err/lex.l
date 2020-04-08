@@ -1,8 +1,8 @@
-/*	$NetBSD: lex.l,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: lex.l,v 1.2.12.1 2020/04/08 14:03:09 martin Exp $	*/
 
 %{
 /*
- * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -75,13 +75,11 @@ end			{ return END; }
 .			{ return *yytext; }
 %%
 
-#ifndef yywrap /* XXX */
 int
 yywrap ()
 {
      return 1;
 }
-#endif
 
 static int
 getstring(void)

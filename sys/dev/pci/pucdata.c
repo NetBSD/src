@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.102.2.1 2019/06/10 22:07:27 christos Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.102.2.2 2020/04/08 14:08:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.102.2.1 2019/06/10 22:07:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.102.2.2 2020/04/08 14:08:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -980,6 +980,25 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, PCI_BAR1, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* NetMos PCIe NM9900 : 4S */
+	{   "NetMos NM9900 UART",
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9900, 0xa000, 0x1000 },
+	    {	0xffff,	0xffff,				      0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* NetMos PCIe NM9900 : 8S */
+	{   "NetMos NM9900 UART 8S",
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9900, 0xa000, 0x3002 },
+	    {	0xffff,	0xffff,				      0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, PCI_BAR3, 0x00, COM_FREQ },
 	    },
 	},
 

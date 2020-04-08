@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.27.2.2 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.27.2.3 2020/04/08 14:08:13 martin Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.27.2.2 2019/06/10 22:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.27.2.3 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -1472,7 +1472,7 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 			break;
 
 		/* Create node entry for our BSS. */
-		DPRINTFN(DBG_NODES, sc, "create node for AID=0x%x\n",
+		DPRINTFN(DBG_NODES, sc, "create node for AID=%#x\n",
 		    ic->ic_bss->ni_associd);
 		athn_usb_create_node(usc, TAILQ_FIRST(&(ic->ic_vaps))->iv_bss);	/* XXX: handle error? */
 
@@ -1539,7 +1539,7 @@ athn_usb_newassoc_cb(struct athn_usb_softc *usc, void *arg)
 	s = splnet();
 	/* NB: Node may have left before we got scheduled. */
 	if (ni->ni_associd != 0) {
-		DPRINTFN(DBG_NODES, usc, "creating node for AID=0x%x\n",
+		DPRINTFN(DBG_NODES, usc, "creating node for AID=%#x\n",
 		    ni->ni_associd);
 		(void)athn_usb_create_node(usc, ni);	/* XXX: handle error? */
 	}
@@ -1656,7 +1656,7 @@ athn_usb_create_node(struct athn_usb_softc *usc, struct ieee80211_node *ni)
 	struct ar_htc_target_rate rate;
 	int error;
 
-	DPRINTFN(DBG_FN | DBG_NODES, usc, "AID=0x%x\n", ni->ni_associd);
+	DPRINTFN(DBG_FN | DBG_NODES, usc, "AID=%#x\n", ni->ni_associd);
 
 	/*
 	 * NB: this is called by ic_newstate and (in HOSTAP mode by)
@@ -2063,7 +2063,7 @@ athn_usb_rx_wmi_ctrl(struct athn_usb_softc *usc, uint8_t *buf, size_t len)
 #endif
 		break;
 	default:
-		DPRINTFN(DBG_TX, usc, "WMI event 0x%x (%d) ignored\n", cmd_id, cmd_id);
+		DPRINTFN(DBG_TX, usc, "WMI event %#x (%d) ignored\n", cmd_id, cmd_id);
 		break;
 	}
 }
@@ -2346,7 +2346,7 @@ athn_usb_rxeof(struct usbd_xfer *xfer, void * priv,
 	while (len >= (int)sizeof(*hdr)) {
 		hdr = (struct ar_stream_hdr *)buf;
 		if (hdr->tag != htole16(AR_USB_RX_STREAM_TAG)) {
-			DPRINTFN(DBG_RX, usc, "invalid tag 0x%x\n", hdr->tag);
+			DPRINTFN(DBG_RX, usc, "invalid tag %#x\n", hdr->tag);
 			break;
 		}
 		pktlen = le16toh(hdr->len);
@@ -2426,13 +2426,13 @@ athn_usb_txeof(struct usbd_xfer *xfer, void * priv,
 		DPRINTFN(DBG_TX, sc, "TX status=%d\n", status);
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(usc->usc_tx_data_pipe);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		splx(s);
 		/* XXX Why return? */
 		return;
 	}
 	sc->sc_tx_timer = 0;
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	/* We just released a Tx buffer, notify Tx. */
 	if (ifp->if_flags & IFF_OACTIVE) {
@@ -2606,14 +2606,14 @@ athn_usb_start(struct ifnet *ifp)
 
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		eh = mtod(m, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -2621,7 +2621,7 @@ athn_usb_start(struct ifnet *ifp)
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
  sendit:
@@ -2630,7 +2630,7 @@ athn_usb_start(struct ifnet *ifp)
 		if (athn_usb_tx(sc, m, ni, data) != 0) {
 			m_freem(m);
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		data = NULL;
@@ -2659,7 +2659,7 @@ athn_usb_watchdog(struct ifnet *ifp)
 		if (--sc->sc_tx_timer == 0) {
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			/* athn_usb_init(ifp); XXX needs a process context! */
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;

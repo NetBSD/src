@@ -22,37 +22,6 @@
 #	The file /etc/postfix/sqlite-aliases.cf has the same format as
 #	the Postfix main.cf file, and can specify the parameters
 #	described below.
-# BACKWARDS COMPATIBILITY
-# .ad
-# .fi
-#	For compatibility with other Postfix lookup tables, SQLite
-#	parameters can also be defined in main.cf.  In order to do that,
-#	specify as SQLite source a name that doesn't begin with a slash
-#	or a dot.  The SQLite parameters will then be accessible as the
-#	name you've given the source in its definition, an underscore,
-#	and the name of the parameter.	For example, if the map is
-#	specified as "sqlite:\fIsqlitename\fR", the parameter "query"
-#	below would be defined in main.cf as "\fIsqlitename\fR_query".
-#
-#	Normally, the SQL query is specified via a single \fBquery\fR
-#	parameter (described in more detail below).  When this
-#	parameter is not specified in the map definition, Postfix
-#	reverts to an older interface, with the SQL query constructed
-#	from the \fBselect_field\fR, \fBtable\fR, \fBwhere_field\fR
-#	and \fBadditional_conditions\fR parameters.  The old interface
-#	will be gradually phased out. To migrate to the new interface
-#	set:
-#
-# .nf
-#	    \fBquery\fR = SELECT [\fIselect_field\fR]
-#	        FROM [\fItable\fR]
-#	        WHERE [\fIwhere_field\fR] = '%s'
-#	            [\fIadditional_conditions\fR]
-# .fi
-#
-#	Insert the value, not the name, of each legacy parameter. Note
-#	that the \fBadditional_conditions\fR parameter is optional
-#	and if not empty, will always start with \fBAND\fR.
 # LIST MEMBERSHIP
 # .ad
 # .fi
@@ -211,6 +180,17 @@
 #	temporary error if the limit is exceeded.  Setting the
 #	limit to 1 ensures that lookups do not return multiple
 #	values.
+# OBSOLETE MAIN.CF PARAMETERS
+# .ad
+# .fi
+#	For compatibility with other Postfix lookup tables, SQLite
+#	parameters can also be defined in main.cf.  In order to do that,
+#	specify as SQLite source a name that doesn't begin with a slash
+#	or a dot.  The SQLite parameters will then be accessible as the
+#	name you've given the source in its definition, an underscore,
+#	and the name of the parameter.	For example, if the map is
+#	specified as "sqlite:\fIsqlitename\fR", the parameter "query"
+#	would be defined in main.cf as "\fIsqlitename\fR_query".
 # OBSOLETE QUERY INTERFACE
 # .ad
 # .fi

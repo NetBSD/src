@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.7.2.1 2019/06/10 22:06:23 christos Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.7.2.2 2020/04/08 14:07:41 martin Exp $	*/
 
 ACPI_STATUS		acpi_md_OsInitialize(void);
 ACPI_PHYSICAL_ADDRESS	acpi_md_OsGetRootPointer(void);
@@ -27,6 +27,8 @@ void		acpi_md_OsDisableInterrupt(void);
 
 void *		acpi_md_intr_establish(uint32_t, int, int, int (*)(void *),
 				       void *, bool, const char *);
+void		acpi_md_intr_mask(void *);
+void		acpi_md_intr_unmask(void *);
 void		acpi_md_intr_disestablish(void *);
 
 int		acpi_md_sleep(int);

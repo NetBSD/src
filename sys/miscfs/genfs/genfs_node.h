@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.22 2018/05/28 21:04:38 chs Exp $ */
+/* $NetBSD: genfs_node.h,v 1.22.2.1 2020/04/08 14:08:53 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -61,7 +61,7 @@ struct genfs_ops {
 /*
  * GOP_MARKUPDATE: mark vnode's timestamps for update.
  *
- * => called with v_interlock (and possibly other locks) held.
+ * => called with vmobjlock (and possibly other locks) held.
  * => used for accesses via mmap.
  */
 
@@ -80,7 +80,6 @@ struct genfs_ops {
 struct genfs_node {
 	const struct genfs_ops	*g_op;		/* ops vector */
 	krwlock_t		g_glock;	/* getpages lock */
-	int			g_dirtygen;
 };
 
 #define VTOG(vp) ((struct genfs_node *)(vp)->v_data)

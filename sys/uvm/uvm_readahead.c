@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.10 2018/05/19 15:18:02 jdolecek Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.10.2.1 2020/04/08 14:09:05 martin Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005, 2009 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.10 2018/05/19 15:18:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.10.2.1 2020/04/08 14:09:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -133,9 +133,9 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 	 * too. This speeds up I/O using cache, since it avoids lookups and temporary
 	 * allocations done by full pgo_get.
 	 */
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_READER);
 	struct vm_page *pg = uvm_pagelookup(uobj, trunc_page(endoff - 1));
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 	if (pg != NULL) {
 		DPRINTF(("%s:  off=%" PRIu64 ", sz=%zu already cached\n",
 		    __func__, off, sz));
@@ -162,7 +162,7 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 		 * use UVM_ADV_RANDOM to avoid recursion.
 		 */
 
-		mutex_enter(uobj->vmobjlock);
+		rw_enter(uobj->vmobjlock, RW_WRITER);
 		error = (*uobj->pgops->pgo_get)(uobj, off, NULL,
 		    &npages, 0, VM_PROT_READ, UVM_ADV_RANDOM, PGO_NOTIMESTAMP);
 		DPRINTF(("%s:  off=%" PRIu64 ", bytelen=%zu -> %d\n",
@@ -224,7 +224,7 @@ uvm_ra_request(struct uvm_ractx *ra, int advice, struct uvm_object *uobj,
     off_t reqoff, size_t reqsize)
 {
 
-	KASSERT(mutex_owned(uobj->vmobjlock));
+	KASSERT(rw_write_held(uobj->vmobjlock));
 
 	if (ra == NULL || advice == UVM_ADV_RANDOM) {
 		return;
@@ -332,9 +332,9 @@ do_readahead:
 		if (rasize >= RA_MINSIZE) {
 			off_t next;
 
-			mutex_exit(uobj->vmobjlock);
+			rw_exit(uobj->vmobjlock);
 			next = ra_startio(uobj, raoff, rasize);
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_WRITER);
 			ra->ra_next = next;
 		}
 	}

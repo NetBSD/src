@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.27.6.1 2019/06/10 22:07:13 christos Exp $	*/
+/*	$NetBSD: igphy.c,v 1.27.6.2 2020/04/08 14:08:08 martin Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.27.6.1 2019/06/10 22:07:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.27.6.2 2020/04/08 14:08:08 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mii.h"
@@ -157,7 +157,8 @@ igphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &igphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
+
+	mii_lock(mii);
 
 	PHY_RESET(sc);
 
@@ -165,13 +166,10 @@ igphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
-	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
-	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
+
+	mii_unlock(mii);
+
+	mii_phy_add_media(sc);
 }
 
 typedef struct {
@@ -303,6 +301,8 @@ igphy_reset(struct mii_softc *sc)
 	struct igphy_softc *igsc = (struct igphy_softc *)sc;
 	uint16_t fused, fine, coarse;
 
+	KASSERT(mii_locked(sc->mii_pdata));
+
 	mii_phy_reset(sc);
 	delay(150);
 
@@ -354,6 +354,8 @@ igphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg;
+
+	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -421,6 +423,8 @@ igphy_status(struct mii_softc *sc)
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t bmcr, pssr, gtsr, bmsr;
+
+	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;

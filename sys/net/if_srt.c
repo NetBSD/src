@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.27.4.1 2019/06/10 22:09:45 christos Exp $ */
+/* $NetBSD: if_srt.c,v 1.27.4.2 2020/04/08 14:08:57 martin Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.27.4.1 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.27.4.2 2020/04/08 14:08:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -246,9 +246,9 @@ srt_if_output(
 	}
 	/* XXX Do we need to bpf_tap?  Or do higher layers now handle that? */
 	/* if_gif.c seems to imply the latter. */
-	ifp->if_opackets ++;
+	if_statinc(ifp, if_opackets);
 	if (! r) {
-		ifp->if_oerrors ++;
+		if_statinc(ifp, if_oerrors);
 		m_freem(m);
 		return 0;
 	}
@@ -257,7 +257,7 @@ srt_if_output(
 		m_freem(m);
 		return 0;
 	}
-	ifp->if_obytes += m->m_pkthdr.len;
+	if_statadd(ifp, if_obytes, m->m_pkthdr.len);
 	if (! (r->u.dstifp->if_flags & IFF_UP)) {
 		m_freem(m);
 		return 0; /* XXX ENETDOWN? */

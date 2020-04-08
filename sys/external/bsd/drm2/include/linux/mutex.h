@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.7.20.1 2019/06/10 22:08:31 christos Exp $	*/
+/*	$NetBSD: mutex.h,v 1.7.20.2 2020/04/08 14:08:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
 #include <sys/mutex.h>
 
 #include <lib/libkern/libkern.h> /* KASSERT */
+
+#include <asm/processor.h>
+
 #include <linux/list.h>
 
 #define	__acquires(lock)			/* XXX lockdep stuff */

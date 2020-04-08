@@ -111,7 +111,8 @@ tcache_bin_flush_small(tsd_t *tsd, tcache_t *tcache, cache_bin_t *tbin,
 	arena_t *arena = tcache->arena;
 	assert(arena != NULL);
 	unsigned nflush = tbin->ncached - rem;
-	VARIABLE_ARRAY(extent_t *, item_extent, nflush);
+	/* Variable length array must have > 0 length. */
+	VARIABLE_ARRAY(extent_t *, item_extent, nflush + + 1);
 	/* Look up extent once per item. */
 	for (unsigned i = 0 ; i < nflush; i++) {
 		item_extent[i] = iealloc(tsd_tsdn(tsd), *(tbin->avail - 1 - i));
@@ -196,7 +197,8 @@ tcache_bin_flush_large(tsd_t *tsd, cache_bin_t *tbin, szind_t binind,
 	arena_t *arena = tcache->arena;
 	assert(arena != NULL);
 	unsigned nflush = tbin->ncached - rem;
-	VARIABLE_ARRAY(extent_t *, item_extent, nflush);
+	/* Variable length array must have > 0 length. */
+	VARIABLE_ARRAY(extent_t *, item_extent, nflush + 1);
 	/* Look up extent once per item. */
 	for (unsigned i = 0 ; i < nflush; i++) {
 		item_extent[i] = iealloc(tsd_tsdn(tsd), *(tbin->avail - 1 - i));

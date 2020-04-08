@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.1.4.1 2019/06/10 22:05:42 christos Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.1.4.2 2020/04/08 14:07:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,18 +37,16 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.1.4.1 2019/06/10 22:05:42 christos Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.1.4.2 2020/04/08 14:07:23 martin Exp $")
 
 /*
  * At IPL_SCHED:
- *	x0 = oldlwp (maybe be NULL)
+ *	x0 = oldlwp
  *	x1 = newlwp
  *	x2 = returning
  * returns x0-x2 unchanged
  */
 ENTRY_NP(cpu_switchto)
-	cbz	x0, .Lrestore_lwp
-
 	/*
 	 * Store the callee saved register on the stack.
 	 */
@@ -72,7 +70,6 @@ ENTRY_NP(cpu_switchto)
 
 	/* We are done with the old lwp */
 
-.Lrestore_lwp:
 	DISABLE_INTERRUPT
 	ldr	x6, [x1, #L_PCB]	/* x6 = lwp_getpcb(newlwp) */
 	ldr	x4, [x6, #PCB_TF]	/* get trapframe ptr (aka SP) */
@@ -178,7 +175,6 @@ END(cpu_switchto_softint)
  *	cpu_switchto() bottom half arranges to start this when softlwp.
  *	kernel thread is to yield CPU for the pinned_lwp in the above.
  *	curcpu()->ci_mtx_count += 1;
- *	softlwp->l_ctxswtch = 0;
  *	this returns as if cpu_switchto_softint finished normally.
  * }
  */
@@ -189,7 +185,6 @@ ENTRY_NP(softint_cleanup)
 	ldr	w2, [x3, #CI_MTX_COUNT]	/* ->ci_mtx_count */
 	add	w2, w2, #1
 	str	w2, [x3, #CI_MTX_COUNT]
-	str	wzr, [x0, #L_CTXSWTCH]	/* softlwp->l_ctxswtch = 0 */
 
 	msr	daif, x19		/* restore interrupt mask */
 	ldp	x19, x20, [sp], #16	/* restore */
@@ -268,7 +263,7 @@ ENTRY_NP(el1_trap_exit)
 	ldp	x1, x2, [x0, #TF_X1]
 	ldr	x0, [x0, #TF_X0]
 
-	eret
+	ERET
 END(el1_trap_exit)
 #ifdef DDB
 END(el1_trap)
@@ -339,7 +334,7 @@ ENTRY_NP(el0_trap_exit)
 	unwind_x0_x2
 
 	/* leave sp at l_md.md_utf, return back to EL0 user process */
-	eret
+	ERET
 END(el0_trap_exit)
 #ifdef DDB
 END(el0_trap)

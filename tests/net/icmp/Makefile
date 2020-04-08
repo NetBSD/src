@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9.14.1 2019/06/10 22:10:09 christos Exp $
+# $NetBSD: Makefile,v 1.9.14.2 2020/04/08 14:09:11 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -14,6 +14,6 @@ TESTS_SH_SRC_t_${name}=	../net_common.sh t_${name}.sh
 .endfor
 
 LDADD+=		-lrumpnet_shmif -lrumpnet_netinet -lrumpnet_net -lrumpnet
-LDADD+=		-lrump -lrumpvfs -lrumpuser -lrump -lpthread
+LDADD+=		${LIBRUMPBASE}
 
 .include <bsd.test.mk>

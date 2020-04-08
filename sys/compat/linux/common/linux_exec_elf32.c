@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.94.14.1 2019/06/10 22:07:00 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.94.14.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.94.14.1 2019/06/10 22:07:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.94.14.2 2020/04/08 14:08:00 martin Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -107,7 +107,8 @@ ELFNAME2(linux,atexit_signature)(
 	/* Load the section header table. */
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
-	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
+	error = exec_read(l, epp->ep_vp, eh->e_shoff, sh, shsize,
+	    IO_NODELOCKED);
 	if (error)
 		goto out;
 
@@ -126,8 +127,8 @@ ELFNAME2(linux,atexit_signature)(
 		if (s->sh_name + sigsz > sh[shstrndx].sh_size)
 			continue;
 
-		error = exec_read_from(l, epp->ep_vp, stroff + s->sh_name, tbuf,
-		    sigsz);
+		error = exec_read(l, epp->ep_vp, stroff + s->sh_name, tbuf,
+		    sigsz, IO_NODELOCKED);
 		if (error)
 			goto out;
 		if (!memcmp(tbuf, signature, sigsz)) {
@@ -171,7 +172,8 @@ ELFNAME2(linux,gcc_signature)(
 
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
-	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
+	error = exec_read(l, epp->ep_vp, eh->e_shoff, sh, shsize,
+	    IO_NODELOCKED);
 	if (error)
 		goto out;
 
@@ -189,8 +191,8 @@ ELFNAME2(linux,gcc_signature)(
 		    s->sh_size < sizeof(signature) - 1)
 			continue;
 
-		error = exec_read_from(l, epp->ep_vp, s->sh_offset, tbuf,
-		    sizeof(signature) - 1);
+		error = exec_read(l, epp->ep_vp, s->sh_offset, tbuf,
+		    sizeof(signature) - 1, IO_NODELOCKED);
 		if (error)
 			continue;
 
@@ -230,7 +232,8 @@ ELFNAME2(linux,debuglink_signature)(struct lwp *l, struct exec_package *epp, Elf
 	/* Load the section header table. */
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
-	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
+	error = exec_read(l, epp->ep_vp, eh->e_shoff, sh, shsize,
+	    IO_NODELOCKED);
 	if (error)
 		goto out;
 
@@ -249,8 +252,8 @@ ELFNAME2(linux,debuglink_signature)(struct lwp *l, struct exec_package *epp, Elf
 		if (s->sh_name + sigsz > sh[shstrndx].sh_size)
 			continue;
 
-		error = exec_read_from(l, epp->ep_vp, stroff + s->sh_name, tbuf,
-		    sigsz);
+		error = exec_read(l, epp->ep_vp, stroff + s->sh_name, tbuf,
+		    sigsz, IO_NODELOCKED);
 		if (error)
 			goto out;
 		if (!memcmp(tbuf, signature, sigsz)) {
@@ -290,7 +293,8 @@ ELFNAME2(linux,go_rt0_signature)(struct lwp *l, struct exec_package *epp, Elf_Eh
 	/* Load the section header table. */
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = malloc(shsize, M_TEMP, M_WAITOK);
-	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
+	error = exec_read(l, epp->ep_vp, eh->e_shoff, sh, shsize,
+	    IO_NODELOCKED);
 	if (error)
 		goto out;
 
@@ -309,8 +313,8 @@ ELFNAME2(linux,go_rt0_signature)(struct lwp *l, struct exec_package *epp, Elf_Eh
 		if (s->sh_name + sigsz > sh[shstrndx].sh_size)
 			continue;
 
-		error = exec_read_from(l, epp->ep_vp, stroff + s->sh_name, tbuf,
-		    sigsz);
+		error = exec_read(l, epp->ep_vp, stroff + s->sh_name, tbuf,
+		    sigsz, IO_NODELOCKED);
 		if (error)
 			goto out;
 		if (!memcmp(tbuf, signature, sigsz)) {
@@ -329,8 +333,8 @@ ELFNAME2(linux,go_rt0_signature)(struct lwp *l, struct exec_package *epp, Elf_Eh
 		sh[i].sh_size = 1024 * 1024;
 
 	tmp = malloc(sh[i].sh_size, M_TEMP, M_WAITOK);
-	error = exec_read_from(l, epp->ep_vp, sh[i].sh_offset, tmp,
-	    sh[i].sh_size);
+	error = exec_read(l, epp->ep_vp, sh[i].sh_offset, tmp,
+	    sh[i].sh_size, IO_NODELOCKED);
 	if (error)
 		goto out;
 
@@ -368,7 +372,8 @@ ELFNAME2(linux,signature)(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-	error = exec_read_from(l, epp->ep_vp, eh->e_phoff, ph, phsize);
+	error = exec_read(l, epp->ep_vp, eh->e_phoff, ph, phsize,
+	    IO_NODELOCKED);
 	if (error)
 		goto out;
 
@@ -383,8 +388,8 @@ ELFNAME2(linux,signature)(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 			continue;
 
 		np = (Elf_Nhdr *)malloc(ephp->p_filesz, M_TEMP, M_WAITOK);
-		error = exec_read_from(l, epp->ep_vp, ephp->p_offset, np,
-		    ephp->p_filesz);
+		error = exec_read(l, epp->ep_vp, ephp->p_offset, np,
+		    ephp->p_filesz, IO_NODELOCKED);
 		if (error)
 			goto next;
 

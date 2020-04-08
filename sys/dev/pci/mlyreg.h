@@ -1,4 +1,4 @@
-/*	$NetBSD: mlyreg.h,v 1.6 2017/11/21 10:55:23 maxv Exp $	*/
+/*	$NetBSD: mlyreg.h,v 1.6.4.1 2020/04/08 14:08:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -724,7 +724,7 @@ struct mly_ioctl_getlogdevinfovalid {
 	u_int8_t	ar5_algo;
 	u_int16_t	logical_device_number;
 	u_int16_t	bios_control;
-	/* erorr counters */
+	/* error counters */
 	u_int16_t	soft_errors;				/* N/A */
 	u_int16_t	commands_failed;			/* N/A */
 	u_int16_t	host_command_aborts;			/* N/A */

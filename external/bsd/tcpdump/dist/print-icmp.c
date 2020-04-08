@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-icmp.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-icmp.c,v 1.9.4.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: Internet Control Message Protocol (ICMP) printer */
@@ -331,6 +331,7 @@ icmp_tstamp_print(u_int tstamp)
     return buf;
 }
 
+UNALIGNED_OK
 void
 icmp_print(netdissect_options *ndo, const u_char *bp, u_int plen, const u_char *bp2,
            int fragmented)

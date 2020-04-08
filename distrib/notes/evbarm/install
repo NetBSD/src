@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.9 2008/09/06 21:46:14 tsutsui Exp $
+.\"	$NetBSD: install,v 1.9.62.1 2020/04/08 14:03:49 martin Exp $
 .\"
 .\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,8 +81,8 @@ hard-wired to use the on-board Ethernet as the root device.
 Unpack the distribution sets into the target's root directory.
 .Pp
 .Dl server# Ic cd /export/client/iq80310
-.Dl server# Ic gzcat .../base.tgz | tar xvpf -
-.Dl server# Ic gzcat .../etc.tgz | tar xvpf -
+.Dl server# Ic gzcat .../base.\*[setsuffix] | tar xvpf -
+.Dl server# Ic gzcat .../etc.\*[setsuffix] | tar xvpf -
 .Dl [ repeat for all sets you wish to unpack ]
 .It
 Load the kernel from the TFTP server.
@@ -176,8 +176,8 @@ hard-wired to use the on-board Ethernet as the root device.
 Unpack the distribution sets into the target's root directory.
 .Pp
 .Dl server# Ic cd /export/client/iq80321
-.Dl server# Ic gzcat .../base.tgz | tar xvpf -
-.Dl server# Ic gzcat .../etc.tgz | tar xvpf -
+.Dl server# Ic gzcat .../base.\*[setsuffix] | tar xvpf -
+.Dl server# Ic gzcat .../etc.\*[setsuffix] | tar xvpf -
 .Dl [ repeat for all sets you wish to unpack ]
 .It
 Load the kernel from the TFTP server.

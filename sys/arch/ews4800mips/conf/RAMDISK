@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.22.4.1 2019/06/10 22:06:15 christos Exp $
+# 	$NetBSD: RAMDISK,v 1.22.4.2 2020/04/08 14:07:37 martin Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -11,6 +11,9 @@ makeoptions	COPTS="-Os -mmemcpy"	# optimize for space
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+# This sets the memory disk image size for the kernel. There is another
+# memory disk image size defined in the boot blocks:
+# 	src/sys/arch/ews4800mips/stand/boot/Makefile
 options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks (12)
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
@@ -76,7 +79,6 @@ no pseudo-device	putter
 no pseudo-device	ipfilter
 no pseudo-device	ppp
 no pseudo-device	pppoe
-no pseudo-device	strip
 no pseudo-device	tap
 no pseudo-device	tun
 no pseudo-device	gre

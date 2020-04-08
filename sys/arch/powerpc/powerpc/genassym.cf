@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10 2013/08/30 21:29:29 matt Exp $
+#	$NetBSD: genassym.cf,v 1.10.30.1 2020/04/08 14:07:50 martin Exp $
 
 #-
 # Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -151,7 +151,6 @@ define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
 define	PCB_USPRG0	offsetof(struct pcb, pcb_usprg0)
 
 define	L_CPU		offsetof(struct lwp, l_cpu)
-define	L_CTXSWTCH	offsetof(struct lwp, l_ctxswtch)
 define	L_MD_ASTPENDING	offsetof(struct lwp, l_md.md_astpending)
 define	L_MD_UTF	offsetof(struct lwp, l_md.md_utf)
 define	L_PCB		offsetof(struct lwp, l_addr)
@@ -163,7 +162,6 @@ define	CI_SIZE		sizeof(struct cpu_info)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
 define	CI_CURPM	offsetof(struct cpu_info, ci_curpm)
-define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_CPL		offsetof(struct cpu_info, ci_cpl)
 define	CI_IDEPTH	offsetof(struct cpu_info, ci_idepth)
 define	CI_IDLESPIN	offsetof(struct cpu_info, ci_idlespin)

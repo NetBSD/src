@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_var.h,v 1.23.18.1 2019/06/10 22:05:56 christos Exp $	*/
+/*	$NetBSD: exynos_var.h,v 1.23.18.2 2020/04/08 14:07:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -93,6 +93,11 @@ struct exyo_attach_args {
 	bus_dma_tag_t exyo_coherent_dmat;
 };
 
+struct exynos_pinctrl_banks {
+	struct exynos_gpio_bank *epb_banks;
+	size_t			epb_nbanks;
+};
+
 struct exynos_gpio_pinset {
 	char pinset_bank[10];
 	uint8_t pinset_func;
@@ -168,7 +173,10 @@ extern void exynos_usb_soc_powerup(void);
 extern void exyo_device_register(device_t self, void *aux);
 extern void exyo_device_register_post_config(device_t self, void *aux);
 
-extern struct exynos_gpio_bank *exynos_gpio_bank_lookup(const char *name);
+extern struct exynos_pinctrl_banks exynos5410_pinctrl_banks;
+extern struct exynos_pinctrl_banks exynos5420_pinctrl_banks;
+
+extern struct exynos_gpio_bank *exynos_gpio_bank_lookup(struct exynos_pinctrl_banks *, const char *name);
 extern bool exynos_gpio_pinset_available(const struct exynos_gpio_pinset *);
 extern void exynos_gpio_pinset_acquire(const struct exynos_gpio_pinset *);
 extern void exynos_gpio_pinset_release(const struct exynos_gpio_pinset *);

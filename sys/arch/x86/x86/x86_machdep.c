@@ -1,12 +1,12 @@
-/*	$NetBSD: x86_machdep.c,v 1.117.2.1 2019/06/10 22:06:54 christos Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.117.2.2 2020/04/08 14:07:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
- * Copyright (c) 2005, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio M. Merino Vidal.
+ * by Julio M. Merino Vidal, and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,13 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.117.2.1 2019/06/10 22:06:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.117.2.2 2020/04/08 14:07:59 martin Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
 #include "opt_splash.h"
 #include "opt_kaslr.h"
 #include "opt_svs.h"
+#include "opt_xen.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -290,53 +291,35 @@ module_init_md(void)
 #endif	/* MODULAR */
 
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
-	struct cpu_info *cur;
-	lwp_t *l;
 
 	KASSERT(kpreempt_disabled());
-	cur = curcpu();
-	l = ci->ci_data.cpu_onproc;
-	ci->ci_want_resched |= flags;
 
-	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
-		/*
-		 * No point doing anything, it will switch soon.
-		 * Also here to prevent an assertion failure in
-		 * kpreempt() due to preemption being set on a
-		 * soft interrupt LWP.
-		 */
-		return;
-	}
-
-	if (l == ci->ci_data.cpu_idlelwp) {
-		if (ci == cur)
-			return;
-		if (x86_cpu_idle_ipi != false) {
+	if ((flags & RESCHED_IDLE) != 0) {
+		if ((flags & RESCHED_REMOTE) != 0 &&
+		    x86_cpu_idle_ipi != false) {
 			cpu_kick(ci);
 		}
 		return;
 	}
 
-	if ((flags & RESCHED_KPREEMPT) != 0) {
 #ifdef __HAVE_PREEMPTION
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
-		if (ci == cur) {
-			softint_trigger(1 << SIR_PREEMPT);
-		} else {
+	if ((flags & RESCHED_KPREEMPT) != 0) {
+		if ((flags & RESCHED_REMOTE) != 0) {
 			x86_send_ipi(ci, X86_IPI_KPREEMPT);
+		} else {
+			softint_trigger(1 << SIR_PREEMPT);
 		}
 		return;
+	}
 #endif
-	}
 
-	aston(l, X86_AST_PREEMPT);
-	if (ci == cur) {
-		return;
-	}
-	if ((flags & RESCHED_IMMED) != 0) {
+	KASSERT((flags & RESCHED_UPREEMPT) != 0);
+	if ((flags & RESCHED_REMOTE) != 0) {
 		cpu_kick(ci);
+	} else {
+		aston(l);
 	}
 }
 
@@ -345,9 +328,12 @@ cpu_signotify(struct lwp *l)
 {
 
 	KASSERT(kpreempt_disabled());
-	aston(l, X86_AST_GENERIC);
-	if (l->l_cpu != curcpu())
+
+	if (l->l_cpu != curcpu()) {
 		cpu_kick(l->l_cpu);
+	} else {
+		aston(l);
+	}
 }
 
 void
@@ -358,18 +344,29 @@ cpu_need_proftick(struct lwp *l)
 	KASSERT(l->l_cpu == curcpu());
 
 	l->l_pflag |= LP_OWEUPC;
-	aston(l, X86_AST_GENERIC);
+	aston(l);
 }
 
 bool
 cpu_intr_p(void)
 {
+	uint64_t ncsw;
 	int idepth;
+	lwp_t *l;
 
-	kpreempt_disable();
-	idepth = curcpu()->ci_idepth;
-	kpreempt_enable();
-	return (idepth >= 0);
+	l = curlwp;
+	if (__predict_false(l->l_cpu == NULL)) {
+		KASSERT(l == &lwp0);
+		return false;
+	}
+	do {
+		ncsw = l->l_ncsw;
+		__insn_barrier();
+		idepth = l->l_cpu->ci_idepth;
+		__insn_barrier();
+	} while (__predict_false(ncsw != l->l_ncsw));
+
+	return idepth >= 0;
 }
 
 #ifdef __HAVE_PREEMPTION
@@ -392,7 +389,6 @@ cpu_kpreempt_enter(uintptr_t where, int s)
 	 */
 	if (s > IPL_PREEMPT) {
 		softint_trigger(1 << SIR_PREEMPT);
-		aston(l, X86_AST_PREEMPT);	/* paranoid */
 		return false;
 	}
 
@@ -462,8 +458,7 @@ x86_cpu_idle_init(void)
 {
 
 #ifndef XENPV
-	if ((cpu_feature[1] & CPUID2_MONITOR) == 0 ||
-	    cpu_vendor == CPUVENDOR_AMD)
+	if ((cpu_feature[1] & CPUID2_MONITOR) == 0)
 		x86_cpu_idle_set(x86_cpu_idle_halt, "halt", true);
 	else
 		x86_cpu_idle_set(x86_cpu_idle_mwait, "mwait", false);
@@ -673,7 +668,7 @@ x86_parse_clusters(struct btinfo_memmap *bim)
 		type = bim->entry[x].type;
 #ifdef DEBUG_MEMLOAD
 		printf("MEMMAP: 0x%016" PRIx64 "-0x%016" PRIx64
-		    ", size=0x%016" PRIx64 ", type=%d(%s)\n",
+		    "\n\tsize=0x%016" PRIx64 ", type=%d(%s)\n",
 		    addr, addr + size - 1, size, type,
 		    (type == BIM_Memory) ?  "Memory" :
 		    (type == BIM_Reserved) ?  "Reserved" :
@@ -913,27 +908,95 @@ init_x86_vm(paddr_t pa_kend)
 		seg_start1 = 0;
 		seg_end1 = 0;
 
+#ifdef DEBUG_MEMLOAD
+		printf("segment %" PRIx64 " - %" PRIx64 "\n",
+		    seg_start, seg_end);
+#endif
+
 		/* Skip memory before our available starting point. */
-		if (seg_end <= lowmem_rsvd)
+		if (seg_end <= lowmem_rsvd) {
+#ifdef DEBUG_MEMLOAD
+			printf("discard segment below starting point "
+			    "%" PRIx64 " - %" PRIx64 "\n", seg_start, seg_end);
+#endif
 			continue;
+		}
 
 		if (seg_start <= lowmem_rsvd && lowmem_rsvd < seg_end) {
 			seg_start = lowmem_rsvd;
-			if (seg_start == seg_end)
+			if (seg_start == seg_end) {
+#ifdef DEBUG_MEMLOAD
+				printf("discard segment below starting point "
+				    "%" PRIx64 " - %" PRIx64 "\n",
+				    seg_start, seg_end);
+
+
+#endif
 				continue;
+			}
 		}
 
 		/*
 		 * If this segment contains the kernel, split it in two, around
 		 * the kernel.
+		 *  [seg_start                       seg_end]
+		 *             [pa_kstart  pa_kend]
 		 */
 		if (seg_start <= pa_kstart && pa_kend <= seg_end) {
+#ifdef DEBUG_MEMLOAD
+			printf("split kernel overlapping to "
+			    "%" PRIx64 " - %lx and %lx - %" PRIx64 "\n",
+			    seg_start, pa_kstart, pa_kend, seg_end);
+#endif
 			seg_start1 = pa_kend;
 			seg_end1 = seg_end;
 			seg_end = pa_kstart;
 			KASSERT(seg_end < seg_end1);
 		}
 
+		/*
+		 * Discard a segment inside the kernel
+		 *  [pa_kstart                       pa_kend]
+		 *             [seg_start  seg_end]
+		 */
+		if (pa_kstart < seg_start && seg_end < pa_kend) {
+#ifdef DEBUG_MEMLOAD
+			printf("discard complete kernel overlap "
+			    "%" PRIx64 " - %" PRIx64 "\n", seg_start, seg_end);
+#endif
+			continue;
+		}
+
+		/*
+		 * Discard leading hunk that overlaps the kernel
+		 *  [pa_kstart             pa_kend]
+		 *            [seg_start            seg_end]
+		 */
+		if (pa_kstart < seg_start &&
+		    seg_start < pa_kend &&
+		    pa_kend < seg_end) {
+#ifdef DEBUG_MEMLOAD
+			printf("discard leading kernel overlap "
+			    "%" PRIx64 " - %lx\n", seg_start, pa_kend);
+#endif
+			seg_start = pa_kend;
+		}
+
+		/*
+		 * Discard trailing hunk that overlaps the kernel
+		 *             [pa_kstart            pa_kend]
+		 *  [seg_start              seg_end]
+		 */
+		if (seg_start < pa_kstart &&
+		    pa_kstart < seg_end &&
+		    seg_end < pa_kend) {
+#ifdef DEBUG_MEMLOAD
+			printf("discard trailing kernel overlap "
+			    "%lx - %" PRIx64 "\n", pa_kstart, seg_end);
+#endif
+			seg_end = pa_kstart;
+		}
+		
 		/* First hunk */
 		if (seg_start != seg_end) {
 			x86_load_region(seg_start, seg_end);
@@ -1095,6 +1158,13 @@ x86_startup(void)
 #if !defined(XENPV)
 	nmi_init();
 #endif
+}
+
+const char *
+get_booted_kernel(void)
+{
+	const struct btinfo_bootpath *bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+	return bibp ? bibp->bootpath : NULL;
 }
 
 /* 

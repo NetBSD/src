@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.80 2011/05/24 23:30:30 matt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.80.56.1 2020/04/08 14:07:56 martin Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -189,9 +189,6 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	return (false);
 }
 
-bool pmap_clear_modify_long(const struct pv_entry *);
-bool pmap_clear_reference_long(const struct pv_entry *);
-bool pmap_is_modified_long_p(const struct pv_entry *);
 void pmap_page_protect_long(struct pv_entry *, vm_prot_t);
 void pmap_protect_long(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 
@@ -207,38 +204,6 @@ pmap_is_referenced(struct vm_page *pg)
 	const struct pv_entry * const pv = pmap_pg_to_pv(pg);
 
 	return (pv->pv_attr & PG_V) != 0;
-}
-
-static __inline bool
-pmap_clear_reference(struct vm_page *pg)
-{
-	struct pv_entry * const pv = pmap_pg_to_pv(pg);
-	bool rv = (pv->pv_attr & PG_V) != 0;
-
-	pv->pv_attr &= ~PG_V;
-	if (pv->pv_pmap != NULL || pv->pv_next != NULL)
-		rv |= pmap_clear_reference_long(pv);
-	return rv;
-}
-
-static __inline bool
-pmap_clear_modify(struct vm_page *pg)
-{
-	struct pv_entry * const pv = pmap_pg_to_pv(pg);
-	bool rv = (pv->pv_attr & PG_M) != 0;
-
-	pv->pv_attr &= ~PG_M;
-	if (pv->pv_pmap != NULL || pv->pv_next != NULL)
-		rv |= pmap_clear_modify_long(pv);
-	return rv;
-}
-
-static __inline bool
-pmap_is_modified(struct vm_page *pg)
-{
-	const struct pv_entry * const pv = pmap_pg_to_pv(pg);
-
-	return (pv->pv_attr & PG_M) != 0 || pmap_is_modified_long_p(pv);
 }
 
 static __inline void
@@ -258,10 +223,11 @@ pmap_protect(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 		pmap_protect_long(pmap, start, end, prot);
 }
 
-static __inline void
+static __inline bool
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
+	return false;
 }
 
 /* Routines that are best to define as macros */

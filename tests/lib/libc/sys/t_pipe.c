@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe.c,v 1.5 2017/01/13 21:30:41 christos Exp $ */
+/* $NetBSD: t_pipe.c,v 1.5.14.1 2020/04/08 14:09:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pipe.c,v 1.5 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_pipe.c,v 1.5.14.1 2020/04/08 14:09:09 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -99,7 +99,7 @@ ATF_TC_BODY(pipe_restart, tc)
 		/* child */
 		RL(close(pp[1]));
 
-		/* Do inital write. This should succeed, make
+		/* Do initial write. This should succeed, make
 		 * the other side do partial write and wait for us to pick
 		 * rest up.
 		 */

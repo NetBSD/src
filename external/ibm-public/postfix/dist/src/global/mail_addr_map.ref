@@ -1,0 +1,26 @@
+unknown: warning: fail test selftest 1 external -external-> external, no extension, quoted: expect[0]='"bXb"@example.com', result[0]='"b b"@example.com'
+unknown: database = inline:{ {"a a"@example.com="b b"@example.com} }
+unknown: propagate = 1
+unknown: delimiter = '+'
+unknown: in_form = external
+unknown: query_form = external
+unknown: out_form = external
+unknown: address = "a a"@example.com
+unknown: warning: fail test selftest 2 external -external-> external, no extension, quoted: expects 1 results but there were 0
+unknown: no result to match expect[0]='"b b"@example.com'
+unknown: database = inline:{ {"a a"@example.com="b b"@example.com} }
+unknown: propagate = 1
+unknown: delimiter = '+'
+unknown: in_form = external
+unknown: query_form = external
+unknown: out_form = external
+unknown: address = "aXa"@example.com
+unknown: warning: fail test selftest 3 external -external-> external, no extension, quoted: expects 0 results but there were 1
+unknown: no expect to match result[0]='"b b"@example.com'
+unknown: database = inline:{ {"a a"@example.com="b b"@example.com} }
+unknown: propagate = 1
+unknown: delimiter = '+'
+unknown: in_form = external
+unknown: query_form = external
+unknown: out_form = external
+unknown: address = "a a"@example.com

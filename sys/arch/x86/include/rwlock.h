@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.5 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.5.88.1 2020/04/08 14:07:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -32,31 +32,6 @@
 #ifndef _X86_RWLOCK_H_
 #define	_X86_RWLOCK_H_
 
-struct krwlock {
-	volatile uintptr_t	rw_owner;
-};
-
-#ifdef __RWLOCK_PRIVATE
-
-#define	__HAVE_SIMPLE_RW_LOCKS		1
 #define	__HAVE_RW_STUBS			1
-
-/*
- * RW_RECEIVE: no memory barrier required, as 'ret' implies a load fence. 
- */
-#define	RW_RECEIVE(rw)			/* nothing */
-
-/*
- * RW_GIVE: no memory barrier required, as _lock_cas() will take care of it.
- */
-#define	RW_GIVE(rw)			/* nothing */
-
-#define	RW_CAS(p, o, n)			\
-    (_atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))
-
-unsigned long	_atomic_cas_ulong(volatile unsigned long *,
-    unsigned long, unsigned long);
-
-#endif	/* __RWLOCK_PRIVATE */
 
 #endif /* _X86_RWLOCK_H_ */

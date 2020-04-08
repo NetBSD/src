@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.3.4.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.3.4.2 2020/04/08 14:08:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -240,7 +233,7 @@ static void
 raidframe_50_init(void)
 {
 
-	MODULE_HOOK_SET(raidframe_ioctl_50_hook, "raid50", raidframe_ioctl_50);
+	MODULE_HOOK_SET(raidframe_ioctl_50_hook, raidframe_ioctl_50);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.80 2018/02/05 05:00:48 ozaki-r Exp $	*/
+/*	$NetBSD: locks.c,v 1.80.4.1 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.80 2018/02/05 05:00:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.80.4.1 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -356,6 +356,13 @@ rw_lock_held(krwlock_t *rw)
 {
 
 	return rw_read_held(rw) || rw_write_held(rw);
+}
+
+krw_t
+rw_lock_op(krwlock_t *rw)
+{
+
+	return rw_write_held(rw) ? RW_WRITER : RW_READER;
 }
 
 /* curriculum vitaes */

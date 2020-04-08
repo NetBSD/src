@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,11 @@
 #define DUID_H
 
 #define DUID_LEN	128 + 2
+#define	DUID_LLT	1
+#define	DUID_LL		3
+#define	DUID_UUID	4
 
+size_t duid_make(void *, const struct interface *, uint16_t);
 size_t duid_init(const struct interface *);
 
 #endif

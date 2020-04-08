@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.59.2.1 2019/06/10 22:07:11 christos Exp $ */
+/* $NetBSD: seeq8005.c,v 1.59.2.2 2020/04/08 14:08:06 martin Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.59.2.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.59.2.2 2020/04/08 14:08:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1081,27 +1081,27 @@ ea_txint(struct seeq8005_softc *sc)
 			 * The 8004 contains a 4 bit collision count
 			 * in the status register.
 			 */
-
+#if 0
 			/* This appears to be broken on 80C04.AE */
-/*			ifp->if_collisions +=
+			if_statadd(ifp, if_collisions,
 			    (txstatus >> SEEQ_TXSTAT_COLLISIONS_SHIFT)
-			    & SEEQ_TXSTAT_COLLISION_MASK;*/
+			    & SEEQ_TXSTAT_COLLISION_MASK;
+#endif
 
 			/* Use the TX Collision register */
 			ea_select_buffer(sc, SEEQ_BUFCODE_TX_COLLS);
 			colls = bus_space_read_1(iot, ioh, SEEQ_BUFWIN);
-			ifp->if_collisions += colls;
+			if_statadd(ifp, if_collisions, colls);
 			break;
 		}
 		case SEEQ_8005:
 			/* We known there was at least 1 collision */
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 			break;
 		}
 	} else if (txstatus & SEEQ_TXSTAT_COLLISION16) {
 		printf("seeq_intr: col16 %x\n", txstatus);
-		ifp->if_collisions += 16;
-		ifp->if_oerrors++;
+		if_statadd2(ifp, if_collisions, 16, if_oerrors, 1);
 	}
 
 	/* Have we completed transmission on the packet ? */
@@ -1111,7 +1111,7 @@ ea_txint(struct seeq8005_softc *sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 		/* Update stats */
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 		/* Tx next packet */
 
@@ -1159,7 +1159,7 @@ ea_rxint(struct seeq8005_softc *sc)
 		/* Sanity-check the next-packet pointer and flags. */
 		if (__predict_false(ptr < sc->sc_tx_bufsize ||
 		    (ctrl & SEEQ_PKTCMD_TX))) {
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			log(LOG_ERR,
 			    "%s: Rx chain corrupt at %04x (ptr = %04x)\n",
 			    device_xname(sc->sc_dev), addr, ptr);
@@ -1185,7 +1185,7 @@ ea_rxint(struct seeq8005_softc *sc)
 		if (__predict_false(status &
 			(SEEQ_RXSTAT_CRC_ERROR | SEEQ_RXSTAT_DRIBBLE_ERROR |
 			 SEEQ_RXSTAT_SHORT_FRAME))) {
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			log(LOG_WARNING,
 			    "%s: rx packet error at %04x (err=%02x)\n",
 			    device_xname(sc->sc_dev), addr, status & 0x0f);
@@ -1199,7 +1199,7 @@ ea_rxint(struct seeq8005_softc *sc)
 		 * wants incoming packets in a single mbuf cluster.
 		 */
 		if (__predict_false(len > MCLBYTES)) {
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			log(LOG_ERR,
 			    "%s: rx packet size error at %04x (len=%d)\n",
 			    device_xname(sc->sc_dev), addr, len);
@@ -1482,7 +1482,7 @@ ea_watchdog(struct ifnet *ifp)
 	log(LOG_ERR, "%s: lost Tx interrupt (status = 0x%04x)\n",
 	    device_xname(sc->sc_dev),
 	    SEEQ_READ16(sc, sc->sc_iot, sc->sc_ioh, SEEQ_STATUS));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	/* Kick the interface */
 

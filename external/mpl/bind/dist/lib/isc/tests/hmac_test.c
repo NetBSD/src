@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_test.c,v 1.2.4.2 2019/06/10 22:04:45 christos Exp $	*/
+/*	$NetBSD: hmac_test.c,v 1.2.4.3 2020/04/08 14:07:09 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -95,6 +95,7 @@ isc_hmac_test(isc_hmac_t *hmac, const void *key, size_t keylen,
 	assert_int_equal(isc_hmac_init(hmac, key, keylen, type), ISC_R_SUCCESS);
 
 	int i;
+	isc_result_t res;
 
 	for (i = 0; i < repeats; i++) {
 		assert_int_equal(
@@ -115,7 +116,8 @@ isc_hmac_test(isc_hmac_t *hmac, const void *key, size_t keylen,
 	isc_buffer_t b;
 	isc_buffer_init(&b, hexdigest, sizeof(hexdigest));
 
-	assert_return_code(isc_hex_totext(&r, 0, "", &b), ISC_R_SUCCESS);
+	res = isc_hex_totext(&r, 0, "", &b);
+	assert_return_code(res, ISC_R_SUCCESS);
 
 	assert_memory_equal(hexdigest, result, (result?strlen(result):0));
 	assert_int_equal(isc_hmac_reset(hmac), ISC_R_SUCCESS);

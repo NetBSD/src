@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.33.10.1 2019/06/10 22:07:10 christos Exp $ */
+/* $NetBSD: atppc.c,v 1.33.10.2 2020/04/08 14:08:06 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.33.10.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.33.10.2 2020/04/08 14:08:06 martin Exp $");
 
 #include "opt_atppc.h"
 
@@ -1669,7 +1669,7 @@ atppc_nibble_read(struct atppc_softc *atppc)
 				return;
 		}
 
-		/* Store byte transfered */
+		/* Store byte transferred */
 		*(atppc->sc_inbstart) = ((nibble2char(nibble[1]) << 4) & 0xf0) |
 			(nibble2char(nibble[0]) & 0x0f);
 		atppc->sc_inbstart++;
@@ -1720,7 +1720,7 @@ atppc_byte_read(struct atppc_softc * const atppc)
 		if (atppc->sc_inerr)
 			return;
 
-		/* Store byte transfered */
+		/* Store byte transferred */
 		*(atppc->sc_inbstart) = atppc_r_dtr(atppc);
 		atppc_barrier_r(atppc);
 

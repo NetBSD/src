@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.64 2017/12/26 08:30:58 kamil Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.64.4.1 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -166,8 +166,8 @@ typedef struct cwdinfo {
 	struct vnode	*cwdi_cdir;	/* current directory */
 	struct vnode	*cwdi_rdir;	/* root directory */
 	struct vnode	*cwdi_edir;	/* emulation root (if known) */
-	krwlock_t	cwdi_lock;	/* lock on entire struct */
-	u_short		cwdi_cmask;	/* mask for file creation */
+	kmutex_t	cwdi_lock;	/* lock on entire struct */
+	u_int		cwdi_cmask;	/* mask for file creation */
 	u_int		cwdi_refcnt;	/* reference count */
 } cwdinfo_t;
 
@@ -213,11 +213,17 @@ int	pipe1(struct lwp *, int *, int);
 int	dodup(struct lwp *, int, int, int, register_t *);
 
 void	cwd_sys_init(void);
-struct cwdinfo *cwdinit(void);
+struct	cwdinfo *cwdinit(void);
 void	cwdshare(proc_t *);
 void	cwdunshare(proc_t *);
 void	cwdfree(struct cwdinfo *);
 void	cwdexec(struct proc *);
+struct	cwdinfo *cwdenter(krw_t);
+void	cwdexit(struct cwdinfo *);
+const	struct cwdinfo *cwdlock(struct proc *);
+void	cwdunlock(struct proc *);
+struct	vnode *cwdcdir(void);
+struct	vnode *cwdrdir(void);
 
 #define GETCWD_CHECK_ACCESS 0x0001
 int	getcwd_common(struct vnode *, struct vnode *, char **, char *, int,

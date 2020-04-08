@@ -1,4 +1,4 @@
-. ${srcdir}/emulparams/armelf.sh
+source_sh ${srcdir}/emulparams/armelf.sh
 MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
 TEXT_START_ADDR=0x00010000
 TARGET2_TYPE=got-rel

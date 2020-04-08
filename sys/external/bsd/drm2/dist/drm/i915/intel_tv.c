@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_tv.c,v 1.6.20.1 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: intel_tv.c,v 1.6.20.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2006-2008 Intel Corporation
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_tv.c,v 1.6.20.1 2019/06/10 22:08:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_tv.c,v 1.6.20.2 2020/04/08 14:08:23 martin Exp $");
 
 #include <linux/math64.h>
 #include <drm/drmP.h>
@@ -845,7 +845,7 @@ static struct intel_tv *intel_attached_tv(struct drm_connector *connector)
 }
 
 static bool
-intel_tv_get_hw_state(struct intel_encoder *encoder, enum i915_pipe *pipe)
+intel_tv_get_hw_state(struct intel_encoder *encoder, enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;

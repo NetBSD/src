@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.113.4.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.113.4.2 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -127,9 +127,10 @@ extern kcondvar_t locked_queue_cv;
 int lfs_valloc(struct vnode *, int, kauth_cred_t, ino_t *, int *);
 int lfs_valloc_fixed(struct lfs *, ino_t, int);
 int lfs_vfree(struct vnode *, ino_t, int);
-void lfs_order_freelist(struct lfs *);
+void lfs_order_freelist(struct lfs *, ino_t **, size_t *);
 int lfs_extend_ifile(struct lfs *, kauth_cred_t);
 void lfs_orphan(struct lfs *, ino_t);
+void lfs_free_orphans(struct lfs *, ino_t *, size_t);
 
 /* lfs_balloc.c */
 int lfs_balloc(struct vnode *, off_t, int, kauth_cred_t, int, struct buf **);
@@ -197,7 +198,7 @@ int lfs_match_data(struct lfs *, struct buf *);
 int lfs_match_indir(struct lfs *, struct buf *);
 int lfs_match_dindir(struct lfs *, struct buf *);
 int lfs_match_tindir(struct lfs *, struct buf *);
-void lfs_callback(struct buf *);
+void lfs_free_aiodone(struct buf *);
 void lfs_acquire_finfo(struct lfs *fs, ino_t, int);
 void lfs_release_finfo(struct lfs *fs);
 
@@ -210,7 +211,8 @@ void lfs_free(struct lfs *, void *, int);
 int lfs_seglock(struct lfs *, unsigned long);
 void lfs_segunlock(struct lfs *);
 void lfs_segunlock_relock(struct lfs *);
-int lfs_writer_enter(struct lfs *, const char *);
+void lfs_writer_enter(struct lfs *, const char *);
+int lfs_writer_tryenter(struct lfs *);
 void lfs_writer_leave(struct lfs *);
 void lfs_wakeup_cleaner(struct lfs *);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/01/02 15:50:34 dsl Exp $
+#	$NetBSD: Makefile,v 1.3.32.1 2020/04/08 14:04:05 martin Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -24,6 +24,8 @@ DPSRCS+=	iplang_y.h
 
 .PATH:		${UDIST}/ipsend \
 		${UDIST}/iplang
+
+COPTS.ipsopt.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=maybe-uninitialized :}
 
 iplang_y.c: iplang_y.y
 	${_MKTARGET_CREATE}

@@ -1095,7 +1095,15 @@ zpool_open_func(void *arg)
 	}
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
+	struct dkwedge_list dkwl;
 	off_t size;
+
+	/* skip devices with wedges */
+	if (native_ioctl(fd, DIOCLWEDGES, &dkwl) == 0 &&
+	    dkwl.dkwl_nwedges > 0) {
+		(void) close(fd);
+		return;
+	}
 
 	if (native_ioctl(fd, DIOCGMEDIASIZE, &size) < 0 ||
 	    size < SPA_MINDEVSIZE) {

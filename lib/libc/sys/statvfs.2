@@ -1,4 +1,4 @@
-.\"	$NetBSD: statvfs.2,v 1.6 2017/05/14 12:30:37 wiz Exp $
+.\"	$NetBSD: statvfs.2,v 1.6.10.1 2020/04/08 14:07:13 martin Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -162,6 +162,13 @@ error occurred while reading from or writing to the file system.
 .El
 .Sh SEE ALSO
 .Xr statvfs 5
+.Sh STANDARDS
+The
+.Fn statvfs
+and
+.Fn fstatvfs
+functions conform to
+.St -p1003.1-2001 .
 .Sh HISTORY
 The
 .Fn statvfs ,

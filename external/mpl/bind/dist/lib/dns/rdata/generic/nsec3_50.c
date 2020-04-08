@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_50.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: nsec3_50.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -251,7 +251,7 @@ fromstruct_nsec3(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_nsec3);
-	REQUIRE(source != NULL);
+	REQUIRE(nsec3 != NULL);
 	REQUIRE(nsec3->common.rdtype == type);
 	REQUIRE(nsec3->common.rdclass == rdclass);
 	REQUIRE(nsec3->typebits != NULL || nsec3->len == 0);
@@ -280,7 +280,7 @@ tostruct_nsec3(ARGS_TOSTRUCT) {
 	dns_rdata_nsec3_t *nsec3 = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_nsec3);
-	REQUIRE(target != NULL);
+	REQUIRE(nsec3 != NULL);
 	REQUIRE(rdata->length != 0);
 
 	nsec3->common.rdclass = rdata->rdclass;
@@ -324,7 +324,7 @@ static inline void
 freestruct_nsec3(ARGS_FREESTRUCT) {
 	dns_rdata_nsec3_t *nsec3 = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(nsec3 != NULL);
 	REQUIRE(nsec3->common.rdtype == dns_rdatatype_nsec3);
 
 	if (nsec3->mctx == NULL)

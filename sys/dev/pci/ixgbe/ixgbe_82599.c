@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82599.c,v 1.20.2.1 2019/06/10 22:07:28 christos Exp $ */
+/* $NetBSD: ixgbe_82599.c,v 1.20.2.2 2020/04/08 14:08:11 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -1041,6 +1041,7 @@ s32 ixgbe_reset_hw_82599(struct ixgbe_hw *hw)
 {
 	ixgbe_link_speed link_speed;
 	s32 status;
+	s32 phy_status = IXGBE_SUCCESS;
 	u32 ctrl = 0;
 	u32 i, autoc, autoc2;
 	u32 curr_lms;
@@ -1059,28 +1060,29 @@ s32 ixgbe_reset_hw_82599(struct ixgbe_hw *hw)
 	/* PHY ops must be identified and initialized prior to reset */
 
 	/* Identify PHY and related function pointers */
-	status = hw->phy.ops.init(hw);
+	phy_status = hw->phy.ops.init(hw);
 
-	if (status == IXGBE_ERR_SFP_NOT_SUPPORTED)
-		goto reset_hw_out;
+	if (phy_status == IXGBE_ERR_SFP_NOT_SUPPORTED)
+		goto mac_reset_top;
 
 	/* Setup SFP module if there is one present. */
 	if (hw->phy.sfp_setup_needed) {
-		status = hw->mac.ops.setup_sfp(hw);
+		phy_status = hw->mac.ops.setup_sfp(hw);
 		hw->phy.sfp_setup_needed = FALSE;
 	}
 
-	if (status == IXGBE_ERR_SFP_NOT_SUPPORTED)
-		goto reset_hw_out;
+	if (phy_status == IXGBE_ERR_SFP_NOT_SUPPORTED)
+		goto mac_reset_top;
 
 	/* Reset PHY */
 	if (hw->phy.reset_disable == FALSE && hw->phy.ops.reset != NULL)
 		hw->phy.ops.reset(hw);
 
+mac_reset_top:
 	/* remember AUTOC from before we reset */
 	curr_lms = IXGBE_READ_REG(hw, IXGBE_AUTOC) & IXGBE_AUTOC_LMS_MASK;
 
-mac_reset_top:
+mac_reset_retry:
 	/*
 	 * Issue global reset to the MAC.  Needs to be SW reset if link is up.
 	 * If link reset is used when link is up, it might reset the PHY when
@@ -1120,7 +1122,7 @@ mac_reset_top:
 	 */
 	if (hw->mac.flags & IXGBE_FLAGS_DOUBLE_RESET_REQUIRED) {
 		hw->mac.flags &= ~IXGBE_FLAGS_DOUBLE_RESET_REQUIRED;
-		goto mac_reset_top;
+		goto mac_reset_retry;
 	}
 
 	/*
@@ -1208,6 +1210,9 @@ mac_reset_top:
 				   &hw->mac.wwpn_prefix);
 
 reset_hw_out:
+	if (phy_status != IXGBE_SUCCESS)
+		status = phy_status;
+
 	return status;
 }
 

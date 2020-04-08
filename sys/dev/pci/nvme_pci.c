@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.20.2.1 2019/06/10 22:07:17 christos Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.20.2.2 2020/04/08 14:08:09 martin Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.20.2.1 2019/06/10 22:07:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.20.2.2 2020/04/08 14:08:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		msixtbl = pci_conf_read(pa->pa_pc, pa->pa_tag,
 		    msixoff + PCI_MSIX_TBLOFFSET);
 		table_offset = msixtbl & PCI_MSIX_TBLOFFSET_MASK;
-		bir = msixtbl & PCI_MSIX_PBABIR_MASK;
+		bir = msixtbl & PCI_MSIX_TBLBIR_MASK;
 		if (bir == PCI_MAPREG_NUM(NVME_PCI_BAR)) {
 			sc->sc_ios = table_offset;
 		}

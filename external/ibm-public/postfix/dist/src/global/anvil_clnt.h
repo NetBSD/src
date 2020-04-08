@@ -1,4 +1,4 @@
-/*	$NetBSD: anvil_clnt.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: anvil_clnt.h,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _ANVIL_CLNT_H_INCLUDED_
 #define _ANVIL_CLNT_H_INCLUDED_
@@ -75,6 +75,11 @@ extern void anvil_clnt_free(ANVIL_CLNT *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

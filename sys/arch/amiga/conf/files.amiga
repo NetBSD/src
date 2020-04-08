@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.179.2.1 2019/06/10 22:05:48 christos Exp $
+#	$NetBSD: files.amiga,v 1.179.2.2 2020/04/08 14:07:26 martin Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -20,7 +20,7 @@ defflag	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
 defflag	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
 defflag	opt_amigacons.h		SERCONSOLE
 
-defflag opt_mntva.h		MNTVA_CONSOLE
+defflag	opt_mntva.h		MNTVA_CONSOLE
 
 defflag	opt_kfont.h		KFONT_CONS_ISO8859_1
 defflag	opt_kfont.h		KFONT_CONS_ISO8859_2
@@ -34,7 +34,7 @@ defflag				P5PPC68KBOARD
 defflag				LEV6_DEFER
 defflag				DEVRELOAD
 
-defflag opt_p5pb.h		P5PB_DEBUG P5PB_CONSOLE
+defflag	opt_p5pb.h		P5PB_DEBUG P5PB_CONSOLE
 
 defparam			IOBZCLOCK
 
@@ -51,7 +51,7 @@ file	arch/amiga/amiga/amiga_bus_simple_4.c
 define	amibus_ww
 file	arch/amiga/amiga/amiga_bus_simple_2word.c
 
-define amibus_wb
+define	amibus_wb
 file	arch/amiga/amiga/amiga_bus_simple_1word.c
 
 define	amibus_b16
@@ -66,7 +66,7 @@ file	arch/amiga/amiga/amiga_bus_simple_0x1000.c	amibus_b1000
 define	amibus_b4000
 file	arch/amiga/amiga/amiga_bus_simple_0x4000.c	amibus_b4000
 
-define  amibus_empb
+define	amibus_empb
 file	arch/amiga/pci/empb_bsm.c	amibus_empb
 
 file	arch/amiga/amiga/bus.c
@@ -122,7 +122,7 @@ device repulse: audiobus, ac97
 attach	repulse at zbus
 file	arch/amiga/dev/repulse.c	repulse
 
-device toccata: audiobus, ad1848
+device	toccata: audiobus, ad1848
 attach	toccata at zbus
 file	arch/amiga/dev/toccata.c	toccata
 
@@ -322,7 +322,7 @@ file	arch/amiga/dev/gvpbus.c		gvpbus
 attach	lpt at supio with lpt_supio
 file	arch/amiga/dev/lpt_supio.c	lpt_supio
 
-include "dev/scsipi/files.scsipi"
+include	"dev/scsipi/files.scsipi"
 
 # wd 33c93 contrllers
 define	sbic
@@ -339,8 +339,8 @@ attach	ahsc at mainbus
 file	arch/amiga/dev/ahsc.c		ahsc needs-flag
 
 # C= A2091
-device atzsc: scsi, sbic
-attach atzsc at zbus
+device	atzsc: scsi, sbic
+attach	atzsc at zbus
 file	arch/amiga/dev/atzsc.c		atzsc needs-flag
 
 # ncr 5380 controllers
@@ -480,9 +480,9 @@ file	arch/amiga/dev/gayle_pcmcia.c		pccard
 device	pccard: pcmciabus, gayle
 attach	pccard at mainbus
 
-include "dev/pcmcia/files.pcmcia"
+include	"dev/pcmcia/files.pcmcia"
 
-include "dev/ata/files.ata"
+include	"dev/ata/files.ata"
 
 # Amiga 4000/1200 IDE using MI wdc
 attach	wdc at mainbus with wdc_amiga: gayle, amibus_b1000
@@ -493,32 +493,32 @@ attach	wdc at zbus with wdc_buddha
 file	arch/amiga/dev/wdc_buddha.c	wdc_buddha
 
 # FastATA 
-device  efa: ata, wdc_common, amibus_b1000
-attach  efa at mainbus
-file    arch/amiga/dev/efa.c		efa
+device	efa: ata, wdc_common, amibus_b1000
+attach	efa at mainbus
+file	arch/amiga/dev/efa.c		efa
 
 # Compatibility modules
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
-include "compat/aoutm68k/files.aoutm68k"
+include	"compat/aoutm68k/files.aoutm68k"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
-include "compat/sunos/files.sunos"
+include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 
 # Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/m68k/files.linux_m68k"
-file arch/m68k/m68k/linux_trap.c		compat_linux
+include	"compat/linux/files.linux"
+include	"compat/linux/arch/m68k/files.linux_m68k"
+file	arch/m68k/m68k/linux_trap.c		compat_linux
 
 # OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
+include	"compat/ossaudio/files.ossaudio"
 
 # Bluetooth stack
-include "dev/bluetooth/files.bluetooth"
+include	"dev/bluetooth/files.bluetooth"
 
 # USB stack
-include "dev/usb/files.usb"
+include	"dev/usb/files.usb"
 
 # Phase5 BPPC/CSPPC internal bus
 device	p5bus {}
@@ -590,6 +590,6 @@ file	arch/amiga/dev/acafh.c		acafh needs-count
 attach	wdc at acafhbus with wdc_acafh: gayle, amibus_b1000
 file	arch/amiga/dev/wdc_acafh.c	wdc_acafh & acafh 
 
-include "arch/amiga/clockport/files.clockport"
+include	"arch/amiga/clockport/files.clockport"
 
 include	"arch/amiga/conf/majors.amiga"

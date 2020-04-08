@@ -31,7 +31,7 @@ base-games-usr base-sys-usr
 base-gnats-bin base-sys-usr
 base-gnats-share base-sys-share
 base-groff-font base-sys-share
-base-groff-share base-termcap-share
+base-groff-share base-terminfo-share
 base-hesiod-bin base-sys-usr
 base-htmldoc-share base-sys-share
 base-i18n-root base-sys-usr
@@ -83,7 +83,7 @@ base-locale-zh base-locale-share
 base-lpr-bin base-lpr-usr
 base-lpr-root base-sys-root
 base-lpr-usr base-sys-usr
-base-magic-share base-termcap-share
+base-magic-share base-terminfo-share
 base-mail-bin base-sys-usr
 base-mail-root base-sys-root
 base-mailwrapper-bin base-sys-usr
@@ -112,7 +112,7 @@ base-postfix-usr base-sys-usr
 base-ppp-bin base-sys-usr
 base-psd-share base-sys-share
 base-rcs-bin base-sys-usr
-base-reference-share base-termcap-share
+base-reference-share base-terminfo-share
 base-rescue-root base-sys-root
 base-router-bin base-sys-usr
 base-router-examples base-sys-share
@@ -140,7 +140,7 @@ base-sysutil-bin base-sys-usr
 base-sysutil-examples base-sys-share
 base-sysutil-root base-sys-usr
 base-sysutil-share base-sys-share
-base-termcap-share base-sys-share
+base-terminfo-share base-sys-share
 base-texinfo-bin base-sys-usr
 base-texinfo-share base-sys-share
 base-texinfo_locale-cs base-locale-cs
@@ -190,7 +190,7 @@ comp-c-man base-man-share
 comp-c-piclib base-sys-usr
 comp-c-proflib base-sys-usr
 comp-c-root base-sys-root
-comp-c-share base-termcap-share
+comp-c-share base-terminfo-share
 comp-c-shlib base-sys-usr
 comp-c_locale-be base-locale-share
 comp-c_locale-ca base-locale-ca
@@ -273,7 +273,7 @@ comp-util-bin base-sys-usr
 comp-util-catman base-man-share
 comp-util-man base-man-share
 comp-util-sbin base-sys-usr
-comp-util-share base-termcap-share
+comp-util-share base-terminfo-share
 comp-util-share base-util-share
 etc-amd-rc base-sys-root
 etc-audio-rc base-sys-root
@@ -493,4 +493,4 @@ text-groff-man base-man-share
 text-groff-share base-groff-share
 text-sys-root base-sys-root
 text-texinfo-bin base-sys-usr
-text-texinfo-share base-termcap-share
+text-texinfo-share base-terminfo-share

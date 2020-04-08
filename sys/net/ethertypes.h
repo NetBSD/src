@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.18 2012/09/23 01:14:19 chs Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.18.38.1 2020/04/08 14:08:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -299,6 +299,7 @@
 #define	ETHERTYPE_LANPROBE	0x8888	/* HP LanProbe test? */
 #define	ETHERTYPE_PAE		0x888e	/* EAPOL PAE/802.1x */
 #define	ETHERTYPE_AOE		0x88a2	/* ATA over Ethernet */
+#define	ETHERTYPE_QINQ		0x88a8	/* 802.1ad VLAN stacking */
 #define	ETHERTYPE_FCOE		0x8906	/* Fibre Channel over Ethernet */
 #define	ETHERTYPE_LOOPBACK	0x9000	/* Loopback */
 #define	ETHERTYPE_LBACK		ETHERTYPE_LOOPBACK	/* DEC MOP loopback */

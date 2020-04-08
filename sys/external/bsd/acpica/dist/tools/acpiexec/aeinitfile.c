@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,24 +43,17 @@
 
 #include "aecommon.h"
 #include "acdispat.h"
+#include "acnamesp.h"
+
 
 #define _COMPONENT          ACPI_TOOLS
         ACPI_MODULE_NAME    ("aeinitfile")
-
-
-/* Local prototypes */
-
-static void
-AeEnterInitFileEntry (
-    INIT_FILE_ENTRY         InitEntry,
-    ACPI_WALK_STATE         *WalkState);
 
 
 #define AE_FILE_BUFFER_SIZE     512
 
 static char                 LineBuffer[AE_FILE_BUFFER_SIZE];
 static char                 NameBuffer[AE_FILE_BUFFER_SIZE];
-static char                 ValueBuffer[AE_FILE_BUFFER_SIZE];
 static FILE                 *InitFile;
 
 
@@ -103,33 +96,38 @@ AeOpenInitializationFile (
  * RETURN:      None
  *
  * DESCRIPTION: Read the initialization file and perform all namespace
- *              initializations. AcpiGbl_InitEntries will be used for region
- *              field initialization.
+ *              initializations. AcpiGbl_InitEntries will be used for all
+ *              object initialization.
  *
  * NOTE:        The format of the file is multiple lines, each of format:
- *                  <ACPI-pathname> <Integer Value>
+ *                  <ACPI-pathname> <New Value>
  *
  *****************************************************************************/
 
-void
-AeProcessInitFile(
+ACPI_STATUS
+AeProcessInitFile (
     void)
 {
     ACPI_WALK_STATE         *WalkState;
-    int                     i;
     UINT64                  idx;
-    ACPI_STATUS             Status;
+    ACPI_STATUS             Status = AE_OK;
+    char                    *Token;
+    char                    *ValueBuffer;
+    char                    *TempNameBuffer;
+    ACPI_OBJECT_TYPE        Type;
+    ACPI_OBJECT             TempObject;
 
 
     if (!InitFile)
     {
-        return;
+        return (AE_OK);
     }
 
     /* Create needed objects to be reused for each init entry */
 
     WalkState = AcpiDsCreateWalkState (0, NULL, NULL, NULL);
     NameBuffer[0] = '\\';
+    NameBuffer[1] = 0;
 
     while (fgets (LineBuffer, AE_FILE_BUFFER_SIZE, InitFile) != NULL)
     {
@@ -137,38 +135,92 @@ AeProcessInitFile(
     }
     rewind (InitFile);
 
+    /*
+     * Allocate and populate the Gbl_InitEntries array
+     */
     AcpiGbl_InitEntries =
-        AcpiOsAllocate (sizeof (INIT_FILE_ENTRY) * AcpiGbl_InitFileLineCount);
+        AcpiOsAllocateZeroed (sizeof (INIT_FILE_ENTRY) * AcpiGbl_InitFileLineCount);
     for (idx = 0; fgets (LineBuffer, AE_FILE_BUFFER_SIZE, InitFile); ++idx)
     {
-        if (sscanf (LineBuffer, "%s %s\n",
-                &NameBuffer[1], ValueBuffer) != 2)
+        TempNameBuffer = AcpiDbGetNextToken (LineBuffer, &Token, &Type);
+        if (!TempNameBuffer)
         {
-            goto CleanupAndExit;
+            AcpiGbl_InitEntries[idx].Name = NULL;
+            continue;
         }
 
-        /* Add a root prefix if not present in the string */
-
-        i = 0;
-        if (NameBuffer[1] == '\\')
+        if (LineBuffer[0] == '\\')
         {
-            i = 1;
+            strcpy (NameBuffer, TempNameBuffer);
+        }
+        else
+        {
+            /* Add a root prefix if not present in the string */
+
+            strcpy (NameBuffer + 1, TempNameBuffer);
         }
 
+        AcpiNsNormalizePathname (NameBuffer);
         AcpiGbl_InitEntries[idx].Name =
-            AcpiOsAllocateZeroed (strnlen (NameBuffer + i, AE_FILE_BUFFER_SIZE) + 1);
+            AcpiOsAllocateZeroed (strnlen (NameBuffer, AE_FILE_BUFFER_SIZE) + 1);
+        strcpy (AcpiGbl_InitEntries[idx].Name, NameBuffer);
 
-        strcpy (AcpiGbl_InitEntries[idx].Name, NameBuffer + i);
+        ValueBuffer = AcpiDbGetNextToken (Token, &Token, &Type);
+        if (!ValueBuffer)
+        {
+            AcpiGbl_InitEntries[idx].Value = NULL;
+            continue;
+        }
 
-        Status = AcpiUtStrtoul64 (ValueBuffer, &AcpiGbl_InitEntries[idx].Value);
+        AcpiGbl_InitEntries[idx].Value =
+            AcpiOsAllocateZeroed (strnlen (ValueBuffer, AE_FILE_BUFFER_SIZE) + 1);
+        strcpy (AcpiGbl_InitEntries[idx].Value, ValueBuffer);
+
+        if (Type == ACPI_TYPE_FIELD_UNIT)
+        {
+            Status = AcpiDbConvertToObject (ACPI_TYPE_BUFFER, ValueBuffer,
+                &TempObject);
+        }
+        else
+        {
+            Status = AcpiDbConvertToObject (Type, ValueBuffer, &TempObject);
+        }
+
         if (ACPI_FAILURE (Status))
         {
-            AcpiOsPrintf ("%s %s\n", ValueBuffer,
+            AcpiOsPrintf ("%s[%s]: %s\n", NameBuffer, AcpiUtGetTypeName (Type),
                 AcpiFormatException (Status));
             goto CleanupAndExit;
         }
 
-        AeEnterInitFileEntry (AcpiGbl_InitEntries[idx], WalkState);
+        Status = AcpiUtCopyEobjectToIobject (&TempObject,
+            &AcpiGbl_InitEntries[idx].ObjDesc);
+
+        /* Cleanup the external object created by DbConvertToObject above */
+
+        if (ACPI_SUCCESS (Status))
+        {
+            if (Type == ACPI_TYPE_BUFFER || Type == ACPI_TYPE_FIELD_UNIT)
+            {
+                ACPI_FREE (TempObject.Buffer.Pointer);
+            }
+            else if (Type == ACPI_TYPE_PACKAGE)
+            {
+                AcpiDbDeleteObjects (1, &TempObject);
+            }
+        }
+        else
+        {
+            AcpiOsPrintf ("%s[%s]: %s\n", NameBuffer, AcpiUtGetTypeName (Type),
+                AcpiFormatException (Status));
+            goto CleanupAndExit;
+        }
+
+        /*
+         * Initialize the namespace node with the value found in the init file.
+         */
+        AcpiOsPrintf ("Namespace object init from file: %16s, Value \"%s\", Type %s\n",
+            AcpiGbl_InitEntries[idx].Name, AcpiGbl_InitEntries[idx].Value, AcpiUtGetTypeName (Type));
     }
 
     /* Cleanup */
@@ -176,62 +228,7 @@ AeProcessInitFile(
 CleanupAndExit:
     fclose (InitFile);
     AcpiDsDeleteWalkState (WalkState);
-}
-
-
-/******************************************************************************
- *
- * FUNCTION:    AeInitFileEntry
- *
- * PARAMETERS:  InitEntry           - Entry of the init file
- *              WalkState           - Used for the Store operation
- *
- * RETURN:      None
- *
- * DESCRIPTION: Perform initialization of a single namespace object
- *
- *              Note: namespace of objects are limited to integers and region
- *              fields units of 8 bytes at this time.
- *
- *****************************************************************************/
-
-static void
-AeEnterInitFileEntry (
-    INIT_FILE_ENTRY         InitEntry,
-    ACPI_WALK_STATE         *WalkState)
-{
-    char                    *Pathname = InitEntry.Name;
-    UINT64                  Value = InitEntry.Value;
-    ACPI_OPERAND_OBJECT     *ObjDesc;
-    ACPI_NAMESPACE_NODE     *NewNode;
-    ACPI_STATUS             Status;
-
-
-    AcpiOsPrintf ("Initializing namespace element: %s\n", Pathname);
-    Status = AcpiNsLookup (NULL, Pathname, ACPI_TYPE_INTEGER,
-        ACPI_IMODE_LOAD_PASS2, ACPI_NS_ERROR_IF_FOUND | ACPI_NS_NO_UPSEARCH |
-        ACPI_NS_EARLY_INIT, NULL, &NewNode);
-    if (ACPI_FAILURE (Status))
-    {
-        ACPI_EXCEPTION ((AE_INFO, Status,
-            "While creating name from namespace initialization file: %s",
-            Pathname));
-        return;
-    }
-
-    ObjDesc = AcpiUtCreateIntegerObject (Value);
-
-    AcpiOsPrintf ("New value: 0x%8.8X%8.8X\n",
-        ACPI_FORMAT_UINT64 (Value));
-
-    /* Store pointer to value descriptor in the Node */
-
-    Status = AcpiNsAttachObject (NewNode, ObjDesc,
-         ACPI_TYPE_INTEGER);
-
-    /* Remove local reference to the object */
-
-    AcpiUtRemoveReference (ObjDesc);
+    return (Status);
 }
 
 
@@ -240,9 +237,9 @@ AeEnterInitFileEntry (
  * FUNCTION:    AeLookupInitFileEntry
  *
  * PARAMETERS:  Pathname            - AML namepath in external format
- *              ValueString         - value of the namepath if it exitst
+ *              ObjDesc             - Where the object is returned if it exists
  *
- * RETURN:      None
+ * RETURN:      Status. AE_OK if a match was found
  *
  * DESCRIPTION: Search the init file for a particular name and its value.
  *
@@ -251,22 +248,110 @@ AeEnterInitFileEntry (
 ACPI_STATUS
 AeLookupInitFileEntry (
     char                    *Pathname,
-    UINT64                  *Value)
+    ACPI_OPERAND_OBJECT     **ObjDesc)
 {
     UINT32                  i;
 
+    ACPI_FUNCTION_TRACE (AeLookupInitFileEntry);
+
+    ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "Lookup: %s\n", Pathname));
+
     if (!AcpiGbl_InitEntries)
     {
-        return AE_NOT_FOUND;
+        return (AE_NOT_FOUND);
+    }
+
+    AcpiNsNormalizePathname (Pathname);
+
+    for (i = 0; i < AcpiGbl_InitFileLineCount; ++i)
+    {
+        if (AcpiGbl_InitEntries[i].Name &&
+            !strcmp (AcpiGbl_InitEntries[i].Name, Pathname))
+        {
+            *ObjDesc = AcpiGbl_InitEntries[i].ObjDesc;
+            AcpiGbl_InitEntries[i].IsUsed = TRUE;
+            ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "Found match: %s, %p\n", Pathname, *ObjDesc));
+            return_ACPI_STATUS (AE_OK);
+        }
+    }
+
+    ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "No match found: %s\n", Pathname));
+    return_ACPI_STATUS (AE_NOT_FOUND);
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AeDisplayUnusedInitFileItems
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Display all init file items that have not been referenced
+ *              (i.e., items that have not been found in the namespace).
+ *
+ *****************************************************************************/
+
+void
+AeDisplayUnusedInitFileItems (
+    void)
+{
+    UINT32                  i;
+
+
+    if (!AcpiGbl_InitEntries)
+    {
+        return;
     }
 
     for (i = 0; i < AcpiGbl_InitFileLineCount; ++i)
     {
-        if (!strcmp(AcpiGbl_InitEntries[i].Name, Pathname))
+        if (AcpiGbl_InitEntries[i].Name &&
+            !AcpiGbl_InitEntries[i].IsUsed)
         {
-            *Value = AcpiGbl_InitEntries[i].Value;
-            return AE_OK;
+            AcpiOsPrintf ("Init file entry not found in namespace "
+                "(or is a non-data type): %s\n",
+                AcpiGbl_InitEntries[i].Name);
         }
     }
-    return AE_NOT_FOUND;
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AeDeleteInitFileList
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Delete the global namespace initialization file data
+ *
+ *****************************************************************************/
+
+void
+AeDeleteInitFileList (
+    void)
+{
+    UINT32                  i;
+
+
+    if (!AcpiGbl_InitEntries)
+    {
+        return;
+    }
+
+    for (i = 0; i < AcpiGbl_InitFileLineCount; ++i)
+    {
+
+        if ((AcpiGbl_InitEntries[i].ObjDesc) && (AcpiGbl_InitEntries[i].Value))
+        {
+            /* Remove one reference on the object (and all subobjects) */
+
+            AcpiUtRemoveReference (AcpiGbl_InitEntries[i].ObjDesc);
+        }
+    }
+
+    AcpiOsFree (AcpiGbl_InitEntries);
 }

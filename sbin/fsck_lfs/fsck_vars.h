@@ -1,4 +1,4 @@
-/* $NetBSD: fsck_vars.h,v 1.15 2015/09/01 06:15:02 dholland Exp $	 */
+/* $NetBSD: fsck_vars.h,v 1.15.16.1 2020/04/08 14:07:18 martin Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -78,7 +78,7 @@ extern ino_t n_files;		/* number of files in use */
 
 extern int no_roll_forward;	/* Don't roll forward */
 
-blkcnt_t badblkcount;		/* count of "bad" blocks */
+extern blkcnt_t badblkcount;	/* count of "bad" blocks */
 
 /* from setup.c */
 extern SEGUSE *seg_table;

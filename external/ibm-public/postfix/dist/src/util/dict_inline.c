@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_inline.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_inline.c,v 1.2.16.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -28,6 +28,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -55,7 +60,7 @@ DICT   *dict_inline_open(const char *name, int open_flags, int dict_flags)
     size_t  len;
     char   *nameval, *vname, *value;
     const char *err = 0;
-    char   *xperr = 0;
+    char   *free_me = 0;
     int     count = 0;
 
     /*
@@ -65,8 +70,8 @@ DICT   *dict_inline_open(const char *name, int open_flags, int dict_flags)
 	    DICT *__d = (x); \
 	    if (saved_name != 0) \
 		myfree(saved_name); \
-	    if (xperr != 0) \
-		myfree(xperr); \
+	    if (free_me != 0) \
+		myfree(free_me); \
 	    return (__d); \
 	} while (0)
 
@@ -111,10 +116,19 @@ DICT   *dict_inline_open(const char *name, int open_flags, int dict_flags)
     dict_type_override(dict, DICT_TYPE_INLINE);
     while ((nameval = mystrtokq(&cp, CHARS_COMMA_SP, CHARS_BRACE)) != 0) {
 	if ((nameval[0] != CHARS_BRACE[0]
-	     || (err = xperr = extpar(&nameval, CHARS_BRACE, EXTPAR_FLAG_STRIP)) == 0)
-	    && (err = split_nameval(nameval, &vname, &value)) != 0)
+	     || (err = free_me = extpar(&nameval, CHARS_BRACE, EXTPAR_FLAG_STRIP)) == 0)
+	    && (err = split_qnameval(nameval, &vname, &value)) != 0)
 	    break;
 
+	if ((dict->flags & DICT_FLAG_SRC_RHS_IS_FILE) != 0) {
+	    VSTRING *base64_buf;
+
+	    if ((base64_buf = dict_file_to_b64(dict, value)) == 0) {
+		err = free_me = dict_file_get_error(dict);
+		break;
+	    }
+	    value = vstring_str(base64_buf);
+	}
 	/* No duplicate checks. See comments in dict_thash.c. */
 	dict->update(dict, vname, value);
 	count += 1;
@@ -124,12 +138,15 @@ DICT   *dict_inline_open(const char *name, int open_flags, int dict_flags)
 	DICT_INLINE_RETURN(dict_surrogate(DICT_TYPE_INLINE, name,
 					  open_flags, dict_flags,
 					  "%s: \"%s:%s\"; "
-					  "need \"%s:{name=value...}\"",
+					  "need \"%s:{name=%s...}\"",
 					  err != 0 ? err : "empty table",
 					  DICT_TYPE_INLINE, name,
-					  DICT_TYPE_INLINE));
+					  DICT_TYPE_INLINE,
+				  (dict_flags & DICT_FLAG_SRC_RHS_IS_FILE) ?
+					  "filename" : "value"));
     }
     dict->owner.status = DICT_OWNER_TRUSTED;
 
+    dict_file_purge_buffers(dict);
     DICT_INLINE_RETURN(DICT_DEBUG (dict));
 }

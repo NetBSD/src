@@ -1,4 +1,4 @@
-/* $NetBSD: anxedp.c,v 1.2.4.2 2019/06/10 22:07:09 christos Exp $ */
+/* $NetBSD: anxedp.c,v 1.2.4.3 2020/04/08 14:08:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.2.4.2 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.2.4.3 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,7 +99,7 @@ anxedp_read(struct anxedp_softc *sc, u_int off, uint8_t reg)
 {
 	uint8_t val;
 
-	if (iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr + off, reg, &val, I2C_F_POLL) != 0)
+	if (iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr + off, reg, &val, 0) != 0)
 		val = 0xff;
 
 	return val;
@@ -108,7 +108,7 @@ anxedp_read(struct anxedp_softc *sc, u_int off, uint8_t reg)
 static void
 anxedp_write(struct anxedp_softc *sc, u_int off, uint8_t reg, uint8_t val)
 {
-	(void)iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr + off, reg, val, I2C_F_POLL);
+	(void)iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr + off, reg, val, 0);
 }
 
 static int
@@ -247,9 +247,9 @@ anxedp_connector_get_modes(struct drm_connector *connector)
 	struct edid *pedid = NULL;
 	int error;
 
-	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	iic_acquire_bus(sc->sc_i2c, 0);
 	error = anxedp_read_edid(sc, edid, sizeof(edid));
-	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c, 0);
 	if (error == 0)
 		pedid = (struct edid *)edid;
 

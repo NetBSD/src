@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.16.18.1 2019/06/10 22:05:55 christos Exp $	*/
+/*	$NetBSD: picvar.h,v 1.16.18.2 2020/04/08 14:07:30 martin Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -90,6 +90,8 @@ void	*intr_establish(int irq, int ipl, int type, int (*func)(void *),
 void	*intr_establish_xname(int irq, int ipl, int type, int (*func)(void *),
 	    void *arg, const char *xname);
 void	intr_disestablish(void *);
+void	intr_mask(void *);
+void	intr_unmask(void *);
 const char *intr_string(intr_handle_t, char *, size_t);
 #ifdef MULTIPROCESSOR
 void	intr_cpu_init(struct cpu_info *);
@@ -124,6 +126,7 @@ struct intrsource {
 	bool is_mpsafe;
 	char is_source[16];
 	char *is_xname;
+	uint32_t is_mask_count;
 };
 
 struct pic_percpu {
@@ -183,7 +186,9 @@ void	pic_set_priority(struct cpu_info *, int);
 #define	pic_set_priority(ci, newipl)	((void)((ci)->ci_cpl = (newipl)))
 #endif
 
-void	pic_add(struct pic_softc *, int);
+#define	PIC_IRQBASE_ALLOC	(-2)
+
+int	pic_add(struct pic_softc *, int);
 void	pic_do_pending_int(void);
 #ifdef MULTIPROCESSOR
 int	pic_ipi_ast(void *);

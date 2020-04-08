@@ -1,4 +1,4 @@
-.\"	$NetBSD: hprop.8,v 1.5 2017/01/28 21:31:44 christos Exp $
+.\"	$NetBSD: hprop.8,v 1.5.12.1 2020/04/08 14:03:08 martin Exp $
 .\"
 .\" Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -117,7 +117,8 @@ The encryption keys in the database can either be in clear, or
 encrypted with a master key. This option transmits the database with
 unencrypted keys.
 .It Fl E , Fl Fl encrypt
-This option transmits the database with encrypted keys.
+This option transmits the database with encrypted keys. This is the
+default if no option is supplied.
 .It Fl n , Fl Fl stdout
 Dump the database on stdout, in a format that can be fed to hpropd.
 .El

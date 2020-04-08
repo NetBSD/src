@@ -1,11 +1,8 @@
-/*	$NetBSD: imx6qdl-clock.h,v 1.1.1.2.2.1 2019/06/10 22:08:54 christos Exp $	*/
+/*	$NetBSD: imx6qdl-clock.h,v 1.1.1.2.2.2 2020/04/08 14:08:44 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2014 Freescale Semiconductor, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 
 #ifndef __DT_BINDINGS_CLOCK_IMX6QDL_H

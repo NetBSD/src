@@ -1,0 +1,11 @@
+# setup chroot mounts
+
+if [ "$reason" = CHROOT ] && [ -n "$chroot" ]; then
+	for d in /dev /proc /sys /run/udev; do
+		[ -d "$d" ] || continue
+		if ! mountpoint -q "$chroot$d"; then
+			mkdir -p "$chroot$d"
+			mount --bind $d "$chroot$d"
+		fi
+	done
+fi

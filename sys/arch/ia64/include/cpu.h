@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.14.1 2019/06/10 22:06:23 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.14.2 2020/04/08 14:07:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	device_t ci_dev;		/* pointer to our device */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 	struct cctr_state ci_cc;	/* cycle counter state */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
 
@@ -107,7 +108,8 @@ struct cpu_info {
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
-	u_long ci_want_resched;		/* preempt current process */
+	u_int ci_want_resched;		/* preempt current process */
+	u_int ci_unused;		/* unused */
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 	uint64_t ci_clock;		/* clock counter */
@@ -136,7 +138,7 @@ extern struct cpu_info *cpu_info_list;
 
 #define aston(l) ((l)->l_md.md_astpending = 1)
 
-#define	need_resched(ci)            /*XXX: FIXME */
+#define	need_resched(ci,l,f)            /*XXX: FIXME */
 
 struct clockframe {
 	struct trapframe cf_tf;
@@ -165,7 +167,7 @@ struct clockframe {
 #define	cpu_signotify(l)	aston(l)
 
 // void cpu_need_resched(struct cpu_info *ci, int flags)
-#define cpu_need_resched(ci, f) do {	\
+#define cpu_need_resched(ci, l, f) do {	\
 	__USE(ci);			\
 	__USE(f);			\
 } while(/*CONSTCOND*/0)

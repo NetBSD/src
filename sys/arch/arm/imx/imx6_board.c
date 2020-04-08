@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_board.c,v 1.10.2.1 2019/06/10 22:05:54 christos Exp $	*/
+/*	$NetBSD: imx6_board.c,v 1.10.2.2 2020/04/08 14:07:29 martin Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.10.2.1 2019/06/10 22:05:54 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.10.2.2 2020/04/08 14:07:29 martin Exp $");
 
 #include "arml2cc.h"
 #include "opt_cputypes.h"
@@ -278,6 +278,6 @@ imx6_set_gpio(device_t self, const char *name, int32_t *gpio,
 
 	*gpio = GPIO_NO(grp, pin);
 #if NIMXGPIO > 0
-	gpio_set_direction(*gpio, dir);
+	imxgpio_set_direction(*gpio, dir);
 #endif
 }

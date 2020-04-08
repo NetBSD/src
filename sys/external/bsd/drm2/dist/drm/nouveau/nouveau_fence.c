@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.4.18.1 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.4.18.2 2020/04/08 14:08:24 martin Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.4.18.1 2019/06/10 22:08:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.4.18.2 2020/04/08 14:08:24 martin Exp $");
 
 #include <drm/drmP.h>
 
-#include <asm/param.h>
 #include <linux/ktime.h>
 #include <linux/hrtimer.h>
 #include <trace/events/fence.h>

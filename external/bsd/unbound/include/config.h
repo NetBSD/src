@@ -16,6 +16,9 @@
 /* Do sha512 definitions in config.h */
 /* #undef COMPAT_SHA512 */
 
+/* Command line arguments used with configure */
+#define CONFCMDLINE ""
+
 /* Pathname to the Unbound configuration file */
 #define CONFIGFILE "/etc/unbound/unbound.conf"
 
@@ -87,6 +90,10 @@
    if you don't. */
 /* #undef HAVE_DECL_ARC4RANDOM_UNIFORM */
 
+/* Define to 1 if you have the declaration of `evsignal_assign', and to 0 if
+   you don't. */
+/* #undef HAVE_DECL_EVSIGNAL_ASSIGN */
+
 /* Define to 1 if you have the declaration of `inet_ntop', and to 0 if you
    don't. */
 #define HAVE_DECL_INET_NTOP 1
@@ -113,7 +120,7 @@
 
 /* Define to 1 if you have the declaration of `reallocarray', and to 0 if you
    don't. */
-/* #undef HAVE_DECL_REALLOCARRAY */
+#define HAVE_DECL_REALLOCARRAY 0
 
 /* Define to 1 if you have the declaration of `redisConnect', and to 0 if you
    don't. */
@@ -166,6 +173,9 @@
 
 /* Define to 1 if you have the `ERR_load_crypto_strings' function. */
 /* #undef HAVE_ERR_LOAD_CRYPTO_STRINGS */
+
+/* Define to 1 if you have the `event_assign' function. */
+/* #undef HAVE_EVENT_ASSIGN */
 
 /* Define to 1 if you have the `event_base_free' function. */
 /* #undef HAVE_EVENT_BASE_FREE */
@@ -407,7 +417,7 @@
 /* Define to 1 if you have the `RAND_cleanup' function. */
 /* #undef HAVE_RAND_CLEANUP */
 
-/* Define to 1 if you have the `reallocarray' function. */
+/* If we have reallocarray(3) */
 #define HAVE_REALLOCARRAY 1
 
 /* Define to 1 if you have the `recvmsg' function. */
@@ -472,7 +482,6 @@
 
 /* Define to 1 if you have the `SSL_CTX_set_tlsext_ticket_key_cb' function. */
 /* #undef HAVE_SSL_CTX_SET_TLSEXT_TICKET_KEY_CB */
-
 
 /* Define to 1 if you have the `SSL_get0_peername' function. */
 #define HAVE_SSL_GET0_PEERNAME 1
@@ -612,6 +621,9 @@
 /* Define to 1 if you have the `_beginthreadex' function. */
 /* #undef HAVE__BEGINTHREADEX */
 
+/* If HMAC_Init_ex() returns void */
+/* #undef HMAC_INIT_EX_RETURNS_VOID */
+
 /* if lex has yylex_destroy */
 #define LEX_HAS_YYLEX_DESTROY 1
 
@@ -659,13 +671,13 @@
 /* #undef OMITTED__D__EXTENSIONS__ */
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "unbound-bugs@nlnetlabs.nl"
+#define PACKAGE_BUGREPORT "unbound-bugs@nlnetlabs.nl or https://github.com/NLnetLabs/unbound/issues"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.9.1"
+#define PACKAGE_STRING "unbound 1.9.6"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -674,7 +686,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.9.1"
+#define PACKAGE_VERSION "1.9.6"
 
 /* default pidfile location */
 #define PIDFILE "/var/run/unbound.pid"
@@ -696,13 +708,16 @@
 #define ROOT_CERT_FILE "/etc/unbound/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,6,8,0
+#define RSRC_PACKAGE_VERSION 1,9,6,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/etc/unbound"
 
 /* Shared data */
 #define SHARE_DIR "/etc/unbound"
+
+/* The size of `size_t', as computed by sizeof. */
+#define SIZEOF_SIZE_T 8
 
 /* The size of `time_t', as computed by sizeof. */
 #define SIZEOF_TIME_T 8
@@ -721,6 +736,9 @@
 
 /* Use win32 resources and API */
 /* #undef UB_ON_WINDOWS */
+
+/* the SYSLOG_FACILITY to use, default LOG_DAEMON */
+#define UB_SYSLOG_FACILITY LOG_DAEMON
 
 /* default username */
 #define UB_USERNAME "_unbound"
@@ -769,6 +787,9 @@
 
 /* Define to 1 to use ipsecmod support. */
 /* #undef USE_IPSECMOD */
+
+/* Define to 1 to use ipset support */
+/* #undef USE_IPSET */
 
 /* Define if you want to use internal select based events */
 #define USE_MINI_EVENT 1
@@ -967,8 +988,14 @@
 
 
 
+#ifndef _OPENBSD_SOURCE
+#define _OPENBSD_SOURCE 1
+#endif
+
 #ifndef UNBOUND_DEBUG
+# ifndef NDEBUG
 #  define NDEBUG
+# endif
 #endif
 
 /** Use small-ldns codebase */
@@ -1202,6 +1229,10 @@ struct tm;
 char *strptime(const char *s, const char *format, struct tm *tm);
 #endif
 
+#if !HAVE_DECL_REALLOCARRAY
+void *reallocarray(void *ptr, size_t nmemb, size_t size);
+#endif
+
 #ifdef HAVE_LIBRESSL
 #  if !HAVE_DECL_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t siz);
@@ -1214,9 +1245,6 @@ uint32_t arc4random(void);
 #  endif
 #  if !HAVE_DECL_ARC4RANDOM_UNIFORM && defined(HAVE_ARC4RANDOM_UNIFORM)
 uint32_t arc4random_uniform(uint32_t upper_bound);
-#  endif
-#  if !HAVE_DECL_REALLOCARRAY
-void *reallocarray(void *ptr, size_t nmemb, size_t size);
 #  endif
 #endif /* HAVE_LIBRESSL */
 #ifndef HAVE_ARC4RANDOM

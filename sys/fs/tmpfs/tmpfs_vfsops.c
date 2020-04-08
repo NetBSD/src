@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.72.10.1 2019/06/10 22:09:01 christos Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.72.10.2 2020/04/08 14:08:50 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.72.10.1 2019/06/10 22:09:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.72.10.2 2020/04/08 14:08:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -186,7 +186,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mp->mnt_stat.f_namemax = TMPFS_MAXNAMLEN;
 	mp->mnt_fs_bshift = PAGE_SHIFT;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
-	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO | IMNT_SHRLOOKUP |
+	    IMNT_NCLOOKUP;
 	vfs_getnewfsid(mp);
 
 	/* Allocate the tmpfs mount structure and fill it. */
@@ -300,7 +301,7 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-tmpfs_root(struct mount *mp, vnode_t **vpp)
+tmpfs_root(struct mount *mp, int lktype, vnode_t **vpp)
 {
 	tmpfs_node_t *node = VFS_TO_TMPFS(mp)->tm_root;
 	int error;
@@ -308,7 +309,7 @@ tmpfs_root(struct mount *mp, vnode_t **vpp)
 	error = vcache_get(mp, &node, sizeof(node), vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -319,14 +320,14 @@ tmpfs_root(struct mount *mp, vnode_t **vpp)
 }
 
 int
-tmpfs_vget(struct mount *mp, ino_t ino, vnode_t **vpp)
+tmpfs_vget(struct mount *mp, ino_t ino, int lktype, vnode_t **vpp)
 {
 
 	return EOPNOTSUPP;
 }
 
 int
-tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
+tmpfs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, vnode_t **vpp)
 {
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
 	tmpfs_node_t *node;
@@ -339,6 +340,7 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 	memcpy(&tfh, fhp, sizeof(tmpfs_fid_t));
 
 	mutex_enter(&tmp->tm_lock);
+	/* XXX big oof .. use a better data structure */
 	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
 		if (node->tn_id == tfh.tf_id) {
 			/* Prevent this node from disappearing. */
@@ -358,7 +360,7 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 	}
 	if (error)
 		return (error == ENOENT ? ESTALE : error);
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;

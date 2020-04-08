@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_output.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: msg_output.h,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 #ifndef _MSG_OUTPUT_FN_
 #define _MSG_OUTPUT_FN_
@@ -25,7 +25,6 @@ typedef void (*MSG_OUTPUT_FN) (int, const char *);
 extern void msg_output(MSG_OUTPUT_FN);
 extern void PRINTFLIKE(2, 3) msg_printf(int, const char *,...);
 extern void msg_vprintf(int, const char *, va_list);
-extern void msg_text(int, const char *);
 
 #define MSG_INFO	0		/* informative */
 #define	MSG_WARN	1		/* warning (non-fatal) */
@@ -44,6 +43,11 @@ extern void msg_text(int, const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

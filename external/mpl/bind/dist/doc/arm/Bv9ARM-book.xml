@@ -4786,7 +4786,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 		the first time; if unsuccessful, the server will
 		will terminate, under the assumption that another
 		server is already running.  If not specified, the default is
-		<filename>/var/run/named/named.lock</filename>.
+		<filename>none</filename>.
 	      </para>
 	      <para>
 		Specifying <command>lock-file none</command> disables the
@@ -5457,15 +5457,21 @@ options {
 	      <term><command>automatic-interface-scan</command></term>
 	      <listitem>
 		<para>
-		  If <userinput>yes</userinput> and supported by the OS,
-		  automatically rescan network interfaces when the interface
-		  addresses are added or removed.  The default is
-		  <userinput>yes</userinput>.
+		  If <userinput>yes</userinput> and supported by the operating
+		  system, automatically rescan network interfaces when the
+		  interface addresses are added or removed.  The default is
+		  <userinput>yes</userinput>.  This configuration option does
+		  not affect time based <command>interface-interval</command>
+		  option, and it is recommended to set the time based
+		  <command>interface-interval</command> to 0 when the operator
+		  confirms that automatic interface scanning is supported by the
+		  operating system.
 		</para>
 		<para>
-		  Currently the OS needs to support routing sockets for
-		  <command>automatic-interface-scan</command> to be
-		  supported.
+		  The <command>automatic-interface-scan</command> implementation
+		  uses routing sockets for the network interface discovery,
+		  and therefore the operating system has to support the routing
+		  sockets for this feature to work.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6000,6 +6006,17 @@ options {
 		  response to a UDP request from a cookie aware client.
 		  BADCOOKIE is sent if there is a bad or no existent
 		  server cookie.
+		  The default is <userinput>no</userinput>.
+		</para>
+		<para>
+		  Set this to <userinput>yes</userinput> to test that DNS
+		  COOKIE clients correctly handle BADCOOKIE or if you are
+		  getting a lot of forged DNS requests with DNS COOKIES
+		  present. Setting this to <userinput>yes</userinput> will
+		  result in reduced amplification effect in a reflection
+		  attack, as the BADCOOKIE response will be smaller than
+		  a full response, while also requiring a legitimate client
+		  to follow up with a second query with the new, valid, cookie.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6048,6 +6065,7 @@ options {
 		  do not send a correct COOKIE option may be limited
 		  to receiving smaller responses via the
 		  <command>nocookie-udp-size</command> option.
+		  The default is <userinput>yes</userinput>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6772,7 +6790,9 @@ options {
 		<para>
 		  Synthesize answers from cached NSEC, NSEC3 and
 		  other RRsets that have been proved to be correct
-		  using DNSSEC.  The default is <command>yes</command>.
+		  using DNSSEC.  The default is <command>no</command>,
+		  but it will become <command>yes</command> again
+		  in the future releases.
 		</para>
 		<para>
 		  Note:
@@ -8440,10 +8460,11 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  minutes. The default
 		  is 60 minutes. The maximum value is 28 days (40320 minutes).
 		  If set to 0, interface scanning will only occur when
-		  the configuration file is  loaded. After the scan, the
-		  server will
-		  begin listening for queries on any newly discovered
-		  interfaces (provided they are allowed by the
+		  the configuration file is loaded, or when
+		  <command>automatic-interface-scan</command> is enabled
+		  and supported by the operating system. After the scan, the
+		  server will begin listening for queries on any newly
+		  discovered interfaces (provided they are allowed by the
 		  <command>listen-on</command> configuration), and
 		  will stop listening on interfaces that have gone away.
 		  For convenience, TTL-style time unit suffixes may be
@@ -8482,7 +8503,8 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 	    The first element (which may be an IP address, an IP prefix, an
 	    ACL name or a nested <command>address_match_list</command>) of
 	    each top level list is checked against the source address of
-	    the query until a match is found.
+	    the query until a match is found. When the addresses in the
+	    first element overlap, the first rule to match gets selected.
 	  </para>
 	  <para>
 	    Once the source address of the query has been matched, if the
@@ -8806,6 +8828,26 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  either in the configuration file using
 		  <command>stale-answer-enable</command> or via
 		  <command>rndc serve-stale on</command>.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>resolver-nonbackoff-tries</command></term>
+	      <listitem>
+		<para>
+		  Specifies how many retries occur before exponential
+		  backoff kicks in.  The default is <userinput>3</userinput>.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>resolver-retry-interval</command></term>
+	      <listitem>
+		<para>
+		  The base retry interval in milliseconds.
+		  The default is <userinput>800</userinput>.
 		</para>
 	      </listitem>
 	    </varlistentry>

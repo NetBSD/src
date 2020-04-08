@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.23.12.1 2019/06/10 22:07:16 christos Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.23.12.2 2020/04/08 14:08:09 martin Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -339,6 +339,7 @@ struct bge_softc {
 	struct evcnt bge_ev_rx_macctl;	/* receive MAC control packets */
 	struct evcnt bge_ev_xoffentered;/* XOFF state entered */
 #endif /* BGE_EVENT_COUNTERS */
+	uint64_t		bge_if_collisions;
 	int			bge_txcnt;
 	struct callout		bge_timeout;
 	int			bge_pending_rxintr_change;

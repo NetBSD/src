@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.32.4.1 2019/06/10 22:07:07 christos Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.32.4.2 2020/04/08 14:08:03 martin Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.32.4.1 2019/06/10 22:07:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.32.4.2 2020/04/08 14:08:03 martin Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -82,13 +82,11 @@ __KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.32.4.1 2019/06/10 22:07:07 christos E
 
 #include <sys/types.h>
 #include <sys/param.h>
-
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
-#include <sys/vnode.h>
 
 #include <machine/int_fmtio.h>
 
@@ -96,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.32.4.1 2019/06/10 22:07:07 christos E
 #include "dm.h"
 
 static uint32_t sc_minor_num;
-extern const struct dkdriver dmdkdriver;
 uint32_t dm_dev_counter;
 
 /* Generic cf_data for device-mapper driver */
@@ -106,36 +103,39 @@ static struct cfdata dm_cfdata = {
 	.cf_fstate = FSTATE_STAR,
 	.cf_unit = 0
 };
+
 #define DM_REMOVE_FLAG(flag, name) do {					\
-		prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag); \
-		flag &= ~name;						\
-		prop_dictionary_set_uint32(dm_dict,DM_IOCTL_FLAGS,flag); \
+	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag);	\
+	flag &= ~name;							\
+	prop_dictionary_set_uint32(dm_dict,DM_IOCTL_FLAGS,flag);	\
 } while (/*CONSTCOND*/0)
 
 #define DM_ADD_FLAG(flag, name) do {					\
-		prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag); \
-		flag |= name;						\
-		prop_dictionary_set_uint32(dm_dict,DM_IOCTL_FLAGS,flag); \
+	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag);	\
+	flag |= name;							\
+	prop_dictionary_set_uint32(dm_dict,DM_IOCTL_FLAGS,flag);	\
 } while (/*CONSTCOND*/0)
 
-static int dm_dbg_print_flags(int);
+static int dm_table_deps(dm_table_entry_t *, prop_array_t);
+static int dm_table_init(dm_target_t *, dm_table_entry_t *, char *);
 
 /*
- * Print flags sent to the kernel from libevmapper.
+ * Print flags sent to the kernel from libdevmapper.
  */
 static int
-dm_dbg_print_flags(int flags)
+dm_dbg_print_flags(uint32_t flags)
 {
+
 	aprint_debug("dbg_print --- %d\n", flags);
 
 	if (flags & DM_READONLY_FLAG)
 		aprint_debug("dbg_flags: DM_READONLY_FLAG set In/Out\n");
 
 	if (flags & DM_SUSPEND_FLAG)
-		aprint_debug("dbg_flags: DM_SUSPEND_FLAG set In/Out \n");
+		aprint_debug("dbg_flags: DM_SUSPEND_FLAG set In/Out\n");
 
 	if (flags & DM_PERSISTENT_DEV_FLAG)
-		aprint_debug("db_flags: DM_PERSISTENT_DEV_FLAG set In\n");
+		aprint_debug("dbg_flags: DM_PERSISTENT_DEV_FLAG set In\n");
 
 	if (flags & DM_STATUS_TABLE_FLAG)
 		aprint_debug("dbg_flags: DM_STATUS_TABLE_FLAG set In\n");
@@ -157,17 +157,6 @@ dm_dbg_print_flags(int flags)
 
 	if (flags & DM_NOFLUSH_FLAG)
 		aprint_debug("dbg_flags: DM_NOFLUSH_FLAG set In\n");
-
-	return 0;
-}
-
-/*
- * Get version ioctl call I do it as default therefore this
- * function is unused now.
- */
-int
-dm_get_version_ioctl(prop_dictionary_t dm_dict)
-{
 
 	return 0;
 }
@@ -198,7 +187,6 @@ dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 /*
  * Create in-kernel entry for device. Device attributes such as name, uuid are
  * taken from proplib dictionary.
- *
  */
 int
 dm_dev_create_ioctl(prop_dictionary_t dm_dict)
@@ -209,7 +197,6 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	uint32_t flags;
 	device_t devt;
 
-	r = 0;
 	flags = 0;
 	name = NULL;
 	uuid = NULL;
@@ -246,7 +233,6 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	dmv->flags = 0;		/* device flags are set when needed */
 	dmv->ref_cnt = 0;
 	dmv->event_nr = 0;
-	dmv->dev_type = 0;
 	dmv->devt = devt;
 
 	dm_table_head_init(&dmv->table_head);
@@ -293,13 +279,11 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
  *    <integer>...</integer>
  *   </dict>
  *  </array>
- *
  */
 int
 dm_dev_list_ioctl(prop_dictionary_t dm_dict)
 {
 	prop_array_t dev_list;
-
 	uint32_t flags;
 
 	flags = 0;
@@ -430,7 +414,6 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 	name = NULL;
 	uuid = NULL;
 	flags = 0;
-	j = 0;
 
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
@@ -454,9 +437,9 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 	 * Add status flags for tables I have to check both active and
 	 * inactive tables.
 	 */
-	if ((j = dm_table_get_target_count(&dmv->table_head, DM_TABLE_ACTIVE))) {
+	if ((j = dm_table_get_target_count(&dmv->table_head, DM_TABLE_ACTIVE)))
 		DM_ADD_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
-	} else
+	else
 		DM_REMOVE_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
 
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_TARGET_COUNT, j);
@@ -474,7 +457,6 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 /*
  * Set only flag to suggest that device is suspended. This call is
  * not supported in NetBSD.
- *
  */
 int
 dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
@@ -575,7 +557,6 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 /*
  * Remove inactive table from device. Routines which work's with inactive tables
  * doesn't need to synchronise with dmstrategy. They can synchronise themselves with mutex?.
- *
  */
 int
 dm_table_clear_ioctl(prop_dictionary_t dm_dict)
@@ -584,7 +565,6 @@ dm_table_clear_ioctl(prop_dictionary_t dm_dict)
 	const char *name, *uuid;
 	uint32_t flags, minor;
 
-	dmv = NULL;
 	name = NULL;
 	uuid = NULL;
 	flags = 0;
@@ -629,12 +609,10 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	prop_array_t cmd_array;
 	const char *name, *uuid;
 	uint32_t flags, minor;
-
 	int table_type;
 
 	name = NULL;
 	uuid = NULL;
-	dmv = NULL;
 	flags = 0;
 
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
@@ -667,13 +645,43 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	tbl = dm_table_get_entry(&dmv->table_head, table_type);
 
 	SLIST_FOREACH(table_en, tbl, next)
-	    table_en->target->deps(table_en, cmd_array);
+		dm_table_deps(table_en, cmd_array);
 
 	dm_table_release(&dmv->table_head, table_type);
 	dm_dev_unbusy(dmv);
 
 	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, cmd_array);
 	prop_object_release(cmd_array);
+
+	return 0;
+}
+
+static int
+dm_table_deps(dm_table_entry_t *table_en, prop_array_t array)
+{
+	dm_mapping_t *map;
+	int i, size;
+	uint64_t rdev, tmp;
+
+	size = prop_array_count(array);
+
+	TAILQ_FOREACH(map, &table_en->pdev_maps, next) {
+		rdev = map->data.pdev->pdev_vnode->v_rdev;
+		for (i = 0; i < size; i++) {
+			if (prop_array_get_uint64(array, i, &tmp) == true)
+				if (rdev == tmp)
+					break; /* exists */
+		}
+		/*
+		 * Ignore if the device has already been added by
+		 * other tables.
+		 */
+		if (i == size) {
+			prop_array_add_uint64(array, rdev);
+			aprint_debug("%s: %d:%d\n", __func__, major(rdev),
+			    minor(rdev));
+		}
+	}
 
 	return 0;
 }
@@ -686,7 +694,6 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
  *
  * Load table to inactive slot table are switched in dm_device_resume_ioctl.
  * This simulates Linux behaviour better there should not be any difference.
- *
  */
 int
 dm_table_load_ioctl(prop_dictionary_t dm_dict)
@@ -701,18 +708,12 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_t target_dict;
 
 	const char *name, *uuid, *type;
+	uint32_t flags, minor;
 
-	uint32_t flags, ret, minor;
-
-	char *str;
-
-	ret = 0;
 	flags = 0;
 	name = NULL;
 	uuid = NULL;
-	dmv = NULL;
 	last_table = NULL;
-	str = NULL;
 
 	/*
 	 * char *xml; xml = prop_dictionary_externalize(dm_dict);
@@ -751,6 +752,8 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 
 	while ((target_dict = prop_object_iterator_next(iter)) != NULL) {
+		int ret;
+		char *str = NULL;
 
 		prop_dictionary_get_cstring_nocopy(target_dict,
 		    DM_TABLE_TYPE, &type);
@@ -774,6 +777,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		table_en->target = target;
 		table_en->dm_dev = dmv;
 		table_en->target_config = NULL;
+		TAILQ_INIT(&table_en->pdev_maps);
 
 		/*
 		 * There is a parameter string after dm_target_spec
@@ -791,15 +795,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		else
 			SLIST_INSERT_AFTER(last_table, table_en, next);
 
-		/*
-		 * Params string is different for every target,
-		 * therfore I have to pass it to target init
-		 * routine and parse parameters there.
-		 */
-
-		if ((ret = target->init(dmv, &table_en->target_config,
-			    str)) != 0) {
-
+		if ((ret = dm_table_init(target, table_en, str)) != 0) {
 			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
 			dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
 			free(str, M_TEMP);
@@ -819,6 +815,41 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
 	dm_dev_unbusy(dmv);
 	return 0;
+}
+
+static int
+dm_table_init(dm_target_t *target, dm_table_entry_t *table_en, char *params)
+{
+	int i, n, ret, argc;
+	char **ap, **argv;
+
+	if (params == NULL)
+		return EINVAL;
+
+	n = target->max_argc;
+	if (n)
+		aprint_debug("Max argc %d for %s target\n", n, target->name);
+	else
+		n = 32; /* large enough for most targets */
+
+	argv = kmem_alloc(sizeof(*argv) * n, KM_SLEEP);
+
+	for (ap = argv;
+	     ap < &argv[n] && (*ap = strsep(&params, " \t")) != NULL;) {
+		if (**ap != '\0')
+			ap++;
+	}
+	argc = ap - argv;
+
+	for (i = 0; i < argc; i++)
+		aprint_debug("DM: argv[%d] = \"%s\"\n", i, argv[i]);
+
+	KASSERT(target->init);
+	ret = target->init(table_en, argc, argv);
+
+	kmem_free(argv, sizeof(*argv) * n);
+
+	return ret;
 }
 
 /*
@@ -843,7 +874,6 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
  *    <string>...</string>
  *   </dict>
  * </array>
- *
  */
 int
 dm_table_status_ioctl(prop_dictionary_t dm_dict)
@@ -856,15 +886,11 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_t target_dict;
 
 	uint32_t minor, flags;
-
 	const char *name, *uuid;
-	char *params;
 	int table_type;
 
-	dmv = NULL;
 	uuid = NULL;
 	name = NULL;
-	params = NULL;
 	flags = 0;
 
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
@@ -887,16 +913,15 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	else
 		table_type = DM_TABLE_ACTIVE;
 
-	if (dm_table_get_target_count(&dmv->table_head, DM_TABLE_ACTIVE))
+	if (dm_table_get_target_count(&dmv->table_head, DM_TABLE_ACTIVE)) {
 		DM_ADD_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
-	else {
+	} else {
 		DM_REMOVE_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
 
 		if (dm_table_get_target_count(&dmv->table_head, DM_TABLE_INACTIVE))
 			DM_ADD_FLAG(flags, DM_INACTIVE_PRESENT_FLAG);
-		else {
+		else
 			DM_REMOVE_FLAG(flags, DM_INACTIVE_PRESENT_FLAG);
-		}
 	}
 
 	if (dmv->flags & DM_SUSPEND_FLAG)
@@ -910,6 +935,9 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	tbl = dm_table_get_entry(&dmv->table_head, table_type);
 
 	SLIST_FOREACH(table_en, tbl, next) {
+		char *params;
+		int is_table;
+
 		target_dict = prop_dictionary_create();
 		aprint_debug("%016" PRIu64 ", length %016" PRIu64
 		    ", target %s\n", table_en->start, table_en->length,
@@ -927,17 +955,28 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		prop_dictionary_set_int32(target_dict, DM_TABLE_STAT,
 		    dmv->table_head.cur_active_table);
 
-		if (flags & DM_STATUS_TABLE_FLAG) {
-			params = table_en->target->status
-			    (table_en->target_config);
+		/*
+		 * Explicitly clear DM_TABLE_PARAMS to prevent dmsetup(8) from
+		 * printing junk when DM_TABLE_PARAMS was never initialized.
+		 */
+		prop_dictionary_set_cstring(target_dict, DM_TABLE_PARAMS, "");
 
-			if (params != NULL) {
-				prop_dictionary_set_cstring(target_dict,
-				    DM_TABLE_PARAMS, params);
+		is_table = (flags & DM_STATUS_TABLE_FLAG) ? 1 : 0;
+		if (is_table && table_en->target->table)
+			params = table_en->target->table(
+			    table_en->target_config);
+		else if (!is_table && table_en->target->info)
+			params = table_en->target->info(
+			    table_en->target_config);
+		else
+			params = NULL;
 
-				kmem_free(params, DM_MAX_PARAMS_SIZE);
-			}
+		if (params != NULL) {
+			prop_dictionary_set_cstring(target_dict,
+			    DM_TABLE_PARAMS, params);
+			kmem_free(params, DM_MAX_PARAMS_SIZE);
 		}
+
 		prop_array_add(cmd_array, target_dict);
 		prop_object_release(target_dict);
 	}
@@ -961,7 +1000,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 int
 dm_check_version(prop_dictionary_t dm_dict)
 {
-	size_t i;
+	int i;
 	uint32_t dm_version[3];
 	prop_array_t ver;
 

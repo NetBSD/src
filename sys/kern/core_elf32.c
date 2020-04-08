@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.56.4.1 2019/06/10 22:09:02 christos Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.56.4.2 2020/04/08 14:08:51 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.56.4.1 2019/06/10 22:09:02 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.56.4.2 2020/04/08 14:08:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_coredump.h"
 #include "opt_compat_netbsd32.h"
 #endif
 
@@ -60,12 +59,11 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.56.4.1 2019/06/10 22:09:02 christos
 #include <sys/ptrace.h>
 #include <sys/kmem.h>
 #include <sys/kauth.h>
+#include <sys/compat_stub.h>
 
 #include <machine/reg.h>
 
 #include <uvm/uvm_extern.h>
-
-#ifdef COREDUMP
 
 struct writesegs_state {
 	Elf_Phdr *psections;
@@ -98,6 +96,9 @@ static int	ELFNAMEEND(coredump_note)(struct lwp *, struct note_state *);
 /* The 'note' section names and data are always 4-byte aligned. */
 #define	ELFROUNDSIZE	4	/* XXX Should it be sizeof(Elf_Word)? */
 
+#define elf_read_lwpstatus	CONCAT(process_read_lwpstatus, ELFSIZE)
+#define elf_lwpstatus		CONCAT(process_lwpstatus, ELFSIZE)
+
 #define elf_process_read_regs	CONCAT(process_read_regs, ELFSIZE)
 #define elf_process_read_fpregs	CONCAT(process_read_fpregs, ELFSIZE)
 #define elf_reg			CONCAT(process_reg, ELFSIZE)
@@ -115,6 +116,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	off_t notestart;
 	size_t notesize;
 	int error, i;
+	off_t offset __diagused;
 
 	struct note_state ns;
 	struct note_buf *nb;
@@ -144,7 +146,8 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	 */
 
 	/* Pass 1: count the entries. */
-	npsections = uvm_coredump_count_segs(l->l_proc);
+	MODULE_HOOK_CALL(uvm_coredump_count_segs_hook,
+	    (l->l_proc), 0, npsections);
 	/* Allow for the PT_NOTE section. */
 	npsections++;
 
@@ -193,7 +196,8 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 #endif
 
 	/* Write out the ELF header. */
-	error = coredump_write(cookie, UIO_SYSSPACE, &ehdr, sizeof(ehdr));
+	MODULE_HOOK_CALL(coredump_write_hook, (cookie, UIO_SYSSPACE, &ehdr,
+	    sizeof(ehdr)), ENOSYS, error);
 	if (error)
 		goto out;
 
@@ -202,8 +206,8 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 		memset(&shdr, 0, sizeof(shdr));
 		shdr.sh_type = SHT_NULL;
 		shdr.sh_info = npsections;
-		error = coredump_write(cookie, UIO_SYSSPACE, &shdr,
-		    sizeof(shdr));
+		MODULE_HOOK_CALL(coredump_write_hook, (cookie, UIO_SYSSPACE,
+		    &shdr, sizeof(shdr)), ENOSYS, error);
 		if (error)
 			goto out;
 	}
@@ -218,8 +222,8 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	ws.psections = psections;
 	ws.npsections = npsections - 1;
 	ws.p = l->l_proc;
-	error = uvm_coredump_walkmap(l->l_proc, ELFNAMEEND(coredump_getseghdrs),
-	    &ws);
+	MODULE_HOOK_CALL(uvm_coredump_walkmap_hook,
+	    (l->l_proc, ELFNAMEEND(coredump_getseghdrs), &ws), ENOSYS, error);
 	if (error)
 		goto out;
 	if (ws.npsections != 0) {
@@ -239,21 +243,25 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	ws.psections->p_align = ELFROUNDSIZE;
 
 	/* Write the P-section headers followed by the PT_NOTE header */
-	error = coredump_write(cookie, UIO_SYSSPACE, psections, psectionssize);
+	MODULE_HOOK_CALL(coredump_write_hook, (cookie, UIO_SYSSPACE, psections,
+	    psectionssize), ENOSYS, error);
 	if (error)
 		goto out;
 
 #ifdef DIAGNOSTIC
-	if (coredump_offset(cookie) != notestart)
+	MODULE_HOOK_CALL(coredump_offset_hook, (cookie), 0, offset);
+	if (offset != notestart)
 		panic("coredump: offset %lld != notestart %lld",
-		    (long long) coredump_offset(cookie),
+		    (long long) offset,
 		    (long long) notestart);
 #endif
 
 	/* Write out the notes. */
 	for (nb = ns.ns_first; nb != NULL; nb = nb->nb_next) {
-		error = coredump_write(cookie, UIO_SYSSPACE, nb->nb_data,
-		    nb->nb_next == NULL ? ns.ns_offset : sizeof nb->nb_data);
+		MODULE_HOOK_CALL(coredump_write_hook, (cookie, UIO_SYSSPACE,
+		    nb->nb_data,
+		    nb->nb_next == NULL ? ns.ns_offset : sizeof nb->nb_data),
+		    ENOSYS, error);
 		if (error)
 			goto out;
 	}
@@ -264,15 +272,16 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 			continue;
 
 #ifdef DIAGNOSTIC
-		if (coredump_offset(cookie) != psections[i].p_offset)
+		MODULE_HOOK_CALL(coredump_offset_hook, (cookie), 0, offset);
+		if (offset != psections[i].p_offset)
 			panic("coredump: offset %lld != p_offset[%d] %lld",
-			    (long long) coredump_offset(cookie), i,
+			    (long long) offset, i,
 			    (long long) psections[i].p_filesz);
 #endif
 
-		error = coredump_write(cookie, UIO_USERSPACE,
+		MODULE_HOOK_CALL(coredump_write_hook, (cookie, UIO_USERSPACE,
 		    (void *)(vaddr_t)psections[i].p_vaddr,
-		    psections[i].p_filesz);
+		    psections[i].p_filesz), ENOSYS, error);
 		if (error)
 			goto out;
 	}
@@ -363,8 +372,6 @@ coredump_note_procinfo(struct lwp *l, struct note_state *ns)
 {
 	struct proc *p;
 	struct netbsd_elfcore_procinfo cpi;
-	struct lwp *l0;
-	sigset_t ss1, ss2;
 
 	p = l->l_proc;
 
@@ -376,16 +383,16 @@ coredump_note_procinfo(struct lwp *l, struct note_state *ns)
 	cpi.cpi_siglwp = p->p_sigctx.ps_lwp;
 
 	/*
-	 * XXX This should be per-LWP.
+	 * per-LWP pending signals are stored in PT_LWPSTATUS@nnn.
 	 */
-	ss1 = p->p_sigpend.sp_set;
-	sigemptyset(&ss2);
-	LIST_FOREACH(l0, &p->p_lwps, l_sibling) {
-		sigplusset(&l0->l_sigpend.sp_set, &ss1);
-		sigplusset(&l0->l_sigmask, &ss2);
-	}
-	memcpy(&cpi.cpi_sigpend, &ss1, sizeof(cpi.cpi_sigpend));
-	memcpy(&cpi.cpi_sigmask, &ss2, sizeof(cpi.cpi_sigmask));
+	memcpy(&cpi.cpi_sigpend, &p->p_sigpend.sp_set, sizeof(cpi.cpi_sigpend));
+
+	/*
+	 * Signal mask is stored on a per-LWP basis in PT_LWPSTATUS@nnn.
+	 * For compatibility purposes, cpi_sigmask is present, but zeroed.
+	 */
+	memset(&cpi.cpi_sigmask, 0, sizeof(cpi.cpi_sigmask));
+
 	memcpy(&cpi.cpi_sigignore, &p->p_sigctx.ps_sigignore,
 	    sizeof(cpi.cpi_sigignore));
 	memcpy(&cpi.cpi_sigcatch, &p->p_sigctx.ps_sigcatch,
@@ -476,6 +483,7 @@ ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
 {
 	int error;
 	char name[64];
+	elf_lwpstatus els;
 	elf_reg intreg;
 #ifdef PT_GETFPREGS
 	elf_fpreg freg;
@@ -484,6 +492,11 @@ ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
 
 	snprintf(name, sizeof(name), "%s@%d",
 	    ELF_NOTE_NETBSD_CORE_NAME, l->l_lid);
+
+	elf_read_lwpstatus(l, &els);
+
+	ELFNAMEEND(coredump_savenote)(ns, PT_LWPSTATUS, name, &els,
+	    sizeof(els));
 
 	error = elf_process_read_regs(l, &intreg);
 	if (error)
@@ -500,7 +513,11 @@ ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
 
 	ELFNAMEEND(coredump_savenote)(ns, PT_GETFPREGS, name, &freg, freglen);
 #endif
-	/* XXX Add hook for machdep per-LWP notes. */
+
+#ifdef COREDUMP_MACHDEP_LWP_NOTES
+	COREDUMP_MACHDEP_LWP_NOTES(l, ns, name);
+#endif
+
 	return (0);
 }
 
@@ -551,14 +568,3 @@ ELFNAMEEND(coredump_savenote)(struct note_state *ns, unsigned int type,
 	save_note_bytes(ns, name, nhdr.n_namesz);
 	save_note_bytes(ns, data, data_len);
 }
-
-#else	/* COREDUMP */
-
-int
-ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
-{
-
-	return ENOSYS;
-}
-
-#endif	/* COREDUMP */

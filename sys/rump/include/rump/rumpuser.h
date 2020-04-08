@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.115 2017/12/27 09:01:53 ozaki-r Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.115.4.1 2020/04/08 14:09:00 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -224,10 +224,13 @@ void rumpuser_cv_has_waiters(struct rumpuser_cv *, int *);
 
 struct modinfo;
 struct rump_component;
+struct evcnt;
 typedef void (*rump_modinit_fn)(const struct modinfo *const *, size_t);
 typedef int (*rump_symload_fn)(void *, uint64_t, char *, uint64_t);
 typedef void (*rump_compload_fn)(const struct rump_component *);
-void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn, rump_compload_fn);
+typedef void (*rump_evcntattach_fn)(struct evcnt *);
+void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn, rump_compload_fn,
+    rump_evcntattach_fn);
 
 /*
  * misc management

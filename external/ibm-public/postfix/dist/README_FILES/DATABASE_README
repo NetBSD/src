@@ -215,9 +215,11 @@ To find out what database types your Postfix system supports, use the "ppooss
     iinnlliinnee (read-only)
         A non-shared, in-memory lookup table. Example: "inline:{ key=value,
         { key = text with whitespace or comma }}". Key-value pairs are
-        separated by whitespace or comma; whitespace after "{" and before "}"
-        is ignored. Inline tables eliminate the need to create a database file
-        for just a few fixed elements. See also the static: map type.
+        separated by whitespace or comma; with a key-value pair inside "{}",
+        whitespace is ignored after the opening "{", around the "=" between key
+        and value, and before the closing "}". Inline tables eliminate the need
+        to create a database file for just a few fixed elements. See also the
+        static: map type.
     iinntteerrnnaall
         A non-shared, in-memory hash table. Its content are lost when a process
         terminates.
@@ -267,7 +269,8 @@ To find out what database types your Postfix system supports, use the "ppooss
         {result1. ..., resultn}". Each table query returns a random choice from
         the specified results. The first and last characters of the "randmap:
         " table name must be "{" and "}". Within these, individual maps are
-        separated with comma or whitespace.
+        separated with comma or whitespace. To give a specific result more
+        weight, specify it multiple times.
     rreeggeexxpp (read-only)
         A lookup table based on regular expressions. The file format is
         described in regexp_table(5). The lookup table name as used in "regexp:
@@ -289,8 +292,8 @@ To find out what database types your Postfix system supports, use the "ppooss
         A table that always returns its name as the lookup result. For example,
         "static:foobar" always returns the string "foobar" as lookup result.
         Specify "static:{ text with whitespace }" when the result contains
-        whitespace; this form ignores whitespace after "{" and before "}". See
-        also the inline: map type.
+        whitespace; this form ignores whitespace after the opening "{" and
+        before the closing "}". See also the inline: map type.
     ttccpp
         TCP/IP client. The protocol is described in tcp_table(5). The lookup
         table name is "tcp:host:port" where "host" specifies a symbolic

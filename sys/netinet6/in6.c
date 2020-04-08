@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.268.2.1 2019/06/10 22:09:48 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.268.2.2 2020/04/08 14:08:58 martin Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.268.2.1 2019/06/10 22:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.268.2.2 2020/04/08 14:08:58 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2393,8 +2393,6 @@ in6_if2idlen(struct ifnet *ifp)
 	case IFT_PROPVIRTUAL:	/* XXX: no RFC. treat it as ether */
 	case IFT_L2VLAN:	/* ditto */
 	case IFT_IEEE80211:	/* ditto */
-	case IFT_FDDI:		/* RFC2467 */
-	case IFT_ISO88025:	/* RFC2470 (IPv6 over Token Ring) */
 	case IFT_PPP:		/* RFC2472 */
 	case IFT_ARCNET:	/* RFC2497 */
 	case IFT_FRELAY:	/* RFC2590 */

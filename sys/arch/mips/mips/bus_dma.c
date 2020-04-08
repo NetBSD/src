@@ -1,7 +1,7 @@
-/*	$NetBSD: bus_dma.c,v 1.38 2016/08/17 22:02:19 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.38.16.1 2020/04/08 14:07:45 martin Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38 2016/08/17 22:02:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38.16.1 2020/04/08 14:07:45 martin Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -750,11 +750,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		panic("_bus_dmamap_sync: mix PRE and POST");
 
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad offset %"PRIxPADDR 
-			" (map size is %"PRIxPSIZE")",
-				offset, map->dm_mapsize);
-	if (len == 0 || (offset + len) > map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad length");
+		panic("%s: bad offset 0x%jx >= 0x%jx", __func__,
+		    (intmax_t)offset, (intmax_t)map->dm_mapsize);
+	if ((offset + len) > map->dm_mapsize)
+		panic("%s: bad length 0x%jx + 0x%jx > 0x%jx", __func__,
+		    (intmax_t)offset, (intmax_t)len,
+		    (intmax_t)map->dm_mapsize);
 #endif
 
 	/*
@@ -777,7 +778,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #ifdef _MIPS_NEED_BUS_DMA_BOUNCE
 	struct mips_bus_dma_cookie * const cookie = map->_dm_cookie;
 	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_IS_BOUNCING)
-	    && (ops & BUS_DMASYNC_PREWRITE)) {
+	    && (ops & BUS_DMASYNC_PREWRITE) && len != 0) {
 		STAT_INCR(write_bounces);
 		/*
 		 * Copy the caller's buffer to the bounce buffer.
@@ -920,7 +921,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #ifdef _MIPS_NEED_BUS_DMA_BOUNCE
 	if ((ops & BUS_DMASYNC_POSTREAD) == 0
 	    || cookie == NULL
-	    || (cookie->id_flags & _BUS_DMA_IS_BOUNCING) == 0)
+	    || (cookie->id_flags & _BUS_DMA_IS_BOUNCING) == 0
+	    || len == 0)
 		return;
 
 	STAT_INCR(read_bounces);
@@ -1289,10 +1291,8 @@ _bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
 			continue;
 		cnt = MIN(resid, iov->iov_len);
 
-		if (!VMSPACE_IS_KERNEL_P(vm) &&
-		    (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-		    != 0) {
-			preempt();
+		if (!VMSPACE_IS_KERNEL_P(vm)) {
+			preempt_point();
 		}
 		if (direction == UIO_READ) {
 			error = copyout_vmspace(vm, cp, iov->iov_base, cnt);

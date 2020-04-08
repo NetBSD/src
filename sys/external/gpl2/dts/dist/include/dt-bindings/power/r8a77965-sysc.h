@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a77965-sysc.h,v 1.1.1.1 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: r8a77965-sysc.h,v 1.1.1.1.4.1 2020/04/08 14:08:47 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -23,7 +23,6 @@
 #define R8A77965_PD_A3VC		14
 #define R8A77965_PD_3DG_A		17
 #define R8A77965_PD_3DG_B		18
-#define R8A77965_PD_A3IR		24
 #define R8A77965_PD_A2VC1		26
 
 /* Always-on power area */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-serv.c,v 1.11.4.1 2019/06/10 21:41:12 christos Exp $	*/
+/*	$NetBSD: gss-serv.c,v 1.11.4.2 2020/04/08 14:03:18 martin Exp $	*/
 /* $OpenBSD: gss-serv.c,v 1.31 2018/07/09 21:37:55 markus Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv.c,v 1.11.4.1 2019/06/10 21:41:12 christos Exp $");
+__RCSID("$NetBSD: gss-serv.c,v 1.11.4.2 2020/04/08 14:03:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: gss-serv.c,v 1.11.4.1 2019/06/10 21:41:12 christos Exp $");
 #include <unistd.h>
 #include <netdb.h>
 #include <limits.h>
+#include <stdarg.h>
 
 #include "xmalloc.h"
 #include "sshkey.h"

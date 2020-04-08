@@ -1,5 +1,5 @@
-/*      $NetBSD: whois.c,v 1.36 2013/02/20 09:27:52 ws Exp $   */
-/*	$OpenBSD: whois.c,v 1.28 2003/09/18 22:16:15 fgsch Exp $	*/
+/*      $NetBSD: whois.c,v 1.36.30.1 2020/04/08 14:09:18 martin Exp $    */
+/*      $OpenBSD: whois.c,v 1.58 2018/06/19 11:28:11 jca Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.36 2013/02/20 09:27:52 ws Exp $");
+__RCSID("$NetBSD: whois.c,v 1.36.30.1 2020/04/08 14:09:18 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,18 +66,19 @@ __RCSID("$NetBSD: whois.c,v 1.36 2013/02/20 09:27:52 ws Exp $");
 #define	DNICHOST	"whois.nic.mil"
 #define	FNICHOST	"whois.afrinic.net"
 #define	GNICHOST	"whois.nic.gov"
+#define	IANAHOST	"whois.iana.org"
 #define	INICHOST	"whois.networksolutions.com"
 #define	LNICHOST	"whois.lacnic.net"
 #define	MNICHOST	"whois.ra.net"
 #define	NICHOST		"whois.crsnic.net"
+#define	PDBHOST		"whois.peeringdb.com"
 #define	PNICHOST	"whois.apnic.net"
 #define	QNICHOST_TAIL	".whois-servers.net"
 #define	RNICHOST	"whois.ripe.net"
 #define	RUNICHOST	"whois.ripn.net"
-#define	SNICHOST	"whois.6bone.net"
 
 #define	WHOIS_PORT	"whois"
-#define	WHOIS_SERVER_ID	"Whois Server:"
+#define	WHOIS_SERVER_ID	"Registrar WHOIS Server:"
 
 #define WHOIS_RECURSE		0x01
 #define WHOIS_QUICK		0x02
@@ -88,7 +89,7 @@ static const char *ip_whois[] =
 
 static void usage(void) __dead;
 static int whois(const char *, const char *, const char *, int);
-static const char *choose_server(const char *, const char *);
+static const char *choose_server(const char *, const char *, char **);
 
 int
 main(int argc, char *argv[])
@@ -96,13 +97,10 @@ main(int argc, char *argv[])
 	int ch, flags, rval;
 	const char *host, *name, *country;
 
-#ifdef SOCKS
-	SOCKSinit(argv[0]);
-#endif
 	country = host = NULL;
 	flags = rval = 0;
-	while ((ch = getopt(argc, argv, "6Aac:dfgh:ilmp:qQRr")) != -1)
-		switch(ch) {
+	while ((ch = getopt(argc, argv, "Aac:dfgh:Iilmp:PqQRr")) != -1)
+		switch (ch) {
 		case 'a':
 			host = ANICHOST;
 			break;
@@ -127,6 +125,9 @@ main(int argc, char *argv[])
 		case 'i':
 			host = INICHOST;
 			break;
+		case 'I':
+			host = IANAHOST;
+			break;
 		case 'l':
 			host = LNICHOST;
 			break;
@@ -135,6 +136,9 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			port_whois = optarg;
+			break;
+		case 'P':
+			host = PDBHOST;
 			break;
 		case 'q':
 			/* deprecated, now the default */
@@ -148,9 +152,6 @@ main(int argc, char *argv[])
 		case 'R':
 			host = RUNICHOST;
 			break;
-		case '6':
-			host = SNICHOST;
-			break;
 		default:
 			usage();
 		}
@@ -162,16 +163,20 @@ main(int argc, char *argv[])
 
 	if (host == NULL && country == NULL && !(flags & WHOIS_QUICK))
 		flags |= WHOIS_RECURSE;
-	for (name = *argv; (name = *argv) != NULL; argv++)
-		rval += whois(name, host ? host : choose_server(name, country),
-		    port_whois, flags);
-	return rval;
+	for (name = *argv; (name = *argv) != NULL; argv++) {
+		char *tofree = NULL;
+		const char *server =
+		    host ? host : choose_server(name, country, &tofree);
+		rval += whois(name, server, port_whois, flags);
+		free(tofree);
+	}
+	return (rval);
 }
 
 static int
 whois(const char *query, const char *server, const char *port, int flags)
 {
-	FILE *sfi, *sfo;
+	FILE *fp;
 	char *buf, *p, *nhost, *nbuf = NULL;
 	size_t len;
 	int i, s, error;
@@ -184,7 +189,10 @@ whois(const char *query, const char *server, const char *port, int flags)
 	hints.ai_socktype = SOCK_STREAM;
 	error = getaddrinfo(server, port, &hints, &res);
 	if (error) {
-		warnx("%s: %s", server, gai_strerror(error));
+		if (error == EAI_SERVICE)
+			warnx("%s: bad port", port);
+		else
+			warnx("%s: %s", server, gai_strerror(error));
 		return (1);
 	}
 
@@ -204,30 +212,32 @@ whois(const char *query, const char *server, const char *port, int flags)
 		}
 		break;	/*okay*/
 	}
+	freeaddrinfo(res);
 	if (s < 0) {
 		if (reason) {
 			errno = error;
 			warn("%s: %s", server, reason);
 		} else
 			warnx("Unknown error in connection attempt");
-		freeaddrinfo(res);
 		return (1);
 	}
 
 	if (strcmp(server, "whois.denic.de") == 0 ||
-	    strcmp(server, "de.whois-servers.net") == 0)
+	    strcmp(server, "de" QNICHOST_TAIL) == 0)
 		fmt = "-T dn,ace -C ISO-8859-1 ";
+	else if (strcmp(server, "whois.dk-hostmaster.dk") == 0 ||
+	    strcmp(server, "dk" QNICHOST_TAIL) == 0)
+		fmt = "--show-handles ";
 	else
 		fmt = "";
 
-	sfi = fdopen(s, "r");
-	sfo = fdopen(s, "w");
-	if (sfi == NULL || sfo == NULL)
+	fp = fdopen(s, "r+");
+	if (fp == NULL)
 		err(1, "fdopen");
-	(void)fprintf(sfo, "%s%s\r\n", fmt, query);
-	(void)fflush(sfo);
+	(void)fprintf(fp, "%s%s\r\n", fmt, query);
+	(void)fflush(fp);
 	nhost = NULL;
-	while ((buf = fgetln(sfi, &len)) != NULL) {
+	while ((buf = fgetln(fp, &len)) != NULL) {
 		p = buf + len - 1;
 		if (isspace((unsigned char)*p)) {
 			do
@@ -268,16 +278,14 @@ whois(const char *query, const char *server, const char *port, int flags)
 			}
 		}
 	}
-	if (nbuf != NULL)
-		free(nbuf);
+	fclose(fp);
+	free(nbuf);
 
 	if (nhost != NULL) {
 		error = whois(query, nhost, port, 0);
 		free(nhost);
 	}
-	freeaddrinfo(res);
-	(void)fclose(sfi);
-	(void)fclose(sfo);
+
 	return (error);
 }
 
@@ -285,17 +293,22 @@ whois(const char *query, const char *server, const char *port, int flags)
  * If no country is specified determine the top level domain from the query.
  * If the TLD is a number, query ARIN, otherwise, use TLD.whois-server.net.
  * If the domain does not contain '.', check to see if it is an NSI handle
- * (starts with '!') or a CORE handle (COCO-[0-9]+ or COHO-[0-9]+).
- * Fall back to NICHOST for the non-handle case.
+ * (starts with '!') or a CORE handle (COCO-[0-9]+ or COHO-[0-9]+) or an
+ * ASN (starts with AS) or IPv6 address (contains ':'). Fall back to
+ * NICHOST for the non-handle and non-IPv6 case.
  */
 static const char *
-choose_server(const char *name, const char *country)
+choose_server(const char *name, const char *country, char **tofree)
 {
 	static char *server;
-	char *nserver;
 	const char *qhead;
 	char *ep;
-	size_t len;
+	struct addrinfo hints, *res = NULL;
+
+	(void)memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = 0;
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
 
 	if (country != NULL)
 		qhead = country;
@@ -305,17 +318,47 @@ choose_server(const char *name, const char *country)
 		else if ((strncasecmp(name, "COCO-", 5) == 0 ||
 		    strncasecmp(name, "COHO-", 5) == 0) &&
 		    strtol(name + 5, &ep, 10) > 0 && *ep == '\0')
-			return (CNICHOST);  
+			return (CNICHOST);
+		else if ((strncasecmp(name, "AS", 2) == 0) &&
+		    strtol(name + 2, &ep, 10) > 0 && *ep == '\0')
+			return (MNICHOST);
+		else if (strchr(name, ':') != NULL) /* IPv6 address */
+			return (ANICHOST);
 		else
 			return (NICHOST);
 	} else if (isdigit((unsigned char)*(++qhead)))
 		return (ANICHOST);
-	len = strlen(qhead) + sizeof(QNICHOST_TAIL);
-	if ((nserver = realloc(server, len)) == NULL)
-		err(1, "realloc");
-	server = nserver;
-	(void)strlcpy(server, qhead, len);
-	(void)strlcat(server, QNICHOST_TAIL, len);
+
+	/*
+	 * Post-2003 ("new") gTLDs are all supposed to have "whois.nic.domain"
+	 * (per registry agreement), some older gTLDs also support this...
+	 */
+	if (asprintf(&server, "whois.nic.%s", qhead) == -1)
+		err(1, NULL);
+
+	/* most ccTLDs don't do this, but QNICHOST/whois-servers mostly works */
+	if ((strlen(qhead) == 2 ||
+	    /* and is required for most of the <=2003 TLDs/gTLDs */
+	    strcasecmp(qhead, "org") == 0 ||
+	    strcasecmp(qhead, "com") == 0 ||
+	    strcasecmp(qhead, "net") == 0 ||
+	    strcasecmp(qhead, "cat") == 0 ||
+	    strcasecmp(qhead, "pro") == 0 ||
+	    strcasecmp(qhead, "info") == 0 ||
+	    strcasecmp(qhead, "aero") == 0 ||
+	    strcasecmp(qhead, "jobs") == 0 ||
+	    strcasecmp(qhead, "mobi") == 0 ||
+	    strcasecmp(qhead, "museum") == 0 ||
+	     /* for others, if whois.nic.TLD doesn't exist, try whois-servers */
+	    getaddrinfo(server, NULL, &hints, &res) != 0)) {
+		free(server);
+		if (asprintf(&server, "%s%s", qhead, QNICHOST_TAIL) == -1)
+			err(1, NULL);
+	}
+	if (res != NULL)
+		freeaddrinfo(res);
+
+	*tofree = server;
 	return (server);
 }
 
@@ -323,7 +366,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-6AadgilmQRr] [-c country-code | -h hostname] "
+	    "usage: %s [-AadfgIilmPQRr] [-c country-code | -h host] "
 		"[-p port] name ...\n", getprogname());
 	exit(1);
 }

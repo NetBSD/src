@@ -26,33 +26,11 @@
 #	described below. An example is given at the end of this manual.
 #
 #	This configuration method is available with Postfix version
-#	2.1 and later.  See the section "BACKWARDS COMPATIBILITY"
+#	2.1 and later.  See the section "OBSOLETE MAIN.CF PARAMETERS"
 #	below for older Postfix versions.
 #
 #	For details about LDAP SSL and STARTTLS, see the section
 #	on SSL and STARTTLS below.
-# BACKWARDS COMPATIBILITY
-# .ad
-# .fi
-#	For backwards compatibility with Postfix version 2.0 and earlier,
-#	LDAP parameters can also be defined in main.cf.  Specify
-#	as LDAP source a name that doesn't begin with a slash or
-#	a dot.  The LDAP parameters will then be accessible as the
-#	name you've given the source in its definition, an underscore,
-#	and the name of the parameter.  For example, if the map is
-#	specified as "ldap:\fIldapsource\fR", the "server_host"
-#	parameter below would be defined in main.cf as
-#	"\fIldapsource\fR_server_host".
-#
-#	Note: with this form, the passwords for the LDAP sources are
-#	written in main.cf, which is normally world-readable.  Support
-#	for this form will be removed in a future Postfix version.
-#
-#	For backwards compatibility with the pre
-#	2.2 LDAP clients, \fBresult_filter\fR can for now be used instead
-#	of \fBresult_format\fR, when the latter parameter is not also set.
-#	The new name better reflects the function of the parameter. This
-#	compatibility interface may be removed in a future release.
 # LIST MEMBERSHIP
 # .ad
 # .fi
@@ -684,6 +662,30 @@
 #	the "maildrop" attributes of those found, and build a list
 #	of their maildrops, which will be treated as RFC822 addresses
 #	to which the message will be delivered.
+# OBSOLETE MAIN.CF PARAMETERS
+# .ad
+# .fi
+#	For backwards compatibility with Postfix version 2.0 and earlier,
+#	LDAP parameters can also be defined in main.cf.  Specify
+#	as LDAP source a name that doesn't begin with a slash or
+#	a dot.  The LDAP parameters will then be accessible as the
+#	name you've given the source in its definition, an underscore,
+#	and the name of the parameter.  For example, if the map is
+#	specified as "ldap:\fIldapsource\fR", the "server_host"
+#	parameter below would be defined in main.cf as
+#	"\fIldapsource\fR_server_host".
+#
+#	Note: with this form, the passwords for the LDAP sources are
+#	written in main.cf, which is normally world-readable.  Support
+#	for this form will be removed in a future Postfix version.
+# OTHER OBSOLETE FEATURES
+# .ad
+# .fi
+#	For backwards compatibility with the pre
+#	2.2 LDAP clients, \fBresult_filter\fR can for now be used instead
+#	of \fBresult_format\fR, when the latter parameter is not also set.
+#	The new name better reflects the function of the parameter. This
+#	compatibility interface may be removed in a future release.
 # SEE ALSO
 #	postmap(1), Postfix lookup table manager
 #	postconf(5), configuration parameters

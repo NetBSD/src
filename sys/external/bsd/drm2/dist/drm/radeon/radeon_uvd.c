@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_uvd.c,v 1.2.32.1 2019/06/10 22:08:27 christos Exp $	*/
+/*	$NetBSD: radeon_uvd.c,v 1.2.32.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_uvd.c,v 1.2.32.1 2019/06/10 22:08:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_uvd.c,v 1.2.32.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_uvd.c,v 1.2.32.1 2019/06/10 22:08:27 christos
 
 #include "radeon.h"
 #include "r600d.h"
+
+#include <linux/nbsd-namespace.h>
 
 /* 1 second timeout */
 #define UVD_IDLE_TIMEOUT_MS	1000
@@ -242,7 +244,7 @@ int radeon_uvd_suspend(struct radeon_device *rdev)
 int radeon_uvd_resume(struct radeon_device *rdev)
 {
 	unsigned size;
-	uint8_t *ptr;
+	void *ptr;
 
 	if (rdev->uvd.vcpu_bo == NULL)
 		return -EINVAL;
@@ -321,21 +323,13 @@ static int radeon_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 	unsigned pitch = msg[28];
 
 	unsigned width_in_mb = width / 16;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	unsigned height_in_mb = round_up(height / 16, 2);
-#else
 	unsigned height_in_mb = ALIGN(height / 16, 2);
-#endif
 
 	unsigned image_size, tmp, min_dpb_size;
 
 	image_size = width * height;
 	image_size += image_size / 2;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	image_size = round_up(image_size, 1024);
-#else
 	image_size = ALIGN(image_size, 1024);
-#endif
 
 	switch (stream_type) {
 	case 0: /* H264 */
@@ -366,11 +360,7 @@ static int radeon_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 
 		/* BP */
 		tmp = max(width_in_mb, height_in_mb);
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		min_dpb_size += round_up(tmp * 7 * 16, 64);
-#else
 		min_dpb_size += ALIGN(tmp * 7 * 16, 64);
-#endif
 		break;
 
 	case 3: /* MPEG2 */
@@ -388,11 +378,7 @@ static int radeon_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 		min_dpb_size += width_in_mb * height_in_mb * 64;
 
 		/* IT surface buffer */
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		min_dpb_size += round_up(width_in_mb * height_in_mb * 32, 64);
-#else
 		min_dpb_size += ALIGN(width_in_mb * height_in_mb * 32, 64);
-#endif
 		break;
 
 	default:
@@ -469,7 +455,7 @@ static int radeon_uvd_cs_msg(struct radeon_cs_parser *p, struct radeon_bo *bo,
 		return r;
 	}
 
-	msg = (int32_t *)((uint8_t *)ptr + offset);
+	msg = ptr + offset;
 
 	msg_type = msg[1];
 	handle = msg[2];
@@ -753,7 +739,7 @@ int radeon_uvd_get_create_msg(struct radeon_device *rdev, int ring,
 	uint64_t offs = radeon_bo_size(rdev->uvd.vcpu_bo) -
 		RADEON_GPU_PAGE_SIZE;
 
-	uint32_t *msg = (void *)((char *)rdev->uvd.cpu_addr + offs);
+	uint32_t *msg = rdev->uvd.cpu_addr + offs;
 	uint64_t addr = rdev->uvd.gpu_addr + offs;
 
 	int r, i;
@@ -789,7 +775,7 @@ int radeon_uvd_get_destroy_msg(struct radeon_device *rdev, int ring,
 	uint64_t offs = radeon_bo_size(rdev->uvd.vcpu_bo) -
 		RADEON_GPU_PAGE_SIZE;
 
-	uint32_t *msg = (void *)((char *)rdev->uvd.cpu_addr + offs);
+	uint32_t *msg = rdev->uvd.cpu_addr + offs;
 	uint64_t addr = rdev->uvd.gpu_addr + offs;
 
 	int r, i;

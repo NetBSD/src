@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.82.6.1 2019/06/10 22:10:24 christos Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.82.6.2 2020/04/08 14:09:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.82.6.1 2019/06/10 22:10:24 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.82.6.2 2020/04/08 14:09:18 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -552,8 +552,8 @@ again:
 	}
 	if (sysctl(mib, 6, buffers, &size, NULL, 0) < 0) {
 		free(buffers);
-		if (extraslop == 0) {
-			extraslop = 100;
+		if (extraslop < 1000) {
+			extraslop += 100;
 			goto again;
 		}
 		error("can't get buffers: %s\n", strerror(errno));

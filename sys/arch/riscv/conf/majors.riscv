@@ -1,4 +1,4 @@
-#	$NetBSD: majors.riscv,v 1.2.18.1 2019/06/10 22:06:41 christos Exp $
+#	$NetBSD: majors.riscv,v 1.2.18.2 2020/04/08 14:07:50 martin Exp $
 #
 # Device majors for riscv
 #
@@ -32,7 +32,7 @@ device-major	kttcp		char 71			kttcp
 #device-major	aucom		char 73			aucom
 
 # Majors up to 143 are reserved for machine-dependent drivers.
-# New machine-independent driver majors are assigned in 
+# New machine-independent driver majors are assigned in
 # sys/conf/majors.
 
 include "conf/majors.ws"

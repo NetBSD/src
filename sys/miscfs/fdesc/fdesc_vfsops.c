@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.92 2017/02/17 08:31:25 hannken Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.92.14.1 2020/04/08 14:08:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.92 2017/02/17 08:31:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.92.14.1 2020/04/08 14:08:53 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -67,8 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.92 2017/02/17 08:31:25 hannken Ex
 MODULE(MODULE_CLASS_VFS, fdesc, NULL);
 
 VFS_PROTOS(fdesc);
-
-static struct sysctllog *fdesc_sysctl_log;
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
@@ -136,7 +134,7 @@ fdesc_unmount(struct mount *mp, int mntflags)
 }
 
 int
-fdesc_root(struct mount *mp, struct vnode **vpp)
+fdesc_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *vp;
 
@@ -145,7 +143,7 @@ fdesc_root(struct mount *mp, struct vnode **vpp)
 	 */
 	vp = mp->mnt_data;
 	vref(vp);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, lktype | LK_RETRY);
 	*vpp = vp;
 	return (0);
 }
@@ -164,7 +162,7 @@ fdesc_sync(struct mount *mp, int waitfor,
  * Currently unsupported.
  */
 int
-fdesc_vget(struct mount *mp, ino_t ino,
+fdesc_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 
@@ -263,17 +261,10 @@ struct vfsops fdesc_vfsops = {
 	.vfs_opv_descs = fdesc_vnodeopv_descs
 };
 
-static int
-fdesc_modcmd(modcmd_t cmd, void *arg)
+SYSCTL_SETUP(fdesc_sysctl_setup, "fdesc sysctl")
 {
-	int error;
 
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		error = vfs_attach(&fdesc_vfsops);
-		if (error != 0)
-			break;
-		sysctl_createv(&fdesc_sysctl_log, 0, NULL, NULL,
+		sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "fdesc",
 			       SYSCTL_DESCR("File-descriptor file system"),
@@ -284,12 +275,23 @@ fdesc_modcmd(modcmd_t cmd, void *arg)
 		 * more instance of the "number to vfs" mapping problem, but
 		 * "7" is the order as taken from sys/mount.h
 		 */
+}
+
+static int
+fdesc_modcmd(modcmd_t cmd, void *arg)
+{
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = vfs_attach(&fdesc_vfsops);
+		if (error != 0)
+			break;
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&fdesc_vfsops);
 		if (error != 0)
 			break;
-		sysctl_teardown(&fdesc_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

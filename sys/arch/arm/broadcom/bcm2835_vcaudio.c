@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.11.16.1 2019/06/10 22:05:52 christos Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.11.16.2 2020/04/08 14:07:28 martin Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.11.16.1 2019/06/10 22:05:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.11.16.2 2020/04/08 14:07:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -371,8 +371,6 @@ vcaudio_service_callback(void *priv, const VCHI_CALLBACK_REASON_T reason,
 	VC_AUDIO_MSG_T msg;
 	int32_t msglen = 0;
 	int error;
-	void (*intr)(void *) = NULL;
-	void *intrarg = NULL;
 
 	if (sc == NULL || reason != VCHI_CALLBACK_MSG_AVAILABLE)
 		return;
@@ -396,9 +394,8 @@ vcaudio_service_callback(void *priv, const VCHI_CALLBACK_REASON_T reason,
 		break;
 
 	case VC_AUDIO_MSG_TYPE_COMPLETE:
-		intr = msg.u.complete.callback;
-		intrarg = msg.u.complete.cookie;
-		if (intr && intrarg) {
+		if (msg.u.complete.cookie1 == VC_AUDIO_WRITE_COOKIE1 &&
+		    msg.u.complete.cookie2 == VC_AUDIO_WRITE_COOKIE2) {
 			int count = msg.u.complete.count & 0xffff;
 			int perr = (msg.u.complete.count & __BIT(30)) != 0;
 			bool sched = false;
@@ -420,7 +417,7 @@ vcaudio_service_callback(void *priv, const VCHI_CALLBACK_REASON_T reason,
 			}
 
 			if (sched && sc->sc_pint) {
-				intr(intrarg);
+				sc->sc_pint(sc->sc_pintarg);
 				sc->sc_abytes += sc->sc_pblksize;
 				cv_signal(&sc->sc_datacv);
 			}
@@ -465,8 +462,8 @@ vcaudio_worker(void *priv)
 		msg.type = VC_AUDIO_MSG_TYPE_WRITE;
 		msg.u.write.max_packet = VCAUDIO_MSGSIZE;
 		msg.u.write.count = count;
-		msg.u.write.callback = intr;
-		msg.u.write.cookie = intrarg;
+		msg.u.write.cookie1 = VC_AUDIO_WRITE_COOKIE1;
+		msg.u.write.cookie2 = VC_AUDIO_WRITE_COOKIE2;
 		msg.u.write.silence = 0;
 
 		block = (uint8_t *)sc->sc_pstart + sc->sc_ppos;

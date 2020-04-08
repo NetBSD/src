@@ -326,7 +326,7 @@ public:
 // ------------------------------------------------------------------------
 
 class temp_dir {
-    std::auto_ptr< tools::fs::path > m_path;
+    std::unique_ptr< tools::fs::path > m_path;
 
 public:
     temp_dir(const tools::fs::path&);

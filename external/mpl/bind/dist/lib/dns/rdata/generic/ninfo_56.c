@@ -1,4 +1,4 @@
-/*	$NetBSD: ninfo_56.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: ninfo_56.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -89,13 +89,14 @@ fromstruct_ninfo(ARGS_FROMSTRUCT) {
 
 static inline isc_result_t
 tostruct_ninfo(ARGS_TOSTRUCT) {
-	dns_rdata_ninfo_t *txt = target;
+	dns_rdata_ninfo_t *ninfo = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_ninfo);
+	REQUIRE(ninfo != NULL);
 
-	txt->common.rdclass = rdata->rdclass;
-	txt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&txt->common, link);
+	ninfo->common.rdclass = rdata->rdclass;
+	ninfo->common.rdtype = rdata->type;
+	ISC_LINK_INIT(&ninfo->common, link);
 
 	return (generic_tostruct_txt(rdata, target, mctx));
 }
@@ -104,7 +105,7 @@ static inline void
 freestruct_ninfo(ARGS_FREESTRUCT) {
 	dns_rdata_ninfo_t *ninfo = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(ninfo != NULL);
 	REQUIRE(ninfo->common.rdtype == dns_rdatatype_ninfo);
 
 	generic_freestruct_txt(source);

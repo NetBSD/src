@@ -4,7 +4,7 @@
 # Created: 1993-05-16
 # Public domain
 
-# $Id: mkinstalldirs,v 1.1.1.2.4.1 2019/06/10 21:51:11 christos Exp $
+# Id
 
 errstatus=0
 

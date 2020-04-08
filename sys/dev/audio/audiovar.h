@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.3.2.2 2019/06/10 22:07:06 christos Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.3.2.3 2020/04/08 14:08:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,20 +67,14 @@
 #ifndef _SYS_DEV_AUDIO_AUDIOVAR_H_
 #define _SYS_DEV_AUDIO_AUDIOVAR_H_
 
-#if defined(_KERNEL)
 #include <sys/condvar.h>
 #include <sys/proc.h>
+#include <sys/pserialize.h>
+#include <sys/psref.h>
 #include <sys/queue.h>
 
 #include <dev/audio/audio_if.h>
 #include <dev/audio/audiofil.h>
-#else
-#include <stdint.h>
-#include <stdbool.h>
-#include "compat.h"
-#include "userland.h"
-#include "audiofil.h"
-#endif /* _KERNEL */
 
 /*
  * Whether supports [US]LINEAR24/24 as userland format.
@@ -149,34 +143,37 @@ struct audio_softc {
 
 	/*
 	 * Blocksize in msec.
-	 * Must be protected by sc_lock.
+	 * Must be protected by sc_exlock.
 	 */
 	int sc_blk_ms;
 
 	/*
 	 * Track mixer for playback and recording.
 	 * If null, the mixer is disabled.
+	 * Must be protected by sc_exlock.
 	 */
 	audio_trackmixer_t *sc_pmixer;
 	audio_trackmixer_t *sc_rmixer;
 
 	/*
 	 * Opening track counter.
-	 * Must be protected by sc_lock.
+	 * Must be protected by sc_lock && sc_exlock for modifying.
+	 * Must be protected by sc_lock || sc_exlock for reference.
 	 */
 	int sc_popens;
 	int sc_ropens;
 
 	/*
 	 * true if the track mixer is running.
-	 * Must be protected by sc_lock.
+	 * Must be protected by sc_exlock && sc_intr_lock for modifying.
+	 * Must be protected by sc_exlock || sc_intr_lock for reference.
 	 */
 	bool sc_pbusy;
 	bool sc_rbusy;
 
 	/*
 	 * These four are the parameters sustained with /dev/sound.
-	 * Must be protected by sc_lock.
+	 * Must be protected by sc_exlock.
 	 */
 	audio_format2_t sc_sound_pparams;
 	audio_format2_t sc_sound_rparams;
@@ -195,13 +192,15 @@ struct audio_softc {
 	struct selinfo sc_rsel;
 
 	/*
-	 * processes who want mixer SIGIO.
-	 * Must be protected by sc_lock.
+	 * Processes who want mixer SIGIO.
+	 * sc_am is an array of pids, or NULL if empty.
+	 * sc_am_capacity is the number of allocated elements.
+	 * sc_am_used is the number of elements actually used.
+	 * Must be protected by sc_exlock.
 	 */
-	struct	mixer_asyncs {
-		struct mixer_asyncs *next;
-		pid_t	pid;
-	} *sc_async_mixer;
+	pid_t *sc_am;
+	int sc_am_capacity;
+	int sc_am_used;
 
 	/*
 	 * Thread lock and interrupt lock obtained by get_locks().
@@ -217,6 +216,13 @@ struct audio_softc {
 	kcondvar_t sc_exlockcv;
 
 	/*
+	 * Passive reference to prevent a race between detach and fileops.
+	 * pserialize_perform(sc_psz) must be protected by sc_lock.
+	 */
+	pserialize_t sc_psz;
+	struct psref_target sc_psref;
+
+	/*
 	 * Must be protected by sc_lock (?)
 	 */
 	bool		sc_dying;
@@ -224,7 +230,7 @@ struct audio_softc {
 	/*
 	 * If multiuser is false, other users who have different euid
 	 * than the first user cannot open this device.
-	 * Must be protected by sc_lock.
+	 * Must be protected by sc_exlock.
 	 */
 	bool sc_multiuser;
 	kauth_cred_t sc_cred;

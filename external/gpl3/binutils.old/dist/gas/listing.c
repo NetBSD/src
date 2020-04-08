@@ -1,5 +1,5 @@
 /* listing.c - maintain assembly listings
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -41,7 +41,7 @@
   will affect the page they are on, as well as any subsequent page
 
  .eject
- 	Thow a page
+ 	Throw a page
  .list
  	Increment the enable listing counter
  .nolist
@@ -324,7 +324,13 @@ listing_newline (char *ps)
     }
 #endif
 
-  file = as_where (&line);
+  /* PR 21977 - use the physical file name not the logical one unless high
+     level source files are being included in the listing.  */
+  if (listing & LISTING_HLL)
+    file = as_where (&line);
+  else
+    file = as_where_physical (&line);
+
   if (ps == NULL)
     {
       if (line == last_line

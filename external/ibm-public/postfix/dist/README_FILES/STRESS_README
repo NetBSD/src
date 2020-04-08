@@ -88,8 +88,8 @@ the command line (i.e. with an empty parameter value):
 
     83326  ??  S      0:00.28 smtpd -n smtp -t inet -u -c -o stress=
 
-Services that have local access only never have "-o stress" parameters on the
-command line. This includes services internal to Postfix such as the queue
+You won't see "-o stress" command-line parameters with services that have local
+clients only. These include services internal to Postfix such as the queue
 manager, and services that listen on a loopback interface only, such as after-
 filter SMTP services.
 
@@ -108,6 +108,9 @@ later.
 Postfix versions before 3.0 use the older form ${stress?x}${stress:y} instead
 of the newer form ${stress?{x}:{y}}.
 
+The syntax of ${name?{value}:{value}}, ${name?value} and ${name:value} is
+explained at the beginning of the postconf(5) manual page.
+
 Translation:
 
   * Line 1: under conditions of stress, use an smtpd_timeout value of 10
@@ -121,9 +124,9 @@ Translation:
     temporarily.
 
   * Line 2: under conditions of stress, use an smtpd_hard_error_limit of 1
-    instead of the default 20. This helps by disconnecting clients after a
-    single error, giving other clients a chance to connect. However, this may
-    cause significant delays with legitimate mail, such as a mailing list that
+    instead of the default 20. This disconnects clients after a single error,
+    giving other clients a chance to connect. However, this may cause
+    significant delays with legitimate mail, such as a mailing list that
     contains a few no-longer-active user names that didn't bother to
     unsubscribe. No mail should be lost, as long as this measure is used only
     temporarily.
@@ -148,9 +151,6 @@ Translation:
     $unverified_recipient_tempfail_action or
     $unverified_sender_tempfail_action. No mail should be lost, as long as this
     measure is used only temporarily.
-
-The syntax of ${name?{value}:{value}}, ${name?value} and ${name:value} is
-explained at the beginning of the postconf(5) manual page.
 
 NOTE: Please keep in mind that the stress-adaptive feature is a fairly
 desperate measure to keep ssoommee legitimate mail flowing under overload
@@ -309,9 +309,9 @@ More information about automatic stress-adaptive behavior is in section
 
 TTeemmppoorraarryy mmeeaassuurreess ffoorr oollddeerr PPoossttffiixx rreelleeaasseess
 
-See the next section, "Automatic stress-adaptive behavior", if you are running
-Postfix version 2.5 or later, or if you have applied the source code patch for
-stress-adaptive behavior from the mirrors listed at http://www.postfix.org/
+See the section "Automatic stress-adaptive behavior" if you are running Postfix
+version 2.5 or later, or if you have applied the source code patch for stress-
+adaptive behavior from the mirrors listed at http://www.postfix.org/
 download.html.
 
 The following measures can be applied temporarily during overload. They still

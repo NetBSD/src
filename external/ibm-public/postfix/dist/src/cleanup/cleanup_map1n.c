@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_map1n.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: cleanup_map1n.c,v 1.2.12.1 2020/04/08 14:06:52 martin Exp $	*/
 
 /*++
 /* NAME
@@ -41,6 +41,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -134,8 +139,8 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, const char *addr,
 		UNEXPAND(argv, addr);
 		RETURN(argv);
 	    }
-	    quote_822_local(state->temp1, argv->argv[arg]);
-	    if ((lookup = mail_addr_map(maps, STR(state->temp1), propagate)) != 0) {
+	    if ((lookup = mail_addr_map_internal(maps, argv->argv[arg],
+						 propagate)) != 0) {
 		saved_lhs = mystrdup(argv->argv[arg]);
 		for (i = 0; i < lookup->argc; i++) {
 		    if (strlen(lookup->argv[i]) > var_virt_addrlen_limit) {
@@ -147,18 +152,17 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, const char *addr,
 			UNEXPAND(argv, addr);
 			RETURN(argv);
 		    }
-		    unquote_822_local(state->temp1, lookup->argv[i]);
 		    if (i == 0) {
-			UPDATE(argv->argv[arg], STR(state->temp1));
+			UPDATE(argv->argv[arg], lookup->argv[i]);
 		    } else {
-			argv_add(argv, STR(state->temp1), ARGV_END);
+			argv_add(argv, lookup->argv[i], ARGV_END);
 			argv_terminate(argv);
 		    }
 
 		    /*
 		     * Allow an address to expand into itself once.
 		     */
-		    if (strcasecmp_utf8(saved_lhs, STR(state->temp1)) == 0)
+		    if (strcasecmp_utf8(saved_lhs, lookup->argv[i]) == 0)
 			been_here_fixed(been_here, saved_lhs);
 		}
 		myfree(saved_lhs);

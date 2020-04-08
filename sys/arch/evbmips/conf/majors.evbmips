@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.30.16.1 2019/06/10 22:06:12 christos Exp $
+#	$NetBSD: majors.evbmips,v 1.30.16.2 2020/04/08 14:07:36 martin Exp $
 #
 # Device majors for evbmips
 #
@@ -62,7 +62,7 @@ device-major	ses		char 58			ses
 device-major	ld		char 59  block 17	ld
 device-major	cy		char 60			cy
 device-major	cz		char 61			cz
-device-major	urio		char 62			urio
+#device-major	obsolete	char 62			obsolete (urio)
 device-major	uscanner	char 63			uscanner
 device-major	altq		char 64			altq
 device-major	mlx		char 65			mlx
@@ -82,7 +82,7 @@ device-major	ksyms		char 76			ksyms
 device-major	uart		char 77			uart
 #device-major	obsolete	char 78			obsolete (opencrypto)
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 device-major	athflash	char 99			athflash
 #device-major	obsolete	char 100 block 19	obsolete (spiflash)
 

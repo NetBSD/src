@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_haproxy.h,v 1.1.1.1 2013/09/25 19:06:33 tron Exp $	*/
+/*	$NetBSD: postscreen_haproxy.h,v 1.1.1.1.30.1 2020/04/08 14:06:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -24,4 +24,9 @@ extern void psc_endpt_haproxy_lookup(VSTREAM *, PSC_ENDPT_LOOKUP_FN);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/

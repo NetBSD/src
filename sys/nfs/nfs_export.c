@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_export.c,v 1.60 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.60.12.1 2020/04/08 14:08:59 martin Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2004, 2005, 2008, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.60 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.60.12.1 2020/04/08 14:08:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,9 +217,9 @@ netexport_fini(void)
 			kpause("nfsfini", false, hz, NULL);
 			continue;
 		}
-		mutex_enter(&mp->mnt_updating);	/* mnt_flag */
+		mutex_enter(mp->mnt_updating);	/* mnt_flag */
 		netexport_unmount(mp);
-		mutex_exit(&mp->mnt_updating);	/* mnt_flag */
+		mutex_exit(mp->mnt_updating);	/* mnt_flag */
 		vfs_unbusy(mp);
 	}
 	rw_destroy(&netexport_lock);
@@ -289,7 +289,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
 	if (error != 0)
 		return error;
 	if (nmp == NULL)
-		mutex_enter(&mp->mnt_updating);	/* mnt_flag */
+		mutex_enter(mp->mnt_updating);	/* mnt_flag */
 	netexport_wrlock();
 	ne = netexport_lookup(mp);
 	if (ne == NULL) {
@@ -331,7 +331,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
 out:
 	netexport_wrunlock();
 	if (nmp == NULL)
-		mutex_exit(&mp->mnt_updating);	/* mnt_flag */
+		mutex_exit(mp->mnt_updating);	/* mnt_flag */
 	vfs_unbusy(mp);
 	return error;
 }
@@ -770,7 +770,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	/*
 	 * Get real filehandle for root of exported FS.
 	 */
-	if ((error = VFS_ROOT(mp, &rvp)))
+	if ((error = VFS_ROOT(mp, LK_EXCLUSIVE, &rvp)))
 		return error;
 
 	fhsize = 0;

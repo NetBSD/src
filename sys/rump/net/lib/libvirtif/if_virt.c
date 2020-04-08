@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.57 2018/06/26 06:48:03 msaitoh Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.57.2.1 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.57 2018/06/26 06:48:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.57.2.1 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -325,7 +325,7 @@ virtif_start(struct ifnet *ifp)
 		VIFHYPER_SEND(sc->sc_viu, io, i);
 
 		m_freem(m0);
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 	}
 
 	ifp->if_flags &= ~IFF_OACTIVE;

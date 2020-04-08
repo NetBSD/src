@@ -1,4 +1,4 @@
-/*	$NetBSD: mymalloc.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: mymalloc.c,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -74,6 +74,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System libraries. */
@@ -221,13 +226,17 @@ void    myfree(void *ptr)
 
 char   *mystrdup(const char *str)
 {
+    size_t  len;
+
     if (str == 0)
 	msg_panic("mystrdup: null pointer argument");
 #ifndef NO_SHARED_EMPTY_STRINGS
     if (*str == 0)
 	return ((char *) empty_string);
 #endif
-    return (strcpy(mymalloc(strlen(str) + 1), str));
+    if ((len = strlen(str) + 1) > SSIZE_T_MAX)
+	msg_panic("mystrdup: string length >= SSIZE_T_MAX");
+    return (memcpy(mymalloc(len), str, len));
 }
 
 /* mystrndup - save substring to heap */

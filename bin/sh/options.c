@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.52.4.1 2019/06/10 21:41:04 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.52.4.2 2020/04/08 14:03:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.52.4.1 2019/06/10 21:41:04 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.52.4.2 2020/04/08 14:03:04 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -595,7 +595,11 @@ out:
  * Standard option processing (a la getopt) for builtin routines.  The
  * only argument that is passed to nextopt is the option string; the
  * other arguments are unnecessary.  It return the character, or '\0' on
- * end of input.
+ * end of input.  If optstring is NULL, then there are no options, and
+ * args are allowed to begin with '-', but a single leading "--" will be
+ * discarded.   This is for some POSIX special builtins that require
+ * -- processing, have no args, and we never did opt processing before
+ * and need to retain backwards compat.
  */
 
 int
@@ -612,7 +616,11 @@ nextopt(const char *optstring)
 		argptr++;
 		if (p[0] == '-' && p[1] == '\0')	/* check for "--" */
 			return '\0';
+		if (optstring == NULL)	/* not processing the "option" */
+			argptr--;	/* so make it be an arg again */
 	}
+	if (optstring == NULL)
+		return '\0';
 	c = *p++;
 	for (q = optstring ; *q != c ; ) {
 		if (*q == '\0')

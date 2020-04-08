@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.63.2.1 2019/06/10 22:05:29 christos Exp $	 */
+/*	$NetBSD: headers.c,v 1.63.2.2 2020/04/08 14:07:17 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.63.2.1 2019/06/10 22:05:29 christos Exp $");
+__RCSID("$NetBSD: headers.c,v 1.63.2.2 2020/04/08 14:07:17 martin Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -166,26 +166,87 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 		case DT_HASH:
 			{
+				uint32_t nbuckets, nchains;
 				const Elf_Symindx *hashtab = (const Elf_Symindx *)
 				    (obj->relocbase + dynp->d_un.d_ptr);
 
 				if (hashtab[0] > UINT32_MAX)
-					obj->nbuckets = UINT32_MAX;
+					nbuckets = UINT32_MAX;
 				else
-					obj->nbuckets = hashtab[0];
-				obj->nchains = hashtab[1];
+					nbuckets = hashtab[0];
+				obj->nbuckets = nbuckets;
+				obj->nchains = (nchains = hashtab[1]);
 				obj->buckets = hashtab + 2;
 				obj->chains = obj->buckets + obj->nbuckets;
+
+				/* Validity check */
+				if (!obj->buckets || !nbuckets || !nchains)
+					continue;
+
+				obj->sysv_hash = true;
+
 				/*
 				 * Should really be in _rtld_relocate_objects,
 				 * but _rtld_symlook_obj might be used before.
 				 */
-				if (obj->nbuckets) {
-					fast_divide32_prepare(obj->nbuckets,
-					    &obj->nbuckets_m,
-					    &obj->nbuckets_s1,
-					    &obj->nbuckets_s2);
-				}
+				fast_divide32_prepare(obj->nbuckets,
+				    &obj->nbuckets_m,
+				    &obj->nbuckets_s1,
+				    &obj->nbuckets_s2);
+			}
+			break;
+
+		case DT_GNU_HASH:
+			{
+				uint32_t nmaskwords;
+				uint32_t nbuckets, symndx;
+				int bloom_size32;
+				bool nmw_power2;
+				const Elf_Symindx *hashtab = (const Elf_Symindx *)
+				    (obj->relocbase + dynp->d_un.d_ptr);
+
+				if (hashtab[0] > UINT32_MAX)
+					nbuckets = UINT32_MAX;
+				else
+					nbuckets = hashtab[0];
+				obj->nbuckets_gnu = nbuckets;
+
+				nmaskwords = hashtab[2];
+				bloom_size32 = nmaskwords * (ELFSIZE / 32);
+
+				obj->buckets_gnu = (const uint32_t *)(hashtab + 4 + bloom_size32);
+
+				nmw_power2 = powerof2(nmaskwords);
+
+				/* Validity check */
+				if (!nmw_power2 || !nbuckets || !obj->buckets_gnu)
+					continue;
+
+				obj->gnu_hash = true;
+
+				obj->mask_bm_gnu = nmaskwords - 1;
+				obj->symndx_gnu = (symndx = hashtab[1]);
+				obj->shift2_gnu = hashtab[3];
+				obj->bloom_gnu = (const Elf_Addr *)(hashtab + 4);
+				obj->chains_gnu = obj->buckets_gnu + nbuckets - symndx;
+
+				/*
+				 * Should really be in _rtld_relocate_objects,
+				 * but _rtld_symlook_obj might be used before.
+				 */
+				fast_divide32_prepare(nbuckets,
+				    &obj->nbuckets_m_gnu,
+				    &obj->nbuckets_s1_gnu,
+				    &obj->nbuckets_s2_gnu);
+
+				dbg(("found GNU Hash: buckets=%p "
+				     "nbuckets=%lu chains=%p nchains=%u "
+				     "bloom=%p mask_bm=%u shift2=%u "
+				     "symndx=%u",
+				    obj->buckets_gnu, obj->nbuckets_gnu,
+				    obj->chains_gnu, obj->nchains_gnu,
+				    obj->bloom_gnu, obj->mask_bm_gnu,
+				    obj->shift2_gnu, obj->symndx_gnu));
 			}
 			break;
 
@@ -352,6 +413,26 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			obj->relalim = obj->pltrela;
 	}
 
+	/* If the ELF Hash is present, "nchains" is the same in both hashes. */
+	if (!obj->sysv_hash && obj->gnu_hash) {
+		uint_fast32_t i, nbucket, symndx;
+
+		/* Otherwise, count the entries from the GNU Hash chain. */
+		nbucket = obj->nbuckets_gnu;
+		symndx = obj->symndx_gnu;
+
+		for (i = 0; i < nbucket; i++) {
+			Elf_Word bkt = obj->buckets_gnu[i];
+			if (bkt == 0)
+				continue;
+			const uint32_t *hashval = &obj->chains_gnu[bkt];
+			do {
+				symndx++;
+			} while ((*hashval++ & 1U) == 0);
+		}
+		obj->nchains_gnu = (uint32_t)symndx;
+	}
+
 #ifdef RTLD_LOADER
 	if (init != 0)
 		obj->init = (Elf_Addr) obj->relocbase + init;
@@ -435,9 +516,9 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 
 #ifdef GNU_RELRO
 		case PT_GNU_RELRO:
-			obj->relro_page = obj->relocbase
-			    + round_down(ph->p_vaddr);
-			obj->relro_size = round_up(ph->p_memsz);
+			/* rounding happens later. */
+			obj->relro_page = obj->relocbase + ph->p_vaddr;
+			obj->relro_size = ph->p_memsz;
 			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_GNU_RELRO", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));

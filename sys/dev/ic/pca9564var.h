@@ -1,4 +1,4 @@
-/*	$NetBSD: pca9564var.h,v 1.1 2010/04/09 10:09:50 nonaka Exp $	*/
+/*	$NetBSD: pca9564var.h,v 1.1.66.1 2020/04/08 14:08:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -41,7 +41,6 @@ struct pca9564_softc {
 	int sc_i2c_clock;
 
 	struct i2c_controller sc_i2c;
-	kmutex_t sc_buslock;
 };
 
 void pca9564_attach(struct pca9564_softc *);

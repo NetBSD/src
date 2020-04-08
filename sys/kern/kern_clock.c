@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.136.4.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.136.4.2 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.136.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.136.4.2 2020/04/08 14:08:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -155,7 +155,13 @@ static u_int
 get_intr_timecount(struct timecounter *tc)
 {
 
-	return (u_int)hardclock_ticks;
+	return (u_int)getticks();
+}
+
+int
+getticks(void)
+{
+	return atomic_load_relaxed(&hardclock_ticks);
 }
 
 /*
@@ -219,7 +225,7 @@ hardclock(struct clockframe *frame)
 	struct cpu_info *ci;
 
 	ci = curcpu();
-	l = ci->ci_data.cpu_onproc;
+	l = ci->ci_onproc;
 
 	timer_tick(l, CLKF_USERMODE(frame));
 
@@ -242,7 +248,8 @@ hardclock(struct clockframe *frame)
 		sched_tick(ci);
 
 	if (CPU_IS_PRIMARY(ci)) {
-		hardclock_ticks++;
+		atomic_store_relaxed(&hardclock_ticks,
+		    atomic_load_relaxed(&hardclock_ticks) + 1);
 		tc_ticktock();
 	}
 
@@ -340,7 +347,7 @@ statclock(struct clockframe *frame)
 			setstatclockrate(profhz);
 		}
 	}
-	l = ci->ci_data.cpu_onproc;
+	l = ci->ci_onproc;
 	if ((l->l_flag & LW_IDLE) != 0) {
 		/*
 		 * don't account idle lwps as swapper.

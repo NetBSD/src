@@ -1,4 +1,4 @@
-/*	$NetBSD: master_listen.c,v 1.1.1.2 2013/09/25 19:06:32 tron Exp $	*/
+/*	$NetBSD: master_listen.c,v 1.1.1.2.26.1 2020/04/08 14:06:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -37,6 +37,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -95,6 +100,17 @@ void    master_listen_init(MASTER_SERV *serv)
 	serv->listen_fd[0] =
 	    LOCAL_LISTEN(serv->name, serv->max_proc > var_proc_limit ?
 			 serv->max_proc : var_proc_limit, NON_BLOCKING);
+	close_on_exec(serv->listen_fd[0], CLOSE_ON_EXEC);
+	set_ugid(getuid(), getgid());
+	break;
+
+	/*
+	 * UNIX-domain datagram listener endpoints always come as singlets.
+	 */
+    case MASTER_SERV_TYPE_UXDG:
+	set_eugid(var_owner_uid, var_owner_gid);
+	serv->listen_fd[0] =
+	    unix_dgram_listen(serv->name, NON_BLOCKING);
 	close_on_exec(serv->listen_fd[0], CLOSE_ON_EXEC);
 	set_ugid(getuid(), getgid());
 	break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.21.18.1 2019/06/10 22:07:35 christos Exp $	*/
+/*	$NetBSD: uyap.c,v 1.21.18.2 2020/04/08 14:08:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.21.18.1 2019/06/10 22:07:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.21.18.2 2020/04/08 14:08:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,24 +44,24 @@ __KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.21.18.1 2019/06/10 22:07:35 christos Exp 
 
 #include <dev/usb/ezload.h>
 
-const struct ezdata uyap_firmware[] = {
+static const struct ezdata uyap_firmware[] = {
 #include "dev/usb/uyap_firmware.h"
 };
-const struct ezdata *uyap_firmwares[] = { uyap_firmware, NULL };
+static const struct ezdata *uyap_firmwares[] = { uyap_firmware, NULL };
 
 struct uyap_softc {
 	device_t		sc_dev;		/* base device */
 };
 
-int	uyap_match(device_t, cfdata_t, void *);
-void	uyap_attach(device_t, device_t, void *);
-int	uyap_detach(device_t, int);
-int	uyap_activate(device_t, enum devact);
+static int	uyap_match(device_t, cfdata_t, void *);
+static void	uyap_attach(device_t, device_t, void *);
+static int	uyap_detach(device_t, int);
+static int	uyap_activate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(uyap, sizeof(struct uyap_softc), uyap_match, uyap_attach,
     uyap_detach, uyap_activate);
 
-int
+static int
 uyap_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -74,7 +74,7 @@ uyap_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void
+static void
 uyap_attach(device_t parent, device_t self, void *aux)
 {
 	struct uyap_softc *sc = device_private(self);
@@ -106,7 +106,7 @@ uyap_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 uyap_detach(device_t self, int flags)
 {
 #if 0
@@ -116,7 +116,7 @@ uyap_detach(device_t self, int flags)
 	return 0;
 }
 
-int
+static int
 uyap_activate(device_t self, enum devact act)
 {
 	return 0;

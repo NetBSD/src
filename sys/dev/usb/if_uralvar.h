@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralvar.h,v 1.12 2016/04/23 10:15:31 skrll Exp $ */
+/*	$NetBSD: if_uralvar.h,v 1.12.18.1 2020/04/08 14:08:13 martin Exp $ */
 /*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
@@ -77,6 +77,8 @@ struct ural_softc {
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+
+	kmutex_t		sc_media_mtx;	/* XXX */
 
 	struct usbd_device *	sc_udev;
 	struct usbd_interface *	sc_iface;

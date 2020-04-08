@@ -1353,7 +1353,7 @@ hx509_cms_decrypt_encrypted (
  *
  * @param context A hx509 context.
  * @param flags flags to control the behavior.
- *    - HX509_CMS_EV_NO_KU_CHECK - Dont check KU on certificate
+ *    - HX509_CMS_EV_NO_KU_CHECK - Don't check KU on certificate
  *    - HX509_CMS_EV_ALLOW_WEAK - Allow weak crytpo
  *    - HX509_CMS_EV_ID_NAME - prefer issuer name and serial number
  * @param cert Certificate to encrypt the EnvelopedData encryption key

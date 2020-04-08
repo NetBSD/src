@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.17.2.1 2019/06/10 22:07:37 christos Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.17.2.2 2020/04/08 14:08:14 martin Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.17.2.1 2019/06/10 22:07:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.17.2.2 2020/04/08 14:08:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1045,7 +1045,11 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
+#ifdef __NetBSD__
+		if_statinc(&sc->sc_if, if_oerrors);
+#else
 		sc->sc_if.if_oerrors++;
+#endif /* __NetBSD__ */
 		return (NULL);
 	}
 
@@ -1084,7 +1088,11 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
+#ifdef __NetBSD__
+			if_statinc(&sc->sc_if, if_oerrors);
+#else
 			sc->sc_if.if_oerrors++;
+#endif /* __NetBSD__ */
 			return (NULL);
 		}
 		m->m_data += (MCLBYTES - len) &~ (sizeof(long) - 1);

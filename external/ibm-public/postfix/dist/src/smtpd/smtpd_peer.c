@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_peer.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtpd_peer.c,v 1.2.12.1 2020/04/08 14:06:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -12,6 +12,9 @@
 /*	SMTPD_STATE *state;
 /*
 /*	void	smtpd_peer_reset(state)
+/*	SMTPD_STATE *state;
+/* AUXILIARY METHODS
+/*	void	smtpd_peer_from_default(state)
 /*	SMTPD_STATE *state;
 /* DESCRIPTION
 /*	The smtpd_peer_init() routine attempts to produce a printable
@@ -51,7 +54,12 @@
 /*	String of the form "ipv4addr" or "ipv6:ipv6addr" for use
 /*	in Received: message headers.
 /* .IP dest_addr
-/*	Server address, used by the Dovecot authentication server.
+/*	Server address, used by the Dovecot authentication server,
+/*	available as Milter {daemon_addr} macro, and as server_address
+/*	policy delegation attribute.
+/* .IP dest_port
+/*	Server port, available as Milter {daemon_port} macro, and
+/*	as server_port policy delegation attribute.
 /* .IP name_status
 /*	The name_status result field specifies how the name
 /*	information should be interpreted:
@@ -70,16 +78,19 @@
 /* .IP reverse_name_status
 /*	The reverse_name_status result field specifies how the
 /*	reverse_name information should be interpreted:
-/* .RS .IP 2
+/* .RS
+/* .IP 2
 /*	The address->name lookup succeeded.
 /* .IP 4
 /*	The address->name lookup failed with a recoverable error.
 /* .IP 5
 /*	The address->name lookup failed with an unrecoverable error.
-/* .RE .IP forward_name_status
+/* .RE
+/* .IP forward_name_status
 /*	The forward_name_status result field specifies how the
 /*	forward_name information should be interpreted:
-/* .RS .IP 2
+/* .RS
+/* .IP 2
 /*	The address->name and name->address lookup succeeded.
 /* .IP 4
 /*	The address->name lookup or name->address failed with a
@@ -90,6 +101,10 @@
 /* .RE
 /* .PP
 /*	smtpd_peer_reset() releases memory allocated by smtpd_peer_init().
+/*
+/*	smtpd_peer_from_default() looks up connection information
+/*	when an up-stream proxy indicates that a connection is not
+/*	proxied.
 /* LICENSE
 /* .ad
 /* .fi
@@ -99,6 +114,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -137,14 +157,6 @@
 static INET_PROTO_INFO *proto_info;
 
  /*
-  * XXX If we make local endpoint (getsockname) information available to
-  * Milter applications as {if_name} and {if_addr}, then we also must be able
-  * to provide this via the XCLIENT command for Milter testing.
-  * 
-  * XXX If we make local port information available to policy servers or Milter
-  * applications, then we must also make this testable with the XCLIENT
-  * command, otherwise there will be confusion.
-  * 
   * XXX If we make local port information available via logging, then we must
   * also support these attributes with the XFORWARD command.
   * 
@@ -175,6 +187,8 @@ static int smtpd_peer_sockaddr_to_hostaddr(SMTPD_STATE *state)
 	) {
 	MAI_HOSTADDR_STR client_addr;
 	MAI_SERVPORT_STR client_port;
+	MAI_HOSTADDR_STR server_addr;
+	MAI_SERVPORT_STR server_port;
 	int     aierr;
 	char   *colonp;
 
@@ -276,6 +290,21 @@ static int smtpd_peer_sockaddr_to_hostaddr(SMTPD_STATE *state)
 	    state->rfc_addr = mystrdup(client_addr.buf);
 	    state->addr_family = sa->sa_family;
 	}
+
+	/*
+	 * Convert the server address/port to printable form.
+	 */
+	if ((aierr = sockaddr_to_hostaddr((struct sockaddr *)
+					  &state->dest_sockaddr,
+					  state->dest_sockaddr_len,
+					  &server_addr,
+					  &server_port, 0)) != 0)
+	    msg_fatal("%s: cannot convert server address/port to string: %s",
+		      myname, MAI_STRERROR(aierr));
+	/* TODO: convert IPv4-in-IPv6 to IPv4 form. */
+	state->dest_addr = mystrdup(server_addr.buf);
+	state->dest_port = mystrdup(server_port.buf);
+
 	return (0);
     }
 
@@ -414,6 +443,9 @@ static void smtpd_peer_not_inet(SMTPD_STATE *state)
     state->name_status = SMTPD_PEER_CODE_OK;
     state->reverse_name_status = SMTPD_PEER_CODE_OK;
     state->port = mystrdup("0");		/* XXX bogus. */
+
+    state->dest_addr = mystrdup(state->addr);	/* XXX bogus. */
+    state->dest_port = mystrdup(state->port);	/* XXX bogus. */
 }
 
 /* smtpd_peer_no_client - peer went away, or peer info unavailable */
@@ -429,6 +461,9 @@ static void smtpd_peer_no_client(SMTPD_STATE *state)
     state->name_status = SMTPD_PEER_CODE_PERM;
     state->reverse_name_status = SMTPD_PEER_CODE_PERM;
     state->port = mystrdup(CLIENT_PORT_UNKNOWN);
+
+    state->dest_addr = mystrdup(SERVER_ADDR_UNKNOWN);
+    state->dest_port = mystrdup(SERVER_PORT_UNKNOWN);
 }
 
 /* smtpd_peer_from_pass_attr - initialize from attribute hash */
@@ -463,13 +498,19 @@ static void smtpd_peer_from_pass_attr(SMTPD_STATE *state)
     state->port = mystrdup(cp);
 
     /*
-     * Avoid surprises in the Dovecot authentication server.
+     * The Dovecot authentication server needs the server IP address.
      */
     if ((cp = htable_find(attr, MAIL_ATTR_ACT_SERVER_ADDR)) == 0)
 	msg_fatal("missing server address from proxy");
     if (valid_hostaddr(cp, DO_GRIPE) == 0)
-	msg_fatal("bad IPv6 client address syntax from proxy: %s", cp);
+	msg_fatal("bad IPv6 server address syntax from proxy: %s", cp);
     state->dest_addr = mystrdup(cp);
+
+    if ((cp = htable_find(attr, MAIL_ATTR_ACT_SERVER_PORT)) == 0)
+	msg_fatal("missing server port from proxy");
+    if (valid_hostport(cp, DO_GRIPE) == 0)
+	msg_fatal("bad TCP server port number syntax from proxy: %s", cp);
+    state->dest_port = mystrdup(cp);
 
     /*
      * Convert the client address from string to binary form.
@@ -479,10 +520,8 @@ static void smtpd_peer_from_pass_attr(SMTPD_STATE *state)
 
 /* smtpd_peer_from_default - try to initialize peer information from socket */
 
-static void smtpd_peer_from_default(SMTPD_STATE *state)
+void    smtpd_peer_from_default(SMTPD_STATE *state)
 {
-    SOCKADDR_SIZE sa_length = sizeof(state->sockaddr);
-    struct sockaddr *sa = (struct sockaddr *) &(state->sockaddr);
 
     /*
      * The "no client" routine provides surrogate information so that the
@@ -490,13 +529,19 @@ static void smtpd_peer_from_default(SMTPD_STATE *state)
      * before the server wakes up. The "not inet" routine provides surrogate
      * state for (presumably) local IPC channels.
      */
-    if (getpeername(vstream_fileno(state->client), sa, &sa_length) < 0) {
+    state->sockaddr_len = sizeof(state->sockaddr);
+    state->dest_sockaddr_len = sizeof(state->dest_sockaddr);
+    if (getpeername(vstream_fileno(state->client),
+		    (struct sockaddr *) &state->sockaddr,
+		    &state->sockaddr_len) <0
+	|| getsockname(vstream_fileno(state->client),
+		       (struct sockaddr *) &state->dest_sockaddr,
+		       &state->dest_sockaddr_len) < 0) {
 	if (errno == ENOTSOCK)
 	    smtpd_peer_not_inet(state);
 	else
 	    smtpd_peer_no_client(state);
     } else {
-	state->sockaddr_len = sa_length;
 	if (smtpd_peer_sockaddr_to_hostaddr(state) < 0)
 	    smtpd_peer_not_inet(state);
     }
@@ -528,7 +573,7 @@ static void smtpd_peer_from_proxy(SMTPD_STATE *state)
 	    break;
     }
     if (pp->endpt_lookup(state) < 0) {
-	smtpd_peer_no_client(state);
+	smtpd_peer_from_default(state);
 	state->flags |= SMTPD_FLAG_HANGUP;
     } else {
 	smtpd_peer_hostaddr_to_sockaddr(state);
@@ -558,6 +603,7 @@ void    smtpd_peer_init(SMTPD_STATE *state)
     state->rfc_addr = 0;
     state->port = 0;
     state->dest_addr = 0;
+    state->dest_port = 0;
 
     /*
      * Determine the remote SMTP client address and port.
@@ -610,4 +656,6 @@ void    smtpd_peer_reset(SMTPD_STATE *state)
 	myfree(state->port);
     if (state->dest_addr)
 	myfree(state->dest_addr);
+    if (state->dest_port)
+	myfree(state->dest_port);
 }

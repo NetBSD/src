@@ -1,4 +1,4 @@
-/*	$NetBSD: rp_17.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: rp_17.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -179,7 +179,7 @@ fromstruct_rp(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_rp);
-	REQUIRE(source != NULL);
+	REQUIRE(rp != NULL);
 	REQUIRE(rp->common.rdtype == type);
 	REQUIRE(rp->common.rdclass == rdclass);
 
@@ -200,7 +200,7 @@ tostruct_rp(ARGS_TOSTRUCT) {
 	dns_name_t name;
 
 	REQUIRE(rdata->type == dns_rdatatype_rp);
-	REQUIRE(target != NULL);
+	REQUIRE(rp != NULL);
 	REQUIRE(rdata->length != 0);
 
 	rp->common.rdclass = rdata->rdclass;
@@ -232,7 +232,7 @@ static inline void
 freestruct_rp(ARGS_FREESTRUCT) {
 	dns_rdata_rp_t *rp = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(rp != NULL);
 	REQUIRE(rp->common.rdtype == dns_rdatatype_rp);
 
 	if (rp->mctx == NULL)

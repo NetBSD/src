@@ -1,4 +1,4 @@
-/* $NetBSD: max77620.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $ */
+/* $NetBSD: max77620.c,v 1.6.2.1 2020/04/08 14:08:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: max77620.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: max77620.c,v 1.6.2.1 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
@@ -96,10 +97,10 @@ max77620_write(struct max77620_softc *sc, uint8_t reg, uint8_t val, int flags)
 		aprint_error_dev(sc->sc_dev, "error writing reg %#x: %d\n", reg, error);
 }
 
-#define	I2C_READ(sc, reg)	max77620_read((sc), (reg), I2C_F_POLL)
-#define	I2C_WRITE(sc, reg, val)	max77620_write((sc), (reg), (val), I2C_F_POLL)
-#define	I2C_LOCK(sc)		iic_acquire_bus((sc)->sc_i2c, I2C_F_POLL)
-#define	I2C_UNLOCK(sc)		iic_release_bus((sc)->sc_i2c, I2C_F_POLL)
+#define	I2C_READ(sc, reg)	max77620_read((sc), (reg), 0)
+#define	I2C_WRITE(sc, reg, val)	max77620_write((sc), (reg), (val), 0)
+#define	I2C_LOCK(sc)		iic_acquire_bus((sc)->sc_i2c, 0)
+#define	I2C_UNLOCK(sc)		iic_release_bus((sc)->sc_i2c, 0)
 
 static int
 max77620_gpio_config(struct max77620_softc *sc, int pin, int flags)
@@ -199,6 +200,11 @@ max77620_gpio_read(device_t dev, void *priv, bool raw)
 	struct max77620_pin *gpin = priv;
 	uint8_t gpio;
 	int val;
+
+	/*
+	 * Performing a register read only; no need to acquire
+	 * the max77620 lock.
+	 */
 
 	I2C_LOCK(sc);
 	gpio = I2C_READ(sc, MAX_GPIO_REG(gpin->pin_num));

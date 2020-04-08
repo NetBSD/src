@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_reboot.c,v 1.1.6.2 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_reboot.c,v 1.1.6.3 2020/04/08 14:08:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,15 +33,45 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_reboot.c,v 1.1.6.2 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_reboot.c,v 1.1.6.3 2020/04/08 14:08:51 martin Exp $");
 
+#include <sys/atomic.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
+#include <sys/kernel.h>
 #include <sys/kauth.h>
+
+/*
+ * Reboot / shutdown the system.
+ */
+void
+kern_reboot(int howto, char *bootstr)
+{
+	static lwp_t *rebooter;
+	lwp_t *l;
+
+	/*
+	 * If already rebooting then just hang out.  Allow reentry for the
+	 * benfit of ddb, even if questionable.  It would be better to call
+	 * exit1(), but this is called from all sorts of places.
+	 */
+	l = atomic_cas_ptr(&rebooter, NULL, curlwp);
+	while (l != NULL && l != curlwp) {
+		(void)kpause("reboot", true, 0, NULL);
+	}
+	shutting_down = 1;
+
+	/*
+	 * XXX We should re-factor out all of the common stuff
+	 * that each and every cpu_reboot() does and put it here.
+	 */
+
+	cpu_reboot(howto, bootstr);
+}
 
 /* ARGSUSED */
 int
@@ -69,8 +99,6 @@ sys_reboot(struct lwp *l, const struct sys_reboot_args *uap, register_t *retval)
 	/*
 	 * Not all ports use the bootstr currently.
 	 */
-	KERNEL_LOCK(1, NULL);
-	cpu_reboot(SCARG(uap, opt), bootstr);
-	KERNEL_UNLOCK_ONE(NULL);
+	kern_reboot(SCARG(uap, opt), bootstr);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_subr.c,v 1.9 2013/10/20 17:18:38 christos Exp $	*/
+/*	$NetBSD: chfs_subr.c,v 1.9.30.1 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -79,7 +79,7 @@ chfs_mem_info(bool total)
 	if (!total) {
 		size -= uvmexp.swpgonly;
 	}
-	size += uvmexp.free;
+	size += uvm_availmem();
 	size += uvmexp.filepages;
 	if (size > uvmexp.wired) {
 		size -= uvmexp.wired;

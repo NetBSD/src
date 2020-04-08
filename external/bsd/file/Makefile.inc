@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2017/02/22 12:34:49 maya Exp $
+#	$NetBSD: Makefile.inc,v 1.6.12.1 2020/04/08 14:04:03 martin Exp $
 
 WARNS=4
 DIST=${NETBSDSRCDIR}/external/bsd/file/dist
@@ -21,3 +21,8 @@ CPPFLAGS+=	-DMAGIC='"${MAGIC}"' -DHAVE_CONFIG_H -DQUICK -DBUILTIN_ELF \
 CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/src
 
 .PATH:		${DIST}/src ${DIST}/doc
+
+DPLIBS+=     lzma    ${NETBSDSRCDIR}/external/public-domain/xz/lib
+DPLIBS+=     bz2     ${NETBSDSRCDIR}/lib/libbz2
+DPLIBS+=     z       ${NETBSDSRCDIR}/lib/libz
+

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@
 
 #include "aslcompiler.h"
 #include "aslcompiler.y.h"
+#include "acnamesp.h"
 #include <string.h>
 
 
@@ -313,6 +314,7 @@ AnCheckMethodReturnValue (
 {
     ACPI_PARSE_OBJECT       *OwningOp;
     ACPI_NAMESPACE_NODE     *Node;
+    char                    *ExternalPath;
 
 
     Node = ArgOp->Asl.Node;
@@ -327,18 +329,19 @@ AnCheckMethodReturnValue (
     /* Examine the parent op of this method */
 
     OwningOp = Node->Op;
+    ExternalPath = AcpiNsGetNormalizedPathname (Node, TRUE);
+
     if (OwningOp->Asl.CompileFlags & OP_METHOD_NO_RETVAL)
     {
         /* Method NEVER returns a value */
 
-        AslError (ASL_ERROR, ASL_MSG_NO_RETVAL, Op, Op->Asl.ExternalName);
+        AslError (ASL_ERROR, ASL_MSG_NO_RETVAL, Op, ExternalPath);
     }
     else if (OwningOp->Asl.CompileFlags & OP_METHOD_SOME_NO_RETVAL)
     {
         /* Method SOMETIMES returns a value, SOMETIMES not */
 
-        AslError (ASL_WARNING, ASL_MSG_SOME_NO_RETVAL,
-            Op, Op->Asl.ExternalName);
+        AslError (ASL_WARNING, ASL_MSG_SOME_NO_RETVAL, Op, ExternalPath);
     }
     else if (!(ThisNodeBtype & RequiredBtypes))
     {
@@ -361,6 +364,11 @@ AnCheckMethodReturnValue (
 
             AslError (ASL_ERROR, ASL_MSG_INVALID_TYPE, ArgOp, AslGbl_MsgBuffer);
         }
+    }
+
+    if (ExternalPath)
+    {
+        ACPI_FREE (ExternalPath);
     }
 }
 
@@ -461,7 +469,7 @@ ApCheckForGpeNameConflict (
 
     /* Need a null-terminated string version of NameSeg */
 
-    ACPI_MOVE_32_TO_32 (Name, &Op->Asl.NameSeg);
+    ACPI_MOVE_32_TO_32 (Name, Op->Asl.NameSeg);
     Name[ACPI_NAMESEG_SIZE] = 0;
 
     /*

@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.24 2018/05/28 21:04:37 chs Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.24.2.1 2020/04/08 14:08:49 martin Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.24 2018/05/28 21:04:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.24.2.1 2020/04/08 14:08:49 martin Exp $");
 #endif /* not lint */
 
 
@@ -80,7 +80,6 @@ struct pool nilfs_node_pool;
 
 /* globals */
 struct _nilfs_devices nilfs_devices;
-static struct sysctllog *nilfs_sysctl_log;
 
 /* supported functions predefined */
 VFS_PROTOS(nilfs);
@@ -235,10 +234,34 @@ nilfs_done(void)
  */
 #define NILFS_VERBOSE_SYSCTLOPT        1
 
+SYSCTL_SETUP(nilfs_sysctl_setup, "nilfs sysctl")
+{
+	const struct sysctlnode *node;
+
+	/*
+	 * XXX the "30" below could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "30" is the order as taken from sys/mount.h
+	 */
+	sysctl_createv(clog, 0, NULL, &node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "nilfs",
+		       SYSCTL_DESCR("NTT's NILFSv2"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 30, CTL_EOL);
+#ifdef DEBUG
+	sysctl_createv(clog, 0, NULL, &node,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "verbose",
+		       SYSCTL_DESCR("Bitmask for filesystem debugging"),
+		       NULL, 0, &nilfs_verbose, 0,
+		       CTL_VFS, 30, NILFS_VERBOSE_SYSCTLOPT, CTL_EOL);
+#endif
+}
+
 static int
 nilfs_modcmd(modcmd_t cmd, void *arg)
 {
-	const struct sysctlnode *node;
 	int error;
 
 	switch (cmd) {
@@ -246,31 +269,11 @@ nilfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&nilfs_vfsops);
 		if (error != 0)
 			break;
-		/*
-		 * XXX the "30" below could be dynamic, thereby eliminating one
-		 * more instance of the "number to vfs" mapping problem, but
-		 * "30" is the order as taken from sys/mount.h
-		 */
-		sysctl_createv(&nilfs_sysctl_log, 0, NULL, &node,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "nilfs",
-			       SYSCTL_DESCR("NTT's NILFSv2"),
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, 30, CTL_EOL);
-#ifdef DEBUG
-		sysctl_createv(&nilfs_sysctl_log, 0, NULL, &node,
-			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			       CTLTYPE_INT, "verbose",
-			       SYSCTL_DESCR("Bitmask for filesystem debugging"),
-			       NULL, 0, &nilfs_verbose, 0,
-			       CTL_VFS, 30, NILFS_VERBOSE_SYSCTLOPT, CTL_EOL);
-#endif
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&nilfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_teardown(&nilfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;
@@ -1023,7 +1026,7 @@ nilfs_start(struct mount *mp, int flags)
 /* --------------------------------------------------------------------- */
 
 int
-nilfs_root(struct mount *mp, struct vnode **vpp)
+nilfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	uint64_t ino = NILFS_ROOT_INO;
 	int error;
@@ -1032,7 +1035,7 @@ nilfs_root(struct mount *mp, struct vnode **vpp)
 
 	error = vcache_get(mp, &ino, sizeof(ino), vpp);
 	if (error == 0) {
-		error = vn_lock(*vpp, LK_EXCLUSIVE);
+		error = vn_lock(*vpp, lktype);
 		if (error) {
 			vrele(*vpp);
 			*vpp = NULL;
@@ -1090,7 +1093,7 @@ nilfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
  * (optional) TODO lookup why some sources state NFSv3
  */
 int
-nilfs_vget(struct mount *mp, ino_t ino,
+nilfs_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 	DPRINTF(NOTIMPL, ("nilfs_vget called\n"));
@@ -1189,7 +1192,7 @@ nilfs_loadvnode(struct mount *mp, struct vnode *vp,
  * Lookup vnode for file handle specified
  */
 int
-nilfs_fhtovp(struct mount *mp, struct fid *fhp,
+nilfs_fhtovp(struct mount *mp, struct fid *fhp, int lktype,
     struct vnode **vpp)
 {
 	DPRINTF(NOTIMPL, ("nilfs_fhtovp called\n"));

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.137 2017/08/19 11:27:42 maya Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.137.4.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.137 2017/08/19 11:27:42 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.137.4.1 2020/04/08 14:09:04 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -95,16 +95,16 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.137 2017/08/19 11:27:42 maya Exp $")
 #define SET_BITMAP_FREE(F, I) do { \
 	DLOG((DLOG_ALLOC, "lfs: ino %d wrd %d bit %d set\n", (int)(I), 	\
 	     (int)((I) >> BMSHIFT), (int)((I) & BMMASK)));		\
-	(F)->lfs_ino_bitmap[(I) >> BMSHIFT] |= (1 << ((I) & BMMASK));	\
+	(F)->lfs_ino_bitmap[(I) >> BMSHIFT] |= (1U << ((I) & BMMASK));	\
 } while (0)
 #define CLR_BITMAP_FREE(F, I) do { \
 	DLOG((DLOG_ALLOC, "lfs: ino %d wrd %d bit %d clr\n", (int)(I), 	\
 	     (int)((I) >> BMSHIFT), (int)((I) & BMMASK)));		\
-	(F)->lfs_ino_bitmap[(I) >> BMSHIFT] &= ~(1 << ((I) & BMMASK));	\
+	(F)->lfs_ino_bitmap[(I) >> BMSHIFT] &= ~(1U << ((I) & BMMASK));	\
 } while(0)
 
 #define ISSET_BITMAP_FREE(F, I) \
-	((F)->lfs_ino_bitmap[(I) >> BMSHIFT] & (1 << ((I) & BMMASK)))
+	((F)->lfs_ino_bitmap[(I) >> BMSHIFT] & (1U << ((I) & BMMASK)))
 
 /*
  * Add a new block to the Ifile, to accommodate future file creations.
@@ -705,16 +705,16 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
  * Takes the segmenet lock.
  */
 void
-lfs_order_freelist(struct lfs *fs)
+lfs_order_freelist(struct lfs *fs, ino_t **orphanp, size_t *norphanp)
 {
 	CLEANERINFO *cip;
 	IFILE *ifp = NULL;
 	struct buf *bp;
 	ino_t ino, firstino, lastino, maxino;
-#ifdef notyet
-	struct vnode *vp;
-#endif
-	
+	ino_t *orphan = NULL;
+	size_t norphan = 0;
+	size_t norphan_alloc = 0;
+
 	ASSERT_NO_SEGLOCK(fs);
 	lfs_seglock(fs, SEGM_PROT);
 
@@ -745,7 +745,6 @@ lfs_order_freelist(struct lfs *fs)
 		if (ino == LFS_UNUSED_INUM || ino == LFS_IFILE_INUM)
 			continue;
 
-#ifdef notyet
 		/*
 		 * Address orphaned files.
 		 *
@@ -757,39 +756,26 @@ lfs_order_freelist(struct lfs *fs)
 		 * but presumably it doesn't work... not sure what
 		 * happens to such files currently. -- dholland 20160806
 		 */
-		if (lfs_if_getnextfree(fs, ifp) == LFS_ORPHAN_NEXTFREE &&
-		    VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp) == 0) {
-			unsigned segno;
-
-			/* get the segment the inode in on disk  */
-			segno = lfs_dtosn(fs, lfs_if_getdaddr(fs, ifp));
-
-			/* truncate the inode */
-			lfs_truncate(vp, 0, 0, NOCRED);
-			vput(vp);
-
-			/* load the segment summary */
-			LFS_SEGENTRY(sup, fs, segno, bp);
-			/* update the number of bytes in the segment */
-			KASSERT(sup->su_nbytes >= DINOSIZE(fs));
-			sup->su_nbytes -= DINOSIZE(fs);
-			/* write the segment summary */
-			LFS_WRITESEGENTRY(sup, fs, segno, bp);
-
-			/* Drop the on-disk address */
-			lfs_if_setdaddr(fs, ifp, LFS_UNUSED_DADDR);
-			/* write the ifile entry */
-			LFS_BWRITE_LOG(bp);
-
-			/*
-			 * and reload it (XXX: why? I guess
-			 * LFS_BWRITE_LOG drops it...)
-			 */
-			LFS_IENTRY(ifp, fs, ino, bp);
-
-			/* Fall through to next if block */
+		if (lfs_if_getnextfree(fs, ifp) == LFS_ORPHAN_NEXTFREE(fs)) {
+			if (orphan == NULL) {
+				norphan_alloc = 32; /* XXX pulled from arse */
+				orphan = kmem_zalloc(sizeof(orphan[0]) *
+				    norphan_alloc, KM_SLEEP);
+			} else if (norphan == norphan_alloc) {
+				ino_t *orphan_new;
+				if (norphan_alloc >= 4096)
+					norphan_alloc += 4096;
+				else
+					norphan_alloc *= 2;
+				orphan_new = kmem_zalloc(sizeof(orphan[0]) *
+				    norphan_alloc, KM_SLEEP);
+				memcpy(orphan_new, orphan, sizeof(orphan[0]) *
+				    norphan);
+				kmem_free(orphan, sizeof(orphan[0]) * norphan);
+				orphan = orphan_new;
+			}
+			orphan[norphan++] = ino;
 		}
-#endif
 
 		if (lfs_if_getdaddr(fs, ifp) == LFS_UNUSED_DADDR) {
 
@@ -836,6 +822,22 @@ lfs_order_freelist(struct lfs *fs)
 
 	/* done */
 	lfs_segunlock(fs);
+
+	/*
+	 * Shrink the array of orphans so we don't have to carry around
+	 * the allocation size.
+	 */
+	if (norphan < norphan_alloc) {
+		ino_t *orphan_new = kmem_alloc(sizeof(orphan[0]) * norphan,
+		    KM_SLEEP);
+		memcpy(orphan_new, orphan, sizeof(orphan[0]) * norphan);
+		kmem_free(orphan, sizeof(orphan[0]) * norphan_alloc);
+		orphan = orphan_new;
+		norphan_alloc = norphan;
+	}
+
+	*orphanp = orphan;
+	*norphanp = norphan;
 }
 
 /*
@@ -851,6 +853,85 @@ lfs_orphan(struct lfs *fs, ino_t ino)
 	struct buf *bp;
 
 	LFS_IENTRY(ifp, fs, ino, bp);
-	lfs_if_setnextfree(fs, ifp, LFS_ORPHAN_NEXTFREE);
+	lfs_if_setnextfree(fs, ifp, LFS_ORPHAN_NEXTFREE(fs));
 	LFS_BWRITE_LOG(bp);
+}
+
+/*
+ * Free orphans discovered during mount.  This is a separate stage
+ * because it requires fs->lfs_suflags to be set up, which is not done
+ * by the time we run lfs_order_freelist.  It's possible that we could
+ * run lfs_order_freelist later (i.e., set up fs->lfs_suflags sooner)
+ * but that requires more thought than I can put into this at the
+ * moment.
+ */
+void
+lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)
+{
+	size_t i;
+
+	for (i = 0; i < norphan; i++) {
+		ino_t ino = orphan[i];
+		unsigned segno;
+		struct vnode *vp;
+		struct inode *ip;
+		struct buf *bp;
+		IFILE *ifp;
+		SEGUSE *sup;
+		int error;
+
+		/* Get the segment the inode is in on disk.  */
+		LFS_IENTRY(ifp, fs, ino, bp);
+		segno = lfs_dtosn(fs, lfs_if_getdaddr(fs, ifp));
+		brelse(bp, 0);
+
+		/*
+		 * Try to get the vnode.  If we can't, tough -- hope
+		 * you have backups!
+		 */
+		error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, LK_EXCLUSIVE,
+		    &vp);
+		if (error) {
+			printf("orphan %jd vget error %d\n", (intmax_t)ino,
+			    error);
+			continue;
+		}
+
+		/*
+		 * Sanity-check the inode.
+		 *
+		 * XXX What to do if it is still referenced?
+		 */
+		ip = VTOI(vp);
+		if (ip->i_nlink != 0)
+			printf("orphan %jd nlink %d\n", (intmax_t)ino,
+			    ip->i_nlink);
+
+		/*
+		 * Truncate the inode, to free any blocks allocated for
+		 * it, and release it, to free the inode number.
+		 *
+		 * XXX Isn't it redundant to truncate?  Won't vput do
+		 * that for us?
+		 */
+		error = lfs_truncate(vp, 0, 0, NOCRED);
+		if (error)
+			printf("orphan %jd truncate error %d", (intmax_t)ino,
+			    error);
+		vput(vp);
+
+		/* Update the number of bytes in the segment summary.  */
+		LFS_SEGENTRY(sup, fs, segno, bp);
+		KASSERT(sup->su_nbytes >= DINOSIZE(fs));
+		sup->su_nbytes -= DINOSIZE(fs);
+		LFS_WRITESEGENTRY(sup, fs, segno, bp);
+
+		/* Drop the on-disk address.  */
+		LFS_IENTRY(ifp, fs, ino, bp);
+		lfs_if_setdaddr(fs, ifp, LFS_UNUSED_DADDR);
+		LFS_BWRITE_LOG(bp);
+	}
+
+	if (orphan)
+		kmem_free(orphan, sizeof(orphan[0]) * norphan);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic.c,v 1.1.4.1 2019/06/10 22:07:10 christos Exp $ */
+/* $NetBSD: dwiic.c,v 1.1.4.2 2020/04/08 14:08:06 martin Exp $ */
 
 /* $OpenBSD: dwiic.c,v 1.4 2018/05/23 22:08:00 kettenis Exp $ */
 
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.1.4.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.1.4.2 2020/04/08 14:08:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -145,8 +145,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.1.4.1 2019/06/10 22:07:10 christos Exp $
 
 static int	dwiic_init(struct dwiic_softc *);
 static void	dwiic_enable(struct dwiic_softc *, bool);
-static int	dwiic_i2c_acquire_bus(void *, int);
-static void	dwiic_i2c_release_bus(void *, int);
 static uint32_t	dwiic_read(struct dwiic_softc *, int);
 static void	dwiic_write(struct dwiic_softc *, int, uint32_t);
 static int	dwiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
@@ -184,16 +182,14 @@ dwiic_attach(struct dwiic_softc *sc)
 	dwiic_enable(sc, 0);
 	dwiic_read(sc, DW_IC_CLR_INTR);
 
-	mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_int_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_int_readwait, "dwiicr");
 	cv_init(&sc->sc_int_writewait, "dwiicw");
 	cv_init(&sc->sc_int_stopwait, "dwiics");
 
 	/* setup and attach iic bus */
+	iic_tag_init(&sc->sc_i2c_tag);
 	sc->sc_i2c_tag.ic_cookie = sc;
-	sc->sc_i2c_tag.ic_acquire_bus = dwiic_i2c_acquire_bus;
-	sc->sc_i2c_tag.ic_release_bus = dwiic_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = dwiic_i2c_exec;
 
 	sc->sc_iba.iba_tag = &sc->sc_i2c_tag;
@@ -270,29 +266,6 @@ dwiic_write(struct dwiic_softc *sc, int offset, uint32_t val)
 }
 
 static int
-dwiic_i2c_acquire_bus(void *cookie, int flags)
-{
-	struct dwiic_softc *sc = cookie;
-
-	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
-		return (0);
-
-	mutex_enter(&sc->sc_i2c_lock);
-	return 0;
-}
-
-void
-dwiic_i2c_release_bus(void *cookie, int flags)
-{
-	struct dwiic_softc *sc = cookie;
-
-	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
-		return;
-
-	mutex_exit(&sc->sc_i2c_lock);
-}
-
-static int
 dwiic_init(struct dwiic_softc *sc)
 {
 	uint32_t reg;
@@ -362,7 +335,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	const uint8_t *bcmd;
 	uint8_t *bdata;
 
-	if (cold || sc->sc_poll)
+	if (sc->sc_poll)
 		flags |= I2C_F_POLL;
 
 	DPRINTF(("%s: %s: op %d, addr 0x%02x, cmdlen %zu, len %zu, "

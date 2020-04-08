@@ -1,4 +1,4 @@
-.\"	$NetBSD: vndcompress.1,v 1.14 2014/01/22 06:18:17 riastradh Exp $
+.\"	$NetBSD: vndcompress.1,v 1.14.26.1 2020/04/08 14:09:18 martin Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 21, 2014
+.Dd January 24, 2020
 .Dt VNDCOMPRESS 1
 .Os
 .Sh NAME
@@ -59,7 +59,7 @@ utility compresses disk images in cloop2 format, which the kernel's
 device can interpret as read-only disk devices using the
 .Fl z
 option to
-.Xr vnconfig 8 .
+.Xr vndconfig 8 .
 .Pp
 By default,
 .Nm vndcompress
@@ -203,7 +203,7 @@ assuming your kernel was built with the
 .Dv VND_COMPRESSION
 option enabled:
 .Bd -literal -offset indent
-# vnconfig -z vnd0 disk.cloop2
+# vndconfig -z vnd0 disk.cloop2
 # mount /dev/vnd0d /mnt
 .Ed
 .Sh SIGNALS
@@ -246,7 +246,7 @@ may be truncated if the uncompressed image's size is not a multiple of
 the compression block size.
 .Sh SEE ALSO
 .Xr vnd 4 ,
-.Xr vnconfig 8
+.Xr vndconfig 8
 .Sh HISTORY
 The
 .Nm

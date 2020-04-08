@@ -1,4 +1,4 @@
-/*	$NetBSD: xsyslog.c,v 1.5 2017/04/18 12:34:07 maya Exp $	*/
+/*	$NetBSD: xsyslog.c,v 1.5.12.1 2020/04/08 14:07:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: xsyslog.c,v 1.5 2017/04/18 12:34:07 maya Exp $");
+__RCSID("$NetBSD: xsyslog.c,v 1.5.12.1 2020/04/08 14:07:13 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -124,7 +124,7 @@ _closelog_unlocked_r(struct syslog_data *data)
 	data->log_connected = 0;
 }
 
-static void
+static __sysloglike(6, 7) void
 _xsyslogp_r(int pri, struct syslog_fun *fun,
     struct syslog_data *data, const char *msgid,
     const char *sdfmt, const char *msgfmt, ...)
@@ -160,7 +160,7 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 	/* Check for invalid bits. */
 	if (pri & ~(LOG_PRIMASK|LOG_FACMASK)) {
 		_xsyslogp_r(INTERNALLOG, &_syslog_ss_fun, data, NULL, NULL,
-		    "%s: unknown facility/priority: %x", pri);
+		    "Unknown facility/priority: %#x", pri);
 		pri &= LOG_PRIMASK|LOG_FACMASK;
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.2 2018/04/01 04:35:03 ryo Exp $ */
+/* $NetBSD: frame.h,v 1.2.2.1 2020/04/08 14:07:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@ __CTASSERT((sizeof(struct trapframe) & 15) == 0);
 struct faultbuf {
 	register_t fb_reg[FB_MAX];
 };
+
+#define	lwp_trapframe(l)		((l)->l_md.md_utf)
 
 #elif defined(__arm__)
 

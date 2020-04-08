@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.20 2016/11/20 03:30:11 pgoyette Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.20.16.1 2020/04/08 14:07:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.20 2016/11/20 03:30:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.20.16.1 2020/04/08 14:07:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1473,11 +1473,6 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * 2. Redistributions in binary form must reproduce the above copyright
  *	notice, this list of conditions and the following disclaimer in the
  *	documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *	must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *	derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -1506,13 +1501,6 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -2405,7 +2393,7 @@ acedump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	}
 #else	/* ACE_DUMP_NOT_TRUSTED */
 	/* Let's just talk about this first... */
-	device_printf(ace->sc_dev, ": dump addr 0x%p, size %zu blkno %llx\n",
+	device_printf(ace->sc_dev, ": dump addr %p, size %zu blkno %llx\n",
 	    va, size, blkno);
 	DELAY(500 * 1000);	/* half a second */
 	err = 0;

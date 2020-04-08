@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.94.2.1 2019/06/10 22:07:12 christos Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.94.2.2 2020/04/08 14:08:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.94.2.1 2019/06/10 22:07:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.94.2.2 2020/04/08 14:08:07 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -589,7 +589,7 @@ loop:
 	if (egwritePCB(iot, ioh, sc->eg_pcb) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "can't send Send Packet command\n");
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		ifp->if_flags &= ~IFF_OACTIVE;
 		m_freem(m0);
 		goto loop;
@@ -620,6 +620,7 @@ int
 egintr(void *arg)
 {
 	struct eg_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, len, serviced;
@@ -657,11 +658,12 @@ egintr(void *arg)
 			if (sc->eg_pcb[6] || sc->eg_pcb[7]) {
 				DPRINTF(("%s: packet dropped\n",
 				    device_xname(sc->sc_dev)));
-				sc->sc_ethercom.ec_if.if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 			} else
-				sc->sc_ethercom.ec_if.if_opackets++;
-			sc->sc_ethercom.ec_if.if_collisions +=
-			    sc->eg_pcb[8] & 0xf;
+				if_statinc(ifp, if_opackets);
+			if (sc->eg_pcb[8] & 0xf)
+				if_statadd(ifp, if_collisions,
+				    sc->eg_pcb[8] & 0xf);
 			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 			egstart(&sc->sc_ethercom.ec_if);
 			serviced = 1;
@@ -712,14 +714,14 @@ egread(struct eg_softc *sc, void *buf, int len)
 	    len > ETHER_MAX_LEN) {
 		aprint_error_dev(sc->sc_dev,
 		    "invalid packet size %d; dropping\n", len);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
 	/* Pull packet off interface. */
 	m = egget(sc, buf, len);
 	if (m == 0) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -861,7 +863,7 @@ egwatchdog(struct ifnet *ifp)
 	struct eg_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	sc->sc_ethercom.ec_if.if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	egreset(sc);
 }

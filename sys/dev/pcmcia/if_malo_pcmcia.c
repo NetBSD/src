@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.18.2.1 2019/06/10 22:07:30 christos Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.18.2.2 2020/04/08 14:08:11 martin Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.18.2.1 2019/06/10 22:07:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.18.2.2 2020/04/08 14:08:11 martin Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -525,7 +525,7 @@ cmalo_start(struct ifnet *ifp)
 	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	if (cmalo_tx(sc, m) != 0)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 }
 
 static int
@@ -1046,7 +1046,7 @@ cmalo_rx(struct malo_softc *sc)
 	    rxdesc->pkglen, ETHER_ALIGN, ifp);
 	if (m == NULL) {
 		DPRINTF(1, "RX m_devget failed\n");
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -1110,7 +1110,7 @@ cmalo_tx_done(struct malo_softc *sc)
 	DPRINTF(2, "%s: TX done\n", device_xname(sc->sc_dev));
 
 	s = splnet();
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
 	cmalo_start(ifp);

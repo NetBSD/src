@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -436,8 +436,11 @@ CvSwitchFiles(
         Current = Current->Parent;
     }
 
-    /* Redirect output to Op->Common.CvFilename */
+    if (FNode)
+    {
+        /* Redirect output to Op->Common.CvFilename */
 
-    AcpiOsRedirectOutput (FNode->File);
-    AcpiGbl_CurrentFilename = FNode->Filename;
+        AcpiOsRedirectOutput (FNode->File);
+        AcpiGbl_CurrentFilename = FNode->Filename;
+    }
 }

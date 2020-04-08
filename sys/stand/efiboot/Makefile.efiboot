@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.7.2.2 2019/06/10 22:09:56 christos Exp $
+# $NetBSD: Makefile.efiboot,v 1.7.2.3 2020/04/08 14:09:02 martin Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -8,7 +8,7 @@ NOLIBCSANITIZER=# defined
 NOSANITIZER=	# defined
 NORELRO=	# defined
 PROG?=		boot.efi
-NEWVERSWHAT?=	"EFI Boot"
+NEWVERSWHAT?=	"efiboot"
 
 EFIDIR= ${S}/external/bsd/gnu-efi/dist
 GNUEFIARCH?= ${MACHINE_CPU}
@@ -22,7 +22,7 @@ AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 .PATH: ${EFIDIR}/gnuefi
 SOURCES=	crt0-efi-${GNUEFIARCH}.S reloc_${GNUEFIARCH}.c
 SOURCES+=	boot.c conf.c console.c dev_net.c devopen.c exec.c panic.c prompt.c
-SOURCES+=	efiboot.c efichar.c efidev.c efienv.c efigetsecs.c efifdt.c efifile.c efiblock.c efinet.c efipxe.c efiacpi.c
+SOURCES+=	efiboot.c efichar.c efidev.c efienv.c efigetsecs.c efifdt.c efifile.c efiblock.c efinet.c efipxe.c efiacpi.c smbios.c
 
 .PATH: ${S}/external/bsd/libfdt/dist
 CPPFLAGS+=	-I${S}/external/bsd/libfdt/dist
@@ -86,6 +86,11 @@ CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
 #CPPFLAGS+= -DNFS_DEBUG
 #CPPFLAGS+= -DRARP_DEBUG
 #CPPFLAGS+= -DRPC_DEBUG
+
+# Follow the suit of Makefile.kern.inc; needed for the lfs64 union
+# accessors -- they don't actually dereference the resulting pointer,
+# just use it for type-checking.
+CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_WIDTH_SUPPORT

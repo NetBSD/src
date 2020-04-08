@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoi.c,v 1.2 2015/05/01 14:17:56 christos Exp $	*/
+/*	$NetBSD: strtoi.c,v 1.2.16.1 2020/04/08 14:03:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005 The DragonFly Project.  All rights reserved.
@@ -30,12 +30,12 @@
  * NetBSD: src/common/lib/libc/stdlib/strtoul.c,v 1.3 2008/08/20 19:58:34 oster Exp
  */
 
-#if HAVE_NBTOOL_CONFIG_H
+#if defined(HAVE_NBTOOL_CONFIG_H) && HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoi.c,v 1.2 2015/05/01 14:17:56 christos Exp $");
+__RCSID("$NetBSD: strtoi.c,v 1.2.16.1 2020/04/08 14:03:05 martin Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"

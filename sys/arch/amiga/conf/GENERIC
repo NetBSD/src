@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.320.4.1 2019/06/10 22:05:48 christos Exp $
+# $NetBSD: GENERIC,v 1.320.4.2 2020/04/08 14:07:26 martin Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.320.4.1 $"
+#ident 		"GENERIC-$Revision: 1.320.4.2 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -109,7 +109,6 @@ file-system 	OVERLAY		# overlay filesystem
 file-system 	PROCFS		# /proc filesystem
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
-file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
@@ -427,10 +426,10 @@ gencp*		at acafhbus?		# clockport on ACA500
 
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
 wdc*		at zbus0		# Buddha / Catweasel
-#efa0		at mainbus0		# ELBOX FastATA 1200 Mk-III/Mk-IV 
+efa0		at mainbus0		# ELBOX FastATA 1200 Mk-III/Mk-IV 
 
 atabus* 	at wdc? channel ?	# ATA bus
-#atabus*	at efa? channel ?	# ATA bus 
+atabus*	at efa? channel ?	# ATA bus 
 atabus*		at ata? channel ?	# ATA bus 
 wd*		at atabus? drive ?	#  + drives
 atapibus*	at atabus?		# ATAPI bus
@@ -590,7 +589,6 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 pseudo-device	ksyms			# /dev/ksyms (kernel symbols)
-pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device   bcsp                    # BlueCore Serial Protocol
 pseudo-device   btuart                  # Bluetooth HCI UART (H4)
 

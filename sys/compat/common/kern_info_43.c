@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.35.30.1 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.35.30.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.35.30.1 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.35.30.2 2020/04/08 14:08:00 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -172,11 +172,19 @@ compat_43_sys_getkerninfo(struct lwp *l, const struct compat_43_sys_getkerninfo_
 		syscallarg(int) arg;
 	} */
 	int error, name[6];
+	int isize;
 	size_t size;
 
-	if (SCARG(uap, size) && (error = copyin((void *)SCARG(uap, size),
-	    (void *)&size, sizeof(size))))
-		return (error);
+	if (!SCARG(uap, size))
+		return EINVAL;
+
+	if ((error = copyin(SCARG(uap, size), &isize, sizeof(isize))) != 0)
+		return error;
+
+	if (isize < 0 || isize > 4096)
+		return EINVAL;
+
+	size = isize;
 
 	switch (SCARG(uap, op) & 0xff00) {
 
@@ -283,7 +291,7 @@ compat_43_sys_getkerninfo(struct lwp *l, const struct compat_43_sys_getkerninfo_
 			ksi.open_max = OPEN_MAX;
 			ksi.child_max = CHILD_MAX;
 
-			TIMESPEC_TO_TIMEVAL(&tv, &boottime);
+			getmicroboottime(&tv);
 			timeval_to_timeval50(&tv, &ksi.boottime);
 			COPY(hostname);
 

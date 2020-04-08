@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.20 2015/06/21 03:58:36 dholland Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.20.16.1 2020/04/08 14:07:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -50,8 +50,10 @@ struct fstab;
 int checkfstab(int, int, void *(*)(struct fstab *), 
     int (*) (const char *, const char *, const char *, void *, pid_t *));
 
-void (*ckfinish)(int);
+extern void (*ckfinish)(int);
 extern volatile sig_atomic_t returntosingle;
 void catch(int) __dead;
 void catchquit(int);
 void voidquit(int);
+
+extern int quiet;

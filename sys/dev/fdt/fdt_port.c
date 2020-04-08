@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.c,v 1.1.4.1 2019/06/10 22:07:08 christos Exp $	*/
+/*	$NetBSD: fdt_port.c,v 1.1.4.2 2020/04/08 14:08:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.1.4.1 2019/06/10 22:07:08 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.1.4.2 2020/04/08 14:08:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,8 +190,8 @@ fdt_endpoint_activate(struct fdt_endpoint *ep, bool activate)
 		return EBUSY;
 
 	rdp = rep->ep_port->port_dp;
-device_printf(rdp->dp_dev, "activating port %d endpoint %d\n",
-    fdt_endpoint_port_index(rep), fdt_endpoint_index(rep));
+	aprint_debug_dev(rdp->dp_dev, "activating port %d endpoint %d\n",
+	    fdt_endpoint_port_index(rep), fdt_endpoint_index(rep));
 	if (rdp->dp_ep_activate)
 		error = rdp->dp_ep_activate(rdp->dp_dev, rep, activate);
 
@@ -207,8 +207,8 @@ fdt_endpoint_activate_direct(struct fdt_endpoint *ep, bool activate)
 	int error = 0;
 
 	dp = ep->ep_port->port_dp;
-device_printf(dp->dp_dev, "activating port %d endpoint %d (direct)\n",
-    fdt_endpoint_port_index(ep), fdt_endpoint_index(ep));
+	aprint_debug_dev(dp->dp_dev, "activating port %d endpoint %d (direct)\n",
+	    fdt_endpoint_port_index(ep), fdt_endpoint_index(ep));
 	if (dp->dp_ep_activate)
 		error = dp->dp_ep_activate(dp->dp_dev, ep, activate);
 
@@ -257,7 +257,7 @@ fdt_ports_register(struct fdt_device_ports *ports, device_t self,
 	int port_phandle, child;
 	int i;
 	char buf[20];
-	uint64_t id;
+	bus_addr_t id;
 
 	ports->dp_dev = self;
 	SLIST_INSERT_HEAD(&fdt_port_devices, ports, dp_list);
@@ -296,7 +296,7 @@ again:
 		}
 		if (strcmp(buf, "port") != 0)
 			continue;
-		if (fdtbus_get_reg64(child, 0, &id, NULL) != 0) {
+		if (fdtbus_get_reg(child, 0, &id, NULL) != 0) {
 			if (ports->dp_nports > 1)
 				aprint_error_dev(self,
 				    "%s: missing reg property",
@@ -372,8 +372,8 @@ fdt_endpoints_register(int phandle, struct fdt_port *port,
 		} else if (rep != NULL) {
 			rep->ep_rep = ep;
 			rep->ep_rphandle = child;
-			aprint_verbose("%s ", ep_name(ep, buf, sizeof(buf)));
-			aprint_verbose("connected to %s\n",
+			aprint_debug("%s ", ep_name(ep, buf, sizeof(buf)));
+			aprint_debug("connected to %s\n",
 			    ep_name(rep, buf, sizeof(buf)));
 			if (rep->ep_type == EP_OTHER)
 				rep->ep_type = ep->ep_type;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.236.16.1 2019/06/10 22:05:34 christos Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.236.16.2 2020/04/08 14:07:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.236.16.1 2019/06/10 22:05:34 christos Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.236.16.2 2020/04/08 14:07:19 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1306,14 +1306,14 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 		    ifcr.ifcr_capabilities, MAX_PRINT_LEN);
 		bp = fbuf;
 		while (*bp != '\0') {
-			printf("\tcapabilities=%s\n", &bp[2]);
+			printf("\tcapabilities=%s\n", bp);
 			bp += strlen(bp) + 1;
 		}
 		(void)snprintb_m(fbuf, sizeof(fbuf), IFCAPBITS,
 		    ifcr.ifcr_capenable, MAX_PRINT_LEN);
 		bp = fbuf;
 		while (*bp != '\0') {
-			printf("\tenabled=%s\n", &bp[2]);
+			printf("\tenabled=%s\n", bp);
 			bp += strlen(bp) + 1;
 		}
 	}

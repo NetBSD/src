@@ -1,4 +1,4 @@
-#	$NetBSD: majors.or1k,v 1.2 2015/04/23 23:22:52 pgoyette Exp $
+#	$NetBSD: majors.or1k,v 1.2.20.1 2020/04/08 14:07:48 martin Exp $
 #
 # Device majors for OpenRISC 1000
 #
@@ -23,7 +23,7 @@ device-major	ipl		char 16			ipfilter
 device-major	vcoda		char 17			vcoda
 device-major	altq		char 18			altq
 device-major	prof		char 19			profiler
-device-major	nsmb		char 20			nsmb
+#device-major	obsolete	char 20			obsolete (nsmb)
 
 device-major	wd		char 30  block 30	wd
 device-major	fd		char 31  block 31	fdc
@@ -61,7 +61,6 @@ device-major	uhid		char 81			uhid
 device-major	ugen		char 82			ugen
 device-major	ulpt		char 83			ulpt
 device-major	ucom		char 84			ucom
-device-major	urio		char 85			urio
 device-major	uscanner	char 86			uscanner
 
 device-major	agp		char 90			agp

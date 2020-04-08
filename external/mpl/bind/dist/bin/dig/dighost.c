@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.4.2.2 2019/06/10 22:02:58 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.4.2.3 2020/04/08 14:07:04 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -812,8 +812,8 @@ clone_lookup(dig_lookup_t *lookold, bool servers) {
 		memmove(looknew->ecs_addr, lookold->ecs_addr, len);
 	}
 
-	dns_name_copy(dns_fixedname_name(&lookold->fdomain),
-		      dns_fixedname_name(&looknew->fdomain), NULL);
+	dns_name_copynf(dns_fixedname_name(&lookold->fdomain),
+			   dns_fixedname_name(&looknew->fdomain));
 
 	if (servers)
 		clone_server_list(lookold->my_server_list,
@@ -1823,7 +1823,7 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 				if (lookup->ns_search_only)
 					lookup->recurse = false;
 				domain = dns_fixedname_name(&lookup->fdomain);
-				dns_name_copy(name, domain, NULL);
+				dns_name_copynf(name, domain);
 			}
 			debug("adding server %s", namestr);
 			num = getaddresses(lookup, namestr, &lresult);
@@ -2027,6 +2027,9 @@ setup_lookup(dig_lookup_t *lookup) {
 	char cookiebuf[256];
 	char *origin = NULL;
 	char *textname = NULL;
+
+	REQUIRE(lookup != NULL);
+
 #ifdef HAVE_LIBIDN2
 	char idn_origin[MXNAME], idn_textname[MXNAME];
 
@@ -2035,7 +2038,6 @@ setup_lookup(dig_lookup_t *lookup) {
 	check_result(result, "dns_name_settotextfilter");
 #endif /* HAVE_LIBIDN2 */
 
-	REQUIRE(lookup != NULL);
 	INSIST(!free_now);
 
 	debug("setup_lookup(%p)", lookup);
@@ -2136,22 +2138,26 @@ setup_lookup(dig_lookup_t *lookup) {
 			isc_buffer_init(&b, textname, len);
 			isc_buffer_add(&b, len);
 			result = dns_name_fromtext(name, &b, NULL, 0, NULL);
-			if (result == ISC_R_SUCCESS &&
-			    !dns_name_isabsolute(name))
-				result = dns_name_concatenate(name,
-							      lookup->oname,
-							      lookup->name,
-							      &lookup->namebuf);
-			else if (result == ISC_R_SUCCESS)
-				result = dns_name_copy(name, lookup->name,
-						       &lookup->namebuf);
+			if (result == ISC_R_SUCCESS) {
+				if (!dns_name_isabsolute(name)) {
+					result = dns_name_concatenate(name,
+							     lookup->oname,
+							     lookup->name,
+							     &lookup->namebuf);
+				} else {
+					result = dns_name_copy(name,
+							     lookup->name,
+							     &lookup->namebuf);
+				}
+			}
 			if (result != ISC_R_SUCCESS) {
 				dns_message_puttempname(lookup->sendmsg,
 							&lookup->name);
 				dns_message_puttempname(lookup->sendmsg,
 							&lookup->oname);
-				if (result == DNS_R_NAMETOOLONG)
+				if (result == DNS_R_NAMETOOLONG) {
 					return (false);
+				}
 				fatal("'%s' is not in legal name syntax (%s)",
 				      lookup->textname,
 				      isc_result_totext(result));

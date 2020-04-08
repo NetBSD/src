@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_l2tp.sh,v 1.7 2017/08/03 03:16:27 ozaki-r Exp $
+#	$NetBSD: t_ipsec_l2tp.sh,v 1.7.4.1 2020/04/08 14:09:12 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -62,6 +62,15 @@ make_l2tp_pktstr()
 	echo "$src > $dst: $proto_cap.+$proto_str"
 }
 
+wait_for_all_dad_completions()
+{
+
+	for sock in $SOCK_LOCAL $SOCK_TUN_LOCAL $SOCK_TUN_REMOTE $SOCK_REMOTE; do
+		export RUMP_SERVER=$sock
+		atf_check -s exit:0 rump.ifconfig -w 10
+	done
+}
+
 test_ipsec4_l2tp()
 {
 	local mode=$1
@@ -121,8 +130,8 @@ test_ipsec4_l2tp()
 
 	export RUMP_SERVER=$SOCK_REMOTE
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_remote/24
-	# Run ifconfig -w 10 just once for optimization
-	atf_check -s exit:0 rump.ifconfig -w 10
+
+	wait_for_all_dad_completions
 
 	extract_new_packets $BUS_TUNNEL > $outfile
 
@@ -263,8 +272,8 @@ test_ipsec6_l2tp()
 
 	export RUMP_SERVER=$SOCK_REMOTE
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_remote
-	# Run ifconfig -w 10 just once for optimization
-	atf_check -s exit:0 rump.ifconfig -w 10
+
+	wait_for_all_dad_completions
 
 	extract_new_packets $BUS_TUNNEL > $outfile
 

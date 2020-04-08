@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_early.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: postscreen_early.c,v 1.2.12.1 2020/04/08 14:06:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -106,6 +106,7 @@ static void psc_early_event(int event, void *context)
 {
     const char *myname = "psc_early_event";
     PSC_STATE *state = (PSC_STATE *) context;
+    time_t *expire_time = state->client_info->expire_time;
     char    read_buf[PSC_READ_BUF_SIZE];
     int     read_count;
     DELTA_TIME elapsed;
@@ -144,7 +145,7 @@ static void psc_early_event(int event, void *context)
 	 */
 	if ((state->flags & PSC_STATE_FLAG_PREGR_TODO) != 0
 	    && (state->flags & PSC_STATE_MASK_PREGR_FAIL_DONE) == 0) {
-	    state->pregr_stamp = event_time() + var_psc_pregr_ttl;
+	    expire_time[PSC_TINDX_PREGR] = event_time() + var_psc_pregr_ttl;
 	    PSC_PASS_SESSION_STATE(state, "pregreet test",
 				   PSC_STATE_FLAG_PREGR_PASS);
 	}
@@ -177,7 +178,7 @@ static void psc_early_event(int event, void *context)
 		    psc_whitelist_non_dnsbl(state);
 	    }
 	    if (state->dnsbl_score < var_psc_dnsbl_thresh) {
-		state->dnsbl_stamp = event_time() + state->dnsbl_ttl;
+		expire_time[PSC_TINDX_DNSBL] = event_time() + state->dnsbl_ttl;
 		PSC_PASS_SESSION_STATE(state, "dnsbl test",
 				       PSC_STATE_FLAG_DNSBL_PASS);
 	    } else {

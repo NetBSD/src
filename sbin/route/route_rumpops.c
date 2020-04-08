@@ -1,4 +1,4 @@
-/*	$NetBSD: route_rumpops.c,v 1.1 2010/12/13 17:39:47 pooka Exp $	*/
+/*	$NetBSD: route_rumpops.c,v 1.1.46.1 2020/04/08 14:07:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: route_rumpops.c,v 1.1 2010/12/13 17:39:47 pooka Exp $");
+__RCSID("$NetBSD: route_rumpops.c,v 1.1.46.1 2020/04/08 14:07:20 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -43,16 +43,28 @@ __RCSID("$NetBSD: route_rumpops.c,v 1.1 2010/12/13 17:39:47 pooka Exp $");
 #include "prog_ops.h"
 
 const struct prog_ops prog_ops = {
-	.op_init =	rumpclient_init,
+	.op_init =		rumpclient_init,
 
-	.op_socket =	rump_sys_socket,
-	.op_open =	rump_sys_open,
-	.op_getpid =	rump_sys_getpid,
+	.op_socket =		rump_sys_socket,
+	.op_setsockopt =	rump_sys_setsockopt,
 
-	.op_read =	rump_sys_read,
-	.op_write =	rump_sys_write,
+	.op_open =		rump_sys_open,
+	.op_getpid =		rump_sys_getpid,
 
-	.op_sysctl =	rump_sys___sysctl,
+	.op_read =		rump_sys_read,
+	.op_write =		rump_sys_write,
 
-	.op_shutdown =	rump_sys_shutdown,
+	.op_shutdown =		rump_sys_shutdown,
+
+	.op_sysctl =		rump_sys___sysctl,
+
+	/*
+	 * The following are only indirected through ops because
+	 * santizers get confused otherwise.
+	 */
+	.op_sysctlbyname =	sysctlbyname,
+
+	.op_sysctlgetmibinfo =	sysctlgetmibinfo,
+
+	.op_sysctlnametomib =	sysctlnametomib,
 };

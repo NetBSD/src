@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.13.12.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.13.12.2 2020/04/08 14:09:04 martin Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.54 2015/03/17 09:39:29 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.13.12.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.13.12.2 2020/04/08 14:09:04 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -85,12 +85,12 @@ ulfs_start(struct mount *mp, int flags)
  * Return the root of a filesystem.
  */
 int
-ulfs_root(struct mount *mp, struct vnode **vpp)
+ulfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)ULFS_ROOTINO, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)ULFS_ROOTINO, lktype, &nvp)) != 0)
 		return (error);
 	*vpp = nvp;
 	return (0);
@@ -116,11 +116,11 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 	if (error) {
 		return (error);
 	}
-	mutex_enter(&mp->mnt_updating);
+	mutex_enter(mp->mnt_updating);
 
 	error = lfsquota_handle_cmd(mp, l, args);
 
-	mutex_exit(&mp->mnt_updating);
+	mutex_exit(mp->mnt_updating);
 	vfs_unbusy(mp);
 	return (error);
 #endif
@@ -172,7 +172,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 		return (error);
 	}
 
-	mutex_enter(&mp->mnt_updating);
+	mutex_enter(mp->mnt_updating);
 	switch (cmd) {
 
 	case Q_QUOTAON:
@@ -202,7 +202,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 	default:
 		error = EINVAL;
 	}
-	mutex_exit(&mp->mnt_updating);
+	mutex_exit(mp->mnt_updating);
 	vfs_unbusy(mp);
 	return (error);
 #endif
@@ -212,13 +212,14 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
  * filesystem has validated the file handle.
  */
 int
-ulfs_fhtovp(struct mount *mp, struct ulfs_ufid *ufhp, struct vnode **vpp)
+ulfs_fhtovp(struct mount *mp, struct ulfs_ufid *ufhp, int lktype,
+    struct vnode **vpp)
 {
 	struct vnode *nvp;
 	struct inode *ip;
 	int error;
 
-	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ufhp->ufid_ino, lktype, &nvp)) != 0) {
 		if (error == ENOENT)
 			error = ESTALE;
 		*vpp = NULLVP;

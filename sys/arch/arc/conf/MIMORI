@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.72.4.1 2019/06/10 22:05:49 christos Exp $
+#	$NetBSD: MIMORI,v 1.72.4.2 2020/04/08 14:07:27 martin Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -179,7 +179,7 @@ slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
-le*		at pci? dev ? function ?	# PCnet-PCI
+pcn*		at pci? dev ? function ?	# PCnet-PCI
 ne*		at pci? dev ? function ?	# NE2000-compatible
 tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
@@ -250,7 +250,6 @@ pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)

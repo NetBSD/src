@@ -1,4 +1,4 @@
-/*	$NetBSD: maps.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: maps.c,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -14,6 +14,11 @@
 /*	int	flags;
 /*
 /*	const char *maps_find(maps, key, flags)
+/*	MAPS	*maps;
+/*	const char *key;
+/*	int	flags;
+/*
+/*	const char *maps_file_find(maps, key, flags)
 /*	MAPS	*maps;
 /*	const char *key;
 /*	int	flags;
@@ -40,6 +45,10 @@
 /*	The flags argument is either 0 or specifies a filter:
 /*	for example, DICT_FLAG_FIXED | DICT_FLAG_PATTERN selects
 /*	dictionaries that have fixed keys or pattern keys.
+/*
+/*	maps_file_find() implements maps_find() but also decodes
+/*	the base64 lookup result. This requires that the maps are
+/*	opened with DICT_FLAG_SRC_RHS_IS_FILE.
 /*
 /*	maps_free() releases storage claimed by maps_create()
 /*	and conveniently returns a null pointer.
@@ -191,15 +200,81 @@ const char *maps_find(MAPS *maps, const char *name, int flags)
 			 maps->title, name);
 		msg_warn("%s should return NO RESULT in case of NOT FOUND",
 			 maps->title);
-		maps->error = DICT_ERR_RETRY;
+		maps->error = DICT_ERR_CONFIG;
 		return (0);
 	    }
 	    if (msg_verbose)
-		msg_info("%s: %s: %s: %s = %s", myname, maps->title,
-			 *map_name, name, expansion);
+		msg_info("%s: %s: %s: %s = %.100s%s", myname, maps->title,
+			 *map_name, name, expansion,
+			 strlen(expansion) > 100 ? "..." : "");
 	    return (expansion);
 	} else if ((maps->error = dict->error) != 0) {
-	    msg_warn("%s:%s lookup error for \"%.100s\"",
+	    msg_warn("%s:%s lookup error for \"%s\"",
+		     dict->type, dict->name, name);
+	    break;
+	}
+    }
+    if (msg_verbose)
+	msg_info("%s: %s: %s: %s", myname, maps->title, name, maps->error ?
+		 "search aborted" : "not found");
+    return (0);
+}
+
+/* maps_file_find - search a list of dictionaries and base64 decode */
+
+const char *maps_file_find(MAPS *maps, const char *name, int flags)
+{
+    const char *myname = "maps_file_find";
+    char  **map_name;
+    const char *expansion;
+    DICT   *dict;
+    VSTRING *unb64;
+    char   *err;
+
+    /*
+     * In case of return without map lookup (empty name or no maps).
+     */
+    maps->error = 0;
+
+    /*
+     * Temp. workaround, for buggy callers that pass zero-length keys when
+     * given partial addresses.
+     */
+    if (*name == 0)
+	return (0);
+
+    for (map_name = maps->argv->argv; *map_name; map_name++) {
+	if ((dict = dict_handle(*map_name)) == 0)
+	    msg_panic("%s: dictionary not found: %s", myname, *map_name);
+	if ((dict->flags & DICT_FLAG_SRC_RHS_IS_FILE) == 0)
+	    msg_panic("%s: %s: opened without DICT_FLAG_SRC_RHS_IS_FILE",
+		      myname, maps->title);
+	if (flags != 0 && (dict->flags & flags) == 0)
+	    continue;
+	if ((expansion = dict_get(dict, name)) != 0) {
+	    if (*expansion == 0) {
+		msg_warn("%s lookup of %s returns an empty string result",
+			 maps->title, name);
+		msg_warn("%s should return NO RESULT in case of NOT FOUND",
+			 maps->title);
+		maps->error = DICT_ERR_CONFIG;
+		return (0);
+	    }
+	    if (msg_verbose)
+		msg_info("%s: %s: %s: %s = %.100s%s", myname, maps->title,
+			 *map_name, name, expansion,
+			 strlen(expansion) > 100 ? "..." : "");
+	    if ((unb64 = dict_file_from_b64(dict, expansion)) == 0) {
+		err = dict_file_get_error(dict);
+		msg_warn("table %s:%s: key %s: %s",
+			 dict->type, dict->name, name, err);
+		myfree(err);
+		maps->error = DICT_ERR_CONFIG;
+		return (0);
+	    }
+	    return (vstring_str(unb64));
+	} else if ((maps->error = dict->error) != 0) {
+	    msg_warn("%s:%s lookup error for \"%s\"",
 		     dict->type, dict->name, name);
 	    break;
 	}

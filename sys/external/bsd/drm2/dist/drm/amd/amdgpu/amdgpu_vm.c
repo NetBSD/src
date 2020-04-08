@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vm.c,v 1.3.6.2 2019/06/10 22:07:58 christos Exp $	*/
+/*	$NetBSD: amdgpu_vm.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,12 +28,14 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.3.6.2 2019/06/10 22:07:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 #include "amdgpu_trace.h"
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * GPUVM
@@ -571,11 +573,7 @@ static void amdgpu_vm_frag_ptes(struct amdgpu_device *adev,
 	uint64_t frag_flags = AMDGPU_PTE_FRAG_64KB;
 	uint64_t frag_align = 0x80;
 
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-	uint64_t frag_start = round_up(pe_start, frag_align);
-#else
 	uint64_t frag_start = ALIGN(pe_start, frag_align);
-#endif
 	uint64_t frag_end = pe_end & ~(frag_align - 1);
 
 	unsigned count;
@@ -981,11 +979,7 @@ struct amdgpu_bo_va *amdgpu_vm_bo_add(struct amdgpu_device *adev,
 	INIT_LIST_HEAD(&bo_va->valids);
 	INIT_LIST_HEAD(&bo_va->invalids);
 	INIT_LIST_HEAD(&bo_va->vm_status);
-#ifdef __NetBSD__
-	linux_mutex_init(&bo_va->mutex);
-#else
 	mutex_init(&bo_va->mutex);
-#endif
 	list_add_tail(&bo_va->bo_list, &bo->va);
 
 	return bo_va;
@@ -1223,11 +1217,7 @@ void amdgpu_vm_bo_rmv(struct amdgpu_device *adev,
 		kfree(mapping);
 	}
 	fence_put(bo_va->last_pt_update);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&bo_va->mutex);
-#else
 	mutex_destroy(&bo_va->mutex);
-#endif
 	kfree(bo_va);
 }
 

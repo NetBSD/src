@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.61 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.61.12.1 2020/04/08 14:08:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.61 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.61.12.1 2020/04/08 14:08:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.61 2017/04/26 03:02:49 riastradh Ex
 /*
  * Prototypes for dead operations on vnodes.
  */
-#define dead_bwrite	genfs_nullop
+#define	dead_bwrite	vn_bwrite
 int	dead_lookup(void *);
 int	dead_open(void *);
 #define dead_close	genfs_nullop
@@ -348,7 +348,7 @@ dead_getpages(void *v)
 	} */ *ap = v;
 
 	if ((ap->a_flags & PGO_LOCKED) == 0)
-		mutex_exit(ap->a_vp->v_interlock);
+		rw_exit(ap->a_vp->v_uobj.vmobjlock);
 
 	return (EFAULT);
 }
@@ -363,6 +363,6 @@ dead_putpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 
-	mutex_exit(ap->a_vp->v_interlock);
+	rw_exit(ap->a_vp->v_uobj.vmobjlock);
 	return (EFAULT);
 }

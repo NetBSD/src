@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_stream.h,v 1.1.1.2 2013/01/02 18:59:00 tron Exp $	*/
+/*	$NetBSD: smtp_stream.h,v 1.1.1.2.30.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _SMTP_STREAM_H_INCLUDED_
 #define _SMTP_STREAM_H_INCLUDED_
@@ -40,8 +40,10 @@ extern void PRINTFLIKE(2, 3) smtp_printf(VSTREAM *, const char *,...);
 extern void smtp_flush(VSTREAM *);
 extern int smtp_fgetc(VSTREAM *);
 extern int smtp_get(VSTRING *, VSTREAM *, ssize_t, int);
+extern int smtp_get_noexcept(VSTRING *, VSTREAM *, ssize_t, int);
 extern void smtp_fputs(const char *, ssize_t len, VSTREAM *);
 extern void smtp_fwrite(const char *, ssize_t len, VSTREAM *);
+extern void smtp_fread_buf(VSTRING *, ssize_t len, VSTREAM *);
 extern void smtp_fputc(int, VSTREAM *);
 
 extern void smtp_vprintf(VSTREAM *, const char *, va_list);
@@ -51,6 +53,7 @@ extern void smtp_vprintf(VSTREAM *, const char *, va_list);
 
 #define SMTP_GET_FLAG_NONE	0
 #define SMTP_GET_FLAG_SKIP	(1<<0)	/* skip over excess input */
+#define SMTP_GET_FLAG_APPEND	(1<<1)	/* append instead of overwrite */
 
 /* LICENSE
 /* .ad
@@ -61,6 +64,11 @@ extern void smtp_vprintf(VSTREAM *, const char *, va_list);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

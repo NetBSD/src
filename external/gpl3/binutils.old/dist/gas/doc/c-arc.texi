@@ -1,4 +1,4 @@
-@c Copyright (C) 2000-2016 Free Software Foundation, Inc.
+@c Copyright (C) 2000-2018 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -47,9 +47,27 @@ convenience.  Supported values for @var{cpu} are
 @item arc600
 Assemble for ARC 600.  Aliases: @code{-mA6}, @code{-mARC600}.
 
+@item arc600_norm
+Assemble for ARC 600 with norm instructions.
+
+@item arc600_mul64
+Assemble for ARC 600 with mul64 instructions.
+
+@item arc600_mul32x16
+Assemble for ARC 600 with mul32x16 instructions.
+
 @item arc601
 @cindex @code{mARC601} command line option, ARC
 Assemble for ARC 601.  Alias: @code{-mARC601}.
+
+@item arc601_norm
+Assemble for ARC 601 with norm instructions.
+
+@item arc601_mul64
+Assemble for ARC 601 with mul64 instructions.
+
+@item arc601_mul32x16
+Assemble for ARC 601 with mul32x16 instructions.
 
 @item arc700
 @cindex @code{mA7} command line option, ARC
@@ -60,9 +78,40 @@ Assemble for ARC 700.  Aliases: @code{-mA7}, @code{-mARC700}.
 @cindex @code{mEM} command line option, ARC
 Assemble for ARC EM.  Aliases: @code{-mEM}
 
+@item em
+Assemble for ARC EM, identical as arcem variant.
+
+@item em4
+Assemble for ARC EM with code-density instructions.
+
+@item em4_dmips
+Assemble for ARC EM with code-density instructions.
+
+@item em4_fpus
+Assemble for ARC EM with code-density instructions.
+
+@item em4_fpuda
+Assemble for ARC EM with code-density, and double-precision assist
+instructions.
+
+@item quarkse_em
+Assemble for QuarkSE-EM cpu.
+
 @item archs
 @cindex @code{mHS} command line option, ARC
 Assemble for ARC HS.  Aliases: @code{-mHS}, @code{-mav2hs}.
+
+@item hs
+Assemble for ARC HS.
+
+@item hs34
+Assemble for ARC HS34.
+
+@item hs38
+Assemble for ARC HS38.
+
+@item hs38_linux
+Assemble for ARC HS38 with floating point support on.
 
 @item nps400
 @cindex @code{mnps400} command line option, ARC
@@ -368,6 +417,27 @@ version.  Permitted values for CPU are:
 @item ARC600
 Assemble for the ARC600 instruction set.
 
+@item arc600_norm
+Assemble for ARC 600 with norm instructions.
+
+@item arc600_mul64
+Assemble for ARC 600 with mul64 instructions.
+
+@item arc600_mul32x16
+Assemble for ARC 600 with mul32x16 instructions.
+
+@item arc601
+Assemble for ARC 601 instruction set.
+
+@item arc601_norm
+Assemble for ARC 601 with norm instructions.
+
+@item arc601_mul64
+Assemble for ARC 601 with mul64 instructions.
+
+@item arc601_mul32x16
+Assemble for ARC 601 with mul32x16 instructions.
+
 @item ARC700
 Assemble for the ARC700 instruction set.
 
@@ -377,8 +447,42 @@ Assemble for the NPS400 instruction set.
 @item EM
 Assemble for the ARC EM instruction set.
 
+@item arcem
+Assemble for ARC EM instruction set
+
+@item em4
+Assemble for ARC EM with code-density instructions.
+
+@item em4_dmips
+Assemble for ARC EM with code-density instructions.
+
+@item em4_fpus
+Assemble for ARC EM with code-density instructions.
+
+@item em4_fpuda
+Assemble for ARC EM with code-density, and double-precision assist
+instructions.
+
+@item quarkse_em
+Assemble for QuarkSE-EM instruction set.
+
 @item HS
 Assemble for the ARC HS instruction set.
+
+@item archs
+Assemble for ARC HS instruction set.
+
+@item hs
+Assemble for ARC HS instruction set.
+
+@item hs34
+Assemble for ARC HS34 instruction set.
+
+@item hs38
+Assemble for ARC HS38 instruction set.
+
+@item hs38_linux
+Assemble for ARC HS38 with floating point support on.
 
 @end table
 
@@ -553,6 +657,22 @@ A two operands instruction variant would be:
 @end example
 which describes a two operand instruction with an implicit first
 immediate operand.  The result of this operation would be discarded.
+
+@cindex @code{.arc_attribute} directive, ARC
+@item .arc_attribute @var{tag}, @var{value}
+Set the ARC object attribute @var{tag} to @var{value}.
+
+The @var{tag} is either an attribute number, or one of the following:
+@code{Tag_ARC_PCS_config}, @code{Tag_ARC_CPU_base},
+@code{Tag_ARC_CPU_variation}, @code{Tag_ARC_CPU_name},
+@code{Tag_ARC_ABI_rf16}, @code{Tag_ARC_ABI_osver}, @code{Tag_ARC_ABI_sda},
+@code{Tag_ARC_ABI_pic}, @code{Tag_ARC_ABI_tls}, @code{Tag_ARC_ABI_enumsize},
+@code{Tag_ARC_ABI_exceptions}, @code{Tag_ARC_ABI_double_size},
+@code{Tag_ARC_ISA_config}, @code{Tag_ARC_ISA_apex},
+@code{Tag_ARC_ISA_mpy_option}
+
+The @var{value} is either a @code{number}, @code{"string"}, or
+@code{number, "string"} depending on the tag.
 
 @end table
 

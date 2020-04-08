@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mod.c,v 1.10.4.1 2019/06/10 22:07:00 christos Exp $	*/
+/*	$NetBSD: linux_mod.c,v 1.10.4.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.10.4.1 2019/06/10 22:07:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.10.4.2 2020/04/08 14:08:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -164,10 +164,7 @@ compat_linux_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		linux_futex_init();
-		linux_sysctl_init();
 		error = exec_add(linux_execsw, __arraycount(linux_execsw));
-		if (error != 0) 	 
-			linux_sysctl_fini();
 		return error;
 
 	case MODULE_CMD_FINI:

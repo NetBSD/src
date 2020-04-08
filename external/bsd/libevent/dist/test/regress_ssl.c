@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_ssl.c,v 1.3 2017/01/31 23:17:40 christos Exp $	*/
+/*	$NetBSD: regress_ssl.c,v 1.3.12.1 2020/04/08 14:04:07 martin Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -265,7 +265,7 @@ respond_to_number(struct bufferevent *bev, void *ctx)
 	int n;
 
 	enum regress_openssl_type type;
-	type = (enum regress_openssl_type)ctx;
+	type = (enum regress_openssl_type)(uintptr_t)ctx;
 
 	line = evbuffer_readln(b, NULL, EVBUFFER_EOL_LF);
 	if (! line)
@@ -306,7 +306,7 @@ static void
 eventcb(struct bufferevent *bev, short what, void *ctx)
 {
 	enum regress_openssl_type type;
-	type = (enum regress_openssl_type)ctx;
+	type = (enum regress_openssl_type)(uintptr_t)ctx;
 
 	TT_BLATHER(("Got event %d", (int)what));
 	if (what & BEV_EVENT_CONNECTED) {
@@ -407,7 +407,7 @@ regress_bufferevent_openssl(void *arg)
 	evutil_socket_t *fd_pair = NULL;
 
 	enum regress_openssl_type type;
-	type = (enum regress_openssl_type)data->setup_data;
+	type = (enum regress_openssl_type)(uintptr_t)data->setup_data;
 
 	tt_assert(cert);
 	tt_assert(key);
@@ -526,7 +526,7 @@ acceptcb(struct evconnlistener *listener, evutil_socket_t fd,
 	enum regress_openssl_type type;
 	SSL *ssl = SSL_new(get_ssl_ctx());
 
-	type = (enum regress_openssl_type)data->setup_data;
+	type = (enum regress_openssl_type)(uintptr_t)data->setup_data;
 
 	SSL_use_certificate(ssl, ssl_getcert());
 	SSL_use_PrivateKey(ssl, ssl_getkey());
@@ -678,7 +678,7 @@ regress_bufferevent_openssl_connect(void *arg)
 	struct rwcount rw = { -1, 0, 0 };
 	enum regress_openssl_type type;
 
-	type = (enum regress_openssl_type)data->setup_data;
+	type = (enum regress_openssl_type)(uintptr_t)data->setup_data;
 
 	init_ssl();
 

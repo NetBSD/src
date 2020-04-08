@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.44 2016/02/19 18:38:37 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.44.18.1 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.44 2016/02/19 18:38:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.44.18.1 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -76,11 +76,6 @@ cpuinfo_to_rumpcpu(struct cpu_info *ci)
 }
 
 struct cpu_info rump_bootcpu;
-kcpuset_t *kcpuset_attached = NULL;
-kcpuset_t *kcpuset_running = NULL;
-int ncpu, ncpuonline;
-
-kmutex_t cpu_lock;
 
 #define RCPULWP_BUSY	((void *)-1)
 #define RCPULWP_WANTED	((void *)-2)
@@ -143,10 +138,9 @@ rump_cpus_bootstrap(int *nump)
 		num = MAXCPUS;
 	}
 
-	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
+	cpu_setmodel("rumpcore (virtual)");
 
-	kcpuset_create(&kcpuset_attached, true);
-	kcpuset_create(&kcpuset_running, true);
+	mi_cpu_init();
 
 	/* attach first cpu for bootstrap */
 	rump_cpu_attach(&rump_bootcpu);
@@ -377,7 +371,7 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 	 * in the case that an interrupt is scheduled immediately
 	 * after a user proc, but leave that for later.
 	 */
-	ci->ci_curlwp = ci->ci_data.cpu_onproc = l;
+	ci->ci_curlwp = ci->ci_onproc = l;
 }
 
 void
@@ -449,7 +443,7 @@ rump_unschedule_cpu1(struct lwp *l, void *interlock)
 	void *old;
 
 	ci = l->l_cpu;
-	ci->ci_curlwp = ci->ci_data.cpu_onproc = NULL;
+	ci->ci_curlwp = ci->ci_onproc = NULL;
 	rcpu = cpuinfo_to_rumpcpu(ci);
 
 	KASSERT(rcpu->rcpu_ci == ci);
@@ -572,12 +566,29 @@ sched_nice(struct proc *p, int level)
 }
 
 void
-sched_enqueue(struct lwp *l, bool swtch)
+setrunnable(struct lwp *l)
 {
 
-	if (swtch)
-		panic("sched_enqueue with switcheroo");
+	sched_enqueue(l);
+}
+
+void
+sched_enqueue(struct lwp *l)
+{
+
 	rump_thread_allow(l);
+}
+
+void
+sched_resched_cpu(struct cpu_info *ci, pri_t pri, bool unlock)
+{
+
+}
+
+void
+sched_resched_lwp(struct lwp *l, bool unlock)
+{
+
 }
 
 void
@@ -585,4 +596,17 @@ sched_dequeue(struct lwp *l)
 {
 
 	panic("sched_dequeue not implemented");
+}
+
+void
+preempt_point(void)
+{
+
+}
+
+bool
+preempt_needed(void)
+{
+
+	return false;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.99.12.1 2019/06/10 22:09:06 christos Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.99.12.2 2020/04/08 14:08:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.99.12.1 2019/06/10 22:09:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.99.12.2 2020/04/08 14:08:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.99.12.1 2019/06/10 22:09:06 christ
 MODULE(MODULE_CLASS_VFS, umap, "layerfs");
 
 VFS_PROTOS(umapfs);
-
-static struct sysctllog *umapfs_sysctl_log;
 
 /*
  * Mount umap layer
@@ -305,6 +303,22 @@ struct vfsops umapfs_vfsops = {
 	.vfs_opv_descs = umapfs_vnodeopv_descs
 };
 
+SYSCTL_SETUP(umapfs_sysctl_setup, "umapfs sysctl")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "umap",
+		       SYSCTL_DESCR("UID/GID remapping file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 10, CTL_EOL);
+	/*
+	 * XXX the "10" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "10" is the order as taken from sys/mount.h
+	 */
+}
+
 static int
 umap_modcmd(modcmd_t cmd, void *arg)
 {
@@ -315,23 +329,11 @@ umap_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&umapfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&umapfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "umap",
-			       SYSCTL_DESCR("UID/GID remapping file system"),
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, 10, CTL_EOL);
-		/*
-		 * XXX the "10" above could be dynamic, thereby eliminating
-		 * one more instance of the "number to vfs" mapping problem,
-		 * but "10" is the order as taken from sys/mount.h
-		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&umapfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_teardown(&umapfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

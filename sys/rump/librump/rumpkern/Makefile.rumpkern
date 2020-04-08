@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.170.4.1 2019/06/10 22:09:53 christos Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.170.4.2 2020/04/08 14:09:01 martin Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -76,6 +76,7 @@ SRCS+=	init_sysctl_base.c	\
 	kern_ksyms.c		\
 	kern_malloc.c		\
 	kern_module.c		\
+	kern_module_hook.c	\
 	kern_mutex_obj.c	\
 	kern_ntptime.c		\
 	kern_proc.c		\
@@ -102,6 +103,7 @@ SRCS+=	init_sysctl_base.c	\
 	subr_callback.c		\
 	subr_copy.c		\
 	subr_cprng.c		\
+	subr_cpu.c		\
 	subr_device.c		\
 	subr_devsw.c		\
 	subr_evcnt.c		\
@@ -139,6 +141,7 @@ SRCS+=	init_sysctl_base.c	\
 
 # sys/uvm
 SRCS+=	uvm_aobj.c uvm_readahead.c uvm_object.c uvm_swapstub.c
+SRCS+=	uvm_page_array.c uvm_page_status.c
 
 # 4.4BSD secmodel.  selection is hardcoded for now
 SRCS+=	secmodel.c

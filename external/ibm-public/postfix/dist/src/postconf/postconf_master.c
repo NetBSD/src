@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_master.c,v 1.5 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: postconf_master.c,v 1.5.12.1 2020/04/08 14:06:55 martin Exp $	*/
 
 /*++
 /* NAME
@@ -192,6 +192,7 @@ static const char *pcf_valid_master_types[] = {
     MASTER_XPORT_NAME_FIFO,
     MASTER_XPORT_NAME_INET,
     MASTER_XPORT_NAME_PASS,
+    MASTER_XPORT_NAME_UXDG,
     0,
 };
 
@@ -355,8 +356,10 @@ void    pcf_free_master_entry(PCF_MASTER_ENT *masterp)
     argv_free(masterp->argv);
     if (masterp->valid_names)
 	htable_free(masterp->valid_names, myfree);
+    if (masterp->ro_params)
+	dict_close(masterp->ro_params);
     if (masterp->all_params)
-	dict_free(masterp->all_params);
+	dict_close(masterp->all_params);
     myfree((void *) masterp);
 }
 
@@ -365,6 +368,8 @@ void    pcf_free_master_entry(PCF_MASTER_ENT *masterp)
 const char *pcf_parse_master_entry(PCF_MASTER_ENT *masterp, const char *buf)
 {
     ARGV   *argv;
+    char   *ro_name_space;
+    char   *process_name;
 
     /*
      * We can't use the master daemon's master_ent routines in their current
@@ -386,8 +391,17 @@ const char *pcf_parse_master_entry(PCF_MASTER_ENT *masterp, const char *buf)
     pcf_normalize_daemon_args(argv);
     masterp->name_space =
 	concatenate(argv->argv[0], PCF_NAMESP_SEP_STR, argv->argv[1], (char *) 0);
+    ro_name_space =
+	concatenate("ro", PCF_NAMESP_SEP_STR, masterp->name_space, (char *) 0);
     masterp->argv = argv;
     masterp->valid_names = 0;
+    process_name = basename(argv->argv[PCF_MASTER_FLD_CMD]);
+    dict_update(ro_name_space, VAR_PROCNAME, process_name);
+    dict_update(ro_name_space, VAR_SERVNAME,
+		strcmp(process_name, argv->argv[0]) != 0 ?
+		argv->argv[0] : process_name);
+    masterp->ro_params = dict_handle(ro_name_space);
+    myfree(ro_name_space);
     masterp->all_params = 0;
     return (0);
 }

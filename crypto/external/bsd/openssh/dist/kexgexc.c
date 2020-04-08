@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgexc.c,v 1.12.2.1 2019/06/10 21:41:12 christos Exp $	*/
-/* $OpenBSD: kexgexc.c,v 1.34 2019/01/23 00:30:41 djm Exp $ */
+/*	$NetBSD: kexgexc.c,v 1.12.2.2 2020/04/08 14:03:18 martin Exp $	*/
+/* $OpenBSD: kexgexc.c,v 1.35 2019/11/25 00:51:37 djm Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexc.c,v 1.12.2.1 2019/06/10 21:41:12 christos Exp $");
+__RCSID("$NetBSD: kexgexc.c,v 1.12.2.2 2020/04/08 14:03:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -197,7 +197,7 @@ input_kex_dh_gex_reply(int type, u_int32_t seq, struct ssh *ssh)
 		goto out;
 
 	if ((r = sshkey_verify(server_host_key, signature, slen, hash,
-	    hashlen, kex->hostkey_alg, ssh->compat)) != 0)
+	    hashlen, kex->hostkey_alg, ssh->compat, NULL)) != 0)
 		goto out;
 
 	if ((r = kex_derive_keys(ssh, hash, hashlen, shared_secret)) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: unsafe.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: unsafe.c,v 1.1.1.1.50.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -10,13 +10,20 @@
 /*
 /*	int	unsafe()
 /* DESCRIPTION
-/*	The \fBunsafe()\fR routine attempts to determine if the process runs
-/*	with any privileges that do not belong to the user. The purpose is
-/*	to make it easy to taint any user-provided data such as the current
-/*	working directory, the process environment, etcetera.
+/*	The \fBunsafe()\fR routine attempts to determine if the process
+/*	(runs with privileges or has access to information) that the
+/*	controlling user has no access to. The purpose is to prevent
+/*	misuse of privileges, including access to protected information.
 /*
-/*	On UNIX systems, the result is true when any of the following
-/*	conditions is true:
+/*	The result is always false when both of the following conditions
+/*	are true:
+/* .IP \(bu
+/*	The real UID is zero.
+/* .IP \(bu
+/*	The effective UID is zero.
+/* .PP
+/*	Otherwise, the result is true if any of the following conditions
+/*	is true:
 /* .IP \(bu
 /*	The issetuid kernel flag is non-zero (on systems that support
 /*	this concept).
@@ -33,6 +40,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -48,6 +60,17 @@
 
 int     unsafe(void)
 {
+
+    /*
+     * The super-user is trusted.
+     */
+    if (getuid() == 0 && geteuid() == 0)
+	return (0);
+
+    /*
+     * Danger: don't trust inherited process attributes, and don't leak
+     * privileged info that the parent has no access to.
+     */
     return (geteuid() != getuid()
 #ifdef HAS_ISSETUGID
 	    || issetugid()

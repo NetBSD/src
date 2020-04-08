@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.62.2.1 2019/06/10 22:06:47 christos Exp $	*/
+/*	$NetBSD: ffb.c,v 1.62.2.2 2020/04/08 14:07:54 martin Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.62.2.1 2019/06/10 22:06:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.62.2.2 2020/04/08 14:07:54 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -157,8 +157,6 @@ struct wsdisplay_accessops ffb_accessops = {
 };
 
 /* I2C glue */
-static int ffb_i2c_acquire_bus(void *, int);
-static void ffb_i2c_release_bus(void *, int);
 static int ffb_i2c_send_start(void *, int);
 static int ffb_i2c_send_stop(void *, int);
 static int ffb_i2c_initiate_xfer(void *, i2c_addr_t, int);
@@ -387,15 +385,13 @@ ffb_attach_i2c(struct ffb_softc *sc)
 {
 
 	/* Fill in the i2c tag */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = ffb_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = ffb_i2c_release_bus;
 	sc->sc_i2c.ic_send_start = ffb_i2c_send_start;
 	sc->sc_i2c.ic_send_stop = ffb_i2c_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = ffb_i2c_initiate_xfer;
 	sc->sc_i2c.ic_read_byte = ffb_i2c_read_byte;
 	sc->sc_i2c.ic_write_byte = ffb_i2c_write_byte;
-	sc->sc_i2c.ic_exec = NULL;
 }
 
 int
@@ -1313,19 +1309,6 @@ static uint32_t ffb_i2cbb_read(void *cookie)
 }
 
 /* higher level I2C stuff */
-static int
-ffb_i2c_acquire_bus(void *cookie, int flags)
-{
-	/* private bus */
-	return (0);
-}
-
-static void
-ffb_i2c_release_bus(void *cookie, int flags)
-{
-	/* private bus */
-}
-
 static int
 ffb_i2c_send_start(void *cookie, int flags)
 {

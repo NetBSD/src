@@ -1,5 +1,5 @@
 /* BFD support for the Freescale 9S12Z processor
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,18 +24,19 @@
 
 const bfd_arch_info_type bfd_s12z_arch =
 {
-    16,	/* 16 bits in a word.  */
-    24,	/* 24 bits in an address.  */
-    8,	/* 8 bits in a byte.  */
-    bfd_arch_s12z,
-    0,
-    "s12z",
-    "s12z",
-    4, /* Section alignment power.  */
-    TRUE,
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    0,
+  16,	/* Bits in a word.  */
+  24,	/* Bits in an address.  */
+  8,	/* Bits in a byte.  */
+  bfd_arch_s12z,
+  0,
+  "s12z",
+  "s12z",
+  4,    /* Section alignment power.  */
+  TRUE,
+  bfd_default_compatible,
+  bfd_default_scan,
+  bfd_arch_default_fill,
+  NULL,
+  0    /* Maximum offset of a reloc from the start of an insn.  */
 };
 

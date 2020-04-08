@@ -7,13 +7,20 @@
 
 openssl=openssl
 
+# workaround until openssl -objects lands
+if ${openssl} version | grep '^OpenSSL 1\.[1-9]' >/dev/null ; then
+    config=openssl.1.1.cnf
+else
+    config=openssl.1.0.cnf
+fi
+
 gen_cert()
 {
-	keytype=${6:-rsa:1024}
+	keytype=${6:-rsa:4096}
 	${openssl} req \
 		-new \
 		-subj "$1" \
-		-config openssl.cnf \
+		-config ${config} \
 		-newkey $keytype \
 		-sha1 \
 		-nodes \
@@ -23,9 +30,9 @@ gen_cert()
         if [ "$3" = "ca" ] ; then
 	    ${openssl} x509 \
 		-req \
-		-days 3650 \
+		-days 182500 \
 		-in cert.req \
-		-extfile openssl.cnf \
+		-extfile ${config} \
 		-extensions $4 \
                 -signkey out.key \
 		-out cert.crt
@@ -39,12 +46,12 @@ gen_cert()
 	    ${openssl} x509 \
 		-req \
 		-in cert.req \
-		-days 3650 \
+		-days 182500 \
 		-out cert.crt \
 		-CA $2.crt \
 		-CAkey $2.key \
 		-CAcreateserial \
-		-extfile openssl.cnf \
+		-extfile ${config} \
 		-extensions $4
 
 		name=$5
@@ -52,14 +59,14 @@ gen_cert()
 
 	    ${openssl} ca \
 		-name $4 \
-		-days 3650 \
+		-days 182500 \
 		-cert $2.crt \
 		-keyfile $2.key \
 		-in cert.req \
 		-out cert.crt \
 		-outdir . \
 		-batch \
-		-config openssl.cnf 
+		-config ${config} 
 
 		name=$3
 	fi
@@ -109,7 +116,7 @@ ${openssl} ca \
     -cert ca.crt \
     -keyfile ca.key \
     -revoke revoke.crt \
-    -config openssl.cnf 
+    -config ${config} 
 
 ${openssl} pkcs12 \
     -export \
@@ -348,6 +355,6 @@ ${openssl} ca \
     -cert ca.crt \
     -crl_reason superseded \
     -out crl1.crl \
-    -config openssl.cnf 
+    -config ${config} 
 
 ${openssl} crl -in crl1.crl -outform der -out crl1.der

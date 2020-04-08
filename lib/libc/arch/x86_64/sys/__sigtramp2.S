@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.6 2014/05/22 15:01:57 uebayasi Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.6.24.1 2020/04/08 14:07:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,10 +42,13 @@
  * the signal; the kernel calls the signal handler directly.
  */
 NENTRY(__sigtramp_siginfo_2)
+	.cfi_startproc
+	.cfi_def_cfa rsp, 8
 	movq	%r15,%rdi
 	movq	$SYS_setcontext, %rax
 	syscall
 	movq	$-1,%rdi /* if we return here, something is wrong */
 	movq	$SYS_exit, %rax
 	syscall
+	.cfi_endproc
 END(__sigtramp_siginfo_2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_prot.h,v 1.19 2016/01/22 23:22:56 dholland Exp $	*/
+/*	$NetBSD: yp_prot.h,v 1.19.16.1 2020/04/08 14:07:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -269,8 +269,8 @@ struct ypbind_setdom {
  *  is supplied to ypxfr as a command-line parameter when it
  *  is activated by ypserv."
  * 
- * This protocol is not implimented, naturally, because this YP
- * implimentation only does the client side.
+ * This protocol is not implemented, naturally, because this YP
+ * implementation only does the client side.
  */
 #define YPPUSHVERS		((unsigned long)1)
 #define YPPUSHVERS_ORIG		((unsigned long)1)

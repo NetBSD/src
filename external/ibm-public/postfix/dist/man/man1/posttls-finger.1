@@ -1,4 +1,4 @@
-.\"	$NetBSD: posttls-finger.1,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: posttls-finger.1,v 1.2.12.1 2020/04/08 14:06:50 martin Exp $
 .\"
 .TH POSTTLS-FINGER 1 
 .ad
@@ -123,6 +123,16 @@ smtp_tls_mandatory_ciphers for details.
 .IP "\fB\-h \fIhost_lookup\fR (default: \fBdns\fR)"
 The hostname lookup methods used for the connection.  See the
 documentation of smtp_host_lookup for syntax and semantics.
+.IP "\fB\-H \fIchainfiles\fR (default: \fInone\fR)\fR"
+List of files with a sequence PEM\-encoded TLS client certificate
+chains.  The list can be built\-up incrementally, by specifying
+the option multiple times, or all at once via a comma or
+whitespace separated list of filenames.  Each chain starts with
+a private key, which is followed immediately by the
+corresponding certificate, and optionally by additional issuer
+certificates. Each new key begins a new chain for the
+corresponding algorithm.  This option is mutually exclusive with
+the below \fB\-k\fR and \fB\-K\fR options.
 .IP "\fB\-k \fIcertfile\fR (default: \fIkeyfile\fR)\fR"
 File with PEM\-encoded TLS client certificate chain. This
 defaults to \fIkeyfile\fR if one is specified.
@@ -234,6 +244,12 @@ seconds. Report whether the session is re\-used. Retry if a new server
 is encountered, up to 5 times or as specified with the \fB\-m\fR option.
 By default reconnection is disabled, specify a positive delay to
 enable this behavior.
+.IP "\fB\-s \fIservername\fR"
+The server name to send with the TLS Server Name Indication (SNI)
+extension.  When the server has DANE TLSA records, this parameter
+is ignored and the TLSA base domain is used instead.  Otherwise, SNI is
+not used by default, but can be enabled by specifying the desired value
+with this option.
 .IP "\fB\-S\fR"
 Disable SMTP; that is, connect to an LMTP server. The default port for
 LMTP over TCP is 24.  Alternative ports can specified by appending
@@ -253,6 +269,9 @@ provided on port 465 by servers that are compatible with the ad\-hoc
 SMTP in SSL protocol, rather than the standard STARTTLS protocol.
 The destination \fIdomain\fR:\fIport\fR should of course provide such
 a service.
+.IP "\fB\-X\fR"
+Enable \fBtlsproxy\fR(8) mode. This is an unsupported mode,
+for program development only.
 .IP "[\fBinet:\fR]\fIdomain\fR[:\fIport\fR]"
 Connect via TCP to domain \fIdomain\fR, port \fIport\fR. The default
 port is \fBsmtp\fR (or 24 with LMTP).  With SMTP an MX lookup is
@@ -316,5 +335,10 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA
 
 Viktor Dukhovni

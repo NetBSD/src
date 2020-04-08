@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -57,7 +57,8 @@
 /*	non-Postfix directory is redirected to the Postfix-owned
 /*	\fBdata_directory\fR, and a warning is logged.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* BUGS
 /*	Address verification probe messages add additional traffic
 /*	to the mail queue.
@@ -157,6 +158,12 @@
 /* .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
 /*	Detect that a message requires SMTPUTF8 support for the specified
 /*	mail origin classes.
+/* .PP
+/*	Available in Postfix version 3.2 and later:
+/* .IP "\fBenable_idna2003_compatibility (no)\fR"
+/*	Enable 'transitional' compatibility between IDNA2003 and IDNA2008,
+/*	when converting UTF-8 domain names to/from the ASCII form that is
+/*	used for DNS lookups.
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -178,13 +185,18 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
 /* SEE ALSO
 /*	smtpd(8), Postfix SMTP server
 /*	cleanup(8), enqueue Postfix message
 /*	postconf(5), configuration parameters
-/*	syslogd(5), system logging
+/*	postlogd(8), Postfix logging
+/*	syslogd(8), system logging
 /* README FILES
 /* .ad
 /* .fi
@@ -391,6 +403,7 @@ static void verify_update_service(VSTREAM *client_stream)
 		|| STATUS_FROM_RAW_ENTRY(raw_data) != DEL_RCPT_STAT_OK) {
 		probed = 0;
 		updated = (long) time((time_t *) 0);
+		printable(STR(text), '?');
 		verify_make_entry(buf, addr_status, probed, updated, STR(text));
 		if (msg_verbose)
 		    msg_info("PUT %s status=%d probed=%ld updated=%ld text=%s",

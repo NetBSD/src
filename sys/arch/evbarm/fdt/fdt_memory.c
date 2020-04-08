@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_memory.c,v 1.3.6.2 2019/06/10 22:06:06 christos Exp $ */
+/* $NetBSD: fdt_memory.c,v 1.3.6.3 2020/04/08 14:07:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_bootconfig.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.3.6.2 2019/06/10 22:06:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.3.6.3 2020/04/08 14:07:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -48,7 +48,7 @@ struct fdt_memory_range {
 static TAILQ_HEAD(fdt_memory_rangehead, fdt_memory_range) fdt_memory_ranges =
     TAILQ_HEAD_INITIALIZER(fdt_memory_ranges);
 
-static struct fdt_memory_range fdt_memory_range_pool[sizeof(struct fdt_memory_range) * DRAM_BLOCKS];
+static struct fdt_memory_range fdt_memory_range_pool[DRAM_BLOCKS];
 
 static struct fdt_memory_range *
 fdt_memory_range_alloc(void)

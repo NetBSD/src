@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.19 2014/10/29 10:59:48 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.19.20.1 2020/04/08 14:07:29 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -137,8 +137,9 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  * keep the old L2_TABLE_SIZE define lying around. Converted ports
  * should use L2_TABLE_SIZE_REAL until then.
  */
-#define	L1_TABLE_SIZE_REAL	0x4000	/* 16K */
 #define	L2_TABLE_SIZE_REAL	0x400	/* 1K */
+
+#define L1TT_SIZE		0x2000	/* 8K */
 
 /*
  * ARM L1 Descriptors

@@ -40,6 +40,10 @@
 #	is installed from a pre-built package or from source code.
 #
 #	Arguments
+# .IP -keep-build-mtime
+#	When installing files preserve new file's mtime timestamps.
+#	Otherwise, mtimes will be set to the time that postfix-install
+#	is run.
 # .IP -non-interactive
 #	Do not ask the user for parameter settings. Installation parameters
 #	are specified via one of the non-interactive methods described
@@ -210,6 +214,7 @@ if [ -n "$SHLIB_ENV_VAR" ]; then
 fi
 
 USAGE="Usage: $0 [name=value] [option]
+    -keep-build-mtime       Preserve build-time file mtime timestamps.
     -non-interactive        Do not ask for installation parameters.
     -package                Build a ready-to-install package.
     name=value              Specify an installation parameter".
@@ -225,6 +230,8 @@ do
 	*=*) IFS= eval $arg; IFS="$BACKUP_IFS";;
   -non-int*) non_interactive=1;;
    -package) need_install_root=install_root;;
+-keep-build-mtime)
+             keep_build_mtime=1;;
 	  *) echo "$0: Error: $USAGE" 1>&2; exit 1;;
     esac
     shift
@@ -304,7 +311,9 @@ compare_or_replace() {
     (cmp $src $dst >/dev/null 2>&1 && echo Skipping $dst...) || {
 	echo Updating $dst...
 	rm -f $tempdir/junk || exit 1
+	# Not: "cp -p" which preserves ownership.
 	cp $src $tempdir/junk || exit 1
+	test -z "$keep_build_mtime" || touch -r $src $tempdir/junk || exit 1
 	mv -f $tempdir/junk $dst || exit 1
 	test -z "$owner" || chown $owner $dst || exit 1
 	test -z "$group" || chgrp $group $dst || exit 1
@@ -367,7 +376,7 @@ check_parent() {
     done
 }
 
-# How to supress newlines in echo.
+# How to suppress newlines in echo.
 
 case `echo -n` in
 "") n=-n; c=;;

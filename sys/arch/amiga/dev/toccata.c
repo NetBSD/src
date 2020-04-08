@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.17.30.1 2019/06/10 22:05:48 christos Exp $ */
+/* $NetBSD: toccata.c,v 1.17.30.2 2020/04/08 14:07:26 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.17.30.1 2019/06/10 22:05:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.17.30.2 2020/04/08 14:07:26 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -415,11 +415,10 @@ int
 toccata_round_blocksize(void *addr, int blk,
 			int mode, const audio_params_t *param)
 {
-	int ret;
 
-	ret = blk > 512 ? 512 : (blk & -4);
-
-	return ret;
+	if (blk > 512)
+		blk = 512;
+	return blk;
 }
 
 size_t

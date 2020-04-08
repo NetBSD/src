@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndctl.8,v 1.22 2014/08/10 17:13:02 wiz Exp $
+.\"	$NetBSD: rndctl.8,v 1.22.24.1 2020/04/08 14:07:20 martin Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -78,9 +78,13 @@ Enable entropy estimation using the collected timing information
 for the given device name or device type.
 .It Fl L
 Load saved entropy from file
-.Ar save-file ,
-which will be overwritten and deleted before the entropy is loaded into
-the kernel.
+.Ar save-file
+and overwrite it with a seed derived by hashing it together with output
+from
+.Pa /dev/urandom
+so that the new seed has at least as much entropy as either the old
+seed had or the system already has.
+If interrupted, either the old seed or the new seed will be in place.
 .It Fl l
 List all sources, or, if the
 .Fl t

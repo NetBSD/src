@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-igmp.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-igmp.c,v 1.7.12.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: Internet Group Management Protocol (IGMP) printer */
@@ -107,6 +107,7 @@ static const struct tok igmpv3report2str[] = {
 	{ 0,	NULL }
 };
 
+UNALIGNED_OK
 static void
 print_mtrace(netdissect_options *ndo,
              register const u_char *bp, register u_int len)

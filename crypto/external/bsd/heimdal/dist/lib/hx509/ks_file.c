@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_file.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
+/*	$NetBSD: ks_file.c,v 1.3.4.1 2020/04/08 14:03:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2007 Kungliga Tekniska Högskolan
@@ -138,10 +138,10 @@ try_decrypt(hx509_context context,
 					   &clear,
 					   NULL);
 
-    memset(clear.data, 0, clear.length);
+    memset_s(clear.data, clear.length, 0, clear.length);
     free(clear.data);
 out:
-    memset(key, 0, keylen);
+    memset_s(key, keylen, 0, keylen);
     free(key);
     return ret;
 }
@@ -304,7 +304,7 @@ parse_pem_private_key(hx509_context context, const char *fn,
 		ret = try_decrypt(context, c, ai, cipher, ivdata, password,
 				  strlen(password), data, len);
 	    /* XXX add password to lock password collection ? */
-	    memset(password, 0, sizeof(password));
+	    memset_s(password, sizeof(password), 0, sizeof(password));
 	}
 	free(ivdata);
 

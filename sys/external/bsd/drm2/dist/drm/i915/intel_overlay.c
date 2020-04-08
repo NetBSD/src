@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_overlay.c,v 1.6.20.1 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: intel_overlay.c,v 1.6.20.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2009
@@ -28,10 +28,8 @@
  * Derived from Xorg ddx, xf86-video-intel, src/i830_video.c
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_overlay.c,v 1.6.20.1 2019/06/10 22:08:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_overlay.c,v 1.6.20.2 2020/04/08 14:08:23 martin Exp $");
 
-#include <linux/kernel.h>
-#include <asm/io.h>
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
@@ -767,7 +765,7 @@ static int intel_overlay_do_put_image(struct intel_overlay *overlay,
 	bool scale_changed = false;
 	struct drm_device *dev __diagused = overlay->dev;
 	u32 swidth, swidthsw, sheight, ostride;
-	enum i915_pipe pipe = overlay->crtc->pipe;
+	enum pipe pipe = overlay->crtc->pipe;
 
 	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
 	WARN_ON(!drm_modeset_is_locked(&dev->mode_config.connection_mutex));

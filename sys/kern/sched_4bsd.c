@@ -1,7 +1,8 @@
-/*	$NetBSD: sched_4bsd.c,v 1.33.6.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.33.6.2 2020/04/08 14:08:51 martin Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019, 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.33.6.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.33.6.2 2020/04/08 14:08:51 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -84,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.33.6.1 2019/06/10 22:09:03 christos
 #include <sys/sysctl.h>
 #include <sys/lockdebug.h>
 #include <sys/intr.h>
+#include <sys/atomic.h>
 
 static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);
@@ -96,34 +98,39 @@ static int rrticks __read_mostly;
 /*
  * Force switch among equal priority processes every 100ms.
  * Called from hardclock every hz/10 == rrticks hardclock ticks.
- *
- * There's no need to lock anywhere in this routine, as it's
- * CPU-local and runs at IPL_SCHED (called from clock interrupt).
  */
 /* ARGSUSED */
 void
 sched_tick(struct cpu_info *ci)
 {
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
+	pri_t pri = PRI_NONE;
 	lwp_t *l;
 
 	spc->spc_ticks = rrticks;
 
 	if (CURCPU_IDLE_P()) {
-		cpu_need_resched(ci, 0);
+		spc_lock(ci);
+		sched_resched_cpu(ci, MAXPRI_KTHREAD, true);
+		/* spc now unlocked */
 		return;
 	}
-	l = ci->ci_data.cpu_onproc;
+	l = ci->ci_onproc;
 	if (l == NULL) {
 		return;
 	}
+	/*
+	 * Can only be spc_lwplock or a turnstile lock at this point
+	 * (if we interrupted priority inheritance trylock dance).
+	 */
+	KASSERT(l->l_mutex != spc->spc_mutex);
 	switch (l->l_class) {
 	case SCHED_FIFO:
 		/* No timeslicing for FIFO jobs. */
 		break;
 	case SCHED_RR:
 		/* Force it into mi_switch() to look for other jobs to run. */
-		cpu_need_resched(ci, RESCHED_KPREEMPT);
+		pri = MAXPRI_KERNEL_RT;
 		break;
 	default:
 		if (spc->spc_flags & SPCF_SHOULDYIELD) {
@@ -132,19 +139,33 @@ sched_tick(struct cpu_info *ci)
 			 * due to buggy or inefficient code.  Force a
 			 * kernel preemption.
 			 */
-			cpu_need_resched(ci, RESCHED_KPREEMPT);
+			pri = MAXPRI_KERNEL_RT;
 		} else if (spc->spc_flags & SPCF_SEENRR) {
 			/*
 			 * The process has already been through a roundrobin
 			 * without switching and may be hogging the CPU.
 			 * Indicate that the process should yield.
 			 */
+			pri = MAXPRI_KTHREAD;
 			spc->spc_flags |= SPCF_SHOULDYIELD;
-			cpu_need_resched(ci, 0);
+		} else if ((spc->spc_flags & SPCF_1STCLASS) == 0) {
+			/*
+			 * For SMT or assymetric systems push a little
+			 * harder: if this is not a 1st class CPU, try to
+			 * find a better one to run this LWP.
+			 */
+			pri = MAXPRI_KTHREAD;
+			spc->spc_flags |= SPCF_SHOULDYIELD;
 		} else {
 			spc->spc_flags |= SPCF_SEENRR;
 		}
 		break;
+	}
+
+	if (pri != PRI_NONE) {
+		spc_lock(ci);
+		sched_resched_cpu(ci, pri, true);
+		/* spc now unlocked */
 	}
 }
 

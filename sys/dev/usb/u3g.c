@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.34.10.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: u3g.c,v 1.34.10.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.34.10.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.34.10.2 2020/04/08 14:08:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ static void u3g_close(void *, int);
 static void u3g_read(void *, int, u_char **, uint32_t *);
 static void u3g_write(void *, int, u_char *, u_char *, uint32_t *);
 
-struct ucom_methods u3g_methods = {
+static const struct ucom_methods u3g_methods = {
 	.ucom_get_status = u3g_get_status,
 	.ucom_set = u3g_set,
 	.ucom_open = u3g_open,
@@ -255,6 +255,10 @@ static const struct usb_devno u3g_devs[] = {
 	/* 4G Systems */
 	{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_XSSTICK_P14 },
 	{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_XSSTICK_W14 },
+
+	/* DLink */
+	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157 },
+	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157E },
 };
 
 /*
@@ -571,7 +575,6 @@ static int
 u3g_open(void *arg, int portno)
 {
 	struct u3g_softc *sc = arg;
-	usb_device_request_t req;
 	usb_endpoint_descriptor_t *ed;
 	usb_interface_descriptor_t *id;
 	struct usbd_interface *ih;
@@ -596,13 +599,8 @@ u3g_open(void *arg, int portno)
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
 		    nin++ == portno) {
-			/* Issue ENDPOINT_HALT request */
-			req.bmRequestType = UT_WRITE_ENDPOINT;
-			req.bRequest = UR_CLEAR_FEATURE;
-			USETW(req.wValue, UF_ENDPOINT_HALT);
-			USETW(req.wIndex, ed->bEndpointAddress);
-			USETW(req.wLength, 0);
-			err = usbd_do_request(sc->sc_udev, &req, 0);
+			err = usbd_clear_endpoint_feature(sc->sc_udev,
+			    ed->bEndpointAddress, UF_ENDPOINT_HALT);
 			if (err)
 				return EIO;
 		}

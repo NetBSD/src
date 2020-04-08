@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dsi.c,v 1.3.20.1 2019/06/10 22:08:05 christos Exp $	*/
+/*	$NetBSD: intel_dsi.c,v 1.3.20.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dsi.c,v 1.3.20.1 2019/06/10 22:08:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dsi.c,v 1.3.20.2 2020/04/08 14:08:23 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_atomic_helper.h>
@@ -655,7 +655,7 @@ static void intel_dsi_post_disable(struct intel_encoder *encoder)
 }
 
 static bool intel_dsi_get_hw_state(struct intel_encoder *encoder,
-				   enum i915_pipe *pipe)
+				   enum pipe *pipe)
 {
 	struct drm_i915_private *dev_priv = encoder->base.dev->dev_private;
 	struct intel_dsi *intel_dsi = enc_to_intel_dsi(&encoder->base);

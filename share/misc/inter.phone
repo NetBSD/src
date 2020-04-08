@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.30 2018/02/08 10:05:54 wiz Exp $
+#	$NetBSD: inter.phone,v 1.30.4.1 2020/04/08 14:07:23 martin Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -143,6 +143,7 @@
 47:7:Trondheim:Norway
 48:12:Cracow:Poland
 48:13:Krosno:Poland
+48:14:Tarnow:Poland
 48:15:Tarnobrzeg:Poland
 48:16:Przemysl:Poland
 48:17:Rzeszow:Poland
@@ -153,12 +154,12 @@
 48:25:Siedlce:Poland
 48:29:Ostroleka:Poland
 48:32:Katowice:Poland
-48:33:Bielsko Biala:Poland
-48:33:Czestochowa:Poland
+48:33:Bielsko-Biala:Poland
+48:34:Czestochowa:Poland
 48:41:Kielce:Poland
 48:42:Lodz:Poland
 48:43:Sieradz:Poland
-48:44:Piotrkow:Poland
+48:44:Piotrkow Trybunalski:Poland
 48:46:Skierniewice:Poland
 48:48:Radom:Poland
 48:52:Bydgoszcz:Poland
@@ -188,7 +189,7 @@
 48:89:Olsztyn:Poland
 48:91:Szczecin:Poland
 48:94:Koszalin:Poland
-48:95:Gorzow:Poland
+48:95:Gorzow Wielkopolski:Poland
 49:201:Essen:Germany, Fed. Rep. of
 49:202:Wuppertal:Germany, Fed. Rep. of
 49:203:Duisburg:Germany, Fed. Rep. of

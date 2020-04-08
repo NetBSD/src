@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.24 2016/06/20 03:36:09 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.24.18.1 2020/04/08 14:09:04 martin Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.79 2015/03/27 17:27:56 riastradh Exp   */
 
 /*-
@@ -147,9 +147,9 @@ void	ulfs_init(void);
 void	ulfs_reinit(void);
 void	ulfs_done(void);
 int	ulfs_start(struct mount *, int);
-int	ulfs_root(struct mount *, struct vnode **);
+int	ulfs_root(struct mount *, int, struct vnode **);
 int	ulfs_quotactl(struct mount *, struct quotactl_args *);
-int	ulfs_fhtovp(struct mount *, struct ulfs_ufid *, struct vnode **);
+int	ulfs_fhtovp(struct mount *, struct ulfs_ufid *, int, struct vnode **);
 
 /* ulfs_vnops.c */
 void	ulfs_vinit(struct mount *, int (**)(void *),

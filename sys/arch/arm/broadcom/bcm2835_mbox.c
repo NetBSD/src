@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.c,v 1.12.4.1 2019/06/10 22:05:52 christos Exp $	*/
+/*	$NetBSD: bcm2835_mbox.c,v 1.12.4.2 2020/04/08 14:07:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.12.4.1 2019/06/10 22:05:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.12.4.2 2020/04/08 14:07:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,102 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.12.4.1 2019/06/10 22:05:52 christ
 #include <arm/broadcom/bcm2835_mbox.h>
 #include <arm/broadcom/bcm2835_mboxreg.h>
 #include <arm/broadcom/bcm2835reg.h>
-
-#include <dev/fdt/fdtvar.h>
-
-struct bcm2835mbox_softc {
-	device_t sc_dev;
-	device_t sc_platdev;
-
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	bus_dma_tag_t sc_dmat;
-	void *sc_intrh;
-
-	kmutex_t sc_lock;
-	kmutex_t sc_intr_lock;
-	kcondvar_t sc_chan[BCM2835_MBOX_NUMCHANNELS];
-	uint32_t sc_mbox[BCM2835_MBOX_NUMCHANNELS];
-};
+#include <arm/broadcom/bcm2835var.h>
 
 static struct bcm2835mbox_softc *bcm2835mbox_sc;
-
-static int bcmmbox_match(device_t, cfdata_t, void *);
-static void bcmmbox_attach(device_t, device_t, void *);
-static int bcmmbox_intr1(struct bcm2835mbox_softc *, int);
-static int bcmmbox_intr(void *);
-
-CFATTACH_DECL_NEW(bcmmbox, sizeof(struct bcm2835mbox_softc),
-    bcmmbox_match, bcmmbox_attach, NULL, NULL);
-
-/* ARGSUSED */
-static int
-bcmmbox_match(device_t parent, cfdata_t match, void *aux)
-{
-	const char * const compatible[] = { "brcm,bcm2835-mbox", NULL };
-	struct fdt_attach_args * const faa = aux;
-
-	return of_match_compatible(faa->faa_phandle, compatible);
-}
-
-static void
-bcmmbox_attach(device_t parent, device_t self, void *aux)
-{
-	struct bcm2835mbox_softc *sc = device_private(self);
-	struct fdt_attach_args * const faa = aux;
-	struct bcmmbox_attach_args baa;
-	const int phandle = faa->faa_phandle;
-	int i;
-
-	aprint_naive("\n");
-	aprint_normal(": VC mailbox\n");
-
-	sc->sc_dev = self;
-	sc->sc_iot = faa->faa_bst;
-	sc->sc_dmat = faa->faa_dmat;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
-	for (i = 0; i < BCM2835_MBOX_NUMCHANNELS; ++i)
-		cv_init(&sc->sc_chan[i], "bcmmbox");
-
-	bus_addr_t addr;
-	bus_size_t size;
-
-	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
-		aprint_error(": couldn't get register address\n");
-		return;
-	}
-
-	if (bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_ioh) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map device\n");
-		return;
-	}
-
-	char intrstr[128];
-	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
-		aprint_error(": failed to decode interrupt\n");
-		return;
-	}
-
-	sc->sc_intrh = fdtbus_intr_establish(phandle, 0, IPL_VM, 0,
-	    bcmmbox_intr, sc);
-	if (sc->sc_intrh == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %s\n",
-		    intrstr);
-		return;
-	}
-	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
-
-	/* enable mbox interrupt */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_MBOX_CFG,
-	    BCM2835_MBOX_CFG_DATAIRQEN);
-
-	if (bcm2835mbox_sc == NULL)
-		bcm2835mbox_sc = sc;
-
-	baa.baa_dmat = sc->sc_dmat;
-	sc->sc_platdev = config_found_ia(self, "bcmmboxbus", &baa, NULL);
-}
 
 static int
 bcmmbox_intr1(struct bcm2835mbox_softc *sc, int cv)
@@ -175,7 +82,30 @@ bcmmbox_intr1(struct bcm2835mbox_softc *sc, int cv)
 	return ret;
 }
 
-static int
+void
+bcmmbox_attach(struct bcm2835mbox_softc *sc)
+{
+	struct bcmmbox_attach_args baa;
+	int i;
+
+	if (bcm2835mbox_sc == NULL)
+		bcm2835mbox_sc = sc;
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
+	for (i = 0; i < BCM2835_MBOX_NUMCHANNELS; ++i)
+		cv_init(&sc->sc_chan[i], "bcmmbox");
+
+	/* enable mbox interrupt */
+	if (sc->sc_intrh != NULL)
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_MBOX_CFG,
+		    BCM2835_MBOX_CFG_DATAIRQEN);
+
+	baa.baa_dmat = sc->sc_dmat;
+	sc->sc_platdev = config_found_ia(sc->sc_dev, "bcmmboxbus", &baa, NULL);
+}
+
+int
 bcmmbox_intr(void *cookie)
 {
 	struct bcm2835mbox_softc *sc = cookie;
@@ -201,7 +131,7 @@ bcmmbox_read(uint8_t chan, uint32_t *data)
 
 	mutex_enter(&sc->sc_intr_lock);
 	while (BCM2835_MBOX_CHAN(sc->sc_mbox[chan]) == 0) {
-		if (cold)
+		if (cold || sc->sc_intrh == NULL)
 			bcmmbox_intr1(sc, 0);
 		else
 			cv_wait(&sc->sc_chan[chan], &sc->sc_intr_lock);

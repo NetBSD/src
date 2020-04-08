@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.118 2015/12/19 18:45:52 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.118.16.1 2020/04/08 14:03:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.118 2015/12/19 18:45:52 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.118.16.1 2020/04/08 14:03:04 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,11 @@ __RCSID("$NetBSD: options.c,v 1.118 2015/12/19 18:45:52 christos Exp $");
 #ifndef SMALL
 #include "mtree.h"
 #endif	/* SMALL */
+
+char *chdname;
+#if !HAVE_NBTOOL_CONFIG_H
+int do_chroot;
+#endif
 
 /*
  * Routines which handle command line options

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.14 2017/04/27 10:01:54 msaitoh Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.14.10.1 2020/04/08 14:08:10 martin Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.14 2017/04/27 10:01:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.14.10.1 2020/04/08 14:08:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -87,6 +87,7 @@ static const struct sdhc_pci_quirk {
 #define	SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK	__BIT(3)
 #define	SDHC_PCI_QUIRK_RICOH_SLOW_SDR50_HACK	__BIT(4)
 #define	SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET	__BIT(5)
+#define	SDHC_PCI_QUIRK_SINGLE_POWER_WRITE	__BIT(6)
 } sdhc_pci_quirk_table[] = {
 	{
 		PCI_VENDOR_TI,
@@ -121,6 +122,7 @@ static const struct sdhc_pci_quirk {
 		0xffff,
 		0,
 		SDHC_PCI_QUIRK_RICOH_SLOW_SDR50_HACK
+		| SDHC_PCI_QUIRK_SINGLE_POWER_WRITE
 	},
 	{
 		PCI_VENDOR_RICOH,
@@ -266,6 +268,8 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 		sdhc_pci_quirk_ti_hack(pa);
 	if (ISSET(flags, SDHC_PCI_QUIRK_FORCE_DMA))
 		SET(sc->sc.sc_flags, SDHC_FLAG_FORCE_DMA);
+	if (ISSET(flags, SDHC_PCI_QUIRK_SINGLE_POWER_WRITE))
+		SET(sc->sc.sc_flags, SDHC_FLAG_SINGLE_POWER_WRITE);
 	if (ISSET(flags, SDHC_PCI_QUIRK_NO_PWR0))
 		SET(sc->sc.sc_flags, SDHC_FLAG_NO_PWR0);
 	if (ISSET(flags, SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK))

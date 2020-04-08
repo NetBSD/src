@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.39 2018/05/19 15:03:26 jdolecek Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.39.2.1 2020/04/08 14:09:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -190,7 +190,7 @@ void		pmap_reference(pmap_t);
 #if !defined(pmap_remove)
 void		pmap_remove(pmap_t, vaddr_t, vaddr_t);
 #endif
-void		pmap_remove_all(struct pmap *);
+bool		pmap_remove_all(struct pmap *);
 #if !defined(pmap_update)
 void		pmap_update(pmap_t);
 #endif

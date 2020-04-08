@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.34.2.1 2019/06/10 22:07:08 christos Exp $ */
+/* $NetBSD: fdtvar.h,v 1.34.2.2 2020/04/08 14:08:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -76,6 +76,8 @@ struct fdtbus_interrupt_controller_func {
 			     int (*)(void *), void *);
 	void	(*disestablish)(device_t, void *);
 	bool	(*intrstr)(device_t, u_int *, char *, size_t);
+	void	(*mask)(device_t, void *);
+	void	(*unmask)(device_t, void *);
 };
 
 struct fdtbus_i2c_controller_func {
@@ -243,6 +245,12 @@ _FDT_CONSOLE_REGISTER(_name)
 
 TAILQ_HEAD(fdt_conslist, fdt_console_info);
 
+struct fdt_dma_range {
+	paddr_t		dr_sysbase;
+	bus_addr_t	dr_busbase;
+	bus_size_t	dr_len;
+};
+
 int		fdtbus_register_interrupt_controller(device_t, int,
 		    const struct fdtbus_interrupt_controller_func *);
 int		fdtbus_register_i2c_controller(device_t, int,
@@ -277,6 +285,9 @@ int		fdtbus_get_reg(int, u_int, bus_addr_t *, bus_size_t *);
 int		fdtbus_get_reg_byname(int, const char *, bus_addr_t *,
 		    bus_size_t *);
 int		fdtbus_get_reg64(int, u_int, uint64_t *, uint64_t *);
+int		fdtbus_get_addr_cells(int);
+int		fdtbus_get_size_cells(int);
+uint64_t	fdtbus_get_cells(const uint8_t *, int);
 int		fdtbus_get_phandle(int, const char *);
 int		fdtbus_get_phandle_from_native(int);
 i2c_tag_t	fdtbus_get_i2c_tag(int);
@@ -287,6 +298,8 @@ void *		fdtbus_intr_establish_byname(int, const char *, int, int,
 		    int (*func)(void *), void *arg);
 void *		fdtbus_intr_establish_raw(int, const u_int *, int, int,
 		    int (*func)(void *), void *arg);
+void		fdtbus_intr_mask(int, void *);
+void		fdtbus_intr_unmask(int, void *);
 void		fdtbus_intr_disestablish(int, void *);
 bool		fdtbus_intr_str(int, u_int, char *, size_t);
 bool		fdtbus_intr_str_raw(int, const u_int *, char *, size_t);
@@ -363,7 +376,7 @@ void		fdtbus_power_poweroff(void);
 
 device_t	fdtbus_attach_i2cbus(device_t, int, i2c_tag_t, cfprint_t);
 
-bool		fdtbus_set_data(const void *);
+bool		fdtbus_init(const void *);
 const void *	fdtbus_get_data(void);
 int		fdtbus_phandle2offset(int);
 int		fdtbus_offset2phandle(int);
@@ -392,5 +405,8 @@ void		fdt_remove_byhandle(int);
 void		fdt_remove_bycompat(const char *[]);
 int		fdt_find_with_property(const char *, int *);
 int		fdtbus_print(void *, const char *);
+
+bus_dma_tag_t	fdtbus_dma_tag_create(int, const struct fdt_dma_range *,
+		    u_int);
 
 #endif /* _DEV_FDT_FDTVAR_H */

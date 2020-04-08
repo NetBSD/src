@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_copy.c,v 1.1.1.3 2013/01/02 18:58:58 tron Exp $	*/
+/*	$NetBSD: mail_copy.c,v 1.1.1.3.30.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -54,7 +54,8 @@
 /*	The address is quoted according to RFC822 rules.
 /* .IP MAIL_COPY_ORIG_RCPT
 /*	Prepend an X-Original-To: header with the original
-/*	envelope recipient address.
+/*	envelope recipient address. This is a NOOP with
+/*	var_enable_orcpt === 0.
 /* .IP MAIL_COPY_RETURN_PATH
 /*	Prepend a Return-Path: header with the value of the
 /*	\fIsender\fR attribute.
@@ -89,6 +90,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -199,7 +205,7 @@ int     mail_copy(const char *sender,
 	 * An empty original recipient record almost certainly means that
 	 * original recipient processing was disabled.
 	 */
-	if (*orig_rcpt) {
+	if (var_enable_orcpt && *orig_rcpt) {
 	    quote_822_local(buf, orig_rcpt);
 	    vstream_fprintf(dst, "X-Original-To: %s%s", vstring_str(buf), eol);
 	}

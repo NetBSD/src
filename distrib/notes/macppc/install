@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.39.32.1 2019/06/10 21:42:27 christos Exp $
+.\"	$NetBSD: install,v 1.39.32.2 2020/04/08 14:03:50 martin Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -302,7 +302,7 @@ listing if it is present on the disk.  For example:
 PowerPC 601 machines need to specify the
 .Pa NETBSD.601
 kernel when booting from the install CD, and use the
-.Pa kern-GENERIC_601.tgz
+.Pa kern-GENERIC_601.\*[setsuffix]
 and
 .Pa netbsd-INSTALL_601.gz
 kernels.

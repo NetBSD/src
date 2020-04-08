@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 2016/12/22 14:47:59 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.114.16.1 2020/04/08 14:07:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2016/12/22 14:47:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114.16.1 2020/04/08 14:07:55 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -356,7 +356,7 @@ unsigned int	NUM_A_TABLES, NUM_B_TABLES, NUM_C_TABLES;
 #define KERN_C_TABLES	(KVAS_SIZE >> MMU_TIB_SHIFT)
 #define	NUM_KERN_PTES	(KVAS_SIZE >> MMU_TIC_SHIFT)
 
-/*************************** MISCELANEOUS MACROS *************************/
+/*************************** MISCELLANEOUS MACROS *************************/
 void *pmap_bootstrap_alloc(int);
 
 static INLINE void *mmu_ptov(paddr_t);

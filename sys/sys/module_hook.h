@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.3.4.2 2019/06/10 22:09:57 christos Exp $	*/
+/* $NetBSD: module_hook.h,v 1.3.4.3 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,11 +33,14 @@
 #define _SYS_MODULE_HOOK_H
 
 #include <sys/param.h>	/* for COHERENCY_UNIT, for __cacheline_aligned */
-#include <sys/mutex.h>
 #include <sys/localcount.h>
-#include <sys/condvar.h>
-#include <sys/pserialize.h>
-#include <sys/atomic.h>
+#include <sys/stdbool.h>
+
+void module_hook_init(void);
+void module_hook_set(bool *, struct localcount *);
+void module_hook_unset(bool *, struct localcount *);
+bool module_hook_tryenter(bool *, struct localcount *);
+void module_hook_exit(struct localcount *); 
 
 /*
  * Macros for creating MP-safe vectored function calls, where
@@ -47,101 +50,50 @@
 
 #define MODULE_HOOK(hook, type, args)				\
 extern struct hook ## _t {					\
-	kmutex_t		mtx;				\
-	kcondvar_t		cv;				\
 	struct localcount	lc;				\
-	pserialize_t		psz;				\
-        bool			hooked;				\
 	type			(*f)args;			\
+	bool			hooked;				\
 } hook __cacheline_aligned;
 
-#define MODULE_HOOK_SET(hook, waitchan, func)			\
+/*
+ * We use pserialize_perform() to issue a memory barrier on the current
+ * CPU and on all other CPUs so that all prior memory operations on the
+ * current CPU globally happen before all subsequent memory operations
+ * on the current CPU, as perceived by any other CPU.
+ *
+ * pserialize_perform() might be rather heavy-weight here, but it only
+ * happens during module loading, and it allows MODULE_HOOK_CALL() to
+ * work without any other memory barriers.
+ */
+
+#define MODULE_HOOK_SET(hook, func)				\
 do {								\
-								\
-	KASSERT(!hook.hooked);					\
-								\
-	hook.psz = pserialize_create();				\
-	mutex_init(&hook.mtx, MUTEX_DEFAULT, IPL_NONE);		\
-	cv_init(&hook.cv, waitchan);				\
-	localcount_init(&hook.lc);				\
-	hook.f = func;						\
-								\
-	/* Make sure it's initialized before anyone uses it */	\
-	membar_producer();					\
-								\
-	/* Let them use it */					\
-	hook.hooked = true;					\
+	(hook).f = func;					\
+	module_hook_set(&(hook).hooked, &(hook).lc);		\
 } while /* CONSTCOND */ (0)
 
 #define MODULE_HOOK_UNSET(hook)					\
 do {								\
-								\
-	KASSERT(kernconfig_is_held());				\
-	KASSERT(hook.hooked);					\
-	KASSERT(hook.f);					\
-								\
-	/* Grab the mutex */					\
-	mutex_enter(&hook.mtx);					\
-								\
-	/* Prevent new localcount_acquire calls.  */		\
-	hook.hooked = false;					\
-								\
-	/*							\
-	 * Wait for localcount_acquire calls already under way	\
-	 * to finish.						\
-	 */							\
-	pserialize_perform(hook.psz);				\
-								\
-	/* Wait for existing localcount references to drain.  */\
-	localcount_drain(&hook.lc, &hook.cv, &hook.mtx);	\
-								\
-	/* Release the mutex and clean up all resources */	\
-	mutex_exit(&hook.mtx);					\
-	localcount_fini(&hook.lc);				\
-	cv_destroy(&hook.cv);					\
-	mutex_destroy(&hook.mtx);				\
-	pserialize_destroy(hook.psz);				\
+	KASSERT((hook).f);					\
+	module_hook_unset(&(hook).hooked, &(hook).lc);		\
+	(hook).f = NULL;	/* paranoia */			\
 } while /* CONSTCOND */ (0)
 
 #define MODULE_HOOK_CALL(hook, args, default, retval)		\
 do {								\
-	bool __hooked;						\
-	int __hook_s;						\
-								\
-	__hook_s = pserialize_read_enter();			\
-	__hooked = hook.hooked;					\
-	if (__hooked) {						\
-		membar_consumer();				\
-		localcount_acquire(&hook.lc);			\
-	}							\
-	pserialize_read_exit(__hook_s);				\
-								\
-	if (__hooked) {						\
-		retval = (*hook.f)args;				\
-		localcount_release(&hook.lc, &hook.cv,		\
-		    &hook.mtx);					\
+	if (module_hook_tryenter(&(hook).hooked, &(hook).lc)) {	\
+		(retval) = (*(hook).f)args;			\
+		module_hook_exit(&(hook).lc);			\
 	} else {						\
-		retval = default;				\
+		(retval) = (default);				\
 	}							\
 } while /* CONSTCOND */ (0)
 
 #define MODULE_HOOK_CALL_VOID(hook, args, default)		\
 do {								\
-	bool __hooked;						\
-	int __hook_s;						\
-								\
-	__hook_s = pserialize_read_enter();			\
-	__hooked = hook.hooked;					\
-	if (__hooked) {						\
-		membar_consumer();				\
-		localcount_acquire(&hook.lc);			\
-	}							\
-	pserialize_read_exit(__hook_s);				\
-								\
-	if (__hooked) {						\
-		(*hook.f)args;					\
-		localcount_release(&hook.lc, &hook.cv,		\
-		    &hook.mtx);					\
+	if (module_hook_tryenter(&(hook).hooked, &(hook).lc)) {	\
+		(*(hook).f)args;				\
+		module_hook_exit(&(hook).lc);			\
 	} else {						\
 		default;					\
 	}							\

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13.18.1 2019/06/10 22:07:02 christos Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.18.2 2020/04/08 14:08:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,8 +29,37 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum, and by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.18.1 2019/06/10 22:07:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.18.2 2020/04/08 14:08:01 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -45,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.18.1 2019/06/10 22:07:02 chris
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/module_hook.h>
+#include <sys/compat_stub.h>
 
 #include <compat/netbsd32/netbsd32_sysctl.h>
 #include <compat/netbsd32/netbsd32_kern_proc.h>
@@ -55,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.18.1 2019/06/10 22:07:02 chris
 
 struct compat32_80_modctl_hook_t compat32_80_modctl_hook;
 
-# define	DEPS1	"ksem,coredump,compat_util"
+# define	DEPS1	"ksem,compat_util"
 
 #if defined(EXEC_ELF32)
 # define	DEPS2	",exec_elf32"
@@ -100,6 +130,33 @@ static struct execsw netbsd32_execsw[] = {
 #endif
 };
 
+#if defined(__amd64__)
+
+/* This code was moved here, from $SRC/arch/amd64/amd64/trap.c */
+
+static int
+amd64_oosyscall_handle(struct proc *p, struct trapframe *frame)
+{
+
+	static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
+	const size_t sz = sizeof(lcall);
+	char tmp[sizeof(lcall) /* Avoids VLA */];
+
+	/* Check for the oosyscall lcall instruction. */
+	if (p->p_emul == &emul_netbsd32 &&
+	    frame->tf_rip < VM_MAXUSER_ADDRESS32 - sz &&
+	    copyin((void *)frame->tf_rip, tmp, sz) == 0 &&
+	    memcmp(tmp, lcall, sz) == 0) {
+
+		/* Advance past the lcall and save instruction size. */
+		frame->tf_rip += sz;
+		frame->tf_err = sz;
+		return 0;
+	} else
+		return EPASSTHROUGH;
+}
+#endif /* defined(__amd64__) */
+
 static int
 compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 {
@@ -110,13 +167,19 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 		error = exec_add(netbsd32_execsw,
 		    __arraycount(netbsd32_execsw));
 		if (error == 0) {
-			netbsd32_sysctl_init();
 			netbsd32_machdep_md_init();
 			netbsd32_kern_proc_32_init();
+#if defined(__amd64__)
+			MODULE_HOOK_SET(amd64_oosyscall_hook,
+			    amd64_oosyscall_handle);
+#endif /* defined(__amd64__) */
 		}
 		return error;
 
 	case MODULE_CMD_FINI:
+#if defined(__amd64__)
+		MODULE_HOOK_UNSET(amd64_oosyscall_hook);
+#endif /* defined(__amd64__) */
 		netbsd32_machdep_md_fini();
 		netbsd32_sysctl_fini();
 		netbsd32_kern_proc_32_fini();
@@ -125,8 +188,11 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 		    __arraycount(netbsd32_execsw));
 		if (error) {
 			netbsd32_kern_proc_32_init();
-			netbsd32_sysctl_init();
 			netbsd32_machdep_md_init();
+#if defined(__amd64__)
+			MODULE_HOOK_SET(amd64_oosyscall_hook,
+			    amd64_oosyscall_handle);
+#endif /* defined(__amd64__) */
 		}
 		return error;
 

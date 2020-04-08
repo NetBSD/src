@@ -1,4 +1,4 @@
-/*	$NetBSD: ehlo_mask.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: ehlo_mask.c,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -21,6 +21,7 @@
 /*	#define EHLO_MASK_ENHANCEDSTATUSCODES	(1<<10)
 /*	#define EHLO_MASK_DSN		(1<<11)
 /*	#define EHLO_MASK_SMTPUTF8	(1<<12)
+/*	#define EHLO_MASK_CHUNKING	(1<<13)
 /*	#define EHLO_MASK_SILENT	(1<<15)
 /*
 /*	int	ehlo_mask(keyword_list)
@@ -48,6 +49,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library.*/
@@ -79,6 +85,8 @@ static const NAME_MASK ehlo_mask_table[] = {
     "ENHANCEDSTATUSCODES", EHLO_MASK_ENHANCEDSTATUSCODES,
     "DSN", EHLO_MASK_DSN,
     "EHLO_MASK_SMTPUTF8", EHLO_MASK_SMTPUTF8,
+    "SMTPUTF8", EHLO_MASK_SMTPUTF8,
+    "CHUNKING", EHLO_MASK_CHUNKING,
     "SILENT-DISCARD", EHLO_MASK_SILENT,	/* XXX In-band signaling */
     0,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomreg.h,v 1.5 2012/10/24 21:23:45 skrll Exp $	*/
+/*	$NetBSD: plcomreg.h,v 1.5.38.1 2020/04/08 14:07:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -91,7 +91,7 @@
 /* flag register */
 #define	PL011_FR_RI	0x100	/* Ring Indicator */
 #define	PL01X_FR_TXFE	0x080	/* Transmit fifo empty */
-#define	PL01X_FR_RXFF	0x040	/* Recive fifo full */
+#define	PL01X_FR_RXFF	0x040	/* Receive fifo full */
 #define	PL01X_FR_TXFF	0x020	/* Transmit fifo full */
 #define	PL01X_FR_RXFE	0x010	/* Receive fifo empty */
 #define	PL01X_FR_BUSY	0x008	/* Uart Busy */

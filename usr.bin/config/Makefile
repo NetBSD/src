@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/10/29 19:10:49 christos Exp $
+#	$NetBSD: Makefile,v 1.10.16.1 2020/04/08 14:09:15 martin Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
 
 .include <bsd.own.mk>
@@ -16,6 +16,8 @@ MAN+=	config.5 config.samples.5
 YHEADER=1
 CPPFLAGS+=-I${.CURDIR} -I.
 CPPFLAGS+= -I${NETBSDSRCDIR}/usr.bin/cksum
+
+COPTS.scan.c+=		${GCC_NO_STRINGOP_TRUNCATION}
 
 .ifndef HOSTPROG
 LDADD+=-lutil

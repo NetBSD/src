@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9.18.1 2019/06/10 22:09:21 christos Exp $
+# $NetBSD: Makefile,v 1.9.18.2 2020/04/08 14:08:55 martin Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -29,8 +29,11 @@ CPPFLAGS+=	-I.
 
 # XXX CWARNFLAGS.foo.c doesn't work.
 COPTS.drm_atomic_helper.c+=	-Wno-shadow
+COPTS.drm_bufs.c+=		-Wno-pointer-arith
 COPTS.drm_crtc.c+=		-Wno-missing-field-initializers
+COPTS.drm_crtc.c+=		-Wno-pointer-arith
 COPTS.drm_crtc.c+=		-Wno-shadow
+COPTS.drm_dp_helper.c+=		-Wno-pointer-arith
 COPTS.drm_edid.c+=		-Wno-shadow
 COPTS.drm_ioctl.c+=		-Wno-shadow
 

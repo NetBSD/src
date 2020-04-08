@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_plane_helper.c,v 1.2.32.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_plane_helper.c,v 1.2.32.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright (C) 2014 Intel Corporation
@@ -26,10 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_plane_helper.c,v 1.2.32.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_plane_helper.c,v 1.2.32.2 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/list.h>
-#include <linux/export.h>
 #include <drm/drmP.h>
 #include <drm/drm_plane_helper.h>
 #include <drm/drm_rect.h>

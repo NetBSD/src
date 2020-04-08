@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.14 2011/05/27 17:38:45 tsutsui Exp $
+.\"	$NetBSD: xfer,v 1.14.46.1 2020/04/08 14:03:52 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,7 +74,7 @@ Of course, if you have a tape unit other than unit 0 you have to use
 the corresponding unit number.
 .Pp
 If you wish to install the sets from tape then stage you will need to
-download the *.tgz files from
+download the *.\*[setsuffix] files from
 .Pp
 .Dl Pa \&.../NetBSD-\*V/\*M/binary/sets Ns Ar {50,33}
 .Pp
@@ -83,7 +83,7 @@ X sets) and then before the
 .Ic "mt ... rewoffl"
 run
 .Pp
-.Dl # Ic "tar -cvf /dev/nrmt0 *.tgz"
+.Dl # Ic "tar -cvf /dev/nrmt0 *.\*[setsuffix]"
 .Pp
 When you have booted the bootfs and completed the disk partitioning
 you will be prompted to

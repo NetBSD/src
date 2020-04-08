@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.48.18.1 2019/06/10 22:09:04 christos Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.48.18.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.48.18.1 2019/06/10 22:09:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.48.18.2 2020/04/08 14:08:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -368,7 +368,7 @@ mount_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	enum kauth_system_req req;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_system_req)arg0;
+	req = (enum kauth_system_req)(uintptr_t)(uintptr_t)arg0;
 
 	if (action != KAUTH_SYSTEM_MOUNT)
 		return result;

@@ -196,6 +196,29 @@ grep "status: NOERROR" dig.out.test$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+n=`expr $n + 1`
+echo_i "checking recursive lookup to edns 512 + no tcp server does not cause query loops ($n)"
+ret=0
+sent=`grep -c -F "sending packet to 10.53.0.7" ns1/named.run`
+if [ $sent -ge 10 ]; then
+	echo_i "ns1 sent $sent queries to ns7, expected less than 10"
+	ret=1
+fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo_i "checking that TCP failures do not influence EDNS statistics in the ADB ($n)"
+ret=0
+rndc_dumpdb ns1 -adb || ret=1
+timeouts512=`sed -n "s|.*10\.53\.0\.7.*\[edns \([0-9/][0-9/]*\).*|\1|p" ns1/named_dump.db.test$n | awk -F/ '{print $NF}'`
+if [ $timeouts512 -ne 0 ]; then
+	echo_i "512-byte EDNS timeouts according to ADB: $timeouts512, expected: 0"
+	ret=1
+fi
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
 $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} legacy ns1
 copy_setports ns1/named2.conf.in ns1/named.conf
 $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} legacy ns1

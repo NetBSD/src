@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.12.12.1 2019/06/10 22:05:54 christos Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.12.12.2 2020/04/08 14:07:29 martin Exp $	*/
 
 /*
  * Modified for arm32 by Mark Brinicombe
@@ -93,6 +93,7 @@ struct arm32_pci_chipset {
 			    int *, int *);
 	u_int		(*pc_get_segment)(void *);
 	uint32_t	(*pc_get_devid)(void *, uint32_t);
+	uint32_t	(*pc_get_frameid)(void *, uint32_t);
 	pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
@@ -151,6 +152,8 @@ struct arm32_pci_chipset {
     ((c)->pc_get_segment ? (*(c)->pc_get_segment)((c)->pc_conf_v) : 0)
 #define pci_get_devid(c, d)						\
     ((c)->pc_get_devid ? (*(c)->pc_get_devid)((c)->pc_conf_v, (d)) : (d))
+#define pci_get_frameid(c, d)						\
+    ((c)->pc_get_frameid ? (*(c)->pc_get_frameid)((c)->pc_conf_v, (d)) : 0)
 #define	pci_conf_read(c, t, r)						\
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define	pci_conf_write(c, t, r, v)					\

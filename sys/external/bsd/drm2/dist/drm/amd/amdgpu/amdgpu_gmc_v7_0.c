@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gmc_v7_0.c,v 1.1.6.2 2019/06/10 22:07:58 christos Exp $	*/
+/*	$NetBSD: amdgpu_gmc_v7_0.c,v 1.1.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,11 +23,9 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gmc_v7_0.c,v 1.1.6.2 2019/06/10 22:07:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gmc_v7_0.c,v 1.1.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/firmware.h>
-#include <linux/module.h>
-#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "cikd.h"
@@ -490,7 +488,7 @@ static int gmc_v7_0_gart_set_pte_pde(struct amdgpu_device *adev,
 
 	value = addr & 0xFFFFFFFFFFFFF000ULL;
 	value |= flags;
-	writeq(value, (char __iomem *)ptr + (gpu_page_idx * 8));
+	writeq(value, ptr + (gpu_page_idx * 8));
 
 	return 0;
 }

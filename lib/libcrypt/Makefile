@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2013/08/10 18:42:29 dholland Exp $
+#	$NetBSD: Makefile,v 1.25.26.1 2020/04/08 14:07:14 martin Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -9,7 +9,7 @@ SRCS+=	hmac_sha1.c
 
 WARNS?=	5
 
-MAN=	crypt.3
+MAN=	crypt.3 pw_gensalt.3
 MLINKS= crypt.3 encrypt.3 crypt.3 setkey.3
 
 

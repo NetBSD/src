@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpmvar.h,v 1.11 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: amdpmvar.h,v 1.11.18.1 2020/04/08 14:08:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #ifndef _DEV_PCI_AMDPMVAR_H_
 #define _DEV_PCI_AMDPMVAR_H_
 
-#include <sys/mutex.h>
 #include <sys/rndsource.h>
 
 struct amdpm_softc {

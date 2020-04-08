@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.139.4.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.139.4.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139.4.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139.4.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -138,13 +138,13 @@ struct ugen_softc {
 	u_char sc_dying;
 };
 
-dev_type_open(ugenopen);
-dev_type_close(ugenclose);
-dev_type_read(ugenread);
-dev_type_write(ugenwrite);
-dev_type_ioctl(ugenioctl);
-dev_type_poll(ugenpoll);
-dev_type_kqfilter(ugenkqfilter);
+static dev_type_open(ugenopen);
+static dev_type_close(ugenclose);
+static dev_type_read(ugenread);
+static dev_type_write(ugenwrite);
+static dev_type_ioctl(ugenioctl);
+static dev_type_poll(ugenpoll);
+static dev_type_kqfilter(ugenkqfilter);
 
 const struct cdevsw ugen_cdevsw = {
 	.d_open = ugenopen,
@@ -184,12 +184,12 @@ Static void ugen_clear_endpoints(struct ugen_softc *);
 #define UGENENDPOINT(n) (minor(n) & 0xf)
 #define UGENDEV(u, e) (makedev(0, ((u) << 4) | (e)))
 
-int	ugenif_match(device_t, cfdata_t, void *);
-void	ugenif_attach(device_t, device_t, void *);
-int	ugen_match(device_t, cfdata_t, void *);
-void	ugen_attach(device_t, device_t, void *);
-int	ugen_detach(device_t, int);
-int	ugen_activate(device_t, enum devact);
+static int	ugenif_match(device_t, cfdata_t, void *);
+static void	ugenif_attach(device_t, device_t, void *);
+static int	ugen_match(device_t, cfdata_t, void *);
+static void	ugen_attach(device_t, device_t, void *);
+static int	ugen_detach(device_t, int);
+static int	ugen_activate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(ugen, sizeof(struct ugen_softc), ugen_match,
     ugen_attach, ugen_detach, ugen_activate);
@@ -199,7 +199,7 @@ CFATTACH_DECL_NEW(ugenif, sizeof(struct ugen_softc), ugenif_match,
 /* toggle to control attach priority. -1 means "let autoconf decide" */
 int ugen_override = -1;
 
-int
+static int
 ugen_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -218,20 +218,20 @@ ugen_match(device_t parent, cfdata_t match, void *aux)
 		return UMATCH_NONE;
 }
 
-int
+static int
 ugenif_match(device_t parent, cfdata_t match, void *aux)
 {
 	/* Assume that they knew what they configured! (see ugenif(4)) */
 	return UMATCH_HIGHEST;
 }
 
-void
+static void
 ugen_attach(device_t parent, device_t self, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 	struct usbif_attach_arg uiaa;
 
-	memset(&uiaa, 0, sizeof uiaa);
+	memset(&uiaa, 0, sizeof(uiaa));
 	uiaa.uiaa_port = uaa->uaa_port;
 	uiaa.uiaa_vendor = uaa->uaa_vendor;
 	uiaa.uiaa_product = uaa->uaa_product;
@@ -243,7 +243,7 @@ ugen_attach(device_t parent, device_t self, void *aux)
 	ugenif_attach(parent, self, &uiaa);
 }
 
-void
+static void
 ugenif_attach(device_t parent, device_t self, void *aux)
 {
 	struct ugen_softc *sc = device_private(self);
@@ -392,7 +392,7 @@ ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 	return USBD_NORMAL_COMPLETION;
 }
 
-int
+static int
 ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ugen_softc *sc;
@@ -540,7 +540,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int endpt = UGENENDPOINT(dev);
@@ -826,7 +826,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	return error;
 }
 
-int
+static int
 ugenread(dev_t dev, struct uio *uio, int flag)
 {
 	int endpt = UGENENDPOINT(dev);
@@ -1016,7 +1016,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 	return error;
 }
 
-int
+static int
 ugenwrite(dev_t dev, struct uio *uio, int flag)
 {
 	int endpt = UGENENDPOINT(dev);
@@ -1041,7 +1041,7 @@ ugenwrite(dev_t dev, struct uio *uio, int flag)
 	return error;
 }
 
-int
+static int
 ugen_activate(device_t self, enum devact act)
 {
 	struct ugen_softc *sc = device_private(self);
@@ -1055,7 +1055,7 @@ ugen_activate(device_t self, enum devact act)
 	}
 }
 
-int
+static int
 ugen_detach(device_t self, int flags)
 {
 	struct ugen_softc *sc = device_private(self);
@@ -1406,6 +1406,8 @@ ugen_get_cdesc(struct ugen_softc *sc, int index, int *lenp)
 
 	if (index == USB_CURRENT_CONFIG_INDEX) {
 		tdesc = usbd_get_config_descriptor(sc->sc_udev);
+		if (tdesc == NULL)
+			return NULL;
 		len = UGETW(tdesc->wTotalLength);
 		if (lenp)
 			*lenp = len;
@@ -1856,7 +1858,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	return 0;
 }
 
-int
+static int
 ugenioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	int endpt = UGENENDPOINT(dev);
@@ -1874,7 +1876,7 @@ ugenioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	return error;
 }
 
-int
+static int
 ugenpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ugen_softc *sc;
@@ -2096,7 +2098,7 @@ static const struct filterops ugenwrite_bulk_filtops = {
 	.f_event = filt_ugenwrite_bulk,
 };
 
-int
+static int
 ugenkqfilter(dev_t dev, struct knote *kn)
 {
 	struct ugen_softc *sc;

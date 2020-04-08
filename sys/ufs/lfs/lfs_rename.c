@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.22 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.22.6.1 2020/04/08 14:09:04 martin Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.12 2015/03/27 17:27:56 riastradh Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.22 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.22.6.1 2020/04/08 14:09:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1060,6 +1060,9 @@ lfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	error = ulfs_gro_rename(mp, cred,
 	    fdvp, fcnp, fde, fvp,
 	    tdvp, tcnp, tde, tvp);
+
+	if (tvp && VTOI(tvp)->i_nlink == 0)
+		lfs_orphan(VTOI(tvp)->i_lfs, VTOI(tvp)->i_number);
 
 	UNMARK_VNODE(fdvp);
 	UNMARK_VNODE(fvp);

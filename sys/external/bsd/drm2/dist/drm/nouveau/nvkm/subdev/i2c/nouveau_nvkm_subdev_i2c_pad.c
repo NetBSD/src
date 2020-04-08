@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_i2c_pad.c,v 1.3.6.2 2019/06/10 22:08:22 christos Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_i2c_pad.c,v 1.3.6.3 2020/04/08 14:08:25 martin Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,9 +24,11 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_pad.c,v 1.3.6.2 2019/06/10 22:08:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_pad.c,v 1.3.6.3 2020/04/08 14:08:25 martin Exp $");
 
 #include "pad.h"
+
+#include <linux/nbsd-namespace.h>
 
 static void
 nvkm_i2c_pad_mode_locked(struct nvkm_i2c_pad *pad, enum nvkm_i2c_pad_mode mode)
@@ -92,11 +94,7 @@ nvkm_i2c_pad_del(struct nvkm_i2c_pad **ppad)
 	if (pad) {
 		PAD_TRACE(pad, "dtor");
 		list_del(&pad->head);
-#ifdef __NetBSD__
-		linux_mutex_destroy(&pad->mutex);
-#else
 		mutex_destroy(&pad->mutex);
-#endif
 		kfree(pad);
 		pad = NULL;
 	}
@@ -110,11 +108,7 @@ nvkm_i2c_pad_ctor(const struct nvkm_i2c_pad_func *func, struct nvkm_i2c *i2c,
 	pad->i2c = i2c;
 	pad->id = id;
 	pad->mode = NVKM_I2C_PAD_OFF;
-#ifdef __NetBSD__
-	linux_mutex_init(&pad->mutex);
-#else
 	mutex_init(&pad->mutex);
-#endif
 	list_add_tail(&pad->head, &i2c->pad);
 	PAD_TRACE(pad, "ctor");
 }

@@ -1,16 +1,8 @@
-/*	$NetBSD: dra7.h,v 1.1.1.1.4.1 2019/06/10 22:08:54 christos Exp $	*/
+/*	$NetBSD: dra7.h,v 1.1.1.1.4.2 2020/04/08 14:08:44 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2017 Texas Instruments, Inc.
- *
- * This software is licensed under the terms of the GNU General Public
- * License version 2, as published by the Free Software Foundation, and
- * may be copied, distributed, and modified under those terms.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
  */
 #ifndef __DT_BINDINGS_CLK_DRA7_H
 #define __DT_BINDINGS_CLK_DRA7_H

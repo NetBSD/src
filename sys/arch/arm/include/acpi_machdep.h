@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.h,v 1.2.4.2 2019/06/10 22:05:54 christos Exp $ */
+/* $NetBSD: acpi_machdep.h,v 1.2.4.3 2020/04/08 14:07:29 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@ void			acpi_md_OsEnableInterrupt(void);
 void			acpi_md_OsDisableInterrupt(void);
 void *			acpi_md_intr_establish(uint32_t, int, int, int (*)(void *),
 					       void *, bool, const char *);
+void			acpi_md_intr_mask(void *);
+void			acpi_md_intr_unmask(void *);
 void			acpi_md_intr_disestablish(void *);
 int			acpi_md_sleep(int);
 uint32_t		acpi_md_pdc(void);

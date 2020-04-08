@@ -1,4 +1,4 @@
-/*	$NetBSD: afsdb_18.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: afsdb_18.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -176,7 +176,7 @@ fromstruct_afsdb(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_afsdb);
-	REQUIRE(source != NULL);
+	REQUIRE(afsdb != NULL);
 	REQUIRE(afsdb->common.rdclass == rdclass);
 	REQUIRE(afsdb->common.rdtype == type);
 
@@ -195,7 +195,7 @@ tostruct_afsdb(ARGS_TOSTRUCT) {
 	dns_name_t name;
 
 	REQUIRE(rdata->type == dns_rdatatype_afsdb);
-	REQUIRE(target != NULL);
+	REQUIRE(afsdb != NULL);
 	REQUIRE(rdata->length != 0);
 
 	afsdb->common.rdclass = rdata->rdclass;
@@ -221,7 +221,7 @@ static inline void
 freestruct_afsdb(ARGS_FREESTRUCT) {
 	dns_rdata_afsdb_t *afsdb = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(afsdb != NULL);
 	REQUIRE(afsdb->common.rdtype == dns_rdatatype_afsdb);
 
 	if (afsdb->mctx == NULL)

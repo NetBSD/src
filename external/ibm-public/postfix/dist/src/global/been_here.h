@@ -1,4 +1,4 @@
-/*	$NetBSD: been_here.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: been_here.h,v 1.1.1.1.50.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _BEEN_HERE_H_INCLUDED_
 #define _BEEN_HERE_H_INCLUDED_
@@ -27,6 +27,7 @@ typedef struct {
     struct HTABLE *table;
 } BH_TABLE;
 
+#define BH_BOUND_NONE	0		/* no upper bound */
 #define BH_FLAG_NONE	0		/* no special processing */
 #define BH_FLAG_FOLD	(1<<0)		/* fold case */
 

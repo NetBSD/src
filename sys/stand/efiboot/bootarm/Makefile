@@ -1,15 +1,15 @@
-# $NetBSD: Makefile,v 1.1.4.2 2019/06/10 22:09:56 christos Exp $
+# $NetBSD: Makefile,v 1.1.4.3 2020/04/08 14:09:03 martin Exp $
 
 PROG=		bootarm.efi
 OBJFMT=		binary
-NEWVERSWHAT=	"EFI Boot (arm)"
+NEWVERSWHAT=	"efiboot (arm)"
 GNUEFIARCH=	arm
 LIBGNUEFI_ARCH=	arm
 
 EXTRA_SOURCES=	efibootarm.c
 EXTRA_SOURCES+=	cache.S
 
-COPTS+=		-mno-unaligned-access -ffreestanding -fno-unwind-tables
+COPTS+=		-mfloat-abi=soft -mno-unaligned-access -ffreestanding -fno-unwind-tables
 CFLAGS+=	-DEFIBOOT_ALIGN=0x1000000
 LDFLAGS+=	-N
 

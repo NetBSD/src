@@ -1,4 +1,4 @@
-/*	$NetBSD: post_mail.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: post_mail.h,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _POST_MAIL_H_INCLUDED_
 #define _POST_MAIL_H_INCLUDED_
@@ -53,6 +53,11 @@ extern void post_mail_fclose_async(VSTREAM *, POST_MAIL_FCLOSE_NOTIFY, void *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

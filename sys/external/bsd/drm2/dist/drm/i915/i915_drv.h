@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.11.20.1 2019/06/10 22:08:05 christos Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.11.20.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -127,7 +127,7 @@ static inline const char *yesno(bool v)
 	return v ? "yes" : "no";
 }
 
-enum i915_pipe {
+enum pipe {
 	INVALID_PIPE = -1,
 	PIPE_A = 0,
 	PIPE_B,
@@ -921,6 +921,12 @@ struct intel_context {
 		int pin_count;
 	} engine[I915_NUM_RINGS];
 
+	/* jump_whitelist: Bit array for tracking cmds during cmdparsing */
+	unsigned long *jump_whitelist;
+
+	/* jump_whitelist_cmds: No of cmd slots available */
+	uint32_t jump_whitelist_cmds;
+
 	struct list_head link;
 };
 
@@ -1189,6 +1195,7 @@ struct intel_gen6_power_mgmt {
 	bool client_boost;
 
 	bool enabled;
+	bool ctx_corrupted;
 	struct delayed_work delayed_resume_work;
 	unsigned boosts;
 
@@ -2652,6 +2659,9 @@ struct drm_i915_cmd_table {
 #define HAS_BSD2(dev)		(INTEL_INFO(dev)->ring_mask & BSD2_RING)
 #define HAS_BLT(dev)		(INTEL_INFO(dev)->ring_mask & BLT_RING)
 #define HAS_VEBOX(dev)		(INTEL_INFO(dev)->ring_mask & VEBOX_RING)
+
+#define HAS_SECURE_BATCHES(dev_priv) (INTEL_INFO(dev_priv)->gen < 6)
+
 #define HAS_LLC(dev)		(INTEL_INFO(dev)->has_llc)
 #define HAS_WT(dev)		((IS_HASWELL(dev) || IS_BROADWELL(dev)) && \
 				 __I915__(dev)->ellc_size)
@@ -2666,8 +2676,18 @@ struct drm_i915_cmd_table {
 #define HAS_OVERLAY(dev)		(INTEL_INFO(dev)->has_overlay)
 #define OVERLAY_NEEDS_PHYSICAL(dev)	(INTEL_INFO(dev)->overlay_needs_physical)
 
+/*
+ * The Gen7 cmdparser copies the scanned buffer to the ggtt for execution
+ * All later gens can run the final buffer from the ppgtt
+ */
+#define CMDPARSER_USES_GGTT(dev_priv) IS_GEN7(dev_priv)
+
 /* Early gen2 have a totally busted CS tlb and require pinned batches. */
 #define HAS_BROKEN_CS_TLB(dev)		(IS_I830(dev) || IS_845G(dev))
+
+#define NEEDS_RC6_CTX_CORRUPTION_WA(dev)	\
+	(IS_BROADWELL(dev) || INTEL_INFO(dev)->gen == 9)
+
 /*
  * dp aux and gmbus irq on gen4 seems to be able to generate legacy interrupts
  * even when in MSI mode. This results in spurious interrupt warnings if the
@@ -2860,11 +2880,11 @@ static inline bool intel_vgpu_active(struct drm_device *dev)
 }
 
 void
-i915_enable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
+i915_enable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
 		     u32 status_mask);
 
 void
-i915_disable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
+i915_disable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
 		      u32 status_mask);
 
 void valleyview_enable_display_irqs(struct drm_i915_private *dev_priv);
@@ -3001,9 +3021,9 @@ i915_gem_object_get_page(struct drm_i915_gem_object *obj, int n)
 		 * lock to prevent them from disappearing.
 		 */
 		KASSERT(obj->pages != NULL);
-		mutex_enter(obj->base.filp->vmobjlock);
+		rw_enter(obj->base.filp->vmobjlock, RW_WRITER);
 		page = uvm_pagelookup(obj->base.filp, ptoa(n));
-		mutex_exit(obj->base.filp->vmobjlock);
+		rw_exit(obj->base.filp->vmobjlock);
 	}
 	KASSERT(page != NULL);
 	return container_of(page, struct page, p_vmp);
@@ -3428,16 +3448,19 @@ void i915_get_extra_instdone(struct drm_device *dev, uint32_t *instdone);
 const char *i915_cache_level_str(struct drm_i915_private *i915, int type);
 
 /* i915_cmd_parser.c */
-int i915_cmd_parser_get_version(void);
+int i915_cmd_parser_get_version(struct drm_i915_private *dev_priv);
 int i915_cmd_parser_init_ring(struct intel_engine_cs *ring);
 void i915_cmd_parser_fini_ring(struct intel_engine_cs *ring);
 bool i915_needs_cmd_parser(struct intel_engine_cs *ring);
-int i915_parse_cmds(struct intel_engine_cs *ring,
+int i915_parse_cmds(struct intel_context *cxt,
+		    struct intel_engine_cs *ring,
 		    struct drm_i915_gem_object *batch_obj,
-		    struct drm_i915_gem_object *shadow_batch_obj,
+		    u64 user_batch_start,
 		    u32 batch_start_offset,
 		    u32 batch_len,
-		    bool is_master);
+		    struct drm_i915_gem_object *shadow_batch_obj,
+		    u64 shadow_batch_start);
+
 
 /* i915_suspend.c */
 extern int i915_save_state(struct drm_device *dev);
@@ -3568,8 +3591,8 @@ u32 vlv_bunit_read(struct drm_i915_private *dev_priv, u32 reg);
 void vlv_bunit_write(struct drm_i915_private *dev_priv, u32 reg, u32 val);
 u32 vlv_gps_core_read(struct drm_i915_private *dev_priv, u32 reg);
 void vlv_gps_core_write(struct drm_i915_private *dev_priv, u32 reg, u32 val);
-u32 vlv_dpio_read(struct drm_i915_private *dev_priv, enum i915_pipe pipe, int reg);
-void vlv_dpio_write(struct drm_i915_private *dev_priv, enum i915_pipe pipe, int reg, u32 val);
+u32 vlv_dpio_read(struct drm_i915_private *dev_priv, enum pipe pipe, int reg);
+void vlv_dpio_write(struct drm_i915_private *dev_priv, enum pipe pipe, int reg, u32 val);
 u32 intel_sbi_read(struct drm_i915_private *dev_priv, u16 reg,
 		   enum intel_sbi_destination destination);
 void intel_sbi_write(struct drm_i915_private *dev_priv, u16 reg, u32 value,

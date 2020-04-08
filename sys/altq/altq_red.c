@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.30.18.1 2019/06/10 22:05:42 christos Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.30.18.2 2020/04/08 14:07:23 martin Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.30.18.1 2019/06/10 22:05:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.30.18.2 2020/04/08 14:07:23 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -165,7 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.30.18.1 2019/06/10 22:05:42 christos 
 #define	TH_MIN		5	/* min threshold */
 #define	TH_MAX		15	/* max threshold */
 
-#define	RED_LIMIT	60	/* default max queue lenght */
+#define	RED_LIMIT	60	/* default max queue length */
 #define	RED_STATS		/* collect statistics */
 
 /*

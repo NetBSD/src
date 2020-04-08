@@ -1,4 +1,4 @@
-# $NetBSD: t_ldp_regen.sh,v 1.7.14.1 2019/06/10 22:10:10 christos Exp $
+# $NetBSD: t_ldp_regen.sh,v 1.7.14.2 2020/04/08 14:09:12 martin Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,14 +35,6 @@
 # Now: * R4 should install label IMPLNULL for that prefix
 #      * R3 should realloc the target label from IMPLNULL to something else
 
-
-RUMP_SERVER1=unix://./r1
-RUMP_SERVER2=unix://./r2
-RUMP_SERVER3=unix://./r3
-RUMP_SERVER4=unix://./r4
-
-RUMP_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 \
-           -lrumpnet_netmpls -lrumpnet_shmif"
 LDP_FLAGS=""
 
 atf_test_case ldp_regen cleanup
@@ -68,15 +60,7 @@ newaddr_and_ping() {
 		rump.ping -n -o -w 5 10.0.5.1
 }
 
-create_servers() {
-
-	# allows us to run as normal user
-	ulimit -r 400
-
-	atf_check -s exit:0 rump_server ${RUMP_LIBS} ${RUMP_SERVER1}
-	atf_check -s exit:0 rump_server ${RUMP_LIBS} ${RUMP_SERVER2}
-	atf_check -s exit:0 rump_server ${RUMP_LIBS} ${RUMP_SERVER3}
-	atf_check -s exit:0 rump_server ${RUMP_LIBS} ${RUMP_SERVER4}
+configservers() {
 
 	# LDP HIJACK
 	export RUMPHIJACK=path=/rump,socket=all,sysctl=yes
@@ -153,21 +137,14 @@ wait_ldp_ok() {
 		rump.ping -o -w 60 10.0.4.1
 }
 
-docleanup() {
-
-	RUMP_SERVER=${RUMP_SERVER1} rump.halt
-	RUMP_SERVER=${RUMP_SERVER2} rump.halt
-	RUMP_SERVER=${RUMP_SERVER3} rump.halt
-	RUMP_SERVER=${RUMP_SERVER4} rump.halt
-}
-
 ldp_regen_body() {
 
         if sysctl machdep.cpu_brand 2>/dev/null | grep QEMU >/dev/null 2>&1
 	then
 	    atf_skip "unreliable under qemu, skip until PR kern/43997 fixed"
 	fi
-	create_servers
+	dostart
+	configservers
 	wait_ldp_ok
 	newaddr_and_ping
 }

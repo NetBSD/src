@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.49.4.1 2019/06/10 22:09:03 christos Exp $ */
+/* $NetBSD: kern_tc.c,v 1.49.4.2 2020/04/08 14:08:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.49.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.49.4.2 2020/04/08 14:08:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -517,6 +517,35 @@ getmicrotime(struct timeval *tvp)
 		gen = th->th_generation;
 		*tvp = th->th_microtime;
 	} while (gen == 0 || gen != th->th_generation);
+}
+
+void
+getnanoboottime(struct timespec *tsp)
+{
+	struct bintime bt;
+
+	getbinboottime(&bt);
+	bintime2timespec(&bt, tsp);
+}
+
+void
+getmicroboottime(struct timeval *tvp)
+{
+	struct bintime bt;
+
+	getbinboottime(&bt);
+	bintime2timeval(&bt, tvp);
+}
+
+void
+getbinboottime(struct bintime *bt)
+{
+
+	/*
+	 * XXX Need lockless read synchronization around timebasebin
+	 * (and not just here).
+	 */
+	*bt = timebasebin;
 }
 
 /*
@@ -1331,7 +1360,7 @@ inittimecounter(void)
 	 * Set the initial timeout to
 	 * max(1, <approx. number of hardclock ticks in a millisecond>).
 	 * People should probably not use the sysctl to set the timeout
-	 * to smaller than its inital value, since that value is the
+	 * to smaller than its initial value, since that value is the
 	 * smallest reasonable one.  If they want better timestamps they
 	 * should use the non-"get"* functions.
 	 */

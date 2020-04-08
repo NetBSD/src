@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ntp.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-ntp.c,v 1.7.12.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -205,6 +205,7 @@ static const struct tok ntp_stratum_values[] = {
 /*
  * Print ntp requests
  */
+UNALIGNED_OK
 void
 ntp_print(netdissect_options *ndo,
           register const u_char *cp, u_int length)
@@ -429,4 +430,3 @@ p_ntp_delta(netdissect_options *ndo,
 	f = (uint32_t)(ff * 1000000000.0);	/* treat fraction as parts per billion */
 	ND_PRINT((ndo, "%s%d.%09d", signbit ? "-" : "+", i, f));
 }
-

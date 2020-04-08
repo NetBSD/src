@@ -1,7 +1,7 @@
-/*	$NetBSD: mopcopy.c,v 1.6 2016/06/08 01:16:35 christos Exp $	*/
+/*	$NetBSD: mopcopy.c,v 1.6.16.1 2020/04/08 14:09:21 martin Exp $	*/
 
 /* mopcopy - Convert a Unix format kernel into something that
- * can be transfered via MOP.
+ * can be transferred via MOP.
  *
  * This code was written while refering to the NetBSD/vax boot
  * loader. Therefore anything that can be booted by the Vax
@@ -49,7 +49,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: mopcopy.c,v 1.6 2016/06/08 01:16:35 christos Exp $");
+__RCSID("$NetBSD: mopcopy.c,v 1.6.16.1 2020/04/08 14:09:21 martin Exp $");
 #endif
 
 #include "os.h"

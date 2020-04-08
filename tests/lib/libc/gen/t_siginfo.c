@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.32.4.1 2019/06/10 22:10:03 christos Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.32.4.2 2020/04/08 14:09:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 
 #include "isqemu.h"
 
+#ifdef ENABLE_TESTS
 /* for sigbus */
 volatile char *addr;
 
@@ -366,8 +367,8 @@ ATF_TC_BODY(sigfpe_int, tc)
 	struct sigaction sa;
 	long l = strtol("0", NULL, 10);
 
-#if defined(__powerpc__)
-	atf_tc_skip("Test not valid on powerpc");
+#if defined(__powerpc__) || defined(__aarch64__)
+	atf_tc_skip("Integer division by zero doesn't trap");
 #endif
 	if (sigsetjmp(sigfpe_int_env, 0) == 0) {
 		sa.sa_flags = SA_SIGINFO;
@@ -496,9 +497,25 @@ ATF_TC_BODY(sigbus_adraln, tc)
 	atf_tc_fail("Test did not fault as expected");
 }
 
+#else
+ATF_TC(dummy);
+ATF_TC_HEAD(dummy, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A dummy test");
+}
+
+ATF_TC_BODY(dummy, tc)
+{
+
+	// Dummy, skipped
+	// The ATF framework requires at least a single defined test.
+}
+#endif
+
 ATF_TP_ADD_TCS(tp)
 {
 
+#ifdef ENABLE_TESTS
 	ATF_TP_ADD_TC(tp, sigalarm);
 	ATF_TP_ADD_TC(tp, sigchild_normal);
 	ATF_TP_ADD_TC(tp, sigchild_dump);
@@ -507,6 +524,9 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, sigfpe_int);
 	ATF_TP_ADD_TC(tp, sigsegv);
 	ATF_TP_ADD_TC(tp, sigbus_adraln);
+#else
+	ATF_TP_ADD_TC(tp, dummy);
+#endif
 
 	return atf_no_error();
 }

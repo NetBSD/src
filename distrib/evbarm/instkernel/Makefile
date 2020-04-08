@@ -1,6 +1,14 @@
-#	$NetBSD: Makefile,v 1.4 2013/03/19 22:16:52 garbled Exp $
+#	$NetBSD: Makefile,v 1.4.32.1 2020/04/08 14:03:44 martin Exp $
 
-SUBDIR=		ramdisk sshramdisk .WAIT instkernel
+SUBDIR=		ramdisk
+
+.include "../../etc/etc.evbarm/Makefile.inc"
+
+.if !empty(KERNEL_SETS:MRPI)
+SUBDIR+=	sshramdisk
+.endif
+
+SUBDIR+=	.WAIT instkernel
 TARGETS+=	release
 
 .include <bsd.subdir.mk>

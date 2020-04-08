@@ -1,5 +1,5 @@
 /* Disassemble h8300 instructions.
-   Copyright (C) 1993-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -140,7 +140,8 @@ extract_immediate (FILE *stream,
       break;
     case L_32:
       *len = 32;
-      *cst = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
+      *cst = (((unsigned) data[0] << 24) + (data[1] << 16)
+	      + (data[2] << 8) + data[3]);
       break;
     default:
       *len = 0;
@@ -530,7 +531,7 @@ bfd_h8_disassemble (bfd_vma addr, disassemble_info *info, int mach)
 		{
 		  int i = len / 2;
 
-		  cst[opnr] = ((data[i] << 24)
+		  cst[opnr] = (((unsigned) data[i] << 24)
 			       | (data[i + 1] << 16)
 			       | (data[i + 2] << 8)
 			       | (data[i + 3]));

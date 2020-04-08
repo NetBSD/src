@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.47.2.1 2019/06/10 22:06:27 christos Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.47.2.2 2020/04/08 14:07:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.47.2.1 2019/06/10 22:06:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.47.2.2 2020/04/08 14:07:43 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -117,7 +117,7 @@ ether_cmp(void *one, void *two)
 	diff |= *a++ - *b++;
 #else
 	/*
-	 * Most modern CPUs do better with a single expresion.
+	 * Most modern CPUs do better with a single expression.
 	 * Note that short-cut evaluation is NOT helpful here,
 	 * because it just makes the code longer, not faster!
 	 */
@@ -266,7 +266,7 @@ mcstart(struct ifnet *ifp)
 		ifp->if_flags |= IFF_OACTIVE;
 		maceput(sc, m);
 
-		ifp->if_opackets++;		/* # of pkts */
+		if_statinc(ifp, if_opackets);	/* # of pkts */
 	}
 }
 
@@ -434,21 +434,21 @@ struct mc_softc *sc = arg;
 #ifdef MCDEBUG
 		printf("%s: jabber error\n", device_xname(sc->sc_dev));
 #endif
-		sc->sc_if.if_oerrors++;
+		if_statinc(&sc->sc_if, if_oerrors);
 	}
 
 	if (ir & BABL) {
 #ifdef MCDEBUG
 		printf("%s: babble\n", device_xname(sc->sc_dev));
 #endif
-		sc->sc_if.if_oerrors++;
+		if_statinc(&sc->sc_if, if_oerrors);
 	}
 
 	if (ir & CERR) {
 #ifdef MCDEBUG
 		printf("%s: collision error\n", device_xname(sc->sc_dev));
 #endif
-		sc->sc_if.if_collisions++;
+		if_statinc(&sc->sc_if, if_collisions);
 	}
 
 	/*
@@ -481,28 +481,32 @@ mc_tint(struct mc_softc *sc)
 		return;
 	}
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(&sc->sc_if);
+
 	if (xmtfs & LCOL) {
 		printf("%s: late collision\n", device_xname(sc->sc_dev));
-		sc->sc_if.if_oerrors++;
-		sc->sc_if.if_collisions++;
+		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(nsr, if_collisions);
 	}
 
 	if (xmtfs & MORE)
 		/* Real number is unknown. */
-		sc->sc_if.if_collisions += 2;
+		if_statadd_ref(nsr, if_collisions, 2);
 	else if (xmtfs & ONE)
-		sc->sc_if.if_collisions++;
+		if_statinc_ref(nsr, if_collisions);
 	else if (xmtfs & RTRY) {
 		printf("%s: excessive collisions\n", device_xname(sc->sc_dev));
-		sc->sc_if.if_collisions += 16;
-		sc->sc_if.if_oerrors++;
+		if_statadd_ref(nsr, if_collisions, 16);
+		if_statinc_ref(nsr, if_oerrors);
 	}
 
 	if (xmtfs & LCAR) {
 		sc->sc_havecarrier = 0;
 		printf("%s: lost carrier\n", device_xname(sc->sc_dev));
-		sc->sc_if.if_oerrors++;
+		if_statinc_ref(nsr, if_oerrors);
 	}
+
+	IF_STAT_PUTREF(&sc->sc_if);
 
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	sc->sc_if.if_timer = 0;
@@ -526,18 +530,18 @@ mc_rint(struct mc_softc *sc)
 
 	if (rxf.rx_rcvsts & OFLO) {
 		printf("%s: receive FIFO overflow\n", device_xname(sc->sc_dev));
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		return;
 	}
 
 	if (rxf.rx_rcvsts & CLSN)
-		sc->sc_if.if_collisions++;
+		if_statinc(&sc->sc_if, if_collisions);
 
 	if (rxf.rx_rcvsts & FRAM) {
 #ifdef MCDEBUG
 		printf("%s: framing error\n", device_xname(sc->sc_dev));
 #endif
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		return;
 	}
 
@@ -545,7 +549,7 @@ mc_rint(struct mc_softc *sc)
 #ifdef MCDEBUG
 		printf("%s: frame control checksum error\n", device_xname(sc->sc_dev));
 #endif
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		return;
 	}
 
@@ -565,13 +569,13 @@ mace_read(struct mc_softc *sc, void *pkt, int len)
 		printf("%s: invalid packet size %d; dropping\n",
 		    device_xname(sc->sc_dev), len);
 #endif
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
 	m = mace_get(sc, pkt, len);
 	if (m == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 

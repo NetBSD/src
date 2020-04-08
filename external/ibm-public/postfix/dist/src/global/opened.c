@@ -1,4 +1,4 @@
-/*	$NetBSD: opened.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: opened.c,v 1.1.1.1.50.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -44,6 +44,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -59,7 +64,8 @@
 
 /* Global library. */
 
-#include "opened.h"
+#include <opened.h>
+#include <info_log_addr_form.h>
 
 /* opened - log that a message was opened */
 
@@ -84,7 +90,7 @@ void    vopened(const char *queue_id, const char *sender, long size, int nrcpt,
 
     vstring_vsprintf(text, fmt, ap);
     msg_info("%s: from=<%s>, size=%ld, nrcpt=%d%s%s%s",
-	     queue_id, sender, size, nrcpt,
+	     queue_id, info_log_addr_form_sender(sender), size, nrcpt,
 	     *TEXT ? " (" : "", TEXT, *TEXT ? ")" : "");
     vstring_free(text);
 }

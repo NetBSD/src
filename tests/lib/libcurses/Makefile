@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2012/06/03 23:19:11 joerg Exp $
+# $NetBSD: Makefile,v 1.3.32.1 2020/04/08 14:09:09 martin Exp $
 
 NOMAN=		# defined
 
@@ -23,7 +23,11 @@ CLEANFILES+=	${TERMINFO_DB}.cdb
 
 realall: ${TERMINFO_DB}.cdb
 
-${TERMINFO_DB}.cdb: ${TOOL_TIC} ${TEST_TERMINFO}
+.if ${USETOOLS} == "yes"
+DPTOOL_TIC = ${TOOL_TIC} 
+.endif
+
+${TERMINFO_DB}.cdb: ${DPTOOL_TIC} ${TEST_TERMINFO}
 	${TOOL_TIC} -o ${.TARGET} ${.CURDIR}/${TEST_TERMINFO}
 
 .include <bsd.test.mk>

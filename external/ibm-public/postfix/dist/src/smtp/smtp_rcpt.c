@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_rcpt.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtp_rcpt.c,v 1.2.12.1 2020/04/08 14:06:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -108,6 +108,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System  library. */
@@ -162,7 +167,7 @@ void    smtp_rcpt_done(SMTP_STATE *state, SMTP_RESP *resp, RECIPIENT *rcpt)
      */
     if ((session->features & SMTP_FEATURE_DSN) == 0
 	&& !smtp_mode
-	&& var_lmtp_assume_final != 0)
+	&& (smtp_cli_attr.flags & SMTP_CLI_FLAG_FINAL_DELIVERY) != 0)
 	dsn_action = "delivered";
 
     /*

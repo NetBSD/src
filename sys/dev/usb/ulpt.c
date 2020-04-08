@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.99.4.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.99.4.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.99.4.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.99.4.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -129,11 +129,11 @@ struct ulpt_softc {
 	u_char sc_dying;
 };
 
-dev_type_open(ulptopen);
-dev_type_close(ulptclose);
-dev_type_write(ulptwrite);
-dev_type_read(ulptread);
-dev_type_ioctl(ulptioctl);
+static dev_type_open(ulptopen);
+static dev_type_close(ulptclose);
+static dev_type_write(ulptwrite);
+static dev_type_read(ulptread);
+static dev_type_ioctl(ulptioctl);
 
 const struct cdevsw ulpt_cdevsw = {
 	.d_open = ulptopen,
@@ -150,15 +150,13 @@ const struct cdevsw ulpt_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-void ulpt_disco(void *);
-
-int ulpt_do_write(struct ulpt_softc *, struct uio *, int);
-int ulpt_do_read(struct ulpt_softc *, struct uio *, int);
-int ulpt_status(struct ulpt_softc *);
-void ulpt_reset(struct ulpt_softc *);
-int ulpt_statusmsg(u_char, struct ulpt_softc *);
-void ulpt_read_cb(struct usbd_xfer *, void *, usbd_status);
-void ulpt_tick(void *xsc);
+static int ulpt_do_write(struct ulpt_softc *, struct uio *, int);
+static int ulpt_do_read(struct ulpt_softc *, struct uio *, int);
+static int ulpt_status(struct ulpt_softc *);
+static void ulpt_reset(struct ulpt_softc *);
+static int ulpt_statusmsg(u_char, struct ulpt_softc *);
+static void ulpt_read_cb(struct usbd_xfer *, void *, usbd_status);
+static void ulpt_tick(void *xsc);
 
 #if 0
 void ieee1284_print_id(char *);
@@ -168,17 +166,17 @@ void ieee1284_print_id(char *);
 #define	ULPTFLAGS(s)	(minor(s) & 0xe0)
 
 
-int ulpt_match(device_t, cfdata_t, void *);
-void ulpt_attach(device_t, device_t, void *);
-int ulpt_detach(device_t, int);
-int ulpt_activate(device_t, enum devact);
+static int ulpt_match(device_t, cfdata_t, void *);
+static void ulpt_attach(device_t, device_t, void *);
+static int ulpt_detach(device_t, int);
+static int ulpt_activate(device_t, enum devact);
 
 
 
 CFATTACH_DECL_NEW(ulpt, sizeof(struct ulpt_softc), ulpt_match, ulpt_attach,
     ulpt_detach, ulpt_activate);
 
-int
+static int
 ulpt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
@@ -194,7 +192,7 @@ ulpt_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void
+static void
 ulpt_attach(device_t parent, device_t self, void *aux)
 {
 	struct ulpt_softc *sc = device_private(self);
@@ -331,7 +329,7 @@ ulpt_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 ulpt_activate(device_t self, enum devact act)
 {
 	struct ulpt_softc *sc = device_private(self);
@@ -345,7 +343,7 @@ ulpt_activate(device_t self, enum devact act)
 	}
 }
 
-int
+static int
 ulpt_detach(device_t self, int flags)
 {
 	struct ulpt_softc *sc = device_private(self);
@@ -381,7 +379,7 @@ ulpt_detach(device_t self, int flags)
 	return 0;
 }
 
-int
+static int
 ulpt_status(struct ulpt_softc *sc)
 {
 	usb_device_request_t req;
@@ -401,7 +399,7 @@ ulpt_status(struct ulpt_softc *sc)
 		return 0;
 }
 
-void
+static void
 ulpt_reset(struct ulpt_softc *sc)
 {
 	usb_device_request_t req;
@@ -430,7 +428,7 @@ int ulptusein = 1;
 /*
  * Reset the printer, then wait until it's selected and not busy.
  */
-int
+static int
 ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	u_char flags = ULPTFLAGS(dev);
@@ -450,7 +448,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	sc->sc_state = ULPT_INIT;
 	sc->sc_flags = flags;
-	DPRINTFN(2, ("ulptopen: flags=0x%x\n", (unsigned)flags));
+	DPRINTFN(2, ("ulptopen: flags=%#x\n", (unsigned)flags));
 
 	error = 0;
 	sc->sc_refcnt++;
@@ -538,7 +536,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 /*
  * XXX Document return value semantics.
  */
-int
+static int
 ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 {
 	u_char new;
@@ -557,7 +555,7 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 	return status;
 }
 
-int
+static int
 ulptclose(dev_t dev, int flag, int mode,
     struct lwp *l)
 {
@@ -605,7 +603,7 @@ ulptclose(dev_t dev, int flag, int mode,
 	return 0;
 }
 
-int
+static int
 ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 {
 	uint32_t n;
@@ -635,7 +633,7 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 	return error;
 }
 
-int
+static int
 ulptwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct ulpt_softc *sc;
@@ -669,7 +667,7 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
  * not interact with the device. See ucom.c for an example of how to
  * do this.
  */
-int
+static int
 ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 {
 	uint32_t n, nread, nreq;
@@ -817,7 +815,7 @@ done:
 	return error;
 }
 
-int
+static int
 ulptread(dev_t dev, struct uio *uio, int flags)
 {
 	struct ulpt_softc *sc;
@@ -835,7 +833,7 @@ ulptread(dev_t dev, struct uio *uio, int flags)
 	return error;
 }
 
-void
+static void
 ulpt_read_cb(struct usbd_xfer *xfer, void *priv,
 	     usbd_status status)
 {
@@ -866,7 +864,7 @@ ulpt_read_cb(struct usbd_xfer *xfer, void *priv,
  * XXX This should be adapted for continuous reads to allow select to
  * work; see do_ulpt_read().
  */
-void
+static void
 ulpt_tick(void *xsc)
 {
 	struct ulpt_softc *sc = xsc;
@@ -881,7 +879,7 @@ ulpt_tick(void *xsc)
 	DPRINTFN(3, ("ulpt_tick: sc=%p err=%d\n", sc, err));
 }
 
-int
+static int
 ulptioctl(dev_t dev, u_long cmd, void *data,
     int flag, struct lwp *l)
 {

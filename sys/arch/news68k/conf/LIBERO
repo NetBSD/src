@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.66.4.1 2019/06/10 22:06:34 christos Exp $
+# 	$NetBSD: LIBERO,v 1.66.4.2 2020/04/08 14:07:46 martin Exp $
 
 #	NEWS1750 config file;
 #
@@ -151,7 +151,6 @@ pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley Packet Filter
 #pseudo-device	npf			# NPF packet filter
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation

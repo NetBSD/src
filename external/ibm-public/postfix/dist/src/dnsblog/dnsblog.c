@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsblog.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: dnsblog.c,v 1.2.12.1 2020/04/08 14:06:52 martin Exp $	*/
 
 /*++
 /* NAME
@@ -22,10 +22,12 @@
 /*	query arguments plus an address list with the resulting IP
 /*	addresses, separated by whitespace, and the reply TTL.
 /*	Otherwise it replies with the query arguments plus an empty
-/*	address list and the reply TTL (-1 if unavailable).  Finally,
-/*	The \fBdnsblog\fR(8) server closes the connection.
+/*	address list and the reply TTL; the reply TTL is -1 if there
+/*	is no reply, or a negative reply that contains no SOA record.
+/*	Finally, the \fBdnsblog\fR(8) server closes the connection.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
@@ -57,12 +59,17 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
 /* SEE ALSO
 /*	smtpd(8), Postfix SMTP server
 /*	postconf(5), configuration parameters
-/*	syslogd(5), system logging
+/*	postlogd(8), Postfix logging
+/*	syslogd(8), system logging
 /* LICENSE
 /* .ad
 /* .fi
@@ -309,5 +316,6 @@ int     main(int argc, char **argv)
 		       CA_MAIL_SERVER_TIME_TABLE(time_table),
 		       CA_MAIL_SERVER_POST_INIT(post_jail_init),
 		       CA_MAIL_SERVER_UNLIMITED,
+		       CA_MAIL_SERVER_RETIRE_ME,
 		       0);
 }

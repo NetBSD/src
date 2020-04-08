@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.176.2.1 2019/06/10 22:07:04 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.176.2.2 2020/04/08 14:08:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.176.2.1 2019/06/10 22:07:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.176.2.2 2020/04/08 14:08:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -706,7 +706,7 @@ ccdbackoff(struct ccd_softc *cs)
 {
 
 	/* XXX Arbitrary, should be a uvm call. */
-	return uvmexp.free < (uvmexp.freemin >> 1) &&
+	return uvm_availmem() < (uvmexp.freemin >> 1) &&
 	    disk_isbusy(&cs->sc_dkdev);
 }
 
@@ -1226,7 +1226,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 			error = pathbuf_copyin(cpp[i], &pb);
 			if (error == 0) {
-				error = dk_lookup(pb, l, &vpp[i]);
+				error = vn_bdev_openpath(pb, &vpp[i], l);
 			}
 			pathbuf_destroy(pb);
 			if (error != 0) {

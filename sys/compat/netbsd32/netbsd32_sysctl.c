@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.40 2018/05/26 21:07:47 kamil Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.40.2.1 2020/04/08 14:08:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.40 2018/05/26 21:07:47 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.40.2.1 2020/04/08 14:08:01 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -70,8 +70,6 @@ struct sysctlnode netbsd32_sysctl_root = {
 	.sysctl_size = sizeof(struct sysctlnode),
 };
 
-static struct sysctllog *netbsd32_clog;
-
 /*
  * sysctl helper routine for netbsd32's kern.boottime node
  */
@@ -80,8 +78,10 @@ netbsd32_sysctl_kern_boottime(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	struct netbsd32_timespec bt32;
+	struct timespec ts;
 
-	netbsd32_from_timespec(&boottime, &bt32);
+	getnanoboottime(&ts);
+	netbsd32_from_timespec(&ts, &bt32);
 
 	node = *rnode;
 	node.sysctl_data = &bt32;
@@ -118,64 +118,63 @@ sysctl_hw_machine_arch32(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
-void
-netbsd32_sysctl_init(void)
+SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "netbsd32 shadow tree")
 {
 	const struct sysctlnode *_root = &netbsd32_sysctl_root;
 	extern const char machine32[];
 
-	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "boottime", NULL,
 		       netbsd32_sysctl_kern_boottime, 0, NULL,
 		       sizeof(struct netbsd32_timeval),
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
 
-	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vm", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VM, CTL_EOL);
-	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "loadavg", NULL,
 		       netbsd32_sysctl_vm_loadavg, 0, NULL,
 		       sizeof(struct netbsd32_loadavg),
 		       CTL_VM, VM_LOADAVG, CTL_EOL);
-	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "maxaddress",
 		       SYSCTL_DESCR("Maximum user address"),
 		       NULL, VM_MAXUSER_ADDRESS32, NULL, 0,
 		       CTL_VM, VM_MAXADDRESS, CTL_EOL);
-	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "minaddress",
 		       SYSCTL_DESCR("Minimum user address"),
 		       NULL, VM_MIN_ADDRESS, NULL, 0,
 		       CTL_VM, VM_MINADDRESS, CTL_EOL);
 
-	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "hw", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_HW, CTL_EOL);
-	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "alignbytes", NULL,
 		       NULL, ALIGNBYTES32, NULL, 0,
 		       CTL_HW, HW_ALIGNBYTES, CTL_EOL);
-	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine", NULL,
 		       NULL, 0, __UNCONST(&machine32), 0,
 		       CTL_HW, HW_MACHINE, CTL_EOL);
-	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
+	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRING, "machine_arch", NULL,
 		       sysctl_hw_machine_arch32, 0, NULL, 0,
@@ -186,7 +185,6 @@ void
 netbsd32_sysctl_fini(void)
 {
 
-	sysctl_teardown(&netbsd32_clog);
 	sysctl_free(&netbsd32_sysctl_root);
 }
 

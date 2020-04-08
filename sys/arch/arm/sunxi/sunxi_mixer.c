@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.7.4.2 2019/06/10 22:05:57 christos Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.7.4.3 2020/04/08 14:07:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.7.4.2 2019/06/10 22:05:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.7.4.3 2020/04/08 14:07:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -173,10 +173,25 @@ enum {
 	MIXER_PORT_OUTPUT = 1,
 };
 
+struct sunxi_mixer_compat_data {
+	uint8_t ovl_ui_count;
+	uint8_t mixer_index;
+};
+
+struct sunxi_mixer_compat_data mixer0_data = {
+	.ovl_ui_count = 3,
+	.mixer_index = 0,
+};
+
+struct sunxi_mixer_compat_data mixer1_data = {
+	.ovl_ui_count = 1,
+	.mixer_index = 1,
+};
+
 static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun8i-h3-de2-mixer-0",	3 },
-	{ "allwinner,sun50i-a64-de2-mixer-0",	3 },
-	{ "allwinner,sun50i-a64-de2-mixer-1",	1 },
+	{ "allwinner,sun8i-h3-de2-mixer-0",	(uintptr_t)&mixer0_data },
+	{ "allwinner,sun50i-a64-de2-mixer-0",	(uintptr_t)&mixer0_data },
+	{ "allwinner,sun50i-a64-de2-mixer-1",	(uintptr_t)&mixer1_data },
 	{ NULL }
 };
 
@@ -252,8 +267,14 @@ sunxi_mixer_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 
 	uint64_t paddr = (uint64_t)sfb->obj->dmamap->dm_segs[0].ds_addr;
 
+	paddr += y * sfb->base.pitches[0];
+	paddr += x * drm_format_plane_cpp(sfb->base.pixel_format, 0);
+
 	uint32_t haddr = (paddr >> 32) & OVL_UI_TOP_HADD_LAYER0;
 	uint32_t laddr = paddr & 0xffffffff;
+
+	/* Set UI overlay line size */
+	OVL_UI_WRITE(sc, 0, OVL_UI_PITCH(0), sfb->base.pitches[0]);
 
 	/* Framebuffer start address */
 	val = OVL_UI_READ(sc, 0, OVL_UI_TOP_HADD);
@@ -458,7 +479,6 @@ sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 
 	const uint32_t size = ((adjusted_mode->vdisplay - 1) << 16) |
 			      (adjusted_mode->hdisplay - 1);
-	const uint32_t offset = (y << 16) | x;
 
 	/* Set global size */
 	GLB_WRITE(sc, GLB_SIZE, size);
@@ -471,7 +491,7 @@ sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	/* Set blender 0 input size */
 	BLD_WRITE(sc, BLD_CH_ISIZE(0), size);
 	/* Set blender 0 offset */
-	BLD_WRITE(sc, BLD_CH_OFFSET(0), offset);
+	BLD_WRITE(sc, BLD_CH_OFFSET(0), 0);
 	/* Route channel 1 to pipe 0 */
 	val = BLD_READ(sc, BLD_CH_RTCTL);
 	val &= ~BLD_CH_RTCTL_P0;
@@ -490,9 +510,7 @@ sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	/* Set UI overlay layer size */
 	OVL_UI_WRITE(sc, 0, OVL_UI_MBSIZE(0), size);
 	/* Set UI overlay offset */
-	OVL_UI_WRITE(sc, 0, OVL_UI_COOR(0), offset);
-	/* Set UI overlay line size */
-	OVL_UI_WRITE(sc, 0, OVL_UI_PITCH(0), adjusted_mode->hdisplay * 4);
+	OVL_UI_WRITE(sc, 0, OVL_UI_COOR(0), 0);
 	/* Set UI overlay window size */
 	OVL_UI_WRITE(sc, 0, OVL_UI_SIZE, size);
 
@@ -1227,6 +1245,8 @@ sunxi_mixer_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	struct fdt_endpoint *out_ep;
 	const int phandle = faa->faa_phandle;
+	const struct sunxi_mixer_compat_data * const cd =
+	    (const void *)of_search_compatible(phandle, compat_data)->data;
 	struct clk *clk_bus, *clk_mod;
 	struct fdtbus_reset *rst;
 	bus_addr_t addr;
@@ -1264,7 +1284,7 @@ sunxi_mixer_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_phandle = faa->faa_phandle;
-	sc->sc_ovl_ui_count = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_ovl_ui_count = cd->ovl_ui_count;
 
 	aprint_naive("\n");
 	aprint_normal(": Display Engine Mixer\n");
@@ -1273,7 +1293,14 @@ sunxi_mixer_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_get_data = sunxi_mixer_ep_get_data;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_CRTC);
 
-	out_ep = fdt_endpoint_get_from_index(&sc->sc_ports, MIXER_PORT_OUTPUT, 0);
+	out_ep = fdt_endpoint_get_from_index(&sc->sc_ports,
+	    MIXER_PORT_OUTPUT, cd->mixer_index);
+	if (out_ep == NULL) {
+		/* Couldn't find new-style DE2 endpoint, try old style. */
+		out_ep = fdt_endpoint_get_from_index(&sc->sc_ports,
+		    MIXER_PORT_OUTPUT, 0);
+	}
+
 	if (out_ep != NULL)
 		sunxi_drm_register_endpoint(phandle, out_ep);
 }

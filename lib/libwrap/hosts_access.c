@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.21 2016/02/17 19:52:20 christos Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.21.16.1 2020/04/08 14:07:17 martin Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.21 2016/02/17 19:52:20 christos Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.21.16.1 2020/04/08 14:07:17 martin Exp $");
 #endif
 #endif
 
@@ -561,7 +561,7 @@ masked_match6(char *net_tok, char *mask_tok, char *string)
     for (i = 0; i < alen; i++)
 	ap[i] &= mp[i];
 
-    if (addr.sa.sa_family == AF_INET6 && addr.sin6.sin6_scope_id &&
+    if (addr.sa.sa_family == AF_INET6 && net.sin6.sin6_scope_id &&
         addr.sin6.sin6_scope_id != net.sin6.sin6_scope_id)
 	return NO;
     return (memcmp(ap, np, alen) == 0);

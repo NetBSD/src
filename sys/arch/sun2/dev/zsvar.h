@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.8 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.8.18.1 2020/04/08 14:07:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,15 +44,18 @@
 #include <dev/ic/z8530sc.h>
 #include <sun2/dev/zsreg.h>
 
+#ifdef _KERNEL_OPT
+#include "kbd.h"
+#endif
+
+#if NKBD > 0
 /*
  * Need to override cn_console_dev() for zstty and zskbd.
  */
-#ifdef cn_isconsole
-#undef cn_isconsole
-#endif
 extern struct consdev *cn_hw;
-extern struct consdev *cn_tab;
+#undef cn_isconsole
 #define cn_isconsole(d)	((d) == cn_tab->cn_dev || (d) == cn_hw->cn_dev)
+#endif
 
 struct zsc_softc {
 	device_t		zsc_dev;	/* base device */

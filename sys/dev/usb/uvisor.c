@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.48.16.1 2019/06/10 22:07:35 christos Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.48.16.2 2020/04/08 14:08:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.48.16.1 2019/06/10 22:07:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.48.16.2 2020/04/08 14:08:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -71,7 +71,7 @@ int uvisordebug = 0;
 /* From the Linux driver */
 /*
  * UVISOR_REQUEST_BYTES_AVAILABLE asks the visor for the number of bytes that
- * are available to be transfered to the host for the specified endpoint.
+ * are available to be transferred to the host for the specified endpoint.
  * Currently this is not used, and always returns 0x0001
  */
 #define UVISOR_REQUEST_BYTES_AVAILABLE		0x01
@@ -152,7 +152,7 @@ static usbd_status uvisor_init(struct uvisor_softc *,
 static int uvisor_open(void *, int);
 static void uvisor_close(void *, int);
 
-struct ucom_methods uvisor_methods = {
+static const struct ucom_methods uvisor_methods = {
 	.ucom_open = uvisor_open,
 	.ucom_close = uvisor_close,
 };
@@ -200,7 +200,7 @@ uvisor_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	DPRINTFN(20,("uvisor: vendor=0x%x, product=0x%x\n",
+	DPRINTFN(20,("uvisor: vendor=%#x, product=%#x\n",
 		     uaa->uaa_vendor, uaa->uaa_product));
 
 	return uvisor_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.6 2017/06/25 12:15:04 maxv Exp $	*/
+/*	$NetBSD: siop.c,v 1.6.6.1 2020/04/08 14:07:32 martin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -183,27 +183,27 @@ siop_sdp(struct siop_adapter *adp, struct siop_xfer *xfer, struct scsi_xfer *xs,
 		return;
 	/*
 	 * Save data pointer. We do this by adjusting the tables to point
-	 * at the begginning of the data not yet transfered.
-	 * offset points to the first table with untransfered data.
+	 * at the begginning of the data not yet transferred.
+	 * offset points to the first table with untransferred data.
 	 */
 
 	/*
 	 * before doing that we decrease resid from the ammount of data which
-	 * has been transfered.
+	 * has been transferred.
 	 */
 	siop_update_resid(adp, xfer, xs, offset);
 
 #if 0
 	/*
 	 * First let see if we have a resid from a phase mismatch. If so,
-	 * we have to adjst the table at offset to remove transfered data.
+	 * we have to adjst the table at offset to remove transferred data.
 	 */
 	if (siop_cmd->flags & CMDFL_RESID) {
 		scr_table_t *table;
 
 		siop_cmd->flags &= ~CMDFL_RESID;
 		table = &xfer->siop_tables.data[offset];
-		/* "cut" already transfered data from this table */
+		/* "cut" already transferred data from this table */
 		table->addr =
 		    htoc32(ctoh32(table->addr) + ctoh32(table->count) -
 							siop_cmd->resid);
@@ -212,7 +212,7 @@ siop_sdp(struct siop_adapter *adp, struct siop_xfer *xfer, struct scsi_xfer *xs,
 #endif
 
 	/*
-	 * now we can remove entries which have been transfered.
+	 * now we can remove entries which have been transferred.
 	 * We just move the entries with data left at the beggining of the
 	 * tables
 	 */

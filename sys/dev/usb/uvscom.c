@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.31.16.1 2019/06/10 22:07:35 christos Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.31.16.2 2020/04/08 14:08:14 martin Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.31.16.1 2019/06/10 22:07:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.31.16.2 2020/04/08 14:08:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -188,7 +188,7 @@ static	int  uvscom_param(void *, int, struct termios *);
 static	int  uvscom_open(void *, int);
 static	void uvscom_close(void *, int);
 
-struct ucom_methods uvscom_methods = {
+static const struct ucom_methods uvscom_methods = {
 	.ucom_get_status = uvscom_get_status,
 	.ucom_set = uvscom_set,
 	.ucom_param = uvscom_param,
@@ -211,15 +211,15 @@ static const struct usb_devno uvscom_devs [] = {
 };
 #define uvscom_lookup(v, p) usb_lookup(uvscom_devs, v, p)
 
-int uvscom_match(device_t, cfdata_t, void *);
-void uvscom_attach(device_t, device_t, void *);
-void uvscom_childdet(device_t, device_t);
-int uvscom_detach(device_t, int);
+static int uvscom_match(device_t, cfdata_t, void *);
+static void uvscom_attach(device_t, device_t, void *);
+static void uvscom_childdet(device_t, device_t);
+static int uvscom_detach(device_t, int);
 
 CFATTACH_DECL2_NEW(uvscom, sizeof(struct uvscom_softc), uvscom_match,
     uvscom_attach, uvscom_detach, NULL, NULL, uvscom_childdet);
 
-int
+static int
 uvscom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -228,7 +228,7 @@ uvscom_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 uvscom_attach(device_t parent, device_t self, void *aux)
 {
 	struct uvscom_softc *sc = device_private(self);
@@ -354,12 +354,12 @@ uvscom_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	DPRINTF(("uvscom: in = 0x%x out = 0x%x intr = 0x%x\n",
+	DPRINTF(("uvscom: in = %#x out = %#x intr = %#x\n",
 		 ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
-	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
+	DPRINTF(("uplcom: in=%#x out=%#x intr=%#x\n",
 		ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number ));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
@@ -367,7 +367,7 @@ uvscom_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-void
+static void
 uvscom_childdet(device_t self, device_t child)
 {
 	struct uvscom_softc *sc = device_private(self);
@@ -391,7 +391,7 @@ uvscom_close_pipe(struct uvscom_softc *sc)
 	}
 }
 
-int
+static int
 uvscom_detach(device_t self, int flags)
 {
 	struct uvscom_softc *sc = device_private(self);

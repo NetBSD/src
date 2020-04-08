@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.107.2.1 2019/06/10 22:07:17 christos Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.107.2.2 2020/04/08 14:08:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -435,7 +435,7 @@ struct livengood_tcpip_ctxdesc {
 #define CTRL_D_UD_EN	(1U << 13)	/* Dock/Undock enable */
 #define CTRL_D_UD_POL	(1U << 14)	/* Defined polarity of Dock/Undock indication in SDP[0] */
 #define CTRL_F_PHY_R 	(1U << 15)	/* Reset both PHY ports, through PHYRST_N pin */
-#define CTRL_EXT_LINK_EN (1U << 16)	/* enable link status from external LINK_0 and LINK_1 pins */
+#define CTRL_EXTLINK_EN (1U << 16)	/* enable link status from external LINK_0 and LINK_1 pins */
 #define CTRL_LANPHYPC_OVERRIDE (1U << 16) /* SW control of LANPHYPC */
 #define CTRL_LANPHYPC_VALUE (1U << 17)	/* SW value of LANPHYPC */
 #define	CTRL_SWDPINS_SHIFT	18
@@ -639,6 +639,14 @@ struct livengood_tcpip_ctxdesc {
 #define	KUMCTRLSTA_OPMODE_MASK	0x000c
 #define	KUMCTRLSTA_OPMODE_INBAND_MDIO 0x0004
 
+#define	WMREG_CONNSW	0x0034	/* Copper/Fiber Switch Control (>= 82575) */
+#define	CONNSW_AUTOSENSE_EN	__BIT(0)	/* Auto Sense Enable */
+#define	CONNSW_AUTOSENSE_CONF	__BIT(1)	/* Auto Sense Config Mode */
+#define	CONNSW_ENRGSRC		__BIT(2)	/* SerDes Energy Detect Src */
+#define	CONNSW_SERDESD		__BIT(9)	/* SerDes Signal Detect Ind. */
+#define	CONNSW_PHYSD		__BIT(10)	/* PHY Signal Detect Ind. */
+#define	CONNSW_PHY_PDN		__BIT(11)	/* Internal PHY in powerdown */
+
 #define	WMREG_VET	0x0038	/* VLAN Ethertype */
 #define	WMREG_MDPHYA	0x003c	/* PHY address - RW */
 
@@ -686,7 +694,7 @@ struct livengood_tcpip_ctxdesc {
 #define	ICR_RXT0	(1U << 7)	/* Rx ring 0 timer */
 #define	ICR_MDAC	(1U << 9)	/* MDIO access complete */
 #define	ICR_RXCFG	(1U << 10)	/* Receiving /C/ */
-#define	ICR_GPI(x)	(1U << (x))	/* general purpose interrupts */
+#define	ICR_GPI(x)	__BIT(11+(x))	/* general purpose interrupts */
 #define	ICR_RXQ(x)	__BIT(20+(x))	/* 82574: Rx queue x interrupt x=0,1 */
 #define	ICR_TXQ(x)	__BIT(22+(x))	/* 82574: Tx queue x interrupt x=0,1 */
 #define	ICR_OTHER	__BIT(24)	/* 82574: Other interrupt */
@@ -1153,13 +1161,23 @@ struct livengood_tcpip_ctxdesc {
 #define	PCS_CFG_PCS_EN	__BIT(3)
 
 #define	WMREG_PCS_LCTL	0x4208	/* PCS Link Control */
-#define	PCS_LCTL_FSV_1000 __BIT(2)	/* AN Timeout Enable */
-#define	PCS_LCTL_FDV_FULL __BIT(3)	/* AN Timeout Enable */
-#define	PCS_LCTL_FSD __BIT(4)	/* AN Timeout Enable */
-#define	PCS_LCTL_FORCE_FC __BIT(7)	/* AN Timeout Enable */
-#define	PCS_LCTL_AN_ENABLE __BIT(16)	/* AN Timeout Enable */
-#define	PCS_LCTL_AN_RESTART __BIT(17)	/* AN Timeout Enable */
-#define	PCS_LCTL_AN_TIMEOUT __BIT(18)	/* AN Timeout Enable */
+#define	PCS_LCTL_FLV_LINK_UP	__BIT(0)	/* Forced Link Value */
+#define	PCS_LCTL_FSV_MASK	__BITS(2, 1)	/* Forced Speed Value */
+#define	PCS_LCTL_FSV_10			0		/* 10Mbps */
+#define	PCS_LCTL_FSV_100		__BIT(1)	/* 100Mbps */
+#define	PCS_LCTL_FSV_1000		__BIT(2)	/* 1Gpbs */
+#define	PCS_LCTL_FDV_FULL	__BIT(3)	/* Force Duplex Value */
+#define	PCS_LCTL_FSD		__BIT(4)	/* Force Speed and Duplex */
+#define	PCS_LCTL_FORCE_LINK	__BIT(5)	/* Force Link */
+#define	PCS_LCTL_LINK_LATCH_LOW	__BIT(6)	/* Link Latch Low */
+#define	PCS_LCTL_FORCE_FC	__BIT(7)	/* Force Flow Control */
+#define	PCS_LCTL_AN_ENABLE	__BIT(16)	/* AN enable */
+#define	PCS_LCTL_AN_RESTART	__BIT(17)	/* AN restart */
+#define	PCS_LCTL_AN_TIMEOUT	__BIT(18)	/* AN Timeout Enable */
+#define	PCS_LCTL_AN_SGMII_BYP	__BIT(19)	/* AN SGMII Bypass */
+#define	PCS_LCTL_AN_SGMII_TRIG	__BIT(20)	/* AN SGMII Trigger */
+#define	PCS_LCTL_FAST_LINKTIMER	__BIT(24)	/* Fast Link Timer */
+#define	PCS_LCTL_LINK_OK_FIX_EN	__BIT(25)	/* Link OK Fix Enable */
 
 #define	WMREG_PCS_LSTS	0x420c	/* PCS Link Status */
 #define PCS_LSTS_LINKOK	__BIT(0)
@@ -1172,6 +1190,7 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_PCS_ANADV	0x4218	/* AN Advertsement */
 #define	WMREG_PCS_LPAB	0x421c	/* Link Partnet Ability */
+#define	WMREG_PCS_NPTX	0x4220	/* Next Page Transmit */
 
 #define	WMREG_RXCSUM	0x5000	/* Receive Checksum register */
 #define	RXCSUM_PCSS	0x000000ff	/* Packet Checksum Start */
@@ -1424,7 +1443,7 @@ struct livengood_tcpip_ctxdesc {
 #define	NVM_CFG1_LSSID		(1U << 1)
 #define	NVM_CFG1_PME_CLOCK	(1U << 2)
 #define	NVM_CFG1_PM		(1U << 3)
-#define	NVM_CFG1_ILOS		(1U << 4)
+#define	NVM_CFG1_ILOS		(1U << 4)	/* Invert loss of signal */
 #define	NVM_CFG1_SWDPIO_SHIFT	5
 #define	NVM_CFG1_SWDPIO_MASK	(0xf << NVM_CFG1_SWDPIO_SHIFT)
 #define	NVM_CFG1_IPS1		(1U << 8)
@@ -1456,6 +1475,7 @@ struct livengood_tcpip_ctxdesc {
 #define	NVM_CFG2_MNGM_NCSI	1
 #define	NVM_CFG2_MNGM_PT	2
 
+#define	NVM_COMPAT_MAS_EN(x)		__BIT(x) /* Media Auto Sense Enable */
 #define	NVM_COMPAT_SERDES_FORCE_MODE	__BIT(14) /* Don't use autonego */
 
 #define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
@@ -1468,9 +1488,10 @@ struct livengood_tcpip_ctxdesc {
 
 #define NVM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
 
-#define NVM_CFG3_APME		(1U << 10)	
-#define NVM_CFG3_PORTA_EXT_MDIO	(1U << 2)	/* External MDIO Interface */
-#define NVM_CFG3_PORTA_COM_MDIO	(1U << 3)	/* MDIO Interface is shared */
+#define NVM_CFG3_PORTA_EXT_MDIO	__BIT(2)	/* External MDIO Interface */
+#define NVM_CFG3_PORTA_COM_MDIO	__BIT(3)	/* MDIO Interface is shared */
+#define NVM_CFG3_APME		__BIT(10)	/* APM Enable */
+#define NVM_CFG3_ILOS		__BIT(13)	/* Invert loss of signal */
 
 #define	NVM_OFF_MACADDR_82571(x)	(3 * (x))
 
@@ -1599,7 +1620,8 @@ struct livengood_tcpip_ctxdesc {
 #define SFF_SFP_ETH_FLAGS_1000LX	0x02
 #define SFF_SFP_ETH_FLAGS_1000CX	0x04
 #define SFF_SFP_ETH_FLAGS_1000T		0x08
-#define SFF_SFP_ETH_FLAGS_100FX		0x10
+#define SFF_SFP_ETH_FLAGS_100LX		0x10
+#define SFF_SFP_ETH_FLAGS_100FX		0x20
 
 /* I21[01] PHY related definitions */
 #define GS40G_PAGE_SELECT	0x16

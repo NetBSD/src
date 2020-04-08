@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.55.10.1 2019/06/10 22:07:15 christos Exp $	*/
+/*	$NetBSD: autri.c,v 1.55.10.2 2020/04/08 14:08:08 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.55.10.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.55.10.2 2020/04/08 14:08:08 martin Exp $");
 
 #include "midi.h"
 
@@ -113,7 +113,6 @@ static int	autri_query_format(void *, audio_format_query_t *);
 static int	autri_set_format(void *, int,
 				 const audio_params_t *, const audio_params_t *,
 				 audio_filter_reg_t *, audio_filter_reg_t *);
-static int	autri_round_blocksize(void *, int, int, const audio_params_t *);
 static int	autri_trigger_output(void *, void *, void *, int,
 				     void (*)(void *), void *,
 				     const audio_params_t *);
@@ -135,7 +134,6 @@ static const struct audio_hw_if autri_hw_if = {
 	.open			= autri_open,
 	.query_format		= autri_query_format,
 	.set_format		= autri_set_format,
-	.round_blocksize	= autri_round_blocksize,
 	.halt_output		= autri_halt_output,
 	.halt_input		= autri_halt_input,
 	.getdev			= autri_getdev,
@@ -909,13 +907,6 @@ autri_set_format(void *addr, int setmode,
 {
 
 	return 0;
-}
-
-static int
-autri_round_blocksize(void *addr, int block,
-    int mode, const audio_params_t *param)
-{
-	return block & -4;
 }
 
 static int

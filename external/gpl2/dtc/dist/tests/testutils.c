@@ -1,23 +1,10 @@
-/*	$NetBSD: testutils.c,v 1.1.1.2 2017/06/08 15:59:28 skrll Exp $	*/
+/*	$NetBSD: testutils.c,v 1.1.1.2.6.1 2020/04/08 14:04:22 martin Exp $	*/
 
+// SPDX-License-Identifier: LGPL-2.1-or-later
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase common utility functions
  * Copyright (C) 2006 David Gibson, IBM Corporation.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #define _GNU_SOURCE /* for strsignal() in glibc.  FreeBSD has it either way */
@@ -32,9 +19,25 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#if NO_VALGRIND
+static inline void VALGRIND_MAKE_MEM_UNDEFINED(void *p, size_t len)
+{
+}
+
+static inline void VALGRIND_MAKE_MEM_DEFINED(void *p, size_t len)
+{
+}
+#else
+#include <valgrind/memcheck.h>
+#endif
+
 #include <libfdt.h>
 
 #include "tests.h"
+#include "testdata.h"
+
+/* For FDT_SW_MAGIC */
+#include "libfdt_internal.h"
 
 int verbose_test = 1;
 char *test_name;
@@ -90,7 +93,7 @@ void check_property(void *fdt, int nodeoffset, const char *name,
 		    int len, const void *val)
 {
 	const struct fdt_property *prop;
-	int retlen;
+	int retlen, namelen;
 	uint32_t tag, nameoff, proplen;
 	const char *propname;
 
@@ -98,7 +101,7 @@ void check_property(void *fdt, int nodeoffset, const char *name,
 	prop = fdt_get_property(fdt, nodeoffset, name, &retlen);
 	verbose_printf("pointer %p\n", prop);
 	if (! prop)
-		FAIL("Error retreiving \"%s\" pointer: %s", name,
+		FAIL("Error retrieving \"%s\" pointer: %s", name,
 		     fdt_strerror(retlen));
 
 	tag = fdt32_to_cpu(prop->tag);
@@ -108,8 +111,13 @@ void check_property(void *fdt, int nodeoffset, const char *name,
 	if (tag != FDT_PROP)
 		FAIL("Incorrect tag 0x%08x on property \"%s\"", tag, name);
 
-	propname = fdt_string(fdt, nameoff);
-	if (!propname || !streq(propname, name))
+	propname = fdt_get_string(fdt, nameoff, &namelen);
+	if (!propname)
+		FAIL("Couldn't get property name: %s", fdt_strerror(namelen));
+	if (namelen != strlen(propname))
+		FAIL("Incorrect prop name length: %d instead of %zd",
+		     namelen, strlen(propname));
+	if (!streq(propname, name))
 		FAIL("Property name mismatch \"%s\" instead of \"%s\"",
 		     propname, name);
 	if (proplen != retlen)
@@ -119,7 +127,7 @@ void check_property(void *fdt, int nodeoffset, const char *name,
 	if (proplen != len)
 		FAIL("Size mismatch on property \"%s\": %d insead of %d",
 		     name, proplen, len);
-	if (memcmp(val, prop->data, len) != 0)
+	if (len && memcmp(val, prop->data, len) != 0)
 		FAIL("Data mismatch on property \"%s\"", name);
 }
 
@@ -136,8 +144,90 @@ const void *check_getprop(void *fdt, int nodeoffset, const char *name,
 	if (proplen != len)
 		FAIL("Size mismatch on property \"%s\": %d insead of %d",
 		     name, proplen, len);
-	if (memcmp(val, propval, len) != 0)
+	if (len && memcmp(val, propval, len) != 0)
 		FAIL("Data mismatch on property \"%s\"", name);
+
+	return propval;
+}
+
+const void *check_get_prop_offset(void *fdt, int poffset, const char *exp_name,
+				  int exp_len, const void *exp_val)
+{
+	const void *propval;
+	const char *name;
+	int proplen;
+
+	propval = fdt_getprop_by_offset(fdt, poffset, &name, &proplen);
+	if (!propval)
+		FAIL("fdt_getprop(\"%s\"): %s", name, fdt_strerror(proplen));
+
+	/* Not testing for this field, so ignore */
+	if (strcmp(name, exp_name))
+		return NULL;
+
+	if (proplen != exp_len)
+		FAIL("Size mismatch on property \"%s\": %d insead of %d",
+		     name, proplen, exp_len);
+	if (exp_len && memcmp(exp_val, propval, exp_len))
+		FAIL("Data mismatch on property \"%s\"", name);
+
+	return propval;
+}
+
+const void *check_getprop_addrrange(void *fdt, int parent, int nodeoffset,
+				    const char *name, int num)
+{
+	const void *propval;
+	int xac, xsc, buf_size, cells, i;
+	char *buf, *p;
+	uint64_t addr, size;
+	fdt32_t val;
+
+	xac = fdt_address_cells(fdt, parent);
+	xsc = fdt_size_cells(fdt, parent);
+
+	if (xac <= 0)
+		FAIL("Couldn't identify #address-cells: %s",
+		     fdt_strerror(xac));
+	if (xsc <= 0)
+		FAIL("Couldn't identify #size-cells: %s",
+		     fdt_strerror(xsc));
+
+	buf_size = (xac + xsc) * sizeof(fdt32_t) * num;
+	buf = malloc(buf_size);
+	if (!buf)
+		FAIL("Couldn't allocate temporary buffer");
+
+	/* expected value */
+	addr = TEST_MEMREGION_ADDR;
+	if (xac > 1)
+		addr += TEST_MEMREGION_ADDR_HI;
+	size = TEST_MEMREGION_SIZE;
+	if (xsc > 1)
+		size += TEST_MEMREGION_SIZE_HI;
+	for (p = buf, i = 0; i < num; i++) {
+		cells = xac;
+		while (cells) {
+			val = cpu_to_fdt32(addr >> (32 * (--cells)));
+			memcpy(p, &val, sizeof(val));
+			p += sizeof(val);
+		}
+		cells = xsc;
+		while (cells) {
+			val = cpu_to_fdt32(size >> (32 * (--cells)));
+			memcpy(p, &val, sizeof(val));
+			p += sizeof(val);
+		}
+
+		addr += size;
+		size += TEST_MEMREGION_SIZE_INC;
+	}
+
+	/* check */
+	propval = check_getprop(fdt, nodeoffset, name, buf_size,
+				(const void *)buf);
+
+	free(buf);
 
 	return propval;
 }
@@ -156,16 +246,66 @@ int nodename_eq(const char *s1, const char *s2)
 		return 0;
 }
 
-#define CHUNKSIZE	128
+void vg_prepare_blob(void *fdt, size_t bufsize)
+{
+	char *blob = fdt;
+	int off_memrsv, off_strings, off_struct;
+	int num_memrsv;
+	size_t size_memrsv, size_strings, size_struct;
+
+	off_memrsv = fdt_off_mem_rsvmap(fdt);
+	num_memrsv = fdt_num_mem_rsv(fdt);
+	if (num_memrsv < 0)
+		size_memrsv = fdt_totalsize(fdt) - off_memrsv;
+	else
+		size_memrsv = (num_memrsv + 1)
+			* sizeof(struct fdt_reserve_entry);
+
+	VALGRIND_MAKE_MEM_UNDEFINED(blob, bufsize);
+	VALGRIND_MAKE_MEM_DEFINED(blob, FDT_V1_SIZE);
+	VALGRIND_MAKE_MEM_DEFINED(blob, fdt_header_size(fdt));
+
+	if (fdt_magic(fdt) == FDT_MAGIC) {
+		off_strings = fdt_off_dt_strings(fdt);
+		if (fdt_version(fdt) >= 3)
+			size_strings = fdt_size_dt_strings(fdt);
+		else
+			size_strings = fdt_totalsize(fdt) - off_strings;
+
+		off_struct = fdt_off_dt_struct(fdt);
+		if (fdt_version(fdt) >= 17)
+			size_struct = fdt_size_dt_struct(fdt);
+		else
+			size_struct = fdt_totalsize(fdt) - off_struct;
+	} else if (fdt_magic(fdt) == FDT_SW_MAGIC) {
+		size_strings = fdt_size_dt_strings(fdt);
+		off_strings = fdt_off_dt_strings(fdt) - size_strings;
+
+		off_struct = fdt_off_dt_struct(fdt);
+		size_struct = fdt_size_dt_struct(fdt);
+		size_struct = fdt_totalsize(fdt) - off_struct;
+
+	} else {
+		CONFIG("Bad magic on vg_prepare_blob()");
+	}
+
+	VALGRIND_MAKE_MEM_DEFINED(blob + off_memrsv, size_memrsv);
+	VALGRIND_MAKE_MEM_DEFINED(blob + off_strings, size_strings);
+	VALGRIND_MAKE_MEM_DEFINED(blob + off_struct, size_struct);
+}
 
 void *load_blob(const char *filename)
 {
 	char *blob;
-	int ret = utilfdt_read_err(filename, &blob);
+	size_t len;
+	int ret = utilfdt_read_err(filename, &blob, &len);
 
 	if (ret)
 		CONFIG("Couldn't open blob from \"%s\": %s", filename,
 		       strerror(ret));
+
+	vg_prepare_blob(blob, len);
+
 	return blob;
 }
 
@@ -178,11 +318,20 @@ void *load_blob_arg(int argc, char *argv[])
 
 void save_blob(const char *filename, void *fdt)
 {
-	int ret = utilfdt_write_err(filename, fdt);
+	size_t size = fdt_totalsize(fdt);
+	void *tmp;
+	int ret;
 
+	/* Make a temp copy of the blob so that valgrind won't check
+	 * about uninitialized bits in the pieces between blocks */
+	tmp = xmalloc(size);
+	fdt_move(fdt, tmp, size);
+	VALGRIND_MAKE_MEM_DEFINED(tmp, size);
+	ret = utilfdt_write_err(filename, tmp);
 	if (ret)
 		CONFIG("Couldn't write blob to \"%s\": %s", filename,
 		       strerror(ret));
+	free(tmp);
 }
 
 void *open_blob_rw(void *blob)

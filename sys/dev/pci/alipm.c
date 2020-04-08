@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.10 2012/03/18 12:47:01 martin Exp $ */
+/*	$NetBSD: alipm.c,v 1.10.40.1 2020/04/08 14:08:08 martin Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.10 2012/03/18 12:47:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.10.40.1 2020/04/08 14:08:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,7 +104,6 @@ struct alipm_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct i2c_controller sc_smb_tag;
-	kmutex_t sc_smb_mutex;
 };
 
 static int	alipm_match(device_t, cfdata_t, void *);
@@ -205,10 +204,8 @@ alipm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 
 	/* Attach I2C bus */
-	mutex_init(&sc->sc_smb_mutex, MUTEX_DEFAULT, IPL_NONE);
+	iic_tag_init(&sc->sc_smb_tag);
 	sc->sc_smb_tag.ic_cookie = sc;
-	sc->sc_smb_tag.ic_acquire_bus = alipm_smb_acquire_bus;
-	sc->sc_smb_tag.ic_release_bus = alipm_smb_release_bus;
 	sc->sc_smb_tag.ic_exec = alipm_smb_exec;
 
 	memset(&iba, 0, sizeof iba);
@@ -219,23 +216,6 @@ alipm_attach(device_t parent, device_t self, void *aux)
 
 fail:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
-}
-
-int
-alipm_smb_acquire_bus(void *cookie, int flags)
-{
-	struct alipm_softc *sc = cookie;
-
-	mutex_enter(&sc->sc_smb_mutex);
-	return 0;
-}
-
-void
-alipm_smb_release_bus(void *cookie, int flags)
-{
-	struct alipm_softc *sc = cookie;
-
-	mutex_exit(&sc->sc_smb_mutex);
 }
 
 int

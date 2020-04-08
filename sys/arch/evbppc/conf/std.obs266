@@ -1,8 +1,10 @@
-#	$NetBSD: std.obs266,v 1.2 2011/04/04 19:55:16 dyoung Exp $
+#	$NetBSD: std.obs266,v 1.2.56.1 2020/04/08 14:07:36 martin Exp $
 #
 # Standard/required options for obs266.
 
 include		"arch/evbppc/conf/std.obs405"
+
+options 	IBM405_ERRATA77
 
 makeoptions	PRDCTTYPE="obs266"
 makeoptions	TEXTADDR=0x25000

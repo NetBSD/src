@@ -1,4 +1,4 @@
-/*	$NetBSD: spnego_asn1.c,v 1.4.2.2 2019/06/10 22:04:35 christos Exp $	*/
+/*	$NetBSD: spnego_asn1.c,v 1.4.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -699,6 +699,7 @@ decode_NegTokenResp(const unsigned char *p, size_t len, NegTokenResp * data, siz
 	size_t l;
 	int e;
 
+	/* cppcheck-suppress uninitvar */
 	memset(data, 0, sizeof(*data));
 	reallen = 0;
 	e = der_match_tag_and_length(p, len, ASN1_C_UNIV, CONS, UT_Sequence, &reallen, &l);

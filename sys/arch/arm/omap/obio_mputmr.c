@@ -1,4 +1,4 @@
-/* $NetBSD: obio_mputmr.c,v 1.8 2013/06/16 17:47:54 matt Exp $ */
+/* $NetBSD: obio_mputmr.c,v 1.8.34.1 2020/04/08 14:07:30 martin Exp $ */
 
 /*
  * Based on omap_mputmr.c
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.8 2013/06/16 17:47:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.8.34.1 2020/04/08 14:07:30 martin Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -302,9 +302,9 @@ gpt_enable(
 
 #if defined(OMAP_2430) || defined(OMAP_2420)
 	bus_space_handle_t ioh;
-	uint32_t r;
+	uint32_t r, err __diagused;
 
-	int err = bus_space_map(obio->obio_iot, OMAP2_CM_BASE,
+	err = bus_space_map(obio->obio_iot, OMAP2_CM_BASE,
 	    OMAP2_CM_SIZE, 0, &ioh);
 	KASSERT(err == 0);
 

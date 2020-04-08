@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -424,7 +424,7 @@ AcpiOsGetLine (
                  * Ignore the various keys like insert/delete/home/end, etc.
                  * But we must eat the final character of the ESC sequence.
                  */
-                InputChar = getchar ();
+                (void) getchar ();
                 continue;
 
             default:

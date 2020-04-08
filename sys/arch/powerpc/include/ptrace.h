@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.13 2017/04/08 00:25:49 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.13.14.1 2020/04/08 14:07:49 martin Exp $	*/
 
 #ifndef _POWERPC_PTRACE_H
 #define	_POWERPC_PTRACE_H
@@ -69,5 +69,15 @@ int procfs_machdep_validvecregs(struct lwp *, struct mount *);
 
 #endif /* ALTIVEC || PPC_HAVE_SPE */
 #endif /* _KERNEL */
+
+#define PTRACE_ILLEGAL_ASM	__asm __volatile (".long 0" : : : "memory")
+
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x7f, 0xe0, 0x00, 0x08 })
+#define PTRACE_BREAKPOINT_ASM	__asm __volatile("trap")
+#define PTRACE_BREAKPOINT_SIZE	4
+
+#ifdef _KERNEL
+#define PTRACE_LWP_GETPRIVATE(l) (l)->l_md.md_utf->tf_fixreg[_REG_R2]
+#endif
 
 #endif /* _POWERPC_PTRACE_H */

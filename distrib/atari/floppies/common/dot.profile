@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.7 2017/11/25 09:40:17 tsutsui Exp $
+# $NetBSD: dot.profile,v 1.7.4.1 2020/04/08 14:03:43 martin Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -107,5 +107,5 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		break
 	done
 
-	sysinst
+	sysinst || stty sane
 fi

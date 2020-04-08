@@ -1,4 +1,4 @@
-#	$NetBSD: majors.playstation2,v 1.22.32.1 2019/06/10 22:06:36 christos Exp $
+#	$NetBSD: majors.playstation2,v 1.22.32.2 2020/04/08 14:07:48 martin Exp $
 #
 # Device majors for playstation2
 #
@@ -39,7 +39,7 @@ device-major	uhid		char 32			uhid
 device-major	ulpt		char 33			ulpt
 device-major	ugen		char 34			ugen
 device-major	ucom		char 35			ucom
-device-major	urio		char 36			urio
+#device-major	obsolete	char 36			obsolete (urio)
 device-major	uscanner	char 37			uscanner
 device-major	clockctl	char 38			clockctl
 #device-major	obsolete	char 39			obsolete (systrace)
@@ -48,7 +48,7 @@ device-major	ksyms		char 41			ksyms
 device-major	wsfont		char 42			wsfont
 #device-major	obsolete	char 43			obsolete (opencrypto)
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independent driver majors are assigned in 

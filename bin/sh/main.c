@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73.4.1 2019/06/10 21:41:04 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.73.4.2 2020/04/08 14:03:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.73.4.1 2019/06/10 21:41:04 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.73.4.2 2020/04/08 14:03:04 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,22 @@ main(int argc, char **argv)
 	char *shinit;
 	uid_t uid;
 	gid_t gid;
+	sigset_t mask;
+
+	/*
+	 * If we happen to be invoked with SIGCHLD ignored, we cannot
+	 * successfully do almost anything.   Perhaps we should remember
+	 * its state and pass it on ignored to children if it was ignored
+	 * on entry, but that seems like just leaving the shit on the
+	 * footpath for someone else to fall into...
+	 */
+	(void)signal(SIGCHLD, SIG_DFL);
+	/*
+	 * Similarly, SIGCHLD must not be blocked
+	 */
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGCHLD);
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
 	uid = getuid();
 	gid = getgid();

@@ -1,7 +1,7 @@
-/* $NetBSD: term.c,v 1.28.10.1 2019/06/10 22:05:27 christos Exp $ */
+/* $NetBSD: term.c,v 1.28.10.2 2020/04/08 14:07:16 martin Exp $ */
 
 /*
- * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011, 2020 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.28.10.1 2019/06/10 22:05:27 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.28.10.2 2020/04/08 14:07:16 martin Exp $");
 
 #include <sys/stat.h>
 
@@ -44,9 +44,15 @@ __RCSID("$NetBSD: term.c,v 1.28.10.1 2019/06/10 22:05:27 christos Exp $");
 #include <term_private.h>
 #include <term.h>
 
-#define _PATH_TERMINFO		"/usr/share/misc/terminfo"
+/*
+ * Although we can read v1 structure (which includes v2 alias records)
+ * we really want a v3 structure to get numerics of type int rather than short.
+ */
+#define _PATH_TERMINFO	"/usr/share/misc/terminfo"
 
+#ifdef TERMINFO_DB
 static char __ti_database[PATH_MAX];
+#endif
 const char *_ti_database;
 
 /* Include a generated list of pre-compiled terminfo descriptions. */
@@ -72,17 +78,17 @@ allocset(void *pp, int init, size_t nelem, size_t elemsize)
 static int
 _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 {
-	char ver;
+	char rtype;
 	uint16_t ind, num;
 	size_t len;
 	TERMUSERDEF *ud;
 
 	if (caplen == 0)
 		goto out;
-	ver = *cap++;
+	rtype = *cap++;
 	caplen--;
-	/* Only read version 1 structures */
-	if (ver != 1)
+	/* Only read type 1 or 3 records */
+	if (rtype != TERMINFO_RTYPE && rtype != TERMINFO_RTYPE_O1)
 		goto out;
 
 	if (allocset(&term->flags, 0, TIFLAGMAX+1, sizeof(*term->flags)) == -1)
@@ -103,20 +109,17 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 	memcpy(term->_area, cap, term->_arealen);
 
 	cap = term->_area;
-	len = le16dec(cap);
-	cap += sizeof(uint16_t);
+	len = _ti_decode_16(&cap);
 	term->name = cap;
 	cap += len;
-	len = le16dec(cap);
-	cap += sizeof(uint16_t);
+	len = _ti_decode_16(&cap);
 	if (len == 0)
 		term->_alias = NULL;
 	else {
 		term->_alias = cap;
 		cap += len;
 	}
-	len = le16dec(cap);
-	cap += sizeof(uint16_t);
+	len = _ti_decode_16(&cap);
 	if (len == 0)
 		term->desc = NULL;
 	else {
@@ -124,45 +127,34 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 		cap += len;
 	}
 
-	num = le16dec(cap);
-	cap += sizeof(uint16_t);
+	num = _ti_decode_16(&cap);
 	if (num != 0) {
-		num = le16dec(cap);
-		cap += sizeof(uint16_t);
+		num = _ti_decode_16(&cap);
 		for (; num != 0; num--) {
-			ind = le16dec(cap);
-			cap += sizeof(uint16_t);
+			ind = _ti_decode_16(&cap);
 			term->flags[ind] = *cap++;
 			if (flags == 0 && !VALID_BOOLEAN(term->flags[ind]))
 				term->flags[ind] = 0;
 		}
 	}
 
-	num = le16dec(cap);
-	cap += sizeof(uint16_t);
+	num = _ti_decode_16(&cap);
 	if (num != 0) {
-		num = le16dec(cap);
-		cap += sizeof(uint16_t);
+		num = _ti_decode_16(&cap);
 		for (; num != 0; num--) {
-			ind = le16dec(cap);
-			cap += sizeof(uint16_t);
-			term->nums[ind] = (short)le16dec(cap);
+			ind = _ti_decode_16(&cap);
+			term->nums[ind] = _ti_decode_num(&cap, rtype);
 			if (flags == 0 && !VALID_NUMERIC(term->nums[ind]))
 				term->nums[ind] = ABSENT_NUMERIC;
-			cap += sizeof(uint16_t);
 		}
 	}
 
-	num = le16dec(cap);
-	cap += sizeof(uint16_t);
+	num = _ti_decode_16(&cap);
 	if (num != 0) {
-		num = le16dec(cap);
-		cap += sizeof(uint16_t);
+		num = _ti_decode_16(&cap);
 		for (; num != 0; num--) {
-			ind = le16dec(cap);
-			cap += sizeof(uint16_t);
-			len = le16dec(cap);
-			cap += sizeof(uint16_t);
+			ind = _ti_decode_16(&cap);
+			len = _ti_decode_16(&cap);
 			if (len > 0)
 				term->strs[ind] = cap;
 			else if (flags == 0)
@@ -173,11 +165,9 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 		}
 	}
 
-	num = le16dec(cap);
-	cap += sizeof(uint16_t);
+	num = _ti_decode_16(&cap);
 	if (num != 0) {
-		num = le16dec(cap);
-		cap += sizeof(uint16_t);
+		num = _ti_decode_16(&cap);
 		if (num != term->_nuserdefs) {
 			free(term->_userdefs);
 			term->_userdefs = NULL;
@@ -188,8 +178,7 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 			return -1;
 		for (num = 0; num < term->_nuserdefs; num++) {
 			ud = &term->_userdefs[num];
-			len = le16dec(cap);
-			cap += sizeof(uint16_t);
+			len = _ti_decode_16(&cap);
 			ud->id = cap;
 			cap += len;
 			ud->type = *cap++;
@@ -204,18 +193,16 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 				break;
 			case 'n':
 				ud->flag = ABSENT_BOOLEAN;
-				ud->num = (short)le16dec(cap);
+				ud->num = _ti_decode_num(&cap, rtype);
 				if (flags == 0 &&
 				    !VALID_NUMERIC(ud->num))
 					ud->num = ABSENT_NUMERIC;
 				ud->str = ABSENT_STRING;
-				cap += sizeof(uint16_t);
 				break;
 			case 's':
 				ud->flag = ABSENT_BOOLEAN;
 				ud->num = ABSENT_NUMERIC;
-				len = le16dec(cap);
-				cap += sizeof(uint16_t);
+				len = _ti_decode_16(&cap);
 				if (len > 0)
 					ud->str = cap;
 				else if (flags == 0)
@@ -242,6 +229,7 @@ out:
 	return -1;
 }
 
+#if defined(TERMINFO_DB) || defined(TERMINFO_COMPILE)
 static int
 _ti_checkname(const char *name, const char *termname, const char *termalias)
 {
@@ -274,7 +262,9 @@ _ti_checkname(const char *name, const char *termname, const char *termalias)
 	/* No match. */
 	return 0;
 }
+#endif
 
+#ifdef TERMINFO_DB
 static int
 _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 {
@@ -309,7 +299,7 @@ _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 		goto out;
 
 	/* If the entry is an alias, load the indexed terminfo description. */
-	if (data8[0] == 2) {
+	if (data8[0] == TERMINFO_ALIAS) {
 		if (cdbr_get(db, le32dec(data8 + 1), &data, &len))
 			goto out;
 		data8 = data;
@@ -354,10 +344,16 @@ _ti_dbgettermp(TERMINAL *term, const char *path, const char *name, int flags)
 	} while (*path++ == ':');
 	return e;
 }
+#endif
 
 static int
 _ti_findterm(TERMINAL *term, const char *name, int flags)
 {
+#ifndef TERMINFO_DB
+	_ti_database = NULL;
+
+	return 0;
+#else
 	int r;
 	char *c, *e;
 
@@ -367,12 +363,12 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 	_ti_database = NULL;
 	r = 0;
 
-	if ((e = getenv("TERMINFO")) != NULL && *e != '\0') {
-		if (e[0] == '/')
-			return _ti_dbgetterm(term, e, name, flags);
-	}
+	e = getenv("TERMINFO");
+	if (e != NULL && *e == '/')
+		return _ti_dbgetterm(term, e, name, flags);
 
 	c = NULL;
+#ifdef TERMINFO_COMPILE
 	if (e == NULL && (c = getenv("TERMCAP")) != NULL) {
 		if (*c != '\0' && *c != '/') {
 			c = strdup(c);
@@ -429,8 +425,10 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 	}
 	if (r != 1)
 		r = _ti_dbgettermp(term, _PATH_TERMINFO, name, flags);
+#endif
 
 	return r;
+#endif
 }
 
 int
@@ -439,6 +437,17 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 	int r;
 	size_t i;
 	const struct compiled_term *t;
+#ifdef TERMINFO_COMPAT
+	char *namev3;
+
+	namev3 = _ti_getname(TERMINFO_RTYPE, name);
+	if (namev3 != NULL) {
+		r = _ti_findterm(term, namev3, flags);
+		free(namev3);
+		if (r == 1)
+			return r;
+	}
+#endif
 
 	r = _ti_findterm(term, name, flags);
 	if (r == 1)

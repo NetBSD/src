@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.14 2012/02/12 16:34:09 matt Exp $ */
+/*	$NetBSD: bus_space.h,v 1.14.48.1 2020/04/08 14:07:46 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -395,7 +395,7 @@ struct mvme68k_bus_space_tag {
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplimented !!!
+			!!! bus_space_write_multi_8 unimplemented !!!
 #endif
 
 /*

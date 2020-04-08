@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.4.30.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.4.30.2 2020/04/08 14:08:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,16 +32,12 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.4.30.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.4.30.2 2020/04/08 14:08:21 martin Exp $");
 
-#include <linux/err.h>
-#include <linux/spinlock.h>
 #include <linux/ctype.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/export.h>
-#include <linux/errno.h>
-#include <asm/bug.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_edid.h>
@@ -51,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.4.30.1 2019/06/10 22:07:57 christos E
 
 #include "drm_crtc_internal.h"
 #include "drm_internal.h"
+
+#include <linux/nbsd-namespace.h>
 
 static struct drm_framebuffer *
 internal_framebuffer_create(struct drm_device *dev,
@@ -3063,8 +3061,7 @@ int drm_mode_addfb(struct drm_device *dev,
 		   void *data, struct drm_file *file_priv)
 {
 	struct drm_mode_fb_cmd *or = data;
-	static const struct drm_mode_fb_cmd2 zero_fbcmd;
-	struct drm_mode_fb_cmd2 r = zero_fbcmd;
+	struct drm_mode_fb_cmd2 r = {};
 	int ret;
 
 	/* convert to new format and call new ioctl */
@@ -3460,12 +3457,7 @@ int drm_mode_getfb(struct drm_device *dev,
 	r->bpp = fb->bits_per_pixel;
 	r->pitch = fb->pitches[0];
 	if (fb->funcs->create_handle) {
-		if (file_priv->is_master ||
-#ifdef __NetBSD__
-		    DRM_SUSER() ||
-#else
-		    capable(CAP_SYS_ADMIN) ||
-#endif
+		if (file_priv->is_master || capable(CAP_SYS_ADMIN) ||
 		    drm_is_control_client(file_priv)) {
 			ret = fb->funcs->create_handle(fb, file_priv,
 						       &r->handle);
@@ -5151,13 +5143,13 @@ int drm_mode_gamma_set_ioctl(struct drm_device *dev,
 		goto out;
 	}
 
-	g_base = (char *)r_base + size;
+	g_base = r_base + size;
 	if (copy_from_user(g_base, (void __user *)(unsigned long)crtc_lut->green, size)) {
 		ret = -EFAULT;
 		goto out;
 	}
 
-	b_base = (char *)g_base + size;
+	b_base = g_base + size;
 	if (copy_from_user(b_base, (void __user *)(unsigned long)crtc_lut->blue, size)) {
 		ret = -EFAULT;
 		goto out;
@@ -5218,13 +5210,13 @@ int drm_mode_gamma_get_ioctl(struct drm_device *dev,
 		goto out;
 	}
 
-	g_base = (char *)r_base + size;
+	g_base = r_base + size;
 	if (copy_to_user((void __user *)(unsigned long)crtc_lut->green, g_base, size)) {
 		ret = -EFAULT;
 		goto out;
 	}
 
-	b_base = (char *)g_base + size;
+	b_base = g_base + size;
 	if (copy_to_user((void __user *)(unsigned long)crtc_lut->blue, b_base, size)) {
 		ret = -EFAULT;
 		goto out;
@@ -5772,19 +5764,11 @@ EXPORT_SYMBOL(drm_rotation_simplify);
  */
 void drm_mode_config_init(struct drm_device *dev)
 {
-#ifdef __NetBSD__
-	linux_mutex_init(&dev->mode_config.mutex);
-	drm_modeset_lock_init(&dev->mode_config.connection_mutex);
-	linux_mutex_init(&dev->mode_config.idr_mutex);
-	linux_mutex_init(&dev->mode_config.fb_lock);
-	linux_mutex_init(&dev->mode_config.blob_lock);
-#else
 	mutex_init(&dev->mode_config.mutex);
 	drm_modeset_lock_init(&dev->mode_config.connection_mutex);
 	mutex_init(&dev->mode_config.idr_mutex);
 	mutex_init(&dev->mode_config.fb_lock);
 	mutex_init(&dev->mode_config.blob_lock);
-#endif
 	INIT_LIST_HEAD(&dev->mode_config.fb_list);
 	INIT_LIST_HEAD(&dev->mode_config.crtc_list);
 	INIT_LIST_HEAD(&dev->mode_config.connector_list);
@@ -5876,12 +5860,10 @@ void drm_mode_config_cleanup(struct drm_device *dev)
 
 	idr_destroy(&dev->mode_config.tile_idr);
 	idr_destroy(&dev->mode_config.crtc_idr);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev->mode_config.blob_lock);
-	linux_mutex_destroy(&dev->mode_config.fb_lock);
-	linux_mutex_destroy(&dev->mode_config.idr_mutex);
-	linux_mutex_destroy(&dev->mode_config.mutex);
-#endif
+	mutex_destroy(&dev->mode_config.blob_lock);
+	mutex_destroy(&dev->mode_config.fb_lock);
+	mutex_destroy(&dev->mode_config.idr_mutex);
+	mutex_destroy(&dev->mode_config.mutex);
 	drm_modeset_lock_fini(&dev->mode_config.connection_mutex);
 }
 EXPORT_SYMBOL(drm_mode_config_cleanup);

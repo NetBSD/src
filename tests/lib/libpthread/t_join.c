@@ -1,4 +1,4 @@
-/* $NetBSD: t_join.c,v 1.9 2017/07/02 16:41:33 joerg Exp $ */
+/* $NetBSD: t_join.c,v 1.9.6.1 2020/04/08 14:09:10 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_join.c,v 1.9 2017/07/02 16:41:33 joerg Exp $");
+__RCSID("$NetBSD: t_join.c,v 1.9.6.1 2020/04/08 14:09:10 martin Exp $");
 
 #include <errno.h>
 #include <pthread.h>
@@ -153,7 +153,7 @@ threadfunc2(void *arg)
 
 	j = (uintptr_t)arg;
 
-	ATF_REQUIRE(pthread_attr_get_np(pthread_self(), &attr) == 0);
+	ATF_REQUIRE(pthread_getattr_np(pthread_self(), &attr) == 0);
 	ATF_REQUIRE(pthread_attr_getstacksize(&attr, &stacksize) == 0);
 	ATF_REQUIRE(stacksize == STACKSIZE * (j + 1));
 	ATF_REQUIRE(pthread_attr_getguardsize(&attr, &guardsize) == 0);

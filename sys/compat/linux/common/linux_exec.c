@@ -1,7 +1,8 @@
-/*	$NetBSD: linux_exec.c,v 1.119.2.1 2019/06/10 22:07:00 christos Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.119.2.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*-
- * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008, 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,11 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.119.2.1 2019/06/10 22:07:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.119.2.2 2020/04/08 14:08:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
@@ -129,9 +131,7 @@ linux_e_proc_exec(struct proc *p, struct exec_package *epp)
 
 	KASSERT(p->p_nlwps == 1);
 	l = LIST_FIRST(&p->p_lwps);
-	mutex_enter(p->p_lock);
-	l->l_lid = p->p_pid;
-	mutex_exit(p->p_lock);
+	lwp_renumber(l, p->p_pid);
 }
 
 void
@@ -152,7 +152,7 @@ linux_e_proc_fork(struct proc *p2, struct lwp *l1, int flags)
 
 	KASSERT(p2->p_nlwps == 1);
 	l2 = LIST_FIRST(&p2->p_lwps);
-	l2->l_lid = p2->p_pid;
+	lwp_renumber(l2, p2->p_pid);
 	led1 = l1->l_emuldata;
 	led2 = l2->l_emuldata;
 	led2->led_child_tidptr = led1->led_child_tidptr;

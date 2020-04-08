@@ -1,4 +1,4 @@
-/*	$NetBSD: soa_6.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -276,7 +276,7 @@ fromstruct_soa(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_soa);
-	REQUIRE(source != NULL);
+	REQUIRE(soa != NULL);
 	REQUIRE(soa->common.rdtype == type);
 	REQUIRE(soa->common.rdclass == rdclass);
 
@@ -302,7 +302,7 @@ tostruct_soa(ARGS_TOSTRUCT) {
 	isc_result_t result;
 
 	REQUIRE(rdata->type == dns_rdatatype_soa);
-	REQUIRE(target != NULL);
+	REQUIRE(soa != NULL);
 	REQUIRE(rdata->length != 0);
 
 	soa->common.rdclass = rdata->rdclass;
@@ -352,7 +352,7 @@ static inline void
 freestruct_soa(ARGS_FREESTRUCT) {
 	dns_rdata_soa_t *soa = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(soa != NULL);
 	REQUIRE(soa->common.rdtype == dns_rdatatype_soa);
 
 	if (soa->mctx == NULL)

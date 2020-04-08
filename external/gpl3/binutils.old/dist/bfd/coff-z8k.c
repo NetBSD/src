@@ -1,5 +1,5 @@
 /* BFD back-end for Zilog Z800n COFF binaries.
-   Copyright (C) 1992-2016 Free Software Foundation, Inc.
+   Copyright (C) 1992-2018 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
@@ -118,18 +118,18 @@ rtype2howto (arelent *internal, struct internal_reloc *dst)
 
 static reloc_howto_type *
 coff_z8k_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
-                            bfd_reloc_code_real_type code)
+			    bfd_reloc_code_real_type code)
 {
   switch (code)
     {
-    case BFD_RELOC_8:      	return & r_imm8;
-    case BFD_RELOC_16:      	return & r_da;
-    case BFD_RELOC_32:      	return & r_imm32;
-    case BFD_RELOC_8_PCREL:     return & r_jr;
-    case BFD_RELOC_16_PCREL:    return & r_rel16;
-    case BFD_RELOC_Z8K_DISP7:   return & r_disp7;
-    case BFD_RELOC_Z8K_CALLR:   return & r_callr;
-    case BFD_RELOC_Z8K_IMM4L:   return & r_imm4l;
+    case BFD_RELOC_8:		return & r_imm8;
+    case BFD_RELOC_16:		return & r_da;
+    case BFD_RELOC_32:		return & r_imm32;
+    case BFD_RELOC_8_PCREL:	return & r_jr;
+    case BFD_RELOC_16_PCREL:	return & r_rel16;
+    case BFD_RELOC_Z8K_DISP7:	return & r_disp7;
+    case BFD_RELOC_Z8K_CALLR:	return & r_callr;
+    case BFD_RELOC_Z8K_IMM4L:	return & r_imm4l;
     default:			BFD_FAIL ();
       return 0;
     }
@@ -169,10 +169,10 @@ coff_z8k_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 static void
 reloc_processing (arelent *relent,
-                  struct internal_reloc *reloc,
-                  asymbol **symbols,
-                  bfd *abfd,
-                  asection *section)
+		  struct internal_reloc *reloc,
+		  asymbol **symbols,
+		  bfd *abfd,
+		  asection *section)
 {
   relent->address = reloc->r_vaddr;
   rtype2howto (relent, reloc);
@@ -188,12 +188,12 @@ reloc_processing (arelent *relent,
 
 static void
 extra_case (bfd *in_abfd,
-            struct bfd_link_info *link_info,
-            struct bfd_link_order *link_order,
-            arelent *reloc,
-            bfd_byte *data,
-            unsigned int *src_ptr,
-            unsigned int *dst_ptr)
+	    struct bfd_link_info *link_info,
+	    struct bfd_link_order *link_order,
+	    arelent *reloc,
+	    bfd_byte *data,
+	    unsigned int *src_ptr,
+	    unsigned int *dst_ptr)
 {
   asection * input_section = link_order->u.indirect.section;
 
@@ -258,7 +258,7 @@ extra_case (bfd *in_abfd,
 		       + input_section->output_offset
 		       + input_section->output_section->vma);
 	int gap = dst - dot - 1;  /* -1, since we're in the odd byte of the
-                                     word and the pc's been incremented.  */
+				     word and the pc's been incremented.  */
 
 	if (gap & 1)
 	  abort ();
@@ -283,7 +283,7 @@ extra_case (bfd *in_abfd,
 		       + input_section->output_offset
 		       + input_section->output_section->vma);
 	int gap = dst - dot - 1;  /* -1, since we're in the odd byte of the
-                                     word and the pc's been incremented.  */
+				     word and the pc's been incremented.  */
 
 	if (gap & 1)
 	  abort ();
@@ -296,8 +296,8 @@ extra_case (bfd *in_abfd,
 	     input_section, reloc->address);
 
 	bfd_put_8 (in_abfd,
-                   (bfd_get_8 ( in_abfd, data + *dst_ptr) & 0x80) + (-gap & 0x7f),
-                   data + *dst_ptr);
+		   (bfd_get_8 ( in_abfd, data + *dst_ptr) & 0x80) + (-gap & 0x7f),
+		   data + *dst_ptr);
 	(*dst_ptr)++;
 	(*src_ptr)++;
 	break;
@@ -322,8 +322,8 @@ extra_case (bfd *in_abfd,
 
 	gap /= 2;
 	bfd_put_16 (in_abfd,
-                    (bfd_get_16 ( in_abfd, data + *dst_ptr) & 0xf000) | (-gap & 0x0fff),
-                    data + *dst_ptr);
+		    (bfd_get_16 ( in_abfd, data + *dst_ptr) & 0xf000) | (-gap & 0x0fff),
+		    data + *dst_ptr);
 	(*dst_ptr) += 2;
 	(*src_ptr) += 2;
 	break;

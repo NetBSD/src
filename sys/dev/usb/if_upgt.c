@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.20.2.1 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.20.2.2 2020/04/08 14:08:13 martin Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.20.2.1 2019/06/10 22:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.20.2.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -459,7 +459,11 @@ upgt_attach_hook(device_t arg)
 
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = upgt_newstate;
-	ieee80211_media_init(ic, upgt_media_change, ieee80211_media_status);
+
+	/* XXX media locking needs revisiting */
+	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTUSB);
+	ieee80211_media_init_with_lock(ic,
+	    upgt_media_change, ieee80211_media_status, &sc->sc_media_mtx);
 
 	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
@@ -1012,7 +1016,11 @@ upgt_eeprom_read(struct upgt_softc *sc)
 			    "could not transmit EEPROM data URB\n");
 			return EIO;
 		}
-		if (tsleep(sc, 0, "eeprom_request", UPGT_USB_TIMEOUT)) {
+
+		mutex_enter(&sc->sc_mtx);
+		int res = cv_timedwait(&sc->sc_cv, &sc->sc_mtx, UPGT_USB_TIMEOUT);
+		mutex_exit(&sc->sc_mtx);
+		if (res) {
 			aprint_error_dev(sc->sc_dev,
 			    "timeout while waiting for EEPROM data\n");
 			return EIO;
@@ -1482,7 +1490,7 @@ upgt_start(struct ifnet *ifp)
 				aprint_error_dev(sc->sc_dev,
 				    "no free prism memory\n");
 				m_freem(m);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 			data_tx->ni = ni;
@@ -1524,7 +1532,7 @@ upgt_start(struct ifnet *ifp)
 				    "no free prism memory\n");
 				m_freem(m);
 				ieee80211_free_node(ni);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 			data_tx->ni = ni;
@@ -1602,7 +1610,7 @@ upgt_tx_task(void *arg)
 				data_tx->m = NULL;
 				ieee80211_free_node(data_tx->ni);
 				data_tx->ni = NULL;
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 
@@ -1687,7 +1695,7 @@ upgt_tx_task(void *arg)
 		    error != USBD_IN_PROGRESS) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not transmit TX data URB\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			break;
 		}
 
@@ -1726,7 +1734,7 @@ upgt_tx_done(struct upgt_softc *sc, uint8_t *data)
 			data_tx->addr = 0;
 
 			sc->tx_queued--;
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 
 			DPRINTF(2, "%s: TX done: ", device_xname(sc->sc_dev));
 			DPRINTF(2, "memaddr=0x%08x, status=0x%04x, rssi=%d, ",
@@ -1787,12 +1795,15 @@ upgt_rx_cb(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		DPRINTF(2, "%s: received EEPROM block (offset=%d, len=%d)\n",
 			device_xname(sc->sc_dev), eeprom_offset, eeprom_len);
 
+		mutex_enter(&sc->sc_mtx);
 		memcpy(sc->sc_eeprom + eeprom_offset,
 		    data_rx->buf + sizeof(struct upgt_lmac_eeprom) + 4,
 		    eeprom_len);
 
-		/* EEPROM data has arrived in time, wakeup tsleep() */
-		wakeup(sc);
+		/* EEPROM data has arrived in time, wakeup upgt_eeprom_read */
+		/* Note eeprom data arrived */
+		cv_broadcast(&sc->sc_cv);
+		mutex_exit(&sc->sc_mtx);
 	} else
 	if (h1_type == UPGT_H1_TYPE_CTRL &&
 	    h2_type == UPGT_H2_TYPE_TX_DONE) {
@@ -1845,7 +1856,7 @@ upgt_rx(struct upgt_softc *sc, uint8_t *data, int pkglen)
 	if (m == NULL) {
 		DPRINTF(1, "%s: could not create RX mbuf\n",
 		   device_xname(sc->sc_dev));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -2317,6 +2328,7 @@ upgt_alloc_cmd(struct upgt_softc *sc)
 
 	data_cmd->buf = usbd_get_buffer(data_cmd->xfer);
 
+	cv_init(&sc->sc_cv, "upgteeprom");
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	return 0;
@@ -2363,6 +2375,7 @@ upgt_free_cmd(struct upgt_softc *sc)
 	}
 
 	mutex_destroy(&sc->sc_mtx);
+	cv_destroy(&sc->sc_cv);
 }
 
 static int

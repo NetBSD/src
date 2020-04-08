@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.25.16.1 2019/06/10 22:05:35 christos Exp $ */
+/* $NetBSD: udf_create.c,v 1.25.16.2 2020/04/08 14:07:20 martin Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_create.c,v 1.25.16.1 2019/06/10 22:05:35 christos Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.25.16.2 2020/04/08 14:07:20 martin Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +51,9 @@ __RCSID("$NetBSD: udf_create.c,v 1.25.16.1 2019/06/10 22:05:35 christos Exp $");
 #   define DEBUG
 #  endif
 #endif
+
+struct udf_create_context context;
+struct udf_disclayout     layout;
 
 /*
  * NOTE that there is some overlap between this code and the udf kernel fs.

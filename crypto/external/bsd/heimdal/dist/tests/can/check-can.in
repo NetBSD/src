@@ -41,7 +41,7 @@ env_setup="@env_setup@"
 
 . ${env_setup}
 
-# If there is no useful db support compile in, disable test
+# If there is no useful db support compiled in, disable test
 ${have_db} || exit 77
 
 ./test_can TEST.H5L.SE heim-0.8 || exit 1

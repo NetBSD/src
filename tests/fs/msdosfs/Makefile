@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2015/01/07 23:12:31 pooka Exp $
+#	$NetBSD: Makefile,v 1.2.16.1 2020/04/08 14:09:07 martin Exp $
 #
 
 TESTSDIR=	${TESTSBASE}/fs/msdosfs
@@ -9,7 +9,7 @@ TESTS_C=	t_snapshot
 LDADD+=-lrumpfs_msdos -lrumpfs_tmpfs				# fs drivers
 LDADD+=-lrumpdev_fss						# snapshot dev
 LDADD+=-lrumpdev_disk -lrumpdev					# disk device
-LDADD+=-lrumpvfs -lrumpkern_sysproxy -lrump -lrumpuser 		# base
+LDADD+=-lrumpkern_sysproxy ${LIBRUMPBASE}
 LDADD+=-lpthread
 
 .include <bsd.test.mk>

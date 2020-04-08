@@ -1,7 +1,7 @@
-/* $NetBSD: compile.c,v 1.12 2017/05/04 09:46:30 roy Exp $ */
+/* $NetBSD: compile.c,v 1.12.10.1 2020/04/08 14:07:16 martin Exp $ */
 
 /*
- * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011, 2020 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.12 2017/05/04 09:46:30 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.12.10.1 2020/04/08 14:07:16 martin Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -64,6 +64,110 @@ dowarn(int flags, const char *fmt, ...)
 	}
 }
 
+#ifdef TERMINFO_COMPAT
+int
+_ti_promote(TIC *tic)
+{
+	char *obuf, type, flag, *buf, *delim, *name, *nbuf;
+	const char *cap, *code, *str;
+	size_t n, entries, strl;
+	uint16_t ind;
+	int num, ortype, error = 0;
+
+	ortype = tic->rtype;
+	tic->rtype = TERMINFO_RTYPE;
+	obuf = tic->name;
+	tic->name = _ti_getname(tic->rtype, tic->name);
+	if (tic->name == NULL) {
+		warn("_ti_getname");
+		tic->name = obuf;
+		return -1;
+	}
+	free(obuf);
+
+	n = 0;
+	obuf = buf = tic->alias;
+	tic->alias = NULL;
+	while (buf != NULL) {
+		delim = strchr(buf, '|');
+		if (delim != NULL)
+			*delim++ = '\0';
+		name = _ti_getname(tic->rtype, buf);
+		strl = strlen(name) + 1;
+		nbuf = realloc(tic->alias, n + strl);
+		if (nbuf == NULL) {
+			free(name);
+			return -1;
+		}
+		tic->alias = nbuf;
+		memcpy(tic->alias + n, name, strl);
+		n += strl;
+		free(name);
+		buf = delim;
+	}
+	free(obuf);
+
+	obuf = tic->nums.buf;
+	cap = obuf;
+	entries = tic->nums.entries;
+	tic->nums.buf = NULL;
+	tic->nums.entries = tic->nums.buflen = tic->nums.bufpos = 0;
+	for (n = entries; n > 0; n--) {
+		ind = _ti_decode_16(&cap);
+		num = _ti_decode_num(&cap, ortype);
+		if (VALID_NUMERIC(num) &&
+		    !_ti_encode_buf_id_num(&tic->nums, ind, num,
+		    _ti_numsize(tic)))
+		{
+			warn("promote num");
+			error = -1;
+			break;
+		}
+	}
+	free(obuf);
+
+	obuf = tic->extras.buf;
+	cap = obuf;
+	entries = tic->extras.entries;
+	tic->extras.buf = NULL;
+	tic->extras.entries = tic->extras.buflen = tic->extras.bufpos = 0;
+	for (n = entries; n > 0; n--) {
+		num = _ti_decode_16(&cap);
+		flag = 0; /* satisfy gcc, won't be used for non flag types */
+		str = NULL; /* satisfy gcc, won't be used as strl is 0 */
+		strl = 0;
+		code = cap;
+		cap += num;
+		type = *cap++;
+		switch (type) {
+		case 'f':
+			flag = *cap++;
+			break;
+		case 'n':
+			num = _ti_decode_num(&cap, ortype);
+			break;
+		case 's':
+			strl = _ti_decode_16(&cap);
+			str = cap;
+			cap += strl;
+			break;
+		default:
+			errno = EINVAL;
+			break;
+		}
+		if (!_ti_store_extra(tic, 0, code, type, flag, num,
+		    str, strl, TIC_EXTRA))
+		{
+			error = -1;
+			break;
+		}
+	}
+	free(obuf);
+
+	return error;
+}
+#endif
+
 char *
 _ti_grow_tbuf(TBUF *tbuf, size_t len)
 {
@@ -86,19 +190,18 @@ _ti_grow_tbuf(TBUF *tbuf, size_t len)
 	return tbuf->buf;
 }
 
-char *
-_ti_find_cap(TBUF *tbuf, char type, short ind)
+const char *
+_ti_find_cap(TIC *tic, TBUF *tbuf, char type, short ind)
 {
 	size_t n;
 	uint16_t num;
-	char *cap;
+	const char *cap;
 
 	_DIAGASSERT(tbuf != NULL);
 
 	cap = tbuf->buf;
 	for (n = tbuf->entries; n > 0; n--) {
-		num = le16dec(cap);
-		cap += sizeof(uint16_t);
+		num = _ti_decode_16(&cap);
 		if ((short)num == ind)
 			return cap;
 		switch (type) {
@@ -106,11 +209,10 @@ _ti_find_cap(TBUF *tbuf, char type, short ind)
 			cap++;
 			break;
 		case 'n':
-			cap += sizeof(uint16_t);
+			cap += _ti_numsize(tic);
 			break;
 		case 's':
-			num = le16dec(cap);
-			cap += sizeof(uint16_t);
+			num = _ti_decode_16(&cap);
 			cap += num;
 			break;
 		}
@@ -120,20 +222,19 @@ _ti_find_cap(TBUF *tbuf, char type, short ind)
 	return NULL;
 }
 
-char *
-_ti_find_extra(TBUF *tbuf, const char *code)
+const char *
+_ti_find_extra(TIC *tic, TBUF *tbuf, const char *code)
 {
 	size_t n;
 	uint16_t num;
-	char *cap;
+	const char *cap;
 
 	_DIAGASSERT(tbuf != NULL);
 	_DIAGASSERT(code != NULL);
 
 	cap = tbuf->buf;
 	for (n = tbuf->entries; n > 0; n--) {
-		num = le16dec(cap);
-		cap += sizeof(uint16_t);
+		num = _ti_decode_16(&cap);
 		if (strcmp(cap, code) == 0)
 			return cap + num;
 		cap += num;
@@ -142,11 +243,10 @@ _ti_find_extra(TBUF *tbuf, const char *code)
 			cap++;
 			break;
 		case 'n':
-			cap += sizeof(uint16_t);
+			cap += _ti_numsize(tic);
 			break;
 		case 's':
-			num = le16dec(cap);
-			cap += sizeof(uint16_t);
+			num = _ti_decode_16(&cap);
 			cap += num;
 			break;
 		}
@@ -156,16 +256,54 @@ _ti_find_extra(TBUF *tbuf, const char *code)
 	return NULL;
 }
 
-size_t
-_ti_store_extra(TIC *tic, int wrn, char *id, char type, char flag, short num,
-    char *str, size_t strl, int flags)
+char *
+_ti_getname(int rtype, const char *orig)
 {
-	size_t l;
+#ifdef TERMINFO_COMPAT
+	const char *delim;
+	char *name;
+	const char *verstr;
+	size_t diff, vlen;
+
+	switch (rtype) {
+	case TERMINFO_RTYPE:
+		verstr = TERMINFO_VDELIMSTR "v3";
+		break;
+	case TERMINFO_RTYPE_O1:
+		verstr = "";
+		break;
+	default:
+		errno = EINVAL;
+		return NULL;
+	}
+
+	delim = orig;
+	while (*delim != '\0' && *delim != TERMINFO_VDELIM)
+		delim++;
+	diff = delim - orig;
+	vlen = strlen(verstr);
+	name = malloc(diff + vlen + 1);
+	if (name == NULL)
+		return NULL;
+
+	memcpy(name, orig, diff);
+	memcpy(name + diff, verstr, vlen + 1);
+	return name;
+#else
+	return strdup(orig);
+#endif
+}
+
+size_t
+_ti_store_extra(TIC *tic, int wrn, const char *id, char type, char flag,
+    int num, const char *str, size_t strl, int flags)
+{
+	size_t l, capl;
 
 	_DIAGASSERT(tic != NULL);
 
 	if (strcmp(id, "use") != 0) {
-		if (_ti_find_extra(&tic->extras, id) != NULL)
+		if (_ti_find_extra(tic, &tic->extras, id) != NULL)
 			return 0;
 		if (!(flags & TIC_EXTRA)) {
 			if (wrn != 0)
@@ -176,43 +314,60 @@ _ti_store_extra(TIC *tic, int wrn, char *id, char type, char flag, short num,
 	}
 
 	l = strlen(id) + 1;
-	if (l > UINT16_T_MAX) {
+	if (l > UINT16_MAX) {
 		dowarn(flags, "%s: %s: cap name is too long", tic->name, id);
 		return 0;
 	}
 
-	if (!_ti_grow_tbuf(&tic->extras,
-		l + strl + (sizeof(uint16_t) * 2) + 1))
+	capl = sizeof(uint16_t) + l + 1;
+	switch (type) {
+	case 'f':
+		capl++;
+		break;
+	case 'n':
+		capl += _ti_numsize(tic);
+		break;
+	case 's':
+		capl += sizeof(uint16_t) + strl;
+		break;
+	}
+
+	if (!_ti_grow_tbuf(&tic->extras, capl))
 		return 0;
-	le16enc(tic->extras.buf + tic->extras.bufpos, (uint16_t)l);
-	tic->extras.bufpos += sizeof(uint16_t);
-	memcpy(tic->extras.buf + tic->extras.bufpos, id, l);
-	tic->extras.bufpos += l;
+	_ti_encode_buf_count_str(&tic->extras, id, l);
 	tic->extras.buf[tic->extras.bufpos++] = type;
 	switch (type) {
 	case 'f':
 		tic->extras.buf[tic->extras.bufpos++] = flag;
 		break;
 	case 'n':
-		le16enc(tic->extras.buf + tic->extras.bufpos, (uint16_t)num);
-		tic->extras.bufpos += sizeof(uint16_t);
+		_ti_encode_buf_num(&tic->extras, num, tic->rtype);
 		break;
 	case 's':
-		le16enc(tic->extras.buf + tic->extras.bufpos, (uint16_t)strl);
-		tic->extras.bufpos += sizeof(uint16_t);
-		memcpy(tic->extras.buf + tic->extras.bufpos, str, strl);
-		tic->extras.bufpos += strl;
+		_ti_encode_buf_count_str(&tic->extras, str, strl);
 		break;
 	}
 	tic->extras.entries++;
 	return 1;
 }
 
+static void
+_ti_encode_buf(char **cap, const TBUF *buf)
+{
+	if (buf->entries == 0) {
+		_ti_encode_16(cap, 0);
+	} else {
+		_ti_encode_16(cap, buf->bufpos + sizeof(uint16_t));
+		_ti_encode_16(cap, buf->entries);
+		_ti_encode_str(cap, buf->buf, buf->bufpos);
+	}
+}
+
 ssize_t
 _ti_flatten(uint8_t **buf, const TIC *tic)
 {
 	size_t buflen, len, alen, dlen;
-	uint8_t *cap;
+	char *cap;
 
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(tic != NULL);
@@ -226,6 +381,7 @@ _ti_flatten(uint8_t **buf, const TIC *tic)
 		dlen = 0;
 	else
 		dlen = strlen(tic->desc) + 1;
+
 	buflen = sizeof(char) +
 	    sizeof(uint16_t) + len +
 	    sizeof(uint16_t) + alen +
@@ -234,79 +390,25 @@ _ti_flatten(uint8_t **buf, const TIC *tic)
 	    (sizeof(uint16_t) * 2) + tic->nums.bufpos +
 	    (sizeof(uint16_t) * 2) + tic->strs.bufpos +
 	    (sizeof(uint16_t) * 2) + tic->extras.bufpos;
+
 	*buf = malloc(buflen);
 	if (*buf == NULL)
 		return -1;
 
-	cap = *buf;
-	*cap++ = 1;
-	le16enc(cap, (uint16_t)len);
-	cap += sizeof(uint16_t);
-	memcpy(cap, tic->name, len);
-	cap += len;
+	cap = (char *)*buf;
+	*cap++ = tic->rtype;
 
-	le16enc(cap, (uint16_t)alen);
-	cap += sizeof(uint16_t);
-	if (tic->alias != NULL) {
-		memcpy(cap, tic->alias, alen);
-		cap += alen;
-	}
-	le16enc(cap, (uint16_t)dlen);
-	cap += sizeof(uint16_t);
-	if (tic->desc != NULL) {
-		memcpy(cap, tic->desc, dlen);
-		cap += dlen;
-	}
+	_ti_encode_count_str(&cap, tic->name, len);
+	_ti_encode_count_str(&cap, tic->alias, alen);
+	_ti_encode_count_str(&cap, tic->desc, dlen);
 
-	if (tic->flags.entries == 0) {
-		le16enc(cap, 0);
-		cap += sizeof(uint16_t);
-	} else {
-		le16enc(cap, (uint16_t)(tic->flags.bufpos + sizeof(uint16_t)));
-		cap += sizeof(uint16_t);
-		le16enc(cap, (uint16_t)tic->flags.entries);
-		cap += sizeof(uint16_t);
-		memcpy(cap, tic->flags.buf, tic->flags.bufpos);
-		cap += tic->flags.bufpos;
-	}
+	_ti_encode_buf(&cap, &tic->flags);
 
-	if (tic->nums.entries == 0) {
-		le16enc(cap, 0);
-		cap += sizeof(uint16_t);
-	} else {
-		le16enc(cap, (uint16_t)(tic->nums.bufpos + sizeof(uint16_t)));
-		cap += sizeof(uint16_t);
-		le16enc(cap, (uint16_t)tic->nums.entries);
-		cap += sizeof(uint16_t);
-		memcpy(cap, tic->nums.buf, tic->nums.bufpos);
-		cap += tic->nums.bufpos;
-	}
+	_ti_encode_buf(&cap, &tic->nums);
+	_ti_encode_buf(&cap, &tic->strs);
+	_ti_encode_buf(&cap, &tic->extras);
 
-	if (tic->strs.entries == 0) {
-		le16enc(cap, 0);
-		cap += sizeof(uint16_t);
-	} else {
-		le16enc(cap, (uint16_t)(tic->strs.bufpos + sizeof(uint16_t)));
-		cap += sizeof(uint16_t);
-		le16enc(cap, (uint16_t)tic->strs.entries);
-		cap += sizeof(uint16_t);
-		memcpy(cap, tic->strs.buf, tic->strs.bufpos);
-		cap += tic->strs.bufpos;
-	}
-
-	if (tic->extras.entries == 0) {
-		le16enc(cap, 0);
-		cap += sizeof(uint16_t);
-	} else {
-		le16enc(cap, (uint16_t)(tic->extras.bufpos + sizeof(uint16_t)));
-		cap += sizeof(uint16_t);
-		le16enc(cap, (uint16_t)tic->extras.entries);
-		cap += sizeof(uint16_t);
-		memcpy(cap, tic->extras.buf, tic->extras.bufpos);
-		cap += tic->extras.bufpos;
-	}
-
-	return cap - *buf;
+	return (uint8_t *)cap - *buf;
 }
 
 static int
@@ -451,13 +553,50 @@ _ti_get_token(char **cap, char sep)
 	return token;
 }
 
+int
+_ti_encode_buf_id_num(TBUF *tbuf, int ind, int num, size_t len)
+{
+	if (!_ti_grow_tbuf(tbuf, sizeof(uint16_t) + len))
+		return 0;
+	_ti_encode_buf_16(tbuf, ind);
+	if (len == sizeof(uint32_t))
+		_ti_encode_buf_32(tbuf, num);
+	else
+		_ti_encode_buf_16(tbuf, num);
+	tbuf->entries++;
+	return 1;
+}
+
+int
+_ti_encode_buf_id_count_str(TBUF *tbuf, int ind, const void *buf, size_t len)
+{
+	if (!_ti_grow_tbuf(tbuf, 2 * sizeof(uint16_t) + len))
+		return 0;
+	_ti_encode_buf_16(tbuf, ind);
+	_ti_encode_buf_count_str(tbuf, buf, len);
+	tbuf->entries++;
+	return 1;
+}
+
+int
+_ti_encode_buf_id_flags(TBUF *tbuf, int ind, int flag)
+{
+	if (!_ti_grow_tbuf(tbuf, sizeof(uint16_t) + 1))
+		return 0;
+	_ti_encode_buf_16(tbuf, ind);
+	tbuf->buf[tbuf->bufpos++] = flag;
+	tbuf->entries++;
+	return 1;
+}
+
 TIC *
 _ti_compile(char *cap, int flags)
 {
 	char *token, *p, *e, *name, *desc, *alias;
 	signed char flag;
 	long cnum;
-	short ind, num;
+	short ind;
+	int num;
 	size_t len;
 	TBUF buf;
 	TIC *tic;
@@ -466,7 +605,7 @@ _ti_compile(char *cap, int flags)
 
 	name = _ti_get_token(&cap, ',');
 	if (name == NULL) {
-		dowarn(flags, "no seperator found: %s", cap);
+		dowarn(flags, "no separator found: %s", cap);
 		return NULL;
 	}
 	desc = strrchr(name, '|');
@@ -476,18 +615,36 @@ _ti_compile(char *cap, int flags)
 	if (alias != NULL)
 		*alias++ = '\0';
 
+	if (strlen(name) > UINT16_MAX - 1) {
+		dowarn(flags, "%s: name too long", name);
+		return NULL;
+	}
+	if (desc != NULL && strlen(desc) > UINT16_MAX - 1) {
+		dowarn(flags, "%s: description too long: %s", name, desc);
+		return NULL;
+	}
+	if (alias != NULL && strlen(alias) > UINT16_MAX - 1) {
+		dowarn(flags, "%s: alias too long: %s", name, alias);
+		return NULL;
+	}
+
 	tic = calloc(sizeof(*tic), 1);
 	if (tic == NULL)
 		return NULL;
 
+#ifdef TERMINFO_COMPAT
+	tic->rtype = TERMINFO_RTYPE_O1; /* will promote if needed */
+#else
+	tic->rtype = TERMINFO_RTYPE;
+#endif
 	buf.buf = NULL;
 	buf.buflen = 0;
 
-	tic->name = strdup(name);
+	tic->name = _ti_getname(tic->rtype, name);
 	if (tic->name == NULL)
 		goto error;
 	if (alias != NULL && flags & TIC_ALIAS) {
-		tic->alias = strdup(alias);
+		tic->alias = _ti_getname(tic->rtype, alias);
 		if (tic->alias == NULL)
 			goto error;
 	}
@@ -519,7 +676,7 @@ _ti_compile(char *cap, int flags)
 			/* Don't use the string if we already have it */
 			ind = (short)_ti_strindex(token);
 			if (ind != -1 &&
-			    _ti_find_cap(&tic->strs, 's', ind) != NULL)
+			    _ti_find_cap(tic, &tic->strs, 's', ind) != NULL)
 				continue;
 
 			/* Encode the string to our scratch buffer */
@@ -527,7 +684,7 @@ _ti_compile(char *cap, int flags)
 			if (encode_string(tic->name, token,
 				&buf, p, flags) == -1)
 				goto error;
-			if (buf.bufpos > UINT16_T_MAX) {
+			if (buf.bufpos > UINT16_MAX - 1) {
 				dowarn(flags, "%s: %s: string is too long",
 				    tic->name, token);
 				continue;
@@ -538,22 +695,14 @@ _ti_compile(char *cap, int flags)
 				continue;
 			}
 
-			if (ind == -1)
-				_ti_store_extra(tic, 1, token, 's', -1, -2,
-				    buf.buf, buf.bufpos, flags);
-			else {
-				if (!_ti_grow_tbuf(&tic->strs,
-					(sizeof(uint16_t) * 2) + buf.bufpos))
+			if (ind == -1) {
+				if (!_ti_store_extra(tic, 1, token, 's', -1, -2,
+				    buf.buf, buf.bufpos, flags))
 					goto error;
-				le16enc(tic->strs.buf + tic->strs.bufpos, (uint16_t)ind);
-				tic->strs.bufpos += sizeof(uint16_t);
-				le16enc(tic->strs.buf + tic->strs.bufpos,
-				    (uint16_t)buf.bufpos);
-				tic->strs.bufpos += sizeof(uint16_t);
-				memcpy(tic->strs.buf + tic->strs.bufpos,
-				    buf.buf, buf.bufpos);
-				tic->strs.bufpos += buf.bufpos;
-				tic->strs.entries++;
+			} else {
+				if (!_ti_encode_buf_id_count_str(&tic->strs,
+				    ind, buf.buf, buf.bufpos))
+					goto error;
 			}
 			continue;
 		}
@@ -565,7 +714,7 @@ _ti_compile(char *cap, int flags)
 			/* Don't use the number if we already have it */
 			ind = (short)_ti_numindex(token);
 			if (ind != -1 &&
-			    _ti_find_cap(&tic->nums, 'n', ind) != NULL)
+			    _ti_find_cap(tic, &tic->nums, 'n', ind) != NULL)
 				continue;
 
 			cnum = strtol(p, &e, 0);
@@ -574,26 +723,28 @@ _ti_compile(char *cap, int flags)
 				    tic->name, token);
 				continue;
 			}
-			if (!VALID_NUMERIC(cnum)) {
-				dowarn(flags, "%s: %s: number out of range",
-				    tic->name, token);
+			if (!VALID_NUMERIC(cnum) || cnum > INT32_MAX) {
+				dowarn(flags, "%s: %s: number %ld out of range",
+				    tic->name, token, cnum);
 				continue;
 			}
-			num = (short)cnum;
-			if (ind == -1)
-				_ti_store_extra(tic, 1, token, 'n', -1,
-				    num, NULL, 0, flags);
-			else {
-				if (_ti_grow_tbuf(&tic->nums,
-					sizeof(uint16_t) * 2) == NULL)
+			if (cnum > INT16_MAX) {
+				if (flags & TIC_COMPAT_V1)
+					cnum = INT16_MAX;
+				else if (tic->rtype == TERMINFO_RTYPE_O1)
+					if (_ti_promote(tic) == -1)
+						goto error;
+			}
+
+			num = (int)cnum;
+			if (ind == -1) {
+				if (!_ti_store_extra(tic, 1, token, 'n', -1,
+				    num, NULL, 0, flags))
 					goto error;
-				le16enc(tic->nums.buf + tic->nums.bufpos,
-				    (uint16_t)ind);
-				tic->nums.bufpos += sizeof(uint16_t);
-				le16enc(tic->nums.buf + tic->nums.bufpos,
-				    (uint16_t)num);
-				tic->nums.bufpos += sizeof(uint16_t);
-				tic->nums.entries++;
+			} else {
+				if (!_ti_encode_buf_id_num(&tic->nums,
+				    ind, num, _ti_numsize(tic)))
+					    goto error;
 			}
 			continue;
 		}
@@ -607,45 +758,30 @@ _ti_compile(char *cap, int flags)
 		ind = (short)_ti_flagindex(token);
 		if (ind == -1 && flag == CANCELLED_BOOLEAN) {
 			if ((ind = (short)_ti_numindex(token)) != -1) {
-				if (_ti_find_cap(&tic->nums, 'n', ind) != NULL)
+				if (_ti_find_cap(tic, &tic->nums, 'n', ind)
+				    != NULL)
 					continue;
-				if (_ti_grow_tbuf(&tic->nums,
-					sizeof(uint16_t) * 2) == NULL)
+				if (!_ti_encode_buf_id_num(&tic->nums, ind,
+				    CANCELLED_NUMERIC, _ti_numsize(tic)))
 					goto error;
-				le16enc(tic->nums.buf + tic->nums.bufpos,
-				    (uint16_t)ind);
-				tic->nums.bufpos += sizeof(uint16_t);
-				le16enc(tic->nums.buf + tic->nums.bufpos,
-				    (uint16_t)CANCELLED_NUMERIC);
-				tic->nums.bufpos += sizeof(uint16_t);
-				tic->nums.entries++;
 				continue;
 			} else if ((ind = (short)_ti_strindex(token)) != -1) {
-				if (_ti_find_cap(&tic->strs, 's', ind) != NULL)
+				if (_ti_find_cap(tic, &tic->strs, 's', ind)
+				    != NULL)
 					continue;
-				if (_ti_grow_tbuf(&tic->strs,
-				    (sizeof(uint16_t) * 2) + 1) == NULL)
+				if (!_ti_encode_buf_id_num(
+				    &tic->strs, ind, 0, sizeof(uint16_t)))
 					goto error;
-				le16enc(tic->strs.buf + tic->strs.bufpos, (uint16_t)ind);
-				tic->strs.bufpos += sizeof(uint16_t);
-				le16enc(tic->strs.buf + tic->strs.bufpos, 0);
-				tic->strs.bufpos += sizeof(uint16_t);
-				tic->strs.entries++;
 				continue;
 			}
 		}
-		if (ind == -1)
-			_ti_store_extra(tic, 1, token, 'f', flag, 0, NULL, 0,
-			    flags);
-		else if (_ti_find_cap(&tic->flags, 'f', ind) == NULL) {
-			if (_ti_grow_tbuf(&tic->flags, sizeof(uint16_t) + 1)
-			    == NULL)
+		if (ind == -1) {
+			if (!_ti_store_extra(tic, 1, token, 'f', flag, 0, NULL,
+			    0, flags))
 				goto error;
-			le16enc(tic->flags.buf + tic->flags.bufpos,
-			    (uint16_t)ind);
-			tic->flags.bufpos += sizeof(uint16_t);
-			tic->flags.buf[tic->flags.bufpos++] = flag;
-			tic->flags.entries++;
+		} else if (_ti_find_cap(tic, &tic->flags, 'f', ind) == NULL) {
+			if (!_ti_encode_buf_id_flags(&tic->flags, ind, flag))
+				goto error;
 		}
 	}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.31.54.1 2019/06/10 22:06:17 christos Exp $
+#	$NetBSD: majors.hpcmips,v 1.31.54.2 2020/04/08 14:07:38 martin Exp $
 #
 # Device majors for hpcmips
 #
@@ -42,7 +42,7 @@ device-major	txcom		char 35			txcom
 device-major	ucbsnd		char 36			ucbsnd
 device-major	ucom		char 37			ucom
 device-major	wsmux		char 38			wsmux
-device-major	urio		char 39			urio
+#device-major	obsolete	char 39			obsolete (urio)
 device-major	uscanner	char 40			uscanner
 #device-major	obsolete	char 41			obsolete (isdn)
 #device-major	obsolete	char 42			obsolete (isdnctl)
@@ -63,7 +63,7 @@ device-major	ksyms		char 55			ksyms
 device-major	vr4181aiu	char 101		vr4181aiu
 device-major	wsfont		char 102		wsfont
 device-major	ses		char 103		ses
-device-major	nsmb		char 104		nsmb
+#device-major	obsolete	char 104		obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

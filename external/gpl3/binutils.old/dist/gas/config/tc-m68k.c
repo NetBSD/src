@@ -1,5 +1,5 @@
 /* tc-m68k.c -- Assemble for the m68k family
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -27,18 +27,9 @@
 
 #include "opcode/m68k.h"
 #include "m68k-parse.h"
-
-#if defined (OBJ_ELF)
 #include "elf/m68k.h"
-#endif
 
-#ifdef M68KCOFF
-#include "obj-coff.h"
-#endif
-
-#ifdef OBJ_ELF
 static void m68k_elf_cons (int);
-#endif
 
 /* This string holds the chars that always start a comment.  If the
    pre-processor is disabled, these aren't very useful.  The macro
@@ -138,7 +129,7 @@ static struct label_line *current_label;
 /* Pointer to list holding the opcodes sorted by name.  */
 static struct m68k_opcode const ** m68k_sorted_opcodes;
 
-/* Its an arbitrary name:  This means I don't approve of it.
+/* It's an arbitrary name:  This means I don't approve of it.
    See flames below.  */
 static struct obstack robyn;
 
@@ -369,7 +360,7 @@ struct m68k_it
     }
   fragb[4];
 
-  int nrel;			/* Num of reloc strucs in use.  */
+  int nrel;			/* Num of reloc structs in use.  */
   struct
     {
       int n;
@@ -384,11 +375,9 @@ struct m68k_it
 	 significance of some values (in the branch instruction, for
 	 example).  */
       int pcrel_fix;
-#ifdef OBJ_ELF
       /* Whether this expression needs special pic relocation, and if
 	 so, which.  */
       enum pic_relocation pic_reloc;
-#endif
     }
   reloc[5];			/* Five is enough???  */
 };
@@ -449,9 +438,7 @@ add_fix (int width, struct m68k_exp *exp, int pc_rel, int pc_fix)
   the_ins.reloc[the_ins.nrel].exp = exp->exp;
   the_ins.reloc[the_ins.nrel].wid = width;
   the_ins.reloc[the_ins.nrel].pcrel_fix = pc_fix;
-#ifdef OBJ_ELF
   the_ins.reloc[the_ins.nrel].pic_reloc = exp->pic_reloc;
-#endif
   the_ins.reloc[the_ins.nrel++].pcrel = pc_rel;
 }
 
@@ -513,7 +500,7 @@ struct m68k_cpu
   unsigned long arch;	/* Architecture features.  */
   const enum m68k_register *control_regs;	/* Control regs on chip */
   const char *name;	/* Name */
-  int alias;       	/* Alias for a cannonical name.  If 1, then
+  int alias;       	/* Alias for a canonical name.  If 1, then
 			   succeeds canonical name, if -1 then
 			   succeeds canonical name, if <-1 ||>1 this is a
 			   deprecated name, and the next/previous name
@@ -894,13 +881,9 @@ const pseudo_typeS md_pseudo_table[] =
   {"even", s_even, 0},
   {"skip", s_space, 0},
   {"proc", s_proc, 0},
-#if defined (TE_SUN3) || defined (OBJ_ELF)
   {"align", s_align_bytes, 0},
-#endif
-#ifdef OBJ_ELF
   {"swbeg", s_ignore, 0},
   {"long", m68k_elf_cons, 4},
-#endif
   {"extend", float_cons, 'x'},
   {"ldouble", float_cons, 'x'},
 
@@ -967,15 +950,7 @@ const pseudo_typeS mote_pseudo_table[] =
   {"dsb", s_space, 1},
 
   {"xdef", s_globl, 0},
-#ifdef OBJ_ELF
   {"align", s_align_bytes, 0},
-#else
-  {"align", s_align_ptwo, 0},
-#endif
-#ifdef M68KCOFF
-  {"sect", obj_coff_section, 0},
-  {"section", obj_coff_section, 0},
-#endif
   {0, 0, 0}
 };
 
@@ -1000,7 +975,6 @@ static char alt_notend_table[256];
       || (*s == ':'						\
 	  && alt_notend_table[(unsigned char) s[1]])))
 
-#ifdef OBJ_ELF
 
 /* Return zero if the reference to SYMBOL from within the same segment may
    be relaxed.  */
@@ -1226,16 +1200,6 @@ tc_m68k_fix_adjustable (fixS *fixP)
     }
 }
 
-#else /* !OBJ_ELF */
-
-#define get_reloc_code(SIZE,PCREL,OTHER) NO_RELOC
-
-/* PR gas/3041 Weak symbols are not relaxable
-   because they must be treated as extern.  */
-#define relaxable_symbol(symbol)   (!(S_IS_WEAK (symbol)))
-
-#endif /* OBJ_ELF */
-
 arelent *
 tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 {
@@ -1338,39 +1302,6 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
   reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
-#ifndef OBJ_ELF
-  if (OUTPUT_FLAVOR == bfd_target_aout_flavour
-      && fixp->fx_addsy
-      && S_IS_WEAK (fixp->fx_addsy)
-      && ! bfd_is_und_section (S_GET_SEGMENT (fixp->fx_addsy)))
-    {
-      /* PR gas/3041 References to weak symbols must be treated as extern
-	 in order to be overridable by the linker, even if they are defined
-	 in the same object file. So the original addend must be written
-	 "as is" into the output section without further processing.
-	 The addend value must be hacked here in order to force
-	 bfd_install_relocation() to write the original value into the
-	 output section.
-	 1) MD_APPLY_SYM_VALUE() is set to 1 for m68k/a.out, so the symbol
-	 value has already been added to the addend in fixup_segment(). We
-	 have to remove it.
-	 2) bfd_install_relocation() will incorrectly treat this symbol as
-	 resolved, so it will write the symbol value plus its addend and
-	 section VMA. As a workaround we can tweak the addend value here in
-	 order to get the original value in the section after the call to
-	 bfd_install_relocation().  */
-      reloc->addend = fixp->fx_addnumber
-		      /* Fix because of MD_APPLY_SYM_VALUE() */
-		      - S_GET_VALUE (fixp->fx_addsy)
-		      /* Fix for bfd_install_relocation() */
-		      - (S_GET_VALUE (fixp->fx_addsy)
-			 + S_GET_SEGMENT (fixp->fx_addsy)->vma);
-    }
-  else if (fixp->fx_pcrel)
-    reloc->addend = fixp->fx_addnumber;
-  else
-    reloc->addend = 0;
-#else
   if (!fixp->fx_pcrel)
     reloc->addend = fixp->fx_addnumber;
   else
@@ -1378,7 +1309,6 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 		     + fixp->fx_pcrel_adjust
 		     + fixp->fx_addnumber
 		     + md_pcrel_from (fixp));
-#endif
 
   reloc->howto = bfd_reloc_type_lookup (stdoutput, code);
   gas_assert (reloc->howto != 0);
@@ -1469,7 +1399,7 @@ m68k_ip (char *instring)
       char *old = input_line_pointer;
       *old = '\n';
       input_line_pointer = p;
-      /* Ahh - it's a motorola style psuedo op.  */
+      /* Ahh - it's a motorola style pseudo op.  */
       mote_pseudo_table[opcode->m_opnum].poc_handler
 	(mote_pseudo_table[opcode->m_opnum].poc_val);
       input_line_pointer = old;
@@ -1504,7 +1434,7 @@ m68k_ip (char *instring)
   opsfound = opP - &the_ins.operands[0];
 
   /* This ugly hack is to support the floating pt opcodes in their
-     standard form.  Essentially, we fake a first enty of type COP#1 */
+     standard form.  Essentially, we fake a first entry of type COP#1 */
   if (opcode->m_operands[0] == 'I')
     {
       int n;
@@ -2470,7 +2400,7 @@ m68k_ip (char *instring)
       int use_pl = 0;
 
       /* This switch is a doozy.
-	 Watch the first step; its a big one! */
+	 Watch the first step; it's a big one! */
       switch (s[0])
 	{
 
@@ -2670,12 +2600,9 @@ m68k_ip (char *instring)
 		      if (opP->reg == PC)
 			{
 			  if (opP->disp.size == SIZE_LONG
-#ifdef OBJ_ELF
 			      /* If the displacement needs pic
 				 relocation it cannot be relaxed.  */
-			      || opP->disp.pic_reloc != pic_none
-#endif
-			      )
+			      || opP->disp.pic_reloc != pic_none)
 			    {
 			      addword (0x0170);
 			      add_fix ('l', &opP->disp, 1, 2);
@@ -2794,7 +2721,7 @@ m68k_ip (char *instring)
 		    default:
 		      abort ();
 		    }
-		  /* IF its simple,
+		  /* IF it's simple,
 		     GET US OUT OF HERE! */
 
 		  /* Must be INDEX, with an index register.  Address
@@ -2840,12 +2767,9 @@ m68k_ip (char *instring)
 			       && opP->reg == PC
 			       && isvar (&opP->disp)
 			       && subs (&opP->disp) == NULL
-#ifdef OBJ_ELF
 			       /* If the displacement needs pic
 				  relocation it cannot be relaxed.  */
-			       && opP->disp.pic_reloc == pic_none
-#endif
-			       )
+			       && opP->disp.pic_reloc == pic_none)
 			{
 			  /* The code in md_convert_frag_1 needs to be
                              able to adjust nextword.  Call frag_grow
@@ -2989,11 +2913,9 @@ m68k_ip (char *instring)
 		  if (isvar (&opP->disp)
 		      && !subs (&opP->disp)
 		      && adds (&opP->disp)
-#ifdef OBJ_ELF
 		      /* If the displacement needs pic relocation it
 			 cannot be relaxed.  */
 		      && opP->disp.pic_reloc == pic_none
-#endif
 		      && !flag_long_jumps
 		      && !strchr ("~%&$?", s[0]))
 		    {
@@ -3003,7 +2925,7 @@ m68k_ip (char *instring)
 				TAB (ABSTOPCREL, SZ_UNDEF));
 		      break;
 		    }
-		  /* Fall through into long.  */
+		  /* Fall through.  */
 		case SIZE_LONG:
 		  if (isvar (&opP->disp))
 		    add_fix ('l', &opP->disp, 0, 0);
@@ -3109,6 +3031,7 @@ m68k_ip (char *instring)
 	      break;
 	    case '3':
 	      tmpreg &= 0xFF;
+	      /* Fall through.  */
 	    case '8':
 	    case 'C':
 	    case 'j':
@@ -3159,12 +3082,9 @@ m68k_ip (char *instring)
 
 	      var_branch:
 	      if (subs (&opP->disp)	/* We can't relax it.  */
-#ifdef OBJ_ELF
 		  /* If the displacement needs pic relocation it cannot be
 		     relaxed.  */
-		  || opP->disp.pic_reloc != pic_none
-#endif
-		  || 0)
+		  || opP->disp.pic_reloc != pic_none)
 		{
 		  if (!have_disp)
 		    as_warn (_("Can't use long branches on this architecture"));
@@ -3734,7 +3654,7 @@ m68k_ip (char *instring)
 	}
     }
 
-  /* By the time whe get here (FINALLY) the_ins contains the complete
+  /* By the time when get here (FINALLY) the_ins contains the complete
      instruction, ready to be emitted. . .  */
 }
 
@@ -3923,7 +3843,7 @@ install_gen_operand (int mode, int val)
   switch (mode)
     {
     case '/':  /* Special for mask loads for mac/msac insns with
-		  possible mask; trailing_ampersend set in bit 8.  */
+		  possible mask; trailing_ampersand set in bit 8.  */
       the_ins.opcode[0] |= (val & 0x3f);
       the_ins.opcode[1] |= (((val & 0x100) >> 8) << 5);
       break;
@@ -4393,10 +4313,8 @@ md_assemble (char *str)
       current_label = NULL;
     }
 
-#ifdef OBJ_ELF
   /* Tie dwarf2 debug info to the address at the start of the insn.  */
   dwarf2_emit_insn (0);
-#endif
 
   if (the_ins.nfrag == 0)
     {
@@ -4431,7 +4349,7 @@ md_assemble (char *str)
 	      n = 4;
 	      break;
 	    default:
-	      as_fatal (_("Don't know how to figure width of %c in md_assemble()"),
+	      as_fatal (_("Don't know how to figure out width of %c in md_assemble()"),
 			the_ins.reloc[m].wid);
 	    }
 
@@ -4596,7 +4514,7 @@ md_begin (void)
 	m68k_rel32 = 0;
     }
 
-  /* First sort the opcode table into alphabetical order to seperate
+  /* First sort the opcode table into alphabetical order to separate
      the order that the assembler wants to see the opcodes from the
      order that the disassembler wants to see them.  */
   m68k_sorted_opcodes = XNEWVEC (const struct m68k_opcode *, m68k_numopcodes);
@@ -4771,11 +4689,9 @@ md_begin (void)
 
   init_regtable ();
 
-#ifdef OBJ_ELF
   record_alignment (text_section, 2);
   record_alignment (data_section, 2);
   record_alignment (bss_section, 2);
-#endif
 }
 
 
@@ -4794,9 +4710,7 @@ m68k_frob_label (symbolS *sym)
   labels = n;
   current_label = n;
 
-#ifdef OBJ_ELF
   dwarf2_emit_label (sym);
-#endif
 }
 
 /* This is called when a value that is not an instruction is emitted.  */
@@ -4906,7 +4820,6 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
   if (fixP->fx_addsy == NULL && fixP->fx_pcrel == 0)
     fixP->fx_done = 1;
 
-#ifdef OBJ_ELF
   if (fixP->fx_addsy)
     {
       memset (buf, 0, fixP->fx_size);
@@ -4943,15 +4856,6 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 
       return;
     }
-#elif defined(OBJ_AOUT)
-  /* PR gas/3041 Do not fix frags referencing a weak symbol.  */
-  if (fixP->fx_addsy && S_IS_WEAK (fixP->fx_addsy))
-    {
-      memset (buf, 0, fixP->fx_size);
-      fixP->fx_addnumber = val;	/* Remember value for emit_reloc.  */
-      return;
-    }
-#endif
 
   if (fixP->fx_r_type == BFD_RELOC_VTABLE_INHERIT
       || fixP->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
@@ -5404,36 +5308,6 @@ md_estimate_size_before_relax (fragS *fragP, segT segment)
   return md_relax_table[fragP->fr_subtype].rlx_length;
 }
 
-#if defined(OBJ_AOUT) | defined(OBJ_BOUT)
-/* the bit-field entries in the relocation_info struct plays hell
-   with the byte-order problems of cross-assembly.  So as a hack,
-   I added this mach. dependent ri twiddler.  Ugly, but it gets
-   you there. -KWK  */
-/* on m68k: first 4 bytes are normal unsigned long, next three bytes
-   are symbolnum, most sig. byte first.  Last byte is broken up with
-   bit 7 as pcrel, bits 6 & 5 as length, bit 4 as pcrel, and the lower
-   nibble as nuthin. (on Sun 3 at least) */
-/* Translate the internal relocation information into target-specific
-   format.  */
-#ifdef comment
-void
-md_ri_to_chars (char *the_bytes, struct reloc_info_generic *ri)
-{
-  /* This is easy.  */
-  md_number_to_chars (the_bytes, ri->r_address, 4);
-  /* Now the fun stuff.  */
-  the_bytes[4] = (ri->r_symbolnum >> 16) & 0x0ff;
-  the_bytes[5] = (ri->r_symbolnum >>  8) & 0x0ff;
-  the_bytes[6] =  ri->r_symbolnum        & 0x0ff;
-  the_bytes[7] = (((ri->r_pcrel << 7) & 0x80)
-		  | ((ri->r_length << 5) & 0x60)
-		  | ((ri->r_extern << 4) & 0x10));
-}
-
-#endif
-
-#endif /* OBJ_AOUT or OBJ_BOUT */
-
 #ifndef WORKING_DOT_WORD
 int md_short_jump_size = 4;
 int md_long_jump_size = 6;
@@ -5477,7 +5351,7 @@ md_create_long_jump (char *ptr, addressT from_addr, addressT to_addr,
 
 #endif
 
-/* Different values of OK tell what its OK to return.  Things that
+/* Different values of OK tell what it's OK to return.  Things that
    aren't OK are an error (what a shock, no?)
 
    0:  Everything is OK
@@ -7508,11 +7382,7 @@ m68k_set_extension (char const *name, int allow_m, int silent)
    Invocation line includes a switch not recognized by the base assembler.
  */
 
-#ifdef OBJ_ELF
 const char *md_shortopts = "lSA:m:kQ:V";
-#else
-const char *md_shortopts = "lSA:m:k";
-#endif
 
 struct option md_longopts[] = {
 #define OPTION_PIC (OPTION_MD_BASE)
@@ -7730,7 +7600,7 @@ md_show_usage (FILE *stream)
 "), default_cpu);
   for (i = 0; m68k_extensions[i].name; i++)
     fprintf (stream, _("\
--m[no-]%-16s enable/disable%s architecture extension\n\
+-m[no-]%-16s enable/disable %s architecture extension\n\
 "), m68k_extensions[i].name,
 	     m68k_extensions[i].alias > 0 ? " ColdFire"
 	     : m68k_extensions[i].alias < 0 ? " m68k" : "");
@@ -7876,18 +7746,6 @@ md_undefined_symbol (char *name ATTRIBUTE_UNUSED)
 valueT
 md_section_align (segT segment ATTRIBUTE_UNUSED, valueT size)
 {
-#ifdef OBJ_AOUT
-  /* For a.out, force the section size to be aligned.  If we don't do
-     this, BFD will align it for us, but it will not write out the
-     final bytes of the section.  This may be a bug in BFD, but it is
-     easier to fix it here since that is how the other a.out targets
-     work.  */
-  int align;
-
-  align = bfd_get_section_alignment (stdoutput, segment);
-  size = ((size + (1 << align) - 1) & (-((valueT) 1 << align)));
-#endif
-
   return size;
 }
 
@@ -7906,7 +7764,6 @@ md_pcrel_from (fixS *fixP)
   return fixP->fx_where + fixP->fx_frag->fr_address - adjust;
 }
 
-#ifdef OBJ_ELF
 void
 m68k_elf_final_processing (void)
 {
@@ -8067,7 +7924,9 @@ m68k_elf_cons (int nbytes /* 4=.long */)
 
 	  if (size > nbytes)
 	    {
-	      as_bad (_("%s relocations do not fit in %d bytes\n"),
+	      as_bad (ngettext ("%s relocations do not fit in %u byte",
+				"%s relocations do not fit in %u bytes",
+				nbytes),
 		      reloc_howto->name, nbytes);
 	    }
 	  else
@@ -8092,7 +7951,6 @@ m68k_elf_cons (int nbytes /* 4=.long */)
   input_line_pointer--;
   demand_empty_rest_of_line ();
 }
-#endif
 
 int
 tc_m68k_regname_to_dw2regnum (const char *regname)

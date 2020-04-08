@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.36 2015/09/01 06:15:02 dholland Exp $	 */
+/* $NetBSD: pass5.c,v 1.36.16.1 2020/04/08 14:07:18 martin Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -44,14 +44,11 @@
 #include <string.h>
 
 #include "bufcache.h"
-#include "vnode.h"
 #include "lfs_user.h"
 
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
-
-extern off_t locked_queue_bytes;
 
 void
 pass5(void)

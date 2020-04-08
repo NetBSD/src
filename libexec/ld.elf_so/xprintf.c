@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.21 2010/12/16 22:52:32 joerg Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.21.46.1 2020/04/08 14:07:17 martin Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xprintf.c,v 1.21 2010/12/16 22:52:32 joerg Exp $");
+__RCSID("$NetBSD: xprintf.c,v 1.21.46.1 2020/04/08 14:07:17 martin Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: xprintf.c,v 1.21 2010/12/16 22:52:32 joerg Exp $");
  * Non-mallocing printf, for use by malloc and rtld itself.
  * This avoids putting in most of stdio.
  *
- * deals withs formats %x, %p, %s, and %d.
+ * deals with formats %x, %p, %s, and %d.
  */
 size_t
 xvsnprintf(char *buf, size_t buflen, const char *fmt, va_list ap)

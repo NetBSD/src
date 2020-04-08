@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2018/05/28 21:05:11 chs Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2020/04/08 14:04:21 martin Exp $
 
 # $FreeBSD: head/cddl/usr.bin/ctfconvert/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -34,6 +34,7 @@ SRCS=		alist.c \
 		traverse.c \
 		util.c
 
+COPTS.dwarf.c +=	${GCC_NO_STRINGOP_TRUNCATION}
 COPTS.st_parse.c +=	-Wno-format-nonliteral
 COPTS.util.c +=		-Wno-format-nonliteral
 

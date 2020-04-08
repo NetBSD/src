@@ -8,3 +8,5 @@ unknown: wanted:    foo-ext@bar -> foo@bar -ext
 unknown: strip_addr foo-ext@bar -> foo@bar -ext
 unknown: wanted:    foo+ext@bar -> foo@bar +ext
 unknown: strip_addr foo+ext@bar -> foo@bar +ext
+unknown: wanted:    foo bar+ext -> foo bar +ext
+unknown: strip_addr foo bar+ext -> foo bar +ext

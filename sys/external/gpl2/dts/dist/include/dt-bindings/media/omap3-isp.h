@@ -1,18 +1,10 @@
-/*	$NetBSD: omap3-isp.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: omap3-isp.h,v 1.1.1.1.12.1 2020/04/08 14:08:46 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * include/dt-bindings/media/omap3-isp.h
  *
  * Copyright (C) 2015 Sakari Ailus
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
  */
 
 #ifndef __DT_BINDINGS_OMAP3_ISP_H__

@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.h,v 1.4.4.2 2019/06/10 22:05:52 christos Exp $ */
+/* $NetBSD: gicv3.h,v 1.4.4.3 2020/04/08 14:07:28 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,6 +30,7 @@
 #define _ARM_CORTEX_GICV3_H
 
 #include <sys/intr.h>
+#include <sys/vmem.h>
 
 struct gicv3_dma {
 	bus_dma_segment_t	segs[1];
@@ -68,6 +69,9 @@ struct gicv3_softc {
 
 	/* LPI pending tables */
 	struct gicv3_dma	sc_lpipend[MAXCPUS];
+
+	/* LPI IDs */
+	vmem_t			*sc_lpi_pool;
 
 	/* Unique identifier for PEs */
 	u_int			sc_processor_id[MAXCPUS];

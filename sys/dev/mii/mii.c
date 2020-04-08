@@ -1,7 +1,7 @@
-/*	$NetBSD: mii.c,v 1.51.18.1 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: mii.c,v 1.51.18.2 2020/04/08 14:08:08 martin Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.51.18.1 2019/06/10 22:07:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.51.18.2 2020/04/08 14:08:08 martin Exp $");
+
+#define	__IFMEDIA_PRIVATE
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,6 +71,8 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 	int locs[MIICF_NLOCS];
 	int rv;
 
+	KASSERT(mii->mii_media.ifm_lock != NULL);
+
 	if (phyloc != MII_PHY_ANY && offloc != MII_OFFSET_ANY)
 		panic("mii_attach: phyloc and offloc specified");
 
@@ -78,10 +82,34 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 	} else
 		phymin = phymax = phyloc;
 
+	mii_lock(mii);
+
 	if ((mii->mii_flags & MIIF_INITDONE) == 0) {
 		LIST_INIT(&mii->mii_phys);
+		cv_init(&mii->mii_probe_cv, "mii_attach");
 		mii->mii_flags |= MIIF_INITDONE;
 	}
+
+	/*
+	 * Probing temporarily unlocks the MII; wait until anyone
+	 * else who might be doing this to finish.
+	 */
+	mii->mii_probe_waiters++;
+	for (;;) {
+		if (mii->mii_flags & MIIF_EXITING) {
+			mii->mii_probe_waiters--;
+			cv_signal(&mii->mii_probe_cv);
+			mii_unlock(mii);
+			return;
+		}
+		if ((mii->mii_flags & MIIF_PROBING) == 0)
+			break;
+		cv_wait(&mii->mii_probe_cv, mii->mii_media.ifm_lock);
+	}
+	mii->mii_probe_waiters--;
+
+	/* ...and old others off. */
+	mii->mii_flags |= MIIF_PROBING;
 
 	for (ma.mii_phyno = phymin; ma.mii_phyno <= phymax; ma.mii_phyno++) {
 		/*
@@ -142,33 +170,82 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 
 		locs[MIICF_PHY] = ma.mii_phyno;
 
+		mii_unlock(mii);
+
 		child = device_private(config_found_sm_loc(parent, "mii",
 			locs, &ma, mii_print, config_stdsubmatch));
 		if (child) {
 			/* Link it up in the parent's MII data. */
 			callout_init(&child->mii_nway_ch, 0);
+			mii_lock(mii);
 			LIST_INSERT_HEAD(&mii->mii_phys, child, mii_list);
 			child->mii_offset = offset;
 			mii->mii_instance++;
+		} else {
+			mii_lock(mii);
 		}
 		offset++;
 	}
+
+	/* All done! */
+	mii->mii_flags &= ~MIIF_PROBING;
+	cv_signal(&mii->mii_probe_cv);
+	mii_unlock(mii);
 }
 
 void
 mii_detach(struct mii_data *mii, int phyloc, int offloc)
 {
 	struct mii_softc *child, *nchild;
+	bool exiting = false;
 
 	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
 		panic("mii_detach: phyloc and offloc specified");
 
-	if ((mii->mii_flags & MIIF_INITDONE) == 0)
-		return;
+	mii_lock(mii);
 
-	for (child = LIST_FIRST(&mii->mii_phys);
-	     child != NULL; child = nchild) {
-		nchild = LIST_NEXT(child, mii_list);
+	if ((mii->mii_flags & MIIF_INITDONE) == 0 ||
+	    (mii->mii_flags & MIIF_EXITING) != 0) {
+		mii_unlock(mii);
+		return;
+	}
+
+	/*
+	 * XXX This is probably not the best hueristic.  Consider
+	 * XXX adding an argument to mii_detach().
+	 */
+	if (phyloc == MII_PHY_ANY && MII_PHY_ANY == MII_OFFSET_ANY)
+		exiting = true;
+
+	if (exiting) {
+		mii->mii_flags |= MIIF_EXITING;
+		cv_broadcast(&mii->mii_probe_cv);
+	}
+
+	/* Wait for everyone else to get out. */
+	mii->mii_probe_waiters++;
+	for (;;) {
+		/*
+		 * If we've been waiting to do a less-than-exit, and
+		 * *someone else* initiated an exit, then get out.
+		 */
+		if (!exiting && (mii->mii_flags & MIIF_EXITING) != 0) {
+			mii->mii_probe_waiters--;
+			cv_signal(&mii->mii_probe_cv);
+			mii_unlock(mii);
+			return;
+		}
+		if ((mii->mii_flags & MIIF_PROBING) == 0 &&
+		    (!exiting || (exiting && mii->mii_probe_waiters == 1)))
+			break;
+		cv_wait(&mii->mii_probe_cv, mii->mii_media.ifm_lock);
+	}
+	mii->mii_probe_waiters--;
+
+	if (!exiting)
+		mii->mii_flags |= MIIF_PROBING;
+
+	LIST_FOREACH_SAFE(child, &mii->mii_phys, mii_list, nchild) {
 		if (phyloc != MII_PHY_ANY || offloc != MII_OFFSET_ANY) {
 			if (phyloc != MII_PHY_ANY &&
 			    phyloc != child->mii_phy)
@@ -177,8 +254,20 @@ mii_detach(struct mii_data *mii, int phyloc, int offloc)
 			    offloc != child->mii_offset)
 				continue;
 		}
+		LIST_REMOVE(child, mii_list);
+		mii_unlock(mii);
 		(void)config_detach(child->mii_dev, DETACH_FORCE);
+		mii_lock(mii);
 	}
+
+	if (exiting) {
+		cv_destroy(&mii->mii_probe_cv);
+	} else {
+		mii->mii_flags &= ~MIIF_PROBING;
+		cv_signal(&mii->mii_probe_cv);
+	}
+
+	mii_unlock(mii);
 }
 
 static int
@@ -207,6 +296,9 @@ phy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 int
 mii_ifmedia_change(struct mii_data *mii)
 {
+
+	KASSERT(mii_locked(mii) ||
+		ifmedia_islegacy(&mii->mii_media));
 	return ifmedia_change(&mii->mii_media, mii->mii_ifp);
 }
 
@@ -217,7 +309,10 @@ int
 mii_mediachg(struct mii_data *mii)
 {
 	struct mii_softc *child;
-	int rv;
+	int rv = 0;
+
+	IFMEDIA_LOCK_FOR_LEGACY(&mii->mii_media);
+	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = 0;
 	mii->mii_media_active = IFM_NONE;
@@ -225,9 +320,10 @@ mii_mediachg(struct mii_data *mii)
 	LIST_FOREACH(child, &mii->mii_phys, mii_list) {
 		rv = phy_service(child, mii, MII_MEDIACHG);
 		if (rv)
-			return rv;
+			break;
 	}
-	return 0;
+	IFMEDIA_UNLOCK_FOR_LEGACY(&mii->mii_media);
+	return rv;
 }
 
 /*
@@ -238,8 +334,13 @@ mii_tick(struct mii_data *mii)
 {
 	struct mii_softc *child;
 
+	IFMEDIA_LOCK_FOR_LEGACY(&mii->mii_media);
+	KASSERT(mii_locked(mii));
+
 	LIST_FOREACH(child, &mii->mii_phys, mii_list)
 		(void)phy_service(child, mii, MII_TICK);
+
+	IFMEDIA_UNLOCK_FOR_LEGACY(&mii->mii_media);
 }
 
 /*
@@ -250,11 +351,16 @@ mii_pollstat(struct mii_data *mii)
 {
 	struct mii_softc *child;
 
+	IFMEDIA_LOCK_FOR_LEGACY(&mii->mii_media);
+	KASSERT(mii_locked(mii));
+
 	mii->mii_media_status = 0;
 	mii->mii_media_active = IFM_NONE;
 
 	LIST_FOREACH(child, &mii->mii_phys, mii_list)
 		(void)phy_service(child, mii, MII_POLLSTAT);
+
+	IFMEDIA_UNLOCK_FOR_LEGACY(&mii->mii_media);
 }
 
 /*
@@ -265,8 +371,13 @@ mii_down(struct mii_data *mii)
 {
 	struct mii_softc *child;
 
+	IFMEDIA_LOCK_FOR_LEGACY(&mii->mii_media);
+	KASSERT(mii_locked(mii));
+
 	LIST_FOREACH(child, &mii->mii_phys, mii_list)
 		(void)phy_service(child, mii, MII_DOWN);
+
+	IFMEDIA_UNLOCK_FOR_LEGACY(&mii->mii_media);
 }
 
 static unsigned char

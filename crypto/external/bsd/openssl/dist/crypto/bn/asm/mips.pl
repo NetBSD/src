@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2010-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -802,7 +802,7 @@ $code.=<<___;
 #if 0
 /*
  * The bn_div_3_words entry point is re-used for constant-time interface.
- * Implementation is retained as hystorical reference.
+ * Implementation is retained as historical reference.
  */
 .align 5
 .globl	bn_div_3_words
@@ -2262,4 +2262,4 @@ $code.=<<___;
 .end	bn_sqr_comba4
 ___
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_ioctl.c,v 1.4.18.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_ioctl.c,v 1.4.18.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.4.18.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.4.18.2 2020/04/08 14:08:22 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_core.h>
@@ -529,11 +529,7 @@ static int drm_version(struct drm_device *dev, void *data,
 int drm_ioctl_permit(u32 flags, struct drm_file *file_priv)
 {
 	/* ROOT_ONLY is only for CAP_SYS_ADMIN */
-#ifdef __NetBSD__
-	if (unlikely((flags & DRM_ROOT_ONLY) && !DRM_SUSER()))
-#else
 	if (unlikely((flags & DRM_ROOT_ONLY) && !capable(CAP_SYS_ADMIN)))
-#endif
 		return -EACCES;
 
 	/* AUTH is only for authenticated or render client */

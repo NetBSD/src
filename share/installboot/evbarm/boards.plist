@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.4.2.2 2019/06/10 22:05:39 christos Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.4.2.3 2020/04/08 14:07:21 martin Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -61,12 +61,26 @@
 	<!--
 	  -- rockchip boards
 	  -->
+	<key>pine64,rock64</key>
+	<dict>
+		<key>description</key>
+		<string>Pine64 Rock64</string>
+		<key>u-boot-pkg</key>
+		<string>rock64</string>
+	</dict>
 	<key>pine64,rockpro64</key>
 	<dict>
 		<key>description</key>
 		<string>Pine64 RockPro64</string>
 		<key>u-boot-pkg</key>
 		<string>rockpro64</string>
+	</dict>
+	<key>pine64,pinebook-pro</key>
+	<dict>
+		<key>description</key>
+		<string>Pine64 Pinebook Pro</string>
+		<key>u-boot-pkg</key>
+		<string>pinebook-pro</string>
 	</dict>
 
 	<!--
@@ -235,6 +249,13 @@
 		<key>u-boot-pkg</key>
 		<string>nanopi-neo2</string>
 	</dict>
+	<key>friendlyarm,nanopi-r1</key>
+	<dict>
+		<key>description</key>
+		<string>FriendlyARM NanoPi R1</string>
+		<key>u-boot-pkg</key>
+		<string>nanopi-r1</string>
+	</dict>
 
 	<key>merrii,a31-hummingbird</key>
 	<dict>
@@ -339,6 +360,20 @@
 		<string>Xunlong Orange Pi One</string>
 		<key>u-boot-pkg</key>
 		<string>orangepi-one</string>
+	</dict>
+	<key>xunlong,orangepi-lite</key>
+	<dict>
+		<key>description</key>
+		<string>Xunlong Orange Pi Lite</string>
+		<key>u-boot-pkg</key>
+		<string>orangepi-lite</string>
+	</dict>
+	<key>xunlong,orangepi-lite2</key>
+	<dict>
+		<key>description</key>
+		<string>Xunlong Orange Pi Lite2</string>
+		<key>u-boot-pkg</key>
+		<string>orangepi-lite2</string>
 	</dict>
 	<key>xunlong,orangepi-plus2e</key>
 	<dict>

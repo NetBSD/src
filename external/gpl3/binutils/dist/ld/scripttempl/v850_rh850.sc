@@ -1,11 +1,11 @@
-# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
 
 cat << EOF
-/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -25,11 +25,11 @@ SECTIONS
   .zdata ${ZDATA_START_ADDR} :
   {
 	*(.zdata)
-	*(.zdata23)
+	${RELOCATING+*(.zdata23)
 	*(.zbss)
 	*(.zbss23)
 	*(reszdata)
-	*(.zcommon)
+	*(.zcommon)}
   }
 
   /* This is the read only part of the zero data area.
@@ -41,10 +41,10 @@ SECTIONS
   .rozdata ${ROZDATA_START_ADDR} :
   {
 	*(.rozdata)
-	*(romzdata)
+	${RELOCATING+*(romzdata)
 	*(romzbss)
 	*(.zconst)
-	*(.zconst23)
+	*(.zconst23)}
   }
 
   /* Read-only sections, merged into text segment.  */
@@ -75,7 +75,7 @@ SECTIONS
   .rela.bss	: { *(.rela.bss) }
   .rel.plt	: { *(.rel.plt) }
   .rela.plt	: { *(.rela.plt) }
-  .init		: { KEEP (*(.init)) } =0
+  .init		: { KEEP (*(SORT_NONE(.init))) } =0
   .plt		: { *(.plt) }
 
   .text		:
@@ -83,9 +83,9 @@ SECTIONS
     *(.text)
     ${RELOCATING+*(.text.*)}
 
-    /* .gnu.warning sections are handled specially by elf32.em.  */
+    /* .gnu.warning sections are handled specially by elf.em.  */
     *(.gnu.warning)
-    *(.gnu.linkonce.t*)
+    ${RELOCATING+*(.gnu.linkonce.t*)}
   } =0
 
   ${RELOCATING+_etext = .;}
@@ -106,29 +106,29 @@ SECTIONS
     *(.call_table_text)
   }
 
-  .fini		: { KEEP (*(.fini)) } =0
+  .fini		: { KEEP (*(SORT_NONE(.fini))) } =0
   .rodata	:
   {
 	*(.rodata)
-	${RELOCATING+*(.rodata.*)}
+	${RELOCATING+*(.rodata.*)
 	*(.gnu.linkonce.r*)
-	*(.const)
+	*(.const)}
   }
   .rodata1	: { *(.rodata1) }
 
   .data		:
   {
     *(.data)
-    ${RELOCATING+*(.data.*)}
-    *(.gnu.linkonce.d*)
-    CONSTRUCTORS
+    ${RELOCATING+*(.data.*)
+    *(.gnu.linkonce.d*)}
+    ${CONSTRUCTING+CONSTRUCTORS}
   }
   .data1	: { *(.data1) }
   .ctors	:
   {
     ${CONSTRUCTING+___ctors = .;}
     KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
-    KEEP (*(SORT(.ctors.*)))
+    ${RELOCATING+KEEP (*(SORT(.ctors.*)))}
     KEEP (*crtend(.ctors))
     ${CONSTRUCTING+___ctors_end = .;}
   }
@@ -136,7 +136,7 @@ SECTIONS
   {
     ${CONSTRUCTING+___dtors = .;}
     KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
-    KEEP (*(SORT(.dtors.*)))
+    ${RELOCATING+KEEP (*(SORT(.dtors.*)))}
     KEEP (*crtend.o(.dtors))
     ${CONSTRUCTING+___dtors_end = .;}
   }
@@ -147,23 +147,23 @@ SECTIONS
 
   .gcc_except_table : { *(.gcc_except_table) }
 
-  .got		: { *(.got.plt) *(.got) }
+  .got		: {${RELOCATING+ *(.got.plt)} *(.got) }
   .dynamic	: { *(.dynamic) }
 
   .tdata ${TDATA_START_ADDR} :
   {
-	${RELOCATING+PROVIDE (__ep = .);}
+	${RELOCATING+PROVIDE (__ep = .);
 	*(.edata)
 	*(.edata23)
 	*(.tbyte)
-	*(.tcommon_byte)
+	*(.tcommon_byte)}
 	*(.tdata)
-	*(.tdata*)
+	${RELOCATING+*(.tdata*)
 	*(.ebss)
 	*(.ebss23)
 	*(.tbss)
 	*(.tbss*)
-	*(.tcommon)
+	*(.tcommon)}
   }
 
   /* We want the small data sections together, so single-instruction offsets
@@ -174,15 +174,15 @@ SECTIONS
   {
 	${RELOCATING+PROVIDE (__gp = . + 0x8000);}
 	*(.sdata)
-	*(.sdata23)
+	${RELOCATING+*(.sdata23)}
    }
 
   /* See comment about .rozdata. */
   .rosdata ${ROSDATA_START_ADDR} :
   {
 	*(.rosdata)
-	*(.sconst)
-	*(.sconst23)
+	${RELOCATING+*(.sconst)
+	*(.sconst23)}
   }
 
   /* We place the .sbss data section AFTER the .rosdata section, so that
@@ -194,8 +194,8 @@ SECTIONS
   {
 	${RELOCATING+__sbss_start = .;}
 	*(.sbss)
-	*(.sbss23)
-	*(.scommon)
+	${RELOCATING+*(.sbss23)
+	*(.scommon)}
   }
 
   ${RELOCATING+_edata  = DEFINED (__sbss_start) ? __sbss_start : . ;}
@@ -205,9 +205,9 @@ SECTIONS
   {
 	${RELOCATING+__bss_start = DEFINED (__sbss_start) ? __sbss_start : . ;}
 	${RELOCATING+__real_bss_start = . ;}
-	*(.dynbss)
+	${RELOCATING+*(.dynbss)}
 	*(.bss)
-	*(COMMON)
+	${RELOCATING+*(COMMON)}
   }
 
   ${RELOCATING+_end = . ;}

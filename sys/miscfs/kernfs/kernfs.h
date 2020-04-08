@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.40 2014/07/20 13:58:04 hannken Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.40.28.1 2020/04/08 14:08:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,10 +48,11 @@ typedef enum {
 	KFSkern,		/* the filesystem itself (.) */
 	KFSroot,		/* the filesystem root (..) */
 	KFSnull,		/* none aplicable */
-	KFStime,		/* boottime */
+	KFStime,		/* time */
+	KFSboottime,		/* boottime */
 	KFSint,			/* integer */
 	KFSstring,		/* string */
-	KFShostname,	/* hostname */
+	KFShostname,		/* hostname */
 	KFSavenrun,		/* loadavg */
 	KFSdevice,		/* device file (rootdev/rrootdev) */
 	KFSmsgbuf,		/* msgbuf */
@@ -121,11 +122,12 @@ extern const struct kern_target kern_targets[];
 extern int nkern_targets;
 extern const int static_nkern_targets;
 extern int (**kernfs_vnodeop_p)(void *);
+extern int (**kernfs_specop_p)(void *);
 extern struct vfsops kernfs_vfsops;
 extern dev_t rrootdev;
 extern kmutex_t kfs_lock;
 
-int kernfs_root(struct mount *, struct vnode **);
+int kernfs_root(struct mount *, int, struct vnode **);
 
 /*
  * Data types for the kernfs file operations.

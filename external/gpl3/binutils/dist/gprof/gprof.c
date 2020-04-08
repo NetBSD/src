@@ -162,7 +162,7 @@ static void
 usage (FILE *stream, int status)
 {
   fprintf (stream, _("\
-Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqSQZ][name]] [-I dirs]\n\
+Usage: %s [-[abcDhilLrsTvwxyz]] [-[ACeEfFJnNOpPqQRStZ][name]] [-I dirs]\n\
 	[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n\
 	[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n\
 	[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n\
@@ -271,6 +271,10 @@ main (int argc, char **argv)
 	case 'f':
 	  sym_id_add (optarg, INCL_GRAPH);
 	  break;
+	  /* FIXME: The -g and -G options are not present in the getopt_long
+	     invocation above, and they are not documented in gprof.texi.
+	     Therefore they appear to be deprecated.  Test this theory and
+	     delete them if true.  */
 	case 'g':
 	  sym_id_add (optarg, EXCL_FLAT);
 	  break;
@@ -454,7 +458,7 @@ This program is free software.  This program has absolutely no warranty.\n"));
 	    {
 	      output_style &= ~STYLE_EXEC_COUNTS;
 	    }
-	  user_specified |= STYLE_ANNOTATED_SOURCE;
+	  user_specified |= STYLE_EXEC_COUNTS;
 	  break;
 	case OPTION_DEMANGLE:
 	  demangle = TRUE;

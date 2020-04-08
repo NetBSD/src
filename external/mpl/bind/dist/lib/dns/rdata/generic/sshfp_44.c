@@ -1,4 +1,4 @@
-/*	$NetBSD: sshfp_44.c,v 1.4.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.4.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -153,7 +153,7 @@ fromstruct_sshfp(ARGS_FROMSTRUCT) {
 	dns_rdata_sshfp_t *sshfp = source;
 
 	REQUIRE(type == dns_rdatatype_sshfp);
-	REQUIRE(source != NULL);
+	REQUIRE(sshfp != NULL);
 	REQUIRE(sshfp->common.rdtype == type);
 	REQUIRE(sshfp->common.rdclass == rdclass);
 
@@ -172,7 +172,7 @@ tostruct_sshfp(ARGS_TOSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(rdata->type == dns_rdatatype_sshfp);
-	REQUIRE(target != NULL);
+	REQUIRE(sshfp != NULL);
 	REQUIRE(rdata->length != 0);
 
 	sshfp->common.rdclass = rdata->rdclass;

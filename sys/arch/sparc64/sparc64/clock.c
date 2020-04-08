@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.120.18.1 2019/06/10 22:06:48 christos Exp $ */
+/*	$NetBSD: clock.c,v 1.120.18.2 2020/04/08 14:07:54 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.120.18.1 2019/06/10 22:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.120.18.2 2020/04/08 14:07:54 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -760,7 +760,7 @@ int
 schedintr(void *arg)
 {
 
-	schedclock(curcpu()->ci_data.cpu_onproc);
+	schedclock(curcpu()->ci_onproc);
 	return (1);
 }
 #endif

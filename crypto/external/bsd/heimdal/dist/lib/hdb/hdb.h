@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb.h,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: hdb.h,v 1.2.12.1 2020/04/08 14:03:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -273,9 +273,17 @@ typedef struct HDB {
      * Check if s4u2self is allowed from this client to this server
      */
     krb5_error_code (*hdb_check_s4u2self)(krb5_context, struct HDB *, hdb_entry_ex *, krb5_const_principal);
+
+    /**
+     * Enable/disable synchronous updates
+     *
+     * Calling this with 0 disables sync.  Calling it with non-zero enables
+     * sync and does an fsync().
+     */
+    krb5_error_code (*hdb_set_sync)(krb5_context, struct HDB *, int);
 }HDB;
 
-#define HDB_INTERFACE_VERSION	9
+#define HDB_INTERFACE_VERSION	10
 
 struct hdb_method {
     int			version;

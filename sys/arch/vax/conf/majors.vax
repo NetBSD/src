@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.28.2.1 2019/06/10 22:06:51 christos Exp $
+#	$NetBSD: majors.vax,v 1.28.2.2 2020/04/08 14:07:56 martin Exp $
 #
 # Device majors for vax
 #
@@ -85,7 +85,7 @@ device-major	ksyms		char 79			ksyms
 device-major	wsfont		char 80			wsfont
 device-major	ses		char 81			ses
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 device-major	audio		char 99			audio
 
 #

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hppa,v 1.3 2016/05/09 15:23:23 skrll Exp $
+#	$NetBSD: majors.hppa,v 1.3.18.1 2020/04/08 14:07:39 martin Exp $
 #
 # Device majors for hppa
 #
@@ -47,7 +47,7 @@ device-major	pci		char 42			pci
 device-major	wd		char 43  block 11	wd
 device-major	sysmon          char 44                 sysmon
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in

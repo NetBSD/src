@@ -1,0 +1,22 @@
+unknown: warning: byte_mask: unknown mask bit in mask: 0x10
+0123 -> 0xf -> 0123
+0x1e -> 123
+0 -> 0x1 -> 0
+0x2 -> 1
+1 -> 0x2 -> 1
+0x4 -> 2
+2 -> 0x4 -> 2
+0x8 -> 3
+unknown: warning: byte_mask: unknown mask bit in mask: 0x10
+3 -> 0x8 -> 3
+0x10 -> 
+unknown: warning: unknown name value "4" in "1234"
+unknown: warning: byte_mask: unknown mask bit in mask: 0x10
+1234 -> 0xe -> 123
+0x1c -> 23
+unknown: warning: unknown name value "a" in "abcd"
+unknown: warning: unknown name value "b" in "abcd"
+unknown: warning: unknown name value "c" in "abcd"
+unknown: warning: unknown name value "d" in "abcd"
+abcd -> 0x0 -> 
+0x0 -> 

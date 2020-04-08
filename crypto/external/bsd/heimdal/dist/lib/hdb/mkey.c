@@ -1,4 +1,4 @@
-/*	$NetBSD: mkey.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: mkey.c,v 1.2.12.1 2020/04/08 14:03:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
@@ -228,7 +228,7 @@ read_master_encryptionkey(krb5_context context, const char *filename,
     }
 
     ret = decode_EncryptionKey(buf, len, &key, &ret_len);
-    memset(buf, 0, sizeof(buf));
+    memset_s(buf, sizeof(buf), 0, sizeof(buf));
     if(ret)
 	return ret;
 
@@ -281,7 +281,7 @@ read_master_krb4(krb5_context context, const char *filename,
     memset(&key, 0, sizeof(key));
     key.keytype = ETYPE_DES_PCBC_NONE;
     ret = krb5_data_copy(&key.keyvalue, buf, len);
-    memset(buf, 0, sizeof(buf));
+    memset_s(buf, sizeof(buf), 0, sizeof(buf));
     if(ret)
 	return ret;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.146.2.1 2019/06/10 21:41:04 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.146.2.2 2020/04/08 14:03:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.146.2.1 2019/06/10 21:41:04 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.146.2.2 2020/04/08 14:03:04 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1749,7 +1749,7 @@ readcstyleesc(char *out)
  *
  * The current definition of ISCTL() allows the compiler to
  * optimise away either half, or all, of the test in most of
- * the cases here (0xc0 | anything) cannot be between 08x0 and 0x9f
+ * the cases here (0xc0 | anything) cannot be between 0x80 and 0x9f
  * for example, so there a test is not needed).
  *
  * Which tests can be removed depends upon the actual values

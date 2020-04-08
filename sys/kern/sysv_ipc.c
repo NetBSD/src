@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.32.18.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.32.18.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.18.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.18.2 2020/04/08 14:08:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -276,7 +276,7 @@ sysvipc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	int mode;
 	enum kauth_system_req req;
 
-	req = (enum kauth_system_req)arg0;
+	req = (enum kauth_system_req)(uintptr_t)arg0;
 
 	if (!(action == KAUTH_SYSTEM_SYSVIPC &&
 	      req == KAUTH_REQ_SYSTEM_SYSVIPC_BYPASS))

@@ -1,7 +1,7 @@
-/*	$NetBSD: syncobj.h,v 1.8 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.8.64.1 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -52,12 +52,16 @@ typedef struct syncobj {
 struct lwp *syncobj_noowner(wchan_t);
 
 #define	SOBJ_SLEEPQ_SORTED	0x01
-#define	SOBJ_SLEEPQ_FIFO	0x02
 #define	SOBJ_SLEEPQ_LIFO	0x04
+#define	SOBJ_SLEEPQ_NULL	0x08
 
-extern syncobj_t	sched_syncobj;
+extern syncobj_t	cv_syncobj;
+extern syncobj_t	kpause_syncobj;
+extern syncobj_t	lwp_park_syncobj;
 extern syncobj_t	mutex_syncobj;
 extern syncobj_t	rw_syncobj;
+extern syncobj_t	sched_syncobj;
+extern syncobj_t	select_syncobj;
 extern syncobj_t	sleep_syncobj;
 
 #endif /* defined(_KERNEL) */

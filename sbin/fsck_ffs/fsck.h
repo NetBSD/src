@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.52.12.1 2019/06/10 22:05:33 christos Exp $	*/
+/*	$NetBSD: fsck.h,v 1.52.12.2 2020/04/08 14:07:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -96,7 +96,7 @@ struct inostat {
  * Inode state information is contained on per cylinder group lists
  * which are described by the following structure.
  */
-struct inostatlist {
+extern struct inostatlist {
 	long    il_numalloced;  /* number of inodes allocated in this cg */
 	struct inostat *il_stat;/* inostat info for this cylinder group */
 } *inostathead;
@@ -140,15 +140,15 @@ struct bufarea {
 #define	B_INUSE 1
 
 #define	MINBUFS		5	/* minimum number of buffers required */
-struct bufarea bufhead;		/* head of list of other blks in filesys */
-struct bufarea sblk;		/* file system superblock */
-struct bufarea asblk;		/* file system superblock */
-struct bufarea cgblk;		/* cylinder group blocks */
+extern struct bufarea bufhead;	/* head of list of other blks in filesys */
+extern struct bufarea sblk;	/* file system superblock */
+extern struct bufarea asblk;	/* file system superblock */
+extern struct bufarea cgblk;	/* cylinder group blocks */
 #ifndef NO_APPLE_UFS
-struct bufarea appleufsblk;	/* Apple UFS volume label */
+extern struct bufarea appleufsblk; /* Apple UFS volume label */
 #endif
-struct bufarea *pdirbp;		/* current directory contents */
-struct bufarea *pbp;		/* current inode block */
+extern struct bufarea *pdirbp;	/* current directory contents */
+extern struct bufarea *pbp;	/* current inode block */
 
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
@@ -156,10 +156,10 @@ struct bufarea *pbp;		/* current inode block */
 	(bp)->b_bno = (daddr_t)-1; \
 	(bp)->b_flags = 0;
 
-struct fs *sblock;
-struct fs *altsblock;
-struct cg *cgrp;
-struct fs *sblocksave;
+extern struct fs *sblock;
+extern struct fs *altsblock;
+extern struct cg *cgrp;
+extern struct fs *sblocksave;
 #define	sbdirty() \
 	do { \
 		memmove(sblk.b_un.b_fs, sblock, SBLOCKSIZE); \
@@ -227,8 +227,8 @@ struct dups {
 	struct dups *next;
 	daddr_t dup;
 };
-struct dups *duplist;		/* head of dup list */
-struct dups *muldup;		/* end of unique duplicate dup block numbers */
+extern struct dups *duplist;	/* head of dup list */
+extern struct dups *muldup;	/* end of unique duplicate dup block numbers */
 
 /*
  * Linked list of inodes with zero link counts.
@@ -237,12 +237,12 @@ struct zlncnt {
 	struct zlncnt *next;
 	ino_t zlncnt;
 };
-struct zlncnt *zlnhead;		/* head of zero link count list */
+extern struct zlncnt *zlnhead;		/* head of zero link count list */
 
 /*
  * Inode cache data structures.
  */
-struct inoinfo {
+extern struct inoinfo {
 	struct	inoinfo *i_nexthash;	/* next entry in hash chain */
 	struct	inoinfo	*i_child, *i_sibling;
 	ino_t	i_number;		/* inode number of this entry */
@@ -252,7 +252,7 @@ struct inoinfo {
 	u_int	i_numblks;		/* size of block array in bytes */
 	int64_t i_blks[1];		/* actually longer */
 } **inphead, **inpsort;
-long numdirs, dirhash, listmax, inplast;
+extern long numdirs, dirhash, listmax, inplast;
 
 /*
  * quota usage structures
@@ -264,43 +264,43 @@ struct uquot {
 	uint32_t uq_uid; /* uid/gid of the owner */
 };
 SLIST_HEAD(uquot_hash, uquot);
-struct uquot_hash *uquot_user_hash;
-struct uquot_hash *uquot_group_hash;
-uint8_t q2h_hash_shift;
-uint16_t q2h_hash_mask;
+extern struct uquot_hash *uquot_user_hash;
+extern struct uquot_hash *uquot_group_hash;
+extern uint8_t q2h_hash_shift;
+extern uint16_t q2h_hash_mask;
 
-long	dev_bsize;		/* computed value of DEV_BSIZE */
-long	secsize;		/* actual disk sector size */
-char	nflag;			/* assume a no response */
-char	yflag;			/* assume a yes response */
-int	Uflag;			/* resolve user names */
-int	bflag;			/* location of alternate super block */
-int	debug;			/* output debugging info */
-int	zflag;			/* zero unused directory space */
-int	cvtlevel;		/* convert to newer file system format */
-int	doinglevel1;		/* converting to new cylinder group format */
-int	doinglevel2;		/* converting to new inode format */
-int	newinofmt;		/* filesystem has new inode format */
-char	usedsoftdep;		/* just fix soft dependency inconsistencies */
-int	preen;			/* just fix normal inconsistencies */
-int	quiet;			/* Don't print anything if clean */
-int	forceimage;		/* file system is an image file */
-int	is_ufs2;		/* we're dealing with an UFS2 filesystem */
-int	markclean;		/* mark file system clean when done */
-char	havesb;			/* superblock has been read */
-char	skipclean;		/* skip clean file systems if preening */
-int	fsmodified;		/* 1 => write done to file system */
-int	fsreadfd;		/* file descriptor for reading file system */
-int	fswritefd;		/* file descriptor for writing file system */
-int	rerun;			/* rerun fsck.  Only used in non-preen mode */
-char	resolved;		/* cleared if unresolved changes => not clean */
+extern long	dev_bsize;	/* computed value of DEV_BSIZE */
+extern long	secsize;	/* actual disk sector size */
+extern char	nflag;		/* assume a no response */
+extern char	yflag;		/* assume a yes response */
+extern int	Uflag;		/* resolve user names */
+extern int	bflag;		/* location of alternate super block */
+extern int	debug;		/* output debugging info */
+extern int	zflag;		/* zero unused directory space */
+extern int	cvtlevel;	/* convert to newer file system format */
+extern int	doinglevel1;	/* converting to new cylinder group format */
+extern int	doinglevel2;	/* converting to new inode format */
+extern int	newinofmt;	/* filesystem has new inode format */
+extern char	usedsoftdep;	/* just fix soft dependency inconsistencies */
+extern int	preen;		/* just fix normal inconsistencies */
+extern int	quiet;		/* Don't print anything if clean */
+extern int	forceimage;	/* file system is an image file */
+extern int	is_ufs2;	/* we're dealing with an UFS2 filesystem */
+extern int	markclean;	/* mark file system clean when done */
+extern char	havesb;		/* superblock has been read */
+extern char	skipclean;	/* skip clean file systems if preening */
+extern int	fsmodified;	/* 1 => write done to file system */
+extern int	fsreadfd;	/* file descriptor for reading file system */
+extern int	fswritefd;	/* file descriptor for writing file system */
+extern int	rerun;		/* rerun fsck.  Only used in non-preen mode */
+extern char	resolved;	/* cleared if unresolved changes => not clean */
 
 #ifndef NO_FFS_EI
-int	endian;			/* endian coversion */
-int	doswap;			/* convert byte order */
-int	needswap;		/* need to convert byte order in memory */
-int	do_blkswap;		/* need to do block addr byteswap */
-int	do_dirswap;		/* need to do dir entry byteswap */
+extern int	endian;		/* endian coversion */
+extern int	doswap;		/* convert byte order */
+extern int	needswap;	/* need to convert byte order in memory */
+extern int	do_blkswap;	/* need to do block addr byteswap */
+extern int	do_dirswap;	/* need to do dir entry byteswap */
 #else
 /* Disable Endian-Independent FFS support for install media */
 #define	endian			(0)
@@ -316,28 +316,28 @@ int	do_dirswap;		/* need to do dir entry byteswap */
 #endif
 
 #ifndef NO_APPLE_UFS
-int	isappleufs;		/* filesystem is Apple UFS */
+extern int	isappleufs;		/* filesystem is Apple UFS */
 #else
 /* Disable Apple UFS support for install media */
 #define	isappleufs		(0)
 #endif
 
-daddr_t maxfsblock;		/* number of blocks in the file system */
-char	*blockmap;		/* ptr to primary blk allocation map */
-ino_t	maxino;			/* number of inodes in file system */
+extern daddr_t maxfsblock;	/* number of blocks in the file system */
+extern char	*blockmap;	/* ptr to primary blk allocation map */
+extern ino_t	maxino;		/* number of inodes in file system */
 
-int	dirblksiz;
+extern int	dirblksiz;
 
 extern ino_t	lfdir;		/* lost & found directory inode number */
 extern const char *lfname;	/* lost & found directory name */
 extern int	lfmode;		/* lost & found directory creation mode */
 
-daddr_t n_blks;		/* number of blocks in use */
-ino_t n_files;		/* number of files in use */
+extern daddr_t n_blks;		/* number of blocks in use */
+extern ino_t n_files;		/* number of files in use */
 
-long countdirs;
+extern long countdirs;
 
-int	got_siginfo;		/* received a SIGINFO */
+extern int	got_siginfo;		/* received a SIGINFO */
 
 #define	clearinode(dp) \
 do { \
@@ -347,8 +347,8 @@ do { \
 		(dp)->dp1 = ufs1_zino;	\
 } while (0)
 
-struct	ufs1_dinode ufs1_zino;
-struct	ufs2_dinode ufs2_zino;
+extern struct	ufs1_dinode ufs1_zino;
+extern struct	ufs2_dinode ufs2_zino;
 
 #define	setbmap(blkno)	setbit(blockmap, blkno)
 #define	testbmap(blkno)	isset(blockmap, blkno)

@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.164.2.1 2019/06/10 22:07:10 christos Exp $  */
+/*	$NetBSD: atw.c,v 1.164.2.2 2020/04/08 14:08:06 martin Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.164.2.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.164.2.2 2020/04/08 14:08:06 martin Exp $");
 
 
 #include <sys/param.h>
@@ -3160,7 +3160,7 @@ atw_rxintr(struct atw_softc *sc)
 			if (rxstat & (bit))				\
 				aprint_error_dev(sc->sc_dev, "receive error: %s\n",	\
 				    str)
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			PRINTERR(ATW_RXSTAT_DE, "descriptor error");
 			PRINTERR(ATW_RXSTAT_RXTOE, "time-out");
 #if 0
@@ -3190,14 +3190,14 @@ atw_rxintr(struct atw_softc *sc)
 		 */
 		m = rxs->rxs_mbuf;
 		if (atw_add_rxbuf(sc, i) != 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 			atw_init_rxdesc(sc, i);
 			continue;
 		}
 
-		ifp->if_ipackets++;
+		if_statinc(ifp, if_ipackets);
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = MIN(m->m_ext.ext_size, len);
 
@@ -3253,7 +3253,7 @@ atw_rxintr(struct atw_softc *sc)
 				sc->sc_sfde_ev.ev_count++;
 			if (rxstat & ATW_RXSTAT_SIGE)
 				sc->sc_sige_ev.ev_count++;
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			m_freem(m);
 			splx(s);
 			continue;
@@ -3377,12 +3377,12 @@ atw_txintr(struct atw_softc *sc, uint32_t status)
 			sc->sc_sofbr_ev.ev_count++;
 
 		if ((txstat & ATW_TXSTAT_ES) == 0)
-			ifp->if_collisions +=
-			    __SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK);
+			if_statadd(ifp, if_collisions,
+			    __SHIFTOUT(txstat, ATW_TXSTAT_ARC_MASK));
 		else
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 	}
 
 	KASSERT(txs != NULL || (ifp->if_flags & IFF_OACTIVE) == 0);
@@ -3410,7 +3410,7 @@ atw_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer != 0 && --sc->sc_tx_timer == 0 &&
 	    !SIMPLEQ_EMPTY(&sc->sc_txdirtyq)) {
 		printf("%s: transmit timeout\n", ifp->if_xname);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		(void)atw_init(ifp);
 		atw_start(ifp);
 	}
@@ -3573,12 +3573,12 @@ atw_start(struct ifnet *ifp)
 			ni = ieee80211_find_txnode(ic,
 			    mtod(m0, struct ether_header *)->ether_dhost);
 			if (ni == NULL) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 			if ((m0 = ieee80211_encap(ic, m0, ni)) == NULL) {
 				ieee80211_free_node(ni);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 		}
@@ -3592,7 +3592,7 @@ atw_start(struct ifnet *ifp)
 		else if ((k = ieee80211_crypto_encap(ic, ni, m0)) == NULL) {
 			m_freem(m0);
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			break;
 		}
 #if 0
@@ -3637,7 +3637,7 @@ atw_start(struct ifnet *ifp)
 			ieee80211_free_node(ni);
 
 		if (m0 == NULL) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			break;
 		}
 
@@ -3645,7 +3645,7 @@ atw_start(struct ifnet *ifp)
 		m0 = m_pullup(m0, sizeof(struct atw_frame));
 
 		if (m0 == NULL) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			break;
 		}
 

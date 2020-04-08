@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.20 2012/10/27 17:18:37 chs Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.20.38.1 2020/04/08 14:08:11 martin Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.20 2012/10/27 17:18:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.20.38.1 2020/04/08 14:08:11 martin Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -144,7 +144,7 @@ ppbus_attach(device_t parent, device_t self, void *aux)
 	ppbus->sc_1284_state = PPBUS_FORWARD_IDLE;
 	ppbus->sc_1284_error = PPBUS_NO_ERROR;
 
-	/* Record device's sucessful attachment */
+	/* Record device's successful attachment */
 	ppbus->sc_dev_ok = PPBUS_OK;
 
 #ifndef DONTPROBE_1284

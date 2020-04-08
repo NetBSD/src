@@ -1,7 +1,7 @@
-/*	$NetBSD: clock_subr.h,v 1.26 2018/04/19 21:50:08 christos Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.26.2.1 2020/04/08 14:08:02 martin Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,6 +33,7 @@
 #define _DEV_CLOCK_SUBR_H_
 
 #include <sys/clock.h>
+#include <sys/stdbool.h>
 
 /*
  * "POSIX time" to/from "YY/MM/DD/hh/mm/ss"
@@ -93,19 +94,13 @@ struct todr_chip_handle {
 };
 typedef struct todr_chip_handle *todr_chip_handle_t;
 
-#define todr_wenable(ct, v)	if ((ct)->todr_setwen) \
-					((*(ct)->todr_setwen)(ct, v))
-
-/*
- * Probably these should evolve into internal routines in kern_todr.c.
- */
-extern int todr_gettime(todr_chip_handle_t, struct timeval *);
-extern int todr_settime(todr_chip_handle_t, struct timeval *);
-
-/*
- * Machine-dependent function that machine-independent RTC drivers can
- * use to register their todr_chip_handle_t with inittodr()/resettodr().
- */
+void	todr_init(void);
 void	todr_attach(todr_chip_handle_t);
+void	todr_lock(void);
+void	todr_unlock(void);
+bool	todr_lock_owned(void);
+
+void	todr_set_systime(time_t base);
+void	todr_save_systime(void);
 
 #endif /* _DEV_CLOCK_SUBR_H_ */

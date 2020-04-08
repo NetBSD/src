@@ -60,9 +60,10 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 	struct args		*args = self->args;
 	struct key_table	*table;
 	struct key_binding	*bd;
-	const char		*key, *tablename, *r;
-	char			*cp, tmp[BUFSIZ];
+	const char		*tablename, *r;
+	char			*key, *cp, *tmp;
 	int			 repeat, width, tablewidth, keywidth;
+	size_t			 tmpsize, tmpused, cplen;
 
 	if (self->entry == &cmd_list_commands_entry)
 		return (cmd_list_keys_commands(self, item));
@@ -83,7 +84,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 		}
 		bd = key_bindings_first(table);
 		while (bd != NULL) {
-			key = key_string_lookup_key(bd->key);
+			key = args_escape(key_string_lookup_key(bd->key));
 
 			if (bd->flags & KEY_BINDING_REPEAT)
 				repeat = 1;
@@ -95,10 +96,14 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 			if (width > keywidth)
 				keywidth = width;
 
+			free(key);
 			bd = key_bindings_next(table, bd);
 		}
 		table = key_bindings_next_table(table);
 	}
+
+	tmpsize = 256;
+	tmp = xmalloc(tmpsize);
 
 	table = key_bindings_first_table ();
 	while (table != NULL) {
@@ -108,7 +113,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 		}
 		bd = key_bindings_first(table);
 		while (bd != NULL) {
-			key = key_string_lookup_key(bd->key);
+			key = args_escape(key_string_lookup_key(bd->key));
 
 			if (!repeat)
 				r = "";
@@ -116,27 +121,46 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 				r = "-r ";
 			else
 				r = "   ";
-			xsnprintf(tmp, sizeof tmp, "%s-T ", r);
+			tmpused = xsnprintf(tmp, tmpsize, "%s-T ", r);
 
 			cp = utf8_padcstr(table->name, tablewidth);
-			strlcat(tmp, cp, sizeof tmp);
-			strlcat(tmp, " ", sizeof tmp);
+			cplen = strlen(cp) + 1;
+			while (tmpused + cplen + 1 >= tmpsize) {
+				tmpsize *= 2;
+				tmp = xrealloc(tmp, tmpsize);
+			}
+			tmpused = strlcat(tmp, cp, tmpsize);
+			tmpused = strlcat(tmp, " ", tmpsize);
 			free(cp);
 
 			cp = utf8_padcstr(key, keywidth);
-			strlcat(tmp, cp, sizeof tmp);
-			strlcat(tmp, " ", sizeof tmp);
+			cplen = strlen(cp) + 1;
+			while (tmpused + cplen + 1 >= tmpsize) {
+				tmpsize *= 2;
+				tmp = xrealloc(tmp, tmpsize);
+			}
+			tmpused = strlcat(tmp, cp, tmpsize);
+			tmpused = strlcat(tmp, " ", tmpsize);
 			free(cp);
 
-			cp = cmd_list_print(bd->cmdlist);
-			strlcat(tmp, cp, sizeof tmp);
+			cp = cmd_list_print(bd->cmdlist, 1);
+			cplen = strlen(cp);
+			while (tmpused + cplen + 1 >= tmpsize) {
+				tmpsize *= 2;
+				tmp = xrealloc(tmp, tmpsize);
+			}
+			strlcat(tmp, cp, tmpsize);
 			free(cp);
 
 			cmdq_print(item, "bind-key %s", tmp);
+
+			free(key);
 			bd = key_bindings_next(table, bd);
 		}
 		table = key_bindings_next_table(table);
 	}
+
+	free(tmp);
 
 	return (CMD_RETURN_NORMAL);
 }

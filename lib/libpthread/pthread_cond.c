@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.65 2017/12/08 03:08:19 christos Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.65.4.1 2020/04/08 14:07:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.65 2017/12/08 03:08:19 christos Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.65.4.1 2020/04/08 14:07:15 martin Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -78,6 +78,10 @@ __strong_alias(__libc_cond_destroy,pthread_cond_destroy)
 static clockid_t
 pthread_cond_getclock(const pthread_cond_t *cond)
 {
+
+	pthread__error(EINVAL, "Invalid condition variable",
+	    cond->ptc_magic == _PT_COND_MAGIC);
+
 	return cond->ptc_private ? 
 	    *(clockid_t *)cond->ptc_private : CLOCK_REALTIME;
 }
@@ -164,7 +168,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		self->pt_willpark = 1;
 		pthread_mutex_unlock(mutex);
 		self->pt_willpark = 0;
-		self->pt_blocking++;
 		do {
 			retval = _lwp_park(clkid, TIMER_ABSTIME,
 			    __UNCONST(abstime), self->pt_unpark,
@@ -172,8 +175,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 			    __UNVOLATILE(&mutex->ptm_waiters));
 			self->pt_unpark = 0;
 		} while (retval == -1 && errno == ESRCH);
-		self->pt_blocking--;
-		membar_sync();
 		pthread_mutex_lock(mutex);
 
 		/*
@@ -224,9 +225,6 @@ pthread__cond_wake_one(pthread_cond_t *cond)
 	pthread_t self, signaled;
 	pthread_mutex_t *mutex;
 	lwpid_t lid;
-
-	pthread__error(EINVAL, "Invalid condition variable",
-	    cond->ptc_magic == _PT_COND_MAGIC);
 
 	/*
 	 * Pull the first thread off the queue.  If the current thread
@@ -281,6 +279,9 @@ pthread_cond_signal(pthread_cond_t *cond)
 	if (__predict_false(__uselibcstub))
 		return __libc_cond_signal_stub(cond);
 
+	pthread__error(EINVAL, "Invalid condition variable",
+	    cond->ptc_magic == _PT_COND_MAGIC);
+
 	if (__predict_true(PTQ_EMPTY(&cond->ptc_waiters)))
 		return 0;
 	return pthread__cond_wake_one(cond);
@@ -293,9 +294,6 @@ pthread__cond_wake_all(pthread_cond_t *cond)
 	pthread_mutex_t *mutex;
 	u_int max;
 	size_t nwaiters;
-
-	pthread__error(EINVAL, "Invalid condition variable",
-	    cond->ptc_magic == _PT_COND_MAGIC);
 
 	/*
 	 * Try to defer waking threads (see pthread_cond_signal()).
@@ -331,6 +329,9 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	if (__predict_false(__uselibcstub))
 		return __libc_cond_broadcast_stub(cond);
 
+	pthread__error(EINVAL, "Invalid condition variable",
+	    cond->ptc_magic == _PT_COND_MAGIC);
+
 	if (__predict_true(PTQ_EMPTY(&cond->ptc_waiters)))
 		return 0;
 	return pthread__cond_wake_all(cond);
@@ -356,6 +357,10 @@ pthread_condattr_init(pthread_condattr_t *attr)
 int
 pthread_condattr_setclock(pthread_condattr_t *attr, clockid_t clck)
 {
+
+	pthread__error(EINVAL, "Invalid condition variable attribute",
+	    attr->ptca_magic == _PT_CONDATTR_MAGIC);
+
 	switch (clck) {
 	case CLOCK_MONOTONIC:
 	case CLOCK_REALTIME:
@@ -374,6 +379,10 @@ int
 pthread_condattr_getclock(const pthread_condattr_t *__restrict attr,
     clockid_t *__restrict clock_id)
 {
+
+	pthread__error(EINVAL, "Invalid condition variable attribute",
+	    attr->ptca_magic == _PT_CONDATTR_MAGIC);
+
 	if (attr == NULL || attr->ptca_private == NULL)
 		return EINVAL;
 	*clock_id = *(clockid_t *)attr->ptca_private;
@@ -399,6 +408,9 @@ pthread_condattr_getpshared(const pthread_condattr_t * __restrict attr,
     int * __restrict pshared)
 {
 
+	pthread__error(EINVAL, "Invalid condition variable attribute",
+	    attr->ptca_magic == _PT_CONDATTR_MAGIC);
+
 	*pshared = PTHREAD_PROCESS_PRIVATE;
 	return 0;
 }
@@ -406,6 +418,9 @@ pthread_condattr_getpshared(const pthread_condattr_t * __restrict attr,
 int
 pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared)
 {
+
+	pthread__error(EINVAL, "Invalid condition variable attribute",
+	    attr->ptca_magic == _PT_CONDATTR_MAGIC);
 
 	switch(pshared) {
 	case PTHREAD_PROCESS_PRIVATE:

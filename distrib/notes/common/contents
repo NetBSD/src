@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.174.2.1 2019/06/10 21:42:27 christos Exp $
+.\"	$NetBSD: contents,v 1.174.2.2 2020/04/08 14:03:48 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,8 +30,7 @@ The \*M-specific portion of the
 \*V release is found in the
 .Pa \*M
 subdirectory of the distribution:
-.ie \n[FOR_RELEASE] .Pa \&.../NetBSD-\*V/\*M/ .
-.el .Pa Pf \&.../arch/\*M/snapshot/ Ar yyyymmdd/ .
+.Pa \&.../NetBSD-\*V/\*M/ .
 It contains the following files and directories:
 .Pp
 .(tag INSTALL.html -compact \" top level
@@ -497,7 +496,7 @@ asks you for the distribution set to install, provide the
 .Nx Ns /sparc
 .Pa binary/sets .
 Be sure to use the 32 bit sparc
-.Pa kern-GENERIC_SUN4U.tgz 
+.Pa kern-GENERIC_SUN4U.tgz
 kernel distribution.  Otherwise, continue to follow the \*M installation
 procedure, not the sparc instructions.
 .Note)
@@ -856,6 +855,11 @@ This set includes the system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
 .
+.It Sy rescue
+This set includes the statically linked emergency recover binaries installed
+in
+.Pa /rescue .
+.
 .It Sy text
 This set includes
 .Nx Ns 's
@@ -963,9 +967,9 @@ servers with man pages and the runtime configuration file.
 .Pp
 The \*M binary distribution sets are distributed as gzipped tar files
 named with the extension
-.Sy .tgz ,
+.Sy .\*[setsuffix] ,
 e.g.
-.Pa base.tgz .
+.Pa base.\*[setsuffix] .
 .
 .
 .Pp
@@ -1429,13 +1433,13 @@ directory:
 .
 .(tag diskimage/
 .It Pa diskimage/
-.	(tag diskimage.tgz
+.	(tag diskimage.\*[setsuffix]
 .	It Pa diskimage.gz
 FFS disk image of the installation filesystem.
 .	tag)
 .It Pa netboot/
-.	(tag diskimage.tgz
-.	It Pa diskimage.tgz
+.	(tag diskimage.\*[setsuffix]
+.	It Pa diskimage.\*[setsuffix]
 Minimal file set necessary for NFS-root installations; to be extracted on the 
 NFS server.
 .	tag)

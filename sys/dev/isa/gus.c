@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.113.2.1 2019/06/10 22:07:12 christos Exp $	*/
+/*	$NetBSD: gus.c,v 1.113.2.2 2020/04/08 14:08:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.113.2.1 2019/06/10 22:07:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.113.2.2 2020/04/08 14:08:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2332,7 +2332,6 @@ gusmax_round_blocksize(void *addr, int blocksize,
 
 	ac = addr;
 	sc = ac->sc_ad1848.parent;
-/*	blocksize = ad1848_round_blocksize(ac, blocksize, mode, param);*/
 	return gus_round_blocksize(sc, blocksize, mode, param);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_sdma_v2_4.c,v 1.1.6.2 2019/06/10 22:07:58 christos Exp $	*/
+/*	$NetBSD: amdgpu_sdma_v2_4.c,v 1.1.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,12 +24,9 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_sdma_v2_4.c,v 1.1.6.2 2019/06/10 22:07:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_sdma_v2_4.c,v 1.1.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/log2.h>
-#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_ucode.h"
@@ -51,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_sdma_v2_4.c,v 1.1.6.2 2019/06/10 22:07:58 chr
 #include "bif/bif_5_0_sh_mask.h"
 
 #include "iceland_sdma_pkt_open.h"
+
+#include <linux/nbsd-namespace.h>
 
 static void sdma_v2_4_set_ring_funcs(struct amdgpu_device *adev);
 static void sdma_v2_4_set_buffer_funcs(struct amdgpu_device *adev);
@@ -163,11 +162,7 @@ static int sdma_v2_4_init_microcode(struct amdgpu_device *adev)
 			info->fw = adev->sdma.instance[i].fw;
 			header = (const struct common_firmware_header *)info->fw->data;
 			adev->firmware.fw_size +=
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-				round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#else
 				ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#endif
 		}
 	}
 

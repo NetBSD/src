@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8 2018/04/26 18:06:25 scole Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8.2.1 2020/04/08 14:07:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,10 +117,18 @@ typedef struct __mcontext {
 #define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[8])
 #define _UC_MACHINE_SET_PC(uc)  _UC_MACHINE_PC(uc) = (pc)  /* XXX */
 
+#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
+    defined(__LIBPTHREAD_SOURCE__)
+#include <sys/tls.h>
+
+__BEGIN_DECLS
 static __inline void *
 __lwp_getprivate_fast(void)
 {
 	return (void*)0;
 }
+__END_DECLS
+
+#endif
 
 #endif	/* !_IA64_MCONTEXT_H_ */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.31.6.1 2019/06/10 22:05:40 christos Exp $
+.\"	$NetBSD: route.4,v 1.31.6.2 2020/04/08 14:07:21 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd July 11, 2018
+.Dd February 4, 2020
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -189,6 +189,35 @@ unsigned char rtfilter[] = { RTM_IFINFO, RTM_IFANNOUNCE };
 if (setsockopt(routefd, PF_ROUTE, RO_MSGFILTER,
     &rtfilter, (socklen_t)sizeof(rtfilter)) == -1)
 	err(1, "setsockopt(RO_MSGFILTER)");
+.Ed
+.Pp
+A process can specify which RTM_MISS destination addresses it's interested in
+by passing an array of struct sockaddr to the
+.Xr setsockopt 2
+call with the
+.Dv RO_MISSFILTER
+option at the
+.Dv PF_ROUTE
+level.
+For example, to only get RTM_MISS messages for specific destinations:
+.Bd -literal -offset indent
+char buf[1024] = { '\\0' }, *cp = buf;
+struct sockaddr_in sin = {
+	.sin_family = AF_INET,
+	.sin_len = sizeof(sin),
+};
+
+inet_aton("192.168.0.1", &sin.sin_addr);
+memcpy(cp, &sin, sin.sin_len);
+cp += RT_ROUNDUP(sin.sin_len);
+
+inet_aton("192.168.0.2", &sin.sin_addr);
+memcpy(cp, &sin, sin.sin_len);
+cp += RT_ROUNDUP(sin.sin_len);
+
+if (setsockopt(routefd, PF_ROUTE, RO_MISSFILTER,
+    &sin, (socklen_t)(cp - buf)) == -1)
+	err(1, "setsockopt(RO_MISSFILTER)");
 .Ed
 .Pp
 If a route is in use when it is deleted,

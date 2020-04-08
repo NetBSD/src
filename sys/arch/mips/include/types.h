@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.67.4.1 2019/06/10 22:06:30 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.67.4.2 2020/04/08 14:07:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -175,5 +175,8 @@ typedef __uint32_t tlb_asid_t;
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_MM_MD_KERNACC
 #define	__HAVE_MM_MD_CACHE_ALIASING
+
+/* XXX temporary */
+#define	__HAVE_UNLOCKED_PMAP
 
 #endif	/* _MIPS_TYPES_H_ */

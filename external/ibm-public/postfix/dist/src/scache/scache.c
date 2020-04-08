@@ -1,4 +1,4 @@
-/*	$NetBSD: scache.c,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
+/*	$NetBSD: scache.c,v 1.2.12.1 2020/04/08 14:06:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -65,7 +65,8 @@
 /*	The \fBscache\fR(8) server is not a trusted process. It must
 /*	not be used to store information that is security sensitive.
 /* DIAGNOSTICS
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /* BUGS
 /*	The session cache cannot be shared among multiple machines.
 /*
@@ -113,12 +114,17 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
+/* .PP
+/*	Available in Postfix 3.3 and later:
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
 /* SEE ALSO
 /*	smtp(8), SMTP client
 /*	postconf(5), configuration parameters
 /*	master(8), process manager
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* README FILES
 /* .ad

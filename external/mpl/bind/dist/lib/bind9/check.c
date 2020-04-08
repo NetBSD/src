@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.5.2.2 2019/06/10 22:04:34 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.5.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1005,9 +1005,9 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 		uint32_t keyvalidity;
 
 		keyvalidity = cfg_obj_asuint32(obj);
-		if (keyvalidity > 3660 || keyvalidity == 0) { /* 10 years */
+		if (keyvalidity > 3660) {		 /* 10 years */
 			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-				    "%s '%u' is out of range (1..3660)",
+				    "%s '%u' is out of range (0..3660)",
 				    "dnskey-sig-validity",
 				    keyvalidity);
 			result = ISC_R_RANGE;
@@ -3402,6 +3402,44 @@ check_one_plugin(const cfg_obj_t *config, const cfg_obj_t *obj,
 #endif
 
 static isc_result_t
+check_dnstap(const cfg_obj_t *voptions, const cfg_obj_t *config,
+	     isc_log_t *logctx)
+{
+#ifdef HAVE_DNSTAP
+	const cfg_obj_t *options = NULL;
+	const cfg_obj_t *obj = NULL;
+
+	if (config != NULL) {
+		(void) cfg_map_get(config, "options", &options);
+	}
+	if (options != NULL) {
+		(void) cfg_map_get(options, "dnstap-output", &obj);
+	}
+	if (obj == NULL) {
+		if (voptions != NULL) {
+			(void) cfg_map_get(voptions, "dnstap", &obj);
+		}
+		if (options != NULL && obj == NULL) {
+			(void) cfg_map_get(options, "dnstap", &obj);
+		}
+		if (obj != NULL) {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "'dnstap-output' must be set if 'dnstap' "
+				    "is set");
+			return (ISC_R_FAILURE);
+		}
+	}
+	return (ISC_R_SUCCESS);
+#else
+	UNUSED(voptions);
+	UNUSED(config);
+	UNUSED(logctx);
+
+	return (ISC_R_SUCCESS);
+#endif
+}
+
+static isc_result_t
 check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	       const char *viewname, dns_rdataclass_t vclass,
 	       isc_symtab_t *files, bool check_plugins, isc_symtab_t *inview,
@@ -3700,6 +3738,11 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 					optlevel_config);
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
+
+	tresult = check_dnstap(voptions, config, logctx);
+	if (tresult != ISC_R_SUCCESS) {
+		result = tresult;
+	}
 
 	tresult = check_viewacls(actx, voptions, config, logctx, mctx);
 	if (tresult != ISC_R_SUCCESS)

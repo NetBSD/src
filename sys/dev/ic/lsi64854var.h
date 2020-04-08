@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854var.h,v 1.12 2008/04/28 20:23:50 martin Exp $ */
+/*	$NetBSD: lsi64854var.h,v 1.12.88.1 2020/04/08 14:08:06 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ struct lsi64854_softc {
 
 	bus_space_handle_t	sc_regs;	/* the registers */
 	u_int			sc_rev;		/* revision */
-	int			sc_burst;	/* max suported burst size */
+	int			sc_burst;	/* max supported burst size */
 
 	int			sc_channel;
 #define L64854_CHANNEL_SCSI	1

@@ -1,4 +1,4 @@
-/* $NetBSD: pwm_backlight.c,v 1.4 2018/05/10 13:11:21 jmcneill Exp $ */
+/* $NetBSD: pwm_backlight.c,v 1.4.4.1 2020/04/08 14:08:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.4 2018/05/10 13:11:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.4.4.1 2020/04/08 14:08:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,6 +48,7 @@ struct pwm_backlight_softc {
 
 	u_int			*sc_levels;
 	u_int			sc_nlevels;
+	u_int			sc_curlevel;
 
 	char			*sc_levelstr;
 
@@ -59,7 +60,7 @@ static void	pwm_backlight_attach(device_t, device_t, void *);
 
 static void	pwm_backlight_sysctl_init(struct pwm_backlight_softc *);
 static void	pwm_backlight_pmf_init(struct pwm_backlight_softc *);
-static void	pwm_backlight_set(struct pwm_backlight_softc *, u_int);
+static void	pwm_backlight_set(struct pwm_backlight_softc *, u_int, bool);
 static u_int	pwm_backlight_get(struct pwm_backlight_softc *);
 
 static const char *compatible[] = {
@@ -117,26 +118,28 @@ pwm_backlight_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": PWM Backlight");
-	aprint_verbose(" <");
-	for (n = 0; n < sc->sc_nlevels; n++) {
-		aprint_verbose("%s%u", n ? " " : "", sc->sc_levels[n]);
+	if (sc->sc_nlevels > 1) {
+		aprint_normal(", %u-%u (%u steps)",
+		    sc->sc_levels[0], sc->sc_levels[sc->sc_nlevels - 1],
+		    sc->sc_nlevels);
 	}
-	aprint_verbose(">");
 	aprint_normal("\n");
 
 	sc->sc_lid_state = true;
 
 	if (of_getprop_uint32(phandle, "default-brightness-level", &default_level) == 0) {
 		/* set the default level now */
-		pwm_backlight_set(sc, default_level);
+		pwm_backlight_set(sc, default_level, true);
 	}
+
+	sc->sc_curlevel = pwm_backlight_get(sc);
 
 	pwm_backlight_sysctl_init(sc);
 	pwm_backlight_pmf_init(sc);
 }
 
 static void
-pwm_backlight_set(struct pwm_backlight_softc *sc, u_int index)
+pwm_backlight_set(struct pwm_backlight_softc *sc, u_int index, bool set_cur)
 {
 	struct pwm_config conf;
 
@@ -150,6 +153,9 @@ pwm_backlight_set(struct pwm_backlight_softc *sc, u_int index)
 	conf.duty_cycle = (conf.period * sc->sc_levels[index]) / sc->sc_levels[sc->sc_nlevels - 1];
 	pwm_set_config(sc->sc_pwm, &conf);
 	pwm_enable(sc->sc_pwm);
+
+	if (set_cur)
+		sc->sc_curlevel = index;
 }
 
 static u_int
@@ -190,7 +196,7 @@ pwm_backlight_sysctl_helper(SYSCTLFN_ARGS)
 
 	for (n = 0; n < sc->sc_nlevels; n++) {
 		if (sc->sc_levels[n] == level) {
-			pwm_backlight_set(sc, n);
+			pwm_backlight_set(sc, n, true);
 			return 0;
 		}
 	}
@@ -247,12 +253,21 @@ failed:
 }
 
 static void
+pwm_backlight_enable(struct pwm_backlight_softc *sc, int enable)
+{
+	if (sc->sc_pin)
+		fdtbus_gpio_write(sc->sc_pin, enable);
+	else
+		pwm_backlight_set(sc, enable ? sc->sc_curlevel : 0, false);
+}
+
+static void
 pwm_backlight_display_on(device_t dev)
 {
 	struct pwm_backlight_softc * const sc = device_private(dev);
 
-	if (sc->sc_pin && sc->sc_lid_state)
-		fdtbus_gpio_write(sc->sc_pin, 1);
+	if (sc->sc_lid_state)
+		pwm_backlight_enable(sc, 1);
 }
 
 static void
@@ -260,8 +275,7 @@ pwm_backlight_display_off(device_t dev)
 {
 	struct pwm_backlight_softc * const sc = device_private(dev);
 
-	if (sc->sc_pin)
-		fdtbus_gpio_write(sc->sc_pin, 0);
+	pwm_backlight_enable(sc, 0);
 }
 
 static void
@@ -271,8 +285,7 @@ pwm_backlight_chassis_lid_open(device_t dev)
 
 	sc->sc_lid_state = true;
 
-	if (sc->sc_pin)
-		fdtbus_gpio_write(sc->sc_pin, 1);
+	pwm_backlight_enable(sc, 1);
 }
 
 static void
@@ -282,8 +295,7 @@ pwm_backlight_chassis_lid_close(device_t dev)
 
 	sc->sc_lid_state = false;
 
-	if (sc->sc_pin)
-		fdtbus_gpio_write(sc->sc_pin, 0);
+	pwm_backlight_enable(sc, 0);
 }
 
 static void
@@ -294,7 +306,7 @@ pwm_backlight_display_brightness_up(device_t dev)
 
 	n = pwm_backlight_get(sc);
 	if (n < sc->sc_nlevels - 1)
-		pwm_backlight_set(sc, n + 1);
+		pwm_backlight_set(sc, n + 1, true);
 }
 
 static void
@@ -305,7 +317,7 @@ pwm_backlight_display_brightness_down(device_t dev)
 
 	n = pwm_backlight_get(sc);
 	if (n > 0)
-		pwm_backlight_set(sc, n - 1);
+		pwm_backlight_set(sc, n - 1, true);
 }
 
 static void

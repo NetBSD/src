@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.15 2009/04/23 01:56:50 snj Exp $
+.\"	$NetBSD: prep,v 1.15.48.1 2020/04/08 14:03:52 martin Exp $
 .
 .Ss2 Deciding on partition sizes
 .
@@ -73,8 +73,8 @@ If the ethernet address of your \*M system is
 .Dq banner
 command),
 then your NVRAM battery is dead and you will have trouble using
-ethernet (among other problems).  Read the Sun NVRAM/Hostid FAQ.
-.Lk http://www.squirrel.com/squirrel/sun-nvram-hostid.faq.html
+ethernet (among other problems).  Read the
+.Lk http://www.squirrel.com/squirrel/sun-nvram-hostid.faq.html "Sun NVRAM/Hostid FAQ" .
 .Pp
 If you have a valid ethernet address and you plan to netboot, write down
 your system's ethernet address.

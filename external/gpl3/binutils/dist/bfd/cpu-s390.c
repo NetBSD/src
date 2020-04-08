@@ -1,5 +1,5 @@
 /* BFD support for the s390 processor.
-   Copyright (C) 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Carl B. Pedersen and Martin Schwidefsky.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -25,19 +25,20 @@
 
 #define N(bits, number, print, is_default, next)	\
   {							\
-    bits,	       /* bits in a word */		\
-    bits,	       /* bits in an address */		\
-    8,		       /* bits in a byte */		\
+    bits,	       /* Bits in a word.  */		\
+    bits,	       /* Bits in an address.  */	\
+    8,		       /* Bits in a byte.  */		\
     bfd_arch_s390,					\
     number,						\
     "s390",						\
     print,						\
-    3,		       /* section alignment power */	\
+    3,		       /* Section alignment power */	\
     is_default,						\
     bfd_default_compatible,				\
     bfd_default_scan,					\
     bfd_arch_default_fill,				\
-    next						\
+    next,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
   }
 
 #if BFD_DEFAULT_TARGET_SIZE == 64

@@ -1,4 +1,4 @@
-/*	$NetBSD: at91emac.c,v 1.21.2.1 2019/06/10 22:05:52 christos Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.21.2.2 2020/04/08 14:07:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.21.2.1 2019/06/10 22:05:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.21.2.2 2020/04/08 14:07:28 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,8 +93,6 @@ static void	emac_attach(device_t, device_t, void *);
 static void	emac_init(struct emac_softc *);
 static int	emac_intr(void* arg);
 static int	emac_gctx(struct emac_softc *);
-static int	emac_mediachange(struct ifnet *);
-static void	emac_mediastatus(struct ifnet *, struct ifmediareq *);
 int		emac_mii_readreg (device_t, int, int, uint16_t *);
 int		emac_mii_writereg (device_t, int, int, uint16_t);
 void		emac_statchg (struct ifnet *);
@@ -245,14 +243,14 @@ emac_intr(void *arg)
 		EMAC_WRITE(ETH_CTL, ctl & ~ETH_CTL_RE);	// disable receiver
 		EMAC_WRITE(ETH_RSR, ETH_RSR_BNA);	// clear BNA bit
 		EMAC_WRITE(ETH_CTL, ctl |  ETH_CTL_RE);	// re-enable receiver
-		ifp->if_ierrors++;
-		ifp->if_ipackets++;
+		if_statinc(ifp, if_ierrors);
+		if_statinc(ifp, if_ipackets);
 		DPRINTFN(1,("%s: out of receive buffers\n", __FUNCTION__));
 	}
 	if (isr & ETH_ISR_ROVR) {
 		EMAC_WRITE(ETH_RSR, ETH_RSR_OVR);	// clear interrupt
-		ifp->if_ierrors++;
-		ifp->if_ipackets++;
+		if_statinc(ifp, if_ierrors);
+		if_statinc(ifp, if_ipackets);
 		DPRINTFN(1,("%s: receive overrun\n", __FUNCTION__));
 	}
 
@@ -306,7 +304,7 @@ emac_intr(void *arg)
 				if (m != NULL) {
 					m_freem(m);
 				}
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 			}
 			sc->rxqi++;
 		}
@@ -467,8 +465,8 @@ emac_init(struct emac_softc *sc)
 	mii->mii_writereg = emac_mii_writereg;
 	mii->mii_statchg = emac_statchg;
 	sc->sc_ec.ec_mii = mii;
-	ifmedia_init(&mii->mii_media, IFM_IMASK, emac_mediachange,
-		emac_mediastatus);
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
+		ether_mediastatus);
 	mii_attach((device_t )sc, mii, 0xffffffff, MII_PHY_ANY,
 		MII_OFFSET_ANY, 0);
 	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
@@ -505,25 +503,6 @@ emac_init(struct emac_softc *sc)
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, (sc)->sc_enaddr);
 }
-
-static int
-emac_mediachange(struct ifnet *ifp)
-{
-	if (ifp->if_flags & IFF_UP)
-		emac_ifinit(ifp);
-	return (0);
-}
-
-static void
-emac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct emac_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-}
-
 
 int
 emac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
@@ -587,7 +566,7 @@ emac_tick(void *arg)
 	int s;
 	uint32_t misses;
 
-	ifp->if_collisions += EMAC_READ(ETH_SCOL) + EMAC_READ(ETH_MCOL);
+	if_statadd(ifp, if_collisions, EMAC_READ(ETH_SCOL) + EMAC_READ(ETH_MCOL));
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
 	misses = EMAC_READ(ETH_DRFC);
 	if (misses > 0)

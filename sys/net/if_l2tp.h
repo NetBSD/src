@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.h,v 1.5.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if_l2tp.h,v 1.5.2.2 2020/04/08 14:08:57 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -133,12 +133,11 @@ l2tp_getref_variant(struct l2tp_softc *sc, struct psref *psref)
 	int s;
 
 	s = pserialize_read_enter();
-	var = sc->l2tp_var;
+	var = atomic_load_consume(&sc->l2tp_var);
 	if (var == NULL) {
 		pserialize_read_exit(s);
 		return NULL;
 	}
-	membar_datadep_consumer();
 	psref_acquire(psref, &var->lv_psref, lv_psref_class);
 	pserialize_read_exit(s);
 

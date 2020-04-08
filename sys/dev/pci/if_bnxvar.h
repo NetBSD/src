@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxvar.h,v 1.7.2.1 2019/06/10 22:07:16 christos Exp $	*/
+/*	$NetBSD: if_bnxvar.h,v 1.7.2.2 2020/04/08 14:08:09 martin Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -289,6 +289,11 @@ struct bnx_softc
 	uint16_t		max_rx_bd;
 	uint16_t		used_tx_bd;
 	uint16_t		max_tx_bd;
+
+	/* For interfacing with if_stats */
+	uint64_t	if_stat_collisions;
+	uint64_t	if_stat_ierrors;
+	uint64_t	if_stat_oerrors;
 
 	/* Provides access to hardware statistics through sysctl. */
 	uint64_t 	stat_IfHCInOctets;

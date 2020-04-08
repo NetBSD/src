@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-esp.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-esp.c,v 1.9.4.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: IPSEC Encapsulating Security Payload (ESP) printer */
@@ -631,6 +631,7 @@ void esp_print_decodesecret(netdissect_options *ndo)
 
 #endif
 
+UNALIGNED_OK
 #ifdef HAVE_LIBCRYPTO
 USES_APPLE_DEPRECATED_API
 #endif

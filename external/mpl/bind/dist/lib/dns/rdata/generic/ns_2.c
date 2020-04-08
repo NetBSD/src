@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_2.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: ns_2.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -132,7 +132,7 @@ fromstruct_ns(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_ns);
-	REQUIRE(source != NULL);
+	REQUIRE(ns != NULL);
 	REQUIRE(ns->common.rdtype == type);
 	REQUIRE(ns->common.rdclass == rdclass);
 
@@ -150,7 +150,7 @@ tostruct_ns(ARGS_TOSTRUCT) {
 	dns_name_t name;
 
 	REQUIRE(rdata->type == dns_rdatatype_ns);
-	REQUIRE(target != NULL);
+	REQUIRE(ns != NULL);
 	REQUIRE(rdata->length != 0);
 
 	ns->common.rdclass = rdata->rdclass;
@@ -170,7 +170,7 @@ static inline void
 freestruct_ns(ARGS_FREESTRUCT) {
 	dns_rdata_ns_t *ns = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(ns != NULL);
 
 	if (ns->mctx == NULL)
 		return;

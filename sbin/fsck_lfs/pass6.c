@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.50 2017/06/10 08:13:15 pgoyette Exp $	 */
+/* $NetBSD: pass6.c,v 1.50.6.1 2020/04/08 14:07:18 martin Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -51,16 +51,12 @@
 #include <util.h>
 
 #include "bufcache.h"
-#include "vnode.h"
 #include "lfs_user.h"
 #include "segwrite.h"
 
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
-
-extern u_int32_t cksum(void *, size_t);
-extern u_int32_t lfs_sb_cksum(struct dlfs *);
 
 static int nnewblocks;
 

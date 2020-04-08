@@ -1,4 +1,4 @@
-/* $NetBSD: gpioiic.c,v 1.8 2017/10/28 04:53:56 riastradh Exp $ */
+/* $NetBSD: gpioiic.c,v 1.8.4.1 2020/04/08 14:08:04 martin Exp $ */
 /*	$OpenBSD: gpioiic.c,v 1.8 2008/11/24 12:12:12 mbalmer Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.8 2017/10/28 04:53:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.8.4.1 2020/04/08 14:08:04 martin Exp $");
 
 /*
  * I2C bus bit-banging through GPIO pins.
@@ -54,7 +54,6 @@ struct gpioiic_softc {
 
 	struct i2c_controller	sc_i2c_tag;
 	device_t		sc_i2c_dev;
-	krwlock_t		sc_i2c_lock;
 
 	int			sc_pin_sda;
 	int			sc_pin_scl;
@@ -67,8 +66,6 @@ int		gpioiic_match(device_t, cfdata_t, void *);
 void		gpioiic_attach(device_t, device_t, void *);
 int		gpioiic_detach(device_t, int);
 
-int		gpioiic_i2c_acquire_bus(void *, int);
-void		gpioiic_i2c_release_bus(void *, int);
 int		gpioiic_i2c_send_start(void *, int);
 int		gpioiic_i2c_send_stop(void *, int);
 int		gpioiic_i2c_initiate_xfer(void *, i2c_addr_t, int);
@@ -185,19 +182,15 @@ gpioiic_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	/* Attach I2C bus */
-	rw_init(&sc->sc_i2c_lock);
+	iic_tag_init(&sc->sc_i2c_tag);
 	sc->sc_i2c_tag.ic_cookie = sc;
-	sc->sc_i2c_tag.ic_acquire_bus = gpioiic_i2c_acquire_bus;
-	sc->sc_i2c_tag.ic_release_bus = gpioiic_i2c_release_bus;
 	sc->sc_i2c_tag.ic_send_start = gpioiic_i2c_send_start;
 	sc->sc_i2c_tag.ic_send_stop = gpioiic_i2c_send_stop;
 	sc->sc_i2c_tag.ic_initiate_xfer = gpioiic_i2c_initiate_xfer;
 	sc->sc_i2c_tag.ic_read_byte = gpioiic_i2c_read_byte;
 	sc->sc_i2c_tag.ic_write_byte = gpioiic_i2c_write_byte;
-	sc->sc_i2c_tag.ic_exec = NULL;
 
 	memset(&iba, 0, sizeof(iba));
-	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c_tag;
 	sc->sc_i2c_dev = config_found(self, &iba, iicbus_print);
 
@@ -220,33 +213,11 @@ gpioiic_detach(device_t self, int flags)
 		rv = config_detach(sc->sc_i2c_dev, flags);
 
 	if (!rv) {
+		iic_tag_fini(&sc->sc_i2c_tag);
 		gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 		pmf_device_deregister(self);
 	}
 	return rv;
-}
-
-int
-gpioiic_i2c_acquire_bus(void *cookie, int flags)
-{
-	struct gpioiic_softc *sc = cookie;
-
-	if (flags & I2C_F_POLL)
-		return 1;
-
-	rw_enter(&sc->sc_i2c_lock, RW_WRITER);
-	return 0;
-}
-
-void
-gpioiic_i2c_release_bus(void *cookie, int flags)
-{
-	struct gpioiic_softc *sc = cookie;
-
-	if (flags & I2C_F_POLL)
-		return;
-
-	rw_exit(&sc->sc_i2c_lock);
 }
 
 int

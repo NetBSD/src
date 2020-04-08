@@ -4415,7 +4415,6 @@ uvmspace
 uvn
 uvscom
 uyap
-uyurex
 va
 vaccess
 vaddr

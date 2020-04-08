@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: pmap_machdep.c,v 1.2.22.1 2019/06/10 22:06:41 christos Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.2.22.2 2020/04/08 14:07:51 martin Exp $");
 
 #include <sys/param.h>
 
@@ -40,6 +40,13 @@ __RCSID("$NetBSD: pmap_machdep.c,v 1.2.22.1 2019/06/10 22:06:41 christos Exp $")
 #include <riscv/locore.h>
 
 int riscv_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
+
+void
+pmap_bootstrap(void)
+{
+
+	pmap_bootstrap_common();
+}
 
 void
 pmap_zero_page(paddr_t pa)
@@ -146,7 +153,7 @@ pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 {
 	return false;
 }
- 
+
 void
 pmap_md_pdetab_activate(struct pmap *pmap)
 {

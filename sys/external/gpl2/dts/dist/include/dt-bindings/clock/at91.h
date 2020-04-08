@@ -1,11 +1,10 @@
-/*	$NetBSD: at91.h,v 1.1.1.1.12.1 2019/06/10 22:08:54 christos Exp $	*/
+/*	$NetBSD: at91.h,v 1.1.1.1.12.2 2020/04/08 14:08:44 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * This header provides constants for AT91 pmc status.
  *
  * The constants defined in this header are being used in dts.
- *
- * Licensed under GPLv2 or later.
  */
 
 #ifndef _DT_BINDINGS_CLK_AT91_H

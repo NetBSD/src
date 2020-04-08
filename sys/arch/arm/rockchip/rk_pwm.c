@@ -1,4 +1,4 @@
-/* $NetBSD: rk_pwm.c,v 1.1.2.2 2019/06/10 22:05:55 christos Exp $ */
+/* $NetBSD: rk_pwm.c,v 1.1.2.3 2020/04/08 14:07:30 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk_pwm.c,v 1.1.2.2 2019/06/10 22:05:55 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_pwm.c,v 1.1.2.3 2020/04/08 14:07:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,6 +132,10 @@ static int
 rk_pwm_get_config(pwm_tag_t pwm, struct pwm_config *conf)
 {
 	struct rk_pwm_softc * const sc = device_private(pwm->pwm_dev);
+
+#if 0
+	/* XXX may be useful someday */
+
 	uint32_t ctrl, period, duty;
 	u_int div;
 
@@ -153,6 +157,9 @@ rk_pwm_get_config(pwm_tag_t pwm, struct pwm_config *conf)
 	conf->polarity = (ctrl & CTRL_DUTY_POL) ? PWM_ACTIVE_HIGH : PWM_ACTIVE_LOW;
         conf->period = (u_int)(((uint64_t)period * 1000000000) / rate);
         conf->duty_cycle = (u_int)(((uint64_t)duty * 1000000000) / rate);
+#else
+	*conf = sc->sc_conf;
+#endif
 
 	return 0;
 }

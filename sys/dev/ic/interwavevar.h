@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.18.38.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.18.38.2 2020/04/08 14:08:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -203,9 +203,6 @@ int	iw_query_format(void *, audio_format_query_t *);
 int	iw_audio_set_format(void *, int,
 	    const audio_params_t *, const audio_params_t *,
 	    audio_filter_reg_t *, audio_filter_reg_t *);
-
-	/* Hardware may have some say in the blocksize to choose */
-int	iw_round_blocksize(void *, int, int, const audio_params_t *);
 
 int	iw_commit_settings(void *);
 

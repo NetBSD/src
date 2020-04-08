@@ -1,0 +1,5 @@
+9223372036854775807
+unknown: warning: bad input 9223372036854775808
+unknown: warning: bad input 92233720368547758070
+unknown: warning: bad input +1
+unknown: warning: bad input -1

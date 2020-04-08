@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.1.1.4 2013/09/25 19:06:32 tron Exp $	*/
+/*	$NetBSD: master.h,v 1.1.1.4.26.1 2020/04/08 14:06:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -75,12 +75,13 @@ typedef struct MASTER_SERV {
 #define MASTER_LIMIT_OK(limit, count) ((limit) == 0 || ((count) < (limit)))
 
  /*
-  * Service types.
+  * Service types, stream sockets unless indicated otherwise.
   */
 #define MASTER_SERV_TYPE_UNIX	1	/* AF_UNIX domain socket */
 #define MASTER_SERV_TYPE_INET	2	/* AF_INET domain socket */
 #define MASTER_SERV_TYPE_FIFO	3	/* fifo (named pipe) */
 #define MASTER_SERV_TYPE_PASS	4	/* AF_UNIX domain socket */
+#define MASTER_SERV_TYPE_UXDG	5	/* AF_UNIX domain datagram socket */
 
  /*
   * Default process management policy values. This is only the bare minimum.
@@ -111,6 +112,7 @@ typedef struct MASTER_PROC {
   * master.c
   */
 extern int master_detach;
+extern int init_mode;
 
  /*
   * master_ent.c
@@ -238,4 +240,9 @@ extern int master_monitor(int);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/

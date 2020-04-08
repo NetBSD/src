@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#   Copyright (C) 1990-2014 Free Software Foundation
+#   Copyright (C) 1990-2018 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ set -e
 
 BZIPPROG=bzip2
 GZIPPROG=gzip
+LZIPPROG=lzip
 XZPROG=xz
 MD5PROG=md5sum
 MAKE=make
@@ -36,7 +37,7 @@ MAKEINFOFLAGS=--split-size=5000000
 #
 # Support for building net releases
 
-# Files in devo used in any net release.
+# Files in root used in any net release.
 DEVO_SUPPORT="README Makefile.in configure configure.ac \
 	config.guess config.sub config move-if-change \
 	COPYING COPYING.LIB install-sh config-ml.in symlink-tree \
@@ -45,7 +46,7 @@ DEVO_SUPPORT="README Makefile.in configure configure.ac \
 	Makefile.def Makefile.tpl src-release.sh config.rpath \
 	ChangeLog MAINTAINERS README-maintainer-mode \
 	lt~obsolete.m4 ltgcc.m4 depcomp mkdep compile \
-	COPYING3 COPYING3.LIB"
+	COPYING3 COPYING3.LIB test-driver ar-lib"
 
 # Files in devo/etc used in any net release.
 ETC_SUPPORT="Makefile.in configure configure.in standards.texi \
@@ -76,14 +77,28 @@ do_proto_toplev()
     ver=$2
     tool=$3
     support_files=$4
+
+    echo "==> Cleaning sources."
+    find \( -name "*.orig" -o  -name "*.rej" -o -name "*~" -o -name ".#*" -o -name "*~$bkpat" \) -exec rm {} \;
+    
     echo "==> Making $package-$ver/"
     # Take out texinfo from a few places.
     sed -e '/^all\.normal: /s/\all-texinfo //' \
 	-e '/^	install-texinfo /d' \
 	<Makefile.in >tmp
     mv -f tmp Makefile.in
-    #
-    ./configure --target=i386-pc-linux-gnu
+    # configure.  --enable-gold is needed to ensure .c/.h from .y are
+    # built in the gold dir.  The disables speed the build a little.
+    enables=
+    disables=
+    for dir in binutils gas gdb gold gprof ld libdecnumber readline sim; do
+	case " $tool $support_files " in
+	    *" $dir "*) enables="$enables --enable-$dir" ;;
+	    *) disables="$disables --disable-$dir" ;;
+	esac
+    done
+    echo "==> configure --target=x86_64-pc-linux-gnu $disables $enables"
+    ./configure --quiet --target=x86_64-pc-linux-gnu $disables $enables
     $MAKE configure-host configure-target \
 	ALL_GCC="" ALL_GCC_C="" ALL_GCC_CXX="" \
 	CC_FOR_TARGET="$CC" CXX_FOR_TARGET="$CXX"
@@ -194,6 +209,16 @@ do_gz()
     $GZIPPROG -k -v -9 $package-$ver.tar
 }
 
+# Compress the output with lzip
+do_lz()
+{
+    package=$1
+    ver=$2
+    echo "==> Lzipping $package-$ver.tar.lz"
+    rm -f $package-$ver.tar.lz
+    $LZIPPROG -k -v -9 $package-$ver.tar
+}
+
 # Compress the output with xz
 do_xz()
 {
@@ -216,6 +241,8 @@ do_compress()
 		do_bz2 $package $ver;;
 	    gz)
 		do_gz $package $ver;;
+	    lz)
+		do_lz $package $ver;;
 	    xz)
 		do_xz $package $ver;;
 	    *)
@@ -311,6 +338,7 @@ usage()
     echo "options:"
     echo "  -b: Compress with bzip2"
     echo "  -g: Compress with gzip"
+    echo "  -l: Compress with lzip"
     echo "  -x: Compress with xz"
     exit 1
 }
@@ -335,12 +363,14 @@ build_release()
 
 compressors=""
 
-while getopts ":gbx" opt; do
+while getopts ":bglx" opt; do
     case $opt in
 	b)
 	    compressors="$compressors bz2";;
 	g)
 	    compressors="$compressors gz";;
+	l)
+	    compressors="$compressors lz";;
 	x)
 	    compressors="$compressors xz";;
 	\?)

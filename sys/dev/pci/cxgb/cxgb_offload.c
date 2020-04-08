@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.4.20.1 2019/06/10 22:07:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.4.20.2 2020/04/08 14:08:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1058,7 +1058,7 @@ restore_arp_sans_t3core(void)
     unregister_jprobe(&neigh_update_jprobe);
 }
 
-#else /* Module suport */
+#else /* Module support */
 static inline int
 prepare_arp_with_t3core(void)
 {

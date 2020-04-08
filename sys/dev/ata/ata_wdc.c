@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.110.2.1 2019/06/10 22:07:06 christos Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.110.2.2 2020/04/08 14:08:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.110.2.1 2019/06/10 22:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.110.2.2 2020/04/08 14:08:03 martin Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -206,10 +206,9 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		 * that we never get to this point if that's the case.
 		 */
 		/* If it's not a polled command, we need the kernel thread */
-		if ((xfer->c_flags & C_POLL) == 0 &&
-		    (chp->ch_flags & ATACH_TH_RUN) == 0) {
+		if ((xfer->c_flags & C_POLL) == 0 && !ata_is_thread_run(chp))
 			return ATASTART_TH;
-		}
+
 		/*
 		 * disable interrupts, all commands here should be quick
 		 * enough to be able to poll, and we don't go here that often

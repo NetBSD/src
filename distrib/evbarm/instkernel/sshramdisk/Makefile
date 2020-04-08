@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.17 2018/04/08 15:48:39 mlelstv Exp $
+#	$NetBSD: Makefile,v 1.17.2.1 2020/04/08 14:03:45 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		sshramdisk.fs
-IMAGESIZE=	28000k
+IMAGESIZE=	45000k
 MAKEFS_FLAGS+=	-f 15
 
 .if ${MKREPRO_TIMESTAMP:Uno} != "no"

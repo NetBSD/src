@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.113 2017/04/17 08:32:02 hannken Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.113.12.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.113 2017/04/17 08:32:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.113.12.1 2020/04/08 14:09:04 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -76,8 +76,6 @@ static int mfs_initcnt;
 
 extern int (**mfs_vnodeop_p)(void *);
 
-static struct sysctllog *mfs_sysctl_log;
-
 /*
  * mfs vfs operations.
  */
@@ -116,6 +114,23 @@ struct vfsops mfs_vfsops = {
 	.vfs_opv_descs = mfs_vnodeopv_descs
 };
 
+SYSCTL_SETUP(mfs_sysctl_setup, "mfs sysctl")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "mfs",
+		       SYSCTL_DESCR("Memory based file system"),
+		       NULL, 1, NULL, 0,
+		       CTL_VFS, 3, CTL_EOL);
+	/*
+	 * XXX the "1" and the "3" above could be dynamic, thereby
+	 * eliminating one more instance of the "number to vfs"
+	 * mapping problem, but they are in order as taken from
+	 * sys/mount.h
+	 */
+}
+
 static int
 mfs_modcmd(modcmd_t cmd, void *arg)
 {
@@ -126,24 +141,11 @@ mfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&mfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&mfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-			       CTLTYPE_NODE, "mfs",
-			       SYSCTL_DESCR("Memory based file system"),
-			       NULL, 1, NULL, 0,
-			       CTL_VFS, 3, CTL_EOL);
-		/*
-		 * XXX the "1" and the "3" above could be dynamic, thereby
-		 * eliminating one more instance of the "number to vfs"
-		 * mapping problem, but they are in order as taken from
-		 * sys/mount.h
-		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&mfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_teardown(&mfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

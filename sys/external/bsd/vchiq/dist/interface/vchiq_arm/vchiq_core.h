@@ -43,7 +43,7 @@
 
 /* Run time control of log level, based on KERN_XXX level. */
 #ifndef VCHIQ_LOG_DEFAULT
-#define VCHIQ_LOG_DEFAULT  4
+#define VCHIQ_LOG_DEFAULT  7
 #endif
 #define VCHIQ_LOG_ERROR    3
 #define VCHIQ_LOG_WARNING  4
@@ -263,9 +263,10 @@ typedef struct vchiq_bulk_queue_struct {
 } VCHIQ_BULK_QUEUE_T;
 
 typedef struct remote_event_struct {
-	int armed;
-	int fired;
-	struct semaphore *event;
+	int32_t armed;
+	int32_t fired;
+	uint32_t event; /* offset to VCHIQ_STATE_T */
+#define REMOTE_EVENT_SEMA(s,e) ((struct semaphore *)((char *)(s) + (e)->event))
 } REMOTE_EVENT_T;
 
 typedef struct opaque_platform_state_t *VCHIQ_PLATFORM_STATE_T;
@@ -278,8 +279,8 @@ typedef struct vchiq_slot_struct {
 
 typedef struct vchiq_slot_info_struct {
 	/* Use two counters rather than one to avoid the need for a mutex. */
-	short use_count;
-	short release_count;
+	int16_t use_count;
+	int16_t release_count;
 } VCHIQ_SLOT_INFO_T;
 
 typedef struct vchiq_service_struct {
@@ -346,14 +347,14 @@ typedef struct vchiq_service_quota_struct {
 typedef struct vchiq_shared_state_struct {
 
 	/* A non-zero value here indicates that the content is valid. */
-	int initialised;
+	int32_t initialised;
 
 	/* The first and last (inclusive) slots allocated to the owner. */
-	int slot_first;
-	int slot_last;
+	int32_t slot_first;
+	int32_t slot_last;
 
 	/* The slot allocated to synchronous messages from the owner. */
-	int slot_sync;
+	int32_t slot_sync;
 
 	/* Signalling this event indicates that owner's slot handler thread
 	** should run. */
@@ -362,7 +363,7 @@ typedef struct vchiq_shared_state_struct {
 	/* Indicates the byte position within the stream where the next message
 	** will be written. The least significant bits are an index into the
 	** slot. The next bits are the index of the slot in slot_queue. */
-	int tx_pos;
+	int32_t tx_pos;
 
 	/* This event should be signalled when a slot is recycled. */
 	REMOTE_EVENT_T recycle;
@@ -378,21 +379,21 @@ typedef struct vchiq_shared_state_struct {
 	REMOTE_EVENT_T sync_release;
 
 	/* A circular buffer of slot indexes. */
-	int slot_queue[VCHIQ_MAX_SLOTS_PER_SIDE];
+	int32_t slot_queue[VCHIQ_MAX_SLOTS_PER_SIDE];
 
 	/* Debugging state */
-	int debug[DEBUG_MAX];
+	int32_t debug[DEBUG_MAX];
 } VCHIQ_SHARED_STATE_T;
 
 typedef struct vchiq_slot_zero_struct {
-	int magic;
-	short version;
-	short version_min;
-	int slot_zero_size;
-	int slot_size;
-	int max_slots;
-	int max_slots_per_side;
-	int platform_data[2];
+	int32_t magic;
+	int16_t version;
+	int16_t version_min;
+	int32_t slot_zero_size;
+	int32_t slot_size;
+	int32_t max_slots;
+	int32_t max_slots_per_side;
+	int32_t platform_data[2];
 	VCHIQ_SHARED_STATE_T master;
 	VCHIQ_SHARED_STATE_T slave;
 	VCHIQ_SLOT_INFO_T slots[VCHIQ_MAX_SLOTS];

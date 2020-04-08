@@ -1,4 +1,4 @@
-/*	$NetBSD: alaw.c,v 1.2.2.2 2019/06/10 22:07:06 christos Exp $	*/
+/*	$NetBSD: alaw.c,v 1.2.2.3 2020/04/08 14:08:03 martin Exp $	*/
 
 /*
  * Copyright (C) 2018 Tetsuya Isaki. All rights reserved.
@@ -26,15 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alaw.c,v 1.2.2.2 2019/06/10 22:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alaw.c,v 1.2.2.3 2020/04/08 14:08:03 martin Exp $");
 
-#if defined(_KERNEL)
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <dev/audio/audiovar.h>
 #include <dev/audio/mulaw.h>
-#endif
 
 static const uint16_t alaw_to_slinear16[256] = {
 	0xea80, 0xeb80, 0xe880, 0xe980, 0xee80, 0xef80, 0xec80, 0xed80,

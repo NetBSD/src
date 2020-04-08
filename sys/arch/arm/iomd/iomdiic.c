@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiic.c,v 1.8 2016/02/14 19:54:20 chs Exp $	*/
+/*	$NetBSD: iomdiic.c,v 1.8.18.1 2020/04/08 14:07:29 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -57,7 +57,6 @@ struct iomdiic_softc {
 	bus_space_handle_t sc_sh;
 
 	struct i2c_controller sc_i2c;
-	kmutex_t sc_buslock;
 
 	/*
 	 * The SDA pin is open-drain, so we make it an input by
@@ -65,9 +64,6 @@ struct iomdiic_softc {
 	 */
 	uint8_t sc_iomd_iocr;
 };
-
-static int	iomdiic_acquire_bus(void *, int);
-static void	iomdiic_release_bus(void *, int);
 
 static int	iomdiic_send_start(void *, int);
 static int	iomdiic_send_stop(void *, int);
@@ -136,11 +132,8 @@ iomdiic_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
-
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = iomdiic_acquire_bus;
-	sc->sc_i2c.ic_release_bus = iomdiic_release_bus;
 	sc->sc_i2c.ic_send_start = iomdiic_send_start;
 	sc->sc_i2c.ic_send_stop = iomdiic_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = iomdiic_initiate_xfer;
@@ -165,9 +158,9 @@ iomdiic_bootstrap_cookie(void)
 	strcpy(dev.dv_xname, "iomdiicboot");
 
 	sc.sc_dev = &dev;
+
+	iic_tag_init(&sc.sc_i2c);
 	sc.sc_i2c.ic_cookie = &sc;
-	sc.sc_i2c.ic_acquire_bus = iomdiic_acquire_bus;
-	sc.sc_i2c.ic_release_bus = iomdiic_release_bus;
 	sc.sc_i2c.ic_send_start = iomdiic_send_start;
 	sc.sc_i2c.ic_send_stop = iomdiic_send_stop;
 	sc.sc_i2c.ic_initiate_xfer = iomdiic_initiate_xfer;
@@ -175,31 +168,6 @@ iomdiic_bootstrap_cookie(void)
 	sc.sc_i2c.ic_write_byte = iomdiic_write_byte;
 
 	return ((void *) &sc.sc_i2c);
-}
-
-static int
-iomdiic_acquire_bus(void *cookie, int flags)
-{
-	struct iomdiic_softc *sc = cookie;
-
-	/* XXX What should we do for the polling case? */
-	if (flags & I2C_F_POLL)
-		return (0);
-
-	mutex_enter(&sc->sc_buslock);
-	return (0);
-}
-
-static void
-iomdiic_release_bus(void *cookie, int flags)
-{
-	struct iomdiic_softc *sc = cookie;
-
-	/* XXX See above. */
-	if (flags & I2C_F_POLL)
-		return;
-
-	mutex_exit(&sc->sc_buslock);
 }
 
 static int

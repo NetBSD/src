@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_atombios.c,v 1.3.6.2 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: amdgpu_atombios.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,9 +26,8 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios.c,v 1.3.6.2 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $");
 
-#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
@@ -105,7 +104,7 @@ struct amdgpu_i2c_bus_rec amdgpu_atombios_lookup_i2c_gpio(struct amdgpu_device *
 	i2c.valid = false;
 
 	if (amdgpu_atom_parse_data_header(ctx, index, &size, NULL, NULL, &data_offset)) {
-		i2c_info = (struct _ATOM_GPIO_I2C_INFO *)((char *)ctx->bios + data_offset);
+		i2c_info = (struct _ATOM_GPIO_I2C_INFO *)(ctx->bios + data_offset);
 
 		num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) /
 			sizeof(ATOM_GPIO_I2C_ASSIGMENT);
@@ -139,7 +138,7 @@ void amdgpu_atombios_i2c_init(struct amdgpu_device *adev)
 	char stmp[32];
 
 	if (amdgpu_atom_parse_data_header(ctx, index, &size, NULL, NULL, &data_offset)) {
-		i2c_info = (struct _ATOM_GPIO_I2C_INFO *)((char *)ctx->bios + data_offset);
+		i2c_info = (struct _ATOM_GPIO_I2C_INFO *)(ctx->bios + data_offset);
 
 		num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) /
 			sizeof(ATOM_GPIO_I2C_ASSIGMENT);
@@ -176,7 +175,7 @@ amdgpu_atombios_lookup_gpio(struct amdgpu_device *adev,
 	gpio.valid = false;
 
 	if (amdgpu_atom_parse_data_header(ctx, index, &size, NULL, NULL, &data_offset)) {
-		gpio_info = (struct _ATOM_GPIO_PIN_LUT *)((char *)ctx->bios + data_offset);
+		gpio_info = (struct _ATOM_GPIO_PIN_LUT *)(ctx->bios + data_offset);
 
 		num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) /
 			sizeof(ATOM_GPIO_PIN_ASSIGNMENT);
@@ -301,18 +300,18 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 	if (crev < 2)
 		return false;
 
-	obj_header = (ATOM_OBJECT_HEADER *) ((char *)ctx->bios + data_offset);
+	obj_header = (ATOM_OBJECT_HEADER *) (ctx->bios + data_offset);
 	path_obj = (ATOM_DISPLAY_OBJECT_PATH_TABLE *)
-	    ((char *)ctx->bios + data_offset +
+	    (ctx->bios + data_offset +
 	     le16_to_cpu(obj_header->usDisplayPathTableOffset));
 	con_obj = (ATOM_CONNECTOR_OBJECT_TABLE *)
-	    ((char *)ctx->bios + data_offset +
+	    (ctx->bios + data_offset +
 	     le16_to_cpu(obj_header->usConnectorObjectTableOffset));
 	enc_obj = (ATOM_ENCODER_OBJECT_TABLE *)
-	    ((char *)ctx->bios + data_offset +
+	    (ctx->bios + data_offset +
 	     le16_to_cpu(obj_header->usEncoderObjectTableOffset));
 	router_obj = (ATOM_OBJECT_TABLE *)
-		((char *)ctx->bios + data_offset +
+		(ctx->bios + data_offset +
 		 le16_to_cpu(obj_header->usRouterObjectTableOffset));
 	device_support = le16_to_cpu(obj_header->usDeviceSupport);
 
@@ -377,7 +376,7 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 						u16 encoder_obj = le16_to_cpu(enc_obj->asObjects[k].usObjectID);
 						if (le16_to_cpu(path->usGraphicObjIds[j]) == encoder_obj) {
 							ATOM_COMMON_RECORD_HEADER *record = (ATOM_COMMON_RECORD_HEADER *)
-								((char *)ctx->bios + data_offset +
+								(ctx->bios + data_offset +
 								 le16_to_cpu(enc_obj->asObjects[k].usRecordOffset));
 							ATOM_ENCODER_CAP_RECORD *cap_record;
 							u16 caps = 0;
@@ -405,7 +404,7 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 						u16 router_obj_id = le16_to_cpu(router_obj->asObjects[k].usObjectID);
 						if (le16_to_cpu(path->usGraphicObjIds[j]) == router_obj_id) {
 							ATOM_COMMON_RECORD_HEADER *record = (ATOM_COMMON_RECORD_HEADER *)
-								((char *)ctx->bios + data_offset +
+								(ctx->bios + data_offset +
 								 le16_to_cpu(router_obj->asObjects[k].usRecordOffset));
 							ATOM_I2C_RECORD *i2c_record;
 							ATOM_I2C_ID_CONFIG_ACCESS *i2c_config;
@@ -413,7 +412,7 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 							ATOM_ROUTER_DATA_CLOCK_PATH_SELECT_RECORD *cd_path;
 							ATOM_SRC_DST_TABLE_FOR_ONE_OBJECT *router_src_dst_table =
 								(ATOM_SRC_DST_TABLE_FOR_ONE_OBJECT *)
-								((char *)ctx->bios + data_offset +
+								(ctx->bios + data_offset +
 								 le16_to_cpu(router_obj->asObjects[k].usSrcDstTableOffset));
 							u8 *num_dst_objs = (u8 *)
 								((u8 *)router_src_dst_table + 1 +
@@ -483,7 +482,7 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 						    *record =
 						    (ATOM_COMMON_RECORD_HEADER
 						     *)
-						    ((char *)ctx->bios + data_offset +
+						    (ctx->bios + data_offset +
 						     le16_to_cpu(con_obj->
 								 asObjects[j].
 								 usRecordOffset));
@@ -578,7 +577,7 @@ int amdgpu_atombios_get_clock_info(struct amdgpu_device *adev)
 		struct amdgpu_pll *spll = &adev->clock.spll;
 		struct amdgpu_pll *mpll = &adev->clock.mpll;
 		union firmware_info *firmware_info =
-			(union firmware_info *)((char *)mode_info->atom_context->bios +
+			(union firmware_info *)(mode_info->atom_context->bios +
 						data_offset);
 		/* pixel clocks */
 		ppll->reference_freq =
@@ -737,7 +736,7 @@ static void amdgpu_atombios_get_igp_ss_overrides(struct amdgpu_device *adev,
 	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, &size,
 				   &frev, &crev, &data_offset)) {
 		igp_info = (union igp_info *)
-			((char *)mode_info->atom_context->bios + data_offset);
+			(mode_info->atom_context->bios + data_offset);
 		switch (crev) {
 		case 6:
 			switch (id) {
@@ -852,7 +851,7 @@ bool amdgpu_atombios_get_asic_ss_info(struct amdgpu_device *adev,
 				   &frev, &crev, &data_offset)) {
 
 		ss_info =
-			(union asic_ss_info *)((char *)mode_info->atom_context->bios + data_offset);
+			(union asic_ss_info *)(mode_info->atom_context->bios + data_offset);
 
 		switch (frev) {
 		case 1:
@@ -1198,7 +1197,7 @@ int amdgpu_atombios_get_leakage_vddc_based_on_leakage_params(struct amdgpu_devic
 		return -EINVAL;
 
 	profile = (ATOM_ASIC_PROFILING_INFO_V2_1 *)
-		((char *)adev->mode_info.atom_context->bios + data_offset);
+		(adev->mode_info.atom_context->bios + data_offset);
 
 	switch (frev) {
 	case 1:
@@ -1209,19 +1208,19 @@ int amdgpu_atombios_get_leakage_vddc_based_on_leakage_params(struct amdgpu_devic
 			if (size < sizeof(ATOM_ASIC_PROFILING_INFO_V2_1))
 				return -EINVAL;
 			leakage_bin = (u16 *)
-				((char *)adev->mode_info.atom_context->bios + data_offset +
+				(adev->mode_info.atom_context->bios + data_offset +
 				 le16_to_cpu(profile->usLeakageBinArrayOffset));
 			vddc_id_buf = (u16 *)
-				((char *)adev->mode_info.atom_context->bios + data_offset +
+				(adev->mode_info.atom_context->bios + data_offset +
 				 le16_to_cpu(profile->usElbVDDC_IdArrayOffset));
 			vddc_buf = (u16 *)
-				((char *)adev->mode_info.atom_context->bios + data_offset +
+				(adev->mode_info.atom_context->bios + data_offset +
 				 le16_to_cpu(profile->usElbVDDC_LevelArrayOffset));
 			vddci_id_buf = (u16 *)
-				((char *)adev->mode_info.atom_context->bios + data_offset +
+				(adev->mode_info.atom_context->bios + data_offset +
 				 le16_to_cpu(profile->usElbVDDCI_IdArrayOffset));
 			vddci_buf = (u16 *)
-				((char *)adev->mode_info.atom_context->bios + data_offset +
+				(adev->mode_info.atom_context->bios + data_offset +
 				 le16_to_cpu(profile->usElbVDDCI_LevelArrayOffset));
 
 			if (profile->ucElbVDDC_Num > 0) {
@@ -1342,7 +1341,7 @@ amdgpu_atombios_is_voltage_gpio(struct amdgpu_device *adev,
 	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
 				   &frev, &crev, &data_offset)) {
 		voltage_info = (union voltage_object_info *)
-			((char *)adev->mode_info.atom_context->bios + data_offset);
+			(adev->mode_info.atom_context->bios + data_offset);
 
 		switch (frev) {
 		case 3:
@@ -1380,7 +1379,7 @@ int amdgpu_atombios_get_voltage_table(struct amdgpu_device *adev,
 	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
 				   &frev, &crev, &data_offset)) {
 		voltage_info = (union voltage_object_info *)
-			((char *)adev->mode_info.atom_context->bios + data_offset);
+			(adev->mode_info.atom_context->bios + data_offset);
 
 		switch (frev) {
 		case 3:
@@ -1452,7 +1451,7 @@ int amdgpu_atombios_init_mc_reg_table(struct amdgpu_device *adev,
 	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
 				   &frev, &crev, &data_offset)) {
 		vram_info = (union vram_info *)
-			((char *)adev->mode_info.atom_context->bios + data_offset);
+			(adev->mode_info.atom_context->bios + data_offset);
 		switch (frev) {
 		case 1:
 			DRM_ERROR("old table version %d, %d\n", frev, crev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.103.2.1 2019/06/10 22:10:18 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.103.2.2 2020/04/08 14:09:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,6 +110,10 @@ extern const char *progname;
 #define CONFIG_VERSION		20180827
 #define CONFIG_MINVERSION	0
 
+struct where {
+	const char *w_srcfile;		/* file name where we are defined */
+	u_short	w_srcline;		/* line number where we are defined */
+};
 /*
  * Name/value lists.  Values can be strings or pointers and/or can carry
  * integers.  The names can be NULL, resulting in simple value lists.
@@ -123,6 +127,7 @@ struct nvlist {
 	int		nv_ifunit;		/* XXX XXX XXX */
 	int		nv_flags;
 #define	NV_DEPENDED	1
+	struct where	nv_where;
 };
 
 /*
@@ -131,10 +136,10 @@ struct nvlist {
 struct config {
 	TAILQ_ENTRY(config) cf_next;
 	const char *cf_name;		/* "netbsd" */
-	int	cf_lineno;		/* source line */
 	const char *cf_fstype;		/* file system type */
 	struct	nvlist *cf_root;	/* "root on ra0a" */
 	struct	nvlist *cf_dump;	/* "dumps on ra0b" */
+	struct where	cf_where;
 };
 
 /*
@@ -147,6 +152,7 @@ struct defoptlist {
 	const char *dl_lintvalue;
 	int dl_obsolete;
 	struct nvlist *dl_depends;
+	struct where	dl_where;
 };
 
 struct files;
@@ -199,6 +205,7 @@ struct attr {
 
 	/* "device class" */
 	const char *a_devclass;		/* device class described */
+	struct where a_where;
 };
 
 /*
@@ -277,8 +284,7 @@ struct devbase {
 	struct	deva *d_ahead;		/* first attachment, if any */
 	struct	deva **d_app;		/* used for tacking on attachments */
 	struct	attr *d_classattr;	/* device class attribute (if any) */
-	const char *d_srcfile;		/* file name where we are defined */
-	u_short	d_srcline;		/* line number where we are defined */
+	struct	where d_where;
 };
 
 struct deva {
@@ -291,8 +297,7 @@ struct deva {
 	struct	attrlist *d_attrs;	/* attributes, if any */
 	struct	devi *d_ihead;		/* first instance, if any */
 	struct	devi **d_ipp;		/* used for tacking on more instances */
-	const char *d_srcfile;		/* file name where we are defined */
-	u_short	d_srcline;		/* line number where we are defined */
+	struct	where d_where;
 };
 
 /*
@@ -319,8 +324,6 @@ struct devi {
 	struct	deva *i_atdeva;
 	const char **i_locs;	/* locators (as given by pspec's iattr) */
 	int	i_cfflags;	/* flags from config line */
-	int	i_lineno;	/* line # in config, for later errors */
-	const char *i_srcfile;	/* file it appears in */
 	int	i_level;	/* position between negated instances */
 	int	i_active;
 #define	DEVI_ORPHAN	0	/* instance has no active parent */
@@ -333,7 +336,7 @@ struct devi {
 	short	i_collapsed;	/* set => this alias no longer needed */
 	u_short	i_cfindex;	/* our index in cfdata */
 	int	i_locoff;	/* offset in locators.vec */
-
+	struct	where i_where;
 };
 /* special units */
 #define	STAR	(-1)		/* unit number for, e.g., "sd*" */
@@ -346,8 +349,7 @@ struct devi {
 struct files {
 	TAILQ_ENTRY(files) fi_next;
 	TAILQ_ENTRY(files) fi_snext;	/* per-suffix list */
-	const char *fi_srcfile;	/* the name of the "files" file that got us */
-	u_short	fi_srcline;	/* and the line number */
+	struct	where fi_where;
 	u_char fi_flags;	/* as below */
 	const char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
 	const char *fi_base;	/* tail minus ".c" (or whatever) */
@@ -418,13 +420,12 @@ struct prefix {
  */
 struct devm {
 	TAILQ_ENTRY(devm) dm_next;
-	const char	*dm_srcfile;	/* the name of the "majors" file */
-	u_short		dm_srcline;	/* the line number */
 	const char	*dm_name;	/* [bc]devsw name */
 	devmajor_t	dm_cmajor;	/* character major */
 	devmajor_t	dm_bmajor;	/* block major */
 	struct condexpr	*dm_opts;	/* options */
 	struct nvlist	*dm_devnodes;	/* information on /dev nodes */
+	struct where dm_where;
 };
 
 /*
@@ -436,80 +437,88 @@ struct devm {
  */
 struct hashtab;
 
-int lkmmode;
-const char *conffile;		/* source file, e.g., "GENERIC.sparc" */
-const char *machine;		/* machine type, e.g., "sparc" or "sun3" */
-const char *machinearch;	/* machine arch, e.g., "sparc" or "m68k" */
-struct	nvlist *machinesubarches;
+extern int lkmmode;
+extern const char *conffile;		/* source file, e.g., "GENERIC.sparc" */
+extern const char *machine;		/* machine type, e.g., "sparc" or "sun3" */
+extern const char *machinearch;	/* machine arch, e.g., "sparc" or "m68k" */
+extern struct	nvlist *machinesubarches;
 				/* machine subarches, e.g., "sun68k" or "hpc" */
-const char *ioconfname;		/* ioconf name, mutually exclusive to machine */
-const char *srcdir;		/* path to source directory (rel. to build) */
-const char *builddir;		/* path to build directory */
-const char *defbuilddir;	/* default build directory */
-const char *ident;		/* kernel "ident"ification string */
-int	errors;			/* counts calls to error() */
-int	minmaxusers;		/* minimum "maxusers" parameter */
-int	defmaxusers;		/* default "maxusers" parameter */
-int	maxmaxusers;		/* default "maxusers" parameter */
-int	maxusers;		/* configuration's "maxusers" parameter */
-int	maxpartitions;		/* configuration's "maxpartitions" parameter */
-int	version;		/* version of the configuration file */
-struct	nvlist *options;	/* options */
-struct	nvlist *fsoptions;	/* filesystems */
-struct	nvlist *mkoptions;	/* makeoptions */
-struct	nvlist *appmkoptions;	/* appending mkoptions */
-struct	nvlist *condmkoptions;	/* conditional makeoption table */
-struct	hashtab *devbasetab;	/* devbase lookup */
-struct	hashtab *devroottab;	/* attach at root lookup */
-struct	hashtab *devatab;	/* devbase attachment lookup */
-struct	hashtab *devitab;	/* device instance lookup */
-struct	hashtab *deaddevitab;	/* removed instances lookup */
-struct	hashtab *selecttab;	/* selects things that are "optional foo" */
-struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
-struct	hashtab *opttab;	/* table of configured options */
-struct	hashtab *fsopttab;	/* table of configured file systems */
-struct	dlhash *defopttab;	/* options that have been "defopt"'d */
-struct	dlhash *defflagtab;	/* options that have been "defflag"'d */
-struct	dlhash *defparamtab;	/* options that have been "defparam"'d */
-struct	dlhash *defoptlint;	/* lint values for options */
-struct	nvhash *deffstab;	/* defined file systems */
-struct	dlhash *optfiletab;	/* "defopt"'d option .h files */
-struct	hashtab *attrtab;	/* attributes (locators, etc.) */
-struct	hashtab *attrdeptab;	/* attribute dependencies */
-struct	hashtab *bdevmtab;	/* block devm lookup */
-struct	hashtab *cdevmtab;	/* character devm lookup */
+extern const char *ioconfname;		/* ioconf name, mutually exclusive to machine */
+extern const char *srcdir;		/* path to source directory (rel. to build) */
+extern const char *builddir;		/* path to build directory */
+extern const char *defbuilddir;	/* default build directory */
+extern const char *ident;		/* kernel "ident"ification string */
+extern int	errors;			/* counts calls to error() */
+extern int	minmaxusers;		/* minimum "maxusers" parameter */
+extern int	defmaxusers;		/* default "maxusers" parameter */
+extern int	maxmaxusers;		/* default "maxusers" parameter */
+extern int	maxusers;		/* configuration's "maxusers" parameter */
+extern int	maxpartitions;		/* configuration's "maxpartitions" parameter */
+extern int	version;		/* version of the configuration file */
+extern struct	nvlist *options;	/* options */
+extern struct	nvlist *fsoptions;	/* filesystems */
+extern struct	nvlist *mkoptions;	/* makeoptions */
+extern struct	nvlist *appmkoptions;	/* appending mkoptions */
+extern struct	nvlist *condmkoptions;	/* conditional makeoption table */
+extern struct	hashtab *devbasetab;	/* devbase lookup */
+extern struct	hashtab *devroottab;	/* attach at root lookup */
+extern struct	hashtab *devatab;	/* devbase attachment lookup */
+extern struct	hashtab *devitab;	/* device instance lookup */
+extern struct	hashtab *deaddevitab;	/* removed instances lookup */
+extern struct	hashtab *selecttab;	/* selects things that are "optional foo" */
+extern struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
+extern struct	hashtab *opttab;	/* table of configured options */
+extern struct	hashtab *fsopttab;	/* table of configured file systems */
+extern struct	dlhash *defopttab;	/* options that have been "defopt"'d */
+extern struct	dlhash *defflagtab;	/* options that have been "defflag"'d */
+extern struct	dlhash *defparamtab;	/* options that have been "defparam"'d */
+extern struct	dlhash *defoptlint;	/* lint values for options */
+extern struct	nvhash *deffstab;	/* defined file systems */
+extern struct	dlhash *optfiletab;	/* "defopt"'d option .h files */
+extern struct	hashtab *attrtab;	/* attributes (locators, etc.) */
+extern struct	hashtab *attrdeptab;	/* attribute dependencies */
+extern struct	hashtab *bdevmtab;	/* block devm lookup */
+extern struct	hashtab *cdevmtab;	/* character devm lookup */
 
-TAILQ_HEAD(, devbase)	allbases;	/* list of all devbase structures */
-TAILQ_HEAD(, deva)	alldevas;	/* list of all devbase attachments */
-TAILQ_HEAD(conftq, config) allcf;	/* list of configured kernels */
-TAILQ_HEAD(, devi)	alldevi,	/* list of all instances */
-			allpseudo;	/* list of all pseudo-devices */
-TAILQ_HEAD(, devm)	alldevms;	/* list of all device-majors */
-TAILQ_HEAD(, pspec)	allpspecs;	/* list of all parent specs */
-int	ndevi;				/* number of devi's (before packing) */
-int	npspecs;			/* number of parent specs */
-devmajor_t maxbdevm;			/* max number of block major */
-devmajor_t maxcdevm;			/* max number of character major */
-int	do_devsw;			/* 0 if pre-devsw config */
-int	oktopackage;			/* 0 before setmachine() */
-int	devilevel;			/* used for devi->i_level */
+TAILQ_HEAD(devbasetq, devbase);
+TAILQ_HEAD(devatq, deva);
+TAILQ_HEAD(conftq, config);
+TAILQ_HEAD(devitq, devi);
+TAILQ_HEAD(devmtq, devm);
+TAILQ_HEAD(pspectq, pspec);
 
-struct filelist		allfiles;	/* list of all kernel source files */
-struct filelist		allcfiles;	/* list of all .c files */
-struct filelist		allsfiles;	/* list of all .S files */
-struct filelist		allofiles;	/* list of all .o files */
+extern struct devbasetq allbases;	/* list of all devbase structures */
+extern struct devatq alldevas;		/* list of all devbase attachments */
+extern struct conftq allcf;		/* list of configured kernels */
+extern struct devitq alldevi,		/* list of all instances */
+		     allpseudo;		/* list of all pseudo-devices */
+extern struct devmtq alldevms;		/* list of all device-majors */
+extern struct pspectq allpspecs;	/* list of all parent specs */
+extern int	ndevi;			/* number of devi's (before packing) */
+extern int	npspecs;		/* number of parent specs */
+extern devmajor_t maxbdevm;		/* max number of block major */
+extern devmajor_t maxcdevm;		/* max number of character major */
+extern int	do_devsw;		/* 0 if pre-devsw config */
+extern int	oktopackage;		/* 0 before setmachine() */
+extern int	devilevel;		/* used for devi->i_level */
 
-struct prefixlist	prefixes,	/* prefix stack */
-			allprefixes;	/* all prefixes used (after popped) */
-struct prefixlist	buildprefixes,	/* build prefix stack */
-			allbuildprefixes;/* all build prefixes used (after popped) */
-SLIST_HEAD(, prefix)	curdirs;	/* curdir stack */
+extern struct filelist		allfiles;	/* list of all kernel source files */
+extern struct filelist		allcfiles;	/* list of all .c files */
+extern struct filelist		allsfiles;	/* list of all .S files */
+extern struct filelist		allofiles;	/* list of all .o files */
+
+extern struct prefixlist	prefixes,	/* prefix stack */
+				allprefixes;	/* all prefixes used
+						 * (after popped) */
+extern struct prefixlist	buildprefixes,	/* build prefix stack */
+				allbuildprefixes;/* all build prefixes used
+						  * (after popped) */
 
 extern struct attr allattr;
-struct	devi **packed;		/* arrayified table for packed devi's */
-size_t	npacked;		/* size of packed table, <= ndevi */
+extern struct devi **packed;	/* arrayified table for packed devi's */
+extern size_t npacked;		/* size of packed table, <= ndevi */
 
-struct {			/* loc[] table for config */
+extern struct locators {			/* loc[] table for config */
 	const char **vec;
 	int	used;
 } locators;
@@ -581,7 +590,7 @@ void	deloption(const char *, int);
 void	delfsoption(const char *, int);
 void	delmkoption(const char *, int);
 int	devbase_has_instances(struct devbase *, int);
-int	is_declared_option(const char *);
+struct where *find_declared_option(const char *);
 int	deva_has_instances(struct deva *, int);
 void	setupdirs(void);
 void	fixmaxusers(void);
@@ -594,7 +603,7 @@ const char *strtolower(const char *);
 #define OPT_DEFFLAG(n)	(dlhash_lookup(defflagtab, (n)) != NULL)
 #define OPT_DEFPARAM(n)	(dlhash_lookup(defparamtab, (n)) != NULL)
 #define OPT_OBSOLETE(n)	(dlhash_lookup(obsopttab, (n)) != NULL)
-#define DEFINED_OPTION(n) (is_declared_option((n)))
+#define DEFINED_OPTION(n) (find_declared_option((n)))
 
 /* main.c */
 void	logconfig_include(FILE *, const char *);

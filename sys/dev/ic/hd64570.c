@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.54 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.54.2.1 2020/04/08 14:08:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.54 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.54.2.1 2020/04/08 14:08:06 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -878,15 +878,18 @@ sca_output(
 			IF_ENQUEUE(ifq, m);
 	} else
 		IFQ_ENQUEUE(&ifp->if_snd, m, error);
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (error != 0) {
+		if_statinc_ref(nsr, if_oerrors);
+		if_statinc_ref(nsr, if_collisions);
+		IF_STAT_PUTREF(ifp);
 		splx(s);
-		ifp->if_oerrors++;
-		ifp->if_collisions++;
 		return (error);
 	}
-	ifp->if_obytes += len;
+	if_statadd_ref(nsr, if_obytes, len);
 	if (mflags & M_MCAST)
-		ifp->if_omcasts++;
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(ifp);
 
 	sca_start(ifp);
 	splx(s);
@@ -1113,7 +1116,7 @@ X
 	sca_desc_write_buflen(sc, desc, len);
 	sca_desc_write_stat(sc, desc, SCA_DESC_EOM);
 
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	/*
 	 * Pass packet to bpf if there is a listener.
@@ -1490,7 +1493,7 @@ sca_frame_avail(sca_port_t *scp)
 			 * consider an error condition the end
 			 * of a frame
 			 */
-			scp->sp_if.if_ierrors++;
+			if_statinc(&scp->sp_if, if_ierrors);
 			toolong = 0;
 			continue;
 		}
@@ -1509,7 +1512,7 @@ sca_frame_avail(sca_port_t *scp)
 			 * we currently don't deal with frames
 			 * larger than a single buffer (fixed MTU)
 			 */
-			scp->sp_if.if_ierrors++;
+			if_statinc(&scp->sp_if, if_ierrors);
 			toolong = 1;
 		}
 		SCA_DPRINTF(SCA_DEBUG_RX, ("RX: idx %d no EOM\n",
@@ -1557,7 +1560,7 @@ sca_frame_process(sca_port_t *scp)
 	 * skip packets that are too short
 	 */
 	if (len < sizeof(struct hdlc_header)) {
-		scp->sp_if.if_ierrors++;
+		if_statinc(&scp->sp_if, if_ierrors);
 		return;
 	}
 
@@ -1578,7 +1581,7 @@ sca_frame_process(sca_port_t *scp)
 
 	bpf_mtap_softint(&scp->sp_if, m);
 
-	scp->sp_if.if_ipackets++;
+	if_statinc(&scp->sp_if, if_ipackets);
 
 	hdlc = mtod(m, struct hdlc_header *);
 	switch (ntohs(hdlc->h_proto)) {
@@ -1610,7 +1613,7 @@ sca_frame_process(sca_port_t *scp)
 			SCA_DPRINTF(SCA_DEBUG_CISCO,
 				    ("short CISCO packet %d, wanted %d\n",
 				     len, CISCO_PKT_LEN));
-			scp->sp_if.if_ierrors++;
+			if_statinc(&scp->sp_if, if_ierrors);
 			goto dropit;
 		}
 
@@ -1627,12 +1630,12 @@ sca_frame_process(sca_port_t *scp)
 		switch (ntohl(cisco->type)) {
 		case CISCO_ADDR_REQ:
 			printf("Got CISCO addr_req, ignoring\n");
-			scp->sp_if.if_ierrors++;
+			if_statinc(&scp->sp_if, if_ierrors);
 			goto dropit;
 
 		case CISCO_ADDR_REPLY:
 			printf("Got CISCO addr_reply, ignoring\n");
-			scp->sp_if.if_ierrors++;
+			if_statinc(&scp->sp_if, if_ierrors);
 			goto dropit;
 
 		case CISCO_KEEPALIVE_REQ:
@@ -1677,7 +1680,7 @@ sca_frame_process(sca_port_t *scp)
 				    ("Unknown CISCO keepalive protocol 0x%04x\n",
 				     ntohl(cisco->type)));
 
-			scp->sp_if.if_noproto++;
+			if_statinc(&scp->sp_if, if_noproto);
 			goto dropit;
 		}
 		return;
@@ -1685,14 +1688,14 @@ sca_frame_process(sca_port_t *scp)
 		SCA_DPRINTF(SCA_DEBUG_RX,
 			    ("Unknown/unexpected ethertype 0x%04x\n",
 			     ntohs(hdlc->h_proto)));
-		scp->sp_if.if_noproto++;
+		if_statinc(&scp->sp_if, if_noproto);
 		goto dropit;
 	}
 
 	/* Queue the packet */
 	if (__predict_true(pktq)) {
 		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
-			scp->sp_if.if_iqdrops++;
+			if_statinc(&scp->sp_if, if_iqdrops);
 			goto dropit;
 		}
 		return;
@@ -1702,7 +1705,7 @@ sca_frame_process(sca_port_t *scp)
 		schednetisr(isr);
 	} else {
 		IF_DROP(ifq);
-		scp->sp_if.if_iqdrops++;
+		if_statinc(&scp->sp_if, if_iqdrops);
 		goto dropit;
 	}
 	return;

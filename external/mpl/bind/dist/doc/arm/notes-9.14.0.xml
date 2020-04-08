@@ -1,0 +1,486 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<section xml:id="relnotes-9.14.0"><info><title>Notes for BIND 9.14.0</title></info>
+
+  <section xml:id="relnotes-9.14.0-features"><info><title>New Features</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          Task manager and socket code have been substantially modified.
+          The manager uses per-cpu queues for tasks and network stack runs
+          multiple event loops in CPU-affinitive threads. This greatly
+          improves performance on large systems, especially when using
+          multi-queue NICs.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Support for QNAME minimization was added and enabled by default
+          in <command>relaxed</command> mode, in which BIND will fall back
+          to normal resolution if the remote server returns something
+          unexpected during the query minimization process. This default
+          setting might change to <command>strict</command> in the future.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          A new <command>plugin</command> mechanism has been added to allow
+          extension of query processing functionality through the use of
+          external libraries. The new <filename>filter-aaaa.so</filename>
+          plugin replaces the <command>filter-aaaa</command> feature that
+          was formerly implemented as a native part of BIND.
+        </para>
+        <para>
+          The plugin API is a work in progress and is likely to evolve
+          as further plugins are implemented. [GL #15]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          A new secondary zone option, <command>mirror</command>,
+          enables <command>named</command> to serve a transferred copy
+          of a zone's contents without acting as an authority for the
+          zone. A zone must be fully validated against an active trust
+          anchor before it can be used as a mirror zone. DNS responses
+          from mirror zones do not set the AA bit ("authoritative answer"),
+          but do set the AD bit ("authenticated data"). This feature is
+          meant to facilitate deployment of a local copy of the root zone,
+          as described in RFC 7706. [GL #33]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          BIND now can be compiled against the <command>libidn2</command>
+          library to add IDNA2008 support.  Previously, BIND supported
+          IDNA2003 using the (now obsolete and unsupported)
+          <command>idnkit-1</command> library.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>named</command> now supports the "root key sentinel"
+          mechanism. This enables validating resolvers to indicate
+          which trust anchors are configured for the root, so that
+          information about root key rollover status can be gathered.
+          To disable this feature, add
+          <command>root-key-sentinel no;</command> to
+          <filename>named.conf</filename>. [GL #37]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <command>dnskey-sig-validity</command> option allows the
+          <command>sig-validity-interval</command> to be overriden for
+          signatures covering DNSKEY RRsets. [GL #145]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          When built on Linux, BIND now requires the <command>libcap</command>
+          library to set process privileges.  The adds a new compile-time
+          dependency, which can be met on most Linux platforms by installing the
+          <command>libcap-dev</command> or <command>libcap-devel</command>
+          package. BIND can also be built without capability support by using
+          <command>configure --disable-linux-caps</command>, at the cost of some
+          loss of security.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <command>validate-except</command> option specifies a list of
+          domains beneath which DNSSEC validation should not be performed,
+          regardless of whether a trust anchor has been configured above
+          them. [GL #237]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Two new update policy rule types have been added
+          <command>krb5-selfsub</command> and <command>ms-selfsub</command>
+          which allow machines with Kerberos principals to update
+          the name space at or below the machine names identified
+          in the respective principals.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The new configure option <command>--enable-fips-mode</command>
+          can be used to make BIND enable and enforce FIPS mode in the
+          OpenSSL library.  When compiled with such option the BIND will
+          refuse to run if FIPS mode can't be enabled, thus this option
+          must be only enabled for the systems where FIPS mode is available.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Two new configuration options <command>min-cache-ttl</command> and
+          <command>min-ncache-ttl</command> has been added to allow the BIND 9
+          administrator to override the minimum TTL in the received DNS records
+          (positive caching) and for storing the information about non-existent
+          records (negative caching).  The configured minimum TTL for both
+          configuration options cannot exceed 90 seconds.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>rndc status</command> output now includes a
+          <command>reconfig/reload in progress</command> status line if named
+          configuration is being reloaded.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The new <command>answer-cookie</command> option, if set to
+          <literal>no</literal>, prevents <command>named</command> from
+          returning a DNS COOKIE option to a client, even if such an
+          option was present in the request.  This is only intended as
+          a temporary measure, for use when <command>named</command>
+          shares an IP address with other servers that do not yet
+          support DNS COOKIE.  A mismatch between servers on the same
+          address is not expected to cause operational problems, but the
+          option to disable COOKIE responses so that all servers have the
+          same behavior is provided out of an abundance of caution.
+          DNS COOKIE is an important security mechanism, and this option
+          should not be used to disable it unless absolutely necessary.
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes-9.14.0-removed"><info><title>Removed Features</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          Workarounds for servers that misbehave when queried with EDNS
+          have been removed, because these broken servers and the
+          workarounds for their noncompliance cause unnecessary delays,
+          increase code complexity, and prevent deployment of new DNS
+          features. See <link xmlns:xlink="http://www.w3.org/1999/xlink"
+            xlink:href="https://dnsflagday.net">https://dnsflagday.net</link>
+          for further details.
+        </para>
+        <para>
+          In particular, resolution will no longer fall back to
+          plain DNS when there was no response from an authoritative
+          server.  This will cause some domains to become non-resolvable
+          without manual intervention.  In these cases, resolution can
+          be restored by adding <command>server</command> clauses for the
+          offending servers, specifying <command>edns no</command> or
+          <command>send-cookie no</command>, depending on the specific
+          noncompliance.
+        </para>
+        <para>
+          To determine which <command>server</command> clause to use, run
+          the following commands to send queries to the authoritative
+          servers for the broken domain:
+        </para>
+<literallayout>
+          dig soa &lt;zone&gt; @&lt;server&gt; +dnssec
+          dig soa &lt;zone&gt; @&lt;server&gt; +dnssec +nocookie
+          dig soa &lt;zone&gt; @&lt;server&gt; +noedns
+</literallayout>
+        <para>
+          If the first command fails but the second succeeds, the
+          server most likely needs <command>send-cookie no</command>.
+          If the first two fail but the third succeeds, then the server
+          needs EDNS to be fully disabled with <command>edns no</command>.
+        </para>
+        <para>
+          Please contact the administrators of noncompliant domains
+          and encourage them to upgrade their broken DNS servers. [GL #150]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Previously, it was possible to build BIND without thread support
+          for old architectures and systems without threads support.
+          BIND now requires threading support (either POSIX or Windows) from
+          the operating system, and it cannot be built without threads.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <command>filter-aaaa</command>,
+          <command>filter-aaaa-on-v4</command>, and
+          <command>filter-aaaa-on-v6</command> options have been removed
+          from <command>named</command>, and can no longer be
+          configured using native <filename>named.conf</filename> syntax.
+          However, loading the new <filename>filter-aaaa.so</filename>
+          plugin and setting its parameters provides identical
+          functionality.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>named</command> can no longer use the EDNS CLIENT-SUBNET
+          option for view selection.  In its existing form, the authoritative
+          ECS feature was not fully RFC-compliant, and could not realistically
+          have been deployed in production for an authoritative server; its
+          only practical use was for testing and experimentation. In the
+          interest of code simplification, this feature has now been removed.
+        </para>
+        <para>
+          The ECS option is still supported in <command>dig</command> and
+          <command>mdig</command> via the +subnet argument, and can be parsed
+          and logged when received by <command>named</command>, but
+          it is no longer used for ACL processing. The
+          <command>geoip-use-ecs</command> option is now obsolete;
+          a warning will be logged if it is used in
+          <filename>named.conf</filename>.
+          <command>ecs</command> tags in an ACL definition are
+          also obsolete, and will cause the configuration to fail to
+          load if they are used. [GL #32]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>dnssec-keygen</command> can no longer generate HMAC
+          keys for TSIG authentication. Use <command>tsig-keygen</command>
+          to generate these keys. [RT #46404]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Support for OpenSSL 0.9.x has been removed.  OpenSSL version
+          1.0.0 or greater, or LibreSSL is now required.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <command>configure --enable-seccomp</command> option,
+          which formerly turned on system-call filtering on Linux, has
+          been removed. [GL #93]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          IPv4 addresses in forms other than dotted-quad are no longer
+          accepted in master files. [GL #13] [GL #56]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          IDNA2003 support via (bundled) idnkit-1.0 has been removed.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The "rbtdb64" database implementation (a parallel
+          implementation of "rbt") has been removed. [GL #217]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <command>-r randomdev</command> option to explicitly select
+          random device has been removed from the
+          <command>ddns-confgen</command>,
+          <command>rndc-confgen</command>,
+          <command>nsupdate</command>,
+          <command>dnssec-confgen</command>, and
+          <command>dnssec-signzone</command> commands.
+        </para>
+        <para>
+          The <command>-p</command> option to use pseudo-random data
+          has been removed from the <command>dnssec-signzone</command>
+          command.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Support for the RSAMD5 algorithm has been removed freom BIND as
+          the usage of the RSAMD5 algorithm for DNSSEC has been deprecated
+          in RFC6725, the security of the MD5 algorithm has been compromised,
+          and its usage is considered harmful.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Support for the ECC-GOST (GOST R 34.11-94) algorithm has been
+          removed from BIND, as the algorithm has been superseded by
+          GOST R 34.11-2012 in RFC6986 and it must not be used in new
+          deployments.  BIND will neither create new DNSSEC keys,
+          signatures and digests, nor it will validate them.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Support for DSA and DSA-NSEC3-SHA1 algorithms has been
+          removed from BIND as the DSA key length is limited to 1024
+          bits and this is not considered secure enough.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>named</command> will no longer ignore "no-change" deltas
+          when processing an IXFR stream.  This had previously been
+          permitted for compatibility with BIND 8, but now "no-change"
+          deltas will trigger a fallback to AXFR as the recovery mechanism.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          BIND 9 will no longer build on platforms that don't have
+          proper IPv6 support.  BIND 9 now also requires POSIX-compatible
+          pthread support.  Most of the platforms that lack these featuers
+          are long past their end-of-lifew dates, and they are neither
+          developed nor supported by their respective vendors.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The incomplete support for internationalization message catalogs has
+          been removed from BIND. Since the internationalization was never
+          completed, and no localized message catalogs were ever made available
+          for the portions of BIND in which they could have been used, this
+          change will have no effect except to simplify the source code. BIND's
+          log messages and other output were already only available in English.
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes-9.14.0-changes"><info><title>Feature Changes</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          BIND will now always use the best CSPRNG (cryptographically-secure
+          pseudo-random number generator) available on the platform where
+          it is compiled.  It will use the <command>arc4random()</command>
+          family of functions on BSD operating systems,
+          <command>getrandom()</command> on Linux and Solaris,
+          <command>CryptGenRandom</command> on Windows, and the selected
+          cryptography provider library (OpenSSL or PKCS#11) as the last
+          resort. [GL #221]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The default setting for <command>dnssec-validation</command> is
+          now <userinput>auto</userinput>, which activates DNSSEC
+          validation using the IANA root key. (The default can be changed
+          back to <userinput>yes</userinput>, which activates DNSSEC
+          validation only when keys are explicitly configured in
+          <filename>named.conf</filename>, by building BIND with
+          <command>configure --disable-auto-validation</command>.) [GL #30]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          BIND can no longer be built without DNSSEC support. A cryptography
+          provider (i.e., OpenSSL or a hardware service module with
+          PKCS#11 support) must be available. [GL #244]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Zone types <command>primary</command> and
+          <command>secondary</command> are now available as synonyms for
+          <command>master</command> and <command>slave</command>,
+          respectively, in <filename>named.conf</filename>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>named</command> will now log a warning if the old
+          root DNSSEC key is explicitly configured and has not been updated.
+          [RT #43670]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>dig +nssearch</command> will now list name servers
+          that have timed out, in addition to those that respond. [GL #64]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Up to 64 <command>response-policy</command> zones are now
+          supported by default; previously the limit was 32. [GL #123]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Several configuration options for time periods can now use
+          TTL value suffixes (for example, <literal>2h</literal> or
+          <literal>1d</literal>) in addition to an integer number of
+          seconds. These include
+          <command>fstrm-set-reopen-interval</command>,
+          <command>interface-interval</command>,
+          <command>max-cache-ttl</command>,
+          <command>max-ncache-ttl</command>,
+          <command>max-policy-ttl</command>, and
+          <command>min-update-interval</command>.
+          [GL #203]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          NSID logging (enabled by the <command>request-nsid</command>
+          option) now has its own <command>nsid</command> category,
+          instead of using the <command>resolver</command> category.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <command>rndc nta</command> command could not differentiate
+          between views of the same name but different class; this
+          has been corrected with the addition of a <command>-class</command>
+          option. [GL #105]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>allow-recursion-on</command> and
+          <command>allow-query-cache-on</command> each now default to
+          the other if only one of them is set, in order to be consistent
+          with the way <command>allow-recursion</command> and
+          <command>allow-query-cache</command> work. [GL #319]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          When compiled with IDN support, the <command>dig</command> and
+          <command>nslookup</command> commands now disable IDN processing
+          when the standard output is not a TTY (i.e., when the output
+          is not being read by a human). When running from a shell
+          script, the command line options <command>+idnin</command> and
+          <command>+idnout</command> may be used to enable IDN
+          processing of input and output domain names, respectively.
+          When running on a TTY, the <command>+noidnin</command> and
+          <command>+noidnout</command> options may be used to disable
+          IDN processing of input and output domain names.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The configuration option <command>max-ncache-ttl</command> cannot
+          exceed seven days. Previously, larger values than this were silently
+          lowered; now, they trigger a configuration error.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The new <command>dig -r</command> command line option
+          disables reading of the file <filename>$HOME/.digrc</filename>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Zone signing and key maintenance events are now logged to the
+          <command>dnssec</command> category rather than
+          <command>zone</command>.
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+</section>

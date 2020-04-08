@@ -1,7 +1,7 @@
-/*      $NetBSD: kcov.h,v 1.6.2.2 2019/06/10 22:09:57 christos Exp $        */
+/*      $NetBSD: kcov.h,v 1.6.2.3 2020/04/08 14:09:03 martin Exp $        */
 
 /*
- * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,6 +32,10 @@
 #ifndef _SYS_KCOV_H_
 #define _SYS_KCOV_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_kcov.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -46,5 +50,13 @@
 
 typedef volatile uint64_t kcov_int_t;
 #define KCOV_ENTRY_SIZE sizeof(kcov_int_t)
+
+#ifdef _KERNEL
+#ifdef KCOV
+void kcov_lwp_free(struct lwp *);
+#else
+#define kcov_lwp_free(a) __nothing
+#endif
+#endif
 
 #endif /* !_SYS_KCOV_H_ */

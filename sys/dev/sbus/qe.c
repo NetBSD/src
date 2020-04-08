@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.69.2.1 2019/06/10 22:07:32 christos Exp $	*/
+/*	$NetBSD: qe.c,v 1.69.2.2 2020/04/08 14:08:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.69.2.1 2019/06/10 22:07:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.69.2.2 2020/04/08 14:08:12 martin Exp $");
 
 #define QEDEBUG
 
@@ -406,7 +406,7 @@ qe_read(struct qe_softc *sc, int idx, int len)
 		printf("%s: invalid packet size %d; dropping\n",
 			ifp->if_xname, len);
 
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -415,7 +415,7 @@ qe_read(struct qe_softc *sc, int idx, int len)
 	 */
 	m = qe_get(sc, idx, len);
 	if (m == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -425,12 +425,10 @@ qe_read(struct qe_softc *sc, int idx, int len)
 
 /*
  * Start output on interface.
- * We make two assumptions here:
+ * We make an assumption here:
  *  1) that the current priority is set to splnet _before_ this code
  *     is called *and* is returned to the appropriate priority after
  *     return
- *  2) that the IFF_OACTIVE flag is checked before this code is called
- *     (i.e. that the output part of the interface is idle)
  */
 void
 qestart(struct ifnet *ifp)
@@ -441,12 +439,12 @@ qestart(struct ifnet *ifp)
 	unsigned int bix, len;
 	unsigned int ntbuf = sc->sc_rb.rb_ntbuf;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
 		return;
 
 	bix = sc->sc_rb.rb_tdhead;
 
-	for (;;) {
+	while (sc->sc_rb.rb_td_nbusy < ntbuf) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
@@ -473,10 +471,7 @@ qestart(struct ifnet *ifp)
 		if (++bix == QEC_XD_RING_MAXSIZE)
 			bix = 0;
 
-		if (++sc->sc_rb.rb_td_nbusy == ntbuf) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
-		}
+		sc->sc_rb.rb_td_nbusy++;
 	}
 
 	sc->sc_rb.rb_tdhead = bix;
@@ -532,7 +527,7 @@ qewatchdog(struct ifnet *ifp)
 	struct qe_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	qereset(sc);
 }
@@ -626,8 +621,7 @@ qe_tint(struct qe_softc *sc)
 		if (txflags & QEC_XD_OWN)
 			break;
 
-		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 		if (++bix == QEC_XD_RING_MAXSIZE)
 			bix = 0;
@@ -705,21 +699,23 @@ qe_eint(struct qe_softc *sc, uint32_t why)
 	const char *xname = device_xname(self);
 	int r = 0, rst = 0;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	if (why & QE_CR_STAT_EDEFER) {
 		printf("%s: excessive tx defers.\n", xname);
 		r |= 1;
-		ifp->if_oerrors++;
+		if_statinc_ref(nsr, if_oerrors);
 	}
 
 	if (why & QE_CR_STAT_CLOSS) {
 		printf("%s: no carrier, link down?\n", xname);
-		ifp->if_oerrors++;
+		if_statinc_ref(nsr, if_oerrors);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_ERETRIES) {
 		printf("%s: excessive tx retries\n", xname);
-		ifp->if_oerrors++;
+		if_statinc_ref(nsr, if_oerrors);
 		r |= 1;
 		rst = 1;
 	}
@@ -727,14 +723,14 @@ qe_eint(struct qe_softc *sc, uint32_t why)
 
 	if (why & QE_CR_STAT_LCOLL) {
 		printf("%s: late tx transmission\n", xname);
-		ifp->if_oerrors++;
+		if_statinc_ref(nsr, if_oerrors);
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_FUFLOW) {
 		printf("%s: tx fifo underflow\n", xname);
-		ifp->if_oerrors++;
+		if_statinc_ref(nsr, if_oerrors);
 		r |= 1;
 		rst = 1;
 	}
@@ -750,8 +746,8 @@ qe_eint(struct qe_softc *sc, uint32_t why)
 	}
 
 	if (why & QE_CR_STAT_TCCOFLOW) {
-		ifp->if_collisions += 256;
-		ifp->if_oerrors += 256;
+		if_statadd_ref(nsr, if_collisions, 256);
+		if_statadd_ref(nsr, if_oerrors, 256);
 		r |= 1;
 	}
 
@@ -763,97 +759,99 @@ qe_eint(struct qe_softc *sc, uint32_t why)
 
 	if (why & QE_CR_STAT_TXLERR) {
 		printf("%s: tx late error\n", xname);
-		ifp->if_oerrors++;
+		if_statinc_ref(nsr, if_oerrors);
 		rst = 1;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_TXPERR) {
 		printf("%s: tx DMA parity error\n", xname);
-		ifp->if_oerrors++;
+		if_statinc_ref(nsr, if_oerrors);
 		rst = 1;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_TXSERR) {
 		printf("%s: tx DMA sbus error ack\n", xname);
-		ifp->if_oerrors++;
+		if_statinc_ref(nsr, if_oerrors);
 		rst = 1;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RCCOFLOW) {
-		ifp->if_collisions += 256;
-		ifp->if_ierrors += 256;
+		if_statadd_ref(nsr, if_collisions, 256);
+		if_statadd_ref(nsr, if_ierrors, 256);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RUOFLOW) {
-		ifp->if_ierrors += 256;
+		if_statadd_ref(nsr, if_ierrors, 256);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_MCOFLOW) {
-		ifp->if_ierrors += 256;
+		if_statadd_ref(nsr, if_ierrors, 256);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RXFOFLOW) {
 		printf("%s: rx fifo overflow\n", xname);
-		ifp->if_ierrors++;
+		if_statinc_ref(nsr, if_ierrors);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RLCOLL) {
 		printf("%s: rx late collision\n", xname);
-		ifp->if_ierrors++;
-		ifp->if_collisions++;
+		if_statinc_ref(nsr, if_ierrors);
+		if_statinc_ref(nsr, if_collisions);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_FCOFLOW) {
-		ifp->if_ierrors += 256;
+		if_statadd_ref(nsr, if_ierrors, 256);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_CECOFLOW) {
-		ifp->if_ierrors += 256;
+		if_statadd_ref(nsr, if_ierrors, 256);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RXDROP) {
 		printf("%s: rx packet dropped\n", xname);
-		ifp->if_ierrors++;
+		if_statinc_ref(nsr, if_ierrors);
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RXSMALL) {
 		printf("%s: rx buffer too small\n", xname);
-		ifp->if_ierrors++;
+		if_statinc_ref(nsr, if_ierrors);
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_RXLERR) {
 		printf("%s: rx late error\n", xname);
-		ifp->if_ierrors++;
+		if_statinc_ref(nsr, if_ierrors);
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_RXPERR) {
 		printf("%s: rx DMA parity error\n", xname);
-		ifp->if_ierrors++;
+		if_statinc_ref(nsr, if_ierrors);
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_RXSERR) {
 		printf("%s: rx DMA sbus error ack\n", xname);
-		ifp->if_ierrors++;
+		if_statinc_ref(nsr, if_ierrors);
 		r |= 1;
 		rst = 1;
 	}
+
+	IF_STAT_PUTREF(ifp);
 
 	if (r == 0)
 		aprint_error_dev(self, "unexpected interrupt error: %08x\n",
@@ -1042,7 +1040,6 @@ qeinit(struct qe_softc *sc)
 	qe_mcreset(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 	splx(s);
 }
 

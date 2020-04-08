@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap_pvt.c,v 1.3 2016/02/07 18:41:25 riastradh Exp $	*/
+/*	$NetBSD: pmap_pvt.c,v 1.3.20.1 2020/04/08 14:09:05 martin Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,8 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_pvt.c,v 1.3 2016/02/07 18:41:25 riastradh Exp $");
+__RCSID("$NetBSD: pmap_pvt.c,v 1.3.20.1 2020/04/08 14:09:05 martin Exp $");
 
+#include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/pserialize.h>
 
@@ -89,10 +90,14 @@ pmap_pv_track(paddr_t start, psize_t size)
 	pvt->pvt_start = start;
 	pvt->pvt_size = size;
 
+#ifdef PMAP_PAGE_INIT
+	for (size_t i = 0; i < npages; i++)
+		PMAP_PAGE_INIT(&pvt->pvt_pages[i]);
+#endif
+
 	mutex_enter(&pv_unmanaged.lock);
 	pvt->pvt_next = pv_unmanaged.list;
-	membar_producer();
-	pv_unmanaged.list = pvt;
+	atomic_store_release(&pv_unmanaged.list, pvt);
 	mutex_exit(&pv_unmanaged.lock);
 }
 
@@ -118,9 +123,21 @@ pmap_pv_untrack(paddr_t start, psize_t size)
 			panic("pmap_pv_untrack: pv-tracking at 0x%"PRIxPADDR
 			    ": 0x%"PRIxPSIZE" bytes, not 0x%"PRIxPSIZE" bytes",
 			    pvt->pvt_start, pvt->pvt_size, size);
-		*pvtp = pvt->pvt_next;
+
+		/*
+		 * Remove from list.  Readers can safely see the old
+		 * and new states of the list.
+		 */
+		atomic_store_relaxed(pvtp, pvt->pvt_next);
+
+		/* Wait for readers who can see the old state to finish.  */
 		pserialize_perform(pv_unmanaged.psz);
-		pvt->pvt_next = NULL;
+
+		/*
+		 * We now have exclusive access to pvt and can destroy
+		 * it.  Poison it to catch bugs.
+		 */
+		explicit_memset(&pvt->pvt_next, 0x1a, sizeof pvt->pvt_next);
 		goto out;
 	}
 	panic("pmap_pv_untrack: pages not pv-tracked at 0x%"PRIxPADDR
@@ -142,8 +159,9 @@ pmap_pv_tracked(paddr_t pa)
 	KASSERT(pa == trunc_page(pa));
 
 	s = pserialize_read_enter();
-	for (pvt = pv_unmanaged.list; pvt != NULL; pvt = pvt->pvt_next) {
-		membar_datadep_consumer();
+	for (pvt = atomic_load_consume(&pv_unmanaged.list);
+	     pvt != NULL;
+	     pvt = pvt->pvt_next) {
 		if ((pvt->pvt_start <= pa) &&
 		    ((pa - pvt->pvt_start) < pvt->pvt_size))
 			break;

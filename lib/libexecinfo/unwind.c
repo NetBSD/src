@@ -1,4 +1,4 @@
-/*	$NetBSD: unwind.c,v 1.2.26.1 2019/06/10 22:05:23 christos Exp $	*/
+/*	$NetBSD: unwind.c,v 1.2.26.2 2020/04/08 14:07:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "unwind.h"
+#include <unwind.h>
 #include "execinfo.h"
 
 struct tracer_context {

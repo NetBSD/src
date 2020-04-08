@@ -1,4 +1,4 @@
-/*	$NetBSD: get_cred.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: get_cred.c,v 1.2.12.1 2020/04/08 14:03:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -560,8 +560,10 @@ get_cred_kdc(krb5_context context,
 	out_creds->times.endtime = in_creds->times.endtime;
 
 	/* XXX should do better testing */
-	if (flags.b.constrained_delegation || impersonate_principal)
+	if (flags.b.cname_in_addl_tkt || impersonate_principal)
 	    eflags |= EXTRACT_TICKET_ALLOW_CNAME_MISMATCH;
+	if (flags.b.request_anonymous)
+	    eflags |= EXTRACT_TICKET_MATCH_ANON;
 
 	ret = _krb5_extract_ticket(context,
 				   &rep,
@@ -1035,7 +1037,7 @@ get_cred_kdc_referral(krb5_context context,
 	char *referral_realm;
 
 	/* Use cache if we are not doing impersonation or contrained deleg */
-	if (impersonate_principal == NULL || flags.b.constrained_delegation) {
+	if (impersonate_principal == NULL || flags.b.cname_in_addl_tkt) {
 	    krb5_cc_clear_mcred(&mcreds);
 	    mcreds.server = referral.server;
 	    krb5_timeofday(context, &mcreds.times.endtime);
@@ -1187,21 +1189,31 @@ check_cc(krb5_context context, krb5_flags options, krb5_ccache ccache,
 {
     krb5_error_code ret;
     krb5_timestamp now;
-    krb5_times save_times = in_creds->times;
-    NAME_TYPE save_type = in_creds->server->name.name_type;
+    krb5_creds mcreds = *in_creds;
 
     krb5_timeofday(context, &now);
 
     if (!(options & KRB5_GC_EXPIRED_OK) &&
-	in_creds->times.endtime < now) {
-	in_creds->times.renew_till = 0;
-	krb5_timeofday(context, &in_creds->times.endtime);
+	mcreds.times.endtime < now) {
+	mcreds.times.renew_till = 0;
+	krb5_timeofday(context, &mcreds.times.endtime);
 	options |= KRB5_TC_MATCH_TIMES;
     }
 
-    if (save_type == KRB5_NT_SRV_HST_NEEDS_CANON) {
+    if (mcreds.server->name.name_type == KRB5_NT_SRV_HST_NEEDS_CANON) {
         /* Avoid name canonicalization in krb5_cc_retrieve_cred() */
-        krb5_principal_set_type(context, in_creds->server, KRB5_NT_SRV_HST);
+        krb5_principal_set_type(context, mcreds.server, KRB5_NT_SRV_HST);
+    }
+
+    if (options & KRB5_GC_ANONYMOUS) {
+	ret = krb5_make_principal(context,
+				  &mcreds.client,
+				  krb5_principal_get_realm(context, mcreds.client),
+				  KRB5_WELLKNOWN_NAME,
+				  KRB5_ANON_NAME,
+				  NULL);
+	if (ret)
+	    return ret;
     }
 
     ret = krb5_cc_retrieve_cred(context, ccache,
@@ -1209,10 +1221,11 @@ check_cc(krb5_context context, krb5_flags options, krb5_ccache ccache,
 				 (KRB5_TC_DONT_MATCH_REALM |
                                   KRB5_TC_MATCH_KEYTYPE |
 				  KRB5_TC_MATCH_TIMES)),
-				in_creds, out_creds);
+				&mcreds, out_creds);
 
-    in_creds->server->name.name_type = save_type;
-    in_creds->times = save_times;
+    if (options & KRB5_GC_ANONYMOUS)
+	krb5_free_principal(context, mcreds.client);
+
     return ret;
 }
 
@@ -1576,10 +1589,10 @@ next_rule:
 	flags.b.forwardable = 1;
     if (options & KRB5_GC_NO_TRANSIT_CHECK)
 	flags.b.disable_transited_check = 1;
-    if (options & KRB5_GC_CONSTRAINED_DELEGATION) {
-	flags.b.request_anonymous = 1; /* XXX ARGH confusion */
-	flags.b.constrained_delegation = 1;
-    }
+    if (options & KRB5_GC_CONSTRAINED_DELEGATION)
+	flags.b.cname_in_addl_tkt = 1;
+    if (options & KRB5_GC_ANONYMOUS)
+	flags.b.request_anonymous = 1;
 
     tgts = NULL;
     ret = _krb5_get_cred_kdc_any(context, flags, ccache,

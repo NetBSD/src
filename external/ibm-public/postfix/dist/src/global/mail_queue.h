@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_queue.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: mail_queue.h,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _MAIL_QUEUE_H_INCLUDED_
 #define _MAIL_QUEUE_H_INCLUDED_
@@ -51,6 +51,7 @@
 #define MAIL_QUEUE_STAT_CORRUPT	(S_IRUSR)
 #ifndef MAIL_QUEUE_STAT_UNTHROTTLE
 #define MAIL_QUEUE_STAT_UNTHROTTLE (S_IRGRP)
+#define MAIL_QUEUE_STAT_EXPIRE	(S_IXGRP)
 #endif
 
 extern struct VSTREAM *mail_queue_enter(const char *, mode_t, struct timeval *);
@@ -94,7 +95,7 @@ extern int mail_queue_id_ok(const char *);
   * - the inode number (base 51 encoded so that it contains no 'z').
   */
 #define MQID_LG_SEC_BASE	52	/* seconds safe alphabet base */
-#define MQID_LG_SEC_PAD	6	/* seconds minumum field width */
+#define MQID_LG_SEC_PAD	6	/* seconds minimum field width */
 #define MQID_LG_USEC_BASE	52	/* microseconds safe alphabet base */
 #define MQID_LG_USEC_PAD	4	/* microseconds exact field width */
 #define MQID_LG_TIME_PAD	(MQID_LG_SEC_PAD + MQID_LG_USEC_PAD)
@@ -184,6 +185,11 @@ extern int mail_queue_id_ok(const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif					/* _MAIL_QUEUE_H_INCLUDED_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.h,v 1.20 2011/08/06 20:46:42 dholland Exp $	*/
+/*	$NetBSD: restore.h,v 1.20.42.1 2020/04/08 14:07:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -61,7 +61,7 @@ extern int32_t	volno;		/* current volume being read */
 extern int32_t	ntrec;		/* number of TP_BSIZE records per tape block */
 extern time_t	dumptime;	/* time that this dump begins */
 extern time_t	dumpdate;	/* time that this dump was made */
-extern char	command;	/* opration being performed */
+extern char	command;	/* operation being performed */
 extern size_t	pagesize;	/* system page size */
 extern FILE	*terminal;	/* file descriptor for the terminal input */
 extern const char *tmpdir;	/* where to store temporary files */
@@ -120,7 +120,7 @@ struct entry {
 /*
  * The entry describes the next file available on the tape
  */
-struct context {
+extern struct context {
 	short	action;		/* action being taken on this file */
 	mode_t	mode;		/* mode of file */
 	ino_t	ino;		/* inumber of file */

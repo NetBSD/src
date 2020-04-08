@@ -1,6 +1,6 @@
 // aarch64-reloc-property.cc -- AArch64 relocation properties   -*- C++ -*-
 
-// Copyright (C) 2014-2016 Free Software Foundation, Inc.
+// Copyright (C) 2014-2018 Free Software Foundation, Inc.
 // Written by Han Shen <shenhan@google.com> and Jing Yu <jingyu@google.com>.
 
 // This file is part of gold.
@@ -59,17 +59,51 @@ template<>
 bool
 rvalue_checkup<0, 0>(int64_t) { return true; }
 
+namespace
+{
+
+template<int L, int U>
+class Rvalue_bit_select_impl
+{
+public:
+  static uint64_t
+  calc(uint64_t x)
+  {
+    return (x & ((1ULL << (U+1)) - 1)) >> L;
+  }
+};
+
+template<int L>
+class Rvalue_bit_select_impl<L, 63>
+{
+public:
+  static uint64_t
+  calc(uint64_t x)
+  {
+    return x >> L;
+  }
+};
+
+// By our convention, L=U=0 means that the whole value should be retrieved.
+template<>
+class Rvalue_bit_select_impl<0, 0>
+{
+public:
+  static uint64_t
+  calc(uint64_t x)
+  {
+    return x;
+  }
+};
+
+} // End anonymous namespace.
+
 template<int L, int U>
 uint64_t
 rvalue_bit_select(uint64_t x)
 {
-  if (U == 63) return x >> L;
-  return (x & (((uint64_t)1 << (U+1)) - 1)) >> L;
+  return Rvalue_bit_select_impl<L, U>::calc(x);
 }
-
-template<>
-uint64_t
-rvalue_bit_select<0, 0>(uint64_t x) { return x; }
 
 AArch64_reloc_property::AArch64_reloc_property(
     unsigned int code,

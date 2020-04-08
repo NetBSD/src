@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.78.4.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: RPI,v 1.78.4.2 2020/04/08 14:07:34 martin Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -134,6 +134,7 @@ sdhost* 	at fdt?
 sdmmc* 		at sdhost?
 
 ld*     at sdmmc?
+bwfm*   at      sdmmc?
 
 # On-board USB
 dwctwo* 	at fdt?
@@ -221,7 +222,6 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 #pseudo-device	npf			# NPF packet filter
 #pseudo-device	kttcp			# network loopback
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	faith			# IPv[46] TCP relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
@@ -239,7 +239,6 @@ pseudo-device	wsfont
 # local configuration
 cinclude "arch/evbarm/conf/RPI.local"
 
-# Bluetooth serial UART devices
-pseudo-device btuart
-pseudo-device bcsp
-pseudo-device bthfive
+# Bluetooth devices
+include "dev/bluetooth/bluetoothdevices.config"
+

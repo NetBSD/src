@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.34.58.1 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.34.58.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.34.58.1 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.34.58.2 2020/04/08 14:08:00 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -128,6 +128,7 @@ compat_43_sigstack_to_sigaltstack(const struct sigstack *ss, struct sigaltstack 
 void
 compat_43_sigaltstack_to_sigstack(const struct sigaltstack *sa, struct sigstack *ss)
 {
+	memset(ss, 0, sizeof(*ss));
 	ss->ss_sp = sa->ss_sp;
 	if (sa->ss_flags & SS_ONSTACK)
 		ss->ss_onstack = 1;

@@ -1,4 +1,4 @@
-.\" $NetBSD: audioamd.4,v 1.5 2008/04/30 13:10:56 martin Exp $
+.\" $NetBSD: audioamd.4,v 1.5.64.1 2020/04/08 14:07:22 martin Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 4, 2000
+.Dd January 31, 2020
 .Dt AUDIOAMD 4 sparc
 .Os
 .Sh NAME
@@ -38,10 +38,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the baseboard audio found on
-sun4c and sun4m systems.  The baseboard audio driver is based on the
-AMD 79c30 ISDN and audio interface.  The interface is only capable of
-playing and recording 8kHz mu-law audio.
+driver provides support for the baseboard audio found on sun4c and sun4m
+systems.
+The baseboard audio driver is based on the AMD 79c30 ISDN and audio interface.
+The interface is only capable of playing and recording 8kHz mu-law audio.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr sbus 4

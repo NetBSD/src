@@ -1,6 +1,6 @@
 // compressed_output.cc -- manage compressed debug sections for gold
 
-// Copyright (C) 2007-2016 Free Software Foundation, Inc.
+// Copyright (C) 2007-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -286,6 +286,8 @@ Output_compressed_section::set_final_data_size()
 		  chdr.put_ch_type(elfcpp::ELFCOMPRESS_ZLIB);
 		  chdr.put_ch_size(uncompressed_size);
 		  chdr.put_ch_addralign(addralign);
+		  // Clear the reserved field.
+		  chdr.put_ch_reserved(0);
 		}
 	      else
 		{
@@ -293,6 +295,8 @@ Output_compressed_section::set_final_data_size()
 		  chdr.put_ch_type(elfcpp::ELFCOMPRESS_ZLIB);
 		  chdr.put_ch_size(uncompressed_size);
 		  chdr.put_ch_addralign(addralign);
+		  // Clear the reserved field.
+		  chdr.put_ch_reserved(0);
 		}
 	    }
 	  else

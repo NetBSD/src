@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6 2018/02/04 01:41:05 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.6.4.1 2020/04/08 14:04:01 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -40,8 +40,6 @@ CPPFLAGS+=	-DATF_WORKDIR=\"/tmp\"
 CPPFLAGS+=	-I${TOPDIR}			# For bconfig.h.
 CPPFLAGS+=	-I${TOPDIR}/lib/libatf-c	# For atf-c/defs.hpp.
 CPPFLAGS+=	-I${SRCDIR}
-
-CXXFLAGS+=	-std=gnu++98
 
 .if defined(USE_ATF_LIBTOOLS)
 LIBTOOLSOBJDIR!=	cd ${TOPDIR}/lib/tools; ${PRINTOBJDIR}

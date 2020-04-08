@@ -1,11 +1,8 @@
-/*	$NetBSD: phy-pistachio-usb.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: phy-pistachio-usb.h,v 1.1.1.1.12.1 2020/04/08 14:08:47 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2015 Google, Inc.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
  */
 
 #ifndef _DT_BINDINGS_PHY_PISTACHIO

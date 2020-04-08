@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2015/09/03 22:24:02 youri Exp $
+#	$NetBSD: Makefile,v 1.5.16.1 2020/04/08 14:07:01 martin Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+=	expat lua
+SUBDIR+=	expat lua libcbor
 
 .if ${MKX11} != "no"
 SUBDIR+=	xorg

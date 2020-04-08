@@ -1,4 +1,4 @@
-/*	$NetBSD: mpl115a.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $ */
+/*	$NetBSD: mpl115a.c,v 1.2.2.1 2020/04/08 14:08:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpl115a.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpl115a.c,v 1.2.2.1 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,16 +154,16 @@ mpl115a_load_coeffs(struct mpl115a_softc *sc)
 static void 
 mpl115a_reg_write_1(struct mpl115a_softc *sc, uint8_t reg, uint8_t val) 
 {
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
+	if (iic_acquire_bus(sc->sc_tag, 0) != 0) {
 		aprint_error_dev(sc->sc_dev, "cannot acquire bus for write\n");
 		return;
 	}
 
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, &reg, 1,
-	    &val, 1, I2C_F_POLL)) {
+	    &val, 1, 0)) {
 		aprint_error_dev(sc->sc_dev, "cannot execute write\n");
 	}
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 }
 
 static uint8_t
@@ -171,7 +171,7 @@ mpl115a_reg_read_1(struct mpl115a_softc *sc, uint8_t reg)
 {
 	uint8_t rv, wbuf[2];
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
+	if (iic_acquire_bus(sc->sc_tag, 0) != 0) {
 #ifdef MPL115A_DEBUG
 		aprint_error_dev(sc->sc_dev, "cannot acquire bus for read\n");
 #endif /* MPL115A_DEBUG */ 
@@ -181,12 +181,12 @@ mpl115a_reg_read_1(struct mpl115a_softc *sc, uint8_t reg)
 	wbuf[0] = reg;
 
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, wbuf,
-	    1, &rv, 1, I2C_F_POLL)) {
+	    1, &rv, 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev, "cannot execute read\n");
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
 		return 0;
 	}
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	return rv;
 }

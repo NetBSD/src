@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.97 2017/07/26 16:42:37 maya Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.97.4.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.97 2017/07/26 16:42:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.97.4.1 2020/04/08 14:09:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ static void lfs_unmark_dirop(struct lfs *);
 static void
 lfs_unmark_dirop(struct lfs *fs)
 {
-	struct inode *ip, *nip;
+	struct inode *ip, *marker;
 	struct vnode *vp;
 	int doit;
 
@@ -349,13 +349,26 @@ lfs_unmark_dirop(struct lfs *fs)
 	doit = !(fs->lfs_flags & LFS_UNDIROP);
 	if (doit)
 		fs->lfs_flags |= LFS_UNDIROP;
-	if (!doit) {
-		mutex_exit(&lfs_lock);
-		return;
-	}
+	mutex_exit(&lfs_lock);
 
-	for (ip = TAILQ_FIRST(&fs->lfs_dchainhd); ip != NULL; ip = nip) {
-		nip = TAILQ_NEXT(ip, i_lfs_dchain);
+	if (!doit)
+		return;
+
+	marker = pool_get(&lfs_inode_pool, PR_WAITOK);
+	KASSERT(fs != NULL);
+	memset(marker, 0, sizeof(*marker));
+	marker->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
+	memset(marker->inode_ext.lfs, 0, sizeof(*marker->inode_ext.lfs));
+	marker->i_state |= IN_MARKER;
+
+	mutex_enter(&lfs_lock);
+	TAILQ_INSERT_HEAD(&fs->lfs_dchainhd, marker, i_lfs_dchain);
+	while ((ip = TAILQ_NEXT(marker, i_lfs_dchain)) != NULL) {
+		TAILQ_REMOVE(&fs->lfs_dchainhd, marker, i_lfs_dchain);
+		TAILQ_INSERT_AFTER(&fs->lfs_dchainhd, ip, marker,
+		    i_lfs_dchain);
+		if (ip->i_state & IN_MARKER)
+			continue;
 		vp = ITOV(ip);
 		if ((ip->i_state & (IN_ADIROP | IN_CDIROP)) == IN_CDIROP) {
 			--lfs_dirvcount;
@@ -371,10 +384,13 @@ lfs_unmark_dirop(struct lfs *fs)
 			ip->i_state &= ~IN_CDIROP;
 		}
 	}
-
+	TAILQ_REMOVE(&fs->lfs_dchainhd, marker, i_lfs_dchain);
 	fs->lfs_flags &= ~LFS_UNDIROP;
 	wakeup(&fs->lfs_flags);
 	mutex_exit(&lfs_lock);
+
+	pool_put(&lfs_inoext_pool, marker->inode_ext.lfs);
+	pool_put(&lfs_inode_pool, marker);
 }
 
 static void
@@ -539,6 +555,7 @@ lfs_segunlock(struct lfs *fs)
 			lfs_unmark_dirop(fs);
 	} else {
 		--fs->lfs_seglock;
+		KASSERT(fs->lfs_seglock != 0);
 		mutex_exit(&lfs_lock);
 	}
 }
@@ -548,12 +565,12 @@ lfs_segunlock(struct lfs *fs)
  *
  * No simple_locks are held when we enter and none are held when we return.
  */
-int
+void
 lfs_writer_enter(struct lfs *fs, const char *wmesg)
 {
-	int error = 0;
+	int error __diagused;
 
-	ASSERT_MAYBE_SEGLOCK(fs);
+	ASSERT_NO_SEGLOCK(fs);
 	mutex_enter(&lfs_lock);
 
 	/* disallow dirops during flush */
@@ -563,15 +580,26 @@ lfs_writer_enter(struct lfs *fs, const char *wmesg)
 		++fs->lfs_diropwait;
 		error = mtsleep(&fs->lfs_writer, PRIBIO+1, wmesg, 0,
 				&lfs_lock);
+		KASSERT(error == 0);
 		--fs->lfs_diropwait;
 	}
 
-	if (error)
-		fs->lfs_writer--;
+	mutex_exit(&lfs_lock);
+}
 
+int
+lfs_writer_tryenter(struct lfs *fs)
+{
+	int writer_set;
+
+	ASSERT_MAYBE_SEGLOCK(fs);
+	mutex_enter(&lfs_lock);
+	writer_set = (fs->lfs_dirops == 0);
+	if (writer_set)
+		fs->lfs_writer++;
 	mutex_exit(&lfs_lock);
 
-	return error;
+	return writer_set;
 }
 
 void

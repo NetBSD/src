@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.28.16.1 2019/06/10 22:02:37 christos Exp $
+# $NetBSD: Makefile,v 1.28.16.2 2020/04/08 14:07:02 martin Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
 .include <bsd.own.mk>
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE} == "evbarm"
 
 LIBISMODULE=	yes
 LIBISCXX=     yes
@@ -31,9 +32,9 @@ CPPFLAGS.brw_disk_cache.c+=	-march=i586
 
 #CPPFLAGS+=	-D_NETBSD_SOURCE -DPTHREADS
 
-# We don't actually build this on non-x86 at all, currently.
+# We don't actually build this on non-x86/non-evbarm at all, currently.
 # The following if statements are not effective since we only
-# get here for x86
+# get here for x86 and evbarm
 .if ${MACHINE_ARCH} == "alpha"
 DRIVERS=	r200 radeon
 .elif ${MACHINE} == "macppc" || ${MACHINE} == "ofppc"
@@ -43,6 +44,8 @@ DRIVERS=	r200 radeon
 .elif ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 DRIVERS=	i915 i965 r200 radeon
 .elif ${MACHINE} == "prep" || ${MACHINE} == "bebox"
+DRIVERS=	r200 radeon
+.elif ${MACHINE} == "evbarm"
 DRIVERS=	r200 radeon
 .endif
 
@@ -408,6 +411,7 @@ SRCS+=	${DRI_SOURCES.${_d}}
 .PATH: ${X11SRCDIR.Mesa}/src/mesa/drivers/dri/${_d}
 .endfor
 
+
 LIBDPLIBS+=	expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat
 LIBDPLIBS+=	m		${NETBSDSRCDIR}/lib/libm
 LIBDPLIBS+=	pthread		${NETBSDSRCDIR}/lib/libpthread
@@ -426,6 +430,8 @@ MESA_SRC_MODULES=  main math math_xform vbo tnl swrast ss common asm_c program a
 SRCS+=	streaming-load-memcpy.c
 CPPFLAGS.streaming-load-memcpy.c+= -msse4.1
 .endif
+
+CFLAGS+= ${${ACTIVE_CC} == "clang":? -Wno-error=atomic-alignment :}
 
 .include "../driver.mk"
 
@@ -458,7 +464,8 @@ FILES=		drirc
 .PATH:          ${X11SRCDIR.Mesa}/src/mesa/drivers/dri/common
 
 .include <bsd.x11.mk>
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE} == "evbarm"
 LIBDIR=		${X11USRLIBDIR}/modules/dri
 
 CWARNFLAGS.clang+=	-Wno-error=initializer-overrides -Wno-error=switch \

@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: heimdal2netbsd,v 1.8 2017/01/28 21:31:43 christos Exp $
+#	$NetBSD: heimdal2netbsd,v 1.8.12.1 2020/04/08 14:03:06 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,13 +36,22 @@
 #	$ export SRCDIR=/usr/src
 #	$ export HEIMDAL_SRCDIR=src/crypto/external/bsd/heimdal
 #	$ cd /some/where/temporary
-#	$ git clone git://github.com/heimdal/heimdal.git
-#	$ sh $SRCDIR/../$HEIMDAL_SRCDIR/heimdal2netbsd heimdal `pwd`
-#	$ cd $HEIMDAL_SRCDIR/dist
-#       $ cvs -d ... import $HEIMDAL_SRCDIR/dist HEIMDAL head-20110317
+#	For HEAD:
+#		$ git clone git://github.com/heimdal/heimdal.git
+#		$ sh $SRCDIR/../$HEIMDAL_SRCDIR/heimdal2netbsd heimdal .
+#		$ cd $HEIMDAL_SRCDIR/dist
+#		$ cvs -d ... import $HEIMDAL_SRCDIR/dist HEIMDAL head-20110317
+#		$ cd /some/where/temporary/heimdal
+#		$ autoreconf -f -i
+#	For release:
+#		$ ftp https://github.com/heimdal/heimdal/releases/download/\
+#			heimdal-X.Y.Z/heimdal-X.Y.Z.tar.gz
+#		$ tar -xzf heimdal-X.Y.Z.tar.gz
+#		$ sh $SRCDIR/../$HEIMDAL_SRCDIR/heimdal2netbsd heimdal-X-Y-Z .
+#		$ cd $HEIMDAL_SRCDIR/dist
+#		$ cvs -d ... import $HEIMDAL_SRCDIR/dist HEIMDAL heimdal-X-Y-Z
+#		$ cd /some/where/temporary/heimdal
 #	>>> if any conflicts, merge, fix and commit them.
-#	$ cd /some/where/temporary/heimdal
-#	$ autoreconf -f -i
 #	$ ./configure
 #	$ make
 #	>>> merge newly generated config.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_server.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: xsasl_cyrus_server.c,v 1.2.12.1 2020/04/08 14:07:00 martin Exp $	*/
 
 /*++
 /* NAME
@@ -59,6 +59,7 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <sys/socket.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -141,6 +142,10 @@ typedef int MECHANISM_COUNT_TYPE;
 typedef const char *SERVEROUT_TYPE;
 typedef const void *VOID_SERVEROUT_TYPE;
 
+#endif
+
+#ifndef NO_IP_CYRUS_SASL_AUTH
+#define USE_IP_CYRUS_SASL_AUTH
 #endif
 
  /*
@@ -266,8 +271,8 @@ static XSASL_SERVER *xsasl_cyrus_server_create(XSASL_SERVER_IMPL *unused_impl,
 				             XSASL_SERVER_CREATE_ARGS *args)
 {
     const char *myname = "xsasl_cyrus_server_create";
-    char   *server_address;
-    char   *client_address;
+    char   *server_addr_port = 0;
+    char   *client_addr_port = 0;
     sasl_conn_t *sasl_conn = 0;
     XSASL_CYRUS_SERVER *server = 0;
     int     sasl_status;
@@ -288,6 +293,15 @@ static XSASL_SERVER *xsasl_cyrus_server_create(XSASL_SERVER_IMPL *unused_impl,
 	    if (sasl_conn) \
 		sasl_dispose(&sasl_conn); \
 	} \
+	XSASL_CYRUS_SERVER_CREATE_RETURN(x); \
+    } while (0)
+
+#define XSASL_CYRUS_SERVER_CREATE_RETURN(x) \
+    do { \
+	if (server_addr_port) \
+	    myfree(server_addr_port); \
+	if (client_addr_port) \
+	    myfree(client_addr_port); \
 	return (x); \
     } while (0)
 
@@ -298,27 +312,31 @@ static XSASL_SERVER *xsasl_cyrus_server_create(XSASL_SERVER_IMPL *unused_impl,
 #define NO_SESSION_CALLBACKS	((sasl_callback_t *) 0)
 #define NO_AUTH_REALM		((char *) 0)
 
-#if SASL_VERSION_MAJOR >= 2 && defined(USE_SASL_IP_AUTH)
+#if SASL_VERSION_MAJOR >= 2 && defined(USE_IP_CYRUS_SASL_AUTH)
 
     /*
-     * Get IP addresses of local and remote endpoints for SASL.
+     * Get IP address and port of local and remote endpoints for SASL. Some
+     * implementation supports "[ipv6addr]:port" and "ipv4addr:port" (e.g.,
+     * https://illumos.org/man/3sasl/sasl_server_new), They still support the
+     * historical "address;port" syntax, so we stick with that for now.
      */
-#error "USE_SASL_IP_AUTH is not implemented"
-
+    server_addr_port = (*args->server_addr && *args->server_port ?
+			concatenate(args->server_addr, ";",
+				    args->server_port, (char *) 0) : 0);
+    client_addr_port = (*args->client_addr && *args->client_port ?
+			concatenate(args->client_addr, ";",
+				    args->client_port, (char *) 0) : 0);
 #else
 
     /*
-     * Don't give any IP address information to SASL.  SASLv1 doesn't use it,
-     * and in SASLv2 this will disable any mechanisms that do.
+     * Don't give any IP address information to SASL.
      */
-    server_address = 0;
-    client_address = 0;
 #endif
 
     if ((sasl_status =
 	 SASL_SERVER_NEW(args->service, var_myhostname,
 			 args->user_realm ? args->user_realm : NO_AUTH_REALM,
-			 server_address, client_address,
+			 server_addr_port, client_addr_port,
 			 NO_SESSION_CALLBACKS, NO_SECURITY_LAYERS,
 			 &sasl_conn)) != SASL_OK) {
 	msg_warn("SASL per-connection server initialization: %s",
@@ -347,7 +365,7 @@ static XSASL_SERVER *xsasl_cyrus_server_create(XSASL_SERVER_IMPL *unused_impl,
 	!= XSASL_AUTH_OK)
 	XSASL_CYRUS_SERVER_CREATE_ERROR_RETURN(0);
 
-    return (&server->xsasl);
+    XSASL_CYRUS_SERVER_CREATE_RETURN(&server->xsasl);
 }
 
 /* xsasl_cyrus_server_set_security - set security properties */
@@ -482,6 +500,8 @@ static int xsasl_cyrus_server_auth_response(int sasl_status,
 	    sasl_status = SASL_BADAUTH;
 	vstring_strcpy(reply, xsasl_cyrus_strerror(sasl_status));
 	switch (sasl_status) {
+	case SASL_FAIL:
+	case SASL_NOMEM:
 	case SASL_TRYAGAIN:
 	case SASL_UNAVAIL:
 	    return XSASL_AUTH_TEMP;

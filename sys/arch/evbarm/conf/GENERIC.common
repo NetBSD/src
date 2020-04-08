@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.28.2.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: GENERIC.common,v 1.28.2.2 2020/04/08 14:07:34 martin Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -130,6 +130,7 @@ pseudo-device	swcrypto		# software crypto implementation
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	drvctl			# driver control
+pseudo-device	cgd			# cryptographic disk devices
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

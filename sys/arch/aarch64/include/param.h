@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.3.2.1 2019/06/10 22:05:43 christos Exp $ */
+/* $NetBSD: param.h,v 1.3.2.2 2020/04/08 14:07:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,9 +59,13 @@
 #  ifdef __AARCH64EB__
 #   define	_MACHINE_ARCH	aarch64eb
 #   define	MACHINE_ARCH	"aarch64eb"
+#   define	_MACHINE32_ARCH	earmv7hfeb
+#   define	MACHINE32_ARCH	"earmv7hfeb"
 #  else
 #   define	_MACHINE_ARCH	aarch64
 #   define	MACHINE_ARCH	"aarch64"
+#   define	_MACHINE32_ARCH	earmv7hf
+#   define	MACHINE32_ARCH	"earmv7hf"
 #  endif /* __AARCH64EB__ */
 # endif /* MACHINE_ARCH */
 #else
@@ -69,14 +73,20 @@
 # undef MACHINE
 # undef _MACHINE_ARCH
 # undef MACHINE_ARCH
+# undef _MACHINE32_ARCH
+# undef MACHINE32_ARCH
 # define	_MACHINE	aarch64
 # define	MACHINE		"aarch64"
 # ifdef __AARCH64EB__
 #  define	_MACHINE_ARCH	aarch64eb
 #  define	MACHINE_ARCH	"aarch64eb"
+#  define	_MACHINE32_ARCH	earmv7hfeb
+#  define	MACHINE32_ARCH	"earmv7hfeb"
 # else
 #  define	_MACHINE_ARCH	aarch64
 #  define	MACHINE_ARCH	"aarch64"
+#  define	_MACHINE32_ARCH	earmv7hf
+#  define	MACHINE32_ARCH	"earmv7hf"
 # endif /* __AARCH64EB__ */
 #endif /* !_KERNEL */
 
@@ -152,8 +162,6 @@ void delay(unsigned int);
 /* compatibility for arm */
 #define arm_btop(x)		aarch64_btop(x)
 #define arm_ptob(x)		aarch64_ptob(x)
-#define arm_trunc_page(x)	aarch64_trunc_page(x)
-#define arm_round_page(x)	aarch64_round_page(x)
 
 #elif defined(__arm__)
 

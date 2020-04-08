@@ -1,4 +1,4 @@
-/*	$NetBSD: syncptr.c,v 1.3.2.2 2019/06/10 22:03:29 christos Exp $	*/
+/*	$NetBSD: syncptr.c,v 1.3.2.3 2020/04/08 14:07:06 martin Exp $	*/
 
 /*
  * Automatic A/AAAA/PTR record synchronization.
@@ -237,15 +237,7 @@ syncptr(sample_instance_t *inst, dns_name_t *name,
 	/* Reverse zone is managed by this driver, prepare PTR record */
 	pevent->zone = NULL;
 	dns_zone_attach(ptr_zone, &pevent->zone);
-	result = dns_name_copy(name,
-			       dns_fixedname_name(&pevent->ptr_target_name),
-			       NULL);
-	if (result != ISC_R_SUCCESS) {
-		log_write(ISC_LOG_ERROR,
-			  "syncptr: dns_name_copy -> %s\n",
-			  isc_result_totext(result));
-		goto cleanup;
-	}
+	dns_name_copynf(name, dns_fixedname_name(&pevent->ptr_target_name));
 	dns_name_clone(dns_fixedname_name(&pevent->ptr_target_name),
 		       &ptr_struct.ptr);
 	dns_diff_init(inst->mctx, &pevent->diff);

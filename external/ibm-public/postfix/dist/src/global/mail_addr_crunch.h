@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_crunch.h,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_addr_crunch.h,v 1.1.1.1.50.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _MAIL_ADDR_CRUNCH_H_INCLUDED_
 #define _MAIL_ADDR_CRUNCH_H_INCLUDED_
@@ -19,9 +19,21 @@
 #include <argv.h>
 
  /*
+  * Global library.
+  */
+#include <mail_addr_form.h>
+
+ /*
   * External interface.
   */
-extern ARGV *mail_addr_crunch(const char *, const char *);
+extern ARGV *mail_addr_crunch_opt(const char *, const char *, int, int);
+
+ /*
+  * The least-overhead form.
+  */
+#define mail_addr_crunch_ext_to_int(string, extension) \
+	mail_addr_crunch_opt((string), (extension), MA_FORM_EXTERNAL, \
+			MA_FORM_INTERNAL)
 
 /* LICENSE
 /* .ad
@@ -32,6 +44,11 @@ extern ARGV *mail_addr_crunch(const char *, const char *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

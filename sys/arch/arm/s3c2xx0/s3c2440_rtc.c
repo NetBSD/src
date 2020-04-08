@@ -1,3 +1,5 @@
+/* $NetBSD: s3c2440_rtc.c,v 1.2.20.1 2020/04/08 14:07:30 martin Exp $ */
+
 /*--
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -26,6 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,8 +64,10 @@ static void ssrtc_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ssrtc, sizeof(struct ssrtc_softc),
   ssrtc_match, ssrtc_attach, NULL, NULL);
 
-static int ssrtc_todr_gettime(struct todr_chip_handle *, struct timeval *);
-static int ssrtc_todr_settime(struct todr_chip_handle *, struct timeval *);
+static int ssrtc_todr_gettime_ymdhms(struct todr_chip_handle *,
+				     struct clock_ymdhms *);
+static int ssrtc_todr_settime_ymdhms(struct todr_chip_handle *,
+				     struct clock_ymdhms *);
 
 static int
 ssrtc_match(device_t parent, cfdata_t cf, void *aux)
@@ -87,70 +92,65 @@ ssrtc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": RTC \n");
 
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = ssrtc_todr_gettime;
-	sc->sc_todr.todr_settime = ssrtc_todr_settime;
+	sc->sc_todr.todr_gettime = NULL;
+	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_gettime_ymdhms = ssrtc_todr_gettime_ymdhms;
+	sc->sc_todr.todr_settime_ymdhms = ssrtc_todr_settime_ymdhms;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }
 
 static int
-ssrtc_todr_gettime(struct todr_chip_handle *h, struct timeval *tv)
+ssrtc_todr_gettime_ymdhms(struct todr_chip_handle *h, struct clock_ymdhms *dt)
 {
 	struct ssrtc_softc *sc = h->cookie;
-	struct clock_ymdhms dt;
 	uint8_t reg;
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDSEC);
 	DPRINTF(("BCDSEC: %02X\n", reg));
-	dt.dt_sec = bcdtobin(reg);
+	dt->dt_sec = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMIN);
 	DPRINTF(("BCDMIN: %02X\n", reg));
-	dt.dt_min = bcdtobin(reg);
+	dt->dt_min = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDHOUR);
 	DPRINTF(("BCDHOUR: %02X\n", reg));
-	dt.dt_hour = bcdtobin(reg);
+	dt->dt_hour = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDATE);
 	DPRINTF(("BCDDATE: %02X\n", reg));
-	dt.dt_day = bcdtobin(reg);
+	dt->dt_day = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDAY);
 	DPRINTF(("BCDDAY: %02X\n", reg));
-	dt.dt_wday = bcdtobin(reg);
+	dt->dt_wday = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMON);
 	DPRINTF(("BCDMON: %02X\n", reg));
-	dt.dt_mon = bcdtobin(reg);
+	dt->dt_mon = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDYEAR);
 	DPRINTF(("BCDYEAR: %02X\n", reg));
-	dt.dt_year = SSRTC_YEAR_ZERO + bcdtobin(reg);
+	dt->dt_year = SSRTC_YEAR_ZERO + bcdtobin(reg);
 
-	DPRINTF(("Seconds: %d\n", dt.dt_sec));
-	DPRINTF(("Minutes: %d\n", dt.dt_min));
-	DPRINTF(("Hour: %d\n", dt.dt_hour));
-	DPRINTF(("Mon: %d\n", dt.dt_mon));
-	DPRINTF(("Date: %d\n", dt.dt_day));
-	DPRINTF(("Day: %d\n", dt.dt_wday));
-	DPRINTF(("Year: %d\n", dt.dt_year));
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
+	DPRINTF(("Seconds: %d\n", dt->dt_sec));
+	DPRINTF(("Minutes: %d\n", dt->dt_min));
+	DPRINTF(("Hour: %d\n", dt->dt_hour));
+	DPRINTF(("Mon: %d\n", dt->dt_mon));
+	DPRINTF(("Date: %d\n", dt->dt_day));
+	DPRINTF(("Day: %d\n", dt->dt_wday));
+	DPRINTF(("Year: %d\n", dt->dt_year));
 
 	return 0;
 }
 
 static int
-ssrtc_todr_settime(struct todr_chip_handle *h, struct timeval *tv)
+ssrtc_todr_settime_ymdhms(struct todr_chip_handle *h, struct clock_ymdhms *dt)
 {
 	struct ssrtc_softc *sc = h->cookie;
-	struct clock_ymdhms dt;
 	uint8_t reg;
-
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
 	DPRINTF(("ssrtc_todr_settime"));
 
@@ -158,13 +158,13 @@ ssrtc_todr_settime(struct todr_chip_handle *h, struct timeval *tv)
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_RTCCON);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_RTCCON, reg | RTCCON_RTCEN);
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDSEC, bintobcd(dt.dt_sec));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMIN, bintobcd(dt.dt_min));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDHOUR, bintobcd(dt.dt_hour));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDATE, bintobcd(dt.dt_day));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDAY, bintobcd(dt.dt_wday));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMON, bintobcd(dt.dt_mon));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDYEAR, bintobcd(dt.dt_year-SSRTC_YEAR_ZERO));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDSEC, bintobcd(dt->dt_sec));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMIN, bintobcd(dt->dt_min));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDHOUR, bintobcd(dt->dt_hour));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDATE, bintobcd(dt->dt_day));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDAY, bintobcd(dt->dt_wday));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMON, bintobcd(dt->dt_mon));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDYEAR, bintobcd(dt->dt_year-SSRTC_YEAR_ZERO));
 
 	/* Clear RTCEN */
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_RTCCON);

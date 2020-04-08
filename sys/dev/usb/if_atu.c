@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.61.2.1 2019/06/10 22:07:33 christos Exp $ */
+/*	$NetBSD: if_atu.c,v 1.61.2.2 2020/04/08 14:08:13 martin Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.61.2.1 2019/06/10 22:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.61.2.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -228,65 +228,61 @@ static const struct atu_radfirm {
 	  atmel_fw_intersil_ext,	sizeof(atmel_fw_intersil_ext) }
 };
 
-int	atu_newbuf(struct atu_softc *, struct atu_chain *, struct mbuf *);
-void	atu_rxeof(struct usbd_xfer *, void *, usbd_status);
-void	atu_txeof(struct usbd_xfer *, void *, usbd_status);
-void	atu_start(struct ifnet *);
-int	atu_ioctl(struct ifnet *, u_long, void *);
-int	atu_init(struct ifnet *);
-void	atu_stop(struct ifnet *, int);
-void	atu_watchdog(struct ifnet *);
-usbd_status atu_usb_request(struct atu_softc *, uint8_t,
+static int	atu_newbuf(struct atu_softc *, struct atu_chain *, struct mbuf *);
+static void	atu_rxeof(struct usbd_xfer *, void *, usbd_status);
+static void	atu_txeof(struct usbd_xfer *, void *, usbd_status);
+static void	atu_start(struct ifnet *);
+static int	atu_ioctl(struct ifnet *, u_long, void *);
+static int	atu_init(struct ifnet *);
+static void	atu_stop(struct ifnet *, int);
+static void	atu_watchdog(struct ifnet *);
+static usbd_status atu_usb_request(struct atu_softc *, uint8_t,
 	    uint8_t, uint16_t, uint16_t,
 	    uint16_t, uint8_t *);
-int	atu_send_command(struct atu_softc *, uint8_t *, int);
-int	atu_get_cmd_status(struct atu_softc *, uint8_t,
+static int	atu_send_command(struct atu_softc *, uint8_t *, int);
+static int	atu_get_cmd_status(struct atu_softc *, uint8_t,
 	    uint8_t *);
-int	atu_wait_completion(struct atu_softc *, uint8_t,
+static int	atu_wait_completion(struct atu_softc *, uint8_t,
 	    uint8_t *);
-int	atu_send_mib(struct atu_softc *, uint8_t,
+static int	atu_send_mib(struct atu_softc *, uint8_t,
 	    uint8_t, uint8_t, void *);
-int	atu_get_mib(struct atu_softc *, uint8_t,
+static int	atu_get_mib(struct atu_softc *, uint8_t,
 	    uint8_t, uint8_t, uint8_t *);
 #if 0
 int	atu_start_ibss(struct atu_softc *);
 #endif
-int	atu_start_scan(struct atu_softc *);
-int	atu_switch_radio(struct atu_softc *, int);
-int	atu_initial_config(struct atu_softc *);
-int	atu_join(struct atu_softc *, struct ieee80211_node *);
-int8_t	atu_get_dfu_state(struct atu_softc *);
-uint8_t atu_get_opmode(struct atu_softc *, uint8_t *);
-void	atu_internal_firmware(device_t);
-void	atu_external_firmware(device_t);
-int	atu_get_card_config(struct atu_softc *);
-int	atu_media_change(struct ifnet *);
-void	atu_media_status(struct ifnet *, struct ifmediareq *);
-int	atu_tx_list_init(struct atu_softc *);
-int	atu_rx_list_init(struct atu_softc *);
-void	atu_xfer_list_free(struct atu_softc *, struct atu_chain *,
+static int	atu_start_scan(struct atu_softc *);
+static int	atu_switch_radio(struct atu_softc *, int);
+static int	atu_initial_config(struct atu_softc *);
+static int	atu_join(struct atu_softc *, struct ieee80211_node *);
+static int8_t	atu_get_dfu_state(struct atu_softc *);
+static uint8_t atu_get_opmode(struct atu_softc *, uint8_t *);
+static void	atu_internal_firmware(device_t);
+static void	atu_external_firmware(device_t);
+static int	atu_get_card_config(struct atu_softc *);
+static int	atu_media_change(struct ifnet *);
+static void	atu_media_status(struct ifnet *, struct ifmediareq *);
+static int	atu_tx_list_init(struct atu_softc *);
+static int	atu_rx_list_init(struct atu_softc *);
+static void	atu_xfer_list_free(struct atu_softc *, struct atu_chain *,
 	    int);
 
-#ifdef ATU_DEBUG
-void	atu_debug_print(struct atu_softc *);
-#endif
-
-void atu_task(void *);
-int atu_newstate(struct ieee80211com *, enum ieee80211_state, int);
-int atu_tx_start(struct atu_softc *, struct ieee80211_node *,
+static void atu_task(void *);
+static int atu_newstate(struct ieee80211com *, enum ieee80211_state, int);
+static int atu_tx_start(struct atu_softc *, struct ieee80211_node *,
     struct atu_chain *, struct mbuf *);
-void atu_complete_attach(struct atu_softc *);
-uint8_t atu_calculate_padding(int);
+static void atu_complete_attach(struct atu_softc *);
+static uint8_t atu_calculate_padding(int);
 
-int atu_match(device_t, cfdata_t, void *);
-void atu_attach(device_t, device_t, void *);
-int atu_detach(device_t, int);
-int atu_activate(device_t, enum devact);
+static int atu_match(device_t, cfdata_t, void *);
+static void atu_attach(device_t, device_t, void *);
+static int atu_detach(device_t, int);
+static int atu_activate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(atu, sizeof(struct atu_softc), atu_match, atu_attach,
     atu_detach, atu_activate);
 
-usbd_status
+static usbd_status
 atu_usb_request(struct atu_softc *sc, uint8_t type,
     uint8_t request, uint16_t value, uint16_t index, uint16_t length,
     uint8_t *data)
@@ -329,7 +325,7 @@ atu_usb_request(struct atu_softc *sc, uint8_t type,
 #ifdef ATU_DEBUG
 	if (atudebug) {
 		if (type & UT_READ) {
-			DPRINTFN(20, ("%s: transfered 0x%x bytes in\n",
+			DPRINTFN(20, ("%s: transferred %#x bytes in\n",
 			    device_xname(sc->atu_dev), total_len));
 		} else {
 			if (total_len != length)
@@ -345,14 +341,14 @@ atu_usb_request(struct atu_softc *sc, uint8_t type,
 	return err;
 }
 
-int
+static int
 atu_send_command(struct atu_softc *sc, uint8_t *command, int size)
 {
 	return atu_usb_request(sc, UT_WRITE_VENDOR_DEVICE, 0x0e, 0x0000,
 	    0x0000, size, command);
 }
 
-int
+static int
 atu_get_cmd_status(struct atu_softc *sc, uint8_t cmd, uint8_t *status)
 {
 	/*
@@ -368,7 +364,7 @@ atu_get_cmd_status(struct atu_softc *sc, uint8_t cmd, uint8_t *status)
 	    0x0000, 6, status);
 }
 
-int
+static int
 atu_wait_completion(struct atu_softc *sc, uint8_t cmd, uint8_t *status)
 {
 	int			idle_count = 0, err;
@@ -410,7 +406,7 @@ atu_wait_completion(struct atu_softc *sc, uint8_t cmd, uint8_t *status)
 	}
 }
 
-int
+static int
 atu_send_mib(struct atu_softc *sc, uint8_t type, uint8_t size,
     uint8_t index, void *data)
 {
@@ -461,7 +457,7 @@ atu_send_mib(struct atu_softc *sc, uint8_t type, uint8_t size,
 	return atu_wait_completion(sc, CMD_SET_MIB, NULL);
 }
 
-int
+static int
 atu_get_mib(struct atu_softc *sc, uint8_t type, uint8_t size,
     uint8_t index, uint8_t *buf)
 {
@@ -524,7 +520,7 @@ atu_start_ibss(struct atu_softc *sc)
 }
 #endif
 
-int
+static int
 atu_start_scan(struct atu_softc *sc)
 {
 	struct ieee80211com		*ic = &sc->sc_ic;
@@ -588,7 +584,7 @@ atu_start_scan(struct atu_softc *sc)
 	return 0;
 }
 
-int
+static int
 atu_switch_radio(struct atu_softc *sc, int state)
 {
 	usbd_status		err;
@@ -625,7 +621,7 @@ atu_switch_radio(struct atu_softc *sc, int state)
 	return 0;
 }
 
-int
+static int
 atu_initial_config(struct atu_softc *sc)
 {
 	struct ieee80211com		*ic = &sc->sc_ic;
@@ -723,7 +719,7 @@ atu_initial_config(struct atu_softc *sc)
 		DPRINTF(("%s: could not get regdomain!\n",
 		    device_xname(sc->atu_dev)));
 	} else {
-		DPRINTF(("%s: in reg domain 0x%x according to the "
+		DPRINTF(("%s: in reg domain %#x according to the "
 		    "adapter\n", device_xname(sc->atu_dev), reg_domain));
 	}
 
@@ -779,7 +775,7 @@ atu_initial_config(struct atu_softc *sc)
 	return 0;
 }
 
-int
+static int
 atu_join(struct atu_softc *sc, struct ieee80211_node *node)
 {
 	struct atu_cmd_join	join;
@@ -836,7 +832,7 @@ atu_join(struct atu_softc *sc, struct ieee80211_node *node)
 /*
  * Get the state of the DFU unit
  */
-int8_t
+static int8_t
 atu_get_dfu_state(struct atu_softc *sc)
 {
 	uint8_t	state;
@@ -849,7 +845,7 @@ atu_get_dfu_state(struct atu_softc *sc)
 /*
  * Get MAC opmode
  */
-uint8_t
+static uint8_t
 atu_get_opmode(struct atu_softc *sc, uint8_t *mode)
 {
 
@@ -860,7 +856,7 @@ atu_get_opmode(struct atu_softc *sc, uint8_t *mode)
 /*
  * Upload the internal firmware into the device
  */
-void
+static void
 atu_internal_firmware(device_t arg)
 {
 	struct atu_softc *sc = device_private(arg);
@@ -981,7 +977,7 @@ atu_internal_firmware(device_t arg)
 	usb_needs_reattach(sc->atu_udev);
 }
 
-void
+static void
 atu_external_firmware(device_t arg)
 {
 	struct atu_softc *sc = device_private(arg);
@@ -1044,7 +1040,7 @@ atu_external_firmware(device_t arg)
 	atu_complete_attach(sc);
 }
 
-int
+static int
 atu_get_card_config(struct atu_softc *sc)
 {
 	struct ieee80211com		*ic = &sc->sc_ic;
@@ -1090,7 +1086,7 @@ atu_get_card_config(struct atu_softc *sc)
 /*
  * Probe for an AT76c503 chip.
  */
-int
+static int
 atu_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -1107,7 +1103,7 @@ atu_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-int
+static int
 atu_media_change(struct ifnet *ifp)
 {
 	struct atu_softc	*sc = ifp->if_softc;
@@ -1132,7 +1128,7 @@ atu_media_change(struct ifnet *ifp)
 	return err;
 }
 
-void
+static void
 atu_media_status(struct ifnet *ifp, struct ifmediareq *req)
 {
 #ifdef ATU_DEBUG
@@ -1144,7 +1140,7 @@ atu_media_status(struct ifnet *ifp, struct ifmediareq *req)
 	ieee80211_media_status(ifp, req);
 }
 
-void
+static void
 atu_task(void *arg)
 {
 	struct atu_softc	*sc = (struct atu_softc *)arg;
@@ -1190,7 +1186,7 @@ atu_task(void *arg)
 	}
 }
 
-int
+static int
 atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet		*ifp = ic->ic_ifp;
@@ -1234,7 +1230,7 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
  * Attach the interface. Allocate softc structures, do
  * setup and ethernet/BPF attach.
  */
-void
+static void
 atu_attach(device_t parent, device_t self, void *aux)
 {
 	struct atu_softc *sc = device_private(self);
@@ -1350,7 +1346,7 @@ atu_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-void
+static void
 atu_complete_attach(struct atu_softc *sc)
 {
 	struct ieee80211com		*ic = &sc->sc_ic;
@@ -1460,14 +1456,17 @@ atu_complete_attach(struct atu_softc *sc)
 	ic->ic_newstate = atu_newstate;
 
 	/* setup ifmedia interface */
-	ieee80211_media_init(ic, atu_media_change, atu_media_status);
+	/* XXX media locking needs revisiting */
+	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTUSB);
+	ieee80211_media_init_with_lock(ic,
+	    atu_media_change, atu_media_status, &sc->sc_media_mtx);
 
 	usb_init_task(&sc->sc_task, atu_task, sc, 0);
 
 	sc->sc_state = ATU_S_OK;
 }
 
-int
+static int
 atu_detach(device_t self, int flags)
 {
 	struct atu_softc *sc = device_private(self);
@@ -1486,7 +1485,7 @@ atu_detach(device_t self, int flags)
 	return 0;
 }
 
-int
+static int
 atu_activate(device_t self, enum devact act)
 {
 	struct atu_softc *sc = device_private(self);
@@ -1506,7 +1505,7 @@ atu_activate(device_t self, enum devact act)
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
-int
+static int
 atu_newbuf(struct atu_softc *sc, struct atu_chain *c, struct mbuf *m)
 {
 	struct mbuf		*m_new = NULL;
@@ -1536,7 +1535,7 @@ atu_newbuf(struct atu_softc *sc, struct atu_chain *c, struct mbuf *m)
 	return 0;
 }
 
-int
+static int
 atu_rx_list_init(struct atu_softc *sc)
 {
 	struct atu_cdata	*cd = &sc->atu_cdata;
@@ -1563,7 +1562,7 @@ atu_rx_list_init(struct atu_softc *sc)
 	return 0;
 }
 
-int
+static int
 atu_tx_list_init(struct atu_softc *sc)
 {
 	struct atu_cdata	*cd = &sc->atu_cdata;
@@ -1593,7 +1592,7 @@ atu_tx_list_init(struct atu_softc *sc)
 	return 0;
 }
 
-void
+static void
 atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch, int listlen)
 {
 	int			i;
@@ -1617,7 +1616,7 @@ atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch, int listlen)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-void
+static void
 atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;
@@ -1693,12 +1692,12 @@ atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	wh = mtod(m, struct ieee80211_frame_min *);
 	ni = ieee80211_find_rxnode(ic, wh);
 
-	ifp->if_ipackets++;
+	if_statinc(ifp, if_ipackets);
 
 	s = splnet();
 
 	if (atu_newbuf(sc, c, NULL) == ENOBUFS) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto done1; /* XXX if we can't allocate, why restart it? */
 	}
 
@@ -1726,7 +1725,7 @@ done:
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
  */
-void
+static void
 atu_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct atu_chain	*c = (struct atu_chain *)priv;
@@ -1758,9 +1757,9 @@ atu_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	usbd_get_xfer_status(c->atu_xfer, NULL, NULL, NULL, &err);
 
 	if (err)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	else
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 	s = splnet();
 	SLIST_INSERT_HEAD(&sc->atu_cdata.atu_tx_free, c, atu_list);
@@ -1773,7 +1772,7 @@ atu_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	atu_start(ifp);
 }
 
-uint8_t
+static uint8_t
 atu_calculate_padding(int size)
 {
 	size %= 64;
@@ -1785,7 +1784,7 @@ atu_calculate_padding(int size)
 	return 0;
 }
 
-int
+static int
 atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
     struct atu_chain *c, struct mbuf *m)
 {
@@ -1840,7 +1839,7 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	return 0;
 }
 
-void
+static void
 atu_start(struct ifnet *ifp)
 {
 	struct atu_softc	*sc = ifp->if_softc;
@@ -1949,7 +1948,7 @@ bad:
 			    atu_list);
 			cd->atu_tx_inuse--;
 			splx(s);
-			/* ifp_if_oerrors++; */
+			/* if_statinc(ifp, if_oerrors); */
 			if (ni != NULL)
 				ieee80211_free_node(ni);
 			continue;
@@ -1958,7 +1957,7 @@ bad:
 	}
 }
 
-int
+static int
 atu_init(struct ifnet *ifp)
 {
 	struct atu_softc	*sc = ifp->if_softc;
@@ -2053,8 +2052,9 @@ atu_init(struct ifnet *ifp)
 	return 0;
 }
 
-#ifdef ATU_DEBUG
-void
+#if 0 && defined(ATU_DEBUG) /* XXX XXX XXX UNUSED */
+static void	atu_debug_print(struct atu_softc *);
+static void
 atu_debug_print(struct atu_softc *sc)
 {
 	usbd_status		err;
@@ -2137,21 +2137,15 @@ atu_debug_print(struct atu_softc *sc)
 }
 #endif /* ATU_DEBUG */
 
-int
+static int
 atu_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct atu_softc	*sc = ifp->if_softc;
-	struct ifreq		*ifr = (struct ifreq *)data;
 	struct ieee80211com	*ic = &sc->sc_ic;
 	int			err = 0, s;
 
 	s = splnet();
 	switch (command) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		err = ifmedia_ioctl(ifp, ifr, &ic->ic_media, command);
-		break;
-
 	default:
 		DPRINTFN(15, ("%s: ieee80211_ioctl (%lu)\n",
 		    device_xname(sc->atu_dev), command));
@@ -2175,7 +2169,7 @@ atu_ioctl(struct ifnet *ifp, u_long command, void *data)
 	return err;
 }
 
-void
+static void
 atu_watchdog(struct ifnet *ifp)
 {
 	struct atu_softc	*sc = ifp->if_softc;
@@ -2192,7 +2186,7 @@ atu_watchdog(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 	s = splnet();
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	DPRINTF(("%s: watchdog timeout\n", device_xname(sc->atu_dev)));
 
 	/*
@@ -2219,7 +2213,7 @@ atu_watchdog(struct ifnet *ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-void
+static void
 atu_stop(struct ifnet *ifp, int disable)
 {
 	struct atu_softc	*sc = ifp->if_softc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.99.2.1 2019/06/10 22:07:11 christos Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.99.2.2 2020/04/08 14:08:06 martin Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.99.2.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.99.2.2 2020/04/08 14:08:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -1030,7 +1030,9 @@ slhci_root_start(struct usbd_xfer *xfer)
 	KASSERT(spipe->ptype == PT_ROOT_INTR);
 
 	mutex_enter(&sc->sc_intr_lock);
+	KASSERT(t->rootintr == NULL);
 	t->rootintr = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
 	mutex_exit(&sc->sc_intr_lock);
 
 	return USBD_IN_PROGRESS;
@@ -2003,7 +2005,7 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 	 * 200MB file).
 	 *
 	 * Overflow can indicate that the device and host disagree about how
-	 * much data has been transfered.  This may indicate a problem at any
+	 * much data has been transferred.  This may indicate a problem at any
 	 * point during the transfer, not just when the error occurs.  It may
 	 * indicate data corruption.  A warning message is printed.
 	 *
@@ -2389,6 +2391,8 @@ slhci_callback(struct slhci_softc *sc)
 			if (t->rootintr != NULL) {
 				u_char *p;
 
+				KASSERT(t->rootintr->ux_status ==
+				    USBD_IN_PROGRESS);
 				p = t->rootintr->ux_buf;
 				p[0] = 2;
 				t->rootintr->ux_actlen = 1;

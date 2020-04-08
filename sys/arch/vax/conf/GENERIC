@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.205.2.1 2019/06/10 22:06:51 christos Exp $
+# $NetBSD: GENERIC,v 1.205.2.2 2020/04/08 14:07:56 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.205.2.1 $"
+#ident 		"GENERIC-$Revision: 1.205.2.2 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -196,7 +196,6 @@ tc0		at vsbus0 csr 0x36800000 # VS4000/60 or 90 TC adapter
 tcds*		at tc0 slot ? offset ?	 # TC dual SCSI controller
 asc*		at tcds? chip ?		 # PMAZB/C
 asc*		at tc? slot ? offset ?	 # PMAZ 
-fta*		at tc? slot ? offset ?	 # TC FDDI controller
 le*		at tc? slot ? offset ?	 # PMAD
 
 hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr

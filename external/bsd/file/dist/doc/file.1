@@ -1,7 +1,7 @@
-.\"	$NetBSD: file.1,v 1.21.2.1 2019/06/10 21:44:45 christos Exp $
+.\"	$NetBSD: file.1,v 1.21.2.2 2020/04/08 14:04:04 martin Exp $
 .\"
-.\" $File: file.man,v 1.135 2019/03/03 02:32:40 christos Exp $
-.Dd February 18, 2019
+.\" $File: file.man,v 1.138 2019/10/15 18:00:40 christos Exp $
+.Dd July 13, 2019
 .Dt FILE 1
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@
 .Nm
 .Op Fl Fl help
 .Sh DESCRIPTION
-This manual page documents version 5.37 of the
+This manual page documents version 5.38 of the
 .Nm
 command.
 .Pp
@@ -214,6 +214,8 @@ Ignored for backwards compatibility.
 Prints details of Compound Document Files.
 .It compress
 Checks for, and looks inside, compressed files.
+.It csv
+Checks Comma Separated Value files.
 .It elf
 Prints ELF file details, provided soft magic tests are enabled and the
 elf magic is found.
@@ -291,7 +293,7 @@ The magic pattern with the highest strength (see the
 option) comes first.
 .It Fl l , Fl Fl list
 Shows a list of patterns and their strength sorted descending by
-.Xr magic 4
+.Xr magic 5
 strength
 which is used for the matching (see also the
 .Fl k
@@ -365,10 +367,11 @@ On systems where libseccomp
 is available, the
 .Fl S
 flag disables sandboxing which is enabled by default.
-This option is needed for file to execute external descompressing programs,
+This option is needed for file to execute external decompressing programs,
 i.e. when the
 .Fl z
 flag is specified and the built-in decompressors are not available.
+On systems where sandboxing is not available, this option has no effect.
 .It Fl v , Fl Fl version
 Print the version of the program and exit.
 .It Fl z , Fl Fl uncompress

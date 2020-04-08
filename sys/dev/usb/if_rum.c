@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.61.2.1 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.61.2.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.61.2.1 2019/06/10 22:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.61.2.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -456,7 +456,11 @@ rum_attach(device_t parent, device_t self, void *aux)
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = rum_newstate;
-	ieee80211_media_init(ic, rum_media_change, ieee80211_media_status);
+
+	/* XXX media locking needs revisiting */
+	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTUSB);
+	ieee80211_media_init_with_lock(ic,
+	    rum_media_change, ieee80211_media_status, &sc->sc_media_mtx);
 
 	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
@@ -776,7 +780,7 @@ rum_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_tx_pipeh);
 
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		return;
 	}
 
@@ -786,7 +790,7 @@ rum_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	data->ni = NULL;
 
 	sc->tx_queued--;
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	DPRINTFN(10, ("tx done\n"));
 
@@ -825,7 +829,7 @@ rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		        sizeof(struct ieee80211_frame_min))) {
 		DPRINTF(("%s: xfer too short %d\n", device_xname(sc->sc_dev),
 		    len));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto skip;
 	}
 
@@ -837,7 +841,7 @@ rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		 * those frames when we filled RT2573_TXRX_CSR0.
 		 */
 		DPRINTFN(5, ("CRC error\n"));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto skip;
 	}
 
@@ -845,7 +849,7 @@ rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (mnew == NULL) {
 		printf("%s: could not allocate rx mbuf\n",
 		    device_xname(sc->sc_dev));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto skip;
 	}
 
@@ -854,7 +858,7 @@ rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		printf("%s: could not allocate rx mbuf cluster\n",
 		    device_xname(sc->sc_dev));
 		m_freem(mnew);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto skip;
 	}
 
@@ -1301,7 +1305,7 @@ rum_start(struct ifnet *ifp)
 			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 			if (rum_tx_data(sc, m0, ni) != 0) {
 				ieee80211_free_node(ni);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 		}
@@ -1323,7 +1327,7 @@ rum_watchdog(struct ifnet *ifp)
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", device_xname(sc->sc_dev));
 			/*rum_init(ifp); XXX needs a process context! */
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;
@@ -2258,7 +2262,7 @@ rum_amrr_update(struct usbd_xfer *xfer, void *priv,
 	}
 
 	/* count TX retry-fail as Tx errors */
-	ifp->if_oerrors += le32toh(sc->sta[5]) >> 16;
+	if_statadd(ifp, if_oerrors, le32toh(sc->sta[5]) >> 16);
 
 	sc->amn.amn_retrycnt =
 	    (le32toh(sc->sta[4]) >> 16) +	/* TX one-retry ok count */

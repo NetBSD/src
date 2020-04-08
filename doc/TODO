@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.19 2015/02/19 11:20:43 mrg Exp $
+#	$NetBSD: TODO,v 1.19.14.1 2020/04/08 14:03:55 martin Exp $
 
 THINGS TO BE DONE:
 
@@ -35,10 +35,6 @@ High Kernel:
 
 User programs:
     rwall nfs-mountees on shutdown
-
-i386 kernel support:
-    make use of sysenter/sysexit instructions on PIII/4 and Athlon for
-        reducing syscall overhead.
 
 This is a list of suggested smaller projects (in no particular order):
 

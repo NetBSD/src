@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mc,v 1.11.92.1 2019/06/10 22:10:22 christos Exp $	*/
+/*	$NetBSD: menus.mc,v 1.11.92.2 2020/04/08 14:09:17 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior

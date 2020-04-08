@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.12.16.1 2019/06/10 22:06:14 christos Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.12.16.2 2020/04/08 14:07:37 martin Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.12.16.1 2019/06/10 22:06:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.12.16.2 2020/04/08 14:07:37 martin Exp $");
 
 
 #include <sys/param.h>
@@ -1212,7 +1212,7 @@ temac_rxreap(struct temac_softc *sc)
 			    (TEMAC_ISINTR(tail) ? CDMAC_STAT_INTR : 0) |
 			    (TEMAC_ISLAST(tail) ? CDMAC_STAT_STOP : 0);
 
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			continue;
  		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.118.2.1 2019/06/10 22:07:01 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.118.2.2 2020/04/08 14:08:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -39,6 +39,7 @@
 #include <sys/param.h> /* precautionary upon removal from ucred.h */
 #include <sys/systm.h>
 #include <sys/mount.h>
+#include <sys/ptrace.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/syscallargs.h>
@@ -325,6 +326,16 @@ struct netbsd32_ptrace_siginfo {
 	lwpid_t		psi_lwpid;	/* destination LWP of the signal
 					 * value 0 means the whole process
 					 * (route signal to all LWPs) */
+};
+
+#define PL32_LNAMELEN 20
+
+struct netbsd32_ptrace_lwpstatus {
+	lwpid_t		pl_lwpid;
+	sigset_t	pl_sigpend;
+	sigset_t	pl_sigmask;
+	char		pl_name[PL32_LNAMELEN];
+	netbsd32_voidp	pl_private;
 };
 
 /* from <sys/quotactl.h> */
@@ -1179,6 +1190,8 @@ void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
 void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 
 void	netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32);
+
+void	netbsd32_read_lwpstatus(struct lwp *, struct netbsd32_ptrace_lwpstatus *);
 
 #ifdef KTRACE
 void netbsd32_ktrpsig(int, sig_t, const sigset_t *, const ksiginfo_t *);

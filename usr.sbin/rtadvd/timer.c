@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.18 2018/04/20 16:07:48 roy Exp $	*/
+/*	$NetBSD: timer.c,v 1.18.2.1 2020/04/08 14:09:22 martin Exp $	*/
 /*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ rtadvd_set_timer(struct timespec *tm, struct rtadvd_timer *timer)
 	prog_clock_gettime(CLOCK_MONOTONIC, &now);
 	timespecadd(&now, tm, &timer->tm);
 
-	/* upate the next expiration time */
+	/* update the next expiration time */
 	if (timespeccmp(&timer->tm, &tm_max, <))
 		tm_max = timer->tm;
 

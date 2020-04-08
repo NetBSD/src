@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.68 2012/11/02 00:01:19 chs Exp $
+#	$NetBSD: genassym.cf,v 1.68.38.1 2020/04/08 14:07:53 martin Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,14 +109,8 @@ define	USRSTACK	USRSTACK
 # LWP fields and values
 define	L_PCB		offsetof(struct lwp, l_addr)
 define	L_PROC		offsetof(struct lwp, l_proc)
-define	L_STAT		offsetof(struct lwp, l_stat)
-define	L_WCHAN		offsetof(struct lwp, l_wchan)
 define	L_CPU		offsetof(struct lwp, l_cpu)
-define	L_PRIORITY	offsetof(struct lwp, l_priority)
 define	L_TF		offsetof(struct lwp, l_md.md_tf)
-
-define	LSRUN		LSRUN
-define	LSONPROC	LSONPROC
 
 # proc fields
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)

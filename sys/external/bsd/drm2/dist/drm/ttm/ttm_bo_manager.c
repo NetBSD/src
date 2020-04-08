@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_manager.c,v 1.2.30.1 2019/06/10 22:08:28 christos Exp $	*/
+/*	$NetBSD: ttm_bo_manager.c,v 1.2.30.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_manager.c,v 1.2.30.1 2019/06/10 22:08:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_manager.c,v 1.2.30.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <drm/ttm/ttm_module.h>
 #include <drm/ttm/ttm_bo_driver.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo_manager.c,v 1.2.30.1 2019/06/10 22:08:28 chri
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/module.h>
-#include <linux/export.h>
 
 /**
  * Currently we use a spinlock for the lock, but a mutex *may* be

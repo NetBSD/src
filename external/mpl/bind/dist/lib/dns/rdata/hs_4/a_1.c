@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: a_1.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -129,7 +129,7 @@ fromstruct_hs_a(ARGS_FROMSTRUCT) {
 
 	REQUIRE(type == dns_rdatatype_a);
 	REQUIRE(rdclass == dns_rdataclass_hs);
-	REQUIRE(source != NULL);
+	REQUIRE(a != NULL);
 	REQUIRE(a->common.rdtype == type);
 	REQUIRE(a->common.rdclass == rdclass);
 
@@ -150,6 +150,7 @@ tostruct_hs_a(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_a);
 	REQUIRE(rdata->rdclass == dns_rdataclass_hs);
 	REQUIRE(rdata->length == 4);
+	REQUIRE(a != NULL);
 
 	UNUSED(mctx);
 

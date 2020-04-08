@@ -1,4 +1,4 @@
-/*	$NetBSD: gxiic.c,v 1.8 2016/02/14 19:54:20 chs Exp $ */
+/*	$NetBSD: gxiic.c,v 1.8.18.1 2020/04/08 14:07:35 martin Exp $ */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.8 2016/02/14 19:54:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.8.18.1 2020/04/08 14:07:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,7 +44,6 @@ struct gxiic_softc {
 	struct pxa2x0_i2c_softc sc_pxa_i2c;
 
 	struct i2c_controller sc_i2c;
-	kmutex_t sc_lock;
 };
 
 
@@ -96,17 +95,11 @@ gxiicattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-
 	/* Initialize i2c_controller  */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = gxiic_acquire_bus;
 	sc->sc_i2c.ic_release_bus = gxiic_release_bus;
-	sc->sc_i2c.ic_send_start = NULL;
-	sc->sc_i2c.ic_send_stop = NULL;
-	sc->sc_i2c.ic_initiate_xfer = NULL;
-	sc->sc_i2c.ic_read_byte = NULL;
-	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = gxiic_exec;
 
 	memset(&iba, 0, sizeof(iba));
@@ -121,7 +114,6 @@ gxiic_acquire_bus(void *cookie, int flags)
 {
 	struct gxiic_softc *sc = cookie;
 
-	mutex_enter(&sc->sc_lock);
 	pxa2x0_i2c_open(&sc->sc_pxa_i2c);
 
 	return 0;
@@ -133,8 +125,6 @@ gxiic_release_bus(void *cookie, int flags)
 	struct gxiic_softc *sc = cookie;
 
 	pxa2x0_i2c_close(&sc->sc_pxa_i2c);
-	mutex_exit(&sc->sc_lock);
-	return;
 }
 
 static int

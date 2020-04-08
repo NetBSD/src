@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.30 2018/06/02 22:25:30 christos Exp $	*/
+/*	$NetBSD: kernel.h,v 1.30.2.1 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,20 +50,23 @@ extern int hostnamelen;
 extern char domainname[MAXHOSTNAMELEN];
 extern int domainnamelen;
 
-extern struct timespec boottime;
-
 extern int rtc_offset;		/* offset of rtc from UTC in minutes */
 
 extern int cold;		/* still working on startup */
+extern int shutting_down;	/* system is shutting down */
 extern int tick;		/* usec per tick (1000000 / hz) */
 extern int tickadj;		/* "standard" clock skew, us./tick */
-extern int hardclock_ticks;	/* # of hardclock ticks */
+extern int hardclock_ticks;	/* # of hardclock ticks; XXX use getticks()! */
 extern int hz;			/* system clock's frequency */
 extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
 
 extern int profsrc;		/* profiling source */
 extern int psratio;		/* ratio: prof / stat */
+
+/* Accessors. */
+
+int getticks(void);
 
 #define PROFSRC_CLOCK	0
 

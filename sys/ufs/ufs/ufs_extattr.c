@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.48 2016/11/09 05:08:35 dholland Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.48.16.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.48 2016/11/09 05:08:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.48.16.1 2020/04/08 14:09:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -675,7 +675,7 @@ ufs_extattr_autostart(struct mount *mp, struct lwp *l)
 	 * Does UFS_EXTATTR_FSROOTSUBDIR exist off the filesystem root?
 	 * If so, automatically start EA's.
 	 */
-	error = VFS_ROOT(mp, &rvp);
+	error = VFS_ROOT(mp, LK_EXCLUSIVE, &rvp);
 	if (error) {
 		printf("ufs_extattr_autostart.VFS_ROOT() returned %d\n",
 		    error);

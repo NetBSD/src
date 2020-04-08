@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_rename.c,v 1.2 2014/04/25 18:31:35 pooka Exp $	*/
+/*	$NetBSD: kobj_rename.c,v 1.2.28.1 2020/04/08 14:09:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_rename.c,v 1.2 2014/04/25 18:31:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_rename.c,v 1.2.28.1 2020/04/08 14:09:01 martin Exp $");
 
 #define ELFSIZE ARCH_ELFSIZE
 
@@ -49,6 +49,7 @@ const char *norentab[] = {
 	"rump",
 	"__",
 	"_GLOBAL_OFFSET_TABLE",
+	".TOC.",
 };
 static int
 norename(const char *name)

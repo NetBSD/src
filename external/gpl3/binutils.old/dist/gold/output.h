@@ -1,6 +1,6 @@
 // output.h -- manage the output file for gold   -*- C++ -*-
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2018 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -2499,7 +2499,7 @@ class Output_data_got : public Output_data_got_base
   // entry.
   bool
   add_local(Relobj* object, unsigned int sym_index, unsigned int got_type,
-            uint64_t addend);
+	    uint64_t addend);
 
   // Like add_local, but use the PLT offset of the local symbol if it
   // has one.
@@ -2643,7 +2643,7 @@ class Output_data_got : public Output_data_got_base
 
     // Create a local symbol entry plus addend.
     Got_entry(Relobj* object, unsigned int local_sym_index,
-        bool use_plt_or_tls_offset, uint64_t addend)
+	bool use_plt_or_tls_offset, uint64_t addend)
       : local_sym_index_(local_sym_index),
 	use_plt_or_tls_offset_(use_plt_or_tls_offset), addend_(addend)
     {
@@ -2874,7 +2874,7 @@ class Output_data_dynamic : public Output_section_data
       DYNAMIC_NUMBER = -1U,
       // Section size.
       DYNAMIC_SECTION_SIZE = -2U,
-      // Symbol adress.
+      // Symbol address.
       DYNAMIC_SYMBOL = -3U,
       // String.
       DYNAMIC_STRING = -4U,
@@ -4136,6 +4136,16 @@ class Output_section : public Output_data
   input_sections()
   { return this->input_sections_; }
 
+  // For -r and --emit-relocs, we need to keep track of the associated
+  // relocation section.
+  Output_section*
+  reloc_section() const
+  { return this->reloc_section_; }
+
+  void
+  set_reloc_section(Output_section* os)
+  { this->reloc_section_ = os; }
+
  protected:
   // Return the output section--i.e., the object itself.
   Output_section*
@@ -4623,6 +4633,8 @@ class Output_section : public Output_data
   Output_fill* free_space_fill_;
   // Amount added as patch space for incremental linking.
   off_t patch_space_;
+  // Associated relocation section, when emitting relocations.
+  Output_section* reloc_section_;
 };
 
 // An output segment.  PT_LOAD segments are built from collections of
@@ -4741,6 +4753,7 @@ class Output_segment
   first_section_load_address() const
   {
     const Output_section* os = this->first_section();
+    gold_assert(os != NULL);
     return os->has_load_address() ? os->load_address() : os->address();
   }
 
@@ -4796,6 +4809,13 @@ class Output_segment
       this->min_p_align_ = align;
   }
 
+  // Set the memory size of this segment.
+  void
+  set_size(uint64_t size)
+  {
+    this->memsz_ = size;
+  }
+
   // Set the offset of this segment based on the section.  This should
   // only be called for a non-PT_LOAD segment.
   void
@@ -4844,8 +4864,8 @@ class Output_segment
   // Set the section addresses in an Output_data_list.
   uint64_t
   set_section_list_addresses(Layout*, bool reset, Output_data_list*,
-			     uint64_t addr, off_t* poff, unsigned int* pshndx,
-			     bool* in_tls);
+			     uint64_t addr, off_t* poff, off_t* fpoff,
+			     unsigned int* pshndx, bool* in_tls);
 
   // Return the number of Output_sections in an Output_data_list.
   unsigned int

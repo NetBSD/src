@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_scatter.c,v 1.4.4.1 2019/06/10 22:07:07 christos Exp $ */
+/* $NetBSD: dtv_scatter.c,v 1.4.4.2 2020/04/08 14:08:04 martin Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_scatter.c,v 1.4.4.1 2019/06/10 22:07:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_scatter.c,v 1.4.4.2 2020/04/08 14:08:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -161,7 +161,7 @@ dtv_scatter_io_init(struct dtv_scatter_buf *sb,
 }
 
 /* Store the pointer and size of the next contiguous segment.  Returns
- * true if the segment is valid, or false if all has been transfered.
+ * true if the segment is valid, or false if all has been transferred.
  * Does not check for overflow. */
 bool
 dtv_scatter_io_next(struct dtv_scatter_io *sio, void **p, size_t *sz)

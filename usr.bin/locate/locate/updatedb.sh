@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.15 2014/08/04 21:56:30 apb Exp $
+#	$NetBSD: updatedb.sh,v 1.15.24.1 2020/04/08 14:09:16 martin Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -40,10 +40,9 @@
 #
 
 LIBDIR="/usr/libexec"			# for subprograms
-					# for temp files
-TMPDIR=/tmp
+TMPDIR="/tmp"				# for temp files
 FCODES="/var/db/locate.database"	# the database
-CONF=/etc/locate.conf			# configuration file
+CONF="/etc/locate.conf"			# configuration file
 
 PATH="/bin:/usr/bin"
 
@@ -97,6 +96,26 @@ shell_quote()
 	printf "%s\n" "$result"
 )}
 
+args=`getopt c: $*`
+if [ $? -ne 0 ]; then
+	progname=`basename $0`
+	echo 'Usage: ...'
+	echo "usage: ${progname} [-c config]"
+	exit 2
+fi
+set -- $args
+while [ $# -gt 0 ]; do
+	case "$1" in
+		-c)
+			CONF=$2; shift
+			;;
+		--)
+			shift; break
+			;;
+	esac
+	shift
+done
+
 # read configuration file
 if [ -f "$CONF" ]; then
 	while read -r com args; do
@@ -147,6 +166,13 @@ if [ -f "$CONF" ]; then
 				TMPDIR="$1"
 			else
 				echo "$CONF: workdir: $1 nonexistent" >&2
+			fi
+			;;
+		database)
+			if [ $# -ne 1 ]; then
+				echo "$CONF: database takes exactly one argument" >&2
+			else
+				FCODES="$1"
 			fi
 			;;
 		*)

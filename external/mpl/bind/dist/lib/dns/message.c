@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.5.2.2 2019/06/10 22:04:35 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.5.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3066,7 +3066,7 @@ dns_message_signer(dns_message_t *msg, dns_name_t *signer) {
 		dns_name_clone(&sig.signer, signer);
 		dns_rdata_freestruct(&sig);
 	} else {
-		dns_name_t *identity;
+		const dns_name_t *identity;
 		dns_rdata_any_tsig_t tsig;
 
 		result = dns_rdataset_first(msg->tsig);

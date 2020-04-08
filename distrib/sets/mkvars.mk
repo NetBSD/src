@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.35.2.1 2019/06/10 21:42:29 christos Exp $
+# $NetBSD: mkvars.mk,v 1.35.2.2 2020/04/08 14:03:53 martin Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -16,6 +16,7 @@ MKEXTRAVARS= \
 	OBJECT_FMT \
 	TOOLCHAIN_MISSING \
 	EXTSRCS \
+	KERNEL_DIR \
 	MKMANZ \
 	MKBFD \
 	MKCOMPAT \

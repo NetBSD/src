@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_psr.c,v 1.5.6.2 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: intel_psr.c,v 1.5.6.3 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -54,12 +54,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_psr.c,v 1.5.6.2 2019/06/10 22:08:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_psr.c,v 1.5.6.3 2020/04/08 14:08:23 martin Exp $");
 
 #include <drm/drmP.h>
 
 #include "intel_drv.h"
 #include "i915_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 static bool is_edp_psr(struct intel_dp *intel_dp)
 {
@@ -87,7 +89,7 @@ static void intel_psr_write_vsc(struct intel_dp *intel_dp,
 	enum transcoder cpu_transcoder = crtc->config->cpu_transcoder;
 	u32 ctl_reg = HSW_TVIDEO_DIP_CTL(cpu_transcoder);
 	uint32_t data;
-	const char *ptr = (const char *)vsc_psr;
+	const char *ptr = (const void *)vsc_psr;
 	unsigned int i;
 
 	/* As per BSPec (Pipe Video Data Island Packet), we need to disable
@@ -115,7 +117,7 @@ static void vlv_psr_setup_vsc(struct intel_dp *intel_dp)
 	struct drm_device *dev = intel_dig_port->base.base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc = intel_dig_port->base.base.crtc;
-	enum i915_pipe pipe = to_intel_crtc(crtc)->pipe;
+	enum pipe pipe = to_intel_crtc(crtc)->pipe;
 	uint32_t val;
 
 	/* VLV auto-generate VSC package as per EDP 1.3 spec, Table 3.10 */
@@ -227,7 +229,7 @@ static void vlv_psr_enable_source(struct intel_dp *intel_dp)
 	struct drm_device *dev = dig_port->base.base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc = dig_port->base.base.crtc;
-	enum i915_pipe pipe = to_intel_crtc(crtc)->pipe;
+	enum pipe pipe = to_intel_crtc(crtc)->pipe;
 
 	/* Transition from PSR_state 0 to PSR_state 1, i.e. PSR Inactive */
 	I915_WRITE(VLV_PSRCTL(pipe),
@@ -242,7 +244,7 @@ static void vlv_psr_activate(struct intel_dp *intel_dp)
 	struct drm_device *dev = dig_port->base.base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc = dig_port->base.base.crtc;
-	enum i915_pipe pipe = to_intel_crtc(crtc)->pipe;
+	enum pipe pipe = to_intel_crtc(crtc)->pipe;
 
 	/* Let's do the transition from PSR_state 1 to PSR_state 2
 	 * that is PSR transition to active - static frame transmission.
@@ -521,7 +523,7 @@ static void intel_psr_work(struct work_struct *work)
 		container_of(work, typeof(*dev_priv), psr.work.work);
 	struct intel_dp *intel_dp = dev_priv->psr.enabled;
 	struct drm_crtc *crtc = dp_to_dig_port(intel_dp)->base.base.crtc;
-	enum i915_pipe pipe = to_intel_crtc(crtc)->pipe;
+	enum pipe pipe = to_intel_crtc(crtc)->pipe;
 
 	/* We have to make sure PSR is ready for re-enable
 	 * otherwise it keeps disabled until next full enable/disable cycle.
@@ -565,7 +567,7 @@ static void intel_psr_exit(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_dp *intel_dp = dev_priv->psr.enabled;
 	struct drm_crtc *crtc = dp_to_dig_port(intel_dp)->base.base.crtc;
-	enum i915_pipe pipe = to_intel_crtc(crtc)->pipe;
+	enum pipe pipe = to_intel_crtc(crtc)->pipe;
 	u32 val;
 
 	if (!dev_priv->psr.active)
@@ -619,7 +621,7 @@ void intel_psr_single_frame_update(struct drm_device *dev,
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	u32 val;
 
 	/*
@@ -667,7 +669,7 @@ void intel_psr_invalidate(struct drm_device *dev,
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	mutex_lock(&dev_priv->psr.lock);
 	if (!dev_priv->psr.enabled) {
@@ -705,7 +707,7 @@ void intel_psr_flush(struct drm_device *dev,
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	int delay_ms = HAS_DDI(dev) ? 100 : 500;
 
 	mutex_lock(&dev_priv->psr.lock);
@@ -758,9 +760,5 @@ void intel_psr_init(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	INIT_DELAYED_WORK(&dev_priv->psr.work, intel_psr_work);
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->psr.lock);
-#else
 	mutex_init(&dev_priv->psr.lock);
-#endif
 }

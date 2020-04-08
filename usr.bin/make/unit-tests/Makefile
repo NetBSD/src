@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.53 2018/05/24 00:25:44 christos Exp $
+# $NetBSD: Makefile,v 1.53.2.1 2020/04/08 14:09:17 martin Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -50,6 +50,7 @@ TESTNAMES= \
 	unexport-env \
 	varcmd \
 	varmisc \
+	varmod-edge \
 	varquote \
 	varshell
 

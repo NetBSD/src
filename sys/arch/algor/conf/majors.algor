@@ -1,4 +1,4 @@
-#	$NetBSD: majors.algor,v 1.23.16.1 2019/06/10 22:05:45 christos Exp $
+#	$NetBSD: majors.algor,v 1.23.16.2 2020/04/08 14:07:24 martin Exp $
 #
 # Device majors for algor
 #
@@ -59,7 +59,7 @@ device-major	ses		char 58			ses
 device-major	ld		char 59  block 17	ld
 device-major	cy		char 60			cy
 device-major	cz		char 61			cz
-device-major	urio		char 62			urio
+#device-major	obsolete	char 62			obsolete (urio)
 device-major	uscanner	char 63			uscanner
 device-major	altq		char 64			altq
 device-major	mlx		char 65			mlx
@@ -68,7 +68,7 @@ device-major	clockctl	char 66			clockctl
 device-major	cgd		char 68  block 18	cgd
 device-major	ksyms		char 69			ksyms
 device-major	wsfont		char 70			wsfont
-device-major	nsmb		char 71			nsmb
+#device-major	obsolete	char 71			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

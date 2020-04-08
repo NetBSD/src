@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.18.6.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.18.6.2 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.18.6.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.18.6.2 2020/04/08 14:08:51 martin Exp $");
 
 #include "opt_veriexec.h"
 
@@ -307,7 +307,7 @@ veriexec_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		return KAUTH_RESULT_DEFER;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_system_req)arg0;
+	req = (enum kauth_system_req)(uintptr_t)arg0;
 
 	if (req == KAUTH_REQ_SYSTEM_VERIEXEC_MODIFY &&
 	    veriexec_strict > VERIEXEC_LEARNING) {
@@ -919,7 +919,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	struct veriexec_table_entry *vte;
 
 	result = KAUTH_RESULT_DENY;
-	req = (enum kauth_device_req)arg0;
+	req = (enum kauth_device_req)(uintptr_t)arg0;
 
 	switch (action) {
 	case KAUTH_DEVICE_RAWIO_SPEC: {

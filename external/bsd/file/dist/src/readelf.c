@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.17.2.1 2019/06/10 21:44:47 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.17.2.2 2020/04/08 14:04:05 martin Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readelf.c,v 1.165 2019/05/07 02:27:11 christos Exp $")
+FILE_RCSID("@(#)$File: readelf.c,v 1.168 2019/12/16 03:49:19 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.17.2.1 2019/06/10 21:44:47 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.17.2.2 2020/04/08 14:04:05 martin Exp $");
 #endif
 #endif
 
@@ -1146,6 +1146,9 @@ donote(struct magic_set *ms, void *vbuf, size_t offset, size_t size,
 		 */
 		return xnh_sizeof + offset;
 	}
+	/*XXX: GCC */
+	memset(&nh32, 0, sizeof(nh32));
+	memset(&nh64, 0, sizeof(nh64));
 
 	memcpy(xnh_addr, &nbuf[offset], xnh_sizeof);
 	offset += xnh_sizeof;
@@ -1350,6 +1353,13 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 		return 0;
 	}
 	name_off = xsh_offset;
+
+	if (fsize != SIZE_UNKNOWN && fsize < name_off) {
+		if (file_printf(ms, ", too large section header offset %jd",
+		    (intmax_t)name_off) == -1)
+			return -1;
+		return 0;
+	}
 
 	for ( ; num; num--) {
 		/* Read the name of this section. */
@@ -1634,7 +1644,6 @@ dophn_exec(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 		/* Things we can determine before we seek */
 		switch (xph_type) {
 		case PT_DYNAMIC:
-			linking_style = "dynamically";
 			doread = 1;
 			break;
 		case PT_NOTE:
@@ -1650,6 +1659,7 @@ dophn_exec(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
 			}
 			/*FALLTHROUGH*/
 		case PT_INTERP:
+			linking_style = "dynamically";
 			doread = 1;
 			break;
 		default:

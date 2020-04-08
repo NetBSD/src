@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef COMPATNAME1
-__RCSID("$NetBSD: sig_machdep.c,v 1.1.22.1 2019/06/10 22:06:41 christos Exp $");
+__RCSID("$NetBSD: sig_machdep.c,v 1.1.22.2 2020/04/08 14:07:51 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -50,12 +50,12 @@ __RCSID("$NetBSD: sig_machdep.c,v 1.1.22.1 2019/06/10 22:06:41 christos Exp $");
 #define UCLINK_SET(uc,c)	((uc)->uc_link = (c))
 #define	COPY_SIGINFO(d,s)	((d)->sf_si._info = (s)->ksi_info)
 
-void *	
+void *
 cpu_sendsig_getframe(struct lwp *l, int signo, bool *onstack)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct proc * const p = l->l_proc;
- 
+
 	/* Do we need to jump onto the signal stack? */
 	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, signo).sa_flags & SA_ONSTACK) != 0;

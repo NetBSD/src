@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.1.4.1 2019/06/10 22:05:43 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.1.4.2 2020/04/08 14:07:23 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.4.1 2019/06/10 22:05:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.4.2 2020/04/08 14:07:23 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.4.1 2019/06/10 22:05:43 chr
 #include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
+#include <sys/compat_stub.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -54,11 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.4.1 2019/06/10 22:05:43 chr
 #include <aarch64/userret.h>
 
 const char machine32[] = MACHINE;
-#ifdef __AARCH64EB__
-const char machine_arch32[] = "earmv7hfeb";
-#else
-const char machine_arch32[] = "earmv7hf";
-#endif
+const char machine_arch32[] = MACHINE32_ARCH;
 
 void
 netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
@@ -193,13 +190,15 @@ cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = coredump_write(iocookie, UIO_SYSSPACE,
-	    &cseg, chdr->c_seghdrsize);
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE,
+	    &cseg, chdr->c_seghdrsize), ENOSYS, error);
 	if (error)
 		return error;
 
-	return coredump_write(iocookie, UIO_SYSSPACE,
-	    &md_core32, sizeof(md_core32));
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE,
+	    &md_core32, sizeof(md_core32)), ENOSYS, error);
+
+	return error;
 }
 
 static void
@@ -318,8 +317,6 @@ cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 	KASSERT(p->p_flag & PK_32);
 
 	if (__SHIFTOUT(spsr, SPSR_M) != SPSR_M_USR32)
-		return EINVAL;
-	if ((spsr & (SPSR_A64_D|SPSR_A|SPSR_I|SPSR_F)) != 0)
 		return EINVAL;
 
 #ifdef __AARCH64EB__

@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.19.2.1 2019/06/10 22:07:08 christos Exp $ */
+/* $NetBSD: fdtbus.c,v 1.19.2.2 2020/04/08 14:08:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.19.2.1 2019/06/10 22:07:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.19.2.2 2020/04/08 14:08:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/cpu.h>
 
 #include <sys/bus.h>
 
@@ -116,7 +117,7 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	struct fdt_softc *sc = device_private(self);
 	const struct fdt_attach_args *faa = aux;
 	const int phandle = faa->faa_phandle;
-	const char *descr;
+	const char *descr, *model;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
@@ -136,6 +137,13 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	/* Only the root bus should scan for devices */
 	if (OF_finddevice("/") != faa->faa_phandle)
 		return;
+
+	/* Set hw.model if available */
+	model = fdtbus_get_string(phandle, "compatible");
+	if (model)
+		cpu_setmodel("%s", model);
+	else if (descr)
+		cpu_setmodel("%s", descr);
 
 	/* Scan devices */
 	fdt_rescan(self, NULL, NULL);
@@ -190,6 +198,7 @@ fdt_init_attach_args(const struct fdt_attach_args *faa_tmpl, struct fdt_node *no
 	faa->faa_phandle = node->n_phandle;
 	faa->faa_name = node->n_name;
 	faa->faa_quiet = quiet;
+	faa->faa_dmat = node->n_faa.faa_dmat;
 }
 
 static bool
@@ -218,6 +227,66 @@ fdt_add_bus_match(device_t bus, const int phandle, struct fdt_attach_args *faa,
 	}
 }
 
+static int
+fdt_dma_translate(int phandle, struct fdt_dma_range **ranges, u_int *nranges)
+{
+	const uint8_t *data;
+	int len, n;
+
+	const int parent = OF_parent(phandle);
+	if (parent == -1)
+		return 1;	/* done searching */
+
+	data = fdtbus_get_prop(phandle, "dma-ranges", &len);
+	if (data == NULL)
+		return 1;	/* no dma-ranges property, stop searching */
+
+	if (len == 0)
+		return 0;	/* dma-ranges property is empty, keep going */
+
+	const int addr_cells = fdtbus_get_addr_cells(phandle);
+	const int size_cells = fdtbus_get_size_cells(phandle);
+	const int paddr_cells = fdtbus_get_addr_cells(parent);
+	if (addr_cells == -1 || size_cells == -1 || paddr_cells == -1)
+		return 1;
+
+	const int entry_size = (addr_cells + paddr_cells + size_cells) * 4;
+
+	*nranges = len / entry_size;
+	*ranges = kmem_alloc(sizeof(struct fdt_dma_range) * *nranges, KM_SLEEP);
+	for (n = 0; len >= entry_size; n++, len -= entry_size) {
+		const uint64_t cba = fdtbus_get_cells(data, addr_cells);
+		data += addr_cells * 4;
+		const uint64_t pba = fdtbus_get_cells(data, paddr_cells);
+		data += paddr_cells * 4;
+		const uint64_t cl = fdtbus_get_cells(data, size_cells);
+		data += size_cells * 4;
+
+		(*ranges)[n].dr_sysbase = pba;
+		(*ranges)[n].dr_busbase = cba;
+		(*ranges)[n].dr_len = cl;
+	}
+
+	return 1;
+}
+
+static bus_dma_tag_t
+fdt_get_dma_tag(struct fdt_node *node)
+{
+	struct fdt_dma_range *ranges = NULL;
+	u_int nranges = 0;
+	int parent;
+
+	parent = OF_parent(node->n_phandle);
+	while (parent != -1) {
+		if (fdt_dma_translate(parent, &ranges, &nranges) != 0)
+			break;
+		parent = OF_parent(parent);
+	}
+
+	return fdtbus_dma_tag_create(node->n_phandle, ranges, nranges);
+}
+
 void
 fdt_add_child(device_t bus, const int child, struct fdt_attach_args *faa,
     u_int order)
@@ -234,6 +303,7 @@ fdt_add_child(device_t bus, const int child, struct fdt_attach_args *faa,
 	node->n_faa = *faa;
 	node->n_faa.faa_phandle = child;
 	node->n_faa.faa_name = node->n_name;
+	node->n_faa.faa_dmat = fdt_get_dma_tag(node);
 
 	fdt_add_node(node);
 	fdt_need_rescan = true;

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8.18.1 2019/06/10 22:09:27 christos Exp $
+# $NetBSD: Makefile,v 1.8.18.2 2020/04/08 14:08:56 martin Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -25,6 +25,7 @@ CPPFLAGS+=	-DNACPICA=1
 CPPFLAGS+=	-DNVGA=1
 
 CWARNFLAGS+=	-Wno-shadow
+CWARNFLAGS+=	-Wno-pointer-arith
 
 COPTS.i915_drv.c+=	${${ACTIVE_CC} == "gcc":? -Wno-override-init :}
 COPTS.i915_drv.c+=	${${ACTIVE_CC} == "clang":? -Wno-initializer-overrides :}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.installimage,v 1.5 2017/02/10 16:43:59 christos Exp $
+#	$NetBSD: Makefile.installimage,v 1.5.12.1 2020/04/08 14:03:44 martin Exp $
 #
 # Common Makefile to create a bootable installation image for USB flash etc.
 #
@@ -30,7 +30,6 @@ check_INSTIMGBASE: .PHONY .NOTMAIN
 IMAGEMB=	${INSTIMAGEMB}
 .endif
 SWAPMB=		0			# no swap
-OMIT_SWAPIMG=	yes			# nothing to write
 
 KERN_SET?=	kern-GENERIC
 SETS?=		modules base etc

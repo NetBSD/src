@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.152.14.1 2019/06/10 22:07:17 christos Exp $	*/
+/*	$NetBSD: pci.c,v 1.152.14.2 2020/04/08 14:08:09 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.152.14.1 2019/06/10 22:07:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.152.14.2 2020/04/08 14:08:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -288,13 +288,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	if (sc->PCI_SC_DEVICESC(device, function).c_dev != NULL && !match)
 		return 0;
 
-	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-	if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
-		return 0;
-
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
-	/* csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG); */
-	pciclass = pci_conf_read(pc, tag, PCI_CLASS_REG);
 
 	/* Invalid vendor ID value? */
 	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
@@ -302,6 +296,13 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	/* XXX Not invalid, but we've done this ~forever. */
 	if (PCI_VENDOR(id) == 0)
 		return 0;
+
+	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
+		return 0;
+
+	/* csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG); */
+	pciclass = pci_conf_read(pc, tag, PCI_CLASS_REG);
 
 	/* Collect memory range info */
 	memset(sc->PCI_SC_DEVICESC(device, function).c_range, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.28 2016/07/29 17:13:09 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.28.14.1 2020/04/08 14:04:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.28 2016/07/29 17:13:09 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.28.14.1 2020/04/08 14:04:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -495,12 +495,11 @@ bl_recv(bl_t b)
 	}
 
 	if (got != (GOT_CRED|GOT_FD)) {
-		bl_log(b->b_fun, LOG_ERR, "message missing %s %s", 
+		bl_log(b->b_fun, LOG_ERR, "message missing %s %s",
 #if GOT_CRED != 0
 		    (got & GOT_CRED) == 0 ? "cred" :
 #endif
 		    "", (got & GOT_FD) == 0 ? "fd" : "");
-			
 		return NULL;
 	}
 

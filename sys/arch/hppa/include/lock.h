@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.20.4.1 2019/06/10 22:06:19 christos Exp $	*/
+/* 	$NetBSD: lock.h,v 1.20.4.2 2020/04/08 14:07:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -139,24 +139,6 @@ __cpu_simple_lock_clear(__cpu_simple_lock_t *alp)
 	volatile unsigned long *__aptr = __SIMPLELOCK_ALIGN(alp);
 
 	*__aptr = __SIMPLELOCK_RAW_UNLOCKED;
-}
-
-static __inline void
-mb_read(void)
-{
-	__sync();
-}
-
-static __inline void
-mb_write(void)
-{
-	__sync();
-}
-
-static __inline void
-mb_memory(void)
-{
-	__sync();
 }
 
 #endif /* _HPPA_LOCK_H_ */

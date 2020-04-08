@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2017/07/23 20:59:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.23.4.1 2020/04/08 14:03:45 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -11,7 +11,6 @@ WARNS=		1
 DBG=		${${ACTIVE_CC} == "clang":? -Oz -fomit-frame-pointer : -Os } -fno-unwind-tables
 
 CRUNCHBIN=	ramdiskbin
-CRUNCHGEN_FLAGS=-d "${DBG}"
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be

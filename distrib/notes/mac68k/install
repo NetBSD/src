@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.30 2008/09/27 23:15:21 tsutsui Exp $
+.\"	$NetBSD: install,v 1.30.62.1 2020/04/08 14:03:50 martin Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -222,7 +222,7 @@ Select the
 menu item from the
 .Ic File
 menu and install
-.Pa base.tgz , etc.tgz , either kern-GENERIC.tgz or kern-GENERICSBC.tgz ,
+.Pa base.\*[setsuffix] , etc.\*[setsuffix] , either kern-GENERIC.\*[setsuffix] or kern-GENERICSBC.\*[setsuffix] ,
 and any other sets you wish to
 install	at this time (see the
 .Sx NetBSD\ \*V\ Release\ Contents

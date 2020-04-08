@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.54.16.1 2019/06/10 22:05:32 christos Exp $	*/
+/*	$NetBSD: dump.h,v 1.54.16.2 2020/04/08 14:07:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -85,15 +85,15 @@ struct ufsi {
 	((((b) >= UFS_NDADDR || DIP((d), size) >= ((b)+1) << (u)->ufs_bshift \
 		? (u)->ufs_bsize \
 		: (ufs_fragroundup((u), ufs_blkoff(u, DIP((d), size)))))))
-struct ufsi *ufsib;
+extern struct ufsi *ufsib;
 
 /*
  * Dump maps used to describe what is to be dumped.
  */
-int	mapsize;	/* size of the state maps */
-char	*usedinomap;	/* map of allocated inodes */
-char	*dumpdirmap;	/* map of directories to be dumped */
-char	*dumpinomap;	/* map of files to be dumped */
+extern int	mapsize;	/* size of the state maps */
+extern char	*usedinomap;	/* map of allocated inodes */
+extern char	*dumpdirmap;	/* map of directories to be dumped */
+extern char	*dumpinomap;	/* map of files to be dumped */
 /*
  * Map manipulation macros.
  */
@@ -107,29 +107,29 @@ char	*dumpinomap;	/* map of files to be dumped */
 /*
  *	All calculations done in 0.1" units!
  */
-char	*disk;		/* name of the disk file */
-char	*disk_dev;	/* name of the raw device we are dumping */
-const char *tape;	/* name of the tape file */
-const char *dumpdates;	/* name of the file containing dump date information*/
-const char *temp;	/* name of the file for doing rewrite of dumpdates */
-char	lastlevel;	/* dump level of previous dump */
-char	level;		/* dump level of this dump */
-int	uflag;		/* update flag */
-const char *dumpdev;	/* device name in dumpdates */
-int	eflag;		/* eject flag */
-int	lflag;		/* autoload flag */
-int	diskfd;		/* disk file descriptor */
-int	tapefd;		/* tape file descriptor */
-int	pipeout;	/* true => output to standard output */
-int	trueinc;	/* true => "true incremental", i.e use last 9 as ref */
-ino_t	curino;		/* current inumber; used globally */
-int	newtape;	/* new tape flag */
-u_int64_t	tapesize;	/* estimated tape size, blocks */
-long	tsize;		/* tape size in 0.1" units */
-long	asize;		/* number of 0.1" units written on current tape */
-int	etapes;		/* estimated number of tapes */
-int	nonodump;	/* if set, do not honor UF_NODUMP user flags */
-int	unlimited;	/* if set, write to end of medium */
+extern char	*disk;		/* name of the disk file */
+extern char	*disk_dev;	/* name of the raw device we are dumping */
+extern const char *tape;	/* name of the tape file */
+extern const char *dumpdates;	/* name of the file containing dump date information*/
+extern const char *temp;	/* name of the file for doing rewrite of dumpdates */
+extern char	lastlevel;	/* dump level of previous dump */
+extern char	level;		/* dump level of this dump */
+extern int	uflag;		/* update flag */
+extern const char *dumpdev;	/* device name in dumpdates */
+extern int	eflag;		/* eject flag */
+extern int	lflag;		/* autoload flag */
+extern int	diskfd;		/* disk file descriptor */
+extern int	tapefd;		/* tape file descriptor */
+extern int	pipeout;	/* true => output to standard output */
+extern int	trueinc;	/* true => "true incremental", i.e use last 9 as ref */
+extern ino_t	curino;		/* current inumber; used globally */
+extern int	newtape;	/* new tape flag */
+extern u_int64_t	tapesize;	/* estimated tape size, blocks */
+extern long	tsize;		/* tape size in 0.1" units */
+extern long	asize;		/* number of 0.1" units written on current tape */
+extern int	etapes;		/* estimated number of tapes */
+extern int	nonodump;	/* if set, do not honor UF_NODUMP user flags */
+extern int	unlimited;	/* if set, write to end of medium */
 
 extern int	density;	/* density in 0.1" units */
 extern int	notify;		/* notify operator flag */
@@ -138,14 +138,14 @@ extern int	blockswritten;	/* number of blocks written on current tape */
 extern int	tapeno;		/* current tape number */
 extern int	is_ufs2;
 
-time_t	tstart_writing;	/* when started writing the first tape block */
-time_t	tstart_volume;	/* when started writing the current volume */
-int	xferrate;	/* averaged transfer rate of all volumes */
-char	sblock_buf[MAXBSIZE]; /* buffer to hold the superblock */
+extern time_t	tstart_writing;	/* when started writing the first tape block */
+extern time_t	tstart_volume;	/* when started writing the current volume */
+extern int	xferrate;	/* averaged transfer rate of all volumes */
+extern char	sblock_buf[MAXBSIZE]; /* buffer to hold the superblock */
 extern long	dev_bsize;	/* block size of underlying disk device */
-int	dev_bshift;	/* log2(dev_bsize) */
-int	tp_bshift;	/* log2(TP_BSIZE) */
-int needswap;	/* file system in swapped byte order */
+extern int	dev_bshift;	/* log2(dev_bsize) */
+extern int	tp_bshift;	/* log2(TP_BSIZE) */
+extern int needswap;	/* file system in swapped byte order */
 
 
 /* some inline functions to help the byte-swapping mess */

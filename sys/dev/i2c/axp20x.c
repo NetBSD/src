@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.13 2018/06/26 06:03:57 thorpej Exp $ */
+/* $NetBSD: axp20x.c,v 1.13.2.1 2020/04/08 14:08:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_fdt.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.13 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.13.2.1 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,13 +37,13 @@ __KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.13 2018/06/26 06:03:57 thorpej Exp $");
 #include <sys/kmem.h>
 
 #include <dev/i2c/i2cvar.h>
-#include <dev/i2c/axp20xvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
-#ifdef FDT
 #include <dev/fdt/fdtvar.h>
-#endif
+
+#define AXP20X_DCDC2    2
+#define AXP20X_DCDC3    3
 
 #define	AXP209_I2C_ADDR		0x34
 
@@ -204,12 +202,10 @@ static int	axp20x_match(device_t, cfdata_t, void *);
 static void	axp20x_attach(device_t, device_t, void *);
 
 static void	axp20x_sensors_refresh(struct sysmon_envsys *, envsys_data_t *);
-static int	axp20x_read(struct axp20x_softc *, uint8_t, uint8_t *, size_t, int);
-static int	axp20x_write(struct axp20x_softc *, uint8_t, uint8_t *, size_t, int);
+static int	axp20x_read(struct axp20x_softc *, uint8_t, uint8_t *, size_t);
+static int	axp20x_write(struct axp20x_softc *, uint8_t, uint8_t *, size_t);
 
-#ifdef FDT
 static void	axp20x_fdt_attach(struct axp20x_softc *);
-#endif
 
 CFATTACH_DECL_NEW(axp20x, sizeof(struct axp20x_softc),
     axp20x_match, axp20x_attach, NULL, NULL);
@@ -248,13 +244,13 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = ia->ia_cookie;
 
 	error = axp20x_read(sc, AXP_INPUT_STATUS,
-	    &sc->sc_inputstatus, 1, I2C_F_POLL);
+	    &sc->sc_inputstatus, 1);
 	if (error) {
 		aprint_error(": can't read status: %d\n", error);
 		return;
 	}
 	error = axp20x_read(sc, AXP_POWER_MODE,
-	    &sc->sc_powermode, 1, I2C_F_POLL);
+	    &sc->sc_powermode, 1);
 	if (error) {
 		aprint_error(": can't read power mode: %d\n", error);
 		return;
@@ -262,18 +258,18 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 	value = AXP_ADC_EN1_ACV | AXP_ADC_EN1_ACI | AXP_ADC_EN1_VBUSV | AXP_ADC_EN1_VBUSI | AXP_ADC_EN1_APSV | AXP_ADC_EN1_TS;
 	if (sc->sc_powermode & AXP_POWER_MODE_BATTOK)
 		value |= AXP_ADC_EN1_BATTV | AXP_ADC_EN1_BATTI;
-	error = axp20x_write(sc, AXP_ADC_EN1, &value, 1, I2C_F_POLL);
+	error = axp20x_write(sc, AXP_ADC_EN1, &value, 1);
 	if (error) {
 		aprint_error(": can't set AXP_ADC_EN1\n");
 		return;
 	}
-	error = axp20x_read(sc, AXP_ADC_EN2, &value, 1, I2C_F_POLL);
+	error = axp20x_read(sc, AXP_ADC_EN2, &value, 1);
 	if (error) {
 		aprint_error(": can't read AXP_ADC_EN2\n");
 		return;
 	}
 	value |= AXP_ADC_EN2_TEMP;
-	error = axp20x_write(sc, AXP_ADC_EN2, &value, 1, I2C_F_POLL);
+	error = axp20x_write(sc, AXP_ADC_EN2, &value, 1);
 	if (error) {
 		aprint_error(": can't set AXP_ADC_EN2\n");
 		return;
@@ -381,22 +377,22 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 
 	sysmon_envsys_register(sc->sc_sme);
 
-	if (axp20x_read(sc, AXP_DCDC2, &value, 1, I2C_F_POLL) == 0) {
+	if (axp20x_read(sc, AXP_DCDC2, &value, 1) == 0) {
 		aprint_verbose_dev(sc->sc_dev, "DCDC2 %dmV\n",
 		    (int)(700 + (value & AXP_DCDC2_VOLT_MASK) * 25));
 	}
-	if (axp20x_read(sc, AXP_DCDC3, &value, 1, I2C_F_POLL) == 0) {
+	if (axp20x_read(sc, AXP_DCDC3, &value, 1) == 0) {
 		aprint_verbose_dev(sc->sc_dev, "DCDC3 %dmV\n",
 		    (int)(700 + (value & AXP_DCDC3_VOLT_MASK) * 25));
 	}
-	if (axp20x_read(sc, AXP_LDO2_4, &value, 1, I2C_F_POLL) == 0) {
+	if (axp20x_read(sc, AXP_LDO2_4, &value, 1) == 0) {
 		aprint_verbose_dev(sc->sc_dev, "LDO2 %dmV, LDO4 %dmV\n",
 		    (int)(1800 +
 		    ((value & AXP_LDO2_VOLT_MASK) >> AXP_LDO2_VOLT_SHIFT) * 100
 		    ),
 		    ldo4_mvV[(value & AXP_LDO4_VOLT_MASK) >> AXP_LDO4_VOLT_SHIFT]);
 	}
-	if (axp20x_read(sc, AXP_LDO3, &value, 1, I2C_F_POLL) == 0) {
+	if (axp20x_read(sc, AXP_LDO3, &value, 1) == 0) {
 		if (value & AXP_LDO3_TRACK) {
 			aprint_verbose_dev(sc->sc_dev, "LDO3: tracking\n");
 		} else {
@@ -405,7 +401,7 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	if (axp20x_read(sc, AXP_BKUP_CTRL, &value, 1, I2C_F_POLL) == 0) {
+	if (axp20x_read(sc, AXP_BKUP_CTRL, &value, 1) == 0) {
 		if (value & AXP_BKUP_CTRL_ENABLE) {
 			aprint_verbose_dev(sc->sc_dev,
 			    "RTC supercap charger enabled: %dmV at %duA\n",
@@ -417,9 +413,7 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-#ifdef FDT
 	axp20x_fdt_attach(sc);
-#endif
 }
 
 static void
@@ -429,7 +423,7 @@ axp20x_sensors_refresh_volt(struct axp20x_softc *sc, int reg,
 	uint8_t buf[2];
 	int error;
 
-	error = axp20x_read(sc, reg, buf, sizeof(buf), 0);
+	error = axp20x_read(sc, reg, buf, sizeof(buf));
 	if (error) {
 		edata->state = ENVSYS_SINVALID;
 	} else {
@@ -446,7 +440,7 @@ axp20x_sensors_refresh_amp(struct axp20x_softc *sc, int reg,
 	uint8_t buf[2];
 	int error;
 
-	error = axp20x_read(sc, reg, buf, sizeof(buf), 0);
+	error = axp20x_read(sc, reg, buf, sizeof(buf));
 	if (error) {
 		edata->state = ENVSYS_SINVALID;
 	} else {
@@ -467,7 +461,7 @@ axp20x_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	case AXP_SENSOR_ACOK:
 	case AXP_SENSOR_VBUSOK:
 		error = axp20x_read(sc, AXP_INPUT_STATUS,
-		    &sc->sc_inputstatus, 1, 0);
+		    &sc->sc_inputstatus, 1);
 		if (error) {
 			edata->state = ENVSYS_SINVALID;
 			return;
@@ -483,7 +477,7 @@ axp20x_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		return;
 	case AXP_SENSOR_BATTOK:
 		error = axp20x_read(sc, AXP_POWER_MODE,
-		    &sc->sc_powermode, 1, 0);
+		    &sc->sc_powermode, 1);
 		if (error) {
 			edata->state = ENVSYS_SINVALID;
 			return;
@@ -527,7 +521,7 @@ axp20x_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			return;
 		}
 		error = axp20x_read(sc, AXP_POWER_MODE,
-		    &sc->sc_inputstatus, 1, 0);
+		    &sc->sc_inputstatus, 1);
 		if (error) {
 			edata->state = ENVSYS_SINVALID;
 			return;
@@ -545,7 +539,7 @@ axp20x_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		axp20x_sensors_refresh_volt(sc, AXP_APSV_MON_REG, edata);
 		return;
 	case AXP_SENSOR_TEMP:
-		error = axp20x_read(sc, AXP_TEMP_MON_REG, buf, sizeof(buf), 0);
+		error = axp20x_read(sc, AXP_TEMP_MON_REG, buf, sizeof(buf));
 		if (error) {
 			edata->state = ENVSYS_SINVALID;
 		} else {
@@ -563,32 +557,38 @@ axp20x_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 static int
-axp20x_read(struct axp20x_softc *sc, uint8_t reg, uint8_t *val, size_t len,
-    int flags)
+axp20x_read(struct axp20x_softc *sc, uint8_t reg, uint8_t *val, size_t len)
 {
 	int ret;
-	iic_acquire_bus(sc->sc_i2c, flags);
-	ret = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &reg, 1, val, len, flags);
-	iic_release_bus(sc->sc_i2c, flags);
+
+	ret = iic_acquire_bus(sc->sc_i2c, 0);
+	if (ret == 0) {
+		ret = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+		    &reg, 1, val, len, 0);
+		iic_release_bus(sc->sc_i2c, 0);
+	}
+
 	return ret;
 
 }
 
 static int
-axp20x_write(struct axp20x_softc *sc, uint8_t reg, uint8_t *val, size_t len,
-    int flags)
+axp20x_write(struct axp20x_softc *sc, uint8_t reg, uint8_t *val, size_t len)
 {
 	int ret;
-	iic_acquire_bus(sc->sc_i2c, flags);
-	ret = iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
-	    &reg, 1, val, len, flags);
-	iic_release_bus(sc->sc_i2c, flags);
+
+	ret = iic_acquire_bus(sc->sc_i2c, 0);
+	if (ret == 0) {
+		ret = iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
+		    &reg, 1, val, len, 0);
+		iic_release_bus(sc->sc_i2c, 0);
+	}
+
 	return ret;
 }
 
-int
-axp20x_set_dcdc(device_t dev, int dcdc, int mvolt, bool poll)
+static int
+axp20x_set_dcdc(device_t dev, int dcdc, int mvolt)
 {
 	struct axp20x_softc *sc = device_private(dev);
 	int ret;
@@ -603,12 +603,10 @@ axp20x_set_dcdc(device_t dev, int dcdc, int mvolt, bool poll)
 		if (value > AXP_DCDC2_VOLT_MASK) 
 			return EINVAL;
 		reg = value & AXP_DCDC2_VOLT_MASK;
-		ret = axp20x_write(sc, AXP_DCDC2, &reg, 1,
-		    poll ? I2C_F_POLL : 0);
+		ret = axp20x_write(sc, AXP_DCDC2, &reg, 1);
 		if (ret)
 			return ret;
-		if (axp20x_read(sc, AXP_DCDC2, &reg, 1, poll ? I2C_F_POLL : 0)
-		  == 0) {
+		if (axp20x_read(sc, AXP_DCDC2, &reg, 1) == 0) {
 			aprint_debug_dev(sc->sc_dev,
 			    "DCDC2 changed to %dmV\n",
 			    (int)(700 + (reg & AXP_DCDC2_VOLT_MASK) * 25));
@@ -620,12 +618,10 @@ axp20x_set_dcdc(device_t dev, int dcdc, int mvolt, bool poll)
 		if (value > AXP_DCDC3_VOLT_MASK) 
 			return EINVAL;
 		reg = value & AXP_DCDC3_VOLT_MASK;
-		ret = axp20x_write(sc, AXP_DCDC3, &reg, 1,
-		    poll ? I2C_F_POLL : 0);
+		ret = axp20x_write(sc, AXP_DCDC3, &reg, 1);
 		if (ret)
 			return ret;
-		if (axp20x_read(sc, AXP_DCDC3, &reg, 1, poll ? I2C_F_POLL : 0)
-		  == 0) {
+		if (axp20x_read(sc, AXP_DCDC3, &reg, 1) == 0) {
 			aprint_debug_dev(sc->sc_dev,
 			    "DCDC3 changed to %dmV\n",
 			    (int)(700 + (reg & AXP_DCDC3_VOLT_MASK) * 25));
@@ -637,8 +633,8 @@ axp20x_set_dcdc(device_t dev, int dcdc, int mvolt, bool poll)
 	}
 }
 
-int
-axp20x_get_dcdc(device_t dev, int dcdc, int *pmvolt, bool poll)
+static int
+axp20x_get_dcdc(device_t dev, int dcdc, int *pmvolt)
 {
 	struct axp20x_softc *sc = device_private(dev);
 	uint8_t reg;
@@ -646,13 +642,13 @@ axp20x_get_dcdc(device_t dev, int dcdc, int *pmvolt, bool poll)
 
 	switch (dcdc) {
 	case AXP20X_DCDC2:
-		error = axp20x_read(sc, AXP_DCDC2, &reg, 1, poll ? I2C_F_POLL : 0);
+		error = axp20x_read(sc, AXP_DCDC2, &reg, 1);
 		if (error != 0)
 			return error;
 		*pmvolt = __SHIFTOUT(reg, AXP_DCDC2_VOLT_MASK) * 25 + 700;
 		return 0;
 	case AXP20X_DCDC3:
-		error = axp20x_read(sc, AXP_DCDC3, &reg, 1, poll ? I2C_F_POLL : 0);
+		error = axp20x_read(sc, AXP_DCDC3, &reg, 1);
 		if (error != 0)
 			return error;
 		*pmvolt = __SHIFTOUT(reg, AXP_DCDC3_VOLT_MASK) * 25 + 700;
@@ -662,17 +658,20 @@ axp20x_get_dcdc(device_t dev, int dcdc, int *pmvolt, bool poll)
 	}
 }
 
-void
+static void
 axp20x_poweroff(device_t dev)
 {
 	struct axp20x_softc * const sc = device_private(dev);
 	uint8_t reg = AXP_SHUTDOWN_CTRL;
+	int error;
 
-	if (axp20x_write(sc, AXP_SHUTDOWN, &reg, 1, I2C_F_POLL) != 0)
-		device_printf(dev, "WARNING: poweroff failed\n");
+	error = axp20x_write(sc, AXP_SHUTDOWN, &reg, 1);
+	if (error) {
+		device_printf(dev, "WARNING: unable to power off, error %d\n",
+		    error);
+	}
 }
 
-#ifdef FDT
 static const struct axp20xregdef {
 	const char *name;
 	int dcdc;
@@ -714,7 +713,7 @@ axp20xreg_set_voltage(device_t dev, u_int min_uvol, u_int max_uvol)
 {
 	struct axp20xreg_softc * const sc = device_private(dev);
 	
-	return axp20x_set_dcdc(device_parent(dev), sc->sc_regdef->dcdc, min_uvol / 1000, true);
+	return axp20x_set_dcdc(device_parent(dev), sc->sc_regdef->dcdc, min_uvol / 1000);
 }
 
 static int
@@ -723,7 +722,7 @@ axp20xreg_get_voltage(device_t dev, u_int *puvol)
 	struct axp20xreg_softc * const sc = device_private(dev);
 	int mvol, error;
 
-	error = axp20x_get_dcdc(device_parent(dev), sc->sc_regdef->dcdc, &mvol, true);
+	error = axp20x_get_dcdc(device_parent(dev), sc->sc_regdef->dcdc, &mvol);
 	if (error != 0)
 		return error;
 
@@ -817,4 +816,3 @@ axp20x_fdt_attach(struct axp20x_softc *sc)
 		config_found(sc->sc_dev, &reg, NULL);
 	}
 }
-#endif /* FDT */

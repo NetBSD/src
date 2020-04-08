@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2017/11/19 21:05:26 martin Exp $
+#	$NetBSD: Makefile,v 1.25.4.1 2020/04/08 14:09:08 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -39,14 +39,13 @@ LDADD+=-lrumpfs_null -lrumpvfs_layerfs				# nullfs
 VFSTESTDIR != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 LDADD+=-L${VFSTESTDIR} -lvfstest
 
-LDADD+=-lrumpvfs -lrumpkern_sysproxy -lrump -lrumpuser		# base
+LDADD+= ${LIBRUMPBASE}						# base
 LDADD+=-lrumpnet						# static linking
-LDADD+=-lpthread
 
 LDADD+=-lutil
 
 .if (${MKZFS} != "no")
-LDADD+=-lrumpfs_zfs -lrumpkern_solaris -lrumpdev_rnd
+LDADD+=-lrumpfs_zfs -lrumpkern_solaris -lrumpdev_rnd -lrumpkern_sysproxy
 CPPFLAGS+=-DWANT_ZFS_TESTS
 .endif
 

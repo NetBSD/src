@@ -698,7 +698,7 @@ is used for deliveries to commands or files in "root"-owned aliases.
 
 LLooccaall ppeerr--uusseerr ..ffoorrwwaarrdd ffiilleess
 
-With delivery via the local(8) deliver agent, users can control their own mail
+With delivery via the local(8) delivery agent, users can control their own mail
 delivery by specifying destinations in a file called .forward in their home
 directories. The syntax of these files is the same as with the local aliases(5)
 file, except that the left-hand side of the alias (lookup key and colon) are

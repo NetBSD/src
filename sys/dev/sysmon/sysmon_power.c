@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.58.4.1 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.58.4.2 2020/04/08 14:08:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.58.4.1 2019/06/10 22:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.58.4.2 2020/04/08 14:08:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -862,7 +862,7 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 		switch (event) {
 		case PENVSYS_EVENT_LOW_POWER:
 			printf("sysmon: LOW POWER! SHUTTING DOWN.\n");
-			cpu_reboot(RB_POWERDOWN, NULL);
+			kern_reboot(RB_POWERDOWN, NULL);
 			break;
 		case PENVSYS_EVENT_STATE_CHANGED:
 			printf("%s: state changed on '%s' to '%s'\n",
@@ -1029,7 +1029,7 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		 */
 		printf("%s: power button pressed, shutting down!\n",
 		    smpsw->smpsw_name);
-		cpu_reboot(RB_POWERDOWN, NULL);
+		kern_reboot(RB_POWERDOWN, NULL);
 		break;
 
 	case PSWITCH_TYPE_RESET:
@@ -1044,7 +1044,7 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		 */
 		printf("%s: reset button pressed, rebooting!\n",
 		    smpsw->smpsw_name);
-		cpu_reboot(0, NULL);
+		kern_reboot(0, NULL);
 		break;
 
 	case PSWITCH_TYPE_SLEEP:

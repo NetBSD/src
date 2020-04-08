@@ -1,4 +1,4 @@
-/*	$NetBSD: lapi.c,v 1.10.4.1 2019/06/10 22:02:33 christos Exp $	*/
+/*	$NetBSD: lapi.c,v 1.10.4.2 2020/04/08 14:07:01 martin Exp $	*/
 
 /*
 ** Id: lapi.c,v 2.259.1.2 2017/12/06 18:35:12 roberto Exp 
@@ -1297,6 +1297,8 @@ LUA_API void lua_upvaluejoin (lua_State *L, int fidx1, int n1,
   LClosure *f1;
   UpVal **up1 = getupvalref(L, fidx1, n1, &f1);
   UpVal **up2 = getupvalref(L, fidx2, n2, NULL);
+  if (*up1 == *up2)
+    return;
   luaC_upvdeccount(L, *up1);
   *up1 = *up2;
   (*up1)->refcount++;

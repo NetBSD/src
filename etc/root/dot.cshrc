@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.27 2018/03/01 06:12:09 snj Exp $
+#	$NetBSD: dot.cshrc,v 1.27.4.1 2020/04/08 14:03:58 martin Exp $
 
 alias	h	history
 alias	j	jobs -l
@@ -28,7 +28,7 @@ set history=1000
 set path=(/sbin /usr/sbin /bin /usr/bin /usr/pkg/sbin /usr/pkg/bin /usr/X11R7/bin /usr/local/sbin /usr/local/bin)
 
 # directory stuff: cdpath/cd/back
-set cdpath=(/usr/src/{sys,bin,sbin,usr.{bin,sbin},lib,libexec,share,local,games,gnu/{usr.{bin,sbin},libexec,lib,games}})
+set cdpath=(/usr/src/{sys,bin,sbin,usr.{bin,sbin},lib,libexec,share,local,games,libexec,lib,games}})
 
 if ($?prompt && -x /usr/bin/id ) then
 	if (`/usr/bin/id -u` == 0) then

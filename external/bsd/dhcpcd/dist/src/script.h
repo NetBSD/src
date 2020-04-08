@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,9 @@
 #include "control.h"
 
 void if_printoptions(void);
-int send_interface(struct fd_list *, const struct interface *);
+char ** script_buftoenv(struct dhcpcd_ctx *, char *, size_t);
+pid_t script_exec(const struct dhcpcd_ctx *, char *const *, char *const *);
+int send_interface(struct fd_list *, const struct interface *, int);
 int script_runreason(const struct interface *, const char *);
-
+int script_runchroot(struct dhcpcd_ctx *, char *);
 #endif

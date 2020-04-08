@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.13.2.1 2019/06/10 22:06:21 christos Exp $
+# $NetBSD: Makefile.efiboot,v 1.13.2.2 2020/04/08 14:07:41 martin Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -37,6 +37,7 @@ BINMODE=444
 .PATH:	${.CURDIR}/../../lib
 
 LDSCRIPT?= ${.CURDIR}/ldscript
+LDFLAGS+= --no-dynamic-linker --noinhibit-exec
 LDFLAGS+= -nostdlib -T${LDSCRIPT} -Bsymbolic -shared -nocombreloc
 CPPFLAGS+= -I$S -I${.CURDIR} -I${.CURDIR}/.. -I$S/lib/libsa
 CPPFLAGS+= -I${.OBJDIR}

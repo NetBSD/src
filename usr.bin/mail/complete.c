@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.20 2010/01/12 14:44:24 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.20.46.1 2020/04/08 14:09:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.20 2010/01/12 14:44:24 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.20.46.1 2020/04/08 14:09:16 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -332,16 +332,27 @@ complete_filename(EditLine *el, char *word, int dolist)
 {
 	StringList *words;
 	char dir[MAXPATHLEN];
-	char *fname;
+	char *fname, *mf;
 	DIR *dd;
 	struct dirent *dp;
 	unsigned char rv;
 	size_t len;
 
 	if ((fname = strrchr(word, '/')) == NULL) {
-		dir[0] = '.';
-		dir[1] = '\0';
-		fname = word;
+		if (word[0] == '+' && (mf = value(ENAME_FOLDER)) != NULL) {
+			if (mf[0] == '/') {
+				(void)estrlcpy(dir, mf, sizeof(dir));
+			} else {
+				dir[0] = '~';
+				dir[1] = '/';
+				(void)estrlcpy(dir + 2, mf, sizeof(dir) - 2);
+			}
+			fname = word + 1;
+		} else {
+			dir[0] = '.';
+			dir[1] = '\0';
+			fname = word;
+		}
 	} else {
 		if (fname == word) {
 			dir[0] = '/';

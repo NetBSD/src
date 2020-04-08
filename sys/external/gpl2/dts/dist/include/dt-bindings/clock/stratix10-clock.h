@@ -1,4 +1,4 @@
-/*	$NetBSD: stratix10-clock.h,v 1.1.1.1 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: stratix10-clock.h,v 1.1.1.1.4.1 2020/04/08 14:08:45 martin Exp $	*/
 
 /* SPDX-License-Identifier:	GPL-2.0 */
 /*
@@ -81,6 +81,8 @@
 #define STRATIX10_USB_CLK		59
 #define STRATIX10_SPI_M_CLK		60
 #define STRATIX10_NAND_CLK		61
-#define STRATIX10_NUM_CLKS		62
+#define STRATIX10_NAND_X_CLK		62
+#define STRATIX10_NAND_ECC_CLK		63
+#define STRATIX10_NUM_CLKS		64
 
 #endif	/* __STRATIX10_CLOCK_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.26 2013/12/28 18:04:03 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.26.26.1 2020/04/08 14:07:15 martin Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.26 2013/12/28 18:04:03 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.26.26.1 2020/04/08 14:07:15 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -459,6 +459,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
                 if (!cache_name)
                 	goto cleanup3;
 	} else {
+		size_t len = PATH_MAX + 16;
 		/* Get the cache name */
 		cache_name = openpam_get_option(pamh, PAM_OPT_CCACHE);
 		if (cache_name == NULL) {
@@ -466,8 +467,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 			cache_name = cache_name_buf;
 		}
 
-		/* XXX potential overflow */
-		cache_name_buf2 = p = calloc(PATH_MAX + 16, sizeof(char));
+		cache_name_buf2 = p = calloc(len, sizeof(char));
 		q = cache_name;
 	
 		if (p == NULL) {
@@ -479,27 +479,42 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 
 		/* convert %u and %p */
 		while (*q) {
+			int l;
 			if (*q == '%') {
 				q++;
 				if (*q == 'u') {
-					sprintf(p, "%d", pwd->pw_uid);
-					p += strlen(p);
+					l = snprintf(p, len, "%d", pwd->pw_uid);
 				}
 				else if (*q == 'p') {
-					sprintf(p, "%d", getpid());
-					p += strlen(p);
+					l = snprintf(p, len, "%d", getpid());
 				}
 				else {
 					/* Not a special token */
-					*p++ = '%';
+					if (!len)
+						goto truncated;
+					*p = '%';
+					l = 1;
 					q--;
+				}
+				if ((size_t)l > len) {
+truncated:				PAM_LOG("string truncation failure");
+					retval = PAM_BUF_ERR;
+					goto cleanup3;
 				}
 				q++;
 			}
 			else {
-				*p++ = *q++;
+				if (!len)
+					goto truncated;
+				*p = *q++;
+				l = 1;
 			}
+			p += l;
+			len -= (size_t)l;
 		}
+		if (!len)
+			goto truncated;
+		*p = '\0';
 	}
 
 	PAM_LOG("Got cache_name: %s", cache_name);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.1 2019/06/10 22:02:40 christos Exp $
+#	$NetBSD: Makefile,v 1.4.2.2 2020/04/08 14:07:02 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,8 @@ SRCS.util=	\
 	miscutil.c \
 	patcache.c \
 	private.c \
-	utilbitmap.c
+	utilbitmap.c \
+	reallocarray.c
 .PATH:	${XFONT2DIR}/src/util
 
 SRCS.fontfile=	\
@@ -104,6 +105,7 @@ CPPFLAGS+=	-DHAS_SNPRINTF -DHAVE_CONFIG_H
 CPPFLAGS+=      -DBDFFORMAT -DSNFFORMAT -DPCFFORMAT -DX_GZIP_FONT_COMPRESSION -DX_BZIP2_FONT_COMPRESSION
 CPPFLAGS+=	-DFONT_ENCODINGS_DIRECTORY=\"${X11LIBDIR}/X11/fonts/encodings/encodings.dir\" 
 CPPFLAGS+=	-I${XFONT2DIR}/src/stubs
+CPPFLAGS+=	-I${XFONT2DIR}
 CPPFLAGS+=	-I${XFONT2DIR}/include
 CPPFLAGS+=	-I${XFONT2DIR}/../include
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}

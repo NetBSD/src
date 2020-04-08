@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.17 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: strerror.c,v 1.17.16.1 2020/04/08 14:07:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strerror.c,v 1.17 2015/01/20 18:31:25 christos Exp $");
+__RCSID("$NetBSD: strerror.c,v 1.17.16.1 2020/04/08 14:07:13 martin Exp $");
 
 #define __SETLOCALE_SOURCE__
 
@@ -78,7 +78,9 @@ strerror_l(int num, locale_t loc)
 	thr_once(&strerror_once, strerror_setup);
 	buf = thr_getspecific(strerror_key);
 	if (buf == NULL) {
+		error = errno;
 		buf = malloc(NL_TEXTMAX);
+		errno = error;
 		if (buf == NULL) {
 			static char fallback_buf[NL_TEXTMAX];
 			buf = fallback_buf;

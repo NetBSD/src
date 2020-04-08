@@ -1,4 +1,4 @@
-/*	$NetBSD: jziic.c,v 1.4.12.1 2019/06/10 22:06:30 christos Exp $ */
+/*	$NetBSD: jziic.c,v 1.4.12.2 2020/04/08 14:07:45 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.4.12.1 2019/06/10 22:06:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.4.12.2 2020/04/08 14:07:45 martin Exp $");
 
 /*
  * a preliminary driver for JZ4780's on-chip SMBus controllers
@@ -69,7 +69,7 @@ struct jziic_softc {
 	bus_space_tag_t 	sc_memt;
 	bus_space_handle_t 	sc_memh;
 	struct i2c_controller 	sc_i2c;
-	kmutex_t		sc_buslock, sc_cvlock;
+	kmutex_t		sc_cvlock;
 	uint32_t		sc_pclk;
 	/* stuff used for interrupt-driven transfers */
 	const uint8_t		*sc_cmd;
@@ -89,8 +89,6 @@ STATIC int jziic_enable(struct jziic_softc *);
 STATIC void jziic_disable(struct jziic_softc *);
 STATIC int jziic_wait(struct jziic_softc *);
 STATIC void jziic_set_speed(struct jziic_softc *);
-STATIC int jziic_i2c_acquire_bus(void *, int);
-STATIC void jziic_i2c_release_bus(void *, int);
 STATIC int jziic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
 STATIC int jziic_i2c_exec_poll(struct jziic_softc *, i2c_op_t, i2c_addr_t,
@@ -138,7 +136,6 @@ jziic_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_cvlock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_ping, device_xname(self));
 
@@ -175,14 +172,8 @@ jziic_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* fill in the i2c tag */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = jziic_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = jziic_i2c_release_bus;
-	sc->sc_i2c.ic_send_start = NULL;
-	sc->sc_i2c.ic_send_stop = NULL;
-	sc->sc_i2c.ic_initiate_xfer = NULL;
-	sc->sc_i2c.ic_read_byte = NULL;
-	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = jziic_i2c_exec;
 
 	memset(&iba, 0, sizeof(iba));
@@ -233,23 +224,6 @@ jziic_disable(struct jziic_softc *sc)
 }
 
 STATIC int
-jziic_i2c_acquire_bus(void *cookie, int flags)
-{
-	struct jziic_softc *sc = cookie;
-
-	mutex_enter(&sc->sc_buslock);
-	return 0;
-}
-
-STATIC void
-jziic_i2c_release_bus(void *cookie, int flags)
-{
-	struct jziic_softc *sc = cookie;
-
-	mutex_exit(&sc->sc_buslock);
-}
-
-STATIC int
 jziic_wait(struct jziic_softc *sc)
 {
 	uint32_t reg;
@@ -292,7 +266,7 @@ jziic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 {
 	struct jziic_softc *sc = cookie;
 
-	if (cold || (flags & I2C_F_POLL)) {
+	if (flags & I2C_F_POLL) {
 		return jziic_i2c_exec_poll(sc, op, addr, vcmd, cmdlen, vbuf,
 		    buflen, flags);
 	} else {

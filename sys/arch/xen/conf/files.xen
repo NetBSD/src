@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.169.2.1 2019/06/10 22:06:54 christos Exp $
+#	$NetBSD: files.xen,v 1.169.2.2 2020/04/08 14:07:59 martin Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -158,7 +158,6 @@ file	arch/x86/x86/tsc.c		machdep
 file	arch/x86/x86/vm_machdep.c	machdep
 file	arch/x86/x86/x86_autoconf.c	machdep & xenpvhvm
 file	arch/x86/x86/x86_machdep.c	machdep
-file	arch/x86/x86/cpu_topology.c	machdep
 file	arch/x86/x86/platform.c		machdep
 
 include	"arch/xen/conf/files.compat"

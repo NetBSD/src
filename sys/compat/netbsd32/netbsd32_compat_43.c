@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.56.2.1 2019/06/10 22:07:01 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.56.2.2 2020/04/08 14:08:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.56.2.1 2019/06/10 22:07:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.56.2.2 2020/04/08 14:08:01 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -432,7 +432,7 @@ compat_43_netbsd32_orecvmsg(struct lwp *l, const struct compat_43_netbsd32_orecv
 	struct iovec *iov, aiov[UIO_SMALLIOV];
 	int error;
 
-	error = copyin(SCARG_P32(uap, msg), &omsg, sizeof (struct omsghdr));
+	error = copyin(SCARG_P32(uap, msg), &omsg, sizeof(omsg));
 	if (error)
 		return (error);
 
@@ -517,7 +517,7 @@ compat_43_netbsd32_osendmsg(struct lwp *l, const struct compat_43_netbsd32_osend
 	struct sockaddr *sa;
 	int error;
 
-	error = copyin(SCARG_P32(uap, msg), &omsg, sizeof (struct omsghdr));
+	error = copyin(SCARG_P32(uap, msg), &omsg, sizeof(omsg));
 	if (error != 0)
 		return (error);
 
@@ -768,6 +768,26 @@ static struct syscall_package compat_netbsd32_43_syscalls[] = {
 	    (sy_call_t *)compat_43_netbsd32_sigsetmask },
 	{ NETBSD32_SYS_compat_43_netbsd32_osigstack, 0,
 	    (sy_call_t *)compat_43_netbsd32_osigstack },
+/*
+ * These syscalls are provided by emul_netbsd compat_43 code, but their
+ * entry points must still be loaded in the emul_netbsd32 disatch table
+ */
+	{ NETBSD32_SYS_compat_43_ogetpagesize, 0,
+	    (sy_call_t *)compat_43_sys_getpagesize },
+	{ NETBSD32_SYS_compat_43_ogetdtablesize, 0,
+	    (sy_call_t *)compat_43_sys_getdtablesize},
+	{ NETBSD32_SYS_compat_43_ogethostid, 0,
+	    (sy_call_t *)compat_43_sys_gethostid },
+	{ NETBSD32_SYS_compat_43_owait, 0,
+	    (sy_call_t *)compat_43_sys_wait },
+/*
+ * Skip oquota since it isn't part of compat_43
+ *	{ NETBSD32_SYS_compat_43_oquota, 0,
+ *	    (sy_call_t *)compat_43_sys_quota },
+ */
+
+/* End of compat_43 syscalls */
+
 	{ 0, 0, NULL }
 }; 
 

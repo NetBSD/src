@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.34.14.1 2019/06/10 22:09:00 christos Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.34.14.2 2020/04/08 14:08:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.34.14.1 2019/06/10 22:09:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.34.14.2 2020/04/08 14:08:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -439,7 +439,7 @@ hfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-hfs_root(struct mount *mp, struct vnode **vpp)
+hfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
@@ -448,7 +448,7 @@ hfs_root(struct mount *mp, struct vnode **vpp)
 	printf("vfsop = hfs_root()\n");
 #endif /* HFS_DEBUG */
 
-	if ((error = VFS_VGET(mp, HFS_CNID_ROOT_FOLDER, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, HFS_CNID_ROOT_FOLDER, lktype, &nvp)) != 0)
 		return error;
 	*vpp = nvp;
 
@@ -474,7 +474,7 @@ hfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_bavail = vh->free_blocks; /* blocks free for non superuser */
 	sbp->f_bresvd = 0;
 	sbp->f_files =  vh->file_count; /* total files */
-	sbp->f_ffree = (1<<31) - vh->file_count; /* free file nodes */
+	sbp->f_ffree = (1U<<31) - vh->file_count; /* free file nodes */
 	copy_statvfs_info(sbp, mp);
 
 	return 0;
@@ -495,14 +495,14 @@ hfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
  * since both are conveniently 32-bit numbers
  */
 int
-hfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+hfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	int error;
 
 	error = hfs_vget_internal(mp, ino, HFS_DATAFORK, vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -612,7 +612,7 @@ hfs_loadvnode(struct mount *mp, struct vnode *vp,
 }
 
 int
-hfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+hfs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, struct vnode **vpp)
 {
 
 #ifdef HFS_DEBUG

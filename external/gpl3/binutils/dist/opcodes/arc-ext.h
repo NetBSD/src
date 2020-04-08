@@ -1,5 +1,5 @@
 /* ARC target-dependent stuff.  Extension data structures.
-   Copyright (C) 1995-2018 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -125,7 +125,7 @@ extern void build_ARC_extmap (bfd *);
 /* Accessor functions.  */
 extern enum ExtReadWrite arcExtMap_coreReadWrite (int);
 extern const char * arcExtMap_coreRegName (int);
-extern const char * arcExtMap_auxRegName (long);
+extern const char * arcExtMap_auxRegName (unsigned);
 extern const char * arcExtMap_condCodeName (int);
 extern const extInstruction_t *arcExtMap_insn (int, unsigned long long);
 extern struct arc_opcode *arcExtMap_genOpcode (const extInstruction_t *,

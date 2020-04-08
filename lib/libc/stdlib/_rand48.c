@@ -1,4 +1,4 @@
-/*	$NetBSD: _rand48.c,v 1.7 2005/06/12 05:21:27 lukem Exp $	*/
+/*	$NetBSD: _rand48.c,v 1.7.86.1 2020/04/08 14:07:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _rand48.c,v 1.7 2005/06/12 05:21:27 lukem Exp $");
+__RCSID("$NetBSD: _rand48.c,v 1.7.86.1 2020/04/08 14:07:13 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -42,15 +42,17 @@ __dorand48(unsigned short xseed[3])
 
 	_DIAGASSERT(xseed != NULL);
 
-	accu = (unsigned long) __rand48_mult[0] * (unsigned long) xseed[0] +
-	 (unsigned long) __rand48_add;
+	accu = (unsigned long) __rand48_mult[0] * (unsigned long) xseed[0];
+	accu += (unsigned long) __rand48_add;
 	temp[0] = (unsigned short) accu;	/* lower 16 bits */
 	accu >>= sizeof(unsigned short) * 8;
-	accu += (unsigned long) __rand48_mult[0] * (unsigned long) xseed[1] +
-	 (unsigned long) __rand48_mult[1] * (unsigned long) xseed[0];
+	accu += (unsigned long) __rand48_mult[0] * (unsigned long) xseed[1];
+	accu += (unsigned long) __rand48_mult[1] * (unsigned long) xseed[0];
 	temp[1] = (unsigned short) accu;	/* middle 16 bits */
 	accu >>= sizeof(unsigned short) * 8;
-	accu += __rand48_mult[0] * xseed[2] + __rand48_mult[1] * xseed[1] + __rand48_mult[2] * xseed[0];
+	accu += (unsigned long) __rand48_mult[0] * (unsigned long) xseed[2];
+	accu += (unsigned long) __rand48_mult[1] * (unsigned long) xseed[1];
+	accu += (unsigned long) __rand48_mult[2] * (unsigned long) xseed[0];
 	xseed[0] = temp[0];
 	xseed[1] = temp[1];
 	xseed[2] = (unsigned short) accu;

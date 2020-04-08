@@ -1,4 +1,4 @@
-/*	$NetBSD: tsciic.c,v 1.1 2014/02/21 12:23:30 jdc Exp $	*/
+/*	$NetBSD: tsciic.c,v 1.1.36.1 2020/04/08 14:07:25 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsciic.c,v 1.1 2014/02/21 12:23:30 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsciic.c,v 1.1.36.1 2020/04/08 14:07:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: tsciic.c,v 1.1 2014/02/21 12:23:30 jdc Exp $");
 #include <dev/i2c/ddcvar.h>
 
 /* I2C glue */
-static int tsciic_acquire_bus(void *, int);
-static void tsciic_release_bus(void *, int);
 static int tsciic_send_start(void *, int);
 static int tsciic_send_stop(void *, int);
 static int tsciic_initiate_xfer(void *, i2c_addr_t, int);
@@ -77,17 +75,13 @@ tsciic_init(device_t self) {
 	struct tsciic_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
-
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = tsciic_acquire_bus;
-	sc->sc_i2c.ic_release_bus = tsciic_release_bus;
 	sc->sc_i2c.ic_send_start = tsciic_send_start;
 	sc->sc_i2c.ic_send_stop = tsciic_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = tsciic_initiate_xfer;
 	sc->sc_i2c.ic_read_byte = tsciic_read_byte;
 	sc->sc_i2c.ic_write_byte = tsciic_write_byte;
-	sc->sc_i2c.ic_exec = NULL;
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
@@ -128,23 +122,6 @@ tsciicbb_read(void *cookie)
 }
 
 /* higher level I2C stuff */
-static int
-tsciic_acquire_bus(void *cookie, int flags)
-{
-	struct tsciic_softc *sc = cookie;
-
-	mutex_enter(&sc->sc_buslock);
-	return 0;
-}
-
-static void
-tsciic_release_bus(void *cookie, int flags)
-{
-	struct tsciic_softc *sc = cookie;
-
-	mutex_exit(&sc->sc_buslock);
-}
-
 static int
 tsciic_send_start(void *cookie, int flags)
 {

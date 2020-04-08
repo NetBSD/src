@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ci_dpm.c,v 1.2.6.2 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: amdgpu_ci_dpm.c,v 1.2.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,11 +24,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ci_dpm.c,v 1.2.6.2 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ci_dpm.c,v 1.2.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/firmware.h>
-#include <linux/module.h>
-#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "amdgpu_pm.h"
@@ -5692,18 +5690,18 @@ static int ci_parse_power_table(struct amdgpu_device *adev)
 	if (!amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
 				   &frev, &crev, &data_offset))
 		return -EINVAL;
-	power_info = (union power_info *)((char *)mode_info->atom_context->bios + data_offset);
+	power_info = (union power_info *)(mode_info->atom_context->bios + data_offset);
 
 	amdgpu_add_thermal_controller(adev);
 
 	state_array = (struct _StateArray *)
-		((char *)mode_info->atom_context->bios + data_offset +
+		(mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usStateArrayOffset));
 	clock_info_array = (struct _ClockInfoArray *)
-		((char *)mode_info->atom_context->bios + data_offset +
+		(mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usClockInfoArrayOffset));
 	non_clock_info_array = (struct _NonClockInfoArray *)
-		((char *)mode_info->atom_context->bios + data_offset +
+		(mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usNonClockInfoArrayOffset));
 
 	adev->pm.dpm.ps = kzalloc(sizeof(struct amdgpu_ps) *
@@ -5775,7 +5773,7 @@ static int ci_get_vbios_boot_values(struct amdgpu_device *adev,
 	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
 				   &frev, &crev, &data_offset)) {
 		firmware_info =
-			(ATOM_FIRMWARE_INFO_V2_2 *)((char *)mode_info->atom_context->bios +
+			(ATOM_FIRMWARE_INFO_V2_2 *)(mode_info->atom_context->bios +
 						    data_offset);
 		boot_state->mvdd_bootup_value = le16_to_cpu(firmware_info->usBootUpMVDDCVoltage);
 		boot_state->vddc_bootup_value = le16_to_cpu(firmware_info->usBootUpVDDCVoltage);
@@ -5858,22 +5856,18 @@ static int ci_dpm_init(struct amdgpu_device *adev)
 	u8 frev, crev;
 	struct ci_power_info *pi;
 	int ret;
-#ifndef __NetBSD__		/* XXX amdgpu pcie */
 	u32 mask;
-#endif
 
 	pi = kzalloc(sizeof(struct ci_power_info), GFP_KERNEL);
 	if (pi == NULL)
 		return -ENOMEM;
 	adev->pm.dpm.priv = pi;
 
-#ifndef __NetBSD__		/* XXX amdgpu pcie */
 	ret = drm_pcie_get_speed_cap_mask(adev->ddev, &mask);
 	if (ret)
 		pi->sys_pcie_mask = 0;
 	else
 		pi->sys_pcie_mask = mask;
-#endif
 	pi->force_pcie_gen = AMDGPU_PCIE_GEN_INVALID;
 
 	pi->pcie_gen_performance.max = AMDGPU_PCIE_GEN1;

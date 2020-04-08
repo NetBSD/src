@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.133.2.1 2019/06/10 22:05:29 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.133.2.2 2020/04/08 14:07:17 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -76,6 +76,11 @@ extern size_t _rtld_pagesz;
     assert((dlp)->objs != NULL),					\
     (dlp)->num_used = 0)
 
+
+typedef struct Struct_Elf_Hash {
+	unsigned long sysv;
+	unsigned long gnu;
+} Elf_Hash;
 #endif /* _RTLD_SOURCE */
 
 /*
@@ -176,6 +181,7 @@ typedef struct Struct_Obj_Entry {
 	Elf_Word        gotsym;		/* First dynamic symbol in GOT */
 #endif
 
+	/* SysV Hash fields */
 	const Elf_Symindx *buckets;	/* Hash table buckets array */
 	unsigned long	unused1;	/* Used to be nbuckets */
 	const Elf_Symindx *chains;	/* Hash table chain array */
@@ -216,7 +222,9 @@ typedef struct Struct_Obj_Entry {
 			tls_done:1,	/* True if static TLS offset
 					 * has been allocated */
 #endif
-			ref_nodel:1;	/* Refcount increased to prevent dlclose */
+			ref_nodel:1,	/* Refcount increased to prevent dlclose */
+			sysv_hash:1,	/* SysV Hash available */
+			gnu_hash:1;	/* GNU Hash available */
 
 	struct link_map linkmap;	/* for GDB */
 
@@ -229,10 +237,25 @@ typedef struct Struct_Obj_Entry {
 
 	void		*ehdr;
 
+	/* SysV Hash fields */
 	uint32_t        nbuckets;	/* Number of buckets */
 	uint32_t        nbuckets_m;	/* Precomputed for fast remainder */
 	uint8_t         nbuckets_s1;
 	uint8_t         nbuckets_s2;
+
+	/* GNU Hash fields */
+	const uint32_t *buckets_gnu;	/* Hash table buckets array */
+	uint32_t	nbuckets_gnu;	/* Number of GNU hash buckets */
+	uint32_t	nbuckets_m_gnu;	/* Precomputed for fast remainder */
+	uint8_t		nbuckets_s1_gnu;
+	uint8_t		nbuckets_s2_gnu;
+	const uint32_t *chains_gnu;	/* Hash table chain array */
+#define nchains_gnu	nchains		/* Number of symbols, shared with SysV Hash */
+	const Elf_Addr *bloom_gnu;
+	uint32_t	symndx_gnu;	/* First accessible symbol on dynsym table */
+	uint32_t	mask_bm_gnu;	/* Bloom filter words - 1 (bitmask) */
+	uint32_t	shift2_gnu;	/* Bloom filter shift count */
+
 	size_t		pathlen;	/* Pathname length */
 	SIMPLEQ_HEAD(, Struct_Name_Entry) names; /* List of names for this
 						  * object we know about. */
@@ -410,19 +433,20 @@ void _rtld_call_ifunc(Obj_Entry *, sigset_t *, u_int);
 Obj_Entry *_rtld_load_library(const char *, const Obj_Entry *, int);
 
 /* symbol.c */
-unsigned long _rtld_elf_hash(const char *);
-const Elf_Sym *_rtld_symlook_obj(const char *, unsigned long,
+unsigned long _rtld_sysv_hash(const char *);
+unsigned long _rtld_gnu_hash(const char *);
+const Elf_Sym *_rtld_symlook_obj(const char *, Elf_Hash *,
     const Obj_Entry *, u_int, const Ver_Entry *);
 const Elf_Sym *_rtld_find_symdef(unsigned long, const Obj_Entry *,
     const Obj_Entry **, u_int);
 const Elf_Sym *_rtld_find_plt_symdef(unsigned long, const Obj_Entry *,
     const Obj_Entry **, bool);
 
-const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
+const Elf_Sym *_rtld_symlook_list(const char *, Elf_Hash *,
     const Objlist *, const Obj_Entry **, u_int, const Ver_Entry *, DoneList *);
-const Elf_Sym *_rtld_symlook_default(const char *, unsigned long,
+const Elf_Sym *_rtld_symlook_default(const char *, Elf_Hash *,
     const Obj_Entry *, const Obj_Entry **, u_int, const Ver_Entry *);
-const Elf_Sym *_rtld_symlook_needed(const char *, unsigned long,
+const Elf_Sym *_rtld_symlook_needed(const char *, Elf_Hash *,
     const Needed_Entry *, const Obj_Entry **, u_int, const Ver_Entry *,
     DoneList *, DoneList *);
 

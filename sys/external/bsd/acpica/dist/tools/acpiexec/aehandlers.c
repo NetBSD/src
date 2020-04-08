@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -575,20 +575,27 @@ AeInstallLateHandlers (
     {
         Status = AcpiInstallNotifyHandler (Handle, ACPI_ALL_NOTIFY,
             AeNotifyHandler1, ACPI_CAST_PTR (void, 0x01234567));
+        ACPI_CHECK_OK (AcpiInstallNotifyHandler, Status);
 
         Status = AcpiInstallNotifyHandler (Handle, ACPI_ALL_NOTIFY,
             AeNotifyHandler2, ACPI_CAST_PTR (void, 0x89ABCDEF));
+        ACPI_CHECK_OK (AcpiInstallNotifyHandler, Status);
 
         Status = AcpiRemoveNotifyHandler (Handle, ACPI_ALL_NOTIFY,
             AeNotifyHandler1);
+        ACPI_CHECK_OK (AcpiInstallNotifyHandler, Status);
+
         Status = AcpiRemoveNotifyHandler (Handle, ACPI_ALL_NOTIFY,
             AeNotifyHandler2);
+        ACPI_CHECK_OK (AcpiInstallNotifyHandler, Status);
 
         Status = AcpiInstallNotifyHandler (Handle, ACPI_ALL_NOTIFY,
             AeNotifyHandler2, ACPI_CAST_PTR (void, 0x89ABCDEF));
+        ACPI_CHECK_OK (AcpiInstallNotifyHandler, Status);
 
         Status = AcpiInstallNotifyHandler (Handle, ACPI_ALL_NOTIFY,
             AeNotifyHandler1, ACPI_CAST_PTR (void, 0x01234567));
+        ACPI_CHECK_OK (AcpiInstallNotifyHandler, Status);
     }
 
     Status = AcpiGetHandle (NULL, "\\_PR.CPU0", &Handle);
@@ -596,9 +603,11 @@ AeInstallLateHandlers (
     {
         Status = AcpiInstallNotifyHandler (Handle, ACPI_ALL_NOTIFY,
             AeNotifyHandler1, ACPI_CAST_PTR (void, 0x01234567));
+        ACPI_CHECK_OK (AcpiInstallNotifyHandler, Status);
 
         Status = AcpiInstallNotifyHandler (Handle, ACPI_SYSTEM_NOTIFY,
             AeNotifyHandler2, ACPI_CAST_PTR (void, 0x89ABCDEF));
+        ACPI_CHECK_OK (AcpiInstallNotifyHandler, Status);
     }
 
 #if (!ACPI_REDUCED_HARDWARE)
@@ -747,13 +756,15 @@ AeInstallEarlyHandlers (
 
         Status = AcpiInstallNotifyHandler (Handle, ACPI_SYSTEM_NOTIFY,
             AeNotifyHandler1, ACPI_CAST_PTR (void, 0x01234567));
+        ACPI_CHECK_OK(AcpiInstallNotifyHandler, Status);
 
         Status = AcpiInstallNotifyHandler (Handle, ACPI_SYSTEM_NOTIFY,
             AeNotifyHandler2, ACPI_CAST_PTR (void, 0x89ABCDEF));
+        ACPI_CHECK_OK(AcpiInstallNotifyHandler, Status);
 
         /* Attempt duplicate handler installation, should fail */
 
-        Status = AcpiInstallNotifyHandler (Handle, ACPI_SYSTEM_NOTIFY,
+        (void) AcpiInstallNotifyHandler (Handle, ACPI_SYSTEM_NOTIFY,
             AeNotifyHandler1, ACPI_CAST_PTR (void, 0x77777777));
 
         Status = AcpiAttachData (Handle, AeAttachedDataHandler, Handle);

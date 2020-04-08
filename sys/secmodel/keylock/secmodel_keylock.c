@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_keylock.c,v 1.8.30.1 2019/06/10 22:09:56 christos Exp $ */
+/* $NetBSD: secmodel_keylock.c,v 1.8.30.2 2020/04/08 14:09:02 martin Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.8.30.1 2019/06/10 22:09:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.8.30.2 2020/04/08 14:09:02 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,7 +168,7 @@ secmodel_keylock_system_cb(kauth_cred_t cred,
 		return KAUTH_RESULT_DENY;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_system_req)arg0;
+	req = (enum kauth_system_req)(uintptr_t)arg0;
 
 	switch (action) {
 	case KAUTH_SYSTEM_CHSYSFLAGS:
@@ -282,7 +282,7 @@ secmodel_keylock_process_cb(kauth_cred_t cred,
 	case KAUTH_PROCESS_PROCFS: {
 		enum kauth_process_req req;
 
-		req = (enum kauth_process_req)arg2;
+		req = (enum kauth_process_req)(uintptr_t)arg2;
 		switch (req) {
 		case KAUTH_REQ_PROCESS_PROCFS_READ:
 			break;
@@ -336,7 +336,7 @@ secmodel_keylock_network_cb(kauth_cred_t cred,
 		return KAUTH_RESULT_DENY;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_network_req)arg0;
+	req = (enum kauth_network_req)(uintptr_t)arg0;
 
 	switch (action) {
 	case KAUTH_NETWORK_FIREWALL:
@@ -426,7 +426,7 @@ secmodel_keylock_device_cb(kauth_cred_t cred,
 		struct vnode *vp;
 		enum kauth_device_req req;
 
-		req = (enum kauth_device_req)arg0;
+		req = (enum kauth_device_req)(uintptr_t)arg0;
 		vp = arg1;
 
 		KASSERT(vp != NULL);

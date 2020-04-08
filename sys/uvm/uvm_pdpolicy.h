@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy.h,v 1.3 2007/02/21 23:00:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdpolicy.h,v 1.3.132.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -37,7 +37,9 @@ struct vm_anon;
  * don't use them directly from outside of /sys/uvm.
  */
 
+void uvmpdpol_idle(struct uvm_cpu *);
 void uvmpdpol_init(void);
+void uvmpdpol_init_cpu(struct uvm_cpu *);
 void uvmpdpol_reinit(void);
 void uvmpdpol_estimatepageable(int *, int *);
 bool uvmpdpol_needsscan_p(void);
@@ -47,13 +49,28 @@ void uvmpdpol_pagedeactivate(struct vm_page *);
 void uvmpdpol_pagedequeue(struct vm_page *);
 void uvmpdpol_pageenqueue(struct vm_page *);
 bool uvmpdpol_pageisqueued_p(struct vm_page *);
+void uvmpdpol_pagerealize(struct vm_page *);
 void uvmpdpol_anfree(struct vm_anon *);
 
 void uvmpdpol_tune(void);
 void uvmpdpol_scaninit(void);
-struct vm_page *uvmpdpol_selectvictim(void);
+void uvmpdpol_scanfini(void);
+struct vm_page *uvmpdpol_selectvictim(krwlock_t **lock);
 void uvmpdpol_balancequeue(int);
 
 void uvmpdpol_sysctlsetup(void);
+
+/*
+ * uvmpdpol_set_intent: set an intended state for the page, taking care not
+ * to overwrite any of the other flags.
+ */
+
+static inline void
+uvmpdpol_set_intent(struct vm_page *pg, uint32_t i)
+{
+
+	KASSERT(mutex_owned(&pg->interlock));
+	pg->pqflags = PQ_INTENT_SET | (pg->pqflags & ~PQ_INTENT_MASK) | i;
+}
 
 #endif /* !_UVM_PDPOLICY_H_ */

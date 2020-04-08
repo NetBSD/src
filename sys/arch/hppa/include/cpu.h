@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3.18.1 2019/06/10 22:06:19 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3.18.2 2020/04/08 14:07:39 martin Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -288,6 +288,7 @@ struct cpu_info {
 	struct hppa_interrupt_register	ci_ir;
 	struct hppa_interrupt_bit	ci_ib[HPPA_INTERRUPT_BITS];
 
+	struct lwp	*ci_onproc;	/* current user LWP / kthread */
 #if defined(MULTIPROCESSOR)
 	struct lwp	*ci_curlwp;	/* CPU owner */
 	paddr_t		ci_stack;	/* stack for spin up */

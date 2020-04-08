@@ -1,4 +1,4 @@
-.\" $NetBSD: bitops.3,v 1.5 2016/12/16 17:20:52 abhinav Exp $
+.\" $NetBSD: bitops.3,v 1.5.14.1 2020/04/08 14:07:21 martin Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -35,22 +35,22 @@
 .Sh DESCRIPTION
 The
 .In sys/bitops.h
-header includes macros and
-.Em static inline
+header provides macros and
+.Vt static inline
 functions related to bits and integers.
 Among these are:
-.Bl -tag -width "fast_divide32(3) " -offset indent
+.Bl -tag -width ".Xr fast_divide32 3" -offset indent
 .It Xr bitmap 3
 bitmap manipulation macros
+.It Xr fast_divide32 3
+a function for fast 32-bit division
 .It Xr ffs32 3
-functions to find the first and last bit in integers of type
+functions to find the first and last set bit in integers of type
 .Vt uint32_t
 and
 .Vt uint64_t
 .It Xr ilog2 3
 a macro for binary logarithm
-.It Xr fast_divide32 3
-a function for fast 32-bit division
 .El
 .Sh SEE ALSO
 .Xr bits 3 ,

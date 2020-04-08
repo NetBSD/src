@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amigappc,v 1.5.54.1 2019/06/10 22:05:49 christos Exp $
+#	$NetBSD: majors.amigappc,v 1.5.54.2 2020/04/08 14:07:26 martin Exp $
 #
 # Device majors for amigappc
 #
@@ -54,7 +54,7 @@ device-major	wskbd		char 54			wskbd
 device-major	clockctl	char 55			clockctl
 device-major	cgd		char 57  block 18	cgd
 device-major	ksyms		char 58			ksyms
-device-major	nsmb		char 59			nsmb
+#device-major	obsolete	char 59			obsolete (nsmb)
 
 device-major	wsmouse		char 61			wsmouse
 device-major	wsfont		char 62			wsfont

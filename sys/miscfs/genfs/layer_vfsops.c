@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.51 2017/06/04 08:02:26 hannken Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.51.6.1 2020/04/08 14:08:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.51 2017/06/04 08:02:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.51.6.1 2020/04/08 14:08:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -134,7 +134,7 @@ layerfs_start(struct mount *mp, int flags)
 }
 
 int
-layerfs_root(struct mount *mp, struct vnode **vpp)
+layerfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *vp;
 
@@ -147,7 +147,7 @@ layerfs_root(struct mount *mp, struct vnode **vpp)
 	 * Return root vnode with locked and with a reference held.
 	 */
 	vref(vp);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, lktype | LK_RETRY);
 	*vpp = vp;
 	return 0;
 }
@@ -214,9 +214,10 @@ layerfs_loadvnode(struct mount *mp, struct vnode *vp,
 
 	xp = kmem_alloc(lmp->layerm_size, KM_SLEEP);
 
-	/* Share the interlock with the lower node. */
-	mutex_obj_hold(lowervp->v_interlock);
-	uvm_obj_setlock(&vp->v_uobj, lowervp->v_interlock);
+	/* Share the interlock and vmobjlock with the lower node. */
+	vshareilock(vp, lowervp);
+	rw_obj_hold(lowervp->v_uobj.vmobjlock);
+	uvm_obj_setlock(&vp->v_uobj, lowervp->v_uobj.vmobjlock);
 
 	vp->v_tag = lmp->layerm_tag;
 	vp->v_type = lowervp->v_type;
@@ -236,12 +237,12 @@ layerfs_loadvnode(struct mount *mp, struct vnode *vp,
 }
 
 int
-layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+layerfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	struct vnode *vp;
 	int error;
 
-	error = VFS_VGET(mp->mnt_lower, ino, &vp);
+	error = VFS_VGET(mp->mnt_lower, ino, lktype, &vp);
 	if (error) {
 		*vpp = NULL;
 		return error;
@@ -253,7 +254,7 @@ layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		*vpp = NULL;
 		return error;
 	}
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -263,12 +264,13 @@ layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 }
 
 int
-layerfs_fhtovp(struct mount *mp, struct fid *fidp, struct vnode **vpp)
+layerfs_fhtovp(struct mount *mp, struct fid *fidp, int lktype,
+    struct vnode **vpp)
 {
 	struct vnode *vp;
 	int error;
 
-	error = VFS_FHTOVP(mp->mnt_lower, fidp, &vp);
+	error = VFS_FHTOVP(mp->mnt_lower, fidp, lktype, &vp);
 	if (error) {
 		*vpp = NULL;
 		return error;
@@ -280,7 +282,7 @@ layerfs_fhtovp(struct mount *mp, struct fid *fidp, struct vnode **vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;

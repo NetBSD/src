@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.10 2016/10/16 13:09:57 kiyohara Exp $ */
+/* $NetBSD: ti_iic.c,v 1.10.16.1 2020/04/08 14:07:30 martin Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.10 2016/10/16 13:09:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.10.16.1 2020/04/08 14:07:30 martin Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -102,7 +102,6 @@ typedef enum {
 struct ti_iic_softc {
 	device_t		sc_dev;
 	struct i2c_controller	sc_ic;
-	kmutex_t		sc_lock;
 	device_t		sc_i2cdev;
 
 	bus_space_tag_t		sc_iot;
@@ -136,8 +135,6 @@ static void	ti_iic_childdet(device_t, device_t);
 
 static int	ti_iic_intr(void *);
 
-static int	ti_iic_acquire_bus(void *, int);
-static void	ti_iic_release_bus(void *, int);
 static int	ti_iic_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 			       size_t, void *, size_t, int);
 
@@ -214,9 +211,10 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_dev = self;
 	sc->sc_iot = obio->obio_iot;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NET);
 	cv_init(&sc->sc_cv, "tiiic");
+
+	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_acquire_bus = ti_iic_acquire_bus;
 	sc->sc_ic.ic_release_bus = ti_iic_release_bus;
@@ -334,29 +332,6 @@ ti_iic_intr(void *arg)
 	mutex_exit(&sc->sc_mtx);
 	DPRINTF(("ti_iic_intr status 0x%x\n", stat));
 	return 1;
-}
-
-static int
-ti_iic_acquire_bus(void *opaque, int flags)
-{
-	struct ti_iic_softc *sc = opaque;
-
-	if (flags & I2C_F_POLL) {
-		if (!mutex_tryenter(&sc->sc_lock))
-			return EBUSY;
-	} else {
-		mutex_enter(&sc->sc_lock);
-	}
-
-	return 0;
-}
-
-static void
-ti_iic_release_bus(void *opaque, int flags)
-{
-	struct ti_iic_softc *sc = opaque;
-
-	mutex_exit(&sc->sc_lock);
 }
 
 static int

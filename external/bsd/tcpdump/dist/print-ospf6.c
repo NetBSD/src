@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ospf6.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-ospf6.c,v 1.8.4.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: IPv6 Open Shortest Path First (OSPFv3) printer */
@@ -388,6 +388,7 @@ ospf6_print_ls_type(netdissect_options *ndo,
                ipaddr_string(ndo, ls_stateid)));
 }
 
+UNALIGNED_OK
 static int
 ospf6_print_lshdr(netdissect_options *ndo,
                   register const struct lsa6_hdr *lshp, const u_char *dataend)
@@ -451,6 +452,7 @@ trunc:
 /*
  * Print a single link state advertisement.  If truncated return 1, else 0.
  */
+UNALIGNED_OK
 static int
 ospf6_print_lsa(netdissect_options *ndo,
                 register const struct lsa6 *lsap, const u_char *dataend)
@@ -725,6 +727,7 @@ trunc:
 	return (1);
 }
 
+UNALIGNED_OK
 static int
 ospf6_decode_v3(netdissect_options *ndo,
                 register const struct ospf6hdr *op,
@@ -930,6 +933,7 @@ trunc:
  * AT data may be present in Hello and DBDesc packets with the AT-bit set or in
  * any other packet type, thus decode the AT data regardless of the AT-bit.
  */
+UNALIGNED_OK
 static int
 ospf6_decode_v3_trailer(netdissect_options *ndo,
                         const struct ospf6hdr *op, const u_char *cp, const unsigned len)
@@ -957,6 +961,7 @@ trunc:
 	return 1;
 }
 
+UNALIGNED_OK
 void
 ospf6_print(netdissect_options *ndo,
             register const u_char *bp, register u_int length)

@@ -1,4 +1,4 @@
-/*	$NetBSD: maps.h,v 1.1.1.2 2013/01/02 18:58:59 tron Exp $	*/
+/*	$NetBSD: maps.h,v 1.1.1.2.30.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _MAPS_H_INCLUDED_
 #define _MAPS_H_INCLUDED_
@@ -29,6 +29,7 @@ typedef struct MAPS {
 
 extern MAPS *maps_create(const char *, const char *, int);
 extern const char *maps_find(MAPS *, const char *, int);
+extern const char *maps_file_find(MAPS *, const char *, int);
 extern MAPS *maps_free(MAPS *);
 
 /* LICENSE

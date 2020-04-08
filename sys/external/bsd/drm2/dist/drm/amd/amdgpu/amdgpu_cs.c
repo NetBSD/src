@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cs.c,v 1.3.6.2 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: amdgpu_cs.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2008 Jerome Glisse.
@@ -27,7 +27,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cs.c,v 1.3.6.2 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cs.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/list_sort.h>
 #include <drm/drmP.h>
@@ -406,7 +406,7 @@ static int amdgpu_cs_parser_relocs(struct amdgpu_cs_parser *p)
 	struct amdgpu_fpriv *fpriv = p->filp->driver_priv;
 	struct amdgpu_cs_buckets buckets;
 	struct list_head duplicates;
-	bool need_mmap_lock __diagused = false;
+	bool need_mmap_lock = false;
 	int i, r;
 
 	if (p->bo_list) {
@@ -426,9 +426,8 @@ static int amdgpu_cs_parser_relocs(struct amdgpu_cs_parser *p)
 		list_add(&p->uf_entry.tv.head, &p->validated);
 
 #ifdef __NetBSD__
-	KASSERTMSG(!need_mmap_lock,
-	    "someone didn't finish adding support for userptr"
-	    " and it wasn't me");
+	if (need_mmap_lock)
+		vm_map_lock_read(&curproc->p_vmspace->vm_map);
 #else
 	if (need_mmap_lock)
 		down_read(&current->mm->mmap_sem);
@@ -450,7 +449,10 @@ error_validate:
 		ttm_eu_backoff_reservation(&p->ticket, &p->validated);
 
 error_reserve:
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+	if (need_mmap_lock)
+		vm_map_unlock_read(&curproc->p_vmspace->vm_map);
+#else
 	if (need_mmap_lock)
 		up_read(&current->mm->mmap_sem);
 #endif

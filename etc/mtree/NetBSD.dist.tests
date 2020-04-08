@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.151.2.1 2019/06/10 21:42:45 christos Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.151.2.2 2020/04/08 14:03:57 martin Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -72,6 +72,7 @@
 ./usr/libdata/debug/usr/tests/kyua-testers
 ./usr/libdata/debug/usr/tests/lib
 ./usr/libdata/debug/usr/tests/lib/csu
+./usr/libdata/debug/usr/tests/lib/libarchive
 ./usr/libdata/debug/usr/tests/lib/libbluetooth
 ./usr/libdata/debug/usr/tests/lib/libbpfjit
 ./usr/libdata/debug/usr/tests/lib/libc
@@ -87,6 +88,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/misc
 ./usr/libdata/debug/usr/tests/lib/libc/net
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo
+./usr/libdata/debug/usr/tests/lib/libc/nls
 ./usr/libdata/debug/usr/tests/lib/libc/regex
 ./usr/libdata/debug/usr/tests/lib/libc/rpc
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp
@@ -164,7 +166,9 @@
 ./usr/libdata/debug/usr/tests/sys/netinet
 ./usr/libdata/debug/usr/tests/sys/netinet6
 ./usr/libdata/debug/usr/tests/usr.bin
+./usr/libdata/debug/usr/tests/usr.bin/cpio
 ./usr/libdata/debug/usr/tests/usr.bin/id
+./usr/libdata/debug/usr/tests/usr.bin/tar
 ./usr/libdata/debug/usr/tests/usr.bin/netpgpverify
 ./usr/libdata/debug/usr/tests/usr.sbin
 ./usr/tests
@@ -258,6 +262,7 @@
 ./usr/tests/kyua-testers
 ./usr/tests/lib
 ./usr/tests/lib/csu
+./usr/tests/lib/libarchive
 ./usr/tests/lib/libbluetooth
 ./usr/tests/lib/libc
 ./usr/tests/lib/libc/atomic
@@ -274,6 +279,7 @@
 ./usr/tests/lib/libc/net
 ./usr/tests/lib/libc/net/getaddrinfo
 ./usr/tests/lib/libc/net/getaddrinfo/data
+./usr/tests/lib/libc/nls
 ./usr/tests/lib/libc/regex
 ./usr/tests/lib/libc/regex/data
 ./usr/tests/lib/libc/rpc
@@ -394,6 +400,7 @@
 ./usr/tests/usr.bin/config/support/arch/regress
 ./usr/tests/usr.bin/config/support/arch/regress/conf
 ./usr/tests/usr.bin/config/support/conf
+./usr/tests/usr.bin/cpio
 ./usr/tests/usr.bin/cut
 ./usr/tests/usr.bin/diff
 ./usr/tests/usr.bin/dirname
@@ -421,6 +428,7 @@
 ./usr/tests/usr.bin/sed
 ./usr/tests/usr.bin/shmif_dumpbus
 ./usr/tests/usr.bin/sort
+./usr/tests/usr.bin/tar
 ./usr/tests/usr.bin/tmux
 ./usr/tests/usr.bin/tr
 ./usr/tests/usr.bin/unifdef

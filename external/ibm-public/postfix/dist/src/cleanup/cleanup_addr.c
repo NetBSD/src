@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_addr.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: cleanup_addr.c,v 1.2.12.1 2020/04/08 14:06:52 martin Exp $	*/
 
 /*++
 /* NAME
@@ -65,6 +65,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -167,8 +172,9 @@ off_t   cleanup_addr_sender(CLEANUP_STATE *state, const char *buf)
     if ((state->flags & CLEANUP_FLAG_BCC_OK)
 	&& *STR(clean_addr)
 	&& cleanup_send_bcc_maps) {
-	if ((bcc = mail_addr_find(cleanup_send_bcc_maps, STR(clean_addr),
-				  IGNORE_EXTENSION)) != 0) {
+	if ((bcc = mail_addr_find_to_internal(cleanup_send_bcc_maps,
+					      STR(clean_addr),
+					      IGNORE_EXTENSION)) != 0) {
 	    cleanup_addr_bcc(state, bcc);
 	} else if (cleanup_send_bcc_maps->error) {
 	    msg_warn("%s: %s map lookup problem -- "
@@ -230,8 +236,9 @@ void    cleanup_addr_recipient(CLEANUP_STATE *state, const char *buf)
     if ((state->flags & CLEANUP_FLAG_BCC_OK)
 	&& *STR(clean_addr)
 	&& cleanup_rcpt_bcc_maps) {
-	if ((bcc = mail_addr_find(cleanup_rcpt_bcc_maps, STR(clean_addr),
-				  IGNORE_EXTENSION)) != 0) {
+	if ((bcc = mail_addr_find_to_internal(cleanup_rcpt_bcc_maps,
+					      STR(clean_addr),
+					      IGNORE_EXTENSION)) != 0) {
 	    cleanup_addr_bcc(state, bcc);
 	} else if (cleanup_rcpt_bcc_maps->error) {
 	    msg_warn("%s: %s map lookup problem -- "

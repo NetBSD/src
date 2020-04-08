@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.55.12.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.55.12.2 2020/04/08 14:09:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.55.12.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.55.12.2 2020/04/08 14:09:04 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -84,12 +84,12 @@ ufs_start(struct mount *mp, int flags)
  * Return the root of a filesystem.
  */
 int
-ufs_root(struct mount *mp, struct vnode **vpp)
+ufs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, lktype, &nvp)) != 0)
 		return (error);
 	*vpp = nvp;
 	return (0);
@@ -99,14 +99,14 @@ ufs_root(struct mount *mp, struct vnode **vpp)
  * Look up and return a vnode/inode pair by inode number.
  */
 int
-ufs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+ufs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	int error;
 
 	error = vcache_get(mp, &ino, sizeof(ino), vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -135,11 +135,11 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 	if (error) {
 		return (error);
 	}
-	mutex_enter(&mp->mnt_updating);
+	mutex_enter(mp->mnt_updating);
 
 	error = quota_handle_cmd(mp, l, args);
 
-	mutex_exit(&mp->mnt_updating);
+	mutex_exit(mp->mnt_updating);
 	vfs_unbusy(mp);
 	return (error);
 #endif
@@ -191,7 +191,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 		return (error);
 	}
 
-	mutex_enter(&mp->mnt_updating);
+	mutex_enter(mp->mnt_updating);
 	switch (cmd) {
 
 	case Q_QUOTAON:
@@ -221,7 +221,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 	default:
 		error = EINVAL;
 	}
-	mutex_exit(&mp->mnt_updating);
+	mutex_exit(mp->mnt_updating);
 	vfs_unbusy(mp);
 	return (error);
 #endif
@@ -231,13 +231,13 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
  * filesystem has validated the file handle.
  */
 int
-ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
+ufs_fhtovp(struct mount *mp, struct ufid *ufhp, int lktype, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	struct inode *ip;
 	int error;
 
-	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ufhp->ufid_ino, lktype, &nvp)) != 0) {
 		if (error == ENOENT)
 			error = ESTALE;
 		*vpp = NULLVP;

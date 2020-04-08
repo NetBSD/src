@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.24.2.1 2019/06/10 22:06:06 christos Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.24.2.2 2020/04/08 14:07:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.24.2.1 2019/06/10 22:06:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.24.2.2 2020/04/08 14:07:35 martin Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.24.2.1 2019/06/10 22:06:06 christo
 #include <sys/disk.h>
 #include <sys/md5.h>
 #include <sys/pserialize.h>
+#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -88,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.24.2.1 2019/06/10 22:06:06 christo
 #include <evbarm/fdt/fdt_memory.h>
 
 #include <arm/fdt/arm_fdtvar.h>
+#include <dev/fdt/fdt_private.h>
 
 #ifdef EFI_RUNTIME
 #include <arm/arm/efi_runtime.h>
@@ -117,6 +119,7 @@ u_long uboot_args[4] __attribute__((__section__(".data")));
 const uint8_t *fdt_addr_r __attribute__((__section__(".data")));
 
 static uint64_t initrd_start, initrd_end;
+static uint64_t rndseed_start, rndseed_end;
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -269,11 +272,6 @@ fdt_add_boot_physmem(const struct fdt_memory *m, void *arg)
 	bp->bp_pages = atop(eaddr) - bp->bp_start;
 	bp->bp_freelist = VM_FREELIST_DEFAULT;
 
-#ifdef _LP64
-	if (m->end > 0x100000000)
-		bp->bp_freelist = VM_FREELIST_HIGHMEM;
-#endif
-
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 	const uint64_t memory_size = *(uint64_t *)arg;
 	if (atop(memory_size) > bp->bp_pages) {
@@ -310,6 +308,10 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 	const uint64_t initrd_size = initrd_end - initrd_start;
 	if (initrd_size > 0)
 		fdt_memory_remove_range(initrd_start, initrd_size);
+
+	const uint64_t rndseed_size = rndseed_end - rndseed_start;
+	if (rndseed_size > 0)
+		fdt_memory_remove_range(rndseed_start, rndseed_size);
 
 	const int framebuffer = OF_finddevice("/chosen/framebuffer");
 	if (framebuffer >= 0) {
@@ -390,6 +392,65 @@ fdt_setup_initrd(void)
 #endif
 }
 
+static void
+fdt_probe_rndseed(uint64_t *pstart, uint64_t *pend)
+{
+	int chosen, len;
+	const void *start_data, *end_data;
+
+	*pstart = *pend = 0;
+	chosen = OF_finddevice("/chosen");
+	if (chosen < 0)
+		return;
+
+	start_data = fdtbus_get_prop(chosen, "netbsd,rndseed-start", &len);
+	end_data = fdtbus_get_prop(chosen, "netbsd,rndseed-end", NULL);
+	if (start_data == NULL || end_data == NULL)
+		return;
+
+	switch (len) {
+	case 4:
+		*pstart = be32dec(start_data);
+		*pend = be32dec(end_data);
+		break;
+	case 8:
+		*pstart = be64dec(start_data);
+		*pend = be64dec(end_data);
+		break;
+	default:
+		printf("Unsupported len %d for /chosen/rndseed-start\n", len);
+		return;
+	}
+}
+
+static void
+fdt_setup_rndseed(void)
+{
+	const uint64_t rndseed_size = rndseed_end - rndseed_start;
+	const paddr_t startpa = trunc_page(rndseed_start);
+	const paddr_t endpa = round_page(rndseed_end);
+	paddr_t pa;
+	vaddr_t va;
+	void *rndseed;
+
+	if (rndseed_size == 0)
+		return;
+
+	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	if (va == 0) {
+		printf("Failed to allocate VA for rndseed\n");
+		return;
+	}
+	rndseed = (void *)va;
+
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
+		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_update(pmap_kernel());
+
+	rnd_seed(rndseed, rndseed_size);
+}
+
 #ifdef EFI_RUNTIME
 static void
 fdt_map_efi_runtime(const char *prop, enum arm_efirt_mem_type type)
@@ -436,7 +497,7 @@ initarm(void *arg)
 		error = fdt_open_into(fdt_addr_r, fdt_data, sizeof(fdt_data));
 		if (error != 0)
 			panic("fdt_move failed: %s", fdt_strerror(error));
-		fdtbus_set_data(fdt_data);
+		fdtbus_init(fdt_data);
 	} else {
 		panic("fdt_check_header failed: %s", fdt_strerror(error));
 	}
@@ -519,6 +580,9 @@ initarm(void *arg)
 
 	/* Parse ramdisk info */
 	fdt_probe_initrd(&initrd_start, &initrd_end);
+
+	/* Parse rndseed */
+	fdt_probe_rndseed(&rndseed_start, &rndseed_end);
 
 	/*
 	 * Populate bootconfig structure for the benefit of
@@ -626,6 +690,15 @@ consinit(void)
 	cons->consinit(&faa, uart_freq);
 
 	initialized = true;
+}
+
+void
+cpu_startup_hook(void)
+{
+
+	fdtbus_intr_init();
+
+	fdt_setup_rndseed();
 }
 
 void

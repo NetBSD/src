@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.31.18.1 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.31.18.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.31.18.1 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.31.18.2 2020/04/08 14:08:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.31.18.1 2019/06/10 22:06:58 chris
 #include <compat/sys/clockctl.h>
 
 struct timeval50 boottime50; 
-
-static struct sysctllog *kern_time_50_clog = NULL;
 
 static const struct syscall_package kern_time_50_syscalls[] = {
 	{ SYS_compat_50_clock_gettime, 0,
@@ -580,12 +578,11 @@ compat_50_sys___ntp_gettime30(struct lwp *l,
 	return 0;
 }
 
-static void
-compat_sysctl_time(struct sysctllog **clog)
+SYSCTL_SETUP(compat_sysctl_time, "Old system boottime")
 {
 	struct timeval tv;
 
-	TIMESPEC_TO_TIMEVAL(&tv, &boottime);
+	getmicroboottime(&tv);
 	timeval_to_timeval50(&tv, &boottime50);
 
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -601,11 +598,7 @@ kern_time_50_init(void)
 {               
 	int error;
 
-	compat_sysctl_time(&kern_time_50_clog);
-
 	error = syscall_establish(NULL, kern_time_50_syscalls);
-	if (error != 0)
-		sysctl_teardown(&kern_time_50_clog);
 
 	return error;
 }       
@@ -616,8 +609,6 @@ kern_time_50_fini(void)
 	int error;
 
 	error = syscall_disestablish(NULL, kern_time_50_syscalls);
-	if (error == 0)
-		sysctl_teardown(&kern_time_50_clog);
 
 	return error;
 } 

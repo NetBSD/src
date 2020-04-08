@@ -1,5 +1,5 @@
 /* tc-ns32k.h -- Opcode table for National Semi 32k processor
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -73,7 +73,7 @@ extern const struct relax_type md_relax_table[];
       char         fr_bsr;			\
     }
 
-#define TC_FRAG_INIT(X)				\
+#define TC_FRAG_INIT(X, MAX_BYTES)		\
   do						\
      {						\
        frag_opcode_frag (X) = NULL;		\
@@ -91,14 +91,16 @@ extern const struct relax_type md_relax_table[];
   struct					\
     {						\
       fragS *      opcode_fragP;		\
+      bit_fixS *   fx_bit_fixP;			\
       unsigned int opcode_offset;		\
       unsigned int bsr : 1;			\
+      unsigned int fx_im_disp : 2;		\
     }
 
 /* Accessor macros for things which may move around.
    See comments in write.h.  */
-#define fix_im_disp(X)       (X)->fx_im_disp
-#define fix_bit_fixP(X)      (X)->fx_bit_fixP
+#define fix_im_disp(X)       (X)->tc_fix_data.fx_im_disp
+#define fix_bit_fixP(X)      (X)->tc_fix_data.fx_bit_fixP
 #define fix_opcode_frag(X)   (X)->tc_fix_data.opcode_fragP
 #define fix_opcode_offset(X) (X)->tc_fix_data.opcode_offset
 #define fix_bsr(X)           (X)->tc_fix_data.bsr
@@ -108,16 +110,20 @@ extern const struct relax_type md_relax_table[];
      {						\
        fix_opcode_frag(X) = NULL;		\
        fix_opcode_offset(X) = 0;		\
+       fix_bit_fixP(X) = NULL;			\
        fix_bsr(X) = 0;				\
+       fix_im_disp(X) = 0;			\
      }						\
   while (0)
 
 #define TC_FIX_DATA_PRINT(FILE, FIX)					\
   do									\
     {									\
-      fprintf ((FILE), "opcode_frag=%ld, operand offset=%d, bsr=%d\n",	\
-	      (unsigned long) fix_opcode_frag (FIX),			\
-	      fix_opcode_offset (FIX),					\
-	      fix_bsr (FIX));						\
+      fprintf ((FILE), "opcode_frag=%ld, operand offset=%d, bsr=%d, "	\
+	       "im_disp=%d\n",						\
+	       (unsigned long) fix_opcode_frag (FIX),			\
+	       fix_opcode_offset (FIX),					\
+	       fix_bsr (FIX),						\
+	       fix_im_disp (FIX));					\
     }									\
   while (0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.c,v 1.13 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: arn9003.c,v 1.13.2.1 2020/04/08 14:08:06 martin Exp $	*/
 /*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.13 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.13.2.1 2020/04/08 14:08:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -992,7 +992,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 			ieee80211_notify_michael_failure(ic, wh,
 			    0 /* XXX: keyix */);
 		}
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto skip;
 	}
 
@@ -1001,7 +1001,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 	    len > ATHN_RXBUFSZ - sizeof(*ds))) {
 		DPRINTFN(DBG_RX, sc, "corrupted descriptor length=%zd\n",
 		    len);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto skip;
 	}
 
@@ -1009,7 +1009,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 	m1 = MCLGETI(NULL, M_DONTWAIT, NULL, ATHN_RXBUFSZ);
 	if (__predict_false(m1 == NULL)) {
 		ic->ic_stats.is_rx_nobuf++;
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto skip;
 	}
 
@@ -1028,7 +1028,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 		    BUS_DMA_NOWAIT | BUS_DMA_READ);
 		KASSERT(error != 0);
 		bf->bf_daddr = bf->bf_map->dm_segs[0].ds_addr;
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto skip;
 	}
 	bf->bf_desc = mtod(m1, struct ar_rx_status *);
@@ -1134,12 +1134,12 @@ ar9003_tx_process(struct athn_softc *sc)
 		return 0;
 	}
 	SIMPLEQ_REMOVE_HEAD(&txq->head, bf_list);
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	sc->sc_tx_timer = 0;
 
 	if (ds->ds_status3 & AR_TXS3_EXCESSIVE_RETRIES)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 	if (ds->ds_status3 & AR_TXS3_UNDERRUN)
 		athn_inc_tx_trigger_level(sc);
@@ -1336,7 +1336,7 @@ ar9003_swba_intr(struct athn_softc *sc)
 
 		if (sc->sc_ops.tx(sc, m, ni, ATHN_TXFLAG_CAB) != 0) {
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			break;
 		}
 	}

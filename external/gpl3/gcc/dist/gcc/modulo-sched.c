@@ -1600,6 +1600,7 @@ sms_schedule (void)
       mii = 1; /* Need to pass some estimate of mii.  */
       rec_mii = sms_order_nodes (g, mii, node_order, &max_asap);
       mii = MAX (res_MII (g), rec_mii);
+      mii = MAX (mii, 1);
       maxii = MAX (max_asap, MAXII_FACTOR * mii);
 
       if (dump_file)
@@ -2998,9 +2999,7 @@ ps_insn_find_column (partial_schedule_ptr ps, ps_insn_ptr ps_i,
             last_must_precede = next_ps_i;
         }
       /* The closing branch must be the last in the row.  */
-      if (must_precede 
-	  && bitmap_bit_p (must_precede, next_ps_i->id)
-	  && JUMP_P (ps_rtl_insn (ps, next_ps_i->id)))
+      if (JUMP_P (ps_rtl_insn (ps, next_ps_i->id)))
 	return false;
              
        last_in_row = next_ps_i;
@@ -3204,7 +3203,7 @@ ps_add_node_check_conflicts (partial_schedule_ptr ps, int n,
    			     int c, sbitmap must_precede,
 			     sbitmap must_follow)
 {
-  int has_conflicts = 0;
+  int i, first, amount, has_conflicts = 0;
   ps_insn_ptr ps_i;
 
   /* First add the node to the PS, if this succeeds check for
@@ -3212,23 +3211,32 @@ ps_add_node_check_conflicts (partial_schedule_ptr ps, int n,
   if (! (ps_i = add_node_to_ps (ps, n, c, must_precede, must_follow)))
     return NULL; /* Failed to insert the node at the given cycle.  */
 
-  has_conflicts = ps_has_conflicts (ps, c, c)
-		  || (ps->history > 0
-		      && ps_has_conflicts (ps,
-					   c - ps->history,
-					   c + ps->history));
-
-  /* Try different issue slots to find one that the given node can be
-     scheduled in without conflicts.  */
-  while (has_conflicts)
+  while (1)
     {
+      has_conflicts = ps_has_conflicts (ps, c, c);
+      if (ps->history > 0 && !has_conflicts)
+	{
+	  /* Check all 2h+1 intervals, starting from c-2h..c up to c..2h,
+	     but not more than ii intervals.  */
+	  first = c - ps->history;
+	  amount = 2 * ps->history + 1;
+	  if (amount > ps->ii)
+	    amount = ps->ii;
+	  for (i = first; i < first + amount; i++)
+	    {
+	      has_conflicts = ps_has_conflicts (ps,
+						i - ps->history,
+						i + ps->history);
+	      if (has_conflicts)
+		break;
+	    }
+	}
+      if (!has_conflicts)
+	break;
+      /* Try different issue slots to find one that the given node can be
+	 scheduled in without conflicts.  */
       if (! ps_insn_advance_column (ps, ps_i, must_follow))
 	break;
-      has_conflicts = ps_has_conflicts (ps, c, c)
-		      || (ps->history > 0
-			  && ps_has_conflicts (ps,
-					       c - ps->history,
-					       c + ps->history));
     }
 
   if (has_conflicts)

@@ -507,10 +507,27 @@ solib_bfd_open (const char *pathname)
   /* Check bfd arch.  */
   b = gdbarch_bfd_arch_info (target_gdbarch ());
   if (!b->compatible (b, bfd_get_arch_info (abfd.get ())))
-    warning (_("`%s': Shared library architecture %s is not compatible "
-               "with target architecture %s."), bfd_get_filename (abfd),
+    {
+      char buf[SO_NAME_MAX_PATH_SIZE];
+      const char *slash = strrchr(pathname, '/');
+      if (slash)
+        {
+          struct stat st;
+
+	  snprintf(buf, sizeof(buf), "%.*s/%s/%s", 
+	    (int)(slash - pathname), pathname, b->printable_name, slash + 1);
+	  if (stat(buf, &st) == 0)
+	    return solib_bfd_open(buf);
+	  snprintf(buf, sizeof(buf), "%s-%s", 
+	    pathname, b->printable_name);
+	  if (stat(buf, &st) == 0)
+	    return solib_bfd_open(buf);
+	}
+      warning (_("`%s': Shared library architecture %s is not compatible "
+                 "with target architecture %s."), bfd_get_filename (abfd),
              bfd_get_arch_info (abfd.get ())->printable_name,
 	     b->printable_name);
+    }
 
   return abfd;
 }

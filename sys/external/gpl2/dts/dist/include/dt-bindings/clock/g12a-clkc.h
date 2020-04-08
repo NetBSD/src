@@ -1,4 +1,4 @@
-/*	$NetBSD: g12a-clkc.h,v 1.1.1.1.2.2 2019/06/10 22:08:54 christos Exp $	*/
+/*	$NetBSD: g12a-clkc.h,v 1.1.1.1.2.3 2020/04/08 14:08:44 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0+ OR MIT */
 /*
@@ -132,6 +132,18 @@
 #define CLKID_MALI_1_SEL			172
 #define CLKID_MALI_1				174
 #define CLKID_MALI				175
-#define CLKID_MPLL_5OM				177
+#define CLKID_MPLL_50M				177
+#define CLKID_CPU_CLK				187
+#define CLKID_PCIE_PLL				201
+#define CLKID_VDEC_1				204
+#define CLKID_VDEC_HEVC				207
+#define CLKID_VDEC_HEVCF			210
+#define CLKID_TS				212
+#define CLKID_CPUB_CLK				224
+#define CLKID_GP1_PLL				243
+#define CLKID_DSU_CLK				252
+#define CLKID_CPU1_CLK				253
+#define CLKID_CPU2_CLK				254
+#define CLKID_CPU3_CLK				255
 
 #endif /* __G12A_CLKC_H */

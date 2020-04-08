@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-rip.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-rip.c,v 1.7.12.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: Routing Information Protocol (RIP) printer */
@@ -98,6 +98,7 @@ struct rip_netinfo {
 	uint32_t rip_metric;		/* cost of route */
 };
 
+UNALIGNED_OK
 static void
 rip_entry_print_v1(netdissect_options *ndo,
                    register const struct rip_netinfo *ni)
@@ -129,6 +130,7 @@ rip_entry_print_v1(netdissect_options *ndo,
 	       EXTRACT_32BITS(&ni->rip_metric)));
 }
 
+UNALIGNED_OK
 static unsigned
 rip_entry_print_v2(netdissect_options *ndo,
                    register const struct rip_netinfo *ni, const unsigned remaining)
@@ -274,5 +276,3 @@ rip_print(netdissect_options *ndo,
                 }
         }
 }
-
-

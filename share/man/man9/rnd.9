@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.25 2015/04/13 22:23:54 riastradh Exp $
+.\"	$NetBSD: rnd.9,v 1.25.16.1 2020/04/08 14:07:22 martin Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,16 +35,21 @@
 .Nm rnd_attach_source ,
 .Nm rnd_detach_source ,
 .Nm rnd_add_data ,
+.Nm rnd_add_data_sync ,
 .Nm rnd_add_uint32
 .Nd functions to make a device available for entropy collection
 .Sh SYNOPSIS
 .In sys/rndsource.h
+.Ft void
+.Fn rndsource_setcb "krndsource_t *rnd_source" "void (*callback)(size_t, void *)" "void *cookie"
 .Ft void
 .Fn rnd_attach_source "krndsource_t *rnd_source" "char *devname" "uint32_t source_type" "uint32_t flags"
 .Ft void
 .Fn rnd_detach_source "krndsource_t *rnd_source"
 .Ft void
 .Fn rnd_add_data "krndsource_t *rnd_source" "void *data" "uint32_t len" "uint32_t entropy"
+.Ft void
+.Fn rnd_add_data_sync "krndsource_t *rnd_source" "void *data" "uint32_t len" "uint32_t entropy"
 .Ft void
 .Fn rnd_add_uint32 "krndsource_t *rnd_source" "uint32_t datum"
 .Sh DESCRIPTION
@@ -58,6 +63,9 @@ and
 .Pa ( /dev/random )
 interfaces.
 .Pp
+The caller must zero an
+.Fa rnd_source
+object before using it.
 Ideally the first argument
 .Fa rnd_source
 of these functions gets included in the devices' entity struct,
@@ -65,9 +73,55 @@ but any means to permanently (statically) attach one such argument
 to one incarnation of the device is ok.
 Do not share
 .Fa rnd_source
-structures between two devices.
-.Pp
+structures between two devices, and make sure to serialize all access
+to each
+.Fa rnd_source ,
+for example with
+.Xr mutex 9 .
 .Bl -tag -width 8n
+.It Fn rndsource_setcb "krndsource_t *rnd_source" "void (*callback)(size_t, void *)" "void *cookie"
+This function sets a callback to be invoked when the kernel entropy
+pool is hungry.
+It is optional; if used, it must be used
+.Em before
+.Fn rnd_attach_source ,
+and the caller must pass
+.Dv RND_FLAG_HASCB
+to
+.Fn rnd_attach_source
+in order for the callback to be used.
+The callback is invoked as
+.Fa callback ( Fa nbytes , Fa cookie ) ,
+where
+.Fa nbytes
+is the number of bytes requested for the entropy pool, and
+.Fa cookie
+is the cookie that was passed to
+.Fn rndsource_setcb .
+The callback normally does one of two things:
+.Bl -dash
+.It
+Sends a request to a hardware device for entropy and returns.
+The hardware will later return data asynchronously by an interrupt, and
+the callback will use
+.Fn rnd_add_data
+or
+.Fn rnd_add_uint32
+to add the data to the pool.
+.It
+Synchronously gathers entropy from hardware \(em for example, by a CPU
+instruction like Intel RDSEED.
+In this case, in order to add data to the pool
+.Em before
+returning, the callback
+.Em must
+use
+.Fn rnd_add_data_sync ,
+not
+.Fn rnd_add_data
+or
+.Fn rnd_add_uint32 .
+.El
 .It Fn rnd_attach_source "krndsource_t *rnd_source" "char *devname" "uint32_t source_type" "uint32_t flags"
 This function announces the availability of a device for entropy collection.
 It must be called before the source struct pointed to by
@@ -109,7 +163,10 @@ are the logical OR of
 the pool estimate)
 .Dv RND_FLAG_ESTIMATE_TIME
 (use a delta estimator to count bits of entropy from this source's timestamps
-towards the pool estimate).
+towards the pool estimate)
+.Dv RND_FLAG_HASCB
+(caller specified a callback with
+.Fn rndsource_setcb ) .
 For many devices,
 .Dv RND_FLAG_DEFAULT
 .Dv ( RND_FLAG_COLLECT_VALUE | RND_FLAG_COLLECT_TIME | RND_FLAG_ESTIMATE_TIME )
@@ -119,7 +176,6 @@ Note that devices of type
 default to
 .Dv RND_FLAG_COLLECT_VALUE | RND_FLAG_COLLECT_TIME
 (no entropy counted).
-.Pp
 .It Fn rnd_detach_source "krndsource_t *rnd_source"
 This function disconnects the device from entropy collection.
 .It Fn rnd_add_uint32 "krndsource_t *rnd_source" "uint32_t datum"
@@ -155,6 +211,14 @@ of randomness, passing
 for
 .Va rnd_source
 is permitted, and the device does not need to be attached.
+.Pp
+.Fn rnd_add_uint32
+.Em must not
+be used during a callback as set with
+.Fn rndsource_setcb ;
+use
+.Fn rnd_add_data_sync
+instead.
 .It Fn rnd_add_data "krndsource_t *rnd_source" "void *data" "uint32_t len" "uint32_t entropy"
 adds (hopefully) random
 .Fa data
@@ -183,6 +247,14 @@ of randomness, passing
 for
 .Va rnd_source
 is permitted, and the device does not need to be attached.
+.Pp
+.Fn rnd_add_data
+.Em must not
+be used during a callback as set with
+.Fn rndsource_setcb ;
+use
+.Fn rnd_add_data_sync
+instead.
 .El
 .Sh INTERNAL ENTROPY POOL MANAGEMENT
 When a hardware event occurs (such as completion of a hard drive

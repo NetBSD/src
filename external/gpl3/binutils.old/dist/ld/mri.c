@@ -1,5 +1,5 @@
 /* mri.c -- handle MRI style linker scripts
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2018 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain <sac@cygnus.com>.
 
    This file is part of the GNU Binutils.
@@ -285,14 +285,8 @@ mri_format (const char *name)
   if (strcmp (name, "S") == 0)
     lang_add_output_format ("srec", NULL, NULL, 1);
 
-  else if (strcmp (name, "IEEE") == 0)
-    lang_add_output_format ("ieee", NULL, NULL, 1);
-
-  else if (strcmp (name, "COFF") == 0)
-    lang_add_output_format ("coff-m68k", NULL, NULL, 1);
-
   else
-    einfo (_("%P%F: unknown format type %s\n"), name);
+    einfo (_("%F%P: unknown format type %s\n"), name);
 }
 
 void

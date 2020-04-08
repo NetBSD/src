@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.36.2.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: HPT5325,v 1.36.2.2 2020/04/08 14:07:34 martin Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -49,7 +49,6 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
-#file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system 	PTYFS		# /dev/ptm support
 file-system 	TMPFS		# Efficient memory file-system
 file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
@@ -345,9 +344,6 @@ ucom*	at uvscom? portno ?
 # RIM BlackBerry
 #uberry* at uhub? port ?
 
-# Diamond Multimedia Rio 500
-#urio*	at uhub? port ?
-
 # USB Handspring Visor
 uvisor* at uhub? port ?
 ucom*	at uvisor?
@@ -457,7 +453,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	tun			# network tunneling over tty
@@ -479,9 +474,6 @@ pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.
-
-# a pseudo device needed for SMBFS
-#pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

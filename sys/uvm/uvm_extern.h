@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.213 2018/05/28 21:04:35 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.213.2.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -210,6 +210,7 @@ b\32UNMAP\0\
 #define	UVM_PGA_STRAT_NORMAL	0	/* priority (low id to high) walk */
 #define	UVM_PGA_STRAT_ONLY	1	/* only specified free list */
 #define	UVM_PGA_STRAT_FALLBACK	2	/* ONLY falls back on NORMAL */
+#define	UVM_PGA_STRAT_NUMA	3	/* strongly prefer ideal bucket */
 
 /*
  * flags for uvm_pagealloc_strat()
@@ -248,6 +249,7 @@ b\32UNMAP\0\
 #define UFP_NORDONLY	0x08
 #define UFP_DIRTYONLY	0x10
 #define UFP_BACKWARD	0x20
+#define UFP_NOBUSY	0x40
 
 /*
  * lockflags that control the locking behavior of various functions.
@@ -346,12 +348,12 @@ struct uvmexp {
 	int nswget;	/* number of times fault calls uvm_swap_get() */
 
 	/* stat counters.  XXX: should be 64-bit counters */
-	int _unused_faults;	/* page fault count */
-	int _unused_traps;	/* trap count */
-	int _unused_intrs;	/* interrupt count */
-	int _unused_swtch;	/* context switch count */
-	int _unused_softs;	/* software interrupt count */
-	int _unused_syscalls;	/* system calls */
+	int faults;		/* page fault count */
+	int traps;		/* trap count */
+	int intrs;		/* interrupt count */
+	int swtch;		/* context switch count */
+	int softs;		/* software interrupt count */
+	int syscalls;		/* system calls */
 	int pageins;		/* pagein operation count */
 				/* pageouts are in pdpageouts below */
 	int _unused1;
@@ -451,7 +453,7 @@ struct uvmexp_sysctl {
 	int64_t	pageins;
 	int64_t	swapins;		/* unused */
 	int64_t	swapouts;		/* unused */
-	int64_t	pgswapin;
+	int64_t	pgswapin;		/* unused */
 	int64_t	pgswapout;
 	int64_t	forks;
 	int64_t	forks_ppwait;
@@ -497,6 +499,16 @@ struct uvmexp_sysctl {
 	int64_t ncolors;
 	int64_t bootpages;
 	int64_t poolpages;
+	int64_t countsyncone;
+	int64_t countsyncall;
+	int64_t anonunknown;
+	int64_t anonclean;
+	int64_t anondirty;
+	int64_t fileunknown;
+	int64_t fileclean;
+	int64_t filedirty;
+	int64_t fltup;
+	int64_t fltnoup;
 };
 
 #ifdef _KERNEL
@@ -636,6 +648,7 @@ int			uvm_coredump_walkmap(struct proc *,
 int			uvm_coredump_count_segs(struct proc *);
 void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);
+void			uvm_idle(void);
 void			uvm_init_limits(struct proc *);
 bool			uvm_kernacc(void *, size_t, vm_prot_t);
 __dead void		uvm_scheduler(void);
@@ -709,6 +722,7 @@ void			uvm_pctparam_init(struct uvm_pctparam *, int,
 			    int (*)(struct uvm_pctparam *, int));
 int			uvm_pctparam_createsysctlnode(struct uvm_pctparam *,
 			    const char *, const char *);
+void			uvm_update_uvmexp(void);
 
 /* uvm_mmap.c */
 int			uvm_mmap_dev(struct proc *, void **, size_t, dev_t,
@@ -725,13 +739,15 @@ int			uvm_mremap(struct vm_map *, vaddr_t, vsize_t,
 /* uvm_object.c */
 void			uvm_obj_init(struct uvm_object *,
 			    const struct uvm_pagerops *, bool, u_int);
-void			uvm_obj_setlock(struct uvm_object *, kmutex_t *);
+void			uvm_obj_setlock(struct uvm_object *, krwlock_t *);
 void			uvm_obj_destroy(struct uvm_object *, bool);
 int			uvm_obj_wirepages(struct uvm_object *, off_t, off_t,
 			    struct pglist *);
 void			uvm_obj_unwirepages(struct uvm_object *, off_t, off_t);
 
 /* uvm_page.c */
+int			uvm_availmem(void);
+void			uvm_page_numa_load(paddr_t, paddr_t, u_int);
 struct vm_page		*uvm_pagealloc_strat(struct uvm_object *,
 			    voff_t, struct vm_anon *, int, int, int);
 #define	uvm_pagealloc(obj, off, anon, flags) \
@@ -744,7 +760,6 @@ void			uvm_pagerealloc(struct vm_page *,
 void			uvm_setpagesize(void);
 
 /* uvm_pager.c */
-void			uvm_aio_biodone(struct buf *);
 void			uvm_aio_aiodone(struct buf *);
 void			uvm_aio_aiodone_pages(struct vm_page **, int, bool,
 			    int);
@@ -772,10 +787,12 @@ int			uvm_grow(struct proc *, vaddr_t);
 void			uvm_deallocate(struct vm_map *, vaddr_t, vsize_t);
 
 /* uvm_vnode.c */
+struct uvm_page_array;
 void			uvm_vnp_setsize(struct vnode *, voff_t);
 void			uvm_vnp_setwritesize(struct vnode *, voff_t);
 int			uvn_findpages(struct uvm_object *, voff_t,
-			    int *, struct vm_page **, int);
+			    unsigned int *, struct vm_page **,
+			    struct uvm_page_array *, unsigned int);
 bool			uvn_text_p(struct uvm_object *);
 bool			uvn_clean_p(struct uvm_object *);
 bool			uvn_needs_writefault_p(struct uvm_object *);

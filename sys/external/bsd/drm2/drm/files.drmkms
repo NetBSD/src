@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.14.4.1 2019/06/10 22:08:30 christos Exp $
+#	$NetBSD: files.drmkms,v 1.14.4.2 2020/04/08 14:08:27 martin Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -52,8 +52,11 @@ file	external/bsd/drm2/drm/drmfb.c			drmfb
 include "external/bsd/drm2/ttm/files.ttm"
 
 makeoptions 	drmkms 	"CWARNFLAGS.drm_atomic_helper.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_bufs.c"+="-Wno-pointer-arith"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-missing-field-initializers"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-pointer-arith"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_dp_helper.c"+="-Wno-pointer-arith"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_ioctl.c"+="-Wno-shadow"
 
@@ -89,6 +92,7 @@ file	external/bsd/drm2/drm/drm_memory.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_mm.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_modes.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_modeset_lock.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_panel.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_pci.c	drmkms	# drmkms_pci
 file	external/bsd/drm2/dist/drm/drm_plane_helper.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_platform.c	drmkms

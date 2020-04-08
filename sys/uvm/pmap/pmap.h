@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9.8.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9.8.2 2020/04/08 14:09:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,6 +103,7 @@ typedef union pmap_segtab {
 struct pmap;
 typedef bool (*pte_callback_t)(struct pmap *, vaddr_t, vaddr_t,
 	pt_entry_t *, uintptr_t);
+void pmap_bootstrap_common(void);
 pt_entry_t *pmap_pte_lookup(struct pmap *, vaddr_t);
 pt_entry_t *pmap_pte_reserve(struct pmap *, vaddr_t, int);
 void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
@@ -184,7 +185,7 @@ extern pmap_segtab_t pmap_kern_segtab;
 /*
  *	Bootstrap the system enough to run with virtual memory.
  */
-void	pmap_remove_all(pmap_t);
+bool	pmap_remove_all(pmap_t);
 void	pmap_set_modified(paddr_t);
 bool	pmap_page_clear_attributes(struct vm_page_md *, u_int);
 void	pmap_page_set_attributes(struct vm_page_md *, u_int);

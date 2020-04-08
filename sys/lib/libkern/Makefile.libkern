@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.libkern,v 1.41.4.1 2019/06/10 22:09:04 christos Exp $
+#	$NetBSD: Makefile.libkern,v 1.41.4.2 2020/04/08 14:08:52 martin Exp $
 
-# 
-# Variable definitions for libkern.  
+#
+# Variable definitions for libkern.
 #
 # Before including this, you _must_ set
 #   KERNDIR: location of sys/lib/libkern
@@ -54,7 +54,7 @@ SRCS+=	cpuset.c inet_addr.c intoa.c
 SRCS+=	bswap64.c
 .endif
 SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c sha3.c keccak.c murmurhash.c
-SRCS+=	pmatch.c mcount.c mertwist.c crc32.c
+SRCS+=	pmatch.c mcount.c crc32.c
 
 SRCS+=	ppath_kmem_alloc.c
 
@@ -68,7 +68,7 @@ SRCS+=	memcmp.c memmem.c
 
 SRCS+=	memcpy.c
 .if empty(SRCS:Mmemset2.*)
-SRCS+=	memset.c 
+SRCS+=	memset.c
 .endif
 
 SRCS+=	popcount32.c popcount64.c
@@ -87,7 +87,7 @@ SRCS+=	strcasecmp.c strncasecmp.c
 
 SRCS+=	xlat_mbr_fstype.c
 
-SRCS+=	heapsort.c ptree.c rb.c
+SRCS+=	heapsort.c ptree.c radixtree.c rb.c rpst.c
 
 SRCS+=	hexdump.c
 
@@ -97,9 +97,6 @@ SRCS+=	explicit_memset.c consttime_memequal.c
 .PATH:	${NETBSDSRCDIR}/common/lib/libc/cdb
 SRCS+=	cdbr.c
 SRCS+=	mi_vector_hash.c
-
-#.PATH:	${NETBSDSRCDIR}/external/bsd/liblzf/dist
-#SRCS+=	lzf_c.c lzf_d.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po

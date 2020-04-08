@@ -1,4 +1,4 @@
-/*	$NetBSD: igmafb.c,v 1.1 2014/01/21 14:52:07 mlelstv Exp $	*/
+/*	$NetBSD: igmafb.c,v 1.1.36.1 2020/04/08 14:08:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael van Elst
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmafb.c,v 1.1 2014/01/21 14:52:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmafb.c,v 1.1.36.1 2020/04/08 14:08:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ igmafb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("%s: %d x %d, %d bit, stride %d\n", device_xname(self),
 		sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
 
-	aprint_normal("%s: %d MB video memory at 0x%p\n", device_xname(self),
+	aprint_normal("%s: %d MB video memory at %p\n", device_xname(self),
 		(int)sc->sc_fbsize >> 20, (void *)sc->sc_chip.gmb);
 
 	sc->sc_vga_save = kmem_alloc(256*1024, KM_SLEEP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: jz4725b-cgu.h,v 1.1.1.1.6.2 2019/06/10 22:08:54 christos Exp $	*/
+/*	$NetBSD: jz4725b-cgu.h,v 1.1.1.1.6.3 2020/04/08 14:08:44 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -33,5 +33,6 @@
 #define JZ4725B_CLK_TCU		22
 #define JZ4725B_CLK_EXT512	23
 #define JZ4725B_CLK_RTC		24
+#define JZ4725B_CLK_UDC_PHY	25
 
 #endif /* __DT_BINDINGS_CLOCK_JZ4725B_CGU_H__ */

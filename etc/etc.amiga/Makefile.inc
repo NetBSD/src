@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27.34.1 2019/06/10 21:42:40 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.27.34.2 2020/04/08 14:03:56 martin Exp $
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
@@ -15,4 +15,7 @@ INSTALLATION_DIRS+=	installation/miniroot	\
 
 snap_md_post:
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc '*'
-#	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot '*.gz'
+	rm -f		${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot/miniroot.fs
+	${TOOL_GZIP} -cd ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot/miniroot.fs.gz > \
+			${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot/miniroot.fs
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot '*.fs*'

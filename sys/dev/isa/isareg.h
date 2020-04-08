@@ -1,4 +1,4 @@
-/*	$NetBSD: isareg.h,v 1.10 2018/05/29 06:14:33 jdolecek Exp $	*/
+/*	$NetBSD: isareg.h,v 1.10.2.1 2020/04/08 14:08:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -133,7 +133,7 @@
 #define	IO_COMSIZE	8	/* 8250, 16X50 com controllers */
 #define	IO_CGASIZE	16	/* CGA controllers */
 #define	IO_DMASIZE	16	/* 8237 DMA controllers */
-#define	IO_DPGSIZE	32	/* 74LS612 DMA page reisters */
+#define	IO_DPGSIZE	32	/* 74LS612 DMA page registers */
 #define	IO_FDCSIZE	8	/* Nec765 floppy controllers */
 #define	IO_WDCSIZE	8	/* WD compatible disk controller */
 #define	IO_GAMSIZE	16	/* AT compatible game controller */

@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_sleepq.c,v 1.51 2016/07/03 14:24:58 christos Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.51.18.1 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.51 2016/07/03 14:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.51.18.1 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,7 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.51 2016/07/03 14:24:58 christos Ex
 static int	sleepq_sigtoerror(lwp_t *, int);
 
 /* General purpose sleep table, used by mtsleep() and condition variables. */
-sleeptab_t	sleeptab	__cacheline_aligned;
+sleeptab_t	sleeptab __cacheline_aligned;
+sleepqlock_t	sleepq_locks[SLEEPTAB_HASH_SIZE] __cacheline_aligned;
 
 /*
  * sleeptab_init:
@@ -75,15 +76,17 @@ sleeptab_t	sleeptab	__cacheline_aligned;
 void
 sleeptab_init(sleeptab_t *st)
 {
-	sleepq_t *sq;
+	static bool again;
 	int i;
 
 	for (i = 0; i < SLEEPTAB_HASH_SIZE; i++) {
-		sq = &st->st_queues[i].st_queue;
-		st->st_queues[i].st_mutex =
-		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
-		sleepq_init(sq);
+		if (!again) {
+			mutex_init(&sleepq_locks[i].lock, MUTEX_DEFAULT,
+			    IPL_SCHED);
+		}
+		sleepq_init(&st->st_queue[i]);
 	}
+	again = true;
 }
 
 /*
@@ -95,7 +98,7 @@ void
 sleepq_init(sleepq_t *sq)
 {
 
-	TAILQ_INIT(sq);
+	LIST_INIT(sq);
 }
 
 /*
@@ -111,7 +114,13 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 
 	KASSERT(lwp_locked(l, NULL));
 
-	TAILQ_REMOVE(sq, l, l_sleepchain);
+	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_NULL) == 0) {
+		KASSERT(sq != NULL);
+		LIST_REMOVE(l, l_sleepchain);
+	} else {
+		KASSERT(sq == NULL);
+	}
+
 	l->l_syncobj = &sched_syncobj;
 	l->l_wchan = NULL;
 	l->l_sleepq = NULL;
@@ -158,8 +167,9 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
-	sched_enqueue(l, false);
-	spc_unlock(ci);
+	sched_enqueue(l);
+	sched_resched_lwp(l, true);
+	/* LWP & SPC now unlocked, but we still hold sleep queue lock. */
 }
 
 /*
@@ -171,22 +181,25 @@ static void
 sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 {
 
+	if ((sobj->sobj_flag & SOBJ_SLEEPQ_NULL) != 0) {
+		KASSERT(sq == NULL); 
+		return;
+	}
+	KASSERT(sq != NULL);
+
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
 		lwp_t *l2;
-		const int pri = lwp_eprio(l);
+		const pri_t pri = lwp_eprio(l);
 
-		TAILQ_FOREACH(l2, sq, l_sleepchain) {
+		LIST_FOREACH(l2, sq, l_sleepchain) {
 			if (lwp_eprio(l2) < pri) {
-				TAILQ_INSERT_BEFORE(l2, l, l_sleepchain);
+				LIST_INSERT_BEFORE(l2, l, l_sleepchain);
 				return;
 			}
 		}
 	}
 
-	if ((sobj->sobj_flag & SOBJ_SLEEPQ_LIFO) != 0)
-		TAILQ_INSERT_HEAD(sq, l, l_sleepchain);
-	else
-		TAILQ_INSERT_TAIL(sq, l, l_sleepchain);
+	LIST_INSERT_HEAD(sq, l, l_sleepchain);
 }
 
 /*
@@ -211,7 +224,6 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
 	l->l_wmesg = wmesg;
 	l->l_slptime = 0;
 	l->l_stat = LSSLEEP;
-	l->l_sleeperr = 0;
 
 	sleepq_insert(sq, l, sobj);
 
@@ -261,13 +273,18 @@ sleepq_block(int timo, bool catch_p)
 		if (timo) {
 			callout_schedule(&l->l_timeout_ch, timo);
 		}
+		spc_lock(l->l_cpu);
 		mi_switch(l);
 
 		/* The LWP and sleep queue are now unlocked. */
 		if (timo) {
 			/*
-			 * Even if the callout appears to have fired, we need to
-			 * stop it in order to synchronise with other CPUs.
+			 * Even if the callout appears to have fired, we
+			 * need to stop it in order to synchronise with
+			 * other CPUs.  It's important that we do this in
+			 * this LWP's context, and not during wakeup, in
+			 * order to keep the callout & its cache lines
+			 * co-located on the CPU with the LWP.
 			 */
 			if (callout_halt(&l->l_timeout_ch, NULL))
 				error = EWOULDBLOCK;
@@ -283,7 +300,7 @@ sleepq_block(int timo, bool catch_p)
 			 * Acquiring p_lock may cause us to recurse
 			 * through the sleep path and back into this
 			 * routine, but is safe because LWPs sleeping
-			 * on locks are non-interruptable.  We will
+			 * on locks are non-interruptable and we will
 			 * not recurse again.
 			 */
 			mutex_enter(p->p_lock);
@@ -314,10 +331,10 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 
 	KASSERT(mutex_owned(mp));
 
-	for (l = TAILQ_FIRST(sq); l != NULL; l = next) {
+	for (l = LIST_FIRST(sq); l != NULL; l = next) {
 		KASSERT(l->l_sleepq == sq);
 		KASSERT(l->l_mutex == mp);
-		next = TAILQ_NEXT(l, l_sleepchain);
+		next = LIST_NEXT(l, l_sleepchain);
 		if (l->l_wchan != wchan)
 			continue;
 		sleepq_remove(sq, l);
@@ -333,10 +350,10 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
  *
  *	Remove an LWP from its sleep queue and set it runnable again. 
  *	sleepq_unsleep() is called with the LWP's mutex held, and will
- *	always release it.
+ *	release it if "unlock" is true.
  */
 void
-sleepq_unsleep(lwp_t *l, bool cleanup)
+sleepq_unsleep(lwp_t *l, bool unlock)
 {
 	sleepq_t *sq = l->l_sleepq;
 	kmutex_t *mp = l->l_mutex;
@@ -345,7 +362,7 @@ sleepq_unsleep(lwp_t *l, bool cleanup)
 	KASSERT(l->l_wchan != NULL);
 
 	sleepq_remove(sq, l);
-	if (cleanup) {
+	if (unlock) {
 		mutex_spin_exit(mp);
 	}
 }
@@ -433,7 +450,7 @@ sleepq_reinsert(sleepq_t *sq, lwp_t *l)
 {
 
 	KASSERT(l->l_sleepq == sq);
-	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0) {
+	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0) { 
 		return;
 	}
 
@@ -443,10 +460,10 @@ sleepq_reinsert(sleepq_t *sq, lwp_t *l)
 	 * sleep queue lock held and need to see a non-empty queue
 	 * head if there are waiters.
 	 */
-	if (TAILQ_FIRST(sq) == l && TAILQ_NEXT(l, l_sleepchain) == NULL) {
+	if (LIST_FIRST(sq) == l && LIST_NEXT(l, l_sleepchain) == NULL) {
 		return;
 	}
-	TAILQ_REMOVE(sq, l, l_sleepchain);
+	LIST_REMOVE(l, l_sleepchain);
 	sleepq_insert(sq, l, l->l_syncobj);
 }
 

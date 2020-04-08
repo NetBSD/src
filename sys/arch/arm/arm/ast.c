@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.30 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: ast.c,v 1.30.4.1 2020/04/08 14:07:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.30 2018/01/24 09:04:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.30.4.1 2020/04/08 14:07:27 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -119,7 +119,6 @@ ast(struct trapframe *tf)
 	ci->ci_data.cpu_ntrap++;
 
 	KDASSERT(ci->ci_cpl == IPL_NONE);
-	const int want_resched = ci->ci_want_resched;
 #ifdef __HAVE_PREEMPTION
 	kpreempt_enable();
 #endif
@@ -129,8 +128,5 @@ ast(struct trapframe *tf)
 		ADDUPROF(l);
 	}
 
-	/* Allow a forced task switch. */
-	if (want_resched)
-		preempt();
 	userret(l);
 }

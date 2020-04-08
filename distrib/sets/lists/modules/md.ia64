@@ -1,5 +1,5 @@
-# $NetBSD: md.ia64,v 1.5 2016/12/15 12:56:52 kre Exp $
-./@MODULEDIR@/acpiverbose			base-kernel-modules	kmod
-./@MODULEDIR@/acpiverbose/acpiverbose.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/exec_elf64			base-kernel-modules	kmod
-./@MODULEDIR@/exec_elf64/exec_elf64.kmod	base-kernel-modules	kmod
+# $NetBSD: md.ia64,v 1.5.14.1 2020/04/08 14:03:54 martin Exp $
+./@MODULEDIR@/acpiverbose			modules-base-kernel	kmod
+./@MODULEDIR@/acpiverbose/acpiverbose.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/exec_elf64			modules-base-kernel	kmod
+./@MODULEDIR@/exec_elf64/exec_elf64.kmod	modules-base-kernel	kmod

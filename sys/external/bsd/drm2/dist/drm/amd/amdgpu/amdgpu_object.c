@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_object.c,v 1.3.6.2 2019/06/10 22:07:58 christos Exp $	*/
+/*	$NetBSD: amdgpu_object.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_object.c,v 1.3.6.2 2019/06/10 22:07:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_object.c,v 1.3.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/list.h>
 #include <linux/slab.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_object.c,v 1.3.6.2 2019/06/10 22:07:58 christ
 #include <drm/drm_cache.h>
 #include "amdgpu.h"
 #include "amdgpu_trace.h"
+
+#include <linux/nbsd-namespace.h>
 
 static u64 amdgpu_get_vis_part_size(struct amdgpu_device *adev,
 						struct ttm_mem_reg *mem)
@@ -230,11 +232,7 @@ int amdgpu_bo_create_restricted(struct amdgpu_device *adev,
 	int r;
 
 	page_align = roundup(byte_align, PAGE_SIZE) >> PAGE_SHIFT;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	size = round_up(size, PAGE_SIZE);
-#else
 	size = ALIGN(size, PAGE_SIZE);
-#endif
 
 	if (kernel) {
 		type = ttm_bo_type_kernel;

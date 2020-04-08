@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.31.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.31.2.2 2020/04/08 14:08:57 martin Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -104,9 +104,8 @@ gif_getref_variant(struct gif_softc *sc, struct psref *psref)
 	int s;
 
 	s = pserialize_read_enter();
-	var = sc->gif_var;
+	var = atomic_load_consume(&sc->gif_var);
 	KASSERT(var != NULL);
-	membar_datadep_consumer();
 	psref_acquire(psref, &var->gv_psref, gv_psref_class);
 	pserialize_read_exit(s);
 

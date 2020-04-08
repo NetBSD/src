@@ -1,4 +1,4 @@
-#	$NetBSD: majors.x68k,v 1.27.18.1 2019/06/10 22:06:52 christos Exp $
+#	$NetBSD: majors.x68k,v 1.27.18.2 2020/04/08 14:07:57 martin Exp $
 #
 # Device majors for x68k
 #
@@ -57,10 +57,10 @@ device-major	ses		char 55			ses
 device-major	uhid		char 56			uhid
 device-major	ulpt		char 57			ulpt
 device-major	ucom		char 58			ucom
-device-major	urio		char 59			urio
+#device-major	obsolete	char 59			obsolete (urio)
 device-major	uscanner	char 60			uscanner
 device-major	sysmon		char 61			sysmon
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

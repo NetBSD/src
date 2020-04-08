@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.36 2017/08/15 12:15:10 mlelstv Exp $
+.\"	$NetBSD: install,v 1.36.4.1 2020/04/08 14:03:48 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -284,10 +284,10 @@ the newly installed / upgraded system.
 If the installed system already has a kernel, it will ask you for
 confirmation.
 .Pp If you are doing an upgrade and you did not install the
-kern.tgz distribution set, this is an old kernel, and you should answer
+kern.\*[setsuffix] distribution set, this is an old kernel, and you should answer
 "y" to install a working (although restricted) INSTALL kernel.
 .Pp
-If you did install the kern.tgz kernel, you normally should answer "n".
+If you did install the kern.\*[setsuffix] kernel, you normally should answer "n".
 .Pp
 Finally, the installer asks you if you want to install the bootblock
 code on your root disk and, if yes, what boot command it should execute.

@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.72.6.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: disk.h,v 1.72.6.2 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -211,6 +211,7 @@ struct dkwedge_list {
 #define	DKW_PTYPE_VMKCORE	"vmkcore"
 #define	DKW_PTYPE_VMFS		"vmfs"
 #define	DKW_PTYPE_VMWRESV	"vmwresv"
+#define	DKW_PTYPE_ZFS		"zfs"
 
 /*
  * Ensure each symbol used in FSTYPE_DEFN in <sys/disklabel.h>
@@ -298,6 +299,12 @@ struct disk_strategy {
 	char dks_name[DK_STRATEGYNAMELEN]; /* name of strategy */
 	char *dks_param;		/* notyet; should be NULL */
 	size_t dks_paramlen;		/* notyet; should be 0 */
+};
+
+/* Sector alignment */
+struct disk_sectoralign {
+	uint32_t	dsa_firstaligned; /* first aligned sector # */
+	uint32_t	dsa_alignment;	  /* sectors per aligned sector */
 };
 
 #ifdef _KERNEL

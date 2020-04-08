@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25.6.1 2019/06/10 22:05:54 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.25.6.2 2020/04/08 14:07:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -46,11 +46,7 @@
  * this file. */
 
 #ifndef PGSHIFT
-#if defined(_ARM_ARCH_6)
-#define	PGSHIFT		13		/* LOG2(NBPG) */
-#else
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#endif
 #endif
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
@@ -71,7 +67,12 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+
+#if defined(_ARM_ARCH_6)
+#define	NKMEMPAGES_MAX_DEFAULT	((768 * 1024 * 1024) >> PAGE_SHIFT)
+#else
+#define	NKMEMPAGES_MAX_DEFAULT	((256 * 1024 * 1024) >> PAGE_SHIFT)
+#endif
 
 /* Constants used to divide the USPACE area */
 
@@ -97,7 +98,6 @@
 
 #define arm_btop(x)			((unsigned)(x) >> PGSHIFT)
 #define arm_ptob(x)			((unsigned)(x) << PGSHIFT)
-#define arm_trunc_page(x)		((unsigned)(x) & ~PGOFSET)
 
 #ifdef _KERNEL
 #ifndef _LOCORE

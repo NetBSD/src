@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.80.2.1 2019/06/10 22:06:56 christos Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.80.2.2 2020/04/08 14:07:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.80.2.1 2019/06/10 22:06:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.80.2.2 2020/04/08 14:07:59 martin Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -834,15 +834,12 @@ intr_calculatemasks(struct evtsource *evts, int evtch, struct cpu_info *ci)
 
 int
 event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
-    const char *intrname, const char *xname)
+    const char *intrname, const char *xname, bool mpsafe)
 {
 	struct cpu_info *ci = curcpu(); /* XXX: pass in ci ? */
 	struct evtsource *evts;
 	struct intrhand *ih, **ihp;
 	int s;
-#ifdef MULTIPROCESSOR
-	bool mpsafe = (level != IPL_VM);
-#endif /* MULTIPROCESSOR */
 
 #ifdef IRQ_DEBUG
 	printf("event_set_handler IRQ %d handler %p\n", evtch, func);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_stream.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: clnt_stream.c,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -129,7 +129,7 @@ static void clnt_stream_ttl_event(int event, void *context)
      * with the call-back routine, but there is too much code that would have
      * to be changed.
      * 
-     * XXX Should we be concerned that an overly agressive optimizer will
+     * XXX Should we be concerned that an overly aggressive optimizer will
      * eliminate this function and replace calls to clnt_stream_ttl_event()
      * by direct calls to clnt_stream_event()? It should not, because there
      * exists code that takes the address of both functions.

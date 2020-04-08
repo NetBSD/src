@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.61 2016/03/17 18:56:14 christos Exp $ */
+/* $NetBSD: setup.c,v 1.61.16.1 2020/04/08 14:07:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -88,14 +88,12 @@
 #include <util.h>
 
 #include "bufcache.h"
-#include "vnode.h"
 #include "lfs_user.h"
 
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
 
-extern u_int32_t cksum(void *, size_t);
 static uint64_t calcmaxfilesize(unsigned);
 
 daddr_t *din_table;
@@ -157,8 +155,6 @@ reset_maxino(ino_t len)
 
 	return;
 }
- 
-extern time_t write_time;
 
 int
 setup(const char *dev)

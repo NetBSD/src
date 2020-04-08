@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.13 2014/07/15 13:17:15 christos Exp $	*/
+/*	$NetBSD: regexp.c,v 1.13.24.1 2020/04/08 14:09:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)regexp.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: regexp.c,v 1.13 2014/07/15 13:17:15 christos Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.13.24.1 2020/04/08 14:09:18 martin Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -330,7 +330,7 @@ expconv(void)
 
 
 /*
- *	The following routine recognises an irregular expresion
+ *	The following routine recognises an irregular expression
  *	with the following special characters:
  *
  *		\?	-	means last match was optional

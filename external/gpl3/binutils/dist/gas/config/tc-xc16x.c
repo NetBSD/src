@@ -1,5 +1,5 @@
 /* tc-xc16x.c -- Assembler for the Infineon XC16X.
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
    Contributed by KPIT Cummins Infosystems
 
    This file is part of GAS, the GNU Assembler.
@@ -234,7 +234,7 @@ md_atof (int type, char *litP, int *sizeP)
 valueT
 md_section_align (segT segment, valueT size)
 {
-  int align = bfd_get_section_alignment (stdoutput, segment);
+  int align = bfd_section_alignment (segment);
   return ((size + (1 << align) - 1) & -(1 << align));
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: std.walnut,v 1.8 2011/06/22 18:06:32 matt Exp $
+#	$NetBSD: std.walnut,v 1.8.54.1 2020/04/08 14:07:36 martin Exp $
 #
 # Standard/required options for NetBSD/walnut.
 
@@ -7,6 +7,8 @@ include		"conf/std"	# MI standard options
 
 # standard ("mandatory") kernel options.
 options 	PPC_IBM4XX	# IBM 40x family
+
+options 	IBM405_ERRATA77
 
 # Executable support:
 options 	EXEC_ELF32	# (native) ELF32 binary support

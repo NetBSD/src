@@ -1,4 +1,4 @@
-/* $NetBSD: mt2131.c,v 1.6 2017/06/01 02:45:10 chs Exp $ */
+/* $NetBSD: mt2131.c,v 1.6.10.1 2020/04/08 14:08:05 martin Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.6 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.6.10.1 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,12 @@ mt2131_open(device_t parent, i2c_tag_t t, i2c_addr_t a)
 	cmd = reg = 0;
 
 	/* get id reg */
-	iic_acquire_bus(t, I2C_F_POLL);
-	ret = iic_exec(t, I2C_OP_READ_WITH_STOP, a, &cmd, 1, &reg, 1, I2C_F_POLL);
-	iic_release_bus(t, I2C_F_POLL);
+	ret = iic_acquire_bus(t, 0);
+	if (ret == 0) {
+		ret = iic_exec(t, I2C_OP_READ_WITH_STOP, a, &cmd, 1, &reg, 1,
+		    0);
+		iic_release_bus(t, 0);
+	}
 
 	if (ret) {
 		device_printf(parent, "%s(): read fail\n", __func__);
@@ -153,9 +156,12 @@ mt2131_tune_dtv(struct mt2131_softc *sc, const struct dvb_frontend_parameters *p
 	b[5] = (d2 & 0x001f);
 	b[6] = r2;
 
-	iic_acquire_bus(sc->tag, I2C_F_POLL);
-	rv = iic_exec(sc->tag, I2C_OP_WRITE_WITH_STOP, sc->addr, b, 7, NULL, 0, I2C_F_POLL);
-	iic_release_bus(sc->tag, I2C_F_POLL);
+	rv = iic_acquire_bus(sc->tag, 0);
+	if (rv == 0) {
+		rv = iic_exec(sc->tag, I2C_OP_WRITE_WITH_STOP, sc->addr, b, 7,
+		    NULL, 0, 0);
+		iic_release_bus(sc->tag, 0);
+	}
 
 	regval = (fr - 27501) / 55000;
 
@@ -191,27 +197,27 @@ mt2131_init(struct mt2131_softc *sc)
 {
 	int ret;
 
-	ret = iic_acquire_bus(sc->tag, I2C_F_POLL);
+	ret = iic_acquire_bus(sc->tag, 0);
 	if (ret)
 		return -1;
 	ret = iic_exec(sc->tag, I2C_OP_WRITE_WITH_STOP, sc->addr,
-	    mt2131_initstring, sizeof(mt2131_initstring), NULL, 0, I2C_F_POLL);
+	    mt2131_initstring, sizeof(mt2131_initstring), NULL, 0, 0);
+	iic_release_bus(sc->tag, 0);
 	if (ret)
 		return -1;
-	iic_release_bus(sc->tag, I2C_F_POLL);
 
 	ret = mt2131_write(sc, UPC_1, 0x09);
 	ret = mt2131_write(sc, MISC_2, 0x47);
 	ret = mt2131_write(sc, PWR, 0xf2);
 	ret = mt2131_write(sc, UPC_1, 0x01);
 
-	ret = iic_acquire_bus(sc->tag, I2C_F_POLL);
+	ret = iic_acquire_bus(sc->tag, 0);
 	if (ret)
 		return -1;
 	ret = iic_exec(sc->tag, I2C_OP_WRITE_WITH_STOP, sc->addr,
 	    mt2131_agcinitstring, sizeof(mt2131_agcinitstring),
-	    NULL, 0, I2C_F_POLL);
-	iic_release_bus(sc->tag, I2C_F_POLL);
+	    NULL, 0, 0);
+	iic_release_bus(sc->tag, 0);
 	if (ret)
 		return -1;
 	
@@ -223,13 +229,13 @@ mt2131_read(struct mt2131_softc *sc, uint8_t r, uint8_t *v)
 {
 	int ret;
 
-	ret = iic_acquire_bus(sc->tag, I2C_F_POLL);
+	ret = iic_acquire_bus(sc->tag, 0);
 	if (ret)
 		return ret;
 	ret = iic_exec(sc->tag, I2C_OP_READ_WITH_STOP, sc->addr,
-	    &r, 1, v, 1, I2C_F_POLL);
+	    &r, 1, v, 1, 0);
 
-	iic_release_bus(sc->tag, I2C_F_POLL);
+	iic_release_bus(sc->tag, 0);
 
 	return ret;
 }
@@ -240,14 +246,14 @@ mt2131_write(struct mt2131_softc *sc, uint8_t a, uint8_t v)
 	int ret;
 	uint8_t b[] = { a, v };
 
-	ret = iic_acquire_bus(sc->tag, I2C_F_POLL);
+	ret = iic_acquire_bus(sc->tag, 0);
 	if (ret)
 		return ret;
 
 	ret = iic_exec(sc->tag, I2C_OP_READ_WITH_STOP, sc->addr,
-	    b, sizeof(b), NULL, 0, I2C_F_POLL);
+	    b, sizeof(b), NULL, 0, 0);
 
-	iic_release_bus(sc->tag, I2C_F_POLL);
+	iic_release_bus(sc->tag, 0);
 
 	return ret;
 }

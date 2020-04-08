@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.59.2.1 2019/06/10 22:06:06 christos Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.59.2.2 2020/04/08 14:07:35 martin Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -545,8 +545,8 @@ gumstix_mpstart(void)
 				break;
 	}
 	for (size_t i = 1; i < arm_cpu_max; i++) {
-		if ((arm_cpu_hatched & __BIT(i)) == 0) {
-		printf("%s: warning: cpu%zu failed to hatch\n",
+		if (cpu_hatched_p(i)) {
+			printf("%s: warning: cpu%zu failed to hatch\n",
 			    __func__, i);
 		}
 	}

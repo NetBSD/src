@@ -369,3 +369,14 @@ REQMASK=MASK:0x800 ./mkcert.sh req badalt7-key "O = Bad NC Test Certificate 7" \
 OPENSSL_KEYALG=ec OPENSSL_KEYBITS=brainpoolP256r1 ./mkcert.sh genee \
     "Server ECDSA brainpoolP256r1 cert" server-ecdsa-brainpoolP256r1-key \
     server-ecdsa-brainpoolP256r1-cert rootkey rootcert
+
+openssl req -new -nodes -subj "/CN=localhost" \
+    -newkey rsa-pss -keyout server-pss-restrict-key.pem \
+    -pkeyopt rsa_pss_keygen_md:sha256 -pkeyopt rsa_pss_keygen_saltlen:32 | \
+    ./mkcert.sh geneenocsr "Server RSA-PSS restricted cert" \
+    server-pss-restrict-cert rootkey rootcert
+
+OPENSSL_SIGALG=ED448 OPENSSL_KEYALG=ed448 ./mkcert.sh genroot "Root Ed448" \
+    root-ed448-key root-ed448-cert
+OPENSSL_SIGALG=ED448 OPENSSL_KEYALG=ed448 ./mkcert.sh genee ed448 \
+    server-ed448-key server-ed448-cert root-ed448-key root-ed448-cert

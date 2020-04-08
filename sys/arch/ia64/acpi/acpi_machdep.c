@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.7.2.1 2019/06/10 22:06:23 christos Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.7.2.2 2020/04/08 14:07:41 martin Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -28,7 +28,7 @@
  * Machine-dependent routines for ACPICA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.7.2.1 2019/06/10 22:06:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.7.2.2 2020/04/08 14:07:41 martin Exp $");
 
 #include <sys/param.h>
 
@@ -123,6 +123,20 @@ acpi_md_intr_establish(uint32_t irq, int ipl, int type, int (*handler)(void *),
 	const int vec = acpi_isa_irq_to_vector(irq);
 
 	return intr_establish(vec, type, ipl, handler, arg);
+}
+
+void
+acpi_md_intr_mask(void *ih)
+{
+	/* XXX */
+	panic("acpi_md_intr_mask(%p): not implemented", ih);
+}
+
+void
+acpi_md_intr_unmask(void *ih)
+{
+	/* XXX */
+	panic("acpi_md_intr_unmask(%p): not implemented", ih);
 }
 
 void

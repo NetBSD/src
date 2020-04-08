@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.21.2.1 2019/06/10 22:05:55 christos Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.21.2.2 2020/04/08 14:07:30 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.21.2.1 2019/06/10 22:05:55 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.21.2.2 2020/04/08 14:07:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -362,11 +362,11 @@ cpsw_detach(device_t self, int flags)
 	intr_disestablish(sc->sc_txih);
 	intr_disestablish(sc->sc_miscih);
 
-	/* Delete all media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	/* Free the packet padding buffer */
 	kmem_free(sc->sc_txpad, ETHER_MIN_LEN);
@@ -621,7 +621,7 @@ cpsw_start(struct ifnet *ifp)
 			device_printf(sc->sc_dev, "won't fit\n");
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		} else if (error != 0) {
 			device_printf(sc->sc_dev, "error\n");
@@ -731,7 +731,7 @@ cpsw_watchdog(struct ifnet *ifp)
 
 	device_printf(sc->sc_dev, "device timeout\n");
 
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	cpsw_init(ifp);
 	cpsw_start(ifp);
 }
@@ -1161,7 +1161,7 @@ cpsw_rxintr(void *arg)
 
 		if (cpsw_new_rxbuf(sc, i) != 0) {
 			/* drop current packet, reuse buffer for new */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
 
@@ -1266,7 +1266,7 @@ cpsw_txintr(void *arg)
 		m_freem(rdp->tx_mb[sc->sc_txhead]);
 		rdp->tx_mb[sc->sc_txhead] = NULL;
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 		handled = true;
 
@@ -1543,9 +1543,11 @@ cpsw_ale_update_addresses(struct cpsw_softc *sc, int purge)
 		cpsw_ale_remove_all_mc_entries(sc);
 
 	/* Set other multicast addrs desired. */
+	ETHER_LOCK(ec);
 	LIST_FOREACH(ifma, &ec->ec_multiaddrs, enm_list) {
 		cpsw_ale_mc_entry_set(sc, ALE_PORT_MASK_ALL, ifma->enm_addrlo);
 	}
+	ETHER_UNLOCK(ec);
 
 	return 0;
 }

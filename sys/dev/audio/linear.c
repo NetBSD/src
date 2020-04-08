@@ -1,4 +1,4 @@
-/*	$NetBSD: linear.c,v 1.2.2.2 2019/06/10 22:07:06 christos Exp $	*/
+/*	$NetBSD: linear.c,v 1.2.2.3 2020/04/08 14:08:03 martin Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -26,21 +26,14 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_KERNEL)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linear.c,v 1.2.2.2 2019/06/10 22:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linear.c,v 1.2.2.3 2020/04/08 14:08:03 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <dev/audio/audiovar.h>
 #include <dev/audio/linear.h>
-#else
-#include <stdint.h>
-#include <stdbool.h>
-#include "compat.h"
-#include "audiovar.h"
-#endif /* _KERNEL */
 
 /*
  * audio_linear8_to_internal:

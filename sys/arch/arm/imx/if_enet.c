@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.14.2.1 2019/06/10 22:05:54 christos Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.14.2.2 2020/04/08 14:07:29 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.14.2.1 2019/06/10 22:05:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.14.2.2 2020/04/08 14:07:29 martin Exp $");
 
 #include "vlan.h"
 
@@ -291,7 +291,7 @@ enet_attach_common(device_t self, bus_space_tag_t iot,
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, enet_mediastatus);
 
 	/* try to attach PHY */
-	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	mii_attach(self, mii, 0xffffffff, sc->sc_phyid, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
@@ -429,9 +429,10 @@ enet_tick(void *arg)
 #endif
 
 	/* update counters */
-	ifp->if_ierrors += ENET_REG_READ(sc, ENET_RMON_R_UNDERSIZE);
-	ifp->if_ierrors += ENET_REG_READ(sc, ENET_RMON_R_FRAG);
-	ifp->if_ierrors += ENET_REG_READ(sc, ENET_RMON_R_JAB);
+	if_statadd(ifp, if_ierrors,
+	    (uint64_t)ENET_REG_READ(sc, ENET_RMON_R_UNDERSIZE) +
+	    (uint64_t)ENET_REG_READ(sc, ENET_RMON_R_FRAG) +
+	    (uint64_t)ENET_REG_READ(sc, ENET_RMON_R_JAB));
 
 	/* clear counters */
 	ENET_REG_WRITE(sc, ENET_MIBC, ENET_MIBC_MIB_CLEAR);
@@ -509,7 +510,7 @@ enet_tx_intr(void *arg)
 			bus_dmamap_unload(sc->sc_dmat,
 			    txs->txs_dmamap);
 			m_freem(txs->txs_mbuf);
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		}
 
 		/* checking error */
@@ -536,7 +537,7 @@ enet_tx_intr(void *arg)
 					    "flags2=%s\n", idx, flagsbuf);
 				}
 #endif /* DEBUG_ENET */
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 			}
 		}
 
@@ -637,7 +638,7 @@ enet_rx_intr(void *arg)
 					    idx, flags1buf, flags2buf, amount);
 				}
 #endif /* DEBUG_ENET */
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				m_freem(m0);
 
 			} else {
@@ -762,15 +763,14 @@ enet_setmulti(struct enet_softc *sc)
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	int promisc;
-	uint32_t crc;
+	uint32_t crc, hashidx;
 	uint32_t gaddr[2];
 
-	promisc = 0;
-	if ((ifp->if_flags & IFF_PROMISC) || ec->ec_multicnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
-			promisc = 1;
+	if (ifp->if_flags & IFF_PROMISC) {
+		/* receive all unicast packet */
+		ENET_REG_WRITE(sc, ENET_IAUR, 0xffffffff);
+		ENET_REG_WRITE(sc, ENET_IALR, 0xffffffff);
+		/* receive all multicast packet */
 		gaddr[0] = gaddr[1] = 0xffffffff;
 	} else {
 		gaddr[0] = gaddr[1] = 0;
@@ -778,25 +778,38 @@ enet_setmulti(struct enet_softc *sc)
 		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
+				/*
+				 * if specified by range, give up setting hash,
+				 * and fallback to allmulti.
+				 */
+				gaddr[0] = gaddr[1] = 0xffffffff;
+				break;
+			}
+
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-			gaddr[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+			hashidx = __SHIFTOUT(crc, __BITS(30,26));
+			gaddr[__SHIFTOUT(crc, __BIT(31))] |= __BIT(hashidx);
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
 		ETHER_UNLOCK(ec);
-	}
 
-	ENET_REG_WRITE(sc, ENET_GAUR, gaddr[0]);
-	ENET_REG_WRITE(sc, ENET_GALR, gaddr[1]);
-
-	if (promisc) {
-		/* match all packet */
-		ENET_REG_WRITE(sc, ENET_IAUR, 0xffffffff);
-		ENET_REG_WRITE(sc, ENET_IALR, 0xffffffff);
-	} else {
-		/* don't match any packet */
+		/* dont't receive any unicast packet (except own address) */
 		ENET_REG_WRITE(sc, ENET_IAUR, 0);
 		ENET_REG_WRITE(sc, ENET_IALR, 0);
 	}
+
+	if (gaddr[0] == 0xffffffff && gaddr[1] == 0xffffffff)
+		ifp->if_flags |= IFF_ALLMULTI;
+	else
+		ifp->if_flags &= ~IFF_ALLMULTI;
+
+	/* receive multicast packets according to multicast filter */
+	ENET_REG_WRITE(sc, ENET_GAUR, gaddr[1]);
+	ENET_REG_WRITE(sc, ENET_GALR, gaddr[0]);
+
 }
 
 static void
@@ -909,7 +922,7 @@ enet_start(struct ifnet *ifp)
 			DEVICE_DPRINTF(
 			    "TX descriptor is full. dropping packet\n");
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			break;
 		}
 
@@ -965,7 +978,7 @@ enet_watchdog(struct ifnet *ifp)
 	s = splnet();
 
 	device_printf(sc->sc_dev, "watchdog timeout\n");
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	/* salvage packets left in descriptors */
 	enet_tx_intr(sc);
@@ -1358,7 +1371,7 @@ enet_drain_txbuf(struct enet_softc *sc)
 			    txs->txs_dmamap);
 			m_freem(txs->txs_mbuf);
 
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		}
 		sc->sc_tx_free++;
 	}

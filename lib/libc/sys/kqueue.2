@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.47.4.1 2019/06/10 22:05:21 christos Exp $
+.\"	$NetBSD: kqueue.2,v 1.47.4.2 2020/04/08 14:07:13 martin Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd January 8, 2018
+.Dd December 22, 2019
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -168,7 +168,7 @@ struct kevent {
 	uint32_t  flags;	/* action flags for kqueue */
 	uint32_t  fflags;	/* filter flag value */
 	int64_t   data;		/* filter data value */
-	intptr_t  udata;	/* opaque user data identifier */
+	void     *udata;	/* opaque user data identifier */
 };
 .Ed
 .Pp
@@ -621,6 +621,9 @@ structure.
 .It Bq Er EINTR
 A signal was delivered before the timeout expired and before any
 events were placed on the kqueue for return.
+All changes contained in the
+.Fa changelist
+are applied before returning this error.
 .It Bq Er EINVAL
 The specified time limit or filter is invalid.
 .It Bq Er ENOENT
@@ -677,3 +680,8 @@ The
 .Fn EV_SET
 macro was protected from evaluating multiple times the first argument in
 .Nx 8.0 .
+.Pp
+The
+.Va udata
+type was changed from intptr_t to void * in
+.Nx 10.0 .

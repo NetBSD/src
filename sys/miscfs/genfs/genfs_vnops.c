@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.199 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.199.4.1 2020/04/08 14:08:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.199 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.199.4.1 2020/04/08 14:08:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,12 +292,21 @@ genfs_deadlock(void *v)
 	if (! ISSET(flags, LK_RETRY))
 		return ENOENT;
 
-	op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
-	if (ISSET(flags, LK_NOWAIT)) {
-		if (! rw_tryenter(&vip->vi_lock, op))
+	if (ISSET(flags, LK_DOWNGRADE)) {
+		rw_downgrade(&vip->vi_lock);
+	} else if (ISSET(flags, LK_UPGRADE)) {
+		KASSERT(ISSET(flags, LK_NOWAIT));
+		if (!rw_tryupgrade(&vip->vi_lock)) {
 			return EBUSY;
-	} else {
-		rw_enter(&vip->vi_lock, op);
+		}
+	} else if ((flags & (LK_EXCLUSIVE | LK_SHARED)) != 0) {
+		op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
+		if (ISSET(flags, LK_NOWAIT)) {
+			if (!rw_tryenter(&vip->vi_lock, op))
+				return EBUSY;
+		} else {
+			rw_enter(&vip->vi_lock, op);
+		}
 	}
 	VSTATE_ASSERT_UNLOCKED(vp, VS_RECLAIMED);
 	return 0;
@@ -335,12 +344,21 @@ genfs_lock(void *v)
 	int flags = ap->a_flags;
 	krw_t op;
 
-	op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
-	if (ISSET(flags, LK_NOWAIT)) {
-		if (! rw_tryenter(&vip->vi_lock, op))
+	if (ISSET(flags, LK_DOWNGRADE)) {
+		rw_downgrade(&vip->vi_lock);
+	} else if (ISSET(flags, LK_UPGRADE)) {
+		KASSERT(ISSET(flags, LK_NOWAIT));
+		if (!rw_tryupgrade(&vip->vi_lock)) {
 			return EBUSY;
-	} else {
-		rw_enter(&vip->vi_lock, op);
+		}
+	} else if ((flags & (LK_EXCLUSIVE | LK_SHARED)) != 0) {
+		op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
+		if (ISSET(flags, LK_NOWAIT)) {
+			if (!rw_tryenter(&vip->vi_lock, op))
+				return EBUSY;
+		} else {
+			rw_enter(&vip->vi_lock, op);
+		}
 	}
 	VSTATE_ASSERT_UNLOCKED(vp, VS_ACTIVE);
 	return 0;
@@ -431,7 +449,7 @@ genfs_null_putpages(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	KASSERT(vp->v_uobj.uo_npages == 0);
-	mutex_exit(vp->v_interlock);
+	rw_exit(vp->v_uobj.vmobjlock);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.15.4.1 2019/06/10 22:07:08 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.15.4.2 2020/04/08 14:08:05 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.15.4.1 2019/06/10 22:07:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.15.4.2 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -796,7 +796,7 @@ hdafg_assoc_count_channels(struct hdafg_softc *sc,
 		if (as->as_dacs[i])
 			dacmap[as->as_dacs[i]] = 1;
 
-	for (i = 1; i < sc->sc_endnode; i++) {
+	for (i = sc->sc_startnode; i < sc->sc_endnode; i++) {
 		if (!dacmap[i])
 			continue;
 		w = hdafg_widget_lookup(sc, i);
@@ -889,6 +889,7 @@ hdafg_assoc_dump_dd(struct hdafg_softc *sc, struct hdaudio_assoc *as, int pin,
 			return;
 		}
 
+#ifdef HDAFG_HDMI_DEBUG
 		hda_print(sc, "  ELD version=0x%x", ELD_VER(&hdi.eld));
 		hda_print1(sc, ",len=%u", hdi.eld.header.baseline_eld_len * 4);
 		hda_print1(sc, ",edid=0x%x", ELD_CEA_EDID_VER(&hdi.eld));
@@ -914,6 +915,7 @@ hdafg_assoc_dump_dd(struct hdafg_softc *sc, struct hdaudio_assoc *as, int pin,
 				    CEA_MAX_BITRATE(&hdi.sad[i]));
 			hda_print1(sc, "\n");
 		}
+#endif
 	}
 }
 
@@ -3780,6 +3782,12 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	    HDAUDIO_STREAM_ISS, hdafg_stream_intr, &sc->sc_audiodev);
 	sc->sc_audiodev.ad_playback = hdaudio_stream_establish(sc->sc_host,
 	    HDAUDIO_STREAM_OSS, hdafg_stream_intr, &sc->sc_audiodev);
+
+	if (sc->sc_audiodev.ad_capture == NULL &&
+	    sc->sc_audiodev.ad_playback == NULL) {
+		hda_error(sc, "couldn't find any input or output streams\n");
+		return;
+	}
 
 	hda_debug(sc, "connecting streams\n");
 	defparams.channels = 2;

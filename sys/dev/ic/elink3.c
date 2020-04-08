@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.142.2.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.142.2.2 2020/04/08 14:08:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.142.2.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.142.2.2 2020/04/08 14:08:06 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -324,7 +324,10 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	u_int8_t myla[ETHER_ADDR_LEN];
 
 	callout_init(&sc->sc_mii_callout, 0);
+	callout_setfunc(&sc->sc_mii_callout, ep_tick, sc);
+
 	callout_init(&sc->sc_mbuf_callout, 0);
+	callout_setfunc(&sc->sc_mbuf_callout, epmbuffill, sc);
 
 	sc->ep_chipset = chipset;
 
@@ -708,7 +711,7 @@ ep_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_mii_callout, hz, ep_tick, sc);
+	callout_schedule(&sc->sc_mii_callout, hz);
 }
 
 /*
@@ -830,7 +833,7 @@ epinit(struct ifnet *ifp)
 
 	if (sc->ep_flags & ELINK_FLAGS_MII) {
 		/* Start the one second clock. */
-		callout_reset(&sc->sc_mii_callout, hz, ep_tick, sc);
+		callout_schedule(&sc->sc_mii_callout, hz);
 	}
 
 	/* Attempt to start output, if any. */
@@ -1123,7 +1126,7 @@ startagain:
 	 */
 	if (len + pad > ETHER_MAX_LEN) {
 		/* packet is obviously too large: toss it */
-		++ifp->if_oerrors;
+		if_statinc(ifp, if_oerrors);
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		m_freem(m0);
 		goto readcheck;
@@ -1229,7 +1232,7 @@ startagain:
 
 	splx(sh);
 
-	++ifp->if_opackets;
+	if_statinc(ifp, if_opackets);
 
 readcheck:
 	if ((bus_space_read_2(iot, ioh, ep_w1_reg(sc, ELINK_W1_RX_STATUS)) &
@@ -1318,6 +1321,7 @@ eptxstat(struct ep_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;
 
 	/*
@@ -1330,13 +1334,13 @@ eptxstat(struct ep_softc *sc)
 		    0x0);
 
 		if (i & TXS_JABBER) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
+			if_statinc(ifp, if_oerrors);
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				       device_xname(sc->sc_dev), i);
 			epreset(sc);
 		} else if (i & TXS_UNDERRUN) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
+			if_statinc(ifp, if_oerrors);
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: fifo underrun (%x) @%d\n",
 				       device_xname(sc->sc_dev), i,
@@ -1347,7 +1351,7 @@ eptxstat(struct ep_softc *sc)
 			sc->tx_succ_ok = 0;
 			epreset(sc);
 		} else if (i & TXS_MAX_COLLISION) {
-			++sc->sc_ethercom.ec_if.if_collisions;
+			if_statinc(ifp, if_collisions);
 			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
 			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 		} else
@@ -1472,7 +1476,7 @@ again:
 		return;
 
 	if (len & ERR_RX) {
-		++ifp->if_ierrors;
+		if_statinc(ifp, if_ierrors);
 		goto abort;
 	}
 
@@ -1481,7 +1485,7 @@ again:
 	/* Pull packet off interface. */
 	m = epget(sc, len);
 	if (m == 0) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto abort;
 	}
 
@@ -1546,7 +1550,7 @@ epget(struct ep_softc *sc, int totlen)
 	} else {
 		/* If the queue is no longer full, refill. */
 		if (sc->last_mb == sc->next_mb)
-			callout_reset(&sc->sc_mbuf_callout, 1, epmbuffill, sc);
+			callout_schedule(&sc->sc_mbuf_callout, 1);
 
 		/* Convert one of our saved mbuf's. */
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
@@ -1713,7 +1717,7 @@ epwatchdog(struct ifnet *ifp)
 	struct ep_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	epreset(sc);
 }
@@ -1914,7 +1918,7 @@ epmbuffill(void *v)
 	sc->last_mb = i;
 	/* If the queue was not filled, try again. */
 	if (sc->last_mb != sc->next_mb)
-		callout_reset(&sc->sc_mbuf_callout, 1, epmbuffill, sc);
+		callout_schedule(&sc->sc_mbuf_callout, 1);
 	splx(s);
 }
 
@@ -2004,12 +2008,12 @@ ep_detach(device_t self, int flags)
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	}
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->rnd_source);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	pmf_device_deregister(sc->sc_dev);
 

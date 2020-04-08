@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.156.4.1 2019/06/10 22:06:20 christos Exp $
+#	$NetBSD: INSTALL_TINY,v 1.156.4.2 2020/04/08 14:07:39 martin Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -381,16 +381,14 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCI network interfaces
 #ep*	at pci? dev ? function ?	# 3Com 3c59x/3c90x Ethernet
-#fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 #fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-#le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+#pcn*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 #ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 #tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # EISA network interfaces
 #ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
-#fea*	at eisa? slot ?			# DEC DEFEA FDDI
 
 # ISA Plug-and-Play network interfaces
 #ep*	at isapnp?			# 3Com 3c509 Ethernet
@@ -479,7 +477,6 @@ pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	tun			# network tunneling over tty
 
 # miscellaneous pseudo-devices

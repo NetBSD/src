@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2018/05/31 09:08:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2020/04/08 14:04:22 martin Exp $
 
 NOMAN=	# defined
 
@@ -12,6 +12,7 @@ PROG=	dtc
 CPPFLAGS+=	-I${.CURDIR}
 CPPFLAGS+=	-I${DTCDIST}
 CPPFLAGS+=	-I${LIBFDTDIST}
+CPPFLAGS+=	-DNO_YAML
 
 SRCS+=	${DTC_SRCS} dtc-lexer.l dtc-parser.y
 YFLAGS+= -d -L

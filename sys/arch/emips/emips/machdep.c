@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2017/07/30 11:38:57 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.4.1 2020/04/08 14:07:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2017/07/30 11:38:57 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.4.1 2020/04/08 14:07:33 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -352,8 +352,10 @@ consinit(void)
 
 	(*platform.cons_init)();
 
-	/* Do NOT call cninit(); It will clobber cn_tab using constab[] which we do not use
-     */
+	/*
+	 * Do NOT call cninit(); It will clobber cn_tab using constab[]
+	 * which we do not use
+	 */
 }
 
 /*
@@ -458,7 +460,7 @@ cpu_startup(void)
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 }
 
@@ -735,5 +737,5 @@ void
 delay(int n)
 {
 
-        DELAY(n);
+	DELAY(n);
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.27 2016/12/28 11:44:58 wiz Exp $
+.\"	$NetBSD: ethersubr.9,v 1.27.14.1 2020/04/08 14:07:22 martin Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 28, 2016
+.Dd January 19, 2020
 .Dt ETHERSUBR 9
 .Os
 .Sh NAME
@@ -37,11 +37,8 @@
 .Nm ether_delmulti ,
 .Nm ETHER_FIRST_MULTI ,
 .Nm ETHER_NEXT_MULTI ,
-.Nm ETHER_IS_MULTICAST ,
-.Nm fddi_ifattach ,
-.Nm fddi_addmulti ,
-.Nm fddi_delmulti
-.Nd Ethernet and FDDI driver support functions and macros
+.Nm ETHER_IS_MULTICAST
+.Nd Ethernet driver support functions and macros
 .Sh SYNOPSIS
 .In net/if_ether.h
 .Ft void
@@ -56,13 +53,6 @@
 .Fn ETHER_NEXT_MULTI  "struct ether_multistep step" "struct ether_multi *enm"
 .Ft int
 .Fn ETHER_IS_MULTICAST "uint8_t *addr"
-.In net/if_fddi.h
-.Ft void
-.Fn fddi_ifattach "struct ifnet *ifp" "uint8_t *lla"
-.Ft int
-.Fn fddi_addmulti "const struct sockaddr *sa" "struct ethercom *ec"
-.Ft int
-.Fn fddi_delmulti "const struct sockaddr *sa" "struct ethercom *ec"
 .Sh DESCRIPTION
 The
 .Nm
@@ -74,11 +64,6 @@ Such drivers must request the
 attribute in their
 .Ar files
 declaration and call the appropriate functions as specified below.
-.Pp
-FDDI drivers must request the "fddi" attribute in their "files"
-declaration and call the functions tagged with "fddi_" or "FDDI_"
-instead, where different.
-Some macros are shared.
 .Pp
 Note that you also need the
 .Xr arp 9
@@ -103,8 +88,6 @@ and calling
 .Fn if_set_sadl .
 .Pp
 This function must be called from the driver's attach function.
-.It Fn fddi_ifattach "ifp" "lla"
-Corresponding function for FDDI devices.
 .It Fn ether_addmulti "sa" "ec"
 .It Fn ether_delmulti "sa" "ec"
 Add
@@ -154,9 +137,6 @@ returns, in addition to the above errors,
 .Er ENXIO
 if the specified address
 can't be found in the list of multicast addresses.
-.It Fn fddi_addmulti "sa" "ec"
-.It Fn fddi_delmulti "sa" "ec"
-Corresponding functions for FDDI devices.
 .It Fn ETHER_NEXT_MULTI "step" "enm"
 A macro to step through all of the
 .Em ether_multi
@@ -182,11 +162,6 @@ Ethernet support functions are declared in
 .In net/if_ether.h
 and defined (if not implemented as macro) in
 .Pa sys/net/if_ethersubr.c .
-.Pp
-FDDI support functions are declared in
-.In net/if_fddi.h
-and defined (if not implemented as macro) in
-.Pa sys/net/if_fddisubr.c .
 .Sh SEE ALSO
 .Xr arp 9
 .Sh HISTORY

@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: mutex.h,v 1.3.88.1 2020/04/08 14:07:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -53,16 +53,6 @@ struct kmutex {
 #define	mtx_lock			u.s.mtxs_lock
 
 #define	__HAVE_SIMPLE_MUTEXES		1
-
-/*
- * MUTEX_RECEIVE: no memory barrier required, as 'ret' implies a load fence.
- */
-#define	MUTEX_RECEIVE(mtx)		/* nothing */
-
-/*
- * MUTEX_GIVE: no memory barrier required, as _lock_cas() will take care of it.
- */
-#define	MUTEX_GIVE(mtx)			/* nothing */
 
 #define	MUTEX_CAS(p, o, n)		\
     (_atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))

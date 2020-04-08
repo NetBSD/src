@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_tonga_dpm.c,v 1.1.6.2 2019/06/10 22:07:58 christos Exp $	*/
+/*	$NetBSD: amdgpu_tonga_dpm.c,v 1.1.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,10 +24,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_tonga_dpm.c,v 1.1.6.2 2019/06/10 22:07:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_tonga_dpm.c,v 1.1.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/firmware.h>
-#include <linux/module.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "tonga_smumgr.h"

@@ -1,11 +1,8 @@
-/*	$NetBSD: zx296718-clock.h,v 1.1.1.2 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: zx296718-clock.h,v 1.1.1.2.6.1 2020/04/08 14:08:45 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2015 - 2016 ZTE Corporation.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 #ifndef __DT_BINDINGS_CLOCK_ZX296718_H
 #define __DT_BINDINGS_CLOCK_ZX296718_H

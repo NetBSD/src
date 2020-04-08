@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.12.20.1 2019/06/10 22:08:33 christos Exp $
+#	$NetBSD: files.radeon,v 1.12.20.2 2020/04/08 14:08:28 martin Exp $
 
 version	20180827
 
@@ -20,6 +20,7 @@ makeoptions	radeon	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/radeon"
 
 makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-missing-field-initializers"
 makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-missing-prototypes"
+makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-pointer-arith"
 makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-shadow"
 makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-unused-const-variable"
 

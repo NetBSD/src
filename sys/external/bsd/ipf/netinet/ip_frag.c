@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.7 2018/06/03 10:37:23 maxv Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.7.2.1 2020/04/08 14:08:28 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -86,7 +86,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.7 2018/06/03 10:37:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.7.2.1 2020/04/08 14:08:28 martin Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -393,6 +393,7 @@ ipfr_frag_new(
 		}
 	}
 
+	memset(&frag, 0, sizeof(frag));
 	frag.ipfr_v = fin->fin_v;
 	idx = fin->fin_v;
 	frag.ipfr_p = fin->fin_p;
@@ -441,6 +442,7 @@ ipfr_frag_new(
 		FBUMPD(ifs_nomem);
 		return NULL;
 	}
+	memset(fran, 0, sizeof(*fran));
 
 	WRITE_ENTER(lock);
 
@@ -478,6 +480,7 @@ ipfr_frag_new(
 	table[idx] = fra;
 	bcopy((char *)&frag.ipfr_ifp, (char *)&fra->ipfr_ifp, IPFR_CMPSZ);
 	fra->ipfr_v = fin->fin_v;
+	fra->ipfr_p = fin->fin_p;
 	fra->ipfr_ttl = softc->ipf_ticks + softf->ipfr_ttl;
 	fra->ipfr_firstend = frag.ipfr_firstend;
 
@@ -655,6 +658,7 @@ ipf_frag_lookup(
 	 *
 	 * build up a hash value to index the table with.
 	 */
+	memset(&frag, 0, sizeof(frag));
 	frag.ipfr_v = fin->fin_v;
 	idx = fin->fin_v;
 	frag.ipfr_p = fin->fin_p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.29.16.1 2019/06/10 22:05:44 christos Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.29.16.2 2020/04/08 14:07:24 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.29.16.1 2019/06/10 22:05:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.29.16.2 2020/04/08 14:07:24 martin Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -945,7 +945,7 @@ initarm(void *cookie)
 #endif	/* DDB */
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 

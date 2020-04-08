@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.175 2017/07/26 16:42:37 maya Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.175.4.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.175 2017/07/26 16:42:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.175.4.1 2020/04/08 14:09:04 martin Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -1006,7 +1006,7 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, daddr_t lbn, size_t size, void *ua
 		lfs_freebuf(fs, bp);
 		return NULL;
 	}
-	KDASSERT(bp->b_iodone == lfs_callback);
+	KDASSERT(bp->b_iodone == lfs_free_aiodone);
 
 #if 0
 	mutex_enter(&lfs_lock);

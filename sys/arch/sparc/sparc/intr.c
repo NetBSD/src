@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.119.4.1 2019/06/10 22:06:46 christos Exp $ */
+/*	$NetBSD: intr.c,v 1.119.4.2 2020/04/08 14:07:53 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.119.4.1 2019/06/10 22:06:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.119.4.2 2020/04/08 14:07:53 martin Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -889,11 +889,10 @@ intr_biglock_wrapper(void *vp)
 bool
 cpu_intr_p(void)
 {
-	int idepth;
 
-	kpreempt_disable();
-	idepth = curcpu()->ci_idepth;
-	kpreempt_enable();
-
-	return idepth != 0;
+	/* 
+	 * cpuinfo is the same VA on every CPU.  Even if preempted it will
+	 * give the correct answer.
+	 */
+	return cpuinfo.ci_idepth != 0;
 }

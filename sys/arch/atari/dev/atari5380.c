@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.63 2017/10/07 16:05:31 jdolecek Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.63.4.1 2020/04/08 14:07:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.63 2017/10/07 16:05:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.63.4.1 2020/04/08 14:07:31 martin Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -628,7 +628,7 @@ ncr5380_drq_intr(int poll)
 
 	/*
 	 * Update the DMA 'registers' to reflect that all bytes
-	 * have been transfered and tell this to the 5380 too.
+	 * have been transferred and tell this to the 5380 too.
 	 */
 	set_scsi_dma(SCSI_DMA->s_dma_ptr, (u_long)dma_ptr);
 	set_scsi_dma(SCSI_DMA->s_dma_cnt, 0);

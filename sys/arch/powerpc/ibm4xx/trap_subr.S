@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.26.16.1 2019/06/10 22:06:38 christos Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.26.16.2 2020/04/08 14:07:49 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -334,6 +334,7 @@ intrleave_to_kernel:
 	mtpid	%r31
 	mfsprg3	%r31
 	mfsprg2	%r30
+	IBM405_ERRATA77_SYNC
 	rfi
 	ba	.		/* Protect against prefetch */
 
@@ -375,6 +376,7 @@ intrleave_to_user:
 	mtpid	%r31
 	mfsprg3	%r31
 	mfsprg2	%r30
+	IBM405_ERRATA77_SYNC
 	rfi
 	ba	.	/* Protect against prefetch */
 

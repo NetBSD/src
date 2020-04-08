@@ -1,7 +1,7 @@
-/* $NetBSD: term.h,v 1.22 2017/03/23 00:39:06 roy Exp $ */
+/* $NetBSD: term.h,v 1.22.12.1 2020/04/08 14:07:16 martin Exp $ */
 
 /*
- * Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011, 2013, 2020 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -1934,7 +1934,7 @@ typedef struct {
 	const char *name;
 	const char *desc;
 	signed char *flags;
-	short *nums;
+	int *nums;
 	const char **strs;
 } TERMINAL;
 #endif

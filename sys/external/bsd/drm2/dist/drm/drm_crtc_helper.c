@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc_helper.c,v 1.4.30.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_crtc_helper.c,v 1.4.30.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,14 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc_helper.c,v 1.4.30.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc_helper.c,v 1.4.30.2 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/kernel.h>
 #include <linux/export.h>
-#include <linux/module.h>
 #include <linux/moduleparam.h>
-#include <asm/param.h>
-#include <asm/bug.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_atomic.h>

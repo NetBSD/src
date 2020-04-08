@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_body_edit.c,v 1.1.1.1 2009/06/23 10:08:42 tron Exp $	*/
+/*	$NetBSD: cleanup_body_edit.c,v 1.1.1.1.50.1 2020/04/08 14:06:52 martin Exp $	*/
 
 /*++
 /* NAME
@@ -60,6 +60,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -112,7 +117,7 @@ int     cleanup_body_edit_start(CLEANUP_STATE *state)
     cleanup_region_return(state, state->body_regions);
 
     /*
-     * Select the first region. XXX This will usally be the original body
+     * Select the first region. XXX This will usually be the original body
      * segment, but we must not count on that. Region assignments may change
      * when header editing also uses queue file regions. XXX We don't really
      * know if the first region will be large enough to hold the first body

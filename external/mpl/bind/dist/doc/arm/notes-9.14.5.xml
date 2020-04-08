@@ -1,0 +1,86 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<section xml:id="relnotes-9.14.5"><info><title>Notes for BIND 9.14.5</title></info>
+
+  <section xml:id="relnotes-9.14.5-features"><info><title>New Features</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          A SipHash 2-4 based DNS Cookie (RFC 7873) algorithm has been added.
+          [GL #605]
+        </para>
+        <para>
+          If you are running multiple DNS Servers (different versions of BIND 9
+          or DNS server from multiple vendors) responding from the same IP
+          address (anycast or load-balancing scenarios), you'll have to make
+          sure that all the servers are configured with the same DNS Cookie
+          algorithm and same Server Secret for the best performance.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          DS records included in DNS referral messages can now be validated
+          and cached immediately, reducing the number of queries needed for
+          a DNSSEC validation. [GL #964]
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes-9.14.5-bugs"><info><title>Bug Fixes</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          Cache database statistics counters could report invalid values
+          when stale answers were enabled, because of a bug in counter
+          maintenance when cache data becomes stale. The statistics counters
+          have been corrected to report the number of RRsets for each
+          RR type that are active, stale but still potentially served,
+          or stale and marked for deletion. [GL #602]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Interaction between DNS64 and RPZ No Data rule (CNAME *.) could
+          cause unexpected results; this has been fixed. [GL #1106]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>named-checkconf</command> now checks DNS64 prefixes
+          to ensure bits 64-71 are zero. [GL #1159]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>named-checkconf</command> could crash during
+          configuration if configured to use "geoip continent" ACLs with
+          legacy GeoIP. [GL #1163]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <command>named-checkconf</command> now correctly reports a missing
+          <command>dnstap-output</command> option when
+          <command>dnstap</command> is set. [GL #1136]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Handle ETIMEDOUT error on connect() with a non-blocking
+          socket. [GL #1133]
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+</section>

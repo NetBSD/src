@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.7 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: mem.c,v 1.7.92.1 2020/04/08 14:09:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,12 +37,13 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem.c,v 1.7 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: mem.c,v 1.7.92.1 2020/04/08 14:09:19 martin Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -96,6 +97,19 @@ nomem(void)
 {
 
 	errx(1, "virtual memory exhausted");
+}
+
+void
+xasprintf(char **buf, const char *fmt, ...)
+{
+	int e;
+	va_list ap;
+
+	va_start(ap, fmt);
+	e = vasprintf(buf, fmt, ap);
+	va_end(ap);
+	if (e < 0)
+		nomem();
 }
 
 #if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)

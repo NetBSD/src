@@ -1,5 +1,5 @@
 /* ehopt.c--optimize gcc exception frame information.
-   Copyright (C) 1998-2018 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
@@ -21,7 +21,6 @@
 
 #include "as.h"
 #include "subsegs.h"
-#include "struc-symbol.h"
 
 /* We include this ELF file, even though we may not be assembling for
    ELF, since the exception frame information is always in a format
@@ -104,7 +103,7 @@ get_cie_info (struct cie_info *info)
 {
   fragS *f;
   fixS *fix;
-  int offset;
+  unsigned int offset;
   char CIE_id;
   char augmentation[10];
   int iaug;
@@ -434,23 +433,28 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
 		|| exp->X_op == O_right_shift)
 	       && d->cie_info.code_alignment > 1)
 	{
-	  if (exp->X_add_symbol->bsym
-	      && exp->X_op_symbol->bsym
-	      && exp->X_add_symbol->sy_value.X_op == O_subtract
-	      && exp->X_op_symbol->sy_value.X_op == O_constant
+	  if (symbol_symbolS (exp->X_add_symbol)
+	      && symbol_constant_p (exp->X_op_symbol)
+	      && S_GET_SEGMENT (exp->X_op_symbol) == absolute_section
 	      && ((exp->X_op == O_divide
-		   ? exp->X_op_symbol->sy_value.X_add_number
-		   : (offsetT) 1 << exp->X_op_symbol->sy_value.X_add_number)
+		   ? *symbol_X_add_number (exp->X_op_symbol)
+		   : (offsetT) 1 << *symbol_X_add_number (exp->X_op_symbol))
 		  == (offsetT) d->cie_info.code_alignment))
 	    {
-	      /* This is a case we can optimize as well.  The expression was
-		 not reduced, so we can not finish the optimization until the
-		 end of the assembly.  We set up a variant frag which we
-		 handle later.  */
-	      frag_var (rs_cfa, 4, 0, d->cie_info.code_alignment << 3,
-			make_expr_symbol (&exp->X_add_symbol->sy_value),
-			d->loc4_fix, (char *) d->loc4_frag);
-	      return 1;
+	      expressionS *symval;
+
+	      symval = symbol_get_value_expression (exp->X_add_symbol);
+	      if (symval->X_op == O_subtract)
+		{
+		  /* This is a case we can optimize as well.  The
+		     expression was not reduced, so we can not finish
+		     the optimization until the end of the assembly.
+		     We set up a variant frag which we handle later.  */
+		  frag_var (rs_cfa, 4, 0, d->cie_info.code_alignment << 3,
+			    make_expr_symbol (symval),
+			    d->loc4_fix, (char *) d->loc4_frag);
+		  return 1;
+		}
 	    }
 	}
       break;
@@ -478,7 +482,9 @@ eh_frame_estimate_size_before_relax (fragS *frag)
 
   gas_assert (ca > 0);
   diff /= ca;
-  if (diff < 0x40)
+  if (diff == 0)
+    ret = -1;
+  else if (diff < 0x40)
     ret = 0;
   else if (diff < 0x100)
     ret = 1;
@@ -487,7 +493,7 @@ eh_frame_estimate_size_before_relax (fragS *frag)
   else
     ret = 4;
 
-  frag->fr_subtype = (frag->fr_subtype & ~7) | ret;
+  frag->fr_subtype = (frag->fr_subtype & ~7) | (ret & 7);
 
   return ret;
 }
@@ -502,6 +508,8 @@ eh_frame_relax_frag (fragS *frag)
   int oldsize, newsize;
 
   oldsize = frag->fr_subtype & 7;
+  if (oldsize == 7)
+    oldsize = -1;
   newsize = eh_frame_estimate_size_before_relax (frag);
   return newsize - oldsize;
 }
@@ -544,9 +552,17 @@ eh_frame_convert_frag (fragS *frag)
       md_number_to_chars (frag->fr_literal + frag->fr_fix, diff, 2);
       break;
 
-    default:
+    case 4:
       md_number_to_chars (frag->fr_literal + frag->fr_fix, diff, 4);
       break;
+
+    case 7:
+      gas_assert (diff == 0);
+      frag->fr_fix -= 8;
+      break;
+
+    default:
+      abort ();
     }
 
   frag->fr_fix += frag->fr_subtype & 7;

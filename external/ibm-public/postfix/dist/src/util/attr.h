@@ -1,4 +1,4 @@
-/*	$NetBSD: attr.h,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: attr.h,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 #ifndef _ATTR_H_INCLUDED_
 #define _ATTR_H_INCLUDED_
@@ -173,6 +173,11 @@ extern int WARN_UNUSED_RESULT attr_vscan_plain(VSTREAM *, int, va_list);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

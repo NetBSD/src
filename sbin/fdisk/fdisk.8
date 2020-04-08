@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.87.12.1 2019/06/10 22:05:33 christos Exp $
+.\"	$NetBSD: fdisk.8,v 1.87.12.2 2020/04/08 14:07:18 martin Exp $
 .\"
-.Dd April 9, 2019
+.Dd December 14, 2019
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -13,7 +13,7 @@
 .Fl 0 | 1 | 2 | 3 | E Ar number
 .Op Fl s Oo Ar id Oc Ns Oo / Ns Oo Ar start Oc Ns Oo / Ns Oo Ar size Oc Ns Oo / Ns Oo Ar bootmenu Oc Oc Oc Oc
 .Oc
-.Op Fl r Ar file | Fl w Ar file
+.Op Fl r Ar bootfile | Fl w Ar bootfile
 .Op Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
 .Op Fl b Ar cylinders/heads/sectors
 .Op Fl c Ar bootcode
@@ -175,7 +175,7 @@ On an i386 or amd64 system, interactively update the boot selector settings.
 These include the default boot partition and the timeout value for the prompt.
 (The boot selector permits the user to interactively select the boot
 partition, and thus which operating system is run, at system boot time; see
-.Xr mbr 8
+.Xr x86/mbr 8
 for more information.)
 .It Fl b Ar cylinders/heads/sectors
 Specify the BIOS geometry parameters for
@@ -282,9 +282,9 @@ The partition table is left alone by this (but see above).
 Lists known
 .Em sysid
 values and exit.
-.It Fl r Ar file
+.It Fl r Ar bootfile
 Read the boot record from file
-.Ar file
+.Ar bootfile
 instead of the specified disk.
 The geometry information used is still that of the disk volume.
 Any changes are written back to the file.
@@ -386,9 +386,9 @@ Using
 with
 .Fl u
 allows the user to change more parameters than normally permitted.
-.It Fl w Ar file
+.It Fl w Ar bootfile
 Write the modified partition table to file
-.Ar file
+.Ar bootfile
 instead of the disk.
 .It Fl z Ar sectorsize
 Specify a sector size other than 512, for devices that only
@@ -585,9 +585,9 @@ lose all the data in that partition.
 You should run this program interactively once or twice to see how it works.
 This is completely safe as long as you answer the last question in the negative.
 You can also specify
-.Fl w Ar file
+.Fl w Ar bootfile
 to write the output to a file and later specify
-.Fl r Ar file
+.Fl r Ar bootfile
 to read back the updated information.
 This can be done without having write access to the disk volume.
 .Sh FILES
@@ -651,8 +651,8 @@ partition using whole disk without prompt against 1GB disk image file
 .Xr disklabel 8 ,
 .Xr gpt 8 ,
 .Xr installboot 8 ,
-.Xr mbr 8 ,
-.Xr mbrlabel 8
+.Xr mbrlabel 8 ,
+.Xr x86/mbr 8
 .Sh HISTORY
 A version of
 .Nm

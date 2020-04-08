@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dvo.c,v 1.2.20.1 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: intel_dvo.c,v 1.2.20.2 2020/04/08 14:08:23 martin Exp $	*/
 
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
@@ -27,7 +27,7 @@
  *	Eric Anholt <eric@anholt.net>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dvo.c,v 1.2.20.1 2019/06/10 22:08:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dvo.c,v 1.2.20.2 2020/04/08 14:08:23 martin Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
@@ -133,7 +133,7 @@ static bool intel_dvo_connector_get_hw_state(struct intel_connector *connector)
 }
 
 static bool intel_dvo_get_hw_state(struct intel_encoder *encoder,
-				   enum i915_pipe *pipe)
+				   enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -457,7 +457,7 @@ void intel_dvo_init(struct drm_device *dev)
 		struct i2c_adapter *i2c;
 		int gpio;
 		bool dvoinit;
-		enum i915_pipe pipe;
+		enum pipe pipe;
 		uint32_t dpll[I915_MAX_PIPES];
 
 		/* Allow the I2C driver info to specify the GPIO to be used in

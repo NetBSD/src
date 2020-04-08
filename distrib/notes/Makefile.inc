@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.43 2015/05/20 05:19:19 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.43.16.1 2020/04/08 14:03:47 martin Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -13,12 +13,13 @@ MKTOCS?=yes
 M?=	${.CURDIR:T}
 COMMON=	${.CURDIR}/../common
 
-MAIN=	${COMMON}/main ${COMMON}/macros ${EXTRA}
+MAIN=	${COMMON}/main ${EXTRA}
 TARG=	INSTALL
 TARGS=	${TARG}.ps ${TARG}.txt ${TARG}.html ${TARG}.more
 TOCS=	${TARG}.PostScript.toc ${TARG}.ASCII.toc ${TARG}.HTML.toc \
 	${TARG}.more.toc
-SRCS=	${MAIN} whatis ${COMMON}/contents hardware xfer prep \
+SRCS=	${MAIN} ${COMMON}/macros \
+	whatis ${COMMON}/contents hardware xfer prep \
 	${.CURDIR}/install ${COMMON}/postinstall upgrade \
 	${COMMON}/legal.common ${COMMON}/netboot \
 	${COMMON}/sysinst \
@@ -27,6 +28,37 @@ SRCS=	${MAIN} whatis ${COMMON}/contents hardware xfer prep \
 whatis: .OPTIONAL
 
 PRESET=	${GFLAGS} -U -dM=${M} -dV=${DISTRIBVER} -d.CURDIR=${.CURDIR} -r${M}=1
+PRESET+=	-rmajor=${DISTRIBVER:C/\..*$//}
+.if ${USE_XZ_SETS:Uno} == "yes"
+PRESET+=	-dsetsuffix=tar.xz
+.else
+PRESET+=	-dsetsuffix=tgz
+.endif
+.if ${NETBSD_OFFICIAL_RELEASE:Uno} == "yes"
+PRESET+=	-rFOR_RELEASE=1
+.else
+PRESET+=	-rFOR_RELEASE=0
+.endif
+.if (${DISTRIBVER:M*.99.*})
+PRESET+=	-rRELEASE_BRANCH=0
+.elif (${DISTRIBVER:M*.[0-9]*})
+PRESET+=	-rRELEASE_BRANCH=1
+PRESET+=	-rminor=${DISTRIBVER:C/^[0-9]+\.([0-9])+.*$/\1/}
+nextmin!=	expr ${DISTRIBVER:C/^[0-9]+\.([0-9])+.*$/\1/} + 1
+.if exists(${.CURDIR}/../../../doc/CHANGES-${DISTRIBVER:C/\..*$//}.${nextmin})
+PRESET+=	-rnextminor=${nextmin}
+.endif
+.endif
+.if defined(BUILDID) && "${BUILDID:M20*Z}" != ""
+curdate!=	env LANG="C" date -d "${BUILDID:C/[0-9][0-9][0-9][0-9]Z$//}" "+%b %d, %Y"
+.else
+.if ${NETBSD_OFFICIAL_RELEASE:Uno} == "yes"
+.error "No release date could be derived from BUILDID"
+.else
+curdate!=	env LANG="C" date "+%b %d, %Y"
+.endif
+.endif
+PRESET+=	-dcur_date="${curdate}"
 
 POST_PLAIN= -P-b -P-u -P-o
 
@@ -71,36 +103,26 @@ ${TARG}.more: ${SRCS} ${TOC.more} ${DISTRIBVERDEP}
 	${TOOL_GROFF} ${ARGS_MORE} -mdoc      ${MAIN} > $@
 
 
-# Rules to build the table of contents (.toc) files.
-# They are generated twice to take into account the
-# space taken by the TOC itself.
-#
-
-TOCPROC=	   2>&1 >/dev/null |\
-           ${TOOL_SED} -n '/^\.Ti/{s/ \([A-Za-z]\)/ "\1/; s/ *$$/"/; p; }'
+# Rules to build the table of contents (.toc) files.  For the
+# PostScript version it's generated twice to take into account the
+# space taken by the TOC itself.  Other versions are not paginated.
 
 ${TARG}.PostScript.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
-	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 ${TARG}.ASCII.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
-	mv -f $@.tmp $@
-	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 ${TARG}.HTML.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
-	mv -f $@.tmp $@
-	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc2html ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 ${TARG}.more.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
-	mv -f $@.tmp $@
-	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.71.4.1 2019/06/10 22:09:46 christos Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.71.4.2 2020/04/08 14:08:58 martin Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.71.4.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.71.4.2 2020/04/08 14:08:58 martin Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_atalk.h"
@@ -97,6 +97,8 @@ at_pcbsetaddr(struct ddpcb *ddp, struct sockaddr_at *sat)
 
 		if (sat->sat_family != AF_APPLETALK)
 			return (EAFNOSUPPORT);
+		if (sat->sat_len != sizeof(*sat))
+			return EINVAL;
 
 		if (sat->sat_addr.s_node != ATADDR_ANYNODE ||
 		    sat->sat_addr.s_net != ATADDR_ANYNET) {

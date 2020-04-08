@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2017/02/14 01:16:49 christos Exp $
+#	$NetBSD: Makefile,v 1.2.12.1 2020/04/08 14:07:00 martin Exp $
 
 LIBISPRIVATE=	yes
 
@@ -9,8 +9,18 @@ LIB=	dns
 DIST=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist/src/${LIB}
 .PATH:	${DIST}
 
-SRCS=	dns_lookup.c dns_rr.c dns_strerror.c dns_strtype.c dns_rr_to_pa.c \
-	dns_sa_to_rr.c dns_rr_eq_sa.c dns_rr_to_sa.c dns_rr_filter.c \
-	dns_strrecord.c
+SRCS= \
+dns_lookup.c \
+dns_rr.c \
+dns_rr_eq_sa.c \
+dns_rr_filter.c \
+dns_rr_to_pa.c \
+dns_rr_to_sa.c \
+dns_sa_to_rr.c \
+dns_str_resflags.c \
+dns_strerror.c \
+dns_strrecord.c \
+dns_strtype.c \
+test_dns_lookup.c
 
 .include <bsd.lib.mk>

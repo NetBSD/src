@@ -93,7 +93,7 @@ sleep 1
 for ns in 2 4 5
 do
     case $ns in
-    2) synth=yes description="<default>";;
+    2) synth=no description="<default>";;
     4) synth=no  description="no";;
     5) synth=yes description="yes";;
     *) exit 1;;
@@ -171,7 +171,7 @@ ret=0
 dig_with_opts b.redirect. @10.53.0.3 a > dig.out.ns2.test$n || ret=1
 grep "flags:[^;]* ad[ ;]" dig.out.ns2.test$n > /dev/null || ret=1
 grep "status: NXDOMAIN," dig.out.ns2.test$n > /dev/null || ret=1
-grep "\..*3600.IN.SOA" dig.out.ns2.test$n > /dev/null && ret=1
+grep "\..*3600.IN.SOA" dig.out.ns2.test$n > /dev/null || ret=1
 n=$((n+1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))

@@ -4,7 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN: Cpu tools GENerator.
    - the resultant file is machine generated, cgen-ibld.in isn't
 
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -680,7 +680,7 @@ lm32_cgen_extract_operand (CGEN_CPU_DESC cd,
       {
         long value;
         length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 15, 16, 32, total_length, pc, & value);
-        value = ((pc) + (((SI) (((value) << (16))) >> (14))));
+        value = ((pc) + (((((((((value) & (65535))) << (2))) ^ (131072))) - (131072))));
         fields->f_branch = value;
       }
       break;
@@ -688,7 +688,7 @@ lm32_cgen_extract_operand (CGEN_CPU_DESC cd,
       {
         long value;
         length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 25, 26, 32, total_length, pc, & value);
-        value = ((pc) + (((SI) (((value) << (6))) >> (4))));
+        value = ((pc) + (((((((((value) & (67108863))) << (2))) ^ (134217728))) - (134217728))));
         fields->f_call = value;
       }
       break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.321.4.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.321.4.2 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.321.4.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.321.4.2 2020/04/08 14:09:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -483,7 +483,7 @@ lfs_fsync(void *v)
 
 	wait = (ap->a_flags & FSYNC_WAIT);
 	do {
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
 				     round_page(ap->a_offhi),
 				     PGO_CLEANIT | (wait ? PGO_SYNCIO : 0));
@@ -1604,7 +1604,7 @@ lfs_strategy(void *v)
 int
 lfs_flush_dirops(struct lfs *fs)
 {
-	struct inode *ip, *nip;
+	struct inode *ip, *marker;
 	struct vnode *vp;
 	extern int lfs_dostats; /* XXX this does not belong here */
 	struct segment *sp;
@@ -1613,7 +1613,8 @@ lfs_flush_dirops(struct lfs *fs)
 	int error = 0;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
-	KASSERT(fs->lfs_nadirop == 0);
+	KASSERT(fs->lfs_nadirop == 0); /* stable during lfs_writer */
+	KASSERT(fs->lfs_dirops == 0);  /* stable during lfs_writer */
 
 	if (fs->lfs_ronly)
 		return EROFS;
@@ -1627,6 +1628,12 @@ lfs_flush_dirops(struct lfs *fs)
 
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
+
+	marker = pool_get(&lfs_inode_pool, PR_WAITOK);
+	memset(marker, 0, sizeof(*marker));
+	marker->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
+	memset(marker->inode_ext.lfs, 0, sizeof(*marker->inode_ext.lfs));
+	marker->i_state = IN_MARKER;
 
 	lfs_imtime(fs);
 	lfs_seglock(fs, flags);
@@ -1646,15 +1653,41 @@ lfs_flush_dirops(struct lfs *fs)
 	 *
 	 */
 	mutex_enter(&lfs_lock);
-	for (ip = TAILQ_FIRST(&fs->lfs_dchainhd); ip != NULL; ip = nip) {
-		nip = TAILQ_NEXT(ip, i_lfs_dchain);
-		mutex_exit(&lfs_lock);
+	KASSERT(fs->lfs_writer);
+	TAILQ_INSERT_HEAD(&fs->lfs_dchainhd, marker, i_lfs_dchain);
+	while ((ip = TAILQ_NEXT(marker, i_lfs_dchain)) != NULL) {
+		TAILQ_REMOVE(&fs->lfs_dchainhd, marker, i_lfs_dchain);
+		TAILQ_INSERT_AFTER(&fs->lfs_dchainhd, ip, marker,
+		    i_lfs_dchain);
+		if (ip->i_state & IN_MARKER)
+			continue;
 		vp = ITOV(ip);
-		mutex_enter(vp->v_interlock);
 
+		/*
+		 * Prevent the vnode from going away if it's just been
+		 * put out in the segment and lfs_unmark_dirop is about
+		 * to release it.  While it is on the list it is always
+		 * referenced, so it cannot be reclaimed until we
+		 * release it.
+		 */
+		vref(vp);
+
+		/*
+		 * Since we hold lfs_writer, the node can't be in an
+		 * active dirop.  Since it's on the list and we hold a
+		 * reference to it, it can't be reclaimed now.
+		 */
 		KASSERT((ip->i_state & IN_ADIROP) == 0);
 		KASSERT(vp->v_uflag & VU_DIROP);
-		KASSERT(vdead_check(vp, VDEAD_NOWAIT) == 0);
+
+		/*
+		 * After we release lfs_lock, if we were in the middle
+		 * of writing a segment, lfs_unmark_dirop may end up
+		 * clearing VU_DIROP, and we have no way to stop it.
+		 * That should be OK -- we'll just have less to do
+		 * here.
+		 */
+		mutex_exit(&lfs_lock);
 
 		/*
 		 * All writes to directories come from dirops; all
@@ -1663,15 +1696,6 @@ lfs_flush_dirops(struct lfs *fs)
 		 * and/or directories will not be affected by writing
 		 * directory blocks inodes and file inodes.  So we don't
 		 * really need to lock.
-		 */
-		if (vdead_check(vp, VDEAD_NOWAIT) != 0) {
-			mutex_exit(vp->v_interlock);
-			mutex_enter(&lfs_lock);
-			continue;
-		}
-		mutex_exit(vp->v_interlock);
-		/* XXX see below
-		 * waslocked = VOP_ISLOCKED(vp);
 		 */
 		if (vp->v_type != VREG &&
 		    ((ip->i_state & IN_ALLMOD) || !VPISEMPTY(vp))) {
@@ -1683,15 +1707,17 @@ lfs_flush_dirops(struct lfs *fs)
 			    	mutex_exit(&lfs_lock);
 			}
 			if (error && (sp->seg_flags & SEGM_SINGLE)) {
+				vrele(vp);
 				mutex_enter(&lfs_lock);
 				error = EAGAIN;
 				break;
 			}
 		}
-		KDASSERT(ip->i_number != LFS_IFILE_INUM);
+		KASSERT(ip->i_number != LFS_IFILE_INUM);
 		error = lfs_writeinode(fs, sp, ip);
-		mutex_enter(&lfs_lock);
 		if (error && (sp->seg_flags & SEGM_SINGLE)) {
+			vrele(vp);
+			mutex_enter(&lfs_lock);
 			error = EAGAIN;
 			break;
 		}
@@ -1704,15 +1730,25 @@ lfs_flush_dirops(struct lfs *fs)
 		 * write them.
 		 */
 		/* XXX only for non-directories? --KS */
+		mutex_enter(&lfs_lock);
 		LFS_SET_UINO(ip, IN_MODIFIED);
+		mutex_exit(&lfs_lock);
+
+		vrele(vp);
+		mutex_enter(&lfs_lock);
 	}
+	TAILQ_REMOVE(&fs->lfs_dchainhd, marker, i_lfs_dchain);
 	mutex_exit(&lfs_lock);
+
 	/* We've written all the dirops there are */
 	ssp = (SEGSUM *)sp->segsum;
 	lfs_ss_setflags(fs, ssp, lfs_ss_getflags(fs, ssp) & ~(SS_CONT));
 	lfs_finalize_fs_seguse(fs);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
+
+	pool_put(&lfs_inoext_pool, marker->inode_ext.lfs);
+	pool_put(&lfs_inode_pool, marker);
 
 	return error;
 }
@@ -1734,6 +1770,7 @@ lfs_flush_pchain(struct lfs *fs)
 	int error, error2;
 
 	ASSERT_NO_SEGLOCK(fs);
+	KASSERT(fs->lfs_writer);
 
 	if (fs->lfs_ronly)
 		return EROFS;
@@ -1804,7 +1841,7 @@ lfs_flush_pchain(struct lfs *fs)
 			LFS_SET_UINO(ip, IN_MODIFIED);
 		    	mutex_exit(&lfs_lock);
 		}
-		KDASSERT(ip->i_number != LFS_IFILE_INUM);
+		KASSERT(ip->i_number != LFS_IFILE_INUM);
 		error2 = lfs_writeinode(fs, sp, ip);
 
 		VOP_UNLOCK(vp);

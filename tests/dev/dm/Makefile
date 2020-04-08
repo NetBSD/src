@@ -1,5 +1,4 @@
-
-#	$NetBSD: Makefile,v 1.3 2016/01/23 21:22:48 christos Exp $
+#	$NetBSD: Makefile,v 1.3.16.1 2020/04/08 14:09:05 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -16,10 +15,7 @@ PROGS=		h_dm
 
 CPPFLAGS+=-D_KERNTYPES
 LDADD+= -lprop -lutil
-LDADD+= -lrumpdev_disk -lrumpdev_dm
-LDADD+=	-lrumpdev -lrumpvfs
-LDADD+=	-lrump
-LDADD+=	-lrumpuser -lpthread
+LDADD+= -lrumpdev_disk -lrumpdev_dm ${LIBRUMPBASE}
 
 FILES=		t_dm_disk_1.bz2.uue t_dm_disk_2.bz2.uue t_dm_disk_3.bz2.uue
 

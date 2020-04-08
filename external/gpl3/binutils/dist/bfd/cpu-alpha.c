@@ -1,5 +1,5 @@
 /* BFD support for the Alpha architecture.
-   Copyright (C) 1992-2018 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,19 +24,20 @@
 
 #define N(BITS_WORD, BITS_ADDR, NUMBER, PRINT, DEFAULT, NEXT) \
   {							\
-    BITS_WORD, /* bits in a word */			\
-    BITS_ADDR, /* bits in an address */			\
-    8,	/* 8 bits in a byte */				\
+    BITS_WORD, /* Bits in a word.  */			\
+    BITS_ADDR, /* Bits in an address.  */		\
+    8,	       /* Bits in a byte.  */			\
     bfd_arch_alpha,					\
     NUMBER,						\
     "alpha",						\
     PRINT,						\
-    3,							\
+    3,		/* Section alignment power. */		\
     DEFAULT,						\
     bfd_default_compatible,				\
     bfd_default_scan,					\
     bfd_arch_default_fill,				\
     NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
   }
 
 #define NN(index) (&arch_info_struct[index])

@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.88.2.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: be.c,v 1.88.2.2 2020/04/08 14:08:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.88.2.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.88.2.2 2020/04/08 14:08:12 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -550,7 +550,7 @@ be_read(struct be_softc *sc, int idx, int len)
 			printf("%s: invalid packet size %d; dropping\n",
 			    ifp->if_xname, len);
 #endif
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -559,7 +559,7 @@ be_read(struct be_softc *sc, int idx, int len)
 	 */
 	m = be_get(sc, idx, len);
 	if (m == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -569,12 +569,10 @@ be_read(struct be_softc *sc, int idx, int len)
 
 /*
  * Start output on interface.
- * We make two assumptions here:
+ * We make an assumption here:
  *  1) that the current priority is set to splnet _before_ this code
  *     is called *and* is returned to the appropriate priority after
  *     return
- *  2) that the IFF_OACTIVE flag is checked before this code is called
- *     (i.e. that the output part of the interface is idle)
  */
 void
 bestart(struct ifnet *ifp)
@@ -585,12 +583,12 @@ bestart(struct ifnet *ifp)
 	unsigned int bix, len;
 	unsigned int ntbuf = sc->sc_rb.rb_ntbuf;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
 		return;
 
 	bix = sc->sc_rb.rb_tdhead;
 
-	for (;;) {
+	while (sc->sc_rb.rb_td_nbusy < ntbuf) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
@@ -617,10 +615,7 @@ bestart(struct ifnet *ifp)
 		if (++bix == QEC_XD_RING_MAXSIZE)
 			bix = 0;
 
-		if (++sc->sc_rb.rb_td_nbusy == ntbuf) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
-		}
+		sc->sc_rb.rb_td_nbusy++;
 	}
 
 	sc->sc_rb.rb_tdhead = bix;
@@ -686,7 +681,7 @@ bewatchdog(struct ifnet *ifp)
 	struct be_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	bereset(sc);
 }
@@ -850,11 +845,11 @@ betint(struct be_softc *sc)
 	/*
 	 * Unload collision counters
 	 */
-	ifp->if_collisions +=
+	if_statadd(ifp, if_collisions, 
 	    bus_space_read_4(t, br, BE_BRI_NCCNT) +
 	    bus_space_read_4(t, br, BE_BRI_FCCNT) +
 	    bus_space_read_4(t, br, BE_BRI_EXCNT) +
-	    bus_space_read_4(t, br, BE_BRI_LTCNT);
+	    bus_space_read_4(t, br, BE_BRI_LTCNT));
 
 	/*
 	 * the clear the hardware counters
@@ -875,8 +870,7 @@ betint(struct be_softc *sc)
 		if (txflags & QEC_XD_OWN)
 			break;
 
-		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 		if (++bix == QEC_XD_RING_MAXSIZE)
 			bix = 0;
@@ -1108,7 +1102,6 @@ beinit(struct ifnet *ifp)
 		goto out;
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	callout_reset(&sc->sc_tick_ch, hz, be_tick, sc);
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.4.2 2019/06/10 21:42:06 christos Exp $
+# $NetBSD: Makefile,v 1.1.4.3 2020/04/08 14:03:42 martin Exp $
 
 LIBISPRIVATE=	yes
 LIB=		cryptotest
@@ -13,6 +13,6 @@ CRYPTODIST=     ${NETBSDSRCDIR}/crypto
 CPPFLAGS+= -I${OPENSSLSRC}/include
 
 SRCS+=	tests.c format_output.c output_helpers.c basic_output.c stanza.c
-SRCS+=	main.c tap_bio.c driver.c init.c test_cleanup.c cb.c
+SRCS+=	main.c tap_bio.c driver.c test_cleanup.c cb.c random.c  testutil_init.c
 
 .include <bsd.lib.mk>

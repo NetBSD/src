@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.16.4.1 2019/06/10 22:09:45 christos Exp $
+#	$NetBSD: files.net,v 1.16.4.2 2020/04/08 14:08:57 martin Exp $
 
 # XXX CLEANUP
 define	net
@@ -12,13 +12,10 @@ file	net/if.c			net
 file	net/if_arcsubr.c		arcnet			needs-flag
 file	net/if_bridge.c			bridge			needs-flag
 file	net/bridgestp.c			bridge
-file	net/if_ethersubr.c		ether | fddi | netatalk | token |
-					    wlan		needs-flag
+file	net/if_ethersubr.c		ether | netatalk | wlan	needs-flag
 file	net/if_faith.c			faith & (inet | inet6)	needs-flag
-file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
-file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
 file	net/if_ipsec.c			ipsec & ipsecif
 file	net/if_llatbl.c			inet | inet6
@@ -28,11 +25,10 @@ file	net/if_media.c			net
 file	net/if_mpls.c			mpls			needs-flag
 file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
+file	net/if_stats.c			net
 file	net/if_stf.c			stf & inet & inet6	needs-flag
 file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
-file	net/if_strip.c			strip			needs-flag
-file	net/if_tokensubr.c		token			needs-flag
 file	net/if_tap.c			tap
 file	net/if_tun.c			tun
 file	net/if_vlan.c			vlan			needs-flag
@@ -49,7 +45,7 @@ file	net/route.c			net
 file	net/rss_config.c		net
 file	net/rtbl.c			net
 file	net/rtsock.c			net
-file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
+file	net/slcompress.c		sl | ppp | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | swcrypto | vnd_compression
 file	netinet/accf_data.c		accf_data
 file	netinet/accf_http.c		accf_http

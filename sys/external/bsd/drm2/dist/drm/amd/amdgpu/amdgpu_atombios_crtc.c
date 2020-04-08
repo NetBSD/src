@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_atombios_crtc.c,v 1.1.6.2 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: amdgpu_atombios_crtc.c,v 1.1.6.3 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,13 +26,12 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_crtc.c,v 1.1.6.2 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_crtc.c,v 1.1.6.3 2020/04/08 14:08:22 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/amdgpu_drm.h>
 #include <drm/drm_fixed.h>
-#include <asm/byteorder.h>
 #include "amdgpu.h"
 #include "atom.h"
 #include "atom-bits.h"

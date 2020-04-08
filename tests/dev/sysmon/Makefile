@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2016/01/23 21:22:48 christos Exp $
+#	$NetBSD: Makefile,v 1.4.16.1 2020/04/08 14:09:06 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -8,11 +8,7 @@ TESTSDIR=	${TESTSBASE}/dev/sysmon
 TESTS_C=	t_swwdog
 
 CPPFLAGS+=	-D_KERNTYPES
-LDADD+=	-lrumpdev_sysmon -lrumpdev -lrumpvfs
-LDADD+=	-lrump
-LDADD+=	-lrumpuser
-LDADD+=	-lrump
-LDADD+=	-lpthread
+LDADD+=	-lrumpdev_sysmon -lrumpdev ${LIBRUMPBASE}
 
 WARNS=	4
 

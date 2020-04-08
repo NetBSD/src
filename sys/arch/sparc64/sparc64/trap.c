@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.188.14.1 2019/06/10 22:06:48 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.188.14.2 2020/04/08 14:07:54 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.188.14.1 2019/06/10 22:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.188.14.2 2020/04/08 14:07:54 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -613,8 +613,6 @@ dopanic:
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
 		}
-		if (want_resched)
-			preempt();
 		break;
 
 	case T_INST_EXCEPT:

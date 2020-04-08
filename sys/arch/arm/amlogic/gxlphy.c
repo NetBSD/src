@@ -1,4 +1,4 @@
-/* $NetBSD: gxlphy.c,v 1.1.2.2 2019/06/10 22:05:51 christos Exp $ */
+/* $NetBSD: gxlphy.c,v 1.1.2.3 2020/04/08 14:07:27 martin Exp $ */
 
 /*
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxlphy.c,v 1.1.2.2 2019/06/10 22:05:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxlphy.c,v 1.1.2.3 2020/04/08 14:07:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: gxlphy.c,v 1.1.2.2 2019/06/10 22:05:51 christos Exp 
 static int	gxlphymatch(device_t, cfdata_t, void *);
 static void	gxlphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL3_NEW(gxlphy, sizeof(struct mii_softc),
-    gxlphymatch, gxlphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
+CFATTACH_DECL_NEW(gxlphy, sizeof(struct mii_softc),
+    gxlphymatch, gxlphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	gxlphy_service(struct mii_softc *, struct mii_data *, int);
 static void	gxlphy_status(struct mii_softc *);
@@ -168,7 +167,8 @@ gxlphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &gxlphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
+
+	mii_lock(mii);
 
 	PHY_RESET(sc);
 
@@ -180,13 +180,10 @@ gxlphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
-	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
-	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
+
+	mii_unlock(mii);
+
+	mii_phy_add_media(sc);
 }
 
 static int
@@ -194,6 +191,8 @@ gxlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t reg;
+
+	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -246,6 +245,8 @@ static void
 gxlphy_status(struct mii_softc *sc)
 {
 	uint16_t bmcr, bmsr, wol, lpa, aner;
+
+	KASSERT(mii_locked(sc->mii_pdata));
 
 	PHY_READ(sc, MII_BMCR, &bmcr);
 	if ((bmcr & BMCR_AUTOEN) == 0)

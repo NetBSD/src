@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdddma.c,v 1.8 2016/02/24 22:14:39 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdddma.c,v 1.8.18.1 2020/04/08 14:08:28 martin Exp $	*/
 
 /*
  * hcd_ddma.c - DesignWare HS OTG Controller descriptor DMA routines
@@ -40,7 +40,7 @@
  * This file contains the Descriptor DMA implementation for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.8 2016/02/24 22:14:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.8.18.1 2020/04/08 14:08:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -106,7 +106,7 @@ static int dwc2_desc_list_alloc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 						dwc2_max_desc_num(qh);
 
 	err = usb_allocmem(&hsotg->hsotg_sc->sc_bus, qh->desc_list_sz, 0,
-	    &qh->desc_list_usbdma);
+	    USBMALLOC_COHERENT, &qh->desc_list_usbdma);
 
 	if (err)
 		return -ENOMEM;
@@ -147,7 +147,7 @@ static int dwc2_frame_list_alloc(struct dwc2_hsotg *hsotg, gfp_t mem_flags)
 	hsotg->frame_list_sz = 4 * FRLISTEN_64_SIZE;
 	hsotg->frame_list = NULL;
 	err = usb_allocmem(&hsotg->hsotg_sc->sc_bus, hsotg->frame_list_sz,
-	    0, &hsotg->frame_list_usbdma);
+	    0, USBMALLOC_COHERENT, &hsotg->frame_list_usbdma);
 
 	if (!err) {
 		hsotg->frame_list = KERNADDR(&hsotg->frame_list_usbdma, 0);

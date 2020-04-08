@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.43 2018/06/03 13:41:30 kamil Exp $	*/
+/*	$NetBSD: dump.c,v 1.43.2.1 2020/04/08 14:09:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.43 2018/06/03 13:41:30 kamil Exp $");
+__RCSID("$NetBSD: dump.c,v 1.43.2.1 2020/04/08 14:09:16 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,10 +74,12 @@ int width;			/* Keep track of current columns. */
 #include <sys/syscall.h>
 
 static const char *const ptrace_ops[] = {
-	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
-	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
-	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",
+	PT_STRINGS
 };
+
+#ifdef PT_MACHDEP_STRINGS
+static const char * const ptrace_machdep_ops[] = { PT_MACHDEP_STRINGS };
+#endif
 
 struct ktr_entry {
 	TAILQ_ENTRY(ktr_entry) kte_list;
@@ -558,7 +560,10 @@ syscallprint(struct ktr_header *kth)
 		break;
 
 	case SYS_compat_16___sigaction14 :
-		xwprintf("(%s", signals[(int)*ap].name);
+		if ((int)*ap < 0 || (int)*ap >= MAXSIGNALS)
+			xwprintf("(%d", (int)*ap);
+		else
+			xwprintf("(%s", signals[(int)*ap].name);
 		ap++;
 		argsize -= sizeof(register_t);
 		break;
@@ -575,8 +580,14 @@ syscallprint(struct ktr_header *kth)
 
 	case SYS_ptrace :
 		if ((long)*ap >= 0 &&
-		    *ap < (register_t)(sizeof(ptrace_ops) / sizeof(ptrace_ops[0])))
+		    *ap < (register_t)__arraycount(ptrace_ops))
 			xwprintf("(%s", ptrace_ops[*ap]);
+#ifdef PT_MACHDEP_STRINGS
+		else if (*ap >= PT_FIRSTMACH &&
+		    *ap - PT_FIRSTMACH < (register_t)
+		    __arraycount(ptrace_machdep_ops))
+			xwprintf("(%s", ptrace_machdep_ops[*ap - PT_FIRSTMACH]);
+#endif
 		else
 			xwprintf("(%ld", (long)*ap);
 		ap++;
@@ -630,7 +641,7 @@ sysretprint(struct ktr_header *kth)
 		xwprintf(" RESTART");
 	else if (error) {
 		xwprintf(" Err#%d", error);
-		if (error < MAXERRNOS && error >= -2)
+		if (error < MAXERRNOS && error >= 0)
 			xwprintf(" %s", errnos[error].name);
 	} else
 		switch (ktr->ktr_code) {

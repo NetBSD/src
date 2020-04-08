@@ -27,7 +27,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2013\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_kauth_pr_47598.c,v 1.3 2014/04/28 08:34:16 martin Exp $");
+__RCSID("$NetBSD: t_kauth_pr_47598.c,v 1.3.26.1 2020/04/08 14:09:08 martin Exp $");
 
 #include <errno.h>
 #include <unistd.h>
@@ -120,21 +120,23 @@ ATF_TC_BODY(kauth_curtain, tc)
 	 * create a socket and bind it to some arbitray free port
 	 */
 	s = socket(PF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0);
-	ATF_REQUIRE(s != -1);
+	ATF_REQUIRE_MSG(s != -1, "socket: %d", errno);
 	memset(&sa, 0, sizeof(sa));
 	sa.sin_family = AF_INET;
 	sa.sin_len = sizeof(sa);
 	sa.sin_addr.s_addr = inet_addr("127.0.0.1");
-	ATF_REQUIRE(bind(s, (struct sockaddr *)&sa, sizeof(sa))==0);
-	ATF_REQUIRE(listen(s, 16)==0);
+	ATF_REQUIRE_MSG(bind(s, (struct sockaddr *)&sa, sizeof(sa)) == 0,
+	    "bind: %d", errno);
+	ATF_REQUIRE_MSG(listen(s, 16) == 0, "listen: %d", errno);
 
 	/*
 	 * extract address and open a connection to the port
 	 */
 	slen = sizeof(sa);
-	ATF_REQUIRE(getsockname(s, (struct sockaddr *)&sa, &slen)==0);
+	ATF_REQUIRE_MSG(getsockname(s, (struct sockaddr *)&sa, &slen) == 0,
+	    "getsockname: %d", errno);
 	s2 = socket(PF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0);
-	ATF_REQUIRE(s2 != -1);
+	ATF_REQUIRE_MSG(s2 != -1, "socket: %d", errno);
 	printf("port is %d\n", ntohs(sa.sin_port));
 	err = connect(s2, (struct sockaddr *)&sa, sizeof(sa));
 	ATF_REQUIRE_MSG(err == -1 && errno == EINPROGRESS,

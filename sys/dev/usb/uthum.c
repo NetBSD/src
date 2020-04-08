@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.14.4.1 2019/06/10 22:07:35 christos Exp $   */
+/*	$NetBSD: uthum.c,v 1.14.4.2 2020/04/08 14:08:14 martin Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.14.4.1 2019/06/10 22:07:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.14.4.2 2020/04/08 14:08:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -59,9 +59,9 @@ int	uthumdebug = 0;
 #define CMD_DEVTYPE 0x52 /* XXX */
 #define CMD_GETDATA 0x48 /* XXX */
 #define CMD_GETTEMP 0x54 /* XXX */
-static uint8_t cmd_start[8] =
+static const uint8_t cmd_start[8] =
 	{ 0x0a, 0x0b, 0x0c, 0x0d, 0x00, 0x00, 0x02, 0x00 };
-static uint8_t cmd_end[8] =
+static const uint8_t cmd_end[8] =
 	{ 0x0a, 0x0b, 0x0c, 0x0d, 0x00, 0x00, 0x01, 0x00 };
 
 /* sensors */
@@ -82,7 +82,6 @@ struct uthum_softc {
 
 	/* uhidev parameters */
 	size_t			 sc_flen;	/* feature report length */
-	size_t			 sc_ilen;	/* input report length */
 	size_t			 sc_olen;	/* output report length */
 
 	/* sensor framework */
@@ -93,32 +92,31 @@ struct uthum_softc {
 };
 
 
-const struct usb_devno uthum_devs[] = {
+static const struct usb_devno uthum_devs[] = {
 	/* XXX: various TEMPer variants using same VID/PID */
 	{ USB_VENDOR_TENX, USB_PRODUCT_TENX_TEMPER},
 };
 #define uthum_lookup(v, p) usb_lookup(uthum_devs, v, p)
 
-int uthum_match(device_t, cfdata_t, void *);
-void uthum_attach(device_t, device_t, void *);
-void uthum_childdet(device_t, device_t);
-int uthum_detach(device_t, int);
-int uthum_activate(device_t, enum devact);
+static int uthum_match(device_t, cfdata_t, void *);
+static void uthum_attach(device_t, device_t, void *);
+static int uthum_detach(device_t, int);
+static int uthum_activate(device_t, enum devact);
 
-int uthum_read_data(struct uthum_softc *, uint8_t, uint8_t *, size_t, int);
-int uthum_check_sensortype(struct uthum_softc *);
-int uthum_temper_temp(uint8_t, uint8_t);
-int uthum_sht1x_temp(uint8_t, uint8_t);
-int uthum_sht1x_rh(unsigned int, int);
+static int uthum_read_data(struct uthum_softc *, uint8_t, uint8_t *, size_t, int);
+static int uthum_check_sensortype(struct uthum_softc *);
+static int uthum_temper_temp(uint8_t, uint8_t);
+static int uthum_sht1x_temp(uint8_t, uint8_t);
+static int uthum_sht1x_rh(unsigned int, int);
 
-void uthum_intr(struct uhidev *, void *, u_int);
+static void uthum_intr(struct uhidev *, void *, u_int);
 static void uthum_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 
 CFATTACH_DECL_NEW(uthum, sizeof(struct uthum_softc), uthum_match, uthum_attach,
     uthum_detach, uthum_activate);
 
-int
+static int
 uthum_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
@@ -127,7 +125,7 @@ uthum_match(device_t parent, cfdata_t match, void *aux)
 	    != NULL ? UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 uthum_attach(device_t parent, device_t self, void *aux)
 {
 	struct uthum_softc *sc = device_private(self);
@@ -148,7 +146,6 @@ uthum_attach(device_t parent, device_t self, void *aux)
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;
-	sc->sc_ilen = hid_report_size(desc, size, hid_input, repid);
 	sc->sc_olen = hid_report_size(desc, size, hid_output, repid);
 	sc->sc_flen = hid_report_size(desc, size, hid_feature, repid);
 
@@ -220,7 +217,7 @@ uthum_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("uthum_attach: complete\n"));
 }
 
-int
+static int
 uthum_detach(device_t self, int flags)
 {
 	struct uthum_softc *sc = device_private(self);
@@ -238,7 +235,7 @@ uthum_detach(device_t self, int flags)
 	return rv;
 }
 
-int
+static int
 uthum_activate(device_t self, enum devact act)
 {
 	struct uthum_softc *sc = device_private(self);
@@ -251,45 +248,48 @@ uthum_activate(device_t self, enum devact act)
 	return 0;
 }
 
-void
+static void
 uthum_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
 	/* do nothing */
 }
 
-int
+static int
 uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 	size_t len, int need_delay)
 {
 	int i;
 	uint8_t cmdbuf[32], report[256];
+	size_t olen, flen;
 
 	/* if return buffer is null, do nothing */
 	if ((buf == NULL) || len == 0)
 		return 0;
 
+	olen = uimin(sc->sc_olen, sizeof(cmdbuf));
+
 	/* issue query */
 	memset(cmdbuf, 0, sizeof(cmdbuf));
 	memcpy(cmdbuf, cmd_start, sizeof(cmd_start));
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-	    cmdbuf, sc->sc_olen))
+	    cmdbuf, olen))
 		return EIO;
 
 	memset(cmdbuf, 0, sizeof(cmdbuf));
 	cmdbuf[0] = target_cmd;
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-	    cmdbuf, sc->sc_olen))
+	    cmdbuf, olen))
 		return EIO;
 
 	memset(cmdbuf, 0, sizeof(cmdbuf));
 	for (i = 0; i < 7; i++) {
 		if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-		    cmdbuf, sc->sc_olen))
+		    cmdbuf, olen))
 			return EIO;
 	}
 	memcpy(cmdbuf, cmd_end, sizeof(cmd_end));
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-	    cmdbuf, sc->sc_olen))
+	    cmdbuf, olen))
 		return EIO;
 
 	/* wait if required */
@@ -297,14 +297,15 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 		kpause("uthum", false, (need_delay*hz+999)/1000 + 1, NULL);
 
 	/* get answer */
+	flen = uimin(sc->sc_flen, sizeof(report));
 	if (uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
-	    report, sc->sc_flen))
+	    report, flen))
 		return EIO;
 	memcpy(buf, report, len);
 	return 0;
 }
 
-int
+static int
 uthum_check_sensortype(struct uthum_softc *sc)
 {
 	uint8_t buf[8];
@@ -395,7 +396,7 @@ uthum_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 /* return C-degree * 100 value */
-int
+static int
 uthum_temper_temp(uint8_t msb, uint8_t lsb)
 {
 	int val;
@@ -409,7 +410,7 @@ uthum_temper_temp(uint8_t msb, uint8_t lsb)
 }
 
 /* return C-degree * 100 value */
-int
+static int
 uthum_sht1x_temp(uint8_t msb, uint8_t lsb)
 {
 	int val;
@@ -419,7 +420,7 @@ uthum_sht1x_temp(uint8_t msb, uint8_t lsb)
 }
 
 /* return %RH * 1000 */
-int
+static int
 uthum_sht1x_rh(unsigned int ticks, int temp)
 {
 	int rh_l, rh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2013/03/06 11:49:06 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.19.30.1 2020/04/08 14:09:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.19 2013/03/06 11:49:06 yamt Exp $");
+__RCSID("$NetBSD: main.c,v 1.19.30.1 2020/04/08 14:09:20 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,9 +70,12 @@ TAILQ_HEAD(lock_head, lockstruct);
 typedef struct lock_head locklist_t;
 TAILQ_HEAD(buf_head, lsbuf);
 typedef struct buf_head buflist_t;
+SLIST_HEAD(bucket, lockstruct);
+typedef struct bucket bucket_t;
 
 typedef struct lockstruct {
 	TAILQ_ENTRY(lockstruct)	chain;
+	SLIST_ENTRY(lockstruct)	bucket;
 	buflist_t		bufs;
 	buflist_t		tosort;
 	uintptr_t		lock;
@@ -128,6 +131,9 @@ static const name_t xtypes[] = {
 static locklist_t	locklist;
 static locklist_t	freelist;
 static locklist_t	sortlist;
+static bucket_t		bucket[256];
+
+#define	HASH(a)		(&bucket[((a) >> 6) & (__arraycount(bucket) - 1)])
 
 static lsbuf_t		*bufs;
 static lsdisable_t	ld;
@@ -604,14 +610,16 @@ makelists(int mask, int event)
 {
 	lsbuf_t *lb, *lb2, *max;
 	lock_t *l, *l2;
+	bucket_t *bp;
 	int type;
+	size_t i;
 
 	/*
 	 * Recycle lock_t structures from the last run.
 	 */
-	while ((l = TAILQ_FIRST(&locklist)) != NULL) {
-		TAILQ_REMOVE(&locklist, l, chain);
-		TAILQ_INSERT_HEAD(&freelist, l, chain);
+	TAILQ_CONCAT(&freelist, &locklist, chain);
+	for (i = 0; i < __arraycount(bucket); i++) {
+		SLIST_INIT(&bucket[i]);
 	}
 
 	type = mask & LB_LOCK_MASK;
@@ -626,7 +634,8 @@ makelists(int mask, int event)
 		 * Look for a record descibing this lock, and allocate a
 		 * new one if needed.
 		 */
-		TAILQ_FOREACH(l, &sortlist, chain) {
+		bp = HASH(lb->lb_lock);
+		SLIST_FOREACH(l, bp, bucket) {
 			if (l->lock == lb->lb_lock)
 				break;
 		}
@@ -643,6 +652,7 @@ makelists(int mask, int event)
 			TAILQ_INIT(&l->tosort);
 			TAILQ_INIT(&l->bufs);
 			TAILQ_INSERT_TAIL(&sortlist, l, chain);
+			SLIST_INSERT_HEAD(bp, l, bucket);
 		}
 
 		/*

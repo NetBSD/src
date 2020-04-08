@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.12.2.1 2019/06/10 22:07:10 christos Exp $ */
+/* $NetBSD: bwfm.c,v 1.12.2.2 2020/04/08 14:08:06 martin Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -130,6 +130,184 @@ struct bwfm_proto_ops bwfm_proto_bcdc_ops = {
 	.proto_set_dcmd = bwfm_proto_bcdc_set_dcmd,
 };
 
+static const struct {
+	const char *suffix;
+	const char *description;
+} bwfm_firmware_filetypes[] = {
+	[BWFM_FILETYPE_UCODE] = {
+		.suffix = "bin",
+		.description = "Firmware",
+	},
+	[BWFM_FILETYPE_NVRAM] = {
+		.suffix = "txt",
+		.description = "NVRAM",
+	},
+	[BWFM_FILETYPE_CLM] = {
+		.suffix = "clm_blob",
+		.description = "CLM",
+	},
+};
+
+static void
+bwfm_firmware_read_file(struct bwfm_softc * const sc,
+    const struct bwfm_firmware_selector * const fwp,
+    struct bwfm_firmware_context * const ctx,
+    unsigned int const which)
+{
+	firmware_handle_t fwh;
+	char *names[2];
+	int i, error;
+
+	names[1] = kmem_asprintf("%s.%s", fwp->fwsel_basename,
+	    bwfm_firmware_filetypes[which].suffix);
+	if (ctx->ctx_model)
+	names[0] = ctx->ctx_model ? kmem_asprintf("%s.%s.%s",
+	    fwp->fwsel_basename, ctx->ctx_model,
+	    bwfm_firmware_filetypes[which].suffix) : NULL;
+
+	aprint_verbose_dev(sc->sc_dev, "%s file default:    %s\n",
+	    bwfm_firmware_filetypes[which].description, names[1]);
+	if (names[0]) {
+		aprint_verbose_dev(sc->sc_dev, "%s file model-spec: %s\n",
+		    bwfm_firmware_filetypes[which].description, names[0]);
+	}
+
+	for (i = 0; i < 2; i++) {
+		if (names[i] == NULL)
+			continue;
+		error = firmware_open("if_bwfm", names[i], &fwh);
+		if (error == 0)
+			break;
+	}
+	if (i == 2)
+		goto out;
+
+	aprint_verbose_dev(sc->sc_dev, "Found %s file: %s\n",
+	    bwfm_firmware_filetypes[which].description, names[i]);
+
+	size_t size = firmware_get_size(fwh);
+	void *data = firmware_malloc(size);
+	if (data == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate %zu bytes for %s image\n", size,
+		    bwfm_firmware_filetypes[which].description);
+		firmware_close(fwh);
+		goto out;
+	}
+	error = firmware_read(fwh, 0, data, size);
+	firmware_close(fwh);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to read %s file, error %d\n",
+		    bwfm_firmware_filetypes[which].description,
+		    error);
+		firmware_free(data, size);
+		goto out;
+	}
+
+	ctx->ctx_file[which].ctx_f_data = data;
+	ctx->ctx_file[which].ctx_f_size = size;
+ out:
+	for (i = 0; i < 2; i++) {
+		if (names[i])
+			kmem_free(names[i], strlen(names[i])+1);
+	}
+}
+
+void
+bwfm_firmware_context_init(struct bwfm_firmware_context * const ctx,
+    uint32_t const chip, uint32_t const chiprev, const char * const model,
+    uint32_t req)
+{
+	memset(ctx, 0, sizeof(*ctx));
+	ctx->ctx_chip = chip;
+	ctx->ctx_chiprev = chiprev;
+	ctx->ctx_model = model;
+
+	/* all devices require ucode */
+	ctx->ctx_req = req | BWFM_FWREQ(BWFM_FILETYPE_UCODE);
+}
+
+bool
+bwfm_firmware_open(struct bwfm_softc * const sc,
+    const struct bwfm_firmware_selector * const fwtab,
+    struct bwfm_firmware_context * const ctx)
+{
+	const struct bwfm_firmware_selector *fwp;
+	unsigned int i;
+
+	KASSERT(fwtab != NULL);
+	KASSERT(ctx != NULL);
+
+	/* First locate the appropriate entry for this chip / rev. */
+	for (fwp = fwtab; fwp->fwsel_basename != NULL; fwp++) {
+		if (fwp->fwsel_chip == ctx->ctx_chip &&
+		    fwp->fwsel_revmask & __BIT(ctx->ctx_chiprev))
+		    	break;
+	}
+	if (fwp->fwsel_basename == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "No firmware entry for chip 0x%x/%u rev %u model %s\n",
+		    ctx->ctx_chip, ctx->ctx_chip, ctx->ctx_chiprev,
+		    ctx->ctx_model);
+		return false;
+	}
+
+	bool rv = true;
+
+	/*
+	 * Read in each file that the front-end has requested as
+	 * either required or optional.
+	 */
+	for (i = 0; i < BWFM_NFILETYPES; i++) {
+		if (ctx->ctx_req & (BWFM_FWREQ(i) | BWFM_FWOPT(i)))
+			bwfm_firmware_read_file(sc, fwp, ctx, i);
+		if ((ctx->ctx_req & BWFM_FWREQ(i)) &&
+		    ctx->ctx_file[i].ctx_f_data == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "%s file not available\n",
+			    bwfm_firmware_filetypes[i].description);
+			rv = false;
+		}
+	}
+
+	if (rv == false)
+		bwfm_firmware_close(ctx);
+
+	return rv;
+}
+
+void
+bwfm_firmware_close(struct bwfm_firmware_context * const ctx)
+{
+	for (int i = 0; i < BWFM_NFILETYPES; i++) {
+		if (ctx->ctx_file[i].ctx_f_data == NULL)
+			continue;
+		firmware_free(ctx->ctx_file[i].ctx_f_data,
+			      ctx->ctx_file[i].ctx_f_size);
+		ctx->ctx_file[i].ctx_f_data = NULL;
+	}
+}
+
+void *
+bwfm_firmware_data(struct bwfm_firmware_context * const ctx,
+    unsigned int const which, size_t *sizep)
+{
+	KASSERT(which < BWFM_NFILETYPES);
+	KASSERT(sizep != NULL);
+
+	*sizep = ctx->ctx_file[which].ctx_f_size;
+	return ctx->ctx_file[which].ctx_f_data;
+}
+
+const char *
+bwfm_firmware_description(unsigned int const which)
+{
+	KASSERT(which < BWFM_NFILETYPES);
+
+	return bwfm_firmware_filetypes[which].description;
+}
+
 void
 bwfm_attach(struct bwfm_softc *sc)
 {
@@ -184,7 +362,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	    IEEE80211_C_AES |
 	    IEEE80211_C_AES_CCM |
 #if notyet
-	    IEEE80211_C_MONITOR |		/* monitor mode suported */
+	    IEEE80211_C_MONITOR |		/* monitor mode supported */
 	    IEEE80211_C_IBSS |
 	    IEEE80211_C_TXPMGT |
 	    IEEE80211_C_WME |
@@ -346,7 +524,7 @@ bwfm_start(struct ifnet *ifp)
 		}
 
 		if (error != 0) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			m_freem(m);
 			if (ni != NULL)
 				ieee80211_free_node(ni);
@@ -488,7 +666,7 @@ bwfm_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", DEVNAME(sc));
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;

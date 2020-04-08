@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.41.2.1 2019/06/10 22:07:16 christos Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.41.2.2 2020/04/08 14:08:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.41.2.1 2019/06/10 22:07:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.41.2.2 2020/04/08 14:08:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1279,9 +1279,11 @@ vioif_transmit(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
-	ifp->if_obytes += m->m_pkthdr.len;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
 	if (m->m_flags & M_MCAST)
-		ifp->if_omcasts++;
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(ifp);
 
 	if (mutex_tryenter(txq->txq_lock)) {
 		if (!txq->txq_stopping)
@@ -1613,7 +1615,7 @@ vioif_tx_vq_done_locked(struct virtqueue *vq)
 		bus_dmamap_unload(virtio_dmat(vsc), txq->txq_dmamaps[slot]);
 		txq->txq_mbufs[slot] = NULL;
 		virtio_dequeue_commit(vsc, vq, slot);
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		m_freem(m);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.11.16.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uark.c,v 1.11.16.2 2020/04/08 14:08:13 martin Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.11.16.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uark.c,v 1.11.16.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -85,7 +85,7 @@ static int	uark_open(void *, int);
 static void	uark_break(void *, int, int);
 static int	uark_cmd(struct uark_softc *, uint16_t, uint16_t);
 
-struct ucom_methods uark_methods = {
+static const struct ucom_methods uark_methods = {
 	.ucom_get_status = uark_get_status,
 	.ucom_set = uark_set,
 	.ucom_param = uark_param,

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.28 2011/04/12 08:42:12 mrg Exp $	*/
+/*	$NetBSD: db_print.c,v 1.28.56.1 2020/04/08 14:08:02 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.28 2011/04/12 08:42:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.28.56.1 2020/04/08 14:08:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -47,6 +47,7 @@ void
 db_show_regs(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
+#ifdef _KERNEL
 	const struct db_variable *regp;
 	struct db_variable vs;
 	db_expr_t value, offset;
@@ -71,4 +72,7 @@ db_show_regs(db_expr_t addr, bool have_addr,
 		db_printf("\n");
 	}
 	db_print_loc_and_inst(PC_REGS(DDB_REGS));
+#else
+	db_kernelonly();
+#endif
 }

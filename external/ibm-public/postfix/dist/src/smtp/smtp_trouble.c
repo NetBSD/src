@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_trouble.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtp_trouble.c,v 1.2.12.1 2020/04/08 14:06:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -146,6 +146,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -192,11 +197,17 @@ static void smtp_check_code(SMTP_SESSION *session, int code)
      * remote servers screw up, protocol wise. This is becoming a common
      * problem now that response codes are configured manually as part of
      * anti-UCE systems, by people who aren't aware of RFC details.
+     * 
+     * Fix 20190621: don't cache an SMTP session after an SMTP protocol error.
+     * The protocol may be in a bad state. Disable caching here so that the
+     * protocol engine will send QUIT.
      */
     if (code < 400 || code > 599
 	|| code == 555			/* RFC 1869, section 6.1. */
-	|| (code >= 500 && code < 510))
+	|| (code >= 500 && code < 510)) {
 	session->error_mask |= MAIL_ERROR_PROTOCOL;
+	DONT_CACHE_THIS_SESSION;
+    }
 }
 
 /* smtp_bulk_fail - skip, defer or bounce recipients, maybe throttle queue */
@@ -311,9 +322,17 @@ static void vsmtp_fill_dsn(SMTP_STATE *state, const char *mta_name,
      * when informal text needs to be formatted. So we maintain consistency
      * with other error reporting in the SMTP client even if we waste a few
      * cycles.
+     * 
+     * Fix 20190621: don't cache an SMTP session after an SMTP protocol error.
+     * The protocol may be in a bad state. Disable caching here so that the
+     * protocol engine will send QUIT.
      */
     VSTRING_RESET(why->reason);
     if (mta_name && status && status[0] != '4' && status[0] != '5') {
+	SMTP_SESSION *session = state->session;
+
+	session->error_mask |= MAIL_ERROR_PROTOCOL;
+	DONT_CACHE_THIS_SESSION;
 	vstring_strcpy(why->reason, "Protocol error: ");
 	status = "5.5.0";
     }
@@ -325,8 +344,8 @@ static void vsmtp_fill_dsn(SMTP_STATE *state, const char *mta_name,
 
 /* smtp_misc_fail - maybe throttle queue; skip/defer/bounce all recipients */
 
-int     smtp_misc_fail(SMTP_STATE *state, int throttle, const char *mta_name, 
-				SMTP_RESP *resp, const char *format,...)
+int     smtp_misc_fail(SMTP_STATE *state, int throttle, const char *mta_name,
+		               SMTP_RESP *resp, const char *format,...)
 {
     va_list ap;
 

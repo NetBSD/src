@@ -140,7 +140,7 @@ base-sysutil-examples example configuration files for miscellaneous system utili
 base-sysutil-root root file system support for system utilities
 base-sysutil-share shared data files for system utilities
 base-sysutil_locale-share shared locale support for system utilities
-base-termcap-share shared files for terminal capability database
+base-terminfo-share shared files for terminal capability database
 base-texinfo-bin the GNU texinfo software
 base-texinfo-share shared data files for the GNU texinfo software
 base-texinfo_locale-cs Czech language support for the GNU texinfo software

@@ -1,5 +1,5 @@
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
-#	$NetBSD: Makefile,v 1.31 2008/10/25 22:27:36 apb Exp $
+#	$NetBSD: Makefile,v 1.31.60.1 2020/04/08 14:07:23 martin Exp $
 
 # IF YOU ADD TO MSRCS, MAKE SURE YOU UPDATE `CATDEPS' IN bsd.man.mk!
 MSRCS=	doc2html
@@ -10,9 +10,6 @@ CLEANFILES+= ${MMACS}
 
 TMACDIR?=${.CURDIR}
 STRIP_SED = ${TMACDIR}/../me/strip.sed
-
-# old macros not currently installed...
-OFILES=	tmac.an.v6compat tmac.an6n tmac.an6t tmac.a tmac.cp tmac.doc.old
 
 realall:	${MMACS}
 

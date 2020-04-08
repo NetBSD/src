@@ -1,8 +1,8 @@
-/*	$NetBSD: sel-lex.l,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: sel-lex.l,v 1.2.12.1 2020/04/08 14:03:12 martin Exp $	*/
 
 %{
 /*
- * Copyright (c) 2004, 2008 Kungliga Tekniska Högskolan
+ * Copyright (c) 2004 - 2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -121,6 +121,10 @@ handle_string(void)
     x[i] = '\0';
     return strdup(x);
 }
+
+#if !defined(yywrap)
+#define yywrap  _hx509_sel_yywrap
+#endif
 
 int
 yywrap ()

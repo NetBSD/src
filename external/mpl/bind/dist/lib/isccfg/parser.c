@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.4.2.2 2019/06/10 22:04:48 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.4.2.3 2020/04/08 14:07:09 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -245,7 +245,7 @@ cfg_printx(const cfg_obj_t *obj, unsigned int flags,
 isc_result_t
 cfg_create_tuple(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	isc_result_t result;
-	const cfg_tuplefielddef_t *fields = type->of;
+	const cfg_tuplefielddef_t *fields;
 	const cfg_tuplefielddef_t *f;
 	cfg_obj_t *obj = NULL;
 	unsigned int nfields = 0;
@@ -254,6 +254,8 @@ cfg_create_tuple(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	REQUIRE(pctx != NULL);
 	REQUIRE(type != NULL);
 	REQUIRE(ret != NULL && *ret == NULL);
+
+	fields = type->of;
 
 	for (f = fields; f->name != NULL; f++)
 		nfields++;
@@ -280,7 +282,7 @@ isc_result_t
 cfg_parse_tuple(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 {
 	isc_result_t result;
-	const cfg_tuplefielddef_t *fields = type->of;
+	const cfg_tuplefielddef_t *fields;
 	const cfg_tuplefielddef_t *f;
 	cfg_obj_t *obj = NULL;
 	unsigned int i;
@@ -288,6 +290,8 @@ cfg_parse_tuple(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 	REQUIRE(pctx != NULL);
 	REQUIRE(type != NULL);
 	REQUIRE(ret != NULL && *ret == NULL);
+
+	fields = type->of;
 
 	CHECK(cfg_create_tuple(pctx, type, &obj));
 	for (f = fields, i = 0; f->name != NULL; f++, i++)
@@ -1806,12 +1810,14 @@ cfg_parse_spacelist(cfg_parser_t *pctx, const cfg_type_t *listtype,
 		    cfg_obj_t **ret)
 {
 	cfg_obj_t *listobj = NULL;
-	const cfg_type_t *listof = listtype->of;
+	const cfg_type_t *listof;
 	isc_result_t result;
 
 	REQUIRE(pctx != NULL);
 	REQUIRE(listtype != NULL);
 	REQUIRE(ret != NULL && *ret == NULL);
+
+	listof = listtype->of;
 
 	CHECK(cfg_create_list(pctx, listtype, &listobj));
 
@@ -1916,7 +1922,7 @@ cfg_listelt_value(const cfg_listelt_t *elt) {
 isc_result_t
 cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 {
-	const cfg_clausedef_t * const *clausesets = type->of;
+	const cfg_clausedef_t * const *clausesets;
 	isc_result_t result;
 	const cfg_clausedef_t * const *clauseset;
 	const cfg_clausedef_t *clause;
@@ -1930,6 +1936,8 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 	REQUIRE(pctx != NULL);
 	REQUIRE(type != NULL);
 	REQUIRE(ret != NULL && *ret == NULL);
+
+	clausesets = type->of;
 
 	CHECK(create_map(pctx, type, &obj));
 
@@ -2607,7 +2615,7 @@ token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
 				strlcat(buf, ".0", sizeof(buf));
 				if (inet_pton(AF_INET, buf, &in4a) == 1) {
 					isc_netaddr_fromin(na, &in4a);
-					return (ISC_R_SUCCESS);
+					return (ISC_R_IPV4PREFIX);
 				}
 			}
 		}
@@ -2683,7 +2691,7 @@ cfg_lookingat_netaddr(cfg_parser_t *pctx, unsigned int flags) {
 	REQUIRE(pctx != NULL);
 
 	result = token_addr(pctx, flags, &na_dummy);
-	return (result == ISC_R_SUCCESS);
+	return (result == ISC_R_SUCCESS || result == ISC_R_IPV4PREFIX);
 }
 
 isc_result_t
@@ -2847,14 +2855,18 @@ cfg_parse_netprefix(cfg_parser_t *pctx, const cfg_type_t *type,
 	isc_result_t result;
 	isc_netaddr_t netaddr;
 	unsigned int addrlen = 0, prefixlen;
+	bool expectprefix;
 
 	REQUIRE(pctx != NULL);
 	REQUIRE(ret != NULL && *ret == NULL);
 
 	UNUSED(type);
 
-	CHECK(cfg_parse_rawaddr(pctx, CFG_ADDR_V4OK | CFG_ADDR_V4PREFIXOK |
-				CFG_ADDR_V6OK, &netaddr));
+	result = cfg_parse_rawaddr(pctx, CFG_ADDR_V4OK | CFG_ADDR_V4PREFIXOK |
+				   CFG_ADDR_V6OK, &netaddr);
+	if (result != ISC_R_SUCCESS && result != ISC_R_IPV4PREFIX) {
+		CHECK(result);
+	}
 	switch (netaddr.family) {
 	case AF_INET:
 		addrlen = 32;
@@ -2866,6 +2878,7 @@ cfg_parse_netprefix(cfg_parser_t *pctx, const cfg_type_t *type,
 		INSIST(0);
 		ISC_UNREACHABLE();
 	}
+	expectprefix = (result == ISC_R_IPV4PREFIX);
 	CHECK(cfg_peektoken(pctx, 0));
 	if (pctx->token.type == isc_tokentype_special &&
 	    pctx->token.value.as_char == '/') {
@@ -2873,16 +2886,30 @@ cfg_parse_netprefix(cfg_parser_t *pctx, const cfg_type_t *type,
 		CHECK(cfg_gettoken(pctx, ISC_LEXOPT_NUMBER));
 		if (pctx->token.type != isc_tokentype_number) {
 			cfg_parser_error(pctx, CFG_LOG_NEAR,
-				     "expected prefix length");
+					 "expected prefix length");
 			return (ISC_R_UNEXPECTEDTOKEN);
 		}
 		prefixlen = pctx->token.value.as_ulong;
 		if (prefixlen > addrlen) {
 			cfg_parser_error(pctx, CFG_LOG_NOPREP,
-				     "invalid prefix length");
+					 "invalid prefix length");
 			return (ISC_R_RANGE);
 		}
+		result = isc_netaddr_prefixok(&netaddr, prefixlen);
+		if (result != ISC_R_SUCCESS) {
+			char buf[ISC_NETADDR_FORMATSIZE + 1];
+			isc_netaddr_format(&netaddr, buf, sizeof(buf));
+			cfg_parser_error(pctx, CFG_LOG_NOPREP,
+					 "'%s/%u': address/prefix length "
+					 "mismatch", buf, prefixlen);
+			return (ISC_R_FAILURE);
+		}
 	} else {
+		if (expectprefix) {
+			cfg_parser_error(pctx, CFG_LOG_NEAR,
+					 "incomplete IPv4 address or prefix");
+			return (ISC_R_FAILURE);
+		}
 		prefixlen = addrlen;
 	}
 	CHECK(cfg_create_obj(pctx, &cfg_type_netprefix, &obj));
@@ -3030,11 +3057,13 @@ cfg_print_sockaddr(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 
 void
 cfg_doc_sockaddr(cfg_printer_t *pctx, const cfg_type_t *type) {
-	const unsigned int *flagp = type->of;
+	const unsigned int *flagp;
 	int n = 0;
 
 	REQUIRE(pctx != NULL);
 	REQUIRE(type != NULL);
+
+	flagp = type->of;
 
 	cfg_print_cstr(pctx, "( ");
 	if ((*flagp & CFG_ADDR_V4OK) != 0) {

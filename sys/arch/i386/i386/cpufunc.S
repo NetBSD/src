@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.21.20.1 2019/06/10 22:06:20 christos Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.21.20.2 2020/04/08 14:07:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.21.20.1 2019/06/10 22:06:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.21.20.2 2020/04/08 14:07:40 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -175,12 +175,6 @@ ENTRY(x86_curlwp)
 	movl	%fs:(CPU_INFO_CURLWP), %eax
 	ret
 END(x86_curlwp)
-
-ENTRY(cpu_set_curpri)
-	movl	4(%esp), %eax
-	movl	%eax, %fs:(CPU_INFO_CURPRIORITY)
-	ret
-END(cpu_set_curpri)
 
 ENTRY(__byte_swap_u32_variable)
 	movl	4(%esp), %eax

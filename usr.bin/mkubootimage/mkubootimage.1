@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkubootimage.1,v 1.12 2018/02/04 15:44:51 jmcneill Exp $
+.\"	$NetBSD: mkubootimage.1,v 1.12.4.1 2020/04/08 14:09:17 martin Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 4, 2018
+.Dd December 4, 2019
 .Dt MKUBOOTIMAGE 1
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nd create U-Boot loader image
 .Sh SYNOPSIS
 .Nm
-.Op Fl h
+.Op Fl hu
 .Fl A No ( arm Ns | Ns arm64 Ns | Ns i386 Ns | Ns mips Ns | Ns mips64 Ns | Ns or1k Ns | Ns powerpc Ns | Ns sh )
 .Fl a Ar address
 .Op Fl C Po bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none Pc
@@ -45,7 +45,7 @@
 .Op Fl m Ar magic
 .Fl n Ar image
 .Op Fl O Po freebsd Ns | Ns linux Ns | Ns netbsd Ns | Ns openbsd Pc
-.Fl T No ( fs Ns | Ns kernel Ns | Ns kernel_noload Ns | Ns ramdisk Ns | Ns standalone )
+.Fl T No ( fs Ns | Ns kernel Ns | Ns kernel_noload Ns | Ns ramdisk Ns | Ns script Ns | Ns standalone )
 .Ar source destination
 .\"
 .Sh DESCRIPTION
@@ -58,7 +58,7 @@ The arguments are as follows:
 .Bl -tag -width indent
 .It Fl A No ( arm Ns | Ns arm64 Ns | Ns i386 Ns | Ns mips Ns | Ns mips64 Ns | Ns or1k Ns | Ns powerpc Ns | Ns sh )
 Defines the architecture.
-This is required for 
+This is required for
 .Qq uimg
 format images.
 .It Fl a Ar address
@@ -119,11 +119,13 @@ This is required.
 Defines the operating system type.
 The default OS name is
 .Qq netbsd .
-.It Fl T No ( fs Ns | Ns kernel Ns | Ns kernel_noload Ns | Ns ramdisk Ns | Ns standalone Ns | Ns script )
+.It Fl T No ( fs Ns | Ns kernel Ns | Ns kernel_noload Ns | Ns ramdisk Ns | Ns script Ns | Ns standalone )
 Defines the image type.
 This is required for
 .Qq uimg
 format images.
+.It Fl u
+Update the header in an existing file instead of creating a new one.
 .El
 .Pp
 The required

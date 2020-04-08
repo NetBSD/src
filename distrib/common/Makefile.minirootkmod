@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.minirootkmod,v 1.3 2014/08/05 15:40:58 apb Exp $
+#	$NetBSD: Makefile.minirootkmod,v 1.3.24.1 2020/04/08 14:03:44 martin Exp $
 #
 # Makefile snippet to build a miniroot kernel module (e.g. miniroot.kmod)
 #
@@ -36,7 +36,11 @@ PROG=		${MINIROOT}.kmod
 # RAMDISKFS is the ramdisk image to be included inside DSTMOD.  It should
 # already have been created by the Makefile in RAMDISKSRCDIR.
 #
+.if ${KERNEL_DIR:U*no} == "yes"
+SRCMOD=		${DESTDIR}/netbsd/modules/miniroot/miniroot.kmod
+.else
 SRCMOD=		${DESTDIR}/stand/${MACHINE}/${MODULEVER}/modules/miniroot/miniroot.kmod
+.endif
 DSTMOD=		${.OBJDIR}/${MINIROOT}.kmod
 RAMDISKSRCDIR=	${.CURDIR}/../ramdisks/${RAMDISK}
 RAMDISKOBJDIR!=	cd ${RAMDISKSRCDIR} && ${PRINTOBJDIR}

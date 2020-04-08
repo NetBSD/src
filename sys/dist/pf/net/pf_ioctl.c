@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.52.4.1 2019/06/10 22:07:37 christos Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.52.4.2 2020/04/08 14:08:14 martin Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.52.4.1 2019/06/10 22:07:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.52.4.2 2020/04/08 14:08:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -213,7 +213,7 @@ pf_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	enum kauth_network_req req;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_network_req)arg0;
+	req = (enum kauth_network_req)(uintptr_t)arg0;
 
 	if (action != KAUTH_NETWORK_FIREWALL)
 		return result;

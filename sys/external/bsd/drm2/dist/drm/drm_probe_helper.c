@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_probe_helper.c,v 1.2.32.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_probe_helper.c,v 1.2.32.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,9 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_probe_helper.c,v 1.2.32.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_probe_helper.c,v 1.2.32.2 2020/04/08 14:08:22 martin Exp $");
 
-#include <asm/param.h>
 #include <linux/export.h>
 #include <linux/moduleparam.h>
 

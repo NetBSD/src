@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.99.4.1 2019/06/10 22:06:45 christos Exp $
+#	$NetBSD: INSTALL,v 1.99.4.2 2020/04/08 14:07:53 martin Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -457,9 +457,6 @@ pseudo-device	loop
 
 ## PPP, the successor to SLIP.  See pppd(8).
 #pseudo-device	ppp		
-
-## Starmode Radio IP, a special hardware network device.
-#pseudo-device	strip		
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.

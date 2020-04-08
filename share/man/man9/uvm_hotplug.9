@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm_hotplug.9,v 1.4 2016/12/24 08:05:47 wiz Exp $
+.\"	$NetBSD: uvm_hotplug.9,v 1.4.16.1 2020/04/08 14:07:22 martin Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,12 +27,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 20, 2016
+.Dd January 17, 2020
 .Dt UVM_HOTPLUG 9
 .Os
 .Sh NAME
 .Nm uvm_physseg_init ,
-.Nm uvm_physseg_valid ,
+.Nm uvm_physseg_valid_p ,
 .Nm uvm_physseg_get_start ,
 .Nm uvm_physseg_get_end ,
 .Nm uvm_physseg_get_avail_start ,
@@ -95,7 +95,7 @@ They must
 never be used after
 .Xr uvm_init 9 .
 .Pp
-.Em WARNING :
+.Sy WARNING :
 This is an experimental feature and should not be used in production
 environments.
 Furthermore, attempting to "hotplug" without
@@ -280,7 +280,7 @@ depending on success or failure respectively.
 .Sh UTILITY FUNCTIONS
 .Bl -ohang
 .It Ft bool
-.Fn uvm_physseg_valid "uvm_physseg_t upm"
+.Fn uvm_physseg_valid_p "uvm_physseg_t upm"
 .It Ft paddr_t
 .Fn uvm_physseg_get_start "uvm_physseg_t upm"
 .It Ft paddr_t
@@ -317,7 +317,7 @@ depending on success or failure respectively.
 .Fn uvm_physseg_set_avail_end "uvm_physseg_t upm" "paddr_t avail_end"
 .El
 .Pp
-.Fn uvm_physseg_valid
+.Fn uvm_physseg_valid_p
 validates a handle that is passed in, returns
 .Fa true
 if the given handle is valid,

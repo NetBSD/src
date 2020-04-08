@@ -1,6 +1,6 @@
 LIB_TESTS_L = get_mem_rsv \
 	root_node find_property subnode_offset path_offset \
-	get_name getprop get_phandle \
+	get_name getprop get_prop_offset get_phandle \
 	get_path supernode_atdepth_offset parent_offset \
 	node_offset_by_prop_value node_offset_by_phandle \
 	node_check_compatible node_offset_by_compatible \
@@ -9,11 +9,13 @@ LIB_TESTS_L = get_mem_rsv \
 	sized_cells \
 	notfound \
 	addr_size_cells \
+	addr_size_cells2 \
+	appendprop_addrrange \
 	stringlist \
 	setprop_inplace nop_property nop_node \
-	sw_tree1 \
+	sw_tree1 sw_states \
 	move_and_save mangle-layout nopulate \
-	open_pack rw_tree1 set_name setprop del_property del_node \
+	open_pack rw_tree1 rw_oom set_name setprop del_property del_node \
 	appendprop1 appendprop2 propname_escapes \
 	string_escapes references path-references phandle_format \
 	boot-cpuid incbin \
@@ -26,10 +28,11 @@ LIB_TESTS_L = get_mem_rsv \
 	property_iterate \
 	subnode_iterate \
 	overlay overlay_bad_fixup \
-	check_path
+	check_path check_header check_full \
+	fs_tree1
 LIB_TESTS = $(LIB_TESTS_L:%=$(TESTS_PREFIX)%)
 
-LIBTREE_TESTS_L = truncated_property
+LIBTREE_TESTS_L = truncated_property truncated_string truncated_memrsv
 LIBTREE_TESTS = $(LIBTREE_TESTS_L:%=$(TESTS_PREFIX)%)
 
 DL_LIB_TESTS_L = asm_tree_dump value-labels
@@ -45,21 +48,27 @@ TESTS_TARGETS = $(TESTS) $(TESTS_TREES)
 TESTS_DEPFILES = $(TESTS:%=%.d) \
 	$(addprefix $(TESTS_PREFIX),testutils.d trees.d dumptrees.d)
 
-TESTS_CLEANFILES_L =  *.output vglog.* vgcore.* *.dtb *.test.dts *.dtsv1 tmp.*
-TESTS_CLEANFILES_L += dumptrees
+TESTS_CLEANFILES_L = $(STD_CLEANFILES) \
+	*.dtb *.test.dts *.test.dt.yaml *.dtsv1 tmp.* \
+	dumptrees
 TESTS_CLEANFILES = $(TESTS) $(TESTS_CLEANFILES_L:%=$(TESTS_PREFIX)%)
+TESTS_CLEANDIRS_L = fs
+TESTS_CLEANDIRS = $(TESTS_CLEANDIRS_L:%=$(TESTS_PREFIX)%)
 
 .PHONY: tests
 tests:	$(TESTS) $(TESTS_TREES)
 
-$(LIB_TESTS): %: $(TESTS_PREFIX)testutils.o util.o $(LIBFDT_archive)
+$(LIB_TESTS): %: $(TESTS_PREFIX)testutils.o util.o $(LIBFDT_lib)
 
-$(DL_LIB_TESTS): %: %.o $(TESTS_PREFIX)testutils.o util.o $(LIBFDT_archive)
+# Not necessary on all platforms; allow -ldl to be excluded instead of forcing
+# other platforms to patch it out.
+LIBDL = -ldl
+$(DL_LIB_TESTS): %: %.o $(TESTS_PREFIX)testutils.o util.o $(LIBFDT_lib)
 	@$(VECHO) LD [libdl] $@
-	$(LINK.c) -o $@ $^ -ldl
+	$(LINK.c) -o $@ $^ $(LIBDL)
 
 $(LIBTREE_TESTS): %: $(TESTS_PREFIX)testutils.o $(TESTS_PREFIX)trees.o \
-		util.o $(LIBFDT_archive)
+		util.o $(LIBFDT_lib)
 
 $(TESTS_PREFIX)dumptrees: $(TESTS_PREFIX)trees.o
 
@@ -69,19 +78,23 @@ $(TESTS_TREES): $(TESTS_PREFIX)dumptrees
 
 tests_clean:
 	@$(VECHO) CLEAN "(tests)"
-	rm -f $(STD_CLEANFILES:%=$(TESTS_PREFIX)%)
 	rm -f $(TESTS_CLEANFILES)
+	rm -rf $(TESTS_CLEANDIRS)
 
-check:	tests ${TESTS_BIN}
-	cd $(TESTS_PREFIX); ./run_tests.sh
+check:	tests ${TESTS_BIN} $(TESTS_PYLIBFDT)
+	cd $(TESTS_PREFIX); PYTHON=$(PYTHON) ./run_tests.sh
 
-checkm: tests ${TESTS_BIN}
-	cd $(TESTS_PREFIX); ./run_tests.sh -m 2>&1 | tee vglog.$$$$
+ifeq ($(NO_VALGRIND),1)
+checkm:
+	@echo "make checkm requires valgrind, but NO_VALGRIND=1"
+else
+checkm: tests ${TESTS_BIN} $(TESTS_PYLIBFDT)
+	cd $(TESTS_PREFIX); PYTHON=$(PYTHON) ./run_tests.sh -m
+endif
 
-checkv:	tests ${TESTS_BIN}
-	cd $(TESTS_PREFIX); ./run_tests.sh -v
+checkv:	tests ${TESTS_BIN} $(TESTS_PYLIBFDT)
+	cd $(TESTS_PREFIX); PYTHON=$(PYTHON) ./run_tests.sh -v
 
 ifneq ($(DEPTARGETS),)
 -include $(TESTS_DEPFILES)
 endif
-

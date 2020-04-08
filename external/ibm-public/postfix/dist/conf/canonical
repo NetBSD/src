@@ -82,39 +82,60 @@
 # 
 # TABLE SEARCH ORDER
 #        With lookups from indexed files such as DB or DBM, or from
-#        networked  tables  such  as NIS, LDAP or SQL, patterns are
-#        tried in the order as listed below:
+#        networked   tables   such   as  NIS,  LDAP  or  SQL,  each
+#        user@domain query produces a sequence of query patterns as
+#        described below.
+# 
+#        Each  query pattern is sent to each specified lookup table
+#        before trying the next query pattern,  until  a  match  is
+#        found.
 # 
 #        user@domain address
-#               Replace user@domain by address. This form  has  the
+#               Replace  user@domain  by address. This form has the
 #               highest precedence.
 # 
-#               This  is  useful  to clean up addresses produced by
-#               legacy mail systems.  It can also be used  to  pro-
-#               duce  Firstname.Lastname  style  addresses, but see
+#               This is useful to clean up  addresses  produced  by
+#               legacy  mail  systems.  It can also be used to pro-
+#               duce Firstname.Lastname style  addresses,  but  see
 #               below for a simpler solution.
 # 
 #        user address
-#               Replace user@site by address when site is equal  to
-#               $myorigin,  when  site is listed in $mydestination,
-#               or  when  it  is  listed  in  $inet_interfaces   or
+#               Replace  user@site by address when site is equal to
+#               $myorigin, when site is listed  in  $mydestination,
+#               or   when  it  is  listed  in  $inet_interfaces  or
 #               $proxy_interfaces.
 # 
-#               This  form  is  useful for replacing login names by
+#               This form is useful for replacing  login  names  by
 #               Firstname.Lastname.
 # 
 #        @domain address
 #               Replace other addresses in domain by address.  This
 #               form has the lowest precedence.
 # 
-#               Note:  @domain  is  a  wild-card. When this form is
-#               applied to recipient addresses,  the  Postfix  SMTP
-#               server  accepts  mail  for any recipient in domain,
-#               regardless of whether that recipient exists.   This
+#               Note: @domain is a wild-card.  When  this  form  is
+#               applied  to  recipient  addresses, the Postfix SMTP
+#               server accepts mail for any  recipient  in  domain,
+#               regardless  of whether that recipient exists.  This
 #               may  turn  your  mail  system  into  a  backscatter
 #               source: Postfix first accepts mail for non-existent
-#               recipients  and  then  tries to return that mail as
+#               recipients and then tries to return  that  mail  as
 #               "undeliverable" to the often forged sender address.
+# 
+#               To avoid backscatter  with  mail  for  a  wild-card
+#               domain, replace the wild-card mapping with explicit
+#               1:1 mappings, or add a  reject_unverified_recipient
+#               restriction for that domain:
+# 
+#                   smtpd_recipient_restrictions =
+#                       ...
+#                       reject_unauth_destination
+#                       check_recipient_access
+#                           inline:{example.com=reject_unverified_recipient}
+#                   unverified_recipient_reject_code = 550
+# 
+#               In  the above example, Postfix may contact a remote
+#               server if the recipient is rewritten  to  a  remote
+#               address.
 # 
 # RESULT ADDRESS REWRITING
 #        The lookup result is subject to address rewriting:
@@ -180,74 +201,77 @@
 #        The  text  below  provides  only  a parameter summary. See
 #        postconf(5) for more details including examples.
 # 
-#        canonical_classes
-#               What addresses are  subject  to  canonical  address
-#               mapping.
+#        canonical_classes  (envelope_sender,   envelope_recipient,
+#        header_sender, header_recipient)
+#               What  addresses  are  subject   to   canonical_maps
+#               address mapping.
 # 
-#        canonical_maps
-#               List of canonical mapping tables.
+#        canonical_maps (empty)
+#               Optional  address mapping lookup tables for message
+#               headers and envelopes.
 # 
-#        recipient_canonical_maps
-#               Address  mapping  lookup  table  for  envelope  and
-#               header recipient addresses.
+#        recipient_canonical_maps (empty)
+#               Optional address mapping lookup tables for envelope
+#               and header recipient addresses.
 # 
-#        sender_canonical_maps
-#               Address  mapping  lookup  table  for  envelope  and
-#               header sender addresses.
+#        sender_canonical_maps (empty)
+#               Optional address mapping lookup tables for envelope
+#               and header sender addresses.
 # 
-#        propagate_unmatched_extensions
-#               A  list  of  address rewriting or forwarding mecha-
-#               nisms that propagate an address extension from  the
-#               original  address  to  the result.  Specify zero or
-#               more  of  canonical,   virtual,   alias,   forward,
-#               include, or generic.
+#        propagate_unmatched_extensions (canonical, virtual)
+#               What address lookup tables copy an  address  exten-
+#               sion from the lookup key to the lookup result.
 # 
 #        Other parameters of interest:
 # 
-#        inet_interfaces
-#               The  network  interface  addresses that this system
-#               receives mail on.  You need to stop and start Post-
-#               fix when this parameter changes.
+#        inet_interfaces (all)
+#               The network interface addresses that this mail sys-
+#               tem receives mail on.
 # 
-#        local_header_rewrite_clients
+#        local_header_rewrite_clients (permit_inet_interfaces)
 #               Rewrite message header addresses in mail from these
-#               clients and update incomplete  addresses  with  the
+#               clients  and  update  incomplete addresses with the
 #               domain name in $myorigin or $mydomain; either don't
-#               rewrite message headers from other clients at  all,
-#               or  rewrite  message  headers and update incomplete
-#               addresses  with  the  domain   specified   in   the
+#               rewrite  message headers from other clients at all,
+#               or rewrite message headers  and  update  incomplete
+#               addresses   with   the   domain  specified  in  the
 #               remote_header_rewrite_domain parameter.
 # 
-#        proxy_interfaces
-#               Other interfaces that this machine receives mail on
-#               by way of a proxy agent or network address transla-
-#               tor.
+#        proxy_interfaces (empty)
+#               The network interface addresses that this mail sys-
+#               tem  receives  mail on by way of a proxy or network
+#               address translation unit.
 # 
-#        masquerade_classes
-#               List  of  address  classes subject to masquerading:
-#               zero or more of  envelope_sender,  envelope_recipi-
-#               ent, header_sender, header_recipient.
+#        masquerade_classes    (envelope_sender,     header_sender,
+#        header_recipient)
+#               What addresses are subject to address masquerading.
 # 
-#        masquerade_domains
-#               List  of  domains  that hide their subdomain struc-
-#               ture.
+#        masquerade_domains (empty)
+#               Optional  list of domains whose subdomain structure
+#               will be stripped off in email addresses.
 # 
-#        masquerade_exceptions
-#               List of user names that are not subject to  address
-#               masquerading.
+#        masquerade_exceptions (empty)
+#               Optional list of user names that are not  subjected
+#               to  address  masquerading,  even when their address
+#               matches $masquerade_domains.
 # 
-#        mydestination
-#               List  of  domains  that  this mail system considers
-#               local.
+#        mydestination  ($myhostname,  localhost.$mydomain,  local-
+#        host)
+#               The list of domains  that  are  delivered  via  the
+#               $local_transport mail delivery transport.
 # 
-#        myorigin
-#               The domain that is appended to locally-posted mail.
+#        myorigin ($myhostname)
+#               The domain name that locally-posted mail appears to
+#               come from, and that locally posted mail  is  deliv-
+#               ered to.
 # 
-#        owner_request_special
-#               Give special treatment to owner-xxx and xxx-request
-#               addresses.
+#        owner_request_special (yes)
+#               Enable special treatment for owner-listname entries
+#               in the aliases(5) file, and don't split owner-list-
+#               name  and  listname-request address localparts when
+#               the recipient_delimiter is set to "-".
 # 
-#        remote_header_rewrite_domain
+#        remote_header_rewrite_domain (empty)
 #               Don't rewrite message headers from  remote  clients
 #               at all when this parameter is empty; otherwise, re-
 #               write message  headers  and  append  the  specified

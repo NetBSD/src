@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.25.6.1 2019/06/10 22:06:12 christos Exp $
+#	$NetBSD: CI20,v 1.25.6.2 2020/04/08 14:07:36 martin Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.25.6.1 $"
+#ident 		"CI20-$Revision: 1.25.6.2 $"
 
 maxusers	32
 
@@ -219,7 +219,7 @@ jzrng0	at apbus0
 # MII/PHY support
 #acphy*		at mii? phy ?		# DAltima AC101 and AMD Am79c874 PHYs
 #amhphy* 	at mii? phy ?		# AMD 79c901 Ethernet PHYs
-#dmphy*		at mii? phy ?		# Davicom DM9101 PHYs
+dmphy*		at mii? phy ?		# Davicom DM9101 PHYs
 #glxtphy*	at mii? phy ?		# Level One LXT-1000 PHYs
 #gphyter*	at mii? phy ?		# NS83861 Gig-E PHY
 #icsphy* 	at mii? phy ?		# Integrated Circuit Systems ICS1890
@@ -233,7 +233,7 @@ jzrng0	at apbus0
 #tlphy*		at mii? phy ?		# ThunderLAN PHYs
 #tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
 #rlphy*		at mii? phy ?		# RealTek PHYs
-#ukphy*		at mii? phy ?		# generic unknown PHYs
+ukphy*		at mii? phy ?		# generic unknown PHYs
 
 
 # Pseudo-devices
@@ -252,7 +252,6 @@ pseudo-device 	carp				# Common Address Redundancy Protocol
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	sl				# Serial Line IP
-#pseudo-device	strip				# Starmode Radio IP (Metricom)
 #pseudo-device	tun				# network tunneling over tty
 #pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre				# generic L3 over IP tunnel

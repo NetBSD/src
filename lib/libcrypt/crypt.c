@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.34 2015/06/17 00:15:26 christos Exp $	*/
+/*	$NetBSD: crypt.c,v 1.34.16.1 2020/04/08 14:07:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.34 2015/06/17 00:15:26 christos Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.34.16.1 2020/04/08 14:07:14 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -698,9 +698,9 @@ des_cipher(const char *in, char *out, long salt, int num_iter)
 	LOADREG(R,R0,R1,L,L0,L1);
 	L0 &= 0x55555555L;
 	L1 &= 0x55555555L;
-	L0 = (L0 << 1) | L1;	/* L0 is the even-numbered input bits */
+	L0 = ((uint32_t)L0 << 1) | L1;	/* L0 is the even-numbered input bits */
 	R0 &= 0xaaaaaaaaL;
-	R1 = (R1 >> 1) & 0x55555555L;
+	R1 = ((uint32_t)R1 >> 1) & 0x55555555L;
 	L1 = R0 | R1;		/* L1 is the odd-numbered input bits */
 	STORE(L,L0,L1,B);
 	PERM3264(L,L0,L1,B.b,  (C_block *)IE3264);	/* even bits */
@@ -765,8 +765,8 @@ des_cipher(const char *in, char *out, long salt, int num_iter)
 	}
 
 	/* store the encrypted (or decrypted) result */
-	L0 = ((L0 >> 3) & 0x0f0f0f0fL) | ((L1 << 1) & 0xf0f0f0f0L);
-	L1 = ((R0 >> 3) & 0x0f0f0f0fL) | ((R1 << 1) & 0xf0f0f0f0L);
+	L0 = (((uint32_t)L0 >> 3) & 0x0f0f0f0fL) | (((uint32_t)L1 << 1) & 0xf0f0f0f0L);
+	L1 = (((uint32_t)R0 >> 3) & 0x0f0f0f0fL) | (((uint32_t)R1 << 1) & 0xf0f0f0f0L);
 	STORE(L,L0,L1,B);
 	PERM6464(L,L0,L1,B.b, (C_block *)CF6464);
 #if defined(MUST_ALIGN)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.38 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.38.14.1 2020/04/08 14:07:50 martin Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.38 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.38.14.1 2020/04/08 14:07:50 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -47,19 +47,15 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.38 2017/03/16 16:13:20 chs Exp $");
 #include <machine/fpu.h>
 #include <machine/psl.h>
 
-#ifdef PPC_HAVE_FPU
 static void fpu_state_load(lwp_t *, u_int);
 static void fpu_state_save(lwp_t *);
 static void fpu_state_release(lwp_t *);
-#endif
 
 const pcu_ops_t fpu_ops = {
 	.pcu_id = PCU_FPU,
-#ifdef PPC_HAVE_FPU
 	.pcu_state_load = fpu_state_load,
 	.pcu_state_save = fpu_state_save,
 	.pcu_state_release = fpu_state_release,
-#endif
 };
 
 bool
@@ -74,10 +70,10 @@ fpu_mark_used(lwp_t *l)
 	pcu_discard(&fpu_ops, l, true);
 }
 
-#ifdef PPC_HAVE_FPU
 void
 fpu_state_load(lwp_t *l, u_int flags)
 {
+#ifdef PPC_HAVE_FPU
 	struct pcb * const pcb = lwp_getpcb(l);
 
 	if ((flags & PCU_VALID) == 0) {
@@ -98,6 +94,7 @@ fpu_state_load(lwp_t *l, u_int flags)
 
 	curcpu()->ci_ev_fpusw.ev_count++;
 	l->l_md.md_utf->tf_srr1 |= PSL_FP|(pcb->pcb_flags & (PCB_FE0|PCB_FE1));
+#endif
 }
 
 /*
@@ -106,6 +103,7 @@ fpu_state_load(lwp_t *l, u_int flags)
 void
 fpu_state_save(lwp_t *l)
 {
+#ifdef PPC_HAVE_FPU
 	struct pcb * const pcb = lwp_getpcb(l);
 
 	const register_t msr = mfmsr();
@@ -117,14 +115,18 @@ fpu_state_save(lwp_t *l)
 
 	mtmsr(msr);
 	__asm volatile ("isync");
+#endif
 }
 
 void
 fpu_state_release(lwp_t *l)
 {
+#ifdef PPC_HAVE_FPU
 	l->l_md.md_utf->tf_srr1 &= ~PSL_FP;
+#endif
 }
 
+#ifdef PPC_HAVE_FPU
 #define	STICKYBITS	(FPSCR_VX|FPSCR_OX|FPSCR_UX|FPSCR_ZX|FPSCR_XX)
 #define	STICKYSHIFT	25
 #define	MASKBITS	(FPSCR_VE|FPSCR_OE|FPSCR_UE|FPSCR_ZE|FPSCR_XE)

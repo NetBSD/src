@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.7.2.1 2019/06/10 22:07:28 christos Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.7.2.2 2020/04/08 14:08:11 martin Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -161,6 +161,22 @@ post_zalloc_err:
 	return NULL;
 }
 
+static void
+ixgbe_jcl_freeall(struct adapter *adapter, struct rx_ring *rxr)
+{
+	ixgbe_extmem_head_t *eh = &rxr->jcl_head;
+	ixgbe_extmem_t *em;
+	bus_dma_tag_t dmat = rxr->ptag->dt_dmat;
+
+	while ((em = ixgbe_getext(eh, 0)) != NULL) {
+		KASSERT(em->em_vaddr != NULL);
+		bus_dmamem_unmap(dmat, em->em_vaddr, em->em_size);
+		bus_dmamem_free(dmat, &em->em_seg, 1);
+		memset(em, 0, sizeof(*em));
+		kmem_free(em, sizeof(*em));
+	}
+}
+
 void
 ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat,
     struct rx_ring *rxr, int nbuf, size_t size)
@@ -187,13 +203,7 @@ ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat,
 		return;
 
 	/* Free all dmamem */
-	while ((em = ixgbe_getext(eh, 0)) != NULL) {
-		KASSERT(em->em_vaddr != NULL);
-		bus_dmamem_unmap(dmat, em->em_vaddr, em->em_size);
-		bus_dmamem_free(dmat, &em->em_seg, 1);
-		memset(em, 0, sizeof(*em));
-		kmem_free(em, sizeof(*em));
-	}
+	ixgbe_jcl_freeall(adapter, rxr);
 
 	for (i = 0; i < nbuf; i++) {
 		if ((em = ixgbe_newext(eh, dmat, size)) == NULL) {
@@ -208,6 +218,21 @@ ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat,
 	rxr->last_rx_mbuf_sz = adapter->rx_mbuf_sz;
 	rxr->last_num_rx_desc = adapter->num_rx_desc;
 }
+
+void
+ixgbe_jcl_destroy(struct adapter *adapter, struct rx_ring *rxr)
+{
+	ixgbe_extmem_head_t *eh = &rxr->jcl_head;
+
+	if (eh->eh_initialized) {
+		/* Free all dmamem */
+		ixgbe_jcl_freeall(adapter, rxr);
+
+		mutex_destroy(&eh->eh_mtx);
+		eh->eh_initialized = false;
+	}
+}
+
 
 static void
 ixgbe_jcl_free(struct mbuf *m, void *buf, size_t size, void *arg)
@@ -277,15 +302,5 @@ ixgbe_pci_enable_busmaster(pci_chipset_tag_t pc, pcitag_t tag)
 u_int
 atomic_load_acq_uint(volatile u_int *p)
 {
-	u_int rv;
-
-	rv = *p;
-	/*
-	 * XXX
-	 * membar_sync() is far more than we need on most CPUs;
-	 * we just don't have an MI load-acqure operation.
-	 */
-	membar_sync();
-
-	return rv;
+	return atomic_load_acquire(p);
 }

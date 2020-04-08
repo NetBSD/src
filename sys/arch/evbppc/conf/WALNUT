@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.73.4.1 2019/06/10 22:06:13 christos Exp $
+#	$NetBSD: WALNUT,v 1.73.4.2 2020/04/08 14:07:36 martin Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -133,7 +133,6 @@ pchb0	at plb?				# PCI-Host bridges
 pci*	at pchb?
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
-fpa*	at pci? dev ? function ?	# DEC PCI FDDI (DEFPA) Controller
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[B]

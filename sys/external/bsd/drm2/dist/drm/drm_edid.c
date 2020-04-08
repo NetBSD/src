@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_edid.c,v 1.5.18.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_edid.c,v 1.5.18.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
@@ -30,23 +30,18 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.5.18.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.5.18.2 2020/04/08 14:08:22 martin Exp $");
 
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/hdmi.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/export.h>
-#include <linux/printk.h>
-#include <linux/device.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>
 #include <drm/drm_displayid.h>
+
+#include <linux/nbsd-namespace.h>
 
 #define version_greater(edid, maj, min) \
 	(((edid)->version > (maj)) || \
@@ -2673,7 +2668,7 @@ add_alternate_cea_modes(struct drm_connector *connector, struct edid *edid)
 {
 	struct drm_device *dev = connector->dev;
 	struct drm_display_mode *mode, *tmp;
-	struct list_head list = LIST_HEAD_INIT(list);
+	LIST_HEAD(list);
 	int modes = 0;
 
 	/* Don't add CEA modes if the CEA extension block is missing */

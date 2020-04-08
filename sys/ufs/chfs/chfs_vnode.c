@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.15 2017/04/01 19:35:57 riastradh Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.15.14.1 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -210,7 +210,7 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	/* number of vnode will be the new maximum */
 	vno = ++(chmp->chm_max_vno);
 
-	error = VFS_VGET(dvp->v_mount, vno, &vp);
+	error = VFS_VGET(dvp->v_mount, vno, LK_EXCLUSIVE, &vp);
 	if (error)
 		return (error);
 

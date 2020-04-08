@@ -86,7 +86,7 @@
 static struct cmd_list_element *sparc64adilist = NULL;
 
 /* ADI stat settings.  */
-typedef struct
+struct adi_stat_t
 {
   /* The ADI block size.  */
   unsigned long blksize;
@@ -108,7 +108,7 @@ typedef struct
   /* ADI is available.  */
   bool is_avail = false;
 
-} adi_stat_t;
+};
 
 /* Per-process ADI stat info.  */
 

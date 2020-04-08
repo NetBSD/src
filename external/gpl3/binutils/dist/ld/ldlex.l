@@ -2,7 +2,7 @@
 
 %{
 
-/* Copyright (C) 1991-2018 Free Software Foundation, Inc.
+/* Copyright (C) 1991-2020 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of the GNU Binutils.
@@ -25,6 +25,7 @@
 #include "bfd.h"
 #include "safe-ctype.h"
 #include "bfdlink.h"
+#include "ctf-api.h"
 #include "ld.h"
 #include "ldmisc.h"
 #include "ldexp.h"
@@ -89,16 +90,13 @@ static void lex_warn_invalid (char *where, char *what);
 %a 4000
 %o 5000
 
-CMDFILENAMECHAR   [_a-zA-Z0-9\/\.\\_\+\$\:\[\]\\\,\=\&\!\<\>\-\~]
-CMDFILENAMECHAR1  [_a-zA-Z0-9\/\.\\_\+\$\:\[\]\\\,\=\&\!\<\>\~]
-FILENAMECHAR1	[_a-zA-Z\/\.\\\$\_\~]
-SYMBOLNAMECHAR1	[_a-zA-Z\/\.\\\$\_]
-SYMBOLCHARN     [_a-zA-Z\/\.\\\$\_\~0-9]
-FILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\=\$\:\[\]\\\,\~]
-WILDCHAR	[_a-zA-Z0-9\/\.\-\_\+\=\$\:\[\]\\\,\~\?\*\^\!]
+WILDCHAR	[_a-zA-Z0-9\/\.\\\$\~\-\+\:\[\]\,\=\?\*\^\!]
+FILENAMECHAR	[_a-zA-Z0-9\/\.\\\$\~\-\+\:\[\]\,\=]
+NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\\\$\~\-\+\:\[\]]
+SYMBOLNAMECHAR  [_a-zA-Z0-9\/\.\\\$\~]
+FILENAMECHAR1	[_a-zA-Z\/\.\\\$\~]
+SYMBOLNAMECHAR1	[_a-zA-Z\.\\\$]
 WHITE		[ \t\n\r]+
-
-NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
 
 V_TAG [.$_a-zA-Z][._a-zA-Z0-9]*
 V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
@@ -135,7 +133,8 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 
 <DEFSYMEXP>"-"			{ RTOKEN('-');}
 <DEFSYMEXP>"+"			{ RTOKEN('+');}
-<DEFSYMEXP>{SYMBOLNAMECHAR1}{SYMBOLCHARN}*   { yylval.name = xstrdup (yytext); return NAME; }
+<DEFSYMEXP>{SYMBOLNAMECHAR1}{SYMBOLNAMECHAR}* { yylval.name = xstrdup (yytext);
+						return NAME; }
 <DEFSYMEXP>"="			{ RTOKEN('='); }
 
 <MRI,EXPRESSION>"$"([0-9A-Fa-f])+ {
@@ -366,31 +365,30 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 
 <MRI>{FILENAMECHAR1}{NOCFILENAMECHAR}*	{
 /* Filename without commas, needed to parse mri stuff */
-				 yylval.name = xstrdup (yytext);
+				  yylval.name = xstrdup (yytext);
 				  return NAME;
 				}
 
 
 <BOTH,INPUTLIST>{FILENAMECHAR1}{FILENAMECHAR}*	{
-				 yylval.name = xstrdup (yytext);
+				  yylval.name = xstrdup (yytext);
 				  return NAME;
 				}
 <INPUTLIST>"="{FILENAMECHAR1}{FILENAMECHAR}*	{
 /* Filename to be prefixed by --sysroot or when non-sysrooted, nothing.  */
-				 yylval.name = xstrdup (yytext);
-				  return NAME;
-				}
-<INPUTLIST>"$SYSROOT"{FILENAMECHAR1}{FILENAMECHAR}*	{
-/* Filename to be prefixed by --sysroot or when non-sysrooted, nothing.  */
-				 yylval.name = xstrdup (yytext);
+				  yylval.name = xstrdup (yytext);
 				  return NAME;
 				}
 <BOTH,INPUTLIST>"-l"{FILENAMECHAR}+ {
 				  yylval.name = xstrdup (yytext + 2);
 				  return LNAME;
 				}
-<EXPRESSION>{SYMBOLNAMECHAR1}{NOCFILENAMECHAR}*	{
-				 yylval.name = xstrdup (yytext);
+<EXPRESSION>{SYMBOLNAMECHAR1}{NOCFILENAMECHAR}* {
+				  yylval.name = xstrdup (yytext);
+				  return NAME;
+				}
+<EXPRESSION>"/DISCARD/"		{
+				  yylval.name = xstrdup (yytext);
 				  return NAME;
 				}
 <EXPRESSION>"-l"{NOCFILENAMECHAR}+ {
@@ -422,7 +420,7 @@ V_IDENTIFIER [*?.$_a-zA-Z\[\]\-\!\^\\]([*?.$_a-zA-Z0-9\[\]\-\!\^\\]|::)*
 					/* PR ld/20906.  A corrupt input file
 					   can contain bogus strings.  */
 					len = strlen (yylval.name);
-					if (len > yyleng - 2)
+					if (len > (bfd_size_type) yyleng - 2)
 					  len = yyleng - 2;
 					yylval.name[len] = 0;
 					return NAME;
@@ -676,7 +674,7 @@ comment (void)
   while (1)
     {
       c = input();
-      while (c != '*' && c != EOF)
+      while (c != '*' && c != 0)
 	{
 	  if (c == '\n')
 	    lineno++;
@@ -695,7 +693,7 @@ comment (void)
       if (c == '\n')
 	lineno++;
 
-      if (c == EOF)
+      if (c == 0)
 	{
 	  einfo (_("%F%P: EOF in comment\n"));
 	  break;

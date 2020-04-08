@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: pipe.c,v 1.2.12.1 2020/04/08 14:06:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -193,7 +193,7 @@
 /* .sp
 /*	Specify "{" and "}" around command arguments that contain
 /*	whitespace (Postfix 3.0 and later). Whitespace
-/*	after "{" and before "}" is ignored.
+/*	after the opening "{" and before the closing "}" is ignored.
 /* .sp
 /*	In the command argument vector, the following macros are recognized
 /*	and replaced with corresponding information from the Postfix queue
@@ -333,7 +333,8 @@
 /*	This command output is not examined for the presence of an
 /*	enhanced status code.
 /*
-/*	Problems and transactions are logged to \fBsyslogd\fR(8).
+/*	Problems and transactions are logged to \fBsyslogd\fR(8)
+/*	or \fBpostlogd\fR(8).
 /*	Corrupted message files are marked so that the queue manager
 /*	can move them to the \fBcorrupt\fR queue for further inspection.
 /* SECURITY
@@ -356,22 +357,22 @@
 /* .fi
 /*	In the text below, \fItransport\fR is the first field in a
 /*	\fBmaster.cf\fR entry.
-/* .IP "\fItransport\fB_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
-/*	Limit the number of parallel deliveries to the same destination,
-/*	for delivery via the named \fItransport\fR.
-/*	The limit is enforced by the Postfix queue manager.
-/* .IP "\fItransport\fB_destination_recipient_limit ($default_destination_recipient_limit)\fR"
-/*	Limit the number of recipients per message delivery, for delivery
-/*	via the named \fItransport\fR.
-/*	The limit is enforced by the Postfix queue manager.
-/* .IP "\fItransport\fB_time_limit ($command_time_limit)\fR"
-/*	Limit the time for delivery to external command, for delivery via
-/*	the named \fItransport\fR.
-/*	The limit is enforced by the pipe delivery agent.
-/*
-/*	Postfix 2.4 and later support a suffix that specifies the
-/*	time unit: s (seconds), m (minutes), h (hours), d (days),
-/*	w (weeks). The default time unit is seconds.
+/* .IP "\fBtransport_time_limit ($command_time_limit)\fR"
+/*	A transport-specific override for the command_time_limit parameter
+/*	value, where \fItransport\fR is the master.cf name of the message
+/*	delivery transport.
+/* .PP
+/*	Implemented in the qmgr(8) daemon:
+/* .IP "\fBtransport_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
+/*	A transport-specific override for the
+/*	default_destination_concurrency_limit parameter value, where
+/*	\fItransport\fR is the master.cf name of the message delivery
+/*	transport.
+/* .IP "\fBtransport_destination_recipient_limit ($default_destination_recipient_limit)\fR"
+/*	A transport-specific override for the
+/*	default_destination_recipient_limit parameter value, where
+/*	\fItransport\fR is the master.cf name of the message delivery
+/*	transport.
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -412,20 +413,34 @@
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
-/*	The mail system name that is prepended to the process name in syslog
-/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/*	A prefix that is prepended to the process name in syslog
+/*	records, so that, for example, "smtpd" becomes "prefix/smtpd".
 /* .PP
 /*	Available in Postfix version 3.0 and later:
 /* .IP "\fBpipe_delivery_status_filter ($default_delivery_status_filter)\fR"
 /*	Optional filter for the \fBpipe\fR(8) delivery agent to change the
 /*	delivery status code or explanatory text of successful or unsuccessful
 /*	deliveries.
+/* .PP
+/*	Available in Postfix version 3.3 and later:
+/* .IP "\fBenable_original_recipient (yes)\fR"
+/*	Enable support for the original recipient address after an
+/*	address is rewritten to a different address (for example with
+/*	aliasing or with canonical mapping).
+/* .IP "\fBservice_name (read-only)\fR"
+/*	The master.cf service name of a Postfix daemon process.
+/* .PP
+/*	Available in Postfix 3.5 and later:
+/* .IP "\fBinfo_log_address_format (external)\fR"
+/*	The email address form that will be used in non-debug logging
+/*	(info, warning, etc.).
 /* SEE ALSO
 /*	qmgr(8), queue manager
 /*	bounce(8), delivery status reports
 /*	postconf(5), configuration parameters
 /*	master(5), generic daemon options
 /*	master(8), process manager
+/*	postlogd(8), Postfix logging
 /*	syslogd(8), system logging
 /* LICENSE
 /* .ad

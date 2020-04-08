@@ -1,4 +1,4 @@
-/*	$NetBSD: umodeswitch.c,v 1.3.8.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: umodeswitch.c,v 1.3.8.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodeswitch.c,v 1.3.8.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodeswitch.c,v 1.3.8.2 2020/04/08 14:08:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -435,6 +435,17 @@ umodeswitch_match(device_t parent, cfdata_t match, void *aux)
 		if (uaa->uaa_product == USB_PRODUCT_LONGCHEER_XSSTICK_P14_INSTALLER)
 			return u3g_4gsystems_reinit(uaa->uaa_device);
 		break;
+
+	case USB_VENDOR_DLINK:
+		switch (uaa->uaa_product) {
+		case USB_PRODUCT_DLINK_DWM157E_CD:
+		case USB_PRODUCT_DLINK_DWM157_CD:
+			(void)u3g_bulk_ata_eject(uaa->uaa_device);
+			(void)u3g_bulk_scsi_eject(uaa->uaa_device);
+			return UMATCH_HIGHEST;
+		default:
+			break;
+		}
 
 	default:
 		break;

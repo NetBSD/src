@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.2.34.1 2019/06/10 22:05:34 christos Exp $	*/
+/*	$NetBSD: ether.c,v 1.2.34.2 2020/04/08 14:07:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ether.c,v 1.2.34.1 2019/06/10 22:05:34 christos Exp $");
+__RCSID("$NetBSD: ether.c,v 1.2.34.2 2020/04/08 14:07:19 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -166,14 +166,14 @@ ether_status(prop_dictionary_t env, prop_dictionary_t oenv)
 		    eccr.eccr_capabilities, MAX_PRINT_LEN);
 		bp = fbuf;
 		while (*bp != '\0') {
-			printf("\tec_capabilities=%s\n", &bp[2]);
+			printf("\tec_capabilities=%s\n", bp);
 			bp += strlen(bp) + 1;
 		}
 		(void)snprintb_m(fbuf, sizeof(fbuf), ECCAPBITS,
 		    eccr.eccr_capenable, MAX_PRINT_LEN);
 		bp = fbuf;
 		while (*bp != '\0') {
-			printf("\tec_enabled=%s\n", &bp[2]);
+			printf("\tec_enabled=%s\n", bp);
 			bp += strlen(bp) + 1;
 		}
 	}

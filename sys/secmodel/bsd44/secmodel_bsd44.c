@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44.c,v 1.16 2014/02/25 18:30:13 pooka Exp $ */
+/* $NetBSD: secmodel_bsd44.c,v 1.16.30.1 2020/04/08 14:09:02 martin Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.16 2014/02/25 18:30:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.16.30.1 2020/04/08 14:09:02 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,10 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.16 2014/02/25 18:30:13 pooka Ex
 MODULE(MODULE_CLASS_SECMODEL, secmodel_bsd44, "suser,securelevel,extensions");
 
 static secmodel_t bsd44_sm;
-static struct sysctllog *sysctl_bsd44_log;
 
-void
-sysctl_security_bsd44_setup(struct sysctllog **clog)
+SYSCTL_SETUP(sysctl_security_bsd44_setup, "secmodel_bsd44 sysctl")
 {
 	const struct sysctlnode *rnode;
 
@@ -108,11 +106,9 @@ secmodel_bsd44_modcmd(modcmd_t cmd, void *arg)
 
 		secmodel_bsd44_init();
 		secmodel_bsd44_start();
-		sysctl_security_bsd44_setup(&sysctl_bsd44_log);
 		break;
 
 	case MODULE_CMD_FINI:
-		sysctl_teardown(&sysctl_bsd44_log);
 		secmodel_bsd44_stop();
 
 		error = secmodel_deregister(bsd44_sm);

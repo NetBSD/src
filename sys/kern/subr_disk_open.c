@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.13.18.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.13.18.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.13.18.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.13.18.2 2020/04/08 14:08:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -160,7 +160,8 @@ getdiskinfo(struct vnode *vp, struct dkwedge_info *dkw)
 
 	dkw->dkw_wname[0] = '\0';
 
-	strlcpy(dkw->dkw_parent, dkw->dkw_devname, sizeof(dkw->dkw_parent));
+	snprintf(dkw->dkw_parent, sizeof(dkw->dkw_parent), "%s%" PRId32,
+	    devsw_blk2name(major(dev)), DISKUNIT(dev));
 
 	dkw->dkw_size = pi.pi_size;
 	dkw->dkw_offset = pi.pi_offset;

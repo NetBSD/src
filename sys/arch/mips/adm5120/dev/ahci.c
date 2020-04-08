@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.15.2.1 2019/06/10 22:06:29 christos Exp $	*/
+/*	$NetBSD: ahci.c,v 1.15.2.2 2020/04/08 14:07:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.15.2.1 2019/06/10 22:06:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.15.2.2 2020/04/08 14:07:44 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ static void		ahci_poll_device(void *arg);
 static struct usbd_xfer *
 			ahci_allocx(struct usbd_bus *, unsigned int);
 static void		ahci_freex(struct usbd_bus *, struct usbd_xfer *);
+static void		ahci_abortx(struct usbd_xfer *);
 
 static void		ahci_get_lock(struct usbd_bus *, kmutex_t **);
 static int		ahci_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
@@ -136,7 +137,6 @@ static void		ahci_device_bulk_done(struct usbd_xfer *);
 static int		ahci_transaction(struct ahci_softc *,
 	struct usbd_pipe *, uint8_t, int, u_char *, uint8_t);
 static void		ahci_noop(struct usbd_pipe *);
-static void		ahci_abort_xfer(struct usbd_xfer *, usbd_status);
 static void		ahci_device_clear_toggle(struct usbd_pipe *);
 
 extern int usbdebug;
@@ -169,6 +169,7 @@ struct usbd_bus_methods ahci_bus_methods = {
 	.ubm_dopoll = ahci_poll,
 	.ubm_allocx = ahci_allocx,
 	.ubm_freex = ahci_freex,
+	.ubm_abortx = ahci_abortx,
 	.ubm_getlock = ahci_get_lock,
 	.ubm_rhctrl = ahci_roothub_ctrl,
 };
@@ -282,6 +283,7 @@ ahci_attach(device_t parent, device_t self, void *aux)
 	SIMPLEQ_INIT(&sc->sc_free_xfers);
 
 	callout_init(&sc->sc_poll_handle, 0);
+	callout_setfunc(&sc->sc_poll_handle, ahci_poll_hub, sc);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED /* XXXNH */);
@@ -421,13 +423,40 @@ ahci_poll(struct usbd_bus *bus)
 void
 ahci_poll_hub(void *arg)
 {
-	struct usbd_xfer *xfer = arg;
-	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
+	struct ahci_softc *sc = arg;
+	struct usbd_xfer *xfer;
 	u_char *p;
 	static int p0_state=0;
 	static int p1_state=0;
 
-	callout_reset(&sc->sc_poll_handle, sc->sc_interval, ahci_poll_hub, xfer);
+	mutex_enter(&sc->sc_lock);
+
+	/*
+	 * If the intr xfer has completed or been synchronously
+	 * aborted, we have nothing to do.
+	 */
+	xfer = sc->sc_intr_xfer;
+	if (xfer == NULL)
+		goto out;
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
+
+	/*
+	 * If the intr xfer for which we were scheduled is done, and
+	 * another intr xfer has been submitted, let that one be dealt
+	 * with when the callout fires again.
+	 *
+	 * The call to callout_pending is racy, but the the transition
+	 * from pending to invoking happens atomically.  The
+	 * callout_ack ensures callout_invoking does not return true
+	 * due to this invocation of the callout; the lock ensures the
+	 * next invocation of the callout cannot callout_ack (unless it
+	 * had already run to completion and nulled sc->sc_intr_xfer,
+	 * in which case would have bailed out already).
+	 */
+	callout_ack(&sc->sc_poll_handle);
+	if (callout_pending(&sc->sc_poll_handle) ||
+	    callout_invoking(&sc->sc_poll_handle))
+		goto out;
 
 	/* USB spec 11.13.3 (p.260) */
 	p = KERNADDR(&xfer->ux_dmabuf, 0);
@@ -443,15 +472,23 @@ ahci_poll_hub(void *arg)
 		p1_state=(REG_READ(ADMHCD_REG_PORTSTATUS1) & ADMHCD_CCS);
 	};
 
-	/* no change, return NAK */
-	if (p[0] == 0)
-		return;
+	/* no change, return NAK and try again later */
+	if (p[0] == 0) {
+		callout_schedule(&sc->sc_poll_handle, sc->sc_interval);
+		goto out;
+	}
 
+	/*
+	 * Interrupt completed, and the xfer has not been completed or
+	 * synchronously aborted.  Complete the xfer now.
+	 *
+	 * XXX Set ux_isdone if DIAGNOSTIC?
+	 */
 	xfer->ux_actlen = 1;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
-	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
+
+out:	mutex_exit(&sc->sc_lock);
 }
 
 struct usbd_xfer *
@@ -718,33 +755,73 @@ ahci_root_intr_start(struct usbd_xfer *xfer)
 
 	DPRINTF(D_TRACE, ("SLRIstart "));
 
+	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_intr_xfer == NULL);
 	sc->sc_interval = MS_TO_TICKS(xfer->ux_pipe->up_endpoint->ue_edesc->bInterval);
-	callout_reset(&sc->sc_poll_handle, sc->sc_interval, ahci_poll_hub, xfer);
+	callout_schedule(&sc->sc_poll_handle, sc->sc_interval);
 	sc->sc_intr_xfer = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
+	mutex_exit(&sc->sc_lock);
+
 	return USBD_IN_PROGRESS;
 }
 
 static void
 ahci_root_intr_abort(struct usbd_xfer *xfer)
 {
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
+
 	DPRINTF(D_TRACE, ("SLRIabort "));
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
+
+	/*
+	 * Try to stop the callout before it starts.  If we got in too
+	 * late, too bad; but if the callout had yet to run and time
+	 * out the xfer, cancel it ourselves.
+	 */
+	callout_stop(&sc->sc_poll_handle);
+	if (sc->sc_intr_xfer == NULL)
+		return;
+
+	KASSERT(sc->sc_intr_xfer == xfer);
+	xfer->ux_status = USBD_CANCELLED;
+	usb_transfer_complete(xfer);
 }
 
 static void
 ahci_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct ahci_softc *sc = AHCI_PIPE2SC(pipe);
+	struct ahci_softc *sc __diagused = AHCI_PIPE2SC(pipe);
 
 	DPRINTF(D_TRACE, ("SLRIclose "));
 
-	callout_stop(&sc->sc_poll_handle);
-	sc->sc_intr_xfer = NULL;
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	/*
+	 * The caller must arrange to have aborted the pipe already, so
+	 * there can be no intr xfer in progress.  The callout may
+	 * still be pending from a prior intr xfer -- if it has already
+	 * fired, it will see there is nothing to do, and do nothing.
+	 */
+	KASSERT(sc->sc_intr_xfer == NULL);
+	KASSERT(!callout_pending(&sc->sc_poll_handle));
 }
 
 static void
 ahci_root_intr_done(struct usbd_xfer *xfer)
 {
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
+
 	//DPRINTF(D_XFER, ("RIdn "));
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	/* Claim the xfer so it doesn't get completed again.  */
+	KASSERT(sc->sc_intr_xfer == xfer);
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
+	sc->sc_intr_xfer = NULL;
 }
 
 static usbd_status
@@ -802,7 +879,7 @@ ahci_device_ctrl_start(struct usbd_xfer *xfer)
 		td3 = (struct admhcd_td *)KSEG1ADDR(&td_v[3]);
 		err = usb_allocmem(&sc->sc_bus,
 			sizeof(usb_device_request_t),
-			0, &reqdma);
+			0, USBMALLOC_COHERENT, &reqdma);
 		if (err)
 			return USBD_NOMEM;
 
@@ -912,6 +989,9 @@ ahci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
+
+	usb_freemem(&sc->sc_bus, &reqdma);
+
 	return USBD_NORMAL_COMPLETION;
 }
 
@@ -919,7 +999,7 @@ static void
 ahci_device_ctrl_abort(struct usbd_xfer *xfer)
 {
 	DPRINTF(D_TRACE, ("Cab "));
-	ahci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 static void
@@ -1031,7 +1111,7 @@ ahci_device_intr_abort(struct usbd_xfer *xfer)
 	} else {
 		printf("%s: sx == NULL!\n", __func__);
 	}
-	ahci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 static void
@@ -1179,6 +1259,10 @@ ahci_device_bulk_start(struct usbd_xfer *xfer)
 	segs = i;
 	len = 0;
 
+	if (xfer->ux_length)
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+		    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+
 /*	printf("segs: %d\n",segs);
 	printf("ep: %p\n",ep);
 	printf("ep->control: %x\n",ep->control);
@@ -1237,6 +1321,10 @@ ahci_device_bulk_start(struct usbd_xfer *xfer)
 	level--;
 /*	printf("bulk_start<<<\n"); */
 
+	if (xfer->ux_length)
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
 
@@ -1247,7 +1335,7 @@ static void
 ahci_device_bulk_abort(struct usbd_xfer *xfer)
 {
 	DPRINTF(D_TRACE, ("Bab "));
-	ahci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 static void
@@ -1377,11 +1465,15 @@ ahci_transaction(struct ahci_softc *sc, struct usbd_pipe *pipe,
 #endif
 }
 
-void
-ahci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
+static void
+ahci_abortx(struct usbd_xfer *xfer)
 {
-	xfer->ux_status = status;
-	usb_transfer_complete(xfer);
+	/*
+	 * XXX This is totally busted; there's no way it can possibly
+	 * work!  All transfers are busy-waited, it seems, so there is
+	 * no opportunity to abort.
+	 */
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
 }
 
 void

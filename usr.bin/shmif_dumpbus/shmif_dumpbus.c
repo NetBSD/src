@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.18 2014/11/04 19:05:17 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.18.16.1 2020/04/08 14:09:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shmif_dumpbus.c,v 1.18 2014/11/04 19:05:17 pooka Exp $");
+__RCSID("$NetBSD: shmif_dumpbus.c,v 1.18.16.1 2020/04/08 14:09:18 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -64,8 +64,9 @@ usage(void)
 #define getprogname() "shmif_dumpbus"
 #endif
 
-	fprintf(stderr, "usage: %s [-h] [-p pcapfile] buspath\n",getprogname());
-	exit(1);
+	fprintf(stderr, "Usage: %s [-h] [-p pcapfile] buspath\n",
+	    getprogname());
+	exit(EXIT_FAILURE);
 }
 
 #define BUFSIZE 64*1024
@@ -101,8 +102,8 @@ swp64(uint64_t x)
 	return v;
 }
 
-#define FIXENDIAN32(x) (doswap ? swp32(x) : (x))
-#define FIXENDIAN64(x) (doswap ? swp64(x) : (x))
+#define FIXENDIAN32(x) (doswap ? swp32(x) : (uint32_t)(x))
+#define FIXENDIAN64(x) (doswap ? swp64(x) : (uint64_t)(x))
 
 /* compat for bus version 2 */
 struct shmif_pkthdr2 {
@@ -126,7 +127,7 @@ main(int argc, char *argv[])
 	bool hflag = false, doswap = false;
 	pcap_dumper_t *pdump;
 	FILE *dumploc = stdout;
-	int useversion;
+	uint32_t useversion;
 
 	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, "hp:")) != -1) {
@@ -150,33 +151,36 @@ main(int argc, char *argv[])
 
 	buf = malloc(BUFSIZE);
 	if (buf == NULL)
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 
 	fd = open(argv[0], O_RDONLY);
 	if (fd == -1)
-		err(1, "open bus");
+		err(EXIT_FAILURE, "Can't open bus file `%s'", argv[0]);
 
 	if (fstat(fd, &sb) == -1)
-		err(1, "stat");
+		err(EXIT_FAILURE, "Can't stat bus file `%s'", argv[0]);
 
-	busmem = mmap(NULL, sb.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd, 0);
+	busmem = mmap(NULL, (size_t)sb.st_size, PROT_READ, MAP_FILE|MAP_SHARED,
+	    fd, 0);
 	if (busmem == MAP_FAILED)
-		err(1, "mmap");
+		err(EXIT_FAILURE, "mmap");
 	bmem = busmem;
 
 	if (bmem->shm_magic != SHMIF_MAGIC) {
 		if (bmem->shm_magic != swp32(SHMIF_MAGIC))
-			errx(1, "%s not a shmif bus", argv[0]);
+			errx(EXIT_FAILURE, "%s not a shmif bus: "
+			    "bad magic %#x != %#x", argv[0], bmem->shm_magic,
+			    SHMIF_MAGIC);
 		doswap = true;
 	}
-	if (FIXENDIAN32(bmem->shm_version) != SHMIF_VERSION) {
-		if (FIXENDIAN32(bmem->shm_version) != 2) {
-			errx(1, "bus version %d, program %d",
-			    FIXENDIAN32(bmem->shm_version), SHMIF_VERSION);
-		}
-		useversion = 2;
-	} else {
-		useversion = 3;
+	useversion = FIXENDIAN32(bmem->shm_version);
+	switch (useversion) {
+	case 2:
+	case SHMIF_VERSION:
+		break;
+	default:
+		errx(EXIT_FAILURE, "Unhandled bus version %d, program %d",
+		    useversion, SHMIF_VERSION);
 	}
 
 	if (pcapfile && strcmp(pcapfile, "-") == 0)
@@ -194,8 +198,11 @@ main(int argc, char *argv[])
 	if (pcapfile) {
 		pcap_t *pcap = pcap_open_dead(DLT_EN10MB, 1518);
 		pdump = pcap_dump_open(pcap, pcapfile);
-		if (pdump == NULL)
-			err(1, "cannot open pcap dump file");
+		if (pdump == NULL) {
+			errx(EXIT_FAILURE,
+			    "Cannot open pcap dump file `%s': %s", pcapfile,
+			    pcap_geterr(pcap));
+		}
 	} else {
 		/* XXXgcc */
 		pdump = NULL;
@@ -252,8 +259,8 @@ main(int argc, char *argv[])
 		}
 
 		fprintf(dumploc, "packet %d, offset 0x%04x, length 0x%04x, "
-			    "ts %d/%06d\n", i++, curbus, curlen,
-			    sp_sec, sp_usec);
+		    "ts %d/%06d\n", i++, curbus, curlen,
+		    sp_sec, sp_usec);
 
 		if (!pcapfile) {
 			curbus = shmif_busread(bmem,
@@ -266,7 +273,7 @@ main(int argc, char *argv[])
 		memset(&packhdr, 0, sizeof(packhdr));
 		packhdr.caplen = packhdr.len = curlen;
 		packhdr.ts.tv_sec = sp_sec;
-		packhdr.ts.tv_usec = sp_usec;
+		packhdr.ts.tv_usec = (suseconds_t)sp_usec;
 		assert(curlen <= BUFSIZE);
 
 		curbus = shmif_busread(bmem, buf, curbus, curlen, &wrap);
@@ -278,5 +285,5 @@ main(int argc, char *argv[])
 	if (pcapfile)
 		pcap_dump_close(pdump);
 
-	return 0;
+	return EXIT_SUCCESS;
 }

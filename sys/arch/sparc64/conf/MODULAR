@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.7 2017/07/29 12:28:28 maxv Exp $
+# $NetBSD: MODULAR,v 1.7.4.1 2020/04/08 14:07:54 martin Exp $
 #
 # MODULAR kernel - like GENERIC, but excluding lots of stuff that can
 # be loaded as a module later
@@ -6,7 +6,7 @@
 
 include 	"arch/sparc64/conf/GENERIC"
 
-#ident		"MODULAR-$Revision: 1.7 $"
+#ident		"MODULAR-$Revision: 1.7.4.1 $"
 
 options 	INSECURE	# disable kernel security levels initially
 				# (we can't load file system modules otherwise)
@@ -29,6 +29,5 @@ no file-system	CD9660		# ISO 9660 + Rock Ridge file system
 no file-system	UNION		# union file system
 no file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 no file-system	PTYFS		# /dev/pts/N support
-no file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 no file-system	TMPFS		# Efficient memory file-system
 #no file-system	UDF		# experimental - OSTA UDF CD/DVD file-system

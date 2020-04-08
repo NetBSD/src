@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.234.2.1 2019/06/10 22:07:32 christos Exp $ */
+/*	$NetBSD: st.c,v 1.234.2.2 2020/04/08 14:08:12 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.234.2.1 2019/06/10 22:07:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.234.2.2 2020/04/08 14:08:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -2283,7 +2283,7 @@ st_interpret_sense(struct scsipi_xfer *xs)
 				retval = EIO;
 				/*
 				 * If we return an error we can't claim to
-				 * have transfered all data.
+				 * have transferred all data.
 				 */
 				if (xs->resid == 0)
 					xs->resid = xs->datalen;

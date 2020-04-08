@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.67.4.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.67.4.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.67.4.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.67.4.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -107,7 +107,7 @@ static void	uftdi_read(void *, int, u_char **, uint32_t *);
 static void	uftdi_write(void *, int, u_char *, u_char *, uint32_t *);
 static void	uftdi_break(void *, int, int);
 
-struct ucom_methods uftdi_methods = {
+static const struct ucom_methods uftdi_methods = {
 	.ucom_get_status = uftdi_get_status,
 	.ucom_set = uftdi_set,
 	.ucom_param = uftdi_param,
@@ -186,7 +186,7 @@ uftdi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
 
-	DPRINTFN(20,("uftdi: vendor=0x%x, product=0x%x\n",
+	DPRINTFN(20,("uftdi: vendor=%#x, product=%#x\n",
 		     uiaa->uiaa_vendor, uiaa->uiaa_product));
 
 	if (uiaa->uiaa_configno != UFTDI_CONFIG_NO)
@@ -295,7 +295,7 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 	ucaa.ucaa_arg = sc;
 	ucaa.ucaa_info = NULL;
 
-	DPRINTF(("uftdi: in=0x%x out=0x%x isize=0x%x osize=0x%x\n",
+	DPRINTF(("uftdi: in=%#x out=%#x isize=%#x osize=%#x\n",
 		ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
 		ucaa.ucaa_ibufsize, ucaa.ucaa_obufsize));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL,

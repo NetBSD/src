@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.5.2.1 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.5.2.2 2020/04/08 14:08:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -65,6 +58,7 @@
 static int
 compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 {
+	struct if_data ifi;
 	struct oifdatareq *ifdr = data;
 	struct ifnet *ifp;
 	int error;
@@ -85,7 +79,8 @@ compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 	/* Do work. */
 	switch (cmd) {
 	case OSIOCGIFDATA:
-		ifdatan2o(&ifdr->ifdr_data, &ifp->if_data);
+		if_export_if_data(ifp, &ifi, false);
+		ifdatan2o(&ifdr->ifdr_data, &ifi);
 		return 0;
 
 	case OSIOCZIFDATA:
@@ -97,13 +92,9 @@ compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 			if (error != 0)
 				return error;
 		}
-		ifdatan2o(&ifdr->ifdr_data, &ifp->if_data);
-		/*
-		 * Assumes that the volatile counters that can be
-		 * zero'ed are at the end of if_data.
-		 */
-		memset(&ifp->if_data.ifi_ipackets, 0, sizeof(ifp->if_data) -
-		    offsetof(struct if_data, ifi_ipackets));
+		if_export_if_data(ifp, &ifi, true);
+		ifdatan2o(&ifdr->ifdr_data, &ifi);
+		/* XXX if_lastchange? */
 		return 0;
 
 	default:
@@ -116,7 +107,7 @@ void
 uipc_syscalls_50_init(void)
 {
 
-	MODULE_HOOK_SET(uipc_syscalls_50_hook, "uipc50", compat_ifdatareq);
+	MODULE_HOOK_SET(uipc_syscalls_50_hook, compat_ifdatareq);
 }
 
 void

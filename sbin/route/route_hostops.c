@@ -1,4 +1,4 @@
-/*	$NetBSD: route_hostops.c,v 1.1 2010/12/13 17:39:47 pooka Exp $	*/
+/*	$NetBSD: route_hostops.c,v 1.1.46.1 2020/04/08 14:07:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: route_hostops.c,v 1.1 2010/12/13 17:39:47 pooka Exp $");
+__RCSID("$NetBSD: route_hostops.c,v 1.1.46.1 2020/04/08 14:07:20 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -41,14 +41,23 @@ __RCSID("$NetBSD: route_hostops.c,v 1.1 2010/12/13 17:39:47 pooka Exp $");
 #include "prog_ops.h"
 
 const struct prog_ops prog_ops = {
-	.op_socket = socket,
-	.op_open = open,
-	.op_getpid = getpid,
 
-	.op_read = read,
-	.op_write = write,
+	.op_socket =		socket,
+	.op_setsockopt =	setsockopt,
 
-	.op_sysctl = sysctl,
+	.op_open =		open,
+	.op_getpid =		getpid,
 
-	.op_shutdown = shutdown,
+	.op_read =		read,
+	.op_write =		write,
+
+	.op_shutdown =		shutdown,
+
+	.op_sysctl =		sysctl,
+
+	.op_sysctlbyname =	sysctlbyname,
+
+	.op_sysctlgetmibinfo =	sysctlgetmibinfo,
+
+	.op_sysctlnametomib =	sysctlnametomib,
 };

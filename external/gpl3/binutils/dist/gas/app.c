@@ -1,5 +1,5 @@
 /* This is the Assembler Pre-Processor
-   Copyright (C) 1987-2018 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -602,13 +602,11 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	      state = old_state;
 	      PUT (ch);
 	    }
-#ifndef NO_STRING_ESCAPES
-	  else if (ch == '\\')
+	  else if (TC_STRING_ESCAPES && ch == '\\')
 	    {
 	      state = 6;
 	      PUT (ch);
 	    }
-#endif
 	  else if (scrub_m68k_mri && ch == '\n')
 	    {
 	      /* Just quietly terminate the string.  This permits lines like

@@ -1,6 +1,6 @@
 /* microblaze-opcm.h -- Header used in microblaze-opc.h
 
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -40,7 +40,7 @@ enum microblaze_instr
   brki, beqi, beqid, bnei, bneid, blti, bltid, blei, bleid, bgti,
   bgtid, bgei, bgeid, lbu, lbur, lhu, lhur, lw, lwr, lwx, sb, sbr, sh,
   shr, sw, swr, swx, lbui, lhui, lwi,
-  sbi, shi, swi, msrset, msrclr, tuqula, fadd, frsub, fmul, fdiv,
+  sbi, shi, swi, msrset, msrclr, tuqula, mbi_fadd, frsub, mbi_fmul, mbi_fdiv,
   fcmp_lt, fcmp_eq, fcmp_le, fcmp_gt, fcmp_ne, fcmp_ge, fcmp_un, flt,
   fint, fsqrt,
   tget, tcget, tnget, tncget, tput, tcput, tnput, tncput,

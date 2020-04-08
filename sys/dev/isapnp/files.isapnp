@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.38.164.1 2019/06/10 22:07:12 christos Exp $
+#	$NetBSD: files.isapnp,v 1.38.164.2 2020/04/08 14:08:07 martin Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -29,10 +29,6 @@ file	dev/isapnp/if_le_isapnp.c		le_isapnp
 # NE2000-PnP
 attach	ne at isapnp with ne_isapnp: rtl80x9
 file	dev/isapnp/if_ne_isapnp.c		ne_isapnp
-
-# TROPIC based Token-Ring (IBM/3COM)
-attach	tr at isapnp with tr_isapnp
-file	dev/isapnp/if_tr_isapnp.c		tr_isapnp
 
 # Aironet 802.11 ISA
 attach	an at isapnp with an_isapnp

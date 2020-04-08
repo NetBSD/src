@@ -1,5 +1,5 @@
-# Copyright (C) 2014-2016 Free Software Foundation, Inc.
-# 
+# Copyright (C) 2014-2018 Free Software Foundation, Inc.
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.
@@ -7,8 +7,8 @@
 HEAP_SECTION_MSP430=" "
 HEAP_MEMORY_MSP430=" "
 
-if test ${GOT_HEAP_MSP-0} -ne 0 
-then 
+if test ${GOT_HEAP_MSP-0} -ne 0
+then
 HEAP_SECTION_MSP430=".heap ${RELOCATING-0} :
   {
     ${RELOCATING+ PROVIDE (__heap_data_start = .) ; }
@@ -18,12 +18,12 @@ HEAP_SECTION_MSP430=".heap ${RELOCATING-0} :
     ${RELOCATING+ PROVIDE (__heap_bottom = .) ; }
     ${RELOCATING+ PROVIDE (__heap_top = ${HEAP_START} + ${HEAP_LENGTH}) ; }
   } ${RELOCATING+ > heap}"
-HEAP_MEMORY_MSP430="heap(rwx) 		: ORIGIN = $HEAP_START,	LENGTH = $HEAP_LENGTH"
+HEAP_MEMORY_MSP430="heap(rwx)		: ORIGIN = $HEAP_START,	LENGTH = $HEAP_LENGTH"
 fi
 
 
 cat <<EOF
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -34,9 +34,9 @@ OUTPUT_ARCH(${ARCH})
 
 MEMORY
 {
-  text   (rx)   	: ORIGIN = $ROM_START,  LENGTH = $ROM_SIZE
-  data   (rwx)  	: ORIGIN = $RAM_START, 	LENGTH = $RAM_SIZE
-  vectors (rw)  	: ORIGIN = 0xffe0,      LENGTH = 0x20
+  text   (rx)		: ORIGIN = $ROM_START,  LENGTH = $ROM_SIZE
+  data   (rwx)		: ORIGIN = $RAM_START,	LENGTH = $RAM_SIZE
+  vectors (rw)		: ORIGIN = 0xffe0,      LENGTH = 0x20
   bootloader(rx)	: ORIGIN = 0x0c00,	LENGTH = 1K
   infomem(rx)		: ORIGIN = 0x1000,	LENGTH = 256
   infomemnobits(rx)	: ORIGIN = 0x1000,      LENGTH = 256
@@ -53,7 +53,7 @@ SECTIONS
     ${RELOCATING+. = ALIGN(2);}
     *(.bootloader.*)
   } ${RELOCATING+ > bootloader}
-  
+
   /* Information memory.  */
   .infomem ${RELOCATING-0} :
   {
@@ -270,7 +270,7 @@ SECTIONS
 
   __romdatastart = LOADADDR(.data);
   __romdatacopysize = SIZEOF(.data);
-  
+
   .bss ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
   {
     ${RELOCATING+. = ALIGN(2);}
@@ -304,9 +304,9 @@ SECTIONS
 
   /* Stabs for profiling information*/
   .profiler 0 : { *(.profiler) }
-  
+
   /* Stabs debugging sections.  */
-  .stab 0 : { *(.stab) } 
+  .stab 0 : { *(.stab) }
   .stabstr 0 : { *(.stabstr) }
   .stab.excl 0 : { *(.stab.excl) }
   .stab.exclstr 0 : { *(.stab.exclstr) }

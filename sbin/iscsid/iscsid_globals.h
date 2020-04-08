@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_globals.h,v 1.9 2016/05/30 22:02:41 joerg Exp $	*/
+/*	$NetBSD: iscsid_globals.h,v 1.9.16.1 2020/04/08 14:07:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -362,19 +362,19 @@ typedef struct
 
 /* In iscsid_main.c */
 
-int driver;						/* the driver's file desc */
-int client_sock;				/* the client communication socket */
+extern int driver;						/* the driver's file desc */
+extern int client_sock;				/* the client communication socket */
 
-list_head_t list[NUM_DAEMON_LISTS];	/* the lists this daemon keeps */
+extern list_head_t list[NUM_DAEMON_LISTS];	/* the lists this daemon keeps */
 
 #ifndef ISCSI_NOTHREAD
-pthread_t event_thread;			/* event handler thread ID */
-pthread_mutex_t sesslist_lock;	/* session list lock */
+extern pthread_t event_thread;			/* event handler thread ID */
+extern pthread_mutex_t sesslist_lock;	/* session list lock */
 #endif
 
 /* in iscsid_discover.c */
 
-iscsid_set_node_name_req_t node_name;
+extern iscsid_set_node_name_req_t node_name;
 
 
 /* -------------------------  Global Functions  ----------------------------- */

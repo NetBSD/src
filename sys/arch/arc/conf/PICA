@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.84.4.1 2019/06/10 22:05:49 christos Exp $
+#	$NetBSD: PICA,v 1.84.4.2 2020/04/08 14:07:27 martin Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -189,7 +189,6 @@ pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)

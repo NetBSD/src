@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.29.12.1 2019/06/10 22:05:53 christos Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.29.12.2 2020/04/08 14:07:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.29.12.1 2019/06/10 22:05:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.29.12.2 2020/04/08 14:07:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,7 @@ void
 footbridge_pci_intr_disestablish(void *pcv, void *cookie)
 {
 #ifdef PCI_DEBUG
-	printf("footbridge_pci_intr_disestablish(pcv=%p, cookie=0x%p)\n",
+	printf("footbridge_pci_intr_disestablish(pcv=%p, cookie=%p)\n",
 	    pcv, cookie);
 #endif
 	/* XXXX Need to free the string */

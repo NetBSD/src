@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.29.2.1 2019/06/10 22:06:48 christos Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.29.2.2 2020/04/08 14:07:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.29.2.1 2019/06/10 22:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.29.2.2 2020/04/08 14:07:54 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -86,6 +86,7 @@ struct ec_softc {
 	bus_space_tag_t sc_iot;	/* bus space tag */
 	bus_space_handle_t sc_ioh;	/* bus space handle */
 
+	bool sc_txbusy;
 	u_char sc_jammed;	/* nonzero if the net is jammed */
 	u_char sc_colliding;	/* nonzero if the net is colliding */
 	uint32_t sc_backoff_seed;	/* seed for the backoff PRNG */
@@ -281,7 +282,7 @@ ec_init(struct ifnet *ifp)
 
 	/* Set flags appropriately. */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	sc->sc_txbusy = false;
 
 	/* Start output. */
 	ec_start(ifp);
@@ -305,7 +306,7 @@ ec_start(struct ifnet *ifp)
 	s = splnet();
 
 	/* Don't do anything if output is active. */
-	if ((ifp->if_flags & IFF_OACTIVE) != 0) {
+	if (sc->sc_txbusy) {
 		splx(s);
 		return;
 	}
@@ -334,7 +335,7 @@ ec_start(struct ifnet *ifp)
 	/* Enable the transmitter. */
 	ECREG_CSR_WR((ECREG_CSR_RD & EC_CSR_PA) |
 	    EC_CSR_TBSW | EC_CSR_TINT | EC_CSR_JINT);
-	ifp->if_flags |= IFF_OACTIVE;
+	sc->sc_txbusy = true;
 
 	/* Done. */
 	splx(s);
@@ -413,13 +414,13 @@ ec_intr(void *arg)
 		retval++;
 	}
 	/* Check for a transmitted packet. */
-	if (ifp->if_flags & IFF_OACTIVE) {
+	if (sc->sc_txbusy) {
 
 		/* If we got a collision. */
 		if (ECREG_CSR_RD & EC_CSR_JAM) {
 			ECREG_CSR_WR(ECREG_CSR_RD &
 			    (EC_CSR_BINT | EC_CSR_AINT | EC_CSR_PAMASK));
-			sc->sc_ethercom.ec_if.if_collisions++;
+			if_statinc(ifp, if_collisions);
 			retval++;
 			ec_coll(sc);
 
@@ -429,9 +430,9 @@ ec_intr(void *arg)
 			ECREG_CSR_WR(ECREG_CSR_RD &
 			    (EC_CSR_BINT | EC_CSR_AINT | EC_CSR_PAMASK));
 			retval++;
-			sc->sc_ethercom.ec_if.if_opackets++;
+			if_statinc(ifp, if_opackets);
 			sc->sc_jammed = 0;
-			ifp->if_flags &= ~IFF_OACTIVE;
+			sc->sc_txbusy = false;
 			if_schedule_deferred_start(ifp);
 		}
 	} else {
@@ -526,7 +527,7 @@ ec_recv(struct ec_softc *sc, int intbit)
 		/* Something went wrong. */
 		if (m0 != NULL)
 			m_freem(m0);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 	}
 
 	/* Give the receive buffer back to the card. */
@@ -629,13 +630,13 @@ ec_coll(struct ec_softc *sc)
 	u_short jams;
 
 	if ((++sc->sc_colliding) >= EC_COLLISIONS_JAMMED) {
-		sc->sc_ethercom.ec_if.if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		if (!sc->sc_jammed)
 			printf("%s: ethernet jammed\n",
 			    device_xname(sc->sc_dev));
 		sc->sc_jammed = 1;
 		sc->sc_colliding = 0;
-		ifp->if_flags &= ~IFF_OACTIVE;
+		sc->sc_txbusy = false;
 		if_schedule_deferred_start(ifp);
 	} else {
 		jams = MAX(sc->sc_colliding, EC_BACKOFF_PRNG_COLL_MAX);
@@ -658,7 +659,7 @@ ec_watchdog(struct ifnet *ifp)
 	struct ec_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	sc->sc_ethercom.ec_if.if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	ec_reset(ifp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_gem.c,v 1.3.18.1 2019/06/10 22:08:26 christos Exp $	*/
+/*	$NetBSD: radeon_gem.c,v 1.3.18.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,11 +28,13 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_gem.c,v 1.3.18.1 2019/06/10 22:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_gem.c,v 1.3.18.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
 #include "radeon.h"
+
+#include <linux/nbsd-namespace.h>
 
 void radeon_gem_object_free(struct drm_gem_object *gobj)
 {
@@ -288,15 +290,6 @@ int radeon_gem_create_ioctl(struct drm_device *dev, void *data,
 int radeon_gem_userptr_ioctl(struct drm_device *dev, void *data,
 			     struct drm_file *filp)
 {
-#ifdef __NetBSD__
-	/*
-	 * XXX Too painful to contemplate for now.  If you add this,
-	 * make sure to update radeon_cs.c radeon_cs_parser_relocs
-	 * (need_mmap_lock), and anything else using
-	 * radeon_ttm_tt_has_userptr.
-	 */
-	return -ENODEV;
-#else
 	struct radeon_device *rdev = dev->dev_private;
 	struct drm_radeon_gem_userptr *args = data;
 	struct drm_gem_object *gobj;
@@ -347,17 +340,29 @@ int radeon_gem_userptr_ioctl(struct drm_device *dev, void *data,
 	}
 
 	if (args->flags & RADEON_GEM_USERPTR_VALIDATE) {
+#ifdef __NetBSD__
+		vm_map_lock_read(&curproc->p_vmspace->vm_map);
+#else
 		down_read(&current->mm->mmap_sem);
+#endif
 		r = radeon_bo_reserve(bo, true);
 		if (r) {
+#ifdef __NetBSD__
+			vm_map_unlock_read(&curproc->p_vmspace->vm_map);
+#else
 			up_read(&current->mm->mmap_sem);
+#endif
 			goto release_object;
 		}
 
 		radeon_ttm_placement_from_domain(bo, RADEON_GEM_DOMAIN_GTT);
 		r = ttm_bo_validate(&bo->tbo, &bo->placement, true, false);
 		radeon_bo_unreserve(bo);
+#ifdef __NetBSD__
+		vm_map_unlock_read(&curproc->p_vmspace->vm_map);
+#else
 		up_read(&current->mm->mmap_sem);
+#endif
 		if (r)
 			goto release_object;
 	}
@@ -380,7 +385,6 @@ handle_lockup:
 	r = radeon_gem_handle_lockup(rdev, r);
 
 	return r;
-#endif
 }
 
 int radeon_gem_set_domain_ioctl(struct drm_device *dev, void *data,
@@ -763,11 +767,7 @@ int radeon_mode_dumb_create(struct drm_file *file_priv,
 
 	args->pitch = radeon_align_pitch(rdev, args->width, args->bpp, 0) * ((args->bpp + 1) / 8);
 	args->size = args->pitch * args->height;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	args->size = round_up(args->size, PAGE_SIZE);
-#else
 	args->size = ALIGN(args->size, PAGE_SIZE);
-#endif
 
 	r = radeon_gem_object_create(rdev, args->size, 0,
 				     RADEON_GEM_DOMAIN_VRAM, 0,

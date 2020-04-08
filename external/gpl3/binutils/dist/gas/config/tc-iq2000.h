@@ -1,5 +1,5 @@
 /* tc-iq2000.h -- Header file for tc-iq2000.c.
-   Copyright (C) 2003-2018 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

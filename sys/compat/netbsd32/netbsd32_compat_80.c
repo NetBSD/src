@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_80.c,v 1.5.4.2 2019/06/10 22:07:01 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_80.c,v 1.5.4.3 2020/04/08 14:08:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.5.4.2 2019/06/10 22:07:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.5.4.3 2020/04/08 14:08:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -183,8 +183,7 @@ compat_netbsd32_80_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		MODULE_HOOK_SET(compat32_80_modctl_hook, "nb32_modctl_80",
-		    netbsd32_80_modctl);
+		MODULE_HOOK_SET(compat32_80_modctl_hook, netbsd32_80_modctl);
 		return 0;
 
 	case MODULE_CMD_FINI:

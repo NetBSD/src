@@ -1,4 +1,4 @@
-/* $NetBSD: imcsmb.c,v 1.2 2018/03/03 05:27:02 pgoyette Exp $ */
+/* $NetBSD: imcsmb.c,v 1.2.4.1 2020/04/08 14:07:58 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.2 2018/03/03 05:27:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.2.4.1 2020/04/08 14:07:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -130,7 +130,6 @@ imcsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_regs = imca->ia_regs;
 	sc->sc_pci_tag = imca->ia_pci_tag;
 	sc->sc_pci_chipset_tag = imca->ia_pci_chipset_tag;
-	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -151,13 +150,13 @@ imcsmb_rescan(device_t self, const char *ifattr, const int *flags)
 	if (sc->sc_smbus != NULL)
 		return 0;
 
+	iic_tag_init(&sc->sc_i2c_tag);
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = imcsmb_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = imcsmb_release_bus;
 	sc->sc_i2c_tag.ic_exec = imcsmb_exec;
 
 	memset(&iba, 0, sizeof(iba));
-	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c_tag;
 	sc->sc_smbus = config_found_ia(self, ifattr, &iba, iicbus_print);
 
@@ -196,7 +195,7 @@ imcsmb_detach(device_t self, int flags)
 	}
 
 	pmf_device_deregister(self);
-	mutex_destroy(&sc->sc_i2c_mutex);
+	iic_tag_fini(&sc->sc_i2c_tag);
 	return 0;
 }
 
@@ -224,8 +223,6 @@ imcsmb_acquire_bus(void *cookie, int flags)
 	if (cold)
 		return 0;
 
-	mutex_enter(&sc->sc_i2c_mutex);
-
 	imc_callback(sc, IMC_BIOS_DISABLE);
 
 	return 0;
@@ -240,8 +237,6 @@ imcsmb_release_bus(void *cookie, int flags)
 		return;
 
 	imc_callback(sc, IMC_BIOS_ENABLE);
-
-	mutex_exit(&sc->sc_i2c_mutex);
 }
 
 static int

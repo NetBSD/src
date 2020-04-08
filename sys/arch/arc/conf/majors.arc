@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arc,v 1.24.54.1 2019/06/10 22:05:49 christos Exp $
+#	$NetBSD: majors.arc,v 1.24.54.2 2020/04/08 14:07:27 martin Exp $
 #
 # Device majors for arc
 #
@@ -56,7 +56,7 @@ device-major	icp		char 58			icp
 device-major	mlx		char 59			mlx
 device-major	twe		char 60			twe
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in

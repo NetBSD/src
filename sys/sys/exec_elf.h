@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.160.2.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.160.2.2 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -169,11 +169,11 @@ typedef struct {
 #define ELFOSABI_SYSV		0	/* UNIX System V ABI */
 #define ELFOSABI_HPUX		1	/* HP-UX operating system */
 #define ELFOSABI_NETBSD		2	/* NetBSD */
-#define ELFOSABI_LINUX		3	/* GNU/Linux */
-#define ELFOSABI_HURD		4	/* GNU/Hurd */
-#define ELFOSABI_86OPEN		5	/* 86Open */
+#define ELFOSABI_GNU		3	/* GNU/Linux */
+#define ELFOSABI_HURD		4	/* GNU/Hurd - historical */
+#define ELFOSABI_86OPEN		5	/* 86Open - historical */
 #define ELFOSABI_SOLARIS	6	/* Solaris */
-#define ELFOSABI_MONTEREY	7	/* Monterey */
+#define ELFOSABI_AIX		7	/* AIX */
 #define ELFOSABI_IRIX		8	/* IRIX */
 #define ELFOSABI_FREEBSD	9	/* FreeBSD */
 #define ELFOSABI_TRU64		10	/* TRU64 UNIX */
@@ -182,12 +182,18 @@ typedef struct {
 #define ELFOSABI_OPENVMS	13	/* OpenVMS */
 #define ELFOSABI_NSK		14	/* HP Non-Stop Kernel */
 #define ELFOSABI_AROS		15	/* Amiga Research OS */
+#define ELFOSABI_FENIXOS	16	/* The FenixOS highly scalable multi-core OS */
+#define ELFOSABI_CLOUDABI	17	/* Nuxi CloudABI */
+#define ELFOSABI_OPENVOS	18	/* Stratus Technologies OpenVOS */
 /* Unofficial OSABIs follow */
 #define ELFOSABI_ARM		97	/* ARM */
 #define ELFOSABI_STANDALONE	255	/* Standalone (embedded) application */
 
 #define ELFOSABI_NONE		ELFOSABI_SYSV
-#define ELFOSABI_AIX		ELFOSABI_MONTEREY
+
+/* Historical aliases. */
+#define ELFOSABI_LINUX		ELFOSABI_GNU
+#define ELFOSABI_MONTEREY	ELFOSABI_AIX
 
 /* e_type */
 #define ET_NONE		0	/* No file type */
@@ -224,8 +230,9 @@ typedef struct {
 #define EM_960		19	/* Intel 80960 */
 #define EM_PPC		20	/* PowerPC */
 #define EM_PPC64	21	/* 64-bit PowerPC */
-			/* 22-35 - Reserved */
-#define EM_S390		22	/* System/390 XXX reserved */
+#define EM_S390		22	/* IBM System/390 Processor */
+#define EM_SPU		23	/* IBM SPU/SPC */
+			/* 24-35 - Reserved */
 #define EM_V800		36	/* NEC V800 */
 #define EM_FR20		37	/* Fujitsu FR20 */
 #define EM_RH32		38	/* TRW RH-32 */
@@ -302,14 +309,98 @@ typedef struct {
 #define EM_SEP		108	/* Sharp embedded microprocessor */
 #define EM_ARCA		109	/* Arca RISC microprocessor */
 #define EM_UNICORE	110	/* UNICORE from PKU-Unity Ltd. and MPRC Peking University */
+#define EM_EXCESS	111	/* eXcess: 16/32/64-bit configurable embedded CPU */
+#define EM_DXP		112	/* Icera Semiconductor Inc. Deep Execution Processor */
 #define EM_ALTERA_NIOS2	113	/* Altera Nios II soft-core processor */
+#define EM_CRX		114	/* National Semiconductor CompactRISC CRX microprocessor */
+#define EM_XGATE	115	/* Motorola XGATE embedded processor */
+#define EM_C166		116	/* Infineon C16x/XC16x processor */
+#define EM_M16C		117	/* Renesas M16C series microprocessors */
+#define EM_DSPIC30F	118	/* Microchip Technology dsPIC30F Digital Signal Controller */
+#define EM_CE		119	/* Freescale Communication Engine RISC core */
+#define EM_M32C		120	/* Renesas M32C series microprocessors */
+			/* 121-130 - Reserved */
+#define EM_TSK3000	131	/* Altium TSK3000 core */
+#define EM_RS08		132	/* Freescale RS08 embedded processor */
+#define EM_SHARC	133	/* Analog Devices SHARC family of 32-bit DSP processors */
+#define EM_ECOG2	134	/* Cyan Technology eCOG2 microprocessor */
+#define EM_SCORE7	135	/* Sunplus S+core7 RISC processor */
+#define EM_DSP24	136	/* New Japan Radio (NJR) 24-bit DSP Processor */
+#define EM_VIDEOCORE3	137	/* Broadcom VideoCore III processor */
+#define EM_LATTICEMICO32	138	/* RISC processor for Lattice FPGA architecture */
+#define EM_SE_C17	139	/* Seiko Epson C17 family */
+#define EM_TI_C6000	140	/* The Texas Instruments TMS320C6000 DSP family */
+#define EM_TI_C2000	141	/* The Texas Instruments TMS320C2000 DSP family */
+#define EM_TI_C5500	142	/* The Texas Instruments TMS320C55x DSP family */
+#define EM_TI_ARP32	143	/* Texas Instruments Application Specific RISC Processor, 32bit fetch */
+#define EM_TI_PRU	144	/* Texas Instruments Programmable Realtime Unit */
+			/* 145-159 - Reserved */
+#define EM_MMDSP_PLUS	160	/* STMicroelectronics 64bit VLIW Data Signal Processor */
+#define EM_CYPRESS_M8C	161	/* Cypress M8C microprocessor */
+#define EM_R32C		162	/* Renesas R32C series microprocessors */
+#define EM_TRIMEDIA	163	/* NXP Semiconductors TriMedia architecture family */
+#define EM_QDSP6	164	/* QUALCOMM DSP6 Processor */
+#define EM_8051		165	/* Intel 8051 and variants */
+#define EM_STXP7X	166	/* STMicroelectronics STxP7x family of configurable and extensible RISC processors */
+#define EM_NDS32	167	/* Andes Technology compact code size embedded RISC processor family */
+#define EM_ECOG1	168	/* Cyan Technology eCOG1X family */
+#define EM_ECOG1X	168	/* Cyan Technology eCOG1X family */
+#define EM_MAXQ30	169	/* Dallas Semiconductor MAXQ30 Core Micro-controllers */
+#define EM_XIMO16	170	/* New Japan Radio (NJR) 16-bit DSP Processor */
+#define EM_MANIK	171	/* M2000 Reconfigurable RISC Microprocessor */
+#define EM_CRAYNV2	172	/* Cray Inc. NV2 vector architecture */
+#define EM_RX		173	/* Renesas RX family */
+#define EM_METAG	174	/* Imagination Technologies META processor architecture */
+#define EM_MCST_ELBRUS	175	/* MCST Elbrus general purpose hardware architecture */
+#define EM_ECOG16	176	/* Cyan Technology eCOG16 family */
+#define EM_CR16		177	/* National Semiconductor CompactRISC CR16 16-bit microprocessor */
+#define EM_ETPU		178	/* Freescale Extended Time Processing Unit */
+#define EM_SLE9X	179	/* Infineon Technologies SLE9X core */
+#define EM_L10M		180	/* Intel L10M */
+#define EM_K10M		181	/* Intel K10M */
+			/* 182 - Reserved */
 #define EM_AARCH64	183	/* AArch64 64-bit ARM microprocessor */
+			/* 184 - Reserved */
 #define EM_AVR32	185	/* Atmel Corporation 32-bit microprocessor family*/
 #define EM_TILE64	187	/* Tilera TILE64 multicore architecture family */
 #define EM_TILEPRO	188	/* Tilera TILEPro multicore architecture family */
 #define EM_MICROBLAZE	189	/* Xilinx MicroBlaze 32-bit RISC soft processor core */
-#define EM_TILEGX	192	/* Tilera TILE-GX multicore architecture family */
+#define EM_CUDA		190	/* NVIDIA CUDA architecture */
+#define EM_TILEGX	191	/* Tilera TILE-GX multicore architecture family */
+#define EM_CLOUDSHIELD	192	/* CloudShield architecture family */
+#define EM_COREA_1ST	193	/* KIPO-KAIST Core-A 1st generation processor family */
+#define EM_COREA_2ND	194	/* KIPO-KAIST Core-A 2nd generation processor family */
+#define EM_ARC_COMPACT2	195	/* Synopsys ARCompact V2 */
+#define EM_OPEN8	196	/* Open8 8-bit RISC soft processor core */
+#define EM_RL78		197	/* Renesas RL78 family */
+#define EM_VIDEOCORE5	198	/* Broadcom VideoCore V processor */
+#define EM_78KOR	199	/* Renesas 78KOR family */
+#define EM_56800EX	200	/* Freescale 56800EX Digital Signal Controller (DSC) */
+#define EM_BA1		201	/* Beyond BA1 CPU architecture */
+#define EM_BA2		202	/* Beyond BA2 CPU architecture */
+#define EM_XCORE	203	/* XMOS xCORE processor family */
+#define EM_MCHP_PIC	204	/* Microchip 8-bit PIC(r) family */
+#define EM_INTEL205	205	/* Reserved by Intel */
+#define EM_INTEL206	206	/* Reserved by Intel */
+#define EM_INTEL207	207	/* Reserved by Intel */
+#define EM_INTEL208	208	/* Reserved by Intel */
+#define EM_INTEL209	209	/* Reserved by Intel */
+#define EM_KM32		210	/* KM211 KM32 32-bit processor */
+#define EM_KMX32	211	/* KM211 KMX32 32-bit processor */
+#define EM_KMX16	212	/* KM211 KMX16 16-bit processor */
+#define EM_KMX8		213	/* KM211 KMX8 8-bit processor */
+#define EM_KVARC	214	/* KM211 KVARC processor */
+#define EM_CDP		215	/* Paneve CDP architecture family */
+#define EM_COGE		216	/* Cognitive Smart Memory Processor */
+#define EM_COOL		217	/* Bluechip Systems CoolEngine */
+#define EM_NORC		218	/* Nanoradio Optimized RISC */
+#define EM_CSR_KALIMBA 	219	/* CSR Kalimba architecture family */
 #define EM_Z80		220	/* Zilog Z80 */
+#define EM_VISIUM 	221	/* Controls and Data Services VISIUMcore processor */
+#define EM_FT32 	222	/* FTDI Chip FT32 high performance 32-bit RISC architecture */
+#define EM_MOXIE	223	/* Moxie processor family */
+#define EM_AMDGPU	224	/* AMD GPU architecture */
+			/* 225-242 - Reserved */
 #define EM_RISCV	243	/* RISC-V */
 
 /* Unofficial machine types follow */
@@ -458,6 +549,7 @@ typedef struct {
 #define	SHT_MIPS_REGINFO     0x70000006
 #define	SHT_MIPS_OPTIONS     0x7000000d
 #define	SHT_MIPS_DWARF	     0x7000001e	/* MIPS gcc uses MIPS_DWARF */
+#define	SHT_MIPS_XHASH	     0x7000002b	/* MIPS version of GNU_HASH */
 #define SHT_HIPROC	     0x7fffffff
 #define SHT_LOUSER	     0x80000000 /* Application-specific range */
 #define SHT_HIUSER	     0xffffffff
@@ -706,6 +798,7 @@ typedef struct {
 #define DT_NUM		34
 
 #define DT_LOOS		0x60000000	/* Operating system specific range */
+#define DT_GNU_HASH	0x6ffffef5	/* GNU-style hash table */
 #define DT_VERSYM	0x6ffffff0	/* Symbol versions */
 #define DT_FLAGS_1	0x6ffffffb	/* ELF dynamic flags */
 #define DT_VERDEF	0x6ffffffc	/* Versions defined by file */
@@ -714,6 +807,7 @@ typedef struct {
 #define DT_VERNEEDNUM	0x6fffffff	/* Number of versions needed by file */
 #define DT_HIOS		0x6fffffff
 #define DT_LOPROC	0x70000000	/* Processor-specific range */
+#define DT_MIPS_XHASH	0x70000036	/* MIPS version of GNU_HASH */
 #define DT_HIPROC	0x7fffffff
 
 /* Flag values for DT_FLAGS */

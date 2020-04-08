@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.80.2.1 2019/06/10 22:05:42 christos Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.80.2.2 2020/04/08 14:07:23 martin Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.hostinit.mk>
@@ -27,6 +27,7 @@ LIBEXPAT?=	/usr/lib/libexpat.a
 LIBFETCH?=	/usr/lib/libfetch.a
 LIBFORM?=	/usr/lib/libform.a
 LIBGCC?=	/usr/lib/libgcc.a
+LIBGNUCTF?=	/usr/lib/libgnuctf.a
 LIBGNUMALLOC?=	/usr/lib/libgnumalloc.a
 LIBINTL?=	/usr/lib/libintl.a
 LIBIPSEC?=	/usr/lib/libipsec.a

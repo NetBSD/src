@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bus_dma.c,v 1.7.14.1 2019/06/10 22:08:33 christos Exp $	*/
+/*	$NetBSD: ttm_bus_dma.c,v 1.7.14.2 2020/04/08 14:08:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.7.14.1 2019/06/10 22:08:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.7.14.2 2020/04/08 14:08:28 martin Exp $");
 
 #include <sys/bus.h>
 
@@ -120,7 +120,7 @@ ttm_bus_dma_put(struct ttm_dma_tt *ttm_dma, int flags)
 	KASSERT(uobj->pgops->pgo_put);
 
 	/* Release or deactivate the pages.  */
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	(void)(*uobj->pgops->pgo_put)(uobj, 0, size, flags);
 	/* pgo_put unlocks uobj->vmobjlock.  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: test_hdbkeys.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: test_hdbkeys.c,v 1.2.12.1 2020/04/08 14:03:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -96,7 +96,7 @@ main(int argc, char **argv)
     *keyset.set_time = time(NULL);
 
     ret = hdb_generate_key_set_password(context, principal, password_str,
-					NULL, 0, &keyset.keys.val, &len);
+					&keyset.keys.val, &len);
     if (ret)
 	krb5_err(context, 1, ret, "hdb_generate_key_set_password");
     keyset.keys.len = len;

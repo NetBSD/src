@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.60.4.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.60.4.2 2020/04/08 14:08:05 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.60.4.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.60.4.2 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -99,12 +99,12 @@ static void ahci_atapi_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 static void ahci_atapi_probe_device(struct atapibus_softc *, int);
 
 static const struct scsipi_bustype ahci_atapi_bustype = {
-	SCSIPI_BUSTYPE_ATAPI,
-	atapi_scsipi_cmd,
-	atapi_interpret_sense,
-	atapi_print_addr,
-	ahci_atapi_kill_pending,
-	NULL,
+	.bustype_type = SCSIPI_BUSTYPE_ATAPI,
+	.bustype_cmd = atapi_scsipi_cmd,
+	.bustype_interpret_sense = atapi_interpret_sense,
+	.bustype_printaddr = atapi_print_addr,
+	.bustype_kill_pending = ahci_atapi_kill_pending,
+	.bustype_async_event_xfer_mode = NULL,
 };
 #endif /* NATAPIBUS */
 
@@ -275,6 +275,11 @@ ahci_attach(struct ahci_softc *sc)
 		aprint_verbose_dev(sc->sc_atac.atac_dev,
 		    "ignoring broken port multiplier support\n");
 		sc->sc_ahci_cap &= ~AHCI_CAP_SPM;
+	}
+	if (sc->sc_ahci_quirks & AHCI_QUIRK_BADNCQ) {
+		aprint_verbose_dev(sc->sc_atac.atac_dev,
+		    "ignoring broken NCQ support\n");
+		sc->sc_ahci_cap &= ~AHCI_CAP_NCQ;
 	}
 	sc->sc_atac.atac_nchannels = (sc->sc_ahci_cap & AHCI_CAP_NPMASK) + 1;
 	sc->sc_ncmds = ((sc->sc_ahci_cap & AHCI_CAP_NCS) >> 8) + 1;
@@ -807,7 +812,7 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
 	int i, error = 0;
-	uint32_t sig;
+	uint32_t sig, cmd;
 	int noclo_retry = 0;
 
 	ata_channel_lock_owned(chp);
@@ -825,6 +830,19 @@ again:
 		ahci_channel_start(sc, chp, flags, 1);
 	} else {
 		/* Can't handle command still running without CLO */
+		cmd = AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel));
+		if ((cmd & AHCI_P_CMD_CR) != 0) {
+			ahci_channel_stop(sc, chp, flags);
+			cmd = AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel));
+			if ((cmd & AHCI_P_CMD_CR) != 0) {
+				aprint_error("%s port %d: DMA engine busy "
+				    "for drive %d\n", AHCINAME(sc),
+				    chp->ch_channel, drive);
+				error = EBUSY;
+				goto end;
+			}
+		}
+
 		KASSERT((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR) == 0);
 
 		ahci_channel_start(sc, chp, flags, 0);
@@ -1538,10 +1556,10 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	AHCIDEBUG_PRINT(("ahci_bio_complete bcount %ld",
 	    ata_bio->bcount), DEBUG_XFERS);
 	/* 
-	 * If it was a write, complete data buffer may have been transfered
+	 * If it was a write, complete data buffer may have been transferred
 	 * before error detection; in this case don't use cmdh_prdbc
 	 * as it won't reflect what was written to media. Assume nothing
-	 * was transfered and leave bcount as-is.
+	 * was transferred and leave bcount as-is.
 	 * For queued commands, PRD Byte Count should not be used, and is
 	 * not required to be valid; in that case underflow is always illegal.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_template.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
+/*	$NetBSD: bounce_template.c,v 1.2.12.1 2020/04/08 14:06:52 martin Exp $	*/
 
 /*++
 /* NAME
@@ -308,7 +308,7 @@ static void bounce_template_parse_buffer(BOUNCE_TEMPLATE *tp)
      * Parse pseudo-header labels and values.
      * 
      * XXX EAI: allow UTF8 in template headers when responding to SMTPUTF8
-     * message. Sending SMTPUTF8 in reponse to non-SMTPUTF8 mail would make
+     * message. Sending SMTPUTF8 in response to non-SMTPUTF8 mail would make
      * no sense.
      */
 #define GETLINE(line, buf) \

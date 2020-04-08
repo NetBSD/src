@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_gem.c,v 1.4.18.1 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: nouveau_gem.c,v 1.4.18.2 2020/04/08 14:08:24 martin Exp $	*/
 
 /*
  * Copyright (C) 2008 Ben Skeggs.
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.4.18.1 2019/06/10 22:08:06 christos Exp $");
-
-#include <linux/err.h>		/* XXX */
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.4.18.2 2020/04/08 14:08:24 martin Exp $");
 
 #include "nouveau_drm.h"
 #include "nouveau_dma.h"
@@ -38,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.4.18.1 2019/06/10 22:08:06 christo
 
 #include "nouveau_ttm.h"
 #include "nouveau_gem.h"
+
+#include <linux/nbsd-namespace.h>
 
 void
 nouveau_gem_object_del(struct drm_gem_object *gem)
@@ -381,11 +381,9 @@ validate_init(struct nouveau_channel *chan, struct drm_file *file_priv,
 	int trycnt = 0;
 	int ret = -EINVAL, i;
 	struct nouveau_bo *res_bo = NULL;
-	struct list_head gart_list, vram_list, both_list;
-
-	INIT_LIST_HEAD(&gart_list);
-	INIT_LIST_HEAD(&vram_list);
-	INIT_LIST_HEAD(&both_list);
+	LIST_HEAD(gart_list);
+	LIST_HEAD(vram_list);
+	LIST_HEAD(both_list);
 
 	ww_acquire_init(&op->ticket, &reservation_ww_class);
 retry:

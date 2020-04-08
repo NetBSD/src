@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: vstring.c,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -39,6 +39,10 @@
 /*	VSTRING	*vp;
 /*
 /*	VSTRING	*vstring_truncate(vp, len)
+/*	VSTRING	*vp;
+/*	ssize_t	len;
+/*
+/*	VSTRING	*vstring_set_payload_size(vp, len)
 /*	VSTRING	*vp;
 /*	ssize_t	len;
 /*
@@ -141,6 +145,9 @@
 /*	length would be exceeded, the program simulates a memory
 /*	allocation problem (i.e. it terminates through msg_fatal()).
 /*	This fuctionality is currently unimplemented.
+/* .IP "CA_VSTRING_CTL_EXACT (no argument)"
+/*	Allocate the requested amounts, instead of rounding up.
+/*	This should be used for tests only.
 /* .IP "CA_VSTRING_CTL_END (no argument)"
 /*	Specifies the end of the argument list. Forgetting to terminate
 /*	the argument list may cause the program to crash.
@@ -178,6 +185,15 @@
 /*	length. If length is negative, the trailing portion is kept.
 /*	The operation has no effect when the string is shorter.
 /*	The string is not null-terminated.
+/*
+/*	vstring_set_payload_size() sets the number of 'used' bytes
+/*	in the named buffer's metadata. This determines the buffer
+/*	write position and the VSTRING_LEN() result. The payload
+/*	size must be within the closed range [0, number of allocated
+/*	bytes]. The typical usage is to request buffer space with
+/*	VSTRING_SPACE(), to use some non-VSTRING operations to write
+/*	to the buffer, and to call vstring_set_payload_size() to
+/*	update buffer metadata, perhaps followed by VSTRING_TERMINATE().
 /*
 /*	VSTRING_RESET() is a macro that resets the write position of its
 /*	string argument to the very beginning. Note that VSTRING_RESET()
@@ -265,6 +281,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System libraries. */
@@ -276,6 +297,8 @@
 #include <string.h>
 
 /* Utility library. */
+
+#define VSTRING_INTERNAL
 
 #include "mymalloc.h"
 #include "msg.h"
@@ -298,13 +321,17 @@ static void vstring_extend(VBUF *bp, ssize_t incr)
      * 
      * The length overflow tests here and in vstring_alloc() should protect us
      * against all length overflow problems within vstring library routines.
-     * (The tests are redundant as long as mymalloc() and myrealloc() reject
-     * negative length parameters).
+     * 
+     * Safety net: add a gratuitous null terminator so that C-style string
+     * operations won't scribble past the end.
      */
-    new_len = bp->len + (bp->len > incr ? bp->len : incr);
-    if (new_len <= bp->len)
+    if ((bp->flags & VSTRING_FLAG_EXACT) == 0 && bp->len > incr)
+	incr = bp->len;
+    if (bp->len > SSIZE_T_MAX - incr - 1)
 	msg_fatal("vstring_extend: length overflow");
-    bp->data = (unsigned char *) myrealloc((void *) bp->data, new_len);
+    new_len = bp->len + incr;
+    bp->data = (unsigned char *) myrealloc((void *) bp->data, new_len + 1);
+    bp->data[new_len] = 0;
     bp->len = new_len;
     bp->ptr = bp->data + used;
     bp->cnt = bp->len - used;
@@ -314,14 +341,14 @@ static void vstring_extend(VBUF *bp, ssize_t incr)
 
 static int vstring_buf_get_ready(VBUF *unused_buf)
 {
-    msg_panic("vstring_buf_get: write-only buffer");
+    return (VBUF_EOF);			/* be VSTREAM-friendly */
 }
 
 /* vstring_buf_put_ready - vbuf callback for write buffer full condition */
 
 static int vstring_buf_put_ready(VBUF *bp)
 {
-    vstring_extend(bp, 0);
+    vstring_extend(bp, 1);
     return (0);
 }
 
@@ -344,19 +371,23 @@ VSTRING *vstring_alloc(ssize_t len)
 {
     VSTRING *vp;
 
-    if (len < 1)
+    /*
+     * Safety net: add a gratuitous null terminator so that C-style string
+     * operations won't scribble past the end.
+     */
+    if (len < 1 || len > SSIZE_T_MAX - 1)
 	msg_panic("vstring_alloc: bad length %ld", (long) len);
     vp = (VSTRING *) mymalloc(sizeof(*vp));
     vp->vbuf.flags = 0;
     vp->vbuf.len = 0;
-    vp->vbuf.data = (unsigned char *) mymalloc(len);
+    vp->vbuf.data = (unsigned char *) mymalloc(len + 1);
+    vp->vbuf.data[len] = 0;
     vp->vbuf.len = len;
     VSTRING_RESET(vp);
     vp->vbuf.data[0] = 0;
     vp->vbuf.get_ready = vstring_buf_get_ready;
     vp->vbuf.put_ready = vstring_buf_put_ready;
     vp->vbuf.space = vstring_buf_space;
-    vp->maxlen = 0;
     return (vp);
 }
 
@@ -382,10 +413,8 @@ void    vstring_ctl(VSTRING *vp,...)
 	switch (code) {
 	default:
 	    msg_panic("vstring_ctl: unknown code: %d", code);
-	case VSTRING_CTL_MAXLEN:
-	    vp->maxlen = va_arg(ap, ssize_t);
-	    if (vp->maxlen < 0)
-		msg_panic("vstring_ctl: bad max length %ld", (long) vp->maxlen);
+	case VSTRING_CTL_EXACT:
+	    vp->vbuf.flags |= VSTRING_FLAG_EXACT;
 	    break;
 	}
     }
@@ -405,6 +434,18 @@ VSTRING *vstring_truncate(VSTRING *vp, ssize_t len)
     }
     if (len < VSTRING_LEN(vp))
 	VSTRING_AT_OFFSET(vp, len);
+    return (vp);
+}
+
+/* vstring_set_payload_size - public version of VSTRING_AT_OFFSET */
+
+VSTRING *vstring_set_payload_size(VSTRING *vp, ssize_t len)
+{
+    if (len < 0 || len > vp->vbuf.len)
+	msg_panic("vstring_set_payload_size: invalid offset: %ld", (long) len);
+    if (vp->vbuf.data[vp->vbuf.len] != 0)
+	msg_panic("vstring_set_payload_size: no safety null byte");
+    VSTRING_AT_OFFSET(vp, len);
     return (vp);
 }
 
@@ -575,7 +616,6 @@ VSTRING *vstring_import(char *str)
     vp->vbuf.get_ready = vstring_buf_get_ready;
     vp->vbuf.put_ready = vstring_buf_put_ready;
     vp->vbuf.space = vstring_buf_space;
-    vp->maxlen = 0;
     return (vp);
 }
 
@@ -657,7 +697,18 @@ VSTRING *vstring_sprintf_prepend(VSTRING *vp, const char *format,...)
 int     main(int argc, char **argv)
 {
     VSTRING *vp = vstring_alloc(1);
+    int     n;
 
+    /*
+     * Report the location of the gratuitous null terminator.
+     */
+    for (n = 1; n <= 5; n++) {
+	VSTRING_ADDCH(vp, 'x');
+	printf("payload/buffer size %d/%ld, strlen() %ld\n",
+	       n, (long) (vp)->vbuf.len, (long) strlen(vstring_str(vp)));
+    }
+
+    VSTRING_RESET(vp);
     while (argc-- > 0) {
 	vstring_strcat(vp, *argv++);
 	vstring_strcat(vp, ".");

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog_private.h,v 1.2 2017/01/12 01:58:39 christos Exp $	*/
+/*	$NetBSD: syslog_private.h,v 1.2.16.1 2020/04/08 14:07:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -40,13 +40,13 @@
 struct syslog_fun {
 	size_t (*timefun)(char *, size_t);
 	int  (*errfun)(int, char *, size_t);
-	int __printflike(3, 0) (*prfun)(char *, size_t, const char *, va_list);
+	int __sysloglike(3, 0) (*prfun)(char *, size_t, const char *, va_list);
 	int (*lock)(const struct syslog_data *);
 	int (*unlock)(const struct syslog_data *);
 };
 
-void _vxsyslogp_r(int , struct syslog_fun *, struct syslog_data *,
-    const char *, const char *, const char *, va_list);
+void _vxsyslogp_r(int, struct syslog_fun *, struct syslog_data *,
+    const char *, const char *, const char *, va_list) __sysloglike(6, 0);
 void _openlog_unlocked_r(const char *, int, int, struct syslog_data *);
 void _closelog_unlocked_r(struct syslog_data *);
 

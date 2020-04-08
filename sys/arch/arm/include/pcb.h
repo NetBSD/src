@@ -41,6 +41,14 @@
 #include <arm/arm32/pte.h>
 #include <arm/reg.h>
 
+struct pcb_faultinfo {
+	void *pfi_faultptep;
+	vaddr_t pfi_faultaddr;
+	u_int pfi_repeats;
+	pid_t pfi_lastpid;
+	uint8_t pfi_faulttype;
+};
+
 #define	pcb_ksp		pcb_sp
 
 struct pcb {
@@ -68,6 +76,7 @@ struct pcb {
 	void *	pcb_onfault;			/* On fault handler */
 	struct	vfpreg pcb_vfp;			/* VFP registers */
 	struct	vfpreg pcb_kernel_vfp;		/* kernel VFP state */
+	struct  pcb_faultinfo pcb_faultinfo;
 };
 
 /*

@@ -1,5 +1,5 @@
 /* Print SPARC instructions.
-   Copyright (C) 1989-2018 Free Software Foundation, Inc.
+   Copyright (C) 1989-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -63,8 +63,8 @@ static sparc_opcode_hash *opcode_hash_table[HASH_SIZE];
 
 /* Sign-extend a value which is N bits long.  */
 #define	SEX(value, bits) \
-	((((int)(value)) << ((8 * sizeof (int)) - bits))	\
-			 >> ((8 * sizeof (int)) - bits) )
+  ((int) (((value & ((1u << (bits - 1) << 1) - 1))	\
+	   ^ (1u << (bits - 1))) - (1u << (bits - 1))))
 
 static  char *reg_names[] =
 { "g0", "g1", "g2", "g3", "g4", "g5", "g6", "g7",
@@ -325,7 +325,7 @@ compare_opcodes (const void * a, const void * b)
      another, it is important to order the opcodes in the right order.  */
   for (i = 0; i < 32; ++i)
     {
-      unsigned long int x = 1 << i;
+      unsigned long int x = 1ul << i;
       int x0 = (match0 & x) != 0;
       int x1 = (match1 & x) != 0;
 
@@ -335,7 +335,7 @@ compare_opcodes (const void * a, const void * b)
 
   for (i = 0; i < 32; ++i)
     {
-      unsigned long int x = 1 << i;
+      unsigned long int x = 1ul << i;
       int x0 = (lose0 & x) != 0;
       int x1 = (lose1 & x) != 0;
 
@@ -712,8 +712,7 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 
 		  case 'h':
 		    (*info->fprintf_func) (stream, "%%hi(%#x)",
-					   ((unsigned) 0xFFFFFFFF
-					    & ((int) X_IMM22 (insn) << 10)));
+					   (unsigned) X_IMM22 (insn) << 10);
 		    break;
 
 		  case 'i':	/* 13 bit immediate.  */
@@ -1062,9 +1061,7 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		      && X_RD (prev_insn) == X_RS1 (insn))
 		    {
 		      (*info->fprintf_func) (stream, "\t! ");
-		      info->target =
-			((unsigned) 0xFFFFFFFF
-			 & ((int) X_IMM22 (prev_insn) << 10));
+		      info->target = (unsigned) X_IMM22 (prev_insn) << 10;
 		      if (imm_added_to_rs1)
 			info->target += X_SIMM (insn, 13);
 		      else

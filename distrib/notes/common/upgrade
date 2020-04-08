@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.30 2015/05/09 08:13:35 snj Exp $
+.\"	$NetBSD: upgrade,v 1.30.16.1 2020/04/08 14:03:48 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,6 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.
 .
 .Pp
 The easiest way to upgrade to

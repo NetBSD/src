@@ -1,4 +1,4 @@
-#	$NetBSD: t_static_destructor.sh,v 1.2 2018/03/24 00:26:51 kamil Exp $
+#	$NetBSD: t_static_destructor.sh,v 1.2.2.1 2020/04/08 14:09:13 martin Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -123,6 +123,11 @@ struct B {
 int main(void) {struct B b;return 0;}
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -pg -o hello test.cpp
+	case `uname -p` in
+	aarch64)
+		atf_expect_fail 'cc -pg is busted on aarch64'
+		;;
+	esac
 	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
 }
 
@@ -275,6 +280,11 @@ EOF
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -pg -o hello test.cpp -L. -ltest
 
+	case `uname -p` in
+	aarch64)
+		atf_expect_fail 'cc -pg is busted on aarch64'
+		;;
+	esac
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
 }

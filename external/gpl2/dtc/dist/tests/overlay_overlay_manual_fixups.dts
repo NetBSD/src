@@ -50,7 +50,7 @@
 		};
 	};
 
-	fragment@5 {
+	fragment@4 {
 		target = <0xffffffff /*&test*/>;
 
 		__overlay__ {
@@ -60,7 +60,7 @@
 		};
 	};
 
-	fragment@6 {
+	fragment@5 {
 		target = <0xffffffff /*&test*/>;
 
 		__overlay__ {
@@ -68,7 +68,7 @@
 		};
 	};
 
-	fragment@7 {
+	fragment@6 {
 		target = <0xffffffff /*&test*/>;
 
 		__overlay__ {
@@ -76,7 +76,7 @@
 		};
 	};
 
-	fragment@8 {
+	fragment@7 {
 		target = <0xffffffff /*&test*/>;
 
 		__overlay__ {
@@ -86,27 +86,27 @@
 		};
 	};
 
-	__local_fixups__ {
-		fragment@6 {
-			__overlay__ {
-				test-phandle = <4>;
-			};
-		};
-		fragment@7 {
-			__overlay__ {
-				test-several-phandle = <0 4>;
-			};
-		};
-	};
 	__fixups__ {
 		test = "/fragment@0:target:0",
 		       "/fragment@1:target:0",
 		       "/fragment@2:target:0",
 		       "/fragment@3:target:0",
+		       "/fragment@4:target:0",
 		       "/fragment@5:target:0",
+		       "/fragment@5/__overlay__:test-phandle:0",
 		       "/fragment@6:target:0",
-		       "/fragment@6/__overlay__:test-phandle:0",
-		       "/fragment@7:target:0",
-		       "/fragment@8:target:0";
+		       "/fragment@7:target:0";
+	};
+	__local_fixups__ {
+		fragment@5 {
+			__overlay__ {
+				test-phandle = <4>;
+			};
+		};
+		fragment@6 {
+			__overlay__ {
+				test-several-phandle = <0 4>;
+			};
+		};
 	};
 };

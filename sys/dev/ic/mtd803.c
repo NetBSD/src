@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.35.2.1 2019/06/10 22:07:11 christos Exp $ */
+/* $NetBSD: mtd803.c,v 1.35.2.2 2020/04/08 14:08:06 martin Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.35.2.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.35.2.2 2020/04/08 14:08:06 martin Exp $");
 
 
 #include <sys/param.h>
@@ -539,7 +539,7 @@ mtd_watchdog(struct ifnet *ifp)
 	int s;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->dev));
-	++sc->ethercom.ec_if.if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	mtd_stop(ifp, 0);
 
@@ -645,7 +645,7 @@ mtd_rxirq(struct mtd_softc *sc)
 			sc->desc[sc->cur_rx].stat = MTD_RXD_OWNER;
 			sc->desc[sc->cur_rx].conf = MTD_RXBUF_SIZE &
 							MTD_RXD_CONF_BUFS;
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			if (++sc->cur_rx >= MTD_NUM_RXD)
 				sc->cur_rx = 0;
 			continue;
@@ -662,7 +662,7 @@ mtd_rxirq(struct mtd_softc *sc)
 			sc->desc[sc->cur_rx].stat = MTD_RXD_OWNER;
 			sc->desc[sc->cur_rx].conf = MTD_RXBUF_SIZE &
 							MTD_RXD_CONF_BUFS;
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			if (++sc->cur_rx >= MTD_NUM_RXD)
 				sc->cur_rx = 0;
 			continue;
@@ -680,7 +680,7 @@ mtd_rxirq(struct mtd_softc *sc)
 		if (m == NULL) {
 			aprint_error_dev(sc->dev,
 			    "error pulling packet off interface\n");
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			continue;
 		}
 
@@ -701,7 +701,7 @@ mtd_txirq(struct mtd_softc *sc)
 	ifp->if_timer = 0;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
-	++ifp->if_opackets;
+	if_statinc(ifp, if_opackets);
 
 	/* XXX FIXME If there is some queued, do an mtd_start? */
 
@@ -755,44 +755,44 @@ mtd_irq_h(void *args)
 		if (status & MTD_ISR_RXBUN) {
 			aprint_error_dev(sc->dev,
 			    "receive buffer unavailable\n");
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 
 		if (status & MTD_ISR_RXERR) {
 			aprint_error_dev(sc->dev, "receive error\n");
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 
 		if (status & MTD_ISR_TXBUN) {
 			aprint_error_dev(sc->dev,
 			    "transmit buffer unavailable\n");
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 
 		if ((status & MTD_ISR_PDF)) {
 			aprint_error_dev(sc->dev,
 			    "parallel detection fault\n");
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 
 		if (status & MTD_ISR_FBUSERR) {
 			aprint_error_dev(sc->dev, "fatal bus error\n");
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 
 		if (status & MTD_ISR_TARERR) {
 			aprint_error_dev(sc->dev, "target error\n");
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 
 		if (status & MTD_ISR_MASTERR) {
 			aprint_error_dev(sc->dev, "master error\n");
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 
 		if (status & MTD_ISR_PARERR) {
 			aprint_error_dev(sc->dev, "parity error\n");
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 
 		if (status & MTD_ISR_RXIRQ)	/* Receive interrupt */

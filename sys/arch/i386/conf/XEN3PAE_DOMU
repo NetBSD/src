@@ -1,4 +1,4 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.2.104.1 2019/06/10 22:06:20 christos Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.2.104.2 2020/04/08 14:07:39 martin Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -98,7 +98,6 @@ file-system	PROCFS		# /proc
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 file-system	NILFS		# experimental - NTT's NiLFS(2)
@@ -230,9 +229,6 @@ pseudo-device	putter			# for puffs and pud
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda			# coda minicache <-> venus comm.
-
-# a pseudo device needed for SMBFS
-pseudo-device	nsmb			# experimental - SMB requester
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl

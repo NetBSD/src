@@ -1,5 +1,5 @@
 /* coff information for Zilog Z80
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This program is free software; you can redistribute it and/or modify

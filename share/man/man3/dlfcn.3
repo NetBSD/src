@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.33 2011/06/25 12:44:37 wiz Exp $
+.\"	$NetBSD: dlfcn.3,v 1.33.42.1 2020/04/08 14:07:21 martin Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 25, 2011
+.Dd January 13, 2020
 .Dt DLFCN 3
 .Os
 .Sh NAME
@@ -104,7 +104,7 @@ The
 .Fa mode
 parameter specifies symbol resolution time and symbol visibility.
 One of the following values may be used to specify symbol resolution time:
-.Bl -tag -width "RTLD_GLOBALXX" -offset indent
+.Bl -tag -width ".Dv RTLD_NODELETE" -offset indent
 .It Dv RTLD_NOW
 Symbols are resolved immediately.
 .It Dv RTLD_LAZY
@@ -113,8 +113,7 @@ This is the default value if resolution time is unspecified.
 .El
 .Pp
 One of the following values may be used to specify symbol visibility:
-.Pp
-.Bl -tag -width "RTLD_GLOBALXX" -offset indent
+.Bl -tag -width ".Dv RTLD_NODELETE" -offset indent
 .It Dv RTLD_GLOBAL
 The object's symbols and the symbols of its dependencies will be visible to
 other objects.
@@ -136,12 +135,12 @@ then it is promoted to
 Additionally, one of the following flags may be ORed into the
 .Fa mode
 argument:
-.Bl -tag -width "RTLD_NODELETEXX" -offset indent
+.Bl -tag -width ".Dv RTLD_NODELETE" -offset indent
 .It Dv RTLD_NODELETE
 Prevents unload of the loaded object on
 .Fn dlclose .
 The same behaviour may be requested by
-.Fl "z nodelete"
+.Fl z Cm nodelete
 option of the static linker
 .Xr ld 1 .
 .It Dv RTLD_NOLOAD
@@ -203,13 +202,14 @@ However, the symbols of an object's dependencies are always visible to it.
 All shared objects loaded at program startup are globally visible.
 Only the symbols in the main executable that are referenced by a
 shared object at link time will be visible unless it has been linked
-with the --export-dynamic option where all of its symbols will be
-visible.
+with the
+.Fl Fl export-dynamic
+option where all of its symbols will be visible.
 The following special
 .Fa handle
 values may be used with
 .Fn dlsym :
-.Bl -tag -width "RTLD_DEFAULTXX" -offset indent
+.Bl -tag -width ".Dv RTLD_DEFAULT" -offset indent
 .It Dv NULL
 Interpreted as a reference to the executable or shared object
 from which the call is being made.
@@ -251,15 +251,15 @@ and the
 must match in order for the symbol to be resolved.
 .Pp
 .Fn dladdr
-examines all currently mapped shared objects for a symbol whose address --
-as mapped in the process address space -- is closest to but not exceeding
+examines all currently mapped shared objects for a symbol whose address \(em
+as mapped in the process address space \(em is closest to but not exceeding
 the value passed in the first argument
 .Fa addr .
 The symbols of a shared object are only eligible if
-.Va addr
+.Fa addr
 is between the base address of the shared object and the value of the
 symbol
-.Dq _end
+.Va _end
 in the same shared object.
 If no object for which this condition holds
 true can be found,
@@ -272,23 +272,23 @@ and the shared object it is contained in.
 The
 .Fa dli
 argument points at a caller-provided
-.Va Dl_info
+.Vt Dl_info
 structure defined as follows:
 .Bd -literal -offset indent
 typedef struct {
-	const char  *dli_fname;     /* File defining the symbol */
-	void	    *dli_fbase;     /* Base address */
-	const char  *dli_sname;     /* Symbol name */
-	const void  *dli_saddr;     /* Symbol address */
+        const char  *dli_fname;     /* File defining the symbol */
+        void        *dli_fbase;     /* Base address */
+        const char  *dli_sname;     /* Symbol name */
+        const void  *dli_saddr;     /* Symbol address */
 } Dl_info;
 .Ed
 .Pp
 The structure members are further described as follows:
-.Bl -tag -width "dli_fnameXX"
-.It Li "dli_fname"
+.Bl -tag -width "Va"
+.It Va dli_fname
 The pathname of the shared object containing the address
 .Fa addr .
-.It Li "dli_fbase"
+.It Va dli_fbase
 The base address at which this shared object is loaded in the process
 address space.
 This may be zero if the symbol was found in the internally generated
@@ -299,9 +299,9 @@ see
 .Xr link 5
 .Pc
 which is not associated with a file.
-.It Li "dli_sname"
+.It Va dli_sname
 points at the nul-terminated name of the selected symbol
-.It Li "dli_saddr"
+.It Va dli_saddr
 is the actual address
 .Pq as it appears in the process address space
 of the symbol.
@@ -350,6 +350,7 @@ a module that needs libpthread but isn't linked against it itself.
 .Sh SEE ALSO
 .Xr ld 1 ,
 .Xr rtld 1 ,
+.Xr dlinfo 3 ,
 .Xr link 5
 .Sh HISTORY
 Some of the

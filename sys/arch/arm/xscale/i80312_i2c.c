@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_i2c.c,v 1.6 2012/01/10 18:55:37 jakllsch Exp $	*/
+/*	$NetBSD: i80312_i2c.c,v 1.6.48.1 2020/04/08 14:07:31 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_i2c.c,v 1.6 2012/01/10 18:55:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_i2c.c,v 1.6.48.1 2020/04/08 14:07:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -90,8 +90,6 @@ iic312_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* XXX Reset the I2C unit? */
-
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* XXX We don't currently use interrupts.  Fix this some day. */
 #if 0

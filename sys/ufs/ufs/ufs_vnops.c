@@ -1,7 +1,7 @@
-/*	$NetBSD: ufs_vnops.c,v 1.239.4.1 2019/06/10 22:09:58 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.239.4.2 2020/04/08 14:09:04 martin Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.239.4.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.239.4.2 2020/04/08 14:09:04 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -621,6 +621,7 @@ ufs_setattr(void *v)
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 out:
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
 	return (error);
 }
 
@@ -648,6 +649,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	ip->i_flag |= IN_CHANGE;
 	DIP_ASSIGN(ip, mode, ip->i_mode);
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
 	return (0);
 }
 
@@ -708,6 +710,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 #endif /* QUOTA || QUOTA2 */
 	ip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
 	return (0);
 }
 
@@ -873,7 +876,11 @@ ufs_whiteout(void *v)
 		newdir->d_namlen = cnp->cn_namelen;
 		memcpy(newdir->d_name, cnp->cn_nameptr,
 		    (size_t)cnp->cn_namelen);
-		newdir->d_name[cnp->cn_namelen] = '\0';
+
+		/* NUL terminate and zero out padding */
+		memset(&newdir->d_name[cnp->cn_namelen], 0,
+		    UFS_NAMEPAD(cnp->cn_namelen));
+
 		newdir->d_type = DT_WHT;
 		error = ufs_direnter(dvp, ulr, NULL, newdir, cnp, NULL);
 		pool_cache_put(ufs_direct_cache, newdir);

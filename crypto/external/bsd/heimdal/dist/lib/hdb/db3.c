@@ -1,4 +1,4 @@
-/*	$NetBSD: db3.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: db3.c,v 1.2.12.1 2020/04/08 14:03:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -56,6 +56,7 @@
 typedef struct {
     HDB hdb;            /* generic members */
     int lock_fd;        /* DB3-specific */
+    int do_sync;        /* DB3-specific */
 } DB3_HDB;
 
 
@@ -90,6 +91,32 @@ DB_destroy(krb5_context context, HDB *db)
     ret = hdb_clear_master_key (context, db);
     free(db->hdb_name);
     free(db);
+    return ret;
+}
+
+static krb5_error_code
+DB_set_sync(krb5_context context, HDB *db, int on)
+{
+    DB3_HDB *db3 = (DB3_HDB *)db;
+    DB *d = (DB*)db->hdb_db;
+    krb5_error_code ret = 0;
+
+    db3->do_sync = on;
+    if (on) {
+        ret = (*d->sync)(d, 0);
+        if (ret) {
+            if (ret == EACCES || ret == ENOSPC || ret == EINVAL) {
+                krb5_set_error_message(context, ret,
+                                       "Database %s put sync error: %s",
+                                       db->hdb_name, strerror(ret));
+            } else {
+                ret = HDB_ERR_UK_SERROR;
+                krb5_set_error_message(context, ret,
+                                       "Database %s put sync error: unknown (%d)",
+                                       db->hdb_name, ret);
+            }
+        }
+    }
     return ret;
 }
 
@@ -222,6 +249,7 @@ static krb5_error_code
 DB__put(krb5_context context, HDB *db, int replace,
 	krb5_data key, krb5_data value)
 {
+    DB3_HDB *db3 = (DB3_HDB *)db;
     DB *d = (DB*)db->hdb_db;
     DBT k, v;
     int code;
@@ -263,26 +291,13 @@ DB__put(krb5_context context, HDB *db, int replace,
         }
 	return code;
     }
-    code = (*d->sync)(d, 0);
-    if (code) {
-        if (code == EACCES || code == ENOSPC || code == EINVAL) {
-            krb5_set_error_message(context, code,
-                                   "Database %s put sync error: %s",
-                                   db->hdb_name, strerror(code));
-        } else {
-            code = HDB_ERR_UK_SERROR;
-            krb5_set_error_message(context, code,
-                                   "Database %s put sync error: unknown (%d)",
-                                   db->hdb_name, code);
-        }
-        return code;
-    }
-    return 0;
+    return db->hdb_set_sync(context, db, db3->do_sync);
 }
 
 static krb5_error_code
 DB__del(krb5_context context, HDB *db, krb5_data key)
 {
+    DB3_HDB *db3 = (DB3_HDB *)db;
     DB *d = (DB*)db->hdb_db;
     DBT k;
     krb5_error_code code;
@@ -306,21 +321,7 @@ DB__del(krb5_context context, HDB *db, krb5_data key)
         }
 	return code;
     }
-    code = (*d->sync)(d, 0);
-    if (code) {
-        if (code == EACCES || code == ENOSPC || code == EINVAL) {
-            krb5_set_error_message(context, code,
-                                   "Database %s del sync error: %s",
-                                   db->hdb_name, strerror(code));
-        } else {
-            code = HDB_ERR_UK_SERROR;
-            krb5_set_error_message(context, code,
-                                   "Database %s del sync error: unknown (%d)",
-                                   db->hdb_name, code);
-        }
-        return code;
-    }
-    return 0;
+    return db->hdb_set_sync(context, db, db3->do_sync);
 }
 
 #define RD_CACHE_SZ 0x8000     /* Minimal read cache size */
@@ -487,6 +488,7 @@ hdb_db3_create(krb5_context context, HDB **db,
     (*db)->hdb__put = DB__put;
     (*db)->hdb__del = DB__del;
     (*db)->hdb_destroy = DB_destroy;
+    (*db)->hdb_set_sync = DB_set_sync;
 
     (*db3)->lock_fd = -1;
     return 0;

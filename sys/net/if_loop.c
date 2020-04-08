@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.103.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.103.2.2 2020/04/08 14:08:57 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.103.2.1 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.103.2.2 2020/04/08 14:08:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -270,8 +270,8 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 	pktlen = m->m_pkthdr.len;
-	ifp->if_opackets++;
-	ifp->if_obytes += pktlen;
+
+	if_statadd2(ifp, if_opackets, 1, if_obytes, pktlen);
 
 #ifdef ALTQ
 	/*
@@ -358,8 +358,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		error = 0;
 
 		if (__predict_true(pktq_enqueue(pktq, m, 0))) {
-			ifp->if_ipackets++;
-			ifp->if_ibytes += pktlen;
+			if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
 		} else {
 			m_freem(m);
 			error = ENOBUFS;
@@ -374,8 +373,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		error = ENOBUFS;
 		goto out;
 	}
-	ifp->if_ipackets++;
-	ifp->if_ibytes += m->m_pkthdr.len;
+	if_statadd2(ifp, if_ipackets, 1, if_ibytes, m->m_pkthdr.len);
 	IF_ENQUEUE(ifq, m);
 	schednetisr(isr);
 	splx(s);
@@ -435,8 +433,7 @@ lostart(struct ifnet *ifp)
 				splx(s);
 				return;
 			}
-			ifp->if_ipackets++;
-			ifp->if_ibytes += pktlen;
+			if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
 			splx(s);
 			continue;
 		}
@@ -448,8 +445,7 @@ lostart(struct ifnet *ifp)
 		}
 		IF_ENQUEUE(ifq, m);
 		schednetisr(isr);
-		ifp->if_ipackets++;
-		ifp->if_ibytes += pktlen;
+		if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
 		splx(s);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem_test.c,v 1.3.2.2 2019/06/10 22:04:45 christos Exp $	*/
+/*	$NetBSD: mem_test.c,v 1.3.2.3 2020/04/08 14:07:09 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -55,6 +55,7 @@ default_memalloc(void *arg, size_t size) {
 	if (size == 0U) {
 		size = 1;
 	}
+	/* cppcheck-suppress leakNoVarFunctionCall */
 	return (malloc(size));
 }
 

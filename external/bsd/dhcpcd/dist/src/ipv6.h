@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -66,6 +66,11 @@
 #define IDGEN_RETRIES	3
 #define IDGEN_DELAY	1 /* second */
 
+/* Interface identifier length. Prefix + this == 128 for autoconf */
+#define ipv6_ifidlen(ifp)	64
+#define	IA6_CANAUTOCONF(ia)	\
+	((ia)->prefix_len + ipv6_ifidlen((ia)->iface) == 128)
+
 #ifndef IN6_ARE_MASKED_ADDR_EQUAL
 #define IN6_ARE_MASKED_ADDR_EQUAL(d, a, m)	(	\
 	(((d)->s6_addr32[0] ^ (a)->s6_addr32[0]) & (m)->s6_addr32[0]) == 0 && \
@@ -101,6 +106,11 @@
 /* This was fixed in NetBSD */
 #if defined(__NetBSD_Version__) && __NetBSD_Version__ >= 699002000
 #  undef IPV6_POLLADDRFLAG
+#endif
+
+/* Of course OpenBSD has their own special name. */
+#if !defined(IN6_IFF_TEMPORARY) && defined(IN6_IFF_PRIVACY)
+#define	IN6_IFF_TEMPORARY IN6_IFF_PRIVACY
 #endif
 
 #ifdef __sun
@@ -219,7 +229,7 @@ struct ipv6_state {
 	struct ll_callback_head ll_callbacks;
 
 #ifdef IPV6_MANAGETEMPADDR
-	time_t desync_factor;
+	uint32_t desync_factor;
 	uint8_t randomseed0[8]; /* upper 64 bits of MD5 digest */
 	uint8_t randomseed1[8]; /* lower 64 bits */
 	uint8_t randomid[8];
@@ -247,6 +257,7 @@ void ipv6_checkaddrflags(void *);
 void ipv6_markaddrsstale(struct interface *, unsigned int);
 void ipv6_deletestaleaddrs(struct interface *);
 int ipv6_addaddr(struct ipv6_addr *, const struct timespec *);
+int ipv6_doaddr(struct ipv6_addr *, struct timespec *);
 ssize_t ipv6_addaddrs(struct ipv6_addrhead *addrs);
 void ipv6_deleteaddr(struct ipv6_addr *);
 void ipv6_freedrop_addrs(struct ipv6_addrhead *, int,

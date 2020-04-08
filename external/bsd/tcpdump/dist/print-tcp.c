@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-tcp.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.8.12.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -156,6 +156,7 @@ tcp6_cksum(netdissect_options *ndo,
 				IPPROTO_TCP);
 }
 
+UNALIGNED_OK
 void
 tcp_print(netdissect_options *ndo,
           register const u_char *bp, register u_int length,

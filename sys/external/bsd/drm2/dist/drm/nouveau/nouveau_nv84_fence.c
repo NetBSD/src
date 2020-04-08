@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv84_fence.c,v 1.2.18.1 2019/06/10 22:08:06 christos Exp $	*/
+/*	$NetBSD: nouveau_nv84_fence.c,v 1.2.18.2 2020/04/08 14:08:24 martin Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,13 +25,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv84_fence.c,v 1.2.18.1 2019/06/10 22:08:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv84_fence.c,v 1.2.18.2 2020/04/08 14:08:24 martin Exp $");
 
 #include "nouveau_drm.h"
 #include "nouveau_dma.h"
 #include "nouveau_fence.h"
 
 #include "nv50_display.h"
+
+#include <linux/nbsd-namespace.h>
 
 u64
 nv84_fence_crtc(struct nouveau_channel *chan, int crtc)
@@ -217,11 +219,7 @@ nv84_fence_destroy(struct nouveau_drm *drm)
 		nouveau_bo_unpin(priv->bo);
 	nouveau_bo_ref(NULL, &priv->bo);
 	drm->fence = NULL;
-#ifdef __NetBSD__
-	linux_mutex_destroy(&priv->mutex);
-#else
 	mutex_destroy(&priv->mutex);
-#endif
 	kfree(priv);
 }
 
@@ -247,11 +245,7 @@ nv84_fence_create(struct nouveau_drm *drm)
 	priv->base.context_base = fence_context_alloc(priv->base.contexts);
 	priv->base.uevent = true;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&priv->mutex);
-#else
 	mutex_init(&priv->mutex);
-#endif
 
 	/* Use VRAM if there is any ; otherwise fallback to system memory */
 	domain = drm->device.info.ram_size != 0 ? TTM_PL_FLAG_VRAM :

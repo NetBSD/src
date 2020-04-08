@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.29.16.1 2019/06/10 22:07:27 christos Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.29.16.2 2020/04/08 14:08:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.29.16.1 2019/06/10 22:07:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.29.16.2 2020/04/08 14:08:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,8 +167,6 @@ struct wsdisplay_accessops pm2fb_accessops = {
 };
 
 /* I2C glue */
-static int pm2fb_i2c_acquire_bus(void *, int);
-static void pm2fb_i2c_release_bus(void *, int);
 static int pm2fb_i2c_send_start(void *, int);
 static int pm2fb_i2c_send_stop(void *, int);
 static int pm2fb_i2c_initiate_xfer(void *, i2c_addr_t, int);
@@ -1341,15 +1339,13 @@ pm2_setup_i2c(struct pm2fb_softc *sc)
 #endif
 
 	/* Fill in the i2c tag */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = pm2fb_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = pm2fb_i2c_release_bus;
 	sc->sc_i2c.ic_send_start = pm2fb_i2c_send_start;
 	sc->sc_i2c.ic_send_stop = pm2fb_i2c_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = pm2fb_i2c_initiate_xfer;
 	sc->sc_i2c.ic_read_byte = pm2fb_i2c_read_byte;
 	sc->sc_i2c.ic_write_byte = pm2fb_i2c_write_byte;
-	sc->sc_i2c.ic_exec = NULL;
 
 	DPRINTF("data: %08x\n", bus_space_read_4(sc->sc_memt, sc->sc_regh,
 		PM2_DISPLAY_DATA));
@@ -1447,19 +1443,6 @@ static uint32_t pm2fb_i2cbb_read(void *cookie)
 }
 
 /* higher level I2C stuff */
-static int
-pm2fb_i2c_acquire_bus(void *cookie, int flags)
-{
-	/* private bus */
-	return (0);
-}
-
-static void
-pm2fb_i2c_release_bus(void *cookie, int flags)
-{
-	/* private bus */
-}
-
 static int
 pm2fb_i2c_send_start(void *cookie, int flags)
 {

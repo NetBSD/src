@@ -1,4 +1,4 @@
-/*	$NetBSD: master_ent.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: master_ent.c,v 1.2.12.1 2020/04/08 14:06:54 martin Exp $	*/
 
 /*++
 /* NAME
@@ -59,6 +59,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System libraries. */
@@ -383,6 +388,10 @@ MASTER_SERV *get_master_ent()
 	serv->type = MASTER_SERV_TYPE_UNIX;
 	serv->listen_fd_count = 1;
 	serv->flags |= MASTER_FLAG_LOCAL_ONLY;
+    } else if (STR_SAME(transport, MASTER_XPORT_NAME_UXDG)) {
+	serv->type = MASTER_SERV_TYPE_UXDG;
+	serv->listen_fd_count = 1;
+	serv->flags |= MASTER_FLAG_LOCAL_ONLY;
     } else if (STR_SAME(transport, MASTER_XPORT_NAME_FIFO)) {
 	serv->type = MASTER_SERV_TYPE_FIFO;
 	serv->listen_fd_count = 1;
@@ -444,6 +453,9 @@ MASTER_SERV *get_master_ent()
 	    serv->name = mystrdup(name);
 	myfree(atmp);
     } else if (serv->type == MASTER_SERV_TYPE_UNIX) {
+	serv->name = mail_pathname(private ? MAIL_CLASS_PRIVATE :
+				   MAIL_CLASS_PUBLIC, name);
+    } else if (serv->type == MASTER_SERV_TYPE_UXDG) {
 	serv->name = mail_pathname(private ? MAIL_CLASS_PRIVATE :
 				   MAIL_CLASS_PUBLIC, name);
     } else if (serv->type == MASTER_SERV_TYPE_FIFO) {
@@ -595,6 +607,7 @@ void    print_master_ent(MASTER_SERV *serv)
 #ifdef MASTER_SERV_TYPE_PASS
 	     serv->type == MASTER_SERV_TYPE_PASS ? MASTER_XPORT_NAME_PASS :
 #endif
+	     serv->type == MASTER_SERV_TYPE_UXDG ? MASTER_XPORT_NAME_UXDG :
 	     "unknown transport type");
     msg_info("listen_fd_count: %d", serv->listen_fd_count);
     msg_info("wakeup: %d", serv->wakeup_time);

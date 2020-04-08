@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.31.4.1 2019/06/10 22:05:46 christos Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.31.4.2 2020/04/08 14:07:25 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -259,11 +259,6 @@ ENTRY(x86_curlwp)
 	movq	%gs:(CPU_INFO_CURLWP), %rax
 	ret
 END(x86_curlwp)
-
-ENTRY(cpu_set_curpri)
-	movl	%edi, %gs:(CPU_INFO_CURPRIORITY)
-	ret
-END(cpu_set_curpri)
 
 ENTRY(__byte_swap_u32_variable)
 	movl	%edi, %eax

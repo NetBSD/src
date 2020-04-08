@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.70 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.70.10.1 2020/04/08 14:08:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.70 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.70.10.1 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
 		if (vfs_busy(mp))
 			continue;
 		vput(dvp);
-		error = VFS_ROOT(mp, &tdvp);
+		error = VFS_ROOT(mp, LK_EXCLUSIVE, &tdvp);
 		vfs_unbusy(mp);
 		if (error) {
 			return (error);
@@ -1850,13 +1850,13 @@ union_getpages(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	KASSERT(mutex_owned(vp->v_interlock));
+	KASSERT(rw_lock_held(vp->v_uobj.vmobjlock));
 
 	if (ap->a_flags & PGO_LOCKED) {
 		return EBUSY;
 	}
 	ap->a_vp = OTHERVP(vp);
-	KASSERT(vp->v_interlock == ap->a_vp->v_interlock);
+	KASSERT(vp->v_uobj.vmobjlock == ap->a_vp->v_uobj.vmobjlock);
 
 	/* Just pass the request on to the underlying layer. */
 	return VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
@@ -1873,13 +1873,13 @@ union_putpages(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	KASSERT(mutex_owned(vp->v_interlock));
+	KASSERT(rw_lock_held(vp->v_uobj.vmobjlock));
 
 	ap->a_vp = OTHERVP(vp);
-	KASSERT(vp->v_interlock == ap->a_vp->v_interlock);
+	KASSERT(vp->v_uobj.vmobjlock == ap->a_vp->v_uobj.vmobjlock);
 
 	if (ap->a_flags & PGO_RECLAIM) {
-		mutex_exit(vp->v_interlock);
+		rw_exit(vp->v_uobj.vmobjlock);
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_vm.c,v 1.1.6.2 2019/06/10 22:07:02 christos Exp $	*/
+/*	$NetBSD: netbsd32_vm.c,v 1.1.6.3 2020/04/08 14:08:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_vm.c,v 1.1.6.2 2019/06/10 22:07:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_vm.c,v 1.1.6.3 2020/04/08 14:08:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,13 @@ netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *r
 #endif
 
 	error = sys_mmap(l, &ua, retval);
-	if ((u_long)*retval > (u_long)UINT_MAX) {
-		printf("netbsd32_mmap: retval out of range: 0x%lx\n",
-		    (u_long)*retval);
+	if (error == 0 && (u_long)*retval > (u_long)UINT_MAX) {
+		const char *name = curlwp->l_name;
+
+		if (name == NULL)
+			name = curproc->p_comm;
+		printf("netbsd32_mmap(%s:%u:%u): retval out of range: 0x%lx\n",
+		    name, curproc->p_pid, curlwp->l_lid, (u_long)*retval);
 		/* Should try to recover and return an error here. */
 	}
 	return error;

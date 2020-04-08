@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.54.2.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.54.2.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ struct uhci_soft_td {
  * aligned.
  * NOTE: Minimum size is 32 bytes.
  */
-#define UHCI_STD_SIZE ((sizeof(struct uhci_soft_td) + UHCI_TD_ALIGN - 1) / UHCI_TD_ALIGN * UHCI_TD_ALIGN)
+#define UHCI_STD_SIZE (roundup(sizeof(struct uhci_soft_td), UHCI_TD_ALIGN))
 #define UHCI_STD_CHUNK 128 /*(PAGE_SIZE / UHCI_TD_SIZE)*/
 
 /*
@@ -128,7 +128,7 @@ struct uhci_soft_qh {
 	int offs;			/* QH's offset in usb_dma_t */
 };
 /* See comment about UHCI_STD_SIZE. */
-#define UHCI_SQH_SIZE ((sizeof(struct uhci_soft_qh) + UHCI_QH_ALIGN - 1) / UHCI_QH_ALIGN * UHCI_QH_ALIGN)
+#define UHCI_SQH_SIZE (roundup(sizeof(struct uhci_soft_qh), UHCI_QH_ALIGN))
 #define UHCI_SQH_CHUNK 128 /*(PAGE_SIZE / UHCI_QH_SIZE)*/
 
 /*

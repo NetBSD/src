@@ -1,4 +1,4 @@
-/*	$NetBSD: smtputf8.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: smtputf8.h,v 1.2.16.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _SMTPUTF8_H_INCLUDED_
 #define _SMTPUTF8_H_INCLUDED_
@@ -18,7 +18,7 @@
   * environments with pre-existing mail flows that contain UTF8.
   * 
   * Prior to SMTPUTF8, mail flows that contain UTF8 worked because the vast
-  * majority of MTAs is perfectly capable of handling UTF8 in addres
+  * majority of MTAs is perfectly capable of handling UTF8 in address
   * localparts (and in headers), even if pre-SMTPUTF8 standards do not
   * support this practice.
   * 
@@ -27,7 +27,7 @@
   * client does not request SMTPUTF8 support, and because 2) a down-stream
   * MTA does not announce SMTPUTF8 support.
   * 
-  * While 1) is easy enough to avoid (keep accepting UTF8 in addres localparts
+  * While 1) is easy enough to avoid (keep accepting UTF8 in address localparts
   * just like Postfix has always done), 2) presents a thornier problem. The
   * root cause of that problem is the need for SMTPUTF8 autodetection.
   * 

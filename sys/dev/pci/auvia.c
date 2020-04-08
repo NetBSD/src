@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.78.10.1 2019/06/10 22:07:15 christos Exp $	*/
+/*	$NetBSD: auvia.c,v 1.78.10.2 2020/04/08 14:08:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.78.10.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.78.10.2 2020/04/08 14:08:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -749,8 +749,7 @@ auvia_round_blocksize(void *addr, int blk,
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233 && blk < 288)
 		blk = 288;
 
-	/* Avoid too many dma_ops. */
-	return uimin((blk & -32), AUVIA_MINBLKSZ);
+	return (blk & -32);
 }
 
 static int

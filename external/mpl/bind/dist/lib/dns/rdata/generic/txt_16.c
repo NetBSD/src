@@ -1,4 +1,4 @@
-/*	$NetBSD: txt_16.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -140,7 +140,7 @@ generic_fromstruct_txt(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 	uint8_t length;
 
-	REQUIRE(source != NULL);
+	REQUIRE(txt != NULL);
 	REQUIRE(txt->common.rdtype == type);
 	REQUIRE(txt->common.rdclass == rdclass);
 	REQUIRE(txt->txt != NULL && txt->txt_len != 0);
@@ -166,7 +166,7 @@ generic_tostruct_txt(ARGS_TOSTRUCT) {
 	dns_rdata_txt_t *txt = target;
 	isc_region_t r;
 
-	REQUIRE(target != NULL);
+	REQUIRE(txt != NULL);
 	REQUIRE(txt->common.rdclass == rdata->rdclass);
 	REQUIRE(txt->common.rdtype == rdata->type);
 	REQUIRE(!ISC_LINK_LINKED(&txt->common, link));
@@ -186,7 +186,7 @@ static inline void
 generic_freestruct_txt(ARGS_FREESTRUCT) {
 	dns_rdata_txt_t *txt = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(txt != NULL);
 
 	if (txt->mctx == NULL)
 		return;
@@ -209,7 +209,7 @@ tostruct_txt(ARGS_TOSTRUCT) {
 	dns_rdata_txt_t *txt = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_txt);
-	REQUIRE(target != NULL);
+	REQUIRE(txt != NULL);
 
 	txt->common.rdclass = rdata->rdclass;
 	txt->common.rdtype = rdata->type;
@@ -222,7 +222,7 @@ static inline void
 freestruct_txt(ARGS_FREESTRUCT) {
 	dns_rdata_txt_t *txt = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(txt != NULL);
 	REQUIRE(txt->common.rdtype == dns_rdatatype_txt);
 
 	generic_freestruct_txt(source);

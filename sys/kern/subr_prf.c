@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.171.2.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.171.2.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.171.2.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.171.2.2 2020/04/08 14:08:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -333,7 +333,7 @@ vpanic(const char *fmt, va_list ap)
 #ifdef DDB
 	db_panic();
 #endif
-	cpu_reboot(bootopt, NULL);
+	kern_reboot(bootopt, NULL);
 }
 
 /*

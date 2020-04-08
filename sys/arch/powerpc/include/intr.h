@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2018/04/19 21:50:07 christos Exp $ */
+/*	$NetBSD: intr.h,v 1.13.2.1 2020/04/08 14:07:49 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.13 2018/04/19 21:50:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.13.2.1 2020/04/08 14:07:49 martin Exp $");
 #endif
 
 #ifndef _POWERPC_INTR_MACHDEP_H_
@@ -92,8 +92,10 @@ struct intrhand {
 
 void softint_fast_dispatch(struct lwp *, int);
 
+#ifdef __HAVE_FAST_SOFTINTS
 #define softint_init_md		powerpc_softint_init_md
 #define softint_trigger		powerpc_softint_trigger
+#endif
 
 #ifdef __IMASK_T
 typedef __IMASK_T imask_t;

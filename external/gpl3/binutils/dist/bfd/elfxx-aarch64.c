@@ -1,5 +1,5 @@
 /* AArch64-specific support for ELF.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -19,6 +19,8 @@
    see <http://www.gnu.org/licenses/>.  */
 
 #include "sysdep.h"
+#include "bfd.h"
+#include "elf-bfd.h"
 #include "elfxx-aarch64.h"
 #include <stdarg.h>
 #include <string.h>
@@ -393,10 +395,12 @@ _bfd_aarch64_elf_put_addend (bfd *abfd,
 }
 
 bfd_vma
-_bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type r_type,
+_bfd_aarch64_elf_resolve_relocation (bfd *input_bfd,
+				     bfd_reloc_code_real_type r_type,
 				     bfd_vma place, bfd_vma value,
 				     bfd_vma addend, bfd_boolean weak_undef_p)
 {
+  bfd_boolean tls_reloc = TRUE;
   switch (r_type)
     {
     case BFD_RELOC_AARCH64_NONE:
@@ -444,6 +448,8 @@ _bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type r_type,
     case BFD_RELOC_AARCH64_MOVW_G2_NC:
     case BFD_RELOC_AARCH64_MOVW_G2_S:
     case BFD_RELOC_AARCH64_MOVW_G3:
+      tls_reloc = FALSE;
+      /* fall-through.  */
     case BFD_RELOC_AARCH64_TLSDESC_OFF_G0_NC:
     case BFD_RELOC_AARCH64_TLSDESC_OFF_G1:
     case BFD_RELOC_AARCH64_TLSGD_MOVW_G0_NC:
@@ -464,6 +470,15 @@ _bfd_aarch64_elf_resolve_relocation (bfd_reloc_code_real_type r_type,
     case BFD_RELOC_AARCH64_TLSLE_LDST32_TPREL_LO12:
     case BFD_RELOC_AARCH64_TLSLE_LDST64_TPREL_LO12:
     case BFD_RELOC_AARCH64_TLSLE_LDST8_TPREL_LO12:
+      /* Weak Symbols and TLS relocations are implementation defined.  For this
+	 case we choose to emit 0.  */
+      if (weak_undef_p && tls_reloc)
+	{
+	  _bfd_error_handler (_("%pB: warning: Weak TLS is implementation "
+				"defined and may not work as expected"),
+				input_bfd);
+	  value = place;
+	}
       value = value + addend;
       break;
 
@@ -640,16 +655,16 @@ _bfd_aarch64_elf_write_core_note (bfd *abfd, char *buf, int *bufsiz, int note_ty
 	va_start (ap, note_type);
 	memset (data, 0, sizeof (data));
 	strncpy (data + 40, va_arg (ap, const char *), 16);
-#if GCC_VERSION == 8001
+#if GCC_VERSION == 8000 || GCC_VERSION == 8001
 	DIAGNOSTIC_PUSH;
-	/* GCC 8.1 warns about 80 equals destination size with
+	/* GCC 8.0 and 8.1 warn about 80 equals destination size with
 	   -Wstringop-truncation:
 	   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85643
 	 */
 	DIAGNOSTIC_IGNORE_STRINGOP_TRUNCATION;
 #endif
 	strncpy (data + 56, va_arg (ap, const char *), 80);
-#if GCC_VERSION == 8001
+#if GCC_VERSION == 8000 || GCC_VERSION == 8001
 	DIAGNOSTIC_POP;
 #endif
 	va_end (ap);
@@ -679,5 +694,231 @@ _bfd_aarch64_elf_write_core_note (bfd *abfd, char *buf, int *bufsiz, int note_ty
 	return elfcore_write_note (abfd, buf, bufsiz, "CORE",
 				   note_type, data, sizeof (data));
       }
+    }
+}
+
+/* Find the first input bfd with GNU property and merge it with GPROP.  If no
+   such input is found, add it to a new section at the last input.  Update
+   GPROP accordingly.  */
+bfd *
+_bfd_aarch64_elf_link_setup_gnu_properties (struct bfd_link_info *info,
+					    uint32_t *gprop)
+{
+  asection *sec;
+  bfd *pbfd;
+  bfd *ebfd = NULL;
+  elf_property *prop;
+  unsigned align;
+
+  uint32_t gnu_prop = *gprop;
+
+  /* Find a normal input file with GNU property note.  */
+  for (pbfd = info->input_bfds;
+       pbfd != NULL;
+       pbfd = pbfd->link.next)
+    if (bfd_get_flavour (pbfd) == bfd_target_elf_flavour
+	&& bfd_count_sections (pbfd) != 0)
+      {
+	ebfd = pbfd;
+
+	if (elf_properties (pbfd) != NULL)
+	  break;
+      }
+
+  /* If ebfd != NULL it is either an input with property note or the last
+     input.  Either way if we have gnu_prop, we should add it (by creating
+     a section if needed).  */
+  if (ebfd != NULL && gnu_prop)
+    {
+      prop = _bfd_elf_get_property (ebfd,
+				    GNU_PROPERTY_AARCH64_FEATURE_1_AND,
+				    4);
+      if (gnu_prop & GNU_PROPERTY_AARCH64_FEATURE_1_BTI
+	  && !(prop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_BTI))
+	    _bfd_error_handler (_("%pB: warning: BTI turned on by -z force-bti "
+				  "when all inputs do not have BTI in NOTE "
+				  "section."), ebfd);
+      prop->u.number |= gnu_prop;
+      prop->pr_kind = property_number;
+
+      /* pbfd being NULL implies ebfd is the last input.  Create the GNU
+	 property note section.  */
+      if (pbfd == NULL)
+	{
+	  sec = bfd_make_section_with_flags (ebfd,
+					     NOTE_GNU_PROPERTY_SECTION_NAME,
+					     (SEC_ALLOC
+					      | SEC_LOAD
+					      | SEC_IN_MEMORY
+					      | SEC_READONLY
+					      | SEC_HAS_CONTENTS
+					      | SEC_DATA));
+	  if (sec == NULL)
+	    info->callbacks->einfo (
+	      _("%F%P: failed to create GNU property section\n"));
+
+          align = (bfd_get_mach (ebfd) & bfd_mach_aarch64_ilp32) ? 2 : 3;
+	  if (!bfd_set_section_alignment (sec, align))
+	    info->callbacks->einfo (_("%F%pA: failed to align section\n"),
+				    sec);
+
+	  elf_section_type (sec) = SHT_NOTE;
+	}
+    }
+
+  pbfd = _bfd_elf_link_setup_gnu_properties (info);
+
+  if (bfd_link_relocatable (info))
+    return pbfd;
+
+  /* If pbfd has any GNU_PROPERTY_AARCH64_FEATURE_1_AND properties, update
+     gnu_prop accordingly.  */
+  if (pbfd != NULL)
+    {
+      elf_property_list *p;
+
+      /* The property list is sorted in order of type.  */
+      for (p = elf_properties (pbfd); p; p = p->next)
+	{
+	  /* Check for all GNU_PROPERTY_AARCH64_FEATURE_1_AND.  */
+	  if (GNU_PROPERTY_AARCH64_FEATURE_1_AND == p->property.pr_type)
+	    {
+	      gnu_prop = (p->property.u.number
+			  & (GNU_PROPERTY_AARCH64_FEATURE_1_PAC
+			      | GNU_PROPERTY_AARCH64_FEATURE_1_BTI));
+	      break;
+	    }
+	  else if (GNU_PROPERTY_AARCH64_FEATURE_1_AND < p->property.pr_type)
+	    break;
+	}
+    }
+  *gprop = gnu_prop;
+  return pbfd;
+}
+
+/* Define elf_backend_parse_gnu_properties for AArch64.  */
+enum elf_property_kind
+_bfd_aarch64_elf_parse_gnu_properties (bfd *abfd, unsigned int type,
+				       bfd_byte *ptr, unsigned int datasz)
+{
+  elf_property *prop;
+
+  switch (type)
+    {
+    case GNU_PROPERTY_AARCH64_FEATURE_1_AND:
+      if (datasz != 4)
+	{
+	  _bfd_error_handler
+	    ( _("error: %pB: <corrupt AArch64 used size: 0x%x>"),
+	     abfd, datasz);
+	  return property_corrupt;
+	}
+      prop = _bfd_elf_get_property (abfd, type, datasz);
+      /* Combine properties of the same type.  */
+      prop->u.number |= bfd_h_get_32 (abfd, ptr);
+      prop->pr_kind = property_number;
+      break;
+
+    default:
+      return property_ignored;
+    }
+
+  return property_number;
+}
+
+/* Merge AArch64 GNU property BPROP with APROP also accounting for PROP.
+   If APROP isn't NULL, merge it with BPROP and/or PROP.  Vice-versa if BROP
+   isn't NULL.  Return TRUE if there is any update to APROP or if BPROP should
+   be merge with ABFD.  */
+bfd_boolean
+_bfd_aarch64_elf_merge_gnu_properties (struct bfd_link_info *info
+				       ATTRIBUTE_UNUSED,
+				       bfd *abfd ATTRIBUTE_UNUSED,
+				       elf_property *aprop,
+				       elf_property *bprop,
+				       uint32_t prop)
+{
+  unsigned int orig_number;
+  bfd_boolean updated = FALSE;
+  unsigned int pr_type = aprop != NULL ? aprop->pr_type : bprop->pr_type;
+
+  switch (pr_type)
+    {
+    case GNU_PROPERTY_AARCH64_FEATURE_1_AND:
+      {
+	if (aprop != NULL && bprop != NULL)
+	  {
+	    orig_number = aprop->u.number;
+	    aprop->u.number = (orig_number & bprop->u.number) | prop;
+	    updated = orig_number != aprop->u.number;
+	    /* Remove the property if all feature bits are cleared.  */
+	    if (aprop->u.number == 0)
+	      aprop->pr_kind = property_remove;
+	    break;
+	  }
+	/* If either is NULL, the AND would be 0 so, if there is
+	   any PROP, asign it to the input that is not NULL.  */
+	if (prop)
+	  {
+	    if (aprop != NULL)
+	      {
+		orig_number = aprop->u.number;
+		aprop->u.number = prop;
+		updated = orig_number != aprop->u.number;
+	      }
+	    else
+	      {
+		bprop->u.number = prop;
+		updated = TRUE;
+	      }
+	  }
+	/* No PROP and BPROP is NULL, so remove APROP.  */
+	else if (aprop != NULL)
+	  {
+	    aprop->pr_kind = property_remove;
+	    updated = TRUE;
+	  }
+      }
+      break;
+
+    default:
+      abort ();
+    }
+
+  return updated;
+}
+
+/* Fix up AArch64 GNU properties.  */
+void
+_bfd_aarch64_elf_link_fixup_gnu_properties
+  (struct bfd_link_info *info ATTRIBUTE_UNUSED,
+   elf_property_list **listp)
+{
+  elf_property_list *p, *prev;
+
+  for (p = *listp, prev = *listp; p; p = p->next)
+    {
+      unsigned int type = p->property.pr_type;
+      if (type == GNU_PROPERTY_AARCH64_FEATURE_1_AND)
+	{
+	  if (p->property.pr_kind == property_remove)
+	    {
+	      /* Remove empty property.  */
+	      if (prev == p)
+		{
+		  *listp = p->next;
+		  prev = *listp;
+		}
+	      else
+		  prev->next = p->next;
+	      continue;
+	    }
+	  prev = p;
+	}
+      else if (type > GNU_PROPERTY_HIPROC)
+	{
+	  /* The property list is sorted in order of type.  */
+	  break;
+	}
     }
 }

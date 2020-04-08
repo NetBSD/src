@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_sender_addr.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: verify_sender_addr.c,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -297,7 +297,7 @@ int     main(int argc, char **argv)
     verify_time = time((time_t *) 0);
 
     /*
-     * Compute the current probe sender addres.
+     * Compute the current probe sender address.
      */
     verify_sender = make_verify_sender_addr();
 

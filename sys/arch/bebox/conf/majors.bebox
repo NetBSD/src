@@ -1,4 +1,4 @@
-#	$NetBSD: majors.bebox,v 1.26.16.1 2019/06/10 22:05:59 christos Exp $
+#	$NetBSD: majors.bebox,v 1.26.16.2 2020/04/08 14:07:32 martin Exp $
 #
 # Device majors for bebox
 #
@@ -63,7 +63,7 @@ device-major	wsfont		char 62			wsfont
 device-major	pci		char 63			pci
 device-major	bktr		char 71			bktr
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

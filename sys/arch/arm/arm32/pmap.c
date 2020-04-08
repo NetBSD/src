@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.365.2.1 2019/06/10 22:05:51 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.365.2.2 2020/04/08 14:07:28 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
+ *   endorse or promote products derived from this software without specific
  *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
@@ -197,20 +197,23 @@
 #define _INTR_PRIVATE
 #endif
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.365.2.2 2020/04/08 14:07:28 martin Exp $");
+
+#include <sys/atomic.h>
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/intr.h>
-#include <sys/pool.h>
-#include <sys/kmem.h>
-#include <sys/cdefs.h>
-#include <sys/cpu.h>
-#include <sys/sysctl.h>
-#include <sys/bus.h>
 #include <sys/atomic.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
 #include <sys/kernhist.h>
+#include <sys/kmem.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm.h>
 #include <uvm/pmap/pmap_pvt.h>
@@ -220,8 +223,6 @@
 #ifdef DDB
 #include <arm/db_machdep.h>
 #endif
-
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.365.2.1 2019/06/10 22:05:51 christos Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -547,8 +548,8 @@ pmap_acquire_pmap_lock(pmap_t pm)
 	if (__predict_false(db_onproc != NULL))
 		return;
 #endif
-	
-	mutex_enter(pm->pm_lock);
+
+	mutex_enter(&pm->pm_lock);
 }
 
 static inline void
@@ -558,7 +559,7 @@ pmap_release_pmap_lock(pmap_t pm)
 	if (__predict_false(db_onproc != NULL))
 		return;
 #endif
-	mutex_exit(pm->pm_lock);
+	mutex_exit(&pm->pm_lock);
 }
 
 static inline void
@@ -614,7 +615,7 @@ struct l1_ttable {
 /*
  * L1 Page Tables are tracked using a Least Recently Used list.
  *  - New L1s are allocated from the HEAD.
- *  - Freed L1s are added to the TAIl.
+ *  - Freed L1s are added to the TAIL.
  *  - Recently accessed L1s (where an 'access' is some change to one of
  *    the userland pmaps which owns this L1) are moved to the TAIL.
  */
@@ -778,6 +779,19 @@ static void		pmap_init_l1(struct l1_ttable *, pd_entry_t *);
 #endif
 static vaddr_t		kernel_pt_lookup(paddr_t);
 
+#ifdef ARM_MMU_EXTENDED
+static struct pool_cache pmap_l1tt_cache;
+
+static int		pmap_l1tt_ctor(void *, void *, int);
+static void *		pmap_l1tt_alloc(struct pool *, int);
+static void		pmap_l1tt_free(struct pool *, void *);
+
+static struct pool_allocator pmap_l1tt_allocator = {
+	.pa_alloc = pmap_l1tt_alloc,
+	.pa_free = pmap_l1tt_free,
+	.pa_pagesz = L1TT_SIZE,
+};
+#endif
 
 /*
  * Misc variables
@@ -1096,7 +1110,7 @@ pmap_find_pv(struct vm_page_md *md, pmap_t pm, vaddr_t va)
 			break;
 	}
 
-	return (pv);
+	return pv;
 }
 
 /*
@@ -1213,7 +1227,7 @@ pmap_modify_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va,
 	KASSERT(!PV_IS_KENTRY_P(set_mask));
 
 	if ((npv = pmap_find_pv(md, pm, va)) == NULL)
-		return (0);
+		return 0;
 
 	NPDEBUG(PDB_PVDUMP,
 	    printf("pmap_modify_pv: pm %p, md %p, clr 0x%x, set 0x%x, flags 0x%x\n", pm, md, clr_mask, set_mask, npv->pv_flags));
@@ -1287,8 +1301,31 @@ pmap_modify_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va,
 
 	PMAPCOUNT(remappings);
 
-	return (oflags);
+	return oflags;
 }
+
+
+#if defined(ARM_MMU_EXTENDED)
+int
+pmap_maxproc_set(int nmaxproc)
+{
+	static const char pmap_l1ttpool_warnmsg[] =
+	    "WARNING: l1ttpool limit reached; increase kern.maxproc";
+
+//	pool_cache_setlowat(&pmap_l1tt_cache, nmaxproc);
+
+	/*
+	 * Set the hard limit on the pmap_l1tt_cache to the number
+	 * of processes the kernel is to support.  Log the limit
+	 * reached message max once a minute.
+	 */
+	pool_cache_sethardlimit(&pmap_l1tt_cache, nmaxproc,
+	    pmap_l1ttpool_warnmsg, 60);
+
+	return 0;
+}
+
+#endif
 
 /*
  * Allocate an L1 translation table for the specified pmap.
@@ -1298,33 +1335,11 @@ static void
 pmap_alloc_l1(pmap_t pm)
 {
 #ifdef ARM_MMU_EXTENDED
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	struct vm_page *pg;
-	bool ok __diagused;
-	for (;;) {
-#ifdef PMAP_NEED_ALLOC_POOLPAGE
-		pg = arm_pmap_alloc_poolpage(UVM_PGA_ZERO);
-#else
-		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
-#endif
-		if (pg != NULL)
-			break;
-		uvm_wait("pmapl1alloc");
-	}
-	pm->pm_l1_pa = VM_PAGE_TO_PHYS(pg);
-	vaddr_t va = pmap_direct_mapped_phys(pm->pm_l1_pa, &ok, 0);
-	KASSERT(ok);
-	KASSERT(va >= KERNEL_BASE);
+	vaddr_t va = (vaddr_t)pool_cache_get_paddr(&pmap_l1tt_cache, PR_WAITOK,
+	    &pm->pm_l1_pa);
 
-#else
-	KASSERTMSG(kernel_map != NULL, "pm %p", pm);
-	vaddr_t va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-	    UVM_KMF_WIRED|UVM_KMF_ZERO);
-	KASSERT(va);
-	pmap_extract(pmap_kernel(), va, &pm->pm_l1_pa);
-#endif
 	pm->pm_l1 = (pd_entry_t *)va;
-	PTE_SYNC_RANGE(pm->pm_l1, PAGE_SIZE / sizeof(pt_entry_t));
+	PTE_SYNC_RANGE(pm->pm_l1, L1TT_SIZE / sizeof(pt_entry_t));
 #else
 	struct l1_ttable *l1;
 	uint8_t domain;
@@ -1369,12 +1384,8 @@ static void
 pmap_free_l1(pmap_t pm)
 {
 #ifdef ARM_MMU_EXTENDED
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	struct vm_page *pg = PHYS_TO_VM_PAGE(pm->pm_l1_pa);
-	uvm_pagefree(pg);
-#else
-	uvm_km_free(kernel_map, (vaddr_t)pm->pm_l1, PAGE_SIZE, UVM_KMF_WIRED);
-#endif
+	pool_cache_put_paddr(&pmap_l1tt_cache, (void *)pm->pm_l1, pm->pm_l1_pa);
+
 	pm->pm_l1 = NULL;
 	pm->pm_l1_pa = 0;
 #else
@@ -1495,9 +1506,9 @@ pmap_get_l2_bucket(pmap_t pm, vaddr_t va)
 
 	if ((l2 = pm->pm_l2[L2_IDX(l1slot)]) == NULL ||
 	    (l2b = &l2->l2_bucket[L2_BUCKET(l1slot)])->l2b_kva == NULL)
-		return (NULL);
+		return NULL;
 
-	return (l2b);
+	return l2b;
 }
 
 /*
@@ -1525,7 +1536,7 @@ pmap_alloc_l2_bucket(pmap_t pm, vaddr_t va)
 		 * Need to allocate a new l2_dtable.
 		 */
 		if ((l2 = pmap_alloc_l2_dtable()) == NULL)
-			return (NULL);
+			return NULL;
 
 		/*
 		 * Link it into the parent pmap
@@ -1555,7 +1566,7 @@ pmap_alloc_l2_bucket(pmap_t pm, vaddr_t va)
 				pm->pm_l2[L2_IDX(l1slot)] = NULL;
 				pmap_free_l2_dtable(l2);
 			}
-			return (NULL);
+			return NULL;
 		}
 
 		l2->l2_occupancy++;
@@ -1576,7 +1587,7 @@ pmap_alloc_l2_bucket(pmap_t pm, vaddr_t va)
 #endif
 	}
 
-	return (l2b);
+	return l2b;
 }
 
 /*
@@ -1671,6 +1682,24 @@ pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 	pmap_free_l2_dtable(l2);
 }
 
+#if defined(ARM_MMU_EXTENDED)
+/*
+ * Pool cache constructors for L1 translation tables
+ */
+
+static int
+pmap_l1tt_ctor(void *arg, void *v, int flags)
+{
+#ifndef PMAP_INCLUDE_PTE_SYNC
+#error not supported
+#endif
+
+	memset(v, 0, L1TT_SIZE);
+	PTE_SYNC_RANGE(v, L1TT_SIZE / sizeof(pt_entry_t));
+	return 0;
+}
+#endif
+
 /*
  * Pool cache constructors for L2 descriptor tables, metadata and pmap
  * structures.
@@ -1712,7 +1741,7 @@ pmap_l2ptp_ctor(void *arg, void *v, int flags)
 
 	memset(v, 0, L2_TABLE_SIZE_REAL);
 	PTE_SYNC_RANGE(v, L2_TABLE_SIZE_REAL / sizeof(pt_entry_t));
-	return (0);
+	return 0;
 }
 
 static int
@@ -1720,7 +1749,7 @@ pmap_l2dtable_ctor(void *arg, void *v, int flags)
 {
 
 	memset(v, 0, sizeof(struct l2_dtable));
-	return (0);
+	return 0;
 }
 
 static int
@@ -1728,7 +1757,7 @@ pmap_pmap_ctor(void *arg, void *v, int flags)
 {
 
 	memset(v, 0, sizeof(struct pmap));
-	return (0);
+	return 0;
 }
 
 static void
@@ -1807,7 +1836,7 @@ pmap_get_vac_flags(const struct vm_page_md *md)
 	if (md->urw_mappings)
 		uidx |= 2;
 
-	return (pmap_vac_flags[uidx][kidx]);
+	return pmap_vac_flags[uidx][kidx];
 }
 
 static inline void
@@ -2693,9 +2722,10 @@ pmap_syncicache_page(struct vm_page_md *md, paddr_t pa)
 		 * Unmap the page(s).
 		 */
 		l2pte_reset(ptep + j);
+		PTE_SYNC(ptep + j);
+
 		pmap_tlb_flush_SE(kpm, dstp + i, PVF_REF | PVF_EXEC);
 	}
-	PTE_SYNC_RANGE(ptep, way_size / L2_S_SIZE);
 
 	md->pvh_attrs |= PVF_EXEC;
 	PMAPCOUNT(exec_synced);
@@ -2998,10 +3028,9 @@ pmap_create(void)
 
 	pm = pool_cache_get(&pmap_cache, PR_WAITOK);
 
-	mutex_init(&pm->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
-	uvm_obj_init(&pm->pm_obj, NULL, false, 1);
-	uvm_obj_setlock(&pm->pm_obj, &pm->pm_obj_lock);
+	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_NONE);
 
+	pm->pm_refs = 1;
 	pm->pm_stats.wired_count = 0;
 	pm->pm_stats.resident_count = 1;
 #ifdef ARM_MMU_EXTENDED
@@ -3021,7 +3050,7 @@ pmap_create(void)
 
 	pmap_pinit(pm);
 
-	return (pm);
+	return pm;
 }
 
 u_int
@@ -3251,7 +3280,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 					pmap_free_l2_bucket(pm, l2b, 0);
 					UVMHIST_LOG(maphist, "  <-- done (ENOMEM)",
 					    0, 0, 0, 0);
-					return (ENOMEM);
+					return ENOMEM;
 				}
 			}
 
@@ -3370,9 +3399,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				}
 			}
 		}
-#endif /* !ARM_MMU_EXTENDED */
 
-#ifndef ARM_MMU_EXTENDED
 		UVMHIST_LOG(maphist, "  is_cached %jd cs 0x%08jx",
 		    is_cached, pm->pm_cstate.cs_all, 0, 0);
 
@@ -3406,7 +3433,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 free_pv:
 	if (new_pv)
 		pool_put(&pmap_pv_pool, new_pv);
-	return (error);
+	return error;
 }
 
 /*
@@ -3439,6 +3466,12 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, " (pm=%#jx, sva=%#jx, eva=%#jx)",
 	    (uintptr_t)pm, sva, eva, 0);
+
+#ifdef PMAP_FAULTINFO
+	curpcb->pcb_faultinfo.pfi_faultaddr = 0;
+	curpcb->pcb_faultinfo.pfi_repeats = 0;
+	curpcb->pcb_faultinfo.pfi_faultptep = NULL;
+#endif
 
 	SLIST_INIT(&opv_list);
 	/*
@@ -3633,8 +3666,8 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 	KASSERT(PV_IS_KENTRY_P(pv->pv_flags));
 
 	/*
-	 * If we are removing a writeable mapping to a cached exec page,
-	 * if it's the last mapping then clear it execness other sync
+	 * We are removing a writeable mapping to a cached exec page, if
+	 * it's the last mapping then clear its execness otherwise sync
 	 * the page to the icache.
 	 */
 	if ((md->pvh_attrs & (PVF_NC|PVF_EXEC)) == PVF_EXEC
@@ -3740,8 +3773,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (!(flags & PMAP_NOCACHE))
 			npte |= pte_l2_s_cache_mode_pt;
 	} else {
-		switch (flags & PMAP_CACHE_MASK) {
+		switch (flags & (PMAP_CACHE_MASK | PMAP_DEV_MASK)) {
+		case PMAP_DEV ... PMAP_DEV | PMAP_CACHE_MASK:
+			break;
 		case PMAP_NOCACHE:
+			npte |= pte_l2_s_nocache_mode;
 			break;
 		case PMAP_WRITE_COMBINE:
 			npte |= pte_l2_s_wc_mode;
@@ -4756,7 +4792,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 out:
 	pmap_release_pmap_lock(pm);
 
-	return (rv);
+	return rv;
 }
 
 /*
@@ -5149,7 +5185,7 @@ pmap_update(pmap_t pm)
 	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
 
-void
+bool
 pmap_remove_all(pmap_t pm)
 {
 
@@ -5177,6 +5213,7 @@ pmap_remove_all(pmap_t pm)
 	pmap_tlb_asid_release_all(pm);
 #endif
 	pm->pm_remove_all = true;
+	return false;
 }
 
 /*
@@ -5187,8 +5224,6 @@ void
 pmap_destroy(pmap_t pm)
 {
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-
-	u_int count;
 
 	if (pm == NULL)
 		return;
@@ -5208,10 +5243,7 @@ pmap_destroy(pmap_t pm)
 	/*
 	 * Drop reference count
 	 */
-	mutex_enter(pm->pm_lock);
-	count = --pm->pm_obj.uo_refs;
-	mutex_exit(pm->pm_lock);
-	if (count > 0) {
+	if (atomic_dec_uint_nv(&pm->pm_refs) > 0) {
 #ifndef ARM_MMU_EXTENDED
 		if (pmap_is_current(pm)) {
 			if (pm != pmap_kernel())
@@ -5249,8 +5281,7 @@ pmap_destroy(pmap_t pm)
 		ci->ci_pmap_lastuser = NULL;
 #endif
 
-	uvm_obj_destroy(&pm->pm_obj, false);
-	mutex_destroy(&pm->pm_obj_lock);
+	mutex_destroy(&pm->pm_lock);
 	pool_cache_put(&pmap_cache, pm);
 	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
@@ -5272,9 +5303,7 @@ pmap_reference(pmap_t pm)
 	pmap_use_l1(pm);
 #endif
 
-	mutex_enter(pm->pm_lock);
-	pm->pm_obj.uo_refs++;
-	mutex_exit(pm->pm_lock);
+	atomic_inc_uint(&pm->pm_refs);
 }
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
@@ -5772,6 +5801,8 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 {
 	paddr_t pa;
 
+	KASSERT((va & PGOFSET) == 0);
+
 	if (uvm.page_init_done == false) {
 #ifdef PMAP_STEAL_MEMORY
 		pv_addr_t pv;
@@ -5786,38 +5817,44 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 		pa = pv.pv_pa;
 #else
 		if (uvm_page_physget(&pa) == false)
-			return (1);
+			return 1;
 #endif	/* PMAP_STEAL_MEMORY */
 	} else {
 		struct vm_page *pg;
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 		if (pg == NULL)
-			return (1);
+			return 1;
 		pa = VM_PAGE_TO_PHYS(pg);
 		/*
-		 * This new page must not have any mappings.  Enter it via
-		 * pmap_kenter_pa and let that routine do the hard work.
+		 * This new page must not have any mappings.
 		 */
 		struct vm_page_md *md __diagused = VM_PAGE_TO_MD(pg);
 		KASSERT(SLIST_EMPTY(&md->pvh_list));
-		pmap_kenter_pa(va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE|PMAP_PTE);
 	}
+
+	/*
+	 * Enter it via pmap_kenter_pa and let that routine do the hard work.
+	 */
+	pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
+	    PMAP_KMPAGE | PMAP_PTE);
 
 	if (pap)
 		*pap = pa;
 
 	PMAPCOUNT(pt_mappings);
-#ifdef DEBUG
-	struct l2_bucket * const l2b = pmap_get_l2_bucket(pmap_kernel(), va);
-	KDASSERT(l2b != NULL);
 
-	pt_entry_t * const ptep = &l2b->l2b_kva[l2pte_index(va)];
-	const pt_entry_t opte = *ptep;
-	KDASSERT((opte & L2_S_CACHE_MASK) == pte_l2_s_cache_mode_pt);
-#endif
+	const pmap_t kpm __diagused = pmap_kernel();
+	struct l2_bucket * const l2b __diagused = pmap_get_l2_bucket(kpm, va);
+	KASSERT(l2b != NULL);
+
+	pt_entry_t * const ptep __diagused = &l2b->l2b_kva[l2pte_index(va)];
+	const pt_entry_t pte __diagused = *ptep;
+	KASSERT(l2pte_valid_p(pte));
+	KASSERT((pte & L2_S_CACHE_MASK) == pte_l2_s_cache_mode_pt);
+
 	memset((void *)va, 0, PAGE_SIZE);
-	return (0);
+
+	return 0;
 }
 
 /*
@@ -5827,13 +5864,11 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 static inline struct l2_bucket *
 pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 {
+	const size_t l1slot = l1pte_index(va);
 	struct l2_dtable *l2;
-	struct l2_bucket *l2b;
-	u_short l1slot;
 	vaddr_t nva;
 
-	l1slot = l1pte_index(va);
-
+	CTASSERT((PAGE_SIZE % L2_TABLE_SIZE_REAL) == 0);
 	if ((l2 = pm->pm_l2[L2_IDX(l1slot)]) == NULL) {
 		/*
 		 * No mapping at this address, as there is
@@ -5846,7 +5881,7 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 			 * Need to allocate a backing page
 			 */
 			if (pmap_grow_map(nva, NULL))
-				return (NULL);
+				return NULL;
 		}
 
 		l2 = (struct l2_dtable *)nva;
@@ -5857,8 +5892,8 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 			 * The new l2_dtable straddles a page boundary.
 			 * Map in another page to cover it.
 			 */
-			if (pmap_grow_map(nva, NULL))
-				return (NULL);
+			if (pmap_grow_map(nva & ~PGOFSET, NULL))
+				return NULL;
 		}
 
 		pmap_kernel_l2dtable_kva = nva;
@@ -5869,7 +5904,7 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 		pm->pm_l2[L2_IDX(l1slot)] = l2;
 	}
 
-	l2b = &l2->l2_bucket[L2_BUCKET(l1slot)];
+	struct l2_bucket * const l2b = &l2->l2_bucket[L2_BUCKET(l1slot)];
 
 	/*
 	 * Fetch pointer to the L2 page table associated with the address.
@@ -5888,7 +5923,7 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 			 * Need to allocate a backing page
 			 */
 			if (pmap_grow_map(nva, &pmap_kernel_l2ptp_phys))
-				return (NULL);
+				return NULL;
 			PTE_SYNC_RANGE(ptep, PAGE_SIZE / sizeof(pt_entry_t));
 		}
 
@@ -5901,7 +5936,7 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 		pmap_kernel_l2ptp_phys += L2_TABLE_SIZE_REAL;
 	}
 
-	return (l2b);
+	return l2b;
 }
 
 vaddr_t
@@ -5947,6 +5982,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		const pd_entry_t npde = L1_C_PROTO | l2b->l2b_pa
 		    | L1_C_DOM(PMAP_DOMAIN_KERNEL);
 #ifdef ARM_MMU_EXTENDED
+		KASSERT(*pdep == 0);
 		l1pte_setone(pdep, npde);
 #else
 		/* Distribute new L1 entry to all other L1s */
@@ -5975,7 +6011,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	splx(s);
 
 out:
-	return (pmap_curmaxkvaddr);
+	return pmap_curmaxkvaddr;
 }
 
 /************************ Utility routines ****************************/
@@ -6175,9 +6211,8 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	 */
 	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&kpm_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&pm->pm_obj_lock, MUTEX_DEFAULT, IPL_VM);
-	uvm_obj_init(&pm->pm_obj, NULL, false, 1);
-	uvm_obj_setlock(&pm->pm_obj, &pm->pm_obj_lock);
+	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_VM);
+	pm->pm_refs = 1;
 
 	VPRINTF("l1pt ");
 	/*
@@ -6435,7 +6470,7 @@ pmap_set_pt_cache_mode(pd_entry_t *kl1, vaddr_t va, size_t nptes)
 		va += PAGE_SIZE;
 	}
 
-	return (rv);
+	return rv;
 #endif
 }
 
@@ -6481,6 +6516,17 @@ pmap_init(void)
 	pool_setlowat(&pmap_pv_pool, (PAGE_SIZE / sizeof(struct pv_entry)) * 2);
 
 #ifdef ARM_MMU_EXTENDED
+	/*
+	 * Initialise the L1 pool and cache.
+	 */
+
+	pool_cache_bootstrap(&pmap_l1tt_cache, L1TT_SIZE, L1TT_SIZE,
+	    0, 0, "l1ttpl", &pmap_l1tt_allocator, IPL_NONE, pmap_l1tt_ctor,
+	     NULL, NULL);
+
+	int error __diagused = pmap_maxproc_set(maxproc);
+	KASSERT(error == 0);
+
 	pmap_tlb_info_evcnt_attach(&pmap_tlb0_info);
 #endif
 
@@ -6498,12 +6544,12 @@ pmap_bootstrap_pv_page_alloc(struct pool *pp, int flags)
 	void *rv;
 
 	if (pmap_initialized)
-		return (pool_page_alloc(pp, flags));
+		return pool_page_alloc(pp, flags);
 
 	if (free_bootstrap_pages) {
 		rv = free_bootstrap_pages;
 		free_bootstrap_pages = *((void **)rv);
-		return (rv);
+		return rv;
 	}
 
 	KASSERT(kernel_map != NULL);
@@ -6512,7 +6558,7 @@ pmap_bootstrap_pv_page_alloc(struct pool *pp, int flags)
 
 	KASSERT(new_page > last_bootstrap_page);
 	last_bootstrap_page = new_page;
-	return ((void *)new_page);
+	return (void *)new_page;
 }
 
 static void
@@ -6531,6 +6577,76 @@ pmap_bootstrap_pv_page_free(struct pool *pp, void *v)
 		return;
 	}
 }
+
+
+#if defined(ARM_MMU_EXTENDED)
+static void *
+pmap_l1tt_alloc(struct pool *pp, int flags)
+{
+	struct pglist plist;
+	vaddr_t va;
+
+	const int waitok = flags & PR_WAITOK;
+
+	int error = uvm_pglistalloc(L1TT_SIZE, 0, -1, L1TT_SIZE, 0, &plist, 1,
+	    waitok);
+	if (error)
+		panic("Cannot allocate L1TT physical pages, %d", error);
+
+	struct vm_page *pg = TAILQ_FIRST(&plist);
+#if !defined( __HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+
+	/* Allocate a L1 translation table VA */
+	va = uvm_km_alloc(kernel_map, L1TT_SIZE, L1TT_SIZE, UVM_KMF_VAONLY);
+	if (va == 0)
+		panic("Cannot allocate L1TT KVA");
+
+	const vaddr_t eva = va + L1TT_SIZE;
+	vaddr_t mva = va;
+	while (pg && mva < eva) {
+		paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+		pmap_kenter_pa(mva, pa,
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE|PMAP_PTE);
+
+		mva += PAGE_SIZE;
+		pg = TAILQ_NEXT(pg, pageq.queue);
+	}
+	KASSERTMSG(pg == NULL && mva == eva, "pg %p mva %" PRIxVADDR
+	    " eva %" PRIxVADDR, pg, mva, eva);
+#else
+	bool ok;
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	va = pmap_direct_mapped_phys(pa, &ok, 0);
+	KASSERT(ok);
+	KASSERT(va >= KERNEL_BASE);
+#endif
+
+	return (void *)va;
+}
+
+static void
+pmap_l1tt_free(struct pool *pp, void *v)
+{
+	vaddr_t va = (vaddr_t)v;
+
+#if !defined( __HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+	uvm_km_free(kernel_map, va, L1TT_SIZE, UVM_KMF_WIRED);
+#else
+#if defined(KERNEL_BASE_VOFFSET)
+	paddr_t pa = va - KERNEL_BASE_VOFFSET;
+#else
+	paddr_t pa = va - KERNEL_BASE + physical_start;
+#endif
+	const paddr_t epa = pa + L1TT_SIZE;
+
+	for (; pa < epa; pa += PAGE_SIZE) {
+		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+		uvm_pagefree(pg);
+	}
+#endif
+}
+#endif
 
 /*
  * pmap_postinit()
@@ -6615,7 +6731,7 @@ pmap_postinit(void)
  * find them as necessary.
  *
  * Note that the data on this list MUST remain valid after initarm() returns,
- * as pmap_bootstrap() uses it to contruct L2 table metadata.
+ * as pmap_bootstrap() uses it to construct L2 table metadata.
  */
 SLIST_HEAD(, pv_addr) kernel_pt_list = SLIST_HEAD_INITIALIZER(kernel_pt_list);
 
@@ -6626,9 +6742,9 @@ kernel_pt_lookup(paddr_t pa)
 
 	SLIST_FOREACH(pv, &kernel_pt_list, pv_list) {
 		if (pv->pv_pa == (pa & ~PGOFSET))
-			return (pv->pv_va | (pa & PGOFSET));
+			return pv->pv_va | (pa & PGOFSET);
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -6647,8 +6763,7 @@ pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 
 	switch (cache) {
 	case PTE_NOCACHE:
-	default:
-		fl = 0;
+		fl = pte_l1_s_nocache_mode;
 		break;
 
 	case PTE_CACHE:
@@ -6657,6 +6772,11 @@ pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 
 	case PTE_PAGETABLE:
 		fl = pte_l1_s_cache_mode_pt;
+		break;
+
+	case PTE_DEV:
+	default:
+		fl = 0;
 		break;
 	}
 
@@ -6683,8 +6803,7 @@ pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 
 	switch (cache) {
 	case PTE_NOCACHE:
-	default:
-		npte = 0;
+		npte = pte_l2_s_nocache_mode;
 		break;
 
 	case PTE_CACHE:
@@ -6693,6 +6812,10 @@ pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 
 	case PTE_PAGETABLE:
 		npte = pte_l2_s_cache_mode_pt;
+		break;
+
+	default:
+		npte = 0;
 		break;
 	}
 
@@ -6762,10 +6885,9 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 
 	switch (cache) {
 	case PTE_NOCACHE:
-	default:
-		f1 = 0;
-		f2l = 0;
-		f2s = 0;
+		f1 = pte_l1_s_nocache_mode;
+		f2l = pte_l2_l_nocache_mode;
+		f2s = pte_l2_s_nocache_mode;
 		break;
 
 	case PTE_CACHE:
@@ -6778,6 +6900,13 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		f1 = pte_l1_s_cache_mode_pt;
 		f2l = pte_l2_l_cache_mode_pt;
 		f2s = pte_l2_s_cache_mode_pt;
+		break;
+
+	case PTE_DEV:
+	default:
+		f1 = 0;
+		f2l = 0;
+		f2s = 0;
 		break;
 	}
 
@@ -6874,7 +7003,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		resid -= PAGE_SIZE;
 	}
 	VPRINTF("\n");
-	return (size);
+	return size;
 }
 
 /*
@@ -6948,7 +7077,7 @@ pmap_devmap_find_pa(paddr_t pa, psize_t size)
 	int i;
 
 	if (pmap_devmap_table == NULL)
-		return (NULL);
+		return NULL;
 
 	endpa = (uint64_t)pa + (uint64_t)(size - 1);
 
@@ -6956,10 +7085,10 @@ pmap_devmap_find_pa(paddr_t pa, psize_t size)
 		if (pa >= pmap_devmap_table[i].pd_pa &&
 		    endpa <= (uint64_t)pmap_devmap_table[i].pd_pa +
 			     (uint64_t)(pmap_devmap_table[i].pd_size - 1))
-			return (&pmap_devmap_table[i]);
+			return &pmap_devmap_table[i];
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 const struct pmap_devmap *
@@ -6968,16 +7097,16 @@ pmap_devmap_find_va(vaddr_t va, vsize_t size)
 	int i;
 
 	if (pmap_devmap_table == NULL)
-		return (NULL);
+		return NULL;
 
 	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
 		if (va >= pmap_devmap_table[i].pd_va &&
 		    va + size - 1 <= pmap_devmap_table[i].pd_va +
 				     pmap_devmap_table[i].pd_size - 1)
-			return (&pmap_devmap_table[i]);
+			return &pmap_devmap_table[i];
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /********************** PTE initialization routines **************************/
@@ -6990,16 +7119,19 @@ pmap_devmap_find_va(vaddr_t va, vsize_t size)
  * them (though, they shouldn't).
  */
 
+pt_entry_t	pte_l1_s_nocache_mode;
 pt_entry_t	pte_l1_s_cache_mode;
 pt_entry_t	pte_l1_s_wc_mode;
 pt_entry_t	pte_l1_s_cache_mode_pt;
 pt_entry_t	pte_l1_s_cache_mask;
 
+pt_entry_t	pte_l2_l_nocache_mode;
 pt_entry_t	pte_l2_l_cache_mode;
 pt_entry_t	pte_l2_l_wc_mode;
 pt_entry_t	pte_l2_l_cache_mode_pt;
 pt_entry_t	pte_l2_l_cache_mask;
 
+pt_entry_t	pte_l2_s_nocache_mode;
 pt_entry_t	pte_l2_s_cache_mode;
 pt_entry_t	pte_l2_s_wc_mode;
 pt_entry_t	pte_l2_s_cache_mode_pt;
@@ -7033,14 +7165,17 @@ void
 pmap_pte_init_generic(void)
 {
 
+	pte_l1_s_nocache_mode = 0;
 	pte_l1_s_cache_mode = L1_S_B|L1_S_C;
 	pte_l1_s_wc_mode = L1_S_B;
 	pte_l1_s_cache_mask = L1_S_CACHE_MASK_generic;
 
+	pte_l2_l_nocache_mode = 0;
 	pte_l2_l_cache_mode = L2_B|L2_C;
 	pte_l2_l_wc_mode = L2_B;
 	pte_l2_l_cache_mask = L2_L_CACHE_MASK_generic;
 
+	pte_l2_s_nocache_mode = 0;
 	pte_l2_s_cache_mode = L2_B|L2_C;
 	pte_l2_s_wc_mode = L2_B;
 	pte_l2_s_cache_mask = L2_S_CACHE_MASK_generic;
@@ -7424,12 +7559,11 @@ pmap_uarea(vaddr_t va)
 
 
 #if defined(CPU_ARM11MPCORE)
-
 void
 pmap_pte_init_arm11mpcore(void)
 {
 
-	/* cache mode is controlled by 5 bits (B, C, TEX) */
+	/* cache mode is controlled by 5 bits (B, C, TEX[2:0]) */
 	pte_l1_s_cache_mask = L1_S_CACHE_MASK_armv6;
 	pte_l2_l_cache_mask = L2_L_CACHE_MASK_armv6;
 #if defined(ARM11MPCORE_COMPAT_MMU) || defined(ARMV6_EXTENDED_SMALL_PAGE)
@@ -7508,6 +7642,54 @@ pmap_pte_init_arm11mpcore(void)
 #endif	/* CPU_ARM11MPCORE */
 
 
+#if ARM_MMU_V6 == 1
+void
+pmap_pte_init_armv6(void)
+{
+	/*
+	 * The ARMv6-A MMU is mostly compatible with generic. If the
+	 * AP field is zero, that now means "no access" rather than
+	 * read-only. The prototypes are a little different because of
+	 * the XN bit.
+	 */
+	pmap_pte_init_generic();
+
+	pte_l1_s_nocache_mode = L1_S_XS_TEX(1);
+	pte_l2_l_nocache_mode = L2_XS_L_TEX(1);
+	pte_l2_s_nocache_mode = L2_XS_T_TEX(1);
+
+#ifdef ARM11_COMPAT_MMU
+	/* with AP[0..3] */
+	pte_l1_ss_proto = L1_SS_PROTO_armv6;
+#else
+	pte_l1_s_cache_mask = L1_S_CACHE_MASK_armv6n;
+	pte_l2_l_cache_mask = L2_L_CACHE_MASK_armv6n;
+	pte_l2_s_cache_mask = L2_S_CACHE_MASK_armv6n;
+
+	pte_l1_ss_proto = L1_SS_PROTO_armv6;
+	pte_l1_s_proto = L1_S_PROTO_armv6;
+	pte_l1_c_proto = L1_C_PROTO_armv6;
+	pte_l2_s_proto = L2_S_PROTO_armv6n;
+
+	pte_l1_s_prot_u = L1_S_PROT_U_armv6;
+	pte_l1_s_prot_w = L1_S_PROT_W_armv6;
+	pte_l1_s_prot_ro = L1_S_PROT_RO_armv6;
+	pte_l1_s_prot_mask = L1_S_PROT_MASK_armv6;
+
+	pte_l2_l_prot_u = L2_L_PROT_U_armv6n;
+	pte_l2_l_prot_w = L2_L_PROT_W_armv6n;
+	pte_l2_l_prot_ro = L2_L_PROT_RO_armv6n;
+	pte_l2_l_prot_mask = L2_L_PROT_MASK_armv6n;
+
+	pte_l2_s_prot_u = L2_S_PROT_U_armv6n;
+	pte_l2_s_prot_w = L2_S_PROT_W_armv6n;
+	pte_l2_s_prot_ro = L2_S_PROT_RO_armv6n;
+	pte_l2_s_prot_mask = L2_S_PROT_MASK_armv6n;
+
+#endif
+}
+#endif /* ARM_MMU_V6 */
+
 #if ARM_MMU_V7 == 1
 void
 pmap_pte_init_armv7(void)
@@ -7521,6 +7703,10 @@ pmap_pte_init_armv7(void)
 	pmap_pte_init_generic();
 
 	pmap_needs_pte_sync = 1;
+
+	pte_l1_s_nocache_mode = L1_S_XS_TEX(1);
+	pte_l2_l_nocache_mode = L2_XS_L_TEX(1);
+	pte_l2_s_nocache_mode = L2_XS_T_TEX(1);
 
 	pte_l1_s_cache_mask = L1_S_CACHE_MASK_armv7;
 	pte_l2_l_cache_mask = L2_L_CACHE_MASK_armv7;
@@ -7673,21 +7859,27 @@ pmap_dump(pmap_t pm)
 					ch = '.';
 				} else {
 					occ--;
-					switch (pte & 0x0c) {
+					switch (pte & 0x4c) {
 					case 0x00:
-						ch = 'D'; /* No cache No buff */
+						ch = 'N'; /* No cache No buff */
 						break;
 					case 0x04:
 						ch = 'B'; /* No cache buff */
 						break;
 					case 0x08:
-						if (pte & 0x40)
-							ch = 'm';
-						else
-						   ch = 'C'; /* Cache No buff */
+						ch = 'C'; /* Cache No buff */
 						break;
 					case 0x0c:
 						ch = 'F'; /* Cache Buff */
+						break;
+					case 0x40:
+						ch = 'D';
+						break;
+					case 0x48:
+						ch = 'm'; /* Xscale mini-data */
+						break;
+					default:
+						ch = '?';
 						break;
 					}
 
@@ -7789,8 +7981,6 @@ pmap_boot_pagealloc(psize_t amount, psize_t mask, psize_t match,
 	pv_addr_t *rpv)
 {
 	pv_addr_t *pv, **pvp;
-	struct vm_physseg *ps;
-	size_t i;
 
 	KASSERT(amount & PGOFSET);
 	KASSERT((mask & PGOFSET) == 0);
@@ -7803,7 +7993,7 @@ pmap_boot_pagealloc(psize_t amount, psize_t mask, psize_t match,
 		pv_addr_t *newpv;
 		psize_t off;
 		/*
-		 * If this entry is too small to satify the request...
+		 * If this entry is too small to satisfy the request...
 		 */
 		KASSERT(pv->pv_size > 0);
 		if (pv->pv_size < amount)
@@ -7848,7 +8038,7 @@ pmap_boot_pagealloc(psize_t amount, psize_t mask, psize_t match,
 		return;
 	}
 
-	if (vm_nphysseg == 0)
+	if (!uvm_physseg_valid_p(uvm_physseg_get_first()))
 		panic("pmap_boot_pagealloc: couldn't allocate memory");
 
 	for (pvp = &SLIST_FIRST(&pmap_boot_freeq);
@@ -7858,28 +8048,27 @@ pmap_boot_pagealloc(psize_t amount, psize_t mask, psize_t match,
 			break;
 	}
 	KASSERT(mask == 0);
-	for (i = 0; i < vm_nphysseg; i++) {
-		ps = VM_PHYSMEM_PTR(i);
-		if (ps->avail_start == atop(pv->pv_pa + pv->pv_size)
-		    && pv->pv_va + pv->pv_size <= ptoa(ps->avail_end)) {
+
+	for (uvm_physseg_t ups = uvm_physseg_get_first();
+	    uvm_physseg_valid_p(ups);
+	    ups = uvm_physseg_get_next(ups)) {
+
+		paddr_t spn = uvm_physseg_get_start(ups);
+		paddr_t epn = uvm_physseg_get_end(ups);
+		if (spn == atop(pv->pv_pa + pv->pv_size)
+		    && pv->pv_va + pv->pv_size <= ptoa(epn)) {
 			rpv->pv_va = pv->pv_va;
 			rpv->pv_pa = pv->pv_pa;
 			rpv->pv_size = amount;
 			*pvp = NULL;
 			pmap_map_chunk(kernel_l1pt.pv_va,
-			     ptoa(ps->avail_start) + (pv->pv_va - pv->pv_pa),
-			     ptoa(ps->avail_start),
+			     ptoa(spn) + (pv->pv_va - pv->pv_pa),
+			     ptoa(spn),
 			     amount - pv->pv_size,
 			     VM_PROT_READ|VM_PROT_WRITE,
 			     PTE_CACHE);
-			ps->avail_start += atop(amount - pv->pv_size);
-			/*
-			 * If we consumed the entire physseg, remove it.
-			 */
-			if (ps->avail_start == ps->avail_end) {
-				for (--vm_nphysseg; i < vm_nphysseg; i++)
-					VM_PHYSMEM_PTR_SWAP(i, i + 1);
-			}
+
+			uvm_physseg_unplug(spn, atop(amount - pv->pv_size));
 			memset((void *)rpv->pv_va, 0, rpv->pv_size);
 			return;
 		}

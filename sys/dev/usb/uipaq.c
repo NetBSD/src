@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.22.16.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.22.16.2 2020/04/08 14:08:13 martin Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.22.16.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.22.16.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -105,7 +105,7 @@ static void	uipaq_rts(struct uipaq_softc *, int);
 static void	uipaq_break(struct uipaq_softc *, int);
 
 
-struct ucom_methods uipaq_methods = {
+static const struct ucom_methods uipaq_methods = {
 	.ucom_set = uipaq_set,
 	.ucom_open = uipaq_open,
 };
@@ -126,27 +126,27 @@ static const struct uipaq_type uipaq_devs[] = {
 
 #define uipaq_lookup(v, p) ((const struct uipaq_type *)usb_lookup(uipaq_devs, v, p))
 
-int uipaq_match(device_t, cfdata_t, void *);
-void uipaq_attach(device_t, device_t, void *);
-void uipaq_childdet(device_t, device_t);
-int uipaq_detach(device_t, int);
+static int uipaq_match(device_t, cfdata_t, void *);
+static void uipaq_attach(device_t, device_t, void *);
+static void uipaq_childdet(device_t, device_t);
+static int uipaq_detach(device_t, int);
 
 CFATTACH_DECL2_NEW(uipaq, sizeof(struct uipaq_softc), uipaq_match,
     uipaq_attach, uipaq_detach, NULL, NULL, uipaq_childdet);
 
-int
+static int
 uipaq_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	DPRINTFN(20,("uipaq: vendor=0x%x, product=0x%x\n",
+	DPRINTFN(20,("uipaq: vendor=%#x, product=%#x\n",
 	    uaa->uaa_vendor, uaa->uaa_product));
 
 	return uipaq_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 uipaq_attach(device_t parent, device_t self, void *aux)
 {
 	struct uipaq_softc *sc = device_private(self);
@@ -375,7 +375,7 @@ uipaq_open(void *arg, int portno)
 	return 0;
 }
 
-void
+static void
 uipaq_childdet(device_t self, device_t child)
 {
 	struct uipaq_softc *sc = device_private(self);
@@ -384,7 +384,7 @@ uipaq_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int
+static int
 uipaq_detach(device_t self, int flags)
 {
 	struct uipaq_softc *sc = device_private(self);

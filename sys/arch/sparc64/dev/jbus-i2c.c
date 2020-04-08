@@ -1,4 +1,4 @@
-/*	$NetBSD: jbus-i2c.c,v 1.3.6.2 2019/06/10 22:06:47 christos Exp $	*/
+/*	$NetBSD: jbus-i2c.c,v 1.3.6.3 2020/04/08 14:07:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.3.6.2 2019/06/10 22:06:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.3.6.3 2020/04/08 14:07:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.3.6.2 2019/06/10 22:06:47 christos Ex
 #endif
 
 /* I2C glue */
-static int jbusi2c_i2c_acquire_bus(void *, int);
-static void jbusi2c_i2c_release_bus(void *, int);
 static int jbusi2c_i2c_send_start(void *, int);
 static int jbusi2c_i2c_send_stop(void *, int);
 static int jbusi2c_i2c_initiate_xfer(void *, i2c_addr_t, int);
@@ -79,7 +77,6 @@ static	void	jbusi2c_attach(device_t, device_t, void *);
 struct jbusi2c_softc {
 	device_t sc_dev;
 	struct i2c_controller sc_i2c;
-	kmutex_t sc_i2c_lock;
 	bus_space_tag_t sc_bustag;
 	bus_space_handle_t sc_regh;
 	int sc_node;
@@ -144,15 +141,13 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 	int devs, regs[2], addr;
 	char name[64], compat[256];
 
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = jbusi2c_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = jbusi2c_i2c_release_bus;
 	sc->sc_i2c.ic_send_start = jbusi2c_i2c_send_start;
 	sc->sc_i2c.ic_send_stop = jbusi2c_i2c_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = jbusi2c_i2c_initiate_xfer;
 	sc->sc_i2c.ic_read_byte = jbusi2c_i2c_read_byte;
 	sc->sc_i2c.ic_write_byte = jbusi2c_i2c_write_byte;
-	sc->sc_i2c.ic_exec = NULL;
 
 	/* round up i2c devices */
 	devs = OF_child(sc->sc_node);
@@ -185,7 +180,6 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 	}
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_NONE);
 	config_found_ia(sc->sc_dev, "i2cbus", &iba,
 	    iicbus_print);
 }
@@ -228,23 +222,6 @@ jbusi2c_i2cbb_read(void *cookie)
 }
 
 /* higher level I2C stuff */
-static int
-jbusi2c_i2c_acquire_bus(void *cookie, int flags)
-{
-	struct jbusi2c_softc *sc = cookie;
-
-	mutex_enter(&sc->sc_i2c_lock);
-	return 0;
-}
-
-static void
-jbusi2c_i2c_release_bus(void *cookie, int flags)
-{
-	struct jbusi2c_softc *sc = cookie;
-
-	mutex_exit(&sc->sc_i2c_lock);
-}
-
 static int
 jbusi2c_i2c_send_start(void *cookie, int flags)
 {

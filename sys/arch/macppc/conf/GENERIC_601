@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_601,v 1.20.4.1 2019/06/10 22:06:27 christos Exp $
+# $NetBSD: GENERIC_601,v 1.20.4.2 2020/04/08 14:07:44 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include 	"arch/macppc/conf/std.macppc.601"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"GENERIC-$Revision: 1.20.4.1 $"
+ident 		"GENERIC-$Revision: 1.20.4.2 $"
 
 maxusers	32
 
@@ -97,7 +97,6 @@ file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
-#file-system	SMBFS		# CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
@@ -217,8 +216,8 @@ ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 # official Macintosh firmware from 3Dfx. The others should work but are
 # untested with OF 1.0.5
 
-# this will take over the console if output-device is set to 'screen' or
-# 'platinum'. It will provide a NetBSD console, but still won't work with OF
+# this will take over the console if output-device is set to 'platinum'.
+# It will provide a NetBSD console, but still won't work with OF
 platinumfb0 	at mainbus?
 
 #gffb*		at pci?	function ?	# NVIDIA GeForce2 MX
@@ -350,7 +349,6 @@ pseudo-device	wsmux			# mouse and keyboard multiplexer
 #pseudo-device	swwdog			# software watchdog driver - swwdog(4)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	nsmb			# SMB requester
 #pseudo-device	putter			# for puffs and pud
 
 # userland interface to drivers, including autoconf and properties retrieval

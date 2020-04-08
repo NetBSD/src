@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_bridge.c,v 1.3.6.2 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_bridge.c,v 1.3.6.3 2020/04/08 14:08:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 Samsung Electronics Co., Ltd
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bridge.c,v 1.3.6.2 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bridge.c,v 1.3.6.3 2020/04/08 14:08:21 martin Exp $");
 
 #include <linux/err.h>
 #include <linux/module.h>
@@ -64,6 +64,17 @@ static struct list_head bridge_list = LIST_HEAD_INIT(bridge_list);
 #else
 static DEFINE_MUTEX(bridge_lock);
 static LIST_HEAD(bridge_list);
+#endif
+
+#ifdef __NetBSD__
+void drm_bridge_init_lock(void)
+{
+	linux_mutex_init(&bridge_lock);
+}
+void drm_bridge_fini_lock(void)
+{
+	linux_mutex_destroy(&bridge_lock);
+}
 #endif
 
 /**

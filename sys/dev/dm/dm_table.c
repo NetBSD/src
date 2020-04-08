@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.8 2018/01/05 14:22:26 christos Exp $      */
+/*        $NetBSD: dm_table.c,v 1.8.4.1 2020/04/08 14:08:03 martin Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,11 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.8 2018/01/05 14:22:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.8.4.1 2020/04/08 14:08:03 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-
 #include <sys/kmem.h>
 
 #include "dm.h"
@@ -55,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.8 2018/01/05 14:22:26 christos Exp $"
 
 static int dm_table_busy(dm_table_head_t *, uint8_t);
 static void dm_table_unbusy(dm_table_head_t *);
+static void dm_table_free_deps(dm_table_entry_t *);
+
 
 /*
  * Function to increment table user reference counter. Return id
@@ -63,11 +64,9 @@ static void dm_table_unbusy(dm_table_head_t *);
  * DM_TABLE_INACTIVE will return inactive table id.
  */
 static int
-dm_table_busy(dm_table_head_t * head, uint8_t table_id)
+dm_table_busy(dm_table_head_t *head, uint8_t table_id)
 {
 	uint8_t id;
-
-	id = 0;
 
 	mutex_enter(&head->table_mtx);
 
@@ -86,8 +85,9 @@ dm_table_busy(dm_table_head_t * head, uint8_t table_id)
  * Function release table lock and eventually wakeup all waiters.
  */
 static void
-dm_table_unbusy(dm_table_head_t * head)
+dm_table_unbusy(dm_table_head_t *head)
 {
+
 	KASSERT(head->io_cnt != 0);
 
 	mutex_enter(&head->table_mtx);
@@ -102,7 +102,7 @@ dm_table_unbusy(dm_table_head_t * head)
  * Return current active table to caller, increment io_cnt reference counter.
  */
 dm_table_t *
-dm_table_get_entry(dm_table_head_t * head, uint8_t table_id)
+dm_table_get_entry(dm_table_head_t *head, uint8_t table_id)
 {
 	uint8_t id;
 
@@ -114,8 +114,9 @@ dm_table_get_entry(dm_table_head_t * head, uint8_t table_id)
  * Decrement io reference counter and wake up all callers, with table_head cv.
  */
 void
-dm_table_release(dm_table_head_t * head, uint8_t table_id)
+dm_table_release(dm_table_head_t *head, uint8_t table_id)
 {
+
 	dm_table_unbusy(head);
 }
 
@@ -123,8 +124,9 @@ dm_table_release(dm_table_head_t * head, uint8_t table_id)
  * Switch table from inactive to active mode. Have to wait until io_cnt is 0.
  */
 void
-dm_table_switch_tables(dm_table_head_t * head)
+dm_table_switch_tables(dm_table_head_t *head)
 {
+
 	mutex_enter(&head->table_mtx);
 
 	while (head->io_cnt != 0)
@@ -142,7 +144,7 @@ dm_table_switch_tables(dm_table_head_t * head)
  * XXX Is it ok to call kmem_free and potentialy VOP_CLOSE with held mutex ?xs
  */
 int
-dm_table_destroy(dm_table_head_t * head, uint8_t table_id)
+dm_table_destroy(dm_table_head_t *head, uint8_t table_id)
 {
 	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
@@ -162,18 +164,14 @@ dm_table_destroy(dm_table_head_t * head, uint8_t table_id)
 
 	tbl = &head->tables[id];
 
-	while (!SLIST_EMPTY(tbl)) {	/* List Deletion. */
-		table_en = SLIST_FIRST(tbl);
-		/*
-		 * Remove target specific config data. After successfull
-		 * call table_en->target_config must be set to NULL.
-		 */
-		table_en->target->destroy(table_en);
-
-		SLIST_REMOVE_HEAD(tbl, next);
-
+	while ((table_en = SLIST_FIRST(tbl)) != NULL) {
+		SLIST_REMOVE(tbl, table_en, dm_table_entry, next);
+		if (table_en->target->destroy(table_en) == 0)
+			table_en->target_config = NULL;
+		dm_table_free_deps(table_en);
 		kmem_free(table_en, sizeof(*table_en));
 	}
+	KASSERT(SLIST_EMPTY(tbl));
 
 	mutex_exit(&head->table_mtx);
 
@@ -183,8 +181,8 @@ dm_table_destroy(dm_table_head_t * head, uint8_t table_id)
 /*
  * Return length of active table in device.
  */
-static inline uint64_t
-dm_table_size_impl(dm_table_head_t * head, int table)
+static uint64_t
+dm_table_size_impl(dm_table_head_t *head, int table)
 {
 	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
@@ -203,7 +201,7 @@ dm_table_size_impl(dm_table_head_t * head, int table)
 	 * if length => rawblkno then we should used that table.
 	 */
 	SLIST_FOREACH(table_en, tbl, next)
-	    length += table_en->length;
+		length += table_en->length;
 
 	dm_table_unbusy(head);
 
@@ -214,8 +212,9 @@ dm_table_size_impl(dm_table_head_t * head, int table)
  * Return length of active table in device.
  */
 uint64_t
-dm_table_size(dm_table_head_t * head)
+dm_table_size(dm_table_head_t *head)
 {
+
 	return dm_table_size_impl(head, DM_TABLE_ACTIVE);
 }
 
@@ -223,8 +222,9 @@ dm_table_size(dm_table_head_t * head)
  * Return length of active table in device.
  */
 uint64_t
-dm_inactive_table_size(dm_table_head_t * head)
+dm_inactive_table_size(dm_table_head_t *head)
 {
+
 	return dm_table_size_impl(head, DM_TABLE_INACTIVE);
 }
 
@@ -232,12 +232,13 @@ dm_inactive_table_size(dm_table_head_t * head)
  * Return combined disk geometry
  */
 void
-dm_table_disksize(dm_table_head_t * head, uint64_t *numsecp, unsigned *secsizep)
+dm_table_disksize(dm_table_head_t *head, uint64_t *numsecp,
+    unsigned int *secsizep)
 {
 	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
 	uint64_t length;
-	unsigned secsize, tsecsize;
+	unsigned int secsize, tsecsize;
 	uint8_t id;
 
 	length = 0;
@@ -253,13 +254,19 @@ dm_table_disksize(dm_table_head_t * head, uint64_t *numsecp, unsigned *secsizep)
 	 */
 	secsize = 0;
 	SLIST_FOREACH(table_en, tbl, next) {
-	    length += table_en->length;
-	    (void)table_en->target->secsize(table_en, &tsecsize);
-	    if (secsize < tsecsize)
-	    	secsize = tsecsize;
+		length += table_en->length;
+		if (table_en->target->secsize)
+			table_en->target->secsize(table_en, &tsecsize);
+		else
+			tsecsize = 0;
+		if (secsize < tsecsize)
+			secsize = tsecsize;
 	}
-	*numsecp = secsize > 0 ? dbtob(length) / secsize : 0;
-	*secsizep = secsize;
+
+	if (numsecp)
+		*numsecp = secsize > 0 ? dbtob(length) / secsize : 0;
+	if (secsizep)
+		*secsizep = secsize;
 
 	dm_table_unbusy(head);
 }
@@ -271,7 +278,7 @@ dm_table_disksize(dm_table_head_t * head, uint64_t *numsecp, unsigned *secsizep)
  * there can be dm_dev_resume_ioctl), therfore this isonly informative.
  */
 int
-dm_table_get_target_count(dm_table_head_t * head, uint8_t table_id)
+dm_table_get_target_count(dm_table_head_t *head, uint8_t table_id)
 {
 	dm_table_entry_t *table_en;
 	dm_table_t *tbl;
@@ -281,25 +288,24 @@ dm_table_get_target_count(dm_table_head_t * head, uint8_t table_id)
 	target_count = 0;
 
 	id = dm_table_busy(head, table_id);
-
 	tbl = &head->tables[id];
 
 	SLIST_FOREACH(table_en, tbl, next)
-	    target_count++;
+		target_count++;
 
 	dm_table_unbusy(head);
 
 	return target_count;
 }
 
-
 /*
  * Initialize table_head structures, I'm trying to keep this structure as
  * opaque as possible.
  */
 void
-dm_table_head_init(dm_table_head_t * head)
+dm_table_head_init(dm_table_head_t *head)
 {
+
 	head->cur_active_table = 0;
 	head->io_cnt = 0;
 
@@ -315,8 +321,9 @@ dm_table_head_init(dm_table_head_t * head)
  * Destroy all variables in table_head
  */
 void
-dm_table_head_destroy(dm_table_head_t * head)
+dm_table_head_destroy(dm_table_head_t *head)
 {
+
 	KASSERT(!mutex_owned(&head->table_mtx));
 	KASSERT(!cv_has_waiters(&head->table_cv));
 	/* tables doens't exists when I call this routine, therefore it
@@ -325,4 +332,48 @@ dm_table_head_destroy(dm_table_head_t * head)
 
 	cv_destroy(&head->table_cv);
 	mutex_destroy(&head->table_mtx);
+}
+
+int
+dm_table_add_deps(dm_table_entry_t *table_en, dm_pdev_t *pdev)
+{
+	dm_table_head_t *head;
+	dm_mapping_t *map;
+
+	if (!pdev)
+		return -1;
+
+	head = &table_en->dm_dev->table_head;
+	mutex_enter(&head->table_mtx);
+
+	TAILQ_FOREACH(map, &table_en->pdev_maps, next) {
+		if (map->data.pdev->pdev_vnode->v_rdev ==
+		    pdev->pdev_vnode->v_rdev) {
+			mutex_exit(&head->table_mtx);
+			return -1;
+		}
+	}
+
+	map = kmem_alloc(sizeof(*map), KM_SLEEP);
+	map->data.pdev = pdev;
+	aprint_debug("%s: %s\n", __func__, pdev->name);
+	TAILQ_INSERT_TAIL(&table_en->pdev_maps, map, next);
+
+	mutex_exit(&head->table_mtx);
+
+	return 0;
+}
+
+/* caller must hold ->table_mtx */
+static void
+dm_table_free_deps(dm_table_entry_t *table_en)
+{
+	dm_mapping_t *map;
+
+	while ((map = TAILQ_FIRST(&table_en->pdev_maps)) != NULL) {
+		TAILQ_REMOVE(&table_en->pdev_maps, map, next);
+		aprint_debug("%s: %s\n", __func__, map->data.pdev->name);
+		kmem_free(map, sizeof(*map));
+	}
+	KASSERT(TAILQ_EMPTY(&table_en->pdev_maps));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.36.16.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: umct.c,v 1.36.16.2 2020/04/08 14:08:13 martin Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.36.16.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.36.16.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -127,7 +127,7 @@ static	int  umct_param(void *, int, struct termios *);
 static	int  umct_open(void *, int);
 static	void umct_close(void *, int);
 
-struct	ucom_methods umct_methods = {
+static const struct	ucom_methods umct_methods = {
 	.ucom_get_status = umct_get_status,
 	.ucom_set = umct_set,
 	.ucom_param = umct_param,
@@ -299,7 +299,7 @@ umct_attach(device_t parent, device_t self, void *aux)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
-	DPRINTF(("umct: in=0x%x out=0x%x intr=0x%x\n",
+	DPRINTF(("umct: in=%#x out=%#x intr=%#x\n",
 	    ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);

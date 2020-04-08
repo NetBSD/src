@@ -1,4 +1,4 @@
-/* $NetBSD: umbctl.c,v 1.2.4.2 2019/06/10 22:05:36 christos Exp $ */
+/* $NetBSD: umbctl.c,v 1.2.4.3 2020/04/08 14:07:21 martin Exp $ */
 /*
  * Copyright (c) 2018 Pierre Pronchery <khorben@defora.org>
  *
@@ -80,8 +80,8 @@ static const struct umb_valdescr _umb_ber[] =
 static int _char_to_utf16(const char * in, uint16_t * out, size_t outlen);
 static int _error(int ret, char const * format, ...);
 static int _umbctl(char const * ifname, int verbose, int argc, char * argv[]);
-static int _umbctl_file(char const * ifname, char const * filename, int verbose,
-		int argc, char * argv[]);
+static int _umbctl_file(char const * ifname, char const * filename,
+		int verbose);
 static void _umbctl_info(char const * ifname, struct umb_info * umbi);
 static int _umbctl_ioctl(char const * ifname, int fd, unsigned long request,
 		struct ifreq * ifr);
@@ -177,8 +177,7 @@ static int _umbctl(char const * ifname, int verbose, int argc, char * argv[])
 
 
 /* umbctl_file */
-static int _umbctl_file(char const * ifname, char const * filename, int verbose,
-		int argc, char * argv[])
+static int _umbctl_file(char const * ifname, char const * filename, int verbose)
 {
 	int fd;
 	struct ifreq ifr;
@@ -216,7 +215,6 @@ static int _umbctl_file(char const * ifname, char const * filename, int verbose,
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_data = &umbp;
 	if(_umbctl_ioctl(ifname, fd, SIOCGUMBPARAM, &ifr) != 0
-			|| _umbctl_set(ifname, &umbp, argc, argv) != 0
 			|| _umbctl_ioctl(ifname, fd, SIOCSUMBPARAM, &ifr) != 0)
 	{
 		close(fd);
@@ -427,7 +425,7 @@ static int _umbctl_socket(void)
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: umbctl [-v] ifname [parameter[=value]] [...]\n"
+	fputs("Usage: umbctl [-v] ifname [parameter [value]] [...]\n"
 "       umbctl -f config-file ifname [...]\n",
 			stderr);
 	return 1;
@@ -475,8 +473,11 @@ int main(int argc, char * argv[])
 	if(optind == argc)
 		return _usage();
 	if(filename != NULL)
-		return _umbctl_file(argv[optind], filename, verbose,
-				argc - optind - 1, &argv[optind + 1]);
+	{
+		if(optind + 1 != argc)
+			return _usage();
+		return _umbctl_file(argv[optind], filename, verbose);
+	}
 	return _umbctl(argv[optind], verbose, argc - optind - 1,
 			&argv[optind + 1]);
 }

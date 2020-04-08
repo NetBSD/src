@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328.dtsi,v 1.1 2018/06/21 10:46:39 jmcneill Exp $ */
+/* $NetBSD: rk3328.dtsi,v 1.1.4.1 2020/04/08 14:07:28 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -40,6 +40,14 @@
 			reg = <0x0 0xff600000 0x0 0x100000>;
 			interrupts = <GIC_SPI 67 IRQ_TYPE_LEVEL_HIGH>;
 			dr_mode = "host";
+
+			phy_type = "utmi_wide";
+			snps,dis_enblslpm_quirk;
+			snps,dis-u2-freeclk-exists-quirk;
+			snps,dis_u2_susphy_quirk;
+			snps,dis_u3_susphy_quirk;
+			snps,dis-del-phy-power-chg-quirk;
+			snps,dis-tx-ipgap-linecheck-quirk;
 		};
 	};
 };

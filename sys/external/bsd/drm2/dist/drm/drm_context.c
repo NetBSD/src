@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_context.c,v 1.3.30.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_context.c,v 1.3.30.2 2020/04/08 14:08:21 martin Exp $	*/
 
 /*
  * Legacy: Generic DRM Contexts
@@ -31,9 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_context.c,v 1.3.30.1 2019/06/10 22:07:57 christos Exp $");
-
-#include <linux/err.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_context.c,v 1.3.30.2 2020/04/08 14:08:21 martin Exp $");
 
 #include <drm/drmP.h>
 #include "drm_legacy.h"

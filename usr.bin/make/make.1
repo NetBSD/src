@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.273.2.1 2019/06/10 22:10:21 christos Exp $
+.\"	$NetBSD: make.1,v 1.273.2.2 2020/04/08 14:09:16 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -272,7 +272,7 @@ that do not depend on the target whose creation caused the error.
 .It Fl m Ar directory
 Specify a directory in which to search for sys.mk and makefiles included
 via the
-.Ao Ar file Ac Ns -style
+.Li \&< Ns Ar file Ns Li \&> Ns -style
 include statement.
 The
 .Fl m
@@ -280,7 +280,7 @@ option can be used multiple times to form a search path.
 This path will override the default system include path: /usr/share/mk.
 Furthermore the system include path will be appended to the search path used
 for
-.Qo Ar file Qc Ns -style
+.Li \*q Ns Ar file Ns Li \*q Ns -style
 include statements (see the
 .Fl I
 option).
@@ -1233,7 +1233,7 @@ Quotes every shell meta-character in the variable, and also doubles
 characters so that it can be passed
 safely through recursive invocations of
 .Nm .
-This is equivalent to: 
+This is equivalent to:
 .Sq \&:S/\e\&$/&&/g:Q .
 .It Cm \&:R
 Replaces each word in the variable with everything but its suffix.
@@ -1622,9 +1622,9 @@ dot
 .Pq Ql \&.
 character.
 Files are included with either
-.Cm \&.include Aq Ar file
+.Cm \&.include \&< Ns Ar file Ns Cm \&>
 or
-.Cm \&.include Pf \*q Ar file Ns \*q .
+.Cm \&.include \&\*q Ns Ar file Ns Cm \&\*q .
 Variables between the angle brackets or double quotes are expanded
 to form the file name.
 If angle brackets are used, the included makefile is expected to be in

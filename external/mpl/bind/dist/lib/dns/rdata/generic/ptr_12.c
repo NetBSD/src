@@ -1,4 +1,4 @@
-/*	$NetBSD: ptr_12.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: ptr_12.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -134,7 +134,7 @@ fromstruct_ptr(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_ptr);
-	REQUIRE(source != NULL);
+	REQUIRE(ptr != NULL);
 	REQUIRE(ptr->common.rdtype == type);
 	REQUIRE(ptr->common.rdclass == rdclass);
 
@@ -152,7 +152,7 @@ tostruct_ptr(ARGS_TOSTRUCT) {
 	dns_name_t name;
 
 	REQUIRE(rdata->type == dns_rdatatype_ptr);
-	REQUIRE(target != NULL);
+	REQUIRE(ptr != NULL);
 	REQUIRE(rdata->length != 0);
 
 	ptr->common.rdclass = rdata->rdclass;
@@ -172,7 +172,7 @@ static inline void
 freestruct_ptr(ARGS_FREESTRUCT) {
 	dns_rdata_ptr_t *ptr = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(ptr != NULL);
 	REQUIRE(ptr->common.rdtype == dns_rdatatype_ptr);
 
 	if (ptr->mctx == NULL)

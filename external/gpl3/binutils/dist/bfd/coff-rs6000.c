@@ -1,5 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF" files.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Metin G. Ozisik, Mimi Phuong-Thao Vo, and John Gilmore.
    Archive support from Damon A. Permezel.
    Contributed by IBM Corporation and Cygnus Support.
@@ -114,7 +114,6 @@ extern int rs6000coff_core_file_failing_signal (bfd *abfd);
 #define bfd_pe_print_pdata	NULL
 #endif
 
-#include <stdint.h>
 #include "coffcode.h"
 
 /* The main body of code is in coffcode.h.  */
@@ -1170,20 +1169,6 @@ _bfd_xcoff_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
    to take care that we are not generating the new form of archives
    on AIX 4.2 or earlier systems.  */
 
-/* XCOFF archives use this as a magic string.  Note that both strings
-   have the same length.  */
-
-/* Set the magic for archive.  */
-
-bfd_boolean
-bfd_xcoff_ar_archive_set_magic (bfd *abfd ATTRIBUTE_UNUSED,
-				char *magic ATTRIBUTE_UNUSED)
-{
-  /* Not supported yet.  */
-  return FALSE;
- /* bfd_xcoff_archive_set_magic (abfd, magic); */
-}
-
 /* PR 21786:  The PE/COFF standard does not require NUL termination for any of
    the ASCII fields in the archive headers.  So in order to be able to extract
    numerical values we provide our own versions of strtol and strtoll which
@@ -1215,19 +1200,19 @@ _bfd_strntoll (const char * nptr, int base, unsigned int maxlen)
 }
 
 /* Macro to read an ASCII value stored in an archive header field.  */
-#define GET_VALUE_IN_FIELD(VAR, FIELD)		  \
-  do						  \
-    {						  \
-      (VAR) = sizeof (VAR) > sizeof (long)	  \
-	? _bfd_strntoll (FIELD, 10, sizeof FIELD) \
-	: _bfd_strntol (FIELD, 10, sizeof FIELD); \
-    }						  \
+#define GET_VALUE_IN_FIELD(VAR, FIELD, BASE)			\
+  do								\
+    {								\
+      (VAR) = (sizeof (VAR) > sizeof (long)			\
+	       ? _bfd_strntoll (FIELD, BASE, sizeof FIELD)	\
+	       : _bfd_strntol (FIELD, BASE, sizeof FIELD));	\
+    }								\
   while (0)
 
-#define EQ_VALUE_IN_FIELD(VAR, FIELD)			\
-  (sizeof (VAR) > sizeof (long)				\
-   ? (VAR) ==_bfd_strntoll (FIELD, 10, sizeof FIELD)	\
-   : (VAR) == _bfd_strntol (FIELD, 10, sizeof FIELD))
+#define EQ_VALUE_IN_FIELD(VAR, FIELD, BASE)			\
+  (sizeof (VAR) > sizeof (long)					\
+   ? (VAR) == _bfd_strntoll (FIELD, BASE, sizeof FIELD)		\
+   : (VAR) == _bfd_strntol (FIELD, BASE, sizeof FIELD))
 
 /* Read in the armap of an XCOFF archive.  */
 
@@ -1244,7 +1229,7 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
 
   if (xcoff_ardata (abfd) == NULL)
     {
-      bfd_has_map (abfd) = FALSE;
+      abfd->has_armap = FALSE;
       return TRUE;
     }
 
@@ -1253,10 +1238,10 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
       /* This is for the old format.  */
       struct xcoff_ar_hdr hdr;
 
-      GET_VALUE_IN_FIELD (off, xcoff_ardata (abfd)->symoff);
+      GET_VALUE_IN_FIELD (off, xcoff_ardata (abfd)->symoff, 10);
       if (off == 0)
 	{
-	  bfd_has_map (abfd) = FALSE;
+	  abfd->has_armap = FALSE;
 	  return TRUE;
 	}
 
@@ -1269,24 +1254,33 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
 	return FALSE;
 
       /* Skip the name (normally empty).  */
-      GET_VALUE_IN_FIELD (namlen, hdr.namlen);
+      GET_VALUE_IN_FIELD (namlen, hdr.namlen, 10);
       off = ((namlen + 1) & ~ (size_t) 1) + SXCOFFARFMAG;
       if (bfd_seek (abfd, off, SEEK_CUR) != 0)
 	return FALSE;
 
-      GET_VALUE_IN_FIELD (sz, hdr.size);
+      GET_VALUE_IN_FIELD (sz, hdr.size, 10);
+      if (sz == (bfd_size_type) -1)
+	{
+	  bfd_set_error (bfd_error_no_memory);
+	  return FALSE;
+	}
 
       /* Read in the entire symbol table.  */
-      contents = (bfd_byte *) bfd_alloc (abfd, sz);
+      contents = (bfd_byte *) bfd_alloc (abfd, sz + 1);
       if (contents == NULL)
 	return FALSE;
       if (bfd_bread (contents, sz, abfd) != sz)
 	return FALSE;
 
+      /* Ensure strings are NULL terminated so we don't wander off the
+	 end of the buffer.  */
+      contents[sz] = 0;
+
       /* The symbol table starts with a four byte count.  */
       c = H_GET_32 (abfd, contents);
 
-      if (c * 4 >= sz)
+      if (c >= sz / 4)
 	{
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
@@ -1308,10 +1302,10 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
       /* This is for the new format.  */
       struct xcoff_ar_hdr_big hdr;
 
-      GET_VALUE_IN_FIELD (off, xcoff_ardata_big (abfd)->symoff);
+      GET_VALUE_IN_FIELD (off, xcoff_ardata_big (abfd)->symoff, 10);
       if (off == 0)
 	{
-	  bfd_has_map (abfd) = FALSE;
+	  abfd->has_armap = FALSE;
 	  return TRUE;
 	}
 
@@ -1324,24 +1318,33 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
 	return FALSE;
 
       /* Skip the name (normally empty).  */
-      GET_VALUE_IN_FIELD (namlen, hdr.namlen);
+      GET_VALUE_IN_FIELD (namlen, hdr.namlen, 10);
       off = ((namlen + 1) & ~ (size_t) 1) + SXCOFFARFMAG;
       if (bfd_seek (abfd, off, SEEK_CUR) != 0)
 	return FALSE;
 
-      GET_VALUE_IN_FIELD (sz, hdr.size);
+      GET_VALUE_IN_FIELD (sz, hdr.size, 10);
+      if (sz == (bfd_size_type) -1)
+	{
+	  bfd_set_error (bfd_error_no_memory);
+	  return FALSE;
+	}
 
       /* Read in the entire symbol table.  */
-      contents = (bfd_byte *) bfd_alloc (abfd, sz);
+      contents = (bfd_byte *) bfd_alloc (abfd, sz + 1);
       if (contents == NULL)
 	return FALSE;
       if (bfd_bread (contents, sz, abfd) != sz)
 	return FALSE;
 
+      /* Ensure strings are NULL terminated so we don't wander off the
+	 end of the buffer.  */
+      contents[sz] = 0;
+
       /* The symbol table starts with an eight byte count.  */
       c = H_GET_64 (abfd, contents);
 
-      if (c * 8 >= sz)
+      if (c >= sz / 8)
 	{
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
@@ -1374,7 +1377,7 @@ _bfd_xcoff_slurp_armap (bfd *abfd)
     }
 
   bfd_ardata (abfd)->symdef_count = c;
-  bfd_has_map (abfd) = TRUE;
+  abfd->has_armap = TRUE;
 
   return TRUE;
 }
@@ -1435,7 +1438,7 @@ _bfd_xcoff_archive_p (bfd *abfd)
 	}
 
       GET_VALUE_IN_FIELD (bfd_ardata (abfd)->first_file_filepos,
-			  hdr.firstmemoff);
+			  hdr.firstmemoff, 10);
 
       amt = SIZEOF_AR_FILE_HDR;
       bfd_ardata (abfd)->tdata = bfd_zalloc (abfd, amt);
@@ -1510,7 +1513,7 @@ _bfd_xcoff_read_ar_hdr (bfd *abfd)
 	  return NULL;
 	}
 
-      GET_VALUE_IN_FIELD (namlen, hdr.namlen);
+      GET_VALUE_IN_FIELD (namlen, hdr.namlen, 10);
       amt = SIZEOF_AR_HDR + namlen + 1;
       hdrp = (struct xcoff_ar_hdr *) bfd_alloc (abfd, amt);
       if (hdrp == NULL)
@@ -1527,7 +1530,7 @@ _bfd_xcoff_read_ar_hdr (bfd *abfd)
       ((char *) hdrp)[SIZEOF_AR_HDR + namlen] = '\0';
 
       ret->arch_header = (char *) hdrp;
-      GET_VALUE_IN_FIELD (ret->parsed_size, hdr.size);
+      GET_VALUE_IN_FIELD (ret->parsed_size, hdr.size, 10);
       ret->filename = (char *) hdrp + SIZEOF_AR_HDR;
     }
   else
@@ -1542,7 +1545,7 @@ _bfd_xcoff_read_ar_hdr (bfd *abfd)
 	  return NULL;
 	}
 
-      GET_VALUE_IN_FIELD (namlen, hdr.namlen);
+      GET_VALUE_IN_FIELD (namlen, hdr.namlen, 10);
       amt = SIZEOF_AR_HDR_BIG + namlen + 1;
       hdrp = (struct xcoff_ar_hdr_big *) bfd_alloc (abfd, amt);
       if (hdrp == NULL)
@@ -1559,7 +1562,7 @@ _bfd_xcoff_read_ar_hdr (bfd *abfd)
       ((char *) hdrp)[SIZEOF_AR_HDR_BIG + namlen] = '\0';
 
       ret->arch_header = (char *) hdrp;
-      GET_VALUE_IN_FIELD (ret->parsed_size, hdr.size);
+      GET_VALUE_IN_FIELD (ret->parsed_size, hdr.size, 10);
       ret->filename = (char *) hdrp + SIZEOF_AR_HDR_BIG;
     }
 
@@ -1588,11 +1591,11 @@ _bfd_xcoff_openr_next_archived_file (bfd *archive, bfd *last_file)
       if (last_file == NULL)
 	filestart = bfd_ardata (archive)->first_file_filepos;
       else
-	GET_VALUE_IN_FIELD (filestart, arch_xhdr (last_file)->nextoff);
+	GET_VALUE_IN_FIELD (filestart, arch_xhdr (last_file)->nextoff, 10);
 
       if (filestart == 0
-	  || EQ_VALUE_IN_FIELD (filestart, xcoff_ardata (archive)->memoff)
-	  || EQ_VALUE_IN_FIELD (filestart, xcoff_ardata (archive)->symoff))
+	  || EQ_VALUE_IN_FIELD (filestart, xcoff_ardata (archive)->memoff, 10)
+	  || EQ_VALUE_IN_FIELD (filestart, xcoff_ardata (archive)->symoff, 10))
 	{
 	  bfd_set_error (bfd_error_no_more_archived_files);
 	  return NULL;
@@ -1603,11 +1606,11 @@ _bfd_xcoff_openr_next_archived_file (bfd *archive, bfd *last_file)
       if (last_file == NULL)
 	filestart = bfd_ardata (archive)->first_file_filepos;
       else
-	GET_VALUE_IN_FIELD (filestart, arch_xhdr_big (last_file)->nextoff);
+	GET_VALUE_IN_FIELD (filestart, arch_xhdr_big (last_file)->nextoff, 10);
 
       if (filestart == 0
-	  || EQ_VALUE_IN_FIELD (filestart, xcoff_ardata_big (archive)->memoff)
-	  || EQ_VALUE_IN_FIELD (filestart, xcoff_ardata_big (archive)->symoff))
+	  || EQ_VALUE_IN_FIELD (filestart, xcoff_ardata_big (archive)->memoff, 10)
+	  || EQ_VALUE_IN_FIELD (filestart, xcoff_ardata_big (archive)->symoff, 10))
 	{
 	  bfd_set_error (bfd_error_no_more_archived_files);
 	  return NULL;
@@ -1632,20 +1635,20 @@ _bfd_xcoff_stat_arch_elt (bfd *abfd, struct stat *s)
     {
       struct xcoff_ar_hdr *hdrp = arch_xhdr (abfd);
 
-      GET_VALUE_IN_FIELD (s->st_mtime, hdrp->date);
-      GET_VALUE_IN_FIELD (s->st_uid, hdrp->uid);
-      GET_VALUE_IN_FIELD (s->st_gid, hdrp->gid);
-      GET_VALUE_IN_FIELD (s->st_mode, hdrp->mode);
+      GET_VALUE_IN_FIELD (s->st_mtime, hdrp->date, 10);
+      GET_VALUE_IN_FIELD (s->st_uid, hdrp->uid, 10);
+      GET_VALUE_IN_FIELD (s->st_gid, hdrp->gid, 10);
+      GET_VALUE_IN_FIELD (s->st_mode, hdrp->mode, 8);
       s->st_size = arch_eltdata (abfd)->parsed_size;
     }
   else
     {
       struct xcoff_ar_hdr_big *hdrp = arch_xhdr_big (abfd);
 
-      GET_VALUE_IN_FIELD (s->st_mtime, hdrp->date);
-      GET_VALUE_IN_FIELD (s->st_uid, hdrp->uid);
-      GET_VALUE_IN_FIELD (s->st_gid, hdrp->gid);
-      GET_VALUE_IN_FIELD (s->st_mode, hdrp->mode);
+      GET_VALUE_IN_FIELD (s->st_mtime, hdrp->date, 10);
+      GET_VALUE_IN_FIELD (s->st_uid, hdrp->uid, 10);
+      GET_VALUE_IN_FIELD (s->st_gid, hdrp->gid, 10);
+      GET_VALUE_IN_FIELD (s->st_mode, hdrp->mode, 8);
       s->st_size = arch_eltdata (abfd)->parsed_size;
     }
 
@@ -3090,7 +3093,7 @@ xcoff_complain_overflow_bitfield_func (bfd *input_bfd,
      relies on it, and it is the only way to write assembler
      code which can run when loaded at a location 0x80000000
      away from the location at which it is linked.  */
-  if (howto->bitsize + howto->rightshift
+  if ((unsigned) howto->bitsize + howto->rightshift
       == bfd_arch_bits_per_address (input_bfd))
     return FALSE;
 
@@ -3458,10 +3461,6 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
 	 operation, which would be tedious, or we must do the computations
 	 in a type larger than bfd_vma, which would be inefficient.  */
 
-      if ((unsigned int) howto.complain_on_overflow
-	  >= XCOFF_MAX_COMPLAIN_OVERFLOW)
-	abort ();
-
       if (((*xcoff_complain_overflow[howto.complain_on_overflow])
 	   (input_bfd, value_to_relocate, relocation, &howto)))
 	{
@@ -3506,6 +3505,23 @@ xcoff_ppc_relocate_section (bfd *output_bfd,
   return TRUE;
 }
 
+/* gcc-8 warns (*) on all the strncpy calls in this function about
+   possible string truncation.  The "truncation" is not a bug.  We
+   have an external representation of structs with fields that are not
+   necessarily NULL terminated and corresponding internal
+   representation fields that are one larger so that they can always
+   be NULL terminated.
+   gcc versions between 4.2 and 4.6 do not allow pragma control of
+   diagnostics inside functions, giving a hard error if you try to use
+   the finer control available with later versions.
+   gcc prior to 4.2 warns about diagnostic push and pop.
+   gcc-5, gcc-6 and gcc-7 warn that -Wstringop-truncation is unknown,
+   unless you also add #pragma GCC diagnostic ignored "-Wpragma".
+   (*) Depending on your system header files!  */
+#if GCC_VERSION >= 8000
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wstringop-truncation"
+#endif
 static bfd_boolean
 _bfd_xcoff_put_ldsymbol_name (bfd *abfd ATTRIBUTE_UNUSED,
 			      struct xcoff_loader_info *ldinfo,
@@ -3575,6 +3591,9 @@ _bfd_xcoff_put_symbol_name (struct bfd_link_info *info,
     }
   return TRUE;
 }
+#if GCC_VERSION >= 8000
+# pragma GCC diagnostic pop
+#endif
 
 static asection *
 xcoff_create_csect_from_smclas (bfd *abfd,
@@ -4042,6 +4061,7 @@ const struct xcoff_dwsect_name xcoff_dwsect_names[] = {
 #define _bfd_xcoff_bfd_lookup_section_flags bfd_generic_lookup_section_flags
 #define _bfd_xcoff_bfd_merge_sections bfd_generic_merge_sections
 #define _bfd_xcoff_bfd_is_group_section bfd_generic_is_group_section
+#define _bfd_xcoff_bfd_group_name bfd_generic_group_name
 #define _bfd_xcoff_bfd_discard_group bfd_generic_discard_group
 #define _bfd_xcoff_section_already_linked _bfd_generic_section_already_linked
 #define _bfd_xcoff_bfd_define_common_symbol _bfd_xcoff_define_common_symbol

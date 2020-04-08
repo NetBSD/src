@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.4.2.2 2019/06/10 22:06:58 christos Exp $
+#	$NetBSD: files.common,v 1.4.2.3 2020/04/08 14:08:00 martin Exp $
 
 #
 # Generic utility files, used by various compat options.
@@ -80,6 +80,7 @@ file	compat/common/kern_select_50.c		compat_50
 file	compat/common/rndpseudo_50.c		compat_50
 file	compat/common/rtsock_50.c		compat_50
 file	compat/common/vfs_syscalls_50.c		compat_50
+file	compat/common/compat_50_quota.c		compat_50 & quota
 file	compat/common/uipc_syscalls_50.c	compat_50
 file	compat/common/vnd_50.c			compat_50
 file	compat/common/clockctl_50.c		compat_50

@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_vnops.c,v 1.1 2018/01/09 03:31:14 christos Exp $	*/
+/*	$NetBSD: autofs_vnops.c,v 1.1.4.1 2020/04/08 14:08:48 martin Exp $	*/
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * Copyright (c) 2016 The DragonFly Project
@@ -34,7 +34,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.1 2018/01/09 03:31:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.1.4.1 2020/04/08 14:08:48 martin Exp $");
 
 #include "autofs.h"
 
@@ -87,7 +87,7 @@ autofs_getattr(void *v)
 	if (autofs_mount_on_stat &&
 	    autofs_cached(anp, NULL, 0) == false &&
 	    autofs_ignore_thread() == false) {
-		struct vnode *newvp = NULL;
+		struct vnode *newvp = NULLVP;
 		int error = autofs_trigger_vn(vp, "", 0, &newvp);
 		if (error)
 			return error;
@@ -171,7 +171,7 @@ mounted:
 		return error;
 
 	if (!vp->v_mountedhere) {
-		*newvp = NULL;
+		*newvp = NULLVP;
 		return 0;
 	} else {
 		/*
@@ -183,7 +183,7 @@ mounted:
 		autofs_node_uncache(anp);
 	}
 
-	error = VFS_ROOT(vp->v_mountedhere, newvp);
+	error = VFS_ROOT(vp->v_mountedhere, LK_EXCLUSIVE, newvp);
 	if (error) {
 		AUTOFS_WARN("VFS_ROOT() failed with error %d", error);
 		return error;
@@ -212,7 +212,7 @@ autofs_lookup(void *v)
 	KASSERT(VOP_ISLOCKED(dvp));
 
 	anp = VTOI(dvp);
-	*vpp = NULL;
+	*vpp = NULLVP;
 
 	/* Check accessibility of directory. */
 	KASSERT(!VOP_ACCESS(dvp, VEXEC, cnp->cn_cred));
@@ -259,7 +259,7 @@ autofs_lookup(void *v)
 
 	if (autofs_cached(anp, cnp->cn_nameptr, cnp->cn_namelen) == false &&
 	    autofs_ignore_thread() == false) {
-		struct vnode *newvp = NULL;
+		struct vnode *newvp = NULLVP;
 		error = autofs_trigger_vn(dvp, cnp->cn_nameptr, cnp->cn_namelen,
 		    &newvp);
 		if (error)
@@ -413,8 +413,7 @@ autofs_print(void *v)
 }
 
 static int
-autofs_readdir_one(struct uio *uio, const char *name, ino_t ino,
-    size_t *reclenp)
+autofs_readdir_one(struct uio *uio, const char *name, ino_t ino)
 {
 	struct dirent dirent;
 
@@ -423,9 +422,6 @@ autofs_readdir_one(struct uio *uio, const char *name, ino_t ino,
 	strlcpy(dirent.d_name, name, sizeof(dirent.d_name));
 	dirent.d_namlen = strlen(dirent.d_name);
 	dirent.d_reclen = _DIRENT_SIZE(&dirent);
-
-	if (reclenp)
-		*reclenp = dirent.d_reclen;
 
 	if (!uio)
 		return 0;
@@ -439,11 +435,12 @@ autofs_readdir_one(struct uio *uio, const char *name, ino_t ino,
 static size_t
 autofs_dirent_reclen(const char *name)
 {
-	size_t reclen;
+	struct dirent dirent;
 
-	(void)autofs_readdir_one(NULL, name, -1, &reclen);
+	strlcpy(dirent.d_name, name, sizeof(dirent.d_name));
+	dirent.d_namlen = strlen(dirent.d_name);
 
-	return reclen;
+	return _DIRENT_SIZE(&dirent);
 }
 
 static int
@@ -463,7 +460,7 @@ autofs_readdir(void *v)
 	struct autofs_mount *amp = VFSTOAUTOFS(vp->v_mount);
 	struct autofs_node *anp = VTOI(vp);
 	struct autofs_node *child;
-	size_t reclen, reclens;
+	size_t reclens;
 	int error;
 
 	if (vp->v_type != VDIR)
@@ -471,7 +468,7 @@ autofs_readdir(void *v)
 
 	if (autofs_cached(anp, NULL, 0) == false &&
 	    autofs_ignore_thread() == false) {
-		struct vnode *newvp = NULL;
+		struct vnode *newvp = NULLVP;
 		error = autofs_trigger_vn(vp, "", 0, &newvp);
 		if (error)
 			return error;
@@ -496,7 +493,7 @@ autofs_readdir(void *v)
 	 * Write out the directory entry for ".".
 	 */
 	if (uio->uio_offset == 0) {
-		error = autofs_readdir_one(uio, ".", anp->an_ino, &reclen);
+		error = autofs_readdir_one(uio, ".", anp->an_ino);
 		if (error)
 			goto out;
 	}
@@ -509,8 +506,7 @@ autofs_readdir(void *v)
 		if (uio->uio_offset != reclens)
 			return EINVAL;
 		error = autofs_readdir_one(uio, "..",
-		    (anp->an_parent ? anp->an_parent->an_ino : anp->an_ino),
-		    &reclen);
+		    anp->an_parent ? anp->an_parent->an_ino : anp->an_ino);
 		if (error)
 			goto out;
 	}
@@ -538,9 +534,8 @@ autofs_readdir(void *v)
 			return EINVAL;
 		}
 
-		error = autofs_readdir_one(uio, child->an_name,
-		    child->an_ino, &reclen);
-		reclens += reclen;
+		error = autofs_readdir_one(uio, child->an_name, child->an_ino);
+		reclens += autofs_dirent_reclen(child->an_name);
 		if (error) {
 			mutex_exit(&amp->am_lock);
 			goto out;
@@ -562,7 +557,7 @@ out:
 	/*
 	 * Don't return an error if we managed to copy out some entries.
 	 */
-	if (uio->uio_resid < reclen)
+	if (uio->uio_resid < initial_resid)
 		return 0;
 
 	return error;
@@ -583,10 +578,8 @@ autofs_reclaim(void *v)
 	 * We do not free autofs_node here; instead we are
 	 * destroying them in autofs_node_delete().
 	 */
-	mutex_enter(&anp->an_vnode_lock);
-	anp->an_vnode = NULL;
+	anp->an_vnode = NULLVP;
 	vp->v_data = NULL;
-	mutex_exit(&anp->an_vnode_lock);
 
 	return 0;
 }
@@ -634,11 +627,10 @@ autofs_node_new(struct autofs_node *parent, struct autofs_mount *amp,
 	anp->an_name = autofs_strndup(name, namelen, KM_SLEEP);
 	anp->an_ino = amp->am_last_ino++;
 	callout_init(&anp->an_callout, 0);
-	mutex_init(&anp->an_vnode_lock, MUTEX_DEFAULT, IPL_NONE);
 	getnanotime(&anp->an_ctime);
 	anp->an_parent = parent;
 	anp->an_mount = amp;
-	anp->an_vnode = NULL;
+	anp->an_vnode = NULLVP;
 	anp->an_cached = false;
 	anp->an_wildcards = false;
 	anp->an_retries = 0;
@@ -686,7 +678,6 @@ autofs_node_delete(struct autofs_node *anp)
 	if (anp->an_parent)
 		RB_REMOVE(autofs_node_tree, &anp->an_parent->an_children, anp);
 
-	mutex_destroy(&anp->an_vnode_lock);
 	kmem_strfree(anp->an_name);
 	pool_put(&autofs_node_pool, anp);
 }

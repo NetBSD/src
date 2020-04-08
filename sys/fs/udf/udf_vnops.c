@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.106 2017/05/26 14:34:20 riastradh Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.106.10.1 2020/04/08 14:08:50 martin Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.106 2017/05/26 14:34:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.106.10.1 2020/04/08 14:08:50 martin Exp $");
 #endif /* not lint */
 
 
@@ -379,7 +379,7 @@ udf_write(void *v)
 		 */
 		if ((vp->v_type != VDIR) &&
 		  (old_offset >> 16 != uio->uio_offset >> 16)) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, (old_offset >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16,
 			    PGO_CLEANIT | PGO_LAZY);
@@ -609,7 +609,7 @@ udf_readdir(void *v)
 			if (uio->uio_resid < _DIRENT_SIZE(dirent))
 				break;
 
-			/* remember the last entry we transfered */
+			/* remember the last entry we transferred */
 			transoffset = diroffset;
 
 			/* skip deleted entries */
@@ -750,7 +750,8 @@ udf_lookup(void *v)
 		if (error == 0) {
 			DPRINTF(LOOKUP, ("\tfound '..'\n"));
 			/* try to create/reuse the node */
-			error = udf_get_node(ump, &icb_loc, &res_node);
+			error = udf_get_node(ump, &icb_loc, &res_node,
+			    LK_EXCLUSIVE);
 
 			if (!error) {
 				DPRINTF(LOOKUP,
@@ -802,7 +803,7 @@ udf_lookup(void *v)
 	 */
 
 	/* try to create/reuse the node */
-	error = udf_get_node(ump, &icb_loc, &res_node);
+	error = udf_get_node(ump, &icb_loc, &res_node, LK_EXCLUSIVE);
 	if (error)
 		goto out;
 
@@ -1378,7 +1379,7 @@ udf_close(void *v)
 	udf_node = udf_node;	/* shut up gcc */
 
 	if (!async && (vp->v_type != VDIR)) {
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_CLEANIT);
 		if (error)
 			return error;

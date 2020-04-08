@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.40 2014/03/07 01:55:01 matt Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.40.30.1 2020/04/08 14:08:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,11 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.40 2014/03/07 01:55:01 matt Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_coredump.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.40.30.1 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,13 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.40 2014/03/07 01:55:01 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#ifdef COREDUMP
-#define	DEP	"coredump"
-#else
-#define	DEP	NULL
-#endif
-
-MODULE(MODULE_CLASS_EXEC, exec_aout, DEP);
+MODULE(MODULE_CLASS_EXEC, exec_aout, NULL);
 
 static struct execsw exec_aout_execsw = {
 	.es_hdrsz = sizeof(struct exec),

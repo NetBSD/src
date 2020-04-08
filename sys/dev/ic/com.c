@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.348.2.1 2019/06/10 22:07:10 christos Exp $ */
+/* $NetBSD: com.c,v 1.348.2.2 2020/04/08 14:08:06 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.348.2.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.348.2.2 2020/04/08 14:08:06 martin Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -192,8 +192,11 @@ static struct comcons_info comcons_info;
  * Following are all routines needed for COM to act as console
  */
 static struct consdev comcons = {
-	NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL, NULL, NULL,
-	NODEV, CN_NORMAL
+	.cn_getc = comcngetc,
+	.cn_putc = comcnputc,
+	.cn_pollc = comcnpollc,
+	.cn_dev = NODEV,
+	.cn_pri = CN_NORMAL
 };
 
 

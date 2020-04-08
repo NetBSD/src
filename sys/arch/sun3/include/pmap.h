@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32 2009/12/11 18:31:27 tsutsui Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32.64.1 2020/04/08 14:07:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,12 @@
 #endif	/* SUN3X */
 
 #ifdef _KERNEL
+/*
+ * Some pmap(9) API macros should be defined here for module(7)
+ * because they are common between sun3 and sun3x. (see PR/54869)
+ */
+#define	pmap_update(pmap)		__nothing	/* nothing (yet) */
+
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 #endif
 

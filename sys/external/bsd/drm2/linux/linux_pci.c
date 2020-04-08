@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.6.6.2 2019/06/10 22:08:33 christos Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.6.6.3 2020/04/08 14:08:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,8 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_pci.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.6.6.2 2019/06/10 22:08:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.6.6.3 2020/04/08 14:08:28 martin Exp $");
 
 #include <linux/pci.h>
 
@@ -66,7 +70,12 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev, device_t parent,
 	pdev->pd_rom_vaddr = NULL;
 	pdev->pd_dev = dev;
 #if (NACPICA > 0)
-	pdev->pd_ad = acpi_pcidev_find(0 /*XXX segment*/, pa->pa_bus,
+#ifdef __HAVE_PCI_GET_SEGMENT
+	const int seg = pci_get_segment(pa->pa_pc);
+#else
+	const int seg = 0;
+#endif
+	pdev->pd_ad = acpi_pcidev_find(seg, pa->pa_bus,
 	    pa->pa_device, pa->pa_function);
 #else
 	pdev->pd_ad = NULL;
@@ -257,7 +266,6 @@ pci_bus_write_config_byte(struct pci_bus *bus, unsigned devfn, int reg,
 int
 pci_enable_msi(struct pci_dev *pdev)
 {
-#ifdef notyet
 	const struct pci_attach_args *const pa = &pdev->pd_pa;
 
 	if (pci_msi_alloc_exact(pa, &pdev->pd_intr_handles, 1))
@@ -265,9 +273,6 @@ pci_enable_msi(struct pci_dev *pdev)
 
 	pdev->msi_enabled = 1;
 	return 0;
-#else
-	return -ENOSYS;
-#endif
 }
 
 void

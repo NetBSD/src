@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.67 2018/05/17 19:08:51 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.67.2.1 2020/04/08 14:07:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2018/05/17 19:08:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67.2.1 2020/04/08 14:07:44 martin Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2018/05/17 19:08:51 macallan Exp $");
 #include <sys/device.h>
 #include <sys/types.h>
 #include <sys/lwp.h>
+#include <sys/cpu.h>
 
 #include <dev/ofw/openfirm.h>
 #include <powerpc/oea/hid.h>
@@ -159,11 +160,22 @@ cpuattach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_info *ci;
 	struct confargs *ca = aux;
-	int id = ca->ca_reg[0];
+	int id = ca->ca_reg[0], vers, package, core;
 
 	ci = cpu_attach_common(self, id);
 	if (ci == NULL)
 		return;
+
+	package = id;
+	core = 0;
+
+	vers = (mfpvr() >> 16) & 0xffff;
+
+	if (vers == IBM970MP) {
+		core = package & 1;
+		package >>= 1;
+	}
+	cpu_topology_set(ci, package, core, 0, 0);
 
 	if (ci->ci_khz == 0) {
 		cpu_OFgetspeed(self, ci);
@@ -336,7 +348,7 @@ md_setup_interrupts(void)
 	if (openpic_base) {
 		openpic_set_priority(cpu_number(), 0);
 	} else if (have_u3_ht()) {
-		__u3_ht_set_priority(cpu_number(), 0);		
+		__u3_ht_set_priority(cpu_number(), 0);
 	} else
 #endif /* OPENPIC */
 		out32(HH_INTR_SECONDARY, ~0);	/* Reset interrupt. */

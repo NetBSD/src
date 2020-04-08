@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -112,6 +112,7 @@ CmDoCompile (
         PrDoPreprocess ();
         AslGbl_CurrentLineNumber = 1;
         AslGbl_LogicalLineNumber = 1;
+        AslGbl_CurrentLineOffset = 0;
 
         if (AslGbl_PreprocessOnly)
         {
@@ -175,25 +176,7 @@ CmDoCompile (
 
     LsDumpParseTree ();
 
-    OpcGetIntegerWidth (AslGbl_ParseTreeRoot->Asl.Child);
     UtEndEvent (Event);
-
-    /* Pre-process parse tree for any operator transforms */
-
-    Event = UtBeginEvent ("Parse tree transforms");
-    DbgPrint (ASL_DEBUG_OUTPUT, "\nParse tree transforms\n\n");
-    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_TWICE,
-        TrAmlTransformWalkBegin, TrAmlTransformWalkEnd, NULL);
-    UtEndEvent (Event);
-
-    /* Generate AML opcodes corresponding to the parse tokens */
-
-    Event = UtBeginEvent ("Generate AML opcodes");
-    DbgPrint (ASL_DEBUG_OUTPUT, "Generating AML opcodes\n\n");
-    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD, NULL,
-        OpcAmlOpcodeWalk, NULL);
-    UtEndEvent (Event);
-
     UtEndEvent (FullCompile);
     return (AE_OK);
 
@@ -222,6 +205,25 @@ CmDoAslMiddleAndBackEnd (
 {
     UINT8                   Event;
     ACPI_STATUS             Status;
+
+
+    OpcGetIntegerWidth (AslGbl_ParseTreeRoot->Asl.Child);
+
+    /* Pre-process parse tree for any operator transforms */
+
+    Event = UtBeginEvent ("Parse tree transforms");
+    DbgPrint (ASL_DEBUG_OUTPUT, "\nParse tree transforms\n\n");
+    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_TWICE,
+        TrAmlTransformWalkBegin, TrAmlTransformWalkEnd, NULL);
+    UtEndEvent (Event);
+
+    /* Generate AML opcodes corresponding to the parse tokens */
+
+    Event = UtBeginEvent ("Generate AML opcodes");
+    DbgPrint (ASL_DEBUG_OUTPUT, "Generating AML opcodes\n\n");
+    TrWalkParseTree (AslGbl_ParseTreeRoot, ASL_WALK_VISIT_UPWARD,
+        NULL, OpcAmlOpcodeWalk, NULL);
+    UtEndEvent (Event);
 
 
     /* Interpret and generate all compile-time constants */
@@ -539,7 +541,7 @@ void
 AslCompilerFileHeader (
     UINT32                  FileId)
 {
-    struct tm               *NewTime;
+    char                    *NewTime;
     time_t                  Aclock;
     char                    *Prefix = "";
 
@@ -583,13 +585,17 @@ AslCompilerFileHeader (
 
     /* Compilation header with timestamp */
 
-    (void) time (&Aclock);
-    NewTime = localtime (&Aclock);
+    Aclock = time (NULL);
+    NewTime = ctime (&Aclock);
 
     FlPrintFile (FileId,
-        "%sCompilation of \"%s\" - %s%s\n",
-        Prefix, AslGbl_Files[ASL_FILE_INPUT].Filename, asctime (NewTime),
-        Prefix);
+        "%sCompilation of \"%s\" -",
+        Prefix, AslGbl_Files[ASL_FILE_INPUT].Filename);
+
+    if (NewTime)
+    {
+        FlPrintFile (FileId, " %s%s\n", NewTime, Prefix);
+    }
 
     switch (FileId)
     {

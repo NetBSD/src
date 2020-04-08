@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-script,v 1.2 2017/02/14 01:16:43 christos Exp $
+#	$NetBSD: postfix-script,v 1.2.12.1 2020/04/08 14:06:49 martin Exp $
 #
 
 #++
@@ -25,6 +25,11 @@
 #	IBM T.J. Watson Research
 #	P.O. Box 704
 #	Yorktown Heights, NY 10598, USA
+#
+#	Wietse Venema
+#	Google, Inc.
+#	111 8th Avenue
+#	New York, NY 10011, USA
 #--
 
 # Avoid POSIX death due to SIGHUP when some parent process exits.
@@ -119,7 +124,7 @@ stop_msg)
 	echo "Stop postfix"
 	;;
 
-start)
+start|start-fg)
 
 	$daemon_directory/master -t 2>/dev/null || {
 		$FATAL the Postfix mail system is already running
@@ -136,12 +141,34 @@ start)
 		# Foreground this so it can be stopped. All inodes are cached.
 		$daemon_directory/postfix-script check-warn
 	fi
-	$INFO starting the Postfix mail system
-	# NOTE: wait in foreground process to get the initialization status.
-	$daemon_directory/master -w || {
-	    $FATAL "mail system startup failed"
-	    exit 1
-	}
+	$INFO starting the Postfix mail system || exit 1
+	case $1 in
+	start)
+	    # NOTE: wait in foreground process to get the initialization status.
+	    $daemon_directory/master -w || {
+		$FATAL "mail system startup failed"
+		exit 1
+	    }
+	    ;;
+	start-fg)
+	    # Foreground start-up is incompatible with multi-instance mode.
+	    # Use "exec $daemon_directory/master" only if PID == 1.
+	    # Otherwise, doing so would break process group management,
+	    # and "postfix stop" would kill too many processes.
+	    case $instances in
+	    "") case $$ in
+		 1) exec $daemon_directory/master -i
+		    $FATAL "cannot start-fg the master daemon"
+		    exit 1;;
+		 *) $daemon_directory/master -s;;
+		esac
+		;;
+	     *) $FATAL "start-fg does not support multi_instance_directories"
+		exit 1
+		;;
+	    esac
+	    ;;
+	esac
 	;;
 
 drain)
@@ -241,6 +268,18 @@ check-fatal)
 	test -f $config_directory/master.cf || {
 		$FATAL no $config_directory/master.cf file found
 		exit 1
+	}
+
+	maillog_file=`$command_directory/postconf -h maillog_file` || {
+		$FATAL cannot execute $command_directory/postconf!
+		exit 1
+	}
+	test -n "$maillog_file" && {
+		$command_directory/postconf -M postlog/unix-dgram 2>/dev/null \
+		    | grep . >/dev/null || {
+			$FATAL "missing 'postlog' service in master.cf - run 'postfix upgrade-configuration'"
+			exit 1
+		}
 	}
 
 	# See if all queue files are in the right place. This is slow.
@@ -368,9 +407,41 @@ tls)
 	"$@"
 	;;
 
+logrotate)
+	case $# in
+	1) ;;
+	*) $FATAL "usage postfix $1 (no arguments)"; exit 1;;
+	esac
+	for name in maillog_file maillog_file_compressor \
+	   maillog_file_rotate_suffix
+	do
+	    value="`$command_directory/postconf -h $name`"
+	    case "$value" in
+	    "") $FATAL "empty '$name' parameter value - logfile rotation failed"
+		exit 1;;
+	    esac
+	    eval $name='"$value"';
+	done
+
+	case "$maillog_file" in
+	/dev/*) $FATAL "not rotating '$maillog_file'"; exit 1;;
+	esac
+
+	errors=`(
+	    suffix="\`date +$maillog_file_rotate_suffix\`" || exit 1
+	    mv "$maillog_file" "$maillog_file.$suffix" || exit 1
+	    $daemon_directory/master -t 2>/dev/null ||
+		kill -HUP \`sed 1q pid/master.pid\` || exit 1
+	    sleep 1
+	    "$maillog_file_compressor" "$maillog_file.$suffix" || exit 1
+	) 2>&1` || {
+	    $FATAL "logfile '$maillog_file' rotation failed: $errors"
+	    exit 1
+	}
+	;;
+
 *)
-	$ERROR "unknown command: '$1'"
-	$FATAL "usage: postfix start (or stop, reload, abort, flush, check, status, set-permissions, upgrade-configuration)"
+	$FATAL "unknown command: '$1'. Usage: postfix start (or stop, reload, abort, flush, check, status, set-permissions, upgrade-configuration, logrotate)"
 	exit 1
 	;;
 

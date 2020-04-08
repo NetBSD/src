@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.h,v 1.15 2005/03/06 16:04:19 itojun Exp $	*/
-/*	$NetBSD: sctputil.h,v 1.2 2016/05/22 23:04:27 rjs Exp $ */
+/*	$NetBSD: sctputil.h,v 1.2.20.1 2020/04/08 14:08:58 martin Exp $ */
 
 #ifndef __SCTPUTIL_H__
 #define __SCTPUTIL_H__
@@ -140,8 +140,6 @@ u_int32_t sctp_select_initial_TSN(struct sctp_pcb *);
 u_int32_t sctp_select_a_tag(struct sctp_inpcb *);
 
 int sctp_init_asoc(struct sctp_inpcb *, struct sctp_association *, int, uint32_t);
-
-void sctp_fill_random_store(struct sctp_pcb *);
 
 int sctp_timer_start(int, struct sctp_inpcb *, struct sctp_tcb *,
 	struct sctp_nets *);

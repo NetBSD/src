@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.16.1 2019/06/10 21:55:39 christos Exp $
+#	$NetBSD: Makefile,v 1.12.16.2 2020/04/08 14:06:42 martin Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:Nlibcpp.a:.o=.c} main.c ${PROG}-checksum.c
@@ -41,6 +41,9 @@ COPTS.c-opts.c=		-Wno-stack-protector
 COPTS.c-ppoutput.c=	-Wno-stack-protector
 COPTS.c-pragma.c=	-Wno-stack-protector
 COPTS.c-typeck.c=	-Wno-stack-protector
+
+COPTS.c-cppbuiltin.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=format-overflow :}
+COPTS.c-typeck.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=format-overflow :}
 
 CPPFLAGS.default-c.c+=	-I${BACKENDOBJ}
 

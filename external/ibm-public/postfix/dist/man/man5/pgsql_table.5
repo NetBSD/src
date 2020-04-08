@@ -1,4 +1,4 @@
-.\"	$NetBSD: pgsql_table.5,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: pgsql_table.5,v 1.2.12.1 2020/04/08 14:06:50 martin Exp $
 .\"
 .TH PGSQL_TABLE 5 
 .ad
@@ -30,51 +30,6 @@ PostgreSQL source as a lookup table in main.cf, for example:
 The file /etc/postfix/pgsql\-aliases.cf has the same format as
 the Postfix main.cf file, and can specify the parameters
 described below.
-.SH "BACKWARDS COMPATIBILITY"
-.na
-.nf
-.ad
-.fi
-For compatibility with other Postfix lookup tables, PostgreSQL
-parameters can also be defined in main.cf.  In order to do
-that, specify as PostgreSQL source a name that doesn't begin
-with a slash or a dot.  The PostgreSQL parameters will then
-be accessible as the name you've given the source in its
-definition, an underscore, and the name of the parameter.  For
-example, if the map is specified as "pgsql:\fIpgsqlname\fR",
-the parameter "hosts" below would be defined in main.cf as
-"\fIpgsqlname\fR_hosts".
-
-Note: with this form, the passwords for the PostgreSQL sources
-are written in main.cf, which is normally world\-readable.
-Support for this form will be removed in a future Postfix
-version.
-
-Normally, the SQL query is specified via a single \fBquery\fR
-parameter (described in more detail below).  When this
-parameter is not specified in the map definition, Postfix
-reverts to an older interface, with the  SQL  query
-constructed  from the \fBselect_function\fR, \fBselect_field\fR,
-\fBtable\fR, \fBwhere_field\fR and \fBadditional_conditions\fR
-parameters.  The old interface will be gradually phased
-out. To migrate to the new interface set:
-
-.nf
-    \fBquery\fR = SELECT \fIselect_function\fR('%s')
-.fi
-
-or in the absence of \fBselect_function\fR, the lower precedence:
-
-.nf
-    \fBquery\fR = SELECT \fIselect_field\fR
-        FROM \fItable\fR
-        WHERE \fIwhere_field\fR = '%s'
-            \fIadditional_conditions\fR
-.fi
-
-Use the value, not the name, of each legacy parameter. Note
-that the \fBadditional_conditions\fR parameter is optional
-and if not empty, will always start with \fBAND\fR.
 .SH "LIST MEMBERSHIP"
 .na
 .nf
@@ -101,24 +56,22 @@ return the key itself or a constant value.
 .ad
 .fi
 .IP "\fBhosts\fR"
-The hosts that Postfix will try to connect to and query from.
-Specify \fIunix:\fR for UNIX\-domain sockets, \fIinet:\fR for TCP
-connections (default).  Example:
+The hosts that Postfix will try to connect to and query
+from. Besides a \fBpostgresql://\fR connection URI, this
+setting supports the historical forms \fBunix:/\fIpathname\fR
+for UNIX\-domain sockets and \fBinet:\fIhost:port\fR for TCP
+connections, where the \fBunix:\fR and \fBinet:\fR prefixes
+are accepted and ignored for backwards compatibility.
+Examples:
 .nf
+    hosts = postgresql://username@example.com/tablename?sslmode=require
     hosts = host1.some.domain host2.some.domain:port
     hosts = unix:/file/name
 .fi
 
-The hosts are tried in random order, with all connections over
-UNIX domain sockets being tried before those over TCP.  The
-connections are automatically closed after being idle for about
-1 minute, and are re\-opened as necessary.
-
-NOTE: the \fIunix:\fR and \fIinet:\fR prefixes are accepted for
-backwards compatibility reasons, but are actually ignored.
-The PostgreSQL client library will always try to connect to an
-UNIX socket if the name starts with a slash, and will try a TCP
-connection otherwise.
+The hosts are tried in random order. The connections are
+automatically closed after being idle for about 1 minute,
+and are re\-opened as necessary.
 .IP "\fBuser, password\fR"
 The user name and password to log into the pgsql server.
 Example:
@@ -259,6 +212,25 @@ A setting of zero disables the limit. Lookups fail with a
 temporary error if the limit is exceeded.  Setting the
 limit to 1 ensures that lookups do not return multiple
 values.
+.SH "OBSOLETE MAIN.CF PARAMETERS"
+.na
+.nf
+.ad
+.fi
+For compatibility with other Postfix lookup tables, PostgreSQL
+parameters can also be defined in main.cf.  In order to do
+that, specify as PostgreSQL source a name that doesn't begin
+with a slash or a dot.  The PostgreSQL parameters will then
+be accessible as the name you've given the source in its
+definition, an underscore, and the name of the parameter.  For
+example, if the map is specified as "pgsql:\fIpgsqlname\fR",
+the parameter "hosts" would be defined in main.cf as
+"\fIpgsqlname\fR_hosts".
+
+Note: with this form, the passwords for the PostgreSQL sources
+are written in main.cf, which is normally world\-readable.
+Support for this form will be removed in a future Postfix
+version.
 .SH "OBSOLETE QUERY INTERFACES"
 .na
 .nf

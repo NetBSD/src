@@ -1,5 +1,5 @@
 /* bit_fix.h
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -21,7 +21,7 @@
 /* The bit_fix was implemented to support machines that need variables
    to be inserted in bitfields other than 1, 2 and 4 bytes.
    Furthermore it gives us a possibility to mask in bits in the symbol
-   when it's fixed in the objectcode and check the symbols limits.
+   when it's fixed in the object code and check the symbols limits.
 
    The or-mask is used to set the huffman bits in displacements for the
    ns32k port.

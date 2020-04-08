@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_evergreen_cs.c,v 1.2.4.2 2019/06/10 22:08:26 christos Exp $	*/
+/*	$NetBSD: radeon_evergreen_cs.c,v 1.2.4.3 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen_cs.c,v 1.2.4.2 2019/06/10 22:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen_cs.c,v 1.2.4.3 2020/04/08 14:08:26 martin Exp $");
 
 #include <drm/drmP.h>
 #include "radeon.h"
@@ -36,9 +36,11 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_evergreen_cs.c,v 1.2.4.2 2019/06/10 22:08:26 
 #include "evergreen_reg_safe.h"
 #include "cayman_reg_safe.h"
 
+#include <linux/nbsd-namespace.h>
+
 #ifndef __NetBSD__
-#define MAX(a,b)			(((a)>(b))?(a):(b))
-#define MIN(a,b)			(((a)<(b))?(a):(b))
+#define MAX(a,b)                   (((a)>(b))?(a):(b))
+#define MIN(a,b)                   (((a)<(b))?(a):(b))
 #endif
 
 #define REG_SAFE_BM_SIZE ARRAY_SIZE(evergreen_reg_safe_bm)
@@ -455,21 +457,21 @@ static int evergreen_cs_track_validate_cb(struct radeon_cs_parser *p, unsigned i
 		 */
 		if (!surf.mode) {
 			uint32_t *ib = p->ib.ptr;
-			unsigned long tmp, nby, bsize, size, vmin = 0;
+			unsigned long tmp, nby, bsize, size, min = 0;
 
 			/* find the height the ddx wants */
 			if (surf.nby > 8) {
-				vmin = surf.nby - 8;
+				min = surf.nby - 8;
 			}
 			bsize = radeon_bo_size(track->cb_color_bo[id]);
 			tmp = track->cb_color_bo_offset[id] << 8;
-			for (nby = surf.nby; nby > vmin; nby--) {
+			for (nby = surf.nby; nby > min; nby--) {
 				size = nby * surf.nbx * surf.bpe * surf.nsamples;
 				if ((tmp + size * mslice) <= bsize) {
 					break;
 				}
 			}
-			if (nby > vmin) {
+			if (nby > min) {
 				surf.nby = nby;
 				slice = ((nby * surf.nbx) / 64) - 1;
 				if (!evergreen_surface_check(p, &surf, "cb")) {
@@ -849,11 +851,7 @@ static int evergreen_cs_track_validate_texture(struct radeon_cs_parser *p,
 
 	/* align height */
 	evergreen_surface_check(p, &surf, NULL);
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-	surf.nby = round_up(surf.nby, surf.halign);
-#else
 	surf.nby = ALIGN(surf.nby, surf.halign);
-#endif
 
 	r = evergreen_surface_check(p, &surf, "texture");
 	if (r) {
@@ -926,13 +924,8 @@ static int evergreen_cs_track_validate_texture(struct radeon_cs_parser *p,
 				 __func__, __LINE__, surf.mode);
 			return -EINVAL;
 		}
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		surf.nbx = round_up(surf.nbx, surf.palign);
-		surf.nby = round_up(surf.nby, surf.halign);
-#else
 		surf.nbx = ALIGN(surf.nbx, surf.palign);
 		surf.nby = ALIGN(surf.nby, surf.halign);
-#endif
 
 		r = evergreen_surface_check(p, &surf, "mipmap");
 		if (r) {

@@ -4,7 +4,7 @@
 #   $1 - source file to compile and compare with fdtdump output of the
 #	  compiled file.
 
-. ./tests.sh
+. ./testutils.sh
 
 dts="$1"
 dtb="${dts}.dtb"

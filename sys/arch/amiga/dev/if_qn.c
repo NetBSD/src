@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.46.2.1 2019/06/10 22:05:48 christos Exp $ */
+/*	$NetBSD: if_qn.c,v 1.46.2.2 2020/04/08 14:07:26 martin Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.46.2.1 2019/06/10 22:05:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.46.2.2 2020/04/08 14:07:26 martin Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -304,7 +304,7 @@ qnwatchdog(struct ifnet *ifp)
 	struct qn_softc *sc = ifp->if_softc;
 
 	log(LOG_INFO, "qn: device timeout (watchdog)\n");
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	qnreset(sc);
 }
@@ -612,19 +612,19 @@ qn_rint(struct qn_softc *sc, u_short rstat)
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Overflow\n");
 #endif
-		++sc->sc_ethercom.ec_if.if_ierrors;
+		if_statinc(&sc->sc_ethercom.ec_if, if_ierrors);
 	}
 	if (rstat & R_INT_CRC_ERR) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "CRC Error\n");
 #endif
-		++sc->sc_ethercom.ec_if.if_ierrors;
+		if_statinc(&sc->sc_ethercom.ec_if, if_ierrors);
 	}
 	if (rstat & R_INT_ALG_ERR) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Alignment error\n");
 #endif
-		++sc->sc_ethercom.ec_if.if_ierrors;
+		if_statinc(&sc->sc_ethercom.ec_if, if_ierrors);
 	}
 	if (rstat & R_INT_SRT_PKT) {
 		/* Short packet (these may occur and are
@@ -634,13 +634,13 @@ qn_rint(struct qn_softc *sc, u_short rstat)
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Short packet\n");
 #endif
-		++sc->sc_ethercom.ec_if.if_ierrors;
+		if_statinc(&sc->sc_ethercom.ec_if, if_ierrors);
 	}
 	if (rstat & 0x4040) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Bus read error\n");
 #endif
-		++sc->sc_ethercom.ec_if.if_ierrors;
+		if_statinc(&sc->sc_ethercom.ec_if, if_ierrors);
 		qnreset(sc);
 	}
 
@@ -676,7 +676,7 @@ qn_rint(struct qn_softc *sc, u_short rstat)
 			    "%s: received a %s packet? (%u bytes)\n",
 			    device_xname(sc->sc_dev),
 			    len < ETHER_HDR_LEN ? "partial" : "big", len);
-			++sc->sc_ethercom.ec_if.if_ierrors;
+			if_statinc(&sc->sc_ethercom.ec_if, if_ierrors);
 			continue;
 		}
 #endif
@@ -741,7 +741,7 @@ qnintr(void *arg)
 			 * Update total number of successfully
 			 * transmitted packets.
 			 */
-			sc->sc_ethercom.ec_if.if_opackets++;
+			if_statinc(&sc->sc_ethercom.ec_if, if_opackets);
 		}
 
 		if (tint & T_SIXTEEN_COL) {
@@ -752,8 +752,8 @@ qnintr(void *arg)
 #ifdef QN_DEBUG1
 			qn_dump(sc);
 #endif
-			sc->sc_ethercom.ec_if.if_oerrors++;
-			sc->sc_ethercom.ec_if.if_collisions += 16;
+			if_statadd2(&sc->sc_ethercom.ec_if,
+			    if_oerrors, 1, if_collisions, 16);
 			sc->transmit_pending = 0;
 		}
 

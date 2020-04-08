@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.14 2016/11/02 00:11:59 pgoyette Exp $	*/
+/*	$NetBSD: userret.h,v 1.14.16.1 2020/04/08 14:07:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,14 @@ static __inline void
 userret(struct lwp *l)
 {
 
+	/* This must come first... */
+	l->l_md.md_astpending = 0;
+
+	if (l->l_pflag & LP_OWEUPC) {
+		l->l_pflag &= ~LP_OWEUPC;
+		ADDUPROF(l);
+	}
+
 	/* Invoke MI userret code */
 	mi_userret(l);
 
@@ -67,7 +75,7 @@ userret(struct lwp *l)
 		if (CPU_IS_SH3) {
 			tf->tf_ubc = UBC_CYCLE_INSN | UBC_CYCLE_READ
 				| SH3_UBC_CYCLE_CPU;
-	}
+		}
 #endif
 #ifdef SH4
 		if (CPU_IS_SH4) {

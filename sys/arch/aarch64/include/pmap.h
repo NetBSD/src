@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.5.2.1 2019/06/10 22:05:43 christos Exp $ */
+/* $NetBSD: pmap.h,v 1.5.2.2 2020/04/08 14:07:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -44,12 +44,14 @@
 #include <sys/queue.h>
 #include <uvm/uvm_pglist.h>
 
+#include <aarch64/armreg.h>
 #include <aarch64/pte.h>
 
 #define PMAP_GROWKERNEL
 #define PMAP_STEAL_MEMORY
 
 #define __HAVE_VM_PAGE_MD
+#define __HAVE_PMAP_PV_TRACK	1
 
 #ifndef KASAN
 #define PMAP_MAP_POOLPAGE(pa)		AARCH64_PA_TO_KVA(pa)
@@ -72,7 +74,7 @@ struct pmap {
 	pd_entry_t *pm_l0table;			/* L0 table: 512G*512 */
 	paddr_t pm_l0table_pa;
 
-	TAILQ_HEAD(, vm_page) pm_vmlist;	/* for L[0123] tables */
+	LIST_HEAD(, vm_page) pm_vmlist;		/* for L[0123] tables */
 
 	struct pmap_statistics pm_stats;
 	unsigned int pm_refcnt;
@@ -82,22 +84,28 @@ struct pmap {
 };
 
 struct pv_entry;
-struct vm_page_md {
-	kmutex_t mdpg_pvlock;
-	TAILQ_ENTRY(vm_page) mdpg_vmlist;	/* L[0123] table vm_page list */
-	TAILQ_HEAD(, pv_entry) mdpg_pvhead;
 
-	pd_entry_t *mdpg_ptep_parent;	/* for page descriptor page only */
+struct pmap_page {
+	kmutex_t pp_pvlock;
+	LIST_HEAD(, pv_entry) pp_pvhead;
 
 	/* VM_PROT_READ means referenced, VM_PROT_WRITE means modified */
-	uint32_t mdpg_flags;
+	uint32_t pp_flags;
+#define PMAP_PAGE_FLAGS_PV_TRACKED	0x80000000
 };
 
-/* each mdpg_pvlock will be initialized in pmap_init() */
-#define VM_MDPAGE_INIT(pg)				\
-	do {						\
-		TAILQ_INIT(&(pg)->mdpage.mdpg_pvhead);	\
-		(pg)->mdpage.mdpg_flags = 0;		\
+struct vm_page_md {
+	LIST_ENTRY(vm_page) mdpg_vmlist;	/* L[0123] table vm_page list */
+	pd_entry_t *mdpg_ptep_parent;	/* for page descriptor page only */
+
+	struct pmap_page mdpg_pp;
+};
+
+/* each mdpg_pp.pp_pvlock will be initialized in pmap_init() */
+#define VM_MDPAGE_INIT(pg)					\
+	do {							\
+		LIST_INIT(&(pg)->mdpage.mdpg_pp.pp_pvhead);	\
+		(pg)->mdpage.mdpg_pp.pp_flags = 0;		\
 	} while (/*CONSTCOND*/ 0)
 
 
@@ -113,6 +121,7 @@ struct vm_page_md {
 #define LX_BLKPAG_ATTR_NORMAL_NC	__SHIFTIN(1, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_NORMAL_WT	__SHIFTIN(2, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_DEVICE_MEM	__SHIFTIN(3, LX_BLKPAG_ATTR_INDX)
+#define LX_BLKPAG_ATTR_DEVICE_MEM_SO	__SHIFTIN(4, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_MASK		LX_BLKPAG_ATTR_INDX
 
 #define lxpde_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
@@ -164,6 +173,8 @@ int pmapboot_enter(vaddr_t, paddr_t, psize_t, psize_t,
     void (*pr)(const char *, ...) __printflike(1, 2));
 #define PMAPBOOT_ENTER_NOBLOCK		0x00000001
 #define PMAPBOOT_ENTER_NOOVERWRITE	0x00000002
+int pmapboot_enter_range(vaddr_t, paddr_t, psize_t, pt_entry_t, uint64_t,
+    pd_entry_t *(*)(void), void (*)(const char *, ...) __printflike(1, 2));
 int pmapboot_protect(vaddr_t, vaddr_t, vm_prot_t);
 void pmap_db_pte_print(pt_entry_t, int,
     void (*pr)(const char *, ...) __printflike(1, 2));
@@ -196,16 +207,17 @@ paddr_t pmap_alloc_pdp(struct pmap *, struct vm_page **, int, bool);
 #define L1_ROUND_BLOCK(x)	L1_TRUNC_BLOCK((x) + L1_SIZE - 1)
 #define L2_TRUNC_BLOCK(x)	((x) & L2_FRAME)
 #define L2_ROUND_BLOCK(x)	L2_TRUNC_BLOCK((x) + L2_SIZE - 1)
+#define L3_TRUNC_BLOCK(x)	((x) & L3_FRAME)
+#define L3_ROUND_BLOCK(x)	L3_TRUNC_BLOCK((x) + L3_SIZE - 1)
 
-/* devmap use L2 blocks. (2Mbyte) */
-#define DEVMAP_TRUNC_ADDR(x)	L2_TRUNC_BLOCK((x))
-#define DEVMAP_ROUND_SIZE(x)	L2_ROUND_BLOCK((x))
+#define DEVMAP_ALIGN(x)		L3_TRUNC_BLOCK((x))
+#define DEVMAP_SIZE(x)		L3_ROUND_BLOCK((x))
 
 #define	DEVMAP_ENTRY(va, pa, sz)			\
 	{						\
-		.pd_va = DEVMAP_TRUNC_ADDR(va),		\
-		.pd_pa = DEVMAP_TRUNC_ADDR(pa),		\
-		.pd_size = DEVMAP_ROUND_SIZE(sz),	\
+		.pd_va = DEVMAP_ALIGN(va),		\
+		.pd_pa = DEVMAP_ALIGN(pa),		\
+		.pd_size = DEVMAP_SIZE(sz),			\
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,	\
 		.pd_flags = PMAP_NOCACHE		\
 	}
@@ -227,6 +239,8 @@ paddr_t pmap_alloc_pdp(struct pmap *, struct vm_page **, int, bool);
 
 #define	PMAP_PTE			0x10000000 /* kenter_pa */
 #define	PMAP_DEV			0x20000000 /* kenter_pa */
+#define	PMAP_DEV_SO			0x40000000 /* kenter_pa */
+#define	PMAP_DEV_MASK			(PMAP_DEV | PMAP_DEV_SO)
 
 static inline u_int
 aarch64_mmap_flags(paddr_t mdpgno)
@@ -234,11 +248,12 @@ aarch64_mmap_flags(paddr_t mdpgno)
 	u_int nflag, pflag;
 
 	/*
-	 * aarch64 arch has 4 memory attribute:
+	 * aarch64 arch has 5 memory attribute:
 	 *
 	 *  WriteBack      - write back cache
-	 *  WriteThru      - wite through cache
+	 *  WriteThru      - write through cache
 	 *  NoCache        - no cache
+	 *  Device(nGnRE)  - no Gathering, no Reordering, Early write ack
 	 *  Device(nGnRnE) - no Gathering, no Reordering, no Early write ack
 	 *
 	 * but pmap has PMAP_{NOCACHE,WRITE_COMBINE,WRITE_BACK} flags.
@@ -263,6 +278,75 @@ aarch64_mmap_flags(paddr_t mdpgno)
 	return pflag;
 }
 
+/*
+ * Which is the address space of this VA?
+ * return the space considering TBI. (PAC is not yet)
+ *
+ * return value: AARCH64_ADDRSPACE_{LOWER,UPPER}{_OUTOFRANGE}?
+ */
+#define AARCH64_ADDRTOP_TAG		__BIT(55)	/* ECR_EL1.TBI[01]=1 */
+#define AARCH64_ADDRTOP_MSB		__BIT(63)	/* ECR_EL1.TBI[01]=0 */
+#define AARCH64_ADDRESS_TAG_MASK	__BITS(63,56)	/* if TCR.TBI[01]=1 */
+#define AARCH64_ADDRESS_PAC_MASK	__BITS(54,48)	/* depend on VIRT_BIT */
+#define AARCH64_ADDRESS_TAGPAC_MASK	\
+			(AARCH64_ADDRESS_TAG_MASK|AARCH64_ADDRESS_PAC_MASK)
+
+#define AARCH64_ADDRSPACE_LOWER			0	/* -> TTBR0 */
+#define AARCH64_ADDRSPACE_UPPER			1	/* -> TTBR1 */
+#define AARCH64_ADDRSPACE_LOWER_OUTOFRANGE	-1	/* certainly fault */
+#define AARCH64_ADDRSPACE_UPPER_OUTOFRANGE	-2	/* certainly fault */
+static inline int
+aarch64_addressspace(vaddr_t va)
+{
+	uint64_t addrtop, tbi;
+
+	addrtop = (uint64_t)va & AARCH64_ADDRTOP_TAG;
+	tbi = addrtop ? TCR_TBI1 : TCR_TBI0;
+	if (reg_tcr_el1_read() & tbi) {
+		if (addrtop == 0) {
+			/* lower address, and TBI0 enabled */
+			if ((va & AARCH64_ADDRESS_PAC_MASK) != 0)
+				return AARCH64_ADDRSPACE_LOWER_OUTOFRANGE;
+			return AARCH64_ADDRSPACE_LOWER;
+		}
+		/* upper address, and TBI1 enabled */
+		if ((va & AARCH64_ADDRESS_PAC_MASK) != AARCH64_ADDRESS_PAC_MASK)
+			return AARCH64_ADDRSPACE_UPPER_OUTOFRANGE;
+		return AARCH64_ADDRSPACE_UPPER;
+	}
+
+	addrtop = (uint64_t)va & AARCH64_ADDRTOP_MSB;
+	if (addrtop == 0) {
+		/* lower address, and TBI0 disabled */
+		if ((va & AARCH64_ADDRESS_TAGPAC_MASK) != 0)
+			return AARCH64_ADDRSPACE_LOWER_OUTOFRANGE;
+		return AARCH64_ADDRSPACE_LOWER;
+	}
+	/* upper address, and TBI1 disabled */
+	if ((va & AARCH64_ADDRESS_TAGPAC_MASK) != AARCH64_ADDRESS_TAGPAC_MASK)
+		return AARCH64_ADDRSPACE_UPPER_OUTOFRANGE;
+	return AARCH64_ADDRSPACE_UPPER;
+}
+
+static inline vaddr_t
+aarch64_untag_address(vaddr_t va)
+{
+	uint64_t addrtop, tbi;
+
+	addrtop = (uint64_t)va & AARCH64_ADDRTOP_TAG;
+	tbi = addrtop ? TCR_TBI1 : TCR_TBI0;
+	if (reg_tcr_el1_read() & tbi) {
+		if (addrtop == 0) {
+			/* lower address, and TBI0 enabled */
+			return (uint64_t)va & ~AARCH64_ADDRESS_TAG_MASK;
+		}
+		/* upper address, and TBI1 enabled */
+		return (uint64_t)va | AARCH64_ADDRESS_TAG_MASK;
+	}
+
+	/* TBI[01] is disabled, nothing to do */
+	return va;
+}
 
 #define pmap_phys_address(pa)		aarch64_ptob((pa))
 #define pmap_mmap_flags(ppn)		aarch64_mmap_flags((ppn))
@@ -274,6 +358,11 @@ aarch64_mmap_flags(paddr_t mdpgno)
 
 bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
 void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
+
+void	pmap_pv_init(void);
+void	pmap_pv_track(paddr_t, psize_t);
+void	pmap_pv_untrack(paddr_t, psize_t);
+void	pmap_pv_protect(paddr_t, vm_prot_t);
 
 #define	PMAP_MAPSIZE1	L2_SIZE
 

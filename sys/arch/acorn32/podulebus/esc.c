@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.31 2016/08/17 22:03:57 skrll Exp $	*/
+/*	$NetBSD: esc.c,v 1.31.16.1 2020/04/08 14:07:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.31 2016/08/17 22:03:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.31.16.1 2020/04/08 14:07:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1180,12 +1180,12 @@ esc_midaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 
 	case ESC_NS_DATA_IN:
 	case ESC_NS_DATA_OUT:
-		/* We have transfered data. */
+		/* We have transferred data. */
 		if (dev->sc_dma_len)
 			if (dev->sc_cur_link < dev->sc_max_link) {
 				/*
 				 * Clean up DMA and at the same time get how
-				 * many bytes that were NOT transfered.
+				 * many bytes that were NOT transferred.
 				 */
 			  left = dev->sc_setup_dma(dev, 0, 0, ESC_DMA_CLEAR);
 			  len  = dev->sc_dma_len;
@@ -1212,7 +1212,7 @@ esc_midaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 			  }
 
 			  /*
-			   * Update pointers/length to reflect the transfered
+			   * Update pointers/length to reflect the transferred
 			   * data.
 			   */
 			  dev->sc_len -= len-left;

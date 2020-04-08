@@ -43,6 +43,7 @@
 #endif
 #ifdef __NetBSD__
 #include <sys/sysctl.h>
+#include <paths.h>
 #endif
 
 #include <unistd.h>
@@ -1185,9 +1186,7 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 	bool ismod;
 
 	if (strcmp("netbsd", name) == 0) {
-		/* want the kernel, but it is not absolute */
-		dt_bootfile(machine, sizeof(machine));
-		snprintf(fname, sizeof(fname), "/%s", machine);
+		strlcpy(fname, _PATH_KSYMS, sizeof fname);
 		ismod = false;
 	} else {
 

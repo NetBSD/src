@@ -1,0 +1,62 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<section xml:id="relnotes-9.14.1"><info><title>Notes for BIND 9.14.1</title></info>
+
+  <section xml:id="relnotes-9.14.1-security"><info><title>Security Fixes</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          In certain configurations, <command>named</command> could crash
+          with an assertion failure if <command>nxdomain-redirect</command>
+          was in use and a redirected query resulted in an NXDOMAIN from the
+          cache. This flaw is disclosed in CVE-2019-6467. [GL #880]
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The TCP client quota set using the <command>tcp-clients</command>
+          option could be exceeded in some cases. This could lead to
+          exhaustion of file descriptors. (CVE-2018-5743) [GL #615]
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes-9.14.1-features"><info><title>New Features</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          The new <command>add-soa</command> option specifies whether
+          or not the <command>response-policy</command> zone's SOA record
+          should be included in the additional section of RPZ responses.
+          [GL #865]
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes-9.14.1-bugs"><info><title>Bug Fixes</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          The <command>allow-update</command> and
+          <command>allow-update-forwarding</command> options were
+          inadvertently treated as configuration errors when used at the
+          <command>options</command> or <command>view</command> level.
+          This has now been corrected.
+          [GL #913]
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+</section>

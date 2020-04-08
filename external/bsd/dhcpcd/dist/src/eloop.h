@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -30,33 +30,12 @@
 
 #include <time.h>
 
-/* Some systems don't define timespec macros */
-#ifndef timespecclear
-#define timespecclear(tsp)      (tsp)->tv_sec = (time_t)((tsp)->tv_nsec = 0L)
-#define timespecisset(tsp)      ((tsp)->tv_sec || (tsp)->tv_nsec)
-#define timespeccmp(tsp, usp, cmp)                                      \
-        (((tsp)->tv_sec == (usp)->tv_sec) ?                             \
-            ((tsp)->tv_nsec cmp (usp)->tv_nsec) :                       \
-            ((tsp)->tv_sec cmp (usp)->tv_sec))
-#define timespecadd(tsp, usp, vsp)                                      \
-        do {                                                            \
-                (vsp)->tv_sec = (tsp)->tv_sec + (usp)->tv_sec;          \
-                (vsp)->tv_nsec = (tsp)->tv_nsec + (usp)->tv_nsec;       \
-                if ((vsp)->tv_nsec >= 1000000000L) {                    \
-                        (vsp)->tv_sec++;                                \
-                        (vsp)->tv_nsec -= 1000000000L;                  \
-                }                                                       \
-        } while (/* CONSTCOND */ 0)
-#define timespecsub(tsp, usp, vsp)                                      \
-        do {                                                            \
-                (vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;          \
-                (vsp)->tv_nsec = (tsp)->tv_nsec - (usp)->tv_nsec;       \
-                if ((vsp)->tv_nsec < 0) {                               \
-                        (vsp)->tv_sec--;                                \
-                        (vsp)->tv_nsec += 1000000000L;                  \
-                }                                                       \
-        } while (/* CONSTCOND */ 0)
-#endif
+/* Handy macros to create subsecond timeouts */
+#define	CSEC_PER_SEC		100
+#define	MSEC_PER_SEC		1000
+#define	NSEC_PER_CSEC		10000000
+#define	NSEC_PER_MSEC		1000000
+#define	NSEC_PER_SEC		1000000000
 
 /* eloop queues are really only for deleting timeouts registered
  * for a function or object.
@@ -66,9 +45,14 @@
   #define ELOOP_QUEUE 1
 #endif
 
+/* Used for deleting a timeout for all queues. */
+#define	ELOOP_QUEUE_ALL	0
+
 /* Forward declare eloop - the content should be invisible to the outside */
 struct eloop;
 
+unsigned long long eloop_timespec_diff(const struct timespec *tsp,
+    const struct timespec *usp, unsigned int *nsp);
 int eloop_event_add_rw(struct eloop *, int,
     void (*)(void *), void *,
     void (*)(void *), void *);
@@ -93,9 +77,9 @@ int eloop_event_delete_write(struct eloop *, int, int);
 int eloop_q_timeout_add_tv(struct eloop *, int,
     const struct timespec *, void (*)(void *), void *);
 int eloop_q_timeout_add_sec(struct eloop *, int,
-    time_t, void (*)(void *), void *);
+    unsigned int, void (*)(void *), void *);
 int eloop_q_timeout_add_msec(struct eloop *, int,
-    long, void (*)(void *), void *);
+    unsigned long, void (*)(void *), void *);
 int eloop_q_timeout_delete(struct eloop *, int, void (*)(void *), void *);
 
 int eloop_signal_set_cb(struct eloop *, const int *, size_t,

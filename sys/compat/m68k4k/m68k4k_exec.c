@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.24 2014/03/07 01:33:43 christos Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.24.30.1 2020/04/08 14:08:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.24 2014/03/07 01:33:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.24.30.1 2020/04/08 14:08:00 martin Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -59,13 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.24 2014/03/07 01:33:43 christos Ex
 
 #include <compat/m68k4k/m68k4k_exec.h>
 
-#ifdef COREDUMP
-#define	DEP	"coredump"
-#else
-#define	DEP	NULL
-#endif
-
-MODULE(MODULE_CLASS_EXEC, exec_m68k4k, DEP);
+MODULE(MODULE_CLASS_EXEC, exec_m68k4k, NULL);
 
 static struct execsw exec_m68k4k_execsw = {
 	.es_hdrsz = sizeof(struct exec),

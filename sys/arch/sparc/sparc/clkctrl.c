@@ -1,4 +1,4 @@
-/*	$NetBSD: clkctrl.c,v 1.5 2011/07/17 23:32:37 mrg Exp $	*/
+/*	$NetBSD: clkctrl.c,v 1.5.54.1 2020/04/08 14:07:53 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clkctrl.c,v 1.5 2011/07/17 23:32:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clkctrl.c,v 1.5.54.1 2020/04/08 14:07:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ static void clkctrl_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(clkctrl, 0,
      clkctrl_match, clkctrl_attach, NULL, NULL);
 
-static void tadpole_cpu_sleep(struct cpu_info *);
+static void tadpole_cpu_sleep(void);
 volatile uint8_t *clkctrl_reg = NULL;
 
 static int
@@ -91,8 +91,9 @@ clkctrl_attach(device_t parent, device_t self, void *aux)
 
 /* ARGSUSED */
 static void
-tadpole_cpu_sleep(struct cpu_info *ci)
+tadpole_cpu_sleep(void)
 {
+
 	if (clkctrl_reg == 0)
 		return;
 	*clkctrl_reg = 0;

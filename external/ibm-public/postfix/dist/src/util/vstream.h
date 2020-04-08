@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: vstream.h,v 1.2.12.1 2020/04/08 14:06:59 martin Exp $	*/
 
 #ifndef _VSTREAM_H_INCLUDED_
 #define _VSTREAM_H_INCLUDED_
@@ -46,7 +46,7 @@ typedef struct VSTREAM {
     VBUF    buf;			/* generic intelligent buffer */
     int     fd;				/* file handle, no 256 limit */
     VSTREAM_RW_FN read_fn;		/* buffer fill action */
-    VSTREAM_RW_FN write_fn;		/* buffer fill action */
+    VSTREAM_RW_FN write_fn;		/* buffer flush action */
     ssize_t req_bufsize;		/* requested read/write buffer size */
     void   *context;			/* application context */
     off_t   offset;			/* cached seek info */
@@ -57,10 +57,11 @@ typedef struct VSTREAM {
     VBUF    write_buf;			/* write buffer (double-buffered) */
     pid_t   pid;			/* vstream_popen/close() */
     VSTREAM_WAITPID_FN waitpid_fn;	/* vstream_popen/close() */
-    int     timeout;			/* read/write timout */
+    int     timeout;			/* read/write timeout */
     VSTREAM_JMP_BUF *jbuf;		/* exception handling */
     struct timeval iotime;		/* time of last fill/flush */
     struct timeval time_limit;		/* read/write time limit */
+    struct VSTRING *vstring;		/* memory-backed stream */
 } VSTREAM;
 
 extern VSTREAM vstream_fstd[];		/* pre-defined streams */
@@ -80,12 +81,14 @@ extern VSTREAM vstream_fstd[];		/* pre-defined streams */
 #define VSTREAM_FLAG_FIXED	VBUF_FLAG_FIXED	/* fixed-size buffer */
 #define VSTREAM_FLAG_BAD	VBUF_FLAG_BAD
 
+/* Flags 1<<24 and above are reserved for VSTRING. */
 #define VSTREAM_FLAG_READ	(1<<8)	/* read buffer */
 #define VSTREAM_FLAG_WRITE	(1<<9)	/* write buffer */
 #define VSTREAM_FLAG_SEEK	(1<<10)	/* seek info valid */
 #define VSTREAM_FLAG_NSEEK	(1<<11)	/* can't seek this file */
 #define VSTREAM_FLAG_DOUBLE	(1<<12)	/* double buffer */
 #define VSTREAM_FLAG_DEADLINE	(1<<13)	/* deadline active */
+#define VSTREAM_FLAG_MEMORY	(1<<14)	/* internal stream */
 
 #define VSTREAM_PURGE_READ	(1<<0)	/* flush unread data */
 #define VSTREAM_PURGE_WRITE	(1<<1)	/* flush unwritten data */
@@ -131,6 +134,8 @@ extern int vstream_fdclose(VSTREAM *);
 
 #define vstream_fstat(vp, fl)	((vp)->buf.flags & (fl))
 
+extern ssize_t vstream_fread_buf(VSTREAM *, struct VSTRING *, ssize_t);
+extern ssize_t vstream_fread_app(VSTREAM *, struct VSTRING *, ssize_t);
 extern void vstream_control(VSTREAM *, int,...);
 
 /* Legacy API: type-unchecked arguments, internal use. */
@@ -259,6 +264,13 @@ extern int vstream_tweak_tcp(VSTREAM *);
 
 #define vstream_flags(stream) ((const int) (stream)->buf.flags)
 
+ /*
+  * Read/write VSTRING memory.
+  */
+#define vstream_memopen(string, flags) \
+	vstream_memreopen((VSTREAM *) 0, (string), (flags))
+VSTREAM *vstream_memreopen(VSTREAM *, struct VSTRING *, int);
+
 /* LICENSE
 /* .ad
 /* .fi
@@ -268,6 +280,11 @@ extern int vstream_tweak_tcp(VSTREAM *);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

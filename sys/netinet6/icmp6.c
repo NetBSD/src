@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.238.2.1 2019/06/10 22:09:48 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.238.2.2 2020/04/08 14:08:58 martin Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.238.2.1 2019/06/10 22:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.238.2.2 2020/04/08 14:08:58 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -285,7 +285,7 @@ icmp6_mtudisc_callback_register(void (*func)(struct in6_addr *))
  */
 void
 icmp6_error2(struct mbuf *m, int type, int code, int param,
-	struct ifnet *ifp)
+	struct ifnet *ifp, struct in6_addr *src)
 {
 	struct ip6_hdr *ip6;
 
@@ -304,6 +304,7 @@ icmp6_error2(struct mbuf *m, int type, int code, int param,
 	if (in6_setscope(&ip6->ip6_dst, ifp, NULL) != 0)
 		goto out;
 
+	*src = ip6->ip6_src;
 	icmp6_error(m, type, code, param);
 	return;
 

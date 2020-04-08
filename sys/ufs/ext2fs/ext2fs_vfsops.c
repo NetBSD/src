@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.211.2.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.211.2.2 2020/04/08 14:09:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.211.2.1 2019/06/10 22:09:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.211.2.2 2020/04/08 14:09:03 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,8 +104,6 @@ MODULE(MODULE_CLASS_VFS, ext2fs, "ffs");
 
 int ext2fs_sbupdate(struct ufsmount *, int);
 static int ext2fs_sbfill(struct m_ext2fs *, int);
-
-static struct sysctllog *ext2fs_sysctl_log;
 
 extern const struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc ext2fs_specop_opv_desc;
@@ -174,17 +172,10 @@ ext2fs_set_inode_guid(struct inode *ip)
 	}
 }
 
-static int
-ext2fs_modcmd(modcmd_t cmd, void *arg)
+SYSCTL_SETUP(ext2fs_sysctl_setup, "ext2fs sysctl")
 {
-	int error;
 
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		error = vfs_attach(&ext2fs_vfsops);
-		if (error != 0)
-			break;
-		sysctl_createv(&ext2fs_sysctl_log, 0, NULL, NULL,
+		sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "ext2fs",
 			       SYSCTL_DESCR("Linux EXT2FS file system"),
@@ -195,12 +186,23 @@ ext2fs_modcmd(modcmd_t cmd, void *arg)
 		 * one more instance of the "number to vfs" mapping problem,
 		 * but "17" is the order as taken from sys/mount.h
 		 */
+}
+
+static int
+ext2fs_modcmd(modcmd_t cmd, void *arg)
+{
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = vfs_attach(&ext2fs_vfsops);
+		if (error != 0)
+			break;
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&ext2fs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_teardown(&ext2fs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;
@@ -736,7 +738,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_fs_bshift = m_fs->e2fs_bshift;
-	mp->mnt_iflag |= IMNT_DTYPE;
+	mp->mnt_iflag |= IMNT_DTYPE | IMNT_SHRLOOKUP;
 	ump->um_flags = 0;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
@@ -895,7 +897,7 @@ ext2fs_sync_selector(void *cl, struct vnode *vp)
 	if (((ip->i_flag &
 	      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 	     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-	     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
+	     (vp->v_iflag & VI_ONWORKLST) == 0))
 		return false;
 	return true;
 }
@@ -1186,7 +1188,7 @@ ext2fs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
  * - check for an unallocated inode (i_mode == 0)
  */
 int
-ext2fs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+ext2fs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, struct vnode **vpp)
 {
 	struct inode *ip;
 	struct vnode *nvp;
@@ -1203,7 +1205,7 @@ ext2fs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 		ufh.ufid_ino >= fs->e2fs_ncg * fs->e2fs.e2fs_ipg)
 		return ESTALE;
 
-	if ((error = VFS_VGET(mp, ufh.ufid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ufh.ufid_ino, lktype, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return error;
 	}

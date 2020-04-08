@@ -35,13 +35,12 @@
 # SUCH DAMAGE. 
 
 import re
-import string
 import sys
 
 import generate
 
 if len(sys.argv) != 3:
-    print "usage: %s rfc3492.txt" % sys.argv[0]
+    print("usage: %s rfc3492.txt" % sys.argv[0])
     sys.exit(1)
 
 f = open(sys.argv[1], 'r')
@@ -72,7 +71,7 @@ while True:
             else:
                 m = re.search('^ *([uU]+.*) *$', l)
                 if m:
-                    codes.extend(string.split(m.group(1), ' '))
+                    codes.extend(m.group(1).split(' '))
                 else:
                     m = re.search('^ *Punycode: (.*) *$', l)
                     if m:
@@ -81,7 +80,7 @@ while True:
         if re.match('^7\.1', l):
             start = True
             cases = []
-            
+
 f.close()
 
 examples_h.file.write(
@@ -115,7 +114,7 @@ for x in cases:
     examples_c.file.write(
         "  {%u, {%s}, \"%s\", \"%s\"},\n" %
         (len(cp),
-         string.join([re.sub('[uU]\+', '0x', x) for x in cp], ', '),
+         ",".join([re.sub('[uU]\+', '0x', x) for x in cp]),
          pc,
          desc))
 

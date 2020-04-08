@@ -115,6 +115,12 @@ resize_ffs()
 	local fslevel=$5
 	local numdata=$6
 	local swap=$7
+	local avail=$( df -m . | awk '{if (int($4) > 0) print $4}' )
+	# convert MB size to blocks
+	avail=$(( $avail \* 2 \* 1024 ))
+	if [ $avail -lt $osize ] || [ $avail -lt $nsize ]; then
+		atf_skip "not enough free space in working directory"
+	fi
 	mkdir -p mnt
 	echo "bs is ${bs} numdata is ${numdata}"
 	echo "****resizing fs with blocksize ${bs}"
@@ -140,7 +146,7 @@ resize_ffs()
 		then
 			atf_skip 'No PUFFS available in kernel'
 		else
-			aft_fail "rump_ffs mount failed: $(tail -r S.Err |
+			atf_fail "rump_ffs mount failed: $(tail -r S.Err |
 				sed -e '/^$/d' -e p -e q )"
 		fi
 	fi

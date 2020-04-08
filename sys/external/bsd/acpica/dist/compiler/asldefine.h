@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -114,11 +114,12 @@
 
 /* Misc */
 
-#define ASL_EXTERNAL_METHOD         255
-#define ASL_ABORT                   TRUE
-#define ASL_NO_ABORT                FALSE
-#define ASL_EOF                     ACPI_UINT32_MAX
-#define ASL_IGNORE_LINE            (ACPI_UINT32_MAX -1)
+#define ASL_EXTERNAL_METHOD_UNKNOWN_PARAMS  255
+#define ASL_ABORT                           TRUE
+#define ASL_NO_ABORT                        FALSE
+#define ASL_EOF                             ACPI_UINT32_MAX
+#define ASL_IGNORE_LINE                     (ACPI_UINT32_MAX -1)
+#define ASL_ERROR_CODE_LENGTH               4
 
 
 /* Listings */

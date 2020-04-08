@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.41.4.1 2019/06/10 22:05:51 christos Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.41.4.2 2020/04/08 14:07:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,23 +127,23 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.41.4.1 2019/06/10 22:05:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.41.4.2 2020/04/08 14:07:28 martin Exp $");
 
 #include <sys/param.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
-#include <sys/bus.h>
 
 #include <dev/cons.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <arm/locore.h>
-#include <arm/db_machdep.h>
-#include <arm/undefined.h>
-#include <arm/bootconfig.h>
 #include <arm/arm32/machdep.h>
+#include <arm/bootconfig.h>
+#include <arm/db_machdep.h>
+#include <arm/locore.h>
+#include <arm/undefined.h>
 
 #if defined(FDT)
 #include <arch/evbarm/fdt/platform.h>
@@ -460,7 +460,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 */
 	size_t kernel_size = bmi->bmi_kernelend;
 	kernel_size -= (bmi->bmi_kernelstart & -L2_S_SEGSIZE);
-	kernel_size += L1_TABLE_SIZE_REAL;
+	kernel_size += L1_TABLE_SIZE;
 	kernel_size += PAGE_SIZE * KERNEL_L2PT_VMDATA_NUM;
 	if (map_vectors_p) {
 		kernel_size += PAGE_SIZE;	/* L2PT for VECTORS */
@@ -655,7 +655,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	}
 
 	/*
-	 * This enforces a alignment requirement of L2_S_SEGSIZE for kernel
+	 * This enforces an alignment requirement of L2_S_SEGSIZE for kernel
 	 * start PA
 	 */
 	const vaddr_t kernel_base =

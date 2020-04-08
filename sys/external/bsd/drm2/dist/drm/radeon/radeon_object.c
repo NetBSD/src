@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_object.c,v 1.3.18.1 2019/06/10 22:08:26 christos Exp $	*/
+/*	$NetBSD: radeon_object.c,v 1.3.18.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_object.c,v 1.3.18.1 2019/06/10 22:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_object.c,v 1.3.18.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <linux/list.h>
 #include <linux/slab.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_object.c,v 1.3.18.1 2019/06/10 22:08:26 chris
 #include <drm/drm_cache.h>
 #include "radeon.h"
 #include "radeon_trace.h"
+
+#include <linux/nbsd-namespace.h>
 
 
 int radeon_ttm_init(struct radeon_device *rdev);
@@ -192,11 +194,7 @@ int radeon_bo_create(struct radeon_device *rdev,
 	size_t acc_size;
 	int r;
 
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	size = round_up(size, PAGE_SIZE);
-#else
 	size = ALIGN(size, PAGE_SIZE);
-#endif
 
 	if (kernel) {
 		type = ttm_bo_type_kernel;

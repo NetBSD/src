@@ -1,4 +1,4 @@
-/*	$NetBSD: haproxy_srvr.h,v 1.1.1.1 2013/09/25 19:06:30 tron Exp $	*/
+/*	$NetBSD: haproxy_srvr.h,v 1.1.1.1.30.1 2020/04/08 14:06:53 martin Exp $	*/
 
 #ifndef _HAPROXY_SRVR_H_INCLUDED_
 #define _HAPROXY_SRVR_H_INCLUDED_
@@ -21,12 +21,14 @@
  /*
   * External interface.
   */
-extern const char *haproxy_srvr_parse(const char *,
+extern const char *haproxy_srvr_parse(const char *, ssize_t *, int *,
+			             MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *,
+			            MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *);
+extern int haproxy_srvr_receive(int, int *,
 			             MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *,
 			            MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *);
 
 #define HAPROXY_PROTO_NAME	"haproxy"
-#define HAPROXY_MAX_LEN		(256 + 2)
 
 #ifndef DO_GRIPE
 #define DO_GRIPE 	1
@@ -42,6 +44,11 @@ extern const char *haproxy_srvr_parse(const char *,
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

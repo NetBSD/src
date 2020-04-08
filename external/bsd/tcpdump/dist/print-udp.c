@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-udp.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.8.12.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: UDP printer */
@@ -371,6 +371,7 @@ udpipaddr_print(netdissect_options *ndo, const struct ip *ip, int sport, int dpo
 	}
 }
 
+UNALIGNED_OK
 void
 udp_print(netdissect_options *ndo, register const u_char *bp, u_int length,
 	  register const u_char *bp2, int fragmented)

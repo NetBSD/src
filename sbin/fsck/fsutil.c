@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.26 2015/06/21 04:01:40 dholland Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.26.16.1 2020/04/08 14:07:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.26 2015/06/21 04:01:40 dholland Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.26.16.1 2020/04/08 14:07:18 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -66,10 +66,12 @@ __RCSID("$NetBSD: fsutil.c,v 1.26 2015/06/21 04:01:40 dholland Exp $");
 
 volatile sig_atomic_t returntosingle;
 
+void (*ckfinish)(int);
+
 static const char *dev = NULL;
 static int hot = 0;
 static int preen = 0;
-int quiet;
+int quiet;			/* don't report clean filesystems */
 #define F_ERROR	0x80000000
 
 void

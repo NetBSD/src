@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2019 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,7 @@
 #define DHCPCD_HOSTNAME			(1ULL << 18)
 #define DHCPCD_CLIENTID			(1ULL << 19)
 #define DHCPCD_LINK			(1ULL << 20)
-// unused				(1ULL << 21)
+#define DHCPCD_ANONYMOUS		(1ULL << 21)
 #define DHCPCD_BACKGROUND		(1ULL << 22)
 #define DHCPCD_VENDORRAW		(1ULL << 23)
 #define DHCPCD_NOWAITIP			(1ULL << 24) /* To force daemonise */
@@ -89,8 +89,8 @@
 #define DHCPCD_DUMPLEASE		(1ULL << 30)
 #define DHCPCD_IPV6RS			(1ULL << 31)
 #define DHCPCD_IPV6RA_REQRDNSS		(1ULL << 32)
-// unused				(1ULL << 33)
-// unused				(1ULL << 34)
+#define DHCPCD_PRIVSEP			(1ULL << 33)
+#define DHCPCD_UNPRIV			(1ULL << 34)
 #define DHCPCD_IPV4			(1ULL << 35)
 #define DHCPCD_FORKED			(1ULL << 36)
 #define DHCPCD_IPV6			(1ULL << 37)
@@ -174,8 +174,8 @@ struct if_options {
 	uint8_t nomask6[(UINT16_MAX + 1) / NBBY];
 	uint8_t rejectmask6[(UINT16_MAX + 1) / NBBY];
 	uint32_t leasetime;
-	time_t timeout;
-	time_t reboot;
+	uint32_t timeout;
+	uint32_t reboot;
 	unsigned long long options;
 
 	struct in_addr req_addr;

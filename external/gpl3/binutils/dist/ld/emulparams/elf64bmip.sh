@@ -1,4 +1,4 @@
-. ${srcdir}/emulparams/elf64bmip-defs.sh
+source_sh ${srcdir}/emulparams/elf64bmip-defs.sh
 OUTPUT_FORMAT="elf64-bigmips"
 BIG_OUTPUT_FORMAT="elf64-bigmips"
 LITTLE_OUTPUT_FORMAT="elf64-littlemips"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 2013/11/27 16:30:12 christos Exp $
+#	$NetBSD: Makefile,v 1.88.26.1 2020/04/08 14:07:21 martin Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 __USE.3 CMSG_DATA.3 \
@@ -7,7 +7,7 @@ MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 __USE.3 CMSG_DATA.3 \
 	__builtin_return_address.3 \
 	__builtin_types_compatible_p.3 __insn_barrier.3 \
 	assert.3 attribute.3 bitmap.3 bitops.3 bits.3 bitstring.3 \
-	cdefs.3 dirent.3 dlfcn.3 dl_iterate_phdr.3 end.3 \
+	cdefs.3 dirent.3 dlfcn.3 dlinfo.3 dl_iterate_phdr.3 end.3 \
 	fast_divide32.3 ffs32.3 gcq.3 \
 	ilog2.3 intro.3 inttypes.3 iso646.3 limits.3 \
 	makedev.3 offsetof.3 param.3 paths.3 queue.3 rbtree.3 sigevent.3 \

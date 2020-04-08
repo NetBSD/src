@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uipc_socket_50.c,v 1.2.4.2 2019/06/10 22:06:58 christos Exp $	*/
+/*	$NetBSD: kern_uipc_socket_50.c,v 1.2.4.3 2020/04/08 14:08:00 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uipc_socket_50.c,v 1.2.4.2 2019/06/10 22:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uipc_socket_50.c,v 1.2.4.3 2020/04/08 14:08:00 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -233,12 +233,9 @@ void
 kern_uipc_socket_50_init(void)
 {
 
-	MODULE_HOOK_SET(uipc_socket_50_setopt1_hook, "sockop_50",
-	    uipc_socket_50_setopt1);
-	MODULE_HOOK_SET(uipc_socket_50_getopt1_hook, "sockop_50",
-	    uipc_socket_50_getopt1);
-	MODULE_HOOK_SET(uipc_socket_50_sbts_hook, "sbts_50",
-	    uipc_socket_50_sbts);
+	MODULE_HOOK_SET(uipc_socket_50_setopt1_hook, uipc_socket_50_setopt1);
+	MODULE_HOOK_SET(uipc_socket_50_getopt1_hook, uipc_socket_50_getopt1);
+	MODULE_HOOK_SET(uipc_socket_50_sbts_hook, uipc_socket_50_sbts);
 }
 
 void

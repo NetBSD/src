@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.6.16.1 2019/06/10 22:06:41 christos Exp $ */
+/* $NetBSD: types.h,v 1.6.16.2 2020/04/08 14:07:50 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -70,9 +70,9 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
 	__uint32_t lb_sr;
 } label_t;
 #endif
-         
+
 typedef	unsigned int	__cpu_simple_lock_nv_t;
-#ifdef _LP64		
+#ifdef _LP64
 typedef __int64_t	__register_t;
 #else
 typedef __int32_t	__register_t;
@@ -106,5 +106,8 @@ typedef __int32_t	__register_t;
 #define PCU_FPU		0
 #define PCU_UNIT_COUNT	1
 #endif
+
+/* XXX temporary */
+#define	__HAVE_UNLOCKED_PMAP
 
 #endif	/* _RISCV_TYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66 2017/01/10 21:08:15 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.66.14.1 2020/04/08 14:07:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.66 2017/01/10 21:08:15 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.66.14.1 2020/04/08 14:07:17 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,8 +99,7 @@ struct	utsname kerninfo;
 char	name[LOGIN_NAME_MAX];
 char	dev[] = _PATH_DEV;
 char	ttyn[32];
-char	lockfile[512];
-uid_t	ttyowner;
+uid_t	ttyowner = 0;
 char	*rawttyn;
 
 #define	OBUFSIZ		128
@@ -183,15 +182,12 @@ static void	xputs(const char *);
 int
 main(int argc, char *argv[], char *envp[])
 {
-	const char *progname;
 	int repcnt = 0, failopenlogged = 0;
 	volatile int first_time = 1;
 	struct rlimit limit;
-	struct passwd *pw;
 	int rval;
 	/* this is used past the siglongjmp, so make sure it is not cached
 	   in registers that might become invalid. */
-	volatile int uugetty = 0;
 	const char * volatile tname = "default";
 
 	(void)signal(SIGINT, SIG_IGN);
@@ -201,18 +197,6 @@ main(int argc, char *argv[], char *envp[])
 	if (hostname[0] == '\0')
 		(void)strlcpy(hostname, "Amnesiac", sizeof(hostname));
 	(void)uname(&kerninfo);
-
-	progname = getprogname();
-	if (progname[0] == 'u' && progname[1] == 'u')
-		uugetty = 1;
-
-	/*
-	 * Find id of uucp login (if present) so we can chown tty properly.
-	 */
-	if (uugetty && (pw = getpwnam("uucp")))
-		ttyowner = pw->pw_uid;
-	else
-		ttyowner = 0;
 
 	/*
 	 * Limit running time to deal with broken or dead lines.
@@ -238,23 +222,6 @@ main(int argc, char *argv[], char *envp[])
 		rawttyn = argv[2];
 		(void)strlcpy(ttyn, dev, sizeof(ttyn));
 		(void)strlcat(ttyn, argv[2], sizeof(ttyn));
-		if (uugetty)  {
-			(void)chown(ttyn, ttyowner, 0);
-			(void)strlcpy(lockfile, _PATH_LOCK,
-				sizeof(lockfile));
-			(void)strlcat(lockfile, argv[2],
-				sizeof(lockfile));
-			/*
-			 * wait for lockfiles to go away before we try
-			 * to open
-			 */
-			if (pidlock(lockfile, 0, 0, 0) != 0)  {
-				syslog(LOG_ERR,
-					"%s: can't create lockfile", ttyn);
-				exit(1);
-			}
-			(void)unlink(lockfile);
-		}
 		if (strcmp(argv[0], "+") != 0) {
 			(void)chown(ttyn, ttyowner, 0);
 			(void)chmod(ttyn, 0600);
@@ -277,13 +244,6 @@ main(int argc, char *argv[], char *envp[])
 				repcnt++;
 				(void)sleep(60);
 			}
-			if (uugetty && pidlock(lockfile, 0, 0, 0) != 0)  {
-				syslog(LOG_ERR, "%s: can't create lockfile",
-					ttyn);
-				exit(1);
-			}
-			if (uugetty)
-				(void)chown(lockfile, ttyowner, 0);
 			(void)login_tty(i);
 		}
 	}
@@ -441,8 +401,6 @@ main(int argc, char *argv[], char *envp[])
 		(void)signal(SIGINT, SIG_IGN);
 		if (NX && *NX)
 			tname = NX;
-		if (uugetty)
-			(void)unlink(lockfile);
 	}
 }
 

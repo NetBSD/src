@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.10.2.2 2019/06/10 22:09:56 christos Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.10.2.3 2020/04/08 14:09:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -64,6 +64,8 @@ int set_dtb_path(const char *);
 char *get_dtb_path(void);
 int set_efibootplist_path(const char *);
 char *get_efibootplist_path(void);
+int set_rndseed_path(const char *);
+char *get_rndseed_path(void);
 
 /* console.c */
 int ischar(void);

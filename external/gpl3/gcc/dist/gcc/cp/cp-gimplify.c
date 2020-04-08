@@ -220,16 +220,25 @@ genericize_cp_loop (tree *stmt_p, location_t start_locus, tree cond, tree body,
   tree blab, clab;
   tree exit = NULL;
   tree stmt_list = NULL;
+  tree debug_begin = NULL;
 
   blab = begin_bc_block (bc_break, start_locus);
   clab = begin_bc_block (bc_continue, start_locus);
 
-  protected_set_expr_location (incr, start_locus);
+  if (EXPR_LOCATION (incr) == UNKNOWN_LOCATION)
+    protected_set_expr_location (incr, start_locus);
 
   cp_walk_tree (&cond, cp_genericize_r, data, NULL);
   cp_walk_tree (&body, cp_genericize_r, data, NULL);
   cp_walk_tree (&incr, cp_genericize_r, data, NULL);
   *walk_subtrees = 0;
+
+  if (MAY_HAVE_DEBUG_MARKER_STMTS
+      && (!cond || !integer_zerop (cond)))
+    {
+      debug_begin = build0 (DEBUG_BEGIN_STMT, void_type_node);
+      SET_EXPR_LOCATION (debug_begin, EXPR_LOC_OR_LOC (cond, start_locus));
+    }
 
   if (cond && TREE_CODE (cond) != INTEGER_CST)
     {
@@ -243,10 +252,24 @@ genericize_cp_loop (tree *stmt_p, location_t start_locus, tree cond, tree body,
     }
 
   if (exit && cond_is_first)
-    append_to_statement_list (exit, &stmt_list);
+    {
+      append_to_statement_list (debug_begin, &stmt_list);
+      debug_begin = NULL_TREE;
+      append_to_statement_list (exit, &stmt_list);
+    }
   append_to_statement_list (body, &stmt_list);
   finish_bc_block (&stmt_list, bc_continue, clab);
-  append_to_statement_list (incr, &stmt_list);
+  if (incr)
+    {
+      if (MAY_HAVE_DEBUG_MARKER_STMTS)
+	{
+	  tree d = build0 (DEBUG_BEGIN_STMT, void_type_node);
+	  SET_EXPR_LOCATION (d, EXPR_LOC_OR_LOC (incr, start_locus));
+	  append_to_statement_list (d, &stmt_list);
+	}
+      append_to_statement_list (incr, &stmt_list);
+    }
+  append_to_statement_list (debug_begin, &stmt_list);
   if (exit && !cond_is_first)
     append_to_statement_list (exit, &stmt_list);
 
@@ -802,6 +825,27 @@ cp_gimplify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p)
 	  return (enum gimplify_status) gimplify_cilk_spawn (expr_p);
 	}
       ret = GS_OK;
+      if (flag_strong_eval_order == 2
+	  && CALL_EXPR_FN (*expr_p)
+	  && cp_get_callee_fndecl_nofold (*expr_p) == NULL_TREE)
+	{
+	  tree fnptrtype = TREE_TYPE (CALL_EXPR_FN (*expr_p));
+	  enum gimplify_status t
+	    = gimplify_expr (&CALL_EXPR_FN (*expr_p), pre_p, NULL,
+			     is_gimple_call_addr, fb_rvalue);
+	  if (t == GS_ERROR)
+	    ret = GS_ERROR;
+	  else if (is_gimple_variable (CALL_EXPR_FN (*expr_p))
+		   && TREE_CODE (CALL_EXPR_FN (*expr_p)) != SSA_NAME)
+	    CALL_EXPR_FN (*expr_p)
+	      = get_initialized_tmp_var (CALL_EXPR_FN (*expr_p), pre_p,
+					 NULL);
+	  /* GIMPLE considers most pointer conversion useless, but for
+	     calls we actually care about the exact function pointer type.  */
+	  if (t != GS_ERROR && TREE_TYPE (CALL_EXPR_FN (*expr_p)) != fnptrtype)
+	    CALL_EXPR_FN (*expr_p)
+	      = build1 (NOP_EXPR, fnptrtype, CALL_EXPR_FN (*expr_p));
+	}
       if (!CALL_EXPR_FN (*expr_p))
 	/* Internal function call.  */;
       else if (CALL_EXPR_REVERSE_ARGS (*expr_p))

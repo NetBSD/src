@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1.36.1 2019/06/10 22:06:19 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.36.2 2020/04/08 14:07:39 martin Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -836,9 +836,6 @@ switch_diag:
 kstack_ok:
 #endif
 
-	/* If old LWP exited, don't bother saving anything. */
-	comb,=,n %r0, %arg0, switch_exited
-
 	/*
 	 * save old LWP context
 	 *
@@ -876,7 +873,6 @@ kstack_ok:
 	 * arg0: old LWP (oldl)
 	 * arg1: new LWP (newl)
 	 */
-switch_exited:
 	ldw	L_MD(%arg1), %t1
 	ldw	L_PCB(%arg1), %t3
 	ldw	PCB_KSP(%t3), %sp		/* restore stack of newl */

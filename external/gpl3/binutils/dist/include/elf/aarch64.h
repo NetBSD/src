@@ -1,6 +1,6 @@
 /* AArch64 ELF support for BFD.
 
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GNU Binutils.
@@ -35,6 +35,14 @@
 						entry point.  */
 #define SHF_COMDEF		0x80000000   /* Section may be multiply defined
 						in the input to a link step.  */
+/* Processor specific dynamic array tags.  */
+#define DT_AARCH64_BTI_PLT	(DT_LOPROC + 1)
+#define DT_AARCH64_PAC_PLT	(DT_LOPROC + 3)
+#define DT_AARCH64_VARIANT_PCS	(DT_LOPROC + 5)
+
+/* AArch64-specific values for st_other.  */
+#define STO_AARCH64_VARIANT_PCS	0x80  /* Symbol may follow different call
+					 convention from the base PCS.  */
 
 /* Relocation types.  */
 
@@ -120,6 +128,10 @@ RELOC_NUMBER (R_AARCH64_P32_JUMP26, 20)
 /* BL:     ((S+A-P) >> 2) & 0x3ffffff.  */
 RELOC_NUMBER (R_AARCH64_P32_CALL26, 21)
 
+/* Group relocations to create a 16 or 32 bit PC-relative offset inline.  */
+RELOC_NUMBER (R_AARCH64_P32_MOVW_PREL_G0, 22)
+RELOC_NUMBER (R_AARCH64_P32_MOVW_PREL_G0_NC, 23)
+RELOC_NUMBER (R_AARCH64_P32_MOVW_PREL_G1, 24)
 
 RELOC_NUMBER (R_AARCH64_P32_GOT_LD_PREL19, 25)
 RELOC_NUMBER (R_AARCH64_P32_ADR_GOT_PAGE, 26)

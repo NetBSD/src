@@ -1,4 +1,4 @@
-/*	$NetBSD: srv_33.c,v 1.3.2.2 2019/06/10 22:04:39 christos Exp $	*/
+/*	$NetBSD: srv_33.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -233,7 +233,7 @@ fromstruct_in_srv(ARGS_FROMSTRUCT) {
 
 	REQUIRE(type == dns_rdatatype_srv);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
+	REQUIRE(srv != NULL);
 	REQUIRE(srv->common.rdtype == type);
 	REQUIRE(srv->common.rdclass == rdclass);
 
@@ -255,7 +255,7 @@ tostruct_in_srv(ARGS_TOSTRUCT) {
 
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata->type == dns_rdatatype_srv);
-	REQUIRE(target != NULL);
+	REQUIRE(srv != NULL);
 	REQUIRE(rdata->length != 0);
 
 	srv->common.rdclass = rdata->rdclass;
@@ -281,7 +281,7 @@ static inline void
 freestruct_in_srv(ARGS_FREESTRUCT) {
 	dns_rdata_in_srv_t *srv = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(srv != NULL);
 	REQUIRE(srv->common.rdclass == dns_rdataclass_in);
 	REQUIRE(srv->common.rdtype == dns_rdatatype_srv);
 

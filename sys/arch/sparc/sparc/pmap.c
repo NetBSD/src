@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.364.4.1 2019/06/10 22:06:46 christos Exp $ */
+/*	$NetBSD: pmap.c,v 1.364.4.2 2020/04/08 14:07:53 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.364.4.1 2019/06/10 22:06:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.364.4.2 2020/04/08 14:07:53 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -4606,11 +4606,11 @@ pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp, struct segmap *sp,
 }
 #endif /* SUN4M || SUN4D */
 
-void
+bool
 pmap_remove_all(struct pmap *pm)
 {
 	if (pm->pm_ctx == NULL)
-		return;
+		return false;
 
 #if defined(SUN4) || defined(SUN4C)
 	if (CPU_HAS_SUNMMU) {
@@ -4628,6 +4628,7 @@ pmap_remove_all(struct pmap *pm)
 #endif
 
 	pm->pm_flags |= PMAP_USERCACHECLEAN;
+	return false;
 }
 
 /*

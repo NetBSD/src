@@ -1,0 +1,8 @@
+# $NetBSD: md.evbarm,v 1.1.2.2 2020/04/08 14:03:54 martin Exp $
+#
+# Note: don't delete entries from here - mark them as "obsolete" instead.
+#
+./@MODULEDIR@/if_ixl				modules-base-kernel	kmod
+./@MODULEDIR@/if_ixl/if_ixl.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/ubsec				modules-base-kernel	kmod
+./@MODULEDIR@/ubsec/ubsec.kmod			modules-base-kernel	kmod

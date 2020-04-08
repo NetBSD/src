@@ -1,4 +1,4 @@
-#	$NetBSD: majors.atari,v 1.22.54.1 2019/06/10 22:05:58 christos Exp $
+#	$NetBSD: majors.atari,v 1.22.54.2 2020/04/08 14:07:31 martin Exp $
 #
 # Device majors for atari
 #
@@ -60,7 +60,7 @@ device-major	wsfont		char 57			wsfont
 device-major	wsmux		char 58			wsmux
 device-major	wsmouse		char 59			wsmouse
 
-device-major	nsmb		char 98			nsmb
+#device-major	obsolete	char 98			obsolete (nsmb)
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

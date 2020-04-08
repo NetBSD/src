@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.74 2018/04/25 11:12:55 ragge Exp $
+#	$NetBSD: INSTALL,v 1.74.2.1 2020/04/08 14:07:56 martin Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -146,7 +146,6 @@ tc0		at vsbus0 csr 0x36800000 # VS4000/60 or 90 TC adapter
 tcds*		at tc0 slot ? offset ?	 # TC dual SCSI controller
 asc*		at tcds? chip ?		 # PMAZB/C
 asc*		at tc? slot ? offset ?	 # PMAZ 
-fta*		at tc? slot ? offset ?	 # TC FDDI controller
 le*		at tc? slot ? offset ?	 # PMAD
 
 hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr

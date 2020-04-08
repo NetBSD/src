@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sctp.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-sctp.c,v 1.8.12.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: Stream Control Transmission Protocol (SCTP) printer */
@@ -495,6 +495,7 @@ static inline int isForCES_port(u_short Port)
 	return 0;
 }
 
+UNALIGNED_OK
 void sctp_print(netdissect_options *ndo,
                 const u_char *bp,        /* beginning of sctp packet */
                 const u_char *bp2,       /* beginning of enclosing */

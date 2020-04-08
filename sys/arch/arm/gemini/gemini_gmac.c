@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.16.2.1 2019/06/10 22:05:53 christos Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.16.2.2 2020/04/08 14:07:29 martin Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.16.2.1 2019/06/10 22:05:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.16.2.2 2020/04/08 14:07:29 martin Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -127,7 +127,7 @@ gmac_init(struct gmac_softc *sc)
 	    &global_ioh);
 	KASSERT(error == 0);
 	aprint_normal_dev(sc->sc_dev, "gmac_init: global_ioh=%#zx\n", global_ioh);
-	bus_space_write_4(sc->sc_iot, global_ioh, GEMINI_GLOBAL_RESET_CTL, 
+	bus_space_write_4(sc->sc_iot, global_ioh, GEMINI_GLOBAL_RESET_CTL,
 	    GLOBAL_RESET_GMAC0|GLOBAL_RESET_GMAC1);
 	do {
 		v = bus_space_read_4(sc->sc_iot, global_ioh,
@@ -524,7 +524,7 @@ gmac_hwqueue_desc(gmac_hwqueue_t *hwq, size_t i)
 	i += hwq->hwq_wptr;
 	if (i >= hwq->hwq_size)
 		i -= hwq->hwq_size;
-	return hwq->hwq_base + i; 
+	return hwq->hwq_base + i;
 }
 
 static void
@@ -546,8 +546,8 @@ gmac_hwqueue_txconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	gmac_mapcache_put(hqm->hqm_mc, map);
 
 	ifp = hwq->hwq_ifp;
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
+	if_statinc(ifp, if_opackets);
+	if_statiadd(ifp, if_obytes,	 m->m_pkthdr.len);
 
 	aprint_debug("gmac_hwqueue_txconsume(%p): %zu@%p: %s m=%p\n",
 	    hwq, d - hwq->hwq_base, d, ifp->if_xname, m);
@@ -584,14 +584,14 @@ gmac_hwqueue_sync(gmac_hwqueue_t *hwq)
 	     rptr = (rptr + 1) & (hwq->hwq_size - 1)) {
 		gmac_desc_t * const d = hwq->hwq_base + rptr;
 		if (hqm->hqm_flags & HQM_TX) {
-			bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap, 
+			bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap,
 			    sizeof(gmac_desc_t [hwq->hwq_qoff + rptr]),
 			    sizeof(gmac_desc_t),
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			if (d->d_desc3 & htole32(DESC3_EOF))
 				gmac_hwqueue_txconsume(hwq, d);
 		} else {
-			bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap, 
+			bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap,
 			    sizeof(gmac_desc_t [hwq->hwq_qoff + rptr]),
 			    sizeof(gmac_desc_t),
 			    BUS_DMASYNC_POSTWRITE);
@@ -599,7 +599,7 @@ gmac_hwqueue_sync(gmac_hwqueue_t *hwq)
 			aprint_debug("gmac_hwqueue_sync(%p): %zu@%p=%#x/%#x/%#x/%#x\n",
 			    hwq, rptr, d, d->d_desc0, d->d_desc1,
 			    d->d_bufaddr, d->d_desc3);
-			bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap, 
+			bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap,
 			    sizeof(gmac_desc_t [hwq->hwq_qoff + rptr]),
 			    sizeof(gmac_desc_t),
 			    BUS_DMASYNC_PREWRITE);
@@ -631,7 +631,7 @@ gmac_hwqueue_produce(gmac_hwqueue_t *hwq, size_t count)
 	     count > 0;
 	     count--, wptr = (wptr + 1) & (hwq->hwq_size - 1)) {
 		KASSERT(((wptr + 1) & (hwq->hwq_size - 1)) != hwq->hwq_rptr);
-		bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap, 
+		bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap,
 		    sizeof(gmac_desc_t [hwq->hwq_qoff + wptr]),
 		    sizeof(gmac_desc_t),
 		    BUS_DMASYNC_PREWRITE);
@@ -640,7 +640,7 @@ gmac_hwqueue_produce(gmac_hwqueue_t *hwq, size_t count)
 	hwq->hwq_wptr = wptr;
 #else
 	if (hwq->hwq_wptr + count >= hwq->hwq_size) {
-		bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap, 
+		bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap,
 		    sizeof(gmac_desc_t [hwq->hwq_qoff + hwq->hwq_wptr]),
 		    sizeof(gmac_desc_t [hwq->hwq_size - hwq->hwq_wptr]),
 		    BUS_DMASYNC_PREWRITE);
@@ -648,7 +648,7 @@ gmac_hwqueue_produce(gmac_hwqueue_t *hwq, size_t count)
 		hwq->hwq_wptr = 0;
 	}
 	if (count > 0) {
-		bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap, 
+		bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap,
 		    sizeof(gmac_desc_t [hwq->hwq_qoff + hwq->hwq_wptr]),
 		    sizeof(gmac_desc_t [count]),
 		    BUS_DMASYNC_PREWRITE);
@@ -860,7 +860,7 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 		break;
 	default:
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		m_freem(m);
 		break;
 	}
@@ -885,8 +885,8 @@ gmac_hwqueue_consume(gmac_hwqueue_t *hwq, size_t free_min)
 
 
 	v = bus_space_read_4(hwq->hwq_iot, hwq->hwq_qrwptr_ioh, 0);
-	rptr = (v >>  0) & 0xffff; 
-	hwq->hwq_wptr = (v >> 16) & 0xffff; 
+	rptr = (v >>  0) & 0xffff;
+	hwq->hwq_wptr = (v >> 16) & 0xffff;
 	KASSERT(rptr == hwq->hwq_rptr);
 	if (rptr == hwq->hwq_wptr)
 		return 0;
@@ -957,7 +957,7 @@ gmac_hwqmem_destroy(gmac_hwqmem_t *hqm)
 gmac_hwqmem_t *
 gmac_hwqmem_create(gmac_mapcache_t *mc, size_t ndesc, size_t nqueue, int flags)
 {
-	gmac_hwqmem_t *hqm; 
+	gmac_hwqmem_t *hqm;
 	int error;
 
 	KASSERT(ndesc > 0 && ndesc <= 2048);
@@ -993,7 +993,7 @@ gmac_hwqmem_create(gmac_mapcache_t *mc, size_t ndesc, size_t nqueue, int flags)
 	}
 	error = bus_dmamap_load(hqm->hqm_dmat, hqm->hqm_dmamap, hqm->hqm_base,
 	    hqm->hqm_memsize, NULL,
-	    BUS_DMA_WAITOK|BUS_DMA_WRITE|BUS_DMA_READ|BUS_DMA_COHERENT); 
+	    BUS_DMA_WAITOK|BUS_DMA_WRITE|BUS_DMA_READ|BUS_DMA_COHERENT);
 	if (error) {
 		aprint_debug("gmac_hwqmem_create: ds_addr=%zu ds_len=%zu\n",
 		    hqm->hqm_segs->ds_addr, hqm->hqm_segs->ds_len);

@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_unix.8,v 1.8 2005/02/26 15:59:34 thorpej Exp $
+.\" $NetBSD: pam_unix.8,v 1.8.90.1 2020/04/08 14:07:15 martin Exp $
 .\" Copyright (c) 2001 Mark R V Murray
 .\" All rights reserved.
 .\" Copyright (c) 2001 Networks Associates Technology, Inc.
@@ -62,7 +62,7 @@ and
 .Dq Li account
 features.
 It also provides a null function for session management.
-.Ss Ux Ss Authentication Module
+.Ss UNIX Authentication Module
 The
 .Ux
 authentication component
@@ -137,7 +137,7 @@ and silently allow authentication to succeed.
 .\" system is not configured to use the specified password database, an
 .\" authentication failure will occur.
 .El
-.Ss Ux Ss Account Management Module
+.Ss UNIX Account Management Module
 The
 .Ux
 account management component
@@ -156,7 +156,7 @@ debugging information at
 .Dv LOG_DEBUG
 level.
 .El
-.Ss Ux Ss Password Management Module
+.Ss UNIX Password Management Module
 The
 .Ux
 password management component

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.135 2018/06/06 01:49:08 maya Exp $ */
+/*	$NetBSD: cpu.c,v 1.135.2.1 2020/04/08 14:07:54 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.135 2018/06/06 01:49:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.135.2.1 2020/04/08 14:07:54 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -556,7 +556,15 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		    (u_int)GETVER_CPU_IMPL(),
 		    (u_int)GETVER_CPU_MASK());
 	}
-
+#ifdef NUMA
+	if (CPU_IS_USIIIi()) {
+		uint64_t start = ci->ci_cpuid;
+		start <<= 36;
+		ci->ci_numa_id = ci->ci_cpuid;
+		printf("NUMA bucket %d %016lx\n", ci->ci_cpuid, start);
+		uvm_page_numa_load(start, 0x1000000000, ci->ci_cpuid);
+	}
+#endif
 	if (ci->ci_system_clockrate[0] != 0) {
 		aprint_normal_dev(dev, "system tick frequency %s MHz\n",
 		    clockfreq(ci->ci_system_clockrate[0]));

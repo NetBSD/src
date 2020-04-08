@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.13 2017/10/04 23:04:42 christos Exp $	*/
+/*	$NetBSD: mutex.h,v 1.13.4.1 2020/04/08 14:07:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -99,9 +99,9 @@ MUTEX_OWNED(uintptr_t owner)
 static inline int
 MUTEX_SET_WAITERS(struct kmutex *mtx, uintptr_t owner)
 {
-	mb_write();
+	__sync();		/* formerly mb_read */
 	mtx->mtx_waiters = 1;
-	mb_memory();
+	__sync();		/* formerly mb_memory */
 	return mtx->mtx_owner != MUTEX_ADAPTIVE_UNOWNED;
 }
 
@@ -141,15 +141,15 @@ MUTEX_DEBUG_P(const volatile struct kmutex *mtx)
 }
 
 static inline int
-MUTEX_SPIN_P(const volatile struct kmutex *mtx)
+MUTEX_SPIN_P(const uintptr_t owner)
 {
-	return mtx->mtx_owner == MUTEX_SPIN_FLAG;
+	return owner == MUTEX_SPIN_FLAG;
 }
 
 static inline int
-MUTEX_ADAPTIVE_P(const volatile struct kmutex *mtx)
+MUTEX_ADAPTIVE_P(const uintptr_t owner)
 {
-	return mtx->mtx_owner != MUTEX_SPIN_FLAG;
+	return owner != MUTEX_SPIN_FLAG;
 }
 
 /* Acquire an adaptive mutex */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.16 2012/02/12 16:34:10 matt Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.16.48.1 2020/04/08 14:07:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -331,7 +331,7 @@ typedef u_long	bus_space_handle_t;
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplimented !!!
+			!!! bus_space_write_multi_8 unimplemented !!!
 #endif
 
 /*

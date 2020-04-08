@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.4.2.2 2019/06/10 22:04:36 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.4.2.3 2020/04/08 14:07:07 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -663,7 +663,7 @@ process_deletetkey(dns_name_t *signer, dns_name_t *name,
 {
 	isc_result_t result;
 	dns_tsigkey_t *tsigkey = NULL;
-	dns_name_t *identity;
+	const dns_name_t *identity;
 
 	result = dns_tsigkey_find(&tsigkey, name, &tkeyin->algorithm, ring);
 	if (result != ISC_R_SUCCESS) {
@@ -817,8 +817,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 
 		if (!dns_name_equal(qname, dns_rootname)) {
 			unsigned int n = dns_name_countlabels(qname);
-			RUNTIME_CHECK(dns_name_copy(qname, keyname, NULL)
-				      == ISC_R_SUCCESS);
+			dns_name_copynf(qname, keyname);
 			dns_name_getlabelsequence(keyname, 0, n - 1, keyname);
 		} else {
 			static char hexdigits[16] = {
@@ -1515,7 +1514,7 @@ dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
 		dns_fixedname_t fixed;
 
 		dns_fixedname_init(&fixed);
-		dns_name_copy(tkeyname, dns_fixedname_name(&fixed), NULL);
+		dns_name_copynf(tkeyname, dns_fixedname_name(&fixed));
 		tkeyname = dns_fixedname_name(&fixed);
 
 		tkey.common.rdclass = dns_rdataclass_any;

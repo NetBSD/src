@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_device.c,v 1.3.32.1 2019/06/10 22:08:26 christos Exp $	*/
+/*	$NetBSD: radeon_device.c,v 1.3.32.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.3.32.1 2019/06/10 22:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.3.32.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <linux/console.h>
 #include <linux/slab.h>
@@ -38,10 +38,11 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.3.32.1 2019/06/10 22:08:26 chris
 #include <linux/vgaarb.h>
 #include <linux/vga_switcheroo.h>
 #include <linux/efi.h>
-#include <linux/bitops.h>
 #include "radeon_reg.h"
 #include "radeon.h"
 #include "atom.h"
+
+#include <linux/nbsd-namespace.h>
 
 static const char radeon_family_name[][16] = {
 	"R100",
@@ -835,10 +836,17 @@ int radeon_dummy_page_init(struct radeon_device *rdev)
 	    BUS_DMA_WAITOK, &rdev->dummy_page.rdp_map);
 	if (error)
 		goto fail1;
-	error = bus_dmamap_load_raw(rdev->ddev->dmat, rdev->dummy_page.rdp_map,
-	    &rdev->dummy_page.rdp_seg, 1, PAGE_SIZE, BUS_DMA_WAITOK);
+	error = bus_dmamem_map(rdev->ddev->dmat, &rdev->dummy_page.rdp_seg, 1,
+	    PAGE_SIZE, &rdev->dummy_page.rdp_addr,
+	    BUS_DMA_WAITOK|BUS_DMA_NOCACHE);
 	if (error)
 		goto fail2;
+	error = bus_dmamap_load(rdev->ddev->dmat, rdev->dummy_page.rdp_map,
+	    rdev->dummy_page.rdp_addr, PAGE_SIZE, NULL, BUS_DMA_WAITOK);
+	if (error)
+		goto fail3;
+
+	memset(rdev->dummy_page.rdp_addr, 0, PAGE_SIZE);
 
 	/* Success!  */
 	rdev->dummy_page.addr = rdev->dummy_page.rdp_map->dm_segs[0].ds_addr;
@@ -846,8 +854,10 @@ int radeon_dummy_page_init(struct radeon_device *rdev)
 		rdev->dummy_page.addr, RADEON_GART_PAGE_DUMMY);
 	return 0;
 
-fail3: __unused
+fail4: __unused
 	bus_dmamap_unload(rdev->ddev->dmat, rdev->dummy_page.rdp_map);
+fail3:	bus_dmamem_unmap(rdev->ddev->dmat, rdev->dummy_page.rdp_addr,
+	    PAGE_SIZE);
 fail2:	bus_dmamap_destroy(rdev->ddev->dmat, rdev->dummy_page.rdp_map);
 fail1:	bus_dmamem_free(rdev->ddev->dmat, &rdev->dummy_page.rdp_seg, 1);
 fail0:	KASSERT(error);
@@ -888,6 +898,8 @@ void radeon_dummy_page_fini(struct radeon_device *rdev)
 	if (rdev->dummy_page.rdp_map == NULL)
 		return;
 	bus_dmamap_unload(rdev->ddev->dmat, rdev->dummy_page.rdp_map);
+	bus_dmamem_unmap(rdev->ddev->dmat, rdev->dummy_page.rdp_addr,
+	    PAGE_SIZE);
 	bus_dmamap_destroy(rdev->ddev->dmat, rdev->dummy_page.rdp_map);
 	bus_dmamem_free(rdev->ddev->dmat, &rdev->dummy_page.rdp_seg, 1);
 	rdev->dummy_page.rdp_map = NULL;
@@ -1094,13 +1106,8 @@ int radeon_atombios_init(struct radeon_device *rdev)
 		return -ENOMEM;
 	}
 
-#ifdef __NetBSD__
-	linux_mutex_init(&rdev->mode_info.atom_context->mutex);
-	linux_mutex_init(&rdev->mode_info.atom_context->scratch_mutex);
-#else
 	mutex_init(&rdev->mode_info.atom_context->mutex);
 	mutex_init(&rdev->mode_info.atom_context->scratch_mutex);
-#endif
 	radeon_atom_initialize_bios_scratch_regs(rdev->ddev);
 	atom_allocate_fb_scratch(rdev->mode_info.atom_context);
 	return 0;
@@ -1118,13 +1125,8 @@ int radeon_atombios_init(struct radeon_device *rdev)
 void radeon_atombios_fini(struct radeon_device *rdev)
 {
 	if (rdev->mode_info.atom_context) {
-#ifdef __NetBSD__
-		linux_mutex_destroy(&rdev->mode_info.atom_context->scratch_mutex);
-		linux_mutex_destroy(&rdev->mode_info.atom_context->mutex);
-#else
 		mutex_destroy(&rdev->mode_info.atom_context->scratch_mutex);
 		mutex_destroy(&rdev->mode_info.atom_context->mutex);
-#endif
 		kfree(rdev->mode_info.atom_context->scratch);
 	}
 	kfree(rdev->mode_info.atom_context);
@@ -1433,37 +1435,23 @@ int radeon_device_init(struct radeon_device *rdev,
 
 	/* mutex initialization are all done here so we
 	 * can recall function without having locking issues */
-#ifdef __NetBSD__
-	linux_mutex_init(&rdev->ring_lock);
-	linux_mutex_init(&rdev->dc_hw_i2c_mutex);
-#else
 	mutex_init(&rdev->ring_lock);
 	mutex_init(&rdev->dc_hw_i2c_mutex);
-#endif
 	atomic_set(&rdev->ih.lock, 0);
-#ifdef __NetBSD__
-	linux_mutex_init(&rdev->gem.mutex);
-	linux_mutex_init(&rdev->pm.mutex);
-	linux_mutex_init(&rdev->gpu_clock_mutex);
-	linux_mutex_init(&rdev->srbm_mutex);
-	linux_mutex_init(&rdev->grbm_idx_mutex);
-#else
 	mutex_init(&rdev->gem.mutex);
 	mutex_init(&rdev->pm.mutex);
 	mutex_init(&rdev->gpu_clock_mutex);
 	mutex_init(&rdev->srbm_mutex);
 	mutex_init(&rdev->grbm_idx_mutex);
-#endif
 	init_rwsem(&rdev->pm.mclk_lock);
 	init_rwsem(&rdev->exclusive_lock);
 #ifdef __NetBSD__
 	spin_lock_init(&rdev->irq.vblank_lock);
 	DRM_INIT_WAITQUEUE(&rdev->irq.vblank_queue, "radvblnk");
-	linux_mutex_init(&rdev->mn_lock);
 #else
 	init_waitqueue_head(&rdev->irq.vblank_queue);
-	mutex_init(&rdev->mn_lock);
 #endif
+	mutex_init(&rdev->mn_lock);
 	hash_init(rdev->mn_hash);
 	r = radeon_gem_init(rdev);
 	if (r)
@@ -1749,20 +1737,13 @@ void radeon_device_fini(struct radeon_device *rdev)
 	spin_lock_destroy(&rdev->irq.vblank_lock);
 	destroy_rwsem(&rdev->exclusive_lock);
 	destroy_rwsem(&rdev->pm.mclk_lock);
-	linux_mutex_destroy(&rdev->srbm_mutex);
-	linux_mutex_destroy(&rdev->gpu_clock_mutex);
-	linux_mutex_destroy(&rdev->pm.mutex);
-	linux_mutex_destroy(&rdev->gem.mutex);
-	linux_mutex_destroy(&rdev->dc_hw_i2c_mutex);
-	linux_mutex_destroy(&rdev->ring_lock);
-#else
+#endif
 	mutex_destroy(&rdev->srbm_mutex);
 	mutex_destroy(&rdev->gpu_clock_mutex);
 	mutex_destroy(&rdev->pm.mutex);
 	mutex_destroy(&rdev->gem.mutex);
 	mutex_destroy(&rdev->dc_hw_i2c_mutex);
 	mutex_destroy(&rdev->ring_lock);
-#endif
 }
 
 
@@ -1862,13 +1843,11 @@ int radeon_suspend_kms(struct drm_device *dev, bool suspend, bool fbcon)
 	}
 #endif
 
-#ifndef __NetBSD__		/* XXX radeon fb */
 	if (fbcon) {
 		console_lock();
 		radeon_fbdev_set_suspend(rdev, 1);
 		console_unlock();
 	}
-#endif
 	return 0;
 }
 
@@ -1891,11 +1870,9 @@ int radeon_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 	if (dev->switch_power_state == DRM_SWITCH_POWER_OFF)
 		return 0;
 
-#ifndef __NetBSD__		/* XXX radeon fb */
 	if (fbcon) {
 		console_lock();
 	}
-#endif
 #ifndef __NetBSD__		/* pmf handles this for us.  */
 	if (resume) {
 		pci_set_power_state(dev->pdev, PCI_D0);
@@ -1981,12 +1958,10 @@ int radeon_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 	if ((rdev->pm.pm_method == PM_METHOD_DPM) && rdev->pm.dpm_enabled)
 		radeon_pm_compute_clocks(rdev);
 
-#ifndef __NetBSD__		/* XXX radeon fb */
 	if (fbcon) {
 		radeon_fbdev_set_suspend(rdev, 0);
 		console_unlock();
 	}
-#endif
 
 	return 0;
 }

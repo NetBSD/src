@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 2005/12/29 16:01:31 tsutsui Exp $
+#	$NetBSD: dot.profile,v 1.1.88.1 2020/04/08 14:03:45 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -63,7 +63,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	if [ -x /sysinst ]; then
 		# run the installation or upgrade script.
-		sysinst
+		sysinst || stty sane
 	else
 		echo "This image contains utilities which may be needed"
 		echo "to get you out of a pinch."

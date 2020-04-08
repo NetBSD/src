@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.42 2015/09/01 06:11:06 dholland Exp $	 */
+/* $NetBSD: pass0.c,v 1.42.16.1 2020/04/08 14:07:18 martin Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -77,14 +77,11 @@
 #include <util.h>
 
 #include "bufcache.h"
-#include "vnode.h"
 #include "lfs_user.h"
 
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
-
-extern int fake_cleanseg;
 
 /*
  * Pass 0.  Check the LFS partial segments for valid checksums, correcting

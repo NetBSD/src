@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - posttls-finger(1) </title>
 </head> <body> <pre>
-POSTTLS-FINGER(1)           General Commands Manual          POSTTLS-FINGER(1)
+POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
 
 <b>NAME</b>
        posttls-finger - Probe the TLS properties of an ESMTP or LMTP server.
@@ -126,6 +126,17 @@ POSTTLS-FINGER(1)           General Commands Manual          POSTTLS-FINGER(1)
        <b>-h</b> <i>host</i><b>_</b><i>lookup</i> (default: <b>dns</b>)
               The  hostname  lookup  methods used for the connection.  See the
               documentation of <a href="postconf.5.html#smtp_host_lookup">smtp_host_lookup</a> for syntax and semantics.
+
+       <b>-H</b> <i>chainfiles</i> (default: <i>none</i>)
+              List of files with a sequence PEM-encoded TLS client certificate
+              chains.   The  list can be built-up incrementally, by specifying
+              the option multiple times, or all at once via a comma or  white-
+              space  separated  list  of  filenames.  Each chain starts with a
+              private key, which is followed immediately by the  corresponding
+              certificate,  and  optionally by additional issuer certificates.
+              Each new key begins a new chain for the corresponding algorithm.
+              This  option  is  mutually  exclusive  with  the below <b>-k</b> and <b>-K</b>
+              options.
 
        <b>-k</b> <i>certfile</i> (default: <i>keyfile</i>)
               File  with  PEM-encoded  TLS  client  certificate  chain.   This
@@ -259,6 +270,13 @@ POSTTLS-FINGER(1)           General Commands Manual          POSTTLS-FINGER(1)
               the <b>-m</b> option.  By default reconnection is disabled,  specify  a
               positive delay to enable this behavior.
 
+       <b>-s</b> <i>servername</i>
+              The  server  name  to  send  with the TLS Server Name Indication
+              (SNI) extension.  When the server has DANE  TLSA  records,  this
+              parameter  is  ignored and the TLSA base domain is used instead.
+              Otherwise, SNI is not used by default, but  can  be  enabled  by
+              specifying the desired value with this option.
+
        <b>-S</b>     Disable  SMTP;  that  is, connect to an LMTP server. The default
               port for LMTP over TCP is 24.  Alternative ports  can  specified
               by  appending "<i>:servicename</i>" or ":<i>portnumber</i>" to the destination
@@ -269,16 +287,19 @@ POSTTLS-FINGER(1)           General Commands Manual          POSTTLS-FINGER(1)
               reading the remote server's 220 banner.
 
        <b>-T</b> <i>timeout</i> (default: <b>30</b>)
-              The SMTP/LMTP command timeout for EHLO/LHLO, STARTTLS and QUIT.
+              The  SMTP/LMTP command timeout for EHLO/LHLO, STARTTLS and QUIT.
 
-       <b>-v</b>     Enable  verbose  Postfix  logging.   Specify  more  than once to
+       <b>-v</b>     Enable verbose Postfix  logging.   Specify  more  than  once  to
               increase the level of verbose logging.
 
-       <b>-w</b>     Enable outgoing TLS wrapper mode, or  SMTPS  support.   This  is
-              typically  provided  on  port 465 by servers that are compatible
-              with the ad-hoc SMTP in SSL protocol, rather than  the  standard
+       <b>-w</b>     Enable  outgoing  TLS  wrapper  mode, or SMTPS support.  This is
+              typically provided on port 465 by servers  that  are  compatible
+              with  the  ad-hoc SMTP in SSL protocol, rather than the standard
               STARTTLS protocol.  The destination <i>domain</i>:<i>port</i> should of course
               provide such a service.
+
+       <b>-X</b>     Enable  <a href="tlsproxy.8.html"><b>tlsproxy</b>(8)</a>  mode. This is an unsupported mode, for pro-
+              gram development only.
 
        [<b>inet:</b>]<i>domain</i>[:<i>port</i>]
               Connect via TCP to domain <i>domain</i>, port <i>port</i>. The default port is
@@ -328,6 +349,11 @@ POSTTLS-FINGER(1)           General Commands Manual          POSTTLS-FINGER(1)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
        Viktor Dukhovni
 

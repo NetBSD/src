@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.46.4.1 2019/06/10 21:42:25 christos Exp $
+#	$NetBSD: install.sub,v 1.46.4.2 2020/04/08 14:03:47 martin Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -114,8 +114,7 @@ cutlast () {
 	read _a; set -- $_a
 	IFS="$_oifs"
 	if [ "$1" = "" ]; then return; fi
-	while [ "$#" -gt 10 ]; do shift 10; done
-	eval echo \$$#
+	eval echo '"${'"$#"'}"'
 }
 
 firstchar () {
@@ -135,8 +134,7 @@ basename () {
 	IFS="/"
 	set -- $1
 	IFS="$_oifs"
-	while [ "$#" -gt 10 ]; do shift 10; done
-	eval echo \$$#
+	eval echo '"${'"$#"'}"'
 }
 
 dir_has_sets() {
@@ -429,7 +427,7 @@ configure_ifs() {
 
 	# Get netmask
 	resp=""		# force one iteration
-	while [ -n "${resp}" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Netmask? [$_interface_mask] "
 		getresp "$_interface_mask"
 		_interface_mask=$resp
@@ -525,7 +523,7 @@ if [ -f /mnt/etc/rc.conf ]; then
 		echo -n "configuring network interfaces:"
 		for i in $tmp; do
 			eval $(echo 'args=$ifconfig_'$i)
-			if [ ! -z "$args" ]; then
+			if [ -n "$args" ]; then
 				echo -n " $i"
 				ifconfig $i $args
 			elif [ -f /mnt/etc/ifconfig.$i ]; then
@@ -557,7 +555,7 @@ else
 			read af name mask bcaddr extras
 			read dt dtaddr
 
-			if [ ! -n "$name" ]; then
+			if [ -z "$name" ]; then
 		    echo "/etc/hostname.$1: invalid network configuration file"
 				exit
 			fi
@@ -1049,7 +1047,7 @@ The following filesystem types are supported:
 __mount_a_disk_2
 	_md_fstype=$(md_native_fstype)
 	_md_fsopts=$(md_native_fsopts)
-	if [ ! -z "$_md_fstype" ]; then
+	if [ -n "$_md_fstype" ]; then
 		echo "	3) $_md_fstype"
 	else
 		_md_fstype="_undefined_"
@@ -1531,7 +1529,7 @@ unmount_fs()
 		_fstab=$1
 	fi
 
-	if [ ! \( -f $_fstab -a -s $_fstab \) ]; then
+	if ! [ -f "${_fstab}" ] || ! [ -s "${_fstab}" ]; then
 		echo "fstab empty" > /dev/tty
 		return
 	fi

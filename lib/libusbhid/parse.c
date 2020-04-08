@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.10 2017/12/10 20:38:14 bouyer Exp $	*/
+/*	$NetBSD: parse.c,v 1.10.4.1 2020/04/08 14:07:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.10 2017/12/10 20:38:14 bouyer Exp $");
+__RCSID("$NetBSD: parse.c,v 1.10.4.1 2020/04/08 14:07:16 martin Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -243,7 +243,7 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 			dval = *data++;
 			dval |= *data++ << 8;
 			dval |= *data++ << 16;
-			dval |= *data++ << 24;
+			dval |= ((uint32_t)*data++) << 24;
 			break;
 		default:
 			return (-1);

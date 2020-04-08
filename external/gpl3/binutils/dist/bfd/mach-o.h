@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 1999-2018 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -21,7 +21,6 @@
 #ifndef _BFD_MACH_O_H_
 #define _BFD_MACH_O_H_
 
-#include "bfd.h"
 #include "mach-o/loader.h"
 #include "mach-o/external.h"
 
@@ -112,6 +111,18 @@ bfd_mach_o_segment_command;
 #define BFD_MACH_O_PROT_READ    0x01
 #define BFD_MACH_O_PROT_WRITE   0x02
 #define BFD_MACH_O_PROT_EXECUTE 0x04
+
+/* Target platforms.  */
+#define BFD_MACH_O_PLATFORM_MACOS    1
+#define BFD_MACH_O_PLATFORM_IOS      2
+#define BFD_MACH_O_PLATFORM_TVOS     3
+#define BFD_MACH_O_PLATFORM_WATCHOS  4
+#define BFD_MACH_O_PLATFORM_BRIDGEOS 5
+
+/* Build tools.  */
+#define BFD_MACH_O_TOOL_CLANG 1
+#define BFD_MACH_O_TOOL_SWIFT 2
+#define BFD_MACH_O_TOOL_LD    3
 
 /* Expanded internal representation of a relocation entry.  */
 typedef struct bfd_mach_o_reloc_info
@@ -519,10 +530,8 @@ bfd_mach_o_dyld_info_command;
 
 typedef struct bfd_mach_o_version_min_command
 {
-  unsigned char rel;
-  unsigned char maj;
-  unsigned char min;
-  unsigned int reserved;
+  uint32_t version;
+  uint32_t sdk;
 }
 bfd_mach_o_version_min_command;
 
@@ -550,6 +559,30 @@ typedef struct bfd_mach_o_source_version_command
   unsigned short e;
 }
 bfd_mach_o_source_version_command;
+
+typedef struct bfd_mach_o_note_command
+{
+  char data_owner[16];
+  bfd_uint64_t offset;
+  bfd_uint64_t size;
+}
+bfd_mach_o_note_command;
+
+typedef struct bfd_mach_o_build_version_tool
+{
+  uint32_t tool;
+  uint32_t version;
+}
+bfd_mach_o_build_version_tool;
+
+typedef struct bfd_mach_o_build_version_command
+{
+  uint32_t platform;
+  uint32_t minos;
+  uint32_t sdk;
+  uint32_t ntools;
+}
+bfd_mach_o_build_version_command;
 
 typedef struct bfd_mach_o_load_command
 {
@@ -584,6 +617,8 @@ typedef struct bfd_mach_o_load_command
     bfd_mach_o_fvmlib_command fvmlib;
     bfd_mach_o_main_command main;
     bfd_mach_o_source_version_command source_version;
+    bfd_mach_o_note_command note;
+    bfd_mach_o_build_version_command build_version;
   } command;
 }
 bfd_mach_o_load_command;
@@ -617,10 +652,10 @@ typedef struct mach_o_data_struct
   /* A place to stash dwarf2 info for this bfd.  */
   void *dwarf2_find_line_info;
 
-  /* BFD of .dSYM file. */
+  /* BFD of .dSYM file.  */
   bfd *dsym_bfd;
 
-  /* Cache of dynamic relocs. */
+  /* Cache of dynamic relocs.  */
   arelent *dyn_reloc_cache;
 }
 bfd_mach_o_data_struct;

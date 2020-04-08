@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.25.16.1 2019/06/10 22:09:05 christos Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.25.16.2 2020/04/08 14:08:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -866,7 +866,7 @@ ext2fs_ls(struct open_file *f, const char *pattern)
 				goto out;
 			}
 			lsadd(&names, pattern, dp->e2d_name,
-			    strlen(dp->e2d_name), fs2h32(dp->e2d_ino), t);
+			    dp->e2d_namlen, fs2h32(dp->e2d_ino), t);
 		}
 		fp->f_seekp += buf_size;
 	}

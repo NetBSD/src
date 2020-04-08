@@ -1,4 +1,4 @@
-/*	$NetBSD: encoding.c,v 1.6.2.1 2019/06/10 21:44:47 christos Exp $	*/
+/*	$NetBSD: encoding.c,v 1.6.2.2 2020/04/08 14:04:05 martin Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,15 +38,14 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: encoding.c,v 1.20 2019/04/15 16:48:41 christos Exp $")
+FILE_RCSID("@(#)$File: encoding.c,v 1.21 2019/06/08 20:49:14 christos Exp $")
 #else
-__RCSID("$NetBSD: encoding.c,v 1.6.2.1 2019/06/10 21:44:47 christos Exp $");
+__RCSID("$NetBSD: encoding.c,v 1.6.2.2 2020/04/08 14:04:05 martin Exp $");
 #endif
 #endif	/* lint */
 
 #include "magic.h"
 #include <string.h>
-#include <memory.h>
 #include <stdlib.h>
 
 

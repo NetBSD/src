@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/03/23 21:38:51 christos Exp $
+#	$NetBSD: Makefile,v 1.14.18.1 2020/04/08 14:09:00 martin Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../ufs/lfs
@@ -20,6 +20,11 @@ CFLAGS+=        -DLFS_KERNEL_RFW
 .if ${MACHINE_ARCH} == "vax"
 COPTS.lfs_inode.c+=-O0
 .endif
+
+# Follow the suit of Makefile.kern.inc; needed for the lfs64 union
+# accessors -- they don't actually dereference the resulting pointer,
+# just use it for type-checking.
+CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

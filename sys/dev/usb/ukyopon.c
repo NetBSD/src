@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.19.16.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.19.16.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.19.16.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.19.16.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -93,7 +93,7 @@ static int	ukyopon_param(void *, int, struct termios *);
 static int	ukyopon_open(void *, int);
 static void	ukyopon_close(void *, int);
 
-static struct ucom_methods ukyopon_methods = {
+static const struct ucom_methods ukyopon_methods = {
 	.ucom_get_status = ukyopon_get_status,
 	.ucom_set = ukyopon_set,
 	.ucom_param = ukyopon_param,

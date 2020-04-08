@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.1 2011/07/16 15:52:21 tsutsui Exp $
+# $NetBSD: dot.profile,v 1.1.44.1 2020/04/08 14:03:46 martin Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -68,7 +68,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		read _forceloop
 		case "$_forceloop" in
 			i*|I*)
-				/sysinst
+				/sysinst || stty sane
 				;;
 
 			s*|S*)

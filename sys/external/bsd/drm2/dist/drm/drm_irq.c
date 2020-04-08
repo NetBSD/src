@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_irq.c,v 1.8.18.1 2019/06/10 22:07:57 christos Exp $	*/
+/*	$NetBSD: drm_irq.c,v 1.8.18.2 2020/04/08 14:08:22 martin Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.8.18.1 2019/06/10 22:07:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.8.18.2 2020/04/08 14:08:22 martin Exp $");
 
 #include <drm/drmP.h>
 #include "drm_trace.h"
@@ -46,16 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.8.18.1 2019/06/10 22:07:57 christos Ex
 
 #include <linux/vgaarb.h>
 #include <linux/export.h>
-#include <linux/moduleparam.h>
-
-#include <linux/atomic.h>
-#include <linux/ktime.h>
-#include <linux/math64.h>
-#include <linux/preempt.h>
-#include <linux/sched.h>
-
-#include <asm/bug.h>
-#include <asm/param.h>
 
 #ifdef __NetBSD__		/* XXX hurk -- selnotify &c. */
 #include <sys/poll.h>

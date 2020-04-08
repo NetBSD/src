@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.c,v 1.13 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: randomid.c,v 1.13.48.1 2020/04/08 14:07:13 martin Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: randomid.c,v 1.13 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: randomid.c,v 1.13.48.1 2020/04/08 14:07:13 martin Exp $");
 #endif
 
 #include "namespace.h"
@@ -200,7 +200,7 @@ pmod(u_int32_t gen, u_int32_t expo, u_int32_t mod)
 }
 
 /*
- * Initalizes the seed and chooses a suitable generator. Also toggles
+ * Initializes the seed and chooses a suitable generator. Also toggles
  * the msb flag. The msb flag is used to generate two distinct
  * cycles of random numbers and thus avoiding reuse of ids.
  *

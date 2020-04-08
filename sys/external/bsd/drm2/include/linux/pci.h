@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.24.4.1 2019/06/10 22:08:32 christos Exp $	*/
+/*	$NetBSD: pci.h,v 1.24.4.2 2020/04/08 14:08:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _LINUX_PCI_H_
 
 #ifdef _KERNEL_OPT
-#if defined(i386) || defined(amd64)
+#if defined(i386) || defined(amd64) || defined(__aarch64__)
 #include "acpica.h"
 #else	/* !(i386 || amd64) */
 #define NACPICA	0
@@ -61,7 +61,10 @@
 struct acpi_devnode;
 #endif
 
+#include <linux/device.h>
 #include <linux/dma-mapping.h>
+#include <linux/errno.h>
+#include <linux/io.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 

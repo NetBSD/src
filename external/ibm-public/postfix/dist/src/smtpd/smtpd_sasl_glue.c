@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_glue.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: smtpd_sasl_glue.c,v 1.2.12.1 2020/04/08 14:06:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -220,10 +220,15 @@ void    smtpd_sasl_activate(SMTPD_STATE *state, const char *sasl_opts_name,
     if ((state->sasl_server =
 	 XSASL_SERVER_CREATE(smtpd_sasl_impl, &create_args,
 			     stream = state->client,
-			     server_addr = (state->dest_addr ?
-					    state->dest_addr : ""),
+			     addr_family = state->addr_family,
+			     server_addr = ADDR_OR_EMPTY(state->dest_addr,
+						       SERVER_ADDR_UNKNOWN),
+			     server_port = ADDR_OR_EMPTY(state->dest_port,
+						       SERVER_PORT_UNKNOWN),
 			     client_addr = ADDR_OR_EMPTY(state->addr,
 						       CLIENT_ADDR_UNKNOWN),
+			     client_port = ADDR_OR_EMPTY(state->port,
+						       CLIENT_PORT_UNKNOWN),
 			     service = var_smtpd_sasl_service,
 			   user_realm = REALM_OR_NULL(var_smtpd_sasl_realm),
 			     security_options = sasl_opts_val,
@@ -305,12 +310,11 @@ int     smtpd_sasl_authenticate(SMTPD_STATE *state,
 
 	/*
 	 * Receive the client response. "*" means that the client gives up.
-	 * XXX For now we ignore the fact that an excessively long response
-	 * will be chopped into multiple reponses. To handle such responses,
-	 * we need to change smtpd_chat_query() so that it returns an error
-	 * indication.
 	 */
-	smtpd_chat_query(state);
+	if (!smtpd_chat_query_limit(state, var_smtpd_sasl_resp_limit)) {
+	    smtpd_chat_reply(state, "500 5.5.6 SASL response limit exceeded");
+	    return (-1);
+	}
 	if (strcmp(STR(state->buffer), "*") == 0) {
 	    msg_warn("%s: SASL %s authentication aborted",
 		     state->namaddr, sasl_method);

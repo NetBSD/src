@@ -1,6 +1,6 @@
-. ${srcdir}/emulparams/arc-endianness.sh
+source_sh ${srcdir}/emulparams/arc-endianness.sh
 SCRIPT_NAME=elfarc
-TEMPLATE_NAME=elf32
+TEMPLATE_NAME=elf
 if [ "x${ARC_ENDIAN}" = "xbig" ]; then
   OUTPUT_FORMAT="elf32-bigarc"
 else

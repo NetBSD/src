@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.15.38.1 2019/06/10 22:06:18 christos Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.15.38.2 2020/04/08 14:07:39 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.15.38.1 2019/06/10 22:06:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.15.38.2 2020/04/08 14:07:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,9 +110,7 @@ int vraiu_round_blocksize(void *, int, int, const audio_params_t *);
 int vraiu_commit_settings(void *);
 int vraiu_init_output(void *, void*, int);
 int vraiu_start_output(void *, void *, int, void (*)(void *), void *);
-int vraiu_start_input(void *, void *, int, void (*)(void *), void *);
 int vraiu_halt_output(void *);
-int vraiu_halt_input(void *);
 int vraiu_getdev(void *, struct audio_device *);
 int vraiu_set_port(void *, mixer_ctrl_t *);
 int vraiu_get_port(void *, mixer_ctrl_t *);
@@ -129,11 +127,8 @@ const struct audio_hw_if vraiu_hw_if = {
 	.round_blocksize	= vraiu_round_blocksize,
 	.commit_settings	= vraiu_commit_settings,
 	.init_output		= vraiu_init_output,
-	.init_input		= NULL,
 	.start_output		= vraiu_start_output,
-	.start_input		= vraiu_start_input,
 	.halt_output		= vraiu_halt_output,
-	.halt_input		= vraiu_halt_input,
 	.getdev			= vraiu_getdev,
 	.set_port		= vraiu_set_port,
 	.get_port		= vraiu_get_port,
@@ -367,16 +362,6 @@ vraiu_start_output(void *self, void *block, int bsize,
 }
 
 int
-vraiu_start_input(void *self, void *block, int bsize,
-		  void (*intr)(void *), void *intrarg)
-{
-
-	DPRINTFN(3, ("vraiu_start_input\n"));
-	/* no input */
-	return ENXIO;
-}
-
-int
 vraiu_intr(void* self)
 {
 	struct vraiu_softc *sc;
@@ -429,16 +414,6 @@ vraiu_halt_output(void *self)
 	sc->sc_intr = NULL;
 	return 0;
 }
-
-int
-vraiu_halt_input(void *self)
-{
-
-	DPRINTFN(3, ("vraiu_halt_input\n"));
-	/* no input */
-	return ENXIO;
-}
-
 
 int
 vraiu_getdev(void *self, struct audio_device *ret)

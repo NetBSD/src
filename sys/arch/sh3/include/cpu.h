@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu.h,v 1.56.30.1 2019/06/10 22:06:45 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56.30.2 2020/04/08 14:07:52 martin Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
+ * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -60,6 +60,7 @@ struct cpu_info {
 	int	ci_mtx_oldspl;
 	int	ci_want_resched;
 	int	ci_idepth;
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 };
 
 extern struct cpu_info cpu_info_store;
@@ -99,11 +100,9 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	cpu_need_resched(ci, flags)					\
+#define	cpu_need_resched(ci,l,flags)					\
 do {									\
-	__USE(flags); 							\
-	ci->ci_want_resched = 1;					\
-	if (curlwp != ci->ci_data.cpu_idlelwp)				\
+	if ((flags & RESCHED_IDLE) == 0)				\
 		aston(curlwp);						\
 } while (/*CONSTCOND*/0)
 

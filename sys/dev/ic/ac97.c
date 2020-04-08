@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.97.4.1 2019/06/10 22:07:10 christos Exp $ */
+/*      $NetBSD: ac97.c,v 1.97.4.2 2020/04/08 14:08:05 martin Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.97.4.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.97.4.2 2020/04/08 14:08:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1691,7 +1691,7 @@ ac97_query_devinfo(struct ac97_codec_if *codec_if, mixer_devinfo_t *dip)
 		else if (si->class)
 			name = si->class;
 		else
-			name = 0;
+			name = NULL;
 
 		if (name)
 			strcpy(dip->label.name, name);

@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.30 2014/11/04 19:05:17 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.30.16.1 2020/04/08 14:07:16 martin Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,11 +40,13 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.30 2014/11/04 19:05:17 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.30.16.1 2020/04/08 14:07:16 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/evcnt.h>
+
 #include <assert.h>
 
 #include <dlfcn.h>
@@ -225,7 +227,7 @@ getsymbols(struct link_map *map, int ismainobj)
 		 * DT_GNU_HASH is a bit more complicated than DT_HASH
 		 * in this regard since apparently there is no field
 		 * telling us the total symbol count.  Instead, we look
-		 * for the last valid hash bucket and add its chain lenght
+		 * for the last valid hash bucket and add its chain length
 		 * to the bucket's base index.
 		 */
 		case DT_GNU_HASH: {
@@ -348,10 +350,17 @@ getsymbols(struct link_map *map, int ismainobj)
 
 static void
 process_object(void *handle,
-	rump_modinit_fn domodinit, rump_compload_fn docompload)
+	rump_modinit_fn domodinit, rump_compload_fn docompload,
+	rump_evcntattach_fn doevcntattach)
 {
 	const struct modinfo *const *mi_start, *const *mi_end;
 	struct rump_component *const *rc, *const *rc_end;
+
+	struct sysctllog;
+	typedef void sysctl_setup_func(struct sysctllog **);
+	sysctl_setup_func *const *sfp, *const *sfp_end;
+
+	struct evcnt *const *evp, *const *evp_end;
 
 	mi_start = dlsym(handle, "__start_link_set_modules");
 	mi_end = dlsym(handle, "__stop_link_set_modules");
@@ -365,6 +374,24 @@ process_object(void *handle,
 			docompload(*rc);
 		assert(rc == rc_end);
 	}
+
+	/* handle link_set_sysctl_funcs */
+	sfp = dlsym(handle, "__start_link_set_sysctl_funcs");
+	sfp_end = dlsym(handle, "__stop_link_set_sysctl_funcs");
+	if (sfp && sfp_end) {
+		for (; sfp < sfp_end; sfp++)
+			(**sfp)(NULL);
+		assert(sfp == sfp_end);
+	}
+
+	/* handle link_set_evcnts */
+	evp = dlsym(handle, "__start_link_set_evcnts");
+	evp_end = dlsym(handle, "__stop_link_set_evcnts");
+	if (evp && evp_end) {
+		for (; evp < evp_end; evp++)
+			doevcntattach(*evp);
+		assert(evp == evp_end);
+	}
 }
 
 /*
@@ -373,7 +400,8 @@ process_object(void *handle,
  */
 void
 rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
-	rump_symload_fn symload, rump_compload_fn compload)
+	rump_symload_fn symload, rump_compload_fn compload,
+	rump_evcntattach_fn doevcntattach)
 {
 	struct link_map *map, *origmap, *mainmap;
 	void *mainhandle;
@@ -468,7 +496,7 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 			if (handle == NULL)
 				continue;
 		}
-		process_object(handle, domodinit, compload);
+		process_object(handle, domodinit, compload, doevcntattach);
 		if (map != mainmap)
 			dlclose(handle);
 	}
@@ -479,7 +507,8 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
  */
 void
 rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
-	rump_symload_fn symload, rump_compload_fn compload)
+	rump_symload_fn symload, rump_compload_fn compload,
+	rump_evcntattach_fn doevcntattach)
 {
 
 	return;

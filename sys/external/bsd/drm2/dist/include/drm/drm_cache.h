@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.h,v 1.1.1.1.38.1 2019/06/10 22:08:29 christos Exp $	*/
+/*	$NetBSD: drm_cache.h,v 1.1.1.1.38.2 2020/04/08 14:08:27 martin Exp $	*/
 
 /**************************************************************************
  *
@@ -35,6 +35,10 @@
 #ifndef _DRM_CACHE_H_
 #define _DRM_CACHE_H_
 
+#ifdef __NetBSD__
+#include <drm/drm_os_netbsd.h>
+#endif
+
 void drm_clflush_pages(struct page *pages[], unsigned long num_pages);
 
 static inline bool drm_arch_can_wc_memory(void)
@@ -42,6 +46,8 @@ static inline bool drm_arch_can_wc_memory(void)
 #if defined(CONFIG_PPC) && !defined(CONFIG_NOT_COHERENT_CACHE)
 	return false;
 #elif defined(CONFIG_MIPS) && defined(CONFIG_CPU_LOONGSON3)
+	return false;
+#elif defined(CONFIG_ARM) || defined(CONFIG_ARM64)
 	return false;
 #else
 	return true;

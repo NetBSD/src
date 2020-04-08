@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.280.2.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.280.2.2 2020/04/08 14:09:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -123,45 +123,64 @@ LIST_HEAD(buflists, buf);
  * Reading or writing any of these items requires holding the appropriate
  * lock.  Field markings and the corresponding locks:
  *
- *	:	stable, reference to the vnode is required
+ *	-	stable, reference to the vnode is required
+ *	b	bufcache_lock
+ *	e	exec_lock
  *	f	vnode_free_list_lock, or vrele_lock for vrele_list
  *	i	v_interlock
- *	u	locked by underlying filesystem
+ *	i+b	v_interlock + bufcache_lock to modify, either to inspect
+ *	i+u	v_interlock + v_uobj.vmobjlock to modify, either to inspect
+ *	k	locked by underlying filesystem (maybe kernel_lock)
+ *	u	v_uobj.vmobjlock
  *	v	vnode lock
- *	x	v_interlock + bufcache_lock to modify, either to inspect
  *
  * Each underlying filesystem allocates its own private area and hangs
  * it from v_data.
  */
 struct vnode {
-	struct uvm_object v_uobj;		/* i: the VM object */
-	kcondvar_t	v_cv;			/* i: synchronization */
-	voff_t		v_size;			/* i: size of file */
-	voff_t		v_writesize;		/* i: new size after write */
-	int		v_iflag;		/* i: VI_* flags */
-	int		v_vflag;		/* v: VV_* flags */
-	int		v_uflag;		/* u: VU_* flags */
-	int		v_numoutput;		/* i: # of pending writes */
-	int		v_writecount;		/* i: ref count of writers */
-	int		v_holdcnt;		/* i: page & buffer refs */
-	struct mount	*v_mount;		/* v: ptr to vfs we are in */
-	int		(**v_op)(void *);	/* :: vnode operations vector */
-	struct buflists	v_cleanblkhd;		/* x: clean blocklist head */
-	struct buflists	v_dirtyblkhd;		/* x: dirty blocklist head */
+	/*
+	 * VM system related items.
+	 */
+	struct uvm_object v_uobj;		/* u   the VM object */
+	voff_t		v_size;			/* i+u size of file */
+	voff_t		v_writesize;		/* i+u new size after write */
+
+	/*
+	 * Unstable items get their own cache line.
+	 * On _LP64 this fills the space nicely.
+	 */
+	kcondvar_t	v_cv			/* i   synchronization */
+	    __aligned(COHERENCY_UNIT);
+	int		v_iflag;		/* i+u VI_* flags */
+	int		v_uflag;		/* k   VU_* flags */
+	int		v_usecount;		/* i   reference count */
+	int		v_numoutput;		/* i   # of pending writes */
+	int		v_writecount;		/* i   ref count of writers */
+	int		v_holdcnt;		/* i   page & buffer refs */
+	struct buflists	v_cleanblkhd;		/* i+b clean blocklist head */
+	struct buflists	v_dirtyblkhd;		/* i+b dirty blocklist head */
+
+	/*
+	 * The remaining items are largely stable.
+	 */
+	int		v_vflag			/* v   VV_* flags */
+	    __aligned(COHERENCY_UNIT);
+	kmutex_t	*v_interlock;		/* -   vnode interlock */
+	struct mount	*v_mount;		/* v   ptr to vfs we are in */
+	int		(**v_op)(void *);	/* :   vnode operations vector */
 	union {
-		struct mount	*vu_mountedhere;/* v: ptr to vfs (VDIR) */
-		struct socket	*vu_socket;	/* v: unix ipc (VSOCK) */
-		struct specnode	*vu_specnode;	/* v: device (VCHR, VBLK) */
-		struct fifoinfo	*vu_fifoinfo;	/* v: fifo (VFIFO) */
-		struct uvm_ractx *vu_ractx;	/* i: read-ahead ctx (VREG) */
+		struct mount	*vu_mountedhere;/* v   ptr to vfs (VDIR) */
+		struct socket	*vu_socket;	/* v   unix ipc (VSOCK) */
+		struct specnode	*vu_specnode;	/* v   device (VCHR, VBLK) */
+		struct fifoinfo	*vu_fifoinfo;	/* v   fifo (VFIFO) */
+		struct uvm_ractx *vu_ractx;	/* u   read-ahead ctx (VREG) */
 	} v_un;
-	enum vtype	v_type;			/* :: vnode type */
-	enum vtagtype	v_tag;			/* :: type of underlying data */
-	void 		*v_data;		/* :: private data for fs */
-	struct klist	v_klist;		/* i: notes attached to vnode */
+	enum vtype	v_type;			/* -   vnode type */
+	enum vtagtype	v_tag;			/* -   type of underlying data */
+	void 		*v_data;		/* -   private data for fs */
+	struct klist	v_klist;		/* i   notes attached to vnode */
+	void		*v_segvguard;		/* e   for PAX_SEGVGUARD */
 };
-#define	v_usecount	v_uobj.uo_refs
-#define	v_interlock	v_uobj.vmobjlock
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
 #define	v_specnode	v_un.vu_specnode
@@ -184,13 +203,16 @@ typedef struct vnode vnode_t;
 #define	VV_LOCKSWORK	0x00000020	/* FS supports locking discipline */
 
 /*
- * The second set are locked by vp->v_interlock.
+ * The second set are locked by vp->v_interlock.  VI_TEXT and VI_EXECMAP are
+ * typically updated with vp->v_uobj.vmobjlock also held as the VM system
+ * uses them for accounting purposes.
  */
 #define	VI_TEXT		0x00000100	/* vnode is a pure text prototype */
 #define	VI_EXECMAP	0x00000200	/* might have PROT_EXEC mappings */
 #define	VI_WRMAP	0x00000400	/* might have PROT_WRITE u. mappings */
-#define	VI_WRMAPDIRTY	0x00000800	/* might have dirty pages */
+#define	VI_PAGES	0x00000800	/* UVM object has >0 pages */
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
+#define	VI_DEADCHECK	0x00008000	/* UVM: need to call vdead_check() */
 
 /*
  * The third set are locked by the underlying file system.
@@ -199,17 +221,20 @@ typedef struct vnode vnode_t;
 
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
-    "\13WRMAP\14WRMAPDIRTY\17ONWORKLST\31DIROP"
+    "\13WRMAP\14PAGES\17ONWORKLST\18DEADCHECK\31DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
 
 /*
  * vnode lock flags
  */
+#define	LK_NONE		0x00000000	/* no lock - for VOP_ISLOCKED() */
 #define	LK_SHARED	0x00000001	/* shared lock */
 #define	LK_EXCLUSIVE	0x00000002	/* exclusive lock */
-#define	LK_NOWAIT	0x00000010	/* do not sleep to await lock */
-#define	LK_RETRY	0x00020000	/* vn_lock: retry until locked */
+#define	LK_UPGRADE	0x00000010	/* upgrade shared -> exclusive */
+#define	LK_DOWNGRADE	0x00000020	/* downgrade exclusive -> shared */
+#define	LK_NOWAIT	0x00000100	/* do not sleep to await lock */
+#define	LK_RETRY	0x00000200	/* vn_lock: retry until locked */
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
@@ -315,35 +340,10 @@ extern const int	vttoif_tab[];
 #define VDEAD_NOWAIT	0x0001		/* vdead_check: do not sleep */
 
 void holdrelel(struct vnode *);
+void holdrele(struct vnode *);
 void vholdl(struct vnode *);
+void vhold(struct vnode *);
 void vref(struct vnode *);
-
-static __inline void holdrele(struct vnode *) __unused;
-static __inline void vhold(struct vnode *) __unused;
-
-/*
- * decrease buf or page ref
- */
-static __inline void
-holdrele(struct vnode *vp)
-{
-
-	mutex_enter(vp->v_interlock);
-	holdrelel(vp);
-	mutex_exit(vp->v_interlock);
-}
-
-/*
- * increase buf or page ref
- */
-static __inline void
-vhold(struct vnode *vp)
-{
-
-	mutex_enter(vp->v_interlock);
-	vholdl(vp);
-	mutex_exit(vp->v_interlock);
-}
 
 #define	NULLVP	((struct vnode *)NULL)
 
@@ -411,11 +411,6 @@ struct vnodeop_desc {
 };
 
 #ifdef _KERNEL
-
-/*
- * Interlock for scanning list of vnodes attached to a mountpoint
- */
-extern kmutex_t		mntvnode_lock;
 
 /*
  * Union filesystem hook for vn_readdir().
@@ -517,6 +512,7 @@ void	vwakeup(struct buf *);
 int	vdead_check(struct vnode *, int);
 void	vrevoke(struct vnode *);
 void	vremfree(struct vnode *);
+void	vshareilock(struct vnode *, struct vnode *);
 int	vcache_get(struct mount *, const void *, size_t, struct vnode **);
 int	vcache_new(struct mount *, struct vnode *,
 	    struct vattr *, kauth_cred_t, void *, struct vnode **);
@@ -546,7 +542,6 @@ int	vn_extattr_get(struct vnode *, int, int, const char *, size_t *,
 int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
 	    const void *, struct lwp *);
 int	vn_extattr_rm(struct vnode *, int, int, const char *, struct lwp *);
-void	vn_ra_allocctx(struct vnode *);
 int	vn_fifo_bypass(void *);
 
 #ifdef DIAGNOSTIC
@@ -586,6 +581,8 @@ void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...)
 void	vfs_vnode_lock_print(void *, int, void (*)(const char *, ...)
     __printflike(1, 2));
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...)
+    __printflike(1, 2));
+void	vfs_mount_print_all(int, void (*)(const char *, ...)
     __printflike(1, 2));
 #endif /* DDB */
 

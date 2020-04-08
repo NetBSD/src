@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.64.4.1 2019/06/10 22:05:26 christos Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.64.4.2 2020/04/08 14:07:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.64.4.1 2019/06/10 22:05:26 christos Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.64.4.2 2020/04/08 14:07:15 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -131,6 +131,9 @@ pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 		return __libc_mutex_init_stub(ptm, attr);
 #endif
 
+	pthread__error(EINVAL, "Invalid mutes attribute",
+	    attr == NULL || attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
+
 	if (attr == NULL) {
 		type = PTHREAD_MUTEX_NORMAL;
 		proto = PTHREAD_PRIO_NONE;
@@ -197,6 +200,9 @@ pthread_mutex_lock(pthread_mutex_t *ptm)
 	if (__predict_false(__uselibcstub))
 		return __libc_mutex_lock_stub(ptm);
 
+	pthread__error(EINVAL, "Invalid mutex",
+	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
+
 	self = pthread__self();
 	val = atomic_cas_ptr(&ptm->ptm_owner, NULL, self);
 	if (__predict_true(val == NULL)) {
@@ -213,6 +219,9 @@ pthread_mutex_timedlock(pthread_mutex_t* ptm, const struct timespec *ts)
 {
 	pthread_t self;
 	void *val;
+
+	pthread__error(EINVAL, "Invalid mutex",
+	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
 
 	self = pthread__self();
 	val = atomic_cas_ptr(&ptm->ptm_owner, NULL, self);
@@ -235,10 +244,7 @@ pthread__mutex_pause(void)
 
 /*
  * Spin while the holder is running.  'lwpctl' gives us the true
- * status of the thread.  pt_blocking is set by libpthread in order
- * to cut out system call and kernel spinlock overhead on remote CPUs
- * (could represent many thousands of clock cycles).  pt_blocking also
- * makes this thread yield if the target is calling sched_yield().
+ * status of the thread.
  */
 NOINLINE static void *
 pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner)
@@ -250,8 +256,7 @@ pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner)
 		thread = (pthread_t)MUTEX_OWNER(owner);
 		if (thread == NULL)
 			break;
-		if (thread->pt_lwpctl->lc_curcpu == LWPCTL_CPU_NONE ||
-		    thread->pt_blocking)
+		if (thread->pt_lwpctl->lc_curcpu == LWPCTL_CPU_NONE)
 			break;
 		if (count < 128) 
 			count += count;
@@ -262,10 +267,10 @@ pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner)
 	return owner;
 }
 
-NOINLINE static void
+NOINLINE static bool
 pthread__mutex_setwaiters(pthread_t self, pthread_mutex_t *ptm)
 {
-	void *new, *owner;
+	void *owner, *next;
 
 	/*
 	 * Note that the mutex can become unlocked before we set
@@ -281,34 +286,16 @@ pthread__mutex_setwaiters(pthread_t self, pthread_mutex_t *ptm)
 	 * the value of ptm_owner/pt_mutexwait after we have entered
 	 * the waiters list (the CAS itself must be atomic).
 	 */
-again:
-	membar_consumer();
-	owner = ptm->ptm_owner;
-
-	if (MUTEX_OWNER(owner) == 0) {
-		pthread__mutex_wakeup(self, ptm);
-		return;
-	}
-	if (!MUTEX_HAS_WAITERS(owner)) {
-		new = (void *)((uintptr_t)owner | MUTEX_WAITERS_BIT);
-		if (atomic_cas_ptr(&ptm->ptm_owner, owner, new) != owner) {
-			goto again;
+	for (owner = ptm->ptm_owner;; owner = next) {
+		if (MUTEX_OWNER(owner) == 0) {
+			pthread__mutex_wakeup(self, ptm);
+			return true;
 		}
-	}
-
-	/*
-	 * Note that pthread_mutex_unlock() can do a non-interlocked CAS.
-	 * We cannot know if the presence of the waiters bit is stable
-	 * while the holding thread is running.  There are many assumptions;
-	 * see sys/kern/kern_mutex.c for details.  In short, we must spin if
-	 * we see that the holder is running again.
-	 */
-	membar_sync();
-	if (MUTEX_OWNER(owner) != (uintptr_t)self)
-		pthread__mutex_spin(ptm, owner);
-
-	if (membar_consumer(), !MUTEX_HAS_WAITERS(ptm->ptm_owner)) {
-		goto again;
+		if (MUTEX_HAS_WAITERS(owner)) {
+			return false;
+		}
+		next = atomic_cas_ptr(&ptm->ptm_owner, owner,
+		    (void *)((uintptr_t)owner | MUTEX_WAITERS_BIT));
 	}
 }
 
@@ -319,9 +306,6 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 	pthread_t self;
 	int serrno;
 	int error;
-
-	pthread__error(EINVAL, "Invalid mutex",
-	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
 
 	owner = ptm->ptm_owner;
 	self = pthread__self();
@@ -386,9 +370,12 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 			if (next == waiters)
 			    	break;
 		}
-
+		
 		/* Set the waiters bit and block. */
-		pthread__mutex_setwaiters(self, ptm);
+		membar_sync();
+		if (pthread__mutex_setwaiters(self, ptm)) {
+			continue;
+		}
 
 		/*
 		 * We may have been awoken by the current thread above,
@@ -398,15 +385,13 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 		 * being set to zero).  Otherwise it is unsafe to re-enter
 		 * the thread onto the waiters list.
 		 */
+		membar_sync();
 		while (self->pt_mutexwait) {
-			self->pt_blocking++;
 			error = _lwp_park(CLOCK_REALTIME, TIMER_ABSTIME,
 			    __UNCONST(ts), self->pt_unpark,
 			    __UNVOLATILE(&ptm->ptm_waiters),
 			    __UNVOLATILE(&ptm->ptm_waiters));
 			self->pt_unpark = 0;
-			self->pt_blocking--;
-			membar_sync();
 			if (__predict_true(error != -1)) {
 				continue;
 			}
@@ -430,6 +415,9 @@ pthread_mutex_trylock(pthread_mutex_t *ptm)
 
 	if (__predict_false(__uselibcstub))
 		return __libc_mutex_trylock_stub(ptm);
+
+	pthread__error(EINVAL, "Invalid mutex",
+	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
 
 	self = pthread__self();
 	val = atomic_cas_ptr(&ptm->ptm_owner, NULL, self);
@@ -471,15 +459,14 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 	if (__predict_false(__uselibcstub))
 		return __libc_mutex_unlock_stub(ptm);
 
-	/*
-	 * Note this may be a non-interlocked CAS.  See lock_slow()
-	 * above and sys/kern/kern_mutex.c for details.
-	 */
+	pthread__error(EINVAL, "Invalid mutex",
+	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
+
 #ifndef PTHREAD__ATOMIC_IS_MEMBAR
 	membar_exit();
 #endif
 	self = pthread__self();
-	value = atomic_cas_ptr_ni(&ptm->ptm_owner, self, NULL);
+	value = atomic_cas_ptr(&ptm->ptm_owner, self, NULL);
 	if (__predict_true(value == self)) {
 		pthread__smt_wake();
 		return 0;
@@ -491,15 +478,11 @@ NOINLINE static int
 pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 {
 	pthread_t self, owner, new;
-	int weown, error, deferred;
-
-	pthread__error(EINVAL, "Invalid mutex",
-	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
+	int weown, error;
 
 	self = pthread__self();
 	owner = ptm->ptm_owner;
 	weown = (MUTEX_OWNER(owner) == (uintptr_t)self);
-	deferred = (int)((uintptr_t)owner & MUTEX_DEFERRED_BIT);
 	error = 0;
 
 	if (__SIMPLELOCK_LOCKED_P(&ptm->ptm_errorcheck)) {
@@ -541,14 +524,8 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 			pthread__mutex_wakeup(self, ptm);
 			return 0;
 		}
+		error = 0;
 	}
-
-	/*
-	 * There were no waiters, but we may have deferred waking
-	 * other threads until mutex unlock - we must wake them now.
-	 */
-	if (!deferred)
-		return error;
 
 	if (self->pt_nwaiters == 1) {
 		/*
@@ -561,7 +538,7 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 			(void)_lwp_unpark(self->pt_waiters[0],
 			    __UNVOLATILE(&ptm->ptm_waiters));
 		}
-	} else {
+	} else if (self->pt_nwaiters > 0) {
 		(void)_lwp_unpark_all(self->pt_waiters, self->pt_nwaiters,
 		    __UNVOLATILE(&ptm->ptm_waiters));
 	}
@@ -582,12 +559,9 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 	pthread_t thread, next;
 	ssize_t n, rv;
 
-	/*
-	 * Take ownership of the current set of waiters.  No
-	 * need for a memory barrier following this, all loads
-	 * are dependent upon 'thread'.
-	 */
+	/* Take ownership of the current set of waiters. */
 	thread = atomic_swap_ptr(&ptm->ptm_waiters, NULL);
+	membar_datadep_consumer(); /* for alpha */
 	pthread__smt_wake();
 
 	for (;;) {
@@ -645,8 +619,10 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 int
 pthread_mutexattr_init(pthread_mutexattr_t *attr)
 {
+#if 0
 	if (__predict_false(__uselibcstub))
 		return __libc_mutexattr_init_stub(attr);
+#endif
 
 	attr->ptma_magic = _PT_MUTEXATTR_MAGIC;
 	attr->ptma_private = (void *)PTHREAD_MUTEX_DEFAULT;
@@ -661,6 +637,8 @@ pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 
 	pthread__error(EINVAL, "Invalid mutex attribute",
 	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
+
+	attr->ptma_magic = _PT_MUTEXATTR_DEAD;
 
 	return 0;
 }
@@ -758,6 +736,9 @@ pthread_mutexattr_getpshared(const pthread_mutexattr_t * __restrict attr,
     int * __restrict pshared)
 {
 
+	pthread__error(EINVAL, "Invalid mutex attribute",
+		attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
+
 	*pshared = PTHREAD_PROCESS_PRIVATE;
 	return 0;
 }
@@ -765,6 +746,9 @@ pthread_mutexattr_getpshared(const pthread_mutexattr_t * __restrict attr,
 int
 pthread_mutexattr_setpshared(pthread_mutexattr_t *attr, int pshared)
 {
+
+	pthread__error(EINVAL, "Invalid mutex attribute",
+		attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
 
 	switch(pshared) {
 	case PTHREAD_PROCESS_PRIVATE:
@@ -805,6 +789,10 @@ pthread__mutex_deferwake(pthread_t self, pthread_mutex_t *ptm)
 int
 pthread_mutex_getprioceiling(const pthread_mutex_t *ptm, int *ceil) 
 {
+
+	pthread__error(EINVAL, "Invalid mutex",
+	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
+
 	*ceil = ptm->ptm_ceiling;
 	return 0;
 }
@@ -813,6 +801,9 @@ int
 pthread_mutex_setprioceiling(pthread_mutex_t *ptm, int ceil, int *old_ceil) 
 {
 	int error;
+
+	pthread__error(EINVAL, "Invalid mutex",
+	    ptm->ptm_magic == _PT_MUTEX_MAGIC);
 
 	error = pthread_mutex_lock(ptm);
 	if (error == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_irq_kms.c,v 1.2.32.1 2019/06/10 22:08:26 christos Exp $	*/
+/*	$NetBSD: radeon_irq_kms.c,v 1.2.32.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_irq_kms.c,v 1.2.32.1 2019/06/10 22:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_irq_kms.c,v 1.2.32.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
@@ -107,11 +107,12 @@ static void radeon_dp_work_func(struct work_struct *work)
 	struct drm_mode_config *mode_config = &dev->mode_config;
 	struct drm_connector *connector;
 
-	/* this should take a mutex */
+	mutex_lock(&mode_config->mutex);
 	if (mode_config->num_connector) {
 		list_for_each_entry(connector, &mode_config->connector_list, head)
 			radeon_connector_hotplug(connector);
 	}
+	mutex_unlock(&mode_config->mutex);
 }
 /**
  * radeon_driver_irq_preinstall_kms - drm irq preinstall callback

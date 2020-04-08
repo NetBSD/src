@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.102.2.1 2019/06/10 21:42:39 christos Exp $
+# $NetBSD: rc.subr,v 1.102.2.2 2020/04/08 14:03:56 martin Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,6 +43,7 @@ _rc_pid=
 _rc_original_stdout_fd=
 _rc_original_stderr_fd=
 _rc_postprocessor_fd=
+_rc_kill_ntries=
 "
 
 #
@@ -313,35 +314,61 @@ _find_processes()
 }
 
 #
+# kill_pids signal pid [pid ...]
+#	kills the given pids with signal. 
+#	returns the list of pids killed successfully.
+#
+kill_pids()
+{
+	local signal=$1
+	shift
+	local list="$@"
+	local j=
+	local nlist=
+	for j in $list; do
+		if kill -$signal $j 2>/dev/null; then
+			nlist="${nlist}${nlist:+ }$j"
+		fi
+	done
+	echo $nlist
+}
+
+#
 # wait_for_pids pid [pid ...]
 #	spins until none of the pids exist
+#	if _rc_kill_ntries is set and exceeded, it SIGKILLS the remaining
+#	pids
 #
 wait_for_pids()
 {
-	_list="$@"
-	if [ -z "$_list" ]; then
+	local ntries=0
+	local prefix=
+	local list="$@"
+
+	if [ -z "$list" ]; then
 		return
 	fi
-	_prefix=
+
 	while true; do
-		_nlist="";
-		for _j in $_list; do
-			if kill -0 $_j 2>/dev/null; then
-				_nlist="${_nlist}${_nlist:+ }$_j"
-			fi
-		done
-		if [ -z "$_nlist" ]; then
+		local nlist=$(kill_pids 0 $list)
+		if [ -z "$nlist" ]; then
 			break
 		fi
-		if [ "$_list" != "$_nlist" ]; then
-			_list=$_nlist
-			echo -n ${_prefix:-"Waiting for PIDS: "}$_list
-			_prefix=", "
+		if [ "$list" != "$nlist" ]; then
+			list=$nlist
+			echo -n ${prefix:-"Waiting for PIDS: "}$list
+			prefix=", "
 		fi
 		# We want this to be a tight loop for a fast exit
 		sleep 0.05
+		ntries=$((ntries + 1))
+		if [ -n "${_rc_kill_ntries}" ]; then
+			if [ ${ntries} -gt ${_rc_kill_ntries} ]; then
+				kill_pids 9 $list > /dev/null
+			fi
+		fi
 	done
-	if [ -n "$_prefix" ]; then
+	if [ -n "$prefix" ]; then
 		echo "."
 	fi
 }

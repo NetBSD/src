@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.39.4.1 2019/06/10 22:09:58 christos Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.39.4.2 2020/04/08 14:09:05 martin Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.39.4.1 2019/06/10 22:09:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.39.4.2 2020/04/08 14:09:05 martin Exp $");
 
 #include "opt_readahead.h"
 #include "opt_ddb.h"
@@ -57,50 +57,66 @@ uvmexp_print(void (*pr)(const char *, ...)
 {
 	int active, inactive;
 	int poolpages;
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
 
 	uvm_estimatepageable(&active, &inactive);
 	poolpages = pool_totalpages_locked();
 
+	cpu_count_sync_all();
 	(*pr)("Current UVM status:\n");
 	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d, ncolors=%d\n",
 	    uvmexp.pagesize, uvmexp.pagesize, uvmexp.pagemask,
 	    uvmexp.pageshift, uvmexp.ncolors);
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
-	    uvmexp.npages, active, inactive, uvmexp.wired,
-	    uvmexp.free);
-	(*pr)("  pages  %d anon, %d file, %d exec\n",
-	    uvmexp.anonpages, uvmexp.filepages, uvmexp.execpages);
+	    uvmexp.npages, active, inactive, uvmexp.wired, uvm_availmem());
+	(*pr)("  pages  %" PRId64 " anon, %" PRId64 " file, %" PRId64 " exec\n",
+	    cpu_count_get(CPU_COUNT_ANONPAGES),
+	    cpu_count_get(CPU_COUNT_FILEPAGES),
+	    cpu_count_get(CPU_COUNT_EXECPAGES));
 	(*pr)("  freemin=%d, free-target=%d, wired-max=%d\n",
 	    uvmexp.freemin, uvmexp.freetarg, uvmexp.wiredmax);
-	(*pr)("  resv-pg=%d, resv-kernel=%d, zeropages=%d\n",
-	    uvmexp.reserve_pagedaemon, uvmexp.reserve_kernel, uvmexp.zeropages);
+	(*pr)("  resv-pg=%d, resv-kernel=%d, zeropages=%" PRId64 "\n",
+	    uvmexp.reserve_pagedaemon, uvmexp.reserve_kernel,
+	    cpu_count_get(CPU_COUNT_ZEROPAGES));
 	(*pr)("  bootpages=%d, poolpages=%d\n",
 	    uvmexp.bootpages, poolpages);
 
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		(*pr)("  cpu%u:\n", cpu_index(ci));
-		(*pr)("    faults=%" PRIu64 ", traps=%" PRIu64 ", "
-		    "intrs=%" PRIu64 ", ctxswitch=%" PRIu64 "\n",
-		    ci->ci_data.cpu_nfault, ci->ci_data.cpu_ntrap,
-		    ci->ci_data.cpu_nintr, ci->ci_data.cpu_nswtch);
-		(*pr)("    softint=%" PRIu64 ", syscalls=%" PRIu64 "\n",
-		    ci->ci_data.cpu_nsoft, ci->ci_data.cpu_nsyscall);
-	}
+	(*pr)("  faults=%" PRId64 ", traps=%" PRId64 ", "
+	      "intrs=%" PRId64 ", ctxswitch=%" PRId64 "\n",
+	    cpu_count_get(CPU_COUNT_NFAULT),
+	    cpu_count_get(CPU_COUNT_NTRAP),
+	    cpu_count_get(CPU_COUNT_NINTR),
+	    cpu_count_get(CPU_COUNT_NSWTCH));
+	(*pr)("   softint=%" PRId64 ", syscalls=%" PRId64 "\n",
+	    cpu_count_get(CPU_COUNT_NSOFT),
+	    cpu_count_get(CPU_COUNT_NSYSCALL));
 
 	(*pr)("  fault counts:\n");
-	(*pr)("    noram=%d, noanon=%d, pgwait=%d, pgrele=%d\n",
-	    uvmexp.fltnoram, uvmexp.fltnoanon, uvmexp.fltpgwait,
-	    uvmexp.fltpgrele);
-	(*pr)("    ok relocks(total)=%d(%d), anget(retrys)=%d(%d), "
-	    "amapcopy=%d\n", uvmexp.fltrelckok, uvmexp.fltrelck,
-	    uvmexp.fltanget, uvmexp.fltanretry, uvmexp.fltamcopy);
-	(*pr)("    neighbor anon/obj pg=%d/%d, gets(lock/unlock)=%d/%d\n",
-	    uvmexp.fltnamap, uvmexp.fltnomap, uvmexp.fltlget, uvmexp.fltget);
-	(*pr)("    cases: anon=%d, anoncow=%d, obj=%d, prcopy=%d, przero=%d\n",
-	    uvmexp.flt_anon, uvmexp.flt_acow, uvmexp.flt_obj, uvmexp.flt_prcopy,
-	    uvmexp.flt_przero);
+	(*pr)("    noram=%" PRId64 ", noanon=%" PRId64 ", pgwait=%" PRId64
+	    ", pgrele=%" PRId64 "\n",
+	    cpu_count_get(CPU_COUNT_FLTNORAM),
+	    cpu_count_get(CPU_COUNT_FLTNOANON),
+	    cpu_count_get(CPU_COUNT_FLTPGWAIT),
+	    cpu_count_get(CPU_COUNT_FLTPGRELE));
+	(*pr)("    ok relocks(total)=%" PRId64 "(%" PRId64 "), "
+	    "anget(retrys)=%" PRId64 "(%" PRId64 "), amapcopy=%" PRId64 "\n",
+	    cpu_count_get(CPU_COUNT_FLTRELCKOK),
+	    cpu_count_get(CPU_COUNT_FLTRELCK),
+	    cpu_count_get(CPU_COUNT_FLTANGET),
+	    cpu_count_get(CPU_COUNT_FLTANRETRY),
+	    cpu_count_get(CPU_COUNT_FLTAMCOPY));
+	(*pr)("    neighbor anon/obj pg=%" PRId64 "/%" PRId64
+	    ", gets(lock/unlock)=%" PRId64 "/%" PRId64 "\n",
+	    cpu_count_get(CPU_COUNT_FLTNAMAP),
+	    cpu_count_get(CPU_COUNT_FLTNOMAP),
+	    cpu_count_get(CPU_COUNT_FLTLGET),
+	    cpu_count_get(CPU_COUNT_FLTGET));
+	(*pr)("    cases: anon=%" PRId64 ", anoncow=%" PRId64 ", obj=%" PRId64
+	    ", prcopy=%" PRId64 ", przero=%" PRId64 "\n",
+	    cpu_count_get(CPU_COUNT_FLT_ANON),
+	    cpu_count_get(CPU_COUNT_FLT_ACOW),
+	    cpu_count_get(CPU_COUNT_FLT_OBJ),
+	    cpu_count_get(CPU_COUNT_FLT_PRCOPY),
+	    cpu_count_get(CPU_COUNT_FLT_PRZERO));
 
 	(*pr)("  daemon and swap counts:\n");
 	(*pr)("    woke=%d, revs=%d, scans=%d, obscans=%d, anscans=%d\n",

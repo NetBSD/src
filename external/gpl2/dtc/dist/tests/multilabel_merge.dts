@@ -39,6 +39,11 @@ m1: mq: /memreserve/ 0 0x1000;
 		n2 = &n2;
 		n3 = &n3;
 	};
+
+	node6 {
+		linux,phandle = <0xfffffffe>;
+		phandle = <0xfffffffe>;
+	};
 };
 
 / {

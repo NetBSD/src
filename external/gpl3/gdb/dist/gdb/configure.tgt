@@ -771,7 +771,8 @@ x86_64-*-mingw* | x86_64-*-cygwin*)
         ;;
 x86_64-*-netbsd* | x86_64-*-knetbsd*-gnu)
 	# Target: NetBSD/amd64
-	gdb_target_obs="amd64-nbsd-tdep.o ${i386_tobjs}"
+	gdb_target_obs="amd64-nbsd-tdep.o ${i386_tobjs} \
+			i386-bsd-tdep.o i386-nbsd-tdep.o"
 	;;
 x86_64-*-openbsd*)
 	# Target: OpenBSD/amd64

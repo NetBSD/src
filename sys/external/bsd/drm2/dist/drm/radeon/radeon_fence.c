@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_fence.c,v 1.8.18.1 2019/06/10 22:08:26 christos Exp $	*/
+/*	$NetBSD: radeon_fence.c,v 1.8.18.2 2020/04/08 14:08:26 martin Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,7 +31,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.8.18.1 2019/06/10 22:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.8.18.2 2020/04/08 14:08:26 martin Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/atomic.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.8.18.1 2019/06/10 22:08:26 christ
 #include "radeon_reg.h"
 #include "radeon.h"
 #include "radeon_trace.h"
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * Fences
@@ -918,11 +920,7 @@ int radeon_fence_driver_start_ring(struct radeon_device *rdev, int ring)
 
 		} else {
 			/* put fence directly behind firmware */
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-			index = round_up(rdev->uvd_fw->size, 8);
-#else
 			index = ALIGN(rdev->uvd_fw->size, 8);
-#endif
 			rdev->fence_drv[ring].cpu_addr = (uint32_t *)((uint8_t *)rdev->uvd.cpu_addr + index);
 			rdev->fence_drv[ring].gpu_addr = rdev->uvd.gpu_addr + index;
 		}

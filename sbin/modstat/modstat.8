@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.22.14.1 2019/06/10 22:05:34 christos Exp $
+.\" $NetBSD: modstat.8,v 1.22.14.2 2020/04/08 14:07:19 martin Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd September 8, 2018
+.Dd February 22, 2020
 .Dt MODSTAT 8
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ take into consideration the sysctl
 .It Fl e
 Tells you whether or not you may load a module at the moment.
 .It Fl k
-Display the module's kernel address (disabled by default).
+Display the kernel address of the module's text segment (disabled by default).
 .It Fl n Ar name
 Display the status of only the module with this name.
 Please note that
@@ -76,7 +76,6 @@ In addition to listing the currently loaded modules' name,
 the information reported by
 .Nm
 includes:
-.Pp
 .Bl -tag -width Loadaddr
 .It Li CLASS
 Module class, such as
@@ -90,7 +89,7 @@ indicates that the module was loaded during system bootstrap.
 .Qq Dv filesys
 indicates that the module was loaded from the file system.
 .It Li SIZE
-Size of the module in bytes.
+Size of the module's text section, in bytes.
 .It Li FLAG
 The module flags:
 .Bl -tag -width a -offset indent -compact
@@ -107,7 +106,7 @@ flag
 Number of references held on the module.
 Disabled builtin modules will show a count of \-1 here.
 .It Li ADDRESS
-The kernel address at which the module is loaded.
+The kernel address at which the module's text segment is loaded.
 Builtin modules will show 0 here.
 This field is only displayed if the
 .Fl k

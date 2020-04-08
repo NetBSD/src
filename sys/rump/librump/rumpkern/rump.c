@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.331.4.1 2019/06/10 22:09:53 christos Exp $	*/
+/*	$NetBSD: rump.c,v 1.331.4.2 2020/04/08 14:09:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.331.4.1 2019/06/10 22:09:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.331.4.2 2020/04/08 14:09:01 martin Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -52,12 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.331.4.1 2019/06/10 22:09:53 christos Exp 
 #include <sys/ksyms.h>
 #include <sys/msgbuf.h>
 #include <sys/module.h>
+#include <sys/module_hook.h>
 #include <sys/namei.h>
 #include <sys/once.h>
 #include <sys/percpu.h>
 #include <sys/pipe.h>
 #include <sys/pool.h>
-#include <sys/pserialize.h>
 #include <sys/queue.h>
 #include <sys/reboot.h>
 #include <sys/resourcevar.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.331.4.1 2019/06/10 22:09:53 christos Exp 
 #include <sys/cprng.h>
 #include <sys/rnd.h>
 #include <sys/ktrace.h>
+#include <sys/pserialize.h>
 #include <sys/psref.h>
 
 #include <rump-sys/kern.h>
@@ -115,15 +116,6 @@ bool rump_ttycomponent = false;
 
 pool_cache_t pnbuf_cache;
 
-static void
-rump_aiodone_worker(struct work *wk, void *dummy)
-{
-	struct buf *bp = (struct buf *)wk;
-
-	KASSERT(&bp->b_work == wk);
-	bp->b_iodone(bp);
-}
-
 static int rump_inited;
 
 void (*rump_vfs_drainbufs)(int) = (void *)nullop;
@@ -137,6 +129,7 @@ rump_proc_vfs_init_fn rump_proc_vfs_init = (void *)nullop;
 rump_proc_vfs_release_fn rump_proc_vfs_release = (void *)nullop;
 
 static void add_linkedin_modules(const struct modinfo *const *, size_t);
+static void add_static_evcnt(struct evcnt *);
 
 static pid_t rspo_wrap_getpid(void) {
 	return rump_sysproxy_hyp_getpid();
@@ -228,7 +221,7 @@ int
 rump_init(void)
 {
 	char buf[256];
-	struct timespec ts;
+	struct timespec bts;
 	int64_t sec;
 	long nsec;
 	struct lwp *l, *initlwp;
@@ -275,8 +268,8 @@ rump_init(void)
 	rump_cpus_bootstrap(&numcpu);
 
 	rumpuser_clock_gettime(RUMPUSER_CLOCK_RELWALL, &sec, &nsec);
-	boottime.tv_sec = sec;
-	boottime.tv_nsec = nsec;
+	bts.tv_sec = sec;
+	bts.tv_nsec = nsec;
 
 	initmsgbuf(rump_msgbuf, sizeof(rump_msgbuf));
 	aprint_verbose("%s%s", copyright, version);
@@ -368,8 +361,7 @@ rump_init(void)
 	ktrinit();
 #endif
 
-	ts = boottime;
-	tc_setclock(&ts);
+	tc_setclock(&bts);
 
 	extern krwlock_t exec_lock;
 	rw_init(&exec_lock);
@@ -383,6 +375,7 @@ rump_init(void)
 			rump_cpu_attach(ci);
 			ncpu++;
 		}
+		snprintf(ci->ci_cpuname, sizeof ci->ci_cpuname, "cpu%d", i);
 
 		callout_init_cpu(ci);
 		softint_init(ci);
@@ -412,12 +405,14 @@ rump_init(void)
 	iostat_init();
 	fd_sys_init();
 	module_init();
+	module_hook_init();
 	devsw_init();
 	pipe_init();
 	resource_init();
 	procinit_sysctl();
 	time_init();
 	time_init2();
+	config_init();
 
 	/* start page baroness */
 	if (rump_threads) {
@@ -429,7 +424,7 @@ rump_init(void)
 
 	/* process dso's */
 	rumpuser_dl_bootstrap(add_linkedin_modules,
-	    rump_kernelfsym_load, rump_component_load);
+	    rump_kernelfsym_load, rump_component_load, add_static_evcnt);
 
 	rump_component_addlocal();
 	rump_component_init(RUMP_COMPONENT_KERN);
@@ -457,13 +452,6 @@ rump_init(void)
 		mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_VM);
 
 	cold = 0;
-
-	/* aieeeedondest */
-	if (rump_threads) {
-		if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-		    rump_aiodone_worker, NULL, 0, 0, WQ_MPSAFE))
-			panic("aiodoned");
-	}
 
 	sysctl_finalize();
 
@@ -658,6 +646,16 @@ add_linkedin_modules(const struct modinfo * const *mip, size_t nmodinfo)
 	module_builtin_add(mip, nmodinfo, false);
 }
 
+/*
+ * Add an evcnt.
+ */
+static void
+add_static_evcnt(struct evcnt *ev)
+{
+
+	evcnt_attach_static(ev);
+}
+
 int
 rump_kernelfsym_load(void *symtab, uint64_t symsize,
 	char *strtab, uint64_t strsize)
@@ -731,14 +729,11 @@ rump_allbetsareoff_setid(pid_t pid, int lid)
 	p->p_pid = pid;
 }
 
-#include <sys/pserialize.h>
-
 static void
 ipiemu(void *a1, void *a2)
 {
 
 	xc__highpri_intr(NULL);
-	pserialize_switchpoint();
 }
 
 void

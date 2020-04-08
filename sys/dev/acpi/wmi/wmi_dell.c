@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_dell.c,v 1.11 2017/12/03 23:43:00 christos Exp $ */
+/*	$NetBSD: wmi_dell.c,v 1.11.4.1 2020/04/08 14:08:02 martin Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.11 2017/12/03 23:43:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.11.4.1 2020/04/08 14:08:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,7 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.11 2017/12/03 23:43:00 christos Exp $
 ACPI_MODULE_NAME			("wmi_dell")
 
 #define WMI_DELL_PSW_DISPLAY_CYCLE	0
-#define WMI_DELL_PSW_COUNT		1
+#define WMI_DELL_PSW_RADIO_TOGGLE	1
+#define WMI_DELL_PSW_COUNT		2
 
 #define WMI_DELL_GUID_EVENT		"9DBB5994-A997-11DA-B012-B622A1EF5492"
 #define WMI_DELL_GUID_DESC		"8D9DDCBC-A997-11DA-B012-B622A1EF5492"
@@ -82,7 +83,7 @@ const struct wmi_dell_actions {
 	{WMI_DELLA_PMF, 0x0000, 0xe006, PMFE_DISPLAY_BRIGHTNESS_UP},
 	{WMI_DELLA_PSW, 0x0000, 0xe00b, WMI_DELL_PSW_DISPLAY_CYCLE},
 
-	{WMI_DELLA_PMF, 0x0000, 0xe008, PMFE_RADIO_TOGGLE},
+	{WMI_DELLA_PSW, 0x0000, 0xe008, WMI_DELL_PSW_RADIO_TOGGLE},
 	{WMI_DELLA_IGN, 0x0000, 0xe00c, 0}, /* keyboard illumination */
 
 	/* volume control */
@@ -96,14 +97,16 @@ const struct wmi_dell_actions {
 	/* type 0x10 */
 	{WMI_DELLA_PMF, 0x0010, 0x0057, PMFE_DISPLAY_BRIGHTNESS_DOWN},
 	{WMI_DELLA_PMF, 0x0010, 0x0058, PMFE_DISPLAY_BRIGHTNESS_UP},
+	{WMI_DELLA_IGN, 0x0010, 0x0150, 0}, /* XXX microphone toggle */
 	{WMI_DELLA_IGN, 0x0010, 0x0151, 0}, /* Fn-lock */
 	{WMI_DELLA_IGN, 0x0010, 0x0152, 0}, /* keyboard illumination */
-	{WMI_DELLA_PMF, 0x0010, 0x0153, PMFE_RADIO_TOGGLE},
+	{WMI_DELLA_PSW, 0x0010, 0x0153, WMI_DELL_PSW_RADIO_TOGGLE},
 	{WMI_DELLA_IGN, 0x0010, 0x0155, 0}, /* Stealth mode toggle */
+	{WMI_DELLA_PSW, 0x0010, 0xE008, WMI_DELL_PSW_RADIO_TOGGLE},
 	{WMI_DELLA_IGN, 0x0010, 0xE035, 0}, /* Fn-lock */
 
 	/* type 0x11 */
-	{WMI_DELLA_IGN, 0x0011, 0x02eb5, 0}, /* keyboard illumination */
+	{WMI_DELLA_IGN, 0x0011, 0x02eb, 0}, /* keyboard illumination */
 };
 
 static int	wmi_dell_match(device_t, cfdata_t, void *);
@@ -182,9 +185,23 @@ wmi_dell_attach(device_t parent, device_t self, void *aux)
 
 	e = sysmon_pswitch_register(&sc->sc_smpsw[WMI_DELL_PSW_DISPLAY_CYCLE]);
 
+	if (e != 0) {
+		sc->sc_smpsw_valid = false;
+		goto end;
+	}
+
+	sc->sc_smpsw[WMI_DELL_PSW_RADIO_TOGGLE].smpsw_name =
+	    PSWITCH_HK_WIRELESS_BUTTON;
+
+	sc->sc_smpsw[WMI_DELL_PSW_RADIO_TOGGLE].smpsw_type =
+	    PSWITCH_TYPE_HOTKEY;
+
+	e = sysmon_pswitch_register(&sc->sc_smpsw[WMI_DELL_PSW_RADIO_TOGGLE]);
+
 	if (e != 0)
 		sc->sc_smpsw_valid = false;
 
+end:
 	(void)pmf_device_register(self, wmi_dell_suspend, wmi_dell_resume);
 }
 

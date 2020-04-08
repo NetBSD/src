@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.52.2.1 2019/06/10 22:10:20 christos Exp $
+#	$NetBSD: mkioctls,v 1.52.2.2 2020/04/08 14:09:16 martin Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -198,20 +198,36 @@ BEGIN {
 		if ($i ~ /define/)
 			break;
 	++i;
-	printf("/* %s [%s] */\n", $0, $i);
+	name = $i;
+	printf("/* %s [%s] */\n", $0, name);
 	# 
-	if ($i ~ /^[A-Z0-9a-z_]*$/) {
-		if (keep[$i] != 1) {
-			printf("\t#ifdef %s\n", $i);
-			printf("\tcase %s:\n\t\treturn \"%s\";\n", $i, $i);
-			printf("\t#endif /* %s */\n", $i);
-			keep[$i] = 1;
-		}
-	}
+	if (name !~ /^[A-Z0-9a-z_]*$/)
+		next;
+	if (keep[name] == 1)
+		next;
+	keep[name] = 1;
+	printf("\t#ifdef %s\n", name);
+	printf("\tcase %s:\n\t\treturn \"%s\";\n", name, name);
+	printf("\t#endif /* %s */\n", $i);
+	name = name;
+	names[name] = name;
+	exprs[name] = "";
+	files[name] = filename;
+	do {
+		++i;
+		exprs[name] = exprs[name] " " $i;
+	} while ($i !~ /.*)/);
+	exprs[name] = substr(exprs[name], 2);
 }
 END {
 	print "\tdefault:\n\t\treturn NULL;\n"
 	print "\t}\n"
 	print "}"
+	print "const struct ioctlinfo ioctlinfo[] = {\n";
+	for (name in names) {
+		printf("\t{ .name = \"%s\", .expr = \"%s\", .value = %s },\n",
+		    names[name], exprs[name], names[name]);
+	}
+	print "\t{ .name = NULL, .expr = NULL, .value = 0 },\n};";
 }
 '

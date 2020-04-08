@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145.4.1 2019/06/10 22:06:44 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.145.4.2 2020/04/08 14:07:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.4.1 2019/06/10 22:06:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.4.2 2020/04/08 14:07:52 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -730,7 +730,7 @@ cpu_startup(void)
 	 * are allocated via the pool allocator, and we use KSEG to
 	 * map those pages.)
 	 */
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 }
 

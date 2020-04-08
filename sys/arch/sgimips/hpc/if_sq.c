@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.49.2.1 2019/06/10 22:06:43 christos Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.49.2.2 2020/04/08 14:07:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.49.2.1 2019/06/10 22:06:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.49.2.2 2020/04/08 14:07:52 martin Exp $");
 
 
 #include <sys/param.h>
@@ -860,7 +860,7 @@ sq_watchdog(struct ifnet *ifp)
 	memset(&sc->sq_trace, 0, sizeof(sc->sq_trace));
 	sc->sq_trace_idx = 0;
 
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	sq_init(ifp);
 }
@@ -988,7 +988,7 @@ sq_rxintr(struct sq_softc *sc)
 		pktstat = *((uint8_t *)m->m_data + framelen + 2);
 
 		if ((pktstat & RXSTAT_GOOD) == 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 
 			if (pktstat & RXSTAT_OFLOW)
 				printf("%s: receive FIFO overflow\n",
@@ -1003,7 +1003,7 @@ sq_rxintr(struct sq_softc *sc)
 		}
 
 		if (sq_add_rxbuf(sc, i) != 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap[i], 0,
 			    sc->sc_rxmap[i]->dm_mapsize, BUS_DMASYNC_PREREAD);
 			SQ_INIT_RXDESC(sc, i);
@@ -1074,24 +1074,26 @@ sq_txintr(struct sq_softc *sc)
 
 	SQ_TRACE(SQ_TXINTR_ENTER, sc, sc->sc_prevtx, status);
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	tmp = (sc->hpc_regs->enetx_ctl_active >> shift) | TXSTAT_GOOD;
 	if ((status & tmp) == 0) {
 		if (status & TXSTAT_COLL)
-			ifp->if_collisions++;
+			if_statinc_ref(nsr, if_collisions);
 
 		if (status & TXSTAT_UFLOW) {
 			printf("%s: transmit underflow\n",
 			    device_xname(sc->sc_dev));
-			ifp->if_oerrors++;
+			if_statinc_ref(nsr, if_oerrors);
 		}
 
 		if (status & TXSTAT_16COLL) {
 			printf("%s: max collisions reached\n",
 			    device_xname(sc->sc_dev));
-			ifp->if_oerrors++;
-			ifp->if_collisions += 16;
+			if_statinc_ref(nsr, if_oerrors);
+			if_statadd_ref(nsr, if_collisions, 16);
 		}
 	}
+	IF_STAT_PUTREF(ifp);
 
 	/* prevtx now points to next xmit packet not yet finished */
 	if (sc->hpc_regs->revision == 3)
@@ -1161,7 +1163,7 @@ sq_txring_hpc1(struct sq_softc *sc)
 		m_freem(sc->sc_txmbuf[i]);
 		sc->sc_txmbuf[i] = NULL;
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		sc->sc_nfreetx++;
 
 		SQ_TRACE(SQ_DONE_DMA, sc, i, status);
@@ -1249,7 +1251,7 @@ sq_txring_hpc3(struct sq_softc *sc)
 		m_freem(sc->sc_txmbuf[i]);
 		sc->sc_txmbuf[i] = NULL;
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		sc->sc_nfreetx++;
 
 		SQ_TRACE(SQ_DONE_DMA, sc, i, status);

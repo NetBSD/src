@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.32.4.1 2019/06/10 22:05:52 christos Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.32.4.2 2020/04/08 14:07:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.32.4.1 2019/06/10 22:05:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.32.4.2 2020/04/08 14:07:28 martin Exp $");
 
 #include "bcmdmac.h"
 
@@ -91,17 +91,24 @@ static void bcmemmc_dma_done(uint32_t, uint32_t, void *);
 CFATTACH_DECL_NEW(bcmemmc, sizeof(struct bcmemmc_softc),
     bcmemmc_match, bcmemmc_attach, NULL, NULL);
 
+enum bcmemmc_type {
+	BCM2835_SDHCI,
+	BCM2711_EMMC2,
+};
+
+static const struct of_compat_data compat_data[] = {
+	{ "brcm,bcm2835-sdhci",		BCM2835_SDHCI },
+	{ "brcm,bcm2711-emmc2",		BCM2711_EMMC2 },
+	{ NULL }
+};
+
 /* ARGSUSED */
 static int
 bcmemmc_match(device_t parent, struct cfdata *match, void *aux)
 {
-	const char * const compatible[] = {
-	    "brcm,bcm2835-sdhci",
-	    NULL
-	};
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 /* ARGSUSED */
@@ -111,8 +118,12 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	struct bcmemmc_softc *sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	prop_dictionary_t dict = device_properties(self);
+	const int phandle = faa->faa_phandle;
 	bool disable = false;
+	enum bcmemmc_type type;
 	int error;
+
+	type = of_search_compatible(phandle, compat_data)->data;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = faa->faa_dmat;
@@ -137,7 +148,6 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 
-	const int phandle = faa->faa_phandle;
 	error = fdtbus_get_reg(phandle, 0, &addr, &size);
 	if (error) {
 		aprint_error_dev(sc->sc.sc_dev, "unable to map device\n");
@@ -185,6 +195,9 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 #if NBCMDMAC > 0
+	if (type != BCM2835_SDHCI)
+		goto done;
+
 	sc->sc_dmac = bcm_dmac_alloc(BCM_DMAC_TYPE_NORMAL, IPL_SDMMC,
 	    bcmemmc_dma_done, sc);
 	if (sc->sc_dmac == NULL)

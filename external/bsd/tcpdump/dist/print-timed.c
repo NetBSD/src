@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-timed.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-timed.c,v 1.6.12.1 2020/04/08 14:04:14 martin Exp $");
 #endif
 
 /* \summary: BSD time daemon protocol printer */
@@ -99,6 +99,7 @@ static const char *tsptype[TSPTYPENUMBER] =
   "DATE", "DATEREQ", "DATEACK", "TRACEON", "TRACEOFF", "MSITE", "MSITEREQ",
   "TEST", "SETDATE", "SETDATEREQ", "LOOP" };
 
+UNALIGNED_OK
 void
 timed_print(netdissect_options *ndo,
             register const u_char *bp)

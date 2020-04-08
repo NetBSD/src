@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.74.4.1 2019/06/10 22:07:34 christos Exp $	*/
+/*	$NetBSD: umidi.c,v 1.74.4.2 2020/04/08 14:08:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.74.4.1 2019/06/10 22:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.74.4.2 2020/04/08 14:08:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -308,16 +308,16 @@ struct midi_hw_if_ext umidi_hw_if_mm = {
 	.compress = 1,
 };
 
-int umidi_match(device_t, cfdata_t, void *);
-void umidi_attach(device_t, device_t, void *);
-void umidi_childdet(device_t, device_t);
-int umidi_detach(device_t, int);
-int umidi_activate(device_t, enum devact);
+static int umidi_match(device_t, cfdata_t, void *);
+static void umidi_attach(device_t, device_t, void *);
+static void umidi_childdet(device_t, device_t);
+static int umidi_detach(device_t, int);
+static int umidi_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(umidi, sizeof(struct umidi_softc), umidi_match,
     umidi_attach, umidi_detach, umidi_activate, NULL, umidi_childdet);
 
-int
+static int
 umidi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
@@ -335,7 +335,7 @@ umidi_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void
+static void
 umidi_attach(device_t parent, device_t self, void *aux)
 {
 	usbd_status     err;
@@ -414,11 +414,10 @@ out_free_endpoints:
 out:
 	aprint_error_dev(self, "disabled.\n");
 	sc->sc_dying = 1;
-	KERNEL_UNLOCK_ONE(curlwp);
 	return;
 }
 
-void
+static void
 umidi_childdet(device_t self, device_t child)
 {
 	int i;
@@ -434,7 +433,7 @@ umidi_childdet(device_t self, device_t child)
 	sc->sc_mididevs[i].mdev = NULL;
 }
 
-int
+static int
 umidi_activate(device_t self, enum devact act)
 {
 	struct umidi_softc *sc = device_private(self);
@@ -451,7 +450,7 @@ umidi_activate(device_t self, enum devact act)
 	}
 }
 
-int
+static int
 umidi_detach(device_t self, int flags)
 {
 	struct umidi_softc *sc = device_private(self);

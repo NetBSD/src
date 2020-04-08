@@ -1,4 +1,4 @@
-/*	$NetBSD: postlock.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
+/*	$NetBSD: postlock.c,v 1.2.12.1 2020/04/08 14:06:55 martin Exp $	*/
 
 /*++
 /* NAME
@@ -80,6 +80,10 @@
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
+/* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
+/*	The list of environment parameters that a privileged Postfix
+/*	process will import from a non-Postfix parent process, or name=value
+/*	environment overrides.
 /* SEE ALSO
 /*	postconf(5), configuration parameters
 /* LICENSE
@@ -116,6 +120,7 @@
 #include <msg_vstream.h>
 #include <iostuff.h>
 #include <warn_stat.h>
+#include <clean_env.h>
 
 /* Global library. */
 
@@ -128,6 +133,7 @@
 #include <mbox_conf.h>
 #include <mbox_open.h>
 #include <dsn_util.h>
+#include <mail_parm_split.h>
 
 /* Application-specific. */
 
@@ -163,6 +169,7 @@ int     main(int argc, char **argv)
     int     lock_mask;
     char   *lock_style = 0;
     MBOX   *mp;
+    ARGV   *import_env;
 
     /*
      * Fingerprint executables and core dumps.
@@ -228,6 +235,10 @@ int     main(int argc, char **argv)
      * configured lock style.
      */
     mail_conf_read();
+    /* Enforce consistent operation of different Postfix parts. */
+    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
+    update_env(import_env->argv);
+    argv_free(import_env);
     lock_mask = mbox_lock_mask(lock_style ? lock_style :
 	       get_mail_conf_str(VAR_MAILBOX_LOCK, DEF_MAILBOX_LOCK, 1, 0));
 

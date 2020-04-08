@@ -1,9 +1,7 @@
-/*	$NetBSD: lantiq_rcu_gphy.h,v 1.1.1.1 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: lantiq_rcu_gphy.h,v 1.1.1.1.6.1 2020/04/08 14:08:46 martin Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- *  This program is free software; you can redistribute it and/or modify it
- *  under the terms of the GNU General Public License version 2 as published
- *  by the Free Software Foundation.
  *
  *  Copyright (C) 2016 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  *  Copyright (C) 2017 Hauke Mehrtens <hauke@hauke-m.de>

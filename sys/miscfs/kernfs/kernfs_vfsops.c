@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.96 2017/02/17 08:31:25 hannken Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.96.14.1 2020/04/08 14:08:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.96 2017/02/17 08:31:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.96.14.1 2020/04/08 14:08:53 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -73,8 +73,6 @@ kmutex_t kfs_lock;
 VFS_PROTOS(kernfs);
 
 void	kernfs_get_rrootdev(void);
-
-static struct sysctllog *kernfs_sysctl_log;
 
 void
 kernfs_init(void)
@@ -189,7 +187,7 @@ kernfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-kernfs_root(struct mount *mp, struct vnode **vpp)
+kernfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	const struct kern_target *root_target = &kern_targets[0];
 	int error;
@@ -198,7 +196,7 @@ kernfs_root(struct mount *mp, struct vnode **vpp)
 	error = vcache_get(mp, &root_target, sizeof(root_target), vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -221,7 +219,7 @@ kernfs_sync(struct mount *mp, int waitfor,
  * Currently unsupported.
  */
 int
-kernfs_vget(struct mount *mp, ino_t ino,
+kernfs_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 
@@ -283,6 +281,7 @@ again:
 		vp->v_vflag = VV_ROOT;
 
 	if (kt->kt_tag == KFSdevice) {
+		vp->v_op = kernfs_specop_p;
 		spec_node_init(vp, *(dev_t *)kt->kt_data);
 	}
 
@@ -293,9 +292,11 @@ again:
 }
 
 extern const struct vnodeopv_desc kernfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc kernfs_specop_opv_desc;
 
 const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
 	&kernfs_vnodeop_opv_desc,
+	&kernfs_specop_opv_desc,
 	NULL,
 };
 
@@ -325,6 +326,22 @@ struct vfsops kernfs_vfsops = {
 	.vfs_opv_descs = kernfs_vnodeopv_descs
 };
 
+SYSCTL_SETUP(kernfs_sysctl_setup, "kernfs sysctl")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kernfs",
+		       SYSCTL_DESCR("/kern file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 11, CTL_EOL);
+	/*
+	 * XXX the "11" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "11" is the order as taken from sys/mount.h
+	 */
+}
+
 static int
 kernfs_modcmd(modcmd_t cmd, void *arg)
 {
@@ -335,23 +352,11 @@ kernfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&kernfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&kernfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "kernfs",
-			       SYSCTL_DESCR("/kern file system"),
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, 11, CTL_EOL);
-		/*
-		 * XXX the "11" above could be dynamic, thereby eliminating one
-		 * more instance of the "number to vfs" mapping problem, but
-		 * "11" is the order as taken from sys/mount.h
-		 */
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&kernfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_teardown(&kernfs_sysctl_log);
 		break;
 	default:
 		error = ENOTTY;

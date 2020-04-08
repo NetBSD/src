@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umbreg.h,v 1.1.8.2 2019/06/10 22:07:33 christos Exp $ */
+/*	$NetBSD: if_umbreg.h,v 1.1.8.3 2020/04/08 14:08:13 martin Exp $ */
 /*	$OpenBSD: if_umb.h,v 1.4 2017/04/18 13:27:55 gerhard Exp $ */
 
 /*
@@ -40,7 +40,7 @@ umb_val2descr(const struct umb_valdescr *vdp, int val)
 			return vdp->descr;
 		vdp++;
 	}
-	snprintf(sval, sizeof (sval), "#%d", val);
+	snprintf(sval, sizeof(sval), "#%d", val);
 	return sval;
 }
 

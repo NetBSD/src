@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.124.2.1 2019/06/10 22:06:29 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.124.2.2 2020/04/08 14:07:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -95,6 +95,7 @@ struct cpu_info {
 	u_long ci_divisor_delay;	/* for delay/DELAY */
 	u_long ci_divisor_recip;	/* unused, for obsolete microtime(9) */
 	struct lwp *ci_curlwp;		/* currently running lwp */
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 	volatile int ci_want_resched;	/* user preemption pending */
 	int ci_mtx_count;		/* negative count of held mutexes */
 	int ci_mtx_oldspl;		/* saved SPL value */
@@ -251,11 +252,6 @@ struct pcb;
 struct reg;
 
 /*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-void	cpu_need_resched(struct cpu_info *, int);
-/*
  * Notify the current lwp (l) that it has a signal pending,
  * process as soon as possible.
  */
@@ -267,7 +263,6 @@ void	cpu_signotify(struct lwp *);
  * through trap, marking the proc as needing a profiling tick.
  */
 void	cpu_need_proftick(struct lwp *);
-void	cpu_set_curpri(int);
 
 /* VM related hooks */
 void	cpu_boot_secondary_processors(void);

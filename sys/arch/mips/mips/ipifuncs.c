@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.11 2015/06/26 22:29:38 matt Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.11.18.1 2020/04/08 14:07:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.11 2015/06/26 22:29:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.11.18.1 2020/04/08 14:07:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -71,6 +71,12 @@ ipi_nop(struct cpu_info *ci)
 	 * This is just a reason to get an interrupt so we get
 	 * kicked out of cpu_idle().
 	 */
+}
+
+static void
+ipi_ast(struct cpu_info *ci)
+{
+	ci->ci_onproc->l_md.md_astpending = 1;
 }
 
 static void
@@ -120,7 +126,7 @@ ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 	}
 	if (ipi_mask & __BIT(IPI_AST)) {
 		ci->ci_evcnt_per_ipi[IPI_AST].ev_count++;
-		ipi_nop(ci);
+		ipi_ast(ci);
 	}
 	if (ipi_mask & __BIT(IPI_SHOOTDOWN)) {
 		ci->ci_evcnt_per_ipi[IPI_SHOOTDOWN].ev_count++;

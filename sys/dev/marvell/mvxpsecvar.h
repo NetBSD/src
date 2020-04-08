@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsecvar.h,v 1.1 2015/06/03 04:20:02 hsuenaga Exp $	*/
+/*	$NetBSD: mvxpsecvar.h,v 1.1.22.1 2020/04/08 14:08:07 martin Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -157,7 +157,7 @@ struct mvxpsec_session_header {
  * |               |
  * +---------------+ MVXPSEC_SRAM_SESS_HDR_OFF
  * |Session Header |   contains per session information (Key, HMAC-iPad/oPad)  
- * |               |   may not DMA transfered if session is not changed.
+ * |               |   may not DMA transferred if session is not changed.
  * |               |
  * +---------------+ MVXPSEC_SRAM_PAYLOAD_OFF
  * |Payload        | 
@@ -168,7 +168,7 @@ struct mvxpsec_session_header {
  * |               |
  * +---------------+ MV_ACC_SRAM_SIZE(2048)
  * 
- * The input data is transfered to SRAM from system DRAM using TDMA,
+ * The input data is transferred to SRAM from system DRAM using TDMA,
  * and ACC is working on the SRAM. When ACC finished the work,
  * TDMA returns the payload of SRAM to system DRAM.
  *

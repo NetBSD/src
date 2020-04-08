@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_frexp.c,v 1.13 2008/09/28 18:54:55 christos Exp $");
+__RCSID("$NetBSD: s_frexp.c,v 1.13.60.1 2020/04/08 14:07:14 martin Exp $");
 #endif
 
 /*
@@ -27,6 +27,10 @@ __RCSID("$NetBSD: s_frexp.c,v 1.13 2008/09/28 18:54:55 christos Exp $");
 
 #include "math.h"
 #include "math_private.h"
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(frexpl, frexp)
+#endif
 
 static const double
 two54 =  1.80143985094819840000e+16; /* 0x43500000, 0x00000000 */

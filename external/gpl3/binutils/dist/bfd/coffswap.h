@@ -1,5 +1,5 @@
 /* Generic COFF swapping routines, for BFD.
-   Copyright (C) 1990-2018 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -264,9 +264,6 @@ coff_swap_filehdr_in (bfd * abfd, void * src, void * dst)
   filehdr_dst->f_nsyms  = H_GET_32 (abfd, filehdr_src->f_nsyms);
   filehdr_dst->f_opthdr = H_GET_16 (abfd, filehdr_src->f_opthdr);
   filehdr_dst->f_flags  = H_GET_16 (abfd, filehdr_src->f_flags);
-#ifdef TIC80_TARGET_ID
-  filehdr_dst->f_target_id = H_GET_16 (abfd, filehdr_src->f_target_id);
-#endif
 
 #ifdef COFF_ADJUST_FILEHDR_IN_POST
   COFF_ADJUST_FILEHDR_IN_POST (abfd, src, dst);
@@ -289,9 +286,6 @@ coff_swap_filehdr_out (bfd *abfd, void * in, void * out)
   H_PUT_32 (abfd, filehdr_in->f_nsyms, filehdr_out->f_nsyms);
   H_PUT_16 (abfd, filehdr_in->f_opthdr, filehdr_out->f_opthdr);
   H_PUT_16 (abfd, filehdr_in->f_flags, filehdr_out->f_flags);
-#ifdef TIC80_TARGET_ID
-  H_PUT_16 (abfd, filehdr_in->f_target_id, filehdr_out->f_target_id);
-#endif
 
 #ifdef COFF_ADJUST_FILEHDR_OUT_POST
   COFF_ADJUST_FILEHDR_OUT_POST (abfd, in, out);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tegra210-car.h,v 1.1.1.4 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: tegra210-car.h,v 1.1.1.4.2.1 2020/04/08 14:08:45 martin Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -310,8 +310,8 @@
 #define TEGRA210_CLK_CLK_OUT_2 278
 #define TEGRA210_CLK_CLK_OUT_3 279
 #define TEGRA210_CLK_BLINK 280
-/* 281 */
-#define TEGRA210_CLK_SOR1_SRC 282
+#define TEGRA210_CLK_SOR0_LVDS 281 /* deprecated */
+#define TEGRA210_CLK_SOR0_OUT 281
 #define TEGRA210_CLK_SOR1_OUT 282
 /* 283 */
 #define TEGRA210_CLK_XUSB_HOST_SRC 284
@@ -393,7 +393,7 @@
 #define TEGRA210_CLK_CLK_OUT_3_MUX 358
 #define TEGRA210_CLK_DSIA_MUX 359
 #define TEGRA210_CLK_DSIB_MUX 360
-#define TEGRA210_CLK_SOR0_LVDS 361
+/* 361 */
 #define TEGRA210_CLK_XUSB_SS_DIV2 362
 
 #define TEGRA210_CLK_PLL_M_UD 363

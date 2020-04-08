@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2019, Intel Corp.
+ * Copyright (C) 2000 - 2020, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -453,6 +453,13 @@ main (
     {
         ConversionTable->SourceFunctions &= ~CVT_REMOVE_DEBUG_MACROS;
     }
+
+    /*
+     * Set LF only support. Note ACPI_SRC_OS_LF_ONLY indicates that newlines
+     * are represented as LF only rather than CR/LF
+     */
+    ConversionTable->Flags |= ACPI_SRC_OS_LF_ONLY;
+    Gbl_IgnoreLoneLineFeeds = ACPI_SRC_OS_LF_ONLY;
 
     /* Check source and target paths and files */
 

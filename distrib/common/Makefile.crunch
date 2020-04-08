@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.crunch,v 1.25 2014/02/01 21:05:54 matt Exp $
+#	$NetBSD: Makefile.crunch,v 1.25.26.1 2020/04/08 14:03:44 martin Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
 #
@@ -26,6 +26,17 @@
 .if !defined(_MAKEFILE_CRUNCH_)
 _MAKEFILE_CRUNCH_=1
 
+DBG?=-Os
+CRUNCHGEN_FLAGS?=\
+-V LDSTATIC=-static \
+-V DBG="${DBG}" \
+-V NOMAN= \
+-V NOLIBCSANITIZER= \
+-V NOSANITIZER= \
+-V NOPIE= \
+-V NOSSP= \
+-V NOFORT=
+
 CRUNCHENV+=		AWK=${TOOL_AWK:Q}
 
 SMALLPROG?=		1
@@ -52,7 +63,7 @@ ${CRUNCHBIN}.cache: ${CRUNCHBIN}.mk
 CRUNCHGEN != command -v ${TOOL_CRUNCHGEN:[-1]} || echo
 
 ${CRUNCHBIN}.mk: ${CRUNCHBIN}.conf  ${CRUNCHGEN}
-	${CRUNCHENV} ${TOOL_CRUNCHGEN} -f -D ${NETBSDSRCDIR} -d ${DBG:Q} \
+	${CRUNCHENV} ${TOOL_CRUNCHGEN} -f -D ${NETBSDSRCDIR} \
 	    -L ${DESTDIR}/usr/lib -q ${CRUNCHGEN_FLAGS} ${CRUNCHBIN}.conf
 
 ${CRUNCHBIN}.conf: ${LISTS} ${PARSELISTDEP}

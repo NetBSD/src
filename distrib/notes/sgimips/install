@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.10 2010/10/04 13:58:43 tsutsui Exp $
+.\"	$NetBSD: install,v 1.10.48.1 2020/04/08 14:03:51 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -174,8 +174,8 @@ Unpack the distribution sets into the client's root directory
 on the server.
 .Pp
 .Dl server# Ic cd /export/client/mipseb
-.Dl server# Ic gzcat .../base.tgz | tar xvpf -
-.Dl server# Ic gzcat .../etc.tgz | tar xvpf -
+.Dl server# Ic gzcat .../base.\*[setsuffix] | tar xvpf -
+.Dl server# Ic gzcat .../etc.\*[setsuffix] | tar xvpf -
 .Dl "[ repeat for all sets you wish to unpack ]"
 .It
 Load the kernel from the TFTP server:

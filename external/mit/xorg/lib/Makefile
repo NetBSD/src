@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42.2.1 2019/06/10 22:02:37 christos Exp $
+#	$NetBSD: Makefile,v 1.42.2.2 2020/04/08 14:07:02 martin Exp $
 
 # build libraries for xorg
 
@@ -9,10 +9,10 @@
 SUBDIR=	libfontenc freetype libFS libICE libglapi${OLD_PREFIX} \
 	libXau libXdmcp libdrm libpciaccess libpthread-stubs libxshmfence .WAIT
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-SUBDIR+=libdrm_intel libdrm_amdgpu
+SUBDIR+=libdrm_intel
 .endif
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
-SUBDIR+=libdrm_nouveau
+SUBDIR+=libdrm_amdgpu libdrm_nouveau
 .endif
 SUBDIR+=libdrm_radeon pixman
 .if !defined(MLIBDIR)

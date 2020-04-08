@@ -1,4 +1,4 @@
-/*	$NetBSD: arcfour.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
+/*	$NetBSD: arcfour.c,v 1.3.4.1 2020/04/08 14:03:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2006 Kungliga Tekniska Högskolan
@@ -316,7 +316,7 @@ _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
     EVP_CIPHER_CTX_free(rc4_key);
 #endif
 
-    memset(k6_data, 0, sizeof(k6_data));
+    memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
 
     *minor_status = 0;
     return GSS_S_COMPLETE;
@@ -401,7 +401,7 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
 	EVP_CIPHER_CTX_free(rc4_key);
 #endif
 
-	memset(k6_data, 0, sizeof(k6_data));
+	memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
     }
 
     _gsskrb5_decode_be_om_uint32(SND_SEQ, &seq_number);
@@ -411,7 +411,7 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
     else
 	cmp = memcmp(&SND_SEQ[4], "\x00\x00\x00\x00", 4);
 
-    memset(SND_SEQ, 0, sizeof(SND_SEQ));
+    memset_s(SND_SEQ, sizeof(SND_SEQ), 0, sizeof(SND_SEQ));
     if (cmp != 0) {
 	*minor_status = 0;
 	return GSS_S_BAD_MIC;
@@ -538,7 +538,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
     ret = arcfour_mic_key(context, &Klocal,
 			  p0 + 8, 4, /* SND_SEQ */
 			  k6_data, sizeof(k6_data));
-    memset(Klocaldata, 0, sizeof(Klocaldata));
+    memset_s(Klocaldata, sizeof(Klocaldata), 0, sizeof(Klocaldata));
     if (ret) {
 	_gsskrb5_release_buffer(minor_status, output_message_buffer);
 	*minor_status = ret;
@@ -565,7 +565,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
 	EVP_CIPHER_CTX_free(rc4_key);
 #endif
     }
-    memset(k6_data, 0, sizeof(k6_data));
+    memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
 
     ret = arcfour_mic_key(context, key,
 			  p0 + 16, 8, /* SGN_CKSUM */
@@ -593,7 +593,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
 #else
 	EVP_CIPHER_CTX_free(rc4_key);
 #endif
-	memset(k6_data, 0, sizeof(k6_data));
+	memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
     }
 
     if (conf_state)
@@ -703,7 +703,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
 #else
 	EVP_CIPHER_CTX_free(rc4_key);
 #endif
-	memset(k6_data, 0, sizeof(k6_data));
+	memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
     }
 
     _gsskrb5_decode_be_om_uint32(SND_SEQ, &seq_number);
@@ -731,7 +731,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
     ret = arcfour_mic_key(context, &Klocal,
 			  SND_SEQ, 4,
 			  k6_data, sizeof(k6_data));
-    memset(Klocaldata, 0, sizeof(Klocaldata));
+    memset_s(Klocaldata, sizeof(Klocaldata), 0, sizeof(Klocaldata));
     if (ret) {
 	*minor_status = ret;
 	return GSS_S_FAILURE;
@@ -767,7 +767,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
 	       p0 + GSS_ARCFOUR_WRAP_TOKEN_SIZE,
 	       datalen);
     }
-    memset(k6_data, 0, sizeof(k6_data));
+    memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
 
     if (!IS_DCE_STYLE(context_handle)) {
 	ret = _gssapi_verify_pad(output_message_buffer, datalen, &padlen);
@@ -1131,7 +1131,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
     kret = arcfour_mic_key(context, &Klocal,
 			   p0 + 8, 4, /* SND_SEQ */
 			   k6_data, sizeof(k6_data));
-    memset(Klocaldata, 0, sizeof(Klocaldata));
+    memset_s(Klocaldata, sizeof(Klocaldata), 0, sizeof(Klocaldata));
     if (kret) {
 	*minor_status = kret;
 	major_status = GSS_S_FAILURE;
@@ -1177,7 +1177,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
 	EVP_CIPHER_CTX_free(rc4_key);
 #endif
     }
-    memset(k6_data, 0, sizeof(k6_data));
+    memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
 
     kret = arcfour_mic_key(context, key,
 			   p0 + 16, 8, /* SGN_CKSUM */
@@ -1205,7 +1205,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
 	EVP_CIPHER_CTX_free(rc4_key);
 #endif
 
-	memset(k6_data, 0, sizeof(k6_data));
+	memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
     }
 
     if (conf_state)
@@ -1352,7 +1352,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	EVP_CIPHER_CTX_free(rc4_key);
 #endif
 
-	memset(k6_data, 0, sizeof(k6_data));
+	memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
     }
 
     _gsskrb5_decode_be_om_uint32(snd_seq, &seq_number);
@@ -1391,7 +1391,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 			   snd_seq,
 			   4,
 			   k6_data, sizeof(k6_data));
-    memset(Klocaldata, 0, sizeof(Klocaldata));
+    memset_s(Klocaldata, sizeof(Klocaldata), 0, sizeof(Klocaldata));
     if (kret) {
 	*minor_status = kret;
 	return GSS_S_FAILURE;
@@ -1440,7 +1440,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	/* Confounder */
 	memcpy(Confounder, p0 + 24, 8);
     }
-    memset(k6_data, 0, sizeof(k6_data));
+    memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
 
     /* Prepare the buffer for signing */
     kret = arcfour_mic_cksum_iov(context,

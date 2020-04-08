@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.69.2.1 2019/06/10 22:07:16 christos Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.69.2.2 2020/04/08 14:08:09 martin Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.69.2.1 2019/06/10 22:07:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.69.2.2 2020/04/08 14:08:09 martin Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1035,7 +1035,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 	if (mnew == NULL) {
 		aprint_error_dev(sc->sc_dev, "could not allocate rx mbuf\n");
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -1043,7 +1043,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	if (!(mnew->m_flags & M_EXT)) {
 		aprint_error_dev(sc->sc_dev, "could not allocate rx mbuf cluster\n");
 		m_freem(mnew);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -1067,7 +1067,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 			panic("%s: unable to remap rx buf",
 			    device_xname(sc->sc_dev));
 		}
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -1237,7 +1237,7 @@ ipw_tx_intr(struct ipw_softc *sc)
 		sbd = &sc->stbd_list[i];
 
 		if (sbd->type == IPW_SBD_TYPE_DATA)
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 
 		ipw_release_sbd(sc, sbd);
 		sc->txfree++;
@@ -1559,7 +1559,7 @@ ipw_start(struct ifnet *ifp)
 
 		if (ipw_tx_start(ifp, m0, ni) != 0) {
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			break;
 		}
 
@@ -1579,7 +1579,7 @@ ipw_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			ifp->if_flags &= ~IFF_UP;
 			ipw_stop(ifp, 1);
 			return;

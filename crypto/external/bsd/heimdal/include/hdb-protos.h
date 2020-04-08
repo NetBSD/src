@@ -337,6 +337,14 @@ hdb_generate_key_set_password (
 	krb5_context /*context*/,
 	krb5_principal /*principal*/,
 	const char */*password*/,
+	Key **/*keys*/,
+	size_t */*num_keys*/);
+
+krb5_error_code
+hdb_generate_key_set_password_with_ks_tuple (
+	krb5_context /*context*/,
+	krb5_principal /*principal*/,
+	const char */*password*/,
 	krb5_key_salt_tuple */*ks_tuple*/,
 	int /*n_ks_tuple*/,
 	Key **/*keys*/,

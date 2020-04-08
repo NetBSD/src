@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_trap_subr.S,v 1.7 2011/05/19 07:51:50 kiyohara Exp $	*/
+/*	$NetBSD: 4xx_trap_subr.S,v 1.7.56.1 2020/04/08 14:07:49 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -55,10 +55,12 @@ _C_LABEL(pitfitwdog):
 _C_LABEL(pitfitwdogsize) = .-_C_LABEL(pitfitwdog)
 
 pithandler:
+	IBM405_ERRATA77_SYNC
 	rfi
 	ba	.	/* Protect against prefetch */
 
 wdoghandler:
+	IBM405_ERRATA77_SYNC
 	rfi
 	ba	.	/* Protect against prefetch */
 

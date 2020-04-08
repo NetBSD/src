@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.305.2.1 2019/06/10 22:05:47 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.305.2.2 2020/04/08 14:07:25 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.1 2019/06/10 22:05:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.2 2020/04/08 14:07:25 martin Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -231,7 +231,7 @@ int cpureset_delay = 2000; /* default to 2s */
 int cpu_class = CPUCLASS_686;
 
 #ifdef MTRR
-struct mtrr_funcs *mtrr_funcs;
+const struct mtrr_funcs *mtrr_funcs;
 #endif
 
 int cpu_class;
@@ -866,7 +866,7 @@ sparse_dump_mark(void)
 		     pfn++) {
 			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
 
-			if (pg->uanon || (pg->pqflags & PQ_FREE) ||
+			if (pg->uanon || (pg->flags & PG_FREE) ||
 			    (pg->uobject && pg->uobject->pgops)) {
 				p = VM_PAGE_TO_PHYS(pg) / PAGE_SIZE;
 				clrbit(sparse_dump_physmap, p);
@@ -920,25 +920,25 @@ dump_seg_iter(int (*callback)(paddr_t, paddr_t))
 		 * dump will always be smaller than a full one.
 		 */
 		if (sparse_dump && sparse_dump_physmap) {
-			paddr_t p, start, end;
+			paddr_t p, sp_start, sp_end;
 			int lastset;
 
-			start = mem_clusters[i].start;
-			end = start + mem_clusters[i].size;
-			start = rounddown(start, PAGE_SIZE); /* unnecessary? */
+			sp_start = mem_clusters[i].start;
+			sp_end = sp_start + mem_clusters[i].size;
+			sp_start = rounddown(sp_start, PAGE_SIZE); /* unnecessary? */
 			lastset = 0;
-			for (p = start; p < end; p += PAGE_SIZE) {
+			for (p = sp_start; p < sp_end; p += PAGE_SIZE) {
 				int thisset = isset(sparse_dump_physmap,
 				    p/PAGE_SIZE);
 
 				if (!lastset && thisset)
-					start = p;
+					sp_start = p;
 				if (lastset && !thisset)
-					CALLBACK(start, p - start);
+					CALLBACK(sp_start, p - sp_start);
 				lastset = thisset;
 			}
 			if (lastset)
-				CALLBACK(start, p - start);
+				CALLBACK(sp_start, p - sp_start);
 		} else
 #endif
 			CALLBACK(mem_clusters[i].start, mem_clusters[i].size);

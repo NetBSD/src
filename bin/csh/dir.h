@@ -1,4 +1,4 @@
-/* $NetBSD: dir.h,v 1.8 2003/08/07 09:05:04 agc Exp $ */
+/* $NetBSD: dir.h,v 1.8.98.1 2020/04/08 14:03:04 martin Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,6 +43,6 @@ struct directory {
     unsigned short *di_count;	/* refcount of processes */
     Char   *di_name;		/* actual name */
 };
-struct directory *dcwd;		/* the one we are in now */
+extern struct directory *dcwd;	/* the one we are in now */
 
 #endif /* !_DIR_H_ */

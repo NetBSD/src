@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40.2.1 2019/06/10 22:10:29 christos Exp $
+#	$NetBSD: Makefile,v 1.40.2.2 2020/04/08 14:09:19 martin Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -53,6 +53,10 @@ SRCS+=	db_disasm.c
 .PATH:  $S/kern
 SRCS+=	kern_timeout.c
 CPPFLAGS.kern_timeout.c += -DCRASH -DDDB
+
+CPPFLAGS +=-DLOCKDEBUG
+SRCS += subr_lockdebug.c
+CPPFLAGS.subr_lockdebug.c += -DCRASH -DDDB
 
 CPPFLAGS+=	-I${S}/arch
 

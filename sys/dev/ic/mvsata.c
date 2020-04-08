@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.40.2.1 2019/06/10 22:07:11 christos Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.40.2.2 2020/04/08 14:08:06 martin Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.40.2.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.40.2.2 2020/04/08 14:08:06 martin Exp $");
 
 #include "opt_mvsata.h"
 
@@ -197,7 +197,7 @@ static uint32_t mvsata_softreset(struct mvsata_port *, int);
 #ifndef MVSATA_WITHOUTDMA
 static void mvsata_edma_reset_qptr(struct mvsata_port *);
 static inline void mvsata_edma_enable(struct mvsata_port *);
-static int mvsata_edma_disable(struct mvsata_port *, int, int);
+static void mvsata_edma_disable(struct mvsata_port *, int, int);
 static void mvsata_edma_config(struct mvsata_port *, enum mvsata_edmamode);
 
 static void mvsata_edma_setup_crqb(struct mvsata_port *, int,
@@ -234,12 +234,12 @@ static const struct ata_bustype mvsata_ata_bustype = {
 
 #if NATAPIBUS > 0
 static const struct scsipi_bustype mvsata_atapi_bustype = {
-	SCSIPI_BUSTYPE_ATAPI,
-	atapi_scsipi_cmd,
-	atapi_interpret_sense,
-	atapi_print_addr,
-	mvsata_atapi_kill_pending,
-	NULL,
+	.bustype_type = SCSIPI_BUSTYPE_ATAPI,
+	.bustype_cmd = atapi_scsipi_cmd,
+	.bustype_interpret_sense = atapi_interpret_sense,
+	.bustype_printaddr = atapi_print_addr,
+	.bustype_kill_pending = mvsata_atapi_kill_pending,
+	.bustype_async_event_xfer_mode = NULL,
 };
 #endif /* NATAPIBUS */
 #endif
@@ -529,10 +529,10 @@ mvsata_error(struct mvsata_port *mvport)
 
 		case nodma:
 		default:
-			aprint_error(
-			    "%s:%d:%d: EDMA self disable happen 0x%x\n",
+			DPRINTF(DEBUG_INTR,
+			    ("%s:%d:%d: EDMA self disable happen 0x%x\n",
 			    device_xname(MVSATA_DEV2(mvport)),
-			    mvport->port_hc->hc, mvport->port, cause);
+			    mvport->port_hc->hc, mvport->port, cause));
 			break;
 		}
 	}
@@ -673,7 +673,8 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 		const uint32_t val = SControl_IPM_NONE | SControl_SPD_ANY |
 		    SControl_DET_DISABLE;
 
-		MVSATA_EDMA_WRITE_4(mvport, mvport->port_sata_scontrol, val);
+		bus_space_write_4(mvport->port_iot,
+		    mvport->port_sata_scontrol, 0, val);
 
 		ctrl = MVSATA_EDMA_READ_4(mvport, SATA_SATAICFG);
 		ctrl &= ~(1 << 17);	/* Disable GenII */
@@ -1175,10 +1176,10 @@ do_pio:
 			 * If it's not a polled command, we need the kernel
 			 * thread
 			 */
-			if ((xfer->c_flags & C_POLL) == 0 &&
-			    (chp->ch_flags & ATACH_TH_RUN) == 0) {
+			if ((xfer->c_flags & C_POLL) == 0
+			    && !ata_is_thread_run(chp))
 				return ATASTART_TH;
-			}
+
 			if (mvsata_bio_ready(mvport, ata_bio, xfer->c_drive,
 			    (xfer->c_flags & C_POLL) ? AT_POLL : 0) != 0) {
 				return ATASTART_ABORT;
@@ -1751,7 +1752,7 @@ mvsata_wdc_cmd_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		    chp->ch_drive[xfer->c_drive].drive_flags;
 	else
 		/*
-		 * Other data structure are opaque and should be transfered
+		 * Other data structure are opaque and should be transferred
 		 * as is.
 		 */
 		drive_flags = chp->ch_drive[xfer->c_drive].drive_flags;
@@ -2062,10 +2063,10 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	/* Do control operations specially. */
 	if (__predict_false(drvp->state < READY)) {
 		/* If it's not a polled command, we need the kernel thread */
-		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0 &&
-		    (chp->ch_flags & ATACH_TH_RUN) == 0) {
+		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0
+		    && !ata_is_thread_run(chp))
 			return ATASTART_TH;
-		}
+
 		/*
 		 * disable interrupts, all commands here should be quick
 		 * enough to be able to poll, and we don't go here that often
@@ -3442,54 +3443,32 @@ mvsata_edma_enable(struct mvsata_port *mvport)
 	MVSATA_EDMA_WRITE_4(mvport, EDMA_CMD, EDMA_CMD_EENEDMA);
 }
 
-static int
+static void
 mvsata_edma_disable(struct mvsata_port *mvport, int timeout, int wflags)
 {
 	struct ata_channel *chp = &mvport->port_ata_channel;
-	uint32_t status, command;
-	uint32_t idlestatus = EDMA_S_EDMAIDLE | EDMA_S_ECACHEEMPTY;
+	uint32_t command;
 	int t;
 
 	ata_channel_lock_owned(chp);
 
-	if (MVSATA_EDMA_READ_4(mvport, EDMA_CMD) & EDMA_CMD_EENEDMA) {
+	/* The disable bit (eDsEDMA) is self negated. */
+	MVSATA_EDMA_WRITE_4(mvport, EDMA_CMD, EDMA_CMD_EDSEDMA);
 
-		timeout = mstohz(timeout + hztoms(1) - 1);
+	timeout = mstohz(timeout + hztoms(1) - 1);
 
-		for (t = 0; ; ++t) {
-			status = MVSATA_EDMA_READ_4(mvport, EDMA_S);
-			if ((status & idlestatus) == idlestatus)
-				break;
-			if (t >= timeout)
-				break;
-			ata_delay(chp, hztoms(1), "mvsata_edma1", wflags);
-		}
-		if (t >= timeout) {
-			aprint_error("%s:%d:%d: unable to stop EDMA\n",
-			    device_xname(MVSATA_DEV2(mvport)),
-			    mvport->port_hc->hc, mvport->port);
-			return EBUSY;
-		}
-
-		/* The disable bit (eDsEDMA) is self negated. */
-		MVSATA_EDMA_WRITE_4(mvport, EDMA_CMD, EDMA_CMD_EDSEDMA);
-
-		for (t = 0; ; ++t) {
-			command = MVSATA_EDMA_READ_4(mvport, EDMA_CMD);
-			if (!(command & EDMA_CMD_EENEDMA))
-				break;
-			if (t >= timeout)
-				break;
-			ata_delay(chp, hztoms(1), "mvsata_edma2", wflags);
-		}
-		if (t >= timeout) {
-			aprint_error("%s:%d:%d: unable to re-enable EDMA\n",
-			    device_xname(MVSATA_DEV2(mvport)),
-			    mvport->port_hc->hc, mvport->port);
-			return EBUSY;
-		}
+	for (t = 0; ; ++t) {
+		command = MVSATA_EDMA_READ_4(mvport, EDMA_CMD);
+		if (!(command & EDMA_CMD_EENEDMA))
+			return;
+		if (t >= timeout)
+			break;
+		ata_delay(chp, hztoms(1), "mvsata_edma2", wflags);
 	}
-	return 0;
+
+	aprint_error("%s:%d:%d: unable to disable EDMA\n",
+	    device_xname(MVSATA_DEV2(mvport)),
+	    mvport->port_hc->hc, mvport->port);
 }
 
 /*

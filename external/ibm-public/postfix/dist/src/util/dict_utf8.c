@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_utf8.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_utf8.c,v 1.2.16.1 2020/04/08 14:06:59 martin Exp $	*/
 
 /*++
 /* NAME
@@ -35,6 +35,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
  /*
@@ -106,8 +111,9 @@ static char *dict_utf8_check_fold(DICT *dict, const char *string,
     /*
      * Casefold UTF-8.
      */
-    if (fold_flag != 0 && (fold_flag & (dict->flags & DICT_FLAG_FIXED) ?
-			   DICT_FLAG_FOLD_FIX : DICT_FLAG_FOLD_MUL)) {
+    if (fold_flag != 0
+	&& (fold_flag & ((dict->flags & DICT_FLAG_FIXED) ?
+			 DICT_FLAG_FOLD_FIX : DICT_FLAG_FOLD_MUL))) {
 	if (dict->fold_buf == 0)
 	    dict->fold_buf = vstring_alloc(10);
 	return (casefold(dict->fold_buf, string));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mf_4.c,v 1.3.2.2 2019/06/10 22:04:38 christos Exp $	*/
+/*	$NetBSD: mf_4.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -124,7 +124,7 @@ fromstruct_mf(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_mf);
-	REQUIRE(source != NULL);
+	REQUIRE(mf != NULL);
 	REQUIRE(mf->common.rdtype == type);
 	REQUIRE(mf->common.rdclass == rdclass);
 
@@ -142,7 +142,7 @@ tostruct_mf(ARGS_TOSTRUCT) {
 	dns_name_t name;
 
 	REQUIRE(rdata->type == dns_rdatatype_mf);
-	REQUIRE(target != NULL);
+	REQUIRE(mf != NULL);
 	REQUIRE(rdata->length != 0);
 
 	mf->common.rdclass = rdata->rdclass;
@@ -162,7 +162,7 @@ static inline void
 freestruct_mf(ARGS_FREESTRUCT) {
 	dns_rdata_mf_t *mf = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(mf != NULL);
 	REQUIRE(mf->common.rdtype == dns_rdatatype_mf);
 
 	if (mf->mctx == NULL)

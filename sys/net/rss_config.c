@@ -1,4 +1,4 @@
-/*	$NetBSD: rss_config.c,v 1.1 2018/02/16 04:48:32 knakahara Exp $  */
+/*	$NetBSD: rss_config.c,v 1.1.6.1 2020/04/08 14:08:57 martin Exp $  */
 
 /*
  * Copyright (c) 2018 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rss_config.c,v 1.1 2018/02/16 04:48:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rss_config.c,v 1.1.6.1 2020/04/08 14:08:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ static uint8_t rss_default_key[RSS_KEYSIZE] = {
  * the hash value calculated by func("destination address", "source address").
  */
 static uint8_t rss_symmetric_key[RSS_KEYSIZE] = {
+	0x6d, 0x5a, 0x6d, 0x5a, 0x6d, 0x5a, 0x6d, 0x5a,
 	0x6d, 0x5a, 0x6d, 0x5a, 0x6d, 0x5a, 0x6d, 0x5a,
 	0x6d, 0x5a, 0x6d, 0x5a, 0x6d, 0x5a, 0x6d, 0x5a,
 	0x6d, 0x5a, 0x6d, 0x5a, 0x6d, 0x5a, 0x6d, 0x5a,

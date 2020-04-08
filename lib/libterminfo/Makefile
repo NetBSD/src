@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2012/03/21 05:37:44 matt Exp $
+#	$NetBSD: Makefile,v 1.22.32.1 2020/04/08 14:07:16 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -10,9 +10,19 @@ WARNS?=		5
 CPPFLAGS+=	-I${.CURDIR}
 
 SRCS=		term.c ti.c setupterm.c curterm.c tparm.c tputs.c
-SRCS+=		compile.c hash.c
+SRCS+=		hash.c
 INCS=		term.h
 INCSDIR=	/usr/include
+
+# For ramdisks there is no database to read from so remove compat
+# and the need to read from them.
+# While here, remove the ability to compile terminfo descriptions
+# from $TERMINFO as well.
+# This means the library requires any terminal needed built into it.
+.if !defined(SMALLPROG)
+CPPFLAGS+=	-DTERMINFO_COMPILE -DTERMINFO_DB -DTERMINFO_COMPAT
+SRCS+=		compile.c
+.endif
 
 COPTS.tparm.c = -Wno-format-nonliteral
 

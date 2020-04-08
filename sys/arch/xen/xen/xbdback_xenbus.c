@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.67.2.1 2019/06/10 22:06:56 christos Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.67.2.2 2020/04/08 14:07:59 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.67.2.1 2019/06/10 22:06:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.67.2.2 2020/04/08 14:07:59 martin Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -1620,6 +1620,8 @@ xbdback_iodone(struct buf *bp)
 	struct xbdback_instance *xbdi;
 	int errp;
 
+	KERNEL_LOCK(1, NULL);		/* XXXSMP */
+
 	xbd_io = bp->b_private;
 	xbdi = xbd_io->xio_xbdi;
 
@@ -1675,6 +1677,7 @@ xbdback_iodone(struct buf *bp)
 	xbdback_pool_put(&xbdback_io_pool, xbd_io);
 
 	xbdback_wakeup_thread(xbdi);
+	KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 }
 
 /*

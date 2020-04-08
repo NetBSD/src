@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_cred.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: rd_cred.c,v 1.2.12.1 2020/04/08 14:03:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -273,7 +273,11 @@ krb5_rd_cred(krb5_context context,
 	}
 	if(creds->ticket.length != len)
 	    krb5_abortx(context, "internal error in ASN.1 encoder");
-	copy_EncryptionKey (&kci->key, &creds->session);
+	ret = copy_EncryptionKey (&kci->key, &creds->session);
+	if (ret) {
+	    krb5_free_creds(context, creds);
+	    goto out;
+	}
 	if (kci->prealm && kci->pname)
 	    _krb5_principalname2krb5_principal (context,
 						&creds->client,

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.7.20.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.7.20.2 2020/04/08 14:08:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.7.20.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.7.20.2 2020/04/08 14:08:52 martin Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/mutex.h>
@@ -46,12 +47,13 @@ fd_ktrexecfd(void)
 	fdfile_t *ff;
 	lwp_t *l;
 	fdtab_t *dt;
+	file_t *fp;
 	int fd;
 
 	l = curlwp;
 	p = l->l_proc;
 	fdp = p->p_fd;
-	dt = fdp->fd_dt;
+	dt = atomic_load_consume(&fdp->fd_dt);
 
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
 		if ((ff = dt->dt_ff[fd]) == NULL) {
@@ -60,9 +62,9 @@ fd_ktrexecfd(void)
 		}
 		KASSERT(fd >= NDFDFILE ||
 		    ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
-		if (ff->ff_file == NULL)
+		if ((fp = atomic_load_consume(&ff->ff_file)) == NULL)
 			continue;
-		ktr_execfd(fd, ff->ff_file->f_type);
+		ktr_execfd(fd, fp->f_type);
 	}
 }
 
@@ -91,7 +93,7 @@ fd_checkstd(void)
 	closed[0] = '\0';
 	if ((fdp = p->p_fd) == NULL)
 		return (0);
-	dt = fdp->fd_dt;
+	dt = atomic_load_consume(&fdp->fd_dt);
 	for (i = 0; i < CHECK_UPTO; i++) {
 		KASSERT(i >= NDFDFILE ||
 		    dt->dt_ff[i] == (fdfile_t *)fdp->fd_dfdfile[i]);

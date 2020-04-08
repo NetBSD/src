@@ -1,4 +1,4 @@
-/*	$NetBSD: sent.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: sent.c,v 1.2.12.1 2020/04/08 14:06:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -18,7 +18,7 @@
 /* DESCRIPTION
 /*	sent() logs that a message was successfully delivered,
 /*	updates the address verification service, or updates a
-/*	message delivery record on request by the sender. The
+/*	sender-requested message delivery record. The
 /*	flags argument determines the action.
 /*
 /*	Arguments:
@@ -34,10 +34,10 @@
 /*	The message is a user-requested address expansion probe.
 /*	Update the message delivery record.
 /* .IP DEL_REQ_FLAG_RECORD
-/* .IP DEL_REQ_FLAG_REC_SENT
 /*	This is a normal message with logged delivery. Update the
 /*	the message delivery record.
-/* .RE .IP queue_id
+/* .RE
+/* .IP queue_id
 /*	The message queue id.
 /* .IP stats
 /*	Time stamps from different message delivery stages
@@ -66,6 +66,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */

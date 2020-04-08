@@ -1,4 +1,4 @@
-/*	$NetBSD: k5dfspag.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: k5dfspag.c,v 1.2.12.1 2020/04/08 14:03:13 martin Exp $	*/
 
 /*
  * lib/krb5/os/k5dfspag.c
@@ -27,7 +27,7 @@
 #include <config.h>
 #endif
 
-__RCSID("$NetBSD: k5dfspag.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
+__RCSID("$NetBSD: k5dfspag.c,v 1.2.12.1 2020/04/08 14:03:13 martin Exp $");
 
 #include <krb5/krb5.h>
 
@@ -276,7 +276,7 @@ int krb5_dfs_pag(context, flag, principal, luser)
 
    /* test if DFS is running or installed */
    if (krb5_dfs_getpag() == -2)
-     return(0); /* DFS not running, dont try */
+     return(0); /* DFS not running, don't try */
 
   if (pipe(fd) == -1)
      return(0);
@@ -307,7 +307,7 @@ int krb5_dfs_pag(context, flag, principal, luser)
 
   /* parent, wait for child to finish */
 
-  close(fd[1]);  /* dont need this end of pipe */
+  close(fd[1]);  /* don't need this end of pipe */
 
 /* #if defined(sgi) || defined(_sgi) */
   /* wait_status.w_status = 0; */

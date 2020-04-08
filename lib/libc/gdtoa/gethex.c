@@ -1,4 +1,4 @@
-/* $NetBSD: gethex.c,v 1.6 2013/04/19 10:41:53 joerg Exp $ */
+/* $NetBSD: gethex.c,v 1.6.28.1 2020/04/08 14:07:13 martin Exp $ */
 
 /****************************************************************
 
@@ -209,7 +209,7 @@ gethex( CONST char **sp, CONST FPI *fpi, Long *expt, Bigint **bp, int sign, loca
 			L = 0;
 			n = 0;
 			}
-		L |= (hexdig[(unsigned char)*s1] & 0x0f) << n;
+		L |= (unsigned int)(hexdig[(unsigned char)*s1] & 0x0f) << n;
 		n += 4;
 		}
 	*x++ = L;

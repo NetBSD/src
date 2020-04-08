@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.1.4.1 2019/06/10 22:05:43 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.1.4.2 2020/04/08 14:07:24 martin Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -106,5 +106,8 @@ struct netbsd32_arm_sync_icache_args {
 	netbsd32_uintptr_t addr;	/* Virtual start address */
 	netbsd32_size_t len;		/* Region size */
 };
+
+/* Support varying ABI names for netbsd32 */
+#define PROC_MACHINE_ARCH32(P)	((P)->p_md.md_march32)
 
 #endif /* _MACHINE_NETBSD32_H_ */

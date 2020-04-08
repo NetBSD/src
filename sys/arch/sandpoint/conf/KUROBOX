@@ -1,4 +1,4 @@
-#	$NetBSD: KUROBOX,v 1.7 2015/09/21 23:34:21 phx Exp $
+#	$NetBSD: KUROBOX,v 1.7.18.1 2020/04/08 14:07:51 martin Exp $
 #
 # KuroBox/LinkStation support
 #
@@ -18,8 +18,6 @@ no s390rtc*
 no pcf8563rtc*
 no dsrtc*
 no strtc*
-no options 	STRTC_NO_WATCHDOG
-no options 	STRTC_NO_USERRAM
 
 no acardide*
 no viaide* 

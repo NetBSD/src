@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.71.18.1 2019/06/10 22:06:39 christos Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.71.18.2 2020/04/08 14:07:50 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.71.18.1 2019/06/10 22:06:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.71.18.2 2020/04/08 14:07:50 martin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -89,9 +89,7 @@ extern int powersave;
 char *booted_kernel;
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
-#if defined(PPC_HAVE_FPU)
 	[PCU_FPU] = &fpu_ops,
-#endif
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 	[PCU_VEC] = &vec_ops,
 #endif
@@ -373,73 +371,34 @@ void
 cpu_ast(struct lwp *l, struct cpu_info *ci)
 {
 	l->l_md.md_astpending = 0;	/* we are about to do it */
-
 	if (l->l_pflag & LP_OWEUPC) {
 		l->l_pflag &= ~LP_OWEUPC;
 		ADDUPROF(l);
 	}
-
-	/* Check whether we are being preempted. */
-	if (ci->ci_want_resched) {
-		preempt();
-	}
 }
 
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
-	struct lwp * const l = ci->ci_data.cpu_onproc;
-#if defined(MULTIPROCESSOR)
-	struct cpu_info * const cur_ci = curcpu();
-#endif
-
 	KASSERT(kpreempt_disabled());
 
-#ifdef MULTIPROCESSOR
-	atomic_or_uint(&ci->ci_want_resched, flags);
-#else
-	ci->ci_want_resched |= flags;
-#endif
-
-	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
-		/*
-		 * No point doing anything, it will switch soon.
-		 * Also here to prevent an assertion failure in
-		 * kpreempt() due to preemption being set on a
-		 * soft interrupt LWP.
-		 */
-		return;
-	}
-
-	if (__predict_false(l == ci->ci_data.cpu_idlelwp)) {
-#if defined(MULTIPROCESSOR)
-		/*
-		 * If the other CPU is idling, it must be waiting for an
-		 * interrupt.  So give it one.
-		 */
-		if (__predict_false(ci != cur_ci))
-			cpu_send_ipi(cpu_index(ci), IPI_NOMESG);
-#endif
-		return;
-	}
-
 #ifdef __HAVE_PREEMPTION
-	if (flags & RESCHED_KPREEMPT) {
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
-		if (ci == cur_ci) {
-			softint_trigger(SOFTINT_KPREEMPT);
-		} else {
+	if ((flags & RESCHED_KPREEMPT) != 0) {
+		if ((flags & RESCHED_REMOTE) != 0) {
 			cpu_send_ipi(cpu_index(ci), IPI_KPREEMPT);
+		} else {
+			softint_trigger(SOFTINT_KPREEMPT);
 		}
 		return;
 	}
 #endif
-	l->l_md.md_astpending = 1;		/* force call to ast() */
+	if ((flags & RESCHED_REMOTE) != 0) {
 #if defined(MULTIPROCESSOR)
-	if (ci != cur_ci && (flags & RESCHED_IMMED)) {
-		cpu_send_ipi(cpu_index(ci), IPI_NOMESG);
-	} 
+		cpu_send_ipi(cpu_index(ci), IPI_AST);
 #endif
+	} else {
+		l->l_md.md_astpending = 1;	/* force call to cpu_ast() */
+	}
 }
 
 void
@@ -452,7 +411,13 @@ cpu_need_proftick(lwp_t *l)
 void
 cpu_signotify(lwp_t *l)
 {
-	l->l_md.md_astpending = 1;
+	if (l->l_cpu != curcpu()) {
+#if defined(MULTIPROCESSOR)
+		cpu_send_ipi(cpu_index(l->l_cpu), IPI_AST);
+#endif
+	} else {
+		l->l_md.md_astpending = 1;
+	}
 }
 
 vaddr_t

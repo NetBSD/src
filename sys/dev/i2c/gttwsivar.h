@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsivar.h,v 1.4 2018/05/07 15:03:19 jmcneill Exp $	*/
+/*	$NetBSD: gttwsivar.h,v 1.4.2.1 2020/04/08 14:08:05 martin Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -86,17 +86,19 @@ struct gttwsi_softc {
 	struct i2c_controller sc_i2c;
 	kmutex_t sc_buslock;
 	kmutex_t sc_mtx;
-	bool sc_inuse;
 	kcondvar_t sc_cv;
 
-	bool sc_iflg_rwc;
+	const bus_size_t *sc_regmap;	/* GTTWSI_NREGS entries */
 
-	uint32_t (*sc_reg_read)(struct gttwsi_softc *, uint32_t);
-	void (*sc_reg_write)(struct gttwsi_softc *, uint32_t, uint32_t);
+	bool sc_iflg_rwc;
 };
 
-void	gttwsi_attach_subr(device_t, bus_space_tag_t, bus_space_handle_t);
+void	gttwsi_attach_subr(device_t, bus_space_tag_t, bus_space_handle_t,
+			   const bus_size_t *);
 void	gttwsi_config_children(device_t);
+
+uint32_t gttwsi_read_4(struct gttwsi_softc *, uint32_t);
+void	gttwsi_write_4(struct gttwsi_softc *, uint32_t, uint32_t);
 
 int	gttwsi_intr(void *);
 

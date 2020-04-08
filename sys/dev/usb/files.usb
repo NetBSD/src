@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.150.4.1 2019/06/10 22:07:33 christos Exp $
+#	$NetBSD: files.usb,v 1.150.4.2 2020/04/08 14:08:13 martin Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -68,7 +68,6 @@ defflag opt_usb.h	UPGT_DEBUG: USB_DEBUG
 defflag opt_usb.h	UPLCOM_DEBUG: USB_DEBUG
 defflag opt_usb.h	UPL_DEBUG: USB_DEBUG
 defflag opt_usb.h	URAL_DEBUG: USB_DEBUG
-defflag opt_usb.h	URIO_DEBUG: USB_DEBUG
 defflag opt_usb.h	URL_DEBUG: USB_DEBUG
 defflag opt_usb.h	URNDIS_DEBUG: USB_DEBUG
 defflag opt_usb.h	URTWN_DEBUG: USB_DEBUG
@@ -83,7 +82,6 @@ defflag opt_usb.h	UTS_DEBUG: USB_DEBUG
 defflag opt_usb.h	UVIDEO_DEBUG: USB_DEBUG
 defflag opt_usb.h	UVISOR_DEBUG: USB_DEBUG
 defflag opt_usb.h	UVSCOM_DEBUG: USB_DEBUG
-defflag opt_usb.h	UYUREX_DEBUG: USB_DEBUG
 defflag opt_usb.h	ZYD_DEBUG: USB_DEBUG
 
 define	usbroothubif { }
@@ -277,11 +275,6 @@ file	dev/usb/emdtv_ir.c		emdtv
 device	umodeswitch
 attach	umodeswitch at usbdevif
 file	dev/usb/umodeswitch.c		umodeswitch
-
-# Diamond Multimedia Rio 500
-device	urio
-attach	urio at usbdevif
-file	dev/usb/urio.c			urio			needs-flag
 
 # Apple iPad
 device	uipad
@@ -518,11 +511,6 @@ file	dev/usb/udl.c			udl
 device	uhso: ifnet
 attach	uhso at usbdevif
 file	dev/usb/uhso.c			uhso
-
-# Maywa-denki/Kayac YUREX
-device	uyurex: hid
-attach	uyurex at uhidbus
-file	dev/usb/uyurex.c		uyurex
 
 # Microsoft RNDIS
 device	urndis: arp, ether, ifnet

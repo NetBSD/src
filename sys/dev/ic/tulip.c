@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.191.2.1 2019/06/10 22:07:11 christos Exp $	*/
+/*	$NetBSD: tulip.c,v 1.191.2.2 2020/04/08 14:08:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.191.2.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.191.2.2 2020/04/08 14:08:06 martin Exp $");
 
 
 #include <sys/param.h>
@@ -619,13 +619,13 @@ tlp_detach(struct tulip_softc *sc)
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	}
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->sc_rnd_source);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	for (i = 0; i < TULIP_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
@@ -683,9 +683,9 @@ tlp_start(struct ifnet *ifp)
 	 * itself into the ring.
 	 */
 	if (sc->sc_flags & TULIPF_WANT_SETUP)
-		ifp->if_flags |= IFF_OACTIVE;
+		return;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) != IFF_RUNNING)
 		return;
 
 	if (sc->sc_tick == tlp_2114x_nway_tick &&
@@ -768,15 +768,8 @@ tlp_start(struct ifnet *ifp)
 		if (dmamap->dm_nsegs > sc->sc_txfree) {
 			/*
 			 * Not enough free descriptors to transmit this
-			 * packet.  We haven't committed to anything yet,
-			 * so just unload the DMA map, put the packet
-			 * back on the queue, and punt.  Notify the upper
-			 * layer that there are no more slots left.
-			 *
-			 * XXX We could allocate an mbuf and copy, but
-			 * XXX it is worth it?
+			 * packet.
 			 */
-			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			if (m != NULL)
 				m_freem(m);
@@ -877,11 +870,6 @@ tlp_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
-	if (txs == NULL || sc->sc_txfree == 0) {
-		/* No more slots left; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
-	}
-
 	if (sc->sc_txfree != ofree) {
 		DPRINTF(sc, ("%s: packets enqueued, IC on %d, OWN on %d\n",
 		    device_xname(sc->sc_dev), lasttx, firsttx));
@@ -940,10 +928,10 @@ tlp_watchdog(struct ifnet *ifp)
 	if (doing_setup && doing_transmit) {
 		printf("%s: filter setup and transmit timeout\n",
 		    device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	} else if (doing_transmit) {
 		printf("%s: transmit timeout\n", device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	} else if (doing_setup)
 		printf("%s: filter setup timeout\n", device_xname(sc->sc_dev));
 	else
@@ -1251,7 +1239,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		 * If any collisions were seen on the wire, count one.
 		 */
 		if (rxstat & TDSTAT_Rx_CS)
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 
 		/*
 		 * If an error occurred, update stats, clear the status
@@ -1279,7 +1267,7 @@ tlp_rxintr(struct tulip_softc *sc)
 			if (rxstat & (bit))				\
 				aprint_error_dev(sc->sc_dev,		\
 				    "receive error: %s\n", str)
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			PRINTERR(TDSTAT_Rx_DE, "descriptor error");
 			PRINTERR(TDSTAT_Rx_RF, "runt frame");
 			PRINTERR(TDSTAT_Rx_TL, "frame too long");
@@ -1308,7 +1296,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		 */
 		m = rxs->rxs_mbuf;
 		if (tlp_add_rxbuf(sc, i) != 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			TULIP_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -1324,7 +1312,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
  dropit:
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			TULIP_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -1414,8 +1402,6 @@ tlp_txintr(struct tulip_softc *sc)
 	DPRINTF(sc, ("%s: tlp_txintr: sc_flags 0x%08x\n",
 	    device_xname(sc->sc_dev), sc->sc_flags));
 
-	ifp->if_flags &= ~IFF_OACTIVE;
-
 	/*
 	 * Go through our Tx list and free mbufs for those
 	 * frames that have been transmitted.
@@ -1491,18 +1477,20 @@ tlp_txintr(struct tulip_softc *sc)
 		if (txstat & TDSTAT_Tx_LC)
 			sc->sc_stats.ts_tx_lc++;
 #endif
-
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (txstat & (TDSTAT_Tx_UF | TDSTAT_Tx_TO))
-			ifp->if_oerrors++;
+			if_statinc_ref(nsr, if_oerrors);
 
 		if (txstat & TDSTAT_Tx_EC)
-			ifp->if_collisions += 16;
+			if_statadd_ref(nsr, if_collisions, 16);
 		else
-			ifp->if_collisions += TDSTAT_Tx_COLLISIONS(txstat);
+			if_statadd_ref(nsr, if_collisions,
+			    TDSTAT_Tx_COLLISIONS(txstat));
 		if (txstat & TDSTAT_Tx_LC)
-			ifp->if_collisions++;
+			if_statinc_ref(nsr, if_collisions);
 
-		ifp->if_opackets++;
+		if_statinc_ref(nsr, if_opackets);
+		IF_STAT_PUTREF(ifp);
 	}
 
 	/*
@@ -1885,9 +1873,9 @@ tlp_init(struct ifnet *ifp)
 		const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 
 		reg = enaddr[0] |
-		      (enaddr[1] << 8) |
-		      (enaddr[2] << 16) |
-		      (enaddr[3] << 24);
+		    (enaddr[1] << 8) |
+		    (enaddr[2] << 16) |
+		    ((uint32_t)enaddr[3] << 24);
 		bus_space_write_4(sc->sc_st, sc->sc_sh, CSR_ADM_PAR0, reg);
 
 		reg = enaddr[4] |
@@ -1903,9 +1891,9 @@ tlp_init(struct ifnet *ifp)
 		const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 
 		reg = enaddr[0] |
-		      (enaddr[1] << 8) |
-		      (enaddr[2] << 16) |
-		      (enaddr[3] << 24);
+		    (enaddr[1] << 8) |
+		    (enaddr[2] << 16) |
+		    ((uint32_t)enaddr[3] << 24);
 		TULIP_WRITE(sc, CSR_AX_FILTIDX, AX_FILTIDX_PAR0);
 		TULIP_WRITE(sc, CSR_AX_FILTDATA, reg);
 
@@ -1945,12 +1933,11 @@ tlp_init(struct ifnet *ifp)
 	 * Note that the interface is now running.
 	 */
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->sc_if_flags = ifp->if_flags;
 
  out:
 	if (error) {
-		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+		ifp->if_flags &= ~IFF_RUNNING;
 		ifp->if_timer = 0;
 		printf("%s: interface not running\n", device_xname(sc->sc_dev));
 	}
@@ -2060,7 +2047,7 @@ tlp_stop(struct ifnet *ifp, int disable)
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_RUNNING;
 	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
 

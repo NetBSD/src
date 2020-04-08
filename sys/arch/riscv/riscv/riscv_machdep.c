@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.2.16.1 2019/06/10 22:06:41 christos Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.2.16.2 2020/04/08 14:07:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ delay(unsigned long us)
 
 #ifdef MODULAR
 /*
- * Push any modules loaded by the boot loader. 
+ * Push any modules loaded by the boot loader.
  */
 void
 module_init_md(void)
@@ -131,7 +131,7 @@ cpu_spawn_return(struct lwp *l)
 	userret(l);
 }
 
-/* 
+/*
  * Start a new LWP
  */
 void
@@ -243,62 +243,27 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 }
 
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
-	struct lwp * const l = ci->ci_data.cpu_onproc;
-#ifdef MULTIPROCESSOR
-	struct cpu_info * const cur_ci = curcpu();
-#endif
-
 	KASSERT(kpreempt_disabled());
 
-	ci->ci_want_resched |= flags;
-
-	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
-		/*
-		 * No point doing anything, it will switch soon.
-		 * Also here to prevent an assertion failure in
-		 * kpreempt() due to preemption being set on a
-		 * soft interrupt LWP.
-		 */
-		return;
-	}
-
-	if (__predict_false(l == ci->ci_data.cpu_idlelwp)) {
-#ifdef MULTIPROCESSOR
-		/*
-		 * If the other CPU is idling, it must be waiting for an
-		 * interrupt.  So give it one.
-		 */
-		if (__predict_false(ci != cur_ci))
-			cpu_send_ipi(ci, IPI_NOP);
-#endif
-		return;
-	}
-
-#ifdef MULTIPROCESSOR
-	atomic_or_uint(&ci->ci_want_resched, flags);
-#else
-	ci->ci_want_resched |= flags;
-#endif
-
-	if (flags & RESCHED_KPREEMPT) {
+	if ((flags & RESCHED_KPREEMPT) != 0) {
 #ifdef __HAVE_PREEMPTION
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
-		if (ci == cur_ci) {
-			softint_trigger(SOFTINT_KPREEMPT);
-                } else {
+		if ((flags & RESCHED_REMOTE) != 0) {
                         cpu_send_ipi(ci, IPI_KPREEMPT);
+		} else {
+			softint_trigger(SOFTINT_KPREEMPT);
                 }
 #endif
 		return;
 	}
-	l->l_md.md_astpending = 1;		/* force call to ast() */
+	if ((flags & RESCHED_REMOTE) != 0) {
 #ifdef MULTIPROCESSOR
-	if (ci != cur_ci && (flags & RESCHED_IMMED)) {
 		cpu_send_ipi(ci, IPI_AST);
-	} 
 #endif
+	} else {
+		l->l_md.md_astpending = 1;		/* force call to ast() */
+	}
 }
 
 void
@@ -308,9 +273,14 @@ cpu_signotify(struct lwp *l)
 #ifdef __HAVE_FAST_SOFTINTS
 	KASSERT(lwp_locked(l, NULL));
 #endif
-	KASSERT(l->l_stat == LSONPROC || l->l_stat == LSRUN || l->l_stat == LSSTOP);
 
-	l->l_md.md_astpending = 1; 		/* force call to ast() */
+	if (l->l_cpu != curcpu()) {
+#ifdef MULTIPROCESSOR
+		cpu_send_ipi(ci, IPI_AST);
+#endif
+	} else {
+		l->l_md.md_astpending = 1; 	/* force call to ast() */
+	}
 }
 
 void
@@ -321,14 +291,6 @@ cpu_need_proftick(struct lwp *l)
 
 	l->l_pflag |= LP_OWEUPC;
 	l->l_md.md_astpending = 1;		/* force call to ast() */
-}
-
-void
-cpu_set_curpri(int pri)
-{
-	kpreempt_disable();
-	curcpu()->ci_schedstate.spc_curpriority = pri;
-	kpreempt_enable();
 }
 
 void
@@ -364,11 +326,14 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 }
 
 void
 init_riscv(vaddr_t kernstart, vaddr_t kernend)
 {
+
+	/* Early VM bootstrap. */
+	pmap_bootstrap();
 }

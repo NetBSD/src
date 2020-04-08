@@ -1,4 +1,4 @@
-/*	$NetBSD: dirhash.h,v 1.7 2013/06/09 17:57:09 dholland Exp $	*/
+/*	$NetBSD: dirhash.h,v 1.7.34.1 2020/04/08 14:09:04 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
@@ -59,7 +59,7 @@
  * together on a TAILQ list, and hashes with higher scores filter
  * towards the tail (most recently used) end of the list.
  *
- * New hash entries are given an inital score of DH_SCOREINIT and are
+ * New hash entries are given an initial score of DH_SCOREINIT and are
  * placed at the most-recently-used end of the list. This helps a lot
  * in the worst-case case scenario where every directory access is
  * to a directory that is not hashed (i.e. the working set of hash

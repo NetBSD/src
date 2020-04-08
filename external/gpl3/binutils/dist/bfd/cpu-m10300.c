@@ -1,5 +1,5 @@
 /* BFD support for the Matsushita 10300 processor
-   Copyright (C) 1996-2018 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,53 +22,29 @@
 #include "bfd.h"
 #include "libbfd.h"
 
+#define N(NUMBER, NAME, PRINT, DEFAULT, NEXT)		\
+  {							\
+    32,         /* Bits in a word.  */			\
+    32,         /* Bits in an address.  */		\
+    8,	        /* Bits in a byte.  */			\
+    bfd_arch_mn10300,					\
+    NUMBER,						\
+    NAME,						\
+    PRINT,						\
+    2,		/* Section alignment power.  */		\
+    DEFAULT,						\
+    bfd_default_compatible,				\
+    bfd_default_scan,					\
+    bfd_arch_default_fill,				\
+    NEXT,						\
+    0 /* Maximum offset of a reloc from the start of an insn.  */ \
+  }
+
 const bfd_arch_info_type bfd_am33_2_arch =
-  {
-    32, /* 32 bits in a word */
-    32, /* 32 bits in an address */
-    8,  /* 8 bits in a byte */
-    bfd_arch_mn10300,
-    332,
-    "am33_2",
-    "am33-2",
-    2,
-    FALSE,
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    0,
-  };
+  N (bfd_mach_am33_2, "am33_2", "am33-2", FALSE, NULL);
 
 const bfd_arch_info_type bfd_am33_arch =
-  {
-    32, /* 32 bits in a word */
-    32, /* 32 bits in an address */
-    8,  /* 8 bits in a byte */
-    bfd_arch_mn10300,
-    330,
-    "am33",
-    "am33",
-    2,
-    FALSE,
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_am33_2_arch,
-  };
+  N (bfd_mach_am33, "am33", "am33", FALSE, &bfd_am33_2_arch);
 
 const bfd_arch_info_type bfd_mn10300_arch =
-  {
-    32, /* 32 bits in a word */
-    32, /* 32 bits in an address */
-    8,  /* 8 bits in a byte */
-    bfd_arch_mn10300,
-    300,
-    "mn10300",
-    "mn10300",
-    2,
-    TRUE, /* the one and only */
-    bfd_default_compatible,
-    bfd_default_scan,
-    bfd_arch_default_fill,
-    &bfd_am33_arch,
-  };
+  N (bfd_mach_mn10300, "mn10300", "mn10300", TRUE, &bfd_am33_arch);

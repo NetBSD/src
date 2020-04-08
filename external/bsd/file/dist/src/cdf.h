@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.h,v 1.1.1.9.10.1 2019/06/10 21:44:47 christos Exp $	*/
+/*	$NetBSD: cdf.h,v 1.1.1.9.10.2 2020/04/08 14:04:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -50,6 +50,7 @@
 typedef int32_t cdf_secid_t;
 
 #define CDF_LOOP_LIMIT					10000
+#define CDF_ELEMENT_LIMIT				100000
 
 #define CDF_SECID_NULL					0
 #define CDF_SECID_FREE					-1

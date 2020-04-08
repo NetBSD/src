@@ -1,6 +1,6 @@
 // layout.cc -- lay out output file sections for gold
 
-// Copyright (C) 2006-2018 Free Software Foundation, Inc.
+// Copyright (C) 2006-2020 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -466,6 +466,7 @@ Layout::Layout(int number_of_input_files, Script_options* script_options)
     unique_segment_for_sections_specified_(false),
     incremental_inputs_(NULL),
     record_output_section_data_from_script_(false),
+    lto_slim_object_(false),
     script_output_section_data_list_(),
     segment_states_(NULL),
     relaxation_debug_check_(NULL),
@@ -1128,7 +1129,8 @@ Layout::special_ordering_of_input_section(const char* name)
     ".text.unlikely",
     ".text.exit",
     ".text.startup",
-    ".text.hot"
+    ".text.hot",
+    ".text.sorted"
   };
 
   for (size_t i = 0;
@@ -1604,21 +1606,18 @@ Layout::add_eh_frame_for_plt(Output_data* plt, const unsigned char* cie_data,
     }
 }
 
-// Remove .eh_frame information for a PLT.  FDEs using the CIE must
-// be removed in reverse order to the order they were added.
+// Remove all post-map .eh_frame information for a PLT.
 
 void
 Layout::remove_eh_frame_for_plt(Output_data* plt, const unsigned char* cie_data,
-				size_t cie_length, const unsigned char* fde_data,
-				size_t fde_length)
+				size_t cie_length)
 {
   if (parameters->incremental())
     {
       // FIXME: Maybe this could work some day....
       return;
     }
-  this->eh_frame_data_->remove_ehframe_for_plt(plt, cie_data, cie_length,
-					       fde_data, fde_length);
+  this->eh_frame_data_->remove_ehframe_for_plt(plt, cie_data, cie_length);
 }
 
 // Scan a .debug_info or .debug_types section, and add summary
@@ -5429,6 +5428,7 @@ const Layout::Section_name_mapping Layout::section_name_mapping[] =
   MAPPING_INIT(".gnu.linkonce.armextab.", ".ARM.extab"),
   MAPPING_INIT(".ARM.exidx", ".ARM.exidx"),
   MAPPING_INIT(".gnu.linkonce.armexidx.", ".ARM.exidx"),
+  MAPPING_INIT(".gnu.build.attributes.", ".gnu.build.attributes"),
 };
 
 // Mapping for ".text" section prefixes with -z,keep-text-section-prefix.

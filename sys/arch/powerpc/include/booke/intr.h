@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.2.1 2020/04/08 14:07:49 martin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -75,6 +75,7 @@
 #define IPI_TLB1SYNC	0x0008
 #define IPI_GENERIC	0x0010
 #define IPI_SUSPEND	0x0020
+#define IPI_AST		0x0040
 
 #define	__HAVE_FAST_SOFTINTS	1
 #define	SOFTINT_KPREEMPT	SOFTINT_COUNT

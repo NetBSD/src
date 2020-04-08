@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.36.4.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.36.4.2 2020/04/08 14:09:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -220,7 +220,9 @@ typedef struct fhandle	fhandle_t;
 #define	IMNT_UNMOUNT	0x00000002	/* unmount in progress */
 #define	IMNT_WANTRDWR	0x00000004	/* upgrade to read/write requested */
 #define	IMNT_WANTRDONLY	0x00000008	/* upgrade to readonly requested */
+#define	IMNT_NCLOOKUP	0x00000020	/* can do lookop direct in namecache */
 #define	IMNT_DTYPE	0x00000040	/* returns d_type fields */
+#define	IMNT_SHRLOOKUP	0x00000080	/* can do LK_SHARED lookups */
 #define	IMNT_MPSAFE	0x00000100	/* file system code MP safe */
 #define	IMNT_CAN_RWTORO	0x00000200	/* can downgrade fs to from rw to r/o */
 #define	IMNT_ONWORKLIST	0x00000400	/* on syncer worklist */
@@ -271,7 +273,9 @@ typedef struct fhandle	fhandle_t;
 	"\13IMNT_ONWORKLIST" \
 	"\12IMNT_CAN_RWTORO" \
 	"\11IMNT_MPSAFE" \
+	"\10IMNT_SHRLOOKUP" \
 	"\07IMNT_DTYPE" \
+	"\06IMNT_NCLOOKUP" \
 	"\04IMNT_WANTRDONLY" \
 	"\03IMNT_WANTRDWR" \
 	"\02IMNT_UNMOUNT" \

@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_ktrace.c,v 1.172.4.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.172.4.2 2020/04/08 14:08:51 martin Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.172.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.172.4.2 2020/04/08 14:08:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ static void	ktrace_thread(void *);
 static int	ktrderefall(struct ktr_desc *, int);
 
 /*
- * Default vaules.
+ * Default values.
  */
 #define	KTD_MAXENTRY		1000	/* XXX: tune */
 #define	KTD_TIMEOUT		5	/* XXX: tune */
@@ -225,7 +225,7 @@ ktrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	if (action != KAUTH_PROCESS_KTRACE)
 		return result;
 
-	req = (enum kauth_process_req)(unsigned long)arg1;
+	req = (enum kauth_process_req)(uintptr_t)arg1;
 
 	/* Privileged; secmodel should handle these. */
 	if (req == KAUTH_REQ_PROCESS_KTRACE_PERSISTENT)
@@ -528,7 +528,7 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 
 void
 ktesethdrlen(struct ktrace_entry *kte, size_t l)
-{	
+{
 	kte->kte_kth.ktr_len = l;
 }
 
@@ -720,7 +720,7 @@ ktr_io(lwp_t *l, int fd, enum uio_rw rw, struct iovec *iov, size_t len)
 	 */
 	ktraddentry(l, kte, KTA_WAITOK | KTA_LARGE);
 	if (resid > 0) {
-		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) {
+		if (preempt_needed()) {
 			(void)ktrenter(l);
 			preempt();
 			ktrexit(l);
@@ -818,7 +818,7 @@ ktr_csw(int out, int user)
 		return;
 
 	/*
-	 * Don't record context switches resulting from blocking on 
+	 * Don't record context switches resulting from blocking on
 	 * locks; it's too easy to get duff results.
 	 */
 	if (l->l_syncobj == &mutex_syncobj || l->l_syncobj == &rw_syncobj)
@@ -831,7 +831,7 @@ ktr_csw(int out, int user)
 	 * XXX This is not ideal: it would be better to maintain a pool
 	 * of ktes and actually push this to the kthread when context
 	 * switch happens, however given the points where we are called
-	 * from that is difficult to do. 
+	 * from that is difficult to do.
 	 */
 	if (out) {
 		if (ktrenter(l))
@@ -868,7 +868,7 @@ ktr_csw(int out, int user)
 			kte->kte_kth.ktr_otv.tv_sec = ts->tv_sec;
 			kte->kte_kth.ktr_otv.tv_usec = ts->tv_nsec / 1000;
 			break;
-		case 1: 
+		case 1:
 			kte->kte_kth.ktr_ots.tv_sec = ts->tv_sec;
 			kte->kte_kth.ktr_ots.tv_nsec = ts->tv_nsec;
 			break;
@@ -1141,7 +1141,8 @@ done:
  */
 /* ARGSUSED */
 int
-sys_fktrace(struct lwp *l, const struct sys_fktrace_args *uap, register_t *retval)
+sys_fktrace(struct lwp *l, const struct sys_fktrace_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -1224,8 +1225,8 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
 #endif
 
  out:
- 	mutex_exit(&ktrace_lock);
- 	mutex_exit(p->p_lock);
+	mutex_exit(&ktrace_lock);
+	mutex_exit(p->p_lock);
 
 	return error ? 0 : 1;
 }

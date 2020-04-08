@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.115 2015/03/01 07:05:59 mlelstv Exp $ */
+/* $NetBSD: vga.c,v 1.115.18.1 2020/04/08 14:08:06 martin Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.115 2015/03/01 07:05:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.115.18.1 2020/04/08 14:08:06 martin Exp $");
 
 #include "opt_vga.h"
 /* for WSCONS_SUPPORT_PCVTFONTS */
@@ -548,7 +548,9 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 	    &vh->vh_ioh_6845))
 		panic("vga_init: couldn't map 6845 io");
 
-	if (bus_space_map(vh->vh_memt, 0xa0000, 0x20000, 0, &vh->vh_allmemh))
+	if (bus_space_map(vh->vh_memt, 0xa0000, 0x20000, 
+	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE,
+	    &vh->vh_allmemh))
 		panic("vga_init: couldn't map memory");
 
 	if (bus_space_subregion(vh->vh_memt, vh->vh_allmemh,

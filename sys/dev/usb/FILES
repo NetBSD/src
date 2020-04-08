@@ -57,8 +57,6 @@ umidi_quirks.c		Strange MIDI devices
 umidi_quirks.h		  and definitions for it
 umodem.c		USB modem (CDC ACM) driver
 ums.c			USB mouse driver
-urio.c			USB Diamond Rio500 driver
-urio.h			USB Diamond Rio500 defines
 usb.c			usb (bus) device driver
 usb.h			general USB defines
 usb_mem.c		memory allocation for DMAable memory

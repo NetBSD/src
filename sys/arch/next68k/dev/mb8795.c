@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.60.2.1 2019/06/10 22:06:35 christos Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.60.2.2 2020/04/08 14:07:47 martin Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.60.2.1 2019/06/10 22:06:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.60.2.2 2020/04/08 14:07:47 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -283,7 +283,7 @@ mb8795_rint(struct mb8795_softc *sc)
 	}
 
 	if (error) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		/* @@@ handle more gracefully, free memory, etc. */
 	}
 
@@ -385,20 +385,20 @@ mb8795_tint(struct mb8795_softc *sc)
 
 	if (txstat & MB8795_TXSTAT_SHORTED) {
 		printf("%s: tx cable shorted\n", device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	}
 	if (txstat & MB8795_TXSTAT_UNDERFLOW) {
 		printf("%s: tx underflow\n", device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	}
 	if (txstat & MB8795_TXSTAT_COLLERR) {
 		DPRINTF(("%s: tx collision\n", device_xname(sc->sc_dev)));
-		ifp->if_collisions++;
+		if_statinc(ifp, if_collisions);
 	}
 	if (txstat & MB8795_TXSTAT_COLLERR16) {
 		printf("%s: tx 16th collision\n", device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
-		ifp->if_collisions += 16;
+		if_statinc(ifp, if_oerrors);
+		if_statadd(ifp, if_collisions, 16);
 	}
 
 #if 0
@@ -483,10 +483,7 @@ mb8795_watchdog(struct ifnet *ifp)
 	struct mb8795_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
-
-	DPRINTF(("%s: %lld input errors, %lld input packets\n",
-		device_xname(sc->sc_dev), ifp->if_ierrors, ifp->if_ipackets));
+	if_statinc(ifp, if_oerrors);
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	mb8795_init(sc);
@@ -762,7 +759,7 @@ mb8795_start_dma(struct mb8795_softc *sc)
 		MB_WRITE_REG(sc, MB8795_TXMODE,
 		    MB8795_TXMODE_TURBO1 | MB8795_TXMODE_TURBOSTART);
 
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 }
 
 /****************************************************************/

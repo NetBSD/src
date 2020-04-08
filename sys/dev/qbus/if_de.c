@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.34 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_de.c,v 1.34.2.1 2020/04/08 14:08:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.34 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.34.2.1 2020/04/08 14:08:11 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -480,19 +480,19 @@ deintr(void *arg)
 		if (rp->r_flags & XFLG_OWN)
 			break;
 
-		sc->sc_if.if_opackets++;
+		if_statinc(&sc->sc_if, if_opackets);
 		ifxp = &sc->sc_ifw[sc->sc_xindex];
 		/* check for unusual conditions */
 		if (rp->r_flags & (XFLG_ERRS|XFLG_MTCH|XFLG_ONE|XFLG_MORE)) {
 			if (rp->r_flags & XFLG_ERRS) {
 				/* output error */
-				sc->sc_if.if_oerrors++;
+				if_statinc(&sc->sc_if, if_oerrors);
 			} else if (rp->r_flags & XFLG_ONE) {
 				/* one collision */
-				sc->sc_if.if_collisions++;
+				if_statinc(&sc->sc_if, if_collisions);
 			} else if (rp->r_flags & XFLG_MORE) {
-				/* more than one collision */
-				sc->sc_if.if_collisions += 2;	/* guess */
+				/* more than one collision (guess...) */
+				if_statadd(&sc->sc_if, if_collisions, 2);
 			}
 		}
 		if_ubaend(&sc->sc_ifuba, ifxp);
@@ -534,13 +534,13 @@ derecv(struct de_softc *sc)
 		/* check for errors */
 		if ((rp->r_flags & (RFLG_ERRS|RFLG_FRAM|RFLG_OFLO|RFLG_CRC)) ||
 		    (rp->r_lenerr & (RERR_BUFL|RERR_UBTO))) {
-			sc->sc_if.if_ierrors++;
+			if_statinc(&sc->sc_if, if_ierrors);
 			goto next;
 		}
 		m = if_ubaget(&sc->sc_ifuba, &sc->sc_ifr[sc->sc_rindex],
 		    ifp, len);
 		if (m == 0) {
-			sc->sc_if.if_ierrors++;
+			if_statinc(&sc->sc_if, if_ierrors);
 			goto next;
 		}
 
