@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.670 2020/03/21 16:47:05 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.671 2020/04/08 21:51:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.670 2020/03/21 16:47:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.671 2020/04/08 21:51:42 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -379,6 +379,12 @@ struct wm_txqueue {
 	bool txq_sending;
 	time_t txq_lastsent;
 
+	/* Checksum flags used for previous packet */
+	uint32_t 	txq_last_hw_cmd;
+	uint8_t 	txq_last_hw_fields;
+	uint16_t	txq_last_hw_ipcs;
+	uint16_t	txq_last_hw_tucs;
+
 	uint32_t txq_packets;		/* for AIM */
 	uint32_t txq_bytes;		/* for AIM */
 #ifdef WM_EVENT_COUNTERS
@@ -403,6 +409,7 @@ struct wm_txqueue {
 	WM_Q_EVCNT_DEFINE(txq, toomanyseg)  /* Pkt dropped(toomany DMA segs) */
 	WM_Q_EVCNT_DEFINE(txq, defrag)	    /* m_defrag() */
 	WM_Q_EVCNT_DEFINE(txq, underrun)    /* Tx underrun */
+	WM_Q_EVCNT_DEFINE(txq, skipcontext) /* Tx skip wring cksum context */
 
 	char txq_txseg_evcnt_names[WM_NTXSEGS][sizeof("txqXXtxsegXXX")];
 	struct evcnt txq_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
@@ -6947,6 +6954,7 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 		WM_Q_MISC_EVCNT_ATTACH(txq, toomanyseg, txq, i, xname);
 		WM_Q_MISC_EVCNT_ATTACH(txq, defrag, txq, i, xname);
 		WM_Q_MISC_EVCNT_ATTACH(txq, underrun, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, skipcontext, txq, i, xname);
 #endif /* WM_EVENT_COUNTERS */
 
 		tx_done++;
@@ -7079,6 +7087,7 @@ wm_free_txrx_queues(struct wm_softc *sc)
 		WM_Q_EVCNT_DETACH(txq, toomanyseg, txq, i);
 		WM_Q_EVCNT_DETACH(txq, defrag, txq, i);
 		WM_Q_EVCNT_DETACH(txq, underrun, txq, i);
+		WM_Q_EVCNT_DETACH(txq, skipcontext, txq, i);
 #endif /* WM_EVENT_COUNTERS */
 
 		/* Drain txq_interq */
@@ -7394,6 +7403,9 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 
 	default:
 		/* Don't support this protocol or encapsulation. */
+ 		txq->txq_last_hw_cmd = txq->last_hw_fields = 0;
+ 		txq->txq_last_hw_ipcs = 0;
+ 		txq->txq_last_hw_tucs = 0;
 		*fieldsp = 0;
 		*cmdp = 0;
 		return 0;
@@ -7533,13 +7545,47 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 		    WTX_TCPIP_TUCSE(0) /* Rest of packet */;
 	}
 
+	*cmdp = cmd;
+	*fieldsp = fields;
+
 	/*
 	 * We don't have to write context descriptor for every packet
 	 * except for 82574. For 82574, we must write context descriptor
 	 * for every packet when we use two descriptor queues.
-	 * It would be overhead to write context descriptor for every packet,
-	 * however it does not cause problems.
-	 */
+	 *
+	 * The 82574L can only remember the *last* context used
+	 * regardless of queue that it was use for.  We cannot reuse
+	 * contexts on this hardware platform and must generate a new
+	 * context every time.  82574L hardware spec, section 7.2.6,
+	 * second note.
+ 	 *
+  	 * Setting up new checksum offload context for every
+	 * frames takes a lot of processing time for hardware.
+	 * This also reduces performance a lot for small sized
+	 * frames so avoid it if driver can use previously
+	 * configured checksum offload context.
+	 * For TSO, in theory we can use the same TSO context if and only if
+	 * frame is the same type(IP/TCP) and the same MSS. However
+	 * checking whether a frame has the same IP/TCP structure is
+	 * hard thing so just ignore that and always restablish a
+	 * new TSO context.
+  	 */
+	KASSERT(!wm_is_using_multiqueue(sc));
+	if ((m0->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) == 0) {
+		if (txq->txq_last_hw_cmd == cmd &&
+		    txq->txq_last_hw_fields == fields &&
+		    txq->txq_last_hw_ipcs == (ipcs & 0xffff) &&
+		    txq->txq_last_hw_tucs == (tucs & 0xffff)) {
+			WM_Q_EVCNT_INCR(txq, skipcontext);
+			return 0;
+		}
+	}
+
+ 	txq->txq_last_hw_cmd = cmd;
+ 	txq->txq_last_hw_fields = fields;
+ 	txq->txq_last_hw_ipcs = (ipcs & 0xffff);
+	txq->txq_last_hw_tucs = (tucs & 0xffff);
+
 	/* Fill in the context descriptor. */
 	t = (struct livengood_tcpip_ctxdesc *)
 	    &txq->txq_descs[txq->txq_next];
@@ -7551,9 +7597,6 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 
 	txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
 	txs->txs_ndesc++;
-
-	*cmdp = cmd;
-	*fieldsp = fields;
 
 	return 0;
 }
@@ -7839,6 +7882,8 @@ retry:
 				continue;
 			}
 		} else {
+ 			txq->txq_last_hw_cmd = txq->last_hw_fields = 0;
+ 			txq->txq_last_hw_ipcs = txq->last_hw_tucs = 0;
 			cksumcmd = 0;
 			cksumfields = 0;
 		}
