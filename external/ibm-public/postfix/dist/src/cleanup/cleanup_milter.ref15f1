@@ -1,1 +1,0 @@
-./cleanup_milter: NOQUEUE: milter-header-redirect: header X-SPAM-FLAG: YES from client_name[client_addr]; from=<sender> to=<recipient>: x@y.z

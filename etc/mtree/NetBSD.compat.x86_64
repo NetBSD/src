@@ -1,4 +1,0 @@
-#	$NetBSD: NetBSD.compat.x86_64,v 1.1 2019/02/09 21:43:23 mrg Exp $
-
-./usr/include/g++/bits/i386
-./usr/include/g++/bits/x86_64

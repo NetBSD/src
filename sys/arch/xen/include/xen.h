@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.45 2020/04/09 19:26:37 jdolecek Exp $	*/
+/*	$NetBSD: xen.h,v 1.44 2019/05/09 17:09:50 bouyer Exp $	*/
 
 /*
  *
@@ -165,6 +165,20 @@ xen_atomic_xchg(volatile XATOMIC_T *ptr, unsigned long val)
 #endif
 	    :"=r" (result)
 	    :"m" (*ptr), "0" (val)
+	    :"memory");
+
+	return result;
+}
+
+static inline uint16_t
+xen_atomic_cmpxchg16(volatile uint16_t *ptr, uint16_t  val, uint16_t newval)
+{
+	unsigned long result;
+
+        __asm volatile(__LOCK_PREFIX
+	    "cmpxchgw %w1,%2"
+	    :"=a" (result)
+	    :"q"(newval), "m" (*ptr), "0" (val)
 	    :"memory");
 
 	return result;

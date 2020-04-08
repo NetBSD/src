@@ -1,6 +1,6 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.10 2020/04/10 20:56:56 jdolecek Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.8.2.1 2020/04/08 17:56:08 bouyer Exp $
 
-include 	"arch/i386/conf/std.xen"
+include 	"arch/xen/conf/std.xen"
 
 options		XENPV		# PV domU support
 options 	MULTIPROCESSOR
@@ -58,7 +58,7 @@ options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	DEBUG="-g"	# compile full symbol table
 options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options
@@ -150,6 +150,7 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOTSTATIC_SERVADDR="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
 
+#options 	__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
 options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 
 config		netbsd	root on ? type ?

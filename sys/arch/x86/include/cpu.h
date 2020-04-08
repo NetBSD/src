@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.119 2020/04/10 14:35:26 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.117 2020/01/15 13:22:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.138 2020/04/10 16:55:40 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.137 2020/04/04 20:49:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.138 2020/04/10 16:55:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.137 2020/04/04 20:49:30 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -241,7 +241,7 @@ struct nchcpu {
 static callout_t cache_stat_callout;
 static kmutex_t cache_stat_lock __cacheline_aligned;
 
-#define	COUNT(f) do { \
+#define	COUNT(f)	do { \
 	lwp_t *l = curlwp; \
 	KPREEMPT_DISABLE(l); \
 	((struct nchstats_percpu *)curcpu()->ci_data.cpu_nch)->f++; \
@@ -417,10 +417,10 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
 		if (__predict_false(RB_SENTINEL_P(node))) {
 			return NULL;
 		}
-		ncp = (struct namecache *)node;
 		KASSERT((void *)&ncp->nc_tree == (void *)ncp);
+		ncp = (struct namecache *)node;
 		KASSERT(ncp->nc_dvp == dvp);
-		if (ncp->nc_key == key) {
+		if (__predict_false(ncp->nc_key == key)) {
 			KASSERT(ncp->nc_nlen == namelen);
 			diff = memcmp(ncp->nc_name, name, namelen);
 			if (__predict_true(diff == 0)) {

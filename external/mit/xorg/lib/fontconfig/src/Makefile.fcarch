@@ -1,9 +1,0 @@
-#	$NetBSD: Makefile.fcarch,v 1.4 2018/05/09 08:39:54 mrg Exp $
-
-.ifndef _FONTCONFIG_FCARCH_MK_
-_FONTCONFIG_FCARCH_MK_=1
-
-CPPFLAGS+=	-DFC_ARCHITECTURE="\"${MACHINE_ARCH}\""
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
-
-.endif

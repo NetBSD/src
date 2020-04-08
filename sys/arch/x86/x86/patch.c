@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.39 2020/04/10 14:35:26 bouyer Exp $	*/
+/*	$NetBSD: patch.c,v 1.37 2019/09/18 15:07:08 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.39 2020/04/10 14:35:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.37 2019/09/18 15:07:08 kamil Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386

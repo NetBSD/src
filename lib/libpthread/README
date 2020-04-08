@@ -1,6 +1,0 @@
-$NetBSD: README,v 1.7 2017/02/08 03:44:41 kamil Exp $
-
-Due to limitations in the current pthread implementation, makecontext(3)
-and sigaltstack(2) should not be used in programs which link against
-libpthread (whether threads are used or not). This has been noted in the
-makecontext(3), sigaltstack(2), and pthread(3) man pages.

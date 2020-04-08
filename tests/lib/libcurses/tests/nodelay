@@ -1,7 +1,0 @@
-include window
-call OK nodelay $win1 $TRUE
-noinput
-call -1 wgetch $win1
-call OK nodelay $win1 $FALSE
-input "j"
-call 106 wgetch $win1

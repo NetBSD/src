@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.183 2020/04/10 14:35:26 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.181 2020/01/14 01:41:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.183 2020/04/10 14:35:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181 2020/01/14 01:41:37 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */

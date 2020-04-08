@@ -1,1 +1,0 @@
-MULTIARCH_DIRNAME = $(call if_multiarch,i386-linux-gnu)

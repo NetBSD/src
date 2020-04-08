@@ -1,6 +1,0 @@
-Things I want to finish for 8:
-
-- import new file(1)
-- get more ports to gcc-5.3/binutils-2.29
-- turn on ASLR/MPROTECT/SEGVGUARD on more ports
-- debug issue with virtio/network getting stuffed

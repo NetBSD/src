@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.378 2020/04/10 17:26:46 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.377 2020/04/04 21:17:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.378 2020/04/10 17:26:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.377 2020/04/04 21:17:02 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2266,10 +2266,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 			/*
 			 * note: if map is dying, leave pmap_update() for
-			 * later.  if the map is to be reused (exec) then
-			 * pmap_update() will be called.  if the map is
-			 * being disposed of (exit) then pmap_destroy()
-			 * will be called.
+			 * pmap_destroy(), which will be called later.
 			 */
 
 			if ((map->flags & VM_MAP_DYING) == 0) {
@@ -4170,23 +4167,11 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end, bool topdown)
 		map->flags &= ~VM_MAP_WIREFUTURE;
 
 		/*
-		 * now unmap the old program.
-		 * 
-		 * XXX set VM_MAP_DYING for the duration, so pmap_update()
-		 * is not called until the pmap has been totally cleared out
-		 * after pmap_remove_all(), or it can confuse some pmap
-		 * implementations.  it would be nice to handle this by
-		 * deferring the pmap_update() while it is known the address
-		 * space is not visible to any user LWP other than curlwp,
-		 * but there isn't an elegant way of inferring that right
-		 * now.
+		 * now unmap the old program
 		 */
 
 		flags = pmap_remove_all(map->pmap) ? UVM_FLAG_VAONLY : 0;
-		map->flags |= VM_MAP_DYING;
 		uvm_unmap1(map, vm_map_min(map), vm_map_max(map), flags);
-		map->flags &= ~VM_MAP_DYING;
-		pmap_update(map->pmap);
 		KASSERT(map->header.prev == &map->header);
 		KASSERT(map->nentries == 0);
 

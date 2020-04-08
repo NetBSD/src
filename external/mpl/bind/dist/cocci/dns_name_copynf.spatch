@@ -1,6 +1,0 @@
-@@
-expression E1, E2;
-@@
-
-- RUNTIME_CHECK(dns_name_copy(E1, E2, NULL) == ISC_R_SUCCESS);
-+ dns_name_copynf(E1, E2);
