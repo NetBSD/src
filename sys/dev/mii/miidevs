@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.166 2020/03/13 04:44:34 msaitoh Exp $
+$NetBSD: miidevs,v 1.167 2020/04/08 03:01:05 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -360,6 +360,8 @@ model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 
 /* RDC Semiconductor PHYs */
 model xxRDC R6040		0x0003 R6040 10/100 media interface
+model xxRDC R6040_2		0x0005 R6040 10/100 media interface
+model xxRDC R6040_3		0x0006 R6040 10/100 media interface
 
 /* RealTek PHYs */
 model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S/8211 1000BASE-T media interface
