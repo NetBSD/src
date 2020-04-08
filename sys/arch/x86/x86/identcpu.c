@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.102 2020/04/04 14:49:35 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.102.2.1 2020/04/08 17:59:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.102 2020/04/04 14:49:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.102.2.1 2020/04/08 17:59:16 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -1129,7 +1129,7 @@ identify_hypervisor(void)
 			} else if (memcmp(hv_vendor, "KVMKVMKVM\0\0\0", 12) == 0)
 				vm_guest = VM_GUEST_KVM;
 			else if (memcmp(hv_vendor, "XenVMMXenVMM", 12) == 0)
-				vm_guest = VM_GUEST_XEN;
+				vm_guest = VM_GUEST_XENHVM;
 			/* FreeBSD bhyve: "bhyve bhyve " */
 			/* OpenBSD vmm:   "OpenBSDVMM58" */
 			/* NetBSD nvmm:   "___ NVMM ___" */

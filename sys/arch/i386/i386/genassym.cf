@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.119 2020/02/17 09:09:48 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.119.4.1 2020/04/08 17:59:16 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -373,6 +373,8 @@ define	L2_SHIFT		L2_SHIFT
 define	L2_FRAME		L2_FRAME
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
+
+define	VM_GUEST_XENPV		VM_GUEST_XENPV
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)

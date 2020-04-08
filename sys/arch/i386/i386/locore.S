@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.179 2020/03/27 21:05:03 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.179.2.1 2020/04/08 17:59:16 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.179 2020/03/27 21:05:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.179.2.1 2020/04/08 17:59:16 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1114,6 +1114,8 @@ begin:
 	xorl	%eax,%eax
 	cpuid
 	movl	%eax,RELOC(cpuid_level)
+
+	movl    $VM_GUEST_XENPV, RELOC(vm_guest)
 
 	/*
 	 * Use a temporary GDT page. We'll re-add it to uvm(9) once we're done
