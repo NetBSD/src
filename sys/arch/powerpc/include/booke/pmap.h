@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.20 2020/03/12 23:09:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21 2020/04/08 10:57:16 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -140,9 +140,7 @@ static __inline void
 pmap_md_vca_clean(struct vm_page *pg, vaddr_t va, int op)
 {
 }
-#endif
 
-#ifdef __PMAP_PRIVATE
 static __inline size_t
 pmap_md_tlb_asid_max(void)
 {
