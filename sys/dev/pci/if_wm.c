@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.672 2020/04/08 21:56:01 jdolecek Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.673 2020/04/08 21:57:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.672 2020/04/08 21:56:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.673 2020/04/08 21:57:24 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -795,7 +795,7 @@ static int	wm_alloc_txrx_queues(struct wm_softc *);
 static void	wm_free_txrx_queues(struct wm_softc *);
 static int	wm_init_txrx_queues(struct wm_softc *);
 /* Start */
-static int	wm_tx_offload(struct wm_softc *, struct wm_txqueue *,
+static void	wm_tx_offload(struct wm_softc *, struct wm_txqueue *,
     struct wm_txsoft *, uint32_t *, uint8_t *);
 static inline int	wm_select_txqueue(struct ifnet *, struct mbuf *);
 static void	wm_start(struct ifnet *);
@@ -804,7 +804,7 @@ static int	wm_transmit(struct ifnet *, struct mbuf *);
 static void	wm_transmit_locked(struct ifnet *, struct wm_txqueue *);
 static void	wm_send_common_locked(struct ifnet *, struct wm_txqueue *,
 		    bool);
-static int	wm_nq_tx_offload(struct wm_softc *, struct wm_txqueue *,
+static void	wm_nq_tx_offload(struct wm_softc *, struct wm_txqueue *,
     struct wm_txsoft *, uint32_t *, uint32_t *, bool *);
 static void	wm_nq_start(struct ifnet *);
 static void	wm_nq_start_locked(struct ifnet *);
@@ -7373,7 +7373,7 @@ wm_init_txrx_queues(struct wm_softc *sc)
  *	Set up TCP/IP checksumming parameters for the
  *	specified packet.
  */
-static int
+static void
 wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
     struct wm_txsoft *txs, uint32_t *cmdp, uint8_t *fieldsp)
 {
@@ -7408,7 +7408,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
  		txq->txq_last_hw_tucs = 0;
 		*fieldsp = 0;
 		*cmdp = 0;
-		return 0;
+		return;
 	}
 
 	if ((m0->m_pkthdr.csum_flags &
@@ -7577,7 +7577,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 		    txq->txq_last_hw_ipcs == (ipcs & 0xffff) &&
 		    txq->txq_last_hw_tucs == (tucs & 0xffff)) {
 			WM_Q_EVCNT_INCR(txq, skipcontext);
-			return 0;
+			return;
 		}
 	}
 
@@ -7597,8 +7597,6 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 
 	txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
 	txs->txs_ndesc++;
-
-	return 0;
 }
 
 static inline int
@@ -7875,12 +7873,7 @@ retry:
 		    (M_CSUM_TSOv4 | M_CSUM_TSOv6 |
 		    M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4 |
 		    M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
-			if (wm_tx_offload(sc, txq, txs, &cksumcmd,
-					  &cksumfields) != 0) {
-				/* Error message already displayed. */
-				bus_dmamap_unload(sc->sc_dmat, dmamap);
-				continue;
-			}
+			wm_tx_offload(sc, txq, txs, &cksumcmd, &cksumfields);
 		} else {
  			txq->txq_last_hw_cmd = txq->txq_last_hw_fields = 0;
  			txq->txq_last_hw_ipcs = txq->txq_last_hw_tucs = 0;
@@ -8014,7 +8007,7 @@ retry:
  *	Set up TCP/IP checksumming parameters for the
  *	specified packet, for NEWQUEUE devices
  */
-static int
+static void
 wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
     struct wm_txsoft *txs, uint32_t *cmdlenp, uint32_t *fieldsp, bool *do_csum)
 {
@@ -8044,7 +8037,7 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	default:
 		/* Don't support this protocol or encapsulation. */
 		*do_csum = false;
-		return 0;
+		return;
 	}
 	*do_csum = true;
 	*cmdlenp = NQTX_DTYP_D | NQTX_CMD_DEXT | NQTX_CMD_IFCS;
@@ -8210,7 +8203,6 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	DPRINTF(WM_DEBUG_TX, ("\t0x%08x%08x\n", mssidx, cmdc));
 	txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
 	txs->txs_ndesc++;
-	return 0;
 }
 
 /*
@@ -8444,12 +8436,8 @@ retry:
 		    (M_CSUM_TSOv4 | M_CSUM_TSOv6 |
 			M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4 |
 			M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
-			if (wm_nq_tx_offload(sc, txq, txs, &cmdlen, &fields,
-			    &do_csum) != 0) {
-				/* Error message already displayed. */
-				bus_dmamap_unload(sc->sc_dmat, dmamap);
-				continue;
-			}
+			wm_nq_tx_offload(sc, txq, txs, &cmdlen, &fields,
+			    &do_csum);
 		} else {
 			do_csum = false;
 			cmdlen = 0;
