@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.163 2020/03/13 04:44:58 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.164 2020/04/08 03:01:28 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.166 2020/03/13 04:44:34 msaitoh Exp
+ *	NetBSD: miidevs,v 1.167 2020/04/08 03:01:05 msaitoh Exp
  */
 
 /*-
@@ -554,6 +554,10 @@
 /* RDC Semiconductor PHYs */
 #define	MII_MODEL_xxRDC_R6040	0x0003
 #define	MII_STR_xxRDC_R6040	"R6040 10/100 media interface"
+#define	MII_MODEL_xxRDC_R6040_2	0x0005
+#define	MII_STR_xxRDC_R6040_2	"R6040 10/100 media interface"
+#define	MII_MODEL_xxRDC_R6040_3	0x0006
+#define	MII_STR_xxRDC_R6040_3	"R6040 10/100 media interface"
 
 /* RealTek PHYs */
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
