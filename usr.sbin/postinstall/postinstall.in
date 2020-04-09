@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.18 2020/04/06 13:10:48 roy Exp $
+# $NetBSD: postinstall.in,v 1.19 2020/04/09 15:24:31 roy Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -945,7 +945,7 @@ do_dhcpcd()
 	populate_dir "$op" true "${dir}" "${DEST_DIR}/etc" 644 dhcpcd.conf
 	failed=$(( ${failed} + $? ))
 
-	dstdir="${DESTDIR}/var/chroot/dhcpcd"
+	dstdir="${DEST_DIR}/var/chroot/dhcpcd"
 
 	check_dir "${op}" "${dstdir}/var/db/dhcpcd" 755
 	failed=$(( ${failed} + $? ))
