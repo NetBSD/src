@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.251 2020/03/10 04:04:45 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.252 2020/04/09 06:47:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.251 2020/03/10 04:04:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.252 2020/04/09 06:47:50 skrll Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -279,8 +279,8 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			}
 		}
 		UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-		UVMHIST_LOG(maphist, "%ctlbmod(va=%#lx, pc=%#lx, tf=%p)",
-		    user_p ? 'u' : 'k', vaddr, pc, tf);
+		UVMHIST_LOG(maphist, "%ctlbmod(va=%#lx, pc=%#lx, tf=%#jx)",
+		    user_p ? 'u' : 'k', vaddr, pc, (uintptr_t)tf);
 		if (!pte_modified_p(pte)) {
 			pte |= mips_pg_m_bit();
 #ifdef MULTIPROCESSOR
