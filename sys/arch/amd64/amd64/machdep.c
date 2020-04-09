@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.346 2020/01/31 08:21:11 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.346.4.1 2020/04/09 16:12:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346 2020/01/31 08:21:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.4.1 2020/04/09 16:12:50 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -729,9 +729,12 @@ haltsys:
 
 		acpi_enter_sleep_state(ACPI_STATE_S5);
 #endif
-#ifdef XENPV
-		HYPERVISOR_shutdown();
-#endif /* XENPV */
+#ifdef XEN
+		if (vm_guest == VM_GUEST_XENPV ||
+		    vm_guest == VM_GUEST_XENPVH ||
+		    vm_guest == VM_GUEST_XENPVHVM)
+			HYPERVISOR_shutdown();
+#endif /* XEN */
 	}
 
 	cpu_broadcast_halt();
