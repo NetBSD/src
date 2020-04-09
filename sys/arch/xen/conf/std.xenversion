@@ -1,0 +1,6 @@
+# $NetBSD: std.xenversion,v 1.1 2020/04/09 14:39:10 jdolecek Exp $
+#
+# Xen options shared for all archs (i386, amd64)
+
+options 	__XEN_INTERFACE_VERSION__=0x00030208 # Xen 3.1 interface
+
