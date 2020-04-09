@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.43.4.1 2020/04/09 16:51:00 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.43.4.2 2020/04/09 21:01:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -322,8 +322,9 @@ IDTVEC(spllower)
 	pushq	%r12
 	movl	%edi,%ebx
 	leaq	1f(%rip),%r13		/* address to resume loop at */
-1:	movl	%ebx,%eax		/* get cpl */
+1:
 #if !defined(XENPV)
+	movl	%ebx,%eax		/* get cpl */
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
@@ -335,6 +336,7 @@ IDTVEC(spllower)
 #endif
 2:
 #if defined(XEN)
+	movl	%ebx,%eax		/* get cpl */
 	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
