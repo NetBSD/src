@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.29 2020/04/07 09:05:14 jdolecek Exp $      */
+/*      $NetBSD: xengnt.c,v 1.30 2020/04/09 15:54:41 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.29 2020/04/07 09:05:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.30 2020/04/09 15:54:41 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -170,7 +170,7 @@ xengnt_more_entries(void)
 		return ENOMEM;
 
 	sz = nframes_new * sizeof(u_long);
-	pages = kmem_alloc(sz, KM_NOSLEEP);
+	pages = kmem_intr_alloc(sz, KM_NOSLEEP);
 	if (pages == NULL)
 		return ENOMEM;
 
@@ -209,7 +209,7 @@ xengnt_more_entries(void)
 		if (setup.status != GNTST_okay) {
 			aprint_error("%s: setup table returned %d\n",
 			    __func__, setup.status);
-			kmem_free(pages, sz);
+			kmem_intr_free(pages, sz);
 			return ENOMEM;
 		}
 	}
@@ -244,7 +244,7 @@ xengnt_more_entries(void)
 		last_gnt_entry++;
 	}
 	gnt_nr_grant_frames = nframes_new;
-	kmem_free(pages, sz);
+	kmem_intr_free(pages, sz);
 	return 0;
 }
 
