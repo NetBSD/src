@@ -1,6 +1,6 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.8 2020/03/25 17:06:19 jdolecek Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.9 2020/04/09 14:39:10 jdolecek Exp $
 
-include 	"arch/xen/conf/std.xen"
+include 	"arch/i386/conf/std.xen"
 
 options		XENPV		# PV domU support
 options 	MULTIPROCESSOR
