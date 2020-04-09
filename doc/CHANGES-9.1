@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.31 2020/04/06 14:59:48 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.32 2020/04/09 11:29:33 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -811,4 +811,9 @@ sys/dev/cgdvar.h				1.19
 	Defer crypto operations to a workqueue and make it utilize all CPUs.
 	Make device mpsafe.
 	[riastradh, ticket #823]
+
+usr.bin/man/man.c				1.68
+
+	Exit successfully after printing the search path (-p option).
+	[maya, ticket #824]
 
