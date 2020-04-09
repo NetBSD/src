@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.28 2018/09/03 16:29:29 riastradh Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.29 2020/04/09 19:26:37 jdolecek Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.28 2018/09/03 16:29:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.29 2020/04/09 19:26:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment,
 		set_xen_guest_handle(res.extent_start, &mfn);
 		res.nr_extents = 1;
 		res.extent_order = 0;
-		res.address_bits = 0;
+		res.mem_flags = 0;
 		res.domid = DOMID_SELF;
 		error = HYPERVISOR_memory_op(XENMEM_decrease_reservation, &res);
 		if (error != 1) {
@@ -113,14 +113,14 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment,
 	set_xen_guest_handle(res.extent_start, &mfn);
 	res.nr_extents = 1;
 	res.extent_order = order;
-	res.address_bits = get_order(high) + PAGE_SHIFT;
+	res.mem_flags = XENMEMF_address_bits(get_order(high) + PAGE_SHIFT);
 	res.domid = DOMID_SELF;
 	error = HYPERVISOR_memory_op(XENMEM_increase_reservation, &res);
 	if (error != 1) {
 #ifdef DEBUG
 		printf("xen_alloc_contig: XENMEM_increase_reservation "
-		    "failed: %d (order %d address_bits %d)\n",
-		    error, order, res.address_bits);
+		    "failed: %d (order %d mem_flags %d)\n",
+		    error, order, res.mem_flags);
 #endif
 		error = ENOMEM;
 		pg = NULL;
@@ -166,7 +166,7 @@ failed:
 		set_xen_guest_handle(res.extent_start, &mfn);
 		res.nr_extents = 1;
 		res.extent_order = 0;
-		res.address_bits = 32;
+		res.mem_flags = XENMEMF_address_bits(32);
 		res.domid = DOMID_SELF;
 		if (HYPERVISOR_memory_op(XENMEM_increase_reservation, &res)
 		    < 0) {
