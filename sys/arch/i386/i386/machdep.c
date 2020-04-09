@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.825 2020/01/31 08:21:11 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.825.4.1 2020/04/09 16:12:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.825 2020/01/31 08:21:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.825.4.1 2020/04/09 16:12:50 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -793,10 +793,12 @@ haltsys:
 #else
 		__USE(s);
 #endif
-#ifdef XENPV
-		HYPERVISOR_shutdown();
-		for (;;);
-#endif
+#ifdef XEN
+		if (vm_guest == VM_GUEST_XENPV ||
+		    vm_guest == VM_GUEST_XENPVH ||
+		    vm_guest == VM_GUEST_XENPVHVM)
+			HYPERVISOR_shutdown();
+#endif /* XEN */
 	}
 
 #ifdef MULTIPROCESSOR
