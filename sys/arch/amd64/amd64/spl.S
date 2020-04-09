@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.43 2020/01/08 17:38:41 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.43.4.1 2020/04/09 16:51:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -366,8 +366,9 @@ IDTVEC(doreti)
 	popq	%rbx			/* get previous priority */
 	decl	CPUVAR(IDEPTH)
 	leaq	1f(%rip),%r13
-1:	movl	%ebx,%eax
+1:
 #if !defined(XENPV)
+	movl    %ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(IPENDING),%eax
@@ -379,6 +380,7 @@ IDTVEC(doreti)
 #endif
 2:
 #if defined(XEN)
+	movl    %ebx,%eax
 	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
 	CLI(si)
 	andl	CPUVAR(XPENDING),%eax
