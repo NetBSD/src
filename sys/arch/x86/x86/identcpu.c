@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.103 2020/04/09 01:49:26 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.104 2020/04/09 01:55:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.103 2020/04/09 01:49:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.104 2020/04/09 01:55:58 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -750,7 +750,7 @@ cpu_probe_vortex86(struct cpu_info *ci)
 	static const char *cpu_vortex86_flavor[] = {
 	    "??", "SX", "DX", "MX", "DX2", "MX+", "DX3", "EX", "EX2",
 	};
-	idx = sizeof(cpu_vortex86_flavor) > idx ? idx : 0;
+	idx = __arraycount(cpu_vortex86_flavor) < idx ? idx : 0;
 	snprintf(cpu_brand_string, sizeof(cpu_brand_string), "Vortex86%s",
 	    cpu_vortex86_flavor[idx]);
 
