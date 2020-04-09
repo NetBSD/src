@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.673 2020/04/08 21:57:24 jdolecek Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.674 2020/04/09 06:55:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.673 2020/04/08 21:57:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.674 2020/04/09 06:55:51 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7558,33 +7558,37 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	 * contexts on this hardware platform and must generate a new
 	 * context every time.  82574L hardware spec, section 7.2.6,
 	 * second note.
- 	 *
-  	 * Setting up new checksum offload context for every
-	 * frames takes a lot of processing time for hardware.
-	 * This also reduces performance a lot for small sized
-	 * frames so avoid it if driver can use previously
-	 * configured checksum offload context.
-	 * For TSO, in theory we can use the same TSO context if and only if
-	 * frame is the same type(IP/TCP) and the same MSS. However
-	 * checking whether a frame has the same IP/TCP structure is
-	 * hard thing so just ignore that and always restablish a
-	 * new TSO context.
-  	 */
-	KASSERT(!wm_is_using_multiqueue(sc));
-	if ((m0->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) == 0) {
-		if (txq->txq_last_hw_cmd == cmd &&
-		    txq->txq_last_hw_fields == fields &&
-		    txq->txq_last_hw_ipcs == (ipcs & 0xffff) &&
-		    txq->txq_last_hw_tucs == (tucs & 0xffff)) {
-			WM_Q_EVCNT_INCR(txq, skipcontext);
-			return;
+	 */
+	if (sc->sc_nqueues < 2) {
+		/*
+	 	 *
+	  	 * Setting up new checksum offload context for every
+		 * frames takes a lot of processing time for hardware.
+		 * This also reduces performance a lot for small sized
+		 * frames so avoid it if driver can use previously
+		 * configured checksum offload context.
+		 * For TSO, in theory we can use the same TSO context only if
+		 * frame is the same type(IP/TCP) and the same MSS. However
+		 * checking whether a frame has the same IP/TCP structure is
+		 * hard thing so just ignore that and always restablish a
+		 * new TSO context.
+	  	 */
+		if ((m0->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6))
+		    == 0) {
+			if (txq->txq_last_hw_cmd == cmd &&
+			    txq->txq_last_hw_fields == fields &&
+			    txq->txq_last_hw_ipcs == (ipcs & 0xffff) &&
+			    txq->txq_last_hw_tucs == (tucs & 0xffff)) {
+				WM_Q_EVCNT_INCR(txq, skipcontext);
+				return;
+			}
 		}
-	}
 
- 	txq->txq_last_hw_cmd = cmd;
- 	txq->txq_last_hw_fields = fields;
- 	txq->txq_last_hw_ipcs = (ipcs & 0xffff);
-	txq->txq_last_hw_tucs = (tucs & 0xffff);
+	 	txq->txq_last_hw_cmd = cmd;
+ 		txq->txq_last_hw_fields = fields;
+ 		txq->txq_last_hw_ipcs = (ipcs & 0xffff);
+		txq->txq_last_hw_tucs = (tucs & 0xffff);
+	}
 
 	/* Fill in the context descriptor. */
 	t = (struct livengood_tcpip_ctxdesc *)
