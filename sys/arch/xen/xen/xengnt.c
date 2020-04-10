@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.31 2020/04/09 19:26:38 jdolecek Exp $      */
+/*      $NetBSD: xengnt.c,v 1.32 2020/04/10 08:35:52 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.31 2020/04/09 19:26:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.32 2020/04/10 08:35:52 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -335,6 +335,8 @@ xengnt_get_entry(void)
 	grant_ref_t entry;
 	static struct timeval xengnt_nonmemtime;
 	static const struct timeval xengnt_nonmemintvl = {5,0};
+
+	KASSERT(mutex_owned(&grant_lock));
 
 	if (__predict_false(last_gnt_entry == 0)) {
 		if (ratecheck(&xengnt_nonmemtime, &xengnt_nonmemintvl))
