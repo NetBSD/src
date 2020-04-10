@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88 2020/04/06 19:26:00 jdolecek Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.1 2020/04/10 14:38:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88 2020/04/06 19:26:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.1 2020/04/10 14:38:19 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -942,7 +942,6 @@ event_set_iplhandler(struct cpu_info *ci,
 		    KM_NOSLEEP);
 		if (ipls == NULL)
 			panic("can't allocate fixed interrupt source");
-		ipls->is_recurse = xenev_stubs[level].ist_entry;
 		ipls->is_recurse = xenev_stubs[level].ist_recurse;
 		ipls->is_resume = xenev_stubs[level].ist_resume;
 		ipls->is_handlers = ih;
