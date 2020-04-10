@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.37 2019/09/18 15:07:08 kamil Exp $	*/
+/*	$NetBSD: patch.c,v 1.37.6.1 2020/04/10 14:37:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.37 2019/09/18 15:07:08 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.37.6.1 2020/04/10 14:37:54 bouyer Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -250,7 +250,8 @@ x86_patch(bool early)
 #endif	/* i386 */
 
 #if !defined(SPLDEBUG)
-	if (!early && (cpu_feature[0] & CPUID_CX8) != 0) {
+	if (!early && (cpu_feature[0] & CPUID_CX8) != 0 &&
+	    !vm_guest_is_xenpv()) {
 		/* Faster splx(), mutex_spin_exit(). */
 		patchfunc(
 		    cx8_spllower, cx8_spllower_end,
