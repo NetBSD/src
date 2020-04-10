@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.97 2020/04/07 11:47:06 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.98 2020/04/10 10:30:10 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.97 2020/04/07 11:47:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.98 2020/04/10 10:30:10 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -150,7 +150,12 @@ struct xbd_xenbus_softc {
 	uint64_t sc_xbdsize; /* size of disk in DEV_BSIZE */
 	u_long sc_info; /* VDISK_* */
 	u_long sc_handle; /* from backend */
-	int sc_cache_flush; /* backend supports BLKIF_OP_FLUSH_DISKCACHE */
+	int sc_features;
+#define BLKIF_FEATURE_CACHE_FLUSH	0x1
+#define BLKIF_FEATURE_BARRIER		0x2
+#define BLKIF_FEATURE_PERSISTENT	0x4
+#define BLKIF_FEATURE_BITS		\
+	"\20\1CACHE-FLUSH\2BARRIER\3PERSISTENT"
 	struct evcnt sc_cnt_map_unalign;
 };
 
@@ -509,7 +514,7 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 	struct xbd_xenbus_softc *sc = device_private((device_t)arg);
 	struct disk_geom *dg;
 
-	char buf[9];
+	char buf[32];
 	int s;
 	DPRINTF(("%s: new backend state %d\n",
 	    device_xname(sc->sc_dksc.sc_dev), new_state));
@@ -569,6 +574,9 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 		aprint_normal_dev(sc->sc_dksc.sc_dev,
 				"%s, %d bytes/sect x %" PRIu64 " sectors\n",
 				buf, (int)dg->dg_secsize, sc->sc_xbdsize);
+		snprintb(buf, sizeof(buf), BLKIF_FEATURE_BITS,
+		    sc->sc_features);
+		aprint_normal_dev(sc->sc_dksc.sc_dev, "features %s\n", buf);
 
 		/* Discover wedges on this disk. */
 		dkwedge_discover(&sc->sc_dksc.sc_dkdev);
@@ -588,7 +596,7 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 {
 	int err;
 	unsigned long long sectors;
-	u_long cache_flush;
+	u_long val;
 
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_path, "virtual-device", &sc->sc_handle, 10);
@@ -618,13 +626,25 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 		    sc->sc_xbusd->xbusd_otherend);
 
 	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
-	    "feature-flush-cache", &cache_flush, 10);
+	    "feature-flush-cache", &val, 10);
 	if (err)
-		cache_flush = 0;
-	if (cache_flush > 0)
-		sc->sc_cache_flush = 1;
-	else
-		sc->sc_cache_flush = 0;
+		val = 0;
+	if (val > 0)
+		sc->sc_features |= BLKIF_FEATURE_CACHE_FLUSH;
+
+	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
+	    "feature-barrier", &val, 10);
+	if (err)
+		val = 0;
+	if (val > 0)
+		sc->sc_features |= BLKIF_FEATURE_BARRIER;
+
+	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
+	    "feature-persistent", &val, 10);
+	if (err)
+		val = 0;
+	if (val > 0)
+		sc->sc_features |= BLKIF_FEATURE_PERSISTENT;
 
 	xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
 }
@@ -834,16 +854,22 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCSSTRATEGY:
 		error = EOPNOTSUPP;
 		break;
+	case DIOCGCACHE:
+	    {
+		/*
+		 * Assume there is read & write cache if cache-flush is
+		 * supported.
+		 */
+		int *bitsp = (int *)data;
+		*bitsp = 0;
+		if (sc->sc_features & BLKIF_FEATURE_CACHE_FLUSH)
+			*bitsp |= DKCACHE_WRITE;
+		error = 0;
+		break;
+	    }
 	case DIOCCACHESYNC:
-		if (sc->sc_cache_flush <= 0) {
-			if (sc->sc_cache_flush == 0) {
-				aprint_verbose_dev(sc->sc_dksc.sc_dev,
-				    "WARNING: cache flush not supported "
-				    "by backend\n");
-				sc->sc_cache_flush = -1;
-			}
+		if ((sc->sc_features & BLKIF_FEATURE_CACHE_FLUSH) == 0)
 			return EOPNOTSUPP;
-		}
 
 		s = splbio(); /* XXXSMP */
 
