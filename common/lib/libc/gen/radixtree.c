@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.23 2020/01/28 22:20:45 ad Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.24 2020/04/10 21:56:41 ad Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.23 2020/01/28 22:20:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.24 2020/04/10 21:56:41 ad Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.23 2020/01/28 22:20:45 ad Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.23 2020/01/28 22:20:45 ad Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.24 2020/04/10 21:56:41 ad Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -196,25 +196,6 @@ entry_match_p(void *p, unsigned int tagmask)
 struct radix_tree_node {
 	void *n_ptrs[RADIX_TREE_PTR_PER_NODE];
 };
-
-/*
- * any_children_tagmask:
- *
- * return OR'ed tagmask of the given node's children.
- */
-
-static unsigned int
-any_children_tagmask(const struct radix_tree_node *n)
-{
-	unsigned int mask;
-	int i;
-
-	mask = 0;
-	for (i = 0; i < RADIX_TREE_PTR_PER_NODE; i++) {
-		mask |= (unsigned int)(uintptr_t)n->n_ptrs[i];
-	}
-	return mask & RADIX_TREE_TAG_MASK;
-}
 
 /*
  * p_refs[0].pptr == &t->t_root
@@ -368,18 +349,24 @@ radix_tree_await_memory(void)
 
 #endif /* defined(_KERNEL) */
 
-static bool __unused
-radix_tree_node_clean_p(const struct radix_tree_node *n)
+/*
+ * radix_tree_node_sum:
+ *
+ * return the logical sum of all entries in the given node.  used to quickly
+ * check for tag masks or empty nodes.
+ */
+
+static uintptr_t
+radix_tree_node_sum(const struct radix_tree_node *n)
 {
 #if RADIX_TREE_PTR_PER_NODE > 16
-	unsigned int i;
+	uintptr_t sum;
+	unsigned i;
 
-	for (i = 0; i < RADIX_TREE_PTR_PER_NODE; i++) {
-		if (n->n_ptrs[i] != NULL) {
-			return false;
-		}
+	for (i = 0, sum = 0; i < RADIX_TREE_PTR_PER_NODE; i++) {
+		sum |= (uintptr_t)n->n_ptrs[i];
 	}
-	return true;
+	return sum;
 #else /* RADIX_TREE_PTR_PER_NODE > 16 */
 	uintptr_t sum;
 
@@ -409,7 +396,7 @@ radix_tree_node_clean_p(const struct radix_tree_node *n)
 	sum |= (uintptr_t)n->n_ptrs[14];
 	sum |= (uintptr_t)n->n_ptrs[15];
 #endif
-	return sum == 0;
+	return sum;
 #endif /* RADIX_TREE_PTR_PER_NODE > 16 */
 }
 
@@ -444,7 +431,7 @@ radix_tree_alloc_node(void)
 		radix_tree_node_init(n);
 	}
 #endif /* defined(_KERNEL) */
-	KASSERT(n == NULL || radix_tree_node_clean_p(n));
+	KASSERT(n == NULL || radix_tree_node_sum(n) == 0);
 	return n;
 }
 
@@ -452,7 +439,7 @@ static void
 radix_tree_free_node(struct radix_tree_node *n)
 {
 
-	KASSERT(radix_tree_node_clean_p(n));
+	KASSERT(radix_tree_node_sum(n) == 0);
 #if defined(_KERNEL)
 	pool_cache_put(radix_tree_node_cache, n);
 #elif defined(_STANDALONE)
@@ -687,7 +674,7 @@ radix_tree_remove_node(struct radix_tree *t, uint64_t idx)
 		entry = *pptr;
 		n = entry_ptr(entry);
 		KASSERT(n != NULL);
-		if (!radix_tree_node_clean_p(n)) {
+		if (radix_tree_node_sum(n) != 0) {
 			break;
 		}
 		radix_tree_free_node(n);
@@ -714,8 +701,8 @@ radix_tree_remove_node(struct radix_tree *t, uint64_t idx)
 		entry = *pptr;
 		n = entry_ptr(entry);
 		KASSERT(n != NULL);
-		KASSERT(!radix_tree_node_clean_p(n));
-		newmask = any_children_tagmask(n);
+		KASSERT(radix_tree_node_sum(n) != 0);
+		newmask = radix_tree_node_sum(n) & RADIX_TREE_TAG_MASK;
 		if (newmask == entry_tagmask(entry)) {
 			break;
 		}
@@ -1091,7 +1078,7 @@ radix_tree_clear_tag(struct radix_tree *t, uint64_t idx, unsigned int tagmask)
 		if (0 < i) {
 			struct radix_tree_node *n = path_node(t, &path, i - 1);
 
-			if ((any_children_tagmask(n) & tagmask) != 0) {
+			if ((radix_tree_node_sum(n) & tagmask) != 0) {
 				break;
 			}
 		}
@@ -1124,7 +1111,8 @@ radix_tree_dump_node(const struct radix_tree *t, void *vp,
 		return;
 	}
 	n = entry_ptr(vp);
-	assert(any_children_tagmask(n) == entry_tagmask(vp));
+	assert((radix_tree_node_sum(n) & RADIX_TREE_TAG_MASK) ==
+	    entry_tagmask(vp));
 	printf(" (%u children)\n", radix_tree_node_count_ptrs(n));
 	for (i = 0; i < __arraycount(n->n_ptrs); i++) {
 		void *c;
