@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.118 2020/04/10 14:34:27 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.119 2020/04/10 14:35:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -504,19 +504,6 @@ typedef enum vm_guest {
 	VM_LAST
 } vm_guest_t;
 extern vm_guest_t vm_guest;
-
-static __inline bool __unused
-vm_guest_is_xenpv(void)
-{
-	switch(vm_guest) {
-	case VM_GUEST_XENPV:
-	case VM_GUEST_XENPVH:
-	case VM_GUEST_XENPVHVM:
-		return true;
-	default:
-		return false;
-	}
-}
 
 /* cpu_topology.c */
 void	x86_cpu_topology(struct cpu_info *);
