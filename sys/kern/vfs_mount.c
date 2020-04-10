@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.75 2020/02/23 22:14:03 ad Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.76 2020/04/10 22:34:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.75 2020/02/23 22:14:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.76 2020/04/10 22:34:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1245,14 +1245,13 @@ done:
 
 		/*
 		 * Get the vnode for '/'.  Set cwdi0.cwdi_cdir to
-		 * reference it.
+		 * reference it, and donate it the reference grabbed
+		 * with VFS_ROOT().
 		 */
-		error = VFS_ROOT(mp, LK_SHARED, &rootvnode);
+		error = VFS_ROOT(mp, LK_NONE, &rootvnode);
 		if (error)
 			panic("cannot find root vnode, error=%d", error);
 		cwdi0.cwdi_cdir = rootvnode;
-		vref(cwdi0.cwdi_cdir);
-		VOP_UNLOCK(rootvnode);
 		cwdi0.cwdi_rdir = NULL;
 
 		/*
