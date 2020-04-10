@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.47 2020/04/10 12:38:40 jdolecek Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.48 2020/04/10 14:54:33 jdolecek Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.47 2020/04/10 12:38:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.48 2020/04/10 14:54:33 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -81,6 +81,7 @@ CFATTACH_DECL_NEW(xenbus, 0, xenbus_match, xenbus_attach,
     NULL, NULL);
 
 device_t xenbus_dev;
+bus_dma_tag_t xenbus_dmat;
 
 SLIST_HEAD(, xenbus_device) xenbus_device_list;
 SLIST_HEAD(, xenbus_backend_driver) xenbus_backend_driver_list =
@@ -99,10 +100,12 @@ xenbus_match(device_t parent, cfdata_t match, void *aux)
 static void
 xenbus_attach(device_t parent, device_t self, void *aux)
 {
+	struct xenbus_attach_args *xa = (struct xenbus_attach_args *)aux;
 	int err;
 
 	aprint_normal(": Xen Virtual Bus Interface\n");
 	xenbus_dev = self;
+	xenbus_dmat = xa->xa_dmat;
 	config_pending_incr(self);
 
 	err = kthread_create(PRI_NONE, 0, NULL, xenbus_probe_init, NULL,
@@ -424,6 +427,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 			}
 		} else {
 			xbusd->xbusd_type = XENBUS_FRONTEND_DEVICE;
+			xa.xa_dmat = xenbus_dmat;
 			xa.xa_xbusd = xbusd;
 			xa.xa_type = type;
 			xa.xa_id = strtoul(dir[i], &ep, 0);
