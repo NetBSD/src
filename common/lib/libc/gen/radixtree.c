@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.24 2020/04/10 21:56:41 ad Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.25 2020/04/10 23:43:05 ad Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.24 2020/04/10 21:56:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.25 2020/04/10 23:43:05 ad Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.24 2020/04/10 21:56:41 ad Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.24 2020/04/10 21:56:41 ad Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.25 2020/04/10 23:43:05 ad Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -335,16 +335,22 @@ radix_tree_init(void)
  * radix_tree_await_memory:
  *
  * after an insert has failed with ENOMEM, wait for memory to become
- * available, so the caller can retry.
+ * available, so the caller can retry.  this needs to ensure that the
+ * maximum possible required number of nodes is available.
  */
 
 void
 radix_tree_await_memory(void)
 {
-	struct radix_tree_node *n;
+	struct radix_tree_node *nodes[RADIX_TREE_MAX_HEIGHT];
+	int i;
 
-	n = pool_cache_get(radix_tree_node_cache, PR_WAITOK);
-	pool_cache_put(radix_tree_node_cache, n);
+	for (i = 0; i < __arraycount(nodes); i++) {
+		nodes[i] = pool_cache_get(radix_tree_node_cache, PR_WAITOK);
+	}
+	while (--i >= 0) {
+		pool_cache_put(radix_tree_node_cache, nodes[i]);
+	}
 }
 
 #endif /* defined(_KERNEL) */
@@ -360,8 +366,8 @@ static uintptr_t
 radix_tree_node_sum(const struct radix_tree_node *n)
 {
 #if RADIX_TREE_PTR_PER_NODE > 16
+	unsigned int i;
 	uintptr_t sum;
-	unsigned i;
 
 	for (i = 0, sum = 0; i < RADIX_TREE_PTR_PER_NODE; i++) {
 		sum |= (uintptr_t)n->n_ptrs[i];
@@ -449,31 +455,39 @@ radix_tree_free_node(struct radix_tree_node *n)
 #endif
 }
 
-static int
+/*
+ * radix_tree_grow:
+ *
+ * increase the height of the tree.
+ */
+
+static __noinline int
 radix_tree_grow(struct radix_tree *t, unsigned int newheight)
 {
 	const unsigned int tagmask = entry_tagmask(t->t_root);
+	struct radix_tree_node *newnodes[RADIX_TREE_MAX_HEIGHT];
+	void *root;
+	int h;
 
-	KASSERT(newheight <= 64 / RADIX_TREE_BITS_PER_HEIGHT);
-	if (t->t_root == NULL) {
+	KASSERT(newheight <= RADIX_TREE_MAX_HEIGHT);
+	if ((root = t->t_root) == NULL) {
 		t->t_height = newheight;
 		return 0;
 	}
-	while (t->t_height < newheight) {
-		struct radix_tree_node *n;
-
-		n = radix_tree_alloc_node();
-		if (n == NULL) {
-			/*
-			 * don't bother to revert our changes.
-			 * the caller will likely retry.
-			 */
+	for (h = t->t_height; h < newheight; h++) {
+		newnodes[h] = radix_tree_alloc_node();
+		if (__predict_false(newnodes[h] == NULL)) {
+			while (--h >= (int)t->t_height) {
+				newnodes[h]->n_ptrs[0] = NULL;
+				radix_tree_free_node(newnodes[h]);
+			}
 			return ENOMEM;
 		}
-		n->n_ptrs[0] = t->t_root;
-		t->t_root = entry_compose(n, tagmask);
-		t->t_height++;
+		newnodes[h]->n_ptrs[0] = root;
+		root = entry_compose(newnodes[h], tagmask);
 	}
+	t->t_root = root;
+	t->t_height = h;
 	return 0;
 }
 
@@ -583,6 +597,52 @@ radix_tree_lookup_ptr(struct radix_tree *t, uint64_t idx,
 }
 
 /*
+ * radix_tree_undo_insert_node:
+ *
+ * Undo the effects of a failed insert.  The conditions that led to the
+ * insert may change and it may not be retried.  If the insert is not
+ * retried, there will be no corresponding radix_tree_remove_node() for
+ * this index in the future.  Therefore any adjustments made to the tree
+ * before memory was exhausted must be reverted.
+ */
+
+static __noinline void
+radix_tree_undo_insert_node(struct radix_tree *t, uint64_t idx)
+{
+	struct radix_tree_path path;
+	int i;
+
+	(void)radix_tree_lookup_ptr(t, idx, &path, false, 0);
+	if (path.p_lastidx == RADIX_TREE_INVALID_HEIGHT) {
+		/*
+		 * no nodes were inserted.
+		 */
+		return;
+	}
+	for (i = path.p_lastidx - 1; i >= 0; i--) {
+		struct radix_tree_node ** const pptr =
+		    (struct radix_tree_node **)path_pptr(t, &path, i);
+		struct radix_tree_node *n;
+
+		KASSERT(pptr != NULL);
+		n = entry_ptr(*pptr);
+		KASSERT(n != NULL);
+		if (radix_tree_node_sum(n) != 0) {
+			break;
+		}
+		radix_tree_free_node(n);
+		*pptr = NULL;
+	}
+	/*
+	 * fix up height
+	 */
+	if (i < 0) {
+		KASSERT(t->t_root == NULL);
+		t->t_height = 0;
+	}
+}
+
+/*
  * radix_tree_insert_node:
  *
  * Insert the node at the given index.
@@ -606,7 +666,8 @@ radix_tree_insert_node(struct radix_tree *t, uint64_t idx, void *p)
 	KASSERT(p != NULL);
 	KASSERT(entry_tagmask(entry_compose(p, 0)) == 0);
 	vpp = radix_tree_lookup_ptr(t, idx, NULL, true, 0);
-	if (vpp == NULL) {
+	if (__predict_false(vpp == NULL)) {
+		radix_tree_undo_insert_node(t, idx);
 		return ENOMEM;
 	}
 	KASSERT(*vpp == NULL);
