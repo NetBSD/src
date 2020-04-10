@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.99 2020/04/10 10:32:18 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.100 2020/04/10 11:41:04 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.99 2020/04/10 10:32:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.100 2020/04/10 11:41:04 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -853,10 +853,7 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case DIOCGCACHE:
 	    {
-		/*
-		 * Assume there is read & write cache if cache-flush is
-		 * supported.
-		 */
+		/* Assume there is write cache if cache-flush is supported */
 		int *bitsp = (int *)data;
 		*bitsp = 0;
 		if (sc->sc_features & BLKIF_FEATURE_CACHE_FLUSH)
