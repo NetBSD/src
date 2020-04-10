@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.187.2.3 2020/04/07 19:26:44 is Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.187.2.4 2020/04/10 17:28:37 is Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.3 2020/04/07 19:26:44 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.4 2020/04/10 17:28:37 is Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -336,6 +336,9 @@ static void sppp_lcp_scr(struct sppp *sp);
 static void sppp_lcp_check_and_close(struct sppp *sp);
 static int sppp_ncp_check(struct sppp *sp);
 
+static struct mbuf *sppp_ml_defrag(struct sppp *sp, struct mbuf *m,
+				    u_int16_t *protocolp);
+
 static void sppp_ipcp_init(struct sppp *sp);
 static void sppp_ipcp_up(struct sppp *sp);
 static void sppp_ipcp_down(struct sppp *sp);
@@ -517,6 +520,123 @@ sppp_change_phase(struct sppp *sp, int phase)
 	}
 }
 
+
+/*
+ * Defragment an MP packet. 
+ *
+ * Returns NULL or an assembled packet or the original,
+ * and adjusts the passed protocol to the inner one.
+ *
+ * Called with and returns a packet without PPP header, 
+ * but with MP fragment header.
+ *
+ * Called and returns with lock held.
+ */
+static struct mbuf *
+sppp_ml_defrag(struct sppp *sp, struct mbuf *m, u_int16_t *protocolp)
+{
+	u_int8_t *p;
+	u_int8_t flags;
+	u_int32_t seqid;
+	u_int16_t protocol;
+	u_int16_t *m_protop;
+	int newflen;
+
+	if (*protocolp != PPP_MP)
+		return m; 	/* not ours */
+
+	if (sp->lcp.mrru == 0)
+		return m; 	/*
+				 * ours, but we're not ready.
+				 * sppp_input will arrange for rejection.
+				 */
+
+	if (m->m_len < 4) {
+		m = m_pullup(m, 4);
+		if (m == NULL) {
+			if_statadd2(ifp, if_ierrors, 1, if_iqdrops, 1);
+			return NULL;
+		}
+	}
+	p = mtod(m, u_int8_t *);
+	flags = *p; 
+	seqid = (p[1]<<16) + (p[2]<<8) + p[3];
+
+	m_adj(m, 4);
+
+	/* We're manipulating the defragmentation state below: */
+	SPPP_UPGRADE(sp);
+
+	if (flags & 0x80) {
+		/* Beginning fragment. */
+		sp->lcp.ml_seq_expected=seqid+1;	/* next expected */
+		
+		/* TODO: if prefix, count dropped? */
+
+		m_freem(sp->lcp.ml_prefix);
+		sp->lcp.ml_prefix = m;
+
+	} else if (seqid == sp->lcp.ml_seq_expected) {
+		sp->lcp.ml_seq_expected=seqid+1;	/* next expected */
+		if (sp->lcp.ml_prefix == 0) {
+			/* didn't see B frame.	*/
+		 	/* TODO: count as dropped. */
+			m_freem(m);
+			return NULL;
+		}
+		/*
+		 * m_cat might free the first mbuf (with pkthdr)
+		 * in 2nd chain; therefore:
+		 */
+		newflen = m->m_pkthdr.len;
+		m_cat(sp->lcp.ml_prefix, m);
+		lcp.ml_prefix->m_pkthdr.len += newflen;
+
+	} else {
+		/*
+		 * sequence error. 
+		 *
+		 * For now, only drop this fragment, and don't touch state-
+		 * might be from the long past or future, and we could still
+		 * finish our current prefix.
+		 *
+		 * TODO: count as dropped.
+		 */
+		 m_freem(sp->lcp.ml_prefix);
+		 return NULL;
+	}
+	/* Successfully got the Beginning or appended a non-B packet.*/
+	if (flags & 0x40) {
+		/* B/next was E packet. Unwrap gift and deliver. */
+		m = sp->lcp.ml_prefix;
+		sp->lcp.ml_prefix = NULL;
+
+		if (m->m_len < 2) {
+			m = m_pullup(m,2)
+			if (m == NULL) {
+			 	* TODO: count as dropped.
+				return NULL;
+			}
+		}
+		/* RFC 1990 2.: don't assume no protocol field compression */
+		p = mtod(m, u_int8_t);
+		protocol = *p;
+		
+		if (protocol & 1) {
+			m_adj(m, 1);
+		} else {
+			protocol = (protocol << 8) + p[1];
+			m_adj(m, 2);
+		}
+		*protocolp = protocol;
+
+		return m;
+	}
+
+	return NULL;
+}
+
+
 /*
  * Exported functions, comprising our interface to the lower layer.
  */
@@ -625,6 +745,12 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			goto drop;
 		}
 		protocol = ntohs(h->protocol);
+	}
+
+	m = sppp_ml_defrag(sp, m, &protocol);
+	if (m == 0) {
+		SPPP_UNLOCK(sp);
+		return;
 	}
 
 	switch (protocol) {
@@ -2221,6 +2347,11 @@ sppp_lcp_up(struct sppp *sp)
 
 	/* Initialize activity timestamp: opening a connection is an activity */
 	sp->pp_last_receive = sp->pp_last_activity = time_uptime;
+
+	/* Initialize mlppp state */
+	sp->lcp.mrru = sp->lcp.their_mrru = 0;
+	sp->lcp.ml_prefix = NULL;
+	sp->lcp.ml_seq_expected = 0;
 
 	/*
 	 * If this interface is passive or dial-on-demand, and we are
