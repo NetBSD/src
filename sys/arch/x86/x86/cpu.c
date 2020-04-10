@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.181 2020/01/14 01:41:37 pgoyette Exp $	*/
+/*	$NetBSD: cpu.c,v 1.181.4.1 2020/04/10 14:37:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181 2020/01/14 01:41:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181.4.1 2020/04/10 14:37:54 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -720,10 +720,8 @@ cpu_boot_secondary_processors(void)
 	kcpuset_t *cpus;
 	u_long i;
 
-#ifndef XEN
 	/* Now that we know the number of CPUs, patch the text segment. */
 	x86_patch(false);
-#endif
 
 #if NACPICA > 0
 	/* Finished with NUMA info for now. */
