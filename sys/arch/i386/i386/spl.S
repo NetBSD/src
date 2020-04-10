@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.50 2020/01/08 17:38:41 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.50.4.1 2020/04/10 14:42:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50 2020/01/08 17:38:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50.4.1 2020/04/10 14:42:00 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -94,6 +94,11 @@ ENTRY(spllower)
 	cli
 	testl	CPUVAR(IPENDING),%edx
 	jnz	2f
+#if defined(XEN)
+	movl	CPUVAR(XUNMASK)(,%ecx,4),%edx
+	testl	CPUVAR(XPENDING),%edx
+	jnz	2f
+#endif
 	movl	%ecx,CPUVAR(ILEVEL)
 	popf
 1:
@@ -353,7 +358,7 @@ END(doreti_checkast)
 #endif
 IDTVEC_END(doreti)
 
-#ifndef XEN
+#ifndef XENPV
 /*
  * Xsoftintr()
  *
@@ -455,4 +460,4 @@ IDTVEC(resume_preempt)
 	cli
 	jmp	*%esi
 IDTVEC_END(resume_preempt)
-#endif /* !XEN */
+#endif /* !XENPV */

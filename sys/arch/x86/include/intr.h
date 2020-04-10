@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.61 2019/12/22 15:09:39 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.61.6.1 2020/04/10 14:42:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -32,12 +32,12 @@
 #ifndef _X86_INTR_H_
 #define _X86_INTR_H_
 
-#if !defined(XEN)
+#if !defined(XENPV)
 #define	__HAVE_FAST_SOFTINTS
 #if !defined(NO_PREEMPTION)
 #define	__HAVE_PREEMPTION
 #endif /* !defined(NO_PREEMPTION) */
-#endif /*  !defined(XEN) */
+#endif /*  !defined(XENPV) */
 
 #ifdef _KERNEL
 #include <sys/types.h>

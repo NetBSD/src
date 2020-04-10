@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.43.4.2 2020/04/09 21:01:33 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.43.4.3 2020/04/10 14:41:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -91,7 +91,7 @@ ENTRY(splraise)
 	ret
 END(splraise)
 
-#ifndef XEN
+#ifndef XENPV
 /*
  * Xsoftintr()
  *
@@ -242,6 +242,11 @@ ENTRY(spllower)
 	cli
 	testl	CPUVAR(IPENDING),%edx
 	jnz	2f
+#if defined(XEN)
+	movl	CPUVAR(XUNMASK)(,%rdi,4),%edx
+	testl	CPUVAR(XPENDING),%edx
+	jnz	2f
+#endif
 	movl	%edi,CPUVAR(ILEVEL)
 	popf
 1:

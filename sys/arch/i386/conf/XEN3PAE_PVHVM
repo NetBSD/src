@@ -1,10 +1,11 @@
-# $NetBSD: XEN3PAE_PVHVM,v 1.3.2.1 2020/04/08 17:56:08 bouyer Exp $
+# $NetBSD: XEN3PAE_PVHVM,v 1.3.2.2 2020/04/10 14:42:00 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
 options		XENPVHVM		# PVHVM domU support
 
 #options 	MULTIPROCESSOR	# Not yet.
+options 	NO_PREEMPTION
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -115,7 +116,7 @@ hypervisor*	at mainbus?		# Xen hypervisor
 #vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus* 	at hypervisor?		# Xen virtual bus
 xencons*	at hypervisor?		# Xen virtual console
-#xennet* 	at xenbus?		# Xen virtual network interface
+xennet* 	at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
 #balloon*	at xenbus?		# Xen balloon device
 
