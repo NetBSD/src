@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.46 2020/04/07 15:59:57 jdolecek Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.47 2020/04/10 12:38:40 jdolecek Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.46 2020/04/07 15:59:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.47 2020/04/10 12:38:40 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -54,10 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.46 2020/04/07 15:59:57 jdolecek E
 #include <xen/shutdown_xenbus.h>
 
 #include "xenbus_comms.h"
-
-extern struct semaphore xenwatch_mutex;
-
-#define streq(a, b) (strcmp((a), (b)) == 0)
 
 static int  xenbus_match(device_t, cfdata_t, void *);
 static void xenbus_attach(device_t, device_t, void *);
