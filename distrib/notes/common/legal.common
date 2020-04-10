@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.124 2019/12/03 16:45:21 uwe Exp $
+.\" $NetBSD: legal.common,v 1.125 2020/04/10 17:02:33 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -399,8 +399,6 @@ This product includes software developed by WIDE Project and
 its contributors.
 .It
 This product includes software developed by Winning Strategies, Inc.
-.It
-This product includes software developed by Yasushi Yamasaki
 .It
 This product includes software developed by Yen Yen Lim and
 North Dakota State University
