@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.110 2020/04/10 18:03:06 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.111 2020/04/10 19:08:10 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.110 2020/04/10 18:03:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.111 2020/04/10 19:08:10 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -167,7 +167,7 @@ struct xennet_rxreq {
 struct xennet_xenbus_softc {
 	device_t sc_dev;
 	struct ethercom sc_ethercom;
-	uint8_t sc_enaddr[6];
+	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 	struct xenbus_device *sc_xbusd;
 	bus_dma_tag_t sc_dmat;
 
