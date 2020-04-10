@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.187.2.4 2020/04/10 17:28:37 is Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.187.2.5 2020/04/10 19:45:24 is Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.4 2020/04/10 17:28:37 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.5 2020/04/10 19:45:24 is Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -539,7 +539,6 @@ sppp_ml_defrag(struct sppp *sp, struct mbuf *m, u_int16_t *protocolp)
 	u_int8_t flags;
 	u_int32_t seqid;
 	u_int16_t protocol;
-	u_int16_t *m_protop;
 	int newflen;
 
 	if (*protocolp != PPP_MP)
@@ -554,7 +553,7 @@ sppp_ml_defrag(struct sppp *sp, struct mbuf *m, u_int16_t *protocolp)
 	if (m->m_len < 4) {
 		m = m_pullup(m, 4);
 		if (m == NULL) {
-			if_statadd2(ifp, if_ierrors, 1, if_iqdrops, 1);
+			if_statadd2(&sp->pp_if, if_ierrors, 1, if_iqdrops, 1);
 			return NULL;
 		}
 	}
@@ -569,15 +568,15 @@ sppp_ml_defrag(struct sppp *sp, struct mbuf *m, u_int16_t *protocolp)
 
 	if (flags & 0x80) {
 		/* Beginning fragment. */
-		sp->lcp.ml_seq_expected=seqid+1;	/* next expected */
+		sp->lcp.ml_seq_xpctd=seqid+1;	/* next expected */
 		
 		/* TODO: if prefix, count dropped? */
 
 		m_freem(sp->lcp.ml_prefix);
 		sp->lcp.ml_prefix = m;
 
-	} else if (seqid == sp->lcp.ml_seq_expected) {
-		sp->lcp.ml_seq_expected=seqid+1;	/* next expected */
+	} else if (seqid == sp->lcp.ml_seq_xpctd) {
+		sp->lcp.ml_seq_xpctd=seqid+1;	/* next expected */
 		if (sp->lcp.ml_prefix == 0) {
 			/* didn't see B frame.	*/
 		 	/* TODO: count as dropped. */
@@ -590,7 +589,7 @@ sppp_ml_defrag(struct sppp *sp, struct mbuf *m, u_int16_t *protocolp)
 		 */
 		newflen = m->m_pkthdr.len;
 		m_cat(sp->lcp.ml_prefix, m);
-		lcp.ml_prefix->m_pkthdr.len += newflen;
+		sp->lcp.ml_prefix->m_pkthdr.len += newflen;
 
 	} else {
 		/*
@@ -612,14 +611,14 @@ sppp_ml_defrag(struct sppp *sp, struct mbuf *m, u_int16_t *protocolp)
 		sp->lcp.ml_prefix = NULL;
 
 		if (m->m_len < 2) {
-			m = m_pullup(m,2)
+			m = m_pullup(m,2);
 			if (m == NULL) {
-			 	* TODO: count as dropped.
+			 	/* TODO: count as dropped. */
 				return NULL;
 			}
 		}
 		/* RFC 1990 2.: don't assume no protocol field compression */
-		p = mtod(m, u_int8_t);
+		p = mtod(m, u_int8_t *);
 		protocol = *p;
 		
 		if (protocol & 1) {
@@ -2351,7 +2350,7 @@ sppp_lcp_up(struct sppp *sp)
 	/* Initialize mlppp state */
 	sp->lcp.mrru = sp->lcp.their_mrru = 0;
 	sp->lcp.ml_prefix = NULL;
-	sp->lcp.ml_seq_expected = 0;
+	sp->lcp.ml_seq_xpctd = 0;
 
 	/*
 	 * If this interface is passive or dial-on-demand, and we are
