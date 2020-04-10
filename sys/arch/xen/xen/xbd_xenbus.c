@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.98 2020/04/10 10:30:10 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.99 2020/04/10 10:32:18 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.98 2020/04/10 10:30:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.99 2020/04/10 10:32:18 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -851,9 +851,6 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	dksc = &sc->sc_dksc;
 
 	switch (cmd) {
-	case DIOCSSTRATEGY:
-		error = EOPNOTSUPP;
-		break;
 	case DIOCGCACHE:
 	    {
 		/*
