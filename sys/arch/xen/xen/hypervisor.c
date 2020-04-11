@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.73.2.1 2020/04/08 17:59:17 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.73.2.2 2020/04/11 21:21:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73.2.1 2020/04/08 17:59:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73.2.2 2020/04/11 21:21:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.73.2.1 2020/04/08 17:59:17 bouyer E
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/include/public/version.h>
+#include <x86//pio.h>
 
 #include <sys/cpu.h>
 #include <sys/dirent.h>
@@ -190,6 +191,15 @@ int xen_version;
 /* power management, for save/restore */
 static bool hypervisor_suspend(device_t, const pmf_qual_t *);
 static bool hypervisor_resume(device_t, const pmf_qual_t *);
+
+/* from FreeBSD */
+#define XEN_MAGIC_IOPORT 0x10
+enum {
+	XMI_MAGIC                        = 0x49d2,
+	XMI_UNPLUG_IDE_DISKS             = 0x01,
+	XMI_UNPLUG_NICS                  = 0x02,
+	XMI_UNPLUG_IDE_EXCEPT_PRI_MASTER = 0x04
+}; 
 
 /*
  * Probe for the hypervisor; always succeeds.
@@ -415,7 +425,7 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 	bi.common.len = sizeof(struct btinfo_rootdevice);
 
 	/* From i386/multiboot.c */
-	/*	$NetBSD: hypervisor.c,v 1.73.2.1 2020/04/08 17:59:17 bouyer Exp $	*/
+	/*	$NetBSD: hypervisor.c,v 1.73.2.2 2020/04/11 21:21:16 bouyer Exp $	*/
 	int i, len;
 	vaddr_t data;
 	extern struct bootinfo	bootinfo;
@@ -434,6 +444,13 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 		bip->bi_nentries++;
 	}
 
+	/* disable emulated devices */
+	if (inw(XEN_MAGIC_IOPORT) == XMI_MAGIC) {
+		outw(XEN_MAGIC_IOPORT, XMI_UNPLUG_IDE_DISKS | XMI_UNPLUG_NICS);
+	} else {
+		aprint_error("%s: Unable to disable emulated devices\n",
+		    haa->haa_busname);
+	}
 #endif /* XENPVHVM */
 
 	/* If we got here, it must mean we matched */
