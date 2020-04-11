@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.291 2020/04/10 17:18:04 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.292 2020/04/11 14:38:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.291 2020/04/10 17:18:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.292 2020/04/11 14:38:26 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -513,7 +513,7 @@ bufinit(void)
 		pa = (size <= PAGE_SIZE && use_std)
 			? &pool_allocator_nointr
 			: &bufmempool_allocator;
-		pool_init(pp, size, 0, 0, 0, name, pa, IPL_NONE);
+		pool_init(pp, size, 0, DEV_BSIZE, 0, name, pa, IPL_NONE);
 		pool_setlowat(pp, 1);
 		pool_sethiwat(pp, 1);
 	}
