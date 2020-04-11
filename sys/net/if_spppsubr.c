@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.187.2.8 2020/04/11 08:11:58 is Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.187.2.9 2020/04/11 09:40:02 is Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.8 2020/04/11 08:11:58 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.9 2020/04/11 09:40:02 is Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2354,7 +2354,6 @@ sppp_lcp_up(struct sppp *sp)
 	sp->pp_last_receive = sp->pp_last_activity = time_uptime;
 
 	/* Initialize mlppp state */
-	sp->lcp.mrru = sp->lcp.their_mrru = 0;
 	sp->lcp.ml_prefix = NULL;
 	sp->lcp.ml_seq_xpctd = 0;
 
@@ -2433,6 +2432,10 @@ sppp_lcp_open(struct sppp *sp)
 	} else
 		sp->lcp.mru = PP_MTU;
 	sp->lcp.their_mru = PP_MTU;
+
+	sp->lcp.mrru = sp->pp_if.if_mtu;
+	sp->lcp.opts |= (1 << LCP_OPT_MP_MRRU);
+	sp->lcp.their_mrru = 0;
 
 	/*
 	 * If we are authenticator, negotiate LCP_AUTH
@@ -2822,6 +2825,19 @@ sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 			sp->lcp.opts &= ~(1 << LCP_OPT_MRU);
 			sp->lcp.mru = PP_MTU;
 			break;
+		case LCP_OPT_MP_MRRU:
+			/*
+			 * the peer is rejecting a multilink MRRU.
+			 * give up on MP in the incoming direction.
+			 */
+			if (debug) {
+				addlog("%s: warning: peer rejected our MRRU of "
+				    "%ld bytes. Defaulting to no MLPPP\n",
+				    ifp->if_xname, sp->lcp.mrru);
+			}
+			sp->lcp.opts &= ~(1 << LCP_OPT_MP_MRRU);
+			sp->lcp.mrru = 0;
+			break;
 		case LCP_OPT_AUTH_PROTO:
 			/*
 			 * Peer doesn't want to authenticate himself,
@@ -2922,6 +2938,22 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 					mru = sp->pp_if.if_mtu;
 				sp->lcp.mru = mru;
 				sp->lcp.opts |= (1 << LCP_OPT_MRU);
+			}
+			break;
+		case LCP_OPT_MP_MRRU:
+			/*
+			 * Peer wants to advise us to negotiate an multilink MRRU.
+			 * Agree on it if it's reasonable, or use
+			 * default otherwise.
+			 */
+			if (len >= 4 && l == 4) {
+				u_int mrru = p[2] * 256 + p[3];
+				if (debug)
+					addlog(" %d", mrru);
+				if (mrru < PPP_MINMRU || mru > sp->pp_if.if_mtu)
+					mru = sp->pp_if.if_mtu;
+				sp->lcp.mrru = mrru;
+				sp->lcp.opts |= (1 << LCP_OPT_MP_MRRU);
 			}
 			break;
 		case LCP_OPT_AUTH_PROTO:
@@ -3087,6 +3119,13 @@ sppp_lcp_scr(struct sppp *sp)
 		opt[i++] = 4;
 		opt[i++] = sp->lcp.mru >> 8;
 		opt[i++] = sp->lcp.mru;
+	}
+
+	if (sp->lcp.opts & (1 << LCP_OPT_MP_MRRU)) {
+		opt[i++] = LCP_OPT_MP_MRRU;
+		opt[i++] = 4;
+		opt[i++] = sp->lcp.mrru >> 8;
+		opt[i++] = sp->lcp.mrru;
 	}
 
 	if (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) {
