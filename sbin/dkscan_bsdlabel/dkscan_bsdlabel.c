@@ -1,4 +1,4 @@
-/* $NetBSD: dkscan_bsdlabel.c,v 1.4 2017/06/08 22:24:29 chs Exp $ */
+/* $NetBSD: dkscan_bsdlabel.c,v 1.5 2020/04/11 17:21:16 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <err.h>
 #include <util.h>
 #include <sys/disk.h>
+#include <sys/buf.h>
 
 #include "dkscan_util.h"
 
@@ -45,6 +46,22 @@ struct disk {
 	const char	*dk_name;	/* disk name */
 	int		dk_blkshift;	/* shift to convert DEV_BSIZE to blks */
 };
+
+static struct buf *
+geteblk(int size)
+{
+	struct buf *bp = malloc(sizeof(*bp) + size);
+
+	bp->b_data = (void *)&bp[1];
+
+	return bp;
+}
+
+static void
+brelse(struct buf *bp, int set)
+{
+	free(bp);
+}
 
 #include "dkwedge_bsdlabel.c"
 
