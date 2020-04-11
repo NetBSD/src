@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.73.6.1 2020/04/10 14:41:59 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.73.6.2 2020/04/11 11:56:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -811,36 +811,23 @@ END(xenev_stubs)
  */
 
 /* Hypervisor callback */
+
 ENTRY(hypervisor_callback)
 	movq	(%rsp),%rcx
 	movq	8(%rsp),%r11
 	addq	$16,%rsp
-	pushq	$0		/* Dummy error code */
-	pushq	$T_ASTFLT
-	INTRENTRY
-	/* sti?? */
-	movq	%rsp,%rdi
-	subq	$8,%rdi;	/* don't forget if_ppl */
-	call	do_hypervisor_callback
-	testb	$SEL_RPL,TF_CS(%rsp)
-	jnz	doreti_checkast
-1:
-	INTRFASTEXIT
-END(hypervisor_callback)
-
 IDTVEC(hypervisor_pvhvm_callback)
 	pushq	$0		/* Dummy error code */
 	pushq	$T_ASTFLT
 	INTRENTRY
 	movl    CPUVAR(ILEVEL),%edi
 	pushq   %rdi /* for Xdoreti */
-	/* sti?? */
 	movq	%rsp,%rdi
-	subq	$8,%rdi;	/* don't forget if_ppl */
 	call	do_hypervisor_callback
 	incl	CPUVAR(IDEPTH)
 	jmp 	_C_LABEL(Xdoreti)
 IDTVEC_END(hypervisor_pvhvm_callback)
+END(hypervisor_callback)
 #endif /* XEN */
 
 #ifdef XENPV
