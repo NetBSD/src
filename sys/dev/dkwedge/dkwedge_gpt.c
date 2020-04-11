@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.25 2020/03/30 08:36:09 wiz Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.26 2020/04/11 16:00:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.25 2020/03/30 08:36:09 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.26 2020/04/11 16:00:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.25 2020/03/30 08:36:09 wiz Exp $")
 #include <sys/errno.h>
 #include <sys/disk.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
+#include <sys/buf.h>
 
 #include <sys/disklabel_gpt.h>
 #include <sys/uuid.h>
@@ -115,7 +115,7 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 	static const struct uuid ent_type_unused = GPT_ENT_TYPE_UNUSED;
 	static const char gpt_hdr_sig[] = GPT_HDR_SIG;
 	struct dkwedge_info dkw;
-	void *buf;
+	struct buf *bp;
 	uint32_t secsize;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
@@ -124,11 +124,11 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 	uint32_t gpe_crc;
 	int error;
 	u_int i;
-	size_t r, n;
+	size_t r, n, sz;
 	uint8_t *c;
 
 	secsize = DEV_BSIZE << pdk->dk_blkshift;
-	buf = malloc(secsize, M_DEVBUF, M_WAITOK);
+	bp = geteblk(secsize);
 
 	/*
 	 * Note: We don't bother with a Legacy or Protective MBR
@@ -137,10 +137,11 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 	 */
 
 	/* Read in the GPT Header. */
-	error = dkwedge_read(pdk, vp, GPT_HDR_BLKNO << pdk->dk_blkshift, buf, secsize);
+	error = dkwedge_read(pdk, vp, GPT_HDR_BLKNO << pdk->dk_blkshift,
+	    bp->b_data, secsize);
 	if (error)
 		goto out;
-	hdr = buf;
+	hdr = bp->b_data;
 
 	/* Validate it. */
 	if (memcmp(gpt_hdr_sig, hdr->hdr_sig, sizeof(hdr->hdr_sig)) != 0) {
@@ -201,10 +202,12 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 		goto out;
 	}
 
-	free(buf, M_DEVBUF);
-	buf = malloc(roundup(entries * entsz, secsize), M_DEVBUF, M_WAITOK);
-	error = dkwedge_read(pdk, vp, lba_table << pdk->dk_blkshift, buf,
-			     roundup(entries * entsz, secsize));
+	brelse(bp, 0);
+
+	sz = roundup(entries * entsz, secsize);
+	bp = geteblk(sz);
+	error = dkwedge_read(pdk, vp, lba_table << pdk->dk_blkshift,
+	    bp->b_data, sz);
 	if (error) {
 		/* XXX Should check alternate location. */
 		aprint_error("%s: unable to read GPT partition array, "
@@ -212,7 +215,7 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 		goto out;
 	}
 
-	if (crc32(0, buf, entries * entsz) != gpe_crc) {
+	if (crc32(0, bp->b_data, entries * entsz) != gpe_crc) {
 		/* XXX Should check alternate location. */
 		aprint_error("%s: bad GPT partition array CRC\n",
 		    pdk->dk_name);
@@ -229,7 +232,7 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 		int j;
 		char ptype_guid_str[UUID_STR_LEN], ent_guid_str[UUID_STR_LEN];
 
-		ent = (struct gpt_ent *)((char *)buf + (i * entsz));
+		ent = (struct gpt_ent *)((char *)bp->b_data + (i * entsz));
 
 		uuid_dec_le(ent->ent_type, &ptype_guid);
 		if (memcmp(&ptype_guid, &ent_type_unused,
@@ -297,7 +300,7 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 	error = 0;
 
  out:
-	free(buf, M_DEVBUF);
+	brelse(bp, 0);
 	return (error);
 }
 
