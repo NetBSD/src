@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.45 2019/06/17 03:32:58 christos Exp $
+#	$NetBSD: files.ufs,v 1.46 2020/04/11 17:43:54 jdolecek Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -111,4 +111,3 @@ file	ufs/ufs/quota2_subr.c		quota2 & (ffs | mfs | ext2fs | chfs)
 file	ufs/ufs/ufs_rename.c		ffs | mfs | chfs
 file	ufs/ufs/ufs_vfsops.c		ufs & (ffs | mfs | ext2fs | chfs)
 file	ufs/ufs/ufs_vnops.c		ufs & (ffs | mfs | ext2fs | chfs)
-file	ufs/ufs/ufs_wapbl.c		ffs & wapbl

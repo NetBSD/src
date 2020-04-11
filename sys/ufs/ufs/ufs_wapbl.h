@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.18 2020/03/05 15:18:55 riastradh Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.19 2020/04/11 17:43:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -82,18 +82,6 @@
 
 #if defined(WAPBL)
 
-#if defined(WAPBL_DEBUG)
-#define	WAPBL_DEBUG_INODES
-#endif
-
-#ifdef WAPBL_DEBUG_INODES
-#error Undefine WAPBL_DEBUG_INODES or update the code.  Have a nice day.
-#endif
-
-#ifdef WAPBL_DEBUG_INODES
-void	ufs_wapbl_verify_inodes(struct mount *, const char *);
-#endif
-
 static __inline int
 ufs_wapbl_begin(struct mount *mp, const char *file, int line)
 {
@@ -102,10 +90,6 @@ ufs_wapbl_begin(struct mount *mp, const char *file, int line)
 		error = wapbl_begin(mp->mnt_wapbl, file, line);
 		if (error)
 			return error;
-#ifdef WAPBL_DEBUG_INODES
-		if (mp->mnt_wapbl->wl_lock.lk_exclusivecount == 1)
-			ufs_wapbl_verify_inodes(mp, "wapbl_begin");
-#endif
 	}
 	return 0;
 }
@@ -114,10 +98,6 @@ static __inline void
 ufs_wapbl_end(struct mount *mp)
 {
 	if (mp->mnt_wapbl) {
-#ifdef WAPBL_DEBUG_INODES
-		if (mp->mnt_wapbl->wl_lock.lk_exclusivecount == 1)
-			ufs_wapbl_verify_inodes(mp, "wapbl_end");
-#endif
 		wapbl_end(mp->mnt_wapbl);
 	}
 }
