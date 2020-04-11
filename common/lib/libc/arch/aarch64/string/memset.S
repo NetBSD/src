@@ -1,4 +1,4 @@
-/* $NetBSD: memset.S,v 1.2 2017/08/29 15:00:23 ryo Exp $ */
+/* $NetBSD: memset.S,v 1.3 2020/04/11 05:12:52 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -158,18 +158,26 @@ ENTRY(memset)
 	tbz	x15, #3, .Lzero_qword_aligned
 	str	xzr, [x15], #8
 .Lzero_qword_aligned:
-	cbz	x7, .Lblock_aligned	/* less than 16 bytes? just branch */
-	adr	x6, .Lunrolled_end
-	sub	x6, x6, x7, lsl #2	/* backup to write the last N insn */
-	br	x6			/* and do it */
+	cbz	x7, .Lblock_aligned	/* aligned? just branch */
 
-	/*
-	 * The maximum size of DCZID_EL0:BS supported is 2048 bytes.
-	 */
-	.rept (2048 / 16) - 1
+	/* align to DCZID_EL0:BS boundary */
+	tbz	x7, #0, 0f		/* fill 16byte? */
 	stp	xzr, xzr, [x15], #16
-	.endr
-.Lunrolled_end:
+0:
+	tbz	x7, #1, 1f		/* fill 32byte? */
+	stp	xzr, xzr, [x15], #16
+	stp	xzr, xzr, [x15], #16
+1:
+	lsr	x7, x7, #2
+	cbz	x7, 9f
+.L64bytes_fill:
+	sub	x7, x7, #1
+	stp	xzr, xzr, [x15], #16
+	stp	xzr, xzr, [x15], #16
+	stp	xzr, xzr, [x15], #16
+	stp	xzr, xzr, [x15], #16
+	cbnz	x7, .L64bytes_fill
+9:
 
 /*
  * Now we are block aligned.
