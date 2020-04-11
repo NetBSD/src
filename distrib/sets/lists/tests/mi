@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.834 2020/03/09 02:22:20 christos Exp $
+# $NetBSD: mi,v 1.835 2020/04/11 01:51:14 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1460,6 +1460,7 @@
 ./usr/tests/fs/ffs/rump_quotactl			tests-obsolete		obsolete
 ./usr/tests/fs/ffs/rump_repquota			tests-obsolete		obsolete
 ./usr/tests/fs/ffs/t_clearquota				tests-fs-tests		atf,rump
+./usr/tests/fs/ffs/t_extattr				tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs/t_fifos				tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs/t_getquota				tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs/t_miscquota				tests-fs-tests		atf,rump
