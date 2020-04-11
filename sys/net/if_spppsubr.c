@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.187.2.7 2020/04/11 07:38:00 is Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.187.2.8 2020/04/11 08:11:58 is Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.7 2020/04/11 07:38:00 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.8 2020/04/11 08:11:58 is Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.7 2020/04/11 07:38:00 is Exp
 #include <net/if_spppvar.h>
 
 #ifndef _NET_IF_STATS_H_
-#define if_statadd(ifp,member,amount)	do { (ifp)->(member)+=(amount); } while (0)
+#define if_statadd(ifp,member,amount)	do { (ifp)->member+=(amount); } while (0)
 #define if_statadd2(ifp,m1,a1,m2,a2)	do { if_statadd(ifp,m1,a1); if_statadd(ifp,m2,a2);} while(0)
 #define if_statinc(ifp,member)		if_statadd(ifp,member,1)
 #endif
