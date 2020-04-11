@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.35 2019/12/01 15:34:46 ad Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.35.6.1 2020/04/11 18:26:07 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35 2019/12/01 15:34:46 ad Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.1 2020/04/11 18:26:07 bouyer Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35 2019/12/01 15:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35.6.1 2020/04/11 18:26:07 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,6 +72,7 @@ static void xen_ipi_xcall(struct cpu_info *, struct intrframe *);
 static void xen_ipi_hvcb(struct cpu_info *, struct intrframe *);
 static void xen_ipi_generic(struct cpu_info *, struct intrframe *);
 static void xen_ipi_ast(struct cpu_info *, struct intrframe *);
+static void xen_ipi_kpreempt(struct cpu_info *ci, struct intrframe *);
 
 static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 {	/* In order of priority (see: xen/include/intrdefs.h */
@@ -85,7 +86,8 @@ static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 	xen_ipi_xcall,
 	xen_ipi_hvcb,
 	xen_ipi_generic,
-	xen_ipi_ast
+	xen_ipi_ast,
+	xen_ipi_kpreempt
 };
 
 static int
@@ -341,4 +343,10 @@ xen_ipi_hvcb(struct cpu_info *ci, struct intrframe *intrf)
 	KASSERT(!ci->ci_vcpu->evtchn_upcall_mask);
 
 	hypervisor_force_callback();
+}
+
+static void
+xen_ipi_kpreempt(struct cpu_info *ci, struct intrframe * intrf)
+{
+	softint_trigger(1 << SIR_PREEMPT);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.26 2019/05/04 11:15:49 kre Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.26.8.1 2020/04/11 18:26:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 Christian Limpach.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.26 2019/05/04 11:15:49 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.26.8.1 2020/04/11 18:26:07 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -61,6 +61,7 @@ lidt(struct region_descriptor *rd)
 	 * will be available at the boot stage when this is called.
 	 */
 	static char xen_idt_page[PAGE_SIZE] __attribute__((__aligned__ (PAGE_SIZE)));
+	kpreempt_disable();
 	memset(xen_idt_page, 0, PAGE_SIZE);
 	
 	struct trap_info *xen_idt = (void * )xen_idt_page;
@@ -96,6 +97,7 @@ lidt(struct region_descriptor *rd)
 	/* reset */
 	pmap_changeprot_local((vaddr_t) xen_idt, VM_PROT_READ|VM_PROT_WRITE);
 #endif /* __x86_64 */
+	kpreempt_enable();
 }
 
 void
@@ -254,6 +256,12 @@ register_t
 rcr2(void)
 {
 	return curcpu()->ci_vcpu->arch.cr2;
+}
+
+void
+lcr2(register_t v)
+{       
+	curcpu()->ci_vcpu->arch.cr2 = v;
 }
 
 #ifdef __x86_64__

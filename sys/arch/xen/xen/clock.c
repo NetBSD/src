@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.80 2019/10/16 18:29:49 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.80.6.1 2020/04/11 18:26:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.80 2019/10/16 18:29:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.80.6.1 2020/04/11 18:26:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -501,6 +501,7 @@ xen_wallclock_time(struct timespec *tsp)
 	struct xen_wallclock_ticket ticket;
 	uint64_t systime_ns;
 
+	int s = splsched(); /* make sure we won't be interrupted */
 	/* Read the last wall clock sample from the hypervisor. */
 	do {
 		xen_wallclock_enter(&ticket);
@@ -510,6 +511,7 @@ xen_wallclock_time(struct timespec *tsp)
 
 	/* Get the global system time.  */
 	systime_ns = xen_global_systime_ns();
+	splx(s);
 
 	/* Add the system time to the wall clock time.  */
 	systime_ns += tsp->tv_nsec;
@@ -530,7 +532,6 @@ xen_global_systime_ns(void)
 {
 	struct cpu_info *ci;
 	uint64_t local, global, result;
-	int bound;
 
 	/*
 	 * Find the local timecount on this CPU, and make sure it does
@@ -540,7 +541,7 @@ xen_global_systime_ns(void)
 	 *
 	 * XXX Can we avoid retrying if the CAS fails?
 	 */
-	bound = curlwp_bind();
+	int s = splsched(); /* make sure we won't be interrupted */
 	ci = curcpu();
 	do {
 		local = xen_vcputime_systime_ns();
@@ -555,7 +556,7 @@ xen_global_systime_ns(void)
 	} while (atomic_cas_64(&xen_global_systime_ns_stamp, global, result)
 	    != global);
 	KASSERT(ci == curcpu());
-	curlwp_bindx(bound);
+	splx(s);
 
 	return result;
 }
