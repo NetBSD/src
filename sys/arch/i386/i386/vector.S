@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.85.6.1 2020/04/10 14:42:00 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.85.6.2 2020/04/11 12:01:42 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85.6.1 2020/04/10 14:42:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85.6.2 2020/04/11 12:01:42 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -940,38 +940,6 @@ END(x2apic_level_stubs)
 #if defined(XEN)
 #define voidop(num)
 
-#ifdef XENPV
-#define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(recurse_ ## name ## num)						;\
-	INTR_RECURSE_HWFRAME						;\
-	subl	$4,%esp							;\
-	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
-	INTRENTRY							;\
-	movl	$_C_LABEL(Xdoreti), %esi; /* we now have a trap frame, so loop using doreti instead */ ;\
-IDTVEC(resume_ ## name ## num)						\
-	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
-	pushl	%ebx							;\
-	movl	CPUVAR(XSOURCES) + (num) * 4,%ebp			;\
-	movl	$num,CPUVAR(ILEVEL)					;\
-	IDEPTH_INCR /* leaves old %esp on stack	*/			;\
-	STI(%eax)							;\
-	movl	IS_HANDLERS(%ebp),%ebx					;\
-6:									\
-	pushl	IH_ARG(%ebx)						;\
-	call	*IH_FUN(%ebx)		/* call it */			;\
-	addl	$4,%esp			/* toss the arg */		;\
-	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
-	testl	%ebx,%ebx						;\
-	jnz	6b							;\
-									\
-	CLI(%eax)							;\
-	unmask(num)			/* unmask it in hardware */	;\
-	late_ack(num)							;\
-	IDEPTH_DECR							;\
-	popl	%ebx							;\
-	jmp	*%esi			/* lower spl and do ASTs */	;\
-
-#else /* XENPV */
 #define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
 IDTVEC(recurse_ ## name ## num)						;\
 	INTR_RECURSE_HWFRAME						;\
@@ -998,8 +966,6 @@ IDTVEC(resume_ ## name ## num)						\
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
-
-#endif /* XENPV */
 
 /*
  * Just unmasking the event isn't enough, we also need to
@@ -1110,80 +1076,20 @@ END(xenev_stubs)
  * activation and restart the handler using the previous one.
  */
 ENTRY(hypervisor_callback)
-	pushl	$0			/* dummy error code */
-	pushl	$T_ASTFLT
-	INTRENTRY
-	movl	TF_EIP(%esp),%eax
-	cmpl	$scrit,%eax
-	jb	11f
-	cmpl	$ecrit,%eax
-	jb	critical_region_fixup
-11:	pushl	CPUVAR(ILEVEL)
-	push	%esp
-	call	do_hypervisor_callback
-	add	$8,%esp
-	xorl	%eax,%eax
-	movb	TF_CS(%esp),%cl
-	test	$CHK_UPL,%cl		/* slow return to ring 2 or 3 */
-	je	safesti
-	movl	CPUVAR(ILEVEL),%ebx
-	jmp	doreti_checkast
-safesti:
-	movl	CPUVAR(VCPU),%esi
-	XEN_UNBLOCK_EVENTS(%esi)	/* reenable event callbacks */
-scrit:	/**** START OF CRITICAL REGION ****/
-	XEN_TEST_PENDING(%esi)
-	jnz	14f		/* process more events if necessary... */
-	INTRFASTEXIT
-critiret:
-14:	XEN_BLOCK_EVENTS(%esi)
-	jmp	11b
-ecrit:	/**** END OF CRITICAL REGION ****/
-/*
- * [How we do the fixup]. We want to merge the current stack frame with the
- * just-interrupted frame. How we do this depends on where in the critical
- * region the interrupted handler was executing, and so how many saved
- * registers are in each frame. We do this quickly using the lookup table
- * 'critical_fixup_table'. For each byte offset in the critical region, it
- * provides the number of bytes which have already been popped from the
- * interrupted stack frame.
- */
-critical_region_fixup:
-	cmpl	$(critiret-1),%eax	/* eip points to iret? */
-	jne	1f
-	movl	$(TF_PUSHSIZE+0x8),%eax
-	jmp	2f
-1:	xorl	%eax,%eax
-2:
-	/* %eax contains num bytes popped */
-	mov	%esp,%esi
-	add	%eax,%esi		/* %esi points at end of src region */
-	mov	%esp,%edi
-	add	$(TF_PUSHSIZE+0x8+0xC),%edi /* %edi points at end of dst region */
-	mov	%eax,%ecx
-	shr	$2,%ecx		/* convert words to bytes */
-	je	16f		/* skip loop if nothing to copy */
-15:	subl	$4,%esi		/* pre-decrementing copy loop */
-	subl	$4,%edi
-	movl	(%esi),%eax
-	movl	%eax,(%edi)
-	loop	15b
-16:	movl	%edi,%esp	/* final %edi is top of merged stack */
-	jmp	11b
-END(hypervisor_callback)
-
 IDTVEC(hypervisor_pvhvm_callback)	
 	pushl	$0			/* dummy error code */
 	pushl	$T_ASTFLT
 	INTRENTRY
+	pushl	CPUVAR(ILEVEL)
 	push	%esp
 	call	do_hypervisor_callback
 	add	$4,%esp
-	push	CPUVAR(ILEVEL)
 	IDEPTH_INCR
-	cli
+	CLI(%eax)
 	jmp	_C_LABEL(Xdoreti)
 IDTVEC_END(hypervisor_pvhvm_callback)
+END(hypervisor_callback)
+
 #endif /* XEN */
 #ifdef XENPV	
 /*

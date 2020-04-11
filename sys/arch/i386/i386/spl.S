@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.50.4.2 2020/04/11 10:11:31 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.50.4.3 2020/04/11 12:01:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50.4.2 2020/04/11 10:11:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50.4.3 2020/04/11 12:01:42 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -236,7 +236,7 @@ IDTVEC(spllower)
 #endif
 3:
 	movl	%ebx,CPUVAR(ILEVEL)
-#ifdef XEN
+#ifdef XENPV
 	STIC(%eax)
 	jz 4f
 	call	_C_LABEL(stipending)
@@ -260,7 +260,7 @@ IDTVEC(spllower)
 IDTVEC_END(spllower)
 
 /*
- * Handle return from interrupt after device handler finishes.
+ * Xdoreti: Handle return from interrupt after device handler finishes.
  *
  * Important registers:
  *   ebx - cpl to restore
@@ -270,10 +270,8 @@ IDTVEC_END(spllower)
  * called with interrupt disabled.
  */
 IDTVEC(doreti)
-#ifndef XENPV
 	IDEPTH_DECR
 	popl	%ebx			/* get previous priority */
-#endif
 .Ldoreti_resume_stic:
 	movl	$.Ldoreti_resume,%esi	/* address to resume loop at */
 .Ldoreti_resume:
@@ -292,7 +290,6 @@ IDTVEC(doreti)
 #endif /* XENPV */
 #endif /* defined(DEBUG) */
 
-#if !defined(XENPV)
 	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	andl	CPUVAR(IPENDING),%eax
@@ -301,7 +298,6 @@ IDTVEC(doreti)
 	btrl	%eax,CPUVAR(IPENDING)
 	movl	CPUVAR(ISOURCES)(,%eax, 4),%eax
 	jmp	*IS_RESUME(%eax)
-#endif
 2:
 #if defined(XEN)
 	movl	%ebx,%eax
@@ -340,7 +336,7 @@ END(doreti_checkast)
 	jnz	9f
 	HANDLE_DEFERRED_FPU
 6:
-#ifdef XEN
+#ifdef XENPV
 	STIC(%eax)
 	jz	4f
 	call	_C_LABEL(stipending)
