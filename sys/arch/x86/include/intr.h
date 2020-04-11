@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.61.6.1 2020/04/10 14:42:00 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.61.6.2 2020/04/11 18:26:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -32,12 +32,10 @@
 #ifndef _X86_INTR_H_
 #define _X86_INTR_H_
 
-#if !defined(XENPV)
 #define	__HAVE_FAST_SOFTINTS
 #if !defined(NO_PREEMPTION)
 #define	__HAVE_PREEMPTION
 #endif /* !defined(NO_PREEMPTION) */
-#endif /*  !defined(XENPV) */
 
 #ifdef _KERNEL
 #include <sys/types.h>
@@ -238,6 +236,9 @@ void intr_printconfig(void);
 const char *intr_create_intrid(int, struct pic *, int, char *, size_t);
 struct intrsource *intr_allocate_io_intrsource(const char *);
 void intr_free_io_intrsource(const char *);
+
+void x86_init_preempt(struct cpu_info *);
+void x86_intr_calculatemasks(struct cpu_info *);
 
 int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);

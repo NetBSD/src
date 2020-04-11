@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.50.4.3 2020/04/11 12:01:42 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.50.4.4 2020/04/11 18:26:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50.4.3 2020/04/11 12:01:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50.4.4 2020/04/11 18:26:07 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -213,7 +213,6 @@ IDTVEC(spllower)
 	jz	.Lspllower_panic
 #endif /* XENPV */
 #endif /* defined(DEBUG) */
-#if !defined(XENPV)
 	movl	%ebx,%eax			/* get cpl */
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	andl	CPUVAR(IPENDING),%eax		/* any non-masked bits left? */
@@ -222,7 +221,6 @@ IDTVEC(spllower)
 	btrl	%eax,CPUVAR(IPENDING)
 	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RECURSE(%eax)
-#endif
 2:
 #if defined(XEN)
 	movl	%ebx,%eax			/* get cpl */
@@ -361,7 +359,6 @@ END(doreti_checkast)
 #endif
 IDTVEC_END(doreti)
 
-#ifndef XENPV
 /*
  * Xsoftintr()
  *
@@ -379,6 +376,7 @@ IDTVEC(softintr)
 	pushl	%esi
 	pushl	%edi
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	STI(%esi)
 	movl	CPUVAR(CURLWP),%esi
 	movl	IS_LWP(%eax),%edi	/* switch to handler LWP */
 	movl	%edi,CPUVAR(CURLWP)
@@ -387,12 +385,11 @@ IDTVEC(softintr)
 	movl	%esp,PCB_ESP(%ecx)
 	movl	%ebp,PCB_EBP(%ecx)
 	movl	PCB_ESP0(%edx),%esp	/* onto new stack */
-	sti
 	pushl	IS_MAXLEVEL(%eax)	/* ipl to run at */
 	pushl	%esi
 	call	_C_LABEL(softint_dispatch)/* run handlers */
 	addl	$8,%esp
-	cli
+	CLI(%ecx)
 	movl	L_PCB(%esi),%ecx
 	movl	PCB_ESP(%ecx),%esp
 	xchgl	%esi,CPUVAR(CURLWP)	/* must be globally visible */
@@ -412,7 +409,7 @@ IDTVEC_END(softintr)
  */
 ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
-	cli
+	CLI(%eax)
 	jmp	*%esi			/* back to splx/doreti */
 END(softintr_ret)
 
@@ -434,11 +431,11 @@ END(softint_trigger)
  */
 IDTVEC(recurse_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
-	sti
+	STI(%eax)
 	pushl	$0
 	call	_C_LABEL(kpreempt)
 	addl	$4,%esp
-	cli
+	CLI(%eax)
 	jmp	*%esi
 IDTVEC_END(recurse_preempt)
 
@@ -449,18 +446,17 @@ IDTVEC_END(recurse_preempt)
  */
 IDTVEC(resume_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
-	sti
+	STI(%eax)
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	1f
 	movl	TF_EIP(%esp),%eax
 	pushl	%eax
 	call	_C_LABEL(kpreempt)		/* from kernel */
 	addl	$4,%esp
-	cli
+	CLI(%eax)
 	jmp	*%esi
 1:
 	call	_C_LABEL(preempt)		/* from user */
-	cli
+	CLI(%eax)
 	jmp	*%esi
 IDTVEC_END(resume_preempt)
-#endif /* !XENPV */

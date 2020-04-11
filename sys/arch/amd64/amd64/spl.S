@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.43.4.4 2020/04/11 10:11:30 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.43.4.5 2020/04/11 18:26:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -91,7 +91,6 @@ ENTRY(splraise)
 	ret
 END(splraise)
 
-#ifndef XENPV
 /*
  * Xsoftintr()
  *
@@ -148,11 +147,11 @@ IDTVEC(softintr)
 	movq	PCB_RSP0(%rdx),%rsp
 
 	/* dispatch */
-	sti
+	STI(di)
 	movq	%r15,%rdi		/* interrupted LWP */
 	movl	IS_MAXLEVEL(%rax),%esi	/* ipl to run at */
 	call	_C_LABEL(softint_dispatch)/* run handlers */
-	cli
+	CLI(di)
 
 	/* restore old context */
 	movq	L_PCB(%r15),%rcx
@@ -174,7 +173,7 @@ IDTVEC_END(softintr)
  */
 ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
-	cli
+	CLI(ax)		/* %rax not used by Xspllower/Xdoreti */
 	jmp	*%r13			/* back to Xspllower/Xdoreti */
 END(softintr_ret)
 
@@ -196,11 +195,11 @@ END(softint_trigger)
  */
 IDTVEC(recurse_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
-	sti
+	STI(di)
 	xorq	%rdi,%rdi
 	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(kpreempt)
-	cli
+	CLI(di)
 	jmp	*%r13			/* back to Xspllower */
 IDTVEC_END(recurse_preempt)
 
@@ -211,20 +210,19 @@ IDTVEC_END(recurse_preempt)
  */
 IDTVEC(resume_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
-	sti
+	STI(ax)
 	testq	$SEL_RPL,TF_CS(%rsp)
 	jnz	1f
 	movq	TF_RIP(%rsp),%rdi
 	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(kpreempt)	/* from kernel */
-	cli
+	CLI(ax)
 	jmp	*%r13			/* back to Xdoreti */
 1:
 	call	_C_LABEL(preempt)	/* from user */
-	cli
+	CLI(ax)
 	jmp	*%r13			/* back to Xdoreti */
 IDTVEC_END(resume_preempt)
-#endif /* XEN */
 
 /*
  * void spllower(int s);
@@ -336,7 +334,6 @@ IDTVEC(spllower)
 	movl	%edi,%ebx
 	leaq	1f(%rip),%r13		/* address to resume loop at */
 1:
-#if !defined(XENPV)
 	movl	%ebx,%eax		/* get cpl */
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
@@ -346,7 +343,6 @@ IDTVEC(spllower)
 	btrl	%eax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RECURSE(%rax)
-#endif
 2:
 #if defined(XEN)
 	movl	%ebx,%eax		/* get cpl */
@@ -382,7 +378,6 @@ IDTVEC(doreti)
 	decl	CPUVAR(IDEPTH)
 	leaq	1f(%rip),%r13
 1:
-#if !defined(XENPV)
 	movl    %ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
 	CLI(si)
@@ -392,7 +387,6 @@ IDTVEC(doreti)
 	btrl	%eax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RESUME(%rax)
-#endif
 2:
 #if defined(XEN)
 	movl    %ebx,%eax

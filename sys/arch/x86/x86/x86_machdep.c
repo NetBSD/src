@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.137.2.2 2020/04/11 08:06:16 bouyer Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.137.2.3 2020/04/11 18:26:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.137.2.2 2020/04/11 08:06:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.137.2.3 2020/04/11 18:26:07 bouyer Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -307,7 +307,11 @@ cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 #ifdef __HAVE_PREEMPTION
 	if ((flags & RESCHED_KPREEMPT) != 0) {
 		if ((flags & RESCHED_REMOTE) != 0) {
+#ifdef XENPV
+			xen_send_ipi(ci, XEN_IPI_KPREEMPT);
+#else
 			x86_send_ipi(ci, X86_IPI_KPREEMPT);
+#endif
 		} else {
 			softint_trigger(1 << SIR_PREEMPT);
 		}

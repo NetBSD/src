@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.107 2019/02/15 08:54:01 nonaka Exp $
+#	$NetBSD: files.x86,v 1.107.10.1 2020/04/11 18:26:07 bouyer Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -93,6 +93,7 @@ file	arch/x86/x86/genfb_machdep.c	machdep
 file	arch/x86/x86/identcpu.c		machdep
 file	arch/x86/x86/i8259.c		machdep
 file	arch/x86/x86/intr.c		machdep
+file	arch/x86/x86/x86_softintr.c	machdep
 file	arch/x86/x86/kgdb_machdep.c	kgdb
 file	arch/x86/x86/nmi.c		machdep
 file	arch/x86/x86/idt.c		machdep

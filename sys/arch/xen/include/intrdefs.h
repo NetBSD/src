@@ -1,4 +1,4 @@
-/* $NetBSD: intrdefs.h,v 1.15 2020/04/03 22:20:36 ad Exp $ */
+/* $NetBSD: intrdefs.h,v 1.15.2.1 2020/04/11 18:26:07 bouyer Exp $ */
 
 /* This file co-exists, and is included via machine/intrdefs.h */
 
@@ -14,9 +14,10 @@
 #define XEN_IPI_HVCB		0x00000010
 #define XEN_IPI_GENERIC		0x00000020
 #define XEN_IPI_AST		0x00000040
+#define XEN_IPI_KPREEMPT	0x00000080
 
 /* Note: IPI_KICK does not have a handler. */
-#define XEN_NIPIS		7
+#define XEN_NIPIS		8
 
 /* The number of 'irqs' that XEN understands */
 #define NUM_XEN_IRQS 		256
@@ -24,6 +25,6 @@
 #define XEN_IPI_NAMES {  "halt IPI", "FPU synch IPI", \
 			 "DDB IPI", "xcall IPI", \
 			 "HVCB IPI", "generic IPI", \
-			 "AST IPI" }
+			 "AST IPI", "kpreempt IPI" }
 
 #endif /* _XEN_INTRDEFS_H_ */
