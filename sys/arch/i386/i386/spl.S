@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.50.4.1 2020/04/10 14:42:00 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.50.4.2 2020/04/11 10:11:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50.4.1 2020/04/10 14:42:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50.4.2 2020/04/11 10:11:31 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -67,8 +67,6 @@ ENTRY(splraise)
 	ret
 END(splraise)
 
-#ifndef XENPV
-
 /*
  * void spllower(int s);
  *
@@ -90,8 +88,8 @@ ENTRY(spllower)
 	cmpl	CPUVAR(ILEVEL),%ecx
 	jae	1f
 	movl	CPUVAR(IUNMASK)(,%ecx,4),%edx
-	pushf
-	cli
+	PUSHF(%eax)
+	CLI(%eax)
 	testl	CPUVAR(IPENDING),%edx
 	jnz	2f
 #if defined(XEN)
@@ -100,16 +98,25 @@ ENTRY(spllower)
 	jnz	2f
 #endif
 	movl	%ecx,CPUVAR(ILEVEL)
-	popf
+	POPF(%eax)
 1:
 	ret
 2:
+#ifdef XENPV
+	/*
+	 * no need to call stipending, we're going to CLI again
+	 * just drop the saved value on stack
+	 */
+	addl	$4,%esp
+#else
 	popf
+#endif
 	jmp	_C_LABEL(Xspllower)
 	.align	32
 LABEL(spllower_end)
 END(spllower)
 
+#ifndef XENPV
 /*
  * void	cx8_spllower(int s);
  *
