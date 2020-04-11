@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.187.2.9 2020/04/11 09:40:02 is Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.187.2.10 2020/04/11 10:06:22 is Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.9 2020/04/11 09:40:02 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187.2.10 2020/04/11 10:06:22 is Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2950,8 +2950,8 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				u_int mrru = p[2] * 256 + p[3];
 				if (debug)
 					addlog(" %d", mrru);
-				if (mrru < PPP_MINMRU || mru > sp->pp_if.if_mtu)
-					mru = sp->pp_if.if_mtu;
+				if (mrru < PPP_MINMRU || mrru > sp->pp_if.if_mtu)
+					mrru = sp->pp_if.if_mtu;
 				sp->lcp.mrru = mrru;
 				sp->lcp.opts |= (1 << LCP_OPT_MP_MRRU);
 			}
