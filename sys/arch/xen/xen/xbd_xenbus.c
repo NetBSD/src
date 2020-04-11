@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.100 2020/04/10 11:41:04 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.101 2020/04/11 16:02:41 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.100 2020/04/10 11:41:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.101 2020/04/11 16:02:41 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -576,7 +576,8 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 				buf, (int)dg->dg_secsize, sc->sc_xbdsize);
 		snprintb(buf, sizeof(buf), BLKIF_FEATURE_BITS,
 		    sc->sc_features);
-		aprint_normal_dev(sc->sc_dksc.sc_dev, "features %s\n", buf);
+		aprint_normal_dev(sc->sc_dksc.sc_dev,
+		    "backend features %s\n", buf);
 
 		/* Discover wedges on this disk. */
 		dkwedge_discover(&sc->sc_dksc.sc_dkdev);
