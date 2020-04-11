@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.3 2019/02/14 08:18:25 cherry Exp $ */
+/* $NetBSD: mainbus.c,v 1.3.12.1 2020/04/11 21:21:49 bouyer Exp $ */
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2019/02/14 08:18:25 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3.12.1 2020/04/11 21:21:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,16 +225,16 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif /* XENPV */
 		x86_cpubus_attach(self);
 
-#if defined(__i386__) && !defined(XENPV)
-		i386_mainbus_attach(parent, self, aux);
-#elif defined(__x86_64__) && !defined(XENPV)
-		amd64_mainbus_attach(parent, self, aux);
-#endif
 #if defined(XENPV)
 	}
 #endif /* XENPV */
 #if defined(XEN)
 	xen_mainbus_attach(parent, self, aux);
+#endif
+#if defined(__i386__) && !defined(XENPV)
+	i386_mainbus_attach(parent, self, aux);
+#elif defined(__x86_64__) && !defined(XENPV)
+	amd64_mainbus_attach(parent, self, aux);
 #endif
 }
 
