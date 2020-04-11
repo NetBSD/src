@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.23 2020/04/10 14:54:34 jdolecek Exp $ */
+/* $NetBSD: xenbus.h,v 1.24 2020/04/11 11:01:12 jdolecek Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -52,7 +52,6 @@ struct xenbusdev_attach_args {
 	const char		*xa_type;
 	int 			xa_id;
 	struct xenbus_device	*xa_xbusd;
-	bus_dma_tag_t		xa_dmat;
 };
 
 /* Register callback to watch this node. */
@@ -100,6 +99,7 @@ struct xenbus_device {
 	/* for xenbus internal use */
 	struct xenbus_watch xbusd_otherend_watch;
 	size_t xbusd_sz;		/* size of allocated structure */
+	bus_dma_tag_t xbusd_dmat;
 	const char xbusd_path[1]; /* our path */
 };
 
