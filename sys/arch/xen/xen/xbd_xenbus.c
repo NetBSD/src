@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.101 2020/04/11 16:02:41 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.102 2020/04/11 16:15:34 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.101 2020/04/11 16:02:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.102 2020/04/11 16:15:34 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -97,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.101 2020/04/11 16:02:41 jdolecek Ex
 #define XEN_BSHIFT      9               /* log2(XEN_BSIZE) */
 #define XEN_BSIZE       (1 << XEN_BSHIFT) 
 
+__CTASSERT((DEV_BSIZE == XEN_BSIZE));
+
 struct xbd_req {
 	SLIST_ENTRY(xbd_req) req_next;
 	uint16_t req_id; /* ID passed to backend */
@@ -105,7 +107,6 @@ struct xbd_req {
 		grant_ref_t req_gntref[BLKIF_MAX_SEGMENTS_PER_REQUEST];
 		int req_nr_segments; /* number of segments in this request */
 		struct buf *req_bp; /* buffer associated with this request */
-		void *req_data; /* pointer to the data buffer */
 	    } req_rw;
 	    struct {
 		int s_error;
@@ -116,7 +117,6 @@ struct xbd_req {
 #define req_gntref	u.req_rw.req_gntref
 #define req_nr_segments	u.req_rw.req_nr_segments
 #define req_bp		u.req_rw.req_bp
-#define req_data	u.req_rw.req_data
 #define req_sync	u.req_sync
 
 struct xbd_xenbus_softc {
@@ -156,7 +156,6 @@ struct xbd_xenbus_softc {
 #define BLKIF_FEATURE_PERSISTENT	0x4
 #define BLKIF_FEATURE_BITS		\
 	"\20\1CACHE-FLUSH\2BARRIER\3PERSISTENT"
-	struct evcnt sc_cnt_map_unalign;
 };
 
 #if 0
@@ -176,9 +175,6 @@ static int  xbd_handler(void *);
 static int  xbd_diskstart(device_t, struct buf *);
 static void xbd_backend_changed(void *, XenbusState);
 static void xbd_connect(struct xbd_xenbus_softc *);
-
-static int  xbd_map_align(struct xbd_req *);
-static void xbd_unmap_align(struct xbd_req *);
 
 static void xbdminphys(struct buf *);
 
@@ -285,9 +281,6 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 		panic("%s: can't alloc ring", device_xname(self));
 	sc->sc_ring.sring = ring;
 
-	evcnt_attach_dynamic(&sc->sc_cnt_map_unalign, EVCNT_TYPE_MISC,
-	    NULL, device_xname(self), "map unaligned");
-
 	/* resume shared structures and tell backend that we are ready */
 	if (xbd_xenbus_resume(self, PMF_Q_NONE) == false) {
 		uvm_km_free(kernel_map, (vaddr_t)ring, PAGE_SIZE,
@@ -370,8 +363,6 @@ xbd_xenbus_detach(device_t dev, int flags)
 	xengnt_revoke_access(sc->sc_ring_gntref);
 	uvm_km_free(kernel_map, (vaddr_t)sc->sc_ring.sring,
 	    PAGE_SIZE, UVM_KMF_WIRED);
-
-	evcnt_detach(&sc->sc_cnt_map_unalign);
 
 	pmf_device_deregister(dev);
 
@@ -711,9 +702,6 @@ again:
 			goto next;
 		}
 		/* b_resid was set in dk_start */
-		if (__predict_false(
-		    xbdreq->req_data != NULL && bp->b_data != xbdreq->req_data))
-			xbd_unmap_align(xbdreq);
 next:
 		xbdreq->req_bp = NULL;
 		dk_done(&sc->sc_dksc, bp);
@@ -983,16 +971,13 @@ xbd_diskstart(device_t self, struct buf *bp)
 	}
 
 	xbdreq->req_bp = bp;
-	xbdreq->req_data = bp->b_data;
-	if (__predict_false((vaddr_t)bp->b_data & (XEN_BSIZE - 1))) {
-		sc->sc_cnt_map_unalign.ev_count++;
 
-		if (__predict_false(xbd_map_align(xbdreq) != 0)) {
-			DPRINTF(("xbd_diskstart: no align\n"));
-			error = EAGAIN;
-			goto out;
-		}
-	}
+	/*
+	 * All bufs passed by system are aligned to DEV_BSIZE.
+	 * xbd requires this to be the case, as transfer offsets
+	 * are expressed in multiplies of 512 (XEN_BSIZE).
+	 */
+	KASSERT(((vaddr_t)bp->b_data & (XEN_BSIZE - 1)) == 0);
 
 	SLIST_REMOVE_HEAD(&sc->sc_xbdreq_head, req_next);
 	req = RING_GET_REQUEST(&sc->sc_ring, sc->sc_ring.req_prod_pvt);
@@ -1002,8 +987,8 @@ xbd_diskstart(device_t self, struct buf *bp)
 	req->sector_number = bp->b_rawblkno;
 	req->handle = sc->sc_handle;
 
-	va = (vaddr_t)xbdreq->req_data & ~PAGE_MASK;
-	off = (vaddr_t)xbdreq->req_data & PAGE_MASK;
+	va = (vaddr_t)bp->b_data & ~PAGE_MASK;
+	off = (vaddr_t)bp->b_data & PAGE_MASK;
 	bcount = bp->b_bcount;
 	bp->b_resid = 0;
 	for (seg = 0; bcount > 0;) {
@@ -1042,34 +1027,4 @@ out:
 	splx(s);	/* XXXSMP */
 err:
 	return error;
-}
-
-static int
-xbd_map_align(struct xbd_req *req)
-{
-	int s = splvm(); /* XXXSMP - bogus? */
-	int rc;
-
-	rc = uvm_km_kmem_alloc(kmem_va_arena,
-	    req->req_bp->b_bcount, (VM_NOSLEEP | VM_INSTANTFIT),
-	    (vmem_addr_t *)&req->req_data);
-	splx(s);
-	if (__predict_false(rc != 0))
-		return ENOMEM;
-	if ((req->req_bp->b_flags & B_READ) == 0)
-		memcpy(req->req_data, req->req_bp->b_data,
-		    req->req_bp->b_bcount);
-	return 0;
-}
-
-static void
-xbd_unmap_align(struct xbd_req *req)
-{
-	int s;
-	if (req->req_bp->b_flags & B_READ)
-		memcpy(req->req_bp->b_data, req->req_data,
-		    req->req_bp->b_bcount);
-	s = splvm(); /* XXXSMP - bogus? */
-	uvm_km_kmem_free(kmem_va_arena, (vaddr_t)req->req_data, req->req_bp->b_bcount);
-	splx(s);
 }
