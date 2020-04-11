@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.111 2020/04/10 19:08:10 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.112 2020/04/11 11:01:12 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.111 2020/04/10 19:08:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.112 2020/04/11 11:01:12 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -169,7 +169,6 @@ struct xennet_xenbus_softc {
 	struct ethercom sc_ethercom;
 	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 	struct xenbus_device *sc_xbusd;
-	bus_dma_tag_t sc_dmat;
 
 	netif_tx_front_ring_t sc_tx_ring;
 	netif_rx_front_ring_t sc_rx_ring;
@@ -264,7 +263,6 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_xbusd = xa->xa_xbusd;
 	sc->sc_xbusd->xbusd_otherend_changed = xennet_backend_changed;
-	sc->sc_dmat = xa->xa_dmat;
 
 	/* xenbus ensure 2 devices can't be probed at the same time */
 	if (if_xennetrxbuf_cache_inited == 0) {
@@ -280,8 +278,8 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 		struct xennet_txreq *txreq = &sc->sc_txreqs[i];
 	
 		txreq->txreq_id = i;
-		if (bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
-		    PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		if (bus_dmamap_create(sc->sc_xbusd->xbusd_dmat, PAGE_SIZE, 1,
+		    PAGE_SIZE, PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &txreq->txreq_dmamap) != 0)
 			break;
 
@@ -294,8 +292,8 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < NET_RX_RING_SIZE; i++) {
 		struct xennet_rxreq *rxreq = &sc->sc_rxreqs[i];
 		rxreq->rxreq_id = i;
-		if (bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
-		    PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		if (bus_dmamap_create(sc->sc_xbusd->xbusd_dmat, PAGE_SIZE, 1,
+		    PAGE_SIZE, PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &rxreq->rxreq_dmamap) != 0)
 			break;
 		rxreq->rxreq_gntref = GRANT_INVALID_REF;
@@ -725,7 +723,8 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 
 		/* Set M_EXT_CLUSTER so that load_mbuf uses m_ext.ext_paddr */
 		m->m_flags |= M_EXT_CLUSTER;
-		if (__predict_false(bus_dmamap_load_mbuf(sc->sc_dmat,
+		if (__predict_false(bus_dmamap_load_mbuf(
+		    sc->sc_xbusd->xbusd_dmat,
 		    req->rxreq_dmamap, m, BUS_DMA_NOWAIT) != 0)) {
 			printf("%s: rx mbuf load failed", ifp->if_xname);
 			m->m_flags &= ~M_EXT_CLUSTER;
@@ -867,7 +866,7 @@ again:
 		else
 			if_statinc(ifp, if_opackets);
 		xengnt_revoke_access(req->txreq_gntref);
-		bus_dmamap_unload(sc->sc_dmat, req->txreq_dmamap);
+		bus_dmamap_unload(sc->sc_xbusd->xbusd_dmat, req->txreq_dmamap);
 		m_freem(req->txreq_m);
 		req->txreq_m = NULL;
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, req, txreq_next);
@@ -927,7 +926,7 @@ again:
 		req->rxreq_m = NULL;
 
 		m->m_len = m->m_pkthdr.len = rx->status;
-		bus_dmamap_sync(sc->sc_dmat, req->rxreq_dmamap, 0,
+		bus_dmamap_sync(sc->sc_xbusd->xbusd_dmat, req->rxreq_dmamap, 0,
 		     m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
 
 		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
@@ -998,7 +997,8 @@ xennet_start(struct ifnet *ifp)
 		}
 
 		/* Try to load the mbuf as-is, if that fails allocate new */
-		if (__predict_false(bus_dmamap_load_mbuf(sc->sc_dmat,
+		if (__predict_false(bus_dmamap_load_mbuf(
+		    sc->sc_xbusd->xbusd_dmat,
 		    req->txreq_dmamap, m, BUS_DMA_NOWAIT) != 0)) {
 			struct mbuf *new_m;
 
@@ -1026,7 +1026,8 @@ xennet_start(struct ifnet *ifp)
 			m_freem(m);
 			m = new_m;
 
-			if (__predict_false(bus_dmamap_load_mbuf(sc->sc_dmat,
+			if (__predict_false(bus_dmamap_load_mbuf(
+			    sc->sc_xbusd->xbusd_dmat,
 			    req->txreq_dmamap, m, BUS_DMA_NOWAIT) != 0)) {
 				printf("%s: cannot load new mbuf\n",
 				       device_xname(sc->sc_dev));
@@ -1043,13 +1044,14 @@ xennet_start(struct ifnet *ifp)
 		    sc->sc_xbusd->xbusd_otherend_id,
 		    trunc_page(ma),
 		    GNTMAP_readonly, &req->txreq_gntref) != 0)) {
-			bus_dmamap_unload(sc->sc_dmat, req->txreq_dmamap);
+			bus_dmamap_unload(sc->sc_xbusd->xbusd_dmat,
+			    req->txreq_dmamap);
 			m_freem(m);
 			break;
 		}
 
 		/* We are now committed to transmit the packet */
-		bus_dmamap_sync(sc->sc_dmat, req->txreq_dmamap, 0,
+		bus_dmamap_sync(sc->sc_xbusd->xbusd_dmat, req->txreq_dmamap, 0,
 		     m->m_pkthdr.len, BUS_DMASYNC_POSTWRITE);
 		MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 
