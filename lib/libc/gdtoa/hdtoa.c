@@ -1,4 +1,4 @@
-/*	$NetBSD: hdtoa.c,v 1.10 2020/04/11 20:28:28 christos Exp $	*/
+/*	$NetBSD: hdtoa.c,v 1.11 2020/04/11 20:48:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_hdtoa.c,v 1.4 2007/01/03 04:57:58 das Exp $");
 #else
-__RCSID("$NetBSD: hdtoa.c,v 1.10 2020/04/11 20:28:28 christos Exp $");
+__RCSID("$NetBSD: hdtoa.c,v 1.11 2020/04/11 20:48:53 christos Exp $");
 #endif
 
 #include <float.h>
@@ -348,7 +348,7 @@ hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
 	 * (partial) nibble, which is dealt with by the next
 	 * statement.  We also tack on the implicit normalization bit.
 	 */
-	*s = (u.extu_ext.ext_frach | (1U << ((LDBL_MANT_DIG - 1) % 4))) 0xf;
+	*s = (u.extu_ext.ext_frach | (1U << ((LDBL_MANT_DIG - 1) % 4))) & 0xf;
 
 	/* If ndigits < 0, we are expected to auto-size the precision. */
 	if (ndigits < 0) {
