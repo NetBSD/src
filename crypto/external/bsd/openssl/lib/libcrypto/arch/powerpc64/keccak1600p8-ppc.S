@@ -288,16 +288,16 @@ KeccakF1600:
 .byte	0,12,0x04,1,0x80,0,1,0
 .long	0
 
-.globl	SHA3_absorb
-.type	SHA3_absorb,@function
+.globl	SHA3_absorb_vsx
+.type	SHA3_absorb_vsx,@function
 .section	".opd","aw"
 .align	3
-SHA3_absorb:
-.quad	.SHA3_absorb,.TOC.@tocbase,0
+SHA3_absorb_vsx:
+.quad	.SHA3_absorb_vsx,.TOC.@tocbase,0
 .previous
 
 .align	5
-.SHA3_absorb:
+.SHA3_absorb_vsx:
 	stdu	1,-256(1)
 	li	10,63
 	li	11,79
@@ -595,16 +595,16 @@ SHA3_absorb:
 .byte	0,12,0x04,1,0x80,0,4,0
 .long	0
 
-.globl	SHA3_squeeze
-.type	SHA3_squeeze,@function
+.globl	SHA3_squeeze_vsx
+.type	SHA3_squeeze_vsx,@function
 .section	".opd","aw"
 .align	3
-SHA3_squeeze:
-.quad	.SHA3_squeeze,.TOC.@tocbase,0
+SHA3_squeeze_vsx:
+.quad	.SHA3_squeeze_vsx,.TOC.@tocbase,0
 .previous
 
 .align	5
-.SHA3_squeeze:
+.SHA3_squeeze_vsx:
 	mflr	9
 	subi	4,4,1
 	addi	8,3,4
