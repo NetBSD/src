@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.117.4.2 2020/04/10 14:37:54 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.117.4.3 2020/04/11 10:11:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -132,9 +132,7 @@ struct cpu_info {
 
 	int ci_kfpu_spl;
 
-#ifndef XENPV
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
-#endif
 #if defined(XEN)
 	struct intrsource *ci_xsources[NIPL];
 	uint32_t	ci_xmask[NIPL];

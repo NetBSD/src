@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.43.4.3 2020/04/10 14:41:59 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.43.4.4 2020/04/11 10:11:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -226,7 +226,6 @@ IDTVEC(resume_preempt)
 IDTVEC_END(resume_preempt)
 #endif /* XEN */
 
-#ifndef XENPV
 /*
  * void spllower(int s);
  *
@@ -238,8 +237,8 @@ ENTRY(spllower)
 	cmpl	CPUVAR(ILEVEL),%edi
 	jae	1f
 	movl	CPUVAR(IUNMASK)(,%rdi,4),%edx
-	pushf
-	cli
+	PUSHF(ax)
+	CLI(ax)
 	testl	CPUVAR(IPENDING),%edx
 	jnz	2f
 #if defined(XEN)
@@ -248,12 +247,20 @@ ENTRY(spllower)
 	jnz	2f
 #endif
 	movl	%edi,CPUVAR(ILEVEL)
-	popf
+	POPF	/* clobbers %rdi */
 1:
 	ret
 	ret
 2:
+#ifdef XENPV
+	/*
+	 * no need to call stipending, we're going to CLI again
+	 * just drop the saved value on stack
+	 */
+	addq	$8,%rsp
+#else
 	popf
+#endif
 	jmp	_C_LABEL(Xspllower)
 3:
 	.space 16
@@ -261,6 +268,7 @@ ENTRY(spllower)
 END(spllower)
 LABEL(spllower_end)
 
+#ifndef XENPV
 /*
  * void	cx8_spllower(int s);
  *

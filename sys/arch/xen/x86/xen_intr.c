@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.21 2020/04/06 19:26:00 jdolecek Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.21.2.1 2020/04/11 10:11:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21 2020/04/06 19:26:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.1 2020/04/11 10:11:31 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -72,38 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21 2020/04/06 19:26:00 jdolecek Exp $
 #if defined(MULTIPROCESSOR)
 static const char *xen_ipi_names[XEN_NIPIS] = XEN_IPI_NAMES;
 #endif
-
-/*
- * Restore a value to cpl (unmasking interrupts).  If any unmasked
- * interrupts are pending, call Xspllower() to process them.
- */
-void xen_spllower(int nlevel);
-
-void
-xen_spllower(int nlevel)
-{
-	struct cpu_info *ci = curcpu();
-	uint32_t xmask;
-	u_long psl;
-
-	if (ci->ci_ilevel <= nlevel)
-		return;
-
-	__insn_barrier();
-
-	xmask = XUNMASK(ci, nlevel);
-	psl = xen_read_psl();
-	x86_disable_intr();
-	if (ci->ci_xpending & xmask) {
-		KASSERT(psl == 0);
-		Xspllower(nlevel);
-		/* Xspllower does enable_intr() */
-	} else {
-		ci->ci_ilevel = nlevel;
-		xen_write_psl(psl);
-	}
-}
-
 
 #if !defined(XENPVHVM)
 void
