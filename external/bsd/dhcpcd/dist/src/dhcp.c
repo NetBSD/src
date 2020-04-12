@@ -56,8 +56,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <syslog.h>
 
-#define ELOOP_QUEUE 2
+#define ELOOP_QUEUE	ELOOP_DHCP
 #include "config.h"
 #include "arp.h"
 #include "bpf.h"
@@ -2758,7 +2759,7 @@ whitelisted_ip(const struct if_options *ifo, in_addr_t addr)
 }
 
 static void
-log_dhcp(logfunc_t *logfunc, const char *msg,
+log_dhcp(int loglevel, const char *msg,
     const struct interface *ifp, const struct bootp *bootp, size_t bootp_len,
     const struct in_addr *from, int ad)
 {
@@ -2805,10 +2806,10 @@ log_dhcp(logfunc_t *logfunc, const char *msg,
 		print_string(sname, sizeof(sname), OT_STRING | OT_DOMAIN,
 		    bootp->sname, sizeof(bootp->sname));
 		if (a == NULL)
-			logfunc("%s: %s %s %s `%s'",
+			logmessage(loglevel, "%s: %s %s %s `%s'",
 			    ifp->name, msg, tfrom, inet_ntoa(addr), sname);
 		else
-			logfunc("%s: %s %s %s %s `%s'",
+			logmessage(loglevel, "%s: %s %s %s %s `%s'",
 			    ifp->name, msg, a, tfrom, inet_ntoa(addr), sname);
 	} else {
 		if (r != 0) {
@@ -2816,10 +2817,10 @@ log_dhcp(logfunc_t *logfunc, const char *msg,
 			addr = *from;
 		}
 		if (a == NULL)
-			logfunc("%s: %s %s %s",
+			logmessage(loglevel, "%s: %s %s %s",
 			    ifp->name, msg, tfrom, inet_ntoa(addr));
 		else
-			logfunc("%s: %s %s %s %s",
+			logmessage(loglevel, "%s: %s %s %s %s",
 			    ifp->name, msg, a, tfrom, inet_ntoa(addr));
 	}
 	free(a);
@@ -2949,7 +2950,7 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		    (uint8_t *)bootp, bootp_len, 4, type,
 		    auth, auth_len) == NULL)
 		{
-			LOGDHCP0(logerrx, "authentication failed");
+			LOGDHCP0(LOG_ERR, "authentication failed");
 			return;
 		}
 		if (state->auth.token)
@@ -2959,10 +2960,10 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			loginfox("%s: accepted reconfigure key", ifp->name);
 	} else if (ifo->auth.options & DHCPCD_AUTH_SEND) {
 		if (ifo->auth.options & DHCPCD_AUTH_REQUIRE) {
-			LOGDHCP0(logerrx, "no authentication");
+			LOGDHCP0(LOG_ERR, "no authentication");
 			return;
 		}
-		LOGDHCP0(logwarnx, "no authentication");
+		LOGDHCP0(LOG_WARNING, "no authentication");
 	}
 #endif
 
@@ -2971,20 +2972,20 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		if (from->s_addr == INADDR_ANY ||
 		    from->s_addr == INADDR_BROADCAST)
 		{
-			LOGDHCP(logerrx, "discarding Force Renew");
+			LOGDHCP(LOG_ERR, "discarding Force Renew");
 			return;
 		}
 #ifdef AUTH
 		if (auth == NULL) {
-			LOGDHCP(logerrx, "unauthenticated Force Renew");
+			LOGDHCP(LOG_ERR, "unauthenticated Force Renew");
 			if (ifo->auth.options & DHCPCD_AUTH_REQUIRE)
 				return;
 		}
 		if (state->state != DHS_BOUND && state->state != DHS_INFORM) {
-			LOGDHCP(logdebugx, "not bound, ignoring Force Renew");
+			LOGDHCP(LOG_DEBUG, "not bound, ignoring Force Renew");
 			return;
 		}
-		LOGDHCP(loginfox, "Force Renew from");
+		LOGDHCP(LOG_INFO, "Force Renew from");
 		/* The rebind and expire timings are still the same, we just
 		 * enter the renew state early */
 		if (state->state == DHS_BOUND)
@@ -2995,19 +2996,19 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			dhcp_inform(ifp);
 		}
 #else
-		LOGDHCP(logerrx, "unauthenticated Force Renew");
+		LOGDHCP(LOG_ERR, "unauthenticated Force Renew");
 #endif
 		return;
 	}
 
 	if (state->state == DHS_BOUND) {
-		LOGDHCP(logdebugx, "bound, ignoring");
+		LOGDHCP(LOG_DEBUG, "bound, ignoring");
 		return;
 	}
 
 	if (state->state == DHS_PROBE) {
 		/* Ignore any DHCP messages whilst probing a lease to bind. */
-		LOGDHCP(logdebugx, "probing, ignoring");
+		LOGDHCP(LOG_DEBUG, "probing, ignoring");
 		return;
 	}
 
@@ -3020,7 +3021,7 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		    get_option_uint8(ifp->ctx, &tmp,
 		    bootp, bootp_len, (uint8_t)i) == 0)
 		{
-			LOGDHCP(logwarnx, "reject DHCP");
+			LOGDHCP(LOG_WARNING, "reject DHCP");
 			return;
 		}
 	}
@@ -3031,12 +3032,12 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		    get_option_addr(ifp->ctx, &addr,
 		    bootp, bootp_len, DHO_SERVERID) == -1)
 		{
-			LOGDHCP(logwarnx, "reject NAK");
+			LOGDHCP(LOG_WARNING, "reject NAK");
 			return;
 		}
 
 		/* We should restart on a NAK */
-		LOGDHCP(logwarnx, "NAK:");
+		LOGDHCP(LOG_WARNING, "NAK:");
 		if ((msg = get_option_string(ifp->ctx,
 		    bootp, bootp_len, DHO_MESSAGE)))
 		{
@@ -3076,14 +3077,14 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			 * always true. */
 			if (type == 0 && i == DHO_SERVERID)
 				continue;
-			LOGDHCP(logwarnx, "reject DHCP");
+			LOGDHCP(LOG_WARNING, "reject DHCP");
 			return;
 		}
 	}
 
 	/* DHCP Auto-Configure, RFC 2563 */
 	if (type == DHCP_OFFER && bootp->yiaddr == 0) {
-		LOGDHCP(logwarnx, "no address given");
+		LOGDHCP(LOG_WARNING, "no address given");
 		if ((msg = get_option_string(ifp->ctx,
 		    bootp, bootp_len, DHO_MESSAGE)))
 		{
@@ -3097,14 +3098,14 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		{
 			switch (tmp) {
 			case 0:
-				LOGDHCP(logwarnx, "IPv4LL disabled from");
+				LOGDHCP(LOG_WARNING, "IPv4LL disabled from");
 				ipv4ll_drop(ifp);
 #ifdef ARP
 				arp_drop(ifp);
 #endif
 				break;
 			case 1:
-				LOGDHCP(logwarnx, "IPv4LL enabled from");
+				LOGDHCP(LOG_WARNING, "IPv4LL enabled from");
 				ipv4ll_start(ifp);
 				break;
 			default:
@@ -3127,14 +3128,14 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 	    &&
 	    (bootp->yiaddr == INADDR_ANY || bootp->yiaddr == INADDR_BROADCAST))
 	{
-		LOGDHCP(logwarnx, "reject invalid address");
+		LOGDHCP(LOG_WARNING, "reject invalid address");
 		return;
 	}
 
 #ifdef IN_IFF_DUPLICATED
 	ia = ipv4_iffindaddr(ifp, &lease->addr, NULL);
 	if (ia && ia->addr_flags & IN_IFF_DUPLICATED) {
-		LOGDHCP(logwarnx, "declined duplicate address");
+		LOGDHCP(LOG_WARNING, "declined duplicate address");
 		if (type)
 			dhcp_decline(ifp);
 		ipv4_deladdr(ia, 0);
@@ -3165,7 +3166,7 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			goto rapidcommit;
 		}
 
-		LOGDHCP(loginfox, "offered");
+		LOGDHCP(LOG_INFO, "offered");
 		if (state->offer_len < bootp_len) {
 			free(state->offer);
 			if ((state->offer = malloc(bootp_len)) == NULL) {
@@ -3207,13 +3208,13 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 
 	if (type) {
 		if (type == DHCP_OFFER) {
-			LOGDHCP(logwarnx, "ignoring offer of");
+			LOGDHCP(LOG_WARNING, "ignoring offer of");
 			return;
 		}
 
 		/* We should only be dealing with acks */
 		if (type != DHCP_ACK) {
-			LOGDHCP(logerr, "not ACK or OFFER");
+			LOGDHCP(LOG_ERR, "not ACK or OFFER");
 			return;
 		}
 
@@ -3225,14 +3226,14 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			    DHO_RAPIDCOMMIT, NULL))
 				state->state = DHS_REQUEST;
 			else {
-				LOGDHCP(logdebugx, "ignoring ack of");
+				LOGDHCP(LOG_DEBUG, "ignoring ack of");
 				return;
 			}
 		}
 
 rapidcommit:
 		if (!(ifo->options & DHCPCD_INFORM))
-			LOGDHCP(logdebugx, "acknowledged");
+			LOGDHCP(LOG_DEBUG, "acknowledged");
 		else
 		    ifo->options &= ~DHCPCD_STATIC;
 	}
@@ -3307,7 +3308,7 @@ is_packet_udp_bootp(void *packet, size_t plen)
 	memcpy(&udp, (char *)ip + ip_hlen, sizeof(udp));
 	if (ntohs(udp.uh_ulen) < sizeof(udp))
 		return false;
-	if (ip_hlen + ntohs(udp.uh_ulen) > plen)
+	if (ip_hlen + (size_t)ntohs(udp.uh_ulen) > plen)
 		return false;
 
 	/* Check it's to and from the right ports. */
@@ -3432,9 +3433,10 @@ static void
 dhcp_readbpf(void *arg)
 {
 	struct interface *ifp = arg;
-	uint8_t buf[MTU_MAX];
+	uint8_t buf[FRAMELEN_MAX];
 	ssize_t bytes;
 	struct dhcp_state *state = D_STATE(ifp);
+	ssize_t fl = (ssize_t)bpf_frame_header_len(ifp);
 
 	/* Some RAW mechanisms are generic file descriptors, not sockets.
 	 * This means we have no kernel call to just get one packet,
@@ -3451,7 +3453,12 @@ dhcp_readbpf(void *arg)
 			}
 			break;
 		}
-		dhcp_packet(ifp, buf, (size_t)bytes);
+		if (bytes < fl) {
+			logerrx("%s: %s: short frame header",
+			    __func__, ifp->name);
+			break;
+		}
+		dhcp_packet(ifp, buf + fl, (size_t)(bytes - fl));
 		/* Check we still have a state after processing. */
 		if ((state = D_STATE(ifp)) == NULL)
 			break;

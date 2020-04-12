@@ -106,6 +106,7 @@ static const char * const ifnames_ignore[] = {
 	"bridge",
 	"fwe",		/* Firewire */
 	"tap",
+	"xvif",		/* XEN DOM0 -> guest interface */
 	NULL
 };
 

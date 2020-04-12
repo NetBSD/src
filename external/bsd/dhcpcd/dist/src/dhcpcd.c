@@ -47,6 +47,7 @@ const char dhcpcd_copyright[] = "Copyright (c) 2006-2019 Roy Marples";
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <syslog.h>
 
 #include "config.h"
 #include "arp.h"
@@ -435,7 +436,7 @@ stop_interface(struct interface *ifp)
 		script_runreason(ifp, "STOPPED");
 
 	/* Delete all timeouts for the interfaces */
-	eloop_q_timeout_delete(ctx->eloop, 0, NULL, ifp);
+	eloop_q_timeout_delete(ctx->eloop, ELOOP_QUEUE_ALL, NULL, ifp);
 
 	/* De-activate the interface */
 	ifp->active = IF_INACTIVE;
@@ -2044,11 +2045,11 @@ printpidfile:
 	}
 	if (ifp == NULL) {
 		if (ctx.ifc == 0) {
-			logfunc_t *logfunc;
+			int loglevel;
 
-			logfunc = ctx.options & DHCPCD_INACTIVE ?
-			    logdebugx : logerrx;
-			logfunc("no valid interfaces found");
+			loglevel = ctx.options & DHCPCD_INACTIVE ?
+			    LOG_DEBUG : LOG_ERR;
+			logmessage(loglevel, "no valid interfaces found");
 		} else
 			goto exit_failure;
 		if (!(ctx.options & DHCPCD_LINK)) {
@@ -2092,11 +2093,11 @@ printpidfile:
 		    ctx.options & DHCPCD_LINK &&
 		    !(ctx.options & DHCPCD_WAITIP))
 		{
-			logfunc_t *logfunc;
+			int loglevel;
 
-			logfunc = ctx.options & DHCPCD_INACTIVE ?
-			    logdebugx : logwarnx;
-			logfunc("no interfaces have a carrier");
+			loglevel = ctx.options & DHCPCD_INACTIVE ?
+			    LOG_DEBUG : LOG_WARNING;
+			logmessage(loglevel, "no interfaces have a carrier");
 			if (dhcpcd_daemonise(&ctx))
 				goto exit_success;
 		} else if (t > 0 &&

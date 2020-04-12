@@ -67,6 +67,9 @@
   #define ELOOP_QUEUE 1
 #endif
 
+/* Used for deleting a timeout for all queues. */
+#define	ELOOP_QUEUE_ALL	0
+
 /* Forward declare eloop - the content should be invisible to the outside */
 struct eloop;
 

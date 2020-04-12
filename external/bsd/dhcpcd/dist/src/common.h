@@ -34,6 +34,16 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/* Define eloop queues here, as other apps share eloop.h */
+#define	ELOOP_DHCPCD		1 /* default queue */
+#define	ELOOP_DHCP		2
+#define	ELOOP_ARP		3
+#define	ELOOP_IPV4LL		4
+#define	ELOOP_IPV6		5
+#define	ELOOP_IPV6ND		6
+#define	ELOOP_IPV6RA_EXPIRE	7
+#define	ELOOP_DHCP6		8
+
 #ifndef HOSTNAME_MAX_LEN
 #define HOSTNAME_MAX_LEN	250	/* 255 - 3 (FQDN) - 2 (DNS enc) */
 #endif

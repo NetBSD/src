@@ -54,10 +54,13 @@
 
 struct arp_msg {
 	uint16_t op;
-	unsigned char sha[HWADDR_LEN];
+	uint8_t sha[HWADDR_LEN];
 	struct in_addr sip;
-	unsigned char tha[HWADDR_LEN];
+	uint8_t tha[HWADDR_LEN];
 	struct in_addr tip;
+	/* Frame header and sender to diagnose failures */
+	uint8_t fsha[HWADDR_LEN];
+	uint8_t ftha[HWADDR_LEN];
 };
 
 struct arp_state {
