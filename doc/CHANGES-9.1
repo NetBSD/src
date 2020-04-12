@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.33 2020/04/12 08:50:25 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.34 2020/04/12 17:34:34 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -892,3 +892,9 @@ sys/dev/acpi/acpi_ec.c				1.78-1.81
 	Reject overly large widths.
 	[riastradh, ticket #829]
 
+external/bsd/dhcpcd/dist/src/dhcp6.c		(apply patch)
+external/bsd/dhcpcd/dist/src/defs.h		(apply patch)
+doc/3RDPARTY					(apply patch)
+
+	Update to dhcpcd-8.1.8 which fixes a compile issue.
+	[roy, ticket #830]
