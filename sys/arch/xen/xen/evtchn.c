@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88.2.1 2020/04/10 14:38:19 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.2 2020/04/12 11:16:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.1 2020/04/10 14:38:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.2 2020/04/12 11:16:58 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -316,8 +316,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	struct intrhand *ih;
 	int	(*ih_fun)(void *, void *);
 	uint32_t iplmask;
-	int i;
-	uint32_t iplbit;
 
 	KASSERTMSG(evtch >= 0, "negative evtch: %d", evtch);
 	KASSERTMSG(evtch < NR_EVENT_CHANNELS,
@@ -404,35 +402,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 #endif /* NPCI > 0 || NISA > 0 */		
 
 splx:
-	/*
-	 * C version of spllower(). ASTs will be checked when
-	 * hypevisor_callback() exits, so no need to check here.
-	 */
-	iplmask = (XUNMASK(ci, ilevel) & ci->ci_xpending);
-	while (iplmask != 0) {
-		iplbit = 1 << (NIPL - 1);
-		i = (NIPL - 1);
-		while (iplmask != 0 && i > ilevel) {
-			while (iplmask & iplbit) {
-				ci->ci_xpending &= ~iplbit;
-				ci->ci_ilevel = i;
-				for (ih = ci->ci_xsources[i]->is_handlers;
-				    ih != NULL; ih = ih->ih_next) {
-					KASSERT(ih->ih_cpu == ci);
-					x86_enable_intr();
-					ih_fun = (void *)ih->ih_fun;
-					ih_fun(ih->ih_arg, regs);
-					x86_disable_intr();
-				}
-				hypervisor_enable_ipl(i);
-				/* more pending IPLs may have been registered */
-				iplmask =
-				    (XUNMASK(ci, ilevel) & ci->ci_xpending);
-			}
-			i--;
-			iplbit >>= 1;
-		}
-	}
 	ci->ci_ilevel = ilevel;
 	return 0;
 }
