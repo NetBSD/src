@@ -2950,11 +2950,13 @@ dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 	if (!timedout) {
 		logmessage(loglevel, "%s: %s received from %s",
 		    ifp->name, op, sfrom);
+#ifndef SMALL
 		/* If we delegated from an unconfirmed lease we MUST drop
 		 * them now. Hopefully we have new delegations. */
 		if (state->reason != NULL &&
 		    strcmp(state->reason, "TIMEOUT6") == 0)
 			dhcp6_delete_delegates(ifp);
+#endif
 		state->reason = NULL;
 	} else
 		state->reason = "TIMEOUT6";
