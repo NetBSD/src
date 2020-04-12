@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.73 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: umodem.c,v 1.74 2020/04/12 01:10:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.73 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.74 2020/04/12 01:10:54 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,8 @@ umodem_attach(device_t parent, device_t self, void *aux)
 	struct umodem_softc *sc = device_private(self);
 	struct usbif_attach_arg *uiaa = aux;
 	struct ucom_attach_args ucaa;
+
+	memset(&ucaa, 0, sizeof(ucaa));
 
 	ucaa.ucaa_portno = UCOM_UNK_PORTNO;
 	ucaa.ucaa_methods = &umodem_methods;

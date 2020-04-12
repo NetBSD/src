@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.32 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.33 2020/04/12 01:10:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.32 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.33 2020/04/12 01:10:54 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -105,6 +105,12 @@ static void	umodem_break(struct umodem_softc *, int);
 static void	umodem_set_line_state(struct umodem_softc *);
 static void	umodem_intr(struct usbd_xfer *, void *, usbd_status);
 
+/*
+ * NOTE: Callers of umodem_common_attach() should initialise their ucaa
+ * to 0 before assigning any fields.  ucaa_ibufsize, ucaa_ibufsize and
+ * ucaa_obufsize may be set by the caller, but if 0 are set to default
+ * umodem values.
+ */
 int
 umodem_common_attach(device_t self, struct umodem_softc *sc,
     struct usbif_attach_arg *uiaa, struct ucom_attach_args *ucaa)
@@ -239,10 +245,16 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 
 	sc->sc_dtr = -1;
 
-	/* ucaa_bulkin, ucaa_bulkout set above */
-	ucaa->ucaa_ibufsize = UMODEMIBUFSIZE;
-	ucaa->ucaa_obufsize = UMODEMOBUFSIZE;
-	ucaa->ucaa_ibufsizepad = UMODEMIBUFSIZE;
+	/*
+	 * ucaa_bulkin, ucaa_bulkout set above.  ucaa_ibufsize,
+	 * ucaa_ibufsize, ucaa_obufsize may be initialised by caller
+	 */
+	if (ucaa->ucaa_ibufsize == 0)
+		ucaa->ucaa_ibufsize = UMODEMIBUFSIZE;
+	if (ucaa->ucaa_obufsize == 0)
+		ucaa->ucaa_obufsize = UMODEMOBUFSIZE;
+	if (ucaa->ucaa_ibufsizepad == 0)
+		ucaa->ucaa_ibufsizepad = UMODEMIBUFSIZE;
 	ucaa->ucaa_opkthdrlen = 0;
 	ucaa->ucaa_device = sc->sc_udev;
 	ucaa->ucaa_iface = sc->sc_data_iface;
@@ -356,7 +368,7 @@ umodem_intr(struct usbd_xfer *xfer, void *priv,
 			 sc->sc_notify_buf.data[0],
 			 sc->sc_notify_buf.data[1]));
 		/* Currently, lsr is always zero. */
-		sc->sc_lsr = sc->sc_msr = 0;
+	 	sc->sc_lsr = sc->sc_msr = 0;
 		mstatus = sc->sc_notify_buf.data[0];
 
 		if (ISSET(mstatus, UCDC_N_SERIAL_RI))

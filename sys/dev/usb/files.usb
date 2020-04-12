@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.172 2020/02/09 15:46:15 maya Exp $
+#	$NetBSD: files.usb,v 1.173 2020/04/12 01:10:54 simonb Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -428,6 +428,11 @@ file	dev/usb/umcs.c			umcs
 device	uvscom: ucombus
 attach	uvscom at usbdevif
 file	dev/usb/uvscom.c		uvscom
+
+# Exar XR21V141x serial driver (mostly CDC)
+device	uxrcom: ucombus, umodem_common
+attach	uxrcom at usbifif
+file	dev/usb/uxrcom.c		uxrcom
 
 # Belkin & other serial driver
 define	ubsa_common
