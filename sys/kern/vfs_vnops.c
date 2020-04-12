@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.209 2020/04/12 15:55:53 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.210 2020/04/12 19:56:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.209 2020/04/12 15:55:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.210 2020/04/12 19:56:14 christos Exp $");
 
 #include "veriexec.h"
 
@@ -1161,7 +1161,7 @@ vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
-	error = VOP_DELETEEXTATTR(vp, attrnamespace, attrname, NULL);
+	error = VOP_DELETEEXTATTR(vp, attrnamespace, attrname, NOCRED);
 	if (error == EOPNOTSUPP)
 		error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL,
 		    NOCRED);
