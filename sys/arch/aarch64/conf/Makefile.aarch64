@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.17 2020/03/04 19:28:04 ryo Exp $
+#	$NetBSD: Makefile.aarch64,v 1.18 2020/04/12 07:49:58 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -38,6 +38,10 @@ CFLAGS+=	-march=armv8-a+nofp+nosimd
 CFLAGS+=	-fno-omit-frame-pointer
 CFLAGS+=	-mno-omit-leaf-frame-pointer
 #CFLAGS+=	-mno-unaligned-access
+
+.if ${ARMV83_PAC:U0} > 0 && ${HAVE_LLVM:Uno} == "yes"
+CFLAGS+=	-mbranch-protection=pac-ret
+.endif
 
 .if ${KASAN:U0} > 0 && ${HAVE_GCC:U0} > 0
 KASANFLAGS=	-fsanitize=kernel-address \
