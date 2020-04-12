@@ -1,4 +1,4 @@
-.\" $NetBSD: ucom.4,v 1.27 2019/05/05 00:12:34 pgoyette Exp $
+.\" $NetBSD: ucom.4,v 1.28 2020/04/12 01:10:54 simonb Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,6 +50,7 @@
 .Cd "ucom* at uslsa?"
 .Cd "ucom* at uvisor? portno ?"
 .Cd "ucom* at uvscom?"
+.Cd "ucom* at uxrcom?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -103,7 +104,8 @@ are used for dial-out.
 .Xr usb 4 ,
 .Xr uslsa 4 ,
 .Xr uvisor 4 ,
-.Xr uvscom 4
+.Xr uvscom 4 ,
+.Xr uxrcom 4
 .Sh HISTORY
 The
 .Nm
