@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.113 2020/04/12 13:55:06 jdolecek Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.114 2020/04/12 13:57:07 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.113 2020/04/12 13:55:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.114 2020/04/12 13:57:07 jdolecek Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -413,11 +413,11 @@ xennet_xenbus_detach(device_t self, int flags)
 	/* stop interface */
 	IFNET_LOCK(ifp);
 	xennet_stop(ifp, 1);
+	IFNET_UNLOCK(ifp);
 	if (sc->sc_ih != NULL) {
 		xen_intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
-	IFNET_UNLOCK(ifp);
 
 	/* collect any outstanding TX responses */
 	mutex_enter(&sc->sc_tx_lock);
