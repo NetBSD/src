@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.88.2.2 2020/04/12 11:16:58 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.88.2.3 2020/04/12 17:25:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.2 2020/04/12 11:16:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.88.2.3 2020/04/12 17:25:53 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -372,7 +372,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	while (ih != NULL) {
 		if (ih->ih_cpu != ci) {
 			hypervisor_send_event(ih->ih_cpu, evtch);
-			iplmask &= ~XUNMASK(ci, ih->ih_level);
+			iplmask &= ~(1 << XEN_IPL2SIR(ih->ih_level));
 			ih = ih->ih_evt_next;
 			continue;
 		}
@@ -388,7 +388,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 			mutex_spin_exit(&evtlock[evtch]);
 			goto splx;
 		}
-		iplmask &= ~XUNMASK(ci, ih->ih_level);
+		iplmask &= ~(1 << XEN_IPL2SIR(ih->ih_level));
 		ci->ci_ilevel = ih->ih_level;
 		ih_fun = (void *)ih->ih_fun;
 		ih_fun(ih->ih_arg, regs);
@@ -790,7 +790,7 @@ intr_calculatemasks(struct evtsource *evts, int evtch, struct cpu_info *ci)
 	for (ih = evts->ev_handlers; ih != NULL; ih = ih->ih_evt_next) {
 		if (ih->ih_level > evts->ev_maxlevel)
 			evts->ev_maxlevel = ih->ih_level;
-		evts->ev_imask |= (1 << ih->ih_level);
+		evts->ev_imask |= (1 << XEN_IPL2SIR(ih->ih_level));
 		if (ih->ih_cpu == ci)
 			cpu_receive = 1;
 	}
@@ -904,19 +904,24 @@ event_set_iplhandler(struct cpu_info *ci,
 		     int level)
 {
 	struct intrsource *ipls;
+	int sir = XEN_IPL2SIR(level);
+	KASSERT(sir >= SIR_XENIPL_VM && sir <= SIR_XENIPL_HIGH);
 
 	KASSERT(ci == ih->ih_cpu);
-	if (ci->ci_xsources[level] == NULL) {
+	if (ci->ci_isources[sir] == NULL) {
 		ipls = kmem_zalloc(sizeof (struct intrsource),
 		    KM_NOSLEEP);
 		if (ipls == NULL)
 			panic("can't allocate fixed interrupt source");
-		ipls->is_recurse = xenev_stubs[level].ist_recurse;
-		ipls->is_resume = xenev_stubs[level].ist_resume;
+		ipls->is_recurse = xenev_stubs[level - IPL_VM].ist_recurse;
+		ipls->is_resume = xenev_stubs[level - IPL_VM].ist_resume;
 		ipls->is_handlers = ih;
-		ci->ci_xsources[level] = ipls;
+		ipls->is_maxlevel = level;
+		ipls->is_pic = &xen_pic;
+		ci->ci_isources[sir] = ipls;
+		x86_intr_calculatemasks(ci);
 	} else {
-		ipls = ci->ci_xsources[level];
+		ipls = ci->ci_isources[sir];
 		ih->ih_next = ipls->is_handlers;
 		ipls->is_handlers = ih;
 	}
@@ -949,7 +954,9 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	ci = ih->ih_cpu;
 	*ihp = ih->ih_evt_next;
 
-	ipls = ci->ci_xsources[ih->ih_level];
+	int sir = XEN_IPL2SIR(ih->ih_level);
+	KASSERT(sir >= SIR_XENIPL_VM && sir <= SIR_XENIPL_HIGH);
+	ipls = ci->ci_isources[sir];
 	for (ihp = &ipls->is_handlers, ih = ipls->is_handlers;
 	    ih != NULL;
 	    ihp = &ih->ih_next, ih = ih->ih_next) {
@@ -1014,7 +1021,7 @@ xen_debug_handler(void *arg)
 	struct cpu_info *ci = curcpu();
 	int i;
 	int xci_ilevel = ci->ci_ilevel;
-	int xci_xpending = ci->ci_xpending;
+	int xci_ipending = ci->ci_ipending;
 	int xci_idepth = ci->ci_idepth;
 	u_long upcall_pending = ci->ci_vcpu->evtchn_upcall_pending;
 	u_long upcall_mask = ci->ci_vcpu->evtchn_upcall_mask;
@@ -1031,8 +1038,8 @@ xen_debug_handler(void *arg)
 
 	__insn_barrier();
 	printf("debug event\n");
-	printf("ci_ilevel 0x%x ci_xpending 0x%x ci_idepth %d\n",
-	    xci_ilevel, xci_xpending, xci_idepth);
+	printf("ci_ilevel 0x%x ci_ipending 0x%x ci_idepth %d\n",
+	    xci_ilevel, xci_ipending, xci_idepth);
 	printf("evtchn_upcall_pending %ld evtchn_upcall_mask %ld"
 	    " evtchn_pending_sel 0x%lx\n",
 		upcall_pending, upcall_mask, pending_sel);

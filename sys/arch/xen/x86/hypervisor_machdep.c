@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.36 2019/05/09 17:09:51 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.36.8.1 2020/04/12 17:25:52 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36 2019/05/09 17:09:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.36.8.1 2020/04/12 17:25:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,14 +203,6 @@ stipending(void)
 		x86_enable_intr();
 	}
 
-#if 0
-	if (ci->ci_xpending & 0x1)
-		printf("stipending events %08lx mask %08lx ilevel %d ipending %08x\n",
-		    HYPERVISOR_shared_info->events,
-		    HYPERVISOR_shared_info->events_mask, ci->ci_ilevel,
-		    ci->ci_xpending);
-#endif
-
 	return (ret);
 }
 
@@ -290,7 +282,7 @@ do_hypervisor_callback(struct intrframe *regs)
 	if (level != ci->ci_ilevel)
 		printf("hypervisor done %08x level %d/%d ipending %08x\n",
 		    (uint)vci->evtchn_pending_sel,
-		    level, ci->ci_ilevel, ci->ci_xpending);
+		    level, ci->ci_ilevel, ci->ci_ipending);
 #endif
 }
 
@@ -384,7 +376,7 @@ evt_enable_event(unsigned int port, unsigned int l1i,
 }
 
 void
-hypervisor_enable_ipl(unsigned int ipl)
+hypervisor_enable_sir(unsigned int sir)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -394,37 +386,37 @@ hypervisor_enable_ipl(unsigned int ipl)
 	 * we know that all callback for this event have been processed.
 	 */
 
-	evt_iterate_bits(&ci->ci_xsources[ipl]->ipl_evt_mask1,
-	    ci->ci_xsources[ipl]->ipl_evt_mask2, NULL,
+	evt_iterate_bits(&ci->ci_isources[sir]->ipl_evt_mask1,
+	    ci->ci_isources[sir]->ipl_evt_mask2, NULL,
 	    evt_enable_event, NULL);
 
 }
 
 void
-hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
+hypervisor_set_ipending(uint32_t imask, int l1, int l2)
 {
 
 	/* This function is not re-entrant */
 	KASSERT(x86_read_psl() != 0);
 
-	int ipl;
+	int sir;
 	struct cpu_info *ci = curcpu();
 
 	/* set pending bit for the appropriate IPLs */	
-	ci->ci_xpending |= iplmask;
+	ci->ci_ipending |= imask;
 
 	/*
 	 * And set event pending bit for the lowest IPL. As IPL are handled
 	 * from high to low, this ensure that all callbacks will have been
 	 * called when we ack the event
 	 */
-	ipl = ffs(iplmask);
-	KASSERT(ipl > 0);
-	ipl--;
-	KASSERT(ipl < NIPL);
-	KASSERT(ci->ci_xsources[ipl] != NULL);
-	ci->ci_xsources[ipl]->ipl_evt_mask1 |= 1UL << l1;
-	ci->ci_xsources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
+	sir = ffs(imask);
+	KASSERT(sir > SIR_XENIPL_VM);
+	sir--;
+	KASSERT(sir <= SIR_XENIPL_HIGH);
+	KASSERT(ci->ci_isources[sir] != NULL);
+	ci->ci_isources[sir]->ipl_evt_mask1 |= 1UL << l1;
+	ci->ci_isources[sir]->ipl_evt_mask2[l1] |= 1UL << l2;
 	if (__predict_false(ci != curcpu())) {
 		if (xen_send_ipi(ci, XEN_IPI_HVCB)) {
 			panic("hypervisor_set_ipending: "

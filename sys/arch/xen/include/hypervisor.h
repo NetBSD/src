@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.49 2019/02/04 18:14:53 cherry Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.49.10.1 2020/04/12 17:25:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -170,7 +170,7 @@ void hypervisor_send_event(struct cpu_info *, unsigned int);
 void hypervisor_unmask_event(unsigned int);
 void hypervisor_mask_event(unsigned int);
 void hypervisor_clear_event(unsigned int);
-void hypervisor_enable_ipl(unsigned int);
+void hypervisor_enable_sir(unsigned int);
 void hypervisor_set_ipending(uint32_t, int, int);
 void hypervisor_machdep_attach(void);
 void hypervisor_machdep_resume(void);

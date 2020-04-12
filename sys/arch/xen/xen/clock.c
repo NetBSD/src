@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.80.6.1 2020/04/11 18:26:07 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.80.6.2 2020/04/12 17:25:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.80.6.1 2020/04/11 18:26:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.80.6.2 2020/04/12 17:25:53 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -162,7 +162,6 @@ void
 idle_block(void)
 {
 
-	KASSERT(curcpu()->ci_xpending == 0);
 	HYPERVISOR_block();
 }
 

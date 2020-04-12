@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.150.6.1 2020/04/11 18:26:07 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.150.6.2 2020/04/12 17:25:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150.6.1 2020/04/11 18:26:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150.6.2 2020/04/12 17:25:52 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1372,13 +1372,6 @@ cpu_intr_init(struct cpu_info *ci)
 #endif
 
 	ci->ci_idepth = -1;
-
-#ifdef XENPVHVM
-	ci->ci_xunmask[0] = 0xfffffffe;
-	for (int i = 1; i < NIPL; i++)
-		ci->ci_xunmask[i] = ci->ci_xunmask[i - 1] & ~(1 << i);
-#endif
-
 }
 
 #if defined(INTRDEBUG) || defined(DDB)

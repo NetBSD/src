@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.43.4.5 2020/04/11 18:26:06 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.43.4.6 2020/04/12 17:25:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -239,11 +239,6 @@ ENTRY(spllower)
 	CLI(ax)
 	testl	CPUVAR(IPENDING),%edx
 	jnz	2f
-#if defined(XEN)
-	movl	CPUVAR(XUNMASK)(,%rdi,4),%edx
-	testl	CPUVAR(XPENDING),%edx
-	jnz	2f
-#endif
 	movl	%edi,CPUVAR(ILEVEL)
 	POPF	/* clobbers %rdi */
 1:
@@ -344,18 +339,6 @@ IDTVEC(spllower)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RECURSE(%rax)
 2:
-#if defined(XEN)
-	movl	%ebx,%eax		/* get cpl */
-	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
-	CLI(si)
-	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
-	jz	3f
-	bsrl	%eax,%eax
-	btrl	%eax,CPUVAR(XPENDING)
-	movq	CPUVAR(XSOURCES)(,%rax,8),%rax
-	jmp	*IS_RECURSE(%rax)
-#endif
-3:
 	movl	%ebx,CPUVAR(ILEVEL)
 	STI(si)
 	popq	%r12
@@ -387,19 +370,7 @@ IDTVEC(doreti)
 	btrl	%eax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RESUME(%rax)
-2:
-#if defined(XEN)
-	movl    %ebx,%eax
-	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
-	CLI(si)
-	andl	CPUVAR(XPENDING),%eax
-	jz	3f
-	bsrl	%eax,%eax		/* slow, but not worth optimizing */
-	btrl	%eax,CPUVAR(XPENDING)
-	movq	CPUVAR(XSOURCES)(,%rax,8),%rax
-	jmp	*IS_RESUME(%rax)
-#endif
-3:	/* Check for ASTs on exit to user mode. */
+2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
 5:
 	testb	$SEL_RPL,TF_CS(%rsp)

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.119.4.2 2020/04/11 10:11:31 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.119.4.3 2020/04/12 17:25:52 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -324,6 +324,8 @@ define	IPL_PREEMPT		IPL_PREEMPT
 define	IPL_NET			IPL_NET
 define	IPL_SCHED		IPL_SCHED
 define	IPL_CLOCK		IPL_CLOCK
+define	IPL_VM			IPL_VM
+define	IPL_SCHED		IPL_SCHED
 define	IPL_HIGH		IPL_HIGH
 
 define	IPL_SOFTNET		IPL_SOFTNET
@@ -376,10 +378,9 @@ define	VM_GUEST_XENPV		VM_GUEST_XENPV
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
-define CPU_INFO_XPENDING	offsetof(struct cpu_info, ci_xpending)
-define CPU_INFO_XMASK		offsetof(struct cpu_info, ci_xmask)
-define CPU_INFO_XUNMASK		offsetof(struct cpu_info, ci_xunmask)
-define CPU_INFO_XSOURCES	offsetof(struct cpu_info, ci_xsources)
+define SIR_XENIPL_VM		SIR_XENIPL_VM
+define SIR_XENIPL_SCHED		SIR_XENIPL_SCHED
+define SIR_XENIPL_HIGH		SIR_XENIPL_HIGH
 define START_INFO_SHARED_INFO	offsetof(struct start_info, shared_info)
 define START_INFO_FLAGS		offsetof(struct start_info, flags)
 define START_INFO_CONSOLE_MFN	offsetof(struct start_info, console.domU.mfn)
