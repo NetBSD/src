@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.85.6.2 2020/04/11 12:01:42 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.85.6.3 2020/04/12 16:35:49 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85.6.2 2020/04/11 12:01:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.85.6.3 2020/04/12 16:35:49 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1062,19 +1062,6 @@ END(xenev_stubs)
 
 #ifdef XEN
 
-/*
- * A note on the "critical region" in our callback handler.
- * We want to avoid stacking callback handlers due to events occurring
- * during handling of the last event. To do this, we keep events disabled
- * until weve done all processing. HOWEVER, we must enable events before
- * popping the stack frame (cant be done atomically) and so it would still
- * be possible to get enough handler activations to overflow the stack.
- * Although unlikely, bugs of that kind are hard to track down, so wed
- * like to avoid the possibility.
- * So, on entry to the handler we detect whether we interrupted an
- * existing activation in its critical region -- if so, we pop the current
- * activation and restart the handler using the previous one.
- */
 ENTRY(hypervisor_callback)
 IDTVEC(hypervisor_pvhvm_callback)	
 	pushl	$0			/* dummy error code */
