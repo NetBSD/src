@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.21.2.2 2020/04/12 17:25:52 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.21.2.3 2020/04/12 19:53:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.2 2020/04/12 17:25:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.3 2020/04/12 19:53:37 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -306,6 +306,11 @@ void xen_cpu_intr_init(struct cpu_info *);
 void
 xen_cpu_intr_init(struct cpu_info *ci)
 {
+#if defined(__HAVE_PREEMPTION)
+	x86_init_preempt(ci);
+#endif
+	x86_intr_calculatemasks(ci);
+
 #if defined(INTRSTACKSIZE)
 	vaddr_t istack;
 
