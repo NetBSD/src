@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.107 2020/04/12 08:51:41 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.108 2020/04/12 17:02:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.107 2020/04/12 08:51:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.108 2020/04/12 17:02:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -777,12 +777,16 @@ wapbl_discard(struct wapbl *wl)
 	mutex_enter(&wl->wl_mtx);
 	while ((bp = TAILQ_FIRST(&wl->wl_bufs)) != NULL) {
 		if (bbusy(bp, 0, 0, &wl->wl_mtx) == 0) {
+			KASSERT(bp->b_flags & B_LOCKED);
+			KASSERT(bp->b_oflags & BO_DELWRI);
 			/*
+			 * Buffer is already on BQ_LOCKED queue.
 			 * The buffer will be unlocked and
-			 * removed from the transaction in brelse
+			 * removed from the transaction in brelsel()
 			 */
 			mutex_exit(&wl->wl_mtx);
-			brelsel(bp, 0);
+			bremfree(bp);
+			brelsel(bp, BC_INVAL);
 			mutex_enter(&wl->wl_mtx);
 		}
 	}
