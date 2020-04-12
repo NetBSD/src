@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2019/10/29 21:14:37 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2020/04/12 17:28:57 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -113,10 +113,6 @@ version.h:	../../Makefile.inc
 #ipc_gen.c: vipc.pl ip_read.c
 #	${_MKTARGET_CREATE}
 #	${TOOL_PERL} -n ${.ALLSRC} > ${.TARGET}
-
-.if ${MACHINE_ARCH} == "aarch64"
-COPTS.ex_filter.c+=-O0
-.endif
 
 
 .include "${.CURDIR}/../../Makefile.inc"
