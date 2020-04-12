@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.104 2020/04/12 18:14:09 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.105 2020/04/12 20:17:36 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.104 2020/04/12 18:14:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.105 2020/04/12 20:17:36 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -100,10 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.104 2020/04/12 18:14:09 jdolecek Ex
 struct xbd_req {
 	SLIST_ENTRY(xbd_req) req_next;
 	uint16_t req_id; /* ID passed to backend */
+	bus_dmamap_t req_dmamap;
 	union {
 	    struct {
 		grant_ref_t req_gntref[BLKIF_MAX_SEGMENTS_PER_REQUEST];
-		int req_nr_segments; /* number of segments in this request */
 		struct buf *req_bp; /* buffer associated with this request */
 		void *req_data; /* pointer to the data buffer */
 	    } req_rw;
@@ -114,7 +114,6 @@ struct xbd_req {
 	} u;
 };
 #define req_gntref	u.req_rw.req_gntref
-#define req_nr_segments	u.req_rw.req_nr_segments
 #define req_bp		u.req_rw.req_bp
 #define req_data	u.req_rw.req_data
 #define req_sync	u.req_sync
@@ -288,6 +287,16 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_cnt_map_unalign, EVCNT_TYPE_MISC,
 	    NULL, device_xname(self), "map unaligned");
 
+	for (i = 0; i < XBD_RING_SIZE; i++) {
+		if (bus_dmamap_create(sc->sc_xbusd->xbusd_dmat,
+		    XBD_MAX_XFER, BLKIF_MAX_SEGMENTS_PER_REQUEST,
+		    PAGE_SIZE, PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    &sc->sc_reqs[i].req_dmamap) != 0) {
+			aprint_error_dev(self, "can't alloc dma maps\n");
+			return;
+		}
+	}
+
 	/* resume shared structures and tell backend that we are ready */
 	if (xbd_xenbus_resume(self, PMF_Q_NONE) == false) {
 		uvm_km_free(kernel_map, (vaddr_t)ring, PAGE_SIZE,
@@ -370,6 +379,14 @@ xbd_xenbus_detach(device_t dev, int flags)
 	xengnt_revoke_access(sc->sc_ring_gntref);
 	uvm_km_free(kernel_map, (vaddr_t)sc->sc_ring.sring,
 	    PAGE_SIZE, UVM_KMF_WIRED);
+
+	for (i = 0; i < XBD_RING_SIZE; i++) {
+		if (sc->sc_reqs[i].req_dmamap != NULL) {
+			bus_dmamap_destroy(sc->sc_xbusd->xbusd_dmat,
+			    sc->sc_reqs[i].req_dmamap);
+			sc->sc_reqs[i].req_dmamap = NULL;
+		}
+	}
 
 	evcnt_detach(&sc->sc_cnt_map_unalign);
 
@@ -686,41 +703,38 @@ again:
 			continue;
 		}
 
-		for (seg = xbdreq->req_nr_segments - 1; seg >= 0; seg--) {
-			if (__predict_false(
-			    xengnt_status(xbdreq->req_gntref[seg]))) {
-				aprint_verbose_dev(sc->sc_dksc.sc_dev,
-					"grant still used by backend\n");
-				sc->sc_ring.rsp_cons = i;
-				xbdreq->req_nr_segments = seg + 1;
-				goto done;
-			}
+		for (seg = 0; seg < xbdreq->req_dmamap->dm_nsegs; seg++) {
+			/*
+			 * We are not allowing persistent mappings, so
+			 * expect the backend to release the grant
+			 * immediately.
+			 */
+			KASSERT(xengnt_status(xbdreq->req_gntref[seg]) == 0);
 			xengnt_revoke_access(xbdreq->req_gntref[seg]);
-			xbdreq->req_nr_segments--;
 		}
-		KASSERT(xbdreq->req_nr_segments == 0);
+
+		bus_dmamap_unload(sc->sc_xbusd->xbusd_dmat, xbdreq->req_dmamap);
 
 		bp = xbdreq->req_bp;
-		KASSERT(bp != NULL);
+		KASSERT(bp != NULL && bp->b_data != NULL);
 		DPRINTF(("%s(%p): b_bcount = %ld\n", __func__,
 		    bp, (long)bp->b_bcount));
 
+		if (__predict_false(bp->b_data != xbdreq->req_data))
+			xbd_unmap_align(xbdreq);
+		xbdreq->req_bp = xbdreq->req_data = NULL;
+
+		/* b_resid was set in dk_start, only override on error */
 		if (rep->status != BLKIF_RSP_OKAY) {
 			bp->b_error = EIO;
 			bp->b_resid = bp->b_bcount;
-			goto next;
 		}
-		/* b_resid was set in dk_start */
-		if (__predict_false(
-		    xbdreq->req_data != NULL && bp->b_data != xbdreq->req_data))
-			xbd_unmap_align(xbdreq);
-next:
-		xbdreq->req_bp = NULL;
+
 		dk_done(&sc->sc_dksc, bp);
 
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
-done:
+
 	xen_rmb();
 	sc->sc_ring.rsp_cons = i;
 
@@ -937,9 +951,8 @@ xbd_diskstart(device_t self, struct buf *bp)
 	struct xbd_xenbus_softc *sc = device_private(self);
 	struct xbd_req *xbdreq;
 	blkif_request_t *req;
-	size_t bcount, off;
+	size_t off;
 	paddr_t ma;
-	vaddr_t va;
 	int nsects, nbytes, seg;
 	int notify, error = 0;
 	int s;
@@ -947,18 +960,18 @@ xbd_diskstart(device_t self, struct buf *bp)
 	DPRINTF(("xbd_diskstart(%p): b_bcount = %ld\n",
 	    bp, (long)bp->b_bcount));
 
+	s = splbio();	/* XXX SMP */
+
 	if (sc->sc_shutdown != BLKIF_SHUTDOWN_RUN) {
 		error = EIO;
-		goto err;
+		goto out;
 	}
 
 	if (bp->b_rawblkno < 0 || bp->b_rawblkno > sc->sc_xbdsize) {
 		/* invalid block number */
 		error = EINVAL;
-		goto err;
+		goto out;
 	}
-
-	s = splbio();	/* XXX SMP */
 
 	if (__predict_false(
 	    sc->sc_backend_status == BLKIF_STATE_SUSPENDED)) {
@@ -997,6 +1010,16 @@ xbd_diskstart(device_t self, struct buf *bp)
 		}
 	}
 
+	if (__predict_false(bus_dmamap_load(sc->sc_xbusd->xbusd_dmat,
+	    xbdreq->req_dmamap, xbdreq->req_data, bp->b_bcount, NULL,
+	    BUS_DMA_NOWAIT) != 0)) {
+		printf("%s: %s: xengnt_grant_access failed",
+		    device_xname(sc->sc_dksc.sc_dev), __func__);
+		error = EINVAL;
+		goto out;
+	}
+
+	/* We are now committed to the transfer */
 	SLIST_REMOVE_HEAD(&sc->sc_xbdreq_head, req_next);
 	req = RING_GET_REQUEST(&sc->sc_ring, sc->sc_ring.req_prod_pvt);
 	req->id = xbdreq->req_id;
@@ -1005,45 +1028,41 @@ xbd_diskstart(device_t self, struct buf *bp)
 	req->sector_number = bp->b_rawblkno;
 	req->handle = sc->sc_handle;
 
-	va = (vaddr_t)xbdreq->req_data & ~PAGE_MASK;
-	off = (vaddr_t)xbdreq->req_data & PAGE_MASK;
-	bcount = bp->b_bcount;
 	bp->b_resid = 0;
-	for (seg = 0; bcount > 0;) {
-		pmap_extract_ma(pmap_kernel(), va, &ma);
-		KASSERT((ma & (XEN_BSIZE - 1)) == 0);
-		if (bcount > PAGE_SIZE - off)
-			nbytes = PAGE_SIZE - off;
-		else
-			nbytes = bcount;
+	for (seg = 0; seg < xbdreq->req_dmamap->dm_nsegs; seg++) {
+		bus_dma_segment_t *dmaseg = &xbdreq->req_dmamap->dm_segs[seg];
+
+		ma = dmaseg->ds_addr;
+		off = ma & PAGE_MASK;
+		nbytes = dmaseg->ds_len;
 		nsects = nbytes >> XEN_BSHIFT;
+
 		req->seg[seg].first_sect = off >> XEN_BSHIFT;
-		req->seg[seg].last_sect =
-		    (off >> XEN_BSHIFT) + nsects - 1;
-		KASSERT(req->seg[seg].first_sect <=
-		    req->seg[seg].last_sect);
-		KASSERT(req->seg[seg].last_sect < 8);
+		req->seg[seg].last_sect = (off >> XEN_BSHIFT) + nsects - 1;
+		KASSERT(req->seg[seg].first_sect <= req->seg[seg].last_sect);
+		KASSERT(req->seg[seg].last_sect < (PAGE_SIZE / XEN_BSIZE));
+
 		if (__predict_false(xengnt_grant_access(
-		    sc->sc_xbusd->xbusd_otherend_id, ma,
-		    (bp->b_flags & B_READ) == 0,
-		    &xbdreq->req_gntref[seg])))
-			panic("xbd_diskstart: xengnt_grant_access"); /* XXX XXX !!! */
+		    sc->sc_xbusd->xbusd_otherend_id,
+		    (ma & ~PAGE_MASK), (bp->b_flags & B_READ) == 0,
+		    &xbdreq->req_gntref[seg]))) {
+			printf("%s: %s: xengnt_grant_access failed",
+			    device_xname(sc->sc_dksc.sc_dev), __func__);
+			error = EFAULT;
+			goto out;
+		}
+
 		req->seg[seg].gref = xbdreq->req_gntref[seg];
-		seg++;
-		KASSERT(seg <= BLKIF_MAX_SEGMENTS_PER_REQUEST);
-		va += PAGE_SIZE;
-		off = 0;
-		bcount -= nbytes;
 	}
-	xbdreq->req_nr_segments = req->nr_segments = seg;
+	req->nr_segments = seg;
 	sc->sc_ring.req_prod_pvt++;
 
-out:
 	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&sc->sc_ring, notify);
 	if (notify)
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
+
+out:
 	splx(s);	/* XXXSMP */
-err:
 	return error;
 }
 
