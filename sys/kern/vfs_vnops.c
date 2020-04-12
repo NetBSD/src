@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.208 2020/04/12 13:12:42 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.209 2020/04/12 15:55:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.208 2020/04/12 13:12:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.209 2020/04/12 15:55:53 christos Exp $");
 
 #include "veriexec.h"
 
@@ -1107,7 +1107,6 @@ vn_extattr_get(struct vnode *vp, int ioflg, int attrnamespace,
 
 	error = VOP_GETEXTATTR(vp, attrnamespace, attrname, &auio, NULL,
 	    NOCRED);
-	printf("%s: %d\n", __func__, error);
 
 	if ((ioflg & IO_NODELOCKED) == 0)
 		VOP_UNLOCK(vp);
