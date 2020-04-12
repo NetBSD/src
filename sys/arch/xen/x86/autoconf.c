@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23.8.1 2020/04/08 17:59:16 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23.8.2 2020/04/12 21:19:49 bouyer Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23.8.1 2020/04/08 17:59:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23.8.2 2020/04/12 21:19:49 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_multiprocessor.h"
@@ -126,7 +126,7 @@ cpu_configure(void)
 		/* identify hypervisor type from SMBIOS */
 		identify_hypervisor();
 #endif /* NBIOS32 > 0 */
-	} else
+	}
 #endif /* DOM0OPS */
 #ifdef PCIBIOS
 	pcibios_init();
