@@ -93,6 +93,38 @@ bpf_frame_header_len(const struct interface *ifp)
 	}
 }
 
+void *
+bpf_frame_header_src(const struct interface *ifp, void *fh, size_t *len)
+{
+	uint8_t *f = fh;
+
+	switch (ifp->family) {
+	case ARPHRD_ETHER:
+		*len = sizeof(((struct ether_header *)0)->ether_shost);
+		return f + offsetof(struct ether_header, ether_shost);
+	default:
+		*len = 0;
+		errno =	ENOTSUP;
+		return NULL;
+	}
+}
+
+void *
+bpf_frame_header_dst(const struct interface *ifp, void *fh, size_t *len)
+{
+	uint8_t *f = fh;
+
+	switch (ifp->family) {
+	case ARPHRD_ETHER:
+		*len = sizeof(((struct ether_header *)0)->ether_dhost);
+		return f + offsetof(struct ether_header, ether_dhost);
+	default:
+		*len = 0;
+		errno =	ENOTSUP;
+		return NULL;
+	}
+}
+
 static const uint8_t etherbcastaddr[] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
@@ -215,7 +247,6 @@ ssize_t
 bpf_read(struct interface *ifp, int fd, void *data, size_t len,
     unsigned int *flags)
 {
-	ssize_t fl = (ssize_t)bpf_frame_header_len(ifp);
 	ssize_t bytes;
 	struct ipv4_state *state = IPV4_STATE(ifp);
 
@@ -250,10 +281,10 @@ bpf_read(struct interface *ifp, int fd, void *data, size_t len,
 			*flags |= BPF_BCAST;
 		else
 			*flags &= ~BPF_BCAST;
-		payload += fl;
-		bytes = (ssize_t)packet.bh_caplen - fl;
-		if ((size_t)bytes > len)
+		if (packet.bh_caplen > len)
 			bytes = (ssize_t)len;
+		else
+			bytes = (ssize_t)packet.bh_caplen;
 		memcpy(data, payload, (size_t)bytes);
 next:
 		state->buffer_pos += BPF_WORDALIGN(packet.bh_hdrlen +

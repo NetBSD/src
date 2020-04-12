@@ -29,7 +29,7 @@
 #define CONFIG_H
 
 #define PACKAGE			"dhcpcd"
-#define VERSION			"8.1.6"
+#define VERSION			"8.1.7"
 
 #ifndef CONFIG
 # define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"

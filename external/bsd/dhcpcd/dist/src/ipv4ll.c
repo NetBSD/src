@@ -36,7 +36,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define ELOOP_QUEUE 6
+#define ELOOP_QUEUE	IPV4LL
 #include "config.h"
 #include "arp.h"
 #include "common.h"

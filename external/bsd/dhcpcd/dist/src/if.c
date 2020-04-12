@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <syslog.h>
 
 #include "config.h"
 
@@ -54,6 +55,7 @@
 #include <errno.h>
 #include <ifaddrs.h>
 #include <inttypes.h>
+#include <fcntl.h>
 #include <fnmatch.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -407,8 +409,9 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 #endif
 
 		if (if_vimaster(ctx, spec.devname) == 1) {
-			logfunc_t *logfunc = argc != 0 ? logerrx : logdebugx;
-			logfunc("%s: is a Virtual Interface Master, skipping",
+			int loglevel = argc != 0 ? LOG_ERR : LOG_DEBUG;
+			logmessage(loglevel,
+			    "%s: is a Virtual Interface Master, skipping",
 			    spec.devname);
 			continue;
 		}
@@ -612,11 +615,18 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 	return ifs;
 }
 
-/* Decode bge0:1 as dev = bge, ppa = 0 and lun = 1 */
+/*
+ * eth0.100:2 OR eth0i100:2 (seems to be NetBSD xvif(4) only)
+ *
+ * drvname == eth
+ * devname == eth0.100 OR eth0i100
+ * ppa = 0
+ * lun = 2
+ */
 int
 if_nametospec(const char *ifname, struct if_spec *spec)
 {
-	char *ep;
+	char *ep, *pp;
 	int e;
 
 	if (ifname == NULL || *ifname == '\0' ||
@@ -628,6 +638,8 @@ if_nametospec(const char *ifname, struct if_spec *spec)
 		errno = EINVAL;
 		return -1;
 	}
+
+	/* :N is an alias */
 	ep = strchr(spec->drvname, ':');
 	if (ep) {
 		spec->lun = (int)strtoi(ep + 1, NULL, 10, 0, INT_MAX, &e);
@@ -640,17 +652,27 @@ if_nametospec(const char *ifname, struct if_spec *spec)
 		spec->lun = -1;
 		ep = spec->drvname + strlen(spec->drvname) - 1;
 	}
+
 	strlcpy(spec->devname, spec->drvname, sizeof(spec->devname));
-	while (ep > spec->drvname && isdigit((int)*ep))
-		ep--;
-	if (*ep++ == ':') {
-		errno = EINVAL;
-		return -1;
+	for (ep = spec->drvname; *ep != '\0' && !isdigit((int)*ep); ep++) {
+		if (*ep == ':') {
+			errno = EINVAL;
+			return -1;
+		}
 	}
-	spec->ppa = (int)strtoi(ep, NULL, 10, 0, INT_MAX, &e);
-	if (e != 0)
-		spec->ppa = -1;
+	spec->ppa = (int)strtoi(ep, &pp, 10, 0, INT_MAX, &e);
 	*ep = '\0';
+
+	/*
+	 * . is used for VLAN style names
+	 * i is used on NetBSD for xvif interfaces
+	 */
+	if (pp != NULL && (*pp == '.' || *pp == 'i')) {
+		spec->vlid = (int)strtoi(pp + 1, NULL, 10, 0, INT_MAX, &e);
+		if (e)
+			spec->vlid = -1;
+	} else
+		spec->vlid = -1;
 
 	return 0;
 }

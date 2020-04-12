@@ -36,6 +36,7 @@
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <syslog.h>
 
 #include "config.h"
 
@@ -59,7 +60,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define ELOOP_QUEUE 7
+#define ELOOP_QUEUE	ELOOP_IPV6
 #include "common.h"
 #include "if.h"
 #include "dhcpcd.h"
@@ -380,25 +381,14 @@ ipv6_makeaddr(struct in6_addr *addr, struct interface *ifp,
 static int
 ipv6_makeprefix(struct in6_addr *prefix, const struct in6_addr *addr, int len)
 {
-	int bytes, bits;
+	struct in6_addr mask;
+	size_t i;
 
-	if (len < 0 || len > 128) {
-		errno = EINVAL;
+	if (ipv6_mask(&mask, len) == -1)
 		return -1;
-	}
-
-	bytes = len / NBBY;
-	bits = len % NBBY;
-	memcpy(&prefix->s6_addr, &addr->s6_addr, (size_t)bytes);
-	if (bits != 0) {
-		/* Coverify false positive.
-		 * bytelen cannot be 16 if bitlen is non zero */
-		/* coverity[overrun-local] */
-		prefix->s6_addr[bytes] =
-		    (uint8_t)(prefix->s6_addr[bytes] >> (NBBY - bits));
-	}
-	memset((char *)prefix->s6_addr + bytes, 0,
-	    sizeof(prefix->s6_addr) - (size_t)bytes);
+	*prefix = *addr;
+	for (i = 0; i < sizeof(prefix->s6_addr); i++)
+		prefix->s6_addr[i] &= mask.s6_addr[i];
 	return 0;
 }
 
@@ -627,7 +617,7 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 {
 	struct interface *ifp;
 	uint32_t pltime, vltime;
-	__printflike(1, 2) void (*logfunc)(const char *, ...);
+	int loglevel;
 #ifdef ND6_ADVERTISE
 	bool vltime_was_zero = ia->prefix_vltime == 0;
 #endif
@@ -688,8 +678,8 @@ ipv6_addaddr1(struct ipv6_addr *ia, const struct timespec *now)
 		}
 	}
 
-	logfunc = ia->flags & IPV6_AF_NEW ? loginfox : logdebugx;
-	logfunc("%s: adding %saddress %s", ifp->name,
+	loglevel = ia->flags & IPV6_AF_NEW ? LOG_INFO : LOG_DEBUG;
+	logmessage(loglevel, "%s: adding %saddress %s", ifp->name,
 #ifdef IPV6_AF_TEMPORARY
 	    ia->flags & IPV6_AF_TEMPORARY ? "temporary " : "",
 #else
@@ -932,7 +922,7 @@ ipv6_doaddr(struct ipv6_addr *ia, struct timespec *now)
 		if (ia->flags & IPV6_AF_ADDED)
 			ipv6_deleteaddr(ia);
 		eloop_q_timeout_delete(ia->iface->ctx->eloop,
-		    0, NULL, ia);
+		    ELOOP_QUEUE_ALL, NULL, ia);
 		if (ia->flags & IPV6_AF_REQUEST) {
 			ia->flags &= ~IPV6_AF_ADDED;
 			return 0;
@@ -974,6 +964,7 @@ ipv6_addaddrs(struct ipv6_addrhead *iaddrs)
 void
 ipv6_freeaddr(struct ipv6_addr *ia)
 {
+	struct eloop *eloop = ia->iface->ctx->eloop;
 #ifndef SMALL
 	struct ipv6_addr *iad;
 
@@ -989,10 +980,10 @@ ipv6_freeaddr(struct ipv6_addr *ia)
 
 	if (ia->dhcp6_fd != -1) {
 		close(ia->dhcp6_fd);
-		eloop_event_delete(ia->iface->ctx->eloop, ia->dhcp6_fd);
+		eloop_event_delete(eloop, ia->dhcp6_fd);
 	}
 
-	eloop_q_timeout_delete(ia->iface->ctx->eloop, 0, NULL, ia);
+	eloop_q_timeout_delete(eloop, ELOOP_QUEUE_ALL, NULL, ia);
 	free(ia->na);
 	free(ia);
 }
@@ -1538,9 +1529,10 @@ ipv6_newaddr(struct interface *ifp, const struct in6_addr *addr,
 	/* If adding a new DHCP / RA derived address, check current flags
 	 * from an existing address. */
 	ia = ipv6_iffindaddr(ifp, addr, 0);
-	if (ia != NULL)
+	if (ia != NULL) {
 		addr_flags = ia->addr_flags;
-	else
+		flags |= IPV6_AF_ADDED;
+	} else
 		addr_flags = IN6_IFF_TENTATIVE;
 
 	ia = calloc(1, sizeof(*ia));

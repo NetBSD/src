@@ -54,6 +54,8 @@ struct ra {
 	struct ipv6_addrhead addrs;
 	bool hasdns;
 	bool expired;
+	bool willexpire;
+	bool doexpire;
 	bool isreachable;
 };
 
@@ -108,7 +110,7 @@ ssize_t ipv6nd_free(struct interface *);
 void ipv6nd_expirera(void *arg);
 bool ipv6nd_hasralifetime(const struct interface *, bool);
 #define	ipv6nd_hasra(i)		ipv6nd_hasralifetime((i), false)
-bool ipv6nd_hasradhcp(const struct interface *);
+bool ipv6nd_hasradhcp(const struct interface *, bool);
 void ipv6nd_handleifa(int, struct ipv6_addr *, pid_t);
 int ipv6nd_dadcompleted(const struct interface *);
 void ipv6nd_advertise(struct ipv6_addr *);

@@ -1165,7 +1165,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			np = strchr(p, '/');
 			if (np)
 				*np++ = '\0';
-			if (inet_pton(AF_INET6, p, &ifo->req_addr6) == 1) {
+			if ((i = inet_pton(AF_INET6, p, &ifo->req_addr6)) == 1) {
 				if (np) {
 					ifo->req_prefix_len = (uint8_t)strtou(np,
 					    NULL, 0, 0, 128, &e);
@@ -1177,6 +1177,14 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 					}
 				} else
 					ifo->req_prefix_len = 128;
+			}
+			if (np)
+				*(--np) = '\0';
+			if (i != 1) {
+				logerrx("invalid AF_INET6: %s", p);
+				memset(&ifo->req_addr6, 0,
+				    sizeof(ifo->req_addr6));
+				return -1;
 			}
 		} else
 			add_environ(&ifo->config, arg, 1);
@@ -1398,8 +1406,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				p = strchr(arg, '/');
 				if (p)
 					*p++ = '\0';
-				if (inet_pton(AF_INET6, arg, &ia->addr) == -1) {
-					logerr("%s", arg);
+				if (inet_pton(AF_INET6, arg, &ia->addr) != 1) {
+					logerrx("invalid AF_INET6: %s", arg);
 					memset(&ia->addr, 0, sizeof(ia->addr));
 				}
 				if (p && ia->ia_type == D6_OPTION_IA_PD) {
