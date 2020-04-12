@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.300 2020/04/12 13:37:12 christos Exp $
+	$NetBSD: syscalls.master,v 1.301 2020/04/12 22:06:17 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -331,7 +331,7 @@
 152	UNIMPL
 153	UNIMPL
 154	UNIMPL
-155	STD	RUMP  { int|sys||nfssvc(int flag, void *argp); }
+155	STD MODULAR nfsserver RUMP  { int|sys||nfssvc(int flag, void *argp); }
 156	COMPAT_43 MODULAR compat_43	\
 		{ int|sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
@@ -516,18 +516,18 @@
 245	STD		{ int|sys||sigqueueinfo(pid_t pid, \
 			    const siginfo_t *info); }
 246	STD	RUMP	{ int|sys||modctl(int cmd, void *arg); }
-247	STD	RUMP { int|sys||_ksem_init(unsigned int value, intptr_t *idp); }
-248	STD	RUMP { int|sys||_ksem_open(const char *name, int oflag, \
+247	STD MODULAR ksem RUMP { int|sys||_ksem_init(unsigned int value, intptr_t *idp); }
+248	STD MODULAR ksem RUMP { int|sys||_ksem_open(const char *name, int oflag, \
 			    mode_t mode, unsigned int value, intptr_t *idp); }
-249	STD	RUMP { int|sys||_ksem_unlink(const char *name); }
-250	STD	RUMP { int|sys||_ksem_close(intptr_t id); }
-251	STD	RUMP { int|sys||_ksem_post(intptr_t id); }
-252	STD	RUMP { int|sys||_ksem_wait(intptr_t id); }
-253	STD	RUMP { int|sys||_ksem_trywait(intptr_t id); }
-254	STD	RUMP { int|sys||_ksem_getvalue(intptr_t id, \
+249	STD MODULAR ksem RUMP { int|sys||_ksem_unlink(const char *name); }
+250	STD MODULAR ksem RUMP { int|sys||_ksem_close(intptr_t id); }
+251	STD MODULAR ksem RUMP { int|sys||_ksem_post(intptr_t id); }
+252	STD MODULAR ksem RUMP { int|sys||_ksem_wait(intptr_t id); }
+253	STD MODULAR ksem RUMP { int|sys||_ksem_trywait(intptr_t id); }
+254	STD MODULAR ksem RUMP { int|sys||_ksem_getvalue(intptr_t id, \
 			    unsigned int *value); }
-255	STD	RUMP { int|sys||_ksem_destroy(intptr_t id); }
-256	STD	RUMP { int|sys||_ksem_timedwait(intptr_t id, \
+255	STD MODULAR ksem RUMP { int|sys||_ksem_destroy(intptr_t id); }
+256	STD MODULAR ksem RUMP { int|sys||_ksem_timedwait(intptr_t id, \
 				const struct timespec *abstime); }
 257	STD MODULAR mqueue	\
 			{ mqd_t|sys||mq_open(const char * name, int oflag, \
@@ -819,22 +819,22 @@
 			    size_t fh_size, struct stat30 *sb); }
 
 ; Asynchronous I/O system calls
-399	STD	RUMP	\
+399	STD MODULAR aio RUMP	\
 		{ int|sys||aio_cancel(int fildes, struct aiocb *aiocbp); }
-400	STD	RUMP	\
+400	STD MODULAR aio RUMP	\
 		{ int|sys||aio_error(const struct aiocb *aiocbp); }
-401	STD	RUMP	\
+401	STD MODULAR aio RUMP	\
 		{ int|sys||aio_fsync(int op, struct aiocb *aiocbp); }
-402	STD	RUMP	\
+402	STD MODULAR aio RUMP	\
 		{ int|sys||aio_read(struct aiocb *aiocbp); }
-403	STD	RUMP	\
+403	STD MODULAR aio RUMP	\
 		{ int|sys||aio_return(struct aiocb *aiocbp); }
 404	COMPAT_50 MODULAR compat	\
 		{ int|sys||aio_suspend(const struct aiocb *const *list, \
 		    int nent, const struct timespec50 *timeout); }
-405	STD	RUMP	\
+405	STD MODULAR aio RUMP	\
 		{ int|sys||aio_write(struct aiocb *aiocbp); }
-406	STD	RUMP	\
+406	STD MODULAR aio RUMP	\
 		{ int|sys||lio_listio(int mode, struct aiocb *const *list, \
 		    int nent, struct sigevent *sig); }
 
@@ -912,7 +912,7 @@
 			    const sigset_t *mask); }
 437	STD	RUMP	{ int|sys|50|pollts(struct pollfd *fds, u_int nfds, \
 			    const struct timespec *ts, const sigset_t *mask); }
-438	STD	RUMP { int|sys|50|aio_suspend( \
+438	STD MODULAR aio RUMP { int|sys|50|aio_suspend( \
 			    const struct aiocb *const *list, \
 			    int nent, const struct timespec *timeout); }
 439	STD	RUMP	{ int|sys|50|stat(const char *path, struct stat *ub); }
