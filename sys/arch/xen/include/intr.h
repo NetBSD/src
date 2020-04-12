@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.53 2019/12/23 13:35:37 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.53.6.1 2020/04/12 17:25:52 bouyer Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -61,9 +61,6 @@ struct evtsource {
 	char ev_intrname[32];		/* interrupt string */
 	char ev_xname[64];		/* handler device list */
 };
-
-#define XMASK(ci,level) (ci)->ci_xmask[(level)]
-#define XUNMASK(ci,level) (ci)->ci_xunmask[(level)]
 
 extern struct intrstub xenev_stubs[];
 extern int irq2port[NR_EVENT_CHANNELS]; /* actually port + 1, so that 0 is invaid */

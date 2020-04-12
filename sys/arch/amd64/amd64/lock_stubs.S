@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.35.6.1 2020/04/11 18:26:06 bouyer Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.35.6.2 2020/04/12 17:25:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -130,11 +130,6 @@ ENTRY(mutex_spin_exit)
 	CLI(ax)
 	testl	CPU_INFO_IPENDING(%r8), %esi
 	jnz	_C_LABEL(Xspllower)
-#if defined(XEN)
-	movl	CPU_INFO_XUNMASK(%r8,%rdi,4), %esi
-	testl	CPU_INFO_XPENDING(%r8), %esi
-	jnz	_C_LABEL(Xspllower)
-#endif
 	movl	%edi, CPU_INFO_ILEVEL(%r8)
 	STI(ax)
 1:	rep					/* double byte ret as branch */
@@ -158,14 +153,6 @@ ENTRY(mutex_spin_exit)
 	movl	%eax,%ebx
 	cmpxchg8b CPU_INFO_ISTATE(%rsi)		/* swap in new ilevel */
 	jnz	4f
-#if defined(XEN)
-	movl	CPU_INFO_XPENDING(%rsi),%eax
-	testl	%eax,CPU_INFO_XUNMASK(%rsi,%rcx,4)/* deferred interrupts? */
-	jnz	3f
-	movl	%edx, %eax
-	cmpxchgl %ecx, CPU_INFO_ILEVEL(%rsi)
-	jnz	4f
-#endif
 2:
 	popq	%rbx
 	ret

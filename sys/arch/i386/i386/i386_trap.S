@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.20 2019/10/12 06:31:03 maxv Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.20.6.1 2020/04/12 17:25:52 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.20 2019/10/12 06:31:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.20.6.1 2020/04/12 17:25:52 bouyer Exp $");
 #endif
 
 /*
@@ -446,12 +446,12 @@ calltrap:
 	movl	$.Lalltraps_resume,%esi /* address to resume loop at */
 .Lalltraps_resume:
 	movl	%ebx,%eax		/* get cpl */
-	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
+	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
+	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
 	jz	11f
 	bsrl	%eax,%eax
-	btrl	%eax,CPUVAR(XPENDING)
-	movl	CPUVAR(XSOURCES)(,%eax,4),%eax
+	btrl	%eax,CPUVAR(IPENDING)
+	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
 11:	movl	%ebx,CPUVAR(ILEVEL)	/* restore cpl */
 	jmp	.Lalltraps_checkusr

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.82.4.2 2020/04/11 10:11:30 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.82.4.3 2020/04/12 17:25:52 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -323,6 +323,8 @@ define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
 define	IPL_NET			IPL_NET
 define	IPL_CLOCK		IPL_CLOCK
+define	IPL_VM			IPL_VM
+define	IPL_SCHED		IPL_SCHED
 define	IPL_HIGH		IPL_HIGH
 
 define	LIR_IPI			LIR_IPI
@@ -362,10 +364,9 @@ define	VM_GUEST_XENPV		VM_GUEST_XENPV
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
-define CPU_INFO_XPENDING	offsetof(struct cpu_info, ci_xpending)
-define CPU_INFO_XMASK		offsetof(struct cpu_info, ci_xmask)
-define CPU_INFO_XUNMASK		offsetof(struct cpu_info, ci_xunmask)
-define CPU_INFO_XSOURCES	offsetof(struct cpu_info, ci_xsources)
+define SIR_XENIPL_VM		SIR_XENIPL_VM
+define SIR_XENIPL_SCHED		SIR_XENIPL_SCHED
+define SIR_XENIPL_HIGH		SIR_XENIPL_HIGH
 define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
 ifdef XENPV
 define XEN_PT_BASE		offsetof(struct start_info, pt_base)    

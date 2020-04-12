@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.23 2019/11/23 19:40:37 ad Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.23.6.1 2020/04/12 17:25:52 bouyer Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
@@ -40,6 +40,11 @@
 #define	SIR_BIO		26
 #define	SIR_CLOCK	25
 #define	SIR_PREEMPT	24
+#define	SIR_XENIPL_HIGH 23
+#define	SIR_XENIPL_SCHED 22
+#define	SIR_XENIPL_VM	21
+
+#define XEN_IPL2SIR(ipl) ((ipl) + (SIR_XENIPL_VM - IPL_VM))
 
 /*
  * Maximum # of interrupt sources per CPU. 32 to fit in one word.

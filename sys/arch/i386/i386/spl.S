@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.50.4.4 2020/04/11 18:26:07 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.50.4.5 2020/04/12 17:25:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50.4.4 2020/04/11 18:26:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.50.4.5 2020/04/12 17:25:52 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -92,11 +92,6 @@ ENTRY(spllower)
 	CLI(%eax)
 	testl	CPUVAR(IPENDING),%edx
 	jnz	2f
-#if defined(XEN)
-	movl	CPUVAR(XUNMASK)(,%ecx,4),%edx
-	testl	CPUVAR(XPENDING),%edx
-	jnz	2f
-#endif
 	movl	%ecx,CPUVAR(ILEVEL)
 	POPF(%eax)
 1:
@@ -222,17 +217,6 @@ IDTVEC(spllower)
 	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RECURSE(%eax)
 2:
-#if defined(XEN)
-	movl	%ebx,%eax			/* get cpl */
-	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(XPENDING),%eax		/* any non-masked bits left? */
-	jz	3f
-	bsrl	%eax,%eax
-	btrl	%eax,CPUVAR(XPENDING)
-	movl	CPUVAR(XSOURCES)(,%eax,4),%eax
-	jmp	*IS_RECURSE(%eax)
-#endif
-3:
 	movl	%ebx,CPUVAR(ILEVEL)
 #ifdef XENPV
 	STIC(%eax)
@@ -296,18 +280,7 @@ IDTVEC(doreti)
 	btrl	%eax,CPUVAR(IPENDING)
 	movl	CPUVAR(ISOURCES)(,%eax, 4),%eax
 	jmp	*IS_RESUME(%eax)
-2:
-#if defined(XEN)
-	movl	%ebx,%eax
-	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(XPENDING),%eax
-	jz	3f
-	bsrl	%eax,%eax		/* slow, but not worth optimizing */
-	btrl	%eax,CPUVAR(XPENDING)
-	movl	CPUVAR(XSOURCES)(,%eax, 4),%eax
-	jmp	*IS_RESUME(%eax)
-#endif
-3:	/* Check for ASTs on exit to user mode. */
+2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
 5:
 	testb	$CHK_UPL,TF_CS(%esp)

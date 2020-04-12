@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.21.2.1 2020/04/11 10:11:31 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.21.2.2 2020/04/12 17:25:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.1 2020/04/11 10:11:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21.2.2 2020/04/12 17:25:52 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -306,12 +306,6 @@ void xen_cpu_intr_init(struct cpu_info *);
 void
 xen_cpu_intr_init(struct cpu_info *ci)
 {
-	int i; /* XXX: duplicate */
-
-	ci->ci_xunmask[0] = 0xfffffffe;
-	for (i = 1; i < NIPL; i++)
-		ci->ci_xunmask[i] = ci->ci_xunmask[i - 1] & ~(1 << i);
-
 #if defined(INTRSTACKSIZE)
 	vaddr_t istack;
 
@@ -338,7 +332,7 @@ xen_cpu_intr_init(struct cpu_info *ci)
 #endif
 
 #ifdef MULTIPROCESSOR
-	for (i = 0; i < XEN_NIPIS; i++)
+	for (int i = 0; i < XEN_NIPIS; i++)
 		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_MISC,
 		    NULL, device_xname(ci->ci_dev), xen_ipi_names[i]);
 #endif

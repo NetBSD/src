@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.56 2020/04/07 10:19:53 jdolecek Exp $      */
+/*      $NetBSD: xenevt.c,v 1.56.2.1 2020/04/12 17:25:53 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.56 2020/04/07 10:19:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.56.2.1 2020/04/12 17:25:53 bouyer Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -193,7 +193,7 @@ xenevt_setipending(int l1, int l2)
 {
 	atomic_or_ulong(&xenevt_ev1, 1UL << l1);
 	atomic_or_ulong(&xenevt_ev2[l1], 1UL << l2);
-	atomic_or_32(&cpu_info_primary.ci_xpending, 1 << IPL_HIGH);
+	atomic_or_32(&cpu_info_primary.ci_ipending, 1 << SIR_XENIPL_HIGH);
 }
 
 /* process pending events */
