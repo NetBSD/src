@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.32 2020/04/09 11:29:33 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.33 2020/04/12 08:50:25 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -816,4 +816,79 @@ usr.bin/man/man.c				1.68
 
 	Exit successfully after printing the search path (-p option).
 	[maya, ticket #824]
+
+external/bsd/dhcpcd/dist/src/arp.c		(apply patch)
+external/bsd/dhcpcd/dist/src/arp.h		(apply patch)
+external/bsd/dhcpcd/dist/src/bpf.c		(apply patch)
+external/bsd/dhcpcd/dist/src/bpf.h		(apply patch)
+external/bsd/dhcpcd/dist/src/common.h		(apply patch)
+external/bsd/dhcpcd/dist/src/defs.h		(apply patch)
+external/bsd/dhcpcd/dist/src/dhcp.c		(apply patch)
+external/bsd/dhcpcd/dist/src/dhcp6.c		(apply patch)
+external/bsd/dhcpcd/dist/src/dhcp6.h		(apply patch)
+external/bsd/dhcpcd/dist/src/dhcpcd.c		(apply patch)
+external/bsd/dhcpcd/dist/src/eloop.h		(apply patch)
+external/bsd/dhcpcd/dist/src/if-bsd.c		(apply patch)
+external/bsd/dhcpcd/dist/src/if-options.c	(apply patch)
+external/bsd/dhcpcd/dist/src/if.c		(apply patch)
+external/bsd/dhcpcd/dist/src/if.h		(apply patch)
+external/bsd/dhcpcd/dist/src/ipv4ll.c		(apply patch)
+external/bsd/dhcpcd/dist/src/ipv6.c		(apply patch)
+external/bsd/dhcpcd/dist/src/ipv6nd.c		(apply patch)
+external/bsd/dhcpcd/dist/src/ipv6nd.h		(apply patch)
+external/bsd/dhcpcd/dist/src/logerr.c		(apply patch)
+external/bsd/dhcpcd/dist/src/logerr.h		(apply patch)
+doc/3RDPARTY					(apply patch)
+
+	Update to dhcpcd-8.1.7 which fixes the following issues:
+	* Decode interface complex interface names eth0.100:2 eth0i100:2.
+	  This allows us to ignore some virtual interfaces by default
+	* ARP: Report L2 header address on conflict for more clarity
+	* DHCP: Support jumbo frames (untested)
+	* DHCP6: Clean up old lease on failure to confirm/rebind, etc
+	* RA: Prefer older routers - fixes PR bin/54997
+	* INET6: Obscure prefixes are now calculated correctly
+	* macro logerr commands to allow an alternative logger
+	[roy, ticket #825]
+
+lib/libpthread/arch/powerpc/pthread_md.h	1.9
+sys/arch/powerpc/powerpc/sig_machdep.c		1.48
+
+	Remove a bogus assertion.
+	[rin, ticket #826]
+
+sys/external/bsd/ipf/netinet/fil.c		1.32
+sys/external/bsd/ipf/netinet/fil.c		1.33
+sys/external/bsd/ipf/netinet/ip_frag.c		1.8
+
+	PR/55137: 
+	- fix incorrect byte order in ipfstat -f output.
+	- make sure frag is initialized to 0
+	- initialize ipfr_p field
+	PR/55149: get "morefrag" before we strip it out from "off"
+	[christos, ticket #827]
+
+distrib/sets/lists/man/mi			1.1687
+share/man/man4/Makefile				1.704 (via patch)
+share/man/man4/ucom.4				1.28
+share/man/man4/uxrcom.4				1.1
+share/man/man4/uxrcom.4				1.2
+sys/dev/usb/files.usb				1.173
+sys/dev/usb/ukyopon.c				1.26
+sys/dev/usb/umodem.c				1.74
+sys/dev/usb/umodem_common.c			1.33
+sys/dev/usb/usbdevices.config			1.38
+sys/dev/usb/usbdevs				1.781
+sys/dev/usb/uxrcom.c				1.1
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	Add uxrcom driver for Exar XR21V141x USB serial adapters.
+	[simonb, ticket #828]
+
+sys/dev/acpi/acpi_ec.c				1.78-1.81
+
+	Revert acpi_ec.c 1.76 and 1.77.
+	Reject overly large widths.
+	[riastradh, ticket #829]
 
