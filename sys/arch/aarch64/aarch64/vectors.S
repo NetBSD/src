@@ -1,9 +1,12 @@
-/*	$NetBSD: vectors.S,v 1.12 2020/04/11 09:02:04 maxv Exp $	*/
+/*	$NetBSD: vectors.S,v 1.13 2020/04/12 07:49:58 maxv Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
+#include "opt_cpuoptions.h"
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
+
+	ARMV8_DEFINE_OPTIONS
 
 #ifdef KDTRACE_HOOKS
 /*
@@ -81,6 +84,18 @@ ENTRY_NP(\func)
 	ldr	x1, [x1, #CI_CURLWP]	/* x1 = curcpu()->ci_curlwp */
 	mrs	x0, tpidr\tpidr\()_el0
 	str	x0, [x1, #L_PRIVATE]	/* curlwp->l_private = tpidr{,ro}_el0 */
+
+#ifdef ARMV83_PAC
+	/* Switch to the kern PAC key. */
+	adrl	x4, _C_LABEL(aarch64_pac_enabled)
+	ldr	w4, [x4]
+	cbz	w4, 1f
+	ldr	x5, [x1, #L_MD_IA_KERN_LO]
+	ldr	x6, [x1, #L_MD_IA_KERN_HI]
+	msr	APIAKeyLo_EL1, x5
+	msr	APIAKeyHi_EL1, x6
+1:
+#endif
 	.endif
 
 	adr	x30, el\el\()_trap_exit	/* el[01]_trap_exit */
