@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.103 2020/04/11 17:52:01 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.104 2020/04/12 18:14:09 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.103 2020/04/11 17:52:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.104 2020/04/12 18:14:09 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -985,6 +985,9 @@ xbd_diskstart(device_t self, struct buf *bp)
 	xbdreq->req_bp = bp;
 	xbdreq->req_data = bp->b_data;
 	if (__predict_false((vaddr_t)bp->b_data & (XEN_BSIZE - 1))) {
+		/* Only can get here if this is physio() request */
+		KASSERT(bp->b_saveaddr != NULL);
+
 		sc->sc_cnt_map_unalign.ev_count++;
 
 		if (__predict_false(xbd_map_align(xbdreq) != 0)) {
