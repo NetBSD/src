@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.149 2020/03/31 12:23:17 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.150 2020/04/12 07:49:58 maxv Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -163,6 +163,10 @@ options 	INCLUDE_CONFIG_FILE
 #options 	EARLYCONS=tegra, CONSADDR=0x70006000
 #options 	EARLYCONS=thunderx, CONSADDR=0x87e024000000
 #options 	EARLYCONS=virt
+
+# Pointer Authentication (PAC).
+#makeoptions 	ARMV83_PAC=1
+#options 	ARMV83_PAC
 
 # Kernel Address Sanitizer (kASan). The quarantine is optional and can
 # help KASAN find more use-after-frees. Use KASAN_PANIC if you want panics
