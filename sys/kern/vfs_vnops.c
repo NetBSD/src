@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.207 2020/02/27 22:12:54 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.208 2020/04/12 13:12:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.207 2020/02/27 22:12:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.208 2020/04/12 13:12:42 christos Exp $");
 
 #include "veriexec.h"
 
@@ -1105,7 +1105,9 @@ vn_extattr_get(struct vnode *vp, int ioflg, int attrnamespace,
 	if ((ioflg & IO_NODELOCKED) == 0)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-	error = VOP_GETEXTATTR(vp, attrnamespace, attrname, &auio, NULL, NULL);
+	error = VOP_GETEXTATTR(vp, attrnamespace, attrname, &auio, NULL,
+	    NOCRED);
+	printf("%s: %d\n", __func__, error);
 
 	if ((ioflg & IO_NODELOCKED) == 0)
 		VOP_UNLOCK(vp);
@@ -1141,7 +1143,7 @@ vn_extattr_set(struct vnode *vp, int ioflg, int attrnamespace,
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
-	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio, NULL);
+	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio, NOCRED);
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
 		VOP_UNLOCK(vp);
@@ -1162,7 +1164,8 @@ vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
 
 	error = VOP_DELETEEXTATTR(vp, attrnamespace, attrname, NULL);
 	if (error == EOPNOTSUPP)
-		error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL, NULL);
+		error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL,
+		    NOCRED);
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
 		VOP_UNLOCK(vp);
