@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.119 2020/04/10 14:35:26 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.120 2020/04/13 22:54:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -306,9 +306,6 @@ struct cpu_info {
 	 * behind the global time.
 	 */
 	uint64_t	ci_xen_systime_ns_skew;
-
-	/* Xen periodic timer interrupt handle.  */
-	struct intrhand	*ci_xen_timer_intrhand;
 
 	/*
 	 * Clockframe for timer interrupt handler.
