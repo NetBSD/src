@@ -188,7 +188,7 @@ ps_root_run_script(struct dhcpcd_ctx *ctx, const void *data, size_t len)
 	if (script_buftoenv(ctx, UNCONST(envbuf), len) == NULL)
 		return -1;
 
-	pid = script_exec(ctx, argv, ctx->script_env);
+	pid = script_exec(argv, ctx->script_env);
 	if (pid == -1)
 		return -1;
 	/* Wait for the script to finish */
@@ -435,8 +435,10 @@ ps_root_dispatchcb(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 	struct dhcpcd_ctx *ctx = arg;
 	ssize_t err;
 
+#ifdef INET
 	err = ps_bpf_dispatch(ctx, psm, msg);
 	if (err == -1 && errno == ENOTSUP)
+#endif
 		err = ps_inet_dispatch(ctx, psm, msg);
 	return err;
 }
