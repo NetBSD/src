@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtsold.8,v 1.37 2017/10/22 18:09:33 abhinav Exp $
+.\"	$NetBSD: rtsold.8,v 1.38 2020/04/13 15:23:18 uwe Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -48,6 +48,8 @@ as their functionality is now included in
 .Pp
 For example to send a routing solicitation message and print information
 about it without changing the actual routing table:
-.Bd -literal
-	dhcpcd -dB6T --nodhcp6 <interface>
-.Ed
+.Pp
+.Dl dhcpcd -dB6T --nodhcp6 < Ns Ar interface Ns \^>
+.\"
+.Sh SEE ALSO
+.Xr dhcpcd 8 .
