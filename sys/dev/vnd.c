@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.275 2020/04/10 10:53:02 jdolecek Exp $	*/
+/*	$NetBSD: vnd.c,v 1.276 2020/04/13 08:05:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.275 2020/04/10 10:53:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.276 2020/04/13 08:05:02 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -235,9 +235,9 @@ CFATTACH_DECL3_NEW(vnd, sizeof(struct vnd_softc),
     vnd_match, vnd_attach, vnd_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 static struct vnd_softc	*vnd_spawn(int);
-int	vnd_destroy(device_t);
+static int	vnd_destroy(device_t);
 
-static struct	dkdriver vnddkdriver = {
+static const struct	dkdriver vnddkdriver = {
 	.d_strategy = vndstrategy,
 	.d_minphys = minphys
 };
@@ -308,7 +308,7 @@ vnd_spawn(int unit)
 	return device_private(config_attach_pseudo(cf));
 }
 
-int
+static int
 vnd_destroy(device_t dev)
 {
 	int error;
