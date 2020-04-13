@@ -2301,7 +2301,7 @@ dhcp_bind(struct interface *ifp)
 	if (!state->lease.frominfo &&
 	    !(ifo->options & (DHCPCD_INFORM | DHCPCD_STATIC)))
 		if (write_lease(ifp, state->new, state->new_len) == -1)
-			logerr(__func__);
+			logerr("write_lease: %s", state->leasefile);
 
 	/* Close the BPF filter as we can now receive DHCP messages
 	 * on a UDP socket. */
@@ -3370,7 +3370,7 @@ is_packet_udp_bootp(void *packet, size_t plen)
 	memcpy(&udp, (char *)ip + ip_hlen, sizeof(udp));
 	if (ntohs(udp.uh_ulen) < sizeof(udp))
 		return false;
-	if (ip_hlen + (size_t)ntohs(udp.uh_ulen) > plen)
+	if (ip_hlen + ntohs(udp.uh_ulen) > plen)
 		return false;
 
 	/* Check it's to and from the right ports. */

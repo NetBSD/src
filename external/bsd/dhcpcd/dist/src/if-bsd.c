@@ -1037,7 +1037,7 @@ if_address6(unsigned char cmd, const struct ipv6_addr *ia)
 	if (ia->addr_flags & IN6_IFF_TENTATIVE)
 		ifa.ifra_flags |= IN6_IFF_TENTATIVE;
 #endif
-#ifdef IPV6_MANGETEMPADDR
+#ifdef IPV6_MANAGETEMPADDR
 	if (ia->flags & IPV6_AF_TEMPORARY)
 		ifa.ifra_flags |= IN6_IFF_TEMPORARY;
 #endif
@@ -1524,6 +1524,8 @@ if_missfilter0(struct dhcpcd_ctx *ctx, struct interface *ifp,
 #ifdef INET6
 	if (sa->sa_family == AF_INET6)
 		ifa_setscope(satosin6(sa), ifp->index);
+#else
+	UNUSED(ifp);
 #endif
 
 	cp = ctx->rt_missfilter + ctx->rt_missfilterlen;
@@ -1728,14 +1730,14 @@ int
 ip6_temp_preferred_lifetime(__unused const char *ifname)
 {
 
-	return ND6_PRIV_PREFERRED_LIFETIME;
+	return TEMP_PREFERRED_LIFETIME;
 }
 
 int
 ip6_temp_valid_lifetime(__unused const char *ifname)
 {
 
-	return ND6_PRIV_VALID_LIFETIME;
+	return TEMP_VALID_LIFETIME;
 }
 
 #else /* __OpenBSD__ */

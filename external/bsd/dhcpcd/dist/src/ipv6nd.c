@@ -101,13 +101,6 @@ __CTASSERT(sizeof(struct nd_opt_rdnss) == 8);
 #define ND_RA_FLAG_RTPREF_RSV		0x10
 #endif
 
-/* RTPREF_MEDIUM has to be 0! */
-#define RTPREF_HIGH	1
-#define RTPREF_MEDIUM	0
-#define RTPREF_LOW	(-1)
-#define RTPREF_RESERVED	(-2)
-#define RTPREF_INVALID	(-3)	/* internal */
-
 #define	EXPIRED_MAX	5	/* Remember 5 expired routers to avoid
 				   logspam. */
 
@@ -580,7 +573,7 @@ ipv6nd_startexpire(struct interface *ifp)
 	    RTR_CARRIER_EXPIRE, ipv6nd_expire, ifp);
 }
 
-static int
+int
 ipv6nd_rtpref(struct ra *rap)
 {
 
