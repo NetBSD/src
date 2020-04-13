@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.20 2020/02/15 08:16:10 skrll Exp $
+#	$NetBSD: files.aarch64,v 1.21 2020/04/13 07:09:50 maxv Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -86,6 +86,7 @@ file	arch/aarch64/aarch64/bus_space_notimpl.S
 file	arch/arm/arm/arm_cpu_topology.c
 file	arch/arm/arm/arm_generic_dma.c
 file	arch/arm/arm/bootconfig.c
+file	arch/arm/arm/bus_stubs.c
 file	arch/arm/arm/cpu_subr.c
 file	arch/arm/arm32/bus_dma.c
 file	arch/aarch64/aarch64/aarch64_machdep.c
