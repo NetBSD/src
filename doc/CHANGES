@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2670 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2671 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -173,3 +173,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[maxv 20200412]
 	aarch64: Add support for Branch Target Identification (BTI).
 		[maxv 20200413]
+	umass(4): Removed obsolete ISD-ATA support [jdolecek 202000413]
