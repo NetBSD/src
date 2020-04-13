@@ -1994,7 +1994,7 @@ zfs_mount(vfs_t *vfsp, const char *path, void *data, size_t *data_len)
 	mutex_enter(mvp->v_interlock);
 	if ((uap->flags & MS_REMOUNT) == 0 &&
 	    (uap->flags & MS_OVERLAY) == 0 &&
-	    (mvp->v_count != 1 || (mvp->v_flag & VROOT))) {
+	    (vrefcnt(mvp) != 1 || (mvp->v_flag & VROOT))) {
 		mutex_exit(mvp->v_interlock);
 		return (SET_ERROR(EBUSY));
 	}

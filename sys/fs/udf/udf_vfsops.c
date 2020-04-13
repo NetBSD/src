@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.78 2020/03/16 21:20:10 pgoyette Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.79 2020/04/13 19:23:18 ad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.78 2020/03/16 21:20:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.79 2020/04/13 19:23:18 ad Exp $");
 #endif /* not lint */
 
 
@@ -445,8 +445,8 @@ udf_sanity_selector(void *cl, struct vnode *vp)
 	if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {
 		printf("  is locked\n");
 	}
-	if (vp->v_usecount > 1)
-		printf("  more than one usecount %d\n", vp->v_usecount);
+	if (vrefcnt(vp) > 1)
+		printf("  more than one usecount %d\n", vrefcnt(vp));
 	return false;
 }
 

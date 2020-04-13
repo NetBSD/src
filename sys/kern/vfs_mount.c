@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.77 2020/04/13 15:54:45 maxv Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.78 2020/04/13 19:23:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.77 2020/04/13 15:54:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.78 2020/04/13 19:23:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -395,7 +395,7 @@ vfs_vnode_iterator_destroy(struct vnode_iterator *vni)
 	kmutex_t *lock;
 
 	KASSERT(vnis_marker(mvp));
-	if (mvp->v_usecount != 0) {
+	if (vrefcnt(mvp) != 0) {
 		lock = mvp->v_mount->mnt_vnodelock;
 		mutex_enter(lock);
 		TAILQ_REMOVE(&mvp->v_mount->mnt_vnodelist, mvip, vi_mntvnodes);
@@ -581,7 +581,7 @@ vflush_one(vnode_t *vp, vnode_t *skipvp, int flags)
 	 * kill them.
 	 */
 	if (flags & FORCECLOSE) {
-		if (vp->v_usecount > 1 &&
+		if (vrefcnt(vp) > 1 &&
 		    (vp->v_type == VBLK || vp->v_type == VCHR))
 			vcache_make_anon(vp);
 		else
@@ -651,7 +651,7 @@ mount_checkdirs(vnode_t *olddp)
 	struct proc *p;
 	bool retry;
 
-	if (olddp->v_usecount == 1) {
+	if (vrefcnt(olddp) == 1) {
 		return;
 	}
 	if (VFS_ROOT(olddp->v_mountedhere, LK_EXCLUSIVE, &newdp))

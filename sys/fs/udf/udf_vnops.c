@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.109 2020/02/23 15:46:41 ad Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.110 2020/04/13 19:23:18 ad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.109 2020/02/23 15:46:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.110 2020/04/13 19:23:18 ad Exp $");
 #endif /* not lint */
 
 
@@ -1386,8 +1386,8 @@ udf_close(void *v)
 	}
 
 	mutex_enter(vp->v_interlock);
-		if (vp->v_usecount > 1)
-			udf_itimes(udf_node, NULL, NULL, NULL);
+	if (vrefcnt(vp) > 1)
+		udf_itimes(udf_node, NULL, NULL, NULL);
 	mutex_exit(vp->v_interlock);
 
 	return 0;

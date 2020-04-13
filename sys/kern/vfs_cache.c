@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.138 2020/04/10 16:55:40 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.139 2020/04/13 19:23:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.138 2020/04/10 16:55:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.139 2020/04/13 19:23:18 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -673,7 +673,7 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 		}
 		*plock = &dvi->vi_nc_lock;
 	} else if (*plock == NULL) {
-		KASSERT(dvp->v_usecount > 0);
+		KASSERT(vrefcnt(dvp) > 0);
 	}
 
 	/*

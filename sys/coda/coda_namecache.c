@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.26 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.27 2020/04/13 19:23:17 ad Exp $	*/
 
 /*
  *
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.26 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.27 2020/04/13 19:23:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -348,12 +348,12 @@ coda_nc_remove(struct coda_cache *cncp, enum dc_status dcstat)
 	LIST_REMOVE(cncp, hash);
 	memset(&cncp->hash, 0, sizeof(cncp->hash));
 
-	if ((dcstat == IS_DOWNCALL) && (CTOV(cncp->dcp)->v_usecount == 1)) {
+	if ((dcstat == IS_DOWNCALL) && (vrefcnt(CTOV(cncp->dcp)) == 1)) {
 		cncp->dcp->c_flags |= C_PURGING;
 	}
 	vrele(CTOV(cncp->dcp));
 
-	if ((dcstat == IS_DOWNCALL) && (CTOV(cncp->cp)->v_usecount == 1)) {
+	if ((dcstat == IS_DOWNCALL) && (vrefcnt(CTOV(cncp->cp)) == 1)) {
 		cncp->cp->c_flags |= C_PURGING;
 	}
 	vrele(CTOV(cncp->cp));
@@ -570,7 +570,7 @@ coda_nc_flush(enum dc_status dcstat)
 			memset(&cncp->hash, 0, sizeof(cncp->hash));
 
 			if ((dcstat == IS_DOWNCALL)
-			    && (CTOV(cncp->dcp)->v_usecount == 1))
+			    && (vrefcnt(CTOV(cncp->dcp)) == 1))
 			{
 				cncp->dcp->c_flags |= C_PURGING;
 			}
@@ -584,7 +584,7 @@ coda_nc_flush(enum dc_status dcstat)
 			}
 
 			if ((dcstat == IS_DOWNCALL)
-			    && (CTOV(cncp->cp)->v_usecount == 1))
+			    && (vrefcnt(CTOV(cncp->cp)) == 1))
 			{
 				cncp->cp->c_flags |= C_PURGING;
 			}

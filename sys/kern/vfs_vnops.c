@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.210 2020/04/12 19:56:14 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.211 2020/04/13 19:23:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.210 2020/04/12 19:56:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.211 2020/04/13 19:23:18 ad Exp $");
 
 #include "veriexec.h"
 
@@ -1041,7 +1041,7 @@ vn_lock(struct vnode *vp, int flags)
 	int error;
 
 #if 0
-	KASSERT(vp->v_usecount > 0 || (vp->v_iflag & VI_ONWORKLST) != 0);
+	KASSERT(vrefcnt(vp) > 0 || (vp->v_iflag & VI_ONWORKLST) != 0);
 #endif
 	KASSERT((flags & ~(LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY|
 	    LK_UPGRADE|LK_DOWNGRADE)) == 0);
