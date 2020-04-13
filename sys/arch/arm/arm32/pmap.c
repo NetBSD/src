@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.402 2020/03/29 09:20:43 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.403 2020/04/13 00:27:16 chs Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.402 2020/03/29 09:20:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.403 2020/04/13 00:27:16 chs Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -1312,7 +1312,7 @@ pmap_maxproc_set(int nmaxproc)
 	static const char pmap_l1ttpool_warnmsg[] =
 	    "WARNING: l1ttpool limit reached; increase kern.maxproc";
 
-//	pool_cache_setlowat(&pmap_l1tt_cache, nmaxproc);
+	pool_cache_prime(&pmap_l1tt_cache, nmaxproc);
 
 	/*
 	 * Set the hard limit on the pmap_l1tt_cache to the number
