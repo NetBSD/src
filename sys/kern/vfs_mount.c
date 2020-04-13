@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.76 2020/04/10 22:34:36 ad Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.77 2020/04/13 15:54:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.76 2020/04/10 22:34:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.77 2020/04/13 15:54:45 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -520,9 +520,9 @@ struct ctldebug debug1 = { "busyprt", &busyprt };
 static vnode_t *
 vflushnext(struct vnode_iterator *marker, int *when)
 {
-	if (hardclock_ticks > *when) {
+	if (getticks() > *when) {
 		yield();
-		*when = hardclock_ticks + hz / 10;
+		*when = getticks() + hz / 10;
 	}
 	return vfs_vnode_iterator_next1(marker, NULL, NULL, true);
 }
