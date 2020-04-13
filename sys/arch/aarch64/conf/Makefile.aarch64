@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.19 2020/04/13 05:40:25 maxv Exp $
+#	$NetBSD: Makefile.aarch64,v 1.20 2020/04/13 07:32:36 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -55,6 +55,7 @@ CFLAGS+=	-mbranch-protection=bti
 .if ${KASAN:U0} > 0 && ${HAVE_GCC:U0} > 0
 KASANFLAGS=	-fsanitize=kernel-address \
 		--param asan-globals=1 --param asan-stack=1 \
+		--param asan-instrument-allocas=1 \
 		-fsanitize-address-use-after-scope \
 		-fasan-shadow-offset=0xDFFF600000000000
 .for f in subr_asan.c
