@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.h,v 1.10 2019/12/28 08:33:35 martin Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.11 2020/04/13 15:16:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2008, 2019 The NetBSD Foundation, Inc.
@@ -49,7 +49,9 @@ LIST_HEAD(pgflist, vm_page);
  * pglist = &uvm.page_free[freelist].pgfl_buckets[bucket].pgb_color[color];
  *
  * Freelists provide a priority ordering of pages for allocation, based upon
- * how valuable they are for special uses (e.g. device driver DMA).
+ * how valuable they are for special uses (e.g.  device driver DMA).  MD
+ * code decides the number and structure of these.  They are always arranged
+ * in descending order of allocation priority.
  *
  * Pages are then grouped in buckets according to some common factor, for
  * example L2/L3 cache locality.  Each bucket has its own lock, and the
@@ -66,15 +68,10 @@ struct pgflbucket {
 };
 
 /*
- * At the root, the freelists.  MD code decides the number and structure of
- * these.  They are always arranged in descending order of allocation
- * priority.
- *
  * 8 buckets should be enough to cover most all current x86 systems (2019),
  * given the way package/core/smt IDs are structured on x86.  For systems
  * that report high package counts despite having a single physical CPU
- * package (e.g. Ampere eMAG) a little bit of sharing isn't going to hurt
- * in the least.
+ * package (e.g. Ampere eMAG) a little bit of sharing isn't going to hurt.
  */
 #define	PGFL_MAX_BUCKETS	8
 struct pgfreelist {
