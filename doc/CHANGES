@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2669 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2670 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -169,3 +169,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	xen: remove legacy rx-flip support from xennet(4) and xvif(4)
 		[jdolecek 20200405]
 	OpenSSL: Imported 1.1.1f. [christos 20200405]
+	aarch64: Add support for Pointer Authentication (PAC).
+		[maxv 20200412]
+	aarch64: Add support for Branch Target Identification (BTI).
+		[maxv 20200413]
