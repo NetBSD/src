@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.173 2020/04/12 01:10:54 simonb Exp $
+#	$NetBSD: files.usb,v 1.174 2020/04/13 09:26:43 jdolecek Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -54,7 +54,6 @@ defflag opt_usb.h	UHSO_DEBUG: USB_DEBUG
 defflag opt_usb.h	UIPAD_DEBUG: USB_DEBUG
 defflag opt_usb.h	UIPAQ_DEBUG: USB_DEBUG
 defflag opt_usb.h	UIRDA_DEBUG: USB_DEBUG
-defflag opt_usb.h	UISDATA_DEBUG: USB_DEBUG
 defflag opt_usb.h	UKBD_DEBUG: USB_DEBUG
 defflag opt_usb.h	UKYOPON_DEBUG: USB_DEBUG
 defflag opt_usb.h	ULPT_DEBUG: USB_DEBUG
@@ -199,10 +198,9 @@ file	dev/usb/ulpt.c			ulpt			needs-flag
 
 
 # Mass storage
-device	umass: scsi, atapi, ata_hl
+device	umass: scsi, atapi
 attach	umass at usbifif
 file	dev/usb/umass.c			umass
-file	dev/usb/umass_isdata.c		umass & wd & atabus
 file	dev/usb/umass_quirks.c		umass
 file	dev/usb/umass_scsipi.c		umass & (scsibus | atapibus)
 
