@@ -2301,7 +2301,7 @@ dhcp_bind(struct interface *ifp)
 	if (!state->lease.frominfo &&
 	    !(ifo->options & (DHCPCD_INFORM | DHCPCD_STATIC)))
 		if (write_lease(ifp, state->new, state->new_len) == -1)
-			logerr(__func__);
+			logerr("write_lease: %s", state->leasefile);
 
 	/* Close the BPF filter as we can now receive DHCP messages
 	 * on a UDP socket. */

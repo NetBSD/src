@@ -104,6 +104,7 @@ int ipv6nd_open(struct interface *);
 int ipv6nd_open(struct dhcpcd_ctx *);
 #endif
 void ipv6nd_recvmsg(struct dhcpcd_ctx *, struct msghdr *);
+int ipv6nd_rtpref(struct ra *);
 void ipv6nd_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 void ipv6nd_startrs(struct interface *);
