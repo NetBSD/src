@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.21 2020/04/06 19:26:00 jdolecek Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.22 2020/04/13 22:54:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.21 2020/04/06 19:26:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.22 2020/04/13 22:54:12 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -170,7 +170,7 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 		    sizeof(intrstr_buf));
 
 		event_set_handler(pin, handler, arg, level, intrstr, xname,
-		    known_mpsafe);
+		    known_mpsafe, true);
 
 		rih = kmem_zalloc(sizeof(*rih), cold ? KM_NOSLEEP : KM_SLEEP);
 		if (rih == NULL) {
