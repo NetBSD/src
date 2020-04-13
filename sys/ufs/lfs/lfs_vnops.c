@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.321.4.2 2020/04/08 14:09:04 martin Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.321.4.3 2020/04/13 08:05:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.321.4.2 2020/04/08 14:09:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.321.4.3 2020/04/13 08:05:21 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -350,9 +350,7 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 const struct vnodeopv_desc lfs_fifoop_opv_desc =
 	{ &lfs_fifoop_p, lfs_fifoop_entries };
 
-#define	LFS_READWRITE
 #include <ufs/lfs/ulfs_readwrite.c>
-#undef	LFS_READWRITE
 
 /*
  * Allocate a new inode.
@@ -407,6 +405,7 @@ lfs_makeinode(struct vattr *vap, struct vnode *dvp,
 	if (error)
 		goto bad;
 	*vpp = tvp;
+	cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 	KASSERT(VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE);
 	return (0);
 

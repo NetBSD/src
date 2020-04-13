@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ringbuffer.c,v 1.6.18.2 2020/04/08 14:08:23 martin Exp $	*/
+/*	$NetBSD: intel_ringbuffer.c,v 1.6.18.3 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright © 2008-2010 Intel Corporation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.6.18.2 2020/04/08 14:08:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.6.18.3 2020/04/13 08:04:58 martin Exp $");
 
 #include <drm/drmP.h>
 #include "i915_drv.h"
@@ -2327,6 +2327,8 @@ static int ring_wait_for_space(struct intel_engine_cs *ring, int n)
 	struct drm_i915_gem_request *request;
 	unsigned space;
 	int ret;
+
+	space = 0; /* XXX gcc -Wuninitialized */
 
 	if (intel_ring_space(ringbuf) >= n)
 		return 0;

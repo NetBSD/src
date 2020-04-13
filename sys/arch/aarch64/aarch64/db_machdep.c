@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.2.2.2 2020/04/08 14:07:23 martin Exp $ */
+/* $NetBSD: db_machdep.c,v 1.2.2.3 2020/04/13 08:03:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.2.2.2 2020/04/08 14:07:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.2.2.3 2020/04/13 08:03:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -260,25 +260,23 @@ dump_trapframe(struct trapframe *tf, void (*pr)(const char *, ...))
 }
 
 #if defined(_KERNEL)
-void
-db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
-    const char *modif)
+static void
+show_cpuinfo(struct cpu_info *ci)
 {
-	struct cpu_info *ci, cpuinfobuf;
+	struct cpu_info cpuinfobuf;
 	cpuid_t cpuid;
 	int i;
 
-	ci = curcpu();
 	db_read_bytes((db_addr_t)ci, sizeof(cpuinfobuf), (char *)&cpuinfobuf);
 
 	cpuid = cpuinfobuf.ci_cpuid;
-	db_printf("cpu_info=%p\n", ci);
+	db_printf("cpu_info=%p, cpu_name=%s\n", ci, cpuinfobuf.ci_cpuname);
 	db_printf("%p cpu[%lu].ci_cpuid        = %lu\n",
 	    &ci->ci_cpuid, cpuid, cpuinfobuf.ci_cpuid);
 	db_printf("%p cpu[%lu].ci_curlwp       = %p\n",
 	    &ci->ci_curlwp, cpuid, cpuinfobuf.ci_curlwp);
 	for (i = 0; i < SOFTINT_COUNT; i++) {
-		db_printf("%p cpu[%lu].ci_softlwps[%d] = %p\n",
+		db_printf("%p cpu[%lu].ci_softlwps[%d]  = %p\n",
 		    &ci->ci_softlwps[i], cpuid, i, cpuinfobuf.ci_softlwps[i]);
 	}
 	db_printf("%p cpu[%lu].ci_lastintr     = %" PRIu64 "\n",
@@ -293,6 +291,34 @@ db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	    &ci->ci_astpending, cpuid, cpuinfobuf.ci_astpending);
 	db_printf("%p cpu[%lu].ci_intr_depth   = %u\n",
 	    &ci->ci_intr_depth, cpuid, cpuinfobuf.ci_intr_depth);
+}
+
+void
+db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+#ifdef MULTIPROCESSOR
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	bool showall = false;
+
+	if (modif != NULL) {
+		for (; *modif != '\0'; modif++) {
+			switch (*modif) {
+			case 'a':
+				showall = true;
+				break;
+			}
+		}
+	}
+
+	if (showall) {
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			show_cpuinfo(ci);
+		}
+	} else
+#endif /* MULTIPROCESSOR */
+		show_cpuinfo(curcpu());
 }
 
 void
@@ -843,22 +869,37 @@ db_md_watch_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 volatile struct cpu_info *db_trigger;
 volatile struct cpu_info *db_onproc;
 volatile struct cpu_info *db_newcpu;
+volatile int db_readytoswitch[MAXCPUS];
 
 #ifdef _KERNEL
 void
 db_md_switch_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
+	struct cpu_info *new_ci = NULL;
 	u_int cpuno = (u_int)addr;
+	int i;
 
-	if (!have_addr || (cpuno >= ncpu)) {
-		db_printf("cpu: 0..%d\n", ncpu - 1);
+	membar_consumer();
+
+	if (!have_addr) {
+		for (i = 0; i < ncpu; i++) {
+			if (db_readytoswitch[i] != 0)
+				db_printf("cpu%d: ready\n", i);
+			else
+				db_printf("cpu%d: not responding\n", i);
+		}
 		return;
 	}
 
-	struct cpu_info *new_ci = cpu_lookup(cpuno);
+	if (cpuno < ncpu)
+		new_ci = cpu_lookup(cpuno);
 	if (new_ci == NULL) {
 		db_printf("cpu %u does not exist", cpuno);
+		return;
+	}
+	if (db_readytoswitch[new_ci->ci_index] == 0) {
+		db_printf("cpu %u is not responding", cpuno);
 		return;
 	}
 
@@ -915,6 +956,8 @@ kdb_trap(int type, struct trapframe *tf)
 		db_trigger = ci;
 		membar_producer();
 	}
+	db_readytoswitch[ci->ci_index] = 1;
+	membar_producer();
 #endif
 
 	for (;;) {
@@ -968,6 +1011,8 @@ kdb_trap(int type, struct trapframe *tf)
 		__asm __volatile ("sev; sev; sev");
 	}
 	db_trigger = NULL;
+	db_readytoswitch[ci->ci_index] = 0;
+	membar_producer();
 #endif
 
 	return 1;

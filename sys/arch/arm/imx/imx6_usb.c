@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usb.c,v 1.4 2018/05/23 10:42:05 hkenken Exp $	*/
+/*	$NetBSD: imx6_usb.c,v 1.4.2.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.4 2018/05/23 10:42:05 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.4.2.1 2020/04/13 08:03:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,31 +48,43 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.4 2018/05/23 10:42:05 hkenken Exp $")
 #include <arm/imx/imx6var.h>
 #include <arm/imx/imx6_ccmreg.h>
 #include <arm/imx/imx6_ccmvar.h>
+#include <arm/imx/imx6_usbreg.h>
 #include <arm/imx/imxusbvar.h>
+#include <arm/imx/imxusbreg.h>
 
 #include "locators.h"
 
 static int imxusbc_search(device_t, cfdata_t, const int *, void *);
 static int imxusbc_print(void *, const char *);
+static int imxusbc_init_clocks(struct imxusbc_softc *);
 
 int
-imxusbc_attach_common(device_t parent, device_t self, bus_space_tag_t iot)
+imxusbc_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
+    bus_addr_t addr, bus_size_t size)
 {
-	struct imxusbc_softc *sc;
-	uint32_t v;
+	struct imxusbc_softc *sc = device_private(self);
 
-	sc = device_private(self);
+	sc->sc_dev = self;
 	sc->sc_iot = iot;
+	sc->sc_ehci_size = IMXUSB_EHCI_SIZE;
+	sc->sc_ehci_offset = IMXUSB_EHCI_SIZE;
 
 	/* Map entire USBOH registers.  Host controller drivers
 	 * re-use subregions of this. */
-	if (bus_space_map(iot, IMX6_AIPS2_BASE + AIPS2_USBOH_BASE, /* XXX */
-	    AIPS2_USBOH_SIZE, 0, &sc->sc_ioh))
+	if (bus_space_map(iot, addr, size, 0, &sc->sc_ioh))
+		return -1;
+	if (bus_space_subregion(iot, sc->sc_ioh, USBNC_BASE, USBNC_SIZE, &sc->sc_ioh_usbnc))
 		return -1;
 
-	/* USBOH3 clock enable */
-	v = imx6_ccm_read(CCM_CCGR6);
-	imx6_ccm_write(CCM_CCGR6, v | __SHIFTIN(3, CCM_CCGR6_USBOH3_CLK_ENABLE));
+	sc->sc_clk = imx6_get_clock("usboh3");
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't get clock usboh3\n");
+		return -1;
+	}
+	if (imxusbc_init_clocks(sc) != 0) {
+		aprint_error_dev(self, "couldn't init clocks\n");
+		return -1;
+	}
 
 	/* attach OTG/EHCI host controllers */
 	config_search_ia(imxusbc_search, self, "imxusbc", NULL);
@@ -110,3 +122,18 @@ imxusbc_print(void *aux, const char *name __unused)
 	aprint_normal(" unit %d intr %d", iaa->aa_unit, iaa->aa_irq);
 	return UNCONF;
 }
+
+static int
+imxusbc_init_clocks(struct imxusbc_softc *sc)
+{
+	int error;
+
+	error = clk_enable(sc->sc_clk);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable usboh3: %d\n", error);
+		return error;
+	}
+
+	return 0;
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.50.28.2 2020/04/08 14:08:11 martin Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.50.28.3 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.50.28.2 2020/04/08 14:08:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.50.28.3 2020/04/13 08:04:47 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.50.28.2 2020/04/08 14:08:11 martin
 
 int     rf_copyback_in_progress;
 
-static int rf_CopybackReadDoneProc(RF_CopybackDesc_t * desc, int status);
-static int rf_CopybackWriteDoneProc(RF_CopybackDesc_t * desc, int status);
+static void rf_CopybackReadDoneProc(void *, int);
+static void rf_CopybackWriteDoneProc(void *, int);
 static void rf_CopybackOne(RF_CopybackDesc_t * desc, int typ,
 			   RF_RaidAddr_t addr, RF_RowCol_t testCol,
 			   RF_SectorNum_t testOffs);
@@ -334,13 +334,11 @@ rf_CopybackOne(RF_CopybackDesc_t *desc, int typ, RF_RaidAddr_t addr,
 
 	/* create reqs to read the old location & write the new */
 	desc->readreq = rf_CreateDiskQueueData(RF_IO_TYPE_READ, spOffs,
-	    sectPerSU, desc->databuf, 0L, 0,
-	    (int (*) (void *, int)) rf_CopybackReadDoneProc, desc,
+	    sectPerSU, desc->databuf, 0L, 0, rf_CopybackReadDoneProc, desc,
 	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL,
 	    PR_WAITOK);
 	desc->writereq = rf_CreateDiskQueueData(RF_IO_TYPE_WRITE, testOffs,
-	    sectPerSU, desc->databuf, 0L, 0,
-	    (int (*) (void *, int)) rf_CopybackWriteDoneProc, desc,
+	    sectPerSU, desc->databuf, 0L, 0, rf_CopybackWriteDoneProc, desc,
 	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL,
 	    PR_WAITOK);
 	desc->fcol = testCol;
@@ -368,9 +366,10 @@ rf_CopybackOne(RF_CopybackDesc_t *desc, int typ, RF_RaidAddr_t addr,
 
 
 /* called at interrupt context when the read has completed.  just send out the write */
-static int
-rf_CopybackReadDoneProc(RF_CopybackDesc_t *desc, int status)
+static void
+rf_CopybackReadDoneProc(void *v, int status)
 {
+	RF_CopybackDesc_t *desc = v;
 	if (status) {		/* invoke the callback with bad status */
 		printf("raid%d: copyback read failed.  Aborting.\n",
 		       desc->raidPtr->raidid);
@@ -378,23 +377,22 @@ rf_CopybackReadDoneProc(RF_CopybackDesc_t *desc, int status)
 	} else {
 		rf_DiskIOEnqueue(&(desc->raidPtr->Queues[desc->fcol]), desc->writereq, RF_IO_NORMAL_PRIORITY);
 	}
-	return (0);
 }
 /* called at interrupt context when the write has completed.
  * at user level & in the kernel, wake up the copyback thread.
  * in the simulator, invoke the next copyback directly.
  * can't free diskqueuedata structs in the kernel b/c we're at interrupt context.
  */
-static int
-rf_CopybackWriteDoneProc(RF_CopybackDesc_t *desc, int status)
+static void
+rf_CopybackWriteDoneProc(void *v, int status)
 {
+	RF_CopybackDesc_t *desc = v;
 	if (status && status != -100) {
 		printf("raid%d: copyback write failed.  Aborting.\n",
 		       desc->raidPtr->raidid);
 	}
 	desc->status = status;
 	rf_MCPairWakeupFunc(desc->mcpair);
-	return (0);
 }
 /* invoked when the copyback has completed */
 static void

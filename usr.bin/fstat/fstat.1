@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstat.1,v 1.34 2017/07/03 21:34:57 wiz Exp $
+.\"	$NetBSD: fstat.1,v 1.34.6.1 2020/04/13 08:05:42 martin Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd December 15, 2013
+.Dd September 6, 2019
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd display status of open files
 .Sh SYNOPSIS
 .Nm
-.Op Fl Afnv
+.Op Fl AfnOv
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl p Ar pid
@@ -54,7 +54,7 @@ If no options are specified,
 reports on all open files in the system.
 .Pp
 Options:
-.Bl -tag -width Ds
+.Bl -tag -width XXXXXXXXXX
 .It Fl A
 Add an output column with the address of the kernel object (vnode or file),
 that can be matched with
@@ -72,12 +72,15 @@ resides, type
 Please see the
 .Sx BUGS
 section for issues with this option.
-.It Fl M
-Extract values associated with the name list from the specified core
+.It Fl M Ar core
+Extract values associated with the name list from the specified
+.Ar core
 instead of the default
 .Pa /dev/kmem .
-.It Fl N
-Extract the name list from the specified system instead of the default
+.It Fl N Ar system
+Extract the name list from the specified
+.Ar system
+instead of the default
 .Pa /netbsd .
 .It Fl n
 Numerical format.
@@ -88,10 +91,14 @@ device number that the special device refers to rather than the filename
 in
 .Pa /dev ;
 and print the mode of the file in octal instead of symbolic form.
-.It Fl p
-Report all files open by the specified process.
-.It Fl u
-Report all files open by the specified user.
+.It Fl O
+Report file offsets instead of sizes.
+.It Fl p Ar process
+Report all files open by the specified
+.Ar process .
+.It Fl u Ar user
+Report all files open by the specified
+.Ar user .
 .It Fl v
 Verbose mode.
 Print error messages upon failures to locate particular
@@ -137,7 +144,7 @@ the file is not an inode, but rather a socket,
 .Tn FIFO ,
 or there is an error.
 In this case the remainder of the line doesn't
-correspond to the remaining headers -- the format of the line
+correspond to the remaining headers \(em the format of the line
 is described later under
 .Sx SOCKETS .
 .It Li MOUNT
@@ -161,9 +168,11 @@ using a symbolic format (see
 .Xr strmode 3 ) ;
 otherwise, the mode is printed
 as an octal number.
-.It Li SZ\&|DV
+.It Li SZ\&|DV or OFFS
 If the file is not a character or block special file, prints the size of
-the file in bytes.
+the file in bytes (or the offset if the
+.Fl O
+is specified).
 Otherwise, if the
 .Fl n
 flag is not specified, prints

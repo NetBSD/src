@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.288.4.2 2020/04/08 14:08:06 martin Exp $ */
+/*	$NetBSD: wdc.c,v 1.288.4.3 2020/04/13 08:04:22 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288.4.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288.4.3 2020/04/13 08:04:22 martin Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -296,15 +296,18 @@ wdc_drvprobe(struct ata_channel *chp)
 	u_int8_t st0 = 0, st1 = 0;
 	int i, j, error, tfd;
 
-	if (atabus_alloc_drives(chp, wdc->wdc_maxdrives) != 0)
+	ata_channel_lock(chp);
+	if (atabus_alloc_drives(chp, wdc->wdc_maxdrives) != 0) {
+		ata_channel_unlock(chp);
 		return;
+	}
 	if (wdcprobe1(chp, 0) == 0) {
 		/* No drives, abort the attach here. */
 		atabus_free_drives(chp);
+		ata_channel_unlock(chp);
 		return;
 	}
 
-	ata_channel_lock(chp);
 	/* for ATA/OLD drives, wait for DRDY, 3s timeout */
 	for (i = 0; i < mstohz(3000); i++) {
 		/*
@@ -478,6 +481,14 @@ wdc_drvprobe(struct ata_channel *chp)
 int
 wdcprobe(struct wdc_regs *wdr)
 {
+
+	return wdcprobe_with_reset(wdr, NULL);
+}
+
+int
+wdcprobe_with_reset(struct wdc_regs *wdr,
+    void (*do_reset)(struct ata_channel *, int))
+{
 	struct wdc_softc wdc;
 	struct ata_channel ch;
 	int rv;
@@ -488,11 +499,12 @@ wdcprobe(struct wdc_regs *wdr)
 	ch.ch_atac = &wdc.sc_atac;
 	wdc.regs = wdr;
 
-	/* default reset method */
-	if (wdc.reset == NULL)
-		wdc.reset = wdc_do_reset;
+	/* check the MD reset method */
+	wdc.reset = (do_reset != NULL) ? do_reset : wdc_do_reset;
 
+	ata_channel_lock(&ch);
 	rv = wdcprobe1(&ch, 1);
+	ata_channel_unlock(&ch);
 
 	ata_channel_destroy(&ch);
 
@@ -516,7 +528,6 @@ wdcprobe1(struct ata_channel *chp, int poll)
 	 * Sanity check to see if the wdc channel responds at all.
 	 */
 
-	ata_channel_lock(chp);
 	if ((wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
 		while (wdc_probe_count-- > 0) {
 			if (wdc->select)
@@ -669,7 +680,6 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		}
 
 		if (ret_value == 0) {
-			ata_channel_unlock(chp);
 			return 0;
 		}
 	}
@@ -717,7 +727,6 @@ wdcprobe1(struct ata_channel *chp, int poll)
 
 	/* if reset failed, there's nothing here */
 	if (ret_value == 0) {
-		ata_channel_unlock(chp);
 		return 0;
 	}
 
@@ -770,7 +779,6 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		(void)bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_status], 0);
 	}
-	ata_channel_unlock(chp);
 	return (ret_value);
 }
 
@@ -1233,7 +1241,7 @@ __wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int *tfd)
 	if (!cold && xtime > WDCNDELAY_DEBUG) {
 		struct ata_xfer *xfer;
 
-		xfer = ata_queue_get_active_xfer(chp);
+		xfer = ata_queue_get_active_xfer_locked(chp);
 		if (xfer == NULL)
 			printf("%s channel %d: warning: busy-wait took %dus\n",
 			    device_xname(chp->ch_atac->atac_dev),

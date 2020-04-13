@@ -191,6 +191,8 @@ GCC_NO_EXECUTABLES
 AC_PROG_CC
 AC_PROG_CPP_WERROR
 
+AC_SYS_LARGEFILE
+
 AC_CHECK_SIZEOF([double])
 AC_CHECK_SIZEOF([long double])
 AS_VAR_ARITH([double_type_size], [$ac_cv_sizeof_double \* 8])
@@ -379,23 +381,24 @@ case ${host} in
 # software libraries, and whether the assembler can handle xsaddqp
 # for hardware support.
 powerpc*-*-linux*)
+  saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -mabi=altivec -mvsx -mfloat128"
   AC_CACHE_CHECK([for PowerPC ISA 2.06 to build __float128 libraries],
 		 [libgcc_cv_powerpc_float128],
 		 [AC_COMPILE_IFELSE(
-    [#pragma GCC target ("vsx")
-     vector double dadd (vector double a, vector double b) { return a + b; }],
+    [vector double dadd (vector double a, vector double b) { return a + b; }],
     [libgcc_cv_powerpc_float128=yes],
     [libgcc_cv_powerpc_float128=no])])
 
+  CFLAGS="$CFLAGS -mpower9-vector -mfloat128-hardware"
   AC_CACHE_CHECK([for PowerPC ISA 3.0 to build hardware __float128 libraries],
 		 [libgcc_cv_powerpc_float128_hw],
 		 [AC_COMPILE_IFELSE(
-    [#pragma GCC target ("vsx,power9-vector")
-     #include <sys/auxv.h>
+    [#include <sys/auxv.h>
      #ifndef AT_PLATFORM
      #error "AT_PLATFORM is not defined"
      #endif
-     vector unsigned char (vector unsigned char a, vector unsigned char b)
+     vector unsigned char add (vector unsigned char a, vector unsigned char b)
      {
        vector unsigned char ret;
        __asm__ ("xsaddqp %0,%1,%2" : "=v" (ret) : "v" (a), "v" (b));
@@ -406,6 +409,7 @@ powerpc*-*-linux*)
 	__attribute__ ((__ifunc__ ("add_resolver")));],
     [libgcc_cv_powerpc_float128_hw=yes],
     [libgcc_cv_powerpc_float128_hw=no])])
+  CFLAGS="$saved_CFLAGS"
 esac
 
 # Collect host-machine-specific information.
@@ -544,15 +548,18 @@ AC_SUBST(tm_defines)
 # Map from thread model to thread header.
 GCC_AC_THREAD_HEADER([$target_thread_file])
 
+# Determine what GCC version number to use in filesystem paths.
+GCC_BASE_VER
+
 # Substitute configuration variables
 AC_SUBST(cpu_type)
 AC_SUBST(extra_parts)
 AC_SUBST(asm_hidden_op)
-AC_CONFIG_LINKS([enable-execute-stack.c:$enable_execute_stack])
-AC_CONFIG_LINKS([unwind.h:$unwind_header])
-AC_CONFIG_LINKS([md-unwind-support.h:config/$md_unwind_header])
-AC_CONFIG_LINKS([sfp-machine.h:config/$sfp_machine_header])
-AC_CONFIG_LINKS([gthr-default.h:$thread_header])
+AC_SUBST(enable_execute_stack)
+AC_SUBST(unwind_header)
+AC_SUBST(md_unwind_header)
+AC_SUBST(sfp_machine_header)
+AC_SUBST(thread_header)
 
 # We need multilib support.
 AC_CONFIG_FILES([Makefile])

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.29.18.1 2019/06/10 22:07:30 christos Exp $	*/
+/*	$NetBSD: if_il.c,v 1.29.18.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.29.18.1 2019/06/10 22:07:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.29.18.2 2020/04/13 08:04:47 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -509,7 +509,6 @@ ilrint(void *arg)
 	struct mbuf *m;
 	int len, s;
 
-	sc->sc_if.if_ipackets++;
 #ifdef notyet
 	if (sc->sc_ifuba.ifu_flags & UBA_NEEDBDP)
 		UBAPURGE(is->is_ifuba.ifu_uba, is->is_ifuba.ifu_r.ifrw_bdp);

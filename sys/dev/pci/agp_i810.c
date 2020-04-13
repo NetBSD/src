@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.122.18.1 2019/06/10 22:07:15 christos Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.122.18.2 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.122.18.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.122.18.2 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,12 +311,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	bus_size_t mmadr_size, gtt_off;
 	int error;
 
-	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
-	if (isc == NULL) {
-		aprint_error(": can't allocate chipset-specific softc\n");
-		error = ENOMEM;
-		goto fail0;
-	}
+	isc = malloc(sizeof *isc, M_AGP, M_WAITOK|M_ZERO);
 	sc->as_chipc = isc;
 	sc->as_methods = &agp_i810_methods;
 
@@ -651,7 +646,7 @@ fail2:	bus_space_unmap(isc->bst, isc->bsh, isc->size);
 	isc->size = 0;
 fail1:	free(isc, M_AGP);
 	sc->as_chipc = NULL;
-fail0:	agp_generic_detach(sc);
+	agp_generic_detach(sc);
 	KASSERT(error);
 	return error;
 }
@@ -810,13 +805,7 @@ agp_i810_init(struct agp_softc *sc)
 
 		/* According to the specs the gatt on the i810 must be 64k */
 		isc->gtt_size = 64 * 1024;
-		gatt = malloc(sizeof(*gatt), M_AGP, M_NOWAIT);
-		if (gatt == NULL) {
-			aprint_error_dev(sc->as_dev,
-			    "can't malloc GATT record\n");
-			error = ENOMEM;
-			goto fail0;
-		}
+		gatt = malloc(sizeof(*gatt), M_AGP, M_WAITOK);
 		gatt->ag_entries = isc->gtt_size / sizeof(uint32_t);
 		error = agp_alloc_dmamem(sc->as_dmat, isc->gtt_size,
 		    0, &gatt->ag_dmamap, &virtual, &gatt->ag_physical,

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.74.2.1 2019/06/10 22:09:48 christos Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.74.2.2 2020/04/13 08:05:17 martin Exp $	*/
 /*	$FreeBSD: xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.74.2.1 2019/06/10 22:09:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.74.2.2 2020/04/13 08:05:17 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -147,8 +147,8 @@ _ipip_input(struct mbuf *m, int iphlen)
 		break;
 #endif
 	default:
-		DPRINTF(("%s: bad protocol version 0x%x (%u) "
-		    "for outer header\n", __func__, v, v>>4));
+		DPRINTF("bad protocol version 0x%x (%u) "
+		    "for outer header\n", v, v>>4);
 		IPIP_STATINC(IPIP_STAT_FAMILY);
 		m_freem(m);
 		return;
@@ -157,7 +157,7 @@ _ipip_input(struct mbuf *m, int iphlen)
 	/* Bring the IP header in the first mbuf, if not there already */
 	if (m->m_len < hlen) {
 		if ((m = m_pullup(m, hlen)) == NULL) {
-			DPRINTF(("%s: m_pullup (1) failed\n", __func__));
+			DPRINTF("m_pullup (1) failed\n");
 			IPIP_STATINC(IPIP_STAT_HDROPS);
 			return;
 		}
@@ -205,8 +205,8 @@ _ipip_input(struct mbuf *m, int iphlen)
 		break;
 #endif
 	default:
-		DPRINTF(("%s: bad protocol version %#x (%u) "
-		    "for inner header\n", __func__, v, v >> 4));
+		DPRINTF("bad protocol version %#x (%u) "
+		    "for inner header\n", v, v >> 4);
 		IPIP_STATINC(IPIP_STAT_FAMILY);
 		m_freem(m);
 		return;
@@ -217,7 +217,7 @@ _ipip_input(struct mbuf *m, int iphlen)
 	 */
 	if (m->m_len < hlen) {
 		if ((m = m_pullup(m, hlen)) == NULL) {
-			DPRINTF(("%s: m_pullup (2) failed\n", __func__));
+			DPRINTF("m_pullup (2) failed\n");
 			IPIP_STATINC(IPIP_STAT_HDROPS);
 			return;
 		}
@@ -345,10 +345,10 @@ ipip_output(struct mbuf *m, struct secasvar *sav, struct mbuf **mp)
 		if (saidx->src.sa.sa_family != AF_INET ||
 		    saidx->src.sin.sin_addr.s_addr == INADDR_ANY ||
 		    saidx->dst.sin.sin_addr.s_addr == INADDR_ANY) {
-			DPRINTF(("%s: unspecified tunnel endpoint "
-			    "address in SA %s/%08lx\n", __func__,
+			DPRINTF("unspecified tunnel endpoint "
+			    "address in SA %s/%08lx\n",
 			    ipsec_address(&saidx->dst, buf, sizeof(buf)),
-			    (u_long)ntohl(sav->spi)));
+			    (u_long)ntohl(sav->spi));
 			IPIP_STATINC(IPIP_STAT_UNSPEC);
 			error = EINVAL;
 			goto bad;
@@ -356,7 +356,7 @@ ipip_output(struct mbuf *m, struct secasvar *sav, struct mbuf **mp)
 
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 		if (m == NULL) {
-			DPRINTF(("%s: M_PREPEND failed\n", __func__));
+			DPRINTF("M_PREPEND failed\n");
 			IPIP_STATINC(IPIP_STAT_HDROPS);
 			error = ENOBUFS;
 			goto bad;
@@ -420,10 +420,10 @@ ipip_output(struct mbuf *m, struct secasvar *sav, struct mbuf **mp)
 		if (IN6_IS_ADDR_UNSPECIFIED(&saidx->dst.sin6.sin6_addr) ||
 		    saidx->src.sa.sa_family != AF_INET6 ||
 		    IN6_IS_ADDR_UNSPECIFIED(&saidx->src.sin6.sin6_addr)) {
-			DPRINTF(("%s: unspecified tunnel endpoint "
-			    "address in SA %s/%08lx\n", __func__,
+			DPRINTF("unspecified tunnel endpoint "
+			    "address in SA %s/%08lx\n",
 			    ipsec_address(&saidx->dst, buf, sizeof(buf)),
-			    (u_long)ntohl(sav->spi)));
+			    (u_long)ntohl(sav->spi));
 			IPIP_STATINC(IPIP_STAT_UNSPEC);
 			error = ENOBUFS;
 			goto bad;
@@ -440,7 +440,7 @@ ipip_output(struct mbuf *m, struct secasvar *sav, struct mbuf **mp)
 
 		M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 		if (m == NULL) {
-			DPRINTF(("%s: M_PREPEND failed\n", __func__));
+			DPRINTF("M_PREPEND failed\n");
 			IPIP_STATINC(IPIP_STAT_HDROPS);
 			error = ENOBUFS;
 			goto bad;
@@ -495,8 +495,8 @@ ipip_output(struct mbuf *m, struct secasvar *sav, struct mbuf **mp)
 
 	default:
 nofamily:
-		DPRINTF(("%s: unsupported protocol family %u\n", __func__,
-		    saidx->dst.sa.sa_family));
+		DPRINTF("unsupported protocol family %u\n",
+		    saidx->dst.sa.sa_family);
 		IPIP_STATINC(IPIP_STAT_FAMILY);
 		error = EAFNOSUPPORT;
 		goto bad;
@@ -567,7 +567,7 @@ static int
 ipe4_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 {
 	/* This is a rather serious mistake, so no conditional printing. */
-	printf("%s: should never be called\n", __func__);
+	printf("should never be called\n");
 	if (m)
 		m_freem(m);
 	return EOPNOTSUPP;
@@ -575,7 +575,7 @@ ipe4_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 
 static int
 ipe4_output(struct mbuf *m, const struct ipsecrequest *isr,
-    struct secasvar *sav, int skip, int protoff)
+    struct secasvar *sav, int skip, int protoff, int flags)
 {
 	panic("%s: should not have been called", __func__);
 }

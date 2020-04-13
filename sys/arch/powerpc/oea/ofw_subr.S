@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.10 2011/07/27 22:04:23 macallan Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.10.54.1 2020/04/13 08:04:04 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,7 +39,7 @@
 	.local	OF_buffer
 
 	.lcomm	firmstk,NBPG,16
-	.lcomm	OF_buffer,NBPG,4
+	.lcomm	OF_buffer,NBPG + 36,4
 	.comm	openfirmware_entry,4,4	/* openfirmware entry point */
 	.lcomm	ofwsrsave,64,4		/* openfirmware SR savearea */
 	.comm	ofwmsr,20,4		/* msr & sprg[0-3] used in OF */

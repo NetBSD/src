@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.3.4.2 2020/04/08 14:08:11 martin Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.3.4.3 2020/04/13 08:04:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ typedef struct RF_DeviceConfig50_s {
 	u_int			maxqdepth;
 	int			ndevs;
 	RF_RaidDisk50_t		devs[RF_MAX_DISKS];
-	int			nspares;
+	u_int			nspares;
 	RF_RaidDisk50_t		spares[RF_MAX_DISKS];
 } RF_DeviceConfig50_t;
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2013/12/28 03:19:43 christos Exp $
+# $NetBSD: Makefile,v 1.6.32.1 2020/04/13 07:56:02 martin Exp $
 
 USE_FORT?= yes	# network client/server
 
@@ -30,5 +30,7 @@ CPPFLAGS+= -DLOCKNAME=\"/var/run/sntp.pid\"
 CPPFLAGS+= -DSAVENAME=\"/var/db/sntp.state\"
 LDADD+= -L${LIBISC} -liscntp -levent -lm
 DPADD+=	${LIBM} ${LIBEVENT}
+
+COPTS.utilities.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

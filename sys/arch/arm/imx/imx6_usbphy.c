@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usbphy.c,v 1.1.6.1 2020/04/08 14:07:29 martin Exp $	*/
+/*	$NetBSD: imx6_usbphy.c,v 1.1.6.2 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2017  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: imx6_usbphy.c,v 1.1.6.1 2020/04/08 14:07:29 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_usbphy.c,v 1.1.6.2 2020/04/13 08:03:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,12 +53,15 @@ __KERNEL_RCSID(1, "$NetBSD: imx6_usbphy.c,v 1.1.6.1 2020/04/08 14:07:29 martin E
 #include <arm/imx/imx6_reg.h>
 #include <arm/imx/imx6var.h>
 
+#include <arm/imx/imx6_ccmvar.h>
 #include <arm/imx/imx6_usbphyreg.h>
 
 struct imx6_usbphy_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+
+	struct clk *sc_clk;
 };
 
 static int	imx6_usbphy_match(device_t, cfdata_t, void *);
@@ -73,7 +76,7 @@ CFATTACH_DECL_NEW(imxusbphy, sizeof(struct imx6_usbphy_softc),
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
 static int
-imx6_usbphy_enable(device_t dev, void *priv, bool enable)
+imx6_usbphy_enable(device_t dev, bool enable)
 {
 	struct imx6_usbphy_softc * const sc = device_private(dev);
 
@@ -94,6 +97,20 @@ imx6_usbphy_enable(device_t dev, void *priv, bool enable)
 	/* UTMI+Level2, Level3 */
 	USBPHY_WRITE(sc, USBPHY_CTRL_SET,
 	    USBPHY_CTRL_ENUTMILEVEL2 | USBPHY_CTRL_ENUTMILEVEL3);
+
+	return 0;
+}
+
+static int
+imx6_usbphy_init_clocks(device_t dev)
+{
+	struct imx6_usbphy_softc * const sc = device_private(dev);
+
+	int error = clk_enable(sc->sc_clk);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable: %d\n", error);
+		return error;
+	}
 
 	return 0;
 }
@@ -132,8 +149,18 @@ imx6_usbphy_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	switch (device_unit(self)) {
+	case 0:
+		sc->sc_clk = imx6_get_clock("usbphy1");
+		break;
+	case 1:
+		sc->sc_clk = imx6_get_clock("usbphy2");
+		break;
+	}
+
 	aprint_naive("\n");
 	aprint_normal(": USB PHY\n");
 
-	imx6_usbphy_enable(self, NULL, true);
+	imx6_usbphy_init_clocks(self);
+	imx6_usbphy_enable(self, true);
 }

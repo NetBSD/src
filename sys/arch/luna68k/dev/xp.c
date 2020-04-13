@@ -1,4 +1,4 @@
-/* $NetBSD: xp.c,v 1.4 2017/06/01 02:45:06 chs Exp $ */
+/* $NetBSD: xp.c,v 1.4.12.1 2020/04/13 08:03:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2016 Izumi Tsutsui.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.4 2017/06/01 02:45:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.4.12.1 2020/04/13 08:03:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,13 +42,16 @@ __KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.4 2017/06/01 02:45:06 chs Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/xpio.h>
 
 #include "ioconf.h"
 
-#define XP_SHM_BASE	0x71000000
+#define TRI_PORT_RAM_XP_OFFSET	0x00000
+
+#define XP_SHM_BASE	(TRI_PORT_RAM + TRI_PORT_RAM_XP_OFFSET)
 #define XP_SHM_SIZE	0x00010000	/* 64KB for XP; rest 64KB for lance */
-#define XP_TAS_ADDR	0x61000000
+#define XP_TAS_ADDR	OBIO_TAS
 
 struct xp_softc {
 	device_t	sc_dev;
@@ -105,7 +108,7 @@ static bool xp_matched;
  *
  * XXX: PIO port functions should be shared with machdep.c for DIP SWs
  */
-#define PIO_ADDR	0x49000000
+#define PIO_ADDR	OBIO_PIO0_BASE
 #define PORT_A		0
 #define PORT_B		1
 #define PORT_C		2

@@ -1,4 +1,4 @@
-#	$NetBSD: files.meson,v 1.9.2.2 2019/06/10 22:05:51 christos Exp $
+#	$NetBSD: files.meson,v 1.9.2.3 2020/04/13 08:03:32 martin Exp $
 #
 # Configuration info for Amlogic Meson family SoCs
 #
@@ -113,6 +113,11 @@ file	arch/arm/amlogic/meson_wdt.c		meson_wdt
 device	mesongxwdt: sysmon_wdog
 attach	mesongxwdt at fdt with mesongx_wdt
 file	arch/arm/amlogic/mesongx_wdt.c		mesongx_wdt
+
+# Meson Timers
+device	meson6timer
+attach	meson6timer at fdt with meson6_timer
+file	arch/arm/amlogic/meson6_timer.c		meson6_timer
 
 # SOC parameters
 defflag	opt_soc.h			SOC_MESON

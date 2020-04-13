@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.47.2.1 2019/06/10 22:07:02 christos Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.47.2.2 2020/04/13 08:04:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.47.2.1 2019/06/10 22:07:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.47.2.2 2020/04/13 08:04:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,11 +74,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.47.2.1 2019/06/10 22:07:02 chr
 #define CMSG32_LEN(l)	(CMSG32_ALIGN(sizeof(struct cmsghdr)) + (l))
 
 static int
-copyout32_msg_control_mbuf(struct lwp *l, struct msghdr *mp, int *len,
+copyout32_msg_control_mbuf(struct lwp *l, struct msghdr *mp, u_int *len,
     struct mbuf *m, char **q, bool *truncated)
 {
 	struct cmsghdr *cmsg, cmsg32;
-	int i, j, error;
+	size_t i, j;
+	int error;
 
 	*truncated = false;
 	cmsg = mtod(m, struct cmsghdr *);
@@ -402,7 +403,8 @@ copyin32_msg_control(struct lwp *l, struct msghdr *mp)
 		/*
 		 * Sanity check the control message length.
 		 */
-		if (cmsg32.cmsg_len > resid ||
+		if (resid < 0 ||
+		    cmsg32.cmsg_len > (size_t)resid ||
 		    cmsg32.cmsg_len < sizeof(cmsg32)) {
 			error = EINVAL;
 			goto failure;
@@ -416,7 +418,7 @@ copyin32_msg_control(struct lwp *l, struct msghdr *mp)
 			size_t nclen;
 
 			nclen = cidx + cspace;
-			if (nclen >= PAGE_SIZE) {
+			if (nclen >= (size_t)PAGE_SIZE) {
 				error = EINVAL;
 				goto failure;
 			}

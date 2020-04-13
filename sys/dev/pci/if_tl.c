@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.109.2.2 2020/04/08 14:08:09 martin Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.109.2.3 2020/04/13 08:04:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.109.2.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.109.2.3 2020/04/13 08:04:26 martin Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1501,7 +1501,6 @@ tl_read_stats(tl_softc_t *sc)
 	oerr_underr = reg >> 24;
 
 	reg =  tl_intreg_read(sc, TL_INT_STATS_RX);
-	ifp->if_ipackets += reg & 0x00ffffff;
 	ierr_overr = reg >> 24;
 
 	reg =  tl_intreg_read(sc, TL_INT_STATS_FERR);

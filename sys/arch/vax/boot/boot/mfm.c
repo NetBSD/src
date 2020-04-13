@@ -1,4 +1,4 @@
-/*	$NetBSD: mfm.c,v 1.15 2017/05/22 16:59:32 ragge Exp $	*/
+/*	$NetBSD: mfm.c,v 1.15.10.1 2020/04/13 08:04:09 martin Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -139,6 +139,15 @@ mfm_rxprepare(void)
 	return error;
 }
 
+static int
+mfm_is_ready(int cnt, int error)
+{
+	if (error == 0 && (sreg.udc_dstat & UDC_DS_READY) == UDC_DS_READY)
+		return 1;
+	printf("diskette not ready(%d): %#x/%#x\n", cnt, error, sreg.udc_dstat);
+	return 0;
+}
+
 int
 mfm_rxselect(int unit)
 {
@@ -165,42 +174,40 @@ mfm_rxselect(int unit)
 	 */
 	error = mfm_command(DKC_CMD_DRSEL_RX33 | unit);
 
-	if ((error != 0) || ((sreg.udc_dstat & UDC_DS_READY) == 0)) {
-		printf("\nfloppy-drive not ready (new floppy inserted?)\n\n");
+	if (mfm_is_ready(0, error))
+		return 0;
 
-		creg.udc_rtcnt &= ~UDC_RC_INVRDY;	/* clear INVRDY-flag */
-		error = mfm_command(DKC_CMD_DRSEL_RX33 | unit);
-		if ((error != 0) || ((sreg.udc_dstat & UDC_DS_READY) == 0)) {
-			printf("diskette not ready(1): %x/%x\n",
-			       error, sreg.udc_dstat);
-			printf("floppy-drive offline?\n");
-			return (-1);
-		}
-		if (sreg.udc_dstat & UDC_DS_TRK00)
-			error = mfm_command(DKC_CMD_STEPIN_FDD);
-		else
-			error = mfm_command(DKC_CMD_STEPOUT_FDD);
+	printf("\nfloppy-drive not ready (new floppy inserted?)\n\n");
 
-		/*
-		 * now ready should be 0, cause INVRDY is not set
-		 * (retrying a command makes this fail...)
-		 */
-		if ((error != 0) || ((sreg.udc_dstat & UDC_DS_READY) == 1)) {
-			printf("diskette not ready(2): %x/%x\n",
-			       error, sreg.udc_dstat);
-		}
-		creg.udc_rtcnt |= UDC_RC_INVRDY;
-		error = mfm_command(DKC_CMD_DRSEL_RX33 | unit);
+	/* clear INVRDY-flag and try again */
+	creg.udc_rtcnt &= ~UDC_RC_INVRDY;
+	error = mfm_command(DKC_CMD_DRSEL_RX33 | unit);
 
-		if ((error != 0) || ((sreg.udc_dstat & UDC_DS_READY) == 0)) {
-			printf("diskette not ready(3): %x/%x\n",
-			       error, sreg.udc_dstat);
-			printf("no floppy inserted or floppy-door open\n");
-			return (-1);
-		}
-		printf("floppy-drive reselected.\n");
+	if (!mfm_is_ready(1, error)) {
+		printf("floppy-drive offline?\n");
+		return -1;
+   
 	}
-	return (error);
+	if (sreg.udc_dstat & UDC_DS_TRK00)
+		error = mfm_command(DKC_CMD_STEPIN_FDD);
+	else
+		error = mfm_command(DKC_CMD_STEPOUT_FDD);
+
+	/*
+	 * now ready should be 0, cause INVRDY is not set
+	 * (retrying a command makes this fail...)
+	 */
+	mfm_is_ready(2, error);
+
+	creg.udc_rtcnt |= UDC_RC_INVRDY;
+	error = mfm_command(DKC_CMD_DRSEL_RX33 | unit);
+	if (!mfm_is_ready(3, error)) {
+		printf("no floppy inserted or floppy-door open\n");
+		return -1;
+	}
+
+	printf("floppy-drive reselected.\n");
+	return error;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.52.4.1 2019/06/10 22:07:10 christos Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.52.4.2 2020/04/13 08:04:21 martin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.52.4.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.52.4.2 2020/04/13 08:04:21 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -303,13 +303,7 @@ clmpcc_attach(struct clmpcc_softc *sc)
 
 		ch->ch_tty = tp;
 
-		ch->ch_ibuf = malloc(clmpcc_ibuf_size * 2, M_DEVBUF, M_NOWAIT);
-		if ( ch->ch_ibuf == NULL ) {
-			aprint_error_dev(sc->sc_dev, "(%d): unable to allocate ring buffer\n",
-		    		chan);
-			return;
-		}
-
+		ch->ch_ibuf = malloc(clmpcc_ibuf_size * 2, M_DEVBUF, M_WAITOK);
 		ch->ch_ibuf_end = &(ch->ch_ibuf[clmpcc_ibuf_size * 2]);
 		ch->ch_ibuf_rd = ch->ch_ibuf_wr = ch->ch_ibuf;
 

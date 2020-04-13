@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.24.42.1 2019/06/10 22:10:35 christos Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.24.42.2 2020/04/13 08:05:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.24.42.1 2019/06/10 22:10:35 christos Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.24.42.2 2020/04/13 08:05:56 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -60,6 +60,8 @@ usage(void)
 
 	fprintf(stderr, "usage: %s [-su] [-o mntopts] [-p port] "
 	    "[user@]server[:path] mountpoint\n", getprogname());
+	fprintf(stderr, "       %s -c [-su] [-o mntopts] devfile mountpoint\n",
+	    getprogname());
 	exit(1);
 }
 
@@ -72,7 +74,7 @@ serverconnect(const char *addr, unsigned short port)
 {
 	struct sockaddr_in mysin;
 	struct hostent *he;
-	int s;
+	int s, ret, opt;
 
 	he = gethostbyname2(addr, AF_INET);
 	if (he == NULL) {
@@ -84,6 +86,11 @@ serverconnect(const char *addr, unsigned short port)
 	if (s == -1)
 		err(1, "socket");
 
+	opt = 1;
+	ret = setsockopt(s, SOL_SOCKET, SO_NOSIGPIPE, &opt, sizeof(opt));
+	if (ret == -1)
+		err(1, "setsockopt(SO_NOSIGPIPE)");
+
 	memset(&mysin, 0, sizeof(struct sockaddr_in));
 	mysin.sin_family = AF_INET;
 	mysin.sin_port = htons(port);
@@ -92,6 +99,17 @@ serverconnect(const char *addr, unsigned short port)
 	if (connect(s, (struct sockaddr *)&mysin, sizeof(mysin)) == -1)
 		err(1, "connect");
 
+	return s;
+}
+
+static int
+open_cdev(const char *path)
+{
+	int s;
+
+	s = open(path, O_RDWR, 0);
+	if (s == -1)
+		err(1, "%s", path);
 	return s;
 }
 
@@ -108,7 +126,8 @@ main(int argc, char *argv[])
 	unsigned short port;
 	int mntflags, pflags, ch;
 	int detach;
-	int protover = P9PROTO_VERSION;
+	int protover;
+	int server;
 
 	setprogname(argv[0]);
 
@@ -118,9 +137,14 @@ main(int argc, char *argv[])
 	mntflags = pflags = 0;
 	detach = 1;
 	port = DEFPORT_9P;
+	protover = P9PROTO_VERSION;
+	server = P9P_SERVER_TCP;
 
-	while ((ch = getopt(argc, argv, "o:p:su")) != -1) {
+	while ((ch = getopt(argc, argv, "co:p:su")) != -1) {
 		switch (ch) {
+		case 'c':
+			server = P9P_SERVER_CDEV;
+			break;
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
 			if (mp == NULL)
@@ -209,8 +233,15 @@ main(int argc, char *argv[])
 		srvpath = "/";
 	}
 
-	p9p.servsock = serverconnect(srvhost, port);
+	if (server == P9P_SERVER_TCP) {
+		p9p.servsock = serverconnect(srvhost, port);
+	} else {
+		/* path to a viop9fs chardev file, e.g., /dev/viop9fs0 */
+		p9p.servsock = open_cdev(argv[0]);
+	}
+
 	if ((pn_root = p9p_handshake(pu, user, srvpath)) == NULL) {
+		close(p9p.servsock);
 		puffs_exit(pu, 1);
 		exit(1);
 	}
@@ -232,6 +263,8 @@ main(int argc, char *argv[])
 
 	if (puffs_mainloop(pu) == -1)
 		err(1, "mainloop");
+	close(p9p.servsock);
+	puffs_exit(pu, 1);
 
 	return 0;
 }

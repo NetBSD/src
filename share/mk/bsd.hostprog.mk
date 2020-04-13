@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.80.2.2 2020/04/08 14:07:23 martin Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.80.2.3 2020/04/13 08:03:26 martin Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.hostinit.mk>
@@ -40,6 +40,7 @@ LIBMAGIC?=	/usr/lib/libmagic.a
 LIBMENU?=	/usr/lib/libmenu.a
 LIBMP?=		/usr/lib/libmp.a
 LIBNTP?=	/usr/lib/libntp.a
+LIBNVMM?=	/usr/lib/libnvmm.a
 LIBOBJC?=	/usr/lib/libobjc.a
 LIBP2K?=	/usr/lib/libp2k.a
 LIBPANEL?=	/usr/lib/libpanel.a

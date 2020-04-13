@@ -1,4 +1,4 @@
-.\"	$NetBSD: dig.1,v 1.4.2.2 2019/06/10 22:02:58 christos Exp $
+.\"	$NetBSD: dig.1,v 1.4.2.3 2020/04/13 08:02:35 martin Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -363,14 +363,20 @@ Display [do not display] the CLASS when printing the record\&.
 .PP
 \fB+[no]cmd\fR
 .RS 4
-Toggles the printing of the initial comment in the output identifying the version of
+Toggles the printing of the initial comment in the output, identifying the version of
 \fBdig\fR
-and the query options that have been applied\&. This comment is printed by default\&.
+and the query options that have been applied\&. This option always has global effect; it cannot be set globally and then overridden on a per\-lookup basis\&. The default is to print this comment\&.
 .RE
 .PP
 \fB+[no]comments\fR
 .RS 4
-Toggle the display of comment lines in the output\&. The default is to print comments\&.
+Toggles the display of some comment lines in the output, containing information about the packet header and OPT pseudosection, and the names of the response section\&. The default is to print these comments\&.
+.sp
+Other types of comments in the output are not affected by this option, but can be controlled using other command line switches\&. These include
+\fB+[no]cmd\fR,
+\fB+[no]question\fR,
+\fB+[no]stats\fR, and
+\fB+[no]rrcomments\fR\&.
 .RE
 .PP
 \fB+[no]cookie\fR\fB[=####]\fR
@@ -563,12 +569,12 @@ would cause a 48\-byte query to be padded to 64 bytes\&. The default block size 
 .PP
 \fB+[no]qr\fR
 .RS 4
-Print [do not print] the query as it is sent\&. By default, the query is not printed\&.
+Toggles the display of the query message as it is sent\&. By default, the query is not printed\&.
 .RE
 .PP
 \fB+[no]question\fR
 .RS 4
-Print [do not print] the question section of a query when an answer is returned\&. The default is to print the question section as a comment\&.
+Toggles the display of the question section of a query when an answer is returned\&. The default is to print the question section as a comment\&.
 .RE
 .PP
 \fB+[no]raflag\fR
@@ -586,11 +592,11 @@ A synonym for
 .RS 4
 Toggle the setting of the RD (recursion desired) bit in the query\&. This bit is set by default, which means
 \fBdig\fR
-normally sends recursive queries\&. Recursion is automatically disabled when the
+normally sends recursive queries\&. Recursion is automatically disabled when using the
 \fI+nssearch\fR
-or
+option, and when using
 \fI+trace\fR
-query options are used\&.
+except for an initial recursive query to get the list of root servers\&.
 .RE
 .PP
 \fB+retry=T\fR
@@ -621,7 +627,7 @@ determines if the name will be treated as relative or not and hence whether a se
 .PP
 \fB+[no]short\fR
 .RS 4
-Provide a terse answer\&. The default is to print the answer in a verbose form\&.
+Provide a terse answer\&. The default is to print the answer in a verbose form\&. This option always has global effect; it cannot be set globally and then overridden on a per\-lookup basis\&.
 .RE
 .PP
 \fB+[no]showsearch\fR
@@ -651,7 +657,7 @@ causes fields not to be split at all\&. The default is 56 characters, or 44 char
 .PP
 \fB+[no]stats\fR
 .RS 4
-This query option toggles the printing of statistics: when the query was made, the size of the reply and so on\&. The default behavior is to print the query statistics\&.
+Toggles the printing of statistics: when the query was made, the size of the reply and so on\&. The default behavior is to print the query statistics as a comment after each lookup\&.
 .RE
 .PP
 \fB+[no]subnet=addr[/prefix\-length]\fR

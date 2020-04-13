@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.13 2011/05/23 22:44:18 joerg Exp $	*/
+/*	$NetBSD: room.c,v 1.13.44.1 2020/04/13 08:03:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: room.c,v 1.13 2011/05/23 22:44:18 joerg Exp $");
+__RCSID("$NetBSD: room.c,v 1.13.44.1 2020/04/13 08:03:06 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -129,6 +129,7 @@ truedirec(int way, int option)
 		case WEST:
 			return ("right");
 		}
+		break;
 
 	case SOUTH:
 		switch (direction) {
@@ -142,6 +143,7 @@ truedirec(int way, int option)
 		case WEST:
 			return ("left");
 		}
+		break;
 
 	case EAST:
 		switch (direction) {
@@ -155,6 +157,7 @@ truedirec(int way, int option)
 			return (option == '+' ? "behind you" :
 			    "back");
 		}
+		break;
 
 	case WEST:
 		switch (direction) {
@@ -168,12 +171,12 @@ truedirec(int way, int option)
 		case WEST:
 			return ("ahead");
 		}
-
-	default:
-		printf("Error: room %d.  More than four directions wanted.", 
-		    position);
-		return ("!!");
+		break;
 	}
+
+	printf("Error: room %d.  More than four directions wanted.", 
+	    position);
+	return ("!!");
 }
 
 void

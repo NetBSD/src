@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_iomux.c,v 1.4.2.2 2019/06/10 22:05:55 christos Exp $ */
+/* $NetBSD: rk3399_iomux.c,v 1.4.2.3 2020/04/13 08:03:37 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 //#define RK3399_IOMUX_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.4.2.2 2019/06/10 22:05:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.4.2.3 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -450,6 +450,36 @@ rk3399_iomux_match(device_t parent, cfdata_t cf, void *aux)
 	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
+#ifdef RK3399_IOMUX_FORCE_ENABLE_SWJ_DP
+/*
+ * This enables the SWJ-DP (Serial Wire JTAG Debug Port).
+ * If you enable this you must also disable sdhc due to pin conflicts.
+ */
+static void
+rk3399_iomux_force_enable_swj_dp(struct rk3399_iomux_softc * const sc)
+{
+	struct syscon * const syscon = sc->sc_syscon[RK_IOMUX_REGS_GRF];
+	uint32_t val;
+
+	aprint_normal_dev(sc->sc_dev, "enabling on-chip debugging\n");
+#define GRF_GPIO4B_IOMUX	0xe024
+#define GRF_GPIO4B_IOMUX_TCK	__BITS(5,4)
+#define GRF_GPIO4B_IOMUX_TMS	__BITS(7,6)
+#define GRF_SOC_CON7		0xe21c
+#define GRF_SOC_CON7_FORCE_JTAG	__BIT(12)
+	LOCK(syscon);
+	val = RD4(syscon, GRF_GPIO4B_IOMUX);
+	val &= ~(GRF_GPIO4B_IOMUX_TCK | GRF_GPIO4B_IOMUX_TMS);
+	val |= __SHIFTIN(0x2, GRF_GPIO4B_IOMUX_TCK);
+	val |= __SHIFTIN(0x2, GRF_GPIO4B_IOMUX_TMS);
+	WR4(syscon, GRF_GPIO4B_IOMUX, val);
+	val = RD4(syscon, GRF_SOC_CON7);
+	val |= GRF_SOC_CON7_FORCE_JTAG;
+	WR4(syscon, GRF_SOC_CON7, val);
+	UNLOCK(syscon);
+}
+#endif
+
 static void
 rk3399_iomux_attach(device_t parent, device_t self, void *aux)
 {
@@ -482,8 +512,6 @@ rk3399_iomux_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	fdtbus_pinctrl_configure();
-
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
 		struct fdt_attach_args cfaa = *faa;
 		cfaa.faa_phandle = child;
@@ -492,4 +520,8 @@ rk3399_iomux_attach(device_t parent, device_t self, void *aux)
 
 		config_found(self, &cfaa, NULL);
 	}
+
+#ifdef RK3399_IOMUX_FORCE_ENABLE_SWJ_DP
+	rk3399_iomux_force_enable_swj_dp(sc);
+#endif
 }

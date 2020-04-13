@@ -1,6 +1,6 @@
 // shared_ptr and weak_ptr implementation -*- C++ -*-
 
-// Copyright (C) 2007-2017 Free Software Foundation, Inc.
+// Copyright (C) 2007-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -70,7 +70,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return __os;
     }
 
-  /// 20.7.2.2.10 shared_ptr get_deleter
   template<typename _Del, typename _Tp, _Lock_policy _Lp>
     inline _Del*
     get_deleter(const __shared_ptr<_Tp, _Lp>& __p) noexcept
@@ -82,6 +81,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #endif
     }
 
+  /// 20.7.2.2.10 shared_ptr get_deleter
+  template<typename _Del, typename _Tp>
+    inline _Del*
+    get_deleter(const shared_ptr<_Tp>& __p) noexcept
+    {
+#if __cpp_rtti
+      return static_cast<_Del*>(__p._M_get_deleter(typeid(_Del)));
+#else
+      return 0;
+#endif
+    }
 
   /**
    *  @brief  A smart pointer with reference-counted copy semantics.
@@ -266,8 +276,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	: __shared_ptr<_Tp>(__r) { }
 
 #if _GLIBCXX_USE_DEPRECATED
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
       template<typename _Yp, typename = _Constructible<auto_ptr<_Yp>>>
 	shared_ptr(auto_ptr<_Yp>&& __r);
+#pragma GCC diagnostic pop
 #endif
 
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -304,6 +317,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	}
 
 #if _GLIBCXX_USE_DEPRECATED
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
       template<typename _Yp>
 	_Assignable<auto_ptr<_Yp>>
 	operator=(auto_ptr<_Yp>&& __r)
@@ -311,6 +326,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  this->__shared_ptr<_Tp>::operator=(std::move(__r));
 	  return *this;
 	}
+#pragma GCC diagnostic pop
 #endif
 
       shared_ptr&
@@ -339,9 +355,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     private:
       // This constructor is non-standard, it is used by allocate_shared.
       template<typename _Alloc, typename... _Args>
-	shared_ptr(_Sp_make_shared_tag __tag, const _Alloc& __a,
-		   _Args&&... __args)
-	: __shared_ptr<_Tp>(__tag, __a, std::forward<_Args>(__args)...)
+	shared_ptr(_Sp_alloc_shared_tag<_Alloc> __tag, _Args&&... __args)
+	: __shared_ptr<_Tp>(__tag, std::forward<_Args>(__args)...)
 	{ }
 
       template<typename _Yp, typename _Alloc, typename... _Args>
@@ -687,7 +702,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline shared_ptr<_Tp>
     allocate_shared(const _Alloc& __a, _Args&&... __args)
     {
-      return shared_ptr<_Tp>(_Sp_make_shared_tag(), __a,
+      return shared_ptr<_Tp>(_Sp_alloc_shared_tag<_Alloc>{__a},
 			     std::forward<_Args>(__args)...);
     }
 
@@ -702,7 +717,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline shared_ptr<_Tp>
     make_shared(_Args&&... __args)
     {
-      typedef typename std::remove_const<_Tp>::type _Tp_nc;
+      typedef typename std::remove_cv<_Tp>::type _Tp_nc;
       return std::allocate_shared<_Tp>(std::allocator<_Tp_nc>(),
 				       std::forward<_Args>(__args)...);
     }

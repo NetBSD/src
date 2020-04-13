@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.4.2.2 2019/06/10 22:04:49 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.4.2.3 2020/04/13 08:03:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -49,6 +49,8 @@
 #include <ns/server.h>
 #include <ns/stats.h>
 #include <ns/xfrout.h>
+
+#include <ns/pfilter.h>
 
 /*! \file
  * \brief
@@ -810,11 +812,13 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	question_rdataset = ISC_LIST_HEAD(question_name->list);
 	question_class = question_rdataset->rdclass;
 	INSIST(question_rdataset->type == reqtype);
-	if (ISC_LIST_NEXT(question_rdataset, link) != NULL)
+	if (ISC_LIST_NEXT(question_rdataset, link) != NULL) {
 		FAILC(DNS_R_FORMERR, "multiple questions");
+	}
 	result = dns_message_nextname(request, DNS_SECTION_QUESTION);
-	if (result != ISC_R_NOMORE)
+	if (result != ISC_R_NOMORE) {
 		FAILC(DNS_R_FORMERR, "multiple questions");
+	}
 
 	result = dns_zt_find(client->view->zonetable, question_name, 0, NULL,
 			     &zone);
@@ -831,6 +835,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 						     &client->peeraddr,
 						     &db);
 
+			pfilter_notify(result, client, "zonexfr");
 			if (result == ISC_R_NOPERM) {
 				char _buf1[DNS_NAME_FORMATSIZE];
 				char _buf2[DNS_RDATACLASS_FORMATSIZE];
@@ -896,8 +901,9 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 		/*
 		 * Ignore data whose owner name is not the zone apex.
 		 */
-		if (! dns_name_equal(soa_name, question_name))
+		if (! dns_name_equal(soa_name, question_name)) {
 			continue;
+		}
 
 		for (soa_rdataset = ISC_LIST_HEAD(soa_name->list);
 		     soa_rdataset != NULL;
@@ -906,25 +912,29 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 			/*
 			 * Ignore non-SOA data.
 			 */
-			if (soa_rdataset->type != dns_rdatatype_soa)
+			if (soa_rdataset->type != dns_rdatatype_soa) {
 				continue;
-			if (soa_rdataset->rdclass != question_class)
+			}
+			if (soa_rdataset->rdclass != question_class) {
 				continue;
+			}
 
 			CHECK(dns_rdataset_first(soa_rdataset));
 			dns_rdataset_current(soa_rdataset, &soa_rdata);
 			result = dns_rdataset_next(soa_rdataset);
-			if (result == ISC_R_SUCCESS)
+			if (result == ISC_R_SUCCESS) {
 				FAILC(DNS_R_FORMERR,
 				      "IXFR authority section "
 				      "has multiple SOAs");
+			}
 			have_soa = true;
 			goto got_soa;
 		}
 	}
  got_soa:
-	if (result != ISC_R_NOMORE)
+	if (result != ISC_R_NOMORE) {
 		CHECK(result);
+	}
 
 	xfrout_log1(client, question_name, question_class, ISC_LOG_DEBUG(6),
 		    "%s authority section OK", mnemonic);
@@ -944,8 +954,9 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	 * AXFR over UDP is not possible.
 	 */
 	if (reqtype == dns_rdatatype_axfr &&
-	    (client->attributes & NS_CLIENTATTR_TCP) == 0)
+	    (client->attributes & NS_CLIENTATTR_TCP) == 0) {
 		FAILC(DNS_R_FORMERR, "attempted AXFR over UDP");
+	}
 
 	/*
 	 * Look up the requesting server in the peer table.
@@ -956,8 +967,9 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	/*
 	 * Decide on the transfer format (one-answer or many-answers).
 	 */
-	if (peer != NULL)
+	if (peer != NULL) {
 		(void)dns_peer_gettransferformat(peer, &format);
+	}
 
 	/*
 	 * Get a dynamically allocated copy of the current SOA.
@@ -970,21 +982,27 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 
 	current_serial = dns_soa_getserial(&current_soa_tuple->rdata);
 	if (reqtype == dns_rdatatype_ixfr) {
-		bool provide_ixfr;
-
 		/*
 		 * Outgoing IXFR may have been disabled for this peer
 		 * or globally.
 		 */
-		provide_ixfr = client->view->provideixfr;
-		if (peer != NULL)
-			(void) dns_peer_getprovideixfr(peer, &provide_ixfr);
-		if (provide_ixfr == false)
-			goto axfr_fallback;
+		if ((client->attributes & NS_CLIENTATTR_TCP) != 0) {
+			bool provide_ixfr;
 
-		if (! have_soa)
+			provide_ixfr = client->view->provideixfr;
+			if (peer != NULL) {
+				(void) dns_peer_getprovideixfr(peer,
+							       &provide_ixfr);
+			}
+			if (provide_ixfr == false) {
+				goto axfr_fallback;
+			}
+		}
+
+		if (! have_soa) {
 			FAILC(DNS_R_FORMERR,
 			      "IXFR request missing SOA");
+		}
 
 		begin_serial = dns_soa_getserial(&soa_rdata);
 
@@ -1007,16 +1025,16 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 			goto have_stream;
 		}
 		journalfile = is_dlz ? NULL : dns_zone_getjournal(zone);
-		if (journalfile != NULL)
+		if (journalfile != NULL) {
 			result = ixfr_rrstream_create(mctx,
 						      journalfile,
 						      begin_serial,
 						      current_serial,
 						      &data_stream);
-		else
+		} else {
 			result = ISC_R_NOTFOUND;
-		if (result == ISC_R_NOTFOUND ||
-		    result == ISC_R_RANGE) {
+		}
+		if (result == ISC_R_NOTFOUND || result == ISC_R_RANGE) {
 			xfrout_log1(client, question_name, question_class,
 				    ISC_LOG_DEBUG(4),
 				    "IXFR version not in journal, "
@@ -1049,7 +1067,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 
 
 
-	if (is_dlz)
+	if (is_dlz) {
 		CHECK(xfrout_ctx_create(mctx, client, request->id,
 					question_name, reqtype, question_class,
 					zone, db, ver, quota, stream,
@@ -1061,7 +1079,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 					(format == dns_many_answers) ?
 					true : false,
 					&xfr));
-	else
+	} else {
 		CHECK(xfrout_ctx_create(mctx, client, request->id,
 					question_name, reqtype, question_class,
 					zone, db, ver, quota, stream,
@@ -1073,6 +1091,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 					(format == dns_many_answers) ?
 					true : false,
 					&xfr));
+	}
 
 	xfr->mnemonic = mnemonic;
 	stream = NULL;
@@ -1080,24 +1099,26 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 
 	CHECK(xfr->stream->methods->first(xfr->stream));
 
-	if (xfr->tsigkey != NULL)
+	if (xfr->tsigkey != NULL) {
 		dns_name_format(&xfr->tsigkey->name, keyname, sizeof(keyname));
-	else
+	} else {
 		keyname[0] = '\0';
-	if (is_poll)
+	}
+	if (is_poll) {
 		xfrout_log1(client, question_name, question_class,
 			    ISC_LOG_DEBUG(1), "IXFR poll up to date%s%s",
 			    (xfr->tsigkey != NULL) ? ": TSIG " : "", keyname);
-	else if (is_ixfr)
+	} else if (is_ixfr) {
 		xfrout_log1(client, question_name, question_class,
 			    ISC_LOG_INFO, "%s started%s%s (serial %u -> %u)",
 			    mnemonic, (xfr->tsigkey != NULL) ? ": TSIG " : "",
 			    keyname, begin_serial, current_serial);
-	else
+	} else {
 		xfrout_log1(client, question_name, question_class,
 			    ISC_LOG_INFO, "%s started%s%s (serial %u)",
 			    mnemonic, (xfr->tsigkey != NULL) ? ": TSIG " : "",
 			    keyname, current_serial);
+	}
 
 
 	if (zone != NULL) {
@@ -1116,8 +1137,9 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 				client->expire = secs - client->now;
 			}
 		}
-		if (raw != NULL)
+		if (raw != NULL) {
 			dns_zone_detach(&raw);
+		}
 	}
 
 	/*
@@ -1131,24 +1153,33 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	result = ISC_R_SUCCESS;
 
  failure:
-	if (result == DNS_R_REFUSED)
+	if (result == DNS_R_REFUSED) {
 		inc_stats(client, zone, ns_statscounter_xfrrej);
-	if (quota != NULL)
+	}
+	if (quota != NULL) {
 		isc_quota_detach(&quota);
-	if (current_soa_tuple != NULL)
+	}
+	if (current_soa_tuple != NULL) {
 		dns_difftuple_free(&current_soa_tuple);
-	if (stream != NULL)
+	}
+	if (stream != NULL) {
 		stream->methods->destroy(&stream);
-	if (soa_stream != NULL)
+	}
+	if (soa_stream != NULL) {
 		soa_stream->methods->destroy(&soa_stream);
-	if (data_stream != NULL)
+	}
+	if (data_stream != NULL) {
 		data_stream->methods->destroy(&data_stream);
-	if (ver != NULL)
+	}
+	if (ver != NULL) {
 		dns_db_closeversion(db, &ver, false);
-	if (db != NULL)
+	}
+	if (db != NULL) {
 		dns_db_detach(&db);
-	if (zone != NULL)
+	}
+	if (zone != NULL) {
 		dns_zone_detach(&zone);
+	}
 	/* XXX kludge */
 	if (xfr != NULL) {
 		xfrout_fail(xfr, result, "setting up zone transfer");

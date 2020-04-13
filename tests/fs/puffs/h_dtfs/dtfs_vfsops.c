@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.3 2012/11/04 23:37:02 christos Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.3.30.1 2020/04/13 08:05:24 martin Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -192,7 +192,7 @@ dtfs_domount(struct puffs_usermount *pu, const char *typestr)
 #define ROUND(a,b) (((a) + ((b)-1)) & ~((b)-1))
 #define NFILES 1024*1024
 int
-dtfs_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
+dtfs_fs_statvfs(struct puffs_usermount *pu, struct puffs_statvfs *sbp)
 {
 	struct rlimit rlim;
 	struct dtfs_mount *dtm;
@@ -201,7 +201,7 @@ dtfs_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
 
 	dtm = puffs_getspecific(pu);
 	pgsize = getpagesize();
-	memset(sbp, 0, sizeof(struct statvfs));
+	memset(sbp, 0, sizeof(struct puffs_statvfs));
 
 	/*
 	 * Use datasize rlimit as an _approximation_ for free size.

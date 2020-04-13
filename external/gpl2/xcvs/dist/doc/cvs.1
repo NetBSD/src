@@ -297,6 +297,14 @@ When running a CVS client, \fB-T\fR affects only the local process;
 specifying \fB-T\fR for the client has no effect on the server and
 vice versa.
 .SP
+.IX "CVS directory, overriding"
+.IX "Overriding CVS directory"
+.IP "" 0
+\fB-D \fIcvs_directory\fB\fR
+.IP "" 2
+Use \fIcvs_directory\fR as the location of the CVS internal files, instead
+of the default \fBCVS\fR.
+.SP
 .IX "CVSROOT, overriding"
 .IX "Overriding CVSROOT"
 .IP "" 0
@@ -400,6 +408,14 @@ Set a user variable (see node `Variables\(aq in the CVS manual).
 Trace program execution; display messages showing the steps of
 \fBcvs\fR activity.  Particularly useful with \fB-n\fR to explore the
 potential impact of an unfamiliar command.
+.SP
+.IP "" 0
+\fB-u\fR
+.IP "" 2
+Do not take internal locks (for transactional integrity) during read
+and write operations. (Note this is unrelated to releasing reserved
+checkouts, as accomplished with the \fBcvs admin -u\fR command,
+see node `admin options\(aq in the CVS manual.)
 .SP
 .IP "" 0
 \fB-v\fR
@@ -908,7 +924,7 @@ editing a given file at a time).  See the comments in
 that file for details (and see the \fBREADME\fR file
 in that directory for disclaimers about the unsupported
 nature of contrib).  According to comments in that
-file, locking must set to strict (which is the default).
+file, locking must be set to strict (which is the default).
 .SP
 .IP "" 0
 \fB-L\fR
@@ -3654,8 +3670,9 @@ Requires: Working directory.
 Changes: Working directory, history log.
 .SP
 This command is meant to safely cancel the effect of
-\fBcvs checkout\fR.  Since \fBcvs\fR doesn\(aqt lock files, it
-isn\(aqt strictly necessary to use this command.  You can
+\fBcvs checkout\fR.  Since \fBcvs\fR doesn\(aqt lock files
+(except for the \fBcvs admin -l\fR command, see node `admin options\(aq in the CVS manual),
+it isn\(aqt strictly necessary to use this command.  You can
 always simply delete your working directory, if you
 like; but you risk losing changes you may have
 forgotten, and you leave no trace in the \fBcvs\fR history

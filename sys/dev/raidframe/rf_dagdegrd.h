@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.h,v 1.8 2006/04/26 17:08:48 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.h,v 1.8.152.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -58,6 +58,6 @@ void
 rf_DoubleDegRead(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
     RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList, const char *redundantReadNodeName,
-    const char *recoveryNodeName, int (*recovFunc) (RF_DagNode_t *));
+    const char *recoveryNodeName, void (*recovFunc) (RF_DagNode_t *));
 
 #endif				/* !_RF__RF_DAGDEGRD_H_ */

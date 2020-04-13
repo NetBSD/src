@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.69.4.1 2020/04/08 14:07:41 martin Exp $	 */
+/*	$NetBSD: exec.c,v 1.69.4.2 2020/04/13 08:03:54 martin Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -94,9 +94,6 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
-#include <sys/reboot.h>
-
-#include <i386/multiboot.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -122,6 +119,8 @@
 
 #define MODULE_WARNING_SEC	5
 
+#define MAXMODNAME	32	/* from <sys/module.h> */
+
 extern struct btinfo_console btinfo_console;
 
 boot_module_t *boot_modules;
@@ -135,9 +134,9 @@ typedef struct userconf_command {
 } userconf_command_t;
 userconf_command_t *userconf_commands = NULL;
 
-static struct btinfo_framebuffer btinfo_framebuffer;
+struct btinfo_framebuffer btinfo_framebuffer;
 
-static struct btinfo_modulelist *btinfo_modulelist;
+struct btinfo_modulelist *btinfo_modulelist;
 static size_t btinfo_modulelist_size;
 static uint32_t image_end;
 static char module_base[64] = "/";
@@ -189,6 +188,42 @@ void
 fs_add(char *name)
 {
 	return module_add_common(name, BM_TYPE_FS);
+}
+
+/*
+ * Add a /-separated list of module names to the boot list
+ */
+void
+module_add_split(const char *name, uint8_t type)
+{
+	char mod_name[MAXMODNAME];
+	int i;
+	const char *mp = name;
+	char *ep;
+
+	while (*mp) {				/* scan list of module names */
+		i = MAXMODNAME;
+		ep = mod_name;
+		while (--i) {			/* scan for end of first name */
+			*ep = *mp;
+			if (*ep == '/')		/* NUL-terminate the name */
+				*ep = '\0';
+
+			if (*ep == 0 ) {	/* add non-empty name */
+				if (ep != mod_name)
+					module_add_common(mod_name, type);
+				break;
+			}
+			ep++; mp++;
+		}
+		if (*ep != 0) {
+			printf("module name too long\n");
+			return;
+		}
+		if  (*mp == '/') {		/* skip separator if more */
+			mp++;
+		}
+	}
 }
 
 static void
@@ -275,6 +310,7 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 {
 	paddr_t kernpa_start, kernpa_end;
 	char prekernpath[] = "/prekern";
+	u_long prekern_start;
 	int fd, flags;
 
 	*extmem = getextmem();
@@ -283,13 +319,17 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 	marks[MARK_START] = loadaddr;
 
 	/* Load the prekern (static) */
-	flags = LOAD_KERNEL & ~(LOAD_HDR|COUNT_HDR|LOAD_SYM|COUNT_SYM);
+	flags = LOAD_KERNEL & ~(LOAD_HDR|LOAD_SYM);
 	if ((fd = loadfile(prekernpath, marks, flags)) == -1)
 		return errno;
 	close(fd);
 
-	marks[MARK_END] = (1UL << 21); /* the kernel starts at 2MB XXX */
-	kernpa_start = marks[MARK_END];
+	prekern_start = marks[MARK_START];
+
+	/* The kernel starts at 2MB. */
+	marks[MARK_START] = loadaddr;
+	marks[MARK_END] = loadaddr + (1UL << 21);
+	kernpa_start = (1UL << 21);
 
 	/* Load the kernel (dynamic) */
 	flags = (LOAD_KERNEL | LOAD_DYN) & ~(floppy ? LOAD_BACKWARDS : 0);
@@ -297,11 +337,11 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 		return errno;
 	close(fd);
 
-	kernpa_end = marks[MARK_END];
+	kernpa_end = marks[MARK_END] - loadaddr;
 
 	/* If the root fs type is unusual, load its module. */
 	if (fsmod != NULL)
-		module_add_common(fsmod, BM_TYPE_KMOD);
+		module_add_split(fsmod, BM_TYPE_KMOD);
 
 	bi_prekern.kernpa_start = kernpa_start;
 	bi_prekern.kernpa_end = kernpa_end;
@@ -319,6 +359,7 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 	bi_getmemmap();
 #endif
 
+	marks[MARK_START] = prekern_start;
 	marks[MARK_END] = (((u_long)marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
 	image_end = marks[MARK_END];
@@ -378,7 +419,7 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 
 	/* If the root fs type is unusual, load its module. */
 	if (fsmod != NULL)
-		module_add_common(fsmod, BM_TYPE_KMOD);
+		module_add_split(fsmod, BM_TYPE_KMOD);
 
 	/*
 	 * Gather some information for the kernel. Do this after the
@@ -518,7 +559,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	}
 
 	efi_kernel_start = marks[MARK_START];
-	efi_kernel_size = image_end - efi_loadaddr - efi_kernel_start;
+	efi_kernel_size = image_end - (efi_loadaddr + efi_kernel_start);
 #endif
 	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv,
 	    x86_trunc_page(basemem * 1024));
@@ -528,55 +569,6 @@ out:
 	BI_FREE();
 	bootinfo = NULL;
 	return -1;
-}
-
-int
-count_netbsd(const char *file, u_long *rsz)
-{
-	u_long marks[MARK_MAX];
-	char kdev[64];
-	char base_path[64] = "/";
-	struct stat st;
-	boot_module_t *bm;
-	u_long sz;
-	int err, fd;
-
-	howto = AB_SILENT;
-
-	memset(marks, 0, sizeof(marks));
-	if ((fd = loadfile(file, marks, COUNT_KERNEL | LOAD_NOTE)) == -1)
-		return -1;
-	close(fd);
-	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
-	    (-sizeof(int));
-	sz = marks[MARK_END];
-
-	/* The modules must be allocated after the kernel */
-	if (boot_modules_enabled) {
-		extract_device(file, kdev, sizeof(kdev));
-		module_base_path(base_path, sizeof(base_path));
-
-		/* If the root fs type is unusual, load its module. */
-		if (fsmod != NULL)
-			module_add_common(fsmod, BM_TYPE_KMOD);
-
-		for (bm = boot_modules; bm; bm = bm->bm_next) {
-			fd = module_open(bm, 0, kdev, base_path, false);
-			if (fd == -1)
-				continue;
-			sz = (sz + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-			err = fstat(fd, &st);
-			if (err == -1 || st.st_size == -1) {
-				close(fd);
-				continue;
-			}
-			sz += st.st_size;
-			close(fd);
-		}
-	}
-
-	*rsz = sz;
-	return 0;
 }
 
 static void
@@ -846,75 +838,57 @@ userconf_init(void)
 int
 exec_multiboot(const char *file, char *args)
 {
-	struct multiboot_info *mbi;
-	struct multiboot_module *mbm;
-	struct bi_modulelist_entry *bim;
-	int i, len;
+	physaddr_t loadaddr = 0;
 	u_long marks[MARK_MAX];
 	u_long extmem;
 	u_long basemem;
-	char *cmdline;
+	struct multiboot_package *mbp = NULL;
 
-	mbi = alloc(sizeof(struct multiboot_info));
-	mbi->mi_flags = MULTIBOOT_INFO_HAS_MEMORY;
+#ifndef NO_MULTIBOOT2
+	if ((mbp = probe_multiboot2(file)) != NULL)
+		goto is_multiboot;
+#endif
 
-	if (common_load_kernel(file, &basemem, &extmem, 0, 0, marks))
+	if ((mbp = probe_multiboot1(file)) != NULL) {
+#ifdef EFIBOOT
+		printf("EFI boot requires multiboot 2 kernel\n");
+		goto out;
+#else
+		goto is_multiboot;
+#endif
+	}
+
+#ifndef NO_MULTIBOOT2
+	printf("%s is not a multiboot kernel\n", file);
+#else
+	printf("%s is not a multiboot 1 kernel "
+	    "(multiboot 2 support is not built in)\n", file);
+#endif
+	goto out;
+
+is_multiboot:
+#ifdef EFIBOOT
+	loadaddr = efi_loadaddr;
+#endif
+	if (common_load_kernel(file, &basemem, &extmem, loadaddr, 0, marks))
 		goto out;
 
-	mbi->mi_mem_upper = extmem;
-	mbi->mi_mem_lower = basemem;
-
-	if (args) {
-		mbi->mi_flags |= MULTIBOOT_INFO_HAS_CMDLINE;
-		len = strlen(file) + 1 + strlen(args) + 1;
-		cmdline = alloc(len);
-		snprintf(cmdline, len, "%s %s", file, args);
-		mbi->mi_cmdline = (char *) vtophys(cmdline);
-	}
-
-	/* pull in any modules if necessary */
-	if (boot_modules_enabled) {
+	if (boot_modules_enabled)
 		module_init(file);
-		if (btinfo_modulelist) {
-			mbm = alloc(sizeof(struct multiboot_module) *
-					   btinfo_modulelist->num);
 
-			bim = (struct bi_modulelist_entry *)
-			  (((char *) btinfo_modulelist) +
-			   sizeof(struct btinfo_modulelist));
-			for (i = 0; i < btinfo_modulelist->num; i++) {
-				mbm[i].mmo_start = bim->base;
-				mbm[i].mmo_end = bim->base + bim->len;
-				mbm[i].mmo_string = (char *)vtophys(bim->path);
-				mbm[i].mmo_reserved = 0;
-				bim++;
-			}
-			mbi->mi_flags |= MULTIBOOT_INFO_HAS_MODS;
-			mbi->mi_mods_count = btinfo_modulelist->num;
-			mbi->mi_mods_addr = vtophys(mbm);
-		}
-	}
+	mbp->mbp_args = args;
+	mbp->mbp_basemem = basemem;
+	mbp->mbp_extmem = extmem;
+	mbp->mbp_loadaddr = loadaddr;
+	mbp->mbp_marks = marks;
 
-#ifdef DEBUG
-	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[MARK_ENTRY],
-	    marks[MARK_NSYM], marks[MARK_SYM], marks[MARK_END]);
-#endif
-
-#if 0
-	if (btinfo_symtab.nsym) {
-		mbi->mi_flags |= MULTIBOOT_INFO_HAS_ELF_SYMS;
-		mbi->mi_elfshdr_addr = marks[MARK_SYM];
-	btinfo_symtab.nsym = marks[MARK_NSYM];
-	btinfo_symtab.ssym = marks[MARK_SYM];
-	btinfo_symtab.esym = marks[MARK_END];
-#endif
-
-	multiboot(marks[MARK_ENTRY], vtophys(mbi),
-	    x86_trunc_page(mbi->mi_mem_lower * 1024));
-	panic("exec returned");
+	/* Only returns on error */
+	(void)mbp->mbp_exec(mbp);
 
 out:
-	dealloc(mbi, 0);
+	if (mbp != NULL)
+		mbp->mbp_cleanup(mbp);
+
 	return -1;
 }
 

@@ -1,7 +1,7 @@
 /* Generate attribute information shared between driver and core
    compilers (insn-attr-common.h) from machine description.  Split out
    of genattr.c.
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -61,7 +61,7 @@ gen_attr (md_rtx_info *info)
 }
 
 int
-main (int argc, char **argv)
+main (int argc, const char **argv)
 {
   bool have_delay = false;
   bool have_sched = false;

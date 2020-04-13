@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfctl.8,v 1.20.4.1 2019/06/10 22:10:34 christos Exp $
+.\"	$NetBSD: npfctl.8,v 1.20.4.2 2020/04/13 08:05:55 martin Exp $
 .\"
 .\" Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 10, 2017
+.Dd August 26, 2019
 .Dt NPFCTL 8
 .Os
 .Sh NAME
@@ -114,28 +114,50 @@ List all rules in the dynamic ruleset specified by
 Remove all rules from the dynamic ruleset specified by
 .Ar name .
 .\" ---
-.It Ic table Ar tid Ic add Aq Ar addr/mask
+.It Ic table Ar name Ic add Aq Ar addr/mask
 In table
-.Ar tid ,
+.Ar name ,
 add the IP address and optionally netmask, specified by
 .Aq Ar addr/mask .
 Only the tables of type "lpm" support masks.
-.It Ic table Ar tid Ic rem Aq Ar addr/mask
+.It Ic table Ar name Ic rem Aq Ar addr/mask
 In table
-.Ar tid ,
+.Ar name ,
 remove the IP address and optionally netmask, specified by
 .Aq Ar addr/mask .
 Only the tables of type "lpm" support masks.
-.It Ic table Ar tid Ic test Aq Ar addr
+.It Ic table Ar name Ic test Aq Ar addr
 Query the table
-.Ar tid
+.Ar name
 for a specific IP address, specified by
 .Ar addr .
 If no mask is specified, a single host is assumed.
-.It Ic table Ar tid Ic list
+.It Ic table Ar name Ic list
 List all entries in the currently loaded table specified by
-.Ar tid .
+.Ar name .
 This operation is expensive and should be used with caution.
+.It Ic table Ar name Ic replace Oo Fl n Ar newname Oc Oo Fl t Ar type Oc Aq Ar path
+Replace the existing table specified by
+.Ar name
+with a new table built from the file specified by
+.Ar path .
+Optionally, the new table will:
+.Bl -tag -width xxxxxxxxxx -compact -offset 3n
+.It Fl n Ar newname
+be named
+.Ar newname ,
+effectively renaming the table.
+If not specified, the name of the table being replaced will be used.
+.It Fl t Ar type
+be of type
+.Ar type ;
+currently supported types are
+.Cm ipset ,
+.Cm lpm ,
+or
+.Cm const .
+If not specified, the type of the table being replaced will be used.
+.El
 .\" ---
 .It Ic save
 Save the active configuration and a snapshot of the current connections.
@@ -181,7 +203,7 @@ See
 for details.
 .\" -----
 .Sh FILES
-.Bl -tag -width /etc/npf.conf -compact
+.Bl -tag -width Pa -compact
 .It Pa /dev/npf
 control device
 .It Pa /etc/npf.conf
@@ -200,6 +222,13 @@ Addition and removal of entries in the table whose ID is "vip":
 .Bd -literal -offset indent
 # npfctl table "vip" add 10.0.0.1
 # npfctl table "vip" rem 182.168.0.0/24
+.Ed
+.Pp
+Replacing the existing table which has ID "svr"
+with a new const table populated from file "/tmp/npf_vps_new",
+and renamed to "vps":
+.Bd -literal -offset indent
+# npfctl table "svr" replace -n "vps" -t const "/tmp/npf_vps_new"
 .Ed
 .\" -----
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_iomuxreg.h,v 1.4 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: imx6_iomuxreg.h,v 1.4.8.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -33,6 +33,7 @@
 #define IOMUX_GPR1					0x00000004
 #define  IOMUX_GPR1_CFG_L1_CLK_REMOVAL_EN	__BIT(31)
 #define  IOMUX_GPR1_APP_CLK_REQ_N		__BIT(30)
+#define  IOMUX_GPR1_PCIE_SW_RST			__BIT(29)
 #define  IOMUX_GPR1_APP_REQ_EXIT_L1		__BIT(28)
 #define  IOMUX_GPR1_APP_READY_ENTR_L23		__BIT(27)
 #define  IOMUX_GPR1_APP_REQ_ENTR_L1		__BIT(26)
@@ -93,16 +94,16 @@
 #define  IOMUX_GPR13_CAN2_STOP_REQ		__BIT(29)
 #define  IOMUX_GPR13_CAN1_STOP_REQ		__BIT(28)
 #define  IOMUX_GPR13_ENET_STOP_REQ		__BIT(27)
-#define  IOMUX_GPR13_SATA_PHY_8(n)		__SHIFTIN(n, __BITS(26, 24))
-#define  IOMUX_GPR13_SATA_PHY_7(n)		__SHIFTIN(n, __BITS(23, 19))
-#define  IOMUX_GPR13_SATA_PHY_6(n)		__SHIFTIN(n, __BITS(18, 16))
-#define  IOMUX_GPR13_SATA_SPEED(n)		__SHIFTIN(n, __BIT(15))
-#define  IOMUX_GPR13_SATA_PHY_5(n)		__SHIFTIN(n, __BIT(14))
-#define  IOMUX_GPR13_SATA_PHY_4(n)		__SHIFTIN(n, __BITS(13, 11))
-#define  IOMUX_GPR13_SATA_PHY_3(n)		__SHIFTIN(n, __BITS(10, 7))
-#define  IOMUX_GPR13_SATA_PHY_2(n)		__SHIFTIN(n, __BITS(6, 2))
-#define  IOMUX_GPR13_SATA_PHY_1(n)		__SHIFTIN(n, __BIT(1))
-#define  IOMUX_GPR13_SATA_PHY_0(n)		__SHIFTIN(n, __BIT(0))
+#define  IOMUX_GPR13_SATA_PHY_8			__BITS(26, 24)
+#define  IOMUX_GPR13_SATA_PHY_7			__BITS(23, 19)
+#define  IOMUX_GPR13_SATA_PHY_6			__BITS(18, 16)
+#define  IOMUX_GPR13_SATA_SPEED			__BIT(15)
+#define  IOMUX_GPR13_SATA_PHY_5			__BIT(14)
+#define  IOMUX_GPR13_SATA_PHY_4			__BITS(13, 11)
+#define  IOMUX_GPR13_SATA_PHY_3			__BITS(10, 7)
+#define  IOMUX_GPR13_SATA_PHY_2			__BITS(6, 2)
+#define  IOMUX_GPR13_SATA_PHY_1			__BIT(1)
+#define  IOMUX_GPR13_SATA_PHY_0			__BIT(0)
 
 /* for iMX6Dual/Quad */
 #define IMX6DQ_IOMUXC_SW_MUX_CTL_PAD_SD2_DATA1			0x0000004c

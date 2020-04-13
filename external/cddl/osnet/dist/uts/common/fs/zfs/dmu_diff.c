@@ -43,16 +43,13 @@
 struct diffarg {
 #ifdef __FreeBSD__
 	kthread_t *da_td;
-	struct file *da_fp;		/* file to which we are reporting */
-#else
-	struct vnode *da_vp;		/* file to which we are reporting */
 #endif
+	struct file *da_fp;		/* file to which we are reporting */
 	offset_t *da_offp;
 	int da_err;			/* error that stopped diff search */
 	dmu_diff_record_t da_ddr;
 };
 
-#ifdef __FreeBSD__
 static int
 write_bytes(struct diffarg *da)
 {
@@ -66,18 +63,32 @@ write_bytes(struct diffarg *da)
 	auio.uio_resid = aiov.iov_len;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_offset = (off_t)-1;
+#ifdef __FreeBSD__
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_td = da->da_td;
+#else
 #ifdef _KERNEL
+	auio.uio_vmspace = vmspace_kernel();
+#endif
+#endif /* __FreeBSD__ */
+#ifdef _KERNEL
+#ifdef __FreeBSD__
 	if (da->da_fp->f_type == DTYPE_VNODE)
 		bwillwrite();
 	return (fo_write(da->da_fp, &auio, da->da_td->td_ucred, 0, da->da_td));
+#else
+	int flags = 0;
+
+	if (da->da_fp->f_type == DTYPE_VNODE)
+		flags |= FOF_UPDATE_OFFSET;
+	return (*da->da_fp->f_ops->fo_write)(da->da_fp, &da->da_fp->f_offset,
+	    &auio, da->da_fp->f_cred, flags);
+#endif /* __FreeBSD__ */
 #else
 	fprintf(stderr, "%s: returning EOPNOTSUPP\n", __func__);
 	return (EOPNOTSUPP);
 #endif
 }
-#endif /* __FreeBSD__ */
 
 static int
 write_record(struct diffarg *da)
@@ -89,13 +100,7 @@ write_record(struct diffarg *da)
 		return (0);
 	}
 
-#ifdef __FreeBSD__
 	da->da_err = write_bytes(da);
-#else
-	da->da_err = vn_rdwr(UIO_WRITE, da->da_vp, (caddr_t)&da->da_ddr,
-	    sizeof (da->da_ddr), 0, UIO_SYSSPACE, FAPPEND,
-	    RLIM64_INFINITY, CRED(), &resid);
-#endif
 	*da->da_offp += sizeof (da->da_ddr);
 	return (da->da_err);
 }
@@ -193,11 +198,7 @@ diff_cb(spa_t *spa, zilog_t *zilog, const blkptr_t *bp,
 
 int
 dmu_diff(const char *tosnap_name, const char *fromsnap_name,
-#ifdef __FreeBSD__
     struct file *fp, offset_t *offp)
-#else
-    struct vnode *vp, offset_t *offp)
-#endif
 {
 	struct diffarg da;
 	dsl_dataset_t *fromsnap;
@@ -242,10 +243,8 @@ dmu_diff(const char *tosnap_name, const char *fromsnap_name,
 
 #ifdef __FreeBSD__
 	da.da_td = curthread;
-	da.da_fp = fp;
-#else
-	da.da_vp = vp;
 #endif
+	da.da_fp = fp;
 	da.da_offp = offp;
 	da.da_ddr.ddr_type = DDR_NONE;
 	da.da_ddr.ddr_first = da.da_ddr.ddr_last = 0;

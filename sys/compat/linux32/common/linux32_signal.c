@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.19 2018/01/07 21:16:00 christos Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.19.4.1 2020/04/13 08:04:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.19 2018/01/07 21:16:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.19.4.1 2020/04/13 08:04:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -232,6 +232,7 @@ native_to_linux32_sigaction(struct linux32_sigaction *lsa, const struct sigactio
 void
 native_to_linux32_sigaltstack(struct linux32_sigaltstack *lss, const struct sigaltstack *bss)
 {
+	memset(lss, 0, sizeof(*lss));
 	NETBSD32PTR32(lss->ss_sp, bss->ss_sp);
 	lss->ss_size = bss->ss_size;
 	if (bss->ss_flags & SS_ONSTACK)

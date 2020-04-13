@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.4.2.3 2020/04/08 14:08:09 martin Exp $ */
+/* $NetBSD: mfii.c,v 1.4.2.4 2020/04/13 08:04:27 martin Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.4.2.3 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.4.2.4 2020/04/13 08:04:27 martin Exp $");
 
 #include "bio.h"
 
@@ -1092,10 +1092,7 @@ mfii_dmamem_alloc(struct mfii_softc *sc, size_t size)
 	struct mfii_dmamem *m;
 	int nsegs;
 
-	m = malloc(sizeof(*m), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (m == NULL)
-		return (NULL);
-
+	m = malloc(sizeof(*m), M_DEVBUF, M_WAITOK | M_ZERO);
 	m->mdm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
@@ -3781,12 +3778,8 @@ mfii_create_sensors(struct mfii_softc *sc)
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensors = malloc(sizeof(envsys_data_t) * nsensors,
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
-	if (sc->sc_sensors == NULL) {
-		aprint_error_dev(sc->sc_dev, "can't allocate envsys_data_t\n");
-		return ENOMEM;
-	}
 	/* BBU */
 	sc->sc_sensors[0].units = ENVSYS_INDICATOR;
 	sc->sc_sensors[0].state = ENVSYS_SINVALID;

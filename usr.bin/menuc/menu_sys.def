@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.59.32.1 2019/06/10 22:10:22 christos Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.59.32.2 2020/04/13 08:05:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -674,10 +674,9 @@ menu_init(void)
 	num_menus = DYN_INIT_NUM;
 	while (num_menus < DYN_MENU_START)
 		num_menus *= 2;
-	menu_list = malloc(sizeof *menu_list * num_menus);
+	menu_list = calloc(num_menus, sizeof *menu_list);
 	if (menu_list == NULL)
 		return 2;
-	(void)memset(menu_list, 0, sizeof *menu_list * num_menus);
 	for (i = 0; i < DYN_MENU_START; i++)
 		menu_list[i] = &menu_def[i];
 #endif
@@ -764,7 +763,7 @@ process_menu(int num, void *arg)
 				break;
 		}
 
-		if (opt->opt_menu != -1) {
+		if (opt->opt_menu != OPT_NOMENU) {
 			if (!(opt->opt_flags & OPT_SUB)) {
 				num = opt->opt_menu;
 				wclear(m->mw);
@@ -859,12 +858,12 @@ new_menu(const char *title, menu_ent *opts, int numopts,
 	/* Find free menu entry. */
 	for (ix = DYN_MENU_START; ; ix++) {
 		if (ix >= num_menus && !double_menus())
-			return -1;
+			return OPT_NOMENU;
 		m = menu_list[ix];
 		if (m == NULL) {
-			m = calloc(sizeof *m, 1);
+			m = calloc(1, sizeof *m);
 			if (m == NULL)
-				return -1;
+				return OPT_NOMENU;
 			menu_list[ix] = m;
 			break;
 		}

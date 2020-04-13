@@ -1,4 +1,4 @@
-/*	$NetBSD: isns.c,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $	*/
+/*	$NetBSD: isns.c,v 1.1.1.1.46.1 2020/04/13 08:03:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isns.c,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $");
+__RCSID("$NetBSD: isns.c,v 1.1.1.1.46.1 2020/04/13 08:03:13 martin Exp $");
 
 /*
  * isns.c
@@ -153,7 +153,7 @@ isns_add_servercon(ISNS_HANDLE isns_handle, int fd, struct addrinfo *ai)
 			return ENOMEM;
 		}
 		memset(ai_p->ai_canonname, '\0', len + 1);
-		strncpy(ai_p->ai_canonname, ai->ai_canonname, len);
+		strlcpy(ai_p->ai_canonname, ai->ai_canonname, len + 1);
 	} else
 		ai_p->ai_canonname = NULL;
 	if (ai->ai_addr != NULL) { 

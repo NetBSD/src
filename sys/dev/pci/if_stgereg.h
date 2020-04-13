@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stgereg.h,v 1.5.88.1 2020/04/08 14:08:09 martin Exp $	*/
+/*	$NetBSD: if_stgereg.h,v 1.5.88.2 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #ifndef _DEV_PCI_IF_STGEREG_H_
 #define	_DEV_PCI_IF_STGEREG_H_
+
+
+#include <net/if_ether.h>
+#include <sys/bus.h>
 
 /*
  * Register description for the Sundance Tech. TC9021 10/100/1000

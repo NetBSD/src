@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.23 2008/12/17 19:13:02 cegger Exp $	*/
+/*	$NetBSD: si.c,v 1.23.66.1 2020/04/13 08:04:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.23 2008/12/17 19:13:02 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.23.66.1 2020/04/13 08:04:52 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -306,10 +306,7 @@ si_attach(device_t parent, device_t self, void *aux)
 	 * Allocate DMA handles.
 	 */
 	i = SCI_OPENINGS * sizeof(struct si_dma_handle);
-	sc->sc_dma = malloc(i, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_dma == NULL)
-		panic("si: DMA handle malloc failed");
-
+	sc->sc_dma = malloc(i, M_DEVBUF, M_WAITOK);
 	for (i = 0; i < SCI_OPENINGS; i++) {
 		sc->sc_dma[i].dh_flags = 0;
 

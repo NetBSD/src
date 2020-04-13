@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.96.14.1 2020/04/08 14:08:53 martin Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.96.14.2 2020/04/13 08:05:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.96.14.1 2020/04/08 14:08:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.96.14.2 2020/04/13 08:05:05 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.96.14.1 2020/04/08 14:08:53 mart
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
-#include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
@@ -64,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.96.14.1 2020/04/08 14:08:53 mart
 #include <miscfs/kernfs/kernfs.h>
 
 MODULE(MODULE_CLASS_VFS, kernfs, NULL);
-
-MALLOC_JUSTDEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
 
 dev_t rrootdev = NODEV;
 kmutex_t kfs_lock;
@@ -78,7 +75,6 @@ void
 kernfs_init(void)
 {
 
-	malloc_type_attach(M_KERNFSMNT);
 	mutex_init(&kfs_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -93,7 +89,6 @@ kernfs_done(void)
 {
 
 	mutex_destroy(&kfs_lock);
-	malloc_type_detach(M_KERNFSMNT);
 }
 
 void
@@ -141,7 +136,7 @@ kernfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	fmp = malloc(sizeof(struct kernfs_mount), M_KERNFSMNT, M_WAITOK|M_ZERO);
+	fmp = kmem_zalloc(sizeof(struct kernfs_mount), KM_SLEEP);
 	TAILQ_INIT(&fmp->nodelist);
 
 	mp->mnt_stat.f_namemax = KERNFS_MAXNAMLEN;
@@ -151,7 +146,7 @@ kernfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	if ((error = set_statvfs_info(path, UIO_USERSPACE, "kernfs",
 	    UIO_SYSSPACE, mp->mnt_op->vfs_name, mp, l)) != 0) {
-		free(fmp, M_KERNFSMNT);
+		kmem_free(fmp, sizeof(struct kernfs_mount));
 		return error;
 	}
 
@@ -181,7 +176,7 @@ kernfs_unmount(struct mount *mp, int mntflags)
 	/*
 	 * Finally, throw away the kernfs_mount structure
 	 */
-	free(mp->mnt_data, M_KERNFSMNT);
+	kmem_free(mp->mnt_data, sizeof(struct kernfs_mount));
 	mp->mnt_data = NULL;
 	return (0);
 }

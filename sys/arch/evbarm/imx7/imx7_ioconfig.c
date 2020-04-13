@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_ioconfig.c,v 1.1.22.1 2019/06/10 22:06:07 christos Exp $	*/
+/*	$NetBSD: imx7_ioconfig.c,v 1.1.22.2 2020/04/13 08:03:44 martin Exp $	*/
 
 /*
  * Copyright (c) 2015 Ryo Shimizu <ryo@nerv.org>
@@ -26,9 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_ioconfig.c,v 1.1.22.1 2019/06/10 22:06:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_ioconfig.c,v 1.1.22.2 2020/04/13 08:03:44 martin Exp $");
 
 #include "opt_evbarm_boardtype.h"
+
+#define	_INTR_PRIVATE
+
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/param.h>
@@ -190,7 +193,7 @@ static const struct iomux_conf iomux_data[] = {
 #define GPIO_SETDIR(unit, pin, dir)					\
 	AIPS_WRITE(GPIO_ADDR(unit) + GPIO_DIR,				\
 	    (AIPS_READ(GPIO_ADDR(unit) + GPIO_DIR) & ~(1 << (pin))) |	\
-	    ((dir) << (pin)))
+	    ((dir == GPIO_PIN_OUTPUT) ? __BIT(pin) : 0))
 #define GPIO_WRITE(unit, pin, data)					\
 	AIPS_WRITE(GPIO_ADDR(unit) + GPIO_DR,				\
 	    (AIPS_READ(GPIO_ADDR(unit) + GPIO_DR) & ~(1 << (pin))) |	\
@@ -198,7 +201,7 @@ static const struct iomux_conf iomux_data[] = {
 /* GPIO set dir & write data */
 #define GPIO_DIROUT_WRITE(unit, pin, data)				\
 	do {								\
-		GPIO_SETDIR(unit, pin, GPIO_DIR_OUT);			\
+		GPIO_SETDIR(unit, pin, GPIO_PIN_OUTPUT);		\
 		GPIO_WRITE(unit, pin, data);				\
 	} while (0 /* CONSTCOND */)
 

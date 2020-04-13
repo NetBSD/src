@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.66 2015/12/06 02:21:55 tsutsui Exp $ */
+/*	$NetBSD: scif.c,v 1.66.18.1 2020/04/13 08:04:06 martin Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.66 2015/12/06 02:21:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.66.18.1 2020/04/13 08:04:06 martin Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -497,11 +497,7 @@ scif_attach(device_t parent, device_t self, void *aux)
 	tp->t_hwiflow = NULL;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(scif_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_rbuf == NULL) {
-		aprint_error_dev(self, "unable to allocate ring buffer\n");
-		return;
-	}
+	sc->sc_rbuf = malloc(scif_rbuf_size << 1, M_DEVBUF, M_WAITOK);
 	sc->sc_ebuf = sc->sc_rbuf + (scif_rbuf_size << 1);
 
 	tty_attach(tp);

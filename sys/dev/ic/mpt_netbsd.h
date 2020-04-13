@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.h,v 1.12 2018/01/30 19:13:08 jakllsch Exp $	*/
+/*	$NetBSD: mpt_netbsd.h,v 1.12.4.1 2020/04/13 08:04:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -253,7 +253,7 @@ typedef struct mpt_softc {
 void	mpt_scsipi_attach(mpt_softc_t *);
 int	mpt_dma_mem_alloc(mpt_softc_t *);
 int	mpt_intr(void *);
-void	mpt_prt(mpt_softc_t *, const char *, ...);
+void	mpt_prt(mpt_softc_t *, const char *, ...) __printflike(2, 3);
 
 #define	mpt_set_config_regs(mpt)				\
 do {								\

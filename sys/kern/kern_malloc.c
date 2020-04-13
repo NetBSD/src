@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.146.4.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.146.4.2 2020/04/13 08:05:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,12 +70,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.146.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.146.4.2 2020/04/13 08:05:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/asan.h>
+#include <sys/msan.h>
 
 /*
  * Built-in malloc types.  Note: ought to be removed.
@@ -129,6 +130,9 @@ kern_malloc(unsigned long reqsize, int flags)
 	if (p == NULL)
 		return NULL;
 
+	kmsan_mark(p, allocsize, KMSAN_STATE_UNINIT);
+	kmsan_orig(p, allocsize, KMSAN_TYPE_MALLOC, __RET_ADDR);
+
 	if ((flags & M_ZERO) != 0) {
 		memset(p, 0, allocsize);
 	}
@@ -155,11 +159,16 @@ kern_free(void *addr)
 	kasan_mark(addr, mh->mh_size - sizeof(struct malloc_header),
 	    mh->mh_size - sizeof(struct malloc_header), KASAN_MALLOC_REDZONE);
 
-	if (mh->mh_size >= PAGE_SIZE + sizeof(struct malloc_header))
+	if (mh->mh_size >= PAGE_SIZE + sizeof(struct malloc_header)) {
+		kmsan_mark((char *)addr - PAGE_SIZE,
+		    mh->mh_size + PAGE_SIZE - sizeof(struct malloc_header),
+		    KMSAN_STATE_INITED);
 		kmem_intr_free((char *)addr - PAGE_SIZE,
 		    mh->mh_size + PAGE_SIZE - sizeof(struct malloc_header));
-	else
+	} else {
+		kmsan_mark(mh, mh->mh_size, KMSAN_STATE_INITED);
 		kmem_intr_free(mh, mh->mh_size);
+	}
 }
 
 void *

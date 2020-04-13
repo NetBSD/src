@@ -1,4 +1,4 @@
-/* $NetBSD: t_access.c,v 1.2 2017/01/10 22:36:29 christos Exp $ */
+/* $NetBSD: t_access.c,v 1.2.14.1 2020/04/13 08:05:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_access.c,v 1.2 2017/01/10 22:36:29 christos Exp $");
+__RCSID("$NetBSD: t_access.c,v 1.2.14.1 2020/04/13 08:05:27 martin Exp $");
 
 #include <atf-c.h>
 
@@ -58,7 +58,7 @@ ATF_TC_BODY(access_access, tc)
 	size_t i;
 	int fd;
 
-	fd = open(path, O_RDONLY | O_CREAT);
+	fd = open(path, O_RDONLY | O_CREAT, 0600);
 
 	if (fd < 0)
 		return;

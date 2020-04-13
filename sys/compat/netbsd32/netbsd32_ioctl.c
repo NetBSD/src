@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.92.2.2 2020/04/08 14:08:01 martin Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.92.2.3 2020/04/13 08:04:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.92.2.2 2020/04/08 14:08:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.92.2.3 2020/04/13 08:04:16 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -1539,6 +1539,12 @@ netbsd32_ioctl(struct lwp *l,
 		IOCTL_STRUCT_CONV_TO(DIOCLWEDGES, dkwedge_list);
 
 	default:
+#ifdef NETBSD32_DRMKMS
+		if (IOCGROUP(com) == 'd') {
+			error = netbsd32_drm_ioctl(fp, com, data32, l);
+			break;
+		}
+#endif
 #ifdef NETBSD32_MD_IOCTL
 		error = netbsd32_md_ioctl(fp, com, data32, l);
 #else

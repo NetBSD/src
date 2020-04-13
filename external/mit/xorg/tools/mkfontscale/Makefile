@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.1 2019/06/10 22:02:51 christos Exp $
+#	$NetBSD: Makefile,v 1.12.2.2 2020/04/13 08:02:33 martin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -10,7 +10,7 @@ FREETYPE=       ${X11SRCDIR.freetype}
 SRCS.mkfontscale=	mkfontscale.c hash.c ident.c list.c constlist.c
 
 .PATH:	${FREETYPE}/src/base
-SRCS.freetype+=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c \
+SRCS.freetype+=	ftbase.c ftbbox.c ftbdf.c ftdebug.c \
 		ftglyph.c ftinit.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
 		ftsystem.c fttype1.c ftwinfnt.c ftbitmap.c
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lancereg.h,v 1.13 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: lancereg.h,v 1.13.88.1 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -301,7 +301,7 @@
 #define	LE_C4_APAD_XMT	0x0800		/* auto pad transmit */
 #define	LE_C4_ASTRP_RCV	0x0400		/* auto strip receive */
 #define	LE_C4_MFCO	0x0200		/* missed frame counter overflow */
-#define	LE_C4_MFCOM	0x0100		/* missed frame coutner overflow mask */
+#define	LE_C4_MFCOM	0x0100		/* missed frame counter overflow mask */
 #define	LE_C4_UINTCMD	0x0080		/* user interrupt command */
 #define	LE_C4_UINT	0x0040		/* user interrupt */
 #define	LE_C4_RCVCCO	0x0020		/* receive collision counter overflow */

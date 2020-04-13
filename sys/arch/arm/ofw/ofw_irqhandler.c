@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.21 2014/09/21 15:47:29 christos Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.21.20.1 2020/04/13 08:03:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.21 2014/09/21 15:47:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.21.20.1 2020/04/13 08:03:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,10 +292,7 @@ intr_claim(int irq, int level, int (*ih_func)(void *), void *ih_arg, const char 
 {
 	irqhandler_t *ih;
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (!ih)
-		panic("intr_claim(): Cannot malloc handler memory");
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK|M_ZERO);
 	ih->ih_level = level;
 	ih->ih_func = ih_func;
 	ih->ih_arg = ih_arg;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_park.2,v 1.11 2017/12/08 09:14:36 wiz Exp $
+.\"	$NetBSD: _lwp_park.2,v 1.11.4.1 2020/04/13 08:03:11 martin Exp $
 .\"
 .\" Copyright (c) 2003, 2007, 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 7, 2017
+.Dd July 30, 2019
 .Dt _LWP_PARK 2
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ argument is
 and the time it specifies has passed.
 The
 .Fa ts
-time can be an relative interval to wait if the
+time can be a relative interval to wait if the
 .Ar flags
 argument does not contain
 .Dv TIMER_ABSTIME
@@ -102,7 +102,7 @@ to execute.
 .Pp
 The optional
 .Fa hint
-argument specifies the address of object upon which the LWP is
+argument specifies the address of an object upon which the LWP is
 synchronizing.
 When the
 .Fa hint

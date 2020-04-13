@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.28.1 2019/06/10 22:10:39 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.1.28.2 2020/04/13 08:06:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,17 +38,8 @@
  */
 #include <machine/disklabel.h>
 
-#define	USE_SYSVBFS
-
-#define	PART_ROOT	PART_A
-#define	PART_SWAP	PART_B
-#define	PART_RAW	RAW_PART
-#define	PART_USR	PART_E
-#define	PART_FIRST_FREE	PART_E
-#define	PART_BOOT	PART_H
-#define	BOOT_SIZE	ews4800mips_boot_size()
-#define	PART_SYSVBFS	PART_D
-#define	SYSVBFS_SIZE	ews4800mips_sysvbfs_size()
+#define	PART_BOOT	(8*MEG)
+#define	PART_BOOT_TYPE	FS_SYSVBFS
 
 #define	DEFROOTSIZE	200	/* Default root size */
 #define	XNEEDMB		250	/* Extra megs for full X installation */

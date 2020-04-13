@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.94 2013/07/16 07:31:40 jklos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.94.32.1 2020/04/13 08:03:57 martin Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.94 2013/07/16 07:31:40 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.94.32.1 2020/04/13 08:03:57 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -587,7 +587,7 @@ bootstrap_mac68k(int tc)
 	mrg_fixupROMBase(oldROMBase, ROMBase);
 
 	if (mac68k_machine.do_graybars)
-		printf("Video address 0x%p -> 0x%p.\n",
+		printf("Video address %p -> %p.\n",
 		    (void *)mac68k_video.mv_kvaddr, (void *)newvideoaddr);
 
 	mac68k_set_io_offsets(IOBase);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_dbi.c,v 1.4.2.2 2019/06/10 22:04:27 christos Exp $	*/
+/*	$NetBSD: dlz_dbi.c,v 1.4.2.3 2020/04/13 08:02:54 martin Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -43,14 +43,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <ctype.h>
-
-#include <sys/errno.h>
 
 #include <dlz_minimal.h>
 #include <dlz_list.h>

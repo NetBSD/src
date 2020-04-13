@@ -1,4 +1,4 @@
-/*	$NetBSD: imxgpiovar.h,v 1.1 2010/11/30 13:05:27 bsh Exp $ */
+/*	$NetBSD: imxgpiovar.h,v 1.1.62.1 2020/04/13 08:03:35 martin Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,27 +27,59 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _ARM_IMX_IMXGRPIOVAR_H
-#define _ARM_IMX_IMXGRPIOVAR_H
+#ifndef _ARM_IMX_IMXGPIOVAR_H
+#define _ARM_IMX_IMXGPIOVAR_H
 
-#include <sys/bus.h>
-#include <sys/device.h>
+#include <sys/gpio.h>
+#include <dev/gpio/gpiovar.h>
+
 #include <arm/imx/imxgpioreg.h>	/* for GPIO_NPINS */
 
-void imxgpio_attach_common(device_t, bus_space_tag_t, bus_space_handle_t,
-    int, int, int);
+struct imxgpio_softc {
+	struct pic_softc gpio_pic;
+
+	device_t gpio_dev;
+	bus_space_tag_t gpio_memt;
+	bus_space_handle_t gpio_memh;
+
+	void *gpio_is;
+	void *gpio_is_high;
+
+	int gpio_unit;
+	int gpio_irqbase;
+	uint32_t gpio_enable_mask;
+	uint32_t gpio_edge_mask;
+	uint32_t gpio_level_mask;
+#if NGPIO > 0
+	struct gpio_chipset_tag gpio_chipset;
+	gpio_pin_t gpio_pins[32];
+#endif
+
+	kmutex_t gpio_lock;
+};
+
+struct imxgpio_pin {
+	int pin_no;
+	u_int pin_flags;
+	bool pin_actlo;
+};
+
+void imxgpio_attach_common(device_t);
 /* defined imx[35]1_gpio.c */
 extern const int imxgpio_ngroups;
 int imxgpio_match(device_t, cfdata_t, void *);
 void imxgpio_attach(device_t, device_t, void *);
 
+int imxgpio_pin_read(void *, int);
+void imxgpio_pin_write(void *, int, int);
+void imxgpio_pin_ctl(void *, int, int);
+
+/* in-kernel GPIO access utility functions */
+void imxgpio_set_direction(u_int, int);
+void imxgpio_data_write(u_int, u_int);
+bool imxgpio_data_read(u_int);
 
 #define	GPIO_NO(group, pin)	(((group) - 1) * GPIO_NPINS + (pin))
 #define	GPIO_MODULE(pin)	((pin) / GPIO_NPINS)
 
-/* in-kernel GPIO access utility functions */
-enum GPIO_DIRECTION {GPIO_DIR_IN, GPIO_DIR_OUT};
-void gpio_set_direction(u_int, enum GPIO_DIRECTION);
-void gpio_data_write(u_int, u_int);
-bool gpio_data_read(u_int);
-#endif	/* _ARM_IMX_IMXGRPIOVAR_H */
+#endif	/* _ARM_IMX_IMXGPIOVAR_H */

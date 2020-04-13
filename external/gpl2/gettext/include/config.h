@@ -617,7 +617,7 @@
 /* #undef HAVE___SECURE_GETENV */
 
 /* Define as const if the declaration of iconv() needs const. */
-#define ICONV_CONST const
+#define ICONV_CONST
 
 /* Define to the value of ${prefix}, as a string. */
 #define INSTALLPREFIX "/usr/local"
@@ -906,4 +906,3 @@
 #ifdef __EMX__
 # include "intl/os2compat.h"
 #endif
-

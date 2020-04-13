@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.270.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.270.2.2 2020/04/13 08:05:15 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.270.2.1 2019/06/10 22:09:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.270.2.2 2020/04/13 08:05:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -164,10 +164,12 @@ extern u_char	aarp_org_code[3];
 #include <netmpls/mpls_var.h>
 #endif
 
+#ifdef DIAGNOSTIC
 static struct timeval bigpktppslim_last;
 static int bigpktppslim = 2;	/* XXX */
 static int bigpktpps_count;
 static kmutex_t bigpktpps_lock __cacheline_aligned;
+#endif
 
 const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
@@ -241,7 +243,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		} else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
 		} else {
-			error = arpresolve(ifp, rt, m, dst, edst, sizeof(edst));
+			error = arpresolve(ifp0, rt, m, dst, edst, sizeof(edst));
 			if (error)
 				return (error == EWOULDBLOCK) ? 0 : error;
 		}
@@ -290,7 +292,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 			ETHER_MAP_IPV6_MULTICAST(&satocsin6(dst)->sin6_addr,
 			    edst);
 		} else {
-			error = nd6_resolve(ifp, rt, m, dst, edst,
+			error = nd6_resolve(ifp0, rt, m, dst, edst,
 			    sizeof(edst));
 			if (error)
 				return (error == EWOULDBLOCK) ? 0 : error;
@@ -436,7 +438,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 #if NCARP > 0
 	if (ifp != ifp0)
-		ifp0->if_obytes += m->m_pkthdr.len + ETHER_HDR_LEN;
+		if_statadd(ifp0, if_obytes, m->m_pkthdr.len + ETHER_HDR_LEN);
 #endif
 
 #ifdef ALTQ
@@ -612,6 +614,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 	if (etype != ETHERTYPE_MPLS && m->m_pkthdr.len >
 	    ETHER_MAX_FRAME(ifp, etype, m->m_flags & M_HASFCS)) {
+#ifdef DIAGNOSTIC
 		mutex_enter(&bigpktpps_lock);
 		if (ppsratecheck(&bigpktppslim_last, &bigpktpps_count,
 		    bigpktppslim)) {
@@ -619,6 +622,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			    ifp->if_xname, m->m_pkthdr.len);
 		}
 		mutex_exit(&bigpktpps_lock);
+#endif
+		if_statinc(ifp, if_iqdrops);
 		m_freem(m);
 		return;
 	}
@@ -640,7 +645,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			m->m_flags |= M_BCAST;
 		else
 			m->m_flags |= M_MCAST;
-		ifp->if_imcasts++;
+		if_statinc(ifp, if_imcasts);
 	}
 
 	/* If the CRC is still on the packet, trim it off. */
@@ -649,7 +654,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		m->m_flags &= ~M_HASFCS;
 	}
 
-	ifp->if_ibytes += m->m_pkthdr.len;
+	if_statadd(ifp, if_ibytes, m->m_pkthdr.len);
 
 #if NCARP > 0
 	if (__predict_false(ifp->if_carp && ifp->if_type != IFT_CARP)) {
@@ -996,19 +1001,14 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 		if_set_sadl(ifp, lla, ETHER_ADDR_LEN, !ETHER_IS_LOCAL(lla));
 
 	LIST_INIT(&ec->ec_multiaddrs);
+	SIMPLEQ_INIT(&ec->ec_vids);
 	ec->ec_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
 	ec->ec_flags = 0;
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #ifdef MBUFTRACE
-	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
-	    sizeof(ec->ec_tx_mowner.mo_name));
-	strlcpy(ec->ec_tx_mowner.mo_descr, "tx",
-	    sizeof(ec->ec_tx_mowner.mo_descr));
-	strlcpy(ec->ec_rx_mowner.mo_name, ifp->if_xname,
-	    sizeof(ec->ec_rx_mowner.mo_name));
-	strlcpy(ec->ec_rx_mowner.mo_descr, "rx",
-	    sizeof(ec->ec_rx_mowner.mo_descr));
+	mowner_init_owner(&ec->ec_tx_mowner, ifp->if_xname, "tx");
+	mowner_init_owner(&ec->ec_rx_mowner, ifp->if_xname, "rx");
 	MOWNER_ATTACH(&ec->ec_tx_mowner);
 	MOWNER_ATTACH(&ec->ec_rx_mowner);
 	ifp->if_mowner = &ec->ec_tx_mowner;
@@ -1029,7 +1029,8 @@ ether_ifdetach(struct ifnet *ifp)
 	 * is in the process of being detached. Return device not configured
 	 * instead.
 	 */
-	ifp->if_ioctl = (int (*)(struct ifnet *, u_long, void *))enxio;
+	ifp->if_ioctl = __FPTRCAST(int (*)(struct ifnet *, u_long, void *),
+	    enxio);
 
 #if NBRIDGE > 0
 	if (ifp->if_bridge)
@@ -1042,6 +1043,7 @@ ether_ifdetach(struct ifnet *ifp)
 #endif
 
 	ETHER_LOCK(ec);
+	KASSERT(ec->ec_nvlans == 0);
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
 		LIST_REMOVE(enm, enm_list);
 		kmem_free(enm, sizeof(*enm));
@@ -1370,6 +1372,13 @@ void
 ether_set_ifflags_cb(struct ethercom *ec, ether_cb_t cb)
 {
 	ec->ec_ifflags_cb = cb;
+}
+
+void
+ether_set_vlan_cb(struct ethercom *ec, ether_vlancb_t cb)
+{
+
+	ec->ec_vlan_cb = cb;
 }
 
 static int
@@ -1708,6 +1717,8 @@ void
 etherinit(void)
 {
 
+#ifdef DIAGNOSTIC
 	mutex_init(&bigpktpps_lock, MUTEX_DEFAULT, IPL_NET);
+#endif
 	ether_sysctl_setup(NULL);
 }

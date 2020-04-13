@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_thread.c,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $	*/
+/*	$NetBSD: isns_thread.c,v 1.1.1.1.46.1 2020/04/13 08:03:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isns_thread.c,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $");
+__RCSID("$NetBSD: isns_thread.c,v 1.1.1.1.46.1 2020/04/13 08:03:13 martin Exp $");
 
 
 /*
@@ -152,12 +152,16 @@ isns_kevent_pipe(struct kevent* evt_p, struct isns_config_s *cfg_p)
 			DBG("isns_kevent_pipe: ISNS_CMD_ABORT_TRANS\n");
 			rbytes = read(cfg_p->pipe_fds[0], &trans_id,
 			    sizeof(trans_id));
-			if ((rbytes < 0) && (rbytes == sizeof(trans_id)))
-				isns_abort_trans(cfg_p, trans_id);
-			else
+			if (rbytes < 0)
 				DBG("isns_kevent_pipe: "
 				    "error reading trans id\n");
-			pipe_nbytes -= (int)rbytes;
+			else if (rbytes != sizeof(trans_id))
+				DBG("isns_kevent_pipe: "
+				    "short read reading trans id\n");
+			else {
+				isns_abort_trans(cfg_p, trans_id);
+				pipe_nbytes -= (int)rbytes;
+			}
 			break;
 
 		case ISNS_CMD_STOP:

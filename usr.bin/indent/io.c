@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.17.16.1 2019/06/10 22:10:20 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.17.16.2 2020/04/13 08:05:43 martin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.17.16.1 2019/06/10 22:10:20 christos Exp $");
+__RCSID("$NetBSD: io.c,v 1.17.16.2 2020/04/13 08:05:43 martin Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -57,6 +57,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "indent_globs.h"
 #include "indent.h"
 
@@ -484,52 +485,24 @@ count_spaces(int cur, char *buffer)
 }
 
 void
-diag4(int level, const char *msg, int a, int b)
+diag(int level, const char *msg, ...)
 {
-    if (level)
-	found_err = 1;
-    if (output == stdout) {
-	fprintf(stdout, "/**INDENT** %s@%d: ", level == 0 ? "Warning" : "Error", line_no);
-	fprintf(stdout, msg, a, b);
-	fprintf(stdout, " */\n");
-    }
-    else {
-	fprintf(stderr, "%s@%d: ", level == 0 ? "Warning" : "Error", line_no);
-	fprintf(stderr, msg, a, b);
-	fprintf(stderr, "\n");
-    }
-}
+    va_list ap;
+    const char *s, *e;
 
-void
-diag3(int level, const char *msg, int a)
-{
     if (level)
 	found_err = 1;
-    if (output == stdout) {
-	fprintf(stdout, "/**INDENT** %s@%d: ", level == 0 ? "Warning" : "Error", line_no);
-	fprintf(stdout, msg, a);
-	fprintf(stdout, " */\n");
-    }
-    else {
-	fprintf(stderr, "%s@%d: ", level == 0 ? "Warning" : "Error", line_no);
-	fprintf(stderr, msg, a);
-	fprintf(stderr, "\n");
-    }
-}
 
-void
-diag2(int level, const char *msg)
-{
-    if (level)
-	found_err = 1;
     if (output == stdout) {
-	fprintf(stdout, "/**INDENT** %s@%d: ", level == 0 ? "Warning" : "Error", line_no);
-	fprintf(stdout, "%s", msg);
-	fprintf(stdout, " */\n");
+	s = "/**INDENT** ";
+	e = " */";
+    } else {
+	s = e = "";
     }
-    else {
-	fprintf(stderr, "%s@%d: ", level == 0 ? "Warning" : "Error", line_no);
-	fprintf(stderr, "%s", msg);
-	fprintf(stderr, "\n");
-    }
+
+    va_start(ap, msg);
+    fprintf(stderr, "%s%s@%d: ", s, level == 0 ? "Warning" : "Error", line_no);
+    vfprintf(stderr, msg, ap);
+    fprintf(stderr, "%s\n", e);
+    va_end(ap);
 }

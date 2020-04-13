@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.32.18.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.32.18.2 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ int	semconfig(int);
 #endif
 __END_DECLS
 #else
-int	seminit(struct sysctllog **);
+int	seminit(void);
 int	semfini(void);
 void	semexit(struct proc *, void *);
 

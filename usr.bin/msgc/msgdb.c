@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.23 2012/03/06 16:26:01 mbalmer Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.23.32.1 2020/04/13 08:05:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: msgdb.c,v 1.23 2012/03/06 16:26:01 mbalmer Exp $");
+__RCSID("$NetBSD: msgdb.c,v 1.23.32.1 2020/04/13 08:05:44 martin Exp $");
 #endif
 
 
@@ -162,18 +162,44 @@ write_msg_file ()
 		"void msg_clear(void);\n"
 		"void msg_standout(void);\n"
 		"void msg_standend(void);\n"
-		"void msg_display(msg msg_no,...);\n"
-		"void msg_display_add(msg msg_no,...);\n"
 		"void msg_printf(const char *fmt, ...) __printflike(1, 2);\n"
-		"void msg_prompt (msg msg_no, const char *def,"
-			" char *val, size_t max_chars, ...);\n"
-		"void msg_prompt_add (msg msg_no, const char *def,"
-			" char *val, size_t max_chars, ...);\n"
-		"void msg_prompt_noecho (msg msg_no, const char *def,"
-			" char *val, size_t max_chars, ...);\n"
-		"void msg_prompt_win (msg, int, int, int, int,"
-			" const char *, char *, size_t, ...);\n"
-		"void msg_table_add(msg msg_no,...);\n"
+		"void msg_display(msg msg_no);\n"
+		"void msg_fmt_display(msg msg_no, const char *fmt, ...)"
+			" __printflike(2, 3);\n"
+
+		"void msg_display_add(msg msg_no);\n"
+		"void msg_fmt_display_add(msg msg_no, const char *fmt, ...);\n"
+
+		"void msg_prompt(msg msg_no, const char *def,"
+			" char *val, size_t max_chars);\n"
+		"void msg_fmt_prompt(msg msg_no, const char *def,"
+			" char *val, size_t max_chars, const char *fmt, ...)"
+			" __printflike(5, 6);\n"
+
+		"void msg_prompt_add(msg msg_no, const char *def,"
+			" char *val, size_t max_chars);\n"
+		"void msg_fmt_prompt_add(msg msg_no, const char *def,"
+			" char *val, size_t max_chars, const char *fmt, ...)"
+			" __printflike(5, 6);\n"
+
+		"void msg_prompt_noecho(msg msg_no, const char *def,"
+			" char *val, size_t max_chars);\n"
+		"void msg_fmt_prompt_noecho(msg msg_no, const char *def,"
+			" char *val, size_t max_chars, const char *fmt, ...)"
+			" __printflike(5, 6);\n"
+
+		"void msg_prompt_win(msg msg_no, int x, int y, int w,"
+			" int h, const char *def, char *val,"
+			" size_t max_chars);\n"
+		"void msg_fmt_prompt_win(msg msg_no, int x, int y, int w,"
+			" int h, const char *def, char *val, size_t max_chars,"
+			" const char *fmt, ...)"
+			" __printflike(9, 10);\n"
+
+		"void msg_table_add(msg msg_no);"
+		"void msg_fmt_table_add(msg msg_no, const char *fmt, ...)"
+			" __printflike(2, 3);\n"
+
 		"int msg_row(void);\n"
 		"\n"
 		"/* Message names */\n"

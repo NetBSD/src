@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.164.2.2 2020/04/08 14:08:06 martin Exp $  */
+/*	$NetBSD: atw.c,v 1.164.2.3 2020/04/13 08:04:21 martin Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.164.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.164.2.3 2020/04/13 08:04:21 martin Exp $");
 
 
 #include <sys/param.h>
@@ -374,14 +374,7 @@ atw_read_srom(struct atw_softc *sc)
 		return -1;
 	}
 
-	sc->sc_srom = malloc(sc->sc_sromsz, M_DEVBUF, M_NOWAIT);
-
-	if (sc->sc_srom == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate SROM buffer\n");
-		return -1;
-	}
-
-	(void)memset(sc->sc_srom, 0, sc->sc_sromsz);
+	sc->sc_srom = malloc(sc->sc_sromsz, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* ADM8211 has a single 32-bit register for controlling the
 	 * 93cx6 SROM.  Bit SRS enables the serial port. There is no

@@ -1,9 +1,9 @@
-/*	$NetBSD: back-ndb.h,v 1.1.1.5 2018/02/06 01:53:18 christos Exp $	*/
+/*	$NetBSD: back-ndb.h,v 1.1.1.5.4.1 2020/04/13 07:56:19 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2017 The OpenLDAP Foundation.
+ * Copyright 2008-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

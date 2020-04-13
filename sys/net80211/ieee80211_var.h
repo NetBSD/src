@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.33.2.5 2018/07/20 20:33:05 phil Exp $ */
+/*	$NetBSD: ieee80211_var.h,v 1.33.2.6 2020/04/13 08:05:16 martin Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -726,6 +726,10 @@ struct ieee80211com *ieee80211_find_vap(const uint8_t mac[IEEE80211_ADDR_LEN]);
 struct ieee80211com *ieee80211_find_com(const char *name);
 typedef void ieee80211_com_iter_func(void *, struct ieee80211com *);
 void	ieee80211_iterate_coms(ieee80211_com_iter_func *, void *);
+void	ieee80211_media_init(struct ieee80211com *,
+		ifm_change_cb_t, ifm_stat_cb_t);
+void	ieee80211_media_init_with_lock(struct ieee80211com *,
+		ifm_change_cb_t, ifm_stat_cb_t, ieee80211_media_lock_t *);
 int	ieee80211_media_change(struct ifnet *);
 void	ieee80211_media_status(struct ifnet *, struct ifmediareq *);
 int	ieee80211_ioctl(struct ifnet *, u_long, caddr_t);

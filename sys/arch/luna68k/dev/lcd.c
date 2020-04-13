@@ -1,4 +1,4 @@
-/* $NetBSD: lcd.c,v 1.9 2018/03/08 03:12:02 mrg Exp $ */
+/* $NetBSD: lcd.c,v 1.9.2.1 2020/04/13 08:03:56 martin Exp $ */
 /* $OpenBSD: lcd.c,v 1.7 2015/02/10 22:42:35 miod Exp $ */
 
 /*-
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>		/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.9 2018/03/08 03:12:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.9.2.1 2020/04/13 08:03:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.9 2018/03/08 03:12:02 mrg Exp $");
 #include <sys/errno.h>
 
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/cpu.h>
 #include <machine/lcd.h>
 
@@ -71,10 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.9 2018/03/08 03:12:02 mrg Exp $");
 #define LCD_MAXBUFLEN	80
 
 struct pio {
-	volatile u_int8_t portA;
-	volatile u_int8_t portB;
-	volatile u_int8_t portC;
-	volatile u_int8_t cntrl;
+	volatile uint8_t portA;
+	volatile uint8_t portB;
+	volatile uint8_t portC;
+	volatile uint8_t cntrl;
 };
 
 /* Autoconf stuff */
@@ -280,7 +281,7 @@ lcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 void
 lcdbusywait(void)
 {
-	struct pio *p1 = (struct pio *)0x4D000000;
+	struct pio *p1 = (struct pio *)OBIO_PIO1_BASE;
 	int msb, s;
 
 	s = splhigh();
@@ -301,7 +302,7 @@ lcdbusywait(void)
 void
 lcdput(int cc)
 {
-	struct pio *p1 = (struct pio *)0x4D000000;
+	struct pio *p1 = (struct pio *)OBIO_PIO1_BASE;
 	int s;
 
 	lcdbusywait();
@@ -318,7 +319,7 @@ lcdput(int cc)
 void
 lcdctrl(int cc)
 {
-	struct pio *p1 = (struct pio *)0x4D000000;
+	struct pio *p1 = (struct pio *)OBIO_PIO1_BASE;
 	int s;
 
 	lcdbusywait();
@@ -344,6 +345,7 @@ lcdshow(char *s)
 void
 greeting(void)
 {
+
 	lcdctrl(LCD_INIT);
 	lcdctrl(LCD_ENTRY);
 	lcdctrl(LCD_ON);

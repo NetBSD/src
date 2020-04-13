@@ -1,14 +1,53 @@
-2018-12-06  Release Manager
+2020-03-04  Release Manager
 
-	* GCC 7.4.0 released.
+	* GCC 8.4.0 released.
 
-2018-01-25  Release Manager
+2020-01-13  Joseph Myers  <joseph@codesourcery.com>
 
-	* GCC 7.3.0 released.
+	Backport:
 
-2017-08-14  Release Manager
+	2020-01-13  Joseph Myers  <joseph@codesourcery.com>
 
-	* GCC 7.2.0 released.
+	* gcc_release: Use git instead of SVN.
+
+	2019-11-20  Janne Blomqvist  <jb@gcc.gnu.org>
+
+	* gcc_release: Use https for gcc.gnu.org.
+
+	2018-10-26  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc_release (error, inform): Use $@ instead of $1.
+	(build_sources): Check for ^[[:blank:]]*GCC in both index.html
+	and changes.html, rather than for GCC in one and ^GCC in another one.
+
+	2018-05-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR other/85622
+	* gcc_release: For -f, verify contrib/gennews has the major version
+	pages listed and both index.html and changes.html have been updated
+	for the new release.
+
+2019-02-22  Release Manager
+
+	* GCC 8.3.0 released.
+
+2018-07-26  Release Manager
+
+	* GCC 8.2.0 released.
+
+2018-05-02  Release Manager
+
+	* GCC 8.1.0 released.
+
+2018-01-25  Richard Biener  <rguenther@suse.de>
+
+	* gcc_release (build_sources): Use getconf to get at the number
+	of cores in the system and pass -jN to gcc_build.
+
+2017-10-10  Jakub Jelinek  <jakub@redhat.com>
+
+	* update_version_svn: Ignore the GCC 5 branch.
+	* crontab: Remove entry for the GCC 5 branch.
 
 2017-05-23  Matthias Klose  <doko@ubuntu.com>
 
@@ -25,9 +64,9 @@
 	(XZ): New definition.
 	(<toplevel>): Look for both bz2 and xz compressed old tarballs.
 
-2017-05-02  Release Manager
+2017-04-20  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 7.1.0 released.
+	* crontab: Enable snapshots from gcc-7-branch.
 
 2017-03-03  Gerald Pfeifer  <gerald@pfeifer.com>
 

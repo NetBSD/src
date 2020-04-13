@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscreg.h,v 1.5 2014/08/21 14:02:10 reinoud Exp $	*/
+/*	$NetBSD: if_smscreg.h,v 1.5.20.1 2020/04/13 08:04:49 martin Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -52,8 +52,8 @@
  *
  *   Where the headers have the following fields:
  *
- *      TX_CTRL_0 <31:18>  Reserved
- *      TX_CTRL_0 <17:16>  Data offset (alignment padding 0-3)
+ *      TX_CTRL_0 <31:21>  Reserved
+ *      TX_CTRL_0 <20:16>  Data offset (alignment padding 0-3)
  *      TX_CTRL_0 <13>     First segment of frame indicator
  *      TX_CTRL_0 <12>     Last segment of frame indicator
  *      TX_CTRL_0 <10:0>   Buffer size (payload size)
@@ -64,7 +64,7 @@
  *      TX_CTRL_1 <10:0>   Packet byte length
  *
  */
-#define SMSC_TX_CTRL_0_OFFSET(x)	(((x) & 0x3UL) << 16)
+#define SMSC_TX_CTRL_0_OFFSET(x)	(((x) & 0x1FUL) << 16)
 #define SMSC_TX_CTRL_0_FIRST_SEG	(0x1UL << 13)
 #define SMSC_TX_CTRL_0_LAST_SEG		(0x1UL << 12)
 #define SMSC_TX_CTRL_0_BUF_SIZE(x)	((x) & 0x000007FFUL)

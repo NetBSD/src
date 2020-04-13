@@ -237,7 +237,7 @@ smu_setup_doorbell(struct smu_softc *sc)
 	int node, parent, reg[4], gpio_base, irq;
 
 	mutex_init(&sc->sc_cmd_lock, MUTEX_DEFAULT, IPL_NONE);
-	sc->sc_cmd = malloc(4096, M_DEVBUF, M_NOWAIT);
+	sc->sc_cmd = malloc(4096, M_DEVBUF, M_WAITOK);
 	sc->sc_cmd_paddr = vtophys((vaddr_t) sc->sc_cmd);
 
 	DPRINTF("%s: cmd vaddr 0x%x paddr 0x%x\n",

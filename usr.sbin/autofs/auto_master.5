@@ -1,4 +1,4 @@
-.\"	$NetBSD: auto_master.5,v 1.6.4.1 2020/04/08 14:09:19 martin Exp $
+.\"	$NetBSD: auto_master.5,v 1.6.4.2 2020/04/13 08:05:51 martin Exp $
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2016 The DragonFly Project
 .\" Copyright (c) 2014 The FreeBSD Foundation
@@ -33,7 +33,7 @@
 .\"
 .\" $FreeBSD$
 .\"
-.Dd November 25, 2017
+.Dd November 16, 2019
 .Dt AUTO_MASTER 5
 .Os
 .Sh NAME
@@ -195,6 +195,8 @@ Expands to the output of
 .It Dv CPU
 Same as
 .Dv ARCH .
+.It Dv DOLLAR
+A literal $ sign.
 .It Dv HOST
 Expands to the output of
 .Li "uname -n" .

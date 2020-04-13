@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.43.2.1 2019/06/10 22:06:53 christos Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.43.2.2 2020/04/13 08:04:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.43.2.1 2019/06/10 22:06:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.43.2.2 2020/04/13 08:04:11 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -234,7 +234,7 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
 		    buf, len);
 	}
 
-#if defined(__HAVE_PCI_MSI_MSIX)	
+#if defined(__HAVE_PCI_MSI_MSIX)
 	if (INT_VIA_MSI(ih))
 		return x86_pci_msi_string(pc, ih, buf, len);
 #endif
@@ -266,9 +266,9 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
 	switch (attr) {
 	case PCI_INTR_MPSAFE:
 		if (data) {
-			 *ih |= MPSAFE_MASK;
+			*ih |= MPSAFE_MASK;
 		} else {
-			 *ih &= ~MPSAFE_MASK;
+			*ih &= ~MPSAFE_MASK;
 		}
 		/* XXX Set live if already mapped. */
 		return 0;
@@ -524,7 +524,7 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 		msi_count = 1;
 		intx_count = 1;
 	} else {
-		switch(max_type) {
+		switch (max_type) {
 		case PCI_INTR_TYPE_MSIX:
 			msix_count = counts[PCI_INTR_TYPE_MSIX];
 			/* FALLTHROUGH */

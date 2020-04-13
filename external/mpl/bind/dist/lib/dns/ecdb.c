@@ -1,4 +1,4 @@
-/*	$NetBSD: ecdb.c,v 1.3.2.3 2020/04/08 14:07:07 martin Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.3.2.4 2020/04/13 08:02:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -774,6 +774,7 @@ rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp) {
 	REQUIRE(DNS_RDATASETITER_VALID(*iteratorp));
 
 	u.rdatasetiterator = *iteratorp;
+	*iteratorp = NULL;
 
 	mctx = u.ecdbiterator->common.db->mctx;
 	u.ecdbiterator->common.magic = 0;
@@ -782,8 +783,6 @@ rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp) {
 			  &u.ecdbiterator->common.node);
 	isc_mem_put(mctx, u.ecdbiterator,
 		    sizeof(ecdb_rdatasetiter_t));
-
-	*iteratorp = NULL;
 }
 
 static isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.23 2018/02/04 09:17:54 mrg Exp $	*/
+/*	$NetBSD: db_access.c,v 1.23.4.1 2020/04/13 08:04:17 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.23 2018/02/04 09:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.23.4.1 2020/04/13 08:04:17 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -59,24 +59,47 @@ db_expr_t
 db_get_value(db_addr_t addr, size_t size, bool is_signed)
 {
 	char data[sizeof(db_expr_t)] __aligned(sizeof(db_expr_t));
+	uintmax_t uvalue;
 	db_expr_t value;
 	size_t i;
 
 	db_read_bytes(addr, size, data);
 
-	value = 0;
+	uvalue = 0;
 #if BYTE_ORDER == LITTLE_ENDIAN
 	for (i = size; i-- > 0;)
 #else /* BYTE_ORDER == BIG_ENDIAN */
 	for (i = 0; i < size; i++)
 #endif /* BYTE_ORDER */
-		value = (value << 8) + (data[i] & 0xFF);
+		uvalue = (uvalue << 8) + (data[i] & 0xFF);
+
+	value = (db_expr_t)uvalue;
 
 	if (size < sizeof(db_expr_t) && is_signed
 	    && (value & ((db_expr_t)1 << (8*size - 1)))) {
 		value |= (unsigned long)~(db_expr_t)0 << (8*size - 1);
 	}
 	return (value);
+}
+
+quad_t
+db_get_qvalue(db_addr_t addr, size_t size, bool is_signed)
+{
+	uint64_t data;
+
+	if (size < sizeof(uint64_t)) {
+		if (is_signed)
+			return db_get_value(addr, size, true);
+		return (uint32_t)db_get_value(addr, size, false);
+	}
+
+	if (size != sizeof(data)) {
+		db_error("unnsupported size\n");
+		/*NOTREACHED*/
+	}
+
+	db_read_bytes(addr, sizeof(data), (char *)&data);
+	return data;
 }
 
 void

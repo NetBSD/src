@@ -1,4 +1,4 @@
-/*	$NetBSD: start_pxe.S,v 1.6 2011/03/18 17:46:26 jakllsch Exp $	*/
+/*	$NetBSD: start_pxe.S,v 1.6.56.1 2020/04/13 08:03:55 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@ _C_LABEL(boot_params):
 	# set up %ss and %sp
 	movl	$_end, %eax		/* top of bss */
 	shrl	$4, %eax		/* as a segment */
-	addw	$0x1001, %ax		/* and + 64k */
+	addw	$0x2001, %ax		/* and + 128k */
 	movw	%ax, %ss		/* for stack */
 	movw	$0xfffc, %sp		/* %sp at top of it */
 

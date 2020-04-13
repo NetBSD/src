@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.258.2.2 2020/04/08 14:07:12 martin Exp $
+#	$NetBSD: Makefile,v 1.258.2.3 2020/04/13 08:03:08 martin Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -170,21 +170,23 @@ SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 .endif
 
 .if (${MKLLVMRT} != "no" && (!defined(MLIBDIR) || ${MKCOMPATX11} != "no"))
-SUBDIR+=	../external/bsd/llvm/include
+SUBDIR+=	../external/apache2/llvm/include
 .endif
 
 SUBDIR+=	../external/mit/libcbor/lib
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
+.if (${MKGCC} != "no" && ${MKCXX} != "no" && ${MKLIBSTDCXX} != "no")
 .for sanitizer in asan lsan ubsan
 .if exists(../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer})
 SUBDIR+= ../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer}
 .endif
 .endfor
+.endif
 
 .if (${MKLLVMRT} != "no" && (!defined(MLIBDIR) || ${MKCOMPATX11} != "no"))
-SUBDIR+=	../external/bsd/llvm/librt
+SUBDIR+=	../external/apache2/llvm/librt
 .endif
 
 SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz

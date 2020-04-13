@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.4.2 2020/04/08 14:08:03 martin Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.4.3 2020/04/13 08:04:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.4.2 2020/04/08 14:08:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.4.3 2020/04/13 08:04:18 martin Exp $");
 
 #include "opt_ata.h"
 
@@ -750,15 +750,19 @@ atabus_alloc_drives(struct ata_channel *chp, int ndrives)
 	if (chp->ch_ndrives != ndrives)
 		atabus_free_drives(chp);
 	if (chp->ch_drive == NULL) {
-		chp->ch_drive = kmem_zalloc(
-		    sizeof(struct ata_drive_datas) * ndrives, KM_NOSLEEP);
+		void *drv;
+
+		ata_channel_unlock(chp);
+		drv = kmem_zalloc(sizeof(*chp->ch_drive) * ndrives, KM_SLEEP);
+		ata_channel_lock(chp);
+
+		if (chp->ch_drive != NULL) {
+			/* lost the race */
+			kmem_free(drv, sizeof(*chp->ch_drive) * ndrives);
+			return 0;
+		}
+		chp->ch_drive = drv;
 	}
-	if (chp->ch_drive == NULL) {
-	    aprint_error_dev(chp->ch_atac->atac_dev,
-		"can't alloc drive array\n");
-	    chp->ch_ndrives = 0;
-	    return ENOMEM;
-	};
 	for (i = 0; i < ndrives; i++) {
 		chp->ch_drive[i].chnl_softc = chp;
 		chp->ch_drive[i].drive = i;
@@ -2233,7 +2237,7 @@ atabus_resume(device_t dv, const pmf_qual_t *qual)
 	struct ata_channel *chp = sc->sc_chan;
 
 	/*
-	 * XXX joerg: with wdc, the first channel unfreezes the controler.
+	 * XXX joerg: with wdc, the first channel unfreezes the controller.
 	 * Move this the reset and queue idling into wdc.
 	 */
 	ata_channel_lock(chp);

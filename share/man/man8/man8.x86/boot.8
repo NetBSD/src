@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.12.6.1 2019/06/10 22:05:41 christos Exp $
+.\"	$NetBSD: boot.8,v 1.12.6.2 2020/04/13 08:03:26 martin Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd May 15, 2019
+.Dd September 13, 2019
 .Dt BOOT 8 x86
 .Os
 .Sh NAME
@@ -40,13 +40,9 @@
 .Nd
 system bootstrapping procedures
 .Sh DESCRIPTION
-.Tn IA-32
-computers
-.Po
-the
+Intel Architecture, 32-bit (IA-32) computers (the
 .Tn IBM PC
-and its clones
-.Pc
+and its clones)
 that can run
 .Nx Ns /i386
 or
@@ -60,6 +56,11 @@ bootstrap
 .Nx
 from the system
 .Tn BIOS
+.It efiboot
+bootstrap
+.Nx
+from the system
+.Tn UEFI
 .It Xr x86/dosboot 8
 bootstrap
 .Nx
@@ -175,12 +176,32 @@ input of these commands:
 .It Ic boot Oo Va device : Oc Ns Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
 The default
 .Va device
-will be set to the disk that the boot loader was
-loaded from.
+will be set to the disk from which the boot loader was loaded.
+The partition is set to the first match in this list:
+.Bl -enum -compact
+.It
+The first
+.Xr gpt 8
+partition with the
+.Va bootme
+attribute set.
+.It
+The partition from which the boot loader was loaded from, if that
+can be detected.
+.It
+The first partition with a file system that could be bootable.
+.It
+The first partition.
+.El
 To boot from an alternate disk, the full name of the device should
 be given at the prompt.
 .Va device
 is of the form
+.Va NAME=partition_label
+when booting from a
+.Xr gpt 8
+partitioned disk.
+Otherwise, the syntax is
 .Xo Va xd
 .Op Va N Ns Op Va x
 .Xc
@@ -192,8 +213,8 @@ is the unit number, and
 .Va x
 is the partition letter.
 .Pp
-The following list of supported devices may vary from installation to
-installation:
+In the later case, the following list of supported devices may
+vary from installation to installation:
 .Pp
 .Bl -hang -compact
 .It hd
@@ -203,6 +224,22 @@ lookalike controller(s), and SCSI disks
 on SCSI controllers recognized by the BIOS.
 .It fd
 Floppy drives as numbered by the BIOS.
+.It cd
+CD-ROM drives as numbered by the BIOS.
+.It raid
+RAIDframe configured from hard disks recognized by the BIOS.
+Only RAID level 1 sets are supported by bootstrap code.
+If the RAID is partitioned, the first partition is used, or the
+first
+.Xr gpt 8
+partition that has the
+.Va bootme
+attribute set.
+Inner RAIDframe partitions can also be given to the
+.Ic dev
+command using he
+.Va NAME=partition_label
+syntax.
 .El
 .Pp
 The default
@@ -399,7 +436,12 @@ being separated with spaces
 .It Ic bootdev Ns = Ns Ar dev Po or Ic root Ns = Ns Ar dev Pc
 Override the default boot device.
 .Ar dev
-can be a unit name
+is of the form
+.Va NAME=partition_label
+for
+.Xr gpt 8
+partitioned disks.
+It can also be a unit name
 .Po Dq wd0
 .Pc ,
 or an interface name
@@ -700,6 +742,33 @@ the
 .Nx
 partition by
 .Xr installboot 8 .
+.It Pa /usr/mdec/bootia32.efi
+.It Pa /usr/mdec/bootx64.efi
+.Tn UEFI
+bootstraps for
+.Nx Ns /i386
+and
+.Nx Ns /amd64 ,
+which should be copied to the
+.Pa /efi/boot
+directory in a
+.Tn FAT
+formatted partition of type
+.Tn EFI
+(Either
+.Xr mbr 8
+and
+.Xr gpt 8 ,
+see the
+.Sx BUGS
+section).
+.Nx
+.Tn UEFI
+bootstrap reads its configuration from the
+.Pa /efi/netBSD/boot.cfg
+file in the
+.Tn EFI
+partition.
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
@@ -756,3 +825,39 @@ is derived from the
 field of the
 .Nx
 disklabel (if it is a hard disk).
+.Pp
+.Tn UEFI
+implementation are supposed to support either
+.Xr mbr 8
+or
+.Xr gpt 8
+partitionning, but some do not handle the later.
+.Tn UEFI
+Booting
+from a
+.Xr gpt 8
+partitioned disk is still possible in this case, by adding
+an overlapping
+.Tn EFI
+partition in the protective
+.Xr mbr 8
+block.
+This can be achieved using the following commands
+(you must adapt the hard disk and
+.Tn EFI
+partition start end size to fit your setup):
+.Dl Ic dd if=/dev/rwd0d bs=512 count=1 of=mbr
+.Dl Ic fdisk -FIfaui1s 4/34/32768 -c /usr/mdec/mbr mbr
+.Dl Ic dd if=mbr bs=512 count=1 of=/dev/rwd0d conv=notrunc
+The resulting
+.Xr mbr 8
+partition table will look like this:
+.Bd -unfilled -offset indent
+0: GPT Protective MBR (sysid 238)
+    start 1, size 2097151 (1024 MB, Cyls 0-130/138/8)
+        PBR is not bootable: Bad magic number (0x0000)
+1: Primary DOS with 16 bit FAT <32M (sysid 4)
+    start 34, size 32768 (16 MB, Cyls 0/0/35-2/10/42), Active
+2: <UNUSED>
+3: <UNUSED>
+.Ed

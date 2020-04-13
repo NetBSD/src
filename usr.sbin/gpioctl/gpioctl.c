@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.24.2.1 2019/06/10 22:10:30 christos Exp $ */
+/* $NetBSD: gpioctl.c,v 1.24.2.2 2020/04/13 08:05:52 martin Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gpioctl.c,v 1.24.2.1 2019/06/10 22:10:30 christos Exp $");
+__RCSID("$NetBSD: gpioctl.c,v 1.24.2.2 2020/04/13 08:05:52 martin Exp $");
 
 /*
  * Program to control GPIO devices.
@@ -48,6 +48,7 @@ static void gpioread(int, char *);
 static void gpiowrite(int, char *, int);
 static void gpioset(int pin, char *name, int flags, char *alias);
 static void gpiounset(int pin, char *name);
+static void gpiolist(void);
 static void devattach(char *, int, uint32_t, uint32_t);
 __dead static void usage(void);
 
@@ -159,6 +160,9 @@ main(int argc, char *argv[])
 			ga_flags = lval;
 		}
 		devattach(driver, ga_offset, ga_mask, ga_flags);
+		return EXIT_SUCCESS;
+	} else if (!strcmp(argv[1], "list")) {
+		gpiolist();
 		return EXIT_SUCCESS;
 	} else {
 		char *nm = NULL;
@@ -345,6 +349,26 @@ gpiounset(int pin, char *name)
 }
 
 static void
+gpiolist()
+{
+	struct gpio_info info;
+	struct gpio_req req;
+	int i;
+
+	if (ioctl(devfd, GPIOINFO, &info) == -1)
+		err(EXIT_FAILURE, "GPIOINFO");
+
+	for (i = 0; i < info.gpio_npins; i++) {
+		memset(&req, 0, sizeof(req));
+		req.gp_pin = i;
+		if (ioctl(devfd, GPIOREAD, &req) == -1)
+			err(EXIT_FAILURE, "GPIOREAD");
+		if (!quiet)
+			printf("%d: %s\n", i, req.gp_name);
+	}
+}
+
+static void
 devattach(char *dvname, int offset, uint32_t mask, uint32_t flags)
 {
 	struct gpio_attach attach;
@@ -372,6 +396,7 @@ usage(void)
 	fprintf(stderr, "       %s [-q] device attach device offset mask "
 	    "[flag]\n",
 	    progname);
+	fprintf(stderr, "       %s [-q] device list\n", progname);
 
 	exit(EXIT_FAILURE);
 }

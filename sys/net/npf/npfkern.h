@@ -61,19 +61,29 @@ typedef struct {
 	bool		(*ensure_writable)(struct mbuf **, size_t);
 } npf_mbufops_t;
 
-int	npf_sysinit(unsigned);
-void	npf_sysfini(void);
+int	npfk_sysinit(unsigned);
+void	npfk_sysfini(void);
 
-npf_t *	npf_create(int, const npf_mbufops_t *, const npf_ifops_t *);
-int	npf_load(npf_t *, void *, npf_error_t *);
-void	npf_gc(npf_t *);
-void	npf_destroy(npf_t *);
+npf_t *	npfk_create(int, const npf_mbufops_t *, const npf_ifops_t *);
+int	npfk_load(npf_t *, void *, npf_error_t *);
+void	npfk_gc(npf_t *);
+void	npfk_destroy(npf_t *);
 
-void	npf_thread_register(npf_t *);
-void	npf_thread_unregister(npf_t *);
-int	npf_packet_handler(npf_t *, struct mbuf **, struct ifnet *, int);
-void	npf_ifmap_attach(npf_t *, struct ifnet *);
-void	npf_ifmap_detach(npf_t *, struct ifnet *);
-void	npf_stats(npf_t *, uint64_t *);
+void	npfk_thread_register(npf_t *);
+void	npfk_thread_unregister(npf_t *);
+int	npfk_packet_handler(npf_t *, struct mbuf **, struct ifnet *, int);
+void	npfk_ifmap_attach(npf_t *, struct ifnet *);
+void	npfk_ifmap_detach(npf_t *, struct ifnet *);
+int	npfk_param_get(npf_t *, const char *, int *);
+int	npfk_param_set(npf_t *, const char *, int);
+void	npfk_stats(npf_t *, uint64_t *);
+void	npfk_stats_clear(npf_t *);
+
+/*
+ * ALGs.
+ */
+
+int	npf_alg_icmp_init(npf_t *);
+int	npf_alg_icmp_fini(npf_t *);
 
 #endif

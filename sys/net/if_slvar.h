@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.33 2007/07/14 21:02:41 ad Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.33.122.1 2020/04/13 08:05:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -74,7 +74,7 @@ struct sl_softc {
 
 /* visible flags */
 #define	SC_COMPRESS	IFF_LINK0	/* compress TCP traffic */
-#define	SC_NOICMP	IFF_LINK1	/* supress ICMP traffic */
+#define	SC_NOICMP	IFF_LINK1	/* suppress ICMP traffic */
 #define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
 
 #endif /* _NET_IF_SLVAR_H_ */

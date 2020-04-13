@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.15.2.2 2020/04/08 14:08:58 martin Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.15.2.3 2020/04/13 08:05:16 martin Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.15.2.2 2020/04/08 14:08:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.15.2.3 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2507,9 +2507,7 @@ int sctp_is_address_in_scope(struct ifaddr *ifa,
 			     int local_scope,
 			     int site_scope)
 {
-	if ((loopback_scope == 0) &&
-	    (ifa->ifa_ifp) &&
-	    (ifa->ifa_ifp->if_type == IFT_LOOP)) {
+	if ((loopback_scope == 0) && (ifa->ifa_ifp->if_type == IFT_LOOP)) {
 		/* skip loopback if not in scope *
 		 */
 		return (0);

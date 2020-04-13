@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.24 2018/04/25 08:29:45 yamaguchi Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.24.2.1 2020/04/13 08:04:22 martin Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -73,31 +73,32 @@ struct wbsio_softc {
 
 static const struct wbsio_product {
 	uint16_t id;
-	bool	idis12bits;
+	int idbits;
 	const char *str;
 } wbsio_products[] = {
-	{ WBSIO_ID_W83627HF,	false,	"W83627HF" },
-	{ WBSIO_ID_W83697HF,	false,	"W83697HF" },
-	{ WBSIO_ID_W83637HF,	false,	"W83637HF" },
-	{ WBSIO_ID_W83627THF,	false,	"W83627THF" },
-	{ WBSIO_ID_W83687THF,	false,	"W83687THF" },
-	{ WBSIO_ID_W83627DHG,	true,	"W83627DHG" },
-	{ WBSIO_ID_W83627DHGP,	true,	"W83627DHG-P" },
-	{ WBSIO_ID_W83627EHF,	true,	"W83627EHF" },
-	{ WBSIO_ID_W83627SF,	true,	"W83627SF" },
-	{ WBSIO_ID_W83627UHG,	true,	"W83627UHG" },
-	{ WBSIO_ID_W83667HG,	true,	"W83667HG" },
-	{ WBSIO_ID_W83667HGB,	true,	"W83667HGB" },
-	{ WBSIO_ID_W83697UG,	true,	"W83697UG" },
-	{ WBSIO_ID_NCT6775F,	true,	"NCT6775F" },
-	{ WBSIO_ID_NCT6776F,	true,	"NCT6776F" },
-	{ WBSIO_ID_NCT5104D,	true,	"NCT5104D or 610[246]D" },
-	{ WBSIO_ID_NCT6779D,	true,	"NCT6779D" },
-	{ WBSIO_ID_NCT6791D,	true,	"NCT6791D" },
-	{ WBSIO_ID_NCT6792D,	true,	"NCT6792D" },
-	{ WBSIO_ID_NCT6793D,	true,	"NCT6793D" },
-	{ WBSIO_ID_NCT6795D,	true,	"NCT6795D" },
-	{ WBSIO_ID_NCT6796D,	true,	"NCT6796D" },
+	{ WBSIO_ID_W83627HF,	8,	"W83627HF" },
+	{ WBSIO_ID_W83697HF,	8,	"W83697HF" },
+	{ WBSIO_ID_W83637HF,	8,	"W83637HF" },
+	{ WBSIO_ID_W83627THF,	8,	"W83627THF" },
+	{ WBSIO_ID_W83687THF,	8,	"W83687THF" },
+	{ WBSIO_ID_W83627DHG,	12,	"W83627DHG" },
+	{ WBSIO_ID_W83627DHGP,	12,	"W83627DHG-P" },
+	{ WBSIO_ID_W83627EHF,	12,	"W83627EHF" },
+	{ WBSIO_ID_W83627SF,	12,	"W83627SF" },
+	{ WBSIO_ID_W83627UHG,	12,	"W83627UHG" },
+	{ WBSIO_ID_W83667HG,	12,	"W83667HG" },
+	{ WBSIO_ID_W83667HGB,	12,	"W83667HGB" },
+	{ WBSIO_ID_W83697UG,	12,	"W83697UG" },
+	{ WBSIO_ID_NCT6775F,	12,	"NCT6775F" },
+	{ WBSIO_ID_NCT6776F,	12,	"NCT6776F" },
+	{ WBSIO_ID_NCT5104D,	12,	"NCT5104D or 610[246]D" },
+	{ WBSIO_ID_NCT6779D,	12,	"NCT6779D" },
+	{ WBSIO_ID_NCT6791D,	12,	"NCT6791D" },
+	{ WBSIO_ID_NCT6792D,	12,	"NCT6792D" },
+	{ WBSIO_ID_NCT6793D,	12,	"NCT6793D" },
+	{ WBSIO_ID_NCT6795D,	12,	"NCT6795D" },
+	{ WBSIO_ID_NCT6796D,	13,	"NCT6796D" },
+	{ WBSIO_ID_NCT6798D,	13,	"NCT6798D" },
 };
 
 static const struct wbsio_product *wbsio_lookup(uint8_t id, uint8_t rev);
@@ -169,16 +170,19 @@ wbsio_conf_write(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t index,
 static const struct wbsio_product *
 wbsio_lookup(uint8_t id, uint8_t rev)
 {
-	uint16_t wid = ((uint16_t)id << 4) | (rev >> 4);
 	int i;
 
 	for (i = 0; i < __arraycount(wbsio_products); i++) {
-		if (wbsio_products[i].idis12bits) {
-			if (wbsio_products[i].id == wid)
-				return &wbsio_products[i];
-		} else {
-			if (wbsio_products[i].id == id)
-				return &wbsio_products[i];
+		const struct wbsio_product *ent = &wbsio_products[i];
+		switch (ent->idbits) {
+		case 13:
+		case 12:
+		case 8:
+			if (ent->id == WBSIO_MAKEID(id, rev, ent->idbits))
+				return ent;
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -266,8 +270,7 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "Unknown device. Failed to attach\n");
 		return;
 	}
-	if (product->idis12bits)
-		rev &= 0x0f; /* Revision is low 4bits */
+	rev = WBSIO_MAKEREV(rev, product->idbits);
 
 	desc = product->str;
 	if (desc[0] == 'W')
@@ -276,8 +279,8 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 		vendor = "Nuvoton";
 	aprint_naive("\n");
 	aprint_normal(": %s LPC Super I/O %s rev ", vendor, desc);
-	if (product->idis12bits) {
-		/* Revision filed is 4bit only */
+	if (product->idbits >= 12) {
+		/* Revision filed is 4 or 3bits */
 		aprint_normal("%c\n", 'A' + rev);
 	} else
 		aprint_normal("0x%02x\n", rev);
@@ -394,8 +397,7 @@ wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 		aprint_error_dev(parent, "%s: Unknown device.\n", __func__);
 		return -1;
 	}
-	if (product->idis12bits)
-		devid = (devid << 4) | (rev >> 4);
+	devid = WBSIO_MAKEID(devid, rev, product->idbits);
 
 	sc->sc_ia.ia_nio = 1;
 	sc->sc_ia.ia_io = &sc->sc_io;

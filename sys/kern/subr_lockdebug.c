@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.64.2.2 2020/04/08 14:08:52 martin Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.64.2.3 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.64.2.2 2020/04/08 14:08:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.64.2.3 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -505,19 +505,7 @@ lockdebug_locked(const char *func, size_t line,
 		splx(s);
 		return;
 	}
-	if (cvlock) {
-		KASSERT(ld->ld_lockops->lo_type == LOCKOPS_CV);
-		if (lock == (void *)&lbolt) {
-			/* nothing */
-		} else if (ld->ld_shares++ == 0) {
-			ld->ld_locked = (uintptr_t)cvlock;
-		} else if (__predict_false(cvlock != (void *)ld->ld_locked)) {
-			lockdebug_abort1(func, line, ld, s,
-			    "multiple locks used with condition variable",
-			    true);
-			return;
-		}
-	} else if (shared) {
+	if (shared) {
 		l->l_shlocks++;
 		ld->ld_locked = where;
 		ld->ld_shares++;
@@ -568,13 +556,7 @@ lockdebug_unlocked(const char *func, size_t line,
 		splx(s);
 		return;
 	}
-	if (ld->ld_lockops->lo_type == LOCKOPS_CV) {
-		if (lock == (void *)&lbolt) {
-			/* nothing */
-		} else {
-			ld->ld_shares--;
-		}
-	} else if (shared) {
+	if (shared) {
 		if (__predict_false(l->l_shlocks == 0)) {
 			lockdebug_abort1(func, line, ld, s,
 			    "no shared locks held by LWP", true);
@@ -625,41 +607,6 @@ lockdebug_unlocked(const char *func, size_t line,
 }
 
 /*
- * lockdebug_wakeup:
- *
- *	Process a wakeup on a condition variable.
- */
-void
-lockdebug_wakeup(const char *func, size_t line, volatile void *lock,
-    uintptr_t where)
-{
-	lockdebug_t *ld;
-	int s;
-
-	if (__predict_false(panicstr != NULL || ld_panic || lock == (void *)&lbolt))
-		return;
-
-	s = splhigh();
-	/* Find the CV... */
-	if ((ld = lockdebug_lookup(func, line, lock, where)) == NULL) {
-		splx(s);
-		return;
-	}
-	/*
-	 * If it has any waiters, ensure that they are using the
-	 * same interlock.
-	 */
-	if (__predict_false(ld->ld_shares != 0 &&
-	    !mutex_owned((kmutex_t *)ld->ld_locked))) {
-		lockdebug_abort1(func, line, ld, s, "interlocking mutex not "
-		    "held during wakeup", true);
-		return;
-	}
-	__cpu_simple_unlock(&ld->ld_spinlock);
-	splx(s);
-}
-
-/*
  * lockdebug_barrier:
  *	
  *	Panic if we hold more than one specified lock, and optionally, if we
@@ -704,8 +651,6 @@ lockdebug_barrier(const char *func, size_t line, volatile void *onelock,
 			if (ld->ld_lock == onelock) {
 				continue;
 			}
-			if (ld->ld_lockops->lo_type == LOCKOPS_CV)
-				continue;
 			if (ld->ld_lwp == l)
 				lockdebug_dump(l, ld, printf);
 		}
@@ -783,24 +728,20 @@ lockdebug_dump(lwp_t *l, lockdebug_t *ld, void (*pr)(const char *, ...)
 	lo = &los;
 	db_read_bytes((db_addr_t)ld->ld_lockops, sizeof(los), (char *)lo);
 #endif
-	if (lo->lo_type == LOCKOPS_CV) {
-		(*pr)(" interlock: %#018lx\n", (long)ld->ld_locked);
-	} else {
-		(*pr)("\n"
-		    "shared holds : %18u exclusive: %18u\n"
-		    "shares wanted: %18u exclusive: %18u\n"
-		    "relevant cpu : %18u last held: %18u\n"
-		    "relevant lwp : %#018lx last held: %#018lx\n"
-		    "last locked%c : %#018lx unlocked%c: %#018lx\n",
-		    (unsigned)ld->ld_shares, ((ld->ld_flags & LD_LOCKED) != 0),
-		    (unsigned)ld->ld_shwant, (unsigned)ld->ld_exwant,
-		    (unsigned)cpu_index(l->l_cpu), (unsigned)ld->ld_cpu,
-		    (long)l, (long)ld->ld_lwp,
-		    ((ld->ld_flags & LD_LOCKED) ? '*' : ' '),
-		    (long)ld->ld_locked,
-		    ((ld->ld_flags & LD_LOCKED) ? ' ' : '*'),
-		    (long)ld->ld_unlocked);
-	}
+	(*pr)("\n"
+	    "shared holds : %18u exclusive: %18u\n"
+	    "shares wanted: %18u exclusive: %18u\n"
+	    "relevant cpu : %18u last held: %18u\n"
+	    "relevant lwp : %#018lx last held: %#018lx\n"
+	    "last locked%c : %#018lx unlocked%c: %#018lx\n",
+	    (unsigned)ld->ld_shares, ((ld->ld_flags & LD_LOCKED) != 0),
+	    (unsigned)ld->ld_shwant, (unsigned)ld->ld_exwant,
+	    (unsigned)cpu_index(l->l_cpu), (unsigned)ld->ld_cpu,
+	    (long)l, (long)ld->ld_lwp,
+	    ((ld->ld_flags & LD_LOCKED) ? '*' : ' '),
+	    (long)ld->ld_locked,
+	    ((ld->ld_flags & LD_LOCKED) ? ' ' : '*'),
+	    (long)ld->ld_unlocked);
 
 #ifdef _KERNEL
 	if (lo->lo_dump != NULL)
@@ -1009,17 +950,12 @@ lockdebug_show_lockstats(void (*pr)(const char *, ...) __printflike(1, 2))
 	uint32_t n_spin_mutex = 0;
 	uint32_t n_adaptive_mutex = 0;
 	uint32_t n_rwlock = 0;
-	uint32_t n_cv = 0;
 	uint32_t n_others = 0;
 
 	RB_TREE_FOREACH(_ld, &ld_rb_tree) {
 		ld = _ld;
 		if (ld->ld_lock == NULL) {
 			n_null++;
-			continue;
-		}
-		if (ld->ld_lockops->lo_type == LOCKOPS_CV) {
-			n_cv++;
 			continue;
 		}
 		if (ld->ld_lockops->lo_name[0] == 'M') {
@@ -1036,13 +972,12 @@ lockdebug_show_lockstats(void (*pr)(const char *, ...) __printflike(1, 2))
 		n_others++;
 	}
 	(*pr)(
-	    "condvar: %u\n"
 	    "spin mutex: %u\n"
 	    "adaptive mutex: %u\n"
 	    "rwlock: %u\n"
 	    "null locks: %u\n"
 	    "others: %u\n",
-	    n_cv,  n_spin_mutex, n_adaptive_mutex, n_rwlock,
+	    n_spin_mutex, n_adaptive_mutex, n_rwlock,
 	    n_null, n_others);
 #else
 	(*pr)("Sorry, kernel not built with the LOCKDEBUG option.\n");

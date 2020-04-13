@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.13 2012/01/20 16:31:29 joerg Exp $	*/
+/*	$NetBSD: iconv.c,v 1.13.40.1 2020/04/13 08:03:10 martin Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.13 2012/01/20 16:31:29 joerg Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.13.40.1 2020/04/13 08:03:10 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -84,7 +84,7 @@ iconv_close(iconv_t handle)
 }
 
 size_t
-iconv(iconv_t handle, const char **in, size_t *szin, char **out, size_t *szout)
+iconv(iconv_t handle, char **in, size_t *szin, char **out, size_t *szout)
 {
 	int err;
 	size_t ret;
@@ -95,8 +95,8 @@ iconv(iconv_t handle, const char **in, size_t *szin, char **out, size_t *szout)
 	}
 
 	err = _citrus_iconv_convert(
-		(struct _citrus_iconv *)(void *)handle, in, szin, out, szout,
-		0, &ret);
+		(struct _citrus_iconv *)(void *)handle,
+		(const char **)(void *)in, szin, out, szout, 0, &ret);
 	if (err) {
 		errno = err;
 		ret = (size_t)-1;
@@ -106,7 +106,7 @@ iconv(iconv_t handle, const char **in, size_t *szin, char **out, size_t *szout)
 }
 
 size_t
-__iconv(iconv_t handle, const char **in, size_t *szin, char **out,
+__iconv(iconv_t handle, char **in, size_t *szin, char **out,
 	size_t *szout, u_int32_t flags, size_t *invalids)
 {
 	int err;
@@ -118,8 +118,8 @@ __iconv(iconv_t handle, const char **in, size_t *szin, char **out,
 	}
 
 	err = _citrus_iconv_convert(
-		(struct _citrus_iconv *)(void *)handle, in, szin, out, szout,
-		flags, &ret);
+		(struct _citrus_iconv *)(void *)handle,
+		(const char **)(void *)in, szin, out, szout, flags, &ret);
 	if (invalids)
 		*invalids = ret;
 	if (err) {

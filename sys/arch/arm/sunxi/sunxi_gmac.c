@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gmac.c,v 1.2.6.1 2019/06/10 22:05:56 christos Exp $ */
+/* $NetBSD: sunxi_gmac.c,v 1.2.6.2 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.2.6.1 2019/06/10 22:05:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.2.6.2 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.2.6.1 2019/06/10 22:05:56 christos 
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/gpio.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -90,6 +91,24 @@ static int
 sunxi_gmac_intr(void *arg)
 {
 	return dwc_gmac_intr(arg);
+}
+
+static int
+sunxi_gmac_get_phyid(int phandle)
+{
+	bus_addr_t addr;
+	int phy_phandle;
+
+	phy_phandle = fdtbus_get_phandle(phandle, "phy");
+	if (phy_phandle == -1)
+		phy_phandle = fdtbus_get_phandle(phandle, "phy-handle");
+	if (phy_phandle == -1)
+		return MII_PHY_ANY;
+
+	if (fdtbus_get_reg(phy_phandle, 0, &addr, NULL) != 0)
+		return MII_PHY_ANY;
+
+	return (int)addr;
 }
 
 static int
@@ -181,7 +200,8 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": GMAC\n");
 
-	if (fdtbus_intr_establish(phandle, 0, IPL_NET, 0, sunxi_gmac_intr, sc) == NULL) {
+	if (fdtbus_intr_establish(phandle, 0, IPL_NET, DWCGMAC_FDT_INTR_MPSAFE,
+	    sunxi_gmac_intr, sc) == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n", intrstr);
 		return;
 	}
@@ -190,7 +210,8 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 	if (sunxi_gmac_reset(phandle) != 0)
 		aprint_error_dev(self, "PHY reset failed\n");
 
-	dwc_gmac_attach(sc, MII_PHY_ANY, GMAC_MII_CLK_150_250M_DIV102);
+	dwc_gmac_attach(sc, sunxi_gmac_get_phyid(phandle),
+	    GMAC_MII_CLK_150_250M_DIV102);
 }
 
 CFATTACH_DECL_NEW(sunxi_gmac, sizeof(struct dwc_gmac_softc),

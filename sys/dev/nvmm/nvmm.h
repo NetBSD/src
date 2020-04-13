@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm.h,v 1.10.2.2 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.10.2.3 2020/04/13 08:04:25 martin Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -48,58 +48,28 @@ typedef uint32_t	nvmm_cpuid_t;
 #include <dev/nvmm/x86/nvmm_x86.h>
 #endif
 
-#define NVMM_EXIT_NONE		0x0000000000000000ULL
-#define NVMM_EXIT_MEMORY	0x0000000000000001ULL
-#define NVMM_EXIT_IO		0x0000000000000002ULL
-#define NVMM_EXIT_MSR		0x0000000000000003ULL /* x86 only? */
-#define NVMM_EXIT_INT_READY	0x0000000000000004ULL
-#define NVMM_EXIT_NMI_READY	0x0000000000000005ULL
-#define NVMM_EXIT_HALTED	0x0000000000000006ULL
-#define NVMM_EXIT_SHUTDOWN	0x0000000000000007ULL
-/* Range 0x1000-0x10000 is MD. */
-#define NVMM_EXIT_INVALID	0xFFFFFFFFFFFFFFFFULL
-
-struct nvmm_exit {
-	uint64_t reason;
-	union nvmm_exit_md u;
-	uint64_t exitstate[8];
-};
-
-enum nvmm_event_type {
-	NVMM_EVENT_INTERRUPT_HW,
-	NVMM_EVENT_INTERRUPT_SW,
-	NVMM_EVENT_EXCEPTION
-};
-
-struct nvmm_event {
-	enum nvmm_event_type type;
-	uint64_t vector;
-	union {
-		/* NVMM_EVENT_INTERRUPT_HW */
-		uint8_t prio;
-
-		/* NVMM_EVENT_EXCEPTION */
-		uint64_t error;
-	} u;
-};
-
-#define NVMM_CAPABILITY_VERSION		1
+#define NVMM_KERN_VERSION		1
 
 struct nvmm_capability {
-	uint64_t version;
-	uint64_t state_size;
-	uint64_t max_machines;
-	uint64_t max_vcpus;
+	uint32_t version;
+	uint32_t state_size;
+	uint32_t max_machines;
+	uint32_t max_vcpus;
 	uint64_t max_ram;
 	struct nvmm_cap_md arch;
 };
 
-/* Configuration slots. */
+/* Machine configuration slots. */
 #define NVMM_MACH_CONF_LIBNVMM_BEGIN	0
 #define NVMM_MACH_CONF_MI_BEGIN		100
 #define NVMM_MACH_CONF_MD_BEGIN		200
-
 #define NVMM_MACH_CONF_MD(op)		(op - NVMM_MACH_CONF_MD_BEGIN)
+
+/* VCPU configuration slots. */
+#define NVMM_VCPU_CONF_LIBNVMM_BEGIN	0
+#define NVMM_VCPU_CONF_MI_BEGIN		100
+#define NVMM_VCPU_CONF_MD_BEGIN		200
+#define NVMM_VCPU_CONF_MD(op)		(op - NVMM_VCPU_CONF_MD_BEGIN)
 
 struct nvmm_comm_page {
 	/* State. */
@@ -110,7 +80,7 @@ struct nvmm_comm_page {
 
 	/* Event. */
 	bool event_commit;
-	struct nvmm_event event;
+	struct nvmm_vcpu_event event;
 };
 
 /*

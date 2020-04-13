@@ -1,5 +1,5 @@
 /* Header file for the ARM EABI unwinder
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
    Contributed by Paul Brook
 
    This file is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ extern "C" {
 	return 0;
 
 #if (defined(linux) && !defined(__uClinux__)) || defined(__NetBSD__) \
-    || defined(__FreeBSD__)
+    || defined(__FreeBSD__) || defined(__fuchsia__)
       /* Pc-relative indirect.  */
 #define _GLIBCXX_OVERRIDE_TTYPE_ENCODING (DW_EH_PE_pcrel | DW_EH_PE_indirect)
       tmp += ptr;

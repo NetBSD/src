@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.10.18.2 2020/04/08 14:08:23 martin Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.10.18.3 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.10.18.2 2020/04/08 14:08:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.10.18.3 2020/04/13 08:04:58 martin Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
@@ -984,7 +984,10 @@ intel_dp_aux_transfer(struct drm_dp_aux *aux, struct drm_dp_aux_msg *msg)
 		if (WARN_ON(txsize > 20))
 			return -E2BIG;
 
-		memcpy(txbuf + HEADER_SIZE, msg->buffer, msg->size);
+		WARN_ON(!msg->buffer != !msg->size);
+
+		if (msg->buffer)
+			memcpy(txbuf + HEADER_SIZE, msg->buffer, msg->size);
 
 		ret = intel_dp_aux_ch(intel_dp, txbuf, txsize, rxbuf, rxsize);
 		if (ret > 0) {

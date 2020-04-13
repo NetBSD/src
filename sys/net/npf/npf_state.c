@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.18.16.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.18.16.2 2020/04/13 08:05:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,16 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.18.16.1 2019/06/10 22:09:46 christos
 #define	NPF_ANY_CONN_ESTABLISHED	2
 #define	NPF_ANY_CONN_NSTATES		3
 
+/*
+ * Parameters.
+ */
+typedef struct {
+	int		timeouts[NPF_ANY_CONN_NSTATES];
+} npf_state_params_t;
+
+/*
+ * Generic FSM.
+ */
 static const uint8_t npf_generic_fsm[NPF_ANY_CONN_NSTATES][2] = {
 	[NPF_ANY_CONN_CLOSED] = {
 		[NPF_FLOW_FORW]		= NPF_ANY_CONN_NEW,
@@ -67,12 +77,6 @@ static const uint8_t npf_generic_fsm[NPF_ANY_CONN_NSTATES][2] = {
 	},
 };
 
-static u_int npf_generic_timeout[] __read_mostly = {
-	[NPF_ANY_CONN_CLOSED]		= 0,
-	[NPF_ANY_CONN_NEW]		= 30,
-	[NPF_ANY_CONN_ESTABLISHED]	= 60,
-};
-
 /*
  * State sampler for debugging.
  */
@@ -82,6 +86,46 @@ static void (*npf_state_sample)(npf_state_t *, bool) = NULL;
 #else
 #define	NPF_STATE_SAMPLE(n, r)
 #endif
+
+void
+npf_state_sysinit(npf_t *npf)
+{
+	npf_state_params_t *params = npf_param_allocgroup(npf,
+	    NPF_PARAMS_GENERIC_STATE, sizeof(npf_state_params_t));
+	npf_param_t param_map[] = {
+		/*
+		 * Generic timeout (in seconds).
+		 */
+		{
+			"state.generic.timeout.closed",
+			&params->timeouts[NPF_ANY_CONN_CLOSED],
+			.default_val = 0,
+			.min = 0, .max = INT_MAX
+		},
+		{
+			"state.generic.timeout.new",
+			&params->timeouts[NPF_ANY_CONN_NEW],
+			.default_val = 30,
+			.min = 0, .max = INT_MAX
+		},
+		{
+			"state.generic.timeout.established",
+			&params->timeouts[NPF_ANY_CONN_ESTABLISHED],
+			.default_val = 60,
+			.min = 0, .max = INT_MAX
+		},
+	};
+	npf_param_register(npf, param_map, __arraycount(param_map));
+	npf_state_tcp_sysinit(npf);
+}
+
+void
+npf_state_sysfini(npf_t *npf)
+{
+	const size_t len = sizeof(npf_state_params_t);
+	npf_param_freegroup(npf, NPF_PARAMS_GENERIC_STATE, len);
+	npf_state_tcp_sysfini(npf);
+}
 
 /*
  * npf_state_init: initialise the state structure.
@@ -158,23 +202,25 @@ npf_state_inspect(npf_cache_t *npc, npf_state_t *nst, const bool forw)
 }
 
 /*
- * npf_state_etime: return connection expiration time according to the state.
+ * npf_state_etime: return the expiration time depending on the state.
  */
 int
-npf_state_etime(const npf_state_t *nst, const int proto)
+npf_state_etime(npf_t *npf, const npf_state_t *nst, const int proto)
 {
-	const u_int state = nst->nst_state;
+	const npf_state_params_t *params;
+	const unsigned state = nst->nst_state;
 	int timeout = 0;
 
 	switch (proto) {
 	case IPPROTO_TCP:
 		/* Pass to TCP state tracking engine. */
-		timeout = npf_state_tcp_timeout(nst);
+		timeout = npf_state_tcp_timeout(npf, nst);
 		break;
 	case IPPROTO_UDP:
 	case IPPROTO_ICMP:
 		/* Generic. */
-		timeout = npf_generic_timeout[state];
+		params = npf->params[NPF_PARAMS_GENERIC_STATE];
+		timeout = params->timeouts[state];
 		break;
 	default:
 		KASSERT(false);

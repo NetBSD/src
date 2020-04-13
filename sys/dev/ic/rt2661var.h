@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661var.h,v 1.12 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: rt2661var.h,v 1.12.14.1 2020/04/13 08:04:22 martin Exp $	*/
 /*	$OpenBSD: rt2661var.h,v 1.4 2006/02/25 12:56:47 damien Exp $	*/
 
 /*-
@@ -26,7 +26,7 @@ struct rt2661_rx_radiotap_header {
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_antsignal;
-} __packed;
+};
 
 #define RT2661_RX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_TSFT) |				\
@@ -41,7 +41,7 @@ struct rt2661_tx_radiotap_header {
 	uint8_t		wt_rate;
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
-} __packed;
+};
 
 #define RT2661_TX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\

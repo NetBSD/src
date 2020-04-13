@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.c,v 1.3.2.3 2020/04/08 14:07:04 martin Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.3.2.4 2020/04/13 08:02:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -560,7 +560,8 @@ configure_staticstub(const cfg_obj_t *zconfig, dns_zone_t *zone,
 	RETERR(dns_db_create(mctx, dbtype, dns_zone_getorigin(zone),
 			     dns_dbtype_stub, dns_zone_getclass(zone),
 			     0, NULL, &db));
-	dns_zone_setdb(zone, db);
+
+	dns_rdataset_init(&rdataset);
 
 	dns_rdatalist_init(&rdatalist_ns);
 	rdatalist_ns.rdclass = dns_zone_getclass(zone);
@@ -582,23 +583,19 @@ configure_staticstub(const cfg_obj_t *zconfig, dns_zone_t *zone,
 	result = cfg_map_get(zconfig, "server-addresses", &obj);
 	if (result == ISC_R_SUCCESS) {
 		INSIST(obj != NULL);
-		result = configure_staticstub_serveraddrs(obj, zone,
-							  &rdatalist_ns,
-							  &rdatalist_a,
-							  &rdatalist_aaaa);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
+		CHECK(configure_staticstub_serveraddrs(obj, zone,
+						       &rdatalist_ns,
+						       &rdatalist_a,
+						       &rdatalist_aaaa));
 	}
 
 	obj = NULL;
 	result = cfg_map_get(zconfig, "server-names", &obj);
 	if (result == ISC_R_SUCCESS) {
 		INSIST(obj != NULL);
-		result = configure_staticstub_servernames(obj, zone,
-							  &rdatalist_ns,
-							  zname);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
+		CHECK(configure_staticstub_servernames(obj, zone,
+						       &rdatalist_ns,
+						       zname));
 	}
 
 	/*
@@ -619,34 +616,26 @@ configure_staticstub(const cfg_obj_t *zconfig, dns_zone_t *zone,
 	 * First open a new version for the add operation and get a pointer
 	 * to the apex node (all RRs are of the apex name).
 	 */
-	result = dns_db_newversion(db, &dbversion);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
+	CHECK(dns_db_newversion(db, &dbversion));
+
 	dns_name_init(&apexname, NULL);
 	dns_name_clone(dns_zone_getorigin(zone), &apexname);
-	result = dns_db_findnode(db, &apexname, false, &apexnode);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
+	CHECK(dns_db_findnode(db, &apexname, false, &apexnode));
 
 	/* Add NS RRset */
-	dns_rdataset_init(&rdataset);
 	RUNTIME_CHECK(dns_rdatalist_tordataset(&rdatalist_ns, &rdataset)
 		      == ISC_R_SUCCESS);
-	result = dns_db_addrdataset(db, apexnode, dbversion, 0, &rdataset,
-				    0, NULL);
+	CHECK(dns_db_addrdataset(db, apexnode, dbversion, 0, &rdataset,
+				 0, NULL));
 	dns_rdataset_disassociate(&rdataset);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
 
 	/* Add glue A RRset, if any */
 	if (!ISC_LIST_EMPTY(rdatalist_a.rdata)) {
 		RUNTIME_CHECK(dns_rdatalist_tordataset(&rdatalist_a, &rdataset)
 			      == ISC_R_SUCCESS);
-		result = dns_db_addrdataset(db, apexnode, dbversion, 0,
-					    &rdataset, 0, NULL);
+		CHECK(dns_db_addrdataset(db, apexnode, dbversion, 0,
+					 &rdataset, 0, NULL));
 		dns_rdataset_disassociate(&rdataset);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
 	}
 
 	/* Add glue AAAA RRset, if any */
@@ -654,22 +643,29 @@ configure_staticstub(const cfg_obj_t *zconfig, dns_zone_t *zone,
 		RUNTIME_CHECK(dns_rdatalist_tordataset(&rdatalist_aaaa,
 						       &rdataset)
 			      == ISC_R_SUCCESS);
-		result = dns_db_addrdataset(db, apexnode, dbversion, 0,
-					    &rdataset, 0, NULL);
+		CHECK(dns_db_addrdataset(db, apexnode, dbversion, 0,
+					 &rdataset, 0, NULL));
 		dns_rdataset_disassociate(&rdataset);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
 	}
+
+	dns_db_closeversion(db, &dbversion, true);
+	dns_zone_setdb(zone, db);
 
 	result = ISC_R_SUCCESS;
 
   cleanup:
-	if (apexnode != NULL)
+	if (dns_rdataset_isassociated(&rdataset)) {
+		dns_rdataset_disassociate(&rdataset);
+	}
+	if (apexnode != NULL) {
 		dns_db_detachnode(db, &apexnode);
-	if (dbversion != NULL)
-		dns_db_closeversion(db, &dbversion, true);
-	if (db != NULL)
+	}
+	if (dbversion != NULL) {
+		dns_db_closeversion(db, &dbversion, false);
+	}
+	if (db != NULL) {
 		dns_db_detach(&db);
+	}
 	for (i = 0; rdatalists[i] != NULL; i++) {
 		while ((rdata = ISC_LIST_HEAD(rdatalists[i]->rdata)) != NULL) {
 			ISC_LIST_UNLINK(rdatalists[i]->rdata, rdata, link);
@@ -901,6 +897,8 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	const dns_master_style_t *masterstyle = &dns_master_style_default;
 	isc_stats_t *zoneqrystats;
 	dns_stats_t *rcvquerystats;
+	dns_stats_t *dnssecsignstats;
+	dns_stats_t *dnssecrefreshstats;
 	dns_zonestat_level_t statlevel = dns_zonestat_none;
 	int seconds;
 	dns_zone_t *mayberaw = (raw != NULL) ? raw : zone;
@@ -1185,20 +1183,33 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 	zoneqrystats  = NULL;
 	rcvquerystats = NULL;
+	dnssecsignstats = NULL;
+	dnssecrefreshstats = NULL;
 	if (statlevel == dns_zonestat_full) {
 		RETERR(isc_stats_create(mctx, &zoneqrystats,
 					ns_statscounter_max));
-		RETERR(dns_rdatatypestats_create(mctx,
-					&rcvquerystats));
+		RETERR(dns_rdatatypestats_create(mctx, &rcvquerystats));
+		RETERR(dns_dnssecsignstats_create(mctx, &dnssecsignstats));
+		RETERR(dns_dnssecsignstats_create(mctx, &dnssecrefreshstats));
 	}
 	dns_zone_setrequeststats(zone,  zoneqrystats);
 	dns_zone_setrcvquerystats(zone, rcvquerystats);
+	dns_zone_setdnssecsignstats(zone, dnssecsignstats);
+	dns_zone_setdnssecrefreshstats(zone, dnssecrefreshstats);
 
 	if (zoneqrystats != NULL)
 		isc_stats_detach(&zoneqrystats);
 
 	if(rcvquerystats != NULL)
 		dns_stats_detach(&rcvquerystats);
+
+	if(dnssecsignstats != NULL) {
+		dns_stats_detach(&dnssecsignstats);
+	}
+
+	if(dnssecrefreshstats != NULL) {
+		dns_stats_detach(&dnssecrefreshstats);
+	}
 
 	/*
 	 * Configure master functionality.  This applies

@@ -1,5 +1,5 @@
 /* Build live ranges for pseudos.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -33,6 +33,7 @@ along with GCC; see the file COPYING3.	If not see
 #include "tree.h"
 #include "predict.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "insn-config.h"
 #include "regs.h"
@@ -559,10 +560,11 @@ lra_setup_reload_pseudo_preferenced_hard_reg (int regno,
 }
 
 /* Check that REGNO living through calls and setjumps, set up conflict
-   regs, and clear corresponding bits in PSEUDOS_LIVE_THROUGH_CALLS and
-   PSEUDOS_LIVE_THROUGH_SETJUMPS.  */
+   regs using LAST_CALL_USED_REG_SET, and clear corresponding bits in
+   PSEUDOS_LIVE_THROUGH_CALLS and PSEUDOS_LIVE_THROUGH_SETJUMPS.  */
 static inline void
-check_pseudos_live_through_calls (int regno)
+check_pseudos_live_through_calls (int regno,
+				  HARD_REG_SET last_call_used_reg_set)
 {
   int hr;
 
@@ -570,7 +572,7 @@ check_pseudos_live_through_calls (int regno)
     return;
   sparseset_clear_bit (pseudos_live_through_calls, regno);
   IOR_HARD_REG_SET (lra_reg_info[regno].conflict_hard_regs,
-		    call_used_reg_set);
+		    last_call_used_reg_set);
 
   for (hr = 0; hr < FIRST_PSEUDO_REGISTER; hr++)
     if (HARD_REGNO_CALL_PART_CLOBBERED (hr, PSEUDO_REGNO_MODE (regno)))
@@ -582,6 +584,18 @@ check_pseudos_live_through_calls (int regno)
   /* Don't allocate pseudos that cross setjmps or any call, if this
      function receives a nonlocal goto.	 */
   SET_HARD_REG_SET (lra_reg_info[regno].conflict_hard_regs);
+}
+
+/* Return true if insn REG is an early clobber operand in alternative
+   NALT.  Negative NALT means that we don't know the current insn
+   alternative.  So assume the worst.  */
+static inline bool
+reg_early_clobber_p (const struct lra_insn_reg *reg, int n_alt)
+{
+  return (reg->early_clobber
+	  && (n_alt == LRA_UNKNOWN_ALT
+	      || (n_alt != LRA_NON_CLOBBERED_ALT
+		  && TEST_BIT (reg->early_clobber_alts, n_alt))));
 }
 
 /* Process insns of the basic block BB to update pseudo live ranges,
@@ -603,11 +617,13 @@ process_bb_lives (basic_block bb, int &curr_point, bool dead_insn_p)
   rtx_insn *next;
   rtx link, *link_loc;
   bool need_curr_point_incr;
-
+  HARD_REG_SET last_call_used_reg_set;
+  
   reg_live_out = df_get_live_out (bb);
   sparseset_clear (pseudos_live);
   sparseset_clear (pseudos_live_through_calls);
   sparseset_clear (pseudos_live_through_setjumps);
+  CLEAR_HARD_REG_SET (last_call_used_reg_set);
   REG_SET_TO_HARD_REG_SET (hard_regs_live, reg_live_out);
   AND_COMPL_HARD_REG_SET (hard_regs_live, eliminable_regset);
   EXECUTE_IF_SET_IN_BITMAP (reg_live_out, FIRST_PSEUDO_REGISTER, j, bi)
@@ -634,7 +650,7 @@ process_bb_lives (basic_block bb, int &curr_point, bool dead_insn_p)
   FOR_BB_INSNS_REVERSE_SAFE (bb, curr_insn, next)
     {
       bool call_p;
-      int dst_regno, src_regno;
+      int n_alt, dst_regno, src_regno;
       rtx set;
       struct lra_insn_reg *reg;
 
@@ -643,9 +659,10 @@ process_bb_lives (basic_block bb, int &curr_point, bool dead_insn_p)
 
       curr_id = lra_get_insn_recog_data (curr_insn);
       curr_static_id = curr_id->insn_static_data;
+      n_alt = curr_id->used_insn_alternative;
       if (lra_dump_file != NULL)
-	fprintf (lra_dump_file, "   Insn %u: point = %d\n",
-		 INSN_UID (curr_insn), curr_point);
+	fprintf (lra_dump_file, "   Insn %u: point = %d, n_alt = %d\n",
+		 INSN_UID (curr_insn), curr_point, n_alt);
 
       set = single_set (curr_insn);
 
@@ -701,11 +718,24 @@ process_bb_lives (basic_block bb, int &curr_point, bool dead_insn_p)
       /* Update max ref width and hard reg usage.  */
       for (reg = curr_id->regs; reg != NULL; reg = reg->next)
 	{
+	  int i, regno = reg->regno;
+	  
 	  if (GET_MODE_SIZE (reg->biggest_mode)
-	      > GET_MODE_SIZE (lra_reg_info[reg->regno].biggest_mode))
-	    lra_reg_info[reg->regno].biggest_mode = reg->biggest_mode;
-	  if (reg->regno < FIRST_PSEUDO_REGISTER)
-	    lra_hard_reg_usage[reg->regno] += freq;
+	      > GET_MODE_SIZE (lra_reg_info[regno].biggest_mode))
+	    lra_reg_info[regno].biggest_mode = reg->biggest_mode;
+	  if (regno < FIRST_PSEUDO_REGISTER)
+	    {
+	      lra_hard_reg_usage[regno] += freq;
+	      /* A hard register explicitly can be used in small mode,
+		 but implicitly it can be used in natural mode as a
+		 part of multi-register group.  Process this case
+		 here.  */
+	      for (i = 1; i < hard_regno_nregs[regno][reg->biggest_mode]; i++)
+		if (GET_MODE_SIZE (GET_MODE (regno_reg_rtx[regno + i]))
+		    > GET_MODE_SIZE (lra_reg_info[regno + i].biggest_mode))
+		  lra_reg_info[regno + i].biggest_mode
+		    = GET_MODE (regno_reg_rtx[regno + i]);
+	    }
 	}
 
       call_p = CALL_P (curr_insn);
@@ -781,7 +811,8 @@ process_bb_lives (basic_block bb, int &curr_point, bool dead_insn_p)
 	    need_curr_point_incr
 	      |= mark_regno_live (reg->regno, reg->biggest_mode,
 				  curr_point);
-	    check_pseudos_live_through_calls (reg->regno);
+	    check_pseudos_live_through_calls (reg->regno,
+					      last_call_used_reg_set);
 	  }
 
       for (reg = curr_static_id->hard_regs; reg != NULL; reg = reg->next)
@@ -800,13 +831,15 @@ process_bb_lives (basic_block bb, int &curr_point, bool dead_insn_p)
 
       /* See which defined values die here.  */
       for (reg = curr_id->regs; reg != NULL; reg = reg->next)
-	if (reg->type == OP_OUT && ! reg->early_clobber && ! reg->subreg_p)
+	if (reg->type == OP_OUT
+	    && ! reg_early_clobber_p (reg, n_alt) && ! reg->subreg_p)
 	  need_curr_point_incr
 	    |= mark_regno_dead (reg->regno, reg->biggest_mode,
 				curr_point);
 
       for (reg = curr_static_id->hard_regs; reg != NULL; reg = reg->next)
-	if (reg->type == OP_OUT && ! reg->early_clobber && ! reg->subreg_p)
+	if (reg->type == OP_OUT
+	    && ! reg_early_clobber_p (reg, n_alt) && ! reg->subreg_p)
 	  make_hard_regno_dead (reg->regno);
 
       if (curr_id->arg_hard_regs != NULL)
@@ -817,15 +850,27 @@ process_bb_lives (basic_block bb, int &curr_point, bool dead_insn_p)
 
       if (call_p)
 	{
-	  if (flag_ipa_ra)
+	  if (! flag_ipa_ra)
+	    COPY_HARD_REG_SET(last_call_used_reg_set, call_used_reg_set);
+	  else
 	    {
 	      HARD_REG_SET this_call_used_reg_set;
 	      get_call_reg_set_usage (curr_insn, &this_call_used_reg_set,
 				      call_used_reg_set);
 
+	      bool flush = (! hard_reg_set_empty_p (last_call_used_reg_set)
+			    && ! hard_reg_set_equal_p (last_call_used_reg_set,
+						       this_call_used_reg_set));
+
 	      EXECUTE_IF_SET_IN_SPARSESET (pseudos_live, j)
-		IOR_HARD_REG_SET (lra_reg_info[j].actual_call_used_reg_set,
-				  this_call_used_reg_set);
+		{
+		  IOR_HARD_REG_SET (lra_reg_info[j].actual_call_used_reg_set,
+				    this_call_used_reg_set);
+		  if (flush)
+		    check_pseudos_live_through_calls
+		      (j, last_call_used_reg_set);
+		}
+	      COPY_HARD_REG_SET(last_call_used_reg_set, this_call_used_reg_set);
 	    }
 
 	  sparseset_ior (pseudos_live_through_calls,
@@ -852,7 +897,8 @@ process_bb_lives (basic_block bb, int &curr_point, bool dead_insn_p)
 	    need_curr_point_incr
 	      |= mark_regno_live (reg->regno, reg->biggest_mode,
 				  curr_point);
-	    check_pseudos_live_through_calls (reg->regno);
+	    check_pseudos_live_through_calls (reg->regno,
+					      last_call_used_reg_set);
 	  }
 
       for (reg = curr_static_id->hard_regs; reg != NULL; reg = reg->next)
@@ -870,13 +916,15 @@ process_bb_lives (basic_block bb, int &curr_point, bool dead_insn_p)
 
       /* Mark early clobber outputs dead.  */
       for (reg = curr_id->regs; reg != NULL; reg = reg->next)
-	if (reg->type == OP_OUT && reg->early_clobber && ! reg->subreg_p)
+	if (reg->type == OP_OUT
+	    && reg_early_clobber_p (reg, n_alt) && ! reg->subreg_p)
 	  need_curr_point_incr
 	    |= mark_regno_dead (reg->regno, reg->biggest_mode,
 				curr_point);
 
       for (reg = curr_static_id->hard_regs; reg != NULL; reg = reg->next)
-	if (reg->type == OP_OUT && reg->early_clobber && ! reg->subreg_p)
+	if (reg->type == OP_OUT
+	    && reg_early_clobber_p (reg, n_alt) && ! reg->subreg_p)
 	  make_hard_regno_dead (reg->regno);
 
       if (need_curr_point_incr)
@@ -995,7 +1043,7 @@ process_bb_lives (basic_block bb, int &curr_point, bool dead_insn_p)
       if (sparseset_cardinality (pseudos_live_through_calls) == 0)
 	break;
       if (sparseset_bit_p (pseudos_live_through_calls, j))
-	check_pseudos_live_through_calls (j);
+	check_pseudos_live_through_calls (j, last_call_used_reg_set);
     }
 
   if (need_curr_point_incr)
@@ -1015,12 +1063,11 @@ remove_some_program_points_and_update_live_ranges (void)
   int n, max_regno;
   int *map;
   lra_live_range_t r, prev_r, next_r;
-  sbitmap born_or_dead, born, dead;
   sbitmap_iterator sbi;
   bool born_p, dead_p, prev_born_p, prev_dead_p;
 
-  born = sbitmap_alloc (lra_live_max_point);
-  dead = sbitmap_alloc (lra_live_max_point);
+  auto_sbitmap born (lra_live_max_point);
+  auto_sbitmap dead (lra_live_max_point);
   bitmap_clear (born);
   bitmap_clear (dead);
   max_regno = max_reg_num ();
@@ -1033,7 +1080,7 @@ remove_some_program_points_and_update_live_ranges (void)
 	  bitmap_set_bit (dead, r->finish);
 	}
     }
-  born_or_dead = sbitmap_alloc (lra_live_max_point);
+  auto_sbitmap born_or_dead (lra_live_max_point);
   bitmap_ior (born_or_dead, born, dead);
   map = XCNEWVEC (int, lra_live_max_point);
   n = -1;
@@ -1056,9 +1103,6 @@ remove_some_program_points_and_update_live_ranges (void)
       prev_born_p = born_p;
       prev_dead_p = dead_p;
     }
-  sbitmap_free (born_or_dead);
-  sbitmap_free (born);
-  sbitmap_free (dead);
   n++;
   if (lra_dump_file != NULL)
     fprintf (lra_dump_file, "Compressing live ranges: from %d to %d - %d%%\n",

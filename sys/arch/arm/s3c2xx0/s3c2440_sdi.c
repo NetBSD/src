@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2440_sdi.c,v 1.4 2015/05/25 15:04:01 christos Exp $	*/
+/*	$NetBSD: s3c2440_sdi.c,v 1.4.18.1 2020/04/13 08:03:37 martin Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440_sdi.c,v 1.4 2015/05/25 15:04:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_sdi.c,v 1.4.18.1 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -236,7 +236,7 @@ sssdi_attach(device_t parent, device_t self, void *aux)
 	/* Is it a good idea to get the private parts of sdmmc ? */
 	sc->sdmmc = config_found(sc->dev, &saa, NULL);
 
-	sc->sc_xfer = s3c2440_dmac_allocate_xfer(M_NOWAIT);
+	sc->sc_xfer = s3c2440_dmac_allocate_xfer();
 	sc->sc_dr.ds_addr = S3C2440_SDI_BASE+SDI_DAT_LI_W;
 	sc->sc_dr.ds_len = 4;
 }

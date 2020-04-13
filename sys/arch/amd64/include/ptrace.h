@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.12.12.1 2019/06/10 22:05:47 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.12.12.2 2020/04/13 08:03:30 martin Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -34,7 +34,7 @@
 
 #ifdef __x86_64__
 /*
- * i386-dependent ptrace definitions
+ * amd64-dependent ptrace definitions
  */
 #define	PT_STEP			(PT_FIRSTMACH + 0)
 #define	PT_GETREGS		(PT_FIRSTMACH + 1)
@@ -45,6 +45,18 @@
 #define	PT_SETDBREGS		(PT_FIRSTMACH + 6)
 #define	PT_SETSTEP		(PT_FIRSTMACH + 7)
 #define	PT_CLEARSTEP		(PT_FIRSTMACH + 8)
+#define	PT_GETXSTATE		(PT_FIRSTMACH + 9)
+#define	PT_SETXSTATE		(PT_FIRSTMACH + 10)
+#ifdef _KERNEL
+/*
+ * Only used internally for COMPAT_NETBSD32
+ */
+#define	PT_GETXMMREGS		(PT_FIRSTMACH + 11)
+#define	PT_SETXMMREGS		(PT_FIRSTMACH + 12)
+#endif
+
+/* We have machine-dependent process tracing needs. */
+#define	__HAVE_PTRACE_MACHDEP
 
 #define PT_MACHDEP_STRINGS \
 	"PT_STEP", \
@@ -55,10 +67,15 @@
 	"PT_GETDBREGS", \
 	"PT_SETDBREGS", \
 	"PT_SETSTEP", \
-	"PT_CLEARSTEP",
+	"PT_CLEARSTEP", \
+	"PT_GETXSTATE", \
+	"PT_SETXSTATE", \
+	"PT_GETXMMREGS", \
+	"PT_SETXMMREGS"
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->regs[_REG_RIP]
+#define PTRACE_REG_FP(r)	(r)->regs[_REG_RBP]
 #define PTRACE_REG_SET_PC(r, v)	(r)->regs[_REG_RIP] = (v)
 #define PTRACE_REG_SP(r)	(r)->regs[_REG_RSP]
 #define PTRACE_REG_INTRV(r)	(r)->regs[_REG_RAX]
@@ -69,6 +86,42 @@
 #define PTRACE_BREAKPOINT_ASM	__asm __volatile ("int3" : : : "memory")
 #define PTRACE_BREAKPOINT_SIZE	1
 #define PTRACE_BREAKPOINT_ADJ	1
+
+#ifdef _KERNEL
+
+/*
+ * These are used in sys_ptrace() to find good ptrace(2) requests.
+ */
+#define	PTRACE_MACHDEP_REQUEST_CASES					\
+	case PT_GETXSTATE:						\
+	case PT_SETXSTATE:						\
+	case PT_GETXMMREGS:						\
+	case PT_SETXMMREGS:
+
+int process_machdep_doxstate(struct lwp *, struct lwp *, struct uio *);
+int process_machdep_validfpu(struct proc *);
+
+#include <sys/module_hook.h>
+MODULE_HOOK(netbsd32_process_doxmmregs_hook, int,
+    (struct lwp *, struct lwp *, void *, bool));
+
+#ifdef EXEC_ELF32
+#include <machine/netbsd32_machdep.h>
+#endif
+#define PT64_GETXSTATE		PT_GETXSTATE
+#define COREDUMP_MACHDEP_LWP_NOTES(l, ns, name)				\
+{									\
+	struct xstate xstate;						\
+	memset(&xstate, 0, sizeof(xstate));				\
+	if (!process_read_xstate(l, &xstate))				\
+	{								\
+		ELFNAMEEND(coredump_savenote)(ns,			\
+		    CONCAT(CONCAT(PT, ELFSIZE), _GETXSTATE), name,	\
+		    &xstate, sizeof(xstate));				\
+	}								\
+}
+
+#endif /* _KERNEL */
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"

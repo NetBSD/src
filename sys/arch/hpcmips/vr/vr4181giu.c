@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181giu.c,v 1.4 2012/10/27 17:17:55 chs Exp $ */
+/* $NetBSD: vr4181giu.c,v 1.4.38.1 2020/04/13 08:03:51 martin Exp $ */
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.4 2012/10/27 17:17:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.4.38.1 2020/04/13 08:03:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -325,9 +325,7 @@ vr4181giu_intr_establish(
 
 	s = splhigh();
 
-	if ((ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT)) == NULL)
-		panic("vr4181giu_intr_establish: memory exhausted.");
-
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 	ih->ih_port = port;
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;

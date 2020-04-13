@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.28.1 2019/06/10 22:10:42 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.1.28.2 2020/04/13 08:06:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,6 +55,10 @@
 
 /* have support for booting from UFS2 */
 #define	HAVE_UFS2_BOOT
+
+/* sunlabels force track alignment (true = no further processing) */
+#define	MD_DISKLABEL_SET_ALIGN_PRE(align, track)	\
+	(align) = (track), true
 
 /*
  * Default filesets to fetch and install during installation

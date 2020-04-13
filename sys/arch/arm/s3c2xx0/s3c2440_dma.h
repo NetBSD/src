@@ -115,7 +115,7 @@ struct dmac_xfer {
 };
 
 /* DMA API, inspired by pxa2x0_dmac.h */
-dmac_xfer_t s3c2440_dmac_allocate_xfer(int);
+dmac_xfer_t s3c2440_dmac_allocate_xfer(void);
 void s3c2440_dmac_free_xfer(dmac_xfer_t);
 int s3c2440_dmac_start_xfer(dmac_xfer_t);
 void s3c2440_dmac_abort_xfer(dmac_xfer_t);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.backend,v 1.6.4.1 2019/06/10 21:58:09 christos Exp $
+#	$NetBSD: Makefile.backend,v 1.6.4.2 2020/04/13 08:01:56 martin Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_=1
@@ -17,19 +17,7 @@ LDADD+=			${BACKENDOBJ}/libbackend.a
 
 .include "../Makefile.common"
 .include "../Makefile.libiberty"
-
-HOSTPROG_CXX=	1
-
-.include <bsd.prog.mk>
-
-# Force using C++ for this
-HOST_CC:=	${HOST_CXX}
-CC:=		${CXX}
-CFLAGS:=	${CXXFLAGS}
-
-# Don't auto-frob .y or .l files.
-.l.c .y.c .y.h:
-	@true
+.include "../Makefile.prog"
 
 # Find our (local) libraries
 LIBGMPDIR!=	cd ${GMPDISTDIR}/lib/libgmp && ${PRINTOBJDIR}

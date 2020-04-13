@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.197.4.2 2020/04/08 14:08:52 martin Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.197.4.3 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.197.4.2 2020/04/08 14:08:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.197.4.3 2020/04/13 08:05:04 martin Exp $");
 
 #include "veriexec.h"
 
@@ -308,6 +308,9 @@ vn_openchk(struct vnode *vp, kauth_cred_t cred, int fflags)
 
 	if ((fflags & FREAD) != 0) {
 		permbits = VREAD;
+	}
+	if ((fflags & FEXEC) != 0) {
+		permbits |= VEXEC;
 	}
 	if ((fflags & (FWRITE | O_TRUNC)) != 0) {
 		permbits |= VWRITE;
@@ -1174,4 +1177,57 @@ vn_fifo_bypass(void *v)
 	struct vop_generic_args *ap = v;
 
 	return VOCALL(fifo_vnodeop_p, ap->a_desc->vdesc_offset, v);
+}
+
+/*
+ * Open block device by device number
+ */
+int
+vn_bdev_open(dev_t dev, struct vnode **vpp, struct lwp *l)
+{
+	int     error;
+
+	if ((error = bdevvp(dev, vpp)) != 0)
+		return error;
+
+	if ((error = VOP_OPEN(*vpp, FREAD | FWRITE, l->l_cred)) != 0) {
+		vrele(*vpp);
+		return error;
+	}
+	mutex_enter((*vpp)->v_interlock);
+	(*vpp)->v_writecount++;
+	mutex_exit((*vpp)->v_interlock);
+
+	return 0;
+}
+
+/*
+ * Lookup the provided name in the filesystem.  If the file exists,
+ * is a valid block device, and isn't being used by anyone else,
+ * set *vpp to the file's vnode.
+ */
+int
+vn_bdev_openpath(struct pathbuf *pb, struct vnode **vpp, struct lwp *l)
+{
+	struct nameidata nd;
+	struct vnode *vp;
+	dev_t dev;
+	enum vtype vt;
+	int     error;
+
+	NDINIT(&nd, LOOKUP, FOLLOW, pb);
+	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0)
+		return error;
+
+	vp = nd.ni_vp;
+	dev = vp->v_rdev;
+	vt = vp->v_type;
+
+	VOP_UNLOCK(vp);
+	(void) vn_close(vp, FREAD | FWRITE, l->l_cred);
+
+	if (vt != VBLK)
+		return ENOTBLK;
+
+	return vn_bdev_open(dev, vpp, l);
 }

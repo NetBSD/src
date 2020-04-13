@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.61.2.1 2019/06/10 22:07:08 christos Exp $ */
+/* $NetBSD: gpio.c,v 1.61.2.2 2020/04/13 08:04:20 martin Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.61.2.1 2019/06/10 22:07:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.61.2.2 2020/04/13 08:04:20 martin Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -273,9 +273,7 @@ gpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ga.ga_mask = cf->cf_loc[GPIOCF_MASK];
 	ga.ga_flags = cf->cf_loc[GPIOCF_FLAG];
 	namlen = strlen(cf->cf_name) + 1;
-	ga.ga_dvname = kmem_alloc(namlen, KM_NOSLEEP);
-	if (ga.ga_dvname == NULL)
-		return 0;
+	ga.ga_dvname = kmem_alloc(namlen, KM_SLEEP);
 	strcpy(ga.ga_dvname, cf->cf_name);
 
 	if (config_match(parent, cf, &ga) > 0)
@@ -724,9 +722,8 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		req = data;
 
 		if (req->gp_name[0] != '\0')
-			pin = gpio_pinbyname(sc, req->gp_name);
-		else
-			pin = req->gp_pin;
+			req->gp_pin = gpio_pinbyname(sc, req->gp_name);
+		pin = req->gp_pin;
 
 		if (pin < 0 || pin >= sc->sc_npins)
 			return EINVAL;
@@ -738,6 +735,11 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 
 		/* return read value */
 		req->gp_value = gpiobus_pin_read(gc, pin);
+		LIST_FOREACH(nm, &sc->sc_names, gp_next)
+			if (nm->gp_pin == pin) {
+				strlcpy(req->gp_name, nm->gp_name, GPIOMAXNAME);
+				break;
+			}
 		break;
 	case GPIOWRITE:
 		if ((flag & FWRITE) == 0)

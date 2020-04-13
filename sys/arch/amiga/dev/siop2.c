@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.43 2014/09/21 15:44:47 christos Exp $ */
+/*	$NetBSD: siop2.c,v 1.43.20.1 2020/04/13 08:03:31 martin Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.43 2014/09/21 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.43.20.1 2020/04/13 08:03:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,9 +554,7 @@ siopnginitialize(struct siop_softc *sc)
 	 */
 
 	sc->sc_acb = malloc(sizeof(struct siop_acb) * SIOP_NACB,
-		M_DEVBUF, M_NOWAIT);
-	if (sc->sc_acb == NULL)
-		panic("siopnginitialize: ACB malloc failed!");
+		M_DEVBUF, M_WAITOK);
 
 	sc->sc_tcp[1] = 1000 / sc->sc_clock_freq;
 	sc->sc_tcp[2] = 1500 / sc->sc_clock_freq;

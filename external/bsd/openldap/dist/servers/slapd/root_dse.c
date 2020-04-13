@@ -1,10 +1,10 @@
-/*	$NetBSD: root_dse.c,v 1.1.1.6 2018/02/06 01:53:13 christos Exp $	*/
+/*	$NetBSD: root_dse.c,v 1.1.1.6.4.1 2020/04/13 07:56:17 martin Exp $	*/
 
 /* root_dse.c - Provides the Root DSA-Specific Entry */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2017 The OpenLDAP Foundation.
+ * Copyright 1999-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: root_dse.c,v 1.1.1.6 2018/02/06 01:53:13 christos Exp $");
+__RCSID("$NetBSD: root_dse.c,v 1.1.1.6.4.1 2020/04/13 07:56:17 martin Exp $");
 
 #include "portable.h"
 
@@ -257,6 +257,9 @@ fail:
 		if ( be->be_suffix == NULL
 				|| be->be_nsuffix == NULL ) {
 			/* no suffix! */
+			continue;
+		}
+		if ( SLAP_DBHIDDEN( be )) {
 			continue;
 		}
 		if ( SLAP_MONITOR( be )) {

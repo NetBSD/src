@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.141.16.1 2019/06/10 22:07:11 christos Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.141.16.2 2020/04/13 08:04:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.141.16.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.141.16.2 2020/04/13 08:04:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -224,7 +224,7 @@ static void fwohci_arcv(struct fwohci_softc *, struct fwohci_dbch *);
 #define	OHCI_ATRETRY		0x008
 #define	OHCI_CROMHDR		0x018
 #define	OHCI_BUS_OPT		0x020
-#define	OHCI_BUSIRMC		(1 << 31)
+#define	OHCI_BUSIRMC		(1U << 31)
 #define	OHCI_BUSCMC		(1 << 30)
 #define	OHCI_BUSISC		(1 << 29)
 #define	OHCI_BUSBMC		(1 << 28)
@@ -250,7 +250,7 @@ static void fwohci_arcv(struct fwohci_softc *, struct fwohci_dbch *);
 
 #define	OHCI_SID_BUF		0x064
 #define	OHCI_SID_CNT		0x068
-#define OHCI_SID_ERR		(1 << 31)
+#define OHCI_SID_ERR		(1U << 31)
 #define OHCI_SID_CNT_MASK	0xffc
 
 #define	OHCI_IT_STAT		0x090
@@ -752,7 +752,7 @@ fwohci_set_bus_manager(struct firewire_comm *fc, u_int node)
 	OWRITE(sc, OHCI_CSR_DATA, node);
 	OWRITE(sc, OHCI_CSR_COMP, 0x3f);
 	OWRITE(sc, OHCI_CSR_CONT, OHCI_BUS_MANAGER_ID);
- 	for (i = 0; !(OREAD(sc, OHCI_CSR_CONT) & (1<<31)) && (i < 1000); i++)
+ 	for (i = 0; !(OREAD(sc, OHCI_CSR_CONT) & (1U <<31)) && (i < 1000); i++)
 		DELAY(10);
 	bm = OREAD(sc, OHCI_CSR_DATA);
 	if ((bm & 0x3f) == 0x3f)
@@ -1296,7 +1296,7 @@ fwohci_reset(struct fwohci_softc *sc)
 	/* AT Retries */
 	OWRITE(sc, FWOHCI_RETRY,
 	    /* CycleLimit   PhyRespRetries ATRespRetries ATReqRetries */
-	    (0xffff << 16) | (0x0f << 8) | (0x0f << 4) | 0x0f);
+	    (0xffffU << 16) | (0x0f << 8) | (0x0f << 4) | 0x0f);
 
 	sc->atrq.top = STAILQ_FIRST(&sc->atrq.db_trq);
 	sc->atrs.top = STAILQ_FIRST(&sc->atrs.db_trq);
@@ -1746,8 +1746,8 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 	    dbch->ndb, BUS_DMA_WAITOK);
 #else	/* Ooops, debugging now... */
 	    dbch->ndb, BUS_DMA_WAITOK |
-		(dbch->off == OHCI_ARQOFF || dbch->off == OHCI_ARSOFF) ?
-							BUS_DMA_COHERENT : 0);
+		((dbch->off == OHCI_ARQOFF || dbch->off == OHCI_ARSOFF) ?
+							BUS_DMA_COHERENT : 0));
 #endif
 	if (dbch->am == NULL) {
 		aprint_error_dev(fc->dev, "fwdma_malloc_multiseg failed\n");
@@ -2013,7 +2013,7 @@ fwohci_intr_core(struct fwohci_softc *sc, uint32_t stat)
 		OWRITE(sc, FWOHCI_INTMASK, OHCI_INT_PHY_BUS_R);
 
 		/* Allow async. request to us */
-		OWRITE(sc, OHCI_AREQHI, 1 << 31);
+		OWRITE(sc, OHCI_AREQHI, 1U << 31);
 		if (firewire_phydma_enable) {
 			/* allow from all nodes */
 			OWRITE(sc, OHCI_PREQHI, 0x7fffffff);

@@ -6,6 +6,11 @@ call OK mvwin $win2 8 12
 call OK wrefresh $win1
 call OK wrefresh $win2
 compare dupwin1.chk
+call OK scrollok $win2 $TRUE
+call OK wmove $win2 5 0
+call OK waddstr $win2 "ffffff"
+call OK wmove $win2 4 0
+call OK wscrl $win2 -1
 call OK wmove $win2 0 0
 call OK waddstr $win2 "aaaaaa"
 call OK wmove $win2 1 0
@@ -16,8 +21,6 @@ call OK wmove $win2 3 0
 call OK waddstr $win2 "dddddd"
 call OK wmove $win2 4 0
 call OK waddstr $win2 "eeeeee"
-call OK wmove $win2 5 0
-call OK waddstr $win2 "ffffff"
 call OK wrefresh $win1
 call OK wrefresh $win2
 compare dupwin2.chk

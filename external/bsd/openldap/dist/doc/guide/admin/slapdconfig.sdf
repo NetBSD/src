@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2017 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2019 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: The slapd Configuration File
@@ -279,9 +279,9 @@ sql	SQL Programmable backend
 
 \Example:
 
->	backend bdb
+>	backend mdb
 
-This marks the beginning of a new {{TERM:BDB}} backend
+This marks the beginning of a new {{TERM:MDB}} backend
 definition.
 
 
@@ -299,9 +299,9 @@ supported backend types listed in Table 6.2.
 
 \Example:
 
->	database bdb
+>	database mdb
 
-This marks the beginning of a new {{TERM:BDB}} database instance
+This marks the beginning of a new {{TERM:MDB}} database instance
 declaration.
 
 

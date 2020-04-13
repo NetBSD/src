@@ -1,6 +1,6 @@
 /* Gimple IR definitions.
 
-   Copyright (C) 2007-2016 Free Software Foundation, Inc.
+   Copyright (C) 2007-2017 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>
 
 This file is part of GCC.
@@ -145,6 +145,8 @@ enum gf_mask {
     GF_CALL_INTERNAL		= 1 << 6,
     GF_CALL_CTRL_ALTERING       = 1 << 7,
     GF_CALL_WITH_BOUNDS 	= 1 << 8,
+    GF_CALL_MUST_TAIL_CALL	= 1 << 9,
+    GF_CALL_BY_DESCRIPTOR	= 1 << 10,
     GF_OMP_PARALLEL_COMBINED	= 1 << 0,
     GF_OMP_PARALLEL_GRID_PHONY = 1 << 1,
     GF_OMP_TASK_TASKLOOP	= 1 << 0,
@@ -161,7 +163,13 @@ enum gf_mask {
     GF_OMP_FOR_KIND_CILKSIMD	= GF_OMP_FOR_SIMD | 1,
     GF_OMP_FOR_COMBINED		= 1 << 4,
     GF_OMP_FOR_COMBINED_INTO	= 1 << 5,
+    /* The following flag must not be used on GF_OMP_FOR_KIND_GRID_LOOP loop
+       statements.  */
     GF_OMP_FOR_GRID_PHONY	= 1 << 6,
+    /* The following two flags should only be set on GF_OMP_FOR_KIND_GRID_LOOP
+       loop statements.  */
+    GF_OMP_FOR_GRID_INTRA_GROUP	= 1 << 6,
+    GF_OMP_FOR_GRID_GROUP_ITER  = 1 << 7,
     GF_OMP_TARGET_KIND_MASK	= (1 << 4) - 1,
     GF_OMP_TARGET_KIND_REGION	= 0,
     GF_OMP_TARGET_KIND_DATA	= 1,
@@ -1524,6 +1532,8 @@ extern void preprocess_case_label_vec_for_gimple (vec<tree>, tree, tree *);
 extern void gimple_seq_set_location (gimple_seq, location_t);
 extern void gimple_seq_discard (gimple_seq);
 extern void maybe_remove_unused_call_args (struct function *, gimple *);
+extern bool gimple_inexpensive_call_p (gcall *);
+extern bool stmt_can_terminate_bb_p (gimple *);
 
 /* Formal (expression) temporary table handling: multiple occurrences of
    the same scalar expression are evaluated into the same temporary.  */
@@ -2918,6 +2928,16 @@ gimple_call_internal_unique_p (const gimple *gs)
   return gimple_call_internal_unique_p (gc);
 }
 
+/* Return true if GS is an internal function FN.  */
+
+static inline bool
+gimple_call_internal_p (const gimple *gs, internal_fn fn)
+{
+  return (is_gimple_call (gs)
+	  && gimple_call_internal_p (gs)
+	  && gimple_call_internal_fn (gs) == fn);
+}
+
 /* If CTRL_ALTERING_P is true, mark GIMPLE_CALL S to be a stmt
    that could alter control flow.  */
 
@@ -3209,6 +3229,25 @@ gimple_call_tail_p (gcall *s)
   return (s->subcode & GF_CALL_TAILCALL) != 0;
 }
 
+/* Mark (or clear) call statement S as requiring tail call optimization.  */
+
+static inline void
+gimple_call_set_must_tail (gcall *s, bool must_tail_p)
+{
+  if (must_tail_p)
+    s->subcode |= GF_CALL_MUST_TAIL_CALL;
+  else
+    s->subcode &= ~GF_CALL_MUST_TAIL_CALL;
+}
+
+/* Return true if call statement has been marked as requiring
+   tail call optimization.  */
+
+static inline bool
+gimple_call_must_tail_p (const gcall *s)
+{
+  return (s->subcode & GF_CALL_MUST_TAIL_CALL) != 0;
+}
 
 /* If RETURN_SLOT_OPT_P is true mark GIMPLE_CALL S as valid for return
    slot optimization.  This transformation uses the target of the call
@@ -3334,6 +3373,26 @@ static inline bool
 gimple_call_alloca_for_var_p (gcall *s)
 {
   return (s->subcode & GF_CALL_ALLOCA_FOR_VAR) != 0;
+}
+
+/* If BY_DESCRIPTOR_P is true, GIMPLE_CALL S is an indirect call for which
+   pointers to nested function are descriptors instead of trampolines.  */
+
+static inline void
+gimple_call_set_by_descriptor (gcall  *s, bool by_descriptor_p)
+{
+  if (by_descriptor_p)
+    s->subcode |= GF_CALL_BY_DESCRIPTOR;
+  else
+    s->subcode &= ~GF_CALL_BY_DESCRIPTOR;
+}
+
+/* Return true if S is a by-descriptor call.  */
+
+static inline bool
+gimple_call_by_descriptor_p (gcall *s)
+{
+  return (s->subcode & GF_CALL_BY_DESCRIPTOR) != 0;
 }
 
 /* Copy all the GF_CALL_* flags from ORIG_CALL to DEST_CALL.  */
@@ -5090,6 +5149,8 @@ gimple_omp_for_set_pre_body (gimple *gs, gimple_seq pre_body)
 static inline bool
 gimple_omp_for_grid_phony (const gomp_for *omp_for)
 {
+  gcc_checking_assert (gimple_omp_for_kind (omp_for)
+		       != GF_OMP_FOR_KIND_GRID_LOOP);
   return (gimple_omp_subcode (omp_for) & GF_OMP_FOR_GRID_PHONY) != 0;
 }
 
@@ -5098,10 +5159,59 @@ gimple_omp_for_grid_phony (const gomp_for *omp_for)
 static inline void
 gimple_omp_for_set_grid_phony (gomp_for *omp_for, bool value)
 {
+  gcc_checking_assert (gimple_omp_for_kind (omp_for)
+		       != GF_OMP_FOR_KIND_GRID_LOOP);
   if (value)
     omp_for->subcode |= GF_OMP_FOR_GRID_PHONY;
   else
     omp_for->subcode &= ~GF_OMP_FOR_GRID_PHONY;
+}
+
+/* Return the kernel_intra_group of a GRID_LOOP OMP_FOR statement.  */
+
+static inline bool
+gimple_omp_for_grid_intra_group (const gomp_for *omp_for)
+{
+  gcc_checking_assert (gimple_omp_for_kind (omp_for)
+		       == GF_OMP_FOR_KIND_GRID_LOOP);
+  return (gimple_omp_subcode (omp_for) & GF_OMP_FOR_GRID_INTRA_GROUP) != 0;
+}
+
+/* Set kernel_intra_group flag of OMP_FOR to VALUE.  */
+
+static inline void
+gimple_omp_for_set_grid_intra_group (gomp_for *omp_for, bool value)
+{
+  gcc_checking_assert (gimple_omp_for_kind (omp_for)
+		       == GF_OMP_FOR_KIND_GRID_LOOP);
+  if (value)
+    omp_for->subcode |= GF_OMP_FOR_GRID_INTRA_GROUP;
+  else
+    omp_for->subcode &= ~GF_OMP_FOR_GRID_INTRA_GROUP;
+}
+
+/* Return true if iterations of a grid OMP_FOR statement correspond to HSA
+   groups.  */
+
+static inline bool
+gimple_omp_for_grid_group_iter (const gomp_for *omp_for)
+{
+  gcc_checking_assert (gimple_omp_for_kind (omp_for)
+		       == GF_OMP_FOR_KIND_GRID_LOOP);
+  return (gimple_omp_subcode (omp_for) & GF_OMP_FOR_GRID_GROUP_ITER) != 0;
+}
+
+/* Set group_iter flag of OMP_FOR to VALUE.  */
+
+static inline void
+gimple_omp_for_set_grid_group_iter (gomp_for *omp_for, bool value)
+{
+  gcc_checking_assert (gimple_omp_for_kind (omp_for)
+		       == GF_OMP_FOR_KIND_GRID_LOOP);
+  if (value)
+    omp_for->subcode |= GF_OMP_FOR_GRID_GROUP_ITER;
+  else
+    omp_for->subcode &= ~GF_OMP_FOR_GRID_GROUP_ITER;
 }
 
 /* Return the clauses associated with OMP_PARALLEL GS.  */

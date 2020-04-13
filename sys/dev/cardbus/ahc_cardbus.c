@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.37 2018/04/02 11:02:52 rin Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.37.2.1 2020/04/13 08:04:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.37 2018/04/02 11:02:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.37.2.1 2020/04/13 08:04:19 martin Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -200,10 +200,7 @@ ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	ahc->seep_config = malloc(sizeof(*ahc->seep_config),
-				  M_DEVBUF, M_NOWAIT);
-	if (ahc->seep_config == NULL)
-		return;
-
+				  M_DEVBUF, M_WAITOK);
 	ahc_check_extport(ahc, &sxfrctl1);
 	/*
 	 * Take the LED out of diagnostic mode.

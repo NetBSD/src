@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.60 2017/09/10 19:08:17 maya Exp $
+.\"	$NetBSD: afterboot.8,v 1.60.4.1 2020/04/13 08:03:25 martin Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -59,7 +59,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 10, 2017
+.Dd June 18, 2019
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -411,18 +411,16 @@ You can scan for nearby wireless networks using:
 .Pp
 To connect to a wireless network using WPA and DHCP:
 .Bd -literal -offset indent
-.Ic wpa_passphrase networkname password > /etc/wpa_supplicant.conf
-.Ic wpa_supplicant -i iwm0 -c /etc/wpa_supplicant.conf &
-.Ic dhcpcd iwm0
+.Ic wpa_passphrase networkname password >> /etc/wpa_supplicant.conf
+.Ic service wpa_supplicant onestart
+.Ic service dhcpcd onestart
 .Ed
 .Pp
-To automatically connect at boot, add the following flags to
+To automatically connect at boot, add the following to
 .Pa /etc/rc.conf :
 .Pp
 .Dl dhcpcd=YES
-.Dl dhcpcd_flags="-b"
 .Dl wpa_supplicant=YES
-.Dl wpa_supplicant_flags="-i iwm0 -c /etc/wpa_supplicant.conf"
 .Ss RPC-based network services
 Several services depend on the RPC portmapper
 .Xr rpcbind 8

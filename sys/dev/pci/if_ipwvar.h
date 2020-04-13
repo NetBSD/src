@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.18 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.18.14.1 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -67,7 +67,7 @@ struct ipw_rx_radiotap_header {
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_antsignal;
-} __packed;
+};
 
 #define IPW_RX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_CHANNEL) |				\
@@ -77,7 +77,7 @@ struct ipw_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
-} __packed;
+};
 
 #define IPW_TX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_CHANNEL))

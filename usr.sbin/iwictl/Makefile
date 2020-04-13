@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2009/04/22 15:23:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.46.1 2020/04/13 08:05:54 martin Exp $
 
 PROG	= iwictl
 MAN	= iwictl.8
+
+COPTS.iwictl.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

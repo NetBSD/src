@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.14 2013/05/17 12:55:57 joerg Exp $ */
+/* $NetBSD: strtod.c,v 1.14.28.1 2020/04/13 08:03:09 martin Exp $ */
 
 /****************************************************************
 
@@ -162,7 +162,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 	if (*s == '0') {
 #ifndef NO_HEX_FP /*{*/
 		{
-		static FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
+		static CONST FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
 		Long expt;
 		ULong bits[2];
 		switch(s[1]) {
@@ -293,7 +293,7 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 #ifdef INFNAN_CHECK
 			/* Check for Nan and Infinity */
 			ULong bits[2];
-			static FPI fpinan =	/* only 52 explicit bits */
+			static CONST FPI fpinan = /* only 52 explicit bits */
 				{ 52, 1-1023-53+1, 2046-1023-53+1, 1, SI };
 			if (!decpt)
 			 switch(c) {

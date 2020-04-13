@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_m.c,v 1.1.1.5 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: tls_m.c,v 1.1.1.5.4.1 2020/04/13 07:56:14 martin Exp $	*/
 
 /* tls_m.c - Handle tls/ssl using Mozilla NSS. */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2017 The OpenLDAP Foundation.
+ * Copyright 2008-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls_m.c,v 1.1.1.5 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: tls_m.c,v 1.1.1.5.4.1 2020/04/13 07:56:14 martin Exp $");
 
 #include "portable.h"
 
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: tls_m.c,v 1.1.1.5 2018/02/06 01:53:08 christos Exp $");
 #include <ac/unistd.h>
 #include <ac/param.h>
 #include <ac/dirent.h>
+#include <ac/regex.h>
 
 #include "ldap-int.h"
 #include "ldap-tls.h"
@@ -123,9 +124,7 @@ static const PRIOMethods tlsm_PR_methods;
 
 #define PEM_LIBRARY	"nsspem"
 #define PEM_MODULE	"PEM"
-/* hash files for use with cacertdir have this file name suffix */
-#define PEM_CA_HASH_FILE_SUFFIX	".0"
-#define PEM_CA_HASH_FILE_SUFFIX_LEN 2
+#define PEM_CA_HASH_FILE_REGEX "^[0-9a-f]{8}\\.[0-9]+$"
 
 static SECMODModule *pem_module;
 
@@ -1148,6 +1147,8 @@ tlsm_auth_cert_handler(void *arg, PRFileDesc *fd,
 	return ret;
 }
 
+static PRCallOnceType tlsm_register_shutdown_callonce = {0,0};
+
 static SECStatus
 tlsm_nss_shutdown_cb( void *appData, void *nssData )
 {
@@ -1160,10 +1161,15 @@ tlsm_nss_shutdown_cb( void *appData, void *nssData )
 		SECMOD_DestroyModule( pem_module );
 		pem_module = NULL;
 	}
+
+	/* init callonce so it can be armed again for cases like persistent daemon with LDAP_OPT_X_TLS_NEWCTX */
+	tlsm_register_shutdown_callonce.initialized = 0;
+	tlsm_register_shutdown_callonce.inProgress = 0;
+	tlsm_register_shutdown_callonce.status = 0;
+
 	return rc;
 }
 
-static PRCallOnceType tlsm_register_shutdown_callonce = {0,0};
 static PRStatus PR_CALLBACK
 tlsm_register_nss_shutdown_cb( void )
 {
@@ -1348,7 +1354,7 @@ tlsm_ctx_load_private_key( tlsm_ctx *ctx )
 	/* prefer unlocked key, then key from opened certdb, then any other */
 	if ( unlocked_key )
 		ctx->tc_private_key = unlocked_key;
-	else if ( ctx->tc_certdb_slot )
+	else if ( ctx->tc_certdb_slot && !ctx->tc_using_pem )
 		ctx->tc_private_key = PK11_FindKeyByDERCert( ctx->tc_certdb_slot, ctx->tc_certificate, pin_arg );
 	else
 		ctx->tc_private_key = PK11_FindKeyByAnyCert( ctx->tc_certificate, pin_arg );
@@ -1476,6 +1482,7 @@ tlsm_init_ca_certs( tlsm_ctx *ctx, const char *cacertfile, const char *cacertdir
 		PRDir *dir;
 		PRDirEntry *entry;
 		PRStatus fistatus = PR_FAILURE;
+		regex_t hashfile_re;
 
 		memset( &fi, 0, sizeof(fi) );
 		fistatus = PR_GetFileInfo( cacertdir, &fi );
@@ -1505,20 +1512,30 @@ tlsm_init_ca_certs( tlsm_ctx *ctx, const char *cacertfile, const char *cacertdir
 			goto done;
 		}
 
+		if ( regcomp( &hashfile_re, PEM_CA_HASH_FILE_REGEX, REG_NOSUB|REG_EXTENDED ) != 0 ) {
+			Debug( LDAP_DEBUG_ANY, "TLS: cannot compile regex for CA hash files matching\n", 0, 0, 0 );
+			goto done;
+		}
+
 		do {
 			entry = PR_ReadDir( dir, PR_SKIP_BOTH | PR_SKIP_HIDDEN );
 			if ( ( NULL != entry ) && ( NULL != entry->name ) ) {
 				char *fullpath = NULL;
-				char *ptr;
+				int match;
 
-				ptr = PL_strrstr( entry->name, PEM_CA_HASH_FILE_SUFFIX );
-				if ( ( ptr == NULL ) || ( *(ptr + PEM_CA_HASH_FILE_SUFFIX_LEN) != '\0' ) ) {
+				match = regexec( &hashfile_re, entry->name, 0, NULL, 0 );
+				if ( match == REG_NOMATCH ) {
 					Debug( LDAP_DEBUG_TRACE,
-						   "TLS: file %s does not end in [%s] - does not appear to be a CA certificate "
-						   "directory file with a properly hashed file name - skipping.\n",
-						   entry->name, PEM_CA_HASH_FILE_SUFFIX, 0 );
+						   "TLS: skipping '%s' - filename does not have expected format "
+						   "(certificate hash with numeric suffix)\n", entry->name, 0, 0 );
+					continue;
+				} else if ( match != 0 ) {
+					Debug( LDAP_DEBUG_ANY,
+						   "TLS: cannot execute regex for CA hash file matching (%d).\n",
+						   match, 0, 0 );
 					continue;
 				}
+
 				fullpath = PR_smprintf( "%s/%s", cacertdir, entry->name );
 				if ( !tlsm_add_cert_from_file( ctx, fullpath, isca ) ) {
 					Debug( LDAP_DEBUG_TRACE,
@@ -1534,6 +1551,7 @@ tlsm_init_ca_certs( tlsm_ctx *ctx, const char *cacertfile, const char *cacertdir
 				PR_smprintf_free( fullpath );
 			}
 		} while ( NULL != entry );
+		regfree ( &hashfile_re );
 		PR_CloseDir( dir );
 	}
 done:
@@ -1824,8 +1842,6 @@ tlsm_deferred_init( void *arg )
 				}
 				return -1;
 			}
-
-			ctx->tc_using_pem = PR_TRUE;
 		}
 
 		NSS_SetDomesticPolicy();
@@ -2280,15 +2296,9 @@ tlsm_deferred_ctx_init( void *arg )
 
 	/* set up our cert and key, if any */
 	if ( lt->lt_certfile ) {
-		/* if using the PEM module, load the PEM file specified by lt_certfile */
-		/* otherwise, assume this is the name of a cert already in the db */
-		if ( ctx->tc_using_pem ) {
-			/* this sets ctx->tc_certificate to the correct value */
-			int rc = tlsm_add_cert_from_file( ctx, lt->lt_certfile, PR_FALSE );
-			if ( rc ) {
-				return rc;
-			}
-		} else {
+
+		/* first search in certdb (lt_certfile is nickname) */
+		if ( ctx->tc_certdb ) {
 			char *tmp_certname;
 
 			if ( tlsm_is_tokenname_certnick( lt->lt_certfile )) {
@@ -2308,8 +2318,31 @@ tlsm_deferred_ctx_init( void *arg )
 				Debug( LDAP_DEBUG_ANY,
 					   "TLS: error: the certificate '%s' could not be found in the database - error %d:%s.\n",
 					   lt->lt_certfile, errcode, PR_ErrorToString( errcode, PR_LANGUAGE_I_DEFAULT ) );
+			}
+		}
+
+		/* fallback to PEM module (lt_certfile is filename) */
+		if ( !ctx->tc_certificate ) {
+			if ( !pem_module && tlsm_init_pem_module() ) {
+				int pem_errcode = PORT_GetError();
+				Debug( LDAP_DEBUG_ANY,
+					   "TLS: fallback to PEM impossible, module cannot be loaded - error %d:%s.\n",
+					   pem_errcode, PR_ErrorToString( pem_errcode, PR_LANGUAGE_I_DEFAULT ), 0 );
 				return -1;
 			}
+
+			/* this sets ctx->tc_certificate to the correct value */
+			if ( !tlsm_add_cert_from_file( ctx, lt->lt_certfile, PR_FALSE ) ) {
+				ctx->tc_using_pem = PR_TRUE;
+			}
+		}
+
+		if ( ctx->tc_certificate ) {
+			Debug( LDAP_DEBUG_ANY,
+				   "TLS: certificate '%s' successfully loaded from %s.\n", lt->lt_certfile,
+				   ctx->tc_using_pem ? "PEM file" : "moznss database", 0);
+		} else {
+			return -1;
 		}
 	}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.311.2.2 2020/04/08 14:08:02 martin Exp $
+#	$NetBSD: DEVNAMES,v 1.311.2.3 2020/04/13 08:04:18 martin Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -658,6 +658,7 @@ iopsp			MI
 ipaqbus			hpcarm
 ipaqlcd			hpcarm
 ipaqpcic		hpcarm
+ipgphy			MI
 ipmi			amd64
 ipmi			i386
 ipmi			xen
@@ -706,6 +707,7 @@ j720pwr			hpcarm
 j720ssp			hpcarm
 j720tp			hpcarm
 jme			MI
+jmphy			MI
 joy			arc
 joy			bebox
 joy			cats
@@ -922,6 +924,7 @@ ncr53c9x		MI		Attribute
 ncrsc			mvme68k
 ncrscsi			atari
 ncrscsi			mac68k
+nct			MI
 ne			MI
 necpb			arc
 nele			MI
@@ -1256,6 +1259,7 @@ sm			MI
 smap			playstation2
 smc93cx6		MI		Attribute
 smg			vax
+smscphy			MI
 smsh			MI
 sn			arc
 sn			mac68k

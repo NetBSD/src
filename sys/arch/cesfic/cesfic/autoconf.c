@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2012/07/29 18:05:40 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.40.1 2020/04/13 08:03:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2012/07/29 18:05:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26.40.1 2020/04/13 08:03:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,6 @@ cpu_configure(void)
 		panic("no mainbus found");
 
 	(void)spl0();
-	cold = 0;
 }
 
 void

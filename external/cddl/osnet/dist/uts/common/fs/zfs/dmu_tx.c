@@ -1427,8 +1427,10 @@ dmu_tx_willuse_space(dmu_tx_t *tx, int64_t delta)
 		return;
 
 	if (delta > 0) {
+/* FreeBSD r318821, illumos 7793 ztest fails assertion in dmu_tx_willuse_space
 		ASSERT3U(refcount_count(&tx->tx_space_written) + delta, <=,
 		    tx->tx_space_towrite);
+*/
 		(void) refcount_add_many(&tx->tx_space_written, delta, NULL);
 	} else {
 		(void) refcount_add_many(&tx->tx_space_freed, -delta, NULL);

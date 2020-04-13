@@ -1,0 +1,39 @@
+#	$NetBSD: files.zynq,v 1.1.10.2 2020/04/13 08:03:38 martin Exp $
+#
+# Configuration info for Xilinx Zynq-7000 SoC
+#
+#
+
+file	arch/arm/xilinx/zynq_platform.c		soc_zynq
+
+# SOC parameters
+defflag	opt_soc.h				SOC_ZYNQ
+defflag	opt_soc.h				SOC_ZYNQ7000: SOC_ZYNQ
+
+# System Level Control Module
+#device	zynqslcr
+#attach	zynqslcr at fdt
+#file	arch/arm/xilinx/zynq_slcr.c		zynqslcr needs-flag
+
+# UART
+device	zynquart
+attach	zynquart at fdt
+file	arch/arm/xilinx/zynq_uart.c		zynquart needs-flag
+file	arch/arm/xilinx/zynq7000_uart.c		zynquart
+defflag	opt_zynquart.h				ZYNQUARTCONSOLE
+
+# Gigabit Ethernet Controller
+device	cemac: ether, ifnet, arp, mii, bus_dma_generic
+attach	cemac at fdt
+file	dev/cadence/if_cemac.c			cemac
+file	arch/arm/xilinx/zynq_cemac.c		cemac
+
+# USB controller
+attach	ehci at fdt with zynqusb
+file	arch/arm/xilinx/zynq_usb.c		zynqusb
+file	arch/arm/xilinx/zynq7000_usb.c		zynqusb
+
+# SD host controller for SD/MMC
+attach	sdhc at fdt with sdhc_fdt
+file	arch/arm/xilinx/zynq7000_sdhc.c		sdhc_fdt
+

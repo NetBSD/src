@@ -1,7 +1,7 @@
-/*	$NetBSD: libaudio.h,v 1.20 2015/08/05 06:54:39 mrg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.20.16.1 2020/04/13 08:05:40 martin Exp $	*/
 
 /*
- * Copyright (c) 1999, 2009 Matthew R. Green
+ * Copyright (c) 1999, 2009, 2013, 2015, 2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,17 @@
 #define AUDIO_FORMAT_WAV	3
 
 int	audio_format_from_str (char *);
+
+/*
+ * Audio encoding formats; this is a additional to those set
+ * in sys/audioio.h, but with a large offset to avoid future
+ * conflicts (additional ones are libaudio-software only.)
+ *
+ * This is to support floating-point WAV files.  These require
+ * software conversion to a supported format.
+ */
+#define	AUDIO_ENCODING_LIBAUDIO_FLOAT32    1001	/* 32-bit IEEE FP. */
+#define	AUDIO_ENCODING_LIBAUDIO_FLOAT64    1002	/* 64-bit IEEE FP. */
 
 /*
  * We copy the Sun/NeXT on-disk audio header format and document what
@@ -107,10 +118,11 @@ int	audio_encoding_to_sun (int, int, int *);
 #define	WAVAUDIO_FILE_MAGIC_FMT		((u_int32_t)0x666d7420)
 #define	WAVAUDIO_FILE_MAGIC_DATA	((u_int32_t)0x64617461)
 
-/* purloined from public Microsoft RIFF docs via sox or mplayer */
+/* purloined from public Microsoft RIFF docs via sox, mplayer, or directly */
 #define WAVE_FORMAT_UNKNOWN		(0x0000)
 #define WAVE_FORMAT_PCM			(0x0001)
 #define WAVE_FORMAT_ADPCM		(0x0002)
+#define WAVE_FORMAT_IEEE_FLOAT		(0x0003)
 #define WAVE_FORMAT_ALAW		(0x0006)
 #define WAVE_FORMAT_MULAW		(0x0007)
 #define WAVE_FORMAT_OKI_ADPCM		(0x0010)

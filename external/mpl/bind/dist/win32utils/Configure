@@ -192,10 +192,10 @@ my @projectlist = ("..\\bin\\check\\win32\\checkconf.vcxproj",
 
 my %configdefh;
 
-my @substdefh = ("AES_CC",
-                 "CONFIGARGS",
+my @substdefh = ("CONFIGARGS",
                  "DNS_RDATASET_FIXED",
                  "HAVE_GEOIP",
+                 "HAVE_GEOIP2",
                  "HAVE_GEOIP_CITY_V6",
                  "HAVE_GEOIP_V6",
                  "HAVE_LIBXML2",
@@ -211,8 +211,6 @@ my @substdefh = ("AES_CC",
                  "HAVE_PKCS11_ED448",
                  "HAVE_READLINE",
                  "HAVE_ZLIB",
-                 "HMAC_SHA1_CC",
-                 "HMAC_SHA256_CC",
                  "ISC_LIST_CHECKINIT",
                  "TUNE_LARGE",
                  "WANT_QUERYTRACE",
@@ -248,7 +246,6 @@ my @substtest = ("CHECKDS",
                  "JSONSTATS",
                  "KEYMGR",
                  "NZD_TOOLS",
-                 "PKCS11_TEST",
                  "XMLSTATS",
                  "ZLIB"),
 
@@ -296,7 +293,9 @@ my @substdll = ("COMERR_DLL",
 
 # variables
 
-my %configvar;
+my %configvar = (
+	"TOOLS_VERSION" => "4.0",
+);
 
 my @substvar = ("BIND9_VERSION",
                 "BUILD_MACHINE",
@@ -314,11 +313,14 @@ my @substvar = ("BIND9_VERSION",
                 "OPENSSL_PATH",
                 "PLATFORM",
                 "PKCS11_TOOLS",
+                "PLATFORM_TOOLSET",
                 "prefix",
                 "PSSUSPEND",
                 "PYTHON",
                 "PYTHON_INSTALL_DIR",
-                "VCREDIST_PATH"),
+                "TOOLS_VERSION",
+                "VCREDIST_PATH",
+                "WINDOWS_TARGET_PLATFORM_VERSION"),
 
 # defines
 
@@ -336,6 +338,7 @@ my %configcond;
 my @substcond = ("ATOMIC",
                  "GSSAPI",
                  "GEOIP",
+                 "GEOIPLEGACY",
                  "IDNKIT",
                  "LIBXML2",
                  "OPENSSL",
@@ -370,6 +373,7 @@ my @withlist = ("aes",
                 "extra-tests",
                 "gssapi",
                 "geoip",
+                "geoip2",
                 "iconv",
                 "idn",
                 "openssl",
@@ -426,6 +430,7 @@ my @help = (
 "  with-gssapi[=PATH]    build with MIT KfW GSSAPI yes|no|path\n",
 "  with-libxml2[=PATH]   build with libxml2 library yes|no|path\n",
 "  with-geoip[=PATH]     build with GeoIP support yes|no|path\n",
+"  with-geoip2[=PATH]    build with GeoIP2 support yes|no|path\n",
 "  with-pssuspend[=COMMAND] specify pssuspend command\n",
 "  with-python[=COMMAND] specify python interpreter python|command\n",
 "  with-readline[=PATH]  build with readline library support yes|no|path\n",
@@ -433,8 +438,12 @@ my @help = (
 "  with-iconv[=PATH]     path of the iconv DLL [default=same than idn]\n",
 "  with-zlib[=PATH]      build with zlib library yes|no|path\n",
 "  with-vcredist[=PATH]  visual C++ redistributable package yes|path\n",
-"  with-tuning=OPTION    tune for plaform size (large|default)\n",
-"  with-cross-compile    32 / 64 bit build / host plaforms\n");
+"  with-tuning=OPTION    tune for platform size (large|default)\n",
+"  with-cross-compile    32 / 64 bit build / host platforms\n",
+"\nOptional Visual Studio project parameters:\n",
+"  with-tools-version=VERSION     set the ToolsVersion attribute to VERSION\n",
+"  with-platform-toolset=VERSION  use supplied toolset VERSION for building\n",
+"  with-platform-version=VERSION  use supplied Windows SDK VERSION for building\n");
 
 # Parse arguments
 
@@ -472,6 +481,8 @@ my $validation_default = "auto";
 my $gssapi_path = "C:\\Program\ Files\\MIT\\Kerberos\\";
 my $use_geoip = "no";
 my $geoip_path = "";
+my $use_geoip2 = "no";
+my $geoip2_path = "";
 my $use_libxml2 = "auto";
 my $libxml2_path = "..\\..\\";
 my $with_pssuspend = "no";
@@ -779,6 +790,17 @@ sub mywith {
                 $geoip_path = $val;
             }
         }
+    } elsif ($key =~ /^geoip2$/i) {
+        if ($val !~ /^no$/i) {
+            $use_geoip2 = "yes";
+            # Disable GeoIP legacy.
+            $use_geoip = "no";
+            if ($val !~ /^yes$/i) {
+                $geoip2_path = $val;
+            } else {
+                $geoip2_path = "..\\..\\GeoIP2";
+            }
+        }
     } elsif ($key =~ /^readline$/i) {
         if ($val !~ /^no$/i) {
             $use_readline = "yes";
@@ -839,6 +861,12 @@ sub mywith {
         if ($val =~ /^large$/i) {
             $tuning = "large";
         }
+    } elsif ($key =~ /^tools-version$/i) {
+        $configvar{"TOOLS_VERSION"} = $val;
+    } elsif ($key =~ /^platform-version$/i) {
+        $configvar{"WINDOWS_TARGET_PLATFORM_VERSION"} = "<WindowsTargetPlatformVersion>$val</WindowsTargetPlatformVersion>";
+    } elsif ($key =~ /^platform-toolset$/i) {
+        $configvar{"PLATFORM_TOOLSET"} = "<PlatformToolset>$val</PlatformToolset>";
     } else {
         $want_unknown = "yes";
         if ($val eq "no") {
@@ -977,6 +1005,11 @@ if ($verbose) {
         print "geoip: disabled\n";
     } else {
         print "geoip-path: $geoip_path\n";
+    }
+    if ($use_geoip2 eq "no") {
+        print "geoip2: disabled\n";
+    } else {
+        print "geoip2-path: $geoip2_path\n";
     }
     if ($use_readline eq "no") {
         print "readline: disabled\n";
@@ -1474,6 +1507,7 @@ EOF
             $configdefh{"HAVE_DH_GET0_KEY"} = 1;
             $configdefh{"HAVE_ECDSA_SIG_GET0"} = 1;
             $configdefh{"HAVE_RSA_SET0_KEY"} = 1;
+            $configdefh{"HAVE_CRYPTO_ZALLOC"} = 1;
             $configdefh{"HAVE_EVP_CIPHER_CTX_FREE"} = 1;
             $configdefh{"HAVE_EVP_CIPHER_CTX_NEW"} = 1;
             $configdefh{"HAVE_EVP_MD_CTX_FREE"} = 1;
@@ -1592,18 +1626,6 @@ if ($use_openssl eq "no") {
     if ($use_aes ne "pkcs11") {
         $use_aes = "no";
     }
-}
-
-# with-cc-alg
-if ($cookie_algorithm eq "aes") {
-    $configdefh{"AES_CC"} = 1;
-}
-if ($cookie_algorithm eq "sha1") {
-    $configdefh{"HMAC_SHA1_CC"} = 1;
-} elsif ($cookie_algorithm eq "sha256") {
-    $configdefh{"HMAC_SHA256_CC"} = 1;
-} elsif ($cookie_algorithm ne "aes") {
-    die "Unrecognized cookie algorithm: $cookie_algorithm\n";
 }
 
 if ($cryptolib ne "") {
@@ -1731,7 +1753,7 @@ if ($use_geoip eq "no") {
         print "geoip library is disabled\n";
     }
 } else {
-    $configcond{"GEOIP"} = 1;
+    $configcond{"GEOIPLEGACY"} = 1;
     $geoip_path = File::Spec->rel2abs($geoip_path);
     if ($verbose) {
         print "checking for geoip directory at \"$geoip_path\"\n";
@@ -1837,6 +1859,55 @@ EOF
         die "can't compile GeoIP City IPv6 test: $compret\n";
     }
     $configdefh{"HAVE_GEOIP_CITY_V6"} = 1;
+}
+
+# with-geoip2
+if ($use_geoip2 eq "no") {
+    if ($verbose) {
+        print "geoip2 library is disabled\n";
+    }
+} else {
+    $configcond{"GEOIP"} = 1;
+    $geoip2_path = File::Spec->rel2abs($geoip2_path);
+    if ($verbose) {
+        print "checking for geoip2 directory at \"$geoip2_path\"\n";
+    }
+    if (!-f File::Spec->catfile($geoip2_path, "maxminddb.h")) {
+        die "can't find maxminddb.h include\n";
+    }
+    if (!-f File::Spec->catfile($geoip2_path, "maxminddb_config.h")) {
+        die "can't find maxminddb_config.h include\n";
+    }
+    if (!-f File::Spec->catfile($geoip2_path, "libmaxminddb.lib")) {
+        die "can't find libmaxminddb.lib library\n";
+    }
+    $configinc{"GEOIP_INC"} = "$geoip2_path";
+    my $geoip2_lib = File::Spec->catfile($geoip2_path, "libmaxminddb.lib");
+    $configlib{"GEOIP_LIB"} = "$geoip2_lib";
+    my $geoip_inc = qq(/I "$geoip2_path");
+    my $geoip2_libs = qq("$geoip2_lib" Ws2_32.Lib);
+
+    if ($verbose) {
+        print "checking for GeoIP2 support\n";
+    }
+    open F, ">testgeoip2.c" || die $!;
+    print F << 'EOF';
+#include <maxminddb.h>
+int main(void) {
+	return MMDB_lib_version() != 0;
+}
+EOF
+    close F;
+    $compret = `cl /nologo $geoip_inc /MD testgeoip2.c $geoip2_libs`;
+    if (grep { -f and -x } ".\\testgeoip2.exe") {
+        `.\\testgeoip2.exe`;
+        if ($? == 0) {
+            die "GeoIP2 test failed\n";
+        }
+    } else {
+        die "can't compile GeoIP2 test: $compret\n";
+    }
+    $configdefh{"HAVE_GEOIP2"} = 1;
 }
 
 # with-readline
@@ -2945,6 +3016,7 @@ exit 0;
 #  --with-aes supported
 #  --with-randomdev not supported on WIN32 (makes no sense)
 #  --with-geoip supported
+#  --with-geoip2 supported
 #  --with-gssapi supported with MIT (K)erberos (f)or (W)indows
 #  --with-lmdb no supported on WIN32 (port is not reliable)
 #  --with-libxml2 supported

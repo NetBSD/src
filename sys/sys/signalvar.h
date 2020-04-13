@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.91.2.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.91.2.2 2020/04/13 08:05:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,6 +38,10 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/stdbool.h>
+
+#ifndef _KERNEL
+#include <string.h>     /* Required for memset(3) and memcpy(3) prototypes */
+#endif /* _KERNEL */
 
 /*
  * Kernel signal definitions and data structures,
@@ -93,6 +97,18 @@ struct sigctx {
 #define	SIGACTION_PS(ps, sig)	(ps->sa_sigdesc[(sig)].sd_sigact)
 
 /*
+ * Copy a sigaction structure without padding.
+ */
+static __inline void
+sigaction_copy(struct sigaction *dst, const struct sigaction *src)
+{
+	memset(dst, 0, sizeof(*dst));
+	dst->_sa_u._sa_handler = src->_sa_u._sa_handler;
+	memcpy(&dst->sa_mask, &src->sa_mask, sizeof(dst->sa_mask));
+	dst->sa_flags = src->sa_flags;
+}
+
+/*
  * Signal properties and actions.
  * The array below categorizes the signals and their default actions
  * according to the following properties:
@@ -121,6 +137,7 @@ struct coredump_iostate;
  * Machine-independent functions:
  */
 int	coredump_netbsd(struct lwp *, struct coredump_iostate *);
+int	real_coredump_netbsd(struct lwp *, struct coredump_iostate *);
 void	execsigs(struct proc *);
 int	issignal(struct lwp *);
 void	pgsignal(struct pgrp *, int, int);
@@ -136,9 +153,8 @@ void	killproc(struct proc *, const char *);
 void	setsigvec(struct proc *, int, struct sigaction *);
 int	killpg1(struct lwp *, struct ksiginfo *, int, int);
 void	proc_unstop(struct proc *p);
-void	eventswitch(int);
-void	sigswitch(int, int, bool);
-
+void	eventswitch(int, int, int);
+void	eventswitchchild(struct proc *, int, int);
 
 int	sigaction1(struct lwp *, int, const struct sigaction *,
 	    struct sigaction *, const void *, int);
@@ -185,13 +201,6 @@ void	sendsig_sigcontext(const struct ksiginfo *, const sigset_t *);
 void	sendsig_siginfo(const struct ksiginfo *, const sigset_t *);
 
 extern	struct pool ksiginfo_pool;
-
-/*
- * Modularity / compatibility.
- */
-extern void	(*sendsig_sigcontext_vec)(const struct ksiginfo *,
-					  const sigset_t *);
-extern int	(*coredump_vec)(struct lwp *, const char *);
 
 /*
  * firstsig:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: mbr.h,v 1.1.28.1 2020/04/13 08:06:00 martin Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -54,6 +54,8 @@
 #define MBR_PUT_LSCYL(c)		((c) & 0xff)
 #define MBR_PUT_MSCYLANDSEC(c,s)	(((s) & 0x3f) | (((c) >> 2) & 0xc0))
 
+#define MBR_DEV_LEN	16		/* for wedge names */
+
 typedef struct mbr_info_t mbr_info_t;
 struct mbr_info_t {
 	struct mbr_sector	mbr;
@@ -63,20 +65,15 @@ struct mbr_info_t {
 #endif
 	uint		sector;		/* where we read this from */
 	mbr_info_t	*extended;	/* next in extended partition list */
-	mbr_info_t	*prev_ext;	/* and back ptr */
 	const char	*last_mounted[MBR_PART_COUNT];
-	/* only in first item... */
-	int		opt;		/* entry being edited */
-	uint		install;	/* start sector of install partition */
+	uint		fs_type[MBR_PART_COUNT], fs_sub_type[MBR_PART_COUNT];
 #ifdef BOOTSEL
+	/* only in first item... */
 	uint		bootsec;	/* start sector of bootmenu default */
 #endif
+	/* for temporary access */
+	char		wedge[MBR_PART_COUNT][MBR_DEV_LEN];
 };
-
-/* incore fdisk (mbr, bios) geometry */
-int bcyl, bhead, bsec;
-
-mbr_info_t mbr;
 
 #ifdef BOOTSEL
 struct mbr_bootsel *mbs;
@@ -100,21 +97,15 @@ void	disp_cur_geom(void);
 int	check_geom(void);		/* primitive geometry sanity-check */
 
 void	disp_cur_part(struct mbr_partition *, int, int);
-int	edit_mbr(mbr_info_t *);
-int	mbr_use_wholedisk(mbr_info_t *);
 int 	partsoverlap(struct mbr_partition *, int, int);
 
 /* from mbr.c */
 
-int     read_mbr(const char *, mbr_info_t *);
-int     write_mbr(const char *, mbr_info_t *, int);
-int     valid_mbr(struct mbr_sector *);
-int	guess_biosgeom_from_mbr(mbr_info_t *, int *, int *, daddr_t *);
-int	set_bios_geom_with_mbr_guess(void);
-void	set_bios_geom(int, int, int);
+int	guess_biosgeom_from_parts(struct disk_partitions*, int *, int *, int *);
+bool	set_bios_geom_with_mbr_guess(struct disk_partitions*);
+void	set_bios_geom(struct disk_partitions *, int *cyl, int *head, int *sec);
 int	otherpart(int);
 int	ourpart(int);
-const char	*get_partname(int);
 void	edit_ptn_bounds(void);
 #ifdef BOOTSEL
 void	disp_bootsel(void);
@@ -125,8 +116,23 @@ void	edit_bootsel_default_disk(int);
 void	configure_bootsel(void);
 #endif
 
-/* Machine dependent mbr functions */
-int	md_mbr_use_wholedisk(mbr_info_t *mbri);
-int	md_check_mbr(mbr_info_t *mbri);
+/*
+ * MBR specific: check if the chosen partitioning will work
+ * and perform any MD queries/fixup.
+ * With quiet = true, try to avoid user interaction and
+ * never return 1.
+ *
+ * Return value:
+ *  0 -> abort
+ *  1 -> re-edit
+ *  2 -> continue installation
+*/
+int	md_check_mbr(struct disk_partitions*, mbr_info_t*, bool quiet);
+
+/*
+ * Called early during updates (before md_pre_update),
+ * returns true if partitions have been modified.
+ */
+bool	md_mbr_update_check(struct disk_partitions*, mbr_info_t*);
 
 #endif

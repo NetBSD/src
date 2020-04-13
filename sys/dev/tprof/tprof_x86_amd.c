@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_amd.c,v 1.3.2.2 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: tprof_x86_amd.c,v 1.3.2.3 2020/04/13 08:04:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.3.2.2 2019/06/10 22:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.3.2.3 2020/04/13 08:04:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,8 +135,8 @@ tprof_amd_start_cpu(void *arg1, void *arg2)
 	wrmsr(PERFCTR(ctrno), counter_reset_val);
 	wrmsr(PERFEVTSEL(ctrno), pesr);
 
-	amd_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_PCINT);
-	lapic_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
+	amd_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_LVT_PCINT);
+	lapic_writereg(LAPIC_LVT_PCINT, LAPIC_DLMODE_NMI);
 
 	wrmsr(PERFEVTSEL(ctrno), pesr | PESR_EN);
 }
@@ -148,7 +148,7 @@ tprof_amd_stop_cpu(void *arg1, void *arg2)
 
 	wrmsr(PERFEVTSEL(ctrno), 0);
 
-	lapic_writereg(LAPIC_PCINT, amd_lapic_saved[cpu_index(ci)]);
+	lapic_writereg(LAPIC_LVT_PCINT, amd_lapic_saved[cpu_index(ci)]);
 }
 
 static int
@@ -205,6 +205,7 @@ tprof_amd_ident(void)
 
 	switch (CPUID_TO_FAMILY(ci->ci_signature)) {
 	case 0x10:
+	case 0x15:
 	case 0x17:
 		return TPROF_IDENT_AMD_GENERIC;
 	}

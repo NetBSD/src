@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.29.16.1 2019/06/10 22:05:23 christos Exp $	*/
+/*	$NetBSD: gettext.c,v 1.29.16.2 2020/04/13 08:03:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.29.16.1 2019/06/10 22:05:23 christos Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.29.16.2 2020/04/13 08:03:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -229,6 +229,7 @@ lookup_category(int category)
 	return NULL;
 }
 
+#define MAXBUFLEN	1024
 /*
  * XPG syntax: language[_territory[.codeset]][@modifier]
  * XXX boundary check on "result" is lacking
@@ -236,9 +237,9 @@ lookup_category(int category)
 static const char *
 split_locale(const char *lname)
 {
-	char buf[BUFSIZ], tmp[BUFSIZ];
+	char buf[MAXBUFLEN], tmp[2 * MAXBUFLEN];
 	char *l, *t, *c, *m;
-	static char result[BUFSIZ];
+	static char result[4 * MAXBUFLEN];
 
 	memset(result, 0, sizeof(result));
 

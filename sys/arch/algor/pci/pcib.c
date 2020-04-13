@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.24 2011/07/09 16:03:01 matt Exp $	*/
+/*	$NetBSD: pcib.c,v 1.24.54.1 2020/04/13 08:03:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.24 2011/07/09 16:03:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.24.54.1 2020/04/13 08:03:29 martin Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -449,10 +449,7 @@ pcib_isa_intr_establish(void *v, int irq, int type, int level,
 		return (NULL);
 	}
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;

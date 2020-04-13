@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2016/12/10 14:06:44 rin Exp $
+#	$NetBSD: Makefile,v 1.18.16.1 2020/04/13 08:04:10 martin Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -48,8 +48,8 @@ ${BASE}${i}:	${OBJS} ${LIBDOS}/libdos.a ${LIBIOCS}/libiocs.a
 
 release: check_RELEASEDIR
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${PROG} \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 	${TOOL_MANDOC_ASCII} ${DESTDIR}/usr/share/man/man8/x68k/loadbsd.8 > \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc/loadbsd.0
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc/loadbsd.0
 	${TOOL_MANDOC_HTML} ${DESTDIR}/usr/share/man/man8/x68k/loadbsd.8 > \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc/loadbsd.html
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc/loadbsd.html

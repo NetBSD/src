@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.5.2.2 2019/06/10 22:04:48 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.5.2.3 2020/04/13 08:03:00 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -898,7 +898,7 @@ static cfg_type_t cfg_type_bracketed_portlist = {
 	&cfg_rep_list, &cfg_type_portrange
 };
 
-static const char *cookiealg_enums[] = { "aes", "sha1", "sha256", NULL };
+static const char *cookiealg_enums[] = { "aes", "sha1", "sha256", "siphash24", NULL };
 static cfg_type_t cfg_type_cookiealg = {
 	"cookiealg", cfg_parse_enum, cfg_print_ustring, cfg_doc_enum,
 	&cfg_rep_string, &cookiealg_enums
@@ -1068,7 +1068,7 @@ options_clauses[] = {
 	{ "fstrm-set-reopen-interval", &cfg_type_ttlval,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
 #endif /* HAVE_DNSTAP */
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 	{ "geoip-directory", &cfg_type_qstringornone, 0 },
 #else
 	{ "geoip-directory", &cfg_type_qstringornone,
@@ -2598,8 +2598,9 @@ parse_unitstring(char *str, isc_resourcevalue_t *valuep) {
 	default:
 		return (ISC_R_FAILURE);
 	}
-	if (value > UINT64_MAX / unit)
+	if (value > ((uint64_t)UINT64_MAX / unit)) {
 		return (ISC_R_FAILURE);
+	}
 	*valuep = value * unit;
 	return (ISC_R_SUCCESS);
 }

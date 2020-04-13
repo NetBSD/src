@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_spi.c,v 1.5 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835_spi.c,v 1.5.4.1 2020/04/13 08:03:33 martin Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.5 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.5.4.1 2020/04/13 08:03:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -135,6 +135,7 @@ bcmspi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_spi.sct_transfer = bcmspi_transfer;
 	sc->sc_spi.sct_nslaves = 3;
 
+	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
 
 	(void) config_found_ia(self, "spibus", &sba, spibus_print);

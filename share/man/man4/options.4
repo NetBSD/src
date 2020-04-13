@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.488.2.1 2019/06/10 22:05:40 christos Exp $
+.\"	$NetBSD: options.4,v 1.488.2.2 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd May 21, 2019
+.Dd March 7, 2020
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -604,9 +604,6 @@ is useful for debugging kernel crash dumps with gdb.
 See
 .Xr gdb 1
 for details.
-This also turns on
-.Em options DEBUG
-(which see).
 .It Cd options DEBUG
 Turns on miscellaneous kernel debugging.
 Since options are turned into preprocessor defines (see above),
@@ -940,15 +937,6 @@ See
 for more details.
 .Em NOTE :
 You also need to enable the pseudo-device, vcoda, for the Coda
-file system to work.
-.It Cd file-system SMBFS
-.Bq Em EXPERIMENTAL
-Includes code for the SMB/CIFS file system.
-See
-.Xr mount_smbfs 8
-for details.
-.Em NOTE :
-You also need to enable the pseudo-device, nsmb, for the SMB
 file system to work.
 .It Cd file-system PTYFS
 Includes code for a special file system (normally mounted on
@@ -1326,10 +1314,9 @@ embedded in the kernel using
 .Xr mdsetimage 8 .
 The RAM disk name is obtained using DHCP's filename parameter.
 This option requires
-.Em MEMORY_DISK_HOOKS ,
-.Em MEMORY_DISK_DYNAMIC ,
+.Em MEMORY_DISK_HOOKS
 and
-.Em MEMORY_DISK_IS_ROOT .
+.Em MEMORY_DISK_DYNAMIC .
 It is incompatible with
 .Em MEMORY_DISK_ROOT_SIZE .
 .It Cd options HZ=integer
@@ -2334,17 +2321,11 @@ The flag can be changed at runtime by
 .Xr sysctl 3 .
 .It Cd options KASAN
 Enables Kernel Address Sanitizer.
-Should not be used in conjunction with KLEAK.
 .Em NOTE :
 not available on all architectures.
 .It Cd options KASLR
 Enables Kernel ASLR.
 This randomizes the location of the kernel image in memory.
-.Em NOTE :
-not available on all architectures.
-.It Cd options KLEAK
-Enables the KLEAK feature, that allows to detect kernel information leaks.
-Should not be used in conjunction with KASAN.
 .Em NOTE :
 not available on all architectures.
 .It Cd options SVS

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.74 2017/05/18 02:21:05 christos Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.74.10.1 2020/04/13 08:05:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -125,36 +125,39 @@
  * a VM object (or sharing map) and offset into that object,
  * and user-exported inheritance and protection information.
  * Also included is control information for virtual copy operations.
+ *
+ * At runtime this is aligned on a cacheline boundary, with fields
+ * used during fault processing to do RB tree lookup clustered at
+ * the beginning.
  */
 struct vm_map_entry {
 	struct rb_node		rb_node;	/* tree information */
+	vaddr_t			start;		/* start address */
+	vaddr_t			end;		/* end address */
 	vsize_t			gap;		/* free space after */
 	vsize_t			maxgap;		/* space in subtree */
 	struct vm_map_entry	*prev;		/* previous entry */
 	struct vm_map_entry	*next;		/* next entry */
-	vaddr_t			start;		/* start address */
-	vaddr_t			end;		/* end address */
 	union {
 		struct uvm_object *uvm_obj;	/* uvm object */
 		struct vm_map	*sub_map;	/* belongs to another map */
 	} object;				/* object I point to */
 	voff_t			offset;		/* offset into object */
-	int			etype;		/* entry type */
+	uint8_t			etype;		/* entry type */
+	uint8_t			flags;		/* flags */
+	uint8_t			advice;		/* madvise advice */
+	uint8_t			unused;		/* unused */
 	vm_prot_t		protection;	/* protection code */
 	vm_prot_t		max_protection;	/* maximum protection */
 	vm_inherit_t		inheritance;	/* inheritance */
 	int			wired_count;	/* can be paged if == 0 */
 	struct vm_aref		aref;		/* anonymous overlay */
-	int			advice;		/* madvise advice */
-	uint32_t		map_attrib;	/* uvm-external map attributes */
-#define uvm_map_entry_stop_copy flags
-	u_int8_t		flags;		/* flags */
+};
 
+/* flags */
 #define	UVM_MAP_KERNEL		0x01		/* kernel map entry */
 #define	UVM_MAP_STATIC		0x04		/* special static entries */
 #define	UVM_MAP_NOMERGE		0x08		/* this entry is not mergable */
-
-};
 
 #define	VM_MAPENT_ISWIRED(entry)	((entry)->wired_count != 0)
 
@@ -210,7 +213,7 @@ struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
 	krwlock_t		lock;		/* Non-intrsafe lock */
 	struct lwp *		busy;		/* LWP holding map busy */
-	kmutex_t		misc_lock;	/* Lock for ref_count, cv */
+	kmutex_t		misc_lock;	/* Lock for cv, busy */
 	kcondvar_t		cv;		/* For signalling */
 	int			flags;		/* flags */
 	struct rb_tree		rb_tree;	/* Tree for entries */
@@ -317,8 +320,6 @@ int		uvm_mapent_trymerge(struct vm_map *,
 		    struct vm_map_entry *, int);
 #define	UVM_MERGE_COPYING	1
 
-bool		vm_map_starved_p(struct vm_map *);
-
 /*
  * VM map locking operations.
  */
@@ -332,7 +333,7 @@ void		vm_map_unlock_read(struct vm_map *);
 void		vm_map_busy(struct vm_map *);
 bool		vm_map_locked_p(struct vm_map *);
 
-void		uvm_map_lock_entry(struct vm_map_entry *);
+void		uvm_map_lock_entry(struct vm_map_entry *, krw_t);
 void		uvm_map_unlock_entry(struct vm_map_entry *);
 
 #endif /* _KERNEL */

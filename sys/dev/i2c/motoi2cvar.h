@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2cvar.h,v 1.4.56.1 2020/04/08 14:08:05 martin Exp $ */
+/* $NetBSD: motoi2cvar.h,v 1.4.56.2 2020/04/13 08:04:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ struct motoi2c_softc {
 	struct i2c_controller	sc_i2c;
 	motoi2c_iord_t		sc_iord;
 	motoi2c_iowr_t		sc_iowr;
+	int			sc_phandle;
 };
 
 #define	MOTOI2C_ADR_DEFAULT	(0x7e << 1)

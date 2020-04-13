@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-domain.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.8.4.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: Domain Name System (DNS) printer */
@@ -586,6 +586,13 @@ ns_print(netdissect_options *ndo,
 	register int qdcount, ancount, nscount, arcount;
 	register const u_char *cp;
 	uint16_t b2;
+
+	if(length < sizeof(*np)) {
+		ND_PRINT((ndo, "domain"));
+		ND_PRINT((ndo, " [length %u < %zu]", length, sizeof(*np)));
+		ND_PRINT((ndo, " (invalid)"));
+		return;
+	}
 
 	np = (const HEADER *)bp;
 	ND_TCHECK(*np);

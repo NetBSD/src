@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_fhstatvfs.c,v 1.3 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: compat_fhstatvfs.c,v 1.3.64.1 2020/04/13 08:03:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_fhstatvfs.c,v 1.3 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: compat_fhstatvfs.c,v 1.3.64.1 2020/04/13 08:03:09 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -40,23 +40,22 @@ __RCSID("$NetBSD: compat_fhstatvfs.c,v 1.3 2008/04/28 20:22:59 martin Exp $");
 #include <sys/types.h>
 #include <sys/statvfs.h>
 #include <compat/include/fstypes.h>
+#include <compat/sys/statvfs.h>
 
 __warn_references(fhstatvfs,
-    "warning: reference to compatibility fhstatvfs(); include <sys/mount.h> to generate correct reference")
+    "warning: reference to compatibility fhstatvfs(); include <sys/statvfs.h> to generate correct reference")
 
-#ifdef __weak_alias
-__weak_alias(fhstatvfs, _fhstatvfs)
-#endif
-
-int	 _fhstatvfs(const struct compat_30_fhandle *fhp, struct statvfs *buf);
-int	__fhstatvfs140(const void *fhp, size_t fh_size, struct statvfs *buf,
-	int flags);
+int	fhstatvfs(const struct compat_30_fhandle *fhp, struct statvfs90 *buf);
 
 /*
  * Convert old fhstatvs() call to new calling convention
  */
 int
-_fhstatvfs(const struct compat_30_fhandle *fhp, struct statvfs *buf)
+fhstatvfs(const struct compat_30_fhandle *fhp, struct statvfs90 *buf)
 {
-	return __fhstatvfs140(fhp, FHANDLE30_SIZE, buf, ST_WAIT);
+	struct statvfs sb;
+	int error = __fhstatvfs190(fhp, FHANDLE30_SIZE, &sb, 0);
+	if (error != -1)
+		statvfs_to_statvfs90(&sb, buf);
+	return error;
 }

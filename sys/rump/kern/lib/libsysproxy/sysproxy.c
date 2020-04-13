@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy.c,v 1.4.20.1 2019/06/10 22:09:53 christos Exp $	*/
+/*	$NetBSD: sysproxy.c,v 1.4.20.2 2020/04/13 08:05:18 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.4.20.1 2019/06/10 22:09:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.4.20.2 2020/04/13 08:05:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
@@ -141,7 +141,6 @@ static void
 hyp_lwpexit(void)
 {
 	struct proc *p = curproc;
-	uint64_t where;
 	struct lwp *l;
 
 	mutex_enter(p->p_lock);
@@ -163,8 +162,7 @@ hyp_lwpexit(void)
 	 * we wake up the threads.
 	 */
 
-	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(where);
+	xc_barrier(0);
 
 	/*
 	 * Ok, all lwps are either:

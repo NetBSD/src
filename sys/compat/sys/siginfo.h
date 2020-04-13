@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.4 2008/04/28 20:23:46 martin Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.4.88.1 2020/04/13 08:04:17 martin Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,11 +32,16 @@
 #ifndef	_COMPAT_SYS_SIGINFO_H_
 #define	_COMPAT_SYS_SIGINFO_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_compat_netbsd32.h"
-#endif
+#ifdef _KERNEL
 
-#if defined(COMPAT_NETBSD32) && defined(_KERNEL)
+/* Avoids circular dependency with machine/netbsd32_machdep.h */
+#if defined(__x86_64__) || (defined(__arm__) && defined(__ARM_EABI__))
+#define NETBSD32_SIGINFO_UINT64_ALIGN __attribute__((__aligned__(4)))
+#else
+#define NETBSD32_SIGINFO_UINT64_ALIGN __attribute__((__aligned__(8)))
+#endif
+typedef uint64_t netbsd32_siginfo_uint64 NETBSD32_SIGINFO_UINT64_ALIGN;
+#undef NETBSD32_SIGINFO_UINT64_ALIGN
 
 typedef union sigval32 {
 	int sival_int;
@@ -72,6 +77,21 @@ struct __ksiginfo32 {
 			int32_t _band;
 			int _fd;
 		} _poll;
+
+		struct {
+			int	_sysnum;
+			int	_retval[2];
+			int	_error;
+			netbsd32_siginfo_uint64 _args[8]; /* SYS_MAXSYSARGS */
+		} _syscall;
+
+		struct {
+			int	_pe_report_event;
+			union {
+				pid_t	_pe_other_pid;
+				lwpid_t	_pe_lwp;
+			} _option;
+		} _ptrace_state;
 	} _reason;
 };
 
@@ -80,6 +100,6 @@ typedef union siginfo32 {
 	struct __ksiginfo32 _info;
 } siginfo32_t;
 
-#endif /* COMPAT_NETBSD32 && _KERNEL */
+#endif /* _KERNEL */
 
 #endif /* !_COMPAT_SYS_SIGINFO_H_ */

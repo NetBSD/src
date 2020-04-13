@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.97.14.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: namei.h,v 1.97.14.2 2020/04/13 08:05:20 martin Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.42 2019/06/03 06:04:21 msaitoh Exp 
+ *   from: NetBSD: namei.src,v 1.53 2020/04/04 20:49:31 ad Exp 
  */
 
 /*
@@ -47,6 +47,7 @@
 
 #ifdef _KERNEL
 #include <sys/kauth.h>
+#include <sys/rwlock.h>
 
 /*
  * Abstraction for a single pathname.
@@ -159,13 +160,14 @@ struct nameidata {
 					   (pseudo) */
 #define	EMULROOTSET	0x00000080	/* emulation root already
 					   in ni_erootdir */
+#define	LOCKSHARED	0x00000100	/* want shared locks if possible */
 #define	NOCHROOT	0x01000000	/* no chroot on abs path lookups */
-#define	MODMASK		0x010000fc	/* mask of operational modifiers */
+#define	MODMASK		0x010001fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.
  */
-#define	NOCROSSMOUNT	0x0000100	/* do not cross mount points */
-#define	RDONLY		0x0000200	/* lookup with read-only semantics */
+#define	NOCROSSMOUNT	0x0000800	/* do not cross mount points */
+#define	RDONLY		0x0001000	/* lookup with read-only semantics */
 #define	ISDOTDOT	0x0002000	/* current component name is .. */
 #define	MAKEENTRY	0x0004000	/* entry is to be added to name cache */
 #define	ISLASTCN	0x0008000	/* this is last component of pathname */
@@ -173,7 +175,7 @@ struct nameidata {
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
-#define	PARAMASK	0x02ee300	/* mask of parameter descriptors */
+#define	PARAMASK	0x02ef800	/* mask of parameter descriptors */
 
 /*
  * Initialization of a nameidata structure.
@@ -195,45 +197,43 @@ struct nameidata {
 
 #endif
 
+#ifdef __NAMECACHE_PRIVATE
+#include <sys/rbtree.h>
+
 /*
- * This structure describes the elements in the cache of recent
- * names looked up by namei. NCHNAMLEN is sized to make structure
- * size a power of two to optimize allocations.  Minimum reasonable
- * size is 15.
+ * For simplicity (and economy of storage), names longer than
+ * a maximum length of NCHNAMLEN are stored in non-pooled storage.
  */
-
-#define	NCHNAMLEN	31	/* maximum name segment length we bother with */
+#define	NCHNAMLEN	sizeof(((struct namecache *)NULL)->nc_name)
 
 /*
- * Namecache entry.  This structure is arranged so that frequently
- * accessed and mostly read-only data is toward the front, with
- * infrequently accessed data and the lock towards the rear.  The
- * lock is then more likely to be in a separate cache line.
+ * Namecache entry.
  *
- * Locking rules:
+ * This structure describes the elements in the cache of recent names looked
+ * up by namei.  It's carefully sized to take up 128 bytes on _LP64, to make
+ * good use of space and the CPU caches.  Items used during RB tree lookup
+ * (nc_tree, nc_key) are clustered at the start of the structure.
  *
- *      -       stable after initialization
- *      L       namecache_lock
- *      C       struct nchcpu::cpu_lock
- *      L/C     insert needs L, read needs L or any C,
- *              must hold L and all C after (or during) delete before free
- *      N       struct namecache::nc_lock
+ * Field markings and their corresponding locks:
+ *
+ * -  stable throughout the lifetime of the namecache entry
+ * d  protected by nc_dvp->vi_nc_lock
+ * v  protected by nc_vp->vi_nc_listlock
+ * l  protected by cache_lru_lock
  */
 struct namecache {
-	LIST_ENTRY(namecache) nc_hash;	/* L/C hash chain */
-	LIST_ENTRY(namecache) nc_vhash;	/* L directory hash chain */
-	struct	vnode *nc_dvp;		/* N vnode of parent of name */
-	struct	vnode *nc_vp;		/* N vnode the name refers to */
-	int	nc_flags;		/* - copy of componentname ISWHITEOUT */
-	char	nc_nlen;		/* - length of name */
-	char	nc_name[NCHNAMLEN];	/* - segment name */
-	void	*nc_gcqueue;		/* N queue for garbage collection */
-	TAILQ_ENTRY(namecache) nc_lru;	/* L psuedo-lru chain */
-	LIST_ENTRY(namecache) nc_dvlist;/* L dvp's list of cache entries */
-	LIST_ENTRY(namecache) nc_vlist; /* L vp's list of cache entries */
-	kmutex_t nc_lock;		/*   lock on this entry */
-	int	nc_hittime;		/* N last time scored a hit */
+	struct	rb_node nc_tree;	/* d  red-black tree, must be first */
+	uint64_t nc_key;		/* -  hashed key value */
+	TAILQ_ENTRY(namecache) nc_list;	/* v  nc_vp's list of cache entries */
+	TAILQ_ENTRY(namecache) nc_lru;	/* l  pseudo-lru chain */
+	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
+	struct	vnode *nc_vp;		/* -  vnode the name refers to */
+	int	nc_lrulist;		/* l  which LRU list it's on */
+	u_short	nc_nlen;		/* -  length of the name */
+	char	nc_whiteout;		/* -  true if a whiteout */
+	char	nc_name[41];		/* -  segment name */
 };
+#endif
 
 #ifdef _KERNEL
 #include <sys/pool.h>
@@ -295,14 +295,22 @@ bool	cache_lookup(struct vnode *, const char *, size_t, uint32_t, uint32_t,
 			int *, struct vnode **);
 bool	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
 			int *, struct vnode **);
-int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
+bool	cache_lookup_linked(struct vnode *, const char *, size_t,
+			    struct vnode **, krwlock_t **, kauth_cred_t);
+int	cache_revlookup(struct vnode *, struct vnode **, char **, char *,
+			bool, int);
+int	cache_diraccess(struct vnode *, int);
 void	cache_enter(struct vnode *, struct vnode *,
 			const char *, size_t, uint32_t);
+void	cache_enter_id(struct vnode *, mode_t, uid_t, gid_t);
+bool	cache_have_id(struct vnode *);
+void	cache_vnode_init(struct vnode * );
+void	cache_vnode_fini(struct vnode * );
+void	cache_cpu_init(struct cpu_info *);
+
 void	nchinit(void);
-void	nchreinit(void);
 void	namecache_count_pass2(void);
 void	namecache_count_2passes(void);
-void	cache_cpu_init(struct cpu_info *);
 void	cache_purgevfs(struct mount *);
 void	namecache_print(struct vnode *, void (*)(const char *, ...)
     __printflike(1, 2));
@@ -313,20 +321,20 @@ void	namecache_print(struct vnode *, void (*)(const char *, ...)
  * Stats on usefulness of namei caches.  A couple of structures are
  * used for counting, with members having the same names but different
  * types.  Containerize member names with the preprocessor to avoid
- * cut-'n'-paste.  A (U) in the comment documents values that are
- * incremented unlocked; we may treat these specially.
+ * cut-'n'-paste.
  */
 #define	_NAMEI_CACHE_STATS(type) {					\
-	type	ncs_goodhits;	/* hits that we can really use (U) */	\
+	type	ncs_goodhits;	/* hits that we can really use */	\
 	type	ncs_neghits;	/* negative hits that we can use */	\
 	type	ncs_badhits;	/* hits we must drop */			\
-	type	ncs_falsehits;	/* hits with id mismatch (U) */		\
+	type	ncs_falsehits;	/* hits with id mismatch */		\
 	type	ncs_miss;	/* misses */				\
 	type	ncs_long;	/* long names that ignore cache */	\
-	type	ncs_pass2;	/* names found with passes == 2 (U) */	\
-	type	ncs_2passes;	/* number of times we attempt it (U) */	\
+	type	ncs_pass2;	/* names found with passes == 2 */	\
+	type	ncs_2passes;	/* number of times we attempt it */	\
 	type	ncs_revhits;	/* reverse-cache hits */		\
 	type	ncs_revmiss;	/* reverse-cache misses */		\
+	type	ncs_denied;	/* access denied */			\
 }
 
 /*
@@ -350,10 +358,11 @@ struct	nchstats _NAMEI_CACHE_STATS(uint64_t);
 #define NAMEI_FOLLOW	0x00000040
 #define NAMEI_NOFOLLOW	0x00000000
 #define NAMEI_EMULROOTSET	0x00000080
+#define NAMEI_LOCKSHARED	0x00000100
 #define NAMEI_NOCHROOT	0x01000000
-#define NAMEI_MODMASK	0x010000fc
-#define NAMEI_NOCROSSMOUNT	0x0000100
-#define NAMEI_RDONLY	0x0000200
+#define NAMEI_MODMASK	0x010001fc
+#define NAMEI_NOCROSSMOUNT	0x0000800
+#define NAMEI_RDONLY	0x0001000
 #define NAMEI_ISDOTDOT	0x0002000
 #define NAMEI_MAKEENTRY	0x0004000
 #define NAMEI_ISLASTCN	0x0008000
@@ -361,6 +370,6 @@ struct	nchstats _NAMEI_CACHE_STATS(uint64_t);
 #define NAMEI_DOWHITEOUT	0x0040000
 #define NAMEI_REQUIREDIR	0x0080000
 #define NAMEI_CREATEDIR	0x0200000
-#define NAMEI_PARAMASK	0x02ee300
+#define NAMEI_PARAMASK	0x02ef800
 
 #endif /* !_SYS_NAMEI_H_ */

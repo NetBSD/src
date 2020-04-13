@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.163.18.2 2020/04/08 14:09:04 martin Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.163.18.3 2020/04/13 08:05:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,12 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163.18.2 2020/04/08 14:09:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163.18.3 2020/04/13 08:05:21 martin Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
 #include "opt_uvmhist.h"
-#include "opt_kasan.h"
 
 /*
  * uvm_glue.c: glue functions

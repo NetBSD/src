@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.22.30.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.22.30.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.22.30.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.22.30.2 2020/04/13 08:04:47 martin Exp $");
 
 #include "rf_archs.h"
 
@@ -66,14 +66,11 @@ RF_RedFuncs_t rf_eoERecoveryFuncs = {rf_RecoveryEFunc, "Recovery E Func", rf_Rec
 /**********************************************************************************************
  *   the following encoding node functions is used in  EO_000_CreateLargeWriteDAG
  **********************************************************************************************/
-int
+void
 rf_RegularPEFunc(RF_DagNode_t *node)
 {
 	rf_RegularESubroutine(node, node->results[1]);
 	rf_RegularXorFunc(node);/* does the wakeup here! */
-#if 1
-	return (0);		/* XXX This was missing... GO */
-#endif
 }
 
 
@@ -95,7 +92,7 @@ rf_RegularPEFunc(RF_DagNode_t *node)
    old data and new data, then encode temp buf into old 'E' buf to form new 'E', but this approach
    take the same speed as the previous, and need more memory.
 */
-int
+void
 rf_RegularONEFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
@@ -149,12 +146,9 @@ rf_RegularONEFunc(RF_DagNode_t *node)
 	RF_ETIMER_EVAL(timer);
 	tracerec->q_us += RF_ETIMER_VAL_US(timer);
 	rf_GenericWakeupFunc(node, 0);
-#if 1
-	return (0);		/* XXX this was missing.. GO */
-#endif
 }
 
-int
+void
 rf_SimpleONEFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
@@ -187,9 +181,9 @@ rf_SimpleONEFunc(RF_DagNode_t *node)
 		tracerec->q_us += RF_ETIMER_VAL_US(timer);
 
 	}
-	return (rf_GenericWakeupFunc(node, retcode));	/* call wake func
-							 * explicitly since no
-							 * I/O in this node */
+	rf_GenericWakeupFunc(node, retcode);	/* call wake func
+						 * explicitly since no
+						 * I/O in this node */
 }
 
 
@@ -225,14 +219,11 @@ rf_RegularESubroutine(RF_DagNode_t *node, char *ebuf)
 /*******************************************************************************************
  *			 Used in  EO_001_CreateLargeWriteDAG
  ******************************************************************************************/
-int
+void
 rf_RegularEFunc(RF_DagNode_t *node)
 {
 	rf_RegularESubroutine(node, node->results[0]);
 	rf_GenericWakeupFunc(node, 0);
-#if 1
-	return (0);		/* XXX this was missing?.. GO */
-#endif
 }
 /*******************************************************************************************
  * This degraded function allow only two case:
@@ -283,15 +274,11 @@ rf_DegrESubroutine(RF_DagNode_t *node, char *ebuf)
  * failed in the stripe but not accessed at this time, then we should, instead, use
  * the rf_EOWriteDoubleRecoveryFunc().
  **************************************************************************************/
-int
+void
 rf_Degraded_100_EOFunc(RF_DagNode_t *node)
 {
 	rf_DegrESubroutine(node, node->results[1]);
 	rf_RecoveryXorFunc(node);	/* does the wakeup here! */
-#if 1
-	return (0);		/* XXX this was missing... SHould these be
-				 * void functions??? GO */
-#endif
 }
 /**************************************************************************************
  * This function is to encode one sector in one of the data disks to the E disk.
@@ -395,7 +382,7 @@ rf_e_encToBuf(
  * to recover the data in dead disk. This function is used in the recovery node of
  * for EO_110_CreateReadDAG
  **************************************************************************************/
-int
+void
 rf_RecoveryEFunc(RF_DagNode_t *node)
 {
 	RF_Raid_t *raidPtr = (RF_Raid_t *) node->params[node->numParams - 1].p;
@@ -432,20 +419,17 @@ rf_RecoveryEFunc(RF_DagNode_t *node)
 		RF_ETIMER_EVAL(timer);
 		tracerec->xor_us += RF_ETIMER_VAL_US(timer);
 	}
-	return (rf_GenericWakeupFunc(node, 0));	/* node execute successfully */
+	rf_GenericWakeupFunc(node, 0);	/* node execute successfully */
 }
 /**************************************************************************************
  * This function is used in the case where one data and the parity have filed.
  * (in EO_110_CreateWriteDAG )
  **************************************************************************************/
-int
+void
 rf_EO_DegradedWriteEFunc(RF_DagNode_t * node)
 {
 	rf_DegrESubroutine(node, node->results[0]);
 	rf_GenericWakeupFunc(node, 0);
-#if 1
-	return (0);		/* XXX Yet another one!! GO */
-#endif
 }
 
 
@@ -643,7 +627,7 @@ rf_doubleEOdecode(
 * 	EO_200_CreateReadDAG
 *
 ***************************************************************************************/
-int
+void
 rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t *node)
 {
 	int     ndataParam = 0;
@@ -828,9 +812,6 @@ rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t *node)
 		tracerec->q_us += RF_ETIMER_VAL_US(timer);
 	}
 	rf_GenericWakeupFunc(node, 0);
-#if 1
-	return (0);		/* XXX is this even close!!?!?!!? GO */
-#endif
 }
 
 
@@ -839,7 +820,7 @@ rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t *node)
  * many accesses of single stripe unit.
  */
 
-int
+void
 rf_EOWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 {
 	int     np = node->numParams;
@@ -962,6 +943,5 @@ rf_EOWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 		tracerec->q_us += RF_ETIMER_VAL_US(timer);
 	}
 	rf_GenericWakeupFunc(node, 0);
-	return (0);
 }
 #endif				/* RF_INCLUDE_EVENODD > 0 */

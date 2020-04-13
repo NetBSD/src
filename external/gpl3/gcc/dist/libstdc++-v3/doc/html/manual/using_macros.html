@@ -108,4 +108,17 @@
 	mode</a>.
       </p></dd><dt><span class="term"><code class="code">__STDCPP_WANT_MATH_SPEC_FUNCS__</code></span></dt><dd><p>Undefined by default. When defined to a non-zero integer constant,
 	enables support for ISO/IEC 29124 Special Math Functions.
+      </p></dd><dt><span class="term"><code class="code">_GLIBCXX_SANITIZE_VECTOR</code></span></dt><dd><p>
+	Undefined by default. When defined, <code class="classname">std::vector</code>
+        operations will be annotated so that AddressSanitizer can detect
+        invalid accesses to the unused capacity of a
+        <code class="classname">std::vector</code>. These annotations are only
+        enabled for
+        <code class="classname">std::vector&lt;T, std::allocator&lt;T&gt;&gt;</code>
+        and only when <code class="classname">std::allocator</code> is derived from
+        <a class="link" href="memory.html#allocator.impl" title="Implementation"><code class="classname">new_allocator</code>
+        or <code class="classname">malloc_allocator</code></a>. The annotations
+        must be present on all vector operations or none, so this macro must
+        be defined to the same value for all translation units that create,
+        destroy or modify vectors.
       </p></dd></dl></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="using_headers.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="using.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="using_dual_abi.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Headers </td><td width="20%" align="center"><a accesskey="h" href="../index.html">Home</a></td><td width="40%" align="right" valign="top"> Dual ABI</td></tr></table></div></body></html>

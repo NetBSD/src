@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.152.14.2 2020/04/08 14:08:09 martin Exp $	*/
+/*	$NetBSD: pci.c,v 1.152.14.3 2020/04/13 08:04:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.152.14.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.152.14.3 2020/04/13 08:04:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -696,17 +696,26 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 
 	device_t bridgedev;
 	bool arien = false;
+	bool downstream_port = false;
 
-	/* Check PCIe ARI */
+	/* Check PCIe ARI and port type */
 	bridgedev = device_parent(sc->sc_dev);
 	if (device_is_a(bridgedev, "ppb")) {
 		struct ppb_softc *ppbsc = device_private(bridgedev);
 		pci_chipset_tag_t ppbpc = ppbsc->sc_pc;
 		pcitag_t ppbtag = ppbsc->sc_tag;
-		pcireg_t pciecap, reg;
+		pcireg_t pciecap, capreg, reg;
 
 		if (pci_get_capability(ppbpc, ppbtag, PCI_CAP_PCIEXPRESS,
-		    &pciecap, NULL) != 0) {
+		    &pciecap, &capreg) != 0) {
+			switch (PCIE_XCAP_TYPE(capreg)) {
+			case PCIE_XCAP_TYPE_ROOT:
+			case PCIE_XCAP_TYPE_DOWN:
+			case PCIE_XCAP_TYPE_PCI2PCIE:
+				downstream_port = true;
+				break;
+			}
+
 			reg = pci_conf_read(ppbpc, ppbtag, pciecap
 			    + PCIE_DCSR2);
 			if ((reg & PCIE_DCSR2_ARI_FWD) != 0)
@@ -715,6 +724,11 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 	}
 
 	n = pci_bus_devorder(sc->sc_pc, sc->sc_bus, devs, __arraycount(devs));
+	if (downstream_port) {
+		/* PCIe downstream ports only have a single child device */
+		n = 1;
+	}
+
 	for (i = 0; i < n; i++) {
 		device = devs[i];
 
@@ -724,10 +738,6 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 
 		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
 
-		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
-			continue;
-
 		id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 		/* Invalid vendor ID value? */
@@ -735,6 +745,10 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 			continue;
 		/* XXX Not invalid, but we've done this ~forever. */
 		if (PCI_VENDOR(id) == 0)
+			continue;
+
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
 			continue;
 
 		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));

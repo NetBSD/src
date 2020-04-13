@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.23.4.1 2020/04/08 14:09:03 martin Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.23.4.2 2020/04/13 08:05:20 martin Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,8 +70,9 @@ int dofhopen(struct lwp *, const void *, size_t, int, register_t *);
 int	do_sys_linkat(struct lwp *, int, const char *, int, const char *, int, register_t *);
 int	do_sys_unlink(const char *, enum uio_seg);
 int	do_sys_rename(const char *, const char *, enum uio_seg, int);
-int	do_sys_mknod(struct lwp *, const char *, mode_t, dev_t, register_t *, enum uio_seg);
-int	do_sys_mknodat(struct lwp *, int, const char *, mode_t, dev_t, register_t *, enum uio_seg);
+int	do_posix_mknodat(struct lwp *, int, const char *, mode_t, dev_t);
+int	do_sys_mknod(struct lwp *, const char *, mode_t, dev_t, enum uio_seg);
+int	do_sys_mknodat(struct lwp *, int, const char *, mode_t, dev_t, enum uio_seg);
 int	do_sys_chmodat(struct lwp *, int, const char *, int, int);
 int	do_sys_chownat(struct lwp *, int, const char *, uid_t, gid_t, int);
 int	do_sys_accessat(struct lwp *, int, const char *, int ,int);
@@ -84,6 +85,6 @@ int	chdir_lookup(const char *, int, struct vnode **, struct lwp *);
 void	change_root(struct vnode *);
 
 extern const char *const mountcompatnames[];
-extern const int nmountcompatnames;
+extern const u_int nmountcompatnames;
 
 #endif /* _SYS_VFS_SYSCALLS_H_ */

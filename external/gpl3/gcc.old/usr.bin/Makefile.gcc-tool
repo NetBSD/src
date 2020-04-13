@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gcc-tool,v 1.3.4.1 2019/06/10 21:58:09 christos Exp $
+#	$NetBSD: Makefile.gcc-tool,v 1.3.4.2 2020/04/13 08:01:56 martin Exp $
 
 PROG=	gcc-${GCC_TOOL}
 SRCS=	gcc-ar.c file-find.c
@@ -23,18 +23,13 @@ CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N
 BINDIR=		/usr/bin
 NOMAN=		# defined
 
-.include <bsd.prog.mk>
-
-# Force using C++ for this
-HOST_CC:=	${HOST_CXX}
-CC:=		${CXX}
-CFLAGS:=	${CXXFLAGS}
-
 .include "../Makefile.common"
 .include "../Makefile.libcpp"
 .include "../Makefile.backtrace"
 .include "../Makefile.libiberty"
 .include "../Makefile.libdecnumber"
+
+.include "../Makefile.prog"
 
 COPTS+=		-Wno-stack-protector
 

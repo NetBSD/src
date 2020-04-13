@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_opendir.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_opendir.c,v 1.1.86.1 2020/04/13 08:03:09 martin Exp $	*/
 
 #include "namespace.h"
 #include <sys/stat.h>
@@ -7,6 +7,7 @@
 #define __LIBC12_SOURCE__
 #include <dirent.h>
 #include <compat/include/dirent.h>
+#include <compat/sys/statvfs.h>
 
 #ifdef __weak_alias
 __weak_alias(opendir,_opendir)
@@ -20,5 +21,6 @@ __warn_references(__opendir2,
 #endif
 
 #define dirent dirent12
+#define	fstatvfs1 __fstatvfs190
 
 #include "gen/opendir.c"

@@ -1,4 +1,4 @@
-/* $NetBSD: padvar.h,v 1.11.6.1 2019/06/10 22:07:15 christos Exp $ */
+/* $NetBSD: padvar.h,v 1.11.6.2 2020/04/13 08:04:25 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #ifndef _SYS_DEV_PAD_PADVAR_H
 #define _SYS_DEV_PAD_PADVAR_H
 
-typedef struct pad_softc {
+struct pad_softc {
 	device_t	sc_dev;
 
 	u_int		sc_open;
@@ -53,6 +53,6 @@ typedef struct pad_softc {
 	u_int		sc_wpos;
 
 	uint8_t		sc_swvol;
-} pad_softc_t;
+};
 
 #endif /* !_SYS_DEV_PAD_PADVAR_H */

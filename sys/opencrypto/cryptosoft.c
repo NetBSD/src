@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.52 2017/06/23 11:41:58 knakahara Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.52.6.1 2020/04/13 08:05:17 martin Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.52 2017/06/23 11:41:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.52.6.1 2020/04/13 08:05:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,7 +500,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 		break;
 	case CRYPTO_BUF_MBUF:
 		err = m_apply((struct mbuf *) buf, crd->crd_skip, crd->crd_len,
-		    (int (*)(void*, void *, unsigned int)) axf->Update,
+		    (int (*)(void*, void *, unsigned int))(void *)axf->Update,
 		    (void *) &ctx);
 		if (err)
 			return err;
@@ -508,7 +508,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	case CRYPTO_BUF_IOV:
 		err = cuio_apply((struct uio *) buf, crd->crd_skip,
 		    crd->crd_len,
-		    (int (*)(void *, void *, unsigned int)) axf->Update,
+		    (int (*)(void *, void *, unsigned int))(void *)axf->Update,
 		    (void *) &ctx);
 		if (err) {
 			return err;
@@ -1447,6 +1447,10 @@ swcrypto_modcmd(modcmd_t cmd, void *arg)
 #endif
 		return error;
 	case MODULE_CMD_FINI:
+#if 1
+		// XXX: Need to keep track if we are in use.
+		return ENOTTY;
+#else
 		error = config_cfdata_detach(swcrypto_cfdata);
 		if (error) {
 			return error;
@@ -1456,6 +1460,7 @@ swcrypto_modcmd(modcmd_t cmd, void *arg)
 		config_cfdriver_detach(&swcrypto_cd);
 
 		return 0;
+#endif
 	default:
 		return ENOTTY;
 	}

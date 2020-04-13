@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.116.4.2 2020/04/08 14:07:28 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.116.4.3 2020/04/13 08:03:32 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116.4.2 2020/04/08 14:07:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116.4.3 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -119,7 +119,7 @@ cpu_attach(device_t dv, cpuid_t id)
 		ci->ci_undefsave[2] = cpu_info_store[0].ci_undefsave[2];
 
 		cpu_info[unit] = ci;
-		if ((arm_cpu_hatched & __BIT(unit)) == 0) {
+		if (cpu_hatched_p(unit) == false) {
 			ci->ci_dev = dv;
 			dv->dv_private = ci;
 			aprint_naive(": disabled\n");
@@ -509,6 +509,8 @@ const struct cpuidtab cpuids[] = {
 	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA9R4,	CPU_CLASS_CORTEX,	"Cortex-A9 r4",
 	  pN_steppings, "7A" },
+	{ CPU_ID_CORTEXA12R0,	CPU_CLASS_CORTEX,	"Cortex-A17(A12) r0",	/* A12 was rebranded A17 */
+	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA15R2,	CPU_CLASS_CORTEX,	"Cortex-A15 r2",
 	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA15R3,	CPU_CLASS_CORTEX,	"Cortex-A15 r3",
@@ -681,6 +683,8 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 		aprint_normal(": %s\n", model);
 	}
 
+	aprint_debug_dev(dv, "midr:   %#x\n", arm_cpuid);
+
 	aprint_normal("%s:", xname);
 
 	switch (cpu_class) {
@@ -848,11 +852,11 @@ identify_features(device_t dv)
 	cpu_processor_features[0] = armreg_pfr0_read();
 	cpu_processor_features[1] = armreg_pfr1_read();
 
-	aprint_debug_dev(dv, "sctlr: %#x\n", armreg_sctlr_read());
-	aprint_debug_dev(dv, "actlr: %#x\n", armreg_auxctl_read());
+	aprint_debug_dev(dv, "sctlr:  %#x\n", armreg_sctlr_read());
+	aprint_debug_dev(dv, "actlr:  %#x\n", armreg_auxctl_read());
 	aprint_debug_dev(dv, "revidr: %#x\n", armreg_revidr_read());
 #ifdef MULTIPROCESSOR
-	aprint_debug_dev(dv, "mpidr: %#x\n", armreg_mpidr_read());
+	aprint_debug_dev(dv, "mpidr:  %#x\n", armreg_mpidr_read());
 #endif
 	aprint_debug_dev(dv,
 	    "isar: [0]=%#x [1]=%#x [2]=%#x [3]=%#x, [4]=%#x, [5]=%#x\n",

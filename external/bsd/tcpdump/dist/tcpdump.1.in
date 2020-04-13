@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcpdump.1.in,v 1.13.4.1 2020/04/08 14:04:14 martin Exp $
+.\"	$NetBSD: tcpdump.1.in,v 1.13.4.2 2020/04/13 07:56:31 martin Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -447,7 +447,7 @@ terminal rather than to a file or pipe.
 .PD
 Set the time stamp type for the capture to \fItstamp_type\fP.  The names
 to use for the time stamp types are given in
-.BR pcap-tstamp (@MAN_MISC_INFO@);
+.BR \%pcap-tstamp (@MAN_MISC_INFO@);
 not all the types listed there will necessarily be valid for any given
 interface.
 .TP
@@ -1906,7 +1906,7 @@ It is currently being maintained by tcpdump.org.
 The current version is available via http:
 .LP
 .RS
-.I http://www.tcpdump.org/
+.I https://www.tcpdump.org/
 .RE
 .LP
 The original distribution is available via anonymous ftp:

@@ -1,4 +1,4 @@
-/*	$NetBSD: imxi2cvar.h,v 1.2 2015/03/27 05:31:23 hkenken Exp $	*/
+/*	$NetBSD: imxi2cvar.h,v 1.2.18.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
 * Copyright (c) 2012, 2015 Genetec Corporation.  All rights reserved.
@@ -36,6 +36,8 @@ struct imxi2c_softc {
 	device_t sc_dev;
 	struct motoi2c_softc sc_motoi2c;
 	struct motoi2c_settings sc_motoi2c_settings;
+
+	struct clk *sc_clk;
 };
 
 int imxi2c_attach_common(device_t, device_t,

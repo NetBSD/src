@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.46 2014/03/26 08:09:06 christos Exp $ */
+/* $NetBSD: ioasic.c,v 1.46.30.1 2020/04/13 08:03:30 martin Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.46 2014/03/26 08:09:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.46.30.1 2020/04/13 08:03:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -196,9 +196,7 @@ ioasicattach(device_t parent, device_t self, void *aux)
 		ioasicintrs[i].iai_func = ioasic_intrnull;
 		ioasicintrs[i].iai_arg = (void *)i;
 
-		cp = malloc(len, M_DEVBUF, M_NOWAIT);
-		if (cp == NULL)
-			panic("ioasicattach");
+		cp = malloc(len, M_DEVBUF, M_WAITOK);
 		snprintf(cp, len, "slot %lu", i);
 		evcnt_attach_dynamic(&ioasicintrs[i].iai_evcnt,
 		    EVCNT_TYPE_INTR, pevcnt, device_xname(self), cp);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.13.2.1 2019/06/10 22:05:55 christos Exp $
+#	$NetBSD: files.rockchip,v 1.13.2.2 2020/04/13 08:03:37 martin Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -42,6 +42,11 @@ device	rkiic: i2cbus, i2cexec
 attach	rkiic at fdt with rk_i2c
 file	arch/arm/rockchip/rk_i2c.c		rk_i2c
 
+# SPI
+device	rkspi: spibus
+attach	rkspi at fdt with rk_spi
+file	arch/arm/rockchip/rk_spi.c		rk_spi
+
 # USB PHY
 device	rkusb { }
 attach	rkusb at fdt with rk_usb
@@ -77,6 +82,35 @@ file	arch/arm/rockchip/rk_tsadc.c		rk_tsadc
 device	rkpwm: pwm
 attach	rkpwm at fdt with rk_pwm
 file	arch/arm/rockchip/rk_pwm.c		rk_pwm
+
+# DRM master
+define	rkfbbus { }
+device	rkdrm: drmkms, ddc_read_edid, rkfbbus
+attach	rkdrm at fdt with rk_drm
+file	arch/arm/rockchip/rk_drm.c		rk_drm
+
+# DRM framebuffer console
+device	rkfb: rkfbbus, drmfb, wsemuldisplaydev
+attach	rkfb at rkfbbus with rk_fb
+file	arch/arm/rockchip/rk_fb.c		rk_fb
+
+# Visual Output Processor
+device	rkvop: drmkms
+attach	rkvop at fdt with rk_vop
+file	arch/arm/rockchip/rk_vop.c		rk_vop
+
+# HDMI TX (Designware based)
+attach	dwhdmi at fdt with rk_dwhdmi
+file	arch/arm/rockchip/rk_dwhdmi.c		rk_dwhdmi
+
+# DP/eDP (Analogix-based)
+attach	anxdp at fdt with rk_anxdp
+file	arch/arm/rockchip/rk_anxdp.c		rk_anxdp
+
+# I2S/PCM controller
+device	rki2s	
+attach  rki2s at fdt with rk_i2s
+file    arch/arm/rockchip/rk_i2s.c		rk_i2s
 
 # SOC parameters
 defflag	opt_soc.h			SOC_ROCKCHIP

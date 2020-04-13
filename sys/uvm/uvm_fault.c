@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.204.2.2 2020/04/08 14:09:04 martin Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.204.2.3 2020/04/13 08:05:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.204.2.2 2020/04/08 14:09:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.204.2.3 2020/04/13 08:05:21 martin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1020,8 +1020,11 @@ uvm_fault_check(
 	 */
 
 	flt->enter_prot = ufi->entry->protection;
-	if (VM_MAPENT_ISWIRED(ufi->entry))
+	if (VM_MAPENT_ISWIRED(ufi->entry)) {
 		flt->wire_mapping = true;
+		flt->wire_paging = true;
+		flt->narrow = true;
+	}
 
 	if (flt->wire_mapping) {
 		flt->access_type = flt->enter_prot; /* full access for wired */
@@ -2146,10 +2149,17 @@ uvm_fault_lower_io(
 	int gotpages;
 	int error;
 	voff_t uoff;
+	vm_prot_t access_type;
+	int advice;
 	UVMHIST_FUNC("uvm_fault_lower_io"); UVMHIST_CALLED(maphist);
 
 	/* update rusage counters */
 	curlwp->l_ru.ru_majflt++;
+
+	/* grab everything we need from the entry before we unlock */
+	uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
+	access_type = flt->access_type & MASK(ufi->entry);
+	advice = ufi->entry->advice;
 
 	/* Locked: maps(read), amap(if there), uobj */
 	KASSERT(rw_lock_op(uobj->vmobjlock) == flt->lower_lock_type);
@@ -2167,10 +2177,8 @@ uvm_fault_lower_io(
 	cpu_count(CPU_COUNT_FLTGET, 1);
 	gotpages = 1;
 	pg = NULL;
-	uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
 	error = uobj->pgops->pgo_get(uobj, uoff, &pg, &gotpages,
-	    0, flt->access_type & MASK(ufi->entry), ufi->entry->advice,
-	    PGO_SYNCIO);
+	    0, access_type, advice, PGO_SYNCIO);
 	/* locked: pg(if no error) */
 
 	/*
@@ -2737,8 +2745,6 @@ uvm_fault_unwire_locked(struct vm_map *map, vaddr_t start, vaddr_t end)
 
 	oentry = NULL;
 	for (va = start; va < end; va += PAGE_SIZE) {
-		if (pmap_extract(pmap, va, &pa) == false)
-			continue;
 
 		/*
 		 * find the map entry for the current address.
@@ -2766,6 +2772,9 @@ uvm_fault_unwire_locked(struct vm_map *map, vaddr_t start, vaddr_t end)
 		/*
 		 * if the entry is no longer wired, tell the pmap.
 		 */
+
+		if (!pmap_extract(pmap, va, &pa))
+			continue;
 
 		if (VM_MAPENT_ISWIRED(entry) == 0)
 			pmap_unwire(pmap, va);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_addstr.3,v 1.4 2003/05/21 21:22:15 jdc Exp $
+.\"	$NetBSD: curses_addstr.3,v 1.4.98.1 2020/04/13 08:03:12 martin Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,19 +30,27 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd May 21, 2003
+.Dd July 28, 2019
 .Dt CURSES_ADDSTR 3
 .Os
 .Sh NAME
 .Nm curses_addstr ,
 .Nm addstr ,
+.Nm addwstr ,
 .Nm waddstr ,
+.Nm waddwstr ,
 .Nm addnstr ,
+.Nm addnwstr ,
 .Nm waddnstr ,
+.Nm waddnwstr ,
 .Nm mvaddstr ,
+.Nm mvaddwstr ,
 .Nm mvwaddstr ,
+.Nm mvwaddwstr ,
 .Nm mvaddnstr ,
-.Nm mvwaddnstr
+.Nm mvaddnwstr ,
+.Nm mvwaddnstr ,
+.Nm mvwaddnwstr
 .Nd curses add character strings to windows routines
 .Sh LIBRARY
 .Lb libcurses
@@ -51,19 +59,35 @@
 .Ft int
 .Fn addstr "const char *string"
 .Ft int
+.Fn addwstr "const wchar_t *string"
+.Ft int
 .Fn waddstr "WINDOW *win" "const char *string"
+.Ft int
+.Fn waddwstr "WINDOW *win" "const wchar_t *string"
 .Ft int
 .Fn mvaddstr "int y" "int x" "const char *string"
 .Ft int
+.Fn mvaddwstr "int y" "int x" "const wchar_t *string"
+.Ft int
 .Fn mvwaddstr "WINDOW *win" "int y" "int x" "const char *string"
+.Ft int
+.Fn mvwaddwstr "WINDOW *win" "int y" "int x" "const wchar_t *string" "int len"
 .Ft int
 .Fn addnstr "const char *string" "int len"
 .Ft int
+.Fn addnwstr "const wchar_t *string" "int len"
+.Ft int
 .Fn waddnstr "WINDOW *win" "const char *string" "int len"
+.Ft int
+.Fn waddnwstr "WINDOW *win" "const wchar_t *string" "int len"
 .Ft int
 .Fn mvaddnstr "int y" "int x" "const char *string" "int len"
 .Ft int
+.Fn mvaddnwstr "int y" "int x" "const wchar_t *string" "int len"
+.Ft int
 .Fn mvwaddnstr "WINDOW *win" "int y" "int x" "const char *string" "int len"
+.Ft int
+.Fn mvwaddnwstr "WINDOW *win" "int y" "int x" "const wchar_t *string" "int len"
 .Sh DESCRIPTION
 These functions add character strings to
 .Dv stdscr

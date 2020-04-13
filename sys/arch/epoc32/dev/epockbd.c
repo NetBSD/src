@@ -1,4 +1,4 @@
-/*	$NetBSD: epockbd.c,v 1.2 2013/06/22 13:53:30 kiyohara Exp $	*/
+/*	$NetBSD: epockbd.c,v 1.2.38.1 2020/04/13 08:03:41 martin Exp $	*/
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epockbd.c,v 1.2 2013/06/22 13:53:30 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epockbd.c,v 1.2.38.1 2020/04/13 08:03:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,6 +131,9 @@ epockbd_set_leds(void *v, int on)
 static int
 epockbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct epockbd_softc *sc = v;
+#endif
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -146,7 +149,7 @@ epockbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
-		*(int *)data == WSKBD_RAW;
+		*(int *)data = WSKBD_RAW;
 		sc->sc_flags |= EPOCKBD_FLAG_RAW;
 
 		/* Not yet...: return 0; */

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_gpio.c,v 1.3 2014/07/25 07:49:56 hkenken Exp $ */
+/*	$NetBSD: imx51_gpio.c,v 1.3.28.1 2020/04/13 08:03:35 martin Exp $ */
 
 /* derived from imx31_gpio.c */
 /*-
@@ -30,12 +30,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_gpio.c,v 1.3 2014/07/25 07:49:56 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_gpio.c,v 1.3.28.1 2020/04/13 08:03:35 martin Exp $");
 
 #include "opt_imx.h"
 
 #include "locators.h"
 #include "gpio.h"
+
+#define	_INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -86,6 +88,7 @@ imxgpio_match(device_t parent, cfdata_t cfdata, void *aux)
 void
 imxgpio_attach(device_t parent, device_t self, void *aux)
 {
+	struct imxgpio_softc * const gpio = device_private(self);
 	struct axi_attach_args * const aa = aux;
 	bus_space_handle_t ioh;
 	int error;
@@ -100,21 +103,30 @@ imxgpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "missing irqbase in config\n");
 		return;
 	}
-		
+
 	if (aa->aa_size == AXICF_SIZE_DEFAULT)
 		aa->aa_size = GPIO_SIZE;
 
 	error = bus_space_map(aa->aa_iot, aa->aa_addr, aa->aa_size,
 	    0, &ioh);
-
 	if (error) {
 		aprint_error(": failed to map register %#lx@%#lx: %d\n",
 		    aa->aa_size, aa->aa_addr, error);
 		return;
 	}
 
-	imxgpio_attach_common(self, aa->aa_iot, ioh,
-	    (aa->aa_addr - GPIO1_BASE) / 0x4000,
-	    aa->aa_irq, aa->aa_irqbase);
+	gpio->gpio_is = intr_establish(aa->aa_irq,
+	    IPL_HIGH, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
+	KASSERT(gpio->gpio_is != NULL );
+	gpio->gpio_is_high = intr_establish(aa->aa_irq + 1,
+	    IPL_HIGH, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
+	KASSERT(gpio->gpio_is_high != NULL);
+
+	gpio->gpio_memt = aa->aa_iot;
+	gpio->gpio_memh = ioh;
+	gpio->gpio_unit = (aa->aa_addr - GPIO1_BASE) / 0x4000;
+	gpio->gpio_irqbase = aa->aa_irqbase;
+
+	imxgpio_attach_common(self);
 }
 

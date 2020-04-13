@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mknod.c,v 1.4 2013/10/04 21:07:37 christos Exp $ */
+/*	$NetBSD: compat_mknod.c,v 1.4.26.1 2020/04/13 08:03:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_mknod.c,v 1.4 2013/10/04 21:07:37 christos Exp $");
+__RCSID("$NetBSD: compat_mknod.c,v 1.4.26.1 2020/04/13 08:03:09 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: compat_mknod.c,v 1.4 2013/10/04 21:07:37 christos Exp $");
 #include <compat/sys/stat.h>
 
 __warn_references(mknod,
-    "warning: reference to compatibility mknod(); include <time.h> to generate correct reference")
+    "warning: reference to compatibility mknod(); include <sys/stat.h> to generate correct reference")
 
 __strong_alias(mknod, __compat_mknod)
 

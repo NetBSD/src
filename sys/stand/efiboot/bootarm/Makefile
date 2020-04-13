@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.4.3 2020/04/08 14:09:03 martin Exp $
+# $NetBSD: Makefile,v 1.1.4.4 2020/04/13 08:05:20 martin Exp $
 
 PROG=		bootarm.efi
 OBJFMT=		binary
@@ -17,4 +17,4 @@ LDFLAGS+=	-N
 
 release: check_RELEASEDIR
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${PROG} \
-		${RELEASEDIR}/${MACHINE}/installation/misc
+		${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc

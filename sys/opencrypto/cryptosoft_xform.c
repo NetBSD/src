@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.27 2014/11/27 20:30:21 christos Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.27.20.1 2020/04/13 08:05:17 martin Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.27 2014/11/27 20:30:21 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.27.20.1 2020/04/13 08:05:17 martin Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -313,26 +313,26 @@ static const struct swcr_auth_hash swcr_auth_hash_sha1 = {
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_256 = {
 	&auth_hash_hmac_sha2_256, sizeof(SHA256_CTX),
-	(void (*)(void *)) SHA256_Init, NULL, NULL, SHA256Update_int,
-	(void (*)(u_int8_t *, void *)) SHA256_Final
+	(void (*)(void *))(void *)SHA256_Init, NULL, NULL, SHA256Update_int,
+	(void (*)(u_int8_t *, void *))(void *)SHA256_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_384 = {
 	&auth_hash_hmac_sha2_384, sizeof(SHA384_CTX),
-	(void (*)(void *)) SHA384_Init, NULL, NULL, SHA384Update_int,
-	(void (*)(u_int8_t *, void *)) SHA384_Final
+	(void (*)(void *))(void *)SHA384_Init, NULL, NULL, SHA384Update_int,
+	(void (*)(u_int8_t *, void *))(void *)SHA384_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_512 = {
 	&auth_hash_hmac_sha2_512, sizeof(SHA512_CTX),
-	(void (*)(void *)) SHA512_Init, NULL, NULL, SHA512Update_int,
-	(void (*)(u_int8_t *, void *)) SHA512_Final
+	(void (*)(void *))(void *)SHA512_Init, NULL, NULL, SHA512Update_int,
+	(void (*)(u_int8_t *, void *))(void *)SHA512_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_aes_xcbc_mac = {
 	&auth_hash_aes_xcbc_mac_96, sizeof(aesxcbc_ctx),
 	null_init,
-	(void (*)(void *, const u_int8_t *, u_int16_t))aes_xcbc_mac_init,
+	(void (*)(void *, const u_int8_t *, u_int16_t))(void *)aes_xcbc_mac_init,
 	NULL, aes_xcbc_mac_loop, aes_xcbc_mac_result
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.408.2.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.408.2.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.408.2.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.408.2.2 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -260,9 +260,10 @@ nd6_hint(struct tcpcb *tp)
 	struct rtentry *rt = NULL;
 
 	if (tp != NULL && tp->t_in6pcb != NULL && tp->t_family == AF_INET6 &&
-	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL)
+	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL) {
 		nd6_nud_hint(rt);
-	rtcache_unref(rt, &tp->t_in6pcb->in6p_route);
+		rtcache_unref(rt, &tp->t_in6pcb->in6p_route);
+	}
 }
 #else
 static inline void
@@ -2405,8 +2406,8 @@ after_listen:
 
 	/*
 	 * Since we've covered the SYN-SENT and SYN-RECEIVED states above
-	 * we must be in a synchronized state.  RFC791 states (under RST
-	 * generation) that any unacceptable segment (an out-of-order SYN
+	 * we must be in a synchronized state.  RFC793 states (under Reset
+	 * Generation) that any unacceptable segment (an out-of-order SYN
 	 * qualifies) received in a synchronized state must elicit only an
 	 * empty acknowledgment segment ... and the connection remains in
 	 * the same state.
@@ -3379,7 +3380,7 @@ tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 		if (__predict_false(tcp_rttlocal) && tcp_msl_enable
 		    && tp->t_srtt > tcp_msl_remote_threshold
 		    && tp->t_msl  < tcp_msl_remote) {
-			tp->t_msl = tcp_msl_remote;
+			tp->t_msl = MIN(tcp_msl_remote, TCP_MAXMSL);
 		}
 	} else {
 		/*
@@ -3647,7 +3648,7 @@ syn_cache_timer(void *arg)
 	 * than the keep alive timer would allow, expire it.
 	 */
 	sc->sc_rxttot += sc->sc_rxtcur;
-	if (sc->sc_rxttot >= tcp_keepinit)
+	if (sc->sc_rxttot >= MIN(tcp_keepinit, TCP_TIMER_MAXTICKS))
 		goto dropit;
 
 	TCP_STATINC(TCP_STAT_SC_RETRANSMITTED);

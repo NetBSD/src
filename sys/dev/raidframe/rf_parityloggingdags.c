@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.21.30.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.21.30.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.21.30.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.21.30.2 2020/04/13 08:04:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -82,7 +82,7 @@ rf_CommonCreateParityLoggingLargeWriteDAG(
     RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList,
     int nfaults,
-    int (*redFunc) (RF_DagNode_t *))
+    void (*redFunc) (RF_DagNode_t *))
 {
 	RF_DagNode_t *nodes, *wndNodes, *rodNodes = NULL, *syncNode, *xorNode,
 	       *lpoNode, *blockNode, *unblockNode, *termNode;
@@ -337,7 +337,7 @@ rf_CommonCreateParityLoggingSmallWriteDAG(
 	int     numParityNodes = (asmap->parityInfo->next) ? 2 : 1;
 	int     i, j, nNodes, totalNumNodes;
 	RF_ReconUnitNum_t which_ru;
-	int     (*func) (RF_DagNode_t * node), (*undoFunc) (RF_DagNode_t * node);
+	void    (*func) (RF_DagNode_t * node), (*undoFunc) (RF_DagNode_t * node);
 	const char   *name;
 	RF_StripeNum_t parityStripeID = rf_RaidAddressToParityStripeID(&(raidPtr->Layout), asmap->raidAddress, &which_ru);
 	long    nfaults __unused = qfuncs ? 2 : 1;
@@ -633,7 +633,7 @@ rf_CreateParityLoggingLargeWriteDAG(
     RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList,
     int nfaults,
-    int (*redFunc) (RF_DagNode_t *))
+    void (*redFunc) (RF_DagNode_t *))
 {
 	dag_h->creator = "ParityLoggingSmallWriteDAG";
 	rf_CommonCreateParityLoggingLargeWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, 1, rf_RegularXorFunc);

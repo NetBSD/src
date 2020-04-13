@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.64.4.1 2020/04/08 14:09:03 martin Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.64.4.2 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -112,6 +112,8 @@ typedef struct fdfile {
 	kcondvar_t	ff_closing;	/* d: notifier for close */
 } fdfile_t;
 
+#define FDFILE_SIZE ((sizeof(fdfile_t)+CACHE_LINE_SIZE-1)/CACHE_LINE_SIZE*CACHE_LINE_SIZE)
+
 /* Reference count */
 #define	FR_CLOSING	(0x80000000)	/* closing: must interlock */
 #define	FR_MASK		(~FR_CLOSING)	/* reference count */
@@ -132,7 +134,7 @@ typedef struct filedesc {
 	 * Built-in fdfile_t records first, since they have strict
 	 * alignment requirements.
 	 */
-	uint8_t		fd_dfdfile[NDFDFILE][CACHE_LINE_SIZE];
+	uint8_t		fd_dfdfile[NDFDFILE][FDFILE_SIZE];
 	/*
 	 * All of the remaining fields are locked by fd_lock.
 	 */

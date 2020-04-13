@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.29.4.2 2020/04/08 14:08:52 martin Exp $ */
+/* $NetBSD: systrace_args.c,v 1.29.4.3 2020/04/13 08:05:04 martin Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -2530,8 +2530,8 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_getvfsstat */
 	case 356: {
-		const struct sys_getvfsstat_args *p = params;
-		uarg[0] = (intptr_t) SCARG(p, buf); /* struct statvfs * */
+		const struct compat_90_sys_getvfsstat_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, buf); /* struct statvfs90 * */
 		uarg[1] = SCARG(p, bufsize); /* size_t */
 		iarg[2] = SCARG(p, flags); /* int */
 		*n_args = 3;
@@ -2539,18 +2539,18 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_statvfs1 */
 	case 357: {
-		const struct sys_statvfs1_args *p = params;
+		const struct compat_90_sys_statvfs1_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
-		uarg[1] = (intptr_t) SCARG(p, buf); /* struct statvfs * */
+		uarg[1] = (intptr_t) SCARG(p, buf); /* struct statvfs90 * */
 		iarg[2] = SCARG(p, flags); /* int */
 		*n_args = 3;
 		break;
 	}
 	/* sys_fstatvfs1 */
 	case 358: {
-		const struct sys_fstatvfs1_args *p = params;
+		const struct compat_90_sys_fstatvfs1_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
-		uarg[1] = (intptr_t) SCARG(p, buf); /* struct statvfs * */
+		uarg[1] = (intptr_t) SCARG(p, buf); /* struct statvfs90 * */
 		iarg[2] = SCARG(p, flags); /* int */
 		*n_args = 3;
 		break;
@@ -2559,7 +2559,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	case 359: {
 		const struct compat_30_sys_fhstatvfs1_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, fhp); /* const struct compat_30_fhandle * */
-		uarg[1] = (intptr_t) SCARG(p, buf); /* struct statvfs * */
+		uarg[1] = (intptr_t) SCARG(p, buf); /* struct statvfs90 * */
 		iarg[2] = SCARG(p, flags); /* int */
 		*n_args = 3;
 		break;
@@ -2909,12 +2909,12 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
-	/* sys___fhstatvfs140 */
+	/* sys_fhstatvfs1 */
 	case 397: {
-		const struct sys___fhstatvfs140_args *p = params;
+		const struct compat_90_sys_fhstatvfs1_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, fhp); /* const void * */
 		uarg[1] = SCARG(p, fh_size); /* size_t */
-		uarg[2] = (intptr_t) SCARG(p, buf); /* struct statvfs * */
+		uarg[2] = (intptr_t) SCARG(p, buf); /* struct statvfs90 * */
 		iarg[3] = SCARG(p, flags); /* int */
 		*n_args = 4;
 		break;
@@ -3667,6 +3667,43 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[1] = SCARG(p, id); /* id_t */
 		uarg[2] = (intptr_t) SCARG(p, clock_id); /* clockid_t * */
 		*n_args = 3;
+		break;
+	}
+	/* sys___getvfsstat90 */
+	case 483: {
+		const struct sys___getvfsstat90_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, buf); /* struct statvfs * */
+		uarg[1] = SCARG(p, bufsize); /* size_t */
+		iarg[2] = SCARG(p, flags); /* int */
+		*n_args = 3;
+		break;
+	}
+	/* sys___statvfs190 */
+	case 484: {
+		const struct sys___statvfs190_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
+		uarg[1] = (intptr_t) SCARG(p, buf); /* struct statvfs * */
+		iarg[2] = SCARG(p, flags); /* int */
+		*n_args = 3;
+		break;
+	}
+	/* sys___fstatvfs190 */
+	case 485: {
+		const struct sys___fstatvfs190_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, buf); /* struct statvfs * */
+		iarg[2] = SCARG(p, flags); /* int */
+		*n_args = 3;
+		break;
+	}
+	/* sys___fhstatvfs190 */
+	case 486: {
+		const struct sys___fhstatvfs190_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, fhp); /* const void * */
+		uarg[1] = SCARG(p, fh_size); /* size_t */
+		uarg[2] = (intptr_t) SCARG(p, buf); /* struct statvfs * */
+		iarg[3] = SCARG(p, flags); /* int */
+		*n_args = 4;
 		break;
 	}
 	default:
@@ -7812,7 +7849,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 356:
 		switch(ndx) {
 		case 0:
-			p = "struct statvfs *";
+			p = "struct statvfs90 *";
 			break;
 		case 1:
 			p = "size_t";
@@ -7831,7 +7868,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "const char *";
 			break;
 		case 1:
-			p = "struct statvfs *";
+			p = "struct statvfs90 *";
 			break;
 		case 2:
 			p = "int";
@@ -7847,7 +7884,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "int";
 			break;
 		case 1:
-			p = "struct statvfs *";
+			p = "struct statvfs90 *";
 			break;
 		case 2:
 			p = "int";
@@ -7863,7 +7900,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "const struct compat_30_fhandle *";
 			break;
 		case 1:
-			p = "struct statvfs *";
+			p = "struct statvfs90 *";
 			break;
 		case 2:
 			p = "int";
@@ -8511,7 +8548,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* sys___fhstatvfs140 */
+	/* sys_fhstatvfs1 */
 	case 397:
 		switch(ndx) {
 		case 0:
@@ -8521,7 +8558,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "size_t";
 			break;
 		case 2:
-			p = "struct statvfs *";
+			p = "struct statvfs90 *";
 			break;
 		case 3:
 			p = "int";
@@ -9878,6 +9915,73 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 2:
 			p = "clockid_t *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys___getvfsstat90 */
+	case 483:
+		switch(ndx) {
+		case 0:
+			p = "struct statvfs *";
+			break;
+		case 1:
+			p = "size_t";
+			break;
+		case 2:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys___statvfs190 */
+	case 484:
+		switch(ndx) {
+		case 0:
+			p = "const char *";
+			break;
+		case 1:
+			p = "struct statvfs *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys___fstatvfs190 */
+	case 485:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct statvfs *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys___fhstatvfs190 */
+	case 486:
+		switch(ndx) {
+		case 0:
+			p = "const void *";
+			break;
+		case 1:
+			p = "size_t";
+			break;
+		case 2:
+			p = "struct statvfs *";
+			break;
+		case 3:
+			p = "int";
 			break;
 		default:
 			break;
@@ -11549,7 +11653,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* sys___fhstatvfs140 */
+	/* sys_fhstatvfs1 */
 	case 397:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
@@ -11959,6 +12063,26 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys_clock_getcpuclockid2 */
 	case 482:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys___getvfsstat90 */
+	case 483:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys___statvfs190 */
+	case 484:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys___fstatvfs190 */
+	case 485:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys___fhstatvfs190 */
+	case 486:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

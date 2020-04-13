@@ -1,4 +1,4 @@
-/*	$NetBSD: h_client.c,v 1.8 2012/04/20 05:15:11 jruoho Exp $	*/
+/*	$NetBSD: h_client.c,v 1.8.32.1 2020/04/13 08:05:29 martin Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -71,16 +71,18 @@ main(int argc, char *argv[])
 			errx(EXIT_FAILURE, "stdin fileno is still set");
 		return EXIT_SUCCESS;
 	} else if (strcmp(argv[1], "select_allunset") == 0) {
-		fd_set fds;
+		fd_set rfds, wfds, efds;
 		struct timeval tv;
 		int rv;
 
 		tv.tv_sec = 0;
 		tv.tv_usec = 1;
 
-		FD_ZERO(&fds);
+		FD_ZERO(&rfds);
+		FD_ZERO(&wfds);
+		FD_ZERO(&efds);
 
-		rv = select(100, &fds, &fds, &fds, &tv);
+		rv = select(100, &rfds, &wfds, &efds, &tv);
 		if (rv == -1)
 			err(EXIT_FAILURE, "select");
 		if (rv != 0)

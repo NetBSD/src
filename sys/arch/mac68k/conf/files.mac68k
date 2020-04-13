@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.126.4.1 2019/06/10 22:06:26 christos Exp $
+#	$NetBSD: files.mac68k,v 1.126.4.2 2020/04/13 08:03:57 martin Exp $
 
 # mac68k-specific configuration info
 
@@ -64,11 +64,10 @@ device	macfb: wsemuldisplaydev, wsrasteremulops
 attach	macfb at grfbus
 file	arch/mac68k/dev/macfb.c		macfb needs-flag
 
-file	arch/mac68k/dev/maccons.c	akbd & macfb
+attach	genfb at grfbus with genfb_grfbus
+file	arch/mac68k/dev/genfb_grfbus.c	genfb_grfbus
 
-#device	ite: wsemuldisplaydev
-#attach	ite at wsdisplay
-#file	arch/mac68k/dev/ite_compat.c	ite needs-flag
+file	arch/mac68k/dev/maccons.c	akbd & (macfb | genfb_grfbus)
 
 device	ae: ifnet, ether, arp, dp8390nic
 attach	ae at nubus with ae_nubus
@@ -120,10 +119,6 @@ file	arch/mac68k/obio/sbc_obio.c	sbc_obio
 attach	esp at obio
 file	arch/mac68k/obio/esp.c		esp
 
-#device	qsc: scsi, ncr53c9x
-#attach	qsc at nubus
-#file	arch/mac68k/nubus/qsc.c		qsc
-
 #
 # Machine-independent ATA drivers
 #
@@ -139,7 +134,6 @@ file	arch/mac68k/nubus/cpi_nubus.c	cpi
 device	zsc { channel = -1 }
 attach	zsc at obio
 file	arch/mac68k/dev/zs.c		zsc needs-flag
-#file	arch/mac68k/dev/z8530sc.c	zsc
 file	dev/ic/z8530sc.c		zsc
 
 device	zstty: tty

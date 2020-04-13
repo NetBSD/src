@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_lcd.c,v 1.5 2015/12/21 04:26:29 hkenken Exp $	*/
+/*	$NetBSD: netwalker_lcd.c,v 1.5.18.1 2020/04/13 08:03:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2012 Genetec corp. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_lcd.c,v 1.5 2015/12/21 04:26:29 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_lcd.c,v 1.5.18.1 2020/04/13 08:03:45 martin Exp $");
 
 #include "opt_imx51_ipuv3.h"
 #include "opt_netwalker_lcd.h"
@@ -36,8 +36,11 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_lcd.c,v 1.5 2015/12/21 04:26:29 hkenken Ex
 #include "ioconf.h"
 #include "netwalker_backlight.h"
 
+#define	_INTR_PRIVATE
+
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/gpio.h>
 
 #include <sys/bus.h>
 #include <arm/imx/imx51var.h>
@@ -140,17 +143,17 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 	}
 
 	/* LCD power on */
-	gpio_set_direction(GPIO_NO(4, 9), GPIO_DIR_OUT);
-	gpio_set_direction(GPIO_NO(4, 10), GPIO_DIR_OUT);
-	gpio_set_direction(GPIO_NO(3, 3), GPIO_DIR_OUT);
+	imxgpio_set_direction(GPIO_NO(4, 9), GPIO_PIN_OUTPUT);
+	imxgpio_set_direction(GPIO_NO(4, 10), GPIO_PIN_OUTPUT);
+	imxgpio_set_direction(GPIO_NO(3, 3), GPIO_PIN_OUTPUT);
 
-	gpio_data_write(GPIO_NO(3, 3), 1);
-	gpio_data_write(GPIO_NO(4, 9), 1);
+	imxgpio_data_write(GPIO_NO(3, 3), GPIO_PIN_HIGH);
+	imxgpio_data_write(GPIO_NO(4, 9), GPIO_PIN_HIGH);
 	delay(180 * 1000);
-	gpio_data_write(GPIO_NO(4, 10), 1);
+	imxgpio_data_write(GPIO_NO(4, 10), GPIO_PIN_HIGH);
 
-	gpio_set_direction(GPIO_NO(2, 13), GPIO_DIR_OUT);
-	gpio_data_write(GPIO_NO(2, 13), 1);
+	imxgpio_set_direction(GPIO_NO(2, 13), GPIO_PIN_OUTPUT);
+	imxgpio_data_write(GPIO_NO(2, 13), GPIO_PIN_HIGH);
 
 	imx51_ipuv3_attach_sub(sc, aux, &sharp_panel);
 

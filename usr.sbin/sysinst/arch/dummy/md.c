@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/06 12:34:42 joerg Exp $	*/
+/*	$NetBSD: md.c,v 1.2.28.1 2020/04/13 08:06:01 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,67 +49,90 @@ md_init_set_status(int flags)
 	(void)flags;
 }
 
-int
-md_get_info(void)
+bool
+md_get_info(struct install_partition_desc *desc)
 {
-	return 1;
+	return true;
+}
+
+bool
+md_make_bsd_partitions(struct install_partition_desc *desc)
+{
+	return make_bsd_partitions(desc);
+}
+
+bool
+md_check_partitions(struct install_partition_desc *desc)
+{
+	return true;
+}
+
+bool
+md_pre_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *part)
+{
+	return false;
+}
+
+bool
+md_post_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *part)
+{
+	return true;
 }
 
 int
-md_make_bsd_partitions(void)
-{
-	return make_bsd_partitions();
-}
-
-int
-md_check_partitions(void)
-{
-	return 1;
-}
-
-int
-md_pre_disklabel(void)
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
 	return 0;
 }
 
 int
-md_post_disklabel(void)
+md_post_newfs(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 int
-md_post_newfs(void)
-{
-	return 0;
-}
-
-int
-md_post_extract(void)
+md_post_extract(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install(struct install_partition_desc *install)
 {
 }
 
 int
-md_pre_update(void)
+md_pre_update(struct install_partition_desc *install)
 {
 	return 1;
 }
 
 int
-md_update(void)
+md_update(struct install_partition_desc *install)
 {
 	return 1;
 }
 
-int
-md_pre_mount(void)
+#ifdef HAVE_GPT
+/*
+ * New GPT partitions have been written, update bootloader or remember
+ * data untill needed in md_post_newfs
+ */
+bool
+md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
+    bool root_is_new, part_id efi_id, bool efi_is_new)
 {
-	return 0;
+
+	return true;
 }
+#endif
+
+bool
+md_parts_use_wholedisk(struct disk_partitions *parts)
+{
+	return parts_use_wholedisk(parts, 0, NULL);
+}
+

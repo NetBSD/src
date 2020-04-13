@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rumvar.h,v 1.10.18.1 2020/04/08 14:08:13 martin Exp $	*/
+/*	$NetBSD: if_rumvar.h,v 1.10.18.2 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_rumvar.h,v 1.7 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
@@ -29,7 +29,7 @@ struct rum_rx_radiotap_header {
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_antenna;
 	uint8_t		wr_antsignal;
-} __packed;
+};
 
 #define RT2573_RX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
@@ -45,7 +45,7 @@ struct rum_tx_radiotap_header {
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
 	uint8_t		wt_antenna;
-} __packed;
+};
 
 #define RT2573_TX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\

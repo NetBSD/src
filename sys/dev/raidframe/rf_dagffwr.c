@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.34.30.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.34.30.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.34.30.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.34.30.2 2020/04/13 08:04:47 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -165,7 +165,7 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			     RF_DagHeader_t *dag_h, void *bp,
 			     RF_RaidAccessFlags_t flags,
 			     RF_AllocListElem_t *allocList,
-			     int nfaults, int (*redFunc) (RF_DagNode_t *),
+			     int nfaults, void (*redFunc) (RF_DagNode_t *),
 			     int allowBufferRecycle)
 {
 	RF_DagNode_t *wndNodes, *rodNodes, *xorNode, *wnpNode, *tmpNode;
@@ -538,8 +538,8 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 #endif
 	int     i, j, nNodes;
 	RF_ReconUnitNum_t which_ru;
-	int     (*func) (RF_DagNode_t *), (*undoFunc) (RF_DagNode_t *);
-	int     (*qfunc) (RF_DagNode_t *) __unused;
+	void    (*func) (RF_DagNode_t *), (*undoFunc) (RF_DagNode_t *);
+	void    (*qfunc) (RF_DagNode_t *) __unused;
 	int     numDataNodes, numParityNodes;
 	RF_StripeNum_t parityStripeID;
 	RF_PhysDiskAddr_t *pda;

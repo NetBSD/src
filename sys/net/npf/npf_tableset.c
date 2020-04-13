@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009-2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -35,11 +35,18 @@
  *	The tableset is an array of tables.  After the creation, the array
  *	is immutable.  The caller is responsible to synchronise the access
  *	to the tableset.
+ *
+ * Warning (not applicable for the userspace npfkern):
+ *
+ *	The thmap_put()/thmap_del() are not called from the interrupt
+ *	context and are protected by a mutex(9), therefore they do not
+ *	SPL wrappers -- see the comment at the top of the npf_conndb.c
+ *	source file.
  */
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.27.14.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.27.14.2 2020/04/13 08:05:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -365,7 +372,7 @@ npf_table_create(const char *name, u_int tid, int type,
 
 	switch (type) {
 	case NPF_TABLE_LPM:
-		t->t_lpm = lpm_create();
+		t->t_lpm = lpm_create(KM_NOSLEEP);
 		if (t->t_lpm == NULL) {
 			goto out;
 		}
@@ -398,7 +405,7 @@ npf_table_create(const char *name, u_int tid, int type,
 	default:
 		KASSERT(false);
 	}
-	mutex_init(&t->t_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&t->t_lock, MUTEX_DEFAULT, IPL_NET);
 	t->t_type = type;
 	t->t_id = tid;
 	return t;
@@ -449,12 +456,15 @@ npf_table_getid(npf_table_t *t)
  * npf_table_check: validate the name, ID and type.
  */
 int
-npf_table_check(npf_tableset_t *ts, const char *name, uint64_t tid, uint64_t type)
+npf_table_check(npf_tableset_t *ts, const char *name, uint64_t tid,
+    uint64_t type, bool replacing)
 {
+	const npf_table_t *t;
+
 	if (tid >= ts->ts_nitems) {
 		return EINVAL;
 	}
-	if (ts->ts_map[tid] != NULL) {
+	if (!replacing && ts->ts_map[tid] != NULL) {
 		return EEXIST;
 	}
 	switch (type) {
@@ -469,33 +479,15 @@ npf_table_check(npf_tableset_t *ts, const char *name, uint64_t tid, uint64_t typ
 	if (strlen(name) >= NPF_TABLE_MAXNAMELEN) {
 		return ENAMETOOLONG;
 	}
-	if (npf_tableset_getbyname(ts, name)) {
-		return EEXIST;
+	if ((t = npf_tableset_getbyname(ts, name)) != NULL) {
+		if (!replacing || t->t_id != tid) {
+			return EEXIST;
+		}
 	}
 	return 0;
 }
 
 static int
-table_cidr_check(int alen, const npf_addr_t *addr, npf_netmask_t mask)
-{
-	switch (alen) {
-	case sizeof(struct in_addr):
-		if (__predict_false(mask > 32 && mask != NPF_NO_NETMASK)) {
-			return EINVAL;
-		}
-		break;
-	case sizeof(struct in6_addr):
-		if (__predict_false(mask > 128 && mask != NPF_NO_NETMASK)) {
-			return EINVAL;
-		}
-		break;
-	default:
-		return EINVAL;
-	}
-	return 0;
-}
-
-static void
 table_ifaddr_insert(npf_table_t *t, const int alen, npf_tblent_t *ent)
 {
 	const unsigned aidx = NPF_ADDRLEN2IDX(alen);
@@ -513,7 +505,10 @@ table_ifaddr_insert(npf_table_t *t, const int alen, npf_tblent_t *ent)
 		toalloc = roundup2(allocated + 1, NPF_IFADDR_STEP);
 		newsize = toalloc * sizeof(npf_tblent_t *);
 
-		elements = kmem_zalloc(newsize, KM_SLEEP);
+		elements = kmem_zalloc(newsize, KM_NOSLEEP);
+		if (elements == NULL) {
+			return ENOMEM;
+		}
 		for (unsigned i = 0; i < used; i++) {
 			elements[i] = old_elements[i];
 		}
@@ -527,6 +522,7 @@ table_ifaddr_insert(npf_table_t *t, const int alen, npf_tblent_t *ent)
 	}
 	t->t_elements[aidx][used] = ent;
 	t->t_used[aidx]++;
+	return 0;
 }
 
 /*
@@ -539,7 +535,7 @@ npf_table_insert(npf_table_t *t, const int alen,
 	npf_tblent_t *ent;
 	int error;
 
-	error = table_cidr_check(alen, addr, mask);
+	error = npf_netmask_check(alen, mask);
 	if (error) {
 		return error;
 	}
@@ -590,7 +586,9 @@ npf_table_insert(npf_table_t *t, const int alen,
 		error = EINVAL;
 		break;
 	case NPF_TABLE_IFADDR:
-		table_ifaddr_insert(t, alen, ent);
+		if ((error = table_ifaddr_insert(t, alen, ent)) != 0) {
+			break;
+		}
 		LIST_INSERT_HEAD(&t->t_list, ent, te_listent);
 		t->t_nitems++;
 		break;
@@ -615,7 +613,7 @@ npf_table_remove(npf_table_t *t, const int alen,
 	npf_tblent_t *ent = NULL;
 	int error;
 
-	error = table_cidr_check(alen, addr, mask);
+	error = npf_netmask_check(alen, mask);
 	if (error) {
 		return error;
 	}
@@ -672,7 +670,7 @@ npf_table_lookup(npf_table_t *t, const int alen, const npf_addr_t *addr)
 	bool found;
 	int error;
 
-	error = table_cidr_check(alen, addr, NPF_NO_NETMASK);
+	error = npf_netmask_check(alen, NPF_NO_NETMASK);
 	if (error) {
 		return error;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx6.c,v 1.3 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: if_enet_imx6.c,v 1.3.8.1 2020/04/13 08:03:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.3 2017/06/09 18:14:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.3.8.1 2020/04/13 08:03:34 martin Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -46,6 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.3 2017/06/09 18:14:59 ryo Exp $")
 #include <arm/imx/imx6_ocotpvar.h>
 #include <arm/imx/if_enetreg.h>
 #include <arm/imx/if_enetvar.h>
+
+CFATTACH_DECL_NEW(enet, sizeof(struct enet_softc),
+    enet_match, enet_attach, NULL, NULL);
+
+static int enet_init_clocks(struct enet_softc *);
 
 int
 enet_match(device_t parent __unused, struct cfdata *match __unused, void *aux)
@@ -69,19 +74,21 @@ enet_match(device_t parent __unused, struct cfdata *match __unused, void *aux)
 void
 enet_attach(device_t parent, device_t self, void *aux)
 {
-	struct enet_softc *sc;
-	struct axi_attach_args *aa;
+	struct enet_softc *sc = device_private(self);
+	struct axi_attach_args *aa = aux;
 #if NIMXOCOTP > 0
 	uint32_t eaddr;
 #endif
 
-	aa = aux;
-	sc = device_private(self);
-
 	if (aa->aa_size == AXICF_SIZE_DEFAULT)
 		aa->aa_size = AIPS_ENET_SIZE;
 
+	sc->sc_dev = self;
+	sc->sc_iot = aa->aa_iot;
+	sc->sc_dmat = aa->aa_dmat;
+
 	sc->sc_imxtype = 6;	/* i.MX6 */
+	sc->sc_phyid = MII_PHY_ANY;
 	if (IMX6_CHIPID_MAJOR(imx6_chip_id()) == CHIPID_MAJOR_IMX6UL)
 		sc->sc_rgmii = 0;
 	else
@@ -108,27 +115,8 @@ enet_attach(device_t parent, device_t self, void *aux)
 	sc->sc_enaddr[5] = eaddr + sc->sc_unit;
 #endif
 
-#if NIMXCCM > 0
-	/* PLL power up */
-	if (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
-	    CCM_ANALOG_PLL_ENET_ENABLE) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't enable CCM_ANALOG_PLL_ENET\n");
-		return;
-	}
-
 	if (IMX6_CHIPID_MAJOR(imx6_chip_id()) == CHIPID_MAJOR_IMX6UL) {
 		uint32_t v;
-
-		/* iMX6UL */
-		if ((imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
-		    CCM_ANALOG_PLL_ENET_ENET_25M_REF_EN) != 0) ||
-		    (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
-		    CCM_ANALOG_PLL_ENET_ENET2_125M_EN) != 0)) {
-			aprint_error_dev(sc->sc_dev,
-			    "couldn't enable CCM_ANALOG_PLL_ENET\n");
-			return;
-		}
 
 		v = iomux_read(IMX6UL_IOMUX_GPR1);
 		switch (sc->sc_unit) {
@@ -144,11 +132,74 @@ enet_attach(device_t parent, device_t self, void *aux)
 		iomux_write(IMX6UL_IOMUX_GPR1, v);
 	}
 
-	sc->sc_pllclock = imx6_get_clock(IMX6CLK_PLL6);
-#else
-	sc->sc_pllclock = 50000000;
-#endif
+	sc->sc_clk_ipg = imx6_get_clock("enet");
+	if (sc->sc_clk_ipg == NULL) {
+		aprint_error(": couldn't get clock ipg\n");
+		return;
+	}
+	sc->sc_clk_enet = imx6_get_clock("enet");
+	if (sc->sc_clk_enet == NULL) {
+		aprint_error(": couldn't get clock enet\n");
+		return;
+	}
+	sc->sc_clk_enet_ref = imx6_get_clock("enet_ref");
+	if (sc->sc_clk_enet_ref == NULL) {
+		aprint_error(": couldn't get clock enet_ref\n");
+		return;
+	}
+	if (enet_init_clocks(sc) != 0) {
+		aprint_error_dev(self, "couldn't init clocks\n");
+		return;
+	}
 
-	enet_attach_common(self, aa->aa_iot, aa->aa_dmat, aa->aa_addr,
-	    aa->aa_size, aa->aa_irq);
+	sc->sc_clock = clk_get_rate(sc->sc_clk_ipg);
+
+	if (bus_space_map(sc->sc_iot, aa->aa_addr, aa->aa_size, 0,
+	    &sc->sc_ioh)) {
+		aprint_error_dev(self, "cannot map registers\n");
+		return;
+	}
+
+	aprint_naive("\n");
+	aprint_normal(": Gigabit Ethernet Controller\n");
+
+	/* setup interrupt handlers */
+	if ((sc->sc_ih = intr_establish(aa->aa_irq, IPL_NET,
+	    IST_LEVEL, enet_intr, sc)) == NULL) {
+		aprint_error_dev(self, "unable to establish interrupt\n");
+		goto failure;
+	}
+
+	if (enet_attach_common(self) != 0)
+		goto failure;
+
+	return;
+
+failure:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, aa->aa_size);
+	return;
+}
+
+static int
+enet_init_clocks(struct enet_softc *sc)
+{
+	int error;
+
+	error = clk_enable(sc->sc_clk_ipg);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable ipg: %d\n", error);
+		return error;
+	}
+	error = clk_enable(sc->sc_clk_enet);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable enet: %d\n", error);
+		return error;
+	}
+	error = clk_enable(sc->sc_clk_enet_ref);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable enet-ref: %d\n", error);
+		return error;
+	}
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.31 2015/04/08 08:35:54 ozaki-r Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.31.18.1 2020/04/13 08:03:36 martin Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.31 2015/04/08 08:35:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.31.18.1 2020/04/13 08:03:36 martin Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -342,10 +342,7 @@ ixp12x0_intr_establish(int irq, int ipl, int (*ih_func)(void *), void *arg)
 	if (ipl < 0 || ipl > NIPL)
 		panic("ixp12x0_intr_establish: IPL %d out of range", ipl);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = ih_func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;

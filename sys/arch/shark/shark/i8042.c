@@ -1,4 +1,4 @@
-/*	$NetBSD: i8042.c,v 1.6 2011/07/19 15:07:43 dyoung Exp $	*/
+/*	$NetBSD: i8042.c,v 1.6.54.1 2020/04/13 08:04:07 martin Exp $	*/
 
 /*
  * Copyright 1997
@@ -59,7 +59,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8042.c,v 1.6 2011/07/19 15:07:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8042.c,v 1.6.54.1 2020/04/13 08:04:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -328,7 +328,7 @@ i8042_cmd(bus_space_tag_t    iot,
             else
             {
                 KERN_DEBUG(i8042debug, KERN_DEBUG_WARNING, 
-                           ("i8042_cmd: failed contoller command byte "
+                           ("i8042_cmd: failed controller command byte "
                             "write request of 0x%x\n", 
                             value));
                 break;

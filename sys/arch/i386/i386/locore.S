@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.157.2.1 2019/06/10 22:06:20 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.157.2.2 2020/04/13 08:03:52 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.157.2.1 2019/06/10 22:06:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.157.2.2 2020/04/13 08:03:52 martin Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -346,12 +346,52 @@ _C_LABEL(Multiboot_Header):
 	.long	MULTIBOOT_HEADER_FLAGS
 	.long	-(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 
+	.align	8
+	.globl	Multiboot2_Header
+_C_LABEL(Multiboot2_Header):
+	.long	MULTIBOOT2_HEADER_MAGIC
+	.long	MULTIBOOT2_ARCHITECTURE_I386
+	.long	Multiboot2_Header_end - Multiboot2_Header
+	.long	-(MULTIBOOT2_HEADER_MAGIC + MULTIBOOT2_ARCHITECTURE_I386 \
+		+ (Multiboot2_Header_end - Multiboot2_Header))
+
+	.long	1	/* MULTIBOOT_HEADER_TAG_INFORMATION_REQUEST */
+	.long	12	/* sizeof(multiboot_header_tag_information_request) */
+			/* + sizeof(uint32_t) * requests */
+	.long	4	/* MULTIBOOT_TAG_TYPE_BASIC_MEMINFO */
+	.long	0	/* pad for 8 bytes alignment */
+
+	.long	8	/* MULTIBOOT_HEADER_TAG_ENTRY_ADDRESS_EFI32 */
+	.long	12	/* sizeof(struct multiboot_tag_efi32) */
+	.long	efi_multiboot2_loader - KERNBASE
+	.long   0	/* pad for 8 bytes alignment */
+
+#if notyet 
+	/* 
+	 * Could be used to get an early console for debug,
+	 * but this is broken.
+	 */
+	.long	7	/* MULTIBOOT_HEADER_TAG_EFI_BS */
+	.long	8	/* sizeof(struct multiboot_tag) */
+#endif
+
+	.long	0	/* MULTIBOOT_HEADER_TAG_END */
+	.long	8	/* sizeof(struct multiboot_tag) */
+	.globl	Multiboot2_Header_end
+_C_LABEL(Multiboot2_Header_end):
+
 1:
 	/* Check if we are being executed by a Multiboot-compliant boot
 	 * loader. */
 	cmpl	$MULTIBOOT_INFO_MAGIC,%eax
-	jne	1f
+	je	multiboot1_loader
 
+	cmpl	$MULTIBOOT2_BOOTLOADER_MAGIC,%eax
+	je	multiboot2_loader
+
+	jmp	1f
+
+multiboot1_loader:
 	/*
 	 * Indeed, a multiboot-compliant boot loader executed us. We switch
 	 * to the temporary stack, and copy the received Multiboot information
@@ -361,10 +401,187 @@ _C_LABEL(Multiboot_Header):
 	 */
 	movl	$_RELOC(tmpstk),%esp
 	pushl	%ebx		/* Address of Multiboot information */
-	call	_C_LABEL(multiboot_pre_reloc)
+	call	_C_LABEL(multiboot1_pre_reloc)
 	addl	$4,%esp
 	jmp	2f
+
+efi_multiboot2_loader:
+	/*
+	 * EFI32 multiboot2 entry point. We are left here without
+	 * stack and with no idea of where we were loaded in memory.
+	 * The only inputs are 
+	 * %eax MULTIBOOT2_BOOTLOADER_MAGIC
+	 * %ebx pointer to multiboot_info
+	 *
+	 * Here we will copy the kernel to 0x100000 (KERNTEXTOFF - KERNBASE)
+	 * as almost all the code in locore.S assume it is there. Once done, 
+	 * we join the main start code .This is derived from
+	 * src/sys/arch/i386/stand/efiboot/bootia32/startprog32.S
+	 */
+
+	cli
+
+	/*
+	 * Discover our load address and store it in %edx
+	 */
+	movl	$_RELOC(tmpstk),%esp
+	call	next
+next:	popl	%edx
+	subl	$(next - efi_multiboot2_loader), %edx
+
+	/*
+	 * Save multiboot_info for later. We cannot use
+	 * temporary stack for that since we are going to
+	 * overwrite it.
+	 */
+	movl	%ebx, (multiboot2_info_ptr - efi_multiboot2_loader)(%edx)
+ 
+	/*
+	 * Get relocated multiboot2_loader entry point in %ebx
+	 */
+	movl	$(KERNTEXTOFF - KERNBASE), %ebx
+	addl	$(multiboot2_loader - start), %ebx
+
+        /* Copy kernel */
+        movl    $(KERNTEXTOFF - KERNBASE), %edi		/* dest */ 
+        movl    %edx, %esi
+	subl	$(efi_multiboot2_loader - start), %esi	/* src */
+	movl	$(__kernel_end - kernel_text), %ecx	/* size */
+#if defined(NO_OVERLAP)
+        movl    %ecx, %eax
+#else 
+        movl    %edi, %eax
+        subl    %esi, %eax
+        cmpl    %ecx, %eax      /* overlapping? */
+        movl    %ecx, %eax
+        jb      .Lbackwards
 #endif
+        /* nope, copy forwards. */
+        shrl    $2, %ecx        /* copy by words */
+        rep
+        movsl
+        and     $3, %eax        /* any bytes left? */
+        jnz     .Ltrailing
+        jmp     .Lcopy_done
+
+.Ltrailing:
+        cmp     $2, %eax
+        jb      11f
+        movw    (%esi), %ax
+        movw    %ax, (%edi)
+        je      .Lcopy_done
+        movb    2(%esi), %al
+        movb    %al, 2(%edi)
+        jmp     .Lcopy_done
+11:     movb    (%esi), %al
+        movb    %al, (%edi)
+        jmp     .Lcopy_done
+
+#if !defined(NO_OVERLAP)
+.Lbackwards:
+        addl    %ecx, %edi      /* copy backwards. */
+        addl    %ecx, %esi
+        and     $3, %eax        /* any fractional bytes? */
+        jnz     .Lback_align
+.Lback_aligned:
+        shrl    $2, %ecx
+        subl    $4, %esi
+        subl    $4, %edi
+        std
+        rep
+        movsl
+        cld
+        jmp     .Lcopy_done
+
+.Lback_align:
+        sub     %eax, %esi
+        sub     %eax, %edi
+        cmp     $2, %eax
+        jb      11f
+        je      12f
+        movb    2(%esi), %al
+        movb    %al, 2(%edi)
+12:     movw    (%esi), %ax
+        movw    %ax, (%edi)
+        jmp     .Lback_aligned
+11:     movb    (%esi), %al
+        movb    %al, (%edi)
+        jmp     .Lback_aligned
+#endif
+        /* End of copy kernel */
+.Lcopy_done:
+	cld			/* LynxOS depends on it */
+
+	/* Prepare jump address */
+	lea	(efi_multiboot2_loader32a - efi_multiboot2_loader)(%edx), %eax
+	movl	%eax, (efi_multiboot2_loader32r - efi_multiboot2_loader)(%edx)
+
+	/* Setup GDT */
+	lea	(gdt - efi_multiboot2_loader)(%edx), %eax
+	movl	%eax, (gdtrr - efi_multiboot2_loader)(%edx)
+	lgdt	(gdtr - efi_multiboot2_loader)(%edx)
+
+	/* Jump to set %cs */
+	ljmp	*(efi_multiboot2_loader32r - efi_multiboot2_loader)(%edx)
+
+	.align	4
+efi_multiboot2_loader32a:
+	movl	$0x10, %eax	/* #define DATA_SEGMENT	0x10 */
+	movw	%ax, %ds
+	movw	%ax, %es
+	movw	%ax, %fs
+	movw	%ax, %gs
+	movw	%ax, %ss
+
+	/* Already set new stack pointer */
+	movl	%esp, %ebp
+
+	/* Disable Paging in CR0 */
+	movl	%cr0, %eax
+	andl	$(~CR0_PG), %eax
+	movl	%eax, %cr0
+
+	/* Disable PAE in CR4 */
+	movl	%cr4, %eax
+	andl	$(~CR4_PAE), %eax
+	movl	%eax, %cr4
+
+	jmp	efi_multiboot2_loader32b
+
+	.align	4
+efi_multiboot2_loader32b:
+	xor	%eax, %eax
+	movl	%ebx, (efi_multiboot2_loader32r - efi_multiboot2_loader)(%edx)
+	/*
+	 * Reload multiboot info from target location
+	 */
+	movl	_RELOC(multiboot2_info_ptr), %ebx
+	ljmp	*(efi_multiboot2_loader32r - efi_multiboot2_loader)(%edx)
+
+	.align	16
+efi_multiboot2_loader32r:
+	.long	0
+	.long	0x08	/* #define	CODE_SEGMENT	0x08 */
+	.align	16
+gdt:
+	.long	0, 0
+	.byte	0xff, 0xff, 0x00, 0x00, 0x00, 0x9f, 0xcf, 0x00
+	.byte	0xff, 0xff, 0x00, 0x00, 0x00, 0x93, 0xcf, 0x00
+gdtr:
+	.word	gdtr - gdt
+gdtrr:
+	.quad  	0
+multiboot2_info_ptr:
+	.long	0
+
+	.align 16
+multiboot2_loader:
+	movl    $_RELOC(tmpstk),%esp
+	pushl	%ebx		/* Address of Multiboot information */
+	call	_C_LABEL(multiboot2_pre_reloc)
+	addl	$4,%esp
+	jmp	2f
+#endif /* MULTIBOOT */
 
 1:
 	/*
@@ -834,8 +1051,12 @@ begin:
 	/* It is now safe to parse the Multiboot information structure
 	 * we saved before from C code.  Note that we cannot delay its
 	 * parsing any more because initgdt (called below) needs to make
-	 * use of this information. */
-	call	_C_LABEL(multiboot_post_reloc)
+	 * use of this information.
+	 * We call both multiboot 1 and 2 flavors, they now if they 
+	 * have something to do on their own.
+	 */
+	call	_C_LABEL(multiboot1_post_reloc)
+	call 	_C_LABEL(multiboot2_post_reloc)
 #endif
 
 	subl	$NGDT*8, %esp		/* space for temporary gdt */
@@ -1068,8 +1289,8 @@ END(dumpsys)
  * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
  *     bool returning)
  *
- *	1. if (oldlwp != NULL), save its context.
- *	2. then, restore context of newlwp.
+ *	1. save context of oldlwp.
+ *	2. restore context of newlwp.
  *
  * Note that the stack frame layout is known to "struct switchframe" in
  * <machine/frame.h> and to the code in cpu_lwp_fork() which initializes
@@ -1080,29 +1301,14 @@ ENTRY(cpu_switchto)
 	pushl	%esi
 	pushl	%edi
 
-#if defined(DIAGNOSTIC) && !defined(XENPV)
-	cmpl	$IPL_SCHED,CPUVAR(ILEVEL)
-	jbe	0f
-	pushl	CPUVAR(ILEVEL)
-	pushl	$.Lstr
-	call	_C_LABEL(panic)
-	addl	$8,%esp
-.Lstr:	.string	"cpu_switchto: switching above IPL_SCHED (%d)\0"
-0:
-#endif
-
 	movl	16(%esp),%esi		/* oldlwp */
 	movl	20(%esp),%edi		/* newlwp */
 	movl	24(%esp),%edx		/* returning */
-
-	testl	%esi,%esi		/* oldlwp = NULL ? */
-	jz	skip_save
 
 	/* Save old context. */
 	movl	L_PCB(%esi),%eax
 	movl	%esp,PCB_ESP(%eax)
 	movl	%ebp,PCB_EBP(%eax)
-skip_save:
 
 	/* Switch to newlwp's stack. */
 	movl	L_PCB(%edi),%ebx
@@ -1137,15 +1343,12 @@ skip_save:
 	call	_C_LABEL(x86_dbregs_switch)
 	addl	$8,%esp
 
+	/* Switch the FPU. */
 	pushl	%edx
-	movb	_C_LABEL(x86_fpu_eager),%dl
-	testb	%dl,%dl
-	jz	.Lno_eagerfpu
 	pushl	%edi
 	pushl	%esi
-	call	_C_LABEL(fpu_eagerswitch)
+	call	_C_LABEL(fpu_switch)
 	addl	$8,%esp
-.Lno_eagerfpu:
 	popl	%edx
 
 	/* Don't bother with the rest if switching to a system process. */
@@ -1190,33 +1393,10 @@ skip_save:
 	movl	%eax,TF_EIP(%ecx)
 no_RAS:
 
-	/*
-	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_HIGH.
-	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
-	 * is deferred until mi_switch(), when cpu_switchto() returns.
-	 */
 #ifdef XENPV
 	pushl	%edi
 	call	_C_LABEL(i386_tls_switch)
 	addl	$4,%esp
-#else
-	movl	$IPL_HIGH,CPUVAR(ILEVEL)
-	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
-	movl	%cr0,%edx
-
-	/*
-	 * If our floating point registers are on a different CPU,
-	 * set CR0_TS so we'll trap rather than reuse bogus state.
-	 */
-	cmpl	CPUVAR(FPCURLWP),%edi
-	je	skip_TS
-	orl	$CR0_TS,%ecx
-skip_TS:
-
-	/* Reloading CR0 is very expensive - avoid if possible. */
-	cmpl	%edx,%ecx
-	je	switch_return
-	movl	%ecx,%cr0
 #endif
 
 switch_return:
@@ -1267,6 +1447,7 @@ IDTVEC(syscall)
 	pushl	$T_ASTFLT	/* trap # for doing ASTs */
 	INTRENTRY
 	STI(%eax)
+
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 	testl	%ebx,%ebx
@@ -1279,6 +1460,7 @@ IDTVEC(syscall)
 #endif
 1:
 #endif /* DIAGNOSTIC */
+
 	addl	$1,CPUVAR(NSYSCALL)	/* count it atomically */
 	adcl	$0,CPUVAR(NSYSCALL)+4	/* count it atomically */
 	movl	CPUVAR(CURLWP),%edi
@@ -1293,6 +1475,7 @@ IDTVEC(syscall)
 	movl	L_MD_ASTPENDING(%edi), %eax
 	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
+
 #ifdef XEN
 	STIC(%eax)
 	jz	14f
@@ -1316,12 +1499,17 @@ IDTVEC(syscall)
 	jmp	.Lsyscall_checkast
 14:
 #endif /* XEN */
-#ifndef DIAGNOSTIC
-	INTRFASTEXIT
-#else /* DIAGNOSTIC */
+
+#ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
+#endif
+
+	HANDLE_DEFERRED_FPU
+
 	INTRFASTEXIT
+
+#ifdef DIAGNOSTIC
 3:	STI(%eax)
 	pushl	$4f
 	call	_C_LABEL(panic)
@@ -1332,7 +1520,8 @@ IDTVEC(syscall)
 	jmp	.Lsyscall_checkast
 4:	.asciz	"SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"SPL NOT ZERO ON SYSCALL ENTRY\n"
-#endif /* DIAGNOSTIC */
+#endif
+
 9:
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
 	jz	10f
@@ -1382,7 +1571,7 @@ ENTRY(sse2_idlezero_page)
 	xorl	%eax, %eax
 	.align	16
 1:
-	testl	$RESCHED_KPREEMPT, CPUVAR(RESCHED)
+	cmpl	$0, CPUVAR(RESCHED)
 	jnz	2f
 	movnti	%eax, 0(%edx)
 	movnti	%eax, 4(%edx)

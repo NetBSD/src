@@ -1,3 +1,5 @@
+/*	$NetBSD: gpt_uuid.h,v 1.7.16.2 2020/04/13 08:03:20 martin Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.

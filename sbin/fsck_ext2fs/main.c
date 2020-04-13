@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37.42.1 2019/06/10 22:05:33 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.37.42.2 2020/04/13 08:03:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.37.42.1 2019/06/10 22:05:33 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.37.42.2 2020/04/13 08:03:20 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,8 +87,43 @@ __RCSID("$NetBSD: main.c,v 1.37.42.1 2019/06/10 22:05:33 christos Exp $");
 #include "fsutil.h"
 #include "exitvalues.h"
 
-volatile sig_atomic_t	returntosingle = 0;
-
+struct bufarea bufhead;
+struct bufarea sblk;
+struct bufarea asblk;
+struct bufarea *pdirbp;
+struct bufarea *pbp;
+struct bufarea *getdatablk(daddr_t, long);
+struct m_ext2fs sblock;
+struct dups *duplist;
+struct dups *muldup;
+struct zlncnt *zlnhead;
+struct inoinfo **inphead, **inpsort;
+long numdirs, listmax, inplast;
+long	dev_bsize;
+long	secsize;
+char	nflag;
+char	yflag;
+int	bflag;
+int	Uflag;
+int	debug;
+int	preen;
+char	havesb;
+char	skipclean;
+int	fsmodified;
+int	fsreadfd;
+int	fswritefd;
+int	rerun;
+daddr_t	maxfsblock;
+char	*blockmap;
+ino_t	maxino;
+ino_t	lastino;
+char	*statemap;
+u_char	*typemap;
+int16_t	*lncntp;
+ino_t	lfdir;
+daddr_t	n_blks;
+daddr_t	n_files;
+struct	ext2fs_dinode zino;
 
 static int	argtoi(int, const char *, const char *, int);
 static int	checkfilesys(const char *, char *, long, int);
@@ -354,4 +389,3 @@ usage(void)
 	    getprogname());
 	exit(FSCK_EXIT_USAGE);
 }
-

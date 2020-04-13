@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.4.2.1 2019/06/10 22:05:42 christos Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.4.2.2 2020/04/13 08:03:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.4.2.1 2019/06/10 22:05:42 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.4.2.2 2020/04/13 08:03:27 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
-#include "opt_kasan.h"
 #include "opt_kernhist.h"
 #include "opt_modular.h"
 #include "opt_fdt.h"
@@ -51,6 +50,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.4.2.1 2019/06/10 22:05:42 chri
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
+#include <sys/xcall.h>
 
 #include <dev/mm.h>
 
@@ -100,7 +100,8 @@ vaddr_t physical_end;
 /* filled in before cleaning bss. keep in .data */
 u_long kern_vtopdiff __attribute__((__section__(".data")));
 
-long kernend_extra;	/* extra memory allocated from round_page(_end[]) */
+/* extra physical memory allocated from round_page(_end[]) */
+long kernend_extra;
 
 /* dump configuration */
 int	cpu_dump(void);
@@ -112,12 +113,13 @@ int     dumpsize = 0;           /* also for savecore */
 long    dumplo = 0;
 
 void
-cpu_kernel_vm_init(uint64_t memory_start, uint64_t memory_size)
+cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused)
 {
 	extern char __kernel_text[];
 	extern char _end[];
 	extern char __data_start[];
 	extern char __rodata_start[];
+	u_int blk;
 
 	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
 	vaddr_t kernend = round_page((vaddr_t)_end);
@@ -127,16 +129,28 @@ cpu_kernel_vm_init(uint64_t memory_start, uint64_t memory_size)
 	vaddr_t rodata_start = (vaddr_t)__rodata_start;
 
 	/* add KSEG mappings of whole memory */
-	VPRINTF("Creating KSEG tables for 0x%016lx-0x%016lx\n",
-	    memory_start, memory_start + memory_size);
 	const pt_entry_t ksegattr =
 	    LX_BLKPAG_ATTR_NORMAL_WB |
 	    LX_BLKPAG_AP_RW |
 	    LX_BLKPAG_PXN |
 	    LX_BLKPAG_UXN;
-	pmapboot_enter(AARCH64_PA_TO_KVA(memory_start), memory_start,
-	    memory_size, L1_SIZE, ksegattr, PMAPBOOT_ENTER_NOOVERWRITE,
-	    bootpage_alloc, NULL);
+	for (blk = 0; blk < bootconfig.dramblocks; blk++) {
+		uint64_t start, end;
+
+		start = trunc_page(bootconfig.dram[blk].address);
+		end = round_page(bootconfig.dram[blk].address +
+		    (uint64_t)bootconfig.dram[blk].pages * PAGE_SIZE);
+		pmapboot_enter_range(AARCH64_PA_TO_KVA(start), start,
+		    end - start, ksegattr, PMAPBOOT_ENTER_NOOVERWRITE,
+		    bootpage_alloc, printf);
+	}
+	aarch64_dcache_wbinv_all();
+
+	/* Disable translation table walks using TTBR0 */
+	uint64_t tcr = reg_tcr_el1_read();
+	reg_tcr_el1_write(tcr | TCR_EPD0);
+	__asm __volatile("isb" ::: "memory");
+
 	aarch64_tlbi_all();
 
 	/*
@@ -152,10 +166,9 @@ cpu_kernel_vm_init(uint64_t memory_start, uint64_t memory_size)
 	pmapboot_protect(L2_TRUNC_BLOCK(kernstart),
 	    L2_TRUNC_BLOCK(data_start), VM_PROT_WRITE);
 	pmapboot_protect(L2_ROUND_BLOCK(rodata_start),
-	    L2_ROUND_BLOCK(kernend + kernend_extra), VM_PROT_EXECUTE);
+	    L2_ROUND_BLOCK(kernend), VM_PROT_EXECUTE);
 
 	aarch64_tlbi_all();
-
 
 	VPRINTF("%s: kernel phys start %lx end %lx+%lx\n", __func__,
 	    kernstart_phys, kernend_phys, kernend_extra);
@@ -213,7 +226,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	kernstart = trunc_page((vaddr_t)__kernel_text);
 	kernend = round_page((vaddr_t)_end);
 	kernstart_l2 = L2_TRUNC_BLOCK(kernstart);
-	kernend_l2 = L2_ROUND_BLOCK(kernend + kernend_extra);
+	kernend_l2 = L2_ROUND_BLOCK(kernend);
 	kernelvmstart = kernend_l2;
 
 #ifdef MODULAR
@@ -267,14 +280,14 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    "physical_start        = 0x%016lx\n"
 	    "kernel_start_phys     = 0x%016lx\n"
 	    "kernel_end_phys       = 0x%016lx\n"
+	    "pagetables_start_phys = 0x%016lx\n"
+	    "pagetables_end_phys   = 0x%016lx\n"
 	    "msgbuf                = 0x%016lx\n"
 	    "physical_end          = 0x%016lx\n"
 	    "VM_MIN_KERNEL_ADDRESS = 0x%016lx\n"
 	    "kernel_start_l2       = 0x%016lx\n"
 	    "kernel_start          = 0x%016lx\n"
 	    "kernel_end            = 0x%016lx\n"
-	    "pagetables            = 0x%016lx\n"
-	    "pagetables_end        = 0x%016lx\n"
 	    "kernel_end_l2         = 0x%016lx\n"
 #ifdef MODULAR
 	    "module_start          = 0x%016lx\n"
@@ -288,14 +301,14 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    physical_start,
 	    kernstart_phys,
 	    kernend_phys,
+	    round_page(kernend_phys),
+	    round_page(kernend_phys) + kernend_extra,
 	    msgbufaddr,
 	    physical_end,
 	    VM_MIN_KERNEL_ADDRESS,
 	    kernstart_l2,
 	    kernstart,
 	    kernend,
-	    round_page(kernend),
-	    round_page(kernend) + kernend_extra,
 	    kernend_l2,
 #ifdef MODULAR
 	    module_start,
@@ -367,9 +380,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	 */
 	pmap_bootstrap(kernelvmstart, VM_MAX_KERNEL_ADDRESS);
 
-#ifdef KASAN
 	kasan_init();
-#endif
 
 	/*
 	 * setup lwp0
@@ -385,6 +396,66 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	lwp0.l_md.md_utf = pcb->pcb_tf = tf;
 
 	return (vaddr_t)tf;
+}
+
+/*
+ * machine dependent system variables.
+ */
+static xcfunc_t
+set_user_tagged_address(void *arg1, void *arg2)
+{
+	uint64_t enable = PTRTOUINT64(arg1);
+	uint64_t tcr = reg_tcr_el1_read();
+	if (enable)
+		tcr |= TCR_TBI0;
+	else
+		tcr &= ~TCR_TBI0;
+	reg_tcr_el1_write(tcr);
+
+	return 0;
+}
+
+static int
+sysctl_machdep_tagged_address(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error, cur, val;
+	uint64_t tcr;
+
+	tcr = reg_tcr_el1_read();
+	cur = val = (tcr & TCR_TBI0) ? 1 : 0;
+
+	node = *rnode;
+	node.sysctl_data = &val;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	if (val < 0 || val > 1)
+		return EINVAL;
+
+	if (cur != val) {
+		uint64_t where = xc_broadcast(0,
+		    (xcfunc_t)set_user_tagged_address, UINT64TOPTR(val), NULL);
+		xc_wait(where);
+	}
+
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "tagged_address",
+	    SYSCTL_DESCR("top byte ignored in the address calculation"),
+	    sysctl_machdep_tagged_address, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 void
@@ -481,7 +552,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 #define IN_RANGE(addr,sta,end)	(((sta) <= (addr)) && ((addr) < (end)))
 
 	*handled = false;
-	if (IN_RANGE(v, kernstart, kernend + kernend_extra)) {
+	if (IN_RANGE(v, kernstart, kernend)) {
 		*handled = true;
 		if ((v < data_start) && (prot & VM_PROT_WRITE))
 			return EFAULT;
@@ -530,6 +601,14 @@ cpu_startup(void)
 
 	/* Hello! */
 	banner();
+
+	cpu_startup_hook();
+}
+
+__weak_alias(cpu_startup_hook,cpu_startup_default)
+void
+cpu_startup_default(void)
+{
 }
 
 /*

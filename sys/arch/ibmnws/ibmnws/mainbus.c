@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2012/01/27 18:52:57 para Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11.48.1 2020/04/13 08:03:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -119,8 +119,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 */
 #if NPCI > 0
 	genppc_pct = malloc(sizeof(struct genppc_pci_chipset), M_DEVBUF,
-	    M_NOWAIT);
-	KASSERT(genppc_pct != NULL);
+	    M_WAITOK);
 	ibmnws_pci_get_chipset_tag_indirect (genppc_pct);
 
 #ifdef PCI_NETBSD_CONFIGURE

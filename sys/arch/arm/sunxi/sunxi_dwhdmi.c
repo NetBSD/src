@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_dwhdmi.c,v 1.3.4.3 2020/04/08 14:07:31 martin Exp $ */
+/* $NetBSD: sunxi_dwhdmi.c,v 1.3.4.4 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.3.4.3 2020/04/08 14:07:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.3.4.4 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -200,6 +200,21 @@ sunxi_dwhdmi_mode_set(struct dwhdmi_softc *dsc, struct drm_display_mode *mode,
 	sc->sc_curmode = *adjusted_mode;
 }
 
+static audio_dai_tag_t
+sunxi_dwhdmi_dai_get_tag(device_t dev, const void *data, size_t len)
+{
+	struct sunxi_dwhdmi_softc * const sc = device_private(dev);
+
+	if (len != 4)
+		return NULL;
+
+	return &sc->sc_base.sc_dai;
+}
+
+static struct fdtbus_dai_controller_func sunxi_dwhdmi_dai_funcs = {
+	.get_tag = sunxi_dwhdmi_dai_get_tag
+};
+
 static int
 sunxi_dwhdmi_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -295,6 +310,8 @@ sunxi_dwhdmi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_activate = sunxi_dwhdmi_ep_activate;
 	sc->sc_ports.dp_ep_get_data = sunxi_dwhdmi_ep_get_data;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_BRIDGE);
+
+	fdtbus_register_dai_controller(self, phandle, &sunxi_dwhdmi_dai_funcs);
 }
 
 CFATTACH_DECL_NEW(sunxi_dwhdmi, sizeof(struct sunxi_dwhdmi_softc),

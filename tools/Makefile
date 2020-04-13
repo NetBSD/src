@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.194.2.1 2019/06/10 22:10:13 christos Exp $
+#	$NetBSD: Makefile,v 1.194.2.2 2020/04/13 08:05:34 martin Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -100,10 +100,10 @@ SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \
 		makewhatis mtree nbperf .WAIT uudecode
 .endif
 
-SUBDIR+= cat rpcgen join lorder m4 mkdep tsort xz-include .WAIT yacc .WAIT awk .WAIT lex
-SUBDIR+= grep xz-lib pax .WAIT libprop
-
+SUBDIR+= cat rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
 .if ${TOOLS_BUILDRUMP} == "no"
+SUBDIR+= xz-include .WAIT grep xz-lib pax .WAIT libprop
+
 SUBDIR += .WAIT texinfo \
 	.WAIT tic \
 	.WAIT ${TOOLCHAIN_BITS} \
@@ -118,7 +118,10 @@ SUBDIR += .WAIT texinfo \
 		.WAIT installboot \
 		pwd_mkdb strfile sunlabel vgrind zic
 .endif
-SUBDIR+= stat .WAIT config xz-bin
+SUBDIR+= stat .WAIT config
+.if ${TOOLS_BUILDRUMP} == "no"
+SUBDIR+= xz-bin
+.endif
 
 .if ${MKLLVM} != "no" || ${MKLLVMRT} != "no"
 SUBDIR+= \
@@ -135,12 +138,6 @@ SUBDIR+= \
 	.WAIT llvm-include .WAIT \
 	llvm-lib .WAIT \
 	llvm-clang
-. if ${MKLLD} != "no"
-SUBDIR+=	llvm-lld
-. endif
-. if ${MKMCLINKER} != "no"
-SUBDIR+=	llvm-mcld
-. endif
 .endif
 
 .if ${MKMAN} != "no" || ${MKDOC} != "no" || ${MKHTML} != "no"

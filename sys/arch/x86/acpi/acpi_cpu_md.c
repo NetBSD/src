@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.78.16.1 2019/06/10 22:06:52 christos Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.78.16.2 2020/04/13 08:04:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.78.16.1 2019/06/10 22:06:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.78.16.2 2020/04/13 08:04:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -378,7 +378,6 @@ acpicpu_md_cstate_stop(void)
 {
 	static char text[16];
 	void (*func)(void);
-	uint64_t xc;
 	bool ipi;
 
 	x86_cpu_idle_get(&func, text, sizeof(text));
@@ -393,8 +392,7 @@ acpicpu_md_cstate_stop(void)
 	 * Run a cross-call to ensure that all CPUs are
 	 * out from the ACPI idle-loop before detachment.
 	 */
-	xc = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(xc);
+	xc_barrier(0);
 
 	return 0;
 }
@@ -402,7 +400,7 @@ acpicpu_md_cstate_stop(void)
 /*
  * Called with interrupts enabled.
  */
-void
+void __nocsan
 acpicpu_md_cstate_enter(int method, int state)
 {
 	struct cpu_info *ci = curcpu();

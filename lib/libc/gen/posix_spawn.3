@@ -1,4 +1,4 @@
-.\" $NetBSD: posix_spawn.3,v 1.6 2014/02/02 16:59:06 wiz Exp $
+.\" $NetBSD: posix_spawn.3,v 1.6.26.1 2020/04/13 08:03:10 martin Exp $
 .\"
 .\" Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/gen/posix_spawn.3,v 1.2.2.1.4.1 2010/06/14 02:09:06 kensmith Exp $
 .\"
-.Dd February 2, 2014
+.Dd June 11, 2019
 .Dt POSIX_SPAWN 3
 .Os
 .Sh NAME
@@ -312,11 +312,13 @@ had been called to create a child process and then
 .Fn execve
 had been called by the child process to execute the new process image.
 .Pp
-The implementation uses vfork(), thus the fork handlers are not run when
+This implementation does not run
+.Xr pthread_atfork 3
+callbacks.
 .Fn posix_spawn
-or
-.Fn posix_spawnp
-is called.
+on
+.Nx
+directly creates the child process without intermediate fork.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn posix_spawn
@@ -481,4 +483,4 @@ added for
 .Nx 6.0
 during Google Summer of Code by Charles Zhang and Martin Husemann.
 .Sh AUTHORS
-.An Ed Schouten Aq Mt ed@FreeBSD.org
+.An \&Ed Schouten Aq Mt ed@FreeBSD.org

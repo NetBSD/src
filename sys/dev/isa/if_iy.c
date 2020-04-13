@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.102.2.2 2020/04/08 14:08:07 martin Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.102.2.3 2020/04/13 08:04:22 martin Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.102.2.2 2020/04/08 14:08:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.102.2.3 2020/04/13 08:04:22 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -107,7 +107,7 @@ struct iy_softc {
 
 	int hard_vers;
 
-	int promisc;
+	u_short promisc;
 
 	int sram, tx_size, rx_size;
 
@@ -282,6 +282,7 @@ iyattach(device_t parent, device_t self, void *aux)
 	uint8_t myaddr[ETHER_ADDR_LEN];
 	int eirq;
 
+	sc->sc_dev = self;
 	iot = ia->ia_iot;
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 16, 0, &ioh)) {

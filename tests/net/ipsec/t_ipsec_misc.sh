@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.22 2017/11/09 04:51:07 ozaki-r Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.22.4.1 2020/04/13 08:05:31 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -40,9 +40,16 @@ setup_sasp()
 	local lifetime=$5
 	local update=$6
 	local tmpfile=./tmp
+	local saadd=add
+	local saadd_algo_args="$algo_args"
 	local extra=
 
-	if [ "$update" = sa ]; then
+	if [ "$update" = getspi ]; then
+		saadd=getspi
+		saadd_algo_args=
+	fi
+
+	if [ "$update" = sa -o "$update" = getspi ]; then
 		extra="update $ip_local $ip_peer $proto 10000 $algo_args;
 		       update $ip_peer $ip_local $proto 10001 $algo_args;"
 	elif [ "$update" = sp ]; then
@@ -51,8 +58,8 @@ setup_sasp()
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	cat > $tmpfile <<-EOF
-	add $ip_local $ip_peer $proto 10000 -lh $lifetime -ls $lifetime $algo_args;
-	add $ip_peer $ip_local $proto 10001 -lh $lifetime -ls $lifetime $algo_args;
+	$saadd $ip_local $ip_peer $proto 10000 -lh $lifetime -ls $lifetime $saadd_algo_args;
+	$saadd $ip_peer $ip_local $proto 10001 -lh $lifetime -ls $lifetime $saadd_algo_args;
 	spdadd $ip_local $ip_peer any -P out ipsec $proto/transport//require;
 	$extra
 	EOF
@@ -67,8 +74,8 @@ setup_sasp()
 
 	export RUMP_SERVER=$SOCK_PEER
 	cat > $tmpfile <<-EOF
-	add $ip_local $ip_peer $proto 10000 -lh $lifetime -ls $lifetime $algo_args;
-	add $ip_peer $ip_local $proto 10001 -lh $lifetime -ls $lifetime $algo_args;
+	$saadd $ip_local $ip_peer $proto 10000 -lh $lifetime -ls $lifetime $saadd_algo_args;
+	$saadd $ip_peer $ip_local $proto 10001 -lh $lifetime -ls $lifetime $saadd_algo_args;
 	spdadd $ip_peer $ip_local any -P out ipsec $proto/transport//require;
 	$extra
 	EOF
@@ -360,6 +367,71 @@ add_test_update()
 	    }
 	    ${name}_body() {
 	        test_update $proto $algo $update
+	        rump_server_destroy_ifaces
+	    }
+	    ${name}_cleanup() {
+	        \$DEBUG && dump
+	        cleanup
+	    }
+	"
+	atf_add_test_case ${name}
+}
+
+test_getspi_update()
+{
+	local proto=$1
+	local algo=$2
+	local ip_local=10.0.0.1
+	local ip_peer=10.0.0.2
+	local algo_args="$(generate_algo_args $proto $algo)"
+	local proto_cap=$(echo $proto | tr 'a-z' 'A-Z')
+	local outfile=./out
+
+	rump_server_crypto_start $SOCK_LOCAL netipsec
+	rump_server_crypto_start $SOCK_PEER netipsec
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+	rump_server_add_iface $SOCK_PEER shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_local/24
+
+	export RUMP_SERVER=$SOCK_PEER
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.dad_count=0
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_peer/24
+
+	setup_sasp $proto "$algo_args" $ip_local $ip_peer 100 getspi
+
+	extract_new_packets $BUS > $outfile
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_peer
+
+	extract_new_packets $BUS > $outfile
+	atf_check -s exit:0 -o match:"$ip_local > $ip_peer: $proto_cap" \
+	    cat $outfile
+	atf_check -s exit:0 -o match:"$ip_peer > $ip_local: $proto_cap" \
+	    cat $outfile
+}
+
+add_test_getspi_update()
+{
+	local proto=$1
+	local algo=$2
+	local _algo=$(echo $algo | sed 's/-//g')
+	local name= desc=
+
+	desc="Tests trying to getspi and udpate SA of $proto ($algo)"
+	name="ipsec_getspi_update_sa_${proto}_${_algo}"
+
+	atf_test_case ${name} cleanup
+	eval "
+	    ${name}_head() {
+	        atf_set descr \"$desc\"
+	        atf_set require.progs rump_server setkey
+	    }
+	    ${name}_body() {
+	        test_getspi_update $proto $algo
 	        rump_server_destroy_ifaces
 	    }
 	    ${name}_cleanup() {
@@ -809,6 +881,7 @@ atf_init_test_cases()
 		add_test_lifetime ipv6 esp $algo
 		add_test_update esp $algo sa
 		add_test_update esp $algo sp
+		add_test_getspi_update esp $algo
 		add_test_spi esp $algo new delete
 		add_test_spi esp $algo old delete
 		add_test_spi esp $algo new timeout
@@ -821,6 +894,7 @@ atf_init_test_cases()
 		add_test_lifetime ipv6 ah $algo
 		add_test_update ah $algo sa
 		add_test_update ah $algo sp
+		add_test_getspi_update ah $algo
 		add_test_spi ah $algo new delete
 		add_test_spi ah $algo old delete
 		add_test_spi ah $algo new timeout

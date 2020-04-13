@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.29.4.1 2019/06/10 22:10:27 christos Exp $ */
+/* $NetBSD: acpi.c,v 1.29.4.2 2020/04/13 08:05:50 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.29.4.1 2019/06/10 22:10:27 christos Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.29.4.2 2020/04/13 08:05:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -115,6 +115,7 @@ static void	acpi_print_srat_memory(ACPI_SRAT_MEM_AFFINITY *mp);
 static void	acpi_print_srat(ACPI_SUBTABLE_HEADER *srat);
 static void	acpi_handle_srat(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_tcpa(ACPI_TABLE_HEADER *sdp);
+static void	acpi_handle_tpm2(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_nfit(ACPI_NFIT_HEADER *nfit);
 static void	acpi_handle_nfit(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_uefi(ACPI_TABLE_HEADER *sdp);
@@ -3339,6 +3340,31 @@ acpi_handle_tcpa(ACPI_TABLE_HEADER *sdp)
 	printf(END_COMMENT);
 }
 
+static void
+acpi_handle_tpm2(ACPI_TABLE_HEADER *sdp)
+{
+	ACPI_TABLE_TPM2 *tpm2;
+	const char *class;
+
+	printf(BEGIN_COMMENT);
+
+	acpi_print_sdt(sdp);
+	tpm2 = (ACPI_TABLE_TPM2 *)sdp;
+
+	if (tpm2->PlatformClass == 0) {
+		class = "Client";
+	} else if (tpm2->PlatformClass == 1) {
+		class = "Server";
+	} else {
+		class = "Unknown";
+	}
+	printf("\tClass=%s (%u)\n", class, tpm2->PlatformClass);
+	printf("\tControl Address=0x%"PRIx64"\n", tpm2->ControlAddress);
+	printf("\tStart Method=%u\n", tpm2->StartMethod);
+
+	printf(END_COMMENT);
+}
+
 static const char *
 devscope_type2str(int type)
 {
@@ -4297,6 +4323,8 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 			acpi_handle_srat(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_TCPA, 4))
 			acpi_handle_tcpa(sdp);
+		else if (!memcmp(sdp->Signature, ACPI_SIG_TPM2, 4))
+			acpi_handle_tpm2(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_NFIT, 4))
 			acpi_handle_nfit(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_UEFI, 4))

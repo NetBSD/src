@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.c,v 1.10 2015/02/09 21:56:20 skrll Exp $	*/
+/*	$NetBSD: ifpga_intr.c,v 1.10.18.1 2020/04/13 08:03:43 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -255,10 +255,7 @@ ifpga_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 	if (irq < 0 || irq > NIRQ)
 		panic("ifpga_intr_establish: IRQ %d out of range", irq);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = ipl;

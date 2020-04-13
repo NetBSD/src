@@ -1,3 +1,5 @@
+/*	$NetBSD: parse.h,v 1.7.46.1 2020/04/13 08:03:20 martin Exp $	*/
+
 #ifndef _IFCONFIG_PARSE_H
 #define _IFCONFIG_PARSE_H
 
@@ -250,7 +252,7 @@ struct paddr {
 	const char 		*pa_activator;
 	const char 		*pa_deactivator;
 };
- 
+
 struct piface {
 	struct parser		pif_parser;
 	const char		*pif_key;

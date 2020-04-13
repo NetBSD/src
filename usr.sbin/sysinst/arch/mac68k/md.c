@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2016/05/31 02:49:50 dholland Exp $ */
+/*	$NetBSD: md.c,v 1.5.16.1 2020/04/13 08:06:03 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -131,8 +131,8 @@ md_init_set_status(int flags)
 		set_kernel_set(SET_KERNEL_1);
 }
 
-int
-md_get_info(void)
+bool
+md_get_info(struct install_partition_desc *install)
 {
 	struct disklabel disklabel;
 	int fd, i;
@@ -203,7 +203,8 @@ md_get_info(void)
 #endif /* 0 - broken */
 	pm->dlsize = disklabel.d_secperunit;
 #if 0
-	msg_display(MSG_dldebug, blk_size, pm->dlcyl, pm->dlhead, pm->dlsec, pm->dlsize);
+	msg_fmt_display(MSG_dldebug, "%d%d%d%d%d",
+	    blk_size, pm->dlcyl, pm->dlhead, pm->dlsec, pm->dlsize);
 	process_menu(MENU_ok, NULL);
 #endif
 	map.size = 0;
@@ -236,14 +237,6 @@ md_get_info(void)
 	    read(fd, map.blk, map.size * blk_size);
 	}
 	close(fd);
-	/*
-	 * Setup the disktype so /etc/disktab gets proper info
-	 */
-	if (strncmp(pm->diskdev, "sd", 2) == 0) {
-		pm->disktype = "SCSI";
-		pm->doessf = "sf:";
-	} else
-		pm->disktype = "IDE";
 
 	return edit_diskmap();
 }
@@ -251,12 +244,16 @@ md_get_info(void)
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-int
-md_make_bsd_partitions(void)
+bool
+md_make_bsd_partitions(struct install_partition_desc *install)
 {
-	FILE *f;
-	int i, j, pl, rv;
+	int i, j, rv;
 	EBZB *bzb;
+	struct disk_part_info info;
+	uint fs_type;
+	const char *mountpoint;
+	part_id pid;
+	size_t ndx;
 
 	/*
 	 * Scan for any problems and report them before continuing.
@@ -268,7 +265,7 @@ md_make_bsd_partitions(void)
 	    if (check_for_errors()) {
 	        process_menu (MENU_sanity, &rv);
 	        if (rv < 0)
-		    return 0;
+		    return false;
 	        else if (rv)
 		    break;
 	        edit_diskmap();
@@ -276,14 +273,9 @@ md_make_bsd_partitions(void)
 		break;
 	}
 
-	/* Build standard partitions */
-	memset(&pm->bsdlabel, 0, sizeof pm->bsdlabel);
+	/* Start with empty fake disklabel partitions */
+	pm->parts->pscheme->delete_all_partitions(pm->parts);
 
-	/*
-	 * The mac68k port has a predefined partition for "c" which
-	 *  is the size of the disk, everything else is unused.
-	 */
-	pm->bsdlabel[RAW_PART].pi_size = pm->dlsize;
 	/*
 	 * Now, scan through the Disk Partition Map and transfer the
 	 *  information into the incore disklabel.
@@ -292,96 +284,81 @@ md_make_bsd_partitions(void)
 	    j = map.mblk[i];
 	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
 	    if (bzb->flags.part) {
-		pl = bzb->flags.part - 'a';
+		mountpoint = NULL;
+		fs_type = FS_UNUSED;
 		switch (whichType(&map.blk[j])) {
 		    case HFS_PART:
-			pm->bsdlabel[pl].pi_fstype = FS_HFS;
-			strcpy (pm->bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
+			fs_type = FS_HFS;
+			mountpoint = (const char*)bzb->mount_point;
 			break;
 		    case ROOT_PART:
 		    case UFS_PART:
-			pm->bsdlabel[pl].pi_fstype = FS_BSDFFS;
-			strcpy (pm->bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
-			pm->bsdlabel[pl].pi_flags |= PIF_NEWFS | PIF_MOUNT;
+			fs_type = FS_BSDFFS;
+			mountpoint = (const char*)bzb->mount_point;
 			break;
 		    case SWAP_PART:
-			pm->bsdlabel[pl].pi_fstype = FS_SWAP;
+			fs_type = FS_SWAP;
 			break;
 		    case SCRATCH_PART:
-			pm->bsdlabel[pl].pi_fstype = FS_OTHER;
-			strcpy (pm->bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
-		    default:
+			fs_type = FS_OTHER;
+			mountpoint = (const char*)bzb->mount_point;
 			break;
+		    default:
+			continue;
 		}
-	        if (pm->bsdlabel[pl].pi_fstype != FS_UNUSED) {
-		    pm->bsdlabel[pl].pi_size = map.blk[j].pmPartBlkCnt;
-		    pm->bsdlabel[pl].pi_offset = map.blk[j].pmPyPartStart;
-		    if (pm->bsdlabel[pl].pi_fstype != FS_SWAP) {
-		        pm->bsdlabel[pl].pi_frag = 8;
-		        pm->bsdlabel[pl].pi_fsize = 1024;
-		    }
+		if (fs_type != FS_UNUSED) {
+			memset(&info, 0, sizeof info);
+			info.start = map.blk[j].pmPyPartStart;
+			info.size = map.blk[j].pmPartBlkCnt;
+			info.fs_type = fs_type;
+			info.last_mounted = mountpoint;
+			info.nat_type = pm->parts->pscheme->get_fs_part_type(
+			    PT_root, fs_type, 0);
+			pid = pm->parts->pscheme->add_outer_partition(pm->parts,
+			    &info, NULL);
+			if (pid == NO_PART)
+				return false;
 		}
 	    }
 	}
 
 	/* Disk name  - don't bother asking, just use the physical name*/
-	strcpy (pm->bsddiskname, pm->diskdev);
+	pm->parts->pscheme->set_disk_pack_name(pm->parts, pm->diskdev);
 
-#ifdef DEBUG
-	f = fopen ("/tmp/disktab", "w");
-#else
-	f = fopen ("/etc/disktab", "w");
-#endif
-	if (f == NULL) {
-		endwin();
-		(void) fprintf (stderr, "Could not open /etc/disktab");
-		exit (1);
-	}
-	(void)fprintf (f, "%s|NetBSD installation generated:\\\n", pm->bsddiskname);
-	(void)fprintf (f, "\t:dt=%s:ty=winchester:\\\n", pm->disktype);
-	(void)fprintf (f, "\t:nc#%d:nt#%d:ns#%d:\\\n", pm->dlcyl, pm->dlhead, pm->dlsec);
-	(void)fprintf (f, "\t:sc#%d:su#%" PRIu32 ":\\\n", pm->dlhead*pm->dlsec, (uint32_t)pm->dlsize);
-	(void)fprintf (f, "\t:se#%d:%s\\\n", blk_size, pm->doessf);
-	for (i=0; i<8; i++) {
-		if (pm->bsdlabel[i].pi_fstype == FS_HFS)
-		    (void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=macos:",
-			       'a'+i, pm->bsdlabel[i].pi_size,
-			       'a'+i, pm->bsdlabel[i].pi_offset,
-			       'a'+i);
-		else
-		    (void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
-			       'a'+i, pm->bsdlabel[i].pi_size,
-			       'a'+i, pm->bsdlabel[i].pi_offset,
-			       'a'+i, getfslabelname(pm->bsdlabel[i].pi_fstype));
-		if (pm->bsdlabel[i].pi_fstype == FS_BSDFFS)
-			(void)fprintf (f, "b%c#%d:f%c#%d",
-			   'a'+i, pm->bsdlabel[i].pi_fsize * pm->bsdlabel[i].pi_frag,
-			   'a'+i, pm->bsdlabel[i].pi_fsize);
-		if (i < 7)
-			(void)fprintf (f, "\\\n");
-		else
-			(void)fprintf (f, "\n");
-	}
-	fclose (f);
+	/* Write the converted partitions */
+	if (!pm->parts->pscheme->write_to_disk(pm->parts))
+		return false;
 
-	/* Everything looks OK. */
-	return 1;
+	/* now convert to install info */
+	if (!install_desc_from_parts(install, pm->parts))
+		return false;
+
+	/* set newfs flag for all FFS partitions */
+	for (ndx = 0; ndx < install->num; ndx++) {
+		if (install->infos[ndx].fs_type == FS_BSDFFS &&
+		    install->infos[ndx].size > 0 &&
+		    (install->infos[ndx].instflags & PUIINST_MOUNT))
+			install->infos[ndx].instflags |= PUIINST_NEWFS;
+	}
+
+	return true;
 }
 
 /*
  * any additional partition validation
  */
-int
-md_check_partitions(void)
+bool
+md_check_partitions(struct install_partition_desc *install)
 {
-	return 1;
+	return true;
 }
 
 /*
  * hook called before writing new disklabel.
  */
-int
-md_pre_disklabel(void)
+bool
+md_pre_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
     int fd;
     char dev_name[100];
@@ -464,15 +441,17 @@ md_pre_disklabel(void)
     ioctl(fd, DIOCWDINFO, &lp);    /* Write it out again */
 
     close (fd);
-    return 0;
+    return true;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-int
-md_post_disklabel(void)
+bool
+md_post_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
+#if 0	// XXX
     struct disklabel updated_label;
     int fd, i, no_match;
     char dev_name[100], buf[80];
@@ -486,7 +465,7 @@ md_post_disklabel(void)
      * Open the disk as a raw device
      */
     if ((fd = open(dev_name, O_RDONLY, 0)) < 0)
-       return 0;
+       return false;
     /*
      * Get the "new" label to see if we were successful.  If we aren't
      *  we'll return an error to keep from destroying the user's disk.
@@ -517,20 +496,24 @@ md_post_disklabel(void)
     if (no_match) {
        msg_clear();
        msg_display(MSG_label_error);
-       msg_table_add(MSG_dump_line,
+       msg_fmt_table_add(MSG_dump_line, "%s",
            " in-core: offset      size type on-disk: offset      size type");
        for (i=0;i<MAXPARTITIONS;i++) {
-           sprintf(buf, " %c:%13.8x%10.8x%5s%16.8x%10.8x%5s", i+'a',
+           snprintf(buf, sizeof(buf),
+	      " %c:%13.8x%10.8x%5s%16.8x%10.8x%5s", i+'a',
               pm->bsdlabel[i].pi_offset, pm->bsdlabel[i].pi_size,
               fst[pm->bsdlabel[i].pi_fstype],
               updated_label.d_partitions[i].p_offset,
               updated_label.d_partitions[i].p_size,
               fst[updated_label.d_partitions[i].p_fstype]);
-           msg_table_add(MSG_dump_line, buf);
+           msg_fmt_table_add(MSG_dump_line, "%s", buf);
        }
        process_menu(MENU_ok2, NULL);
     }
-    return no_match;
+    return no_match == 0;
+#else
+	return true;
+#endif
 }
 
 /*
@@ -539,19 +522,19 @@ md_post_disklabel(void)
  * ``disks are now set up'' message.
  */
 int
-md_post_newfs(void)
+md_post_newfs(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 int
-md_post_extract(void)
+md_post_extract(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install(struct install_partition_desc *install)
 {
 #ifndef DEBUG
 	enable_rc_conf();
@@ -559,16 +542,16 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update(void)
+md_pre_update(struct install_partition_desc *install)
 {
 	return 1;
 }
 
 /* Upgrade support */
 int
-md_update(void)
+md_update(struct install_partition_desc *install)
 {
-	md_post_newfs();
+	md_post_newfs(install);
 	return 1;
 }
 
@@ -1056,7 +1039,7 @@ disp_selected_part(sel)
 	char fstyp[16], use[16], name[32];
 	EBZB *bzb;
 
-	msg_table_add(MSG_part_header);
+	msg_table_add(MSG_mac68k_part_header);
 	for (i=0;i<map.usable_cnt;i++) {
 	    if (i == sel) msg_standout();
 	    j = map.mblk[i];
@@ -1064,7 +1047,8 @@ disp_selected_part(sel)
 	    getUse(&map.blk[j], sizeof(use), use);
 	    getName(&map.blk[j], sizeof(name), name);
 	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-	    msg_table_add(MSG_part_row, pm->diskdev,
+	    msg_fmt_table_add(MSG_part_row, "%s%c%d%d%s%s%s",
+		pm->diskdev,
 		bzb->flags.part, map.blk[j].pmPyPartStart,
                  map.blk[j].pmPartBlkCnt, fstyp, use, name);
 	    if (i == sel) msg_standend();
@@ -1124,13 +1108,13 @@ report_errors()
 	j = map.mblk[i];
 	if (map.blk[j].pmPyPartStart > pm->dlsize) {
 	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-	    msg_display_add(MSG_disksetup_part_beginning,
+	    msg_fmt_display_add(MSG_disksetup_part_beginning, "%s%c",
 		pm->diskdev, bzb->flags.part);
 	    errs++;
 	}
 	if ((map.blk[j].pmPyPartStart + map.blk[j].pmPartBlkCnt) > pm->dlsize) {
 	    bzb = (EBZB *)&map.blk[j].pmBootArgs[0];
-	    msg_display_add(MSG_disksetup_part_size,
+	    msg_fmt_display_add(MSG_disksetup_part_size, "%s%c",
 		pm->diskdev, bzb->flags.part);
 	    errs++;
 	}
@@ -1146,7 +1130,7 @@ edit_diskmap(void)
     int i;
 
 	/* Ask full/part */
-	msg_display (MSG_fullpart, pm->diskdev);
+	msg_fmt_display (MSG_mac68k_fullpart, "%s", pm->diskdev);
 	process_menu (MENU_fullpart, NULL);
 
 	map.selected = 0;
@@ -1156,7 +1140,7 @@ edit_diskmap(void)
 	 *  are any active disk partitions */
 	if (usefull) {
 	    if (map.usable_cnt > (map.root_cnt+map.swap_cnt+map.usr_cnt)) {
-		msg_display (MSG_ovrwrite);
+		msg_display (MSG_mac68k_ovrwrite);
 		if (!ask_noyes(NULL)) {
 			endwin();
 			return 0;
@@ -1187,8 +1171,8 @@ md_debug_dump(title)
 
 	msg_clear();
 	sprintf(buf, "Apple Disk Partition Map: %s", title);
-	msg_table_add(MSG_dump_line, buf);
-	msg_table_add(MSG_dump_line,
+	msg_fmt_table_add(MSG_dump_line, "%s", buf);
+	msg_fmt_table_add(MSG_dump_line, "%s",
            "slot      base   fstype        use name");
 	for (i=0;i<map.in_use_cnt;i++) {
 	   j = whichType(&map.blk[i]);
@@ -1201,7 +1185,7 @@ md_debug_dump(title)
 	   if (j == 0) strcpy (name, "reserved for Apple");
            sprintf(buf, " %02d:%c %08x %8s %10s %s", i+1,  type,
 		map.blk[i].pmPyPartStart, fstyp, use, name);
-           msg_table_add(MSG_dump_line, buf);
+           msg_fmt_table_add(MSG_dump_line, "%s", buf);
 	}
 	process_menu(MENU_okabort, &rv);
 	msg_clear();
@@ -1210,7 +1194,24 @@ md_debug_dump(title)
 #endif /* MD_DEBUG_SORT_MERGE */
 
 int
-md_pre_mount()
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
 	return 0;
 }
+
+bool
+md_parts_use_wholedisk(struct disk_partitions *parts)
+{
+	return parts_use_wholedisk(parts, 0, NULL);
+}
+
+#ifdef HAVE_GPT
+bool
+md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
+    bool root_is_new, part_id efi_id, bool efi_is_new)
+{
+	/* no GPT boot support, nothing needs to be done here */
+	return true;
+}
+#endif
+

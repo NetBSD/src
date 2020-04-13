@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libldap,v 1.9 2018/02/04 03:19:52 christos Exp $
+#	$NetBSD: Makefile.libldap,v 1.9.4.1 2020/04/13 07:56:26 martin Exp $
 
 .include "../../openldap.mk"
 
@@ -25,3 +25,5 @@ LIBDPLIBS+=	lber	${.CURDIR}/../liblber
 
 LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 LIBDPLIBS+=	ssl	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
+
+COPTS.charray.c+=	${GCC_NO_STRINGOP_OVERFLOW}

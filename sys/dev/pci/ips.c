@@ -1,4 +1,4 @@
-/*	$NetBSD: ips.c,v 1.1 2017/12/03 14:26:38 jdolecek Exp $	*/
+/*	$NetBSD: ips.c,v 1.1.4.1 2020/04/13 08:04:27 martin Exp $	*/
 /*	$OpenBSD: ips.c,v 1.113 2016/08/14 04:08:03 dlg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ips.c,v 1.1 2017/12/03 14:26:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ips.c,v 1.1.4.1 2020/04/13 08:04:27 martin Exp $");
 
 #include "bio.h"
 
@@ -1910,10 +1910,7 @@ ips_ccb_alloc(struct ips_softc *sc, int n)
 	struct ips_ccb *ccb;
 	int i;
 
-	if ((ccb = malloc(n * sizeof(*ccb), M_DEVBUF,
-	    M_NOWAIT | M_ZERO)) == NULL)
-		return (NULL);
-
+	ccb = malloc(n * sizeof(*ccb), M_DEVBUF, M_WAITOK | M_ZERO);
 	for (i = 0; i < n; i++) {
 		ccb[i].c_sc = sc;
 		ccb[i].c_id = i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.16.14.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.16.14.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.16.14.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.16.14.2 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -146,7 +146,6 @@ syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 {
 	struct sysent *sy;
 	const uint32_t *sb;
-	uint64_t where;
 	lwp_t *l;
 	int i;
 
@@ -175,8 +174,7 @@ syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 	 * of sy_call visible to all CPUs, and upon return we can be sure
 	 * that we see pertinent values of l_sysent posted by remote CPUs.
 	 */
-	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(where);
+	xc_barrier(0);
 
 	/*
 	 * Now it's safe to check l_sysent.  Run through all LWPs and see

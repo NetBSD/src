@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.159.2.1 2019/06/10 22:09:05 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.159.2.2 2020/04/13 08:05:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.159.2.1 2019/06/10 22:09:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.159.2.2 2020/04/13 08:05:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ const struct kern_target kern_targets[] = {
      /*        name            data          tag           type  ro/rw */
      { DT_DIR, N("."),         0,            KFSkern,        VDIR, DIR_MODE   },
      { DT_DIR, N(".."),        0,            KFSroot,        VDIR, DIR_MODE   },
-     { DT_REG, N("boottime"),  &boottime.tv_sec, KFSint,     VREG, READ_MODE  },
+     { DT_REG, N("boottime"),  0,            KFSboottime,    VREG, READ_MODE  },
 			/* XXXUNCONST */
      { DT_REG, N("copyright"), __UNCONST(copyright),
      					     KFSstring,      VREG, READ_MODE  },
@@ -172,6 +172,7 @@ int	kernfs_print(void *);
 int	kernfs_pathconf(void *);
 #define	kernfs_advlock	genfs_einval
 #define	kernfs_bwrite	genfs_eopnotsupp
+int	kernfs_getpages(void *);
 #define	kernfs_putpages	genfs_putpages
 
 static int	kernfs_xread(struct kernfs_node *, int, char **,
@@ -219,11 +220,60 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, kernfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, kernfs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, kernfs_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, kernfs_getpages },	/* getpages */
 	{ &vop_putpages_desc, kernfs_putpages },	/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc kernfs_vnodeop_opv_desc =
 	{ &kernfs_vnodeop_p, kernfs_vnodeop_entries };
+
+int (**kernfs_specop_p)(void *);
+const struct vnodeopv_entry_desc kernfs_specop_entries[] = {
+	{ &vop_default_desc, vn_default_error },
+	{ &vop_lookup_desc, spec_lookup },		/* lookup */
+	{ &vop_create_desc, spec_create },		/* create */
+	{ &vop_mknod_desc, spec_mknod },		/* mknod */
+	{ &vop_open_desc, spec_open },			/* open */
+	{ &vop_close_desc, spec_close },		/* close */
+	{ &vop_access_desc, kernfs_access },		/* access */
+	{ &vop_getattr_desc, kernfs_getattr },		/* getattr */
+	{ &vop_setattr_desc, kernfs_setattr },		/* setattr */
+	{ &vop_read_desc, spec_read },			/* read */
+	{ &vop_write_desc, spec_write },		/* write */
+	{ &vop_fallocate_desc, spec_fallocate },	/* fallocate */
+	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */
+	{ &vop_fcntl_desc, spec_fcntl },		/* fcntl */
+	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
+	{ &vop_poll_desc, spec_poll },			/* poll */
+	{ &vop_revoke_desc, spec_revoke },		/* revoke */
+	{ &vop_fsync_desc, spec_fsync },		/* fsync */
+	{ &vop_seek_desc, spec_seek },			/* seek */
+	{ &vop_remove_desc, spec_remove },		/* remove */
+	{ &vop_link_desc, spec_link },			/* link */
+	{ &vop_rename_desc, spec_rename },		/* rename */
+	{ &vop_mkdir_desc, spec_mkdir },		/* mkdir */
+	{ &vop_rmdir_desc, spec_rmdir },		/* rmdir */
+	{ &vop_symlink_desc, spec_symlink },		/* symlink */
+	{ &vop_readdir_desc, spec_readdir },		/* readdir */
+	{ &vop_readlink_desc, spec_readlink },		/* readlink */
+	{ &vop_abortop_desc, spec_abortop },		/* abortop */
+	{ &vop_inactive_desc, kernfs_inactive },	/* inactive */
+	{ &vop_reclaim_desc, kernfs_reclaim },		/* reclaim */
+	{ &vop_lock_desc, kernfs_lock },		/* lock */
+	{ &vop_unlock_desc, kernfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, spec_bmap },			/* bmap */
+	{ &vop_strategy_desc, spec_strategy },		/* strategy */
+	{ &vop_print_desc, kernfs_print },		/* print */
+	{ &vop_islocked_desc, kernfs_islocked },	/* islocked */
+	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
+	{ &vop_advlock_desc, spec_advlock },		/* advlock */
+	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, spec_getpages },		/* getpages */
+	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ NULL, NULL }
+};
+const struct vnodeopv_desc kernfs_specop_opv_desc =
+	{ &kernfs_specop_p, kernfs_specop_entries };
 
 static inline int
 kernfs_fileop_compare(struct kernfs_fileop *a, struct kernfs_fileop *b)
@@ -357,6 +407,17 @@ kernfs_xread(struct kernfs_node *kfs, int off, char **bufp, size_t len, size_t *
 		microtime(&tv);
 		snprintf(*bufp, len, "%lld %ld\n", (long long)tv.tv_sec,
 		    (long)tv.tv_usec);
+		break;
+	}
+
+	case KFSboottime: {
+		struct timeval tv;
+
+		/*
+		 * Historically, /kern/boottime only contained seconds.
+		 */
+		getmicroboottime(&tv);
+		snprintf(*bufp, len, "%lld\n", (long long)tv.tv_sec);
 		break;
 	}
 
@@ -637,7 +698,7 @@ kernfs_getattr(void *v)
 	/* Make all times be current TOD, except for the "boottime" node. */
 	if (kfs->kfs_kt->kt_namlen == 8 &&
 	    !memcmp(kfs->kfs_kt->kt_name, "boottime", 8)) {
-		vap->va_ctime = boottime;
+		getnanoboottime(&vap->va_ctime);
 	} else {
 		getnanotime(&vap->va_ctime);
 	}
@@ -671,6 +732,7 @@ kernfs_getattr(void *v)
 
 	case KFSnull:
 	case KFStime:
+	case KFSboottime:
 	case KFSint:
 	case KFSstring:
 	case KFShostname:
@@ -932,15 +994,6 @@ kernfs_readdir(void *v)
 					break;
 				kt = &dkt->dkt_kt;
 			}
-			if (kt->kt_tag == KFSdevice) {
-				dev_t *dp = kt->kt_data;
-				struct vnode *fvp;
-
-				if (*dp == NODEV ||
-				    !vfinddev(*dp, kt->kt_vtype, &fvp))
-					continue;
-				vrele(fvp);
-			}
 			if (kt->kt_tag == KFSmsgbuf) {
 				if (!logenabled(msgbufp)) {
 					continue;
@@ -1013,15 +1066,6 @@ kernfs_readdir(void *v)
 					break;
 				kt = &dkt->dkt_kt;
 				dkt = SIMPLEQ_NEXT(dkt, dkt_queue);
-			}
-			if (kt->kt_tag == KFSdevice) {
-				dev_t *dp = kt->kt_data;
-				struct vnode *fvp;
-
-				if (*dp == NODEV ||
-				    !vfinddev(*dp, kt->kt_vtype, &fvp))
-					continue;
-				vrele(fvp);
 			}
 			d.d_namlen = kt->kt_namlen;
 			if ((error = kernfs_setdirentfileno(&d, i, kfs,
@@ -1168,4 +1212,24 @@ kernfs_symlink(void *v)
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	return (EROFS);
+}
+ 
+int
+kernfs_getpages(void *v)
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+
+	if ((ap->a_flags & PGO_LOCKED) == 0)
+		rw_exit(ap->a_vp->v_uobj.vmobjlock);
+
+	return (EFAULT);
 }

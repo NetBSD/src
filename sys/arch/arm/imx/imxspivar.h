@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspivar.h,v 1.1 2014/03/22 09:28:08 hkenken Exp $	*/
+/*	$NetBSD: imxspivar.h,v 1.1.36.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -38,21 +38,16 @@ typedef struct spi_chipset_tag {
 	int (*spi_cs_disable)(void *, int);
 } *spi_chipset_tag_t;
 
-struct imxspi_attach_args {
-	bus_space_tag_t saa_iot;
-	bus_addr_t saa_addr;
-	bus_size_t saa_size;
-	int saa_irq;
-
-	spi_chipset_tag_t saa_tag;
-	int saa_nslaves;
-	unsigned long saa_freq;
-
-	int saa_enhanced;
+enum imxspi_type {
+	IMX31_CSPI,
+	IMX35_CSPI,
+	IMX51_ECSPI,
 };
 
 struct imxspi_softc {
 	device_t sc_dev;
+	int sc_phandle;
+
 	bus_space_tag_t  sc_iot;
 	bus_space_handle_t sc_ioh;
 	spi_chipset_tag_t sc_tag;
@@ -66,10 +61,13 @@ struct imxspi_softc {
 	bool  sc_running;
 	SIMPLEQ_HEAD(,spi_transfer) sc_q;
 
+	int sc_nslaves;
 	int sc_enhanced;
+	enum imxspi_type sc_type;
 };
 
-int imxspi_attach_common(device_t, struct imxspi_softc *, void *);
+int imxspi_attach_common(device_t);
+int imxspi_intr(void *);
 
 /*
  * defined in machine dependent code

@@ -1,4 +1,4 @@
-/* 	$NetBSD: i82093reg.h,v 1.5 2017/04/22 04:25:09 nonaka Exp $ */
+/* 	$NetBSD: i82093reg.h,v 1.5.12.1 2020/04/13 08:04:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,8 +81,9 @@
  * Redirection table registers.
  */
 
-#define IOAPIC_REDHI(pin)	(0x11 + ((pin)<<1))
-#define IOAPIC_REDLO(pin)	(0x10 + ((pin)<<1))
+#define IOAPIC_REDTBL		0x10
+#define IOAPIC_REDHI(pin)	(IOAPIC_REDTBL + ((pin) << 1) + 1)
+#define IOAPIC_REDLO(pin)	(IOAPIC_REDTBL + ((pin) << 1))
 
 #define IOAPIC_REDHI_DEST_SHIFT		24	   /* destination. */
 #define IOAPIC_REDHI_DEST_MASK		0xff000000

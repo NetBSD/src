@@ -1,5 +1,5 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2017 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2019 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -1152,6 +1152,13 @@ You should append "!ADH" to your cipher suites to ensure that these suites
 are not used.
 When using Mozilla NSS these parameters are always generated randomly
 so this directive is ignored.
+.TP
+.B TLSECName <name>
+Specify the name of a curve to use for Elliptic curve Diffie-Hellman
+ephemeral key exchange.  This is required to enable ECDHE algorithms in
+OpenSSL.  This option is not used with GnuTLS; the curves may be
+chosen in the GnuTLS ciphersuite specification. This option is also
+ignored for Mozilla NSS.
 .TP
 .B TLSProtocolMin <major>[.<minor>]
 Specifies minimum SSL/TLS protocol version that will be negotiated.

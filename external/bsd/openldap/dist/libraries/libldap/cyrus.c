@@ -1,9 +1,9 @@
-/*	$NetBSD: cyrus.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: cyrus.c,v 1.1.1.6.4.1 2020/04/13 07:56:13 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,9 +16,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cyrus.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: cyrus.c,v 1.1.1.6.4.1 2020/04/13 07:56:13 martin Exp $");
 
 #include "portable.h"
+
+#include "ldap-int.h"
+
+#ifdef HAVE_CYRUS_SASL
 
 #include <stdio.h>
 
@@ -34,16 +38,12 @@ __RCSID("$NetBSD: cyrus.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $");
 #include <limits.h>
 #endif
 
-#include "ldap-int.h"
-
-#ifdef HAVE_CYRUS_SASL
-
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
-
 #ifndef INT_MAX
 #define	INT_MAX	2147483647	/* 32 bit signed max */
+#endif
+
+#if !defined(HOST_NAME_MAX) && defined(_POSIX_HOST_NAME_MAX)
+#define HOST_NAME_MAX _POSIX_HOST_NAME_MAX
 #endif
 
 #ifdef HAVE_SASL_SASL_H
@@ -390,6 +390,10 @@ ldap_int_sasl_bind(
 	struct berval	ccred = BER_BVNULL;
 	int saslrc, rc;
 	unsigned credlen;
+#if !defined(_WIN32)
+	char my_hostname[HOST_NAME_MAX + 1];
+#endif
+	int free_saslhost = 0;
 
 	Debug( LDAP_DEBUG_TRACE, "ldap_int_sasl_bind: %s\n",
 		mechs ? mechs : "<null>", 0, 0 );
@@ -450,14 +454,29 @@ ldap_int_sasl_bind(
 
 			/* If we don't need to canonicalize just use the host
 			 * from the LDAP URI.
+			 * Always use the result of gethostname() for LDAPI.
+			 * Skip for Windows which doesn't support LDAPI.
 			 */
+#if !defined(_WIN32)
+			if (ld->ld_defconn->lconn_server->lud_scheme != NULL &&
+			    strcmp("ldapi", ld->ld_defconn->lconn_server->lud_scheme) == 0) {
+				rc = gethostname(my_hostname, HOST_NAME_MAX + 1);
+				if (rc == 0) {
+					saslhost = my_hostname;
+				} else {
+					saslhost = "localhost";
+				}
+			} else
+#endif
 			if ( nocanon )
 				saslhost = ld->ld_defconn->lconn_server->lud_host;
-			else 
+			else {
 				saslhost = ldap_host_connected_to( ld->ld_defconn->lconn_sb,
 				"localhost" );
+				free_saslhost = 1;
+			}
 			rc = ldap_int_sasl_open( ld, ld->ld_defconn, saslhost );
-			if ( !nocanon )
+			if ( free_saslhost )
 				LDAP_FREE( saslhost );
 		}
 

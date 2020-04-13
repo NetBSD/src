@@ -1,5 +1,5 @@
 /* Store motion via Lazy Code Motion on the reverse CFG.
-   Copyright (C) 1997-2017 Free Software Foundation, Inc.
+   Copyright (C) 1997-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -836,8 +836,10 @@ remove_reachable_equiv_notes (basic_block bb, struct st_expr *smexpr)
 
   bitmap_clear (visited);
 
-  act = (EDGE_COUNT (ei_container (ei)) > 0 ? EDGE_I (ei_container (ei), 0) : NULL);
-  while (1)
+  act = (EDGE_COUNT (ei_container (ei))
+	 ? EDGE_I (ei_container (ei), 0)
+	 : NULL);
+  for (;;)
     {
       if (!act)
 	{
@@ -879,7 +881,8 @@ remove_reachable_equiv_notes (basic_block bb, struct st_expr *smexpr)
 	      continue;
 
 	    if (dump_file)
-	      fprintf (dump_file, "STORE_MOTION  drop REG_EQUAL note at insn %d:\n",
+	      fprintf (dump_file,
+		       "STORE_MOTION  drop REG_EQUAL note at insn %d:\n",
 		       INSN_UID (insn));
 	    remove_note (insn, note);
 	  }
@@ -893,7 +896,9 @@ remove_reachable_equiv_notes (basic_block bb, struct st_expr *smexpr)
 	  if (act)
 	    stack[sp++] = ei;
 	  ei = ei_start (bb->succs);
-	  act = (EDGE_COUNT (ei_container (ei)) > 0 ? EDGE_I (ei_container (ei), 0) : NULL);
+	  act = (EDGE_COUNT (ei_container (ei))
+		 ? EDGE_I (ei_container (ei), 0)
+		 : NULL);
 	}
     }
 }
@@ -907,8 +912,7 @@ replace_store_insn (rtx reg, rtx_insn *del, basic_block bb,
   rtx_insn *insn;
   rtx mem, note, set;
 
-  mem = smexpr->pattern;
-  insn = gen_move_insn (reg, SET_SRC (single_set (del)));
+  insn = prepare_copy_insn (reg, SET_SRC (single_set (del)));
 
   unsigned int i;
   rtx_insn *temp;
@@ -941,6 +945,7 @@ replace_store_insn (rtx reg, rtx_insn *del, basic_block bb,
   /* Now we must handle REG_EQUAL notes whose contents is equal to the mem;
      they are no longer accurate provided that they are reached by this
      definition, so drop them.  */
+  mem = smexpr->pattern;
   for (; insn != NEXT_INSN (BB_END (bb)); insn = NEXT_INSN (insn))
     if (NONDEBUG_INSN_P (insn))
       {

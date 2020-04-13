@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_usbphy.c,v 1.7.12.1 2019/06/10 22:05:55 christos Exp $ */
+/* $NetBSD: tegra_usbphy.c,v 1.7.12.2 2020/04/13 08:03:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.7.12.1 2019/06/10 22:05:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.7.12.2 2020/04/13 08:03:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,8 +136,7 @@ tegra_usbphy_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#" PRIx64 ": %d",
-		    (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d", addr, error);
 		return;
 	}
 

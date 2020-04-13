@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.4.1 2019/06/10 21:51:36 christos Exp $
+#	$NetBSD: Makefile,v 1.16.4.2 2020/04/13 07:56:03 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -16,10 +16,6 @@ COPTS.regexec.c+=	-Wno-old-style-definition
 COPTS.v_increment.c+=	-Wno-format-nonliteral
 CWARNFLAGS.gcc+=	-Wno-unused
 CWARNFLAGS.clang+=	-Wno-unsequenced
-.endif
-
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
-COPTS.log1.c+=		-Wno-error=implicit-fallthrough
 .endif
 
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I.
@@ -117,6 +113,10 @@ version.h:	../../Makefile.inc
 #ipc_gen.c: vipc.pl ip_read.c
 #	${_MKTARGET_CREATE}
 #	${TOOL_PERL} -n ${.ALLSRC} > ${.TARGET}
+
+.if ${MACHINE_ARCH} == "aarch64"
+COPTS.ex_filter.c+=-O0
+.endif
 
 
 .include "${.CURDIR}/../../Makefile.inc"

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.149.2.2 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: i82557.c,v 1.149.2.3 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.149.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.149.2.3 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,6 +393,7 @@ fxp_attach(struct fxp_softc *sc)
 		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+		sc->sc_ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 	} else if (sc->sc_flags & FXPF_82559_RXCSUM) {
 		ifp->if_capabilities =
 		    IFCAP_CSUM_TCPv4_Rx |
@@ -1481,7 +1482,6 @@ fxp_tick(void *arg)
 	if_statadd_ref(nsr, if_opackets, le32toh(sp->tx_good));
 	if_statadd_ref(nsr, if_collisions, le32toh(sp->tx_total_collisions));
 	if (sp->rx_good) {
-		ifp->if_ipackets += le32toh(sp->rx_good);
 		sc->sc_rxidle = 0;
 	} else if (sc->sc_flags & FXPF_RECV_WORKAROUND) {
 		sc->sc_rxidle++;
@@ -1896,7 +1896,7 @@ fxp_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDIASOFF);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	for (i = 1000; i > 0; i++) {
+	for (i = 1000; i > 0; i--) {
 		FXP_CDIASSYNC(sc,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		status = le16toh(cb_ias->cb_status);

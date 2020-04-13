@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.18.4.2 2020/04/08 14:08:05 martin Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.18.4.3 2020/04/13 08:04:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -104,7 +104,8 @@ struct ahci_softc {
     (char *)(&(achp)->ahcic_cmdh[(cmd)]) - (char *)(sc)->sc_cmd_hdr, \
     sizeof(struct ahci_cmd_header), (op))
 #define AHCI_RFIS_SYNC(sc, achp, op) bus_dmamap_sync((sc)->sc_dmat, \
-    (sc)->sc_cmd_hdrd, (void *)(achp)->ahcic_rfis - (sc)->sc_cmd_hdr, \
+    (sc)->sc_cmd_hdrd, \
+    (char *)(achp)->ahcic_rfis - (char *)(sc)->sc_cmd_hdr, \
     AHCI_RFIS_SIZE, (op))
 #define AHCI_CMDTBL_SYNC(sc, achp, cmd, op) bus_dmamap_sync((sc)->sc_dmat, \
     (achp)->ahcic_cmd_tbld, AHCI_CMDTBL_SIZE * (cmd), \

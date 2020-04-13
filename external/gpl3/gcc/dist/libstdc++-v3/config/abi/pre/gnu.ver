@@ -1,6 +1,6 @@
 ## Linker script for GNU versioning (GNU ld 2.13.91+ only.)
 ##
-## Copyright (C) 2002-2017 Free Software Foundation, Inc.
+## Copyright (C) 2002-2018 Free Software Foundation, Inc.
 ##
 ## This file is part of the GNU ISO C++ Library.  This library is free
 ## software; you can redistribute it and/or modify it under the
@@ -1980,6 +1980,13 @@ GLIBCXX_3.4.24 {
     _ZNSbIwSt11char_traitsIwESaIwEEC[12]ERKS2_[jy]RKS1_;
 
 } GLIBCXX_3.4.23;
+
+GLIBCXX_3.4.25 {
+
+    # std::random_device::_M_getentropy() const
+    _ZNKSt13random_device13_M_getentropyEv;
+
+} GLIBCXX_3.4.24;
 
 # Symbols in the support library (libsupc++) have their own tag.
 CXXABI_1.3 {

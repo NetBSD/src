@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.3.2.3 2020/04/08 14:07:08 martin Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.3.2.4 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -101,28 +101,38 @@ fromwire_opt(ARGS_FROMWIRE) {
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sregion);
-	if (sregion.length == 0)
+	if (sregion.length == 0) {
 		return (ISC_R_SUCCESS);
+	}
 	total = 0;
 	while (sregion.length != 0) {
-		if (sregion.length < 4)
+		if (sregion.length < 4) {
 			return (ISC_R_UNEXPECTEDEND);
+		}
 		opt = uint16_fromregion(&sregion);
 		isc_region_consume(&sregion, 2);
 		length = uint16_fromregion(&sregion);
 		isc_region_consume(&sregion, 2);
 		total += 4;
-		if (sregion.length < length)
+		if (sregion.length < length) {
 			return (ISC_R_UNEXPECTEDEND);
+		}
 		switch (opt) {
+		case DNS_OPT_LLQ:
+			if (length != 18U) {
+				return (DNS_R_OPTERR);
+			}
+			isc_region_consume(&sregion, length);
+			break;
 		case DNS_OPT_CLIENT_SUBNET: {
 			uint16_t family;
 			uint8_t addrlen;
 			uint8_t scope;
 			uint8_t addrbytes;
 
-			if (length < 4)
+			if (length < 4) {
 				return (DNS_R_OPTERR);
+			}
 			family = uint16_fromregion(&sregion);
 			isc_region_consume(&sregion, 2);
 			addrlen = uint8_fromregion(&sregion);
@@ -141,29 +151,34 @@ fromwire_opt(ARGS_FROMWIRE) {
 				 * lengths don't make sense because the
 				 * family is unknown.
 				 */
-				if (addrlen != 0U || scope != 0U)
+				if (addrlen != 0U || scope != 0U) {
 					return (DNS_R_OPTERR);
+				}
 				break;
 			case 1:
-				if (addrlen > 32U || scope > 32U)
+				if (addrlen > 32U || scope > 32U) {
 					return (DNS_R_OPTERR);
+				}
 				break;
 			case 2:
-				if (addrlen > 128U || scope > 128U)
+				if (addrlen > 128U || scope > 128U) {
 					return (DNS_R_OPTERR);
+				}
 				break;
 			default:
 				return (DNS_R_OPTERR);
 			}
 			addrbytes = (addrlen + 7) / 8;
-			if (addrbytes + 4 != length)
+			if (addrbytes + 4 != length) {
 				return (DNS_R_OPTERR);
+			}
 
 			if (addrbytes != 0U && (addrlen % 8) != 0) {
 				uint8_t bits = ~0U << (8 - (addrlen % 8));
 				bits &= sregion.base[addrbytes - 1];
-				if (bits != sregion.base[addrbytes - 1])
+				if (bits != sregion.base[addrbytes - 1]) {
 					return (DNS_R_OPTERR);
+				}
 			}
 			isc_region_consume(&sregion, addrbytes);
 			break;
@@ -172,18 +187,29 @@ fromwire_opt(ARGS_FROMWIRE) {
 			/*
 			 * Request has zero length.  Response is 32 bits.
 			 */
-			if (length != 0 && length != 4)
+			if (length != 0 && length != 4) {
 				return (DNS_R_OPTERR);
+			}
 			isc_region_consume(&sregion, length);
 			break;
 		case DNS_OPT_COOKIE:
-			if (length != 8 && (length < 16 || length > 40))
+			if (length != 8 && (length < 16 || length > 40)) {
 				return (DNS_R_OPTERR);
+			}
 			isc_region_consume(&sregion, length);
 			break;
 		case DNS_OPT_KEY_TAG:
-			if (length == 0 || (length % 2) != 0)
+			if (length == 0 || (length % 2) != 0) {
 				return (DNS_R_OPTERR);
+			}
+			isc_region_consume(&sregion, length);
+			break;
+		case DNS_OPT_CLIENT_TAG:
+			/* FALLTHROUGH */
+		case DNS_OPT_SERVER_TAG:
+			if (length != 2) {
+				return (DNS_R_OPTERR);
+			}
 			isc_region_consume(&sregion, length);
 			break;
 		default:
@@ -195,8 +221,9 @@ fromwire_opt(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sregion);
 	isc_buffer_availableregion(target, &tregion);
-	if (tregion.length < total)
+	if (tregion.length < total) {
 		return (ISC_R_NOSPACE);
+	}
 	memmove(tregion.base, sregion.base, total);
 	isc_buffer_forward(source, total);
 	isc_buffer_add(target, total);

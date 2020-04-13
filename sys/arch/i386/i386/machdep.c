@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.806.2.2 2020/04/08 14:07:40 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.806.2.3 2020/04/13 08:03:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.806.2.2 2020/04/08 14:07:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.806.2.3 2020/04/13 08:03:52 martin Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -118,6 +118,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.806.2.2 2020/04/08 14:07:40 martin Exp
 #include <uvm/uvm_page.h>
 
 #include <sys/sysctl.h>
+
+#include <x86/efi.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -418,7 +420,8 @@ cpu_startup(void)
 	initmsgbuf((void *)msgbuf_vaddr, sz);
 
 #ifdef MULTIBOOT
-	multiboot_print_info();
+	multiboot1_print_info();
+	multiboot2_print_info();
 #endif
 
 #if NCARDBUS > 0
@@ -509,19 +512,9 @@ i386_tls_switch(lwp_t *l)
 	struct pcb *pcb = lwp_getpcb(l);
 
 	/*
-	 * Raise the IPL to IPL_HIGH.
-	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
-	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 * Raise the IPL to IPL_HIGH. XXX Still needed?
 	 */
 	(void)splhigh();
-
-	/*
-	 * If our floating point registers are on a different CPU,
-	 * set CR0_TS so we'll trap rather than reuse bogus state.
-	 */
-	if (l != ci->ci_fpcurlwp) {
-		HYPERVISOR_fpu_taskswitch(1);
-	}
 
 	/* Update TLS segment pointers */
 	update_descriptor(&ci->ci_gdt[GUFS_SEL],
@@ -1071,7 +1064,10 @@ init386_ksyms(void)
 #endif
 
 #if defined(MULTIBOOT)
-	if (multiboot_ksyms_addsyms_elf())
+	if (multiboot1_ksyms_addsyms_elf())
+		return;
+
+	if (multiboot2_ksyms_addsyms_elf())
 		return;
 #endif
 
@@ -1378,10 +1374,15 @@ init386(paddr_t first_avail)
 	init386_ksyms();
 
 #if NMCA > 0
-	/* check for MCA bus, needed to be done before ISA stuff - if
+	/* 
+	 * check for MCA bus, needed to be done before ISA stuff - if
 	 * MCA is detected, ISA needs to use level triggered interrupts
-	 * by default */
-	mca_busprobe();
+	 * by default
+	 * And we do not search for MCA using bioscall() on EFI systems
+	 * that lacks it (they lack MCA too, anyway).
+	 */
+	if (lookup_bootinfo(BTINFO_EFI) == NULL)
+		mca_busprobe();
 #endif
 
 #ifdef XENPV

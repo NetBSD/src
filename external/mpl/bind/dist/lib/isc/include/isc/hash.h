@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.3.2.2 2019/06/10 22:04:44 christos Exp $	*/
+/*	$NetBSD: hash.h,v 1.3.2.3 2020/04/13 08:02:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,14 +31,9 @@ isc_hash_get_initializer(void);
 void
 isc_hash_set_initializer(const void *initializer);
 
-uint32_t
-isc_hash_function(const void *data, size_t length,
-		  bool case_sensitive,
-		  const uint32_t *previous_hashp);
-uint32_t
-isc_hash_function_reverse(const void *data, size_t length,
-			  bool case_sensitive,
-			  const uint32_t *previous_hashp);
+uint64_t
+isc_hash_function(const void *data, const size_t length,
+		  const bool case_sensitive);
 /*!<
  * \brief Calculate a hash over data.
  *
@@ -49,10 +44,7 @@ isc_hash_function_reverse(const void *data, size_t length,
  * distribution.
  *
  * isc_hash_function() calculates the hash from start to end over the
- * input data. isc_hash_function_reverse() calculates the hash from the
- * end to the start over the input data. The difference in order is
- * useful in incremental hashing; for example, a previously hashed
- * value for 'com' can be used as input when hashing 'example.com'.
+ * input data.
  *
  * 'data' is the data to be hashed.
  *
@@ -62,9 +54,9 @@ isc_hash_function_reverse(const void *data, size_t length,
  * case_sensitive values.  It should typically be false if the hash key
  * is a DNS name.
  *
- * 'previous_hashp' is a pointer to a previous hash value returned by
- * this function. It can be used to perform incremental hashing. NULL
- * must be passed during first calls.
+ * WARNING: In case of case insensitive input, the input buffer cannot
+ * be longer than 1024, which should be fine, as it is only used for
+ * DNS names.
  */
 
 ISC_LANG_ENDDECLS

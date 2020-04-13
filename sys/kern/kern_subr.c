@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.219.4.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.219.4.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.219.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.219.4.2 2020/04/13 08:05:04 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -107,8 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.219.4.1 2019/06/10 22:09:03 christos
 
 /* XXX these should eventually move to subr_autoconf.c */
 static device_t finddevice(const char *);
-static device_t getdisk(char *, int, int, dev_t *, int);
-static device_t parsedisk(char *, int, int, dev_t *);
+static device_t getdisk(const char *, int, int, dev_t *, int);
+static device_t parsedisk(const char *, int, int, dev_t *);
 static const char *getwedgename(const char *, int);
 
 static void setroot_nfs(device_t);
@@ -185,10 +185,13 @@ setroot(device_t bootdv, int bootpartition)
 {
 
 	/*
-	 * Let bootcode augment "rootspec".
+	 * Let bootcode augment "rootspec", ensure that
+	 * rootdev is invalid to avoid confusion.
 	 */
-	if (rootspec == NULL)
+	if (rootspec == NULL) {
 		rootspec = bootspec;
+		rootdev = NODEV;
+	}
 
 	/*
 	 * force boot device to md0
@@ -402,9 +405,9 @@ setroot_ask(device_t bootdv, int bootpartition)
 			break;
 		}
 		if (len == 4 && strcmp(buf, "halt") == 0)
-			cpu_reboot(RB_HALT, NULL);
+			kern_reboot(RB_HALT, NULL);
 		else if (len == 6 && strcmp(buf, "reboot") == 0)
-			cpu_reboot(0, NULL);
+			kern_reboot(0, NULL);
 #if defined(DDB)
 		else if (len == 3 && strcmp(buf, "ddb") == 0) {
 			console_debugger();
@@ -448,9 +451,9 @@ setroot_ask(device_t bootdv, int bootpartition)
 
 /*
  * configure
- *   dev_t rootdev
+ *   device_t root_device
+ *   dev_t rootdev (for disks)
  * 
- * return device_t or NULL if not found
  */
 static void
 setroot_root(device_t bootdv, int bootpartition)
@@ -459,6 +462,7 @@ setroot_root(device_t bootdv, int bootpartition)
 	int majdev;
 	const char *rootdevname;
 	char buf[128];
+	dev_t nrootdev;
 
 	if (rootspec == NULL) {
 
@@ -490,20 +494,17 @@ setroot_root(device_t bootdv, int bootpartition)
 		 */
 
 		/*
-		 * If it's a network interface, we can bail out
-		 * early.
+		 * If rootspec can be parsed, just use it.
 		 */
-		rootdv = finddevice(rootspec);
-		if (rootdv != NULL && device_class(rootdv) == DV_IFNET)
-			goto haveroot;
-
-		if (rootdv != NULL && device_class(rootdv) == DV_DISK &&
-		    !DEV_USES_PARTITIONS(rootdv) &&
-		    (majdev = devsw_name2blk(device_xname(rootdv), NULL, 0)) >= 0) {
-			rootdev = makedev(majdev, device_unit(rootdv));
+		rootdv = parsedisk(rootspec, strlen(rootspec), 0, &nrootdev);
+		if (rootdv != NULL) {
+			rootdev = nrootdev;
 			goto haveroot;
 		}
 
+		/*
+		 * Fall back to rootdev, compute rootdv for it
+		 */
 		rootdevname = devsw_blk2name(major(rootdev));
 		if (rootdevname == NULL) {
 			printf("unknown device major 0x%llx\n",
@@ -647,10 +648,21 @@ finddevice(const char *name)
 }
 
 static device_t
-getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
+getdisk(const char *str, int len, int defpart, dev_t *devp, int isdump)
 {
 	device_t dv;
 	deviter_t di;
+
+	if (len == 4 && strcmp(str, "halt") == 0)
+		kern_reboot(RB_HALT, NULL);
+	else if (len == 6 && strcmp(str, "reboot") == 0)
+		kern_reboot(0, NULL);
+#if defined(DDB)
+	else if (len == 3 && strcmp(str, "ddb") == 0) {
+		console_debugger();
+		return NULL;
+	}
+#endif
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
@@ -679,45 +691,48 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 static const char *
 getwedgename(const char *name, int namelen)
 {
-	const char *wpfx = "wedge:";
-	const int wpfxlen = strlen(wpfx);
+	const char *wpfx1 = "wedge:";
+	const char *wpfx2 = "NAME=";
+	const int wpfx1len = strlen(wpfx1);
+	const int wpfx2len = strlen(wpfx2);
 
-	if (namelen < wpfxlen || strncmp(name, wpfx, wpfxlen) != 0)
-		return NULL;
+	if (namelen > wpfx1len && strncmp(name, wpfx1, wpfx1len) == 0)
+		return name + wpfx1len;
 
-	return name + wpfxlen;
+	if (namelen > wpfx2len && strncasecmp(name, wpfx2, wpfx2len) == 0)
+		return name + wpfx2len;
+
+	return NULL;
 }
 
 static device_t
-parsedisk(char *str, int len, int defpart, dev_t *devp)
+parsedisk(const char *str, int len, int defpart, dev_t *devp)
 {
 	device_t dv;
 	const char *wname;
-	char *cp, c;
+	char c;
 	int majdev, part;
+	char xname[16]; /* same size as dv_xname */
+
 	if (len == 0)
 		return (NULL);
-
-	if (len == 4 && strcmp(str, "halt") == 0)
-		cpu_reboot(RB_HALT, NULL);
-	else if (len == 6 && strcmp(str, "reboot") == 0)
-		cpu_reboot(0, NULL);
-#if defined(DDB)
-	else if (len == 3 && strcmp(str, "ddb") == 0)
-		console_debugger();
-#endif
-
-	cp = str + len - 1;
-	c = *cp;
 
 	if ((wname = getwedgename(str, len)) != NULL) {
 		if ((dv = dkwedge_find_by_wname(wname)) == NULL)
 			return NULL;
 		part = defpart;
 		goto gotdisk;
-	} else if (c >= 'a' && c <= ('a' + MAXPARTITIONS - 1)) {
+	}
+
+	c = str[len-1];
+	if (c >= 'a' && c <= ('a' + MAXPARTITIONS - 1)) {
 		part = c - 'a';
-		*cp = '\0';
+		len--;
+		if (len > sizeof(xname)-1)
+			return NULL;
+		memcpy(xname, str, len);
+		xname[len] = '\0';
+		str = xname;
 	} else
 		part = defpart;
 
@@ -739,6 +754,5 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 			*devp = NODEV;
 	}
 
-	*cp = c;
 	return (dv);
 }

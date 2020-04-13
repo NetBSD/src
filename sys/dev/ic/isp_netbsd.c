@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.89.4.1 2019/06/10 22:07:10 christos Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.89.4.2 2020/04/13 08:04:21 martin Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.89.4.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.89.4.2 2020/04/13 08:04:21 martin Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -79,7 +79,7 @@ static const char *roles[4] = {
     "(none)", "Target", "Initiator", "Target/Initiator"
 };
 static const char prom3[] =
-    "PortID 0x%06x Departed from Target %u because of %s";
+    "PortID %#06x Departed from Target %u because of %s";
 int isp_change_is_bad = 0;	/* "changed" devices are bad */
 int isp_quickboot_time = 15;	/* don't wait more than N secs for loop up */
 static int isp_fabric_hysteresis = 5;
@@ -609,7 +609,7 @@ ispcmd(struct ispsoftc *isp, XS_T *xs)
 	}
 	if (isp->isp_osinfo.blocked) {
 		isp_prt(isp, ISP_LOGWARN,
-		    "I/O while blocked with retries %d", xs, xs->xs_retries);
+		    "I/O while blocked with retries %d", xs->xs_retries);
 		if (xs->xs_retries) {
 			xs->error = XS_REQUEUE;
 			xs->xs_retries--;
@@ -730,7 +730,7 @@ isprequest(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		sdp->update = 1;
 		ISP_UNLOCK(isp);
 		isp_prt(isp, ISP_LOGDEBUG1,
-		    "isprequest: device flags 0x%x for %d.%d.X",
+		    "isprequest: device flags %#x for %d.%d.X",
 		    dflags, chan->chan_channel, xm->xm_target);
 		break;
 	}
@@ -809,7 +809,7 @@ isp_done(XS_T *xs)
 		}
 		if (xs->error == XS_DRIVER_STUFFUP) {
 			isp_prt(isp, ISP_LOGERR,
-			    "BOTCHED cmd for %d.%d.%d cmd 0x%x datalen %ld",
+			    "BOTCHED cmd for %d.%d.%d cmd %#x datalen %ld",
 			    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs),
 			    XS_CDBP(xs)[0], (long) XS_XFRLEN(xs));
 		}
@@ -841,13 +841,13 @@ isp_dog(void *arg)
 
 		if (XS_CMD_DONE_P(xs)) {
 			isp_prt(isp, ISP_LOGDEBUG1,
-			    "watchdog found done cmd (handle 0x%x)", handle);
+			    "watchdog found done cmd (handle %#x)", handle);
 			goto out;
 		}
 
 		if (XS_CMD_WDOG_P(xs)) {
 			isp_prt(isp, ISP_LOGDEBUG1,
-			    "recursive watchdog (handle 0x%x)", handle);
+			    "recursive watchdog (handle %#x)", handle);
 			goto out;
 		}
 
@@ -859,12 +859,12 @@ isp_dog(void *arg)
 		}
 		if (XS_CMD_DONE_P(xs)) {
 			isp_prt(isp, ISP_LOGDEBUG1,
-			    "watchdog cleanup for handle 0x%x", handle);
+			    "watchdog cleanup for handle %#x", handle);
 			XS_CMD_C_WDOG(xs);
 			isp_done(xs);
 		} else if (XS_CMD_GRACE_P(xs)) {
 			isp_prt(isp, ISP_LOGDEBUG1,
-			    "watchdog timeout for handle 0x%x", handle);
+			    "watchdog timeout for handle %#x", handle);
 			/*
 			 * Make sure the command is *really* dead before we
 			 * release the handle (and DMA resources) for reuse.
@@ -1042,7 +1042,6 @@ isp_make_gone(ispsoftc_t *isp, int tgt)
 static void
 isp_fc_worker(void *arg)
 {
-	void scsipi_run_queue(struct scsipi_channel *);
 	ispsoftc_t *isp = arg;
 	int slp = 0;
 	int chan = 0;
@@ -1180,11 +1179,11 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 	int bus, tgt;
 	const char *msg = NULL;
 	static const char prom[] =
-	    "PortID 0x%06x handle 0x%x role %s %s\n"
-	    "      WWNN 0x%08x%08x WWPN 0x%08x%08x";
+	    "PortID %#06x handle %#x role %s %s\n"
+	    "      WWNN %#08x%08x WWPN %#08x%08x";
 	static const char prom2[] =
-	    "PortID 0x%06x handle 0x%x role %s %s tgt %u\n"
-	    "      WWNN 0x%08x%08x WWPN 0x%08x%08x";
+	    "PortID %#06x handle %#x role %s %s tgt %u\n"
+	    "      WWNN %#08x%08x WWPN %#08x%08x";
 	fcportdb_t *lp;
 	va_list ap;
 
@@ -1262,7 +1261,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 				   "Starting Loop Down Timer");
 			}
 		}
-		isp_prt(isp, ISP_LOGINFO, msg);
+		isp_prt(isp, ISP_LOGINFO, "%s", msg);
 		break;
         case ISPASYNC_LOOP_UP:
 		/*
@@ -1458,7 +1457,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 			isp_prt(isp, ISP_LOGSANCFG|ISP_LOGDEBUG0,
 			   "Stopping Loop Down Timer");
 		}
-		isp_prt(isp, ISP_LOGINFO, msg);
+		isp_prt(isp, ISP_LOGINFO, "%s", msg);
 		/*
 		 * We can set blocked here because we know it's now okay
 		 * to try and run isp_fc_runstate (in order to build loop
@@ -1495,7 +1494,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, ...)
 			bus = 0;
 		}
                 isp_prt(isp, ISP_LOGERR,
-                    "Internal Firmware Error on bus %d @ RISC Address 0x%x",
+                    "Internal Firmware Error on bus %d @ RISC Address %#x",
                     bus, mbox1);
 		if (IS_FC(isp)) {
 			if (isp->isp_osinfo.blocked == 0) {
@@ -1650,9 +1649,9 @@ isp_mbox_wait_complete(struct ispsoftc *isp, mbreg_t *mbp)
 		microtime(&finish);
 		timersub(&finish, &start, &elapsed);
 		isp_prt(isp, ISP_LOGWARN,
-		    "%s Mailbox Command (0x%x) Timeout (%uus actual)",
+		    "%s Mailbox Command (%#x) Timeout (%juus actual)",
 		    isp->isp_osinfo.mbox_sleep_ok? "Interrupting" : "Polled",
-		    isp->isp_lastmbxcmd, (elapsed.tv_sec * 1000000) +
+		    isp->isp_lastmbxcmd, (intmax_t)(elapsed.tv_sec * 1000000) +
 		    elapsed.tv_usec);
 		mbp->param[0] = MBOX_TIMEOUT;
 		isp->isp_osinfo.mboxcmd_done = 1;

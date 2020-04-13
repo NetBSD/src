@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,11 +42,11 @@
 
 #define	YYSTACKSIZE	4096
 
-int			yyparsetarget;
+int			yystarttoken;
 const char *		yyfilename;
 
 extern int		yylineno, yycolumn;
-extern int		yylex(void);
+extern int		yylex(int);
 
 void
 yyerror(const char *fmt, ...)
@@ -78,14 +78,6 @@ yyerror(const char *fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
-#define	CHECK_PARSER_FILE				\
-	if (yyparsetarget != NPFCTL_PARSE_FILE)		\
-		yyerror("rule must be in the group");
-
-#define	CHECK_PARSER_STRING				\
-	if (yyparsetarget != NPFCTL_PARSE_STRING)	\
-		yyerror("invalid rule syntax");
-
 %}
 
 /*
@@ -94,6 +86,17 @@ yyerror(const char *fmt, ...)
 %expect 0
 %expect-rr 0
 
+/*
+ * Depending on the mode of operation, set a different start symbol.
+ * Workaround yacc limitation by passing the start token.
+ */
+%start input
+%token RULE_ENTRY_TOKEN MAP_ENTRY_TOKEN
+%lex-param { int yystarttoken }
+
+/*
+ * General tokens.
+ */
 %token			ALG
 %token			ALGO
 %token			ALL
@@ -103,7 +106,6 @@ yyerror(const char *fmt, ...)
 %token			ARROWLEFT
 %token			ARROWRIGHT
 %token			BLOCK
-%token			BPFJIT
 %token			CDB
 %token			CONST
 %token			CURLY_CLOSE
@@ -159,7 +161,7 @@ yyerror(const char *fmt, ...)
 %token			SET
 %token			SLASH
 %token			STATEFUL
-%token			STATEFUL_ENDS
+%token			STATEFUL_ALL
 %token			TABLE
 %token			TCP
 %token			TO
@@ -175,6 +177,7 @@ yyerror(const char *fmt, ...)
 %token	<num>		NUM
 %token	<fpnum>		FPNUM
 %token	<str>		STRING
+%token	<str>		PARAM
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
 
@@ -184,6 +187,7 @@ yyerror(const char *fmt, ...)
 %type	<num>		block_or_pass rule_dir group_dir block_opts
 %type	<num>		maybe_not opt_stateful icmp_type table_type
 %type	<num>		map_sd map_algo map_flags map_type
+%type	<num>		param_val
 %type	<var>		static_ifaddrs addr_or_ifaddr
 %type	<var>		port_range icmp_type_and_code
 %type	<var>		filt_addr addr_and_mask tcp_flags tcp_flags_and_mask
@@ -193,11 +197,9 @@ yyerror(const char *fmt, ...)
 %type	<filtopts>	filt_opts all_or_filt_opts
 %type	<optproto>	proto opt_proto
 %type	<rulegroup>	group_opts
-%type	<tf>		onoff
 
 %union {
 	char *		str;
-	bool		tf;
 	unsigned long	num;
 	double		fpnum;
 	npfvar_t *	var;
@@ -210,8 +212,9 @@ yyerror(const char *fmt, ...)
 %%
 
 input
-	: { CHECK_PARSER_FILE	} lines
-	| { CHECK_PARSER_STRING	} rule
+	: lines
+	| RULE_ENTRY_TOKEN	rule
+	| MAP_ENTRY_TOKEN	map
 	;
 
 lines
@@ -237,18 +240,15 @@ alg
 	}
 	;
 
-onoff
-	: ON {
-		$$ = true;
-	}
-	| OFF {
-		$$ = false;
-	}
+param_val
+	: number	{ $$ = $1; }
+	| ON		{ $$ = true; }
+	| OFF		{ $$ = false; }
 	;
 
 set
-	: SET BPFJIT onoff {
-		npfctl_bpfjit($3);
+	: SET PARAM param_val {
+		npfctl_setparam($2, $3);
 	}
 	;
 
@@ -647,7 +647,7 @@ all_or_filt_opts
 
 opt_stateful
 	: STATEFUL	{ $$ = NPF_RULE_STATEFUL; }
-	| STATEFUL_ENDS	{ $$ = NPF_RULE_STATEFUL | NPF_RULE_MULTIENDS; }
+	| STATEFUL_ALL	{ $$ = NPF_RULE_STATEFUL | NPF_RULE_GSTATEFUL; }
 	|		{ $$ = 0; }
 	;
 
@@ -914,9 +914,12 @@ ifref
 	| dynamic_ifaddrs
 	| static_ifaddrs
 	{
-		if (npfvar_get_count($1) != 1)
+		ifnet_addr_t *ifna;
+
+		if (npfvar_get_count($1) != 1) {
 			yyerror("multiple interfaces are not supported");
-		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
+		}
+		ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
 		npfctl_note_interface(ifna->ifna_name);
 		$$ = ifna->ifna_name;
 	}

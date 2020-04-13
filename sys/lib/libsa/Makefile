@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88.2.1 2019/06/10 22:09:05 christos Exp $
+#	$NetBSD: Makefile,v 1.88.2.2 2020/04/13 08:05:04 martin Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -7,6 +7,8 @@ SA_USE_CREAD?= no		# Read compressed kernels
 SA_INCLUDE_NET?= yes		# Netboot via TFTP, NFS
 SA_USE_LOADFILE?= no		# Generic executable loading support
 SA_ENABLE_LS_OP?= no		# Filesystems ls operation
+SA_ENABLE_BIENDIAN?= no		# Biendian support
+				# (currently only for loadfile_elf*)
 
 #DEBUGCPPFLAGS= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
@@ -71,6 +73,11 @@ SRCS+=	bootp.c rarp.c bootparam.c
 
 # boot filesystems
 SRCS+=	nfs.c tftp.c
+.endif
+
+.if (${SA_ENABLE_BIENDIAN} == "yes")
+CPPFLAGS+=	-DLIBSA_BIENDIAN_SUPPORT
+SRCS+=		byteorder.c
 .endif
 
 SRCS+=	ffsv1.c ffsv2.c

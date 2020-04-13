@@ -1,4 +1,4 @@
-/* $NetBSD: ti_prcm.h,v 1.1 2017/10/26 23:28:15 jmcneill Exp $ */
+/* $NetBSD: ti_prcm.h,v 1.1.6.1 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -55,8 +55,12 @@ struct ti_prcm_fixed_factor {
 
 struct ti_prcm_hwmod {
 	bus_size_t		reg;
+	uint32_t		mask;
 	const char		*parent;
+	u_int			flags;
 };
+
+#define	TI_HWMOD_DISABLE_AUTOIDLE	0x01
 
 struct ti_prcm_clk {
 	struct clk		base;
@@ -137,9 +141,14 @@ ti_prcm_hwmod_get_parent(struct ti_prcm_softc *sc, struct ti_prcm_clk *tc)
 }
 
 #define	TI_PRCM_HWMOD(_name, _reg, _parent, _enable)			\
+	TI_PRCM_HWMOD_MASK(_name, _reg, 0, _parent, _enable, 0)
+
+#define	TI_PRCM_HWMOD_MASK(_name, _reg, _mask, _parent, _enable, _flags) \
 	{								\
 		.type = TI_PRCM_HWMOD, .base.name = (_name),		\
 		.u.hwmod.reg = (_reg),					\
+		.u.hwmod.mask = (_mask),				\
+		.u.hwmod.flags = (_flags),				\
 		.u.hwmod.parent = (_parent),				\
 		.enable = (_enable),					\
 		.get_parent = ti_prcm_hwmod_get_parent,			\
@@ -165,5 +174,6 @@ struct ti_prcm_softc {
 #endif /* !TI_PRCM_PRIVATE */
 
 struct clk *	ti_prcm_get_hwmod(const int, u_int);
+int		ti_prcm_enable_hwmod(const int, u_int);
 
 #endif /* !_ARM_TI_PRCM_H */

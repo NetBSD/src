@@ -1,4 +1,4 @@
-/*	$NetBSD: hvs.c,v 1.1.6.3 2020/04/08 14:08:05 martin Exp $	*/
+/*	$NetBSD: hvs.c,v 1.1.6.4 2020/04/13 08:04:20 martin Exp $	*/
 /*	$OpenBSD: hvs.c,v 1.17 2017/08/10 17:22:48 mikeb Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 /* #define HVS_DEBUG_IO */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvs.c,v 1.1.6.3 2020/04/08 14:08:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvs.c,v 1.1.6.4 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1040,7 +1040,6 @@ hvs_empty_done(struct hvs_ccb *ccb)
 static int
 hvs_alloc_ccbs(struct hvs_softc *sc)
 {
-	const int kmemflags = cold ? KM_NOSLEEP : KM_SLEEP;
 	const int dmaflags = cold ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK;
 	int i, error;
 
@@ -1049,11 +1048,7 @@ hvs_alloc_ccbs(struct hvs_softc *sc)
 
 	sc->sc_nccb = HVS_MAX_CCB;
 	sc->sc_ccbs = kmem_zalloc(sc->sc_nccb * sizeof(struct hvs_ccb),
-	    kmemflags);
-	if (sc->sc_ccbs == NULL) {
-		aprint_error_dev(sc->sc_dev, "failed to allocate CCBs\n");
-		return -1;
-	}
+	    KM_SLEEP);
 
 	for (i = 0; i < sc->sc_nccb; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, HVS_MAX_SGE,
@@ -1066,13 +1061,7 @@ hvs_alloc_ccbs(struct hvs_softc *sc)
 
 		sc->sc_ccbs[i].ccb_sgl = kmem_zalloc(
 		    sizeof(struct vmbus_gpa_range) * (HVS_MAX_SGE + 1),
-		    kmemflags);
-		if (sc->sc_ccbs[i].ccb_sgl == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "failed to allocate SGL array\n");
-			goto errout;
-		}
-
+		    KM_SLEEP);
 		sc->sc_ccbs[i].ccb_rid = i;
 		hvs_put_ccb(sc, &sc->sc_ccbs[i]);
 	}

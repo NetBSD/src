@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.de,v 1.2.28.1 2019/06/10 22:10:38 christos Exp $	*/
+/*	$NetBSD: msg.mbr.de,v 1.2.28.2 2020/04/13 08:06:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,57 +36,18 @@
 
 /* NB: Lines ending in spaces force line breaks */
 
-/* Called with:				Example
- *  $0 = device name			wd0
- *  $1 = outer partitioning name	Master Boot Record (MBR)
- *  $2 = inner partitioning name	BSD disklabel
- *  $3 = short version of $1		MBR
- *  $4 = short version of $2		disklabel
- *  $5 = size needed for NetBSD		250M
- *  $6 = size needed to build NetBSD	15G
- */
-message fullpart
-{NetBSD wird auf die Festplatte $0 installiert.
-
-NetBSD benötigt eine eigene Partition im $1. Diese Partition
-wird später durch das $2 weiter aufgeteilt.
-NetBSD kann auch auf Dateisysteme in anderen $3-Partitionen zugreifen.
-
-'Die ganze Festplatte nutzen' löscht alle vorhandenen $3-Partitionen.
-Um auch andere Betriebssysteme zu nutzen, erstellen Sie eine
-$3 Partition.
-
-Etwa $5 reichen für eine Basisinstallation, aber Sie sollten
-zusätzlichen Platz für Erweiterungen und Benutzerdateien einrechnen. 
-Reservieren Sie mindestens $6 wenn Sie NetBSD selbst compilieren möchten.
-}
-
-message Select_your_choice
-{Wie möchten Sie verfahren?}
-message Use_only_part_of_the_disk
-{Bearbeiten der MBR-Partitionstabelle}
-message Use_the_entire_disk
-{Die ganze Festplatte nutzen}
-
-/* the %s's will expand into three character strings */
-message part_header
-{   Festplattenkapazität insgesamt %lu %s.
-
+message mbr_part_header_1	{Typ}
+message mbr_part_header_2	{Ordner}
 .if BOOTSEL
-   Start(%3s) Größe(%3s) Flag Typ                    Bootmenü
-   ---------- ---------- ---- ---------------------- --------
-.else
-   Start(%3s) Größe(%3s) Flag Typ 
-   ---------- ---------- ---- ----------------
+message mbr_part_header_3	{Bootmenü}
 .endif
-}
-
-message part_row_used
-{%10d %11d %c%c%c}
 
 message noactivepart
 {Sie haben keine Partition als aktive Startpartition markiert.
-Das System wird nicht von dieser Festplatte starten können.
+Das System wird nicht von dieser Festplatte starten können.}
+
+message fixactivepart
+{
 Soll die NetBSD-Partition der Festplatte als aktiv markiert werden?}
 
 message setbiosgeom
@@ -113,82 +74,56 @@ message realgeom
 message biosgeom
 {BIOS-Geometrie: %d Zyl, %d Köpfe, %d Sektoren\n}
 
-message ovrwrite
-{Ihre Festplatte verfügt gegenwärtig über eine Nicht-NetBSD Partition.
-Wollen Sie diese Partition wirklich mit NetBSD überschreiben?
-}
-
-message Partition_OK
-{Partition OK}
-
-message ptn_type
-{         Typ: %s}
-message ptn_start
-{       Start: %d %s}
-message ptn_size
-{      Größe: %d %s}
-message ptn_end
-{        Ende: %d %s}
 message ptn_active
-{       Aktiv: %s}
-message ptn_install
-{Installation: %s}
+{Aktiv}
 .if BOOTSEL
 message bootmenu
-{    Bootmenü: %s}
+{Bootmenü}
 message boot_dflt
-{ Bootvorgabe: %s}
+{Standardboot}
 .endif
 
-message get_ptn_size {%sGröße (Maximum %d %s)}
-message Invalid_numeric {Ungültige Zahl: }
-message Too_large {Zu groß: }
-message Space_allocated {Zugeordneter Speicherplatz: }
-message ptn_starts {Speicherplatz auf %d..%d %s (Größe %d %s)\n}
-message get_ptn_start {%s%sStart (in %s)}
-message get_ptn_id {Partitionstyp (0..255)}
-message No_free_space {Kein freier Speicherplatz}
-message Only_one_extended_ptn {Hier ist nur eine erweiterte Partition möglich}
+message mbr_get_ptn_id {Partitionstyp (0..255)}
+message Only_one_extended_ptn {Es ist nur eine erweiterte Partition möglich.}
 
-message editparttable
-{Die aktuelle MBR-Partition wird unten angezeigt. 
-Flag: a => (A)ktive Startpartition,
+message mbr_flags	{as}
+message mbr_flag_desc
 .if BOOTSEL
-d => Stan(D)ardauswahl, 
+{, (A)ktive Startpartition, (S)tandardauswahl}
+.else
+{, (A)ktive Startpartition}
 .endif
-I => hier (I)nstallieren. 
-Wählen Sie die Partition, die Sie verändern möchten:
 
-}
-
-message Partition_table_ok
-{Partitionstabelle OK}
-
-message Dont_change
-{Nicht verändern}
-message Other_kind
-{Anderer Partitionstyp, Nummerneingabe (Id)}
-
-message reeditpart
-{
-
-Wollen Sie die MBR-Tabelle erneut editieren (oder die Installation abbrechen)?
-}
-
-message nobsdpart
-{Es befindet sich keine NetBSD-Partition in der Partitionstabelle des MBR.}
-
-message multbsdpart
-{Es befinden sich mehrere NetBSD-Partitionen in der Partitionstabelle des MBR.
-Sie sollten das Flag 'hier installieren' auf die Partition setzen, die Sie nutzen
-wollen.}
-
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = outer partitioning name	Master Boot Record (MBR)
+ *  $2 = short version of $1		MBR
+ */
 message dofdisk
-{Erstellen der DOS-Partitionstabelle ...
+{$0: schreibe die $2 Partitionstabelle ...
 }
 
 message wmbrfail
 {Schreiben des MBR fehlgeschlagen. Sysinst kann nicht fortfahren.}
+
+message mbr_inside_ext
+{Die Partition muss innerhalb der Extended Partition beginnen.}
+
+message mbr_ext_nofit
+{Die Extended Partition muss alle darin enthaltenen Partition umfassen}
+
+message mbr_ext_not_empty
+{Die Extended Partition kann nur gelöscht werden, wenn sie leer ist!}
+
+message mbr_no_free_primary_have_ext
+{Die partition liegt nicht in der Extended Partition
+und im primären Bootblock ist kein Platz}
+
+message mbr_no_free_primary_no_ext
+{Kein Platz im primären Bootblock.
+Sie können eine Partition entfernen und eine Extended Partition für
+den restlichen freien Platz erstellen, dann die gelöschte Partition
+wieder innerhalb der Extended Partition einfügen}
 
 .if 0
 .if BOOTSEL
@@ -200,3 +135,8 @@ message bootseltimeout
 
 .endif
 .endif
+
+message parttype_mbr {Master Boot Record (MBR)}
+message parttype_mbr_short {MBR}
+
+message mbr_type_invalid	{Ungültiger Partitionstyp (0 .. 255)}

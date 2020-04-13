@@ -1,4 +1,4 @@
-/*	$NetBSD: taskq.c,v 1.7.2.1 2019/06/10 21:52:03 christos Exp $	*/
+/*	$NetBSD: taskq.c,v 1.7.2.2 2020/04/13 07:56:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/types.h>
-#include <sys/mutex.h>
+#include <sys/param.h>
 #include <sys/kcondvar.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/threadpool.h>
 
@@ -65,7 +67,7 @@ static specificdata_key_t taskq_lwp_key; /* Null or taskq this thread runs. */
 
 /*
  * Threadpool job to service tasks from task queue.
- * Runs until the task queue gets destroyed or the queue is empty for 5 secs.
+ * Runs until the task queue gets destroyed or the queue is empty for 10 secs.
  */
 static void
 task_executor(struct threadpool_job *job)
@@ -73,30 +75,37 @@ task_executor(struct threadpool_job *job)
 	struct taskq_executor *state = (struct taskq_executor *)job;
 	taskq_t *tq = state->te_self;
 	taskq_ent_t *tqe; 
+	bool is_dynamic;
+	int error;
 
 	lwp_setspecific(taskq_lwp_key, tq);
 
 	mutex_enter(&tq->tq_lock);
 	while (!tq->tq_destroyed) {
-		tqe = SIMPLEQ_FIRST(&tq->tq_list);
-		if (tqe == NULL) {
+		if (SIMPLEQ_EMPTY(&tq->tq_list)) {
 			if (ISSET(tq->tq_flags, TASKQ_DYNAMIC))
 				break;
 			tq->tq_waiting++;
-			if (cv_timedwait(&tq->tq_cv, &tq->tq_lock, 5000) != 0) {
-				tq->tq_waiting--;
-				break;
+			error = cv_timedwait(&tq->tq_cv, &tq->tq_lock,
+			    mstohz(10000));
+			tq->tq_waiting--;
+			if (SIMPLEQ_EMPTY(&tq->tq_list)) {
+				if (error)
+					break;
+				continue;
 			}
-			continue;
 		}
+		tqe = SIMPLEQ_FIRST(&tq->tq_list);
+		KASSERT(tqe != NULL);
 		SIMPLEQ_REMOVE_HEAD(&tq->tq_list, tqent_list);
+		is_dynamic = tqe->tqent_dynamic;
 		tqe->tqent_queued = 0;
 		mutex_exit(&tq->tq_lock);
 
 		(*tqe->tqent_func)(tqe->tqent_arg);
 
 		mutex_enter(&tq->tq_lock);
-		if (tqe->tqent_dynamic)
+		if (is_dynamic)
 			kmem_free(tqe, sizeof(*tqe));
 		tq->tq_active--;
 	}
@@ -144,7 +153,6 @@ taskq_dispatch_common(taskq_t *tq, taskq_ent_t *tqe, uint_t flags)
 	tq->tq_active++;
 	if (tq->tq_waiting) {
 		cv_signal(&tq->tq_cv);
-		tq->tq_waiting--;
 		mutex_exit(&tq->tq_lock);
 		return;
 	}

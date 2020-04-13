@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.93.4.1 2019/06/10 22:06:16 christos Exp $
+#	$NetBSD: Makefile.hp300,v 1.93.4.2 2020/04/13 08:03:49 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -67,7 +67,7 @@ TEXTADDR?=	0
 ##
 
 # depend on CPU configuration
-dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
+dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_bootstrap.o sys_machdep.o trap.o: Makefile
 
 ##
 ## (7) misc settings

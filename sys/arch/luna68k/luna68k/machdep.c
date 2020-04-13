@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.101.4.2 2020/04/08 14:07:42 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.101.4.3 2020/04/13 08:03:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101.4.2 2020/04/08 14:07:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101.4.3 2020/04/13 08:03:56 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101.4.2 2020/04/08 14:07:42 martin Exp
 #include <sys/sysctl.h>
 
 #include <machine/bootinfo.h>
+#include <machine/board.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pcb.h>
@@ -156,7 +157,7 @@ int	delay_divisor = 30;	/* for delay() loop count */
 void
 luna68k_init(void)
 {
-	volatile uint8_t *pio0 = (void *)0x49000000;
+	volatile uint8_t *pio0 = (void *)OBIO_PIO0_BASE;
 	int sw1, i;
 	char *cp;
 	extern char bootarg[64];
@@ -460,7 +461,7 @@ haltsys:
 
 	/* Finally, halt/reboot the system. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-		volatile uint8_t *pio = (void *)0x4d000000;
+		volatile uint8_t *pio = (void *)OBIO_PIO1_BASE;
 
 		printf("power is going down.\n");
 		DELAY(100000);
@@ -856,7 +857,7 @@ struct consdev romcons = {
 	CN_DEAD,
 };
 
-#define __		((int **)0x41000000)
+#define __		((int **)PROM_ADDR)
 #define GETC()		(*(int (*)())__[6])()
 #define PUTC(x)		(*(void (*)())__[7])(x)
 

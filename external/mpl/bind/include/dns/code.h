@@ -88,7 +88,6 @@
 #include "rdata/generic/csync_62.c"
 #include "rdata/generic/zonemd_63.c"
 #include "rdata/generic/spf_99.c"
-#include "rdata/generic/unspec_103.c"
 #include "rdata/generic/nid_104.c"
 #include "rdata/generic/l32_105.c"
 #include "rdata/generic/l64_106.c"
@@ -231,7 +230,6 @@
 	case 62: result = fromtext_csync(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 63: result = fromtext_zonemd(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 99: result = fromtext_spf(rdclass, type, lexer, origin, options, target, callbacks); break; \
-	case 103: result = fromtext_unspec(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 104: result = fromtext_nid(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 105: result = fromtext_l32(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 106: result = fromtext_l64(rdclass, type, lexer, origin, options, target, callbacks); break; \
@@ -378,7 +376,6 @@
 	case 62: result = totext_csync(rdata, tctx, target); break; \
 	case 63: result = totext_zonemd(rdata, tctx, target); break; \
 	case 99: result = totext_spf(rdata, tctx, target); break; \
-	case 103: result = totext_unspec(rdata, tctx, target); break; \
 	case 104: result = totext_nid(rdata, tctx, target); break; \
 	case 105: result = totext_l32(rdata, tctx, target); break; \
 	case 106: result = totext_l64(rdata, tctx, target); break; \
@@ -525,7 +522,6 @@
 	case 62: result = fromwire_csync(rdclass, type, source, dctx, options, target); break; \
 	case 63: result = fromwire_zonemd(rdclass, type, source, dctx, options, target); break; \
 	case 99: result = fromwire_spf(rdclass, type, source, dctx, options, target); break; \
-	case 103: result = fromwire_unspec(rdclass, type, source, dctx, options, target); break; \
 	case 104: result = fromwire_nid(rdclass, type, source, dctx, options, target); break; \
 	case 105: result = fromwire_l32(rdclass, type, source, dctx, options, target); break; \
 	case 106: result = fromwire_l64(rdclass, type, source, dctx, options, target); break; \
@@ -672,7 +668,6 @@
 	case 62: result = towire_csync(rdata, cctx, target); break; \
 	case 63: result = towire_zonemd(rdata, cctx, target); break; \
 	case 99: result = towire_spf(rdata, cctx, target); break; \
-	case 103: result = towire_unspec(rdata, cctx, target); break; \
 	case 104: result = towire_nid(rdata, cctx, target); break; \
 	case 105: result = towire_l32(rdata, cctx, target); break; \
 	case 106: result = towire_l64(rdata, cctx, target); break; \
@@ -819,7 +814,6 @@
 	case 62: result = compare_csync(rdata1, rdata2); break; \
 	case 63: result = compare_zonemd(rdata1, rdata2); break; \
 	case 99: result = compare_spf(rdata1, rdata2); break; \
-	case 103: result = compare_unspec(rdata1, rdata2); break; \
 	case 104: result = compare_nid(rdata1, rdata2); break; \
 	case 105: result = compare_l32(rdata1, rdata2); break; \
 	case 106: result = compare_l64(rdata1, rdata2); break; \
@@ -966,7 +960,6 @@
 	case 62: result = casecompare_csync(rdata1, rdata2); break; \
 	case 63: result = casecompare_zonemd(rdata1, rdata2); break; \
 	case 99: result = casecompare_spf(rdata1, rdata2); break; \
-	case 103: result = casecompare_unspec(rdata1, rdata2); break; \
 	case 104: result = casecompare_nid(rdata1, rdata2); break; \
 	case 105: result = casecompare_l32(rdata1, rdata2); break; \
 	case 106: result = casecompare_l64(rdata1, rdata2); break; \
@@ -1113,7 +1106,6 @@
 	case 62: result = fromstruct_csync(rdclass, type, source, target); break; \
 	case 63: result = fromstruct_zonemd(rdclass, type, source, target); break; \
 	case 99: result = fromstruct_spf(rdclass, type, source, target); break; \
-	case 103: result = fromstruct_unspec(rdclass, type, source, target); break; \
 	case 104: result = fromstruct_nid(rdclass, type, source, target); break; \
 	case 105: result = fromstruct_l32(rdclass, type, source, target); break; \
 	case 106: result = fromstruct_l64(rdclass, type, source, target); break; \
@@ -1260,7 +1252,6 @@
 	case 62: result = tostruct_csync(rdata, target, mctx); break; \
 	case 63: result = tostruct_zonemd(rdata, target, mctx); break; \
 	case 99: result = tostruct_spf(rdata, target, mctx); break; \
-	case 103: result = tostruct_unspec(rdata, target, mctx); break; \
 	case 104: result = tostruct_nid(rdata, target, mctx); break; \
 	case 105: result = tostruct_l32(rdata, target, mctx); break; \
 	case 106: result = tostruct_l64(rdata, target, mctx); break; \
@@ -1407,7 +1398,6 @@
 	case 62: freestruct_csync(source); break; \
 	case 63: freestruct_zonemd(source); break; \
 	case 99: freestruct_spf(source); break; \
-	case 103: freestruct_unspec(source); break; \
 	case 104: freestruct_nid(source); break; \
 	case 105: freestruct_l32(source); break; \
 	case 106: freestruct_l64(source); break; \
@@ -1554,7 +1544,6 @@
 	case 62: result = additionaldata_csync(rdata, add, arg); break; \
 	case 63: result = additionaldata_zonemd(rdata, add, arg); break; \
 	case 99: result = additionaldata_spf(rdata, add, arg); break; \
-	case 103: result = additionaldata_unspec(rdata, add, arg); break; \
 	case 104: result = additionaldata_nid(rdata, add, arg); break; \
 	case 105: result = additionaldata_l32(rdata, add, arg); break; \
 	case 106: result = additionaldata_l64(rdata, add, arg); break; \
@@ -1701,7 +1690,6 @@
 	case 62: result = digest_csync(rdata, digest, arg); break; \
 	case 63: result = digest_zonemd(rdata, digest, arg); break; \
 	case 99: result = digest_spf(rdata, digest, arg); break; \
-	case 103: result = digest_unspec(rdata, digest, arg); break; \
 	case 104: result = digest_nid(rdata, digest, arg); break; \
 	case 105: result = digest_l32(rdata, digest, arg); break; \
 	case 106: result = digest_l64(rdata, digest, arg); break; \
@@ -1848,7 +1836,6 @@
 	case 62: result = checkowner_csync(name, rdclass, type, wildcard); break; \
 	case 63: result = checkowner_zonemd(name, rdclass, type, wildcard); break; \
 	case 99: result = checkowner_spf(name, rdclass, type, wildcard); break; \
-	case 103: result = checkowner_unspec(name, rdclass, type, wildcard); break; \
 	case 104: result = checkowner_nid(name, rdclass, type, wildcard); break; \
 	case 105: result = checkowner_l32(name, rdclass, type, wildcard); break; \
 	case 106: result = checkowner_l64(name, rdclass, type, wildcard); break; \
@@ -1995,7 +1982,6 @@
 	case 62: result = checknames_csync(rdata, owner, bad); break; \
 	case 63: result = checknames_zonemd(rdata, owner, bad); break; \
 	case 99: result = checknames_spf(rdata, owner, bad); break; \
-	case 103: result = checknames_unspec(rdata, owner, bad); break; \
 	case 104: result = checknames_nid(rdata, owner, bad); break; \
 	case 105: result = checknames_l32(rdata, owner, bad); break; \
 	case 106: result = checknames_l64(rdata, owner, bad); break; \
@@ -2332,7 +2318,7 @@
 	case 100: return (0); \
 	case 101: return (0); \
 	case 102: return (0); \
-	case 103: return (RRTYPE_UNSPEC_ATTRIBUTES); \
+	case 103: return (0); \
 	case 104: return (RRTYPE_NID_ATTRIBUTES); \
 	case 105: return (RRTYPE_L32_ATTRIBUTES); \
 	case 106: return (RRTYPE_L64_ATTRIBUTES); \

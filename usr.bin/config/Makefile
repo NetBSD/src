@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.16.1 2020/04/08 14:09:15 martin Exp $
+#	$NetBSD: Makefile,v 1.10.16.2 2020/04/13 08:05:41 martin Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
 
 .include <bsd.own.mk>
@@ -22,6 +22,8 @@ COPTS.scan.c+=		${GCC_NO_STRINGOP_TRUNCATION}
 .ifndef HOSTPROG
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+COPTS.mkheaders.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.sem.c+=		${GCC_NO_FORMAT_TRUNCATION}
 .endif
 
 CWARNFLAGS+=-Wno-format-y2k

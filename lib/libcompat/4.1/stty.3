@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)stty.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: stty.3,v 1.9 2003/08/07 16:44:15 agc Exp $
+.\"	$NetBSD: stty.3,v 1.9.96.1 2020/04/13 08:03:11 martin Exp $
 .\"
-.Dd June 4, 1993
+.Dd September 2, 2019
 .Dt STTY 3
 .Os
 .Sh NAME
@@ -90,4 +90,8 @@ The
 and
 .Fn gtty
 functions appeared in
+.At v1 .
+Obsoleted by
+.Xr ioctl 2 ,
+these functions were moved to libcompat in
 .Bx 4.2 .

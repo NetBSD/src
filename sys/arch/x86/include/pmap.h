@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.80.2.2 2020/04/08 14:07:58 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.80.2.3 2020/04/13 08:04:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -173,8 +173,9 @@ struct bootspace {
 #define SLAREA_DMAP	4
 #define SLAREA_HYPV	5
 #define SLAREA_ASAN	6
-#define SLAREA_KERN	7
-#define SLSPACE_NAREAS	8
+#define SLAREA_MSAN	7
+#define SLAREA_KERN	8
+#define SLSPACE_NAREAS	9
 
 struct slotspace {
 	struct {
@@ -192,6 +193,7 @@ extern struct slotspace slotspace;
 
 struct pcpu_entry {
 	uint8_t gdt[MAXGDTSIZ];
+	uint8_t ldt[MAXGDTSIZ];
 	uint8_t tss[PAGE_SIZE];
 	uint8_t ist0[PAGE_SIZE];
 	uint8_t ist1[PAGE_SIZE];
@@ -322,8 +324,8 @@ struct pmap {
  */
 extern u_long PDPpaddr;
 
-extern pd_entry_t pmap_pg_g;			/* do we support PG_G? */
-extern pd_entry_t pmap_pg_nx;			/* do we support PG_NX? */
+extern pd_entry_t pmap_pg_g;			/* do we support PTE_G? */
+extern pd_entry_t pmap_pg_nx;			/* do we support PTE_NX? */
 extern int pmap_largepages;
 extern long nkptp[PTP_LEVELS];
 
@@ -334,11 +336,11 @@ extern long nkptp[PTP_LEVELS];
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-#define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PP_ATTRS_M)
-#define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PP_ATTRS_U)
+#define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PP_ATTRS_D)
+#define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PP_ATTRS_A)
 #define pmap_copy(DP,SP,D,L,S)		__USE(L)
-#define pmap_is_modified(pg)		pmap_test_attrs(pg, PP_ATTRS_M)
-#define pmap_is_referenced(pg)		pmap_test_attrs(pg, PP_ATTRS_U)
+#define pmap_is_modified(pg)		pmap_test_attrs(pg, PP_ATTRS_D)
+#define pmap_is_referenced(pg)		pmap_test_attrs(pg, PP_ATTRS_A)
 #define pmap_move(DP,SP,D,L,S)
 #define pmap_phys_address(ppn)		(x86_ptob(ppn) & ~X86_MMAP_FLAG_MASK)
 #define pmap_mmap_flags(ppn)		x86_mmap_flags(ppn)
@@ -530,7 +532,7 @@ kvtopte(vaddr_t va)
 	KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 
 	pde = L2_BASE + pl2_i(va);
-	if (*pde & PG_PS)
+	if (*pde & PTE_PS)
 		return ((pt_entry_t *)pde);
 
 	return (PTE_BASE + pl1_i(va));
@@ -564,7 +566,7 @@ xpmap_ptetomach(pt_entry_t *pte)
 	va = ((va & XPTE_MASK) >> XPTE_SHIFT) | (vaddr_t) PTE_BASE;
 	up_pte = (pt_entry_t *) va;
 
-	return (paddr_t) (((*up_pte) & PG_FRAME) + (((vaddr_t) pte) & (~PG_FRAME & ~VA_SIGN_MASK)));
+	return (paddr_t) (((*up_pte) & PTE_FRAME) + (((vaddr_t) pte) & (~PTE_FRAME & ~VA_SIGN_MASK)));
 }
 
 /* Xen helpers to change bits of a pte */

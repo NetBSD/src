@@ -1,4 +1,4 @@
-/* $NetBSD: g_Qfmt.c,v 1.4 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: g_Qfmt.c,v 1.4.44.1 2020/04/13 08:03:09 martin Exp $ */
 
 /****************************************************************
 
@@ -58,7 +58,7 @@ g_Qfmt(buf, V, ndig, bufsize) char *buf; char *V; int ndig; size_t bufsize;
 g_Qfmt(char *buf, void *V, int ndig, size_t bufsize)
 #endif
 {
-	static FPI fpi0 = { 113, 1-16383-113+1, 32766 - 16383 - 113 + 1, 1, 0 };
+	static CONST FPI fpi0 = { 113, 1-16383-113+1, 32766 - 16383 - 113 + 1, 1, 0 };
 	char *b, *s, *se;
 	ULong bits[4], *L, sign;
 	int decpt, ex, i, mode;

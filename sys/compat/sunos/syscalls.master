@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.80.4.1 2019/06/10 22:07:02 christos Exp $
+	$NetBSD: syscalls.master,v 1.80.4.2 2020/04/13 08:04:16 martin Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -178,7 +178,7 @@
 103	UNIMPL		old socketaddr
 104	NOARGS		{ int|sys||bind(int s, void *name, int namelen); }
 105	STD		{ int|sunos_sys||setsockopt(int s, int level, int name, \
-			    void *val, int valsize); }
+			    void *val, u_int valsize); }
 106	NOARGS		{ int|sys||listen(int s, int backlog); }
 107	UNIMPL		vtimes
 108	STD		{ int|sunos_sys||sigvec(int signum, struct sigvec *nsv, \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2015/11/06 19:34:13 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.23.16.1 2020/04/13 08:03:10 martin Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/rpc
@@ -167,3 +167,13 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		xdr.3 xdr_vector.3 \
 		xdr.3 xdr_void.3 \
 		xdr.3 xdr_wrapstring.3
+
+COPTS.clnt_bcast.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.clnt_generic.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.clnt_vc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_clnt.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.xdr_sizeof.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.svc_simple.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.pmap_getmaps.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpc_generic.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.getrpcent.c+=	${GCC_NO_STRINGOP_TRUNCATION}

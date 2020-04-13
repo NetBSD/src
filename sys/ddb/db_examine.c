@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.36.18.1 2019/06/10 22:07:04 christos Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.36.18.2 2020/04/13 08:04:17 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.36.18.1 2019/06/10 22:07:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.36.18.2 2020/04/13 08:04:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static void
 db_examine(db_addr_t addr, char *fmt, int count)
 {
 	int		i, c;
-	db_expr_t	value;
+	quad_t		value;
 	int		size;
 	int		width;
 	int		bytes;
@@ -101,13 +101,10 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				size = 4;
 				width = 12;
 				break;
-			case 'q':
-				if (sizeof(db_expr_t) != sizeof(uint64_t)) {
-					size = -1;
-					db_error("q not supported\n");
-					/*NOTREACHED*/
-				}
-				/* FALLTHROUGH */
+			case 'q':	/* quad-word */
+				size = 8;
+				width = 24;
+				break;
 			case 'L':	/* implementation maximum */
 				size = sizeof value;
 				width = 12 * (sizeof value / 4);
@@ -115,21 +112,29 @@ db_examine(db_addr_t addr, char *fmt, int count)
 			case 'a':	/* address */
 				db_printf("= 0x%lx\n", (long)addr);
 				break;
+			case 'p':
+				size = sizeof(void *);
+				value = db_get_value(addr, size, false);
+				addr += size;
+				db_printf("= 0x%lx ", (long)value);
+				db_printsym((db_addr_t)value, DB_STGY_ANY, db_printf);
+				db_printf("\n");
+				break;
 			case 'r':	/* signed, current radix */
-				value = db_get_value(addr, size, true);
+				value = db_get_qvalue(addr, size, true);
 				addr += size;
 				db_format_radix(tbuf, 24, value, false);
 				db_printf("%-*s", width, tbuf);
 				break;
 			case 'x':	/* unsigned hex */
-				value = db_get_value(addr, size, false);
+				value = db_get_qvalue(addr, size, false);
 				addr += size;
-				db_printf("%-*" DDB_EXPR_FMT "x", width, value);
+				db_printf("%-*" PRIx64, width, value);
 				break;
 			case 'm':	/* hex dump */
 				/*
 				 * Print off in chunks of size. Try to print 16
-				 * bytes at a time into 4 columns. This
+				 * bytes at a time into 16/size columns. This
 				 * loops modify's count extra times in order
 				 * to get the nicely formatted lines.
 				 */
@@ -138,13 +143,19 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				do {
 					for (i = 0; i < size; i++) {
 						value =
- 						    db_get_value(addr+bytes, 1,
-							false);
+#if BYTE_ORDER == LITTLE_ENDIAN
+						    db_get_value(addr +
+						    (bytes & ~(size - 1)) +
+						    size - i - 1, 1, false);
+#else
+						    db_get_value(addr + bytes,
+						    1, false);
+#endif
 						db_printf(
-						    "%02" DDB_EXPR_FMT "x",
+						    "%02" PRIx64,
 						    value);
 						bytes++;
-						if (!(bytes % 4))
+						if (!(bytes % size))
 							db_printf(" ");
 					}
 				} while ((bytes != 16) && count--);
@@ -163,25 +174,25 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				db_printf("\n");
 				break;
 			case 'z':	/* signed hex */
-				value = db_get_value(addr, size, true);
+				value = db_get_qvalue(addr, size, true);
 				addr += size;
 				db_format_hex(tbuf, 24, value, false);
 				db_printf("%-*s", width, tbuf);
 				break;
 			case 'd':	/* signed decimal */
-				value = db_get_value(addr, size, true);
+				value = db_get_qvalue(addr, size, true);
 				addr += size;
-				db_printf("%-*" DDB_EXPR_FMT "d", width, value);
+				db_printf("%-*" PRId64, width, value);
 				break;
 			case 'u':	/* unsigned decimal */
-				value = db_get_value(addr, size, false);
+				value = db_get_qvalue(addr, size, false);
 				addr += size;
-				db_printf("%-*" DDB_EXPR_FMT "u", width, value);
+				db_printf("%-*" PRIu64, width, value);
 				break;
 			case 'o':	/* unsigned octal */
-				value = db_get_value(addr, size, false);
+				value = db_get_qvalue(addr, size, false);
 				addr += size;
-				db_printf("%-*" DDB_EXPR_FMT "o", width, value);
+				db_printf("%-*" PRIo64, width, value);
 				break;
 			case 'c':	/* character */
 				value = db_get_value(addr, 1, false);

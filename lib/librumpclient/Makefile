@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2017/05/11 04:33:14 sevan Exp $
+#	$NetBSD: Makefile,v 1.14.10.1 2020/04/13 08:03:16 martin Exp $
 #
 
 .PATH:	${.CURDIR}/../../sys/rump/librump/rumpkern
@@ -32,5 +32,7 @@ COPTS.rump_syscalls.c+= -fno-strict-aliasing
 	@rm -f srcsys
 	@ln -s ${NETBSDSRCDIR}/sys/sys srcsys
 .endif
+
+COPTS.rumpclient.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat_hostops.c,v 1.1 2010/12/13 21:15:30 pooka Exp $	*/
+/*	$NetBSD: netstat_hostops.c,v 1.1.46.1 2020/04/13 08:05:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,16 +26,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: netstat_hostops.c,v 1.1 2010/12/13 21:15:30 pooka Exp $");
-#endif /* !lint */
-
-#include <sys/types.h>
-#include <sys/sysctl.h>
-
-#include "prog_ops.h"
-
-const struct prog_ops prog_ops = {
-	.op_sysctl = sysctl,
-};
+#include "route_hostops.c"

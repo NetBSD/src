@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1.4.1 2019/06/10 22:05:43 christos Exp $	*/
+/*	$NetBSD: machdep.h,v 1.1.4.2 2020/04/13 08:03:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -66,9 +66,11 @@ extern void (*cpu_powerdown_address)(void);
 
 extern char *booted_kernel;
 
-#ifdef MULTIPROCESSOR
-extern u_int arm_cpu_max;
-#endif
+/*
+ * note that we use void * as all the platforms have different ideas on what
+ * the structure is
+ */
+vaddr_t initarm(void *);
 
 vaddr_t initarm_common(vaddr_t, vsize_t, const struct boot_physmem *, size_t);
 void cpu_kernel_vm_init(paddr_t, psize_t);
@@ -76,6 +78,9 @@ void uartputc(int);
 
 void parse_mi_bootargs(char *);
 void dumpsys(void);
+
+void cpu_startup_hook(void);
+void cpu_startup_default(void);
 
 struct trapframe;
 

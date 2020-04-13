@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.5.22.1 2019/06/10 22:06:53 christos Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.5.22.2 2020/04/13 08:04:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -52,6 +52,8 @@ static enum {
 	CPU_RNG_RDSEED,
 	CPU_RNG_VIA
 } cpu_rng_mode __read_mostly = CPU_RNG_NONE;
+
+static bool has_rdrand;
 
 bool
 cpu_rng_init(void)
@@ -131,7 +133,10 @@ cpu_rng_rdseed(cpu_rng_t *out)
 	 * to be seeded even in this case.
 	 */
 exhausted:
-	return cpu_rng_rdrand(out);
+	if (has_rdrand)
+		return cpu_rng_rdrand(out);
+	else
+		return 0;
 }
 
 static size_t
@@ -213,7 +218,7 @@ cpu_earlyrng(void *out, size_t sz)
 	int i;
 
 	bool has_rdseed = (cpu_feature[5] & CPUID_SEF_RDSEED) != 0;
-	bool has_rdrand = (cpu_feature[1] & CPUID2_RDRAND) != 0;
+	has_rdrand = (cpu_feature[1] & CPUID2_RDRAND) != 0;
 
 	KASSERT(sz + sizeof(uint64_t) <= SHA512_DIGEST_LENGTH);
 

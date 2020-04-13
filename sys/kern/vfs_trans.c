@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.48.6.1 2019/06/10 22:09:04 christos Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.48.6.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.48.6.1 2019/06/10 22:09:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.48.6.2 2020/04/13 08:05:04 martin Exp $");
 
 /*
  * File system transaction operations.
@@ -55,8 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.48.6.1 2019/06/10 22:09:04 christos 
 
 enum fstrans_lock_type {
 	FSTRANS_LAZY,			/* Granted while not suspended */
-	FSTRANS_SHARED,			/* Granted while not suspending */
-	FSTRANS_EXCL			/* Internal: exclusive lock */
+	FSTRANS_SHARED			/* Granted while not suspending */
 };
 
 struct fscow_handler {
@@ -83,6 +82,7 @@ struct fstrans_mount_info {
 	bool fmi_cow_change;
 	LIST_HEAD(, fscow_handler) fmi_cow_handler;
 	struct mount *fmi_mount;
+	struct lwp *fmi_owner;
 };
 
 static kmutex_t vfs_suspend_lock;	/* Serialize suspensions. */
@@ -101,7 +101,8 @@ static inline struct fstrans_lwp_info *
     fstrans_get_lwp_info(struct mount *, bool);
 static struct fstrans_lwp_info *fstrans_alloc_lwp_info(struct mount *);
 static inline int _fstrans_start(struct mount *, enum fstrans_lock_type, int);
-static bool grant_lock(const enum fstrans_state, const enum fstrans_lock_type);
+static bool grant_lock(const struct fstrans_mount_info *,
+    const enum fstrans_lock_type);
 static bool state_change_done(const struct fstrans_mount_info *);
 static bool cow_state_change_done(const struct fstrans_mount_info *);
 static void cow_change_enter(struct fstrans_mount_info *);
@@ -233,6 +234,7 @@ fstrans_mount_dtor(struct fstrans_mount_info *fmi)
 
 	KASSERT(fmi->fmi_state == FSTRANS_NORMAL);
 	KASSERT(LIST_FIRST(&fmi->fmi_cow_handler) == NULL);
+	KASSERT(fmi->fmi_owner == NULL);
 
 	KASSERT(fstrans_gone_count > 0);
 	fstrans_gone_count -= 1;
@@ -258,6 +260,7 @@ fstrans_mount(struct mount *mp)
 	LIST_INIT(&newfmi->fmi_cow_handler);
 	newfmi->fmi_cow_change = false;
 	newfmi->fmi_mount = mp;
+	newfmi->fmi_owner = NULL;
 
 	mutex_enter(&fstrans_mount_lock);
 	mp->mnt_transinfo = newfmi;
@@ -433,14 +436,15 @@ fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
  * Check if this lock type is granted at this state.
  */
 static bool
-grant_lock(const enum fstrans_state state, const enum fstrans_lock_type type)
+grant_lock(const struct fstrans_mount_info *fmi,
+    const enum fstrans_lock_type type)
 {
 
-	if (__predict_true(state == FSTRANS_NORMAL))
+	if (__predict_true(fmi->fmi_state == FSTRANS_NORMAL))
 		return true;
-	if (type == FSTRANS_EXCL)
+	if (fmi->fmi_owner == curlwp)
 		return true;
-	if  (state == FSTRANS_SUSPENDING && type == FSTRANS_LAZY)
+	if  (fmi->fmi_state == FSTRANS_SUSPENDING && type == FSTRANS_LAZY)
 		return true;
 
 	return false;
@@ -468,14 +472,13 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	fmi = fli->fli_mountinfo;
 
 	if (fli->fli_trans_cnt > 0) {
-		KASSERT(lock_type != FSTRANS_EXCL);
 		fli->fli_trans_cnt += 1;
 
 		return 0;
 	}
 
 	s = pserialize_read_enter();
-	if (__predict_true(grant_lock(fmi->fmi_state, lock_type))) {
+	if (__predict_true(grant_lock(fmi, lock_type))) {
 		fli->fli_trans_cnt = 1;
 		fli->fli_lock_type = lock_type;
 		pserialize_read_exit(s);
@@ -488,7 +491,7 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 		return EBUSY;
 
 	mutex_enter(&fstrans_lock);
-	while (! grant_lock(fmi->fmi_state, lock_type))
+	while (! grant_lock(fmi, lock_type))
 		cv_wait(&fstrans_state_cv, &fstrans_lock);
 	fli->fli_trans_cnt = 1;
 	fli->fli_lock_type = lock_type;
@@ -572,15 +575,14 @@ int
 fstrans_is_owner(struct mount *mp)
 {
 	struct fstrans_lwp_info *fli;
+	struct fstrans_mount_info *fmi;
 
 	KASSERT(mp != dead_rootmount);
 
 	fli = fstrans_get_lwp_info(mp, true);
+	fmi = fli->fli_mountinfo;
 
-	if (fli->fli_trans_cnt == 0)
-		return 0;
-
-	return (fli->fli_lock_type == FSTRANS_EXCL);
+	return (fmi->fmi_owner == curlwp);
 }
 
 /*
@@ -598,7 +600,9 @@ state_change_done(const struct fstrans_mount_info *fmi)
 			continue;
 		if (fli->fli_trans_cnt == 0)
 			continue;
-		if (grant_lock(fmi->fmi_state, fli->fli_lock_type))
+		if (fli->fli_self == curlwp)
+			continue;
+		if (grant_lock(fmi, fli->fli_lock_type))
 			continue;
 
 		return false;
@@ -642,15 +646,18 @@ fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 			break;
 		}
 	}
+	if (old_state != new_state) {
+		if (old_state == FSTRANS_NORMAL) {
+			KASSERT(fmi->fmi_owner == NULL);
+			fmi->fmi_owner = curlwp;
+		}
+		if (new_state == FSTRANS_NORMAL) {
+			KASSERT(fmi->fmi_owner == curlwp);
+			fmi->fmi_owner = NULL;
+		}
+	}
 	cv_broadcast(&fstrans_state_cv);
 	mutex_exit(&fstrans_lock);
-
-	if (old_state != new_state) {
-		if (old_state == FSTRANS_NORMAL)
-			_fstrans_start(mp, FSTRANS_EXCL, 1);
-		if (new_state == FSTRANS_NORMAL)
-			fstrans_done(mp);
-	}
 
 	return error;
 }
@@ -976,9 +983,6 @@ fstrans_print_lwp(struct proc *p, struct lwp *l, int verbose)
 			case FSTRANS_SHARED:
 				printf(" shared");
 				break;
-			case FSTRANS_EXCL:
-				printf(" excl");
-				break;
 			default:
 				printf(" %#x", fli->fli_lock_type);
 				break;
@@ -1004,6 +1008,7 @@ fstrans_print_mount(struct mount *mp, int verbose)
 		printf("(null)\n");
 		return;
 	}
+	printf("owner %p ", fmi->fmi_owner);
 	switch (fmi->fmi_state) {
 	case FSTRANS_NORMAL:
 		printf("state normal\n");

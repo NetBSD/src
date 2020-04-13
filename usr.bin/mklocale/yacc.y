@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.33 2016/09/03 05:56:59 dholland Exp $	*/
+/*	$NetBSD: yacc.y,v 1.33.14.1 2020/04/13 08:05:44 martin Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.33 2016/09/03 05:56:59 dholland Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.33.14.1 2020/04/13 08:05:44 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ table	:	entry
 	;
 
 entry	:	ENCODING STRING
-		{ strncpy(new_locale.frl_encoding, $2, sizeof(new_locale.frl_encoding)); }
+		{ strlcpy(new_locale.frl_encoding, $2, sizeof(new_locale.frl_encoding)); }
 	|	VARIABLE
 		{ rl_variable_len = strlen($1) + 1;
 		  rl_variable = strdup($1);

@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.91.2.1 2019/06/10 22:10:13 christos Exp $
+#	$NetBSD: configure.ac,v 1.91.2.2 2020/04/13 08:05:34 martin Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -79,12 +79,21 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/param.h \
 # Find headers that may not be available.
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h stdio_ext.h \
-	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h rpc/types.h)
+	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h sys/uio.h)
 AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
 	sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h \
 	libgen.h stdint.h util.h resolv.h arpa/nameser.h,,
 	[test -f include/$ac_header || touch include/$ac_header])
-AC_CHECK_HEADERS(rpc/types.h netconfig.h,,
+AC_CHECK_HEADERS(rpc/types.h,,
+	[echo '#include "nbtool_config.h"' >include/$ac_header.new
+	echo '#include "'$srcdir/../../common/include/$ac_header'"' \
+		>>include/$ac_header.new
+	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
+		rm -f include/$ac_header.new
+	else
+		mv -f include/$ac_header.new include/$ac_header
+	fi])
+AC_CHECK_HEADERS(netconfig.h,,
 	[echo '#include "nbtool_config.h"' >include/$ac_header.new
 	echo '#include "'$srcdir/../../include/$ac_header'"' \
 		>>include/$ac_header.new
@@ -97,6 +106,7 @@ AC_CHECK_HEADERS(rpc/types.h netconfig.h,,
 # Typedefs.
 AC_TYPE_SIZE_T
 AC_CHECK_TYPES([id_t, long long, u_long, u_char, u_short, u_int, u_quad_t])
+AC_CHECK_TYPES([uchar_t, ushort_t, uint_t, ulong_t])
 AC_CHECK_TYPE(socklen_t, [AC_DEFINE([HAVE_SOCKLEN_T], 1,
 			  [Define if you have the socklen_t type.])],,
 [#include <sys/types.h>
@@ -104,6 +114,24 @@ AC_CHECK_TYPE(socklen_t, [AC_DEFINE([HAVE_SOCKLEN_T], 1,
 #include <rpc/types.h>
 #endif
 #include <sys/socket.h>])
+
+AC_MSG_CHECKING([for enum uio_rw])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif]],
+[[enum uio_rw rw;]])],[AC_DEFINE([HAVE_ENUM_UIO_RW], 1,
+			    [Define if you have the enum uio_rw type.])],)
+
+AC_MSG_CHECKING([for enum uio_seg])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <sys/types.h>
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif]],
+[[enum uio_seg seg;]])],[AC_DEFINE([HAVE_ENUM_UIO_SEG], 1,
+			    [Define if you have the enum uio_seg type.])],)
 
 dnl XXX - This is UGLY.  Need a better way to homogenize the bitsized types,
 dnl including use of compiler primitive types via AC_CHECK_SIZEOF.

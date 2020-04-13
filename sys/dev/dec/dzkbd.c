@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.27 2015/01/02 21:32:26 jklos Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.27.18.1 2020/04/13 08:04:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.27 2015/01/02 21:32:26 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.27.18.1 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ dzkbd_attach(device_t parent, device_t self, void *aux)
 		dzi = &dzkbd_console_internal;
 	} else {
 		dzi = malloc(sizeof(struct dzkbd_internal),
-				       M_DEVBUF, M_NOWAIT);
+				       M_DEVBUF, M_WAITOK);
 		dzi->dzi_ks.attmt.sendchar = dzkbd_sendchar;
 		dzi->dzi_ks.attmt.cookie = ls;
 	}
@@ -305,4 +305,3 @@ dzkbd_input(void *v, int data)
 
 	return(1);
 }
-

@@ -1,6 +1,6 @@
 // std::ctype implementation details, DragonFly version -*- C++ -*-
 
-// Copyright (C) 2014-2017 Free Software Foundation, Inc.
+// Copyright (C) 2014-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -32,6 +32,8 @@
 #include <locale>
 #include <cstring>
 #include <cstdio>
+
+#include "xlocale_port.h"
 
 #ifndef _ISbit
 #define _ISbit(bit) ((bit) < 8 ? ((1 << (bit)) << 8) : ((1 << (bit)) >> 8))
@@ -96,9 +98,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       case graph:
 	__ret = wctype_l("graph", (locale_t)_M_c_locale_ctype);
 	break;
+#ifndef __NetBSD__
       case blank:
 	__ret = wctype_l("blank", (locale_t)_M_c_locale_ctype);
 	break;
+#endif
       default:
 	__ret = __wmask_type();
       }
@@ -135,6 +139,60 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     return __hi;
   }
 
+  bool
+  ctype<wchar_t>::
+  do_is(mask __m, char_type __c) const
+  {
+    bool __ret = false;
+    // Generically, 15 (instead of 11) since we don't know the numerical
+    // encoding of the various categories in /usr/include/ctype.h.
+    const size_t __bitmasksize = 15;
+    for (size_t __bitcur = 0; __bitcur <= __bitmasksize; ++__bitcur)
+      if (__m & _M_bit[__bitcur]
+	  && iswctype(__c, _M_wmask[__bitcur]))
+	{
+	  __ret = true;
+	  break;
+	}
+    return __ret;
+  }
+
+  const wchar_t*
+  ctype<wchar_t>::
+  do_is(const wchar_t* __lo, const wchar_t* __hi, mask* __vec) const
+  {
+    for (;__lo < __hi; ++__vec, ++__lo)
+      {
+	// Generically, 15 (instead of 11) since we don't know the numerical
+	// encoding of the various categories in /usr/include/ctype.h.
+	const size_t __bitmasksize = 15;
+	mask __m = 0;
+	for (size_t __bitcur = 0; __bitcur <= __bitmasksize; ++__bitcur)
+	  if (iswctype(*__lo, _M_wmask[__bitcur]))
+	    __m |= _M_bit[__bitcur];
+	*__vec = __m;
+      }
+    return __hi;
+  }
+
+  const wchar_t*
+  ctype<wchar_t>::
+  do_scan_is(mask __m, const wchar_t* __lo, const wchar_t* __hi) const
+  {
+    while (__lo < __hi && !this->do_is(__m, *__lo))
+      ++__lo;
+    return __lo;
+  }
+
+  const wchar_t*
+  ctype<wchar_t>::
+  do_scan_not(mask __m, const char_type* __lo, const char_type* __hi) const
+  {
+    while (__lo < __hi && this->do_is(__m, *__lo) != 0)
+      ++__lo;
+    return __lo;
+  }
+
   wchar_t
   ctype<wchar_t>::
   do_widen(char __c) const
@@ -159,9 +217,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   {
     if (__wc >= 0 && __wc < 128 && _M_narrow_ok)
       return _M_narrow[__wc];
-    __c_locale __old = (__c_locale)uselocale((locale_t)_M_c_locale_ctype);
-    const int __c = wctob(__wc);
-    uselocale((locale_t)__old);
+    const int __c = wctob_l(__wc, (locale_t)_M_c_locale_ctype);
     return (__c == EOF ? __dfault : static_cast<char>(__c));
   }
 
@@ -170,7 +226,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   do_narrow(const wchar_t* __lo, const wchar_t* __hi, char __dfault,
 	    char* __dest) const
   {
-    __c_locale __old = (__c_locale)uselocale((locale_t)_M_c_locale_ctype);
     if (_M_narrow_ok)
       while (__lo < __hi)
 	{
@@ -178,7 +233,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    *__dest = _M_narrow[*__lo];
 	  else
 	    {
-	      const int __c = wctob(*__lo);
+	      const int __c = wctob_l(*__lo, (locale_t)_M_c_locale_ctype);
 	      *__dest = (__c == EOF ? __dfault : static_cast<char>(__c));
 	    }
 	  ++__lo;
@@ -187,23 +242,21 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     else
       while (__lo < __hi)
 	{
-	  const int __c = wctob(*__lo);
+	  const int __c = wctob_l(*__lo, (locale_t)_M_c_locale_ctype);
 	  *__dest = (__c == EOF ? __dfault : static_cast<char>(__c));
 	  ++__lo;
 	  ++__dest;
 	}
-    uselocale((locale_t)__old);
     return __hi;
   }
 
   void
   ctype<wchar_t>::_M_initialize_ctype() throw()
   {
-    __c_locale __old = (__c_locale)uselocale((locale_t)_M_c_locale_ctype);
     wint_t __i;
     for (__i = 0; __i < 128; ++__i)
       {
-	const int __c = wctob(__i);
+	const int __c = wctob_l(__i, (locale_t)_M_c_locale_ctype);
 	if (__c == EOF)
 	  break;
 	else
@@ -222,7 +275,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	_M_bit[__k] = static_cast<mask>(_ISbit(__k));
 	_M_wmask[__k] = _M_convert_to_wmask(_M_bit[__k]);
       }
-    uselocale((locale_t)__old);
   }
 #endif //  _GLIBCXX_USE_WCHAR_T
 

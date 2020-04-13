@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ievar.h,v 1.15 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.15.84.1 2020/04/13 08:04:08 martin Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -80,7 +80,7 @@ struct ie_softc {
 	enum ie_hardware hard_type;	/* card type */
 
 	int     want_mcsetup;	/* flag for multicast setup */
-	int     promisc;	/* are we in promisc mode? */
+	u_short     promisc;	/* are we in promisc mode? */
 
 	int ntxbuf;       /* number of tx frames/buffers */
 	int nframes;      /* number of recv frames in use */

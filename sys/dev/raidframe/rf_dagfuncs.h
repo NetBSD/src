@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.h,v 1.10 2006/01/09 01:33:27 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.h,v 1.10.162.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,24 +36,24 @@
 #define _RF__RF_DAGFUNCS_H_
 
 int     rf_ConfigureDAGFuncs(RF_ShutdownList_t ** listp);
-int     rf_TerminateFunc(RF_DagNode_t * node);
-int     rf_TerminateUndoFunc(RF_DagNode_t * node);
-int     rf_DiskReadMirrorIdleFunc(RF_DagNode_t * node);
-int     rf_DiskReadMirrorPartitionFunc(RF_DagNode_t * node);
-int     rf_DiskReadMirrorUndoFunc(RF_DagNode_t * node);
-int     rf_ParityLogUpdateFunc(RF_DagNode_t * node);
-int     rf_ParityLogOverwriteFunc(RF_DagNode_t * node);
-int     rf_ParityLogUpdateUndoFunc(RF_DagNode_t * node);
-int     rf_ParityLogOverwriteUndoFunc(RF_DagNode_t * node);
-int     rf_NullNodeFunc(RF_DagNode_t * node);
-int     rf_NullNodeUndoFunc(RF_DagNode_t * node);
-int     rf_DiskReadFuncForThreads(RF_DagNode_t * node);
-int     rf_DiskWriteFuncForThreads(RF_DagNode_t * node);
-int     rf_DiskUndoFunc(RF_DagNode_t * node);
-int     rf_GenericWakeupFunc(RF_DagNode_t * node, int status);
-int     rf_RegularXorFunc(RF_DagNode_t * node);
-int     rf_SimpleXorFunc(RF_DagNode_t * node);
-int     rf_RecoveryXorFunc(RF_DagNode_t * node);
+void    rf_TerminateFunc(RF_DagNode_t * node);
+void    rf_TerminateUndoFunc(RF_DagNode_t * node);
+void    rf_DiskReadMirrorIdleFunc(RF_DagNode_t * node);
+void    rf_DiskReadMirrorPartitionFunc(RF_DagNode_t * node);
+void    rf_DiskReadMirrorUndoFunc(RF_DagNode_t * node);
+void    rf_ParityLogUpdateFunc(RF_DagNode_t * node);
+void    rf_ParityLogOverwriteFunc(RF_DagNode_t * node);
+void    rf_ParityLogUpdateUndoFunc(RF_DagNode_t * node);
+void    rf_ParityLogOverwriteUndoFunc(RF_DagNode_t * node);
+void    rf_NullNodeFunc(RF_DagNode_t * node);
+void    rf_NullNodeUndoFunc(RF_DagNode_t * node);
+void    rf_DiskReadFuncForThreads(RF_DagNode_t * node);
+void    rf_DiskWriteFuncForThreads(RF_DagNode_t * node);
+void    rf_DiskUndoFunc(RF_DagNode_t * node);
+void    rf_GenericWakeupFunc(void *, int);
+void    rf_RegularXorFunc(RF_DagNode_t * node);
+void    rf_SimpleXorFunc(RF_DagNode_t * node);
+void    rf_RecoveryXorFunc(RF_DagNode_t * node);
 int
 rf_XorIntoBuffer(RF_Raid_t * raidPtr, RF_PhysDiskAddr_t * pda, char *srcbuf,
 		 char *targbuf);
@@ -68,13 +68,13 @@ rf_bxor3(unsigned char *dst, unsigned char *a, unsigned char *b,
     unsigned char *c, unsigned long len, void *bp);
 
 /* function ptrs defined in ConfigureDAGFuncs() */
-extern int (*rf_DiskReadFunc) (RF_DagNode_t *);
-extern int (*rf_DiskWriteFunc) (RF_DagNode_t *);
-extern int (*rf_DiskReadUndoFunc) (RF_DagNode_t *);
-extern int (*rf_DiskWriteUndoFunc) (RF_DagNode_t *);
-extern int (*rf_SimpleXorUndoFunc) (RF_DagNode_t *);
-extern int (*rf_RegularXorUndoFunc) (RF_DagNode_t *);
-extern int (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
+extern void (*rf_DiskReadFunc) (RF_DagNode_t *);
+extern void (*rf_DiskWriteFunc) (RF_DagNode_t *);
+extern void (*rf_DiskReadUndoFunc) (RF_DagNode_t *);
+extern void (*rf_DiskWriteUndoFunc) (RF_DagNode_t *);
+extern void (*rf_SimpleXorUndoFunc) (RF_DagNode_t *);
+extern void (*rf_RegularXorUndoFunc) (RF_DagNode_t *);
+extern void (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
 
 /* macros for manipulating the param[3] in a read or write node */
 #define RF_CREATE_PARAM3(pri, wru) (((RF_uint64)(((wru&0xFFFFFF)<<8)|((pri)&0xF)) ))

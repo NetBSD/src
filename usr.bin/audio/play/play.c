@@ -1,7 +1,7 @@
-/*	$NetBSD: play.c,v 1.55.16.1 2019/06/10 22:10:17 christos Exp $	*/
+/*	$NetBSD: play.c,v 1.55.16.2 2020/04/13 08:05:40 martin Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000, 2001, 2002, 2010 Matthew R. Green
+ * Copyright (c) 1999, 2000, 2001, 2002, 2010, 2015, 2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,9 +28,8 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.55.16.1 2019/06/10 22:10:17 christos Exp $");
+__RCSID("$NetBSD: play.c,v 1.55.16.2 2020/04/13 08:05:40 martin Exp $");
 #endif
-
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -51,10 +50,14 @@ __RCSID("$NetBSD: play.c,v 1.55.16.1 2019/06/10 22:10:17 christos Exp $");
 
 #include "libaudio.h"
 
+typedef size_t (*convert)(void *inbuf, void *outbuf, size_t len);
+
 static void usage(void) __dead;
 static void play(char *);
 static void play_fd(const char *, int);
-static ssize_t audioctl_write_fromhdr(void *, size_t, int, off_t *, const char *);
+static ssize_t audioctl_write_fromhdr(void *, size_t, int,
+				      off_t *, const char *,
+				      convert *);
 static void cleanup(int) __dead;
 
 static audio_info_t	info;
@@ -214,9 +217,90 @@ cleanup(int signo)
 	exit(exitstatus);
 }
 
+#ifndef __vax__
+static size_t
+float32_to_linear32(void *inbuf, void *outbuf, size_t len)
+{
+	uint8_t *inbuf8 = inbuf, *end = inbuf8 + len;
+	uint8_t *outbuf8 = outbuf;
+	float f;
+	int32_t i;
+
+	while (inbuf8 + sizeof f <= end) {
+		memcpy(&f, inbuf8, sizeof f);
+
+		/* saturate */
+		if (f < -1.0)
+			f = -1.0;
+		if (f > 1.0)
+			f = 1.0;
+
+		/* Convert -1.0 to +1.0 into a 32 bit signed value */
+		i = f * (float)INT32_MAX;
+
+		memcpy(outbuf8, &i, sizeof i);
+
+		inbuf8 += sizeof f;
+		outbuf8 += sizeof i;
+	}
+
+	return len;
+}
+
+static size_t
+float64_to_linear32(void *inbuf, void *outbuf, size_t len)
+{
+	uint8_t *inbuf8 = inbuf, *end = inbuf8 + len;
+	uint8_t *outbuf8 = outbuf;
+	double f;
+	int32_t i;
+
+	while (inbuf8 + sizeof f <= end) {
+		memcpy(&f, inbuf8, sizeof f);
+
+		/* saturate */
+		if (f < -1.0)
+			f = -1.0;
+		if (f > 1.0)
+			f = 1.0;
+
+		/* Convert -1.0 to +1.0 into a 32 bit signed value */
+		i = f * ((1u << 31) - 1);
+
+		memcpy(outbuf8, &i, sizeof i);
+
+		inbuf8 += sizeof f;
+		outbuf8 += sizeof i;
+	}
+
+	return len / 2;
+}
+#endif /* __vax__ */
+
+static size_t
+audio_write(int fd, void *buf, size_t len, convert conv)
+{
+	static void *convert_buffer;
+	static size_t convert_buffer_size;
+
+	if (conv == NULL)
+		return write(fd, buf, len);
+
+	if (convert_buffer == NULL || convert_buffer_size < len) {
+		free(convert_buffer);
+		convert_buffer = malloc(len);
+		if (convert_buffer == NULL)
+			err(1, "malloc of convert buffer failed");
+		convert_buffer_size = len;
+	}
+	len = conv(buf, convert_buffer, len);
+	return write(fd, convert_buffer, len);
+}
+
 static void
 play(char *file)
 {
+	convert conv = NULL;
 	struct stat sb;
 	void *addr, *oaddr;
 	off_t	filesize;
@@ -265,10 +349,11 @@ play(char *file)
 	madvise(addr, sizet_filesize, MADV_SEQUENTIAL);
 
 	/*
-	 * get the header length and set up the audio device
+	 * get the header length and set up the audio device, and
+	 * determine any conversion needed.
 	 */
 	if ((hdrlen = audioctl_write_fromhdr(addr,
-	    sizet_filesize, audiofd, &datasize, file)) < 0) {
+	    sizet_filesize, audiofd, &datasize, file, &conv)) < 0) {
 		if (play_errstring)
 			errx(1, "%s: %s", play_errstring, file);
 		else
@@ -284,7 +369,7 @@ play(char *file)
 	}
 
 	while ((uint64_t)datasize > bufsize) {
-		nw = write(audiofd, addr, bufsize);
+		nw = audio_write(audiofd, addr, bufsize, conv);
 		if (nw == -1)
 			err(1, "write failed");
 		if ((size_t)nw != bufsize)
@@ -292,7 +377,7 @@ play(char *file)
 		addr = (char *)addr + bufsize;
 		datasize -= bufsize;
 	}
-	nw = write(audiofd, addr, datasize);
+	nw = audio_write(audiofd, addr, datasize, conv);
 	if (nw == -1)
 		err(1, "final write failed");
 	if ((off_t)nw != datasize)
@@ -312,6 +397,7 @@ play(char *file)
 static void
 play_fd(const char *file, int fd)
 {
+	convert conv = NULL;
 	char    *buffer = malloc(bufsize);
 	ssize_t hdrlen;
 	int     nr, nw;
@@ -331,7 +417,7 @@ play_fd(const char *file, int fd)
 		}
 		err(1, "unexpected EOF");
 	}
-	hdrlen = audioctl_write_fromhdr(buffer, nr, audiofd, &datasize, file);
+	hdrlen = audioctl_write_fromhdr(buffer, nr, audiofd, &datasize, file, &conv);
 	if (hdrlen < 0) {
 		if (play_errstring)
 			errx(1, "%s: %s", play_errstring, file);
@@ -347,7 +433,7 @@ play_fd(const char *file, int fd)
 	while (datasize == 0 || dataout < datasize) {
 		if (datasize != 0 && dataout + nr > datasize)
 			nr = datasize - dataout;
-		nw = write(audiofd, buffer, nr);
+		nw = audio_write(audiofd, buffer, nr, conv);
 		if (nw == -1)
 			err(1, "audio device write failed");
 		if (nw != nr)
@@ -374,10 +460,12 @@ read_error:
  * uses the local "info" variable. blah... fix me!
  */
 static ssize_t
-audioctl_write_fromhdr(void *hdr, size_t fsz, int fd, off_t *datasize, const char *file)
+audioctl_write_fromhdr(void *hdr, size_t fsz, int fd, off_t *datasize, const char *file, convert *conv)
 {
 	sun_audioheader	*sunhdr;
 	ssize_t	hdr_len = 0;
+
+	*conv = NULL;
 
 	AUDIO_INITINFO(&info);
 	sunhdr = hdr;
@@ -456,6 +544,32 @@ set_audio_mode:
 		   enc ? " encoding=" : "", 
 		   enc ? enc : "");
 	}
+
+#ifndef __vax__
+	if (info.play.encoding == AUDIO_ENCODING_LIBAUDIO_FLOAT32 ||
+	    info.play.encoding == AUDIO_ENCODING_LIBAUDIO_FLOAT64) {
+		const char *msg;
+
+		if (info.play.encoding == AUDIO_ENCODING_LIBAUDIO_FLOAT32) {
+			if (sizeof(float) * CHAR_BIT != 32)
+				return -1;
+			*conv = float32_to_linear32;
+			msg = "32";
+		} else {
+			if (sizeof(double) * CHAR_BIT != 64)
+				return -1;
+			*conv = float64_to_linear32;
+			msg = "32";
+		}
+		info.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
+		info.play.precision = 32;
+		if (verbose)
+			printf("%s: converting IEEE float%s to precision=%d "
+			       "encoding=%s\n", file, msg,
+			       info.play.precision,
+			       audio_enc_from_val(info.play.encoding));
+	}
+#endif /* __vax__ */
 
 	if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
 		err(1, "failed to set audio info");

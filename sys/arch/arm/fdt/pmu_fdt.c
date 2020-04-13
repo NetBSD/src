@@ -1,4 +1,4 @@
-/* $NetBSD: pmu_fdt.c,v 1.5.4.2 2019/06/10 22:05:53 christos Exp $ */
+/* $NetBSD: pmu_fdt.c,v 1.5.4.3 2020/04/13 08:03:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.5.4.2 2019/06/10 22:05:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.5.4.3 2020/04/13 08:03:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.5.4.2 2019/06/10 22:05:53 christos Exp
 #include <sys/cpu.h>
 #include <sys/interrupt.h>
 #include <sys/kmem.h>
+#include <sys/xcall.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -51,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.5.4.2 2019/06/10 22:05:53 christos Exp
 #endif
 
 #include <arm/armreg.h>
+
+static bool	pmu_fdt_uses_ppi;
+static int	pmu_fdt_count;
 
 static int	pmu_fdt_match(device_t, cfdata_t, void *);
 static void	pmu_fdt_attach(device_t, device_t, void *);
@@ -109,18 +113,35 @@ pmu_fdt_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
+pmu_fdt_init_cpu(void *arg1, void *arg2)
+{
+	arm_pmu_init();
+}
+
+static void
 pmu_fdt_init(device_t self)
 {
 	struct pmu_fdt_softc * const sc = device_private(self);
 	const int phandle = sc->sc_phandle;
 	char intrstr[128];
 	int error, n;
+	uint64_t xc;
 	void **ih;
 
-	error = arm_pmu_init();
-	if (error != 0) {
-		aprint_error_dev(self, "failed to initialize PMU\n");
+	if (pmu_fdt_uses_ppi && pmu_fdt_count > 0) {
+		/*
+		 * Second instance of a PMU where PPIs are used. Since the PMU
+		 * is already initialized and the PPI interrupt handler has
+		 * already been installed, there is nothing left to do here.
+		 */
+		if (fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr)))
+			aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 		return;
+	}
+
+	if (pmu_fdt_count == 0) {
+		xc = xc_broadcast(0, pmu_fdt_init_cpu, NULL, NULL);
+		xc_wait(xc);
 	}
 
 	ih = kmem_zalloc(sizeof(void *) * ncpu, KM_SLEEP);
@@ -157,6 +178,9 @@ pmu_fdt_init(device_t self)
 			}
 		}
 	}
+
+	pmu_fdt_count++;
+	pmu_fdt_uses_ppi = nirq == 1 && ncpu > 1;
 
 cleanup:
 	kmem_free(ih, sizeof(void *) * ncpu);

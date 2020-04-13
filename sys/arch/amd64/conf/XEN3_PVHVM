@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_PVHVM,v 1.1.4.2 2019/06/10 22:05:47 christos Exp $
+# $NetBSD: XEN3_PVHVM,v 1.1.4.3 2020/04/13 08:03:30 martin Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,15 +12,13 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_PVHVM-$Revision: 1.1.4.2 $"
+#ident		"XEN3_PVHVM-$Revision: 1.1.4.3 $"
 
 maxusers	32		# estimated number of users
 options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
-
-#options 	USER_LDT	# user-settable LDT; used by WINE
 
 #options 	MTRR		# memory-type range register syscall support
 
@@ -74,21 +72,7 @@ options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
 #options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
-file-system	FFS		# UFS
-file-system	EXT2FS		# second extended file system (linux)
-file-system	LFS		# log-structured file system
-file-system	MFS		# memory file system
-file-system	NFS		# Network File System client
-file-system	NTFS		# Windows/NT file system (experimental)
-file-system	CD9660		# ISO 9660 + Rock Ridge file system
-file-system	MSDOSFS		# MS-DOS file system
-file-system	FDESC		# /dev/fd
-file-system	KERNFS		# /kern
-file-system	NULLFS		# loopback file system
-file-system	OVERLAY		# overlay file system
-file-system	PROCFS		# /proc
-file-system	UMAPFS		# NULLFS + uid and gid remapping
-file-system	UNION		# union file system
+include "conf/filesystems.config"
 
 # File system options
 options 	QUOTA		# legacy UFS quotas

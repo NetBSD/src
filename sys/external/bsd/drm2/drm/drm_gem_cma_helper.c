@@ -1,4 +1,4 @@
-/* $NetBSD: drm_gem_cma_helper.c,v 1.1.4.2 2020/04/08 14:08:27 martin Exp $ */
+/* $NetBSD: drm_gem_cma_helper.c,v 1.1.4.3 2020/04/13 08:04:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.1.4.2 2020/04/08 14:08:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.1.4.3 2020/04/13 08:04:59 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_gem_cma_helper.h>
+#include <drm/bus_dma_hacks.h>
 
 #include <uvm/uvm.h>
 
@@ -49,13 +50,30 @@ drm_gem_cma_create_internal(struct drm_device *ddev, size_t size,
 		error = -drm_prime_sg_to_bus_dmamem(obj->dmat, obj->dmasegs, 1,
 		    &nsegs, sgt);
 	} else {
-		error = bus_dmamem_alloc(obj->dmat, obj->dmasize, PAGE_SIZE, 0,
-		    obj->dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
+		if (ddev->cma_pool != NULL) {
+			error = vmem_xalloc(ddev->cma_pool, obj->dmasize,
+			    PAGE_SIZE, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX,
+			    VM_BESTFIT | VM_NOSLEEP, &obj->vmem_addr);
+			if (!error) {
+				obj->vmem_pool = ddev->cma_pool;
+				obj->dmasegs[0].ds_addr =
+				    PHYS_TO_BUS_MEM(obj->dmat, obj->vmem_addr);
+				obj->dmasegs[0].ds_len =
+				    roundup(obj->dmasize, PAGE_SIZE);
+				nsegs = 1;
+			}
+		}
+		if (obj->vmem_pool == NULL) {
+			error = bus_dmamem_alloc(obj->dmat, obj->dmasize,
+			    PAGE_SIZE, 0, obj->dmasegs, 1, &nsegs,
+			    BUS_DMA_WAITOK);
+		}
 	}
 	if (error)
 		goto failed;
 	error = bus_dmamem_map(obj->dmat, obj->dmasegs, nsegs,
-	    obj->dmasize, &obj->vaddr, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+	    obj->dmasize, &obj->vaddr,
+	    BUS_DMA_WAITOK | BUS_DMA_PREFETCHABLE);
 	if (error)
 		goto free;
 	error = bus_dmamap_create(obj->dmat, obj->dmasize, 1,
@@ -79,7 +97,12 @@ destroy:
 unmap:
 	bus_dmamem_unmap(obj->dmat, obj->vaddr, obj->dmasize);
 free:
-	bus_dmamem_free(obj->dmat, obj->dmasegs, nsegs);
+	if (obj->sgt)
+		drm_prime_sg_free(obj->sgt);
+	else if (obj->vmem_pool)
+		vmem_xfree(obj->vmem_pool, obj->vmem_addr, obj->dmasize);
+	else
+		bus_dmamem_free(obj->dmat, obj->dmasegs, nsegs);
 failed:
 	kmem_free(obj, sizeof(*obj));
 
@@ -102,6 +125,8 @@ drm_gem_cma_obj_free(struct drm_gem_cma_object *obj)
 	bus_dmamem_unmap(obj->dmat, obj->vaddr, obj->dmasize);
 	if (obj->sgt)
 		drm_prime_sg_free(obj->sgt);
+	else if (obj->vmem_pool)
+		vmem_xfree(obj->vmem_pool, obj->vmem_addr, obj->dmasize);
 	else
 		bus_dmamem_free(obj->dmat, obj->dmasegs, 1);
 	kmem_free(obj, sizeof(*obj));

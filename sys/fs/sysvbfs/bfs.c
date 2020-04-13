@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.18 2014/12/26 15:22:15 hannken Exp $	*/
+/*	$NetBSD: bfs.c,v 1.18.18.1 2020/04/13 08:05:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.18 2014/12/26 15:22:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.18.18.1 2020/04/13 08:05:03 martin Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -90,7 +90,7 @@ bfs_init2(struct bfs **bfsp, int bfs_sector, struct sector_io_ops *io,
 
 	/* 1. */
 	DPRINTF(debug, "bfs sector = %d\n", bfs_sector);
-	if ((bfs = (void *)__MALLOC(sizeof(struct bfs), M_BFS, M_NOWAIT)) == 0)
+	if ((bfs = (void *)__MALLOC(sizeof(struct bfs), M_BFS, M_WAITOK)) == 0)
 		return ENOMEM;
 	memset(bfs, 0, sizeof *bfs);
 	bfs->io = io;
@@ -103,7 +103,7 @@ bfs_init2(struct bfs **bfsp, int bfs_sector, struct sector_io_ops *io,
 	}
 	DPRINTF(debug, "bfs super block + inode area = %zd\n", memsize);
 	bfs->super_block_size = memsize;
-	if ((p = (void *)__MALLOC(memsize, M_BFS, M_NOWAIT)) == 0) {
+	if ((p = (void *)__MALLOC(memsize, M_BFS, M_WAITOK)) == 0) {
 		bfs_fini(bfs);
 		return ENOMEM;
 	}
@@ -114,7 +114,7 @@ bfs_init2(struct bfs **bfsp, int bfs_sector, struct sector_io_ops *io,
 	}
 	DPRINTF(debug, "bfs dirent area = %zd\n", memsize);
 	bfs->dirent_size = memsize;
-	if ((p = (void *)__MALLOC(memsize, M_BFS, M_NOWAIT)) == 0) {
+	if ((p = (void *)__MALLOC(memsize, M_BFS, M_WAITOK)) == 0) {
 		bfs_fini(bfs);
 		return ENOMEM;
 	}

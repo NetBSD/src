@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.18 2013/04/05 17:34:27 christos Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.18.36.1 2020/04/13 08:05:20 martin Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -91,11 +91,12 @@ struct statvfs {
 	unsigned long	f_namemax;	/* maximum filename length */
 	uid_t		f_owner;	/* user that mounted the file system */
 
-	uint32_t	f_spare[4];	/* spare space */
+	uint64_t	f_spare[4];	/* spare space */
 
-	char	f_fstypename[_VFS_NAMELEN]; /* fs type name */
-	char	f_mntonname[_VFS_MNAMELEN];  /* directory on which mounted */
-	char	f_mntfromname[_VFS_MNAMELEN];  /* mounted file system */
+	char	f_fstypename[_VFS_NAMELEN];	/* fs type name */
+	char	f_mntonname[_VFS_MNAMELEN];	/* directory on which mounted */
+	char	f_mntfromname[_VFS_MNAMELEN];	/* mounted file system */
+	char	f_mntfromlabel[_VFS_MNAMELEN];  /* disk label name if avail */
 
 };
 
@@ -146,34 +147,36 @@ int	set_statvfs_info(const char *, int, const char *, int,
     const char *, struct mount *, struct lwp *);
 void	copy_statvfs_info(struct statvfs *, const struct mount *);
 int	dostatvfs(struct mount *, struct statvfs *, struct lwp *, int, int);
+
+#include <sys/kmem.h>
+#define	STATVFSBUF_GET()	kmem_zalloc(sizeof(struct statvfs), KM_SLEEP)
+#define	STATVFSBUF_PUT(sb)	kmem_free(sb, sizeof(struct statvfs))
+
 #else
 __BEGIN_DECLS
-int	statvfs(const char *__restrict, struct statvfs *__restrict);
-int	fstatvfs(int, struct statvfs *);
-int	getvfsstat(struct statvfs *, size_t, int);
 #ifndef __LIBC12_SOURCE__
-int	getmntinfo(struct statvfs **, int) __RENAME(__getmntinfo13);
-#endif /* __LIBC12_SOURCE__ */
-#if defined(_NETBSD_SOURCE)
-#ifndef __LIBC12_SOURCE__
-int	fhstatvfs(const void *, size_t, struct statvfs *) 
-    __RENAME(__fhstatvfs40);
-#endif
+int	getmntinfo(struct statvfs **, int)
+    __RENAME(__getmntinfo90);
 
-int	statvfs1(const char *__restrict, struct statvfs *__restrict, int);
-int	fstatvfs1(int, struct statvfs *, int);
-#ifndef __LIBC12_SOURCE__
+int	statvfs(const char *__restrict, struct statvfs *__restrict)
+    __RENAME(__statvfs90);
+int	fstatvfs(int, struct statvfs *)
+    __RENAME(__fstatvfs90);
+int	getvfsstat(struct statvfs *, size_t, int)
+    __RENAME(__getvfsstat90);
+
+#if defined(_NETBSD_SOURCE)
+int	fhstatvfs(const void *, size_t, struct statvfs *) 
+    __RENAME(__fhstatvfs90);
+int	statvfs1(const char *__restrict, struct statvfs *__restrict, int)
+    __RENAME(__statvfs190);
+int	fstatvfs1(int, struct statvfs *, int)
+    __RENAME(__fstatvfs190);
 int	fhstatvfs1(const void *, size_t, struct statvfs *, int)
-    __RENAME(__fhstatvfs140);
-#endif
+    __RENAME(__fhstatvfs190);
 #endif /* _NETBSD_SOURCE */
+#endif /* __LIBC12_SOURCE__ */
 __END_DECLS
 #endif /* _KERNEL || _STANDALONE */
-
-#if defined(_KERNEL)
-#include <sys/kmem.h>
-#define	STATVFSBUF_GET()	kmem_alloc(sizeof(struct statvfs), KM_SLEEP)
-#define	STATVFSBUF_PUT(sb)	kmem_free(sb, sizeof(struct statvfs))
-#endif /* defined(_KERNEL) */
 
 #endif /* !_SYS_STATVFS_H_ */

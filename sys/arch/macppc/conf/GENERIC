@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.347.2.1 2019/06/10 22:06:27 christos Exp $
+# $NetBSD: GENERIC,v 1.347.2.2 2020/04/13 08:03:58 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.347.2.1 $"
+#ident 		"GENERIC-$Revision: 1.347.2.2 $"
 
 maxusers	32
 
@@ -203,12 +203,10 @@ bwi*	at pci? dev ? function ?	# Broadcom / Apple Airport Extreme
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
-fpa*	at pci? dev ? function ?	# DEC PCI FDDI (DEFPA) Controller
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# gmac ethernet
 #gm*	at pci? dev ? function ?	# gmac ethernet (old)
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
-le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
@@ -330,6 +328,9 @@ mc*	at obio?			# MACE ethernet
 esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
+options OBIO_SPEED_CONTROL		# CPU speed / voltage control via GPIOs
+					# and/or DFS, found on most *Book G4
+
 
 # the traditional ADB subsystem
 
@@ -349,6 +350,7 @@ pmu*	at obio?		# PMU, *Books and newer PowerMacs
 nadb*	at adb_bus?		# ADB bus enumerator, at cuda or pmu
 adbkbd* at nadb?		# ADB keyboard
 adbms*	at nadb?		# ADB mice and touchpads
+ktm* 	at nadb?		# Kensington Turbo Mouse
 adbbt*	at nadb?		# button device found on *Books
 
 wskbd*		at wskbddev? console ?
@@ -370,8 +372,11 @@ iic*	at ki2c?
 
 # I2C devices
 dbcool* 	at iic?		# dbCool thermal monitor & fan control
+lmtemp* 	at iic?		# temperature sensor, found in PowerBook5,6
 deq* 		at iic?		# mixer/equalizer, used by snapper
 admtemp* 	at iic?		# temperature sensor found in Mini, G5
+psoc* 		at iic?		# fan controller found in TiBooks
+lmu* 		at iic?		# ambient / keyboard lights
 videopll*	at iic?		# for valkyriefb
 sgsmix* 	at iic?		# Additional mixer found in beige G3
 				# use with awacs.
@@ -440,7 +445,8 @@ usb*	at slhci?					# USB bus support
 
 include "dev/usb/usbdevices.config"
 
-pbms*	at uhidev? reportid ?				# PowerBook 15" mouse
+uatp*	at uhidev? reportid ?	# Apple multi-touchpads found in late *Books
+#pbms*	at uhidev? reportid ?	# older driver for touchpads
 
 # Bluetooth Controller and Device support
 

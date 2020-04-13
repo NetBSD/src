@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.44 2017/08/15 08:39:11 maya Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.44.4.1 2020/04/13 08:04:07 martin Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.44 2017/08/15 08:39:11 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.44.4.1 2020/04/13 08:04:07 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -182,7 +182,7 @@ cpu_reboot(int howto, char *bootstr)
 }
 
 /*
- * u_int initarm(void *handle)
+ * vaddr_t initarm(void *handle)
  *
  * Initial entry point on startup for a GENERIC OFW
  * system.  Called with MMU on, running in the OFW
@@ -201,7 +201,7 @@ cpu_reboot(int howto, char *bootstr)
 struct fiqhandler shark_fiqhandler;
 struct fiqregs shark_fiqregs;
 
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	ofw_handle_t ofw_handle = arg;
@@ -310,7 +310,7 @@ initarm(void *arg)
 #endif
 
 	/* Return the new stackbase. */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 

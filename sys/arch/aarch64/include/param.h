@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.3.2.2 2020/04/08 14:07:24 martin Exp $ */
+/* $NetBSD: param.h,v 1.3.2.3 2020/04/13 08:03:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -138,6 +138,8 @@
 
 #define COHERENCY_UNIT		128
 #define CACHE_LINE_SIZE		128
+
+#define MAXCPUS			256
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/* $NetBSD: plfb_fdt.c,v 1.2 2017/06/06 00:26:59 jmcneill Exp $ */
+/* $NetBSD: plfb_fdt.c,v 1.2.10.1 2020/04/13 08:03:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,8 +30,10 @@
  * ARM PrimeCell PL111 framebuffer console driver
  */
 
+#include "opt_wsdisplay_compat.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.2 2017/06/06 00:26:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.2.10.1 2020/04/13 08:03:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -171,15 +173,27 @@ plfb_attach(device_t parent, device_t self, void *aux)
 
 	plfb_init(sc);
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	sc->sc_wstype = WSDISPLAY_TYPE_PLFB;
-	prop_dictionary_set_bool(dict, "is_console",
-	    phandle == plfb_console_phandle);
+
+#ifdef WSDISPLAY_MULTICONS
+	const bool is_console = true;
+	genfb_cnattach();
+#else
+	const bool is_console = phandle == plfb_console_phandle;
+	if (is_console)
+		aprint_normal_dev(self, "switching to framebuffer console\n");
+#endif
+
+	prop_dictionary_set_bool(dict, "is_console", is_console);
 
 	genfb_init(&sc->sc_gen);
 
 	if (sc->sc_gen.sc_width == 0 ||
 	    sc->sc_gen.sc_fbsize == 0) {
-		aprint_normal(": disabled\n");
+		aprint_normal_dev(self, "disabled\n");
 		return;
 	}
 
@@ -188,9 +202,6 @@ plfb_attach(device_t parent, device_t self, void *aux)
 	memset(&ops, 0, sizeof(ops));
 	ops.genfb_ioctl = plfb_ioctl;
 	ops.genfb_mmap = plfb_mmap;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	genfb_attach(&sc->sc_gen, &ops);
 }
@@ -262,9 +273,15 @@ plfb_init(struct plfb_softc *sc)
 	struct display_timing timing;
 
 	if (plfb_get_panel_timing(sc, &timing) != 0) {
-		aprint_error_dev(sc->sc_gen.sc_dev,
-		    "couldn't get panel timings\n");
-		return;
+		/* No timings specified in DT, assume 800x600 */
+		timing.hactive = 800;
+		timing.hback_porch = 128;
+		timing.hfront_porch = 24;
+		timing.hsync_len = 72;
+		timing.vactive = 600;
+		timing.vback_porch = 22;
+		timing.vfront_porch = 1;
+		timing.vsync_len = 2;
 	}
 
 	prop_dictionary_set_uint32(dict, "width", timing.hactive);

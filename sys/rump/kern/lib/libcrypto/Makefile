@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.18.1 2020/04/08 14:09:01 martin Exp $
+#	$NetBSD: Makefile,v 1.4.18.2 2020/04/13 08:05:18 martin Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../crypto/blowfish				\
@@ -24,8 +24,7 @@ SRCS+=	cast128.c
 SRCS+=	des_ecb.c des_setkey.c des_enc.c des_cbc.c des_module.c
 
 # rijndael
-# rijndael is in rumpkern due to it being used by cprng
-#SRCS+=	rijndael-alg-fst.c rijndael-api-fst.c rijndael.c
+SRCS+=	rijndael-alg-fst.c rijndael-api-fst.c rijndael.c
 
 # skipjack
 SRCS+=	skipjack.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.154.4.1 2019/06/10 22:05:33 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.154.4.2 2020/04/13 08:03:19 martin Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.154.4.1 2019/06/10 22:05:33 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.154.4.2 2020/04/13 08:03:19 martin Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -2620,19 +2620,19 @@ get_params(void)
 		struct disklabel *tmplabel;
 
 		if ((tmplabel = getdiskbyname(disk_type)) == NULL) {
-			warn("bad disktype");
+			warn("%s: bad disktype", disk);
 			return (-1);
 		}
 		disklabel = *tmplabel;
 	} else if (F_flag) {
 		struct stat st;
 		if (fstat(fd, &st) == -1) {
-			warn("fstat");
+			warn("%s: fstat", disk);
 			return (-1);
 		}
 		if (st.st_size % 512 != 0) {
-			warnx("%s size (%lld) is not divisible "
-			    "by sector size (%d)", disk, (long long)st.st_size,
+			warnx("%s size (%ju) is not divisible "
+			    "by sector size (%d)", disk, (uintmax_t)st.st_size,
 			    512);
 		}
 		disklabel.d_secperunit = st.st_size / 512;
@@ -2644,9 +2644,9 @@ get_params(void)
 	}
 #if !HAVE_NBTOOL_CONFIG_H
 	else if (ioctl(fd, DIOCGDEFLABEL, &disklabel) == -1) {
-		warn("DIOCGDEFLABEL");
+		warn("%s: DIOCGDEFLABEL", disk);
 		if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
-			warn("DIOCGDINFO");
+			warn("%s: DIOCGDINFO", disk);
 			return (-1);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.38.10.1 2019/06/10 22:07:36 christos Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.38.10.2 2020/04/13 08:04:52 martin Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.38.10.1 2019/06/10 22:07:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.38.10.2 2020/04/13 08:04:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,8 +430,23 @@ vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 	/* allocate new buffers */
 	vcons_alloc_buffers(vd, scr);
 	
-	/* save the potentially changed putchar */ 
+	/* save the potentially changed ri_ops */ 
+	vd->eraserows = ri->ri_ops.eraserows;
+	vd->erasecols = ri->ri_ops.erasecols;
 	scr->putchar   = ri->ri_ops.putchar;
+	vd->cursor    = ri->ri_ops.cursor;
+
+	if (scr->scr_flags & VCONS_NO_COPYCOLS) {
+		vd->copycols  = vcons_copycols_noread;
+	} else {
+		vd->copycols = ri->ri_ops.copycols;
+	}
+
+	if (scr->scr_flags & VCONS_NO_COPYROWS) {
+		vd->copyrows  = vcons_copyrows_noread;
+	} else {
+		vd->copyrows = ri->ri_ops.copyrows;
+	}
 
 	/* and put our wrappers back */
 	ri->ri_ops.eraserows = vcons_eraserows;	

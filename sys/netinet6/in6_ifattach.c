@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.115.2.1 2020/04/08 14:08:58 martin Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.115.2.2 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.115.2.1 2020/04/08 14:08:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.115.2.2 2020/04/13 08:05:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ unsigned long in6_maxmtu = 0;
 
 int ip6_auto_linklocal = 1;	/* enable by default */
 
-callout_t in6_tmpaddrtimer_ch;
+static callout_t in6_tmpaddrtimer_ch;
 
 
 #if 0
@@ -74,6 +74,8 @@ static int generate_tmp_ifid(u_int8_t *, const u_int8_t *, u_int8_t *);
 static int get_ifid(struct ifnet *, struct ifnet *, struct in6_addr *);
 static int in6_ifattach_linklocal(struct ifnet *, struct ifnet *);
 static int in6_ifattach_loopback(struct ifnet *);
+
+static void in6_tmpaddrtimer(void *);
 
 #define EUI64_GBIT	0x01
 #define EUI64_UBIT	0x02
@@ -848,6 +850,25 @@ in6_get_tmpifid(struct ifnet *ifp, u_int8_t *retbuf,
 }
 
 void
+in6_tmpaddrtimer_init(void)
+{
+
+	/* timer for regeneration of temporary addresses randomize ID */
+	callout_init(&in6_tmpaddrtimer_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&in6_tmpaddrtimer_ch, in6_tmpaddrtimer, NULL);
+	in6_tmpaddrtimer_schedule();
+}
+
+void
+in6_tmpaddrtimer_schedule(void)
+{
+
+	callout_schedule(&in6_tmpaddrtimer_ch,
+	    (ip6_temp_preferred_lifetime - ip6_desync_factor -
+	    ip6_temp_regen_advance) * hz);
+}
+
+static void
 in6_tmpaddrtimer(void *ignored_arg)
 {
 	struct nd_ifinfo *ndi;
@@ -859,9 +880,7 @@ in6_tmpaddrtimer(void *ignored_arg)
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
-	callout_reset(&in6_tmpaddrtimer_ch,
-	    (ip6_temp_preferred_lifetime - ip6_desync_factor -
-	    ip6_temp_regen_advance) * hz, in6_tmpaddrtimer, NULL);
+	in6_tmpaddrtimer_schedule();
 
 	memset(nullbuf, 0, sizeof(nullbuf));
 	s = pserialize_read_enter();

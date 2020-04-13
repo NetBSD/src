@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.45 2014/10/17 20:49:22 christos Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.45.20.1 2020/04/13 08:05:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.45 2014/10/17 20:49:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.45.20.1 2020/04/13 08:05:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ again:
 	 * The map could have changed between the two reads, and
 	 * that could result in junk, but typically it does not.
 	 */
-	if (uio->uio_offset < pos)
+	if ((uintmax_t)uio->uio_offset < pos)
 		error = uiomove(buffer + uio->uio_offset,
 		    pos - uio->uio_offset, uio);
 	else

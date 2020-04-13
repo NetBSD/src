@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.h,v 1.6 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.h,v 1.6.146.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -39,7 +39,7 @@
 void	rf_CommonCreateParityLoggingLargeWriteDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h,
     void *bp, RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
-    int nfaults, int (*redFunc) (RF_DagNode_t *));
+    int nfaults, void (*redFunc) (RF_DagNode_t *));
 
 void    rf_CommonCreateParityLoggingSmallWriteDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h,
@@ -49,7 +49,7 @@ void    rf_CommonCreateParityLoggingSmallWriteDAG(RF_Raid_t * raidPtr,
 void    rf_CreateParityLoggingLargeWriteDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h,
     void *bp, RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
-    int nfaults, int (*redFunc) (RF_DagNode_t *));
+    int nfaults, void (*redFunc) (RF_DagNode_t *));
 
 void    rf_CreateParityLoggingSmallWriteDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h,

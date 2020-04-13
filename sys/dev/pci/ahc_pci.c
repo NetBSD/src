@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.72.2.1 2019/06/10 22:07:15 christos Exp $
+ * $Id: ahc_pci.c,v 1.72.2.2 2020/04/13 08:04:26 martin Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.72.2.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.72.2.2 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -795,14 +795,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s\n", entry->name);
 
 	/* Keep information about the PCI bus */
-	bd = malloc(sizeof (struct ahc_pci_busdata), M_DEVBUF, M_NOWAIT);
-	if (bd == NULL) {
-		aprint_error("%s: unable to allocate bus-specific data\n",
-		    ahc_name(ahc));
-		return;
-	}
-	memset(bd, 0, sizeof(struct ahc_pci_busdata));
-
+	bd = malloc(sizeof (struct ahc_pci_busdata), M_DEVBUF, M_WAITOK | M_ZERO);
 	bd->pc = pa->pa_pc;
 	bd->tag = pa->pa_tag;
 	bd->func = pa->pa_function;
@@ -1023,11 +1016,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	ahc->seep_config = malloc(sizeof(*ahc->seep_config),
-				  M_DEVBUF, M_NOWAIT);
-	if (ahc->seep_config == NULL)
-		goto error_out;
-
-	memset(ahc->seep_config, 0, sizeof(*ahc->seep_config));
+				  M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* See if we have a SEEPROM and perform auto-term */
 	ahc_check_extport(ahc, &sxfrctl1);

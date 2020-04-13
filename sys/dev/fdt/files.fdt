@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.32.2.1 2019/06/10 22:07:08 christos Exp $
+# $NetBSD: files.fdt,v 1.32.2.2 2020/04/13 08:04:19 martin Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -45,6 +45,9 @@ device	panel: fdt_port
 attach	panel at fdt with fdt_panel
 file	dev/fdt/panel_fdt.c			fdt_panel
 
+attach	panel at fdt with panel_fdt: drmkms
+file	dev/fdt/fdt_panel.c			panel_fdt
+
 device	dispcon: fdt_port, drmkms, ddc_read_edid
 attach	dispcon at fdt with dispcon_hdmi
 file	dev/fdt/hdmi_connector.c		dispcon_hdmi
@@ -64,6 +67,7 @@ file	dev/fdt/fdt_pwm.c			fdt
 file	dev/fdt/fdt_regulator.c			fdt
 file	dev/fdt/fdt_reset.c			fdt
 file	dev/fdt/fdt_rtc.c			fdt
+file	dev/fdt/fdt_spi.c			fdt
 file	dev/fdt/fdt_syscon.c			fdt
 file	dev/fdt/fdt_pinctrl.c			fdt
 
@@ -81,6 +85,10 @@ device	syscon { } : fdt
 attach	syscon at fdt
 file	dev/fdt/syscon.c			syscon
 
+device	pinctrl
+attach	pinctrl at fdt with pinctrl_single
+file	dev/fdt/pinctrl_single.c		pinctrl_single
+
 device	pwmbacklight
 attach	pwmbacklight at fdt
 file	dev/fdt/pwm_backlight.c			pwmbacklight
@@ -93,6 +101,10 @@ device	ausoc: audiobus
 attach	ausoc at fdt
 file	dev/fdt/ausoc.c				ausoc
 
+device	spdiftx
+attach	spdiftx at fdt
+file	dev/fdt/spdif_tx.c			spdiftx
+
 define	fdt_display_timing
 file	dev/fdt/display_timing.c		fdt_display_timing
 
@@ -103,6 +115,14 @@ file	dev/fdt/simplefb.c			simplefb
 # Designware APB UART
 attach	com at fdt with dw_apb_uart
 file	dev/fdt/dw_apb_uart.c			dw_apb_uart
+
+# EHCI
+attach	ehci at fdt with ehci_fdt
+file	dev/fdt/ehci_fdt.c			ehci_fdt
+
+# OHCI
+attach	ohci at fdt with ohci_fdt
+file	dev/fdt/ohci_fdt.c			ohci_fdt
 
 # Designware USB2 OTG
 attach	dwctwo at fdt with dwc2_fdt
@@ -148,3 +168,17 @@ file	dev/fdt/amdccp_fdt.c			amdccp_fdt
 # Arasan SDHCI controller
 attach	sdhc at fdt with arasan_sdhc_fdt
 file	dev/fdt/arasan_sdhc_fdt.c		arasan_sdhc_fdt
+
+# Generic USB PHY
+device	usbnopphy
+attach	usbnopphy at fdt
+file	dev/fdt/usbnopphy.c			usbnopphy
+
+# Simple Amplifier Audio Driver
+device	simpleamp
+attach	simpleamp at fdt
+file	dev/fdt/simple_amplifier.c		simpleamp
+
+# Broadcom GENET v5
+attach	genet at fdt with genet_fdt
+file	dev/fdt/genet_fdt.c			genet_fdt

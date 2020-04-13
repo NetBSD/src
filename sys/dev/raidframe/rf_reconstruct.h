@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.28 2011/05/02 07:29:18 mrg Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.28.56.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -156,7 +156,7 @@ struct RF_ReconCtrl_s {
 						 * waiting disk */
 	RF_ReconBuffer_t *fullBufferList;	/* full buffers waiting to be
 						 * written out */
-	RF_CallbackDesc_t *bufferWaitList;	/* disks that are currently
+	RF_CallbackValueDesc_t *bufferWaitList;	/* disks that are currently
 						 * blocked waiting for buffers */
 
 	/* parity stripe status table */
@@ -166,7 +166,7 @@ struct RF_ReconCtrl_s {
 	/* maximum-head separation control */
 	RF_HeadSepLimit_t minHeadSepCounter;	/* the minimum hs counter over
 						 * all disks */
-	RF_CallbackDesc_t *headSepCBList;	/* list of callbacks to be
+	RF_CallbackValueDesc_t *headSepCBList;	/* list of callbacks to be
 						 * done as minPSID advances */
 
 	/* performance monitoring */
@@ -181,8 +181,7 @@ int rf_ReconstructFailedDiskBasic(RF_Raid_t *, RF_RowCol_t);
 int rf_ReconstructInPlace(RF_Raid_t *, RF_RowCol_t);
 int rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t *);
 int rf_ForceOrBlockRecon(RF_Raid_t *, RF_AccessStripeMap_t *,
-			 void (*cbFunc) (RF_Raid_t *, void *),
-			 void *);
+			 void (*cbFunc) (void *), void *);
 int rf_UnblockRecon(RF_Raid_t *, RF_AccessStripeMap_t *);
 void rf_WakeupHeadSepCBWaiters(RF_Raid_t *);
 

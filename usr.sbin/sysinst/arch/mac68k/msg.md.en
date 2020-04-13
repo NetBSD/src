@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.1.28.1 2020/04/13 08:06:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,7 +42,7 @@ message md_may_remove_boot_medium
 {
 }
 
-message fullpart
+message mac68k_fullpart
 {We are now going to install NetBSD on the disk %s.  You may
 choose to install NetBSD on the entire disk or part of the disk.
 Which would you like to do?
@@ -80,14 +80,14 @@ you have completed your partition setups.
 
 Shall we continue?}
 
-message part_header
+message mac68k_part_header
 {Part      start       size fstype use       mount point (name)
 ---- ---------- ---------- ------ --------- ------------------\n}
 
 message part_row
 {%3s%c %10d %10d %6s %-9s %s\n}
 
-message ovrwrite
+message mac68k_ovrwrite
 {Your disk currently has at least one MacOS HFS partition.  Overwriting
 the entire disk will delete the partition and may make the disk unusable
 under MacOS.  You should consider creating a single small MacOS HFS
@@ -98,7 +98,7 @@ application used to boot NetBSD from MacOS.
 Are you really sure you want to overwrite the MacOS HFS partition(s)?
 }
 
-message editparttable
+message mac68k_editparttable
 {Edit Disk Partition Map: The Map on the disk has been scanned for all
 user-level partitions, but only those usable by NetBSD are displayed.
 The partition table currently looks like:

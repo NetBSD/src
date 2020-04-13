@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_9p.8,v 1.4.70.1 2019/06/10 22:10:35 christos Exp $
+.\"	$NetBSD: mount_9p.8,v 1.4.70.2 2020/04/13 08:05:56 martin Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 7, 2019
+.Dd October 24, 2019
 .Dt MOUNT_9P 8
 .Os
 .Sh NAME
@@ -35,6 +35,12 @@
 .Op Fl o Ar mntopts
 .Op Fl p Ar port
 .Ar [user@]host[:path]
+.Ar mount_point
+.Nm
+.Fl c
+.Op Fl su
+.Op Fl o Ar mntopts
+.Ar devfile
 .Ar mount_point
 .Sh DESCRIPTION
 The
@@ -51,6 +57,18 @@ If
 is supplied, it is used as the mount rootpath on the remote host.
 .Ar path
 must be an absolute path.
+.Pp
+The
+.Fl c
+opiton enables to mount a file system exported by a VM host through
+a character device file
+.Ar devfile
+backed by the
+.Xr vio9p 4
+driver.
+See
+.Xr vio9p 4
+for more information.
 .Pp
 By default
 .Nm
@@ -74,6 +92,7 @@ environments.
 .Sh SEE ALSO
 .Xr puffs 3 ,
 .Xr puffs 4 ,
+.Xr vio9p 4 ,
 .Xr mount 8
 .Rs
 .%T RFC and standards documents relating the 9P protocol
@@ -87,6 +106,11 @@ utility first appeared in
 .Pp
 Experimental 9P2000.u support appeared in
 .Nx 9.0 .
+.Pp
+The
+.Fl c
+option appeared in
+.Nx 10.0 .
 .Sh CAVEATS
 Permissions are not handled well.
 .Pp

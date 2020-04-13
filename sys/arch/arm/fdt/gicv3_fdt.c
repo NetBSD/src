@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.7.4.2 2019/06/10 22:05:53 christos Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.7.4.3 2020/04/13 08:03:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.7.4.2 2019/06/10 22:05:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.7.4.3 2020/04/13 08:03:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,7 +61,7 @@ static int	gicv3_fdt_match(device_t, cfdata_t, void *);
 static void	gicv3_fdt_attach(device_t, device_t, void *);
 
 static int	gicv3_fdt_map_registers(struct gicv3_fdt_softc *);
-#if NPCI > 0
+#if NPCI > 0 && defined(__HAVE_PCI_MSI_MSIX)
 static void	gicv3_fdt_attach_its(struct gicv3_fdt_softc *, bus_space_tag_t, int);
 #endif
 
@@ -158,7 +158,7 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#if NPCI > 0
+#if NPCI > 0 && defined(__HAVE_PCI_MSI_MSIX)
 	for (int child = OF_child(phandle); child; child = OF_peer(child)) {
 		if (!fdtbus_status_okay(child))
 			continue;
@@ -238,7 +238,7 @@ gicv3_fdt_map_registers(struct gicv3_fdt_softc *sc)
 	return 0;
 }
 
-#if NPCI > 0
+#if NPCI > 0 && defined(__HAVE_PCI_MSI_MSIX)
 static void
 gicv3_fdt_attach_its(struct gicv3_fdt_softc *sc, bus_space_tag_t bst, int phandle)
 {

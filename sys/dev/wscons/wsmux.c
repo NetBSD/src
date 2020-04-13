@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.63 2017/06/12 08:19:22 pgoyette Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.63.6.1 2020/04/13 08:04:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.63 2017/06/12 08:19:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.63.6.1 2020/04/13 08:04:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -169,11 +169,7 @@ wsmux_getmux(int n)
 		void *new;
 
 		new = realloc(wsmuxdevs, (n + 1) * sizeof(*wsmuxdevs),
-		    M_DEVBUF, M_ZERO | M_NOWAIT);
-		if (new == NULL) {
-			printf("wsmux_getmux: no memory for mux %d\n", n);
-			return NULL;
-		}
+		    M_DEVBUF, M_ZERO | M_WAITOK);
 		wsmuxdevs = new;
 		nwsmux = n + 1;
 	}
@@ -181,8 +177,6 @@ wsmux_getmux(int n)
 	sc = wsmuxdevs[n];
 	if (sc == NULL) {
 		sc = wsmux_create("wsmux", n);
-		if (sc == NULL)
-			printf("wsmux: attach out of memory\n");
 		wsmuxdevs[n] = sc;
 	}
 	return (sc);
@@ -659,15 +653,9 @@ wsmux_create(const char *name, int unit)
 	/* XXX This is wrong -- should use autoconfiguraiton framework */
 
 	DPRINTF(("wsmux_create: allocating\n"));
-	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (sc == NULL)
-		return (NULL);
+	sc = malloc(sizeof *sc, M_DEVBUF, M_WAITOK|M_ZERO);
 	sc->sc_base.me_dv = malloc(sizeof(struct device), M_DEVBUF,
-	    M_NOWAIT|M_ZERO);
-	if (sc->sc_base.me_dv == NULL) {
-		free(sc, M_DEVBUF);
-		return NULL;
-	}
+	    M_WAITOK|M_ZERO);
 	TAILQ_INIT(&sc->sc_cld);
 	snprintf(sc->sc_base.me_dv->dv_xname,
 	    sizeof sc->sc_base.me_dv->dv_xname, "%s%d", name, unit);

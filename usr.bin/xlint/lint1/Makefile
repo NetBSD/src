@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2015/04/04 19:32:06 christos Exp $
+#	$NetBSD: Makefile,v 1.52.16.1 2020/04/13 08:05:50 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,8 @@ YHEADER=
 #CPPFLAGS+=-DYYDEBUG=1
 #YFLAGS+=-v
 #LFLAGS+=-d
+
+CWARNFLAGS.clang+=	-Wno-error=implicit-int-float-conversion
 
 CPPFLAGS+=	-I${.CURDIR} -I. -DPASS=\"${PROG}.h\"
 

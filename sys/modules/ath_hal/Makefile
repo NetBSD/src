@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.54.1 2019/06/10 22:09:11 christos Exp $
+#	$NetBSD: Makefile,v 1.4.54.2 2020/04/13 08:05:06 martin Exp $
 
 .include "../Makefile.inc"
 
@@ -96,7 +96,7 @@ SRCS+=	ar2133.c \
 
 .include "Makefile.inc"
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.ar5212_xmit.c+=	-Wno-error=implicit-fallthrough
 COPTS.ar5416_xmit.c+=	-Wno-error=implicit-fallthrough
 .endif

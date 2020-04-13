@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.37 2018/01/24 05:35:58 riastradh Exp $ */
+/* $NetBSD: lunafb.c,v 1.37.4.1 2020/04/13 08:03:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.37 2018/01/24 05:35:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.37.4.1 2020/04/13 08:03:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,10 @@ struct bt458 {
 	uint8_t          pad3[3];
 };
 
-#define	OMFB_RFCNT	0xB1000000	/* video h-origin/v-origin */
-#define	OMFB_RAMDAC	0xC1100000	/* Bt454/Bt458 RAMDAC */
+#define	OMFB_RFCNT	BMAP_RFCNT	/* video h-origin/v-origin */
+#define	OMFB_RAMDAC	BMAP_PALLET2	/* Bt454/Bt458 RAMDAC */
 
-#define	OMFB_SIZE	(0xB1300000 - 0xB1080000 + PAGE_SIZE)
+#define	OMFB_SIZE	(BMAP_FN0 - BMAP_BMP + PAGE_SIZE)
 
 struct hwcmap {
 #define CMAP_SIZE 256
@@ -308,7 +308,8 @@ omfbmmap(void *v, void *vs, off_t offset, int prot)
 #endif
 	case WSDISPLAYIO_MODE_DUMBFB:
 		if (offset >= 0 &&
-		    offset < dc->dc_rowbytes * dc->dc_ht * dc->dc_depth)
+		    offset < m68k_page_offset(OMFB_FB_RADDR) +
+		    dc->dc_rowbytes * dc->dc_ht * dc->dc_depth)
 			cookie = m68k_btop(m68k_trunc_page(OMFB_FB_RADDR) +
 			    offset);
 		break;
@@ -346,7 +347,7 @@ omsetcmap(struct omfb_softc *sc, struct wsdisplay_cmap *p)
 
 	cmsize = sc->sc_dc->dc_cmsize;
 	if (index >= cmsize || count > cmsize - index)
-		return (EINVAL);
+		return EINVAL;
 
 	error = copyin(p->red, &cmap.r[index], count);
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.7.2.1 2019/06/10 22:10:05 christos Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.7.2.2 2020/04/13 08:05:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -1617,13 +1617,11 @@ ATF_TC_BODY(dbregs_dr3_trap_code, tc)
 }
 #endif
 
-volatile lwpid_t x86_the_lwp_id = 0;
-
-static void __used
-x86_lwp_main_func(void *arg)
+static void * __used
+x86_main_func(void *arg)
 {
-	x86_the_lwp_id = _lwp_self();
-	_lwp_exit();
+
+	return arg;
 }
 
 static void
@@ -1639,10 +1637,8 @@ dbregs_dont_inherit_lwp(int reg)
 	const int slen = sizeof(state);
 	ptrace_event_t event;
 	const int elen = sizeof(event);
-	ucontext_t uc;
+	pthread_t t;
 	lwpid_t lid;
-	static const size_t ssize = 16*1024;
-	void *stack;
 	size_t i;
 	struct dbreg r1;
 	struct dbreg r2;
@@ -1661,22 +1657,10 @@ dbregs_dont_inherit_lwp(int reg)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("Before allocating memory for stack in child\n");
-		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
+		FORKEE_ASSERT(!pthread_create(&t, NULL, x86_main_func, NULL));
 
-		DPRINTF("Before making context for new lwp in child\n");
-		_lwp_makecontext(&uc, x86_lwp_main_func, NULL, NULL, stack,
-		    ssize);
-
-		DPRINTF("Before creating new in child\n");
-		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
-
-		DPRINTF("Before waiting for lwp %d to exit\n", lid);
-		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
-
-		DPRINTF("Before verifying that reported %d and running lid %d "
-		    "are the same\n", lid, x86_the_lwp_id);
-		FORKEE_ASSERT_EQ(lid, x86_the_lwp_id);
+		DPRINTF("Before waiting for thread to exit\n");
+		FORKEE_ASSERT(!pthread_join(t, NULL));
 
 		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
@@ -2072,13 +2056,13 @@ x86_cve_2018_8897_trigger(void)
 		);
 #else /* !__PIE__ */
 	__asm__ __volatile__(
-		"       movq $farjmp32, %%rax\n\t"
+		"       movq $farjmp32%=, %%rax\n\t"
 		"       ljmp *(%%rax)\n\t"
-		"farjmp32:\n\t"
-		"       .long trigger32\n\t"
+		"farjmp32%=:\n\t"
+		"       .long trigger32%=\n\t"
 		"       .word 0x73\n\t"
 		"       .code32\n\t"
-		"trigger32:\n\t"
+		"trigger32%=:\n\t"
 		"       movl $0x5000, %%esp\n\t"
 		"       pop %%ss\n\t"
 		"       int $4\n\t"
@@ -2189,121 +2173,254 @@ ATF_TC_BODY(x86_cve_2018_8897, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-ATF_TC(x86_regs_mm_read);
-ATF_TC_HEAD(x86_regs_mm_read, tc)
+/// ----------------------------------------------------------------------------
+
+union x86_test_register {
+	struct {
+		uint64_t a, b, c, d;
+	} ymm;
+	struct {
+		uint64_t a, b;
+	} xmm;
+	uint64_t u64;
+	uint32_t u32;
+};
+
+enum x86_test_regset {
+	TEST_GPREGS,
+	TEST_FPREGS,
+	TEST_XMMREGS,
+	TEST_XSTATE
+};
+
+/* Please keep them grouped by acceptable x86_test_regset. */
+enum x86_test_registers {
+	/* TEST_GPREGS */
+	GPREGS_32,
+	GPREGS_32_EBP_ESP,
+	GPREGS_64,
+	GPREGS_64_R8,
+	/* TEST_FPREGS/TEST_XMMREGS */
+	FPREGS_MM,
+	FPREGS_XMM,
+	/* TEST_XSTATE */
+	FPREGS_YMM
+};
+
+enum x86_test_regmode {
+	TEST_GETREGS,
+	TEST_SETREGS,
+	TEST_COREDUMP
+};
+
+static __inline void get_gp32_regs(union x86_test_register out[])
 {
-	atf_tc_set_md_var(tc, "descr",
-		"Set MMX (mm0..mm7) reg values from debugged program and read "
-		"them via PT_GETFPREGS, comparing values against expected.");
+#if defined(__i386__)
+	const uint32_t fill = 0x0F0F0F0F;
+
+	__asm__ __volatile__(
+		/* fill registers with clobber pattern */
+		"movl    %6, %%eax\n\t"
+		"movl    %6, %%ebx\n\t"
+		"movl    %6, %%ecx\n\t"
+		"movl    %6, %%edx\n\t"
+		"movl    %6, %%esi\n\t"
+		"movl    %6, %%edi\n\t"
+		"\n\t"
+		"int3\n\t"
+		: "=a"(out[0].u32), "=b"(out[1].u32), "=c"(out[2].u32),
+		  "=d"(out[3].u32), "=S"(out[4].u32), "=D"(out[5].u32)
+		: "g"(fill)
+	);
+#else
+	__unreachable();
+#endif
 }
 
-__attribute__((target("mmx")))
-static __inline void set_mm_regs(const uint64_t mm[])
+static __inline void set_gp32_regs(const union x86_test_register data[])
 {
+#if defined(__i386__)
 	__asm__ __volatile__(
-		"movq    0x00(%0), %%mm0\n\t"
-		"movq    0x08(%0), %%mm1\n\t"
-		"movq    0x10(%0), %%mm2\n\t"
-		"movq    0x18(%0), %%mm3\n\t"
-		"movq    0x20(%0), %%mm4\n\t"
-		"movq    0x28(%0), %%mm5\n\t"
-		"movq    0x30(%0), %%mm6\n\t"
-		"movq    0x38(%0), %%mm7\n\t"
 		"int3\n\t"
 		:
-		: "b"(mm)
-		: "%mm0", "%mm1", "%mm2", "%mm3", "%mm4", "%mm5", "%mm6", "%mm7"
+		: "a"(data[0].u32), "b"(data[1].u32), "c"(data[2].u32),
+		  "d"(data[3].u32), "S"(data[4].u32), "D"(data[5].u32)
+		:
 	);
+#else
+	__unreachable();
+#endif
 }
 
-ATF_TC_BODY(x86_regs_mm_read, tc)
+static __inline void get_gp32_ebp_esp_regs(union x86_test_register out[])
 {
-	const int exitval = 5;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	const int sigval = SIGTRAP;
-	int status;
-#endif
-	struct fpreg fpr;
+#if defined(__i386__)
+	const uint32_t fill = 0x0F0F0F0F;
 
-	const uint64_t mm[] = {
-		0x0001020304050607,
-		0x1011121314151617,
-		0x2021222324252627,
-		0x3031323334353637,
-		0x4041424344454647,
-		0x5051525354555657,
-		0x6061626364656667,
-		0x7071727374757677,
-	};
-
-	/* verify whether MMX is supported here */
-	DPRINTF("Before invoking cpuid\n");
-	{
-		unsigned int eax, ebx, ecx, edx;
-		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
-			atf_tc_skip("CPUID is not supported by the CPU");
-
-		DPRINTF("cpuid: EDX = %08x\n", edx);
-
-		if (!(edx & bit_MMX))
-			atf_tc_skip("MMX is not supported by the CPU");
-	}
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before running assembly from child\n");
-		set_mm_regs(mm);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Call GETFPREGS for the child process\n");
-	SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &fpr, 0) != -1);
-
-#if defined(__x86_64__)
-#define MM_REG(n) fpr.fxstate.fx_87_ac[n].r.f87_mantissa
+	__asm__ __volatile__(
+		/* save original ebp & esp using our output registers */
+		"movl    %%esp, %0\n\t"
+		"movl    %%ebp, %1\n\t"
+		/* fill them with clobber pattern */
+		"movl    %2, %%esp\n\t"
+		"movl    %2, %%ebp\n\t"
+		"\n\t"
+		"int3\n\t"
+		"\n\t"
+		/* restore ebp & esp, and save the result */
+		"xchgl   %%esp, %0\n\t"
+		"xchgl   %%ebp, %1\n\t"
+		: "=r"(out[0].u32), "=r"(out[1].u32)
+		: "g"(fill)
+		:
+	);
 #else
-#define MM_REG(n) fpr.fstate.s87_ac[n].f87_mantissa
+	__unreachable();
 #endif
+}
 
-	ATF_CHECK_EQ(MM_REG(0), mm[0]);
-	ATF_CHECK_EQ(MM_REG(1), mm[1]);
-	ATF_CHECK_EQ(MM_REG(2), mm[2]);
-	ATF_CHECK_EQ(MM_REG(3), mm[3]);
-	ATF_CHECK_EQ(MM_REG(4), mm[4]);
-	ATF_CHECK_EQ(MM_REG(5), mm[5]);
-	ATF_CHECK_EQ(MM_REG(6), mm[6]);
-	ATF_CHECK_EQ(MM_REG(7), mm[7]);
+static __inline void set_gp32_ebp_esp_regs(const union x86_test_register data[])
+{
+#if defined(__i386__)
+	__asm__ __volatile__(
+		/* ebp & ebp are a bit tricky, we must not clobber them */
+		"movl    %%esp, %%eax\n\t"
+		"movl    %%ebp, %%ebx\n\t"
+		"movl    %0, %%esp\n\t"
+		"movl    %1, %%ebp\n\t"
+		"\n\t"
+		"int3\n\t"
+		"\n\t"
+		"movl    %%eax, %%esp\n\t"
+		"movl    %%ebx, %%ebp\n\t"
+		:
+		: "ri"(data[0].u32), "ri"(data[1].u32)
+		: "%eax", "%ebx"
+	);
+#else
+	__unreachable();
+#endif
+}
 
-#undef MM_REG
+static __inline void get_gp64_regs(union x86_test_register out[])
+{
+#if defined(__x86_64__)
+	const uint64_t fill = 0x0F0F0F0F0F0F0F0F;
 
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	__asm__ __volatile__(
+		/* save rsp & rbp */
+		"movq    %%rsp, %6\n\t"
+		"movq    %%rbp, %7\n\t"
+		"\n\t"
+		/* fill registers with clobber pattern */
+		"movq    %8, %%rax\n\t"
+		"movq    %8, %%rbx\n\t"
+		"movq    %8, %%rcx\n\t"
+		"movq    %8, %%rdx\n\t"
+		"movq    %8, %%rsp\n\t"
+		"movq    %8, %%rbp\n\t"
+		"movq    %8, %%rsi\n\t"
+		"movq    %8, %%rdi\n\t"
+		"\n\t"
+		"int3\n\t"
+		"\n\t"
+		/* swap saved & current rsp & rbp */
+		"xchgq    %%rsp, %6\n\t"
+		"xchgq    %%rbp, %7\n\t"
+		: "=a"(out[0].u64), "=b"(out[1].u64), "=c"(out[2].u64),
+		  "=d"(out[3].u64), "=S"(out[4].u64), "=D"(out[5].u64),
+		  "=r"(out[6].u64), "=r"(out[7].u64)
+		: "g"(fill)
+	);
+#else
+	__unreachable();
+#endif
+}
 
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+static __inline void set_gp64_regs(const union x86_test_register data[])
+{
+#if defined(__x86_64__)
+	__asm__ __volatile__(
+		/* rbp & rbp are a bit tricky, we must not clobber them */
+		"movq    %%rsp, %%r8\n\t"
+		"movq    %%rbp, %%r9\n\t"
+		"movq    %6, %%rsp\n\t"
+		"movq    %7, %%rbp\n\t"
+		"\n\t"
+		"int3\n\t"
+		"\n\t"
+		"movq    %%r8, %%rsp\n\t"
+		"movq    %%r9, %%rbp\n\t"
+		:
+		: "a"(data[0].u64), "b"(data[1].u64), "c"(data[2].u64),
+		  "d"(data[3].u64), "S"(data[4].u64), "D"(data[5].u64),
+		  "r"(data[6].u64), "r"(data[7].u64)
+		: "%r8", "%r9"
+	);
+#else
+	__unreachable();
+#endif
+}
 
-	validate_status_exited(status, exitval);
+static __inline void get_gp64_r8_regs(union x86_test_register out[])
+{
+#if defined(__x86_64__)
+	const uint64_t fill = 0x0F0F0F0F0F0F0F0F;
 
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	__asm__ __volatile__(
+		/* fill registers with clobber pattern */
+		"movq    %1, %%r8\n\t"
+		"movq    %1, %%r9\n\t"
+		"movq    %1, %%r10\n\t"
+		"movq    %1, %%r11\n\t"
+		"movq    %1, %%r12\n\t"
+		"movq    %1, %%r13\n\t"
+		"movq    %1, %%r14\n\t"
+		"movq    %1, %%r15\n\t"
+		"\n\t"
+		"int3\n\t"
+		"\n\t"
+		"movq    %%r8, 0x00(%0)\n\t"
+		"movq    %%r9, 0x20(%0)\n\t"
+		"movq    %%r10, 0x40(%0)\n\t"
+		"movq    %%r11, 0x60(%0)\n\t"
+		"movq    %%r12, 0x80(%0)\n\t"
+		"movq    %%r13, 0xA0(%0)\n\t"
+		"movq    %%r14, 0xC0(%0)\n\t"
+		"movq    %%r15, 0xE0(%0)\n\t"
+		:
+		: "a"(out), "m"(fill)
+		: "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15"
+	);
+#else
+	__unreachable();
+#endif
+}
+
+static __inline void set_gp64_r8_regs(const union x86_test_register data[])
+{
+#if defined(__x86_64__)
+	__asm__ __volatile__(
+		"movq    0x00(%0), %%r8\n\t"
+		"movq    0x20(%0), %%r9\n\t"
+		"movq    0x40(%0), %%r10\n\t"
+		"movq    0x60(%0), %%r11\n\t"
+		"movq    0x80(%0), %%r12\n\t"
+		"movq    0xA0(%0), %%r13\n\t"
+		"movq    0xC0(%0), %%r14\n\t"
+		"movq    0xE0(%0), %%r15\n\t"
+		"int3\n\t"
+		:
+		: "b"(data)
+		: "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15"
+	);
+#else
+	__unreachable();
+#endif
 }
 
 __attribute__((target("mmx")))
-static __inline void get_mm_regs(uint64_t v_mm[])
+static __inline void get_mm_regs(union x86_test_register out[])
 {
 	const uint64_t fill = 0x0F0F0F0F0F0F0F0F;
 
@@ -2321,286 +2438,44 @@ static __inline void get_mm_regs(uint64_t v_mm[])
 		"int3\n\t"
 		"\n\t"
 		"movq    %%mm0, 0x00(%0)\n\t"
-		"movq    %%mm1, 0x08(%0)\n\t"
-		"movq    %%mm2, 0x10(%0)\n\t"
-		"movq    %%mm3, 0x18(%0)\n\t"
-		"movq    %%mm4, 0x20(%0)\n\t"
-		"movq    %%mm5, 0x28(%0)\n\t"
-		"movq    %%mm6, 0x30(%0)\n\t"
-		"movq    %%mm7, 0x38(%0)\n\t"
+		"movq    %%mm1, 0x20(%0)\n\t"
+		"movq    %%mm2, 0x40(%0)\n\t"
+		"movq    %%mm3, 0x60(%0)\n\t"
+		"movq    %%mm4, 0x80(%0)\n\t"
+		"movq    %%mm5, 0xA0(%0)\n\t"
+		"movq    %%mm6, 0xC0(%0)\n\t"
+		"movq    %%mm7, 0xE0(%0)\n\t"
 		:
-		: "a"(v_mm), "m"(fill)
+		: "a"(out), "m"(fill)
 		: "%mm0", "%mm1", "%mm2", "%mm3", "%mm4", "%mm5", "%mm6", "%mm7"
 	);
 }
 
-ATF_TC(x86_regs_mm_write);
-ATF_TC_HEAD(x86_regs_mm_write, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-		"Set mm0..mm7 reg values into a debugged program via "
-		"PT_SETFPREGS and compare the result against expected.");
-}
-
-ATF_TC_BODY(x86_regs_mm_write, tc)
-{
-	const int exitval = 5;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	const int sigval = SIGTRAP;
-	int status;
-#endif
-	struct fpreg fpr;
-
-	const uint64_t mm[] = {
-		0x0001020304050607,
-		0x1011121314151617,
-		0x2021222324252627,
-		0x3031323334353637,
-		0x4041424344454647,
-		0x5051525354555657,
-		0x6061626364656667,
-		0x7071727374757677,
-	};
-
-	/* verify whether MMX is supported here */
-	DPRINTF("Before invoking cpuid\n");
-	{
-		unsigned int eax, ebx, ecx, edx;
-		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
-			atf_tc_skip("CPUID is not supported by the CPU");
-
-		DPRINTF("cpuid: EDX = %08x\n", edx);
-
-		if (!(edx & bit_MMX))
-			atf_tc_skip("MMX is not supported by the CPU");
-	}
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		uint64_t v_mm[8];
-
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before running assembly from child\n");
-		get_mm_regs(v_mm);
-
-		DPRINTF("Before comparing results\n");
-		FORKEE_ASSERT_EQ(v_mm[0], mm[0]);
-		FORKEE_ASSERT_EQ(v_mm[1], mm[1]);
-		FORKEE_ASSERT_EQ(v_mm[2], mm[2]);
-		FORKEE_ASSERT_EQ(v_mm[3], mm[3]);
-		FORKEE_ASSERT_EQ(v_mm[4], mm[4]);
-		FORKEE_ASSERT_EQ(v_mm[5], mm[5]);
-		FORKEE_ASSERT_EQ(v_mm[6], mm[6]);
-		FORKEE_ASSERT_EQ(v_mm[7], mm[7]);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Call GETFPREGS for the child process\n");
-	SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &fpr, 0) != -1);
-
-#if defined(__x86_64__)
-#define MM_REG(n) fpr.fxstate.fx_87_ac[n].r.f87_mantissa
-#else
-#define MM_REG(n) fpr.fstate.s87_ac[n].f87_mantissa
-#endif
-
-	MM_REG(0) = mm[0];
-	MM_REG(1) = mm[1];
-	MM_REG(2) = mm[2];
-	MM_REG(3) = mm[3];
-	MM_REG(4) = mm[4];
-	MM_REG(5) = mm[5];
-	MM_REG(6) = mm[6];
-	MM_REG(7) = mm[7];
-
-#undef MM_REG
-
-	DPRINTF("Call SETFPREGS for the child process\n");
-	SYSCALL_REQUIRE(ptrace(PT_SETFPREGS, child, &fpr, 0) != -1);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
-__attribute__((target("sse")))
-static __inline void set_xmm_regs(const void* xmm)
+__attribute__((target("mmx")))
+static __inline void set_mm_regs(const union x86_test_register data[])
 {
 	__asm__ __volatile__(
-		"movaps   0x00(%0), %%xmm0\n\t"
-		"movaps   0x10(%0), %%xmm1\n\t"
-		"movaps   0x20(%0), %%xmm2\n\t"
-		"movaps   0x30(%0), %%xmm3\n\t"
-		"movaps   0x40(%0), %%xmm4\n\t"
-		"movaps   0x50(%0), %%xmm5\n\t"
-		"movaps   0x60(%0), %%xmm6\n\t"
-		"movaps   0x70(%0), %%xmm7\n\t"
-#if defined(__x86_64__)
-		"movaps   0x80(%0), %%xmm8\n\t"
-		"movaps   0x90(%0), %%xmm9\n\t"
-		"movaps   0xA0(%0), %%xmm10\n\t"
-		"movaps   0xB0(%0), %%xmm11\n\t"
-		"movaps   0xC0(%0), %%xmm12\n\t"
-		"movaps   0xD0(%0), %%xmm13\n\t"
-		"movaps   0xE0(%0), %%xmm14\n\t"
-		"movaps   0xF0(%0), %%xmm15\n\t"
-#endif
+		"movq    0x00(%0), %%mm0\n\t"
+		"movq    0x20(%0), %%mm1\n\t"
+		"movq    0x40(%0), %%mm2\n\t"
+		"movq    0x60(%0), %%mm3\n\t"
+		"movq    0x80(%0), %%mm4\n\t"
+		"movq    0xA0(%0), %%mm5\n\t"
+		"movq    0xC0(%0), %%mm6\n\t"
+		"movq    0xE0(%0), %%mm7\n\t"
 		"int3\n\t"
 		:
-		: "b"(xmm)
-		: "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6",
-		"%xmm7"
-#if defined(__x86_64__)
-		, "%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm12", "%xmm13",
-		"%xmm14", "%xmm15"
-#endif
+		: "b"(data)
+		: "%mm0", "%mm1", "%mm2", "%mm3", "%mm4", "%mm5", "%mm6", "%mm7"
 	);
 }
 
-ATF_TC(x86_regs_xmm_read);
-ATF_TC_HEAD(x86_regs_xmm_read, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-		"Set xmm0..xmm15 (..xmm7 on i386) reg values from debugged program "
-		"and read them via PT_GETFPREGS (PT_GETXMMREGS on i386), comparing "
-		"values against expected.");
-}
-
-ATF_TC_BODY(x86_regs_xmm_read, tc)
-{
-	const int exitval = 5;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	const int sigval = SIGTRAP;
-	int status;
-#endif
-#if defined(__x86_64__)
-	struct fpreg fpr;
-#else
-	struct xmmregs fpr;
-#endif
-
-	const struct {
-		uint64_t a, b;
-	} xmm[] __aligned(16) = {
-		{ 0x0706050403020100, 0x0F0E0D0C0B0A0908, },
-		{ 0x0807060504030201, 0x100F0E0D0C0B0A09, },
-		{ 0x0908070605040302, 0x11100F0E0D0C0B0A, },
-		{ 0x0A09080706050403, 0x1211100F0E0D0C0B, },
-		{ 0x0B0A090807060504, 0x131211100F0E0D0C, },
-		{ 0x0C0B0A0908070605, 0x14131211100F0E0D, },
-		{ 0x0D0C0B0A09080706, 0x1514131211100F0E, },
-		{ 0x0E0D0C0B0A090807, 0x161514131211100F, },
-#if defined(__x86_64__)
-		{ 0x0F0E0D0C0B0A0908, 0x1716151413121110, },
-		{ 0x100F0E0D0C0B0A09, 0x1817161514131211, },
-		{ 0x11100F0E0D0C0B0A, 0x1918171615141312, },
-		{ 0x1211100F0E0D0C0B, 0x1A19181716151413, },
-		{ 0x131211100F0E0D0C, 0x1B1A191817161514, },
-		{ 0x14131211100F0E0D, 0x1C1B1A1918171615, },
-		{ 0x1514131211100F0E, 0x1D1C1B1A19181716, },
-		{ 0x161514131211100F, 0x1E1D1C1B1A191817, },
-#endif
-	};
-
-	/* verify whether SSE is supported here */
-	DPRINTF("Before invoking cpuid\n");
-	{
-		unsigned int eax, ebx, ecx, edx;
-		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
-			atf_tc_skip("CPUID is not supported by the CPU");
-
-		DPRINTF("cpuid: EDX = %08x\n", edx);
-
-		if (!(edx & bit_SSE))
-			atf_tc_skip("SSE is not supported by the CPU");
-	}
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		DPRINTF("Before running assembly from child\n");
-		set_xmm_regs(xmm);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-#if defined(__x86_64__)
-	DPRINTF("Call GETFPREGS for the child process\n");
-	SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &fpr, 0) != -1);
-#else
-	DPRINTF("Call GETXMMREGS for the child process\n");
-	SYSCALL_REQUIRE(ptrace(PT_GETXMMREGS, child, &fpr, 0) != -1);
-#endif
-
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[0], &xmm[0], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[1], &xmm[1], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[2], &xmm[2], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[3], &xmm[3], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[4], &xmm[4], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[5], &xmm[5], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[6], &xmm[6], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[7], &xmm[7], sizeof(*xmm)));
-#if defined(__x86_64__)
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[8], &xmm[8], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[9], &xmm[9], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[10], &xmm[10], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[11], &xmm[11], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[12], &xmm[12], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[13], &xmm[13], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[14], &xmm[14], sizeof(*xmm)));
-	ATF_CHECK(!memcmp(&fpr.fxstate.fx_xmm[15], &xmm[15], sizeof(*xmm)));
-#endif
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
 __attribute__((target("sse")))
-static __inline void get_xmm_regs(void* v_xmm)
+static __inline void get_xmm_regs(union x86_test_register out[])
 {
-	const struct {
-		uint64_t a, b;
-	} fill __aligned(16) = {0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F};
+	union x86_test_register fill __aligned(32) = {
+		.xmm={ 0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F }
+	};
 
 	__asm__ __volatile__(
 		/* fill registers with clobber pattern */
@@ -2625,26 +2500,26 @@ static __inline void get_xmm_regs(void* v_xmm)
 		"\n\t"
 		"int3\n\t"
 		"\n\t"
-		"movaps  %%xmm0, 0x00(%0)\n\t"
-		"movaps  %%xmm1, 0x10(%0)\n\t"
-		"movaps  %%xmm2, 0x20(%0)\n\t"
-		"movaps  %%xmm3, 0x30(%0)\n\t"
-		"movaps  %%xmm4, 0x40(%0)\n\t"
-		"movaps  %%xmm5, 0x50(%0)\n\t"
-		"movaps  %%xmm6, 0x60(%0)\n\t"
-		"movaps  %%xmm7, 0x70(%0)\n\t"
+		"movaps  %%xmm0, 0x000(%0)\n\t"
+		"movaps  %%xmm1, 0x020(%0)\n\t"
+		"movaps  %%xmm2, 0x040(%0)\n\t"
+		"movaps  %%xmm3, 0x060(%0)\n\t"
+		"movaps  %%xmm4, 0x080(%0)\n\t"
+		"movaps  %%xmm5, 0x0A0(%0)\n\t"
+		"movaps  %%xmm6, 0x0C0(%0)\n\t"
+		"movaps  %%xmm7, 0x0E0(%0)\n\t"
 #if defined(__x86_64__)
-		"movaps  %%xmm8, 0x80(%0)\n\t"
-		"movaps  %%xmm9, 0x90(%0)\n\t"
-		"movaps  %%xmm10, 0xA0(%0)\n\t"
-		"movaps  %%xmm11, 0xB0(%0)\n\t"
-		"movaps  %%xmm12, 0xC0(%0)\n\t"
-		"movaps  %%xmm13, 0xD0(%0)\n\t"
-		"movaps  %%xmm14, 0xE0(%0)\n\t"
-		"movaps  %%xmm15, 0xF0(%0)\n\t"
+		"movaps  %%xmm8, 0x100(%0)\n\t"
+		"movaps  %%xmm9, 0x120(%0)\n\t"
+		"movaps  %%xmm10, 0x140(%0)\n\t"
+		"movaps  %%xmm11, 0x160(%0)\n\t"
+		"movaps  %%xmm12, 0x180(%0)\n\t"
+		"movaps  %%xmm13, 0x1A0(%0)\n\t"
+		"movaps  %%xmm14, 0x1C0(%0)\n\t"
+		"movaps  %%xmm15, 0x1E0(%0)\n\t"
 #endif
 		:
-		: "a"(v_xmm), "m"(fill)
+		: "a"(out), "m"(fill)
 		: "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7"
 #if defined(__x86_64__)
 		, "%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm12", "%xmm13", "%xmm14",
@@ -2653,16 +2528,136 @@ static __inline void get_xmm_regs(void* v_xmm)
 	);
 }
 
-ATF_TC(x86_regs_xmm_write);
-ATF_TC_HEAD(x86_regs_xmm_write, tc)
+__attribute__((target("sse")))
+static __inline void set_xmm_regs(const union x86_test_register data[])
 {
-	atf_tc_set_md_var(tc, "descr",
-		"Set xmm0..xmm15 (..xmm7 on i386) reg values into a debugged "
-		"program via PT_SETFPREGS (PT_SETXMMREGS on i386) and compare "
-		"the result against expected.");
+	__asm__ __volatile__(
+		"movaps   0x000(%0), %%xmm0\n\t"
+		"movaps   0x020(%0), %%xmm1\n\t"
+		"movaps   0x040(%0), %%xmm2\n\t"
+		"movaps   0x060(%0), %%xmm3\n\t"
+		"movaps   0x080(%0), %%xmm4\n\t"
+		"movaps   0x0A0(%0), %%xmm5\n\t"
+		"movaps   0x0C0(%0), %%xmm6\n\t"
+		"movaps   0x0E0(%0), %%xmm7\n\t"
+#if defined(__x86_64__)
+		"movaps   0x100(%0), %%xmm8\n\t"
+		"movaps   0x120(%0), %%xmm9\n\t"
+		"movaps   0x140(%0), %%xmm10\n\t"
+		"movaps   0x160(%0), %%xmm11\n\t"
+		"movaps   0x180(%0), %%xmm12\n\t"
+		"movaps   0x1A0(%0), %%xmm13\n\t"
+		"movaps   0x1C0(%0), %%xmm14\n\t"
+		"movaps   0x1E0(%0), %%xmm15\n\t"
+#endif
+		"int3\n\t"
+		:
+		: "b"(data)
+		: "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6",
+		"%xmm7"
+#if defined(__x86_64__)
+		, "%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm12", "%xmm13",
+		"%xmm14", "%xmm15"
+#endif
+	);
 }
 
-ATF_TC_BODY(x86_regs_xmm_write, tc)
+__attribute__((target("avx")))
+static __inline void get_ymm_regs(union x86_test_register out[])
+{
+	union x86_test_register fill __aligned(32) = {
+		{ 0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F,
+		  0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F }
+	};
+
+	__asm__ __volatile__(
+		/* fill registers with clobber pattern */
+		"vmovaps  %1, %%ymm0\n\t"
+		"vmovaps  %1, %%ymm1\n\t"
+		"vmovaps  %1, %%ymm2\n\t"
+		"vmovaps  %1, %%ymm3\n\t"
+		"vmovaps  %1, %%ymm4\n\t"
+		"vmovaps  %1, %%ymm5\n\t"
+		"vmovaps  %1, %%ymm6\n\t"
+		"vmovaps  %1, %%ymm7\n\t"
+#if defined(__x86_64__)
+		"vmovaps  %1, %%ymm8\n\t"
+		"vmovaps  %1, %%ymm9\n\t"
+		"vmovaps  %1, %%ymm10\n\t"
+		"vmovaps  %1, %%ymm11\n\t"
+		"vmovaps  %1, %%ymm12\n\t"
+		"vmovaps  %1, %%ymm13\n\t"
+		"vmovaps  %1, %%ymm14\n\t"
+		"vmovaps  %1, %%ymm15\n\t"
+#endif
+		"\n\t"
+		"int3\n\t"
+		"\n\t"
+		"vmovaps %%ymm0,  0x000(%0)\n\t"
+		"vmovaps %%ymm1,  0x020(%0)\n\t"
+		"vmovaps %%ymm2,  0x040(%0)\n\t"
+		"vmovaps %%ymm3,  0x060(%0)\n\t"
+		"vmovaps %%ymm4,  0x080(%0)\n\t"
+		"vmovaps %%ymm5,  0x0A0(%0)\n\t"
+		"vmovaps %%ymm6,  0x0C0(%0)\n\t"
+		"vmovaps %%ymm7,  0x0E0(%0)\n\t"
+#if defined(__x86_64__)
+		"vmovaps %%ymm8,  0x100(%0)\n\t"
+		"vmovaps %%ymm9,  0x120(%0)\n\t"
+		"vmovaps %%ymm10, 0x140(%0)\n\t"
+		"vmovaps %%ymm11, 0x160(%0)\n\t"
+		"vmovaps %%ymm12, 0x180(%0)\n\t"
+		"vmovaps %%ymm13, 0x1A0(%0)\n\t"
+		"vmovaps %%ymm14, 0x1C0(%0)\n\t"
+		"vmovaps %%ymm15, 0x1E0(%0)\n\t"
+#endif
+		:
+		: "a"(out), "m"(fill)
+		: "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6", "%ymm7"
+#if defined(__x86_64__)
+		, "%ymm8", "%ymm9", "%ymm10", "%ymm11", "%ymm12", "%ymm13", "%ymm14",
+		"%ymm15"
+#endif
+	);
+}
+
+__attribute__((target("avx")))
+static __inline void set_ymm_regs(const union x86_test_register data[])
+{
+	__asm__ __volatile__(
+		"vmovaps  0x000(%0), %%ymm0\n\t"
+		"vmovaps  0x020(%0), %%ymm1\n\t"
+		"vmovaps  0x040(%0), %%ymm2\n\t"
+		"vmovaps  0x060(%0), %%ymm3\n\t"
+		"vmovaps  0x080(%0), %%ymm4\n\t"
+		"vmovaps  0x0A0(%0), %%ymm5\n\t"
+		"vmovaps  0x0C0(%0), %%ymm6\n\t"
+		"vmovaps  0x0E0(%0), %%ymm7\n\t"
+#if defined(__x86_64__)
+		"vmovaps  0x100(%0), %%ymm8\n\t"
+		"vmovaps  0x120(%0), %%ymm9\n\t"
+		"vmovaps  0x140(%0), %%ymm10\n\t"
+		"vmovaps  0x160(%0), %%ymm11\n\t"
+		"vmovaps  0x180(%0), %%ymm12\n\t"
+		"vmovaps  0x1A0(%0), %%ymm13\n\t"
+		"vmovaps  0x1C0(%0), %%ymm14\n\t"
+		"vmovaps  0x1E0(%0), %%ymm15\n\t"
+#endif
+		"int3\n\t"
+		:
+		: "b"(data)
+		: "%ymm0", "%ymm1", "%ymm2", "%ymm3", "%ymm4", "%ymm5", "%ymm6",
+		"%ymm7"
+#if defined(__x86_64__)
+		, "%ymm8", "%ymm9", "%ymm10", "%ymm11", "%ymm12", "%ymm13",
+		"%ymm14", "%ymm15"
+#endif
+	);
+}
+
+static void
+x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
+    enum x86_test_regmode regmode)
 {
 	const int exitval = 5;
 	pid_t child, wpid;
@@ -2670,80 +2665,287 @@ ATF_TC_BODY(x86_regs_xmm_write, tc)
 	const int sigval = SIGTRAP;
 	int status;
 #endif
-#if defined(__x86_64__)
+	struct reg gpr;
 	struct fpreg fpr;
-#else
-	struct xmmregs fpr;
+#if defined(__i386__)
+	struct xmmregs xmm;
 #endif
+	struct xstate xst;
+	struct iovec iov;
+	struct fxsave* fxs = NULL;
+	uint64_t xst_flags = 0;
+	char core_path[] = "/tmp/core.XXXXXX";
+	int core_fd;
 
-	const struct {
-		uint64_t a, b;
-	} xmm[] __aligned(16) = {
-		{ 0x0706050403020100, 0x0F0E0D0C0B0A0908, },
-		{ 0x0807060504030201, 0x100F0E0D0C0B0A09, },
-		{ 0x0908070605040302, 0x11100F0E0D0C0B0A, },
-		{ 0x0A09080706050403, 0x1211100F0E0D0C0B, },
-		{ 0x0B0A090807060504, 0x131211100F0E0D0C, },
-		{ 0x0C0B0A0908070605, 0x14131211100F0E0D, },
-		{ 0x0D0C0B0A09080706, 0x1514131211100F0E, },
-		{ 0x0E0D0C0B0A090807, 0x161514131211100F, },
-#if defined(__x86_64__)
-		{ 0x0F0E0D0C0B0A0908, 0x1716151413121110, },
-		{ 0x100F0E0D0C0B0A09, 0x1817161514131211, },
-		{ 0x11100F0E0D0C0B0A, 0x1918171615141312, },
-		{ 0x1211100F0E0D0C0B, 0x1A19181716151413, },
-		{ 0x131211100F0E0D0C, 0x1B1A191817161514, },
-		{ 0x14131211100F0E0D, 0x1C1B1A1918171615, },
-		{ 0x1514131211100F0E, 0x1D1C1B1A19181716, },
-		{ 0x161514131211100F, 0x1E1D1C1B1A191817, },
-#endif
+	const union x86_test_register expected[] __aligned(32) = {
+		{{ 0x0706050403020100, 0x0F0E0D0C0B0A0908,
+		   0x1716151413121110, 0x1F1E1D1C1B1A1918, }},
+		{{ 0x0807060504030201, 0x100F0E0D0C0B0A09,
+		   0x1817161514131211, 0x201F1E1D1C1B1A19, }},
+		{{ 0x0908070605040302, 0x11100F0E0D0C0B0A,
+		   0x1918171615141312, 0x21201F1E1D1C1B1A, }},
+		{{ 0x0A09080706050403, 0x1211100F0E0D0C0B,
+		   0x1A19181716151413, 0x2221201F1E1D1C1B, }},
+		{{ 0x0B0A090807060504, 0x131211100F0E0D0C,
+		   0x1B1A191817161514, 0x232221201F1E1D1C, }},
+		{{ 0x0C0B0A0908070605, 0x14131211100F0E0D,
+		   0x1C1B1A1918171615, 0x24232221201F1E1D, }},
+		{{ 0x0D0C0B0A09080706, 0x1514131211100F0E,
+		   0x1D1C1B1A19181716, 0x2524232221201F1E, }},
+		{{ 0x0E0D0C0B0A090807, 0x161514131211100F,
+		   0x1E1D1C1B1A191817, 0x262524232221201F, }},
+		{{ 0x0F0E0D0C0B0A0908, 0x1716151413121110,
+		   0x1F1E1D1C1B1A1918, 0x2726252423222120, }},
+		{{ 0x100F0E0D0C0B0A09, 0x1817161514131211,
+		   0x201F1E1D1C1B1A19, 0x2827262524232221, }},
+		{{ 0x11100F0E0D0C0B0A, 0x1918171615141312,
+		   0x21201F1E1D1C1B1A, 0x2928272625242322, }},
+		{{ 0x1211100F0E0D0C0B, 0x1A19181716151413,
+		   0x2221201F1E1D1C1B, 0x2A29282726252423, }},
+		{{ 0x131211100F0E0D0C, 0x1B1A191817161514,
+		   0x232221201F1E1D1C, 0x2B2A292827262524, }},
+		{{ 0x14131211100F0E0D, 0x1C1B1A1918171615,
+		   0x24232221201F1E1D, 0x2C2B2A2928272625, }},
+		{{ 0x1514131211100F0E, 0x1D1C1B1A19181716,
+		   0x2524232221201F1E, 0x2D2C2B2A29282726, }},
+		{{ 0x161514131211100F, 0x1E1D1C1B1A191817,
+		   0x262524232221201F, 0x2E2D2C2B2A292827, }},
 	};
 
-	/* verify whether SSE is supported here */
-	DPRINTF("Before invoking cpuid\n");
-	{
+	bool need_32 = false, need_64 = false, need_cpuid = false;
+
+	switch (regs) {
+	case GPREGS_32:
+	case GPREGS_32_EBP_ESP:
+		need_32 = true;
+		break;
+	case GPREGS_64:
+	case GPREGS_64_R8:
+		need_64 = true;
+		break;
+	case FPREGS_MM:
+	case FPREGS_XMM:
+	case FPREGS_YMM:
+		need_cpuid = true;
+		break;
+	}
+
+	if (need_32) {
+#if defined(__x86_64__)
+		atf_tc_skip("Test requires 32-bit mode");
+#endif
+	}
+	if (need_64) {
+#if defined(__i386__)
+		atf_tc_skip("Test requires 64-bit mode");
+#endif
+	}
+
+	if (need_cpuid) {
+		/* verify whether needed instruction sets are supported here */
 		unsigned int eax, ebx, ecx, edx;
+
+		DPRINTF("Before invoking cpuid\n");
 		if (!__get_cpuid(1, &eax, &ebx, &ecx, &edx))
 			atf_tc_skip("CPUID is not supported by the CPU");
 
-		DPRINTF("cpuid: EDX = %08x\n", edx);
+		DPRINTF("cpuid: ECX = %08x, EDX = %08xd\n", ecx, edx);
 
-		if (!(edx & bit_SSE))
-			atf_tc_skip("SSE is not supported by the CPU");
+		switch (regs) {
+		case FPREGS_YMM:
+			if (!(ecx & bit_AVX))
+				atf_tc_skip("AVX is not supported by the CPU");
+			/*FALLTHROUGH*/
+		case FPREGS_XMM:
+			if (!(edx & bit_SSE))
+				atf_tc_skip("SSE is not supported by the CPU");
+			break;
+		case FPREGS_MM:
+			if (!(edx & bit_MMX))
+				atf_tc_skip("MMX is not supported by the CPU");
+			break;
+		case GPREGS_32:
+		case GPREGS_32_EBP_ESP:
+		case GPREGS_64:
+		case GPREGS_64_R8:
+			__unreachable();
+		}
 	}
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		struct {
-			uint64_t a, b;
-		} v_xmm[16] __aligned(16);
+		union x86_test_register vals[16] __aligned(32);
 
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		DPRINTF("Before running assembly from child\n");
-		get_xmm_regs(v_xmm);
+		switch (regmode) {
+		case TEST_GETREGS:
+		case TEST_COREDUMP:
+			switch (regs) {
+			case GPREGS_32:
+				set_gp32_regs(expected);
+				break;
+			case GPREGS_32_EBP_ESP:
+				set_gp32_ebp_esp_regs(expected);
+				break;
+			case GPREGS_64:
+				set_gp64_regs(expected);
+				break;
+			case GPREGS_64_R8:
+				set_gp64_r8_regs(expected);
+				break;
+			case FPREGS_MM:
+				set_mm_regs(expected);
+				break;
+			case FPREGS_XMM:
+				set_xmm_regs(expected);
+				break;
+			case FPREGS_YMM:
+				set_ymm_regs(expected);
+				break;
+			}
+			break;
+		case TEST_SETREGS:
+			switch (regs) {
+			case GPREGS_32:
+				get_gp32_regs(vals);
+				break;
+			case GPREGS_32_EBP_ESP:
+				get_gp32_ebp_esp_regs(vals);
+				break;
+			case GPREGS_64:
+				get_gp64_regs(vals);
+				break;
+			case GPREGS_64_R8:
+				get_gp64_r8_regs(vals);
+				break;
+			case FPREGS_MM:
+				get_mm_regs(vals);
+				break;
+			case FPREGS_XMM:
+				get_xmm_regs(vals);
+				break;
+			case FPREGS_YMM:
+				get_ymm_regs(vals);
+				break;
+			}
 
-		DPRINTF("Before comparing results\n");
-		FORKEE_ASSERT(!memcmp(&v_xmm[0], &xmm[0], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[1], &xmm[1], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[2], &xmm[2], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[3], &xmm[3], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[4], &xmm[4], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[5], &xmm[5], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[6], &xmm[6], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[7], &xmm[7], sizeof(*xmm)));
+			DPRINTF("Before comparing results\n");
+			switch (regs) {
+			case GPREGS_32:
+				FORKEE_ASSERT(!memcmp(&vals[5].u32,
+				    &expected[5].u32, sizeof(vals->u32)));
+				FORKEE_ASSERT(!memcmp(&vals[4].u32,
+				    &expected[4].u32, sizeof(vals->u32)));
+				FORKEE_ASSERT(!memcmp(&vals[3].u32,
+				    &expected[3].u32, sizeof(vals->u32)));
+				FORKEE_ASSERT(!memcmp(&vals[2].u32,
+				    &expected[2].u32, sizeof(vals->u32)));
+				/*FALLTHROUGH*/
+			case GPREGS_32_EBP_ESP:
+				FORKEE_ASSERT(!memcmp(&vals[1].u32,
+				    &expected[1].u32, sizeof(vals->u32)));
+				FORKEE_ASSERT(!memcmp(&vals[0].u32,
+				    &expected[0].u32, sizeof(vals->u32)));
+				break;
+			case GPREGS_64:
+			case GPREGS_64_R8:
+			case FPREGS_MM:
+				FORKEE_ASSERT(!memcmp(&vals[0].u64,
+				    &expected[0].u64, sizeof(vals->u64)));
+				FORKEE_ASSERT(!memcmp(&vals[1].u64,
+				    &expected[1].u64, sizeof(vals->u64)));
+				FORKEE_ASSERT(!memcmp(&vals[2].u64,
+				    &expected[2].u64, sizeof(vals->u64)));
+				FORKEE_ASSERT(!memcmp(&vals[3].u64,
+				    &expected[3].u64, sizeof(vals->u64)));
+				FORKEE_ASSERT(!memcmp(&vals[4].u64,
+				    &expected[4].u64, sizeof(vals->u64)));
+				FORKEE_ASSERT(!memcmp(&vals[5].u64,
+				    &expected[5].u64, sizeof(vals->u64)));
+				FORKEE_ASSERT(!memcmp(&vals[6].u64,
+				    &expected[6].u64, sizeof(vals->u64)));
+				FORKEE_ASSERT(!memcmp(&vals[7].u64,
+				    &expected[7].u64, sizeof(vals->u64)));
+				break;
+			case FPREGS_XMM:
+				FORKEE_ASSERT(!memcmp(&vals[0].xmm,
+				    &expected[0].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[1].xmm,
+				    &expected[1].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[2].xmm,
+				    &expected[2].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[3].xmm,
+				    &expected[3].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[4].xmm,
+				    &expected[4].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[5].xmm,
+				    &expected[5].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[6].xmm,
+				    &expected[6].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[7].xmm,
+				    &expected[7].xmm, sizeof(vals->xmm)));
 #if defined(__x86_64__)
-		FORKEE_ASSERT(!memcmp(&v_xmm[8], &xmm[8], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[9], &xmm[9], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[10], &xmm[10], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[11], &xmm[11], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[12], &xmm[12], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[13], &xmm[13], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[14], &xmm[14], sizeof(*xmm)));
-		FORKEE_ASSERT(!memcmp(&v_xmm[15], &xmm[15], sizeof(*xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[8].xmm,
+				    &expected[8].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[9].xmm,
+				    &expected[9].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[10].xmm,
+				    &expected[10].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[11].xmm,
+				    &expected[11].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[12].xmm,
+				    &expected[12].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[13].xmm,
+				    &expected[13].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[14].xmm,
+				    &expected[14].xmm, sizeof(vals->xmm)));
+				FORKEE_ASSERT(!memcmp(&vals[15].xmm,
+				    &expected[15].xmm, sizeof(vals->xmm)));
 #endif
+				break;
+			case FPREGS_YMM:
+				FORKEE_ASSERT(!memcmp(&vals[0].ymm,
+				    &expected[0].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[1].ymm,
+				    &expected[1].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[2].ymm,
+				    &expected[2].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[3].ymm,
+				    &expected[3].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[4].ymm,
+				    &expected[4].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[5].ymm,
+				    &expected[5].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[6].ymm,
+				    &expected[6].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[7].ymm,
+				    &expected[7].ymm, sizeof(vals->ymm)));
+#if defined(__x86_64__)
+				FORKEE_ASSERT(!memcmp(&vals[8].ymm,
+				    &expected[8].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[9].ymm,
+				    &expected[9].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[10].ymm,
+				    &expected[10].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[11].ymm,
+				    &expected[11].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[12].ymm,
+				    &expected[12].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[13].ymm,
+				    &expected[13].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[14].ymm,
+				    &expected[14].ymm, sizeof(vals->ymm)));
+				FORKEE_ASSERT(!memcmp(&vals[15].ymm,
+				    &expected[15].ymm, sizeof(vals->ymm)));
+#endif
+				break;
+			}
+			break;
+		}
 
 		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
@@ -2755,40 +2957,481 @@ ATF_TC_BODY(x86_regs_xmm_write, tc)
 
 	validate_status_stopped(status, sigval);
 
-#if defined(__x86_64__)
-	DPRINTF("Call GETFPREGS for the child process\n");
-	SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &fpr, 0) != -1);
+	if (regset == TEST_XSTATE) {
+		switch (regs) {
+		case FPREGS_MM:
+			xst_flags |= XCR0_X87;
+			break;
+		case FPREGS_YMM:
+			xst_flags |= XCR0_YMM_Hi128;
+			/*FALLTHROUGH*/
+		case FPREGS_XMM:
+			xst_flags |= XCR0_SSE;
+			break;
+		case GPREGS_32:
+		case GPREGS_32_EBP_ESP:
+		case GPREGS_64:
+		case GPREGS_64_R8:
+			__unreachable();
+			break;
+		}
+	}
+
+	switch (regmode) {
+	case TEST_GETREGS:
+	case TEST_SETREGS:
+		switch (regset) {
+		case TEST_GPREGS:
+			ATF_REQUIRE(regs < FPREGS_MM);
+			DPRINTF("Call GETREGS for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &gpr, 0)
+			    != -1);
+			break;
+		case TEST_XMMREGS:
+#if defined(__i386__)
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			DPRINTF("Call GETXMMREGS for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_GETXMMREGS, child, &xmm, 0)
+			    != -1);
+			fxs = &xmm.fxstate;
+			break;
 #else
-	DPRINTF("Call GETXMMREGS for the child process\n");
-	SYSCALL_REQUIRE(ptrace(PT_GETXMMREGS, child, &fpr, 0) != -1);
+			/*FALLTHROUGH*/
+#endif
+		case TEST_FPREGS:
+#if defined(__x86_64__)
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			fxs = &fpr.fxstate;
+#else
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_XMM);
+#endif
+			DPRINTF("Call GETFPREGS for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &fpr, 0)
+			    != -1);
+			break;
+		case TEST_XSTATE:
+			ATF_REQUIRE(regs >= FPREGS_MM);
+			iov.iov_base = &xst;
+			iov.iov_len = sizeof(xst);
+
+			DPRINTF("Call GETXSTATE for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_GETXSTATE, child, &iov, 0)
+			    != -1);
+
+			ATF_REQUIRE((xst.xs_rfbm & xst_flags) == xst_flags);
+			switch (regmode) {
+			case TEST_SETREGS:
+				xst.xs_rfbm = xst_flags;
+				xst.xs_xstate_bv = xst_flags;
+				break;
+			case TEST_GETREGS:
+				ATF_REQUIRE((xst.xs_xstate_bv & xst_flags)
+				    == xst_flags);
+				break;
+			case TEST_COREDUMP:
+				__unreachable();
+				break;
+			}
+
+			fxs = &xst.xs_fxsave;
+			break;
+		}
+		break;
+	case TEST_COREDUMP:
+		SYSCALL_REQUIRE((core_fd = mkstemp(core_path)) != -1);
+		close(core_fd);
+
+		DPRINTF("Call DUMPCORE for the child process\n");
+		SYSCALL_REQUIRE(ptrace(PT_DUMPCORE, child, core_path,
+		    strlen(core_path)) != -1);
+
+		switch (regset) {
+		case TEST_GPREGS:
+			ATF_REQUIRE(regs < FPREGS_MM);
+			DPRINTF("Parse core file for PT_GETREGS\n");
+			ATF_REQUIRE_EQ(core_find_note(core_path,
+			    "NetBSD-CORE@1", PT_GETREGS, &gpr, sizeof(gpr)),
+			    sizeof(gpr));
+			break;
+		case TEST_XMMREGS:
+#if defined(__i386__)
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			unlink(core_path);
+			atf_tc_skip("XMMREGS not supported in core dumps");
+			break;
+#else
+			/*FALLTHROUGH*/
+#endif
+		case TEST_FPREGS:
+#if defined(__x86_64__)
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			fxs = &fpr.fxstate;
+#else
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_XMM);
+#endif
+			DPRINTF("Parse core file for PT_GETFPREGS\n");
+			ATF_REQUIRE_EQ(core_find_note(core_path,
+			    "NetBSD-CORE@1", PT_GETFPREGS, &fpr, sizeof(fpr)),
+			    sizeof(fpr));
+			break;
+		case TEST_XSTATE:
+			ATF_REQUIRE(regs >= FPREGS_MM);
+			DPRINTF("Parse core file for PT_GETXSTATE\n");
+			ATF_REQUIRE_EQ(core_find_note(core_path,
+			    "NetBSD-CORE@1", PT_GETXSTATE, &xst, sizeof(xst)),
+			    sizeof(xst));
+			ATF_REQUIRE((xst.xs_xstate_bv & xst_flags)
+			    == xst_flags);
+			fxs = &xst.xs_fxsave;
+			break;
+		}
+		unlink(core_path);
+	}
+
+#if defined(__x86_64__)
+#define MM_REG(n) fpr.fxstate.fx_87_ac[n].r.f87_mantissa
+#else
+#define MM_REG(n) fpr.fstate.s87_ac[n].f87_mantissa
 #endif
 
-	memcpy(&fpr.fxstate.fx_xmm[0], &xmm[0], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[1], &xmm[1], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[2], &xmm[2], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[3], &xmm[3], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[4], &xmm[4], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[5], &xmm[5], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[6], &xmm[6], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[7], &xmm[7], sizeof(*xmm));
-#if defined(__x86_64__)
-	memcpy(&fpr.fxstate.fx_xmm[8], &xmm[8], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[9], &xmm[9], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[10], &xmm[10], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[11], &xmm[11], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[12], &xmm[12], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[13], &xmm[13], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[14], &xmm[14], sizeof(*xmm));
-	memcpy(&fpr.fxstate.fx_xmm[15], &xmm[15], sizeof(*xmm));
+	switch (regmode) {
+	case TEST_GETREGS:
+	case TEST_COREDUMP:
+		switch (regs) {
+		case GPREGS_32:
+#if defined(__i386__)
+			ATF_CHECK_EQ((uint32_t)gpr.r_eax, expected[0].u32);
+			ATF_CHECK_EQ((uint32_t)gpr.r_ebx, expected[1].u32);
+			ATF_CHECK_EQ((uint32_t)gpr.r_ecx, expected[2].u32);
+			ATF_CHECK_EQ((uint32_t)gpr.r_edx, expected[3].u32);
+			ATF_CHECK_EQ((uint32_t)gpr.r_esi, expected[4].u32);
+			ATF_CHECK_EQ((uint32_t)gpr.r_edi, expected[5].u32);
 #endif
+			break;
+		case GPREGS_32_EBP_ESP:
+#if defined(__i386__)
+			ATF_CHECK_EQ((uint32_t)gpr.r_esp, expected[0].u32);
+			ATF_CHECK_EQ((uint32_t)gpr.r_ebp, expected[1].u32);
+#endif
+			break;
+		case GPREGS_64:
+#if defined(__x86_64__)
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_RAX],
+			    expected[0].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_RBX],
+			    expected[1].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_RCX],
+			    expected[2].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_RDX],
+			    expected[3].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_RSI],
+			    expected[4].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_RDI],
+			    expected[5].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_RSP],
+			    expected[6].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_RBP],
+			    expected[7].u64);
+#endif
+			break;
+		case GPREGS_64_R8:
+#if defined(__x86_64__)
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R8],
+			    expected[0].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R9],
+			    expected[1].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R10],
+			    expected[2].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R11],
+			    expected[3].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R12],
+			    expected[4].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R13],
+			    expected[5].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R14],
+			    expected[6].u64);
+			ATF_CHECK_EQ((uint64_t)gpr.regs[_REG_R15],
+			    expected[7].u64);
+#endif
+			break;
+		case FPREGS_MM:
+			if (regset == TEST_FPREGS) {
+				ATF_CHECK_EQ(MM_REG(0), expected[0].u64);
+				ATF_CHECK_EQ(MM_REG(1), expected[1].u64);
+				ATF_CHECK_EQ(MM_REG(2), expected[2].u64);
+				ATF_CHECK_EQ(MM_REG(3), expected[3].u64);
+				ATF_CHECK_EQ(MM_REG(4), expected[4].u64);
+				ATF_CHECK_EQ(MM_REG(5), expected[5].u64);
+				ATF_CHECK_EQ(MM_REG(6), expected[6].u64);
+				ATF_CHECK_EQ(MM_REG(7), expected[7].u64);
+			} else {
+				ATF_CHECK_EQ(fxs->fx_87_ac[0].r.f87_mantissa,
+			    expected[0].u64);
+				ATF_CHECK_EQ(fxs->fx_87_ac[1].r.f87_mantissa,
+			    expected[1].u64);
+				ATF_CHECK_EQ(fxs->fx_87_ac[2].r.f87_mantissa,
+			    expected[2].u64);
+				ATF_CHECK_EQ(fxs->fx_87_ac[3].r.f87_mantissa,
+			    expected[3].u64);
+				ATF_CHECK_EQ(fxs->fx_87_ac[4].r.f87_mantissa,
+			    expected[4].u64);
+				ATF_CHECK_EQ(fxs->fx_87_ac[5].r.f87_mantissa,
+			    expected[5].u64);
+				ATF_CHECK_EQ(fxs->fx_87_ac[6].r.f87_mantissa,
+			    expected[6].u64);
+				ATF_CHECK_EQ(fxs->fx_87_ac[7].r.f87_mantissa,
+			    expected[7].u64);
+			}
+			break;
+		case FPREGS_YMM:
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[0],
+			    &expected[0].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[1],
+			    &expected[1].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[2],
+			    &expected[2].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[3],
+			    &expected[3].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[4],
+			    &expected[4].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[5],
+			    &expected[5].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[6],
+			    &expected[6].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[7],
+			    &expected[7].ymm.c, sizeof(expected->ymm)/2));
+#if defined(__x86_64__)
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[8],
+			    &expected[8].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[9],
+			    &expected[9].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[10],
+			    &expected[10].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[11],
+			    &expected[11].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[12],
+			    &expected[12].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[13],
+			    &expected[13].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[14],
+			    &expected[14].ymm.c, sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&xst.xs_ymm_hi128.xs_ymm[15],
+			    &expected[15].ymm.c, sizeof(expected->ymm)/2));
+#endif
+			/*FALLTHROUGH*/
+		case FPREGS_XMM:
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[0], &expected[0].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[1], &expected[1].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[2], &expected[2].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[3], &expected[3].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[4], &expected[4].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[5], &expected[5].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[6], &expected[6].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[7], &expected[7].ymm.a,
+			    sizeof(expected->ymm)/2));
+#if defined(__x86_64__)
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[8], &expected[8].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[9], &expected[9].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[10], &expected[10].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[11], &expected[11].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[12], &expected[12].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[13], &expected[13].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[14], &expected[14].ymm.a,
+			    sizeof(expected->ymm)/2));
+			ATF_CHECK(!memcmp(&fxs->fx_xmm[15], &expected[15].ymm.a,
+			    sizeof(expected->ymm)/2));
+#endif
+			break;
+		}
+		break;
+	case TEST_SETREGS:
+		switch (regs) {
+		case GPREGS_32:
+#if defined(__i386__)
+			gpr.r_eax = expected[0].u32;
+			gpr.r_ebx = expected[1].u32;
+			gpr.r_ecx = expected[2].u32;
+			gpr.r_edx = expected[3].u32;
+			gpr.r_esi = expected[4].u32;
+			gpr.r_edi = expected[5].u32;
+#endif
+			break;
+		case GPREGS_32_EBP_ESP:
+#if defined(__i386__)
+			gpr.r_esp = expected[0].u32;
+			gpr.r_ebp = expected[1].u32;
+#endif
+			break;
+		case GPREGS_64:
+#if defined(__x86_64__)
+			gpr.regs[_REG_RAX] = expected[0].u64;
+			gpr.regs[_REG_RBX] = expected[1].u64;
+			gpr.regs[_REG_RCX] = expected[2].u64;
+			gpr.regs[_REG_RDX] = expected[3].u64;
+			gpr.regs[_REG_RSI] = expected[4].u64;
+			gpr.regs[_REG_RDI] = expected[5].u64;
+			gpr.regs[_REG_RSP] = expected[6].u64;
+			gpr.regs[_REG_RBP] = expected[7].u64;
+#endif
+			break;
+		case GPREGS_64_R8:
+#if defined(__x86_64__)
+			gpr.regs[_REG_R8] = expected[0].u64;
+			gpr.regs[_REG_R9] = expected[1].u64;
+			gpr.regs[_REG_R10] = expected[2].u64;
+			gpr.regs[_REG_R11] = expected[3].u64;
+			gpr.regs[_REG_R12] = expected[4].u64;
+			gpr.regs[_REG_R13] = expected[5].u64;
+			gpr.regs[_REG_R14] = expected[6].u64;
+			gpr.regs[_REG_R15] = expected[7].u64;
+#endif
+			break;
+		case FPREGS_MM:
+			if (regset == TEST_FPREGS) {
+				MM_REG(0) = expected[0].u64;
+				MM_REG(1) = expected[1].u64;
+				MM_REG(2) = expected[2].u64;
+				MM_REG(3) = expected[3].u64;
+				MM_REG(4) = expected[4].u64;
+				MM_REG(5) = expected[5].u64;
+				MM_REG(6) = expected[6].u64;
+				MM_REG(7) = expected[7].u64;
+			} else {
+				fxs->fx_87_ac[0].r.f87_mantissa =
+				    expected[0].u64;
+				fxs->fx_87_ac[1].r.f87_mantissa =
+				    expected[1].u64;
+				fxs->fx_87_ac[2].r.f87_mantissa =
+				    expected[2].u64;
+				fxs->fx_87_ac[3].r.f87_mantissa =
+				    expected[3].u64;
+				fxs->fx_87_ac[4].r.f87_mantissa =
+				    expected[4].u64;
+				fxs->fx_87_ac[5].r.f87_mantissa =
+				    expected[5].u64;
+				fxs->fx_87_ac[6].r.f87_mantissa =
+				    expected[6].u64;
+				fxs->fx_87_ac[7].r.f87_mantissa =
+				    expected[7].u64;
+			}
+			break;
+		case FPREGS_YMM:
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[0],
+			    &expected[0].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[1],
+			    &expected[1].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[2],
+			    &expected[2].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[3],
+			    &expected[3].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[4],
+			    &expected[4].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[5],
+			    &expected[5].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[6],
+			    &expected[6].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[7],
+			    &expected[7].ymm.c, sizeof(expected->ymm)/2);
+#if defined(__x86_64__)
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[8],
+			    &expected[8].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[9],
+			    &expected[9].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[10],
+			    &expected[10].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[11],
+			    &expected[11].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[12],
+			    &expected[12].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[13],
+			    &expected[13].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[14],
+			    &expected[14].ymm.c, sizeof(expected->ymm)/2);
+			memcpy(&xst.xs_ymm_hi128.xs_ymm[15],
+			    &expected[15].ymm.c, sizeof(expected->ymm)/2);
+#endif
+			/*FALLTHROUGH*/
+		case FPREGS_XMM:
+			memcpy(&fxs->fx_xmm[0], &expected[0].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[1], &expected[1].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[2], &expected[2].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[3], &expected[3].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[4], &expected[4].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[5], &expected[5].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[6], &expected[6].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[7], &expected[7].ymm.a,
+			    sizeof(expected->ymm)/2);
+#if defined(__x86_64__)
+			memcpy(&fxs->fx_xmm[8], &expected[8].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[9], &expected[9].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[10], &expected[10].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[11], &expected[11].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[12], &expected[12].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[13], &expected[13].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[14], &expected[14].ymm.a,
+			    sizeof(expected->ymm)/2);
+			memcpy(&fxs->fx_xmm[15], &expected[15].ymm.a,
+			    sizeof(expected->ymm)/2);
+#endif
+			break;
+		}
 
-#if defined(__x86_64__)
-	DPRINTF("Call SETFPREGS for the child process\n");
-	SYSCALL_REQUIRE(ptrace(PT_SETFPREGS, child, &fpr, 0) != -1);
+		switch (regset) {
+		case TEST_GPREGS:
+			DPRINTF("Call SETREGS for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_SETREGS, child, &gpr, 0)
+			    != -1);
+			break;
+		case TEST_XMMREGS:
+#if defined(__i386__)
+			DPRINTF("Call SETXMMREGS for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_SETXMMREGS, child, &xmm, 0)
+			    != -1);
+			break;
 #else
-	DPRINTF("Call SETXMMREGS for the child process\n");
-	SYSCALL_REQUIRE(ptrace(PT_SETXMMREGS, child, &fpr, 0) != -1);
+			/*FALLTHROUGH*/
 #endif
+		case TEST_FPREGS:
+			DPRINTF("Call SETFPREGS for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_SETFPREGS, child, &fpr, 0)
+			    != -1);
+			break;
+		case TEST_XSTATE:
+			DPRINTF("Call SETXSTATE for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_SETXSTATE, child, &iov, 0)
+			    != -1);
+			break;
+		}
+		break;
+	}
+
+#undef MM_REG
 
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -2802,6 +3445,182 @@ ATF_TC_BODY(x86_regs_xmm_write, tc)
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+#define X86_REGISTER_TEST(test, regset, regs, regmode, descr)		\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr", descr);				\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+	x86_register_test(regset, regs, regmode);			\
+}
+
+X86_REGISTER_TEST(x86_gpregs32_read, TEST_GPREGS, GPREGS_32, TEST_GETREGS,
+    "Test reading basic 32-bit gp registers from debugged program "
+    "via PT_GETREGS.");
+X86_REGISTER_TEST(x86_gpregs32_write, TEST_GPREGS, GPREGS_32, TEST_SETREGS,
+    "Test writing basic 32-bit gp registers into debugged program "
+    "via PT_SETREGS.");
+X86_REGISTER_TEST(x86_gpregs32_core, TEST_GPREGS, GPREGS_32, TEST_COREDUMP,
+    "Test reading basic 32-bit gp registers from core dump.");
+X86_REGISTER_TEST(x86_gpregs32_ebp_esp_read, TEST_GPREGS, GPREGS_32_EBP_ESP,
+    TEST_GETREGS, "Test reading ebp & esp registers from debugged program "
+    "via PT_GETREGS.");
+X86_REGISTER_TEST(x86_gpregs32_ebp_esp_write, TEST_GPREGS, GPREGS_32_EBP_ESP,
+    TEST_SETREGS, "Test writing ebp & esp registers into debugged program "
+    "via PT_SETREGS.");
+X86_REGISTER_TEST(x86_gpregs32_ebp_esp_core, TEST_GPREGS, GPREGS_32_EBP_ESP,
+    TEST_COREDUMP, "Test reading ebp & esp registers from core dump.");
+
+X86_REGISTER_TEST(x86_gpregs64_read, TEST_GPREGS, GPREGS_64, TEST_GETREGS,
+    "Test reading basic 64-bit gp registers from debugged program "
+    "via PT_GETREGS.");
+X86_REGISTER_TEST(x86_gpregs64_write, TEST_GPREGS, GPREGS_64, TEST_SETREGS,
+    "Test writing basic 64-bit gp registers into debugged program "
+    "via PT_SETREGS.");
+X86_REGISTER_TEST(x86_gpregs64_core, TEST_GPREGS, GPREGS_64, TEST_COREDUMP,
+    "Test reading basic 64-bit gp registers from core dump.");
+X86_REGISTER_TEST(x86_gpregs64_r8_read, TEST_GPREGS, GPREGS_64_R8, TEST_GETREGS,
+    "Test reading r8..r15 registers from debugged program via PT_GETREGS.");
+X86_REGISTER_TEST(x86_gpregs64_r8_write, TEST_GPREGS, GPREGS_64_R8,
+    TEST_SETREGS, "Test writing r8..r15 registers into debugged program "
+    "via PT_SETREGS.");
+X86_REGISTER_TEST(x86_gpregs64_r8_core, TEST_GPREGS, GPREGS_64_R8,
+    TEST_COREDUMP, "Test reading r8..r15 registers from core dump.");
+
+X86_REGISTER_TEST(x86_fpregs_mm_read, TEST_FPREGS, FPREGS_MM, TEST_GETREGS,
+    "Test reading mm0..mm7 registers from debugged program "
+    "via PT_GETFPREGS.");
+X86_REGISTER_TEST(x86_fpregs_mm_write, TEST_FPREGS, FPREGS_MM, TEST_SETREGS,
+    "Test writing mm0..mm7 registers into debugged program "
+    "via PT_SETFPREGS.");
+X86_REGISTER_TEST(x86_fpregs_mm_core, TEST_FPREGS, FPREGS_MM, TEST_COREDUMP,
+    "Test reading mm0..mm7 registers from coredump.");
+X86_REGISTER_TEST(x86_fpregs_xmm_read, TEST_XMMREGS, FPREGS_XMM, TEST_GETREGS,
+    "Test reading xmm0..xmm15 (..xmm7 on i386) from debugged program "
+    "via PT_GETFPREGS (PT_GETXMMREGS on i386).");
+X86_REGISTER_TEST(x86_fpregs_xmm_write, TEST_XMMREGS, FPREGS_XMM, TEST_SETREGS,
+    "Test writing xmm0..xmm15 (..xmm7 on i386) into debugged program "
+    "via PT_SETFPREGS (PT_SETXMMREGS on i386).");
+X86_REGISTER_TEST(x86_fpregs_xmm_core, TEST_XMMREGS, FPREGS_XMM, TEST_COREDUMP,
+    "Test reading xmm0..xmm15 (..xmm7 on i386) from coredump.");
+
+X86_REGISTER_TEST(x86_xstate_mm_read, TEST_XSTATE, FPREGS_MM, TEST_GETREGS,
+    "Test reading mm0..mm7 registers from debugged program "
+    "via PT_GETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_mm_write, TEST_XSTATE, FPREGS_MM, TEST_SETREGS,
+    "Test writing mm0..mm7 registers into debugged program "
+    "via PT_SETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_mm_core, TEST_XSTATE, FPREGS_MM, TEST_COREDUMP,
+    "Test reading mm0..mm7 registers from core dump via XSTATE note.");
+X86_REGISTER_TEST(x86_xstate_xmm_read, TEST_XSTATE, FPREGS_XMM, TEST_GETREGS,
+    "Test reading xmm0..xmm15 (..xmm7 on i386) from debugged program "
+    "via PT_GETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_xmm_write, TEST_XSTATE, FPREGS_XMM, TEST_SETREGS,
+    "Test writing xmm0..xmm15 (..xmm7 on i386) into debugged program "
+    "via PT_SETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_xmm_core, TEST_XSTATE, FPREGS_XMM, TEST_COREDUMP,
+    "Test reading xmm0..xmm15 (..xmm7 on i386) from coredump via XSTATE note.");
+X86_REGISTER_TEST(x86_xstate_ymm_read, TEST_XSTATE, FPREGS_YMM, TEST_GETREGS,
+    "Test reading ymm0..ymm15 (..ymm7 on i386) from debugged program "
+    "via PT_GETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_ymm_write, TEST_XSTATE, FPREGS_YMM, TEST_SETREGS,
+    "Test writing ymm0..ymm15 (..ymm7 on i386) into debugged program "
+    "via PT_SETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_ymm_core, TEST_XSTATE, FPREGS_YMM, TEST_COREDUMP,
+    "Test reading ymm0..ymm15 (..ymm7 on i386) from coredump via XSTATE note.");
+
+/// ----------------------------------------------------------------------------
+
+#if defined(TWAIT_HAVE_STATUS)
+
+static void
+thread_concurrent_lwp_setup(pid_t child, lwpid_t lwpid)
+{
+	struct dbreg r;
+	union u dr7;
+
+	/* We need to set debug registers for every child */
+	DPRINTF("Call GETDBREGS for LWP %d\n", lwpid);
+	SYSCALL_REQUIRE(ptrace(PT_GETDBREGS, child, &r, lwpid) != -1);
+
+	dr7.raw = 0;
+	/* should be set to 1 according to Intel manual, 17.2 */
+	dr7.bits.reserved_10 = 1;
+	dr7.bits.local_exact_breakpt = 1;
+	dr7.bits.global_exact_breakpt = 1;
+	/* use DR0 for breakpoints */
+	dr7.bits.global_dr0_breakpoint = 1;
+	dr7.bits.condition_dr0 = 0; /* exec */
+	dr7.bits.len_dr0 = 0;
+	/* use DR1 for watchpoints */
+	dr7.bits.global_dr1_breakpoint = 1;
+	dr7.bits.condition_dr1 = 1; /* write */
+	dr7.bits.len_dr1 = 3; /* 4 bytes */
+	r.dr[7] = dr7.raw;
+	r.dr[0] = (long)(intptr_t)check_happy;
+	r.dr[1] = (long)(intptr_t)&thread_concurrent_watchpoint_var;
+	DPRINTF("dr0=%" PRIxREGISTER "\n", r.dr[0]);
+	DPRINTF("dr1=%" PRIxREGISTER "\n", r.dr[1]);
+	DPRINTF("dr7=%" PRIxREGISTER "\n", r.dr[7]);
+
+	DPRINTF("Call SETDBREGS for LWP %d\n", lwpid);
+	SYSCALL_REQUIRE(ptrace(PT_SETDBREGS, child, &r, lwpid) != -1);
+}
+
+static enum thread_concurrent_sigtrap_event
+thread_concurrent_handle_sigtrap(pid_t child, ptrace_siginfo_t *info)
+{
+	enum thread_concurrent_sigtrap_event ret = TCSE_UNKNOWN;
+	struct dbreg r;
+	union u dr7;
+
+	ATF_CHECK_EQ_MSG(info->psi_siginfo.si_code, TRAP_DBREG,
+	    "lwp=%d, expected TRAP_DBREG (%d), got %d", info->psi_lwpid,
+	    TRAP_DBREG, info->psi_siginfo.si_code);
+
+	DPRINTF("Call GETDBREGS for LWP %d\n", info->psi_lwpid);
+	SYSCALL_REQUIRE(ptrace(PT_GETDBREGS, child, &r, info->psi_lwpid) != -1);
+	DPRINTF("dr6=%" PRIxREGISTER ", dr7=%" PRIxREGISTER "\n",
+	    r.dr[6], r.dr[7]);
+
+	ATF_CHECK_MSG(r.dr[6] & 3, "lwp=%d, got DR6=%" PRIxREGISTER,
+	    info->psi_lwpid, r.dr[6]);
+
+	/* Handle only one event at a time, we should get
+	 * a separate SIGTRAP for the other one.
+	 */
+	if (r.dr[6] & 1) {
+		r.dr[6] &= ~1;
+
+		/* We need to disable the breakpoint to move
+		 * past it.
+		 *
+		 * TODO: single-step and reenable it?
+		 */
+		dr7.raw = r.dr[7];
+		dr7.bits.global_dr0_breakpoint = 0;
+		r.dr[7] = dr7.raw;
+
+		ret = TCSE_BREAKPOINT;
+	} else if (r.dr[6] & 2) {
+		r.dr[6] &= ~2;
+		ret = TCSE_WATCHPOINT;
+	}
+
+	DPRINTF("Call SETDBREGS for LWP %d\n", info->psi_lwpid);
+	DPRINTF("dr6=%" PRIxREGISTER ", dr7=%" PRIxREGISTER "\n",
+		r.dr[6], r.dr[7]);
+	SYSCALL_REQUIRE(ptrace(PT_SETDBREGS, child, &r, info->psi_lwpid) != -1);
+
+	return ret;
+}
+
+#endif /*defined(TWAIT_HAVE_STATUS)*/
+
 /// ----------------------------------------------------------------------------
 
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_X86() \
@@ -2867,10 +3686,33 @@ ATF_TC_BODY(x86_regs_xmm_write, tc)
 	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_dr2_dont_inherit_execve); \
 	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_dr3_dont_inherit_execve); \
 	ATF_TP_ADD_TC_HAVE_DBREGS(tp, x86_cve_2018_8897); \
-	ATF_TP_ADD_TC_HAVE_FPREGS(tp, x86_regs_mm_read); \
-	ATF_TP_ADD_TC_HAVE_FPREGS(tp, x86_regs_mm_write); \
-	ATF_TP_ADD_TC_HAVE_FPREGS(tp, x86_regs_xmm_read); \
-	ATF_TP_ADD_TC_HAVE_FPREGS(tp, x86_regs_xmm_write);
+	ATF_TP_ADD_TC(tp, x86_gpregs32_read); \
+	ATF_TP_ADD_TC(tp, x86_gpregs32_write); \
+	ATF_TP_ADD_TC(tp, x86_gpregs32_core); \
+	ATF_TP_ADD_TC(tp, x86_gpregs32_ebp_esp_read); \
+	ATF_TP_ADD_TC(tp, x86_gpregs32_ebp_esp_write); \
+	ATF_TP_ADD_TC(tp, x86_gpregs32_ebp_esp_core); \
+	ATF_TP_ADD_TC(tp, x86_gpregs64_read); \
+	ATF_TP_ADD_TC(tp, x86_gpregs64_write); \
+	ATF_TP_ADD_TC(tp, x86_gpregs64_core); \
+	ATF_TP_ADD_TC(tp, x86_gpregs64_r8_read); \
+	ATF_TP_ADD_TC(tp, x86_gpregs64_r8_write); \
+	ATF_TP_ADD_TC(tp, x86_gpregs64_r8_core); \
+	ATF_TP_ADD_TC(tp, x86_fpregs_mm_read); \
+	ATF_TP_ADD_TC(tp, x86_fpregs_mm_write); \
+	ATF_TP_ADD_TC(tp, x86_fpregs_mm_core); \
+	ATF_TP_ADD_TC(tp, x86_fpregs_xmm_read); \
+	ATF_TP_ADD_TC(tp, x86_fpregs_xmm_write); \
+	ATF_TP_ADD_TC(tp, x86_fpregs_xmm_core); \
+	ATF_TP_ADD_TC(tp, x86_xstate_mm_read); \
+	ATF_TP_ADD_TC(tp, x86_xstate_mm_write); \
+	ATF_TP_ADD_TC(tp, x86_xstate_mm_core); \
+	ATF_TP_ADD_TC(tp, x86_xstate_xmm_read); \
+	ATF_TP_ADD_TC(tp, x86_xstate_xmm_write); \
+	ATF_TP_ADD_TC(tp, x86_xstate_xmm_core); \
+	ATF_TP_ADD_TC(tp, x86_xstate_ymm_read); \
+	ATF_TP_ADD_TC(tp, x86_xstate_ymm_write); \
+	ATF_TP_ADD_TC(tp, x86_xstate_ymm_core);
 #else
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_X86()
 #endif

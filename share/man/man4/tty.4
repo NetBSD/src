@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.28 2011/09/24 00:06:20 christos Exp $
+.\"	$NetBSD: tty.4,v 1.28.42.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd September 9, 2011
+.Dd September 7, 2019
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -179,7 +179,6 @@ file descriptor zero by the following code fragment:
 .It Dv TIOCSLINED Fa char name[32]
 Change to the new line discipline called
 .Fa name .
-.Pp
 .It Dv TIOCGLINED Fa char name[32]
 Return the current line discipline in the string pointed to by
 .Fa name .
@@ -461,7 +460,6 @@ Point to Point Protocol line discipline.
 .It STRIPDISC
 Starmode Radio IP line discipline.
 .El
-.Pp
 .It Dv TIOCGETD Fa int *ldisc
 Return the current line discipline in the integer pointed to by
 .Fa ldisc .
@@ -478,6 +476,12 @@ Return the current line discipline in the integer pointed to by
 .Xr getty 8 ,
 .Xr linedisc 9
 .Sh HISTORY
+A console typewriter device
+.Pa /dev/tty
+and asynchronus communication interfaces
+.Pa /dev/tty[0-5]
+first appeared in
+.At v1 .
 Separate dial-out device files were implemented in SunOS 4.
 They were cloned by
 .An Charles M. Hannum

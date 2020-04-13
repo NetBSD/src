@@ -28,8 +28,8 @@ options {
 	listen-on-v6 { none; };
 	recursion yes;
 	dnssec-validation yes;
-	cookie-algorithm sha1;
-	cookie-secret "569d36a6cc27d6bf55502183302ba352745255a2";
+	cookie-algorithm siphash24;
+	cookie-secret "569d36a6cc27d6bf55502183302ba352";
 	require-server-cookie yes;
 };
 

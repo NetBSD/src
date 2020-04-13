@@ -1,4 +1,4 @@
-.\" $NetBSD: urndis.4,v 1.5 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: urndis.4,v 1.5.26.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 2010 Michael Knudsen <mk@openbsd.org>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" $OpenBSD: urndis.4,v 1.11 2011/07/20 13:12:16 jasper Exp $
 .\"
-.Dd July 20, 2011
+.Dd September 1, 2019
 .Dt URNDIS 4
 .Os
 .Sh NAME
@@ -64,9 +64,15 @@ HTC Tattoo
 .It
 HTC Wildfire
 .It
+LGE Nexus 5
+.It
+Motorola Moto X (2nd Gen.)
+.It
 Samsung Galaxy S / S2
 .It
-Samsung Nexus S
+Samsung Galaxy S8 Active
+.It
+Sony Xperia XA2
 .El
 .Pp
 The
@@ -74,11 +80,16 @@ The
 driver does not support different media types or options.
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh DIAGNOSTICS
+See
+.Xr usbnet 4
+for diagnostics.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr usb 4 ,
+.Xr usbnet 4 ,
 .Xr ifconfig.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY

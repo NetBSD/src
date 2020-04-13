@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.2.2.2 2020/04/08 14:07:23 martin Exp $
+# $NetBSD: genassym.cf,v 1.2.2.3 2020/04/13 08:03:27 martin Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,39 +70,11 @@ define	VM_MAX_KERNEL_ADDRESS	VM_MAX_KERNEL_ADDRESS
 define	VM_KERNEL_IO_ADDRESS	VM_KERNEL_IO_ADDRESS
 define	VM_KERNEL_IO_SIZE	VM_KERNEL_IO_SIZE
 define	AARCH64_KSEG_START	AARCH64_KSEG_START
+define	AARCH64_KSEG_MASK	AARCH64_KSEG_MASK
 define	UPAGES			UPAGES
 define	USPACE			(UPAGES * PAGE_SIZE)
 
 #define	PV_PA			offsetof(pv_addr_t, pv_pa)
-#define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
-#define	DOMAIN_CLIENT		DOMAIN_CLIENT
-#define	L1_S_PROTO_generic	L1_S_PROTO_generic
-#define	L1_S_PROTO_armv7	L1_S_PROTO_armv7
-#define	L1_S_PROTO_xscale	L1_S_PROTO_xscale
-#if ARM_NMMUS == 1
-#define	L1_S_PROTO		L1_S_PROTO
-#endif
-#define	L1_S_FRAME		L1_S_FRAME
-#define	L1_S_SHIFT		L1_S_SHIFT
-#define	L1_S_SIZE		L1_S_SIZE
-#define	L1_S_B			L1_S_B
-#define	L1_S_C			L1_S_C
-#define	L1_S_V6_S		L1_S_V6_S
-#define	L1_S_AP_KR		L1_S_AP(AP_KR)
-#define	L1_S_AP_KRW		L1_S_AP(AP_KRW)
-#define	L1_S_APv7_KRW		L1_S_AP(AP7_KRW)
-#define	L1_TABLE_SIZE		L1_TABLE_SIZE
-#define	L1_TYPE_S		L1_TYPE_S
-#define	L1_S_DOM_KERNEL		L1_S_DOM(PMAP_DOMAIN_KERNEL)
-#define	L2_S_SIZE		L2_S_SIZE
-
-#define	L1_C_PROTO_generic	L1_C_PROTO_generic
-
-#define	L2_S_PROTO_generic	L2_S_PROTO_generic
-#define	L2_S_SHIFT		L2_S_SHIFT
-#define	L2_S_SIZE		L2_S_SIZE
-#define	L2_C			L2_C
-#define	L2_AP_KRW		L2_AP(AP_KRW)
 
 define	L0_ADDR_BITS		L0_ADDR_BITS
 define	L0_SHIFT		L0_SHIFT

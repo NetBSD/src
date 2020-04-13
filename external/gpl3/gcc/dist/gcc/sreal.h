@@ -1,5 +1,5 @@
 /* Definitions for simple data type for real numbers.
-   Copyright (C) 2002-2017 Free Software Foundation, Inc.
+   Copyright (C) 2002-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -34,6 +34,9 @@ along with GCC; see the file COPYING3.  If not see
 #define SREAL_SIGN(v) (v < 0 ? -1: 1)
 #define SREAL_ABS(v) (v < 0 ? -v: v)
 
+struct output_block;
+struct lto_input_block;
+
 /* Structure for holding a simple real number.  */
 class sreal
 {
@@ -50,6 +53,8 @@ public:
   void dump (FILE *) const;
   int64_t to_int () const;
   double to_double () const;
+  void stream_out (struct output_block *);
+  static sreal stream_in (struct lto_input_block *);
   sreal operator+ (const sreal &other) const;
   sreal operator- (const sreal &other) const;
   sreal operator* (const sreal &other) const;

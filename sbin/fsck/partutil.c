@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.15 2015/06/03 17:53:23 martin Exp $	*/
+/*	$NetBSD: partutil.c,v 1.15.16.1 2020/04/13 08:03:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.15 2015/06/03 17:53:23 martin Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.15.16.1 2020/04/13 08:03:19 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,6 +108,7 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	}
 
 	/* Get disk description dictionary */
+	disk_dict = NULL;
 	error = prop_dictionary_recv_ioctl(fd, DIOCGDISKINFO, &disk_dict);
 
 	/* fail quickly if the device does not exist at all */
@@ -131,6 +132,8 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 		geom_dict = prop_dictionary_get(disk_dict, "geometry");
 		dict2geom(geo, geom_dict);
 	}
+	if (disk_dict != NULL)
+		prop_object_release(disk_dict);
 
 	if (dkw == NULL)
 		return 0;

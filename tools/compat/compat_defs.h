@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.112.2.1 2019/06/10 22:10:13 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.112.2.2 2020/04/13 08:05:34 martin Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -52,6 +52,17 @@ typedef unsigned int id_t;
 typedef int socklen_t;
 #endif
 
+#if !HAVE_ENUM_UIO_RW
+enum uio_rw { UIO_READ, UIO_WRITE };
+#endif
+
+#if !HAVE_ENUM_UIO_SEG
+enum uio_seg {
+	UIO_USERSPACE,		/* from user data space */
+	UIO_SYSSPACE		/* from system space */
+};
+#endif
+
 #if !HAVE_U_LONG
 typedef unsigned long u_long;
 #endif
@@ -66,6 +77,22 @@ typedef unsigned int u_int;
 
 #if !HAVE_U_SHORT
 typedef unsigned short u_short;
+#endif
+
+#if !HAVE_UCHAR_T
+typedef unsigned char uchar_t;
+#endif
+
+#if !HAVE_USHORT_T
+typedef unsigned short ushort_t;
+#endif
+
+#if !HAVE_UINT_T
+typedef unsigned int uint_t;
+#endif
+
+#if !HAVE_ULONG_T
+typedef unsigned long ulong_t;
 #endif
 
 /* System headers needed for (re)definitions below. */
@@ -111,6 +138,10 @@ typedef unsigned short u_short;
 
 #if HAVE_RPC_TYPES_H
 #include <rpc/types.h>
+#endif
+
+#if HAVE_SYS_UIO_H
+#include <sys/uio.h>
 #endif
 
 #ifdef _NETBSD_SOURCE

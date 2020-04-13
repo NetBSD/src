@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata_test.c,v 1.5.2.2 2019/06/10 22:04:39 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.5.2.3 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +38,8 @@
 #include <dns/rdata.h>
 
 #include "dnstest.h"
+
+static bool debug = false;
 
 /*
  * An array of these structures is passed to compare_ok().
@@ -105,8 +108,53 @@ typedef struct wire_ok {
 					ok				      \
 				}
 #define WIRE_VALID(...)		WIRE_TEST(true, __VA_ARGS__)
-#define WIRE_INVALID(...)	WIRE_TEST(false, __VA_ARGS__)
+/*
+ * WIRE_INVALID() test cases must always have at least one octet specified to
+ * distinguish them from WIRE_SENTINEL().  Use the 'empty_ok' parameter passed
+ * to check_wire_ok() for indicating whether empty RDATA is allowed for a given
+ * RR type or not.
+ */
+#define WIRE_INVALID(FIRST, ...) \
+				WIRE_TEST(false, FIRST, __VA_ARGS__)
 #define WIRE_SENTINEL()		WIRE_TEST(false)
+
+/*
+ * Call dns_rdata_fromwire() for data in 'src', which is 'srclen' octets in
+ * size and represents RDATA of given 'type' and 'class'.  Store the resulting
+ * uncompressed wire form in 'dst', which is 'dstlen' octets in size, and make
+ * 'rdata' refer to that uncompressed wire form.
+ */
+static isc_result_t
+wire_to_rdata(const unsigned char *src, size_t srclen,
+	      dns_rdataclass_t rdclass, dns_rdatatype_t type,
+	      unsigned char *dst, size_t dstlen, dns_rdata_t *rdata)
+{
+	isc_buffer_t source, target;
+	dns_decompress_t dctx;
+	isc_result_t result;
+
+	/*
+	 * Set up len-octet buffer pointing at data.
+	 */
+	isc_buffer_constinit(&source, src, srclen);
+	isc_buffer_add(&source, srclen);
+	isc_buffer_setactive(&source, srclen);
+
+	/*
+	 * Initialize target buffer.
+	 */
+	isc_buffer_init(&target, dst, dstlen);
+
+	/*
+	 * Try converting input data into uncompressed wire form.
+	 */
+	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_ANY);
+	result = dns_rdata_fromwire(rdata, rdclass, type, &source, &dctx, 0,
+				    &target);
+	dns_decompress_invalidate(&dctx);
+
+	return (result);
+}
 
 /*
  * Test whether converting rdata to a type-specific struct and then back to
@@ -162,8 +210,8 @@ static void
 check_text_ok_single(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
 		     dns_rdatatype_t type, size_t structsize)
 {
-	dns_rdata_t rdata = DNS_RDATA_INIT;
-	unsigned char buf_fromtext[1024];
+	unsigned char buf_fromtext[1024], buf_fromwire[1024];
+	dns_rdata_t rdata = DNS_RDATA_INIT, rdata2 = DNS_RDATA_INIT;
 	char buf_totext[1024] = { 0 };
 	isc_buffer_t target;
 	isc_result_t result;
@@ -178,8 +226,14 @@ check_text_ok_single(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
 	 * Check whether result is as expected.
 	 */
 	if (text_ok->text_out != NULL) {
+		if (debug && result != ISC_R_SUCCESS) {
+			fprintf(stdout, "#'%s'\n", text_ok->text_in);
+		}
 		assert_int_equal(result, ISC_R_SUCCESS);
 	} else {
+		if (debug && result == ISC_R_SUCCESS) {
+			fprintf(stdout, "#'%s'\n", text_ok->text_in);
+		}
 		assert_int_not_equal(result, ISC_R_SUCCESS);
 	}
 
@@ -190,6 +244,7 @@ check_text_ok_single(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
 	if (result != ISC_R_SUCCESS) {
 		return;
 	}
+
 	/*
 	 * Try converting uncompressed wire form RDATA back into text form and
 	 * check whether the resulting text is the same as the original one.
@@ -197,13 +252,128 @@ check_text_ok_single(const text_ok_t *text_ok, dns_rdataclass_t rdclass,
 	isc_buffer_init(&target, buf_totext, sizeof(buf_totext));
 	result = dns_rdata_totext(&rdata, NULL, &target);
 	assert_int_equal(result, ISC_R_SUCCESS);
+	/*
+	 * Ensure buf_totext is properly NUL terminated as dns_rdata_totext()
+	 * may attempt different output formats writing into the apparently
+	 * unused part of the buffer.
+	 */
+	isc_buffer_putuint8(&target, 0);
+	if (debug && strcmp(buf_totext, text_ok->text_out) != 0) {
+		fprintf(stdout, "# '%s' != '%s'\n",
+			buf_totext, text_ok->text_out);
+	}
 	assert_string_equal(buf_totext, text_ok->text_out);
+
+	/*
+	 * Ensure that fromtext_*() output is valid input for fromwire_*().
+	 */
+	result = wire_to_rdata(rdata.data, rdata.length, rdclass, type,
+			       buf_fromwire, sizeof(buf_fromwire), &rdata2);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(rdata.length, rdata2.length);
+	assert_memory_equal(rdata.data, buf_fromwire, rdata.length);
 
 	/*
 	 * Perform two-way conversion checks between uncompressed wire form and
 	 * type-specific struct.
 	 */
 	check_struct_conversions(&rdata, structsize);
+}
+
+/*
+ * Test whether converting rdata to text form and then parsing the result of
+ * that conversion again results in the same uncompressed wire form.  This
+ * checks whether totext_*() output is parsable by fromtext_*() for given RR
+ * class and type.
+ *
+ * This function is called for every input RDATA which is successfully parsed
+ * by check_wire_ok_single() and whose type is not a meta-type.
+ */
+static void
+check_text_conversions(dns_rdata_t *rdata) {
+	char buf_totext[1024] = { 0 };
+	unsigned char buf_fromtext[1024];
+	isc_result_t result;
+	isc_buffer_t target;
+	dns_rdata_t rdata2 = DNS_RDATA_INIT;
+
+	/*
+	 * Convert uncompressed wire form RDATA into text form.  This
+	 * conversion must succeed since input RDATA was successfully
+	 * parsed by check_wire_ok_single().
+	 */
+	isc_buffer_init(&target, buf_totext, sizeof(buf_totext));
+	result = dns_rdata_totext(rdata, NULL, &target);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	/*
+	 * Ensure buf_totext is properly NUL terminated as dns_rdata_totext()
+	 * may attempt different output formats writing into the apparently
+	 * unused part of the buffer.
+	 */
+	isc_buffer_putuint8(&target, 0);
+	if (debug) {
+		fprintf(stdout, "#'%s'\n", buf_totext);
+	}
+
+	/*
+	 * Try parsing text form RDATA output by dns_rdata_totext() again.
+	 */
+	result = dns_test_rdatafromstring(&rdata2, rdata->rdclass, rdata->type,
+					  buf_fromtext, sizeof(buf_fromtext),
+					  buf_totext, false);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(rdata2.length, rdata->length);
+	assert_memory_equal(buf_fromtext, rdata->data, rdata->length);
+}
+
+/*
+ * Test whether converting rdata to multi-line text form and then parsing the
+ * result of that conversion again results in the same uncompressed wire form.
+ * This checks whether multi-line totext_*() output is parsable by fromtext_*()
+ * for given RR class and type.
+ *
+ * This function is called for every input RDATA which is successfully parsed
+ * by check_wire_ok_single() and whose type is not a meta-type.
+ */
+static void
+check_multiline_text_conversions(dns_rdata_t *rdata) {
+	char buf_totext[1024] = { 0 };
+	unsigned char buf_fromtext[1024];
+	isc_result_t result;
+	isc_buffer_t target;
+	dns_rdata_t rdata2 = DNS_RDATA_INIT;
+	unsigned int flags;
+
+	/*
+	 * Convert uncompressed wire form RDATA into multi-line text form.
+	 * This conversion must succeed since input RDATA was successfully
+	 * parsed by check_wire_ok_single().
+	 */
+	isc_buffer_init(&target, buf_totext, sizeof(buf_totext));
+	flags = dns_master_styleflags(&dns_master_style_default);
+	result = dns_rdata_tofmttext(rdata, dns_rootname, flags, 80 - 32, 4,
+				     "\n", &target);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	/*
+	 * Ensure buf_totext is properly NUL terminated as
+	 * dns_rdata_tofmttext() may attempt different output formats
+	 * writing into the apparently unused part of the buffer.
+	 */
+	isc_buffer_putuint8(&target, 0);
+	if (debug) {
+		fprintf(stdout, "#'%s'\n", buf_totext);
+	}
+
+	/*
+	 * Try parsing multi-line text form RDATA output by
+	 * dns_rdata_tofmttext() again.
+	 */
+	result = dns_test_rdatafromstring(&rdata2, rdata->rdclass, rdata->type,
+					  buf_fromtext, sizeof(buf_fromtext),
+					  buf_totext, false);
+	assert_int_equal(result, ISC_R_SUCCESS);
+	assert_int_equal(rdata2.length, rdata->length);
+	assert_memory_equal(buf_fromtext, rdata->data, rdata->length);
 }
 
 /*
@@ -214,30 +384,15 @@ static void
 check_wire_ok_single(const wire_ok_t *wire_ok, dns_rdataclass_t rdclass,
 		     dns_rdatatype_t type, size_t structsize)
 {
-	isc_buffer_t source, target;
 	unsigned char buf[1024];
-	dns_decompress_t dctx;
 	isc_result_t result;
-	dns_rdata_t rdata;
+	dns_rdata_t rdata = DNS_RDATA_INIT;
 
-	/*
-	 * Set up len-octet buffer pointing at data.
-	 */
-	isc_buffer_constinit(&source, wire_ok->data, wire_ok->len);
-	isc_buffer_add(&source, wire_ok->len);
-	isc_buffer_setactive(&source, wire_ok->len);
-	/*
-	 * Initialize target structures.
-	 */
-	isc_buffer_init(&target, buf, sizeof(buf));
-	dns_rdata_init(&rdata);
 	/*
 	 * Try converting wire data into uncompressed wire form.
 	 */
-	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_ANY);
-	result = dns_rdata_fromwire(&rdata, rdclass, type, &source, &dctx, 0,
-				    &target);
-	dns_decompress_invalidate(&dctx);
+	result = wire_to_rdata(wire_ok->data, wire_ok->len, rdclass, type,
+			       buf, sizeof(buf), &rdata);
 	/*
 	 * Check whether result is as expected.
 	 */
@@ -249,9 +404,19 @@ check_wire_ok_single(const wire_ok_t *wire_ok, dns_rdataclass_t rdclass,
 	/*
 	 * If data was parsed correctly, perform two-way conversion checks
 	 * between uncompressed wire form and type-specific struct.
+	 *
+	 * If the RR type is not a meta-type, additionally perform two-way
+	 * conversion checks between:
+	 *
+	 *   - uncompressed wire form and text form,
+	 *   - uncompressed wire form and multi-line text form.
 	 */
 	if (result == ISC_R_SUCCESS) {
 		check_struct_conversions(&rdata, structsize);
+		if (!dns_rdatatype_ismeta(rdata.type)) {
+			check_text_conversions(&rdata);
+			check_multiline_text_conversions(&rdata);
+		}
 	}
 }
 
@@ -398,6 +563,43 @@ check_rdata(const text_ok_t *text_ok, const wire_ok_t *wire_ok,
 	if (compare_ok != NULL) {
 		check_compare_ok(compare_ok, rdclass, type);
 	}
+}
+
+/*
+ * Common tests for RR types based on KEY that require key data:
+ *
+ *   - CDNSKEY (RFC 7344)
+ *   - DNSKEY (RFC 4034)
+ *   - RKEY (draft-reid-dnsext-rkey-00)
+ */
+static void
+key_required(void **state, dns_rdatatype_t type, size_t size) {
+	wire_ok_t wire_ok[] = {
+		/*
+		 * RDATA must be at least 5 octets in size:
+		 *
+		 *   - 2 octets for Flags,
+		 *   - 1 octet for Protocol,
+		 *   - 1 octet for Algorithm,
+		 *   - Public Key must not be empty.
+		 *
+		 * RFC 2535 section 3.1.2 allows the Public Key to be empty if
+		 * bits 0-1 of Flags are both set, but that only applies to KEY
+		 * records: for the RR types tested here, the Public Key must
+		 * not be empty.
+		 */
+		WIRE_INVALID(0x00),
+		WIRE_INVALID(0x00, 0x00),
+		WIRE_INVALID(0x00, 0x00, 0x00),
+		WIRE_INVALID(0xc0, 0x00, 0x00, 0x00),
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x00),
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
+		WIRE_SENTINEL()
+	};
+
+	UNUSED(state);
+
+	check_rdata(NULL, wire_ok, NULL, false, dns_rdataclass_in, type, size);
 }
 
 /* APL RDATA manipulations */
@@ -658,6 +860,11 @@ amtrelay(void **state) {
 		    dns_rdatatype_amtrelay, sizeof(dns_rdata_amtrelay_t));
 }
 
+static void
+cdnskey(void **state) {
+	key_required(state, dns_rdatatype_cdnskey, sizeof(dns_rdata_cdnskey_t));
+}
+
 /*
  * CSYNC tests.
  *
@@ -784,6 +991,11 @@ csync(void **state) {
 
 	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
 		    dns_rdatatype_csync, sizeof(dns_rdata_csync_t));
+}
+
+static void
+dnskey(void **state) {
+	key_required(state, dns_rdatatype_dnskey, sizeof(dns_rdata_dnskey_t));
 }
 
 /*
@@ -1002,6 +1214,274 @@ doa(void **state) {
 }
 
 /*
+ * DS tests.
+ *
+ * RFC 4034:
+ *
+ * 5.1.  DS RDATA Wire Format
+ *
+ *    The RDATA for a DS RR consists of a 2 octet Key Tag field, a 1 octet
+ *    Algorithm field, a 1 octet Digest Type field, and a Digest field.
+ *
+ *                         1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
+ *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |           Key Tag             |  Algorithm    |  Digest Type  |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    /                                                               /
+ *    /                            Digest                             /
+ *    /                                                               /
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *
+ * 5.1.1.  The Key Tag Field
+ *
+ *    The Key Tag field lists the key tag of the DNSKEY RR referred to by
+ *    the DS record, in network byte order.
+ *
+ *    The Key Tag used by the DS RR is identical to the Key Tag used by
+ *    RRSIG RRs.  Appendix B describes how to compute a Key Tag.
+ *
+ * 5.1.2.  The Algorithm Field
+ *
+ *    The Algorithm field lists the algorithm number of the DNSKEY RR
+ *    referred to by the DS record.
+ *
+ *    The algorithm number used by the DS RR is identical to the algorithm
+ *    number used by RRSIG and DNSKEY RRs.  Appendix A.1 lists the
+ *    algorithm number types.
+ *
+ * 5.1.3.  The Digest Type Field
+ *
+ *    The DS RR refers to a DNSKEY RR by including a digest of that DNSKEY
+ *    RR.  The Digest Type field identifies the algorithm used to construct
+ *    the digest.  Appendix A.2 lists the possible digest algorithm types.
+ *
+ * 5.1.4.  The Digest Field
+ *
+ *    The DS record refers to a DNSKEY RR by including a digest of that
+ *    DNSKEY RR.
+ *
+ *    The digest is calculated by concatenating the canonical form of the
+ *    fully qualified owner name of the DNSKEY RR with the DNSKEY RDATA,
+ *    and then applying the digest algorithm.
+ *
+ *      digest = digest_algorithm( DNSKEY owner name | DNSKEY RDATA);
+ *
+ *       "|" denotes concatenation
+ *
+ *      DNSKEY RDATA = Flags | Protocol | Algorithm | Public Key.
+ *
+ *    The size of the digest may vary depending on the digest algorithm and
+ *    DNSKEY RR size.  As of the time of this writing, the only defined
+ *    digest algorithm is SHA-1, which produces a 20 octet digest.
+ */
+static void
+ds(void **state) {
+	text_ok_t text_ok[] = {
+		/*
+		 * Invalid, empty record.
+		 */
+		TEXT_INVALID(""),
+		/*
+		 * Invalid, no algorithm.
+		 */
+		TEXT_INVALID("0"),
+		/*
+		 * Invalid, no digest type.
+		 */
+		TEXT_INVALID("0 0"),
+		/*
+		 * Invalid, no digest.
+		 */
+		TEXT_INVALID("0 0 0"),
+		/*
+		 * Valid, 1-octet digest for a reserved digest type.
+		 */
+		TEXT_VALID("0 0 0 00"),
+		/*
+		 * Invalid, short SHA-1 digest.
+		 */
+		TEXT_INVALID("0 0 1 00"),
+		TEXT_INVALID("0 0 1 4FDCE83016EDD29077621FE568F8DADDB5809B"),
+		/*
+		 * Valid, 20-octet SHA-1 digest.
+		 */
+		TEXT_VALID("0 0 1 4FDCE83016EDD29077621FE568F8DADDB5809B6A"),
+		/*
+		 * Invalid, excessively long SHA-1 digest.
+		 */
+		TEXT_INVALID("0 0 1 4FDCE83016EDD29077621FE568F8DADDB5809B"
+			     "6A00"),
+		/*
+		 * Invalid, short SHA-256 digest.
+		 */
+		TEXT_INVALID("0 0 2 00"),
+		TEXT_INVALID("0 0 2 D001BD422FFDA9B745425B71DC17D007E69186"
+			     "9BD59C5F237D9BF85434C313"),
+		/*
+		 * Valid, 32-octet SHA-256 digest.
+		 */
+		TEXT_VALID_CHANGED(
+			   "0 0 2 D001BD422FFDA9B745425B71DC17D007E691869B"
+			   "D59C5F237D9BF85434C3133F",
+			   "0 0 2 D001BD422FFDA9B745425B71DC17D007E691869B"
+			   "D59C5F237D9BF854 34C3133F"),
+		/*
+		 * Invalid, excessively long SHA-256 digest.
+		 */
+		TEXT_INVALID("0 0 2 D001BD422FFDA9B745425B71DC17D007E69186"
+			     "9BD59C5F237D9BF85434C3133F00"),
+		/*
+		 * Valid, GOST is no longer supported, hence no length checks.
+		 */
+		TEXT_VALID("0 0 3 00"),
+		/*
+		 * Invalid, short SHA-384 digest.
+		 */
+		TEXT_INVALID("0 0 4 00"),
+		TEXT_INVALID("0 0 4 AC748D6C5AA652904A8763D64B7DFFFFA98152"
+			     "BE12128D238BEBB4814B648F5A841E15CAA2DE348891"
+			     "A37A699F65E5"),
+		/*
+		 * Valid, 48-octet SHA-384 digest.
+		 */
+		TEXT_VALID_CHANGED(
+			   "0 0 4 AC748D6C5AA652904A8763D64B7DFFFFA98152BE"
+			   "12128D238BEBB4814B648F5A841E15CAA2DE348891A37A"
+			   "699F65E54D",
+			   "0 0 4 AC748D6C5AA652904A8763D64B7DFFFFA98152BE"
+			   "12128D238BEBB481 4B648F5A841E15CAA2DE348891A37A"
+			   "699F65E54D"),
+		/*
+		 * Invalid, excessively long SHA-384 digest.
+		 */
+		TEXT_INVALID("0 0 4 AC748D6C5AA652904A8763D64B7DFFFFA98152"
+			     "BE12128D238BEBB4814B648F5A841E15CAA2DE348891"
+			     "A37A699F65E54D00"),
+		/*
+		 * Valid, 1-octet digest for an unassigned digest type.
+		 */
+		TEXT_VALID("0 0 5 00"),
+		/*
+		 * Sentinel.
+		 */
+		TEXT_SENTINEL()
+	};
+	wire_ok_t wire_ok[] = {
+		/*
+		 * Invalid, truncated key tag.
+		 */
+		WIRE_INVALID(0x00),
+		/*
+		 * Invalid, no algorithm.
+		 */
+		WIRE_INVALID(0x00, 0x00),
+		/*
+		 * Invalid, no digest type.
+		 */
+		WIRE_INVALID(0x00, 0x00, 0x00),
+		/*
+		 * Invalid, no digest.
+		 */
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x00),
+		/*
+		 * Valid, 1-octet digest for a reserved digest type.
+		 */
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
+		/*
+		 * Invalid, short SHA-1 digest.
+		 */
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x01, 0x00),
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x01, 0x4F, 0xDC, 0xE8, 0x30,
+			     0x16, 0xED, 0xD2, 0x90, 0x77, 0x62, 0x1F, 0xE5,
+			     0x68, 0xF8, 0xDA, 0xDD, 0xB5, 0x80, 0x9B),
+		/*
+		 * Valid, 20-octet SHA-1 digest.
+		 */
+		WIRE_VALID(0x00, 0x00, 0x00, 0x01, 0x4F, 0xDC, 0xE8, 0x30,
+			   0x16, 0xED, 0xD2, 0x90, 0x77, 0x62, 0x1F, 0xE5,
+			   0x68, 0xF8, 0xDA, 0xDD, 0xB5, 0x80, 0x9B, 0x6A),
+		/*
+		 * Invalid, excessively long SHA-1 digest.
+		 */
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x01, 0x4F, 0xDC, 0xE8, 0x30,
+			     0x16, 0xED, 0xD2, 0x90, 0x77, 0x62, 0x1F, 0xE5,
+			     0x68, 0xF8, 0xDA, 0xDD, 0xB5, 0x80, 0x9B, 0x6A,
+			     0x00),
+		/*
+		 * Invalid, short SHA-256 digest.
+		 */
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x02, 0x00),
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x02, 0xD0, 0x01, 0xBD, 0x42,
+			     0x2F, 0xFD, 0xA9, 0xB7, 0x45, 0x42, 0x5B, 0x71,
+			     0xDC, 0x17, 0xD0, 0x07, 0xE6, 0x91, 0x86, 0x9B,
+			     0xD5, 0x9C, 0x5F, 0x23, 0x7D, 0x9B, 0xF8, 0x54,
+			     0x34, 0xC3, 0x13),
+		/*
+		 * Valid, 32-octet SHA-256 digest.
+		 */
+		WIRE_VALID(0x00, 0x00, 0x00, 0x02, 0xD0, 0x01, 0xBD, 0x42,
+			   0x2F, 0xFD, 0xA9, 0xB7, 0x45, 0x42, 0x5B, 0x71,
+			   0xDC, 0x17, 0xD0, 0x07, 0xE6, 0x91, 0x86, 0x9B,
+			   0xD5, 0x9C, 0x5F, 0x23, 0x7D, 0x9B, 0xF8, 0x54,
+			   0x34, 0xC3, 0x13, 0x3F),
+		/*
+		 * Invalid, excessively long SHA-256 digest.
+		 */
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x02, 0xD0, 0x01, 0xBD, 0x42,
+			     0x2F, 0xFD, 0xA9, 0xB7, 0x45, 0x42, 0x5B, 0x71,
+			     0xDC, 0x17, 0xD0, 0x07, 0xE6, 0x91, 0x86, 0x9B,
+			     0xD5, 0x9C, 0x5F, 0x23, 0x7D, 0x9B, 0xF8, 0x54,
+			     0x34, 0xC3, 0x13, 0x3F, 0x00),
+		/*
+		 * Valid, GOST is no longer supported, hence no length checks.
+		 */
+		WIRE_VALID(0x00, 0x00, 0x00, 0x03, 0x00),
+		/*
+		 * Invalid, short SHA-384 digest.
+		 */
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x04, 0x00),
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x04, 0xAC, 0x74, 0x8D, 0x6C,
+			     0x5A, 0xA6, 0x52, 0x90, 0x4A, 0x87, 0x63, 0xD6,
+			     0x4B, 0x7D, 0xFF, 0xFF, 0xA9, 0x81, 0x52, 0xBE,
+			     0x12, 0x12, 0x8D, 0x23, 0x8B, 0xEB, 0xB4, 0x81,
+			     0x4B, 0x64, 0x8F, 0x5A, 0x84, 0x1E, 0x15, 0xCA,
+			     0xA2, 0xDE, 0x34, 0x88, 0x91, 0xA3, 0x7A, 0x69,
+			     0x9F, 0x65, 0xE5),
+		/*
+		 * Valid, 48-octet SHA-384 digest.
+		 */
+		WIRE_VALID(0x00, 0x00, 0x00, 0x04, 0xAC, 0x74, 0x8D, 0x6C,
+			   0x5A, 0xA6, 0x52, 0x90, 0x4A, 0x87, 0x63, 0xD6,
+			   0x4B, 0x7D, 0xFF, 0xFF, 0xA9, 0x81, 0x52, 0xBE,
+			   0x12, 0x12, 0x8D, 0x23, 0x8B, 0xEB, 0xB4, 0x81,
+			   0x4B, 0x64, 0x8F, 0x5A, 0x84, 0x1E, 0x15, 0xCA,
+			   0xA2, 0xDE, 0x34, 0x88, 0x91, 0xA3, 0x7A, 0x69,
+			   0x9F, 0x65, 0xE5, 0x4D),
+		/*
+		 * Invalid, excessively long SHA-384 digest.
+		 */
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x04, 0xAC, 0x74, 0x8D, 0x6C,
+			     0x5A, 0xA6, 0x52, 0x90, 0x4A, 0x87, 0x63, 0xD6,
+			     0x4B, 0x7D, 0xFF, 0xFF, 0xA9, 0x81, 0x52, 0xBE,
+			     0x12, 0x12, 0x8D, 0x23, 0x8B, 0xEB, 0xB4, 0x81,
+			     0x4B, 0x64, 0x8F, 0x5A, 0x84, 0x1E, 0x15, 0xCA,
+			     0xA2, 0xDE, 0x34, 0x88, 0x91, 0xA3, 0x7A, 0x69,
+			     0x9F, 0x65, 0xE5, 0x4D, 0x00),
+		WIRE_VALID(0x00, 0x00, 0x04, 0x00, 0x00),
+		/*
+		 * Sentinel.
+		 */
+		WIRE_SENTINEL()
+	};
+
+	UNUSED(state);
+
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
+		    dns_rdatatype_ds, sizeof(dns_rdata_ds_t));
+}
+
+/*
  * EDNS Client Subnet tests.
  *
  * RFC 7871:
@@ -1184,11 +1664,8 @@ eid(void **state) {
 		TEXT_SENTINEL()
 	};
 	wire_ok_t wire_ok[] = {
-		/*
-		 * Too short.
-		 */
-		WIRE_INVALID(),
 		WIRE_VALID(0x00),
+		WIRE_VALID(0xAA, 0xBB, 0xCC),
 		/*
 		 * Sentinel.
 		 */
@@ -1210,9 +1687,7 @@ hip(void **state) {
 				    0x01, 0x00, 0x00, 0x01, 0x00, 0x00,
 				    0x04, 0x41, 0x42, 0x43, 0x44, 0x00 };
 	unsigned char buf[1024*1024];
-	isc_buffer_t source, target;
-	dns_rdata_t rdata;
-	dns_decompress_t dctx;
+	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_result_t result;
 	size_t i;
 
@@ -1226,16 +1701,8 @@ hip(void **state) {
 		hipwire[i+1] = 0x06;
 	}
 
-	isc_buffer_init(&source, hipwire, sizeof(hipwire));
-	isc_buffer_add(&source, sizeof(hipwire));
-	isc_buffer_setactive(&source, i);
-	isc_buffer_init(&target, buf, sizeof(buf));
-	dns_rdata_init(&rdata);
-	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_ANY);
-	result = dns_rdata_fromwire(&rdata, dns_rdataclass_in,
-				    dns_rdatatype_hip, &source, &dctx,
-				    0, &target);
-	dns_decompress_invalidate(&dctx);
+	result = wire_to_rdata(hipwire, sizeof(hipwire), dns_rdataclass_in,
+			       dns_rdatatype_hip, buf, sizeof(buf), &rdata);
 	assert_int_equal(result, DNS_R_FORMERR);
 }
 
@@ -1332,6 +1799,41 @@ isdn(void **state) {
 }
 
 /*
+ * KEY tests.
+ */
+static void
+key(void **state) {
+	wire_ok_t wire_ok[] = {
+		/*
+		 * RDATA is comprised of:
+		 *
+		 *   - 2 octets for Flags,
+		 *   - 1 octet for Protocol,
+		 *   - 1 octet for Algorithm,
+		 *   - variable number of octets for Public Key.
+		 *
+		 * RFC 2535 section 3.1.2 states that if bits 0-1 of Flags are
+		 * both set, the RR stops after the algorithm octet and thus
+		 * its length must be 4 octets.  In any other case, though, the
+		 * Public Key part must not be empty.
+		 */
+		WIRE_INVALID(0x00),
+		WIRE_INVALID(0x00, 0x00),
+		WIRE_INVALID(0x00, 0x00, 0x00),
+		WIRE_VALID(0xc0, 0x00, 0x00, 0x00),
+		WIRE_INVALID(0xc0, 0x00, 0x00, 0x00, 0x00),
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x00),
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
+		WIRE_SENTINEL()
+	};
+
+	UNUSED(state);
+
+	check_rdata(NULL, wire_ok, NULL, false, dns_rdataclass_in,
+		    dns_rdatatype_key, sizeof(dns_rdata_key_t));
+}
+
+/*
  * http://ana-3.lcs.mit.edu/~jnc/nimrod/dns.txt
  *
  * The RDATA portion of both the NIMLOC and EID records contains
@@ -1352,11 +1854,8 @@ nimloc(void **state) {
 		TEXT_SENTINEL()
 	};
 	wire_ok_t wire_ok[] = {
-		/*
-		 * Too short.
-		 */
-		WIRE_INVALID(),
 		WIRE_VALID(0x00),
+		WIRE_VALID(0xAA, 0xBB, 0xCC),
 		/*
 		 * Sentinel.
 		 */
@@ -1448,7 +1947,7 @@ nsec(void **state) {
 		WIRE_INVALID(0x00, 0x00),
 		WIRE_INVALID(0x00, 0x00, 0x00),
 		WIRE_VALID(0x00, 0x00, 0x01, 0x02),
-		WIRE_INVALID()
+		WIRE_SENTINEL()
 	};
 
 	UNUSED(state);
@@ -1469,8 +1968,8 @@ nsec3(void **state) {
 		TEXT_INVALID("."),
 		TEXT_INVALID(". RRSIG"),
 		TEXT_INVALID("1 0 10 76931F"),
-		TEXT_INVALID("1 0 10 76931F IMQ912BREQP1POLAH3RMONG;UED541AS"),
-		TEXT_INVALID("1 0 10 76931F IMQ912BREQP1POLAH3RMONG;UED541AS A RRSIG"),
+		TEXT_INVALID("1 0 10 76931F IMQ912BREQP1POLAH3RMONG&UED541AS"),
+		TEXT_INVALID("1 0 10 76931F IMQ912BREQP1POLAH3RMONGAUED541AS A RRSIG BADTYPE"),
 		TEXT_VALID("1 0 10 76931F AJHVGTICN6K0VDA53GCHFMT219SRRQLM A RRSIG"),
 		TEXT_VALID("1 0 10 76931F AJHVGTICN6K0VDA53GCHFMT219SRRQLM"),
 		TEXT_VALID("1 0 10 - AJHVGTICN6K0VDA53GCHFMT219SRRQLM"),
@@ -1509,6 +2008,119 @@ nxt(void **state) {
 
 	check_rdata(NULL, NULL, compare_ok, false, dns_rdataclass_in,
 		    dns_rdatatype_nxt, sizeof(dns_rdata_nxt_t));
+}
+
+static void
+rkey(void **state) {
+	text_ok_t text_ok[] = {
+		/*
+		 * Valid, flags set to 0 and a key is present.
+		 */
+		TEXT_VALID("0 0 0 aaaa"),
+		/*
+		 * Invalid, non-zero flags.
+		 */
+		TEXT_INVALID("1 0 0 aaaa"),
+		TEXT_INVALID("65535 0 0 aaaa"),
+		/*
+		 * Sentinel.
+		 */
+		TEXT_SENTINEL()
+	};
+	wire_ok_t wire_ok[] = {
+		/*
+		 * Valid, flags set to 0 and a key is present.
+		 */
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00),
+		/*
+		 * Invalid, non-zero flags.
+		 */
+		WIRE_INVALID(0x00, 0x01, 0x00, 0x00, 0x00),
+		WIRE_INVALID(0xff, 0xff, 0x00, 0x00, 0x00),
+		/*
+		 * Sentinel.
+		 */
+		WIRE_SENTINEL()
+	};
+	key_required(state, dns_rdatatype_rkey, sizeof(dns_rdata_rkey_t));
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
+		    dns_rdatatype_rkey, sizeof(dns_rdata_rkey_t));
+}
+
+/* SSHFP RDATA manipulations */
+static void
+sshfp(void **state) {
+	text_ok_t text_ok[] = {
+		TEXT_INVALID(""),	/* too short */
+		TEXT_INVALID("0"),	/* reserved, too short */
+		TEXT_VALID("0 0"),	/* no finger print */
+		TEXT_VALID("0 0 AA"),	/* reserved */
+		TEXT_INVALID("0 1 AA"), /* too short SHA 1 digest */
+		TEXT_INVALID("0 2 AA"), /* too short SHA 256 digest */
+		TEXT_VALID("0 3 AA"),	/* unknown finger print type */
+		/* good length SHA 1 digest */
+		TEXT_VALID("1 1 00112233445566778899AABBCCDDEEFF17181920"),
+		/* good length SHA 256 digest */
+		TEXT_VALID("4 2 A87F1B687AC0E57D2A081A2F282672334D90ED316D2B818CA9580EA3 84D92401"),
+		/*
+		 * totext splits the fingerprint into chunks and
+		 * emits uppercase hex.
+		 */
+		TEXT_VALID_CHANGED("1 2 00112233445566778899aabbccddeeff "
+				   "00112233445566778899AABBCCDDEEFF",
+				   "1 2 00112233445566778899AABBCCDDEEFF"
+				   "00112233445566778899AABB CCDDEEFF"),
+		TEXT_SENTINEL()
+	};
+	wire_ok_t wire_ok[] = {
+		WIRE_INVALID(0x00),		/* reserved too short */
+		WIRE_VALID(0x00, 0x00),		/* reserved no finger print */
+		WIRE_VALID(0x00, 0x00, 0x00),	/* reserved */
+
+		/* too short SHA 1 digests */
+		WIRE_INVALID(0x00, 0x01),
+		WIRE_INVALID(0x00, 0x01, 0x00),
+		WIRE_INVALID(0x00, 0x01, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+			     0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
+			     0xEE, 0xFF, 0x17, 0x18, 0x19),
+		/* good length SHA 1 digest */
+		WIRE_VALID(0x00, 0x01, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+			   0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
+			   0xEE, 0xFF, 0x17, 0x18, 0x19, 0x20),
+		/* too long SHA 1 digest */
+		WIRE_INVALID(0x00, 0x01, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+			     0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
+			     0xEE, 0xFF, 0x17, 0x18, 0x19, 0x20, 0x21),
+		/* too short SHA 256 digests */
+		WIRE_INVALID(0x00, 0x02),
+		WIRE_INVALID(0x00, 0x02, 0x00),
+		WIRE_INVALID(0x00, 0x02, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+			     0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
+			     0xEE, 0xFF, 0x17, 0x18, 0x19, 0x20, 0x21, 0x22,
+			     0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
+			     0x31),
+		/* good length SHA 256 digest */
+		WIRE_VALID(0x00, 0x02, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+			   0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
+			   0xEE, 0xFF, 0x17, 0x18, 0x19, 0x20, 0x21, 0x22,
+			   0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
+			   0x31, 0x32),
+		/* too long SHA 256 digest */
+		WIRE_INVALID(0x00, 0x02, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
+			     0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD,
+			     0xEE, 0xFF, 0x17, 0x18, 0x19, 0x20, 0x21, 0x22,
+			     0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30,
+			     0x31, 0x32, 0x33),
+		/* unknown digest, * no fingerprint */
+		WIRE_VALID(0x00, 0x03),
+		WIRE_VALID(0x00, 0x03, 0x00),	/* unknown digest */
+		WIRE_SENTINEL()
+	};
+
+	UNUSED(state);
+
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
+		    dns_rdatatype_sshfp, sizeof(dns_rdata_sshfp_t));
 }
 
 /*
@@ -1827,28 +2439,40 @@ iszonecutauth(void **state) {
 }
 
 int
-main(void) {
+main(int argc, char **argv) {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test_setup_teardown(amtrelay, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(apl, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(atma, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(cdnskey, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(csync, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(doa, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(dnskey, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(ds, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(eid, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(edns_client_subnet,
 						_setup, _teardown),
 		cmocka_unit_test_setup_teardown(hip, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(isdn, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(key, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(nimloc, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(nsec, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(nsec3, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(nxt, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(sshfp, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(wks, _setup, _teardown),
+		cmocka_unit_test_setup_teardown(rkey, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(zonemd, _setup, _teardown),
 		cmocka_unit_test_setup_teardown(atcname, NULL, NULL),
 		cmocka_unit_test_setup_teardown(atparent, NULL, NULL),
 		cmocka_unit_test_setup_teardown(iszonecutauth, NULL, NULL),
 	};
+
+	UNUSED(argv);
+
+	if (argc > 1) {
+		debug = true;
+	}
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
 }

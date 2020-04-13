@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.4.4.3 2020/04/08 14:09:02 martin Exp $	*/
+/*	$NetBSD: prompt.c,v 1.4.4.4 2020/04/13 08:05:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -40,6 +40,7 @@
 #include "efiboot.h"
 
 #include <lib/libsa/net.h>
+#include <sys/syslimits.h>
 
 #define	POLL_FREQ	10
 
@@ -148,7 +149,7 @@ docommand(char *arg)
 __dead void
 bootprompt(void)
 {
-	char input[80];
+	char input[LINE_MAX];
 
 	for (;;) {
 		char *c = input;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.18 2013/03/30 08:35:06 nonaka Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.18.36.1 2020/04/13 08:04:13 martin Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.18 2013/03/30 08:35:06 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.18.36.1 2020/04/13 08:04:13 martin Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #if 0	/* XXX */
@@ -284,12 +284,9 @@ zkbd_attach(device_t parent, device_t self, void *aux)
 		    "couldn't establish power handler\n");
 
 	sc->sc_okeystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
-	    M_DEVBUF, M_NOWAIT);
-	memset(sc->sc_okeystate, 0, sc->sc_nsense * sc->sc_nstrobe);
-
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->sc_keystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
-	    M_DEVBUF, M_NOWAIT);
-	memset(sc->sc_keystate, 0, sc->sc_nsense * sc->sc_nstrobe);
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* set all the strobe bits */
 	for (i = 0; i < sc->sc_nstrobe; i++) {

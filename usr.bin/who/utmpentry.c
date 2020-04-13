@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.18 2015/11/21 15:01:43 christos Exp $	*/
+/*	$NetBSD: utmpentry.c,v 1.18.16.1 2020/04/13 08:05:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.18 2015/11/21 15:01:43 christos Exp $");
+__RCSID("$NetBSD: utmpentry.c,v 1.18.16.1 2020/04/13 08:05:50 martin Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -278,14 +278,14 @@ getentry(struct utmpentry *e, struct utmp *up)
 	/*
 	 * e has just been calloc'd. We don't need to clear it or
 	 * append null-terminators, because its length is strictly
-	 * greater than the source string. Use strncpy to _read_
+	 * greater than the source string. Use memcpy to _read_
 	 * up->ut_* because they may not be terminated. For this
 	 * reason we use the size of the _source_ as the length
 	 * argument.
 	 */
-	(void)strncpy(e->name, up->ut_name, sizeof(up->ut_name));
-	(void)strncpy(e->line, up->ut_line, sizeof(up->ut_line));
-	(void)strncpy(e->host, up->ut_host, sizeof(up->ut_host));
+	memcpy(e->name, up->ut_name, sizeof(up->ut_name));
+	memcpy(e->line, up->ut_line, sizeof(up->ut_line));
+	memcpy(e->host, up->ut_host, sizeof(up->ut_host));
 
 	e->tv.tv_sec = up->ut_time;
 	e->tv.tv_usec = 0;
@@ -309,14 +309,14 @@ getentryx(struct utmpentry *e, struct utmpx *up)
 	/*
 	 * e has just been calloc'd. We don't need to clear it or
 	 * append null-terminators, because its length is strictly
-	 * greater than the source string. Use strncpy to _read_
+	 * greater than the source string. Use memcpy to _read_
 	 * up->ut_* because they may not be terminated. For this
 	 * reason we use the size of the _source_ as the length
 	 * argument.
 	 */
-	(void)strncpy(e->name, up->ut_name, sizeof(up->ut_name));
-	(void)strncpy(e->line, up->ut_line, sizeof(up->ut_line));
-	(void)strncpy(e->host, up->ut_host, sizeof(up->ut_host));
+	memcpy(e->name, up->ut_name, sizeof(up->ut_name));
+	memcpy(e->line, up->ut_line, sizeof(up->ut_line));
+	memcpy(e->host, up->ut_host, sizeof(up->ut_host));
 
 	e->tv = up->ut_tv;
 	e->pid = up->ut_pid;

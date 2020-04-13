@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.121.12.1 2019/06/10 22:05:22 christos Exp $	*/
+/*	$NetBSD: curses.h,v 1.121.12.2 2020/04/13 08:03:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -979,6 +979,77 @@ int wgetbkgrnd(WINDOW *, cchar_t *);
 bool is_keypad(const WINDOW *);
 bool is_leaveok(const WINDOW *);
 bool is_pad(const WINDOW *);
+
+/* ncurses mouse support */
+#define	NB_MOUSE_MASK(b, m)	((m) << (((b) - 1) * 5))
+#define	NB_BUTTON_RELEASED	001L
+#define	NB_BUTTON_PRESSED	002L
+#define	NB_BUTTON_CLICKED	004L
+#define	NB_DOUBLE_CLICKED	010L
+#define	NB_TRIPLE_CLICKED	020L
+#define	NB_RESERVED_EVENT	040L
+
+#define	BUTTON1_RELEASED	NB_MOUSE_MASK(1, NB_BUTTON_RELEASED)
+#define	BUTTON1_PRESSED		NB_MOUSE_MASK(1, NB_BUTTON_PRESSED)
+#define	BUTTON1_CLICKED		NB_MOUSE_MASK(1, NB_BUTTON_CLICKED)
+#define	BUTTON1_DOUBLE_CLICKED	NB_MOUSE_MASK(1, NB_DOUBLE_CLICKED)
+#define	BUTTON1_TRIPLE_CLICKED	NB_MOUSE_MASK(1, NB_TRIPLE_CLICKED)
+
+#define	BUTTON2_RELEASED	NB_MOUSE_MASK(2, NB_BUTTON_RELEASED)
+#define	BUTTON2_PRESSED		NB_MOUSE_MASK(2, NB_BUTTON_PRESSED)
+#define	BUTTON2_CLICKED		NB_MOUSE_MASK(2, NB_BUTTON_CLICKED)
+#define	BUTTON2_DOUBLE_CLICKED	NB_MOUSE_MASK(2, NB_DOUBLE_CLICKED)
+#define	BUTTON2_TRIPLE_CLICKED	NB_MOUSE_MASK(2, NB_TRIPLE_CLICKED)
+
+#define	BUTTON3_RELEASED	NB_MOUSE_MASK(3, NB_BUTTON_RELEASED)
+#define	BUTTON3_PRESSED		NB_MOUSE_MASK(3, NB_BUTTON_PRESSED)
+#define	BUTTON3_CLICKED		NB_MOUSE_MASK(3, NB_BUTTON_CLICKED)
+#define	BUTTON3_DOUBLE_CLICKED	NB_MOUSE_MASK(3, NB_DOUBLE_CLICKED)
+#define	BUTTON3_TRIPLE_CLICKED	NB_MOUSE_MASK(3, NB_TRIPLE_CLICKED)
+
+#define	BUTTON4_RELEASED	NB_MOUSE_MASK(4, NB_BUTTON_RELEASED)
+#define	BUTTON4_PRESSED		NB_MOUSE_MASK(4, NB_BUTTON_PRESSED)
+#define	BUTTON4_CLICKED		NB_MOUSE_MASK(4, NB_BUTTON_CLICKED)
+#define	BUTTON4_DOUBLE_CLICKED	NB_MOUSE_MASK(4, NB_DOUBLE_CLICKED)
+#define	BUTTON4_TRIPLE_CLICKED	NB_MOUSE_MASK(4, NB_TRIPLE_CLICKED)
+
+#define	BUTTON5_RELEASED	NB_MOUSE_MASK(5, NB_BUTTON_RELEASED)
+#define	BUTTON5_PRESSED		NB_MOUSE_MASK(5, NB_BUTTON_PRESSED)
+#define	BUTTON5_CLICKED		NB_MOUSE_MASK(5, NB_BUTTON_CLICKED)
+#define	BUTTON5_DOUBLE_CLICKED	NB_MOUSE_MASK(5, NB_DOUBLE_CLICKED)
+#define	BUTTON5_TRIPLE_CLICKED	NB_MOUSE_MASK(5, NB_TRIPLE_CLICKED)
+
+#define	BUTTON_CTRL		NB_MOUSE_MASK(6, 0001L)
+#define	BUTTON_SHIFT		NB_MOUSE_MASK(6, 0002L)
+#define	BUTTON_ALT		NB_MOUSE_MASK(6, 0004L)
+#define	REPORT_MOUSE_POSITION	NB_MOUSE_MASK(6, 0010L)
+#define	ALL_MOUSE_EVENTS	(REPORT_MOUSE_POSITION - 1)
+
+#define	BUTTON_RELEASE(e, x)		((e) & NB_MOUSE_MASK(x, 001))
+#define	BUTTON_PRESS(e, x)		((e) & NB_MOUSE_MASK(x, 002))
+#define	BUTTON_CLICK(e, x)		((e) & NB_MOUSE_MASK(x, 004))
+#define	BUTTON_DOUBLE_CLICK(e, x)	((e) & NB_MOUSE_MASK(x, 010))
+#define	BUTTON_TRIPLE_CLICK(e, x)	((e) & NB_MOUSE_MASK(x, 020))
+#define	BUTTON_RESERVED_EVENT(e, x)	((e) & NB_MOUSE_MASK(x, 040))
+
+typedef unsigned long mmask_t;
+typedef struct {
+	short id;	/* ID to distinguish multiple devices */
+	int x, y, z;	/* event coordinates */
+	mmask_t bstate;   /* button state bits */
+} MEVENT;
+
+bool has_mouse(void);
+int getmouse(MEVENT *);
+int ungetmouse(MEVENT *);
+mmask_t mousemask(mmask_t, mmask_t *);
+bool wenclose(const WINDOW *, int, int);
+bool mouse_trafo(int *, int *, bool);
+bool wmouse_trafo(const WINDOW *, int *, int *, bool);
+int mouseinterval(int);
+
+/* ncurses version for compat */
+const char *curses_version(void);
 
 /* Private functions that are needed for user programs prototypes. */
 int	 __cputchar(int);

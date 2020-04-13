@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_apple.c,v 1.3 2017/01/19 00:44:40 maya Exp $	*/
+/*	$NetBSD: dkwedge_apple.c,v 1.3.14.1 2020/04/13 08:04:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_apple.c,v 1.3 2017/01/19 00:44:40 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_apple.c,v 1.3.14.1 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -143,10 +143,10 @@ static struct {
 static int
 dkwedge_discover_apple(struct disk *pdk, struct vnode *vp)
 {
-	size_t i;
+	size_t i, n;
 	int error;
 	void *buf;
-	uint32_t blocksize, offset, rsize;
+	uint32_t blocksize, blockcount, offset, rsize;
 	struct apple_drvr_map *am;
 	struct apple_part_map_entry *ae;
 	struct apple_blockzeroblock ab;
@@ -178,8 +178,17 @@ dkwedge_discover_apple(struct disk *pdk, struct vnode *vp)
 		goto out;
 	}
 
+	/* XXX Clamp entries at 512 for now. */
+	blockcount = am->sbBlkCount;
+	if (blockcount > 512) {
+		aprint_error("%s: WARNING: clamping number of blocks to "
+		    "512 (was %u)\n", pdk->dk_name, blockcount);
+		blockcount = 512;
+	}
+
 	ae = buf;
-	for (offset = blocksize;; offset += rsize) {
+	offset = blocksize;
+	for (n = 0; n < blockcount; n++, offset += rsize) {
 		DPRINTF("%s: offset %x rsize %x\n", __func__, offset, rsize);
 		if ((error = dkwedge_read(pdk, vp, offset / DEV_BSIZE, buf,
 		    rsize)) != 0) {
@@ -216,6 +225,7 @@ dkwedge_discover_apple(struct disk *pdk, struct vnode *vp)
 		}
 
 		struct dkwedge_info dkw;
+		memset(&dkw, 0, sizeof(dkw));
 
 		strlcpy(dkw.dkw_ptype, ptype, sizeof(dkw.dkw_ptype));
 		strlcpy(dkw.dkw_parent, pdk->dk_name, sizeof(dkw.dkw_parent));

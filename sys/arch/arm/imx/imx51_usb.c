@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_usb.c,v 1.4 2018/03/17 18:34:09 ryo Exp $	*/
+/*	$NetBSD: imx51_usb.c,v 1.4.2.1 2020/04/13 08:03:35 martin Exp $	*/
 /*
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -25,8 +25,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.4 2018/03/17 18:34:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.4.2.1 2020/04/13 08:03:35 martin Exp $");
 
+#include "locators.h"
 #include "opt_imx.h"
 
 #include <sys/param.h>
@@ -48,22 +49,25 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.4 2018/03/17 18:34:09 ryo Exp $");
 #include <arm/imx/imx51reg.h>
 #include <arm/imx/imx51var.h>
 #include <arm/imx/imxusbvar.h>
-#include "locators.h"
+#include <arm/imx/imxusbreg.h>
 
-static int 	imxusbc_search(device_t, cfdata_t, const int *, void *);
-static int	imxusbc_print(void *, const char *);
-
+static int imxusbc_search(device_t, cfdata_t, const int *, void *);
+static int imxusbc_print(void *, const char *);
 
 int
-imxusbc_attach_common(device_t parent, device_t self, bus_space_tag_t iot)
+imxusbc_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
+    bus_addr_t addr, bus_size_t size)
 {
 	struct imxusbc_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_iot = iot;
+	sc->sc_ehci_size = IMXUSB_EHCI_SIZE;
+	sc->sc_ehci_offset = IMXUSB_EHCI_SIZE;
 
 	/* Map entire USBOH3 registers.  Host controller drivers
 	 * re-use subregions of this. */
-	if (bus_space_map(iot, USBOH3_BASE, USBOH3_SIZE, 0, &sc->sc_ioh))
+	if (bus_space_map(iot, addr, size, 0, &sc->sc_ioh))
 		return -1;
 
 	/* attach OTG/EHCI host controllers */
@@ -78,16 +82,16 @@ imxusbc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	struct imxusbc_softc *sc = device_private(parent);
 	struct imxusbc_attach_args aa;
 
-        aa.aa_iot = sc->sc_iot;
+	aa.aa_iot = sc->sc_iot;
 	aa.aa_ioh = sc->sc_ioh;
 	aa.aa_dmat = &arm_generic_dma_tag;
-        aa.aa_unit = cf->cf_loc[IMXUSBCCF_UNIT];
+	aa.aa_unit = cf->cf_loc[IMXUSBCCF_UNIT];
 	aa.aa_irq = cf->cf_loc[IMXUSBCCF_IRQ];
 
-        if (config_match(parent, cf, &aa) > 0)
-                config_attach(parent, cf, &aa, imxusbc_print);
+	if (config_match(parent, cf, &aa) > 0)
+		config_attach(parent, cf, &aa, imxusbc_print);
 
-        return 0;
+	return 0;
 }
 
 /* ARGSUSED */

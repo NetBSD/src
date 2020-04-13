@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.72.20.1 2019/06/10 22:06:28 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.72.20.2 2020/04/13 08:03:58 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -87,7 +87,9 @@ __start:
 	bl	_C_LABEL(cpu_model_init)	/* init oeacpufeat */
 
 	li	0,0
+#ifndef FIRMWORKSBUGS
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
+#endif
 #if defined(PMAP_OEA64_BRIDGE)
 	mfmsr	0			/* Clear SF and ISF bits */
 	clrldi	0,0,3

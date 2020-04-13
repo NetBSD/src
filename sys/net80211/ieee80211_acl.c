@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_acl.c,v 1.9.54.4 2019/06/10 22:09:46 christos Exp $ */
+/*	$NetBSD: ieee80211_acl.c,v 1.9.54.5 2020/04/13 08:05:16 martin Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.9.54.4 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.9.54.5 2020/04/13 08:05:16 martin Exp $");
 #endif
 
 /*

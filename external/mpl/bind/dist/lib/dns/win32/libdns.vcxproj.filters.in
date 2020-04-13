@@ -103,10 +103,15 @@
       <Filter>Library Source Files</Filter>
     </ClCompile>
 @IF GEOIP
-    <ClCompile Include="..\geoip.c">
+    <ClCompile Include="..\geoip2.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
 @END GEOIP
+@IF GEOIPLEGACY
+    <ClCompile Include="..\geoip.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+@END GEOIPLEGACY
     <ClCompile Include="..\ipkeylist.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
@@ -440,6 +445,11 @@
       <Filter>Library Header Files</Filter>
     </ClInclude>
 @END GEOIP
+@IF GEOIPLEGACY
+    <ClInclude Include="..\include\dns\geoip.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
+@END GEOIPLEGACY
     <ClInclude Include="..\include\dns\ipkeylist.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>

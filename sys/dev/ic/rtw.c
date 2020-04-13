@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.128.2.2 2020/04/08 14:08:06 martin Exp $ */
+/* $NetBSD: rtw.c,v 1.128.2.3 2020/04/13 08:04:22 martin Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.128.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.128.2.3 2020/04/13 08:04:22 martin Exp $");
 
 
 #include <sys/param.h>
@@ -958,14 +958,7 @@ rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
 
 	RTW_WRITE8(regs, RTW_9346CR, ecr);
 
-	sr->sr_content = malloc(sr->sr_size, M_DEVBUF, M_NOWAIT);
-
-	if (sr->sr_content == NULL) {
-		aprint_error_dev(dev, "unable to allocate SROM buffer\n");
-		return ENOMEM;
-	}
-
-	(void)memset(sr->sr_content, 0, sr->sr_size);
+	sr->sr_content = malloc(sr->sr_size, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* RTL8180 has a single 8-bit register for controlling the
 	 * 93cx6 SROM.  There is no "ready" bit. The RTL8180
@@ -3895,9 +3888,7 @@ rtw_txsoft_blk_setup(struct rtw_txsoft_blk *tsb, u_int qlen)
 	SIMPLEQ_INIT(&tsb->tsb_freeq);
 	tsb->tsb_ndesc = qlen;
 	tsb->tsb_desc = malloc(qlen * sizeof(*tsb->tsb_desc), M_DEVBUF,
-	    M_NOWAIT);
-	if (tsb->tsb_desc == NULL)
-		return ENOMEM;
+	    M_WAITOK);
 	return 0;
 }
 

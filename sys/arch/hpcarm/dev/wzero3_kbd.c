@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_kbd.c,v 1.8 2012/10/27 17:17:52 chs Exp $	*/
+/*	$NetBSD: wzero3_kbd.c,v 1.8.38.1 2020/04/13 08:03:50 martin Exp $	*/
 
 /*-
  * Copyright (C) 2008, 2009, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.8 2012/10/27 17:17:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.8.38.1 2020/04/13 08:03:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,17 +289,9 @@ wzero3kbd_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_okeystat = malloc(sc->sc_nrow * sc->sc_ncolumn, M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
+	    M_WAITOK | M_ZERO);
 	sc->sc_keystat = malloc(sc->sc_nrow * sc->sc_ncolumn, M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (sc->sc_okeystat == NULL || sc->sc_keystat == NULL) {
-		aprint_error_dev(self, "couldn't alloc memory.\n");
-		if (sc->sc_okeystat)
-			free(sc->sc_okeystat, M_DEVBUF);
-		if (sc->sc_keystat)
-			free(sc->sc_keystat, M_DEVBUF);
-		return;
-	}
+	    M_WAITOK | M_ZERO);
 
 	sc->sc_if.hii_ctx = sc;
 	sc->sc_if.hii_establish = wzero3kbd_input_establish;

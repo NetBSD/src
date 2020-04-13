@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.98.14.1 2019/06/10 22:05:26 christos Exp $	*/
+/*	$NetBSD: refuse.c,v 1.98.14.2 2020/04/13 08:03:15 martin Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.98.14.1 2019/06/10 22:05:26 christos Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.98.14.2 2020/04/13 08:03:15 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1100,19 +1100,21 @@ puffs_fuse_fs_sync(struct puffs_usermount *pu, int flags,
 
 /* ARGSUSED2 */
 static int
-puffs_fuse_fs_statvfs(struct puffs_usermount *pu, struct statvfs *svfsb)
+puffs_fuse_fs_statvfs(struct puffs_usermount *pu, struct puffs_statvfs *svfsb)
 {
 	struct fuse		*fuse;
 	int			ret;
+	struct statvfs		sb;
 
 	fuse = puffs_getspecific(pu);
 	if (fuse->op.statfs == NULL) {
-		if ((ret = statvfs(PNPATH(puffs_getroot(pu)), svfsb)) == -1) {
+		if ((ret = statvfs(PNPATH(puffs_getroot(pu)), &sb)) == -1) {
 			return errno;
 		}
 	} else {
-		ret = fuse->op.statfs(PNPATH(puffs_getroot(pu)), svfsb);
+		ret = fuse->op.statfs(PNPATH(puffs_getroot(pu)), &sb);
 	}
+	statvfs_to_puffs_statvfs(&sb, svfsb);
 
         return -ret;
 }
@@ -1200,7 +1202,7 @@ int fuse_mount(struct fuse *fuse, const char *mountpoint)
 	struct puffs_node	*pn_root;
 	struct refusenode	*rn_root;
 	struct stat		 st;
-	struct statvfs		 svfsb;
+	struct puffs_statvfs	 svfsb;
 
 	pn_root = newrn(fuse->pu);
 	puffs_setroot(fuse->pu, pn_root);

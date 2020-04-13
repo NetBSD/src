@@ -1,4 +1,4 @@
-#	$NetBSD: libloader.mk,v 1.1.18.1 2019/06/10 22:02:37 christos Exp $
+#	$NetBSD: libloader.mk,v 1.1.18.2 2020/04/13 08:02:31 martin Exp $
 
 # makefile fragment for mesa src/loader
 
@@ -12,9 +12,12 @@ SRCS.loader += \
 
 .for _f in ${SRCS.loader}
 CPPFLAGS.${_f}= 	-I${X11SRCDIR.Mesa}/src/util \
+			-I${X11SRCDIR.Mesa}/../src/util \
 			-I${X11SRCDIR.Mesa}/src/mesa \
 			-I${X11SRCDIR.Mesa}/src \
-			-DUSE_DRICONF
+			-DDEFAULT_DRIVER_DIR=\"${X11USRLIBDIR}/modules/dri\" \
+			-DUSE_DRICONF \
+			-DHAVE_LIBDRM
 .endfor
 
 SRCS+=	${SRCS.loader}

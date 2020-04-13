@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.28.2.1 2019/06/10 22:10:08 christos Exp $
+#	$NetBSD: net_common.sh,v 1.28.2.2 2020/04/13 08:05:29 martin Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -28,6 +28,8 @@
 #
 # Common utility functions for tests/net
 #
+
+export PATH="/sbin:/usr/sbin:/bin:/usr/bin"
 
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so \
     RUMPHIJACK=path=/rump,socket=all:nolocal,sysctl=yes"
@@ -183,6 +185,7 @@ CRYPTO_NPF_LIBS="$CRYPTO_LIBS -lrumpvfs -lrumpdev_bpf -lrumpnet_npf"
 _rump_server_socks=./.__socks
 _rump_server_ifaces=./.__ifaces
 _rump_server_buses=./.__buses
+_rump_server_macaddrs=./.__macaddrs
 
 DEBUG_SYSCTL_ENTRIES="net.inet.arp.debug net.inet6.icmp6.nd6_debug \
     net.inet.ipsec.debug"
@@ -318,10 +321,23 @@ rump_server_add_iface()
 	local ifname=$2
 	local bus=$3
 	local backup=$RUMP_SERVER
+	local macaddr=
 
 	export RUMP_SERVER=$sock
 	atf_check -s exit:0 rump.ifconfig $ifname create
-	atf_check -s exit:0 rump.ifconfig $ifname linkstr $bus
+	if [ -n "$bus" ]; then
+		atf_check -s exit:0 rump.ifconfig $ifname linkstr $bus
+	fi
+
+	macaddr=$(get_macaddr $sock $ifname)
+	if [ -n "$macaddr" ]; then
+		if [ -f $_rump_server_macaddrs ]; then
+			atf_check -s not-exit:0 \
+			    grep -q $macaddr $_rump_server_macaddrs
+		fi
+		echo $macaddr >> $_rump_server_macaddrs
+	fi
+
 	export RUMP_SERVER=$backup
 
 	echo $sock $ifname >> $_rump_server_ifaces
@@ -335,10 +351,42 @@ rump_server_add_iface()
 	return 0
 }
 
+rump_server_check_poolleaks()
+{
+	local target=$1
+
+	# XXX rumphijack doesn't work with a binary with suid/sgid bits like
+	# vmstat.  Use a copied one to drop sgid bit as a workaround until
+	# vmstat stops using kvm(3) for /dev/kmem and the sgid bit.
+	cp /usr/bin/vmstat ./vmstat
+	reqs=$($HIJACKING ./vmstat -mv | awk "/$target/ {print \$3;}")
+	rels=$($HIJACKING ./vmstat -mv | awk "/$target/ {print \$5;}")
+	rm -f ./vmstat
+	atf_check_equal '$target$reqs' '$target$rels'
+}
+
+#
+# rump_server_check_memleaks detects memory leaks.  It can detect leaks of pool
+# objects that are guaranteed to be all deallocated at this point, i.e., all
+# created interfaces are destroyed.  Currently only llentpl satisfies this
+# constraint.  This mechanism can't be applied to objects allocated through
+# pool_cache(9) because it doesn't track released objects explicitly.
+#
+rump_server_check_memleaks()
+{
+
+	rump_server_check_poolleaks llentrypl
+	# This doesn't work for objects allocated through pool_cache
+	#rump_server_check_poolleaks mbpl
+	#rump_server_check_poolleaks mclpl
+	#rump_server_check_poolleaks socket
+}
+
 rump_server_destroy_ifaces()
 {
 	local backup=$RUMP_SERVER
 	local output=ignore
+	local reqs= rels=
 
 	$DEBUG && cat $_rump_server_ifaces
 
@@ -359,13 +407,25 @@ rump_server_destroy_ifaces()
 
 	# XXX using pipe doesn't work. See PR bin/51667
 	#cat $_rump_server_ifaces | while read sock ifname; do
+	# Destroy interfaces in the reverse order
+	tac $_rump_server_ifaces > __ifaces
 	while read sock ifname; do
 		export RUMP_SERVER=$sock
 		if rump.ifconfig -l |grep -q $ifname; then
+			if $DEBUG; then
+				rump.ifconfig -v $ifname
+			fi
 			atf_check -s exit:0 rump.ifconfig $ifname destroy
 		fi
 		atf_check -s exit:0 -o ignore rump.ifconfig
-	done < $_rump_server_ifaces
+	done < __ifaces
+	rm -f __ifaces
+
+	for sock in $(cat $_rump_server_socks); do
+		export RUMP_SERVER=$sock
+		rump_server_check_memleaks
+	done
+
 	export RUMP_SERVER=$backup
 
 	return 0
@@ -389,7 +449,8 @@ extract_rump_server_core()
 
 	if [ -f rump_server.core ]; then
 		gdb -ex bt /usr/bin/rump_server rump_server.core
-		strings rump_server.core |grep panic
+		# Extract kernel logs including a panic message
+		strings rump_server.core |grep -E '^\[.+\] '
 	fi
 }
 
@@ -403,6 +464,10 @@ dump_kernel_stats()
 	rump.netstat -nr
 	# XXX still need hijacking
 	$HIJACKING rump.netstat -nai
+	# XXX workaround for vmstat with the sgid bit
+	cp /usr/bin/vmstat ./vmstat
+	$HIJACKING ./vmstat -m
+	rm -f ./vmstat
 	rump.arp -na
 	rump.ndp -na
 	$HIJACKING ifmcstat

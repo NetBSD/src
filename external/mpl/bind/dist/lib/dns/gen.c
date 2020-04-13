@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.4.2.2 2019/06/10 22:04:35 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.4.2.3 2020/04/13 08:02:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,11 +36,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
+#include <limits.h>
 
 #ifdef WIN32
 #include "gen-win32.h"
 #else
 #include "gen-unix.h"
+#endif
+
+#ifndef ULLONG_MAX
+#define ULLONG_MAX (~0ULL)
 #endif
 
 #define INSIST(cond) \
@@ -535,7 +541,6 @@ main(int argc, char **argv) {
 	struct cc *cc;
 	struct ttnam *ttn, *ttn2;
 	unsigned int hash;
-	struct tm *tm;
 	time_t now;
 	char year[11];
 	int lasttype;
@@ -551,6 +556,9 @@ main(int argc, char **argv) {
 	char *prefix = NULL;
 	char *suffix = NULL;
 	char *file = NULL;
+	char *source_date_epoch;
+	unsigned long long epoch;
+	char *endptr;
 	isc_dir_t dir;
 
 	for (i = 0; i < TYPENAMES; i++)
@@ -647,8 +655,46 @@ main(int argc, char **argv) {
 	INSIST(n > 0 && (unsigned)n < sizeof(srcdir));
 	sd(0, "", buf, filetype);
 
-	if (time(&now) != -1) {
-		if ((tm = localtime(&now)) != NULL && tm->tm_year > 104) {
+	source_date_epoch = getenv("SOURCE_DATE_EPOCH");
+	if (source_date_epoch) {
+		errno = 0;
+		epoch = strtoull(source_date_epoch, &endptr, 10);
+		if ((errno == ERANGE && (epoch == ULLONG_MAX || epoch == 0))
+				|| (errno != 0 && epoch == 0)) {
+			fprintf(stderr, "Environment variable "
+				"$SOURCE_DATE_EPOCH: strtoull: %s\n",
+				strerror(errno));
+			exit (EXIT_FAILURE);
+		}
+		if (endptr == source_date_epoch) {
+			fprintf(stderr, "Environment variable "
+				"$SOURCE_DATE_EPOCH: "
+				"No digits were found: %s\n",
+				endptr);
+			exit (EXIT_FAILURE);
+		}
+		if (*endptr != '\0') {
+			fprintf(stderr, "Environment variable "
+				"$SOURCE_DATE_EPOCH: Trailing garbage: %s\n",
+				endptr);
+			exit (EXIT_FAILURE);
+		}
+		if (epoch > ULONG_MAX) {
+			fprintf(stderr, "Environment variable "
+				"$SOURCE_DATE_EPOCH: value must be "
+				"smaller than or equal to: %lu but "
+				"was found to be: %llu \n",
+				ULONG_MAX, epoch);
+			exit (EXIT_FAILURE);
+		}
+		now = epoch;
+	} else {
+		time(&now);
+	}
+
+	if (now != -1) {
+		struct tm *tm = gmtime(&now);
+		if (tm != NULL && tm->tm_year > 104) {
 			n = snprintf(year, sizeof(year), "-%d",
 				     tm->tm_year + 1900);
 			INSIST(n > 0 && (unsigned)n < sizeof(year));
@@ -731,6 +777,7 @@ main(int argc, char **argv) {
 		insert_into_typenames(100, "uinfo", RESERVEDNAME);
 		insert_into_typenames(101, "uid", RESERVEDNAME);
 		insert_into_typenames(102, "gid", RESERVEDNAME);
+		insert_into_typenames(103, "unspec", RESERVEDNAME);
 		insert_into_typenames(251, "ixfr", METAQUESTIONONLY);
 		insert_into_typenames(252, "axfr", METAQUESTIONONLY);
 		insert_into_typenames(253, "mailb", METAQUESTIONONLY);

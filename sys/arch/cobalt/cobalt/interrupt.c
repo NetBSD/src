@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.9 2018/06/06 01:49:07 maya Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.9.2.1 2020/04/13 08:03:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2018/06/06 01:49:07 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9.2.1 2020/04/13 08:03:40 martin Exp $");
 
 #define __INTR_PRIVATE
 
@@ -265,10 +265,7 @@ icu_intr_establish(int irq, int type, int ipl, int (*func)(void *), void *arg)
 		return NULL;
 	}
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return NULL;
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;

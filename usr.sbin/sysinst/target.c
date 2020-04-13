@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.3.16.1 2019/06/10 22:10:38 christos Exp $	*/
+/*	$NetBSD: target.c,v 1.3.16.2 2020/04/13 08:06:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.3.16.1 2019/06/10 22:10:38 christos Exp $");
+__RCSID("$NetBSD: target.c,v 1.3.16.2 2020/04/13 08:06:00 martin Exp $");
 #endif
 
 /*
@@ -152,19 +152,73 @@ backtowin(void)
 int
 target_already_root(void)
 {
+	char dev[PATH_MAX];
+	int rootpart = -1;
+	static struct pm_devs *last_pm;
+	static int last_res;
+	part_id ptn;
+	struct disk_partitions *parts, *inner;
+	struct disk_part_info info;
 
-	if (pm == NULL)
-		return TRUE;
+	if (pm == last_pm)
+		return last_res;
 
-	if (strcmp(pm->diskdev, "") == 0)
-		/* No root partition was ever selected.
-		 * Assume that the currently mounted one should be used
-		 */
+	if (pm->cur_system)
 		return 1;
 
-	return is_active_rootpart(pm->diskdev, pm->rootpart);
+	last_pm = pm;
+	last_res = 0;
+
+	parts = pm->parts;
+	if (parts == NULL) {
+		last_res = 0;
+		return 0;
+	}
+
+	if (pm->no_part) {
+		last_res = is_active_rootpart(pm->diskdev, -1);
+		return last_res;
+	}
+
+	if (pm->parts->pscheme->secondary_partitions != NULL) {
+		inner = pm->parts->pscheme->secondary_partitions(parts,
+		    pm->ptstart, false);
+		if (inner != NULL)
+			parts = inner;
+	}
+
+	for (ptn = 0; ptn < parts->num_part; ptn++) {
+		if (!parts->pscheme->get_part_info(parts, ptn, &info))
+			continue;
+		if (info.nat_type->generic_ptype != PT_root)
+			continue;
+		if (!is_root_part_mount(info.last_mounted))
+			continue;
+		if (!parts->pscheme->get_part_device(parts, ptn,
+		    dev, sizeof dev, &rootpart, plain_name, false, true))
+			continue;
+
+		last_res = is_active_rootpart(dev, rootpart);
+		break;
+ 	}
+
+	return last_res;
 }
 
+/*
+ * Could something with this "last mounted on" information be a potential
+ * root partition?
+ */
+bool
+is_root_part_mount(const char *last_mounted)
+{
+	if (last_mounted == NULL)
+		return false;
+
+	return strcmp(last_mounted, "/") == 0 ||
+	    strcmp(last_mounted, "/targetroot") == 0 ||
+	    strcmp(last_mounted, "/altroot") == 0;
+}
 
 /*
  * Is this device partition (e.g., "sd0a") mounted as root? 
@@ -304,11 +358,13 @@ do_target_chdir(const char *dir, int must_succeed)
 	}
 
 	if (error && must_succeed) {
-		fprintf(stderr, msg_string(MSG_realdir),
-		       target_prefix(), strerror(error));
+		const char *args[] = { target_prefix(), strerror(error) };
+		char *err = str_arg_subst(msg_string(MSG_realdir),
+		    __arraycount(args), args);
+		fprintf(stderr, "%s\n", err);
 		if (logfp)
-			fprintf(logfp, msg_string(MSG_realdir),
-			       target_prefix(), strerror(error));
+			fprintf(logfp, "%s\n", err);
+		free(err);
 		exit(1);
 	}
 	errno = error;
@@ -380,8 +436,8 @@ cp_within_target(const char *frompath, const char *topath, int optional)
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
 
-	strncpy(realfrom, target_expand(frompath), STRSIZE);
-	strncpy(realto, target_expand(topath), STRSIZE);
+	strlcpy(realfrom, target_expand(frompath), sizeof realfrom);
+	strlcpy(realto, target_expand(topath), sizeof realto);
 
 	if (access(realfrom, R_OK) == -1 && optional)
 		return 0;
@@ -432,17 +488,32 @@ target_mount_do(const char *opts, const char *from, const char *on)
 	return 0;
 }
 
-int
-target_mount(const char *opts, const char *from, int ptn, const char *on)
+/*
+ * Special case - we have mounted the target / readonly
+ * to peek at etc/fstab, and now want it undone.
+ */
+void
+umount_root(void)
 {
-	int error;
-	char *frompath;
-	asprintf (&frompath, "/dev/%s%c", from, (ptn < 0)? 0 : 'a' + ptn);
-	if (frompath == 0)
-		return (ENOMEM);
-	error = target_mount_do(opts, frompath, on);
-	free(frompath);
-	return error;
+
+	/* verify this is the only mount */
+	if (unwind_mountlist == NULL)
+		return;
+	if (unwind_mountlist->um_prev != NULL)
+		return;
+
+	if (run_program(0, "/sbin/umount %s", target_prefix()) != 0)
+		return;
+
+	free(unwind_mountlist);
+	unwind_mountlist = NULL;
+}
+
+
+int
+target_mount(const char *opts, const char *from, const char *on)
+{
+	return target_mount_do(opts, from, on);
 }
 
 /*

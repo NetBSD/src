@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.124.2.2 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: ath.c,v 1.124.2.3 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.124.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.124.2.3 2020/04/13 08:04:21 martin Exp $");
 #endif
 
 /*
@@ -2704,12 +2704,7 @@ ath_descdma_setup(struct ath_softc *sc,
 
 	/* allocate rx buffers */
 	bsize = sizeof(struct ath_buf) * nbuf;
-	bf = malloc(bsize, M_ATHDEV, M_NOWAIT | M_ZERO);
-	if (bf == NULL) {
-		if_printf(ifp, "malloc of %s buffers failed, size %u\n",
-			dd->dd_name, bsize);
-		goto fail4;
-	}
+	bf = malloc(bsize, M_ATHDEV, M_WAITOK | M_ZERO);
 	dd->dd_bufptr = bf;
 
 	STAILQ_INIT(head);
@@ -2727,8 +2722,6 @@ ath_descdma_setup(struct ath_softc *sc,
 		STAILQ_INSERT_TAIL(head, bf, bf_list);
 	}
 	return 0;
-fail4:
-	bus_dmamap_unload(dd->dd_dmat, dd->dd_dmamap);
 fail3:
 	bus_dmamap_destroy(dd->dd_dmat, dd->dd_dmamap);
 fail2:
@@ -4966,11 +4959,7 @@ ath_getchannels(struct ath_softc *sc, u_int cc,
 	int i, ix, nchan;
 
 	chans = malloc(IEEE80211_CHAN_MAX * sizeof(HAL_CHANNEL),
-			M_TEMP, M_NOWAIT);
-	if (chans == NULL) {
-		if_printf(ifp, "unable to allocate channel table\n");
-		return ENOMEM;
-	}
+			M_TEMP, M_WAITOK);
 	if (!ath_hal_init_channels(ah, chans, IEEE80211_CHAN_MAX, &nchan,
 	    NULL, 0, NULL,
 	    cc, HAL_MODE_ALL, outdoor, xchanmode)) {
@@ -5336,11 +5325,7 @@ ath_ioctl_diag(struct ath_softc *sc, struct ath_diag *ad)
 		/*
 		 * Copy in data.
 		 */
-		indata = malloc(insize, M_TEMP, M_NOWAIT);
-		if (indata == NULL) {
-			error = ENOMEM;
-			goto bad;
-		}
+		indata = malloc(insize, M_TEMP, M_WAITOK);
 		error = copyin(ad->ad_in_data, indata, insize);
 		if (error)
 			goto bad;
@@ -5353,11 +5338,7 @@ ath_ioctl_diag(struct ath_softc *sc, struct ath_diag *ad)
 		 * pointer for us to use below in reclaiming the buffer;
 		 * may want to be more defensive.
 		 */
-		outdata = malloc(outsize, M_TEMP, M_NOWAIT);
-		if (outdata == NULL) {
-			error = ENOMEM;
-			goto bad;
-		}
+		outdata = malloc(outsize, M_TEMP, M_WAITOK);
 	}
 	if (ath_hal_getdiagstate(ah, id, indata, insize, &outdata, &outsize)) {
 		if (outsize < ad->ad_out_size)

@@ -1,4 +1,4 @@
-/*	$Id: shutdown_xenbus.c,v 1.7 2011/09/20 00:12:24 jym Exp $	*/
+/*	$Id: shutdown_xenbus.c,v 1.7.54.1 2020/04/13 08:04:12 martin Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -56,10 +56,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.7 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shutdown_xenbus.c,v 1.7.54.1 2020/04/13 08:04:12 martin Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -89,8 +88,7 @@ xenbus_shutdown_handler(struct xenbus_watch *watch, const char **vec,
 
 	struct xenbus_transaction *xbt;
 	int error;
-	char *reqstr;
-	unsigned int reqstrlen;
+	char reqstr[32];
 
 again:
 	xbt = xenbus_transaction_start();
@@ -98,7 +96,7 @@ again:
 		return;
 	}
 	error = xenbus_read(xbt, SHUTDOWN_PATH, SHUTDOWN_NAME,
-	    &reqstrlen, &reqstr);
+	    reqstr, sizeof(reqstr));
 	if (error) {
 		if (error != ENOENT) {
 			printf("%s: xenbus_read %d\n", __func__, error);
@@ -110,14 +108,13 @@ again:
 		}
 		return;
 	}
-	KASSERT(strlen(reqstr) == reqstrlen);
+
 	error = xenbus_rm(xbt, SHUTDOWN_PATH, SHUTDOWN_NAME);
 	if (error) {
 		printf("%s: xenbus_rm %d\n", __func__, error);
 	}
 	error = xenbus_transaction_end(xbt, 0);
 	if (error == EAGAIN) {
-		free(reqstr, M_DEVBUF);
 		goto again;
 	}
 	if (error != 0) {
@@ -135,7 +132,6 @@ again:
 	} else {
 		printf("ignore shutdown request: %s\n", reqstr);
 	}
-	free(reqstr, M_DEVBUF);
 }
 
 static struct xenbus_watch xenbus_shutdown_watch = {

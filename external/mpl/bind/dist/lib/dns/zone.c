@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.5.2.2 2019/06/10 22:04:36 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.5.2.3 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -327,9 +327,11 @@ struct dns_zone {
 	 * module.
 	 */
 	dns_zonestat_level_t	statlevel;
-	bool		requeststats_on;
+	bool			requeststats_on;
 	isc_stats_t		*requeststats;
 	dns_stats_t		*rcvquerystats;
+	dns_stats_t		*dnssecsignstats;
+	dns_stats_t		*dnssecrefreshstats;
 	uint32_t		notifydelay;
 	dns_isselffunc_t	isself;
 	void			*isselfarg;
@@ -426,6 +428,7 @@ struct dns_zone {
 	 */
 	dns_diff_t		rss_diff;
 	isc_eventlist_t		rss_events;
+	isc_eventlist_t		rss_post;
 	dns_dbversion_t		*rss_newver;
 	dns_dbversion_t		*rss_oldver;
 	dns_db_t		*rss_db;
@@ -795,6 +798,7 @@ static isc_result_t zonemgr_getio(dns_zonemgr_t *zmgr, bool high,
 				  void *arg, dns_io_t **iop);
 static void zonemgr_putio(dns_io_t **iop);
 static void zonemgr_cancelio(dns_io_t *io);
+static void rss_post(dns_zone_t *, isc_event_t *);
 
 static isc_result_t
 zone_get_from_db(dns_zone_t *zone, dns_db_t *db, unsigned int *nscount,
@@ -1026,6 +1030,8 @@ dns_zone_create(dns_zone_t **zonep, isc_mem_t *mctx) {
 	zone->statlevel = dns_zonestat_none;
 	zone->requeststats = NULL;
 	zone->rcvquerystats = NULL;
+	zone->dnssecsignstats = NULL;
+	zone->dnssecrefreshstats = NULL;
 	zone->notifydelay = 5;
 	zone->isself = NULL;
 	zone->isselfarg = NULL;
@@ -1051,6 +1057,7 @@ dns_zone_create(dns_zone_t **zonep, isc_mem_t *mctx) {
 	zone->requestixfr = true;
 	zone->requestexpire = true;
 	ISC_LIST_INIT(zone->rss_events);
+	ISC_LIST_INIT(zone->rss_post);
 	zone->rss_db = NULL;
 	zone->rss_raw = NULL;
 	zone->rss_newver = NULL;
@@ -1107,7 +1114,7 @@ zone_free(dns_zone_t *zone) {
 	isc_mem_t *mctx = NULL;
 	dns_signing_t *signing;
 	dns_nsec3chain_t *nsec3chain;
-	isc_event_t *setnsec3param_event;
+	isc_event_t *event;
 	dns_include_t *include;
 
 	REQUIRE(DNS_ZONE_VALID(zone));
@@ -1142,10 +1149,14 @@ zone_free(dns_zone_t *zone) {
 
 	/* Unmanaged objects */
 	while (!ISC_LIST_EMPTY(zone->setnsec3param_queue)) {
-		setnsec3param_event = ISC_LIST_HEAD(zone->setnsec3param_queue);
-		ISC_LIST_UNLINK(zone->setnsec3param_queue, setnsec3param_event,
-				ev_link);
-		isc_event_free(&setnsec3param_event);
+		event = ISC_LIST_HEAD(zone->setnsec3param_queue);
+		ISC_LIST_UNLINK(zone->setnsec3param_queue, event, ev_link);
+		isc_event_free(&event);
+	}
+	while (!ISC_LIST_EMPTY(zone->rss_post)) {
+		event = ISC_LIST_HEAD(zone->rss_post);
+		ISC_LIST_UNLINK(zone->rss_post, event, ev_link);
+		isc_event_free(&event);
 	}
 	for (signing = ISC_LIST_HEAD(zone->signing);
 	     signing != NULL;
@@ -1198,6 +1209,12 @@ zone_free(dns_zone_t *zone) {
 	}
 	if (zone->rcvquerystats != NULL){
 		dns_stats_detach(&zone->rcvquerystats);
+	}
+	if (zone->dnssecsignstats != NULL){
+		dns_stats_detach(&zone->dnssecsignstats);
+	}
+	if (zone->dnssecrefreshstats != NULL){
+		dns_stats_detach(&zone->dnssecrefreshstats);
 	}
 	if (zone->db != NULL) {
 		zone_detachdb(zone);
@@ -1747,7 +1764,7 @@ dns_zone_rpz_enable(dns_zone_t *zone, dns_rpz_zones_t *rpzs,
 {
 	/*
 	 * Only RBTDB zones can be used for response policy zones,
-	 * because only they have the code to load the create the summary data.
+	 * because only they have the code to create the summary data.
 	 * Only zones that are loaded instead of mmap()ed create the
 	 * summary data and so can be policy zones.
 	 */
@@ -3095,7 +3112,7 @@ integrity_checks(dns_zone_t *zone, dns_db_t *db) {
 		/*
 		 * Remember bottom of zone due to NS.
 		 */
-		dns_name_copy(name, bottom, NULL);
+		dns_name_copynf(name, bottom);
 
 		result = dns_rdataset_first(&rdataset);
 		while (result == ISC_R_SUCCESS) {
@@ -3118,7 +3135,7 @@ integrity_checks(dns_zone_t *zone, dns_db_t *db) {
 			/*
 			 * Remember bottom of zone due to DNAME.
 			 */
-			dns_name_copy(name, bottom, NULL);
+			dns_name_copynf(name, bottom);
 			dns_rdataset_disassociate(&rdataset);
 		}
 
@@ -4759,6 +4776,16 @@ zone_postload(dns_zone_t *zone, dns_db_t *db, isc_time_t loadtime,
 			goto cleanup;
 		}
 
+		if (zone->type == dns_zone_master) {
+			result = dns_zone_cdscheck(zone, db, NULL);
+			if (result != ISC_R_SUCCESS) {
+				dns_zone_log(zone, ISC_LOG_ERROR,
+					     "CDS/CDNSKEY consistency checks "
+					     "failed");
+				goto cleanup;
+			}
+		}
+
 		result = dns_zone_verifydb(zone, db, NULL);
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
@@ -5482,8 +5509,8 @@ zone_iattach(dns_zone_t *source, dns_zone_t **target) {
 	/*
 	 * 'source' locked by caller.
 	 */
-	REQUIRE(LOCKED_ZONE(source));
 	REQUIRE(DNS_ZONE_VALID(source));
+	REQUIRE(LOCKED_ZONE(source));
 	REQUIRE(target != NULL && *target == NULL);
 	INSIST(source->irefs + isc_refcount_current(&source->erefs) > 0);
 	source->irefs++;
@@ -6168,17 +6195,17 @@ dns_zone_maintenance(dns_zone_t *zone) {
 
 static inline bool
 was_dumping(dns_zone_t *zone) {
-	bool dumping;
 
 	REQUIRE(LOCKED_ZONE(zone));
 
-	dumping = DNS_ZONE_FLAG(zone, DNS_ZONEFLG_DUMPING);
-	DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_DUMPING);
-	if (!dumping) {
-		DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_NEEDDUMP);
-		isc_time_settoepoch(&zone->dumptime);
+	if (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_DUMPING)) {
+		return (true);
 	}
-	return (dumping);
+
+	DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_DUMPING);
+	DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_NEEDDUMP);
+	isc_time_settoepoch(&zone->dumptime);
+	return (false);
 }
 
 /*%
@@ -6465,10 +6492,11 @@ del_sigs(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 		 * If there is not a matching DNSKEY then
 		 * delete the RRSIG.
 		 */
-		if (!found)
+		if (!found) {
 			result = update_one_rr(db, ver, zonediff->diff,
 					       DNS_DIFFOP_DELRESIGN, name,
 					       rdataset.ttl, &rdata);
+		}
 		if (result != ISC_R_SUCCESS)
 			break;
 	}
@@ -6494,13 +6522,15 @@ del_sigs(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 
 static isc_result_t
 add_sigs(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
-	 dns_rdatatype_t type, dns_diff_t *diff, dst_key_t **keys,
-	 unsigned int nkeys, isc_mem_t *mctx, isc_stdtime_t inception,
-	 isc_stdtime_t expire, bool check_ksk,
-	 bool keyset_kskonly)
+	 dns_zone_t* zone, dns_rdatatype_t type, dns_diff_t *diff,
+	 dst_key_t **keys, unsigned int nkeys, isc_mem_t *mctx,
+	 isc_stdtime_t inception, isc_stdtime_t expire,
+	 bool check_ksk, bool keyset_kskonly)
 {
 	isc_result_t result;
 	dns_dbnode_t *node = NULL;
+	dns_stats_t* dnssecsignstats;
+	dns_stats_t* dnssecrefreshstats;
 	dns_rdataset_t rdataset;
 	dns_rdata_t sig_rdata = DNS_RDATA_INIT;
 	unsigned char data[1024]; /* XXX */
@@ -6533,10 +6563,13 @@ add_sigs(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 	for (i = 0; i < nkeys; i++) {
 		bool both = false;
 
-		if (!dst_key_isprivate(keys[i]))
+		/* Don't add signatures for offline or inactive keys */
+		if (!dst_key_isprivate(keys[i])) {
 			continue;
-		if (dst_key_inactive(keys[i]))	/* Should be redundant. */
+		}
+		if (dst_key_inactive(keys[i])) {
 			continue;
+		}
 
 		if (check_ksk && !REVOKE(keys[i])) {
 			bool have_ksk, have_nonksk;
@@ -6547,24 +6580,36 @@ add_sigs(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 				have_ksk = false;
 				have_nonksk = true;
 			}
+
 			for (j = 0; j < nkeys; j++) {
-				if (j == i || ALG(keys[i]) != ALG(keys[j]))
+				if (j == i || ALG(keys[i]) != ALG(keys[j])) {
 					continue;
-				if (!dst_key_isprivate(keys[j]))
+				}
+
+				/* Don't consider inactive keys, however
+				 * the key may be temporary offline, so do
+				 * consider keys which private key files are
+				 * unavailable.
+				 */
+				if (dst_key_inactive(keys[j])) {
 					continue;
-				if (dst_key_inactive(keys[j]))	/* SBR */
+				}
+
+				if (REVOKE(keys[j])) {
 					continue;
-				if (REVOKE(keys[j]))
-					continue;
-				if (KSK(keys[j]))
+				}
+				if (KSK(keys[j])) {
 					have_ksk = true;
-				else
+				} else {
 					have_nonksk = true;
+				}
 				both = have_ksk && have_nonksk;
-				if (both)
+				if (both) {
 					break;
+				}
 			}
 		}
+
 		if (both) {
 			/*
 			 * CDS and CDNSKEY are signed with KSK (RFC 7344, 4.1).
@@ -6587,12 +6632,27 @@ add_sigs(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 		CHECK(dns_dnssec_sign(name, &rdataset, keys[i],
 				      &inception, &expire,
 				      mctx, &buffer, &sig_rdata));
+
 		/* Update the database and journal with the RRSIG. */
 		/* XXX inefficient - will cause dataset merging */
 		CHECK(update_one_rr(db, ver, diff, DNS_DIFFOP_ADDRESIGN,
 				    name, rdataset.ttl, &sig_rdata));
 		dns_rdata_reset(&sig_rdata);
 		isc_buffer_init(&buffer, data, sizeof(data));
+
+		/* Update DNSSEC sign statistics. */
+		dnssecsignstats = dns_zone_getdnssecsignstats(zone);
+		dnssecrefreshstats = dns_zone_getdnssecrefreshstats(zone);
+		if (dnssecsignstats != NULL) {
+			dns_dnssecsignstats_increment(
+				dns_zone_getdnssecsignstats(zone),
+				dst_key_id(keys[i]));
+		}
+		if (dnssecrefreshstats != NULL) {
+			dns_dnssecsignstats_increment(
+				dns_zone_getdnssecrefreshstats(zone),
+				dst_key_id(keys[i]));
+		}
 	}
 
  failure:
@@ -6617,8 +6677,8 @@ zone_resigninc(dns_zone_t *zone) {
 	dst_key_t *zone_keys[DNS_MAXZONEKEYS];
 	bool check_ksk, keyset_kskonly = false;
 	isc_result_t result;
-	isc_stdtime_t now, inception, soaexpire, expire, stop;
-	uint32_t jitter, sigvalidityinterval;
+	isc_stdtime_t now, inception, soaexpire, expire, fullexpire, stop;
+	uint32_t sigvalidityinterval, expiryinterval;
 	unsigned int i;
 	unsigned int nkeys = 0;
 	unsigned int resign;
@@ -6666,20 +6726,34 @@ zone_resigninc(dns_zone_t *zone) {
 	sigvalidityinterval = zone->sigvalidityinterval;
 	inception = now - 3600;	/* Allow for clock skew. */
 	soaexpire = now + sigvalidityinterval;
+	expiryinterval = dns_zone_getsigresigninginterval(zone);
+	if (expiryinterval > sigvalidityinterval) {
+		expiryinterval = sigvalidityinterval;
+	} else {
+		expiryinterval = sigvalidityinterval - expiryinterval;
+	}
+
 	/*
 	 * Spread out signatures over time if they happen to be
 	 * clumped.  We don't do this for each add_sigs() call as
-	 * we still want some clustering to occur.
+	 * we still want some clustering to occur.  In normal operations
+	 * the records should be re-signed as they fall due and they should
+	 * already be spread out.  However if the server is off for a
+	 * period we need to ensure that the clusters don't become
+	 * synchronised by using the full jitter range.
 	 */
 	if (sigvalidityinterval >= 3600U) {
+		uint32_t normaljitter, fulljitter;
 		if (sigvalidityinterval > 7200U) {
-			jitter = isc_random_uniform(3600);
+			normaljitter = isc_random_uniform(3600);
+			fulljitter = isc_random_uniform(expiryinterval);
 		} else {
-			jitter = isc_random_uniform(1200);
+			normaljitter = fulljitter = isc_random_uniform(1200);
 		}
-		expire = soaexpire - jitter - 1;
+		expire = soaexpire - normaljitter - 1;
+		fullexpire = soaexpire - fulljitter - 1;
 	} else {
-		expire = soaexpire - 1;
+		expire = fullexpire = soaexpire - 1;
 	}
 	stop = now + 5;
 
@@ -6719,9 +6793,17 @@ zone_resigninc(dns_zone_t *zone) {
 			break;
 		}
 
-		result = add_sigs(db, version, name, covers, zonediff.diff,
-				  zone_keys, nkeys, zone->mctx, inception,
-				  expire, check_ksk, keyset_kskonly);
+		/*
+		 * If re-signing is over 5 minutes late use 'fullexpire'
+		 * to redistribute the signature over the complete
+		 * re-signing window, otherwise only add a small amount
+		 * of jitter.
+		 */
+		result = add_sigs(db, version, name, zone, covers,
+				  zonediff.diff, zone_keys, nkeys, zone->mctx,
+				  inception,
+				  resign > (now - 300) ? expire : fullexpire,
+				  check_ksk, keyset_kskonly);
 		if (result != ISC_R_SUCCESS) {
 			dns_zone_log(zone, ISC_LOG_ERROR,
 				     "zone_resigninc:add_sigs -> %s",
@@ -6777,7 +6859,7 @@ zone_resigninc(dns_zone_t *zone) {
 	 * Generate maximum life time signatures so that the above loop
 	 * termination is sensible.
 	 */
-	result = add_sigs(db, version, &zone->origin, dns_rdatatype_soa,
+	result = add_sigs(db, version, &zone->origin, zone, dns_rdatatype_soa,
 			  zonediff.diff, zone_keys, nkeys, zone->mctx,
 			  inception, soaexpire, check_ksk, keyset_kskonly);
 	if (result != ISC_R_SUCCESS) {
@@ -6966,9 +7048,9 @@ check_if_bottom_of_zone(dns_db_t *db, dns_dbnode_t *node,
 }
 
 static isc_result_t
-sign_a_node(dns_db_t *db, dns_name_t *name, dns_dbnode_t *node,
-	    dns_dbversion_t *version, bool build_nsec3,
-	    bool build_nsec, dst_key_t *key,
+sign_a_node(dns_db_t *db, dns_zone_t *zone, dns_name_t *name,
+	    dns_dbnode_t *node, dns_dbversion_t *version,
+	    bool build_nsec3, bool build_nsec, dst_key_t *key,
 	    isc_stdtime_t inception, isc_stdtime_t expire,
 	    unsigned int minimum, bool is_ksk,
 	    bool keyset_kskonly, bool is_bottom_of_zone,
@@ -6978,6 +7060,9 @@ sign_a_node(dns_db_t *db, dns_name_t *name, dns_dbnode_t *node,
 	dns_rdatasetiter_t *iterator = NULL;
 	dns_rdataset_t rdataset;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
+	dns_stats_t* dnssecsignstats;
+	dns_stats_t* dnssecrefreshstats;
+
 	isc_buffer_t buffer;
 	unsigned char data[1024];
 	bool seen_soa, seen_ns, seen_rr, seen_nsec, seen_nsec3, seen_ds;
@@ -7079,6 +7164,21 @@ sign_a_node(dns_db_t *db, dns_name_t *name, dns_dbnode_t *node,
 		CHECK(update_one_rr(db, version, diff, DNS_DIFFOP_ADDRESIGN,
 				    name, rdataset.ttl, &rdata));
 		dns_rdata_reset(&rdata);
+
+		/* Update DNSSEC sign statistics. */
+		dnssecsignstats = dns_zone_getdnssecsignstats(zone);
+		dnssecrefreshstats = dns_zone_getdnssecrefreshstats(zone);
+		if (dnssecsignstats != NULL) {
+			dns_dnssecsignstats_increment(
+				dns_zone_getdnssecsignstats(zone),
+				dst_key_id(key));
+		}
+		if (dnssecrefreshstats != NULL) {
+			dns_dnssecsignstats_increment(
+				dns_zone_getdnssecrefreshstats(zone),
+				dst_key_id(key));
+		}
+
 		(*signatures)--;
  next_rdataset:
 		dns_rdataset_disassociate(&rdataset);
@@ -7612,7 +7712,7 @@ dns__zone_updatesigs(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *version,
 				     dns_result_totext(result));
 			return (result);
 		}
-		result = add_sigs(db, version, &tuple->name,
+		result = add_sigs(db, version, &tuple->name, zone,
 				  tuple->rdata.type, zonediff->diff,
 				  zone_keys, nkeys, zone->mctx, inception,
 				  exp, check_ksk, keyset_kskonly);
@@ -7663,7 +7763,7 @@ zone_nsec3chain(dns_zone_t *zone) {
 	bool first;
 	isc_result_t result;
 	isc_stdtime_t now, inception, soaexpire, expire;
-	uint32_t jitter, sigvalidityinterval;
+	uint32_t jitter, sigvalidityinterval, expiryinterval;
 	unsigned int i;
 	unsigned int nkeys = 0;
 	uint32_t nodes;
@@ -7735,6 +7835,12 @@ zone_nsec3chain(dns_zone_t *zone) {
 	sigvalidityinterval = dns_zone_getsigvalidityinterval(zone);
 	inception = now - 3600;	/* Allow for clock skew. */
 	soaexpire = now + sigvalidityinterval;
+	expiryinterval = dns_zone_getsigresigninginterval(zone);
+	if (expiryinterval > sigvalidityinterval) {
+		expiryinterval = sigvalidityinterval;
+	} else {
+		expiryinterval = sigvalidityinterval - expiryinterval;
+	}
 
 	/*
 	 * Spread out signatures over time if they happen to be
@@ -7743,7 +7849,7 @@ zone_nsec3chain(dns_zone_t *zone) {
 	 */
 	if (sigvalidityinterval >= 3600U) {
 		if (sigvalidityinterval > 7200U) {
-			jitter = isc_random_uniform(3600);
+			jitter = isc_random_uniform(expiryinterval);
 		} else {
 			jitter = isc_random_uniform(1200);
 		}
@@ -7845,7 +7951,7 @@ zone_nsec3chain(dns_zone_t *zone) {
 				 * Remember the obscuring name so that
 				 * we skip all obscured names.
 				 */
-				dns_name_copy(found, name, NULL);
+				dns_name_copynf(found, name);
 				delegation = true;
 				goto next_addnode;
 			}
@@ -8108,7 +8214,7 @@ zone_nsec3chain(dns_zone_t *zone) {
 				 * Remember the obscuring name so that
 				 * we skip all obscured names.
 				 */
-				dns_name_copy(found, name, NULL);
+				dns_name_copynf(found, name);
 				delegation = true;
 				goto next_removenode;
 			}
@@ -8377,7 +8483,7 @@ zone_nsec3chain(dns_zone_t *zone) {
 		goto failure;
 	}
 
-	result = add_sigs(db, version, &zone->origin, dns_rdatatype_soa,
+	result = add_sigs(db, version, &zone->origin, zone, dns_rdatatype_soa,
 			  zonediff.diff, zone_keys, nkeys, zone->mctx,
 			  inception, soaexpire, check_ksk, keyset_kskonly);
 	if (result != ISC_R_SUCCESS) {
@@ -8830,7 +8936,7 @@ zone_sign(dns_zone_t *zone) {
 				 * Remember the obscuring name so that
 				 * we skip all obscured names.
 				 */
-				dns_name_copy(found, name, NULL);
+				dns_name_copynf(found, name);
 				is_bottom_of_zone = true;
 				goto next_node;
 			}
@@ -8855,9 +8961,6 @@ zone_sign(dns_zone_t *zone) {
 			if (!dst_key_isprivate(zone_keys[i])) {
 				continue;
 			}
-			/*
-			 * Should be redundant.
-			 */
 			if (dst_key_inactive(zone_keys[i])) {
 				continue;
 			}
@@ -8901,11 +9004,10 @@ zone_sign(dns_zone_t *zone) {
 					{
 						continue;
 					}
-					if (!dst_key_isprivate(zone_keys[j])) {
-						continue;
-					}
-					/*
-					 * Should be redundant.
+					/* Don't consider inactive keys, however
+					 * the key may be temporary offline, so do
+					 * consider keys which private key files are
+					 * unavailable.
 					 */
 					if (dst_key_inactive(zone_keys[j])) {
 						continue;
@@ -8943,9 +9045,10 @@ zone_sign(dns_zone_t *zone) {
 				continue;
 			}
 
-			CHECK(sign_a_node(db, name, node, version, build_nsec3,
-					  build_nsec, zone_keys[i], inception,
-					  expire, zone->minimum, is_ksk,
+			CHECK(sign_a_node(db, zone, name, node, version,
+					  build_nsec3, build_nsec,
+					  zone_keys[i], inception, expire,
+					  zone->minimum, is_ksk,
 					  (both && keyset_kskonly),
 					  is_bottom_of_zone, zonediff.diff,
 					  &signatures, zone->mctx));
@@ -9083,7 +9186,7 @@ zone_sign(dns_zone_t *zone) {
 	 * Generate maximum life time signatures so that the above loop
 	 * termination is sensible.
 	 */
-	result = add_sigs(db, version, &zone->origin, dns_rdatatype_soa,
+	result = add_sigs(db, version, &zone->origin, zone, dns_rdatatype_soa,
 			  zonediff.diff, zone_keys, nkeys, zone->mctx,
 			  inception, soaexpire, check_ksk, keyset_kskonly);
 	if (result != ISC_R_SUCCESS) {
@@ -10489,14 +10592,17 @@ zone_maintenance(dns_zone_t *zone) {
 		if (zone->rss_event != NULL)
 			break;
 		if (!isc_time_isepoch(&zone->signingtime) &&
-		    isc_time_compare(&now, &zone->signingtime) >= 0)
+		    isc_time_compare(&now, &zone->signingtime) >= 0) {
 			zone_sign(zone);
+		}
 		else if (!isc_time_isepoch(&zone->resigntime) &&
-		    isc_time_compare(&now, &zone->resigntime) >= 0)
+		    isc_time_compare(&now, &zone->resigntime) >= 0) {
 			zone_resigninc(zone);
+		}
 		else if (!isc_time_isepoch(&zone->nsec3chaintime) &&
-			isc_time_compare(&now, &zone->nsec3chaintime) >= 0)
+			isc_time_compare(&now, &zone->nsec3chaintime) >= 0) {
 			zone_nsec3chain(zone);
+		}
 		/*
 		 * Do we need to issue a key expiry warning?
 		 */
@@ -10572,6 +10678,8 @@ dns_zone_expire(dns_zone_t *zone) {
 
 static void
 zone_expire(dns_zone_t *zone) {
+	dns_db_t *db = NULL;
+
 	/*
 	 * 'zone' locked by caller.
 	 */
@@ -10584,6 +10692,32 @@ zone_expire(dns_zone_t *zone) {
 	zone->refresh = DNS_ZONE_DEFAULTREFRESH;
 	zone->retry = DNS_ZONE_DEFAULTRETRY;
 	DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_HAVETIMERS);
+
+	/*
+	 * An RPZ zone has expired; before unloading it, we must
+	 * first remove it from the RPZ summary database. The
+	 * easiest way to do this is "update" it with an empty
+	 * database so that the update callback synchonizes
+	 * the diff automatically.
+	 */
+	if (zone->rpzs != NULL && zone->rpz_num != DNS_RPZ_INVALID_NUM) {
+		isc_result_t result;
+		dns_rpz_zone_t *rpz = zone->rpzs->zones[zone->rpz_num];
+
+		CHECK(dns_db_create(zone->mctx, "rbt", &zone->origin,
+				    dns_dbtype_zone, zone->rdclass,
+				    0, NULL, &db));
+		CHECK(dns_rpz_dbupdate_callback(db, rpz));
+		dns_zone_log(zone, ISC_LOG_WARNING,
+			     "response-policy zone expired; "
+			     "policies unloaded");
+	}
+
+ failure:
+	if (db != NULL) {
+		dns_db_detach(&db);
+	}
+
 	zone_unload(zone);
 }
 
@@ -13630,7 +13764,7 @@ dns_zone_notifyreceive(dns_zone_t *zone, isc_sockaddr_t *from,
 	uint32_t serial = 0;
 	bool have_serial = false;
 	dns_tsigkey_t *tsigkey;
-	dns_name_t *tsig;
+	const dns_name_t *tsig;
 
 	REQUIRE(DNS_ZONE_VALID(zone));
 
@@ -14634,6 +14768,7 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 	dns_update_log_t log = { update_log_cb, NULL };
 	uint32_t newserial = 0, desired = 0;
 	isc_time_t timenow;
+	int level = ISC_LOG_ERROR;
 
 	UNUSED(task);
 
@@ -14667,16 +14802,18 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 		 */
 		result = ISC_R_SUCCESS;
 		ZONEDB_LOCK(&zone->dblock, isc_rwlocktype_read);
-		if (zone->db != NULL)
+		if (zone->db != NULL) {
 			dns_db_attach(zone->db, &zone->rss_db);
-		else
+		} else {
 			result = ISC_R_FAILURE;
+		}
 		ZONEDB_UNLOCK(&zone->dblock, isc_rwlocktype_read);
 
-		if (result == ISC_R_SUCCESS && zone->raw != NULL)
+		if (result == ISC_R_SUCCESS && zone->raw != NULL) {
 			dns_zone_attach(zone->raw, &zone->rss_raw);
-		else
+		} else {
 			result = ISC_R_FAILURE;
+		}
 
 		UNLOCK_ZONE(zone);
 
@@ -14697,8 +14834,9 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 
 		result = dns_journal_open(zone->mctx, zone->journal,
 					  DNS_JOURNAL_READ, &sjournal);
-		if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND)
+		if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
 			goto failure;
+		}
 
 		if (!dns_journal_get_sourceserial(rjournal, &start)) {
 			start = dns_journal_first_serial(rjournal);
@@ -14729,12 +14867,14 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 		result = sync_secure_journal(zone, zone->rss_raw, rjournal,
 					     start, end, &soatuple,
 					     &zone->rss_diff);
-		if (result == DNS_R_UNCHANGED)
+		if (result == DNS_R_UNCHANGED) {
+			level = ISC_LOG_INFO;
 			goto failure;
-		else if (result != ISC_R_SUCCESS)
+		} else if (result != ISC_R_SUCCESS) {
 			CHECK(sync_secure_db(zone, zone->rss_raw, zone->rss_db,
 					     zone->rss_oldver, &soatuple,
 					     &zone->rss_diff));
+		}
 
 		CHECK(dns_diff_apply(&zone->rss_diff, zone->rss_db,
 				     zone->rss_newver));
@@ -14751,18 +14891,20 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 				    dns_soa_getserial(&soatuple->rdata);
 			if (!isc_serial_gt(newserial, oldserial)) {
 				newserial = oldserial + 1;
-				if (newserial == 0)
+				if (newserial == 0) {
 					newserial++;
+				}
 				dns_soa_setserial(newserial, &soatuple->rdata);
 			}
 			CHECK(do_one_tuple(&tuple, zone->rss_db,
 					   zone->rss_newver, &zone->rss_diff));
 			CHECK(do_one_tuple(&soatuple, zone->rss_db,
 					   zone->rss_newver, &zone->rss_diff));
-		} else
+		} else {
 			CHECK(update_soa_serial(zone->rss_db, zone->rss_newver,
 						&zone->rss_diff, zone->mctx,
 						zone->updatemethod));
+		}
 
 	}
 	result = dns_update_signaturesinc(&log, zone, zone->rss_db,
@@ -14771,8 +14913,9 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 					  zone->sigvalidityinterval,
 					  &zone->rss_state);
 	if (result == DNS_R_CONTINUE) {
-		if (rjournal != NULL)
+		if (rjournal != NULL) {
 			dns_journal_destroy(&rjournal);
+		}
 		isc_task_send(task, &event);
 		return;
 	}
@@ -14788,10 +14931,11 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 		goto failure;
 	}
 
-	if (rjournal == NULL)
+	if (rjournal == NULL) {
 		CHECK(dns_journal_open(zone->rss_raw->mctx,
 				       zone->rss_raw->journal,
 				       DNS_JOURNAL_WRITE, &rjournal));
+	}
 	CHECK(zone_journal(zone, &zone->rss_diff, &end,
 			   "receive_secure_serial"));
 
@@ -14821,28 +14965,35 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 	isc_event_free(&zone->rss_event);
 	event = ISC_LIST_HEAD(zone->rss_events);
 
-	if (zone->rss_raw != NULL)
+	if (zone->rss_raw != NULL) {
 		dns_zone_detach(&zone->rss_raw);
-	if (result != ISC_R_SUCCESS)
-		dns_zone_log(zone, ISC_LOG_ERROR, "receive_secure_serial: %s",
+	}
+	if (result != ISC_R_SUCCESS) {
+		dns_zone_log(zone, level, "receive_secure_serial: %s",
 			     dns_result_totext(result));
-	if (tuple != NULL)
+	}
+	if (tuple != NULL) {
 		dns_difftuple_free(&tuple);
-	if (soatuple != NULL)
+	}
+	if (soatuple != NULL) {
 		dns_difftuple_free(&soatuple);
+	}
 	if (zone->rss_db != NULL) {
-		if (zone->rss_oldver != NULL)
+		if (zone->rss_oldver != NULL) {
 			dns_db_closeversion(zone->rss_db, &zone->rss_oldver,
 					    false);
-		if (zone->rss_newver != NULL)
+		}
+		if (zone->rss_newver != NULL) {
 			dns_db_closeversion(zone->rss_db, &zone->rss_newver,
 					    false);
+		}
 		dns_db_detach(&zone->rss_db);
 	}
 	INSIST(zone->rss_oldver == NULL);
 	INSIST(zone->rss_newver == NULL);
-	if (rjournal != NULL)
+	if (rjournal != NULL) {
 		dns_journal_destroy(&rjournal);
+	}
 	dns_diff_clear(&zone->rss_diff);
 
 	if (event != NULL) {
@@ -14852,6 +15003,14 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 		ISC_LIST_UNLINK(zone->rss_events, event, ev_link);
 		goto nextevent;
 	}
+
+	event = ISC_LIST_HEAD(zone->rss_post);
+	while (event != NULL) {
+		ISC_LIST_UNLINK(zone->rss_post, event, ev_link);
+		rss_post(zone, event);
+		event = ISC_LIST_HEAD(zone->rss_post);
+	}
+
 	dns_zone_idetach(&zone);
 }
 
@@ -15097,7 +15256,7 @@ static isc_result_t
 restore_nsec3param(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *version,
 		   nsec3paramlist_t *nsec3list)
 {
-	isc_result_t result;
+	isc_result_t result = ISC_R_SUCCESS;
 	dns_diff_t diff;
 	dns_rdata_t rdata;
 	nsec3param_t *nsec3p = NULL;
@@ -15858,8 +16017,8 @@ zone_loaddone(void *arg, isc_result_t result) {
 		LOCK_ZONE(zone->raw);
 	else if (inline_raw(zone)) {
 		secure = zone->secure;
-		TRYLOCK_ZONE(result, secure);
-		if (result != ISC_R_SUCCESS) {
+		TRYLOCK_ZONE(tresult, secure);
+		if (tresult != ISC_R_SUCCESS) {
 			UNLOCK_ZONE(zone);
 			secure = NULL;
 			isc_thread_yield();
@@ -17506,6 +17665,42 @@ dns_zone_setrcvquerystats(dns_zone_t *zone, dns_stats_t *stats) {
 	UNLOCK_ZONE(zone);
 }
 
+void
+dns_zone_setdnssecsignstats(dns_zone_t *zone, dns_stats_t *stats) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+
+	LOCK_ZONE(zone);
+	if (stats != NULL && zone->dnssecsignstats == NULL) {
+		dns_stats_attach(stats, &zone->dnssecsignstats);
+	}
+	UNLOCK_ZONE(zone);
+}
+
+void
+dns_zone_setdnssecrefreshstats(dns_zone_t *zone, dns_stats_t *stats) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+
+	LOCK_ZONE(zone);
+	if (stats != NULL && zone->dnssecrefreshstats == NULL) {
+		dns_stats_attach(stats, &zone->dnssecrefreshstats);
+	}
+	UNLOCK_ZONE(zone);
+}
+
+dns_stats_t*
+dns_zone_getdnssecsignstats(dns_zone_t *zone) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+
+	return (zone->dnssecsignstats);
+}
+
+dns_stats_t*
+dns_zone_getdnssecrefreshstats(dns_zone_t *zone) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+
+	return (zone->dnssecrefreshstats);
+}
+
 isc_stats_t *
 dns_zone_getrequeststats(dns_zone_t *zone) {
 	/*
@@ -18004,8 +18199,7 @@ rr_exists(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
  */
 static isc_result_t
 add_signing_records(dns_db_t *db, dns_rdatatype_t privatetype,
-		    dns_dbversion_t *ver, dns_diff_t *diff,
-		    bool sign_all)
+		    dns_dbversion_t *ver, dns_diff_t *diff, bool sign_all)
 {
 	dns_difftuple_t *tuple, *newtuple = NULL;
 	dns_rdata_dnskey_t dnskey;
@@ -18020,15 +18214,18 @@ add_signing_records(dns_db_t *db, dns_rdatatype_t privatetype,
 	for (tuple = ISC_LIST_HEAD(diff->tuples);
 	     tuple != NULL;
 	     tuple = ISC_LIST_NEXT(tuple, link)) {
-		if (tuple->rdata.type != dns_rdatatype_dnskey)
+		if (tuple->rdata.type != dns_rdatatype_dnskey) {
 			continue;
+		}
 
 		result = dns_rdata_tostruct(&tuple->rdata, &dnskey, NULL);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		if ((dnskey.flags &
 		     (DNS_KEYFLAG_OWNERMASK|DNS_KEYTYPE_NOAUTH))
 			 != DNS_KEYOWNER_ZONE)
+		{
 			continue;
+		}
 
 		dns_rdata_toregion(&tuple->rdata, &r);
 
@@ -18046,8 +18243,10 @@ add_signing_records(dns_db_t *db, dns_rdatatype_t privatetype,
 
 		if (sign_all || tuple->op == DNS_DIFFOP_DEL) {
 			CHECK(rr_exists(db, ver, name, &rdata, &flag));
-			if (flag)
+			if (flag) {
 				continue;
+			}
+
 			CHECK(dns_difftuple_create(diff->mctx, DNS_DIFFOP_ADD,
 						   name, 0, &rdata, &newtuple));
 			CHECK(do_one_tuple(&newtuple, db, ver, diff));
@@ -18129,10 +18328,10 @@ sign_apex(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
 				   dns_result_totext(result));
 			goto failure;
 		}
-		result = add_sigs(db, ver, &zone->origin, dns_rdatatype_dnskey,
-				  zonediff->diff, zone_keys, nkeys, zone->mctx,
-				  inception, keyexpire, check_ksk,
-				  keyset_kskonly);
+		result = add_sigs(db, ver, &zone->origin, zone,
+				  dns_rdatatype_dnskey, zonediff->diff,
+				  zone_keys, nkeys, zone->mctx, inception,
+				  keyexpire, check_ksk, keyset_kskonly);
 		if (result != ISC_R_SUCCESS) {
 			dnssec_log(zone, ISC_LOG_ERROR,
 				   "sign_apex:add_sigs -> %s",
@@ -18373,7 +18572,6 @@ zone_rekey(dns_zone_t *zone) {
 		goto failure;
 	}
 
-
 	/* Get the CDS rdataset */
 	result = dns_db_findrdataset(db, node, ver, dns_rdatatype_cds,
 				     dns_rdatatype_none, 0, &cdsset, NULL);
@@ -18399,7 +18597,6 @@ zone_rekey(dns_zone_t *zone) {
 	if (result == ISC_R_SUCCESS) {
 		bool check_ksk;
 		check_ksk = DNS_ZONE_OPTION(zone, DNS_ZONEOPT_UPDATECHECKKSK);
-
 		result = dns_dnssec_updatekeys(&dnskeys, &keys, &rmkeys,
 					       &zone->origin, ttl, &diff,
 					       !check_ksk, mctx,
@@ -18468,9 +18665,8 @@ zone_rekey(dns_zone_t *zone) {
 		{
 			CHECK(dns_diff_apply(&diff, db, ver));
 			CHECK(clean_nsec3param(zone, db, ver, &diff));
-			CHECK(add_signing_records(db, zone->privatetype,
-						  ver, &diff,
-						  (newalg || fullsign)));
+			CHECK(add_signing_records(db, zone->privatetype, ver,
+						  &diff, (newalg || fullsign)));
 			CHECK(update_soa_serial(db, ver, &diff, mctx,
 						zone->updatemethod));
 			CHECK(add_chains(zone, db, ver, &diff));
@@ -19300,19 +19496,47 @@ dns_zone_keydone(dns_zone_t *zone, const char *keystr) {
 /*
  * Called from the zone task's queue after the relevant event is posted by
  * dns_zone_setnsec3param().
- *
+ */
+static void
+setnsec3param(isc_task_t *task, isc_event_t *event) {
+	const char *me = "setnsec3param";
+	dns_zone_t *zone = event->ev_arg;
+
+	INSIST(DNS_ZONE_VALID(zone));
+
+	UNUSED(task);
+
+	ENTER;
+
+	/*
+	 * If receive_secure_serial is still processing or we have a
+	 * queued event append rss_post queue.
+	 */
+	if (zone->rss_newver != NULL ||
+	    ISC_LIST_HEAD(zone->rss_post) != NULL)
+	{
+		/*
+		 * Wait for receive_secure_serial() to finish processing.
+		 */
+		ISC_LIST_APPEND(zone->rss_post, event, ev_link);
+	} else {
+		rss_post(zone, event);
+	}
+	dns_zone_idetach(&zone);
+}
+
+/*
  * Check whether NSEC3 chain addition or removal specified by the private-type
  * record passed with the event was already queued (or even fully performed).
  * If not, modify the relevant private-type records at the zone apex and call
  * resume_addnsec3chain().
  */
 static void
-setnsec3param(isc_task_t *task, isc_event_t *event) {
-	const char *me = "setnsec3param";
+rss_post(dns_zone_t *zone, isc_event_t *event) {
+	const char *me = "rss_post";
 	bool commit = false;
 	isc_result_t result;
 	dns_dbversion_t *oldver = NULL, *newver = NULL;
-	dns_zone_t *zone;
 	dns_db_t *db = NULL;
 	dns_dbnode_t *node = NULL;
 	dns_rdataset_t prdataset, nrdataset;
@@ -19323,11 +19547,6 @@ setnsec3param(isc_task_t *task, isc_event_t *event) {
 	dns_rdata_t rdata;
 	bool nseconly;
 	bool exists = false;
-
-	UNUSED(task);
-
-	zone = event->ev_arg;
-	INSIST(DNS_ZONE_VALID(zone));
 
 	ENTER;
 
@@ -19498,7 +19717,6 @@ setnsec3param(isc_task_t *task, isc_event_t *event) {
 	}
 	dns_diff_clear(&diff);
 	isc_event_free(&event);
-	dns_zone_idetach(&zone);
 
 	INSIST(oldver == NULL);
 	INSIST(newver == NULL);

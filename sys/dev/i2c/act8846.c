@@ -1,4 +1,4 @@
-/* $NetBSD: act8846.c,v 1.5 2018/06/16 21:22:13 thorpej Exp $ */
+/* $NetBSD: act8846.c,v 1.5.2.1 2020/04/13 08:04:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 //#define ACT_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: act8846.c,v 1.5 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: act8846.c,v 1.5.2.1 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,15 +185,13 @@ act8846_attach(device_t parent, device_t self, void *aux)
 static int
 act8846_read(struct act8846_softc *sc, uint8_t reg, uint8_t *val)
 {
-	return iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr, reg, val,
-	    cold ? I2C_F_POLL : 0);
+	return iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr, reg, val, 0);
 }
 
 static int
 act8846_write(struct act8846_softc *sc, uint8_t reg, uint8_t val)
 {
-	return iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val,
-	    cold ? I2C_F_POLL : 0);
+	return iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val, 0);
 }
 
 static void

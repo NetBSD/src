@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.1.28.1 2020/04/13 08:06:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,7 +42,7 @@ message md_may_remove_boot_medium
 {
 }
 
-message fullpart
+message mac68k_fullpart
 {NetBSD wird nun auf die Festplatte %s installiert. Sie
 können die gesamte Festplatte oder nur einen Teil davon für NetBSD
 verwenden.
@@ -82,14 +82,14 @@ geschrieben, bis Sie die Partitionierung erfolgreich abgeschlossen haben.
 
 Möchten Sie fortfahren?}
 
-message part_header
+message mac68k_part_header
 {Part      Start      Größe FS-Typ verw.     Dateisystem (Name)
 ---- ---------- ---------- ------ --------- ------------------\n}
 
 message part_row
 {%3s%c %10d %10d %6s %-9s %s\n}
 
-message ovrwrite
+message mac68k_ovrwrite
 {Ihr Festplatte enthält mindestens eine MacOS HFS Partition. Das überschreiben
 der ganzen Festplatte wird die Festplatte für MacOS unbenutzbar machen. Sie
 sollten erwägen, eine kleine MacOS HFS Partition anzulegen, um
@@ -101,7 +101,7 @@ Sind Sie sicher, dass Sie die MacOS HFS Partition(en) überschreiben
 möchten?
 }
 
-message editparttable
+message mac68k_editparttable
 {Festplatten Partitions Übersicht bearbeiten: Die Übersicht auf der Festplatte
 wurde nach Benutzerpartitionen durchsucht, aber nur die für NetBSD nutzbaren
 werden hier angezeigt.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.25 2014/11/06 21:30:09 christos Exp $	*/
+/*	$NetBSD: mroute.c,v 1.25.16.1 2020/04/13 08:05:45 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mroute.c,v 1.25 2014/11/06 21:30:09 christos Exp $");
+__RCSID("$NetBSD: mroute.c,v 1.25.16.1 2020/04/13 08:05:45 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,7 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr,
 static void
 print_bw_meter(struct bw_meter *bw_meter, int *banner_printed)
 {
-	char s0[256], s1[256], s2[256], s3[256];
+	char s0[256*3], s1[256], s2[256], s3[256];
 	struct timeval now, end, delta;
 
 	gettimeofday(&now, NULL);
@@ -286,37 +286,37 @@ print_bw_meter(struct bw_meter *bw_meter, int *banner_printed)
 
 	/* The measured values */
 	if (bw_meter->bm_flags & BW_METER_UNIT_PACKETS)
-		sprintf(s1, "%llu", (unsigned long long)bw_meter->bm_measured.b_packets);
+		snprintf(s1, sizeof s1, "%llu", (unsigned long long)bw_meter->bm_measured.b_packets);
 	else
-		sprintf(s1, "?");
+		snprintf(s1, sizeof s1, "?");
 	if (bw_meter->bm_flags & BW_METER_UNIT_BYTES)
-		sprintf(s2, "%llu", (unsigned long long)bw_meter->bm_measured.b_bytes);
+		snprintf(s2, sizeof s2, "%llu", (unsigned long long)bw_meter->bm_measured.b_bytes);
 	else
-		sprintf(s2, "?");
-	sprintf(s0, "%lld.%ld|%s|%s",
+		snprintf(s2, sizeof s2, "?");
+	snprintf(s0, sizeof s0, "%lld.%ld|%s|%s",
 		(long long)bw_meter->bm_start_time.tv_sec,
 		(long)bw_meter->bm_start_time.tv_usec,
 		s1, s2);
 	printf("  %-30s", s0);
 
 	/* The type of entry */
-	sprintf(s0, "%s", "?");
+	snprintf(s0, sizeof s0, "%s", "?");
 	if (bw_meter->bm_flags & BW_METER_GEQ)
-		sprintf(s0, "%s", ">=");
+		snprintf(s0, sizeof s0, "%s", ">=");
 	else if (bw_meter->bm_flags & BW_METER_LEQ)
-		sprintf(s0, "%s", "<=");
+		snprintf(s0, sizeof s0, "%s", "<=");
 	printf("  %-3s", s0);
 
 	/* The threshold values */
 	if (bw_meter->bm_flags & BW_METER_UNIT_PACKETS)
-		sprintf(s1, "%llu", (unsigned long long)bw_meter->bm_threshold.b_packets);
+		snprintf(s1, sizeof s1, "%llu", (unsigned long long)bw_meter->bm_threshold.b_packets);
 	else
-		sprintf(s1, "?");
+		snprintf(s1, sizeof s1, "?");
 	if (bw_meter->bm_flags & BW_METER_UNIT_BYTES)
-		sprintf(s2, "%llu", (unsigned long long)bw_meter->bm_threshold.b_bytes);
+		snprintf(s2, sizeof s2, "%llu", (unsigned long long)bw_meter->bm_threshold.b_bytes);
 	else
-		sprintf(s2, "?");
-	sprintf(s0, "%lld.%ld|%s|%s",
+		snprintf(s2, sizeof s2, "?");
+	snprintf(s0, sizeof s0, "%lld.%ld|%s|%s",
 		(long long)bw_meter->bm_threshold.b_time.tv_sec,
 		(long)bw_meter->bm_threshold.b_time.tv_usec,
 		s1, s2);
@@ -327,12 +327,12 @@ print_bw_meter(struct bw_meter *bw_meter, int *banner_printed)
 		 &bw_meter->bm_threshold.b_time, &end);
 	if (timercmp(&now, &end, <=)) {
 		timersub(&end, &now, &delta);
-		sprintf(s3, "%lld.%ld",
+		snprintf(s3, sizeof s3, "%lld.%ld",
 		    (long long)delta.tv_sec, (long)delta.tv_usec);
 	} else {
 		/* Negative time */
 		timersub(&now, &end, &delta);
-		sprintf(s3, "-%lld.%ld",
+		snprintf(s3, sizeof s3, "-%lld.%ld",
 		    (long long)delta.tv_sec, (long)delta.tv_usec);
 	}
 	printf(" %s", s3);

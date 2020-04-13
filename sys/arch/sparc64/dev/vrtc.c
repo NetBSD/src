@@ -1,4 +1,4 @@
-/*	$NetBSD: vrtc.c,v 1.1 2016/06/17 21:59:06 palle Exp $	*/
+/*	$NetBSD: vrtc.c,v 1.1.22.1 2020/04/13 08:04:08 martin Exp $	*/
 /*	$OpenBSD: vrtc.c,v 1.1 2008/03/08 19:19:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -57,10 +57,7 @@ vrtc_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	handle = malloc(sizeof(struct todr_chip_handle), M_DEVBUF,M_NOWAIT);
-	if (handle == NULL)
-		panic("couldn't allocate todr_handle");
-
+	handle = malloc(sizeof(struct todr_chip_handle), M_DEVBUF,M_WAITOK);
 	handle->cookie = self;
 	handle->todr_gettime = vrtc_gettime;
 	handle->todr_settime = vrtc_settime;

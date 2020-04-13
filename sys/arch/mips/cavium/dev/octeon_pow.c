@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pow.c,v 1.2.22.1 2019/06/10 22:06:29 christos Exp $	*/
+/*	$NetBSD: octeon_pow.c,v 1.2.22.2 2020/04/13 08:03:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.2.22.1 2019/06/10 22:06:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pow.c,v 1.2.22.2 2020/04/13 08:03:59 martin Exp $");
 
 #include "opt_octeon.h"	/* OCTEON_ETH_DEBUG */
 
@@ -323,9 +323,7 @@ octeon_pow_intr_establish(int group, int level,
 	KASSERT(group >= 0);
 	KASSERT(group < 16);
 
-	pow_ih = malloc(sizeof(*pow_ih), M_DEVBUF, M_NOWAIT);
-	KASSERT(pow_ih != NULL);
-
+	pow_ih = malloc(sizeof(*pow_ih), M_DEVBUF, M_WAITOK);
 	pow_ih->pi_ih = octeon_intr_establish(
 	    ffs64(CIU_INTX_SUM0_WORKQ_0) - 1 + group,
 	    level,
@@ -357,7 +355,7 @@ octeon_pow_intr_debug_init(struct octeon_pow_intr_handle *pow_ih, int group)
 	name = malloc(_NAMELEN +
 	    _DESCRLEN * __arraycount(pow_ih->pi_ev_per) +
 	    _DESCRLEN * __arraycount(pow_ih->pi_ev_ival),
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_WAITOK);
 	descr = name + _NAMELEN;
 	snprintf(name, _NAMELEN, "pow%d", group);
 	for (i = 0; i < (int)__arraycount(pow_ih->pi_ev_per); i++) {

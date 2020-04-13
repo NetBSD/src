@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_apple.c,v 1.7 2014/11/02 00:05:03 christos Exp $ */
+/*	$NetBSD: agp_apple.c,v 1.7.20.1 2020/04/13 08:04:26 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.7 2014/11/02 00:05:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.7.20.1 2020/04/13 08:04:26 martin Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -84,11 +84,7 @@ agp_apple_attach(device_t parent, device_t self, void *aux)
 	struct agp_apple_softc *asc;
 	struct agp_gatt *gatt;
 
-	asc = malloc(sizeof *asc, M_AGP, M_NOWAIT|M_ZERO);
-	if (asc == NULL) {
-		aprint_error(": can't allocate chipset-specific softc\n");
-		return ENOMEM;
-	}
+	asc = malloc(sizeof *asc, M_AGP, M_WAITOK|M_ZERO);
 	sc->as_chipc = asc;
 	sc->as_methods = &agp_apple_methods;
 	pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, &sc->as_capoff,

@@ -1,10 +1,10 @@
-/*	$NetBSD: rwm.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $	*/
+/*	$NetBSD: rwm.c,v 1.1.1.6.4.1 2020/04/13 07:56:21 martin Exp $	*/
 
 /* rwm.c - rewrite/remap operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2017 The OpenLDAP Foundation.
+ * Copyright 2003-2019 The OpenLDAP Foundation.
  * Portions Copyright 2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rwm.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $");
+__RCSID("$NetBSD: rwm.c,v 1.1.1.6.4.1 2020/04/13 07:56:21 martin Exp $");
 
 #include "portable.h"
 
@@ -130,11 +130,15 @@ rwm_op_rollback( Operation *op, SlapReply *rs, rwm_op_state *ros )
 		break;
 	case LDAP_REQ_SEARCH:
 		op->o_tmpfree( ros->mapped_attrs, op->o_tmpmemctx );
-		filter_free_x( op, op->ors_filter, 1 );
-		op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
 		op->ors_attrs = ros->ors_attrs;
-		op->ors_filter = ros->ors_filter;
-		op->ors_filterstr = ros->ors_filterstr;
+		if ( op->ors_filter != ros->ors_filter ) {
+			filter_free_x( op, op->ors_filter, 1 );
+			op->ors_filter = ros->ors_filter;
+		}
+		if ( op->ors_filterstr.bv_val != ros->ors_filterstr.bv_val ) {
+			op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
+			op->ors_filterstr = ros->ors_filterstr;
+		}
 		break;
 	case LDAP_REQ_EXTENDED:
 		if ( op->ore_reqdata != ros->ore_reqdata ) {

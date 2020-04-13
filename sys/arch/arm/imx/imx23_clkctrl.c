@@ -1,4 +1,4 @@
-/* $Id: imx23_clkctrl.c,v 1.2 2015/01/10 12:13:56 jmcneill Exp $ */
+/* $Id: imx23_clkctrl.c,v 1.2.18.1 2020/04/13 08:03:34 martin Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ clkctrl_en_usb(void)
 	struct clkctrl_softc *sc = _sc;
 
         if (sc == NULL) {
-                aprint_error("clkctrl is not initalized");
+                aprint_error("clkctrl is not initialized");
                 return;
         }
 
@@ -160,7 +160,7 @@ clkctrl_en_filtclk(void)
 	struct clkctrl_softc *sc = _sc;
 
 	if (sc == NULL) {
-		aprint_error("clkctrl is not initalized");
+		aprint_error("clkctrl is not initialized");
 		return;
 	}
 

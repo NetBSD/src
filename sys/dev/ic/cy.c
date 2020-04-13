@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.61 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: cy.c,v 1.61.4.1 2020/04/13 08:04:21 martin Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.61 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.61.4.1 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -330,14 +330,7 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 * Allocate input ring buffer if we don't already have one
 		 */
 		if (cy->cy_ibuf == NULL) {
-			cy->cy_ibuf = malloc(CY_IBUF_SIZE, M_DEVBUF, M_NOWAIT);
-			if (cy->cy_ibuf == NULL) {
-				aprint_error_dev(sc->sc_dev,
-				    "port %d: can't allocate input buffer\n",
-				    cy->cy_port_num);
-				splx(s);
-				return ENOMEM;
-			}
+			cy->cy_ibuf = malloc(CY_IBUF_SIZE, M_DEVBUF, M_WAITOK);
 			cy->cy_ibuf_end = cy->cy_ibuf + CY_IBUF_SIZE;
 		}
 		/* mark the ring buffer as empty */

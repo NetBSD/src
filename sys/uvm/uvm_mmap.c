@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.169.4.2 2020/04/08 14:09:04 martin Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.169.4.3 2020/04/13 08:05:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.169.4.2 2020/04/08 14:09:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.169.4.3 2020/04/13 08:05:21 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -132,7 +132,8 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 	vaddr_t start, end, lim;
 	struct vm_map *map;
 	vsize_t len;
-	int error = 0, npgs;
+	int error = 0;
+	size_t npgs;
 
 	map = &p->p_vmspace->vm_map;
 
@@ -860,7 +861,7 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	if (align) {
 		if (align >= sizeof(vaddr_t) * NBBY)
 			return EINVAL;
-		align = 1L << align;
+		align = 1UL << align;
 		if (align < PAGE_SIZE)
 			return EINVAL;
 		if (align >= vm_map_max(map))

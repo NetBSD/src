@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.32 2018/01/09 03:31:13 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.32.4.1 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -52,16 +52,12 @@ struct kevent {
 	uint32_t	flags;		/* action flags for kqueue */
 	uint32_t	fflags;		/* filter flag value */
 	int64_t		data;		/* filter data value */
-	intptr_t	udata;		/* opaque user data identifier */
+	void		*udata;		/* opaque user data identifier */
 };
-
-#define EV_SET(kevp, ident, filter, flags, fflags, data, udata)	\
-    _EV_SET((kevp), __CAST(uintptr_t, (ident)), (filter), (flags), \
-    (fflags), (data), __CAST(intptr_t, (udata)))
 
 static __inline void
 _EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
-    uint32_t _flags, uint32_t _fflags, int64_t _data, intptr_t _udata)
+    uint32_t _flags, uint32_t _fflags, int64_t _data, void *_udata)
 {
 	_kevp->ident = _ident;
 	_kevp->filter = _filter;
@@ -70,6 +66,10 @@ _EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
 	_kevp->data = _data;
 	_kevp->udata = _udata;
 }
+
+#define EV_SET(kevp, ident, filter, flags, fflags, data, udata)	\
+    _EV_SET((kevp), __CAST(uintptr_t, (ident)), (filter), (flags), \
+    (fflags), (data), __CAST(void *, (udata)))
 
 /* actions */
 #define	EV_ADD		0x0001U		/* add event to kq (implies ENABLE) */

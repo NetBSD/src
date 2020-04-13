@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.16 2012/10/27 17:18:27 chs Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.16.38.1 2020/04/13 08:04:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.16 2012/10/27 17:18:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.16.38.1 2020/04/13 08:04:25 martin Exp $");
 
 #include "vmetwo.h"
 
@@ -135,9 +135,7 @@ vmetwo_probe(bus_space_tag_t bt, bus_addr_t offset)
 		 */
 		struct vmetwo_softc *sc;
 
-		/* XXX Should check sc != NULL here... */
-		sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
-
+		sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK);
 		sc->sc_mvmebus.sc_bust = bt;
 		sc->sc_lcrh = bh;
 		vmetwo_intr_init(sc);

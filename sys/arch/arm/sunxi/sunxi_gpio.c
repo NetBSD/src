@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.c,v 1.21.2.1 2019/06/10 22:05:56 christos Exp $ */
+/* $NetBSD: sunxi_gpio.c,v 1.21.2.2 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.21.2.1 2019/06/10 22:05:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gpio.c,v 1.21.2.2 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1018,8 +1018,6 @@ sunxi_gpio_attach(device_t parent, device_t self, void *aux)
 			continue;
 		fdtbus_register_pinctrl_config(self, child, &sunxi_pinctrl_funcs);
 	}
-
-	fdtbus_pinctrl_configure();
 
 	sunxi_gpio_attach_ports(sc);
 

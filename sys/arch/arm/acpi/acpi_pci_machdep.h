@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.h,v 1.2.6.2 2019/06/10 22:05:50 christos Exp $ */
+/* $NetBSD: acpi_pci_machdep.h,v 1.2.6.3 2020/04/13 08:03:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,29 @@ extern struct arm32_pci_chipset arm_acpi_pci_chipset;
 
 struct acpi_pci_context {
 	struct arm32_pci_chipset ap_pc;
+	device_t ap_dev;
 	u_int ap_seg;
+	int ap_bus;
+	bus_space_tag_t ap_bst;
+	bus_space_handle_t ap_conf_bsh;
+	int (*ap_conf_read)(pci_chipset_tag_t, pcitag_t, int, pcireg_t *);
+	int (*ap_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+	void *ap_conf_priv;
+	int ap_pciflags_clear;
 };
+
+struct acpi_pci_quirk {
+	const char			q_oemid[ACPI_OEM_ID_SIZE+1];
+	const char			q_oemtableid[ACPI_OEM_TABLE_ID_SIZE+1];
+	uint32_t			q_oemrevision;
+	int				q_segment;
+	void				(*q_init)(struct acpi_pci_context *);
+};
+
+const struct acpi_pci_quirk *	acpi_pci_md_find_quirk(int);
+
+void	acpi_pci_graviton_init(struct acpi_pci_context *);
+void	acpi_pci_layerscape_gen4_init(struct acpi_pci_context *);
+void	acpi_pci_n1sdp_init(struct acpi_pci_context *);
 
 #endif /* !_ARM_ACPI_PCI_MACHDEP_H */

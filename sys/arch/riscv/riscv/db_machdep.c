@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.2.2.1 2020/04/08 14:07:51 martin Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.2.2.2 2020/04/13 08:04:05 martin Exp $");
 
 #include <sys/param.h>
 
@@ -40,6 +40,8 @@ __RCSID("$NetBSD: db_machdep.c,v 1.2.2.1 2020/04/08 14:07:51 martin Exp $");
 #include <ddb/db_interface.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_variables.h>
+
+int db_active = 0;
 
 static int db_rw_ddbreg(const struct db_variable *, db_expr_t *, int);
 

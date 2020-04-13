@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2012/03/17 16:33:14 jruoho Exp $
+# $NetBSD: Makefile,v 1.1.34.1 2020/04/13 08:05:33 martin Exp $
 
 NOMAN=		# defined
 
@@ -16,5 +16,11 @@ PROG=		h_id
 SRCS=		id.c pwgr.c
 
 COPTS.id.c += -Wno-format-nonliteral
+
+SANITIZER_RENAME_SYMBOL+=	__getpwnam50
+SANITIZER_RENAME_SYMBOL+=	__getpwuid50
+SANITIZER_RENAME_SYMBOL+=	getgrgid
+SANITIZER_RENAME_SYMBOL+=	getgrouplist
+SANITIZER_RENAME_SYMBOL+=	getgroups
 
 .include <bsd.test.mk>

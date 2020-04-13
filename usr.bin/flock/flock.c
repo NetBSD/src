@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.11 2014/08/18 09:16:35 christos Exp $	*/
+/*	$NetBSD: flock.c,v 1.11.16.1 2020/04/13 08:05:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.11 2014/08/18 09:16:35 christos Exp $");
+__RCSID("$NetBSD: flock.c,v 1.11.16.1 2020/04/13 08:05:42 martin Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 		break;
 
 	default:
-		if ((lock & LOCK_NB) == LOCK_UN)
+		if ((lock & ~LOCK_NB) == LOCK_UN)
 			usage("Unlock is only valid for descriptors");
 		if (strcmp(argv[1], "-c") == 0 ||
 		    strcmp(argv[1], "--command") == 0) {

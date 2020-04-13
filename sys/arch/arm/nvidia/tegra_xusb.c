@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.12.6.1 2019/06/10 22:05:55 christos Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.12.6.2 2020/04/13 08:03:36 martin Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.12.6.1 2019/06/10 22:05:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.12.6.2 2020/04/13 08:03:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -223,11 +223,10 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	}
 	error = bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh);
 	if (error) {
-		aprint_error(": couldn't map %#" PRIx64 ": %d",
-		    (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d", addr, error);
 		return;
 	}
-	DPRINTF(sc->sc_dev, "mapped %#" PRIx64 "\n", (uint64_t)addr);
+	DPRINTF(sc->sc_dev, "mapped %#" PRIxBUSADDR "\n", addr);
 
 	if (fdtbus_get_reg_byname(faa->faa_phandle, "fpci", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -235,11 +234,10 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	}
 	error = bus_space_map(sc->sc_iot, addr, size, 0, &psc->sc_bsh_fpci);
 	if (error) {
-		aprint_error(": couldn't map %#" PRIx64 ": %d",
-		    (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d", addr, error);
 		return;
 	}
-	DPRINTF(sc->sc_dev, "mapped %#" PRIx64 "\n", (uint64_t)addr);
+	DPRINTF(sc->sc_dev, "mapped %#" PRIxBUSADDR "\n", addr);
 
 	if (fdtbus_get_reg_byname(faa->faa_phandle, "ipfs", &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -247,11 +245,10 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	}
 	error = bus_space_map(sc->sc_iot, addr, size, 0, &psc->sc_bsh_ipfs);
 	if (error) {
-		aprint_error(": couldn't map %#" PRIx64 ": %d",
-		    (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d", addr, error);
 		return;
 	}
-	DPRINTF(sc->sc_dev, "mapped %#" PRIx64 "\n", (uint64_t)addr);
+	DPRINTF(sc->sc_dev, "mapped %#" PRIxBUSADDR "\n", addr);
 
 	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");

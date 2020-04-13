@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.24 2017/07/07 00:34:09 chs Exp $	*/
+/*	$NetBSD: exception.S,v 1.24.6.1 2020/04/13 08:03:32 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -51,9 +51,9 @@
 
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: exception.S,v 1.24 2017/07/07 00:34:09 chs Exp $")
+	RCSID("$NetBSD: exception.S,v 1.24.6.1 2020/04/13 08:03:32 martin Exp $")
 
-	.text	
+	.text
 	.align	0
 
 AST_ALIGNMENT_FAULT_LOCALS

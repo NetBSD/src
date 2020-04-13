@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.33 2015/12/08 20:36:15 christos Exp $	*/
+/*	$NetBSD: rf.c,v 1.33.18.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.33 2015/12/08 20:36:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.33.18.1 2020/04/13 08:04:47 martin Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -530,7 +530,7 @@ rfc_sendcmd(struct rfc_softc *rfc_sc, int cmd, int data1, int data2)
 	/* Wait 50us, the controller needs this time to setle. */
 	DELAY(50);
 	/* Write parameter 1 to DBR */
-	if ((cmd & RX2CS_FC) != RX2CS_RSTAT) {
+	if ((cmd & RX2CS_MASK) != RX2CS_RSTAT) {
 		/* Transfer request set? */
 		if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh, RX2CS)
 		    & RX2CS_TR) == 0) {
@@ -542,7 +542,8 @@ rfc_sendcmd(struct rfc_softc *rfc_sc, int cmd, int data1, int data2)
 		    data1);
 	}
 	/* Write parameter 2 to DBR */
-	if ((cmd & RX2CS_FC) <= RX2CS_RSEC || (cmd & RX2CS_FC) == RX2CS_WDDS) {
+	if ((cmd & RX2CS_MASK) <= RX2CS_RSEC ||
+	    (cmd & RX2CS_MASK) == RX2CS_WDDS) {
 		/* Wait 50us, the controller needs this time to setle. */
 		DELAY(50);
 		/* Transfer request set? */

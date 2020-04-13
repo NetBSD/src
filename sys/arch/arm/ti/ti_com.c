@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.3.6.1 2019/06/10 22:05:57 christos Exp $ */
+/* $NetBSD: ti_com.c,v 1.3.6.2 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.3.6.1 2019/06/10 22:05:57 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.3.6.2 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,7 +79,6 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t bsh;
 	bus_space_tag_t bst;
 	char intrstr[128];
-	struct clk *hwmod;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
@@ -102,13 +101,11 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 
 	error = bus_space_map(bst, addr, size, 0, &bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d", addr, error);
 		return;
 	}
 
-	hwmod = ti_prcm_get_hwmod(phandle, 0);
-	KASSERT(hwmod != NULL);
-	if (clk_enable(hwmod) != 0) {
+	if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
 		aprint_error(": couldn't enable module\n");
 		return;
 	}

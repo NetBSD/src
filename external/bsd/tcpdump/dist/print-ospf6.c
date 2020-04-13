@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ospf6.c,v 1.8.4.1 2020/04/08 14:04:14 martin Exp $");
+__RCSID("$NetBSD: print-ospf6.c,v 1.8.4.2 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: IPv6 Open Shortest Path First (OSPFv3) printer */
@@ -395,8 +395,7 @@ ospf6_print_lshdr(netdissect_options *ndo,
 {
 	if ((const u_char *)(lshp + 1) > dataend)
 		goto trunc;
-	ND_TCHECK(lshp->ls_type);
-	ND_TCHECK(lshp->ls_seq);
+	ND_TCHECK(lshp->ls_length);	/* last field of struct lsa6_hdr */
 
 	ND_PRINT((ndo, "\n\t  Advertising Router %s, seq 0x%08x, age %us, length %u",
                ipaddr_string(ndo, &lshp->ls_router),

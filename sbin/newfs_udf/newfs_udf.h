@@ -1,3 +1,5 @@
+/*	$NetBSD: newfs_udf.h,v 1.5.30.2 2020/04/13 08:03:21 martin Exp $	*/
+
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
  * All rights reserved.

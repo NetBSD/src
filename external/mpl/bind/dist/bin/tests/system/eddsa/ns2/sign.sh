@@ -18,7 +18,9 @@ starttime=20150729220000
 endtime=20150819220000
 
 for i in Xexample.com.+015+03613.key Xexample.com.+015+03613.private \
-	 Xexample.com.+015+35217.key Xexample.com.+015+35217.private
+	 Xexample.com.+015+35217.key Xexample.com.+015+35217.private \
+	 Xexample.com.+016+09713.key Xexample.com.+016+09713.private \
+	 Xexample.com.+016+38353.key Xexample.com.+016+38353.private
 do
 	cp $i `echo $i | sed s/X/K/`
 done

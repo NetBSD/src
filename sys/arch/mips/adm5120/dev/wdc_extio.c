@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_extio.c,v 1.10 2017/10/20 07:06:07 jdolecek Exp $ */
+/*	$NetBSD: wdc_extio.c,v 1.10.4.1 2020/04/13 08:03:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.10 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.10.4.1 2020/04/13 08:03:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -156,7 +156,7 @@ wdc_extio_reset(struct ata_channel *chp, int poll)
 
 static int
 wdc_extio_map(struct extio_attach_args *ea, struct wdc_regs *wdr,
-    struct ata_channel *chp, void **gpio, struct gpio_pinmap *pinmap)
+    void **gpio, struct gpio_pinmap *pinmap)
 {
 	int i;
 
@@ -200,7 +200,7 @@ wdc_extio_map(struct extio_attach_args *ea, struct wdc_regs *wdr,
 		goto post_bus_err;
 	}
 
-	wdc_init_shadow_regs(chp);
+	wdc_init_shadow_regs(wdr);
 
 	return 0;
 post_bus_err:
@@ -234,8 +234,6 @@ int
 wdc_extio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct extio_attach_args *ea = (struct extio_attach_args *)aux;
-	struct ata_channel ch;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	int result = 0;
 	void *gpio;
@@ -260,10 +258,10 @@ wdc_extio_match(device_t parent, cfdata_t cf, void *aux)
 		    (WDC_CAPABILITY_PREATA|WDC_CAPABILITY_NO_EXTRA_RESETS);
 	}
 
-	if (wdc_extio_map(ea, &wdr, &ch, &gpio, &pm) == -1)
+	if (wdc_extio_map(ea, &wdr, &gpio, &pm) == -1)
 		return 0;
 
-	result = wdcprobe(&ch);
+	result = wdcprobe(&wdr);
 
 	bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, WDC_OBIO_CF_WINSIZE);
 #if 0
@@ -289,7 +287,7 @@ wdc_extio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 
-	if (wdc_extio_map(ea, wdr, chp, &sc->sc_gpio, &sc->sc_pinmap) == -1)
+	if (wdc_extio_map(ea, wdr, &sc->sc_gpio, &sc->sc_pinmap) == -1)
 		return;
 
 	cf = device_cfdata(sc->sc_wdcdev.sc_atac.atac_dev);

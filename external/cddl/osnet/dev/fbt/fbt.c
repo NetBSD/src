@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.24.2.1 2019/06/10 21:52:00 christos Exp $	*/
+/*	$NetBSD: fbt.c,v 1.24.2.2 2020/04/13 07:56:36 martin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -177,7 +177,8 @@ fbt_excluded(const char *name)
 	    strncmp(name, "kdb_", 4) == 0 ||
 	    strncmp(name, "lockdebug_", 10) == 0 ||
 	    strncmp(name, "kauth_", 5) == 0 ||
-	    strncmp(name, "ktext_write", 11) == 0) {
+	    strncmp(name, "ktext_write", 11) == 0 ||
+	    strncmp(name, "fbt_", 4) == 0) {
 		return (1);
 	}
 #endif

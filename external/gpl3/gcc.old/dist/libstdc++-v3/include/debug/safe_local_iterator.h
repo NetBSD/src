@@ -1,6 +1,6 @@
 // Safe iterator implementation  -*- C++ -*-
 
-// Copyright (C) 2011-2016 Free Software Foundation, Inc.
+// Copyright (C) 2011-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -236,7 +236,6 @@ namespace __gnu_debug
       /**
        *  @brief Iterator dereference.
        *  @pre iterator is dereferenceable
-       *  @todo Make this correct w.r.t. iterators that return proxies
        */
       pointer
       operator->() const
@@ -244,7 +243,7 @@ namespace __gnu_debug
 	_GLIBCXX_DEBUG_VERIFY(this->_M_dereferenceable(),
 			      _M_message(__msg_bad_deref)
 			      ._M_iterator(*this, "this"));
-	return std::__addressof(*base());
+	return base().operator->();
       }
 
       // ------ Input iterator requirements ------

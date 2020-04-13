@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo_50.c,v 1.2.40.2 2020/04/08 14:08:00 martin Exp $	*/
+/*	$NetBSD: rndpseudo_50.c,v 1.2.40.3 2020/04/13 08:04:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.2.40.2 2020/04/08 14:08:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.2.40.3 2020/04/13 08:04:14 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -76,7 +76,7 @@ compat_50_rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 	{
 		rndstat_t rstbuf = {.start = 0};
 		rndstat50_t *rst50 = (rndstat50_t *)addr;
-		int count;
+		size_t count;
 
 		if (rst50->count > RND_MAXSTATCOUNT50)
 			return EINVAL;

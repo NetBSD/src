@@ -69,19 +69,19 @@ czoneout=`$SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile 2>&1`
 echo_i "signing parent zone"
 pzoneout=`$SIGNER -Sg -o $pzone $pfile 2>&1`
 
-czactive=`echo $czsk1 | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
-czgenerated=`echo $czsk2 | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
-czpublished=`echo $czsk3 | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
-czinactive=`echo $czsk4 | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
-czpredecessor=`echo $czsk5 | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
-czsuccessor=`echo $czsk6 | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
-ckactive=`echo $cksk1 | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
-ckpublished=`echo $cksk2 | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
-ckprerevoke=`echo $cksk3 | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
-ckrevoked=`echo $cksk4 | sed 's/.*+005+0*\([0-9]*\)$/\1/'`
+czactive=$(keyfile_to_key_id $czsk1)
+czgenerated=$(keyfile_to_key_id $czsk2)
+czpublished=$(keyfile_to_key_id $czsk3)
+czinactive=$(keyfile_to_key_id $czsk4)
+czpredecessor=$(keyfile_to_key_id $czsk5)
+czsuccessor=$(keyfile_to_key_id $czsk6)
+ckactive=$(keyfile_to_key_id $cksk1)
+ckpublished=$(keyfile_to_key_id $cksk2)
+ckprerevoke=$(keyfile_to_key_id $cksk3)
+ckrevoked=$(keyfile_to_key_id $cksk4)
 
-pzid=`echo $pzsk | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
-pkid=`echo $pksk | sed 's/^K.*+005+0*\([0-9]\)/\1/'`
+pzid=$(keyfile_to_key_id $pzsk)
+pkid=$(keyfile_to_key_id $pksk)
 
 echo_i "checking dnssec-signzone output matches expectations"
 ret=0
@@ -343,8 +343,8 @@ status=`expr $status + $ret`
 
 echo_i "checking sync record publication"
 ret=0
-grep -w CDNSKEY $cfile.signed > /dev/null || ret=1
-grep -w CDS $cfile.signed > /dev/null || ret=1
+awk 'BEGIN { r=1 } $2 == "CDNSKEY" { r=0 } END { exit r }' $cfile.signed || ret=1
+awk 'BEGIN { r=1 } $2 == "CDS" { r=0 } END { exit r }' $cfile.signed || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
@@ -353,8 +353,8 @@ ret=0
 $SETTIME -P now -A now -Dsync now ${cksk5} > /dev/null
 $SIGNER -Sg -o $czone -f $cfile.new $cfile.signed > /dev/null 2>&1
 mv $cfile.new $cfile.signed
-grep -w CDNSKEY $cfile.signed > /dev/null && ret=1
-grep -w CDS $cfile.signed > /dev/null && ret=1
+awk 'BEGIN { r=1 } $2 == "CDNSKEY" { r=0 } END { exit r }' $cfile.signed && ret=1
+awk 'BEGIN { r=1 } $2 == "CDS" { r=0 } END { exit r }' $cfile.signed && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 

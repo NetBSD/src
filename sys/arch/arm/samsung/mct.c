@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.12.6.1 2019/06/10 22:05:56 christos Exp $	*/
+/*	$NetBSD: mct.c,v 1.12.6.2 2020/04/13 08:03:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014-2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.12.6.1 2019/06/10 22:05:56 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.12.6.2 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -256,8 +256,8 @@ mct_attach(device_t parent, device_t self, void *aux)
 	sc->sc_freq = EXYNOS_F_IN_FREQ;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d",
-			     (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
+			     addr, error);
 		return;
 	}
 

@@ -1,5 +1,5 @@
 .TH SLAPD-LDAP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2017 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2019 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -450,6 +450,13 @@ do not return search reference responses.
 By default, they are returned unless request is LDAPv2.
 
 .TP
+.B omit-unknown-schema <NO|yes>
+If
+.BR yes ,
+do not return objectClasses or attributes that are not known to the local server.
+The default is to return all schema elements.
+
+.TP
 .B noundeffilter <NO|yes>
 If
 .BR yes ,
@@ -569,6 +576,7 @@ is used.
 .HP
 .hy 0
 .B tls {[try\-]start|[try\-]propagate|ldaps}
+.B [starttls=no]
 .B [tls_cert=<file>]
 .B [tls_key=<file>]
 .B [tls_cacert=<file>]
@@ -589,7 +597,9 @@ if the StartTLS operation failed; its use is \fBnot\fP recommended.
 The TLS settings default to the same as the main slapd TLS settings,
 except for
 .B tls_reqcert
-which defaults to "demand".
+which defaults to "demand" and
+.B starttls
+which is overshadowed by the first keyword and thus ignored.
 .RE
 
 .TP

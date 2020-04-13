@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.111.4.1 2020/04/08 14:09:04 martin Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.111.4.2 2020/04/13 08:05:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.111.4.1 2020/04/08 14:09:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.111.4.2 2020/04/13 08:05:21 martin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -154,6 +154,24 @@ uvm_pager_init(void)
 	}
 }
 
+#ifdef PMAP_DIRECT
+/*
+ * uvm_pagermapdirect: map a single page via the pmap's direct segment
+ *
+ * this is an abuse of pmap_direct_process(), since the kva is being grabbed
+ * and no processing is taking place, but for now..
+ */
+
+static int
+uvm_pagermapdirect(void *kva, size_t sz, void *cookie)
+{
+
+	KASSERT(sz == PAGE_SIZE);
+	*(vaddr_t *)cookie = (vaddr_t)kva;
+	return 0;
+}
+#endif
+
 /*
  * uvm_pagermapin: map pages into KVA (pager_map) for I/O that needs mappings
  *
@@ -175,6 +193,22 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 
 	UVMHIST_LOG(maphist,"(pps=%#jx, npages=%jd, first_color=%ju)",
 		(uintptr_t)pps, npages, first_color, 0);
+
+#ifdef PMAP_DIRECT
+	/* 
+	 * for a single page the direct mapped segment can be used.
+	 */
+
+	if (npages == 1) {
+		int error __diagused;
+		KASSERT((pps[0]->flags & PG_BUSY) != 0);
+		error = pmap_direct_process(VM_PAGE_TO_PHYS(pps[0]), 0,
+		    PAGE_SIZE, uvm_pagermapdirect, &kva);
+		KASSERT(error == 0);
+		UVMHIST_LOG(maphist, "<- done, direct (KVA=%#jx)", kva,0,0,0);
+		return kva;
+	}
+#endif
 
 	/*
 	 * compute protection.  outgoing I/O only needs read
@@ -249,6 +283,17 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, " (kva=%#jx, npages=%jd)", kva, npages,0,0);
+
+#ifdef PMAP_DIRECT
+	/* 
+	 * solitary pages are mapped directly.
+	 */
+
+	if (npages == 1) {
+		UVMHIST_LOG(maphist,"<- done, direct", 0,0,0,0);
+		return;
+	}
+#endif
 
 	/*
 	 * duplicate uvm_unmap, but add in pager_map_wanted handling.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.10 2013/10/04 21:07:37 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.10.30.1 2020/04/13 08:04:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -61,10 +61,91 @@ struct statfs12 {
 	char	f_mntfromname[MNAMELEN];  /* mounted file system */
 };
 
+#ifndef _KERNEL
+#include <string.h>
+#endif
+
 /*
  * Operations supported on mounted file system.
  */
+/*
+ * Convert from a new statvfs to an old statfs structure.
+ */
+
+#define MOUNTNO_NONE	0
+#define MOUNTNO_UFS	1		/* UNIX "Fast" Filesystem */
+#define MOUNTNO_NFS	2		/* Network Filesystem */
+#define MOUNTNO_MFS	3		/* Memory Filesystem */
+#define MOUNTNO_MSDOS	4		/* MSDOS Filesystem */
+#define MOUNTNO_CD9660	5		/* iso9660 cdrom */
+#define MOUNTNO_FDESC	6		/* /dev/fd filesystem */
+#define MOUNTNO_KERNFS	7		/* kernel variable filesystem */ 
+#define MOUNTNO_DEVFS	8		/* device node filesystem */
+#define MOUNTNO_AFS	9		/* AFS 3.x */
+
+static const struct {
+	const char *name;
+	const int value;
+} __nv[] = {
+	{ MOUNT_UFS, MOUNTNO_UFS },
+	{ MOUNT_NFS, MOUNTNO_NFS },
+	{ MOUNT_MFS, MOUNTNO_MFS },
+	{ MOUNT_MSDOS, MOUNTNO_MSDOS },
+	{ MOUNT_CD9660, MOUNTNO_CD9660 },
+	{ MOUNT_FDESC, MOUNTNO_FDESC },
+	{ MOUNT_KERNFS, MOUNTNO_KERNFS },
+	{ MOUNT_AFS, MOUNTNO_AFS },
+};
+
+static __inline void
+statvfs_to_statfs12(const struct statvfs *fs, struct statfs12 *s12)
+{
+	size_t i = 0;
+	s12->f_type = 0;
+	s12->f_oflags = (short)fs->f_flag;
+
+	memset(s12, 0, sizeof(*s12));
+	for (i = 0; i < sizeof(__nv) / sizeof(__nv[0]); i++) {
+		if (strcmp(__nv[i].name, fs->f_fstypename) == 0) {
+			s12->f_type = __nv[i].value;
+			break;
+		}
+	}
+#define __STATFSCLAMP(a)	(long)(((a) & ~LONG_MAX) ? LONG_MAX : (a))
+	s12->f_bsize = __STATFSCLAMP(fs->f_frsize);
+	s12->f_iosize = __STATFSCLAMP(fs->f_iosize);
+	s12->f_blocks = __STATFSCLAMP(fs->f_blocks);
+	s12->f_bfree = __STATFSCLAMP(fs->f_bfree);
+	if (fs->f_bfree > fs->f_bresvd)
+		s12->f_bavail = __STATFSCLAMP(fs->f_bfree - fs->f_bresvd);
+	else
+		s12->f_bavail = -__STATFSCLAMP(fs->f_bresvd - fs->f_bfree);
+	s12->f_files = __STATFSCLAMP(fs->f_files);
+	s12->f_ffree = __STATFSCLAMP(fs->f_ffree);
+	s12->f_fsid = fs->f_fsidx;
+	s12->f_owner = fs->f_owner;
+	s12->f_flags = (long)fs->f_flag;
+	s12->f_syncwrites = __STATFSCLAMP(fs->f_syncwrites);
+	s12->f_asyncwrites = __STATFSCLAMP(fs->f_asyncwrites);
+	memcpy(s12->f_fstypename, fs->f_fstypename, sizeof(s12->f_fstypename));
+	memcpy(s12->f_mntonname, fs->f_mntonname, sizeof(s12->f_mntonname));
+	memcpy(s12->f_mntfromname, fs->f_mntfromname,
+	    sizeof(s12->f_mntfromname));
+}
+
 #ifdef _KERNEL
+static __inline int
+statvfs_to_statfs12_copy(const void *vs, void *vs12, size_t l)
+{
+	struct statfs12 *s12 = STATVFSBUF_GET();
+	int error;
+
+	statvfs_to_statfs12(vs, vs12);
+	error = copyout(s12, vs12, l);
+	STATVFSBUF_PUT(s12);
+
+	return error;
+}
 
 /*
  * Filesystem configuration information. Not used by NetBSD, but

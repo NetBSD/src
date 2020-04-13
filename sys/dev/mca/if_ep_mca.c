@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.23 2016/07/11 11:31:51 msaitoh Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.23.18.1 2020/04/13 08:04:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,13 +63,13 @@
 /*
  * Driver for 3Com 3c529 cards.
  *
- * If you encouter sucky performance, try kernel without DEBUG/DIAGNOSTIC.
+ * If you encounter sucky performance, try kernel without DEBUG/DIAGNOSTIC.
  * This helped on my test machine to change the performance of the card
  * from like 5KB/s to like 800 KB/s.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.23 2016/07/11 11:31:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.23.18.1 2020/04/13 08:04:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

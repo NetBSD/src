@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.148.6.1 2019/06/10 22:07:11 christos Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.148.6.2 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.148.6.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.148.6.2 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,19 +219,13 @@ ncr53c9x_attach(struct ncr53c9x_softc *sc)
 	 * can request a 1 byte DMA transfer.
 	 */
 	if (sc->sc_omess == NULL)
-		sc->sc_omess = malloc(NCR_MAX_MSG_LEN, M_DEVBUF, M_NOWAIT);
+		sc->sc_omess = malloc(NCR_MAX_MSG_LEN, M_DEVBUF, M_WAITOK);
 
 	if (sc->sc_imess == NULL)
-		sc->sc_imess = malloc(NCR_MAX_MSG_LEN + 1, M_DEVBUF, M_NOWAIT);
+		sc->sc_imess = malloc(NCR_MAX_MSG_LEN + 1, M_DEVBUF, M_WAITOK);
 
 	sc->sc_tinfo = malloc(sc->sc_ntarg * sizeof(sc->sc_tinfo[0]),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-
-	if (sc->sc_omess == NULL || sc->sc_imess == NULL ||
-	    sc->sc_tinfo == NULL) {
-		aprint_error_dev(sc->sc_dev, "out of memory\n");
-		return;
-	}
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/*
 	 * Treat NCR53C90 with the 86C01 DMA chip exactly as ESP100

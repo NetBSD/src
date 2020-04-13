@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.c,v 1.6.10.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: can_pcb.c,v 1.6.10.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.6.10.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.6.10.2 2020/04/13 08:05:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,8 +193,8 @@ can_pcbdetach(void *v)
 	so->so_pcb = NULL;
 	mutex_enter(&canp->canp_mtx);
 	can_pcbstate(canp, CANP_DETACHED);
-	can_pcbsetfilter(canp, NULL, 0);
 	mutex_exit(&canp->canp_mtx);
+	can_pcbsetfilter(canp, NULL, 0);
 	TAILQ_REMOVE(&canp->canp_table->canpt_queue, canp, canp_queue);
 	sofree(so); /* sofree drops the softnet_lock */
 	canp_unref(canp);
@@ -243,7 +243,9 @@ can_pcbsetfilter(struct canpcb *canp, struct can_filter *fp, int nfilters)
 {
 
 	struct can_filter *newf;
-	KASSERT(mutex_owned(&canp->canp_mtx));
+	struct can_filter *oldf;
+	int oldnf;
+	int error = 0;
 
 	if (nfilters > 0) {
 		newf =
@@ -252,13 +254,24 @@ can_pcbsetfilter(struct canpcb *canp, struct can_filter *fp, int nfilters)
 	} else {
 		newf = NULL;
 	}
-	if (canp->canp_filters != NULL) {
-		kmem_free(canp->canp_filters,
-		    sizeof(struct can_filter) * canp->canp_nfilters);
+	mutex_enter(&canp->canp_mtx);
+	oldf = canp->canp_filters;
+	oldnf = canp->canp_nfilters;
+	if (newf != NULL && canp->canp_state == CANP_DETACHED) {
+		error = ECONNRESET;
+	} else {
+		canp->canp_filters = newf;
+		canp->canp_nfilters = nfilters;
+		newf = NULL;
 	}
-	canp->canp_filters = newf;
-	canp->canp_nfilters = nfilters;
-	return 0;
+	mutex_exit(&canp->canp_mtx);
+	if (oldf != NULL) {
+		kmem_free(oldf, sizeof(struct can_filter) * oldnf);
+	}
+	if (newf != NULL) {
+		kmem_free(newf, sizeof(struct can_filter) * nfilters);
+	}
+	return error;
 }
 
 

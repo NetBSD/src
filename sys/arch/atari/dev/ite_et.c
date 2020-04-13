@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.30 2011/06/05 16:25:12 tsutsui Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.30.54.1 2020/04/13 08:03:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.30 2011/06/05 16:25:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.30.54.1 2020/04/13 08:03:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,9 +90,9 @@ void et_scroll(struct ite_softc *ip, int sy, int sx, int count,
 /*
  * grfet config stuff
  */
-void grfetattach(device_t, device_t, void *);
-int  grfetmatch(device_t, cfdata_t, void *);
-int  grfetprint(void *, const char *);
+static void grfetattach(device_t, device_t, void *);
+static int  grfetmatch(device_t, cfdata_t, void *);
+static int  grfetprint(void *, const char *);
 
 CFATTACH_DECL_NEW(grfet, sizeof(struct grf_softc),
     grfetmatch, grfetattach, NULL, NULL);
@@ -102,7 +102,7 @@ CFATTACH_DECL_NEW(grfet, sizeof(struct grf_softc),
  */
 static struct cfdata *cfdata_grf   = NULL;
 
-int
+static int
 grfetmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int	card_probed  = -1;
@@ -168,7 +168,7 @@ grfetmatch(device_t parent, cfdata_t cf, void *aux)
  * attach: initialize the grf-structure and try to attach an ite to us.
  * note  : self is NULL during early console init.
  */
-void
+static void
 grfetattach(device_t parent, device_t self, void *aux)
 {
 	static struct grf_softc		congrf;
@@ -255,7 +255,7 @@ grfetattach(device_t parent, device_t self, void *aux)
 	}
 }
 
-int
+static int
 grfetprint(void *aux, const char *pnp)
 {
 

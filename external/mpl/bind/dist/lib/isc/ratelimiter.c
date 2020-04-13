@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimiter.c,v 1.3.2.2 2019/06/10 22:04:43 christos Exp $	*/
+/*	$NetBSD: ratelimiter.c,v 1.3.2.3 2020/04/13 08:02:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -200,7 +200,6 @@ isc_ratelimiter_dequeue(isc_ratelimiter_t *rl, isc_event_t *event) {
 
 static void
 ratelimiter_tick(isc_task_t *task, isc_event_t *event) {
-	isc_result_t result = ISC_R_SUCCESS;
 	isc_ratelimiter_t *rl = (isc_ratelimiter_t *)event->ev_arg;
 	isc_event_t *p;
 	uint32_t pertic;
@@ -220,6 +219,7 @@ ratelimiter_tick(isc_task_t *task, isc_event_t *event) {
 			 */
 			ISC_LIST_UNLINK(rl->pending, p, ev_ratelink);
 		} else {
+			isc_result_t result;
 			/*
 			 * No work left to do.  Stop the timer so that we don't
 			 * waste resources by having it fire periodically.

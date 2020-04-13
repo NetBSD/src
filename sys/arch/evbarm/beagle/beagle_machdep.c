@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.69.2.2 2020/04/08 14:07:34 martin Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.69.2.3 2020/04/13 08:03:42 martin Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.69.2.2 2020/04/08 14:07:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.69.2.3 2020/04/13 08:03:42 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -558,7 +558,7 @@ beagle_platform_early_putchar(char c)
 #endif
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -570,7 +570,7 @@ beagle_platform_early_putchar(char c)
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	psize_t ram_size = 0;
@@ -726,7 +726,7 @@ initarm(void *arg)
 
 	db_trap_callback = beagle_db_trap;
 
-	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	vaddr_t sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
 	/*
 	 * initarm_common flushes cache if required before AP start

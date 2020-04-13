@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4.2.3 2020/04/08 14:07:04 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.4.2.4 2020/04/13 08:02:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -90,7 +90,7 @@
 #include <zlib.h>
 #endif
 
-#include "pfilter.h"
+#include <ns/pfilter.h>
 /*
  * Include header files for database drivers here.
  */
@@ -364,7 +364,7 @@ save_command_line(int argc, char *argv[]) {
 			 * nearly always be fine.
 			 */
 			if (quoted || isalnum(*src & 0xff) ||
-			    *src == '-' || *src == '_' ||
+			    *src == ',' || *src == '-' || *src == '_' ||
 			    *src == '.' || *src == '/') {
 				*dst++ = *src++;
 				quoted = false;
@@ -636,6 +636,9 @@ parse_T_opt(char *option) {
 		maxudp = 1460;
 	} else if (!strncmp(option, "maxudp=", 7)) {
 		maxudp = atoi(option + 7);
+		if (maxudp <= 0) {
+			named_main_earlyfatal("bad maxudp");
+		}
 	} else if (!strncmp(option, "mkeytimers=", 11)) {
 		p = strtok_r(option + 11, "/", &last);
 		if (p == NULL) {
@@ -1385,6 +1388,17 @@ main(int argc, char *argv[]) {
 	(void) ProfilerStart(NULL);
 #endif
 
+#ifdef WIN32
+	/*
+	 * Prevent unbuffered I/O from crippling named performance on Windows
+	 * when it is logging to stderr (e.g. in system tests).  Use full
+	 * buffering (_IOFBF) as line buffering (_IOLBF) is unavailable on
+	 * Windows and fflush() is called anyway after each log message gets
+	 * written to the default stderr logging channels created by libisc.
+	*/
+	setvbuf(stderr, NULL, _IOFBF, BUFSIZ);
+#endif
+
 	/*
 	 * Record version in core image.
 	 * strings named.core | grep "named version:"
@@ -1424,7 +1438,7 @@ main(int argc, char *argv[]) {
 
 	parse_command_line(argc, argv);
 
-	pfilter_open();
+	pfilter_enable();
 
 #ifdef ENABLE_AFL
 	if (named_g_fuzz_type != isc_fuzz_none) {

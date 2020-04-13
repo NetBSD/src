@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.211.10.1 2019/06/10 22:07:17 christos Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.211.10.2 2020/04/13 08:04:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.211.10.1 2019/06/10 22:07:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.211.10.2 2020/04/13 08:04:27 martin Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2938,10 +2938,8 @@ pccbb_winlist_insert(struct pccbb_win_chain_head *head, bus_addr_t start,
 {
 	struct pccbb_win_chain *chainp, *elem;
 
-	if ((elem = malloc(sizeof(struct pccbb_win_chain), M_DEVBUF,
-	    M_NOWAIT)) == NULL)
-		return 1;		/* fail */
-
+	elem = malloc(sizeof(struct pccbb_win_chain), M_DEVBUF,
+	    M_WAITOK);
 	elem->wc_start = start;
 	elem->wc_end = start + (size - 1);
 	elem->wc_handle = bsh;

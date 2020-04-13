@@ -44,9 +44,10 @@ input "j"
 call 106 getch
 call OK refresh
 call OK move 14 14
-call OK add_wch `\000\000\000\001\000H`
-call OK add_wch `\000\000\000\001\000H`
-call OK add_wch `\000\000\000\001\000H`
+cchar HCHAR 0 "H"
+call OK add_wch $HCHAR
+call OK add_wch $HCHAR
+call OK add_wch $HCHAR
 input "j"
 call 106 getch
 call OK refresh
@@ -94,9 +95,9 @@ input "j"
 call 106 getch
 call OK refresh
 call OK move 14 14
-call OK add_wch `\000\000\000\001\000H`
-call OK add_wch `\000\000\000\001\000H`
-call OK add_wch `\000\000\000\001\000H`
+call OK add_wch $HCHAR
+call OK add_wch $HCHAR
+call OK add_wch $HCHAR
 input "j"
 call 106 getch
 call OK refresh

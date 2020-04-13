@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.8.16.1 2019/06/10 22:05:22 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.8.16.2 2020/04/13 08:03:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.8.16.1 2019/06/10 22:05:22 christos Exp $");
+__RCSID("$NetBSD: tls.c,v 1.8.16.2 2020/04/13 08:03:11 martin Exp $");
 
 #include "namespace.h"
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: tls.c,v 1.8.16.1 2019/06/10 22:05:22 christos Exp $");
 #include <link_elf.h>
 #include <lwp.h>
 #include <stdbool.h>
+#include <stdalign.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,15 +85,17 @@ _rtld_tls_allocate(void)
 	uint8_t *p;
 
 	if (initial_thread_tcb == NULL) {
-#ifdef __HAVE_TLS_VARIANT_II
-		tls_size = roundup2(tls_size, sizeof(void *));
+#ifdef __HAVE_TLS_VARIANT_I
+		tls_allocation = tls_size;
+#else
+		tls_allocation = roundup2(tls_size, alignof(max_align_t));
 #endif
-		tls_allocation = tls_size + sizeof(*tcb);
 
-		initial_thread_tcb = p = mmap(NULL, tls_allocation,
-		    PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+		initial_thread_tcb = p = mmap(NULL,
+		    tls_allocation + sizeof(*tcb), PROT_READ | PROT_WRITE,
+		    MAP_ANON, -1, 0);
 	} else {
-		p = calloc(1, tls_allocation);
+		p = calloc(1, tls_allocation + sizeof(*tcb));
 	}
 	if (p == NULL) {
 		static const char msg[] =  "TLS allocation failed, terminating\n";
@@ -105,7 +108,8 @@ _rtld_tls_allocate(void)
 	p += sizeof(struct tls_tcb);
 #else
 	/* LINTED tls_size is rounded above */
-	tcb = (struct tls_tcb *)(p + tls_size);
+	tcb = (struct tls_tcb *)(p + tls_allocation);
+	p = (uint8_t *)tcb - tls_size;
 	tcb->tcb_self = tcb;
 #endif
 	memcpy(p, tls_initaddr, tls_initsize);
@@ -125,10 +129,10 @@ _rtld_tls_free(struct tls_tcb *tcb)
 	p = (uint8_t *)tcb;
 #else
 	/* LINTED */
-	p = (uint8_t *)tcb - tls_size;
+	p = (uint8_t *)tcb - tls_allocation;
 #endif
 	if (p == initial_thread_tcb)
-		munmap(p, tls_allocation);
+		munmap(p, tls_allocation + sizeof(*tcb));
 	else
 		free(p);
 }
@@ -148,7 +152,11 @@ __libc_static_tls_setup_cb(struct dl_phdr_info *data, size_t len, void *cookie)
 			continue;
 		tls_initaddr = (void *)(phdr->p_vaddr + data->dlpi_addr);
 		tls_initsize = phdr->p_filesz;
+#ifdef __HAVE_TLS_VARIANT_I
 		tls_size = phdr->p_memsz;
+#else
+		tls_size = roundup2(phdr->p_memsz, phdr->p_align);
+#endif
 	}
 	return 0;
 }

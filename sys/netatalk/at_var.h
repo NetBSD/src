@@ -1,4 +1,4 @@
-/*	$NetBSD: at_var.h,v 1.8 2018/04/19 21:50:10 christos Exp $	 */
+/*	$NetBSD: at_var.h,v 1.8.2.1 2020/04/13 08:05:16 martin Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -75,13 +75,13 @@ sockaddr_at_init1(struct sockaddr_at *sat, const struct at_addr *addr,
 {
 	sat->sat_port = port;
 	sat->sat_addr = *addr;
-	memset(&sat->sat_range, 0, sizeof(sat->sat_range));
 }
 
 static __inline void
 sockaddr_at_init(struct sockaddr_at *sat, const struct at_addr *addr,
     uint8_t port)
 {
+	memset(sat, 0, sizeof(*sat));
 	sat->sat_family = AF_APPLETALK;
 	sat->sat_len = sizeof(*sat);
 	sockaddr_at_init1(sat, addr, port);
@@ -92,7 +92,8 @@ sockaddr_at_alloc(const struct at_addr *addr, uint8_t port, int flags)
 {
 	struct sockaddr *sa;
 
-	sa = sockaddr_alloc(AF_APPLETALK, sizeof(struct sockaddr_at), flags);
+	sa = sockaddr_alloc(AF_APPLETALK, sizeof(struct sockaddr_at),
+	    flags | M_ZERO);
 
 	if (sa == NULL)
 		return NULL;

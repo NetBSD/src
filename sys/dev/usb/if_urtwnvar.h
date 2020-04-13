@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.10.16.4 2020/04/08 14:08:13 martin Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.10.16.5 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ struct urtwn_rx_radiotap_header {
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_dbm_antsignal;
-} __packed;
+};
 
 #define URTWN_RX_RADIOTAP_PRESENT			\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
@@ -57,7 +57,7 @@ struct urtwn_tx_radiotap_header {
 	uint8_t		wt_flags;
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
-} __packed;
+};
 
 #define URTWN_TX_RADIOTAP_PRESENT			\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
@@ -199,6 +199,7 @@ struct urtwn_softc {
 	bool				sc_running;
 
 	struct ieee80211_beacon_offsets sc_bo;
+	krndsource_t rnd_source;	/* random source */
 };
 
 #endif /* _IF_URTWNVAR_H_ */

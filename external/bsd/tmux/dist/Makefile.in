@@ -147,48 +147,49 @@ dist_tmux_OBJECTS = alerts.$(OBJEXT) arguments.$(OBJEXT) \
 	cmd-break-pane.$(OBJEXT) cmd-capture-pane.$(OBJEXT) \
 	cmd-choose-tree.$(OBJEXT) cmd-command-prompt.$(OBJEXT) \
 	cmd-confirm-before.$(OBJEXT) cmd-copy-mode.$(OBJEXT) \
-	cmd-detach-client.$(OBJEXT) cmd-display-message.$(OBJEXT) \
-	cmd-display-panes.$(OBJEXT) cmd-find-window.$(OBJEXT) \
-	cmd-find.$(OBJEXT) cmd-if-shell.$(OBJEXT) \
-	cmd-join-pane.$(OBJEXT) cmd-kill-pane.$(OBJEXT) \
-	cmd-kill-server.$(OBJEXT) cmd-kill-session.$(OBJEXT) \
-	cmd-kill-window.$(OBJEXT) cmd-list-buffers.$(OBJEXT) \
-	cmd-list-clients.$(OBJEXT) cmd-list-keys.$(OBJEXT) \
-	cmd-list-panes.$(OBJEXT) cmd-list-sessions.$(OBJEXT) \
-	cmd-list-windows.$(OBJEXT) cmd-list.$(OBJEXT) \
+	cmd-detach-client.$(OBJEXT) cmd-display-menu.$(OBJEXT) \
+	cmd-display-message.$(OBJEXT) cmd-display-panes.$(OBJEXT) \
+	cmd-find-window.$(OBJEXT) cmd-find.$(OBJEXT) \
+	cmd-if-shell.$(OBJEXT) cmd-join-pane.$(OBJEXT) \
+	cmd-kill-pane.$(OBJEXT) cmd-kill-server.$(OBJEXT) \
+	cmd-kill-session.$(OBJEXT) cmd-kill-window.$(OBJEXT) \
+	cmd-list-buffers.$(OBJEXT) cmd-list-clients.$(OBJEXT) \
+	cmd-list-keys.$(OBJEXT) cmd-list-panes.$(OBJEXT) \
+	cmd-list-sessions.$(OBJEXT) cmd-list-windows.$(OBJEXT) \
 	cmd-load-buffer.$(OBJEXT) cmd-lock-server.$(OBJEXT) \
 	cmd-move-window.$(OBJEXT) cmd-new-session.$(OBJEXT) \
-	cmd-new-window.$(OBJEXT) cmd-paste-buffer.$(OBJEXT) \
-	cmd-pipe-pane.$(OBJEXT) cmd-queue.$(OBJEXT) \
-	cmd-refresh-client.$(OBJEXT) cmd-rename-session.$(OBJEXT) \
-	cmd-rename-window.$(OBJEXT) cmd-resize-pane.$(OBJEXT) \
+	cmd-new-window.$(OBJEXT) cmd-parse.$(OBJEXT) \
+	cmd-paste-buffer.$(OBJEXT) cmd-pipe-pane.$(OBJEXT) \
+	cmd-queue.$(OBJEXT) cmd-refresh-client.$(OBJEXT) \
+	cmd-rename-session.$(OBJEXT) cmd-rename-window.$(OBJEXT) \
+	cmd-resize-pane.$(OBJEXT) cmd-resize-window.$(OBJEXT) \
 	cmd-respawn-pane.$(OBJEXT) cmd-respawn-window.$(OBJEXT) \
 	cmd-rotate-window.$(OBJEXT) cmd-run-shell.$(OBJEXT) \
 	cmd-save-buffer.$(OBJEXT) cmd-select-layout.$(OBJEXT) \
 	cmd-select-pane.$(OBJEXT) cmd-select-window.$(OBJEXT) \
 	cmd-send-keys.$(OBJEXT) cmd-set-buffer.$(OBJEXT) \
-	cmd-set-environment.$(OBJEXT) cmd-set-hook.$(OBJEXT) \
-	cmd-set-option.$(OBJEXT) cmd-show-environment.$(OBJEXT) \
-	cmd-show-messages.$(OBJEXT) cmd-show-options.$(OBJEXT) \
-	cmd-source-file.$(OBJEXT) cmd-split-window.$(OBJEXT) \
-	cmd-string.$(OBJEXT) cmd-swap-pane.$(OBJEXT) \
+	cmd-set-environment.$(OBJEXT) cmd-set-option.$(OBJEXT) \
+	cmd-show-environment.$(OBJEXT) cmd-show-messages.$(OBJEXT) \
+	cmd-show-options.$(OBJEXT) cmd-source-file.$(OBJEXT) \
+	cmd-split-window.$(OBJEXT) cmd-swap-pane.$(OBJEXT) \
 	cmd-swap-window.$(OBJEXT) cmd-switch-client.$(OBJEXT) \
 	cmd-unbind-key.$(OBJEXT) cmd-wait-for.$(OBJEXT) cmd.$(OBJEXT) \
 	colour.$(OBJEXT) control-notify.$(OBJEXT) control.$(OBJEXT) \
-	environ.$(OBJEXT) format.$(OBJEXT) grid-view.$(OBJEXT) \
-	grid.$(OBJEXT) hooks.$(OBJEXT) input-keys.$(OBJEXT) \
+	environ.$(OBJEXT) format.$(OBJEXT) format-draw.$(OBJEXT) \
+	grid-view.$(OBJEXT) grid.$(OBJEXT) input-keys.$(OBJEXT) \
 	input.$(OBJEXT) job.$(OBJEXT) key-bindings.$(OBJEXT) \
 	key-string.$(OBJEXT) layout-custom.$(OBJEXT) \
 	layout-set.$(OBJEXT) layout.$(OBJEXT) log.$(OBJEXT) \
-	mode-tree.$(OBJEXT) names.$(OBJEXT) notify.$(OBJEXT) \
-	options-table.$(OBJEXT) options.$(OBJEXT) paste.$(OBJEXT) \
-	proc.$(OBJEXT) resize.$(OBJEXT) screen-redraw.$(OBJEXT) \
+	menu.$(OBJEXT) mode-tree.$(OBJEXT) names.$(OBJEXT) \
+	notify.$(OBJEXT) options-table.$(OBJEXT) options.$(OBJEXT) \
+	paste.$(OBJEXT) proc.$(OBJEXT) regsub.$(OBJEXT) \
+	resize.$(OBJEXT) screen-redraw.$(OBJEXT) \
 	screen-write.$(OBJEXT) screen.$(OBJEXT) \
 	server-client.$(OBJEXT) server-fn.$(OBJEXT) server.$(OBJEXT) \
-	session.$(OBJEXT) status.$(OBJEXT) style.$(OBJEXT) \
-	tmux.$(OBJEXT) tty-acs.$(OBJEXT) tty-keys.$(OBJEXT) \
-	tty-term.$(OBJEXT) tty.$(OBJEXT) utf8.$(OBJEXT) \
-	window-buffer.$(OBJEXT) window-client.$(OBJEXT) \
+	session.$(OBJEXT) spawn.$(OBJEXT) status.$(OBJEXT) \
+	style.$(OBJEXT) tmux.$(OBJEXT) tty-acs.$(OBJEXT) \
+	tty-keys.$(OBJEXT) tty-term.$(OBJEXT) tty.$(OBJEXT) \
+	utf8.$(OBJEXT) window-buffer.$(OBJEXT) window-client.$(OBJEXT) \
 	window-clock.$(OBJEXT) window-copy.$(OBJEXT) \
 	window-tree.$(OBJEXT) window.$(OBJEXT) xmalloc.$(OBJEXT) \
 	xterm-keys.$(OBJEXT)
@@ -229,6 +230,14 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
+am__yacc_c2h = sed -e s/cc$$/hh/ -e s/cpp$$/hpp/ -e s/cxx$$/hxx/ \
+		   -e s/c++$$/h++/ -e s/c$$/h/
+YACCCOMPILE = $(YACC) $(AM_YFLAGS) $(YFLAGS)
+AM_V_YACC = $(am__v_YACC_@AM_V@)
+am__v_YACC_ = $(am__v_YACC_@AM_DEFAULT_V@)
+am__v_YACC_0 = @echo "  YACC    " $@;
+am__v_YACC_1 = 
+YLWRAP = $(top_srcdir)/etc/ylwrap
 SOURCES = $(dist_tmux_SOURCES) $(nodist_tmux_SOURCES)
 DIST_SOURCES = $(dist_tmux_SOURCES)
 am__can_run_installinfo = \
@@ -265,7 +274,6 @@ am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/compat/daemon.c $(top_srcdir)/compat/err.c \
 	$(top_srcdir)/compat/explicit_bzero.c \
 	$(top_srcdir)/compat/fdforkpty.c $(top_srcdir)/compat/fgetln.c \
-	$(top_srcdir)/compat/fparseln.c \
 	$(top_srcdir)/compat/freezero.c \
 	$(top_srcdir)/compat/getdtablecount.c \
 	$(top_srcdir)/compat/getopt.c \
@@ -283,9 +291,10 @@ am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/compat/unvis.c $(top_srcdir)/compat/vis.c \
 	$(top_srcdir)/etc/compile $(top_srcdir)/etc/config.guess \
 	$(top_srcdir)/etc/config.sub $(top_srcdir)/etc/depcomp \
-	$(top_srcdir)/etc/install-sh $(top_srcdir)/etc/missing COPYING \
-	README TODO etc/compile etc/config.guess etc/config.sub \
-	etc/depcomp etc/install-sh etc/missing
+	$(top_srcdir)/etc/install-sh $(top_srcdir)/etc/missing \
+	$(top_srcdir)/etc/ylwrap COPYING README cmd-parse.c \
+	etc/compile etc/config.guess etc/config.sub etc/depcomp \
+	etc/install-sh etc/missing etc/ylwrap
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -369,6 +378,8 @@ SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
 XOPEN_DEFINES = @XOPEN_DEFINES@
+YACC = @YACC@
+YFLAGS = @YFLAGS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -419,7 +430,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-CLEANFILES = tmux.1.mdoc tmux.1.man
+CLEANFILES = tmux.1.mdoc tmux.1.man cmd-parse.c
 
 # Distribution tarball options.
 EXTRA_DIST = \
@@ -446,6 +457,7 @@ dist_tmux_SOURCES = \
 	cmd-confirm-before.c \
 	cmd-copy-mode.c \
 	cmd-detach-client.c \
+	cmd-display-menu.c \
 	cmd-display-message.c \
 	cmd-display-panes.c \
 	cmd-find-window.c \
@@ -462,12 +474,12 @@ dist_tmux_SOURCES = \
 	cmd-list-panes.c \
 	cmd-list-sessions.c \
 	cmd-list-windows.c \
-	cmd-list.c \
 	cmd-load-buffer.c \
 	cmd-lock-server.c \
 	cmd-move-window.c \
 	cmd-new-session.c \
 	cmd-new-window.c \
+	cmd-parse.y \
 	cmd-paste-buffer.c \
 	cmd-pipe-pane.c \
 	cmd-queue.c \
@@ -475,6 +487,7 @@ dist_tmux_SOURCES = \
 	cmd-rename-session.c \
 	cmd-rename-window.c \
 	cmd-resize-pane.c \
+	cmd-resize-window.c \
 	cmd-respawn-pane.c \
 	cmd-respawn-window.c \
 	cmd-rotate-window.c \
@@ -486,14 +499,12 @@ dist_tmux_SOURCES = \
 	cmd-send-keys.c \
 	cmd-set-buffer.c \
 	cmd-set-environment.c \
-	cmd-set-hook.c \
 	cmd-set-option.c \
 	cmd-show-environment.c \
 	cmd-show-messages.c \
 	cmd-show-options.c \
 	cmd-source-file.c \
 	cmd-split-window.c \
-	cmd-string.c \
 	cmd-swap-pane.c \
 	cmd-swap-window.c \
 	cmd-switch-client.c \
@@ -506,9 +517,9 @@ dist_tmux_SOURCES = \
 	control.c \
 	environ.c \
 	format.c \
+	format-draw.c \
 	grid-view.c \
 	grid.c \
-	hooks.c \
 	input-keys.c \
 	input.c \
 	job.c \
@@ -518,6 +529,7 @@ dist_tmux_SOURCES = \
 	layout-set.c \
 	layout.c \
 	log.c \
+	menu.c \
 	mode-tree.c \
 	names.c \
 	notify.c \
@@ -525,6 +537,7 @@ dist_tmux_SOURCES = \
 	options.c \
 	paste.c \
 	proc.c \
+	regsub.c \
 	resize.c \
 	screen-redraw.c \
 	screen-write.c \
@@ -533,6 +546,7 @@ dist_tmux_SOURCES = \
 	server-fn.c \
 	server.c \
 	session.c \
+	spawn.c \
 	status.c \
 	style.c \
 	tmux.c \
@@ -557,7 +571,7 @@ nodist_tmux_SOURCES = osdep-@PLATFORM@.c $(am__append_10) \
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj
+.SUFFIXES: .c .o .obj .y
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -669,6 +683,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-confirm-before.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-copy-mode.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-detach-client.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-display-menu.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-display-message.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-display-panes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-find-window.Po@am__quote@
@@ -685,12 +700,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-list-panes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-list-sessions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-list-windows.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-list.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-load-buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-lock-server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-move-window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-new-session.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-new-window.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-parse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-paste-buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-pipe-pane.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-queue.Po@am__quote@
@@ -698,6 +713,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-rename-session.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-rename-window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-resize-pane.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-resize-window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-respawn-pane.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-respawn-window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-rotate-window.Po@am__quote@
@@ -709,14 +725,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-send-keys.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-set-buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-set-environment.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-set-hook.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-set-option.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-show-environment.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-show-messages.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-show-options.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-source-file.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-split-window.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-string.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-swap-pane.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-swap-window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-switch-client.Po@am__quote@
@@ -727,10 +741,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/control-notify.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/environ.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/format-draw.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/format.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/grid-view.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/grid.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hooks.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/input-keys.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/input.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/job.Po@am__quote@
@@ -740,6 +754,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/layout-set.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/layout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mode-tree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/names.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/notify.Po@am__quote@
@@ -748,6 +763,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/osdep-@PLATFORM@.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/paste.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/proc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/regsub.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/resize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screen-redraw.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screen-write.Po@am__quote@
@@ -756,6 +772,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server-fn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/session.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/spawn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/status.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/style.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tmux.Po@am__quote@
@@ -783,7 +800,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/fdforkpty.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/fgetln.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/forkpty-@PLATFORM@.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/fparseln.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/freezero.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getdtablecount.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getopt.Po@am__quote@
@@ -821,6 +837,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.y.c:
+	$(AM_V_YACC)$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h `echo $@ | $(am__yacc_c2h)` y.output $*.output -- $(YACCCOMPILE)
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -1085,6 +1104,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-rm -f cmd-parse.c
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
@@ -1187,7 +1207,7 @@ install-exec-hook:
 			>$(srcdir)/tmux.1.mdoc; \
 	else \
 		sed -e "s|@SYSCONFDIR@|$(sysconfdir)|g" $(srcdir)/tmux.1| \
-			$(AWK) -f$(srcdir)/mdoc2man.awk >$(srcdir)/tmux.1.man; \
+			$(AWK) -f $(srcdir)/mdoc2man.awk >$(srcdir)/tmux.1.man; \
 	fi
 	$(mkdir_p) $(DESTDIR)$(mandir)/man1
 	$(INSTALL_DATA) $(srcdir)/tmux.1.@MANFORMAT@ \

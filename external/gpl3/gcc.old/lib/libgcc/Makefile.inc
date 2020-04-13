@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.7.4.2 2020/04/08 14:06:43 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.7.4.3 2020/04/13 08:01:26 martin Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
+GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${LIBGCC_MACHINE_ARCH}/defs.mk)
@@ -22,11 +23,7 @@ CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 CPPFLAGS+=	${GCPPFLAGS:M-m*} ${GCPPFLAGS:M-f*}
 CPPFLAGS+=	${G_EXTRA_HEADERS:M/*:H:u:S/^/-I/g}
 CPPFLAGS+=	-I${DIST}/libgcc -I${DIST}/libgcc/config
-.if ${LIBGCC_MACHINE_ARCH} == "x86_64"
-CPPFLAGS+=	-I${DIST}/libgcc/config/i386
-.else
-CPPFLAGS+=	-I${DIST}/libgcc/config/${LIBGCC_MACHINE_ARCH}
-.endif
+CPPFLAGS+=	-I${DIST}/libgcc/config/${GCC_MACHINE_SUBDIR}
 CPPFLAGS+=	-I${DIST}/gcc -I${DIST}/include -I.
 CPPFLAGS+=	${G_INTERNAL_CFLAGS:M-DHAVE_CC_TLS}
 
@@ -72,15 +69,23 @@ LIB2FUNCS_ALL+= \
     empty(LIBGCC_MACHINE_ARCH:Maarch64*) && \
     empty(LIBGCC_MACHINE_ARCH:Mmips64*)
 
+EXTRA_FUNC_SIZES=	sf df xf
+
+.if ${LIBGCC_MACHINE_ARCH} != "x86_64" && \
+    ${LIBGCC_MACHINE_ARCH} != "i386" && \
+    ${LIBGCC_MACHINE_ARCH} != "ia64"
+EXTRA_FUNC_SIZES+=	tf
+.endif
+
 # non swfloat versions 
 .for _p in _fix _fixuns
-. for _m in sf df xf tf
+. for _m in ${EXTRA_FUNC_SIZES}
 LIB2FUNCS_ALL+=	${_p}${_m}di
 . endfor
 .endfor
 
 .for _p in _float _floatun
-. for _m in sf df xf tf
+. for _m in ${EXTRA_FUNC_SIZES}
 LIB2FUNCS_ALL+=	${_p}di${_m}
 . endfor
 .endfor
@@ -103,7 +108,6 @@ LIB2DIVMOD=	${LIB2_DIVMOD_FUNCS:=.c}
 .if ${HAVE_LIBGCC_EH} == "no"
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T:Nunwind-dw2.c:Nunwind-dw2-fde-dip.c:Nunwind-sjlj.c:Nunwind-c.c:Nunwind-arm.c:Npr-support.c}
 LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T:Nlibunwind.S}
-G_CONFIGLINKS:= ${G_CONFIGLINKS:S,libgcc/config/arm/unwind-arm.h,libgcc/unwind-generic.h,}
 .else
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
 LIB2_EHASM=	${G_LIB2ADDEH:M*.S:T}
@@ -117,7 +121,7 @@ INCS+=		unwind.h
 # from the list of files we create.
 .if !empty(G_LIB1ASMFUNCS)
 . for f in ${G_LIB1ASMFUNCS:=.S}
-.  if !exists(${DIST}/libgcc/config/${MACHINE_CPU}/${f})
+.  if !exists(${DIST}/libgcc/config/${GCC_MACHINE_SUBDIR}/${f})
 LIB1ASMFUNCS+=	${f}
 .  endif
 . endfor
@@ -142,10 +146,6 @@ CPICFLAGS:=
 BUILDSYMLINKS+=	${DIST}/libgcc/config/m68k/fpgnulib.c fpgnulib.c
 BUILDSYMLINKS+=	${DIST}/libgcc/config/m68k/fpgnulib.c xfgnulib.c
 CPPFLAGS.xfgnulib.c+=	-DEXTFLOAT=1
-.endif
-
-.if ${LIBGCC_MACHINE_ARCH} == "powerpc64"
-COPTS+=	-mlong-double-128
 .endif
 
 ${LIB2FUNCS} ${LIB2FUNCS_ST}: ${.CURDIR}/Makefile
@@ -181,29 +181,23 @@ ${G_LIB2_DIVMOD_FUNCS:=.pico}: $(.PREFIX).c
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${CPICFLAGS} -fexceptions -fnon-call-exceptions ${COPTS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC}
 
+CPPFLAGS.fp-bit.c+=	-DFLOAT=1
 dp-bit.c: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
-	printf '#define FLOAT\n#include <fp-bit.c>\n' >${.TARGET}
+	printf '#include <fp-bit.c>\n' >${.TARGET}
 
 #
 # Common rules.
 #
 
 .PATH: ${DIST}/gcc ${DIST}/gcc/cp ${DIST}/gcc/cp/inc ${DIST}/gcc/config \
-	${DIST}/libgcc/config ${DIST}/libgcc/config/${MACHINE_CPU} \
+	${DIST}/libgcc/config ${DIST}/libgcc/config/${GCC_MACHINE_SUBDIR} \
 	${G_LIB2ADD:H:O:u} ${G_LIB2ADDEH:H:O:u} ${GCCARCHLIBGCC}
 
 .include "../Makefile.tconfigh"
 DPSRCS+=	tconfig.h
 
-.if ${MKGCC} != "no"
-.if defined(G_CONFIGLINKS) && !empty(G_CONFIGLINKS)
-BUILDSYMLINKS+=	${G_CONFIGLINKS}
-.for _src _dst in ${G_CONFIGLINKS}
-DPSRCS+=	${_dst}
-.endfor
-.endif
-.endif
+.include "../Makefile.gthr"
 
 EXTRA_FAKEHEADERS=	options.h libgcc_tm.h
 .include "../../Makefile.hacks"

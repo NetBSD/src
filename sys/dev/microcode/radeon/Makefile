@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/04/26 21:37:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.18.1 2020/04/13 08:04:24 martin Exp $
 
 NOMAN=	# defined
 
@@ -14,8 +14,8 @@ FILES=	\
 	R520_cp.bin \
 	RS600_cp.bin \
 	RS690_cp.bin \
-	R600_me.bin R600_pfp.bin R600_rlc.bin \
-	RS780_me.bin RS780_pfp.bin \
+	R600_me.bin R600_pfp.bin R600_rlc.bin R600_uvd.bin \
+	RS780_me.bin RS780_pfp.bin RS780_uvd.bin \
 	RV610_me.bin RV610_pfp.bin \
 	RV620_me.bin RV620_pfp.bin \
 	RV630_me.bin RV630_pfp.bin \
@@ -24,7 +24,7 @@ FILES=	\
 	RV710_me.bin RV710_pfp.bin RV710_smc.bin RV710_uvd.bin \
 	RV730_me.bin RV730_pfp.bin RV730_smc.bin \
 	RV740_smc.bin \
-	RV770_me.bin RV770_pfp.bin RV770_smc.bin \
+	RV770_me.bin RV770_pfp.bin RV770_smc.bin RV770_uvd.bin \
 	R700_rlc.bin \
 	ARUBA_me.bin ARUBA_pfp.bin ARUBA_rlc.bin \
 	BARTS_mc.bin BARTS_me.bin BARTS_pfp.bin BARTS_smc.bin \
@@ -60,6 +60,7 @@ FILES=	\
 	SUMO2_me.bin SUMO2_pfp.bin \
 	TAHITI_ce.bin TAHITI_mc.bin TAHITI_mc2.bin TAHITI_me.bin \
 	TAHITI_pfp.bin TAHITI_rlc.bin TAHITI_smc.bin TAHITI_uvd.bin \
+	TAHITI_vce.bin \
 	TURKS_mc.bin TURKS_me.bin TURKS_pfp.bin TURKS_smc.bin \
 	VERDE_ce.bin VERDE_mc.bin VERDE_mc2.bin VERDE_me.bin VERDE_pfp.bin \
 	VERDE_rlc.bin VERDE_smc.bin

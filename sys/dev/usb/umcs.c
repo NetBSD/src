@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.10.18.2 2020/04/08 14:08:13 martin Exp $ */
+/* $NetBSD: umcs.c,v 1.10.18.3 2020/04/13 08:04:50 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.10.18.2 2020/04/08 14:08:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.10.18.3 2020/04/13 08:04:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,10 @@ struct umcs7840_softc_oneport {
 
 struct umcs7840_softc {
 	device_t sc_dev;		/* ourself */
+	enum {
+		UMCS_INIT_NONE,
+		UMCS_INIT_INITED
+	} sc_init_state;
 	struct usbd_interface *sc_iface; /* the usb interface */
 	struct usbd_device *sc_udev;	/* the usb device */
 	struct usbd_pipe *sc_intr_pipe;	/* interrupt pipe */
@@ -193,6 +197,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_udev = uaa->uaa_device;
 	sc->sc_dying = false;
+	sc->sc_init_state = UMCS_INIT_NONE;
 
 	if (usbd_set_config_index(sc->sc_udev, MCS7840_CONFIG_INDEX, 1) != 0) {
 		aprint_error(": could not set configuration no\n");
@@ -287,6 +292,8 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	    USB_TASKQ_MPSAFE);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+
+	sc->sc_init_state = UMCS_INIT_INITED;
 
 	memset(&ucaa, 0, sizeof(ucaa));
 	ucaa.ucaa_ibufsize = 256;
@@ -517,6 +524,10 @@ umcs7840_detach(device_t self, int flags)
 		kmem_free(sc->sc_intr_buf, sc->sc_intr_buflen);
 		sc->sc_intr_buf = NULL;
 	}
+
+	if (sc->sc_init_state < UMCS_INIT_INITED)
+		return 0;
+
 	usb_rem_task_wait(sc->sc_udev, &sc->sc_change_task, USB_TASKQ_DRIVER,
 	    NULL);
 

@@ -97,27 +97,27 @@ test-force:
 	exit $$status
 
 README: README.md
-	${PANDOC} --email-obfuscation=none -s -t html README.md | \
+	${PANDOC} --email-obfuscation=none -s --metadata title="README" -f markdown-smart -t html README.md | \
 		${W3M} -dump -cols 75 -O ascii -T text/html | \
 		sed -e '$${/^$$/d;}' > $@
 
 HISTORY: HISTORY.md
-	${PANDOC} --email-obfuscation=none -s -t html HISTORY.md | \
+	${PANDOC} --email-obfuscation=none -s --metadata title="HISTORY" -f markdown-smart -t html HISTORY.md | \
 		${W3M} -dump -cols 75 -O ascii -T text/html | \
 		sed -e '$${/^$$/d;}' > $@
 
 OPTIONS: OPTIONS.md
-	${PANDOC} --email-obfuscation=none -s -t html OPTIONS.md | \
+	${PANDOC} --email-obfuscation=none -s --metadata title="OPTIONS" -f markdown-smart -t html OPTIONS.md | \
 		${W3M} -dump -cols 75 -O ascii -T text/html | \
 		sed -e '$${/^$$/d;}' > $@
 
 CONTRIBUTING: CONTRIBUTING.md
-	${PANDOC} --email-obfuscation=none -s -t html CONTRIBUTING.md | \
+	${PANDOC} --email-obfuscation=none -s --metadata title="CONTRIBUTING" -f markdown-smart -t html CONTRIBUTING.md | \
 		${W3M} -dump -cols 75 -O ascii -T text/html | \
 		sed -e '$${/^$$/d;}' > $@
 
 PLATFORMS: PLATFORMS.md
-	${PANDOC} --email-obfuscation=none -s -t html PLATFORMS.md | \
+	${PANDOC} --email-obfuscation=none -s --metadata title="PLATFORMS" -f markdown-smart -t html PLATFORMS.md | \
 		${W3M} -dump -cols 75 -O ascii -T text/html | \
 		sed -e '$${/^$$/d;}' > $@
 

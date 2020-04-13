@@ -121,7 +121,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.19 2018/05/03 07:13:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.19.2.1 2020/04/13 08:05:16 martin Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -1831,35 +1831,10 @@ vtw_control_init(int af)
 	n = 2*m + (11 * (tcp_vtw_entries / fatp_ntags())) / 10;
 	sz = (ctl->is_v4 ? sizeof(vtw_v4_t) : sizeof(vtw_v6_t));
 
-	fat_hash = kmem_zalloc(2*m * sizeof(fatp_t *), KM_NOSLEEP);
-
-	if (fat_hash == NULL) {
-		printf("%s: could not allocate %zu bytes for "
-		    "hash anchors", __func__, 2*m * sizeof(fatp_t *));
-		return ENOMEM;
-	}
-
-	fat_base = kmem_zalloc(2*n * sizeof(fatp_t), KM_NOSLEEP);
-
-	if (fat_base == NULL) {
-		kmem_free(fat_hash, 2*m * sizeof (fatp_t *));
-		printf("%s: could not allocate %zu bytes for "
-		    "fatp_t array", __func__, 2*n * sizeof(fatp_t));
-		return ENOMEM;
-	}
-
-	ctl_base_v = kmem_zalloc(tcp_vtw_entries * sz, KM_NOSLEEP);
-
-	if (ctl_base_v == NULL) {
-		kmem_free(fat_hash, 2*m * sizeof (fatp_t *));
-		kmem_free(fat_base, 2*n * sizeof(fatp_t));
-		printf("%s: could not allocate %zu bytes for "
-		    "vtw_t array", __func__, tcp_vtw_entries * sz);
-		return ENOMEM;
-	}
-
+	fat_hash = kmem_zalloc(2*m * sizeof(fatp_t *), KM_SLEEP);
+	fat_base = kmem_zalloc(2*n * sizeof(fatp_t), KM_SLEEP);
+	ctl_base_v = kmem_zalloc(tcp_vtw_entries * sz, KM_SLEEP);
 	fatp_init(fat, n, m, fat_base, fat_hash);
-
 	vtw_init(fat, ctl, tcp_vtw_entries, ctl_base_v);
 
 	return 0;

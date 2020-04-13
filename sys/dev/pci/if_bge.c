@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.314.2.2 2020/04/08 14:08:09 martin Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.314.2.3 2020/04/13 08:04:26 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.314.2.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.314.2.3 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1371,13 +1371,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 		sc->bge_cdata.bge_jslots[i] = ptr;
 		ptr += BGE_JLEN;
 		entry = malloc(sizeof(struct bge_jpool_entry),
-		    M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			aprint_error_dev(sc->bge_dev,
-			    "no memory for jumbo buffer queue!\n");
-			error = ENOBUFS;
-			goto out;
-		}
+		    M_DEVBUF, M_WAITOK);
 		entry->slot = i;
 		SLIST_INSERT_HEAD(&sc->bge_jfree_listhead,
 				 entry, jpool_entries);
@@ -1839,7 +1833,7 @@ bge_setmulti(struct bge_softc *sc)
 		/* Just want the 7 least-significant bits. */
 		h &= 0x7f;
 
-		hashes[(h & 0x60) >> 5] |= 1 << (h & 0x1F);
+		hashes[(h & 0x60) >> 5] |= 1U << (h & 0x1F);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
@@ -3851,6 +3845,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 #endif
 	sc->ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
+	sc->ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 
 	if (sc->bge_flags & BGEF_TSO)
 		sc->ethercom.ec_if.if_capabilities |= IFCAP_TSOv4;
@@ -5036,8 +5031,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			if (!M_READONLY(m)) {
 				if (M_LEADINGSPACE(m) < shorfall) {
 					void *m_dat;
-					m_dat = (m->m_flags & M_PKTHDR) ?
-					    m->m_pktdat : m->dat;
+					m_dat = M_BUFADDR(m);
 					memmove(m_dat, mtod(m, void*),
 					    m->m_len);
 					m->m_data = m_dat;
@@ -5603,7 +5597,8 @@ bge_init(struct ifnet *ifp)
 	/* Load our MAC address. */
 	m = (const uint16_t *)&(CLLADDR(ifp->if_sadl)[0]);
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_LO, htons(m[0]));
-	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI, (htons(m[1]) << 16) | htons(m[2]));
+	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI,
+	    ((uint32_t)htons(m[1]) << 16) | htons(m[2]));
 
 	/* Enable or disable promiscuous mode as needed. */
 	if (ifp->if_flags & IFF_PROMISC)
@@ -5842,7 +5837,7 @@ bge_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct bge_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->bge_if_flags;
+	u_short change = ifp->if_flags ^ sc->bge_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;

@@ -25,7 +25,7 @@ CWARNINGS =
 
 ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 ISCCFGLIBS =    ../../lib/isccfg/libisccfg.@A@
-DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 NSLIBS =	../../lib/ns/libns.@A@
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@

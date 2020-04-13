@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.34.2.2 2020/04/08 14:07:25 martin Exp $	*/
+/*	$NetBSD: spl.S,v 1.34.2.3 2020/04/13 08:03:30 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -66,6 +66,7 @@
 
 #include "opt_ddb.h"
 #include "opt_kasan.h"
+#include "opt_kmsan.h"
 
 #define ALIGN_TEXT	.align 16,0x90
 
@@ -86,6 +87,7 @@ ENTRY(splraise)
 	cmpl	%edi,%eax
 	cmoval	%eax,%edi
 	movl	%edi,CPUVAR(ILEVEL)
+	KMSAN_INIT_RET(4)
 	ret
 END(splraise)
 
@@ -123,6 +125,16 @@ IDTVEC(softintr)
 	pushq	%rdx
 	pushq	%rcx
 	callq	_C_LABEL(kasan_softint)
+	popq	%rcx
+	popq	%rdx
+	popq	%rax
+#endif
+
+#ifdef KMSAN
+	pushq	%rax
+	pushq	%rdx
+	pushq	%rcx
+	callq	_C_LABEL(kmsan_softint)
 	popq	%rcx
 	popq	%rdx
 	popq	%rax
@@ -186,6 +198,7 @@ IDTVEC(recurse_preempt)
 	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
 	sti
 	xorq	%rdi,%rdi
+	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(kpreempt)
 	cli
 	jmp	*%r13			/* back to Xspllower */
@@ -202,6 +215,7 @@ IDTVEC(resume_preempt)
 	testq	$SEL_RPL,TF_CS(%rsp)
 	jnz	1f
 	movq	TF_RIP(%rsp),%rdi
+	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(kpreempt)	/* from kernel */
 	cli
 	jmp	*%r13			/* back to Xdoreti */
@@ -390,12 +404,14 @@ LABEL(doreti_checkast)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
+	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(trap)
 	CLI(si)
 	jmp	doreti_checkast
 3:
 	CHECK_DEFERRED_SWITCH
 	jnz	9f
+	HANDLE_DEFERRED_FPU
 6:
 	INTRFASTEXIT
 9:

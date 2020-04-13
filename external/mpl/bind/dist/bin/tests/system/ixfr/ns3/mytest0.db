@@ -18,7 +18,9 @@ test.  15  IN        SOA ns1.test.  hostmaster.test. (
                              )
        IN  NS     ns1.test.
        IN  NS     ns2.test.
+       IN  NS     ns5.test.
 ns1    IN  A      10.53.0.3
 ns2    IN  A      10.53.0.4
+ns5    IN  A      10.53.0.5
 host1  IN  A      192.168.10.3
 host2  IN  A      192.168.10.4

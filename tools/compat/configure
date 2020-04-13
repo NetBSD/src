@@ -4098,7 +4098,7 @@ fi
 fi
 
 for ac_header in sys/mtio.h sys/sysmacros.h sys/syslimits.h stdio_ext.h \
-	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h rpc/types.h
+	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h sys/uio.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -4128,13 +4128,33 @@ fi
 
 done
 
-for ac_header in rpc/types.h netconfig.h
+for ac_header in rpc/types.h
 do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "rpc/types.h" "ac_cv_header_rpc_types_h" "$ac_includes_default"
+if test "x$ac_cv_header_rpc_types_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+#define HAVE_RPC_TYPES_H 1
+_ACEOF
+
+else
+  echo '#include "nbtool_config.h"' >include/$ac_header.new
+	echo '#include "'$srcdir/../../common/include/$ac_header'"' \
+		>>include/$ac_header.new
+	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
+		rm -f include/$ac_header.new
+	else
+		mv -f include/$ac_header.new include/$ac_header
+	fi
+fi
+
+done
+
+for ac_header in netconfig.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "netconfig.h" "ac_cv_header_netconfig_h" "$ac_includes_default"
+if test "x$ac_cv_header_netconfig_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_NETCONFIG_H 1
 _ACEOF
 
 else
@@ -4227,6 +4247,43 @@ _ACEOF
 
 fi
 
+ac_fn_c_check_type "$LINENO" "uchar_t" "ac_cv_type_uchar_t" "$ac_includes_default"
+if test "x$ac_cv_type_uchar_t" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_UCHAR_T 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_type "$LINENO" "ushort_t" "ac_cv_type_ushort_t" "$ac_includes_default"
+if test "x$ac_cv_type_ushort_t" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_USHORT_T 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_type "$LINENO" "uint_t" "ac_cv_type_uint_t" "$ac_includes_default"
+if test "x$ac_cv_type_uint_t" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_UINT_T 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_type "$LINENO" "ulong_t" "ac_cv_type_ulong_t" "$ac_includes_default"
+if test "x$ac_cv_type_ulong_t" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_ULONG_T 1
+_ACEOF
+
+
+fi
+
 ac_fn_c_check_type "$LINENO" "socklen_t" "ac_cv_type_socklen_t" "#include <sys/types.h>
 #ifdef HAVE_RPC_TYPES_H
 #include <rpc/types.h>
@@ -4239,6 +4296,54 @@ $as_echo "#define HAVE_SOCKLEN_T 1" >>confdefs.h
 
 fi
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for enum uio_rw" >&5
+$as_echo_n "checking for enum uio_rw... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
+int
+main ()
+{
+enum uio_rw rw;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+$as_echo "#define HAVE_ENUM_UIO_RW 1" >>confdefs.h
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for enum uio_seg" >&5
+$as_echo_n "checking for enum uio_seg... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
+int
+main ()
+{
+enum uio_seg seg;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+$as_echo "#define HAVE_ENUM_UIO_SEG 1" >>confdefs.h
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
 

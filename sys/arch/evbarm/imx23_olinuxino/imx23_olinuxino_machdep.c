@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.6.18.1 2019/06/10 22:06:07 christos Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.6.18.2 2020/04/13 08:03:43 martin Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ static void bypass_ssp(void);
 /*
  * Initialize ARM and return new SVC stack pointer.
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
         psize_t ram_size;

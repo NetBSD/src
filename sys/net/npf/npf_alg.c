@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -33,15 +33,12 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.16.16.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.16.16.2 2020/04/13 08:05:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/kmem.h>
-#include <sys/pserialize.h>
-#include <sys/mutex.h>
-#include <net/pfil.h>
 #include <sys/module.h>
 #endif
 
@@ -55,20 +52,20 @@ __KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.16.16.1 2019/06/10 22:09:46 christos E
 
 struct npf_alg {
 	const char *	na_name;
-	u_int		na_slot;
+	unsigned	na_slot;
 };
 
 struct npf_algset {
 	/* List of ALGs and the count. */
 	npf_alg_t	alg_list[NPF_MAX_ALGS];
-	u_int		alg_count;
+	unsigned	alg_count;
 
 	/* Matching, inspection and translation functions. */
 	npfa_funcs_t	alg_funcs[NPF_MAX_ALGS];
 };
 
-static const char	alg_prefix[] = "npf_alg_";
-#define	NPF_EXT_PREFLEN	(sizeof(alg_prefix) - 1)
+#define	NPF_ALG_PREF	"npf_alg_"
+#define	NPF_ALG_PREFLEN	(sizeof(NPF_ALG_PREF) - 1)
 
 void
 npf_alg_init(npf_t *npf)
@@ -94,7 +91,7 @@ npf_alg_lookup(npf_t *npf, const char *name)
 
 	KASSERT(npf_config_locked_p(npf));
 
-	for (u_int i = 0; i < aset->alg_count; i++) {
+	for (unsigned i = 0; i < aset->alg_count; i++) {
 		npf_alg_t *alg = &aset->alg_list[i];
 		const char *aname = alg->na_name;
 
@@ -111,9 +108,9 @@ npf_alg_construct(npf_t *npf, const char *name)
 
 	npf_config_enter(npf);
 	if ((alg = npf_alg_lookup(npf, name)) == NULL) {
-		char modname[NPF_EXT_PREFLEN + 64];
+		char modname[NPF_ALG_PREFLEN + 64];
 
-		snprintf(modname, sizeof(modname), "%s%s", alg_prefix, name);
+		snprintf(modname, sizeof(modname), "%s%s", NPF_ALG_PREF, name);
 		npf_config_exit(npf);
 
 		if (module_autoload(modname, MODULE_CLASS_MISC) != 0) {
@@ -135,7 +132,7 @@ npf_alg_register(npf_t *npf, const char *name, const npfa_funcs_t *funcs)
 	npf_algset_t *aset = npf->algset;
 	npfa_funcs_t *afuncs;
 	npf_alg_t *alg;
-	u_int i;
+	unsigned i;
 
 	npf_config_enter(npf);
 	if (npf_alg_lookup(npf, name) != NULL) {
@@ -178,7 +175,7 @@ int
 npf_alg_unregister(npf_t *npf, npf_alg_t *alg)
 {
 	npf_algset_t *aset = npf->algset;
-	u_int i = alg->na_slot;
+	unsigned i = alg->na_slot;
 	npfa_funcs_t *afuncs;
 
 	/* Deactivate the functions first. */
@@ -187,7 +184,7 @@ npf_alg_unregister(npf_t *npf, npf_alg_t *alg)
 	afuncs->match = NULL;
 	afuncs->translate = NULL;
 	afuncs->inspect = NULL;
-	pserialize_perform(npf->qsbr);
+	npf_ebr_full_sync(npf->ebr);
 
 	/* Finally, unregister the ALG. */
 	npf_ruleset_freealg(npf_config_natset(npf), alg);
@@ -198,17 +195,29 @@ npf_alg_unregister(npf_t *npf, npf_alg_t *alg)
 }
 
 /*
- * npf_alg_match: call ALG matching inspectors, determine if any ALG matches.
+ * npf_alg_match: call the ALG matching inspectors.
+ *
+ *	The purpose of the "matching" inspector function in the ALG API
+ *	is to determine whether this connection matches the ALG criteria
+ *	i.e. is concerning the ALG.  If yes, ALG can associate itself with
+ *	the given NAT state structure and set/save an arbitrary parameter.
+ *	This is done using the using the npf_nat_setalg() function.
+ *
+ *	=> This is called when the packet matches the dynamic NAT policy
+ *	   and the NAT state entry is being created for it [NAT-ESTABLISH].
  */
 bool
 npf_alg_match(npf_cache_t *npc, npf_nat_t *nt, int di)
 {
-	npf_algset_t *aset = npc->npc_ctx->algset;
+	npf_t *npf = npc->npc_ctx;
+	npf_algset_t *aset = npf->algset;
 	bool match = false;
 	int s;
 
-	s = pserialize_read_enter();
-	for (u_int i = 0; i < aset->alg_count; i++) {
+	KASSERTMSG(npf_iscached(npc, NPC_IP46), "expecting protocol number");
+
+	s = npf_ebr_enter(npf->ebr);
+	for (unsigned i = 0; i < aset->alg_count; i++) {
 		const npfa_funcs_t *f = &aset->alg_funcs[i];
 
 		if (f->match && f->match(npc, nt, di)) {
@@ -216,39 +225,68 @@ npf_alg_match(npf_cache_t *npc, npf_nat_t *nt, int di)
 			break;
 		}
 	}
-	pserialize_read_exit(s);
+	npf_ebr_exit(npf->ebr, s);
 	return match;
 }
 
 /*
- * npf_alg_exec: execute ALG hooks for translation.
+ * npf_alg_exec: execute the ALG translation processors.
+ *
+ *	The ALG function would perform any additional packet translation
+ *	or manipulation here.  The translate function will be called by
+ *	once the ALG has been associated with the NAT state through the
+ *	npf_alg_match() inspector.
+ *
+ *	=> This is called when the packet is being translated according
+ *	   to the dynamic NAT logic [NAT-TRANSLATE].
  */
 void
 npf_alg_exec(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 {
-	npf_algset_t *aset = npc->npc_ctx->algset;
+	npf_t *npf = npc->npc_ctx;
+	npf_algset_t *aset = npf->algset;
 	int s;
 
-	s = pserialize_read_enter();
-	for (u_int i = 0; i < aset->alg_count; i++) {
+	KASSERTMSG(npf_iscached(npc, NPC_IP46), "expecting protocol number");
+
+	s = npf_ebr_enter(npf->ebr);
+	for (unsigned i = 0; i < aset->alg_count; i++) {
 		const npfa_funcs_t *f = &aset->alg_funcs[i];
 
 		if (f->translate) {
 			f->translate(npc, nt, forw);
 		}
 	}
-	pserialize_read_exit(s);
+	npf_ebr_exit(npf->ebr, s);
 }
 
+/*
+ * npf_alg_conn: query ALGs which may perform a custom state lookup.
+ *
+ *	The purpose of ALG connection inspection function is to provide
+ *	ALGs with a mechanism to override the regular connection state
+ *	lookup, if they need to.  For example, some ALGs may want to
+ *	extract and use a different 5-tuple to perform a lookup.
+ *
+ *	=> This is called at the beginning of the connection state lookup
+ *	   function [CONN-LOOKUP].
+ *
+ *	=> Must use the npf_conn_lookup() function to perform the custom
+ *	   connection state lookup and return the result.
+ *
+ *	=> Returning NULL will result in NPF performing a regular state
+ *	   lookup for the packet.
+ */
 npf_conn_t *
 npf_alg_conn(npf_cache_t *npc, int di)
 {
-	npf_algset_t *aset = npc->npc_ctx->algset;
+	npf_t *npf = npc->npc_ctx;
+	npf_algset_t *aset = npf->algset;
 	npf_conn_t *con = NULL;
 	int s;
 
-	s = pserialize_read_enter();
-	for (u_int i = 0; i < aset->alg_count; i++) {
+	s = npf_ebr_enter(npf->ebr);
+	for (unsigned i = 0; i < aset->alg_count; i++) {
 		const npfa_funcs_t *f = &aset->alg_funcs[i];
 
 		if (!f->inspect)
@@ -256,10 +294,13 @@ npf_alg_conn(npf_cache_t *npc, int di)
 		if ((con = f->inspect(npc, di)) != NULL)
 			break;
 	}
-	pserialize_read_exit(s);
+	npf_ebr_exit(npf->ebr, s);
 	return con;
 }
 
+/*
+ * npf_alg_export: serialise the configuration of ALGs.
+ */
 int
 npf_alg_export(npf_t *npf, nvlist_t *npf_dict)
 {
@@ -267,7 +308,7 @@ npf_alg_export(npf_t *npf, nvlist_t *npf_dict)
 
 	KASSERT(npf_config_locked_p(npf));
 
-	for (u_int i = 0; i < aset->alg_count; i++) {
+	for (unsigned i = 0; i < aset->alg_count; i++) {
 		const npf_alg_t *alg = &aset->alg_list[i];
 		nvlist_t *algdict;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.7.44.1 2020/04/08 14:07:16 martin Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.7.44.2 2020/04/13 08:03:15 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -53,10 +53,7 @@ pthread__sp(void)
 /*
  * Set initial, sane values for registers whose values aren't just
  * "don't care".
- *
- * XXX
- * "Sane value" for MSR differs between oea/booke/ibm4xx, but no way to
- * obtain from userland. It should be corrected by cpu_setmcontext().
+ * 0xd032 is PSL_USERSET from arch/powerpc/include/psl.h
  */
 #define _INITCONTEXT_U_MD(ucp)						\
 	(ucp)->uc_mcontext.__gregs[_REG_MSR] = 0xd032;

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ifunc.c,v 1.8 2018/03/09 20:15:03 joerg Exp $	*/
+/*	$NetBSD: t_ifunc.c,v 1.8.2.1 2020/04/13 08:05:29 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -192,5 +192,5 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, rtld_ifunc);
 	ATF_TP_ADD_TC(tp, rtld_hidden_ifunc);
 	ATF_TP_ADD_TC(tp, rtld_main_ifunc);
-	return 0;
+	return atf_no_error();
 }

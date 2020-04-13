@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.4.2.2 2019/06/10 22:04:36 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.4.2.3 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -101,6 +101,7 @@
 #define DNS_MESSAGEEXTFLAG_DO		0x8000U
 
 /*%< EDNS0 extended OPT codes */
+#define DNS_OPT_LLQ		1		/*%< LLQ opt code */
 #define DNS_OPT_NSID		3		/*%< NSID opt code */
 #define DNS_OPT_CLIENT_SUBNET	8		/*%< client subnet opt code */
 #define DNS_OPT_EXPIRE		9		/*%< EXPIRE opt code */
@@ -108,6 +109,8 @@
 #define DNS_OPT_TCP_KEEPALIVE	11		/*%< TCP keepalive opt code */
 #define DNS_OPT_PAD		12		/*%< PAD opt code */
 #define DNS_OPT_KEY_TAG		14		/*%< Key tag opt code */
+#define DNS_OPT_CLIENT_TAG	16		/*%< Client tag opt code */
+#define DNS_OPT_SERVER_TAG	17		/*%< Server tag opt code */
 
 /*%< Experimental options [65001...65534] as per RFC6891 */
 

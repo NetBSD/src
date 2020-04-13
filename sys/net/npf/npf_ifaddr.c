@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.3.4.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.3.4.2 2020/04/13 08:05:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -51,8 +51,8 @@ lookup_ifnet_table(npf_t *npf, ifnet_t *ifp)
 {
 	const npf_ifops_t *ifops = npf->ifops;
 	char tname[NPF_TABLE_MAXNAMELEN];
-	npf_tableset_t *ts;
 	const char *ifname;
+	npf_config_t *nc;
 	npf_table_t *t;
 	u_int tid;
 
@@ -61,13 +61,12 @@ lookup_ifnet_table(npf_t *npf, ifnet_t *ifp)
 	snprintf(tname, sizeof(tname), ".ifnet-%s", ifname);
 
 	KERNEL_LOCK(1, NULL);
-	npf_config_enter(npf);
-	ts = npf_config_tableset(npf);
+	nc = npf_config_enter(npf);
 
 	/*
 	 * Check whether this interface is of any interest to us.
 	 */
-	t = npf_tableset_getbyname(ts, tname);
+	t = npf_tableset_getbyname(nc->tableset, tname);
 	if (!t) {
 		goto out;
 	}
@@ -88,7 +87,7 @@ out:
 static void
 replace_ifnet_table(npf_t *npf, npf_table_t *newt)
 {
-	npf_tableset_t *ts = npf_config_tableset(npf);
+	npf_tableset_t *ts = npf->config->tableset;
 	npf_table_t *oldt;
 
 	KERNEL_UNLOCK_ONE(NULL);

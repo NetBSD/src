@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.123.2.1 2020/04/08 14:08:59 martin Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.123.2.2 2020/04/13 08:05:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.123.2.1 2020/04/08 14:08:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.123.2.2 2020/04/13 08:05:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -137,7 +137,7 @@ nfs_loadvnode(struct mount *mp, struct vnode *vp,
 	/* Initialize genfs node. */
 	genfs_node_init(vp, &nfs_genfsops);
 	/*
-	 * Initalize read/write creds to useful values. VOP_OPEN will
+	 * Initialize read/write creds to useful values. VOP_OPEN will
 	 * overwrite these.
 	 */
 	np->n_rcred = curlwp->l_cred;

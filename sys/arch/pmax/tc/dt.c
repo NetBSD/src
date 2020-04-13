@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.12 2015/06/28 09:15:45 maxv Exp $	*/
+/*	$NetBSD: dt.c,v 1.12.18.1 2020/04/13 08:04:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.12 2015/06/28 09:15:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.12.18.1 2020/04/13 08:04:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,12 +215,7 @@ dt_attach(device_t parent, device_t self, void *aux)
 
 	dt_cninit();
 
-	msg = malloc(sizeof(*msg) * DT_BUF_CNT, M_DEVBUF, M_NOWAIT);
-	if (msg == NULL) {
-		printf("%s: memory exhausted\n", device_xname(self));
-		return;
-	}
-
+	msg = malloc(sizeof(*msg) * DT_BUF_CNT, M_DEVBUF, M_WAITOK);
 	sc->sc_sih = softint_establish(SOFTINT_SERIAL, dt_dispatch, sc);
 	if (sc->sc_sih == NULL) {
 		printf("%s: memory exhausted\n", device_xname(self));

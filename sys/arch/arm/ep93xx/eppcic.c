@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcic.c,v 1.7 2012/10/27 17:17:37 chs Exp $	*/
+/*	$NetBSD: eppcic.c,v 1.7.38.1 2020/04/13 08:03:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.7 2012/10/27 17:17:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.7.38.1 2020/04/13 08:03:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,10 +175,7 @@ eppcic_attach_common(device_t parent, device_t self, void *aux,
 	epled_red_off();
 #endif
 	/* socket 0 */
-	if (!(ph = malloc(sizeof(struct eppcic_handle), M_DEVBUF, M_NOWAIT))) {
-		printf("%s: Cannot allocate memory\n", device_xname(self));
-		return; /* ENOMEM */
-	}
+	ph = malloc(sizeof(struct eppcic_handle), M_DEVBUF, M_WAITOK);
 	sc->sc_ph[0] = ph;
 	ph->ph_sc = sc;
 	ph->ph_socket = 0;

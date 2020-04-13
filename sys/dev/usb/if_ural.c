@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.55.2.2 2020/04/08 14:08:13 martin Exp $ */
+/*	$NetBSD: if_ural.c,v 1.55.2.3 2020/04/13 08:04:49 martin Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.55.2.2 2020/04/08 14:08:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.55.2.3 2020/04/13 08:04:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -367,6 +367,7 @@ ural_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_udev = uaa->uaa_device;
+	sc->sc_init_state = URAL_INIT_NONE;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -517,6 +518,8 @@ ural_attach(device_t parent, device_t self, void *aux)
 
 	ieee80211_announce(ic);
 
+	sc->sc_init_state = URAL_INIT_INITED;
+
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -532,6 +535,9 @@ ural_detach(device_t self, int flags)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
 	int s;
+
+	if (sc->sc_init_state < URAL_INIT_INITED)
+		return 0;
 
 	pmf_device_deregister(self);
 

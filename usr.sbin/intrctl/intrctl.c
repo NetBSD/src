@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl.c,v 1.8 2018/06/22 22:50:53 jdolecek Exp $	*/
+/*	$NetBSD: intrctl.c,v 1.8.2.1 2020/04/13 08:05:53 martin Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl.c,v 1.8 2018/06/22 22:50:53 jdolecek Exp $");
+__RCSID("$NetBSD: intrctl.c,v 1.8.2.1 2020/04/13 08:05:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -99,8 +99,9 @@ usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "usage: %s list [-c]\n", progname);
-	fprintf(stderr, "       %s affinity -i interrupt_name -c cpu_index\n", progname);
+	fprintf(stderr, "usage: %s list [-cz] [-w secs]\n", progname);
+	fprintf(stderr, "       %s affinity -i interrupt_name -c cpu_index\n",
+	    progname);
 	fprintf(stderr, "       %s intr -c cpu_index\n", progname);
 	fprintf(stderr, "       %s nointr -c cpu_index\n", progname);
 	exit(EXIT_FAILURE);
@@ -110,25 +111,13 @@ usage(void)
 static int intrctl_io_alloc_retry_count = 4;
 
 static void
-intrctl_list(int argc, char **argv)
+intrctl_list_one(bool compact, bool skipzero)
 {
 	char buf[64];
 	struct intrio_list_line *illine;
 	int i, ncpus, *cpucol;
 	void *handle;
 	size_t intridlen;
-	int compact = 0;
-	int ch;
-
-	while ((ch = getopt(argc, argv, "c")) != -1) {
-		switch (ch) {
-		case 'c':
-			compact = 1;
-			break;
-		default:
-			usage();
-		}
-	}
 
 	handle = intrctl_io_alloc(intrctl_io_alloc_retry_count);
 	if (handle == NULL)
@@ -181,6 +170,20 @@ intrctl_list(int argc, char **argv)
 	    illine = intrctl_io_nextline(handle, illine)) {
 		struct intrio_list_line_cpu *illc;
 
+		if (skipzero) {
+			bool is_zero = true;
+
+			for (i = 0; i < ncpus; i++) {
+				illc = &illine->ill_cpu[i];
+				if (illc->illc_count != 0) {
+					is_zero = false;
+					break;
+				}
+			}
+			if (is_zero)
+				continue;
+		}
+
 		printf("%-*s ", (int)intridlen, illine->ill_intrid);
 		if (compact) {
 			uint64_t total = 0;
@@ -214,6 +217,40 @@ intrctl_list(int argc, char **argv)
 
 	free(cpucol);
 	intrctl_io_free(handle);
+}
+
+static void
+intrctl_list(int argc, char **argv)
+{
+	int seconds = 0;
+	bool compact = false;
+	bool skipzero = false;
+	int ch;
+
+	while ((ch = getopt(argc, argv, "cw:z")) != -1) {
+		switch (ch) {
+		case 'c':
+			compact = true;
+			break;
+		case 'z':
+			skipzero = true;
+			break;
+		case 'w':
+			seconds = atoi(optarg);
+			if (seconds < 0)
+				errx(1, "seconds must be positive.");
+			break;
+		default:
+			usage();
+		}
+	}
+
+	for (;;) {
+		intrctl_list_one(compact, skipzero);
+		if (seconds == 0)
+			break;
+		sleep(seconds);
+	}
 }
 
 static void

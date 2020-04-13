@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.21 2011/09/25 13:40:07 chs Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.21.54.1 2020/04/13 08:04:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -279,6 +279,7 @@ bsd_termios_to_linux_termio(struct termios *bts, struct linux_termio *lt)
 {
 	int i, mask;
 
+	memset(lt, 0, sizeof(*lt));
 	lt->c_iflag = 0;
 	lt->c_iflag |= cvtto_linux_mask(bts->c_iflag, IGNBRK, LINUX_IGNBRK);
 	lt->c_iflag |= cvtto_linux_mask(bts->c_iflag, BRKINT, LINUX_BRKINT);
@@ -466,6 +467,7 @@ bsd_termios_to_linux_termios(struct termios *bts, struct linux_termios *lts)
 {
 	int i, mask;
 
+	memset(lts, 0, sizeof(*lts));
 	lts->c_iflag = 0;
 	lts->c_iflag |= cvtto_linux_mask(bts->c_iflag, IGNBRK, LINUX_IGNBRK);
 	lts->c_iflag |= cvtto_linux_mask(bts->c_iflag, BRKINT, LINUX_BRKINT);

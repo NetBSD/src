@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ahcisata.c,v 1.8 2018/06/20 05:53:19 hkenken Exp $	*/
+/*	$NetBSD: imx6_ahcisata.c,v 1.8.2.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.8 2018/06/20 05:53:19 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.8.2.1 2020/04/13 08:03:35 martin Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -47,23 +47,28 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.8 2018/06/20 05:53:19 hkenken Ex
 #include <dev/ic/ahcisatavar.h>
 
 struct imx_ahci_softc {
+	struct ahci_softc sc_ahcisc;
+
 	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	void *sc_ih;
 
-	struct ahci_softc sc_ahcisc;
+	struct clk *sc_clk_sata;
+	struct clk *sc_clk_sata_ref;
+	struct clk *sc_clk_ahb;
 };
 
 static int imx6_ahcisata_match(device_t, cfdata_t, void *);
 static void imx6_ahcisata_attach(device_t, device_t, void *);
 static int imx6_ahcisata_detach(device_t, int);
 
-static int imx6_ahcisata_init(struct imx_ahci_softc *);
 static int imx6_ahcisata_phy_ctrl(struct imx_ahci_softc *, uint32_t, int);
 static int imx6_ahcisata_phy_addr(struct imx_ahci_softc *, uint32_t);
 static int imx6_ahcisata_phy_write(struct imx_ahci_softc *, uint32_t, uint16_t);
 static int imx6_ahcisata_phy_read(struct imx_ahci_softc *, uint32_t);
+static int imx6_ahcisata_init(struct imx_ahci_softc *);
+static int imx6_ahcisata_init_clocks(struct imx_ahci_softc *);
 
 CFATTACH_DECL_NEW(imx6_ahcisata, sizeof(struct imx_ahci_softc),
     imx6_ahcisata_match, imx6_ahcisata_attach, imx6_ahcisata_detach, NULL);
@@ -111,6 +116,26 @@ imx6_ahcisata_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(aa->aa_iot, aa->aa_addr, aa->aa_size, 0,
 	    &sc->sc_ioh)) {
 		aprint_error_dev(self, "cannot map registers\n");
+		return;
+	}
+
+	sc->sc_clk_sata = imx6_get_clock("sata");
+	if (sc->sc_clk_sata == NULL) {
+		aprint_error(": couldn't get clock sata\n");
+		return;
+	}
+	sc->sc_clk_sata_ref = imx6_get_clock("sata_ref");
+	if (sc->sc_clk_sata_ref == NULL) {
+		aprint_error(": couldn't get clock sata_ref\n");
+		return;
+	}
+	sc->sc_clk_ahb = imx6_get_clock("ahb");
+	if (sc->sc_clk_ahb == NULL) {
+		aprint_error(": couldn't get clock ahb\n");
+		return;
+	}
+	if (imx6_ahcisata_init_clocks(sc) != 0) {
+		aprint_error_dev(self, "couldn't init clocks\n");
 		return;
 	}
 
@@ -262,43 +287,28 @@ imx6_ahcisata_init(struct imx_ahci_softc *sc)
 	uint32_t v;
 	int timeout, pllstat;
 
-	/* AHCISATA clock enable */
-	v = imx6_ccm_read(CCM_CCGR5);
-	imx6_ccm_write(CCM_CCGR5, v | __SHIFTIN(3, CCM_CCGR5_SATA_CLK_ENABLE));
-
-	/* PLL power up */
-	if (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1,
-		CCM_ANALOG_PLL_ENET_ENABLE_100M) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't enable CCM_ANALOG_PLL_ENET\n");
-		return -1;
-	}
-	v = imx6_ccm_analog_read(CCM_ANALOG_PLL_ENET);
-	v |= CCM_ANALOG_PLL_ENET_ENABLE_100M;
-	imx6_ccm_analog_write(CCM_ANALOG_PLL_ENET, v);
-
 	v = iomux_read(IOMUX_GPR13);
 	/* clear */
-	v &= ~(IOMUX_GPR13_SATA_PHY_8(7) |
-	    IOMUX_GPR13_SATA_PHY_7(0x1f) |
-	    IOMUX_GPR13_SATA_PHY_6(7) |
-	    IOMUX_GPR13_SATA_SPEED(1) |
-	    IOMUX_GPR13_SATA_PHY_5(1) |
-	    IOMUX_GPR13_SATA_PHY_4(7) |
-	    IOMUX_GPR13_SATA_PHY_3(0xf) |
-	    IOMUX_GPR13_SATA_PHY_2(0x1f) |
-	    IOMUX_GPR13_SATA_PHY_1(1) |
-	    IOMUX_GPR13_SATA_PHY_0(1));
+	v &= ~(IOMUX_GPR13_SATA_PHY_8 |
+	    IOMUX_GPR13_SATA_PHY_7 |
+	    IOMUX_GPR13_SATA_PHY_6 |
+	    IOMUX_GPR13_SATA_SPEED |
+	    IOMUX_GPR13_SATA_PHY_5 |
+	    IOMUX_GPR13_SATA_PHY_4 |
+	    IOMUX_GPR13_SATA_PHY_3 |
+	    IOMUX_GPR13_SATA_PHY_2 |
+	    IOMUX_GPR13_SATA_PHY_1 |
+	    IOMUX_GPR13_SATA_PHY_0);
 	/* setting */
-	v |= IOMUX_GPR13_SATA_PHY_8(5) |	/* Rx 3.0db */
-	    IOMUX_GPR13_SATA_PHY_7(0x12) |	/* Rx SATA2m */
-	    IOMUX_GPR13_SATA_PHY_6(3) |		/* Rx DPLL mode */
-	    IOMUX_GPR13_SATA_SPEED(1) |		/* 3.0GHz */
-	    IOMUX_GPR13_SATA_PHY_5(0) |		/* SpreadSpectram */
-	    IOMUX_GPR13_SATA_PHY_4(4) |		/* Tx Attenuation 9/16 */
-	    IOMUX_GPR13_SATA_PHY_3(0) |		/* Tx Boost 0db */
-	    IOMUX_GPR13_SATA_PHY_2(0x11) |	/* Tx Level 1.104V */
-	    IOMUX_GPR13_SATA_PHY_1(1);		/* PLL clock enable */
+	v |= __SHIFTIN(5, IOMUX_GPR13_SATA_PHY_8);	/* Rx 3.0db */
+	v |= __SHIFTIN(0x12, IOMUX_GPR13_SATA_PHY_7);	/* Rx SATA2m */
+	v |= __SHIFTIN(3, IOMUX_GPR13_SATA_PHY_6);	/* Rx DPLL mode */
+	v |= __SHIFTIN(1, IOMUX_GPR13_SATA_SPEED);	/* 3.0GHz */
+	v |= __SHIFTIN(0, IOMUX_GPR13_SATA_PHY_5);	/* SpreadSpectram */
+	v |= __SHIFTIN(4, IOMUX_GPR13_SATA_PHY_4);	/* Tx Attenuation 9/16 */
+	v |= __SHIFTIN(0, IOMUX_GPR13_SATA_PHY_3);	/* Tx Boost 0db */
+	v |= __SHIFTIN(0x11, IOMUX_GPR13_SATA_PHY_2);	/* Tx Level 1.104V */
+	v |= __SHIFTIN(1, IOMUX_GPR13_SATA_PHY_1);	/* PLL clock enable */
 	iomux_write(IOMUX_GPR13, v);
 
 	/* phy reset */
@@ -332,7 +342,32 @@ imx6_ahcisata_init(struct imx_ahci_softc *sc)
 
 	/* set 1ms-timer = AHB clock / 1000 */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SATA_TIMER1MS,
-	    imx6_get_clock(IMX6CLK_AHB) / 1000);
+	    clk_get_rate(sc->sc_clk_ahb) / 1000);
 
 	return 0;
 }
+
+static int
+imx6_ahcisata_init_clocks(struct imx_ahci_softc *sc)
+{
+	int error;
+
+	error = clk_enable(sc->sc_clk_sata);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable sata: %d\n", error);
+		return error;
+	}
+	error = clk_enable(sc->sc_clk_sata_ref);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable sata-ref: %d\n", error);
+		return error;
+	}
+	error = clk_enable(sc->sc_clk_ahb);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable anb: %d\n", error);
+		return error;
+	}
+
+	return 0;
+}
+

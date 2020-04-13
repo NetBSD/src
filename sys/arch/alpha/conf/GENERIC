@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.383.2.2 2020/04/08 14:07:25 martin Exp $
+# $NetBSD: GENERIC,v 1.383.2.3 2020/04/13 08:03:29 martin Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.383.2.2 $"
+ident		"GENERIC-$Revision: 1.383.2.3 $"
 
 maxusers 32
 
@@ -65,6 +65,8 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB_DEVNAME="\"com\""	# device to use for KGDB
 #options 	KGDB_DEVADDR=0x2f8	# at this address
 #options 	KGDB_DEVRATE=57600	# at this comm. rate
+
+#options 	CONSPEED=57600		# Console speed (default to 9600)
 
 # File systems
 file-system	FFS		# Fast file system
@@ -319,6 +321,7 @@ mpt*	at	pci? dev ? function ?		# LSI Fusion SCSI/FC
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 ehci*	at	pci? dev ? function ?		# USB-2 Host controller
+xhci*	at	pci? dev ? function ?		# eXtensible Host Controller
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide* at	pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide* at	pci? dev ? function ?		# Acard IDE controllers
@@ -546,6 +549,7 @@ iic* 	at alipm?
 slhci*	at pcmcia? function ?			# ScanLogic SL811HS
 
 # USB bus support
+usb*	at xhci?
 usb*	at ehci?
 usb*	at ohci?
 usb*	at slhci?

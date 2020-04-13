@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.45 2012/10/27 17:17:32 chs Exp $ */
+/*	$NetBSD: zssc.c,v 1.45.38.1 2020/04/13 08:03:31 martin Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.45 2012/10/27 17:17:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.45.38.1 2020/04/13 08:03:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,15 +103,15 @@ zsscmatch(device_t parent, cfdata_t cf, void *aux)
 void
 zsscattach(device_t parent, device_t self, void *aux)
 {
-	struct siop_softc *sc;
+	struct siop_softc *sc = device_private(self);
 	struct zbus_args *zap;
 	siop_regmap_p rp;
 
 	printf("\n");
 
+	sc->sc_dev = self;
 	zap = aux;
 
-	sc = device_private(self);
 	sc->sc_siopp = rp = (siop_regmap_p)((char *)zap->va + 0x4000);
 
 	/*

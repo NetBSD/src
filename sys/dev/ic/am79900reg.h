@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900reg.h,v 1.9 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: am79900reg.h,v 1.9.88.1 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ struct leinit {
 };
 
 /* Receive message descriptor 1 (rmd1_bits) */
-#define	LE_R1_OWN	(1<<31)		/* LANCE owns the packet */
+#define	LE_R1_OWN	(1U<<31)	/* LANCE owns the packet */
 #define	LE_R1_ERR	(1<<30)		/* error summary */
 #define	LE_R1_FRAM	(1<<29)		/* framing error */
 #define	LE_R1_OFLO	(1<<28)		/* overflow error */
@@ -111,7 +111,7 @@ struct leinit {
     "\20\40OWN\37ERR\36FRAM\35OFLO\34CRC\33BUFF\32STP\31ENP"
 
 /* Transmit message descriptor 1 (tmd1_bits) */
-#define	LE_T1_OWN	(1<<31)		/* LANCE owns the packet */
+#define	LE_T1_OWN	(1U<<31)	/* LANCE owns the packet */
 #define	LE_T1_ERR	(1<<30)		/* error summary */
 #define	LE_T1_ADD_FCS	(1<<29)		/* add FCS (PCnet-PCI) */
 #define	LE_T1_NO_FCS	(1<<29)		/* no FCS (ILACC) */

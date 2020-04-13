@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.138.4.2 2020/04/08 14:08:13 martin Exp $	*/
+/*	$NetBSD: uhub.c,v 1.138.4.3 2020/04/13 08:04:49 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.138.4.2 2020/04/08 14:08:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.138.4.3 2020/04/13 08:04:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -98,8 +98,10 @@ fail:
 
 #define DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(uhubdebug,1,FMT,A,B,C,D)
 #define DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(uhubdebug,N,FMT,A,B,C,D)
-#define UHUBHIST_FUNC() USBHIST_FUNC()
-#define UHUBHIST_CALLED(name) USBHIST_CALLED(uhubdebug)
+#define UHUBHIST_FUNC()		USBHIST_FUNC()
+#define UHUBHIST_CALLED(name)	USBHIST_CALLED(uhubdebug)
+#define UHUBHIST_CALLARGS(FMT,A,B,C,D) \
+				USBHIST_CALLARGS(uhubdebug,FMT,A,B,C,D)
 
 struct uhub_softc {
 	device_t		 sc_dev;	/* base device */
@@ -486,9 +488,8 @@ uhub_explore(struct usbd_device *dev)
 	int port;
 	int change, status, reconnect;
 
-	UHUBHIST_FUNC(); UHUBHIST_CALLED();
-
-	DPRINTFN(10, "uhub%jd dev=%#jx addr=%jd speed=%ju",
+	UHUBHIST_FUNC();
+	UHUBHIST_CALLARGS("uhub%jd dev=%#jx addr=%jd speed=%ju",
 	    device_unit(sc->sc_dev), (uintptr_t)dev, dev->ud_addr,
 	    dev->ud_speed);
 
@@ -759,8 +760,8 @@ uhub_explore(struct usbd_device *dev)
 			  dev->ud_depth + 1, speed, port, up);
 		/* XXX retry a few times? */
 		if (err) {
-			DPRINTF("usbd_new_device failed, error %jd", err, 0, 0,
-			    0);
+			DPRINTF("uhub%jd: usbd_new_device failed, error %jd",
+			    device_unit(sc->sc_dev), err, 0, 0);
 			/* Avoid addressing problems by disabling. */
 			/* usbd_reset_port(dev, port, &up->status); */
 
@@ -927,9 +928,8 @@ uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uhub_softc *sc = addr;
 
-	UHUBHIST_FUNC(); UHUBHIST_CALLED();
-
-	DPRINTFN(5, "uhub%jd", device_unit(sc->sc_dev), 0, 0, 0);
+	UHUBHIST_FUNC(); UHUBHIST_CALLARGS("called! uhub%jd status=%jx",
+	    device_unit(sc->sc_dev), status, 0, 0);
 
 	if (status == USBD_STALLED)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);

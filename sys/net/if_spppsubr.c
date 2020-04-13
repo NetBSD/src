@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.180.2.2 2020/04/08 14:08:57 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.180.2.3 2020/04/13 08:05:15 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.180.2.2 2020/04/08 14:08:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.180.2.3 2020/04/13 08:05:15 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1174,7 +1174,8 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct sppp *sp = (struct sppp *) ifp;
-	int s, error=0, going_up, going_down, newmode;
+	int s, error=0, going_up, going_down;
+	u_short newmode;
 
 	s = splnet();
 	switch (cmd) {
@@ -4623,7 +4624,7 @@ sppp_chap_tlu(struct sppp *sp)
 		if ((sp->hisauth.flags & SPPP_AUTHFLAG_NORECHALLENGE) == 0)
 			addlog("next re-challenge in %d seconds\n", i);
 		else
-			addlog("re-challenging supressed\n");
+			addlog("re-challenging suppressed\n");
 	}
 
 	x = splnet();

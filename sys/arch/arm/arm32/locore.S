@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.38.4.1 2019/06/10 22:05:51 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.38.4.2 2020/04/13 08:03:32 martin Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -43,7 +43,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.38.4.1 2019/06/10 22:05:51 christos Exp $")
+	RCSID("$NetBSD: locore.S,v 1.38.4.2 2020/04/13 08:03:32 martin Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -92,7 +92,7 @@ ASENTRY_NP(start)
 	mov	fp, #0x00000000		/* trace back starts here */
 	bl	_C_LABEL(initarm)	/* Off we go */
 
-	/* init arm will return the new stack pointer. */
+	/* initarm will return the new stack pointer. */
 	mov	sp, r0
 
 	mov	fp, #0x00000000		/* trace back starts here */

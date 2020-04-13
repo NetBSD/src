@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.15.2.2 2019/06/10 22:09:56 christos Exp $ */
+/* $NetBSD: efifdt.c,v 1.15.2.3 2020/04/13 08:05:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -47,6 +47,13 @@ static EFI_GUID FdtTableGuid = FDT_TABLE_GUID;
 	 (_md)->Type == EfiBootServicesCode || (_md)->Type == EfiBootServicesData || \
 	 (_md)->Type == EfiConventionalMemory)
 
+#ifdef _LP64
+#define PRIdUINTN "ld"
+#define PRIxUINTN "lx"
+#else
+#define PRIdUINTN "d"
+#define PRIxUINTN "x"
+#endif
 static void *fdt_data = NULL;
 
 int
@@ -185,13 +192,19 @@ efi_fdt_memory_map(void)
 	EFI_MEMORY_DESCRIPTOR *md, *memmap;
 	UINT32 descver;
 	UINT64 phys_start, phys_size;
-	int n, memory;
+	int n, memory, chosen;
 
 	memory = fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH);
 	if (memory < 0)
 		memory = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_MEMORY_NODE_NAME);
 	if (memory < 0)
 		panic("FDT: Failed to create " FDT_MEMORY_NODE_PATH " node");
+
+	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
+	if (chosen < 0)
+		chosen = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_CHOSEN_NODE_NAME);
+	if (chosen < 0)
+		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
 
 	fdt_delprop(fdt_data, memory, "reg");
 
@@ -200,8 +213,14 @@ efi_fdt_memory_map(void)
 
 	memmap = LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
 	for (n = 0, md = memmap; n < nentries; n++, md = NextMemoryDescriptor(md, descsize)) {
+		fdt_appendprop_u32(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->Type);
+		fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->PhysicalStart);
+		fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->NumberOfPages);
+		fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "netbsd,uefi-memmap", md->Attribute);
+
 		if ((md->Attribute & EFI_MEMORY_RUNTIME) != 0)
 			continue;
+
 		if ((md->Attribute & EFI_MEMORY_WB) == 0)
 			continue;
 		if (!FDT_MEMORY_USABLE(md))
@@ -235,6 +254,77 @@ efi_fdt_memory_map(void)
 		else
 			fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH),
 			    "reg", phys_size);
+	}
+}
+
+void
+efi_fdt_gop(void)
+{
+	EFI_STATUS status;
+	EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
+	EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE *mode;
+	EFI_HANDLE *gop_handle;
+	UINTN ngop_handle, n;
+	char buf[48];
+	int fb;
+
+	status = LibLocateHandle(ByProtocol, &GraphicsOutputProtocol, NULL, &ngop_handle, &gop_handle);
+	if (EFI_ERROR(status) || ngop_handle == 0)
+		return;
+
+	for (n = 0; n < ngop_handle; n++) {
+		status = uefi_call_wrapper(BS->HandleProtocol, 3, gop_handle[n], &GraphicsOutputProtocol, (void **)&gop);
+		if (EFI_ERROR(status))
+			continue;
+
+		mode = gop->Mode;
+		if (mode == NULL)
+			continue;
+
+#ifdef EFIBOOT_DEBUG
+		printf("GOP: FB @ 0x%" PRIx64 " size 0x%" PRIxUINTN "\n", mode->FrameBufferBase, mode->FrameBufferSize);
+		printf("GOP: Version %d\n", mode->Info->Version);
+		printf("GOP: HRes %d VRes %d\n", mode->Info->HorizontalResolution, mode->Info->VerticalResolution);
+		printf("GOP: PixelFormat %d\n", mode->Info->PixelFormat);
+		printf("GOP: PixelBitmask R 0x%x G 0x%x B 0x%x Res 0x%x\n",
+		    mode->Info->PixelInformation.RedMask,
+		    mode->Info->PixelInformation.GreenMask,
+		    mode->Info->PixelInformation.BlueMask,
+		    mode->Info->PixelInformation.ReservedMask);
+		printf("GOP: Pixels per scanline %d\n", mode->Info->PixelsPerScanLine);
+#endif
+
+		if (mode->Info->PixelFormat == PixelBltOnly) {
+			printf("GOP: PixelBltOnly pixel format not supported\n");
+			continue;
+		}
+
+		fdt_setprop_u32(fdt_data,
+		    fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "#address-cells", 2);
+		fdt_setprop_u32(fdt_data,
+		    fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "#size-cells", 2);
+		fdt_setprop_empty(fdt_data,
+		    fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "ranges");
+
+		snprintf(buf, sizeof(buf), "framebuffer@%" PRIx64, mode->FrameBufferBase);
+		fb = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), buf);
+		if (fb < 0)
+			panic("FDT: Failed to create framebuffer node");
+
+		fdt_appendprop_string(fdt_data, fb, "compatible", "simple-framebuffer");
+		fdt_appendprop_string(fdt_data, fb, "status", "okay");
+		fdt_appendprop_u64(fdt_data, fb, "reg", mode->FrameBufferBase);
+		fdt_appendprop_u64(fdt_data, fb, "reg", mode->FrameBufferSize);
+		fdt_appendprop_u32(fdt_data, fb, "width", mode->Info->HorizontalResolution);
+		fdt_appendprop_u32(fdt_data, fb, "height", mode->Info->VerticalResolution);
+		fdt_appendprop_u32(fdt_data, fb, "stride", mode->Info->PixelsPerScanLine * 4);	/* XXX */
+		fdt_appendprop_string(fdt_data, fb, "format", "a8b8g8r8");
+
+		snprintf(buf, sizeof(buf), "/chosen/framebuffer@%" PRIx64, mode->FrameBufferBase);
+		fdt_setprop_string(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH),
+		    "stdout-path", buf);
+
+		return;
 	}
 }
 
@@ -299,4 +389,26 @@ efi_fdt_initrd(u_long initrd_addr, u_long initrd_size)
 
 	fdt_setprop_u64(fdt_data, chosen, "linux,initrd-start", initrd_addr);
 	fdt_setprop_u64(fdt_data, chosen, "linux,initrd-end", initrd_addr + initrd_size);
+}
+
+void
+efi_fdt_rndseed(u_long rndseed_addr, u_long rndseed_size)
+{
+	int chosen;
+
+	if (rndseed_size == 0)
+		return;
+
+	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
+	if (chosen < 0)
+		chosen = fdt_add_subnode(fdt_data,
+		    fdt_path_offset(fdt_data, "/"),
+		    FDT_CHOSEN_NODE_NAME);
+	if (chosen < 0)
+		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
+
+	fdt_setprop_u64(fdt_data, chosen, "netbsd,rndseed-start",
+	    rndseed_addr);
+	fdt_setprop_u64(fdt_data, chosen, "netbsd,rndseed-end",
+	    rndseed_addr + rndseed_size);
 }

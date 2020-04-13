@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2018/05/18 12:23:22 joerg Exp $	*/
+/*	$NetBSD: md.c,v 1.4.2.1 2020/04/13 08:06:03 martin Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -55,60 +55,87 @@ md_init_set_status(int flags)
 	(void)flags;
 }
 
-int
-md_get_info(void)
+bool
+md_get_info(struct install_partition_desc *install)
 {
-	return set_bios_geom_with_mbr_guess();
+
+	if (pm->no_mbr || pm->no_part)
+		return true;
+
+	if (pm->parts == NULL) {
+
+		const struct disk_partitioning_scheme *ps =
+		    select_part_scheme(pm, NULL, true, NULL);
+
+		if (!ps)
+			return false;
+
+		struct disk_partitions *parts =
+		   (*ps->create_new_for_disk)(pm->diskdev,
+		   0, pm->dlsize, true, NULL);
+		if (!parts)
+			return false;
+
+		pm->parts = parts;
+		if (ps->size_limit > 0 && pm->dlsize > ps->size_limit)
+			pm->dlsize = ps->size_limit;
+	}
+
+	return set_bios_geom_with_mbr_guess(pm->parts);
 }
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-int
-md_make_bsd_partitions(void)
+bool
+md_make_bsd_partitions(struct install_partition_desc *install)
 {
-	return make_bsd_partitions();
+	return make_bsd_partitions(install);
 }
 
 /*
  * any additional partition validation
  */
-int
-md_check_partitions(void)
+bool
+md_check_partitions(struct install_partition_desc *install)
 {
-	return 1;
+	return true;
 }
 
 /*
  * hook called before writing new disklabel.
  */
-int
-md_pre_disklabel(void)
+bool
+md_pre_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	if (pm->no_mbr)
-		return 0;
 
-	msg_display(MSG_dofdisk);
+	if (parts->parent == NULL)
+		return true;	/* no outer partitions */
 
-	/* write edited MBR onto disk. */
-	if (write_mbr(pm->diskdev, &mbr, 1) != 0 ||
-	    run_program(RUN_SILENT | RUN_ERROR_OK,
-	    "/sbin/fdisk -f -i -c /usr/mdec/mbr %s", pm->diskdev)) {
+	parts = parts->parent;
+
+	msg_display_subst(MSG_dofdisk, 3, parts->disk,
+	    msg_string(parts->pscheme->name),
+	    msg_string(parts->pscheme->short_name));
+
+	/* write edited "MBR" onto disk. */
+	if (!parts->pscheme->write_to_disk(parts)) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok, NULL);
-		return 1;
+		return false;
 	}
-
-	return 0;
+	return true;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-int
-md_post_disklabel(void)
+bool
+md_post_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	return 0;
+	return true;
 }
 
 /*
@@ -119,17 +146,17 @@ md_post_disklabel(void)
  * On the landisk, we use this opportunity to install the boot blocks.
  */
 int
-md_post_newfs(void)
+md_post_newfs(struct install_partition_desc *install)
 {
 	char *bootxx;
 	int error;
 
-	msg_display(MSG_dobootblks, pm->diskdev);
+	msg_fmt_display(MSG_dobootblks, "%s", pm->diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
-	bootxx = bootxx_name();
+	bootxx = bootxx_name(install);
 	if (bootxx != NULL) {
 		error = run_program(RUN_DISPLAY,
-		    "/usr/sbin/installboot -v /dev/r%sa %s", pm->diskdev, bootxx);
+		    "/usr/sbin/installboot -v /dev/r%sd %s", pm->diskdev, bootxx);
 		free(bootxx);
 	} else
 		error = -1;
@@ -142,13 +169,13 @@ md_post_newfs(void)
 }
 
 int
-md_post_extract(void)
+md_post_extract(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install(struct install_partition_desc *install)
 {
 #ifndef DEBUG
 	enable_rc_conf();
@@ -156,34 +183,51 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update(void)
+md_pre_update(struct install_partition_desc *install)
 {
 	return 1;
 }
 
 /* Upgrade support */
 int
-md_update(void)
+md_update(struct install_partition_desc *install)
 {
-	md_post_newfs();
+	md_post_newfs(install);
 	return 1;
 }
 
 int
-md_check_mbr(mbr_info_t *mbri)
+md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 {
 	return 2;
 }
 
-int
-md_mbr_use_wholedisk(mbr_info_t *mbri)
+bool
+md_parts_use_wholedisk(struct disk_partitions *parts)
 {
-	return mbr_use_wholedisk(mbri);
+	return parts_use_wholedisk(parts, 0, NULL);
 }
 
 
 int
-md_pre_mount()
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
 	return 0;
 }
+
+bool
+md_mbr_update_check(struct disk_partitions *parts, mbr_info_t *mbri)
+{
+	return false;	/* no change, no need to write back */
+}
+
+#ifdef HAVE_GPT
+bool
+md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
+    bool root_is_new, part_id efi_id, bool efi_is_new)
+{
+	/* no GPT boot support, nothing needs to be done here */
+	return true;
+}
+#endif
+ 

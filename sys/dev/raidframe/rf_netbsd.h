@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.30.36.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.30.36.2 2020/04/13 08:04:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,8 @@ struct RF_Pools_s {
 	struct pool asm_hdr;     /* Access Stripe Map Header */
 	struct pool asmap;       /* Access Stripe Map */
 	struct pool asmhle;      /* Access Stripe Map Header List Elements */
-	struct pool callback;    /* Callback descriptors */
+	struct pool callbackf;   /* Callback function descriptors */
+	struct pool callbackv;   /* Callback value descriptors */
 	struct pool dagh;        /* DAG headers */
 	struct pool dagnode;     /* DAG nodes */
 	struct pool daglist;     /* DAG lists */

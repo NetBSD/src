@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.5.2.3 2020/04/08 14:07:07 martin Exp $	*/
+/*	$NetBSD: check.c,v 1.5.2.4 2020/04/13 08:02:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,6 +33,7 @@
 #include <isc/print.h>
 #include <isc/region.h>
 #include <isc/result.h>
+#include <isc/siphash.h>
 #include <isc/sockaddr.h>
 #include <isc/string.h>
 #include <isc/symtab.h>
@@ -43,6 +44,7 @@
 #include <dns/acl.h>
 #include <dns/dnstap.h>
 #include <dns/fixedname.h>
+#include <dns/rbt.h>
 #include <dns/rdataclass.h>
 #include <dns/rdatatype.h>
 #include <dns/rrl.h>
@@ -530,6 +532,12 @@ check_dns64(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 			continue;
 		}
 
+		if (na.type.in6.s6_addr[8] != 0) {
+			cfg_obj_log(map, logctx, ISC_LOG_WARNING,
+				    "warning: invalid prefix, bits [64..71] "
+				    "must be zero");
+		}
+
 		if (prefixlen != 32 && prefixlen != 40 && prefixlen != 48 &&
 		    prefixlen != 56 && prefixlen != 64 && prefixlen != 96) {
 			cfg_obj_log(map, logctx, ISC_LOG_ERROR,
@@ -860,7 +868,7 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 	dns_name_t *name;
 	isc_buffer_t b;
 	uint32_t lifetime = 3600;
-	const char *ccalg = "aes";
+	const char *ccalg = "siphash24";
 
 	/*
 	 * { "name", scale, value }
@@ -1354,8 +1362,14 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 			if (strcasecmp(ccalg, "aes") == 0 &&
 			    usedlength != ISC_AES128_KEYLENGTH) {
 				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-					    "AES cookie-secret must be "
-					    "128 bits");
+					    "AES cookie-secret must be 128 bits");
+				if (result == ISC_R_SUCCESS)
+					result = ISC_R_RANGE;
+			}
+			if (strcasecmp(ccalg, "siphash24") == 0 &&
+			    usedlength != ISC_SIPHASH24_KEY_LENGTH) {
+				cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+					    "SipHash-2-4 cookie-secret must be 128 bits");
 				if (result == ISC_R_SUCCESS)
 					result = ISC_R_RANGE;
 			}
@@ -3267,6 +3281,120 @@ check_trusted_key(const cfg_obj_t *key, bool managed,
 	return (result);
 }
 
+/*
+ * Check for conflicts between trusted-keys and managed-keys.
+ */
+static isc_result_t
+check_ta_conflicts(const cfg_obj_t *mkeys, const cfg_obj_t *tkeys,
+		   bool autovalidation, isc_mem_t *mctx, isc_log_t *logctx)
+{
+	isc_result_t result = ISC_R_SUCCESS, tresult;
+	const cfg_listelt_t *elt = NULL, *elt2 = NULL;
+	dns_fixedname_t fixed;
+	dns_name_t *name;
+	const cfg_obj_t *obj;
+	const char *str;
+	isc_symtab_t *symtab = NULL;
+	isc_symvalue_t symvalue;
+	char namebuf[DNS_NAME_FORMATSIZE];
+	const char *file;
+	unsigned int line;
+
+	name = dns_fixedname_initname(&fixed);
+
+	result = isc_symtab_create(mctx, 100, NULL, NULL, false, &symtab);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+
+	for (elt = cfg_list_first(mkeys);
+	     elt != NULL;
+	     elt = cfg_list_next(elt))
+	{
+		const cfg_obj_t *keylist = cfg_listelt_value(elt);
+		for (elt2 = cfg_list_first(keylist);
+		     elt2 != NULL;
+		     elt2 = cfg_list_next(elt2))
+		{
+			obj = cfg_listelt_value(elt2);
+			str = cfg_obj_asstring(cfg_tuple_get(obj, "name"));
+			tresult = dns_name_fromstring(name, str, 0, NULL);
+			if (tresult != ISC_R_SUCCESS) {
+				/* already reported */
+				continue;
+			}
+
+			dns_name_format(name, namebuf, sizeof(namebuf));
+			symvalue.as_cpointer = obj;
+			tresult = isc_symtab_define(symtab, namebuf, 1,
+						   symvalue,
+						   isc_symexists_reject);
+			if (tresult != ISC_R_SUCCESS &&
+			    tresult != ISC_R_EXISTS)
+			{
+				result = tresult;
+				continue;
+			}
+		}
+	}
+
+	for (elt = cfg_list_first(tkeys);
+	     elt != NULL;
+	     elt = cfg_list_next(elt))
+	{
+		const cfg_obj_t *keylist = cfg_listelt_value(elt);
+		for (elt2 = cfg_list_first(keylist);
+		     elt2 != NULL;
+		     elt2 = cfg_list_next(elt2))
+		{
+			obj = cfg_listelt_value(elt2);
+			str = cfg_obj_asstring(cfg_tuple_get(obj, "name"));
+			result = dns_name_fromstring(name, str, 0, NULL);
+			if (result != ISC_R_SUCCESS) {
+				/* already reported */
+				continue;
+			}
+
+			if (autovalidation &&
+			    dns_name_equal(name, dns_rootname))
+			{
+				cfg_obj_log(obj, logctx, ISC_LOG_WARNING,
+					    "WARNING: "
+					    "trusted-keys for root zone "
+					    "used with "
+					    "'dnssec-validation auto'. "
+					    "KEY ROLLOVERS WILL FAIL.");
+				continue;
+			}
+
+			dns_name_format(name, namebuf, sizeof(namebuf));
+			tresult = isc_symtab_lookup(symtab, namebuf, 1,
+						   &symvalue);
+			if (tresult == ISC_R_SUCCESS) {
+				file = cfg_obj_file(symvalue.as_cpointer);
+				line = cfg_obj_line(symvalue.as_cpointer);
+				if (file == NULL) {
+					file = "<unknown file>";
+				}
+				cfg_obj_log(obj, logctx, ISC_LOG_WARNING,
+					    "WARNING: "
+					    "trusted-keys and managed-keys "
+					    "are both used for the "
+					    "name '%s'. "
+					    "KEY ROLLOVERS WILL FAIL. "
+					    "managed-key defined "
+					    "(%s:%u)", str, file, line);
+			}
+		}
+	}
+
+ cleanup:
+	if (symtab != NULL) {
+		isc_symtab_destroy(&symtab);
+	}
+	return (result);
+}
+
 typedef enum {
 	special_zonetype_rpz,
 	special_zonetype_catz
@@ -3446,7 +3574,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	       isc_log_t *logctx, isc_mem_t *mctx)
 {
 	const cfg_obj_t *zones = NULL;
-	const cfg_obj_t *keys = NULL;
+	const cfg_obj_t *keys = NULL, *tkeys = NULL, *mkeys = NULL;
 #ifndef HAVE_DLOPEN
 	const cfg_obj_t *dyndb = NULL;
 #endif
@@ -3460,6 +3588,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	const cfg_obj_t *opts = NULL;
 	const cfg_obj_t *plugin_list = NULL;
 	bool enablednssec, enablevalidation;
+	bool autovalidation = false;
 	const char *valstr = "no";
 	unsigned int tflags, mflags;
 
@@ -3648,14 +3777,14 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	/*
 	 * Check trusted-keys and managed-keys.
 	 */
-	keys = NULL;
+	tkeys = NULL;
 	if (voptions != NULL)
-		(void)cfg_map_get(voptions, "trusted-keys", &keys);
-	if (keys == NULL)
-		(void)cfg_map_get(config, "trusted-keys", &keys);
+		(void)cfg_map_get(voptions, "trusted-keys", &tkeys);
+	if (tkeys == NULL)
+		(void)cfg_map_get(config, "trusted-keys", &tkeys);
 
 	tflags = 0;
-	for (element = cfg_list_first(keys);
+	for (element = cfg_list_first(tkeys);
 	     element != NULL;
 	     element = cfg_list_next(element))
 	{
@@ -3672,33 +3801,34 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	}
 
 	if ((tflags & ROOT_KSK_2010) != 0 && (tflags & ROOT_KSK_2017) == 0) {
-		cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+		cfg_obj_log(tkeys, logctx, ISC_LOG_WARNING,
 			    "trusted-key for root from 2010 without updated "
 			    "trusted-key from 2017: THIS WILL FAIL AFTER "
 			    "KEY ROLLOVER");
 	}
 
 	if ((tflags & DLV_KSK_KEY) != 0) {
-		cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+		cfg_obj_log(tkeys, logctx, ISC_LOG_WARNING,
 			    "trusted-key for dlv.isc.org still present; "
 			    "dlv.isc.org has been shut down");
 	}
 
-	keys = NULL;
+	mkeys = NULL;
 	if (voptions != NULL)
-		(void)cfg_map_get(voptions, "managed-keys", &keys);
-	if (keys == NULL)
-		(void)cfg_map_get(config, "managed-keys", &keys);
+		(void)cfg_map_get(voptions, "managed-keys", &mkeys);
+	if (mkeys == NULL)
+		(void)cfg_map_get(config, "managed-keys", &mkeys);
 
 	mflags = 0;
-	for (element = cfg_list_first(keys);
+	for (element = cfg_list_first(mkeys);
 	     element != NULL;
 	     element = cfg_list_next(element))
 	{
 		const cfg_obj_t *keylist = cfg_listelt_value(element);
 		for (element2 = cfg_list_first(keylist);
 		     element2 != NULL;
-		     element2 = cfg_list_next(element2)) {
+		     element2 = cfg_list_next(element2))
+		{
 			obj = cfg_listelt_value(element2);
 			tresult = check_trusted_key(obj, true, &mflags,
 						    logctx);
@@ -3708,13 +3838,13 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	}
 
 	if ((mflags & ROOT_KSK_2010) != 0 && (mflags & ROOT_KSK_2017) == 0) {
-		cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+		cfg_obj_log(mkeys, logctx, ISC_LOG_WARNING,
 			    "managed-key for root from 2010 without updated "
 			    "managed-key from 2017");
 	}
 
 	if ((mflags & DLV_KSK_KEY) != 0) {
-		cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+		cfg_obj_log(mkeys, logctx, ISC_LOG_WARNING,
 			    "managed-key for dlv.isc.org still present; "
 			    "dlv.isc.org has been shut down");
 	}
@@ -3722,9 +3852,26 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	if ((tflags & (ROOT_KSK_2010|ROOT_KSK_2017)) != 0 &&
 	    (mflags & (ROOT_KSK_2010|ROOT_KSK_2017)) != 0)
 	{
-		cfg_obj_log(keys, logctx, ISC_LOG_WARNING,
+		cfg_obj_log(mkeys, logctx, ISC_LOG_WARNING,
 			    "both trusted-keys and managed-keys for the ICANN "
 			    "root are present");
+	}
+
+	obj = NULL;
+	if (voptions != NULL) {
+		(void)cfg_map_get(voptions, "dnssec-validation", &obj);
+	}
+	if (obj == NULL && options != NULL) {
+		(void)cfg_map_get(options, "dnssec-validation", &obj);
+	}
+	if (obj != NULL && !cfg_obj_isboolean(obj)) {
+		autovalidation = true;
+	}
+
+	tresult = check_ta_conflicts(mkeys, tkeys,
+				     autovalidation, mctx, logctx);
+	if (tresult != ISC_R_SUCCESS) {
+		result = tresult;
 	}
 
 	/*

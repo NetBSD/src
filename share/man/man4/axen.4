@@ -1,4 +1,4 @@
-.\"	$NetBSD: axen.4,v 1.6.12.1 2019/06/10 22:05:39 christos Exp $
+.\"	$NetBSD: axen.4,v 1.6.12.2 2020/04/13 08:03:25 martin Exp $
 .\"	$OpenBSD: axen.4,v 1.2 2013/10/07 07:18:36 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Yojiro UO <yuo@nui.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd July 27, 2018
+.Dd August 24, 2019
 .Dt AXEN 4
 .Os
 .Sh NAME
@@ -62,18 +62,16 @@ Set 1000Mbps (Gigabit Ethernet) operation.
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh DIAGNOSTICS
-.Bl -diag
-.It "axen%d: watchdog timeout"
-A packet was queued for transmission and a transmit command was
-issued, however the device failed to acknowledge the transmission
-before a timeout expired.
-.El
+See
+.Xr usbnet 4
+for diagnostics.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr mii 4 ,
 .Xr netintro 4 ,
 .Xr rgephy 4 ,
 .Xr usb 4 ,
+.Xr usbnet 4 ,
 .Xr ifconfig.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY

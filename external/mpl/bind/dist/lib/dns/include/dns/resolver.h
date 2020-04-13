@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.h,v 1.4.2.2 2019/06/10 22:04:37 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.4.2.3 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -112,15 +112,20 @@ typedef enum {
 #define DNS_FETCHOPT_NOCACHED		0x00008000 /*%< Force cache update. */
 #define DNS_FETCHOPT_QMINIMIZE		0x00010000 /*%< Use qname
 							minimization. */
-#define DNS_FETCHOPT_QMIN_STRICT	0x00020000 /*%< Do not work around
+#define DNS_FETCHOPT_NOFOLLOW		0x00020000 /*%< Don't follow
+							delegations */
+#define DNS_FETCHOPT_QMIN_STRICT	0x00040000 /*%< Do not work around
 							servers that return
 							errors on non-empty
 							terminals. */
-#define DNS_FETCHOPT_QMIN_SKIP_IP6A	0x00040000 /*%< Skip some labels
+#define DNS_FETCHOPT_QMIN_USE_A		0x00080000 /*%< Use A type queries
+							instead of NS when
+							doing minimization */
+#define DNS_FETCHOPT_QMIN_SKIP_IP6A	0x00100000 /*%< Skip some labels
 							when doing qname
 							minimization on
 							ip6.arpa. */
-#define DNS_FETCHOPT_NOFORWARD		0x00080000 /*%< Do not use forwarders
+#define DNS_FETCHOPT_NOFORWARD		0x00200000 /*%< Do not use forwarders
 							if possible. */
 
 /* Reserved in use by adb.c		0x00400000 */

@@ -1,5 +1,5 @@
 /* Convert tree expression to rtl instructions, for GNU compiler.
-   Copyright (C) 1988-2016 Free Software Foundation, Inc.
+   Copyright (C) 1988-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -26,6 +26,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "gimple.h"
 #include "predict.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "ssa.h"
 #include "expmed.h"
@@ -70,53 +71,12 @@ along with GCC; see the file COPYING3.  If not see
    the same indirect address eventually.  */
 int cse_not_expected;
 
-/* This structure is used by move_by_pieces to describe the move to
-   be performed.  */
-struct move_by_pieces_d
-{
-  rtx to;
-  rtx to_addr;
-  int autinc_to;
-  int explicit_inc_to;
-  rtx from;
-  rtx from_addr;
-  int autinc_from;
-  int explicit_inc_from;
-  unsigned HOST_WIDE_INT len;
-  HOST_WIDE_INT offset;
-  int reverse;
-};
-
-/* This structure is used by store_by_pieces to describe the clear to
-   be performed.  */
-
-struct store_by_pieces_d
-{
-  rtx to;
-  rtx to_addr;
-  int autinc_to;
-  int explicit_inc_to;
-  unsigned HOST_WIDE_INT len;
-  HOST_WIDE_INT offset;
-  rtx (*constfun) (void *, HOST_WIDE_INT, machine_mode);
-  void *constfundata;
-  int reverse;
-};
-
-static void move_by_pieces_1 (insn_gen_fn, machine_mode,
-			      struct move_by_pieces_d *);
 static bool block_move_libcall_safe_for_call_parm (void);
 static bool emit_block_move_via_movmem (rtx, rtx, rtx, unsigned, unsigned, HOST_WIDE_INT,
 					unsigned HOST_WIDE_INT, unsigned HOST_WIDE_INT,
 					unsigned HOST_WIDE_INT);
-static tree emit_block_move_libcall_fn (int);
 static void emit_block_move_via_loop (rtx, rtx, rtx, unsigned);
-static rtx clear_by_pieces_1 (void *, HOST_WIDE_INT, machine_mode);
 static void clear_by_pieces (rtx, unsigned HOST_WIDE_INT, unsigned int);
-static void store_by_pieces_1 (struct store_by_pieces_d *, unsigned int);
-static void store_by_pieces_2 (insn_gen_fn, machine_mode,
-			       struct store_by_pieces_d *);
-static tree clear_storage_libcall_fn (int);
 static rtx_insn *compress_float_constant (rtx, rtx);
 static rtx get_subtarget (rtx);
 static void store_constructor_field (rtx, unsigned HOST_WIDE_INT,
@@ -150,7 +110,7 @@ static HOST_WIDE_INT int_expr_size (tree);
 void
 init_expr_target (void)
 {
-  rtx insn, pat;
+  rtx pat;
   machine_mode mode;
   int num_clobbers;
   rtx mem, mem1;
@@ -166,7 +126,7 @@ init_expr_target (void)
      useless RTL allocations.  */
   reg = gen_rtx_REG (word_mode, LAST_VIRTUAL_REGISTER + 1);
 
-  insn = rtx_alloc (INSN);
+  rtx_insn *insn = as_a<rtx_insn *> (rtx_alloc (INSN));
   pat = gen_rtx_SET (NULL_RTX, NULL_RTX);
   PATTERN (insn) = pat;
 
@@ -693,7 +653,7 @@ convert_modes (machine_mode mode, machine_mode oldmode, rtx x, int unsignedp)
 	 assume that all the bits are significant.  */
       if (GET_MODE_CLASS (oldmode) != MODE_INT)
 	oldmode = MAX_MODE_INT;
-      wide_int w = wide_int::from (std::make_pair (x, oldmode),
+      wide_int w = wide_int::from (rtx_mode_t (x, oldmode),
 				   GET_MODE_PRECISION (mode),
 				   unsignedp ? UNSIGNED : SIGNED);
       return immed_wide_int_const (w, mode);
@@ -770,16 +730,449 @@ widest_int_mode_for_size (unsigned int size)
   return mode;
 }
 
+/* Determine whether an operation OP on LEN bytes with alignment ALIGN can
+   and should be performed piecewise.  */
+
+static bool
+can_do_by_pieces (unsigned HOST_WIDE_INT len, unsigned int align,
+		  enum by_pieces_operation op)
+{
+  return targetm.use_by_pieces_infrastructure_p (len, align, op,
+						 optimize_insn_for_speed_p ());
+}
+
 /* Determine whether the LEN bytes can be moved by using several move
    instructions.  Return nonzero if a call to move_by_pieces should
    succeed.  */
 
-int
-can_move_by_pieces (unsigned HOST_WIDE_INT len,
-		    unsigned int align)
+bool
+can_move_by_pieces (unsigned HOST_WIDE_INT len, unsigned int align)
 {
-  return targetm.use_by_pieces_infrastructure_p (len, align, MOVE_BY_PIECES,
-						 optimize_insn_for_speed_p ());
+  return can_do_by_pieces (len, align, MOVE_BY_PIECES);
+}
+
+/* Return number of insns required to perform operation OP by pieces
+   for L bytes.  ALIGN (in bits) is maximum alignment we can assume.  */
+
+unsigned HOST_WIDE_INT
+by_pieces_ninsns (unsigned HOST_WIDE_INT l, unsigned int align,
+		  unsigned int max_size, by_pieces_operation op)
+{
+  unsigned HOST_WIDE_INT n_insns = 0;
+
+  align = alignment_for_piecewise_move (MOVE_MAX_PIECES, align);
+
+  while (max_size > 1 && l > 0)
+    {
+      machine_mode mode;
+      enum insn_code icode;
+
+      mode = widest_int_mode_for_size (max_size);
+
+      if (mode == VOIDmode)
+	break;
+      unsigned int modesize = GET_MODE_SIZE (mode);
+
+      icode = optab_handler (mov_optab, mode);
+      if (icode != CODE_FOR_nothing && align >= GET_MODE_ALIGNMENT (mode))
+	{
+	  unsigned HOST_WIDE_INT n_pieces = l / modesize;
+	  l %= modesize;
+	  switch (op)
+	    {
+	    default:
+	      n_insns += n_pieces;
+	      break;
+
+	    case COMPARE_BY_PIECES:
+	      int batch = targetm.compare_by_pieces_branch_ratio (mode);
+	      int batch_ops = 4 * batch - 1;
+	      unsigned HOST_WIDE_INT full = n_pieces / batch;
+	      n_insns += full * batch_ops;
+	      if (n_pieces % batch != 0)
+		n_insns++;
+	      break;
+
+	    }
+	}
+      max_size = modesize;
+    }
+
+  gcc_assert (!l);
+  return n_insns;
+}
+
+/* Used when performing piecewise block operations, holds information
+   about one of the memory objects involved.  The member functions
+   can be used to generate code for loading from the object and
+   updating the address when iterating.  */
+
+class pieces_addr
+{
+  /* The object being referenced, a MEM.  Can be NULL_RTX to indicate
+     stack pushes.  */
+  rtx m_obj;
+  /* The address of the object.  Can differ from that seen in the
+     MEM rtx if we copied the address to a register.  */
+  rtx m_addr;
+  /* Nonzero if the address on the object has an autoincrement already,
+     signifies whether that was an increment or decrement.  */
+  signed char m_addr_inc;
+  /* Nonzero if we intend to use autoinc without the address already
+     having autoinc form.  We will insert add insns around each memory
+     reference, expecting later passes to form autoinc addressing modes.
+     The only supported options are predecrement and postincrement.  */
+  signed char m_explicit_inc;
+  /* True if we have either of the two possible cases of using
+     autoincrement.  */
+  bool m_auto;
+  /* True if this is an address to be used for load operations rather
+     than stores.  */
+  bool m_is_load;
+
+  /* Optionally, a function to obtain constants for any given offset into
+     the objects, and data associated with it.  */
+  by_pieces_constfn m_constfn;
+  void *m_cfndata;
+public:
+  pieces_addr (rtx, bool, by_pieces_constfn, void *);
+  rtx adjust (machine_mode, HOST_WIDE_INT);
+  void increment_address (HOST_WIDE_INT);
+  void maybe_predec (HOST_WIDE_INT);
+  void maybe_postinc (HOST_WIDE_INT);
+  void decide_autoinc (machine_mode, bool, HOST_WIDE_INT);
+  int get_addr_inc ()
+  {
+    return m_addr_inc;
+  }
+};
+
+/* Initialize a pieces_addr structure from an object OBJ.  IS_LOAD is
+   true if the operation to be performed on this object is a load
+   rather than a store.  For stores, OBJ can be NULL, in which case we
+   assume the operation is a stack push.  For loads, the optional
+   CONSTFN and its associated CFNDATA can be used in place of the
+   memory load.  */
+
+pieces_addr::pieces_addr (rtx obj, bool is_load, by_pieces_constfn constfn,
+			  void *cfndata)
+  : m_obj (obj), m_is_load (is_load), m_constfn (constfn), m_cfndata (cfndata)
+{
+  m_addr_inc = 0;
+  m_auto = false;
+  if (obj)
+    {
+      rtx addr = XEXP (obj, 0);
+      rtx_code code = GET_CODE (addr);
+      m_addr = addr;
+      bool dec = code == PRE_DEC || code == POST_DEC;
+      bool inc = code == PRE_INC || code == POST_INC;
+      m_auto = inc || dec;
+      if (m_auto)
+	m_addr_inc = dec ? -1 : 1;
+
+      /* While we have always looked for these codes here, the code
+	 implementing the memory operation has never handled them.
+	 Support could be added later if necessary or beneficial.  */
+      gcc_assert (code != PRE_INC && code != POST_DEC);
+    }
+  else
+    {
+      m_addr = NULL_RTX;
+      if (!is_load)
+	{
+	  m_auto = true;
+	  if (STACK_GROWS_DOWNWARD)
+	    m_addr_inc = -1;
+	  else
+	    m_addr_inc = 1;
+	}
+      else
+	gcc_assert (constfn != NULL);
+    }
+  m_explicit_inc = 0;
+  if (constfn)
+    gcc_assert (is_load);
+}
+
+/* Decide whether to use autoinc for an address involved in a memory op.
+   MODE is the mode of the accesses, REVERSE is true if we've decided to
+   perform the operation starting from the end, and LEN is the length of
+   the operation.  Don't override an earlier decision to set m_auto.  */
+
+void
+pieces_addr::decide_autoinc (machine_mode ARG_UNUSED (mode), bool reverse,
+			     HOST_WIDE_INT len)
+{
+  if (m_auto || m_obj == NULL_RTX)
+    return;
+
+  bool use_predec = (m_is_load
+		     ? USE_LOAD_PRE_DECREMENT (mode)
+		     : USE_STORE_PRE_DECREMENT (mode));
+  bool use_postinc = (m_is_load
+		      ? USE_LOAD_POST_INCREMENT (mode)
+		      : USE_STORE_POST_INCREMENT (mode));
+  machine_mode addr_mode = get_address_mode (m_obj);
+
+  if (use_predec && reverse)
+    {
+      m_addr = copy_to_mode_reg (addr_mode,
+				 plus_constant (addr_mode,
+						m_addr, len));
+      m_auto = true;
+      m_explicit_inc = -1;
+    }
+  else if (use_postinc && !reverse)
+    {
+      m_addr = copy_to_mode_reg (addr_mode, m_addr);
+      m_auto = true;
+      m_explicit_inc = 1;
+    }
+  else if (CONSTANT_P (m_addr))
+    m_addr = copy_to_mode_reg (addr_mode, m_addr);
+}
+
+/* Adjust the address to refer to the data at OFFSET in MODE.  If we
+   are using autoincrement for this address, we don't add the offset,
+   but we still modify the MEM's properties.  */
+
+rtx
+pieces_addr::adjust (machine_mode mode, HOST_WIDE_INT offset)
+{
+  if (m_constfn)
+    return m_constfn (m_cfndata, offset, mode);
+  if (m_obj == NULL_RTX)
+    return NULL_RTX;
+  if (m_auto)
+    return adjust_automodify_address (m_obj, mode, m_addr, offset);
+  else
+    return adjust_address (m_obj, mode, offset);
+}
+
+/* Emit an add instruction to increment the address by SIZE.  */
+
+void
+pieces_addr::increment_address (HOST_WIDE_INT size)
+{
+  rtx amount = gen_int_mode (size, GET_MODE (m_addr));
+  emit_insn (gen_add2_insn (m_addr, amount));
+}
+
+/* If we are supposed to decrement the address after each access, emit code
+   to do so now.  Increment by SIZE (which has should have the correct sign
+   already).  */
+
+void
+pieces_addr::maybe_predec (HOST_WIDE_INT size)
+{
+  if (m_explicit_inc >= 0)
+    return;
+  gcc_assert (HAVE_PRE_DECREMENT);
+  increment_address (size);
+}
+
+/* If we are supposed to decrement the address after each access, emit code
+   to do so now.  Increment by SIZE.  */
+
+void
+pieces_addr::maybe_postinc (HOST_WIDE_INT size)
+{
+  if (m_explicit_inc <= 0)
+    return;
+  gcc_assert (HAVE_POST_INCREMENT);
+  increment_address (size);
+}
+
+/* This structure is used by do_op_by_pieces to describe the operation
+   to be performed.  */
+
+class op_by_pieces_d
+{
+ protected:
+  pieces_addr m_to, m_from;
+  unsigned HOST_WIDE_INT m_len;
+  HOST_WIDE_INT m_offset;
+  unsigned int m_align;
+  unsigned int m_max_size;
+  bool m_reverse;
+
+  /* Virtual functions, overriden by derived classes for the specific
+     operation.  */
+  virtual void generate (rtx, rtx, machine_mode) = 0;
+  virtual bool prepare_mode (machine_mode, unsigned int) = 0;
+  virtual void finish_mode (machine_mode)
+  {
+  }
+
+ public:
+  op_by_pieces_d (rtx, bool, rtx, bool, by_pieces_constfn, void *,
+		  unsigned HOST_WIDE_INT, unsigned int);
+  void run ();
+};
+
+/* The constructor for an op_by_pieces_d structure.  We require two
+   objects named TO and FROM, which are identified as loads or stores
+   by TO_LOAD and FROM_LOAD.  If FROM is a load, the optional FROM_CFN
+   and its associated FROM_CFN_DATA can be used to replace loads with
+   constant values.  LEN describes the length of the operation.  */
+
+op_by_pieces_d::op_by_pieces_d (rtx to, bool to_load,
+				rtx from, bool from_load,
+				by_pieces_constfn from_cfn,
+				void *from_cfn_data,
+				unsigned HOST_WIDE_INT len,
+				unsigned int align)
+  : m_to (to, to_load, NULL, NULL),
+    m_from (from, from_load, from_cfn, from_cfn_data),
+    m_len (len), m_max_size (MOVE_MAX_PIECES + 1)
+{
+  int toi = m_to.get_addr_inc ();
+  int fromi = m_from.get_addr_inc ();
+  if (toi >= 0 && fromi >= 0)
+    m_reverse = false;
+  else if (toi <= 0 && fromi <= 0)
+    m_reverse = true;
+  else
+    gcc_unreachable ();
+
+  m_offset = m_reverse ? len : 0;
+  align = MIN (to ? MEM_ALIGN (to) : align,
+	       from ? MEM_ALIGN (from) : align);
+
+  /* If copying requires more than two move insns,
+     copy addresses to registers (to make displacements shorter)
+     and use post-increment if available.  */
+  if (by_pieces_ninsns (len, align, m_max_size, MOVE_BY_PIECES) > 2)
+    {
+      /* Find the mode of the largest comparison.  */
+      machine_mode mode = widest_int_mode_for_size (m_max_size);
+
+      m_from.decide_autoinc (mode, m_reverse, len);
+      m_to.decide_autoinc (mode, m_reverse, len);
+    }
+
+  align = alignment_for_piecewise_move (MOVE_MAX_PIECES, align);
+  m_align = align;
+}
+
+/* This function contains the main loop used for expanding a block
+   operation.  First move what we can in the largest integer mode,
+   then go to successively smaller modes.  For every access, call
+   GENFUN with the two operands and the EXTRA_DATA.  */
+
+void
+op_by_pieces_d::run ()
+{
+  while (m_max_size > 1 && m_len > 0)
+    {
+      machine_mode mode = widest_int_mode_for_size (m_max_size);
+
+      if (mode == VOIDmode)
+	break;
+
+      if (prepare_mode (mode, m_align))
+	{
+	  unsigned int size = GET_MODE_SIZE (mode);
+	  rtx to1 = NULL_RTX, from1;
+
+	  while (m_len >= size)
+	    {
+	      if (m_reverse)
+		m_offset -= size;
+
+	      to1 = m_to.adjust (mode, m_offset);
+	      from1 = m_from.adjust (mode, m_offset);
+
+	      m_to.maybe_predec (-(HOST_WIDE_INT)size);
+	      m_from.maybe_predec (-(HOST_WIDE_INT)size);
+
+	      generate (to1, from1, mode);
+
+	      m_to.maybe_postinc (size);
+	      m_from.maybe_postinc (size);
+
+	      if (!m_reverse)
+		m_offset += size;
+
+	      m_len -= size;
+	    }
+
+	  finish_mode (mode);
+	}
+
+      m_max_size = GET_MODE_SIZE (mode);
+    }
+
+  /* The code above should have handled everything.  */
+  gcc_assert (!m_len);
+}
+
+/* Derived class from op_by_pieces_d, providing support for block move
+   operations.  */
+
+class move_by_pieces_d : public op_by_pieces_d
+{
+  insn_gen_fn m_gen_fun;
+  void generate (rtx, rtx, machine_mode);
+  bool prepare_mode (machine_mode, unsigned int);
+
+ public:
+  move_by_pieces_d (rtx to, rtx from, unsigned HOST_WIDE_INT len,
+		    unsigned int align)
+    : op_by_pieces_d (to, false, from, true, NULL, NULL, len, align)
+  {
+  }
+  rtx finish_endp (int);
+};
+
+/* Return true if MODE can be used for a set of copies, given an
+   alignment ALIGN.  Prepare whatever data is necessary for later
+   calls to generate.  */
+
+bool
+move_by_pieces_d::prepare_mode (machine_mode mode, unsigned int align)
+{
+  insn_code icode = optab_handler (mov_optab, mode);
+  m_gen_fun = GEN_FCN (icode);
+  return icode != CODE_FOR_nothing && align >= GET_MODE_ALIGNMENT (mode);
+}
+
+/* A callback used when iterating for a compare_by_pieces_operation.
+   OP0 and OP1 are the values that have been loaded and should be
+   compared in MODE.  If OP0 is NULL, this means we should generate a
+   push; otherwise EXTRA_DATA holds a pointer to a pointer to the insn
+   gen function that should be used to generate the mode.  */
+
+void
+move_by_pieces_d::generate (rtx op0, rtx op1,
+			    machine_mode mode ATTRIBUTE_UNUSED)
+{
+#ifdef PUSH_ROUNDING
+  if (op0 == NULL_RTX)
+    {
+      emit_single_push_insn (mode, op1, NULL);
+      return;
+    }
+#endif
+  emit_insn (m_gen_fun (op0, op1));
+}
+
+/* Perform the final adjustment at the end of a string to obtain the
+   correct return value for the block operation.  If ENDP is 1 return
+   memory at the end ala mempcpy, and if ENDP is 2 return memory the
+   end minus one byte ala stpcpy.  */
+
+rtx
+move_by_pieces_d::finish_endp (int endp)
+{
+  gcc_assert (!m_reverse);
+  if (endp == 2)
+    {
+      m_to.maybe_postinc (-1);
+      --m_offset;
+    }
+  return m_to.adjust (QImode, m_offset);
 }
 
 /* Generate several move instructions to copy LEN bytes from block FROM to
@@ -798,248 +1191,339 @@ rtx
 move_by_pieces (rtx to, rtx from, unsigned HOST_WIDE_INT len,
 		unsigned int align, int endp)
 {
-  struct move_by_pieces_d data;
-  machine_mode to_addr_mode;
-  machine_mode from_addr_mode = get_address_mode (from);
-  rtx to_addr, from_addr = XEXP (from, 0);
-  unsigned int max_size = MOVE_MAX_PIECES + 1;
-  enum insn_code icode;
+#ifndef PUSH_ROUNDING
+  if (to == NULL)
+    gcc_unreachable ();
+#endif
 
-  align = MIN (to ? MEM_ALIGN (to) : align, MEM_ALIGN (from));
+  move_by_pieces_d data (to, from, len, align);
 
-  data.offset = 0;
-  data.from_addr = from_addr;
-  if (to)
-    {
-      to_addr_mode = get_address_mode (to);
-      to_addr = XEXP (to, 0);
-      data.to = to;
-      data.autinc_to
-	= (GET_CODE (to_addr) == PRE_INC || GET_CODE (to_addr) == PRE_DEC
-	   || GET_CODE (to_addr) == POST_INC || GET_CODE (to_addr) == POST_DEC);
-      data.reverse
-	= (GET_CODE (to_addr) == PRE_DEC || GET_CODE (to_addr) == POST_DEC);
-    }
-  else
-    {
-      to_addr_mode = VOIDmode;
-      to_addr = NULL_RTX;
-      data.to = NULL_RTX;
-      data.autinc_to = 1;
-      if (STACK_GROWS_DOWNWARD)
-	data.reverse = 1;
-      else
-	data.reverse = 0;
-    }
-  data.to_addr = to_addr;
-  data.from = from;
-  data.autinc_from
-    = (GET_CODE (from_addr) == PRE_INC || GET_CODE (from_addr) == PRE_DEC
-       || GET_CODE (from_addr) == POST_INC
-       || GET_CODE (from_addr) == POST_DEC);
-
-  data.explicit_inc_from = 0;
-  data.explicit_inc_to = 0;
-  if (data.reverse) data.offset = len;
-  data.len = len;
-
-  /* If copying requires more than two move insns,
-     copy addresses to registers (to make displacements shorter)
-     and use post-increment if available.  */
-  if (!(data.autinc_from && data.autinc_to)
-      && move_by_pieces_ninsns (len, align, max_size) > 2)
-    {
-      /* Find the mode of the largest move...
-	 MODE might not be used depending on the definitions of the
-	 USE_* macros below.  */
-      machine_mode mode ATTRIBUTE_UNUSED
-	= widest_int_mode_for_size (max_size);
-
-      if (USE_LOAD_PRE_DECREMENT (mode) && data.reverse && ! data.autinc_from)
-	{
-	  data.from_addr = copy_to_mode_reg (from_addr_mode,
-					     plus_constant (from_addr_mode,
-							    from_addr, len));
-	  data.autinc_from = 1;
-	  data.explicit_inc_from = -1;
-	}
-      if (USE_LOAD_POST_INCREMENT (mode) && ! data.autinc_from)
-	{
-	  data.from_addr = copy_to_mode_reg (from_addr_mode, from_addr);
-	  data.autinc_from = 1;
-	  data.explicit_inc_from = 1;
-	}
-      if (!data.autinc_from && CONSTANT_P (from_addr))
-	data.from_addr = copy_to_mode_reg (from_addr_mode, from_addr);
-      if (USE_STORE_PRE_DECREMENT (mode) && data.reverse && ! data.autinc_to)
-	{
-	  data.to_addr = copy_to_mode_reg (to_addr_mode,
-					   plus_constant (to_addr_mode,
-							  to_addr, len));
-	  data.autinc_to = 1;
-	  data.explicit_inc_to = -1;
-	}
-      if (USE_STORE_POST_INCREMENT (mode) && ! data.reverse && ! data.autinc_to)
-	{
-	  data.to_addr = copy_to_mode_reg (to_addr_mode, to_addr);
-	  data.autinc_to = 1;
-	  data.explicit_inc_to = 1;
-	}
-      if (!data.autinc_to && CONSTANT_P (to_addr))
-	data.to_addr = copy_to_mode_reg (to_addr_mode, to_addr);
-    }
-
-  align = alignment_for_piecewise_move (MOVE_MAX_PIECES, align);
-
-  /* First move what we can in the largest integer mode, then go to
-     successively smaller modes.  */
-
-  while (max_size > 1 && data.len > 0)
-    {
-      machine_mode mode = widest_int_mode_for_size (max_size);
-
-      if (mode == VOIDmode)
-	break;
-
-      icode = optab_handler (mov_optab, mode);
-      if (icode != CODE_FOR_nothing && align >= GET_MODE_ALIGNMENT (mode))
-	move_by_pieces_1 (GEN_FCN (icode), mode, &data);
-
-      max_size = GET_MODE_SIZE (mode);
-    }
-
-  /* The code above should have handled everything.  */
-  gcc_assert (!data.len);
+  data.run ();
 
   if (endp)
-    {
-      rtx to1;
-
-      gcc_assert (!data.reverse);
-      if (data.autinc_to)
-	{
-	  if (endp == 2)
-	    {
-	      if (HAVE_POST_INCREMENT && data.explicit_inc_to > 0)
-		emit_insn (gen_add2_insn (data.to_addr, constm1_rtx));
-	      else
-		data.to_addr = copy_to_mode_reg (to_addr_mode,
-						 plus_constant (to_addr_mode,
-								data.to_addr,
-								-1));
-	    }
-	  to1 = adjust_automodify_address (data.to, QImode, data.to_addr,
-					   data.offset);
-	}
-      else
-	{
-	  if (endp == 2)
-	    --data.offset;
-	  to1 = adjust_address (data.to, QImode, data.offset);
-	}
-      return to1;
-    }
+    return data.finish_endp (endp);
   else
-    return data.to;
+    return to;
 }
 
-/* Return number of insns required to move L bytes by pieces.
-   ALIGN (in bits) is maximum alignment we can assume.  */
+/* Derived class from op_by_pieces_d, providing support for block move
+   operations.  */
 
-unsigned HOST_WIDE_INT
-move_by_pieces_ninsns (unsigned HOST_WIDE_INT l, unsigned int align,
-		       unsigned int max_size)
+class store_by_pieces_d : public op_by_pieces_d
 {
-  unsigned HOST_WIDE_INT n_insns = 0;
+  insn_gen_fn m_gen_fun;
+  void generate (rtx, rtx, machine_mode);
+  bool prepare_mode (machine_mode, unsigned int);
 
-  align = alignment_for_piecewise_move (MOVE_MAX_PIECES, align);
+ public:
+  store_by_pieces_d (rtx to, by_pieces_constfn cfn, void *cfn_data,
+		     unsigned HOST_WIDE_INT len, unsigned int align)
+    : op_by_pieces_d (to, false, NULL_RTX, true, cfn, cfn_data, len, align)
+  {
+  }
+  rtx finish_endp (int);
+};
 
-  while (max_size > 1 && l > 0)
+/* Return true if MODE can be used for a set of stores, given an
+   alignment ALIGN.  Prepare whatever data is necessary for later
+   calls to generate.  */
+
+bool
+store_by_pieces_d::prepare_mode (machine_mode mode, unsigned int align)
+{
+  insn_code icode = optab_handler (mov_optab, mode);
+  m_gen_fun = GEN_FCN (icode);
+  return icode != CODE_FOR_nothing && align >= GET_MODE_ALIGNMENT (mode);
+}
+
+/* A callback used when iterating for a store_by_pieces_operation.
+   OP0 and OP1 are the values that have been loaded and should be
+   compared in MODE.  If OP0 is NULL, this means we should generate a
+   push; otherwise EXTRA_DATA holds a pointer to a pointer to the insn
+   gen function that should be used to generate the mode.  */
+
+void
+store_by_pieces_d::generate (rtx op0, rtx op1, machine_mode)
+{
+  emit_insn (m_gen_fun (op0, op1));
+}
+
+/* Perform the final adjustment at the end of a string to obtain the
+   correct return value for the block operation.  If ENDP is 1 return
+   memory at the end ala mempcpy, and if ENDP is 2 return memory the
+   end minus one byte ala stpcpy.  */
+
+rtx
+store_by_pieces_d::finish_endp (int endp)
+{
+  gcc_assert (!m_reverse);
+  if (endp == 2)
     {
-      machine_mode mode;
-      enum insn_code icode;
+      m_to.maybe_postinc (-1);
+      --m_offset;
+    }
+  return m_to.adjust (QImode, m_offset);
+}
 
-      mode = widest_int_mode_for_size (max_size);
+/* Determine whether the LEN bytes generated by CONSTFUN can be
+   stored to memory using several move instructions.  CONSTFUNDATA is
+   a pointer which will be passed as argument in every CONSTFUN call.
+   ALIGN is maximum alignment we can assume.  MEMSETP is true if this is
+   a memset operation and false if it's a copy of a constant string.
+   Return nonzero if a call to store_by_pieces should succeed.  */
 
-      if (mode == VOIDmode)
-	break;
+int
+can_store_by_pieces (unsigned HOST_WIDE_INT len,
+		     rtx (*constfun) (void *, HOST_WIDE_INT, machine_mode),
+		     void *constfundata, unsigned int align, bool memsetp)
+{
+  unsigned HOST_WIDE_INT l;
+  unsigned int max_size;
+  HOST_WIDE_INT offset = 0;
+  machine_mode mode;
+  enum insn_code icode;
+  int reverse;
+  /* cst is set but not used if LEGITIMATE_CONSTANT doesn't use it.  */
+  rtx cst ATTRIBUTE_UNUSED;
 
-      icode = optab_handler (mov_optab, mode);
-      if (icode != CODE_FOR_nothing && align >= GET_MODE_ALIGNMENT (mode))
-	n_insns += l / GET_MODE_SIZE (mode), l %= GET_MODE_SIZE (mode);
+  if (len == 0)
+    return 1;
 
-      max_size = GET_MODE_SIZE (mode);
+  if (!targetm.use_by_pieces_infrastructure_p (len, align,
+					       memsetp
+						 ? SET_BY_PIECES
+						 : STORE_BY_PIECES,
+					       optimize_insn_for_speed_p ()))
+    return 0;
+
+  align = alignment_for_piecewise_move (STORE_MAX_PIECES, align);
+
+  /* We would first store what we can in the largest integer mode, then go to
+     successively smaller modes.  */
+
+  for (reverse = 0;
+       reverse <= (HAVE_PRE_DECREMENT || HAVE_POST_DECREMENT);
+       reverse++)
+    {
+      l = len;
+      max_size = STORE_MAX_PIECES + 1;
+      while (max_size > 1 && l > 0)
+	{
+	  mode = widest_int_mode_for_size (max_size);
+
+	  if (mode == VOIDmode)
+	    break;
+
+	  icode = optab_handler (mov_optab, mode);
+	  if (icode != CODE_FOR_nothing
+	      && align >= GET_MODE_ALIGNMENT (mode))
+	    {
+	      unsigned int size = GET_MODE_SIZE (mode);
+
+	      while (l >= size)
+		{
+		  if (reverse)
+		    offset -= size;
+
+		  cst = (*constfun) (constfundata, offset, mode);
+		  if (!targetm.legitimate_constant_p (mode, cst))
+		    return 0;
+
+		  if (!reverse)
+		    offset += size;
+
+		  l -= size;
+		}
+	    }
+
+	  max_size = GET_MODE_SIZE (mode);
+	}
+
+      /* The code above should have handled everything.  */
+      gcc_assert (!l);
     }
 
-  gcc_assert (!l);
-  return n_insns;
+  return 1;
 }
 
-/* Subroutine of move_by_pieces.  Move as many bytes as appropriate
-   with move instructions for mode MODE.  GENFUN is the gen_... function
-   to make a move insn for that mode.  DATA has all the other info.  */
+/* Generate several move instructions to store LEN bytes generated by
+   CONSTFUN to block TO.  (A MEM rtx with BLKmode).  CONSTFUNDATA is a
+   pointer which will be passed as argument in every CONSTFUN call.
+   ALIGN is maximum alignment we can assume.  MEMSETP is true if this is
+   a memset operation and false if it's a copy of a constant string.
+   If ENDP is 0 return to, if ENDP is 1 return memory at the end ala
+   mempcpy, and if ENDP is 2 return memory the end minus one byte ala
+   stpcpy.  */
+
+rtx
+store_by_pieces (rtx to, unsigned HOST_WIDE_INT len,
+		 rtx (*constfun) (void *, HOST_WIDE_INT, machine_mode),
+		 void *constfundata, unsigned int align, bool memsetp, int endp)
+{
+  if (len == 0)
+    {
+      gcc_assert (endp != 2);
+      return to;
+    }
+
+  gcc_assert (targetm.use_by_pieces_infrastructure_p
+		(len, align,
+		 memsetp ? SET_BY_PIECES : STORE_BY_PIECES,
+		 optimize_insn_for_speed_p ()));
+
+  store_by_pieces_d data (to, constfun, constfundata, len, align);
+  data.run ();
+
+  if (endp)
+    return data.finish_endp (endp);
+  else
+    return to;
+}
+
+/* Callback routine for clear_by_pieces.
+   Return const0_rtx unconditionally.  */
+
+static rtx
+clear_by_pieces_1 (void *, HOST_WIDE_INT, machine_mode)
+{
+  return const0_rtx;
+}
+
+/* Generate several move instructions to clear LEN bytes of block TO.  (A MEM
+   rtx with BLKmode).  ALIGN is maximum alignment we can assume.  */
 
 static void
-move_by_pieces_1 (insn_gen_fn genfun, machine_mode mode,
-		  struct move_by_pieces_d *data)
+clear_by_pieces (rtx to, unsigned HOST_WIDE_INT len, unsigned int align)
 {
-  unsigned int size = GET_MODE_SIZE (mode);
-  rtx to1 = NULL_RTX, from1;
+  if (len == 0)
+    return;
 
-  while (data->len >= size)
+  store_by_pieces_d data (to, clear_by_pieces_1, NULL, len, align);
+  data.run ();
+}
+
+/* Context used by compare_by_pieces_genfn.  It stores the fail label
+   to jump to in case of miscomparison, and for branch ratios greater than 1,
+   it stores an accumulator and the current and maximum counts before
+   emitting another branch.  */
+
+class compare_by_pieces_d : public op_by_pieces_d
+{
+  rtx_code_label *m_fail_label;
+  rtx m_accumulator;
+  int m_count, m_batch;
+
+  void generate (rtx, rtx, machine_mode);
+  bool prepare_mode (machine_mode, unsigned int);
+  void finish_mode (machine_mode);
+ public:
+  compare_by_pieces_d (rtx op0, rtx op1, by_pieces_constfn op1_cfn,
+		       void *op1_cfn_data, HOST_WIDE_INT len, int align,
+		       rtx_code_label *fail_label)
+    : op_by_pieces_d (op0, true, op1, true, op1_cfn, op1_cfn_data, len, align)
+  {
+    m_fail_label = fail_label;
+  }
+};
+
+/* A callback used when iterating for a compare_by_pieces_operation.
+   OP0 and OP1 are the values that have been loaded and should be
+   compared in MODE.  DATA holds a pointer to the compare_by_pieces_data
+   context structure.  */
+
+void
+compare_by_pieces_d::generate (rtx op0, rtx op1, machine_mode mode)
+{
+  if (m_batch > 1)
     {
-      if (data->reverse)
-	data->offset -= size;
+      rtx temp = expand_binop (mode, sub_optab, op0, op1, NULL_RTX,
+			       true, OPTAB_LIB_WIDEN);
+      if (m_count != 0)
+	temp = expand_binop (mode, ior_optab, m_accumulator, temp, temp,
+			     true, OPTAB_LIB_WIDEN);
+      m_accumulator = temp;
 
-      if (data->to)
-	{
-	  if (data->autinc_to)
-	    to1 = adjust_automodify_address (data->to, mode, data->to_addr,
-					     data->offset);
-	  else
-	    to1 = adjust_address (data->to, mode, data->offset);
-	}
+      if (++m_count < m_batch)
+	return;
 
-      if (data->autinc_from)
-	from1 = adjust_automodify_address (data->from, mode, data->from_addr,
-					   data->offset);
-      else
-	from1 = adjust_address (data->from, mode, data->offset);
-
-      if (HAVE_PRE_DECREMENT && data->explicit_inc_to < 0)
-	emit_insn (gen_add2_insn (data->to_addr,
-				  gen_int_mode (-(HOST_WIDE_INT) size,
-						GET_MODE (data->to_addr))));
-      if (HAVE_PRE_DECREMENT && data->explicit_inc_from < 0)
-	emit_insn (gen_add2_insn (data->from_addr,
-				  gen_int_mode (-(HOST_WIDE_INT) size,
-						GET_MODE (data->from_addr))));
-
-      if (data->to)
-	emit_insn ((*genfun) (to1, from1));
-      else
-	{
-#ifdef PUSH_ROUNDING
-	  emit_single_push_insn (mode, from1, NULL);
-#else
-	  gcc_unreachable ();
-#endif
-	}
-
-      if (HAVE_POST_INCREMENT && data->explicit_inc_to > 0)
-	emit_insn (gen_add2_insn (data->to_addr,
-				  gen_int_mode (size,
-						GET_MODE (data->to_addr))));
-      if (HAVE_POST_INCREMENT && data->explicit_inc_from > 0)
-	emit_insn (gen_add2_insn (data->from_addr,
-				  gen_int_mode (size,
-						GET_MODE (data->from_addr))));
-
-      if (! data->reverse)
-	data->offset += size;
-
-      data->len -= size;
+      m_count = 0;
+      op0 = m_accumulator;
+      op1 = const0_rtx;
+      m_accumulator = NULL_RTX;
     }
+  do_compare_rtx_and_jump (op0, op1, NE, true, mode, NULL_RTX, NULL,
+			   m_fail_label, -1);
+}
+
+/* Return true if MODE can be used for a set of moves and comparisons,
+   given an alignment ALIGN.  Prepare whatever data is necessary for
+   later calls to generate.  */
+
+bool
+compare_by_pieces_d::prepare_mode (machine_mode mode, unsigned int align)
+{
+  insn_code icode = optab_handler (mov_optab, mode);
+  if (icode == CODE_FOR_nothing
+      || align < GET_MODE_ALIGNMENT (mode)
+      || !can_compare_p (EQ, mode, ccp_jump))
+    return false;
+  m_batch = targetm.compare_by_pieces_branch_ratio (mode);
+  if (m_batch < 0)
+    return false;
+  m_accumulator = NULL_RTX;
+  m_count = 0;
+  return true;
+}
+
+/* Called after expanding a series of comparisons in MODE.  If we have
+   accumulated results for which we haven't emitted a branch yet, do
+   so now.  */
+
+void
+compare_by_pieces_d::finish_mode (machine_mode mode)
+{
+  if (m_accumulator != NULL_RTX)
+    do_compare_rtx_and_jump (m_accumulator, const0_rtx, NE, true, mode,
+			     NULL_RTX, NULL, m_fail_label, -1);
+}
+
+/* Generate several move instructions to compare LEN bytes from blocks
+   ARG0 and ARG1.  (These are MEM rtx's with BLKmode).
+
+   If PUSH_ROUNDING is defined and TO is NULL, emit_single_push_insn is
+   used to push FROM to the stack.
+
+   ALIGN is maximum stack alignment we can assume.
+
+   Optionally, the caller can pass a constfn and associated data in A1_CFN
+   and A1_CFN_DATA. describing that the second operand being compared is a
+   known constant and how to obtain its data.  */
+
+static rtx
+compare_by_pieces (rtx arg0, rtx arg1, unsigned HOST_WIDE_INT len,
+		   rtx target, unsigned int align,
+		   by_pieces_constfn a1_cfn, void *a1_cfn_data)
+{
+  rtx_code_label *fail_label = gen_label_rtx ();
+  rtx_code_label *end_label = gen_label_rtx ();
+
+  if (target == NULL_RTX
+      || !REG_P (target) || REGNO (target) < FIRST_PSEUDO_REGISTER)
+    target = gen_reg_rtx (TYPE_MODE (integer_type_node));
+
+  compare_by_pieces_d data (arg0, arg1, a1_cfn, a1_cfn_data, len, align,
+			    fail_label);
+
+  data.run ();
+
+  emit_move_insn (target, const0_rtx);
+  emit_jump (end_label);
+  emit_barrier ();
+  emit_label (fail_label);
+  emit_move_insn (target, const1_rtx);
+  emit_label (end_label);
+
+  return target;
 }
 
 /* Emit code to move a block Y to a block X.  This may be done with
@@ -1069,8 +1553,7 @@ emit_block_move_hints (rtx x, rtx y, rtx size, enum block_op_methods method,
   unsigned int align;
 
   gcc_assert (size);
-  if (CONST_INT_P (size)
-      && INTVAL (size) == 0)
+  if (CONST_INT_P (size) && INTVAL (size) == 0)
     return 0;
 
   switch (method)
@@ -1133,7 +1616,7 @@ emit_block_move_hints (rtx x, rtx y, rtx size, enum block_op_methods method,
 	mark_addressable (y_expr);
       if (x_expr)
 	mark_addressable (x_expr);
-      retval = emit_block_move_via_libcall (x, y, size,
+      retval = emit_block_copy_via_libcall (x, y, size,
 					    method == BLOCK_OP_TAILCALL);
     }
 
@@ -1176,7 +1659,7 @@ block_move_libcall_safe_for_call_parm (void)
   /* If registers go on the stack anyway, any argument is sure to clobber
      an outgoing argument.  */
 #if defined (REG_PARM_STACK_SPACE)
-  fn = emit_block_move_libcall_fn (false);
+  fn = builtin_decl_implicit (BUILT_IN_MEMCPY);
   /* Avoid set but not used warning if *REG_PARM_STACK_SPACE doesn't
      depend on its argument.  */
   (void) fn;
@@ -1192,7 +1675,7 @@ block_move_libcall_safe_for_call_parm (void)
     cumulative_args_t args_so_far;
     tree fn, arg;
 
-    fn = emit_block_move_libcall_fn (false);
+    fn = builtin_decl_implicit (BUILT_IN_MEMCPY);
     INIT_CUMULATIVE_ARGS (args_so_far_v, TREE_TYPE (fn), NULL_RTX, 0, 3);
     args_so_far = pack_cumulative_args (&args_so_far_v);
 
@@ -1311,106 +1794,6 @@ emit_block_move_via_movmem (rtx x, rtx y, rtx size, unsigned int align,
   return false;
 }
 
-/* A subroutine of emit_block_move.  Expand a call to memcpy.
-   Return the return value from memcpy, 0 otherwise.  */
-
-rtx
-emit_block_move_via_libcall (rtx dst, rtx src, rtx size, bool tailcall)
-{
-  rtx dst_addr, src_addr;
-  tree call_expr, fn, src_tree, dst_tree, size_tree;
-  machine_mode size_mode;
-  rtx retval;
-
-  /* Emit code to copy the addresses of DST and SRC and SIZE into new
-     pseudos.  We can then place those new pseudos into a VAR_DECL and
-     use them later.  */
-
-  dst_addr = copy_addr_to_reg (XEXP (dst, 0));
-  src_addr = copy_addr_to_reg (XEXP (src, 0));
-
-  dst_addr = convert_memory_address (ptr_mode, dst_addr);
-  src_addr = convert_memory_address (ptr_mode, src_addr);
-
-  dst_tree = make_tree (ptr_type_node, dst_addr);
-  src_tree = make_tree (ptr_type_node, src_addr);
-
-  size_mode = TYPE_MODE (sizetype);
-
-  size = convert_to_mode (size_mode, size, 1);
-  size = copy_to_mode_reg (size_mode, size);
-
-  /* It is incorrect to use the libcall calling conventions to call
-     memcpy in this context.  This could be a user call to memcpy and
-     the user may wish to examine the return value from memcpy.  For
-     targets where libcalls and normal calls have different conventions
-     for returning pointers, we could end up generating incorrect code.  */
-
-  size_tree = make_tree (sizetype, size);
-
-  fn = emit_block_move_libcall_fn (true);
-  call_expr = build_call_expr (fn, 3, dst_tree, src_tree, size_tree);
-  CALL_EXPR_TAILCALL (call_expr) = tailcall;
-
-  retval = expand_normal (call_expr);
-
-  return retval;
-}
-
-/* A subroutine of emit_block_move_via_libcall.  Create the tree node
-   for the function we use for block copies.  */
-
-static GTY(()) tree block_move_fn;
-
-void
-init_block_move_fn (const char *asmspec)
-{
-  if (!block_move_fn)
-    {
-      tree args, fn, attrs, attr_args;
-
-      fn = get_identifier ("memcpy");
-      args = build_function_type_list (ptr_type_node, ptr_type_node,
-				       const_ptr_type_node, sizetype,
-				       NULL_TREE);
-
-      fn = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL, fn, args);
-      DECL_EXTERNAL (fn) = 1;
-      TREE_PUBLIC (fn) = 1;
-      DECL_ARTIFICIAL (fn) = 1;
-      TREE_NOTHROW (fn) = 1;
-      DECL_VISIBILITY (fn) = VISIBILITY_DEFAULT;
-      DECL_VISIBILITY_SPECIFIED (fn) = 1;
-
-      attr_args = build_tree_list (NULL_TREE, build_string (1, "1"));
-      attrs = tree_cons (get_identifier ("fn spec"), attr_args, NULL);
-
-      decl_attributes (&fn, attrs, ATTR_FLAG_BUILT_IN);
-
-      block_move_fn = fn;
-    }
-
-  if (asmspec)
-    set_user_assembler_name (block_move_fn, asmspec);
-}
-
-static tree
-emit_block_move_libcall_fn (int for_call)
-{
-  static bool emitted_extern;
-
-  if (!block_move_fn)
-    init_block_move_fn (NULL);
-
-  if (for_call && !emitted_extern)
-    {
-      emitted_extern = true;
-      make_decl_rtl (block_move_fn);
-    }
-
-  return block_move_fn;
-}
-
 /* A subroutine of emit_block_move.  Copy the data via an explicit
    loop.  This is used only when libcalls are forbidden.  */
 /* ??? It'd be nice to copy in hunks larger than QImode.  */
@@ -1463,6 +1846,132 @@ emit_block_move_via_loop (rtx x, rtx y, rtx size,
 
   emit_cmp_and_jump_insns (iter, size, LT, NULL_RTX, iter_mode,
 			   true, top_label, REG_BR_PROB_BASE * 90 / 100);
+}
+
+/* Expand a call to memcpy or memmove or memcmp, and return the result.
+   TAILCALL is true if this is a tail call.  */
+
+rtx
+emit_block_op_via_libcall (enum built_in_function fncode, rtx dst, rtx src,
+			   rtx size, bool tailcall)
+{
+  rtx dst_addr, src_addr;
+  tree call_expr, dst_tree, src_tree, size_tree;
+  machine_mode size_mode;
+
+  dst_addr = copy_addr_to_reg (XEXP (dst, 0));
+  dst_addr = convert_memory_address (ptr_mode, dst_addr);
+  dst_tree = make_tree (ptr_type_node, dst_addr);
+
+  src_addr = copy_addr_to_reg (XEXP (src, 0));
+  src_addr = convert_memory_address (ptr_mode, src_addr);
+  src_tree = make_tree (ptr_type_node, src_addr);
+
+  size_mode = TYPE_MODE (sizetype);
+  size = convert_to_mode (size_mode, size, 1);
+  size = copy_to_mode_reg (size_mode, size);
+  size_tree = make_tree (sizetype, size);
+
+  /* It is incorrect to use the libcall calling conventions for calls to
+     memcpy/memmove/memcmp because they can be provided by the user.  */
+  tree fn = builtin_decl_implicit (fncode);
+  call_expr = build_call_expr (fn, 3, dst_tree, src_tree, size_tree);
+  CALL_EXPR_TAILCALL (call_expr) = tailcall;
+
+  return expand_call (call_expr, NULL_RTX, false);
+}
+
+/* Try to expand cmpstrn or cmpmem operation ICODE with the given operands.
+   ARG3_TYPE is the type of ARG3_RTX.  Return the result rtx on success,
+   otherwise return null.  */
+
+rtx
+expand_cmpstrn_or_cmpmem (insn_code icode, rtx target, rtx arg1_rtx,
+			  rtx arg2_rtx, tree arg3_type, rtx arg3_rtx,
+			  HOST_WIDE_INT align)
+{
+  machine_mode insn_mode = insn_data[icode].operand[0].mode;
+
+  if (target && (!REG_P (target) || HARD_REGISTER_P (target)))
+    target = NULL_RTX;
+
+  struct expand_operand ops[5];
+  create_output_operand (&ops[0], target, insn_mode);
+  create_fixed_operand (&ops[1], arg1_rtx);
+  create_fixed_operand (&ops[2], arg2_rtx);
+  create_convert_operand_from (&ops[3], arg3_rtx, TYPE_MODE (arg3_type),
+			       TYPE_UNSIGNED (arg3_type));
+  create_integer_operand (&ops[4], align);
+  if (maybe_expand_insn (icode, 5, ops))
+    return ops[0].value;
+  return NULL_RTX;
+}
+
+/* Expand a block compare between X and Y with length LEN using the
+   cmpmem optab, placing the result in TARGET.  LEN_TYPE is the type
+   of the expression that was used to calculate the length.  ALIGN
+   gives the known minimum common alignment.  */
+
+static rtx
+emit_block_cmp_via_cmpmem (rtx x, rtx y, rtx len, tree len_type, rtx target,
+			   unsigned align)
+{
+  /* Note: The cmpstrnsi pattern, if it exists, is not suitable for
+     implementing memcmp because it will stop if it encounters two
+     zero bytes.  */
+  insn_code icode = direct_optab_handler (cmpmem_optab, SImode);
+
+  if (icode == CODE_FOR_nothing)
+    return NULL_RTX;
+
+  return expand_cmpstrn_or_cmpmem (icode, target, x, y, len_type, len, align);
+}
+
+/* Emit code to compare a block Y to a block X.  This may be done with
+   string-compare instructions, with multiple scalar instructions,
+   or with a library call.
+
+   Both X and Y must be MEM rtx's.  LEN is an rtx that says how long
+   they are.  LEN_TYPE is the type of the expression that was used to
+   calculate it.
+
+   If EQUALITY_ONLY is true, it means we don't have to return the tri-state
+   value of a normal memcmp call, instead we can just compare for equality.
+   If FORCE_LIBCALL is true, we should emit a call to memcmp rather than
+   returning NULL_RTX.
+
+   Optionally, the caller can pass a constfn and associated data in Y_CFN
+   and Y_CFN_DATA. describing that the second operand being compared is a
+   known constant and how to obtain its data.
+   Return the result of the comparison, or NULL_RTX if we failed to
+   perform the operation.  */
+
+rtx
+emit_block_cmp_hints (rtx x, rtx y, rtx len, tree len_type, rtx target,
+		      bool equality_only, by_pieces_constfn y_cfn,
+		      void *y_cfndata)
+{
+  rtx result = 0;
+
+  if (CONST_INT_P (len) && INTVAL (len) == 0)
+    return const0_rtx;
+
+  gcc_assert (MEM_P (x) && MEM_P (y));
+  unsigned int align = MIN (MEM_ALIGN (x), MEM_ALIGN (y));
+  gcc_assert (align >= BITS_PER_UNIT);
+
+  x = adjust_address (x, BLKmode, 0);
+  y = adjust_address (y, BLKmode, 0);
+
+  if (equality_only
+      && CONST_INT_P (len)
+      && can_do_by_pieces (INTVAL (len), align, COMPARE_BY_PIECES))
+    result = compare_by_pieces (x, y, INTVAL (len), target, align,
+				y_cfn, y_cfndata);
+  else
+    result = emit_block_cmp_via_cmpmem (x, y, len, len_type, target, align);
+
+  return result;
 }
 
 /* Copy all or part of a value X into registers starting at REGNO.
@@ -1667,19 +2176,22 @@ emit_group_load_1 (rtx *tmps, rtx dst, rtx orig_src, tree type, int ssize)
 	{
 	  unsigned int slen = GET_MODE_SIZE (GET_MODE (src));
 	  unsigned int slen0 = GET_MODE_SIZE (GET_MODE (XEXP (src, 0)));
+	  unsigned int elt = bytepos / slen0;
+	  unsigned int subpos = bytepos % slen0;
 
-	  if ((bytepos == 0 && bytelen == slen0)
-	      || (bytepos != 0 && bytepos + bytelen <= slen))
+	  if (subpos + bytelen <= slen0)
 	    {
 	      /* The following assumes that the concatenated objects all
 		 have the same size.  In this case, a simple calculation
 		 can be used to determine the object and the bit field
 		 to be extracted.  */
-	      tmps[i] = XEXP (src, bytepos / slen0);
-	      if (! CONSTANT_P (tmps[i])
-		  && (!REG_P (tmps[i]) || GET_MODE (tmps[i]) != mode))
+	      tmps[i] = XEXP (src, elt);
+	      if (subpos != 0
+		  || subpos + bytelen != slen0
+		  || (!CONSTANT_P (tmps[i])
+		      && (!REG_P (tmps[i]) || GET_MODE (tmps[i]) != mode)))
 		tmps[i] = extract_bit_field (tmps[i], bytelen * BITS_PER_UNIT,
-					     (bytepos % slen0) * BITS_PER_UNIT,
+					     subpos * BITS_PER_UNIT,
 					     1, NULL_RTX, mode, mode, false);
 	    }
 	  else
@@ -2083,7 +2595,7 @@ maybe_emit_group_store (rtx x, tree type)
 
    This is used on targets that return BLKmode values in registers.  */
 
-void
+static void
 copy_blkmode_from_reg (rtx target, rtx srcreg, tree type)
 {
   unsigned HOST_WIDE_INT bytes = int_size_in_bytes (type);
@@ -2400,308 +2912,6 @@ get_def_for_expr_class (tree name, enum tree_code_class tclass)
   return def_stmt;
 }
 
-
-/* Determine whether the LEN bytes generated by CONSTFUN can be
-   stored to memory using several move instructions.  CONSTFUNDATA is
-   a pointer which will be passed as argument in every CONSTFUN call.
-   ALIGN is maximum alignment we can assume.  MEMSETP is true if this is
-   a memset operation and false if it's a copy of a constant string.
-   Return nonzero if a call to store_by_pieces should succeed.  */
-
-int
-can_store_by_pieces (unsigned HOST_WIDE_INT len,
-		     rtx (*constfun) (void *, HOST_WIDE_INT, machine_mode),
-		     void *constfundata, unsigned int align, bool memsetp)
-{
-  unsigned HOST_WIDE_INT l;
-  unsigned int max_size;
-  HOST_WIDE_INT offset = 0;
-  machine_mode mode;
-  enum insn_code icode;
-  int reverse;
-  /* cst is set but not used if LEGITIMATE_CONSTANT doesn't use it.  */
-  rtx cst ATTRIBUTE_UNUSED;
-
-  if (len == 0)
-    return 1;
-
-  if (!targetm.use_by_pieces_infrastructure_p (len, align,
-					       memsetp
-						 ? SET_BY_PIECES
-						 : STORE_BY_PIECES,
-					       optimize_insn_for_speed_p ()))
-    return 0;
-
-  align = alignment_for_piecewise_move (STORE_MAX_PIECES, align);
-
-  /* We would first store what we can in the largest integer mode, then go to
-     successively smaller modes.  */
-
-  for (reverse = 0;
-       reverse <= (HAVE_PRE_DECREMENT || HAVE_POST_DECREMENT);
-       reverse++)
-    {
-      l = len;
-      max_size = STORE_MAX_PIECES + 1;
-      while (max_size > 1 && l > 0)
-	{
-	  mode = widest_int_mode_for_size (max_size);
-
-	  if (mode == VOIDmode)
-	    break;
-
-	  icode = optab_handler (mov_optab, mode);
-	  if (icode != CODE_FOR_nothing
-	      && align >= GET_MODE_ALIGNMENT (mode))
-	    {
-	      unsigned int size = GET_MODE_SIZE (mode);
-
-	      while (l >= size)
-		{
-		  if (reverse)
-		    offset -= size;
-
-		  cst = (*constfun) (constfundata, offset, mode);
-		  if (!targetm.legitimate_constant_p (mode, cst))
-		    return 0;
-
-		  if (!reverse)
-		    offset += size;
-
-		  l -= size;
-		}
-	    }
-
-	  max_size = GET_MODE_SIZE (mode);
-	}
-
-      /* The code above should have handled everything.  */
-      gcc_assert (!l);
-    }
-
-  return 1;
-}
-
-/* Generate several move instructions to store LEN bytes generated by
-   CONSTFUN to block TO.  (A MEM rtx with BLKmode).  CONSTFUNDATA is a
-   pointer which will be passed as argument in every CONSTFUN call.
-   ALIGN is maximum alignment we can assume.  MEMSETP is true if this is
-   a memset operation and false if it's a copy of a constant string.
-   If ENDP is 0 return to, if ENDP is 1 return memory at the end ala
-   mempcpy, and if ENDP is 2 return memory the end minus one byte ala
-   stpcpy.  */
-
-rtx
-store_by_pieces (rtx to, unsigned HOST_WIDE_INT len,
-		 rtx (*constfun) (void *, HOST_WIDE_INT, machine_mode),
-		 void *constfundata, unsigned int align, bool memsetp, int endp)
-{
-  machine_mode to_addr_mode = get_address_mode (to);
-  struct store_by_pieces_d data;
-
-  if (len == 0)
-    {
-      gcc_assert (endp != 2);
-      return to;
-    }
-
-  gcc_assert (targetm.use_by_pieces_infrastructure_p
-		(len, align,
-		 memsetp
-		   ? SET_BY_PIECES
-		   : STORE_BY_PIECES,
-		 optimize_insn_for_speed_p ()));
-
-  data.constfun = constfun;
-  data.constfundata = constfundata;
-  data.len = len;
-  data.to = to;
-  store_by_pieces_1 (&data, align);
-  if (endp)
-    {
-      rtx to1;
-
-      gcc_assert (!data.reverse);
-      if (data.autinc_to)
-	{
-	  if (endp == 2)
-	    {
-	      if (HAVE_POST_INCREMENT && data.explicit_inc_to > 0)
-		emit_insn (gen_add2_insn (data.to_addr, constm1_rtx));
-	      else
-		data.to_addr = copy_to_mode_reg (to_addr_mode,
-						 plus_constant (to_addr_mode,
-								data.to_addr,
-								-1));
-	    }
-	  to1 = adjust_automodify_address (data.to, QImode, data.to_addr,
-					   data.offset);
-	}
-      else
-	{
-	  if (endp == 2)
-	    --data.offset;
-	  to1 = adjust_address (data.to, QImode, data.offset);
-	}
-      return to1;
-    }
-  else
-    return data.to;
-}
-
-/* Generate several move instructions to clear LEN bytes of block TO.  (A MEM
-   rtx with BLKmode).  ALIGN is maximum alignment we can assume.  */
-
-static void
-clear_by_pieces (rtx to, unsigned HOST_WIDE_INT len, unsigned int align)
-{
-  struct store_by_pieces_d data;
-
-  if (len == 0)
-    return;
-
-  data.constfun = clear_by_pieces_1;
-  data.constfundata = NULL;
-  data.len = len;
-  data.to = to;
-  store_by_pieces_1 (&data, align);
-}
-
-/* Callback routine for clear_by_pieces.
-   Return const0_rtx unconditionally.  */
-
-static rtx
-clear_by_pieces_1 (void *data ATTRIBUTE_UNUSED,
-		   HOST_WIDE_INT offset ATTRIBUTE_UNUSED,
-		   machine_mode mode ATTRIBUTE_UNUSED)
-{
-  return const0_rtx;
-}
-
-/* Subroutine of clear_by_pieces and store_by_pieces.
-   Generate several move instructions to store LEN bytes of block TO.  (A MEM
-   rtx with BLKmode).  ALIGN is maximum alignment we can assume.  */
-
-static void
-store_by_pieces_1 (struct store_by_pieces_d *data ATTRIBUTE_UNUSED,
-		   unsigned int align ATTRIBUTE_UNUSED)
-{
-  machine_mode to_addr_mode = get_address_mode (data->to);
-  rtx to_addr = XEXP (data->to, 0);
-  unsigned int max_size = STORE_MAX_PIECES + 1;
-  enum insn_code icode;
-
-  data->offset = 0;
-  data->to_addr = to_addr;
-  data->autinc_to
-    = (GET_CODE (to_addr) == PRE_INC || GET_CODE (to_addr) == PRE_DEC
-       || GET_CODE (to_addr) == POST_INC || GET_CODE (to_addr) == POST_DEC);
-
-  data->explicit_inc_to = 0;
-  data->reverse
-    = (GET_CODE (to_addr) == PRE_DEC || GET_CODE (to_addr) == POST_DEC);
-  if (data->reverse)
-    data->offset = data->len;
-
-  /* If storing requires more than two move insns,
-     copy addresses to registers (to make displacements shorter)
-     and use post-increment if available.  */
-  if (!data->autinc_to
-      && move_by_pieces_ninsns (data->len, align, max_size) > 2)
-    {
-      /* Determine the main mode we'll be using.
-	 MODE might not be used depending on the definitions of the
-	 USE_* macros below.  */
-      machine_mode mode ATTRIBUTE_UNUSED
-	= widest_int_mode_for_size (max_size);
-
-      if (USE_STORE_PRE_DECREMENT (mode) && data->reverse && ! data->autinc_to)
-	{
-	  data->to_addr = copy_to_mode_reg (to_addr_mode,
-					    plus_constant (to_addr_mode,
-							   to_addr,
-							   data->len));
-	  data->autinc_to = 1;
-	  data->explicit_inc_to = -1;
-	}
-
-      if (USE_STORE_POST_INCREMENT (mode) && ! data->reverse
-	  && ! data->autinc_to)
-	{
-	  data->to_addr = copy_to_mode_reg (to_addr_mode, to_addr);
-	  data->autinc_to = 1;
-	  data->explicit_inc_to = 1;
-	}
-
-      if ( !data->autinc_to && CONSTANT_P (to_addr))
-	data->to_addr = copy_to_mode_reg (to_addr_mode, to_addr);
-    }
-
-  align = alignment_for_piecewise_move (STORE_MAX_PIECES, align);
-
-  /* First store what we can in the largest integer mode, then go to
-     successively smaller modes.  */
-
-  while (max_size > 1 && data->len > 0)
-    {
-      machine_mode mode = widest_int_mode_for_size (max_size);
-
-      if (mode == VOIDmode)
-	break;
-
-      icode = optab_handler (mov_optab, mode);
-      if (icode != CODE_FOR_nothing && align >= GET_MODE_ALIGNMENT (mode))
-	store_by_pieces_2 (GEN_FCN (icode), mode, data);
-
-      max_size = GET_MODE_SIZE (mode);
-    }
-
-  /* The code above should have handled everything.  */
-  gcc_assert (!data->len);
-}
-
-/* Subroutine of store_by_pieces_1.  Store as many bytes as appropriate
-   with move instructions for mode MODE.  GENFUN is the gen_... function
-   to make a move insn for that mode.  DATA has all the other info.  */
-
-static void
-store_by_pieces_2 (insn_gen_fn genfun, machine_mode mode,
-		   struct store_by_pieces_d *data)
-{
-  unsigned int size = GET_MODE_SIZE (mode);
-  rtx to1, cst;
-
-  while (data->len >= size)
-    {
-      if (data->reverse)
-	data->offset -= size;
-
-      if (data->autinc_to)
-	to1 = adjust_automodify_address (data->to, mode, data->to_addr,
-					 data->offset);
-      else
-	to1 = adjust_address (data->to, mode, data->offset);
-
-      if (HAVE_PRE_DECREMENT && data->explicit_inc_to < 0)
-	emit_insn (gen_add2_insn (data->to_addr,
-				  gen_int_mode (-(HOST_WIDE_INT) size,
-						GET_MODE (data->to_addr))));
-
-      cst = (*data->constfun) (data->constfundata, data->offset, mode);
-      emit_insn ((*genfun) (to1, cst));
-
-      if (HAVE_POST_INCREMENT && data->explicit_inc_to > 0)
-	emit_insn (gen_add2_insn (data->to_addr,
-				  gen_int_mode (size,
-						GET_MODE (data->to_addr))));
-
-      if (! data->reverse)
-	data->offset += size;
-
-      data->len -= size;
-    }
-}
-
 /* Write zeros through the storage of OBJECT.  If OBJECT has BLKmode, SIZE is
    its length in bytes.  */
 
@@ -2785,85 +2995,26 @@ set_storage_via_libcall (rtx object, rtx size, rtx val, bool tailcall)
 {
   tree call_expr, fn, object_tree, size_tree, val_tree;
   machine_mode size_mode;
-  rtx retval;
-
-  /* Emit code to copy OBJECT and SIZE into new pseudos.  We can then
-     place those into new pseudos into a VAR_DECL and use them later.  */
 
   object = copy_addr_to_reg (XEXP (object, 0));
+  object_tree = make_tree (ptr_type_node, object);
+
+  if (!CONST_INT_P (val))
+    val = convert_to_mode (TYPE_MODE (integer_type_node), val, 1);
+  val_tree = make_tree (integer_type_node, val);
 
   size_mode = TYPE_MODE (sizetype);
   size = convert_to_mode (size_mode, size, 1);
   size = copy_to_mode_reg (size_mode, size);
-
-  /* It is incorrect to use the libcall calling conventions to call
-     memset in this context.  This could be a user call to memset and
-     the user may wish to examine the return value from memset.  For
-     targets where libcalls and normal calls have different conventions
-     for returning pointers, we could end up generating incorrect code.  */
-
-  object_tree = make_tree (ptr_type_node, object);
-  if (!CONST_INT_P (val))
-    val = convert_to_mode (TYPE_MODE (integer_type_node), val, 1);
   size_tree = make_tree (sizetype, size);
-  val_tree = make_tree (integer_type_node, val);
 
-  fn = clear_storage_libcall_fn (true);
+  /* It is incorrect to use the libcall calling conventions for calls to
+     memset because it can be provided by the user.  */
+  fn = builtin_decl_implicit (BUILT_IN_MEMSET);
   call_expr = build_call_expr (fn, 3, object_tree, val_tree, size_tree);
   CALL_EXPR_TAILCALL (call_expr) = tailcall;
 
-  retval = expand_normal (call_expr);
-
-  return retval;
-}
-
-/* A subroutine of set_storage_via_libcall.  Create the tree node
-   for the function we use for block clears.  */
-
-tree block_clear_fn;
-
-void
-init_block_clear_fn (const char *asmspec)
-{
-  if (!block_clear_fn)
-    {
-      tree fn, args;
-
-      fn = get_identifier ("memset");
-      args = build_function_type_list (ptr_type_node, ptr_type_node,
-				       integer_type_node, sizetype,
-				       NULL_TREE);
-
-      fn = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL, fn, args);
-      DECL_EXTERNAL (fn) = 1;
-      TREE_PUBLIC (fn) = 1;
-      DECL_ARTIFICIAL (fn) = 1;
-      TREE_NOTHROW (fn) = 1;
-      DECL_VISIBILITY (fn) = VISIBILITY_DEFAULT;
-      DECL_VISIBILITY_SPECIFIED (fn) = 1;
-
-      block_clear_fn = fn;
-    }
-
-  if (asmspec)
-    set_user_assembler_name (block_clear_fn, asmspec);
-}
-
-static tree
-clear_storage_libcall_fn (int for_call)
-{
-  static bool emitted_extern;
-
-  if (!block_clear_fn)
-    init_block_clear_fn (NULL);
-
-  if (for_call && !emitted_extern)
-    {
-      emitted_extern = true;
-      make_decl_rtl (block_clear_fn);
-    }
-
-  return block_clear_fn;
+  return expand_call (call_expr, NULL_RTX, false);
 }
 
 /* Expand a setmem pattern; return true if successful.  */
@@ -4619,7 +4770,7 @@ optimize_bitfield_assignment_op (unsigned HOST_WIDE_INT bitsize,
       binop = code == BIT_IOR_EXPR ? ior_optab : xor_optab;
       if (bitpos + bitsize != str_bitsize)
 	{
-	  rtx mask = gen_int_mode (((unsigned HOST_WIDE_INT) 1 << bitsize) - 1,
+	  rtx mask = gen_int_mode ((HOST_WIDE_INT_1U << bitsize) - 1,
 				   str_mode);
 	  value = expand_and (str_mode, value, mask, NULL_RTX);
 	}
@@ -4683,7 +4834,7 @@ get_bit_range (unsigned HOST_WIDE_INT *bitstart,
       int unsignedp, reversep, volatilep = 0;
       get_inner_reference (TREE_OPERAND (exp, 0), &rbitsize, &rbitpos,
 			   &roffset, &rmode, &unsignedp, &reversep,
-			   &volatilep, false);
+			   &volatilep);
       if ((rbitpos % BITS_PER_UNIT) != 0)
 	{
 	  *bitstart = *bitend = 0;
@@ -4839,14 +4990,13 @@ expand_assignment (tree to, tree from, bool nontemporal)
 
       push_temp_slots ();
       tem = get_inner_reference (to, &bitsize, &bitpos, &offset, &mode1,
-				 &unsignedp, &reversep, &volatilep, true);
+				 &unsignedp, &reversep, &volatilep);
 
       /* Make sure bitpos is not negative, it can wreak havoc later.  */
       if (bitpos < 0)
 	{
 	  gcc_assert (offset == NULL_TREE);
-	  offset = size_int (bitpos >> (BITS_PER_UNIT == 8
-					? 3 : exact_log2 (BITS_PER_UNIT)));
+	  offset = size_int (bitpos >> LOG2_BITS_PER_UNIT);
 	  bitpos &= BITS_PER_UNIT - 1;
 	}
 
@@ -4990,7 +5140,9 @@ expand_assignment (tree to, tree from, bool nontemporal)
 					   from_mode, 0);
 		  rtx from_imag
 		    = simplify_gen_subreg (to_mode, XEXP (result, 1),
-					   from_mode, 1);
+					   from_mode, 0);
+		  if (!from_real || !from_imag)
+		    goto concat_store_slow;
 		  emit_move_insn (XEXP (to_rtx, 0), from_real);
 		  emit_move_insn (XEXP (to_rtx, 1), from_imag);
 		}
@@ -4999,14 +5151,35 @@ expand_assignment (tree to, tree from, bool nontemporal)
 		  rtx from_rtx
 		    = simplify_gen_subreg (GET_MODE (to_rtx), result,
 					   TYPE_MODE (TREE_TYPE (from)), 0);
-		  emit_move_insn (XEXP (to_rtx, 0),
-				  read_complex_part (from_rtx, false));
-		  emit_move_insn (XEXP (to_rtx, 1),
-				  read_complex_part (from_rtx, true));
+		  if (from_rtx)
+		    {
+		      emit_move_insn (XEXP (to_rtx, 0),
+				      read_complex_part (from_rtx, false));
+		      emit_move_insn (XEXP (to_rtx, 1),
+				      read_complex_part (from_rtx, true));
+		    }
+		  else
+		    {
+		      machine_mode to_mode
+			= GET_MODE_INNER (GET_MODE (to_rtx));
+		      rtx from_real
+			= simplify_gen_subreg (to_mode, result,
+					       TYPE_MODE (TREE_TYPE (from)),
+					       0);
+		      rtx from_imag
+			= simplify_gen_subreg (to_mode, result,
+					       TYPE_MODE (TREE_TYPE (from)),
+					       GET_MODE_SIZE (to_mode));
+		      if (!from_real || !from_imag)
+			goto concat_store_slow;
+		      emit_move_insn (XEXP (to_rtx, 0), from_real);
+		      emit_move_insn (XEXP (to_rtx, 1), from_imag);
+		    }
 		}
 	    }
 	  else
 	    {
+	    concat_store_slow:;
 	      rtx temp = assign_stack_temp (GET_MODE (to_rtx),
 					    GET_MODE_SIZE (GET_MODE (to_rtx)));
 	      write_complex_part (temp, XEXP (to_rtx, 0), false);
@@ -5062,7 +5235,7 @@ expand_assignment (tree to, tree from, bool nontemporal)
   if (TREE_CODE (from) == CALL_EXPR && ! aggregate_value_p (from, from)
       && COMPLETE_TYPE_P (TREE_TYPE (from))
       && TREE_CODE (TYPE_SIZE (TREE_TYPE (from))) == INTEGER_CST
-      && ! (((TREE_CODE (to) == VAR_DECL
+      && ! (((VAR_P (to)
 	      || TREE_CODE (to) == PARM_DECL
 	      || TREE_CODE (to) == RESULT_DECL)
 	     && REG_P (DECL_RTL (to)))
@@ -5179,12 +5352,7 @@ expand_assignment (tree to, tree from, bool nontemporal)
       size = expr_size (from);
       from_rtx = expand_normal (from);
 
-      emit_library_call (memmove_libfunc, LCT_NORMAL,
-			 VOIDmode, 3, XEXP (to_rtx, 0), Pmode,
-			 XEXP (from_rtx, 0), Pmode,
-			 convert_to_mode (TYPE_MODE (sizetype),
-					  size, TYPE_UNSIGNED (sizetype)),
-			 TYPE_MODE (sizetype));
+      emit_block_move_via_libcall (XEXP (to_rtx, 0), XEXP (from_rtx, 0), size);
 
       preserve_temp_slots (to_rtx);
       pop_temp_slots ();
@@ -5451,8 +5619,21 @@ store_expr_with_bounds (tree exp, rtx target, int call_param_p,
   if (CONSTANT_P (temp) && GET_MODE (temp) == VOIDmode
       && TREE_CODE (exp) != ERROR_MARK
       && GET_MODE (target) != TYPE_MODE (TREE_TYPE (exp)))
-    temp = convert_modes (GET_MODE (target), TYPE_MODE (TREE_TYPE (exp)),
-			  temp, TYPE_UNSIGNED (TREE_TYPE (exp)));
+    {
+      if (GET_MODE_CLASS (GET_MODE (target))
+	  != GET_MODE_CLASS (TYPE_MODE (TREE_TYPE (exp)))
+	  && GET_MODE_BITSIZE (GET_MODE (target))
+	     == GET_MODE_BITSIZE (TYPE_MODE (TREE_TYPE (exp))))
+	{
+	  rtx t = simplify_gen_subreg (GET_MODE (target), temp,
+				       TYPE_MODE (TREE_TYPE (exp)), 0);
+	  if (t)
+	    temp = t;
+	}
+      if (GET_MODE (temp) == VOIDmode)
+	temp = convert_modes (GET_MODE (target), TYPE_MODE (TREE_TYPE (exp)),
+			      temp, TYPE_UNSIGNED (TREE_TYPE (exp)));
+    }
 
   /* If value was not generated in the target, store it there.
      Convert the value to TARGET's type first if necessary and emit the
@@ -6072,8 +6253,7 @@ store_constructor (tree exp, rtx target, int cleared, HOST_WIDE_INT size,
 	   register whose mode size isn't equal to SIZE since
 	   clear_storage can't handle this case.  */
 	else if (size > 0
-		 && (((int)vec_safe_length (CONSTRUCTOR_ELTS (exp))
-		      != fields_length (type))
+		 && (((int) CONSTRUCTOR_NELTS (exp) != fields_length (type))
 		     || mostly_zeros_p (exp))
 		 && (!REG_P (target)
 		     || ((HOST_WIDE_INT) GET_MODE_SIZE (GET_MODE (target))
@@ -6846,27 +7026,13 @@ store_field (rtx target, HOST_WIDE_INT bitsize, HOST_WIDE_INT bitpos,
 
    If the field describes a variable-sized object, *PMODE is set to
    BLKmode and *PBITSIZE is set to -1.  An access cannot be made in
-   this case, but the address of the object can be found.
-
-   If KEEP_ALIGNING is true and the target is STRICT_ALIGNMENT, we don't
-   look through nodes that serve as markers of a greater alignment than
-   the one that can be deduced from the expression.  These nodes make it
-   possible for front-ends to prevent temporaries from being created by
-   the middle-end on alignment considerations.  For that purpose, the
-   normal operating mode at high-level is to always pass FALSE so that
-   the ultimate containing object is really returned; moreover, the
-   associated predicate handled_component_p will always return TRUE
-   on these nodes, thus indicating that they are essentially handled
-   by get_inner_reference.  TRUE should only be passed when the caller
-   is scanning the expression in order to build another representation
-   and specifically knows how to handle these nodes; as such, this is
-   the normal operating mode in the RTL expanders.  */
+   this case, but the address of the object can be found.  */
 
 tree
 get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
 		     HOST_WIDE_INT *pbitpos, tree *poffset,
 		     machine_mode *pmode, int *punsignedp,
-		     int *preversep, int *pvolatilep, bool keep_aligning)
+		     int *preversep, int *pvolatilep)
 {
   tree size_tree = 0;
   machine_mode mode = VOIDmode;
@@ -6997,14 +7163,6 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
 	  break;
 
 	case VIEW_CONVERT_EXPR:
-	  if (keep_aligning && STRICT_ALIGNMENT
-	      && (TYPE_ALIGN (TREE_TYPE (exp))
-	       > TYPE_ALIGN (TREE_TYPE (TREE_OPERAND (exp, 0))))
-	      && (TYPE_ALIGN (TREE_TYPE (TREE_OPERAND (exp, 0)))
-		  < BIGGEST_ALIGNMENT)
-	      && (TYPE_ALIGN_OK (TREE_TYPE (exp))
-		  || TYPE_ALIGN_OK (TREE_TYPE (TREE_OPERAND (exp, 0)))))
-	    goto done;
 	  break;
 
 	case MEM_REF:
@@ -7015,7 +7173,7 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
 	      if (!integer_zerop (off))
 		{
 		  offset_int boff, coff = mem_ref_offset (exp);
-		  boff = wi::lshift (coff, LOG2_BITS_PER_UNIT);
+		  boff = coff << LOG2_BITS_PER_UNIT;
 		  bit_offset += boff;
 		}
 	      exp = TREE_OPERAND (TREE_OPERAND (exp, 0), 0);
@@ -7041,7 +7199,7 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
     {
       offset_int tem = wi::sext (wi::to_offset (offset),
 				 TYPE_PRECISION (sizetype));
-      tem = wi::lshift (tem, LOG2_BITS_PER_UNIT);
+      tem <<= LOG2_BITS_PER_UNIT;
       tem += bit_offset;
       if (wi::fits_shwi_p (tem))
 	{
@@ -7061,7 +7219,7 @@ get_inner_reference (tree exp, HOST_WIDE_INT *pbitsize,
 	  /* TEM is the bitpos rounded to BITS_PER_UNIT towards -Inf.
 	     Subtract it to BIT_OFFSET and add it (scaled) to OFFSET.  */
 	  bit_offset -= tem;
-	  tem = wi::arshift (tem, LOG2_BITS_PER_UNIT);
+	  tem >>= LOG2_BITS_PER_UNIT;
 	  offset = size_binop (PLUS_EXPR, offset,
 			       wide_int_to_tree (sizetype, tem));
 	}
@@ -7485,7 +7643,7 @@ highest_pow2_factor (const_tree exp)
   int trailing_zeros = tree_ctz (exp);
   if (trailing_zeros >= HOST_BITS_PER_WIDE_INT)
     return BIGGEST_ALIGNMENT;
-  ret = (unsigned HOST_WIDE_INT) 1 << trailing_zeros;
+  ret = HOST_WIDE_INT_1U << trailing_zeros;
   if (ret > BIGGEST_ALIGNMENT)
     return BIGGEST_ALIGNMENT;
   return ret;
@@ -7581,10 +7739,6 @@ expand_operands (tree exp0, tree exp1, rtx target, rtx *op0, rtx *op1,
     }
   else
     {
-      /* If we need to preserve evaluation order, copy exp0 into its own
-	 temporary variable so that it can't be clobbered by exp1.  */
-      if (flag_evaluation_order && TREE_SIDE_EFFECTS (exp1))
-	exp0 = save_expr (exp0);
       *op0 = expand_expr (exp0, target, VOIDmode, modifier);
       *op1 = expand_expr (exp1, NULL_RTX, VOIDmode, modifier);
     }
@@ -7723,7 +7877,7 @@ expand_expr_addr_expr_1 (tree exp, rtx target, machine_mode tmode,
 	 they won't change the final object whose address will be returned
 	 (they actually exist only for that purpose).  */
       inner = get_inner_reference (exp, &bitsize, &bitpos, &offset, &mode1,
-				   &unsignedp, &reversep, &volatilep, false);
+				   &unsignedp, &reversep, &volatilep);
       break;
     }
 
@@ -7738,7 +7892,7 @@ expand_expr_addr_expr_1 (tree exp, rtx target, machine_mode tmode,
     {
       inner = copy_node (inner);
       TREE_TYPE (inner) = copy_node (TREE_TYPE (inner));
-      TYPE_ALIGN (TREE_TYPE (inner)) = TYPE_ALIGN (TREE_TYPE (exp));
+      SET_TYPE_ALIGN (TREE_TYPE (inner), TYPE_ALIGN (TREE_TYPE (exp)));
       TYPE_USER_ALIGN (TREE_TYPE (inner)) = 1;
     }
   result = expand_expr_addr_expr_1 (inner, subtarget, tmode, modifier, as);
@@ -8009,6 +8163,15 @@ expand_cond_expr_using_cmove (tree treeop0 ATTRIBUTE_UNUSED,
   int unsignedp = TYPE_UNSIGNED (type);
   machine_mode mode = TYPE_MODE (type);
   machine_mode orig_mode = mode;
+  static bool expanding_cond_expr_using_cmove = false;
+
+  /* Conditional move expansion can end up TERing two operands which,
+     when recursively hitting conditional expressions can result in
+     exponential behavior if the cmove expansion ultimatively fails.
+     It's hardly profitable to TER a cmove into a cmove so avoid doing
+     that by failing early if we end up recursing.  */
+  if (expanding_cond_expr_using_cmove)
+    return NULL_RTX;
 
   /* If we cannot do a conditional move on the mode, try doing it
      with the promoted mode. */
@@ -8022,6 +8185,7 @@ expand_cond_expr_using_cmove (tree treeop0 ATTRIBUTE_UNUSED,
   else
     temp = assign_temp (type, 0, 1);
 
+  expanding_cond_expr_using_cmove = true;
   start_sequence ();
   expand_operands (treeop1, treeop2,
 		   temp, &op1, &op2, EXPAND_NORMAL);
@@ -8056,6 +8220,7 @@ expand_cond_expr_using_cmove (tree treeop0 ATTRIBUTE_UNUSED,
       if (comparison_mode == VOIDmode)
 	comparison_mode = TYPE_MODE (TREE_TYPE (treeop0));
     }
+  expanding_cond_expr_using_cmove = false;
 
   if (GET_MODE (op1) != mode)
     op1 = gen_lowpart (mode, op1);
@@ -8238,7 +8403,8 @@ expand_expr_real_2 (sepops ops, rtx target, machine_mode tmode,
 	}
 
       else if (modifier == EXPAND_INITIALIZER)
-	op0 = gen_rtx_fmt_e (unsignedp ? ZERO_EXTEND : SIGN_EXTEND, mode, op0);
+	op0 = gen_rtx_fmt_e (TYPE_UNSIGNED (TREE_TYPE (treeop0))
+			     ? ZERO_EXTEND : SIGN_EXTEND, mode, op0);
 
       else if (target == 0)
 	op0 = convert_to_mode (mode, op0,
@@ -8306,6 +8472,7 @@ expand_expr_real_2 (sepops ops, rtx target, machine_mode tmode,
 	 offset to have matching modes.  */
       else if (TYPE_PRECISION (sizetype) > TYPE_PRECISION (type))
 	treeop1 = fold_convert_loc (loc, type, treeop1);
+      /* FALLTHRU */
 
     case PLUS_EXPR:
       /* If we are adding a constant, a VAR_DECL that is sp, fp, or ap, and
@@ -8321,7 +8488,7 @@ expand_expr_real_2 (sepops ops, rtx target, machine_mode tmode,
 
       if (TREE_CODE (treeop0) == PLUS_EXPR
 	  && TREE_CODE (TREE_OPERAND (treeop0, 1)) == INTEGER_CST
-	  && TREE_CODE (treeop1) == VAR_DECL
+	  && VAR_P (treeop1)
 	  && (DECL_RTL (treeop1) == frame_pointer_rtx
 	      || DECL_RTL (treeop1) == stack_pointer_rtx
 	      || DECL_RTL (treeop1) == arg_pointer_rtx))
@@ -8695,26 +8862,62 @@ expand_expr_real_2 (sepops ops, rtx target, machine_mode tmode,
       expand_operands (treeop0, treeop1, subtarget, &op0, &op1, EXPAND_NORMAL);
       return REDUCE_BIT_FIELD (expand_mult (mode, op0, op1, target, unsignedp));
 
+    case TRUNC_MOD_EXPR:
+    case FLOOR_MOD_EXPR:
+    case CEIL_MOD_EXPR:
+    case ROUND_MOD_EXPR:
+
     case TRUNC_DIV_EXPR:
     case FLOOR_DIV_EXPR:
     case CEIL_DIV_EXPR:
     case ROUND_DIV_EXPR:
     case EXACT_DIV_EXPR:
-      /* If this is a fixed-point operation, then we cannot use the code
-	 below because "expand_divmod" doesn't support sat/no-sat fixed-point
-         divisions.   */
-      if (ALL_FIXED_POINT_MODE_P (mode))
-	goto binop;
+     {
+       /* If this is a fixed-point operation, then we cannot use the code
+	  below because "expand_divmod" doesn't support sat/no-sat fixed-point
+	  divisions.   */
+       if (ALL_FIXED_POINT_MODE_P (mode))
+	 goto binop;
 
-      if (modifier == EXPAND_STACK_PARM)
-	target = 0;
-      /* Possible optimization: compute the dividend with EXPAND_SUM
-	 then if the divisor is constant can optimize the case
-	 where some terms of the dividend have coeffs divisible by it.  */
-      expand_operands (treeop0, treeop1,
-		       subtarget, &op0, &op1, EXPAND_NORMAL);
-      return expand_divmod (0, code, mode, op0, op1, target, unsignedp);
-
+       if (modifier == EXPAND_STACK_PARM)
+	 target = 0;
+       /* Possible optimization: compute the dividend with EXPAND_SUM
+	  then if the divisor is constant can optimize the case
+	  where some terms of the dividend have coeffs divisible by it.  */
+       expand_operands (treeop0, treeop1,
+			subtarget, &op0, &op1, EXPAND_NORMAL);
+       bool mod_p = code == TRUNC_MOD_EXPR || code == FLOOR_MOD_EXPR
+		    || code == CEIL_MOD_EXPR || code == ROUND_MOD_EXPR;
+       if (SCALAR_INT_MODE_P (mode)
+	   && optimize >= 2
+	   && get_range_pos_neg (treeop0) == 1
+	   && get_range_pos_neg (treeop1) == 1)
+	 {
+	   /* If both arguments are known to be positive when interpreted
+	      as signed, we can expand it as both signed and unsigned
+	      division or modulo.  Choose the cheaper sequence in that case.  */
+	   bool speed_p = optimize_insn_for_speed_p ();
+	   do_pending_stack_adjust ();
+	   start_sequence ();
+	   rtx uns_ret = expand_divmod (mod_p, code, mode, op0, op1, target, 1);
+	   rtx_insn *uns_insns = get_insns ();
+	   end_sequence ();
+	   start_sequence ();
+	   rtx sgn_ret = expand_divmod (mod_p, code, mode, op0, op1, target, 0);
+	   rtx_insn *sgn_insns = get_insns ();
+	   end_sequence ();
+	   unsigned uns_cost = seq_cost (uns_insns, speed_p);
+	   unsigned sgn_cost = seq_cost (sgn_insns, speed_p);
+	   if (uns_cost < sgn_cost || (uns_cost == sgn_cost && unsignedp))
+	     {
+	       emit_insn (uns_insns);
+	       return uns_ret;
+	     }
+	   emit_insn (sgn_insns);
+	   return sgn_ret;
+	 }
+       return expand_divmod (mod_p, code, mode, op0, op1, target, unsignedp);
+     }
     case RDIV_EXPR:
       goto binop;
 
@@ -8723,16 +8926,6 @@ expand_expr_real_2 (sepops ops, rtx target, machine_mode tmode,
       temp = expand_mult_highpart (mode, op0, op1, target, unsignedp);
       gcc_assert (temp);
       return temp;
-
-    case TRUNC_MOD_EXPR:
-    case FLOOR_MOD_EXPR:
-    case CEIL_MOD_EXPR:
-    case ROUND_MOD_EXPR:
-      if (modifier == EXPAND_STACK_PARM)
-	target = 0;
-      expand_operands (treeop0, treeop1,
-		       subtarget, &op0, &op1, EXPAND_NORMAL);
-      return expand_divmod (1, code, mode, op0, op1, target, unsignedp);
 
     case FIXED_CONVERT_EXPR:
       op0 = expand_normal (treeop0);
@@ -9410,6 +9603,23 @@ expand_expr_real_2 (sepops ops, rtx target, machine_mode tmode,
       target = expand_vec_cond_expr (type, treeop0, treeop1, treeop2, target);
       return target;
 
+    case BIT_INSERT_EXPR:
+      {
+	unsigned bitpos = tree_to_uhwi (treeop2);
+	unsigned bitsize;
+	if (INTEGRAL_TYPE_P (TREE_TYPE (treeop1)))
+	  bitsize = TYPE_PRECISION (TREE_TYPE (treeop1));
+	else
+	  bitsize = tree_to_uhwi (TYPE_SIZE (TREE_TYPE (treeop1)));
+	rtx op0 = expand_normal (treeop0);
+	rtx op1 = expand_normal (treeop1);
+	rtx dst = gen_reg_rtx (mode);
+	emit_move_insn (dst, op0);
+	store_bit_field (dst, bitsize, bitpos, 0, 0,
+			 TYPE_MODE (TREE_TYPE (treeop1)), op1, false);
+	return dst;
+      }
+
     default:
       gcc_unreachable ();
     }
@@ -9483,9 +9693,9 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
     switch (TREE_CODE_LENGTH (code))
       {
 	default:
-	case 3: treeop2 = TREE_OPERAND (exp, 2);
-	case 2: treeop1 = TREE_OPERAND (exp, 1);
-	case 1: treeop0 = TREE_OPERAND (exp, 0);
+	case 3: treeop2 = TREE_OPERAND (exp, 2); /* FALLTHRU */
+	case 2: treeop1 = TREE_OPERAND (exp, 1); /* FALLTHRU */
+	case 1: treeop0 = TREE_OPERAND (exp, 0); /* FALLTHRU */
 	case 0: break;
       }
   ops.code = code;
@@ -9657,7 +9867,7 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
 	  && (TREE_STATIC (exp) || DECL_EXTERNAL (exp)))
 	layout_decl (exp, 0);
 
-      /* ... fall through ...  */
+      /* fall through */
 
     case FUNCTION_DECL:
     case RESULT_DECL:
@@ -9781,10 +9991,9 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
          GET_MODE_PRECISION (TYPE_MODE (type)), we need to extend from
          the former to the latter according to the signedness of the
          type. */
-      temp = immed_wide_int_const (wide_int::from
+      temp = immed_wide_int_const (wi::to_wide
 				   (exp,
-				    GET_MODE_PRECISION (TYPE_MODE (type)),
-				    TYPE_SIGN (type)),
+				    GET_MODE_PRECISION (TYPE_MODE (type))),
 				   TYPE_MODE (type));
       return temp;
 
@@ -9824,6 +10033,19 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
       }
 
     case CONST_DECL:
+      if (modifier == EXPAND_WRITE)
+	{
+	  /* Writing into CONST_DECL is always invalid, but handle it
+	     gracefully.  */
+	  addr_space_t as = TYPE_ADDR_SPACE (TREE_TYPE (exp));
+	  machine_mode address_mode = targetm.addr_space.address_mode (as);
+	  op0 = expand_expr_addr_expr_1 (exp, NULL_RTX, address_mode,
+					 EXPAND_NORMAL, as);
+	  op0 = memory_address_addr_space (mode, op0, as);
+	  temp = gen_rtx_MEM (mode, op0);
+	  set_mem_addr_space (temp, as);
+	  return temp;
+	}
       return expand_expr (DECL_INITIAL (exp), target, VOIDmode, modifier);
 
     case REAL_CST:
@@ -9866,7 +10088,7 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
 	  return original_target;
 	}
 
-      /* ... fall through ...  */
+      /* fall through */
 
     case STRING_CST:
       temp = expand_expr_constant (exp, 1, modifier);
@@ -10111,8 +10333,7 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
 		 && modifier != EXPAND_MEMORY
 		 && TREE_READONLY (array) && ! TREE_SIDE_EFFECTS (array)
 		 && TREE_CODE (index) == INTEGER_CST
-		 && (TREE_CODE (array) == VAR_DECL
-		     || TREE_CODE (array) == CONST_DECL)
+		 && (VAR_P (array) || TREE_CODE (array) == CONST_DECL)
 		 && (init = ctor_for_folding (array)) != error_mark_node)
 	  {
 	    if (init == NULL_TREE)
@@ -10183,7 +10404,8 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
 					    fold_convert_loc (loc, sizetype,
 							      low_bound));
 
-		if (compare_tree_int (index1, TREE_STRING_LENGTH (init)) < 0)
+		if (tree_fits_uhwi_p (index1)
+		    && compare_tree_int (index1, TREE_STRING_LENGTH (init)) < 0)
 		  {
 		    tree type = TREE_TYPE (TREE_TYPE (init));
 		    machine_mode mode = TYPE_MODE (type);
@@ -10233,7 +10455,7 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
 
 		    if (TYPE_UNSIGNED (TREE_TYPE (field)))
 		      {
-			op1 = gen_int_mode (((HOST_WIDE_INT) 1 << bitsize) - 1,
+			op1 = gen_int_mode ((HOST_WIDE_INT_1 << bitsize) - 1,
 					    imode);
 			op0 = expand_and (imode, op0, op1, target);
 		      }
@@ -10263,7 +10485,7 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
 	int reversep, volatilep = 0, must_force_mem;
 	tree tem
 	  = get_inner_reference (exp, &bitsize, &bitpos, &offset, &mode1,
-				 &unsignedp, &reversep, &volatilep, true);
+				 &unsignedp, &reversep, &volatilep);
 	rtx orig_op0, memloc;
 	bool clear_mem_expr = false;
 
@@ -10645,18 +10867,30 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
 	tree fndecl = get_callee_fndecl (exp), attr;
 
 	if (fndecl
+	    /* Don't diagnose the error attribute in thunks, those are
+	       artificially created.  */
+	    && !CALL_FROM_THUNK_P (exp)
 	    && (attr = lookup_attribute ("error",
 					 DECL_ATTRIBUTES (fndecl))) != NULL)
-	  error ("%Kcall to %qs declared with attribute error: %s",
-		 exp, identifier_to_locale (lang_hooks.decl_printable_name (fndecl, 1)),
-		 TREE_STRING_POINTER (TREE_VALUE (TREE_VALUE (attr))));
+	  {
+	    const char *ident = lang_hooks.decl_printable_name (fndecl, 1);
+	    error ("%Kcall to %qs declared with attribute error: %s", exp,
+		   identifier_to_locale (ident),
+		   TREE_STRING_POINTER (TREE_VALUE (TREE_VALUE (attr))));
+	  }
 	if (fndecl
+	    /* Don't diagnose the warning attribute in thunks, those are
+	       artificially created.  */
+	    && !CALL_FROM_THUNK_P (exp)
 	    && (attr = lookup_attribute ("warning",
 					 DECL_ATTRIBUTES (fndecl))) != NULL)
-	  warning_at (tree_nonartificial_location (exp),
-		      0, "%Kcall to %qs declared with attribute warning: %s",
-		      exp, identifier_to_locale (lang_hooks.decl_printable_name (fndecl, 1)),
-		      TREE_STRING_POINTER (TREE_VALUE (TREE_VALUE (attr))));
+	  {
+	    const char *ident = lang_hooks.decl_printable_name (fndecl, 1);
+	    warning_at (tree_nonartificial_location (exp), 0,
+			"%Kcall to %qs declared with attribute warning: %s",
+			exp, identifier_to_locale (ident),
+			TREE_STRING_POINTER (TREE_VALUE (TREE_VALUE (attr))));
+	  }
 
 	/* Check for a built-in function.  */
 	if (fndecl && DECL_BUILT_IN (fndecl))
@@ -10687,7 +10921,7 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
 	int unsignedp, reversep, volatilep = 0;
 	tree tem
 	  = get_inner_reference (treeop0, &bitsize, &bitpos, &offset, &mode1,
-				 &unsignedp, &reversep, &volatilep, true);
+				 &unsignedp, &reversep, &volatilep);
 	rtx orig_op0;
 
 	/* ??? We should work harder and deal with non-zero offsets.  */
@@ -10798,20 +11032,11 @@ expand_expr_real_1 (tree exp, rtx target, machine_mode tmode,
 	{
 	  enum insn_code icode;
 
-	  if (TYPE_ALIGN_OK (type))
-	    {
-	      /* ??? Copying the MEM without substantially changing it might
-		 run afoul of the code handling volatile memory references in
-		 store_expr, which assumes that TARGET is returned unmodified
-		 if it has been used.  */
-	      op0 = copy_rtx (op0);
-	      set_mem_align (op0, MAX (MEM_ALIGN (op0), TYPE_ALIGN (type)));
-	    }
-	  else if (modifier != EXPAND_WRITE
-		   && modifier != EXPAND_MEMORY
-		   && !inner_reference_p
-		   && mode != BLKmode
-		   && MEM_ALIGN (op0) < GET_MODE_ALIGNMENT (mode))
+	  if (modifier != EXPAND_WRITE
+	      && modifier != EXPAND_MEMORY
+	      && !inner_reference_p
+	      && mode != BLKmode
+	      && MEM_ALIGN (op0) < GET_MODE_ALIGNMENT (mode))
 	    {
 	      /* If the target does have special handling for unaligned
 		 loads of mode then use them.  */
@@ -11009,7 +11234,7 @@ is_aligning_offset (const_tree offset, const_tree exp)
       || !tree_fits_uhwi_p (TREE_OPERAND (offset, 1))
       || compare_tree_int (TREE_OPERAND (offset, 1),
 			   BIGGEST_ALIGNMENT / BITS_PER_UNIT) <= 0
-      || exact_log2 (tree_to_uhwi (TREE_OPERAND (offset, 1)) + 1) < 0)
+      || !pow2p_hwi (tree_to_uhwi (TREE_OPERAND (offset, 1)) + 1))
     return 0;
 
   /* Look at the first operand of BIT_AND_EXPR and strip any conversion.
@@ -11056,8 +11281,7 @@ string_constant (tree arg, tree *ptr_offset)
 	{
 	  array = TREE_OPERAND (TREE_OPERAND (arg, 0), 0);
 	  offset = TREE_OPERAND (TREE_OPERAND (arg, 0), 1);
-	  if (TREE_CODE (array) != STRING_CST
-	      && TREE_CODE (array) != VAR_DECL)
+	  if (TREE_CODE (array) != STRING_CST && !VAR_P (array))
 	    return 0;
 
 	  /* Check if the array has a nonzero lower bound.  */
@@ -11081,8 +11305,7 @@ string_constant (tree arg, tree *ptr_offset)
 	  if (TREE_CODE (array) != ADDR_EXPR)
 	    return 0;
 	  array = TREE_OPERAND (array, 0);
-	  if (TREE_CODE (array) != STRING_CST
-	      && TREE_CODE (array) != VAR_DECL)
+	  if (TREE_CODE (array) != STRING_CST && !VAR_P (array))
 	    return 0;
 	}
       else
@@ -11121,8 +11344,7 @@ string_constant (tree arg, tree *ptr_offset)
       *ptr_offset = fold_convert (sizetype, offset);
       return array;
     }
-  else if (TREE_CODE (array) == VAR_DECL
-	   || TREE_CODE (array) == CONST_DECL)
+  else if (VAR_P (array) || TREE_CODE (array) == CONST_DECL)
     {
       int length;
       tree init = ctor_for_folding (array);
@@ -11220,7 +11442,7 @@ do_store_flag (sepops ops, rtx target, machine_mode mode)
     {
       tree ifexp = build2 (ops->code, ops->type, arg0, arg1);
       if (VECTOR_BOOLEAN_TYPE_P (ops->type)
-	  && expand_vec_cmp_expr_p (TREE_TYPE (arg0), ops->type))
+	  && expand_vec_cmp_expr_p (TREE_TYPE (arg0), ops->type, ops->code))
 	return expand_vec_cmp_expr (ops->type, ifexp, target);
       else
 	{
@@ -11732,5 +11954,3 @@ int_expr_size (tree exp)
 
   return tree_to_shwi (size);
 }
-
-#include "gt-expr.h"

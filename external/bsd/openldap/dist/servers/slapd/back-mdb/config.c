@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.3 2018/02/06 01:53:17 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.3.4.1 2020/04/13 07:56:18 martin Exp $	*/
 
 /* config.c - mdb backend configuration file routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2017 The OpenLDAP Foundation.
+ * Copyright 2000-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.1.1.3 2018/02/06 01:53:17 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.1.1.3.4.1 2020/04/13 07:56:18 martin Exp $");
 
 #include "portable.h"
 
@@ -265,6 +265,7 @@ mdb_cf_cleanup( ConfigArgs *c )
 	}
 
 	if ( mdb->mi_flags & MDB_OPEN_INDEX ) {
+		mdb->mi_flags ^= MDB_OPEN_INDEX;
 		rc = mdb_attr_dbs_open( c->be, NULL, &c->reply );
 		if ( rc )
 			rc = LDAP_OTHER;
@@ -428,10 +429,11 @@ mdb_cf_gen( ConfigArgs *c )
 			if ( c->valx == -1 ) {
 				int i;
 
-				/* delete all (FIXME) */
+				/* delete all */
 				for ( i = 0; i < mdb->mi_nattrs; i++ ) {
 					mdb->mi_attrs[i]->ai_indexmask |= MDB_INDEX_DELETING;
 				}
+				mdb->mi_defaultmask = 0;
 				mdb->mi_flags |= MDB_DEL_INDEX;
 				c->cleanup = mdb_cf_cleanup;
 
@@ -635,8 +637,8 @@ mdb_cf_gen( ConfigArgs *c )
 			c->argc - 1, &c->argv[1], &c->reply);
 
 		if( rc != LDAP_SUCCESS ) return 1;
-		mdb->mi_flags |= MDB_OPEN_INDEX;
 		if ( mdb->mi_flags & MDB_IS_OPEN ) {
+			mdb->mi_flags |= MDB_OPEN_INDEX;
 			c->cleanup = mdb_cf_cleanup;
 			if ( !mdb->mi_index_task ) {
 				/* Start the task as soon as we finish here. Set a long

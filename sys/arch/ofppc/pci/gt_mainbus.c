@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.4 2011/07/01 20:51:15 dyoung Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.4.54.1 2020/04/13 08:04:03 martin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.4 2011/07/01 20:51:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.4.54.1 2020/04/13 08:04:03 martin Exp $");
 
 #include "opt_pci.h"
 #include "opt_marvell.h"
@@ -276,8 +276,7 @@ gtpci_md_attach_hook(device_t parent, device_t self,
 		struct genppc_pci_chipset_businfo *pbi;
 
 		pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
-		    M_DEVBUF, M_NOWAIT);
-		KASSERT(pbi != NULL);
+		    M_DEVBUF, M_WAITOK);
 		pbi->pbi_properties = prop_dictionary_create();
 		KASSERT(pbi->pbi_properties != NULL);
 		SIMPLEQ_INIT(&genppc_gtpci1_chipset.pc_pbi);

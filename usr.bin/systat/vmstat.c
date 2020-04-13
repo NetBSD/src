@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.82.6.2 2020/04/08 14:09:18 martin Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.82.6.3 2020/04/13 08:05:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.82.6.2 2020/04/08 14:09:18 martin Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.82.6.3 2020/04/13 08:05:48 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -756,7 +756,7 @@ cputime(int indx)
 }
 
 void
-puthumanint(u_int64_t n, int l, int c, int w)
+puthumanint_scale(u_int64_t n, int l, int c, int w, int scale)
 {
 	char b[128];
 
@@ -766,11 +766,33 @@ puthumanint(u_int64_t n, int l, int c, int w)
 		hline(' ', w);
 		return;
 	}
-	if (humanize_number(b, w, n, "", HN_AUTOSCALE, HN_NOSPACE) == -1 ) {
+	if (humanize_number(b, w, n, "", scale, HN_NOSPACE) == -1 ) {
 		hline('*', w);
 		return;
 	}
 	printw("%*s", w, b);
+}
+
+void
+puthumanint_sticky(u_int64_t n, int l, int c, int w, int *scale)
+{
+	char b[128];
+	int sc;
+
+	sc = humanize_number(b, w, n, "", HN_GETSCALE, HN_NOSPACE);
+	if (sc > *scale)
+		*scale = sc;
+	else
+		sc = *scale;
+
+	puthumanint_scale(n, l, c, w, sc);
+}
+
+void
+puthumanint(u_int64_t n, int l, int c, int w)
+{
+
+	puthumanint_scale(n, l, c, w, HN_AUTOSCALE);
 }
 
 void
@@ -899,8 +921,8 @@ dinfo(int dn, int r, int c)
 	putint((int)((cur.rxfer[dn]+cur.wxfer[dn])/dtime+0.5),
 	    r, c, DISKCOLWIDTH);
 	ADV;
-	puthumanint((cur.rbytes[dn] + cur.wbytes[dn]) / dtime + 0.5,
-		    r, c, DISKCOLWIDTH);
+	puthumanint_sticky((cur.rbytes[dn] + cur.wbytes[dn]) / dtime + 0.5,
+		    r, c, DISKCOLWIDTH, &cur.scale[dn]);
 	ADV;
 
 	/* time busy in disk activity */

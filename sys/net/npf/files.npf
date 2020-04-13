@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.20.16.1 2019/06/10 22:09:46 christos Exp $
+# $NetBSD: files.npf,v 1.20.16.2 2020/04/13 08:05:15 martin Exp $
 #
 # Public Domain.
 #
@@ -16,16 +16,19 @@ file	net/npf/npf_ctl.c			npf
 file	net/npf/npf_handler.c			npf
 file	net/npf/npf_mbuf.c			npf
 file	net/npf/npf_bpf.c			npf
+file	net/npf/npf_params.c			npf
 file	net/npf/npf_ruleset.c			npf
 file	net/npf/npf_rproc.c			npf
 file	net/npf/npf_tableset.c			npf
 file	net/npf/npf_if.c			npf
 file	net/npf/npf_inet.c			npf
 file	net/npf/npf_conn.c			npf
+file	net/npf/npf_connkey.c			npf
 file	net/npf/npf_conndb.c			npf
 file	net/npf/npf_state.c			npf
 file	net/npf/npf_state_tcp.c			npf
 file	net/npf/npf_nat.c			npf
+file	net/npf/npf_portmap.c			npf
 file	net/npf/npf_alg.c			npf
 file	net/npf/npf_sendpkt.c			npf
 file	net/npf/npf_worker.c			npf

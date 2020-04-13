@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.19.38.1 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.19.38.2 2020/04/13 08:04:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.19.38.1 2019/06/10 22:07:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.19.38.2 2020/04/13 08:04:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -275,10 +275,7 @@ mvmebus_map(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_data
 		return (rv);
 
 	/* Allocate space for the resource tag */
-	if ((mr = malloc(sizeof(*mr), M_DEVBUF, M_NOWAIT)) == NULL) {
-		bus_space_unmap(sc->sc_bust, *handle, len);
-		return (ENOMEM);
-	}
+	mr = malloc(sizeof(*mr), M_DEVBUF, M_WAITOK);
 
 	/* Record the range's details */
 	mr->mr_am = am;

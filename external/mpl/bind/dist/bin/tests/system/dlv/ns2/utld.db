@@ -18,6 +18,12 @@ ns.rootservers	A	10.53.0.1
 dlv		NS	ns.dlv
 ns.dlv		A	10.53.0.3
 ;
+disabled-algorithm-dlv		NS	ns.disabled-algorithm-dlv
+ns.disabled-algorithm-dlv	A	10.53.0.3
+;
+unsupported-algorithm-dlv	NS	ns.unsupported-algorithm-dlv
+ns.unsupported-algorithm-dlv	A	10.53.0.3
+;
 child1		NS	ns.child1
 ns.child1	A	10.53.0.3
 ;
@@ -47,3 +53,9 @@ ns.child9	A	10.53.0.3
 ;
 child10		NS	ns.child10
 ns.child10	A	10.53.0.3
+;
+disabled-algorithm		NS    ns.disabled-algorithm
+ns.disabled-algorithm		A     10.53.0.3
+;
+unsupported-algorithm		NS    ns.unsupported-algorithm
+ns.unsupported-algorithm	A     10.53.0.3

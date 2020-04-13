@@ -1,4 +1,4 @@
-/* $NetBSD: strtopf.c,v 1.3 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: strtopf.c,v 1.3.44.1 2020/04/13 08:03:09 martin Exp $ */
 
 /****************************************************************
 
@@ -40,7 +40,7 @@ strtopf(s, sp, f) CONST char *s; char **sp; float *f;
 strtopf(CONST char *s, char **sp, float *f)
 #endif
 {
-	static FPI fpi0 = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
+	static CONST FPI fpi0 = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
 	ULong bits[1], *L;
 	Long expt;
 	int k;

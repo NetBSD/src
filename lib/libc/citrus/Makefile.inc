@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2010/05/30 08:28:53 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.8.46.1 2020/04/13 08:03:08 martin Exp $
 
 # sources
 .PATH: ${ARCHDIR}/citrus ${.CURDIR}/citrus
@@ -23,3 +23,7 @@ CPPFLAGS.citrus_lc_monetary.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.citrus_lc_numeric.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.citrus_lc_time.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.citrus_lc_messages.c+=	-I${LIBCDIR}/locale
+
+COPTS.citrus_iconv.c+=		${GCC_NO_FORMAT_TRUNCATION}
+COPTS.citrus_csmapper.c+=	${GCC_NO_FORMAT_TRUNCATION}
+

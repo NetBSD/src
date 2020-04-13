@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.85 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.85.2.1 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.85 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.85.2.1 2020/04/13 08:05:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -780,8 +780,7 @@ getroute:
 	 * destination address (which should probably be one of our own
 	 * addresses.)
 	 */
-	if (rt->rt_ifa && rt->rt_ifa->ifa_ifp &&
-	    rt->rt_ifa->ifa_ifp != *retifp &&
+	if (rt->rt_ifa->ifa_ifp != *retifp &&
 	    !if_is_deactivated(rt->rt_ifa->ifa_ifp)) {
 		if_put(*retifp, psref);
 		*retifp = rt->rt_ifa->ifa_ifp;

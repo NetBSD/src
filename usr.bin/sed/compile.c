@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.47 2016/04/05 00:13:03 christos Exp $	*/
+/*	$NetBSD: compile.c,v 1.47.16.1 2020/04/13 08:05:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.47 2016/04/05 00:13:03 christos Exp $");
+__RCSID("$NetBSD: compile.c,v 1.47.16.1 2020/04/13 08:05:47 martin Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/compile.c 259132 2013-12-09 18:57:20Z eadler $");
 #endif
@@ -89,6 +89,7 @@ static struct s_command
 		 *findlabel(char *);
 static void	  fixuplabel(struct s_command *, struct s_command *);
 static void	  uselabel(void);
+static void	  parse_escapes(char *);
 
 /*
  * Command specification.  This is used to drive the command parser.
@@ -463,12 +464,141 @@ compile_re(char *re, int case_insensitive)
 	if (case_insensitive)
 		flags |= REG_ICASE;
 	rep = xmalloc(sizeof(regex_t));
+	parse_escapes(re);
 	if ((eval = regcomp(rep, re, flags)) != 0)
 		errx(1, "%lu: %s: RE error: %s",
 				linenum, fname, strregerror(eval, rep));
 	if (maxnsub < rep->re_nsub)
 		maxnsub = rep->re_nsub;
 	return (rep);
+}
+
+static char
+cton(char c, int base)
+{
+	switch (c) {
+	case '0': case '1': case '2': case '3': case '4':
+	case '5': case '6': case '7':
+		return (char)(c - '0');
+	case '8': case '9':
+		return base == 8 ? '?' : (char)(c - '0');
+	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+		return base == 16 ? (char)(c - 'a' + 10) : '?'; 
+	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+		return base == 16 ? (char)(c - 'A' + 10) : '?'; 
+	default:
+		return '?';
+	}
+}
+
+static int
+ston(char **pp, char *sp, int base)
+{
+	char *p = *pp, n;
+	int r = cton(p[1], base);
+
+	if (r == '?')
+		return 0;
+
+	p++;
+	while ((n = cton(p[1], base)) != '?' && r < 255) {
+		r = r * base + n;
+		p++;
+	}
+	*sp = (char)r;
+	*pp = p;
+	return 1;
+}
+		
+static int
+unescape(char **pp, char **spp)
+{
+	char *p = *pp;
+	char *sp = *spp;
+
+	switch (*p) {
+	case 'o':
+		if (!ston(&p, sp, 8))
+			return 0;
+		break;
+	case 'd':
+		if (!ston(&p, sp, 10))
+			return 0;
+		break;
+	case 'x':
+		if (!ston(&p, sp, 16))
+			return 0;
+		break;
+	case 'a':
+		*sp = '\a';
+		p++;
+		break;
+#if 0
+	// No, \b RE
+	case 'b':
+		*sp = '\b';
+		break;
+#endif
+	case 'f':
+		*sp = '\f';
+		break;
+	case 'n':
+		*sp = '\n';
+		break;
+	case 'r':
+		*sp = '\r';
+		break;
+	case 'v':
+		*sp = '\v';
+		break;
+	default:
+		return 0;
+	}
+	*spp = sp + 1;
+	*pp = p;
+	return 1;
+}
+
+static void
+parse_escapes(char *buf)
+{
+	char bracket = '\0';
+	char *p, *q;
+
+	p = q = buf;
+
+	for (p = q = buf; *p; p++) {
+		if (*p == '\\' && p[1] && !bracket) {
+			p++;
+			if (unescape(&p, &q))
+				continue;
+			*q++ = '\\';
+		}
+		switch (*p) {
+		case '[':
+			if (!bracket)
+				bracket = *p;
+			break;
+		case '.':
+		case ':':
+		case '=':
+			if (bracket == '[' && p[-1] == '[')
+				bracket = *p;
+			break;
+		case ']':
+			if (!bracket)
+			    break;
+			if (bracket == '[')
+				bracket = '\0';
+			else if (p[-2] != bracket && p[-1] == bracket)
+				bracket = '[';
+			break;
+		default:
+			break;
+		}
+		*q++ = *p;
+	}
+	*q = '\0';
 }
 
 /*
@@ -508,7 +638,8 @@ compile_subst(char *p, struct s_subst *s)
 				else
 					p++;
 
-				if (*p == '\0') {
+				switch (*p) {
+				case '\0':
 					/*
 					 * This escaped character is continued
 					 * in the next part of the line.  Note
@@ -519,7 +650,9 @@ compile_subst(char *p, struct s_subst *s)
 					sawesc = 1;
 					p--;
 					continue;
-				} else if (strchr("123456789", *p) != NULL) {
+				case '0': case '1': case '2': case '3':
+				case '4': case '5': case '6': case '7':
+				case '8': case '9':
 					*sp++ = '\\';
 					ref = (u_char)(*p - '0');
 					if (s->re != NULL &&
@@ -528,8 +661,16 @@ compile_subst(char *p, struct s_subst *s)
 								linenum, fname, *p);
 					if (s->maxbref < ref)
 						s->maxbref = ref;
-				} else if (*p == '&' || *p == '\\')
+					break;
+				case '&':
+				case '\\':
 					*sp++ = '\\';
+					break;
+				default:
+					if (unescape(&p, &sp))
+						continue;
+					break;
+				}
 			} else if (*p == c) {
 				if (*++p == '\0' && more) {
 					if (cu_fgets(lbuf, sizeof(lbuf), &more))

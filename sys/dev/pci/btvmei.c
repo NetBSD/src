@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.30.30.1 2019/06/10 22:07:15 christos Exp $ */
+/* $NetBSD: btvmei.c,v 1.30.30.2 2020/04/13 08:04:26 martin Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.30.30.1 2019/06/10 22:07:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.30.30.2 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,7 +447,7 @@ b3_617_map_vme(void *vsc, vme_addr_t vmeaddr, vme_size_t len, vme_am_t am, vme_d
 	/*
 	 * save all data needed for later unmapping
 	 */
-	r = malloc(sizeof(*r), M_DEVBUF, M_NOWAIT); /* XXX check! */
+	r = malloc(sizeof(*r), M_DEVBUF, M_WAITOK);
 	r->handle = *handle;
 	r->len = len;
 	r->firstpage = first;
@@ -552,10 +552,7 @@ b3_617_establish_vmeint(void *vsc, vme_intr_handle_t handle, int prior, int (*fu
 	long lv;
 	int s;
 
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("b3_617_map_vmeint: can't malloc handler info");
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 
 	lv = (long)handle; /* XXX */
 

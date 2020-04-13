@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.215.2.1 2019/06/10 22:09:04 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.215.2.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.215.2.1 2019/06/10 22:09:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.215.2.2 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -188,8 +188,8 @@ mbinit(void)
 	    NULL, IPL_VM, mb_ctor, NULL, NULL);
 	KASSERT(mb_cache != NULL);
 
-	mcl_cache = pool_cache_init(mclbytes, 0, 0, 0, "mclpl", NULL,
-	    IPL_VM, NULL, NULL, NULL);
+	mcl_cache = pool_cache_init(mclbytes, COHERENCY_UNIT, 0, 0, "mclpl",
+	    NULL, IPL_VM, NULL, NULL, NULL);
 	KASSERT(mcl_cache != NULL);
 
 	pool_cache_set_drain_hook(mb_cache, mb_drain, NULL);
@@ -402,7 +402,7 @@ mbstat_type_add(int type, int diff)
 }
 
 static void
-mbstat_conver_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
+mbstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
 {
 	struct mbstat_cpu *mbsc = v1;
 	struct mbstat *mbs = v2;
@@ -419,7 +419,7 @@ mbstat_convert_to_user(struct mbstat *mbs)
 
 	memset(mbs, 0, sizeof(*mbs));
 	mbs->m_drain = mbstat.m_drain;
-	percpu_foreach(mbstat_percpu, mbstat_conver_to_user_cb, mbs);
+	percpu_foreach(mbstat_percpu, mbstat_convert_to_user_cb, mbs);
 }
 
 static int
@@ -1768,12 +1768,7 @@ m_align(struct mbuf *m, int len)
 	KASSERT(len != M_COPYALL);
 	KASSERT(M_LEADINGSPACE(m) == 0);
 
-	if (m->m_flags & M_EXT)
-		buflen = m->m_ext.ext_size;
-	else if (m->m_flags & M_PKTHDR)
-		buflen = MHLEN;
-	else
-		buflen = MLEN;
+	buflen = M_BUFSIZE(m);
 
 	KASSERT(len <= buflen);
 	adjust = buflen - len;
@@ -2059,6 +2054,14 @@ nextchain:
 
 #if defined(MBUFTRACE)
 void
+mowner_init_owner(struct mowner *mo, const char *name, const char *descr)
+{
+	memset(mo, 0, sizeof(*mo));
+	strlcpy(mo->mo_name, name, sizeof(mo->mo_name));
+	strlcpy(mo->mo_descr, descr, sizeof(mo->mo_descr));
+}
+
+void
 mowner_attach(struct mowner *mo)
 {
 
@@ -2210,20 +2213,12 @@ m_verify_packet(struct mbuf *m)
 
 		dat = n->m_data;
 		len = n->m_len;
-
-		if (n->m_flags & M_EXT) {
-			low = n->m_ext.ext_buf;
-			high = low + n->m_ext.ext_size;
-		} else if (n->m_flags & M_PKTHDR) {
-			low = n->m_pktdat;
-			high = low + MHLEN;
-		} else {
-			low = n->m_dat;
-			high = low + MLEN;
-		}
-		if (__predict_false(dat + len < dat)) {
+		if (__predict_false(len < 0)) {
 			panic("%s: incorrect length (len = %d)", __func__, len);
 		}
+
+		low = M_BUFADDR(n);
+		high = low + M_BUFSIZE(n);
 		if (__predict_false((dat < low) || (dat + len > high))) {
 			panic("%s: m_data not in packet"
 			    "(dat = %p, len = %d, low = %p, high = %p)",

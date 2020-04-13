@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.352.4.1 2020/04/08 14:07:43 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.352.4.2 2020/04/13 08:03:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.352.4.1 2020/04/08 14:07:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.352.4.2 2020/04/13 08:03:57 martin Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.352.4.1 2020/04/08 14:07:43 martin Exp
 #include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #include "akbd.h"
+#include "genfb.h"
 #include "macfb.h"
 #include "zsc.h"
 
@@ -315,7 +316,7 @@ consinit(void)
 		cninit();
 		init = 1;
 	} else {
-#if NAKBD > 0 && NMACFB > 0
+#if NAKBD > 0 && (NMACFB + NGENFB) > 0
 		/*
 		 * XXX  This is an evil hack on top of an evil hack!
 		 *
@@ -811,7 +812,7 @@ int	get_top_of_ram(void);
 int
 get_top_of_ram(void)
 {
-	return ((mac68k_machine.mach_memsize * (1024 * 1024)) - 4096);
+	return ((mac68k_machine.mach_memsize * (1024 * 1024)) - PAGE_SIZE);
 }
 
 /*
@@ -2325,7 +2326,7 @@ check_video(const char *id, u_long limit, u_long maxm)
 			addr += 32768;
 		}
 		if (mac68k_machine.do_graybars) {
-			printf("  %s internal video at addr 0x%p (phys 0x%p), ",
+			printf("  %s internal video at addr %p (phys %p), ",
 			    id, (void *)mac68k_video.mv_log,
 			    (void *)mac68k_video.mv_phys);
 			printf("len 0x%x.\n", mac68k_video.mv_len);
@@ -2470,7 +2471,7 @@ get_mapping(void)
 		 * Tell the user what we know.
 		 */
 		if (mac68k_machine.do_graybars)
-			printf("On-board video at addr 0x%p (phys 0x%p), "
+			printf("On-board video at addr %p (phys %p), "
 			    "len 0x%x.\n",
 			    (void *)mac68k_video.mv_kvaddr,
 			    (void *)mac68k_video.mv_phys,
@@ -2596,9 +2597,9 @@ get_mapping(void)
 					    mac68k_video.mv_kvaddr);
 			}
 		} else if (mac68k_machine.do_graybars) {
-			printf("  Video address = 0x%p\n",
+			printf("  Video address = %p\n",
 			    (void *)mac68k_video.mv_kvaddr);
-			printf("  Int video starts at 0x%p\n",
+			printf("  Int video starts at %p\n",
 			    (void *)mac68k_video.mv_log);
 			printf("  Length = 0x%x (%d) bytes\n",
 			    mac68k_video.mv_len, mac68k_video.mv_len);

@@ -1,4 +1,4 @@
-# $NetBSD: t_option.sh,v 1.6 2017/11/16 19:41:41 kre Exp $
+# $NetBSD: t_option.sh,v 1.6.4.1 2020/04/13 08:05:22 martin Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -258,7 +258,7 @@ set_f_body() {
 
 atf_test_case set_n
 set_n_head() {
-	atf_set "descr" "Tests that 'set -n' supresses command execution " \
+	atf_set "descr" "Tests that 'set -n' suppresses command execution " \
 	                "and that it behaves as defined by the standard"
 }
 set_n_body() {

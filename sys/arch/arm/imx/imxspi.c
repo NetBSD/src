@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.3 2017/08/07 09:24:43 hkenken Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.3.4.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,10 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.3 2017/08/07 09:24:43 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.3.4.1 2020/04/13 08:03:35 martin Exp $");
 
-#include "opt_imx.h"
 #include "opt_imxspi.h"
+#include "opt_fdt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,11 +52,14 @@ __KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.3 2017/08/07 09:24:43 hkenken Exp $");
 #include <arm/imx/imxspivar.h>
 #include <arm/imx/imxspireg.h>
 
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
+
 /* SPI service routines */
 static int imxspi_configure_enhanced(void *, int, int, int);
 static int imxspi_configure(void *, int, int, int);
 static int imxspi_transfer(void *, struct spi_transfer *);
-static int imxspi_intr(void *);
 
 /* internal stuff */
 void imxspi_done(struct imxspi_softc *, int);
@@ -64,8 +67,13 @@ void imxspi_send(struct imxspi_softc *);
 void imxspi_recv(struct imxspi_softc *);
 void imxspi_sched(struct imxspi_softc *);
 
-#define	IMXSPI(x)							      \
-	((sc->sc_enhanced) ? __CONCAT(ECSPI_, x) : __CONCAT(CSPI_, x))
+#define	IMXCSPI_TYPE(type, x)						      \
+	((sc->sc_type == IMX31_CSPI) ? __CONCAT(CSPI_IMX31_, x) :	      \
+	 (sc->sc_type == IMX35_CSPI) ? __CONCAT(CSPI_IMX35_, x) : 0)
+#define	IMXCSPI(x)	__CONCAT(CSPI_, x)
+#define	IMXESPI(x)	__CONCAT(ECSPI_, x)
+#define	IMXSPI(x)	((sc->sc_enhanced) ? IMXESPI(x) : IMXCSPI(x))
+#define	IMXSPI_TYPE(x)	((sc->sc_enhanced) ? IMXESPI(x) : IMXCSPI_TYPE(sc->sc_type, x))
 #define	READ_REG(sc, x)							      \
 	bus_space_read_4(sc->sc_iot, sc->sc_ioh, IMXSPI(x))
 #define	WRITE_REG(sc, x, v)						      \
@@ -78,30 +86,30 @@ int imxspi_debug = IMXSPI_DEBUG;
 #define	DPRINTFN(n,x)
 #endif
 
-int
-imxspi_attach_common(device_t parent, struct imxspi_softc *sc, void *aux)
+#ifdef FDT
+static struct spi_controller *
+imxspi_get_controller(device_t dev)
 {
-	struct imxspi_attach_args *saa = aux;
-	struct spibus_attach_args sba;
-	bus_addr_t addr = saa->saa_addr;
-	bus_size_t size = saa->saa_size;
+	struct imxspi_softc * const sc = device_private(dev);
 
-	sc->sc_iot = saa->saa_iot;
-	sc->sc_freq = saa->saa_freq;
-	sc->sc_tag = saa->saa_tag;
-	sc->sc_enhanced = saa->saa_enhanced;
-	if (size <= 0)
-		size = SPI_SIZE;
+	return &sc->sc_spi;
+}
 
-	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh)) {
-		aprint_error_dev(sc->sc_dev, "couldn't map registers\n");
-		return 1;
-	}
+static const struct fdtbus_spi_controller_func imxspi_funcs = {
+	.get_controller = imxspi_get_controller
+};
+#endif
 
-	aprint_normal(": i.MX %sCSPI Controller (clock %ld Hz)\n",
+int
+imxspi_attach_common(device_t self)
+{
+	struct imxspi_softc * const sc = device_private(self);
+
+	aprint_normal("i.MX %sCSPI Controller (clock %ld Hz)\n",
 	    ((sc->sc_enhanced) ? "e" : ""), sc->sc_freq);
 
 	/* Initialize SPI controller */
+	sc->sc_dev = self;
 	sc->sc_spi.sct_cookie = sc;
 	if (sc->sc_enhanced)
 		sc->sc_spi.sct_configure = imxspi_configure_enhanced;
@@ -110,33 +118,38 @@ imxspi_attach_common(device_t parent, struct imxspi_softc *sc, void *aux)
 	sc->sc_spi.sct_transfer = imxspi_transfer;
 
 	/* sc->sc_spi.sct_nslaves must have been initialized by machdep code */
-	sc->sc_spi.sct_nslaves = saa->saa_nslaves;
+	sc->sc_spi.sct_nslaves = sc->sc_nslaves;
 	if (!sc->sc_spi.sct_nslaves)
 		aprint_error_dev(sc->sc_dev, "no slaves!\n");
-
-	sba.sba_controller = &sc->sc_spi;
 
 	/* initialize the queue */
 	SIMPLEQ_INIT(&sc->sc_q);
 
 	/* configure SPI */
 	/* Setup Control Register */
-	WRITE_REG(sc, CONREG, __SHIFTIN(0, IMXSPI(CON_DRCTL)) |
-	    __SHIFTIN(8 - 1, IMXSPI(CON_BITCOUNT)) |
+	WRITE_REG(sc, CONREG,
+	    __SHIFTIN(0, IMXSPI_TYPE(CON_DRCTL)) |
+	    __SHIFTIN(8 - 1, IMXSPI_TYPE(CON_BITCOUNT)) |
 	    __SHIFTIN(0xf, IMXSPI(CON_MODE)) | IMXSPI(CON_ENABLE));
-
 	/* TC and RR interruption */
-	WRITE_REG(sc, INTREG,  (IMXSPI(INTR_TC_EN) | IMXSPI(INTR_RR_EN)));
-	WRITE_REG(sc, STATREG, IMXSPI(STAT_CLR));
+	WRITE_REG(sc, INTREG, (IMXSPI_TYPE(INTR_TC_EN) | IMXSPI(INTR_RR_EN)));
+	WRITE_REG(sc, STATREG, IMXSPI_TYPE(STAT_CLR));
 
 	WRITE_REG(sc, PERIODREG, 0x0);
 
-	/* enable device interrupts */
-	sc->sc_ih = intr_establish(saa->saa_irq, IPL_BIO, IST_LEVEL,
-	    imxspi_intr, sc);
+#ifdef FDT
+	KASSERT(sc->sc_phandle != 0);
+
+	fdtbus_register_spi_controller(self, sc->sc_phandle, &imxspi_funcs);
+	(void) fdtbus_attach_spibus(self, sc->sc_phandle, spibus_print);
+#else
+	struct spibus_attach_args sba;
+	memset(&sba, 0, sizeof(sba));
+	sba.sba_controller = &sc->sc_spi;
 
 	/* attach slave devices */
 	(void)config_found_ia(sc->sc_dev, "spibus", &sba, spibus_print);
+#endif
 
 	return 0;
 }
@@ -215,6 +228,7 @@ imxspi_configure_enhanced(void *arg, int slave, int mode, int speed)
 
 	config = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ECSPI_CONFIGREG);
 	config &= ~(__SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_POL) |
+	    __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_CTL) |
 	    __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_PHA));
 	switch (mode) {
 	case SPI_MODE_0:
@@ -227,11 +241,13 @@ imxspi_configure_enhanced(void *arg, int slave, int mode, int speed)
 	case SPI_MODE_2:
 		/* CPHA = 0, CPOL = 1 */
 		config |= __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_POL);
+		config |= __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_CTL);
 		break;
 	case SPI_MODE_3:
 		/* CPHA = 1, CPOL = 1 */
 		config |= __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_PHA);
 		config |= __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_POL);
+		config |= __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_CTL);
 		break;
 	default:
 		return EINVAL;
@@ -323,8 +339,8 @@ imxspi_sched(struct imxspi_softc *sc)
 
 		/* chip slect */
 		chipselect = READ_REG(sc, CONREG);
-		chipselect &= ~IMXSPI(CON_CS);
-		chipselect |= __SHIFTIN(st->st_slave, IMXSPI(CON_CS));
+		chipselect &= ~IMXSPI_TYPE(CON_CS);
+		chipselect |= __SHIFTIN(st->st_slave, IMXSPI_TYPE(CON_CS));
 		WRITE_REG(sc, CONREG, chipselect);
 
 		delay(1);
@@ -362,7 +378,7 @@ imxspi_done(struct imxspi_softc *sc, int err)
 	imxspi_sched(sc);
 }
 
-static int
+int
 imxspi_intr(void *arg)
 {
 	struct imxspi_softc *sc = arg;
@@ -389,11 +405,9 @@ imxspi_intr(void *arg)
 			imxspi_done(sc, err);
 	}
 
-	/* Transfer Conplete? */
-	if (sr & IMXSPI(INTR_TC_EN)) {
-		/* complete TX */
+	/* Transfer Complete? */
+	if (sr & IMXSPI_TYPE(INTR_TC_EN))
 		imxspi_send(sc);
-	}
 
 	/* status register clear */
 	WRITE_REG(sc, STATREG, sr);

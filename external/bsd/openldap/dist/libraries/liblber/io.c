@@ -1,10 +1,10 @@
-/*	$NetBSD: io.c,v 1.1.1.7 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.1.1.7.4.1 2020/04/13 07:56:13 martin Exp $	*/
 
 /* io.c - ber general i/o routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.1.1.7 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: io.c,v 1.1.1.7.4.1 2020/04/13 07:56:13 martin Exp $");
 
 #include "portable.h"
 
@@ -133,7 +133,7 @@ ber_write(
 int
 ber_realloc( BerElement *ber, ber_len_t len )
 {
-	ber_len_t	total, offset, sos_offset;
+	ber_len_t	total, offset, sos_offset, rw_offset;
 	char		*buf;
 
 	assert( ber != NULL );
@@ -170,6 +170,7 @@ ber_realloc( BerElement *ber, ber_len_t len )
 	offset = ber->ber_ptr - buf;
 	sos_offset = ber->ber_sos_ptr ? ber->ber_sos_ptr - buf : 0;
 	/* if ber_sos_ptr != NULL, it is > ber_buf so that sos_offset > 0 */
+	rw_offset = ber->ber_rwptr ? ber->ber_rwptr - buf : 0;
 
 	buf = (char *) ber_memrealloc_x( buf, total, ber->ber_memctx );
 	if ( buf == NULL ) {
@@ -181,6 +182,8 @@ ber_realloc( BerElement *ber, ber_len_t len )
 	ber->ber_ptr = buf + offset;
 	if ( sos_offset )
 		ber->ber_sos_ptr = buf + sos_offset;
+	if ( ber->ber_rwptr )
+		ber->ber_rwptr = buf + rw_offset;
 
 	return( 0 );
 }

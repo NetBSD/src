@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.82.2.1 2019/06/10 22:09:48 christos Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.82.2.2 2020/04/13 08:05:17 martin Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -237,13 +237,17 @@ extern int crypto_support;
 
 #include <sys/syslog.h>
 
-#define	DPRINTF(x)	do { if (ipsec_debug) printf x; } while (0)
+#define	DPRINTF(fmt, args...) 						\
+	do {								\
+		if (ipsec_debug)					\
+			log(LOG_DEBUG, "%s: " fmt, __func__, ##args);	\
+	} while (/*CONSTCOND*/0)
 
 #define IPSECLOG(level, fmt, args...) 					\
 	do {								\
 		if (ipsec_debug)					\
 			log(level, "%s: " fmt, __func__, ##args);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define ipsec_indone(m)	\
 	((m->m_flags & M_AUTHIPHDR) || (m->m_flags & M_DECRYPTED))
@@ -314,7 +318,7 @@ void ipsec4_common_input(struct mbuf *m, int, int);
 int ipsec4_common_input_cb(struct mbuf *, struct secasvar *, int, int);
 int ipsec4_process_packet(struct mbuf *, const struct ipsecrequest *, u_long *);
 int ipsec_process_done(struct mbuf *, const struct ipsecrequest *,
-    struct secasvar *);
+    struct secasvar *, int);
 
 struct mbuf *m_clone(struct mbuf *);
 struct mbuf *m_makespace(struct mbuf *, int, int, int *);

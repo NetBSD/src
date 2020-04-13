@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.47 2015/04/13 21:18:41 riastradh Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.47.18.1 2020/04/13 08:03:36 martin Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.47 2015/04/13 21:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.47.18.1 2020/04/13 08:03:36 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -212,14 +212,9 @@ ixpcom_attach_subr(struct ixpcom_softc *sc)
 	tp->t_hwiflow = ixpcomhwiflow;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(IXPCOM_RING_SIZE << 1, M_DEVBUF, M_NOWAIT);
+	sc->sc_rbuf = malloc(IXPCOM_RING_SIZE << 1, M_DEVBUF, M_WAITOK);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = IXPCOM_RING_SIZE;
-	if (sc->sc_rbuf == NULL) {
-		printf("%s: unable to allocate ring buffer\n",
-		    device_xname(sc->sc_dev));
-		return;
-	}
 	sc->sc_ebuf = sc->sc_rbuf + (IXPCOM_RING_SIZE << 1);
 	sc->sc_tbc = 0;
 

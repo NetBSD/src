@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.124.2.2 2020/04/08 14:08:09 martin Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.124.2.3 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.124.2.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.124.2.3 2020/04/13 08:04:26 martin Exp $");
 
 
 
@@ -234,7 +234,7 @@ struct vr_softc {
 	bool		vr_link;
 	int		vr_flags;
 #define VR_F_RESTART	0x1		/* restart on next tick */
-	int		vr_if_flags;
+	u_short		vr_if_flags;
 
 	krndsource_t rnd_source;	/* random source */
 };

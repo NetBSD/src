@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.38.18.1 2019/06/10 22:06:29 christos Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.38.18.2 2020/04/13 08:04:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -93,24 +93,24 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #endif
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
+#define	PGOFSET		(NBPG - 1)	/* byte offset into page */
 #define	PTPSHIFT	2
-#define	PTPLENGTH	(PGSHIFT-PTPSHIFT)
+#define	PTPLENGTH	(PGSHIFT - PTPSHIFT)
 #define	NPTEPG		(1 << PTPLENGTH)
 
-#define SEGSHIFT	(PGSHIFT+PTPLENGTH)	/* LOG2(NBSEG) */
-#define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
+#define	SEGSHIFT	(PGSHIFT + PTPLENGTH)	/* LOG2(NBSEG) */
+#define	NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
 #ifdef _LP64
-#define	SEGLENGTH	(PGSHIFT-3)
-#define	XSEGSHIFT	(SEGSHIFT+SEGLENGTH)	/* LOG2(NBXSEG) */
+#define	SEGLENGTH	(PGSHIFT - 3)
+#define	XSEGSHIFT	(SEGSHIFT + SEGLENGTH)	/* LOG2(NBXSEG) */
 #define	NBXSEG		(1UL << XSEGSHIFT)	/* bytes/xsegment */
-#define	XSEGOFSET	(NBXSEG-1)	/* byte offset into xsegment */
-#define	XSEGLENGTH	(PGSHIFT-3)
+#define	XSEGOFSET	(NBXSEG - 1)	/* byte offset into xsegment */
+#define	XSEGLENGTH	(PGSHIFT - 3)
 #define	NXSEGPG		(1 << XSEGLENGTH)
 #else
-#define	SEGLENGTH	(31-SEGSHIFT)
+#define	SEGLENGTH	(31 - SEGSHIFT)
 #endif
 #define	NSEGPG		(1 << SEGLENGTH)
 

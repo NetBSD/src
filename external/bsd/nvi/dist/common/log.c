@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.5 2018/06/16 21:00:12 kamil Exp $ */
+/*	$NetBSD: log.c,v 1.5.2.1 2020/04/13 07:56:03 martin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: log.c,v 10.26 2002/03/02 23:12:13 skimo Exp  (Berkeley) Date: 2002/03/02 23:12:13 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: log.c,v 1.5 2018/06/16 21:00:12 kamil Exp $");
+__RCSID("$NetBSD: log.c,v 1.5.2.1 2020/04/13 07:56:03 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -620,6 +620,7 @@ log_setline(SCR *sp)
 				sp->rptlchange = lno;
 				++sp->rptlines[L_CHANGED];
 			}
+			break;
 		case LOG_MARK:
 			memmove(&lm, p + sizeof(u_char), sizeof(LMARK));
 			m.lno = lm.lno;

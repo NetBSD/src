@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.87.2.2 2020/04/08 14:08:09 martin Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.87.2.3 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.87.2.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.87.2.3 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,9 +372,7 @@ sk_vpd_read(struct sk_softc *sc)
 	}
 
 	pos += sizeof(res);
-	sc->sk_vpd_prodname = malloc(res.vr_len + 1, M_DEVBUF, M_NOWAIT);
-	if (sc->sk_vpd_prodname == NULL)
-		panic("sk_vpd_read");
+	sc->sk_vpd_prodname = malloc(res.vr_len + 1, M_DEVBUF, M_WAITOK);
 	for (i = 0; i < res.vr_len; i++)
 		sc->sk_vpd_prodname[i] = sk_vpd_readbyte(sc, i + pos);
 	sc->sk_vpd_prodname[i] = '\0';
@@ -390,9 +388,7 @@ sk_vpd_read(struct sk_softc *sc)
 	}
 
 	pos += sizeof(res);
-	sc->sk_vpd_readonly = malloc(res.vr_len, M_DEVBUF, M_NOWAIT);
-	if (sc->sk_vpd_readonly == NULL)
-		panic("sk_vpd_read");
+	sc->sk_vpd_readonly = malloc(res.vr_len, M_DEVBUF, M_WAITOK);
 	for (i = 0; i < res.vr_len ; i++)
 		sc->sk_vpd_readonly[i] = sk_vpd_readbyte(sc, i + pos);
 }
@@ -883,13 +879,7 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 		sc_if->sk_cdata.sk_jslots[i] = ptr;
 		ptr += SK_JLEN;
 		entry = malloc(sizeof(struct sk_jpool_entry),
-		    M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			aprint_error_dev(sc->sk_dev,
-			    "no memory for jumbo buffer queue!\n");
-			error = ENOBUFS;
-			goto out;
-		}
+		    M_DEVBUF, M_WAITOK);
 		entry->slot = i;
 		if (i)
 			LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
@@ -1375,18 +1365,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 			goto fail;
 		}
 
-		entry = malloc(sizeof(*entry), M_DEVBUF, M_NOWAIT);
-		if (!entry) {
-			aprint_error_dev(sc_if->sk_dev,
-			    "Can't alloc txmap entry\n");
-			bus_dmamap_destroy(sc->sc_dmatag, dmamap);
-			bus_dmamap_unload(sc->sc_dmatag, sc_if->sk_ring_map);
-			bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
-			bus_dmamem_unmap(sc->sc_dmatag, kva,
-			    sizeof(struct sk_ring_data));
-			bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
-			goto fail;
-		}
+		entry = malloc(sizeof(*entry), M_DEVBUF, M_WAITOK);
 		entry->dmamap = dmamap;
 		SIMPLEQ_INSERT_HEAD(&sc_if->sk_txmap_head, entry, link);
 	}

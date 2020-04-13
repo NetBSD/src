@@ -233,12 +233,13 @@ nbsd_enable_proc_events (pid_t pid)
 	      sizeof (events)) == -1)
     perror_with_name (("ptrace"));
   events |= PTRACE_FORK;
-#ifdef notyet
   events |= PTRACE_VFORK;
   events |= PTRACE_VFORK_DONE;
-#endif
   events |= PTRACE_LWP_CREATE;
   events |= PTRACE_LWP_EXIT;
+#if notyet
+  events |= PTRACE_POSIX_SPAWN;
+#endif
   if (ptrace (PT_SET_EVENT_MASK, pid, (PTRACE_TYPE_ARG3)&events,
 	      sizeof (events)) == -1)
     perror_with_name (("ptrace"));
@@ -262,7 +263,12 @@ nbsd_add_threads (pid_t pid)
     {
       ptid_t ptid = ptid_t (pid, pl.pl_lwpid, 0);
       if (!in_thread_list (ptid))
-	add_thread (ptid);
+	{
+	  if (inferior_ptid.lwp () == 0)
+	    thread_change_ptid (inferior_ptid, ptid);
+	  else
+	    add_thread (ptid);
+	}
     }
 }
 
@@ -381,11 +387,11 @@ nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
           break;
         case TRAP_SCE:
           ourstatus->kind = TARGET_WAITKIND_SYSCALL_ENTRY;
-//          ourstatus->value.syscall_number = 0;
+          ourstatus->value.syscall_number = psi.psi_siginfo.si_sysnum;
           break;
         case TRAP_SCX:
           ourstatus->kind = TARGET_WAITKIND_SYSCALL_RETURN;
-//          ourstatus->value.syscall_number = 0;
+          ourstatus->value.syscall_number = psi.psi_siginfo.si_sysnum;
           break;
         case TRAP_EXEC:
           ourstatus->kind = TARGET_WAITKIND_EXECD;
@@ -453,7 +459,10 @@ nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
               ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
               return wptid;
             }
-            add_thread (wptid);
+	    if (inferior_ptid.lwp () == 0)
+	      thread_change_ptid (inferior_ptid, wptid);
+	    else
+	      add_thread (wptid);
             ourstatus->kind = TARGET_WAITKIND_THREAD_CREATED;
             if (debug_nbsd_lwp)
               fprintf_unfiltered (gdb_stdlog, "NLWP: created LWP %d\n", pst.pe_lwp);

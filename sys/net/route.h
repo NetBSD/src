@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.119.2.1 2019/06/10 22:09:45 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.119.2.2 2020/04/13 08:05:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -42,6 +42,7 @@
 #include <sys/rwlock.h>
 #include <sys/condvar.h>
 #include <sys/pserialize.h>
+#include <sys/percpu.h>
 #endif
 #include <sys/psref.h>
 
@@ -269,6 +270,9 @@ struct rt_msghdr {
  * setsockopt defines used for the filtering.
  */
 #define	RO_MSGFILTER	1	/* array of which rtm_type to send to client */
+#define	RO_MISSFILTER	2	/* array of sockaddrs to match miss dst */
+
+#define	RO_FILTSA_MAX	30	/* maximum number of sockaddrs per filter */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
@@ -507,6 +511,24 @@ struct rtentry *
 
 void	rtcache_unref(struct rtentry *, struct route *);
 
+percpu_t *
+	rtcache_percpu_alloc(void);
+
+static inline struct route *
+rtcache_percpu_getref(percpu_t *pc)
+{
+
+	return *(struct route **)percpu_getref(pc);
+}
+
+static inline void
+rtcache_percpu_putref(percpu_t *pc)
+{
+
+	percpu_putref(pc);
+}
+
+
 /* rtsock */
 void	rt_ieee80211msg(struct ifnet *, int, void *, size_t);
 void	rt_ifannouncemsg(struct ifnet *, int);
@@ -521,8 +543,8 @@ void	rt_addrmsg_rt(int, struct ifaddr *, int, struct rtentry *);
 void	route_enqueue(struct mbuf *, int);
 
 struct llentry;
-void	rt_clonedmsg(const struct sockaddr *, const struct ifnet *,
-	    const struct rtentry *);
+void	rt_clonedmsg(int, const struct sockaddr *, const struct sockaddr *,
+	    const uint8_t *, const struct ifnet *);
 
 void	rt_setmetrics(void *, struct rtentry *);
 

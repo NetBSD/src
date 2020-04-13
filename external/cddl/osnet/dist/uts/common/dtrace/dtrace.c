@@ -395,9 +395,12 @@ static dtrace_pattr_t	dtrace_provider_attr = {
 { DTRACE_STABILITY_STABLE, DTRACE_STABILITY_STABLE, DTRACE_CLASS_COMMON },
 };
 
-static void
+static int
 dtrace_nullop(void)
-{}
+{
+
+	return 0;
+}
 
 static dtrace_pops_t	dtrace_provider_ops = {
 	(void (*)(void *, dtrace_probedesc_t *))dtrace_nullop,
@@ -18994,5 +18997,5 @@ MODULE_DEPEND(dtrace, opensolaris, 1, 1, 1);
 #endif /* __FreeBSD__ */
 
 #ifdef __NetBSD__
-MODULE(MODULE_CLASS_DRIVER, dtrace, "solaris");
+MODULE(MODULE_CLASS_MISC, dtrace, "solaris");
 #endif /* __NetBSD__ */

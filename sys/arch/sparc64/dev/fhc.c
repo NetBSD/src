@@ -1,4 +1,4 @@
-/*	$NetBSD: fhc.c,v 1.5 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: fhc.c,v 1.5.18.1 2020/04/13 08:04:08 martin Exp $	*/
 /*	$OpenBSD: fhc.c,v 1.17 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhc.c,v 1.5 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhc.c,v 1.5.18.1 2020/04/13 08:04:08 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -151,10 +151,7 @@ fhc_get_string(int node, const char *name, char **buf)
 	len = prom_getproplen(node, name);
 	if (len < 0)
 		return (len);
-	*buf = (char *)malloc(len + 1, M_DEVBUF, M_NOWAIT);
-	if (*buf == NULL)
-		return (-1);
-
+	*buf = (char *)malloc(len + 1, M_DEVBUF, M_WAITOK);
 	if (len != 0)
 		prom_getpropstringA(node, name, *buf, len + 1);
 	(*buf)[len] = '\0';
@@ -166,10 +163,7 @@ fhc_alloc_bus_tag(struct fhc_softc *sc)
 {
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (bt == NULL)
-		panic("fhc: couldn't alloc bus tag");
-
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_WAITOK | M_ZERO);
 	bt->cookie = sc;
 	bt->parent = sc->sc_bt;
 	bt->type = 0;	/* XXX asi? */

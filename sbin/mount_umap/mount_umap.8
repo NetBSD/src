@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_umap.8,v 1.19 2005/09/11 23:40:43 wiz Exp $
+.\"	$NetBSD: mount_umap.8,v 1.19.86.1 2020/04/13 08:03:21 martin Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Nd user and group ID remapping file system layer
 .Sh SYNOPSIS
 .Nm
+.Op Fl i Ar fsid
 .Op Fl o Ar options
 .Fl g Ar gid-mapfile
 .Fl u Ar uid-mapfile
@@ -70,6 +71,11 @@ The options are as follows:
 Use the group ID mapping specified in
 .Ar gid-mapfile .
 This flag is required.
+.It Fl i Ar fsid
+Use the specified
+.Ar fsid
+for the file system ID, rather than choosing one at random.
+This is useful if the file system is to be exported.
 .It Fl o
 Options are specified with a
 .Fl o

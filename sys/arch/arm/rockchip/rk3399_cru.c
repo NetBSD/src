@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.8.2.2 2019/06/10 22:05:55 christos Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.8.2.3 2020/04/13 08:03:37 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.8.2.2 2019/06/10 22:05:55 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.8.2.3 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -181,6 +181,7 @@ static const struct rk_cru_cpu_rate armclkb_rates[] = {
         RK3399_CPUB_RATE(2088000000, 1, 10, 10),
         RK3399_CPUB_RATE(2040000000, 1, 10, 10),
         RK3399_CPUB_RATE(2016000000, 1, 9, 9),
+        RK3399_CPUB_RATE(2000000000, 1, 9, 9),
         RK3399_CPUB_RATE(1992000000, 1, 9, 9),
         RK3399_CPUB_RATE(1896000000, 1, 9, 9),
         RK3399_CPUB_RATE(1800000000, 1, 8, 8),
@@ -271,20 +272,21 @@ rk3399_cru_pll_set_rate(struct rk_cru_softc *sc,
 	struct rk_cru_pll *pll = &clk->u.pll;
 	const struct rk_cru_pll_rate *pll_rate = NULL;
 	uint32_t val;
-	int retry;
+	int retry, best_diff;
 
 	KASSERT(clk->type == RK_CRU_PLL);
 
 	if (pll->rates == NULL || rate == 0)
 		return EIO;
 
-	for (int i = 0; i < pll->nrates; i++)
-		if (pll->rates[i].rate == rate) {
+	best_diff = INT_MAX;
+	for (int i = 0; i < pll->nrates; i++) {
+		const int diff = (int)rate - (int)pll->rates[i].rate;
+		if (abs(diff) < best_diff) {
 			pll_rate = &pll->rates[i];
-			break;
+			best_diff = abs(diff);
 		}
-	if (pll_rate == NULL)
-		return EINVAL;
+	}
 
 	val = __SHIFTIN(PLL_WORK_MODE_SLOW, PLL_WORK_MODE) | (PLL_WORK_MODE << 16);
 	CRU_WRITE(sc, pll->con_base + PLL_CON3, val);
@@ -348,13 +350,24 @@ static const char * armclkb_parents[] = { "clk_core_b_lpll_src", "clk_core_b_bpl
 static const char * mux_clk_tsadc_parents[] = { "xin24m", "xin32k" };
 static const char * mux_pll_src_cpll_gpll_parents[] = { "cpll", "gpll" };
 static const char * mux_pll_src_cpll_gpll_npll_parents[] = { "cpll", "gpll", "npll" };
+static const char * mux_pll_src_cpll_gpll_ppll_parents[] = { "cpll", "gpll", "ppll" };
 static const char * mux_pll_src_cpll_gpll_upll_parents[] = { "cpll", "gpll", "upll" };
 static const char * mux_pll_src_cpll_gpll_npll_24m_parents[] = { "cpll", "gpll", "npll", "xin24m" };
 static const char * mux_pll_src_cpll_gpll_npll_ppll_upll_24m_parents[] = { "cpll", "gpll", "npll", "ppll", "upll", "xin24m" };
+static const char * mux_pll_src_npll_cpll_gpll_parents[] = { "npll", "cpll", "gpll" };
+static const char * mux_pll_src_vpll_cpll_gpll_parents[] = { "vpll", "cpll", "gpll" };
+static const char * mux_pll_src_vpll_cpll_gpll_npll_parents[] = { "vpll", "cpll", "gpll", "npll" };
 static const char * mux_aclk_perilp0_parents[] = { "cpll_aclk_perilp0_src", "gpll_aclk_perilp0_src" };
 static const char * mux_hclk_perilp1_parents[] = { "cpll_hclk_perilp1_src", "gpll_hclk_perilp1_src" };
 static const char * mux_aclk_perihp_parents[] = { "cpll_aclk_perihp_src", "gpll_aclk_perihp_src" };
 static const char * mux_aclk_cci_parents[] = { "cpll_aclk_cci_src", "gpll_aclk_cci_src", "npll_aclk_cci_src", "vpll_aclk_cci_src" };
+static const char * mux_dclk_vop0_parents[] = { "dclk_vop0_div", "dclk_vop0_frac" };
+static const char * mux_dclk_vop1_parents[] = { "dclk_vop1_div", "dclk_vop1_frac" };
+static const char * mux_i2s0_parents[] = { "clk_i2s0_div", "clk_i2s0_frac", "clkin_i2s", "xin12m" };
+static const char * mux_i2s1_parents[] = { "clk_i2s1_div", "clk_i2s1_frac", "clkin_i2s", "xin12m" };
+static const char * mux_i2s2_parents[] = { "clk_i2s2_div", "clk_i2s2_frac", "clkin_i2s", "xin12m" };
+static const char * mux_i2sch_parents[] = { "clk_i2s0", "clk_i2s1", "clk_i2s2" };
+static const char * mux_i2sout_parents[] = { "clk_i2sout_src", "xin12m" };
 static const char * mux_uart0_parents[] = { "clk_uart0_div", "clk_uart0_frac", "xin24m" };
 static const char * mux_uart1_parents[] = { "clk_uart1_div", "clk_uart1_frac", "xin24m" };
 static const char * mux_uart2_parents[] = { "clk_uart2_div", "clk_uart2_frac", "xin24m" };
@@ -403,7 +416,7 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		   __BIT(31),		/* lock_mask */
 		   pll_rates),
 	RK3399_PLL(RK3399_PLL_VPLL, "vpll", pll_parents,
-		   PLL_CON(43),		/* con_base */
+		   PLL_CON(48),		/* con_base */
 		   PLL_CON(51),		/* mode_reg */
 		   __BIT(8),		/* mode_mask */
 		   __BIT(31),		/* lock_mask */
@@ -760,6 +773,53 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK_GATE(RK3399_PCLK_I2C2, "pclk_rki2c2", "pclk_perilp1", CLKGATE_CON(22), 9),
 	RK_GATE(RK3399_PCLK_I2C3, "pclk_rki2c3", "pclk_perilp1", CLKGATE_CON(22), 10),
 
+	/*
+	 * SPI
+	 */
+	RK_COMPOSITE(RK3399_SCLK_SPI0, "clk_spi0", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(59),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(9),	/* gate_reg */
+		     __BIT(12),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_SPI1, "clk_spi1", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(59),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(9),	/* gate_reg */
+		     __BIT(13),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_SPI2, "clk_spi2", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(60),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(9),	/* gate_reg */
+		     __BIT(14),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_SPI4, "clk_spi4", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(60),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(9),	/* gate_reg */
+		     __BIT(15),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_SPI5, "clk_spi5", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(58),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(13),	/* gate_reg */
+		     __BIT(13),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_PCLK_SPI0, "pclk_rkspi0", "pclk_perilp1", CLKGATE_CON(23), 10),
+	RK_GATE(RK3399_PCLK_SPI1, "pclk_rkspi1", "pclk_perilp1", CLKGATE_CON(23), 11),
+	RK_GATE(RK3399_PCLK_SPI2, "pclk_rkspi2", "pclk_perilp1", CLKGATE_CON(23), 12),
+	RK_GATE(RK3399_PCLK_SPI4, "pclk_rkspi4", "pclk_perilp1", CLKGATE_CON(23), 13),
+	RK_GATE(RK3399_PCLK_SPI5, "pclk_rkspi5", "hclk_perilp1", CLKGATE_CON(34), 5),
+
+	/* Watchdog */
+	RK_SECURE_GATE(RK3399_PCLK_WDT, "pclk_wdt", "pclk_alive" /*, SECURE_CLKGATE_CON(3), 8 */),
+
 	/* PCIe */
 	RK_GATE(RK3399_ACLK_PERF_PCIE, "aclk_perf_pcie", "aclk_perihp", CLKGATE_CON(20), 2),
 	RK_GATE(RK3399_ACLK_PCIE, "aclk_pcie", "aclk_perihp", CLKGATE_CON(20), 10),
@@ -796,18 +856,227 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     __BIT(1),		/* gate_mask */
 		     RK_COMPOSITE_ROUND_DOWN),
 	RK_GATE(RK3399_PCLK_TSADC, "pclk_tsadc", "pclk_perilp1", CLKGATE_CON(22), 13),
+
+	/* VOP0 */
+	RK_COMPOSITE(RK3399_ACLK_VOP0_PRE, "aclk_vop0_pre", mux_pll_src_vpll_cpll_gpll_npll_parents,
+		     CLKSEL_CON(47),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(8),		/* gate_mask */
+		     0),
+	RK_COMPOSITE_NOMUX(0, "hclk_vop0_pre", "aclk_vop0_pre",
+			   CLKSEL_CON(47),	/* div_reg */
+			   __BITS(12,8),	/* div_mask */
+			   CLKGATE_CON(10),	/* gate_reg */
+			   __BIT(9),		/* gate_mask */
+			   0),
+	RK_COMPOSITE(RK3399_DCLK_VOP0_DIV, "dclk_vop0_div", mux_pll_src_vpll_cpll_gpll_parents,
+		     CLKSEL_CON(49),	/* muxdiv_reg */
+		     __BITS(9,8),	/* mux_mask */
+		     __BITS(7,0),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(12),		/* gate_mask */
+		     RK_COMPOSITE_SET_RATE_PARENT),
+	RK_GATE(RK3399_ACLK_VOP0, "aclk_vop0", "aclk_vop0_pre", CLKGATE_CON(28), 3),
+	RK_GATE(RK3399_HCLK_VOP0, "hclk_vop0", "hclk_vop0_pre", CLKGATE_CON(28), 2),
+	RK_COMPOSITE_FRAC(RK3399_DCLK_VOP0_FRAC, "dclk_vop0_frac", "dclk_vop0_div",
+			  CLKSEL_CON(106),	/* frac_reg */
+			  0),
+	RK_MUX(RK3399_DCLK_VOP0, "dclk_vop0", mux_dclk_vop0_parents, CLKSEL_CON(49), __BIT(11)),
+
+	/* VOP1 */
+	RK_COMPOSITE(RK3399_ACLK_VOP1_PRE, "aclk_vop1_pre", mux_pll_src_vpll_cpll_gpll_npll_parents,
+		     CLKSEL_CON(48),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(10),		/* gate_mask */
+		     0),
+	RK_COMPOSITE_NOMUX(0, "hclk_vop1_pre", "aclk_vop1_pre",
+			   CLKSEL_CON(48),	/* div_reg */
+			   __BITS(12,8),	/* div_mask */
+			   CLKGATE_CON(10),	/* gate_reg */
+			   __BIT(11),		/* gate_mask */
+			   0),
+	RK_COMPOSITE(RK3399_DCLK_VOP1_DIV, "dclk_vop1_div", mux_pll_src_vpll_cpll_gpll_parents,
+		     CLKSEL_CON(50),	/* muxdiv_reg */
+		     __BITS(9,8),	/* mux_mask */
+		     __BITS(7,0),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(13),		/* gate_mask */
+		     RK_COMPOSITE_SET_RATE_PARENT),
+	RK_GATE(RK3399_ACLK_VOP1, "aclk_vop1", "aclk_vop1_pre", CLKGATE_CON(28), 7),
+	RK_GATE(RK3399_HCLK_VOP1, "hclk_vop1", "hclk_vop1_pre", CLKGATE_CON(28), 6),
+	RK_COMPOSITE_FRAC(RK3399_DCLK_VOP1_FRAC, "dclk_vop1_frac", "dclk_vop1_div",
+			  CLKSEL_CON(107),	/* frac_reg */
+			  0),
+	RK_MUX(RK3399_DCLK_VOP1, "dclk_vop1", mux_dclk_vop1_parents, CLKSEL_CON(50), __BIT(11)),
+
+	/* VIO */
+	RK_COMPOSITE(RK3399_ACLK_VIO, "aclk_vio", mux_pll_src_cpll_gpll_ppll_parents,
+		     CLKSEL_CON(42),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(0),		/* gate_mask */
+		     0),
+	RK_COMPOSITE_NOMUX(RK3399_PCLK_VIO, "pclk_vio", "aclk_vio",
+			   CLKSEL_CON(43),	/* div_reg */
+			   __BITS(4,0),		/* div_mask */
+			   CLKGATE_CON(11),	/* gate_reg */
+			   __BIT(1),		/* gate_mask */
+			   0),
+	RK_GATE(RK3399_PCLK_VIO_GRF, "pclk_vio_grf", "pclk_vio", CLKGATE_CON(29), 12),
+
+	/* HDMI */
+	RK_COMPOSITE(RK3399_ACLK_HDCP, "aclk_hdcp", mux_pll_src_cpll_gpll_ppll_parents,
+		     CLKSEL_CON(42),	/* muxdiv_reg */
+		     __BITS(15,14),	/* mux_mask */
+		     __BITS(12,8),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(12),		/* gate_mask */
+		     0),
+	RK_COMPOSITE_NOMUX(RK3399_PCLK_HDCP, "pclk_hdcp", "aclk_hdcp",
+			   CLKSEL_CON(43),	/* div_reg */
+			   __BITS(14,10),	/* div_mask */
+			   CLKGATE_CON(11),	/* gate_reg */
+			   __BIT(10),		/* gate_mask */
+			   0),
+	RK_COMPOSITE(RK3399_SCLK_HDMI_CEC, "clk_hdmi_cec", pll_parents,
+		     CLKSEL_CON(45),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(9,0),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(7),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_PCLK_HDMI_CTRL, "pclk_hdmi_ctrl", "pclk_hdcp", CLKGATE_CON(29), 6),
+	RK_GATE(RK3399_SCLK_HDMI_SFR, "clk_hdmi_sfr", "xin24m", CLKGATE_CON(11), 6),
+
+	/* I2S2 */
+	RK_COMPOSITE(0, "clk_i2s0_div", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(28),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(8),	/* gate_reg */
+		     __BIT(3),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(0, "clk_i2s1_div", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(29),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(8),	/* gate_reg */
+		     __BIT(6),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(0, "clk_i2s2_div", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(30),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(8),	/* gate_reg */
+		     __BIT(9),		/* gate_mask */
+		     0),
+	RK_COMPOSITE_FRAC(0, "clk_i2s0_frac", "clk_i2s0_div",
+			  CLKSEL_CON(96),	/* frac_reg */
+			  0),
+	RK_COMPOSITE_FRAC(0, "clk_i2s1_frac", "clk_i2s1_div",
+			  CLKSEL_CON(97),	/* frac_reg */
+			  0),
+	RK_COMPOSITE_FRAC(0, "clk_i2s2_frac", "clk_i2s2_div",
+			  CLKSEL_CON(98),	/* frac_reg */
+			  0),
+	RK_MUX(0, "clk_i2s0_mux", mux_i2s0_parents, CLKSEL_CON(28), __BITS(9,8)),
+	RK_MUX(0, "clk_i2s1_mux", mux_i2s1_parents, CLKSEL_CON(29), __BITS(9,8)),
+	RK_MUX(0, "clk_i2s2_mux", mux_i2s2_parents, CLKSEL_CON(30), __BITS(9,8)),
+	RK_GATE(RK3399_SCLK_I2S0_8CH, "clk_i2s0", "clk_i2s0_mux", CLKGATE_CON(8), 5),
+	RK_GATE(RK3399_SCLK_I2S1_8CH, "clk_i2s1", "clk_i2s1_mux", CLKGATE_CON(8), 8),
+	RK_GATE(RK3399_SCLK_I2S2_8CH, "clk_i2s2", "clk_i2s2_mux", CLKGATE_CON(8), 11),
+	RK_GATE(RK3399_HCLK_I2S0_8CH, "hclk_i2s0", "hclk_perilp1", CLKGATE_CON(34), 0),
+	RK_GATE(RK3399_HCLK_I2S1_8CH, "hclk_i2s1", "hclk_perilp1", CLKGATE_CON(34), 1),
+	RK_GATE(RK3399_HCLK_I2S2_8CH, "hclk_i2s2", "hclk_perilp1", CLKGATE_CON(34), 2),
+	RK_MUX(0, "clk_i2sout_src", mux_i2sch_parents, CLKSEL_CON(31), __BITS(1,0)),
+	RK_COMPOSITE(RK3399_SCLK_I2S_8CH_OUT, "clk_i2sout", mux_i2sout_parents,
+		     CLKSEL_CON(31),	/* muxdiv_reg */
+		     __BIT(2),		/* mux_mask */
+		     0,			/* div_mask */
+		     CLKGATE_CON(8),	/* gate_reg */
+		     __BIT(12),		/* gate_mask */
+		     RK_COMPOSITE_SET_RATE_PARENT),
+
+	/* eDP */
+	RK_COMPOSITE(RK3399_PCLK_EDP, "pclk_edp", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(44),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(13,8),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(11),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_PCLK_EDP_NOC, "pclk_edp_noc", "pclk_edp", CLKGATE_CON(32), 12),
+	RK_GATE(RK3399_PCLK_EDP_CTRL, "pclk_edp_ctrl", "pclk_edp", CLKGATE_CON(32), 13),
+
+	RK_COMPOSITE(RK3399_SCLK_DP_CORE, "clk_dp_core", mux_pll_src_npll_cpll_gpll_parents,
+		     CLKSEL_CON(46),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(8),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_PCLK_DP_CTRL, "pclk_dp_ctrl", "pclk_hdcp", CLKGATE_CON(29), 7),
+
+};
+
+static const struct rk3399_init_param {
+	const char *clk;
+	const char *parent;
+} rk3399_init_params[] = {
+	{ .clk = "clk_i2s0_mux",	.parent = "clk_i2s0_frac" },
+	{ .clk = "clk_i2s1_mux",	.parent = "clk_i2s1_frac" },
+	{ .clk = "clk_i2s2_mux",	.parent = "clk_i2s2_frac" },
+	{ .clk = "dclk_vop0_div",	.parent = "gpll" },
+	{ .clk = "dclk_vop1_div",	.parent = "gpll" },
+	{ .clk = "dclk_vop0",		.parent = "dclk_vop0_frac" },
+	{ .clk = "dclk_vop1",		.parent = "dclk_vop1_frac" },
 };
 
 static void
 rk3399_cru_init(struct rk_cru_softc *sc)
 {
-	struct rk_cru_clk *clk;
+	struct rk_cru_clk *clk, *pclk;
+	uint32_t write_mask, write_val;
+	int error;
+	u_int n;
 
 	/*
 	 * Force an update of BPLL to bring it out of slow mode.
 	 */
 	clk = rk_cru_clock_find(sc, "armclkb");
 	clk_set_rate(&clk->base, clk_get_rate(&clk->base));
+
+	/*
+	 * Set DCLK_VOP0 and DCLK_VOP1 dividers to 1.
+	 */
+	write_mask = __BITS(7,0) << 16;
+	write_val = 0;
+	CRU_WRITE(sc, CLKSEL_CON(49), write_mask | write_val);
+	CRU_WRITE(sc, CLKSEL_CON(50), write_mask | write_val);
+
+	/*
+	 * Set defaults
+	 */
+	for (n = 0; n < __arraycount(rk3399_init_params); n++) {
+		const struct rk3399_init_param *param = &rk3399_init_params[n];
+		clk = rk_cru_clock_find(sc, param->clk);
+		KASSERTMSG(clk != NULL, "couldn't find clock %s", param->clk);
+		if (param->parent != NULL) {
+			pclk = rk_cru_clock_find(sc, param->parent);
+			KASSERTMSG(pclk != NULL, "couldn't find clock %s", param->parent);
+			error = clk_set_parent(&clk->base, &pclk->base);
+			if (error != 0) {
+				aprint_error_dev(sc->sc_dev, "couldn't set %s parent to %s: %d\n",
+				    param->clk, param->parent, error);
+				continue;
+			}
+		}
+	}
 }
 
 static int

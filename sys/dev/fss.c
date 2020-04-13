@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.104.4.2 2020/04/08 14:08:02 martin Exp $	*/
+/*	$NetBSD: fss.c,v 1.104.4.3 2020/04/13 08:04:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.104.4.2 2020/04/08 14:08:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.104.4.3 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -992,16 +992,19 @@ restart:
 		return 0;
 	}
 
-	for (scp = sc->sc_cache; scp < scl; scp++)
-		if (scp->fc_cluster == cl) {
-			if (scp->fc_type == FSS_CACHE_VALID) {
+	for (scp = sc->sc_cache; scp < scl; scp++) {
+		if (scp->fc_type == FSS_CACHE_VALID) {
+			if (scp->fc_cluster == cl) {
 				mutex_exit(&sc->sc_slock);
 				return 0;
-			} else if (scp->fc_type == FSS_CACHE_BUSY) {
+			}
+		} else if (scp->fc_type == FSS_CACHE_BUSY) {
+			if (scp->fc_cluster == cl) {
 				cv_wait(&scp->fc_state_cv, &sc->sc_slock);
 				goto restart;
 			}
 		}
+	}
 
 	for (scp = sc->sc_cache; scp < scl; scp++)
 		if (scp->fc_type == FSS_CACHE_FREE) {

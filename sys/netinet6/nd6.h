@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.86 2018/03/06 10:57:00 roy Exp $	*/
+/*	$NetBSD: nd6.h,v 1.86.2.1 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -38,14 +38,7 @@
 
 #define ND6_LLINFO_PURGE	-3
 #define ND6_LLINFO_NOSTATE	-2
-/*
- * We don't need the WAITDELETE state any more, but we keep the definition
- * in a comment line instead of removing it. This is necessary to avoid
- * unintentionally reusing the value for another purpose, which might
- * affect backward compatibility with old applications.
- * (20000711 jinmei@kame.net)
- */
-/* #define ND6_LLINFO_WAITDELETE	-1 */
+#define ND6_LLINFO_WAITDELETE	-1
 #define ND6_LLINFO_INCOMPLETE	0
 #define ND6_LLINFO_REACHABLE	1
 #define ND6_LLINFO_STALE	2
@@ -437,6 +430,7 @@ union nd_opts {
 /* XXX: need nd6_var.h?? */
 /* nd6.c */
 void nd6_init(void);
+void nd6_nbr_init(void);
 struct nd_ifinfo *nd6_ifattach(struct ifnet *);
 void nd6_ifdetach(struct ifnet *, struct in6_ifextra *);
 int nd6_is_addr_neighbor(const struct sockaddr_in6 *, struct ifnet *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.18 2015/08/02 18:11:57 dholland Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.18.16.1 2020/04/13 08:05:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -43,16 +43,20 @@
 
 #include "mount_lfs.h"
 
+#define RUMPRAWDEVICE "/dev/rrumpy0"
+
 static void *
 cleaner(void *arg)
 {
-	const char *the_argv[7];
+	const char *the_argv[9];
 
 	the_argv[0] = "megamaid";
 	the_argv[1] = "-D"; /* don't fork() & detach */
-	the_argv[2] = arg;
+	the_argv[2] = "-J"; /* treat arg as a device */
+	the_argv[3] = RUMPRAWDEVICE;
+	the_argv[4] = arg;
 
-	lfs_cleaner_main(3, __UNCONST(the_argv));
+	lfs_cleaner_main(5, __UNCONST(the_argv));
 
 	return NULL;
 }
@@ -93,7 +97,7 @@ main(int argc, char *argv[])
 	 * XXX: this particular piece inspired by the cleaner code.
 	 * obviously FIXXXME along with the cleaner.
 	 */
-	sprintf(rawdev, "/dev/r%s", canon_dev+5);
+	strlcpy(rawdev, RUMPRAWDEVICE, MAXPATHLEN);
 	rump_pub_etfs_register(rawdev, canon_dev, RUMP_ETFS_CHR);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.15.4.1 2019/06/10 22:07:03 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.15.4.2 2020/04/13 08:04:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -67,7 +67,7 @@ struct omsghdr {
 	struct iovec	*msg_iov;	/* scatter/gather array */
 	int		msg_iovlen;	/* # elements in msg_iov */
 	void *		msg_accrights;	/* access rights sent/received */
-	int		msg_accrightslen;
+	u_int		msg_accrightslen;
 };
 
 /*

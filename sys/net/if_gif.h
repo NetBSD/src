@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.31.2.2 2020/04/08 14:08:57 martin Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.31.2.3 2020/04/13 08:05:15 martin Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -55,11 +55,6 @@ extern struct psref_class *gv_psref_class;
 
 struct encaptab;
 
-struct gif_ro {
-	struct route gr_ro;
-	kmutex_t *gr_lock;
-};
-
 struct gif_variant {
 	struct gif_softc *gv_softc;
 	struct sockaddr	*gv_psrc; /* Physical src addr */
@@ -73,13 +68,15 @@ struct gif_variant {
 
 struct gif_softc {
 	struct ifnet	gif_if;		/* common area - must be at the top */
-	percpu_t *gif_ro_percpu;	/* struct gif_ro */
+	percpu_t *gif_ro_percpu;	/* struct tunnel_ro */
 	struct gif_variant *gif_var;	/*
 					 * reader must use gif_getref_variant()
 					 * instead of direct dereference.
 					 */
 	kmutex_t gif_lock;		/* writer lock for gif_var */
 	pserialize_t gif_psz;
+
+	int gif_pmtu;
 
 	LIST_ENTRY(gif_softc) gif_list;	/* list of all gifs */
 };
@@ -130,8 +127,6 @@ gif_heldref_variant(struct gif_variant *var)
 /* Prototypes */
 void	gif_input(struct mbuf *, int, struct ifnet *);
 
-void	gif_rtcache_free_pc(void *, void *, struct cpu_info *);
-
 #ifdef GIF_ENCAPCHECK
 int	gif_encapcheck(struct mbuf *, int, int, void *);
 #endif
@@ -146,8 +141,8 @@ int	gif_encapcheck(struct mbuf *, int, int, void *);
  *   - gif_var->gv_psref for reader
  *       gif_softc->gif_var is used for variant values while the gif tunnel
  *       exists.
- * + Each CPU's gif_ro.gr_ro of gif_ro_percpu are protected by
- *   percpu'ed gif_ro.gr_lock.
+ * + Each CPU's tunnel_ro.tr_ro of gif_ro_percpu are protected by
+ *   percpu'ed tunnel_ro.tr_lock.
  *
  * Locking order:
  *     - encap_lock => gif_softc->gif_lock => gif_softcs.lock

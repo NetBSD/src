@@ -1,4 +1,4 @@
-/*	$NetBSD: ldc.c,v 1.3.16.1 2019/06/10 22:06:47 christos Exp $	*/
+/*	$NetBSD: ldc.c,v 1.3.16.2 2020/04/13 08:04:08 martin Exp $	*/
 /*	$OpenBSD: ldc.c,v 1.12 2015/03/21 18:02:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -529,9 +529,7 @@ ldc_queue_alloc(int nentries)
 	int nsegs;
 #endif
 
-	lq = kmem_zalloc(sizeof(struct ldc_queue), KM_NOSLEEP);
-	if (lq == NULL)
-		return NULL;
+	lq = kmem_zalloc(sizeof(struct ldc_queue), KM_SLEEP);
 
 	mutex_init(&lq->lq_mtx, MUTEX_DEFAULT, IPL_TTY);
 
@@ -553,9 +551,7 @@ ldc_queue_alloc(int nentries)
 	    BUS_DMA_NOWAIT) != 0)
 		goto unmap;
 #else
-	 va = (vaddr_t)kmem_zalloc(size, KM_NOSLEEP);
-	 if (va == 0)
-		goto free;
+	va = (vaddr_t)kmem_zalloc(size, KM_SLEEP);
 #endif
 	lq->lq_va = (vaddr_t)va;
 	lq->lq_nentries = nentries;
@@ -567,9 +563,6 @@ free:
 	bus_dmamem_free(t, &lq->lq_seg, 1);
 destroy:
 	bus_dmamap_destroy(t, lq->lq_map);
-#else
-free:
-	kmem_free(lq, sizeof(struct ldc_queue));
 #endif
 	return (NULL);
 }
@@ -611,10 +604,7 @@ ldc_map_alloc(int nentries)
 #if OPENBSD_BUSDMA
 	int nsegs;
 #endif
-	lm = kmem_zalloc(sizeof(struct ldc_map), KM_NOSLEEP);
-	if (lm == NULL)
-		return NULL;
-
+	lm = kmem_zalloc(sizeof(struct ldc_map), KM_SLEEP);
 	size = roundup(nentries * sizeof(struct ldc_map_slot), PAGE_SIZE);
 
 #if OPENBSD_BUSDMA
@@ -641,9 +631,7 @@ ldc_map_alloc(int nentries)
 		goto unmap;
 	}
 #else
-	va = (vaddr_t)kmem_zalloc(size, KM_NOSLEEP);
-	if (va == 0)
-		goto free;
+	va = (vaddr_t)kmem_zalloc(size, KM_SLEEP);
 #endif
 	lm->lm_slot = (struct ldc_map_slot *)va;
 	lm->lm_nentries = nentries;
@@ -657,9 +645,6 @@ free:
 	bus_dmamem_free(t, &lm->lm_seg, 1);
 destroy:
 	bus_dmamap_destroy(t, lm->lm_map);
-#else
-free:
-	kmem_free(lm, sizeof(struct ldc_map));
 #endif
 	return (NULL);
 }

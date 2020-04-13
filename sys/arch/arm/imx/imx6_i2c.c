@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_i2c.c,v 1.2 2015/03/27 05:31:23 hkenken Exp $	*/
+/*	$NetBSD: imx6_i2c.c,v 1.2.20.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_i2c.c,v 1.2 2015/03/27 05:31:23 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_i2c.c,v 1.2.20.1 2020/04/13 08:03:35 martin Exp $");
 
 #include "opt_imx.h"
 
@@ -65,11 +65,34 @@ void
 imxi2c_attach(device_t parent __unused, device_t self, void *aux)
 {
 	struct axi_attach_args *aa = aux;
+	struct imxi2c_softc *sc = device_private(self);
 
 	if (aa->aa_size <= 0)
 		aa->aa_size = I2C_SIZE;
 
-	imxi2c_set_freq(self, imx6_get_clock(IMX6CLK_PERCLK), 400000);
+	switch (device_unit(self)) {
+	case 0:
+		sc->sc_clk = imx6_get_clock("i2c1");
+		break;
+	case 1:
+		sc->sc_clk = imx6_get_clock("i2c2");
+		break;
+	case 2:
+		sc->sc_clk = imx6_get_clock("i2c3");
+		break;
+	}
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't get clock sata\n");
+		return;
+	}
+
+	int error = clk_enable(sc->sc_clk);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable: %d\n", error);
+		return;
+	}
+
+	imxi2c_set_freq(self, clk_get_rate(sc->sc_clk), 400000);
 	imxi2c_attach_common(parent, self,
 	    aa->aa_iot, aa->aa_addr, aa->aa_size, aa->aa_irq, 0);
 }

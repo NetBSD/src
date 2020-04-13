@@ -1,7 +1,8 @@
-/*	$NetBSD: kern_fork.c,v 1.205.2.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.205.2.2 2020/04/13 08:05:03 martin Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.205.2.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.205.2.2 2020/04/13 08:05:03 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -94,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.205.2.1 2019/06/10 22:09:03 christos
 #include <sys/uidinfo.h>
 #include <sys/sdt.h>
 #include <sys/ptrace.h>
-
-#include <uvm/uvm_extern.h>
 
 /*
  * DTrace SDT provider definitions
@@ -252,7 +251,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	int		count;
 	vaddr_t		uaddr;
 	int		tnprocs;
-	bool		trace_fork, trace_vfork;
 	int		error = 0;
 
 	p1 = l1->l_proc;
@@ -329,6 +327,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	LIST_INIT(&p2->p_lwps);
 	LIST_INIT(&p2->p_sigwaiters);
+	radix_tree_init_tree(&p2->p_lwptree);
 
 	/*
 	 * Duplicate sub-structures as needed.
@@ -355,6 +354,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	mutex_init(&p2->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p2->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p2->p_reflock);
+	rw_init(&p2->p_treelock);
 	cv_init(&p2->p_waitcv, "wait");
 	cv_init(&p2->p_lwpcv, "lwpwait");
 
@@ -413,11 +413,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	if (flags & FORK_PPWAIT) {
 		/* Mark ourselves as waiting for a child. */
-		l1->l_pflag |= LP_VFORKWAIT;
 		p2->p_lflag = PL_PPWAIT;
+		l1->l_vforkwaiting = true;
 		p2->p_vforklwp = l1;
 	} else {
 		p2->p_lflag = 0;
+		l1->l_vforkwaiting = false;
 	}
 	p2->p_sflag = 0;
 	p2->p_slflag = 0;
@@ -510,17 +511,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Trace fork(2) and vfork(2)-like events on demand in a debugger.
 	 */
-	trace_fork = tracefork(p1, flags);
-	trace_vfork = tracevfork(p1, flags);
-	if (trace_fork || trace_vfork)
+	if (tracefork(p1, flags) || tracevfork(p1, flags)) {
 		proc_changeparent(p2, p1->p_pptr);
-	if (trace_fork) {
-		p1->p_fpid = p2->p_pid;
-		p2->p_fpid = p1->p_pid;
-	}
-	if (trace_vfork) {
-		p1->p_vfpid = p2->p_pid;
-		p2->p_vfpid = p1->p_pid;
+		p2->p_oppid = p1->p_pid;
 	}
 
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
@@ -534,11 +527,13 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Update stats now that we know the fork was successful.
 	 */
-	uvmexp.forks++;
+	KPREEMPT_DISABLE(l1);
+	CPU_COUNT(CPU_COUNT_FORKS, 1);
 	if (flags & FORK_PPWAIT)
-		uvmexp.forks_ppwait++;
+		CPU_COUNT(CPU_COUNT_FORKS_PPWAIT, 1);
 	if (flags & FORK_SHAREVM)
-		uvmexp.forks_sharevm++;
+		CPU_COUNT(CPU_COUNT_FORKS_SHAREVM, 1);
+	KPREEMPT_ENABLE(l1);
 
 	if (ktrpoint(KTR_EMUL))
 		p2->p_traceflag |= KTRFAC_TRC_EMUL;
@@ -571,21 +566,20 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_acflag = AFORK;
 	lwp_lock(l2);
 	KASSERT(p2->p_nrlwps == 1);
+	KASSERT(l2->l_stat == LSIDL);
 	if (p2->p_sflag & PS_STOPFORK) {
-		struct schedstate_percpu *spc = &l2->l_cpu->ci_schedstate;
 		p2->p_nrlwps = 0;
 		p2->p_stat = SSTOP;
 		p2->p_waited = 0;
 		p1->p_nstopchild++;
 		l2->l_stat = LSSTOP;
 		KASSERT(l2->l_wchan == NULL);
-		lwp_unlock_to(l2, spc->spc_lwplock);
+		lwp_unlock(l2);
 	} else {
 		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
-		l2->l_stat = LSRUN;
-		sched_enqueue(l2, false);
-		lwp_unlock(l2);
+		setrunnable(l2);
+		/* LWP now unlocked */
 	}
 
 	/*
@@ -604,24 +598,25 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	if (tracefork(p1, flags) || tracevfork(p1, flags)) {
 		mutex_enter(p1->p_lock);
-		eventswitch(TRAP_CHLD);
+		eventswitch(TRAP_CHLD,
+		    tracefork(p1, flags) ? PTRACE_FORK : PTRACE_VFORK,
+		    retval[0]);
 		mutex_enter(proc_lock);
 	}
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
-	 * child to exec or exit, sleep until it clears LP_VFORKWAIT.
+	 * child to exec or exit, sleep until it clears p_vforkwaiting.
 	 */
-	while (p2->p_lflag & PL_PPWAIT) // XXX: p2 can go invalid
-		cv_wait(&p1->p_waitcv, proc_lock);
+	while (l1->l_vforkwaiting)
+		cv_wait(&l1->l_waitcv, proc_lock);
 
 	/*
 	 * Let the parent know that we are tracing its child.
 	 */
 	if (tracevforkdone(p1, flags)) {
 		mutex_enter(p1->p_lock);
-		p1->p_vfpid_done = retval[0];
-		eventswitch(TRAP_CHLD);
+		eventswitch(TRAP_CHLD, PTRACE_VFORK_DONE, retval[0]);
 	} else
 		mutex_exit(proc_lock);
 
@@ -634,22 +629,14 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 void
 child_return(void *arg)
 {
-	struct lwp *l = arg;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 
-	if (p->p_slflag & PSL_TRACED) {
-		/* Paranoid check */
-		mutex_enter(proc_lock);
-		if (!(p->p_slflag & PSL_TRACED)) {
-			mutex_exit(proc_lock);
-			goto my_tracer_is_gone;
-		}
-
-		mutex_enter(p->p_lock);
-		eventswitch(TRAP_CHLD);
+	if ((p->p_slflag & PSL_TRACED) != 0) {
+		eventswitchchild(p, TRAP_CHLD, 
+		    ISSET(p->p_lflag, PL_PPWAIT) ? PTRACE_VFORK : PTRACE_FORK);
 	}
 
-my_tracer_is_gone:
 	md_child_return(l);
 
 	/*

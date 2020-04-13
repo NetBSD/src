@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.37.16.1 2019/06/10 22:10:23 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.37.16.2 2020/04/13 08:05:45 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.37.16.1 2019/06/10 22:10:23 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.37.16.2 2020/04/13 08:05:45 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 	char nextch;
 	char *format;
 	char ch;
-	int error, o;
+	int error;
 
 #if !defined(SHELL) && !defined(BUILTIN)
 	(void)setlocale (LC_ALL, "");
@@ -138,16 +138,39 @@ main(int argc, char *argv[])
 
 	rval = 0;	/* clear for builtin versions (avoid holdover) */
 
-	while ((o = getopt(argc, argv, "")) != -1) {
-		switch (o) {
-		case '?':
-		default:
-			usage();
-			return 1;
+	/*
+	 * printf does not comply with Posix XBD 12.2 - there are no opts,
+	 * not even the -- end of options marker.   Do not run getoot().
+	 */
+	if (argc > 2 && strchr(argv[1], '%') == NULL) {
+		int o;
+
+		/*
+		 * except that if there are multiple args and
+		 * the first (the nominal format) contains no '%'
+		 * conversions (which we will approximate as no '%'
+		 * characters at all, conversions or not) then the
+		 * results are unspecified, and we can do what we
+		 * like.   So in that case, for some backward compat
+		 * to scripts which (stupidly) do:
+		 *	printf -- format args
+		 * process this case the old way.
+		 */
+
+		while ((o = getopt(argc, argv, "")) != -1) {
+			switch (o) {
+			case '?':
+			default:
+				usage();
+				return 1;
+			}
 		}
+		argc -= optind;
+		argv += optind;
+	} else {
+		argc -= 1;	/* drop argv[0] (the program name) */
+		argv += 1;
 	}
-	argc -= optind;
-	argv += optind;
 
 	if (argc < 1) {
 		usage();

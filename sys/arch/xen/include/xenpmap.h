@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.39.14.1 2019/06/10 22:06:54 christos Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.39.14.2 2020/04/13 08:04:12 martin Exp $	*/
 
 /*
  *
@@ -85,7 +85,7 @@ xpmap_mtop_masked(paddr_t mpa)
 static __inline paddr_t
 xpmap_mtop(paddr_t mpa)
 {
-	return (xpmap_mtop_masked(mpa) | (mpa & ~PG_FRAME));
+	return (xpmap_mtop_masked(mpa) | (mpa & ~PTE_4KFRAME));
 }
 
 static __inline paddr_t
@@ -99,7 +99,7 @@ xpmap_ptom_masked(paddr_t ppa)
 static __inline paddr_t
 xpmap_ptom(paddr_t ppa)
 {
-	return (xpmap_ptom_masked(ppa) | (ppa & ~PG_FRAME));
+	return (xpmap_ptom_masked(ppa) | (ppa & ~PTE_4KFRAME));
 }
 
 static __inline void

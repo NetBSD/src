@@ -1,5 +1,5 @@
 /* Command line option handling.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -24,6 +24,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "opts.h"
 #include "options.h"
 #include "diagnostic.h"
+#include "spellcheck.h"
 
 static void prune_options (struct cl_decoded_option **, unsigned int *);
 
@@ -958,9 +959,10 @@ keep:
    option for options from the source file, UNKNOWN_LOCATION
    otherwise.  GENERATED_P is true for an option generated as part of
    processing another option or otherwise generated internally, false
-   for one explicitly passed by the user.  Returns false if the switch
-   was invalid.  DC is the diagnostic context for options affecting
-   diagnostics state, or NULL.  */
+   for one explicitly passed by the user.  control_warning_option
+   generated options are considered explicitly passed by the user.
+   Returns false if the switch was invalid.  DC is the diagnostic
+   context for options affecting diagnostics state, or NULL.  */
 
 static bool
 handle_option (struct gcc_options *opts,
@@ -1005,13 +1007,13 @@ handle_generated_option (struct gcc_options *opts,
 			 size_t opt_index, const char *arg, int value,
 			 unsigned int lang_mask, int kind, location_t loc,
 			 const struct cl_option_handlers *handlers,
-			 diagnostic_context *dc)
+			 bool generated_p, diagnostic_context *dc)
 {
   struct cl_decoded_option decoded;
 
   generate_option (opt_index, arg, value, lang_mask, &decoded);
   return handle_option (opts, opts_set, &decoded, lang_mask, kind, loc,
-			handlers, true, dc);
+			handlers, generated_p, dc);
 }
 
 /* Fill in *DECODED with an option described by OPT_INDEX, ARG and
@@ -1069,6 +1071,38 @@ generate_option_input_file (const char *file,
   decoded->errors = 0;
 }
 
+/* Helper function for listing valid choices and hint for misspelled
+   value.  CANDIDATES is a vector containing all valid strings,
+   STR is set to a heap allocated string that contains all those
+   strings concatenated, separated by spaces, and the return value
+   is the closest string from those to ARG, or NULL if nothing is
+   close enough.  Callers should XDELETEVEC (STR) after using it
+   to avoid memory leaks.  */
+
+const char *
+candidates_list_and_hint (const char *arg, char *&str,
+			  const auto_vec <const char *> &candidates)
+{
+  size_t len = 0;
+  int i;
+  const char *candidate;
+  char *p;
+
+  FOR_EACH_VEC_ELT (candidates, i, candidate)
+    len += strlen (candidate) + 1;
+
+  str = p = XNEWVEC (char, len);
+  FOR_EACH_VEC_ELT (candidates, i, candidate)
+    {
+      len = strlen (candidate);
+      memcpy (p, candidate, len);
+      p[len] = ' ';
+      p += len + 1;
+    }
+  p[-1] = '\0';
+  return find_closest_string (arg, &candidates);
+}
+
 /* Perform diagnostics for read_cmdline_option and control_warning_option
    functions.  Returns true if an error has been diagnosed.
    LOC and LANG_MASK arguments like in read_cmdline_option.
@@ -1108,31 +1142,28 @@ cmdline_handle_error (location_t loc, const struct cl_option *option,
     {
       const struct cl_enum *e = &cl_enums[option->var_enum];
       unsigned int i;
-      size_t len;
-      char *s, *p;
+      char *s;
 
       if (e->unknown_error)
 	error_at (loc, e->unknown_error, arg);
       else
 	error_at (loc, "unrecognized argument in option %qs", opt);
 
-      len = 0;
-      for (i = 0; e->values[i].arg != NULL; i++)
-	len += strlen (e->values[i].arg) + 1;
-
-      s = XALLOCAVEC (char, len);
-      p = s;
+      auto_vec <const char *> candidates;
       for (i = 0; e->values[i].arg != NULL; i++)
 	{
 	  if (!enum_arg_ok_for_language (&e->values[i], lang_mask))
 	    continue;
-	  size_t arglen = strlen (e->values[i].arg);
-	  memcpy (p, e->values[i].arg, arglen);
-	  p[arglen] = ' ';
-	  p += arglen + 1;
+	  candidates.safe_push (e->values[i].arg);
 	}
-      p[-1] = 0;
-      inform (loc, "valid arguments to %qs are: %s", option->opt_text, s);
+      const char *hint = candidates_list_and_hint (arg, s, candidates);
+      if (hint)
+	inform (loc, "valid arguments to %qs are: %s; did you mean %qs?",
+		option->opt_text, s, hint);
+      else
+	inform (loc, "valid arguments to %qs are: %s", option->opt_text, s);
+      XDELETEVEC (s);
+
       return true;
     }
 
@@ -1474,7 +1505,7 @@ control_warning_option (unsigned int opt_index, int kind, const char *arg,
 
 	  handle_generated_option (opts, opts_set,
 				   opt_index, arg, value, lang_mask,
-				   kind, loc, handlers, dc);
+				   kind, loc, handlers, false, dc);
 	}
     }
 }

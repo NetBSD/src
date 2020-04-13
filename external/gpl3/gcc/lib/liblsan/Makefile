@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.2.1 2019/06/10 21:55:24 christos Exp $
+# $NetBSD: Makefile,v 1.2.2.2 2020/04/13 07:59:12 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -8,15 +8,17 @@
 .PATH: ${SANITIZER}/lsan ${SANITIZER}/asan
 
 LSAN_SRCS+= \
-	lsan_common.cc \
-	lsan_common_linux.cc \
 	lsan.cc \
 	lsan_allocator.cc \
+	lsan_common.cc \
+	lsan_common_linux.cc \
 	lsan_interceptors.cc \
+	lsan_linux.cc \
 	lsan_thread.cc
 
 .if ${MACHINE_ARCH} == "vax"
 COPTS.lsan_allocator.cc += -O1
+COPTS.sanitizer_file.cc += -O1
 .endif
 
 LIB=	lsan

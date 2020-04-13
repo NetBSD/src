@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -29,10 +29,60 @@
 
 /*
  * BPF byte-code generation for NPF rules.
+ *
+ * Overview
+ *
+ *	Each NPF rule is compiled into a BPF micro-program.  There is a
+ *	BPF byte-code fragment for each higher-level filtering logic,
+ *	e.g. to match L4 protocol, IP/mask, etc.  The generation process
+ *	combines multiple BPF-byte code fragments into one program.
+ *
+ * Basic case
+ *
+ *	Consider a basic case where all filters should match.  They
+ *	are expressed as logical conjunction, e.g.:
+ *
+ *		A and B and C and D
+ *
+ *	Each test (filter) criterion can be evaluated to true (match) or
+ *	false (no match) and the logic is as follows:
+ *
+ *	- If the value is true, then jump to the "next" test (offset 0).
+ *
+ *	- If the value is false, then jump to the JUMP_MAGIC value (0xff).
+ *	This "magic" value is used to indicate that it will have to be
+ *	patched at a later stage.
+ *
+ *	Once all byte-code fragments are combined into one, then there
+ *	are two additional steps:
+ *
+ *	- Two instructions are appended at the end of the program: "return
+ *	success" followed by "return failure".
+ *
+ *	- All jumps with the JUMP_MAGIC value are patched to point to the
+ *	"return failure" instruction.
+ *
+ *	Therefore, if all filter criteria will match, then the first
+ *	instruction will be reached, indicating a successful match of the
+ *	rule.  Otherwise, if any of the criteria will not match, it will
+ *	take the failure path and the rule will not be matching.
+ *
+ * Grouping
+ *
+ *	Filters can have groups, which have a meaning of logical
+ *	disjunction, e.g.:
+ *
+ *		A and B and (C or D)
+ *
+ *	In such case, the logic inside the group has to be inverted i.e.
+ *	the jump values swapped.  If the test value is true, then jump
+ *	out of the group; if false, then jump "next".  At the end of the
+ *	group, an addition failure path is appended and the JUMP_MAGIC
+ *	uses within the group are patched to jump past the said path.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_bpf_comp.c,v 1.10.14.1 2019/06/10 22:10:34 christos Exp $");
+__RCSID("$NetBSD: npf_bpf_comp.c,v 1.10.14.2 2020/04/13 08:05:55 martin Exp $");
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -75,7 +125,10 @@ struct npf_bpf {
 	sa_family_t		af;
 	uint32_t		flags;
 
-	/* The current group offset and block number. */
+	/*
+	 * The current group offset (counted in BPF instructions)
+	 * and block number at the start of the group.
+	 */
 	bool			ingroup;
 	u_int			goff;
 	u_int			gblock;
@@ -120,6 +173,7 @@ fixup_jumps(npf_bpf_t *ctx, u_int start, u_int end, bool swap)
 	for (u_int i = start; i < end; i++) {
 		struct bpf_insn *insn = &bp->bf_insns[i];
 		const u_int fail_off = end - i;
+		bool seen_magic = false;
 
 		if (fail_off >= JUMP_MAGIC) {
 			errx(EXIT_FAILURE, "BPF generation error: "
@@ -128,15 +182,37 @@ fixup_jumps(npf_bpf_t *ctx, u_int start, u_int end, bool swap)
 		if (BPF_CLASS(insn->code) != BPF_JMP) {
 			continue;
 		}
-		if (swap) {
+		if (BPF_OP(insn->code) == BPF_JA) {
+			/*
+			 * BPF_JA can be used to jump to the failure path.
+			 * If we are swapping i.e. inside the group, then
+			 * jump "next"; groups have a failure path appended
+			 * at their end.
+			 */
+			if (insn->k == JUMP_MAGIC) {
+				insn->k = swap ? 0 : fail_off;
+			}
+			continue;
+		}
+
+		/*
+		 * Fixup the "magic" value.  Swap only the "magic" jumps.
+		 */
+
+		if (insn->jt == JUMP_MAGIC) {
+			insn->jt = fail_off;
+			seen_magic = true;
+		}
+		if (insn->jf == JUMP_MAGIC) {
+			insn->jf = fail_off;
+			seen_magic = true;
+		}
+
+		if (seen_magic && swap) {
 			uint8_t jt = insn->jt;
 			insn->jt = insn->jf;
 			insn->jf = jt;
 		}
-		if (insn->jt == JUMP_MAGIC)
-			insn->jt = fail_off;
-		if (insn->jf == JUMP_MAGIC)
-			insn->jf = fail_off;
 	}
 }
 
@@ -225,11 +301,11 @@ npfctl_bpf_destroy(npf_bpf_t *ctx)
 }
 
 /*
- * npfctl_bpf_group: begin a logical group.  It merely uses logical
+ * npfctl_bpf_group_enter: begin a logical group.  It merely uses logical
  * disjunction (OR) for compares within the group.
  */
 void
-npfctl_bpf_group(npf_bpf_t *ctx)
+npfctl_bpf_group_enter(npf_bpf_t *ctx)
 {
 	struct bpf_program *bp = &ctx->prog;
 
@@ -242,7 +318,7 @@ npfctl_bpf_group(npf_bpf_t *ctx)
 }
 
 void
-npfctl_bpf_endgroup(npf_bpf_t *ctx, bool invert)
+npfctl_bpf_group_exit(npf_bpf_t *ctx, bool invert)
 {
 	struct bpf_program *bp = &ctx->prog;
 	const size_t curoff = bp->bf_len;
@@ -255,7 +331,7 @@ npfctl_bpf_endgroup(npf_bpf_t *ctx, bool invert)
 
 	/*
 	 * If inverting, then prepend a jump over the statement below.
-	 * If matching, jump will jump below and the fail will happen.
+	 * On match, it will skip-through and the fail path will be taken.
 	 */
 	if (invert) {
 		struct bpf_insn insns_ret[] = {
@@ -318,7 +394,7 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, u_int flags)
 		 */
 		if (ingroup) {
 			assert(ctx->nblocks == ctx->gblock);
-			npfctl_bpf_endgroup(ctx, false);
+			npfctl_bpf_group_exit(ctx, false);
 		}
 
 		/*
@@ -338,7 +414,7 @@ fetch_l3(npf_bpf_t *ctx, sa_family_t af, u_int flags)
 			done_raw_block(ctx, mwords, sizeof(mwords));
 		}
 		if (ingroup) {
-			npfctl_bpf_group(ctx);
+			npfctl_bpf_group_enter(ctx);
 		}
 
 	} else if (af && af != ctx->af) {
@@ -508,8 +584,9 @@ npfctl_bpf_ports(npf_bpf_t *ctx, u_int opts, in_port_t from, in_port_t to)
 	} else {
 		/* Port range case. */
 		struct bpf_insn insns_range[] = {
-			BPF_JUMP(BPF_JMP+BPF_JGE+BPF_K, from, 0, JUMP_MAGIC),
-			BPF_JUMP(BPF_JMP+BPF_JGT+BPF_K, to, JUMP_MAGIC, 0),
+			BPF_JUMP(BPF_JMP+BPF_JGE+BPF_K, from, 0, 1),
+			BPF_JUMP(BPF_JMP+BPF_JGT+BPF_K, to, 0, 1),
+			BPF_STMT(BPF_JMP+BPF_JA, JUMP_MAGIC),
 		};
 		add_insns(ctx, insns_range, __arraycount(insns_range));
 	}

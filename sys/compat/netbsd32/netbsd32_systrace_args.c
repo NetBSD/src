@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.25.2.1 2019/06/10 22:07:02 christos Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.25.2.2 2020/04/13 08:04:16 martin Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -164,7 +164,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
-	/* sys_getpid */
+	/* sys_getpid_with_ppid */
 	case 20: {
 		*n_args = 0;
 		break;
@@ -194,7 +194,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 1;
 		break;
 	}
-	/* sys_getuid */
+	/* sys_getuid_with_euid */
 	case 24: {
 		*n_args = 0;
 		break;
@@ -375,7 +375,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
-	/* sys_getgid */
+	/* sys_getgid_with_egid */
 	case 47: {
 		*n_args = 0;
 		break;
@@ -1102,11 +1102,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[2] = SCARG(p, uid); /* int */
 		uarg[3] = (intptr_t) SCARG(p, arg).i32; /* netbsd32_voidp */
 		*n_args = 4;
-		break;
-	}
-	/* sys_quota */
-	case 149: {
-		*n_args = 0;
 		break;
 	}
 	/* netbsd32_ogetsockname */
@@ -2318,6 +2313,11 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 2;
 		break;
 	}
+	/* sys__lwp_gettid */
+	case 326: {
+		*n_args = 0;
+		break;
+	}
 	/* netbsd32___sigaction_sigtramp */
 	case 340: {
 		const struct netbsd32___sigaction_sigtramp_args *p = params;
@@ -2427,8 +2427,8 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_getvfsstat */
 	case 356: {
-		const struct netbsd32_getvfsstat_args *p = params;
-		uarg[0] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfsp_t */
+		const struct compat_90_netbsd32_getvfsstat_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfs90p_t */
 		iarg[1] = SCARG(p, bufsize); /* netbsd32_size_t */
 		iarg[2] = SCARG(p, flags); /* int */
 		*n_args = 3;
@@ -2436,18 +2436,18 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_statvfs1 */
 	case 357: {
-		const struct netbsd32_statvfs1_args *p = params;
+		const struct compat_90_netbsd32_statvfs1_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
-		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfsp_t */
+		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfs90p_t */
 		iarg[2] = SCARG(p, flags); /* int */
 		*n_args = 3;
 		break;
 	}
 	/* netbsd32_fstatvfs1 */
 	case 358: {
-		const struct netbsd32_fstatvfs1_args *p = params;
+		const struct compat_90_netbsd32_fstatvfs1_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
-		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfsp_t */
+		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfs90p_t */
 		iarg[2] = SCARG(p, flags); /* int */
 		*n_args = 3;
 		break;
@@ -2456,7 +2456,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	case 359: {
 		const struct compat_30_netbsd32_fhstatvfs1_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, fhp).i32; /* netbsd32_fhandlep_t */
-		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfsp_t */
+		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfs90p_t */
 		iarg[2] = SCARG(p, flags); /* int */
 		*n_args = 3;
 		break;
@@ -2806,12 +2806,12 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
-	/* netbsd32___fhstatvfs140 */
+	/* netbsd32_fhstatvfs1 */
 	case 397: {
-		const struct netbsd32___fhstatvfs140_args *p = params;
+		const struct compat_90_netbsd32_fhstatvfs1_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, fhp).i32; /* netbsd32_pointer_t */
 		iarg[1] = SCARG(p, fh_size); /* netbsd32_size_t */
-		uarg[2] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfsp_t */
+		uarg[2] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfs90p_t */
 		iarg[3] = SCARG(p, flags); /* int */
 		*n_args = 4;
 		break;
@@ -3352,7 +3352,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* const netbsd32_charp */
 		uarg[2] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_charp */
-		uarg[3] = SCARG(p, bufsize); /* size_t */
+		iarg[3] = SCARG(p, bufsize); /* netbsd32_size_t */
 		*n_args = 4;
 		break;
 	}
@@ -3484,6 +3484,43 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[1] = SCARG(p, id); /* id_t */
 		uarg[2] = (intptr_t) SCARG(p, clock_id).i32; /* netbsd32_clockidp_t */
 		*n_args = 3;
+		break;
+	}
+	/* netbsd32___getvfsstat90 */
+	case 483: {
+		const struct netbsd32___getvfsstat90_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfsp_t */
+		iarg[1] = SCARG(p, bufsize); /* netbsd32_size_t */
+		iarg[2] = SCARG(p, flags); /* int */
+		*n_args = 3;
+		break;
+	}
+	/* netbsd32___statvfs190 */
+	case 484: {
+		const struct netbsd32___statvfs190_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
+		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfsp_t */
+		iarg[2] = SCARG(p, flags); /* int */
+		*n_args = 3;
+		break;
+	}
+	/* netbsd32___fstatvfs190 */
+	case 485: {
+		const struct netbsd32___fstatvfs190_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfsp_t */
+		iarg[2] = SCARG(p, flags); /* int */
+		*n_args = 3;
+		break;
+	}
+	/* netbsd32___fhstatvfs190 */
+	case 486: {
+		const struct netbsd32___fhstatvfs190_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, fhp).i32; /* netbsd32_voidp */
+		iarg[1] = SCARG(p, fh_size); /* netbsd32_size_t */
+		uarg[2] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_statvfsp_t */
+		iarg[3] = SCARG(p, flags); /* int */
+		*n_args = 4;
 		break;
 	}
 	default:
@@ -3742,7 +3779,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* sys_getpid */
+	/* sys_getpid_with_ppid */
 	case 20:
 		break;
 	/* netbsd32_mount */
@@ -3787,7 +3824,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* sys_getuid */
+	/* sys_getuid_with_euid */
 	case 24:
 		break;
 	/* sys_geteuid */
@@ -4071,7 +4108,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* sys_getgid */
+	/* sys_getgid_with_egid */
 	case 47:
 		break;
 	/* netbsd32_sigprocmask */
@@ -5258,9 +5295,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		default:
 			break;
 		};
-		break;
-	/* sys_quota */
-	case 149:
 		break;
 	/* netbsd32_ogetsockname */
 	case 150:
@@ -7282,6 +7316,9 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* sys__lwp_gettid */
+	case 326:
+		break;
 	/* netbsd32___sigaction_sigtramp */
 	case 340:
 		switch(ndx) {
@@ -7473,7 +7510,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 356:
 		switch(ndx) {
 		case 0:
-			p = "netbsd32_statvfsp_t";
+			p = "netbsd32_statvfs90p_t";
 			break;
 		case 1:
 			p = "netbsd32_size_t";
@@ -7492,7 +7529,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "netbsd32_charp";
 			break;
 		case 1:
-			p = "netbsd32_statvfsp_t";
+			p = "netbsd32_statvfs90p_t";
 			break;
 		case 2:
 			p = "int";
@@ -7508,7 +7545,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "int";
 			break;
 		case 1:
-			p = "netbsd32_statvfsp_t";
+			p = "netbsd32_statvfs90p_t";
 			break;
 		case 2:
 			p = "int";
@@ -7524,7 +7561,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "netbsd32_fhandlep_t";
 			break;
 		case 1:
-			p = "netbsd32_statvfsp_t";
+			p = "netbsd32_statvfs90p_t";
 			break;
 		case 2:
 			p = "int";
@@ -8172,7 +8209,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* netbsd32___fhstatvfs140 */
+	/* netbsd32_fhstatvfs1 */
 	case 397:
 		switch(ndx) {
 		case 0:
@@ -8182,7 +8219,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "netbsd32_size_t";
 			break;
 		case 2:
-			p = "netbsd32_statvfsp_t";
+			p = "netbsd32_statvfs90p_t";
 			break;
 		case 3:
 			p = "int";
@@ -9161,7 +9198,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "netbsd32_charp";
 			break;
 		case 3:
-			p = "size_t";
+			p = "netbsd32_size_t";
 			break;
 		default:
 			break;
@@ -9414,6 +9451,73 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* netbsd32___getvfsstat90 */
+	case 483:
+		switch(ndx) {
+		case 0:
+			p = "netbsd32_statvfsp_t";
+			break;
+		case 1:
+			p = "netbsd32_size_t";
+			break;
+		case 2:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32___statvfs190 */
+	case 484:
+		switch(ndx) {
+		case 0:
+			p = "netbsd32_charp";
+			break;
+		case 1:
+			p = "netbsd32_statvfsp_t";
+			break;
+		case 2:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32___fstatvfs190 */
+	case 485:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "netbsd32_statvfsp_t";
+			break;
+		case 2:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32___fhstatvfs190 */
+	case 486:
+		switch(ndx) {
+		case 0:
+			p = "netbsd32_voidp";
+			break;
+		case 1:
+			p = "netbsd32_size_t";
+			break;
+		case 2:
+			p = "netbsd32_statvfsp_t";
+			break;
+		case 3:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -9517,7 +9621,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "netbsd32_long";
 		break;
-	/* sys_getpid */
+	/* sys_getpid_with_ppid */
 	case 20:
 	/* netbsd32_mount */
 	case 21:
@@ -9534,7 +9638,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* sys_getuid */
+	/* sys_getuid_with_euid */
 	case 24:
 	/* sys_geteuid */
 	case 25:
@@ -9631,7 +9735,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* sys_getgid */
+	/* sys_getgid_with_egid */
 	case 47:
 	/* netbsd32_sigprocmask */
 	case 48:
@@ -10054,8 +10158,6 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* sys_quota */
-	case 149:
 	/* netbsd32_ogetsockname */
 	case 150:
 		if (ndx == 0 || ndx == 1)
@@ -10766,6 +10868,8 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* sys__lwp_gettid */
+	case 326:
 	/* netbsd32___sigaction_sigtramp */
 	case 340:
 		if (ndx == 0 || ndx == 1)
@@ -11020,7 +11124,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* netbsd32___fhstatvfs140 */
+	/* netbsd32_fhstatvfs1 */
 	case 397:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
@@ -11380,6 +11484,26 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* netbsd32_clock_getcpuclockid2 */
 	case 482:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32___getvfsstat90 */
+	case 483:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32___statvfs190 */
+	case 484:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32___fstatvfs190 */
+	case 485:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32___fhstatvfs190 */
+	case 486:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

@@ -1,4 +1,4 @@
-.\" $NetBSD: gpioctl.8,v 1.20.26.1 2019/06/10 22:10:30 christos Exp $
+.\" $NetBSD: gpioctl.8,v 1.20.26.2 2020/04/13 08:05:52 martin Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2013 Marc Balmer <marc@msys.ch>
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 12, 2019
+.Dd October 20, 2019
 .Dt GPIOCTL 8
 .Os
 .Sh NAME
@@ -55,6 +55,10 @@
 .Ar device
 .Ar pin
 .Cm unset
+.Nm gpioctl
+.Op Fl q
+.Ar device
+.Ar list
 .Sh DESCRIPTION
 The
 .Nm
@@ -151,9 +155,7 @@ When executed with only the
 .Xr gpio 4
 device name as argument,
 .Nm
-reads information about the
-.Tn GPIO
-device and displays it.
+reads information about the GPIO device and displays it.
 At securelevel 0 the number of physically available pins is displayed,
 at higher securelevels the number of configured (set) pins is displayed.
 .Pp
@@ -203,6 +205,10 @@ Configure pin 5 as output and name it error_led:
 Toggle the error_led:
 .Pp
 .Dl # gpioctl gpio0 error_led 2
+.Pp
+Enumerate all pins and display their symbolic names:
+.Pp
+.Dl # gpioctl gpio0 list
 .Sh SEE ALSO
 .Xr gpio 4 ,
 .Xr drvctl 8

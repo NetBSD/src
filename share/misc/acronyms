@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.274.2.1 2019/06/10 22:05:42 christos Exp $
+$NetBSD: acronyms,v 1.274.2.2 2020/04/13 08:03:26 martin Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -44,6 +44,7 @@ ATEOTD	at the end of the day
 ATM	at the moment
 ATM	{automated,automatic} teller machine
 ATW	around the world
+ABV	alcohol by volume
 AVI	automatic vehicle identification
 AWK	Aho, Weinberger, [and] Kernighan
 AWOL	absent without official leave
@@ -94,10 +95,12 @@ CFV	call for votes
 CFY	calling for you
 CG	center of gravity
 CHANOPS	channel operator status
+CIA	central intelligence agency
 CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
 COTS	commercial off-the-shelf
+CPA	cyproterone acetate
 CPC	cost per click
 CPE	customer premises equipment
 CPR	car plate recognition
@@ -164,6 +167,7 @@ FNO	from now on
 FOC	free of charge
 FPS	first person shooter
 FPS	frames per second
+FRAND	fair, reasonable, and non-discriminatory
 FSDO	for some definition of
 FSVO	for some value of
 FTBFS	fails to build from source
@@ -189,6 +193,7 @@ GBTW	get back to work
 GCD	greatest common divisor
 GDPR	General Data Protection Regulation
 GF	girlfriend
+GFCI	ground-fault circuit interrupter
 GFU	good for you
 GFY	good for you
 GG	good game
@@ -342,6 +347,7 @@ M&O	management & operations
 M8	mate
 MAD	mutually assured destruction
 MBA	master of business administration
+MDMA	methylenedioxy methamphetamine
 MFW	my face when
 MIA	missing in action
 MLPR	mobile license plate reader
@@ -461,9 +467,12 @@ PTV	parental tunnel vision
 QED	quod erat demonstrandum
 QFT	quoted for truth
 RA	residential advisor
+RAND	reasonable and non-discriminatory
+RCD	residual current device
 RFC	request for comments
 RFD	request for discussion
 RFE	request for enhancements
+RIF	reduction in force
 RIP	rest in peace
 RL	real life
 RLC	rod length check
@@ -539,6 +548,7 @@ TLA	three letter acronym
 TLA	true love always
 TLC	tender loving care
 TLDR	too long, didn't read
+TLDW	too long, didn't watch
 TM	trademark
 TM	trust me
 TMA	too many abbreviations
@@ -559,6 +569,7 @@ TTBOMK	to the best of my knowledge
 TTFN	ta ta for now
 TTM	to the moderator
 TTT	thought that too
+TTTR	time-tagged time-resolved
 TTYL	talk to you later
 TTYS	talk to you soon
 TWAIN	thing without an interesting name
@@ -568,6 +579,7 @@ TY	thank you
 TYVM	thank you very much
 U/L	upload
 UGT	universal greeting time
+UPC	Universal Product Code
 UR	your
 UR	{you're, you are}
 UTSL	use the source, Luke
@@ -591,8 +603,11 @@ WFH	working from home
 WFM	works for me
 WIBNI	wouldn't it be nice if
 WIP	work in progress
+WLW	women-loving women
 WMNC	watch me not care
 WOMBAT	waste of money, brain, and time
+WP	well played
+WRR	weighted round robin
 WRT	with respect to
 WTB	{waiting,want,willing} to buy
 WTF	where's the food

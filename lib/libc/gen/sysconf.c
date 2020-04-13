@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.41.14.1 2020/04/08 14:07:13 martin Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.41.14.2 2020/04/13 08:03:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.41.14.1 2020/04/08 14:07:13 martin Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.41.14.2 2020/04/13 08:03:10 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -339,6 +339,8 @@ sysconf(int name)
 		return _GETPW_R_SIZE_MAX;
 
 /* Unsorted */
+	case _SC_RTSIG_MAX:
+		return SIGRTMAX - SIGRTMIN;
 	case _SC_HOST_NAME_MAX:
 		return MAXHOSTNAMELEN;
 	case _SC_PASS_MAX:

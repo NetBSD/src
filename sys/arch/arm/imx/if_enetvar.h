@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enetvar.h,v 1.2 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: if_enetvar.h,v 1.2.8.1 2020/04/13 08:03:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -51,7 +51,6 @@ struct enet_rxsoft {
 struct enet_softc {
 	device_t sc_dev;
 
-	bus_addr_t sc_addr;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
@@ -59,7 +58,12 @@ struct enet_softc {
 	int sc_unit;
 	int sc_imxtype;
 	int sc_rgmii;
-	unsigned int sc_pllclock;
+	int sc_phyid;
+	unsigned int sc_clock;
+
+	struct clk *sc_clk_ipg;
+	struct clk *sc_clk_enet;
+	struct clk *sc_clk_enet_ref;
 
 	/* interrupts */
 	void *sc_ih;
@@ -83,7 +87,7 @@ struct enet_softc {
 	int sc_rx_readidx;
 
 	/* misc */
-	int sc_if_flags;			/* local copy of if_flags */
+	u_short sc_if_flags;			/* local copy of if_flags */
 	int sc_flowflags;			/* 802.3x flow control flags */
 	struct ethercom sc_ethercom;		/* interface info */
 	struct mii_data sc_mii;
@@ -128,9 +132,10 @@ struct enet_softc {
 #endif /* ENET_EVENT_COUNTER */
 };
 
-void enet_attach_common(device_t, bus_space_tag_t, bus_dma_tag_t,
-    bus_addr_t, bus_size_t, int);
+int enet_attach_common(device_t);
 int enet_match(device_t, cfdata_t, void *);
 void enet_attach(device_t, device_t, void *);
+
+int enet_intr(void *);
 
 #endif /* _ARM_IMX_IF_ENETVAR_H_ */

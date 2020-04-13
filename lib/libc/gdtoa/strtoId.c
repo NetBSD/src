@@ -1,4 +1,4 @@
-/* $NetBSD: strtoId.c,v 1.2 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtoId.c,v 1.2.66.1 2020/04/13 08:03:09 martin Exp $ */
 
 /****************************************************************
 
@@ -40,7 +40,7 @@ strtoId(s, sp, f0, f1) CONST char *s; char **sp; double *f0, *f1;
 strtoId(CONST char *s, char **sp, double *f0, double *f1)
 #endif
 {
-	static FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
+	static CONST FPI fpi = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
 	Long exp[2];
 	Bigint *B[2];
 	int k, rv[2];

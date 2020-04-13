@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.384.2.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.384.2.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.384.2.1 2019/06/10 22:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.384.2.2 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -308,7 +308,7 @@ ip_init(void)
 #endif
 
 	ipstat_percpu = percpu_alloc(sizeof(uint64_t) * IP_NSTATS);
-	ipforward_rt_percpu = percpu_alloc(sizeof(struct route));
+	ipforward_rt_percpu = rtcache_percpu_alloc();
 	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 }
 
@@ -581,10 +581,25 @@ ip_input(struct mbuf *m)
 			IP_STATINC(IP_STAT_PFILDROP_IN);
 			goto out;
 		}
-		KASSERT(m->m_len >= sizeof(struct ip));
+		if (__predict_false(m->m_len < sizeof(struct ip))) {
+			if ((m = m_pullup(m, sizeof(struct ip))) == NULL) {
+				IP_STATINC(IP_STAT_TOOSMALL);
+				goto out;
+			}
+		}
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
-		KASSERT(m->m_len >= hlen);
+		if (hlen < sizeof(struct ip)) {	/* minimum header length */
+			IP_STATINC(IP_STAT_BADHLEN);
+			goto out;
+		}
+		if (hlen > m->m_len) {
+			if ((m = m_pullup(m, hlen)) == NULL) {
+				IP_STATINC(IP_STAT_BADHLEN);
+				goto out;
+			}
+			ip = mtod(m, struct ip *);
+		}
 
 		/*
 		 * XXX The setting of "srcrt" here is to prevent ip_forward()
@@ -1169,16 +1184,16 @@ ip_rtaddr(struct in_addr dst, struct psref *psref)
 
 	sockaddr_in_init(&u.dst4, &dst, 0);
 
-	ro = percpu_getref(ipforward_rt_percpu);
+	ro = rtcache_percpu_getref(ipforward_rt_percpu);
 	rt = rtcache_lookup(ro, &u.dst);
 	if (rt == NULL) {
-		percpu_putref(ipforward_rt_percpu);
+		rtcache_percpu_putref(ipforward_rt_percpu);
 		return NULL;
 	}
 
 	ia4_acquire(ifatoia(rt->rt_ifa), psref);
 	rtcache_unref(rt, ro);
-	percpu_putref(ipforward_rt_percpu);
+	rtcache_percpu_putref(ipforward_rt_percpu);
 
 	return ifatoia(rt->rt_ifa);
 }
@@ -1354,10 +1369,10 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 
 	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
 
-	ro = percpu_getref(ipforward_rt_percpu);
+	ro = rtcache_percpu_getref(ipforward_rt_percpu);
 	rt = rtcache_lookup(ro, &u.dst);
 	if (rt == NULL) {
-		percpu_putref(ipforward_rt_percpu);
+		rtcache_percpu_putref(ipforward_rt_percpu);
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
 		return;
 	}
@@ -1385,8 +1400,7 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    !in_nullhost(satocsin(rt_getkey(rt))->sin_addr) &&
 	    ipsendredirects && !srcrt) {
-		if (rt->rt_ifa &&
-		    (ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_subnetmask) ==
+		if ((ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_subnetmask) ==
 		    ifatoia(rt->rt_ifa)->ia_subnet) {
 			if (rt->rt_flags & RTF_GATEWAY)
 				dest = satosin(rt->rt_gateway)->sin_addr.s_addr;
@@ -1429,13 +1443,13 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 		m_freem(mcopy);
 	}
 
-	percpu_putref(ipforward_rt_percpu);
+	rtcache_percpu_putref(ipforward_rt_percpu);
 	return;
 
 redirect:
 error:
 	if (mcopy == NULL) {
-		percpu_putref(ipforward_rt_percpu);
+		rtcache_percpu_putref(ipforward_rt_percpu);
 		return;
 	}
 
@@ -1478,11 +1492,11 @@ error:
 		 */
 		if (mcopy)
 			m_freem(mcopy);
-		percpu_putref(ipforward_rt_percpu);
+		rtcache_percpu_putref(ipforward_rt_percpu);
 		return;
 	}
 	icmp_error(mcopy, type, code, dest, destmtu);
-	percpu_putref(ipforward_rt_percpu);
+	rtcache_percpu_putref(ipforward_rt_percpu);
 }
 
 void

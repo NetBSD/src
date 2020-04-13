@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7.2.1 2019/06/10 22:05:43 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.7.2.2 2020/04/13 08:03:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,6 @@
  */
 
 #include "opt_arm_debug.h"
-#include "opt_compat_netbsd32.h"
 #include "opt_console.h"
 #include "opt_cpuoptions.h"
 #include "opt_ddb.h"
@@ -39,12 +38,18 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.7.2.1 2019/06/10 22:05:43 christos Exp $")
+RCSID("$NetBSD: locore.S,v 1.7.2.2 2020/04/13 08:03:27 martin Exp $")
 
+#ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
+#define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
+#else
+#define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRE
+#endif
+#define	MAIR_DEVICE_MEM_SO	MAIR_DEVICE_nGnRnE
 
-/*#define DEBUG_LOCORE			/* debug print */
-/*#define DEBUG_LOCORE_PRINT_LOCK	/* avoid mixing AP's output */
-/*#define DEBUG_MMU			/* dump MMU table */
+/*#define DEBUG_LOCORE			// debug print */
+/*#define DEBUG_LOCORE_PRINT_LOCK	// avoid mixing AP's output */
+/*#define DEBUG_MMU			// dump MMU table */
 
 #define LOCORE_EL2
 
@@ -75,12 +80,6 @@ RCSID("$NetBSD: locore.S,v 1.7.2.1 2019/06/10 22:05:43 christos Exp $")
 #define PRINT(string)	bl xprint; .asciz string; .align 2
 
 
-/* load far effective address (pc relative) */
-.macro	ADDR, reg, addr
-	adrp	\reg, \addr
-	add	\reg, \reg, #:lo12:\addr
-.endm
-
 	.text
 	.align	3
 ASENTRY_NP(aarch64_start)
@@ -89,7 +88,7 @@ ASENTRY_NP(aarch64_start)
 	mov	x28, sp
 
 	/* set stack pointer for boot */
-	ADDR	x0, bootstk
+	adrl	x0, bootstk
 	mov	sp, x0
 
 	bl	clear_bss
@@ -119,7 +118,6 @@ ASENTRY_NP(aarch64_start)
 	DPRINTSREG("ID_AA64ISAR1_EL1 = ", id_aa64isar1_el1)
 	DPRINTSREG("ID_AA64MMFR0_EL1 = ", id_aa64mmfr0_el1)
 	DPRINTSREG("ID_AA64MMFR1_EL1 = ", id_aa64mmfr1_el1)
-
 
 #ifdef LOCORE_EL2
 	VPRINT("Drop to EL1...")
@@ -154,7 +152,6 @@ aarch64_fatal:
 	mov	sp, x28
 	ret
 
-
 /*
  * vstart is in kernel virtual address
  */
@@ -162,11 +159,11 @@ vstart:
 	DPRINTREG("PC               = ", x20)
 
 	/* set exception vector */
-	ADDR	x0, _C_LABEL(el1_vectors)
+	adrl	x0, _C_LABEL(el1_vectors)
 	msr	vbar_el1, x0
 
 	/* set lwp0 stack */
-	ADDR	x0, lwp0uspace
+	adrl	x0, lwp0uspace
 	add	x0, x0, #(UPAGES * PAGE_SIZE)
 	sub	x0, x0, #TF_SIZE	/* lwp0space + USPACE - TF_SIZE */
 	mov	sp, x0			/* define lwp0 ksp bottom */
@@ -177,12 +174,22 @@ vstart:
 	msr	tpidrro_el0, xzr
 
 	/* set curcpu() */
-	ADDR	x0, cpu_info_store	/* cpu_info_store is cpu_info[0] */
+	adrl	x0, cpu_info_store	/* cpu_info_store is cpu_info[0] */
 	msr	tpidr_el1, x0		/* curcpu is cpu_info[0] */
 	DPRINTREG("curcpu           = ", x0);
 
+	/* set topology information */
+	mrs	x0, tpidr_el1		/* curcpu */
+	mrs     x1, mpidr_el1
+	mov	x2, #0
+	bl	arm_cpu_topology_set
+
+	/* get cache configuration */
+	mov	x0, xzr
+	bl	aarch64_getcacheinfo
+
 #ifdef KASAN
-	ADDR	x0, lwp0uspace
+	adrl	x0, lwp0uspace
 	bl	_C_LABEL(kasan_early_init)
 #endif
 
@@ -205,8 +212,8 @@ ASEND(aarch64_start)
 
 ASENTRY_NP(clear_bss)
 	/* Zero the BSS. The size must be aligned 16, usually it should be. */
-	ADDR	x14, __bss_start__
-	ADDR	x15, __bss_end__
+	adrl	x14, __bss_start__
+	adrl	x15, __bss_end__
 	b	2f
 1:	stp	xzr, xzr, [x14], #16
 2:	cmp	x14, x15
@@ -256,7 +263,7 @@ locore_lock_enter:
 	mov	x3, xzr			/* x3 = level */
 levelloop:
 	/* lock_level[] and lock_turn[] are always accessed via PA(devmap) */
-	ADDR	x0, kern_vtopdiff
+	adrl	x0, kern_vtopdiff
 	ldr	x0, [x0]
 	ldr	x4, =lock_level
 	sub	x4, x4, x0
@@ -297,7 +304,7 @@ nextlevel:
 locore_lock_exit:
 #ifdef DEBUG_LOCORE_PRINT_LOCK
 	/* lock_level[] and lock_turn[] are always accessed via PA(devmap) */
-	ADDR	x0, kern_vtopdiff
+	adrl	x0, kern_vtopdiff
 	ldr	x0, [x0]
 	ldr	x1, =lock_level
 	sub	x1, x1, x0
@@ -358,32 +365,27 @@ ENTRY_NP(cpu_mpstart)
 	 * resolve own cpuindex. my mpidr is stored in
 	 * extern uint64_t cpu_mpidr[MAXCPUS]
 	 */
-	ADDR	x0, _C_LABEL(cpu_mpidr)
+	adrl	x0, _C_LABEL(cpu_mpidr)
 	mov	x1, xzr
 1:
 	add	x1, x1, #1
-	cmp	x1, MAXCPUS		/* cpuindex >= MAXCPUS ? */
+	cmp	x1, #MAXCPUS		/* cpuindex >= MAXCPUS ? */
 	bge	toomanycpus
-	ldr	x2, [x0, x1, lsl #3]	/* cpu_mpidr[cpunidex] */
+	ldr	x2, [x0, x1, lsl #3]	/* cpu_mpidr[cpuindex] */
 	cmp	x2, x3			/* == mpidr_el1 & MPIDR_AFF ? */
 	bne	1b
 
 	mov	x27, x1			/* x27 = cpuindex */
-	mov	x0, #1
-	lsl	x28, x0, x27		/* x28 = 1 << cpuindex */
-
 
 	/*
 	 * x27 = cpuindex
-	 * x28 = (1 << cpuindex)
 	 */
 
 	/* set stack pointer for boot */
 	mov	x1, #BOOT_AP_STACKSIZE
 	mul	x1, x1, x27
-	ADDR	x0, bootstk_cpus
-	sub	sp, x0, x1  /* sp = bootstk_cpus-(BOOT_AP_STACKSIZE*cpuindex) */
-
+	adrl	x0, bootstk
+	add	sp, x0, x1  /* sp = bootstk + (BOOT_AP_STACKSIZE * cpuindex) */
 
 	bl	1f
 1:	CPU_DPRINTREG("PC               = ", lr)
@@ -401,7 +403,6 @@ ENTRY_NP(cpu_mpstart)
 	CPU_DPRINTSREG("SCTLR_EL1        = ", sctlr_el1)
 	CPU_DPRINTSREG("MIDR_EL1         = ", midr_el1)
 	CPU_DPRINTSREG("MPIDR_EL1        = ", mpidr_el1)
-
 
 #ifdef LOCORE_EL2
 	CPU_DPRINT("Drop to EL1...\n")
@@ -429,7 +430,7 @@ mp_vstart:
 	CPU_DPRINTREG("PC               = ", x20)
 
 	/* set exception vector */
-	ADDR	x0, _C_LABEL(el1_vectors)
+	adrl	x0, _C_LABEL(el1_vectors)
 	msr	vbar_el1, x0
 
 	/* lwp-private = NULL */
@@ -439,7 +440,7 @@ mp_vstart:
 	/* set curcpu(), and fill curcpu()->ci_{midr,mpidr} */
 	mov	x0, #CPU_INFO_SIZE
 	mul	x0, x27, x0
-	ADDR	x1, _C_LABEL(cpu_info_store)
+	adrl	x1, _C_LABEL(cpu_info_store)
 	add	x0, x0, x1		/* x0 = &cpu_info_store[cpuindex] */
 	msr	tpidr_el1, x0		/* tpidr_el1 = curcpu() = x0 */
 
@@ -448,28 +449,47 @@ mp_vstart:
 	mrs	x1, mpidr_el1
 	str	x1, [x0, #CI_MPIDR]	/* curcpu()->ci_mpidr = mpidr_el1 */
 
-	CPU_DPRINTREG("arm_cpu_hatched |= ", x28)
+	/* set topology information */
+	mov	x2, #0
+	bl	arm_cpu_topology_set
+
+	/* x28 = &arm_cpu_hatched[cpuindex / (sizeof(u_long) * NBBY)] */
+	adrl	x0, _C_LABEL(arm_cpu_hatched)
+	// Appease clang - mov	x1, x27, lsr #6
+	orr	x1, xzr, x27, lsr #6
+	add	x28, x0, x1, lsl #3
+
+	/* x29 = __BIT(cpuindex % (sizeof(u_long) * NBBY)) */
+	mov	x0, #1
+	and	x2, x27, #63
+	lsl	x29, x0, x2
 
 	/*
-	 * atomic_or_32(&arm_cpu_hatched, (1 << cpuindex))
-	 * to tell my activity to primary processor.
+	 * atomic_or_ulong(&arm_cpu_hatched[cpuindex / (sizeof(u_long)  * NBBY)],
+	 *   _BIT(cpuindex % ((sizeof(u_long) * NBBY)
+	 * to inform the boot processor.
 	 */
-	ADDR	x0, _C_LABEL(arm_cpu_hatched)
-	mov	x1, x28
-	bl	_C_LABEL(atomic_or_32)	/* hatched! */
+	mov	x0, x28
+	mov	x1, x29
+	bl	_C_LABEL(atomic_or_ulong)	/* hatched! */
+	dsb	sy
 	sev
 
-	/* wait for my bit of arm_cpu_mbox become true */
-	ADDR	x0, _C_LABEL(arm_cpu_mbox)
+	/* x28 = &arm_cpu_mbox[cpuindex / (sizeof(u_long) * NBBY)] */
+	adrl	x0, _C_LABEL(arm_cpu_mbox)
+	// Appease clang - mov	x1, x27, lsr #6
+	orr	x1, xzr, x27, lsr #6
+	add	x28, x0, x1, lsl #3
+
+	/* wait for the mailbox start bit to become true */
 1:
 	dmb	sy
-	ldr	x20, [x0]
-	tst	x20, x28
+	ldr	x20, [x28]
+	tst	x20, x29
 	bne	9f
 	wfe
 	b	1b
 9:
-//	CPU_DPRINTREG("got arm_cpu_mbox = ", x20)
 
 	/* fill my cpu_info */
 	mrs	x0, tpidr_el1		/* curcpu() */
@@ -716,13 +736,13 @@ save_ttbrs:
 	/* save ttbr[01]_el1 for AP */
 	mrs	x0, ttbr0_el1
 	mrs	x1, ttbr1_el1
-	ADDR	x2, ttbr_save
+	adrl	x2, ttbr_save
 	stp	x0, x1, [x2]
 	ret
 
 load_ttbrs:
 	/* load ttbr[01]_el1 */
-	ADDR	x2, ttbr_save
+	adrl	x2, ttbr_save
 	ldp	x0, x1, [x2]
 	msr	ttbr0_el1, x0
 	msr	ttbr1_el1, x1
@@ -767,6 +787,7 @@ init_mmutable:
 	adr	x6, bootpage_alloc		/* allocator */
 	mov	x5, xzr				/* flags = 0 */
 	mov	x4, #LX_BLKPAG_ATTR_DEVICE_MEM|LX_BLKPAG_AP_RW	/* attr */
+	orr	x4, x4, #LX_BLKPAG_UXN|LX_BLKPAG_PXN
 	mov	x3, #L2_SIZE			/* blocksize */
 	mov	x2, #L2_SIZE			/* size */
 	ldr	x1, =CONSADDR			/* pa */
@@ -780,6 +801,7 @@ init_mmutable:
 	adr	x6, bootpage_alloc		/* allocator */
 	mov	x5, xzr				/* flags = 0 */
 	mov	x4, #LX_BLKPAG_ATTR_DEVICE_MEM|LX_BLKPAG_AP_RW	/* attr */
+	orr	x4, x4, #LX_BLKPAG_UXN|LX_BLKPAG_PXN
 	mov	x3, #L2_SIZE			/* blocksize */
 	mov	x2, #(1024*1024*1024*4)		/* size */
 	mov	x1, xzr				/* pa */
@@ -796,15 +818,15 @@ init_mmutable:
 	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC|LX_BLKPAG_AP_RW	/* attr */
 	mov	x3, #L2_SIZE			/* blocksize */
 	adr	x0, start			/* va = start */
-	ADDR	x2, _end
+	adrl	x2, _end
 	sub	x2, x2, x0			/* size = _end - start */
-	add	x2, x2, #BOOTPAGE_ALLOC_MAX	/* for boopage_alloc() */
+	add	x2, x2, #BOOTPAGE_ALLOC_MAX	/* for bootpage_alloc() */
 	mov	x1, x0				/* pa */
 	bl	pmapboot_enter
 	cbnz	x0, init_mmutable_error
 
 #ifdef FDT
-	ADDR	x8, _C_LABEL(fdt_addr_r)
+	adrl	x8, _C_LABEL(fdt_addr_r)
 	ldr	x8, [x8]
 
 	VPRINT("Creating VA=PA tables for FDT\n")
@@ -812,6 +834,7 @@ init_mmutable:
 	adr	x6, bootpage_alloc		/* allocator */
 	mov	x5, xzr				/* flags = 0 */
 	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC|LX_BLKPAG_AP_RW	/* attr */
+	orr	x4, x4, #LX_BLKPAG_UXN|LX_BLKPAG_PXN
 	mov	x3, #L2_SIZE			/* blocksize */
 	mov	x2, #L2_SIZE			/* size */
 	mov	x1, x8				/* pa */
@@ -827,10 +850,10 @@ init_mmutable:
 	mov	x4, #LX_BLKPAG_ATTR_NORMAL_WB|LX_BLKPAG_AP_RW	/* attr */
 	orr	x4, x4, #LX_BLKPAG_UXN
 	mov	x3, #L2_SIZE			/* blocksize */
-	adr	x1, start			/* va = start */
-	ADDR	x2, _end
+	adr	x1, start			/* pa = start */
+	adrl	x2, _end
 	sub	x2, x2, x1			/* size = _end - start */
-	mov	x0, #VM_MIN_KERNEL_ADDRESS	/* va */
+	ldr	x0, =start			/* va */
 	bl	pmapboot_enter
 	cbnz	x0, init_mmutable_error
 
@@ -846,7 +869,7 @@ init_mmutable_done:
 /* return PA of allocated page */
 ENTRY_NP(bootpage_alloc)
 	/* x2 = kernend_extra */
-	ADDR	x3, kernend_extra
+	adrl	x3, kernend_extra
 	ldr	x2, [x3]
 	/* if (kernend_extra < 0) return NULL */
 	mov	x0, xzr
@@ -854,7 +877,7 @@ ENTRY_NP(bootpage_alloc)
 	bmi	bootpage_alloc_done
 
 	/* x0 = PA of _end[] */
-	ADDR	x1, kern_vtopdiff
+	adrl	x1, kern_vtopdiff
 	ldr	x1, [x1]
 	ldr	x0, =ARM_BOOTSTRAP_LxPT
 	sub	x0, x0, x1
@@ -935,7 +958,8 @@ mair_setting:
 	    __SHIFTIN(MAIR_NORMAL_WB, MAIR_ATTR0) |	\
 	    __SHIFTIN(MAIR_NORMAL_NC, MAIR_ATTR1) |	\
 	    __SHIFTIN(MAIR_NORMAL_WT, MAIR_ATTR2) |	\
-	    __SHIFTIN(MAIR_DEVICE_nGnRnE, MAIR_ATTR3))
+	    __SHIFTIN(MAIR_DEVICE_MEM, MAIR_ATTR3) |	\
+	    __SHIFTIN(MAIR_DEVICE_MEM_SO, MAIR_ATTR4))
 
 #define VIRT_BIT	48
 
@@ -977,7 +1001,7 @@ tcr_setting:
 
 
 sctlr_ee:
-	.quad (SCTLR_EE | SCTLR_EOE)	/* Endiannes of Exception and EL0 */
+	.quad (SCTLR_EE | SCTLR_EOE)	/* Endianness of Exception and EL0 */
 sctlr_set:
 	.quad ( \
 	    SCTLR_LSMAOE |  /* Load/Store Multiple Atomicity and Ordering */ \
@@ -1002,7 +1026,7 @@ sctlr_clear:
 	    SCTLR_WXN |     /* Write permission implies Execute Never (W^X) */ \
 	    SCTLR_UMA |     /* EL0 Controls access to interrupt masks */ \
 	    SCTLR_ITD |     /* IT instruction disable */ \
-	    SCTLR_THEE |    /* T32EE is not implemented */ \
+	    SCTLR_nAA |     /* ? */ \
 	    SCTLR_CP15BEN | /* CP15 barrier enable */ \
 	    SCTLR_SA0 |     /* Enable EL0 stack alignment check */ \
 	    SCTLR_SA |      /* Enable SP alignment check */ \
@@ -1041,7 +1065,6 @@ bootstk:
 
 #ifdef MULTIPROCESSOR
 	.space	BOOT_AP_STACKSIZE * (MAXCPUS - 1)
-bootstk_cpus:
 #endif
 
 	.section ".init_pagetable", "aw", %nobits

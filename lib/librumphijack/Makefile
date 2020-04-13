@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.10.1 2019/06/10 22:05:27 christos Exp $
+#	$NetBSD: Makefile,v 1.20.10.2 2020/04/13 08:03:16 martin Exp $
 #
 
 LIB=		rumphijack
@@ -11,7 +11,6 @@ MAN=		rumphijack.3
 SRCS=		hijack.c hijackdlsym.c
 
 CPPFLAGS+=	-D_DIAGNOSTIC -D_REENTRANT
-CPPFLAGS.hijack.c+= -D_INCOMPLETE_XOPEN_C063
 
 WARNS?=		5
 

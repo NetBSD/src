@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.47.2.2 2020/04/08 14:07:22 martin Exp $
+.\"	$NetBSD: audio.9,v 1.47.2.3 2020/04/13 08:03:26 martin Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -504,12 +504,24 @@ which the hardware driver can then change if needed.
 E.g., DMA on the ISA bus cannot exceed 65536 bytes.
 It is called in the Attached or Closed phases.
 .It Dv int get_props(void *hdl)
-Should return the device properties; i.e., a combination of
-AUDIO_PROP_xxx.
-It is called at any time.
+Should return the device properties in a combination of following flags:
 .Pp
-.Dv AUDIO_PROP_MMAP
-is acceptable but obsolete, so new drivers should not return this property.
+.Bl -tag -width AUDIO_PROP_INDEPENDENT -compact
+.It Dv AUDIO_PROP_PLAYBACK
+the device is capable of audio playback.
+.It Dv AUDIO_PROP_CAPTURE
+the device is capable of audio capture.
+.It Dv AUDIO_PROP_FULLDUPLEX
+the device admits full duplex operation.
+Don't set it if the device is unidirectional.
+.It Dv AUDIO_PROP_INDEPENDENT
+the device can set the playing and recording encoding parameters
+independently.
+Don't set it if the device is unidirectional.
+.It Dv AUDIO_PROP_MMAP
+is handled in the upper layer, so new drivers should not return this property.
+.El
+It is called in the Attach phase.
 .It Dv int trigger_output(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
 .Pp

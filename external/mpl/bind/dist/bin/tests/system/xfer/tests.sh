@@ -410,7 +410,7 @@ echo_i "test smaller transfer TCP message size ($n)"
 $DIG $DIGOPTS example. @10.53.0.8 axfr \
 	-y key1.:1234abcd8765 > dig.out.msgsize || status=1
 
-$DOS2UNIX dig.out.msgsize >/dev/null
+$DOS2UNIX dig.out.msgsize >/dev/null 2>&1
 
 bytes=`wc -c < dig.out.msgsize`
 if [ $bytes -ne 459357 ]; then
@@ -502,9 +502,15 @@ status=`expr $status + $tmp`
 
 n=`expr $n + 1`
 echo_i "checking whether named calculates outgoing AXFR statistics correctly"
-tmp=0
-get_named_xfer_stats ns3/named.run 10.53.0.2 xfer-stats "AXFR ended" > stats.outgoing
-diff axfr-stats.good stats.outgoing || tmp=1
+tmp=1
+for i in 0 1 2 3 4 5 6 7 8 9; do
+	get_named_xfer_stats ns3/named.run 10.53.0.2 xfer-stats "AXFR ended" > stats.outgoing
+	if diff axfr-stats.good stats.outgoing > /dev/null; then
+		tmp=0
+		break
+	fi
+	sleep 1
+done
 if test $tmp != 0 ; then echo_i "failed"; fi
 status=`expr $status + $tmp`
 

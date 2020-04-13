@@ -1,4 +1,4 @@
-.\"	$NetBSD: named.conf.5,v 1.5.2.2 2019/06/10 22:02:59 christos Exp $
+.\"	$NetBSD: named.conf.5,v 1.5.2.3 2020/04/13 08:02:36 martin Exp $
 .\"
 .\" Copyright (C) 2004-2019 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -12,12 +12,12 @@
 .\"     Title: named.conf
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 2019-02-06
+.\"      Date: 2019-07-21
 .\"    Manual: BIND9
 .\"    Source: ISC
 .\"  Language: English
 .\"
-.TH "NAMED\&.CONF" "5" "2019\-02\-06" "ISC" "BIND9"
+.TH "NAMED\&.CONF" "5" "2019\-07\-21" "ISC" "BIND9"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -229,7 +229,7 @@ options {
 	check\-wildcard \fIboolean\fR;
 	cleaning\-interval \fIinteger\fR;
 	clients\-per\-query \fIinteger\fR;
-	cookie\-algorithm ( aes | sha1 | sha256 );
+	cookie\-algorithm ( aes | sha1 | sha256 | siphash24 );
 	cookie\-secret \fIstring\fR;
 	coresize ( default | unlimited | \fIsizeval\fR );
 	datasize ( default | unlimited | \fIsizeval\fR );
@@ -411,11 +411,12 @@ options {
 	resolver\-retry\-interval \fIinteger\fR;
 	response\-padding { \fIaddress_match_element\fR; \&.\&.\&. } block\-size
 	    \fIinteger\fR;
-	response\-policy { zone \fIstring\fR [ log \fIboolean\fR ] [ max\-policy\-ttl
-	    \fIttlval\fR ] [ min\-update\-interval \fIttlval\fR ] [ policy ( cname |
-	    disabled | drop | given | no\-op | nodata | nxdomain | passthru
-	    | tcp\-only \fIquoted_string\fR ) ] [ recursive\-only \fIboolean\fR ] [
-	    nsip\-enable \fIboolean\fR ] [ nsdname\-enable \fIboolean\fR ]; \&.\&.\&. } [
+	response\-policy { zone \fIstring\fR [ add\-soa \fIboolean\fR ] [ log
+	    \fIboolean\fR ] [ max\-policy\-ttl \fIttlval\fR ] [ min\-update\-interval
+	    \fIttlval\fR ] [ policy ( cname | disabled | drop | given | no\-op |
+	    nodata | nxdomain | passthru | tcp\-only \fIquoted_string\fR ) ] [
+	    recursive\-only \fIboolean\fR ] [ nsip\-enable \fIboolean\fR ] [
+	    nsdname\-enable \fIboolean\fR ]; \&.\&.\&. } [ add\-soa \fIboolean\fR ] [
 	    break\-dnssec \fIboolean\fR ] [ max\-policy\-ttl \fIttlval\fR ] [
 	    min\-update\-interval \fIttlval\fR ] [ min\-ns\-dots \fIinteger\fR ] [
 	    nsip\-wait\-recurse \fIboolean\fR ] [ qname\-wait\-recurse \fIboolean\fR ]
@@ -763,11 +764,12 @@ view \fIstring\fR [ \fIclass\fR ] {
 	resolver\-retry\-interval \fIinteger\fR;
 	response\-padding { \fIaddress_match_element\fR; \&.\&.\&. } block\-size
 	    \fIinteger\fR;
-	response\-policy { zone \fIstring\fR [ log \fIboolean\fR ] [ max\-policy\-ttl
-	    \fIttlval\fR ] [ min\-update\-interval \fIttlval\fR ] [ policy ( cname |
-	    disabled | drop | given | no\-op | nodata | nxdomain | passthru
-	    | tcp\-only \fIquoted_string\fR ) ] [ recursive\-only \fIboolean\fR ] [
-	    nsip\-enable \fIboolean\fR ] [ nsdname\-enable \fIboolean\fR ]; \&.\&.\&. } [
+	response\-policy { zone \fIstring\fR [ add\-soa \fIboolean\fR ] [ log
+	    \fIboolean\fR ] [ max\-policy\-ttl \fIttlval\fR ] [ min\-update\-interval
+	    \fIttlval\fR ] [ policy ( cname | disabled | drop | given | no\-op |
+	    nodata | nxdomain | passthru | tcp\-only \fIquoted_string\fR ) ] [
+	    recursive\-only \fIboolean\fR ] [ nsip\-enable \fIboolean\fR ] [
+	    nsdname\-enable \fIboolean\fR ]; \&.\&.\&. } [ add\-soa \fIboolean\fR ] [
 	    break\-dnssec \fIboolean\fR ] [ max\-policy\-ttl \fIttlval\fR ] [
 	    min\-update\-interval \fIttlval\fR ] [ min\-ns\-dots \fIinteger\fR ] [
 	    nsip\-wait\-recurse \fIboolean\fR ] [ qname\-wait\-recurse \fIboolean\fR ]

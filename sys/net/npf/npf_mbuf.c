@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.18.16.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.18.16.2 2020/04/13 08:05:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.18.16.1 2019/06/10 22:09:46 christos 
 #define	m_flags_p(m,f)		true
 #else
 #define	m_next_ptr(m)		(m)->m_next
-#define	m_buflen(m)		(m)->m_len
+#define	m_buflen(m)		((size_t)(m)->m_len)
 #define	m_flags_p(m,f)		(((m)->m_flags & (f)) != 0)
 #endif
 

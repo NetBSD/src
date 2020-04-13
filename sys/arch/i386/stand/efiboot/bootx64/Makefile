@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.22.1 2020/04/08 14:07:41 martin Exp $
+#	$NetBSD: Makefile,v 1.1.22.2 2020/04/13 08:03:54 martin Exp $
 
 PROG=		bootx64.efi
 OBJFMT=		pei-x86-64
 NEWVERSWHAT=	"EFI Boot (x64)"
 
-EXTRA_SOURCES=	efibootx64.c startprog64.S
+EXTRA_SOURCES=	efibootx64.c startprog64.S multiboot64.S
 
 COPTS+=		-mno-red-zone
 CPPFLAGS+=	-DEFI_FUNCTION_WRAPPER

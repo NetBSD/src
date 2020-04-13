@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.19.2.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.19.2.2 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 
 #define	LOCKOPS_SLEEP	0
 #define	LOCKOPS_SPIN	1
-#define	LOCKOPS_CV	2
 
 typedef void (*lockop_printer_t)(const char *, ...) __printflike(1, 2);
 
@@ -78,7 +77,6 @@ void	lockdebug_unlocked(const char *, size_t, volatile void *,
     uintptr_t, int);
 void	lockdebug_barrier(const char *, size_t, volatile void *, int);
 void	lockdebug_mem_check(const char *, size_t, void *, size_t);
-void	lockdebug_wakeup(const char *, size_t, volatile void *, uintptr_t);
 
 #define	LOCKDEBUG_ALLOC(lock, ops, addr) \
     lockdebug_alloc(__func__, __LINE__, lock, ops, addr)
@@ -94,8 +92,6 @@ void	lockdebug_wakeup(const char *, size_t, volatile void *, uintptr_t);
     lockdebug_barrier(__func__, __LINE__, lock, slp)
 #define	LOCKDEBUG_MEM_CHECK(base, sz)	\
     lockdebug_mem_check(__func__, __LINE__, base, sz)
-#define	LOCKDEBUG_WAKEUP(dodebug, lock, where)	\
-    if (dodebug) lockdebug_wakeup(__func__, __LINE__, lock, where)
 
 #else	/* LOCKDEBUG */
 
@@ -106,7 +102,6 @@ void	lockdebug_wakeup(const char *, size_t, volatile void *, uintptr_t);
 #define	LOCKDEBUG_UNLOCKED(dodebug, lock, where, s)	/* nothing */
 #define	LOCKDEBUG_BARRIER(lock, slp)			/* nothing */
 #define	LOCKDEBUG_MEM_CHECK(base, sz)			/* nothing */
-#define	LOCKDEBUG_WAKEUP(dodebug, lock, where)		/* nothing */
 
 #endif	/* LOCKDEBUG */
 

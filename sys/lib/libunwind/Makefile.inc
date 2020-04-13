@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2015/01/29 20:45:16 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.11.18.1 2020/04/13 08:05:05 martin Exp $
 
 .PATH:	${NETBSDSRCDIR}/sys/lib/libunwind
 
@@ -14,5 +14,6 @@ COPTS.libunwind.cxx+=	-Wno-old-style-cast
 CPPFLAGS.libunwind.cxx+=-I${NETBSDSRCDIR}/sys/lib/libunwind
 
 .if ${LIBC_MACHINE_CPU} == "arm"
+COPTS.libunwind.cxx+=	${${ACTIVE_CC} == "gcc":? -mfpu=vfp3 :}
 AFLAGS.unwind_registers.S+=	${${ACTIVE_CC} == "clang":? -mfpu=vfp3 :}
 .endif

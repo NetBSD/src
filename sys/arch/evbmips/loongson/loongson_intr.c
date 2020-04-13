@@ -1,4 +1,4 @@
-/*      $NetBSD: loongson_intr.c,v 1.6 2016/08/27 05:53:40 skrll Exp $      */
+/*      $NetBSD: loongson_intr.c,v 1.6.16.1 2020/04/13 08:03:48 martin Exp $      */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.6 2016/08/27 05:53:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.6.16.1 2020/04/13 08:03:48 martin Exp $");
 
 #define __INTR_PRIVATE
 
@@ -295,10 +295,7 @@ evbmips_intr_establish(int irq, int (*func)(void *), void *arg)
 	KASSERT(irq < BONITO_NINTS);
 	DPRINTF(("loongson_intr_establish %d %p", irq, func));
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (ih == NULL)
-		return NULL;
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK|M_ZERO);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;

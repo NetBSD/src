@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.42 2015/10/02 05:22:49 msaitoh Exp $	*/
+/*	$NetBSD: necpb.c,v 1.42.18.1 2020/04/13 08:03:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.42 2015/10/02 05:22:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.42.18.1 2020/04/13 08:03:31 martin Exp $");
 
 #include "opt_pci.h"
 
@@ -407,10 +407,7 @@ necpb_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	if (ih >= 4)
 		panic("%s: bogus handle", __func__);
 
-	n = malloc(sizeof(struct necpb_intrhand), M_DEVBUF, M_NOWAIT);
-	if (n == NULL)
-		panic("%s: can't malloc interrupt handle", __func__);
-
+	n = malloc(sizeof(struct necpb_intrhand), M_DEVBUF, M_WAITOK);
 	n->ih_func = func;
 	n->ih_arg = arg;
 	n->ih_next = NULL;

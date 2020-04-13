@@ -1,5 +1,5 @@
 /* Define builtin-in macros for all front ends that perform preprocessing
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,6 +20,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "memmodel.h"
 #include "target.h"
 #include "tree.h"
 #include "version.h"
@@ -91,6 +92,15 @@ define_builtin_macros_for_compilation_flags (cpp_reader *pfile)
 
   if (flag_sanitize & SANITIZE_ADDRESS)
     cpp_define (pfile, "__SANITIZE_ADDRESS__");
+
+  if (flag_sanitize & SANITIZE_UNDEFINED)
+    cpp_define (pfile, "__SANITIZE_UNDEFINED__");
+
+  if (flag_sanitize & SANITIZE_LEAK)
+    cpp_define (pfile, "__SANITIZE_LEAK__");
+
+  if (flag_sanitize & SANITIZE_THREAD)
+    cpp_define (pfile, "__SANITIZE_THREAD__");
 
   if (optimize_size)
     cpp_define (pfile, "__OPTIMIZE_SIZE__");

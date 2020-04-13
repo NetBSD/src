@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.21.10.1 2019/06/10 22:10:35 christos Exp $	*/
+/*	$NetBSD: npftest.c,v 1.21.10.2 2020/04/13 08:05:55 martin Exp $	*/
 
 /*
  * NPF testing framework.
@@ -277,7 +277,6 @@ main(int argc, char **argv)
 		errx(EXIT_FAILURE, "failed to find the interface");
 	}
 
-	srandom(1);
 	fail = false;
 
 	if (test) {
@@ -311,7 +310,6 @@ main(int argc, char **argv)
 		}
 
 		if (!testname || strcmp("conn", testname) == 0) {
-			srandom(1);
 			ok = rumpns_npf_conn_test(verbose);
 			fail |= result("conn", ok);
 			tname_matched = true;

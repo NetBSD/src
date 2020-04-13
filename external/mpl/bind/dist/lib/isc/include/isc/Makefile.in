@@ -21,7 +21,7 @@ VERSION=@BIND9_VERSION@
 HEADERS =	aes.h app.h assertions.h atomic.h backtrace.h \
 		base32.h base64.h bind9.h buffer.h bufferlist.h \
 		commandline.h counter.h crc64.h deprecated.h \
-		errno.h error.h event.h eventclass.h \
+		endian.h errno.h error.h event.h eventclass.h \
 		file.h formatcheck.h fsaccess.h fuzz.h \
 		hash.h heap.h hex.h hmac.h ht.h httpd.h \
 		interfaceiter.h iterated_hash.h \
@@ -31,7 +31,7 @@ HEADERS =	aes.h app.h assertions.h atomic.h backtrace.h \
 		pool.h portset.h print.h queue.h quota.h \
 		radix.h random.h ratelimiter.h refcount.h regex.h \
 		region.h resource.h result.h resultclass.h rwlock.h \
-		safe.h serial.h sockaddr.h socket.h \
+		safe.h serial.h siphash.h sockaddr.h socket.h \
 		stats.h stdio.h strerr.h string.h symtab.h \
 	        task.h taskpool.h timer.h tm.h types.h util.h version.h \
 		xml.h

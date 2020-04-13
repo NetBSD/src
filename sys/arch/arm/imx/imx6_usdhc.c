@@ -1,5 +1,4 @@
-/*	$NetBSD: imx6_usdhc.c,v 1.6 2018/05/23 10:42:05 hkenken Exp $ */
-
+/*	$NetBSD: imx6_usdhc.c,v 1.6.2.1 2020/04/13 08:03:35 martin Exp $ */
 /*-
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -28,11 +27,12 @@
  * SUCH DAMAGE.
  */
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.6 2018/05/23 10:42:05 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.6.2.1 2020/04/13 08:03:35 martin Exp $");
 
 #include "imxgpio.h"
+
+#define	_INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,19 +53,23 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.6 2018/05/23 10:42:05 hkenken Exp $
 #include <arm/imx/imx6_ccmreg.h>
 #include <arm/imx/imxgpiovar.h>
 
-
 struct sdhc_axi_softc {
 	struct sdhc_softc sc_sdhc;
+
 	/* we have only one slot */
 	struct sdhc_host *sc_hosts[1];
 	int32_t sc_gpio_cd;
 	int32_t sc_gpio_cd_active;
+
 	void *sc_ih;
+
+	struct clk *sc_clk;
 };
 
 static int sdhc_match(device_t, cfdata_t, void *);
 static void sdhc_attach(device_t, device_t, void *);
 static int imx6_sdhc_card_detect(struct sdhc_softc *);
+static int imx6_sdhc_init_clocks(struct sdhc_axi_softc *);
 
 CFATTACH_DECL_NEW(sdhc_axi, sizeof(struct sdhc_axi_softc),
     sdhc_match, sdhc_attach, NULL, NULL);
@@ -89,25 +93,6 @@ sdhc_match(device_t parent, cfdata_t cf, void *aux)
 	return 0;
 }
 
-static int
-imx6_sdhc_card_detect(struct sdhc_softc *ssc)
-{
-	int detect;
-#if NIMXGPIO > 0
-	struct sdhc_axi_softc *sc;
-
-	sc = device_private(ssc->sc_dev);
-	if (sc->sc_gpio_cd >= 0) {
-		detect = gpio_data_read(sc->sc_gpio_cd);
-		if (sc->sc_gpio_cd_active == GPIO_PIN_LOW)
-			detect = !detect;
-	} else
-#endif
-		detect = 1;
-
-	return detect;
-}
-
 static void
 sdhc_attach(device_t parent, device_t self, void *aux)
 {
@@ -115,7 +100,6 @@ sdhc_attach(device_t parent, device_t self, void *aux)
 	struct axi_attach_args *aa = aux;
 	bus_space_tag_t iot = aa->aa_iot;
 	bus_space_handle_t ioh;
-	u_int perclk = 0, v;
 
 	sc->sc_sdhc.sc_dev = self;
 	sc->sc_sdhc.sc_dmat = aa->aa_dmat;
@@ -131,36 +115,37 @@ sdhc_attach(device_t parent, device_t self, void *aux)
 
 	switch (aa->aa_addr) {
 	case IMX6_AIPS2_BASE + AIPS2_USDHC1_BASE:
-		v = imx6_ccm_read(CCM_CCGR6);
-		imx6_ccm_write(CCM_CCGR6, v | __SHIFTIN(3, CCM_CCGR6_USDHC1_CLK_ENABLE));
-		perclk = imx6_get_clock(IMX6CLK_USDHC1);
+		sc->sc_clk = imx6_get_clock("usdhc1");
 		imx6_set_gpio(self, "usdhc1-cd-gpio", &sc->sc_gpio_cd,
-		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);
+		    &sc->sc_gpio_cd_active, GPIO_PIN_INPUT);
 		break;
 	case IMX6_AIPS2_BASE + AIPS2_USDHC2_BASE:
-		v = imx6_ccm_read(CCM_CCGR6);
-		imx6_ccm_write(CCM_CCGR6, v | __SHIFTIN(3, CCM_CCGR6_USDHC2_CLK_ENABLE));
-		perclk = imx6_get_clock(IMX6CLK_USDHC2);
+		sc->sc_clk = imx6_get_clock("usdhc2");
 		imx6_set_gpio(self, "usdhc2-cd-gpio", &sc->sc_gpio_cd,
-		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);
+		    &sc->sc_gpio_cd_active, GPIO_PIN_INPUT);
 		break;
 	case IMX6_AIPS2_BASE + AIPS2_USDHC3_BASE:
-		v = imx6_ccm_read(CCM_CCGR6);
-		imx6_ccm_write(CCM_CCGR6, v | __SHIFTIN(3, CCM_CCGR6_USDHC3_CLK_ENABLE));
-		perclk = imx6_get_clock(IMX6CLK_USDHC3);
+		sc->sc_clk = imx6_get_clock("usdhc3");
 		imx6_set_gpio(self, "usdhc3-cd-gpio", &sc->sc_gpio_cd,
-		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);
+		    &sc->sc_gpio_cd_active, GPIO_PIN_INPUT);
 		break;
 	case IMX6_AIPS2_BASE + AIPS2_USDHC4_BASE:
-		v = imx6_ccm_read(CCM_CCGR6);
-		imx6_ccm_write(CCM_CCGR6, v | __SHIFTIN(3, CCM_CCGR6_USDHC4_CLK_ENABLE));
-		perclk = imx6_get_clock(IMX6CLK_USDHC4);
+		sc->sc_clk = imx6_get_clock("usdhc4");
 		imx6_set_gpio(self, "usdhc4-cd-gpio", &sc->sc_gpio_cd,
-		    &sc->sc_gpio_cd_active, GPIO_DIR_IN);
+		    &sc->sc_gpio_cd_active, GPIO_PIN_INPUT);
 		break;
 	}
 
-	sc->sc_sdhc.sc_clkbase = perclk / 1000;
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't get clock usdhc\n");
+		return;
+	}
+	if (imx6_sdhc_init_clocks(sc) != 0) {
+		aprint_error_dev(self, "couldn't init clocks\n");
+		return;
+	}
+
+	sc->sc_sdhc.sc_clkbase = clk_get_rate(sc->sc_clk) / 1000;
 	sc->sc_sdhc.sc_flags |=
 	    SDHC_FLAG_USE_DMA |
 	    SDHC_FLAG_NO_PWR0 |
@@ -188,4 +173,37 @@ sdhc_attach(device_t parent, device_t self, void *aux)
 	    sdhc_shutdown)) {
 		aprint_error_dev(self, "can't establish power hook\n");
 	}
+}
+
+static int
+imx6_sdhc_card_detect(struct sdhc_softc *ssc)
+{
+	int detect;
+#if NIMXGPIO > 0
+	struct sdhc_axi_softc *sc;
+
+	sc = device_private(ssc->sc_dev);
+	if (sc->sc_gpio_cd >= 0) {
+		detect = imxgpio_data_read(sc->sc_gpio_cd);
+		if (sc->sc_gpio_cd_active == GPIO_PIN_LOW)
+			detect = !detect;
+	} else
+#endif
+		detect = 1;
+
+	return detect;
+}
+
+static int
+imx6_sdhc_init_clocks(struct sdhc_axi_softc *sc)
+{
+	int error;
+
+	error = clk_enable(sc->sc_clk);
+	if (error) {
+		aprint_error_dev(sc->sc_sdhc.sc_dev, "couldn't enable: %d\n", error);
+		return error;
+	}
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.6.2.3 2020/04/08 14:07:04 martin Exp $	*/
+/*	$NetBSD: server.c,v 1.6.2.4 2020/04/13 08:02:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,6 +43,7 @@
 #include <isc/print.h>
 #include <isc/refcount.h>
 #include <isc/resource.h>
+#include <isc/siphash.h>
 #include <isc/socket.h>
 #include <isc/stat.h>
 #include <isc/stats.h>
@@ -110,9 +111,9 @@
 
 #include <named/config.h>
 #include <named/control.h>
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 #include <named/geoip.h>
-#endif /* HAVE_GEOIP */
+#endif /* HAVE_GEOIP || HAVE_GEOIP2 */
 #include <named/log.h>
 #include <named/logconf.h>
 #include <named/main.h>
@@ -167,23 +168,23 @@
  * using it has a 'result' variable and a 'cleanup' label.
  */
 #define CHECK(op) \
-	do { result = (op);					 \
-	       if (result != ISC_R_SUCCESS) goto cleanup;	 \
+	do { result = (op);					  \
+	       if (result != ISC_R_SUCCESS) goto cleanup;	  \
 	} while (/*CONSTCOND*/0)
 
 #define TCHECK(op) \
-	do { tresult = (op);					 \
-		if (tresult != ISC_R_SUCCESS) {			 \
-			isc_buffer_clear(*text);		 \
-			goto cleanup;	 			 \
-		}						 \
-	} while (/*CONSTCOND*/ 0)
+	do { tresult = (op);					  \
+		if (tresult != ISC_R_SUCCESS) {			  \
+			isc_buffer_clear(*text);		  \
+			goto cleanup;	 			  \
+		}						  \
+	} while (/*CONSTCOND*/0)
 
 #define CHECKM(op, msg) \
 	do { result = (op);					  \
 	       if (result != ISC_R_SUCCESS) {			  \
 			isc_log_write(named_g_lctx,		  \
-				      NAMED_LOGCATEGORY_GENERAL,	  \
+				      NAMED_LOGCATEGORY_GENERAL,  \
 				      NAMED_LOGMODULE_SERVER,	  \
 				      ISC_LOG_ERROR,		  \
 				      "%s: %s", msg,		  \
@@ -196,7 +197,7 @@
 	do { result = (op);					  \
 	       if (result != ISC_R_SUCCESS) {			  \
 			isc_log_write(named_g_lctx,		  \
-				      NAMED_LOGCATEGORY_GENERAL,	  \
+				      NAMED_LOGCATEGORY_GENERAL,  \
 				      NAMED_LOGMODULE_SERVER,	  \
 				      ISC_LOG_ERROR,		  \
 				      "%s '%s': %s", msg, file,	  \
@@ -705,7 +706,8 @@ configure_view_nametable(const cfg_obj_t *vconfig, const cfg_obj_t *config,
 
 static isc_result_t
 dstkey_fromconfig(const cfg_obj_t *vconfig, const cfg_obj_t *key,
-		  bool managed, dst_key_t **target, isc_mem_t *mctx)
+		  bool managed, dst_key_t **target, const char **keynamestrp,
+		  isc_mem_t *mctx)
 {
 	dns_rdataclass_t viewclass;
 	dns_rdata_dnskey_t keystruct;
@@ -723,12 +725,14 @@ dstkey_fromconfig(const cfg_obj_t *vconfig, const cfg_obj_t *key,
 	dst_key_t *dstkey = NULL;
 
 	INSIST(target != NULL && *target == NULL);
+	INSIST(keynamestrp != NULL && *keynamestrp == NULL);
 
 	flags = cfg_obj_asuint32(cfg_tuple_get(key, "flags"));
 	proto = cfg_obj_asuint32(cfg_tuple_get(key, "protocol"));
 	alg = cfg_obj_asuint32(cfg_tuple_get(key, "algorithm"));
 	keyname = dns_fixedname_name(&fkeyname);
 	keynamestr = cfg_obj_asstring(cfg_tuple_get(key, "name"));
+	*keynamestrp = keynamestr;
 
 	if (managed) {
 		const char *initmethod;
@@ -762,6 +766,8 @@ dstkey_fromconfig(const cfg_obj_t *vconfig, const cfg_obj_t *key,
 
 	if (flags > 0xffff)
 		CHECKM(ISC_R_RANGE, "key flags");
+	if (flags & DNS_KEYFLAG_REVOKE)
+		CHECKM(DST_R_BADKEYTYPE, "key flags revoke bit set");
 	if (proto > 0xff)
 		CHECKM(ISC_R_RANGE, "key protocol");
 	if (alg > 0xff)
@@ -801,26 +807,118 @@ dstkey_fromconfig(const cfg_obj_t *vconfig, const cfg_obj_t *key,
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (result == DST_R_NOCRYPTO) {
+	if (dstkey != NULL) {
+		dst_key_free(&dstkey);
+	}
+
+	return (result);
+}
+
+/*%
+ * Parse 'key' in the context of view configuration 'vconfig'.  If successful,
+ * add the key to 'secroots' if both of the following conditions are true:
+ *
+ *   - 'keyname_match' is NULL or it matches the owner name of 'key',
+ *   - support for the algorithm used by 'key' is not disabled by 'resolver'
+ *     for the owner name of 'key'.
+ *
+ * 'managed' is true for managed keys and false for trusted keys.  'mctx' is
+ * the memory context to use for allocating memory.
+ */
+static isc_result_t
+process_key(const cfg_obj_t *key, const cfg_obj_t *vconfig,
+	    dns_keytable_t *secroots, const dns_name_t *keyname_match,
+	    dns_resolver_t *resolver, bool managed, isc_mem_t *mctx)
+{
+	const dns_name_t *keyname = NULL;
+	const char *keynamestr = NULL;
+	dst_key_t *dstkey = NULL;
+	unsigned int keyalg;
+	isc_result_t result;
+
+	result = dstkey_fromconfig(vconfig, key, managed, &dstkey, &keynamestr,
+				   mctx);
+
+	switch (result) {
+	case ISC_R_SUCCESS:
+		/*
+		 * Key was parsed correctly, its algorithm is supported by the
+		 * crypto library, and it is not revoked.
+		 */
+		keyname = dst_key_name(dstkey);
+		keyalg = dst_key_alg(dstkey);
+		break;
+	case DST_R_UNSUPPORTEDALG:
+	case DST_R_BADKEYTYPE:
+		/*
+		 * Key was parsed correctly, but it cannot be used; this is not
+		 * a fatal error - log a warning about this key being ignored,
+		 * but do not prevent any further ones from being processed.
+		 */
+		cfg_obj_log(key, named_g_lctx, ISC_LOG_WARNING,
+			    "ignoring %s key for '%s': %s",
+			    managed ? "managed" : "trusted",
+			    keynamestr, isc_result_totext(result));
+		return (ISC_R_SUCCESS);
+	case DST_R_NOCRYPTO:
+		/*
+		 * Crypto support is not available.
+		 */
 		cfg_obj_log(key, named_g_lctx, ISC_LOG_ERROR,
 			    "ignoring %s key for '%s': no crypto support",
 			    managed ? "managed" : "trusted",
 			    keynamestr);
-	} else if (result == DST_R_UNSUPPORTEDALG) {
-		cfg_obj_log(key, named_g_lctx, ISC_LOG_WARNING,
-			    "skipping %s key for '%s': %s",
-			    managed ? "managed" : "trusted",
-			    keynamestr, isc_result_totext(result));
-	} else {
+		return (result);
+	default:
+		/*
+		 * Something unexpected happened; we have no choice but to
+		 * indicate an error so that the configuration loading process
+		 * is interrupted.
+		 */
 		cfg_obj_log(key, named_g_lctx, ISC_LOG_ERROR,
 			    "configuring %s key for '%s': %s",
 			    managed ? "managed" : "trusted",
 			    keynamestr, isc_result_totext(result));
-		result = ISC_R_FAILURE;
+		return (ISC_R_FAILURE);
 	}
 
-	if (dstkey != NULL)
+	/*
+	 * If the caller requested to only load keys for a specific name and
+	 * the owner name of this key does not match the requested name, do not
+	 * load it.
+	 */
+	if (keyname_match != NULL && !dns_name_equal(keyname_match, keyname)) {
+		goto done;
+	}
+
+	/*
+	 * Ensure that 'resolver' allows using the algorithm of this key for
+	 * its owner name.  If it does not, do not load the key and log a
+	 * warning, but do not prevent further keys from being processed.
+	 */
+	if (!dns_resolver_algorithm_supported(resolver, keyname, keyalg)) {
+		cfg_obj_log(key, named_g_lctx, ISC_LOG_WARNING,
+			    "ignoring %s key for '%s': algorithm is disabled",
+			    managed ? "managed" : "trusted", keynamestr);
+		goto done;
+	}
+
+	/*
+	 * Add the key to 'secroots'.  This key is taken from the
+	 * configuration, so if it's a managed key then it's an initializing
+	 * key; that's why 'managed' is duplicated below.
+	 */
+	result = dns_keytable_add(secroots, managed, managed, &dstkey);
+
+ done:
+	/*
+	 * Ensure 'dstkey' does not leak.  Note that if dns_keytable_add()
+	 * succeeds, ownership of the key structure is transferred to the key
+	 * table, i.e. 'dstkey' is set to NULL.
+	 */
+	if (dstkey != NULL) {
 		dst_key_free(&dstkey);
+	}
 
 	return (result);
 }
@@ -836,8 +934,7 @@ load_view_keys(const cfg_obj_t *keys, const cfg_obj_t *vconfig,
 	       const dns_name_t *keyname, isc_mem_t *mctx)
 {
 	const cfg_listelt_t *elt, *elt2;
-	const cfg_obj_t *key, *keylist;
-	dst_key_t *dstkey = NULL;
+	const cfg_obj_t *keylist;
 	isc_result_t result;
 	dns_keytable_t *secroots = NULL;
 
@@ -853,42 +950,13 @@ load_view_keys(const cfg_obj_t *keys, const cfg_obj_t *vconfig,
 		     elt2 != NULL;
 		     elt2 = cfg_list_next(elt2))
 		{
-			key = cfg_listelt_value(elt2);
-			result = dstkey_fromconfig(vconfig, key, managed,
-						   &dstkey, mctx);
-			if (result ==  DST_R_UNSUPPORTEDALG) {
-				result = ISC_R_SUCCESS;
-				continue;
-			}
-			if (result != ISC_R_SUCCESS) {
-				goto cleanup;
-			}
-
-			/*
-			 * If keyname was specified, we only add that key.
-			 */
-			if (keyname != NULL &&
-			    !dns_name_equal(keyname, dst_key_name(dstkey)))
-			{
-				dst_key_free(&dstkey);
-				continue;
-			}
-
-			/*
-			 * This key is taken from the configuration, so
-			 * if it's a managed key then it's an
-			 * initializing key; that's why 'managed'
-			 * is duplicated below.
-			 */
-			CHECK(dns_keytable_add(secroots, managed,
-					       managed, &dstkey));
+			CHECK(process_key(cfg_listelt_value(elt2), vconfig,
+					  secroots, keyname, view->resolver,
+					  managed, mctx));
 		}
 	}
 
  cleanup:
-	if (dstkey != NULL) {
-		dst_key_free(&dstkey);
-	}
 	if (secroots != NULL) {
 		dns_keytable_detach(&secroots);
 	}
@@ -8221,7 +8289,7 @@ load_configuration(const char *filename, named_server_t *server,
 	}
 	isc_socketmgr_setreserved(named_g_socketmgr, reserved);
 
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 	/*
 	 * Initialize GeoIP databases from the configured location.
 	 * This should happen before configuring any ACLs, so that we
@@ -8234,11 +8302,9 @@ load_configuration(const char *filename, named_server_t *server,
 		char *dir;
 		DE_CONST(cfg_obj_asstring(obj), dir);
 		named_geoip_load(dir);
-	} else {
-		named_geoip_load(NULL);
 	}
 	named_g_aclconfctx->geoip = named_g_geoip;
-#endif /* HAVE_GEOIP */
+#endif /* HAVE_GEOIP || HAVE_GEOIP2 */
 
 	/*
 	 * Configure various server options.
@@ -9091,7 +9157,9 @@ load_configuration(const char *filename, named_server_t *server,
 	obj = NULL;
 	result = named_config_get(maps, "cookie-algorithm", &obj);
 	INSIST(result == ISC_R_SUCCESS);
-	if (strcasecmp(cfg_obj_asstring(obj), "aes") == 0) {
+	if (strcasecmp(cfg_obj_asstring(obj), "siphash24") == 0) {
+		server->sctx->cookiealg = ns_cookiealg_siphash24;
+	} else if (strcasecmp(cfg_obj_asstring(obj), "aes") == 0) {
 		server->sctx->cookiealg = ns_cookiealg_aes;
 	} else if (strcasecmp(cfg_obj_asstring(obj), "sha1") == 0) {
 		server->sctx->cookiealg = ns_cookiealg_sha1;
@@ -9154,12 +9222,18 @@ load_configuration(const char *filename, named_server_t *server,
 
 			usedlength = isc_buffer_usedlength(&b);
 			switch (server->sctx->cookiealg) {
+			case ns_cookiealg_siphash24:
+				expectedlength = ISC_SIPHASH24_KEY_LENGTH;
+				if (usedlength != expectedlength) {
+					CHECKM(ISC_R_RANGE,
+					       "SipHash-2-4 cookie-secret must be 128 bits");
+				}
+				break;
 			case ns_cookiealg_aes:
 				expectedlength = ISC_AES128_KEYLENGTH;
 				if (usedlength != expectedlength) {
 					CHECKM(ISC_R_RANGE,
-					       "AES cookie-secret must be "
-					       "128 bits");
+					       "AES cookie-secret must be 128 bits");
 				}
 				break;
 			case ns_cookiealg_sha1:
@@ -9442,6 +9516,7 @@ static void
 run_server(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result;
 	named_server_t *server = (named_server_t *)event->ev_arg;
+	dns_geoip_databases_t *geoip;
 
 	INSIST(task == server->task);
 
@@ -9452,25 +9527,19 @@ run_server(isc_task_t *task, isc_event_t *event) {
 
 	dns_dispatchmgr_setstats(named_g_dispatchmgr, server->resolverstats);
 
-#ifdef HAVE_GEOIP
-	CHECKFATAL(ns_interfacemgr_create(named_g_mctx, server->sctx,
-					  named_g_taskmgr, named_g_timermgr,
-					  named_g_socketmgr,
-					  named_g_dispatchmgr,
-					  server->task, named_g_udpdisp,
-					  named_g_geoip,
-					  &server->interfacemgr),
-		   "creating interface manager");
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
+	geoip = named_g_geoip;
 #else
+	geoip = NULL;
+#endif
+
 	CHECKFATAL(ns_interfacemgr_create(named_g_mctx, server->sctx,
 					  named_g_taskmgr, named_g_timermgr,
 					  named_g_socketmgr,
 					  named_g_dispatchmgr,
-					  server->task, named_g_udpdisp,
-					  NULL,
+					  server->task, named_g_udpdisp, geoip,
 					  &server->interfacemgr),
 		   "creating interface manager");
-#endif
 
 	CHECKFATAL(isc_timer_create(named_g_timermgr, isc_timertype_inactive,
 				    NULL, NULL, server->task,
@@ -9592,9 +9661,9 @@ shutdown_server(isc_task_t *task, isc_event_t *event) {
 #ifdef HAVE_DNSTAP
 	dns_dt_shutdown();
 #endif
-#ifdef HAVE_GEOIP
-	dns_geoip_shutdown();
-#endif
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
+	named_geoip_shutdown();
+#endif /* HAVE_GEOIP || HAVE_GEOIP2 */
 
 	dns_db_detach(&server->in_roothints);
 
@@ -9710,14 +9779,14 @@ named_server_create(isc_mem_t *mctx, named_server_t **serverp) {
 				    &server->sctx),
 		   "creating server context");
 
-#ifdef HAVE_GEOIP
+#if defined(HAVE_GEOIP) || defined(HAVE_GEOIP2)
 	/*
 	 * GeoIP must be initialized before the interface
 	 * manager (which includes the ACL environment)
 	 * is created
 	 */
 	named_geoip_init();
-#endif
+#endif /* HAVE_GEOIP || HAVE_GEOIP2 */
 
 #ifdef ENABLE_AFL
 	server->sctx->fuzztype = named_g_fuzz_type;
@@ -10605,7 +10674,7 @@ add_zone_tolist(dns_zone_t *zone, void *uap) {
 	struct zonelistentry *zle;
 
 	zle = isc_mem_get(dctx->mctx, sizeof *zle);
-	if (zle ==  NULL)
+	if (zle == NULL)
 		return (ISC_R_NOMEMORY);
 	zle->zone = NULL;
 	dns_zone_attach(zone, &zle->zone);
@@ -10682,17 +10751,21 @@ dumpdone(void *arg, isc_result_t result) {
 	char buf[1024+32];
 	const dns_master_style_t *style;
 
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
-	if (dctx->mdctx != NULL)
+	}
+	if (dctx->mdctx != NULL) {
 		dns_dumpctx_detach(&dctx->mdctx);
+	}
 	if (dctx->view == NULL) {
 		dctx->view = ISC_LIST_HEAD(dctx->viewlist);
-		if (dctx->view == NULL)
+		if (dctx->view == NULL) {
 			goto done;
+		}
 		INSIST(dctx->zone == NULL);
-	} else
+	} else {
 		goto resume;
+	}
  nextview:
 	fprintf(dctx->fp, ";\n; Start view %s\n;\n", dctx->view->view->name);
  resume:
@@ -10706,8 +10779,9 @@ dumpdone(void *arg, isc_result_t result) {
 	{
 		style = &dns_master_style_cache;
 		/* start cache dump */
-		if (dctx->view->view->cachedb != NULL)
+		if (dctx->view->view->cachedb != NULL) {
 			dns_db_attach(dctx->view->view->cachedb, &dctx->cache);
+		}
 		if (dctx->cache != NULL) {
 			fprintf(dctx->fp,
 				";\n; Cache dump of view '%s' (cache %s)\n;\n",
@@ -10719,43 +10793,52 @@ dumpdone(void *arg, isc_result_t result) {
 							    dctx->task,
 							    dumpdone, dctx,
 							    &dctx->mdctx);
-			if (result == DNS_R_CONTINUE)
+			if (result == DNS_R_CONTINUE) {
 				return;
-			if (result == ISC_R_NOTIMPLEMENTED)
+			}
+			if (result == ISC_R_NOTIMPLEMENTED) {
 				fprintf(dctx->fp, "; %s\n",
 					dns_result_totext(result));
-			else if (result != ISC_R_SUCCESS)
+			} else if (result != ISC_R_SUCCESS) {
 				goto cleanup;
+			}
 		}
 	}
 
 	if ((dctx->dumpadb || dctx->dumpbad || dctx->dumpfail) &&
-	    dctx->cache == NULL && dctx->view->view->cachedb != NULL)
+	    dctx->cache == NULL && dctx->view->view->cachedb != NULL) {
 		dns_db_attach(dctx->view->view->cachedb, &dctx->cache);
+	}
 
 	if (dctx->cache != NULL) {
-		if (dctx->dumpadb)
+		if (dctx->dumpadb) {
 			dns_adb_dump(dctx->view->view->adb, dctx->fp);
-		if (dctx->dumpbad)
+		}
+		if (dctx->dumpbad) {
 			dns_resolver_printbadcache(dctx->view->view->resolver,
 						   dctx->fp);
-		if (dctx->dumpfail)
+		}
+		if (dctx->dumpfail) {
 			dns_badcache_print(dctx->view->view->failcache,
 					   "SERVFAIL cache", dctx->fp);
+		}
 		dns_db_detach(&dctx->cache);
 	}
 	if (dctx->dumpzones) {
 		style = &dns_master_style_full;
  nextzone:
-		if (dctx->version != NULL)
+		if (dctx->version != NULL) {
 			dns_db_closeversion(dctx->db, &dctx->version,
 					    false);
-		if (dctx->db != NULL)
+		}
+		if (dctx->db != NULL) {
 			dns_db_detach(&dctx->db);
-		if (dctx->zone == NULL)
+		}
+		if (dctx->zone == NULL) {
 			dctx->zone = ISC_LIST_HEAD(dctx->view->zonelist);
-		else
+		} else {
 			dctx->zone = ISC_LIST_NEXT(dctx->zone, link);
+		}
 		if (dctx->zone != NULL) {
 			/* start zone dump */
 			dns_zone_name(dctx->zone->zone, buf, sizeof(buf));
@@ -10774,8 +10857,9 @@ dumpdone(void *arg, isc_result_t result) {
 							    dctx->task,
 							    dumpdone, dctx,
 							    &dctx->mdctx);
-			if (result == DNS_R_CONTINUE)
+			if (result == DNS_R_CONTINUE) {
 				return;
+			}
 			if (result == ISC_R_NOTIMPLEMENTED) {
 				fprintf(dctx->fp, "; %s\n",
 					dns_result_totext(result));
@@ -10783,26 +10867,31 @@ dumpdone(void *arg, isc_result_t result) {
 				POST(result);
 				goto nextzone;
 			}
-			if (result != ISC_R_SUCCESS)
+			if (result != ISC_R_SUCCESS) {
 				goto cleanup;
+			}
 		}
 	}
-	if (dctx->view != NULL)
+	if (dctx->view != NULL) {
 		dctx->view = ISC_LIST_NEXT(dctx->view, link);
-	if (dctx->view != NULL)
-		goto nextview;
+		if (dctx->view != NULL) {
+			goto nextview;
+		}
+	}
  done:
 	fprintf(dctx->fp, "; Dump complete\n");
 	result = isc_stdio_flush(dctx->fp);
-	if (result == ISC_R_SUCCESS)
+	if (result == ISC_R_SUCCESS) {
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
 			      "dumpdb complete");
+	}
  cleanup:
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 			      "dumpdb failed: %s", dns_result_totext(result));
+	}
 	dumpcontext_destroy(dctx);
 }
 
@@ -15338,13 +15427,14 @@ named_server_servestale(named_server_t *server, isc_lex_t *lex,
 	/* Look for the optional class name. */
 	classtxt = next_token(lex, text);
 	if (classtxt != NULL) {
-		/* Look for the optional view name. */
-		viewtxt = next_token(lex, text);
-	}
-
-	if (classtxt != NULL) {
 		isc_textregion_t r;
 
+		/* Look for the optional view name. */
+		viewtxt = next_token(lex, text);
+
+		/*
+		 * If 'classtext' is not a valid class then it us a view name.
+		 */
 		r.base = classtxt;
 		r.length = strlen(classtxt);
 		result = dns_rdataclass_fromtext(&rdclass, &r);

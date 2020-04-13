@@ -1,10 +1,10 @@
-/*	$NetBSD: sssvlv.c,v 1.1.1.5 2018/02/06 01:53:16 christos Exp $	*/
+/*	$NetBSD: sssvlv.c,v 1.1.1.5.4.1 2020/04/13 07:56:21 martin Exp $	*/
 
 /* sssvlv.c - server side sort / virtual list view */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2017 The OpenLDAP Foundation.
+ * Copyright 2009-2019 The OpenLDAP Foundation.
  * Portions copyright 2009 Symas Corporation.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sssvlv.c,v 1.1.1.5 2018/02/06 01:53:16 christos Exp $");
+__RCSID("$NetBSD: sssvlv.c,v 1.1.1.5.4.1 2020/04/13 07:56:21 martin Exp $");
 
 #include "portable.h"
 

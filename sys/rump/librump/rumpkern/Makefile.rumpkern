@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.170.4.2 2020/04/08 14:09:01 martin Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.170.4.3 2020/04/13 08:05:19 martin Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -15,8 +15,7 @@ MAN=		rump.3 rump_lwproc.3
 	${RUMPTOP}/../uvm					\
 	${RUMPTOP}/../conf					\
 	${RUMPTOP}/../dev					\
-	${RUMPTOP}/../crypto/nist_ctr_drbg			\
-	${RUMPTOP}/../crypto/rijndael				\
+	${RUMPTOP}/../crypto/nist_hash_drbg			\
 	${RUMPTOP}/../crypto/cprng_fast				\
 	${RUMPTOP}/../secmodel					\
 	${RUMPTOP}/../secmodel/suser				\
@@ -158,10 +157,7 @@ SRCS+=	clock_subr.c
 # sys/dev/crypto
 # Note: these are here only for cprng.  More crypto algos for drivers
 # are available from the rumpkern_crypto component
-SRCS+=	nist_ctr_drbg.c
-SRCS+=	rijndael-alg-fst.c
-SRCS+=	rijndael-api-fst.c
-SRCS+=	rijndael.c
+SRCS+=	nist_hash_drbg.c
 SRCS+=	cprng_fast.c
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -241,6 +237,12 @@ CPPFLAGS+=	-I${RUMPTOP}/../../common/lib/libc/atomic
 SRCS+=		atomic_cas_generic.c
 #SRCS+=		rump_atomic_cas_up.c
 .endif
+
+COPTS.if_ethersubr.c+=		${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.kern_hook.c+=		${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.subr_vmem.c+=		${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.subr_pool.c+=		${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rump.c+=			${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

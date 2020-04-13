@@ -33,13 +33,13 @@ static void		 server_destroy_session_group(struct session *);
 void
 server_redraw_client(struct client *c)
 {
-	c->flags |= CLIENT_REDRAW;
+	c->flags |= CLIENT_ALLREDRAWFLAGS;
 }
 
 void
 server_status_client(struct client *c)
 {
-	c->flags |= CLIENT_STATUS;
+	c->flags |= CLIENT_REDRAWSTATUS;
 }
 
 void
@@ -108,7 +108,7 @@ server_redraw_window_borders(struct window *w)
 
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (c->session != NULL && c->session->curw->window == w)
-			c->flags |= CLIENT_BORDERS;
+			c->flags |= CLIENT_REDRAWBORDERS;
 	}
 }
 
@@ -303,6 +303,7 @@ server_destroy_pane(struct window_pane *wp, int notify)
 		utempter_remove_record(wp->fd);
 #endif
 		bufferevent_free(wp->event);
+		wp->event = NULL;
 		close(wp->fd);
 		wp->fd = -1;
 	}
@@ -320,7 +321,7 @@ server_destroy_pane(struct window_pane *wp, int notify)
 
 		screen_write_start(&ctx, wp, &wp->base);
 		screen_write_scrollregion(&ctx, 0, screen_size_y(ctx.s) - 1);
-		screen_write_cursormove(&ctx, 0, screen_size_y(ctx.s) - 1);
+		screen_write_cursormove(&ctx, 0, screen_size_y(ctx.s) - 1, 0);
 		screen_write_linefeed(&ctx, 1, 8);
 		memcpy(&gc, &grid_default_cell, sizeof gc);
 
@@ -410,6 +411,7 @@ server_destroy_session(struct session *s)
 			c->last_session = NULL;
 			c->session = s_new;
 			server_client_set_key_table(c, NULL);
+			tty_update_client_offset(c);
 			status_timer_start(c);
 			notify_client("client-session-changed", c);
 			session_update_activity(s_new, NULL);
@@ -431,7 +433,7 @@ server_check_unattached(void)
 	 * set, collect them.
 	 */
 	RB_FOREACH(s, sessions, &sessions) {
-		if (!(s->flags & SESSION_UNATTACHED))
+		if (s->attached != 0)
 			continue;
 		if (options_get_number (s->options, "destroy-unattached"))
 			session_destroy(s, 1, __func__);

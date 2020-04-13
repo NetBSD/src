@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2011-2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.45.4.1 2019/06/10 22:10:34 christos Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.45.4.2 2020/04/13 08:05:55 martin Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -151,37 +151,45 @@ npfctl_debug_addif(const char *ifname)
 	return 0;
 }
 
-unsigned
-npfctl_table_getid(const char *name)
+nl_table_t *
+npfctl_table_getbyname(nl_config_t *ncf, const char *name)
 {
-	unsigned tid = (unsigned)-1;
+	nl_iter_t i = NPF_ITER_BEGIN;
 	nl_table_t *tl;
 
 	/* XXX dynamic ruleset */
-	if (!npf_conf) {
-		return (unsigned)-1;
+	if (!ncf) {
+		return NULL;
 	}
-
-	/* XXX: Iterating all as we need to rewind for the next call. */
-	while ((tl = npf_table_iterate(npf_conf)) != NULL) {
+	while ((tl = npf_table_iterate(ncf, &i)) != NULL) {
 		const char *tname = npf_table_getname(tl);
 		if (strcmp(tname, name) == 0) {
-			tid = npf_table_getid(tl);
+			break;
 		}
 	}
-	return tid;
+	return tl;
+}
+
+unsigned
+npfctl_table_getid(const char *name)
+{
+	nl_table_t *tl;
+
+	tl = npfctl_table_getbyname(npf_conf, name);
+	return tl ? npf_table_getid(tl) : (unsigned)-1;
 }
 
 const char *
 npfctl_table_getname(nl_config_t *ncf, unsigned tid, bool *ifaddr)
 {
 	const char *name = NULL;
+	nl_iter_t i = NPF_ITER_BEGIN;
 	nl_table_t *tl;
 
-	/* XXX: Iterating all as we need to rewind for the next call. */
-	while ((tl = npf_table_iterate(ncf)) != NULL) {
+	while ((tl = npf_table_iterate(ncf, &i)) != NULL) {
 		if (npf_table_getid(tl) == tid) {
 			name = npf_table_getname(tl);
+			break;
 		}
 	}
 	if (!name) {
@@ -289,7 +297,7 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 	const int type = npfvar_get_type(vars, 0);
 	size_t i;
 
-	npfctl_bpf_group(ctx);
+	npfctl_bpf_group_enter(ctx);
 	for (i = 0; i < npfvar_get_count(vars); i++) {
 		void *data = npfvar_get_data(vars, type, i);
 		assert(data != NULL);
@@ -315,7 +323,7 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 			assert(false);
 		}
 	}
-	npfctl_bpf_endgroup(ctx, (opts & MATCH_INVERT) != 0);
+	npfctl_bpf_group_exit(ctx, (opts & MATCH_INVERT) != 0);
 }
 
 static void
@@ -422,10 +430,10 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	/* Build port-range blocks. */
 	if (need_tcpudp) {
 		/* TCP/UDP check for the ports. */
-		npfctl_bpf_group(bc);
+		npfctl_bpf_group_enter(bc);
 		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_TCP);
 		npfctl_bpf_proto(bc, AF_UNSPEC, IPPROTO_UDP);
-		npfctl_bpf_endgroup(bc, false);
+		npfctl_bpf_group_exit(bc, false);
 	}
 	npfctl_build_vars(bc, family, apfrom->ap_portrange, MATCH_SRC);
 	npfctl_build_vars(bc, family, apto->ap_portrange, MATCH_DST);
@@ -444,7 +452,7 @@ npfctl_build_code(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 	}
 	len = bf->bf_len * sizeof(struct bpf_insn);
 
-	if (npf_rule_setcode(rl, NPF_CODE_BPF, bf->bf_insns, len) == -1) {
+	if (npf_rule_setcode(rl, NPF_CODE_BPF, bf->bf_insns, len) != 0) {
 		errx(EXIT_FAILURE, "npf_rule_setcode failed");
 	}
 	npfctl_dump_bpf(bf);
@@ -466,7 +474,7 @@ npfctl_build_pcap(nl_rule_t *rl, const char *filter)
 	}
 	len = bf.bf_len * sizeof(struct bpf_insn);
 
-	if (npf_rule_setcode(rl, NPF_CODE_BPF, bf.bf_insns, len) == -1) {
+	if (npf_rule_setcode(rl, NPF_CODE_BPF, bf.bf_insns, len) != 0) {
 		errx(EXIT_FAILURE, "npf_rule_setcode failed");
 	}
 	npfctl_dump_bpf(&bf);
@@ -529,20 +537,37 @@ npfctl_build_rproc(const char *name, npfvar_t *procs)
 	npf_rproc_insert(npf_conf, rp);
 }
 
+/*
+ * npfctl_build_maprset: create and insert a NAT ruleset.
+ */
 void
 npfctl_build_maprset(const char *name, int attr, const char *ifname)
 {
 	const int attr_di = (NPF_RULE_IN | NPF_RULE_OUT);
 	nl_rule_t *rl;
+	bool natset;
+	int err;
+
+	/* Validate the prefix. */
+	err = npfctl_nat_ruleset_p(name, &natset);
+	if (!natset) {
+		yyerror("NAT ruleset names must be prefixed with `"
+		    NPF_RULESET_MAP_PREF "`");
+	}
+	if (err) {
+		yyerror("NAT ruleset is missing a name (only prefix found)");
+	}
 
 	/* If no direction is not specified, then both. */
 	if ((attr & attr_di) == 0) {
 		attr |= attr_di;
 	}
+
 	/* Allow only "in/out" attributes. */
 	attr = NPF_RULE_GROUP | NPF_RULE_DYNAMIC | (attr & attr_di);
 	rl = npf_rule_create(name, attr, ifname);
-	npf_nat_insert(npf_conf, rl, NPF_PRI_LAST);
+	npf_rule_setprio(rl, NPF_PRI_LAST);
+	npf_nat_insert(npf_conf, rl);
 }
 
 /*
@@ -637,7 +662,7 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
  */
 static nl_nat_t *
 npfctl_build_nat(int type, const char *ifname, const addr_port_t *ap,
-    const opt_proto_t *op, const filt_opts_t *fopts, u_int flags)
+    const opt_proto_t *op, const filt_opts_t *fopts, unsigned flags)
 {
 	const opt_proto_t def_op = { .op_proto = -1, .op_opts = NULL };
 	fam_addr_mask_t *am;
@@ -685,6 +710,38 @@ npfctl_build_nat(int type, const char *ifname, const addr_port_t *ap,
 	return nat;
 }
 
+static void
+npfctl_dnat_check(const addr_port_t *ap, const unsigned algo)
+{
+	int type = npfvar_get_type(ap->ap_netaddr, 0);
+	fam_addr_mask_t *am;
+
+	switch (algo) {
+	case NPF_ALGO_NETMAP:
+		if (type == NPFVAR_FAM) {
+			break;
+		}
+		yyerror("translation address using NETMAP must be "
+		    "a network and not a dynamic pool");
+		break;
+	case NPF_ALGO_IPHASH:
+	case NPF_ALGO_RR:
+	case NPF_ALGO_NONE:
+		if (type != NPFVAR_FAM) {
+			break;
+		}
+		am = npfctl_get_singlefam(ap->ap_netaddr);
+		if (am->fam_mask == NPF_NO_NETMASK) {
+			break;
+		}
+		yyerror("translation address, given the specified algorithm, "
+		    "must be a pool or a single address");
+		break;
+	default:
+		yyerror("invalid algorithm specified for dynamic NAT");
+	}
+}
+
 /*
  * npfctl_build_natseg: validate and create NAT policies.
  */
@@ -726,14 +783,11 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 		 * the port mapping.
 		 */
 		flags = !binat ? (NPF_NAT_PORTS | NPF_NAT_PORTMAP) : 0;
-
-		switch (algo) {
-		case NPF_ALGO_IPHASH:
-		case NPF_ALGO_RR:
-		case NPF_ALGO_NONE:
-			break;
-		default:
-			yyerror("invalid algorithm specified for dynamic NAT");
+		if (type & NPF_NATIN) {
+			npfctl_dnat_check(ap1, algo);
+		}
+		if (type & NPF_NATOUT) {
+			npfctl_dnat_check(ap2, algo);
 		}
 		break;
 	case NPFCTL_NAT_STATIC:
@@ -804,7 +858,10 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 		nt2 = npfctl_build_nat(NPF_NATOUT, ifname, ap2, op, fopts, flags);
 	}
 
-	if (algo == NPF_ALGO_NPT66) {
+	switch (algo) {
+	case NPF_ALGO_NONE:
+		break;
+	case NPF_ALGO_NPT66:
 		/*
 		 * NPTv6 is a special case using special adjustment value.
 		 * It is always bidirectional NAT.
@@ -812,7 +869,8 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 		assert(nt1 && nt2);
 		npf_nat_setnpt66(nt1, ~adj);
 		npf_nat_setnpt66(nt2, adj);
-	} else if (algo) {
+		break;
+	default:
 		/*
 		 * Set the algorithm.
 		 */
@@ -824,11 +882,22 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 		}
 	}
 
-	if (nt1) {
-		npf_nat_insert(npf_conf, nt1, NPF_PRI_LAST);
-	}
-	if (nt2) {
-		npf_nat_insert(npf_conf, nt2, NPF_PRI_LAST);
+	if (npf_conf) {
+		if (nt1) {
+			npf_rule_setprio(nt1, NPF_PRI_LAST);
+			npf_nat_insert(npf_conf, nt1);
+		}
+		if (nt2) {
+			npf_rule_setprio(nt2, NPF_PRI_LAST);
+			npf_nat_insert(npf_conf, nt2);
+		}
+	} else {
+		// XXX/TODO: need to refactor a bit to enable this..
+		if (nt1 && nt2) {
+			errx(EXIT_FAILURE, "bidirectional NAT is currently "
+			    "not yet supported in the dynamic rules");
+		}
+		the_rule = nt1 ? nt1 : nt2;
 	}
 }
 
@@ -836,15 +905,13 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
  * npfctl_fill_table: fill NPF table with entries from a specified file.
  */
 static void
-npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
+npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname, FILE *fp)
 {
 	char *buf = NULL;
 	int l = 0;
-	FILE *fp;
 	size_t n;
 
-	fp = fopen(fname, "r");
-	if (fp == NULL) {
+	if (fp == NULL && (fp = fopen(fname, "r")) == NULL) {
 		err(EXIT_FAILURE, "open '%s'", fname);
 	}
 	while (l++, getline(&buf, &n, fp) != -1) {
@@ -871,6 +938,23 @@ npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
 }
 
 /*
+ * npfctl_load_table: create an NPF table and fill with contents from a file.
+ */
+nl_table_t *
+npfctl_load_table(const char *tname, int tid, u_int type,
+    const char *fname, FILE *fp)
+{
+	nl_table_t *tl;
+
+	tl = npf_table_create(tname, tid, type);
+	if (tl && fname) {
+		npfctl_fill_table(tl, type, fname, fp);
+	}
+
+	return tl;
+}
+
+/*
  * npfctl_build_table: create an NPF table, add to the configuration and,
  * if required, fill with contents from a file.
  */
@@ -879,14 +963,12 @@ npfctl_build_table(const char *tname, u_int type, const char *fname)
 {
 	nl_table_t *tl;
 
-	tl = npf_table_create(tname, npfctl_tid_counter++, type);
-	assert(tl != NULL);
-
-	if (fname) {
-		npfctl_fill_table(tl, type, fname);
-	} else if (type == NPF_TABLE_CONST) {
+	if (type == NPF_TABLE_CONST && !fname) {
 		yyerror("table type 'const' must be loaded from a file");
 	}
+
+	tl = npfctl_load_table(tname, npfctl_tid_counter++, type, fname, NULL);
+	assert(tl != NULL);
 
 	if (npf_table_insert(npf_conf, tl)) {
 		yyerror("table '%s' is already defined", tname);
@@ -902,9 +984,13 @@ npfctl_ifnet_table(const char *ifname)
 {
 	char tname[NPF_TABLE_MAXNAMELEN];
 	nl_table_t *tl;
-	u_int tid;
+	unsigned tid;
 
 	snprintf(tname, sizeof(tname), NPF_IFNET_TABLE_PREF "%s", ifname);
+	if (!npf_conf) {
+		errx(EXIT_FAILURE, "expression `ifaddrs(%s)` is currently "
+		    "not yet supported in dynamic rules", ifname);
+	}
 
 	tid = npfctl_table_getid(tname);
 	if (tid == (unsigned)-1) {
@@ -912,7 +998,7 @@ npfctl_ifnet_table(const char *ifname)
 		tl = npf_table_create(tname, tid, NPF_TABLE_IFADDR);
 		(void)npf_table_insert(npf_conf, tl);
 	}
-	return npfvar_create_element(NPFVAR_TABLE, &tid, sizeof(u_int));
+	return npfvar_create_element(NPFVAR_TABLE, &tid, sizeof(unsigned));
 }
 
 /*
@@ -922,8 +1008,20 @@ npfctl_ifnet_table(const char *ifname)
 void
 npfctl_build_alg(const char *al_name)
 {
-	if (_npf_alg_load(npf_conf, al_name) != 0) {
-		errx(EXIT_FAILURE, "ALG '%s' already loaded", al_name);
+	if (npf_alg_load(npf_conf, al_name) != 0) {
+		yyerror("ALG '%s' is already loaded", al_name);
+	}
+}
+
+void
+npfctl_setparam(const char *name, int val)
+{
+	if (strcmp(name, "bpf.jit") == 0) {
+		npfctl_bpfjit(val != 0);
+		return;
+	}
+	if (npf_param_set(npf_conf, name, val) != 0) {
+		yyerror("invalid parameter `%s` or its value", name);
 	}
 }
 

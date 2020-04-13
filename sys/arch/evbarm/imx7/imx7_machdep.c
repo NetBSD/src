@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_machdep.c,v 1.6.6.2 2020/04/08 14:07:35 martin Exp $	*/
+/*	$NetBSD: imx7_machdep.c,v 1.6.6.3 2020/04/13 08:03:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.6.6.2 2020/04/08 14:07:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.6.6.3 2020/04/13 08:03:44 martin Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -232,7 +232,7 @@ imx7_mpstart(void)
 
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -243,7 +243,7 @@ imx7_mpstart(void)
  *   Initialising the physical console so characters can be printed.
  *   Setting up page tables for the kernel
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	psize_t memsize;
@@ -352,7 +352,7 @@ initarm(void *arg)
 		    &bp_highgig, 1);
 	}
 #endif
-	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	vaddr_t sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
 	/*
 	 * initarm_common flushes cache if required before AP start

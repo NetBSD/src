@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.5.2.2 2019/06/10 22:02:59 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.5.2.3 2020/04/13 08:02:35 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -209,9 +209,7 @@ loadkey(char *filename, unsigned char *key_buf, unsigned int key_buf_size,
 	rdclass = dst_key_class(key);
 
 	name = dns_fixedname_initname(&fixed);
-	result = dns_name_copy(dst_key_name(key), name, NULL);
-	if (result != ISC_R_SUCCESS)
-		fatal("can't copy name");
+	dns_name_copynf(dst_key_name(key), name);
 
 	dst_key_free(&key);
 }
@@ -350,7 +348,7 @@ main(int argc, char **argv) {
 	char		*classname = NULL;
 	char		*filename = NULL, *dir = NULL, *namestr;
 	char		*lookaside = NULL;
-	char		*endp;
+	char		*endp, *arg1;
 	int		ch;
 	dns_dsdigest_t	dtype = DNS_DSDIGEST_SHA1;
 	bool	cds = false;
@@ -364,12 +362,14 @@ main(int argc, char **argv) {
 
 	dns_rdata_init(&rdata);
 
-	if (argc == 1)
+	if (argc == 1) {
 		usage();
+	}
 
 	result = isc_mem_create(0, 0, &mctx);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		fatal("out of memory");
+	}
 
 #if USE_PKCS11
 	pk11_result_register();
@@ -397,9 +397,10 @@ main(int argc, char **argv) {
 			both = false;
 			break;
 		case 'C':
-			if (lookaside != NULL)
+			if (lookaside != NULL) {
 				fatal("lookaside and CDS are mutually"
 				      " exclusive");
+			}
 			cds = true;
 			break;
 		case 'c':
@@ -411,16 +412,18 @@ main(int argc, char **argv) {
 			/* fall through */
 		case 'K':
 			dir = isc_commandline_argument;
-			if (strlen(dir) == 0U)
+			if (strlen(dir) == 0U) {
 				fatal("directory must be non-empty string");
+			}
 			break;
 		case 'f':
 			filename = isc_commandline_argument;
 			break;
 		case 'l':
-			if (cds)
+			if (cds) {
 				fatal("lookaside and CDS are mutually"
 				      " exclusive");
+			}
 			lookaside = isc_commandline_argument;
 			if (strlen(lookaside) == 0U)
 				fatal("lookaside must be a non-empty string");
@@ -434,16 +437,18 @@ main(int argc, char **argv) {
 			break;
 		case 'v':
 			verbose = strtol(isc_commandline_argument, &endp, 0);
-			if (*endp != '\0')
+			if (*endp != '\0') {
 				fatal("-v must be followed by a number");
+			}
 			break;
 		case 'F':
 			/* Reserved for FIPS mode */
 			/* FALLTHROUGH */
 		case '?':
-			if (isc_commandline_option != '?')
+			if (isc_commandline_option != '?') {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
+			}
 			/* FALLTHROUGH */
 		case 'h':
 			/* Does not return. */
@@ -462,46 +467,61 @@ main(int argc, char **argv) {
 
 	rdclass = strtoclass(classname);
 
-	if (usekeyset && filename != NULL)
+	if (usekeyset && filename != NULL) {
 		fatal("cannot use both -s and -f");
+	}
 
 	/* When not using -f, -A is implicit */
-	if (filename == NULL)
+	if (filename == NULL) {
 		showall = true;
+	}
 
-	if (argc < isc_commandline_index + 1 && filename == NULL)
+	/*
+	 * Use local variable arg1 so that clang can correctly analyse
+	 * reachable paths rather than 'argc < isc_commandline_index + 1'.
+	 */
+	arg1 = argv[isc_commandline_index];
+	if (arg1 == NULL && filename == NULL) {
 		fatal("the key file name was not specified");
-	if (argc > isc_commandline_index + 1)
+	}
+	if (arg1 != NULL && argv[isc_commandline_index + 1] != NULL) {
 		fatal("extraneous arguments");
+	}
 
 	result = dst_lib_init(mctx, NULL);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		fatal("could not initialize dst: %s",
 		      isc_result_totext(result));
+	}
 
 	setup_logging(mctx, &log);
 
 	dns_rdataset_init(&rdataset);
 
 	if (usekeyset || filename != NULL) {
-		if (argc < isc_commandline_index + 1 && filename != NULL) {
-			/* using zone name as the zone file name */
+		if (arg1 == NULL) {
+			/* using file name as the zone name */
 			namestr = filename;
-		} else
-			namestr = argv[isc_commandline_index];
+		} else {
+			namestr = arg1;
+		}
 
 		result = initname(namestr);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			fatal("could not initialize name %s", namestr);
+		}
 
-		if (usekeyset)
+		if (usekeyset) {
 			result = loadkeyset(dir, &rdataset);
-		else
+		} else {
+			INSIST(filename != NULL);
 			result = loadset(filename, &rdataset);
+		}
 
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			fatal("could not load DNSKEY set: %s\n",
 			      isc_result_totext(result));
+		}
 
 		for (result = dns_rdataset_first(&rdataset);
 		     result == ISC_R_SUCCESS;
@@ -509,30 +529,32 @@ main(int argc, char **argv) {
 			dns_rdata_init(&rdata);
 			dns_rdataset_current(&rdataset, &rdata);
 
-			if (verbose > 2)
+			if (verbose > 2) {
 				logkey(&rdata);
+			}
 
 			if (both) {
 				emit(DNS_DSDIGEST_SHA1, showall, lookaside,
 				     cds, &rdata);
 				emit(DNS_DSDIGEST_SHA256, showall, lookaside,
 				     cds, &rdata);
-			} else
+			} else {
 				emit(dtype, showall, lookaside, cds, &rdata);
+			}
 		}
 	} else {
 		unsigned char key_buf[DST_KEY_MAXSIZE];
 
-		loadkey(argv[isc_commandline_index], key_buf,
-			DST_KEY_MAXSIZE, &rdata);
+		loadkey(arg1, key_buf, DST_KEY_MAXSIZE, &rdata);
 
 		if (both) {
 			emit(DNS_DSDIGEST_SHA1, showall, lookaside, cds,
 			     &rdata);
 			emit(DNS_DSDIGEST_SHA256, showall, lookaside, cds,
 			     &rdata);
-		} else
+		} else {
 			emit(dtype, showall, lookaside, cds, &rdata);
+		}
 	}
 
 	if (dns_rdataset_isassociated(&rdataset))
@@ -540,14 +562,16 @@ main(int argc, char **argv) {
 	cleanup_logging(&log);
 	dst_lib_destroy();
 	dns_name_destroy();
-	if (verbose > 10)
+	if (verbose > 10) {
 		isc_mem_stats(mctx, stdout);
+	}
 	isc_mem_destroy(&mctx);
 
 	fflush(stdout);
 	if (ferror(stdout)) {
 		fprintf(stderr, "write error\n");
 		return (1);
-	} else
+	} else {
 		return (0);
+	}
 }

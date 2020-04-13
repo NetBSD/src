@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.13.48.1 2019/06/10 22:06:54 christos Exp $ */
+/* $NetBSD: xenbus.h,v 1.13.48.2 2020/04/13 08:04:12 martin Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -33,6 +33,7 @@
 #define _ASM_XEN_XENBUS_H
 
 #include <sys/device.h>
+#include <sys/bus.h>
 #include <sys/queue.h>
 #include <xen/include/public/xen.h>
 #include <xen/include/public/io/xenbus.h>
@@ -43,6 +44,7 @@
 struct xenbus_attach_args {
 	const char 		*xa_device;
 	int			xa_handle;
+	bus_dma_tag_t		xa_dmat;
 };
 
 /* devices to xenbus attach */
@@ -58,6 +60,7 @@ struct xenbus_watch {
 
 	/* Path being watched. */
 	char *node;
+	size_t node_sz;
 
 	/* Callback (executed in a process context with no locks held). */
 	void (*xbw_callback)(struct xenbus_watch *,
@@ -78,7 +81,7 @@ typedef enum {
 
 struct xenbus_device {
 	SLIST_ENTRY(xenbus_device) xbusd_entries;
-	char *xbusd_otherend; /* the otherend path */
+	char xbusd_otherend[64]; /* the otherend path (size arbitrary) */
 	int xbusd_otherend_id; /* the otherend's id */
 	/* callback for otherend change */
 	void (*xbusd_otherend_changed)(void *, XenbusState);
@@ -95,6 +98,8 @@ struct xenbus_device {
 	int xbusd_has_error;
 	/* for xenbus internal use */
 	struct xenbus_watch xbusd_otherend_watch;
+	size_t xbusd_sz;		/* size of allocated structure */
+	bus_dma_tag_t xbusd_dmat;
 	const char xbusd_path[1]; /* our path */
 };
 
@@ -118,9 +123,9 @@ struct xenbus_transaction;
 int xenbus_directory(struct xenbus_transaction *t,
 			const char *dir, const char *node, unsigned int *num,
 			char ***);
-int xenbus_read(struct xenbus_transaction *t,
-		  const char *dir, const char *node, unsigned int *len,
-		  char **);
+void xenbus_directory_free(unsigned int, char **);
+int xenbus_read(struct xenbus_transaction *,
+		  const char *, const char *, char *, size_t);
 int xenbus_read_ul(struct xenbus_transaction *,
 		  const char *, const char *, unsigned long *, int);
 int xenbus_read_ull(struct xenbus_transaction *,
@@ -135,19 +140,10 @@ int xenbus_rm(struct xenbus_transaction *t, const char *dir, const char *node);
 struct xenbus_transaction *xenbus_transaction_start(void);
 int xenbus_transaction_end(struct xenbus_transaction *t, int abort);
 
-/* Single read and scanf: returns -errno or num scanned if > 0. */
-int xenbus_scanf(struct xenbus_transaction *t,
-		 const char *dir, const char *node, const char *fmt, ...)
-	__attribute__((format(scanf, 4, 5)));
-
 /* Single printf and write: returns -errno or 0. */
 int xenbus_printf(struct xenbus_transaction *t,
 		  const char *dir, const char *node, const char *fmt, ...)
 	__attribute__((format(printf, 4, 5)));
-
-/* Generic read function: NULL-terminated triples of name,
- * sprintf-style type string, and pointer. Returns 0 or errno.*/
-int xenbus_gather(struct xenbus_transaction *t, const char *dir, ...);
 
 /* notifer routines for when the xenstore comes up */
 // XXX int register_xenstore_notifier(struct notifier_block *nb);
@@ -160,6 +156,7 @@ void xs_resume(void);
 
 /* Used by xenbus_dev to borrow kernel's store connection. */
 int xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void **);
+void xenbus_dev_reply_free(struct xsd_sockmsg *msg, void *);
 
 void xenbus_probe(void *);
 
@@ -177,20 +174,6 @@ int xenbus_free_device(struct xenbus_device *);
 
 
 /**
- * Register a watch on the given path, using the given xenbus_watch structure
- * for storage, and the given callback function as the callback.  Return 0 on
- * success, or -errno on error.  On success, the given path will be saved as
- * watch->node, and remains the caller's to free.  On error, watch->node will
- * be NULL, the device will switch to XenbusStateClosing, and the error will
- * be saved in the store.
- */
-int xenbus_watch_path(struct xenbus_device *dev, char *path,
-		      struct xenbus_watch *watch, 
-		      void (*callback)(struct xenbus_watch *,
-				       const char **, unsigned int));
-
-
-/**
  * Register a watch on the given path/path2, using the given xenbus_watch
  * structure for storage, and the given callback function as the callback.
  * Return 0 on success, or -errno on error.  On success, the watched path
@@ -204,6 +187,8 @@ int xenbus_watch_path2(struct xenbus_device *dev, const char *path,
 		       void (*callback)(struct xenbus_watch *,
 					const char **, unsigned int));
 
+/* Unregister the watch, and free associated internal structures. */
+void xenbus_unwatch_path(struct xenbus_watch *);
 
 /**
  * Advertise in the store a change of the given driver to the given new_state.

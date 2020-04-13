@@ -1,6 +1,6 @@
 // wstring_convert implementation -*- C++ -*-
 
-// Copyright (C) 2015-2017 Free Software Foundation, Inc.
+// Copyright (C) 2015-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -35,10 +35,10 @@
 #else
 
 #include <streambuf>
-#include "stringfwd.h"
-#include "allocator.h"
-#include "codecvt.h"
-#include "unique_ptr.h"
+#include <bits/stringfwd.h>
+#include <bits/allocator.h>
+#include <bits/codecvt.h>
+#include <bits/unique_ptr.h>
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {

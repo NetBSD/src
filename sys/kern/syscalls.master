@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.291.4.1 2019/06/10 22:09:03 christos Exp $
+	$NetBSD: syscalls.master,v 1.291.4.2 2020/04/13 08:05:04 martin Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -45,9 +45,11 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
+#ifdef _KERNEL_OPT
 #include "opt_modular.h"
 #include "opt_ntp.h"
 #include "opt_sysv.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,8 +316,9 @@
 146	COMPAT_43 MODULAR compat_43	\
 		{ int|sys||killpg(int pgid, int signum); } okillpg
 147	STD 	RUMP 	{ int|sys||setsid(void); }
-148	COMPAT_50 MODULAR XXX { int|sys||quotactl(const char *path, int cmd, \
-			    int uid, void *arg); }
+148	COMPAT_50 MODULAR compat_50_quota	\
+		{ int|sys||quotactl(const char *path, \
+			  int cmd, int uid, void *arg); }
 149	COMPAT_43 MODULAR compat_43 { int|sys||quota(void); } oquota
 150	COMPAT_43 MODULAR compat_43 { int|sys||getsockname(int fdec,	\
 			    void *asa, socklen_t *alen); } ogetsockname
@@ -658,8 +661,8 @@
 				char *name, size_t len); }
 325	STD 		{ int|sys||_lwp_ctl(int features, \
 				struct lwpctl **address); }
-; Syscalls 326-339 reserved for LWP syscalls.
-326	UNIMPL
+326	STD		{ lwptid_t|sys||_lwp_gettid(void); }
+; Syscalls 327-339 reserved for LWP syscalls.
 327	UNIMPL
 328	UNIMPL
 329	UNIMPL
@@ -714,15 +717,16 @@
 354	STD	RUMP	{ int|sys||fsync_range(int fd, int flags, off_t start, \
 			    off_t length); }
 355	STD 		{ int|sys||uuidgen(struct uuid *store, int count); }
-356	STD 	RUMP	{ int|sys||getvfsstat(struct statvfs *buf, \
+356	COMPAT_90 MODULAR compat_90 { \
+			    int|sys||getvfsstat(struct statvfs90 *buf, \
 			    size_t bufsize, int flags); }
-357	STD 	RUMP	{ int|sys||statvfs1(const char *path, \
-			    struct statvfs *buf, int flags); }
-358	STD 	RUMP	{ int|sys||fstatvfs1(int fd, struct statvfs *buf, \
-			    int flags); }
-359	COMPAT_30 MODULAR compat_30	\
-		{ int|sys||fhstatvfs1(const struct compat_30_fhandle *fhp, \
-			    struct statvfs *buf, int flags); }
+357	COMPAT_90 MODULAR compat_90 { int|sys||statvfs1(const char *path, \
+			    struct statvfs90 *buf, int flags); }
+358	COMPAT_90 MODULAR compat_90 { int|sys||fstatvfs1(int fd, \
+			    struct statvfs90 *buf, int flags); }
+359	COMPAT_30 MODULAR compat_30 { int|sys||fhstatvfs1( \
+			    const struct compat_30_fhandle *fhp, \
+			    struct statvfs90 *buf, int flags); }
 360	STD 	RUMP	{ int|sys||extattrctl(const char *path, int cmd, \
 			    const char *filename, int attrnamespace, \
 			    const char *attrname); }
@@ -808,8 +812,9 @@
 			    size_t *fh_size); }
 396	STD 	 RUMP	{ int|sys|40|fhopen(const void *fhp, size_t fh_size,\
 			    int flags); }
-397	STD 	 RUMP	{ int|sys|40|fhstatvfs1(const void *fhp, \
-			    size_t fh_size, struct statvfs *buf, int flags); }
+397	COMPAT_90 MODULAR compat_90 { \
+			    int|sys||fhstatvfs1(const void *fhp, \
+			    size_t fh_size, struct statvfs90 *buf, int flags); }
 398	COMPAT_50 MODULAR compat_50 RUMP { int|sys|40|fhstat(const void *fhp, \
 			    size_t fh_size, struct stat30 *sb); }
 
@@ -1001,3 +1006,11 @@
 			    siginfo_t *info); }
 482	STD		{ int|sys||clock_getcpuclockid2(idtype_t idtype, \
 			    id_t id, clockid_t *clock_id); }
+483	STD RUMP	{ int|sys|90|getvfsstat(struct statvfs *buf, \
+			    size_t bufsize, int flags); }
+484	STD RUMP	{ int|sys|90|statvfs1(const char *path, \
+			    struct statvfs *buf, int flags); }
+485	STD RUMP	{ int|sys|90|fstatvfs1(int fd, \
+			    struct statvfs *buf, int flags); }
+486	STD RUMP	{ int|sys|90|fhstatvfs1(const void *fhp, \
+			    size_t fh_size, struct statvfs *buf, int flags); }

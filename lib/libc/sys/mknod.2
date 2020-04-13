@@ -1,4 +1,4 @@
-.\"	$NetBSD: mknod.2,v 1.29 2017/11/20 17:03:31 uwe Exp $
+.\"	$NetBSD: mknod.2,v 1.29.4.1 2020/04/13 08:03:11 martin Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mknod.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 29, 2013
+.Dd June 20, 2019
 .Dt MKNOD 2
 .Os
 .Sh NAME
@@ -47,7 +47,28 @@
 .Ft int
 .Fn mknodat "int fd" "const char *path" "mode_t mode" "dev_t dev"
 .Sh DESCRIPTION
-The device special file
+.Nm
+with
+.Dv S_IFIFO
+specified in
+.Fa mode
+and 0 in
+.Fa dev
+makes a FIFO file.
+This call is respectively a portable alias for
+.Xr mkfifo 2
+and
+.Xr mkfifoat 2 .
+.Pp
+.Nm
+with
+.Dv S_IFCHR
+or
+.Dv S_IFBLK
+in
+.Fa mode
+makes a device special file.
+The file
 .Fa path
 is created with the major and minor
 device numbers specified by
@@ -87,7 +108,7 @@ can be set to
 in order to specify the current directory.
 .Pp
 .Fn mknod
-requires super-user privileges.
+requires super-user privileges for creating device special files.
 .Sh RETURN VALUES
 .Rv -std mknod mknodat
 .Sh ERRORS
@@ -136,6 +157,8 @@ there are no free inodes on the file system on which the
 node is being created.
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
+.It Bq Er EOPNOTSUPP
+The kernel has not been configured to support FIFOs.
 .It Bq Er EPERM
 The process's effective user ID is not super-user.
 .It Bq Er EROFS
@@ -178,3 +201,10 @@ A
 .Fn mknod
 function call appeared in
 .At v6 .
+.Pp
+The alias mode for
+.Xr mkfifo 2
+and
+.Xr mkfifoat 2
+first appeared in
+.Nx 9 .

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.33 2017/06/11 03:55:56 nat Exp $ */
+/* $NetBSD: pckbd.c,v 1.33.6.1 2020/04/13 08:04:46 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.33 2017/06/11 03:55:56 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.33.6.1 2020/04/13 08:04:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1094,8 +1094,11 @@ pckbd_cngetc(void *v, u_int *type, int *data)
 
 	for (;;) {
 		val = pckbport_poll_data(t->t_kbctag, t->t_kbcslot);
-		if (val == -1)
-			continue;
+		if (val == -1) {
+			*type = 0;
+			*data = 0;
+			return;
+		}
 
 		val = pckbd_scancode_translate(t, val);
 		if (val == 0)

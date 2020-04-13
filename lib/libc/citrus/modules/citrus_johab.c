@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_johab.c,v 1.6 2016/05/31 03:34:14 dholland Exp $ */
+/* $NetBSD: citrus_johab.c,v 1.6.16.1 2020/04/13 08:03:08 martin Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_johab.c,v 1.6 2016/05/31 03:34:14 dholland Exp $");
+__RCSID("$NetBSD: citrus_johab.c,v 1.6.16.1 2020/04/13 08:03:08 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -349,9 +349,10 @@ _citrus_JOHAB_stdenc_cstowc(_JOHABEncodingInfo * __restrict ei,
 		l = ((idx >> 8) & 0xFF) - n;
 		t = (idx & 0xFF) - 0x21;
 		linear = (l * 94) + t;
-		/*l = (linear / 188) + m;*/
+		l = (linear / 188) + m;
 		t = linear % 188;
 		t += (t <= 0x4D) ? 0x31 : 0x43;
+		*wc = (wchar_t)((l << 8) | t);
 		break;
 	default:
 		return EILSEQ;

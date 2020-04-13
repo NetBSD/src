@@ -1,5 +1,5 @@
 /* LTO symbol table.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
    Contributed by CodeSourcery, Inc.
 
 This file is part of GCC.
@@ -81,7 +81,10 @@ lto_cgraph_replace_node (struct cgraph_node *node,
 	 ???  We really need a way to match function signatures for ABI
 	 compatibility and perform related promotions at inlining time.  */
       if (!compatible_p)
-	e->call_stmt_cannot_inline_p = 1;
+	{
+	  e->inline_failed = CIF_LTO_MISMATCHED_DECLARATIONS;
+	  e->call_stmt_cannot_inline_p = 1;
+	}
     }
   /* Redirect incomming references.  */
   prevailing_node->clone_referring (node);
@@ -462,9 +465,14 @@ lto_symtab_resolve_symbols (symtab_node *first)
   /* If the chain is already resolved there is nothing else to do.  */
   if (prevailing)
     {
-      /* Assert it's the only one.  */
+      /* Assert it's the only one.
+	 GCC should silence multiple PREVAILING_DEF_IRONLY defs error
+	 on COMMON symbols since it isn't error.
+	 See: https://sourceware.org/bugzilla/show_bug.cgi?id=23079.  */
       for (e = prevailing->next_sharing_asm_name; e; e = e->next_sharing_asm_name)
 	if (lto_symtab_symbol_p (e)
+	    && !DECL_COMMON (prevailing->decl)
+	    && !DECL_COMMON (e->decl)
 	    && (e->resolution == LDPR_PREVAILING_DEF_IRONLY
 		|| e->resolution == LDPR_PREVAILING_DEF_IRONLY_EXP
 		|| e->resolution == LDPR_PREVAILING_DEF))
@@ -692,6 +700,14 @@ lto_symtab_merge_decls_2 (symtab_node *first, bool diagnosed_p)
   /* Diagnose all mismatched re-declarations.  */
   FOR_EACH_VEC_ELT (mismatches, i, decl)
     {
+      /* Do not diagnose two built-in declarations, there is no useful
+         location in that case.  It also happens for AVR if two built-ins
+         use the same asm name because their libgcc assembler code is the
+         same, see PR78562.  */
+      if (DECL_IS_BUILTIN (prevailing->decl)
+	  && DECL_IS_BUILTIN (decl))
+	continue;
+
       int level = warn_type_compatibility_p (TREE_TYPE (prevailing->decl),
 					     TREE_TYPE (decl),
 					     DECL_COMDAT (decl));
@@ -997,7 +1013,7 @@ lto_symtab_merge_symbols (void)
 
 	      /* The user defined assembler variables are also not unified by their
 		 symbol name (since it is irrelevant), but we need to unify symbol
-		 nodes if tree merging occured.  */
+		 nodes if tree merging occurred.  */
 	      if ((vnode = dyn_cast <varpool_node *> (node))
 		  && DECL_HARD_REGISTER (vnode->decl)
 		  && (node2 = symtab_node::get (vnode->decl))

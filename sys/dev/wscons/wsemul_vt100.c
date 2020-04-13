@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.44.4.1 2019/06/10 22:07:36 christos Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.44.4.2 2020/04/13 08:04:52 martin Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.44.4.1 2019/06/10 22:07:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.44.4.2 2020/04/13 08:04:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
@@ -253,14 +253,14 @@ wsemul_vt100_attach(int console, const struct wsscreen_descr *type,
 	vd = &edp->bd;
 	vd->cbcookie = cbcookie;
 
-	vd->tabs = malloc(1024, M_DEVBUF, M_NOWAIT);
-	vd->dblwid = malloc(1024, M_DEVBUF, M_NOWAIT|M_ZERO);
+	vd->tabs = malloc(1024, M_DEVBUF, M_WAITOK);
+	vd->dblwid = malloc(1024, M_DEVBUF, M_WAITOK|M_ZERO);
 	vd->dw = 0;
-	vd->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_NOWAIT);
-	edp->isolatin1tab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
-	edp->decgraphtab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
-	edp->dectechtab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
-	edp->nrctab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
+	vd->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_WAITOK);
+	edp->isolatin1tab = malloc(128 * sizeof(int), M_DEVBUF, M_WAITOK);
+	edp->decgraphtab = malloc(128 * sizeof(int), M_DEVBUF, M_WAITOK);
+	edp->dectechtab = malloc(128 * sizeof(int), M_DEVBUF, M_WAITOK);
+	edp->nrctab = malloc(128 * sizeof(int), M_DEVBUF, M_WAITOK);
 	vt100_initchartables(edp);
 	wsemul_vt100_reset(edp);
 	return edp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_spi.c,v 1.1 2014/03/29 12:00:27 hkenken Exp $	*/
+/*	$NetBSD: netwalker_spi.c,v 1.1.36.1 2020/04/13 08:03:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009  Genetec Corporation.  All rights reserved.
@@ -27,13 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_spi.c,v 1.1 2014/03/29 12:00:27 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_spi.c,v 1.1.36.1 2020/04/13 08:03:45 martin Exp $");
 
 #include "opt_imxspi.h"
+
+#define	_INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/gpio.h>
 
 #include <arm/imx/imx51reg.h>
 #include <arm/imx/imx51var.h>
@@ -42,9 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_spi.c,v 1.1 2014/03/29 12:00:27 hkenken Ex
 #include <arm/imx/imx51_iomuxreg.h>
 #include <arm/imx/imxgpiovar.h>
 #include <arm/imx/imxspivar.h>
+#include <arm/imx/imxspireg.h>
 
 struct imx51spi_softc {
-	struct imxspi_softc	sc_spi;
+	struct imxspi_softc	sc_spi; /* Must be first */
+
 	struct spi_chipset_tag	sc_tag;
 };
 
@@ -56,16 +61,16 @@ imxspi_cs_enable(void *arg, int slave)
 {
 	switch (slave) {
 	case 0:
-		gpio_data_write(GPIO_NO(4, 24), 0);
-		gpio_set_direction(GPIO_NO(4, 24), GPIO_DIR_OUT);
+		imxgpio_data_write(GPIO_NO(4, 24), GPIO_PIN_LOW);
+		imxgpio_set_direction(GPIO_NO(4, 24), GPIO_PIN_OUTPUT);
 		break;
 	case 1:
-		gpio_data_write(GPIO_NO(4, 25), 0);
-		gpio_set_direction(GPIO_NO(4, 25), GPIO_DIR_OUT);
+		imxgpio_data_write(GPIO_NO(4, 25), GPIO_PIN_LOW);
+		imxgpio_set_direction(GPIO_NO(4, 25), GPIO_PIN_OUTPUT);
 		break;
 	case 2:
-		gpio_data_write(GPIO_NO(3, 0), 0);
-		gpio_set_direction(GPIO_NO(3, 0), GPIO_DIR_OUT);
+		imxgpio_data_write(GPIO_NO(3, 0), GPIO_PIN_LOW);
+		imxgpio_set_direction(GPIO_NO(3, 0), GPIO_PIN_OUTPUT);
 		break;
 	}
 
@@ -77,16 +82,16 @@ imxspi_cs_disable(void *arg, int slave)
 {
 	switch (slave) {
 	case 0:
-		gpio_data_write(GPIO_NO(4, 24), 1);
-		gpio_set_direction(GPIO_NO(4, 24), GPIO_DIR_IN);
+		imxgpio_data_write(GPIO_NO(4, 24), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(4, 24), GPIO_PIN_INPUT);
 		break;
 	case 1:
-		gpio_data_write(GPIO_NO(4, 25), 1);
-		gpio_set_direction(GPIO_NO(4, 25), GPIO_DIR_IN);
+		imxgpio_data_write(GPIO_NO(4, 25), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(4, 25), GPIO_PIN_INPUT);
 		break;
 	case 2:
-		gpio_data_write(GPIO_NO(3, 0), 1);
-		gpio_set_direction(GPIO_NO(3, 0), GPIO_DIR_IN);
+		imxgpio_data_write(GPIO_NO(3, 0), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(3, 0), GPIO_PIN_INPUT);
 		break;
 	}
 
@@ -107,46 +112,59 @@ imxspi_match(device_t parent, cfdata_t cf, void *aux)
 void
 imxspi_attach(device_t parent, device_t self, void *aux)
 {
-	struct imx51spi_softc *sc = device_private(self);
+	struct imx51spi_softc *isc = device_private(self);
+	struct imxspi_softc *sc = &isc->sc_spi;
 	struct axi_attach_args *aa = aux;
-	struct imxspi_attach_args saa;
 	int cf_flags = device_cfdata(self)->cf_flags;
+	bus_addr_t addr;
+	bus_size_t size;
 
-	sc->sc_tag.cookie = sc;
+	addr = aa->aa_addr;
+	size = aa->aa_size;
+	if (size <= 0)
+		size = SPI_SIZE;
 
-	if (device_cfdata(self)->cf_unit == 0) {
+	isc->sc_tag.cookie = sc;
+
+	switch (device_unit(self)) {
+	case 0:
 		/* CS 0 GPIO setting */
-		gpio_data_write(GPIO_NO(4, 24), 1);
-		gpio_set_direction(GPIO_NO(4, 24), GPIO_DIR_IN);
+		imxgpio_data_write(GPIO_NO(4, 24), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(4, 24), GPIO_PIN_INPUT);
 
 		/* CS 1 GPIO setting */
-		gpio_data_write(GPIO_NO(4, 25), 1);
-		gpio_set_direction(GPIO_NO(4, 25), GPIO_DIR_IN);
+		imxgpio_data_write(GPIO_NO(4, 25), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(4, 25), GPIO_PIN_INPUT);
 
 		/* CS 2 */
 		/* OJ6SH-T25 Shutdown */
-		gpio_data_write(GPIO_NO(3, 14), 0);
-		gpio_set_direction(GPIO_NO(3, 14), GPIO_DIR_OUT);
+		imxgpio_data_write(GPIO_NO(3, 14), GPIO_PIN_LOW);
+		imxgpio_set_direction(GPIO_NO(3, 14), GPIO_PIN_OUTPUT);
 
 		/* CS 2 GPIO setting */
-		gpio_data_write(GPIO_NO(3, 0), 1);
-		gpio_set_direction(GPIO_NO(3, 0), GPIO_DIR_IN);
+		imxgpio_data_write(GPIO_NO(3, 0), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(3, 0), GPIO_PIN_INPUT);
 
-		sc->sc_tag.spi_cs_enable = imxspi_cs_enable;
-		sc->sc_tag.spi_cs_disable = imxspi_cs_disable;
+		isc->sc_tag.spi_cs_enable = imxspi_cs_enable;
+		isc->sc_tag.spi_cs_disable = imxspi_cs_disable;
+		break;
 	}
 
-	saa.saa_iot = aa->aa_iot;
-	saa.saa_addr = aa->aa_addr;
-	saa.saa_size = aa->aa_size;
-	saa.saa_irq = aa->aa_irq;
-	saa.saa_enhanced = cf_flags;
+	sc->sc_iot = aa->aa_iot;
+	sc->sc_enhanced = cf_flags;
 
-	saa.saa_nslaves = IMXSPINSLAVES;
-	saa.saa_freq = imx51_get_clock(IMX51CLK_CSPI_CLK_ROOT);
-	saa.saa_tag = &sc->sc_tag;
+	sc->sc_nslaves = IMXSPINSLAVES;
+	sc->sc_freq = imx51_get_clock(IMX51CLK_CSPI_CLK_ROOT);
+	sc->sc_tag = &isc->sc_tag;
 
-	sc->sc_spi.sc_dev = self;
+	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh)) {
+		aprint_error_dev(sc->sc_dev, "couldn't map registers\n");
+		return;
+	}
 
-	imxspi_attach_common(parent, &sc->sc_spi, &saa);
+	/* enable device interrupts */
+	sc->sc_ih = intr_establish(aa->aa_irq, IPL_BIO, IST_LEVEL,
+	    imxspi_intr, sc);
+
+	imxspi_attach_common(self);
 }

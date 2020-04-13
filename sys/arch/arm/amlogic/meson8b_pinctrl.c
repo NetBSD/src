@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b_pinctrl.c,v 1.1.6.2 2019/06/10 22:05:51 christos Exp $ */
+/* $NetBSD: meson8b_pinctrl.c,v 1.1.6.3 2020/04/13 08:03:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson8b_pinctrl.c,v 1.1.6.2 2019/06/10 22:05:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson8b_pinctrl.c,v 1.1.6.3 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/param.h>
 
@@ -481,6 +481,8 @@ static const struct meson_pinctrl_group meson8b_cbus_groups[] = {
 	{ "eth_ref_clk",	REG6,	8,	{ DIF_3_N }, 1 },
 	{ "eth_mdc",		REG6,	9,	{ DIF_4_P }, 1 },
 	{ "eth_mdio_en",	REG6,	10,	{ DIF_4_N }, 1 },
+	{ "eth_rxd3",		REG7,	22,	{ DIF_2_P }, 1 },
+	{ "eth_rxd2",		REG7,	23,	{ DIF_2_N }, 1 },
 };
 
 static const struct meson_pinctrl_group meson8b_aobus_groups[] = {

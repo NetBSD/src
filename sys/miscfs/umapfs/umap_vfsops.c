@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.99.12.2 2020/04/08 14:08:54 martin Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.99.12.3 2020/04/13 08:05:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.99.12.2 2020/04/08 14:08:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.99.12.3 2020/04/13 08:05:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.99.12.2 2020/04/08 14:08:54 martin
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/syslog.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
 
@@ -77,11 +78,17 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 #ifdef UMAPFS_DIAGNOSTIC
 	int i;
 #endif
+	fsid_t tfsid;
 
 	if (args == NULL)
 		return EINVAL;
-	if (*data_len < sizeof *args)
+	if (*data_len < sizeof *args) {
+#ifdef UMAPFS_DIAGNOSTIC
+		printf("mount_umap: data len %d < args %d\n",
+			(int)*data_len, (int)(sizeof *args));
+#endif
 		return EINVAL;
+	}
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		amp = MOUNTTOUMAPMOUNT(mp);
@@ -188,7 +195,23 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * Make sure the mount point's sufficiently initialized
 	 * that the node create call will work.
 	 */
-	vfs_getnewfsid(mp);
+	tfsid.__fsid_val[0] = (int32_t)args->fsid;
+	tfsid.__fsid_val[1] = makefstype(MOUNT_UMAP);
+	if (tfsid.__fsid_val[0] == 0) {
+		log(LOG_WARNING, "umapfs: fsid given as 0, ignoring\n");
+		vfs_getnewfsid(mp);
+	} else if (vfs_getvfs(&tfsid)) {
+		log(LOG_WARNING, "umapfs: fsid %x already mounted\n",
+			tfsid.__fsid_val[0]);
+		vfs_getnewfsid(mp);
+	} else {
+       		mp->mnt_stat.f_fsidx.__fsid_val[0] = tfsid.__fsid_val[0];
+       		mp->mnt_stat.f_fsidx.__fsid_val[1] = tfsid.__fsid_val[1];
+		mp->mnt_stat.f_fsid = tfsid.__fsid_val[0];
+	}
+	log(LOG_DEBUG, "umapfs: using fsid %x/%x\n",
+		mp->mnt_stat.f_fsidx.__fsid_val[0],
+		mp->mnt_stat.f_fsidx.__fsid_val[1]);
 	mp->mnt_lower = lowerrootvp->v_mount;
 
 	amp->umapm_size = sizeof(struct umap_node);

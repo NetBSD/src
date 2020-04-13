@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.49 2012/10/27 17:17:35 chs Exp $	*/
+/*	$NetBSD: isabus.c,v 1.49.38.1 2020/04/13 08:03:31 martin Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.49 2012/10/27 17:17:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.49.38.1 2020/04/13 08:03:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -340,10 +340,7 @@ isabr_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 	struct isa_intrhand **p, *q, *ih;
 	static struct isa_intrhand fakehand = {NULL, fakeintr};
 
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("isa_intr_establish: can't malloc handler info");
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");

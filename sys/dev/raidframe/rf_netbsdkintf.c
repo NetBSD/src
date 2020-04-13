@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.356.4.2 2020/04/08 14:08:11 martin Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.356.4.3 2020/04/13 08:04:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356.4.2 2020/04/08 14:08:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356.4.3 2020/04/13 08:04:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -370,8 +370,7 @@ raidget(int unit, bool create) {
 	mutex_exit(&raid_lock);
 	if (!create)
 		return NULL;
-	if ((sc = raidcreate(unit)) == NULL)
-		return NULL;
+	sc = raidcreate(unit);
 	mutex_enter(&raid_lock);
 	LIST_INSERT_HEAD(&raids, sc, sc_link);
 	mutex_exit(&raid_lock);
@@ -487,7 +486,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	RF_ConfigSet_t *next_cset;
 	int num_root;
 	struct raid_softc *sc, *rsc;
-	struct dk_softc *dksc;
+	struct dk_softc *dksc = NULL;	/* XXX gcc -Os: may be used uninit. */
 
 	sc = rsc = NULL;
 	num_root = 0;
@@ -518,7 +517,6 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		rf_cleanup_config_set(cset);
 		cset = next_cset;
 	}
-	dksc = &rsc->sc_dksc;
 
 	/* if the user has specified what the root device should be
 	   then we don't touch booted_device or boothowto... */
@@ -543,6 +541,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	 */
 	if (num_root == 1) {
 		device_t candidate_root;
+		dksc = &rsc->sc_dksc;
 		if (dksc->sc_dkdev.dk_nwedges != 0) {
 			char cname[sizeof(cset->ac->devname)];
 			/* XXX: assume partition 'a' first */
@@ -2713,19 +2712,7 @@ rf_get_component(RF_AutoConfig_t *ac_list, dev_t dev, struct vnode *vp,
 	RF_ComponentLabel_t *clabel; 
 	RF_AutoConfig_t *ac;
 
-	clabel = malloc(sizeof(RF_ComponentLabel_t), M_RAIDFRAME, M_NOWAIT);
-	if (clabel == NULL) {
-oomem:
-		    while(ac_list) {
-			    ac = ac_list;
-			    if (ac->clabel)
-				    free(ac->clabel, M_RAIDFRAME);
-			    ac_list = ac_list->next;
-			    free(ac, M_RAIDFRAME);
-		    }
-		    printf("RAID auto config: out of memory!\n");
-		    return NULL; /* XXX probably should panic? */
-	}
+	clabel = malloc(sizeof(RF_ComponentLabel_t), M_RAIDFRAME, M_WAITOK);
 
 	if (!raidread_component_label(secsize, dev, vp, clabel)) {
 		/* Got the label.  Does it look reasonable? */
@@ -2738,11 +2725,7 @@ oomem:
 #endif
 			/* if it's reasonable, add it, else ignore it. */
 			ac = malloc(sizeof(RF_AutoConfig_t), M_RAIDFRAME,
-				M_NOWAIT);
-			if (ac == NULL) {
-				free(clabel, M_RAIDFRAME);
-				goto oomem;
-			}
+				M_WAITOK);
 			strlcpy(ac->devname, cname, sizeof(ac->devname));
 			ac->dev = dev;
 			ac->vp = vp;
@@ -3089,12 +3072,8 @@ rf_create_auto_sets(RF_AutoConfig_t *ac_list)
 
 		if (config_sets == NULL) {
 			/* will need at least this one... */
-			config_sets = (RF_ConfigSet_t *)
-				malloc(sizeof(RF_ConfigSet_t),
-				       M_RAIDFRAME, M_NOWAIT);
-			if (config_sets == NULL) {
-				panic("rf_create_auto_sets: No memory!");
-			}
+			config_sets = malloc(sizeof(RF_ConfigSet_t),
+				       M_RAIDFRAME, M_WAITOK);
 			/* this one is easy :) */
 			config_sets->ac = ac;
 			config_sets->next = NULL;
@@ -3114,12 +3093,8 @@ rf_create_auto_sets(RF_AutoConfig_t *ac_list)
 			}
 			if (cset==NULL) {
 				/* didn't find a match above... new set..*/
-				cset = (RF_ConfigSet_t *)
-					malloc(sizeof(RF_ConfigSet_t),
-					       M_RAIDFRAME, M_NOWAIT);
-				if (cset == NULL) {
-					panic("rf_create_auto_sets: No memory!");
-				}
+				cset = malloc(sizeof(RF_ConfigSet_t),
+					       M_RAIDFRAME, M_WAITOK);
 				cset->ac = ac;
 				ac->next = NULL;
 				cset->next = config_sets;
@@ -3468,12 +3443,7 @@ rf_auto_config_set(RF_ConfigSet_t *cset)
 #endif
 
 	/* 1. Create a config structure */
-	config = malloc(sizeof(*config), M_RAIDFRAME, M_NOWAIT|M_ZERO);
-	if (config == NULL) {
-		printf("%s: Out of mem - config!?!?\n", __func__);
-				/* XXX do something more intelligent here. */
-		return NULL;
-	}
+	config = malloc(sizeof(*config), M_RAIDFRAME, M_WAITOK|M_ZERO);
 
 	/*
 	   2. Figure out what RAID ID this one is supposed to live at
@@ -3491,13 +3461,6 @@ rf_auto_config_set(RF_ConfigSet_t *cset)
 
 	if (sc == NULL)
 		sc = raidget(raidID, true);
-	if (sc == NULL) {
-		printf("%s: Out of mem - softc!?!?\n", __func__);
-				/* XXX do something more intelligent here. */
-		free(config, M_RAIDFRAME);
-		return NULL;
-	}
-
 	raidPtr = &sc->sc_r;
 
 	/* XXX all this stuff should be done SOMEWHERE ELSE! */

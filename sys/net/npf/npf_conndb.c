@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010-2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -29,11 +29,24 @@
 
 /*
  * NPF connection storage.
+ *
+ * Warning (not applicable for the userspace npfkern):
+ *
+ *	thmap is partially lock-free data structure that uses its own
+ *	spin-locks on the writer side (insert/delete operations).
+ *
+ *	The relevant interrupt priority level (IPL) must be set and the
+ *	kernel preemption disabled across the critical paths to prevent
+ *	deadlocks and priority inversion problems.  These are essentially
+ *	the same guarantees as a spinning mutex(9) would provide.
+ *
+ *	This is achieved with SPL routines splsoftnet() and splx() around
+ *	the thmap_del() and thmap_put() calls.
  */
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.3.16.2 2020/04/08 14:08:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.3.16.3 2020/04/13 08:05:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.3.16.2 2020/04/08 14:08:57 martin E
 #define __NPF_CONN_PRIVATE
 #include "npf_conn.h"
 #include "npf_impl.h"
-
-#define	NPF_GC_STEP		256
 
 struct npf_conndb {
 	thmap_t *		cd_map;
@@ -66,6 +77,41 @@ struct npf_conndb {
 	/* The last inspected connection (for circular iteration). */
 	npf_conn_t *		cd_marker;
 };
+
+typedef struct {
+	int		gc_step;
+	int		_reserved0;
+} npf_conndb_params_t;
+
+/*
+ * Pointer tag for connection keys which represent the "forwards" entry.
+ */
+#define	CONNDB_FORW_BIT		((uintptr_t)0x1)
+#define	CONNDB_ISFORW_P(p)	(((uintptr_t)(p) & CONNDB_FORW_BIT) != 0)
+#define	CONNDB_GET_PTR(p)	((void *)((uintptr_t)(p) & ~CONNDB_FORW_BIT))
+
+void
+npf_conndb_sysinit(npf_t *npf)
+{
+	npf_conndb_params_t *params = npf_param_allocgroup(npf,
+	    NPF_PARAMS_CONNDB, sizeof(npf_conndb_params_t));
+	npf_param_t param_map[] = {
+		{
+			"gc.step",
+			&params->gc_step,
+			.default_val = 256,
+			.min = 1, .max = INT_MAX
+		}
+	};
+	npf_param_register(npf, param_map, __arraycount(param_map));
+}
+
+void
+npf_conndb_sysfini(npf_t *npf)
+{
+	const size_t len = sizeof(npf_conndb_params_t);
+	npf_param_freegroup(npf, NPF_PARAMS_CONNDB, len);
+}
 
 npf_conndb_t *
 npf_conndb_create(void)
@@ -99,25 +145,30 @@ npf_conndb_destroy(npf_conndb_t *cd)
 npf_conn_t *
 npf_conndb_lookup(npf_conndb_t *cd, const npf_connkey_t *ck, bool *forw)
 {
-	const unsigned keylen = NPF_CONN_KEYLEN(ck);
-	npf_connkey_t *foundkey;
+	const unsigned keylen = NPF_CONNKEY_LEN(ck);
 	npf_conn_t *con;
+	void *val;
 
 	/*
 	 * Lookup the connection key in the key-value map.
 	 */
-	foundkey = thmap_get(cd->cd_map, ck->ck_key, keylen);
-	if (!foundkey) {
+	val = thmap_get(cd->cd_map, ck->ck_key, keylen);
+	if (!val) {
 		return NULL;
 	}
-	con = foundkey->ck_backptr;
+
+	/*
+	 * Determine whether this is the "forwards" or "backwards" key
+	 * and clear the pointer tag.
+	 */
+	*forw = CONNDB_ISFORW_P(val);
+	con = CONNDB_GET_PTR(val);
 	KASSERT(con != NULL);
 
 	/*
 	 * Acquire a reference and return the connection.
 	 */
 	atomic_inc_uint(&con->c_refcnt);
-	*forw = (foundkey == &con->c_forw_entry);
 	return con;
 }
 
@@ -127,10 +178,25 @@ npf_conndb_lookup(npf_conndb_t *cd, const npf_connkey_t *ck, bool *forw)
  * => Returns true on success and false on failure.
  */
 bool
-npf_conndb_insert(npf_conndb_t *cd, npf_connkey_t *ck)
+npf_conndb_insert(npf_conndb_t *cd, const npf_connkey_t *ck,
+    npf_conn_t *con, bool forw)
 {
-	const unsigned keylen = NPF_CONN_KEYLEN(ck);
-	return thmap_put(cd->cd_map, ck->ck_key, keylen, ck) == ck;
+	const unsigned keylen = NPF_CONNKEY_LEN(ck);
+	const uintptr_t tag = (CONNDB_FORW_BIT * !!forw);
+	void *val;
+	bool ok;
+
+	/*
+	 * Tag the connection pointer if this is the "forwards" key.
+	 */
+	KASSERT(!CONNDB_ISFORW_P(con));
+	val = (void *)((uintptr_t)(void *)con | tag);
+
+	int s = splsoftnet();
+	ok = thmap_put(cd->cd_map, ck->ck_key, keylen, val) == val;
+	splx(s);
+
+	return ok;
 }
 
 /*
@@ -140,17 +206,14 @@ npf_conndb_insert(npf_conndb_t *cd, npf_connkey_t *ck)
 npf_conn_t *
 npf_conndb_remove(npf_conndb_t *cd, npf_connkey_t *ck)
 {
-	const unsigned keylen = NPF_CONN_KEYLEN(ck);
-	npf_connkey_t *foundkey;
-	npf_conn_t *con;
+	const unsigned keylen = NPF_CONNKEY_LEN(ck);
+	void *val;
 
-	foundkey = thmap_del(cd->cd_map, ck->ck_key, keylen);
-	if (!foundkey) {
-		return NULL;
-	}
-	con = foundkey->ck_backptr;
-	KASSERT(con != NULL);
-	return con;
+	int s = splsoftnet();
+	val = thmap_del(cd->cd_map, ck->ck_key, keylen);
+	splx(s);
+
+	return CONNDB_GET_PTR(val);
 }
 
 /*
@@ -214,9 +277,10 @@ npf_conndb_getnext(npf_conndb_t *cd, npf_conn_t *con)
  * npf_conndb_gc_incr: incremental G/C of the expired connections.
  */
 static void
-npf_conndb_gc_incr(npf_conndb_t *cd, const time_t now)
+npf_conndb_gc_incr(npf_t *npf, npf_conndb_t *cd, const time_t now)
 {
-	unsigned target = NPF_GC_STEP;
+	const npf_conndb_params_t *params = npf->params[NPF_PARAMS_CONNDB];
+	unsigned target = params->gc_step;
 	npf_conn_t *con;
 
 	/*
@@ -240,7 +304,7 @@ npf_conndb_gc_incr(npf_conndb_t *cd, const time_t now)
 		/*
 		 * Can we G/C this connection?
 		 */
-		if (npf_conn_expired(con, now)) {
+		if (npf_conn_expired(npf, con, now)) {
 			/* Yes: move to the G/C list. */
 			LIST_REMOVE(con, c_entry);
 			LIST_INSERT_HEAD(&cd->cd_gclist, con, c_entry);
@@ -298,7 +362,7 @@ npf_conndb_gc(npf_t *npf, npf_conndb_t *cd, bool flush, bool sync)
 		cd->cd_marker = NULL;
 	} else {
 		/* Incremental G/C of the expired connections. */
-		npf_conndb_gc_incr(cd, tsnow.tv_sec);
+		npf_conndb_gc_incr(npf, cd, tsnow.tv_sec);
 	}
 	mutex_exit(&npf->conn_lock);
 

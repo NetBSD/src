@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.14.6.1 2019/06/10 22:10:10 christos Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.14.6.2 2020/04/13 08:05:32 martin Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -247,6 +247,7 @@ linklocal_body()
 	local dst_if0_lladdr=`get_linklocal_addr ${SOCKDST} shmif0`
 	local fwd_if0_lladdr=`get_linklocal_addr ${SOCKFWD} shmif0`
 	local fwd_if1_lladdr=`get_linklocal_addr ${SOCKFWD} shmif1`
+	local lladdr=fe80::2
 
 	export RUMP_SERVER=${SOCKSRC}
 	$DEBUG && rump.ifconfig
@@ -324,6 +325,19 @@ linklocal_body()
 	    -X $TIMEOUT -n -S ${IP6SRC} ${dst_if0_lladdr}%shmif0
 	atf_check -s ignore -o not-empty -e ignore \
 	    -x "shmif_dumpbus -p - ${BUS2} | tcpdump -r - -n -p icmp6"
+
+	# Setting a link-local address with a scope ID
+	# XXX need $HIJACKING for some reasons
+	cleanup_bus
+	export RUMP_SERVER=${SOCKFWD}
+	$DEBUG && rump.ifconfig shmif0
+	atf_check -s exit:0 $HIJACKING rump.ifconfig shmif0 inet6 $lladdr%shmif0/64
+	export RUMP_SERVER=${SOCKSRC}
+	atf_check -s exit:0 -o match:"0.0% packet loss" rump.ping6 -c 1 \
+	    -X $TIMEOUT -n $lladdr
+	export RUMP_SERVER=${SOCKDST}
+	atf_check -s not-exit:0 -o match:"100.0% packet loss" rump.ping6 -c 1 \
+	    -X $TIMEOUT -n $lladdr
 
 	unset RUMP_SERVER
 

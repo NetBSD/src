@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.55.16.1 2019/06/10 22:07:27 christos Exp $ */
+/*	$NetBSD: twa.c,v 1.55.16.2 2020/04/13 08:04:45 martin Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.55.16.1 2019/06/10 22:07:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.55.16.2 2020/04/13 08:04:45 martin Exp $");
 
 //#define TWA_DEBUG
 
@@ -836,13 +836,10 @@ twa_alloc_req_pkts(struct twa_softc *sc, int num_reqs)
 	size_t max_segs, max_xfer;
 	int	i, rv, rseg, size;
 
-	if ((sc->sc_units = malloc(sc->sc_nunits *
-	    sizeof(struct twa_drive), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) 
-		return(ENOMEM);
-
-	if ((sc->twa_req_buf = malloc(num_reqs * sizeof(struct twa_request),
-					M_DEVBUF, M_NOWAIT)) == NULL)
-		return(ENOMEM);
+	sc->sc_units = malloc(sc->sc_nunits *
+	    sizeof(struct twa_drive), M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->twa_req_buf = malloc(num_reqs * sizeof(struct twa_request),
+	    M_DEVBUF, M_WAITOK);
 
 	size = num_reqs * sizeof(struct twa_command_packet);
 
@@ -993,13 +990,8 @@ twa_request_bus_scan(device_t self, const char *attr, const int *flags)
 
 		tr->tr_cmd_pkt_type |= TWA_CMD_PKT_TYPE_INTERNAL;
 
-		tr->tr_data = malloc(TWA_SECTOR_SIZE, M_DEVBUF, M_NOWAIT);
+		tr->tr_data = malloc(TWA_SECTOR_SIZE, M_DEVBUF, M_WAITOK);
 
-		if (tr->tr_data == NULL) {
-			twa_release_request(tr);
-			splx(s);
-			return (ENOMEM);
-		}
 		td = &sc->sc_units[unit];
 
 		if (twa_inquiry(tr, unit) == 0) {

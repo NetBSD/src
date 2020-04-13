@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.16 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.16.64.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.16 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.16.64.1 2020/04/13 08:04:47 martin Exp $");
 
 #include "rf_archs.h"
 
@@ -56,31 +56,31 @@ __KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.16 2009/03/14 15:36:20 dsl Exp $");
 RF_RedFuncs_t rf_pFuncs = {rf_RegularONPFunc, "Regular Old-New P", rf_SimpleONPFunc, "Simple Old-New P"};
 RF_RedFuncs_t rf_pRecoveryFuncs = {rf_RecoveryPFunc, "Recovery P Func", rf_RecoveryPFunc, "Recovery P Func"};
 
-int
+void
 rf_RegularONPFunc(RF_DagNode_t *node)
 {
-	return (rf_RegularXorFunc(node));
+	rf_RegularXorFunc(node);
 }
 /*
    same as simpleONQ func, but the coefficient is always 1
 */
 
-int
+void
 rf_SimpleONPFunc(RF_DagNode_t *node)
 {
-	return (rf_SimpleXorFunc(node));
+	rf_SimpleXorFunc(node);
 }
 
-int
+void
 rf_RecoveryPFunc(RF_DagNode_t *node)
 {
-	return (rf_RecoveryXorFunc(node));
+	rf_RecoveryXorFunc(node);
 }
 
-int
+void
 rf_RegularPFunc(RF_DagNode_t *node)
 {
-	return (rf_RegularXorFunc(node));
+	rf_RegularXorFunc(node);
 }
 #endif /* (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) || (RF_INCLUDE_EVENODD > 0) */
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)

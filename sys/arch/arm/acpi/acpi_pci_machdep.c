@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.9.4.3 2020/04/08 14:07:27 martin Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.9.4.4 2020/04/13 08:03:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.9.4.3 2020/04/08 14:07:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.9.4.4 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -306,7 +306,10 @@ acpi_pci_md_conf_read(void *v, pcitag_t tag, int offset)
 	if (offset < 0 || offset >= PCI_EXTCONF_SIZE)
 		return (pcireg_t) -1;
 
-	acpimcfg_conf_read(&ap->ap_pc, tag, offset, &val);
+	if (ap->ap_conf_read != NULL)
+		ap->ap_conf_read(&ap->ap_pc, tag, offset, &val);
+	else
+		acpimcfg_conf_read(&ap->ap_pc, tag, offset, &val);
 
 	return val;
 }
@@ -319,7 +322,10 @@ acpi_pci_md_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	if (offset < 0 || offset >= PCI_EXTCONF_SIZE)
 		return;
 
-	acpimcfg_conf_write(&ap->ap_pc, tag, offset, val);
+	if (ap->ap_conf_write != NULL)
+		ap->ap_conf_write(&ap->ap_pc, tag, offset, val);
+	else
+		acpimcfg_conf_write(&ap->ap_pc, tag, offset, val);
 }
 
 static int

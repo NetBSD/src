@@ -19,7 +19,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-juniper.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-juniper.c,v 1.9.4.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -1353,6 +1353,11 @@ juniper_parse_header(netdissect_options *ndo,
                 ND_PRINT((ndo, "%s-PIC, cookie-len %u",
                        lp->s,
                        l2info->cookie_len));
+
+            if (l2info->cookie_len > 8) {
+                ND_PRINT((ndo, " (invalid)"));
+                return 0;
+            }
 
             if (l2info->cookie_len > 0) {
                 ND_TCHECK2(p[0], l2info->cookie_len);

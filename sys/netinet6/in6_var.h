@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.100 2018/05/29 04:38:29 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.100.2.1 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -584,7 +584,6 @@ extern const struct in6_addr zeroin6_addr;
 extern const u_char inet6ctlerrmap[];
 extern unsigned long in6_maxmtu;
 extern bool in6_present;
-extern callout_t in6_tmpaddrtimer_ch;
 
 /*
  * Macro for finding the internet address structure (in6_ifaddr) corresponding
@@ -680,6 +679,7 @@ do {									\
 #endif
 
 void	in6_init(void);
+void	in6_tmpaddrtimer_init(void);
 
 void	in6_multi_lock(int);
 void	in6_multi_unlock(void);
@@ -733,6 +733,8 @@ struct in6pcb;
 #define	LLTABLE6(ifp)	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->lltable)
 
 void	in6_sysctl_multicast_setup(struct sysctllog **);
+
+void	in6_tmpaddrtimer_schedule(void);
 
 #endif /* _KERNEL */
 

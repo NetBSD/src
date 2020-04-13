@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.c,v 1.1.4.2 2019/06/10 22:07:10 christos Exp $ */
+/* $NetBSD: dw_hdmi.c,v 1.1.4.3 2020/04/13 08:04:21 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.1.4.2 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.1.4.3 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,10 +45,18 @@ __KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.1.4.2 2019/06/10 22:07:10 christos Exp
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
 
+#include <dev/audio/audio_dai.h>
+
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_edid.h>
+
+#define	HDMI_DESIGN_ID		0x0000
+#define	HDMI_REVISION_ID	0x0001
+#define	HDMI_CONFIG0_ID		0x0004
+#define	 HDMI_CONFIG0_ID_AUDI2S			__BIT(4)
+#define	HDMI_CONFIG2_ID		0x0006
 
 #define	HDMI_IH_I2CM_STAT0	0x0105
 #define	 HDMI_IH_I2CM_STAT0_DONE		__BIT(1)
@@ -127,6 +135,49 @@ __KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.1.4.2 2019/06/10 22:07:10 christos Exp
 #define	 HDMI_FC_CH1PREAM_DEFAULT		0x16
 #define	HDMI_FC_CH2PREAM	0x1016
 #define	 HDMI_FC_CH2PREAM_DEFAULT		0x21
+#define	HDMI_FC_AUDCONF0	0x1025
+#define	HDMI_FC_AUDCONF1	0x1026
+#define	HDMI_FC_AUDCONF2	0x1027
+#define	HDMI_FC_AUDCONF3	0x1028
+
+#define	HDMI_PHY_CONF0		0x3000
+#define	 HDMI_PHY_CONF0_PDZ			__BIT(7)
+#define	 HDMI_PHY_CONF0_ENTMDS			__BIT(6)
+#define	 HDMI_PHY_CONF0_SVSRET			__BIT(5)
+#define	 HDMI_PHY_CONF0_PDDQ			__BIT(4)
+#define	 HDMI_PHY_CONF0_TXPWRON			__BIT(3)
+#define	 HDMI_PHY_CONF0_ENHPDRXSENSE		__BIT(2)
+#define	 HDMI_PHY_CONF0_SELDATAENPOL		__BIT(1)
+#define	 HDMI_PHY_CONF0_SELDIPIF		__BIT(0)
+#define	HDMI_PHY_STAT0		0x3004
+#define	 HDMI_PHY_STAT0_RX_SENSE_3		__BIT(7)
+#define	 HDMI_PHY_STAT0_RX_SENSE_2		__BIT(6)
+#define	 HDMI_PHY_STAT0_RX_SENSE_1		__BIT(5)
+#define	 HDMI_PHY_STAT0_RX_SENSE_0		__BIT(4)
+#define	 HDMI_PHY_STAT0_HPD			__BIT(1)
+#define	 HDMI_PHY_STAT0_TX_PHY_LOCK		__BIT(0)
+
+#define	HDMI_AUD_CONF0		0x3100
+#define	 HDMI_AUD_CONF0_SW_AUDIO_FIFO_RST	__BIT(7)
+#define	 HDMI_AUD_CONF0_I2S_SELECT		__BIT(5)
+#define	 HDMI_AUD_CONF0_I2S_IN_EN		__BITS(3,0)
+#define	HDMI_AUD_CONF1		0x3101
+#define	 HDMI_AUD_CONF1_I2S_WIDTH		__BITS(4,0)
+#define	HDMI_AUD_INT		0x3102
+#define	HDMI_AUD_CONF2		0x3103
+#define	 HDMI_AUD_CONF2_INSERT_PCUV		__BIT(2)
+#define	 HDMI_AUD_CONF2_NLPCM			__BIT(1)
+#define	 HDMI_AUD_CONF2_HBR			__BIT(0)
+#define	HDMI_AUD_INT1		0x3104
+
+#define	HDMI_AUD_N1		0x3200
+#define	HDMI_AUD_N2		0x3201
+#define	HDMI_AUD_N3		0x3202
+#define	HDMI_AUD_CTS1		0x3203
+#define	HDMI_AUD_CTS2		0x3204
+#define	HDMI_AUD_CTS3		0x3205
+#define	HDMI_AUD_INPUTCLKFS	0x3206
+#define	 HDMI_AUD_INPUTCLKFS_IFSFACTOR		__BITS(2,0)
 
 #define	HDMI_MC_CLKDIS		0x4001
 #define	 HDMI_MC_CLKDIS_HDCPCLK_DISABLE		__BIT(6)
@@ -143,6 +194,8 @@ __KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.1.4.2 2019/06/10 22:07:10 christos Exp
 #define	 HDMI_MC_SWRSTZREQ_PIXELSWRST_REQ	__BIT(0)
 #define	HDMI_MC_FLOWCTRL	0x4004
 #define	HDMI_MC_PHYRSTZ		0x4005
+#define	 HDMI_MC_PHYRSTZ_ASSERT			__BIT(0)
+#define	 HDMI_MC_PHYRSTZ_DEASSERT		0
 #define	HDMI_MC_LOCKONCLOCK	0x4006
 #define	HDMI_MC_HEACPHY_RST	0x4007
 
@@ -186,24 +239,18 @@ __KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.1.4.2 2019/06/10 22:07:10 christos Exp
 #define	HDMI_I2CM_SOFTRSTZ	0x7e09
 #define	 HDMI_I2CM_SOFTRSTZ_I2C_SOFTRST		__BIT(0)
 #define	HDMI_I2CM_SEGPTR	0x7e0a
+#define	HDMI_I2CM_SS_SCL_HCNT_0_ADDR 0x730c
+#define	HDMI_I2CM_SS_SCL_LCNT_0_ADDR 0x730e
 
-static int
-dwhdmi_ddc_acquire_bus(void *priv, int flags)
-{
-	struct dwhdmi_softc * const sc = priv;
+enum dwhdmi_dai_mixer_ctrl {
+	DWHDMI_DAI_OUTPUT_CLASS,
+	DWHDMI_DAI_INPUT_CLASS,
 
-	mutex_enter(&sc->sc_ic_lock);
+	DWHDMI_DAI_OUTPUT_MASTER_VOLUME,
+	DWHDMI_DAI_INPUT_DAC_VOLUME,
 
-	return 0;
-}
-
-static void
-dwhdmi_ddc_release_bus(void *priv, int flags)
-{
-	struct dwhdmi_softc * const sc = priv;
-
-	mutex_exit(&sc->sc_ic_lock);
-}
+	DWHDMI_DAI_MIXER_CTRL_LAST
+};
 
 static int
 dwhdmi_ddc_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
@@ -213,8 +260,6 @@ dwhdmi_ddc_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	uint8_t block, operation, val;
 	uint8_t *pbuf = buf;
 	int off, n, retry;
-
-	KASSERT(mutex_owned(&sc->sc_ic_lock));
 
 	if (addr != DDC_ADDR || op != I2C_OP_READ_WITH_STOP || cmdlen == 0 || buf == NULL) {
 		printf("dwhdmi_ddc_exec: bad args addr=%#x op=%#x cmdlen=%d buf=%p\n",
@@ -228,6 +273,10 @@ dwhdmi_ddc_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 
 	dwhdmi_write(sc, HDMI_I2CM_SOFTRSTZ, 0);
 	dwhdmi_write(sc, HDMI_IH_I2CM_STAT0, dwhdmi_read(sc, HDMI_IH_I2CM_STAT0));
+	if (sc->sc_scl_hcnt)
+		dwhdmi_write(sc, HDMI_I2CM_SS_SCL_HCNT_0_ADDR, sc->sc_scl_hcnt);
+	if (sc->sc_scl_lcnt)
+		dwhdmi_write(sc, HDMI_I2CM_SS_SCL_LCNT_0_ADDR, sc->sc_scl_lcnt);
 	dwhdmi_write(sc, HDMI_I2CM_DIV, 0);
 	dwhdmi_write(sc, HDMI_I2CM_SLAVE, DDC_ADDR);
 	dwhdmi_write(sc, HDMI_I2CM_SEGADDR, DDC_SEGMENT_ADDR);
@@ -235,6 +284,8 @@ dwhdmi_ddc_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	block = *(const uint8_t *)cmdbuf;
 	operation = block ? HDMI_I2CM_OPERATION_RD_EXT : HDMI_I2CM_OPERATION_RD;
 	off = (block & 1) ? 128 : 0;
+
+	dwhdmi_write(sc, HDMI_I2CM_SEGPTR, block >> 1);
 
 	for (n = 0; n < len; n++) {
 		dwhdmi_write(sc, HDMI_I2CM_ADDRESS, n + off);
@@ -358,14 +409,14 @@ dwhdmi_fc_init(struct dwhdmi_softc *sc, struct drm_display_mode *mode)
 	uint8_t val;
 
 	const uint8_t vic = drm_match_cea_mode(mode);
-	const uint16_t inhactiv = mode->hdisplay;
-	const uint16_t inhblank = mode->htotal - mode->hdisplay;
-	const uint16_t invactiv = mode->vdisplay;
-	const uint8_t invblank = mode->vtotal - mode->vdisplay;
-	const uint16_t hsyncindelay = mode->hsync_start - mode->hdisplay;
-	const uint16_t hsyncinwidth = mode->hsync_end - mode->hsync_start;
-	const uint8_t vsyncindelay = mode->vsync_start - mode->vdisplay;
-	const uint8_t vsyncinwidth = mode->vsync_end - mode->vsync_start;
+	const uint16_t inhactiv = mode->crtc_hdisplay;
+	const uint16_t inhblank = mode->crtc_htotal - mode->crtc_hdisplay;
+	const uint16_t invactiv = mode->crtc_vdisplay;
+	const uint8_t invblank = mode->crtc_vtotal - mode->crtc_vdisplay;
+	const uint16_t hsyncindelay = mode->crtc_hsync_start - mode->crtc_hdisplay;
+	const uint16_t hsyncinwidth = mode->crtc_hsync_end - mode->crtc_hsync_start;
+	const uint8_t vsyncindelay = mode->crtc_vsync_start - mode->crtc_vdisplay;
+	const uint8_t vsyncinwidth = mode->crtc_vsync_end - mode->crtc_vsync_start;
 
 	/* Input video configuration for frame composer */
 	val = HDMI_FC_INVIDCONF_DE_IN_POLARITY;
@@ -410,9 +461,8 @@ dwhdmi_fc_init(struct dwhdmi_softc *sc, struct drm_display_mode *mode)
 static void
 dwhdmi_mc_init(struct dwhdmi_softc *sc)
 {
-	struct dwhdmi_connector *dwhdmi_connector = &sc->sc_connector;
 	uint8_t val;
-	u_int n;
+	u_int n, iter;
 
 	/* Bypass colour space converter */
 	dwhdmi_write(sc, HDMI_MC_FLOWCTRL, 0);
@@ -422,16 +472,16 @@ dwhdmi_mc_init(struct dwhdmi_softc *sc)
 	      HDMI_MC_CLKDIS_CECCLK_DISABLE |
 	      HDMI_MC_CLKDIS_CSCCLK_DISABLE |
 	      HDMI_MC_CLKDIS_PREPCLK_DISABLE;
-	if (!dwhdmi_connector->monitor_audio)
-		val |= HDMI_MC_CLKDIS_AUDCLK_DISABLE;
 	dwhdmi_write(sc, HDMI_MC_CLKDIS, val);
 
 	/* Soft reset TMDS */
 	val = 0xff & ~HDMI_MC_SWRSTZREQ_TMDSSWRST_REQ;
 	dwhdmi_write(sc, HDMI_MC_SWRSTZREQ, val);
 
+	iter = sc->sc_version == 0x130a ? 4 : 1;
+
 	val = dwhdmi_read(sc, HDMI_FC_INVIDCONF);
-	for (n = 0; n < 4; n++)
+	for (n = 0; n < iter; n++)
 		dwhdmi_write(sc, HDMI_FC_INVIDCONF, val);
 }
 
@@ -440,6 +490,59 @@ dwhdmi_mc_disable(struct dwhdmi_softc *sc)
 {
 	/* Disable clocks */
 	dwhdmi_write(sc, HDMI_MC_CLKDIS, 0xff);
+}
+
+static void
+dwhdmi_audio_init(struct dwhdmi_softc *sc)
+{
+	uint8_t val;
+	u_int n;
+
+	/* The following values are for 48 kHz */
+	switch (sc->sc_curmode.clock) {
+	case 25170:
+		n = 6864;
+		break;
+	case 74170:
+		n = 11648;
+		break;
+	case 148350:
+		n = 5824;
+		break;
+	default:
+		n = 6144;
+		break;
+	}
+
+	/* Use automatic CTS generation */
+	dwhdmi_write(sc, HDMI_AUD_CTS1, 0);
+	dwhdmi_write(sc, HDMI_AUD_CTS2, 0);
+	dwhdmi_write(sc, HDMI_AUD_CTS3, 0);
+
+	/* Set N factor for audio clock regeneration */
+	dwhdmi_write(sc, HDMI_AUD_N1, n & 0xff);
+	dwhdmi_write(sc, HDMI_AUD_N2, (n >> 8) & 0xff);
+	dwhdmi_write(sc, HDMI_AUD_N3, (n >> 16) & 0xff);
+
+	val = dwhdmi_read(sc, HDMI_AUD_CONF0);
+	val |= HDMI_AUD_CONF0_I2S_SELECT;		/* XXX i2s mode */
+	val &= ~HDMI_AUD_CONF0_I2S_IN_EN;
+	val |= __SHIFTIN(1, HDMI_AUD_CONF0_I2S_IN_EN);	/* XXX 2ch */
+	dwhdmi_write(sc, HDMI_AUD_CONF0, val);
+	
+	val = __SHIFTIN(16, HDMI_AUD_CONF1_I2S_WIDTH);
+	dwhdmi_write(sc, HDMI_AUD_CONF1, val);
+
+	dwhdmi_write(sc, HDMI_AUD_INPUTCLKFS, 4);	/* XXX 64 FS */
+
+	dwhdmi_write(sc, HDMI_FC_AUDCONF0, 1 << 4);	/* XXX 2ch */
+	dwhdmi_write(sc, HDMI_FC_AUDCONF1, 0);
+	dwhdmi_write(sc, HDMI_FC_AUDCONF2, 0);
+	dwhdmi_write(sc, HDMI_FC_AUDCONF3, 0);
+
+	val = dwhdmi_read(sc, HDMI_MC_CLKDIS);
+	val &= ~HDMI_MC_CLKDIS_PREPCLK_DISABLE;
+	dwhdmi_write(sc, HDMI_MC_CLKDIS, val);
 }
 
 static enum drm_connector_status
@@ -479,7 +582,7 @@ dwhdmi_connector_get_modes(struct drm_connector *connector)
 
 	memset(edid, 0, sizeof(edid));
 	for (block = 0; block < 4; block++) {
-		error = ddc_read_edid_block(&sc->sc_ic,
+		error = ddc_read_edid_block(sc->sc_ic,
 		    &edid[block * EDID_LENGTH], EDID_LENGTH, block);
 		if (error != 0)
 			break;
@@ -569,6 +672,9 @@ dwhdmi_bridge_enable(struct drm_bridge *bridge)
 
 	dwhdmi_tx_init(sc);
 	dwhdmi_mc_init(sc);
+
+	if (sc->sc_connector.monitor_audio)
+		dwhdmi_audio_init(sc);
 }
 
 static void
@@ -621,22 +727,183 @@ static const struct drm_bridge_funcs dwhdmi_bridge_funcs = {
 	.mode_fixup = dwhdmi_bridge_mode_fixup,
 };
 
+static int
+dwhdmi_dai_set_format(audio_dai_tag_t dai, u_int format)
+{
+	return 0;
+}
+
+static int
+dwhdmi_dai_add_device(audio_dai_tag_t dai, audio_dai_tag_t aux)
+{
+	/* Not supported */
+	return 0;
+}
+
+static void
+dwhdmi_audio_swvol_codec(audio_filter_arg_t *arg)
+{
+	struct dwhdmi_softc * const sc = arg->context;
+	const aint_t *src;
+	aint_t *dst;
+	u_int sample_count;
+	u_int i;
+
+	src = arg->src;
+	dst = arg->dst;
+	sample_count = arg->count * arg->srcfmt->channels;
+	for (i = 0; i < sample_count; i++) {
+		aint2_t v = (aint2_t)(*src++);
+		v = v * sc->sc_swvol / 255;
+		*dst++ = (aint_t)v;
+	}
+}
+
+static int
+dwhdmi_audio_set_format(void *priv, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
+{
+	struct dwhdmi_softc * const sc = priv;
+
+	pfil->codec = dwhdmi_audio_swvol_codec;
+	pfil->context = sc;
+
+	return 0;
+}
+
+static int
+dwhdmi_audio_set_port(void *priv, mixer_ctrl_t *mc)
+{
+	struct dwhdmi_softc * const sc = priv;
+
+	switch (mc->dev) {
+	case DWHDMI_DAI_OUTPUT_MASTER_VOLUME:
+	case DWHDMI_DAI_INPUT_DAC_VOLUME:
+		sc->sc_swvol = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+		return 0;
+	default:
+		return ENXIO;
+	}
+}
+
+static int
+dwhdmi_audio_get_port(void *priv, mixer_ctrl_t *mc)
+{
+	struct dwhdmi_softc * const sc = priv;
+
+	switch (mc->dev) {
+	case DWHDMI_DAI_OUTPUT_MASTER_VOLUME:
+	case DWHDMI_DAI_INPUT_DAC_VOLUME:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->sc_swvol;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->sc_swvol;
+		return 0;
+	default:
+		return ENXIO;
+	}
+}
+
+static int
+dwhdmi_audio_query_devinfo(void *priv, mixer_devinfo_t *di)
+{
+	switch (di->index) {
+	case DWHDMI_DAI_OUTPUT_CLASS:
+		di->mixer_class = di->index;
+		strcpy(di->label.name, AudioCoutputs);
+		di->type = AUDIO_MIXER_CLASS;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		return 0;
+
+	case DWHDMI_DAI_INPUT_CLASS:
+		di->mixer_class = di->index;
+		strcpy(di->label.name, AudioCinputs);
+		di->type = AUDIO_MIXER_CLASS;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		return 0;
+
+	case DWHDMI_DAI_OUTPUT_MASTER_VOLUME:
+		di->mixer_class = DWHDMI_DAI_OUTPUT_CLASS;
+		strcpy(di->label.name, AudioNmaster);
+		di->un.v.delta = 1;
+		di->un.v.num_channels = 2;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		di->type = AUDIO_MIXER_VALUE;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		return 0;
+
+	case DWHDMI_DAI_INPUT_DAC_VOLUME:
+		di->mixer_class = DWHDMI_DAI_INPUT_CLASS;
+		strcpy(di->label.name, AudioNdac);
+		di->un.v.delta = 1;
+		di->un.v.num_channels = 2;
+		strcpy(di->un.v.units.name, AudioNvolume);
+		di->type = AUDIO_MIXER_VALUE;
+		di->next = di->prev = AUDIO_MIXER_LAST;
+		return 0;
+
+	default:
+		return ENXIO;
+	}
+}
+
+static const struct audio_hw_if dwhdmi_dai_hw_if = {
+	.set_format = dwhdmi_audio_set_format,
+	.set_port = dwhdmi_audio_set_port,
+	.get_port = dwhdmi_audio_get_port,
+	.query_devinfo = dwhdmi_audio_query_devinfo,
+};
+
 int
 dwhdmi_attach(struct dwhdmi_softc *sc)
 {
-	struct i2c_controller *ic = &sc->sc_ic;
+	uint8_t val;
 
 	if (sc->sc_reg_width != 1 && sc->sc_reg_width != 4) {
 		aprint_error_dev(sc->sc_dev, "unsupported register width %d\n", sc->sc_reg_width);
 		return EINVAL;
 	}
 
-	mutex_init(&sc->sc_ic_lock, MUTEX_DEFAULT, IPL_NONE);
+	sc->sc_version = dwhdmi_read(sc, HDMI_DESIGN_ID);
+	sc->sc_version <<= 8;
+	sc->sc_version |= dwhdmi_read(sc, HDMI_REVISION_ID);
 
-	ic->ic_cookie = sc;
-	ic->ic_acquire_bus = dwhdmi_ddc_acquire_bus;
-	ic->ic_release_bus = dwhdmi_ddc_release_bus;
-	ic->ic_exec = dwhdmi_ddc_exec;
+	sc->sc_phytype = dwhdmi_read(sc, HDMI_CONFIG2_ID);
+
+	aprint_normal_dev(sc->sc_dev, "version %x.%03x, phytype 0x%02x\n",
+	    sc->sc_version >> 12, sc->sc_version & 0xfff,
+	    sc->sc_phytype);
+
+	sc->sc_swvol = 255;
+
+	/*
+	 * If a DDC i2c bus tag is provided by the caller, use it. Otherwise,
+	 * use the I2C master built-in to DWC HDMI.
+	 */
+	if (sc->sc_ic == NULL) {
+		struct i2c_controller *ic = &sc->sc_ic_builtin;
+		iic_tag_init(ic);
+		ic->ic_cookie = sc;
+		ic->ic_exec = dwhdmi_ddc_exec;
+		sc->sc_ic = ic;
+	}
+
+	/*
+	 * Enable HPD on internal PHY
+	 */
+	if ((sc->sc_flags & DWHDMI_USE_INTERNAL_PHY) != 0) {
+		val = dwhdmi_read(sc, HDMI_PHY_CONF0);
+		val |= HDMI_PHY_CONF0_ENHPDRXSENSE;
+		dwhdmi_write(sc, HDMI_PHY_CONF0, val);
+	}
+
+	/*
+	 * Initialize audio DAI
+	 */
+	sc->sc_dai.dai_set_format = dwhdmi_dai_set_format;
+	sc->sc_dai.dai_add_device = dwhdmi_dai_add_device;
+	sc->sc_dai.dai_hw_if = &dwhdmi_dai_hw_if;
+	sc->sc_dai.dai_dev = sc->sc_dev;
+	sc->sc_dai.dai_priv = sc;
 
 	return 0;
 }

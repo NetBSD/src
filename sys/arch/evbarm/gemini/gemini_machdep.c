@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.24.16.1 2019/06/10 22:06:06 christos Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.24.16.2 2020/04/13 08:03:43 martin Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.24.16.1 2019/06/10 22:06:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.24.16.2 2020/04/13 08:03:43 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -556,7 +556,7 @@ gemini_puthex(unsigned int val)
 #endif	/* VERBOSE_INIT_ARM */
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -568,7 +568,7 @@ gemini_puthex(unsigned int val)
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	GEMINI_PUTCHAR('0');
@@ -759,7 +759,7 @@ initarm(void *arg)
 	printf("initarm done.\n");
 
 	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 static void

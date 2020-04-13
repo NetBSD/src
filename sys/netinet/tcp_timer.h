@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.29 2018/01/19 07:53:01 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.29.4.1 2020/04/13 08:05:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
@@ -164,6 +164,12 @@ const char *tcptimers[] =
 
 #define	TCP_TIMER_ISARMED(tp, timer)					\
 	callout_active(&(tp)->t_timer[(timer)])
+
+#define	TCP_TIMER_MAXTICKS						      \
+	(INT_MAX / (hz / PR_SLOWHZ))
+
+#define	TCP_MAXMSL							      \
+	(TCP_TIMER_MAXTICKS / 2)
 
 /*
  * Force a time value to be in a certain range.

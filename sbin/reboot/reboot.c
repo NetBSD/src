@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.40 2012/11/04 22:28:16 christos Exp $	*/
+/*	$NetBSD: reboot.c,v 1.40.30.1 2020/04/13 08:03:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.40 2012/11/04 22:28:16 christos Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.40.30.1 2020/04/13 08:03:22 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ main(int argc, char *argv[])
 	logwtmp("~", "shutdown", "");
 #endif
 #ifdef SUPPORT_UTMPX
-	logwtmpx("~", "shutdown", "", INIT_PROCESS, 0);
+	logwtmpx("~", "shutdown", "", 0, INIT_PROCESS);
 #endif
 
 	/*

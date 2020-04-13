@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.17 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: profile.c,v 1.17.18.1 2020/04/13 08:04:07 martin Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.17 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.17.18.1 2020/04/13 08:04:07 martin Exp $");
 
 #include "profiler.h"
 
@@ -339,25 +339,14 @@ profStart(struct profStartInfo *info)
     /* alloc two hash tables. */
     buffer  = malloc(sizeof(struct profHashTable) + 
 		     info->tableSize * sizeof(struct profHashEntry), 
-		     M_DEVBUF, M_NOWAIT);
-    if ( (buffer == NULL) )
-    {
-	info->status = NO_MEMORY;
-	return;
-    }
+		     M_DEVBUF, M_WAITOK);
     phashTables[0] = (struct profHashTable *) buffer;
     phashTables[0]->entries = (struct profHashEntry *) 
 	( buffer + sizeof(struct profHashTable));
 
     buffer  = malloc(sizeof(struct profHashTable) + 
 		     info->tableSize * sizeof(struct profHashEntry), 
-		     M_DEVBUF, M_NOWAIT);
-    if ( (buffer == NULL) )
-    {
-	free(phashTables[0], M_DEVBUF);
-	info->status = NO_MEMORY;
-	return;
-    }
+		     M_DEVBUF, M_WAITOK);
     phashTables[1] = (struct profHashTable *) buffer;
     phashTables[1]->entries = (struct profHashEntry *) 
 	( buffer + sizeof(struct profHashTable));

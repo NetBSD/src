@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_g1.c,v 1.3 2017/10/20 07:06:06 jdolecek Exp $ */
+/* $NetBSD: wdc_g1.c,v 1.3.6.1 2020/04/13 08:03:40 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,24 +71,13 @@ CFATTACH_DECL_NEW(wdc_g1bus, sizeof(struct wdc_g1_softc),
 static int
 wdc_g1_probe(device_t parent, cfdata_t cf, void *aux)
 {
-	struct ata_channel ch;
 	struct g1bus_attach_args *ga = aux;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	int result = 0, i;
-#ifdef ATADEBUG
-	struct device dev;
-#endif
 
 	*((volatile uint32_t *)0xa05f74e4) = 0x1fffff;
 	for (i = 0; i < 0x200000 / 4; i++)
 		(void)((volatile uint32_t *)0xa0000000)[i];
-
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.reset = wdc_g1_do_reset;
-	wdc.regs = &wdr;
 
 	wdr.cmd_iot = ga->ga_memt;
 	if (bus_space_map(wdr.cmd_iot, WDC_G1_CMD_ADDR,
@@ -101,20 +90,14 @@ wdc_g1_probe(device_t parent, cfdata_t cf, void *aux)
 			goto outunmap;
 	}
 
-	wdc_init_shadow_regs(&ch);
+	wdc_init_shadow_regs(&wdr);
 
 	wdr.ctl_iot = ga->ga_memt;
 	if (bus_space_map(wdr.ctl_iot, WDC_G1_CTL_ADDR,
 	    WDC_G1_AUXREG_NPORTS, 0, &wdr.ctl_ioh))
 	  goto outunmap;
 
-#ifdef ATADEBUG
-	/* fake up device name for ATADEBUG_PRINT() with DEBUG_PROBE */
-	memset(&dev, 0, sizeof(dev));
-	strncat(dev.dv_xname, "wdc(g1probe)", sizeof(dev.dv_xname));
-	wdc.sc_atac.atac_dev = &dev;
-#endif
-	result = wdcprobe(&ch);
+	result = wdcprobe_with_reset(&wdr, wdc_g1_do_reset);
 	
 	bus_space_unmap(wdr.ctl_iot, wdr.ctl_ioh, WDC_G1_AUXREG_NPORTS);
  outunmap:
@@ -181,6 +164,12 @@ wdc_g1_intr(void *arg)
 	return wdcintr(arg);
 }
 
+/*
+ * This does what the generic wdc_do_reset() does, with additional
+ * GD-ROM reset. GD-ROM is a very early ATAPI device appeared in 1998
+ * and it doesn't reset itself by the WDCTL_RST in AUX_CTLR but requires
+ * ATAPI_SOFT_RESET command to reset whole device as a master.
+ */
 static void
 wdc_g1_do_reset(struct ata_channel *chp, int poll)
 {

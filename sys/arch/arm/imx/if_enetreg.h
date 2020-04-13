@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enetreg.h,v 1.3 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: if_enetreg.h,v 1.3.8.1 2020/04/13 08:03:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -93,16 +93,9 @@
 # define ENET_MMFR_PHY_REG(reg)		__SHIFTIN(reg, __BITS(22, 18))
 # define ENET_MMFR_DATAMASK		0x0000ffff
 #define ENET_MSCR			0x00000044
-# define ENET_MSCR_HOLDTIME_1CLK	0x00000000
-# define ENET_MSCR_HOLDTIME_2CLK	0x00000100
-# define ENET_MSCR_HOLDTIME_3CLK	0x00000200
-# define ENET_MSCR_HOLDTIME_8CLK	0x00000700
+# define ENET_MSCR_HOLDTIME		__BIT(10, 8)
 # define ENET_MSCR_DIS_PRE		__BIT(7)
-# define ENET_MSCR_MII_SPEED_25MHZ	__SHIFTIN(4, __BITS(6, 1))
-# define ENET_MSCR_MII_SPEED_33MHZ	__SHIFTIN(6, __BITS(6, 1))
-# define ENET_MSCR_MII_SPEED_40MHZ	__SHIFTIN(7, __BITS(6, 1))
-# define ENET_MSCR_MII_SPEED_50MHZ	__SHIFTIN(9, __BITS(6, 1))
-# define ENET_MSCR_MII_SPEED_66MHZ	__SHIFTIN(13, __BITS(6, 1))
+# define ENET_MSCR_MII_SPEED		__BITS(6, 1)
 
 #define ENET_MIBC			0x00000064
 # define ENET_MIBC_MIB_DIS		__BIT(31)

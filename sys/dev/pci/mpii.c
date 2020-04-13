@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.11.4.2 2020/04/08 14:08:09 martin Exp $ */
+/* $NetBSD: mpii.c,v 1.11.4.3 2020/04/13 08:04:27 martin Exp $ */
 /*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.11.4.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.11.4.3 2020/04/13 08:04:27 martin Exp $");
 
 #include "bio.h"
 
@@ -596,12 +596,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_devs_mtx, MUTEX_DEFAULT, IPL_BIO);
 	sc->sc_devs = malloc(sc->sc_max_devices * sizeof(struct mpii_device *),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_devs == NULL) {
-		aprint_error_dev(self,
-		    "unable to allocate memory for mpii_device\n");
-		goto free_queues;
-	}
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	if (mpii_portenable(sc) != 0) {
 		aprint_error_dev(self, "unable to enable port\n");
@@ -1788,12 +1783,7 @@ mpii_event_raid(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 			case MPII_EVT_IR_CFG_ELEMENT_RC_ADDED:
 			case MPII_EVT_IR_CFG_ELEMENT_RC_VOLUME_CREATED:
 				dev = malloc(sizeof(*dev), M_DEVBUF,
-				    M_NOWAIT | M_ZERO);
-				if (!dev) {
-					printf("%s: failed to allocate a "
-					    "device structure\n", DEVNAME(sc));
-					break;
-				}
+				    M_WAITOK | M_ZERO);
 				mutex_enter(&sc->sc_devs_mtx);
 				if (mpii_find_dev(sc,
 				    le16toh(ce->vol_dev_handle))) {
@@ -2498,10 +2488,7 @@ mpii_dmamem_alloc(struct mpii_softc *sc, size_t size)
 	struct mpii_dmamem	*mdm;
 	int			nsegs;
 
-	mdm = malloc(sizeof(*mdm), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (mdm == NULL)
-		return (NULL);
-
+	mdm = malloc(sizeof(*mdm), M_DEVBUF, M_WAITOK | M_ZERO);
 	mdm->mdm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
@@ -2634,12 +2621,7 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 		return 1;
 
 	sc->sc_ccbs = malloc((sc->sc_max_cmds-1) * sizeof(*ccb),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_ccbs == NULL) {
-		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));
-		return (1);
-	}
-
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->sc_requests = mpii_dmamem_alloc(sc,
 	    sc->sc_request_size * sc->sc_max_cmds);
 	if (sc->sc_requests == NULL) {
@@ -2737,9 +2719,7 @@ mpii_alloc_replies(struct mpii_softc *sc)
 	DNPRINTF(MPII_D_MISC, "%s: mpii_alloc_replies\n", DEVNAME(sc));
 
 	sc->sc_rcbs = malloc(sc->sc_num_reply_frames * sizeof(struct mpii_rcb),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->sc_rcbs == NULL)
-		return (1);
+	    M_DEVBUF, M_WAITOK);
 
 	sc->sc_replies = mpii_dmamem_alloc(sc, sc->sc_reply_size *
 	    sc->sc_num_reply_frames);
@@ -3860,13 +3840,7 @@ mpii_bio_volstate(struct mpii_softc *sc, struct bioc_vol *bv)
 	}
 
 	pagelen = hdr.page_length * 4;
-	vpg = malloc(pagelen, M_TEMP, M_NOWAIT | M_ZERO);
-	if (vpg == NULL) {
-		DNPRINTF(MPII_D_MISC, "%s: unable to allocate space for raid "
-		    "volume page 0\n", DEVNAME(sc));
-		return (ENOMEM);
-	}
-
+	vpg = malloc(pagelen, M_TEMP, M_WAITOK | M_ZERO);
 	if (mpii_req_cfg_page(sc, MPII_CFG_RAID_VOL_ADDR_HANDLE | volh,
 	    MPII_PG_POLL, &hdr, 1, vpg, pagelen) != 0) {
 		DNPRINTF(MPII_D_MISC, "%s: unable to fetch raid volume "
@@ -3912,11 +3886,7 @@ mpii_create_sensors(struct mpii_softc *sc)
 	    DEVNAME(sc), sc->sc_max_volumes);
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensors = malloc(sizeof(envsys_data_t) * sc->sc_max_volumes,
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_sensors == NULL) {
-		aprint_error_dev(sc->sc_dev, "can't allocate envsys_data_t\n");
-		return (1);
-	}
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	for (i = 0; i < sc->sc_max_volumes; i++) {
 		sc->sc_sensors[i].units = ENVSYS_DRIVE;

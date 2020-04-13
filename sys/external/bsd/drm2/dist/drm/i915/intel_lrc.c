@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.9.6.3 2020/04/08 14:08:23 martin Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.9.6.4 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.9.6.3 2020/04/08 14:08:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.9.6.4 2020/04/13 08:04:58 martin Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -685,6 +685,8 @@ static int logical_ring_wait_for_space(struct drm_i915_gem_request *req,
 	struct drm_i915_gem_request *target;
 	unsigned space;
 	int ret;
+
+	space = 0; /* XXX gcc -Wuninitialized */
 
 	if (intel_ring_space(ringbuf) >= bytes)
 		return 0;

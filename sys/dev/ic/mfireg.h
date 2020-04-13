@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.8.38.1 2019/06/10 22:07:10 christos Exp $ */
+/* $NetBSD: mfireg.h,v 1.8.38.2 2020/04/13 08:04:21 martin Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -269,7 +269,7 @@ union mfi_mbox {
 	uint8_t                 b[MFI_MBOX_SIZE];
 	uint16_t                s[6];
 	uint32_t                w[3];
-} __packed __aligned(4);
+};
 
 /* mfi completion codes */
 typedef enum {
@@ -417,13 +417,13 @@ typedef enum {
 /* sense buffer */
 struct mfi_sense {
 	uint8_t			mse_data[MFI_SENSE_SIZE];
-} __packed;
+};
 
 /* scatter gather elements */
 struct mfi_sg32 {
 	uint32_t		addr;
 	uint32_t		len;
-} __packed;
+};
 
 struct mfi_sg64 {
 	uint64_t		addr;
@@ -434,14 +434,14 @@ struct mfi_sg_ieee {
 	uint64_t		addr;
 	uint32_t		len;
 	uint32_t		flags;
-} __packed;
+};
 
 
 union mfi_sgl {
 	struct mfi_sg32		sg32[1];
 	struct mfi_sg64		sg64[1];
 	struct mfi_sg_ieee	sg_ieee[1];
-} __packed;
+};
 
 /* message frame */
 struct mfi_frame_header {
@@ -458,7 +458,7 @@ struct mfi_frame_header {
 	uint16_t		mfh_flags;
 	uint16_t		mfh_timeout;
 	uint32_t		mfh_data_len;
-} __packed;
+};
 
 union mfi_sgl_frame {
 	struct mfi_sg32		sge32[8];
@@ -514,7 +514,7 @@ struct mfi_dcmd_frame {
 	uint32_t		mdf_opcode;
 	union mfi_mbox		mdf_mbox;
 	union mfi_sgl		mdf_sgl;
-} __packed;
+};
 #define MFI_DCMD_MBOX_PEND_FLAG	0x1
 
 struct mfi_abort_frame {
@@ -524,7 +524,7 @@ struct mfi_abort_frame {
 	uint32_t		maf_abort_mfi_addr_lo;
 	uint32_t		maf_abort_mfi_addr_hi;
 	uint32_t		maf_reserved[6];
-} __packed;
+};
 
 struct mfi_smp_frame {
 	struct mfi_frame_header msf_header;
@@ -562,10 +562,9 @@ union mfi_evt_class_locale {
 		uint16_t	locale;
 		uint8_t 	reserved;
 		int8_t		class;
-	} __packed		mec_members;
-
+	} 			mec_members;
 	uint32_t		mec_word;
-} __packed;
+};
 
 struct mfi_evt_log_info {
 	uint32_t		mel_newest_seq_num;
@@ -573,30 +572,30 @@ struct mfi_evt_log_info {
 	uint32_t		mel_clear_seq_num;
 	uint32_t		mel_shutdown_seq_num;
 	uint32_t		mel_boot_seq_num;
-} __packed;
+};
 
 struct mfi_progress {
 	uint16_t		mp_progress;
 	uint16_t		mp_elapsed_seconds;
-} __packed;
+};
 
 struct mfi_evtarg_ld {
 	uint16_t		mel_target_id;
 	uint8_t			mel_ld_index;
 	uint8_t			mel_reserved;
-} __packed;
+};
 
 struct mfi_evtarg_pd {
 	uint16_t		mep_device_id;
 	uint8_t			mep_encl_index;
 	uint8_t			mep_slot_number;
-} __packed;
+};
 
 struct mfi_evtarg_pd_state {
 	struct mfi_evtarg_pd	pd;
 	uint32_t		prev_state;
 	uint32_t		new_state;
-} __packed;
+};
 
 struct mfi_evtarg_pd_address {
 	uint16_t		device_id;
@@ -606,22 +605,22 @@ struct mfi_evtarg_pd_address {
 		struct {
 			uint8_t			encl_index;
 			uint8_t			slot_number;
-		} __packed		pd_address;
+		}			pd_address;
 		struct {
 			uint8_t			encl_position;
 			uint8_t			encl_connector_index;
-		} __packed		encl_address;
-	} __packed		address;
+		}			encl_address;
+	}			address;
 
         uint8_t			scsi_dev_type;
 
 	union {
 		uint8_t			port_bitmap;
 		uint8_t			port_numbers;
-	} __packed		connected;
+	} 			connected;
 
 	uint64_t		sas_addr[2];
-} __packed __aligned(8);
+};
 
 struct mfi_evt_detail {
 	uint32_t				med_seq_num;

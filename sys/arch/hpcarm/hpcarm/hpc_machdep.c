@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.105 2018/03/16 12:10:16 ryo Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.105.2.1 2020/04/13 08:03:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.105 2018/03/16 12:10:16 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.105.2.1 2020/04/13 08:03:51 martin Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_kloader.h"
@@ -103,12 +103,12 @@ void *__sleep_ctx;
 
 void (*__cpu_reset)(void) __dead = cpu_reset;
 
-u_int initarm(int, char **, struct bootinfo *);
+vaddr_t initarm(int, char **, struct bootinfo *);
 #if defined(CPU_SA1100) || defined(CPU_SA1110)
-u_int init_sa11x0(int, char **, struct bootinfo *);
+vaddr_t init_sa11x0(int, char **, struct bootinfo *);
 #endif
 #if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
-u_int init_pxa2x0(int, char **, struct bootinfo *);
+vaddr_t init_pxa2x0(int, char **, struct bootinfo *);
 #endif
 
 #ifdef BOOT_DUMP
@@ -220,7 +220,7 @@ machine_standby(void)
  * This includes:
  *   Taking a copy of the boot configuration structure.
  */
-u_int
+vaddr_t
 initarm(int argc, char **argv, struct bootinfo *bi)
 {
 

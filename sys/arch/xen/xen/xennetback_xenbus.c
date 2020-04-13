@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.65.2.2 2020/04/08 14:07:59 martin Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.65.2.3 2020/04/13 08:04:12 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,14 +25,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.65.2.2 2020/04/08 14:07:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.65.2.3 2020/04/13 08:04:12 martin Exp $");
 
 #include "opt_xen.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/kernel.h>
@@ -71,13 +70,14 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.65.2.2 2020/04/08 14:07:59 m
 #define XENPRINTF(x)
 #endif
 
-extern pt_entry_t xpmap_pg_nx;
-
 #define NET_TX_RING_SIZE __RING_SIZE((netif_tx_sring_t *)0, PAGE_SIZE)
 #define NET_RX_RING_SIZE __RING_SIZE((netif_rx_sring_t *)0, PAGE_SIZE)
 
-/* linux wants at last 16 bytes free in front of the packet */
-#define LINUX_REQUESTED_OFFSET 16
+/*
+ * Number of packets to transmit in one hypercall (= number of pages to
+ * transmit at once).
+ */
+#define NB_XMIT_PAGES_BATCH 64
 
 /* ratecheck(9) for pool allocation failures */
 static const struct timeval xni_pool_errintvl = { 30, 0 };  /* 30s, each */
@@ -88,6 +88,13 @@ typedef enum {
 	DISCONNECTING,
 	DISCONNECTED
 } xnetback_state_t;
+
+struct xnetback_xstate {
+	bus_dmamap_t xs_dmamap;
+	struct mbuf *xs_m;
+	int xs_id;
+	int xs_flags;
+};
 
 /* we keep the xnetback instances in a linked list */
 struct xnetback_instance {
@@ -111,6 +118,10 @@ struct xnetback_instance {
 	grant_handle_t xni_rx_ring_handle;
 	vaddr_t xni_tx_ring_va; /* to unmap the ring */
 	vaddr_t xni_rx_ring_va;
+
+	/* arrays used in xennetback_ifstart(), used for both Rx and Tx */
+	gnttab_copy_t     	xni_gop_copy[NB_XMIT_PAGES_BATCH];
+	struct xnetback_xstate	xni_xstate[NB_XMIT_PAGES_BATCH];
 };
 #define xni_if    xni_ec.ec_if
 #define xni_bpf   xni_if.if_bpf
@@ -129,7 +140,6 @@ static void xennetback_frontend_changed(void *, XenbusState);
 
 static inline void xennetback_tx_response(struct xnetback_instance *,
     int, int);
-static void xennetback_mbuf_addr(struct mbuf *, paddr_t *, int *);
 
 static SLIST_HEAD(, xnetback_instance) xnetback_instances;
 static kmutex_t xnetback_lock;
@@ -141,22 +151,6 @@ static struct xenbus_backend_driver xvif_backend_driver = {
 	.xbakd_create = xennetback_xenbus_create,
 	.xbakd_type = "vif"
 };
-
-/*
- * Number of packets to transmit in one hypercall (= number of pages to
- * transmit at once).
- */
-#define NB_XMIT_PAGES_BATCH 64
-
-/* arrays used in xennetback_ifstart(), too large to allocate on stack */
-/* XXXSMP */
-static gnttab_copy_t     xstart_gop_copy[NB_XMIT_PAGES_BATCH];
-static struct mbuf *mbufs_sent[NB_XMIT_PAGES_BATCH];
-static struct _req_info {
-	int id;
-	int flags;
-} xstart_req[NB_XMIT_PAGES_BATCH];
-
 
 void
 xvifattach(int n)
@@ -176,7 +170,8 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	long domid, handle;
 	struct ifnet *ifp;
 	extern int ifqmaxlen; /* XXX */
-	char *val, *e, *p;
+	char *e, *p;
+	char mac[32];
 	int i, err;
 	struct xenbus_transaction *xbt;
 
@@ -193,13 +188,20 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 		return err;
 	}
 
-	if (xnetif_lookup(domid, handle)) {
-		return EEXIST;
-	}
 	xneti = kmem_zalloc(sizeof(*xneti), KM_SLEEP);
 	xneti->xni_domid = domid;
 	xneti->xni_handle = handle;
 	xneti->xni_status = DISCONNECTED;
+
+	/* Need to keep the lock for lookup and the list update */
+	mutex_enter(&xnetback_lock);
+	if (xnetif_lookup(domid, handle)) {
+		mutex_exit(&xnetback_lock);
+		kmem_free(xneti, sizeof(*xneti));
+		return EEXIST;
+	}
+	SLIST_INSERT_HEAD(&xnetback_instances, xneti, next);
+	mutex_exit(&xnetback_lock);
 
 	xbusd->xbusd_u.b.b_cookie = xneti;
 	xbusd->xbusd_u.b.b_detach = xennetback_xenbus_destroy;
@@ -211,26 +213,39 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	    (int)domid, (int)handle);
 
 	/* read mac address */
-	if ((err = xenbus_read(NULL, xbusd->xbusd_path, "mac", NULL, &val))) {
+	err = xenbus_read(NULL, xbusd->xbusd_path, "mac", mac, sizeof(mac));
+	if (err) {
 		aprint_error_ifnet(ifp, "can't read %s/mac: %d\n",
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}
-	for (i = 0, p = val; i < 6; i++) {
+	for (i = 0, p = mac; i < ETHER_ADDR_LEN; i++) {
 		xneti->xni_enaddr[i] = strtoul(p, &e, 16);
 		if ((e[0] == '\0' && i != 5) && e[0] != ':') {
 			aprint_error_ifnet(ifp,
-			    "%s is not a valid mac address\n", val);
-			free(val, M_DEVBUF);
+			    "%s is not a valid mac address\n", mac);
 			err = EINVAL;
 			goto fail;
 		}
 		p = &e[1];
 	}
-	free(val, M_DEVBUF);
 
 	/* we can't use the same MAC addr as our guest */
 	xneti->xni_enaddr[3]++;
+
+	/* Initialize DMA map, used only for loading PA */
+	for (i = 0; i < __arraycount(xneti->xni_xstate); i++) {
+		if (bus_dmamap_create(xneti->xni_xbusd->xbusd_dmat, PAGE_SIZE,
+		    1, PAGE_SIZE, PAGE_SIZE, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    &xneti->xni_xstate[i].xs_dmamap)
+		    != 0) {
+			aprint_error_ifnet(ifp,
+			    "failed to allocate dma map\n");
+			err = ENOMEM;
+			goto fail;
+		}
+	}
+
 	/* create pseudo-interface */
 	aprint_verbose_ifnet(ifp, "Ethernet address %s\n",
 	    ether_sprintf(xneti->xni_enaddr));
@@ -259,10 +274,6 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(&xneti->xni_if, xneti->xni_enaddr);
 
-	mutex_enter(&xnetback_lock);
-	SLIST_INSERT_HEAD(&xnetback_instances, xneti, next);
-	mutex_exit(&xnetback_lock);
-
 	xbusd->xbusd_otherend_changed = xennetback_frontend_changed;
 
 	do {
@@ -286,6 +297,14 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 		if (err) {
 			aprint_error_ifnet(ifp,
 			    "failed to write %s/feature-rx-copy: %d\n",
+			    xbusd->xbusd_path, err);
+			goto abort_xbt;
+		}
+		err = xenbus_printf(xbt, xbusd->xbusd_path,
+		    "feature-ipv6-csum-offload", "%d", 1);
+		if (err) {
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/feature-ipv6-csum-offload: %d\n",
 			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
@@ -572,14 +591,14 @@ xnetif_lookup(domid_t dom , uint32_t handle)
 	struct xnetback_instance *xneti;
 	bool found = false;
 
-	mutex_enter(&xnetback_lock);
+	KASSERT(mutex_owned(&xnetback_lock));
+
 	SLIST_FOREACH(xneti, &xnetback_instances, next) {
 		if (xneti->xni_domid == dom && xneti->xni_handle == handle) {
 			found = true;
 			break;
 		}
 	}
-	mutex_exit(&xnetback_lock);
 
 	return found;
 }
@@ -632,61 +651,50 @@ xennetback_tx_copy_process(struct ifnet *ifp, struct xnetback_instance *xneti,
 {
 	int i = 0;
 	gnttab_copy_t *gop;
-	struct mbuf *m;
-	struct _req_info *req;
+	struct xnetback_xstate *xst;
 
 	/*
 	 * Copy the data and ack it. Delaying it until the mbuf is
 	 * freed will stall transmit.
 	 */
-	if (HYPERVISOR_grant_table_op(GNTTABOP_copy, xstart_gop_copy, queued)
-	    != 0) {
-		printf("%s: GNTTABOP_copy failed", ifp->if_xname);
+	if (HYPERVISOR_grant_table_op(GNTTABOP_copy, xneti->xni_gop_copy,
+	    queued) != 0) {
+		printf("%s: GNTTABOP_copy Tx failed", ifp->if_xname);
 		goto abort;
 	}
 
 	for (; i < queued; i++) {
-		gop = &xstart_gop_copy[i];
-		m = mbufs_sent[i];
-		req = &xstart_req[i];
+		gop = &xneti->xni_gop_copy[i];
+		xst = &xneti->xni_xstate[i];
 
 		if (gop->status != GNTST_okay) {
-			printf("%s GNTTABOP_copy[%d] %d\n",
+			printf("%s GNTTABOP_copy[%d] Tx %d\n",
 			    ifp->if_xname, i, gop->status);
 			goto abort;
 		}
 
-		xennetback_tx_response(xneti, req->id, NETIF_RSP_OKAY);
+		xennetback_tx_response(xneti, xst->xs_id, NETIF_RSP_OKAY);
 
-		if ((ifp->if_flags & IFF_PROMISC) == 0) {
-			struct ether_header *eh =
-			    mtod(m, struct ether_header *);
-			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
-			    ETHER_ADDR_LEN) != 0) {
-				m_freem(m);
-				continue; /* packet is not for us */
-			}
-		}
+		if (xst->xs_flags & NETTXF_csum_blank)
+			xennet_checksum_fill(ifp, xst->xs_m);
+		else if (xst->xs_flags & NETTXF_data_validated)
+			xst->xs_m->m_pkthdr.csum_flags = XN_M_CSUM_SUPPORTED;
+		m_set_rcvif(xst->xs_m, ifp);
 
-		if (req->flags & NETTXF_csum_blank)
-			xennet_checksum_fill(ifp, m);
-		else if (req->flags & NETTXF_data_validated)
-			m->m_pkthdr.csum_flags = XN_M_CSUM_SUPPORTED;
-		m_set_rcvif(m, ifp);
+		if_percpuq_enqueue(ifp->if_percpuq, xst->xs_m);
 
-		if_percpuq_enqueue(ifp->if_percpuq, m);
+		bus_dmamap_unload(xneti->xni_xbusd->xbusd_dmat,
+                    xst->xs_dmamap);
 	}
 
 	return;
 
 abort:
 	for (; i < queued; i++) {
-		m = mbufs_sent[i];
-		req = &xstart_req[i];
+		xst = &xneti->xni_xstate[i];
 
-		m_freem(m);
-		xennetback_tx_response(xneti, req->id, NETIF_RSP_ERROR);
+		m_freem(xst->xs_m);
+		xennetback_tx_response(xneti, xst->xs_id, NETIF_RSP_ERROR);
 		if_statinc(ifp, if_ierrors);
 	}
 }
@@ -701,8 +709,9 @@ xennetback_evthandler(void *arg)
 	int receive_pending;
 	RING_IDX req_cons;
 	gnttab_copy_t *gop;
-	paddr_t pa;
-	int offset, queued = 0;
+	paddr_t ma;
+	int queued = 0;
+	struct xnetback_xstate *xst;
 
 	XENPRINTF(("xennetback_evthandler "));
 	req_cons = xneti->xni_txring.req_cons;
@@ -733,7 +742,7 @@ xennetback_evthandler(void *arg)
 		 */
 		const char *msg = xennetback_tx_check_packet(&txreq,
 		    xneti->xni_ec.ec_capenable & ETHERCAP_VLAN_MTU);
-		if (msg) {
+		if (__predict_false(msg != NULL)) {
 			printf("%s: packet with size %d is %s\n",
 			    ifp->if_xname, txreq.size, msg);
 			xennetback_tx_response(xneti, txreq.id,
@@ -764,15 +773,30 @@ xennetback_evthandler(void *arg)
 				continue;
 			}
 		}
+		m->m_len = m->m_pkthdr.len = txreq.size;
 
 		XENPRINTF(("%s pkt offset %d size %d id %d req_cons %d\n",
 		    xneti->xni_if.if_xname, txreq.offset,
 		    txreq.size, txreq.id, MASK_NETIF_TX_IDX(req_cons)));
 
-		xennetback_mbuf_addr(m, &pa, &offset);
+		xst = &xneti->xni_xstate[queued];
+		xst->xs_m = m;
+		xst->xs_id = txreq.id;
+		xst->xs_flags = txreq.flags;
+
+		if (bus_dmamap_load_mbuf(xneti->xni_xbusd->xbusd_dmat,
+		    xst->xs_dmamap, m, BUS_DMA_NOWAIT) != 0) {
+			printf("%s: mbuf load failed\n", ifp->if_xname);
+			m_freem(m);
+			xennetback_tx_response(xneti, txreq.id,
+			    NETIF_RSP_DROPPED);
+			if_statinc(ifp, if_ierrors);
+			continue;
+		}
+		ma = xst->xs_dmamap->dm_segs[0].ds_addr;
 
 		/* Queue for the copy */
-		gop = &xstart_gop_copy[queued];
+		gop = &xneti->xni_gop_copy[queued];
 		memset(gop, 0, sizeof(*gop));
 		gop->flags = GNTCOPY_source_gref;
 		gop->len = txreq.size;
@@ -781,15 +805,11 @@ xennetback_evthandler(void *arg)
 		gop->source.offset = txreq.offset;
 		gop->source.domid = xneti->xni_domid;
 
-		gop->dest.offset = offset;
+		gop->dest.offset = ma & PAGE_MASK;
 		gop->dest.domid = DOMID_SELF;
-		gop->dest.u.gmfn = xpmap_ptom(pa) >> PAGE_SHIFT;
+		gop->dest.u.gmfn = ma >> PAGE_SHIFT;
 
 		m->m_len = m->m_pkthdr.len = txreq.size;
-		mbufs_sent[queued] = m;
-
-		xstart_req[queued].id = txreq.id;
-		xstart_req[queued].flags = txreq.flags;
 
 		queued++;
 
@@ -852,13 +872,14 @@ xennetback_copymbuf(struct mbuf *m)
 
 	MGETHDR(new_m, M_DONTWAIT, MT_DATA);
 	if (__predict_false(new_m == NULL)) {
+		m_freem(m);
 		return NULL;
 	}
 	if (m->m_pkthdr.len > MHLEN) {
 		MCLGET(new_m, M_DONTWAIT);
-		if (__predict_false(
-		    (new_m->m_flags & M_EXT) == 0)) {
+		if (__predict_false((new_m->m_flags & M_EXT) == 0)) {
 			m_freem(new_m);
+			m_freem(m);
 			return NULL;
 		}
 	}
@@ -873,44 +894,15 @@ xennetback_copymbuf(struct mbuf *m)
 	 */
 	new_m->m_pkthdr.csum_flags = m->m_pkthdr.csum_flags;
 
+	m_freem(m);
 	return new_m;
-}
-
-/* return physical page address and offset of data area of an mbuf */
-static void
-xennetback_mbuf_addr(struct mbuf *m, paddr_t *xmit_pa, int *offset)
-{
-	switch (m->m_flags & (M_EXT|M_EXT_CLUSTER)) {
-	case M_EXT|M_EXT_CLUSTER:
-		KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
-		*xmit_pa = m->m_ext.ext_paddr;
-		*offset = m->m_data - m->m_ext.ext_buf;
-		break;
-	case 0:
-		KASSERT(m->m_paddr != M_PADDR_INVALID);
-		*xmit_pa = m->m_paddr;
-		*offset = M_BUFOFFSET(m) +
-		    (m->m_data - M_BUFADDR(m));
-		break;
-	default:
-		if (__predict_false(
-		    !pmap_extract(pmap_kernel(),
-		    (vaddr_t)m->m_data, xmit_pa))) {
-			panic("xennet_start: no pa");
-		}
-		*offset = 0;
-		break;
-	}
-	*offset += (*xmit_pa & ~PTE_FRAME);
-	*xmit_pa = (*xmit_pa & PTE_FRAME);
 }
 
 static void
 xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 {
 	struct ifnet *ifp = &xneti->xni_if;
-	struct mbuf *m, *new_m;
-	paddr_t xmit_pa;
+	struct mbuf *m;
 	paddr_t xmit_ma;
 	int i, j;
 	netif_rx_response_t *rxresp;
@@ -918,7 +910,8 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 	RING_IDX req_prod, resp_prod;
 	int do_event = 0;
 	gnttab_copy_t *gop;
-	int id, offset;
+	struct xnetback_xstate *xst;
+	int id;
 	bool abort;
 
 	XENPRINTF(("xennetback_ifsoftstart_copy "));
@@ -934,13 +927,9 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 		resp_prod = xneti->xni_rxring.rsp_prod_pvt;
 		xen_rmb();
 
-		gop = xstart_gop_copy;
+		gop = xneti->xni_gop_copy;
 		abort = false;
-		for (i = 0; !IFQ_IS_EMPTY(&ifp->if_snd);) {
-			XENPRINTF(("have a packet\n"));
-			IFQ_POLL(&ifp->if_snd, m);
-			if (__predict_false(m == NULL))
-				panic("xennetback_ifstart: IFQ_POLL");
+		for (i = 0; i < NB_XMIT_PAGES_BATCH; i++) {
 			if (__predict_false(
 			    req_prod == xneti->xni_rxring.req_cons ||
 			    xneti->xni_rxring.req_cons - resp_prod ==
@@ -954,37 +943,43 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 				abort = true;
 				break;
 			}
-			if (__predict_false(i == NB_XMIT_PAGES_BATCH))
-				break; /* we filled the array */
 
-			xennetback_mbuf_addr(m, &xmit_pa, &offset);
-			if (m->m_pkthdr.len != m->m_len ||
-			    (offset + m->m_pkthdr.len) > PAGE_SIZE) {
-				new_m = xennetback_copymbuf(m);
-				if (__predict_false(new_m == NULL)) {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+			if (m == NULL)
+				break;
+
+			xst = &xneti->xni_xstate[i];
+
+			if (bus_dmamap_load_mbuf(
+			    xneti->xni_xbusd->xbusd_dmat,
+			    xst->xs_dmamap, m, BUS_DMA_NOWAIT) != 0) {
+				/* Not possible to load, must copy */
+				m = xennetback_copymbuf(m);
+				if (__predict_false(m == NULL)) {
 					static struct timeval lasttime;
 					if (ratecheck(&lasttime, &xni_pool_errintvl))
 						printf("%s: cannot allocate new mbuf\n",
 						    ifp->if_xname);
-					abort = 1;
+					abort = true;
 					break;
-				} else {
-					IFQ_DEQUEUE(&ifp->if_snd, m);
-					m_freem(m);
-					m = new_m;
-					xennetback_mbuf_addr(m,
-					    &xmit_pa, &offset);
 				}
-			} else {
-				IFQ_DEQUEUE(&ifp->if_snd, m);
+
+				if (__predict_false(bus_dmamap_load_mbuf(
+				    xneti->xni_xbusd->xbusd_dmat,
+				    xst->xs_dmamap, m, BUS_DMA_NOWAIT) != 0)) {
+					printf("%s: cannot load mbuf\n",
+					    ifp->if_xname);
+					m_freem(m);
+					break;
+				}
 			}
 
-			KASSERT(xmit_pa != POOL_PADDR_INVALID);
-			KASSERT((offset + m->m_pkthdr.len) <= PAGE_SIZE);
-			xmit_ma = xpmap_ptom(xmit_pa);
+			xst->xs_m = m;
+			xmit_ma = xst->xs_dmamap->dm_segs[0].ds_addr;
+
 			/* start filling ring */
 			gop->flags = GNTCOPY_dest_gref;
-			gop->source.offset = offset;
+			gop->source.offset = xmit_ma & PAGE_MASK;
 			gop->source.domid = DOMID_SELF;
 			gop->source.u.gmfn = xmit_ma >> PAGE_SHIFT;
 
@@ -1012,24 +1007,23 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 				rxresp->flags = NETRXF_data_validated;
 			}
 
-			mbufs_sent[i] = m;
 			resp_prod++;
-			i++; /* this packet has been queued */
 			if_statinc(ifp, if_opackets);
 			bpf_mtap(ifp, m, BPF_D_OUT);
 		}
 		if (i != 0) {
 			if (HYPERVISOR_grant_table_op(GNTTABOP_copy,
-			    xstart_gop_copy, i) != 0) {
-				panic("%s: GNTTABOP_copy failed",
+			    xneti->xni_gop_copy, i) != 0) {
+				panic("%s: GNTTABOP_copy Rx failed",
 				    ifp->if_xname);
 			}
 
 			for (j = 0; j < i; j++) {
-				if (xstart_gop_copy[j].status != GNTST_okay) {
-					printf("%s GNTTABOP_copy[%d] %d\n",
+				gop = &xneti->xni_gop_copy[j];
+				if (gop->status != GNTST_okay) {
+					printf("%s GNTTABOP_copy[%d] Rx %d\n",
 					    ifp->if_xname,
-					    j, xstart_gop_copy[j].status);
+					    j, gop->status);
 					printf("%s: req_prod %u req_cons "
 					    "%u rsp_prod %u rsp_prod_pvt %u "
 					    "i %d\n",
@@ -1056,7 +1050,11 @@ xennetback_ifsoftstart_copy(struct xnetback_instance *xneti)
 				do_event = 1;
 			/* now we can free the mbufs */
 			for (j = 0; j < i; j++) {
-				m_freem(mbufs_sent[j]);
+				xst = &xneti->xni_xstate[j];
+				bus_dmamap_unload(xneti->xni_xbusd->xbusd_dmat,
+				    xst->xs_dmamap);
+				m_freem(xst->xs_m);
+				xst->xs_m = NULL;
 			}
 		}
 		/* send event */

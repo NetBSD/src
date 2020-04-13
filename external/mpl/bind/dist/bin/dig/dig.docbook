@@ -593,9 +593,11 @@
 	  <listitem>
 	    <para>
 	      Toggles the printing of the initial comment in the
-	      output identifying the version of <command>dig</command>
-	      and the query options that have been applied.  This
-	      comment is printed by default.
+	      output, identifying the version of <command>dig</command>
+	      and the query options that have been applied.  This option
+	      always has global effect; it cannot be set globally
+	      and then overridden on a per-lookup basis.  The default
+	      is to print this comment.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -604,8 +606,18 @@
 	  <term><option>+[no]comments</option></term>
 	  <listitem>
 	    <para>
-	      Toggle the display of comment lines in the output.
-	      The default is to print comments.
+	      Toggles the display of some comment lines in the output,
+	      containing information about the packet header and
+	      OPT pseudosection, and the names of the response
+	      section.  The default is to print these comments.
+	    </para>
+	    <para>
+	      Other types of comments in the output are not affected by
+	      this option, but can be controlled using other command
+	      line switches. These include <command>+[no]cmd</command>,
+	      <command>+[no]question</command>,
+	      <command>+[no]stats</command>, and
+	      <command>+[no]rrcomments</command>.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -955,8 +967,8 @@
 	  <term><option>+[no]qr</option></term>
 	  <listitem>
 	    <para>
-	      Print [do not print] the query as it is sent.  By
-	      default, the query is not printed.
+	      Toggles the display of the query message as it is sent.
+	      By default, the query is not printed.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -965,7 +977,7 @@
 	  <term><option>+[no]question</option></term>
 	  <listitem>
 	    <para>
-	      Print [do not print] the question section of a query
+	      Toggles the display of the question section of a query
 	      when an answer is returned.  The default is to print
 	      the question section as a comment.
 	    </para>
@@ -1000,8 +1012,10 @@
 	      in the query.  This bit is set by default, which means
 	      <command>dig</command> normally sends recursive
 	      queries.  Recursion is automatically disabled when
-	      the <parameter>+nssearch</parameter> or
-	      <parameter>+trace</parameter> query options are used.
+	      using the <parameter>+nssearch</parameter> option, and
+	      when using <parameter>+trace</parameter> except for
+	      an initial recursive query to get the list of root
+	      servers.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1054,7 +1068,9 @@
 	  <listitem>
 	    <para>
 	      Provide a terse answer.  The default is to print the
-	      answer in a verbose form.
+	      answer in a verbose form.  This option always has global
+	      effect; it cannot be set globally and then overridden on
+	      a per-lookup basis.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1099,10 +1115,9 @@
 	  <term><option>+[no]stats</option></term>
 	  <listitem>
 	    <para>
-	      This query option toggles the printing of statistics:
-	      when the query was made, the size of the reply and
-	      so on.  The default behavior is to print the query
-	      statistics.
+	      Toggles the printing of statistics: when the query was made,
+	      the size of the reply and so on.  The default behavior is to
+	      print the query statistics as a comment after each lookup.
 	    </para>
 	  </listitem>
 	</varlistentry>

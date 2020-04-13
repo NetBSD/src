@@ -1,4 +1,4 @@
-/*	$NetBSD: efimemory.c,v 1.5 2018/03/27 14:15:05 nonaka Exp $	*/
+/*	$NetBSD: efimemory.c,v 1.5.2.1 2020/04/13 08:03:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -30,39 +30,27 @@
 
 #include <bootinfo.h>
 
-static const char *memtypes[] = {
-	"unknown",
-	"available",
-	"reserved",
-	"ACPI reclaimable",
-	"ACPI NVS",
-	"unusable",
-	"disabled",
-	"Persistent",
-	"undefined (8)",
-	"undefined (9)",
-	"undefined (10)",
-	"undefined (11)",
-	"Persistent (Legacy)"
+static const char *efi_memory_type[] = {
+	[EfiReservedMemoryType]		= "Reserved Memory Type",
+	[EfiLoaderCode]			= "Loader Code",
+	[EfiLoaderData]			= "Loader Data",
+	[EfiBootServicesCode]		= "Boot Services Code",
+	[EfiBootServicesData]		= "Boot Services Data",
+	[EfiRuntimeServicesCode]	= "Runtime Services Code",
+	[EfiRuntimeServicesData]	= "Runtime Services Data",
+	[EfiConventionalMemory]		= "Conventional Memory",
+	[EfiUnusableMemory]		= "Unusable Memory",
+	[EfiACPIReclaimMemory]		= "ACPI Reclaim Memory",
+	[EfiACPIMemoryNVS]		= "ACPI Memory NVS",
+	[EfiMemoryMappedIO]		= "MMIO",
+	[EfiMemoryMappedIOPortSpace]	= "MMIO (Port Space)",
+	[EfiPalCode]			= "Pal Code",
+	[EfiPersistentMemory]		= "Persistent Memory",
 };
 
-static const char *efimemtypes[] = {
-	"Reserved",
-	"LoaderCode",
-	"LoaderData",
-	"BootServicesCode",
-	"BootServicesData",
-	"RuntimeServicesCode",
-	"RuntimeServicesData",
-	"ConventionalMemory",
-	"UnusableMemory",
-	"ACPIReclaimMemory",
-	"ACPIMemoryNVS",
-	"MemoryMappedIO",
-	"MemoryMappedIOPortSpace",
-	"PalCode",
-	"PersistentMemory",
-};
+#ifndef KERN_LOADSPACE_SIZE
+#define KERN_LOADSPACE_SIZE	(128 * 1024 * 1024)	/* 128MiB */
+#endif
 
 static int
 getmemtype(EFI_MEMORY_DESCRIPTOR *md)
@@ -103,7 +91,7 @@ EFI_MEMORY_DESCRIPTOR *
 efi_memory_get_map(UINTN *NoEntries, UINTN *MapKey, UINTN *DescriptorSize,
     UINT32 *DescriptorVersion, bool sorted)
 {
-	EFI_MEMORY_DESCRIPTOR *desc, *md, *next, *target, tmp;
+	EFI_MEMORY_DESCRIPTOR *desc, *md, *next, *target, *tmp;
 	UINTN i, j;
 
 	*NoEntries = 0;
@@ -115,18 +103,128 @@ efi_memory_get_map(UINTN *NoEntries, UINTN *MapKey, UINTN *DescriptorSize,
 	if (!sorted)
 		return desc;
 
+	tmp = alloc(*DescriptorSize);
+	if (tmp == NULL)
+		return desc;
+
 	for (i = 0, md = desc; i < *NoEntries - 1; i++, md = next) {
 		target = next = NextMemoryDescriptor(md, *DescriptorSize);
 		for (j = i + 1; j < *NoEntries; j++) {
 			if (md->PhysicalStart > target->PhysicalStart) {
-				CopyMem(&tmp, md, sizeof(*md));
-				CopyMem(md, target, sizeof(*md));
-				CopyMem(target, &tmp, sizeof(*md));
+				CopyMem(tmp, md, *DescriptorSize);
+				CopyMem(md, target, *DescriptorSize);
+				CopyMem(target, tmp, *DescriptorSize);
 			}
 			target = NextMemoryDescriptor(target, *DescriptorSize);
 		}
 	}
+	dealloc(tmp, *DescriptorSize);
+
 	return desc;
+}
+
+EFI_MEMORY_DESCRIPTOR *
+efi_memory_compact_map(EFI_MEMORY_DESCRIPTOR *desc, UINTN *NoEntries,
+    UINTN DescriptorSize)
+{
+	EFI_MEMORY_DESCRIPTOR *md, *next, *target, *tmp;
+	UINTN i, j;
+	UINT32 type;
+	bool first = true, do_compact;
+
+	for (i = 0, md = target = desc; i < *NoEntries; i++, md = next) {
+		type = md->Type;
+		switch (type) {
+		case EfiLoaderCode:
+		case EfiLoaderData:
+		case EfiBootServicesCode:
+		case EfiBootServicesData:
+		case EfiConventionalMemory:
+			if ((md->Attribute & EFI_MEMORY_WB) != 0)
+				type = EfiConventionalMemory;
+			if (md->Attribute == target->Attribute) {
+				do_compact = true;
+				break;
+			}
+			/* FALLTHROUGH */
+		case EfiACPIReclaimMemory:
+		case EfiACPIMemoryNVS:
+		case EfiPersistentMemory:
+		case EfiReservedMemoryType:
+		case EfiRuntimeServicesCode:
+		case EfiRuntimeServicesData:
+		case EfiUnusableMemory:
+		case EfiMemoryMappedIO:
+		case EfiMemoryMappedIOPortSpace:
+		case EfiPalCode:
+		default:
+			do_compact = false;
+			break;
+		}
+
+		if (first) {
+			first = false;
+		} else if (do_compact &&
+		    type == target->Type &&
+		    md->Attribute == target->Attribute &&
+		    md->PhysicalStart == target->PhysicalStart + target->NumberOfPages * EFI_PAGE_SIZE) {
+			/* continuous region */
+			target->NumberOfPages += md->NumberOfPages;
+
+			tmp = md;
+			for (j = i + 1; j < *NoEntries; j++) {
+				next = NextMemoryDescriptor(md, DescriptorSize);
+				CopyMem(md, next, DescriptorSize);
+				md = next;
+			}
+			next = tmp;
+
+			i--;
+			(*NoEntries)--;
+			continue;
+		} else {
+			target = md;
+		}
+
+		target->Type = type;
+		next = NextMemoryDescriptor(md, DescriptorSize);
+	}
+
+	return desc;
+}
+
+int
+efi_memory_get_memmap(struct bi_memmap_entry **memmapp, size_t *num)
+{
+	EFI_STATUS status;
+	EFI_MEMORY_DESCRIPTOR *mdtop, *md, *next;
+	UINTN i, NoEntries, MapKey, DescriptorSize;
+	UINT32 DescriptorVersion;
+	UINTN cols, rows;
+	struct bi_memmap_entry *memmap;
+
+	status = uefi_call_wrapper(ST->ConOut->QueryMode, 4, ST->ConOut,
+	    ST->ConOut->Mode->Mode, &cols, &rows);
+	if (EFI_ERROR(status) || rows <= 2)
+		return -1;
+
+	mdtop = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
+	    &DescriptorVersion, true);
+	efi_memory_compact_map(mdtop, &NoEntries, DescriptorSize);
+
+	memmap = alloc(sizeof(*memmap) * NoEntries);
+
+	for (i = 0, md = mdtop; i < NoEntries; i++, md = next) {
+		memmap[i].addr = md->PhysicalStart;
+		memmap[i].size = md->NumberOfPages * EFI_PAGE_SIZE;
+		memmap[i].type = getmemtype(md);
+
+		next = NextMemoryDescriptor(md, DescriptorSize);
+	}
+	
+	*memmapp = memmap;
+	*num = NoEntries;
+	return 0;
 }
 
 /*
@@ -231,13 +329,21 @@ void
 efi_memory_probe(void)
 {
 	EFI_MEMORY_DESCRIPTOR *mdtop, *md, *next;
+	EFI_STATUS status;
+	EFI_PHYSICAL_ADDRESS bouncebuf;
 	UINTN i, n, NoEntries, MapKey, DescriptorSize, MappingSize;
 	UINT32 DescriptorVersion;
 	int memtype;
 
+	bouncebuf = EFI_ALLOCATE_MAX_ADDRESS;
+	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
+	    EfiLoaderData, EFI_SIZE_TO_PAGES(KERN_LOADSPACE_SIZE), &bouncebuf);
+	if (EFI_ERROR(status))
+		panic("couldn't allocate kernel space.");
+	efi_loadaddr = bouncebuf;
+
 	mdtop = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
 	    &DescriptorVersion, false);
-
 	printf(" mem[");
 	for (i = 0, n = 0, md = mdtop; i < NoEntries; i++, md = next) {
 		next = NextMemoryDescriptor(md, DescriptorSize);
@@ -261,15 +367,14 @@ efi_memory_probe(void)
 }
 
 void
-efi_memory_show_map(bool sorted)
+efi_memory_show_map(bool sorted, bool compact)
 {
 	EFI_STATUS status;
 	EFI_MEMORY_DESCRIPTOR *mdtop, *md, *next;
 	UINTN i, NoEntries, MapKey, DescriptorSize;
 	UINT32 DescriptorVersion;
-	char memstr[32], efimemstr[32];
-	int memtype;
-	UINTN cols, rows, row = 0;
+	char efimemstr[32];
+	UINTN cols, rows, row;
 
 	status = uefi_call_wrapper(ST->ConOut->QueryMode, 4, ST->ConOut,
 	    ST->ConOut->Mode->Mode, &cols, &rows);
@@ -280,25 +385,26 @@ efi_memory_show_map(bool sorted)
 
 	mdtop = efi_memory_get_map(&NoEntries, &MapKey, &DescriptorSize,
 	    &DescriptorVersion, sorted);
+	if (compact)
+		efi_memory_compact_map(mdtop, &NoEntries, DescriptorSize);
+
+	printf("%-22s  %-16s  %-16s  %-16s\n", "Type", "Start", "End", "Attributes");
+	printf("----------------------  ----------------  ----------------  ----------------\n");
+	row = 2;
 
 	for (i = 0, md = mdtop; i < NoEntries; i++, md = next) {
 		next = NextMemoryDescriptor(md, DescriptorSize);
 
-		memtype = getmemtype(md);
-		if (memtype >= __arraycount(memtypes))
-			snprintf(memstr, sizeof(memstr), "unknown (%d)",
-			    memtype);
-		if (md->Type >= __arraycount(efimemtypes))
+		if (md->Type >= __arraycount(efi_memory_type))
 			snprintf(efimemstr, sizeof(efimemstr), "unknown (%d)",
 			    md->Type);
-		printf("%016" PRIxMAX "/%016" PRIxMAX ": %s [%s]\n",
+		printf("%-22s  %016" PRIxMAX "  %016" PRIxMAX "  %016" PRIxMAX "\n",
+		    md->Type >= __arraycount(efi_memory_type) ?
+		      efimemstr : efi_memory_type[md->Type],
 		    (uintmax_t)md->PhysicalStart,
 		    (uintmax_t)md->PhysicalStart +
 		      md->NumberOfPages * EFI_PAGE_SIZE - 1,
-		    memtype >= __arraycount(memtypes) ?
-		      memstr : memtypes[memtype],
-		    md->Type >= __arraycount(efimemtypes) ?
-		      efimemstr : efimemtypes[md->Type]);
+		    (uintmax_t)md->Attribute);
 
 		if (++row >= rows) {
 			row = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: em3027.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $ */
+/*	$NetBSD: em3027.c,v 1.2.2.1 2020/04/13 08:04:20 martin Exp $ */
 /*
  * Copyright (c) 2018 Valery Ushakov
  * All rights reserved.
@@ -28,7 +28,7 @@
  * EM Microelectronic EM3027 RTC
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.2 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.2.2.1 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ static int
 em3027rtc_iic_exec(struct em3027rtc_softc *sc, i2c_op_t op, uint8_t reg,
 		   void *buf, size_t len)
 {
-	const int flags = cold ? 0 : I2C_F_POLL;
+	const int flags = 0;
 	int error;
 
 	error = iic_acquire_bus(sc->sc_tag, flags);

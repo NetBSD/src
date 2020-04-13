@@ -13,7 +13,7 @@
 
 <refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.named.conf">
   <info>
-    <date>2019-02-06</date>
+    <date>2019-07-21</date>
   </info>
   <refentryinfo>
     <corpname>ISC</corpname>
@@ -221,7 +221,7 @@ options {
 	check-wildcard <replaceable>boolean</replaceable>;
 	cleaning-interval <replaceable>integer</replaceable>;
 	clients-per-query <replaceable>integer</replaceable>;
-	cookie-algorithm ( aes | sha1 | sha256 );
+	cookie-algorithm ( aes | sha1 | sha256 | siphash24 );
 	cookie-secret <replaceable>string</replaceable>;
 	coresize ( default | unlimited | <replaceable>sizeval</replaceable> );
 	datasize ( default | unlimited | <replaceable>sizeval</replaceable> );
@@ -403,11 +403,12 @@ options {
 	resolver-retry-interval <replaceable>integer</replaceable>;
 	response-padding { <replaceable>address_match_element</replaceable>; ... } block-size
 	    <replaceable>integer</replaceable>;
-	response-policy { zone <replaceable>string</replaceable> [ log <replaceable>boolean</replaceable> ] [ max-policy-ttl
-	    <replaceable>ttlval</replaceable> ] [ min-update-interval <replaceable>ttlval</replaceable> ] [ policy ( cname |
-	    disabled | drop | given | no-op | nodata | nxdomain | passthru
-	    | tcp-only <replaceable>quoted_string</replaceable> ) ] [ recursive-only <replaceable>boolean</replaceable> ] [
-	    nsip-enable <replaceable>boolean</replaceable> ] [ nsdname-enable <replaceable>boolean</replaceable> ]; ... } [
+	response-policy { zone <replaceable>string</replaceable> [ add-soa <replaceable>boolean</replaceable> ] [ log
+	    <replaceable>boolean</replaceable> ] [ max-policy-ttl <replaceable>ttlval</replaceable> ] [ min-update-interval
+	    <replaceable>ttlval</replaceable> ] [ policy ( cname | disabled | drop | given | no-op |
+	    nodata | nxdomain | passthru | tcp-only <replaceable>quoted_string</replaceable> ) ] [
+	    recursive-only <replaceable>boolean</replaceable> ] [ nsip-enable <replaceable>boolean</replaceable> ] [
+	    nsdname-enable <replaceable>boolean</replaceable> ]; ... } [ add-soa <replaceable>boolean</replaceable> ] [
 	    break-dnssec <replaceable>boolean</replaceable> ] [ max-policy-ttl <replaceable>ttlval</replaceable> ] [
 	    min-update-interval <replaceable>ttlval</replaceable> ] [ min-ns-dots <replaceable>integer</replaceable> ] [
 	    nsip-wait-recurse <replaceable>boolean</replaceable> ] [ qname-wait-recurse <replaceable>boolean</replaceable> ]
@@ -735,11 +736,12 @@ view <replaceable>string</replaceable> [ <replaceable>class</replaceable> ] {
 	resolver-retry-interval <replaceable>integer</replaceable>;
 	response-padding { <replaceable>address_match_element</replaceable>; ... } block-size
 	    <replaceable>integer</replaceable>;
-	response-policy { zone <replaceable>string</replaceable> [ log <replaceable>boolean</replaceable> ] [ max-policy-ttl
-	    <replaceable>ttlval</replaceable> ] [ min-update-interval <replaceable>ttlval</replaceable> ] [ policy ( cname |
-	    disabled | drop | given | no-op | nodata | nxdomain | passthru
-	    | tcp-only <replaceable>quoted_string</replaceable> ) ] [ recursive-only <replaceable>boolean</replaceable> ] [
-	    nsip-enable <replaceable>boolean</replaceable> ] [ nsdname-enable <replaceable>boolean</replaceable> ]; ... } [
+	response-policy { zone <replaceable>string</replaceable> [ add-soa <replaceable>boolean</replaceable> ] [ log
+	    <replaceable>boolean</replaceable> ] [ max-policy-ttl <replaceable>ttlval</replaceable> ] [ min-update-interval
+	    <replaceable>ttlval</replaceable> ] [ policy ( cname | disabled | drop | given | no-op |
+	    nodata | nxdomain | passthru | tcp-only <replaceable>quoted_string</replaceable> ) ] [
+	    recursive-only <replaceable>boolean</replaceable> ] [ nsip-enable <replaceable>boolean</replaceable> ] [
+	    nsdname-enable <replaceable>boolean</replaceable> ]; ... } [ add-soa <replaceable>boolean</replaceable> ] [
 	    break-dnssec <replaceable>boolean</replaceable> ] [ max-policy-ttl <replaceable>ttlval</replaceable> ] [
 	    min-update-interval <replaceable>ttlval</replaceable> ] [ min-ns-dots <replaceable>integer</replaceable> ] [
 	    nsip-wait-recurse <replaceable>boolean</replaceable> ] [ qname-wait-recurse <replaceable>boolean</replaceable> ]

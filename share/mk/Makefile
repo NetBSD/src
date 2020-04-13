@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2018/05/28 13:21:50 christos Exp $
+#	$NetBSD: Makefile,v 1.50.2.1 2020/04/13 08:03:26 martin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 NOOBJ=	# defined
@@ -12,7 +12,8 @@ FILES=	bsd.README bsd.buildinstall.mk bsd.clang-analyze.mk bsd.clean.mk \
 	bsd.info.mk bsd.init.mk bsd.ioconf.mk bsd.kernobj.mk bsd.kinc.mk \
 	bsd.klinks.mk bsd.kmodule.mk bsd.lib.mk bsd.links.mk bsd.lua.mk \
 	bsd.man.mk bsd.nls.mk \
-	bsd.obj.mk bsd.own.mk bsd.prog.mk bsd.rpc.mk bsd.shlib.mk \
+	bsd.obj.mk bsd.own.mk bsd.prog.mk bsd.rpc.mk \
+	bsd.sanitizer.mk bsd.shlib.mk \
 	bsd.subdir.mk bsd.sys.mk bsd.syscall.mk bsd.test.mk bsd.x11.mk sys.mk
 
 FILESDIR=/usr/share/mk

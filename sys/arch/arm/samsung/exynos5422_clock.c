@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5422_clock.c,v 1.6.8.2 2020/04/08 14:07:30 martin Exp $ */
+/* $NetBSD: exynos5422_clock.c,v 1.6.8.3 2020/04/13 08:03:37 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.6.8.2 2020/04/08 14:07:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.6.8.3 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -628,8 +628,8 @@ exynos5422_clock_attach(device_t parent, device_t self, void *aux)
 
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d",
-			     (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
+			     addr, error);
 		return;
 	}
 

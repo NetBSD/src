@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.xlibi18n,v 1.2 2016/06/02 22:41:26 mrg Exp $
+# $NetBSD: Makefile.xlibi18n,v 1.2.16.1 2020/04/13 08:02:32 martin Exp $
 
 .PATH:		${X11SRCDIR.X11}/modules/lc/gen
 SRCS.xlibi18n=	lcGenConv.c
@@ -10,3 +10,5 @@ CPPFLAGS+= \
 CPPFLAGS+= \
 	${XLOCALE.DEFINES} \
 	-DHASXDMAUTH
+
+COPTS.lcGenConv.c+=	${GCC_NO_STRINGOP_OVERFLOW}

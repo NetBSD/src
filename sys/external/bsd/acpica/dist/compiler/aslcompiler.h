@@ -158,7 +158,7 @@ void
 CmDoOutputFiles (
     void);
 
-void
+int
 CmCleanupAndExit (
     void);
 
@@ -959,6 +959,7 @@ void
 FlCloseFile (
     UINT32                  FileId);
 
+ACPI_PRINTF_LIKE (2)
 void
 FlPrintFile (
     UINT32                  FileId,
@@ -1011,10 +1012,6 @@ FlGetFileNode (
 ASL_GLOBAL_FILE_NODE *
 FlGetCurrentFileNode (
     void);
-
-BOOLEAN
-FlInputFileExists (
-    char                    *InputFilename);
 
 
 /*
@@ -1106,6 +1103,7 @@ OtXrefWalkPart1 (
 /*
  * aslutils - common compiler utilities
  */
+ACPI_PRINTF_LIKE(2)
 void
 DbgPrint (
     UINT32                  Type,
@@ -1204,6 +1202,10 @@ UtInternalizeName (
     char                    *ExternalName,
     char                    **ConvertedName);
 
+BOOLEAN
+UtNameContainsAllPrefix (
+    ACPI_PARSE_OBJECT       *Op);
+
 void
 UtAttachNamepathToOwner (
     ACPI_PARSE_OBJECT       *Op,
@@ -1218,6 +1220,15 @@ UtCheckIntegerRange (
 UINT64
 UtDoConstant (
     char                    *String);
+
+char *
+AcpiUtStrdup (
+    char                    *String);
+
+char *
+AcpiUtStrcat (
+    char                    *String1,
+    char                    *String2);
 
 
 /*
@@ -1520,6 +1531,7 @@ DtCreateTemplates (
 /*
  * ASL/ASL+ converter debug
  */
+ACPI_PRINTF_LIKE (1)
 void
 CvDbgPrint (
     char                    *Fmt,

@@ -1,4 +1,4 @@
-/* $NetBSD: tputs.c,v 1.4 2017/05/01 19:09:22 roy Exp $ */
+/* $NetBSD: tputs.c,v 1.4.10.1 2020/04/13 08:03:16 martin Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tputs.c,v 1.4 2017/05/01 19:09:22 roy Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.4.10.1 2020/04/13 08:03:16 martin Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -156,7 +156,8 @@ ti_putp(const TERMINAL *term, const char *str)
 
 	_DIAGASSERT(term != NULL);
 	_DIAGASSERT(str != NULL);
-	return ti_puts(term, str, 1, (int (*)(int, void *))putchar, NULL);
+	return ti_puts(term, str, 1,
+	    (int (*)(int, void *))(void *)putchar, NULL);
 }
 
 int
@@ -166,7 +167,7 @@ tputs(const char *str, int affcnt, int (*outc)(int))
 	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(outc != NULL);
 	return _ti_puts(1, ospeed, PC, str, affcnt,
-	    (int (*)(int, void *))outc, NULL);
+	    (int (*)(int, void *))(void *)outc, NULL);
 }
 
 int

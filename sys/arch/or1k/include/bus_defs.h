@@ -1,4 +1,4 @@
-/* $NetBSD: bus_defs.h,v 1.1 2014/09/03 19:34:26 matt Exp $ */
+/* $NetBSD: bus_defs.h,v 1.1.22.1 2020/04/13 08:04:03 martin Exp $ */
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -103,7 +103,14 @@
 typedef uintptr_t bus_addr_t;
 typedef uintptr_t bus_size_t;
 
+#define PRIxBUSADDR	PRIxPTR
+#define PRIxBUSSIZE	PRIxPTR
+#define PRIuBUSSIZE	PRIuPTR
+
 typedef	uintptr_t bus_space_handle_t;
+
+#define PRIxBSH		PRIxPTR
+
 typedef	const struct or1k_bus_space *bus_space_tag_t;
 
 struct extent;

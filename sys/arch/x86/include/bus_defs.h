@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2011/08/25 15:06:10 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2.56.1 2020/04/13 08:04:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,11 @@
 #ifndef _X86_BUS_H_
 #define _X86_BUS_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_kasan.h"
+#include "opt_kmsan.h"
+#endif
+
 #include <x86/busdefs.h>
 
 #ifdef BUS_SPACE_DEBUG 
@@ -79,6 +84,10 @@
  */
 typedef paddr_t bus_addr_t;
 typedef size_t bus_size_t;
+
+#define PRIxBUSADDR	PRIxPADDR
+#define PRIxBUSSIZE	"%zx"
+#define PRIuBUSSIZE	"%zu"
 
 struct bus_space_tag;
 typedef	struct bus_space_tag *bus_space_tag_t;
@@ -97,6 +106,8 @@ struct bus_space_tag {
 };
 
 typedef	vaddr_t bus_space_handle_t;
+
+#define PRIxBSH		PRIxVADDR
 
 typedef struct x86_bus_dma_tag		*bus_dma_tag_t;
 typedef struct x86_bus_dmamap		*bus_dmamap_t;
@@ -135,6 +146,11 @@ struct x86_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+#if defined(KASAN) || defined(KMSAN)
+	void		*dm_buf;
+	bus_size_t	dm_buflen;
+	int		dm_buftype;
+#endif
 	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */

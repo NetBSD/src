@@ -79,8 +79,6 @@ CVersionInfo::CVersionInfo(CString filename)
 		// And finally the version info is ours
 		m_fixedInfo = (VS_FIXEDFILEINFO *)viBlob;
 
-		UINT blobLen = 0;
-
 		// If we got here, all is good
 	}
 	m_isValid = TRUE;

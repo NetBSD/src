@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.21.38.1 2020/04/08 14:08:05 martin Exp $        */
+/*      $NetBSD: adwlib.h,v 1.21.38.2 2020/04/13 08:04:21 martin Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -710,80 +710,6 @@ typedef struct adw_sg_block {
 
 
 /*
- * Adapter operation variable structure.
- *
- * One structure is required per host adapter.
- *
- * Field naming convention:
- *
- *  *_able indicates both whether a feature should be enabled or disabled
- *  and whether a device is capable of the feature. At initialization
- *  this field may be set, but later if a device is found to be incapable
- *  of the feature, the field is cleared.
- */
-#define	CCB_HASH_SIZE	32	/* hash table size for phystokv */
-#define	CCB_HASH_SHIFT	9
-#define CCB_HASH(x)	((((x)) >> CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
-
-typedef int (* ADW_CALLBACK) (int);
-
-typedef struct adw_softc {
-
-	device_t		sc_dev;
-
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	bus_dma_tag_t		sc_dmat;
-	bus_dmamap_t		sc_dmamap_control; /* maps the control structures */
-	bus_dmamap_t		sc_dmamap_carrier; /* maps the carrier structures */
-	void			*sc_ih;
-
-	struct adw_control	*sc_control; /* control structures */
-
-	struct adw_ccb		*sc_ccbhash[CCB_HASH_SIZE];
-	TAILQ_HEAD(, adw_ccb)	sc_free_ccb, sc_waiting_ccb;
-	TAILQ_HEAD(adw_pending_ccb, adw_ccb)	sc_pending_ccb;
-	struct scsipi_adapter   sc_adapter;
-	struct scsipi_channel   sc_channel;
-
-	int			sc_freeze_dev[ADW_MAX_TID+1];
-
-	ADW_CALLBACK	isr_callback;	/* pointer to function, called in AdwISR() */
-	ADW_CALLBACK	async_callback;	/* pointer to function, called in AdwISR() */
-	u_int16_t	bios_ctrl;	/* BIOS control word, EEPROM word 12 */
-	u_int16_t	wdtr_able;	/* try WDTR for a device */
-	u_int16_t	sdtr_able;	/* try SDTR for a device */
-	u_int16_t	ultra_able;	/* try SDTR Ultra speed for a device */
-	u_int16_t	sdtr_speed1;	/* EEPROM SDTR Speed for TID 0-3   */
-	u_int16_t	sdtr_speed2;	/* EEPROM SDTR Speed for TID 4-7   */
-	u_int16_t	sdtr_speed3;	/* EEPROM SDTR Speed for TID 8-11  */
-	u_int16_t	sdtr_speed4;	/* EEPROM SDTR Speed for TID 12-15 */
-	u_int16_t	tagqng_able;	/* try tagged queuing with a device */
-	u_int16_t	ppr_able;	/* PPR message capable per TID bitmask. */
-	u_int16_t	start_motor;	/* start motor command allowed */
-	u_int8_t	max_dvc_qng;	/* maximum number of tagged commands per device */
-	u_int8_t	scsi_reset_wait; /* delay in seconds after scsi bus reset */
-	u_int8_t	chip_no; 	/* should be assigned by caller */
-	u_int8_t	max_host_qng;	/* maximum number of Q'ed command allowed */
-	u_int8_t	irq_no;  	/* IRQ number */
-	u_int8_t	chip_type;	/* chip SCSI target ID */
-	u_int16_t	no_scam; 	/* scam_tolerant of EEPROM */
-	u_int32_t	drv_ptr; 	/* driver pointer to private structure */
-	u_int8_t	chip_scsi_id;	/* chip SCSI target ID */
-	u_int8_t	bist_err_code;
-	u_int16_t	carr_pending_cnt;  /* Count of pending carriers. */
-	struct adw_carrier	*carr_freelist;	/* Carrier free list. */
-	struct adw_carrier	*icq_sp; /* Initiator command queue stopper pointer. */
-	struct adw_carrier	*irq_sp; /* Initiator response queue stopper pointer. */
- /*
-  * Note: The following fields will not be used after initialization. The
-  * driver may discard the buffer after initialization is done.
-  */
-  ADW_DVC_CFG cfg; /* temporary configuration structure  */
-} ADW_SOFTC;
-
-
-/*
  * ADW_SCSI_REQ_Q - microcode request structure
  *
  * All fields in this structure up to byte 60 are used by the microcode.
@@ -874,6 +800,80 @@ typedef struct adw_scsi_req_q {
 #define SCSI_STATUS_RSERV_CONFLICT	0x18
 #define SCSI_STATUS_CMD_TERMINATED	0x22
 #define SCSI_STATUS_QUEUE_FULL		0x28
+
+
+/*
+ * Adapter operation variable structure.
+ *
+ * One structure is required per host adapter.
+ *
+ * Field naming convention:
+ *
+ *  *_able indicates both whether a feature should be enabled or disabled
+ *  and whether a device is capable of the feature. At initialization
+ *  this field may be set, but later if a device is found to be incapable
+ *  of the feature, the field is cleared.
+ */
+#define	CCB_HASH_SIZE	32	/* hash table size for phystokv */
+#define	CCB_HASH_SHIFT	9
+#define CCB_HASH(x)	((((x)) >> CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
+
+typedef struct adw_softc {
+
+	device_t		sc_dev;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	bus_dma_tag_t		sc_dmat;
+	bus_dmamap_t		sc_dmamap_control; /* maps the control structures */
+	bus_dmamap_t		sc_dmamap_carrier; /* maps the carrier structures */
+	void			*sc_ih;
+
+	struct adw_control	*sc_control; /* control structures */
+
+	struct adw_ccb		*sc_ccbhash[CCB_HASH_SIZE];
+	TAILQ_HEAD(, adw_ccb)	sc_free_ccb, sc_waiting_ccb;
+	TAILQ_HEAD(adw_pending_ccb, adw_ccb)	sc_pending_ccb;
+	struct scsipi_adapter   sc_adapter;
+	struct scsipi_channel   sc_channel;
+
+	int			sc_freeze_dev[ADW_MAX_TID+1];
+
+	/* pointers to functions, called in AdwISR() */
+	void (*isr_callback)(struct adw_softc *, ADW_SCSI_REQ_Q *);
+	void (*async_callback)(struct adw_softc *, u_int8_t);
+
+	u_int16_t	bios_ctrl;	/* BIOS control word, EEPROM word 12 */
+	u_int16_t	wdtr_able;	/* try WDTR for a device */
+	u_int16_t	sdtr_able;	/* try SDTR for a device */
+	u_int16_t	ultra_able;	/* try SDTR Ultra speed for a device */
+	u_int16_t	sdtr_speed1;	/* EEPROM SDTR Speed for TID 0-3   */
+	u_int16_t	sdtr_speed2;	/* EEPROM SDTR Speed for TID 4-7   */
+	u_int16_t	sdtr_speed3;	/* EEPROM SDTR Speed for TID 8-11  */
+	u_int16_t	sdtr_speed4;	/* EEPROM SDTR Speed for TID 12-15 */
+	u_int16_t	tagqng_able;	/* try tagged queuing with a device */
+	u_int16_t	ppr_able;	/* PPR message capable per TID bitmask. */
+	u_int16_t	start_motor;	/* start motor command allowed */
+	u_int8_t	max_dvc_qng;	/* maximum number of tagged commands per device */
+	u_int8_t	scsi_reset_wait; /* delay in seconds after scsi bus reset */
+	u_int8_t	chip_no; 	/* should be assigned by caller */
+	u_int8_t	max_host_qng;	/* maximum number of Q'ed command allowed */
+	u_int8_t	irq_no;  	/* IRQ number */
+	u_int8_t	chip_type;	/* chip SCSI target ID */
+	u_int16_t	no_scam; 	/* scam_tolerant of EEPROM */
+	u_int32_t	drv_ptr; 	/* driver pointer to private structure */
+	u_int8_t	chip_scsi_id;	/* chip SCSI target ID */
+	u_int8_t	bist_err_code;
+	u_int16_t	carr_pending_cnt;  /* Count of pending carriers. */
+	struct adw_carrier	*carr_freelist;	/* Carrier free list. */
+	struct adw_carrier	*icq_sp; /* Initiator command queue stopper pointer. */
+	struct adw_carrier	*irq_sp; /* Initiator response queue stopper pointer. */
+ /*
+  * Note: The following fields will not be used after initialization. The
+  * driver may discard the buffer after initialization is done.
+  */
+  ADW_DVC_CFG cfg; /* temporary configuration structure  */
+} ADW_SOFTC;
 
 
 /*

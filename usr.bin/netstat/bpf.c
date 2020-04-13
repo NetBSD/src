@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.13 2018/06/26 09:50:42 msaitoh Exp $	*/
+/*	$NetBSD: bpf.c,v 1.13.2.1 2020/04/13 08:05:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ bpf_stats(void)
 	size_t len = sizeof(bpf_s);
 
 	if (use_sysctl) {
-		if (sysctlbyname("net.bpf.stats", &bpf_s, &len, NULL, 0) == -1)
+		if (prog_sysctlbyname("net.bpf.stats", &bpf_s, &len, NULL, 0) == -1)
 			err(1, "net.bpf.stats");
 	
 		printf("bpf:\n");
@@ -83,7 +83,7 @@ bpf_dump(const char *bpfif)
 		/* adapted from sockstat.c by Andrew Brown */
 
 		sz = CTL_MAXNAME;
-		if (sysctlnametomib("net.bpf.peers", &name[0], &sz) == -1)
+		if (prog_sysctlnametomib("net.bpf.peers", &name[0], &sz) == -1)
 			err(1, "sysctlnametomib: net.bpf.peers");
 		namelen = sz;
 

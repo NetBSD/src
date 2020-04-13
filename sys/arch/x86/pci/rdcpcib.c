@@ -1,4 +1,4 @@
-/*	$NetBSD: rdcpcib.c,v 1.2 2011/07/01 18:22:08 dyoung Exp $	*/
+/*	$NetBSD: rdcpcib.c,v 1.2.54.1 2020/04/13 08:04:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rdcpcib.c,v 1.2 2011/07/01 18:22:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rdcpcib.c,v 1.2.54.1 2020/04/13 08:04:11 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,6 +88,17 @@ CFATTACH_DECL2_NEW(rdcpcib, sizeof(struct rdcpcib_softc),
     rdcpcibmatch, rdcpcibattach, rdcpcibdetach, NULL,
     pcibrescan, pcibchilddet);
 
+
+static const struct rdcpcib_device {
+	pcireg_t vendor, product;
+} rdcpcib_devices[] = {
+	{ PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6011_PCIB},
+	{ PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6013_PCIB},
+	{ PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6031_PCIB},
+	{ PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6035_PCIB},
+	{ PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6036_PCIB},
+};
+
 static int
 rdcpcibmatch(device_t parent, cfdata_t match, void *aux)
 {
@@ -97,9 +108,11 @@ rdcpcibmatch(device_t parent, cfdata_t match, void *aux)
 	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_BRIDGE_ISA)
 		return 0;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RDC &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RDC_PCIB)
+	for (size_t i = 0; i < __arraycount(rdcpcib_devices); i++) {
+		if (PCI_VENDOR(pa->pa_id) == rdcpcib_devices[i].vendor &&
+		    PCI_PRODUCT(pa->pa_id) == rdcpcib_devices[i].product)
 			return 10;
+	}
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_intel.c,v 1.2.8.2 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: tprof_x86_intel.c,v 1.2.8.3 2020/04/13 08:04:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.2.8.2 2019/06/10 22:07:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.2.8.3 2020/04/13 08:04:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +119,8 @@ tprof_intel_start_cpu(void *arg1, void *arg2)
 	wrmsr(MSR_PERFCTR0, counter_reset_val);
 	wrmsr(MSR_EVNTSEL0, evtval);
 
-	intel_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_PCINT);
-	lapic_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
+	intel_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_LVT_PCINT);
+	lapic_writereg(LAPIC_LVT_PCINT, LAPIC_DLMODE_NMI);
 }
 
 static void
@@ -131,7 +131,7 @@ tprof_intel_stop_cpu(void *arg1, void *arg2)
 	wrmsr(MSR_EVNTSEL0, 0);
 	wrmsr(MSR_PERFCTR0, 0);
 
-	lapic_writereg(LAPIC_PCINT, intel_lapic_saved[cpu_index(ci)]);
+	lapic_writereg(LAPIC_LVT_PCINT, intel_lapic_saved[cpu_index(ci)]);
 }
 
 static int
@@ -162,9 +162,9 @@ tprof_intel_nmi(const struct trapframe *tf, void *dummy)
 	wrmsr(MSR_PERFCTR0, counter_reset_val);
 
 	/* unmask PMI */
-	pcint = lapic_readreg(LAPIC_PCINT);
+	pcint = lapic_readreg(LAPIC_LVT_PCINT);
 	KASSERT((pcint & LAPIC_LVT_MASKED) != 0);
-	lapic_writereg(LAPIC_PCINT, pcint & ~LAPIC_LVT_MASKED);
+	lapic_writereg(LAPIC_LVT_PCINT, pcint & ~LAPIC_LVT_MASKED);
 
 	return 1;
 }

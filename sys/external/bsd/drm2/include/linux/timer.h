@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.5.20.1 2019/06/10 22:08:32 christos Exp $	*/
+/*	$NetBSD: timer.h,v 1.5.20.2 2020/04/13 08:04:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ setup_timer(struct timer_list *timer, void (*fn)(unsigned long),
 	callout_init(&timer->tl_callout, 0);
 
 	/* XXX Super-sketchy casts!  */
-	callout_setfunc(&timer->tl_callout, (void (*)(void *))fn,
+	callout_setfunc(&timer->tl_callout, (void (*)(void *))(void *)fn,
 	    (void *)(uintptr_t)arg);
 }
 

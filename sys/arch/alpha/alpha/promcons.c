@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.39 2014/07/25 08:10:31 dholland Exp $ */
+/* $NetBSD: promcons.c,v 1.39.28.1 2020/04/13 08:03:29 martin Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.39 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.39.28.1 2020/04/13 08:03:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.39 2014/07/25 08:10:31 dholland Exp $
 
 #include <machine/cpuconf.h>
 #include <machine/prom.h>
+
+#ifndef CONSPEED
+#define	CONSPEED 9600
+#endif
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 
@@ -129,7 +133,7 @@ promopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = TTYDEF_CFLAG|CLOCAL;
 		tp->t_lflag = TTYDEF_LFLAG;
-		tp->t_ispeed = tp->t_ospeed = 9600;
+		tp->t_ispeed = tp->t_ospeed = CONSPEED;
 		ttsetwater(tp);
 
 		setuptimeout = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.119.18.2 2020/04/08 14:09:03 martin Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.119.18.3 2020/04/13 08:05:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -116,6 +116,40 @@ struct	partition {		/* the partition table */
 #define	p_cpg	__partition_u1.cpg
 #define	p_sgs	__partition_u1.sgs
 };
+
+/*
+ * We'd rather have disklabel be the same size on 32 and 64 bit systems
+ * but it really isn't. In revision 108 matt@ tried to do that by adding
+ * un_d_pad as a uint64_t. This was really smart because the net effect
+ * was to grow the struct by 4 bytes on most LP32 machines and make it
+ * the same as LP64 without changing the layout (which is a nono because
+ * it is stored on existing disks). The easy way would have been to add
+ * padding at the end, but that would have been confusing (although that
+ * is what actually happens), because the partitions structure is supposed
+ * to be variable size and putting a padding uint32_t would be weird.
+ * Unfornately mips32 and i386 align uint64_t standalone at an 8 byte
+ * boundary, but in structures at a 4 byte boundary so matt's
+ * change did not affect them.
+ *
+ * We also prefer to have the structure 4 byte aligned so that the
+ * subr_disk_mbr.c code that scans for label does not trigger ubsan
+ * when comparing magic (without making the code ugly). To do this
+ * we can unexpose the d_boot{0,1} pointers in the kernel (so that
+ * LP64 systems can become 4 byte aligned) and at the same time
+ * remove the un_d_pad member and add padding at the end. The d_boot{0,1}
+ * fields are only used in userland in getdiskbyname(3), filled with
+ * the names of the primary and secondary bootstrap from /etc/disktab.
+ *
+ * While this is a way forward, it is not clear that it is the best
+ * way forward. The ubsan warning is incorrect and the code
+ * will always work since d_magic is always 4 byte aligned even
+ * when structure disklabel is not 8 byte aligned, so what we do
+ * now is ignore it. Another way would be to do offset arithmetic
+ * on the pointer and use it as a char *. That would not prevent
+ * other misaligned accesses in the future. Finally one could
+ * copy the unaligned structure to an aligned one, but that eats
+ * up space on the stack.
+ */
 struct disklabel {
 	uint32_t d_magic;		/* the magic number */
 	uint16_t d_type;		/* drive type */

@@ -1,4 +1,4 @@
-/* $NetBSD: ar_intr.c,v 1.5 2015/06/29 16:36:17 maxv Exp $ */
+/* $NetBSD: ar_intr.c,v 1.5.18.1 2020/04/13 08:03:59 martin Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.5 2015/06/29 16:36:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar_intr.c,v 1.5.18.1 2020/04/13 08:03:59 martin Exp $");
 
 #define __INTR_PRIVATE
 
@@ -110,9 +110,7 @@ genath_cpu_intr_establish(int intr, int (*func)(void *), void *arg)
 {
 	struct atheros_intrhand	*ih;
 
-	if ((ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT)) == NULL)
-		return NULL;
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = intr;
@@ -152,9 +150,7 @@ genath_misc_intr_establish(int irq, int (*func)(void *), void *arg)
 	int s;
 
 
-	if ((ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT)) == NULL)
-		return NULL;
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;
@@ -296,4 +292,3 @@ const struct atheros_intrsw atheros_intrsw = {
 	.aisw_misc_disestablish = genath_misc_intr_disestablish,
 	.aisw_iointr = genath_iointr,
 };
-

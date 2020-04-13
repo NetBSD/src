@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_sis.c,v 1.14 2010/11/13 13:52:05 uebayasi Exp $	*/
+/*	$NetBSD: agp_sis.c,v 1.14.60.1 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_sis.c,v 1.14 2010/11/13 13:52:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_sis.c,v 1.14.60.1 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,11 +80,7 @@ agp_sis_attach(device_t parent, device_t self, void *aux)
 	struct agp_gatt *gatt;
 	pcireg_t reg;
 
-	ssc = malloc(sizeof *ssc, M_AGP, M_NOWAIT);
-	if (ssc == NULL) {
-		aprint_error(": can't allocate chipset-specific softc\n");
-		return ENOMEM;
-	}
+	ssc = malloc(sizeof *ssc, M_AGP, M_WAITOK);
 	sc->as_methods = &agp_sis_methods;
 	sc->as_chipc = ssc;
 	pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, &sc->as_capoff,

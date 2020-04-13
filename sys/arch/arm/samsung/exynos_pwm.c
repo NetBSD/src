@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_pwm.c,v 1.1.6.2 2019/06/10 22:05:56 christos Exp $ */
+/* $NetBSD: exynos_pwm.c,v 1.1.6.3 2020/04/13 08:03:37 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_pwm.c,v 1.1.6.2 2019/06/10 22:05:56 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pwm.c,v 1.1.6.3 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -231,7 +231,7 @@ exynos_pwm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d", addr, error);
 		return;
 	}
 	for (n = 0; n < PWM_NTIMERS; n++) {

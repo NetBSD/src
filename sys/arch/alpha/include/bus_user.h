@@ -1,4 +1,4 @@
-/* $NetBSD: bus_user.h,v 1.2 2016/01/24 16:47:50 christos Exp $ */
+/* $NetBSD: bus_user.h,v 1.2.18.1 2020/04/13 08:03:29 martin Exp $ */
 /*
  * XXX This file is a stopgap intended to keep NetBSD/alpha buildable
  * XXX while developers figure out whether/how to expose to userland
@@ -17,6 +17,10 @@
  */
 typedef u_long bus_addr_t;
 typedef u_long bus_size_t;
+
+#define PRIxBUSADDR	"lx"
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
 
 /*
  * Translation of an Alpha bus address; INTERNAL USE ONLY.

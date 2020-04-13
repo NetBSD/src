@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.104.2.2 2020/04/08 14:08:09 martin Exp $ */
+/* $NetBSD: if_ti.c,v 1.104.2.3 2020/04/13 08:04:26 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.104.2.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.104.2.3 2020/04/13 08:04:26 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -624,14 +624,7 @@ ti_alloc_jumbo_mem(struct ti_softc *sc)
 		sc->ti_cdata.ti_jslots[i] = ptr;
 		ptr += TI_JLEN;
 		entry = malloc(sizeof(struct ti_jpool_entry),
-			       M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			free(sc->ti_cdata.ti_jumbo_buf, M_DEVBUF);
-			sc->ti_cdata.ti_jumbo_buf = NULL;
-			printf("%s: no memory for jumbo "
-			    "buffer queue!\n", device_xname(sc->sc_dev));
-			return (ENOBUFS);
-		}
+			       M_DEVBUF, M_WAITOK);
 		entry->slot = i;
 		SIMPLEQ_INSERT_HEAD(&sc->ti_jfree_listhead, entry,
 				    jpool_entries);
@@ -1846,6 +1839,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
+	sc->ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 
 	/*
 	 * We can do IPv4, TCPv4, and UDPv4 checksums in hardware.

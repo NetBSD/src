@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.c,v 1.3.4.3 2020/04/08 14:09:02 martin Exp $ */
+/* $NetBSD: efiacpi.c,v 1.3.4.4 2020/04/13 08:05:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ struct acpi_rdsp {
 
 #include <libfdt.h>
 
-#define	ACPI_FDT_SIZE	(64 * 1024)
+#define	ACPI_FDT_SIZE	(128 * 1024)
 
 static EFI_GUID Acpi20TableGuid = ACPI_20_TABLE_GUID;
 static EFI_GUID Smbios3TableGuid = SMBIOS3_TABLE_GUID;

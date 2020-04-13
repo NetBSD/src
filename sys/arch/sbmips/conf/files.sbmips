@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.16 2014/07/20 10:22:55 alnsn Exp $
+# $NetBSD: files.sbmips,v 1.16.28.1 2020/04/13 08:04:06 martin Exp $
 
 maxpartitions 8
 
@@ -59,7 +59,7 @@ file	arch/alpha/isa/isapnp_machdep.c	isapnp
 # needs to be before its isa and pci attachments.  This answer is
 # non-optimal, but I don't have a better answer right now.
 
-# PCIC pcmcia contoller
+# PCIC pcmcia controller
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2015/01/02 19:43:13 abs Exp $	*/
+/*	$NetBSD: md.c,v 1.4.16.1 2020/04/13 08:06:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -35,7 +35,6 @@
 /* md.c -- luna68k machine specific routines */
 
 #include <sys/types.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -66,8 +65,8 @@ md_init_set_status(int flags)
 	(void)flags;
 }
 
-int
-md_get_info(void)
+bool
+md_get_info(struct install_partition_desc *install)
 {
 	struct disklabel disklabel;
 	int fd;
@@ -105,66 +104,69 @@ md_get_info(void)
 	if (disklabel.d_secperunit > pm->dlsize)
 		pm->dlsize = disklabel.d_secperunit;
 
-	return 1;
+	return true;
 }
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-int
-md_make_bsd_partitions(void)
+bool
+md_make_bsd_partitions(struct install_partition_desc *install)
 {
 
-	return make_bsd_partitions();
+	return make_bsd_partitions(install);
 }
 
 /*
  * any additional partition validation
  */
-int
-md_check_partitions(void)
+bool
+md_check_partitions(struct install_partition_desc *install)
 {
 
 	/*
 	 * Make sure that a boot partition (old 4.3BSD UFS) is prepared
 	 * properly for our native bootloader.
 	 */
-	if (pm->bsdlabel[PART_BOOT].pi_fstype != FS_BSDFFS ||
-	    (pm->bsdlabel[PART_BOOT].pi_flags & PIF_NEWFS) == 0) {
+	if (install->num < 1 || install->infos[0].fs_type != PART_BOOT_TYPE ||
+	    install->infos[0].fs_version != PART_BOOT_SUBT ||
+	    !(install->infos[0].instflags & PUIINST_NEWFS)) {
 		msg_display(MSG_nobootpartdisklabel);
 		process_menu(MENU_ok, NULL);
-		return 0;
+		return false;
 	}
-	return 1;
+	return true;
 }
 
 /*
  * hook called before writing new disklabel.
  */
-int
-md_pre_disklabel(void)
+bool
+md_pre_disklabel(struct install_partition_desc *install,
+     struct disk_partitions *parts)
 {
 
-	return 0;
+	return true;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-int
-md_post_disklabel(void)
+bool
+md_post_disklabel(struct install_partition_desc *install,
+     struct disk_partitions *parts)
 {
-	return 0;
+	return true;
 }
 
 static int
-copy_bootloader(void)
+copy_bootloader(const char *diskdev)
 {
 	const char *mntdir = "/mnt2";
 
-	msg_display(MSG_copybootloader, pm->diskdev);
+	msg_fmt_display(MSG_copybootloader, "%s", diskdev);
 	if (!run_program(RUN_SILENT | RUN_ERROR_OK,
-	    "mount /dev/%s%c %s", pm->diskdev, 'a' + PART_BOOT, mntdir)) {
+	    "mount %s %s", diskdev, mntdir)) {
 		mnt2_mounted = 1;
 		run_program(0, "/bin/cp /usr/mdec/boot %s", mntdir);
 		run_program(RUN_SILENT | RUN_ERROR_OK, "umount %s", mntdir);
@@ -182,25 +184,38 @@ copy_bootloader(void)
  * message.
  */
 int
-md_post_newfs(void)
+md_post_newfs(struct install_partition_desc *install)
 {
+	char rdisk[STRSIZE], disk[STRSIZE];
+
+	if (install->num < 1)
+		return 1;
+
+	if (!install->infos[0].parts->pscheme->get_part_device(
+	    install->infos[0].parts, install->infos[0].cur_part_id,
+ 	    rdisk, sizeof rdisk, NULL, raw_dev_name, true, true))
+		return 1;
+	if (!install->infos[0].parts->pscheme->get_part_device(
+	    install->infos[0].parts, install->infos[0].cur_part_id,
+	    disk, sizeof disk, NULL, plain_name, true, true))
+		return 1;
 
 	if (run_program(RUN_DISPLAY | RUN_PROGRESS,
-	    "/sbin/newfs -V2 -O 0 -b %d -f %d /dev/r%s%c",
-	    PART_BOOT_BSIZE, PART_BOOT_FSIZE, pm->diskdev, 'a' + PART_BOOT))
+	    "/sbin/newfs -V2 -O 0 -b %d -f %d %s",
+	    PART_BOOT_BSIZE, PART_BOOT_FSIZE, rdisk))
 		return 1;
-	return copy_bootloader();
+	return copy_bootloader(disk);
 }
 
 int
-md_post_extract(void)
+md_post_extract(struct install_partition_desc *install)
 {
 
 	return 0;
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install(struct install_partition_desc *install)
 {
 
 #ifndef DEBUG
@@ -211,26 +226,35 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update(void)
+md_pre_update(struct install_partition_desc *install)
 {
 	return 1;
 }
 
 /* Upgrade support */
 int
-md_update(void)
+md_update(struct install_partition_desc *install)
 {
 	const char *mntdir = "/mnt2";
 	char bootpath[MAXPATHLEN];
 	struct stat sb;
 	bool hasboot = false;
+	char disk[STRSIZE];
+
+	if (install->num < 1)
+		return 0;
+
+	if (!install->infos[0].parts->pscheme->get_part_device(
+	    install->infos[0].parts, install->infos[0].cur_part_id,
+ 	    disk, sizeof disk, NULL, plain_name, true, true))
+		return 0;
 
 	/*
 	 * Check if there is a boot UFS parttion and it has the old bootloader.
 	 * We'll update bootloader only if the old one was installed.
 	 */
 	if (!run_program(RUN_SILENT | RUN_ERROR_OK,
-	    "mount -r /dev/%s%c %s", pm->diskdev, 'a' + PART_BOOT, mntdir)) {
+	    "mount -r %s %s", disk, mntdir)) {
 		mnt2_mounted = 1;
 		snprintf(bootpath, sizeof(bootpath), "%s/%s", mntdir, "boot");
 		if (stat(bootpath, &sb) == 0 && S_ISREG(sb.st_mode))
@@ -238,13 +262,30 @@ md_update(void)
 		run_program(RUN_SILENT | RUN_ERROR_OK, "umount %s", mntdir);
 		mnt2_mounted = 0;
 		if (hasboot)
-			(void)copy_bootloader();
+			(void)copy_bootloader(disk);
 	}
 	return 1;
 }
 
 int
-md_pre_mount()
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
 	return 0;
 }
+
+bool
+md_parts_use_wholedisk(struct disk_partitions *parts)
+{
+	return parts_use_wholedisk(parts, 0, NULL);
+}
+
+#ifdef HAVE_GPT
+bool
+md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
+    bool root_is_new, part_id efi_id, bool efi_is_new)
+{
+	/* no GPT boot support, nothing needs to be done here */
+	return true;
+}
+#endif
+

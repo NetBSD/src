@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.178.6.2 2020/04/08 14:08:12 martin Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.178.6.3 2020/04/13 08:04:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.178.6.2 2020/04/08 14:08:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.178.6.3 2020/04/13 08:04:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -400,7 +400,7 @@ scsipi_get_tag(struct scsipi_xfer *xs)
 #endif
 
 	bit -= 1;
-	periph->periph_freetags[word] &= ~(1 << bit);
+	periph->periph_freetags[word] &= ~(1U << bit);
 	tag = (word << 5) | bit;
 
 	/* XXX Should eventually disallow this completely. */
@@ -436,7 +436,7 @@ scsipi_put_tag(struct scsipi_xfer *xs)
 	word = xs->xs_tag_id >> 5;
 	bit = xs->xs_tag_id & 0x1f;
 
-	periph->periph_freetags[word] |= (1 << bit);
+	periph->periph_freetags[word] |= (1U << bit);
 }
 
 /*
@@ -1424,16 +1424,9 @@ scsipi_get_opcodeinfo(struct scsipi_periph *periph)
 	 *     if timeout exists insert maximum into opcode table
 	 */
 
-	data = malloc(len, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (data == NULL) {
-		SC_DEBUG(periph, SCSIPI_DB3,
-			 ("unable to allocate data buffer "
-			  "for REPORT SUPPORTED OPERATION CODES\n"));
-		return;
-	}
+	data = malloc(len, M_DEVBUF, M_WAITOK|M_ZERO);
 
 	memset(&cmd, 0, sizeof(cmd));
-	
 	cmd.opcode = SCSI_MAINTENANCE_IN;
 	cmd.svcaction = RSOC_REPORT_SUPPORTED_OPCODES;
 	cmd.repoption = RSOC_RCTD|RSOC_ALL;
@@ -1453,9 +1446,8 @@ scsipi_get_opcodeinfo(struct scsipi_periph *periph)
 		SC_DEBUG(periph, SCSIPI_DB3,
 			 ("CMD  LEN  SA    spec  nom. time  cmd timeout\n"));
 
-		struct scsipi_opcodes *tot =
-		  (struct scsipi_opcodes *)malloc(sizeof(struct scsipi_opcodes),
-						  M_DEVBUF, M_NOWAIT|M_ZERO);
+		struct scsipi_opcodes *tot = malloc(sizeof(struct scsipi_opcodes),
+		    M_DEVBUF, M_WAITOK|M_ZERO);
 
 		count = 0;
                 while (tot != NULL &&

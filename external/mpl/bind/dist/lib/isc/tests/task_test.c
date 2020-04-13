@@ -1,4 +1,4 @@
-/*	$NetBSD: task_test.c,v 1.3.2.2 2019/06/10 22:04:45 christos Exp $	*/
+/*	$NetBSD: task_test.c,v 1.3.2.3 2020/04/13 08:02:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,11 +19,12 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <inttypes.h>
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdbool.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <inttypes.h>
 #include <string.h>
+#include <unistd.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>
@@ -423,6 +424,8 @@ basic_cb(isc_task_t *task, isc_event_t *event) {
 	for (i = 0; i < 1000000; i++) {
 		j += 100;
 	}
+
+	UNUSED(j);
 
 	if (verbose) {
 		print_message("# task %s\n", (char *)event->ev_arg);

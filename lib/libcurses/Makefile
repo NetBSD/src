@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.85.2.2 2020/04/08 14:07:14 martin Exp $
+#	$NetBSD: Makefile,v 1.85.2.3 2020/04/13 08:03:12 martin Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -25,7 +25,7 @@ SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 	mvwin.c newwin.c nodelay.c notimeout.c overlay.c overwrite.c pause.c \
 	printw.c putchar.c refresh.c resize.c ripoffline.c scanw.c screen.c \
 	scroll.c scrollok.c setterm.c slk.c standout.c syncok.c timeout.c \
-	toucholap.c touchwin.c tstp.c tty.c unctrl.c underscore.c
+	toucholap.c touchwin.c tstp.c tty.c unctrl.c underscore.c version.c
 
 MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_attributes.3 curses_background.3 curses_border.3 \
@@ -38,7 +38,8 @@ MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_mouse.3 curses_pad.3 \
 	curses_print.3 curses_refresh.3 curses_scanw.3 curses_screen.3 \
 	curses_scroll.3 curses_slk.3 curses_standout.3 curses_termcap.3 \
-	curses_touch.3 curses_tty.3 curses_underscore.3 curses_window.3
+	curses_touch.3 curses_tty.3 curses_underscore.3 curses_version.3 \
+	curses_window.3
 INCS=	curses.h unctrl.h
 INCSDIR=/usr/include
 

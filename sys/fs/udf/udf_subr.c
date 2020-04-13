@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.141.2.2 2020/04/08 14:08:50 martin Exp $ */
+/* $NetBSD: udf_subr.c,v 1.141.2.3 2020/04/13 08:05:03 martin Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.141.2.2 2020/04/08 14:08:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.141.2.3 2020/04/13 08:05:03 martin Exp $");
 #endif /* not lint */
 
 
@@ -5968,6 +5968,7 @@ udf_create_node(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	/* adjust file count */
 	udf_adjust_filecount(udf_node, 1);
 
+	cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 	return 0;
 }
 

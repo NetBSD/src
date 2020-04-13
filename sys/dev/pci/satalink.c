@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.55.4.1 2019/06/10 22:07:27 christos Exp $	*/
+/*	$NetBSD: satalink.c,v 1.55.4.2 2020/04/13 08:04:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.55.4.1 2019/06/10 22:07:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.55.4.2 2020/04/13 08:04:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -787,6 +787,7 @@ sii3112_drv_probe(struct ata_channel *chp)
 	uint8_t /* scnt, sn, */ cl, ch;
 	int s;
 
+	ata_channel_lock(chp);
 	/*
 	 * The 3112 is a 2-port part, and only has one drive per channel
 	 * (each port emulates a master drive).
@@ -861,8 +862,10 @@ sii3112_drv_probe(struct ata_channel *chp)
 		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), chp->ch_channel,
 		    scnt, sn, cl, ch);
 #endif
-		if (atabus_alloc_drives(chp, 1) != 0)
+		if (atabus_alloc_drives(chp, 1) != 0) {
+			ata_channel_unlock(chp);
 			return;
+		}
 		/*
 		 * scnt and sn are supposed to be 0x1 for ATAPI, but in some
 		 * cases we get wrong values here, so ignore it.
@@ -885,6 +888,7 @@ sii3112_drv_probe(struct ata_channel *chp)
 		    "port %d: unknown SStatus: 0x%08x\n",
 		    chp->ch_channel, sstatus);
 	}
+	ata_channel_unlock(chp);
 }
 
 static void

@@ -36,16 +36,6 @@
 #include "nbsd-nat.h"
 #include "bsd-kvm.h"
 
-#ifndef HAVE_GREGSET_T
-typedef struct reg gregset_t;
-#endif
-
-#ifndef HAVE_FPREGSET_T
-typedef struct fpreg fpregset_t;
-#endif
-
-#include "gregset.h" 
-
 static int
 i386nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 {

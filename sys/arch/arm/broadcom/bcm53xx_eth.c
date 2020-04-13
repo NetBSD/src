@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.31.2.2 2020/04/08 14:07:28 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.31.2.3 2020/04/13 08:03:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1031,8 +1031,6 @@ bcmeth_rx_input(
 		m->m_flags |= M_PROMISC;
 	}
 	m_set_rcvif(m, ifp);
-
-	ifp->if_ibytes += m->m_pkthdr.len;
 
 	/*
 	 * Let's give it to the network subsystm to deal with.

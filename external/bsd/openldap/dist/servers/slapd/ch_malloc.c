@@ -1,10 +1,10 @@
-/*	$NetBSD: ch_malloc.c,v 1.1.1.6 2018/02/06 01:53:13 christos Exp $	*/
+/*	$NetBSD: ch_malloc.c,v 1.1.1.6.4.1 2020/04/13 07:56:16 martin Exp $	*/
 
 /* ch_malloc.c - malloc routines that test returns from malloc and friends */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 #define CH_FREE 1
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ch_malloc.c,v 1.1.1.6 2018/02/06 01:53:13 christos Exp $");
+__RCSID("$NetBSD: ch_malloc.c,v 1.1.1.6.4.1 2020/04/13 07:56:16 martin Exp $");
 
 #include "portable.h"
 

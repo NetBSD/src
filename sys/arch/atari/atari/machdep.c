@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.177.30.1 2020/04/08 14:07:31 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.177.30.2 2020/04/13 08:03:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177.30.1 2020/04/08 14:07:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177.30.2 2020/04/13 08:03:39 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -70,13 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177.30.1 2020/04/08 14:07:31 martin Ex
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/cpu.h>
-#if defined(DDB) && defined(__ELF__)
 #include <sys/exec_elf.h>
-#endif
 
-#undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
-
-#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
@@ -163,17 +158,13 @@ consinit(void)
 		extern int end;
 		extern int *esym;
 
-#ifndef __ELF__
-		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
-#else
 		ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
-#endif
 	}
 #endif
 #if defined (DDB)
-        if (boothowto & RB_KDB)
-                Debugger();
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
 }
 
@@ -235,7 +226,9 @@ cpu_startup(void)
 static void
 identifycpu(void)
 {
-       const char *mach, *mmu, *fpu, *cpu;
+	const char *mach, *mmu, *fpu, *cpu;
+	uint32_t pcr;
+	char cputxt[30];
 
 	switch (machineid & ATARI_ANYMACH) {
 	case ATARI_TT:
@@ -260,19 +253,13 @@ identifycpu(void)
 	fpu     = fpu_describe(fputype);
 
 	switch (cputype) {
- 
 	case CPU_68060:
-		{
-			uint32_t	pcr;
-			char		cputxt[30];
-
-			__asm(".word 0x4e7a,0x0808;"
-			    "movl %%d0,%0" : "=d"(pcr) : : "d0");
-			snprintf(cputxt, sizeof(cputxt), "68%s060 rev.%d",
-			    pcr & 0x10000 ? "LC/EC" : "", (pcr >> 8) & 0xff);
-			cpu = cputxt;
-			mmu = "/MMU";
-		}
+		__asm(".word 0x4e7a,0x0808;"
+		    "movl %%d0,%0" : "=d"(pcr) : : "d0");
+		snprintf(cputxt, sizeof(cputxt), "68%s060 rev.%d",
+		    pcr & 0x10000 ? "LC/EC" : "", (pcr >> 8) & 0xff);
+		cpu = cputxt;
+		mmu = "/MMU";
 		break;
 	case CPU_68040:
 		cpu = "m68040";
@@ -597,7 +584,7 @@ badbaddr(void *addr, int size)
 /*
  * this is a handy package to have asynchronously executed
  * function calls executed at very low interrupt priority.
- * Example for use is keyboard repeat, where the repeat 
+ * Example for use is keyboard repeat, where the repeat
  * handler running at splclock() triggers such a (hardware
  * aided) software interrupt.
  * Note: the installed functions are currently called in a

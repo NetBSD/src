@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.14 2017/01/11 18:19:29 christos Exp $ */
+/* $NetBSD: ofwpci.c,v 1.14.16.1 2020/04/13 08:04:03 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.14 2017/01/11 18:19:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.14.16.1 2020/04/13 08:04:03 martin Exp $");
 
 #include "opt_pci.h"
 
@@ -200,8 +200,7 @@ ofwpci_attach(device_t parent, device_t self, void *aux)
 	pc->pc_memt = &sc->sc_memt;
 
 	pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
-	    M_DEVBUF, M_NOWAIT);
-	KASSERT(pbi != NULL);
+	    M_DEVBUF, M_WAITOK);
 	pbi->pbi_properties = prop_dictionary_create();
 	KASSERT(pbi->pbi_properties != NULL);
 	SIMPLEQ_INIT(&pc->pc_pbi);

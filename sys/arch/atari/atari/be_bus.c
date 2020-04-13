@@ -1,4 +1,4 @@
-/*	$NetBSD: be_bus.c,v 1.15 2011/07/01 20:34:05 dyoung Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.15.54.1 2020/04/13 08:03:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.15 2011/07/01 20:34:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.15.54.1 2020/04/13 08:03:39 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -183,8 +183,7 @@ beb_alloc_bus_space_tag(bus_space_tag_t storage)
 	if (storage != NULL)
 		beb_t = storage;
 	else {
-	    if ((beb_t = malloc(sizeof(*beb_t), M_TEMP, M_NOWAIT)) == NULL)
-		return NULL;
+		beb_t = malloc(sizeof(*beb_t), M_TEMP, M_WAITOK);
 	}
 	memset(beb_t, 0, sizeof(*beb_t));
 	

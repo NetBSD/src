@@ -1,9 +1,0 @@
-#	$NetBSD: files.ti,v 1.1.6.1 2019/06/10 22:06:05 christos Exp $
-#
-
-include "arch/arm/pic/files.pic"
-include "arch/arm/cortex/files.cortex"
-
-include "arch/evbarm/conf/files.fdt"
-
-include "arch/arm/ti/files.ti"

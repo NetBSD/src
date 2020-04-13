@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.12 2018/06/06 03:09:12 snj Exp $
+#	$NetBSD: shlib_version,v 1.12.2.1 2020/04/13 08:02:31 martin Exp $
 #
 # XXX our freetype shlib versioning is insane. the rest of the world
 # uses a major of 6. we used to, but it was bumped to 7 for 64 bit
@@ -7,6 +7,10 @@
 # until upstream bumps their major, keep major at 18 and adjust
 # minor/teeny as indicated by xsrc/external/mit/freetype/dist/docs/VERSIONS.TXT
 
-major=18
-minor=16
-teeny=1
+# actually, freetype 2.10 removes (changes) symbols so it needs a
+# major shlib bump, but it's now 6.17 ie, they don't bump the major
+# major but probably mark the soname with the major.minor.  we are
+# now at 19.0 for freetype 2.10.
+
+major=19
+minor=0

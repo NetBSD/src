@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.7.4.2 2020/04/08 14:07:51 martin Exp $ */
+/* $NetBSD: locore.S,v 1.7.4.3 2020/04/13 08:04:05 martin Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -51,6 +51,11 @@ ENTRY_NP(start)
 	li	s10, PAGE_SIZE
 	li	s9, USPACE
 
+	/*
+	 * XXX XXX XXX: This is completely broken and wrong, we should map only
+	 * the kernel sections, and the direct map should be mapped later in C.
+	 */
+#if 0
 #if 0
 	// The kernel doesn't use gp/_gp since we'd have to reload it on
 	// each exception.
@@ -91,11 +96,7 @@ ENTRY_NP(start)
 	REG_S	t0, -SZREG(s3)		// store in highest first level PDE
 #endif
 
-	/*
-	 * XXX XXX XXX: This is completely broken and wrong, we should map only
-	 * the kernel sections, and the direct map should be mapped later in C.
-	 */
-#if 0 && (VM_MIN_KERNEL_ADDRESS >> XSEGSHIFT) != (VM_MAX_KERNEL_ADDRESS >> XSEGSHIFT)
+#if (VM_MIN_KERNEL_ADDRESS >> XSEGSHIFT) != (VM_MAX_KERNEL_ADDRESS >> XSEGSHIFT)
 #error VM_MIN_KERNEL_ADDRESS not in same first level PDE as VM_MAX_KERNEL_ADDRESS
 #endif
 	// We allocated the kernel first PTE page so let's insert in the
@@ -124,6 +125,7 @@ ENTRY_NP(start)
 	add	s3, s3, SZREG		// advance to next PDE slot
 	addi	a7, a7, -1		// count down segment
 	bgtz	a6, .Lfill		// loop if more
+#endif
 
 	csrw	sptbr, s1		// set the page table base
 	li	t0, SR_VM

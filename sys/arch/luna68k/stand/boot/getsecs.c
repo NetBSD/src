@@ -1,4 +1,4 @@
-/*	$NetBSD: getsecs.c,v 1.2 2014/11/21 01:16:04 christos Exp $	*/
+/*	$NetBSD: getsecs.c,v 1.2.20.1 2020/04/13 08:03:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include <machine/cpu.h>
+#include <machine/board.h>
 
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
@@ -46,7 +47,7 @@ getsecs(void)
 	volatile uint8_t *mclock;
 	u_int t;
 
-	mclock = (volatile uint8_t *)0x45000000;
+	mclock = (volatile uint8_t *)OBIO_CLOCK_BASE;
 
 	if (machtype == LUNA_I) {
 		mclock += 2040;

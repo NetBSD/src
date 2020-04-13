@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51var.h,v 1.6 2018/03/17 18:34:09 ryo Exp $ */
+/*	$NetBSD: imx51var.h,v 1.6.2.1 2020/04/13 08:03:35 martin Exp $ */
 
 /*
  * Copyright (c) 2015 Genetec Corporation.  All rights reserved.
@@ -49,10 +49,6 @@ extern struct bus_space armv7_generic_a4x_bs_tag;
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 extern struct arm32_bus_dma_tag imx_bus_dma_tag;
 
-void gpio_set_direction(uint32_t, uint32_t);
-void gpio_data_write(uint32_t, uint32_t);
-bool gpio_data_read(uint32_t);
-
 struct axi_attach_args {
 	const char	*aa_name;
 	bus_space_tag_t	aa_iot;
@@ -62,7 +58,6 @@ struct axi_attach_args {
 	int		aa_irq;
 	int		aa_irqbase;
 };
-
 
 /* iomux utility functions */
 struct iomux_conf {

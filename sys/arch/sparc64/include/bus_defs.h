@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.4 2016/11/04 05:41:01 macallan Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.4.16.1 2020/04/13 08:04:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -106,6 +106,10 @@ typedef	struct _bus_space_handle {
 typedef enum bus_type	bus_type_t;
 typedef uint64_t	bus_addr_t;
 typedef uint64_t	bus_size_t;
+
+#define PRIxBUSADDR	PRIx64
+#define PRIxBUSSIZE	PRIx64
+#define PRIuBUSSIZE	PRIu64
 
 /*
  * XXXX -- convert prom virtual address to bus_space_handle_t

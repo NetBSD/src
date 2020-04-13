@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.45.2.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.45.2.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.45.2.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.45.2.2 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -148,6 +148,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.45.2.1 2019/06/10 22:09:03 c
 #include <sys/module.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
+#include <sys/compat_stub.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -286,6 +287,9 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case PT_DUMPCORE:
 	case PT_RESUME:
 	case PT_SUSPEND:
+	case PT_STOP:
+	case PT_LWPSTATUS:
+	case PT_LWPNEXT:
 		result = KAUTH_RESULT_ALLOW;
 		break;
 
@@ -367,14 +371,19 @@ ptrace_find(struct lwp *l, int req, pid_t pid)
 }
 
 static int
-ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
+ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p,
+    bool *locked)
 {
+	*locked = false;
+
 	/*
 	 * Grab a reference on the process to prevent it from execing or
 	 * exiting.
 	 */
 	if (!rw_tryenter(&t->p_reflock, RW_READER))
 		return EBUSY;
+
+	*locked = true;
 
 	/* Make sure we can operate on it. */
 	switch (req) {
@@ -488,6 +497,9 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 	case PT_GET_PROCESS_STATE:
 	case PT_RESUME:
 	case PT_SUSPEND:
+	case PT_STOP:
+	case PT_LWPSTATUS:
+	case PT_LWPNEXT:
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -506,8 +518,11 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 
 		/*
 		 *	(3) it's not currently stopped.
+		 *
+		 *	As an exception allow PT_KILL and PT_STOP here.
 		 */
-		if (t->p_stat != SSTOP || !t->p_waited /* XXXSMP */) {
+		if (req != PT_KILL && req != PT_STOP &&
+		    (t->p_stat != SSTOP || !t->p_waited /* XXXSMP */)) {
 			DPRINTF(("stat %d flag %d\n", t->p_stat,
 			    !t->p_waited));
 			return EBUSY;
@@ -535,6 +550,7 @@ ptrace_needs_hold(int req)
 	case PT_TRACE_ME:
 	case PT_GET_SIGINFO:
 	case PT_SET_SIGINFO:
+	case PT_STOP:
 		return 1;
 	default:
 		return 0;
@@ -547,9 +563,9 @@ ptrace_update_lwp(struct proc *t, struct lwp **lt, lwpid_t lid)
 	if (lid == 0 || lid == (*lt)->l_lid || t->p_nlwps == 1)
 		return 0;
 
-	lwp_delref(*lt);
-
 	mutex_enter(t->p_lock);
+	lwp_delref2(*lt);
+
 	*lt = lwp_find(t, lid);
 	if (*lt == NULL) {
 		mutex_exit(t->p_lock);
@@ -557,6 +573,7 @@ ptrace_update_lwp(struct proc *t, struct lwp **lt, lwpid_t lid)
 	}
 
 	if ((*lt)->l_flag & LW_SYSTEM) {
+		mutex_exit(t->p_lock);
 		*lt = NULL;
 		return EINVAL;
 	}
@@ -596,9 +613,6 @@ ptrace_set_siginfo(struct proc *t, struct lwp **lt, struct ptrace_methods *ptm,
 	if (psi.psi_siginfo.si_signo < 0 || psi.psi_siginfo.si_signo >= NSIG)
 		return EINVAL;
 
-	if ((error = ptrace_update_lwp(t, lt, psi.psi_lwpid)) != 0)
-		return error;
-
 	t->p_sigctx.ps_faked = true;
 	t->p_sigctx.ps_info = psi.psi_siginfo._info;
 	t->p_sigctx.ps_lwp = psi.psi_lwpid;
@@ -627,6 +641,8 @@ ptrace_get_event_mask(struct proc *t, void *addr, size_t data)
 	    PTRACE_LWP_CREATE : 0;
 	pe.pe_set_event |= ISSET(t->p_slflag, PSL_TRACELWP_EXIT) ?
 	    PTRACE_LWP_EXIT : 0;
+	pe.pe_set_event |= ISSET(t->p_slflag, PSL_TRACEPOSIX_SPAWN) ?
+	    PTRACE_POSIX_SPAWN : 0;
 	DPRINTF(("%s: lwp=%d event=%#x\n", __func__,
 	    t->p_sigctx.ps_lwp, pe.pe_set_event));
 	return copyout(&pe, addr, sizeof(pe));
@@ -671,36 +687,43 @@ ptrace_set_event_mask(struct proc *t, void *addr, size_t data)
 		SET(t->p_slflag, PSL_TRACELWP_EXIT);
 	else
 		CLR(t->p_slflag, PSL_TRACELWP_EXIT);
+
+	if (pe.pe_set_event & PTRACE_POSIX_SPAWN)
+		SET(t->p_slflag, PSL_TRACEPOSIX_SPAWN);
+	else
+		CLR(t->p_slflag, PSL_TRACEPOSIX_SPAWN);
+
 	return 0;
 }
 
 static int
 ptrace_get_process_state(struct proc *t, void *addr, size_t data)
 {
+	struct _ksiginfo *si;
 	struct ptrace_state ps;
 
 	if (data != sizeof(ps)) {
 		DPRINTF(("%s: %zu != %zu\n", __func__, data, sizeof(ps)));
 		return EINVAL;
 	}
-	memset(&ps, 0, sizeof(ps));
 
-	if (t->p_fpid) {
-		ps.pe_report_event = PTRACE_FORK;
-		ps.pe_other_pid = t->p_fpid;
-	} else if (t->p_vfpid) {
-		ps.pe_report_event = PTRACE_VFORK;
-		ps.pe_other_pid = t->p_vfpid;
-	} else if (t->p_vfpid_done) {
-		ps.pe_report_event = PTRACE_VFORK_DONE;
-		ps.pe_other_pid = t->p_vfpid_done;
-	} else if (t->p_lwp_created) {
-		ps.pe_report_event = PTRACE_LWP_CREATE;
-		ps.pe_lwp = t->p_lwp_created;
-	} else if (t->p_lwp_exited) {
-		ps.pe_report_event = PTRACE_LWP_EXIT;
-		ps.pe_lwp = t->p_lwp_exited;
+	if (t->p_sigctx.ps_info._signo != SIGTRAP ||
+	    (t->p_sigctx.ps_info._code != TRAP_CHLD &&
+	        t->p_sigctx.ps_info._code != TRAP_LWP)) {
+		memset(&ps, 0, sizeof(ps));
+	} else {
+		si = &t->p_sigctx.ps_info;
+
+		KASSERT(si->_reason._ptrace_state._pe_report_event > 0);
+		KASSERT(si->_reason._ptrace_state._option._pe_other_pid > 0);
+
+		ps.pe_report_event = si->_reason._ptrace_state._pe_report_event;
+
+		CTASSERT(sizeof(ps.pe_other_pid) == sizeof(ps.pe_lwp));
+		ps.pe_other_pid =
+			si->_reason._ptrace_state._option._pe_other_pid;
 	}
+
 	DPRINTF(("%s: lwp=%d event=%#x pid=%d lwp=%d\n", __func__,
 	    t->p_sigctx.ps_lwp, ps.pe_report_event,
 	    ps.pe_other_pid, ps.pe_lwp));
@@ -734,7 +757,8 @@ ptrace_lwpinfo(struct proc *t, struct lwp **lt, void *addr, size_t data)
 		*lt = LIST_NEXT(*lt, l_sibling);
 	}
 
-	while (*lt != NULL && !lwp_alive(*lt))
+	while (*lt != NULL && (!lwp_alive(*lt) ||
+	       ((*lt)->l_flag & LW_SYSTEM) != 0))
 		*lt = LIST_NEXT(*lt, l_sibling);
 
 	pl.pl_lwpid = 0;
@@ -768,6 +792,72 @@ ptrace_lwpinfo(struct proc *t, struct lwp **lt, void *addr, size_t data)
 }
 
 static int
+ptrace_lwpstatus(struct proc *t, struct ptrace_methods *ptm, struct lwp **lt,
+    void *addr, size_t data, bool next)
+{
+	struct ptrace_lwpstatus pls;
+	struct lwp *l;
+	int error;
+
+	if (data > sizeof(pls) || data < sizeof(lwpid_t)) {
+		DPRINTF(("%s: invalid data: %zu < %zu < %zu\n",
+		        __func__, sizeof(lwpid_t), data, sizeof(pls)));
+		return EINVAL;
+	}
+	error = copyin(addr, &pls.pl_lwpid, sizeof(lwpid_t));
+	if (error)
+		return error;
+
+	if (next) {
+		lwp_delref(*lt);
+		lwpid_t tmp = pls.pl_lwpid;
+		mutex_enter(t->p_lock);
+		if (tmp == 0)
+			*lt = lwp_find_first(t);
+		else {
+			*lt = lwp_find(t, tmp);
+			if (*lt == NULL) {
+				mutex_exit(t->p_lock);
+				return ESRCH;
+			}
+			*lt = LIST_NEXT(*lt, l_sibling);
+		}
+
+		while (*lt != NULL && (!lwp_alive(*lt) ||
+		       ((*lt)->l_flag & LW_SYSTEM) != 0))
+			*lt = LIST_NEXT(*lt, l_sibling);
+
+		if (*lt == NULL) {
+			memset(&pls, 0, sizeof(pls));
+			mutex_exit(t->p_lock);
+			goto out;
+		}
+		lwp_addref(*lt);
+		mutex_exit(t->p_lock);
+
+		pls.pl_lwpid = (*lt)->l_lid;
+	} else {
+		if ((error = ptrace_update_lwp(t, lt, pls.pl_lwpid)) != 0)
+			return error;
+	}
+
+	l = *lt;
+
+	ptrace_read_lwpstatus(l, &pls);
+
+out:
+	DPRINTF(("%s: lwp=%d sigpend=%02x%02x%02x%02x sigmask=%02x%02x%02x%02x "
+	   "name='%s' private=%p\n", __func__, pls.pl_lwpid,
+	    pls.pl_sigpend.__bits[0], pls.pl_sigpend.__bits[1],
+	    pls.pl_sigpend.__bits[2], pls.pl_sigpend.__bits[3],
+	    pls.pl_sigmask.__bits[0], pls.pl_sigmask.__bits[1],
+	    pls.pl_sigmask.__bits[2], pls.pl_sigmask.__bits[3],
+	    pls.pl_name, pls.pl_private));
+
+	return ptm->ptm_copyout_lwpstatus(&pls, addr, data);
+}
+
+static int
 ptrace_startstop(struct proc *t, struct lwp **lt, int rq, void *addr,
     size_t data)
 {
@@ -779,9 +869,12 @@ ptrace_startstop(struct proc *t, struct lwp **lt, int rq, void *addr,
 	DPRINTF(("%s: lwp=%d request=%d\n", __func__, (*lt)->l_lid, rq));
 	lwp_lock(*lt);
 	if (rq == PT_SUSPEND)
-		(*lt)->l_flag |= LW_WSUSPEND;
-	else
-		(*lt)->l_flag &= ~LW_WSUSPEND;
+		(*lt)->l_flag |= LW_DBGSUSPEND;
+	else {
+		(*lt)->l_flag &= ~LW_DBGSUSPEND;
+		if ((*lt)->l_flag != LSSUSPENDED)
+			(*lt)->l_stat = LSSTOP;
+	}
 	lwp_unlock(*lt);
 	return 0;
 }
@@ -809,8 +902,11 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
     void *addr, size_t data)
 {
 	int error;
-	struct proc *t = (*lt)->l_proc;
+	struct proc *p, *t;
 	struct vmspace *vm;
+
+	p = l->l_proc;		/* tracer */
+	t = (*lt)->l_proc;	/* traced */
 
 	if ((error = ptrace_update_lwp(t, lt, data)) != 0)
 		return error;
@@ -827,7 +923,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 	case_PT_SETREGS
 		if (!process_validregs(*lt))
 			return EINVAL;
-		size = PROC_REGSZ(t);
+		size = PROC_REGSZ(p);
 		func = ptm->ptm_doregs;
 		break;
 #endif
@@ -836,7 +932,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 	case_PT_SETFPREGS
 		if (!process_validfpregs(*lt))
 			return EINVAL;
-		size = PROC_FPREGSZ(t);
+		size = PROC_FPREGSZ(p);
 		func = ptm->ptm_dofpregs;
 		break;
 #endif
@@ -845,7 +941,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 	case_PT_SETDBREGS
 		if (!process_validdbregs(*lt))
 			return EINVAL;
-		size = PROC_DBREGSZ(t);
+		size = PROC_DBREGSZ(p);
 		func = ptm->ptm_dodbregs;
 		break;
 #endif
@@ -876,15 +972,9 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 #endif
 
 static int
-ptrace_sendsig(struct proc *t, struct lwp *lt, int signo, int resume_all)
+ptrace_sendsig(struct lwp *l, int req, struct proc *t, struct lwp *lt, int signo, int resume_all)
 {
 	ksiginfo_t ksi;
-
-	t->p_fpid = 0;
-	t->p_vfpid = 0;
-	t->p_vfpid_done = 0;
-	t->p_lwp_created = 0;
-	t->p_lwp_exited = 0;
 
 	/* Finally, deliver the requested signal (or none). */
 	if (t->p_stat == SSTOP) {
@@ -910,23 +1000,20 @@ ptrace_sendsig(struct proc *t, struct lwp *lt, int signo, int resume_all)
 		return 0;
 	}
 
-	KSI_INIT_EMPTY(&ksi);
-	if (t->p_sigctx.ps_faked) {
-		if (signo != t->p_sigctx.ps_info._signo)
-			return EINVAL;
-		t->p_sigctx.ps_faked = false;
-		ksi.ksi_info = t->p_sigctx.ps_info;
-		ksi.ksi_lid = t->p_sigctx.ps_lwp;
-	} else if (signo == 0) {
-		return 0;
-	} else {
-		ksi.ksi_signo = signo;
-	}
-	DPRINTF(("%s: pid=%d.%d signal=%d resume_all=%d\n", __func__, t->p_pid,
-	    t->p_sigctx.ps_lwp, signo, resume_all));
+	KASSERT(req == PT_KILL || req == PT_STOP || req == PT_ATTACH);
 
-	kpsignal2(t, &ksi);
-	return 0;
+	KSI_INIT(&ksi);
+	ksi.ksi_signo = signo;
+	ksi.ksi_code = SI_USER;
+	ksi.ksi_pid = l->l_proc->p_pid;
+	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
+
+	t->p_sigctx.ps_faked = false;
+
+	DPRINTF(("%s: pid=%d.%d signal=%d resume_all=%d\n", __func__, t->p_pid,
+	    lt->l_lid, signo, resume_all));
+
+	return kpsignal2(t, &ksi);
 }
 
 static int
@@ -946,7 +1033,7 @@ ptrace_dumpcore(struct lwp *lt, char *path, size_t len)
 		path[len] = '\0';
 	}
 	DPRINTF(("%s: lwp=%d\n", __func__, lt->l_lid));
-	error = (*coredump_vec)(lt, path);
+	MODULE_HOOK_CALL(coredump_hook, (lt, path), 0, error);
 out:
 	if (path)
 		kmem_free(path, len + 1);
@@ -1033,6 +1120,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	int error, write, tmp, pheld;
 	int signo = 0;
 	int resume_all;
+	bool locked;
 	error = 0;
 
 	/*
@@ -1048,7 +1136,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	}
 
 	pheld = 1;
-	if ((error = ptrace_allowed(l, req, t, p)) != 0)
+	if ((error = ptrace_allowed(l, req, t, p, &locked)) != 0)
 		goto out;
 
 	if ((error = kauth_authorize_process(l->l_cred,
@@ -1189,8 +1277,12 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 				signo = tmp;
 				tmp = 0;	/* don't search for LWP */
 			}
-		} else
+		} else if (tmp == INT_MIN) {
+			error = ESRCH;
+			break;
+		} else {
 			tmp = -tmp;
+		}
 
 		if (tmp > 0) {
 			if (req == PT_DETACH) {
@@ -1230,7 +1322,8 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		if (resume_all) {
 #ifdef PT_STEP
 			if (req == PT_STEP) {
-				if (lt->l_flag & LW_WSUSPEND) {
+				if (lt->l_flag &
+				    (LW_WSUSPEND | LW_DBGSUSPEND)) {
 					error = EDEADLK;
 					break;
 				}
@@ -1239,7 +1332,9 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			{
 				error = EDEADLK;
 				LIST_FOREACH(lt2, &t->p_lwps, l_sibling) {
-					if ((lt2->l_flag & LW_WSUSPEND) == 0) {
+					if ((lt2->l_flag &
+					    (LW_WSUSPEND | LW_DBGSUSPEND)) == 0
+					    ) {
 						error = 0;
 						break;
 					}
@@ -1248,14 +1343,14 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 					break;
 			}
 		} else {
-			if (lt->l_flag & LW_WSUSPEND) {
+			if (lt->l_flag & (LW_WSUSPEND | LW_DBGSUSPEND)) {
 				error = EDEADLK;
 				break;
 			}
 		}
 
 		/*
-		 * Reject setting program cunter to 0x0 if VA0 is disabled.
+		 * Reject setting program counter to 0x0 if VA0 is disabled.
 		 *
 		 * Not all kernels implement this feature to set Program
 		 * Counter in one go in PT_CONTINUE and similar operations.
@@ -1315,7 +1410,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			CLR(lt->l_pflag, LP_SINGLESTEP);
 		}
 	sendsig:
-		error = ptrace_sendsig(t, lt, signo, resume_all);
+		error = ptrace_sendsig(l, req, t, lt, signo, resume_all);
 		break;
 
 	case PT_SYSCALLEMU:
@@ -1346,6 +1441,11 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case PT_KILL:
 		/* just send the process a KILL signal. */
 		signo = SIGKILL;
+		goto sendsig;	/* in PT_CONTINUE, above. */
+
+	case PT_STOP:
+		/* just send the process a STOP signal. */
+		signo = SIGSTOP;
 		goto sendsig;	/* in PT_CONTINUE, above. */
 
 	case PT_ATTACH:
@@ -1390,6 +1490,14 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		error = ptrace_startstop(t, &lt, req, addr, data);
 		break;
 
+	case PT_LWPSTATUS:
+		error = ptrace_lwpstatus(t, ptm, &lt, addr, data, false);
+		break;
+
+	case PT_LWPNEXT:
+		error = ptrace_lwpstatus(t, ptm, &lt, addr, data, true);
+		break;
+
 #ifdef PT_REGISTERS
 	case_PT_SETREGS
 	case_PT_GETREGS
@@ -1415,7 +1523,8 @@ out:
 	}
 	if (lt != NULL)
 		lwp_delref(lt);
-	rw_exit(&t->p_reflock);
+	if (locked)
+		rw_exit(&t->p_reflock);
 
 	return error;
 }
@@ -1471,18 +1580,22 @@ process_doregs(struct lwp *curl /*tracer*/,
 	regwfunc_t w;
 
 #ifdef COMPAT_NETBSD32
-	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
+	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
+		if ((l->l_proc->p_flag & PK_32) == 0) {
+			// 32 bit tracer can't trace 64 bit process
+			return EINVAL;
+		}
 		s = sizeof(process_reg32);
-		r = (regrfunc_t)process_read_regs32;
-		w = (regwfunc_t)process_write_regs32;
+		r = __FPTRCAST(regrfunc_t, process_read_regs32);
+		w = __FPTRCAST(regwfunc_t, process_write_regs32);
 	} else
 #endif
 	{
 		s = sizeof(struct reg);
-		r = (regrfunc_t)process_read_regs;
-		w = (regwfunc_t)process_write_regs;
+		r = __FPTRCAST(regrfunc_t, process_read_regs);
+		w = __FPTRCAST(regwfunc_t, process_write_regs);
 	}
 	return proc_regio(l, uio, s, r, w);
 #else
@@ -1512,9 +1625,13 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	regwfunc_t w;
 
 #ifdef COMPAT_NETBSD32
-	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
+	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
+		if ((l->l_proc->p_flag & PK_32) == 0) {
+			// 32 bit tracer can't trace 64 bit process
+			return EINVAL;
+		}
 		s = sizeof(process_fpreg32);
 		r = (regrfunc_t)process_read_fpregs32;
 		w = (regwfunc_t)process_write_fpregs32;
@@ -1553,9 +1670,13 @@ process_dodbregs(struct lwp *curl /*tracer*/,
 	regwfunc_t w;
 
 #ifdef COMPAT_NETBSD32
-	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
+	const bool pk32 = (curl->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
+		if ((l->l_proc->p_flag & PK_32) == 0) {
+			// 32 bit tracer can't trace 64 bit process
+			return EINVAL;
+		}
 		s = sizeof(process_dbreg32);
 		r = (regrfunc_t)process_read_dbregs32;
 		w = (regwfunc_t)process_write_dbregs32;
@@ -1596,7 +1717,15 @@ process_auxv_offset(struct proc *p, struct uio *uio)
 	if (pss.ps_envstr == NULL)
 		return EIO;
 
-	uio->uio_offset += (off_t)(vaddr_t)(pss.ps_envstr + pss.ps_nenvstr + 1);
+#ifdef COMPAT_NETBSD32
+	if (p->p_flag & PK_32)
+		uio->uio_offset += (off_t)((vaddr_t)pss.ps_envstr +
+		    sizeof(uint32_t) * (pss.ps_nenvstr + 1));
+	else
+#endif
+		uio->uio_offset += (off_t)(vaddr_t)(pss.ps_envstr +
+		    pss.ps_nenvstr + 1);
+
 #ifdef __MACHINE_STACK_GROWS_UP
 	if (uio->uio_offset < off)
 		return EIO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.h,v 1.8 2009/11/17 18:54:26 jld Exp $	*/
+/*	$NetBSD: rf_parityscan.h,v 1.8.64.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,7 +42,7 @@ int	rf_VerifyParity(RF_Raid_t *, RF_AccessStripeMap_t *, int,
 int     rf_TryToRedirectPDA(RF_Raid_t *, RF_PhysDiskAddr_t *, int);
 int     rf_VerifyDegrModeWrite(RF_Raid_t *, RF_AccessStripeMapHeader_t *);
 RF_DagHeader_t *rf_MakeSimpleDAG(RF_Raid_t *, int, int, char *,
-    int (*)(RF_DagNode_t *), int (*) (RF_DagNode_t *), const char *,
+    void (*)(RF_DagNode_t *), void (*) (RF_DagNode_t *), const char *,
     RF_AllocListElem_t *, RF_RaidAccessFlags_t, int);
 
 #define RF_DO_CORRECT_PARITY   1

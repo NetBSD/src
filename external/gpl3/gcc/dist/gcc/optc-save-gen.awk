@@ -1,4 +1,4 @@
-#  Copyright (C) 2003-2017 Free Software Foundation, Inc.
+#  Copyright (C) 2003-2018 Free Software Foundation, Inc.
 #  Contributed by Kelley Cook, June 2004.
 #  Original code from Neil Booth, May 2003.
 #
@@ -41,13 +41,10 @@ print "#include " quote "flags.h" quote
 print "#include " quote "target.h" quote
 print "#include " quote "inchash.h" quote
 print "#include " quote "hash-set.h" quote
-print "#include " quote "machmode.h" quote
 print "#include " quote "vec.h" quote
-print "#include " quote "double-int.h" quote
 print "#include " quote "input.h" quote
 print "#include " quote "alias.h" quote
 print "#include " quote "symtab.h" quote
-print "#include " quote "wide-int.h" quote
 print "#include " quote "inchash.h" quote
 print "#include " quote "tree.h" quote
 print "#include " quote "fold-const.h" quote
@@ -84,7 +81,7 @@ print "void";
 print "cl_optimization_save (struct cl_optimization *ptr, struct gcc_options *opts)";
 print "{";
 
-n_opt_char = 3;
+n_opt_char = 4;
 n_opt_short = 0;
 n_opt_int = 0;
 n_opt_enum = 0;
@@ -92,9 +89,11 @@ n_opt_other = 0;
 var_opt_char[0] = "optimize";
 var_opt_char[1] = "optimize_size";
 var_opt_char[2] = "optimize_debug";
+var_opt_char[3] = "optimize_fast";
 var_opt_range["optimize"] = "0, 255";
 var_opt_range["optimize_size"] = "0, 1";
 var_opt_range["optimize_debug"] = "0, 1";
+var_opt_range["optimize_fast"] = "0, 1";
 
 # Sort by size to mimic how the structure is laid out to be friendlier to the
 # cache.
@@ -681,7 +680,7 @@ for (i = 0; i < n_target_array; i++) {
 }
 for (i = 0; i < n_target_val; i++) {
 	name = var_target_val[i]
-	print "  hstate.add_wide_int (ptr->" name");";
+	print "  hstate.add_hwi (ptr->" name");";
 }
 print "  return hstate.end ();";
 print "}";
@@ -735,13 +734,15 @@ for (i = 0; i < n_target_val; i++) {
 
 print "}";
 
-n_opt_val = 3;
+n_opt_val = 4;
 var_opt_val[0] = "x_optimize"
 var_opt_val_type[0] = "char "
 var_opt_val[1] = "x_optimize_size"
-var_opt_val[2] = "x_optimize_debug"
 var_opt_val_type[1] = "char "
+var_opt_val[2] = "x_optimize_debug"
 var_opt_val_type[2] = "char "
+var_opt_val[3] = "x_optimize_fast"
+var_opt_val_type[3] = "char "
 for (i = 0; i < n_opts; i++) {
 	if (flag_set_p("(Optimization|PerFunction)", flags[i])) {
 		name = var_name(flags[i])
@@ -769,7 +770,7 @@ for (i = 0; i < n_opt_val; i++) {
 	if (!var_opt_hash[i])
 		continue;
 	name = var_opt_val[i]
-	print "  hstate.add_wide_int (ptr->" name");";
+	print "  hstate.add_hwi (ptr->" name");";
 }
 print "  return hstate.end ();";
 print "}";

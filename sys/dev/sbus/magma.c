@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.59.28.1 2019/06/10 22:07:32 christos Exp $	*/
+/*	$NetBSD: magma.c,v 1.59.28.2 2020/04/13 08:04:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.59.28.1 2019/06/10 22:07:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.59.28.2 2020/04/13 08:04:47 martin Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -872,9 +872,7 @@ mtty_attach(device_t parent, device_t self, void *args)
 
 		mp->mp_tty = tp;
 
-		mp->mp_rbuf = malloc(MTTY_RBUF_SIZE, M_DEVBUF, M_NOWAIT);
-		if (mp->mp_rbuf == NULL) break;
-
+		mp->mp_rbuf = malloc(MTTY_RBUF_SIZE, M_DEVBUF, M_WAITOK);
 		mp->mp_rend = mp->mp_rbuf + MTTY_RBUF_SIZE;
 
 		chan = (chan + 1) % CD1400_NO_OF_CHANNELS;

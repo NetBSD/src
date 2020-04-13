@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.16 2018/05/23 07:24:37 maxv Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.16.2.1 2020/04/13 08:04:11 martin Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -79,6 +79,17 @@ struct ymmreg {
 	uint8_t ymm_bytes[16];
 };
 
+/* The AVX-512 registers are 512 bits but the low bits are in xmmregs
+ * and ymmregs */
+struct zmmreg {
+	uint8_t zmm_bytes[32];
+};
+
+/* 512-bit ZMM register. */
+struct hi16_zmmreg {
+	uint8_t zmm_bytes[64];
+};
+
 /*
  * Floating point unit registers (FSAVE instruction).
  *
@@ -138,6 +149,77 @@ struct xsave_ymm {
 	struct ymmreg xs_ymm[16];	/* High bits of YMM registers */
 };
 __CTASSERT(sizeof(struct xsave_ymm) == 256);
+
+/*
+ * AVX-512: opmask state.
+ */
+struct xsave_opmask {
+	uint64_t xs_k[8];			/* k0..k7 registers. */
+};
+__CTASSERT(sizeof(struct xsave_opmask) == 64);
+
+/*
+ * AVX-512: ZMM_Hi256 state.
+ */
+struct xsave_zmm_hi256 {
+	struct zmmreg xs_zmm[16];	/* High bits of zmm0..zmm15 registers. */
+};
+__CTASSERT(sizeof(struct xsave_zmm_hi256) == 512);
+
+/*
+ * AVX-512: Hi16_ZMM state.
+ */
+struct xsave_hi16_zmm {
+	struct hi16_zmmreg xs_hi16_zmm[16];	/* zmm16..zmm31 registers. */
+};
+__CTASSERT(sizeof(struct xsave_hi16_zmm) == 1024);
+
+/*
+ * Structure used to hold all interesting data from XSAVE, in predictable form.
+ * Note that this structure can have new members added to the end.
+ */
+struct xstate {
+	/*
+	 * The two following fields are bitmaps of XSAVE components.  They can be
+	 * matched against XCR0_* constants from <machine/specialreg.h>).
+	 */
+	/*
+	 * XSAVE/XRSTOR RFBM parameter.
+	 *
+	 * PT_GETXSTATE: 1 indicates that the respective XSAVE component is
+	 * supported and has been enabled for saving.  0 indicates that it is not
+	 * supported by the platform or kernel.
+	 *
+	 * PT_SETXSTATE: 1 indicates that the respective XSAVE component should
+	 * be updated to the value of respective field (or reset if xs_xsave_bv
+	 * bit is 0).  0 indicates that it should be left intact.  It is an error
+	 * to enable bits that are not supported by the platform or kernel.
+	 */
+	uint64_t xs_rfbm;
+	/*
+	 * XSAVE/XRSTOR xstate header.
+	 *
+	 * PT_GETXSTATE: 1 indicates that the respective XSAVE component has been
+	 * saved.  0 indicates that it had been in its CPU-defined initial value
+	 * at the time of saving (i.e. was not used by the program).
+	 *
+	 * PT_SETXSTATE: 1 indicates that the respective XSAVE component (if present
+	 * in xs_rfbm) should be set to the values in respective field.  0 indicates
+	 * that it should be reset to CPU-defined initial value.
+	 */
+	uint64_t xs_xstate_bv;
+
+	/* legacy FXSAVE area (used for x87 & SSE state) */
+	struct fxsave xs_fxsave;
+	/* AVX state: high bits of ymm0..ymm15 registers */
+	struct xsave_ymm xs_ymm_hi128;
+	/* AVX-512: opmask */
+	struct xsave_opmask xs_opmask;
+	/* AVX-512: high bits of zmm0..zmm15 registers */
+	struct xsave_zmm_hi256 xs_zmm_hi256;
+	/* AVX-512: whole zmm16..zmm31 registers */
+	struct xsave_hi16_zmm xs_hi16_zmm;
+};
 
 /*
  * The following union is placed at the end of the pcb.

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.63 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.63.166.1 2020/04/13 08:03:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,15 +34,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.63 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.63.166.1 2020/04/13 08:03:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <dev/cons.h>
 
-#include "zstty.h"
 #include "akbd.h"
+#include "genfb.h"
 #include "macfb.h"
+#include "zstty.h"
+
 #define maccnpollc	nullcnpollc
 cons_decl(mac);
 #define zscnpollc	nullcnpollc
@@ -52,7 +54,7 @@ struct	consdev constab[] = {
 #if NZSTTY > 0
 	cons_init(zs),
 #endif
-#if NAKBD > 0 && NMACFB > 0
+#if NAKBD > 0 && (NMACFB + NGENFB) > 0
 	cons_init(mac),
 #endif
 	{ 0 },

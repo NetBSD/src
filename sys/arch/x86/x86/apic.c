@@ -1,4 +1,4 @@
-/* $NetBSD: apic.c,v 1.8 2008/12/16 22:35:28 christos Exp $ */
+/* $NetBSD: apic.c,v 1.8.66.1 2020/04/13 08:04:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.8 2008/12/16 22:35:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.8.66.1 2020/04/13 08:04:11 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,35 +42,41 @@ __KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.8 2008/12/16 22:35:28 christos Exp $");
 #include <machine/i82489var.h>
 #include <machine/apicvar.h>
 
-const char redirlofmt[] = "\177\20"
-	"f\0\10vector\0"
-	"f\10\3delmode\0"
-	"b\13logical\0"
-	"b\14pending\0"
-	"b\15actlo\0"
-	"b\16irrpending\0"
-	"b\17level\0"
+#define APICVTFMT "\177\20"						\
+	"f\0\10vector\0"						\
+	"f\10\3delmode\0" "=\0fixed\0" "=\1low\0" "=\2SMI\0" "=\4NMI\0"	\
+			"=\5INIT\0" "=\6startup\0" "=\7ExtINT\0"	\
+	"F\13\1\0" ":\0physical\0" ":\1logical\0"			\
+	"b\14pending\0"							\
+	"F\15\1\0" ":\0acthi\0" ":\1actlo\0"				\
+	"b\16irrpending\0"						\
+	"F\17\1\0" ":\0edge\0" ":\1level\0"				\
 	"b\20masked\0"
-	"f\22\1dest\0" "=\1self" "=\2all" "=\3all-others";
 
-const char redirhifmt[] = "\177\20"
+static const char ioapicfmt[] = APICVTFMT
+	"f\22\2dest\0" "=\1self\0" "=\2all\0" "=\3all-others\0";
+
+static const char lapicfmt[] = APICVTFMT
+	"f\21\2timer\0" "=\0oneshot\0" "=\1periodic\0" "=\2TSC-deadine\0";
+
+static const char redirhifmt[] = "\177\20"
 	"f\30\10target\0";
 
 void
-apic_format_redir(const char *where1, const char *where2, int idx,
+apic_format_redir(const char *where1, const char *where2, int idx, int type,
 		uint32_t redirhi, uint32_t redirlo)
 {
 	char buf[256];
 
-	snprintb(buf, sizeof(buf), redirlofmt, redirlo);
-	printf("%s: %s%d %s",
-	    where1, where2, idx, buf);
+	snprintb(buf, sizeof(buf),
+	    type == APIC_VECTYPE_IOAPIC ? ioapicfmt : lapicfmt, redirlo);
+	printf("%s: %s%d %s", where1, where2, idx, buf);
 
-	if ((redirlo & LAPIC_DEST_MASK) == 0) {
+	if ((type == APIC_VECTYPE_IOAPIC)
+	    && ((redirlo & LAPIC_DEST_MASK) == 0)) {
 		snprintb(buf, sizeof(buf), redirhifmt, redirhi);
 		printf(" %s", buf);
 	}
-		    
 
 	printf("\n");
 }

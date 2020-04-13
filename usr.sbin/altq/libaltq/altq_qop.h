@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_qop.h,v 1.6 2011/08/16 12:49:13 christos Exp $	*/
+/*	$NetBSD: altq_qop.h,v 1.6.42.1 2020/04/13 08:05:50 martin Exp $	*/
 /*	$KAME: altq_qop.h,v 1.5 2002/02/12 10:14:01 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -121,7 +121,7 @@ struct fltrinfo {
 
 	/* for consistency check */
 	int			line_no;	/* config file line number */
-	int			dontwarn;	/* supress warning msg */
+	int			dontwarn;	/* suppress warning msg */
 };
 
 int do_command(FILE *infp);
@@ -216,7 +216,7 @@ int client_input(FILE *fp);
 
 #define QOPERR_MAX		18
 
-extern int	filter_dontwarn;/* supress warning for the current filter */
+extern int	filter_dontwarn;/* suppress warning for the current filter */
 extern const char *altqconfigfile;	/* config file name */
 extern const char *qop_errlist[];	/* error string list */
 extern struct qdisc_ops nop_qdisc;

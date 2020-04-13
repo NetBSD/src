@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.186.2.1 2020/04/08 14:07:56 martin Exp $	   */
+/*	$NetBSD: pmap.c,v 1.186.2.2 2020/04/13 08:04:10 martin Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186.2.1 2020/04/08 14:07:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186.2.2 2020/04/13 08:04:10 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -104,8 +104,6 @@ extern	void *msgbufaddr;
 #define NPTEPG		0x80	/* # of PTEs per page (logical or physical) */
 #define PPTESZ		sizeof(struct pte)
 #define NOVADDR		0xffffffff /* Illegal virtual address */
-#define WAITOK		M_WAITOK
-#define NOWAIT		M_NOWAIT
 #define NPTEPERREG	0x200000
 
 #define	SEGTYPE(x)	(((unsigned int)(x)) >> 30)

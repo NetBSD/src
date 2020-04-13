@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_ioreg.h,v 1.2.60.1 2020/04/08 14:08:12 martin Exp $	*/
+/*	$NetBSD: sdmmc_ioreg.h,v 1.2.60.2 2020/04/13 08:04:48 martin Exp $	*/
 /*	$OpenBSD: sdmmc_ioreg.h,v 1.4 2007/06/02 01:48:37 uwe Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 /* CMD52 arguments */
 #define SD_ARG_CMD52_READ		(0<<31)
-#define SD_ARG_CMD52_WRITE		(1<<31)
+#define SD_ARG_CMD52_WRITE		(1UL<<31)
 #define SD_ARG_CMD52_FUNC_SHIFT		28
 #define SD_ARG_CMD52_FUNC_MASK		0x7
 #define SD_ARG_CMD52_EXCHANGE		(1<<27)
@@ -48,7 +48,7 @@
 #define SD_ARG_CMD53_REG_MASK		0x1ffff
 #define SD_ARG_CMD53_LENGTH_SHIFT	0
 #define SD_ARG_CMD53_LENGTH_MASK	0x1ff
-#define SD_ARG_CMD53_LENGTH_MAX		64 /* XXX should be 511? */
+#define SD_ARG_CMD53_LENGTH_MAX		64
 
 /* 48-bit response decoding (32 bits w/o CRC) */
 #define MMC_R4(resp)			((resp)[0])
@@ -68,16 +68,19 @@
 #define  CCCR_CCCR_REV_1_00		0
 #define  CCCR_CCCR_REV_1_10		1
 #define  CCCR_CCCR_REV_1_20		2
+#define  CCCR_CCCR_REV_3_00		3
 #define SD_IO_CCCR_SDIO_REV(r)		(((r) >> 4) & 0xf)
 #define  CCCR_SDIO_REV_1_00		0
 #define  CCCR_SDIO_REV_1_10		1
 #define  CCCR_SDIO_REV_1_20		2	/* (unreleased) */
 #define  CCCR_SDIO_REV_2_00		3
+#define  CCCR_SDIO_REV_3_00		4
 #define SD_IO_CCCR_SPEC_REV		0x01
 #define SD_IO_CCCR_SD_PHYS_SPEC_VER(r)	((r) & 0xf)
 #define  CCCR_SD_PHYS_SPEC_VER_1_01	0
 #define  CCCR_SD_PHYS_SPEC_VER_1_10	1
 #define  CCCR_SD_PHYS_SPEC_VER_2_00	2
+#define  CCCR_SD_PHYS_SPEC_VER_3_00	3
 #define SD_IO_CCCR_FN_ENABLE		0x02
 #define SD_IO_CCCR_FN_IOREADY		0x03
 #define SD_IO_CCCR_FN_INTEN		0x04
@@ -85,9 +88,13 @@
 #define SD_IO_CCCR_FN_INTPENDING	0x05
 #define SD_IO_CCCR_CTL			0x06
 #define  CCCR_CTL_RES			(1<<3)
+#define  CCCR_CTL_AS(x)			((x) & 0x7)
 #define SD_IO_CCCR_BUS_WIDTH		0x07
 #define  CCCR_BUS_WIDTH_4		(2<<0)
 #define  CCCR_BUS_WIDTH_1		(0<<0)
+#define  CCCR_BUS_ECSI			(1<<5)
+#define  CCCR_BUS_SCSI			(1<<6)
+#define  CCCR_BUS_NOCD			(1<<7)
 #define SD_IO_CCCR_CAPABILITY		0x08
 #define  CCCR_CAPS_SDC			(1<<0)
 #define  CCCR_CAPS_SMB			(1<<1) /* Multi-Block support */
@@ -100,6 +107,8 @@
 #define SD_IO_CCCR_CISPTR		0x09 /* XXX 9-10, 10-11, or 9-12 */
 #define SD_IO_CCCR_BUS_SUSPEND		0x0c
 #define SD_IO_CCCR_FUNC_SELECT		0x0d
+#define SD_IO_CCCR_EXEC_FLAGS		0x0e
+#define SD_IO_CCCR_READY_FLAGS		0x0f
 #define  CCCR_FUNC_FS(r)		((r) & 0xf)
 #define  CCCR_FUNC_FS_FN(fn)		((fn) & 0x7)
 #define  CCCR_FUNC_FS_MEM		8
@@ -110,12 +119,36 @@
 #define SD_IO_CCCR_HIGH_SPEED		0x13
 #define  CCCR_HIGH_SPEED_SHS		(1<<0) /* Support High-Speed */
 #define  CCCR_HIGH_SPEED_EHS		(1<<1) /* Enable High-Speed */
+#define  CCCR_HIGH_SPEED_SDR50		(2<<1)
+#define  CCCR_HIGH_SPEED_SDR104		(3<<1)
+#define  CCCR_HIGH_SPEED_DDR50		(4<<1)
+#define SD_IO_CCCR_UHS			0x14
+#define  CCCR_UHS_SDR50			(1<<0)
+#define  CCCR_UHS_SDR104		(1<<1)
+#define  CCCR_UHS_DDR50			(1<<2)
+#define SD_IO_DRIVE_STRENGTH		0x15
+#define  CCCR_DRIVE_SDTA		(1<<0)
+#define  CCCR_DRIVE_SDTC		(1<<1)
+#define  CCCR_DRIVE_SDTD		(1<<2)
 
 /* Function Basic Registers (FBR) */
 #define SD_IO_FBR_START			0x00100
 #define SD_IO_FBR_SIZE			0x100
 #define SD_IO_FBR(func)	((((func) - 1) * SD_IO_FBR_SIZE) + SD_IO_FBR_START)
+
+/* FBR offsets */
+#define SD_IO_FBR_BASIC			0x00
 #define  FBR_STD_FUNC_IF_CODE(v)	((v) & 0x0f)
+#define  FBR_STD_FUNC_CSA(v)		((v) & 0x40) /* supports CSA */
+#define  FBR_STD_FUNC_CSAE(v)		((v) & 0x80) /* enable CSA */
+#define SD_IO_FBR_EXT			0x01
+#define SD_IO_FBR_PWR			0x02
+#define  FBR_PWR_SPS			(1<<0)	/* support power selection */
+#define  FBR_PWR_EPS			(1<<1)	/* enable low power selection */
+#define SD_IO_FBR_CIS			0x09	/* 0x109-0x10b */
+#define SD_IO_FBR_CSA			0x0c	/* 0x10c-0x10e */
+#define SD_IO_FBR_DATA			0x0f
+#define SD_IO_FBR_BLOCKLEN		0x10	/* 0x110-0x111 */
 
 /* Card Information Structure (CIS) */
 #define SD_IO_CIS_START			0x01000
@@ -131,5 +164,6 @@
 #define SD_IO_SFIC_PHS			0x6
 #define SD_IO_SFIC_WLAN			0x7
 #define SD_IO_SFIC_ATA			0x8	/* Embedded SDIO-ATA */
+#define SD_IO_SFIC_EXTENDED		0xf	/* See next byte */
 
 #endif	/* _SDMMC_IOREG_H_ */

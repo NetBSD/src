@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.20.2.1 2019/06/10 22:10:19 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.20.2.2 2020/04/13 08:05:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.20.2.1 2019/06/10 22:10:19 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.20.2.2 2020/04/13 08:05:42 martin Exp $");
 
 #include <stdbool.h>
 #include <sys/param.h>
@@ -159,7 +159,7 @@ p_bpf(struct file *f)
 		(void)printf(", waiting");
 	else if (bpf.bd_state == BPF_TIMED_OUT)
 		(void)printf(", timeout");
-	(void)printf("\n");
+	oprint(f, "\n");
 	return 0;
 }
 
@@ -183,11 +183,12 @@ p_sem(struct file *f)
 			    ks.ks_name, Pid);
 		} else {
 			buf[ks.ks_namelen] = '\0';
-			(void)printf(", name=%s\n", buf);
+			(void)printf(", name=%s", buf);
+			oprint(f, "\n");
 			return 0;
 		}
 	}
-	(void)printf("\n");
+	oprint(f, "\n");
 	return 0;
 }
 
@@ -200,7 +201,8 @@ p_mqueue(struct file *f)
 		dprintf("can't read mqueue at %p for pid %d", f->f_data, Pid);
 		return 0;
 	}
-	(void)printf("* mqueue \"%s\"\n", mq.mq_name);
+	(void)printf("* mqueue \"%s\"", mq.mq_name);
+	oprint(f, "\n");
 	return 0;
 }
 
@@ -228,7 +230,8 @@ p_rnd(struct file *f)
 		return 0;
 	}
 	snprintb(buf, sizeof(buf), CPRNG_FMT, str.cs_flags);
-	(void)printf("* rnd \"%s\" flags %s\n", str.cs_name, buf);
+	(void)printf("* rnd \"%s\" flags %s", str.cs_name, buf);
+	oprint(f, "\n");
 	return 0;
 }
 
@@ -241,7 +244,8 @@ p_kqueue(struct file *f)
 		dprintf("can't read kqueue at %p for pid %d", f->f_data, Pid);
 		return 0;
 	}
-	(void)printf("* kqueue pending %d\n", kq.kq_count);
+	(void)printf("* kqueue pending %d", kq.kq_count);
+	oprint(f, "\n");
 	return 0;
 }
 
@@ -281,22 +285,24 @@ pmisc(struct file *f, const char *name)
 	case NL_SEM:
 		return p_sem(f);
 	case NL_TAP:
-		printf("* tap %lu\n", (unsigned long)(intptr_t)f->f_data);
-		return 0;
+		printf("* tap %lu", (unsigned long)(intptr_t)f->f_data);
+		break;
 	case NL_CRYPTO:
-		printf("* crypto %p\n", f->f_data);
-		return 0;
+		printf("* crypto %p", f->f_data);
+		break;
 	case NL_AUDIO:
-		printf("* audio %p\n", f->f_data);
-		return 0;
+		printf("* audio %p", f->f_data);
+		break;
 	case NL_PAD:
-		printf("* pad %p\n", f->f_data);
-		return 0;
+		printf("* pad %p", f->f_data);
+		break;
 	case NL_MAX:
-		printf("* %s ops=%p %p\n", name, f->f_ops, f->f_data);
-		return 0;
+		printf("* %s ops=%p %p", name, f->f_ops, f->f_data);
+		break;
 	default:
-		printf("* %s %p\n", nl[i].n_name, f->f_data);
-		return 0;
+		printf("* %s %p", nl[i].n_name, f->f_data);
+		break;
 	}
+	oprint(f, "\n");
+	return 0;
 }

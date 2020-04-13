@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapdelete.c,v 1.1.1.6 2018/02/06 01:53:07 christos Exp $	*/
+/*	$NetBSD: ldapdelete.c,v 1.1.1.6.4.1 2020/04/13 07:56:04 martin Exp $	*/
 
 /* ldapdelete.c - simple program to delete an entry using LDAP */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapdelete.c,v 1.1.1.6 2018/02/06 01:53:07 christos Exp $");
+__RCSID("$NetBSD: ldapdelete.c,v 1.1.1.6.4.1 2020/04/13 07:56:04 martin Exp $");
 
 #include "portable.h"
 

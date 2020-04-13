@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.49 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: grf.c,v 1.49.28.1 2020/04/13 08:03:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.49 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.49.28.1 2020/04/13 08:03:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -90,9 +90,9 @@ int grfon(dev_t);
 int grfoff(dev_t);
 int grfsinfo(dev_t, struct grfdyninfo *);
 
-int grfbusprint(void *, const char *);
-int grfbusmatch(device_t, cfdata_t, void *);
-void grfbusattach(device_t, device_t, void *);
+static int grfbusprint(void *, const char *);
+static int grfbusmatch(device_t, cfdata_t, void *);
+static void grfbusattach(device_t, device_t, void *);
 
 /*
  * pointers to grf drivers device structs 
@@ -127,7 +127,7 @@ const struct cdevsw grf_cdevsw = {
  */
 static cfdata_t cfdata_gbus  = NULL;
 
-int
+static int
 grfbusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
@@ -139,7 +139,7 @@ grfbusmatch(device_t parent, cfdata_t cf, void *aux)
 	return 1;	/* Always there	*/
 }
 
-void
+static void
 grfbusattach(device_t parent, device_t self, void *aux)
 {
 	grf_auxp_t	grf_auxp;
@@ -155,7 +155,7 @@ grfbusattach(device_t parent, device_t self, void *aux)
 	}
 }
 
-int
+static int
 grfbusprint(void *aux, const char *name)
 {
 

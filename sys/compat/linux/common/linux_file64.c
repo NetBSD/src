@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.59.4.1 2019/06/10 22:07:00 christos Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.59.4.2 2020/04/13 08:04:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.59.4.1 2019/06/10 22:07:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.59.4.2 2020/04/13 08:04:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ static void bsd_to_linux_stat(struct stat *, struct linux_stat64 *);
 static void
 bsd_to_linux_stat(struct stat *bsp, struct linux_stat64 *lsp)
 {
+	memset(lsp, 0, sizeof(*lsp));
 	lsp->lst_dev     = linux_fakedev(bsp->st_dev, 0);
 	lsp->lst_ino     = bsp->st_ino;
 	lsp->lst_mode    = (linux_mode_t)bsp->st_mode;
@@ -352,6 +353,7 @@ again:
 		 * we have to worry about touching user memory outside of
 		 * the copyout() call).
 		 */
+		memset(&idb, 0, sizeof(idb));
 		idb.d_ino = bdp->d_fileno;
 		idb.d_type = bdp->d_type;
 		idb.d_off = off;

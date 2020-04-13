@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_malloc.c,v 1.5 2017/11/09 22:16:38 christos Exp $	*/
+/*	$NetBSD: chfs_malloc.c,v 1.5.4.1 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -218,7 +218,7 @@ chfs_free_refblock(struct chfs_node_ref *nref)
 struct chfs_node_ref*
 chfs_alloc_node_ref(struct chfs_eraseblock *cheb)
 {
-	struct chfs_node_ref *nref, *new, *old;
+	struct chfs_node_ref *nref, *new, *old __diagused;
 	old = cheb->last_node;
 	nref = cheb->last_node;
 

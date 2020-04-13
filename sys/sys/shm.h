@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.51.18.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: shm.h,v 1.51.18.2 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -172,11 +172,13 @@ extern int shm_nused;
 
 struct vmspace;
 
-int	shminit(struct sysctllog **);
+int	shminit(void);
 int	shmfini(void);
 void	shmfork(struct vmspace *, struct vmspace *);
 void	shmexit(struct vmspace *);
 int	shmctl1(struct lwp *, int, int, struct shmid_ds *);
+
+int	shm_find_segment_perm_by_index(int, struct ipc_perm *);
 
 extern void (*uvm_shmexit)(struct vmspace *);
 extern void (*uvm_shmfork)(struct vmspace *, struct vmspace *);

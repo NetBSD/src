@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.24.2.2 2020/04/08 14:07:35 martin Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.24.2.3 2020/04/13 08:03:42 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.24.2.2 2020/04/08 14:07:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.24.2.3 2020/04/13 08:03:42 martin Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -477,9 +477,7 @@ fdt_map_efi_runtime(const char *prop, enum arm_efirt_mem_type type)
 }
 #endif
 
-u_int initarm(void *arg);
-
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	const struct arm_platform *plat;
@@ -607,7 +605,7 @@ initarm(void *arg)
 	VPRINTF("Memory regions:\n");
 	fdt_memory_foreach(fdt_add_boot_physmem, &memory_size);
 
-	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
+	vaddr_t sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
 	     nfdt_physmem);
 
 	/*
@@ -635,9 +633,11 @@ initarm(void *arg)
 		const paddr_t spg = atop(spa);
 		const paddr_t epg = atop(epa);
 
+		VPRINTF("         start %08lx  end %08lx... "
+		    "loading in freelist %d\n", spa, epa, VM_FREELIST_DEFAULT);
+
 		uvm_page_physload(spg, epg, spg, epg, VM_FREELIST_DEFAULT);
 
-		VPRINTF("           start %08lx  end %08lx", ptoa(spa), ptoa(epa));
 	}
 
 	return sp;

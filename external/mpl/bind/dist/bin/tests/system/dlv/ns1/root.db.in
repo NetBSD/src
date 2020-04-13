@@ -13,7 +13,14 @@ $TTL	120
 @		NS	ns.rootservers.utld
 ns		A	10.53.0.1
 ;
+; A zone that is unsigned (utld=unsigned tld) that will include a second level
+; zone that acts as a DLV.
+;
 utld		NS	ns.utld
 ns.utld		A	10.53.0.2
+;
+; A zone that has a bad DNSKEY RRset but has good DLV records for its child
+; zones.
+;
 druz		NS	ns.druz
 ns.druz		A	10.53.0.2

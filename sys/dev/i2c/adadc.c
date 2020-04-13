@@ -1,4 +1,4 @@
-/* $NetBSD: adadc.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $ */
+/* $NetBSD: adadc.c,v 1.6.2.1 2020/04/13 08:04:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.6.2.1 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,7 @@ adadc_attach(device_t parent, device_t self, void *aux)
 			int reg = 0;
 			OF_getprop(ch, "reg", &reg, sizeof(reg));
 			s = &sc->sc_sensors[sc->sc_nsensors];
+			s->state = ENVSYS_SINVALID;
 			/*
 			 * this setup matches my 2x 2.5GHz PCI-X G5, Linux and
 			 * FreeBSD hardcode these as well so we should be safe

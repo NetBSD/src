@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.3.4.3 2020/04/08 14:07:45 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.3.4.4 2020/04/13 08:04:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.3.4.3 2020/04/08 14:07:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.3.4.4 2020/04/13 08:04:00 martin Exp $");
 
 #include "opt_compat_netbsd.h"
-#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

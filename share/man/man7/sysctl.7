@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.128.2.1 2019/06/10 22:05:41 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.128.2.2 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd June 1, 2019
+.Dd November 14, 2019
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -308,6 +308,7 @@ privilege may change the value.
 .It kern.labelsector	integer	no
 .It kern.login_name_max	integer	no
 .It kern.logsigexit	integer	yes
+.It kern.lwp	struct kinfo_lwp	yes
 .It kern.mapped_files	integer	no
 .It kern.maxfiles	integer	yes
 .It kern.maxlwp	integer	yes
@@ -382,8 +383,10 @@ the variable may be created and removed dynamically
 upon loading or unloading the corresponding kernel module.
 .It Li kern.aio_max
 The maximum number of asynchronous I/O operations.
-.It Li kern.arandom
-This variable picks a random number each time it is queried.
+.It Li kern.arandom ( Dv KERN_ARND )
+This variable returns up to 256 bytes of random data.
+Multiple queries can be used to obtain an infinite amount of
+non-blocking cryptographically secure random data.
 The used random number generator
 .Pf ( RNG )
 is based on
@@ -727,6 +730,12 @@ If this flag is non-zero, the kernel will
 all process exits due to signals which create a
 .Xr core 5
 file, and whether the coredump was created.
+.It Li kern.lwp ( Dv KERN_LWP )
+Returns information about the current light-weight process.
+The
+.Sy kinfo_lwp
+structure is defined in
+.In sys/sysctl.h .
 .It Li kern.mapped_files ( Dv KERN_MAPPED_FILES )
 Returns 1 if the
 .St -p1003.1b-93
@@ -1347,7 +1356,6 @@ Each element of the array contains the kernel address of a vnode
 .Vt struct vnode *
 followed by the vnode itself
 .Vt struct vnode .
-.\" XXX: Undocumented: kern.lwp: no children?
 .El
 .Ss The machdep.* subtree
 The set of variables defined is architecture dependent.
@@ -2525,6 +2533,12 @@ the fifth is the size of
 Returns an array of
 .Vt struct kinfo_vmentry
 objects.
+.It Li vm.ubc_direct
+Use direct map for UBC I/O, avoiding need to map and unmap buffer memory.
+Speeds up operation for fast I/O devices like NVMe, especially
+on multi-CPU systems.
+Only available on some architectures.
+Currently still experimental, default is off.
 .It Li vm.uspace ( Dv VM_USPACE )
 The number of bytes allocated for each kernel stack.
 .It Li vm.uvmexp ( Dv VM_UVMEXP )

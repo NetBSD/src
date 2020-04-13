@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2014/01/16 20:31:42 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.17.26.1 2020/04/13 08:03:09 martin Exp $
 
 .PATH: ${COMPATDIR}/gen
 SRCS+=compat_errlist.c compat_fts.c compat___fts13.c compat___fts30.c \
@@ -8,4 +8,5 @@ SRCS+=compat_errlist.c compat_fts.c compat___fts13.c compat___fts30.c \
     compat_times.c compat_timezone.c compat_unvis.c compat_utmpx.c \
     compat_time.c compat_utime.c compat_devname.c compat_alphasort.c \
     compat_getpwent.c compat___fts32.c compat_utmp.c compat___fts50.c \
-    compat___unvis13.c compat_syslog.c compat_alloca.c
+    compat___unvis13.c compat_syslog.c compat_alloca.c \
+    compat___getmntinfo13.c

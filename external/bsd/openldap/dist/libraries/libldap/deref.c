@@ -1,9 +1,9 @@
-/*	$NetBSD: deref.c,v 1.1.1.5 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: deref.c,v 1.1.1.5.4.1 2020/04/13 07:56:13 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: deref.c,v 1.1.1.5 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: deref.c,v 1.1.1.5.4.1 2020/04/13 07:56:13 martin Exp $");
 
 #include "portable.h"
 

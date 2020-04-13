@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.66.2.1 2019/06/10 22:10:37 christos Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.66.2.2 2020/04/13 08:05:58 martin Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ static char *mcastif;
 int sock;
 int rtsock = -1;
 int accept_rr = 0;
-int dflag = 0, sflag = 0, Dflag;
+int Cflag = 0, dflag = 0, sflag = 0, Dflag;
 
 static char **if_argv;
 static int if_argc;
@@ -193,6 +193,9 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'c':
 			conffile = optarg;
+			break;
+		case 'C':
+			Cflag++;
 			break;
 		case 'd':
 			dflag++;
@@ -452,6 +455,18 @@ die(void)
 }
 
 static void
+ra_timer_reset(struct rainfo *rai)
+{
+
+	rtadvd_remove_timer(&rai->timer);
+	rai->timer = rtadvd_add_timer(ra_timeout, ra_timer_update, rai, rai);
+	ra_timer_update(rai, &rai->timer->tm);
+	rtadvd_set_timer(&rai->timer->tm, rai->timer);
+	rtadvd_remove_timer(&rai->timer_sol);
+	rai->timer_sol = rtadvd_add_timer(ra_timeout_sol, NULL, rai, NULL);
+}
+
+static void
 rtmsg_input(void)
 {
 	int n, type, ifindex = 0, plen;
@@ -698,14 +713,7 @@ rtmsg_input(void)
 
 			rai->initcounter = 0; /* reset the counter */
 			rai->waiting = 0; /* XXX */
-			rtadvd_remove_timer(&rai->timer);
-			rai->timer = rtadvd_add_timer(ra_timeout,
-			    ra_timer_update, rai, rai);
-			ra_timer_update(rai, &rai->timer->tm);
-			rtadvd_set_timer(&rai->timer->tm, rai->timer);
-			rtadvd_remove_timer(&rai->timer_sol);
-			rai->timer_sol = rtadvd_add_timer(ra_timeout_sol,
-			    NULL, rai, NULL);
+			ra_timer_reset(rai);
 		} else if (prefixchange && rai->ifflags & IFF_UP) {
 			/*
 			 * An advertised prefix has been added or invalidated.
@@ -1760,10 +1768,7 @@ ra_output(struct rainfo *rai, bool solicited)
 			       "%s: expired RA,"
 			       " new config active for interface (%s)",
 			       __func__, rai->ifname);
-			rai->leaving_for->timer = rtadvd_add_timer(ra_timeout,
-			    ra_timer_update,
-			    rai->leaving_for, rai->leaving_for);
-			ra_timer_set_short_delay(rai->leaving_for, rai->timer);
+			ra_timer_reset(rai->leaving_for);
 			rai->leaving_for->leaving = NULL;
 			free_rainfo(rai);
 			return NULL;

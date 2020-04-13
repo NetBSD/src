@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34.2.1 2019/06/10 22:06:54 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34.2.2 2020/04/13 08:04:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34.2.1 2019/06/10 22:06:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34.2.2 2020/04/13 08:04:12 martin Exp $");
 
 #include "opt_mtrr.h"
 
@@ -136,33 +136,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct switchframe *sf;
 	vaddr_t uv;
 
+	KASSERT(l1 == curlwp || l1 == &lwp0);
+
 	pcb1 = lwp_getpcb(l1);
 	pcb2 = lwp_getpcb(l2);
-
-	/*
-	 * If parent LWP was using FPU, then we have to save the FPU h/w
-	 * state to PCB so that we can copy it.
-	 */
-	fpusave_lwp(l1, true);
-
-	/*
-	 * Sync the PCB before we copy it.
-	 */
-	if (l1 == curlwp) {
-		KASSERT(pcb1 == curpcb);
-		savectx(pcb1);
-	} else {
-		KASSERT(l1 == &lwp0);
-	}
 
 	/* Copy the PCB from parent, except the FPU state. */
 	memcpy(pcb2, pcb1, offsetof(struct pcb, pcb_savefpu));
 
-	/* FPU state not installed. */
-	pcb2->pcb_fpcpu = NULL;
-
-	/* Copy FPU state. */
-	fpu_save_area_fork(pcb2, pcb1);
+	/* Fork the FPU state. */
+	fpu_lwp_fork(l1, l2);
 
 	/* Never inherit CPU Debug Registers */
 	pcb2->pcb_dbregs = NULL;
@@ -211,12 +194,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* Child LWP might get aston() before returning to userspace. */
 	tf->tf_trapno = T_ASTFLT;
 
-#if 0 /* DIAGNOSTIC */
-	/* Set a red zone in the kernel stack after the uarea. */
-	pmap_kremove(uv, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-#endif
-
 	/* If specified, set a different user stack for a child. */
 	if (stack != NULL) {
 #ifdef __x86_64__
@@ -254,14 +231,18 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 /*
  * cpu_lwp_free is called from exit() to let machine-dependent
  * code free machine-dependent resources.  Note that this routine
- * must not block.
+ * must not block.  NB: this may be called with l != curlwp in
+ * error paths.
  */
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
 
-	/* If we were using the FPU, forget about it. */
-	fpusave_lwp(l, false);
+	if (l != curlwp)
+		return;
+
+	/* Abandon the FPU state. */
+	fpu_lwp_abandon(l);
 
 	/* Abandon the dbregs state. */
 	x86_dbregs_abandon(l);
@@ -270,12 +251,6 @@ cpu_lwp_free(struct lwp *l, int proc)
 	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
 #endif
-	/*
-	 * Free deferred mappings if any.
-	 */
-	struct vm_page *empty_ptps = l->l_md.md_gc_ptp;
-	l->l_md.md_gc_ptp = NULL;
-	pmap_free_ptps(empty_ptps);
 }
 
 /*
@@ -286,9 +261,6 @@ void
 cpu_lwp_free2(struct lwp *l)
 {
 	struct pcb *pcb;
-
-	KASSERT(l->l_md.md_gc_ptp == NULL);
-	KASSERT(l->l_md.md_gc_pmap == NULL);
 
 	pcb = lwp_getpcb(l);
 	KASSERT((pcb->pcb_flags & PCB_DBREGS) == 0);
@@ -375,3 +347,31 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
+
+#ifdef __HAVE_CPU_UAREA_ROUTINES
+void *
+cpu_uarea_alloc(bool system)
+{
+	vaddr_t va;
+
+	va = uvm_km_alloc(kernel_map, USPACE, 0, UVM_KMF_WIRED|UVM_KMF_WAITVA);
+	if (va == 0)
+		return NULL;
+
+	/*
+	 * The second page is unmapped, and acts as a guard page between the
+	 * PCB (first page) and the stack (rest of the pages).
+	 */
+	pmap_kremove(va + PAGE_SIZE, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+
+	return (void *)va;
+}
+
+bool
+cpu_uarea_free(void *addr)
+{
+	uvm_km_free(kernel_map, (vaddr_t)addr, USPACE, UVM_KMF_WIRED);
+	return true;
+}
+#endif /* __HAVE_CPU_UAREA_ROUTINES */

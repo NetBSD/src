@@ -1,4 +1,4 @@
-/*      $NetBSD: prog_ops.h,v 1.2 2010/12/13 21:48:01 pooka Exp $	*/
+/*      $NetBSD: prog_ops.h,v 1.2.46.1 2020/04/13 08:03:23 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,19 +32,33 @@
 #include <sys/types.h>
 
 #ifndef CRUNCHOPS
+struct sysctlnode;
+
 struct prog_ops {
 	int (*op_init)(void);
 
 	int (*op_sysctl)(const int *, u_int, void *, size_t *,
 			 const void *, size_t);
+
+	/* Indirection needed for sanitizers. */
+
+	int (*op_sysctlbyname)(const char *, void *, size_t *,
+			 const void *, size_t);
+
+	int (*op_sysctlgetmibinfo)(const char *, int *, u_int *, char *,
+			 size_t *, struct sysctlnode **, int);
 };
 extern const struct prog_ops prog_ops;
 
 #define prog_init prog_ops.op_init
 #define prog_sysctl prog_ops.op_sysctl
+#define prog_sysctlbyname prog_ops.op_sysctlbyname
+#define prog_sysctlgetmibinfo prog_ops.op_sysctlgetmibinfo
 #else
 #define prog_init ((int (*)(void))NULL)
 #define prog_sysctl sysctl
+#define prog_sysctlbyname sysctlbyname
+#define prog_sysctlgetmibinfo sysctlgetmibinfo
 #endif
 
 #endif /* _PROG_OPS_H_ */

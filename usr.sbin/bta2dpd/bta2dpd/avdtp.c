@@ -1,4 +1,4 @@
-/* $NetBSD: avdtp.c,v 1.1.16.1 2019/06/10 22:10:28 christos Exp $ */
+/* $NetBSD: avdtp.c,v 1.1.16.2 2020/04/13 08:05:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -210,7 +210,7 @@ avdtpDiscover(uint8_t *buffer, size_t recvsize,  struct avdtp_sepInfo *sepInfo,
 	bool isSink;
 
 	if (recvsize >= 2) {
-		for (offset = 0;offset < recvsize;offset += 2) {
+		for (offset = 0; offset < recvsize - 1; offset += 2) {
 			sepInfo->sep = buffer[offset] >> 2;
 			sepInfo->media_Type = buffer[offset+1] >> 4;
 			isSink = (buffer[offset+1] >> 3) & 1;
@@ -313,7 +313,7 @@ avdtpAutoConfigSBC(int fd, int recvfd, uint8_t *capabilities, size_t cap_len,
 	uint8_t supBitpoolMin, supBitpoolMax, tmp_mask;
 	size_t i;
 
-	for (i = 0; i < cap_len; i++) {
+	for (i = 0; i < cap_len - 5; i++) {
 		if (capabilities[i] == mediaTransport &&
 		    capabilities[i + 1] == 0 &&
 		    capabilities[i + 2] == mediaCodec &&
@@ -321,7 +321,7 @@ avdtpAutoConfigSBC(int fd, int recvfd, uint8_t *capabilities, size_t cap_len,
 		    capabilities[i + 5] == SBC_CODEC_ID)
 			break;
 	}
-	if (i >= cap_len)
+	if (i >= cap_len - 9)
 		goto auto_config_failed;
 
 	availFreqMode = capabilities[i + 6];

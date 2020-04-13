@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.24 2011/07/01 20:31:39 dyoung Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.24.54.1 2020/04/13 08:03:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.24 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.24.54.1 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,10 +124,7 @@ sacc_intr_establish(sacc_chipset_tag_t *ic, int irq, int type, int level,
 	struct sacc_softc *sc = (struct sacc_softc *)ic;
 	struct sacc_intrhand **p, *ih;
 
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("sacc_intr_establish: can't malloc handler info");
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 
 	if (irq < 0 || irq > SACCIC_LEN ||
 	    !(type == IST_EDGE_RAISE || type == IST_EDGE_FALL))

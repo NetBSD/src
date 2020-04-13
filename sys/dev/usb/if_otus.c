@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.33.2.2 2020/04/08 14:08:13 martin Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.33.2.3 2020/04/13 08:04:49 martin Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.33.2.2 2020/04/08 14:08:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.33.2.3 2020/04/13 08:04:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1118,6 +1118,9 @@ otus_free_tx_cmd(struct otus_softc *sc)
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
+	if (sc->sc_cmd_tx_pipe == NULL)
+		return;
+
 	/* Make sure no transfers are pending. */
 	usbd_abort_pipe(sc->sc_cmd_tx_pipe);
 
@@ -1169,6 +1172,9 @@ otus_free_tx_data_list(struct otus_softc *sc)
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
+	if (sc->sc_data_tx_pipe == NULL)
+		return;
+
 	/* Make sure no transfers are pending. */
 	usbd_abort_pipe(sc->sc_data_tx_pipe);
 
@@ -1213,6 +1219,9 @@ otus_free_rx_data_list(struct otus_softc *sc)
 	int i;
 
 	DPRINTFN(DBG_FN, sc, "\n");
+
+	if (sc->sc_data_rx_pipe == NULL)
+		return;
 
 	/* Make sure no transfers are pending. */
 	usbd_abort_pipe(sc->sc_data_rx_pipe);

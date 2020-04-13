@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.22 2016/07/11 11:31:49 msaitoh Exp $ */
+/* $NetBSD: piixpcib.c,v 1.22.18.1 2020/04/13 08:03:53 martin Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.22 2016/07/11 11:31:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.22.18.1 2020/04/13 08:03:53 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.22 2016/07/11 11:31:49 msaitoh Exp $"
 
 #include <machine/frame.h>
 #include <machine/bioscall.h>
+#include <machine/bootinfo.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -195,6 +196,12 @@ piixpcib_int15_gsic_call(int *sig, int *smicmd, int *cmd, int *smidata,
 {
 	struct bioscallregs regs;
 
+	/* No bioscall with EFI */
+	if (lookup_bootinfo(BTINFO_EFI) != NULL) {
+		*sig = *smicmd = *cmd = *smidata = *flags = -1;
+		return;
+	}
+		
 	memset(&regs, 0, sizeof(struct bioscallregs));
 	regs.EAX = 0x0000e980;	/* IST support */
 	regs.EDX = PIIXPCIB_GSIC;

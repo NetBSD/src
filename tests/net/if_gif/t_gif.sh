@@ -1,4 +1,4 @@
-#	$NetBSD: t_gif.sh,v 1.12 2018/02/01 05:22:01 ozaki-r Exp $
+#	$NetBSD: t_gif.sh,v 1.12.4.1 2020/04/13 08:05:30 martin Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -221,7 +221,7 @@ setup_if_gif()
 	peernet=${7}
 
 	export RUMP_SERVER=${sock}
-	atf_check -s exit:0 rump.ifconfig gif0 create
+	rump_server_add_iface $sock gif0
 	atf_check -s exit:0 rump.ifconfig gif0 tunnel ${src} ${dst}
 	if [ ${inner} = "ipv6" ]; then
 		atf_check -s exit:0 rump.ifconfig gif0 inet6 ${addr}/128 ${remote}
@@ -335,7 +335,7 @@ setup_dummy_if_gif()
 	dst=${6}
 
 	export RUMP_SERVER=${sock}
-	atf_check -s exit:0 rump.ifconfig gif1 create
+	rump_server_add_iface $sock gif1
 	atf_check -s exit:0 rump.ifconfig gif1 tunnel ${src} ${dst}
 	if [ ${inner} = "ipv6" ]; then
 		atf_check -s exit:0 rump.ifconfig gif1 inet6 ${addr}/128 ${remote}
@@ -422,7 +422,7 @@ setup_recursive_if_gif()
 	dst=${7}
 
 	export RUMP_SERVER=${sock}
-	atf_check -s exit:0 rump.ifconfig ${gif} create
+	rump_server_add_iface $sock $gif
 	atf_check -s exit:0 rump.ifconfig ${gif} tunnel ${src} ${dst}
 	if [ ${inner} = "ipv6" ]; then
 		atf_check -s exit:0 rump.ifconfig ${gif} inet6 ${addr}/128 ${remote}

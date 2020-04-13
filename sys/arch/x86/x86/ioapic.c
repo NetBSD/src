@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.56.4.1 2019/06/10 22:06:54 christos Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.56.4.2 2020/04/13 08:04:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -44,11 +44,11 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD 
- *      Foundation, Inc. and its contributors.  
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
- *    contributors may be used to endorse or promote products derived  
- *    from this software without specific prior written permission.   
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.56.4.1 2019/06/10 22:06:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.56.4.2 2020/04/13 08:04:11 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -139,10 +139,10 @@ ioapic_unlock(struct ioapic_softc *sc, u_long flags)
  * Register read/write routines.
  */
 static inline  uint32_t
-ioapic_read_ul(struct ioapic_softc *sc,int regid)
+ioapic_read_ul(struct ioapic_softc *sc, int regid)
 {
 	uint32_t val;
-	
+
 	*(sc->sc_reg) = regid;
 	val = *sc->sc_data;
 
@@ -150,7 +150,7 @@ ioapic_read_ul(struct ioapic_softc *sc,int regid)
 }
 
 static inline  void
-ioapic_write_ul(struct ioapic_softc *sc,int regid, uint32_t val)
+ioapic_write_ul(struct ioapic_softc *sc, int regid, uint32_t val)
 {
 	*(sc->sc_reg) = regid;
 	*(sc->sc_data) = val;
@@ -170,7 +170,7 @@ ioapic_read(struct ioapic_softc *sc, int regid)
 }
 
 static inline  void
-ioapic_write(struct ioapic_softc *sc,int regid, int val)
+ioapic_write(struct ioapic_softc *sc, int regid, int val)
 {
 	u_long flags;
 
@@ -233,13 +233,13 @@ ioapic_add(struct ioapic_softc *sc)
 }
 
 void
-ioapic_print_redir (struct ioapic_softc *sc, const char *why, int pin)
+ioapic_print_redir(struct ioapic_softc *sc, const char *why, int pin)
 {
 	uint32_t redirlo = ioapic_read(sc, IOAPIC_REDLO(pin));
 	uint32_t redirhi = ioapic_read(sc, IOAPIC_REDHI(pin));
 
-	apic_format_redir(device_xname(sc->sc_dev), why, pin, redirhi,
-	    redirlo);
+	apic_format_redir(device_xname(sc->sc_dev), why, pin,
+	    APIC_VECTYPE_IOAPIC, redirhi, redirlo);
 }
 
 CFATTACH_DECL_NEW(ioapic, sizeof(struct ioapic_softc),
@@ -255,15 +255,15 @@ ioapic_match(device_t parent, cfdata_t match, void *aux)
 /*
  * can't use bus_space_xxx as we don't have a bus handle ...
  */
-void 
+void
 ioapic_attach(device_t parent, device_t self, void *aux)
 {
-	struct ioapic_softc *sc = device_private(self);  
+	struct ioapic_softc *sc = device_private(self);
 	struct apic_attach_args *aaa = (struct apic_attach_args *)aux;
 	int apic_id;
 	uint32_t ver_sz;
 	int i;
-	
+
 	sc->sc_dev = self;
 	sc->sc_flags = aaa->flags;
 	sc->sc_pic.pic_apicid = aaa->apic_id;
@@ -287,7 +287,7 @@ ioapic_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_reg = (volatile uint32_t *)(bh + IOAPIC_REG);
-	sc->sc_data = (volatile uint32_t *)(bh + IOAPIC_DATA);	
+	sc->sc_data = (volatile uint32_t *)(bh + IOAPIC_DATA);
 	}
 #endif
 	sc->sc_pa = aaa->apic_address;
@@ -332,7 +332,7 @@ ioapic_attach(device_t parent, device_t self, void *aux)
 		printf(", %s mode",
 		    aaa->flags & IOAPIC_PICMODE ? "PIC" : "virtual wire");
 	}
-	
+
 	aprint_verbose(", version 0x%x, %d pins", sc->sc_apic_vers,
 	    sc->sc_apic_sz);
 	aprint_normal("\n");
@@ -340,7 +340,7 @@ ioapic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pins = malloc(sizeof(struct ioapic_pin) * sc->sc_apic_sz,
 	    M_DEVBUF, M_WAITOK);
 
-	for (i=0; i<sc->sc_apic_sz; i++) {
+	for (i = 0; i < sc->sc_apic_sz; i++) {
 		uint32_t redlo, redhi;
 
 		sc->sc_pins[i].ip_next = NULL;
@@ -356,14 +356,14 @@ ioapic_attach(device_t parent, device_t self, void *aux)
 		 *
 		 * Expect all other interrupts to be PCI-like
 		 * level triggered on low.
-		 */  
+		 */
 		if (i >= 16)
 			redlo |= IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 		redhi = (cpu_info_primary.ci_cpuid << IOAPIC_REDHI_DEST_SHIFT);
 		ioapic_write(sc, IOAPIC_REDHI(i), redhi);
 		ioapic_write(sc, IOAPIC_REDLO(i), redlo);
 	}
-	
+
 	/*
 	 * In case the APIC is not initialized to the correct ID
 	 * do it now.
@@ -377,10 +377,10 @@ ioapic_attach(device_t parent, device_t self, void *aux)
 		ioapic_write(sc, IOAPIC_ID,
 		    (ioapic_read(sc, IOAPIC_ID) & ~IOAPIC_ID_MASK)
 		    | (sc->sc_pic.pic_apicid << IOAPIC_ID_SHIFT));
-		
+
 		apic_id = (ioapic_read(sc, IOAPIC_ID) & IOAPIC_ID_MASK)
 		    >> IOAPIC_ID_SHIFT;
-		
+
 		if (apic_id != sc->sc_pic.pic_apicid)
 			aprint_error_dev(sc->sc_dev,
 			    "can't remap to apid %d\n", sc->sc_pic.pic_apicid);
@@ -396,7 +396,7 @@ ioapic_attach(device_t parent, device_t self, void *aux)
 #if 0
 	/* output of this was boring. */
 	if (mp_verbose)
-		for (i=0; i<sc->sc_apic_sz; i++)
+		for (i = 0; i < sc->sc_apic_sz; i++)
 			ioapic_print_redir(sc, "boot", i);
 #endif
 }
@@ -410,7 +410,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 	int delmode;
 	struct ioapic_pin *pp;
 	struct mp_intr_map *map;
-	
+
 	pp = &sc->sc_pins[pin];
 	map = pp->ip_map;
 	redlo = map == NULL ? IOAPIC_REDLO_MASK : map->redir;
@@ -527,7 +527,7 @@ ioapic_trymask(struct pic *pic, int pin)
 
 	/* If pending, unmask and abort. */
 	redlo = ioapic_read_ul(sc, IOAPIC_REDLO(pin));
-	if ((redlo & (IOAPIC_REDLO_RIRR|IOAPIC_REDLO_DELSTS)) != 0) {
+	if ((redlo & (IOAPIC_REDLO_RIRR | IOAPIC_REDLO_DELSTS)) != 0) {
 		redlo &= ~IOAPIC_REDLO_MASK;
 		ioapic_write_ul(sc, IOAPIC_REDLO(pin), redlo);
 		rv = false;
@@ -611,7 +611,7 @@ ioapic_dump_raw(void)
 			printf(" %08x", (u_int)reg);
 			if (++i % 0x08 == 0)
 				printf("\n");
-		} while (i < 0x40);
+		} while (i < IOAPIC_REDTBL + (sc->sc_apic_sz * 2));
 	}
 }
 #endif

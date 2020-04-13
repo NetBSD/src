@@ -133,10 +133,8 @@ construct_packet(const tcp_meta_t *p)
 static bool
 process_packet(const int i, npf_state_t *nst, bool *snew)
 {
-	ifnet_t *dummy_ifp = npf_test_addif(IFNAME_TEST, false, false);
 	const tcp_meta_t *p = &packet_sequence[i];
-	npf_cache_t npc = { .npc_info = 0, .npc_ctx = npf_getkernctx() };
-	nbuf_t nbuf;
+	npf_cache_t *npc;
 	int ret;
 
 	if (p->flags == 0) {
@@ -145,18 +143,14 @@ process_packet(const int i, npf_state_t *nst, bool *snew)
 		return true;
 	}
 
-	nbuf_init(npf_getkernctx(), &nbuf, construct_packet(p), dummy_ifp);
-	npc.npc_nbuf = &nbuf;
-	ret = npf_cache_all(&npc);
-	KASSERT((ret & NPC_IPFRAG) == 0);
-
+	npc = get_cached_pkt(construct_packet(p), NULL);
 	if (*snew) {
-		ret = npf_state_init(&npc, nst);
+		ret = npf_state_init(npc, nst);
 		KASSERT(ret == true);
 		*snew = false;
 	}
-	ret = npf_state_inspect(&npc, nst, p->flags == OUT);
-	m_freem(nbuf.nb_mbuf);
+	ret = npf_state_inspect(npc, nst, p->flags == OUT);
+	put_cached_pkt(npc);
 
 	return ret ? true : (p->flags & ERR) != 0;
 }
@@ -168,7 +162,7 @@ npf_state_test(bool verbose)
 	bool snew = true;
 	bool ok = true;
 
-	for (u_int i = 0; i < __arraycount(packet_sequence); i++) {
+	for (unsigned i = 0; i < __arraycount(packet_sequence); i++) {
 		if (process_packet(i, &nst, &snew)) {
 			continue;
 		}

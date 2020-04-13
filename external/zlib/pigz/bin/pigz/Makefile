@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.16.1 2019/06/10 22:05:09 christos Exp $
+#	$NetBSD: Makefile,v 1.9.16.2 2020/04/13 08:03:06 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -57,4 +57,8 @@ DIST=		${NETBSDSRCDIR}/external/zlib/pigz/dist
 .if ${MKPIGZGZIP} != "no"
 GZIPDIST=	${NETBSDSRCDIR}/usr.bin/gzip
 .PATH:	${GZIPDIST}
+.endif
+
+.if !defined(HOSTPROG)
+COPTS.pigz.c+=	${GCC_NO_STRINGOP_OVERFLOW}
 .endif

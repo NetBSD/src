@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.25 2010/10/17 16:13:56 uebayasi Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.25.46.1 2020/04/13 08:05:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.25 2010/10/17 16:13:56 uebayasi Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.25.46.1 2020/04/13 08:05:54 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,11 +221,11 @@ kern_readonly(int mode)
 	if (pflag && mode == GMON_PROF_ON)
 		(void)fprintf(stderr, "data may be inconsistent\n");
 	if (rflag)
-		(void)fprintf(stderr, "-r supressed\n");
+		(void)fprintf(stderr, "-r suppressed\n");
 	if (bflag)
-		(void)fprintf(stderr, "-b supressed\n");
+		(void)fprintf(stderr, "-b suppressed\n");
 	if (hflag)
-		(void)fprintf(stderr, "-h supressed\n");
+		(void)fprintf(stderr, "-h suppressed\n");
 	rflag = bflag = hflag = 0;
 }
 

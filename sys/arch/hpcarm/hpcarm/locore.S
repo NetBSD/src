@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18 2014/03/02 13:26:30 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.30.1 2020/04/13 08:03:51 martin Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -160,7 +160,7 @@ ASENTRY_NP(hpc_start)
 	mov	fp, #0x00000000		/* trace back starts here */
 	bl	_C_LABEL(initarm)	/* Off we go */
 
-	/* init arm will return the new stack pointer. */
+	/* initarm will return the new stack pointer. */
 	mov	sp, r0
 
 	mov	fp, #0x00000000		/* trace back starts here */

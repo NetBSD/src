@@ -1,3 +1,11 @@
+2019-05-28  Alan Hayward  <alan.hayward@arm.com>
+
+	* event-top.c: Remove include comment.
+	* inflow.c (class scoped_ignore_sigttou): Move from here...
+	* inflow.h (class scoped_ignore_sigttou): ...to here.
+	* ser-unix.c (hardwire_drain_output): Block SIGTTOU during drain.
+	* top.c:  Remove include comment.
+
 2019-05-11  Joel Brobecker  <brobecker@adacore.com>
 
 	* version.in: Set GDB version number to 8.3.
@@ -2691,4 +2699,3 @@ fill-column: 74
 version-control: never
 coding: utf-8
 End:
-

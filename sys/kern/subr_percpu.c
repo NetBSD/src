@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.18.10.1 2020/04/08 14:08:52 martin Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.18.10.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.18.10.1 2020/04/08 14:08:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.18.10.2 2020/04/13 08:05:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -80,7 +80,7 @@ percpu_offset(percpu_t *pc)
 /*
  * percpu_cpu_swap: crosscall handler for percpu_cpu_enlarge
  */
-
+__noubsan
 static void
 percpu_cpu_swap(void *p1, void *p2)
 {

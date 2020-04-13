@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.38 2016/07/04 07:56:07 maxv Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.38.18.1 2020/04/13 08:05:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.38 2016/07/04 07:56:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.38.18.1 2020/04/13 08:05:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,27 +65,7 @@ ras_sync(void)
 
 	/* No need to sync if exiting or single threaded. */
 	if (curproc->p_nlwps > 1 && ncpu > 1) {
-#ifdef NO_SOFTWARE_PATENTS
-		uint64_t where;
-		where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-		xc_wait(where);
-#else
-		/*
-		 * Assumptions:
-		 *
-		 * o preemption is disabled by the thread in
-		 *   ras_lookup().
-		 * o proc::p_raslist is only inspected with
-		 *   preemption disabled.
-		 * o ras_lookup() plus loads reordered in advance
-		 *   will take no longer than 1/8s to complete.
-		 */
-		const int delta = hz >> 3;
-		int target = hardclock_ticks + delta;
-		do {
-			kpause("ras", false, delta, NULL);
-		} while (hardclock_ticks < target);
-#endif
+		xc_barrier(0);
 	}
 }
 

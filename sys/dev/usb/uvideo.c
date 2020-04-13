@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.46.4.2 2020/04/08 14:08:14 martin Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.46.4.3 2020/04/13 08:04:51 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.46.4.2 2020/04/08 14:08:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.46.4.3 2020/04/13 08:04:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -521,6 +521,12 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 	     (ifdesc = usb_desc_iter_next_interface(&iter)) != NULL;
 	     ++ifaceidx)
 	{
+		if (ifdesc->bLength < USB_INTERFACE_DESCRIPTOR_SIZE) {
+			DPRINTFN(50, ("uvideo_attach: "
+				      "ignoring incorrect descriptor len=%d\n",
+				      ifdesc->bLength));
+			continue;
+		}
 		if (ifdesc->bInterfaceClass != UICLASS_VIDEO) {
 			DPRINTFN(50, ("uvideo_attach: "
 				      "ignoring non-uvc interface: "
@@ -551,12 +557,6 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 			vs = uvideo_find_stream(sc, ifdesc->bInterfaceNumber);
 			if (vs == NULL) {
 				vs = uvideo_stream_alloc();
-				if (vs == NULL) {
-					DPRINTF(("uvideo_attach: "
-						 "failed to alloc stream\n"));
-					err = USBD_NOMEM;
-					goto bad;
-				}
 				err = uvideo_stream_init(vs, sc, ifdesc,
 							 ifaceidx);
 				if (err != USBD_NORMAL_COMPLETION) {
@@ -753,7 +753,7 @@ uvideo_stream_guess_format(struct uvideo_stream *vs,
 static struct uvideo_stream *
 uvideo_stream_alloc(void)
 {
-	return kmem_alloc(sizeof(struct uvideo_stream), KM_NOSLEEP);
+	return kmem_alloc(sizeof(struct uvideo_stream), KM_SLEEP);
 }
 
 
@@ -878,13 +878,17 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 
 	switch (desc->bDescriptorSubtype) {
 	case UDESC_INPUT_TERMINAL:
+		if (desc->bLength < sizeof(*input))
+			return USBD_INVAL;
 		input = (const uvideo_input_terminal_descriptor_t *)desc;
 		switch (UGETW(input->wTerminalType)) {
 		case UVIDEO_ITT_CAMERA:
+			if (desc->bLength < sizeof(*camera))
+				return USBD_INVAL;
 			camera =
 			    (const uvideo_camera_terminal_descriptor_t *)desc;
-			ct = &vu->u.vu_camera;
 
+			ct = &vu->u.vu_camera;
 			ct->ct_objective_focal_min =
 			    UGETW(camera->wObjectiveFocalLengthMin);
 			ct->ct_objective_focal_max =
@@ -905,12 +909,16 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 	case UDESC_OUTPUT_TERMINAL:
 		break;
 	case UDESC_SELECTOR_UNIT:
+		if (desc->bLength < sizeof(*selector))
+			return USBD_INVAL;
 		selector = (const uvideo_selector_unit_descriptor_t *)desc;
 
 		uvideo_unit_alloc_sources(vu, selector->bNrInPins,
 					  selector->baSourceID);
 		break;
 	case UDESC_PROCESSING_UNIT:
+		if (desc->bLength < sizeof(*processing))
+			return USBD_INVAL;
 		processing = (const uvideo_processing_unit_descriptor_t *)desc;
 		pu = &vu->u.vu_processing;
 
@@ -922,6 +930,8 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 					   processing->bmControls);
 		break;
 	case UDESC_EXTENSION_UNIT:
+		if (desc->bLength < sizeof(*extension))
+			return USBD_INVAL;
 		extension = (const uvideo_extension_unit_descriptor_t *)desc;
 		/* TODO: copy guid */
 
@@ -983,6 +993,9 @@ static usbd_status
 uvideo_unit_alloc_controls(struct uvideo_unit *vu, uint8_t size,
 			   const uint8_t *controls)
 {
+	if (size == 0)
+		return USBD_INVAL;
+
 	vu->vu_controls = kmem_alloc(sizeof(*vu->vu_controls) * size, KM_SLEEP);
 	vu->vu_control_size = size;
 	memcpy(vu->vu_controls, controls, size);
@@ -1075,6 +1088,9 @@ uvideo_stream_init(struct uvideo_stream *vs,
  * interface descriptor, modifying the iterator.  This may be called
  * multiple times because there may be several alternate interfaces
  * associated with the same interface number. */
+/*
+ * XXX XXX XXX: This function accesses descriptors in an unsafe manner.
+ */
 static usbd_status
 uvideo_stream_init_desc(struct uvideo_stream *vs,
 			const usb_interface_descriptor_t *ifdesc,
@@ -1136,10 +1152,7 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 						desc, bEndpointAddress);
 				}
 
-				alt = kmem_alloc(sizeof(*alt), KM_NOSLEEP);
-				if (alt == NULL)
-					return USBD_NOMEM;
-
+				alt = kmem_alloc(sizeof(*alt), KM_SLEEP);
 				alt->altno = ifdesc->bAlternateSetting;
 				alt->interval =
 				    GET(usb_endpoint_descriptor_t,

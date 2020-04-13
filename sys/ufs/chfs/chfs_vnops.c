@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.33.10.1 2020/04/08 14:09:03 martin Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.33.10.2 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -60,7 +60,7 @@ chfs_lookup(void *v)
 	struct chfs_inode* ip;
 	struct ufsmount* ump;
 	struct chfs_mount* chmp;
-	struct chfs_vnode_cache* chvc;
+	struct chfs_vnode_cache* chvc __diagused;
 	struct chfs_dirent* fd;
 
 	dbg("lookup(): %s\n", cnp->cn_nameptr);

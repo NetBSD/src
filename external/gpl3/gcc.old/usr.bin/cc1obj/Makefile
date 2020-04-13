@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.4.1 2019/06/10 21:58:09 christos Exp $
+#	$NetBSD: Makefile,v 1.5.4.2 2020/04/13 08:01:57 martin Exp $
 
 MYOBJS=		${G_OBJC_OBJS} ${G_C_AND_OBJC_OBJS} 
 PROG=		cc1obj
@@ -31,11 +31,8 @@ CHECKSUM_OBJS=	${BACKENDOBJ}/libbackend.a \
 # XXX check this out
 # LDFLAGS+=	-rdynamic
 
-# VER_CPPFLAGS from Makefile.inc
-CPPFLAGS.c-cppbuiltin.c=	${VER_CPPFLAGS}
-c-cppbuiltin.c: ${GCCARCH}/defs.mk
-
 COPTS.c-ada-spec.c+=			-Wno-stack-protector
+COPTS.c-attribs.c+=			-Wno-stack-protector
 COPTS.c-aux-info.c+=			-Wno-stack-protector
 COPTS.c-common.c+=			-Wno-stack-protector
 COPTS.c-cppbuiltin.c+=			-Wno-stack-protector

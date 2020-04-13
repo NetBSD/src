@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.196 2018/01/17 01:24:29 kamil Exp $	*/
+/*	$NetBSD: namespace.h,v 1.196.4.1 2020/04/13 08:03:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -325,7 +325,6 @@
 #define fdopen			_fdopen
 #define fgetln			_fgetln
 #define fgetwln			_fgetwln
-#define fhstatvfs		_fhstatvfs
 #define flockfile		_flockfile
 #define ftrylockfile		_ftrylockfile
 #define funlockfile		_funlockfile
@@ -345,7 +344,6 @@
 #define freeifaddrs		_freeifaddrs
 #define freelocale		_freelocale
 #define fscanf_l		_fscanf_l
-#define fstatvfs		_fstatvfs
 #define ftok			_ftok
 #define ftruncate		_ftruncate
 #define fts_children		_fts_children
@@ -668,7 +666,6 @@
 #define srand48			_srand48
 #define srandom			_srandom
 #define sscanf_l		_sscanf_l
-#define statvfs(a, b)		_statvfs(a, b)
 #define strcasecmp		_strcasecmp
 #define strcoll_l		_strcoll_l
 #define strdup			_strdup

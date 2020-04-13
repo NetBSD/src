@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.70.14.1 2019/06/10 22:07:02 christos Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.70.14.2 2020/04/13 08:04:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.70.14.1 2019/06/10 22:07:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.70.14.2 2020/04/13 08:04:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -58,6 +58,10 @@ int ossdebug = 0;
 
 #define TO_OSSVOL(x)	(((x) * 100 + 127) / 255)
 #define FROM_OSSVOL(x)	((((x) > 100 ? 100 : (x)) * 255 + 50) / 100)
+
+#define GETPRINFO(info, name)	\
+	(((info)->mode == AUMODE_RECORD) \
+	    ? (info)->record.name : (info)->play.name)
 
 static struct audiodevinfo *getdevinfo(file_t *);
 static int opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq);
@@ -177,6 +181,8 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 	struct oss_count_info cntinfo;
 	struct audio_encoding tmpenc;
 	u_int u;
+	u_int encoding;
+	u_int precision;
 	int idat, idata;
 	int error = 0;
 	int (*ioctlf)(file_t *, u_long, void *);
@@ -238,7 +244,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			 __func__, error));
 			goto out;
 		}
-		idat = tmpinfo.play.sample_rate;
+		idat = GETPRINFO(&tmpinfo, sample_rate);
 		DPRINTF(("%s: SNDCTL_PCM_READ_RATE < %d\n", __func__, idat));
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error) {
@@ -269,7 +275,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		idat = tmpinfo.play.channels - 1;
+		idat = GETPRINFO(&tmpinfo, channels) - 1;
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error) {
 			DPRINTF(("%s: SNDCTL_DSP_STEREO %d = %d\n",
@@ -380,7 +386,9 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		switch (tmpinfo.play.encoding) {
+		encoding = GETPRINFO(&tmpinfo, encoding);
+		precision = GETPRINFO(&tmpinfo, precision);
+		switch (encoding) {
 		case AUDIO_ENCODING_ULAW:
 			idat = OSS_AFMT_MU_LAW;
 			break;
@@ -388,25 +396,25 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			idat = OSS_AFMT_A_LAW;
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			if (tmpinfo.play.precision == 16)
+			if (precision == 16)
 				idat = OSS_AFMT_S16_LE;
 			else
 				idat = OSS_AFMT_S8;
 			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (tmpinfo.play.precision == 16)
+			if (precision == 16)
 				idat = OSS_AFMT_S16_BE;
 			else
 				idat = OSS_AFMT_S8;
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (tmpinfo.play.precision == 16)
+			if (precision == 16)
 				idat = OSS_AFMT_U16_LE;
 			else
 				idat = OSS_AFMT_U8;
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (tmpinfo.play.precision == 16)
+			if (precision == 16)
 				idat = OSS_AFMT_U16_BE;
 			else
 				idat = OSS_AFMT_U8;
@@ -457,7 +465,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		idat = tmpinfo.play.channels;
+		idat = GETPRINFO(&tmpinfo, channels);
 		DPRINTF(("%s: SOUND_PCM_READ_CHANNELS < %d\n", __func__, idat));
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error) {
@@ -966,7 +974,7 @@ getdevinfo(file_t *fp)
 	}
 	for(i = 0; i < NETBSD_MAXDEVS; i++) {
 		mi.index = i;
-		if (ioctlf(fp, AUDIO_MIXER_DEVINFO, &mi) < 0)
+		if (ioctlf(fp, AUDIO_MIXER_DEVINFO, &mi) != 0)
 			break;
 		switch(mi.type) {
 		case AUDIO_MIXER_VALUE:
@@ -994,7 +1002,7 @@ getdevinfo(file_t *fp)
 	}
 	for(i = 0; i < NETBSD_MAXDEVS; i++) {
 		mi.index = i;
-		if (ioctlf(fp, AUDIO_MIXER_DEVINFO, &mi) < 0)
+		if (ioctlf(fp, AUDIO_MIXER_DEVINFO, &mi) != 0)
 			break;
 		if (strcmp(mi.label.name, AudioNsource) != 0)
 			continue;
@@ -1087,7 +1095,7 @@ oss_ioctl_mixer(struct lwp *lwp, const struct oss_sys_ioctl_args *uap, register_
 		}
 		break;
 	case OSS_SOUND_MIXER_READ_RECSRC:
-		if (di->source == -1) {
+		if (di->source == (u_long)-1) {
 			DPRINTF(("%s: OSS_SOUND_MIXER_READ_RECSRC bad source\n",
 			    __func__));
 			error = EINVAL;
@@ -1132,7 +1140,7 @@ oss_ioctl_mixer(struct lwp *lwp, const struct oss_sys_ioctl_args *uap, register_
 		break;
 	case OSS_SOUND_MIXER_WRITE_RECSRC:
 	case OSS_SOUND_MIXER_WRITE_R_RECSRC:
-		if (di->source == -1) {
+		if (di->source == (u_long)-1) {
 			DPRINTF(("%s: OSS_SOUND_MIXER_WRITE_RECSRC bad "
 			    "source\n", __func__));
 			error = EINVAL;
@@ -1492,11 +1500,11 @@ static void
 setblocksize(file_t *fp, struct audio_info *info)
 {
 	struct audio_info set;
-	int s;
+	u_int s;
 
-	 if (info->blocksize & (info->blocksize-1)) {
+	 if (info->blocksize & (info->blocksize - 1)) {
 		for(s = 32; s < info->blocksize; s <<= 1)
-			;
+			continue;
 		AUDIO_INITINFO(&set);
 		set.blocksize = s;
 		fp->f_ops->fo_ioctl(fp, AUDIO_SETINFO, &set);

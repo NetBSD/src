@@ -1,5 +1,5 @@
 /* High-level loop manipulation functions.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -472,8 +472,11 @@ find_uses_to_rename (bitmap changed_bbs, bitmap *use_blocks, bitmap need_phis,
 
   if (changed_bbs)
     EXECUTE_IF_SET_IN_BITMAP (changed_bbs, 0, index, bi)
-      find_uses_to_rename_bb (BASIC_BLOCK_FOR_FN (cfun, index), use_blocks,
-			      need_phis, use_flags);
+      {
+	bb = BASIC_BLOCK_FOR_FN (cfun, index);
+	if (bb)
+	  find_uses_to_rename_bb (bb, use_blocks, need_phis, use_flags);
+      }
   else
     FOR_EACH_BB_FN (bb, cfun)
       find_uses_to_rename_bb (bb, use_blocks, need_phis, use_flags);
@@ -491,6 +494,9 @@ find_uses_to_rename_def (tree def, bitmap *use_blocks, bitmap need_phis)
 
   FOR_EACH_IMM_USE_STMT (use_stmt, imm_iter, def)
     {
+      if (is_gimple_debug (use_stmt))
+	continue;
+
       basic_block use_bb = gimple_bb (use_stmt);
 
       use_operand_p use_p;
@@ -1090,6 +1096,33 @@ scale_dominated_blocks_in_loop (struct loop *loop, basic_block bb,
     }
 }
 
+/* Return estimated niter for LOOP after unrolling by FACTOR times.  */
+
+gcov_type
+niter_for_unrolled_loop (struct loop *loop, unsigned factor)
+{
+  gcc_assert (factor != 0);
+  bool profile_p = false;
+  gcov_type est_niter = expected_loop_iterations_unbounded (loop, &profile_p);
+  gcov_type new_est_niter = est_niter / factor;
+
+  /* Without profile feedback, loops for which we do not know a better estimate
+     are assumed to roll 10 times.  When we unroll such loop, it appears to
+     roll too little, and it may even seem to be cold.  To avoid this, we
+     ensure that the created loop appears to roll at least 5 times (but at
+     most as many times as before unrolling).  Don't do adjustment if profile
+     feedback is present.  */
+  if (new_est_niter < 5 && !profile_p)
+    {
+      if (est_niter < 5)
+	new_est_niter = est_niter;
+      else
+	new_est_niter = 5;
+    }
+
+  return new_est_niter;
+}
+
 /* Unroll LOOP FACTOR times.  DESC describes number of iterations of LOOP.
    EXIT is the exit of the loop to that DESC corresponds.
 
@@ -1167,13 +1200,12 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
   gimple_stmt_iterator bsi;
   use_operand_p op;
   bool ok;
-  unsigned est_niter, prob_entry, scale_unrolled, scale_rest, freq_e, freq_h;
-  unsigned new_est_niter, i, prob;
+  unsigned i, prob, prob_entry, scale_unrolled, scale_rest;
+  gcov_type freq_e, freq_h;
+  gcov_type new_est_niter = niter_for_unrolled_loop (loop, factor);
   unsigned irr = loop_preheader_edge (loop)->flags & EDGE_IRREDUCIBLE_LOOP;
-  sbitmap wont_exit;
   auto_vec<edge> to_remove;
 
-  est_niter = expected_loop_iterations (loop);
   determine_exit_conditions (loop, desc, factor,
 			     &enter_main_cond, &exit_base, &exit_step,
 			     &exit_cmp, &exit_bound);
@@ -1200,25 +1232,10 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
   scale_rest = REG_BR_PROB_BASE;
 
   new_loop = loop_version (loop, enter_main_cond, NULL,
-			   prob_entry, scale_unrolled, scale_rest, true);
+			   prob_entry, REG_BR_PROB_BASE - prob_entry,
+			   scale_unrolled, scale_rest, true);
   gcc_assert (new_loop != NULL);
   update_ssa (TODO_update_ssa);
-
-  /* Determine the probability of the exit edge of the unrolled loop.  */
-  new_est_niter = est_niter / factor;
-
-  /* Without profile feedback, loops for that we do not know a better estimate
-     are assumed to roll 10 times.  When we unroll such loop, it appears to
-     roll too little, and it may even seem to be cold.  To avoid this, we
-     ensure that the created loop appears to roll at least 5 times (but at
-     most as many times as before unrolling).  */
-  if (new_est_niter < 5)
-    {
-      if (est_niter < 5)
-	new_est_niter = est_niter;
-      else
-	new_est_niter = 5;
-    }
 
   /* Prepare the cfg and update the phi nodes.  Move the loop exit to the
      loop latch (and make its condition dummy, for the moment).  */
@@ -1304,14 +1321,13 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
 
   /* Unroll the loop and remove the exits in all iterations except for the
      last one.  */
-  wont_exit = sbitmap_alloc (factor);
+  auto_sbitmap wont_exit (factor);
   bitmap_ones (wont_exit);
   bitmap_clear_bit (wont_exit, factor - 1);
 
   ok = gimple_duplicate_loop_to_header_edge
 	  (loop, loop_latch_edge (loop), factor - 1,
 	   wont_exit, new_exit, &to_remove, DLTHE_FLAG_UPDATE_FREQ);
-  free (wont_exit);
   gcc_assert (ok);
 
   FOR_EACH_VEC_ELT (to_remove, i, e)
@@ -1324,10 +1340,25 @@ tree_transform_and_unroll_loop (struct loop *loop, unsigned factor,
   /* Ensure that the frequencies in the loop match the new estimated
      number of iterations, and change the probability of the new
      exit edge.  */
-  freq_h = loop->header->frequency;
-  freq_e = EDGE_FREQUENCY (loop_preheader_edge (loop));
+
+  freq_h = loop->header->count;
+  freq_e = (loop_preheader_edge (loop))->count;
+  /* Use frequency only if counts are zero.  */
+  if (freq_h == 0 && freq_e == 0)
+    {
+      freq_h = loop->header->frequency;
+      freq_e = EDGE_FREQUENCY (loop_preheader_edge (loop));
+    }
   if (freq_h != 0)
-    scale_loop_frequencies (loop, freq_e * (new_est_niter + 1), freq_h);
+    {
+      gcov_type scale;
+      /* Avoid dropping loop body profile counter to 0 because of zero count
+	 in loop's preheader.  */
+      freq_e = MAX (freq_e, 1);
+      /* This should not overflow.  */
+      scale = GCOV_COMPUTE_SCALE (freq_e * (new_est_niter + 1), freq_h);
+      scale_loop_frequencies (loop, scale, REG_BR_PROB_BASE);
+    }
 
   exit_bb = single_pred (loop->latch);
   new_exit = find_edge (exit_bb, rest);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.86.2.1 2019/06/10 22:05:39 christos Exp $
+.\"	$NetBSD: audio.4,v 1.86.2.2 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 8, 2019
+.Dd March 28, 2020
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -334,11 +334,9 @@ opportunity to adjust this block size to get it within
 implementation-required limits.
 Normally the
 .Va blocksize
-is calculated to correspond to 40ms
-(for some hardware, this value may be different due to
-the hardware restrictions)
-of sound and it is recalculated
-when the encoding parameters change.
+is calculated to correspond to the value of the
+.Em hw.audioX.blk_ms
+sysctl and is recalculated when the encoding parameters change.
 If the descriptor is opened for read only,
 .Va blocksize
 indicates the blocksize for the recording track.
@@ -402,18 +400,25 @@ unsigned linear encoding with big endian byte order
 Dolby Digital AC3
 .El
 .Pp
-Regardless of formats supported by underlying driver, the
+The
 .Nm
 driver accepts the following formats.
 .Va encoding
 and
 .Va precision
 are one of the values obtained by
-.Dv AUDIO_GETENC .
-.Va channels
-ranges from 1 to 12.
+.Dv AUDIO_GETENC ,
+regardless of formats supported by underlying driver.
 .Va frequency
-ranges from 1000Hz to 192000Hz.
+ranges from 1000Hz to 192000Hz,
+regardless of frequency (ranges) supported by underlying driver.
+.Va channels
+depends your underlying driver.
+If the underlying driver only supports monaural (1channel)
+or stereo (2channels), you can specify 1 or 2 regardless of
+number of channels supported by underlying driver.
+If the underlying driver supports three or more channels, you can specify
+the number of channels supported by the underlying driver or less.
 .Pp
 The
 .Va gain ,
@@ -752,43 +757,72 @@ string values.
 .Sh SEE ALSO
 .Xr audiocfg 1 ,
 .Xr audioctl 1 ,
+.Xr audioplay 1 ,
+.Xr audiorecord 1 ,
 .Xr mixerctl 1 ,
 .Xr ioctl 2 ,
 .Xr ossaudio 3 ,
-.Xr midi 4 ,
-.Xr radio 4 ,
-.Ss ISA bus
+.Xr acorn32/vidcaudio 4 ,
+.\" .Xr amiga/aucc 4 ,
+.\" .Xr amiga/melody 4 ,
+.Xr arcofi 4 ,
 .Xr aria 4 ,
-.Xr ess 4 ,
-.Xr gus 4 ,
-.Xr guspnp 4 ,
-.Xr pas 4 ,
-.Xr sb 4 ,
-.Xr wss 4 ,
-.Xr ym 4
-.Ss PCI bus
 .Xr auacer 4 ,
+.Xr audiocs 4 ,
 .Xr auich 4 ,
 .Xr auixp 4 ,
+.\" .Xr ausoc 4 ,
 .Xr autri 4 ,
 .Xr auvia 4 ,
-.Xr azalia 4 ,
+.Xr bba 4 ,
+.Xr btsco 4 ,
 .Xr clcs 4 ,
 .Xr clct 4 ,
 .Xr cmpci 4 ,
+.Xr dreamcast/aica 4 ,
 .Xr eap 4 ,
 .Xr emuxki 4 ,
 .Xr esa 4 ,
 .Xr esm 4 ,
 .Xr eso 4 ,
+.Xr ess 4 ,
+.\" .Xr evbarm/aaci 4 ,
+.\" .Xr evbarm/digfilt 4 ,
+.\" .Xr evbarm/pxaacu 4 ,
+.\" .Xr evbarm/udassio 4 ,
 .Xr fms 4 ,
+.Xr gcscaudio 4 ,
+.Xr gus 4 ,
+.Xr guspnp 4 ,
+.Xr hdafg 4 ,
+.Xr hdaudio 4 ,
+.Xr hppa/harmony 4 ,
+.Xr macppc/awacs 4 ,
+.Xr macppc/snapper 4 ,
+.Xr midi 4 ,
 .Xr neo 4 ,
+.Xr pad 4 ,
+.Xr pas 4 ,
+.\" .Xr paud 4 ,
+.Xr radio 4 ,
+.\" .Xr repluse 4 ,
+.Xr sb 4 ,
+.Xr sgimips/haltwo 4 ,
+.Xr sgimips/mavb 4 ,
+.Xr sparc/audioamd 4 ,
+.Xr sparc/dbri 4 ,
 .Xr sv 4 ,
-.Xr yds 4
-.Ss TURBOchannel
-.Xr bba 4
-.Ss USB
-.Xr uaudio 4
+.\" .Xr toccata 4 ,
+.Xr uaudio 4 ,
+.\" .Xr vaudio 4 ,
+.\" .Xr vcaudio 4 ,
+.\" .Xr vraiu 4 ,
+.\" .Xr vsaudio 4 ,
+.Xr wss 4 ,
+.Xr x68k/vs 4 ,
+.Xr yds 4 ,
+.Xr ym 4
+.\" .Xr zaudio 4
 .Sh HISTORY
 Support for virtual channels and mixing first appeared in
 .Nx 8.0 .

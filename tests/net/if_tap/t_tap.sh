@@ -1,4 +1,4 @@
-#	$NetBSD: t_tap.sh,v 1.8.2.1 2019/06/10 22:10:09 christos Exp $
+#	$NetBSD: t_tap.sh,v 1.8.2.2 2020/04/13 08:05:31 martin Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -97,7 +97,7 @@ tap_stand_alone_body()
 	export RUMP_SERVER=${SOCK_LOCAL}
 	atf_check -s exit:0 rump.ifconfig shmif0 $IP4_LOCAL delete
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $IP6_LOCAL delete
-	atf_check -s exit:0 rump.ifconfig tap0 create
+	rump_server_add_iface $SOCK_LOCAL tap0
 	atf_check -s exit:0 rump.ifconfig tap0 $IP4_TAP
 	atf_check -s exit:0 rump.ifconfig tap0 inet6 $IP6_TAP
 	atf_check -s exit:0 rump.ifconfig tap0 up
@@ -142,13 +142,13 @@ tap_bridged_body()
 	atf_check -s exit:0 rump.ifconfig shmif0 $IP4_LOCAL
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $IP6_LOCAL
 	atf_check -s exit:0 rump.ifconfig shmif0 up
-	atf_check -s exit:0 rump.ifconfig tap0 create
+	rump_server_add_iface $SOCK_LOCAL tap0
 	atf_check -s exit:0 rump.ifconfig tap0 $IP4_TAP
 	atf_check -s exit:0 rump.ifconfig tap0 inet6 $IP6_TAP
 	atf_check -s exit:0 rump.ifconfig tap0 up
 	atf_check -s exit:0 rump.ifconfig -w 10
 
-	atf_check -s exit:0 rump.ifconfig bridge0 create
+	rump_server_add_iface $SOCK_LOCAL bridge0
 	atf_check -s exit:0 rump.ifconfig bridge0 up
 	export LD_PRELOAD=/usr/lib/librumphijack.so
 	atf_check -s exit:0 brconfig bridge0 add shmif0

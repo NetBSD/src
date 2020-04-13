@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33.2.1 2019/06/10 21:55:30 christos Exp $
+#	$NetBSD: Makefile,v 1.33.2.2 2020/04/13 07:59:17 martin Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -66,6 +66,12 @@ CXXFLAGS+=	-fno-implicit-templates
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
 CPPFLAGS+=	-I${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
 CPPFLAGS+=	-D_GLIBCXX_SHARED -DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
+.if ${G_CLOCALE_CC:M*dragonfly*} != ""
+CPPFLAGS+=	-I${CONF}/locale/dragonfly
+LOCALETYPE=	dragonfly
+.else
+LOCALETYPE=	generic
+.endif
 
 # affects profiling; can't switch it off just for profiling easily.
 #CXXFLAGS+=	${G_SECTION_FLAGS}
@@ -92,6 +98,7 @@ COPTS.snprintf_lite.cc += -Wno-stack-protector
 COPTS.cxx11-wlocale-inst.cc +=-Wno-stack-protector
 COPTS.cxx11-locale-inst.cc +=-Wno-stack-protector
 COPTS.cxx11-wlocale-inst.cc +=-Wno-stack-protector
+COPTS.codecvt_members.cc +=-Wno-stack-protector
 COPTS.compatibility-thread-c++0x.cc += -Wno-deprecated-declarations
 COPTS.concept-inst.cc += -fimplicit-templates
 COPTS.collate_members_cow.cc += -fimplicit-templates
@@ -186,7 +193,7 @@ COPTS.${f}.cc+= -fimplicit-templates ${G_GLIBCXX_ABI_FLAGS}
 	${DIST}/libstdc++-v3/src/filesystem \
 	${DIST}/libstdc++-v3/libsupc++ \
 	${DIST}/libstdc++-v3/config/os/bsd/netbsd \
-	${CONF}/locale/generic \
+	${CONF}/locale/${LOCALETYPE} \
 	${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
 
 ${OBJS}: ${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk

@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1 2018/01/09 03:31:15 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.1.4.1 2020/04/13 08:05:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * $FreeBSD: head/usr.sbin/autofs/common.c 303527 2016-07-30 01:10:05Z bapt $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.1 2018/01/09 03:31:15 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.1.4.1 2020/04/13 08:05:51 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: common.c,v 1.1 2018/01/09 03:31:15 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fs/autofs/autofs_ioctl.h>
 
 #include "common.h"
 
@@ -358,7 +357,7 @@ expand_ampersand(char *string, const char *key)
 		 * of characters before the '&'.
 		 */
 		before_len = i;
-		//assert(i + 1 < strlen(string));
+		//assert(i < strlen(string));
 
 		ret = asprintf(&expanded, "%.*s%s%s",
 		    (int)before_len, string, key, string + before_len + 1);
@@ -373,6 +372,8 @@ expand_ampersand(char *string, const char *key)
 		 */
 		string = expanded;
 		i = before_len + strlen(key);
+		if (i == strlen(string))
+			break;
 		backslashed = false;
 		//assert(i < strlen(string));
 	}

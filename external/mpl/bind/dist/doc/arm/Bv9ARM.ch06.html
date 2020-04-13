@@ -131,46 +131,47 @@ zone "example.com" {
           to search for a match.  Available fields are "country",
           "region", "city", "continent", "postal" (postal code),
           "metro" (metro code), "area" (area code), "tz" (timezone),
-          "isp", "org", "asnum", "domain" and "netspeed".
+          "isp", "asnum", and "domain".
         </p>
         <p>
           <em class="replaceable"><code>value</code></em> is the value to search
           for within the database.  A string may be quoted if it
-          contains spaces or other special characters.  If this is
-          an "asnum" search, then the leading "ASNNNN" string can be
-          used, otherwise the full description must be used (e.g.
-          "ASNNNN Example Company Name").  If this is a "country"
-          search and the string is two characters long, then it must
-          be a standard ISO-3166-1 two-letter country code, and if it
-          is three characters long then it must be an ISO-3166-1
-          three-letter country code; otherwise it is the full name
-          of the country.  Similarly, if this is a "region" search
-          and the string is two characters long, then it must be a
-          standard two-letter state or province abbreviation;
-          otherwise it is the full name of the state or province.
+          contains spaces or other special characters.  An "asnum"
+          search for autonomous system number can be specified using
+          the string "ASNNNN" or the integer NNNN.
+          When "country" search is specified with a string is two
+          characters long, then it must be a standard ISO-3166-1
+          two-letter country code; otherwise it is interpreted as
+          the full name of the country.  Similarly, if this is a
+          "region" search and the string is two characters long,
+          then it treated as a standard two-letter state or province
+          abbreviation; otherwise it treated as the full name of the
+          state or province.
         </p>
         <p>
           The <em class="replaceable"><code>database</code></em> field indicates which
           GeoIP database to search for a match.  In most cases this is
           unnecessary, because most search fields can only be found in
-          a single database.  However, searches for country can be
-          answered from the "city", "region", or "country" databases,
-          and searches for region (i.e., state or province) can be
-          answered from the "city" or "region" databases.  For these
-          search types, specifying a <em class="replaceable"><code>database</code></em>
+          a single database.  However, searches for "continent" or "country"
+          can be answered from either the "city" or "country" databases,
+          so for these search types, specifying a
+          <em class="replaceable"><code>database</code></em>
           will force the query to be answered from that database and no
           other.  If <em class="replaceable"><code>database</code></em> is not
           specified, then these queries will be answered from the "city",
-          database if it is installed, or the "region" database if it is
-          installed, or the "country" database, in that order.
+          database if it is installed, or the "country" database if it
+          is installed, in that order. Valid database names are
+          "country", "city", "asnum", "isp", and "domain". (If using
+          the legacy GeoIP API, "netspeed" and "org" databases are also
+          available.)
         </p>
         <p>
           Some example GeoIP ACLs:
         </p>
         <pre class="programlisting">geoip country US;
-geoip country JAP;
+geoip country JP;
 geoip db country country Canada;
-geoip db region region WA;
+geoip region WA;
 geoip city "San Francisco";
 geoip region Oklahoma;
 geoip postal 95062;
@@ -361,6 +362,6 @@ allow-query { !{ !10/8; any; }; key example; };
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.1 (Stable Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.8 (Stable Release)</p>
 </body>
 </html>

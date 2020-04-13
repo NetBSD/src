@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.6.2.1 2019/06/10 22:07:09 christos Exp $ */
+/* $NetBSD: fcu.c,v 1.6.2.2 2020/04/13 08:04:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.6.2.1 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.6.2.2 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,6 +195,8 @@ fcu_attach(device_t parent, device_t self, void *aux)
 
 		envsys_data_t *s = &sc->sc_sensors[sc->sc_nsensors];
 
+		s->state = ENVSYS_SINVALID;
+
 		if (OF_getprop(ch, "device_type", type, 32) <= 0)
 			goto next;
 
@@ -309,7 +311,7 @@ next:
 
 	sc->sc_dying = FALSE;
 	kthread_create(PRI_NONE, 0, curcpu(), fcu_adjust, sc, &sc->sc_thread,
-	    "fan control"); 
+	    "fan control");
 }
 
 static void

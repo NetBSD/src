@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.94.14.1 2019/06/10 22:06:59 christos Exp $
+	$NetBSD: syscalls.master,v 1.94.14.2 2020/04/13 08:04:14 martin Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -760,7 +760,8 @@
 479	STD		{ int|linux_sys||recvmmsg(int s, \
 			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
 			    unsigned int flags, struct timespec *timeout); }
-480	UNIMPL		fallocate
+480	STD		{ int|linux_sys||fallocate(int fd, int mode, \
+			    off_t offset, off_t len); }
 481	UNIMPL		timerfd_create
 482	UNIMPL		timerfd_settime
 483	UNIMPL		timerfd_gettime

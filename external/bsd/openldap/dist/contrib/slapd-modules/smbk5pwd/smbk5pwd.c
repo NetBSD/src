@@ -1,10 +1,10 @@
-/*	$NetBSD: smbk5pwd.c,v 1.1.1.7 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: smbk5pwd.c,v 1.1.1.7.4.1 2020/04/13 07:56:09 martin Exp $	*/
 
 /* smbk5pwd.c - Overlay for managing Samba and Heimdal passwords */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2017 The OpenLDAP Foundation.
+ * Copyright 2004-2019 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 by Howard Chu, Symas Corp.
  * All rights reserved.
  *

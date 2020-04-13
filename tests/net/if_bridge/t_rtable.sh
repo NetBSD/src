@@ -1,4 +1,4 @@
-#	$NetBSD: t_rtable.sh,v 1.3.2.1 2019/06/10 22:10:09 christos Exp $
+#	$NetBSD: t_rtable.sh,v 1.3.2.2 2020/04/13 08:05:30 martin Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -79,7 +79,7 @@ setup_bridge()
 {
 
 	export RUMP_SERVER=$SOCK2
-	atf_check -s exit:0 rump.ifconfig bridge0 create
+	rump_server_add_iface $SOCK2 bridge0
 	atf_check -s exit:0 rump.ifconfig bridge0 up
 
 	export LD_PRELOAD=/usr/lib/librumphijack.so
@@ -341,7 +341,14 @@ bridge_rtable_maxaddr_body()
 	atf_check -s exit:0 -o match:"max cache: 1" /sbin/brconfig bridge0
 	/sbin/brconfig bridge0
 
-	# Test just one address is cached
+	# Check a cache is flushed out
+	n=$(get_number_of_caches)
+	atf_check_equal $n 1
+
+	# Test a new address cache is not created
+	export RUMP_SERVER=$SOCK1
+	atf_check -s exit:0 -o ignore rump.ping -n -w $TIMEOUT -c 1 $IP2
+	export RUMP_SERVER=$SOCK2
 	n=$(get_number_of_caches)
 	atf_check_equal $n 1
 

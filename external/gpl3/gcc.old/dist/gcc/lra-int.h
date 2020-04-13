@@ -1,5 +1,5 @@
 /* Local Register Allocator (LRA) intercommunication header file.
-   Copyright (C) 2010-2016 Free Software Foundation, Inc.
+   Copyright (C) 2010-2017 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -99,9 +99,9 @@ struct lra_reg
      *non-debug* insns.	 */
   int nrefs, freq;
   int last_reload;
-  /* Regno used to undo the inheritance.  It can be non-zero only
-     between couple of inheritance and undo inheritance passes.	 */
-  int restore_regno;
+  /* rtx used to undo the inheritance.  It can be non-null only
+     between subsequent inheritance and undo inheritance passes.  */
+  rtx restore_rtx;
   /* Value holding by register.	 If the pseudos have the same value
      they do not conflict.  */
   int val;
@@ -130,6 +130,8 @@ struct lra_operand_data
 {
   /* The machine description constraint string of the operand.	*/
   const char *constraint;
+  /* Alternatives for which early_clobber can be true.  */
+  alternative_mask early_clobber_alts;
   /* It is taken only from machine description (which is different
      from recog_data.operand_mode) and can be of VOIDmode.  */
   ENUM_BITFIELD(machine_mode) mode : 16;
@@ -150,6 +152,8 @@ struct lra_operand_data
 /* Info about register occurrence in an insn.  */
 struct lra_insn_reg
 {
+  /* Alternatives for which early_clobber can be true.  */
+  alternative_mask early_clobber_alts;
   /* The biggest mode through which the insn refers to the register
      occurrence (remember the register can be accessed through a
      subreg in the insn).  */
@@ -198,15 +202,20 @@ struct lra_static_insn_data
   const struct operand_alternative *operand_alternative;
 };
 
+/* Negative insn alternative numbers used for special cases.  */
+#define LRA_UNKNOWN_ALT -1
+#define LRA_NON_CLOBBERED_ALT -2
+
 /* LRA internal info about an insn (LRA internal insn
    representation).  */
 struct lra_insn_recog_data
 {
   /* The insn code.  */
   int icode;
-  /* The alternative should be used for the insn, -1 if invalid, or we
-     should try to use any alternative, or the insn is a debug
-     insn.  */
+  /* The alternative should be used for the insn, LRA_UNKNOWN_ALT if
+     unknown, or we should assume any alternative, or the insn is a
+     debug insn.  LRA_NON_CLOBBERED_ALT means ignoring any earlier
+     clobbers for the insn.  */
   int used_insn_alternative;
   /* SP offset before the insn relative to one at the func start.  */
   HOST_WIDE_INT sp_offset;
@@ -285,6 +294,7 @@ extern lra_insn_recog_data_t *lra_insn_recog_data;
 extern int lra_curr_reload_num;
 
 extern void lra_dump_bitmap_with_title (const char *, bitmap, int);
+extern hashval_t lra_rtx_hash (rtx x);
 extern void lra_push_insn (rtx_insn *);
 extern void lra_push_insn_by_uid (unsigned int);
 extern void lra_push_insn_and_update_insn_regno_info (rtx_insn *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.23.2.1 2020/04/08 14:08:11 martin Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.23.2.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.23.2.1 2020/04/08 14:08:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.23.2.2 2020/04/13 08:04:47 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -559,7 +559,6 @@ qtrint(struct qt_softc *sc)
 			goto rnext;
 		}
 		len = (rp->rmd1 & RMD1_MCNT) - 4;	/* -4 for CRC */
-		sc->is_if.if_ipackets++;
 
 		if ((rp->rmd0 & RMD0_ERR3) || (rp->rmd2 & RMD2_ERR4)) {
 #ifdef QTDEBUG

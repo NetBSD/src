@@ -1,10 +1,10 @@
-#	$NetBSD: files.ttm,v 1.1.24.1 2019/06/10 22:08:33 christos Exp $
+#	$NetBSD: files.ttm,v 1.1.24.2 2020/04/13 08:05:00 martin Exp $
 
 # TTM, the texture and tiling manager.
 
 define	drmkms_ttm: drmkms
 
-makeoptions	drmkms	"CWARNFLAGS.ttm_bo.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} == 7:? -Wno-error=implicit-fallthrough :}"
+makeoptions	drmkms	"CWARNFLAGS.ttm_bo.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
 
 file	external/bsd/drm2/ttm/ttm_agp_backend.c			drmkms_ttm
 file	external/bsd/drm2/dist/drm/ttm/ttm_memory.c		drmkms_ttm

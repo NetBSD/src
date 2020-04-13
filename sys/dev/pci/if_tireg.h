@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.20.38.1 2019/06/10 22:07:16 christos Exp $ */
+/* $NetBSD: if_tireg.h,v 1.20.38.2 2020/04/13 08:04:26 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -39,7 +39,7 @@
  * which can be accessed with the CSR_READ_4()/CSR_WRITE_4() macros.
  * Each register must be accessed using 32 bit operations.
  *
- * All reegisters are accessed through a 16K shared memory block.
+ * All registers are accessed through a 16K shared memory block.
  * The first group of registers are actually copies of the PCI
  * configuration space registers.
  */
@@ -96,7 +96,7 @@
 #define TI_FIRMWARE_FIX			0xd
 
 /*
- * Miscelaneous Local Control register.
+ * Miscellaneous Local Control register.
  */
 #define TI_MLC_EE_WRITE_ENB		0x00000010
 #define TI_MLC_SRAM_BANK_256K		0x00000200
@@ -270,7 +270,7 @@
 #define TI_GCR_RXRETURNCONS_IDX		0x680
 #define TI_GCR_CMDRING			0x700
 
-#define TI_GCR_NIC_ADDR(x)		(x - TI_GCR_BASE);
+#define TI_GCR_NIC_ADDR(x)		(x - TI_GCR_BASE)
 
 /*
  * Local memory window. The local memory window is a 2K shared
@@ -288,7 +288,7 @@
  */
 #define TI_OPMODE_BYTESWAP_BD		0x00000002
 #define TI_OPMODE_WORDSWAP_BD		0x00000004
-#define TI_OPMODE_WARN_ENB		0x00000008 /* not yet implimented */
+#define TI_OPMODE_WARN_ENB		0x00000008 /* not yet implemented */
 #define TI_OPMODE_BYTESWAP_DATA		0x00000010
 #define TI_OPMODE_1_DMA_ACTIVE		0x00000040
 #define TI_OPMODE_SBUS			0x00000100
@@ -298,7 +298,7 @@
 #define TI_OPMODE_NO_EVENT_INTRS	0x00001000
 #define TI_OPMODE_NO_TX_INTRS		0x00002000
 #define TI_OPMODE_NO_RX_INTRS		0x00004000
-#define TI_OPMODE_FATAL_ENB		0x40000000 /* not yet implimented */
+#define TI_OPMODE_FATAL_ENB		0x40000000 /* not yet implemented */
 
 /*
  * DMA configuration thresholds.
@@ -373,22 +373,10 @@
  */
 #define TI_MEM_MAX		0x7FFFFF
 
-/*
- * Even on the alpha, pci addresses are 32-bit quantities
- */
-
-#ifdef __64_bit_pci_addressing__
 typedef struct {
-	u_int64_t		ti_addr;
+	uint32_t	ti_addr_hi;
+	uint32_t	ti_addr_lo;
 } ti_hostaddr;
-#define TI_HOSTADDR(x)	x.ti_addr
-#else
-typedef struct {
-	u_int32_t		ti_addr_hi;
-	u_int32_t		ti_addr_lo;
-} ti_hostaddr;
-#define TI_HOSTADDR(x)	x.ti_addr_lo
-#endif
 
 /*
  * Ring control block structure. The rules for the max_len field
@@ -413,13 +401,13 @@ typedef struct {
 struct ti_rcb {
 	ti_hostaddr		ti_hostaddr;
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_max_len;
-	u_int16_t		ti_flags;
+	uint16_t		ti_max_len;
+	uint16_t		ti_flags;
 #else
-	u_int16_t		ti_flags;
-	u_int16_t		ti_max_len;
+	uint16_t		ti_flags;
+	uint16_t		ti_max_len;
 #endif
-	u_int32_t		ti_unused;
+	uint32_t		ti_unused;
 };
 
 #define TI_RCB_FLAG_TCP_UDP_CKSUM	0x00000001
@@ -433,8 +421,8 @@ struct ti_rcb {
 #define TI_RCB_FLAG_RING_DISABLED	0x00000200
 
 struct ti_producer {
-	u_int32_t		ti_idx;
-	u_int32_t		ti_unused;
+	uint32_t		ti_idx;
+	uint32_t		ti_unused;
 };
 
 /*
@@ -444,184 +432,184 @@ struct ti_stats {
 	/*
 	 * MAC stats, taken from RFC 1643, ethernet-like MIB
 	 */
-	volatile u_int32_t dot3StatsAlignmentErrors;		/* 0 */
-	volatile u_int32_t dot3StatsFCSErrors;			/* 1 */
-	volatile u_int32_t dot3StatsSingleCollisionFrames;	/* 2 */
-	volatile u_int32_t dot3StatsMultipleCollisionFrames;	/* 3 */
-	volatile u_int32_t dot3StatsSQETestErrors;		/* 4 */
-	volatile u_int32_t dot3StatsDeferredTransmissions;	/* 5 */
-	volatile u_int32_t dot3StatsLateCollisions;		/* 6 */
-	volatile u_int32_t dot3StatsExcessiveCollisions;	/* 7 */
-	volatile u_int32_t dot3StatsInternalMacTransmitErrors;	/* 8 */
-	volatile u_int32_t dot3StatsCarrierSenseErrors;		/* 9 */
-	volatile u_int32_t dot3StatsFrameTooLongs;		/* 10 */
-	volatile u_int32_t dot3StatsInternalMacReceiveErrors;	/* 11 */
+	volatile uint32_t dot3StatsAlignmentErrors;		/* 0 */
+	volatile uint32_t dot3StatsFCSErrors;			/* 1 */
+	volatile uint32_t dot3StatsSingleCollisionFrames;	/* 2 */
+	volatile uint32_t dot3StatsMultipleCollisionFrames;	/* 3 */
+	volatile uint32_t dot3StatsSQETestErrors;		/* 4 */
+	volatile uint32_t dot3StatsDeferredTransmissions;	/* 5 */
+	volatile uint32_t dot3StatsLateCollisions;		/* 6 */
+	volatile uint32_t dot3StatsExcessiveCollisions;	/* 7 */
+	volatile uint32_t dot3StatsInternalMacTransmitErrors;	/* 8 */
+	volatile uint32_t dot3StatsCarrierSenseErrors;		/* 9 */
+	volatile uint32_t dot3StatsFrameTooLongs;		/* 10 */
+	volatile uint32_t dot3StatsInternalMacReceiveErrors;	/* 11 */
 	/*
 	 * interface stats, taken from RFC 1213, MIB-II, interfaces group
 	 */
-	volatile u_int32_t ifIndex;				/* 12 */
-	volatile u_int32_t ifType;				/* 13 */
-	volatile u_int32_t ifMtu;				/* 14 */
-	volatile u_int32_t ifSpeed;				/* 15 */
-	volatile u_int32_t ifAdminStatus;			/* 16 */
+	volatile uint32_t ifIndex;				/* 12 */
+	volatile uint32_t ifType;				/* 13 */
+	volatile uint32_t ifMtu;				/* 14 */
+	volatile uint32_t ifSpeed;				/* 15 */
+	volatile uint32_t ifAdminStatus;			/* 16 */
 #define IF_ADMIN_STATUS_UP      1
 #define IF_ADMIN_STATUS_DOWN    2
 #define IF_ADMIN_STATUS_TESTING 3
-	volatile u_int32_t ifOperStatus;			/* 17 */
+	volatile uint32_t ifOperStatus;				/* 17 */
 #define IF_OPER_STATUS_UP       1
 #define IF_OPER_STATUS_DOWN     2
 #define IF_OPER_STATUS_TESTING  3
 #define IF_OPER_STATUS_UNKNOWN  4
 #define IF_OPER_STATUS_DORMANT  5
-	volatile u_int32_t ifLastChange;			/* 18 */
-	volatile u_int32_t ifInDiscards;			/* 19 */
-	volatile u_int32_t ifInErrors;				/* 20 */
-	volatile u_int32_t ifInUnknownProtos;			/* 21 */
-	volatile u_int32_t ifOutDiscards;			/* 22 */
-	volatile u_int32_t ifOutErrors;				/* 23 */
-	volatile u_int32_t ifOutQLen;     /* deprecated */	/* 24 */
-	volatile u_int8_t  ifPhysAddress[8]; /* 8 bytes */	/* 25 - 26 */
-	volatile u_int8_t  ifDescr[32];				/* 27 - 34 */
-	u_int32_t alignIt;      /* align to 64 bit for u_int64_ts following */
+	volatile uint32_t ifLastChange;				/* 18 */
+	volatile uint32_t ifInDiscards;				/* 19 */
+	volatile uint32_t ifInErrors;				/* 20 */
+	volatile uint32_t ifInUnknownProtos;			/* 21 */
+	volatile uint32_t ifOutDiscards;			/* 22 */
+	volatile uint32_t ifOutErrors;				/* 23 */
+	volatile uint32_t ifOutQLen;     /* deprecated */	/* 24 */
+	volatile uint8_t  ifPhysAddress[8]; /* 8 bytes */	/* 25 - 26 */
+	volatile uint8_t  ifDescr[32];				/* 27 - 34 */
+	uint32_t alignIt;      /* align to 64 bit for uint64_ts following */
 	/*
 	 * more interface stats, taken from RFC 1573, MIB-IIupdate,
 	 * interfaces group
 	 */
-	volatile u_int64_t ifHCInOctets;			/* 36 - 37 */
-	volatile u_int64_t ifHCInUcastPkts;			/* 38 - 39 */
-	volatile u_int64_t ifHCInMulticastPkts;			/* 40 - 41 */
-	volatile u_int64_t ifHCInBroadcastPkts;			/* 42 - 43 */
-	volatile u_int64_t ifHCOutOctets;			/* 44 - 45 */
-	volatile u_int64_t ifHCOutUcastPkts;			/* 46 - 47 */
-	volatile u_int64_t ifHCOutMulticastPkts;		/* 48 - 49 */
-	volatile u_int64_t ifHCOutBroadcastPkts;		/* 50 - 51 */
-	volatile u_int32_t ifLinkUpDownTrapEnable;		/* 52 */
-	volatile u_int32_t ifHighSpeed;				/* 53 */
-	volatile u_int32_t ifPromiscuousMode; 			/* 54 */
-	volatile u_int32_t ifConnectorPresent; /* follow link state 55 */
+	volatile uint64_t ifHCInOctets;				/* 36 - 37 */
+	volatile uint64_t ifHCInUcastPkts;			/* 38 - 39 */
+	volatile uint64_t ifHCInMulticastPkts;			/* 40 - 41 */
+	volatile uint64_t ifHCInBroadcastPkts;			/* 42 - 43 */
+	volatile uint64_t ifHCOutOctets;			/* 44 - 45 */
+	volatile uint64_t ifHCOutUcastPkts;			/* 46 - 47 */
+	volatile uint64_t ifHCOutMulticastPkts;			/* 48 - 49 */
+	volatile uint64_t ifHCOutBroadcastPkts;			/* 50 - 51 */
+	volatile uint32_t ifLinkUpDownTrapEnable;		/* 52 */
+	volatile uint32_t ifHighSpeed;				/* 53 */
+	volatile uint32_t ifPromiscuousMode;			/* 54 */
+	volatile uint32_t ifConnectorPresent; /* follow link state 55 */
 	/*
 	 * Host Commands
 	 */
-	volatile u_int32_t nicCmdsHostState;			/* 56 */
-	volatile u_int32_t nicCmdsFDRFiltering;			/* 57 */
-	volatile u_int32_t nicCmdsSetRecvProdIndex;		/* 58 */
-	volatile u_int32_t nicCmdsUpdateGencommStats;		/* 59 */
-	volatile u_int32_t nicCmdsResetJumboRing;		/* 60 */
-	volatile u_int32_t nicCmdsAddMCastAddr;			/* 61 */
-	volatile u_int32_t nicCmdsDelMCastAddr;			/* 62 */
-	volatile u_int32_t nicCmdsSetPromiscMode;		/* 63 */
-	volatile u_int32_t nicCmdsLinkNegotiate;		/* 64 */
-	volatile u_int32_t nicCmdsSetMACAddr;			/* 65 */
-	volatile u_int32_t nicCmdsClearProfile;			/* 66 */
-	volatile u_int32_t nicCmdsSetMulticastMode;		/* 67 */
-	volatile u_int32_t nicCmdsClearStats;			/* 68 */
-	volatile u_int32_t nicCmdsSetRecvJumboProdIndex;	/* 69 */
-	volatile u_int32_t nicCmdsSetRecvMiniProdIndex;		/* 70 */
-	volatile u_int32_t nicCmdsRefreshStats;			/* 71 */
-	volatile u_int32_t nicCmdsUnknown;			/* 72 */
+	volatile uint32_t nicCmdsHostState;			/* 56 */
+	volatile uint32_t nicCmdsFDRFiltering;			/* 57 */
+	volatile uint32_t nicCmdsSetRecvProdIndex;		/* 58 */
+	volatile uint32_t nicCmdsUpdateGencommStats;		/* 59 */
+	volatile uint32_t nicCmdsResetJumboRing;		/* 60 */
+	volatile uint32_t nicCmdsAddMCastAddr;			/* 61 */
+	volatile uint32_t nicCmdsDelMCastAddr;			/* 62 */
+	volatile uint32_t nicCmdsSetPromiscMode;		/* 63 */
+	volatile uint32_t nicCmdsLinkNegotiate;			/* 64 */
+	volatile uint32_t nicCmdsSetMACAddr;			/* 65 */
+	volatile uint32_t nicCmdsClearProfile;			/* 66 */
+	volatile uint32_t nicCmdsSetMulticastMode;		/* 67 */
+	volatile uint32_t nicCmdsClearStats;			/* 68 */
+	volatile uint32_t nicCmdsSetRecvJumboProdIndex;		/* 69 */
+	volatile uint32_t nicCmdsSetRecvMiniProdIndex;		/* 70 */
+	volatile uint32_t nicCmdsRefreshStats;			/* 71 */
+	volatile uint32_t nicCmdsUnknown;			/* 72 */
 	/*
 	 * NIC Events
 	 */
-	volatile u_int32_t nicEventsNICFirmwareOperational;	/* 73 */
-	volatile u_int32_t nicEventsStatsUpdated;		/* 74 */
-	volatile u_int32_t nicEventsLinkStateChanged;		/* 75 */
-	volatile u_int32_t nicEventsError;			/* 76 */
-	volatile u_int32_t nicEventsMCastListUpdated;		/* 77 */
-	volatile u_int32_t nicEventsResetJumboRing;		/* 78 */
+	volatile uint32_t nicEventsNICFirmwareOperational;	/* 73 */
+	volatile uint32_t nicEventsStatsUpdated;		/* 74 */
+	volatile uint32_t nicEventsLinkStateChanged;		/* 75 */
+	volatile uint32_t nicEventsError;			/* 76 */
+	volatile uint32_t nicEventsMCastListUpdated;		/* 77 */
+	volatile uint32_t nicEventsResetJumboRing;		/* 78 */
 	/*
 	 * Ring manipulation
 	 */
-	volatile u_int32_t nicRingSetSendProdIndex;		/* 79 */
-	volatile u_int32_t nicRingSetSendConsIndex;		/* 80 */
-	volatile u_int32_t nicRingSetRecvReturnProdIndex;	/* 81 */
+	volatile uint32_t nicRingSetSendProdIndex;		/* 79 */
+	volatile uint32_t nicRingSetSendConsIndex;		/* 80 */
+	volatile uint32_t nicRingSetRecvReturnProdIndex;	/* 81 */
 	/*
 	 * Interrupts
 	 */
-	volatile u_int32_t nicInterrupts;			/* 82 */
-	volatile u_int32_t nicAvoidedInterrupts;		/* 83 */
+	volatile uint32_t nicInterrupts;			/* 82 */
+	volatile uint32_t nicAvoidedInterrupts;			/* 83 */
 	/*
 	 * BD Coalescing Thresholds
 	 */
-	volatile u_int32_t nicEventThresholdHit;		/* 84 */
-	volatile u_int32_t nicSendThresholdHit;			/* 85 */
-	volatile u_int32_t nicRecvThresholdHit;			/* 86 */
+	volatile uint32_t nicEventThresholdHit;			/* 84 */
+	volatile uint32_t nicSendThresholdHit;			/* 85 */
+	volatile uint32_t nicRecvThresholdHit;			/* 86 */
 	/*
 	 * DMA Attentions
 	 */
-	volatile u_int32_t nicDmaRdOverrun;			/* 87 */
-	volatile u_int32_t nicDmaRdUnderrun;			/* 88 */
-	volatile u_int32_t nicDmaWrOverrun;			/* 89 */
-	volatile u_int32_t nicDmaWrUnderrun;			/* 90 */
-	volatile u_int32_t nicDmaWrMasterAborts;		/* 91 */
-	volatile u_int32_t nicDmaRdMasterAborts;		/* 92 */
+	volatile uint32_t nicDmaRdOverrun;			/* 87 */
+	volatile uint32_t nicDmaRdUnderrun;			/* 88 */
+	volatile uint32_t nicDmaWrOverrun;			/* 89 */
+	volatile uint32_t nicDmaWrUnderrun;			/* 90 */
+	volatile uint32_t nicDmaWrMasterAborts;			/* 91 */
+	volatile uint32_t nicDmaRdMasterAborts;			/* 92 */
 	/*
 	 * NIC Resources
 	 */
-	volatile u_int32_t nicDmaWriteRingFull;			/* 93 */
-	volatile u_int32_t nicDmaReadRingFull;			/* 94 */
-	volatile u_int32_t nicEventRingFull;			/* 95 */
-	volatile u_int32_t nicEventProducerRingFull;		/* 96 */
-	volatile u_int32_t nicTxMacDescrRingFull;		/* 97 */
-	volatile u_int32_t nicOutOfTxBufSpaceFrameRetry;	/* 98 */
-	volatile u_int32_t nicNoMoreWrDMADescriptors;		/* 99 */
-	volatile u_int32_t nicNoMoreRxBDs;			/* 100 */
-	volatile u_int32_t nicNoSpaceInReturnRing;		/* 101 */
-	volatile u_int32_t nicSendBDs;            /* current count 102 */
-	volatile u_int32_t nicRecvBDs;            /* current count 103 */
-	volatile u_int32_t nicJumboRecvBDs;       /* current count 104 */
-	volatile u_int32_t nicMiniRecvBDs;        /* current count 105 */
-	volatile u_int32_t nicTotalRecvBDs;       /* current count 106 */
-	volatile u_int32_t nicTotalSendBDs;       /* current count 107 */
-	volatile u_int32_t nicJumboSpillOver;			/* 108 */
-	volatile u_int32_t nicSbusHangCleared;			/* 109 */
-	volatile u_int32_t nicEnqEventDelayed;			/* 110 */
+	volatile uint32_t nicDmaWriteRingFull;			/* 93 */
+	volatile uint32_t nicDmaReadRingFull;			/* 94 */
+	volatile uint32_t nicEventRingFull;			/* 95 */
+	volatile uint32_t nicEventProducerRingFull;		/* 96 */
+	volatile uint32_t nicTxMacDescrRingFull;		/* 97 */
+	volatile uint32_t nicOutOfTxBufSpaceFrameRetry;		/* 98 */
+	volatile uint32_t nicNoMoreWrDMADescriptors;		/* 99 */
+	volatile uint32_t nicNoMoreRxBDs;			/* 100 */
+	volatile uint32_t nicNoSpaceInReturnRing;		/* 101 */
+	volatile uint32_t nicSendBDs;            /* current count 102 */
+	volatile uint32_t nicRecvBDs;            /* current count 103 */
+	volatile uint32_t nicJumboRecvBDs;       /* current count 104 */
+	volatile uint32_t nicMiniRecvBDs;        /* current count 105 */
+	volatile uint32_t nicTotalRecvBDs;       /* current count 106 */
+	volatile uint32_t nicTotalSendBDs;       /* current count 107 */
+	volatile uint32_t nicJumboSpillOver;			/* 108 */
+	volatile uint32_t nicSbusHangCleared;			/* 109 */
+	volatile uint32_t nicEnqEventDelayed;			/* 110 */
 	/*
 	 * Stats from MAC rx completion
 	 */
-	volatile u_int32_t nicMacRxLateColls;			/* 111 */
-	volatile u_int32_t nicMacRxLinkLostDuringPkt;		/* 112 */
-	volatile u_int32_t nicMacRxPhyDecodeErr;		/* 113 */
-	volatile u_int32_t nicMacRxMacAbort;			/* 114 */
-	volatile u_int32_t nicMacRxTruncNoResources;		/* 115 */
+	volatile uint32_t nicMacRxLateColls;			/* 111 */
+	volatile uint32_t nicMacRxLinkLostDuringPkt;		/* 112 */
+	volatile uint32_t nicMacRxPhyDecodeErr;			/* 113 */
+	volatile uint32_t nicMacRxMacAbort;			/* 114 */
+	volatile uint32_t nicMacRxTruncNoResources;		/* 115 */
 	/*
 	 * Stats from the mac_stats area
 	 */
-	volatile u_int32_t nicMacRxDropUla;			/* 116 */
-	volatile u_int32_t nicMacRxDropMcast;			/* 117 */
-	volatile u_int32_t nicMacRxFlowControl;			/* 118 */
-	volatile u_int32_t nicMacRxDropSpace;			/* 119 */
-	volatile u_int32_t nicMacRxColls;			/* 120 */
+	volatile uint32_t nicMacRxDropUla;			/* 116 */
+	volatile uint32_t nicMacRxDropMcast;			/* 117 */
+	volatile uint32_t nicMacRxFlowControl;			/* 118 */
+	volatile uint32_t nicMacRxDropSpace;			/* 119 */
+	volatile uint32_t nicMacRxColls;			/* 120 */
 	/*
- 	 * MAC RX Attentions
+	 * MAC RX Attentions
 	 */
-	volatile u_int32_t nicMacRxTotalAttns;			/* 121 */
-	volatile u_int32_t nicMacRxLinkAttns;			/* 122 */
-	volatile u_int32_t nicMacRxSyncAttns;			/* 123 */
-	volatile u_int32_t nicMacRxConfigAttns;			/* 124 */
-	volatile u_int32_t nicMacReset;				/* 125 */
-	volatile u_int32_t nicMacRxBufDescrAttns;		/* 126 */
-	volatile u_int32_t nicMacRxBufAttns;			/* 127 */
-	volatile u_int32_t nicMacRxZeroFrameCleanup;		/* 128 */
-	volatile u_int32_t nicMacRxOneFrameCleanup;		/* 129 */
-	volatile u_int32_t nicMacRxMultipleFrameCleanup;	/* 130 */
-	volatile u_int32_t nicMacRxTimerCleanup;		/* 131 */
-	volatile u_int32_t nicMacRxDmaCleanup;			/* 132 */
+	volatile uint32_t nicMacRxTotalAttns;			/* 121 */
+	volatile uint32_t nicMacRxLinkAttns;			/* 122 */
+	volatile uint32_t nicMacRxSyncAttns;			/* 123 */
+	volatile uint32_t nicMacRxConfigAttns;			/* 124 */
+	volatile uint32_t nicMacReset;				/* 125 */
+	volatile uint32_t nicMacRxBufDescrAttns;		/* 126 */
+	volatile uint32_t nicMacRxBufAttns;			/* 127 */
+	volatile uint32_t nicMacRxZeroFrameCleanup;		/* 128 */
+	volatile uint32_t nicMacRxOneFrameCleanup;		/* 129 */
+	volatile uint32_t nicMacRxMultipleFrameCleanup;		/* 130 */
+	volatile uint32_t nicMacRxTimerCleanup;			/* 131 */
+	volatile uint32_t nicMacRxDmaCleanup;			/* 132 */
 	/*
 	 * Stats from the mac_stats area
 	 */
-	volatile u_int32_t nicMacTxCollisionHistogram[15];	/* 133 */
+	volatile uint32_t nicMacTxCollisionHistogram[15];	/* 133 */
 	/*
 	 * MAC TX Attentions
 	 */
-	volatile u_int32_t nicMacTxTotalAttns;			/* 134 */
+	volatile uint32_t nicMacTxTotalAttns;			/* 134 */
 	/*
 	 * NIC Profile
 	 */
-	volatile u_int32_t nicProfile[32];			/* 135 */
+	volatile uint32_t nicProfile[32];			/* 135 */
 	/*
 	 * Pat to 1024 bytes.
 	 */
-	u_int32_t		pad[75];
+	uint32_t		pad[75];
 };
 /*
  * Tigon general information block. This resides in host memory
@@ -654,35 +642,35 @@ struct ti_gib {
 struct ti_rx_desc {
 	ti_hostaddr		ti_addr;
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_idx;
-	u_int16_t		ti_len;
+	uint16_t		ti_idx;
+	uint16_t		ti_len;
 #else
-	u_int16_t		ti_len;
-	u_int16_t		ti_idx;
+	uint16_t		ti_len;
+	uint16_t		ti_idx;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_type;
-	u_int16_t		ti_flags;
+	uint16_t		ti_type;
+	uint16_t		ti_flags;
 #else
-	u_int16_t		ti_flags;
-	u_int16_t		ti_type;
+	uint16_t		ti_flags;
+	uint16_t		ti_type;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_ip_cksum;
-	u_int16_t		ti_tcp_udp_cksum;
+	uint16_t		ti_ip_cksum;
+	uint16_t		ti_tcp_udp_cksum;
 #else
-	u_int16_t		ti_tcp_udp_cksum;
-	u_int16_t		ti_ip_cksum;
+	uint16_t		ti_tcp_udp_cksum;
+	uint16_t		ti_ip_cksum;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_error_flags;
-	u_int16_t		ti_vlan_tag;
+	uint16_t		ti_error_flags;
+	uint16_t		ti_vlan_tag;
 #else
-	u_int16_t		ti_vlan_tag;
-	u_int16_t		ti_error_flags;
+	uint16_t		ti_vlan_tag;
+	uint16_t		ti_error_flags;
 #endif
-	u_int32_t		ti_rsvd;
-	u_int32_t		ti_opaque;
+	uint32_t		ti_rsvd;
+	uint32_t		ti_opaque;
 };
 
 struct ti_rx_desc_ext {
@@ -690,50 +678,50 @@ struct ti_rx_desc_ext {
 	ti_hostaddr		ti_addr2;
 	ti_hostaddr		ti_addr3;
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_len1;
-	u_int16_t		ti_len2;
+	uint16_t		ti_len1;
+	uint16_t		ti_len2;
 #else
-	u_int16_t		ti_len2;
-	u_int16_t		ti_len1;
+	uint16_t		ti_len2;
+	uint16_t		ti_len1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_len3;
-	u_int16_t		ti_rsvd0;
+	uint16_t		ti_len3;
+	uint16_t		ti_rsvd0;
 #else
-	u_int16_t		ti_rsvd0;
-	u_int16_t		ti_len3;
+	uint16_t		ti_rsvd0;
+	uint16_t		ti_len3;
 #endif
 	ti_hostaddr		ti_addr0;
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_idx;
-	u_int16_t		ti_len0;
+	uint16_t		ti_idx;
+	uint16_t		ti_len0;
 #else
-	u_int16_t		ti_len0;
-	u_int16_t		ti_idx;
+	uint16_t		ti_len0;
+	uint16_t		ti_idx;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_type;
-	u_int16_t		ti_flags;
+	uint16_t		ti_type;
+	uint16_t		ti_flags;
 #else
-	u_int16_t		ti_flags;
-	u_int16_t		ti_type;
+	uint16_t		ti_flags;
+	uint16_t		ti_type;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_ip_cksum;
-	u_int16_t		ti_tcp_udp_cksum;
+	uint16_t		ti_ip_cksum;
+	uint16_t		ti_tcp_udp_cksum;
 #else
-	u_int16_t		ti_tcp_udp_cksum;
-	u_int16_t		ti_ip_cksum;
+	uint16_t		ti_tcp_udp_cksum;
+	uint16_t		ti_ip_cksum;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_error_flags;
-	u_int16_t		ti_vlan_tag;
+	uint16_t		ti_error_flags;
+	uint16_t		ti_vlan_tag;
 #else
-	u_int16_t		ti_vlan_tag;
-	u_int16_t		ti_error_flags;
+	uint16_t		ti_vlan_tag;
+	uint16_t		ti_error_flags;
 #endif
-	u_int32_t		ti_rsvd1;
-	u_int32_t		ti_opaque;
+	uint32_t		ti_rsvd1;
+	uint32_t		ti_opaque;
 };
 
 /*
@@ -742,18 +730,18 @@ struct ti_rx_desc_ext {
 struct ti_tx_desc {
 	ti_hostaddr		ti_addr;
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_len;
-	u_int16_t		ti_flags;
+	uint16_t		ti_len;
+	uint16_t		ti_flags;
 #else
-	u_int16_t		ti_flags;
-	u_int16_t		ti_len;
+	uint16_t		ti_flags;
+	uint16_t		ti_len;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int16_t		ti_rsvd;
-	u_int16_t		ti_vlan_tag;
+	uint16_t		ti_rsvd;
+	uint16_t		ti_vlan_tag;
 #else
-	u_int16_t		ti_vlan_tag;
-	u_int16_t		ti_rsvd;
+	uint16_t		ti_vlan_tag;
+	uint16_t		ti_rsvd;
 #endif
 };
 
@@ -762,7 +750,7 @@ struct ti_tx_desc {
  * The first thing in the packet is a 14-byte Ethernet header.
  * This means that the packet is misaligned.  To compensate,
  * we actually offset the data 2 bytes into the cluster.  This
- * alignes the packet after the Ethernet header at a 32-bit
+ * aligns the packet after the Ethernet header at a 32-bit
  * boundary.
  */
 
@@ -832,7 +820,7 @@ struct ti_tx_desc {
  * Tigon command structure.
  */
 struct ti_cmd_desc {
-	u_int32_t		ti_cmdx;
+	uint32_t		ti_cmdx;
 };
 
 #define TI_CMD_CMD(cmd)		(((((cmd)->ti_cmdx)) >> 24) & 0xff)
@@ -902,7 +890,7 @@ struct ti_cmd_desc {
 
 #define TI_UPDATE_JUMBOPROD(x, y)	do {				\
 	if ((x)->ti_hwrev == TI_HWREV_TIGON)				\
-		TI_DO_CMD(TI_CMD_SET_RX_JUMBO_PROD_IDX, 0, y);	\
+		TI_DO_CMD(TI_CMD_SET_RX_JUMBO_PROD_IDX, 0, y);		\
 	else								\
 		CSR_WRITE_4(x, TI_MB_JUMBORXPROD_IDX, y);		\
 } while(0)
@@ -922,8 +910,8 @@ struct ti_cmd_desc {
  * Tigon event structure.
  */
 struct ti_event_desc {
-	u_int32_t		ti_eventx;
-	u_int32_t		ti_rsvd;
+	uint32_t		ti_eventx;
+	uint32_t		ti_rsvd;
 };
 
 #define TI_EVENT_EVENT(e)	(((((e)->ti_eventx)) >> 24) & 0xff)
@@ -995,9 +983,9 @@ struct ti_event_desc {
 #endif
 #define TI_RSLOTS	128
 
-#define TI_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN + sizeof(u_int64_t))
-#define TI_JLEN (TI_JRAWLEN + (sizeof(u_int64_t) - \
-	(TI_JRAWLEN % sizeof(u_int64_t))))
+#define TI_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN + sizeof(uint64_t))
+#define TI_JLEN (TI_JRAWLEN + (sizeof(uint64_t) - \
+	(TI_JRAWLEN % sizeof(uint64_t))))
 #define TI_JPAGESZ PAGE_SIZE
 #define TI_RESID (TI_JPAGESZ - (TI_JLEN * TI_JSLOTS) % TI_JPAGESZ)
 #define TI_JMEM ((TI_JLEN * TI_JSLOTS) + TI_RESID)
@@ -1020,11 +1008,11 @@ struct ti_ring_data {
 	 * line boundaries.
 	 */
 	struct ti_producer	ti_ev_prodidx_r;
-	u_int32_t		ti_pad0[6];
+	uint32_t		ti_pad0[6];
 	struct ti_producer	ti_return_prodidx_r;
-	u_int32_t		ti_pad1[6];
+	uint32_t		ti_pad1[6];
 	struct ti_producer	ti_tx_considx_r;
-	u_int32_t		ti_pad2[6];
+	uint32_t		ti_pad2[6];
 	struct ti_gib		ti_info;
 };
 
@@ -1057,8 +1045,8 @@ struct ti_chain_data {
 };
 
 struct ti_type {
-	u_int16_t		ti_vid;
-	u_int16_t		ti_did;
+	uint16_t		ti_vid;
+	uint16_t		ti_did;
 	const char		*ti_name;
 };
 
@@ -1092,9 +1080,9 @@ struct ti_softc {
 
 	struct ifmedia		ifmedia;	/* media info */
 
-	u_int8_t		ti_hwrev;	/* Tigon rev (1 or 2) */
-	u_int8_t		ti_copper;	/* 1000baseT card */
-	u_int8_t		ti_linkstat;	/* Link state */
+	uint8_t			ti_hwrev;	/* Tigon rev (1 or 2) */
+	uint8_t			ti_copper;	/* 1000baseT card */
+	uint8_t			ti_linkstat;	/* Link state */
 	struct ti_ring_data	*ti_rdata;	/* rings */
 #define ti_ev_prodidx		ti_rdata->ti_ev_prodidx_r
 #define ti_return_prodidx	ti_rdata->ti_return_prodidx_r
@@ -1104,6 +1092,8 @@ struct ti_softc {
 
 	struct ti_chain_data	ti_cdata;	/* mbufs */
 
+	uint64_t		ti_if_collisions;
+
 	/*
 	 * Function pointers to deal with Tigon 1 vs. Tigon 2 differences.
 	 */
@@ -1111,30 +1101,30 @@ struct ti_softc {
 				    struct mbuf *, uint32_t *);
 	void			(*sc_tx_eof)(struct ti_softc *);
 
-	u_int16_t		ti_tx_saved_considx;
-	u_int16_t		ti_rx_saved_considx;
-	u_int16_t		ti_ev_saved_considx;
-	u_int16_t		ti_cmd_saved_prodidx;
-	u_int16_t		ti_std;		/* current std ring head */
-	u_int16_t		ti_mini;	/* current mini ring head */
-	u_int16_t		ti_jumbo;	/* current jumo ring head */
+	uint16_t		ti_tx_saved_considx;
+	uint16_t		ti_rx_saved_considx;
+	uint16_t		ti_ev_saved_considx;
+	uint16_t		ti_cmd_saved_prodidx;
+	uint16_t		ti_std;		/* current std ring head */
+	uint16_t		ti_mini;	/* current mini ring head */
+	uint16_t		ti_jumbo;	/* current jumo ring head */
 	SIMPLEQ_HEAD(, ti_mc_entry)	ti_mc_listhead;
 	SIMPLEQ_HEAD(, ti_jpool_entry)	ti_jfree_listhead;
 	SIMPLEQ_HEAD(, ti_jpool_entry)	ti_jinuse_listhead;
-	u_int32_t		ti_stat_ticks;
-	u_int32_t		ti_rx_coal_ticks;
-	u_int32_t		ti_tx_coal_ticks;
-	u_int32_t		ti_rx_max_coal_bds;
-	u_int32_t		ti_tx_max_coal_bds;
-	u_int32_t		ti_tx_buf_ratio;
-	int			ti_if_flags;
+	uint32_t		ti_stat_ticks;
+	uint32_t		ti_rx_coal_ticks;
+	uint32_t		ti_tx_coal_ticks;
+	uint32_t		ti_rx_max_coal_bds;
+	uint32_t		ti_tx_max_coal_bds;
+	uint32_t		ti_tx_buf_ratio;
+	u_short			ti_if_flags;
 	int			ti_txcnt;
 	void *sc_ih;
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t info_dmamap; /* holds ti_rdata */
-	u_int32_t info_dmaaddr; /* XXX 64-bit PCI addresses? */
+	uint32_t info_dmaaddr; /* XXX 64-bit PCI addresses? */
 	bus_dmamap_t jumbo_dmamap;
-	u_int32_t jumbo_dmaaddr; /* XXX 64-bit PCI addresses? */
+	uint32_t jumbo_dmaaddr; /* XXX 64-bit PCI addresses? */
 	bus_dmamap_t mini_dmamap[TI_MINI_RX_RING_CNT];
 	bus_dmamap_t std_dmamap[TI_STD_RX_RING_CNT];
 	SIMPLEQ_HEAD(, txdmamap_pool_entry) txdma_list;

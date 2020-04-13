@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.13.2.1 2019/06/10 22:10:38 christos Exp $	*/
+/*	$NetBSD: menus.mi,v 1.13.2.2 2020/04/13 08:06:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -49,6 +49,64 @@
 #include "menu_defs.h"
 
 static menudesc menu_def[];
+
+static void
+expand_option_text(menudesc *menu, void *arg, int sel)
+{
+	arg_replace *ar = arg;
+	struct menu_ent *opt = &menu->opts[sel];
+
+	if (menu->opts[sel].opt_exp_name)
+		return;	/* has already been expanded */
+
+	opt->opt_exp_name =
+	    str_arg_subst(MSG_XLAT(opt->opt_name), ar->argc, ar->argv);
+}
+
+void
+expand_all_option_texts(menudesc *menu, void *arg)
+{
+	arg_replace *ar = arg;
+	const char *title;
+	int i;
+
+	if (menu->title != NULL && menu->exp_title == NULL) {
+		title = MSG_XLAT(menu->title);
+		if (needs_expanding(title, ar->argc)) {
+			menu->exp_title = str_arg_subst(title,
+			    ar->argc, ar->argv);
+		}
+	}
+	for (i = 0; i < menu->numopts; i++) {
+		const char *t = MSG_XLAT(menu->opts[i].opt_name);
+
+		if (t == NULL) continue;
+
+		if (needs_expanding(t, ar->argc))
+			expand_option_text(menu, arg, i);
+	}
+}
+
+/*
+ * Re-create the menu window with heigh/width updated to current state.
+ */
+void
+resize_menu_height(menudesc *m)
+{
+
+	if (m->mw == NULL)
+		return;
+
+	wclear(m->mw);
+	if (m->sv_mw) {
+		overwrite(m->sv_mw, m->mw);
+		delwin(m->sv_mw);
+		m->sv_mw = NULL;
+	}
+	wnoutrefresh(m->mw);
+	delwin(m->mw);	 
+	m->mw = NULL;
+}
 
 static void
 src_legend(menudesc *menu, const char *legend, const char *text)
@@ -137,16 +195,6 @@ remove_lvm_options()
 }
 
 void
-remove_gpt_options()
-{
-	/*
-	 * No GPT available, remove the following menu entries:
-	 */
-	remove_menu_option(MENU_pmdiskentry, MSG_switchgpt);
-	remove_menu_option(MENU_pmpartentry, MSG_switchgpt);
-}
-
-void
 remove_cgd_options()
 {
 	/*
@@ -163,90 +211,46 @@ default y=12, no exit, scrollable;
 
 allow dynamic menus;
 allow dynamic messages;
+allow expand;
+
 error action {
 	fprintf (stderr, "Could not initialize menu system, please check "
 	    "your terminal type.\n");
 	exit(4);
 };
 
-menu selfskind, title MSG_Select_the_type, exitstring MSG_unchanged, y=6, x=30;
-	display action {
-		partinfo *p = arg;
-		switch (p->pi_fstype) {
-		case FS_UNUSED:	menu->cursel = 0; break;
-		case FS_BSDFFS:
-		    menu->cursel = p->pi_flags & PIF_FFSv2 ? 2 : 1;
-		    break;
-		case FS_SWAP:	menu->cursel = 3; break;
-		case FS_MSDOS:	menu->cursel = 4; break;
-		case FS_BSDLFS:	menu->cursel = 5; break;
-		default	:	menu->cursel = 6; break;
-		};
-	};
-	option "unused", exit, action 
-	    { memset(arg, 0, sizeof (partinfo)); };
-	option "FFSv1", exit, action { set_ptype(arg, FS_BSDFFS, 0); };
-	option "FFSv2", exit, action { set_ptype(arg, FS_BSDFFS, PIF_FFSv2); };
-	option "swap",  exit, action { set_ptype(arg, FS_SWAP, 0); };
-	option "msdos", exit, action { set_ptype(arg, FS_MSDOS, 0); };
-	option "LFS",   exit, action { set_ptype(arg, FS_BSDLFS, 0); };
-	option MSG_other_types, action 
-	    { extern int all_fstype_menu;
-	      m->opts[m->cursel].opt_menu = all_fstype_menu; };
-
-menu selbsize, title MSG_Select_file_system_block_size, y=10, x=40;
-	display action {
-		partinfo *pi = arg;
-		int b;
-		b = ffs(pi->pi_fsize * pi->pi_frag / 4096) - 1;
-		if (b < 0 || b >= menu->numopts)
-			b = 1;
-		menu->cursel = b;
-	};
-	option  "4096", exit, action { set_bsize(arg, 4096); };
-	option  "8192", exit, action { set_bsize(arg, 8192); };
-	option "16384", exit, action { set_bsize(arg, 16384); };
-	option "32768", exit, action { set_bsize(arg, 32768); };
-
-menu selfsize, title MSG_Select_file_system_fragment_size, y=11, x=40;
-	display action {
-		partinfo *pi = arg;
-		int b;
-		b = ffs(pi->pi_fsize / 512) - 1;
-		if (b < 0 || b >= menu->numopts)
-			b = 1;
-		menu->cursel = b;
-	};
-	option   "512", exit, action { set_fsize(arg, 512); };
-	option  "1024", exit, action { set_fsize(arg, 1024); };
-	option  "2048", exit, action { set_fsize(arg, 2048); };
-	option  "4096", exit, action { set_fsize(arg, 4096); };
-	option  "8192", exit, action { set_fsize(arg, 8192); };
-	option "16384", exit, action { set_fsize(arg, 16384); };
-	option "32768", exit, action { set_fsize(arg, 32768); };
-
+/*
+ * Called with arg = struct single_part_fs_edit*
+ */
 menu mountoptions, title MSG_toggle, y=5, x=30, exitstring MSG_unchanged;
-	display action {
-		static int actual_numopt;
-		if (!actual_numopt)
-			actual_numopt = menu->numopts;
-		menu->numopts = actual_numopt - 
-			(((partinfo *)arg)->pi_fstype !=  FS_BSDFFS);
-	};
+	/*
+	 *  XXX - enable / disable options depending on FS type in
+	 *  display action
+	*/
 	option "log", exit, action
-		{ ((partinfo *)arg)->pi_flags ^= PIF_LOG; };
+		{ struct single_part_fs_edit *edit = arg;
+		  edit->pset->infos[edit->index].mountflags ^= PUIMNT_LOG; };
 	option "async", exit, action
-		{ ((partinfo *)arg)->pi_flags ^= PIF_ASYNC; };
+		{ struct single_part_fs_edit *edit = arg;
+		  edit->pset->infos[edit->index].mountflags ^= PUIMNT_ASYNC; };
 	option "noatime", exit, action
-		{ ((partinfo *)arg)->pi_flags ^= PIF_NOATIME; };
+		{ struct single_part_fs_edit *edit = arg;
+		  edit->pset->infos[edit->index].mountflags ^= PUIMNT_NOATIME; };
 	option "nodev", exit, action
-		{ ((partinfo *)arg)->pi_flags ^= PIF_NODEV; };
+		{ struct single_part_fs_edit *edit = arg;
+		  edit->pset->infos[edit->index].mountflags ^= PUIMNT_NODEV; };
 	option "nodevmtime", exit, action
-		{ ((partinfo *)arg)->pi_flags ^= PIF_NODEVMTIME; };
+		{ struct single_part_fs_edit *edit = arg;
+		  edit->pset->infos[edit->index].mountflags ^= PUIMNT_NODEVMTIME; };
 	option "noexec", exit, action
-		{ ((partinfo *)arg)->pi_flags ^= PIF_NOEXEC; };
+		{ struct single_part_fs_edit *edit = arg;
+		  edit->pset->infos[edit->index].mountflags ^= PUIMNT_NOEXEC; };
 	option "nosuid", exit, action
-		{ ((partinfo *)arg)->pi_flags ^= PIF_NOSUID; };
+		{ struct single_part_fs_edit *edit = arg;
+		  edit->pset->infos[edit->index].mountflags ^= PUIMNT_NOSUID; };
+	option "noauto", exit, action
+		{ struct single_part_fs_edit *edit = arg;
+		  edit->pset->infos[edit->index].mountflags ^= PUIMNT_NOAUTO; };
 
 menu netbsd, title MSG_NetBSD_VERSION_Install_System, y=-1,
     exit, exitstring MSG_Exit_Install_System;
@@ -260,7 +264,7 @@ menu netbsd, title MSG_NetBSD_VERSION_Install_System, y=-1,
 	option MSG_Reboot_the_computer, exit,
 		action (endwin) { system("/sbin/reboot -q"); };
 	option MSG_Utility_menu, sub menu utility;
-	option MSG_Config_menu, action { do_configmenu(); };
+	option MSG_Config_menu, action { do_configmenu(NULL); };
 
 menu utility, title MSG_NetBSD_VERSION_Utilities, exit,
 		exitstring MSG_exit_menu_generic;
@@ -311,29 +315,30 @@ menu ok, no shortcut, y=-10;
 	display action { menu->title = arg; };
 	option MSG_Hit_enter_to_continue, exit;
 
-menu layout, sub menu, y=-1, title  MSG_Choose_your_installation;
-	option MSG_Set_Sizes, 	  exit, action { layoutkind = LY_SETNEW; };
-	option MSG_Use_Existing,  exit, action { layoutkind = LY_USEEXIST; };
-
 menu sizechoice, sub menu, y=0, title MSG_Choose_your_size_specifier;
 	display action {
 		if (sizemult == pm->current_cylsize)
-			menu->cursel = 1;
-		else if (sizemult == 1)
 			menu->cursel = 2;
-		};
-	option MSG_Megabytes, exit, action 
-		{ sizemult = MEG / pm->sectorsize;
-		  multname = msg_string(MSG_megname);
-		};
-	option MSG_Cylinders, exit, action 
-		{ sizemult = pm->current_cylsize; 
-		  multname = msg_string(MSG_cylname);
-		};
-	option MSG_Sectors, exit, action 
-		{ sizemult = 1; 
-		  multname = msg_string(MSG_secname);
-		};
+		else if (sizemult == 1)
+			menu->cursel = 3;
+		else if (sizemult == (GIG/pm->sectorsize))
+			menu->cursel = 0;
+		else
+			menu->cursel = 1; };
+	option MSG_Gigabytes, exit, action
+		{ set_sizemult(GIG, pm->sectorsize); };
+	option MSG_Megabytes, exit, action
+		{ set_sizemult(MEG, pm->sectorsize); };
+	option MSG_Cylinders, exit, action
+		{ set_sizemult(pm->current_cylsize*pm->sectorsize, pm->sectorsize); };
+	option MSG_Sectors, exit, action
+		{ set_sizemult(pm->sectorsize, pm->sectorsize); };
+
+menu ptnsize_replace_existing_partition, sub menu, y=0,
+	title MSG_ptnsize_replace_existing;
+	display action { menu->cursel = 1; };
+	option MSG_Yes, exit, action { *((int*)arg) = 1; };
+	option MSG_cancel, exit, action { *((int*)arg) = 0; };
 
 menu distmedium, title MSG_Select_medium, y=-5;
 	option MSG_cdrom,     exit, action { *(int *)arg = get_via_cdrom(); };
@@ -357,7 +362,8 @@ menu distset, title MSG_Select_your_distribution, exit,
 
 menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 	    exitstring MSG_Get_Distribution;
-	display action { msg_display(MSG_ftpsource, url_proto((uintptr_t)((arg_rv*)arg)->arg)); };
+	display action { msg_fmt_display(MSG_ftpsource, "%s",
+	    url_proto((uintptr_t)((arg_rv*)arg)->arg)); };
 	option {src_legend(menu, MSG_Host, ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg]);},
 		action { src_prompt(MSG_Host, ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg], sizeof ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg]); };
 	option {src_legend(menu, MSG_Base_dir, ftp.dir);},
@@ -632,3 +638,21 @@ menu usersh, title MSG_User_shell, no clear;
 	option "/bin/sh",  exit, action { ushell = "/bin/sh";}; 
 	option "/bin/ksh", exit, action { ushell = "/bin/ksh";};
 	option "/bin/csh", exit, action { ushell = "/bin/csh";};
+
+menu convertscheme, title MSG_cvtscheme_hdr;
+	option MSG_cvtscheme_keep,		exit, action { *(int*)arg = 0; };
+	option MSG_cvtscheme_delete,		exit, action { *(int*)arg = 1; };
+	option MSG_cvtscheme_convert,		exit, action { *(int*)arg = 2; };
+	option MSG_cvtscheme_abort,		exit, action { *(int*)arg = 3; };
+
+
+menu reedit, title MSG_reeditpart, y=-10;
+	expand action { expand_all_option_texts(menu, arg); };
+	option MSG_reedit_partitions, exit,
+	    action  {((arg_rep_int*)arg)->rv = 1;};
+	option MSG_use_partitions_anyway, exit,
+	    action  {((arg_rep_int*)arg)->rv = 2;};
+	option MSG_abort_installation,       exit,
+	    action  {((arg_rep_int*)arg)->rv = 0;};
+
+

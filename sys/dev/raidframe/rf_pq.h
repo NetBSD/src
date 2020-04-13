@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.h,v 1.5 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_pq.h,v 1.5.164.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * rf_pq.h
  */
@@ -37,10 +37,10 @@
 extern RF_RedFuncs_t rf_pFuncs;
 extern RF_RedFuncs_t rf_pRecoveryFuncs;
 
-int     rf_RegularONPFunc(RF_DagNode_t * node);
-int     rf_SimpleONPFunc(RF_DagNode_t * node);
-int     rf_RecoveryPFunc(RF_DagNode_t * node);
-int     rf_RegularPFunc(RF_DagNode_t * node);
+void    rf_RegularONPFunc(RF_DagNode_t * node);
+void    rf_SimpleONPFunc(RF_DagNode_t * node);
+void    rf_RecoveryPFunc(RF_DagNode_t * node);
+void    rf_RegularPFunc(RF_DagNode_t * node);
 
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 
@@ -52,14 +52,14 @@ void
 rf_PQDagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
     RF_AccessStripeMap_t * asmap, RF_VoidFuncPtr * createFunc);
 RF_CREATE_DAG_FUNC_DECL(rf_PQCreateLargeWriteDAG);
-int     rf_RegularONQFunc(RF_DagNode_t * node);
-int     rf_SimpleONQFunc(RF_DagNode_t * node);
+void    rf_RegularONQFunc(RF_DagNode_t * node);
+void    rf_SimpleONQFunc(RF_DagNode_t * node);
 RF_CREATE_DAG_FUNC_DECL(rf_PQCreateSmallWriteDAG);
-int     rf_RegularPQFunc(RF_DagNode_t * node);
-int     rf_RegularQFunc(RF_DagNode_t * node);
+void    rf_RegularPQFunc(RF_DagNode_t * node);
+void    rf_RegularQFunc(RF_DagNode_t * node);
 void    rf_Degraded_100_PQFunc(RF_DagNode_t * node);
-int     rf_RecoveryQFunc(RF_DagNode_t * node);
-int     rf_RecoveryPQFunc(RF_DagNode_t * node);
+void    rf_RecoveryQFunc(RF_DagNode_t * node);
+void    rf_RecoveryPQFunc(RF_DagNode_t * node);
 void    rf_PQ_DegradedWriteQFunc(RF_DagNode_t * node);
 void
 rf_IncQ(unsigned long *dest, unsigned long *buf, unsigned length,

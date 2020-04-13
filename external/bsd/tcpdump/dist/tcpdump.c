@@ -30,7 +30,7 @@
 static const char copyright[] _U_ =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000\n\
 The Regents of the University of California.  All rights reserved.\n";
-__RCSID("$NetBSD: tcpdump.c,v 1.16.4.1 2019/06/10 21:51:38 christos Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.16.4.2 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /*
@@ -620,11 +620,10 @@ droproot(const char *username, const char *chroot_dir)
 #ifdef HAVE_LIBCAP_NG
 		{
 			int ret = capng_change_id(pw->pw_uid, pw->pw_gid, CAPNG_NO_FLAG);
-			if (ret < 0) {
-				fprintf(stderr, "error : ret %d\n", ret);
-			} else {
+			if (ret < 0)
+				error("capng_change_id(): return %d\n", ret);
+			else
 				fprintf(stderr, "dropped privs to %s\n", username);
-			}
 		}
 #else
 		if (initgroups(pw->pw_name, pw->pw_gid) != 0 ||
@@ -713,13 +712,15 @@ static char *
 get_next_file(FILE *VFile, char *ptr)
 {
 	char *ret;
+	size_t len;
 
 	ret = fgets(ptr, PATH_MAX, VFile);
 	if (!ret)
 		return NULL;
 
-	if (ptr[strlen(ptr) - 1] == '\n')
-		ptr[strlen(ptr) - 1] = '\0';
+	len = strlen (ptr);
+	if (len > 0 && ptr[len - 1] == '\n')
+		ptr[len - 1] = '\0';
 
 	return ret;
 }
@@ -1036,6 +1037,10 @@ open_interface(const char *device, netdissect_options *ndo, char *ebuf)
 		if (status < 0)
 			error("%s: Can't set time stamp type: %s",
 		              device, pcap_statustostr(status));
+		else if (status > 0)
+			warning("When trying to set timestamp type '%s' on %s: %s",
+				pcap_tstamp_type_val_to_name(jflag), device,
+				pcap_statustostr(status));
 	}
 #endif
 	status = pcap_activate(pc);

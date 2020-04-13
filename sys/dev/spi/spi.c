@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.8.38.1 2019/06/10 22:07:32 christos Exp $ */
+/* $NetBSD: spi.c,v 1.8.38.2 2020/04/13 08:04:48 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.8.38.1 2019/06/10 22:07:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.8.38.2 2020/04/13 08:04:48 martin Exp $");
 
 #include "locators.h"
 
@@ -102,6 +102,8 @@ struct spi_handle {
 	int			sh_slave;
 	int			sh_mode;
 	int			sh_speed;
+	int			sh_flags;
+#define SPIH_ATTACHED		1
 };
 
 #define SPI_MAXDATA 4096
@@ -151,12 +153,122 @@ spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		return -1;
 	}
 
+	memset(&sa, 0, sizeof sa);
 	sa.sa_handle = &sc->sc_slaves[addr];
+	if (ISSET(sa.sa_handle->sh_flags, SPIH_ATTACHED))
+		return -1;
 
-	if (config_match(parent, cf, &sa) > 0)
+	if (config_match(parent, cf, &sa) > 0) {
+		SET(sa.sa_handle->sh_flags, SPIH_ATTACHED);
 		config_attach(parent, cf, &sa, spi_print);
+	}
 
 	return 0;
+}
+
+/*
+ * XXX this is the same as i2c_fill_compat. It could be refactored into a
+ * common fill_compat function with pointers to compat & ncompat instead
+ * of attach_args as the first parameter.
+ */
+static void
+spi_fill_compat(struct spi_attach_args *sa, const char *compat, size_t len,
+	char **buffer)
+{
+	int count, i;
+	const char *c, *start, **ptr;
+
+	*buffer = NULL;
+	for (i = count = 0, c = compat; i < len; i++, c++)
+		if (*c == 0)
+			count++;
+	count += 2;
+	ptr = malloc(sizeof(char*)*count, M_TEMP, M_WAITOK);
+	if (!ptr)
+		return;
+
+	for (i = count = 0, start = c = compat; i < len; i++, c++) {
+		if (*c == 0) {
+			ptr[count++] = start;
+			start = c + 1;
+		}
+	}
+	if (start < compat + len) {
+		/* last string not 0 terminated */
+		size_t l = c - start;
+		*buffer = malloc(l + 1, M_TEMP, M_WAITOK);
+		memcpy(*buffer, start, l);
+		(*buffer)[l] = 0;
+		ptr[count++] = *buffer;
+	}
+	ptr[count] = NULL;
+
+	sa->sa_compat = ptr;
+	sa->sa_ncompat = count;
+}
+
+static void
+spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
+    prop_array_t child_devices)
+{
+	unsigned int count;
+	prop_dictionary_t child;
+	prop_data_t cdata;
+	uint32_t slave;
+	uint64_t cookie;
+	struct spi_attach_args sa;
+	int loc[SPICF_NLOCS];
+	char *buf;
+	int i;
+
+	memset(loc, 0, sizeof loc);
+	count = prop_array_count(child_devices);
+	for (i = 0; i < count; i++) {
+		child = prop_array_get(child_devices, i);
+		if (!child)
+			continue;
+		if (!prop_dictionary_get_uint32(child, "slave", &slave))
+			continue;
+		if(slave >= sc->sc_controller.sct_nslaves)
+			continue;
+		if (!prop_dictionary_get_uint64(child, "cookie", &cookie))
+			continue;
+		if (!(cdata = prop_dictionary_get(child, "compatible")))
+			continue;
+		loc[SPICF_SLAVE] = slave;
+
+		memset(&sa, 0, sizeof sa);
+		sa.sa_handle = &sc->sc_slaves[i];
+		sa.sa_prop = child;
+		sa.sa_cookie = cookie;
+		if (ISSET(sa.sa_handle->sh_flags, SPIH_ATTACHED))
+			continue;
+		SET(sa.sa_handle->sh_flags, SPIH_ATTACHED);
+
+		buf = NULL;
+		spi_fill_compat(&sa,
+				prop_data_data_nocopy(cdata),
+				prop_data_size(cdata), &buf);
+		(void) config_found_sm_loc(parent, "spi",
+					   loc, &sa, spi_print,
+					   NULL);
+
+		if (sa.sa_compat)
+			free(sa.sa_compat, M_TEMP);
+		if (buf)
+			free(buf, M_TEMP);
+	}
+}
+
+int
+spi_compatible_match(const struct spi_attach_args *sa, const cfdata_t cf,
+		     const struct device_compatible_entry *compats)
+{
+	if (sa->sa_ncompat > 0)
+		return device_compatible_match(sa->sa_compat, sa->sa_ncompat,
+					       compats, NULL);
+
+	return 1;
 }
 
 /*
@@ -197,9 +309,11 @@ spi_attach(device_t parent, device_t self, void *aux)
 		sc->sc_slaves[i].sh_controller = &sc->sc_controller;
 	}
 
-	/*
-	 * Locate and attach child devices
-	 */
+	/* First attach devices known to be present via fdt */
+	if (sba->sba_child_devices) {
+		spi_direct_attach_child_devices(self, sc, sba->sba_child_devices);
+	}
+	/* Then do any other devices the user may have manually wired */
 	config_search_ia(spi_search, self, "spi", NULL);
 }
 

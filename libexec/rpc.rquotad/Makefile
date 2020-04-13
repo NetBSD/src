@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/02/01 17:53:01 dholland Exp $
+#	$NetBSD: Makefile,v 1.9.40.1 2020/04/13 08:03:18 martin Exp $
 
 .include <bsd.own.mk>
 PROG =	rpc.rquotad
@@ -8,5 +8,7 @@ MLINKS = rpc.rquotad.8 rquotad.8
 
 DPADD=	${LIBQUOTA} ${LIBRPCSVC}
 LDADD=	-lquota -lrpcsvc
+
+COPTS.rquotad.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.23.2.2 2020/04/08 14:07:31 martin Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.23.2.3 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.23.2.2 2020/04/08 14:07:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.23.2.3 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,6 +113,8 @@ extern struct bus_space arm_generic_a4x_bs_tag;
 #define	sunxi_dma_tag		arm_generic_dma_tag
 #define	sunxi_bs_tag		arm_generic_bs_tag
 #define	sunxi_a4x_bs_tag	arm_generic_a4x_bs_tag
+
+static bus_space_handle_t reset_bsh;
 
 static const struct pmap_devmap *
 sunxi_platform_devmap(void)
@@ -274,6 +276,42 @@ sunxi_platform_bootstrap(void)
 	}
 }
 
+static void
+sun4i_platform_bootstrap(void)
+{
+	bus_space_tag_t bst = &sunxi_bs_tag;
+
+	sunxi_platform_bootstrap();
+	bus_space_map(bst, SUN4I_WDT_BASE, SUN4I_WDT_SIZE, 0, &reset_bsh);
+}
+
+static void
+sun6i_platform_bootstrap(void)
+{
+	bus_space_tag_t bst = &sunxi_bs_tag;
+
+	sunxi_platform_bootstrap();
+	bus_space_map(bst, SUN6I_WDT_BASE, SUN6I_WDT_SIZE, 0, &reset_bsh);
+}
+
+static void
+sun9i_platform_bootstrap(void)
+{
+	bus_space_tag_t bst = &sunxi_bs_tag;
+
+	sunxi_platform_bootstrap();
+	bus_space_map(bst, SUN9I_WDT_BASE, SUN9I_WDT_SIZE, 0, &reset_bsh);
+}
+
+static void
+sun50i_h6_platform_bootstrap(void)
+{
+	bus_space_tag_t bst = &sunxi_bs_tag;
+
+	sunxi_platform_bootstrap();
+	bus_space_map(bst, SUN50I_H6_WDT_BASE, SUN50I_H6_WDT_SIZE, 0, &reset_bsh);
+}
+
 #if defined(SOC_SUNXI_MC)
 static int
 cpu_enable_sun8i_a83t(int phandle)
@@ -302,14 +340,11 @@ static void
 sun4i_platform_reset(void)
 {
 	bus_space_tag_t bst = &sunxi_bs_tag;
-	bus_space_handle_t bsh;
 
-	bus_space_map(bst, SUN4I_WDT_BASE, SUN4I_WDT_SIZE, 0, &bsh);
-
-	bus_space_write_4(bst, bsh, SUN4I_WDT_CTRL,
+	bus_space_write_4(bst, reset_bsh, SUN4I_WDT_CTRL,
 	    SUN4I_WDT_CTRL_KEY | SUN4I_WDT_CTRL_RESTART);
 	for (;;) {
-		bus_space_write_4(bst, bsh, SUN4I_WDT_MODE,
+		bus_space_write_4(bst, reset_bsh, SUN4I_WDT_MODE,
 		    SUN4I_WDT_MODE_EN | SUN4I_WDT_MODE_RST_EN);
 	}
 }
@@ -350,41 +385,32 @@ static void
 sun6i_platform_reset(void)
 {
 	bus_space_tag_t bst = &sunxi_bs_tag;
-	bus_space_handle_t bsh;
 
-	bus_space_map(bst, SUN6I_WDT_BASE, SUN6I_WDT_SIZE, 0, &bsh);
-
-	bus_space_write_4(bst, bsh, SUN6I_WDT_CFG, SUN6I_WDT_CFG_SYS);
-	bus_space_write_4(bst, bsh, SUN6I_WDT_MODE, SUN6I_WDT_MODE_EN);
+	bus_space_write_4(bst, reset_bsh, SUN6I_WDT_CFG, SUN6I_WDT_CFG_SYS);
+	bus_space_write_4(bst, reset_bsh, SUN6I_WDT_MODE, SUN6I_WDT_MODE_EN);
 }
 
 static void
 sun9i_platform_reset(void)
 {
 	bus_space_tag_t bst = &sunxi_bs_tag;
-	bus_space_handle_t bsh;
 
-	bus_space_map(bst, SUN9I_WDT_BASE, SUN9I_WDT_SIZE, 0, &bsh);
-
-	bus_space_write_4(bst, bsh, SUN9I_WDT_CFG, SUN9I_WDT_CFG_SYS);
-	bus_space_write_4(bst, bsh, SUN9I_WDT_MODE, SUN9I_WDT_MODE_EN);
+	bus_space_write_4(bst, reset_bsh, SUN9I_WDT_CFG, SUN9I_WDT_CFG_SYS);
+	bus_space_write_4(bst, reset_bsh, SUN9I_WDT_MODE, SUN9I_WDT_MODE_EN);
 }
 
 static void
 sun50i_h6_platform_reset(void)
 {
 	bus_space_tag_t bst = &sunxi_bs_tag;
-	bus_space_handle_t bsh;
 
-	bus_space_map(bst, SUN50I_H6_WDT_BASE, SUN50I_H6_WDT_SIZE, 0, &bsh);
-
-	bus_space_write_4(bst, bsh, SUN50I_H6_WDT_CFG, SUN50I_H6_WDT_CFG_SYS);
-	bus_space_write_4(bst, bsh, SUN50I_H6_WDT_MODE, SUN50I_H6_WDT_MODE_EN);
+	bus_space_write_4(bst, reset_bsh, SUN50I_H6_WDT_CFG, SUN50I_H6_WDT_CFG_SYS);
+	bus_space_write_4(bst, reset_bsh, SUN50I_H6_WDT_MODE, SUN50I_H6_WDT_MODE_EN);
 }
 
 static const struct arm_platform sun4i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sunxi_platform_bootstrap,
+	.ap_bootstrap = sun4i_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun4i_platform_reset,
@@ -396,7 +422,7 @@ ARM_PLATFORM(sun4i_a10, "allwinner,sun4i-a10", &sun4i_platform);
 
 static const struct arm_platform sun5i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sunxi_platform_bootstrap,
+	.ap_bootstrap = sun4i_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun4i_platform_reset,
@@ -409,7 +435,7 @@ ARM_PLATFORM(sun5i_gr8, "nextthing,gr8", &sun5i_platform);
 
 static const struct arm_platform sun6i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sunxi_platform_bootstrap,
+	.ap_bootstrap = sun6i_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun6i_platform_reset,
@@ -422,7 +448,7 @@ ARM_PLATFORM(sun6i_a31, "allwinner,sun6i-a31", &sun6i_platform);
 
 static const struct arm_platform sun7i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sunxi_platform_bootstrap,
+	.ap_bootstrap = sun4i_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun4i_platform_reset,
@@ -435,7 +461,7 @@ ARM_PLATFORM(sun7i_a20, "allwinner,sun7i-a20", &sun7i_platform);
 
 static const struct arm_platform sun8i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sunxi_platform_bootstrap,
+	.ap_bootstrap = sun6i_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun6i_platform_reset,
@@ -449,7 +475,7 @@ ARM_PLATFORM(sun8i_h3, "allwinner,sun8i-h3", &sun8i_platform);
 
 static const struct arm_platform sun8i_a83t_platform = {
 	.ap_devmap = sun8i_a83t_platform_devmap,
-	.ap_bootstrap = sunxi_platform_bootstrap,
+	.ap_bootstrap = sun6i_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun6i_platform_reset,
@@ -462,7 +488,7 @@ ARM_PLATFORM(sun8i_a83t, "allwinner,sun8i-a83t", &sun8i_a83t_platform);
 
 static const struct arm_platform sun9i_platform = {
 	.ap_devmap = sun9i_a80_platform_devmap,
-	.ap_bootstrap = sunxi_platform_bootstrap,
+	.ap_bootstrap = sun9i_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun9i_platform_reset,
@@ -475,7 +501,7 @@ ARM_PLATFORM(sun9i_a80, "allwinner,sun9i-a80", &sun9i_platform);
 
 static const struct arm_platform sun50i_platform = {
 	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sunxi_platform_bootstrap,
+	.ap_bootstrap = sun6i_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun6i_platform_reset,
@@ -489,7 +515,7 @@ ARM_PLATFORM(sun50i_h5, "allwinner,sun50i-h5", &sun50i_platform);
 
 static const struct arm_platform sun50i_h6_platform = {
 	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sunxi_platform_bootstrap,
+	.ap_bootstrap = sun50i_h6_platform_bootstrap,
 	.ap_init_attach_args = sunxi_platform_init_attach_args,
 	.ap_device_register = sunxi_platform_device_register,
 	.ap_reset = sun50i_h6_platform_reset,

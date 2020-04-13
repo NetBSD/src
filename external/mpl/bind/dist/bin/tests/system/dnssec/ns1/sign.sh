@@ -22,6 +22,8 @@ zonefile=root.db
 (cd ../ns6 && $SHELL sign.sh )
 (cd ../ns7 && $SHELL sign.sh )
 
+echo_i "ns1/sign.sh"
+
 cp "../ns2/dsset-example$TP" .
 cp "../ns2/dsset-dlv$TP" .
 cp "../ns2/dsset-in-addr.arpa$TP" .
@@ -42,6 +44,7 @@ cp trusted.conf ../ns3/trusted.conf
 cp trusted.conf ../ns4/trusted.conf
 cp trusted.conf ../ns6/trusted.conf
 cp trusted.conf ../ns7/trusted.conf
+cp trusted.conf ../ns9/trusted.conf
 
 # ...or with a managed key.
 keyfile_to_managed_keys "$keyname" > managed.conf
@@ -51,4 +54,4 @@ cp managed.conf ../ns4/managed.conf
 #  Save keyid for managed key id test.
 #
 
-echo "$keyname" | sed -e 's/.*[+]//' -e 's/^0*//' > managed.key.id
+keyfile_to_key_id "$keyname" > managed.key.id

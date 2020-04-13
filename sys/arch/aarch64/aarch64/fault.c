@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.1.4.1 2019/06/10 22:05:43 christos Exp $	*/
+/*	$NetBSD: fault.c,v 1.1.4.2 2020/04/13 08:03:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.1.4.1 2019/06/10 22:05:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.1.4.2 2020/04/13 08:03:27 martin Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
@@ -157,6 +157,9 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	p = l->l_proc;
 	va = trunc_page((vaddr_t)tf->tf_far);
 
+	/* eliminate addresss tag if ECR_EL1.TBI[01] is enabled */
+	va = aarch64_untag_address(va);
+
 	if ((VM_MIN_KERNEL_ADDRESS <= va) && (va < VM_MAX_KERNEL_ADDRESS)) {
 		map = kernel_map;
 		UVMHIST_LOG(pmaphist, "use kernel_map %p", map, 0, 0, 0);
@@ -170,7 +173,9 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	}
 
 	if ((eclass == ESR_EC_INSN_ABT_EL0) || (eclass == ESR_EC_INSN_ABT_EL1))
-		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
+		ftype = VM_PROT_EXECUTE;
+	else if (__SHIFTOUT(esr, ESR_ISS_DATAABORT_CM))
+		ftype = VM_PROT_READ;
 	else
 		ftype = (rw == 0) ? VM_PROT_READ : VM_PROT_WRITE;
 
@@ -198,8 +203,8 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 		if (user)
 			uvm_grow(p, va);
 
-		UVMHIST_LOG(pmaphist, "uvm_fault success: va=%016llx",
-		    tf->tf_far, 0, 0, 0);
+		UVMHIST_LOG(pmaphist, "uvm_fault success: far=%016lx, va=%016llx",
+		    tf->tf_far, va, 0, 0);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.13 2012/10/27 17:17:55 chs Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.13.38.1 2020/04/13 08:03:51 martin Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.13 2012/10/27 17:17:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.13.38.1 2020/04/13 08:03:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,10 +498,7 @@ vrc4172gpio_intr_establish(
 	mask2 = (1 << (port % 8));
 	intlv_reg = intlv_regs[port/8];
 
-	ih = malloc(sizeof(struct vrc4172gpio_intr_entry), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		panic("%s: no memory", __func__);
-
+	ih = malloc(sizeof(struct vrc4172gpio_intr_entry), M_DEVBUF, M_WAITOK);
 	ih->ih_port = port;
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;

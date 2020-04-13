@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.169.10.1 2019/06/10 22:09:03 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.169.10.2 2020/04/13 08:05:04 martin Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -70,8 +70,8 @@ rumpcallshdr="/dev/null"
 rumpsysmap="/dev/null"
 rumpsysent="rumpsysent.tmp"
 rumpnoflags="\n\t\t.sy_flags = SYCALL_NOSYS,"
-rumpnosys="(sy_call_t *)rumpns_enosys"
-rumpnomodule="(sy_call_t *)rumpns_sys_nomodule"
+rumpnosys="(sy_call_t *)(void *)rumpns_enosys"
+rumpnomodule="(sy_call_t *)(void *)rumpns_sys_nomodule"
 
 case $1 in
 /*)	. $1;;
@@ -84,6 +84,15 @@ errmsg()
 	printf '%s: %s\n' "$0" "$*" >&2
 }
 
+addsuffix()
+{
+	if [ "$1" = "/dev/null" -o -z "$2" ]; then
+		echo $1
+	else
+		echo $1.$2
+	fi
+}
+
 fail=false
 case "${nsysent:-0}" in
 *[!0-9]*)	errmsg "Non numeric value for nsysent:" "${nsysent}";;
@@ -94,19 +103,20 @@ esac
 $fail && exit 1
 
 # tmp files:
+sysautoloadbottom=$(addsuffix $sysautoload "bottom")
 sysdcl="sysent.dcl"
 sysprotos="sys.protos"
 syscompat_pref="sysent."
 sysent="sysent.switch"
-sysnamesbottom="$sysnames.bottom"
-sysnamesfriendly="$sysnames.friendly"
+sysnamesbottom=$(addsuffix $sysnames "bottom")
+sysnamesfriendly=$(addsuffix $sysnames "friendly")
 rumptypes="rumphdr.types"
 rumpprotos="rumphdr.protos"
 systracetmp="systrace.$$"
 systraceret="systraceret.$$"
 
 cleanup() {
-    rm $sysdcl $sysprotos $sysent $sysnamesbottom $sysnamesfriendly $rumpsysent $rumptypes $rumpprotos $systracetmp $systraceret
+    rm $sysdcl $sysprotos $sysent $sysnamesbottom $sysnamesfriendly $rumpsysent $rumptypes $rumpprotos $systracetmp $systraceret ${sysautoloadbottom#/dev/null}
 }
 trap "cleanup" 0
 
@@ -162,7 +172,6 @@ BEGIN {
 
 	# to allow nested #if/#else/#endif sets
 	savedepth = 0
-	auto_skip = 0
 	# to track already processed syscalls
 
 	sysnames = \"$sysnames\"
@@ -174,6 +183,7 @@ BEGIN {
 	systracetmp = \"$systracetmp\"
 	systraceret = \"$systraceret\"
 	sysautoload = \"$sysautoload\"
+	sysautoloadbottom = \"$sysautoloadbottom\"
 	rumpcalls = \"$rumpcalls\"
 	rumpcallshdr = \"$rumpcallshdr\"
 	rumpsysent = \"$rumpsysent\"
@@ -192,8 +202,8 @@ BEGIN {
 	sysdcl = \"$sysdcl\"
 	syscompat_pref = \"$syscompat_pref\"
 	sysent = \"$sysent\"
-	sysnamesbottom = \"${sysnames}.bottom\"
-	sysnamesfriendly = \"${sysnames}.friendly\"
+	sysnamesbottom = \"$sysnamesbottom\"
+	sysnamesfriendly = \"$sysnamesfriendly\"
 	rumpprotos = \"$rumpprotos\"
 	rumptypes = \"$rumptypes\"
 	sys_nosys = \"$sys_nosys\"
@@ -272,9 +282,8 @@ NR == 1 {
 
 	printf " * created from%s\n */\n\n", $0 > sysautoload
 	printf "#include <sys/cdefs.h>\n__KERNEL_RCSID(0, \"%s\");\n\n", tag > sysautoload
-	printf("#include <sys/proc.h>\n")		> sysautoload
 	printf("static struct sc_autoload " emulname \
-		"_syscalls_autoload[] = {\n")		> sysautoload
+		"_syscalls_autoload[] = {\n")		> sysautoloadbottom
 
 	printf " * created from%s\n */\n\n", $0 > rumpcalls
 	printf "#ifdef RUMP_CLIENT\n" > rumpcalls
@@ -418,39 +427,25 @@ $0 ~ /^%%$/ {
 $1 ~ /^#[ 	]*include/ {
 	print > sysdcl
 	print > sysnames
+	print > sysautoload
 	next
 }
 $1 ~ /^#/ && !intable {
 	print > sysdcl
 	print > sysnames
+	print > sysautoload
 	next
 }
 $1 ~ /^#/ && intable {
 	if ($1 ~ /^#[ 	]*if/) {
 		savedepth++
 		savesyscall[savedepth] = syscall
-		skip_auto[savedepth] = auto_skip
-		auto_skip = 0
-
-		# Special handling for sysautoload conditionals
-		#
-		# We ignore all conditions other than those for
-		# !defined(_LP64) which are used for SYSV* syscalls
-		# only
-
-		if ($0 ~ /!defined\(_LP64\)/) {
-			printf("#if !defined(_LP64)\n") > sysautoload
-			auto_skip = savedepth
-		}
 	}
 	if ($1 ~ /^#[ 	]*else/) {
 		if (savedepth <= 0) {
 			printf("%s: line %d: unbalanced #else\n", \
 			    infile, NR)
 			exit 1
-		}
-		if (auto_skip == savedepth) {
-			print > sysautoload
 		}
 		syscall = savesyscall[savedepth]
 	}
@@ -460,16 +455,13 @@ $1 ~ /^#/ && intable {
 			    infile, NR)
 			exit 1
 		}
-		if (auto_skip == savedepth) {
-			print > sysautoload
-		}
-		auto_skip = skip_auto[savedepth];
 		savedepth--
 	}
 	print > sysent
 	print > sysarghdr
 	print > sysnumhdr
 	print > sysprotos
+	print > sysautoloadbottom
 	print > sysnamesbottom
 	print > sysnamesfriendly
 	print > systrace
@@ -709,9 +701,9 @@ function printproto(wrap) {
 	    syscall) > sysnumhdr
 
 	# output entry for syscall autoload table, if modular
-	if (modular ) {
+	if (modular) {
 		printf("\t    { %s%s%s, \"%s\" },\n", constprefix, wrap,
-		    funcalias, modname) > sysautoload
+		   funcalias, modname) > sysautoloadbottom
 	}
 
 
@@ -1079,7 +1071,7 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 		comment=comment " " $i
 
 	if ($2 == "IGNORED")
-		sys_stub = "(sy_call_t *)nullop";
+		sys_stub = "(sy_call_t *)(void *)nullop";
 	else
 		sys_stub = sys_nosys;
 
@@ -1190,13 +1182,14 @@ END {
 cat $sysprotos >> $sysarghdr
 echo "#endif /* _${constprefix}SYSCALL_H_ */" >> $sysnumhdr
 echo "#endif /* _${constprefix}SYSCALLARGS_H_ */" >> $sysarghdr
-printf "\t    { 0, NULL }\n" >> $sysautoload
-echo "};" >> $sysautoload
+printf "\t    { 0, NULL }\n" >> $sysautoloadbottom
+echo "};" >> $sysautoloadbottom
 printf "\n#endif /* _RUMP_RUMP_SYSCALLS_H_ */\n" >> $rumpprotos
 cat $sysdcl $sysent > $syssw
 cat $sysnamesbottom >> $sysnames
 cat $sysnamesfriendly >> $sysnames
 cat $rumpsysent >> $rumpcalls
+cat $sysautoloadbottom >> $sysautoload
 
 touch $rumptypes
 cat $rumptypes >> $rumpcallshdr

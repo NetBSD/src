@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.48.2.2 2020/04/08 14:08:11 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.48.2.3 2020/04/13 08:04:46 martin Exp $ */
 
 /******************************************************************************
 
@@ -233,7 +233,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 		i = (cpu_index(curcpu()) % ncpu) % adapter->num_queues;
 
 	/* Check for a hung queue and pick alternative */
-	if (((1 << i) & adapter->active_queues) == 0)
+	if (((1ULL << i) & adapter->active_queues) == 0)
 		i = ffs64(adapter->active_queues);
 
 	txr = &adapter->tx_rings[i];
@@ -266,8 +266,11 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 				    &txr->wq_cookie, curcpu());
 			} else
 				percpu_putref(adapter->txr_wq_enqueued);
-		} else
+		} else {
+			kpreempt_disable();
 			softint_schedule(txr->txr_si);
+			kpreempt_enable();
+		}
 	}
 
 	return (0);
@@ -606,14 +609,8 @@ ixgbe_allocate_transmit_buffers(struct tx_ring *txr)
 		goto fail;
 	}
 
-	txr->tx_buffers =
-	    (struct ixgbe_tx_buf *) malloc(sizeof(struct ixgbe_tx_buf) *
-	    adapter->num_tx_desc, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (txr->tx_buffers == NULL) {
-		aprint_error_dev(dev, "Unable to allocate tx_buffer memory\n");
-		error = ENOMEM;
-		goto fail;
-	}
+	txr->tx_buffers = malloc(sizeof(struct ixgbe_tx_buf) *
+	    adapter->num_tx_desc, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Create the descriptor buffer dma maps */
 	txbuf = txr->tx_buffers;
@@ -693,7 +690,7 @@ ixgbe_setup_transmit_ring(struct tx_ring *txr)
 		 * netmap_idx_n2k() handles wraparounds properly.
 		 */
 		if ((adapter->feat_en & IXGBE_FEATURE_NETMAP) && slot) {
-			int si = netmap_idx_n2k(&na->tx_rings[txr->me], i);
+			int si = netmap_idx_n2k(na->tx_rings[txr->me], i);
 			netmap_load_map(na, txr->txtag,
 			    txbuf->map, NMB(na, slot + si));
 		}
@@ -1104,7 +1101,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	if ((adapter->feat_en & IXGBE_FEATURE_NETMAP) &&
 	    (adapter->ifp->if_capenable & IFCAP_NETMAP)) {
 		struct netmap_adapter *na = NA(adapter->ifp);
-		struct netmap_kring *kring = &na->tx_rings[txr->me];
+		struct netmap_kring *kring = na->tx_rings[txr->me];
 		txd = txr->tx_base;
 		bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
 		    BUS_DMASYNC_POSTREAD);
@@ -1122,9 +1119,8 @@ ixgbe_txeof(struct tx_ring *txr)
 		 * - the driver ignores tx interrupts unless netmap_mitigate=0
 		 *   or the slot has the DD bit set.
 		 */
-		if (!netmap_mitigate ||
-		    (kring->nr_kflags < kring->nkr_num_slots &&
-		     txd[kring->nr_kflags].wb.status & IXGBE_TXD_STAT_DD)) {
+		if (kring->nr_kflags < kring->nkr_num_slots &&
+		    txd[kring->nr_kflags].wb.status & IXGBE_TXD_STAT_DD) {
 			netmap_tx_irq(ifp, txr->me);
 		}
 		return false;
@@ -1363,7 +1359,9 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 			error = bus_dmamap_load_mbuf(rxr->ptag->dt_dmat,
 			    rxbuf->pmap, mp, BUS_DMA_NOWAIT);
 			if (error != 0) {
-				printf("Refresh mbufs: payload dmamap load failure - %d\n", error);
+				device_printf(adapter->dev, "Refresh mbufs: "
+				    "payload dmamap load failure - %d\n",
+				    error);
 				m_free(mp);
 				rxbuf->buf = NULL;
 				goto update;
@@ -1404,19 +1402,13 @@ update:
 static int
 ixgbe_allocate_receive_buffers(struct rx_ring *rxr)
 {
-	struct	adapter     *adapter = rxr->adapter;
+	struct adapter      *adapter = rxr->adapter;
 	device_t            dev = adapter->dev;
 	struct ixgbe_rx_buf *rxbuf;
 	int                 bsize, error;
 
 	bsize = sizeof(struct ixgbe_rx_buf) * rxr->num_desc;
-	rxr->rx_buffers = (struct ixgbe_rx_buf *)malloc(bsize, M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (rxr->rx_buffers == NULL) {
-		aprint_error_dev(dev, "Unable to allocate rx_buffer memory\n");
-		error = ENOMEM;
-		goto fail;
-	}
+	rxr->rx_buffers = malloc(bsize, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	error = ixgbe_dma_tag_create(
 	         /*      parent */ adapter->osdep.dmat,
@@ -1529,7 +1521,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		 * an mbuf, so end the block with a continue;
 		 */
 		if ((adapter->feat_en & IXGBE_FEATURE_NETMAP) && slot) {
-			int sj = netmap_idx_n2k(&na->rx_rings[rxr->me], j);
+			int sj = netmap_idx_n2k(na->rx_rings[rxr->me], j);
 			uint64_t paddr;
 			void *addr;
 
@@ -1830,7 +1822,7 @@ ixgbe_rxeof(struct ix_queue *que)
 		u16         len;
 		u16         vtag = 0;
 		bool        eop;
- 
+
 		/* Sync the ring. */
 		ixgbe_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
@@ -2228,30 +2220,15 @@ ixgbe_allocate_queues(struct adapter *adapter)
 
 	/* First, allocate the top level queue structs */
 	adapter->queues = (struct ix_queue *)malloc(sizeof(struct ix_queue) *
-            adapter->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO);
-        if (adapter->queues == NULL) {
-		aprint_error_dev(dev, "Unable to allocate queue memory\n");
-                error = ENOMEM;
-                goto fail;
-        }
+            adapter->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Second, allocate the TX ring struct memory */
-	adapter->tx_rings = (struct tx_ring *)malloc(sizeof(struct tx_ring) *
-	    adapter->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (adapter->tx_rings == NULL) {
-		aprint_error_dev(dev, "Unable to allocate TX ring memory\n");
-		error = ENOMEM;
-		goto tx_fail;
-	}
+	adapter->tx_rings = malloc(sizeof(struct tx_ring) *
+	    adapter->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Third, allocate the RX ring */
 	adapter->rx_rings = (struct rx_ring *)malloc(sizeof(struct rx_ring) *
-	    adapter->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (adapter->rx_rings == NULL) {
-		aprint_error_dev(dev, "Unable to allocate RX ring memory\n");
-		error = ENOMEM;
-		goto rx_fail;
-	}
+	    adapter->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* For the ring itself */
 	tsize = roundup2(adapter->num_tx_desc * sizeof(union ixgbe_adv_tx_desc),
@@ -2310,7 +2287,7 @@ ixgbe_allocate_queues(struct adapter *adapter)
 
 	/*
 	 * Next the RX queues...
-	 */ 
+	 */
 	rsize = roundup2(adapter->num_rx_desc * sizeof(union ixgbe_adv_rx_desc),
 	    DBA_ALIGN);
 	for (int i = 0; i < adapter->num_queues; i++, rxconf++) {
@@ -2371,11 +2348,8 @@ err_tx_desc:
 	for (txr = adapter->tx_rings; txconf > 0; txr++, txconf--)
 		ixgbe_dma_free(adapter, &txr->txdma);
 	free(adapter->rx_rings, M_DEVBUF);
-rx_fail:
 	free(adapter->tx_rings, M_DEVBUF);
-tx_fail:
 	free(adapter->queues, M_DEVBUF);
-fail:
 	return (error);
 } /* ixgbe_allocate_queues */
 

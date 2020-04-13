@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.3.2.2 2019/06/10 22:04:46 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.3.2.3 2020/04/13 08:02:59 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -357,7 +357,6 @@ isc_file_template(const char *path, const char *templet, char *buf,
 isc_result_t
 isc_file_renameunique(const char *file, char *templet) {
 	int fd;
-	int res = 0;
 	isc_result_t result = ISC_R_SUCCESS;
 
 	REQUIRE(file != NULL);
@@ -370,6 +369,7 @@ isc_file_renameunique(const char *file, char *templet) {
 		close(fd);
 
 	if (result == ISC_R_SUCCESS) {
+		int res;
 		res = isc_file_safemovefile(file, templet);
 		if (res != 0) {
 			result = isc__errno2result(errno);

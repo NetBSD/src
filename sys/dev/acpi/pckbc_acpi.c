@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.36 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.36.4.1 2020/04/13 08:04:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.36 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.36.4.1 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -234,7 +234,7 @@ out:
 static void
 pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
-	struct pckbc_acpi_softc *psc;
+	struct pckbc_acpi_softc *psc = NULL; /* XXX: gcc */
 	isa_chipset_tag_t ic = NULL;
 	void *rv = NULL;
 	int irq = 0, ist = 0; /* XXX: gcc */

@@ -1,5 +1,5 @@
-.\"	$NetBSD: aout2hux.1,v 1.5 2001/09/11 00:36:57 wiz Exp $
-.Dd August 13, 1998
+.\"	$NetBSD: aout2hux.1,v 1.5.100.1 2020/04/13 08:03:24 martin Exp $
+.Dd September 1, 2019
 .Dt AOUT2HUX 1 x68k
 .Os
 .Sh NAME
@@ -18,7 +18,7 @@ reads two
 .Xr a.out 5
 or ELF
 format executables with different load addresses
-and generate Human68k
+and generates a Human68k
 .Sq Li \&.x
 format executable.
 .Pp
@@ -28,19 +28,21 @@ If the input files are a.out, they must be static
 .Dv NMAGIC
 m68k executables.
 If the input files are ELF, they must be static m68k executables.
-Two input executables must be created from the same objects,
-and have different loading addresses.
-Each of the load address is specified by a hexadecimal number.
-Load address shall be multiple of 4 for
+The two input executables must be created from the same objects,
+but use different load addresses.
+The load address is specified as a hexadecimal number.
+Load addresses are a multiple of 4 for
 .Xr as 1
 and
 .Xr ld 1
-of
+from
 .Nx Ns Tn /m68k .
 .Pp
-If the output file is not specified by
+If
+.Ar output_file
+is not specified with the
 .Fl o
-option, the name
+option, the default name
 .Pa out.x
 is used.
 .Sh FILES
@@ -75,5 +77,5 @@ utility first appeared in
 .Sh BUGS
 Symbol and debugging information is not converted.
 .Pp
-The generated executable is not so effective as that of
+The generated executable is not as effective as that of
 Human68k native compiler.

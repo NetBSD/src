@@ -1,4 +1,4 @@
-/* $NetBSD: auspi.c,v 1.8 2012/01/04 02:36:26 kiyohara Exp $ */
+/* $NetBSD: auspi.c,v 1.8.48.1 2020/04/13 08:03:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.8 2012/01/04 02:36:26 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.8.48.1 2020/04/13 08:03:59 martin Exp $");
 
 #include "locators.h"
 
@@ -147,6 +147,7 @@ auspi_attach(device_t parent, device_t self, void *aux)
 	/* fix this! */
 	sc->sc_spi.sct_nslaves = sc->sc_md.am_nslaves;
 
+	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
 
 	/* enable SPI mode */

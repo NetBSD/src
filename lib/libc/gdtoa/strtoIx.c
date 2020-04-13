@@ -1,4 +1,4 @@
-/* $NetBSD: strtoIx.c,v 1.2 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtoIx.c,v 1.2.66.1 2020/04/13 08:03:09 martin Exp $ */
 
 /****************************************************************
 
@@ -40,7 +40,7 @@ strtoIx(s, sp, a, b) CONST char *s; char **sp; void *a; void *b;
 strtoIx(CONST char *s, char **sp, void *a, void *b)
 #endif
 {
-	static FPI fpi = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
+	static CONST FPI fpi = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
 	Long exp[2];
 	Bigint *B[2];
 	int k, rv[2];

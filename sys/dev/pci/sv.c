@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.52.10.1 2019/06/10 22:07:27 christos Exp $ */
+/*      $NetBSD: sv.c,v 1.52.10.2 2020/04/13 08:04:45 martin Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.52.10.1 2019/06/10 22:07:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.52.10.2 2020/04/13 08:04:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,7 +530,7 @@ sv_allocmem(struct sv_softc *sc, size_t size, size_t align,
 		goto unmap;
 
 	error = bus_dmamap_load(sc->sc_dmatag, p->map, p->addr, p->size, NULL,
-	    BUS_DMA_WAITOK | (direction == AUMODE_RECORD) ? BUS_DMA_READ : BUS_DMA_WRITE);
+	    BUS_DMA_WAITOK | ((direction == AUMODE_RECORD) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error)
 		goto destroy;
 	DPRINTF(("sv_allocmem: pa=%lx va=%lx pba=%lx\n",

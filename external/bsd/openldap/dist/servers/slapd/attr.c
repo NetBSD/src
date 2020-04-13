@@ -1,10 +1,10 @@
-/*	$NetBSD: attr.c,v 1.1.1.7 2018/02/06 01:53:15 christos Exp $	*/
+/*	$NetBSD: attr.c,v 1.1.1.7.4.1 2020/04/13 07:56:16 martin Exp $	*/
 
 /* attr.c - routines for dealing with attributes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: attr.c,v 1.1.1.7 2018/02/06 01:53:15 christos Exp $");
+__RCSID("$NetBSD: attr.c,v 1.1.1.7.4.1 2020/04/13 07:56:16 martin Exp $");
 
 #include "portable.h"
 

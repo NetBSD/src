@@ -1,4 +1,4 @@
-.\" $NetBSD: log.3,v 1.6 2017/07/03 21:32:50 wiz Exp $
+.\" $NetBSD: log.3,v 1.6.6.1 2020/04/13 08:03:13 martin Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 13, 2011
+.Dd September 2, 2019
 .Dt LOG 3
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nm log10 ,
 .Nm log10f ,
 .Nm log1p ,
-.Nm log1pf
+.Nm log1pf ,
 .Nm log2 ,
 .Nm log2f
 .Nd logarithm functions
@@ -166,5 +166,7 @@ unless
 The described functions conform to
 .St -isoC-99 .
 .Sh HISTORY
-The history of the logarithm functions dates back to
-.At v6 .
+A
+.Fn log
+function appeared in
+.At v1 .

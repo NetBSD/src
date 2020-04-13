@@ -1,4 +1,4 @@
-/* $NetBSD: smsh_fdt.c,v 1.1 2017/06/02 10:46:07 jmcneill Exp $ */
+/* $NetBSD: smsh_fdt.c,v 1.1.14.1 2020/04/13 08:03:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsh_fdt.c,v 1.1 2017/06/02 10:46:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsh_fdt.c,v 1.1.14.1 2020/04/13 08:03:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,7 +49,11 @@ __KERNEL_RCSID(0, "$NetBSD: smsh_fdt.c,v 1.1 2017/06/02 10:46:07 jmcneill Exp $"
 static int	smsh_fdt_match(device_t, cfdata_t, void *);
 static void	smsh_fdt_attach(device_t, device_t, void *);
 
-static const char * const compatible[] = { "smsc,lan9118", NULL };
+static const char * const compatible[] = {
+	"smsc,lan9118",
+	"smsc,lan9115",
+	NULL
+};
 
 CFATTACH_DECL_NEW(smsh_fdt, sizeof(struct lan9118_softc),
 	smsh_fdt_match, smsh_fdt_attach, NULL, NULL);
@@ -67,10 +71,12 @@ smsh_fdt_attach(device_t parent, device_t self, void *aux)
 {
 	struct lan9118_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
-	char intrstr[128];
 	const int phandle = faa->faa_phandle;
+	const char *enaddr;
+	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
+	int len;
 	void *ih;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -94,6 +100,14 @@ smsh_fdt_attach(device_t parent, device_t self, void *aux)
 		sc->sc_flags |= LAN9118_FLAGS_IRQ_ACTHI;
 	if (of_hasprop(phandle, "smsc,irq-push-pull"))
 		sc->sc_flags |= LAN9118_FLAGS_IRQ_PP;
+
+	enaddr = fdtbus_get_prop(phandle, "local-mac-address", &len);
+	if (enaddr == NULL || len != ETHER_ADDR_LEN)
+		enaddr = fdtbus_get_prop(phandle, "mac-address", &len);
+	if (enaddr != NULL && len == ETHER_ADDR_LEN) {
+		memcpy(sc->sc_enaddr, enaddr, ETHER_ADDR_LEN);
+		sc->sc_flags |= LAN9118_FLAGS_NO_EEPROM;
+	}
 
 	if (lan9118_attach(sc) != 0)
 		goto unmap;

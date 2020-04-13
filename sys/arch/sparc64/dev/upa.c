@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upa.c,v 1.18 2012/03/18 05:26:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upa.c,v 1.18.40.1 2020/04/13 08:04:08 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -151,10 +151,7 @@ upa_alloc_bus_tag(struct upa_softc *sc)
 {
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (bt == NULL)
-		panic("upa: couldn't alloc bus tag");
-
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_WAITOK | M_ZERO);
 	*bt = *sc->sc_bt;
 	bt->cookie = sc;
 	bt->parent = sc->sc_bt;

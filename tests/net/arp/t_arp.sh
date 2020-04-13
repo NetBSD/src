@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.36.2.1 2019/06/10 22:10:08 christos Exp $
+#	$NetBSD: t_arp.sh,v 1.36.2.2 2020/04/13 08:05:29 martin Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,6 +33,8 @@ IP4NET=10.0.1.0
 IP4DST=10.0.1.2
 IP4DST_PROXYARP1=10.0.1.3
 IP4DST_PROXYARP2=10.0.1.4
+IP4DST_FAIL1=10.0.1.99
+IP4DST_FAIL2=10.0.99.99
 
 DEBUG=${DEBUG:-false}
 TIMEOUT=1
@@ -485,7 +487,7 @@ test_proxy_arp()
 	# Test#1: First setup an endpoint then create proxy arp entry
 	#
 	export RUMP_SERVER=$SOCKDST
-	atf_check -s exit:0 rump.ifconfig tap1 create
+	rump_server_add_iface $SOCKDST tap1
 	atf_check -s exit:0 rump.ifconfig tap1 $IP4DST_PROXYARP1/24 up
 	atf_check -s exit:0 rump.ifconfig -w 10
 
@@ -536,7 +538,7 @@ test_proxy_arp()
 	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
 
 	export RUMP_SERVER=$SOCKDST
-	atf_check -s exit:0 rump.ifconfig tap2 create
+	rump_server_add_iface $SOCKDST tap2
 	atf_check -s exit:0 rump.ifconfig tap2 $IP4DST_PROXYARP2/24 up
 	atf_check -s exit:0 rump.ifconfig -w 10
 
@@ -718,7 +720,38 @@ arp_rtm_body()
 
 	hdr="RTM_ADD.+<UP,HOST,DONE,LLINFO,CLONED>"
 	what="<DST,GATEWAY>"
-	addr="$IP4DST link#2"
+	addr="$IP4DST $macaddr_dst"
+	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
+		cat $file
+
+	# Test ping and a resulting routing message (RTM_MISS) on subnet
+	rump.route -n monitor -c 1 > $file &
+	pid=$!
+	sleep 1
+	# arp_maxtries = 5, second between each try
+	atf_check -s exit:2 -o ignore -e ignore \
+		rump.ping -n -w 10 -c 10 $IP4DST_FAIL1
+	wait $pid
+	$DEBUG && cat $file
+
+	hdr="RTM_MISS.+<DONE>"
+	what="<DST,GATEWAY,AUTHOR>"
+	addr="$IP4DST_FAIL1 link#2 $IP4SRC"
+	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
+		cat $file
+
+	# Test ping and a resulting routing message (RTM_MISS) off subnet
+	rump.route -n monitor -c 1 > $file &
+	pid=$!
+	sleep 1
+	atf_check -s exit:2 -o ignore -e ignore \
+		rump.ping -n -w 1 -c 1 $IP4DST_FAIL2
+	wait $pid
+	$DEBUG && cat $file
+
+	hdr="RTM_MISS.+<DONE>"
+	what="<DST>"
+	addr="$IP4DST_FAIL2"
 	atf_check -s exit:0 -o match:"$hdr" -o match:"$what" -o match:"$addr" \
 		cat $file
 

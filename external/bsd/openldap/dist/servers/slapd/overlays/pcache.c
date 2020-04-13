@@ -1,9 +1,9 @@
-/*	$NetBSD: pcache.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $	*/
+/*	$NetBSD: pcache.c,v 1.1.1.7.4.1 2020/04/13 07:56:21 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2017 The OpenLDAP Foundation.
+ * Copyright 2003-2019 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * Portions Copyright 2003-2009 Symas Corporation.
  * All rights reserved.
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcache.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $");
+__RCSID("$NetBSD: pcache.c,v 1.1.1.7.4.1 2020/04/13 07:56:21 martin Exp $");
 
 #include "portable.h"
 

@@ -1,7 +1,8 @@
-$NetBSD: version,v 1.1 2017/01/24 11:09:14 nonaka Exp $
+$NetBSD: version,v 1.1.22.1 2020/04/13 08:03:54 martin Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
 is taken as the current.
 
 1.0:	Initial version.
+1.1:	Add CD/DVD-ROM, serial, PXE boot and UEFI memory map compaction support.

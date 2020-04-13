@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.439.2.2 2020/04/08 14:08:03 martin Exp $ */
+/*	$NetBSD: wd.c,v 1.439.2.3 2020/04/13 08:04:18 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.439.2.2 2020/04/08 14:08:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.439.2.3 2020/04/13 08:04:18 martin Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -666,6 +666,7 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 
 	KASSERT(bp == xfer->c_bio.bp || xfer->c_bio.bp == NULL);
 	KASSERT((xfer->c_flags & (C_WAITACT|C_FREE)) == 0);
+	KASSERT(mutex_owned(&wd->sc_lock));
 
 	/* Reset state, so that retries don't use stale info */
 	if (__predict_false(xfer->c_retries > 0)) {
@@ -757,6 +758,8 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 
 	if (xfer->c_retries == 0)
 		wd->inflight++;
+	mutex_exit(&wd->sc_lock);
+
 	switch (wd->atabus->ata_bio(wd->drvp, xfer)) {
 	case ATACMD_TRY_AGAIN:
 		panic("wdstart1: try again");
@@ -767,6 +770,8 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	default:
 		panic("wdstart1: bad return code from ata_bio()");
 	}
+
+	mutex_enter(&wd->sc_lock);
 }
 
 static int

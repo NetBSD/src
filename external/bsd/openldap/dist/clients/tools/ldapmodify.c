@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapmodify.c,v 1.1.1.6 2018/02/06 01:53:07 christos Exp $	*/
+/*	$NetBSD: ldapmodify.c,v 1.1.1.6.4.1 2020/04/13 07:56:04 martin Exp $	*/
 
 /* ldapmodify.c - generic program to modify or add entries using LDAP */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * Portions Copyright 2006 Howard Chu.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapmodify.c,v 1.1.1.6 2018/02/06 01:53:07 christos Exp $");
+__RCSID("$NetBSD: ldapmodify.c,v 1.1.1.6.4.1 2020/04/13 07:56:04 martin Exp $");
 
 #include "portable.h"
 

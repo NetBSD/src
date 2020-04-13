@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-isakmp.c,v 1.10 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.10.4.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: Internet Security Association and Key Management Protocol (ISAKMP) printer */
@@ -1774,6 +1774,7 @@ ikev1_n_print(netdissect_options *ndo, u_char tpay _U_,
 		    }
 		case IPSECDOI_NTYPE_REPLAY_STATUS:
 			ND_PRINT((ndo," status=("));
+			ND_TCHECK_32BITS(cp);
 			ND_PRINT((ndo,"replay detection %sabled",
 				  EXTRACT_32BITS(cp) ? "en" : "dis"));
 			ND_PRINT((ndo,")"));

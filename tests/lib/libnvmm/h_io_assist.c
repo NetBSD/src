@@ -1,7 +1,7 @@
-/*	$NetBSD: h_io_assist.c,v 1.8.2.2 2019/06/10 22:10:07 christos Exp $	*/
+/*	$NetBSD: h_io_assist.c,v 1.8.2.3 2020/04/13 08:05:28 martin Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -242,25 +242,25 @@ handle_io(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 static void
 run_machine(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
-	struct nvmm_exit *exit = vcpu->exit;
+	struct nvmm_vcpu_exit *exit = vcpu->exit;
 
 	while (1) {
 		if (nvmm_vcpu_run(mach, vcpu) == -1)
 			err(errno, "nvmm_vcpu_run");
 
 		switch (exit->reason) {
-		case NVMM_EXIT_NONE:
+		case NVMM_VCPU_EXIT_NONE:
 			break;
 
-		case NVMM_EXIT_MSR:
+		case NVMM_VCPU_EXIT_RDMSR:
 			/* Stop here. */
 			return;
 
-		case NVMM_EXIT_IO:
+		case NVMM_VCPU_EXIT_IO:
 			handle_io(mach, vcpu);
 			break;
 
-		case NVMM_EXIT_SHUTDOWN:
+		case NVMM_VCPU_EXIT_SHUTDOWN:
 			printf("Shutting down!\n");
 			return;
 
@@ -354,7 +354,7 @@ static const struct test tests[] = {
 	{ NULL, NULL, NULL, NULL, false }
 };
 
-static struct nvmm_callbacks callbacks = {
+static struct nvmm_assist_callbacks callbacks = {
 	.io = io_callback,
 	.mem = NULL
 };
@@ -373,11 +373,13 @@ int main(int argc, char *argv[])
 	struct nvmm_vcpu vcpu;
 	size_t i;
 
+	if (nvmm_init() == -1)
+		err(errno, "nvmm_init");
 	if (nvmm_machine_create(&mach) == -1)
 		err(errno, "nvmm_machine_create");
 	if (nvmm_vcpu_create(&mach, 0, &vcpu) == -1)
 		err(errno, "nvmm_vcpu_create");
-	nvmm_machine_configure(&mach, NVMM_MACH_CONF_CALLBACKS, &callbacks);
+	nvmm_vcpu_configure(&mach, &vcpu, NVMM_VCPU_CONF_CALLBACKS, &callbacks);
 	map_pages(&mach);
 
 	for (i = 0; tests[i].name != NULL; i++) {

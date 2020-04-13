@@ -333,6 +333,9 @@ dns_dnssec_verify
 dns_dnssec_verifymessage
 dns_dnsseckey_create
 dns_dnsseckey_destroy
+dns_dnssecsignstats_create
+dns_dnssecsignstats_dump
+dns_dnssecsignstats_increment
 dns_ds_buildrdata
 dns_dsdigest_format
 dns_dsdigest_fromtext
@@ -1141,6 +1144,8 @@ dns_zone_getchecknames
 dns_zone_getclass
 dns_zone_getdb
 dns_zone_getdbtype
+dns_zone_getdnssecrefreshstats
+dns_zone_getdnssecsignstats
 dns_zone_getexpiretime
 dns_zone_getfile
 dns_zone_getforwardacl
@@ -1241,6 +1246,8 @@ dns_zone_setclass
 dns_zone_setdb
 dns_zone_setdbtype
 dns_zone_setdialup
+dns_zone_setdnssecrefreshstats
+dns_zone_setdnssecsignstats
 dns_zone_setfile
 dns_zone_setflag
 dns_zone_setforwardacl

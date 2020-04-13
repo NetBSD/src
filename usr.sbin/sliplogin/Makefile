@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.16.1 2019/06/10 22:10:37 christos Exp $
+#	$NetBSD: Makefile,v 1.6.16.2 2020/04/13 08:05:58 martin Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 USE_FORT?= yes	# setuid
@@ -13,5 +13,7 @@ BINMODE=4555
 FILESDIR=	/usr/share/examples/slip
 FILES=	slip.login
 .endif
+
+COPTS.sliplogin.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

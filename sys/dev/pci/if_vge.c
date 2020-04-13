@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.63.2.1 2019/06/10 22:07:16 christos Exp $ */
+/* $NetBSD: if_vge.c,v 1.63.2.2 2020/04/13 08:04:26 martin Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.63.2.1 2019/06/10 22:07:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.63.2.2 2020/04/13 08:04:26 martin Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -75,10 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.63.2.1 2019/06/10 22:07:16 christos Exp
  * The other issue has to do with the way 64-bit addresses are handled.
  * The DMA descriptors only allow you to specify 48 bits of addressing
  * information. The remaining 16 bits are specified using one of the
- * I/O registers. If you only have a 32-bit system, then this isn't
- * an issue, but if you have a 64-bit system and more than 4GB of
- * memory, you must have to make sure your network data buffers reside
+ * I/O registers (VGE_DATABUF_HIADDR). If you only have a 32-bit system,
+ * then this isn't an issue, but if you have a 64-bit system and more than
+ * 4GB of memory, you must have to make sure your network data buffers reside
  * in the same 48-bit 'segment.'
+ *
+ * Furthermore, the descriptors must also all reside within the same 32-bit
+ * 'segment' (see VGE_TXDESC_HIADDR).
  *
  * Special thanks to Ryan Fu at VIA Networking for providing documentation
  * and sample NICs for testing.
@@ -128,8 +131,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.63.2.1 2019/06/10 22:07:16 christos Exp
 #define VGE_NEXT_RXDESC(x)	((x + 1) & VGE_NRXDESC_MASK)
 #define VGE_PREV_RXDESC(x)	((x - 1) & VGE_NRXDESC_MASK)
 
-#define VGE_ADDR_LO(y)		((uint64_t)(y) & 0xFFFFFFFF)
-#define VGE_ADDR_HI(y)		((uint64_t)(y) >> 32)
+#define VGE_ADDR_LO(y)		BUS_ADDR_LO32(y)
+#define VGE_ADDR_HI(y)		BUS_ADDR_HI32(y)
 #define VGE_BUFLEN(y)		((y) & 0x7FFF)
 #define ETHER_PAD_LEN		(ETHER_MIN_LEN - ETHER_CRC_LEN)
 
@@ -200,7 +203,7 @@ struct vge_softc {
 	void			*sc_intrhand;
 	struct mii_data		sc_mii;
 	uint8_t			sc_type;
-	int			sc_if_flags;
+	u_short			sc_if_flags;
 	int			sc_link;
 	int			sc_camidx;
 	callout_t		sc_timeout;
@@ -328,6 +331,7 @@ static void vge_miibus_statchg(struct ifnet *);
 
 static void vge_cam_clear(struct vge_softc *);
 static int vge_cam_set(struct vge_softc *, uint8_t *);
+static void	vge_clrwol(struct vge_softc *);
 static void vge_setmulti(struct vge_softc *);
 static void vge_reset(struct vge_softc *);
 
@@ -780,10 +784,17 @@ vge_allocmem(struct vge_softc *sc)
 
 	/*
 	 * Allocate memory for control data.
+	 *
+	 * NOTE: This must all fit within the same 4GB segment.  The
+	 * "boundary" argument to bus_dmamem_alloc() will end up as
+	 * 4GB on 64-bit platforms and 0 ("no boundary constraint") on
+	 * 32-bit platformds.
 	 */
 
 	error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct vge_control_data),
-	     VGE_RING_ALIGN, 0, &seg, 1, &nseg, BUS_DMA_NOWAIT);
+	     VGE_RING_ALIGN,
+	     (bus_size_t)(1ULL << 32),
+	     &seg, 1, &nseg, BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not allocate control data dma memory\n");
@@ -953,11 +964,28 @@ vge_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(eaddr));
 
+	/* Clear WOL and take hardware from powerdown. */
+	vge_clrwol(sc);
+
 	/*
-	 * Use the 32bit tag. Hardware supports 48bit physical addresses,
-	 * but we don't use that for now.
+	 * The hardware supports 64-bit DMA addresses, but it's a little
+	 * complicated (see large comment about the hardware near the top
+	 * of the file).  TL;DR -- restrict ourselves to 48-bit.
 	 */
-	sc->sc_dmat = pa->pa_dmat;
+	if (pci_dma64_available(pa)) {
+		if (bus_dmatag_subregion(pa->pa_dmat64,
+					 0,
+					 (bus_addr_t)(1ULL << 48),
+					 &sc->sc_dmat,
+					 BUS_DMA_WAITOK) != 0) {
+			aprint_error_dev(self,
+			    "WARNING: failed to restrict dma range,"
+			    " falling back to parent bus dma range\n");
+			sc->sc_dmat = pa->pa_dmat64;
+		}
+	} else {
+		sc->sc_dmat = pa->pa_dmat;
+	}
 
 	if (vge_allocmem(sc) != 0)
 		return;
@@ -980,6 +1008,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU |
 	    ETHERCAP_VLAN_HWTAGGING;
+	sc->sc_ethercom.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 
 	/*
 	 * We can do IPv4/TCPv4/UDPv4 checksums in hardware.
@@ -1111,7 +1140,7 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 
 	/*
 	 * Note: the manual fails to document the fact that for
-	 * proper opration, the driver needs to replentish the RX
+	 * proper operation, the driver needs to replentish the RX
 	 * DMA ring 4 descriptors at a time (rather than one at a
 	 * time, like most chips). We can allocate the new buffers
 	 * but we should not set the OWN bits until we're ready
@@ -1226,7 +1255,7 @@ vge_rxeof(struct vge_softc *sc)
 		if ((rxstat & VGE_RDSTS_RXOK) == 0 &&
 		    (rxstat & VGE_RDSTS_VIDM) == 0 &&
 		    (rxstat & VGE_RDSTS_CSUMERR) == 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			/*
 			 * If this is part of a multi-fragment packet,
 			 * discard all the pieces.
@@ -1245,7 +1274,7 @@ vge_rxeof(struct vge_softc *sc)
 		 */
 
 		if (vge_newbuf(sc, idx, NULL)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			if (sc->sc_rx_mhead != NULL) {
 				m_freem(sc->sc_rx_mhead);
 				sc->sc_rx_mhead = sc->sc_rx_mtail = NULL;
@@ -1358,12 +1387,14 @@ vge_txeof(struct vge_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap, 0,
 		    txs->txs_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (txstat & (VGE_TDSTS_EXCESSCOLL | VGE_TDSTS_COLL))
-			ifp->if_collisions++;
+			if_statinc_ref(nsr, if_collisions);
 		if (txstat & VGE_TDSTS_TXERR)
-			ifp->if_oerrors++;
+			if_statinc_ref(nsr, if_oerrors);
 		else
-			ifp->if_opackets++;
+			if_statinc_ref(nsr, if_opackets);
+		IF_STAT_PUTREF(ifp);
 	}
 
 	sc->sc_tx_considx = idx;
@@ -1786,6 +1817,7 @@ vge_init(struct ifnet *ifp)
 	 * Note that we only use one transmit queue.
 	 */
 
+	CSR_WRITE_4(sc, VGE_TXDESC_HIADDR, VGE_ADDR_HI(VGE_CDTXADDR(sc, 0)));
 	CSR_WRITE_4(sc, VGE_TXDESC_ADDR_LO0, VGE_ADDR_LO(VGE_CDTXADDR(sc, 0)));
 	CSR_WRITE_2(sc, VGE_TXDESCNUM, VGE_NTXDESC - 1);
 
@@ -1911,6 +1943,7 @@ vge_miibus_statchg(struct ifnet *ifp)
 	struct vge_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	uint8_t dctl;
 
 	/*
 	 * If the user manually selects a media mode, we need to turn
@@ -1922,31 +1955,37 @@ vge_miibus_statchg(struct ifnet *ifp)
 	 * always implied, so we turn on the forced mode bit but leave
 	 * the FDX bit cleared.
 	 */
+	dctl = CSR_READ_1(sc, VGE_DIAGCTL);
 
-	switch (IFM_SUBTYPE(ife->ifm_media)) {
-	case IFM_AUTO:
-		CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_MACFORCE);
-		CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
-		break;
-	case IFM_1000_T:
-		CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_MACFORCE);
-		CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
-		break;
-	case IFM_100_TX:
-	case IFM_10_T:
-		CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_MACFORCE);
-		if ((ife->ifm_media & IFM_FDX) != 0) {
-			CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
-		} else {
-			CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
-		}
-		break;
-	default:
-		printf("%s: unknown media type: %x\n",
-		    device_xname(sc->sc_dev),
-		    IFM_SUBTYPE(ife->ifm_media));
-		break;
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+		dctl &= ~VGE_DIAGCTL_MACFORCE;
+		dctl &= ~VGE_DIAGCTL_FDXFORCE;
+	} else {
+		u_int ifmword;
+
+		/* If the link is up, use the current active media. */
+		if ((mii->mii_media_status & IFM_ACTIVE) != 0)
+			ifmword = mii->mii_media_active;
+		else
+			ifmword = ife->ifm_media;
+
+		dctl |= VGE_DIAGCTL_MACFORCE;
+		if ((ifmword & IFM_FDX) != 0)
+			dctl |= VGE_DIAGCTL_FDXFORCE;
+		else
+			dctl &= ~VGE_DIAGCTL_FDXFORCE;
+
+		if (IFM_SUBTYPE(ifmword) == IFM_1000_T) {
+			/*
+			 * It means the user setting is not auto but it's
+			 * 1000baseT-FDX or 1000baseT.
+			 */
+			dctl |= VGE_DIAGCTL_GMII;
+		} else
+			dctl &= ~VGE_DIAGCTL_GMII;
 	}
+
+	CSR_WRITE_1(sc, VGE_DIAGCTL, dctl);
 }
 
 static int
@@ -1954,7 +1993,7 @@ vge_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct vge_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;
@@ -2007,7 +2046,7 @@ vge_watchdog(struct ifnet *ifp)
 	sc = ifp->if_softc;
 	s = splnet();
 	printf("%s: watchdog timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	vge_txeof(sc);
 	vge_rxeof(sc);
@@ -2154,4 +2193,31 @@ vge_shutdown(device_t self, int howto)
 	vge_stop(&sc->sc_ethercom.ec_if, 1);
 
 	return true;
+}
+
+static void
+vge_clrwol(struct vge_softc *sc)
+{
+	uint8_t val;
+
+	val = CSR_READ_1(sc, VGE_PWRSTAT);
+	val &= ~VGE_STICKHW_SWPTAG;
+	CSR_WRITE_1(sc, VGE_PWRSTAT, val);
+	/* Disable WOL and clear power state indicator. */
+	val = CSR_READ_1(sc, VGE_PWRSTAT);
+	val &= ~(VGE_STICKHW_DS0 | VGE_STICKHW_DS1);
+	CSR_WRITE_1(sc, VGE_PWRSTAT, val);
+
+	CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_GMII);
+	CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_MACFORCE);
+
+	/* Clear WOL on pattern match. */
+	CSR_WRITE_1(sc, VGE_WOLCR0C, VGE_WOLCR0_PATTERN_ALL);
+	/* Disable WOL on magic/unicast packet. */
+	CSR_WRITE_1(sc, VGE_WOLCR1C, 0x0F);
+	CSR_WRITE_1(sc, VGE_WOLCFGC, VGE_WOLCFG_SAB | VGE_WOLCFG_SAM |
+	    VGE_WOLCFG_PMEOVR);
+	/* Clear WOL status on pattern match. */
+	CSR_WRITE_1(sc, VGE_WOLSR0C, 0xFF);
+	CSR_WRITE_1(sc, VGE_WOLSR1C, 0xFF);
 }

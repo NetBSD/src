@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.c,v 1.12 2018/01/25 03:54:57 christos Exp $	*/
+/*	$NetBSD: if_agrsubr.c,v 1.12.4.1 2020/04/13 08:05:15 martin Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.12 2018/01/25 03:54:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.12.4.1 2020/04/13 08:05:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -139,10 +139,7 @@ agr_mc_add(struct agr_multiaddrs *ama, const struct sockaddr *sa)
 		return 0;
 	}
 
-	ame = malloc(sizeof(*ame), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (ame == NULL)
-		return ENOMEM;
-
+	ame = malloc(sizeof(*ame), M_DEVBUF, M_WAITOK | M_ZERO);
 	memcpy(&ame->ame_ifr.ifr_ss, sa, sa->sa_len);
 	ame->ame_refcnt = 1;
 	TAILQ_INSERT_TAIL(&ama->ama_addrs, ame, ame_q);

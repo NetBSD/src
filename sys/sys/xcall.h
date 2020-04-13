@@ -1,4 +1,4 @@
-/*	$NetBSD: xcall.h,v 1.6.4.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: xcall.h,v 1.6.4.2 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,6 +52,8 @@ void		xc__highpri_intr(void *);
 uint64_t	xc_broadcast(u_int, xcfunc_t, void *, void *);
 uint64_t	xc_unicast(u_int, xcfunc_t, void *, void *, struct cpu_info *);
 void		xc_wait(uint64_t);
+
+void		xc_barrier(u_int);
 
 unsigned int	xc_encode_ipl(int);
 

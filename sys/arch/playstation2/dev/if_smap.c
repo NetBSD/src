@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.27.2.2 2020/04/08 14:07:48 martin Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.27.2.3 2020/04/13 08:04:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.27.2.2 2020/04/08 14:07:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.27.2.3 2020/04/13 08:04:03 martin Exp $");
 
 #include "debug_playstation2.h"
 
@@ -193,20 +193,9 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 
 	/* allocate temporary buffer */
 	txbuf = malloc(ETHER_MAX_LEN - ETHER_CRC_LEN + SMAP_FIFO_ALIGN + 16,
-	    M_DEVBUF, M_NOWAIT);
-	if (txbuf == NULL) {
-		printf("%s: no memory.\n", DEVNAME);
-		return;
-	}
-
+	    M_DEVBUF, M_WAITOK);
 	rxbuf = malloc(ETHER_MAX_LEN + SMAP_FIFO_ALIGN + 16,
-	    M_DEVBUF, M_NOWAIT);
-	if (rxbuf == NULL) {
-		printf("%s: no memory.\n", DEVNAME);
-		free(txbuf, M_DEVBUF);
-		return;
-	}
-
+	    M_DEVBUF, M_WAITOK);
 	sc->tx_buf = (u_int32_t *)ROUND16((vaddr_t)txbuf);
 	sc->rx_buf = (u_int32_t *)ROUND16((vaddr_t)rxbuf);
 

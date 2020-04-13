@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.315.2.2 2020/04/08 14:08:51 martin Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.315.2.3 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.315.2.2 2020/04/08 14:08:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.315.2.3 2020/04/13 08:05:04 martin Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -842,6 +842,7 @@ setrunnable(struct lwp *l)
 	kmutex_t *oldlock;
 
 	KASSERT((l->l_flag & LW_IDLE) == 0);
+	KASSERT((l->l_flag & LW_DBGSUSPEND) == 0);
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(lwp_locked(l, NULL));
 	KASSERT(l->l_mutex != l->l_cpu->ci_schedstate.spc_mutex);

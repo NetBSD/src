@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2006/08/29 12:50:49 christos Exp $
+#	$NetBSD: Makefile,v 1.15.82.1 2020/04/13 08:05:41 martin Exp $
 
 PROG=		crunchgen
 SRCS=		crunchgen.c crunched_skel.c
@@ -20,6 +20,8 @@ DPADD+=${LIBUTIL}
 .if ${TOOLCHAIN_MISSING} == "no"
 CPPFLAGS+=	-DNEW_TOOLCHAIN
 .endif
+
+COPTS.crunchgen.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .else
 

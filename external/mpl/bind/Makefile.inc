@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4.2.2 2019/06/10 22:02:52 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.4.2.3 2020/04/13 08:02:33 martin Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -76,6 +76,9 @@ CPPFLAGS+= -DLIBINTERFACE=${LIBINTERFACE} \
 .endif
 #CPPFLAGS+= -DUSE_MEMIMPREGISTER -DUSE_APPIMPREGISTER -DUSE_SOCKETIMPREGISTER \
 #    -DUSE_TIMERIMPREGISTER
+
+LDADD+=-lblacklist
+DPADD+=${LIBBLACKLIST}
 
 .if ${NAMED_USE_PTHREADS} == "yes"
 # XXX: Not ready yet

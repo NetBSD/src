@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_kmem.c,v 1.66.4.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.66.4.2 2020/04/13 08:05:04 martin Exp $	*/
 
-/*-
- * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
+/*
  * Copyright (c)2006 YAMAMOTO Takashi,
  * All rights reserved.
  *
@@ -62,37 +62,23 @@
 
 /*
  * KMEM_SIZE: detect alloc/free size mismatch bugs.
- *	Prefix each allocations with a fixed-sized, aligned header and record
- *	the exact user-requested allocation size in it. When freeing, compare
- *	it with kmem_free's "size" argument.
+ *	Append to each allocation a fixed-sized footer and record the exact
+ *	user-requested allocation size in it.  When freeing, compare it with
+ *	kmem_free's "size" argument.
  *
- * This option enabled on DIAGNOSTIC.
+ * This option is enabled on DIAGNOSTIC.
  *
- *  |CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|
- *  +-----+-----+-----+-----+-----+-----+-----+-----+-----+---+-+
- *  |/////|     |     |     |     |     |     |     |     |   |U|
- *  |/HSZ/|     |     |     |     |     |     |     |     |   |U|
- *  |/////|     |     |     |     |     |     |     |     |   |U|
- *  +-----+-----+-----+-----+-----+-----+-----+-----+-----+---+-+
- *  |Size |    Buffer usable by the caller (requested size)   |Unused\
- */
-
-/*
- * KMEM_GUARD
- *	A kernel with "option DEBUG" has "kmem_guard" debugging feature compiled
- *	in. See the comment below for what kind of bugs it tries to detect. Even
- *	if compiled in, it's disabled by default because it's very expensive.
- *	You can enable it on boot by:
- *		boot -d
- *		db> w kmem_guard_depth 0t30000
- *		db> c
- *
- *	The default value of kmem_guard_depth is 0, which means disabled.
- *	It can be changed by KMEM_GUARD_DEPTH kernel config option.
+ *  |CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK| |
+ *  +-----+-----+-----+-----+-----+-----+-----+-----+-----+-+
+ *  |     |     |     |     |     |     |     |     |/////|U|
+ *  |     |     |     |     |     |     |     |     |/HSZ/|U|
+ *  |     |     |     |     |     |     |     |     |/////|U|
+ *  +-----+-----+-----+-----+-----+-----+-----+-----+-----+-+
+ *  | Buffer usable by the caller (requested size)  |Size |Unused
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.66.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.66.4.2 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -106,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.66.4.1 2019/06/10 22:09:03 christos 
 #include <sys/lockdebug.h>
 #include <sys/cpu.h>
 #include <sys/asan.h>
+#include <sys/msan.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -118,35 +105,35 @@ struct kmem_cache_info {
 };
 
 static const struct kmem_cache_info kmem_cache_sizes[] = {
-	{  8, "kmem-8" },
-	{ 16, "kmem-16" },
-	{ 24, "kmem-24" },
-	{ 32, "kmem-32" },
-	{ 40, "kmem-40" },
-	{ 48, "kmem-48" },
-	{ 56, "kmem-56" },
-	{ 64, "kmem-64" },
-	{ 80, "kmem-80" },
-	{ 96, "kmem-96" },
-	{ 112, "kmem-112" },
-	{ 128, "kmem-128" },
-	{ 160, "kmem-160" },
-	{ 192, "kmem-192" },
-	{ 224, "kmem-224" },
-	{ 256, "kmem-256" },
-	{ 320, "kmem-320" },
-	{ 384, "kmem-384" },
-	{ 448, "kmem-448" },
-	{ 512, "kmem-512" },
-	{ 768, "kmem-768" },
-	{ 1024, "kmem-1024" },
+	{  8, "kmem-00008" },
+	{ 16, "kmem-00016" },
+	{ 24, "kmem-00024" },
+	{ 32, "kmem-00032" },
+	{ 40, "kmem-00040" },
+	{ 48, "kmem-00048" },
+	{ 56, "kmem-00056" },
+	{ 64, "kmem-00064" },
+	{ 80, "kmem-00080" },
+	{ 96, "kmem-00096" },
+	{ 112, "kmem-00112" },
+	{ 128, "kmem-00128" },
+	{ 160, "kmem-00160" },
+	{ 192, "kmem-00192" },
+	{ 224, "kmem-00224" },
+	{ 256, "kmem-00256" },
+	{ 320, "kmem-00320" },
+	{ 384, "kmem-00384" },
+	{ 448, "kmem-00448" },
+	{ 512, "kmem-00512" },
+	{ 768, "kmem-00768" },
+	{ 1024, "kmem-01024" },
 	{ 0, NULL }
 };
 
 static const struct kmem_cache_info kmem_cache_big_sizes[] = {
-	{ 2048, "kmem-2048" },
-	{ 4096, "kmem-4096" },
-	{ 8192, "kmem-8192" },
+	{ 2048, "kmem-02048" },
+	{ 4096, "kmem-04096" },
+	{ 8192, "kmem-08192" },
 	{ 16384, "kmem-16384" },
 	{ 0, NULL }
 };
@@ -177,16 +164,11 @@ static size_t kmem_cache_big_maxidx __read_mostly;
 #endif
 
 #if defined(DEBUG) && defined(_HARDKERNEL)
-#define	KMEM_SIZE
-#define	KMEM_GUARD
 static void *kmem_freecheck;
 #endif
 
 #if defined(KMEM_SIZE)
-struct kmem_header {
-	size_t		size;
-} __aligned(KMEM_ALIGN);
-#define	SIZE_SIZE	sizeof(struct kmem_header)
+#define	SIZE_SIZE	sizeof(size_t)
 static void kmem_size_set(void *, size_t);
 static void kmem_size_check(void *, size_t);
 #else
@@ -195,31 +177,12 @@ static void kmem_size_check(void *, size_t);
 #define	kmem_size_check(p, sz)	/* nothing */
 #endif
 
-#if defined(KMEM_GUARD)
-#ifndef KMEM_GUARD_DEPTH
-#define KMEM_GUARD_DEPTH 0
-#endif
-struct kmem_guard {
-	u_int		kg_depth;
-	intptr_t *	kg_fifo;
-	u_int		kg_rotor;
-	vmem_t *	kg_vmem;
-};
-static bool kmem_guard_init(struct kmem_guard *, u_int, vmem_t *);
-static void *kmem_guard_alloc(struct kmem_guard *, size_t, bool);
-static void kmem_guard_free(struct kmem_guard *, size_t, void *);
-int kmem_guard_depth = KMEM_GUARD_DEPTH;
-static bool kmem_guard_enabled;
-static struct kmem_guard kmem_guard;
-#endif /* defined(KMEM_GUARD) */
-
 CTASSERT(KM_SLEEP == PR_WAITOK);
 CTASSERT(KM_NOSLEEP == PR_NOWAIT);
 
 /*
  * kmem_intr_alloc: allocate wired memory.
  */
-
 void *
 kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 {
@@ -235,13 +198,6 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 
 	KASSERT((kmflags & KM_SLEEP) || (kmflags & KM_NOSLEEP));
 	KASSERT(!(kmflags & KM_SLEEP) || !(kmflags & KM_NOSLEEP));
-
-#ifdef KMEM_GUARD
-	if (kmem_guard_enabled) {
-		return kmem_guard_alloc(&kmem_guard, requested_size,
-		    (kmflags & KM_SLEEP) != 0);
-	}
-#endif
 
 	kasan_add_redzone(&requested_size);
 	size = kmem_roundup_size(requested_size);
@@ -270,7 +226,6 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 	if (__predict_true(p != NULL)) {
 		FREECHECK_OUT(&kmem_freecheck, p);
 		kmem_size_set(p, requested_size);
-		p += SIZE_SIZE;
 		kasan_mark(p, origsize, size, KASAN_KMEM_REDZONE);
 		return p;
 	}
@@ -280,7 +235,6 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 /*
  * kmem_intr_zalloc: allocate zeroed wired memory.
  */
-
 void *
 kmem_intr_zalloc(size_t size, km_flag_t kmflags)
 {
@@ -296,7 +250,6 @@ kmem_intr_zalloc(size_t size, km_flag_t kmflags)
 /*
  * kmem_intr_free: free wired memory allocated by kmem_alloc.
  */
-
 void
 kmem_intr_free(void *p, size_t requested_size)
 {
@@ -306,13 +259,6 @@ kmem_intr_free(void *p, size_t requested_size)
 
 	KASSERT(p != NULL);
 	KASSERT(requested_size > 0);
-
-#ifdef KMEM_GUARD
-	if (kmem_guard_enabled) {
-		kmem_guard_free(&kmem_guard, requested_size, p);
-		return;
-	}
-#endif
 
 	kasan_add_redzone(&requested_size);
 	size = kmem_roundup_size(requested_size);
@@ -333,7 +279,6 @@ kmem_intr_free(void *p, size_t requested_size)
 
 	kasan_mark(p, size, size, 0);
 
-	p = (uint8_t *)p - SIZE_SIZE;
 	kmem_size_check(p, requested_size);
 	FREECHECK_IN(&kmem_freecheck, p);
 	LOCKDEBUG_MEM_CHECK(p, size);
@@ -341,13 +286,12 @@ kmem_intr_free(void *p, size_t requested_size)
 	pool_cache_put(pc, p);
 }
 
-/* ---- kmem API */
+/* -------------------------------- Kmem API -------------------------------- */
 
 /*
  * kmem_alloc: allocate wired memory.
  * => must not be called from interrupt context.
  */
-
 void *
 kmem_alloc(size_t size, km_flag_t kmflags)
 {
@@ -356,6 +300,10 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()),
 	    "kmem(9) should not be used from the interrupt context");
 	v = kmem_intr_alloc(size, kmflags);
+	if (__predict_true(v != NULL)) {
+		kmsan_mark(v, size, KMSAN_STATE_UNINIT);
+		kmsan_orig(v, size, KMSAN_TYPE_KMEM, __RET_ADDR);
+	}
 	KASSERT(v || (kmflags & KM_NOSLEEP) != 0);
 	return v;
 }
@@ -364,7 +312,6 @@ kmem_alloc(size_t size, km_flag_t kmflags)
  * kmem_zalloc: allocate zeroed wired memory.
  * => must not be called from interrupt context.
  */
-
 void *
 kmem_zalloc(size_t size, km_flag_t kmflags)
 {
@@ -381,13 +328,13 @@ kmem_zalloc(size_t size, km_flag_t kmflags)
  * kmem_free: free wired memory allocated by kmem_alloc.
  * => must not be called from interrupt context.
  */
-
 void
 kmem_free(void *p, size_t size)
 {
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
 	kmem_intr_free(p, size);
+	kmsan_mark(p, size, KMSAN_STATE_INITED);
 }
 
 static size_t
@@ -407,22 +354,28 @@ kmem_create_caches(const struct kmem_cache_info *array,
 		pool_cache_t pc;
 		size_t align;
 
-		if ((cache_size & (CACHE_LINE_SIZE - 1)) == 0)
-			align = CACHE_LINE_SIZE;
-		else if ((cache_size & (PAGE_SIZE - 1)) == 0)
-			align = PAGE_SIZE;
-		else
-			align = KMEM_ALIGN;
-
-		if (cache_size < CACHE_LINE_SIZE)
-			flags |= PR_NOTOUCH;
-
 		/* check if we reached the requested size */
 		if (cache_size > maxsize || cache_size > PAGE_SIZE) {
 			break;
 		}
-		if ((cache_size >> shift) > maxidx) {
-			maxidx = cache_size >> shift;
+
+		/*
+		 * Exclude caches with size not a factor or multiple of the
+		 * coherency unit.
+		 */
+		if (cache_size < COHERENCY_UNIT) {
+			if (COHERENCY_UNIT % cache_size > 0) {
+			    	continue;
+			}
+			flags |= PR_NOTOUCH;
+			align = KMEM_ALIGN;
+		} else if ((cache_size & (PAGE_SIZE - 1)) == 0) {
+			align = PAGE_SIZE;
+		} else {
+			if ((cache_size % COHERENCY_UNIT) > 0) {
+				continue;
+			}
+			align = COHERENCY_UNIT;
 		}
 
 		if ((cache_size >> shift) > maxidx) {
@@ -444,10 +397,6 @@ kmem_create_caches(const struct kmem_cache_info *array,
 void
 kmem_init(void)
 {
-#ifdef KMEM_GUARD
-	kmem_guard_enabled = kmem_guard_init(&kmem_guard, kmem_guard_depth,
-	    kmem_va_arena);
-#endif
 	kmem_cache_maxidx = kmem_create_caches(kmem_cache_sizes,
 	    kmem_cache, KMEM_MAXSIZE, KMEM_SHIFT, IPL_VM);
 	kmem_cache_big_maxidx = kmem_create_caches(kmem_cache_big_sizes,
@@ -525,191 +474,27 @@ kmem_strfree(char *str)
 	kmem_free(str, strlen(str) + 1);
 }
 
-/* ------------------ DEBUG / DIAGNOSTIC ------------------ */
+/* --------------------------- DEBUG / DIAGNOSTIC --------------------------- */
 
 #if defined(KMEM_SIZE)
 static void
 kmem_size_set(void *p, size_t sz)
 {
-	struct kmem_header *hd;
-	hd = (struct kmem_header *)p;
-	hd->size = sz;
+	memcpy((size_t *)((uintptr_t)p + sz), &sz, sizeof(size_t));
 }
 
 static void
 kmem_size_check(void *p, size_t sz)
 {
-	struct kmem_header *hd;
 	size_t hsz;
 
-	hd = (struct kmem_header *)p;
-	hsz = hd->size;
+	memcpy(&hsz, (size_t *)((uintptr_t)p + sz), sizeof(size_t));
 
 	if (hsz != sz) {
-		panic("kmem_free(%p, %zu) != allocated size %zu",
-		    (const uint8_t *)p + SIZE_SIZE, sz, hsz);
+		panic("kmem_free(%p, %zu) != allocated size %zu; overwrote?",
+		    p, sz, hsz);
 	}
 
-	hd->size = -1;
+	memset((size_t *)((uintptr_t)p + sz), 0xff, sizeof(size_t));
 }
 #endif /* defined(KMEM_SIZE) */
-
-#if defined(KMEM_GUARD)
-/*
- * The ultimate memory allocator for debugging, baby.  It tries to catch:
- *
- * 1. Overflow, in realtime. A guard page sits immediately after the
- *    requested area; a read/write overflow therefore triggers a page
- *    fault.
- * 2. Invalid pointer/size passed, at free. A kmem_header structure sits
- *    just before the requested area, and holds the allocated size. Any
- *    difference with what is given at free triggers a panic.
- * 3. Underflow, at free. If an underflow occurs, the kmem header will be
- *    modified, and 2. will trigger a panic.
- * 4. Use-after-free. When freeing, the memory is unmapped, and depending
- *    on the value of kmem_guard_depth, the kernel will more or less delay
- *    the recycling of that memory. Which means that any ulterior read/write
- *    access to the memory will trigger a page fault, given it hasn't been
- *    recycled yet.
- */
-
-#include <sys/atomic.h>
-#include <uvm/uvm.h>
-
-static bool
-kmem_guard_init(struct kmem_guard *kg, u_int depth, vmem_t *vm)
-{
-	vaddr_t va;
-
-	/* If not enabled, we have nothing to do. */
-	if (depth == 0) {
-		return false;
-	}
-	depth = roundup(depth, PAGE_SIZE / sizeof(void *));
-	KASSERT(depth != 0);
-
-	/*
-	 * Allocate fifo.
-	 */
-	va = uvm_km_alloc(kernel_map, depth * sizeof(void *), PAGE_SIZE,
-	    UVM_KMF_WIRED | UVM_KMF_ZERO);
-	if (va == 0) {
-		return false;
-	}
-
-	/*
-	 * Init object.
-	 */
-	kg->kg_vmem = vm;
-	kg->kg_fifo = (void *)va;
-	kg->kg_depth = depth;
-	kg->kg_rotor = 0;
-
-	printf("kmem_guard(%p): depth %d\n", kg, depth);
-	return true;
-}
-
-static void *
-kmem_guard_alloc(struct kmem_guard *kg, size_t requested_size, bool waitok)
-{
-	struct vm_page *pg;
-	vm_flag_t flags;
-	vmem_addr_t va;
-	vaddr_t loopva;
-	vsize_t loopsize;
-	size_t size;
-	void **p;
-
-	/*
-	 * Compute the size: take the kmem header into account, and add a guard
-	 * page at the end.
-	 */
-	size = round_page(requested_size + SIZE_SIZE) + PAGE_SIZE;
-
-	/* Allocate pages of kernel VA, but do not map anything in yet. */
-	flags = VM_BESTFIT | (waitok ? VM_SLEEP : VM_NOSLEEP);
-	if (vmem_alloc(kg->kg_vmem, size, flags, &va) != 0) {
-		return NULL;
-	}
-
-	loopva = va;
-	loopsize = size - PAGE_SIZE;
-
-	while (loopsize) {
-		pg = uvm_pagealloc(NULL, loopva, NULL, 0);
-		if (__predict_false(pg == NULL)) {
-			if (waitok) {
-				uvm_wait("kmem_guard");
-				continue;
-			} else {
-				uvm_km_pgremove_intrsafe(kernel_map, va,
-				    va + size);
-				vmem_free(kg->kg_vmem, va, size);
-				return NULL;
-			}
-		}
-
-		pg->flags &= ~PG_BUSY;	/* new page */
-		UVM_PAGE_OWN(pg, NULL);
-		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
-
-		loopva += PAGE_SIZE;
-		loopsize -= PAGE_SIZE;
-	}
-
-	pmap_update(pmap_kernel());
-
-	/*
-	 * Offset the returned pointer so that the unmapped guard page sits
-	 * immediately after the returned object.
-	 */
-	p = (void **)((va + (size - PAGE_SIZE) - requested_size) & ~(uintptr_t)ALIGNBYTES);
-	kmem_size_set((uint8_t *)p - SIZE_SIZE, requested_size);
-	return (void *)p;
-}
-
-static void
-kmem_guard_free(struct kmem_guard *kg, size_t requested_size, void *p)
-{
-	vaddr_t va;
-	u_int rotor;
-	size_t size;
-	uint8_t *ptr;
-
-	ptr = (uint8_t *)p - SIZE_SIZE;
-	kmem_size_check(ptr, requested_size);
-	va = trunc_page((vaddr_t)ptr);
-	size = round_page(requested_size + SIZE_SIZE) + PAGE_SIZE;
-
-	KASSERT(pmap_extract(pmap_kernel(), va, NULL));
-	KASSERT(!pmap_extract(pmap_kernel(), va + (size - PAGE_SIZE), NULL));
-
-	/*
-	 * Unmap and free the pages. The last one is never allocated.
-	 */
-	uvm_km_pgremove_intrsafe(kernel_map, va, va + size);
-	pmap_update(pmap_kernel());
-
-#if 0
-	/*
-	 * XXX: Here, we need to atomically register the va and its size in the
-	 * fifo.
-	 */
-
-	/*
-	 * Put the VA allocation into the list and swap an old one out to free.
-	 * This behaves mostly like a fifo.
-	 */
-	rotor = atomic_inc_uint_nv(&kg->kg_rotor) % kg->kg_depth;
-	va = (vaddr_t)atomic_swap_ptr(&kg->kg_fifo[rotor], (void *)va);
-	if (va != 0) {
-		vmem_free(kg->kg_vmem, va, size);
-	}
-#else
-	(void)rotor;
-	vmem_free(kg->kg_vmem, va, size);
-#endif
-}
-
-#endif /* defined(KMEM_GUARD) */

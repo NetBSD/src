@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.12.4.3 2020/04/08 14:07:27 martin Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.12.4.4 2020/04/13 08:03:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ generic_savevars:
 	ldr	R_TMP2, =uboot_args
 	sub	R_TMP2, R_VTOPDIFF
 
-	VPRINTF("\n\ruboot : @")
+	VPRINTF("\n\ruboot : ")
 	VPRINTX(R_TMP2)
 	str	r4, [R_TMP2, #(4*0)]
 	str	r5, [R_TMP2, #(4*1)]
@@ -1051,7 +1051,7 @@ armv6_mmuinit:
 	VPRINTF(" ")
 
 	.align 5
-	@ turn mmu on!
+	/* turn mmu on! */
 	mov	r0, r6
 	mcr	p15, 0, r0, c1, c0, 0
 

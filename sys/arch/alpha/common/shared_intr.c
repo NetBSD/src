@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.21 2012/02/06 02:14:12 matt Exp $ */
+/* $NetBSD: shared_intr.c,v 1.21.48.1 2020/04/13 08:03:29 martin Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.21 2012/02/06 02:14:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.21.48.1 2020/04/13 08:03:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -72,10 +72,7 @@ alpha_shared_intr_alloc(unsigned int n, unsigned int namesize)
 	unsigned int i;
 
 	intr = malloc(n * sizeof (struct alpha_shared_intr), M_DEVBUF,
-	    cold ? M_NOWAIT : M_WAITOK);
-	if (intr == NULL)
-		panic("alpha_shared_intr_alloc: couldn't malloc intr");
-
+	    M_WAITOK);
 	for (i = 0; i < n; i++) {
 		TAILQ_INIT(&intr[i].intr_q);
 		intr[i].intr_sharetype = IST_NONE;
@@ -85,10 +82,7 @@ alpha_shared_intr_alloc(unsigned int n, unsigned int namesize)
 		intr[i].intr_private = NULL;
 		if (namesize != 0) {
 			intr[i].intr_string = malloc(namesize, M_DEVBUF,
-			    cold ? M_NOWAIT : M_WAITOK);
-			if (intr[i].intr_string == NULL)
-				panic("alpha_shared_intr_alloc: couldn't "
-				    "malloc intr string");
+			    M_WAITOK);
 		} else
 			intr[i].intr_string = NULL;
 	}
@@ -136,11 +130,7 @@ alpha_shared_intr_establish(struct alpha_shared_intr *intr, unsigned int num,
 		return NULL;
 	}
 
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("alpha_shared_intr_establish: can't malloc intrhand");
-
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 #ifdef DIAGNOSTIC
 	if (type == IST_NONE)
 		panic("alpha_shared_intr_establish: bogus type");

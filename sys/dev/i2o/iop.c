@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.88.4.1 2019/06/10 22:07:09 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.88.4.2 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.88.4.1 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.88.4.2 2020/04/13 08:04:21 martin Exp $");
 
 #include "iop.h"
 
@@ -392,11 +392,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 #endif
 
 	/* Allocate message wrappers. */
-	im = malloc(sizeof(*im) * sc->sc_maxib, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (im == NULL) {
-		aprint_error_dev(sc->sc_dev, "memory allocation failure\n");
-		goto bail_out;
-	}
+	im = malloc(sizeof(*im) * sc->sc_maxib, M_DEVBUF, M_WAITOK|M_ZERO);
 	state++;
 	sc->sc_ims = im;
 	SLIST_INIT(&sc->sc_im_freelist);
@@ -515,8 +511,7 @@ iop_config_interrupts(device_t self)
 		i = sizeof(struct i2o_systab_entry) * (niop - 1) +
 		    sizeof(struct i2o_systab);
 		iop_systab_size = i;
-		iop_systab = malloc(i, M_DEVBUF, M_NOWAIT|M_ZERO);
-
+		iop_systab = malloc(i, M_DEVBUF, M_WAITOK|M_ZERO);
 		iop_systab->numentries = niop;
 		iop_systab->version = I2O_VERSION_11;
 
@@ -715,7 +710,7 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 	if (sc->sc_tidmap != NULL)
 		free(sc->sc_tidmap, M_DEVBUF);
 	sc->sc_tidmap = malloc(sc->sc_nlctent * sizeof(struct iop_tidmap),
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 
 	/* Allow 1 queued command per device while we're configuring. */
 	iop_adjqparam(sc, 1);
@@ -1107,8 +1102,7 @@ iop_hrt_get(struct iop_softc *sc)
 
 	size = sizeof(struct i2o_hrt) +
 	    (le16toh(hrthdr.numentries) - 1) * sizeof(struct i2o_hrt_entry);
-	hrt = (struct i2o_hrt *)malloc(size, M_DEVBUF, M_NOWAIT);
-
+	hrt = malloc(size, M_DEVBUF, M_WAITOK);
 	if ((rv = iop_hrt_get0(sc, hrt, size)) != 0) {
 		free(hrt, M_DEVBUF);
 		return (rv);
@@ -1170,10 +1164,7 @@ iop_lct_get(struct iop_softc *sc)
 	struct i2o_lct *lct;
 
 	esize = le32toh(sc->sc_status.expectedlctsize);
-	lct = (struct i2o_lct *)malloc(esize, M_DEVBUF, M_WAITOK);
-	if (lct == NULL)
-		return (ENOMEM);
-
+	lct = malloc(esize, M_DEVBUF, M_WAITOK);
 	if ((rv = iop_lct_get0(sc, lct, esize, 0)) != 0) {
 		free(lct, M_DEVBUF);
 		return (rv);
@@ -1182,10 +1173,7 @@ iop_lct_get(struct iop_softc *sc)
 	size = le16toh(lct->tablesize) << 2;
 	if (esize != size) {
 		free(lct, M_DEVBUF);
-		lct = (struct i2o_lct *)malloc(size, M_DEVBUF, M_WAITOK);
-		if (lct == NULL)
-			return (ENOMEM);
-
+		lct = malloc(size, M_DEVBUF, M_WAITOK);
 		if ((rv = iop_lct_get0(sc, lct, size, 0)) != 0) {
 			free(lct, M_DEVBUF);
 			return (rv);
@@ -1252,10 +1240,7 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	im = iop_msg_alloc(sc, (ii == NULL ? IM_WAIT : 0) | IM_NOSTATUS);
-	if ((pgop = malloc(sizeof(*pgop), M_DEVBUF, M_WAITOK)) == NULL) {
-		iop_msg_free(sc, im);
-		return (ENOMEM);
-	}
+	pgop = malloc(sizeof(*pgop), M_DEVBUF, M_WAITOK);
 	im->im_dvcontext = pgop;
 
 	mf = (struct i2o_util_params_op *)mb;
@@ -1314,11 +1299,7 @@ iop_field_set(struct iop_softc *sc, int tid, int group, void *buf,
 	totsize = sizeof(*pgop) + size;
 
 	im = iop_msg_alloc(sc, IM_WAIT);
-	if ((pgop = malloc(totsize, M_DEVBUF, M_WAITOK)) == NULL) {
-		iop_msg_free(sc, im);
-		return (ENOMEM);
-	}
-
+	pgop = malloc(totsize, M_DEVBUF, M_WAITOK);
 	mf = (struct i2o_util_params_op *)mb;
 	mf->msgflags = I2O_MSGFLAGS(i2o_util_params_op);
 	mf->msgfunc = I2O_MSGFUNC(tid, I2O_UTIL_PARAMS_SET);
@@ -1402,11 +1383,7 @@ iop_table_add_row(struct iop_softc *sc, int tid, int group, void *buf,
 	totsize = sizeof(*pgop) + sizeof(u_int16_t) * 2 + size;
 
 	im = iop_msg_alloc(sc, IM_WAIT);
-	if ((pgop = malloc(totsize, M_DEVBUF, M_WAITOK)) == NULL) {
-		iop_msg_free(sc, im);
-		return (ENOMEM);
-	}
-
+	pgop = malloc(totsize, M_DEVBUF, M_WAITOK);
 	mf = (struct i2o_util_params_op *)mb;
 	mf->msgflags = I2O_MSGFLAGS(i2o_util_params_op);
 	mf->msgfunc = I2O_MSGFUNC(tid, I2O_UTIL_PARAMS_SET);
@@ -2586,9 +2563,6 @@ iop_passthrough(struct iop_softc *sc, struct ioppt *pt, struct proc *p)
 		}
 
 	mf = malloc(sc->sc_framesize, M_DEVBUF, M_WAITOK);
-	if (mf == NULL)
-		return (ENOMEM);
-
 	if ((rv = copyin(pt->pt_msg, mf, pt->pt_msglen)) != 0)
 		goto bad;
 

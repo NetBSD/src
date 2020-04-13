@@ -1,5 +1,5 @@
-/*	$Id: at91spi.c,v 1.3.54.1 2020/04/08 14:07:28 martin Exp $	*/
-/*	$NetBSD: at91spi.c,v 1.3.54.1 2020/04/08 14:07:28 martin Exp $	*/
+/*	$Id: at91spi.c,v 1.3.54.2 2020/04/13 08:03:33 martin Exp $	*/
+/*	$NetBSD: at91spi.c,v 1.3.54.2 2020/04/13 08:03:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91spi.c,v 1.3.54.1 2020/04/08 14:07:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91spi.c,v 1.3.54.2 2020/04/13 08:03:33 martin Exp $");
 
 #include "locators.h"
 
@@ -155,6 +155,7 @@ at91spi_attach_common(device_t parent, device_t self, void *aux,
 		aprint_error("%s: no slaves!\n", device_xname(sc->sc_dev));
 	}
 
+	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
 
 	/* initialize the queue */

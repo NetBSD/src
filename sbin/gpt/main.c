@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11.2.1 2019/06/10 22:05:33 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.11.2.2 2020/04/13 08:03:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.11.2.1 2019/06/10 22:05:33 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.11.2.2 2020/04/13 08:03:20 martin Exp $");
 #endif
 
 #include <stdio.h>
@@ -73,7 +73,8 @@ extern const struct gpt_cmd
 	c_set,
 	c_show,
 	c_type,
-	c_unset;
+	c_unset,
+	c_uuid;
 
 static const struct gpt_cmd *cmdsw[] = {
 	&c_add,
@@ -97,6 +98,7 @@ static const struct gpt_cmd *cmdsw[] = {
 	&c_show,
 	&c_type,
 	&c_unset,
+	&c_uuid,
 	&c_null,
 };
 

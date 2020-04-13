@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.6.4.1 2019/06/10 22:06:53 christos Exp $	*/
+/*	$NetBSD: idt.c,v 1.6.4.2 2020/04/13 08:04:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.6.4.1 2019/06/10 22:06:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.6.4.2 2020/04/13 08:04:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,11 +77,11 @@ __KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.6.4.1 2019/06/10 22:06:53 christos Exp $")
 
 #include <machine/segments.h>
 
-/* 
+/*
  * XEN PV and native have a different idea of what idt entries should
  * look like.
  */
-idt_descriptor_t *idt; 
+idt_descriptor_t *idt;
 
 static char idt_allocmap[NIDT];
 
@@ -92,13 +92,13 @@ void
 set_idtgate(struct trap_info *xen_idd, void *function, int ist,
 	    int type, int dpl, int sel)
 {
-	/* 
+	/*
 	 * Find the page boundary in which the descriptor resides.
 	 * We make an assumption here, that the descriptor is part of
 	 * a table (array), which fits in a page and is page aligned.
 	 *
 	 * This assumption is from the usecases at early startup in
-	 * machine/machdep.c 
+	 * machine/machdep.c
 	 *
 	 * Thus this function may not work in the "general" case of a
 	 * randomly located idt entry template (for eg:).
@@ -109,13 +109,13 @@ set_idtgate(struct trap_info *xen_idd, void *function, int ist,
 	//kpreempt_disable();
 #if defined(__x86_64__)
 	/* Make it writeable, so we can update the values. */
-	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ | VM_PROT_WRITE);
 #endif /* __x86_64 */
 	xen_idd->cs = sel;
 	xen_idd->address = (unsigned long) function;
 	xen_idd->flags = dpl;
 
-	/* 
+	/*
 	 * Again we make the assumption that the descriptor is
 	 * implicitly part of an idt, which we infer as
 	 * xen_idt_vaddr. (See above).
@@ -135,7 +135,7 @@ unset_idtgate(struct trap_info *xen_idd)
 	vaddr_t xen_idt_vaddr = ((vaddr_t) xen_idd) & PAGE_MASK;
 
 	/* Make it writeable, so we can update the values. */
-	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ | VM_PROT_WRITE);
 #endif /* __x86_64 */
 
 	/* Zero it */

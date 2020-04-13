@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.31.4.2 2020/04/08 14:07:25 martin Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.31.4.3 2020/04/13 08:03:30 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -27,10 +27,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Functions to provide access to i386-specific instructions.
  */
 
 #include <sys/errno.h>
@@ -81,6 +77,16 @@ ENTRY(invlpg)
 	ret
 END(invlpg)
 
+ENTRY(lgdt)
+	/* Reload the descriptor table. */
+	movq	%rdi,%rax
+	lgdt	(%rax)
+	/* Flush the prefetch queue. */
+	jmp	1f
+	nop
+1:	jmp	_C_LABEL(lgdt_finish)
+END(lgdt)
+
 ENTRY(lidt)
 	lidt	(%rdi)
 	ret
@@ -100,27 +106,7 @@ ENTRY(ltr)
 	ltr	%di
 	ret
 END(ltr)
-#endif
 
-/*
- * Big hammer: flush all TLB entries, including ones from PTE's
- * with the G bit set.  This should only be necessary if TLB
- * shootdown falls far behind.
- *
- * Intel Architecture Software Developer's Manual, Volume 3,
- *	System Programming, section 9.10, "Invalidating the
- * Translation Lookaside Buffers (TLBS)":
- * "The following operations invalidate all TLB entries, irrespective
- * of the setting of the G flag:
- * ...
- * "(P6 family processors only): Writing to control register CR4 to
- * modify the PSE, PGE, or PAE flag."
- *
- * (the alternatives not quoted above are not an option here.)
- *
- * If PGE is not in use, we reload CR3.
- */
-#ifndef XENPV
 ENTRY(tlbflushg)
 	movq	%cr4, %rax
 	testq	$CR4_PGE, %rax
@@ -150,9 +136,24 @@ ENTRY(tlbflush)
 	ret
 END(tlbflush)
 
+ENTRY(wbinvd)
+	wbinvd
+	ret
+END(wbinvd)
+
+ENTRY(setusergs)
+	CLI(ax)
+	swapgs
+	movw	%di, %gs
+	swapgs
+	STI(ax)
+	ret
+END(setusergs)
+
 ENTRY(x86_read_flags)
 	pushfq
 	popq	%rax
+	KMSAN_INIT_RET(8)
 	ret
 END(x86_read_flags)
 
@@ -165,53 +166,46 @@ ENTRY(x86_write_flags)
 END(x86_write_flags)
 
 STRONG_ALIAS(x86_write_psl,x86_write_flags)
-#endif /* XENPV */
 
-ENTRY(rdmsr_locked)
-	movq	%rdi, %rcx
-	xorq	%rax, %rax
-	movl	$OPTERON_MSR_PASSCODE, %edi
-	rdmsr
-	shlq	$32, %rdx
-	orq	%rdx, %rax
+ENTRY(tsc_get_timecount)
+	movq	CPUVAR(CURLWP), %rcx
+1:
+	movq	L_NCSW(%rcx), %rdi
+	rdtsc
+	addl	CPUVAR(CC_SKEW), %eax
+	cmpq	%rdi, L_NCSW(%rcx)
+	jne	2f
+	KMSAN_INIT_RET(4)
 	ret
-END(rdmsr_locked)
+2:
+	jmp	1b
+END(tsc_get_timecount)
+#endif /* !XENPV */
 
-ENTRY(wrmsr_locked)
-	movq	%rdi, %rcx
-	movq	%rsi, %rax
-	movq	%rsi, %rdx
-	shrq	$32, %rdx
-	movl	$OPTERON_MSR_PASSCODE, %edi
-	wrmsr
-	ret
-END(wrmsr_locked)
-
-/*
- * Support for reading MSRs in the safe manner (returns EFAULT on fault)
- */
-/* int rdmsr_safe(u_int msr, uint64_t *data) */
 ENTRY(rdmsr_safe)
 	movq	CPUVAR(CURLWP), %r8
 	movq	L_PCB(%r8), %r8
 	movq	$_C_LABEL(msr_onfault), PCB_ONFAULT(%r8)
 
-	movl	%edi, %ecx /* u_int msr */
-	rdmsr			/* Read MSR pointed by %ecx. Returns
-				   hi byte in edx, lo in %eax */
-	salq	$32, %rdx	/* sign-shift %rdx left */
+	movl	%edi, %ecx
+	rdmsr
+	salq	$32, %rdx
 	movl	%eax, %eax	/* zero-extend %eax -> %rax */
 	orq	%rdx, %rax
-	movq	%rax, (%rsi)  /* *data */
-	xorq	%rax, %rax    /* "no error" */
+	movq	%rax, (%rsi)
 
+	xorq	%rax, %rax
 	movq	%rax, PCB_ONFAULT(%r8)
+#ifdef KMSAN
+	movq	%rsi,%rdi
+	movq	$8,%rsi
+	xorq	%rdx,%rdx
+	callq	_C_LABEL(kmsan_mark)
+#endif
+	KMSAN_INIT_RET(4)
 	ret
 END(rdmsr_safe)
 
-/*
- * MSR operations fault handler
- */
 ENTRY(msr_onfault)
 	movq	CPUVAR(CURLWP), %r8
 	movq	L_PCB(%r8), %r8
@@ -220,25 +214,20 @@ ENTRY(msr_onfault)
 	ret
 END(msr_onfault)
 
-#ifndef XENPV
-ENTRY(wbinvd)
-	wbinvd
-	ret
-END(wbinvd)
-#endif
-
 ENTRY(cpu_counter)
 	xorq	%rax, %rax
 	rdtsc
 	shlq	$32, %rdx
 	orq	%rdx, %rax
 	addq	CPUVAR(CC_SKEW), %rax
+	KMSAN_INIT_RET(8)
 	ret
 END(cpu_counter)
 
 ENTRY(cpu_counter32)
 	rdtsc
 	addl	CPUVAR(CC_SKEW), %eax
+	KMSAN_INIT_RET(4)
 	ret
 END(cpu_counter32)
 
@@ -252,49 +241,32 @@ END(breakpoint)
 
 ENTRY(x86_curcpu)
 	movq	%gs:(CPU_INFO_SELF), %rax
+	KMSAN_INIT_RET(8)
 	ret
 END(x86_curcpu)
 
 ENTRY(x86_curlwp)
 	movq	%gs:(CPU_INFO_CURLWP), %rax
+	KMSAN_INIT_RET(8)
 	ret
 END(x86_curlwp)
 
 ENTRY(__byte_swap_u32_variable)
 	movl	%edi, %eax
 	bswapl	%eax
+	KMSAN_INIT_RET(4)
 	ret
 END(__byte_swap_u32_variable)
 
 ENTRY(__byte_swap_u16_variable)
 	movl	%edi, %eax
 	xchgb	%al, %ah
+	KMSAN_INIT_RET(2)
 	ret
 END(__byte_swap_u16_variable)
 
 /*
- * void lgdt(struct region_descriptor *rdp);
- *
- * Load a new GDT pointer (and do any necessary cleanup).
- * XXX It's somewhat questionable whether reloading all the segment registers
- * is necessary, since the actual descriptor data is not changed except by
- * process creation and exit, both of which clean up via task switches.
- */
-#ifndef XENPV
-ENTRY(lgdt)
-	/* Reload the descriptor table. */
-	movq	%rdi,%rax
-	lgdt	(%rax)
-	/* Flush the prefetch q. */
-	jmp	1f
-	nop
-1:	jmp	_C_LABEL(lgdt_finish)
-END(lgdt)
-#endif
-
-/*
- * void lgdt_finish(void);
- * Reload segments after a GDT change
+ * Reload segments after a GDT change.
  */
 ENTRY(lgdt_finish)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
@@ -305,8 +277,6 @@ ENTRY(lgdt_finish)
 END(lgdt_finish)
 
 /*
- * void x86_flush()
- *
  * Flush instruction pipelines by doing an intersegment (far) return.
  */
 ENTRY(x86_flush)
@@ -353,45 +323,6 @@ ENTRY(x86_mwait)
 	ret
 END(x86_mwait)
 
-ENTRY(x86_cpuid2)
-	movq	%rbx, %r8
-	movq	%rdi, %rax
-	movq	%rsi, %rcx
-	movq	%rdx, %rsi
-	cpuid
-	movl	%eax, 0(%rsi)
-	movl	%ebx, 4(%rsi)
-	movl	%ecx, 8(%rsi)
-	movl	%edx, 12(%rsi)
-	movq	%r8, %rbx
-	ret
-END(x86_cpuid2)
-
-ENTRY(fnsave)
-	fnsave	(%rdi)
-	ret
-END(fnsave)
-
-ENTRY(fnstcw)
-	fnstcw	(%rdi)
-	ret
-END(fnstcw)
-
-ENTRY(fngetsw)
-	fnstsw	%ax
-	ret
-END(fngetsw)
-
-ENTRY(fnstsw)
-	fnstsw	(%rdi)
-	ret
-END(fnstsw)
-
-ENTRY(frstor)
-	frstor	(%rdi)
-	ret
-END(frstor)
-
 ENTRY(stts)
 	movq	%cr0, %rax
 	orq	$CR0_TS, %rax
@@ -399,103 +330,35 @@ ENTRY(stts)
 	ret
 END(stts)
 
-ENTRY(fxsave)
-	fxsave	(%rdi)
-	ret
-END(fxsave)
-
-ENTRY(fxrstor)
-	fxrstor	(%rdi)
-	ret
-END(fxrstor)
-
 ENTRY(fldummy)
 	ffree	%st(7)
 	fldz
 	ret
 END(fldummy)
 
-ENTRY(xsave)
-	movq	%rsi, %rax
-	movq	%rsi, %rdx
-	shrq	$32, %rdx
-	xsave	(%rdi)
-	ret
-END(xsave)
-
-ENTRY(xsaveopt)
-	movq	%rsi, %rax
-	movq	%rsi, %rdx
-	shrq	$32, %rdx
-	xsaveopt	(%rdi)
-	ret
-END(xsaveopt)
-
-ENTRY(xrstor)
-	movq	%rsi, %rax
-	movq	%rsi, %rdx
-	shrq	$32, %rdx
-	xrstor	(%rdi)
-	ret
-END(xrstor)
-
-ENTRY(x86_stmxcsr)
-	stmxcsr	(%rdi)
-	ret
-END(x86_stmxcsr)
-
-ENTRY(x86_ldmxcsr)
-	ldmxcsr	(%rdi)
-	ret
-END(x86_ldmxcsr)
-
 ENTRY(inb)
 	movq	%rdi, %rdx
 	xorq	%rax, %rax
 	inb	%dx, %al
+	KMSAN_INIT_RET(1)
 	ret
 END(inb)
-
-ENTRY(insb)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	movq	%rsi, %rdi
-	rep
-	insb
-	ret
-END(insb)
 
 ENTRY(inw)
 	movq	%rdi, %rdx
 	xorq	%rax, %rax
 	inw	%dx, %ax
+	KMSAN_INIT_RET(2)
 	ret
 END(inw)
-
-ENTRY(insw)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	movq	%rsi, %rdi
-	rep
-	insw
-	ret
-END(insw)
 
 ENTRY(inl)
 	movq	%rdi, %rdx
 	xorq	%rax, %rax
 	inl	%dx, %eax
+	KMSAN_INIT_RET(4)
 	ret
 END(inl)
-
-ENTRY(insl)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	movq	%rsi, %rdi
-	rep
-	insl
-	ret
-END(insl)
 
 ENTRY(outb)
 	movq	%rdi, %rdx
@@ -504,14 +367,6 @@ ENTRY(outb)
 	ret
 END(outb)
 
-ENTRY(outsb)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	rep
-	outsb
-	ret
-END(outsb)
-
 ENTRY(outw)
 	movq	%rdi, %rdx
 	movq	%rsi, %rax
@@ -519,36 +374,9 @@ ENTRY(outw)
 	ret
 END(outw)
 
-ENTRY(outsw)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	rep
-	outsw
-	ret
-END(outsw)
-
 ENTRY(outl)
 	movq	%rdi, %rdx
 	movq	%rsi, %rax
 	outl	%eax, %dx
 	ret
 END(outl)
-
-ENTRY(outsl)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	rep
-	outsl
-	ret
-END(outsl)
-
-#ifndef XENPV
-ENTRY(setusergs)
-	CLI(ax)
-	swapgs
-	movw	%di, %gs
-	swapgs
-	STI(ax)
-	ret
-END(setusergs)
-#endif

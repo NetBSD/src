@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.33.30.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.33.30.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.33.30.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.33.30.2 2020/04/13 08:04:47 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -160,7 +160,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 				      RF_RaidAccessFlags_t flags,
 				      RF_AllocListElem_t *allocList,
 				      int nfaults,
-				      int (*redFunc) (RF_DagNode_t *),
+				      void (*redFunc) (RF_DagNode_t *),
 				      int allowBufferRecycle)
 {
 	int     nRrdNodes, nWndNodes, nXorBufs, i, j, paramNum,
@@ -716,7 +716,7 @@ rf_DoubleDegSmallWrite(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		       const char *redundantReadNodeName,
 		       const char *redundantWriteNodeName,
 		       const char *recoveryNodeName,
-		       int (*recovFunc) (RF_DagNode_t *))
+		       void (*recovFunc) (RF_DagNode_t *))
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_DagNode_t *nodes, *wudNodes, *rrdNodes, *recoveryNode, *blockNode,

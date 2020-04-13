@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560var.h,v 1.10 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: rt2560var.h,v 1.10.14.1 2020/04/13 08:04:22 martin Exp $	*/
 /*	$OpenBSD: rt2560var.h,v 1.2 2006/01/14 12:43:27 damien Exp $  */
 
 /*-
@@ -27,7 +27,7 @@ struct rt2560_rx_radiotap_header {
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_antenna;
 	uint8_t		wr_antsignal;
-} __packed;
+};
 
 #define RT2560_RX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_TSFT) |				\
@@ -44,7 +44,7 @@ struct rt2560_tx_radiotap_header {
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
 	uint8_t		wt_antenna;
-} __packed;
+};
 
 #define RT2560_TX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\

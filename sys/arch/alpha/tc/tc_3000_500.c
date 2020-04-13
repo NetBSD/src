@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.32 2014/03/26 08:09:06 christos Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.32.30.1 2020/04/13 08:03:30 martin Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.32 2014/03/26 08:09:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.32.30.1 2020/04/13 08:03:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,9 +135,7 @@ tc_3000_500_intr_setup(void)
 		tc_3000_500_intr[i].tci_func = tc_3000_500_intrnull;
 		tc_3000_500_intr[i].tci_arg = (void *)i;
 
-		cp = malloc(len, M_DEVBUF, M_NOWAIT);
-		if (cp == NULL)
-			panic("tc_3000_500_intr_setup");
+		cp = malloc(len, M_DEVBUF, M_WAITOK);
 		snprintf(cp, len, "slot %lu", i);
 		evcnt_attach_dynamic(&tc_3000_500_intr[i].tci_evcnt,
 		    EVCNT_TYPE_INTR, NULL, "tc", cp);

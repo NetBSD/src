@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_gpio.c,v 1.7 2012/10/27 17:17:39 chs Exp $	*/
+/*	$NetBSD: imx31_gpio.c,v 1.7.38.1 2020/04/13 08:03:35 martin Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,21 +28,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_gpio.c,v 1.7 2012/10/27 17:17:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31_gpio.c,v 1.7.38.1 2020/04/13 08:03:35 martin Exp $");
 
 #define _INTR_PRIVATE
 
 #include "locators.h"
 #include "gpio.h"
- 
+
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/atomic.h>
- 
+
 #include <uvm/uvm_extern.h>
-  
+
 #include <machine/intr.h>
- 
+
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
@@ -182,7 +182,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	GPIO_WRITE(gpio, GPIO_ISR, irq_mask);
 
 	/*
-	 * Convert the type to a gpio type and figure out which bits in what 
+	 * Convert the type to a gpio type and figure out which bits in what
 	 * register we have to tweak.
 	 */
 	gtype = (GPIO_TYPEMAP >> (2 * is->is_type)) & 3;
@@ -202,7 +202,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	 */
 	v = GPIO_READ(gpio, GPIO_DIR);
 	v &= ~irq_mask;
-	GPIO_WRITE(gpio, GPIO_DIR, v); 
+	GPIO_WRITE(gpio, GPIO_DIR, v);
 
 	/*
 	 * Now record the type of interrupt.
@@ -243,7 +243,7 @@ imxgpio_pin_write(void *arg, int pin, int value)
 
 	old = GPIO_READ(gpio, GPIO_DR);
 	if (value)
-		new = old | mask; 
+		new = old | mask;
 	else
 		new = old & ~mask;
 

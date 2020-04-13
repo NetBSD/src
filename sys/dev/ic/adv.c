@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.47.18.2 2020/04/08 14:08:05 martin Exp $	*/
+/*	$NetBSD: adv.c,v 1.47.18.3 2020/04/13 08:04:21 martin Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.47.18.2 2020/04/08 14:08:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.47.18.3 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,7 +398,7 @@ adv_init(ASC_SOFTC *sc)
 			aprint_normal("unknown warning %d\n", warn);
 		}
 	}
-	sc->isr_callback = (ASC_CALLBACK) adv_narrow_isr_callback;
+	sc->isr_callback = adv_narrow_isr_callback;
 
 	return (0);
 }

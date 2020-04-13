@@ -759,6 +759,11 @@ EOF
     done
   fi
 
+  # reconfigure the ns5 master server without the fast-exire zone, so
+  # it can't be refreshed on ns3, and will expire in 5 seconds.
+  cat /dev/null > ns5/expire.conf
+  rndc_reconfig ns5 10.53.0.5
+
   # restart the main test RPZ server to see if that creates a core file
   if test -z "$HAVE_CORE"; then
     $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpz ns3
@@ -854,7 +859,40 @@ EOF
     echo_i "checking rpz with delegation fails correctly (${t})"
     $DIG -p ${PORT} @$ns3 ns example.com > dig.out.$t
     grep "status: SERVFAIL" dig.out.$t > /dev/null || setret "failed"
+
+    t=`expr $t + 1`
+    echo_i "checking policies from expired zone are no longer in effect ($t)"
+    $DIG -p ${PORT} @$ns3 a expired > dig.out.$t
+    grep "expired.*10.0.0.10" dig.out.$t > /dev/null && setret "failed"
+    grep "fast-expire/IN: response-policy zone expired" ns3/named.run > /dev/null || setret "failed"
   fi
+
+  # RPZ 'CNAME *.' (NODATA) trumps DNS64.  Test against various DNS64 senarios.
+  for label in a-only no-a-no-aaaa a-plus-aaaa
+  do
+    for type in AAAA A
+    do
+      t=`expr $t + 1`
+      case $label in
+      a-only)
+	echo_i "checking rpz 'CNAME *.' (NODATA) with dns64, $type lookup with A-only (${t})"
+	;;
+      no-a-no-aaaa)
+	echo_i "checking rpz 'CNAME *.' (NODATA) with dns64, $type lookup with no A or AAAA (${t})"
+	;;
+      a-plus-aaaa)
+	echo_i "checking rpz 'CNAME *.' (NODATA) with dns64, $type lookup with A and AAAA (${t})"
+	;;
+      esac
+      ret=0
+      $DIG ${label}.example -p ${PORT} $type @10.53.0.9 > dig.out.${t}
+      grep "status: NOERROR" dig.out.$t > /dev/null || ret=1
+      grep "ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 2$" dig.out.$t > /dev/null || ret=1
+      grep "^rpz"  dig.out.$t > /dev/null || ret=1
+      [ $ret -eq 0 ] || echo_i "failed"
+      status=`expr $status + $ret`
+    done
+  done
 
   [ $status -ne 0 ] && pf=fail || pf=pass
   case $mode in

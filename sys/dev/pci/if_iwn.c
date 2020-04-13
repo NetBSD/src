@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.90.2.2 2020/04/08 14:08:09 martin Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.90.2.3 2020/04/13 08:04:26 martin Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.90.2.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.90.2.3 2020/04/13 08:04:26 martin Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -1572,7 +1572,7 @@ iwn_read_eeprom(struct iwn_softc *sc)
 		sc->rxchainmask = IWN_RFCFG_RXANTMSK(sc->rfcfg);
 
 	/* Read MAC address. */
-	iwn_read_prom_data(sc, IWN_EEPROM_MAC, ic->ic_myaddr, 6);
+	iwn_read_prom_data(sc, IWN_EEPROM_MAC, ic->ic_myaddr, ETHER_ADDR_LEN);
 
 	/* Read adapter-specific information from EEPROM. */
 	ops->read_eeprom(sc);

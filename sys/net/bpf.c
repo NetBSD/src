@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.226.2.2 2020/04/08 14:08:57 martin Exp $	*/
+/*	$NetBSD: bpf.c,v 1.226.2.3 2020/04/13 08:05:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.226.2.2 2020/04/08 14:08:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.226.2.3 2020/04/13 08:05:15 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1682,10 +1682,16 @@ _bpf_mtap(struct bpf_if *bp, struct mbuf *m, u_int direction)
 
 	pktlen = m_length(m);
 
+	/* Skip zero-sized packets. */
+	if (__predict_false(pktlen == 0)) {
+		return;
+	}
+
 	if (pktlen == m->m_len) {
 		cpfn = (void *)memcpy;
 		marg = mtod(m, void *);
 		buflen = pktlen;
+		KASSERT(buflen != 0);
 	} else {
 		cpfn = bpf_mcpy;
 		marg = m;
@@ -1993,10 +1999,10 @@ static int
 bpf_allocbufs(struct bpf_d *d)
 {
 
-	d->bd_fbuf = kmem_alloc(d->bd_bufsize, KM_NOSLEEP);
+	d->bd_fbuf = kmem_zalloc(d->bd_bufsize, KM_NOSLEEP);
 	if (!d->bd_fbuf)
 		return (ENOBUFS);
-	d->bd_sbuf = kmem_alloc(d->bd_bufsize, KM_NOSLEEP);
+	d->bd_sbuf = kmem_zalloc(d->bd_bufsize, KM_NOSLEEP);
 	if (!d->bd_sbuf) {
 		kmem_free(d->bd_fbuf, d->bd_bufsize);
 		return (ENOBUFS);

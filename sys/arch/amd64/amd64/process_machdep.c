@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.38.4.1 2019/06/10 22:05:47 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.38.4.2 2020/04/13 08:03:30 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.38.4.1 2019/06/10 22:05:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.38.4.2 2020/04/13 08:03:30 martin Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -83,12 +83,18 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.38.4.1 2019/06/10 22:05:47 chr
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
+#include <sys/compat_stub.h>
 
+#include <uvm/uvm_extern.h>
+
+#include <compat/netbsd32/netbsd32.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/segments.h>
 #include <x86/dbregs.h>
 #include <x86/fpu.h>
+
+struct netbsd32_process_doxmmregs_hook_t netbsd32_process_doxmmregs_hook;
 
 static inline struct trapframe *process_frame(struct lwp *);
 
@@ -100,42 +106,48 @@ process_frame(struct lwp *l)
 }
 
 int
-process_read_regs(struct lwp *l, struct reg *regs)
+process_read_regs(struct lwp *l, struct reg *regp)
 {
 	struct trapframe *tf = process_frame(l);
-	struct proc *p = l->l_proc;
+	long *regs = regp->regs;
+	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
 
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
-
-	regs->regs[_REG_RDI] = tf->tf_rdi;
-	regs->regs[_REG_RSI] = tf->tf_rsi;
-	regs->regs[_REG_RDX] = tf->tf_rdx;
-	regs->regs[_REG_R10] = tf->tf_r10;
-	regs->regs[_REG_R8]  = tf->tf_r8;
-	regs->regs[_REG_R9]  = tf->tf_r9;
+	regs[_REG_RDI] = tf->tf_rdi;
+	regs[_REG_RSI] = tf->tf_rsi;
+	regs[_REG_RDX] = tf->tf_rdx;
+	regs[_REG_R10] = tf->tf_r10;
+	regs[_REG_R8]  = tf->tf_r8;
+	regs[_REG_R9]  = tf->tf_r9;
 	/* argX not touched */
-	regs->regs[_REG_RCX] = tf->tf_rcx;
-	regs->regs[_REG_R11] = tf->tf_r11;
-	regs->regs[_REG_R12] = tf->tf_r12;
-	regs->regs[_REG_R13] = tf->tf_r13;
-	regs->regs[_REG_R14] = tf->tf_r14;
-	regs->regs[_REG_R15] = tf->tf_r15;
-	regs->regs[_REG_RBP] = tf->tf_rbp;
-	regs->regs[_REG_RBX] = tf->tf_rbx;
-	regs->regs[_REG_RAX] = tf->tf_rax;
-	regs->regs[_REG_GS]  = 0;
-	regs->regs[_REG_FS]  = 0;
-	regs->regs[_REG_ES]  = GSEL(GUDATA_SEL, SEL_UPL);
-	regs->regs[_REG_DS]  = GSEL(GUDATA_SEL, SEL_UPL);
-	regs->regs[_REG_TRAPNO] = tf->tf_trapno;
-	regs->regs[_REG_ERR] = tf->tf_err;
-	regs->regs[_REG_RIP] = tf->tf_rip;
-	regs->regs[_REG_CS]  = LSEL(LUCODE_SEL, SEL_UPL);
-	regs->regs[_REG_RFLAGS] = tf->tf_rflags;
-	regs->regs[_REG_RSP] = tf->tf_rsp;
-	regs->regs[_REG_SS]  = LSEL(LUDATA_SEL, SEL_UPL);
+	regs[_REG_RCX] = tf->tf_rcx;
+	regs[_REG_R11] = tf->tf_r11;
+	regs[_REG_R12] = tf->tf_r12;
+	regs[_REG_R13] = tf->tf_r13;
+	regs[_REG_R14] = tf->tf_r14;
+	regs[_REG_R15] = tf->tf_r15;
+	regs[_REG_RBP] = tf->tf_rbp;
+	regs[_REG_RBX] = tf->tf_rbx;
+	regs[_REG_RAX] = tf->tf_rax;
+	if (pk32) {
+		regs[_REG_GS] = tf->tf_gs & 0xffff;
+		regs[_REG_FS] = tf->tf_fs & 0xffff;
+		regs[_REG_ES] = tf->tf_es & 0xffff;
+		regs[_REG_DS] = tf->tf_ds & 0xffff;
+		regs[_REG_CS] = tf->tf_cs & 0xffff;
+		regs[_REG_SS] = tf->tf_ss & 0xffff;
+	} else {
+		regs[_REG_GS] = 0;
+		regs[_REG_FS] = 0;
+		regs[_REG_ES] = GSEL(GUDATA_SEL, SEL_UPL);
+		regs[_REG_DS] = GSEL(GUDATA_SEL, SEL_UPL);
+		regs[_REG_CS] = LSEL(LUCODE_SEL, SEL_UPL);
+		regs[_REG_SS] = LSEL(LUDATA_SEL, SEL_UPL);
+	}
+	regs[_REG_TRAPNO] = tf->tf_trapno;
+	regs[_REG_ERR] = tf->tf_err;
+	regs[_REG_RIP] = tf->tf_rip;
+	regs[_REG_RFLAGS] = tf->tf_rflags;
+	regs[_REG_RSP] = tf->tf_rsp;
 
 	return 0;
 }
@@ -143,11 +155,6 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
-	struct proc *p = l->l_proc;
-
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
 
 	process_read_fpregs_xmm(l, &regs->fxstate);
 
@@ -157,11 +164,6 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 int
 process_read_dbregs(struct lwp *l, struct dbreg *regs, size_t *sz)
 {
-	struct proc *p = l->l_proc;
-
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
 
 	x86_dbregs_read(l, regs);
 
@@ -172,19 +174,20 @@ int
 process_write_regs(struct lwp *l, const struct reg *regp)
 {
 	struct trapframe *tf = process_frame(l);
-	struct proc *p = l->l_proc;
 	int error;
 	const long *regs = regp->regs;
-
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
+	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
 
 	/*
 	 * Check for security violations. Note that struct regs is compatible
 	 * with the __gregs array in mcontext_t.
 	 */
-	error = cpu_mcontext_validate(l, (const mcontext_t *)regs);
+	if (pk32) {
+		MODULE_HOOK_CALL(netbsd32_reg_validate_hook, (l, regp), EINVAL,
+		    error);
+	} else {
+		error = cpu_mcontext_validate(l, (const mcontext_t *)regs);
+	}
 	if (error != 0)
 		return error;
 
@@ -204,22 +207,25 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	tf->tf_rbp  = regs[_REG_RBP];
 	tf->tf_rbx  = regs[_REG_RBX];
 	tf->tf_rax  = regs[_REG_RAX];
-	tf->tf_gs   = 0;
-	tf->tf_fs   = 0;
-	tf->tf_es   = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds   = GSEL(GUDATA_SEL, SEL_UPL);
+	if (pk32) {
+		tf->tf_gs = regs[_REG_GS] & 0xffff;
+		tf->tf_fs = regs[_REG_FS] & 0xffff;
+		tf->tf_es = regs[_REG_ES] & 0xffff;
+		tf->tf_ds = regs[_REG_DS] & 0xffff;
+		tf->tf_cs = regs[_REG_CS] & 0xffff;
+		tf->tf_ss = regs[_REG_SS] & 0xffff;
+	} else {
+		tf->tf_gs = 0;
+		tf->tf_fs = 0;
+		tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+		tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+		tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+		tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
+	}
 	/* trapno, err not touched */
 	tf->tf_rip  = regs[_REG_RIP];
-	tf->tf_cs   = LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_rflags = regs[_REG_RFLAGS];
 	tf->tf_rsp  = regs[_REG_RSP];
-	tf->tf_ss   = LSEL(LUDATA_SEL, SEL_UPL);
-
-#ifdef XENPV
-	/* see comment in cpu_setmcontext */
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-#endif
 
 	return 0;
 }
@@ -227,11 +233,6 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
-	struct proc *p = l->l_proc;
-
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
 
 	process_write_fpregs_xmm(l, &regs->fxstate);
 	return 0;
@@ -240,12 +241,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 int
 process_write_dbregs(struct lwp *l, const struct dbreg *regs, size_t sz)
 {
-	struct proc *p = l->l_proc;
 	int error;
-
-	if (p->p_flag & PK_32) {
-		return EINVAL;
-	}
 
 	/*
 	 * Check for security violations.
@@ -276,15 +272,156 @@ int
 process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe *tf = process_frame(l);
-	struct proc *p = l->l_proc;
+	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
+	const uint64_t rip = (uint64_t)addr;
 
-	if (p->p_flag & PK_32) {
+	if (rip >= (pk32 ? VM_MAXUSER_ADDRESS32 : VM_MAXUSER_ADDRESS))
 		return EINVAL;
-	}
-
-	if ((uint64_t)addr >= VM_MAXUSER_ADDRESS)
-		return EINVAL;
-	tf->tf_rip = (uint64_t)addr;
+	tf->tf_rip = rip;
 
 	return 0;
 }
+
+#ifdef __HAVE_PTRACE_MACHDEP
+static int
+process_machdep_read_xstate(struct lwp *l, struct xstate *regs)
+{
+	return process_read_xstate(l, regs);
+}
+
+static int
+process_machdep_write_xstate(struct lwp *l, const struct xstate *regs)
+{
+	int error;
+
+	/*
+	 * Check for security violations.
+	 */
+	error = process_verify_xstate(regs);
+	if (error != 0)
+		return error;
+
+	return process_write_xstate(l, regs);
+}
+
+int
+ptrace_machdep_dorequest(
+    struct lwp *l,
+    struct lwp *lt,
+    int req,
+    void *addr,
+    int data
+)
+{
+	struct uio uio;
+	struct iovec iov;
+	struct vmspace *vm;
+	int error;
+	bool write = false;
+
+	switch (req) {
+	case PT_SETXSTATE:
+		write = true;
+
+		/* FALLTHROUGH */
+	case PT_GETXSTATE:
+		/* write = false done above. */
+		if (!process_machdep_validfpu(lt->l_proc))
+			return EINVAL;
+		if (__predict_false(l->l_proc->p_flag & PK_32)) {
+			struct netbsd32_iovec user_iov;
+			if ((error = copyin(addr, &user_iov, sizeof(user_iov)))
+			    != 0)
+				return error;
+
+			iov.iov_base = NETBSD32PTR64(user_iov.iov_base);
+			iov.iov_len = user_iov.iov_len;
+		} else {
+			struct iovec user_iov;
+			if ((error = copyin(addr, &user_iov, sizeof(user_iov)))
+			    != 0)
+				return error;
+
+			iov.iov_base = user_iov.iov_base;
+			iov.iov_len = user_iov.iov_len;
+		}
+
+		error = proc_vmspace_getref(l->l_proc, &vm);
+		if (error)
+			return error;
+		if (iov.iov_len > sizeof(struct xstate))
+			iov.iov_len = sizeof(struct xstate);
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = 0;
+		uio.uio_resid = iov.iov_len;
+		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+		uio.uio_vmspace = vm;
+		error = process_machdep_doxstate(l, lt, &uio);
+		uvmspace_free(vm);
+		return error;
+
+	case PT_SETXMMREGS:		/* only for COMPAT_NETBSD32 */
+		write = true;
+
+		/* FALLTHROUGH */
+	case PT_GETXMMREGS:		/* only for COMPAT_NETBSD32 */
+		/* write = false done above. */
+		MODULE_HOOK_CALL(netbsd32_process_doxmmregs_hook,
+		    (l, lt, addr, write), EINVAL, error);
+		return error;
+	}
+
+#ifdef DIAGNOSTIC
+	panic("ptrace_machdep: impossible");
+#endif
+
+	return 0;
+}
+
+/*
+ * The following functions are used by both ptrace(2) and procfs.
+ */
+
+int
+process_machdep_doxstate(struct lwp *curl, struct lwp *l, struct uio *uio)
+	/* curl:		 tracer */
+	/* l:			 traced */
+{
+	int error;
+	struct xstate r;
+	char *kv;
+	ssize_t kl;
+
+	memset(&r, 0, sizeof(r));
+	kl = MIN(uio->uio_iov->iov_len, sizeof(r));
+	kv = (char *) &r;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	if (kl < 0)
+		error = EINVAL;
+	else
+		error = process_machdep_read_xstate(l, &r);
+	if (error == 0)
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE)
+		error = process_machdep_write_xstate(l, &r);
+
+	uio->uio_offset = 0;
+	return error;
+}
+
+int
+process_machdep_validfpu(struct proc *p)
+{
+
+	if (p->p_flag & PK_SYSTEM)
+		return 0;
+
+	return 1;
+}
+#endif /* __HAVE_PTRACE_MACHDEP */

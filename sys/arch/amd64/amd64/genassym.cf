@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.68.2.2 2020/04/08 14:07:25 martin Exp $
+#	$NetBSD: genassym.cf,v 1.68.2.3 2020/04/13 08:03:30 martin Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -160,6 +160,7 @@ define	PAGE_SIZE		PAGE_SIZE
 
 define	MDL_IRET		MDL_IRET
 define	MDL_COMPAT32		MDL_COMPAT32
+define	MDL_FPU_IN_CPU		MDL_FPU_IN_CPU
 
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
@@ -184,6 +185,7 @@ define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
 define	PCB_COMPAT32		PCB_COMPAT32
 define	PCB_FS			offsetof(struct pcb, pcb_fs)
 define	PCB_GS			offsetof(struct pcb, pcb_gs)
+define	PCB_SAVEFPU		offsetof(struct pcb, pcb_savefpu)
 
 define	TF_RDI			offsetof(struct trapframe, tf_rdi)
 define	TF_RSI			offsetof(struct trapframe, tf_rsi)
@@ -240,7 +242,6 @@ define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
 define	CPU_INFO_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
-define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)

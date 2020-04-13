@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.13 2015/10/02 05:22:51 msaitoh Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.13.18.1 2020/04/13 08:04:00 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.13 2015/10/02 05:22:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.13.18.1 2020/04/13 08:04:00 martin Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -506,9 +506,7 @@ rmixl_pcix_intcfg(rmixl_pcix_softc_t *sc)
 	 * allocate per-cpu, per-pin interrupt event counters
 	 */
 	size = ncpu * PCI_INTERRUPT_PIN_MAX * sizeof(rmixl_pcix_evcnt_t);
-	ev = malloc(size, M_DEVBUF, M_NOWAIT);
-	if (ev == NULL)
-		panic("%s: cannot malloc evcnts\n", __func__);
+	ev = malloc(size, M_DEVBUF, M_WAITOK);
 	sc->sc_evcnts = ev;
 	for (int pin=PCI_INTERRUPT_PIN_A; pin <= PCI_INTERRUPT_PIN_MAX; pin++) {
 		for (int cpu=0; cpu < ncpu; cpu++) {
@@ -982,14 +980,7 @@ rmixl_pcix_pip_add_1(rmixl_pcix_softc_t *sc, int irq, int ipl)
 	 * allocate and initialize softc intr struct
 	 * with one or more dispatch handles
 	 */
-	pip_new = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (pip_new == NULL) {
-#ifdef DIAGNOSTIC
-		printf("%s: cannot malloc\n", __func__);
-#endif
-		return NULL;
-	}
-
+	pip_new = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (pip_old == NULL) {
 		/* initialize the interrupt struct */
 		pip_new->sc = sc;

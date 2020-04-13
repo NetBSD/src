@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr.c,v 1.4.2.2 2019/06/10 22:04:43 christos Exp $	*/
+/*	$NetBSD: sockaddr.c,v 1.4.2.3 2020/04/13 08:02:58 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,9 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#if defined(WIN32) || defined(WIN64)
+#include <malloc.h>
+#endif
 
 #include <isc/buffer.h>
 #include <isc/hash.h>
@@ -226,9 +229,14 @@ isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, bool address_only) {
 		p = 0;
 	}
 
-	h = isc_hash_function(s, length, true, NULL);
-	if (!address_only)
-		h = isc_hash_function(&p, sizeof(p), true, &h);
+	uint8_t buf[sizeof(struct sockaddr_storage) + sizeof(p)];
+	memmove(buf, s, length);
+	if (!address_only) {
+		memmove(buf + length, &p, sizeof(p));
+		h = isc_hash_function(buf, length + sizeof(p), true);
+	} else {
+		h = isc_hash_function(buf, length, true);
+	}
 
 	return (h);
 }

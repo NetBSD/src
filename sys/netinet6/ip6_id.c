@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_id.c,v 1.18 2015/08/07 08:11:33 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_id.c,v 1.18.18.1 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.18 2015/08/07 08:11:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.18.18.1 2020/04/13 08:05:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -164,7 +164,7 @@ pmod(u_int32_t gen, u_int32_t expo, u_int32_t mod)
 }
 
 /*
- * Initalizes the seed and chooses a suitable generator. Also toggles
+ * Initializes the seed and chooses a suitable generator. Also toggles
  * the msb flag. The msb flag is used to generate two distinct
  * cycles of random numbers and thus avoiding reuse of ids.
  *

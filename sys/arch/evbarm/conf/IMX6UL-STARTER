@@ -1,4 +1,4 @@
-#	$NetBSD: IMX6UL-STARTER,v 1.5.6.2 2020/04/08 14:07:34 martin Exp $
+#	$NetBSD: IMX6UL-STARTER,v 1.5.6.3 2020/04/13 08:03:42 martin Exp $
 #
 #	IMX6UL-STARTER - Freescale i.MX6UL Evaluation Board
 #
@@ -209,7 +209,6 @@ imxgpio2	at axi? addr 0x020a4000 irqbase 320 irq 102
 imxgpio3	at axi? addr 0x020a8000 irqbase 352 irq 104
 imxgpio4	at axi? addr 0x020ac000 irqbase 384 irq 106
 gpio*		at imxgpio?
-options 	IMX_GPIO_INTR_SPLIT
 
 # Clock Control
 imxccm0		at axi? addr 0x020c4000

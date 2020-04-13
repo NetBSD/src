@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.42.2.2 2020/04/08 14:07:24 martin Exp $ */
+/* $NetBSD: if_ie.c,v 1.42.2.3 2020/04/13 08:03:28 martin Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.42.2.2 2020/04/08 14:07:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.42.2.3 2020/04/13 08:03:28 martin Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -130,7 +130,7 @@ struct ie_softc {
 	int		sc_ram;
 	int		sc_control;
 	struct ethercom	sc_ethercom;
-	int		promisc;
+	u_short		promisc;
 	int		sc_irqmode;
 
 	u_long	rframes[NFRAMES];

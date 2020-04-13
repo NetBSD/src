@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.22 2017/07/13 16:00:30 christos Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.22.6.1 2020/04/13 08:03:08 martin Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.22 2017/07/13 16:00:30 christos Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.22.6.1 2020/04/13 08:03:08 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -300,6 +300,7 @@ _citrus_NONE_ctype_wcsrtombs(void * __restrict cl, char * __restrict s,
 
 	while (n > 0) {
 		if ((*pwcs0 & ~0xFFU) != 0) {
+			*pwcs = pwcs0;
 			*nresult = (size_t)-1;
 			return (EILSEQ);
 		}

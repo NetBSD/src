@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.32.2.2 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.32.2.3 2020/04/13 08:04:22 martin Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: head/sys/dev/ral/rt2860.c 306591 2016-10-02 20:35:55Z avos $ */
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.32.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.32.2.3 2020/04/13 08:04:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2233,7 +2233,7 @@ static void
 rt2860_enable_mrr(struct rt2860_softc *sc)
 {
 #define CCK(mcs)	(mcs)
-#define OFDM(mcs)	(1 << 3 | (mcs))
+#define OFDM(mcs)	(1U << 3 | (mcs))
 	RAL_WRITE(sc, RT2860_LG_FBK_CFG0,
 	    OFDM(6) << 28 |	/* 54->48 */
 	    OFDM(5) << 24 |	/* 48->36 */
@@ -3294,7 +3294,7 @@ b4inc(uint32_t b32, int8_t delta)
 			b4 = 0;
 		else if (b4 > 0xf)
 			b4 = 0xf;
-		b32 = b32 >> 4 | b4 << 28;
+		b32 = b32 >> 4 | (uint32_t)b4 << 28;
 	}
 	return b32;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.115.18.1 2020/04/08 14:08:06 martin Exp $ */
+/* $NetBSD: vga.c,v 1.115.18.2 2020/04/13 08:04:22 martin Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.115.18.1 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.115.18.2 2020/04/13 08:04:22 martin Exp $");
 
 #include "opt_vga.h"
 /* for WSCONS_SUPPORT_PCVTFONTS */
@@ -360,11 +360,7 @@ egavga_getfont(struct vga_config *vc, struct vgascreen *scr, const char *name,
 		f = &vga_consolefont;
 	else
 #endif
-	f = malloc(sizeof(struct egavga_font), M_DEVBUF, M_NOWAIT);
-	if (!f) {
-		wsfont_unlock(cookie);
-		return (0);
-	}
+	f = malloc(sizeof(struct egavga_font), M_DEVBUF, M_WAITOK);
 	f->wsfont = wf;
 	f->cookie = cookie;
 	f->slot = -1; /* not yet loaded */

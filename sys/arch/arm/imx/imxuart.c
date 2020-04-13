@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.21.2.1 2020/04/08 14:07:29 martin Exp $ */
+/* $NetBSD: imxuart.c,v 1.21.2.2 2020/04/13 08:03:35 martin Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.21.2.1 2020/04/08 14:07:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.21.2.2 2020/04/13 08:03:35 martin Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -355,15 +355,9 @@ imxuart_attach_subr(struct imxuart_softc *sc)
 
 	sc->sc_tty = tp;
 	sc->sc_rbuf = malloc(sizeof (*sc->sc_rbuf) * imxuart_rbuf_size,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_WAITOK);
 	sc->sc_rbuf_size = imxuart_rbuf_size;
 	sc->sc_rbuf_in = sc->sc_rbuf_out = 0;
-	if (sc->sc_rbuf == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to allocate ring buffer\n");
-		return;
-	}
-
 	sc->sc_txfifo_len = 32;
 	sc->sc_txfifo_thresh = 16;	/* when USR1.TRDY, fifo has space
 					 * for this many characters */

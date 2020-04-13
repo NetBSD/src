@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.13.14.1 2020/04/08 14:07:49 martin Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.13.14.2 2020/04/13 08:04:04 martin Exp $	*/
 
 #ifndef _POWERPC_PTRACE_H
 #define	_POWERPC_PTRACE_H
@@ -22,6 +22,7 @@
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->pc
+#define PTRACE_REG_FP(r)	(r)->fixreg[31]
 #define PTRACE_REG_SET_PC(r, v)	(r)->pc = (v)
 #define PTRACE_REG_SP(r)	(r)->fixreg[1]
 #define PTRACE_REG_INTRV(r)	(r)->fixreg[3]

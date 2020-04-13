@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.46.2.2 2020/04/08 14:07:26 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.46.2.3 2020/04/13 08:03:30 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -68,6 +68,8 @@
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
 #include "opt_kasan.h"
+#include "opt_kmsan.h"
+#include "opt_kubsan.h"
 #endif
 
 #include <sys/atomic.h>
@@ -95,6 +97,11 @@
 #ifdef KASAN
 #define L4_SLOT_KASAN		256
 #define NL4_SLOT_KASAN		32
+#endif
+
+#ifdef KMSAN
+#define L4_SLOT_KMSAN		256
+#define NL4_SLOT_KMSAN		4
 #endif
 
 #define NL4_SLOT_DIRECT		32
@@ -132,14 +139,22 @@ extern pt_entry_t *pte_base;
 
 #define PDP_BASE	L4_BASE
 
+#if defined(KMSAN)
+#define NKL4_MAX_ENTRIES	(unsigned long)1	/* 512GB only */
+#else
 #define NKL4_MAX_ENTRIES	(unsigned long)64
+#endif
 #define NKL3_MAX_ENTRIES	(unsigned long)(NKL4_MAX_ENTRIES * 512)
 #define NKL2_MAX_ENTRIES	(unsigned long)(NKL3_MAX_ENTRIES * 512)
 #define NKL1_MAX_ENTRIES	(unsigned long)(NKL2_MAX_ENTRIES * 512)
 
 #define NKL4_KIMG_ENTRIES	1
 #define NKL3_KIMG_ENTRIES	1
+#if defined(KUBSAN) || defined(KMSAN)
+#define NKL2_KIMG_ENTRIES	64	/* really big kernel */
+#else
 #define NKL2_KIMG_ENTRIES	48
+#endif
 
 /*
  * Since kva space is below the kernel in its entirety, we start off
@@ -175,6 +190,7 @@ extern pt_entry_t *pte_base;
 #define PG_X		PTE_X
 
 void svs_pmap_sync(struct pmap *, int);
+void svs_ldt_sync(struct pmap *);
 void svs_lwp_switch(struct lwp *, struct lwp *);
 void svs_pdir_switch(struct pmap *);
 void svs_init(void);

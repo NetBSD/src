@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver_test.c,v 1.3.2.2 2019/06/10 22:04:39 christos Exp $	*/
+/*	$NetBSD: resolver_test.c,v 1.3.2.3 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,13 +19,12 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h> /* IWYU pragma: keep */
 #include <stdlib.h>
 #include <unistd.h>
 
 #define UNIT_TESTING
 #include <cmocka.h>
-
-#include <isc/util.h>
 
 #include <isc/app.h>
 #include <isc/buffer.h>
@@ -33,6 +32,7 @@
 #include <isc/socket.h>
 #include <isc/task.h>
 #include <isc/timer.h>
+#include <isc/util.h>
 
 #include <dns/dispatch.h>
 #include <dns/name.h>

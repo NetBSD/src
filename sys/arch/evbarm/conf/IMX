@@ -1,0 +1,150 @@
+#
+#	$NetBSD: IMX,v 1.4.8.2 2020/04/13 08:03:42 martin Exp $
+#
+#	NXP(Freescale) I.MX family SoCs
+#
+
+include	"arch/evbarm/conf/std.imx"
+include	"arch/evbarm/conf/files.imx"
+include	"arch/evbarm/conf/GENERIC.common"
+
+makeoptions	DTSGNUARCH="arm"
+makeoptions	DTSSUBDIR="fsl"
+makeoptions	DTS="
+	imx6q-hummingboard.dts
+	imx6dl-hummingboard.dts
+	imx6q-hummingboard2.dts
+	imx6dl-hummingboard2.dts
+	imx6qp-sabresd.dts
+"
+
+options 	MULTIPROCESSOR
+
+options 	CPU_CORTEXA9
+
+options 	SOC_IMX6Q
+options 	SOC_IMX6DL
+options 	SOC_IMX6QDL
+
+pseudo-device 	openfirm	# /dev/openfirm
+
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
+#options 	LOCKDEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+# CONSADDR is required for early init messages from VERBOSE_INIT_ARM.
+options 	CONSADDR=0x02020000
+options 	EARLYCONS=imx
+options 	BOOT_ARGS="\"verbose debug\""
+
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+config		netbsd		root on ? type ?
+
+# Device tree support
+armfdt0		at root
+simplebus*	at fdt? pass 0
+
+# CPUs
+cpus*		at fdt? pass 0
+cpu*		at fdt? pass 0
+
+# Timer
+a9ptmr*		at fdt? pass 2		# ARM Cortex A5/A9 Private Timer
+arma9ptmr*	at a9ptmr?
+a9tmr*		at fdt? pass 2		# A9 Global Timer
+arma9tmr0	at a9tmr?
+
+# Interrupt controller
+gic*		at fdt? pass 1		# ARM Generic Interrupt Controller
+armgic0		at gic?
+
+l2cc*		at fdt? pass 1		# ARM Cortex A9 L2 Cache Controller
+arml2cc*	at l2cc?
+
+# Clock
+fclock*		at fdt? pass 1
+ffclock*	at fdt? pass 1
+fregulator*	at fdt? pass 5
+gregulator*	at fdt? pass 4
+imxccm*		at fdt? pass 1		# i.MX6 ccm
+
+# IOMUX
+imxiomux*	at fdt? pass 2
+
+# GPC
+imxgpc*		at fdt? pass 2
+
+# GPIO
+imxgpio*	at fdt? pass 3
+gpio*		at gpiobus?
+
+# UART
+imxuart*	at fdt?
+options		IMXUARTCONSOLE
+
+# Network Interfaces
+enet*		at fdt?			# FEC
+
+# MII/PHY support
+atphy*	at mii? phy ?			# Attansic/Atheros PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# SATA
+ahcisata*	at fdt?			# SATA
+atabus* 	at ahcisata? channel ?
+wd*		at atabus? drive ?
+
+# ATAPI bus support
+atapibus*	at atapi?
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+cd*		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+st*		at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+# SDMMC
+sdhc*		at fdt?			# SDMMC
+sdmmc*		at sdhc?
+ld*		at sdmmc?
+
+# USB
+imxusbphy*	at fdt?
+imxusbc*	at fdt?
+ehci*		at imxusbc?
+usb*		at ehci?
+
+# USB device drivers
+include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
+
+# PCIe
+imxpcie*	at fdt?
+#options PCIVERBOSE
+#options PCI_CONFIG_DUMP
+
+pci*		at imxpcie?
+ppb*		at pci? dev ? function ?
+pci*		at ppb?
+
+# IIC
+imxi2c* 	at fdt?
+iic*		at imxi2c?
+
+# SPI
+imxspi*		at fdt?
+spi*		at imxspi?
+options		IMXSPINSLAVES=1
+
+# SPI NOR-Flash
+spiflash*	at spiflashbus?
+m25p*		at spi? slave ?
+
+cinclude "arch/evbarm/conf/IMX.local"
+

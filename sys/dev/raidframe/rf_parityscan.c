@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.34.56.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.34.56.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.34.56.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.34.56.2 2020/04/13 08:04:47 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -417,8 +417,8 @@ rf_VerifyDegrModeWrite(RF_Raid_t *raidPtr, RF_AccessStripeMapHeader_t *asmh)
  */
 RF_DagHeader_t *
 rf_MakeSimpleDAG(RF_Raid_t *raidPtr, int nNodes, int bytesPerSU, char *databuf,
-		 int (*doFunc) (RF_DagNode_t * node),
-		 int (*undoFunc) (RF_DagNode_t * node),
+		 void (*doFunc) (RF_DagNode_t * node),
+		 void (*undoFunc) (RF_DagNode_t * node),
 		 const char *name, RF_AllocListElem_t *alloclist,
 		 RF_RaidAccessFlags_t flags, int priority)
 {

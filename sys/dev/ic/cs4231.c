@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.29.10.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.29.10.2 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.29.10.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.29.10.2 2020/04/13 08:04:21 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -164,11 +164,10 @@ cs4231_common_attach(struct cs4231_softc *sc, device_t self,
 		sc->sc_ad1848.chip_name = "CS4232C";
 		break;
 	default:
-		if ((buf = malloc(32, M_TEMP, M_NOWAIT)) != NULL) {
-			snprintf(buf, 32, "unknown rev: %x/%x",
-			    reg&0xe0, reg&7);
-			sc->sc_ad1848.chip_name = buf;
-		}
+		buf = malloc(32, M_TEMP, M_WAITOK);
+		snprintf(buf, 32, "unknown rev: %x/%x",
+		    reg&0xe0, reg&7);
+		sc->sc_ad1848.chip_name = buf;
 	}
 
 	sc->sc_ad1848.mode = 2;	/* put ad1848 driver in `MODE 2' mode */

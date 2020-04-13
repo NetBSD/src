@@ -1,5 +1,5 @@
 /* Base configuration file for all NetBSD targets.
-   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+   Copyright (C) 1997-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -63,7 +63,7 @@ along with GCC; see the file COPYING3.  If not see
  * XXX figure out a better way to do this
  */
 #undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include/gcc-6"
+#define GCC_INCLUDE_DIR "/usr/include/gcc-7"
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
@@ -107,31 +107,15 @@ along with GCC; see the file COPYING3.  If not see
    FIXME: Could eliminate the duplication here if we were allowed to
    use string concatenation.  */
 
-#ifdef NETBSD_ENABLE_PTHREADS
-#define NETBSD_LIB_SPEC		\
+#define NETBSD_LIB_SPEC_PTHREAD \
   "%{pthread:			\
      %{!p:			\
        %{!pg:-lpthread}}	\
      %{p:-lpthread_p}		\
-     %{pg:-lpthread_p}}		\
-   %{posix:			\
-     %{!p:			\
-       %{!pg:-lposix}}		\
-     %{p:-lposix_p}		\
-     %{pg:-lposix_p}}		\
-   %{shared:			\
-     %{!p:			\
-       %{!pg:-lc}}		\
-     %{p:-lc_p}			\
-       %{pg:-lc_p}}		\
-   %{!shared:			\
-     %{!symbolic:		\
-       %{!p:			\
-	 %{!pg:-lc}}		\
-       %{p:-lc_p}		\
-       %{pg:-lc_p}}}"
-#else
+     %{pg:-lpthread_p}}"
+
 #define NETBSD_LIB_SPEC		\
+  NETBSD_LIB_SPEC_PTHREAD       \
   "%{posix:			\
      %{!p:			\
        %{!pg:-lposix}}		\
@@ -148,7 +132,6 @@ along with GCC; see the file COPYING3.  If not see
 	 %{!pg:-lc}}		\
        %{p:-lc_p}		\
        %{pg:-lc_p}}}"
-#endif
 
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
@@ -156,9 +139,18 @@ along with GCC; see the file COPYING3.  If not see
 #define LIBSTDCXX_PROFILE "stdc++_p"
 #define MATH_LIBRARY_PROFILE "m_p"
 
-#if 0 // XXXMRG
-#undef STATIC_LIBASAN_LIBS
-#define STATIC_LIBASAN_LIBS "-lstdc++ -lpthread"
+/* Provide a LIBGCC_SPEC appropriate for NetBSD.  */
+#ifdef NETBSD_NATIVE
+#define NETBSD_LIBGCC_SPEC	\
+  "%{!symbolic:			\
+     %{!shared:			\
+       %{!p:			\
+	 %{!pg: -lgcc}}}	\
+     %{shared: -lgcc_pic}	\
+     %{p: -lgcc_p}		\
+     %{pg: -lgcc_p}}"
+#else
+#define NETBSD_LIBGCC_SPEC "-lgcc"
 #endif
 
 /* Pass -cxx-isystem to cc1/cc1plus.  */
@@ -170,6 +162,10 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef CC1PLUS_SPEC
 #define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC
+
+#if defined(HAVE_LD_EH_FRAME_HDR)
+#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
+#endif
 
 #undef TARGET_LIBC_HAS_FUNCTION
 #define TARGET_LIBC_HAS_FUNCTION no_c99_libc_has_function
@@ -208,10 +204,13 @@ along with GCC; see the file COPYING3.  If not see
 #undef WINT_TYPE
 #define WINT_TYPE "int"
 
-#undef LINK_EH_SPEC
-#define LINK_EH_SPEC "--eh-frame-hdr "
-
 /* Use --as-needed -lgcc_s for eh support.  */
 #ifdef HAVE_LD_AS_NEEDED
 #define USE_LD_AS_NEEDED 1
 #endif
+
+#undef  SUBTARGET_INIT_BUILTINS
+#define SUBTARGET_INIT_BUILTINS						\
+  do {									\
+    netbsd_patch_builtins ();						\
+  } while(0)

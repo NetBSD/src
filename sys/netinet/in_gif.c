@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.94 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.94.2.1 2020/04/13 08:05:16 martin Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.94 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.94.2.1 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -81,12 +81,12 @@ static int
 in_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 {
 	struct rtentry *rt;
-	struct route *ro;
-	struct gif_ro *gro;
 	struct gif_softc *sc;
 	struct sockaddr_in *sin_src;
 	struct sockaddr_in *sin_dst;
 	struct ifnet *ifp;
+	struct route *ro_pc;
+	kmutex_t *lock_pc;
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
 	int proto, error;
 	u_int8_t tos;
@@ -173,30 +173,25 @@ in_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 	bcopy(&iphdr, mtod(m, struct ip *), sizeof(struct ip));
 
 	sc = var->gv_softc;
-	gro = percpu_getref(sc->gif_ro_percpu);
-	mutex_enter(gro->gr_lock);
-	ro = &gro->gr_ro;
-	if ((rt = rtcache_lookup(ro, var->gv_pdst)) == NULL) {
-		mutex_exit(gro->gr_lock);
-		percpu_putref(sc->gif_ro_percpu);
+	if_tunnel_get_ro(sc->gif_ro_percpu, &ro_pc, &lock_pc);
+	if ((rt = rtcache_lookup(ro_pc, var->gv_pdst)) == NULL) {
+		if_tunnel_put_ro(sc->gif_ro_percpu, lock_pc);
 		m_freem(m);
 		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */
 	if (rt->rt_ifp == ifp) {
-		rtcache_unref(rt, ro);
-		rtcache_free(ro);
-		mutex_exit(gro->gr_lock);
-		percpu_putref(sc->gif_ro_percpu);
+		rtcache_unref(rt, ro_pc);
+		rtcache_free(ro_pc);
+		if_tunnel_put_ro(sc->gif_ro_percpu, lock_pc);
 		m_freem(m);
 		return ENETUNREACH;	/*XXX*/
 	}
-	rtcache_unref(rt, ro);
+	rtcache_unref(rt, ro_pc);
 
-	error = ip_output(m, NULL, ro, 0, NULL, NULL);
-	mutex_exit(gro->gr_lock);
-	percpu_putref(sc->gif_ro_percpu);
+	error = ip_output(m, NULL, ro_pc, 0, NULL, NULL);
+	if_tunnel_put_ro(sc->gif_ro_percpu, lock_pc);
 	return (error);
 }
 
@@ -398,7 +393,7 @@ in_gif_detach(struct gif_variant *var)
 	if (error == 0)
 		var->gv_encap_cookie4 = NULL;
 
-	percpu_foreach(sc->gif_ro_percpu, gif_rtcache_free_pc, NULL);
+	if_tunnel_ro_percpu_rtcache_free(sc->gif_ro_percpu);
 
 	return error;
 }

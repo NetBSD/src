@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2010-2016 Free Software Foundation, Inc.
+// Copyright (C) 2010-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -785,6 +785,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
       _AutomatonPtr          _M_automaton;
     };
 
+#if __cplusplus < 201703L
   template<typename _Ch, typename _Tr>
     constexpr regex_constants::syntax_option_type
     basic_regex<_Ch, _Tr>::icase;
@@ -824,6 +825,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
   template<typename _Ch, typename _Tr>
     constexpr regex_constants::syntax_option_type
     basic_regex<_Ch, _Tr>::egrep;
+#endif // ! C++17
 
   /** @brief Standard regular expressions. */
   typedef basic_regex<char>    regex;

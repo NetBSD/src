@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.21.4.1 2019/06/10 22:06:09 christos Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.21.4.2 2020/04/13 08:03:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.21.4.1 2019/06/10 22:06:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.21.4.2 2020/04/13 08:03:45 martin Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -145,7 +145,6 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.21.4.1 2019/06/10 22:06:09 c
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>
 #include <arm/imx/imx51_iomuxreg.h>
-#include <arm/imx/imxgpiovar.h>
 
 #include <evbarm/netwalker/netwalker_reg.h>
 #include <evbarm/netwalker/netwalker.h>
@@ -163,6 +162,8 @@ static char bootargs[MAX_BOOT_STRING] = BOOT_ARGS;
 char *boot_args = NULL;
 
 extern char KERNEL_BASE_phys[];
+
+u_int uboot_args[4] __attribute__((__section__(".data")));
 
 extern int cpu_do_powersave;
 
@@ -232,7 +233,7 @@ static const struct pmap_devmap netwalker_devmap[] = {
 #endif
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -244,7 +245,7 @@ static const struct pmap_devmap netwalker_devmap[] = {
  *   Setting up page tables for the kernel
  *   Relocating the kernel to the bottom of physical memory
  */
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	/*

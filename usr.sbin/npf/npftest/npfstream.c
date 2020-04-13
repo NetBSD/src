@@ -1,4 +1,4 @@
-/*	$NetBSD: npfstream.c,v 1.7.14.1 2019/06/10 22:10:35 christos Exp $	*/
+/*	$NetBSD: npfstream.c,v 1.7.14.2 2020/04/13 08:05:55 martin Exp $	*/
 
 /*
  * NPF stream processor.
@@ -80,7 +80,7 @@ process_tcpip(const void *data, size_t len, FILE *fp, ifnet_t *ifp)
 
 	fprintf(fp, "%s%2x %5d %3d %11u %11u %11u %11u %12" PRIxPTR,
 	    forw ? ">" : "<", (th->th_flags & (TH_SYN | TH_ACK | TH_FIN)),
-	    packetno, error, (u_int)seq, (u_int)ntohl(th->th_ack),
+	    packetno, error, (unsigned)seq, (unsigned)ntohl(th->th_ack),
 	    tcpdlen, ntohs(th->th_win), (uintptr_t)result[0]);
 
 	for (unsigned i = 1; i < __arraycount(result); i++) {

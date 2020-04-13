@@ -1,4 +1,4 @@
-/*	$NetBSD: etphy.c,v 1.1.62.1 2019/06/10 22:07:13 christos Exp $	*/
+/*	$NetBSD: etphy.c,v 1.1.62.2 2020/04/13 08:04:24 martin Exp $	*/
 /*	$OpenBSD: etphy.c,v 1.4 2008/04/02 20:12:58 brad Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.1.62.1 2019/06/10 22:07:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.1.62.2 2020/04/13 08:04:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,18 +77,19 @@ __KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.1.62.1 2019/06/10 22:07:13 christos Exp 
 #define ETPHY_SR_FDX		0x0080
 
 
-int	etphy_service(struct mii_softc *, struct mii_data *, int);
-void	etphy_attach(device_t, device_t, void *);
-int	etphy_match(device_t, cfdata_t, void *);
-void	etphy_reset(struct mii_softc *);
-void	etphy_status(struct mii_softc *);
+static int	etphy_service(struct mii_softc *, struct mii_data *, int);
+static void	etphy_attach(device_t, device_t, void *);
+static int	etphy_match(device_t, cfdata_t, void *);
+static void	etphy_reset(struct mii_softc *);
+static void	etphy_status(struct mii_softc *);
 
-const struct mii_phy_funcs etphy_funcs = {
+static const struct mii_phy_funcs etphy_funcs = {
 	etphy_service, etphy_status, etphy_reset,
 };
 
 static const struct mii_phydesc etphys[] = {
 	MII_PHY_DESC(AGERE, ET1011),
+	MII_PHY_DESC(AGERE, ET1011C),
 	MII_PHY_END,
 };
 
@@ -133,7 +134,7 @@ static const struct etphy_dsp {
 	{ 0x8010,	46     }	/* IdlguardTime */
 };
 
-int
+static int
 etphy_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -144,7 +145,7 @@ etphy_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-void
+static void
 etphy_attach(device_t parent, device_t self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
@@ -165,6 +166,8 @@ etphy_attach(device_t parent, device_t self, void *aux)
 
 	sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
 
+	mii_lock(mii);
+
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
@@ -174,22 +177,19 @@ etphy_attach(device_t parent, device_t self, void *aux)
 		/* No 1000baseT half-duplex support */
 		sc->mii_extcapabilities &= ~EXTSR_1000THDX;
 	}
-	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
 
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	mii_unlock(mii);
+
+	mii_phy_add_media(sc);
 }
 
-int
+static int
 etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t bmcr;
+
+	KASSERT(mii_locked(mii));
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -218,6 +218,12 @@ etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			bmcr &= ~BMCR_AUTOEN;
 			PHY_WRITE(sc, MII_BMCR, bmcr);
 			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_PDOWN);
+		} else {
+			/*
+			 * Issue reset before configuring autonego.
+			 * XXX Is this required?
+			 */
+			PHY_RESET(sc);
 		}
 
 		mii_phy_setmedia(sc);
@@ -229,7 +235,7 @@ etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 			if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T) {
 				PHY_WRITE(sc, MII_BMCR,
-					  bmcr | BMCR_AUTOEN | BMCR_STARTNEG);
+				    bmcr | BMCR_AUTOEN | BMCR_STARTNEG);
 			}
 		}
 		break;
@@ -252,19 +258,25 @@ etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return 0;
 }
 
-void
+static void
 etphy_reset(struct mii_softc *sc)
 {
 	uint16_t reg;
 	int i;
+
+	KASSERT(mii_locked(sc->mii_pdata));
+
+	if (sc->mii_mpd_model == MII_MODEL_AGERE_ET1011) {
+		mii_phy_reset(sc);
+		return;
+	}
 
 	for (i = 0; i < 2; ++i) {
 		PHY_READ(sc, MII_PHYIDR1, &reg);
 		PHY_READ(sc, MII_PHYIDR2, &reg);
 
 		PHY_READ(sc, ETPHY_CTRL, &reg);
-		PHY_WRITE(sc, ETPHY_CTRL,
-		    ETPHY_CTRL_DIAG | ETPHY_CTRL_RSV1);
+		PHY_WRITE(sc, ETPHY_CTRL, ETPHY_CTRL_DIAG | ETPHY_CTRL_RSV1);
 
 		PHY_WRITE(sc, ETPHY_INDEX, ETPHY_INDEX_MAGIC);
 		PHY_READ(sc, ETPHY_DATA, &reg);
@@ -294,17 +306,19 @@ etphy_reset(struct mii_softc *sc)
 
 	PHY_READ(sc, MII_BMCR, &reg);
 	PHY_READ(sc, ETPHY_CTRL, &reg);
-	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN |  BMCR_S1000);
+	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_S1000);
 	PHY_WRITE(sc, ETPHY_CTRL, ETPHY_CTRL_RSV1);
 
 	mii_phy_reset(sc);
 }
 
-void
+static void
 etphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t bmsr, bmcr, sr;
+
+	KASSERT(mii_locked(mii));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -340,7 +354,7 @@ etphy_status(struct mii_softc *sc)
 	}
 
 	if (sr & ETPHY_SR_FDX)
-		mii->mii_media_active |= IFM_FDX;
+		mii->mii_media_active |= IFM_FDX | mii_phy_flowstatus(sc);
 	else
 		mii->mii_media_active |= IFM_HDX;
 }

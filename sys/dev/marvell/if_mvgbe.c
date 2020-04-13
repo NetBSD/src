@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.50.2.2 2020/04/08 14:08:07 martin Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.50.2.3 2020/04/13 08:04:23 martin Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.50.2.2 2020/04/08 14:08:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.50.2.3 2020/04/13 08:04:23 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -234,7 +234,7 @@ struct mvgbe_softc {
 	struct mvgbe_chain_data sc_cdata;
 	struct mvgbe_ring_data *sc_rdata;
 	bus_dmamap_t sc_ring_map;
-	int sc_if_flags;
+	u_short sc_if_flags;
 	unsigned int sc_ipginttx;
 	unsigned int sc_ipgintrx;
 	int sc_wdogsoft;
@@ -1467,7 +1467,7 @@ mvgbe_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct mvgbe_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	if (change != 0)
 		sc->sc_if_flags = ifp->if_flags;

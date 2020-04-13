@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt_isa.c,v 1.1 2018/05/28 23:47:39 chs Exp $	*/
+/*	$NetBSD: fbt_isa.c,v 1.1.4.1 2020/04/13 07:56:36 martin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -175,28 +175,15 @@ fbt_patch_tracepoint(fbt_probe_t *fbt, fbt_patchval_t val)
 void
 fbt_patch_tracepoint(fbt_probe_t *fbt, fbt_patchval_t val)
 {
-	u_long psl;
-	u_long cr0;
+	u_long psl, cr0;
 
-	/* Disable interrupts. */
-	psl = x86_read_psl();
-	x86_disable_intr();
-
-	/* Disable write protection in supervisor mode. */
-	cr0 = rcr0();
-	lcr0(cr0 & ~CR0_WP);
+	x86_patch_window_open(&psl, &cr0);
 
 	for (; fbt != NULL; fbt = fbt->fbtp_next) {
 		*fbt->fbtp_patchpoint = val;
 	}
 
-	/* Write back and invalidate cache, flush pipelines. */
-	wbinvd();
-	x86_flush();
-	x86_write_psl(psl);
-
-	/* Re-enable write protection. */
-	lcr0(cr0);
+	x86_patch_window_close(psl, cr0);
 }
 #endif
 

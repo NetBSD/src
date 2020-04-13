@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.6.2.2 2020/04/08 14:08:02 martin Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.6.2.3 2020/04/13 08:04:18 martin Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.6.2.2 2020/04/08 14:08:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.6.2.3 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -575,7 +575,7 @@ acpimcfg_map_bus(device_t self, pci_chipset_tag_t pc, int bus)
 		return 0;
 
 	mb = &seg->ms_bus[boff];
-	baddr = seg->ms_address + (boff * ACPIMCFG_SIZE_PER_BUS);
+	baddr = seg->ms_address + (bus * ACPIMCFG_SIZE_PER_BUS);
 
 	/* Map extended configration space of all dev/func. */
 	error = bus_space_map(seg->ms_bst, baddr, ACPIMCFG_SIZE_PER_BUS, 0,
@@ -832,7 +832,7 @@ acpimcfg_configure_bus(device_t self, pci_chipset_tag_t pc, ACPI_HANDLE handle,
 	for (b = seg->ms_bus_start; b <= seg->ms_bus_end; b++) {
 		boff = b - seg->ms_bus_start;
 		mb = &seg->ms_bus[boff];
-		baddr = seg->ms_address + (boff * ACPIMCFG_SIZE_PER_BUS);
+		baddr = seg->ms_address + (b * ACPIMCFG_SIZE_PER_BUS);
 
 		/* Map extended configration space of all dev/func. */
 		error = bus_space_map(seg->ms_bst, baddr, ACPIMCFG_SIZE_PER_BUS, 0,

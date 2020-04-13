@@ -1,10 +1,10 @@
-#	$NetBSD: files.evbarm,v 1.30.2.1 2019/06/10 22:06:05 christos Exp $
+#	$NetBSD: files.evbarm,v 1.30.2.2 2020/04/13 08:03:42 martin Exp $
 #
 # First try for arm-specific configuration info
 #
 
 maxpartitions	8
-maxusers	2 8 64
+maxusers	2 8 128
 
 # Maintain Interrupt statistics
 defflag			IRQSTATS

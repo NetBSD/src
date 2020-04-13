@@ -1,4 +1,4 @@
-/*	$NetBSD: nv.h,v 1.2.6.2 2019/06/10 22:08:38 christos Exp $	*/
+/*	$NetBSD: nv.h,v 1.2.6.3 2020/04/13 08:05:01 martin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -152,9 +152,7 @@ void nvlist_add_bool(nvlist_t *nvl, const char *name, bool value);
 void nvlist_add_number(nvlist_t *nvl, const char *name, uint64_t value);
 void nvlist_add_string(nvlist_t *nvl, const char *name, const char *value);
 void nvlist_add_stringf(nvlist_t *nvl, const char *name, const char *valuefmt, ...) __printflike(3, 4);
-#if !defined(_KERNEL) || defined(_VA_LIST_DECLARED)
 void nvlist_add_stringv(nvlist_t *nvl, const char *name, const char *valuefmt, va_list valueap) __printflike(3, 0);
-#endif
 void nvlist_add_nvlist(nvlist_t *nvl, const char *name, const nvlist_t *value);
 void nvlist_add_binary(nvlist_t *nvl, const char *name, const void *value, size_t size);
 void nvlist_add_bool_array(nvlist_t *nvl, const char *name, const bool *value, size_t nitems);

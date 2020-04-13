@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.20.18.1 2019/06/10 22:07:33 christos Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.20.18.2 2020/04/13 08:04:49 martin Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -117,78 +117,5 @@
 #define CUE_MCAST_TABLE_ADDR			0xFA80
 #define CUE_MCAST_TABLE_LEN			64
 
-#define CUE_TIMEOUT		1000
-#define CUE_BUFSZ		1536
-#define CUE_MIN_FRAMELEN	60
-#define CUE_RX_FRAMES		1
-#define CUE_TX_FRAMES		1
-
-#define CUE_RX_LIST_CNT		1
-#define CUE_TX_LIST_CNT		1
-
 #define CUE_CTL_READ		0x01
 #define CUE_CTL_WRITE		0x02
-
-#define CUE_CONFIG_NO		1
-#define CUE_IFACE_IDX		0
-
-/*
- * The interrupt endpoint is currently unused by the CATC part.
- */
-#define CUE_ENDPT_RX		0x0
-#define CUE_ENDPT_TX		0x1
-#define CUE_ENDPT_INTR		0x2
-#define CUE_ENDPT_MAX		0x3
-
-struct cue_type {
-	uint16_t		cue_vid;
-	uint16_t		cue_did;
-};
-
-struct cue_softc;
-
-struct cue_chain {
-	struct cue_softc	*cue_sc;
-	struct usbd_xfer	*cue_xfer;
-	char			*cue_buf;
-	struct mbuf		*cue_mbuf;
-	int			cue_idx;
-};
-
-struct cue_cdata {
-	struct cue_chain	cue_tx_chain[CUE_TX_LIST_CNT];
-	struct cue_chain	cue_rx_chain[CUE_RX_LIST_CNT];
-	int			cue_tx_prod;
-	int			cue_tx_cons;
-	int			cue_tx_cnt;
-	int			cue_rx_prod;
-};
-
-struct cue_softc {
-	device_t cue_dev;
-
-	struct ethercom		cue_ec;
-	krndsource_t	rnd_source;
-#define GET_IFP(sc) (&(sc)->cue_ec.ec_if)
-
-	struct callout cue_stat_ch;
-
-	struct usbd_device *	cue_udev;
-	struct usbd_interface *	cue_iface;
-	uint16_t		cue_vendor;
-	uint16_t		cue_product;
-	int			cue_ed[CUE_ENDPT_MAX];
-	struct usbd_pipe *	cue_ep[CUE_ENDPT_MAX];
-	uint8_t			cue_mctab[CUE_MCAST_TABLE_LEN];
-	int			cue_if_flags;
-	uint16_t		cue_rxfilt;
-	struct cue_cdata	cue_cdata;
-
-	char			cue_dying;
-	char			cue_attached;
-	u_int			cue_rx_errs;
-	struct timeval		cue_rx_notice;
-
-	struct usb_task		cue_tick_task;
-	struct usb_task		cue_stop_task;
-};

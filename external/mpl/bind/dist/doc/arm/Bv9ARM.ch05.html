@@ -2408,7 +2408,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>check-wildcard</strong></span> <em class="replaceable"><code>boolean</code></em>;
 	<span class="command"><strong>cleaning-interval</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>clients-per-query</strong></span> <em class="replaceable"><code>integer</code></em>;
-	<span class="command"><strong>cookie-algorithm</strong></span> ( aes | sha1 | sha256 );
+	<span class="command"><strong>cookie-algorithm</strong></span> ( aes | sha1 | sha256 | siphash24 );
 	<span class="command"><strong>cookie-secret</strong></span> <em class="replaceable"><code>string</code></em>;
 	<span class="command"><strong>coresize</strong></span> ( default | unlimited | <em class="replaceable"><code>sizeval</code></em> );
 	<span class="command"><strong>datasize</strong></span> ( default | unlimited | <em class="replaceable"><code>sizeval</code></em> );
@@ -2590,11 +2590,12 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 	<span class="command"><strong>resolver-retry-interval</strong></span> <em class="replaceable"><code>integer</code></em>;
 	<span class="command"><strong>response-padding</strong></span> { <em class="replaceable"><code>address_match_element</code></em>; ... } block-size
 	    <em class="replaceable"><code>integer</code></em>;
-	<span class="command"><strong>response-policy</strong></span> { zone <em class="replaceable"><code>string</code></em> [ log <em class="replaceable"><code>boolean</code></em> ] [ max-policy-ttl
-	    <em class="replaceable"><code>ttlval</code></em> ] [ min-update-interval <em class="replaceable"><code>ttlval</code></em> ] [ policy ( cname |
-	    <span class="command"><strong>disabled</strong></span> | drop | given | no-op | nodata | nxdomain | passthru
-	    | tcp-only <em class="replaceable"><code>quoted_string</code></em> ) ] [ recursive-only <em class="replaceable"><code>boolean</code></em> ] [
-	    <span class="command"><strong>nsip-enable</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ nsdname-enable <em class="replaceable"><code>boolean</code></em> ]; ... } [
+	<span class="command"><strong>response-policy</strong></span> { zone <em class="replaceable"><code>string</code></em> [ add-soa <em class="replaceable"><code>boolean</code></em> ] [ log
+	    <em class="replaceable"><code>boolean</code></em> ] [ max-policy-ttl <em class="replaceable"><code>ttlval</code></em> ] [ min-update-interval
+	    <em class="replaceable"><code>ttlval</code></em> ] [ policy ( cname | disabled | drop | given | no-op |
+	    <span class="command"><strong>nodata</strong></span> | nxdomain | passthru | tcp-only <em class="replaceable"><code>quoted_string</code></em> ) ] [
+	    <span class="command"><strong>recursive-only</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ nsip-enable <em class="replaceable"><code>boolean</code></em> ] [
+	    <span class="command"><strong>nsdname-enable</strong></span> <em class="replaceable"><code>boolean</code></em> ]; ... } [ add-soa <em class="replaceable"><code>boolean</code></em> ] [
 	    <span class="command"><strong>break-dnssec</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ max-policy-ttl <em class="replaceable"><code>ttlval</code></em> ] [
 	    <span class="command"><strong>min-update-interval</strong></span> <em class="replaceable"><code>ttlval</code></em> ] [ min-ns-dots <em class="replaceable"><code>integer</code></em> ] [
 	    <span class="command"><strong>nsip-wait-recurse</strong></span> <em class="replaceable"><code>boolean</code></em> ] [ qname-wait-recurse <em class="replaceable"><code>boolean</code></em> ]
@@ -2993,14 +2994,19 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 <dt><span class="term"><span class="command"><strong>geoip-directory</strong></span></span></dt>
 <dd>
               <p>
-                Specifies the directory containing GeoIP
-                <code class="filename">.dat</code> database files for GeoIP
-                initialization.  By default, this option is unset
-                and the GeoIP support will use libGeoIP's
-                built-in directory.
-                (For details, see <a class="xref" href="Bv9ARM.ch05.html#acl" title="acl Statement Definition and Usage">the section called &#8220;<span class="command"><strong>acl</strong></span> Statement Definition and
-          Usage&#8221;</a> about the
-                <span class="command"><strong>geoip</strong></span> ACL.)
+                When <span class="command"><strong>named</strong></span> is compiled using the
+                MaxMind GeoIP2 geolocation API, or the legacy GeoIP API,
+                this specifies the directory containing GeoIP
+                database files.  By default, the option is set based on
+                the prefix used to build the <span class="command"><strong>libmaxminddb</strong></span>
+                module: for example, if the library is installed in
+                <code class="filename">/usr/local/lib</code>, then the default
+                <span class="command"><strong>geoip-directory</strong></span> will be
+                <code class="filename">/usr/local/share/GeoIP</code>. On Windows,
+                the default is the <span class="command"><strong>named</strong></span> working
+                directory.  See <a class="xref" href="Bv9ARM.ch05.html#acl" title="acl Statement Definition and Usage">the section called &#8220;<span class="command"><strong>acl</strong></span> Statement Definition and
+          Usage&#8221;</a> for details about
+                <span class="command"><strong>geoip</strong></span> ACLs.
               </p>
             </dd>
 <dt><span class="term"><span class="command"><strong>key-directory</strong></span></span></dt>
@@ -3184,7 +3190,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
                 the first time; if unsuccessful, the server will
                 will terminate, under the assumption that another
                 server is already running.  If not specified, the default is
-                <code class="filename">/var/run/named/named.lock</code>.
+                <code class="filename">none</code>.
               </p>
               <p>
                 Specifying <span class="command"><strong>lock-file none</strong></span> disables the
@@ -3409,6 +3415,12 @@ options {
                 by the <span class="command"><strong>disable-algorithms</strong></span> will be treated
                 as insecure.
               </p>
+              <p>
+                Configured trust anchors in <span class="command"><strong>trusted-keys</strong></span>
+                or <span class="command"><strong>managed-keys</strong></span> that match a disabled
+                algorithm will be ignored and treated as if they were not
+                configured at all.
+              </p>
             </dd>
 <dt><span class="term"><span class="command"><strong>disable-ds-digests</strong></span></span></dt>
 <dd>
@@ -3480,7 +3492,9 @@ options {
               </p>
               <p>
                 Compatible IPv6 prefixes have lengths of 32, 40, 48, 56,
-                64 and 96 as per RFC 6052.
+                64 and 96 as per RFC 6052.  Bits 64..71 inclusive must
+                be zero with the most significate bit of the prefix in
+                position 0.
               </p>
               <p>
                 Additionally a reverse IP6.ARPA zone will be created for
@@ -3743,6 +3757,8 @@ options {
                 <span class="command"><strong>zone-statistics terse</strong></span> or
                 <span class="command"><strong>zone-statistics none</strong></span>
                 in the <span class="command"><strong>zone</strong></span> statement).
+                These include, for example, DNSSEC signing operations
+                and the number of authoritative answers per query type.
                 The default is <strong class="userinput"><code>terse</code></strong>, providing
                 minimal statistics on zones (including name and
                 current serial number, but not query type
@@ -3778,15 +3794,21 @@ options {
 <dt><span class="term"><span class="command"><strong>automatic-interface-scan</strong></span></span></dt>
 <dd>
                 <p>
-                  If <strong class="userinput"><code>yes</code></strong> and supported by the OS,
-                  automatically rescan network interfaces when the interface
-                  addresses are added or removed.  The default is
-                  <strong class="userinput"><code>yes</code></strong>.
+                  If <strong class="userinput"><code>yes</code></strong> and supported by the operating
+                  system, automatically rescan network interfaces when the
+                  interface addresses are added or removed.  The default is
+                  <strong class="userinput"><code>yes</code></strong>.  This configuration option does
+                  not affect time based <span class="command"><strong>interface-interval</strong></span>
+                  option, and it is recommended to set the time based
+                  <span class="command"><strong>interface-interval</strong></span> to 0 when the operator
+                  confirms that automatic interface scanning is supported by the
+                  operating system.
                 </p>
                 <p>
-                  Currently the OS needs to support routing sockets for
-                  <span class="command"><strong>automatic-interface-scan</strong></span> to be
-                  supported.
+                  The <span class="command"><strong>automatic-interface-scan</strong></span> implementation
+                  uses routing sockets for the network interface discovery,
+                  and therefore the operating system has to support the routing
+                  sockets for this feature to work.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>allow-new-zones</strong></span></span></dt>
@@ -4115,30 +4137,55 @@ options {
 <dt><span class="term"><span class="command"><strong>minimal-responses</strong></span></span></dt>
 <dd>
                 <p>
-                  If set to <strong class="userinput"><code>yes</code></strong>, then when generating
-                  responses the server will only add records to the authority
-                  and additional data sections when they are required (e.g.
-                  delegations, negative responses).  This may improve the
-                  performance of the server.
+                  This option controls the addition of records to the
+                  authority and additional sections of responses. Such
+                  records may be included in responses to be helpful
+                  to clients; for example, NS or MX records may
+                  have associated address records included in the additional
+                  section, obviating the need for a separate address lookup.
+                  However, adding these records to responses is not mandatory
+                  and requires additional database lookups, causing extra
+                  latency when marshalling responses.
+                  <span class="command"><strong>minimal-responses</strong></span> takes one of
+                  four values:
+                </p>
+                <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+                    <strong class="userinput"><code>no</code></strong>: the server will be
+                    as complete as possible when generating responses.
+                  </li>
+<li class="listitem">
+                    <strong class="userinput"><code>yes</code></strong>: the server will only add
+                    records to the authority and additional sections when
+                    such records are required by the DNS protocol (for
+                    example, when returning delegations or negative
+                    responses). This provides the best server performance
+                    but may result in more client queries.
+                  </li>
+<li class="listitem">
+                    <strong class="userinput"><code>no-auth</code></strong>: the server
+                    will omit records from the authority section except
+                    when they are required, but it may still add records
+                    to the additional section.
+                  </li>
+<li class="listitem">
+                    <strong class="userinput"><code>no-auth-recursive</code></strong>: the same
+                    as <strong class="userinput"><code>no-auth</code></strong> when recursion is
+                    requested in the query (RD=1), or the same as
+                    <strong class="userinput"><code>no</code></strong> if recursion is not
+                    requested.
+                  </li>
+</ul></div>
+                <p>
+                  <strong class="userinput"><code>no-auth</code></strong> and
+                  <strong class="userinput"><code>no-auth-recursive</code></strong> are useful when
+                  answering stub clients, which usually ignore the
+                  authority section.  <strong class="userinput"><code>no-auth-recursive</code></strong>
+                  is meant for use in mixed-mode servers that handle both
+                  authoritative and recursive queries.
                 </p>
                 <p>
-                  When set to <strong class="userinput"><code>no-auth</code></strong>, the
-                  server will omit records from the authority section
-                  unless they are required, but it may still add
-                  records to the additional section.  When set to
-                  <strong class="userinput"><code>no-auth-recursive</code></strong>, this
-                  is only done if the query is recursive.  When the
-                  query is not recursive, the effect is same as if
-                  <strong class="userinput"><code>no</code></strong> was specified. These
-                  settings are useful when answering stub clients,
-                  which usually ignore the authority section.
-                  <strong class="userinput"><code>no-auth-recursive</code></strong> is
-                  designed for mixed-mode servers which handle
-                  both authoritative and recursive queries.
-                </p>
-                <p>
-                  The default is
-                  <strong class="userinput"><code>no-auth-recursive</code></strong>.
+                  The default is <strong class="userinput"><code>no-auth-recursive</code></strong>.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>glue-cache</strong></span></span></dt>
@@ -4270,6 +4317,17 @@ options {
                   response to a UDP request from a cookie aware client.
                   BADCOOKIE is sent if there is a bad or no existent
                   server cookie.
+                  The default is <strong class="userinput"><code>no</code></strong>.
+                </p>
+                <p>
+                  Set this to <strong class="userinput"><code>yes</code></strong> to test that DNS
+                  COOKIE clients correctly handle BADCOOKIE or if you are
+                  getting a lot of forged DNS requests with DNS COOKIES
+                  present. Setting this to <strong class="userinput"><code>yes</code></strong> will
+                  result in reduced amplification effect in a reflection
+                  attack, as the BADCOOKIE response will be smaller than
+                  a full response, while also requiring a legitimate client
+                  to follow up with a second query with the new, valid, cookie.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>answer-cookie</strong></span></span></dt>
@@ -4312,6 +4370,7 @@ options {
                   do not send a correct COOKIE option may be limited
                   to receiving smaller responses via the
                   <span class="command"><strong>nocookie-udp-size</strong></span> option.
+                  The default is <strong class="userinput"><code>yes</code></strong>.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>stale-answer-enable</strong></span></span></dt>
@@ -4937,7 +4996,9 @@ options {
                 <p>
                   Synthesize answers from cached NSEC, NSEC3 and
                   other RRsets that have been proved to be correct
-                  using DNSSEC.  The default is <span class="command"><strong>yes</strong></span>.
+                  using DNSSEC.  The default is <span class="command"><strong>no</strong></span>,
+                  but it will become <span class="command"><strong>yes</strong></span> again
+                  in the future releases.
                 </p>
                 <p>
                   Note:
@@ -6454,10 +6515,11 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   minutes. The default
                   is 60 minutes. The maximum value is 28 days (40320 minutes).
                   If set to 0, interface scanning will only occur when
-                  the configuration file is  loaded. After the scan, the
-                  server will
-                  begin listening for queries on any newly discovered
-                  interfaces (provided they are allowed by the
+                  the configuration file is loaded, or when
+                  <span class="command"><strong>automatic-interface-scan</strong></span> is enabled
+                  and supported by the operating system. After the scan, the
+                  server will begin listening for queries on any newly
+                  discovered interfaces (provided they are allowed by the
                   <span class="command"><strong>listen-on</strong></span> configuration), and
                   will stop listening on interfaces that have gone away.
                   For convenience, TTL-style time unit suffixes may be
@@ -6496,7 +6558,8 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
             The first element (which may be an IP address, an IP prefix, an
             ACL name or a nested <span class="command"><strong>address_match_list</strong></span>) of
             each top level list is checked against the source address of
-            the query until a match is found.
+            the query until a match is found. When the addresses in the
+            first element overlap, the first rule to match gets selected.
           </p>
           <p>
             Once the source address of the query has been matched, if the
@@ -6682,8 +6745,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
             appear, they are not combined &#8212; the last one applies.
           </p>
           <p>
-            By default, records are returned in indeterminate but
-            consistent order (see <span class="command"><strong>none</strong></span> above).
+            By default, records are returned in <span class="command"><strong>random</strong></span> order.
           </p>
 
           <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
@@ -6807,6 +6869,20 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   either in the configuration file using
                   <span class="command"><strong>stale-answer-enable</strong></span> or via
                   <span class="command"><strong>rndc serve-stale on</strong></span>.
+                </p>
+              </dd>
+<dt><span class="term"><span class="command"><strong>resolver-nonbackoff-tries</strong></span></span></dt>
+<dd>
+                <p>
+                  Specifies how many retries occur before exponential
+                  backoff kicks in.  The default is <strong class="userinput"><code>3</code></strong>.
+                </p>
+              </dd>
+<dt><span class="term"><span class="command"><strong>resolver-retry-interval</strong></span></span></dt>
+<dd>
+                <p>
+                  The base retry interval in milliseconds.
+                  The default is <strong class="userinput"><code>800</code></strong>.
                 </p>
               </dd>
 <dt><span class="term"><span class="command"><strong>sig-validity-interval</strong></span></span></dt>
@@ -6954,18 +7030,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   this has the greatest chance of success on the first try.
                 </p>
                 <p>
-                  If the initial response times out, <span class="command"><strong>named</strong></span>
-                  will try again with plain DNS, and if that is successful,
-                  it will be taken as evidence that the server does not
-                  support EDNS. After enough failures using EDNS and
-                  successes using plain DNS, <span class="command"><strong>named</strong></span>
-                  will default to plain DNS for future communications
-                  with that server.  (Periodically, <span class="command"><strong>named</strong></span>
-                  will send an EDNS query to see if the situation has
-                  improved.)
-                </p>
-                <p>
-                  However, if the initial query is successful with
+                  If the initial query is successful with
                   EDNS advertising a buffer size of 512, then
                   <span class="command"><strong>named</strong></span> will advertise progressively
                   larger buffer sizes on successive queries, until
@@ -7607,6 +7672,14 @@ deny-answer-aliases { "example.net"; };
           </p>
 
           <p>
+            Rules encoded in response policy zones are processed after
+            <a class="link" href="Bv9ARM.ch05.html#access_control" title="Access Control">Access Control Lists
+            (ACLs)</a>.  All queries from clients which are not
+            permitted access to the resolver will be answered with a
+            status code of REFUSED, regardless of configured RPZ rules.
+          </p>
+
+          <p>
             Five policy triggers can be encoded in RPZ records.
             </p>
 <div class="variablelist"><dl class="variablelist">
@@ -7810,7 +7883,7 @@ deny-answer-aliases { "example.net"; };
                     The empty set of resource records is specified by
                     CNAME whose target is the wildcard top-level
                     domain (*.).
-                    It rewrites the response to NODATA or ANCOUNT=1.
+                    It rewrites the response to NODATA or ANCOUNT=0.
                   </p>
                 </dd>
 <dt><span class="term"><span class="command"><strong>Local Data</strong></span></span></dt>
@@ -8234,22 +8307,6 @@ example.com                 CNAME   rpz-tcp-only.
             (250/1000)*20 or 5.
             Responses sent via TCP are not limited
             but are counted to compute the query per second rate.
-          </p>
-
-          <p>
-            Rate limiters for different name spaces maintain
-            separate counters: If, for example, there is a
-            <span class="command"><strong>rate-limit</strong></span> statement for "com" and
-            another for "example.com", queries matching "example.com"
-            will not be debited against the rate limiter for "com".
-          </p>
-
-          <p>
-            If a <span class="command"><strong>rate-limit</strong></span> statement does not specify a
-            <span class="command"><strong>domain</strong></span>, then it applies to the root domain
-            (".") and thus affects the entire DNS namespace, except those
-            portions covered by other <span class="command"><strong>rate-limit</strong></span>
-            statements.
           </p>
 
           <p>
@@ -13340,14 +13397,29 @@ HOST-127.EXAMPLE. MX 0 .
                 </td>
 <td>
                   <p>
-                    The number of RRsets per RR type and nonexistent
-                    names stored in the cache database.
-                    If the exclamation mark (!) is printed for a RR
-                    type, it means that particular type of RRset is
-                    known to be nonexistent (this is also known as
-                    "NXRRSET").  If a hash mark (#) is present then
-                    the RRset is marked for garbage collection.
-                    Maintained per view.
+                    Statistics counters related to cache contents;
+                    maintained per view.
+                  </p>
+                  <p>
+                    The "NXDOMAIN" counter is the number of names
+                    that have been cached as nonexistent.
+                    Counters named for RR types indicate the
+                    number of active RRsets for each type in the cache
+                    database.
+                  </p>
+                  <p>
+                    If an RR type name is preceded by an exclamation
+                    mark (!), it represents the number of records in the
+                    cache which indicate that the type does not exist
+                    for a particular name (this is also known as "NXRRSET").
+                    If an RR type name is preceded by a hash mark (#), it
+                    represents the number of RRsets for this type that are
+                    present in the cache but whose TTLs have expired; these
+                    RRsets may only be used if stale answers are enabled.
+                    If an RR type name is preceded by a tilde (~), it
+                    represents the number of RRsets for this type that are
+                    present in the cache database but are marked for garbage
+                    collection; these RRsets cannot be used.
                   </p>
                 </td>
 </tr>
@@ -13452,6 +13524,15 @@ HOST-127.EXAMPLE. MX 0 .
             When a middle column exists between these two columns,
             it gives the corresponding counter name of the
             <acronym class="acronym">BIND</acronym> 8 statistics, if applicable.
+          </p>
+
+          <p>
+            Note: BIND statistics counters are signed 64-bit values on
+            all platforms except one: 32-bit Windows, where they are
+            signed 32-bit values.  Given that 32-bit values have a
+            vastly smaller range than 64-bit values, BIND statistics
+            counters in 32-bit Windows builds overflow significantly
+            more quickly than on all other platforms.
           </p>
 
           <div class="section">
@@ -14852,6 +14933,6 @@ HOST-127.EXAMPLE. MX 0 .
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.1 (Stable Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.8 (Stable Release)</p>
 </body>
 </html>

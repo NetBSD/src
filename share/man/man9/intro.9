@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.9,v 1.21.2.1 2019/06/10 22:05:41 christos Exp $
+.\"     $NetBSD: intro.9,v 1.21.2.2 2020/04/13 08:03:26 martin Exp $
 .\"
 .\" Copyright (c) 1997, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -322,11 +322,11 @@ See
 .Pp
 Store data to user-space.
 See
-.Xr store 9 .
+.Xr ustore 9 .
 .Pp
 Fetch data from user-space.
 See
-.Xr fetch 9 .
+.Xr ufetch 9 .
 .Pp
 Move data described by a struct uio.
 See
@@ -494,10 +494,6 @@ See
 Support for PCMCIA PC-Card devices.
 See
 .Xr pcmcia 9 .
-.Pp
-User-space interface to ppbus parallel port.
-See
-.Xr ppi 9 .
 .Pp
 Interface between low and high level radio drivers.
 See

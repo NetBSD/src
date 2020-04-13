@@ -1,4 +1,4 @@
-#	$NetBSD: std.nitrogen6,v 1.5.8.1 2019/06/10 22:06:05 christos Exp $
+#	$NetBSD: std.nitrogen6,v 1.5.8.2 2020/04/13 08:03:42 martin Exp $
 #
 # standard NetBSD/evbarm options for Nitrogen6X
 
@@ -25,10 +25,6 @@ options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_GENERIC_START
 
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.nitrogen6"
-makeoptions 	CPPFLAGS+="-I$S/../../../include"
-makeoptions 	CPUFLAGS="-mcpu=cortex-a9"
 
-# The physical address is chosen by u-boot and determined by armv6_start.S.
-# The 64 byte offset is due to u-boot header.
-makeoptions	KERNEL_BASE_PHYS="0x00000040"
-makeoptions	KERNEL_BASE_VIRT="0x80000040"
+makeoptions 	KERNEL_BASE_PHYS="0x18000040"
+makeoptions 	KERNEL_BASE_VIRT="0x80000040"

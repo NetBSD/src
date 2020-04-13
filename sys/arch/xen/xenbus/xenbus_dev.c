@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.14 2017/03/27 18:39:55 bouyer Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.14.14.1 2020/04/13 08:04:12 martin Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,14 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.14 2017/03/27 18:39:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.14.14.1 2020/04/13 08:04:12 martin Exp $");
 
 #include "opt_xen.h"
 
 #include <sys/types.h>
 #include <sys/null.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -84,14 +83,14 @@ xenbus_kernfs_init(void)
 	kfstype kfst;
 
 	kfst = KERNFS_ALLOCTYPE(xenbus_fileops);
-	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+	KERNFS_ALLOCENTRY(dkt, KM_SLEEP);
 	KERNFS_INITENTRY(dkt, DT_REG, "xenbus", NULL, kfst, VREG,
 	    PRIVCMD_MODE);
 	kernfs_addentry(kernxen_pkt, dkt);
 
 	if (xendomain_is_dom0()) {
 		kfst = KERNFS_ALLOCTYPE(xsd_port_fileops);
-		KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+		KERNFS_ALLOCENTRY(dkt, KM_SLEEP);
 		KERNFS_INITENTRY(dkt, DT_REG, "xsd_port", NULL,
 		    kfst, VREG, XSD_MODE);
 		kernfs_addentry(kernxen_pkt, dkt);
@@ -289,8 +288,7 @@ xenbus_dev_write(void *v)
 		err = xenbus_dev_request_and_reply(&xlwp->u.msg, &reply);
 		if (err == 0) {
 			if (xlwp->u.msg.type == XS_TRANSACTION_START) {
-				trans = malloc(sizeof(*trans), M_DEVBUF,
-				    M_WAITOK);
+				trans = kmem_alloc(sizeof(*trans), KM_SLEEP);
 				trans->handle = (struct xenbus_transaction *)
 					strtoul(reply, NULL, 0);
 				SLIST_INSERT_HEAD(&xlwp->transactions,
@@ -308,12 +306,13 @@ xenbus_dev_write(void *v)
 				}
 				SLIST_REMOVE(&xlwp->transactions, trans, 
 				    xenbus_dev_transaction, trans_next);
-				free(trans, M_DEVBUF);
+				kmem_free(trans, sizeof(*trans));
 			}
 			queue_reply(xlwp, (char *)&xlwp->u.msg,
 						sizeof(xlwp->u.msg));
 			queue_reply(xlwp, (char *)reply, xlwp->u.msg.len);
-			free(reply, M_DEVBUF);
+
+			xenbus_dev_reply_free(&xlwp->u.msg, reply);
 		}
 		break;
 
@@ -348,37 +347,50 @@ xenbus_dev_open(void *v)
 	mutex_enter(&xenbus_dev_open_mtx);
 	u = kfs->kfs_v;
 	if (u == NULL) {
-		u = malloc(sizeof(*u), M_DEVBUF, M_WAITOK);
-		if (u == NULL) {      
-			mutex_exit(&xenbus_dev_open_mtx);
-			return ENOMEM;
-		}
-		memset(u, 0, sizeof(*u));
+		mutex_exit(&xenbus_dev_open_mtx);
+
+		u = kmem_zalloc(sizeof(*u), KM_SLEEP);
 		SLIST_INIT(&u->lwps); 
 		mutex_init(&u->mtx, MUTEX_DEFAULT, IPL_NONE);
-		kfs->kfs_v = u;       
+
+		mutex_enter(&xenbus_dev_open_mtx);
+		/*
+		 * Must re-check if filled while waiting in alloc
+		 * by some other lwp.
+		 */
+		if (kfs->kfs_v) {
+			kmem_free(u, sizeof(*u));
+			u = kfs->kfs_v;
+		} else {
+			kfs->kfs_v = u;       
+		}
 	};
-	mutex_enter(&u->mtx);
 	mutex_exit(&xenbus_dev_open_mtx);
+
+	mutex_enter(&u->mtx);
 	SLIST_FOREACH(xlwp, &u->lwps, lwp_next) {
 		if (xlwp->lwp == curlwp) {
 			break;
 		}
 	}
 	if (xlwp == NULL) {
-		xlwp = malloc(sizeof(*xlwp ), M_DEVBUF, M_WAITOK);      
-		if (xlwp  == NULL) {  
-			mutex_exit(&u->mtx);
-			return ENOMEM;
-		}
-		memset(xlwp, 0, sizeof(*xlwp));
+		mutex_exit(&u->mtx);
+
+		xlwp = kmem_zalloc(sizeof(*xlwp), KM_SLEEP);      
 		xlwp->lwp = curlwp;   
 		SLIST_INIT(&xlwp->transactions);
 		mutex_init(&xlwp->mtx, MUTEX_DEFAULT, IPL_NONE);
-		SLIST_INSERT_HEAD(&u->lwps,
-		    xlwp, lwp_next);  
+
+		mutex_enter(&u->mtx);
+		/*
+		 * While alloc can block, this can't be re-entered with
+		 * curlwp, so no need to re-check. Also the node can't
+		 * be closed while we are blocked here.
+		 */
+		SLIST_INSERT_HEAD(&u->lwps, xlwp, lwp_next);  
 	}
 	mutex_exit(&u->mtx);
+
 	return 0;
 }
 
@@ -415,7 +427,7 @@ xenbus_dev_close(void *v)
 		trans = SLIST_FIRST(&xlwp->transactions);
 		xenbus_transaction_end(trans->handle, 1);
 		SLIST_REMOVE_HEAD(&xlwp->transactions, trans_next);
-		free(trans, M_DEVBUF);
+		kmem_free(trans, sizeof(*trans));
 	}
 	mutex_exit(&xlwp->mtx);
 	SLIST_REMOVE(&u->lwps, xlwp, xenbus_dev_lwp, lwp_next);
@@ -430,8 +442,8 @@ xenbus_dev_close(void *v)
 	mutex_destroy(&u->mtx);
 	kfs->kfs_v = NULL;
 	mutex_exit(&xenbus_dev_open_mtx);
-	free(xlwp, M_DEVBUF);
-	free(u, M_DEVBUF);
+	kmem_free(xlwp, sizeof(*xlwp));
+	kmem_free(u, sizeof(*u));
 	return 0;
 }
 

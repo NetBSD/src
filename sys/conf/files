@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1200.2.1 2019/06/10 22:07:04 christos Exp $
+#	$NetBSD: files,v 1.1200.2.2 2020/04/13 08:04:17 martin Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -30,7 +30,11 @@ defparam opt_syslimits.h	CHILD_MAX OPEN_MAX
 defflag opt_diagnostic.h	_DIAGNOSTIC
 defflag				GPROF
 defflag				KASAN
-defflag				KLEAK
+defflag opt_kasan.h		KASAN_PANIC
+defflag				KCSAN
+defflag opt_kcsan.h		KCSAN_PANIC
+defflag				KMSAN
+defflag opt_kmsan.h		KMSAN_PANIC
 defflag				KCOV
 defflag opt_pool.h		POOL_QUARANTINE
 
@@ -85,8 +89,6 @@ defflag	opt_ptm.h		NO_DEV_PTM COMPAT_BSDPTY
 
 defparam opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
 
-defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
-
 defflag	opt_exec.h		DEBUG_EXEC
 
 defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
@@ -140,7 +142,8 @@ defflag opt_todr.h		TODR_DEBUG
 # compatibility options
 #
 defflag opt_compat_netbsd.h	COMPAT_NETBSD
-defflag	opt_compat_netbsd.h	COMPAT_80: COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_90: COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_80: COMPAT_90, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_70: COMPAT_80, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_60: COMPAT_70, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_50: COMPAT_60, COMPAT_NETBSD
@@ -156,12 +159,22 @@ defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10, COMPAT_NETBSD
 defflag				COMPAT_OSSAUDIO
-defflag				COMPAT_43
+defflag				COMPAT_43: COMPAT_60
 defflag				COMPAT_FREEBSD: COMPAT_09, COMPAT_43
 defflag				COMPAT_LINUX: COMPAT_NETBSD, COMPAT_43
 defflag				COMPAT_SUNOS: COMPAT_09, COMPAT_43
 defflag				COMPAT_ULTRIX: COMPAT_50
+
+# mips64 and aarch64 have COMPAT_NETBSD32 but cannot have EXEC_AOUT; all
+# other users of COMPAT_NETBSD32 need EXEC_AOUT
+ifdef mips
 defflag				COMPAT_NETBSD32
+elifdef aarch64
+defflag				COMPAT_NETBSD32
+else
+defflag				COMPAT_NETBSD32	: EXEC_AOUT
+endif
+
 defflag				COMPAT_SYSV
 defflag				SYSV_IPC	: SYSVSHM, SYSVSEM, SYSVMSG
 defflag				COMPAT_NETBSD32_SYSVIPC : SYSV_IPC,
@@ -185,7 +198,6 @@ defflag	opt_machdep.h		MACHDEP
 # use it.
 
 # Individual crypto transforms
-include "crypto/arc4/files.arc4"
 include "crypto/des/files.des"
 include "crypto/blowfish/files.blowfish"
 include "crypto/cast128/files.cast128"
@@ -195,8 +207,8 @@ include "crypto/camellia/files.camellia"
 # General-purpose crypto processing framework.
 include "opencrypto/files.opencrypto"
 
-# NIST SP800.90 CTR DRBG
-include "crypto/nist_ctr_drbg/files.nist_ctr_drbg"
+# NIST SP800-90A Hash_DRBG
+include "crypto/nist_hash_drbg/files.nist_hash_drbg"
 
 # ChaCha-based fast PRNG
 include "crypto/cprng_fast/files.cprng_fast"
@@ -249,7 +261,6 @@ include "netinet/files.netinet"
 include "netinet6/files.netinet6"
 include "netipsec/files.netipsec"
 include "netmpls/files.netmpls"
-include "netsmb/files.netsmb"
 
 include "net/npf/files.npf"
 include "netinet/files.ipfilter"
@@ -434,15 +445,11 @@ include "dev/splash/files.splash"
 # videomode support
 include "dev/videomode/files.videomode"
 
-# net device attributes - we have generic code for arc(net), ether(net),
-# fddi, and token ring.
+# net device attributes
 #
 define	arcnet
 define	ether
-define	fddi
-define	hippi
 define	ieee1394
-define	token
 define	sppp
 define	wlan
 define	crypto
@@ -768,11 +775,6 @@ file	dev/ic/dp83905.c		dp83905
 define	mx98905
 file	dev/ic/mx98905.c		mx98905
 
-# TROPIC Token-Ring controller
-#
-device	tr: arp, token, ifnet
-file	dev/ic/tropic.c			tr
-
 # NCR 5380 SCSI Bus Controller
 #
 define	ncr5380sbc
@@ -784,12 +786,6 @@ device	nca: scsi, ncr5380sbc
 define	sunscpal
 file	dev/ic/sunscpal.c		sunscpal
 device	ssc: scsi, sunscpal
-
-# DEC FDDI Chipset
-#
-define	pdq
-file	dev/ic/pdq.c			pdq
-file	dev/ic/pdq_ifsubr.c		pdq
 
 # Cyclades Cyclom-8/16/32
 #
@@ -921,11 +917,6 @@ file	dev/ic/clmpcc.c			clmpcc			needs-flag
 device	ug: sysmon_envsys
 file	dev/ic/ug.c			ug			needs-flag
 
-# Essential Communications Corp. HIPPI Interface
-#
-device	esh: hippi, ifnet
-file	dev/ic/rrunner.c		esh			needs-flag
-
 # SMC 90c26, SMC 90C56 (and 90C66 if in compat mode) chip driver
 #
 device	bah: ifnet, arcnet, arp
@@ -1024,17 +1015,6 @@ file	dev/ic/wdc.c			(ata_dma | ata_udma | ata_piobm | atabus) & atabus & wdc_com
 # Workbit NinjaATA-32 IDE controllers
 device	njata: ata, ata_piobm, wdc_common
 file	dev/ic/ninjaata32.c		njata
-
-# CHIPS and Technologies 82C7[12][01] Universal Peripheral Controller
-#
-device	upc { [offset = -1] }
-attach	wdc at upc with wdc_upc
-attach	com at upc with com_upc
-attach	lpt at upc with lpt_upc
-file	dev/ic/upc.c			upc
-file	dev/ic/wdc_upc.c		wdc_upc
-file	dev/ic/com_upc.c		com_upc
-file	dev/ic/lpt_upc.c		lpt_upc
 
 # AHCI-compatible SATA controllers
 define ahcisata_core
@@ -1289,6 +1269,11 @@ file	dev/usb/ehci.c			ehci			needs-flag
 device	xhci: usbus, usbroothub, usb_dma
 file	dev/usb/xhci.c			xhci			needs-flag
 
+# vHCI USB controller
+#
+defpseudodev vhci: usbus, usbroothub
+file	dev/usb/vhci.c			vhci			needs-flag
+
 # Mentor graphics OTG IP
 device	motg: usbus, usbroothub
 file	dev/usb/motg.c			motg			needs-flag
@@ -1380,7 +1365,7 @@ file	dev/ic/bwi.c			bwi
 
 # DM9000 Ethernet controllers
 #
-device	dme: arp, ether, ifnet
+device	dme: arp, ether, ifnet, mii
 file	dev/ic/dm9000.c			dme
 
 # NVM Express Controller
@@ -1488,6 +1473,15 @@ attach	ipmi at ipmibus
 # Designware HDMI TX
 device	dwhdmi: edid, videomode, drmkms, drmkms_i2c
 file	dev/ic/dw_hdmi.c		dwhdmi
+file	dev/ic/dw_hdmi_phy.c		dwhdmi
+
+# Analogix DisplayPort
+device	anxdp: edid, videomode, drmkms, drmkms_i2c
+file	dev/ic/anx_dp.c			anxdp
+
+# Broadcom GENET v5 ethernet
+device	genet: arp, ether, ifnet, mii
+file	dev/ic/bcmgenet.c		genet
 
 #
 # File systems
@@ -1504,7 +1498,6 @@ include "fs/ntfs/files.ntfs"
 include "fs/ptyfs/files.ptyfs"
 include "fs/puffs/files.puffs"
 include "fs/udf/files.udf"
-include "fs/smbfs/files.smbfs"
 include "fs/sysvbfs/files.sysvbfs"
 include "fs/tmpfs/files.tmpfs"
 include "fs/union/files.union"
@@ -1539,12 +1532,6 @@ include "net/files.net"
 # Game adapter (joystick)
 device	joy
 file	dev/ic/joy.c			joy needs-flag
-
-# process monitor for make(1)
-# normally built as module
-defpseudo filemon
-file	dev/filemon/filemon.c		filemon
-file	dev/filemon/filemon_wrapper.c	filemon
 
 #
 # General Purpose Input/Output framework

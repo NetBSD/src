@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.21.2.1 2019/06/10 22:07:16 christos Exp $ */
+/* $NetBSD: if_skreg.h,v 1.21.2.2 2020/04/13 08:04:26 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1112,7 +1112,11 @@
 #define SK_RXMF1_READ_LEVEL	0x0C78
 
 /* Receive MAC FIFO 1 Control/Test */
-#define SK_RFCTL_WR_PTR_TST_ON	0x00004000	/* Write pointer test on*/
+#define SK_RFCTL_RX_MACSEC_FLUSH_ON  0x00800000
+#define SK_RFCTL_RX_MACSEC_FLUSH_OFF 0x00400000
+#define SK_RFCTL_RX_OVER_ON	0x00080000	/* Flush on RX Overrun on */
+#define SK_RFCTL_RX_OVER_OFF	0x00040000	/* Flush on RX Overrun off */
+#define SK_RFCTL_WR_PTR_TST_ON	0x00004000	/* Write pointer test on */
 #define SK_RFCTL_WR_PTR_TST_OFF	0x00002000	/* Write pointer test off */
 #define SK_RFCTL_WR_PTR_STEP	0x00001000	/* Write pointer increment */
 #define SK_RFCTL_RD_PTR_TST_ON	0x00000400	/* Read pointer test on */
@@ -1199,6 +1203,9 @@
 #define SK_TXMF1_RESTART_PTR	0x0D74
 #define SK_TXMF1_READ_LEVEL	0x0D78
 
+/* Transmit MAC FIFO End Address */
+#define SK_TXEND_WM_ON		0x00000003	/* ??? */
+
 /* Transmit MAC FIFO Control/Test */
 #define SK_TFCTL_WR_PTR_TST_ON	0x00004000	/* Write pointer test on*/
 #define SK_TFCTL_WR_PTR_TST_OFF	0x00002000	/* Write pointer test off */
@@ -1275,9 +1282,16 @@
 #define SK_TSTAMP_STOP		0x02
 #define SK_TSTAMP_START		0x04
 
-#define SK_Y2_ASF_CSR		0x0e68
+#define SK_Y2_CPU_WDOG		0x0e48
 
+#define SK_Y2_ASF_CSR		0x0e68
 #define SK_Y2_ASF_RESET		0x08
+
+#define SK_Y2_ASF_HCU_CCSR	0x0e68
+#define SK_Y2_ASF_HCU_CSSR_ARB_RST	__BIT(9)
+#define SK_Y2_ASF_HCU_CSSR_CPU_RST_MODE	__BIT(8)
+#define SK_Y2_ASF_HCU_CSSR_CPU_CLK_DIVIDE_MSK	__BITS(4, 3)
+#define SK_Y2_ASF_HCU_CSSR_UC_STATE_MSK	__BITS(1, 0)
 
 #define SK_Y2_LEV_ITIMERINIT	0x0eb0
 #define SK_Y2_LEV_ITIMERCTL	0x0eb8

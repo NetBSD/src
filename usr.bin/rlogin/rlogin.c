@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.44 2015/10/28 08:15:53 shm Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.44.16.1 2020/04/13 08:05:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.44 2015/10/28 08:15:53 shm Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.44.16.1 2020/04/13 08:05:46 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	struct servent *sp;
 	struct termios tty;
-	sigset_t smask;
+	sigset_t imask, omask;
 	uid_t uid;
 	int argoff, ch, dflag, nflag, one;
 	int i, len, len2;
@@ -247,10 +247,10 @@ main(int argc, char *argv[])
 	sa.sa_handler = lostpeer;
 	(void)sigaction(SIGPIPE, &sa, (struct sigaction *)0);
 	/* will use SIGUSR1 for window size hack, so hold it off */
-	sigemptyset(&smask);
-	sigaddset(&smask, SIGURG);
-	sigaddset(&smask, SIGUSR1);
-	(void)sigprocmask(SIG_SETMASK, &smask, &smask);
+	sigemptyset(&imask);
+	sigaddset(&imask, SIGURG);
+	sigaddset(&imask, SIGUSR1);
+	(void)sigprocmask(SIG_SETMASK, &imask, &omask);
 	/*
 	 * We set SIGURG and SIGUSR1 below so that an
 	 * incoming signal will be held pending rather than being
@@ -291,7 +291,7 @@ main(int argc, char *argv[])
 	}
 
 	(void)setuid(uid);
-	doit(&smask);
+	doit(&omask);
 	/*NOTREACHED*/
 	return (0);
 }
@@ -345,21 +345,21 @@ doit(sigset_t *smask)
 static void
 setsignal(int sig)
 {
-	struct sigaction sa;
-	sigset_t sigs;
+	struct sigaction isa, osa;
+	sigset_t isigs, osigs;
 
-	sigemptyset(&sigs);
-	sigaddset(&sigs, sig);
-	sigprocmask(SIG_BLOCK, &sigs, &sigs);
+	sigemptyset(&isigs);
+	sigaddset(&isigs, sig);
+	sigprocmask(SIG_BLOCK, &isigs, &osigs);
 
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler = exit;
-	sa.sa_flags = SA_RESTART;
-	(void)sigaction(sig, &sa, &sa);
-	if (sa.sa_handler == SIG_IGN)
-		(void)sigaction(sig, &sa, (struct sigaction *) 0);
+	sigemptyset(&isa.sa_mask);
+	isa.sa_handler = exit;
+	isa.sa_flags = SA_RESTART;
+	(void)sigaction(sig, &isa, &osa);
+	if (osa.sa_handler == SIG_IGN)
+		(void)sigaction(sig, &osa, (struct sigaction *) 0);
 
-	(void)sigprocmask(SIG_SETMASK, &sigs, (sigset_t *) 0);
+	(void)sigprocmask(SIG_SETMASK, &osigs, (sigset_t *) 0);
 }
 
 static void

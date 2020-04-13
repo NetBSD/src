@@ -1,3 +1,30 @@
+/*	$NetBSD: imxusbvar.h,v 1.4.18.1 2020/04/13 08:03:35 martin Exp $	*/
+/*
+ * Copyright (c) 2019  Genetec Corporation.  All rights reserved.
+ * Written by Hashimoto Kenichi for Genetec Corporation.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY GENETEC CORPORATION ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL GENETEC CORPORATION
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #ifndef _ARM_IMX_IMXUSBVAR_H
 #define _ARM_IMX_IMXUSBVAR_H
 
@@ -10,12 +37,19 @@ enum imx_usb_role {
 
 struct imxusbc_softc {
 	device_t sc_dev;
+
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_ioh_usbnc;
+
+	struct clk *sc_clk;
 
 	/* filled in by platform dependent param & routine */
+	bus_addr_t sc_ehci_offset;
 	bus_size_t sc_ehci_size;
+
 	void (* sc_init_md_hook)(struct imxehci_softc *);
+	void *(* sc_intr_establish_md_hook)(struct imxehci_softc *);
 	void (* sc_setup_md_hook)(struct imxehci_softc *, enum imx_usb_role);
 };
 
@@ -39,14 +73,18 @@ enum imx_usb_if {
 struct imxehci_softc {
 	ehci_softc_t sc_hsc;
 
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	void *sc_ih;
+
 	struct imxusbc_softc *sc_usbc;
+
 	uint sc_unit;
 	enum imx_usb_if sc_iftype;
 };
 
-int imxusbc_attach_common(device_t, device_t, bus_space_tag_t);
+int imxusbc_attach_common(device_t, device_t, bus_space_tag_t, bus_addr_t, bus_size_t);
 void imxehci_reset(struct imxehci_softc *);
 
 #endif	/* _ARM_IMX_IMXUSBVAR_H */

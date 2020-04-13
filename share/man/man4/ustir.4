@@ -1,10 +1,10 @@
-.\" $NetBSD: ustir.4,v 1.5 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: ustir.4,v 1.5.26.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by David Sainty <David.Sainty@dtsp.co.nz>
+.\" by David Sainty <dsainty@NetBSD.org>
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -64,9 +64,10 @@ appeared in
 The
 .Nm
 driver was written by
-.An David Sainty Aq Mt David.Sainty@dtsp.co.nz .
+.An David Sainty Aq Mt dsainty@NetBSD.org .
 .Sh BUGS
 The STIr4200 cannot notify the driver when it has received data, instead it
-has to be continuously polled.  This driver polls (when idle) at a fairly low
+has to be continuously polled.
+This driver polls (when idle) at a fairly low
 rate of 10 times per second, which means that system performance is not overly
 affected by rapid polling, but latency is fairly high.

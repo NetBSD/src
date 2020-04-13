@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.36.4.1 2019/06/10 22:06:04 christos Exp $
+#	$NetBSD: NETWALKER,v 1.36.4.2 2020/04/13 08:03:42 martin Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -17,7 +17,7 @@ options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x73fbc000
 options 	CONSPEED=115200	# Console speed
 
 # Development and Debugging options
-#options        DEBUG
+#options 	DEBUG
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -79,7 +79,6 @@ imxgpio1	at axi? addr 0x73f88000 irqbase 160 irq 52
 imxgpio2	at axi? addr 0x73f8c000 irqbase 192 irq 54
 imxgpio3	at axi? addr 0x73f90000 irqbase 224 irq 56
 gpio*		at imxgpio?
-options		IMX_GPIO_INTR_SPLIT
 
 # I2C
 imxi2c0		at axi? addr 0x83fc8000 irq 62

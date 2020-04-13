@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.59 2009/08/23 15:56:56 jmcneill Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.59.64.1 2020/04/13 08:04:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.59 2009/08/23 15:56:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.59.64.1 2020/04/13 08:04:22 martin Exp $");
 
 #include "isadma.h"
 
@@ -862,10 +862,7 @@ isapnp_match(device_t parent, cfdata_t match, void *aux)
 		if (ipc->ipc_parent == parent)
 			return (0);
 
-	ipc = malloc(sizeof(*ipc), M_DEVBUF, M_NOWAIT);
-	if (ipc == NULL)
-		panic("isapnp_match: can't allocate probe cookie");
-
+	ipc = malloc(sizeof(*ipc), M_DEVBUF, M_WAITOK);
 	ipc->ipc_parent = parent;
 	LIST_INSERT_HEAD(&isapnp_probes, ipc, ipc_link);
 

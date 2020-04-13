@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.4 2017/04/08 00:25:49 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.4.14.1 2020/04/13 08:03:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -52,6 +52,7 @@
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->r_special.iip
+#define PTRACE_REG_FP(r)	0 /* Not supported in target */
 #define PTRACE_REG_SET_PC(r, v)	(r)->r_special.iip = (v)
 #define PTRACE_REG_SP(r)	(r)->r_special.sp
 #ifdef notyet

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.36.14.1 2020/04/08 14:07:36 martin Exp $
+#	$NetBSD: Makefile.gzboot,v 1.36.14.2 2020/04/13 08:03:47 martin Exp $
 
 NOMAN=  # defined
 
@@ -37,7 +37,6 @@ CPPFLAGS+= -nostdinc -I. -I${EVBARM_STAND}/gzboot -I${EVBARM_STAND}/board
 CPPFLAGS+= -I${S} -I${S}/arch -I${S}/lib/libsa
 CPPFLAGS+= -I${S}/../common/dist/zlib
 CPPFLAGS+= ${ARM_APCS_FLAGS}
-CPPFLAGS+=	-marm
 
 CPPFLAGS+= -D_STANDALONE
 

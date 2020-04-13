@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.4.2.3 2020/04/08 14:07:07 martin Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.4.2.4 2020/04/13 08:02:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -198,7 +198,7 @@ typedef struct rdatasetheader {
 	rbtdb_serial_t                  serial;
 	dns_ttl_t                       rdh_ttl;
 	rbtdb_rdatatype_t               type;
-	uint16_t                    attributes;
+	uint16_t                        attributes;
 	dns_trust_t                     trust;
 	struct noqname                  *noqname;
 	struct noqname                  *closest;
@@ -758,6 +758,17 @@ hexdump(const char *desc, unsigned char *data, size_t size) {
 }
 #endif
 
+/* Fixed RRSet helper macros */
+
+#define DNS_RDATASET_LENGTH 2;
+
+#if DNS_RDATASET_FIXED
+#define DNS_RDATASET_ORDER 2
+#define DNS_RDATASET_COUNT (count * 4)
+#else /* !DNS_RDATASET_FIXED */
+#define DNS_RDATASET_ORDER 0
+#define DNS_RDATASET_COUNT 0
+#endif /* DNS_RDATASET_FIXED */
 
 /*
  * DB Routines
@@ -806,6 +817,12 @@ update_cachestats(dns_rbtdb_t *rbtdb, isc_result_t result) {
 	}
 }
 
+static bool
+do_stats(rdatasetheader_t *header) {
+	return (EXISTS(header) &&
+		(header->attributes & RDATASET_ATTR_STATCOUNT) != 0);
+}
+
 static void
 update_rrsetstats(dns_rbtdb_t *rbtdb, rdatasetheader_t *header,
 		  bool increment)
@@ -813,6 +830,10 @@ update_rrsetstats(dns_rbtdb_t *rbtdb, rdatasetheader_t *header,
 	dns_rdatastatstype_t statattributes = 0;
 	dns_rdatastatstype_t base = 0;
 	dns_rdatastatstype_t type;
+
+	if (!do_stats(header)) {
+		return;
+	}
 
 	/* At the moment we count statistics only for cache DB */
 	INSIST(IS_CACHE(rbtdb));
@@ -824,17 +845,23 @@ update_rrsetstats(dns_rbtdb_t *rbtdb, rdatasetheader_t *header,
 			statattributes = DNS_RDATASTATSTYPE_ATTR_NXRRSET;
 			base = RBTDB_RDATATYPE_EXT(header->type);
 		}
-	} else
+	} else {
 		base = RBTDB_RDATATYPE_BASE(header->type);
+	}
 
-	if (STALE(header))
+	if (STALE(header)) {
 		statattributes |= DNS_RDATASTATSTYPE_ATTR_STALE;
+	}
+	if (ANCIENT(header)) {
+		statattributes |= DNS_RDATASTATSTYPE_ATTR_ANCIENT;
+	}
 
 	type = DNS_RDATASTATSTYPE_VALUE(base, statattributes);
-	if (increment)
+	if (increment) {
 		dns_rdatasetstats_increment(rbtdb->rrsetstats, type);
-	else
+	} else {
 		dns_rdatasetstats_decrement(rbtdb->rrsetstats, type);
+	}
 }
 
 static void
@@ -1445,10 +1472,7 @@ free_rdataset(dns_rbtdb_t *rbtdb, isc_mem_t *mctx, rdatasetheader_t *rdataset) {
 	unsigned int size;
 	int idx;
 
-	if (EXISTS(rdataset) &&
-	    (rdataset->attributes & RDATASET_ATTR_STATCOUNT) != 0) {
-		update_rrsetstats(rbtdb, rdataset, false);
-	}
+	update_rrsetstats(rbtdb, rdataset, false);
 
 	idx = rdataset->node->locknum;
 	if (ISC_LINK_LINKED(rdataset, link)) {
@@ -1511,24 +1535,48 @@ rollback_node(dns_rbtnode_t *node, rbtdb_serial_t serial) {
 
 static inline void
 mark_header_ancient(dns_rbtdb_t *rbtdb, rdatasetheader_t *header) {
-
 	/*
 	 * If we are already ancient there is nothing to do.
 	 */
-	if (ANCIENT(header))
+	if (ANCIENT(header)) {
 		return;
+	}
+
+	/*
+	 * Decrement the stats counter for the appropriate RRtype.
+	 * If the STALE attribute is set, this will decrement the
+	 * stale type counter, otherwise it decrements the active
+	 * stats type counter.
+	 */
+	update_rrsetstats(rbtdb, header, false);
 
 	header->attributes |= RDATASET_ATTR_ANCIENT;
 	header->node->dirty = 1;
 
-	/*
-	 * If we have not been counted then there is nothing to do.
-	 */
-	if ((header->attributes & RDATASET_ATTR_STATCOUNT) == 0)
-		return;
+	/* Increment the stats counter for the ancient RRtype. */
+	update_rrsetstats(rbtdb, header, true);
+}
 
-	if (EXISTS(header))
-		update_rrsetstats(rbtdb, header, true);
+static inline void
+mark_header_stale(dns_rbtdb_t *rbtdb, rdatasetheader_t *header) {
+	/*
+	 * If we are already stale there is nothing to do.
+	 */
+	if (STALE(header)) {
+		return;
+	}
+
+	/* Decrement the stats counter for the appropriate RRtype.
+	 * If the ANCIENT attribute is set (although it is very
+	 * unlikely that an RRset goes from ANCIENT to STALE), this
+	 * will decrement the ancient stale type counter, otherwise it
+	 * decrements the active stats type counter.
+	 */
+	update_rrsetstats(rbtdb, header, false);
+
+	header->attributes |= RDATASET_ATTR_STALE;
+
+	update_rrsetstats(rbtdb, header, true);
 }
 
 static inline void
@@ -2292,18 +2340,10 @@ setnsec3parameters(dns_db_t *db, rbtdb_version_t *version) {
 			 */
 			raw = (unsigned char *)header + sizeof(*header);
 			count = raw[0] * 256 + raw[1]; /* count */
-#if DNS_RDATASET_FIXED
-			raw += count * 4 + 2;
-#else
-			raw += 2;
-#endif
+			raw += DNS_RDATASET_COUNT + DNS_RDATASET_LENGTH;
 			while (count-- > 0U) {
 				length = raw[0] * 256 + raw[1];
-#if DNS_RDATASET_FIXED
-				raw += 4;
-#else
-				raw += 2;
-#endif
+				raw += DNS_RDATASET_ORDER + DNS_RDATASET_LENGTH;
 				region.base = raw;
 				region.length = length;
 				raw += length;
@@ -3105,20 +3145,12 @@ valid_glue(rbtdb_search_t *search, dns_name_t *name, rbtdb_rdatatype_t type,
 	header = search->zonecut_rdataset;
 	raw = (unsigned char *)header + sizeof(*header);
 	count = raw[0] * 256 + raw[1];
-#if DNS_RDATASET_FIXED
-	raw += 2 + (4 * count);
-#else
-	raw += 2;
-#endif
+	raw += DNS_RDATASET_COUNT + DNS_RDATASET_LENGTH;
 
 	while (count > 0) {
 		count--;
 		size = raw[0] * 256 + raw[1];
-#if DNS_RDATASET_FIXED
-		raw += 4;
-#else
-		raw += 2;
-#endif
+		raw += DNS_RDATASET_ORDER + DNS_RDATASET_LENGTH;
 		region.base = raw;
 		region.length = size;
 		raw += size;
@@ -3470,18 +3502,11 @@ matchparams(rdatasetheader_t *header, rbtdb_search_t *search)
 
 	raw = (unsigned char *)header + sizeof(*header);
 	count = raw[0] * 256 + raw[1]; /* count */
-#if DNS_RDATASET_FIXED
-	raw += count * 4 + 2;
-#else
-	raw += 2;
-#endif
+	raw += DNS_RDATASET_COUNT + DNS_RDATASET_LENGTH;
+
 	while (count-- > 0) {
 		rdlen = raw[0] * 256 + raw[1];
-#if DNS_RDATASET_FIXED
-		raw += 4;
-#else
-		raw += 2;
-#endif
+		raw += DNS_RDATASET_ORDER + DNS_RDATASET_LENGTH;
 		region.base = raw;
 		region.length = rdlen;
 		dns_rdata_fromregion(&rdata, search->rbtdb->common.rdclass,
@@ -4341,7 +4366,7 @@ check_stale_header(dns_rbtnode_t *node, rdatasetheader_t *header,
 		 * skip this record.
 		 */
 		if (KEEPSTALE(search->rbtdb) && stale > search->now) {
-			header->attributes |= RDATASET_ATTR_STALE;
+			mark_header_stale(search->rbtdb, header);
 			*header_prev = header;
 			return ((search->options & DNS_DBFIND_STALEOK) == 0);
 		}
@@ -4349,7 +4374,7 @@ check_stale_header(dns_rbtnode_t *node, rdatasetheader_t *header,
 		/*
 		 * This rdataset is stale.  If no one else is using the
 		 * node, we can clean it up right now, otherwise we mark
-		 * it as stale, and the node as dirty, so it will get
+		 * it as ancient, and the node as dirty, so it will get
 		 * cleaned up later.
 		 */
 		if ((header->rdh_ttl < search->now - RBTDB_VIRTUAL) &&
@@ -5311,7 +5336,8 @@ expirenode(dns_db_t *db, dns_dbnode_t *node, isc_stdtime_t now) {
 			mark_header_ancient(rbtdb, header);
 			if (log)
 				isc_log_write(dns_lctx, category, module,
-					      level, "overmem cache: stale %s",
+					      level,
+					      "overmem cache: ancient %s",
 					      printname);
 		} else if (force_expire) {
 			if (! RETAIN(header)) {
@@ -5850,7 +5876,7 @@ add32(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, rbtdb_version_t *rbtversion,
 				 * which covers all types (NXDOMAIN,
 				 * NODATA(QTYPE=ANY)),
 				 *
-				 * We make all other data stale so that the
+				 * We make all other data ancient so that the
 				 * only rdataset that can be found at this
 				 * node is the negative cache entry.
 				 */
@@ -5865,7 +5891,7 @@ add32(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, rbtdb_version_t *rbtversion,
 			}
 			/*
 			 * Otherwise look for any RRSIGs of the given
-			 * type so they can be marked stale later.
+			 * type so they can be marked ancient later.
 			 */
 			for (topheader = rbtnode->data;
 			     topheader != NULL;
@@ -5877,9 +5903,9 @@ add32(dns_rbtdb_t *rbtdb, dns_rbtnode_t *rbtnode, rbtdb_version_t *rbtversion,
 			/*
 			 * We're adding something that isn't a
 			 * negative cache entry.  Look for an extant
-			 * non-stale NXDOMAIN/NODATA(QTYPE=ANY) negative
+			 * non-ancient NXDOMAIN/NODATA(QTYPE=ANY) negative
 			 * cache entry.  If we're adding an RRSIG, also
-			 * check for an extant non-stale NODATA ncache
+			 * check for an extant non-ancient NODATA ncache
 			 * entry which covers the same type as the RRSIG.
 			 */
 			for (topheader = rbtnode->data;
@@ -6567,7 +6593,7 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	 * If we're adding a delegation type, adding to the auxiliary NSEC tree,
 	 * or the DB is a cache in an overmem state, hold an exclusive lock on
 	 * the tree.  In the latter case the lock does not necessarily have to
-	 * be acquired but it will help purge stale entries more effectively.
+	 * be acquired but it will help purge ancient entries more effectively.
 	 */
 	if (IS_CACHE(rbtdb) && isc_mem_isovermem(rbtdb->common.mctx))
 		cache_is_overmem = true;
@@ -8431,12 +8457,11 @@ rdataset_first(dns_rdataset_t *rdataset) {
 		return (ISC_R_NOMORE);
 	}
 
-#if DNS_RDATASET_FIXED
-	if ((rdataset->attributes & DNS_RDATASETATTR_LOADORDER) == 0)
-		raw += 2 + (4 * count);
-	else
-#endif
-		raw += 2;
+	if ((rdataset->attributes & DNS_RDATASETATTR_LOADORDER) == 0) {
+		raw += DNS_RDATASET_COUNT;
+	}
+
+	raw += DNS_RDATASET_LENGTH;
 
 	/*
 	 * The privateuint4 field is the number of rdata beyond the
@@ -8471,16 +8496,14 @@ rdataset_next(dns_rdataset_t *rdataset) {
 	 */
 	raw = rdataset->private5;
 #if DNS_RDATASET_FIXED
-	if ((rdataset->attributes & DNS_RDATASETATTR_LOADORDER) == 0) {
-#endif
+	if ((rdataset->attributes & DNS_RDATASETATTR_LOADORDER) == 0)
+#endif /* DNS_RDATASET_FIXED */
+	{
 		length = raw[0] * 256 + raw[1];
 		raw += length;
-#if DNS_RDATASET_FIXED
 	}
-	rdataset->private5 = raw + 4;           /* length(2) + order(2) */
-#else
-	rdataset->private5 = raw + 2;           /* length(2) */
-#endif
+
+	rdataset->private5 = raw + DNS_RDATASET_ORDER + DNS_RDATASET_LENGTH;
 
 	return (ISC_R_SUCCESS);
 }
@@ -8488,9 +8511,6 @@ rdataset_next(dns_rdataset_t *rdataset) {
 static void
 rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata) {
 	unsigned char *raw = rdataset->private5;        /* RDATASLAB */
-#if DNS_RDATASET_FIXED
-	unsigned int offset;
-#endif
 	unsigned int length;
 	isc_region_t r;
 	unsigned int flags = 0;
@@ -8503,18 +8523,18 @@ rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata) {
 	 */
 #if DNS_RDATASET_FIXED
 	if ((rdataset->attributes & DNS_RDATASETATTR_LOADORDER) != 0) {
+		unsigned int offset;
 		offset = (raw[0] << 24) + (raw[1] << 16) +
 			 (raw[2] << 8) + raw[3];
 		raw = rdataset->private3;
 		raw += offset;
 	}
 #endif
+
 	length = raw[0] * 256 + raw[1];
-#if DNS_RDATASET_FIXED
-	raw += 4;
-#else
-	raw += 2;
-#endif
+
+	raw += DNS_RDATASET_ORDER + DNS_RDATASET_LENGTH;
+
 	if (rdataset->type == dns_rdatatype_rrsig) {
 		if (*raw & DNS_RDATASLAB_OFFLINE)
 			flags |= DNS_RDATA_OFFLINE;
@@ -9668,7 +9688,7 @@ rehash_gluetable(rbtdb_version_t *version) {
 		{
 			hash = isc_hash_function(&gluenode->node,
 						 sizeof(gluenode->node),
-						 true, NULL) %
+						 true) %
 				version->glue_table_size;
 			nextgluenode = gluenode->next;
 			gluenode->next = version->glue_table[hash];
@@ -9836,7 +9856,7 @@ rdataset_addglue(dns_rdataset_t *rdataset, dns_dbversion_t *version,
 	 * the node pointer is a fixed value that won't change for a DB
 	 * version and can be compared directly.
 	 */
-	idx = isc_hash_function(&node, sizeof(node), true, NULL) %
+	idx = isc_hash_function(&node, sizeof(node), true) %
 		rbtversion->glue_table_size;
 
 restart:
@@ -10012,8 +10032,7 @@ no_glue:
 	RWLOCK(&rbtversion->glue_rwlock, isc_rwlocktype_write);
 
 	if (ISC_UNLIKELY(rehash_gluetable(rbtversion))) {
-		idx = isc_hash_function(&node, sizeof(node),
-					true, NULL) %
+		idx = isc_hash_function(&node, sizeof(node), true) %
 			rbtversion->glue_table_size;
 	}
 

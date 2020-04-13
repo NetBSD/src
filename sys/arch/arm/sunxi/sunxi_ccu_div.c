@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_div.c,v 1.5 2018/03/19 16:19:17 bouyer Exp $ */
+/* $NetBSD: sunxi_ccu_div.c,v 1.5.2.1 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_div.c,v 1.5 2018/03/19 16:19:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_div.c,v 1.5.2.1 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,6 +98,38 @@ sunxi_ccu_div_get_rate(struct sunxi_ccu_softc *sc,
 	return rate / ratio;
 }
 
+static int
+sunxi_ccu_div_select_parent(struct sunxi_ccu_softc *sc,
+    struct sunxi_ccu_clk *clk, u_int new_rate)
+{
+	struct sunxi_ccu_div *div = &clk->u.div;
+	struct sunxi_ccu_clk *clk_parent;
+	struct clk *best_parent;
+	u_int index, best_diff;
+	const char *pname;
+
+	best_parent = NULL;
+	best_diff = ~0u;
+	for (index = 0; index < div->nparents; index++) {
+		pname = div->parents[index];
+		if (pname == NULL)
+			continue;
+		clk_parent = sunxi_ccu_clock_find(sc, pname);
+		if (clk_parent == NULL)
+			continue;
+		const u_int rate = clk_get_rate(&clk_parent->base);
+		const u_int diff = abs((int)rate - (int)new_rate);
+		if (diff < best_diff) {
+			best_diff = diff;
+			best_parent = &clk_parent->base;
+		}
+	}
+	if (best_diff == ~0u)
+		return EINVAL;
+
+	return clk_set_parent(&clk->base, best_parent);
+}
+
 int
 sunxi_ccu_div_set_rate(struct sunxi_ccu_softc *sc,
     struct sunxi_ccu_clk *clk, u_int new_rate)
@@ -119,7 +151,7 @@ sunxi_ccu_div_set_rate(struct sunxi_ccu_softc *sc,
 		if ((div->flags & SUNXI_CCU_DIV_SET_RATE_PARENT) != 0)
 			return clk_set_rate(clkp_parent, new_rate);
 		else
-			return ENXIO;
+			return sunxi_ccu_div_select_parent(sc, clk, new_rate);
 	}
 
 	val = CCU_READ(sc, div->reg);

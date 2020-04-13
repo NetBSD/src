@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.42.2.1 2019/06/10 22:09:57 christos Exp $	*/
+/*	$NetBSD: module.h,v 1.42.2.2 2020/04/13 08:05:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -83,6 +83,9 @@ typedef struct modinfo {
 } const modinfo_t;
 
 /* Per module information, maintained by kern_module.c */ 
+
+struct sysctllog;
+
 typedef struct module {
 	u_int			mod_refcnt;
 	int			mod_flags;
@@ -97,6 +100,7 @@ typedef struct module {
 	modsrc_t		mod_source;
 	time_t			mod_autotime;
 	specificdata_reference	mod_sdref;
+	struct sysctllog	*mod_sysctllog;
 } module_t;
 
 /*

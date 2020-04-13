@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.23 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: gpib.c,v 1.23.18.1 2020/04/13 08:04:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.23 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.23.18.1 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,12 +229,7 @@ _gpibregister(struct gpib_softc *sc, int slave, gpib_callback_t callback,
     void *arg, gpib_handle_t *hdl)
 {
 
-	*hdl = malloc(sizeof(struct gpibqueue), M_DEVBUF, M_NOWAIT);
-	if (*hdl == NULL) {
-		DPRINTF(DBG_FAIL, ("_gpibregister: can't allocate queue\n"));
-		return (1);
-	}
-
+	*hdl = malloc(sizeof(struct gpibqueue), M_DEVBUF, M_WAITOK);
 	(*hdl)->hq_slave = slave;
 	(*hdl)->hq_callback = callback;
 	(*hdl)->hq_softc = arg;

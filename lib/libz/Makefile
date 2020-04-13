@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23.14.1 2019/06/10 22:05:28 christos Exp $
+#	$NetBSD: Makefile,v 1.23.14.2 2020/04/13 08:03:17 martin Exp $
 
 WARNS=	3
 
@@ -29,7 +29,7 @@ FILESGRP_zlib.pc=	${BINGRP}
 FILESMODE_zlib.pc=	${NONBINMODE}
 FILESDIR_zlib.pc=	/usr/lib/pkgconfig
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.infback.c+=	-Wno-error=implicit-fallthrough
 COPTS.inflate.c+=	-Wno-error=implicit-fallthrough
 .endif

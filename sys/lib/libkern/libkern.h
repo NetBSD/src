@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.126.4.2 2020/04/08 14:08:52 martin Exp $	*/
+/*	$NetBSD: libkern.h,v 1.126.4.3 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,6 +37,7 @@
 #ifdef _KERNEL_OPT
 #include "opt_diagnostic.h"
 #include "opt_kasan.h"
+#include "opt_kcsan.h"
 #endif
 
 #include <sys/types.h>
@@ -336,7 +337,7 @@ tolower(int ch)
  * *fp does not match the type of struct bar::b_foo.
  * We skip the validation for coverity runs to avoid warnings.
  */
-#ifdef __COVERITY__
+#if defined(__COVERITY__) || defined(__LGTM_BOT__)
 #define __validate_container_of(PTR, TYPE, FIELD) 0
 #define __validate_const_container_of(PTR, TYPE, FIELD) 0
 #else
@@ -362,17 +363,31 @@ void	*memset(void *, int, size_t);
 void	*memmem(const void *, size_t, const void *, size_t);
 #if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
 #if defined(_KERNEL) && defined(KASAN)
-void	*kasan_memset(void *, int, size_t);
-int	 kasan_memcmp(const void *, const void *, size_t);
 void	*kasan_memcpy(void *, const void *, size_t);
+int	 kasan_memcmp(const void *, const void *, size_t);
+void	*kasan_memset(void *, int, size_t);
 #define	memcpy(d, s, l)		kasan_memcpy(d, s, l)
 #define	memcmp(a, b, l)		kasan_memcmp(a, b, l)
 #define	memset(d, v, l)		kasan_memset(d, v, l)
+#elif defined(_KERNEL) && defined(KCSAN)
+void	*kcsan_memcpy(void *, const void *, size_t);
+int	 kcsan_memcmp(const void *, const void *, size_t);
+void	*kcsan_memset(void *, int, size_t);
+#define	memcpy(d, s, l)		kcsan_memcpy(d, s, l)
+#define	memcmp(a, b, l)		kcsan_memcmp(a, b, l)
+#define	memset(d, v, l)		kcsan_memset(d, v, l)
+#elif defined(_KERNEL) && defined(KMSAN)
+void	*kmsan_memcpy(void *, const void *, size_t);
+int	 kmsan_memcmp(const void *, const void *, size_t);
+void	*kmsan_memset(void *, int, size_t);
+#define	memcpy(d, s, l)		kmsan_memcpy(d, s, l)
+#define	memcmp(a, b, l)		kmsan_memcmp(a, b, l)
+#define	memset(d, v, l)		kmsan_memset(d, v, l)
 #else
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
 #define	memset(d, v, l)		__builtin_memset(d, v, l)
-#endif /* _KERNEL && KASAN */
+#endif
 #endif
 
 char	*strcpy(char *, const char *);
@@ -388,11 +403,25 @@ size_t	 kasan_strlen(const char *);
 #define	strcpy(d, s)		kasan_strcpy(d, s)
 #define	strcmp(a, b)		kasan_strcmp(a, b)
 #define	strlen(a)		kasan_strlen(a)
+#elif defined(_KERNEL) && defined(KCSAN)
+char	*kcsan_strcpy(char *, const char *);
+int	 kcsan_strcmp(const char *, const char *);
+size_t	 kcsan_strlen(const char *);
+#define	strcpy(d, s)		kcsan_strcpy(d, s)
+#define	strcmp(a, b)		kcsan_strcmp(a, b)
+#define	strlen(a)		kcsan_strlen(a)
+#elif defined(_KERNEL) && defined(KMSAN)
+char	*kmsan_strcpy(char *, const char *);
+int	 kmsan_strcmp(const char *, const char *);
+size_t	 kmsan_strlen(const char *);
+#define	strcpy(d, s)		kmsan_strcpy(d, s)
+#define	strcmp(a, b)		kmsan_strcmp(a, b)
+#define	strlen(a)		kmsan_strlen(a)
 #else
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
 #define	strlen(a)		__builtin_strlen(a)
-#endif /* _KERNEL && KASAN */
+#endif
 #endif
 
 /* Functions for which we always use built-ins. */
@@ -400,6 +429,9 @@ size_t	 kasan_strlen(const char *);
 #define	alloca(s)		__builtin_alloca(s)
 #endif
 
+char	*strcat(char *, const char *);
+char	*strchr(const char *, int);
+char	*strrchr(const char *, int);
 /* These exist in GCC 3.x, but we don't bother. */
 #if defined(_KERNEL) && defined(KASAN)
 char	*kasan_strcat(char *, const char *);
@@ -445,7 +477,19 @@ int	inet_aton(const char *, struct in_addr *);
 char	*intoa(u_int32_t);
 #define inet_ntoa(a) intoa((a).s_addr)
 void	*memchr(const void *, int, size_t);
+
 void	*memmove(void *, const void *, size_t);
+#if defined(_KERNEL) && defined(KASAN)
+void	*kasan_memmove(void *, const void *, size_t);
+#define	memmove(d, s, l)	kasan_memmove(d, s, l)
+#elif defined(_KERNEL) && defined(KCSAN)
+void	*kcsan_memmove(void *, const void *, size_t);
+#define	memmove(d, s, l)	kcsan_memmove(d, s, l)
+#elif defined(_KERNEL) && defined(KMSAN)
+void	*kmsan_memmove(void *, const void *, size_t);
+#define	memmove(d, s, l)	kmsan_memmove(d, s, l)
+#endif
+
 int	 pmatch(const char *, const char *, const char **);
 #ifndef SMALL_RANDOM
 void	 srandom(unsigned long);

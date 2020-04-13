@@ -1,10 +1,10 @@
-/*	$NetBSD: ldap_queue.h,v 1.5 2018/02/06 01:57:23 christos Exp $	*/
+/*	$NetBSD: ldap_queue.h,v 1.5.4.1 2020/04/13 07:56:13 martin Exp $	*/
 
 /* ldap_queue.h -- queue macros */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2017 The OpenLDAP Foundation.
+ * Copyright 2001-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

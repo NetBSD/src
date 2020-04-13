@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.14.48.1 2020/04/08 14:07:46 martin Exp $ */
+/*	$NetBSD: bus_space.h,v 1.14.48.2 2020/04/13 08:04:01 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,12 +73,18 @@
 typedef u_long bus_addr_t;
 typedef u_long bus_size_t;
 
+#define PRIxBUSADDR	"lx"
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
+
 /*
  * Access methods for bus resources and address space.
  */
 struct mvme68k_bus_space_tag;
 typedef struct mvme68k_bus_space_tag	*bus_space_tag_t;
 typedef u_long	bus_space_handle_t;
+
+#define PRIxBSH		"lx"
 
 struct mvme68k_bus_space_tag {
 	void		*bs_cookie;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.95 2015/04/26 15:15:20 mlelstv Exp $	*/
+/*	$NetBSD: xd.c,v 1.95.18.1 2020/04/13 08:04:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.95 2015/04/26 15:15:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.95.18.1 2020/04/13 08:04:52 martin Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -584,11 +584,8 @@ xdcattach(device_t parent, device_t self, void *aux)
 
 	memset(xdc->iopbase, 0, XDC_MAXIOPB * sizeof(struct xd_iopb));
 
-	xdc->reqs = (struct xd_iorq *)
-	    malloc(XDC_MAXIOPB * sizeof(struct xd_iorq),
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (xdc->reqs == NULL)
-		panic("xdc malloc");
+	xdc->reqs = malloc(XDC_MAXIOPB * sizeof(struct xd_iorq),
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 
 	/* init free list, iorq to iopb pointers, and non-zero fields in the
 	 * iopb which never change. */

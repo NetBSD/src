@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.161.2.2 2020/04/08 14:08:57 martin Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.161.2.3 2020/04/13 08:05:15 martin Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.161.2.2 2020/04/08 14:08:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.161.2.3 2020/04/13 08:05:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -181,19 +181,6 @@ static void	pppintr(void *);
 extern struct linesw ppp_disc;
 
 /*
- * Some useful mbuf macros not in mbuf.h.
- */
-#define M_IS_CLUSTER(m)	((m)->m_flags & M_EXT)
-
-#define M_DATASTART(m)							\
-	(M_IS_CLUSTER(m) ? (m)->m_ext.ext_buf :				\
-	    (m)->m_flags & M_PKTHDR ? (m)->m_pktdat : (m)->m_dat)
-
-#define M_DATASIZE(m)							\
-	(M_IS_CLUSTER(m) ? (m)->m_ext.ext_size :			\
-	    (m)->m_flags & M_PKTHDR ? MHLEN: MLEN)
-
-/*
  * We define two link layer specific mbuf flags, to mark high-priority
  * packets for output, and received packets following lost/corrupted
  * packets.
@@ -206,9 +193,8 @@ static int ppp_clone_destroy(struct ifnet *);
 
 static struct ppp_softc *ppp_create(const char *, int);
 
-LIST_HEAD(ppp_sclist, ppp_softc);
 static struct {
-	struct ppp_sclist list;
+	LIST_HEAD(ppp_sclist, ppp_softc) list;
 	kmutex_t lock;
 } ppp_softcs __cacheline_aligned;
 
@@ -1624,7 +1610,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	 * If the packet will fit in a header mbuf, don't waste a
 	 * whole cluster on it.
 	 */
-	if (ilen <= MHLEN && M_IS_CLUSTER(m)) {
+	if (ilen <= MHLEN && (m->m_flags & M_EXT)) {
 		MGETHDR(mp, M_DONTWAIT, MT_DATA);
 		if (mp != NULL) {
 			m_copydata(m, 0, ilen, mtod(mp, void *));

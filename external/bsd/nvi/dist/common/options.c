@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.5.4.1 2019/06/10 21:51:35 christos Exp $ */
+/*	$NetBSD: options.c,v 1.5.4.2 2020/04/13 07:56:03 martin Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: options.c,v 10.65 2002/01/18 22:34:43 skimo Exp  (Berkeley) Date: 2002/01/18 22:34:43 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: options.c,v 1.5.4.1 2019/06/10 21:51:35 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.5.4.2 2020/04/13 07:56:03 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -356,7 +356,7 @@ opts_init(SCR *sp, int *oargs)
 #define	OI(indx, str) {							\
 	a.len = STRLEN(str);						\
 	if ((const CHAR_T*)str != b2)/* GCC puts strings in text-space. */\
-		(void)MEMCPY(b2, str, a.len+1);				\
+		(void)MEMMOVE(b2, str, a.len+1);			\
 	if (opts_set(sp, argv, NULL)) {					\
 		 optindx = indx;					\
 		goto err;						\

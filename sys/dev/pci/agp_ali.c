@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_ali.c,v 1.16 2010/11/13 13:52:04 uebayasi Exp $	*/
+/*	$NetBSD: agp_ali.c,v 1.16.60.1 2020/04/13 08:04:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.16 2010/11/13 13:52:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.16.60.1 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -81,11 +81,7 @@ agp_ali_attach(device_t parent, device_t self, void *aux)
 	struct agp_gatt *gatt;
 	pcireg_t reg;
 
-	asc = malloc(sizeof *asc, M_AGP, M_NOWAIT);
-	if (asc == NULL) {
-		aprint_error(": failed to allocate softc\n");
-		return ENOMEM;
-	}
+	asc = malloc(sizeof *asc, M_AGP, M_WAITOK);
 	sc->as_chipc = asc;
 	sc->as_methods = &agp_ali_methods;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.80.2.2 2020/04/08 14:07:59 martin Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.80.2.3 2020/04/13 08:04:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.80.2.2 2020/04/08 14:07:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.80.2.3 2020/04/13 08:04:12 martin Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -745,7 +745,7 @@ unbind_pirq_from_evtch(int pirq)
 
 struct pintrhand *
 pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
-    const char *intrname, const char *xname)
+    const char *intrname, const char *xname, bool known_mpsafe)
 {
 	struct pintrhand *ih;
 
@@ -764,7 +764,7 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 	ih->arg = arg;
 
 	if (event_set_handler(evtch, pirq_interrupt, ih, level, intrname,
-	    xname) != 0) {
+	    xname, known_mpsafe) != 0) {
 		kmem_free(ih, sizeof(struct pintrhand));
 		return NULL;
 	}

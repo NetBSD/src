@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.14.1 2020/04/08 14:09:07 martin Exp $
+#	$NetBSD: Makefile,v 1.12.14.2 2020/04/13 08:05:24 martin Exp $
 #
 
 NOMAN=	1
@@ -47,5 +47,13 @@ CPPFLAGS+=	-I${LIBRPCDIR} -DPORTMAP -DLIBWRAP -DRPCBIND_RUMP
 
 LDADD+= -lwrap -lutil
 DPADD+= ${LIBWRAP} ${LIBUTIL}
+
+SANITIZER_RENAME_SYMBOL+=	__getmntinfo13
+
+COPTS.pmap_svc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_svc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_svc_4.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_svc_com.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.mountd.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.test.mk>

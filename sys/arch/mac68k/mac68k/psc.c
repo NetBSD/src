@@ -1,4 +1,4 @@
-/*	$NetBSD: psc.c,v 1.10 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: psc.c,v 1.10.166.1 2020/04/13 08:03:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psc.c,v 1.10 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psc.c,v 1.10.166.1 2020/04/13 08:03:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,9 @@ int		psc_lev5_intr(void *);
 static void	psc_lev5_noint(void *);
 int		psc_lev6_intr(void *);
 static void	psc_lev6_noint(void *);
+
+static int	stop_read_psc_dma(int, int, uint32_t *);
+static int	stop_write_psc_dma(int, int, uint32_t *);
 
 void	(*psc3_ihandler)(void *) = psc_lev3_noint;
 void	*psc3_iarg;
@@ -323,4 +326,165 @@ void
 psc_lev6_noint(void *arg)
 {
 	printf("psc_lev6_noint: device %d\n", (int)arg);
+}
+
+/*
+ * DMA Control routines for esp(4).
+ * XXX Need to be merged with DMA engine of mc(4).
+ */
+
+int
+start_psc_dma(int channel, int *rset, bus_addr_t addr, uint32_t len, int datain)
+{
+	int chan_ctrl, rset_addr, rset_len, rset_cmd, s;
+
+	s = splhigh(); 
+
+	chan_ctrl = PSC_CTLBASE + (channel << 4);
+
+	pause_psc_dma(channel);
+
+	*rset = (psc_reg2(chan_ctrl) & 1) << 4;
+
+	rset_addr = PSC_ADDRBASE + (0x20 * channel) + *rset;
+	rset_len = rset_addr + 4;
+	rset_cmd = rset_addr + 8;
+
+	(void)psc_reg2(rset_cmd);
+	psc_reg4(rset_len) = len;
+	psc_reg4(rset_addr) = addr;
+
+	if (datain)
+		psc_reg2(rset_cmd) = 0x8200;
+	else
+		psc_reg2(rset_cmd) = 0x200;
+
+	psc_reg2(rset_cmd) = 0x100;
+	psc_reg2(rset_cmd) = 0x8800;
+	psc_reg2(chan_ctrl) = 0x400;
+
+	splx(s);
+
+	return 0;
+}
+
+int
+pause_psc_dma(int channel)
+{
+	int chan_ctrl, s;
+
+	s = splhigh();
+
+	chan_ctrl = PSC_CTLBASE + (channel << 4);
+
+	psc_reg2(chan_ctrl) = 0x8400;
+
+	while (!(psc_reg2(chan_ctrl) & 0x4000))
+		continue;
+
+	splx(s);
+
+	return 0;
+}
+
+int
+wait_psc_dma(int channel, int rset, uint32_t *residual)
+{
+	int rset_addr, rset_len, rset_cmd, s;
+
+	s = splhigh();
+
+	rset_addr = PSC_ADDRBASE + (0x20 * channel) + rset;
+	rset_len = rset_addr + 4;
+	rset_cmd = rset_addr + 8;
+
+	while (!(psc_reg2(rset_cmd) & 0x100))
+		continue;
+
+	while (psc_reg2(rset_cmd) & 0x800)
+		continue;
+
+	*residual = psc_reg4(rset_len);
+
+	splx(s);
+
+	if (*residual)
+		return -1;
+	else
+		return 0;
+}
+
+int
+stop_psc_dma(int channel, int rset, uint32_t *residual, int datain)
+{
+	int rval, s;
+
+	s = splhigh();
+
+	if (datain)
+		rval = stop_read_psc_dma(channel, rset, residual);
+	else
+		rval = stop_write_psc_dma(channel, rset, residual);
+
+	splx(s);
+
+	return rval;
+}
+
+static int
+stop_read_psc_dma(int channel, int rset, uint32_t *residual)
+{
+	int chan_ctrl, rset_addr, rset_len, rset_cmd;
+
+	chan_ctrl = PSC_CTLBASE + (channel << 4);
+	rset_addr = PSC_ADDRBASE + (0x20 * channel) + rset;
+	rset_len = rset_addr + 4;
+	rset_cmd = rset_addr + 8;
+
+	if (psc_reg2(rset_cmd) & 0x400) {
+		*residual = 0;
+		return 0;
+	}
+
+	psc_reg2(chan_ctrl) = 0x8200;
+
+	while (psc_reg2(chan_ctrl) & 0x200)
+		continue;
+
+	pause_psc_dma(channel);
+
+	*residual = psc_reg4(rset_len);
+	if (*residual == 0)
+		return 0;
+
+	do {
+		psc_reg4(rset_len) = 0;
+	} while (psc_reg4(rset_len));
+
+	return 0;
+}
+
+static int
+stop_write_psc_dma(int channel, int rset, uint32_t *residual)
+{
+	int chan_ctrl, rset_addr, rset_len, rset_cmd;
+
+	rset_addr = PSC_ADDRBASE + (0x20 * channel) + rset;
+	rset_cmd = rset_addr + 8;
+
+	if (psc_reg2(rset_cmd) & 0x400) {
+		*residual = 0;
+		return 0;
+	}
+
+	chan_ctrl = PSC_CTLBASE + (channel << 4); 
+	rset_len = rset_addr + 4;
+
+	pause_psc_dma(channel);
+
+	*residual = psc_reg4(rset_len);
+
+	psc_reg2(chan_ctrl) = 0x8800;
+
+	return 0;
 }

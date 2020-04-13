@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.42.2.2 2020/04/08 14:07:25 martin Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.42.2.3 2020/04/13 08:03:30 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -224,6 +224,7 @@ IDTVEC(trap01)
 	cld
 	SMAP_ENABLE
 	IBRS_ENTER
+	KMSAN_ENTER
 	movw	%gs,TF_GS(%rsp)
 	movw	%fs,TF_FS(%rsp)
 	movw	%es,TF_ES(%rsp)
@@ -267,6 +268,7 @@ IDTVEC(trap02)
 	movw	%ds,TF_DS(%rsp)
 
 	SVS_ENTER_NMI
+	KMSAN_ENTER
 
 	movl	$MSR_GSBASE,%ecx
 	rdmsr
@@ -292,6 +294,7 @@ IDTVEC(trap02)
 	IBRS_LEAVE
 1:
 
+	KMSAN_LEAVE
 	SVS_LEAVE_NMI
 	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
@@ -668,10 +671,12 @@ calltrap:
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
+	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(trap)
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
+	HANDLE_DEFERRED_FPU
 
 6:
 #ifdef DIAGNOSTIC

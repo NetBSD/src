@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.2 2016/08/24 06:22:20 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.2.22.1 2020/04/13 08:03:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -71,6 +71,11 @@ __BEGIN_DECLS
 /* Default floating-point environment */
 extern const fenv_t	__fe_dfl_env;
 #define	FE_DFL_ENV	(&__fe_dfl_env)
+
+#if __GNUC_PREREQ__(8, 0)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
 
 static __inline int
 feclearexcept(int __excepts)
@@ -168,6 +173,10 @@ fesetround(int __round)
 	__excb();
 	return 0;
 }
+
+#if __GNUC_PREREQ__(8, 0)
+#pragma GCC diagnostic pop
+#endif
 
 int	fegetenv(fenv_t *);
 int	feholdexcept(fenv_t *);

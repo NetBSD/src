@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.25 2011/05/02 07:29:18 mrg Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.25.56.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.25 2011/05/02 07:29:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.25.56.1 2020/04/13 08:04:47 martin Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -126,7 +126,7 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 	RF_ReconBuffer_t *targetRbuf, *t = NULL;	/* temporary rbuf
 							 * pointers */
 	void *ta;		/* temporary data buffer pointer */
-	RF_CallbackDesc_t *cb, *p;
+	RF_CallbackValueDesc_t *cb, *p;
 	int     retcode = 0;
 
 	RF_Etimer_t timer;
@@ -233,10 +233,10 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 			RF_PANIC();
 		}
 		pssPtr->flags |= RF_PSS_BUFFERWAIT;
-		cb = rf_AllocCallbackDesc();	/* append to buf wait list in
+		cb = rf_AllocCallbackValueDesc();/* append to buf wait list in
 						 * recon ctrl structure */
 		cb->col = rbuf->col;
-		cb->callbackArg.v = rbuf->parityStripeID;
+		cb->v = rbuf->parityStripeID;
 		cb->next = NULL;
 		if (!reconCtrlPtr->bufferWaitList)
 			reconCtrlPtr->bufferWaitList = cb;
@@ -399,7 +399,7 @@ void
 rf_ReleaseFloatingReconBuffer(RF_Raid_t *raidPtr, RF_ReconBuffer_t *rbuf)
 {
 	RF_ReconCtrl_t *rcPtr = raidPtr->reconControl;
-	RF_CallbackDesc_t *cb;
+	RF_CallbackValueDesc_t *cb;
 
 	Dprintf2("RECON: releasing rbuf for psid %ld ru %d\n",
 	    (long) rbuf->parityStripeID, rbuf->which_ru);
@@ -413,7 +413,7 @@ rf_ReleaseFloatingReconBuffer(RF_Raid_t *raidPtr, RF_ReconBuffer_t *rbuf)
 		rcPtr->bufferWaitList = cb->next;
 		rf_CauseReconEvent(raidPtr, cb->col, (void *) 1, RF_REVENT_BUFCLEAR);	/* arg==1 => we've
 												 * committed a buffer */
-		rf_FreeCallbackDesc(cb);
+		rf_FreeCallbackValueDesc(cb);
 		raidPtr->procsInBufWait--;
 	} else {
 		rbuf->next = rcPtr->floatingRbufs;

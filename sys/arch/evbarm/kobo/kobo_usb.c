@@ -1,4 +1,4 @@
-/*	$NetBSD: kobo_usb.c,v 1.2 2017/09/22 15:37:13 khorben Exp $	*/
+/*	$NetBSD: kobo_usb.c,v 1.2.4.1 2020/04/13 08:03:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobo_usb.c,v 1.2 2017/09/22 15:37:13 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobo_usb.c,v 1.2.4.1 2020/04/13 08:03:45 martin Exp $");
 
 #include "opt_imx.h"
 
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: kobo_usb.c,v 1.2 2017/09/22 15:37:13 khorben Exp $")
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
-#include <sys/gpio.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -54,14 +53,13 @@ __KERNEL_RCSID(0, "$NetBSD: kobo_usb.c,v 1.2 2017/09/22 15:37:13 khorben Exp $")
 #include <arm/imx/imxusbreg.h>
 #include <arm/imx/imxusbvar.h>
 #include <arm/imx/imx50_iomuxreg.h>
-#include <arm/imx/imxgpiovar.h>
 #include <arm/imx/imx51_ccmreg.h>
 #include <arm/imx/imx51_ccmvar.h>
 
 #include "locators.h"
 
 struct kobo_usbc_softc {
-	struct imxusbc_softc sc_imxusbc;
+	struct imxusbc_softc sc_imxusbc; /* Must be first */
 };
 
 static int	imxusbc_match(device_t, cfdata_t, void *);
@@ -90,16 +88,20 @@ imxusbc_match(device_t parent, cfdata_t cf, void *aux)
 static void
 imxusbc_attach(device_t parent, device_t self, void *aux)
 {
+	struct imxusbc_softc *sc = device_private(self);
 	struct axi_attach_args *aa = aux;
-	struct kobo_usbc_softc *sc = device_private(self);
 
 	aprint_normal("\n");
-	aprint_naive("\n");
+	aprint_normal(": Universal Serial Bus Controller\n");
 
-	sc->sc_imxusbc.sc_init_md_hook = kobo_usb_init;
-	sc->sc_imxusbc.sc_setup_md_hook = NULL;
+	if (aa->aa_size == AXICF_SIZE_DEFAULT)
+		aa->aa_size = USBOH3_SIZE;
 
-	imxusbc_attach_common(parent, self, aa->aa_iot);
+	sc->sc_init_md_hook = kobo_usb_init;
+	sc->sc_intr_establish_md_hook = NULL;
+	sc->sc_setup_md_hook = NULL;
+
+	imxusbc_attach_common(parent, self, aa->aa_iot, aa->aa_addr, aa->aa_size);
 }
 
 static void

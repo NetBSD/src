@@ -1,6 +1,6 @@
 // Prototypes for GLIBC thread locale __-prefixed functions -*- C++ -*-
 
-// Copyright (C) 2002-2016 Free Software Foundation, Inc.
+// Copyright (C) 2002-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -63,7 +63,7 @@ extern "C" __typeof(wcscoll_l) __wcscoll_l;
 extern "C" __typeof(wcsftime_l) __wcsftime_l;
 extern "C" __typeof(wcsxfrm_l) __wcsxfrm_l;
 extern "C" __typeof(wctype_l) __wctype_l;
-#endif 
+#endif
 
 #endif // GLIBC 2.3 and later
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.50.20.2 2020/04/08 14:08:05 martin Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.50.20.3 2020/04/13 08:04:21 martin Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.50.20.2 2020/04/08 14:08:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.50.20.3 2020/04/13 08:04:21 martin Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -2706,9 +2706,7 @@ ahd_alloc_tstate(struct ahd_softc *ahd, u_int scsi_id, char channel)
 	 && ahd->enabled_targets[scsi_id] != master_tstate)
 		panic("%s: ahd_alloc_tstate - Target already allocated",
 		      ahd_name(ahd));
-	tstate = malloc(sizeof(*tstate), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (tstate == NULL)
-		return (NULL);
+	tstate = malloc(sizeof(*tstate), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/*
 	 * If we have allocated a master tstate, copy user settings from
@@ -6018,11 +6016,7 @@ ahd_init(struct ahd_softc *ahd)
 
 	ahd->stack_size = ahd_probe_stack_size(ahd);
 	ahd->saved_stack = malloc(ahd->stack_size * sizeof(uint16_t),
-				  M_DEVBUF, M_NOWAIT);
-	if (ahd->saved_stack == NULL)
-		return (ENOMEM);
-	/* Zero the memory */
-	memset(ahd->saved_stack, 0, ahd->stack_size * sizeof(uint16_t));
+				  M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/*
 	 * Verify that the compiler hasn't over-agressively

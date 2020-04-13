@@ -1,4 +1,4 @@
-/* $NetBSD: bus_defs.h,v 1.4 2017/06/22 16:46:52 flxd Exp $ */
+/* $NetBSD: bus_defs.h,v 1.4.6.1 2020/04/13 08:03:29 martin Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -112,6 +112,8 @@ struct alpha_bus_space_translation;
  */
 typedef struct alpha_bus_space *bus_space_tag_t;
 typedef u_long bus_space_handle_t;
+
+#define PRIxBSH		"lx"
 
 struct alpha_bus_space {
 	/* cookie */

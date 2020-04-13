@@ -1,4 +1,4 @@
-/* $NetBSD: t_stat.c,v 1.5 2017/01/13 20:06:50 christos Exp $ */
+/* $NetBSD: t_stat.c,v 1.5.14.1 2020/04/13 08:05:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stat.c,v 1.5 2017/01/13 20:06:50 christos Exp $");
+__RCSID("$NetBSD: t_stat.c,v 1.5.14.1 2020/04/13 08:05:27 martin Exp $");
 
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -64,7 +64,7 @@ ATF_TC_BODY(stat_chflags, tc)
 	(void)memset(&sa, 0, sizeof(struct stat));
 	(void)memset(&sb, 0, sizeof(struct stat));
 
-	fd = open(path, O_RDONLY | O_CREAT);
+	fd = open(path, O_RDONLY | O_CREAT, 0600);
 
 	ATF_REQUIRE(fd != -1);
 	ATF_REQUIRE(stat(path, &sa) == 0);
@@ -210,7 +210,7 @@ ATF_TC_BODY(stat_mtime, tc)
 		(void)memset(&sa, 0, sizeof(struct stat));
 		(void)memset(&sb, 0, sizeof(struct stat));
 
-		fd[i] = open(path, O_WRONLY | O_CREAT);
+		fd[i] = open(path, O_WRONLY | O_CREAT, 0600);
 
 		ATF_REQUIRE(fd[i] != -1);
 		ATF_REQUIRE(write(fd[i], "X", 1) == 1);
@@ -254,7 +254,7 @@ ATF_TC_BODY(stat_perm, tc)
 	uid = getuid();
 	gid = getgid();
 
-	fd = open(path, O_RDONLY | O_CREAT);
+	fd = open(path, O_RDONLY | O_CREAT, 0600);
 
 	ATF_REQUIRE(fd != -1);
 	ATF_REQUIRE(fstat(fd, &sa) == 0);
@@ -288,7 +288,7 @@ ATF_TC_BODY(stat_size, tc)
 	size_t i;
 	int fd;
 
-	fd = open(path, O_WRONLY | O_CREAT);
+	fd = open(path, O_WRONLY | O_CREAT, 0600);
 	ATF_REQUIRE(fd >= 0);
 
 	for (i = 0; i < n; i++) {
@@ -377,7 +377,7 @@ ATF_TC_BODY(stat_symlink, tc)
 	(void)memset(&sa, 0, sizeof(struct stat));
 	(void)memset(&sb, 0, sizeof(struct stat));
 
-	fd = open(path, O_WRONLY | O_CREAT);
+	fd = open(path, O_WRONLY | O_CREAT, 0600);
 
 	ATF_REQUIRE(fd >= 0);
 	ATF_REQUIRE(symlink(path, pathlink) == 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.56.2.2 2020/04/08 14:08:01 martin Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.56.2.3 2020/04/13 08:04:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.56.2.2 2020/04/08 14:08:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.56.2.3 2020/04/13 08:04:16 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -77,6 +77,7 @@ static void
 netbsd32_from_stat(const struct stat *sb, struct netbsd32_stat43 *sp32)
 {
 
+	memset(sp32, 0, sizeof(*sp32));
 	sp32->st_dev = sb->st_dev;
 	sp32->st_ino = sb->st_ino;
 	sp32->st_mode = sb->st_mode;

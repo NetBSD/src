@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.55 2014/02/27 18:20:21 joerg Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.55.26.1 2020/04/13 08:03:19 martin Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.55 2014/02/27 18:20:21 joerg Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.55.26.1 2020/04/13 08:03:19 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,16 +86,8 @@ __RCSID("$NetBSD: telnetd.c,v 1.55 2014/02/27 18:20:21 joerg Exp $");
 #include <krb5/com_err.h>
 #endif
 
-#ifdef AUTHENTICATION
-int	auth_level = 0;
-#endif
-
 #if	defined(AUTHENTICATION) || defined(ENCRYPTION)
 #include <libtelnet/misc.h>
-#endif
-
-#ifdef SECURELOGIN
-int	require_secure_login = 0;
 #endif
 
 extern int require_hwpreauth;
@@ -164,12 +156,16 @@ struct sockaddr_storage from;
 int
 main(int argc, char *argv[])
 {
+	static char Xline[] = NULL16STR;
+
 	socklen_t fromlen;
 	int on = 1;
 	int ch;
 #if	defined(IPPROTO_IP) && defined(IP_TOS)
 	int tos = -1;
 #endif
+
+	line = Xline;
 
 	pfrontp = pbackp = ptyobuf;
 	netip = netibuf;

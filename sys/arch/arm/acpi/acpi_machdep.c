@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.6.4.3 2020/04/08 14:07:27 martin Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.6.4.4 2020/04/13 08:03:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6.4.3 2020/04/08 14:07:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6.4.4 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6.4.3 2020/04/08 14:07:27 martin 
 #include <dev/acpi/acpi_mcfg.h>
 #endif
 
+#include <arm/arm/efi_runtime.h>
+
 #include <arm/pic/picvar.h>
 
 #include <arm/locore.h>
@@ -63,6 +65,55 @@ extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
 bus_dma_tag_t	arm_acpi_dma32_tag(struct acpi_softc *, struct acpi_devnode *);
 bus_dma_tag_t	arm_acpi_dma64_tag(struct acpi_softc *, struct acpi_devnode *);
+
+static int
+acpi_md_pmapflags(paddr_t pa)
+{
+	int len;
+
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen == -1)
+		return 0;
+
+	const uint32_t *map = fdtbus_get_prop(chosen, "netbsd,uefi-memmap", &len);
+	if (map == NULL)
+		return 0;
+
+	while (len >= 28) {
+		const uint32_t type = be32dec(&map[0]);
+		const uint64_t phys_start = be64dec(&map[1]);
+		const uint64_t num_pages = be64dec(&map[3]);
+		const uint64_t attr = be64dec(&map[5]);
+
+		if (pa >= phys_start && pa < phys_start + (num_pages * EFI_PAGE_SIZE)) {
+			switch (type) {
+			case EFI_MD_TYPE_RECLAIM:
+				/* ACPI table memory */
+				return PMAP_WRITE_BACK;
+
+			case EFI_MD_TYPE_IOMEM:
+			case EFI_MD_TYPE_IOPORT:
+				return PMAP_DEV;
+
+			default:
+				if ((attr & EFI_MD_ATTR_WB) != 0)
+					return PMAP_WRITE_BACK;
+				else if ((attr & EFI_MD_ATTR_WC) != 0)
+					return PMAP_WRITE_COMBINE;
+				else if ((attr & EFI_MD_ATTR_WT) != 0)
+					return 0;	/* XXX */
+
+				return PMAP_DEV;
+			}
+		}
+
+		map += 7;
+		len -= 28;
+	}
+
+	/* Not found; assume device memory */
+	return PMAP_DEV;
+}
 
 ACPI_STATUS
 acpi_md_OsInitialize(void)
@@ -111,8 +162,12 @@ acpi_md_OsMapMemory(ACPI_PHYSICAL_ADDRESS pa, UINT32 size, void **vap)
 	if (va == 0)
 		return AE_NO_MEMORY;
 
+	const int pmapflags = acpi_md_pmapflags(spa);
+
+	aprint_debug("%s: 0x%lx 0x%x flags = %#x\n", __func__, pa, size, pmapflags);
+
 	for (curpa = spa, curva = va; curpa < epa; curpa += PAGE_SIZE, curva += PAGE_SIZE)
-		pmap_kenter_pa(curva, curpa, VM_PROT_READ | VM_PROT_WRITE, 0);
+		pmap_kenter_pa(curva, curpa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	pmap_update(pmap_kernel());
 
 	*vap = (void *)(va + (pa - spa));
@@ -161,7 +216,7 @@ acpi_md_OsReadable(void *va, UINT32 len)
 
 	for (; sva < eva; sva += PAGE_SIZE) {
 		pte = kvtopte(sva);
-		if ((*pte & (LX_BLKPAG_AF|LX_BLKPAG_AP_RO)) != (LX_BLKPAG_AF|LX_BLKPAG_AP_RO))
+		if ((*pte & (LX_BLKPAG_AF|LX_BLKPAG_AP)) != (LX_BLKPAG_AF|LX_BLKPAG_AP_RO))
 			return FALSE;
 	}
 
@@ -182,7 +237,7 @@ acpi_md_OsWritable(void *va, UINT32 len)
 
 	for (; sva < eva; sva += PAGE_SIZE) {
 		pte = kvtopte(sva);
-		if ((*pte & (LX_BLKPAG_AF|LX_BLKPAG_AP_RW)) != (LX_BLKPAG_AF|LX_BLKPAG_AP_RW))
+		if ((*pte & (LX_BLKPAG_AF|LX_BLKPAG_AP)) != (LX_BLKPAG_AF|LX_BLKPAG_AP_RW))
 			return FALSE;
 	}
 

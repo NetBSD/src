@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.72.10.2 2020/04/08 14:08:50 martin Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.72.10.3 2020/04/13 08:05:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.72.10.2 2020/04/08 14:08:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.72.10.3 2020/04/13 08:05:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -130,10 +130,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	/* Check for invalid uid and gid arguments */
 	if (args->ta_root_uid == VNOVAL || args->ta_root_gid == VNOVAL)
-		return EINVAL;
-
-	/* This can never happen? */
-	if ((args->ta_root_mode & ALLPERMS) == VNOVAL)
 		return EINVAL;
 
 	/* Get the memory usage limit for this file-system. */

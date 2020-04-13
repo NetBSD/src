@@ -1,4 +1,4 @@
-#	$NetBSD: std.n900,v 1.5.20.1 2019/06/10 22:06:05 christos Exp $
+#	$NetBSD: std.n900,v 1.5.20.2 2020/04/13 08:03:42 martin Exp $
 #
 # standard NetBSD/evbarm for N900 options
 
@@ -9,17 +9,18 @@ include		"arch/evbarm/conf/std.evbarm"
 include		"arch/evbarm/conf/files.n900"
 
 # To support easy transit to ../arch/arm/arm32
-options 	__HAVE_CPU_COUNTER
-options 	CORTEX_PMC
-options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	ARM_GENERIC_TODR
 options 	ARM_HAS_VBAR
-options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
-options 	TPIDRPRW_IS_CURCPU
+options 	CORTEX_PMC
 options 	FPU_VFP
+options 	TPIDRPRW_IS_CURCPU
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_GENERIC_START
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
 makeoptions 	LOADADDRESS="0x80300000"
 makeoptions 	BOARDTYPE="n900"
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.beagle"
 
 options 	ARM_INTR_IMPL="<arch/arm/omap/omap2_intr.h>"
-options 	ARM_GENERIC_TODR

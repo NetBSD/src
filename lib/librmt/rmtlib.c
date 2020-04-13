@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.26.32.1 2020/04/08 14:07:16 martin Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.26.32.2 2020/04/13 08:03:15 martin Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rmtlib.c,v 1.26.32.1 2020/04/08 14:07:16 martin Exp $");
+__RCSID("$NetBSD: rmtlib.c,v 1.26.32.2 2020/04/13 08:03:15 martin Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
@@ -249,7 +249,7 @@ static int
 _rmt_open(const char *path, int oflag, int mode)
 {
 	int i;
-	char buffer[BUFMAGIC];
+	char buffer[2 * BUFMAGIC];
 	char host[MAXHOSTLEN];
 	char device[BUFMAGIC];
 	char login[BUFMAGIC];
@@ -292,7 +292,7 @@ _rmt_open(const char *path, int oflag, int mode)
 	path++;
 
 	if (*(path - 1) == '@') {
-		(void)strncpy(user, host, sizeof(login) - 1);
+		(void)strlcpy(user, host, sizeof(login));
 				/* saw user part of user@host */
 		sys = host;			/* start over */
 		while (*path != ':') {

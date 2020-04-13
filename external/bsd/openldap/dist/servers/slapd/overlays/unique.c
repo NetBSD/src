@@ -1,10 +1,10 @@
-/*	$NetBSD: unique.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $	*/
+/*	$NetBSD: unique.c,v 1.1.1.7.4.1 2020/04/13 07:56:21 martin Exp $	*/
 
 /* unique.c - attribute uniqueness module */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2017 The OpenLDAP Foundation.
+ * Copyright 2004-2019 The OpenLDAP Foundation.
  * Portions Copyright 2004,2006-2007 Symas Corporation.
  * All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unique.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $");
+__RCSID("$NetBSD: unique.c,v 1.1.1.7.4.1 2020/04/13 07:56:21 martin Exp $");
 
 #include "portable.h"
 

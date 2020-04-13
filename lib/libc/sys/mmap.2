@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.52 2018/05/02 16:00:20 christos Exp $
+.\"	$NetBSD: mmap.2,v 1.52.2.1 2020/04/13 08:03:11 martin Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mmap.2	8.4 (Berkeley) 5/11/95
 .\"
-.Dd May 2, 2018
+.Dd September 8, 2019
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ If
 is zero, an address will be selected by the system.
 The actual starting address of the region is returned.
 A successful
-.Fa mmap
+.Nm
 deletes any previous mapping in the allocated address range.
 .Pp
 The protections (region accessibility) are specified in the
@@ -168,6 +168,9 @@ The file descriptor is not used for creating
 .Dv MAP_ANON
 regions, and must be specified as \-1.
 The mapped memory will be zero filled.
+.It Dv MAP_ANONYMOUS
+Synonymous with
+.Dv MAP_ANON .
 .It Dv MAP_FILE
 Mapped from a regular file or character-special device memory.
 Read accesses beyond the end of of the file or device but less
@@ -184,7 +187,9 @@ specified.
 If the specified address cannot be used,
 .Nm mmap
 will fail.
-If MAP_FIXED is specified,
+If
+.Dv MAP_FIXED
+is specified,
 .Fa addr
 must be a multiple of the pagesize.
 Use of this option is discouraged.
@@ -201,12 +206,19 @@ resources for this mapping.
 Access to the address space is not guaranteed and may result in a segmentation
 violation.
 Unimplemented.
+.It Dv MAP_PRIVATE
+Modifications made by this process are private, however modifications made by
+other processes using
+.Dv MAP_SHARED
+will be seen.
 .It Dv MAP_REMAPDUP
 Only valid for
 .Xr mremap 2 .
 .It Dv MAP_RENAME
 Assign the referenced private pages to the file descriptor provided.
 Unimplemented.
+.It Dv MAP_SHARED
+Modifications are shared.
 .It Dv MAP_STACK
 Allocate a memory segment that can be used either for a process or thread stack.
 This currently has no effect, but its use is reserved for architectures
@@ -225,18 +237,11 @@ had not been specified.
 If
 .Fa addr
 is
-.Fa NULL ,
+.Dv NULL ,
 this flag is ignored and the system will select a mapping address.
 .It Dv MAP_WIRED
 Lock the mapped region into memory as with
 .Xr mlock 2 .
-.It Dv MAP_PRIVATE
-Modifications made by this process are private, however modifications made by
-other processes using
-.Dv MAP_SHARED
-will be seen.
-.It Dv MAP_SHARED
-Modifications are shared.
 .El
 .Pp
 The
@@ -270,7 +275,7 @@ is set to indicate the error.
 The symbol
 .Dv MAP_FAILED
 is defined in the header
-.Ao Pa sys/mman.h Ac .
+.In sys/mman.h .
 No successful return from
 .Fn mmap
 will return the value
@@ -300,7 +305,7 @@ parameters and
 .Fa fd
 was not open for writing.
 .Pp
-PAX mprotect restrictions prohibit the requested protection.
+PaX mprotect restrictions prohibit the requested protection.
 .It Bq Er EBADF
 .Fa fd
 is not a valid open file descriptor.
@@ -318,7 +323,8 @@ was specified and the
 parameter was not page aligned or was outside of the
 valid address range for a process.
 .Pp
-.Dv MAP_ANON was specified and
+.Dv MAP_ANON
+was specified and
 .Fa fd
 was not \-1.
 .It Bq Er ENODEV

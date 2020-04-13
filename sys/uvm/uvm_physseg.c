@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.9.4.1 2020/04/08 14:09:05 martin Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.9.4.2 2020/04/13 08:05:21 martin Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -473,7 +473,6 @@ uvm_page_physunload(uvm_physseg_t upm, int freelist, paddr_t *paddrp)
 	seg = HANDLE_TO_PHYSSEG_NODE(upm);
 
 	if (seg->free_list != freelist) {
-		paddrp = NULL;
 		return false;
 	}
 
@@ -518,7 +517,6 @@ uvm_page_physunload_force(uvm_physseg_t upm, int freelist, paddr_t *paddrp)
 		panic("%s: unload attempted after uvm_page_init()\n", __func__);
 	/* any room in this bank? */
 	if (seg->avail_start >= seg->avail_end) {
-		paddrp = NULL;
 		return false; /* nope */
 	}
 
@@ -664,7 +662,6 @@ uvm_page_physunload(uvm_physseg_t psi, int freelist, paddr_t *paddrp)
 	seg = VM_PHYSMEM_PTR(psi);
 
 	if (seg->free_list != freelist) {
-		paddrp = NULL;
 		return false;
 	}
 
@@ -719,7 +716,6 @@ uvm_page_physunload_force(uvm_physseg_t psi, int freelist, paddr_t *paddrp)
 
 	/* any room in this bank? */
 	if (seg->avail_start >= seg->avail_end) {
-		paddrp = NULL;
 		return false; /* nope */
 	}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.16.1 2019/06/10 22:10:38 christos Exp $
+#	$NetBSD: Makefile,v 1.2.16.2 2020/04/13 08:06:01 martin Exp $
 #
 # Makefile for atari
 #
@@ -10,6 +10,7 @@ CPPFLAGS+=	-DSUPPORT_8_3_SOURCE_FILESYSTEM
 
 .ifdef SMALLPROG
 NOPARTMAN=	yes
+NO_GPT=		yes
 .endif
 
 .include "../../Makefile.inc"

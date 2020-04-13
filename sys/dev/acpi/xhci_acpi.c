@@ -1,4 +1,4 @@
-/* $NetBSD: xhci_acpi.c,v 1.3.4.2 2019/06/10 22:07:05 christos Exp $ */
+/* $NetBSD: xhci_acpi.c,v 1.3.4.3 2020/04/13 08:04:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.3.4.2 2019/06/10 22:07:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.3.4.3 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.3.4.2 2019/06/10 22:07:05 christos E
 static const char * const compatible[] = {
 	"PNP0D10",	/* XHCI-compliant USB controller without standard debug */
 	"PNP0D15",	/* XHCI-compliant USB controller with standard debug */
+	"808622B7",	/* DesignWare Dual Role SuperSpeed USB controller */
 	NULL
 };
 
@@ -89,6 +90,7 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
+	uint32_t hccparams;
 	ACPI_STATUS rv;
 	int error;
 	void *ih;
@@ -97,7 +99,6 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bus.ub_hcpriv = sc;
-	sc->sc_bus.ub_dmatag = aa->aa_dmat;
 	sc->sc_bus.ub_revision = USBREV_3_0;
 	sc->sc_quirks = 0;
 	sc->sc_vendor_init = xhci_acpi_init;
@@ -125,6 +126,16 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 	if (error) {
 		aprint_error_dev(self, "couldn't map registers\n");
 		return;
+	}
+
+	hccparams = bus_space_read_4(sc->sc_iot, sc->sc_ioh, XHCI_HCCPARAMS);
+	if (XHCI_HCC_AC64(hccparams)) {
+		aprint_verbose_dev(self, "using 64-bit DMA\n");
+		sc->sc_bus.ub_dmatag = BUS_DMA_TAG_VALID(aa->aa_dmat64) ?
+		    aa->aa_dmat64 : aa->aa_dmat;
+	} else {
+		aprint_verbose_dev(self, "using 32-bit DMA\n");
+		sc->sc_bus.ub_dmatag = aa->aa_dmat;
 	}
 
         ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,

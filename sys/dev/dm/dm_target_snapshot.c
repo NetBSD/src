@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.19.4.1 2020/04/08 14:08:03 martin Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.19.4.2 2020/04/13 08:04:19 martin Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.19.4.1 2020/04/08 14:08:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.19.4.2 2020/04/13 08:04:19 martin Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -215,9 +215,7 @@ dm_target_snapshot_init(dm_table_entry_t *table_en, int argc, char **argv)
 	if ((dmp_snap = dm_pdev_insert(argv[0])) == NULL)
 		return ENOENT;
 
-	if ((tsc = kmem_alloc(sizeof(*tsc), KM_NOSLEEP)) == NULL)
-		return 1;
-
+	tsc = kmem_alloc(sizeof(*tsc), KM_SLEEP);
 	tsc->tsc_persistent_dev = 0;
 
 	/* There is now cow device for nonpersistent snapshot devices */
@@ -275,8 +273,7 @@ dm_target_snapshot_table(void *target_config)
 	/* length of names + count of chars + spaces and null char */
 	prm_len = strlen(tsc->tsc_snap_dev->name) + cow_len + count + 5;
 
-	if ((params = kmem_alloc(prm_len, KM_NOSLEEP)) == NULL)
-		return NULL;
+	params = kmem_alloc(prm_len, KM_SLEEP);
 
 	printf("%s %s %s %" PRIu64 "\n", tsc->tsc_snap_dev->name,
 	    tsc->tsc_cow_dev->name, tsc->tsc_persistent_dev ? "p" : "n",
@@ -382,10 +379,7 @@ dm_target_snapshot_orig_init(dm_table_entry_t *table_en, int argc, char **argv)
 	if ((dmp_real = dm_pdev_insert(argv[0])) == NULL)
 		return ENOENT;
 
-	if ((tsoc = kmem_alloc(sizeof(dm_target_snapshot_origin_config_t), KM_NOSLEEP))
-	    == NULL)
-		return 1;
-
+	tsoc = kmem_alloc(sizeof(dm_target_snapshot_origin_config_t), KM_SLEEP);
 	tsoc->tsoc_real_dev = dmp_real;
 
 	dm_table_add_deps(table_en, dmp_real);
@@ -418,8 +412,7 @@ dm_target_snapshot_orig_table(void *target_config)
 
 	printf("real_dev name %s\n", tsoc->tsoc_real_dev->name);
 
-	if ((params = kmem_alloc(prm_len, KM_NOSLEEP)) == NULL)
-		return NULL;
+	params = kmem_alloc(prm_len, KM_SLEEP);
 
 	printf("%s\n", tsoc->tsoc_real_dev->name);
 

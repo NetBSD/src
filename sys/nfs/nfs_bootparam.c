@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.38 2013/09/12 18:00:18 drochner Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.38.30.1 2020/04/13 08:05:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.38 2013/09/12 18:00:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.38.30.1 2020/04/13 08:05:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -127,6 +127,7 @@ nfs_bootparam(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	}
 
 	error = EADDRNOTAVAIL;
+	memset(&arps_ip, 0, sizeof(arps_ip)); /* GCC */
 #if NARP > 0
 	if (ifp->if_type == IFT_ETHER || ifp->if_type == IFT_FDDI) {
 		/*

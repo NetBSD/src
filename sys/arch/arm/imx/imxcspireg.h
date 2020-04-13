@@ -1,4 +1,4 @@
-/*	$NetBSD: imxcspireg.h,v 1.1 2014/03/22 09:28:08 hkenken Exp $	*/
+/*	$NetBSD: imxcspireg.h,v 1.1.36.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,15 +32,12 @@
 #define	CSPI_RXDATA		0x00
 #define	CSPI_TXDATA		0x04
 #define	CSPI_CONREG		0x08
-#ifdef IMX51
-#define	 CSPI_CON_CS		__BITS(13, 12)
-#define	 CSPI_CON_DRCTL		__BITS( 9,  8)
-#define	 CSPI_CON_BITCOUNT	__BITS(31, 20)
-#else
-#define	 CSPI_CON_CS		__BITS(25, 24)
-#define	 CSPI_CON_DRCTL		__BITS(21, 20)
-#define	 CSPI_CON_BITCOUNT	__BITS(12,  8)
-#endif
+#define	 CSPI_IMX31_CON_CS		__BITS(25, 24)
+#define	 CSPI_IMX31_CON_DRCTL		__BITS(21, 20)
+#define	 CSPI_IMX31_CON_BITCOUNT	__BITS(12,  8)
+#define	 CSPI_IMX35_CON_CS		__BITS(13, 12)
+#define	 CSPI_IMX35_CON_DRCTL		__BITS( 9,  8)
+#define	 CSPI_IMX35_CON_BITCOUNT	__BITS(31, 20)
 #define	 CSPI_CON_DIV		__BITS(18, 16)
 #define	 CSPI_CON_SSPOL		__BIT(7)	/* SPI SS Polarity Select */
 #define	 CSPI_CON_SSCTL		__BIT(6)	/* In master mode, this bit
@@ -55,12 +52,9 @@
 #define	 CSPI_CON_ENABLE	__BIT(0)	/* EN */
 #define	CSPI_INTREG		0x0c
 #define	 CSPI_INTR_ALL_EN	0x000001ff	/* All Intarruption Enabled */
-#ifdef IMX51
-#define	 CSPI_INTR_TC_EN	__BIT(7)	/* TX Complete */
-#else
-#define	 CSPI_INTR_TC_EN	__BIT(8)	/* TX Complete */
-#define	 CSPI_INTR_BO_EN	__BIT(7)	/* Bit Counter Overflow */
-#endif
+#define	 CSPI_IMX31_INTR_TC_EN	__BIT(8)	/* TX Complete */
+#define	 CSPI_IMX31_INTR_BO_EN	__BIT(7)	/* Bit Counter Overflow */
+#define	 CSPI_IMX35_INTR_TC_EN	__BIT(7)	/* TX Complete */
 #define	 CSPI_INTR_RO_EN	__BIT(6)	/* RXFIFO Overflow */
 #define	 CSPI_INTR_RF_EN	__BIT(5)	/* RXFIFO Full */
 #define	 CSPI_INTR_RH_EN	__BIT(4)	/* RXFIFO Half Full */
@@ -70,14 +64,11 @@
 #define	 CSPI_INTR_TE_EN	__BIT(0)	/* TXFIFO Empty */
 #define	CSPI_DMAREG		0x10
 #define	CSPI_STATREG		0x14
-#ifdef IMX51
-#define	 CSPI_STAT_CLR_TC	__BIT(7)	/* Clear TC of status register */
-#define  CSPI_STAT_CLR		CSPI_STAT_CLR_TC
-#else
-#define	 CSPI_STAT_CLR_TC	__BIT(8)	/* Clear TC of status register */
-#define	 CSPI_STAT_CLR_BO	__BIT(7)	/* Clear BO of status register */
-#define  CSPI_STAT_CLR		(CSPI_STAT_CLR_TC | CSPI_STAT_CLR_BO)
-#endif
+#define	 CSPI_IMX31_STAT_CLR_TC	__BIT(8)	/* Clear TC of status register */
+#define	 CSPI_IMX31_STAT_CLR_BO	__BIT(7)	/* Clear BO of status register */
+#define  CSPI_IMX31_STAT_CLR	(CSPI_IMX31_STAT_CLR_TC | CSPI_IMX31_STAT_CLR_BO)
+#define	 CSPI_IMX35_STAT_CLR_TC	__BIT(7)	/* Clear TC of status register */
+#define  CSPI_IMX35_STAT_CLR	CSPI_IMX35_STAT_CLR_TC
 #define	 CSPI_STAT_RO		__BIT(6)	/* RXFIFO Overflow */
 #define	 CSPI_STAT_RF		__BIT(5)	/* RXFIFO Full */
 #define	 CSPI_STAT_RH		__BIT(4)	/* RXFIFO Half Full */

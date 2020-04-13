@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.22.1 2019/06/10 22:09:17 christos Exp $
+#	$NetBSD: Makefile,v 1.1.22.2 2020/04/13 08:05:09 martin Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -11,9 +11,5 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 .PATH:	${S}/compat/netbsd32
 SRCS+=	netbsd32_nfssvc.c
-
-.if !empty(MACHINE_ARCH:Mmips64*)
-WARNS=	3
-.endif
 
 .include <bsd.kmodule.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20.4.1 2019/06/10 21:51:39 christos Exp $
+# $NetBSD: Makefile,v 1.20.4.2 2020/04/13 07:56:33 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -27,6 +27,7 @@ cmd-command-prompt.c \
 cmd-confirm-before.c \
 cmd-copy-mode.c \
 cmd-detach-client.c \
+cmd-display-menu.c \
 cmd-display-message.c \
 cmd-display-panes.c \
 cmd-find-window.c \
@@ -43,12 +44,12 @@ cmd-list-keys.c \
 cmd-list-panes.c \
 cmd-list-sessions.c \
 cmd-list-windows.c \
-cmd-list.c \
 cmd-load-buffer.c \
 cmd-lock-server.c \
 cmd-move-window.c \
 cmd-new-session.c \
 cmd-new-window.c \
+cmd-parse.y \
 cmd-paste-buffer.c \
 cmd-pipe-pane.c \
 cmd-queue.c \
@@ -56,6 +57,7 @@ cmd-refresh-client.c \
 cmd-rename-session.c \
 cmd-rename-window.c \
 cmd-resize-pane.c \
+cmd-resize-window.c \
 cmd-respawn-pane.c \
 cmd-respawn-window.c \
 cmd-rotate-window.c \
@@ -67,14 +69,12 @@ cmd-select-window.c \
 cmd-send-keys.c \
 cmd-set-buffer.c \
 cmd-set-environment.c \
-cmd-set-hook.c \
 cmd-set-option.c \
 cmd-show-environment.c \
 cmd-show-messages.c \
 cmd-show-options.c \
 cmd-source-file.c \
 cmd-split-window.c \
-cmd-string.c \
 cmd-swap-pane.c \
 cmd-swap-window.c \
 cmd-switch-client.c \
@@ -86,9 +86,9 @@ control-notify.c \
 control.c \
 environ.c \
 format.c \
+format-draw.c \
 grid-view.c \
 grid.c \
-hooks.c \
 input-keys.c \
 input.c \
 job.c \
@@ -98,6 +98,7 @@ layout-custom.c \
 layout-set.c \
 layout.c \
 log.c \
+menu.c \
 mode-tree.c \
 names.c \
 notify.c \
@@ -106,6 +107,7 @@ options.c \
 osdep-netbsd.c \
 paste.c \
 proc.c \
+regsub.c \
 resize.c \
 screen-redraw.c \
 screen-write.c \
@@ -114,6 +116,7 @@ server-client.c \
 server-fn.c \
 server.c \
 session.c \
+spawn.c \
 status.c \
 style.c \
 tmux.c \
@@ -206,13 +209,13 @@ CPPFLAGS+=	\
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 2.8\" \
+-DPACKAGE_STRING=\"tmux\ 3.0a\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"2.8\" \
+-DPACKAGE_VERSION=\"3.0a\" \
 -DSTDC_HEADERS=1 \
 -DTMUX_CONF="\"/etc/tmux.conf\"" \
--DVERSION=\"2.8\" \
+-DVERSION=\"3.0a\" \
 -D_ALL_SOURCE=1 \
 -D_GNU_SOURCE=1 \
 -D_OPENBSD_SOURCE \
@@ -224,9 +227,6 @@ LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
 
 COPTS.format.c += -Wno-format-nonliteral
-#COPTS.cmd-display-message.c += -Wno-format-nonliteral
-#COPTS.cmd-pipe-pane.c += -Wno-format-nonliteral
-#COPTS.server-client.c += -Wno-format-nonliteral
-#COPTS.status.c += -Wno-format-nonliteral
+COPTS.utempter.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

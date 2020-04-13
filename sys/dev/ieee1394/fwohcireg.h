@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.19 2018/03/31 14:50:45 sevan Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.19.2.1 2020/04/13 08:04:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -285,13 +285,13 @@ struct ohci_registers {
 	fwohcireg_t	link_cntl_clr;	/* Chip control clear 0xe4*/
 #define FWOHCI_NODEID	0xe8
 	fwohcireg_t	node;		/* Node ID 0xe8 */
-#define	OHCI_NODE_VALID	(1 << 31)
+#define	OHCI_NODE_VALID	(1U << 31)
 #define	OHCI_NODE_ROOT	(1 << 30)
 
 #define	OHCI_ASYSRCBUS	1
 
 	fwohcireg_t	phy_access;	/* PHY cntl 0xec */
-#define	PHYDEV_RDDONE		(1<<31)
+#define	PHYDEV_RDDONE		(1U<<31)
 #define	PHYDEV_RDCMD		(1<<15)
 #define	PHYDEV_WRCMD		(1<<14)
 #define	PHYDEV_REGADDR		8
@@ -442,7 +442,7 @@ struct fwohci_trailer {
 #define OHCI_INT_ERR		(0x1 << 24)
 #define OHCI_INT_CYC_LONG	(0x1 << 25)
 #define OHCI_INT_PHY_REG	(0x1 << 26)
-#define OHCI_INT_EN		(0x1 << 31)
+#define OHCI_INT_EN		(0x1U << 31)
 
 #define IP_CHANNELS		0x0234
 #define FWOHCI_MAXREC		2048

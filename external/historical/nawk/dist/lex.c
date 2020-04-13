@@ -47,17 +47,15 @@ typedef struct Keyword {
 	int	type;
 } Keyword;
 
-int peek(void);
-int gettok(char **, int *);
-int binsearch(const char *, const Keyword *, int);
-
-const Keyword keywords[] ={	/* keep sorted: binary searched */
+const Keyword keywords[] = {	/* keep sorted: binary searched */
 	{ "BEGIN",	XBEGIN,		XBEGIN },
 	{ "END",	XEND,		XEND },
 	{ "NF",		VARNF,		VARNF },
+	{ "and",	FAND,		BLTIN },
 	{ "atan2",	FATAN,		BLTIN },
 	{ "break",	BREAK,		BREAK },
 	{ "close",	CLOSE,		CLOSE },
+	{ "compl",	FCOMPL,		BLTIN },
 	{ "continue",	CONTINUE,	CONTINUE },
 	{ "cos",	FCOS,		BLTIN },
 	{ "delete",	DELETE,		DELETE },
@@ -78,13 +76,16 @@ const Keyword keywords[] ={	/* keep sorted: binary searched */
 	{ "int",	FINT,		BLTIN },
 	{ "length",	FLENGTH,	BLTIN },
 	{ "log",	FLOG,		BLTIN },
+	{ "lshift",	FLSHIFT,	BLTIN },
 	{ "match",	MATCHFCN,	MATCHFCN },
 	{ "next",	NEXT,		NEXT },
 	{ "nextfile",	NEXTFILE,	NEXTFILE },
+	{ "or",		FFOR,		BLTIN },
 	{ "print",	PRINT,		PRINT },
 	{ "printf",	PRINTF,		PRINTF },
 	{ "rand",	FRAND,		BLTIN },
 	{ "return",	RETURN,		RETURN },
+	{ "rshift",	FRSHIFT,	BLTIN },
 	{ "sin",	FSIN,		BLTIN },
 	{ "split",	SPLIT,		SPLIT },
 	{ "sprintf",	SPRINTF,	SPRINTF },
@@ -98,23 +99,24 @@ const Keyword keywords[] ={	/* keep sorted: binary searched */
 	{ "tolower",	FTOLOWER,	BLTIN },
 	{ "toupper",	FTOUPPER,	BLTIN },
 	{ "while",	WHILE,		WHILE },
+	{ "xor",	FXOR,		BLTIN },
 };
 
 #define	RET(x)	{ if(dbg)printf("lex %s\n", tokname(x)); return(x); }
 
-int peek(void)
+static int peek(void)
 {
 	int c = input();
 	unput(c);
 	return c;
 }
 
-int gettok(char **pbuf, int *psz)	/* get next input token */
+static int gettok(char **pbuf, int *psz)	/* get next input token */
 {
 	int c, retc;
-	uschar *buf = (uschar *) *pbuf;
+	char *buf = *pbuf;
 	int sz = *psz;
-	uschar *bp = buf;
+	char *bp = buf;
 
 	c = input();
 	if (c == 0)
@@ -147,7 +149,7 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 			if (bp-buf >= sz)
 				if (!adjbuf(&buf, &sz, bp-buf+2, 100, &bp, "gettok"))
 					FATAL( "out of space for number %.10s...", buf );
-			if (isdigit(c) || c == 'e' || c == 'E' 
+			if (isdigit(c) || c == 'e' || c == 'E'
 			  || c == '.' || c == '+' || c == '-')
 				*bp++ = c;
 			else {
@@ -157,7 +159,7 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 		}
 		*bp = 0;
 		strtod(buf, &rem);	/* parse the number */
-		if (rem == (char *)buf) {	/* it wasn't a valid number at all */
+		if (rem == buf) {	/* it wasn't a valid number at all */
 			buf[1] = 0;	/* return one character as token */
 			retc = buf[0];	/* character is its own type */
 			unputstr(rem+1); /* put rest back for later */
@@ -175,23 +177,23 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 int	word(char *);
 int	string(void);
 int	regexpr(void);
-int	sc	= 0;	/* 1 => return a } right now */
-int	reg	= 0;	/* 1 => return a REGEXPR now */
+bool	sc	= false;	/* true => return a } right now */
+bool	reg	= false;	/* true => return a REGEXPR now */
 
 int yylex(void)
 {
 	int c;
-	static char *buf = 0;
+	static char *buf = NULL;
 	static int bufsize = 5; /* BUG: setting this small causes core dump! */
 
-	if (buf == 0 && (buf = malloc(bufsize)) == NULL)
+	if (buf == NULL && (buf = malloc(bufsize)) == NULL)
 		FATAL( "out of space in yylex" );
 	if (sc) {
-		sc = 0;
+		sc = false;
 		RET('}');
 	}
 	if (reg) {
-		reg = 0;
+		reg = false;
 		return regexpr();
 	}
 	for (;;) {
@@ -201,14 +203,17 @@ int yylex(void)
 		if (isalpha(c) || c == '_')
 			return word(buf);
 		if (isdigit(c)) {
-			yylval.cp = setsymtab(buf, buf, atof(buf), CON|NUM, symtab);
+			char *cp = tostring(buf);
+			yylval.cp = setsymtab(buf, cp, atof(buf), CON|NUM, symtab);
+			free(cp);
 			/* should this also have STR set? */
 			RET(NUMBER);
 		}
-	
+
 		yylval.i = c;
 		switch (c) {
 		case '\n':	/* {EOL} */
+			lineno++;
 			RET(NL);
 		case '\r':	/* assume \n is coming */
 		case ' ':	/* {WS}+ */
@@ -218,12 +223,18 @@ int yylex(void)
 			while ((c = input()) != '\n' && c != 0)
 				;
 			unput(c);
+			/*
+			 * Next line is a hack, itcompensates for
+			 * unput's treatment of \n.
+			 */
+			lineno++;
 			break;
 		case ';':
 			RET(';');
 		case '\\':
 			if (peek() == '\n') {
 				input();
+				lineno++;
 			} else if (peek() == '\r') {
 				input(); input();	/* \n */
 				lineno++;
@@ -234,7 +245,7 @@ int yylex(void)
 		case '&':
 			if (peek() == '&') {
 				input(); RET(AND);
-			} else 
+			} else
 				RET('&');
 		case '|':
 			if (peek() == '|') {
@@ -332,11 +343,11 @@ int yylex(void)
 				unputstr(buf);
 				RET(INDIRECT);
 			}
-	
+
 		case '}':
 			if (--bracecnt < 0)
 				SYNTAX( "extra }" );
-			sc = 1;
+			sc = true;
 			RET(';');
 		case ']':
 			if (--brackcnt < 0)
@@ -355,10 +366,10 @@ int yylex(void)
 		case '(':
 			parencnt++;
 			RET('(');
-	
+
 		case '"':
 			return string();	/* BUG: should be like tran.c ? */
-	
+
 		default:
 			RET(c);
 		}
@@ -368,11 +379,11 @@ int yylex(void)
 int string(void)
 {
 	int c, n;
-	uschar *s, *bp;
-	static uschar *buf = 0;
+	char *s, *bp;
+	static char *buf = NULL;
 	static int bufsz = 500;
 
-	if (buf == 0 && (buf = malloc(bufsz)) == NULL)
+	if (buf == NULL && (buf = malloc(bufsz)) == NULL)
 		FATAL("out of space for strings");
 	for (bp = buf; (c = input()) != '"'; ) {
 		if (!adjbuf(&buf, &bufsz, bp-buf+2, 500, &bp, "string"))
@@ -381,23 +392,24 @@ int string(void)
 		case '\n':
 		case '\r':
 		case 0:
+			*bp = '\0';
 			SYNTAX( "non-terminated string %.10s...", buf );
-			lineno++;
 			if (c == 0)	/* hopeless */
 				FATAL( "giving up" );
+			lineno++;
 			break;
 		case '\\':
 			c = input();
 			switch (c) {
 			case '\n': break;
 			case '"': *bp++ = '"'; break;
-			case 'n': *bp++ = '\n'; break;	
+			case 'n': *bp++ = '\n'; break;
 			case 't': *bp++ = '\t'; break;
 			case 'f': *bp++ = '\f'; break;
 			case 'r': *bp++ = '\r'; break;
 			case 'b': *bp++ = '\b'; break;
 			case 'v': *bp++ = '\v'; break;
-			case 'a': *bp++ = '\007'; break;
+			case 'a': *bp++ = '\a'; break;
 			case '\\': *bp++ = '\\'; break;
 
 			case '0': case '1': case '2': /* octal: \d \dd \ddd */
@@ -423,14 +435,12 @@ int string(void)
 				}
 				*px = 0;
 				unput(c);
-	  			sscanf(xbuf, "%x", &n);
+	  			sscanf(xbuf, "%x", (unsigned int *) &n);
 				*bp++ = n;
 				break;
 			    }
 
 			default:
-				WARNING("warning: escape sequence `\\%c' "
-				    "treated as plain `%c'", c, c);
 				*bp++ = c;
 				break;
 			}
@@ -440,15 +450,16 @@ int string(void)
 			break;
 		}
 	}
-	*bp = 0; 
+	*bp = 0;
 	s = tostring(buf);
-	*bp++ = ' '; *bp++ = 0;
+	*bp++ = ' '; *bp++ = '\0';
 	yylval.cp = setsymtab(buf, s, 0.0, CON|STR|DONTFREE, symtab);
+	free(s);
 	RET(STRING);
 }
 
 
-int binsearch(const char *w, const Keyword *kp, int n)
+static int binsearch(char *w, const Keyword *kp, int n)
 {
 	int cond, low, mid, high;
 
@@ -466,13 +477,12 @@ int binsearch(const char *w, const Keyword *kp, int n)
 	return -1;
 }
 
-int word(char *w) 
+int word(char *w)
 {
 	const Keyword *kp;
 	int c, n;
 
 	n = binsearch(w, keywords, sizeof(keywords)/sizeof(keywords[0]));
-
 	if (n != -1) {	/* found in table */
 		kp = keywords + n;
 		yylval.i = kp->sub;
@@ -512,28 +522,29 @@ int word(char *w)
 
 void startreg(void)	/* next call to yylex will return a regular expression */
 {
-	reg = 1;
+	reg = true;
 }
 
 int regexpr(void)
 {
 	int c;
-	static uschar *buf = 0;
+	static char *buf = NULL;
 	static int bufsz = 500;
-	uschar *bp;
+	char *bp;
 
-	if (buf == 0 && (buf = malloc(bufsz)) == NULL)
+	if (buf == NULL && (buf = malloc(bufsz)) == NULL)
 		FATAL("out of space for rex expr");
 	bp = buf;
 	for ( ; (c = input()) != '/' && c != 0; ) {
 		if (!adjbuf(&buf, &bufsz, bp-buf+3, 500, &bp, "regexpr"))
 			FATAL("out of space for reg expr %.10s...", buf);
 		if (c == '\n') {
-			SYNTAX( "newline in regular expression %.10s...", buf ); 
+			*bp = '\0';
+			SYNTAX( "newline in regular expression %.10s...", buf );
 			unput('\n');
 			break;
 		} else if (c == '\\') {
-			*bp++ = '\\'; 
+			*bp++ = '\\';
 			*bp++ = input();
 		} else {
 			*bp++ = c;
@@ -553,7 +564,7 @@ char	ebuf[300];
 char	*ep = ebuf;
 char	yysbuf[100];	/* pushback buffer */
 char	*yysptr = yysbuf;
-FILE	*yyin = 0;
+FILE	*yyin = NULL;
 
 int input(void)	/* get next lexical input character */
 {
@@ -567,18 +578,20 @@ int input(void)	/* get next lexical input character */
 			lexprog++;
 	} else				/* awk -f ... */
 		c = pgetc();
-	if (c == '\n')
-		lineno++;
-	else if (c == EOF)
+	if (c == EOF)
 		c = 0;
 	if (ep >= ebuf + sizeof ebuf)
 		ep = ebuf;
-	return *ep++ = c;
+	*ep = c;
+	if (c != 0) {
+		ep++;
+	}
+	return (c);
 }
 
 void unput(int c)	/* put lexical character back on input */
 {
-	if (c == '\n')
+	if (c == '\n')  
 		lineno--;
 	if (yysptr >= yysbuf + sizeof(yysbuf))
 		FATAL("pushed back too much: %.20s...", yysbuf);

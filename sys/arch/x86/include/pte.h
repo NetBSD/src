@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 2010/07/06 20:50:35 cegger Exp $	*/
+/*	$NetBSD: pte.h,v 1.1.68.1 2020/04/13 08:04:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,18 +33,20 @@
 #define _X86_PTE_H
 
 /* Cacheability bits when we are using PAT */
-#define PGC_WB          0               /* The default */
-#define PGC_WC          PG_WT           /* WT and CD is WC */
-#define PGC_UCMINUS     PG_N            /* UC but mtrr can override */
-#define PGC_UC          (PG_WT | PG_N)  /* hard UC */
+#define PGC_WB		0			/* The default */
+#define PGC_WC		PTE_PWT			/* WT and CD is WC */
+#define PGC_UCMINUS	PTE_PCD			/* UC but mtrr can override */
+#define PGC_UC		(PTE_PWT | PTE_PCD)	/* hard UC */
 
 /*
- * page protection exception bits
+ * #PF exception bits
  */
-
-#define PGEX_P		0x01	/* protection violation (vs. no mapping) */
-#define PGEX_W		0x02	/* exception during a write cycle */
-#define PGEX_U		0x04	/* exception while in user mode (upl) */
-#define PGEX_X		0x10	/* exception during instruction fetch */
+#define PGEX_P		0x0001	/* the page was present */
+#define PGEX_W		0x0002	/* exception during a write cycle */
+#define PGEX_U		0x0004	/* exception while in user mode */
+#define PGEX_RSVD	0x0008	/* a reserved bit was set in the page tables */
+#define PGEX_X		0x0010	/* exception during instruction fetch */
+#define PGEX_PK		0x0020	/* access disallowed by protection key */
+#define PGEX_SGX	0x8000	/* violation of sgx-specific access rights */
 
 #endif /* _X86_PTE_H */

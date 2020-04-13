@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.17 2017/01/22 17:27:31 jakllsch Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.17.14.1 2020/04/13 08:04:07 martin Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.17 2017/01/22 17:27:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.17.14.1 2020/04/13 08:04:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,9 +230,7 @@ igsfb_ofbus_attach(device_t parent, device_t self, void *aux)
 	} else {
 		isconsole = 0;
 		sc->sc_dc = malloc(sizeof(struct igsfb_devconfig),
-				   M_DEVBUF, M_NOWAIT | M_ZERO);
-		if (sc->sc_dc == NULL)
-			panic("unable to allocate igsfb_devconfig");
+				   M_DEVBUF, M_WAITOK | M_ZERO);
 		if (OF_getprop(oba->oba_phandle, "reg",
 			       regs, sizeof(regs)) <= 0)
 		{

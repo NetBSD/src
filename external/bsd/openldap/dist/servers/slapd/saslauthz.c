@@ -1,9 +1,9 @@
-/*	$NetBSD: saslauthz.c,v 1.1.1.6 2018/02/06 01:53:15 christos Exp $	*/
+/*	$NetBSD: saslauthz.c,v 1.1.1.6.4.1 2020/04/13 07:56:17 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * Portions Copyright 2000 Mark Adamson, Carnegie Mellon.
  * All rights reserved.
  *
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: saslauthz.c,v 1.1.1.6 2018/02/06 01:53:15 christos Exp $");
+__RCSID("$NetBSD: saslauthz.c,v 1.1.1.6.4.1 2020/04/13 07:56:17 martin Exp $");
 
 #include "portable.h"
 
@@ -2067,19 +2067,22 @@ int slap_sasl_authorized( Operation *op,
 		goto DONE;
 	}
 
-	/* Allow the manager to authorize as any DN. */
-	if( op->o_conn->c_authz_backend &&
-		be_isroot_dn( op->o_conn->c_authz_backend, authcDN ))
+	/* Allow the manager to authorize as any DN in its own DBs. */
 	{
-		rc = LDAP_SUCCESS;
-		goto DONE;
+		Backend *zbe = select_backend( authzDN, 1 );
+		if ( zbe && be_isroot_dn( zbe, authcDN )) {
+			rc = LDAP_SUCCESS;
+			goto DONE;
+		}
 	}
 
 	/* Check source rules */
 	if( authz_policy & SASL_AUTHZ_TO ) {
 		rc = slap_sasl_check_authz( op, authcDN, authzDN,
 			slap_schema.si_ad_saslAuthzTo, authcDN );
-		if( rc == LDAP_SUCCESS && !(authz_policy & SASL_AUTHZ_AND) ) {
+		if(( rc == LDAP_SUCCESS ) ^ (( authz_policy & SASL_AUTHZ_AND) != 0)) {
+			if( rc != LDAP_SUCCESS )
+				rc = LDAP_INAPPROPRIATE_AUTH;
 			goto DONE;
 		}
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.2.2.1 2019/06/10 22:05:43 christos Exp $ */
+/* $NetBSD: cpu.h,v 1.2.2.2 2020/04/13 08:03:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _AARCH64_CPU_H_
 #define _AARCH64_CPU_H_
+
+#include <arm/cpu.h>
 
 #ifdef __aarch64__
 
@@ -73,6 +75,7 @@ struct cpu_info {
 	device_t ci_dev;
 	cpuid_t ci_cpuid;
 	struct lwp *ci_curlwp;
+	struct lwp *ci_onproc;
 	struct lwp *ci_softlwps[SOFTINT_COUNT];
 
 	uint64_t ci_lastintr;
@@ -92,6 +95,9 @@ struct cpu_info {
 	struct evcnt ci_vfp_save;
 	struct evcnt ci_vfp_release;
 
+	/* FDT or similar supplied "cpu capacity" */
+	uint32_t ci_capacity_dmips_mhz;
+
 	/* interrupt controller */
 	u_int ci_gic_redist;	/* GICv3 redistributor index */
 	uint64_t ci_gic_sgir;	/* GICv3 SGIR target */
@@ -106,6 +112,7 @@ struct cpu_info {
 
 } __aligned(COHERENCY_UNIT);
 
+#ifdef _KERNEL
 static inline struct cpu_info *
 curcpu(void)
 {
@@ -118,19 +125,15 @@ curcpu(void)
 #define setsoftast(ci)		atomic_or_uint(&(ci)->ci_astpending, __BIT(0))
 #define cpu_signotify(l)	setsoftast((l)->l_cpu)
 
-void cpu_set_curpri(int);
-void cpu_proc_fork(struct proc *, struct proc *);
-void cpu_need_proftick(struct lwp *l);
-void cpu_boot_secondary_processors(void);
-void cpu_mpstart(void);
-void cpu_hatch(struct cpu_info *);
+void	cpu_need_proftick(struct lwp *l);
+
+void	cpu_hatch(struct cpu_info *);
 
 extern struct cpu_info *cpu_info[];
-extern volatile u_int arm_cpu_hatched;	/* MULTIPROCESSOR */
-extern uint64_t cpu_mpidr[];		/* MULTIPROCESSOR */
+extern struct cpu_info cpu_info_store[];
 
 #define CPU_INFO_ITERATOR	cpuid_t
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) || defined(_MODULE)
 #define cpu_number()		(curcpu()->ci_index)
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_index == 0)
 #define CPU_INFO_FOREACH(cii, ci)					\
@@ -157,23 +160,9 @@ cpu_dosoftints(void)
 #endif
 }
 
-static inline bool
-cpu_intr_p(void)
-{
-#ifdef __HAVE_PIC_FAST_SOFTINTS
-	if (ci->ci_cpl < IPL_VM)
-		return false;
-#endif
-	return curcpu()->ci_intr_depth > 0;
-}
-
-void	cpu_attach(device_t, cpuid_t);
+#endif /* _KERNEL */
 
 #endif /* _KERNEL || _KMEMUSER */
-
-#elif defined(__arm__)
-
-#include <arm/cpu.h>
 
 #endif
 

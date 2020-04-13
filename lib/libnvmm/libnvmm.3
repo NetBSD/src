@@ -1,6 +1,6 @@
-.\"	$NetBSD: libnvmm.3,v 1.19.2.2 2019/06/10 22:05:25 christos Exp $
+.\"	$NetBSD: libnvmm.3,v 1.19.2.3 2020/04/13 08:03:14 martin Exp $
 .\"
-.\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 30, 2019
+.Dd February 9, 2020
 .Dt LIBNVMM 3
 .Os
 .Sh NAME
@@ -37,6 +37,8 @@
 .Lb libnvmm
 .Sh SYNOPSIS
 .In nvmm.h
+.Ft int
+.Fn nvmm_init "void"
 .Ft int
 .Fn nvmm_capability "struct nvmm_capability *cap"
 .Ft int
@@ -51,6 +53,9 @@
     "struct nvmm_vcpu *vcpu"
 .Ft int
 .Fn nvmm_vcpu_destroy "struct nvmm_machine *mach" "struct nvmm_vcpu *vcpu"
+.Ft int
+.Fn nvmm_vcpu_configure "struct nvmm_machine *mach" "struct nvmm_vcpu *vcpu" \
+    "uint64_t op" "void *conf"
 .Ft int
 .Fn nvmm_vcpu_getstate "struct nvmm_machine *mach" "struct nvmm_vcpu *vcpu" \
     "uint64_t flags"
@@ -95,6 +100,12 @@ to manage virtual machines.
 A virtual CPU is described by a public structure,
 .Cd nvmm_vcpu .
 .Pp
+.Fn nvmm_init
+initializes NVMM.
+See
+.Sx NVMM Initialization
+below for details.
+.Pp
 .Fn nvmm_capability
 gets the capabilities of NVMM.
 See
@@ -132,6 +143,16 @@ destroys the virtual CPU identified by
 .Fa vcpu
 in the machine
 .Fa mach .
+.Pp
+.Fn nvmm_vcpu_configure
+configures, on the VCPU
+.Fa vcpu
+of machine
+.Fa mach ,
+the parameter indicated in
+.Fa op .
+.Fa conf
+describes the value of the parameter.
 .Pp
 .Fn nvmm_vcpu_getstate
 gets the state of the virtual CPU identified by
@@ -264,6 +285,23 @@ from machine
 See
 .Sx Mem Assist
 below for details.
+.Ss NVMM Initialization
+NVMM initialization is performed by the
+.Fn nvmm_init
+function, which must be invoked by emulator software before any other NVMM
+function.
+.Pp
+.Fn nvmm_init
+opens the NVMM device, and expects to have the proper permissions to do so.
+In a default configuration, this implies being part of the "nvmm" group.
+If using a special configuration, emulator software should arrange to have the
+proper permissions before invoking
+.Fn nvmm_init ,
+and can drop them after the call has completed.
+.Pp
+It is to be noted that
+.Fn nvmm_init
+may perform non-re-entrant operations, and should be called only once.
 .Ss NVMM Capability
 The
 .Cd nvmm_capability
@@ -287,12 +325,29 @@ For example, the
 field indicates the maximum number of virtual machines supported, while
 .Cd max_vcpus
 indicates the maximum number of VCPUs supported per virtual machine.
+.Ss Machine Ownership
+When a process creates a virtual machine via
+.Fn nvmm_machine_create ,
+it is considered the owner of this machine.
+No other processes than the owner can operate a virtual machine.
+.Pp
+When an owner exits, all the virtual machines associated with it are destroyed,
+if they were not already destroyed by the owner itself via
+.Fn nvmm_machine_destroy .
+.Pp
+Virtual machines are not inherited across
+.Xr fork 2
+operations.
 .Ss Machine Configuration
 Emulator software can configure several parameters of a virtual machine by using
-.Fn nvmm_machine_configure ,
+.Fn nvmm_machine_configure .
+Currently, no parameters are implemented.
+.Ss VCPU Configuration
+Emulator software can configure several parameters of a VCPU by using
+.Fn nvmm_vcpu_configure ,
 which can take the following operations:
 .Bd -literal
-#define NVMM_MACH_CONF_CALLBACKS	0
+#define NVMM_VCPU_CONF_CALLBACKS	0
 	...
 .Ed
 .Pp
@@ -386,8 +441,8 @@ A VCPU is described by a public structure,
 struct nvmm_vcpu {
 	nvmm_cpuid_t cpuid;
 	struct nvmm_vcpu_state *state;
-	struct nvmm_event *event;
-	struct nvmm_exit *exit;
+	struct nvmm_vcpu_event *event;
+	struct nvmm_vcpu_exit *exit;
 };
 .Ed
 .Pp
@@ -399,11 +454,11 @@ they are initialized to special values by
 .Pp
 A call to
 .Fn nvmm_vcpu_getstate
-will fetch the relevant parts of the VCPU state and put them in
+will fetch the desired parts of the VCPU state and put them in
 .Fa vcpu->state .
 A call to
 .Fn nvmm_vcpu_setstate
-will install in the VCPU the relevant parts of
+will install in the VCPU the desired parts of
 .Fa vcpu->state .
 A call to
 .Fn nvmm_vcpu_inject
@@ -421,27 +476,36 @@ Emulator software should not modify the state of a VCPU with several
 different threads.
 .Ss Exit Reasons
 The
-.Cd nvmm_exit
+.Cd nvmm_vcpu_exit
 structure is used to handle VM exits:
 .Bd -literal
-/* Exit Reasons */
-#define NVMM_EXIT_NONE		0x0000000000000000ULL
-#define NVMM_EXIT_MEMORY	0x0000000000000001ULL
-#define NVMM_EXIT_IO		0x0000000000000002ULL
-#define NVMM_EXIT_MSR		0x0000000000000003ULL
-#define NVMM_EXIT_INT_READY	0x0000000000000004ULL
-#define NVMM_EXIT_NMI_READY	0x0000000000000005ULL
-#define NVMM_EXIT_HALTED	0x0000000000000006ULL
-#define NVMM_EXIT_SHUTDOWN	0x0000000000000007ULL
-	...
-#define NVMM_EXIT_INVALID	0xFFFFFFFFFFFFFFFFULL
+/* Generic. */
+#define NVMM_VCPU_EXIT_NONE		0x0000000000000000ULL
+#define NVMM_VCPU_EXIT_INVALID		0xFFFFFFFFFFFFFFFFULL
+/* x86: operations. */
+#define NVMM_VCPU_EXIT_MEMORY		0x0000000000000001ULL
+#define NVMM_VCPU_EXIT_IO		0x0000000000000002ULL
+/* x86: changes in VCPU state. */
+#define NVMM_VCPU_EXIT_SHUTDOWN		0x0000000000001000ULL
+#define NVMM_VCPU_EXIT_INT_READY	0x0000000000001001ULL
+#define NVMM_VCPU_EXIT_NMI_READY	0x0000000000001002ULL
+#define NVMM_VCPU_EXIT_HALTED		0x0000000000001003ULL
+#define NVMM_VCPU_EXIT_TPR_CHANGED	0x0000000000001004ULL
+/* x86: instructions. */
+#define NVMM_VCPU_EXIT_RDMSR		0x0000000000002000ULL
+#define NVMM_VCPU_EXIT_WRMSR		0x0000000000002001ULL
+#define NVMM_VCPU_EXIT_MONITOR		0x0000000000002002ULL
+#define NVMM_VCPU_EXIT_MWAIT		0x0000000000002003ULL
+#define NVMM_VCPU_EXIT_CPUID		0x0000000000002004ULL
 
-struct nvmm_exit {
+struct nvmm_vcpu_exit {
 	uint64_t reason;
 	union {
 		...
 	} u;
-	uint64_t exitstate[8];
+	struct {
+		...
+	} exitstate;
 };
 .Ed
 .Pp
@@ -457,7 +521,7 @@ to retrieve certain state values.
 It is possible that a VM exit was caused by a reason internal to the host
 kernel, and that emulator software should not be concerned with.
 In this case, the exit reason is set to
-.Cd NVMM_EXIT_NONE .
+.Cd NVMM_VCPU_EXIT_NONE .
 This gives a chance for emulator software to halt the VM in its tracks.
 .Pp
 Refer to functional examples to see precisely how to handle VM exits.
@@ -466,18 +530,16 @@ It is possible to inject an event into a VCPU.
 An event can be a hardware interrupt, a software interrupt, or a software
 exception, defined by:
 .Bd -literal
-enum nvmm_event_type {
-	NVMM_EVENT_INTERRUPT_HW,
-	NVMM_EVENT_INTERRUPT_SW,
-	NVMM_EVENT_EXCEPTION
-};
+#define NVMM_VCPU_EVENT_EXCP	0
+#define NVMM_VCPU_EVENT_INTR	1
 
-struct nvmm_event {
-	enum nvmm_event_type type;
-	uint64_t vector;
+struct nvmm_vcpu_event {
+	u_int type;
+	uint8_t vector;
 	union {
-		uint64_t error;
-		uint64_t prio;
+		struct {
+			uint64_t error;
+		} excp;
 	} u;
 };
 .Ed
@@ -488,8 +550,6 @@ to be sent to vector number
 .Va vector ,
 with a possible additional
 .Va error
-or
-.Va prio
 code that is implementation-specific.
 .Pp
 It is possible that the VCPU is in a state where it cannot receive this
@@ -508,19 +568,19 @@ Emulator software can manage interrupt and NMI window-exiting via the
 .Va intr
 component of the VCPU state.
 When such window-exiting is enabled, NVMM will cause a VM exit with reason
-.Cd NVMM_EXIT_INT_READY
+.Cd NVMM_VCPU_EXIT_INT_READY
 or
-.Cd NVMM_EXIT_NMI_READY
+.Cd NVMM_VCPU_EXIT_NMI_READY
 to indicate that the guest is now able to handle the corresponding class
 of interrupts.
 .Ss Assist Callbacks
 In order to assist emulation of certain operations,
 .Nm
 requires emulator software to register, via
-.Fn nvmm_machine_configure ,
+.Fn nvmm_vcpu_configure ,
 a set of callbacks described in the following structure:
 .Bd -literal
-struct nvmm_callbacks {
+struct nvmm_assist_callbacks {
 	void (*io)(struct nvmm_io *);
 	void (*mem)(struct nvmm_mem *);
 };
@@ -538,7 +598,7 @@ Emulator software that does not intend to use either of these assists can put
 in the callbacks.
 .Ss I/O Assist
 When a VM exit occurs with reason
-.Cd NVMM_EXIT_IO ,
+.Cd NVMM_VCPU_EXIT_IO ,
 it is necessary for emulator software to emulate the associated I/O operation.
 .Nm
 provides an easy way for emulator software to perform that.
@@ -552,7 +612,9 @@ structure as argument.
 This structure describes an I/O transaction:
 .Bd -literal
 struct nvmm_io {
-	uint64_t port;
+	struct nvmm_machine *mach;
+	struct nvmm_vcpu *vcpu;
+	uint16_t port;
 	bool in;
 	size_t size;
 	uint8_t *data;
@@ -584,7 +646,7 @@ will indicate if the operation is an input, and
 will indicate the size of the access.
 .Ss Mem Assist
 When a VM exit occurs with reason
-.Cd NVMM_EXIT_MEMORY ,
+.Cd NVMM_VCPU_EXIT_MEMORY ,
 it is necessary for emulator software to emulate the associated memory
 operation.
 .Nm
@@ -600,6 +662,8 @@ structure as argument.
 This structure describes a Mem transaction:
 .Bd -literal
 struct nvmm_mem {
+	struct nvmm_machine *mach;
+	struct nvmm_vcpu *vcpu;
 	gpaddr_t gpa;
 	bool write;
 	size_t size;
@@ -640,9 +704,9 @@ is set to indicate the error.
 .Bl -tag -width XXXX -compact
 .It Lk https://www.netbsd.org/~maxv/nvmm/nvmm-demo.zip
 Functional example (demonstrator).
-Contains a virtualizer that uses the
+Contains an emulator that uses the
 .Nm
-API, and a small kernel that exercises this virtualizer.
+API, and a small kernel that exercises this emulator.
 .It Pa src/sys/dev/nvmm/
 Source code of the kernel NVMM driver.
 .It Pa src/lib/libnvmm/
@@ -669,7 +733,8 @@ A query was made on a machine or a VCPU that does not exist.
 An attempt was made to access a machine that does not belong to the process.
 .El
 .Sh SEE ALSO
-.Xr nvmm 4
+.Xr nvmm 4 ,
+.Xr nvmmctl 8
 .Sh AUTHORS
 NVMM was designed and implemented by
 .An Maxime Villard .

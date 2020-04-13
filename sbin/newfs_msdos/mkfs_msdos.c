@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.14 2018/02/04 09:03:23 mrg Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.14.4.1 2020/04/13 08:03:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -37,7 +37,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.14 2018/02/04 09:03:23 mrg Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.14.4.1 2020/04/13 08:03:21 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -264,7 +264,10 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
     int ch, fd, fd1;
     struct msdos_options o = *op;
     int oflags = O_RDWR | O_CREAT;
+    bool bspf_is_calculated;
 
+again:
+    bspf_is_calculated = false;
     if (o.block_size && o.sectors_per_cluster) {
 	warnx("Cannot specify both block size and sectors per cluster");
 	return -1;
@@ -556,6 +559,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
     x2 = howmany((RESFTE + MIN(x, maxcls(o.fat_type))) * (o.fat_type / BPN),
 		 bpb.bps * NPB);
     if (!bpb.bspf) {
+	bspf_is_calculated = true;
 	bpb.bspf = x2;
 	x1 += (bpb.bspf - 1) * bpb.nft;
     }
@@ -569,6 +573,11 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	return -1;
     }
     if (cls < mincls(o.fat_type)) {
+	if (bspf_is_calculated && o.sectors_per_cluster == 0 && bpb.spc > 2) {
+		/* retry with smaller cluster size */
+		o.sectors_per_cluster = 2;
+		goto again;
+	}
 	warnx("%u clusters too few clusters for FAT%u, need %u", cls,
 	    o.fat_type, mincls(o.fat_type));
 	return -1;

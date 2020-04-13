@@ -1,4 +1,4 @@
-/*      $NetBSD: wmcom.c,v 1.6.18.1 2019/06/10 22:06:03 christos Exp $      */
+/*      $NetBSD: wmcom.c,v 1.6.18.2 2020/04/13 08:03:41 martin Exp $      */
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.6.18.1 2019/06/10 22:06:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.6.18.2 2020/04/13 08:03:41 martin Exp $");
 
 #include "rnd.h"
 
@@ -199,11 +199,7 @@ wmcom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tty->t_hwiflow = wmcom_hwiflow;
 
 	sc->sc_tbc = 0;
-	sc->sc_rbuf = malloc(WMCOM_RING_SIZE << 1, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_rbuf == NULL) {
-		aprint_error_dev(self, "unable to allocate ring buffer\n");
-		return;
-	}
+	sc->sc_rbuf = malloc(WMCOM_RING_SIZE << 1, M_DEVBUF, M_WAITOK);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = WMCOM_RING_SIZE;
 

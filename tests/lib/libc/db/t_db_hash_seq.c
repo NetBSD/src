@@ -1,4 +1,4 @@
-/*	$NetBSD: t_db_hash_seq.c,v 1.2 2015/06/22 22:35:51 christos Exp $	*/
+/*	$NetBSD: t_db_hash_seq.c,v 1.2.16.1 2020/04/13 08:05:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_db_hash_seq.c,v 1.2 2015/06/22 22:35:51 christos Exp $");
+__RCSID("$NetBSD: t_db_hash_seq.c,v 1.2.16.1 2020/04/13 08:05:25 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -338,6 +338,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, test_hash_del_alt);
 	ATF_TP_ADD_TC(tp, test_hash_del_every_7);
 
-	return 0;
+	return atf_no_error();
 }
 #endif

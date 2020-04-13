@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.102.2.2 2020/04/08 14:08:10 martin Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.102.2.3 2020/04/13 08:04:45 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.102.2.2 2020/04/08 14:08:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.102.2.3 2020/04/13 08:04:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2902,10 +2902,10 @@ const struct puc_device_description puc_devices[] = {
 	    {	PCI_VENDOR_SYSTEMBASE, PCI_PRODUCT_SYSTEMBASE_SB16C1054, 0, 0 },
 	    {	0xffff,	0xffff,						 0, 0 },
 	    {
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x08, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x10, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x18, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x18, COM_FREQ * 8 },
 	    },
 	},
 
@@ -2914,14 +2914,14 @@ const struct puc_device_description puc_devices[] = {
 	    {   PCI_VENDOR_SYSTEMBASE, PCI_PRODUCT_SYSTEMBASE_SB16C1058, 0, 0 },
 	    {	0xffff,	0xffff,						 0, 0 },
 	    {
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x08, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x10, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x18, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x20, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x28, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x30, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x38, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x18, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x20, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x28, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x30, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x38, COM_FREQ * 8 },
 	    },
 	},
 

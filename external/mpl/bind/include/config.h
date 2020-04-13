@@ -4,9 +4,6 @@
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
-/* Use AES for Client Cookie generation */
-#define AES_CC 1
-
 /* Define if you cannot bind() before connect() for TCP sockets. */
 /* #undef BROKEN_TCP_BIND_BEFORE_CONNECT */
 
@@ -21,12 +18,6 @@
 
 /* Define to enable American Fuzzy Lop test harness */
 /* #undef ENABLE_AFL */
-
-/* Define to enable rpz nsdname rules. */
-#define ENABLE_RPZ_NSDNAME 1
-
-/* Define to enable rpz nsip rules. */
-#define ENABLE_RPZ_NSIP 1
 
 /* define if you want TCP_FASTOPEN enabled if available */
 #define ENABLE_TCP_FASTOPEN 1
@@ -52,6 +43,9 @@
 /* Define to 1 if you have the `arc4random_uniform' function. */
 #define HAVE_ARC4RANDOM_UNIFORM 1
 
+/* define if the ARM yield instruction is available */
+/* #undef HAVE_ARM_YIELD */
+
 /* Define to 1 if the compiler supports __builtin_clz. */
 #define HAVE_BUILTIN_CLZ 1
 
@@ -60,9 +54,6 @@
 
 /* define if the compiler supports __builtin_unreachable(). */
 #define HAVE_BUILTIN_UNREACHABLE 1
-
-/* Define to 1 if you have the `catgets' function. */
-#define HAVE_CATGETS 1
 
 /* Define to 1 if you have the `chroot' function. */
 #define HAVE_CHROOT 1
@@ -174,6 +165,9 @@
 
 /* Build with GeoIP support */
 /* #undef HAVE_GEOIP */
+
+/* Build with GeoIP2 support */
+/* #undef HAVE_GEOIP2 */
 
 /* Build with GeoIP City IPv6 support */
 /* #undef HAVE_GEOIP_CITY_V6 */
@@ -292,6 +286,9 @@
 /* define if OpenSSL supports Ed25519 */
 #define HAVE_OPENSSL_ED25519 1
 
+/* define if OpenSSL supports Ed448 */
+#define HAVE_OPENSSL_ED448 1
+
 /* Define to 1 if you have the `processor_bind' function. */
 /* #undef HAVE_PROCESSOR_BIND */
 
@@ -372,11 +369,15 @@
 #define HAVE_SIGWAIT 1
 #endif
 
+/* define if the SPARC pause instruction is available */
+/* #undef HAVE_SPARC_PAUSE */
+
 /* define if struct stat has st_mtim.tv_nsec field */
 /* #undef HAVE_STAT_NSEC */
 
 /* Define to 1 if you have the <stdatomic.h> header file. */
 #ifndef __lint__
+/* Gcc provides its own */
 #define HAVE_STDATOMIC_H 1
 #endif
 
@@ -447,10 +448,10 @@
 #define HAVE_SYS_UN_H 1
 
 /* Define to 1 if you have the <threads.h> header file. */
-/* #undef HAVE_THREADS_H */
+#define HAVE_THREADS_H 1
 
 /* Define if thread_local keyword is available */
-/* #undef HAVE_THREAD_LOCAL */
+#define HAVE_THREAD_LOCAL 1
 
 /* Define if Thread-Local Storage is available */
 #define HAVE_TLS 1
@@ -480,22 +481,13 @@
 /* #undef HAVE___ATOMIC */
 
 /* Define if __thread keyword is available */
-#define HAVE___THREAD 1
-
-/* Use HMAC-SHA1 for Client Cookie generation */
-/* #undef HMAC_SHA1_CC */
-
-/* Use HMAC-SHA256 for Client Cookie generation */
-/* #undef HMAC_SHA256_CC */
+/* #undef HAVE___THREAD */
 
 /* Define if you want to use inline buffers */
 #define ISC_BUFFER_USEINLINE 1
 
 /* Define to allow building of objects for dlopen(). */
 #define ISC_DLZ_DLOPEN 1
-
-/* define if the linker supports --wrap option */
-/* #undef LD_WRAP */
 
 /* have __attribute__s used in librpz.h */
 #define LIBRPZ_HAVE_ATTR 1

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_api.c,v 1.21.2.2 2020/04/08 14:08:11 martin Exp $ */
+/* $NetBSD: ixgbe_api.c,v 1.21.2.3 2020/04/13 08:04:46 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -1103,6 +1103,19 @@ s32 ixgbe_set_vlvf(struct ixgbe_hw *hw, u32 vlan, u32 vind, bool vlan_on,
 	return ixgbe_call_func(hw, hw->mac.ops.set_vlvf, (hw, vlan, vind,
 			       vlan_on, vfta_delta, vfta, vlvf_bypass),
 			       IXGBE_NOT_IMPLEMENTED);
+}
+
+/**
+ *  ixgbe_toggle_txdctl - Toggle VF's queues
+ *  @hw: pointer to hardware structure
+ *  @vind: VMDq pool index
+ *
+ *  Enable and disable each queue in VF.
+ */
+s32 ixgbe_toggle_txdctl(struct ixgbe_hw *hw, u32 vind)
+{
+	return ixgbe_call_func(hw, hw->mac.ops.toggle_txdctl, (hw,
+			       vind), IXGBE_NOT_IMPLEMENTED);
 }
 
 /**

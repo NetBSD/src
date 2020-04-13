@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.21 2011/06/05 17:03:16 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21.54.1 2020/04/13 08:03:58 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2011/06/05 17:03:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.54.1 2020/04/13 08:03:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,17 +67,29 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct ofbus_attach_args oba;
 	struct confargs ca;
-	int node, i;
+	int node, cpus, i;
 	u_int32_t reg[4];
 	char name[32];
 
 	printf("\n");
 
-	for (i = 0; i < 2; i++) {
-		ca.ca_name = "cpu";
-		ca.ca_reg = reg;
-		reg[0] = i;
-		config_found(self, &ca, NULL);
+	cpus = OF_finddevice("/cpus");
+	if (cpus != 0) {
+		node = OF_child(cpus);
+		while (node != 0) {
+			ca.ca_name = "cpu";
+			ca.ca_reg = reg;
+			ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
+			config_found(self, &ca, NULL);
+			node = OF_peer(node);
+		}			
+	} else {
+		for (i = 0; i < 2; i++) {
+			ca.ca_name = "cpu";
+			ca.ca_reg = reg;
+			reg[0] = i;
+			config_found(self, &ca, NULL);
+		}
 	}
 
 	pic_finish_setup();

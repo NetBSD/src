@@ -1,4 +1,4 @@
-/* $NetBSD: t_mprotect.c,v 1.7 2017/05/06 21:34:52 joerg Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.7.10.1 2020/04/13 08:05:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.7 2017/05/06 21:34:52 joerg Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.7.10.1 2020/04/13 08:05:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -87,7 +87,7 @@ ATF_TC_BODY(mprotect_access, tc)
 	size_t i;
 	int fd;
 
-	fd = open(path, O_RDONLY | O_CREAT);
+	fd = open(path, O_RDONLY | O_CREAT, 0600);
 	ATF_REQUIRE(fd >= 0);
 
 	/*

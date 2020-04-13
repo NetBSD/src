@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.12 2015/10/02 05:22:51 msaitoh Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.12.18.1 2020/04/13 08:04:00 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.12 2015/10/02 05:22:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.12.18.1 2020/04/13 08:04:00 martin Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -566,9 +566,7 @@ rmixl_pcie_intcfg(struct rmixl_pcie_softc *sc)
 		 * allocate per-cpu, per-pin interrupt event counters
 		 */
 		size = ncpu * PCI_INTERRUPT_PIN_MAX * sizeof(rmixl_pcie_evcnt_t);
-		ev = malloc(size, M_DEVBUF, M_NOWAIT);
-		if (ev == NULL)
-			panic("%s: cannot malloc evcnts\n", __func__);
+		ev = malloc(size, M_DEVBUF, M_WAITOK);
 		sc->sc_evcnts[link] = ev;
 		for (int pin=PCI_INTERRUPT_PIN_A; pin <= PCI_INTERRUPT_PIN_MAX; pin++) {
 			for (int cpu=0; cpu < ncpu; cpu++) {
@@ -1344,14 +1342,7 @@ rmixl_pcie_lip_add_1(rmixl_pcie_softc_t *sc, u_int link, int irq, int ipl)
 	 * allocate and initialize link intr struct
 	 * with one or more dispatch handles
 	 */
-	lip_new = malloc(size, M_DEVBUF, M_NOWAIT);
-	if (lip_new == NULL) {
-#ifdef DIAGNOSTIC
-		printf("%s: cannot malloc\n", __func__);
-#endif
-		return NULL;
-	}
-
+	lip_new = malloc(size, M_DEVBUF, M_WAITOK);
 	if (lip_old == NULL) {
 		/* initialize the link interrupt struct */
 		lip_new->sc = sc;

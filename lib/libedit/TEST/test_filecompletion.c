@@ -1,4 +1,4 @@
-/*	$NetBSD: test_filecompletion.c,v 1.3.2.1 2019/06/10 22:05:23 christos Exp $	*/
+/*	$NetBSD: test_filecompletion.c,v 1.3.2.2 2020/04/13 08:03:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Abhinav Upadhyay <abhinav@NetBSD.org>
@@ -62,14 +62,14 @@ static test_input inputs[] = {
 		L"ls \"dq_ang",
 		"dq_ang",
 		{"dq_ang<ular>test", NULL},
-		L"ls \"dq_ang<ular>test\" "
+		L"ls \"dq_ang<ular>test\""
 	},
 	{
 		/* test angular bracket inside singlq quotes: ls "sq_ang */
 		L"ls 'sq_ang",
 		"sq_ang",
 		{"sq_ang<ular>test", NULL},
-		L"ls 'sq_ang<ular>test' "
+		L"ls 'sq_ang<ular>test'"
 	},
 	{
 		/* simple test for backslash */
@@ -83,14 +83,14 @@ static test_input inputs[] = {
 		L"ls 'sback",
 		"sback",
 		{"sbackslash\\test", NULL},
-		L"ls 'sbackslash\\test' "
+		L"ls 'sbackslash\\test'"
 	},
 	{
 		/* backslash inside double quotes */
 		L"ls \"dback",
 		"dback",
 		{"dbackslash\\test", NULL},
-		L"ls \"dbackslash\\\\test\" "
+		L"ls \"dbackslash\\\\test\""
 	},
 	{
 		/* test braces */
@@ -104,14 +104,14 @@ static test_input inputs[] = {
 		L"ls 'sbr",
 		"sbr",
 		{"sbraces{test}", NULL},
-		L"ls 'sbraces{test}' "
+		L"ls 'sbraces{test}'"
 	},
 	{
 		/* test braces inside double quotes */
 		L"ls \"dbr",
 		"dbr",
 		{"dbraces{test}", NULL},
-		L"ls \"dbraces{test}\" "
+		L"ls \"dbraces{test}\""
 	},
 	{
 		/* test dollar */
@@ -125,14 +125,14 @@ static test_input inputs[] = {
 		L"ls 'sdoll",
 		"sdoll",
 		{"sdoll$artest", NULL},
-		L"ls 'sdoll$artest' "
+		L"ls 'sdoll$artest'"
 	},
 	{
 		/* test dollar inside double quotes */
 		L"ls \"ddoll",
 		"ddoll",
 		{"ddoll$artest", NULL},
-		L"ls \"ddoll\\$artest\" "
+		L"ls \"ddoll\\$artest\""
 	},
 	{
 		/* test equals */
@@ -146,14 +146,14 @@ static test_input inputs[] = {
 		L"ls 'seq",
 		"seq",
 		{"sequals==test", NULL},
-		L"ls 'sequals==test' "
+		L"ls 'sequals==test'"
 	},
 	{
 		/* test equals inside double quotes */
 		L"ls \"deq",
 		"deq",
 		{"dequals==test", NULL},
-		L"ls \"dequals==test\" "
+		L"ls \"dequals==test\""
 	},
 	{
 		/* test \n */
@@ -167,14 +167,14 @@ static test_input inputs[] = {
 		L"ls 'snew",
 		"snew",
 		{"snew\nline", NULL},
-		L"ls 'snew\nline' "
+		L"ls 'snew\nline'"
 	},
 	{
 		/* test \n inside double quotes */
 		L"ls \"dnew",
 		"dnew",
 		{"dnew\nline", NULL},
-		L"ls \"dnew\nline\" "
+		L"ls \"dnew\nline\""
 	},
 	{
 		/* test single space */
@@ -188,14 +188,14 @@ static test_input inputs[] = {
 		L"ls 's_spac",
 		"s_spac",
 		{"s_space test", NULL},
-		L"ls 's_space test' "
+		L"ls 's_space test'"
 	},
 	{
 		/* test single space inside double quotes */
 		L"ls \"d_spac",
 		"d_spac",
 		{"d_space test", NULL},
-		L"ls \"d_space test\" "
+		L"ls \"d_space test\""
 	},
 	{
 		/* test multiple spaces */
@@ -209,14 +209,14 @@ static test_input inputs[] = {
 		L"ls 's_multi",
 		"s_multi",
 		{"s_multi space  test", NULL},
-		L"ls 's_multi space  test' "
+		L"ls 's_multi space  test'"
 	},
 	{
 		/* test multiple spaces inside double quotes */
 		L"ls \"d_multi",
 		"d_multi",
 		{"d_multi space  test", NULL},
-		L"ls \"d_multi space  test\" "
+		L"ls \"d_multi space  test\""
 	},
 	{
 		/* test double quotes */
@@ -230,14 +230,14 @@ static test_input inputs[] = {
 		L"ls 's_doub",
 		"s_doub",
 		{"s_doub\"quotes", NULL},
-		L"ls 's_doub\"quotes' "
+		L"ls 's_doub\"quotes'"
 	},
 	{
 		/* test double quotes inside double quotes */
 		L"ls \"d_doub",
 		"d_doub",
 		{"d_doub\"quotes", NULL},
-		L"ls \"d_doub\\\"quotes\" "
+		L"ls \"d_doub\\\"quotes\""
 	},
 	{
 		/* test multiple double quotes */
@@ -251,14 +251,14 @@ static test_input inputs[] = {
 		L"ls 'smud",
 		"smud",
 		{"smud\"qu\"otes\"", NULL},
-		L"ls 'smud\"qu\"otes\"' "
+		L"ls 'smud\"qu\"otes\"'"
 	},
 	{
 		/* test multiple double quotes inside double quotes */
 		L"ls \"dmud",
 		"dmud",
 		{"dmud\"qu\"otes\"", NULL},
-		L"ls \"dmud\\\"qu\\\"otes\\\"\" "
+		L"ls \"dmud\\\"qu\\\"otes\\\"\""
 	},
 	{
 		/* test one single quote */
@@ -272,14 +272,14 @@ static test_input inputs[] = {
 		L"ls 'ssing",
 		"ssing",
 		{"ssingle'quote", NULL},
-		L"ls 'ssingle'\\''quote' "
+		L"ls 'ssingle'\\''quote'"
 	},
 	{
 		/* test one single quote inside double quote */
 		L"ls \"dsing",
 		"dsing",
 		{"dsingle'quote", NULL},
-		L"ls \"dsingle'quote\" "
+		L"ls \"dsingle'quote\""
 	},
 	{
 		/* test multiple single quotes */
@@ -293,14 +293,14 @@ static test_input inputs[] = {
 		L"ls 'smu_sing",
 		"smu_sing",
 		{"smu_single''quotes''", NULL},
-		L"ls 'smu_single'\\'''\\''quotes'\\\'''\\''' "
+		L"ls 'smu_single'\\'''\\''quotes'\\\'''\\'''"
 	},
 	{
 		/* test multiple single quotes inside double quote */
 		L"ls \"dmu_sing",
 		"dmu_sing",
 		{"dmu_single''quotes''", NULL},
-		L"ls \"dmu_single''quotes''\" "
+		L"ls \"dmu_single''quotes''\""
 	},
 	{
 		/* test parenthesis */
@@ -314,14 +314,14 @@ static test_input inputs[] = {
 		L"ls 'sparen",
 		"sparen",
 		{"sparen(test)", NULL},
-		L"ls 'sparen(test)' "
+		L"ls 'sparen(test)'"
 	},
 	{
 		/* test parenthesis inside double quote */
 		L"ls \"dparen",
 		"dparen",
 		{"dparen(test)", NULL},
-		L"ls \"dparen(test)\" "
+		L"ls \"dparen(test)\""
 	},
 	{
 		/* test pipe */
@@ -335,14 +335,14 @@ static test_input inputs[] = {
 		L"ls 'spip",
 		"spip",
 		{"spipe|test", NULL},
-		L"ls 'spipe|test' ",
+		L"ls 'spipe|test'",
 	},
 	{
 		/* test pipe inside double quote */
 		L"ls \"dpip",
 		"dpip",
 		{"dpipe|test", NULL},
-		L"ls \"dpipe|test\" "
+		L"ls \"dpipe|test\""
 	},
 	{
 		/* test tab */
@@ -356,14 +356,14 @@ static test_input inputs[] = {
 		L"ls 'sta",
 		"sta",
 		{"stab\ttest", NULL},
-		L"ls 'stab\ttest' "
+		L"ls 'stab\ttest'"
 	},
 	{
 		/* test tab inside double quote */
 		L"ls \"dta",
 		"dta",
 		{"dtab\ttest", NULL},
-		L"ls \"dtab\ttest\" "
+		L"ls \"dtab\ttest\""
 	},
 	{
 		/* test back tick */
@@ -377,14 +377,14 @@ static test_input inputs[] = {
 		L"ls 'stic",
 		"stic",
 		{"stick`test`", NULL},
-		L"ls 'stick`test`' "
+		L"ls 'stick`test`'"
 	},
 	{
 		/* test back tick inside double quote */
 		L"ls \"dtic",
 		"dtic",
 		{"dtick`test`", NULL},
-		L"ls \"dtick\\`test\\`\" "
+		L"ls \"dtick\\`test\\`\""
 	},
 	{
 		/* test for @ */
@@ -398,14 +398,14 @@ static test_input inputs[] = {
 		L"ls 'sat",
 		"sat",
 		{"satthe@rate", NULL},
-		L"ls 'satthe@rate' "
+		L"ls 'satthe@rate'"
 	},
 	{
 		/* test for @ inside double quote */
 		L"ls \"dat",
 		"dat",
 		{"datthe@rate", NULL},
-		L"ls \"datthe@rate\" "
+		L"ls \"datthe@rate\""
 	},
 	{
 		/* test ; */
@@ -419,14 +419,14 @@ static test_input inputs[] = {
 		L"ls 'ssemi",
 		"ssemi",
 		{"ssemi;colon;test", NULL},
-		L"ls 'ssemi;colon;test' "
+		L"ls 'ssemi;colon;test'"
 	},
 	{
 		/* test ; inside double quote */
 		L"ls \"dsemi",
 		"dsemi",
 		{"dsemi;colon;test", NULL},
-		L"ls \"dsemi;colon;test\" "
+		L"ls \"dsemi;colon;test\""
 	},
 	{
 		/* test & */
@@ -440,14 +440,14 @@ static test_input inputs[] = {
 		L"ls 'samp",
 		"samp",
 		{"sampers&and", NULL},
-		L"ls 'sampers&and' "
+		L"ls 'sampers&and'"
 	},
 	{
 		/* test & inside double quote */
 		L"ls \"damp",
 		"damp",
 		{"dampers&and", NULL},
-		L"ls \"dampers&and\" "
+		L"ls \"dampers&and\""
 	},
 	{
 		/* test completion when cursor at \ */

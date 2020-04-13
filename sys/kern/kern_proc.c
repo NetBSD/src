@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_proc.c,v 1.212.2.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.212.2.2 2020/04/13 08:05:03 martin Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.212.2.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.212.2.2 2020/04/13 08:05:03 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.212.2.1 2019/06/10 22:09:03 christos
 #include <sys/exec.h>
 #include <sys/cpu.h>
 #include <sys/compat_stub.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
@@ -262,7 +263,7 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case KAUTH_PROCESS_CANSEE: {
 		enum kauth_process_req req;
 
-		req = (enum kauth_process_req)arg1;
+		req = (enum kauth_process_req)(uintptr_t)arg1;
 
 		switch (req) {
 		case KAUTH_REQ_PROCESS_CANSEE_ARGS:
@@ -376,7 +377,7 @@ procinit(void)
 	proc_specificdata_domain = specificdata_domain_create();
 	KASSERT(proc_specificdata_domain != NULL);
 
-	proc_cache = pool_cache_init(sizeof(struct proc), 0, 0, 0,
+	proc_cache = pool_cache_init(sizeof(struct proc), coherency_unit, 0, 0,
 	    "procpl", NULL, IPL_NONE, proc_ctor, NULL, NULL);
 
 	proc_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
@@ -440,6 +441,7 @@ proc0_init(void)
 	struct pgrp *pg;
 	struct rlimit *rlim;
 	rlim_t lim;
+	int error __diagused;
 	int i;
 
 	p = &proc0;
@@ -450,10 +452,15 @@ proc0_init(void)
 	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
 	rw_init(&p->p_reflock);
+	rw_init(&p->p_treelock);
 	cv_init(&p->p_waitcv, "wait");
 	cv_init(&p->p_lwpcv, "lwpwait");
 
 	LIST_INSERT_HEAD(&p->p_lwps, &lwp0, l_sibling);
+	radix_tree_init_tree(&p->p_lwptree);
+	error = radix_tree_insert_node(&p->p_lwptree,
+	    (uint64_t)(lwp0.l_lid - 1), &lwp0);
+	KASSERT(error == 0);
 
 	pid_table[0].pt_proc = p;
 	LIST_INSERT_HEAD(&allproc, p, p_list);
@@ -470,7 +477,7 @@ proc0_init(void)
 	p->p_cred = cred0;
 
 	/* Create the CWD info. */
-	rw_init(&cwdi0.cwdi_lock);
+	mutex_init(&cwdi0.cwdi_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Create the limits structures. */
 	mutex_init(&limit0.pl_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -487,7 +494,7 @@ proc0_init(void)
 	rlim[RLIMIT_NPROC].rlim_max = maxproc;
 	rlim[RLIMIT_NPROC].rlim_cur = maxproc < maxuprc ? maxproc : maxuprc;
 
-	lim = MIN(VM_MAXUSER_ADDRESS, ctob((rlim_t)uvmexp.free));
+	lim = MIN(VM_MAXUSER_ADDRESS, ctob((rlim_t)uvm_availmem()));
 	rlim[RLIMIT_RSS].rlim_max = lim;
 	rlim[RLIMIT_MEMLOCK].rlim_max = lim;
 	rlim[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
@@ -1819,6 +1826,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 
 		if (buflen >= elem_size &&
 		    (type == KERN_PROC || elem_count > 0)) {
+			ruspace(p);	/* Update process vm resource use */
+
 			if (type == KERN_PROC) {
 				fill_proc(p, &kbuf->kproc.kp_proc, allowaddr);
 				fill_eproc(p, &kbuf->kproc.kp_eproc, zombie,
@@ -2261,11 +2270,7 @@ fill_proc(const struct proc *psrc, struct proc *p, bool allowaddr)
 	COND_SET_VALUE(p->p_sigpend, psrc->p_sigpend, allowaddr);
 	COND_SET_VALUE(p->p_lwpctl, psrc->p_lwpctl, allowaddr);
 	p->p_ppid = psrc->p_ppid;
-	p->p_fpid = psrc->p_fpid;
-	p->p_vfpid = psrc->p_vfpid;
-	p->p_vfpid_done = psrc->p_vfpid_done;
-	p->p_lwp_created = psrc->p_lwp_created;
-	p->p_lwp_exited = psrc->p_lwp_exited;
+	p->p_oppid = psrc->p_oppid;
 	COND_SET_VALUE(p->p_path, psrc->p_path, allowaddr);
 	COND_SET_VALUE(p->p_sigctx, psrc->p_sigctx, allowaddr);
 	p->p_nice = psrc->p_nice;
@@ -2460,7 +2465,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie, bool allowaddr)
 			ki->p_estcpu += l->l_estcpu;
 		}
 	}
-	sigplusset(&p->p_sigpend.sp_set, &ss2);
+	sigplusset(&p->p_sigpend.sp_set, &ss1);
 	memcpy(&ki->p_siglist, &ss1, sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigmask, &ss2, sizeof(ki_sigset_t));
 
@@ -2591,7 +2596,7 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	struct proc *p;
 	char *path;
 	char *bp, *bend;
-	struct cwdinfo *cwdi;
+	const struct cwdinfo *cwdi;
 	struct vnode *vp;
 	size_t len, lenused;
 
@@ -2606,11 +2611,12 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	bend = bp;
 	*(--bp) = '\0';
 
-	cwdi = p->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	cwdi = cwdlock(p);
 	vp = cwdi->cwdi_cdir;
+	vref(vp);
+	cwdunlock(p);
 	error = getcwd_common(vp, NULL, &bp, path, len/2, 0, l);
-	rw_exit(&cwdi->cwdi_lock);
+	vrele(vp);
 
 	if (error)
 		goto out;

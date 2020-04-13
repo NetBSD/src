@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_composite.c,v 1.3 2018/06/19 01:24:17 jmcneill Exp $ */
+/* $NetBSD: rk_cru_composite.c,v 1.3.4.1 2020/04/13 08:03:37 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_composite.c,v 1.3 2018/06/19 01:24:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_composite.c,v 1.3.4.1 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,10 +75,55 @@ rk_cru_composite_get_rate(struct rk_cru_softc *sc,
 	if (prate == 0)
 		return 0;
 
-	const uint32_t val = CRU_READ(sc, composite->muxdiv_reg);
-	const u_int div = __SHIFTOUT(val, composite->div_mask) + 1;
+	if (composite->flags & RK_COMPOSITE_FRACDIV) {
+		const uint32_t val = CRU_READ(sc, composite->frac_reg);
+		const u_int num = (val >> 16) & 0xffff;
+		const u_int den = val & 0xffff;
 
-	return prate / div;
+		return (u_int)((uint64_t)prate * num / den);
+	} else {
+		const uint32_t val = CRU_READ(sc, composite->muxdiv_reg);
+		const u_int div = __SHIFTOUT(val, composite->div_mask) + 1;
+
+		return prate / div;
+	}
+}
+
+static u_int
+rk_cru_composite_get_frac_div(u_int n, u_int d)
+{
+	u_int tmp;
+
+	while (d > 0) {
+		tmp = d;
+		d = n % d;
+		n = tmp;
+	}
+
+	return n;
+}
+
+static int
+rk_cru_composite_set_rate_frac(struct rk_cru_softc *sc,
+    struct rk_cru_clk *clk, u_int rate)
+{
+	struct rk_cru_composite *composite = &clk->u.composite;
+	struct clk *clk_parent;
+
+	clk_parent = clk_get_parent(&clk->base);
+	if (clk_parent == NULL)
+		return ENXIO;
+
+	const u_int prate = clk_get_rate(clk_parent);
+	const u_int v = rk_cru_composite_get_frac_div(prate, rate);
+	const u_int num = (prate / v) & 0xffff;
+	const u_int den = (rate / v) & 0xffff;
+	if (prate / num * den != rate)
+		return EINVAL;
+
+	CRU_WRITE(sc, composite->frac_reg, (den << 16) | num);
+
+	return 0;
 }
 
 int
@@ -91,6 +136,17 @@ rk_cru_composite_set_rate(struct rk_cru_softc *sc,
 	struct clk *clk_parent;
 
 	KASSERT(clk->type == RK_CRU_COMPOSITE);
+
+	if (composite->flags & RK_COMPOSITE_SET_RATE_PARENT) {
+		clk_parent = clk_get_parent(&clk->base);
+		if (clk_parent == NULL)
+			return ENXIO;
+		return clk_set_rate(clk_parent, rate);
+	}
+
+	if (composite->flags & RK_COMPOSITE_FRACDIV) {
+		return rk_cru_composite_set_rate_frac(sc, clk, rate);
+	}
 
 	best_div = 0;
 	best_mux = 0;

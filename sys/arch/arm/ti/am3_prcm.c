@@ -1,4 +1,4 @@
-/* $NetBSD: am3_prcm.c,v 1.1 2017/10/26 23:28:15 jmcneill Exp $ */
+/* $NetBSD: am3_prcm.c,v 1.1.6.1 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.1 2017/10/26 23:28:15 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.1.6.1 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,19 @@ __KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.1 2017/10/26 23:28:15 jmcneill Exp $"
 #define	AM3_PRCM_CLKCTRL_MODULEMODE		__BITS(1,0)
 #define	AM3_PRCM_CLKCTRL_MODULEMODE_ENABLE	0x2
 
+#define	AM3_PRCM_CM_IDLEST_DPLL_DISP	(AM3_PRCM_CM_WKUP + 0x48)
+#define	 AM3_PRCM_CM_IDLEST_DPLL_DISP_ST_MN_BYPASS	__BIT(8)
+#define	 AM3_PRCM_CM_IDLEST_DPLL_DISP_ST_DPLL_CLK	__BIT(0)
+#define	AM3_PRCM_CM_CLKSEL_DPLL_DISP	(AM3_PRCM_CM_WKUP + 0x54)
+#define	 AM3_PRCM_CM_CLKSEL_DPLL_DISP_DPLL_MULT		__BITS(18,8)
+#define	 AM3_PRCM_CM_CLKSEL_DPLL_DISP_DPLL_DIV		__BITS(6,0)
+#define	AM3_PRCM_CM_CLKMODE_DPLL_DISP	(AM3_PRCM_CM_WKUP + 0x98)
+#define	 AM3_PRCM_CM_CLKMODE_DPLL_DISP_DPLL_EN		__BITS(2,0)
+#define	  AM3_PRCM_CM_CLKMODE_DPLL_DISP_DPLL_EN_MN_BYPASS	4
+#define	  AM3_PRCM_CM_CLKMODE_DPLL_DISP_DPLL_EN_LOCK		7
+
+#define	DPLL_DISP_RATE				297000000
+
 static int am3_prcm_match(device_t, cfdata_t, void *);
 static void am3_prcm_attach(device_t, device_t, void *);
 
@@ -70,8 +83,48 @@ am3_prcm_hwmod_enable(struct ti_prcm_softc *sc, struct ti_prcm_clk *tc, int enab
 	return 0;
 }
 
+static int
+am3_prcm_hwmod_enable_display(struct ti_prcm_softc *sc, struct ti_prcm_clk *tc, int enable)
+{
+	uint32_t val;
+	int retry;
+
+	if (enable) {
+		/* Put the DPLL in MN bypass mode */
+		PRCM_WRITE(sc, AM3_PRCM_CM_CLKMODE_DPLL_DISP,
+		    __SHIFTIN(AM3_PRCM_CM_CLKMODE_DPLL_DISP_DPLL_EN_MN_BYPASS,
+			      AM3_PRCM_CM_CLKMODE_DPLL_DISP_DPLL_EN));
+		for (retry = 10000; retry > 0; retry--) {
+			val = PRCM_READ(sc, AM3_PRCM_CM_IDLEST_DPLL_DISP);
+			if ((val & AM3_PRCM_CM_IDLEST_DPLL_DISP_ST_MN_BYPASS) != 0)
+				break;
+			delay(10);
+		}
+
+		/* Set DPLL frequency to DPLL_DISP_RATE (297 MHz) */
+		val = __SHIFTIN(DPLL_DISP_RATE / 1000000, AM3_PRCM_CM_CLKSEL_DPLL_DISP_DPLL_MULT);
+		val |= __SHIFTIN(24 - 1, AM3_PRCM_CM_CLKSEL_DPLL_DISP_DPLL_DIV);
+		PRCM_WRITE(sc, AM3_PRCM_CM_CLKSEL_DPLL_DISP, val);
+
+		/* Disable MN bypass mode */
+		PRCM_WRITE(sc, AM3_PRCM_CM_CLKMODE_DPLL_DISP,
+		    __SHIFTIN(AM3_PRCM_CM_CLKMODE_DPLL_DISP_DPLL_EN_LOCK,
+			      AM3_PRCM_CM_CLKMODE_DPLL_DISP_DPLL_EN));
+		for (retry = 10000; retry > 0; retry--) {
+			val = PRCM_READ(sc, AM3_PRCM_CM_IDLEST_DPLL_DISP);
+			if ((val & AM3_PRCM_CM_IDLEST_DPLL_DISP_ST_DPLL_CLK) != 0)
+				break;
+			delay(10);
+		}
+	}
+
+	return am3_prcm_hwmod_enable(sc, tc, enable);
+}
+
 #define	AM3_PRCM_HWMOD_PER(_name, _reg, _parent)	\
 	TI_PRCM_HWMOD((_name), AM3_PRCM_CM_PER + (_reg), (_parent), am3_prcm_hwmod_enable)
+#define	AM3_PRCM_HWMOD_PER_DISP(_name, _reg, _parent)	\
+	TI_PRCM_HWMOD((_name), AM3_PRCM_CM_PER + (_reg), (_parent), am3_prcm_hwmod_enable_display)
 #define	AM3_PRCM_HWMOD_WKUP(_name, _reg, _parent)	\
 	TI_PRCM_HWMOD((_name), AM3_PRCM_CM_WKUP + (_reg), (_parent), am3_prcm_hwmod_enable)
 
@@ -86,8 +139,10 @@ CFATTACH_DECL_NEW(am3_prcm, sizeof(struct ti_prcm_softc),
 static struct ti_prcm_clk am3_prcm_clks[] = {
 	/* XXX until we get a proper clock tree */
 	TI_PRCM_FIXED("FIXED_32K", 32768),
+	TI_PRCM_FIXED("FIXED_24MHZ", 24000000),
 	TI_PRCM_FIXED("FIXED_48MHZ", 48000000),
 	TI_PRCM_FIXED("FIXED_96MHZ", 96000000),
+	TI_PRCM_FIXED("DISPLAY_CLK", DPLL_DISP_RATE),
 	TI_PRCM_FIXED_FACTOR("PERIPH_CLK", 1, 1, "FIXED_48MHZ"),
 	TI_PRCM_FIXED_FACTOR("MMC_CLK", 1, 1, "FIXED_96MHZ"),
 
@@ -97,17 +152,39 @@ static struct ti_prcm_clk am3_prcm_clks[] = {
 	AM3_PRCM_HWMOD_PER("uart4", 0x78, "PERIPH_CLK"),
 	AM3_PRCM_HWMOD_PER("uart5", 0x38, "PERIPH_CLK"),
 
-	AM3_PRCM_HWMOD_WKUP("timer0", 0x10, "FIXED_32K"),
-	AM3_PRCM_HWMOD_PER("timer2", 0x80, "PERIPH_CLK"),
-	AM3_PRCM_HWMOD_PER("timer3", 0x84, "PERIPH_CLK"),
-	AM3_PRCM_HWMOD_PER("timer4", 0x88, "PERIPH_CLK"),
-	AM3_PRCM_HWMOD_PER("timer5", 0xec, "PERIPH_CLK"),
-	AM3_PRCM_HWMOD_PER("timer6", 0xf0, "PERIPH_CLK"),
-	AM3_PRCM_HWMOD_PER("timer7", 0x7c, "PERIPH_CLK"),
+	AM3_PRCM_HWMOD_WKUP("i2c1", 0xb8, "PERIPH_CLK"),
+	AM3_PRCM_HWMOD_PER("i2c2", 0x48, "PERIPH_CLK"),
+	AM3_PRCM_HWMOD_PER("i2c3", 0x44, "PERIPH_CLK"),
 
-	AM3_PRCM_HWMOD_PER("mmc0", 0x3c, "MMC_CLK"),
-	AM3_PRCM_HWMOD_PER("mmc1", 0xf4, "MMC_CLK"),
-	AM3_PRCM_HWMOD_PER("mmc2", 0xf8, "MMC_CLK"),
+	AM3_PRCM_HWMOD_WKUP("gpio1", 0x8, "PERIPH_CLK"),
+	AM3_PRCM_HWMOD_PER("gpio2", 0xac, "PERIPH_CLK"),
+	AM3_PRCM_HWMOD_PER("gpio3", 0xb0, "PERIPH_CLK"),
+	AM3_PRCM_HWMOD_PER("gpio4", 0xb4, "PERIPH_CLK"),
+
+	AM3_PRCM_HWMOD_WKUP("timer1", 0x10, "FIXED_32K"),
+	AM3_PRCM_HWMOD_PER("timer2", 0x80, "FIXED_24MHZ"),
+	AM3_PRCM_HWMOD_PER("timer3", 0x84, "FIXED_24MHZ"),
+	AM3_PRCM_HWMOD_PER("timer4", 0x88, "FIXED_24MHZ"),
+	AM3_PRCM_HWMOD_PER("timer5", 0xec, "FIXED_24MHZ"),
+	AM3_PRCM_HWMOD_PER("timer6", 0xf0, "FIXED_24MHZ"),
+	AM3_PRCM_HWMOD_PER("timer7", 0x7c, "FIXED_24MHZ"),
+
+	AM3_PRCM_HWMOD_WKUP("wd_timer2", 0xd4, "FIXED_32K"),
+
+	AM3_PRCM_HWMOD_PER("mmc1", 0x3c, "MMC_CLK"),
+	AM3_PRCM_HWMOD_PER("mmc2", 0xf4, "MMC_CLK"),
+	AM3_PRCM_HWMOD_PER("mmc3", 0xf8, "MMC_CLK"),
+
+	AM3_PRCM_HWMOD_PER("tpcc", 0xbc, "PERIPH_CLK"),
+	AM3_PRCM_HWMOD_PER("tptc0", 0x24, "PERIPH_CLK"),
+	AM3_PRCM_HWMOD_PER("tptc1", 0xfc, "PERIPH_CLK"),
+	AM3_PRCM_HWMOD_PER("tptc2", 0x100, "PERIPH_CLK"),
+
+	AM3_PRCM_HWMOD_PER("usb_otg_hs", 0x1c, "PERIPH_CLK"),
+
+	AM3_PRCM_HWMOD_PER("rng", 0x90, "PERIPH_CLK"),
+
+	AM3_PRCM_HWMOD_PER_DISP("lcdc", 0x18, "DISPLAY_CLK"),
 };
 
 static int
@@ -123,6 +200,7 @@ am3_prcm_attach(device_t parent, device_t self, void *aux)
 {
 	struct ti_prcm_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	int clocks;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
@@ -136,4 +214,8 @@ am3_prcm_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": AM3xxx PRCM\n");
+
+	clocks = of_find_firstchild_byname(sc->sc_phandle, "clocks");
+	if (clocks > 0)
+		fdt_add_bus(self, clocks, faa);
 }

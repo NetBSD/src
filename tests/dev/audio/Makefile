@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.16.1 2020/04/08 14:09:05 martin Exp $
+#	$NetBSD: Makefile,v 1.5.16.2 2020/04/13 08:05:22 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -22,8 +22,6 @@ MKMAN=no
 
 CPPFLAGS+=	-D_KERNTYPES
 LDADD+=	-lrumpdev_pad -lrumpdev_audio -lrumpdev ${LIBRUMPBASE}
-
-FILES=		t_pad_output.bz2.uue
 
 WARNS=	4
 NOMAN=

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.19 2014/03/24 18:56:43 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.19.30.1 2020/04/13 08:03:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.19 2014/03/24 18:56:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.19.30.1 2020/04/13 08:03:40 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -124,7 +124,7 @@ zs_config(struct zsc_softc *zsc, char *base)
 			cs = &zs_conschan_store;
 		} else {
 			cs = malloc(sizeof(struct zs_chanstate),
-				    M_DEVBUF, M_NOWAIT | M_ZERO);
+				    M_DEVBUF, M_WAITOK | M_ZERO);
 			if(channel==0){
 				cs->cs_reg_csr  = base + 7;
 				cs->cs_reg_data = base + 15;

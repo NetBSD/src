@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.93 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.93.2.1 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.93 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.93.2.1 2020/04/13 08:05:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -73,6 +73,7 @@ static int gif_validate6(const struct ip6_hdr *, struct gif_variant *,
 	struct ifnet *);
 
 int	ip6_gif_hlim = GIF_HLIM;
+int	ip6_gif_pmtu = 0;
 
 static const struct encapsw in6_gif_encapsw;
 
@@ -84,13 +85,13 @@ static int
 in6_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 {
 	struct rtentry *rt;
-	struct route *ro;
-	struct gif_ro *gro;
 	struct gif_softc *sc;
 	struct sockaddr_in6 *sin6_src;
 	struct sockaddr_in6 *sin6_dst;
 	struct ifnet *ifp;
 	struct ip6_hdr *ip6;
+	struct route *ro_pc;
+	kmutex_t *lock_pc;
 	int proto, error;
 	u_int8_t itos, otos;
 
@@ -179,40 +180,77 @@ in6_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 	ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
 
 	sc = ifp->if_softc;
-	gro = percpu_getref(sc->gif_ro_percpu);
-	mutex_enter(gro->gr_lock);
-	ro = &gro->gr_ro;
-	rt = rtcache_lookup(ro, var->gv_pdst);
+	if_tunnel_get_ro(sc->gif_ro_percpu, &ro_pc, &lock_pc);
+	rt = rtcache_lookup(ro_pc, var->gv_pdst);
 	if (rt == NULL) {
-		mutex_exit(gro->gr_lock);
-		percpu_putref(sc->gif_ro_percpu);
+		if_tunnel_put_ro(sc->gif_ro_percpu, lock_pc);
 		m_freem(m);
 		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */
 	if (rt->rt_ifp == ifp) {
-		rtcache_unref(rt, ro);
-		rtcache_free(ro);
-		mutex_exit(gro->gr_lock);
-		percpu_putref(sc->gif_ro_percpu);
+		rtcache_unref(rt, ro_pc);
+		rtcache_free(ro_pc);
+		if_tunnel_put_ro(sc->gif_ro_percpu, lock_pc);
 		m_freem(m);
 		return ENETUNREACH;	/* XXX */
 	}
-	rtcache_unref(rt, ro);
+	rtcache_unref(rt, ro_pc);
 
 #ifdef IPV6_MINMTU
+	int flags;
+
 	/*
-	 * force fragmentation to minimum MTU, to avoid path MTU discovery.
-	 * it is too painful to ask for resend of inner packet, to achieve
+	 * - GIF_PMTU_MINMTU
+	 *   Force fragmentation to minimum MTU to avoid path MTU discovery
+	 * - GIF_PMTU_OUTERMTU
+	 *   Trust outer MTU is large enough to send all packets
+	 *
+	 * It is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
+	 *
+	 * See RFC4459.
 	 */
-	error = ip6_output(m, 0, ro, IPV6_MINMTU, NULL, NULL, NULL);
-#else
-	error = ip6_output(m, 0, ro, 0, NULL, NULL, NULL);
+	if (sc->gif_pmtu == GIF_PMTU_SYSDEFAULT) {
+		switch (ip6_gif_pmtu) {
+		case GIF_PMTU_MINMTU:
+			flags = IPV6_MINMTU;
+			break;
+		case GIF_PMTU_OUTERMTU:
+			flags = 0;
+			break;
+		default:
+#ifdef DEBUG
+			log(LOG_DEBUG, "%s: ignore unexpected ip6_gif_pmtu %d\n",
+			    __func__, ip6_gif_pmtu);
 #endif
-	mutex_exit(gro->gr_lock);
-	percpu_putref(sc->gif_ro_percpu);
+			flags = IPV6_MINMTU;
+			break;
+		}
+	} else {
+		switch (sc->gif_pmtu) {
+		case GIF_PMTU_MINMTU:
+			flags = IPV6_MINMTU;
+			break;
+		case GIF_PMTU_OUTERMTU:
+			flags = 0;
+			break;
+		default:
+#ifdef DEBUG
+			log(LOG_DEBUG, "%s: ignore unexpected gif_pmtu of %s %d\n",
+			    __func__, ifp->if_xname, sc->gif_pmtu);
+#endif
+			flags = IPV6_MINMTU;
+			break;
+		}
+	}
+
+	error = ip6_output(m, 0, ro_pc, flags, NULL, NULL, NULL);
+#else
+	error = ip6_output(m, 0, ro_pc, 0, NULL, NULL, NULL);
+#endif
+	if_tunnel_put_ro(sc->gif_ro_percpu, lock_pc);
 	return (error);
 }
 
@@ -419,7 +457,7 @@ in6_gif_detach(struct gif_variant *var)
 	if (error == 0)
 		var->gv_encap_cookie6 = NULL;
 
-	percpu_foreach(sc->gif_ro_percpu, gif_rtcache_free_pc, NULL);
+	if_tunnel_ro_percpu_rtcache_free(sc->gif_ro_percpu);
 
 	return error;
 }
@@ -432,7 +470,8 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d, void *eparg)
 	struct ip6ctlparam *ip6cp = NULL;
 	struct ip6_hdr *ip6;
 	const struct sockaddr_in6 *dst6;
-	struct route *ro;
+	struct route *ro_pc;
+	kmutex_t *lock_pc;
 	struct psref psref;
 
 	if (sa->sa_family != AF_INET6 ||
@@ -468,15 +507,15 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d, void *eparg)
 	}
 	gif_putref_variant(var, &psref);
 
-	ro = percpu_getref(sc->gif_ro_percpu);
-	dst6 = satocsin6(rtcache_getdst(ro));
+	if_tunnel_get_ro(sc->gif_ro_percpu, &ro_pc, &lock_pc);
+	dst6 = satocsin6(rtcache_getdst(ro_pc));
 	/* XXX scope */
 	if (dst6 == NULL)
 		;
 	else if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr))
-		rtcache_free(ro);
+		rtcache_free(ro_pc);
 
-	percpu_putref(sc->gif_ro_percpu);
+	if_tunnel_put_ro(sc->gif_ro_percpu, lock_pc);
 	return NULL;
 }
 

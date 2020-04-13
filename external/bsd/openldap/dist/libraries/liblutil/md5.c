@@ -1,10 +1,10 @@
-/*	$NetBSD: md5.c,v 1.5 2018/02/06 01:57:23 christos Exp $	*/
+/*	$NetBSD: md5.c,v 1.5.4.1 2020/04/13 07:56:15 martin Exp $	*/
 
 /* md5.c -- MD5 message-digest algorithm */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@
    public domain.  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: md5.c,v 1.5 2018/02/06 01:57:23 christos Exp $");
+__RCSID("$NetBSD: md5.c,v 1.5.4.1 2020/04/13 07:56:15 martin Exp $");
 
 #include "portable.h"
 

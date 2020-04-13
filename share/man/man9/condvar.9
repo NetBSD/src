@@ -1,6 +1,6 @@
-.\"	$NetBSD: condvar.9,v 1.19.4.2 2020/04/08 14:07:22 martin Exp $
+.\"	$NetBSD: condvar.9,v 1.19.4.3 2020/04/13 08:03:26 martin Exp $
 .\"
-.\" Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 12, 2019
+.Dd April 9, 2020
 .Dt CONDVAR 9
 .Os
 .Sh NAME
@@ -116,7 +116,9 @@ to display.
 .It Fn cv_destroy "cv"
 .Pp
 Release resources used by a CV.
-The CV must not be in use when it is destroyed, and must not be used afterwards.
+If there could be waiters, they should be awoken first with
+.Fn cv_broadcast .
+The CV must not be be used afterwards.
 .It Fn cv_wait "cv" "mtx"
 .Pp
 Cause the current LWP to wait non-interruptably for access to a resource,
@@ -145,10 +147,11 @@ as available until the calling LWP has begun to wait for it.
 Non-interruptable waits have the potential to deadlock the system, and so must
 be kept short (typically, under one second).
 .Pp
-Upon being awakened, the calling LWP should verify the availability
-of the resource (or other condition).
-It should not blindly assume that the resource is now available.
-If the resource is still not available, the calling LWP may call
+.Fn cv_wait
+is typically used within a loop or restartable code sequence, because it
+may awaken spuriously.
+The calling LWP should re-check the condition that caused the wait.
+If necessary, the calling LWP may call
 .Fn cv_wait
 again to continue waiting.
 .It Fn cv_wait_sig "cv" "mtx"
@@ -234,8 +237,12 @@ more than
 .Fa bt Li "+" Fa epsilon .
 .It Fn cv_signal "cv"
 .Pp
-Awaken one LWP (potentially among many) that is waiting on the specified
-condition variable.
+Awaken one LWP waiting on the specified condition variable.
+Where there are waiters sleeping non-interruptaby, more than one
+LWP may be awoken.
+This can be used to avoid a "thundering herd" problem, where a large
+number of LWPs are awoken following an event, but only one LWP can
+process the event.
 The mutex passed to the wait function
 .Po Fa mtx Pc
 must also be held when calling

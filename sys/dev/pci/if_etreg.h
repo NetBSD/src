@@ -1,4 +1,4 @@
-/*	$NetBSD: if_etreg.h,v 1.1 2010/11/13 00:47:25 jnemeth Exp $	*/
+/*	$NetBSD: if_etreg.h,v 1.1.62.1 2020/04/13 08:04:26 martin Exp $	*/
 /*	$OpenBSD: if_etreg.h,v 1.3 2008/06/08 06:18:07 jsg Exp $	*/
 
 /*
@@ -92,6 +92,7 @@
 #define ET_RXQ_END			0x000c
 
 #define ET_PM				0x0010
+#define EM_PM_GIGEPHY_ENB		(1 << 0)
 #define ET_PM_SYSCLK_GATE		(1 << 3)
 #define ET_PM_TXCLK_GATE		(1 << 4)
 #define ET_PM_RXCLK_GATE		(1 << 5)
@@ -235,7 +236,7 @@
 #define ET_MAC_CFG1_RST_TXMC		(1 << 18)
 #define ET_MAC_CFG1_RST_RXMC		(1 << 19)
 #define ET_MAC_CFG1_SIM_RST		(1 << 30)
-#define ET_MAC_CFG1_SOFT_RST		(1 << 31)
+#define ET_MAC_CFG1_SOFT_RST		__BIT(31)
 
 #define ET_MAC_CFG2			0x5004
 #define ET_MAC_CFG2_FDX			(1 << 0)
@@ -486,7 +487,8 @@ struct et_softc {
 	device_t		sc_dev;
 	struct ethercom		sc_ethercom;
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
-	int			sc_if_flags;
+	u_short			sc_if_flags;
+	uint32_t		sc_flags;	/* ET_FLAG_ */
 
 	int			sc_mem_rid;
 	struct resource		*sc_mem_res;
@@ -527,5 +529,9 @@ struct et_softc {
 	int			sc_tx_intr_nsegs;
 	uint32_t		sc_timer;
 };
+
+#define	ET_FLAG_FASTETHER	0x0004
+#define	ET_FLAG_TXRX_ENABLED	0x0100
+#define	ET_FLAG_LINK		0x8000
 
 #endif	/* !_IF_ETREG_H */

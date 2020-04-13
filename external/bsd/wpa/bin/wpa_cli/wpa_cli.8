@@ -1,4 +1,4 @@
-.\" $NetBSD: wpa_cli.8,v 1.3 2014/03/18 18:20:36 riastradh Exp $
+.\" $NetBSD: wpa_cli.8,v 1.3.26.1 2020/04/13 07:56:34 martin Exp $
 .\"
 .\" Copyright (c) 2005 Sam Leffler <sam@errno.com>
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" Based on:
 .\" $FreeBSD: /repoman/r/ncvs/src/usr.sbin/wpa/wpa_cli/wpa_cli.8,v 1.2 2005/06/27 06:40:43 ru Exp $
 .\"
-.Dd October 1, 2005
+.Dd June 19, 2019
 .Dt WPA_CLI 8
 .Os
 .Sh NAME
@@ -159,6 +159,21 @@ Report the current WPA/EAPOL/EAP status for the current interface.
 Report MIB variables (dot1x, dot11) for the current interface.
 .It Ic help
 Show usage help.
+.It Ic status
+Get current WPA/EAPOL/EAP status.
+.It Ic add_network
+Add a network. Returns a number to be used in set_network commands.
+.It Ic set_network Ar network_id ssid Ar my_ssid_name
+Make network_id use the SSID my_ssid_name.
+.It Ic set_network Ar network_id psk Ar my_ssid_password
+Make network_id use the password my_ssid_password
+.It Ic enable_network Ar network_id
+Begin using the network at network_id.
+.It Ic list_network
+List the networks configured.
+.It Ic scan
+Begin a scan of nearby APs. Results can be obtained with
+.Ic scan_results .
 .It Ic interface Op Ar ifname
 Show available interfaces and/or set the current interface
 when multiple are available.
@@ -209,7 +224,40 @@ Exit
 .El
 .Sh SEE ALSO
 .Xr wpa_supplicant.conf 5 ,
+.Xr wpa_passphrase 8 ,
 .Xr wpa_supplicant 8
+.Sh EXAMPLES
+A sample run of discovering and connecting to a network
+with SSID "MyWifiNetwork" and with a password "MyWifiPassword".
+.Pp
+If wpa_supplicant isn't already running, start it with the command
+.Ic service wpa_supplicant onestart .
+.Pp
+Find the network
+.Bd -literal -offset indent
+.Ic scan
+.Ic scan_results
+17:07:08.868: bssid / frequency / signal level / flags / ssid
+14:aa:ff:ee:aa:cc	2437	187	[WPA-PSK-CCMP+TKIP][ESS]	MyWifiNetwork
+44:ee:ff:bb:33:33	2452	168	[WPA2-PSK-CCMP][ESS]	SomeOtherNetwork
+.Ed
+.Pp
+Now, let's create a network and configure it.
+.Bd -literal -offset indent
+.Ic add_network
+17:08:13.047: 1
+.Ed
+.Pp
+That means the new network_id we should use is 1.
+.Bd -literal -offset indent
+.Ic set_network 1 ssid \[dq]MyWifiNetwork\[dq]
+.Ic set_network 1 psk \[dq]MyWifiPassword\[dq]
+.Ic enable_network 1
+.Ed
+.Pp
+After this point, you should be connected, but no IP address
+is configured. You will likely want to configure the address using
+.Xr dhcpcd 8 .
 .Sh HISTORY
 The
 .Nm

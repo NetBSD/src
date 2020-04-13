@@ -19294,7 +19294,7 @@ process_note (Elf_Internal_Note *  pnote,
 
       printf (_("   description data: "));
       for (i = 0; i < pnote->descsz; i++)
-	printf ("%02x ", pnote->descdata[i]);
+	printf ("%02x ", pnote->descdata[i] & 0xff);
       if (!do_wide)
 	printf ("\n");
     }

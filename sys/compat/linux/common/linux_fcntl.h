@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.17 2015/03/01 13:19:39 njoly Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.17.18.1 2020/04/13 08:04:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,9 @@ LINUX##_to_bsd_##FLOCK(struct flock *bfp, const struct LINUX##_##FLOCK *lfp) \
 		break; \
 	case src_f##_WRLCK: \
 		dst->l_type = dst_f##_WRLCK; \
+		break; \
+	default: \
+		dst->l_type = -1; \
 		break; \
 	} \
     }

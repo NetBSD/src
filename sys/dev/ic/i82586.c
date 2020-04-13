@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.78.2.2 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: i82586.c,v 1.78.2.3 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.78.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.78.2.3 2020/04/13 08:04:21 martin Exp $");
 
 
 #include <sys/param.h>
@@ -258,12 +258,7 @@ i82586_attach(struct ie_softc *sc, const char *name, uint8_t *etheraddr,
 
 	if (padbuf == NULL) {
 		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
-		    M_ZERO | M_NOWAIT);
-		if (padbuf == NULL) {
-			 aprint_error_dev(sc->sc_dev,
-			     "can't allocate pad buffer\n");
-			 return;
-		}
+		    M_ZERO | M_WAITOK);
 	}
 
 	/* Attach the interface. */
@@ -1040,7 +1035,6 @@ ie_readframe(
 	 * Finally pass this packet up to higher layers.
 	 */
 	if_percpuq_enqueue((&sc->sc_ethercom.ec_if)->if_percpuq, m);
-	sc->sc_ethercom.ec_if.if_ipackets++;
 	return (0);
 }
 

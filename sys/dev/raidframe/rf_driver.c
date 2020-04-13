@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.133.16.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.133.16.2 2020/04/13 08:04:47 martin Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.133.16.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.133.16.2 2020/04/13 08:04:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -812,7 +812,7 @@ rf_SuspendNewRequestsAndWait(RF_Raid_t *raidPtr)
 void
 rf_ResumeNewRequests(RF_Raid_t *raidPtr)
 {
-	RF_CallbackDesc_t *t, *cb;
+	RF_CallbackFuncDesc_t *t, *cb;
 
 #if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug)
@@ -832,7 +832,7 @@ rf_ResumeNewRequests(RF_Raid_t *raidPtr)
 		t = cb;
 		cb = cb->next;
 		(t->callbackFunc) (t->callbackArg);
-		rf_FreeCallbackDesc(t);
+		rf_FreeCallbackFuncDesc(t);
 	}
 }
 /*****************************************************************************************

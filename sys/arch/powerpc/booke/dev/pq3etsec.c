@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.34.2.2 2020/04/08 14:07:49 martin Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.34.2.3 2020/04/13 08:04:04 martin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.34.2.2 2020/04/08 14:07:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.34.2.3 2020/04/13 08:04:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -780,6 +780,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 
 	ec->ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING
 	    | ETHERCAP_JUMBO_MTU;
+	ec->ec_capenable = ETHERCAP_VLAN_HWTAGGING;
 
 	strlcpy(ifp->if_xname, xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -1607,8 +1608,6 @@ pq3etsec_rx_input(
 		m->m_flags |= M_MCAST;
 	m->m_flags |= M_HASFCS;
 	m_set_rcvif(m, &sc->sc_if);
-
-	ifp->if_ibytes += m->m_pkthdr.len;
 
 	/*
 	 * Let's give it to the network subsystm to deal with.

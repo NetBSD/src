@@ -1,9 +1,9 @@
-/*	$NetBSD: request.c,v 1.1.1.7 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: request.c,v 1.1.1.7.4.1 2020/04/13 07:56:14 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: request.c,v 1.1.1.7 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: request.c,v 1.1.1.7.4.1 2020/04/13 07:56:14 martin Exp $");
 
 #include "portable.h"
 
@@ -189,7 +189,8 @@ ldap_int_flush_request(
 
 	LDAP_ASSERT_MUTEX_OWNER( &ld->ld_conn_mutex );
 	if ( ber_flush2( lc->lconn_sb, lr->lr_ber, LBER_FLUSH_FREE_NEVER ) != 0 ) {
-		if ( sock_errno() == EAGAIN ) {
+		if (( sock_errno() == EAGAIN ) || ( sock_errno() == ENOTCONN )) {
+			/* ENOTCONN is returned in Solaris 10 */
 			/* need to continue write later */
 			lr->lr_status = LDAP_REQST_WRITING;
 			ldap_mark_select_write( ld, lc->lconn_sb );
@@ -320,6 +321,7 @@ ldap_send_server_request(
 		LDAP_MUTEX_UNLOCK( &ld->ld_options.ldo_mutex );
 		if ( rc == -1 ) {
 			ld->ld_errno = LDAP_ENCODING_ERROR;
+			ber_free( ber, 1 );
 			LDAP_CONN_UNLOCK_IF(m_noconn);
 			return rc;
 		}
@@ -339,6 +341,7 @@ ldap_send_server_request(
 		rc = -1;
 	}
 	if ( rc ) {
+		ber_free( ber, 1 );
 		LDAP_CONN_UNLOCK_IF(m_noconn);
 		return rc;
 	}

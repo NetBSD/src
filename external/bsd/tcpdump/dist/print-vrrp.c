@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-vrrp.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-vrrp.c,v 1.6.12.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: Virtual Router Redundancy Protocol (VRRP) printer */
@@ -147,17 +147,21 @@ vrrp_print(netdissect_options *ndo,
 
 			vec[0].ptr = bp;
 			vec[0].len = len;
-			if (in_cksum(vec, 1))
+			if (in_cksum(vec, 1)) {
+				ND_TCHECK_16BITS(&bp[6]);
 				ND_PRINT((ndo, ", (bad vrrp cksum %x)",
 					EXTRACT_16BITS(&bp[6])));
+			}
 		}
 
 		if (version == 3 && ND_TTEST2(bp[0], len)) {
 			uint16_t cksum = nextproto4_cksum(ndo, (const struct ip *)bp2, bp,
 				len, len, IPPROTO_VRRP);
-			if (cksum)
+			if (cksum) {
+				ND_TCHECK_16BITS(&bp[6]);
 				ND_PRINT((ndo, ", (bad vrrp cksum %x)",
 					EXTRACT_16BITS(&bp[6])));
+			}
 		}
 
 		ND_PRINT((ndo, ", addrs"));

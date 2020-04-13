@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lcdc.c,v 1.5.4.2 2019/06/10 22:05:57 christos Exp $ */
+/* $NetBSD: sunxi_lcdc.c,v 1.5.4.3 2020/04/13 08:03:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.5.4.2 2019/06/10 22:05:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.5.4.3 2020/04/13 08:03:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.5.4.2 2019/06/10 22:05:57 christos 
 #define	TCON1_CTL_REG		0x090
 #define	 TCON1_CTL_TCON1_EN			__BIT(31)
 #define	 TCON1_CTL_START_DELAY			__BITS(8,4)
-#define	 TCON1_CTL_TCON1_SRC_SEL		__BIT(1)
+#define	 TCON1_CTL_TCON1_SRC_SEL		__BITS(1,0)
 #define	TCON1_BASIC0_REG	0x094
 #define	TCON1_BASIC1_REG	0x098
 #define	TCON1_BASIC2_REG	0x09c
@@ -185,6 +185,7 @@ sunxi_lcdc_tcon0_prepare(struct drm_encoder *encoder)
 
 	val = TCON_READ(sc, TCON_GCTL_REG);
 	val |= TCON_GCTL_TCON_EN;
+	val &= ~TCON_GCTL_IO_MAP_SEL;
 	TCON_WRITE(sc, TCON_GCTL_REG, val);
 
 	TCON_WRITE(sc, TCON0_IO_TRI_REG, 0);
@@ -215,22 +216,20 @@ sunxi_lcdc_tcon0_commit(struct drm_encoder *encoder)
 	int error;
 
 	const u_int interlace_p = (mode->flags & DRM_MODE_FLAG_INTERLACE) != 0;
-	const u_int hspw = mode->hsync_end - mode->hsync_start;
-	const u_int hbp = mode->htotal - mode->hsync_start;
-	const u_int vspw = mode->vsync_end - mode->vsync_start;
-	const u_int vbp = mode->vtotal - mode->vsync_start;
-	const u_int vblank_len =
-	    ((mode->vtotal << interlace_p) >> 1) - mode->vdisplay - 2;
-	const u_int start_delay =
-	    vblank_len >= 32 ? 30 : vblank_len - 2;
+	const u_int hspw = mode->crtc_hsync_end - mode->crtc_hsync_start;
+	const u_int hbp = mode->crtc_htotal - mode->crtc_hsync_start;
+	const u_int vspw = mode->crtc_vsync_end - mode->crtc_vsync_start;
+	const u_int vbp = mode->crtc_vtotal - mode->crtc_vsync_start;
+	const u_int vblank_len = (mode->crtc_vtotal - mode->crtc_vdisplay) >> interlace_p;
+	const u_int start_delay = uimin(vblank_len, 30);
 
 	val = TCON0_CTL_TCON0_EN |
 	      __SHIFTIN(start_delay, TCON0_CTL_START_DELAY);
 	TCON_WRITE(sc, TCON0_CTL_REG, val);
 
-	TCON_WRITE(sc, TCON0_BASIC0_REG, ((mode->hdisplay - 1) << 16) | (mode->vdisplay - 1));
-	TCON_WRITE(sc, TCON0_BASIC1_REG, ((mode->htotal - 1) << 16) | (hbp - 1));
-	TCON_WRITE(sc, TCON0_BASIC2_REG, ((mode->vtotal * 2) << 16) | (vbp - 1));
+	TCON_WRITE(sc, TCON0_BASIC0_REG, ((mode->crtc_hdisplay - 1) << 16) | (mode->crtc_vdisplay - 1));
+	TCON_WRITE(sc, TCON0_BASIC1_REG, ((mode->crtc_htotal - 1) << 16) | (hbp - 1));
+	TCON_WRITE(sc, TCON0_BASIC2_REG, ((mode->crtc_vtotal * 2) << 16) | (vbp - 1));
 	TCON_WRITE(sc, TCON0_BASIC3_REG, ((hspw - 1) << 16) | (vspw - 1));
 
 	val = TCON_READ(sc, TCON0_IO_POL_REG);
@@ -270,24 +269,22 @@ sunxi_lcdc_tcon1_commit(struct drm_encoder *encoder)
 	int error;
 
 	const u_int interlace_p = (mode->flags & DRM_MODE_FLAG_INTERLACE) != 0;
-	const u_int hspw = mode->hsync_end - mode->hsync_start;
-	const u_int hbp = mode->htotal - mode->hsync_start;
-	const u_int vspw = mode->vsync_end - mode->vsync_start;
-	const u_int vbp = mode->vtotal - mode->vsync_start;
-	const u_int vblank_len =
-	    ((mode->vtotal << interlace_p) >> 1) - mode->vdisplay - 2;
-	const u_int start_delay =
-	    vblank_len >= 32 ? 30 : vblank_len - 2;
+	const u_int hspw = mode->crtc_hsync_end - mode->crtc_hsync_start;
+	const u_int hbp = mode->crtc_htotal - mode->crtc_hsync_start;
+	const u_int vspw = mode->crtc_vsync_end - mode->crtc_vsync_start;
+	const u_int vbp = mode->crtc_vtotal - mode->crtc_vsync_start;
+	const u_int vblank_len = ((mode->crtc_vtotal - mode->crtc_vdisplay) >> interlace_p) - 2;
+	const u_int start_delay = uimin(vblank_len, 30);
 
 	val = TCON1_CTL_TCON1_EN |
 	      __SHIFTIN(start_delay, TCON1_CTL_START_DELAY);
 	TCON_WRITE(sc, TCON1_CTL_REG, val);
 
-	TCON_WRITE(sc, TCON1_BASIC0_REG, ((mode->hdisplay - 1) << 16) | (mode->vdisplay - 1));
-	TCON_WRITE(sc, TCON1_BASIC1_REG, ((mode->hdisplay - 1) << 16) | (mode->vdisplay - 1));
-	TCON_WRITE(sc, TCON1_BASIC2_REG, ((mode->hdisplay - 1) << 16) | (mode->vdisplay - 1));
-	TCON_WRITE(sc, TCON1_BASIC3_REG, ((mode->htotal - 1) << 16) | (hbp - 1));
-	TCON_WRITE(sc, TCON1_BASIC4_REG, ((mode->vtotal * 2) << 16) | (vbp - 1));
+	TCON_WRITE(sc, TCON1_BASIC0_REG, ((mode->crtc_hdisplay - 1) << 16) | (mode->crtc_vdisplay - 1));
+	TCON_WRITE(sc, TCON1_BASIC1_REG, ((mode->crtc_hdisplay - 1) << 16) | (mode->crtc_vdisplay - 1));
+	TCON_WRITE(sc, TCON1_BASIC2_REG, ((mode->crtc_hdisplay - 1) << 16) | (mode->crtc_vdisplay - 1));
+	TCON_WRITE(sc, TCON1_BASIC3_REG, ((mode->crtc_htotal - 1) << 16) | (hbp - 1));
+	TCON_WRITE(sc, TCON1_BASIC4_REG, ((mode->crtc_vtotal * 2) << 16) | (vbp - 1));
 	TCON_WRITE(sc, TCON1_BASIC5_REG, ((hspw - 1) << 16) | (vspw - 1));
 
 	TCON_WRITE(sc, TCON_GINT1_REG,

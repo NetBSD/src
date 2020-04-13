@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.110.2.2 2020/04/08 14:08:06 martin Exp $ */
+/*	$NetBSD: gem.c,v 1.110.2.3 2020/04/13 08:04:21 martin Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.110.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.110.2.3 2020/04/13 08:04:21 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -2597,7 +2597,7 @@ gem_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct gem_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	u_short change = ifp->if_flags ^ sc->sc_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
 		return ENETRESET;

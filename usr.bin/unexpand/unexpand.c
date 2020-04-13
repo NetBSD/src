@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.15 2016/02/03 05:32:14 christos Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.15.16.1 2020/04/13 08:05:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unexpand.c,v 1.15 2016/02/03 05:32:14 christos Exp $");
+__RCSID("$NetBSD: unexpand.c,v 1.15.16.1 2020/04/13 08:05:48 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -67,9 +67,9 @@ static void	usage(void) __attribute__((__noreturn__));
 static void
 usage(void)
 {
-    (void)fprintf(stderr, "Usage: %s [-a] [-t tabstop] [file ...]\n",
-	getprogname());
-    exit(EXIT_FAILURE);
+	(void)fprintf(stderr, "Usage: %s [-a] [-t tabstop] [file ...]\n",
+	    getprogname());
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -86,13 +86,9 @@ main(int argc, char **argv)
 	while ((c = getopt(argc, argv, "at:")) != -1) {
 		switch (c) {
 		case 'a':
-			if (nstops)
-				usage();
-			all++;
+			all = 1;
 			break;
 		case 't':
-			if (all)
-				usage();
 			while ((tab = strsep(&optarg, ", \t")) != NULL) {
 				if (*tab == '\0')
 					continue;
@@ -121,9 +117,6 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	for (i = 0; i < nstops; i++)
-		fprintf(stderr, "%lu %zu\n", i, tabstops[i]);
-
 	do {
 		if (argc > 0) {
 			if (freopen(argv[0], "r", stdin) == NULL)
@@ -139,39 +132,38 @@ main(int argc, char **argv)
 static void
 tabify(const char *line, size_t len)
 {
+	const size_t dstop = (nstops == 0) ? DSTOP : tabstops[0];
 	const char *e, *p;
 	size_t dcol, ocol, limit, n;
 
 	dcol = ocol = 0;
-	limit = nstops == 0 ? UINT_MAX : tabstops[nstops - 1] - 1;
+	limit = nstops <= 1 ? UINT_MAX : tabstops[nstops - 1] - 1;
 	e = line + len;
 	for (p = line; p < e; p++) {
 		if (*p == ' ') {
 			dcol++;
 			continue;
 		} else if (*p == '\t') {
-			if (nstops == 0) {
-				dcol = (1 + dcol / DSTOP) * DSTOP;
+			if (nstops <= 1) {
+				dcol = (1 + dcol / dstop) * dstop;
 				continue;
-			} else {
-				for (n = 0; n < nstops &&
-				    tabstops[n] - 1 < dcol; n++)
-					continue;
-				if (n < nstops - 1 && tabstops[n] - 1 < limit) {
-					dcol = tabstops[n];
-					continue;
-				}
+			}
+			for (n = 0; n < nstops && tabstops[n] <= dcol; n++)
+				continue;
+			if (n < nstops - 1 && tabstops[n] - 1 < limit) {
+				dcol = tabstops[n];
+				continue;
 			}
 		}
 
 		/* Output our tabs */
-		if (nstops == 0) {
-			while (((ocol + DSTOP) / DSTOP) <= (dcol / DSTOP)) {
+		if (nstops <= 1) {
+			while (((ocol + dstop) / dstop) <= (dcol / dstop)) {
 				if (dcol - ocol < 2)
 					break;
 				if (putchar('\t') == EOF)
 					goto out;
-				ocol = (1 + ocol / DSTOP) * DSTOP;
+				ocol = (1 + ocol / dstop) * dstop;
 			}
 		} else {
 			for (n = 0; n < nstops && tabstops[n] <= ocol; n++)
@@ -204,13 +196,15 @@ tabify(const char *line, size_t len)
 			dcol++;
 		}
 
+		if (all && dcol < limit)
+			continue; /* Collapse the rest of the line. */
+
 		/* Output remainder of line */
-		if (!all || dcol >= limit) {
-			for (p++; p < e; p++)
-				if (putchar(*p) == EOF)
-					goto out;
-			return;
+		for (p++; p < e; p++) {
+			if (putchar(*p) == EOF)
+				goto out;
 		}
+		return;
 	}
 	return;
 out:

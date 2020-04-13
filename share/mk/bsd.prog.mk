@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.315.2.2 2020/04/08 14:07:23 martin Exp $
+#	$NetBSD: bsd.prog.mk,v 1.315.2.3 2020/04/13 08:03:26 martin Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -6,19 +6,13 @@
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
 .include <bsd.gcc.mk>
+.include <bsd.sanitizer.mk>
 
 ##### Sanitizer specific flags.
 
 CFLAGS+=	${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
 CXXFLAGS+=	${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
 LDFLAGS+=	${SANITIZERFLAGS}
-
-# Rename the local function definitions to not conflict with libc/rt/pthread/m.
-.if ${MKSANITIZER:Uno} == "yes" && defined(SANITIZER_RENAME_SYMBOL)
-.	for _symbol in ${SANITIZER_RENAME_SYMBOL}
-CPPFLAGS+=	-D${_symbol}=__mksanitizer_${_symbol}
-.	endfor
-.endif
 
 #
 # Definitions and targets shared among all programs built by a single
@@ -130,7 +124,6 @@ _LIBLIST=\
 	crypto \
 	curses \
 	cxx \
-	dbm \
 	des \
 	dns \
 	edit \
@@ -143,7 +136,6 @@ _LIBLIST=\
 	fl \
 	fido2 \
 	form \
-	g2c \
 	gcc \
 	gnuctf \
 	gnumalloc \
@@ -167,7 +159,6 @@ _LIBLIST=\
 	ldap \
 	ldap_r \
 	lua \
-	lutok \
 	m \
 	magic \
 	menu \
@@ -191,28 +182,25 @@ _LIBLIST=\
 	rpcsvc \
 	rt \
 	rump \
-	rumpfs_cd9660fs \
+	rumpfs_cd9660 \
 	rumpfs_efs \
 	rumpfs_ext2fs \
 	rumpfs_ffs \
 	rumpfs_hfs \
 	rumpfs_lfs \
-	rumpfs_msdosfs \
+	rumpfs_msdos \
 	rumpfs_nfs \
 	rumpfs_ntfs \
 	rumpfs_syspuffs \
 	rumpfs_tmpfs \
 	rumpfs_udf \
-	rumpfs_ufs \
 	rumpuser \
 	saslc \
 	skey \
 	sl \
 	sqlite3 \
-	ss \
 	ssh \
 	ssl \
-	ssp \
 	stdc++ \
 	supc++ \
 	terminfo \
@@ -266,43 +254,13 @@ PAM_STATIC_DPADD=
 .endif
 
 #	NB:	If you are a library here, add it in bsd.README
-.for _lib in \
-	FS \
-	GL \
-	GLU \
-	ICE \
-	SM \
-	X11 \
-	XTrap \
-	Xau \
-	Xaw \
-	Xdmcp \
-	Xext \
-	Xfont2 \
-	Xfont \
-	Xft \
-	Xi \
-	Xinerama \
-	Xmu \
-	Xmuu \
-	Xpm \
-	Xrandr \
-	Xrender \
-	Xss \
-	Xt \
-	Xtst \
-	Xv \
-	Xxf86dga \
-	Xxf86misc \
-	Xxf86vm \
-	dps \
-	fntstubs \
-	fontcache \
-	fontconfig \
-	fontenc \
-	freetype \
-	lbxutil \
-	xkbfile
+#	This list is sorted with -f so that it matches the order in bsd.README
+_X11LIBLIST= dps fntstubs fontcache fontconfig fontenc freetype FS GL GLU \
+    ICE lbxutil SM X11 X11_xcb Xau Xaw xcb Xdmcp Xext Xfont Xfont2 Xft Xi \
+    Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt XTrap Xtst Xv Xxf86dga \
+    Xxf86misc Xxf86vm
+
+.for _lib in ${_X11LIBLIST}
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}${X11USRLIBDIR}/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
@@ -471,8 +429,16 @@ PROGNAME.${_P}?=	${_P}
 _PROGDEBUG.${_P}:=	${PROGNAME.${_P}}.debug
 .endif
 
+# paxctl specific arguments
+
 .if defined(PAXCTL_FLAGS)
 PAXCTL_FLAGS.${_P}?= ${PAXCTL_FLAGS}
+.endif
+
+.if ${MKSANITIZER:Uno} == "yes" && \
+	(${USE_SANITIZER} == "address" || ${USE_SANITIZER} == "thread" || \
+	${USE_SANITIZER} == "memory")
+PAXCTL_FLAGS.${_P}= +a
 .endif
 
 ##### PROG specific flags.

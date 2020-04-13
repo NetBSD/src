@@ -1,4 +1,4 @@
-/*	$NetBSD: panel_fdt.c,v 1.1 2018/04/03 12:40:20 bouyer Exp $	*/
+/*	$NetBSD: panel_fdt.c,v 1.1.4.1 2020/04/13 08:04:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: panel_fdt.c,v 1.1 2018/04/03 12:40:20 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: panel_fdt.c,v 1.1.4.1 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ fdt_panel_attach(device_t parent, device_t self, void *aux)
 		else if (strcmp(val, "vesa-24") == 0)
 			sc->sc_panel.panel_lvds_format = LVDS_VESA_24;
 		else {
-			aprint_error(": unkown data-mapping \"%s\"\n", val);
+			aprint_error(": unknown data-mapping \"%s\"\n", val);
 			return;
 		}
 		break;

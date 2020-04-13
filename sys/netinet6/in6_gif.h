@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.h,v 1.17 2017/11/27 05:02:22 knakahara Exp $	*/
+/*	$NetBSD: in6_gif.h,v 1.17.4.1 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: in6_gif.h,v 1.7 2001/07/26 06:53:16 jinmei Exp $	*/
 
 /*
@@ -35,6 +35,11 @@
 
 #define GIF_HLIM	30
 extern int	ip6_gif_hlim;		/* Hop limit for gif encap packet */
+extern int	ip6_gif_pmtu;		/* Default Path MTU setting for gif tunnels */
+
+#define GIF_PMTU_SYSDEFAULT	-1	/* Use system default value (ip6_gif_pmtu) */
+#define GIF_PMTU_MINMTU		0	/* Fragmented by IPV6_MINMTU */
+#define GIF_PMTU_OUTERMTU	1	/* Fragmented by Path MTU of outer path */
 
 struct gif_variant;
 struct sockaddr;

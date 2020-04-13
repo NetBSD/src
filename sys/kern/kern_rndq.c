@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.89.18.2 2020/04/08 14:08:51 martin Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.89.18.3 2020/04/13 08:05:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.18.2 2020/04/08 14:08:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.18.3 2020/04/13 08:05:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.18.2 2020/04/08 14:08:51 martin E
 #endif
 
 #ifdef RND_DEBUG
-#define	DPRINTF(l,x)      if (rnd_debug & (l)) rnd_printf x
+#define	DPRINTF(l,x)	if (rnd_debug & (l)) rnd_printf x
 int	rnd_debug = 0;
 #else
 #define	DPRINTF(l,x)
@@ -155,7 +155,7 @@ static void *rnd_process __read_mostly;
 static void *rnd_wakeup __read_mostly;
 
 static inline uint32_t	rnd_counter(void);
-static        void	rnd_intr(void *);
+static	      void	rnd_intr(void *);
 static	      void	rnd_wake(void *);
 static	      void	rnd_process_events(void);
 static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
@@ -324,22 +324,24 @@ rnd_getmore(size_t byteswanted)
  * non-zero.  If any of these are zero, return zero.
  */
 static inline uint32_t
-rnd_delta_estimate(rnd_delta_t *d, uint32_t v, int32_t delta)
+rnd_delta_estimate(rnd_delta_t *d, uint32_t v, uint32_t delta)
 {
-	int32_t delta2, delta3;
+	uint32_t delta2, delta3;
 
 	d->insamples++;
 
 	/*
 	 * Calculate the second and third order differentials
 	 */
-	delta2 = d->dx - delta;
-	if (delta2 < 0)
-		delta2 = -delta2;
+	if (delta > (uint32_t)d->dx)
+	    delta2 = delta - (uint32_t)d->dx;
+	else
+	    delta2 = (uint32_t)d->dx - delta;
 
-	delta3 = d->d2x - delta2;
-	if (delta3 < 0)
-		delta3 = -delta3;
+	if (delta2 > (uint32_t)d->d2x)
+	    delta3 = delta2 - (uint32_t)d->d2x;
+	else
+	    delta3 = (uint32_t)d->d2x - delta2;
 
 	d->x = v;
 	d->dx = delta;
@@ -357,23 +359,21 @@ rnd_delta_estimate(rnd_delta_t *d, uint32_t v, int32_t delta)
 }
 
 /*
- * Delta estimator for 32-bit timeestamps.  Must handle wrap.
+ * Delta estimator for 32-bit timestamps.
+ * Timestaps generally increase, but may wrap around to 0.
+ * If t decreases, it is assumed that wrap-around occurred (once).
  */
 static inline uint32_t
 rnd_dt_estimate(krndsource_t *rs, uint32_t t)
 {
-	int32_t delta;
+	uint32_t delta;
 	uint32_t ret;
 	rnd_delta_t *d = &rs->time_delta;
 
-	if (t < d->x) {
-		delta = UINT32_MAX - d->x + t;
+	if (t < (uint32_t)d->x) {
+		delta = UINT32_MAX - (uint32_t)d->x + t;
 	} else {
-		delta = d->x - t;
-	}
-
-	if (delta < 0) {
-		delta = -delta;
+		delta = t - (uint32_t)d->x;
 	}
 
 	ret = rnd_delta_estimate(d, t, delta);
@@ -391,21 +391,22 @@ rnd_dt_estimate(krndsource_t *rs, uint32_t t)
 }
 
 /*
- * Delta estimator for 32 or bit values.  "Wrap" isn't.
+ * Delta estimator for arbitrary unsigned 32 bit values.
  */
 static inline uint32_t
 rnd_dv_estimate(krndsource_t *rs, uint32_t v)
 {
-	int32_t delta;
+	uint32_t delta;
 	uint32_t ret;
 	rnd_delta_t *d = &rs->value_delta;
 
-	delta = d->x - v;
-
-	if (delta < 0) {
-		delta = -delta;
+	if (v >= (uint32_t)d->x) {
+		delta = v - (uint32_t)d->x;
+	} else {
+		delta = (uint32_t)d->x - v;
 	}
-	ret = rnd_delta_estimate(d, v, (uint32_t)delta);
+
+	ret = rnd_delta_estimate(d, v, delta);
 
 	KASSERT(d->x == v);
 	KASSERT(d->dx == delta);
@@ -617,7 +618,7 @@ rnd_init(void)
 	 * If we have a cycle counter, take its error with respect
 	 * to the callout mechanism as a source of entropy, ala
 	 * TrueRand.
- 	 *
+	 *
 	 */
 #if defined(__HAVE_CPU_COUNTER)
 	/* IPL_VM because taken while rnd_global.lock is held.  */
@@ -840,10 +841,9 @@ rnd_estimate(krndsource_t *rs, uint32_t ts, uint32_t val)
 			entropy += dt_est;
 		}
 
-                if (rs->flags & RND_FLAG_ESTIMATE_VALUE) {
+		if (rs->flags & RND_FLAG_ESTIMATE_VALUE) {
 			entropy += dv_est;
 		}
-
 	}
 	return entropy;
 }
@@ -883,7 +883,7 @@ _rnd_add_uint64(krndsource_t *rs, uint64_t val)
 	uint32_t entropy = 0;
 
 	if (rs->flags & RND_FLAG_NO_COLLECT)
-                return;
+		return;
 
 	/*
 	 * Sample the counter as soon as possible to avoid
@@ -1416,9 +1416,9 @@ krndsource_to_rndsource(krndsource_t *kr, rndsource_t *r)
 
 	memset(r, 0, sizeof(*r));
 	strlcpy(r->name, kr->name, sizeof(r->name));
-        r->total = kr->total;
-        r->type = kr->type;
-        r->flags = kr->flags;
+	r->total = kr->total;
+	r->type = kr->type;
+	r->flags = kr->flags;
 }
 
 static void
@@ -1442,7 +1442,7 @@ krs_setflags(krndsource_t *kr, uint32_t flags, uint32_t mask)
 	kr->flags |= (flags & mask);
 
 	if (oflags & RND_FLAG_HASENABLE &&
-            ((oflags & RND_FLAG_NO_COLLECT) !=
+	    ((oflags & RND_FLAG_NO_COLLECT) !=
 		(flags & RND_FLAG_NO_COLLECT))) {
 		kr->enable(kr, !(flags & RND_FLAG_NO_COLLECT));
 	}
@@ -1636,7 +1636,7 @@ rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 		}
 		mutex_spin_exit(&rnd_global.lock);
 
-		ret = ENOENT;           /* name not found */
+		ret = ENOENT;		/* name not found */
 
 		break;
 

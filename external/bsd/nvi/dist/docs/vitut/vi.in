@@ -957,7 +957,7 @@ to the other file.
 An ordinary delete command saves the text in the unnamed buffer,
 so that an ordinary put can move it elsewhere.
 However, the unnamed buffer is lost when you change files,
-so to move text from one file to another you should use an unnamed buffer.
+so to move text from one file to another you should use a named buffer.
 .NH 2
 Summary.
 .IP

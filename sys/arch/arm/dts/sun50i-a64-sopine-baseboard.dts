@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-sopine-baseboard.dts,v 1.1 2018/06/07 00:51:41 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64-sopine-baseboard.dts,v 1.1.4.1 2020/04/13 08:03:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,3 +28,11 @@
 
 #include "../../../external/gpl2/dts/dist/arch/arm64/boot/dts/allwinner/sun50i-a64-sopine-baseboard.dts"
 #include "sun50i-a64.dtsi"
+
+&i2s2 {
+	status = "okay";
+};
+
+&sound_hdmi {
+	status = "okay";
+};

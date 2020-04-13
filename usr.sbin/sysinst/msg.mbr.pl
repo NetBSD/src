@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.2.28.1 2019/06/10 22:10:38 christos Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.2.28.2 2020/04/13 08:06:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,56 +34,19 @@
 
 /* MBR Message catalog -- Polish, i386 version */
 
-
-/* Called with:				Example
- *  $0 = device name			wd0
- *  $1 = outer partitioning name	Master Boot Record (MBR)
- *  $2 = inner partitioning name	BSD disklabel
- *  $3 = short version of $1		MBR
- *  $4 = short version of $2		disklabel
- *  $5 = size needed for NetBSD		250M
- *  $6 = size needed to build NetBSD	15G
- */
-message fullpart
-{Zainstalujemy teraz NetBSD na dysku $0. Mozesz wybrac, czy chcesz
-zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
-
-Instalacja na czesci dysku, tworzy partycje, lub 'plaster', dla NetBSD
-w tablicy partycji $3 twojego dysku. Instalacja na calym dysku jest
-`zdecydowanie polecana': zabiera ona caly $3. Spowoduje to calkowita
-utrate danych na dysku. Uniemozliwia ona take pozniejsza instalacje kilku
-systemow na tym dysku (chyba, ze nadpiszesz NetBSD i przeinstalujesz uzywajac
-tylko czesci dysku).
-
-Ktora instalacje chcesz zrobic?
-}
-
-message Select_your_choice
-{Wybierz}
-message Use_only_part_of_the_disk
-{Uzyj tylko czesci dysku}
-message Use_the_entire_disk
-{Uzyj calego dysku}
-
-/* the %s's will expand into three character strings */
-message part_header
-{   Calkowity rozmiar dysku %lu %s.
-
+message mbr_part_header_1	{Rodzaj}
+message mbr_part_header_2	{Mount}
 .if BOOTSEL
-    Pocz(%3s)  Rozm(%3s) Flg Rodzaj                  Wpis menu
-   ---------- ---------- --- ----------------------- ---------
-.else
-    Pocz(%3s)  Rozm(%3s) Flg Rodzaj
-   ---------- ---------- --- ------
+message mbr_part_header_3	{Wpis menu}
 .endif
-}
-
-message part_row_used
-{%10d %10d %c%c%c}
 
 message noactivepart
 {Nie zaznaczyles aktywnej partycji. Moze to spowodowac, ze twoj system nie
-uruchomi sie prawidlowo. Czy partycja NetBSD ma zostac zaznaczona jako aktywna?}
+uruchomi sie prawidlowo.}
+
+message fixactivepart
+{
+Czy partycja NetBSD ma zostac zaznaczona jako aktywna?}
 
 message setbiosgeom
 {
@@ -109,78 +72,55 @@ message realgeom
 message biosgeom
 {BIOS geom: %d cyl, %d glowic, %d sek\n}
 
-message ovrwrite
-{Twoj dysk aktualnie posiada partycje nie-NetBSD. Czy napewno chcesz ja
-nadpisac z NetBSD?
-}
-
-message Partition_OK
-{Partycje OK}
-
-message ptn_type
-{    rodzaj: %s}
-message ptn_start
-{  poczatek: %d %s}
-message ptn_size
-{   rozmiar: %d %s}
-message ptn_end
-{    koniec: %d %s}
 message ptn_active
-{   aktywna: %s}
-message ptn_install
-{ do instalacji: %s}
+{aktywna}
 .if BOOTSEL
 message bootmenu
-{w menu startowym: %s}
+{w menu startowym}
 message boot_dflt
-{   domyslna: %s}
+{domyslna}
 .endif
 
-message get_ptn_size {%swielkosc (maksimum %d %s)}
-message Invalid_numeric {Nieprawidlowa wartosc: }
-message Too_large {Zbyt duza wartosc: }
-message Space_allocated {Wykorzystane miejsce: }
-message ptn_starts {Miejsce od %d..%d %s (rozmiar %d %s)\n}
-message get_ptn_start {%s%sStart (od %s)}
-message get_ptn_id {Typ partycji (0..255)}
-message No_free_space {Brak wolnego miejsca}
+message mbr_get_ptn_id {Typ partycji (0..255)}
 message Only_one_extended_ptn {Moze byc tylko jedna partycja typu rozszerzonego}
 
+message mbr_flags	{ad}
+message mbr_flag_desc
+.if BOOTSEL
+{, (A)ctive partition, bootselect (d)efault}
+.else
+{, (A)ctive partition}
+.endif
 
-message editparttable
-{Wyedytuj DOSowa tablice partycji. Tablica partycji wyglada tak:
-
-}
-
-message Partition_table_ok
-{Tablica partycji jest poprawna}
-
-message Dont_change
-{Nie zmieniaj}
-message Other_kind
-{Inny typ, podaj identyfikator liczbowy}
-
-
-message reeditpart
-{
-
-Czy chcesz zmienic tablice partycji (MBR)? Brak zgody przerwie instalacje.
-}
-
-message nobsdpart
-{Nie ma partycji NetBSD w tablicy partycji MBR.}
-
-message multbsdpart
-{W tablicy partycji MBR znajduje sie kilka partycji NetBSD.
- Powinienies oznaczyc jedna z nich jako przeznaczona do instalacji.
-}
-
+/* Called with:				Example
+ *  $0 = device name			wd0
+ *  $1 = outer partitioning name	Master Boot Record (MBR)
+ *  $2 = short version of $1		MBR
+ */
 message dofdisk
 {Konfigurowanie DOSowej tablicy partycji ...
 }
 
 message wmbrfail
 {Nadpisanie MBR nie powiodlo sie. Nie moge kontynuowac.}
+
+message mbr_inside_ext
+{The partition needs to start within the Extended Partition}
+
+message mbr_ext_nofit
+{The Extended Partition must be able to hold all contained partitions}
+
+message mbr_ext_not_empty
+{Can not delete a non-empty extended partition!}
+
+message mbr_no_free_primary_have_ext
+{This partition is not inside the extended partition
+and there is no free slot in the primary boot record}
+
+message mbr_no_free_primary_no_ext
+{No space in the primary boot block.
+You may consider deleting one partition, creating an extended partition
+and then re-adding the deleted one}
 
 .if 0
 .if BOOTSEL
@@ -192,3 +132,8 @@ message bootseltimeout
 
 .endif
 .endif
+
+message parttype_mbr {Master Boot Record (MBR)}
+message parttype_mbr_short {MBR}
+
+message mbr_type_invalid	{Invalid partition type (0 .. 255)}

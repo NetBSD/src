@@ -1,4 +1,4 @@
-/*	$NetBSD: keyname.c,v 1.7 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: keyname.c,v 1.7.14.1 2020/04/13 08:03:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keyname.c,v 1.7 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: keyname.c,v 1.7.14.1 2020/04/13 08:03:12 martin Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -481,7 +481,7 @@ keyname(int key)
 		return name;
 	}
 	/* No more names. */
-	strncpy(name, "UNKOWN KEY\0", KEYNAMEMAX);
+	strncpy(name, "UNKNOWN KEY\0", KEYNAMEMAX);
 	return name;
 #endif
 }

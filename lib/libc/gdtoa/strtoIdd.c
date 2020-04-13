@@ -1,4 +1,4 @@
-/* $NetBSD: strtoIdd.c,v 1.2 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtoIdd.c,v 1.2.66.1 2020/04/13 08:03:09 martin Exp $ */
 
 /****************************************************************
 
@@ -41,9 +41,9 @@ strtoIdd(CONST char *s, char **sp, double *f0, double *f1)
 #endif
 {
 #ifdef Sudden_Underflow
-	static FPI fpi = { 106, 1-1023, 2046-1023-106+1, 1, 1 };
+	static CONST FPI fpi = { 106, 1-1023, 2046-1023-106+1, 1, 1 };
 #else
-	static FPI fpi = { 106, 1-1023-53+1, 2046-1023-106+1, 1, 0 };
+	static CONST FPI fpi = { 106, 1-1023-53+1, 2046-1023-106+1, 1, 0 };
 #endif
 	Long exp[2];
 	Bigint *B[2];

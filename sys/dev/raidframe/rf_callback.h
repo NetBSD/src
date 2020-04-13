@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.h,v 1.6 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_callback.h,v 1.6.164.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -46,16 +46,23 @@
 
 #include <dev/raidframe/raidframevar.h>
 
-struct RF_CallbackDesc_s {
-	void    (*callbackFunc) (RF_CBParam_t);	/* function to call */
-	RF_CBParam_t callbackArg;	/* args to give to function, or just
-					 * info about this callback  */
+struct RF_CallbackFuncDesc_s {
+	void    (*callbackFunc) (void *);	/* function to call */
+	void *callbackArg;	/* args to give to function, or just
+				 * info about this callback  */
+	RF_CallbackFuncDesc_t *next;/* next entry in list */
+};
+
+struct RF_CallbackValueDesc_s {
+	RF_uint64 v;
 	RF_RowCol_t col;	/* column IDs to give to the callback func */
-	RF_CallbackDesc_t *next;/* next entry in list */
+	RF_CallbackValueDesc_t *next;/* next entry in list */
 };
 
 int     rf_ConfigureCallback(RF_ShutdownList_t ** listp);
-RF_CallbackDesc_t *rf_AllocCallbackDesc(void);
-void    rf_FreeCallbackDesc(RF_CallbackDesc_t * p);
+RF_CallbackFuncDesc_t *rf_AllocCallbackFuncDesc(void);
+void    rf_FreeCallbackFuncDesc(RF_CallbackFuncDesc_t * p);
+RF_CallbackValueDesc_t *rf_AllocCallbackValueDesc(void);
+void    rf_FreeCallbackValueDesc(RF_CallbackValueDesc_t * p);
 
 #endif				/* !_RF__RF_CALLBACK_H_ */

@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.105.2.1 2019/06/10 22:07:28 christos Exp $*/
+/*$NetBSD: ixv.c,v 1.105.2.2 2020/04/13 08:04:46 martin Exp $*/
 
 /******************************************************************************
 
@@ -47,6 +47,7 @@
  * Driver version
  ************************************************************************/
 static const char ixv_driver_version[] = "2.0.1-k";
+/* XXX NetBSD: + 1.5.17 */
 
 /************************************************************************
  * PCI Device ID Table
@@ -107,11 +108,11 @@ static int	ixv_negotiate_api(struct adapter *);
 static void	ixv_initialize_transmit_units(struct adapter *);
 static void	ixv_initialize_receive_units(struct adapter *);
 static void	ixv_initialize_rss_mapping(struct adapter *);
-static void	ixv_check_link(struct adapter *);
+static s32	ixv_check_link(struct adapter *);
 
 static void	ixv_enable_intr(struct adapter *);
 static void	ixv_disable_intr(struct adapter *);
-static void	ixv_set_multi(struct adapter *);
+static int	ixv_set_rxfilter(struct adapter *);
 static void	ixv_update_link_status(struct adapter *);
 static int	ixv_sysctl_debug(SYSCTLFN_PROTO);
 static void	ixv_set_ivar(struct adapter *, u8, u8, s8);
@@ -119,18 +120,18 @@ static void	ixv_configure_ivars(struct adapter *);
 static u8 *	ixv_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
 static void	ixv_eitr_write(struct adapter *, uint32_t, uint32_t);
 
-static void	ixv_setup_vlan_support(struct adapter *);
-#if 0
-static void	ixv_register_vlan(void *, struct ifnet *, u16);
-static void	ixv_unregister_vlan(void *, struct ifnet *, u16);
-#endif
+static void	ixv_setup_vlan_tagging(struct adapter *);
+static int	ixv_setup_vlan_support(struct adapter *);
+static int	ixv_vlan_cb(struct ethercom *, uint16_t, bool);
+static int	ixv_register_vlan(struct adapter *, u16);
+static int	ixv_unregister_vlan(struct adapter *, u16);
 
 static void	ixv_add_device_sysctls(struct adapter *);
 static void	ixv_save_stats(struct adapter *);
 static void	ixv_init_stats(struct adapter *);
 static void	ixv_update_stats(struct adapter *);
 static void	ixv_add_stats_sysctls(struct adapter *);
-
+static void	ixv_clear_evcnt(struct adapter *);
 
 /* Sysctl handlers */
 static void	ixv_set_sysctl_value(struct adapter *, const char *,
@@ -471,12 +472,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	}
 
 	/* Register for VLAN events */
-#if 0 /* XXX delete after write? */
-	adapter->vlan_attach = EVENTHANDLER_REGISTER(vlan_config,
-	    ixv_register_vlan, adapter, EVENTHANDLER_PRI_FIRST);
-	adapter->vlan_detach = EVENTHANDLER_REGISTER(vlan_unconfig,
-	    ixv_unregister_vlan, adapter, EVENTHANDLER_PRI_FIRST);
-#endif
+	ether_set_vlan_cb(&adapter->osdep.ec, ixv_vlan_cb);
 
 	/* Sysctls for limiting the amount of work done in the taskqueues */
 	ixv_set_sysctl_value(adapter, "rx_processing_limit",
@@ -521,7 +517,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	error = ixv_allocate_msix(adapter, pa);
 	if (error) {
-		device_printf(dev, "ixv_allocate_msix() failed!\n");
+		aprint_error_dev(dev, "ixv_allocate_msix() failed!\n");
 		goto err_late;
 	}
 
@@ -551,9 +547,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	return;
 
 err_late:
-	ixgbe_free_transmit_structures(adapter);
-	ixgbe_free_receive_structures(adapter);
-	free(adapter->queues, M_DEVBUF);
+	ixgbe_free_queues(adapter);
 err_out:
 	ixv_free_pci_resources(adapter);
 	IXGBE_CORE_LOCK_DESTROY(adapter);
@@ -599,10 +593,6 @@ ixv_detach(device_t dev, int flags)
 	}
 #endif
 
-	IXGBE_CORE_LOCK(adapter);
-	ixv_stop(adapter);
-	IXGBE_CORE_UNLOCK(adapter);
-
 	for (int i = 0; i < adapter->num_queues; i++, que++, txr++) {
 		if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX))
 			softint_disestablish(txr->txr_si);
@@ -618,14 +608,6 @@ ixv_detach(device_t dev, int flags)
 	/* Drain the Mailbox(link) queue */
 	softint_disestablish(adapter->link_si);
 
-	/* Unregister VLAN events */
-#if 0 /* XXX msaitoh delete after write? */
-	if (adapter->vlan_attach != NULL)
-		EVENTHANDLER_DEREGISTER(vlan_config, adapter->vlan_attach);
-	if (adapter->vlan_detach != NULL)
-		EVENTHANDLER_DEREGISTER(vlan_unconfig, adapter->vlan_detach);
-#endif
-
 	ether_ifdetach(adapter->ifp);
 	callout_halt(&adapter->timer, NULL);
 
@@ -637,6 +619,7 @@ ixv_detach(device_t dev, int flags)
 	bus_generic_detach(dev);
 #endif
 	if_detach(adapter->ifp);
+	ifmedia_fini(&adapter->media);
 	if_percpuq_destroy(adapter->ipq);
 
 	sysctl_teardown(&adapter->sysctllog);
@@ -690,13 +673,7 @@ ixv_detach(device_t dev, int flags)
 	evcnt_detach(&hw->mbx.stats.reqs);
 	evcnt_detach(&hw->mbx.stats.rsts);
 
-	ixgbe_free_transmit_structures(adapter);
-	ixgbe_free_receive_structures(adapter);
-	for (int i = 0; i < adapter->num_queues; i++) {
-		struct ix_queue *lque = &adapter->queues[i];
-		mutex_destroy(&lque->dc_mtx);
-	}
-	free(adapter->queues, M_DEVBUF);
+	ixgbe_free_queues(adapter);
 
 	IXGBE_CORE_LOCK_DESTROY(adapter);
 
@@ -732,6 +709,9 @@ ixv_init_locked(struct adapter *adapter)
 	for (i = 0, que = adapter->queues; i < adapter->num_queues; i++, que++)
 		que->disabled_count = 0;
 
+	adapter->max_frame_size =
+	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
+
 	/* reprogram the RAR[0] in case user changed it. */
 	hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0, IXGBE_RAH_AV);
 
@@ -758,16 +738,16 @@ ixv_init_locked(struct adapter *adapter)
 	ixv_initialize_transmit_units(adapter);
 
 	/* Setup Multicast table */
-	ixv_set_multi(adapter);
+	ixv_set_rxfilter(adapter);
 
 	/*
 	 * Determine the correct mbuf pool
 	 * for doing jumbo/headersplit
 	 */
-	if (ifp->if_mtu > ETHERMTU)
-		adapter->rx_mbuf_sz = MJUMPAGESIZE;
-	else
+	if (adapter->max_frame_size <= MCLBYTES)
 		adapter->rx_mbuf_sz = MCLBYTES;
+	else
+		adapter->rx_mbuf_sz = MJUMPAGESIZE;
 
 	/* Prepare receive descriptors and buffers */
 	if (ixgbe_setup_receive_structures(adapter)) {
@@ -778,19 +758,6 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* Configure RX settings */
 	ixv_initialize_receive_units(adapter);
-
-#if 0 /* XXX isn't it required? -- msaitoh  */
-	/* Set the various hardware offload abilities */
-	ifp->if_hwassist = 0;
-	if (ifp->if_capenable & IFCAP_TSO4)
-		ifp->if_hwassist |= CSUM_TSO;
-	if (ifp->if_capenable & IFCAP_TXCSUM) {
-		ifp->if_hwassist |= (CSUM_TCP | CSUM_UDP);
-#if __FreeBSD_version >= 800000
-		ifp->if_hwassist |= CSUM_SCTP;
-#endif
-	}
-#endif
 
 	/* Set up VLAN offload and filter */
 	ixv_setup_vlan_support(adapter);
@@ -823,6 +790,7 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* Update saved flags. See ixgbe_ifflags_cb() */
 	adapter->if_flags = ifp->if_flags;
+	adapter->ec_capenable = adapter->osdep.ec.ec_capenable;
 
 	/* Now inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
@@ -839,7 +807,7 @@ ixv_enable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
-	u32		queue = 1 << vector;
+	u32		queue = 1UL << vector;
 	u32		mask;
 
 	mutex_enter(&que->dc_mtx);
@@ -860,7 +828,7 @@ ixv_disable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = &adapter->queues[vector];
-	u64		queue = (u64)(1 << vector);
+	u32		queue = 1UL << vector;
 	u32		mask;
 
 	mutex_enter(&que->dc_mtx);
@@ -1021,7 +989,6 @@ ixv_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct adapter *adapter = ifp->if_softc;
 
 	INIT_DEBUGOUT("ixv_media_status: begin");
-	IXGBE_CORE_LOCK(adapter);
 	ixv_update_link_status(adapter);
 
 	ifmr->ifm_status = IFM_AVALID;
@@ -1029,7 +996,6 @@ ixv_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	if (adapter->link_active != LINK_STATE_UP) {
 		ifmr->ifm_active |= IFM_NONE;
-		IXGBE_CORE_UNLOCK(adapter);
 		return;
 	}
 
@@ -1057,8 +1023,6 @@ ixv_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	}
 
 	ifp->if_baudrate = ifmedia_baudrate(ifmr->ifm_active);
-
-	IXGBE_CORE_UNLOCK(adapter);
 } /* ixv_media_status */
 
 /************************************************************************
@@ -1089,7 +1053,6 @@ ixv_media_change(struct ifnet *ifp)
 	return (0);
 } /* ixv_media_change */
 
-
 /************************************************************************
  * ixv_negotiate_api
  *
@@ -1100,7 +1063,9 @@ static int
 ixv_negotiate_api(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	int		mbx_api[] = { ixgbe_mbox_api_11,
+	int		mbx_api[] = { ixgbe_mbox_api_13,
+				      ixgbe_mbox_api_12,
+				      ixgbe_mbox_api_11,
 				      ixgbe_mbox_api_10,
 				      ixgbe_mbox_api_unknown };
 	int		i = 0;
@@ -1120,45 +1085,128 @@ ixv_negotiate_api(struct adapter *adapter)
  *
  *   Called whenever multicast address list is updated.
  ************************************************************************/
-static void
-ixv_set_multi(struct adapter *adapter)
+static int
+ixv_set_rxfilter(struct adapter *adapter)
 {
-	struct ether_multi *enm;
-	struct ether_multistep step;
-	struct ethercom *ec = &adapter->osdep.ec;
-	u8	mta[MAX_NUM_MULTICAST_ADDRESSES * IXGBE_ETH_LENGTH_OF_ADDRESS];
-	u8		   *update_ptr;
-	int		   mcnt = 0;
+	u8	mta[IXGBE_MAX_VF_MC * IXGBE_ETH_LENGTH_OF_ADDRESS];
+	struct ifnet		*ifp = adapter->ifp;
+	struct ixgbe_hw		*hw = &adapter->hw;
+	u8			*update_ptr;
+	int			mcnt = 0;
+	struct ethercom		*ec = &adapter->osdep.ec;
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
+	bool			overflow = false;
+	int			error, rc = 0;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
-	IOCTL_DEBUGOUT("ixv_set_multi: begin");
+	IOCTL_DEBUGOUT("ixv_set_rxfilter: begin");
 
+	/* 1: For PROMISC */
+	if (ifp->if_flags & IFF_PROMISC) {
+		error = hw->mac.ops.update_xcast_mode(hw,
+		    IXGBEVF_XCAST_MODE_PROMISC);
+		if (error == IXGBE_ERR_NOT_TRUSTED) {
+			device_printf(adapter->dev,
+			    "this interface is not trusted\n");
+			error = EPERM;
+		} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+			device_printf(adapter->dev,
+			    "the PF doesn't support promisc mode\n");
+			error = EOPNOTSUPP;
+		} else if (error == IXGBE_ERR_NOT_IN_PROMISC) {
+			device_printf(adapter->dev,
+			    "the PF may not in promisc mode\n");
+			error = EINVAL;
+		} else if (error) {
+			device_printf(adapter->dev,
+			    "failed to set promisc mode. error = %d\n",
+			    error);
+			error = EIO;
+		} else
+			return 0;
+		rc = error;
+	}
+
+	/* 2: For ALLMULTI or normal */
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
+		if ((mcnt >= IXGBE_MAX_VF_MC) ||
+		    (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			ETHER_ADDR_LEN) != 0)) {
+			overflow = true;
+			break;
+		}
 		bcopy(enm->enm_addrlo,
 		    &mta[mcnt * IXGBE_ETH_LENGTH_OF_ADDRESS],
 		    IXGBE_ETH_LENGTH_OF_ADDRESS);
 		mcnt++;
-		/* XXX This might be required --msaitoh */
-		if (mcnt >= MAX_NUM_MULTICAST_ADDRESSES)
-			break;
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
 
+	/* 3: For ALLMULTI */
+	if (overflow) {
+		error = hw->mac.ops.update_xcast_mode(hw,
+		    IXGBEVF_XCAST_MODE_ALLMULTI);
+		if (error == IXGBE_ERR_NOT_TRUSTED) {
+			device_printf(adapter->dev,
+			    "this interface is not trusted\n");
+			error = EPERM;
+		} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+			device_printf(adapter->dev,
+			    "the PF doesn't support allmulti mode\n");
+			error = EOPNOTSUPP;
+		} else if (error) {
+			device_printf(adapter->dev,
+			    "number of Ethernet multicast addresses "
+			    "exceeds the limit (%d). error = %d\n",
+			    IXGBE_MAX_VF_MC, error);
+			error = ENOSPC;
+		} else {
+			ETHER_LOCK(ec);
+			ec->ec_flags |= ETHER_F_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			return rc; /* Promisc might failed */
+		}
+
+		if (rc == 0)
+			rc = error;
+
+		/* Continue to update the multicast table as many as we can */
+	}
+
+	/* 4: For normal operation */
+	error = hw->mac.ops.update_xcast_mode(hw, IXGBEVF_XCAST_MODE_MULTI);
+	if ((error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) || (error == 0)) {
+		/* Normal operation */
+		ETHER_LOCK(ec);
+		ec->ec_flags &= ~ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
+		error = 0;
+	} else if (error) {
+		device_printf(adapter->dev,
+		    "failed to set Ethernet multicast address "
+		    "operation to normal. error = %d\n", error);
+	}
+
 	update_ptr = mta;
 
-	adapter->hw.mac.ops.update_mc_addr_list(&adapter->hw, update_ptr, mcnt,
-	    ixv_mc_array_itr, TRUE);
-} /* ixv_set_multi */
+	error = adapter->hw.mac.ops.update_mc_addr_list(&adapter->hw,
+	    update_ptr, mcnt, ixv_mc_array_itr, TRUE);
+	if (rc == 0)
+		rc = error;
+
+	return rc;
+} /* ixv_set_rxfilter */
 
 /************************************************************************
  * ixv_mc_array_itr
  *
  *   An iterator function needed by the multicast shared code.
  *   It feeds the shared code routine the addresses in the
- *   array of ixv_set_multi() one by one.
+ *   array of ixv_set_rxfilter() one by one.
  ************************************************************************/
 static u8 *
 ixv_mc_array_itr(struct ixgbe_hw *hw, u8 **update_ptr, u32 *vmdq)
@@ -1203,7 +1251,10 @@ ixv_local_timer_locked(void *arg)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
-	ixv_check_link(adapter);
+	if (ixv_check_link(adapter)) {
+		ixv_init_locked(adapter);
+		return;
+	}
 
 	/* Stats Update */
 	ixv_update_stats(adapter);
@@ -1535,6 +1586,8 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	}
 	adapter->ipq = if_percpuq_create(&adapter->osdep.ec.ec_if);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
+	aprint_normal_dev(dev, "Ethernet address %s\n",
+	    ether_sprintf(adapter->hw.mac.addr));
 	/*
 	 * We use per TX queue softint, so if_deferred_start_init() isn't
 	 * used.
@@ -1554,7 +1607,8 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 			     |	IFCAP_TSOv6;
 	ifp->if_capenable = 0;
 
-	ec->ec_capabilities |= ETHERCAP_VLAN_HWTAGGING
+	ec->ec_capabilities |= ETHERCAP_VLAN_HWFILTER
+			    |  ETHERCAP_VLAN_HWTAGGING
 			    |  ETHERCAP_VLAN_HWCSUM
 			    |  ETHERCAP_JUMBO_MTU
 			    |  ETHERCAP_VLAN_MTU;
@@ -1573,8 +1627,8 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	 * callbacks to update media and link information
 	 */
 	ec->ec_ifmedia = &adapter->media;
-	ifmedia_init(&adapter->media, IFM_IMASK, ixv_media_change,
-	    ixv_media_status);
+	ifmedia_init_with_lock(&adapter->media, IFM_IMASK, ixv_media_change,
+	    ixv_media_status, &adapter->core_mtx);
 	ifmedia_add(&adapter->media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&adapter->media, IFM_ETHER | IFM_AUTO);
 
@@ -1740,7 +1794,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 	struct	rx_ring	*rxr = adapter->rx_rings;
 	struct ixgbe_hw	*hw = &adapter->hw;
 	struct ifnet	*ifp = adapter->ifp;
-	u32		bufsz, rxcsum, psrtype;
+	u32		bufsz, psrtype;
 
 	if (ifp->if_mtu > ETHERMTU)
 		bufsz = 4096 >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
@@ -1779,7 +1833,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 			else
 				break;
 		}
-		wmb();
+		IXGBE_WRITE_BARRIER(hw);
 		/* Setup the Base and Length of the Rx Descriptor Ring */
 		IXGBE_WRITE_REG(hw, IXGBE_VFRDBAL(j),
 		    (rdba & 0x00000000ffffffffULL));
@@ -1811,7 +1865,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 				break;
 			msec_delay(1);
 		}
-		wmb();
+		IXGBE_WRITE_BARRIER(hw);
 
 		/* Set the Tail Pointer */
 #ifdef DEV_NETMAP
@@ -1834,7 +1888,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 		if ((adapter->feat_en & IXGBE_FEATURE_NETMAP) &&
 		    (ifp->if_capenable & IFCAP_NETMAP)) {
 			struct netmap_adapter *na = NA(adapter->ifp);
-			struct netmap_kring *kring = &na->rx_rings[i];
+			struct netmap_kring *kring = na->rx_rings[i];
 			int t = na->num_rx_desc - 1 - nm_kr_rxspace(kring);
 
 			IXGBE_WRITE_REG(hw, IXGBE_VFRDT(rxr->me), t);
@@ -1844,22 +1898,8 @@ ixv_initialize_receive_units(struct adapter *adapter)
 			    adapter->num_rx_desc - 1);
 	}
 
-	rxcsum = IXGBE_READ_REG(hw, IXGBE_RXCSUM);
-
-	ixv_initialize_rss_mapping(adapter);
-
-	if (adapter->num_queues > 1) {
-		/* RSS and RX IPP Checksum are mutually exclusive */
-		rxcsum |= IXGBE_RXCSUM_PCSD;
-	}
-
-	if (ifp->if_capenable & IFCAP_RXCSUM)
-		rxcsum |= IXGBE_RXCSUM_PCSD;
-
-	if (!(rxcsum & IXGBE_RXCSUM_PCSD))
-		rxcsum |= IXGBE_RXCSUM_IPPCSE;
-
-	IXGBE_WRITE_REG(hw, IXGBE_RXCSUM, rxcsum);
+	if (adapter->hw.mac.type >= ixgbe_mac_X550_vf)
+		ixv_initialize_rss_mapping(adapter);
 } /* ixv_initialize_receive_units */
 
 /************************************************************************
@@ -1963,29 +2003,22 @@ ixv_sysctl_rdt_handler(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixv_sysctl_rdt_handler */
 
-/************************************************************************
- * ixv_setup_vlan_support
- ************************************************************************/
 static void
-ixv_setup_vlan_support(struct adapter *adapter)
+ixv_setup_vlan_tagging(struct adapter *adapter)
 {
 	struct ethercom *ec = &adapter->osdep.ec;
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct rx_ring	*rxr;
-	u32		ctrl, vid, vfta, retry;
+	u32		ctrl;
+	int		i;
 	bool		hwtagging;
-
-	/*
-	 *  This function is called from both if_init and ifflags_cb()
-	 * on NetBSD.
-	 */
 
 	/* Enable HW tagging only if any vlan is attached */
 	hwtagging = (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING)
 	    && VLAN_ATTACHED(ec);
 
 	/* Enable the queues */
-	for (int i = 0; i < adapter->num_queues; i++) {
+	for (i = 0; i < adapter->num_queues; i++) {
 		rxr = &adapter->rx_rings[i];
 		ctrl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(rxr->me));
 		if (hwtagging)
@@ -1999,12 +2032,52 @@ ixv_setup_vlan_support(struct adapter *adapter)
 		 */
 		rxr->vtag_strip = hwtagging ? TRUE : FALSE;
 	}
+} /* ixv_setup_vlan_tagging */
 
-#if 1
-	/* XXX dirty hack. Enable all VIDs */
+/************************************************************************
+ * ixv_setup_vlan_support
+ ************************************************************************/
+static int
+ixv_setup_vlan_support(struct adapter *adapter)
+{
+	struct ethercom *ec = &adapter->osdep.ec;
+	struct ixgbe_hw *hw = &adapter->hw;
+	u32		vid, vfta, retry;
+	struct vlanid_list *vlanidp;
+	int rv, error = 0;
+
+	/*
+	 *  This function is called from both if_init and ifflags_cb()
+	 * on NetBSD.
+	 */
+
+	/*
+	 * Part 1:
+	 * Setup VLAN HW tagging
+	 */
+	ixv_setup_vlan_tagging(adapter);
+
+	if (!VLAN_ATTACHED(ec))
+		return 0;
+
+	/*
+	 * Part 2:
+	 * Setup VLAN HW filter
+	 */
+	/* Cleanup shadow_vfta */
 	for (int i = 0; i < IXGBE_VFTA_SIZE; i++)
-	  adapter->shadow_vfta[i] = 0xffffffff;
-#endif
+		adapter->shadow_vfta[i] = 0;
+	/* Generate shadow_vfta from ec_vids */
+	ETHER_LOCK(ec);
+	SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list) {
+		uint32_t idx;
+
+		idx = vlanidp->vid / 32;
+		KASSERT(idx < IXGBE_VFTA_SIZE);
+		adapter->shadow_vfta[idx] |= (u32)1 << (vlanidp->vid % 32);
+	}
+	ETHER_UNLOCK(ec);
+
 	/*
 	 * A soft reset zero's out the VFTA, so
 	 * we need to repopulate it now.
@@ -2020,19 +2093,55 @@ ixv_setup_vlan_support(struct adapter *adapter)
 		 */
 		for (int j = 0; j < 32; j++) {
 			retry = 0;
-			if ((vfta & (1 << j)) == 0)
+			if ((vfta & ((u32)1 << j)) == 0)
 				continue;
 			vid = (i * 32) + j;
+
 			/* Call the shared code mailbox routine */
-			while (hw->mac.ops.set_vfta(hw, vid, 0, TRUE, FALSE)) {
-				if (++retry > 5)
+			while ((rv = hw->mac.ops.set_vfta(hw, vid, 0, TRUE,
+			    FALSE)) != 0) {
+				if (++retry > 5) {
+					device_printf(adapter->dev,
+					    "%s: max retry exceeded\n",
+						__func__);
 					break;
+				}
+			}
+			if (rv != 0) {
+				device_printf(adapter->dev,
+				    "failed to set vlan %d\n", vid);
+				error = EACCES;
 			}
 		}
 	}
+	return error;
 } /* ixv_setup_vlan_support */
 
-#if 0	/* XXX Badly need to overhaul vlan(4) on NetBSD. */
+static int
+ixv_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct adapter *adapter = ifp->if_softc;
+	int rv;
+
+	if (set)
+		rv = ixv_register_vlan(adapter, vid);
+	else
+		rv = ixv_unregister_vlan(adapter, vid);
+
+	if (rv != 0)
+		return rv;
+
+	/*
+	 * Control VLAN HW tagging when ec_nvlan is changed from 1 to 0
+	 * or 0 to 1.
+	 */
+	if ((set && (ec->ec_nvlans == 1)) || (!set && (ec->ec_nvlans == 0)))
+		ixv_setup_vlan_tagging(adapter);
+
+	return rv;
+}
+
 /************************************************************************
  * ixv_register_vlan
  *
@@ -2041,25 +2150,28 @@ ixv_setup_vlan_support(struct adapter *adapter)
  *   creates the entry in the soft version of the VFTA, init
  *   will repopulate the real table.
  ************************************************************************/
-static void
-ixv_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
+static int
+ixv_register_vlan(struct adapter *adapter, u16 vtag)
 {
-	struct adapter	*adapter = ifp->if_softc;
+	struct ixgbe_hw *hw = &adapter->hw;
 	u16		index, bit;
-
-	if (ifp->if_softc != arg) /* Not our event */
-		return;
+	int error;
 
 	if ((vtag == 0) || (vtag > 4095)) /* Invalid */
-		return;
-
+		return EINVAL;
 	IXGBE_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
-	adapter->shadow_vfta[index] |= (1 << bit);
-	/* Re-init to load the changes */
-	ixv_init_locked(adapter);
+	adapter->shadow_vfta[index] |= ((u32)1 << bit);
+	error = hw->mac.ops.set_vfta(hw, vtag, 0, true, false);
 	IXGBE_CORE_UNLOCK(adapter);
+
+	if (error != 0) {
+		device_printf(adapter->dev, "failed to register vlan %hu\n",
+		    vtag);
+		error = EACCES;
+	}
+	return error;
 } /* ixv_register_vlan */
 
 /************************************************************************
@@ -2068,27 +2180,30 @@ ixv_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
  *   Run via a vlan unconfig EVENT, remove our entry
  *   in the soft vfta.
  ************************************************************************/
-static void
-ixv_unregister_vlan(void *arg, struct ifnet *ifp, u16 vtag)
+static int
+ixv_unregister_vlan(struct adapter *adapter, u16 vtag)
 {
-	struct adapter	*adapter = ifp->if_softc;
+	struct ixgbe_hw *hw = &adapter->hw;
 	u16		index, bit;
-
-	if (ifp->if_softc !=  arg)
-		return;
+	int		error;
 
 	if ((vtag == 0) || (vtag > 4095))  /* Invalid */
-		return;
+		return EINVAL;
 
 	IXGBE_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
-	adapter->shadow_vfta[index] &= ~(1 << bit);
-	/* Re-init to load the changes */
-	ixv_init_locked(adapter);
+	adapter->shadow_vfta[index] &= ~((u32)1 << bit);
+	error = hw->mac.ops.set_vfta(hw, vtag, 0, false, false);
 	IXGBE_CORE_UNLOCK(adapter);
+
+	if (error != 0) {
+		device_printf(adapter->dev, "failed to unregister vlan %hu\n",
+		    vtag);
+		error = EIO;
+	}
+	return error;
 } /* ixv_unregister_vlan */
-#endif
 
 /************************************************************************
  * ixv_enable_intr
@@ -2159,8 +2274,8 @@ ixv_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 	} else {	  /* RX/TX IVARS */
 		index = (16 * (entry & 1)) + (8 * type);
 		ivar = IXGBE_READ_REG(hw, IXGBE_VTIVAR(entry >> 1));
-		ivar &= ~(0xFF << index);
-		ivar |= (vector << index);
+		ivar &= ~(0xffUL << index);
+		ivar |= ((u32)vector << index);
 		IXGBE_WRITE_REG(hw, IXGBE_VTIVAR(entry >> 1), ivar);
 	}
 } /* ixv_set_ivar */
@@ -2282,12 +2397,8 @@ ixv_update_stats(struct adapter *adapter)
 	    stats->vfgotc);
 	UPDATE_STAT_32(IXGBE_VFMPRC, stats->last_vfmprc, stats->vfmprc);
 
-	/* Fill out the OS statistics structure */
-	/*
-	 * NetBSD: Don't override if_{i|o}{packets|bytes|mcasts} with
-	 * adapter->stats counters. It's required to make ifconfig -z
-	 * (SOICZIFDATA) work.
-	 */
+	/* VF doesn't count errors by hardware */
+
 } /* ixv_update_stats */
 
 /************************************************************************
@@ -2358,7 +2469,8 @@ ixv_sysctl_instance(struct adapter *adapter)
 
 	return rnode;
 err:
-	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
+	device_printf(adapter->dev,
+	    "%s: sysctl_createv failed, rc = %d\n", __func__, rc);
 	return NULL;
 }
 
@@ -2581,6 +2693,76 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 
 } /* ixv_add_stats_sysctls */
 
+static void
+ixv_clear_evcnt(struct adapter *adapter)
+{
+	struct tx_ring		*txr = adapter->tx_rings;
+	struct rx_ring		*rxr = adapter->rx_rings;
+	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
+	struct ixgbe_hw *hw = &adapter->hw;
+	int i;
+
+	/* Driver Statistics */
+	adapter->efbig_tx_dma_setup.ev_count = 0;
+	adapter->mbuf_defrag_failed.ev_count = 0;
+	adapter->efbig2_tx_dma_setup.ev_count = 0;
+	adapter->einval_tx_dma_setup.ev_count = 0;
+	adapter->other_tx_dma_setup.ev_count = 0;
+	adapter->eagain_tx_dma_setup.ev_count = 0;
+	adapter->enomem_tx_dma_setup.ev_count = 0;
+	adapter->watchdog_events.ev_count = 0;
+	adapter->tso_err.ev_count = 0;
+	adapter->link_irq.ev_count = 0;
+
+	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+		adapter->queues[i].irqs.ev_count = 0;
+		adapter->queues[i].handleq.ev_count = 0;
+		adapter->queues[i].req.ev_count = 0;
+		txr->tso_tx.ev_count = 0;
+		txr->no_desc_avail.ev_count = 0;
+		txr->total_packets.ev_count = 0;
+#ifndef IXGBE_LEGACY_TX
+		txr->pcq_drops.ev_count = 0;
+#endif
+		txr->q_efbig_tx_dma_setup = 0;
+		txr->q_mbuf_defrag_failed = 0;
+		txr->q_efbig2_tx_dma_setup = 0;
+		txr->q_einval_tx_dma_setup = 0;
+		txr->q_other_tx_dma_setup = 0;
+		txr->q_eagain_tx_dma_setup = 0;
+		txr->q_enomem_tx_dma_setup = 0;
+		txr->q_tso_err = 0;
+
+		rxr->rx_packets.ev_count = 0;
+		rxr->rx_bytes.ev_count = 0;
+		rxr->rx_copies.ev_count = 0;
+		rxr->no_jmbuf.ev_count = 0;
+		rxr->rx_discarded.ev_count = 0;
+	}
+
+	/* MAC stats get their own sub node */
+
+	stats->ipcs.ev_count = 0;
+	stats->l4cs.ev_count = 0;
+	stats->ipcs_bad.ev_count = 0;
+	stats->l4cs_bad.ev_count = 0;
+
+	/* Packet Reception Stats */
+	stats->vfgprc.ev_count = 0;
+	stats->vfgorc.ev_count = 0;
+	stats->vfmprc.ev_count = 0;
+	stats->vfgptc.ev_count = 0;
+	stats->vfgotc.ev_count = 0;
+
+	/* Mailbox Stats */
+	hw->mbx.stats.msgs_tx.ev_count = 0;
+	hw->mbx.stats.msgs_rx.ev_count = 0;
+	hw->mbx.stats.acks.ev_count = 0;
+	hw->mbx.stats.reqs.ev_count = 0;
+	hw->mbx.stats.rsts.ev_count = 0;
+
+} /* ixv_clear_evcnt */
+
 /************************************************************************
  * ixv_set_sysctl_value
  ************************************************************************/
@@ -2616,16 +2798,12 @@ static void
 ixv_print_debug_info(struct adapter *adapter)
 {
 	device_t	dev = adapter->dev;
-	struct ixgbe_hw *hw = &adapter->hw;
 	struct ix_queue *que = adapter->queues;
 	struct rx_ring	*rxr;
 	struct tx_ring	*txr;
 #ifdef LRO
 	struct lro_ctrl *lro;
 #endif /* LRO */
-
-	device_printf(dev, "Error Byte Count = %u \n",
-	    IXGBE_READ_REG(hw, IXGBE_ERRBC));
 
 	for (int i = 0; i < adapter->num_queues; i++, que++) {
 		txr = que->txr;
@@ -2640,10 +2818,10 @@ ixv_print_debug_info(struct adapter *adapter)
 		device_printf(dev, "RX(%d) Bytes Received: %lu\n",
 		    rxr->me, (long)rxr->rx_bytes.ev_count);
 #ifdef LRO
-		device_printf(dev, "RX(%d) LRO Queued= %lld\n",
-		    rxr->me, (long long)lro->lro_queued);
-		device_printf(dev, "RX(%d) LRO Flushed= %lld\n",
-		    rxr->me, (long long)lro->lro_flushed);
+		device_printf(dev, "RX(%d) LRO Queued= %ju\n",
+		    rxr->me, (uintmax_t)lro->lro_queued);
+		device_printf(dev, "RX(%d) LRO Flushed= %ju\n",
+		    rxr->me, (uintmax_t)lro->lro_flushed);
 #endif /* LRO */
 		device_printf(dev, "TX(%d) Packets Sent: %lu\n",
 		    txr->me, (long)txr->total_packets.ev_count);
@@ -2745,23 +2923,51 @@ ixv_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct adapter *adapter = ifp->if_softc;
-	int change, rc = 0;
+	u_short saved_flags;
+	u_short change;
+	int rv = 0;
 
 	IXGBE_CORE_LOCK(adapter);
 
+	saved_flags = adapter->if_flags;
 	change = ifp->if_flags ^ adapter->if_flags;
 	if (change != 0)
 		adapter->if_flags = ifp->if_flags;
 
-	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
-		rc = ENETRESET;
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
+		rv = ENETRESET;
+		goto out;
+	} else if ((change & IFF_PROMISC) != 0) {
+		rv = ixv_set_rxfilter(adapter);
+		if (rv != 0) {
+			/* Restore previous */
+			adapter->if_flags = saved_flags;
+			goto out;
+		}
+	}
+
+	/* Check for ec_capenable. */
+	change = ec->ec_capenable ^ adapter->ec_capenable;
+	adapter->ec_capenable = ec->ec_capenable;
+	if ((change & ~(ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING
+	    | ETHERCAP_VLAN_HWFILTER)) != 0) {
+		rv = ENETRESET;
+		goto out;
+	}
+
+	/*
+	 * Special handling is not required for ETHERCAP_VLAN_MTU.
+	 * PF's MAXFRS(MHADD) does not include the 4bytes of the VLAN header.
+	 */
 
 	/* Set up VLAN support and filter */
-	ixv_setup_vlan_support(adapter);
+	if ((change & (ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_HWFILTER)) != 0)
+		rv = ixv_setup_vlan_support(adapter);
 
+out:
 	IXGBE_CORE_UNLOCK(adapter);
 
-	return rc;
+	return rv;
 }
 
 
@@ -2776,8 +2982,9 @@ static int
 ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct adapter	*adapter = ifp->if_softc;
+	struct ixgbe_hw *hw = &adapter->hw;
 	struct ifcapreq *ifcr = data;
-	int		error = 0;
+	int		error;
 	int l4csum_en;
 	const int l4csum = IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
 	     IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
@@ -2786,7 +2993,59 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCSIFFLAGS:
 		IOCTL_DEBUGOUT("ioctl: SIOCSIFFLAGS (Set Interface Flags)");
 		break;
-	case SIOCADDMULTI:
+	case SIOCADDMULTI: {
+		struct ether_multi *enm;
+		struct ether_multistep step;
+		struct ethercom *ec = &adapter->osdep.ec;
+		bool overflow = false;
+		int mcnt = 0;
+
+		/*
+		 * Check the number of multicast address. If it exceeds,
+		 * return ENOSPC.
+		 * Update this code when we support API 1.3.
+		 */
+		ETHER_LOCK(ec);
+		ETHER_FIRST_MULTI(step, ec, enm);
+		while (enm != NULL) {
+			mcnt++;
+
+			/*
+			 * This code is before adding, so one room is required
+			 * at least.
+			 */
+			if (mcnt > (IXGBE_MAX_VF_MC - 1)) {
+				overflow = true;
+				break;
+			}
+			ETHER_NEXT_MULTI(step, enm);
+		}
+		ETHER_UNLOCK(ec);
+		error = 0;
+		if (overflow && ((ec->ec_flags & ETHER_F_ALLMULTI) == 0)) {
+			error = hw->mac.ops.update_xcast_mode(hw,
+			    IXGBEVF_XCAST_MODE_ALLMULTI);
+			if (error == IXGBE_ERR_NOT_TRUSTED) {
+				device_printf(adapter->dev,
+				    "this interface is not trusted\n");
+				error = EPERM;
+			} else if (error == IXGBE_ERR_FEATURE_NOT_SUPPORTED) {
+				device_printf(adapter->dev,
+				    "the PF doesn't support allmulti mode\n");
+				error = EOPNOTSUPP;
+			} else if (error) {
+				device_printf(adapter->dev,
+				    "number of Ethernet multicast addresses "
+				    "exceeds the limit (%d). error = %d\n",
+				    IXGBE_MAX_VF_MC, error);
+				error = ENOSPC;
+			} else
+				ec->ec_flags |= ETHER_F_ALLMULTI;
+		}
+		if (error)
+			return error;
+	}
+		/*FALLTHROUGH*/
 	case SIOCDELMULTI:
 		IOCTL_DEBUGOUT("ioctl: SIOC(ADD|DEL)MULTI");
 		break;
@@ -2799,6 +3058,11 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 	case SIOCSIFMTU:
 		IOCTL_DEBUGOUT("ioctl: SIOCSIFMTU (Set Interface MTU)");
+		break;
+	case SIOCZIFDATA:
+		IOCTL_DEBUGOUT("ioctl: SIOCZIFDATA (Zero counter)");
+		ixv_update_stats(adapter);
+		ixv_clear_evcnt(adapter);
 		break;
 	default:
 		IOCTL_DEBUGOUT1("ioctl: UNKNOWN (0x%X)", (int)command);
@@ -2834,7 +3098,7 @@ ixv_ioctl(struct ifnet *ifp, u_long command, void *data)
 			 */
 			IXGBE_CORE_LOCK(adapter);
 			ixv_disable_intr(adapter);
-			ixv_set_multi(adapter);
+			ixv_set_rxfilter(adapter);
 			ixv_enable_intr(adapter);
 			IXGBE_CORE_UNLOCK(adapter);
 		}
@@ -3147,15 +3411,18 @@ ixv_handle_link(void *context)
 /************************************************************************
  * ixv_check_link - Used in the local timer to poll for link changes
  ************************************************************************/
-static void
+static s32
 ixv_check_link(struct adapter *adapter)
 {
+	s32 error;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
 	adapter->hw.mac.get_link_status = TRUE;
 
-	adapter->hw.mac.ops.check_link(&adapter->hw, &adapter->link_speed,
-	    &adapter->link_up, FALSE);
+	error = adapter->hw.mac.ops.check_link(&adapter->hw,
+	    &adapter->link_speed, &adapter->link_up, FALSE);
 	ixv_update_link_status(adapter);
+
+	return error;
 } /* ixv_check_link */

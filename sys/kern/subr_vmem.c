@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.97.4.1 2020/04/08 14:08:52 martin Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.97.4.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.97.4.1 2020/04/08 14:08:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.97.4.2 2020/04/13 08:05:04 martin Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -767,8 +767,8 @@ vmem_import(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 	}
 
 	if (vm->vm_flags & VM_XIMPORT) {
-		rc = ((vmem_ximport_t *)vm->vm_importfn)(vm->vm_arg, size,
-		    &size, flags, &addr);
+		rc = __FPTRCAST(vmem_ximport_t *, vm->vm_importfn)(vm->vm_arg,
+		    size, &size, flags, &addr);
 	} else {
 		rc = (vm->vm_importfn)(vm->vm_arg, size, flags, &addr);
 	}
@@ -1003,7 +1003,7 @@ vmem_xcreate(const char *name, vmem_addr_t base, vmem_size_t size,
 	KASSERT((flags & (VM_XIMPORT)) == 0);
 
 	return vmem_init(NULL, name, base, size, quantum,
-	    (vmem_import_t *)importfn, releasefn, source,
+	    __FPTRCAST(vmem_import_t *, importfn), releasefn, source,
 	    qcache_max, flags | VM_XIMPORT, ipl);
 }
 

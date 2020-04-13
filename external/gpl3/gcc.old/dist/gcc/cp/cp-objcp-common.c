@@ -1,5 +1,5 @@
 /* Some code common to C++ and ObjC++ front ends.
-   Copyright (C) 2004-2016 Free Software Foundation, Inc.
+   Copyright (C) 2004-2017 Free Software Foundation, Inc.
    Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 This file is part of GCC.
@@ -23,6 +23,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "cp-tree.h"
 #include "cp-objcp-common.h"
+#include "dwarf2.h"
 
 /* Special routine to get the alias set for C++.  */
 
@@ -130,24 +131,176 @@ cxx_types_compatible_p (tree x, tree y)
   return same_type_ignoring_top_level_qualifiers_p (x, y);
 }
 
-/* Return true if DECL is explicit member function.  */
-
-bool
-cp_function_decl_explicit_p (tree decl)
+struct debug_type_hasher : ggc_cache_ptr_hash<tree_map>
 {
-  return (decl
-	  && DECL_LANG_SPECIFIC (STRIP_TEMPLATE (decl))
-	  && DECL_NONCONVERTING_P (decl));
+  static hashval_t hash (tree_map *m) { return tree_map_hash (m); }
+  static bool equal (tree_map *a, tree_map *b) { return tree_map_eq (a, b); }
+
+  static int
+  keep_cache_entry (tree_map *&e)
+  {
+    return ggc_marked_p (e->base.from);
+  }
+};
+
+static GTY((cache)) hash_table<debug_type_hasher> *debug_type_hash;
+
+/* Return a type to use in the debug info instead of TYPE, or NULL_TREE to
+   keep TYPE.  */
+
+tree
+cp_get_debug_type (const_tree type)
+{
+  if (TYPE_PTRMEMFUNC_P (type) && !typedef_variant_p (type))
+    {
+      if (debug_type_hash == NULL)
+	debug_type_hash = hash_table<debug_type_hasher>::create_ggc (512);
+
+      /* We cannot simply use build_offset_type here because the function uses
+	 the type canonicalization hashtable, which is GC-ed, so its behavior
+	 depends on the actual collection points.  Since we are building these
+	 types on the fly for the debug info only, they would not be attached
+	 to any GC root and always be swept, so we would make the contents of
+	 the debug info depend on the collection points.  */
+      struct tree_map in, *h, **slot;
+
+      in.base.from = CONST_CAST_TREE (type);
+      in.hash = htab_hash_pointer (type);
+      slot = debug_type_hash->find_slot_with_hash (&in, in.hash, INSERT);
+      if (*slot)
+	return (*slot)->to;
+
+      tree t = build_offset_type (TYPE_PTRMEMFUNC_OBJECT_TYPE (type),
+				  TREE_TYPE (TYPE_PTRMEMFUNC_FN_TYPE (type)));
+
+      h = ggc_alloc<tree_map> ();
+      h->base.from = CONST_CAST_TREE (type);
+      h->hash = htab_hash_pointer (type);
+      h->to = t;
+      *slot = h;
+
+      return t;
+    }
+
+  return NULL_TREE;
 }
 
-/* Return true if DECL is deleted special member function.  */
-
-bool
-cp_function_decl_deleted_p (tree decl)
+/* Return -1 if dwarf ATTR shouldn't be added for DECL, or the attribute
+   value otherwise.  */
+int
+cp_decl_dwarf_attribute (const_tree decl, int attr)
 {
-  return (decl
+  if (decl == NULL_TREE)
+    return -1;
+
+  switch (attr)
+    {
+    case DW_AT_explicit:
+      if (TREE_CODE (decl) == FUNCTION_DECL
 	  && DECL_LANG_SPECIFIC (STRIP_TEMPLATE (decl))
-	  && DECL_DELETED_FN (decl));
+	  && DECL_NONCONVERTING_P (decl))
+	return 1;
+      break;
+
+    case DW_AT_deleted:
+      if (TREE_CODE (decl) == FUNCTION_DECL
+	  && DECL_LANG_SPECIFIC (STRIP_TEMPLATE (decl))
+	  && DECL_DELETED_FN (decl))
+	return 1;
+      break;
+
+    case DW_AT_defaulted:
+      if (TREE_CODE (decl) == FUNCTION_DECL
+	  && DECL_LANG_SPECIFIC (STRIP_TEMPLATE (decl))
+	  && DECL_DEFAULTED_FN (decl))
+	{
+	  if (DECL_DEFAULTED_IN_CLASS_P (decl))
+	    return DW_DEFAULTED_in_class;
+
+	  if (DECL_DEFAULTED_OUTSIDE_CLASS_P (decl))
+	    return DW_DEFAULTED_out_of_class;
+	}
+      break;
+
+    case DW_AT_const_expr:
+      if (VAR_OR_FUNCTION_DECL_P (decl) && DECL_DECLARED_CONSTEXPR_P (decl))
+	return 1;
+      break;
+
+    case DW_AT_reference:
+      if (TREE_CODE (decl) == FUNCTION_DECL
+	  && DECL_NONSTATIC_MEMBER_FUNCTION_P (decl)
+	  && FUNCTION_REF_QUALIFIED (TREE_TYPE (decl))
+	  && !FUNCTION_RVALUE_QUALIFIED (TREE_TYPE (decl)))
+	return 1;
+      break;
+
+    case DW_AT_rvalue_reference:
+      if (TREE_CODE (decl) == FUNCTION_DECL
+	  && DECL_NONSTATIC_MEMBER_FUNCTION_P (decl)
+	  && FUNCTION_REF_QUALIFIED (TREE_TYPE (decl))
+	  && FUNCTION_RVALUE_QUALIFIED (TREE_TYPE (decl)))
+	return 1;
+      break;
+
+    case DW_AT_inline:
+      if (VAR_P (decl) && DECL_INLINE_VAR_P (decl))
+	{
+	  if (DECL_VAR_DECLARED_INLINE_P (decl))
+	    return DW_INL_declared_inlined;
+	  else
+	    return DW_INL_inlined;
+	}
+      break;
+
+    default:
+      break;
+    }
+
+  return -1;
+}
+
+/* Return -1 if dwarf ATTR shouldn't be added for TYPE, or the attribute
+   value otherwise.  */
+int
+cp_type_dwarf_attribute (const_tree type, int attr)
+{
+  if (type == NULL_TREE)
+    return -1;
+
+  switch (attr)
+    {
+    case DW_AT_reference:
+      if ((TREE_CODE (type) == FUNCTION_TYPE
+	   || TREE_CODE (type) == METHOD_TYPE)
+	  && FUNCTION_REF_QUALIFIED (type)
+	  && !FUNCTION_RVALUE_QUALIFIED (type))
+	return 1;
+      break;
+
+    case DW_AT_rvalue_reference:
+      if ((TREE_CODE (type) == FUNCTION_TYPE
+	   || TREE_CODE (type) == METHOD_TYPE)
+	  && FUNCTION_REF_QUALIFIED (type)
+	  && FUNCTION_RVALUE_QUALIFIED (type))
+	return 1;
+      break;
+
+    default:
+      break;
+    }
+
+  return -1;
+}
+
+/* Return the unit size of TYPE without reusable tail padding.  */
+
+tree
+cp_unit_size_without_reusable_padding (tree type)
+{
+  if (CLASS_TYPE_P (type))
+    return CLASSTYPE_SIZE_UNIT (type);
+  return TYPE_SIZE_UNIT (type);
 }
 
 /* Stubs to keep c-opts.c happy.  */
@@ -294,6 +447,7 @@ cp_common_init_ts (void)
   MARK_TS_TYPED (STMT_EXPR);
   MARK_TS_TYPED (OFFSET_REF);
   MARK_TS_TYPED (OFFSETOF_EXPR);
+  MARK_TS_TYPED (ADDRESSOF_EXPR);
   MARK_TS_TYPED (PTRMEM_CST);
   MARK_TS_TYPED (EMPTY_CLASS_EXPR);
   MARK_TS_TYPED (VEC_INIT_EXPR);

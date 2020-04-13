@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_x86.h,v 1.15.2.2 2019/06/10 22:07:14 christos Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.15.2.3 2020/04/13 08:04:25 martin Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,26 +32,21 @@
 #ifndef _NVMM_X86_H_
 #define _NVMM_X86_H_
 
-/* --------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 
 #ifndef ASM_NVMM
 
-struct nvmm_exit_memory {
+struct nvmm_x86_exit_memory {
 	int prot;
 	gpaddr_t gpa;
 	uint8_t inst_len;
 	uint8_t inst_bytes[15];
 };
 
-enum nvmm_exit_io_type {
-	NVMM_EXIT_IO_IN,
-	NVMM_EXIT_IO_OUT
-};
-
-struct nvmm_exit_io {
-	enum nvmm_exit_io_type type;
+struct nvmm_x86_exit_io {
+	bool in;
 	uint16_t port;
-	int seg;
+	int8_t seg;
 	uint8_t address_size;
 	uint8_t operand_size;
 	bool rep;
@@ -59,48 +54,99 @@ struct nvmm_exit_io {
 	uint64_t npc;
 };
 
-enum nvmm_exit_msr_type {
-	NVMM_EXIT_MSR_RDMSR,
-	NVMM_EXIT_MSR_WRMSR
+struct nvmm_x86_exit_rdmsr {
+	uint32_t msr;
+	uint64_t npc;
 };
 
-struct nvmm_exit_msr {
-	enum nvmm_exit_msr_type type;
-	uint64_t msr;
+struct nvmm_x86_exit_wrmsr {
+	uint32_t msr;
 	uint64_t val;
 	uint64_t npc;
 };
 
-struct nvmm_exit_insn {
+struct nvmm_x86_exit_insn {
 	uint64_t npc;
 };
 
-struct nvmm_exit_invalid {
+struct nvmm_x86_exit_invalid {
 	uint64_t hwcode;
 };
 
-union nvmm_exit_md {
-	struct nvmm_exit_memory mem;
-	struct nvmm_exit_io io;
-	struct nvmm_exit_msr msr;
-	struct nvmm_exit_insn insn;
-	struct nvmm_exit_invalid inv;
+/* Generic. */
+#define NVMM_VCPU_EXIT_NONE		0x0000000000000000ULL
+#define NVMM_VCPU_EXIT_INVALID		0xFFFFFFFFFFFFFFFFULL
+/* x86: operations. */
+#define NVMM_VCPU_EXIT_MEMORY		0x0000000000000001ULL
+#define NVMM_VCPU_EXIT_IO		0x0000000000000002ULL
+/* x86: changes in VCPU state. */
+#define NVMM_VCPU_EXIT_SHUTDOWN		0x0000000000001000ULL
+#define NVMM_VCPU_EXIT_INT_READY	0x0000000000001001ULL
+#define NVMM_VCPU_EXIT_NMI_READY	0x0000000000001002ULL
+#define NVMM_VCPU_EXIT_HALTED		0x0000000000001003ULL
+#define NVMM_VCPU_EXIT_TPR_CHANGED	0x0000000000001004ULL
+/* x86: instructions. */
+#define NVMM_VCPU_EXIT_RDMSR		0x0000000000002000ULL
+#define NVMM_VCPU_EXIT_WRMSR		0x0000000000002001ULL
+#define NVMM_VCPU_EXIT_MONITOR		0x0000000000002002ULL
+#define NVMM_VCPU_EXIT_MWAIT		0x0000000000002003ULL
+#define NVMM_VCPU_EXIT_CPUID		0x0000000000002004ULL
+
+struct nvmm_x86_exit {
+	uint64_t reason;
+	union {
+		struct nvmm_x86_exit_memory mem;
+		struct nvmm_x86_exit_io io;
+		struct nvmm_x86_exit_rdmsr rdmsr;
+		struct nvmm_x86_exit_wrmsr wrmsr;
+		struct nvmm_x86_exit_insn insn;
+		struct nvmm_x86_exit_invalid inv;
+	} u;
+	struct {
+		uint64_t rflags;
+		uint64_t cr8;
+		uint64_t int_shadow:1;
+		uint64_t int_window_exiting:1;
+		uint64_t nmi_window_exiting:1;
+		uint64_t evt_pending:1;
+		uint64_t rsvd:60;
+	} exitstate;
 };
 
-#define NVMM_EXIT_MONITOR	0x0000000000001000ULL
-#define NVMM_EXIT_MWAIT		0x0000000000001001ULL
-#define NVMM_EXIT_MWAIT_COND	0x0000000000001002ULL
+#define NVMM_VCPU_EVENT_EXCP	0
+#define NVMM_VCPU_EVENT_INTR	1
+
+struct nvmm_x86_event {
+	u_int type;
+	uint8_t vector;
+	union {
+		struct {
+			uint64_t error;
+		} excp;
+	} u;
+};
 
 struct nvmm_cap_md {
+	uint64_t mach_conf_support;
+
+	uint64_t vcpu_conf_support;
+#define NVMM_CAP_ARCH_VCPU_CONF_CPUID	__BIT(0)
+#define NVMM_CAP_ARCH_VCPU_CONF_TPR	__BIT(1)
+
 	uint64_t xcr0_mask;
-	uint64_t mxcsr_mask;
-	uint64_t conf_cpuid_maxops;
-	uint64_t rsvd[5];
+	uint32_t mxcsr_mask;
+	uint32_t conf_cpuid_maxops;
+	uint64_t rsvd[6];
 };
 
 #endif
 
-/* --------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Segment state indexes. We use X64 as naming convention, not to confuse with
+ * X86 which originally implied 32bit.
+ */
 
 /* Segments. */
 #define NVMM_X64_SEG_ES			0
@@ -198,14 +244,6 @@ struct nvmm_x64_state_intr {
 	uint64_t rsvd:60;
 };
 
-/* VM exit state indexes. */
-#define NVMM_X64_EXITSTATE_CR8			0
-#define NVMM_X64_EXITSTATE_RFLAGS		1
-#define NVMM_X64_EXITSTATE_INT_SHADOW		2
-#define NVMM_X64_EXITSTATE_INT_WINDOW_EXIT	3
-#define NVMM_X64_EXITSTATE_NMI_WINDOW_EXIT	4
-#define NVMM_X64_EXITSTATE_EVT_PENDING		5
-
 /* Flags. */
 #define NVMM_X64_STATE_SEGS	0x01
 #define NVMM_X64_STATE_GPRS	0x02
@@ -229,28 +267,49 @@ struct nvmm_x64_state {
 	struct fxsave fpu;
 };
 
-#define nvmm_vcpu_state nvmm_x64_state
+#define NVMM_VCPU_CONF_CPUID	NVMM_VCPU_CONF_MD_BEGIN
+#define NVMM_VCPU_CONF_TPR	(NVMM_VCPU_CONF_MD_BEGIN + 1)
 
-#define NVMM_MACH_CONF_X86_CPUID	NVMM_MACH_CONF_MD_BEGIN
-#define NVMM_X86_NCONF			1
+struct nvmm_vcpu_conf_cpuid {
+	/* The options. */
+	uint32_t mask:1;
+	uint32_t exit:1;
+	uint32_t rsvd:30;
 
-struct nvmm_mach_conf_x86_cpuid {
+	/* The leaf. */
 	uint32_t leaf;
-	struct {
-		uint32_t eax;
-		uint32_t ebx;
-		uint32_t ecx;
-		uint32_t edx;
-	} set;
-	struct {
-		uint32_t eax;
-		uint32_t ebx;
-		uint32_t ecx;
-		uint32_t edx;
-	} del;
+
+	/* The params. */
+	union {
+		struct {
+			struct {
+				uint32_t eax;
+				uint32_t ebx;
+				uint32_t ecx;
+				uint32_t edx;
+			} set;
+			struct {
+				uint32_t eax;
+				uint32_t ebx;
+				uint32_t ecx;
+				uint32_t edx;
+			} del;
+		} mask;
+	} u;
 };
 
+struct nvmm_vcpu_conf_tpr {
+	uint32_t exit_changed:1;
+	uint32_t rsvd:31;
+};
+
+#define nvmm_vcpu_exit		nvmm_x86_exit
+#define nvmm_vcpu_event		nvmm_x86_event
+#define nvmm_vcpu_state		nvmm_x64_state
+
 #ifdef _KERNEL
+#define NVMM_X86_MACH_NCONF	0
+#define NVMM_X86_VCPU_NCONF	2
 struct nvmm_x86_cpuid_mask {
 	uint32_t eax;
 	uint32_t ebx;

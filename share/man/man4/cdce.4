@@ -25,9 +25,9 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $NetBSD: cdce.4,v 1.13.14.1 2019/06/10 22:05:39 christos Exp $
+.\" $NetBSD: cdce.4,v 1.13.14.2 2020/04/13 08:03:25 martin Exp $
 .\"
-.Dd March 23, 2019
+.Dd August 24, 2019
 .Dt CDCE 4
 .Os
 .Sh NAME
@@ -94,24 +94,18 @@ can be tried to work around the missing descriptor.
 .It "cdce%d: could not find data bulk in/out"
 For a manually added USB vendor/product, these errors indicate
 that the bridge is not compatible with the driver.
-.It "cdce%d: watchdog timeout"
-A packet was queued for transmission and a transmit command was
-issued, however the device failed to acknowledge the transmission
-before a timeout expired.
-.It "cdce%d: no memory for rx list -- packet dropped!"
-Memory allocation through MGETHDR or MCLGET failed, the system
-is running low on mbufs.
-.It "cdce%d: abort/close rx/tx pipe failed"
-.It "cdce%d: rx/tx list init failed"
-.It "cdce%d: open rx/tx pipe failed"
-.It "cdce%d: usb error on rx/tx"
 .El
+.Pp
+Also see
+.Xr usbnet 4
+for diagnostics.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr usb 4 ,
-.\" .Xr hostname.if 5 ,
+.Xr usbnet 4 ,
+.Xr ifconfig.if 5 ,
 .Xr ifconfig 8
 .Rs
 .%T "Universal Serial Bus Class Definitions for Communication Devices"

@@ -1,0 +1,160 @@
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcLogLevel: Sync
+olcLogLevel: Stats
+olcPidFile: @TESTDIR@/slapd.2.pid
+olcArgsFile: @TESTDIR@/slapd.2.args
+olcServerID: 2
+
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file://@TESTWD@/@SCHEMADIR@/core.ldif
+include: file://@TESTWD@/@SCHEMADIR@/cosine.ldif
+include: file://@TESTWD@/@SCHEMADIR@/inetorgperson.ldif
+include: file://@TESTWD@/@SCHEMADIR@/misc.ldif
+include: file://@TESTWD@/@SCHEMADIR@/nis.ldif
+include: file://@TESTWD@/@SCHEMADIR@/dyngroup.ldif
+
+#mod#dn: cn=module{0},cn=config
+#mod#objectClass: olcModuleList
+#mod#cn: module{0}
+#mod#olcModulePath: @TESTWD@/../servers/slapd/back-@BACKEND@/
+#mod#olcModuleLoad: {0}back_@BACKEND@.la
+
+#monitormod#dn: cn=module{1},cn=config
+#monitormod#objectClass: olcModuleList
+#monitormod#cn: module{1}
+#monitormod#olcModulePath: @TESTWD@/../servers/slapd/back-monitor/
+#monitormod#olcModuleLoad: {0}back_monitor.la
+
+#memberofmod#dn: cn=module{2},cn=config
+#memberofmod#objectClass: olcModuleList
+#memberofmod#cn: module{2}
+#memberofmod#olcModulePath: @TESTWD@/../servers/slapd/overlays/
+#memberofmod#olcModuleLoad: {0}memberof.la
+#dynlistmod#olcModuleLoad: {1}dynlist.la
+#syncprovmod#olcModuleLoad: {2}syncprov.la
+#accesslogmod#olcModuleLoad: {3}accesslog.la
+
+dn: olcDatabase={-1}frontend,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
+olcDatabase: {-1}frontend
+olcAccess: {0}to dn=""  by * read
+olcAccess: {1}to *  by self write  by users read  by anonymous auth
+
+dn: olcDatabase={0}config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {0}config
+olcAccess: {0}to *  by * none
+olcRootPW:< file://@TESTDIR@/configpw
+
+dn: olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc@BACKEND@Config
+olcDatabase: {1}@BACKEND@
+olcSuffix: dc=example,dc=com
+olcRootDN: cn=manager,dc=example,dc=com
+olcRootPW: secret
+olcSizeLimit: unlimited
+olcTimeLimit: unlimited
+olcMirrorMode: TRUE
+olcSyncrepl: {0}rid=100 provider=@URI1@ binddn="cn=manager,dc=example,dc=com
+ " credentials=secret bindmethod=simple searchbase="dc=example,dc=com" logba
+ se="cn=accesslog" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))
+ " filter="(objectClass=*)" schemachecking=off attrs="*,+" type=refreshAndPe
+ rsist retry="60 +" tls_reqcert=never timeout=0 keepalive=240:10:30 syncdata
+ =accesslog network-timeout=0 scope=sub interval=00:00:00:03
+olcSyncrepl: {1}rid=101 provider=@URI3@ binddn="cn=manager,dc=example,dc=com
+ " credentials=secret bindmethod=simple searchbase="dc=example,dc=com" logba
+ se="cn=accesslog" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))
+ " filter="(objectClass=*)" schemachecking=off attrs="*,+" type=refreshAndPe
+ rsist retry="60 +" tls_reqcert=never timeout=0 keepalive=240:10:30 syncdata
+ =accesslog network-timeout=0 scope=sub interval=00:00:00:03
+olcSyncrepl: {2}rid=102 provider=@URI4@ binddn="cn=manager,dc=example,dc=com
+ " credentials=secret bindmethod=simple searchbase="dc=example,dc=com" logba
+ se="cn=accesslog" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))
+ " filter="(objectClass=*)" schemachecking=off attrs="*,+" type=refreshAndPe
+ rsist retry="60 +" tls_reqcert=never timeout=0 keepalive=240:10:30 syncdata
+ =accesslog network-timeout=0 scope=sub interval=00:00:00:03
+#~null~#olcDbDirectory: @TESTDIR@/srv2/db.1
+#indexdb#olcDbIndex: default eq
+#indexdb#olcDbIndex: objectClass
+#indexdb#olcDbIndex: entryUUID
+#indexdb#olcDbIndex: entryCSN
+#indexdb#olcDbIndex: cn pres,eq,sub
+#indexdb#olcDbIndex: uid pres,eq,sub
+#indexdb#olcDbIndex: uidNumber pres,eq
+#indexdb#olcDbIndex: gidNumber pres,eq
+#indexdb#olcDbIndex: mail pres,eq,sub
+#indexdb#olcDbIndex: sn pres,eq,sub
+#indexdb#olcDbIndex: memberUid
+#indexdb#olcDbIndex: uniqueMember pres,eq
+#indexdb#olcDbIndex: description pres,eq,sub
+#indexdb#olcDbIndex: title pres,eq,sub
+#indexdb#olcDbIndex: givenName pres,eq,sub
+#indexdb#olcDbIndex: member
+#mdb#olcDbMaxSize: 33554432
+
+dn: olcOverlay={0}dynlist,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcDynamicList
+olcOverlay: {0}dynlist
+olcDlAttrSet: {0}groupOfURLs memberURL
+
+dn: olcOverlay={1}memberof,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcMemberOf
+olcOverlay: {1}memberof
+olcMemberOfDangling: ignore
+olcMemberOfRefInt: TRUE
+olcMemberOfGroupOC: groupOfNames
+olcMemberOfMemberAD: member
+olcMemberOfMemberOfAD: memberOf
+
+dn: olcOverlay={2}syncprov,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcConfig
+objectClass: top
+objectClass: olcSyncProvConfig
+olcOverlay: {2}syncprov
+olcSpCheckpoint: 20 10
+olcSpSessionlog: 50
+
+dn: olcOverlay={3}accesslog,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcAccessLogConfig
+olcOverlay: {3}accesslog
+olcAccessLogDB: cn=accesslog
+olcAccessLogOps: writes
+olcAccessLogPurge: 07+00:00 01+00:00
+olcAccessLogSuccess: TRUE
+
+dn: olcDatabase={2}@BACKEND@,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc@BACKEND@Config
+olcDatabase: {2}@BACKEND@
+olcSuffix: cn=accesslog
+olcSizeLimit: unlimited
+olcTimeLimit: unlimited
+olcDbIndex: default eq
+olcDbIndex: entryCSN,objectClass,reqEnd,reqResult,reqStart,reqDN
+#~null~#olcDbDirectory: @TESTDIR@/srv2/db.2
+#mdb#olcDbMaxSize: 33554432
+
+dn: olcOverlay={0}syncprov,olcDatabase={2}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcConfig
+objectClass: top
+objectClass: olcSyncProvConfig
+olcOverlay: {0}syncprov
+olcSpNoPresent: TRUE
+olcSpReloadHint: TRUE
+
+dn: olcDatabase={3}monitor,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {3}monitor
+olcAccess: {0}to dn.subtree="cn=monitor"  by * read

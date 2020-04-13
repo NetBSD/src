@@ -1,6 +1,45 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.30.4.1 2020/04/08 14:07:23 martin Exp $
+#	$NetBSD: inter.phone,v 1.30.4.2 2020/04/13 08:03:26 martin Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
+7:317:Akmola:Republic of Kazakhstan
+7:329:Aktau:Republic of Kazakhstan
+7:313:Aktubinsk:Republic of Kazakhstan
+7:327:Almaty:Republic of Kazakhstan
+7:330:Arkalyk:Republic of Kazakhstan
+7:717:Astana:Republic of Kazakhstan
+7:312:Atyrau:Republic of Kazakhstan
+7:321:Karaganda:Republic of Kazakhstan
+7:314:Kostanai:Republic of Kazakhstan
+7:324:Kzyl-Orda:Republic of Kazakhstan
+7:336:Leninsk:Republic of Kazakhstan
+7:318:Pavlodar:Republic of Kazakhstan
+7:315:Petropavlovsk:Republic of Kazakhstan
+7:322:Semipalatinsk:Republic of Kazakhstan
+7:325:Shymkent:Republic of Kazakhstan
+7:328:Taldykorgan:Republic of Kazakhstan
+7:311:Uralsk:Republic of Kazakhstan
+7:323:Ust-Kamenogorsk:Republic of Kazakhstan
+7:326:Zhambyl:Republic of Kazakhstan
+7:310:Zhezkazgan:Republic of Kazakhstan
+7:401:Kaliningrad:Russian Federation
+7:471:Kursk:Russian Federation
+7:472:Belgorod:Russian Federation
+7:473:Voronezh:Russian Federation
+7:474:Lipetsk:Russian Federation
+7:475:Tambov:Russian Federation
+7:481:Smolensk:Russian Federation
+7:482:Tver:Russian Federation
+7:483:Bryansk:Russian Federation
+7:484:Kaluga:Russian Federation
+7:485:Yaroslavl:Russian Federation
+7:486:Oryol:Russian Federation
+7:487:Tula:Russian Federation
+7:491:Ryazan:Russian Federation
+7:492:Vladimir:Russian Federation
+7:493:Ivanovo:Russian Federation
+7:494:Kostroma:Russian Federation
+7:495:Moscow:Russian Federation
+7:496:Moscow:Russian Federation
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
 20:66:Port Said:Egypt, Arab Rep. of
@@ -97,7 +136,6 @@
 41:52:Winterthur:Switzerland
 41:61:Basel:Switzerland
 41:62:Argovia:Switzerland
-423:::Liechtenstein
 43:1:Vienna:Austria
 43:316:Graz:Austria
 43:512:Innsbruck:Austria
@@ -117,11 +155,14 @@
 44:131:Edinburgh, Scot.:United Kingdom
 44:1344:Bracknell, Eng.:United Kingdom
 44:141:Glasgow, Scot.:United Kingdom
+44:1481:Guernsey:United Kingdom
 44:1484:Huddersfield, Eng.:United Kingdom
 44:1485:Hillington, Eng.:United Kingdom
 44:1494:High Wycombe, Eng.:United Kingdom
 44:151:Liverpool, Eng.:United Kingdom
 44:161:Manchester, Eng.:United Kingdom
+44:1534:Bailiwick of Jersey:United Kingdom
+44:1624:Isle of Man:United Kingdom
 44:1628:Maidenhead, Eng.:United Kingdom
 44:1752:Plymouth, Eng.:United Kingdom
 44:1753:Slough, Eng.:United Kingdom
@@ -229,6 +270,7 @@
 52:681:Los Mochis:Mexico
 52:682:La Paz:Mexico
 52:684:Cabo San Lucas:Mexico
+53:::Cuba
 54:1:Buenos Aires:Argentina
 54:21:La Plata:Argentina
 54:41:Rosario:Argentina
@@ -300,6 +342,7 @@
 82:51:Pusan:Korea, Rep. of
 82:53:Taegu:Korea, Rep. of
 82:62:Kwangju:Korea, Rep. of
+84:::Vietnam
 86:1:Beijing:China, People's Rep. of
 86:20:Ghuangzhou:China, People's Rep. of
 86:21:Shanghai:China, People's Rep. of
@@ -318,13 +361,16 @@
 91:44:Madras:India
 92:21:Karachi:Pakistan
 92:51:Islamabad:Pakistan
+93:::Afghanistan
 94:1:Colombo Central:Sri Lanka, Dem. Soc. Rep. of
 94:8:Kandy:Sri Lanka, Dem. Soc. Rep. of
+95:::Republic of the Union of Myanmar
 98:21:Teheran:Iran
 98:31:Esfahan:Iran
 98:41:Tabriz:Iran
 98:51:Mashad:Iran
 98:631:Abadan:Iran
+211:::South Sudan, Republic of
 212:7:Rabat:Morocco, Kingdom of
 213:::Algeria
 216:1:Tunis:Tunisia
@@ -333,6 +379,8 @@
 218:61:Benghazi:Libyan Arab People's Socialist Jamahiriya (Libyan A.P.S.J.)
 220:::Gambia
 221:::Senegal Republic
+222:::Mauritania
+223:::Mali, Republic of
 224:4:Conakry:Guinea, People's Rev. Rep.
 225:::Ivory Coast Rep. of
 226:::Upper Volta (Burkina Faso)
@@ -341,47 +389,85 @@
 229:::Benin, People's Rep. of
 230:::Mauritius
 231:::Liberia
+232:::Sierra Leone
 233:21:Accra:Ghana
 234:1:Lagos:Nigeria, Fed. Rep. of
 234:22:Ibadan:Nigeria, Fed. Rep. of
 234:64:Kano:Nigeria, Fed. Rep. of
+235:::Chad
+236:::Central African Republic
 237:::Cameroon, United Rep. of
 238:::Cape Verde Islands
+239:::Call Sao Tome and Principe
+240:::Equatorial Guinea
 241:::Gabon Republic
+242:::Republic of the Congo
 243:12:Kinshasa:Zaire, Rep. of
 243:222:Lubumbashi:Zaire, Rep. of
+244:::Angola
+245:::Guinea-Bissau
+246::British Indian Ocean Territory:United Kingdom
 247:::Ascension Island
+248:::Seychelles
+249:::Sudan, Republic of the
 250:::Rwanda
 251:1:Addis Ababa:Ethiopia
+252:::Somalia, Federal Republic of
+253:::Djibouti
 254:2:Nairobi:Kenya, Rep. of
-255:51:Dar Es Salaam:Tanzania
+255:::Tanzania
 256:41:Kampala:Uganda
 256:42:Entebbe:Uganda
+256:43:Jinja:Uganda
+257:::Burundi, Republic of
+258:::Mozambique, Republic of
 260:1:Lusaka:Zambia
+260:2:Chingola:Zambia
+260:2:Kitwe:Zambia
+260:2:Luanshya:Zambia
+260:2:Ndola:Zambia
+261:::Madagascar
+262:::Reunion:France
+262:::Mayotte:France
 263:4:Harare:Zimbabwe
-264:61:Windhoek:Namibia
+263:9:Bulawayo:Zimbabwe
+263:20:Mutare:Zimbabwe
+264:::Namibia
 265::Blantyre:Malawi
 265::Lilongwe:Malawi
 266:::Lesotho
-267:31:Gaborone:Botswana
+267:::Botswana
 268:::Swaziland
-297:8::Aruba
+269:::Comoros
+290:::Saint Helena
+291:::Eritrea
+297:::Aruba
 298:::Faeroe Islands
-299:11:Soendre Stroemfjord:Greenland (Kalaallit Nunaat)
-299:2:Godthaab:Greenland (Kalaallit Nunaat)
-299:50:Thule:Greenland (Kalaallit Nunaat)
+299:::Greenland (Kalaallit Nunaat)
 350:::Gibraltar
-351:1:Lisbon:Portugal
-351:2:Porto:Portugal
+351:::Portugal
 352:::Luxembourg
 353:1:Dublin:Ireland, Rep. of
 353:21:Cork:Ireland, Rep. of
+353:41:Drogheda:Ireland, Rep. of
+353:42:Dundalk:Ireland, Rep. of
+353:45:Kildare:Ireland, Rep. of
 353:51:Waterford:Ireland, Rep. of
+353:52:Tipperary:Ireland, Rep. of
+353:53:Wexford:Ireland, Rep. of
 353:61:Limerick:Ireland, Rep. of
+353:64:Killarney:Ireland, Rep. of
+353:65:Ennis:Ireland, Rep. of
+353:66:Dingle:Ireland, Rep. of
+353:66:Tralee:Ireland, Rep. of
+353:71:Sligo:Ireland, Rep. of
 353:91:Galway:Ireland, Rep. of
-354:1:Reykjavik:Iceland
+353:402:Arklow:Ireland, Rep. of
+353:506:Tullamore:Ireland, Rep. of
+354:::Iceland
+355:::Albania, Republic of
 356:::Malta
-357:21:Nicosia:Cyprus
+357:::Cyprus
 358:2:Turku & Pori:Finland
 358:3:Häme:Finland
 358:5:Kymi:Finland
@@ -395,10 +481,25 @@
 358:17:Kuopio:Finland
 358:18:Ahvenanmaa:Finland
 358:19:Uusimaa:Finland
-359:2:Sofia:Bulgaria
+359:::Bulgaria
 370:::Lithuania
 371:::Latvia
 372:::Estonia
+373:::Moldova, Republic of
+374:::Armenia, Republic of
+375:::Belarus, Republic of
+376:::Andorra, Principality of
+377:::Monaco, Principality of
+378:::San Marino, Republic of
+379:::Vatican
+380:::Ukraine
+381:::Serbia, Republic of
+382:::Montenegro
+383:::Kosovo, Republic of
+385:::Croatia, Republic of
+386:::Slovenia
+387:::Bosnia and Herzegovina
+389:::Macedonia, Republic of
 420:2:Prague:Czech Republic
 421:2:Bratislava:Slovak Republic
 421:31:Dunajska Streda:Slovak Republic
@@ -425,53 +526,90 @@
 421:56:Michalovce:Slovak Republic
 421:57:Humenne:Slovak Republic
 421:58:Roznava:Slovak Republic
+423:::Liechtenstein
+500::Falkland Islands:United Kingdom
 501:2:Belize City:Belize
 501:8:Belmopan:Belize
-502:2:Guatemala City:Guatemala
-502:9:Amatitlan:Guatemala
-502:9:Antigua:Guatemala
-502:9:Quezaltenango:Guatemala
-502:9:Villa Nueva:Guatemala
+502:8:Pointe A Pitre:Guatemala
+502:9:Pointe A Pitre:Guatemala
+502:26:Jarry:Guatemala
+502:81:Basse Terre:Guatemala
+502:84:Gosier:Guatemala
+502:86:Capesterre:Guatemala
+502:97:Grand Bourg:Guatemala
 503:::El Salvador
 504:::Honduras
 505:2:Managua:Nicaragua
+505:43:San Marcos:Nicaragua
+505:44:Masatepe:Nicaragua
+505:46:Rivas:Nicaragua
+505:52:Masaya:Nicaragua
+505:53:Tipitapa:Nicaragua
+505:54:Boaco:Nicaragua
+505:55:Granada:Nicaragua
+505:71:Esteli:Nicaragua
 505:311:Leon:Nicaragua
+505:341:Chinandega:Nicaragua
+505:4222:Diriamba:Nicaragua
+505:4522:Nandaime:Nicaragua
+505:4672:San Juan Del Sur:Nicaragua
 506:::Costa Rica
 507:::Panama, Rep. of
 508:::St. Pierre and Miquelon
 509:1:Port Au Prince:Haiti
 590:::Guadeloupe
-591:2:La Paz:Bolivia
-591:64:Sucre:Bolivia
-592:2:Georgetown:Guyana
+590:::Saint Martin
+590:::Saint Barthelemy
+591:::Bolivia
+592:::Guyana
 593:2:Quito:Ecuador
+593:3:Bolivar:Ecuador
 593:4:Cuenca:Ecuador
 593:4:Guayaquil:Ecuador
+593:5:Los Rios:Ecuador
+593:6:Carchi:Ecuador
+593:7:Azuay:Ecuador
 594:::French Guiana
-595:21:Asuncion:Paraguay
+595:21::Paraguay
 596:::French Antilles
 597:::Suriname
-598:2:Montevideo:Uruguay
+598:::Uruguay
 599:3:St. Eustatius:Netherlands Antilles
 599:4:Saba:Netherlands Antilles
 599:5:St. Maarten:Netherlands Antilles
 599:7:Bonaire:Netherlands Antilles
 599:9:Curacao:Netherlands Antilles
 670:::Saipan
+670:::East Timor
 671:::Guam
+672:::Antarctica
 673:2:Bandar Seri Begawan:Brunei
+673:3:Kuala Belait:Brunei
+673:4:Temburong:Brunei
+673:5:Tutong:Brunei
+674:::Nauru
 675:::Papua New Guinea
 676:::Tonga Islands
+677:::Solomon Islands
+678:::Vanuatu
 679:::Fiji Islands
+680:::Palau
+681:::Wallis and Futuna
+682:::Cook Islands
+683:::Niue
 684:::American Samoa
+685:::Samoa
+686:::Kiribati
 687:::New Caledonia
+688:::Tuvalu
 689:::French Polynesia (Moorea & Tahiti)
+690:::Tokelau
 691:320:Ponape:Micronesia, Fed. States of
 691:330:Truk:Micronesia, Fed. States of
 691:350:Yap:Micronesia, Fed. States of
 691:370:Kosrae:Micronesia, Fed. States of
-692:871:Ebeye:Marshall Islands
-692:9:Majuro:Marshall Islands
+692:::Marshall Islands
+850:::Democratic People's Republic of Korea
 852:0:Castle Peak:Hong Kong
 852:0:Kwai Chung:Hong Kong
 852:0:Sha Tin:Hong Kong
@@ -483,28 +621,42 @@
 852:5:Ma Wan:Hong Kong
 852:5:Peng Chau:Hong Kong
 853:::Macao
+855:::Cambodia
+856:::Laos
 880:2:Dhaka:Bangladesh, People's Rep. of
 886:2:Taipei:Taiwan, Rep. of China
 886:6:Tainan:Taiwan, Rep. of China
 886:7:Kaohsiung:Taiwan, Rep. of China
 960:::Maldives, Rep. of
-962:6:Amman:Jordan
+961:::Lebanon
+962:::Jordan
+963:::Syria
 964:1:Baghdad:Iraq
+964:32:Kerbela:Iraq
+964:33:Najaf:Iraq
+964:40:Basra:Iraq
+964:50:Kirkuk:Iraq
+964:46:Mousil:Iraq
 965:::Kuwait
-966:1:Riyadh:Saudi Arabia
-966:2:Jeddah:Saudi Arabia
-966:2:Makkah:Saudi Arabia
-966:3:Damman:Saudi Arabia
-967:2:Sanaa:Yemen Arab Republic
+966:::Saudi Arabia
+967:::Yemen Arab Republic
 968:::Oman
+970:::Palestine
 971:2:Abu Dahabi:United Arab Emirates
 971:3:Al Ain:United Arab Emirates
 971:4:Dubai:United Arab Emirates
-971:52:Jebel Dhana:United Arab Emirates
 971:6:Ajman:United Arab Emirates
+971:6:Dhayd:United Arab Emirates
+971:6:Falaj-al-Moalla:United Arab Emirates
 971:6:Sharjah:United Arab Emirates
 971:6:Umm-Al-Quwain:United Arab Emirates
+971:9:Dibba:United Arab Emirates
+971:48:Khawanij:United Arab Emirates
+971:52:Jebel Dhana:United Arab Emirates
+971:58:Aweri:United Arab Emirates
 971:70:Fujairah:United Arab Emirates
+971:77:Ras-Al-Khaimah:United Arab Emirates
+971:88:Tarif:United Arab Emirates
 972:2:Jerusalem:Israel
 972:3:Ramat Gan:Israel
 972:3:Tel Aviv:Israel
@@ -513,5 +665,13 @@
 972:8:Rehovot:Israel
 973:::Bahrain
 974:::Qatar
+975:::Bhutan, Kingdom of
+976:::Mongolia
 977:::Nepal
+992:::Tajikistan
+993:::Turkmenistan
+994:::Azerbaijan
+995:::Georgia
+996:::Kyrgyzstan
+998:::Uzbekistan
 5399:::Guantanamo Bay (U.S. Naval Base)

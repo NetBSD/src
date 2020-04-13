@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.4.2 2019/06/10 22:02:55 christos Exp $
+#	$NetBSD: Makefile,v 1.2.4.3 2020/04/13 08:02:34 martin Exp $
 
 LDADD+=-lns
 DPADD+=${LIBNS}
@@ -35,11 +35,9 @@ SRCS_UNIX=	os.c dlz_dlopen_driver.c
 SRCS=	builtin.c config.c control.c controlconf.c \
 	log.c logconf.c \
 	main.c server.c statschannel.c \
-	pfilter.c tkeyconf.c tsigconf.c \
+	tkeyconf.c tsigconf.c \
 	zoneconf.c ${SRCS_UNIX}
 
 main.o: ${VERSIONFILE}
 
-LDADD+=-lblacklist
-DPADD+=${LIBBLACKLIST}
 .include <bsd.prog.mk>

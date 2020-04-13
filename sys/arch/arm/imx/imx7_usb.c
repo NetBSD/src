@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_usb.c,v 1.3 2018/03/17 18:34:09 ryo Exp $	*/
+/*	$NetBSD: imx7_usb.c,v 1.3.2.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2013  Genetec Corporation.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_usb.c,v 1.3 2018/03/17 18:34:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_usb.c,v 1.3.2.1 2020/04/13 08:03:35 martin Exp $");
 
 #include "locators.h"
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx7_usb.c,v 1.3 2018/03/17 18:34:09 ryo Exp $");
 #include <arm/imx/imx7_srcreg.h>
 #include <arm/imx/imxusbreg.h>
 #include <arm/imx/imxusbvar.h>
-#include <arm/imx/imxgpiovar.h>
 
 static int imx7_usbc_match(device_t, cfdata_t, void *);
 static void imx7_usbc_attach(device_t, device_t, void *);
@@ -127,6 +126,7 @@ imx7_usbc_attach(device_t parent __unused, device_t self, void *aux)
 	sc->sc_init_md_hook = imx7_usb_init;
 	sc->sc_setup_md_hook = NULL;
 	sc->sc_ehci_size = IMX7_USBC_EHCISIZE;	/* ehci register stride */
+	sc->sc_ehci_offset = IMX7_USBC_EHCISIZE;
 
 	if (aa->aa_size == AXICF_SIZE_DEFAULT)
 		aa->aa_size = IMX7_USBC_SIZE;
@@ -141,12 +141,17 @@ imx7_usbc_attach(device_t parent __unused, device_t self, void *aux)
 		aprint_error_dev(self, "cannot map registers\n");
 		return;
 	}
+	if (bus_space_map(sc->sc_iot, aa->aa_addr + USBNC_BASE, aa->aa_size, 0,
+	    &sc->sc_ioh_usbnc)) {
+		aprint_error_dev(self, "cannot map registers\n");
+		return;
+	}
 
 	/* disable clock */
 	imx7_ccm_write(CCM_CCGR_USB_HSIC_CLR, CCM_CCGR_MASK);
 
 	/* set freq */
-	imx7_ccm_write(CCM_CLKROOT_USB_HSIC_CLK_ROOT, 
+	imx7_ccm_write(CCM_CLKROOT_USB_HSIC_CLK_ROOT,
 	    CCM_TARGET_ROOT_ENABLE |
 	    __SHIFTIN(1, CCM_TARGET_ROOT_MUX) |
 	    __SHIFTIN(0, CCM_TARGET_ROOT_PRE_PODF) |
@@ -170,6 +175,10 @@ imx7_usbc_attach(device_t parent __unused, device_t self, void *aux)
 	bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, reg)
 #define EHCIREG_WRITE(sc, reg, value)	\
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, reg, value)
+#define USBNC_READ(sc, reg)	\
+	bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh_usbnc, reg)
+#define USBNC_WRITE(sc, reg, value)	\
+	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh_usbnc, reg, value)
 
 static void
 imx7_usb_init(struct imxehci_softc *sc)
@@ -182,13 +191,13 @@ imx7_usb_init(struct imxehci_softc *sc)
 	usbc = sc->sc_usbc;
 
 	/* setup overcurrent */
-	v = EHCIREG_READ(sc, USBNC_N_CTRL1);
+	v = USBNC_READ(usbc, USBNC_N_CTRL1);
 	v |= USBNC_N_CTRL1_OVER_CUR_POL;
-	EHCIREG_WRITE(sc, USBNC_N_CTRL1, v);
+	USBNC_WRITE(usbc, USBNC_N_CTRL1, v);
 
-	v = EHCIREG_READ(sc, USBNC_N_CTRL1);
+	v = USBNC_READ(usbc, USBNC_N_CTRL1);
 	v |= USBNC_N_CTRL1_OVER_CUR_DIS | USBNC_N_CTRL1_PWR_POL;
-	EHCIREG_WRITE(sc, USBNC_N_CTRL1, v);
+	USBNC_WRITE(usbc, USBNC_N_CTRL1, v);
 
 	/* set host mode */
 	v = EHCIREG_READ(sc, USB_X_USBMODE);

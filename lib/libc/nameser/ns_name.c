@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.11 2014/03/07 01:07:01 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.11.26.1 2020/04/13 08:03:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_name.c,v 1.11 2009/01/23 19:59:16 each Exp";
 #else
-__RCSID("$NetBSD: ns_name.c,v 1.11 2014/03/07 01:07:01 christos Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.11.26.1 2020/04/13 08:03:10 martin Exp $");
 #endif
 #endif
 
@@ -696,7 +696,7 @@ ns_name_skip(const u_char **ptrptr, const u_char *eom)
 {
 	const u_char *cp;
 	u_int n;
-	int l;
+	int l = 0;
 
 	cp = *ptrptr;
 	while (cp < eom && (n = *cp++) != 0) {
@@ -706,7 +706,7 @@ ns_name_skip(const u_char **ptrptr, const u_char *eom)
 			cp += n;
 			continue;
 		case NS_TYPE_ELT: /*%< EDNS0 extended label */
-			if ((l = labellen(cp - 1)) < 0) {
+			if (cp < eom && (l = labellen(cp - 1)) < 0) {
 				errno = EMSGSIZE; /*%< XXX */
 				return (-1);
 			}

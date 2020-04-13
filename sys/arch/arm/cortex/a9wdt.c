@@ -1,4 +1,4 @@
-/*	$NetBSD: a9wdt.c,v 1.7 2017/12/29 11:07:03 skrll Exp $	*/
+/*	$NetBSD: a9wdt.c,v 1.7.4.1 2020/04/13 08:03:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.7 2017/12/29 11:07:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.7.4.1 2020/04/13 08:03:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,7 +67,7 @@ struct a9wdt_softc {
 #define	A9WDT_PERIOD_DEFAULT	12
 #endif
 
-CFATTACH_DECL_NEW(a9wdt, sizeof(struct a9wdt_softc),
+CFATTACH_DECL_NEW(arma9wdt, sizeof(struct a9wdt_softc),
     a9wdt_match, a9wdt_attach, NULL, NULL);
 
 static bool attached;
@@ -183,7 +183,7 @@ a9wdt_setmode(struct sysmon_wdog *smw)
 static void
 a9wdt_attach(device_t parent, device_t self, void *aux)
 {
-        struct a9wdt_softc * const sc = device_private(self);
+	struct a9wdt_softc * const sc = device_private(self);
 	struct mpcore_attach_args * const mpcaa = aux;
 	prop_dictionary_t dict = device_properties(self);
 	const char *cpu_type;
@@ -192,7 +192,7 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_memt = mpcaa->mpcaa_memt;
 
 	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh,
-	    TMR_WDOG_BASE, TMR_WDOG_SIZE, &sc->sc_wdog_memh);
+	    mpcaa->mpcaa_off1, TMR_WDOG_SIZE, &sc->sc_wdog_memh);
 
 	/*
 	 * This runs at the ARM PERIPHCLOCK which should be 1/2 of the
@@ -214,7 +214,7 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
 		/*
 		 * Let's hope the timer frequency isn't prime.
 		 */
-		for (size_t div = 256; div >= 2; div++) {
+		for (size_t div = 256; div >= 2; div--) {
 			if (sc->sc_freq % div == 0) {
 				sc->sc_wdog_prescaler = div;
 				break;

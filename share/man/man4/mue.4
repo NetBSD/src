@@ -1,4 +1,4 @@
-.\"     $NetBSD: mue.4,v 1.4.2.2 2019/06/10 22:05:40 christos Exp $
+.\"     $NetBSD: mue.4,v 1.4.2.3 2020/04/13 08:03:25 martin Exp $
 .\"     $OpenBSD: mue.4,v 1.2 2018/08/03 06:13:14 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 9, 2019
+.Dd August 24, 2019
 .Dt MUE 4
 .Os
 .Sh NAME
@@ -44,6 +44,10 @@ and LAN7800/LAN7801 USB 3.0 Gigabit Ethernet devices including:
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh DIAGNOSTICS
+See
+.Xr usbnet 4
+for diagnostics.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -51,7 +55,8 @@ For more information on configuring this device, see
 .Xr netintro 4 ,
 .Xr ukphy 4 ,
 .Xr usb 4 ,
-.\".Xr hostname.if 5 ,
+.Xr usbnet 4 ,
+.Xr ifconfig.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The

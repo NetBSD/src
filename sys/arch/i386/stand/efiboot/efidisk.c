@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk.c,v 1.6.2.1 2019/06/10 22:06:21 christos Exp $	*/
+/*	$NetBSD: efidisk.c,v 1.6.2.2 2020/04/13 08:03:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -30,7 +30,9 @@
 
 #include "efiboot.h"
 
+#include <sys/param.h>	/* for howmany, required by <dev/raidframe/raidframevar.h> */
 #include <sys/disklabel.h>
+#include <sys/disklabel_gpt.h>
 
 #include "biosdisk.h"
 #include "biosdisk_ll.h"
@@ -39,6 +41,40 @@
 
 static struct efidiskinfo_lh efi_disklist;
 static int nefidisks;
+
+#define MAXDEVNAME 39 /* "NAME=" + 34 char part_name */
+
+#include <dev/raidframe/raidframevar.h>
+#define RF_COMPONENT_INFO_OFFSET   16384   /* from sys/dev/raidframe/rf_netbsdkintf.c */
+#define RF_COMPONENT_LABEL_VERSION     2   /* from <dev/raidframe/rf_raid.h> */
+
+#define RAIDFRAME_NDEV 16 /* abitrary limit to 15 raidframe devices */
+struct efi_raidframe {
+       int last_unit;
+       int serial;
+       const struct efidiskinfo *edi;
+       int parent_part;
+       char parent_name[MAXDEVNAME + 1];
+       daddr_t offset;
+       daddr_t size;
+};
+
+static void
+dealloc_biosdisk_part(struct biosdisk_partition *part, int nparts)
+{
+	int i;
+
+	for (i = 0; i < nparts; i++) {
+		if (part[i].part_name != NULL) {
+			dealloc(part[i].part_name, BIOSDISK_PART_NAME_LEN);
+			part[i].part_name = NULL;
+		}
+	}
+	
+	dealloc(part, sizeof(*part) * nparts);
+	
+	return;
+}
 
 void
 efi_disk_probe(void)
@@ -124,14 +160,51 @@ next:
 	}
 }
 
+static void
+efi_raidframe_probe(struct efi_raidframe *raidframe, int *raidframe_count,
+		    const struct efidiskinfo *edi,
+		    struct biosdisk_partition *part, int parent_part)
+
+{
+	int i = *raidframe_count;
+	struct RF_ComponentLabel_s label;
+
+	if (i + 1 > RAIDFRAME_NDEV)
+		return;
+
+	if (biosdisk_read_raidframe(edi->dev, part->offset, &label) != 0)
+		return;
+
+	if (label.version != RF_COMPONENT_LABEL_VERSION)
+		return;
+
+	raidframe[i].last_unit = label.last_unit;
+	raidframe[i].serial = label.serial_number;
+	raidframe[i].edi = edi;
+	raidframe[i].parent_part = parent_part;
+	if (part->part_name)
+		strlcpy(raidframe[i].parent_name, part->part_name, MAXDEVNAME);
+	else
+		raidframe[i].parent_name[0] = '\0';
+	raidframe[i].offset = part->offset;
+	raidframe[i].size = label.__numBlocks;
+
+	(*raidframe_count)++;
+
+	return;
+}
+
+
 void
 efi_disk_show(void)
 {
 	const struct efidiskinfo *edi;
+	struct efi_raidframe raidframe[RAIDFRAME_NDEV];
+	int raidframe_count = 0;
 	EFI_BLOCK_IO_MEDIA *media;
 	struct biosdisk_partition *part;
 	uint64_t size;
-	int i, nparts;
+	int i, j, nparts;
 	bool first;
 
 	TAILQ_FOREACH(edi, &efi_disklist, list) {
@@ -164,7 +237,7 @@ efi_disk_show(void)
 		if (edi->type != BIOSDISK_TYPE_HD)
 			continue;
 
-		if (biosdisk_readpartition(edi->dev, &part, &nparts))
+		if (biosdisk_readpartition(edi->dev, 0, 0, &part, &nparts))
 			continue;
 
 		for (i = 0; i < nparts; i++) {
@@ -172,11 +245,18 @@ efi_disk_show(void)
 				continue;
 			if (part[i].fstype == FS_UNUSED)
 				continue;
+			if (part[i].fstype == FS_RAID) {
+				efi_raidframe_probe(raidframe, &raidframe_count,
+						    edi, &part[i], i);
+			}
 			if (first) {
 				printf(" ");
 				first = false;
 			}
-			printf(" hd%d%c(", edi->dev & 0x7f, i + 'a');
+			if (part[i].part_name && part[i].part_name[0])
+				printf(" NAME=%s(", part[i].part_name);
+			else
+				printf(" hd%d%c(", edi->dev & 0x7f, i + 'a');
 			if (part[i].guid != NULL)
 				printf("%s", part[i].guid->name);
 			else if (part[i].fstype < FSMAXTYPES)
@@ -187,7 +267,66 @@ efi_disk_show(void)
 		}
 		if (!first)
 			printf("\n");
-		dealloc(part, sizeof(*part) * nparts);
+		dealloc_biosdisk_part(part, nparts);
+	}
+
+	for (i = 0; i < raidframe_count; i++) {
+		size_t secsize = raidframe[i].edi->bio->Media->BlockSize;
+		printf("raidframe raid%d serial %d in ",
+		       raidframe[i].last_unit, raidframe[i].serial);
+		if (raidframe[i].parent_name[0])
+			printf("NAME=%s size ", raidframe[i].parent_name);
+		else
+			printf("hd%d%c size ",
+			       raidframe[i].edi->dev & 0x7f,
+			       raidframe[i].parent_part + 'a');
+		if (raidframe[i].size >= (10ULL * 1024 * 1024 * 1024 / secsize))
+			printf("%"PRIu64" GB",
+			    raidframe[i].size / (1024 * 1024 * 1024 / secsize));
+		else
+			printf("%"PRIu64" MB",
+			    raidframe[i].size / (1024 * 1024 / secsize));
+		printf("\n");
+
+		if (biosdisk_readpartition(raidframe[i].edi->dev,
+		    raidframe[i].offset + RF_PROTECTED_SECTORS,
+		    raidframe[i].size,
+		    &part, &nparts))
+			continue;
+			
+		first = 1;
+		for (j = 0; j < nparts; j++) {
+			bool bootme = part[j].attr & GPT_ENT_ATTR_BOOTME;
+
+			if (part[j].size == 0)
+				continue;
+			if (part[j].fstype == FS_UNUSED)
+				continue;
+			if (part[j].fstype == FS_RAID) /* raid in raid? */
+				continue;
+			if (first) {
+				printf(" ");
+				first = 0;
+			}
+			if (part[j].part_name && part[j].part_name[0])
+				printf(" NAME=%s(", part[j].part_name);
+			else
+				printf(" raid%d%c(",
+				       raidframe[i].last_unit, j + 'a');
+			if (part[j].guid != NULL)
+				printf("%s", part[j].guid->name);
+			else if (part[j].fstype < FSMAXTYPES)
+				printf("%s",
+				  fstypenames[part[j].fstype]);
+			else
+				printf("%d", part[j].fstype);
+			printf("%s)", bootme ? ", bootme" : "");
+		}
+
+		if (first == 0)
+			printf("\n");
+
+		dealloc_biosdisk_part(part, nparts);
 	}
 }
 
@@ -227,7 +366,7 @@ efidisk_get_efi_system_partition(int dev, int *partition)
 	if (edi->type != BIOSDISK_TYPE_HD)
 		return ENOTSUP;
 
-	if (biosdisk_readpartition(edi->dev, &part, &nparts))
+	if (biosdisk_readpartition(edi->dev, 0, 0, &part, &nparts))
 		return EIO;
 
 	for (i = 0; i < nparts; i++) {
@@ -238,7 +377,7 @@ efidisk_get_efi_system_partition(int dev, int *partition)
 		if (guid_is_equal(part[i].guid->guid, &GET_efi))
 			break;
 	}
-	dealloc(part, sizeof(*part) * nparts);
+	dealloc_biosdisk_part(part, nparts);
 	if (i == nparts)
 		return ENOENT;
 

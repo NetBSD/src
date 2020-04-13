@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.33 2016/07/14 04:00:45 msaitoh Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.33.18.1 2020/04/13 08:04:21 martin Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.33 2016/07/14 04:00:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.33.18.1 2020/04/13 08:04:21 martin Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -780,12 +780,7 @@ int
 ahd_platform_alloc(struct ahd_softc *ahd, void *platform_arg)
 {
 	ahd->platform_data = malloc(sizeof(struct ahd_platform_data), M_DEVBUF,
-				    M_NOWAIT /*| M_ZERO*/);
-	if (ahd->platform_data == NULL)
-		return (ENOMEM);
-
-	memset(ahd->platform_data, 0, sizeof(struct ahd_platform_data));
-
+				    M_WAITOK | M_ZERO);
 	return (0);
 }
 

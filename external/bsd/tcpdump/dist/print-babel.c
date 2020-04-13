@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-babel.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-babel.c,v 1.3.18.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 /* \summary: Babel Routing Protocol printer */
@@ -357,6 +357,8 @@ babel_print_v2(netdissect_options *ndo,
         goto invalid;
     bodylen = EXTRACT_16BITS(cp + 2);
     ND_PRINT((ndo, " (%u)", bodylen));
+    if (4U + bodylen > length)
+        goto invalid;
 
     /* Process the TLVs in the body */
     i = 0;
@@ -485,7 +487,7 @@ babel_print_v2(netdissect_options *ndo,
         case MESSAGE_UPDATE: {
             if (!ndo->ndo_vflag) {
                 ND_PRINT((ndo, " update"));
-                if(len < 1)
+                if(len < 10)
                     ND_PRINT((ndo, "/truncated"));
                 else
                     ND_PRINT((ndo, "%s%s%s",

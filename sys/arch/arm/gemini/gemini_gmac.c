@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.16.2.2 2020/04/08 14:07:29 martin Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.16.2.3 2020/04/13 08:03:34 martin Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.16.2.2 2020/04/08 14:07:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.16.2.3 2020/04/13 08:03:34 martin Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -852,7 +852,6 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	 */
 	m = hwq->hwq_rxmbuf;
 	m_set_rcvif(m, ifp);	/* set receive interface */
-	ifp->if_ibytes += m->m_pkthdr.len;
 	switch (DESC0_RXSTS_GET(d->d_desc0)) {
 	case DESC0_RXSTS_GOOD:
 	case DESC0_RXSTS_LONG:

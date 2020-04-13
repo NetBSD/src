@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2018/02/25 00:16:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2020/04/13 07:56:42 martin Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 PROG=	xcvs
@@ -32,5 +32,13 @@ SRCS+=	gssapi-client.c
 
 DPADD+= ${LIBCRYPT} ${LIBZ}
 LDADD+= -lcrypt -lz
+
+COPTS.commit.c+=	${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.logmsg.c+=	${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.ls.c+=		${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.input.c+=		${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.tag.c+=		${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.subr.c+=		${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.filesubr.c+=	${GCC_NO_STRINGOP_OVERFLOW}
 
 .include <bsd.prog.mk>

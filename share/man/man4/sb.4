@@ -1,4 +1,4 @@
-.\"	$NetBSD: sb.4,v 1.25 2008/04/30 13:10:54 martin Exp $
+.\"	$NetBSD: sb.4,v 1.25.64.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,20 +56,24 @@ the particular model).
 The base I/O port address is usually jumper-selected to either 0x220 or
 0x240 (newer cards may provide software configuration, but this driver
 does not directly support them--you must configure the card for its I/O
-addresses with other software).  The SoundBlaster takes 16 I/O ports.
+addresses with other software).
+The SoundBlaster takes 16 I/O ports.
 For the SoundBlaster and SoundBlaster Pro, the IRQ and DRQ channels are
-jumper-selected.  For the SoundBlaster 16, the IRQ and DRQ channels are
-set by this driver to the values specified in the config file.  The IRQ
-must be selected from the set {5,7,9,10}.
+jumper-selected.
+For the SoundBlaster 16, the IRQ and DRQ channels are
+set by this driver to the values specified in the config file.
+The IRQ must be selected from the set {5,7,9,10}.
 .Pp
 The configuration file must use 1
 .Cm flags
-specification to enable the Jazz16 support.  This is to avoid potential
-conflicts with other devices when probing the Jazz 16 because it requires
-use of extra I/O ports not in the base port range.
+specification to enable the Jazz16 support.
+This is to avoid potential conflicts with other devices when probing
+the Jazz 16 because it requires use of extra I/O ports not in the
+base port range.
 .Pp
 With a SoundBlaster 16 card the device is full duplex, but it can
-only sensibly handle a precision of 8 bits.  It does so by extending
+only sensibly handle a precision of 8 bits.
+It does so by extending
 the output 8 bit samples to 16 bits and using the 8 bit DMA channel
 for input and the 16 bit channel for output.
 .Pp
@@ -86,13 +90,13 @@ has a midi device attached directly to the
 .Sh SEE ALSO
 .Xr aic 4 ,
 .Xr audio 4 ,
+.Xr i386/pnpbios 4 ,
 .Xr isa 4 ,
 .Xr isapnp 4 ,
 .Xr joy 4 ,
 .Xr midi 4 ,
 .Xr mpu 4 ,
-.Xr opl 4 ,
-.Xr pnpbios 4
+.Xr opl 4
 .Sh HISTORY
 The
 .Nm
@@ -102,5 +106,5 @@ device driver appeared in
 Non-SCSI CD-ROM interfaces are not supported.
 .Pp
 The MIDI interface on the SB hardware is braindead, and the driver
-needs to busy wait while writing MIDI data.  This will consume
-a lot of system time.
+needs to busy wait while writing MIDI data.
+This will consume a lot of system time.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.41 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.41.20.1 2020/04/13 08:04:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.41 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.41.20.1 2020/04/13 08:04:22 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -143,6 +143,7 @@ uha_isa_attach(device_t parent, device_t self, void *aux)
 	isa_chipset_tag_t ic = ia->ia_ic;
 	int error;
 
+	sc->sc_dev = self;
 	printf("\n");
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, UHA_ISA_IOSIZE, 0, &ioh)) {
@@ -150,7 +151,6 @@ uha_isa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_dev = self;
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = dmat;

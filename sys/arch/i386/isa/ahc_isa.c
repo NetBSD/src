@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.41 2016/07/11 11:31:49 msaitoh Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.41.18.1 2020/04/13 08:03:53 martin Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.41 2016/07/11 11:31:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.41.18.1 2020/04/13 08:03:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,11 +336,7 @@ ahc_isa_probe(device_t parent, cfdata_t match, void *aux)
 	/*
 	 * Don't have one, so make one.
 	 */
-	as = (struct ahc_isa_slot *)
-	    malloc(sizeof(struct ahc_isa_slot), M_DEVBUF, M_NOWAIT);
-	if (as == NULL)
-		panic("ahc_isa_probe: can't allocate slot marker");
-
+	as = malloc(sizeof(struct ahc_isa_slot), M_DEVBUF, M_WAITOK);
 	as->bus = device_unit(parent);
 	as->slot = AHC_ISA_MIN_SLOT;
 	LIST_INSERT_HEAD(&ahc_isa_all_slots, as, link);

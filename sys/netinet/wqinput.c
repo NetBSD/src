@@ -1,4 +1,4 @@
-/*	$NetBSD: wqinput.c,v 1.4.4.1 2019/06/10 22:09:47 christos Exp $	*/
+/*	$NetBSD: wqinput.c,v 1.4.4.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -41,6 +41,7 @@
 #include <sys/queue.h>
 #include <sys/percpu.h>
 #include <sys/sysctl.h>
+#include <sys/xcall.h>
 
 #include <net/if.h>
 #include <netinet/wqinput.h>
@@ -80,7 +81,8 @@ static void wqinput_sysctl_setup(const char *, struct wqinput *);
 static void
 wqinput_drops(void *p, void *arg, struct cpu_info *ci __unused)
 {
-	struct wqinput_worklist *const wwl = p;
+	struct wqinput_worklist **const wwlp = p;
+	struct wqinput_worklist *const wwl = *wwlp;
 	uint64_t *sum = arg;
 
 	*sum += wwl->wwl_dropped;
@@ -97,7 +99,8 @@ wqinput_sysctl_drops_handler(SYSCTLFN_ARGS)
 	node = *rnode;
 	wqi = node.sysctl_data;
 
-	percpu_foreach(wqi->wqi_worklists, wqinput_drops, &sum);
+	percpu_foreach_xcall(wqi->wqi_worklists, XC_HIGHPRI_IPL(IPL_SOFTNET),
+	    wqinput_drops, &sum);
 
 	node.sysctl_data = &sum;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -148,6 +151,28 @@ bad:
 	return;
 }
 
+static struct wqinput_worklist *
+wqinput_percpu_getref(percpu_t *pc)
+{
+
+	return *(struct wqinput_worklist **)percpu_getref(pc);
+}
+
+static void
+wqinput_percpu_putref(percpu_t *pc)
+{
+
+	percpu_putref(pc);
+}
+
+static void
+wqinput_percpu_init_cpu(void *p, void *arg __unused, struct cpu_info *ci __unused)
+{
+	struct wqinput_worklist **wwlp = p;
+
+	*wwlp = kmem_zalloc(sizeof(**wwlp), KM_SLEEP);
+}
+
 struct wqinput *
 wqinput_create(const char *name, void (*func)(struct mbuf *, int, int))
 {
@@ -165,7 +190,8 @@ wqinput_create(const char *name, void (*func)(struct mbuf *, int, int))
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 	pool_init(&wqi->wqi_work_pool, sizeof(struct wqinput_work), 0, 0, 0,
 	    name, NULL, IPL_SOFTNET);
-	wqi->wqi_worklists = percpu_alloc(sizeof(struct wqinput_worklist));
+	wqi->wqi_worklists = percpu_create(sizeof(struct wqinput_worklist *),
+	    wqinput_percpu_init_cpu, NULL, NULL);
 	wqi->wqi_input = func;
 
 	wqinput_sysctl_setup(name, wqi);
@@ -207,7 +233,7 @@ wqinput_work(struct work *wk, void *arg)
 	/* Users expect to run at IPL_SOFTNET */
 	s = splsoftnet();
 	/* This also prevents LWP migrations between CPUs */
-	wwl = percpu_getref(wqi->wqi_worklists);
+	wwl = wqinput_percpu_getref(wqi->wqi_worklists);
 
 	/* We can allow enqueuing another work at this point */
 	wwl->wwl_wq_is_active = false;
@@ -222,7 +248,7 @@ wqinput_work(struct work *wk, void *arg)
 		pool_put(&wqi->wqi_work_pool, work);
 	}
 
-	percpu_putref(wqi->wqi_worklists);
+	wqinput_percpu_putref(wqi->wqi_worklists);
 	splx(s);
 }
 
@@ -245,7 +271,7 @@ wqinput_input(struct wqinput *wqi, struct mbuf *m, int off, int proto)
 	struct wqinput_work *work;
 	struct wqinput_worklist *wwl;
 
-	wwl = percpu_getref(wqi->wqi_worklists);
+	wwl = wqinput_percpu_getref(wqi->wqi_worklists);
 
 	/* Prevent too much work and mbuf from being queued */
 	if (wwl->wwl_len >= WQINPUT_LIST_MAXLEN) {
@@ -274,5 +300,5 @@ wqinput_input(struct wqinput *wqi, struct mbuf *m, int off, int proto)
 
 	workqueue_enqueue(wqi->wqi_wq, &wwl->wwl_work, NULL);
 out:
-	percpu_putref(wqi->wqi_worklists);
+	wqinput_percpu_putref(wqi->wqi_worklists);
 }

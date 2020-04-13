@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat_hostops.c,v 1.1 2011/01/28 18:52:49 pooka Exp $	*/
+/*	$NetBSD: sockstat_hostops.c,v 1.1.46.1 2020/04/13 08:05:47 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat_hostops.c,v 1.1 2011/01/28 18:52:49 pooka Exp $");
+__RCSID("$NetBSD: sockstat_hostops.c,v 1.1.46.1 2020/04/13 08:05:47 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -38,4 +38,8 @@ __RCSID("$NetBSD: sockstat_hostops.c,v 1.1 2011/01/28 18:52:49 pooka Exp $");
 
 const struct prog_ops prog_ops = {
 	.op_sysctl = sysctl,
+
+        .op_sysctlgetmibinfo = sysctlgetmibinfo,
+
+        .op_sysctlnametomib = sysctlnametomib,
 };

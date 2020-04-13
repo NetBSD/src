@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_csmapper.c,v 1.11 2011/11/20 07:43:52 tnozaki Exp $	*/
+/*	$NetBSD: citrus_csmapper.c,v 1.11.40.1 2020/04/13 08:03:08 martin Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_csmapper.c,v 1.11 2011/11/20 07:43:52 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_csmapper.c,v 1.11.40.1 2020/04/13 08:03:08 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -305,7 +305,7 @@ open_serial_mapper(struct _citrus_mapper_area *__restrict ma,
 		   struct _citrus_mapper * __restrict * __restrict rcm,
 		   const char *src, const char *pivot, const char *dst)
 {
-	char buf[PATH_MAX];
+	char buf[4 * PATH_MAX];
 
 	snprintf(buf, sizeof(buf), "%s/%s,%s/%s", src, pivot, pivot, dst);
 

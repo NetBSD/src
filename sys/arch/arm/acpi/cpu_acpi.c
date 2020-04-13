@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.6.2.3 2020/04/08 14:07:27 martin Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.6.2.4 2020/04/13 08:03:32 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.6.2.3 2020/04/08 14:07:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.6.2.4 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.6.2.3 2020/04/08 14:07:27 martin Exp 
 #include <sys/device.h>
 #include <sys/interrupt.h>
 #include <sys/kcpuset.h>
+#include <sys/reboot.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -98,7 +99,7 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 	struct cpu_info *ci = &cpu_info_store[unit];
 
 #ifdef MULTIPROCESSOR
-	if (cpu_mpidr_aff_read() != mpidr) {
+	if (cpu_mpidr_aff_read() != mpidr && (boothowto & RB_MD1) == 0) {
 		const u_int cpuindex = device_unit(self);
 		int error;
 
@@ -115,9 +116,8 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 		__asm __volatile("sev" ::: "memory");
 
 		for (u_int i = 0x10000000; i > 0; i--) {
-			membar_consumer();
-			if (arm_cpu_hatched & __BIT(cpuindex))
-				break;
+			if (cpu_hatched_p(cpuindex))
+				 break;
 		}
 	}
 #endif /* MULTIPROCESSOR */

@@ -1,0 +1,20 @@
+#	$NetBSD: files.imx,v 1.2.8.2 2020/04/13 08:03:42 martin Exp $
+#
+# NXP(Freescale) i.MX configuration info
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+include "arch/evbarm/conf/files.fdt"
+
+file	arch/arm/arm32/arm32_boot.c			arm32
+file	arch/arm/arm32/arm32_kvminit.c			arm32
+file	arch/arm/arm32/arm32_reboot.c			arm32
+file	arch/arm/arm32/irq_dispatch.S			arm32
+file	arch/arm/arm32/armv7_generic_space.c		arm32
+file	arch/arm/arm/arm_generic_dma.c			arm32
+file	arch/arm/arm/bus_space_a4x.S			arm32
+
+include "arch/arm/imx/fdt/files.imx6"
+

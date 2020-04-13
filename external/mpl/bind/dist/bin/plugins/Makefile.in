@@ -17,7 +17,7 @@ CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include -I. \
 		${NS_INCLUDES} ${DNS_INCLUDES} \
 		${ISCCFG_INCLUDES} ${ISC_INCLUDES}
 
-DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ ${MAXMINDDB_LIBS} @DNS_CRYPTO_LIBS@
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
 ISCLIBS =	../../lib/isc/libisc.@A@ @OPENSSL_LIBS@
 NSLIBS =	../../lib/ns/libns.@A@

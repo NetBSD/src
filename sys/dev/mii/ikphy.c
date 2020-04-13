@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphy.c,v 1.12.16.2 2020/04/08 14:08:08 martin Exp $	*/
+/*	$NetBSD: ikphy.c,v 1.12.16.3 2020/04/13 08:04:24 martin Exp $	*/
 
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
@@ -59,7 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.12.16.2 2020/04/08 14:08:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.12.16.3 2020/04/13 08:04:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,21 +214,21 @@ ikphy_setmedia(struct mii_softc *sc)
 	phy_data |= GG82563_MSCR_TX_CLK_1000MBPS_25MHZ;
 	PHY_WRITE(sc, GG82563_PHY_MAC_SPEC_CTRL, phy_data);
 
-	/* set mdi/mid-x options */
+	/* Set mdi/mid-x options */
 	PHY_READ(sc, GG82563_PHY_SPEC_CTRL, &phy_data);
 	phy_data &= ~GG82563_PSCR_CROSSOVER_MODE_MASK;
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
 		phy_data |= GG82563_PSCR_CROSSOVER_MODE_AUTO;
 	else
 		phy_data |= GG82563_PSCR_CROSSOVER_MODE_MDI;
-	/* set polarity correction */
+	/* Set polarity correction */
 	phy_data &= ~GG82563_PSCR_POLARITY_REVERSAL_DISABLE;
 	PHY_WRITE(sc, GG82563_PHY_SPEC_CTRL, phy_data);
 
 	/* SW Reset the PHY so all changes take effect */
 	PHY_RESET(sc);
 
-	/* for the i80003 */
+	/* For the i80003 */
 	PHY_READ(sc, GG82563_PHY_SPEC_CTRL_2, &phy_data);
 	phy_data &= ~GG82563_PSCR2_REVERSE_AUTO_NEG;
 	PHY_WRITE(sc, GG82563_PHY_SPEC_CTRL_2, phy_data);
@@ -262,7 +262,7 @@ ikphy_setmedia(struct mii_softc *sc)
 	}
 	PHY_READ(sc, GG82563_PHY_MAC_SPEC_CTRL, &phy_data);
 	phy_data &= ~GG82563_MSCR_TX_CLK_MASK;
-	switch(IFM_SUBTYPE(ife->ifm_media)) {
+	switch (IFM_SUBTYPE(ife->ifm_media)) {
 	case IFM_10_T:
 		phy_data |= GG82563_MSCR_TX_CLK_10MBPS_2_5MHZ;
 		break;

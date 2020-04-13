@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.32.14.1 2019/06/10 22:09:57 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.32.14.2 2020/04/13 08:05:20 martin Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -84,6 +84,14 @@ struct _ksiginfo {
 			int	_error;
 			uint64_t _args[8]; /* SYS_MAXSYSARGS */
 		} _syscall;
+
+		struct {
+			int	_pe_report_event;
+			union {
+				pid_t _pe_other_pid;
+				lwpid_t _pe_lwp;
+			} _option;
+		} _ptrace_state;
 	} _reason;
 };
 
@@ -167,6 +175,10 @@ typedef union siginfo {
 #define si_error	_info._reason._syscall._error
 #define si_args		_info._reason._syscall._args
 
+#define si_pe_report_event	_info._reason._ptrace_state._pe_report_event
+#define si_pe_other_pid	_info._reason._ptrace_state._option._pe_other_pid
+#define si_pe_lwp	_info._reason._ptrace_state._option._pe_lwp
+
 #ifdef _KERNEL
 /** Field access macros */
 #define	ksi_signo	ksi_info._signo
@@ -192,6 +204,10 @@ typedef union siginfo {
 #define ksi_retval	ksi_info._reason._syscall._retval
 #define ksi_error	ksi_info._reason._syscall._error
 #define ksi_args	ksi_info._reason._syscall._args
+
+#define ksi_pe_report_event	ksi_info._reason._ptrace_state._pe_report_event
+#define ksi_pe_other_pid	ksi_info._reason._ptrace_state._option._pe_other_pid
+#define ksi_pe_lwp		ksi_info._reason._ptrace_state._option._pe_lwp
 #endif /* _KERNEL */
 
 /** si_code */

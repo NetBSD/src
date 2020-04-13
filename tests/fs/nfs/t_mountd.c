@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mountd.c,v 1.6 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_mountd.c,v 1.6.14.1 2020/04/13 08:05:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ wrkwrkwrk(void *unused)
 
 	rump_sys_chdir(FSTEST_MNTNAME);
 	while (!quit) {
-		fd = rump_sys_open("file", O_RDWR | O_CREAT);
+		fd = rump_sys_open("file", O_RDWR | O_CREAT, 0600);
 		if (fd == -1) {
 			if (errno == EACCES) {
 				fail++;

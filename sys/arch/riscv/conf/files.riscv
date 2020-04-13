@@ -1,4 +1,4 @@
-#	$NetBSD: files.riscv,v 1.1.22.2 2020/04/08 14:07:50 martin Exp $
+#	$NetBSD: files.riscv,v 1.1.22.3 2020/04/13 08:04:05 martin Exp $
 #
 
 maxpartitions	16
@@ -41,7 +41,6 @@ file	dev/md_root.c				memory_disk_hooks
 file	kern/subr_disk_mbr.c			disk
 
 file	uvm/pmap/pmap.c
-file	uvm/pmap/pmap_pvt.c
 file	uvm/pmap/pmap_segtab.c
 file	uvm/pmap/pmap_tlb.c
 

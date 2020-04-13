@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.33 2011/11/25 15:02:02 manu Exp $	*/
+/*	$NetBSD: null.c,v 1.33.40.1 2020/04/13 08:03:15 martin Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.33 2011/11/25 15:02:02 manu Exp $");
+__RCSID("$NetBSD: null.c,v 1.33.40.1 2020/04/13 08:03:15 martin Exp $");
 #endif /* !lint */
 
 /*
@@ -191,11 +191,12 @@ puffs_null_setops(struct puffs_ops *pops)
 
 /*ARGSUSED*/
 int
-puffs_null_fs_statvfs(struct puffs_usermount *pu, struct statvfs *svfsb)
+puffs_null_fs_statvfs(struct puffs_usermount *pu, struct puffs_statvfs *svfsb)
 {
-
-	if (statvfs(PNPATH(puffs_getroot(pu)), svfsb) == -1)
+	struct statvfs sb;
+	if (statvfs(PNPATH(puffs_getroot(pu)), &sb) == -1)
 		return errno;
+	statvfs_to_puffs_statvfs(&sb, svfsb);
 
 	return 0;
 }
@@ -411,20 +412,25 @@ puffs_null_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 	int fd, rv;
 	int fflags;
 	struct stat sb;
+	DIR *dirp;
 
 	rv = 0;
 	if (stat(PNPATH(pn), &sb) == -1)
 		return errno;
 	if (S_ISDIR(sb.st_mode)) {
-		DIR *dirp;
-		if ((dirp = opendir(PNPATH(pn))) == 0)
+		if ((dirp = opendir(PNPATH(pn))) == NULL)
 			return errno;
 		fd = dirfd(dirp);
-		if (fd == -1)
-			return errno;
+		if (fd == -1) {
+			rv = errno;
+			closedir(dirp);
+			return rv;
+		}
 
 		if (fsync(fd) == -1)
 			rv = errno;
+
+		closedir(dirp);
 	} else {
 		fd = writeableopen(PNPATH(pn));
 		if (fd == -1)
@@ -439,9 +445,9 @@ puffs_null_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 		if (fsync_range(fd, fflags, offlo, offhi - offlo) == -1)
 			rv = errno;
-	}
 
-	close(fd);
+		close(fd);
+	}
 
 	return rv;
 }

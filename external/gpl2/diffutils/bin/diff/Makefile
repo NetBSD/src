@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/01/13 03:39:28 christos Exp $
+#	$NetBSD: Makefile,v 1.1.16.1 2020/04/13 07:56:40 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -14,7 +14,7 @@ TEXINFO=	diff.texi
 
 COPTS.ifdef.c = -Wno-stack-protector
 
-CWARNFLAGS.clang+=	-Wno-unused-value -Wno-string-plus-int
+CWARNFLAGS.clang+=	-Wno-unused-value -Wno-string-plus-int -Wno-error=bool-operation
 
 .include <bsd.info.mk>
 .include <bsd.prog.mk>

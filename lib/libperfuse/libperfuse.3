@@ -1,4 +1,4 @@
-.\" $NetBSD: libperfuse.3,v 1.5.14.1 2019/06/10 22:05:26 christos Exp $
+.\" $NetBSD: libperfuse.3,v 1.5.14.2 2020/04/13 08:03:15 martin Exp $
 .\"
 .\" Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
 .\"
@@ -53,7 +53,7 @@ for FUSE file systems daemons and libraries, so that they can work with
 The function prototype mimics Linux's
 .Xr mount 2 ,
 with the following arguments:
-.Bl -tag -width indent
+.Bl -tag -width Ar
 .It Ar source
 The source file system that will appear in
 .Xr df 1
@@ -72,7 +72,7 @@ The file system type, as displayed by
 and
 .Xr mount 8 .
 Defaults to
-.Dq fuse
+.Qq Li fuse
 if
 .Dv NULL .
 .It Ar mountflags
@@ -106,7 +106,7 @@ returns a file descriptor to the
 .Pa /dev/fuse
 socket on success, and causes exit on failure.
 .Sh ENVIRONMENT
-.Bl -tag -width Er
+.Bl -tag -width Ev
 .It Ev PERFUSE_OPTIONS
 Comma-separated values controlling the usage of some FUSE methods.
 Allowed values are

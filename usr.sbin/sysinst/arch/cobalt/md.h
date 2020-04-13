@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.28.1 2019/06/10 22:10:39 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.1.28.2 2020/04/13 08:06:01 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,22 +44,12 @@
 /* cobalt uses the mbr code. */
 #include "mbr.h"
 
-/* constants and defines */
-#define EXT2FS_BOOT_SIZE	(5 * 1024 * 1024)	/* 5MB boot partition */
-#define MIN_EXT2FS_BOOT		(1 * 1024 * 1024)	/* 1MB minimum */
-
-#define PART_ROOT		PART_A
-#define PART_SWAP		PART_B
-#define PART_BSD		PART_C
-#define PART_RAW		PART_D
-#define PART_BOOT_EXT2FS	PART_E
-#define PART_USR		PART_F
-#define PART_FIRST_FREE		PART_G
-
-/* We want the boot MSDOS partition mounted on /boot */
-#define USE_EXT2FS
-#define PART_BOOT_EXT2FS_PI_FLAGS	(PIF_NEWFS|PIF_MOUNT)
-#define PART_BOOT_EXT2FS_PI_MOUNT	"/stand"
+/* boot partition size and type */
+#define PART_BOOT		(5 * 1024 * 1024)	/* 5MB boot partition */
+#define PART_BOOT_MIN		(1 * 1024 * 1024)	/* 1MB minimum */
+#define	PART_BOOT_TYPE		FS_EX2FS
+#define	PART_BOOT_SUBT		1			/* use "old" ext2 */
+#define	PART_BOOT_MOUNT		"/stand"
 
 /* default partition size */
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
@@ -80,7 +70,7 @@
 /*
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
- *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
+ *      base etc comp games man misc rescue tests text xbase xcomp xetc xfont xserver
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 #define MD_SETS_SELECTED	SET_KERNEL_1, SET_SYSTEM, SET_X11_NOSERVERS

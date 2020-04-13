@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.72.4.2 2020/04/08 14:07:34 martin Exp $
+#	$NetBSD: TWINTAIL,v 1.72.4.3 2020/04/13 08:03:42 martin Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -337,7 +337,7 @@ options 	PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
 #options 	PXA2X0_DMAC_FIXED_PRIORITY	# Don't want multiple priority
 
 
-# MMC/SD contoller in PXA255
+# MMC/SD controller in PXA255
 #  (attached on obio for card detect and write protect signal)
 pxamci0 at obio?
 sdmmc* at pxamci?

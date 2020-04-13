@@ -5,6 +5,16 @@
 /* auto-target.h.  Generated from config.in by configure.  */
 /* config.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to the .hidden-like directive if it exists. */
+#define AS_HIDDEN_DIRECTIVE .hidden
+
+/* Define to 1 if the assembler supports AVX. */
+/* #undef HAVE_AS_AVX */
+
+/* Define to 1 if the assembler supports .cfi_sections .debug_frame directive.
+   */
+/* #undef HAVE_AS_CFI_SECTIONS */
+
 /* Define to 1 if the target assembler supports thread-local storage. */
 #define HAVE_CC_TLS 1
 

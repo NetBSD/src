@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.305.2.2 2020/04/08 14:07:25 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.305.2.3 2020/04/13 08:03:30 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.2 2020/04/08 14:07:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.3 2020/04/13 08:03:30 martin Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -122,7 +122,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.2 2020/04/08 14:07:25 martin Exp
 #include "opt_xen.h"
 #include "opt_svs.h"
 #include "opt_kaslr.h"
-#include "opt_kasan.h"
 #ifndef XENPV
 #include "opt_physmem.h"
 #endif
@@ -152,6 +151,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.2 2020/04/08 14:07:25 martin Exp
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/asan.h>
+#include <sys/csan.h>
+#include <sys/msan.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -442,18 +443,9 @@ x86_64_tls_switch(struct lwp *l)
 	uint64_t zero = 0;
 
 	/*
-	 * Raise the IPL to IPL_HIGH.
-	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
-	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 * Raise the IPL to IPL_HIGH. XXX Still needed?
 	 */
 	(void)splhigh();
-	/*
-	 * If our floating point registers are on a different CPU,
-	 * set CR0_TS so we'll trap rather than reuse bogus state.
-	 */
-	if (l != ci->ci_fpcurlwp) {
-		HYPERVISOR_fpu_taskswitch(1);
-	}
 
 	/* Update segment registers */
 	if (pcb->pcb_flags & PCB_COMPAT32) {
@@ -1645,6 +1637,13 @@ init_slotspace(void)
 	slotspace.area[SLAREA_ASAN].active = true;
 #endif
 
+#ifdef KMSAN
+	/* MSAN. */
+	slotspace.area[SLAREA_MSAN].sslot = L4_SLOT_KMSAN;
+	slotspace.area[SLAREA_MSAN].nslot = NL4_SLOT_KMSAN;
+	slotspace.area[SLAREA_MSAN].active = true;
+#endif
+
 	/* Kernel. */
 	slotspace.area[SLAREA_KERN].sslot = L4_SLOT_KERNBASE;
 	slotspace.area[SLAREA_KERN].nslot = 1;
@@ -1685,9 +1684,7 @@ init_x86_64(paddr_t first_avail)
 
 	init_pte();
 
-#ifdef KASAN
 	kasan_early_init((void *)lwp0uarea);
-#endif
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
@@ -1739,7 +1736,7 @@ init_x86_64(paddr_t first_avail)
 	 */
 	lowmem_rsvd = 8 * PAGE_SIZE;
 
-	/* Initialize the memory clusters (needed in pmap_boostrap). */
+	/* Initialize the memory clusters (needed in pmap_bootstrap). */
 	init_x86_clusters();
 #else
 	/* Parse Xen command line (replace bootinfo) */
@@ -1767,9 +1764,9 @@ init_x86_64(paddr_t first_avail)
 
 	init_x86_msgbuf();
 
-#ifdef KASAN
 	kasan_init();
-#endif
+	kcsan_init();
+	kmsan_init((void *)lwp0uarea);
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
@@ -2064,15 +2061,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_rsp  = gr[_REG_RSP];
 		tf->tf_ss   = LSEL(LUDATA_SEL, SEL_UPL);
 
-#ifdef XENPV
-		/*
-		 * Xen has its own way of dealing with %cs and %ss,
-		 * reset them to proper values.
-		 */
-		tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-#endif
-
 		l->l_md.md_flags |= MDL_IRET;
 	}
 
@@ -2161,6 +2149,8 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 	for (i = 0; i < BTSPACE_NSEGS; i++) {
 		kva = bootspace.segs[i].va;
 		kva_end = kva + bootspace.segs[i].sz;
+		if (v < kva || v >= kva_end)
+			continue;
 		*handled = true;
 		if (bootspace.segs[i].type == BTSEG_TEXT ||
 		    bootspace.segs[i].type == BTSEG_RODATA) {
@@ -2180,8 +2170,9 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 
 	if (v >= bootspace.smodule && v < bootspace.emodule) {
 		*handled = true;
-		if (!uvm_map_checkprot(module_map, v, v + 1, prot))
+		if (!uvm_map_checkprot(module_map, v, v + 1, prot)) {
 			return EFAULT;
+		}
 	} else {
 		*handled = false;
 	}

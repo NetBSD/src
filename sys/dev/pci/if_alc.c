@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.28.2.1 2019/06/10 22:07:16 christos Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.28.2.2 2020/04/13 08:04:26 martin Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -78,7 +78,7 @@
 /*
  * Devices supported by this driver.
  */
-static struct alc_ident alc_ident_table[] = {
+static const struct alc_ident alc_ident_table[] = {
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_AR8131, 9 * 1024,
 		"Atheros AR8131 PCIe Gigabit Ethernet" },
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_AR8132, 9 * 1024,
@@ -101,6 +101,10 @@ static struct alc_ident alc_ident_table[] = {
 		"Atheros AR8172 PCIe Fast Ethernet" },
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2200, 9 * 1024,
 		"Killer E2200 Gigabit Ethernet" },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2400, 9 * 1024,
+		"Killer E2400 Gigabit Ethernet" },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2500, 9 * 1024,
+		"Killer E2500 Gigabit Ethernet" },
 	{ 0, 0, 0, NULL },
 };
 
@@ -124,7 +128,7 @@ static int	alc_dma_alloc(struct alc_softc *);
 static void	alc_dma_free(struct alc_softc *);
 static void	alc_dsp_fixup(struct alc_softc *, int);
 static int	alc_encap(struct alc_softc *, struct mbuf **);
-static struct alc_ident *
+static const struct alc_ident *
 		alc_find_ident(struct pci_attach_args *);
 static void	alc_get_macaddr(struct alc_softc *);
 static void	alc_get_macaddr_813x(struct alc_softc *);
@@ -166,8 +170,9 @@ static void	alc_stop_mac(struct alc_softc *);
 static void	alc_stop_queue(struct alc_softc *);
 static void	alc_tick(void *);
 static void	alc_txeof(struct alc_softc *);
+static void	alc_init_pcie(struct alc_softc *);
 
-uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0 };
+static const uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0, 0 };
 
 CFATTACH_DECL_NEW(alc, sizeof(struct alc_softc),
     alc_match, alc_attach, alc_detach, NULL);
@@ -569,10 +574,10 @@ alc_mediachange(struct ifnet *ifp)
 	return (error);
 }
 
-static struct alc_ident *
+static const struct alc_ident *
 alc_find_ident(struct pci_attach_args *pa)
 {
-	struct alc_ident *ident;
+	const struct alc_ident *ident;
 	uint16_t vendor, devid;
 
 	vendor = PCI_VENDOR(pa->pa_id);
@@ -762,7 +767,6 @@ alc_get_macaddr_816x(struct alc_softc *sc)
 
 	alc_get_macaddr_par(sc);
 }
-
 
 static void
 alc_get_macaddr_par(struct alc_softc *sc)
@@ -1002,6 +1006,8 @@ alc_phy_down(struct alc_softc *sc)
 	switch (sc->alc_ident->deviceid) {
 	case PCI_PRODUCT_ATTANSIC_AR8161:
 	case PCI_PRODUCT_ATTANSIC_E2200:
+	case PCI_PRODUCT_ATTANSIC_E2400:
+	case PCI_PRODUCT_ATTANSIC_E2500:
 	case PCI_PRODUCT_ATTANSIC_AR8162:
 	case PCI_PRODUCT_ATTANSIC_AR8171:
 	case PCI_PRODUCT_ATTANSIC_AR8172:
@@ -1172,6 +1178,83 @@ alc_aspm_816x(struct alc_softc *sc, int init)
 }
 
 static void
+alc_init_pcie(struct alc_softc *sc)
+{
+	const char *aspm_state[] = { "L0s/L1", "L0s", "L1", "L0s/L1" };
+	uint32_t cap, ctl, val;
+	int state;
+
+	/* Clear data link and flow-control protocol error. */
+	val = CSR_READ_4(sc, ALC_PEX_UNC_ERR_SEV);
+	val &= ~(PEX_UNC_ERR_SEV_DLP | PEX_UNC_ERR_SEV_FCP);
+	CSR_WRITE_4(sc, ALC_PEX_UNC_ERR_SEV, val);
+
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
+		CSR_WRITE_4(sc, ALC_LTSSM_ID_CFG,
+		    CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
+		CSR_WRITE_4(sc, ALC_PCIE_PHYMISC,
+		    CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
+		    PCIE_PHYMISC_FORCE_RCV_DET);
+		if (sc->alc_ident->deviceid == PCI_PRODUCT_ATTANSIC_AR8152_B &&
+		    sc->alc_rev == ATHEROS_AR8152_B_V10) {
+			val = CSR_READ_4(sc, ALC_PCIE_PHYMISC2);
+			val &= ~(PCIE_PHYMISC2_SERDES_CDR_MASK |
+			    PCIE_PHYMISC2_SERDES_TH_MASK);
+			val |= 3 << PCIE_PHYMISC2_SERDES_CDR_SHIFT;
+			val |= 3 << PCIE_PHYMISC2_SERDES_TH_SHIFT;
+			CSR_WRITE_4(sc, ALC_PCIE_PHYMISC2, val);
+		}
+		/* Disable ASPM L0S and L1. */
+		cap = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+		    sc->alc_expcap + PCIE_LCAP) >> 16;
+		if ((cap & PCIE_LCAP_ASPM) != 0) {
+			ctl = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+			    sc->alc_expcap + PCIE_LCSR) >> 16;
+			if ((ctl & 0x08) != 0)
+				sc->alc_rcb = DMA_CFG_RCB_128;
+			if (alcdebug)
+				printf("%s: RCB %u bytes\n",
+				    device_xname(sc->sc_dev),
+				    sc->alc_rcb == DMA_CFG_RCB_64 ? 64 : 128);
+			state = ctl & 0x03;
+			if (state & 0x01)
+				sc->alc_flags |= ALC_FLAG_L0S;
+			if (state & 0x02)
+				sc->alc_flags |= ALC_FLAG_L1S;
+			if (alcdebug)
+				printf("%s: ASPM %s %s\n",
+				    device_xname(sc->sc_dev),
+				    aspm_state[state],
+				    state == 0 ? "disabled" : "enabled");
+			alc_disable_l0s_l1(sc);
+		} else {
+			aprint_debug_dev(sc->sc_dev, "no ASPM support\n");
+		}
+	} else {
+		val = CSR_READ_4(sc, ALC_PDLL_TRNS1);
+		val &= ~PDLL_TRNS1_D3PLLOFF_ENB;
+		CSR_WRITE_4(sc, ALC_PDLL_TRNS1, val);
+		val = CSR_READ_4(sc, ALC_MASTER_CFG);
+		if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1 &&
+		    (sc->alc_rev & 0x01) != 0) {
+			if ((val & MASTER_WAKEN_25M) == 0 ||
+			    (val & MASTER_CLK_SEL_DIS) == 0) {
+				val |= MASTER_WAKEN_25M | MASTER_CLK_SEL_DIS;
+				CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
+			}
+		} else {
+			if ((val & MASTER_WAKEN_25M) == 0 ||
+			    (val & MASTER_CLK_SEL_DIS) != 0) {
+				val |= MASTER_WAKEN_25M;
+				val &= ~MASTER_CLK_SEL_DIS;
+				CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
+			}
+		}
+	}
+	alc_aspm(sc, 1, IFM_UNKNOWN);
+}
+
+static void
 alc_attach(device_t parent, device_t self, void *aux)
 {
 
@@ -1183,21 +1266,24 @@ alc_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	struct mii_data * const mii = &sc->sc_miibus;
 	pcireg_t memtype;
-	const char *aspm_state[] = { "L0s/L1", "L0s", "L1", "L0s/L1" };
 	uint16_t burst;
-	int base, mii_flags, state, error = 0;
-	uint32_t cap, ctl, val;
+	int base, mii_flags, error = 0;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->alc_ident = alc_find_ident(pa);
+	sc->alc_rev = PCI_REVISION(pa->pa_class);
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->alc_ident->name);
 
 	sc->sc_dev = self;
-	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	/*
 	 * Allocate IO memory
@@ -1266,75 +1352,14 @@ alc_attach(device_t parent, device_t self, void *aux)
 			sc->alc_dma_rd_burst = 3;
 		if (alc_dma_burst[sc->alc_dma_wr_burst] > 1024)
 			sc->alc_dma_wr_burst = 3;
-
-		/* Clear data link and flow-control protocol error. */
-		val = CSR_READ_4(sc, ALC_PEX_UNC_ERR_SEV);
-		val &= ~(PEX_UNC_ERR_SEV_DLP | PEX_UNC_ERR_SEV_FCP);
-		CSR_WRITE_4(sc, ALC_PEX_UNC_ERR_SEV, val);
-
-		if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
-			CSR_WRITE_4(sc, ALC_LTSSM_ID_CFG,
-			    CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
-			CSR_WRITE_4(sc, ALC_PCIE_PHYMISC,
-			    CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
-			    PCIE_PHYMISC_FORCE_RCV_DET);
-			if (sc->alc_ident->deviceid == PCI_PRODUCT_ATTANSIC_AR8152_B &&
-			    sc->alc_rev == ATHEROS_AR8152_B_V10) {
-				val = CSR_READ_4(sc, ALC_PCIE_PHYMISC2);
-				val &= ~(PCIE_PHYMISC2_SERDES_CDR_MASK |
-				    PCIE_PHYMISC2_SERDES_TH_MASK);
-				val |= 3 << PCIE_PHYMISC2_SERDES_CDR_SHIFT;
-				val |= 3 << PCIE_PHYMISC2_SERDES_TH_SHIFT;
-				CSR_WRITE_4(sc, ALC_PCIE_PHYMISC2, val);
-			}
-			/* Disable ASPM L0S and L1. */
-			cap = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-			    base + PCIE_LCAP) >> 16;
-			if ((cap & PCIE_LCAP_ASPM) != 0) {
-				ctl = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-				    base + PCIE_LCSR) >> 16;
-				if ((ctl & 0x08) != 0)
-					sc->alc_rcb = DMA_CFG_RCB_128;
-				if (alcdebug)
-					printf("%s: RCB %u bytes\n",
-					    device_xname(sc->sc_dev),
-					    sc->alc_rcb == DMA_CFG_RCB_64 ? 64 : 128);
-				state = ctl & 0x03;
-				if (state & 0x01)
-					sc->alc_flags |= ALC_FLAG_L0S;
-				if (state & 0x02)
-					sc->alc_flags |= ALC_FLAG_L1S;
-				if (alcdebug)
-					printf("%s: ASPM %s %s\n",
-					    device_xname(sc->sc_dev),
-					    aspm_state[state],
-					    state == 0 ? "disabled" : "enabled");
-				alc_disable_l0s_l1(sc);
-			} else {
-				aprint_debug_dev(sc->sc_dev, "no ASPM support\n");
-			}
-		} else {
-			val = CSR_READ_4(sc, ALC_PDLL_TRNS1);
-			val &= ~PDLL_TRNS1_D3PLLOFF_ENB;
-			CSR_WRITE_4(sc, ALC_PDLL_TRNS1, val);
-			val = CSR_READ_4(sc, ALC_MASTER_CFG);
-			if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1 &&
-			    (sc->alc_rev & 0x01) != 0) {
-				if ((val & MASTER_WAKEN_25M) == 0 ||
-				    (val & MASTER_CLK_SEL_DIS) == 0) {
-					val |= MASTER_WAKEN_25M | MASTER_CLK_SEL_DIS;
-					CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
-				}
-			} else {
-				if ((val & MASTER_WAKEN_25M) == 0 ||
-				    (val & MASTER_CLK_SEL_DIS) != 0) {
-					val |= MASTER_WAKEN_25M;
-					val &= ~MASTER_CLK_SEL_DIS;
-					CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
-				}
-			}
-		}
-		alc_aspm(sc, 1, IFM_UNKNOWN);
+		/*
+		 * Force maximum payload size to 128 bytes for
+		 * E2200/E2400/E2500.
+		 * Otherwise it triggers DMA write error.
+		 */
+		if ((sc->alc_flags & ALC_FLAG_E2X00) != 0)
+			sc->alc_dma_wr_burst = 0;
+		alc_init_pcie(sc);
 	}
 
 	/* Reset PHY. */
@@ -1352,13 +1377,17 @@ alc_attach(device_t parent, device_t self, void *aux)
 	 * shows the same PHY model/revision number of AR8131.
 	 */
 	switch (sc->alc_ident->deviceid) {
+	case PCI_PRODUCT_ATTANSIC_E2200:
+	case PCI_PRODUCT_ATTANSIC_E2400:
+	case PCI_PRODUCT_ATTANSIC_E2500:
+		sc->alc_flags |= ALC_FLAG_E2X00;
+		/* FALLTHROUGH */
 	case PCI_PRODUCT_ATTANSIC_AR8161:
 		if (PCI_SUBSYS_ID(pci_conf_read(
 		   sc->sc_pct, sc->sc_pcitag, PCI_SUBSYS_ID_REG)) == 0x0091 &&
 		   sc->alc_rev == 0)
 			sc->alc_flags |= ALC_FLAG_LINK_WAR;
 		/* FALLTHROUGH */
-	case PCI_PRODUCT_ATTANSIC_E2200:
 	case PCI_PRODUCT_ATTANSIC_AR8171:
 		sc->alc_flags |= ALC_FLAG_AR816X_FAMILY;
 		break;
@@ -1393,7 +1422,6 @@ alc_attach(device_t parent, device_t self, void *aux)
 	 * Don't use Tx CMB. It is known to have silicon bug.
 	 */
 	sc->alc_flags |= ALC_FLAG_CMB_BUG;
-	sc->alc_rev = PCI_REVISION(pa->pa_class);
 	sc->alc_chip_rev = CSR_READ_4(sc, ALC_MASTER_CFG) >>
 	    MASTER_CHIP_REV_SHIFT;
 	if (alcdebug) {
@@ -1441,6 +1469,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 
 #if NVLAN > 0
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+	sc->sc_ec.ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 #endif
 
 	/*
@@ -1517,12 +1546,12 @@ alc_detach(device_t self, int flags)
 
 	mii_detach(&sc->sc_miibus, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_miibus.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	alc_dma_free(sc);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_miibus.mii_media);
 
 	alc_phy_down(sc);
 	if (sc->sc_irq_handle != NULL) {
@@ -1556,7 +1585,7 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	/* Allocate DMA'able memory for TX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALC_TX_RING_SZ,
-	    ETHER_ALIGN, 0, &sc->alc_rdata.alc_tx_ring_seg, 1,
+	    PAGE_SIZE, 0, &sc->alc_rdata.alc_tx_ring_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Tx ring.\n",
@@ -1594,7 +1623,7 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	/* Allocate DMA'able memory for RX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALC_RX_RING_SZ,
-	    ETHER_ALIGN, 0, &sc->alc_rdata.alc_rx_ring_seg, 1,
+	    PAGE_SIZE, 0, &sc->alc_rdata.alc_rx_ring_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx ring.\n",
@@ -1632,7 +1661,7 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	/* Allocate DMA'able memory for RX return ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALC_RR_RING_SZ,
-	    ETHER_ALIGN, 0, &sc->alc_rdata.alc_rr_ring_seg, 1,
+	    PAGE_SIZE, 0, &sc->alc_rdata.alc_rr_ring_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx "
@@ -1661,6 +1690,23 @@ alc_dma_alloc(struct alc_softc *sc)
 	    sc->alc_cdata.alc_rr_ring_map->dm_segs[0].ds_addr;
 
 	/*
+	 * All of the memory we allocated for the Rx ring / Rx Return
+	 * ring need to be in the same 4GB segment.  Make sure this is
+	 * so.
+	 *
+	 * XXX We don't care WHAT 4GB segment they're in, just that
+	 * XXX they're all in the same one.  Need some bus_dma API
+	 * XXX help to make this easier to enforce when we actually
+	 * XXX perform the allocation.
+	 */
+	if (ALC_ADDR_HI(sc->alc_rdata.alc_rx_ring_paddr) !=
+	    ALC_ADDR_HI(sc->alc_rdata.alc_rr_ring_paddr)) {
+		aprint_error_dev(sc->sc_dev,
+		    "Rx control data allocation constraints failed\n");
+		return ENOBUFS;
+	}
+
+	/*
 	 * Create DMA stuffs for CMB block
 	 */
 	error = bus_dmamap_create(sc->sc_dmat, ALC_CMB_SZ, 1,
@@ -1671,7 +1717,7 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	/* Allocate DMA'able memory for CMB block */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALC_CMB_SZ,
-	    ETHER_ALIGN, 0, &sc->alc_rdata.alc_cmb_seg, 1,
+	    PAGE_SIZE, 0, &sc->alc_rdata.alc_cmb_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
@@ -1711,7 +1757,7 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	/* Allocate DMA'able memory for SMB block */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALC_SMB_SZ,
-	    ETHER_ALIGN, 0, &sc->alc_rdata.alc_smb_seg, 1,
+	    PAGE_SIZE, 0, &sc->alc_rdata.alc_smb_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
@@ -1780,7 +1826,6 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	return (0);
 }
-
 
 static void
 alc_dma_free(struct alc_softc *sc)
@@ -2035,13 +2080,13 @@ alc_watchdog(struct ifnet *ifp)
 	if ((sc->alc_flags & ALC_FLAG_LINK) == 0) {
 		printf("%s: watchdog timeout (missed link)\n",
 		    device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		alc_init_backend(ifp, false);
 		return;
 	}
 
 	printf("%s: watchdog timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	alc_init_backend(ifp, false);
 	alc_start(ifp);
 }
@@ -2243,21 +2288,26 @@ alc_stats_update(struct alc_softc *sc)
 	stat->tx_mcast_bytes += smb->tx_mcast_bytes;
 
 	/* Update counters in ifnet. */
-	ifp->if_opackets += smb->tx_frames;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
-	ifp->if_collisions += smb->tx_single_colls +
+	if_statadd_ref(nsr, if_opackets, smb->tx_frames);
+
+	if_statadd_ref(nsr, if_collisions,
+	    smb->tx_single_colls +
 	    smb->tx_multi_colls * 2 + smb->tx_late_colls +
-	    smb->tx_excess_colls * HDPX_CFG_RETRY_DEFAULT;
+	    smb->tx_excess_colls * HDPX_CFG_RETRY_DEFAULT);
 
-	ifp->if_oerrors += smb->tx_late_colls + smb->tx_excess_colls +
-	    smb->tx_underrun + smb->tx_pkts_truncated;
+	if_statadd_ref(nsr, if_oerrors,
+	    smb->tx_late_colls + smb->tx_excess_colls +
+	    smb->tx_underrun + smb->tx_pkts_truncated);
 
-	ifp->if_ipackets += smb->rx_frames;
-
-	ifp->if_ierrors += smb->rx_crcerrs + smb->rx_lenerrs +
+	if_statadd_ref(nsr, if_ierrors,
+	    smb->rx_crcerrs + smb->rx_lenerrs +
 	    smb->rx_runts + smb->rx_pkts_truncated +
 	    smb->rx_fifo_oflows + smb->rx_rrs_errs +
-	    smb->rx_alignerrs;
+	    smb->rx_alignerrs);
+
+	IF_STAT_PUTREF(ifp);
 
 	if ((sc->alc_flags & ALC_FLAG_SMB_BUG) == 0) {
 		/* Update done, clear. */
@@ -2529,7 +2579,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 		mp = rxd->rx_m;
 		/* Add a new receive buffer to the ring. */
 		if (alc_newbuf(sc, rxd, false) != 0) {
-			ifp->if_iqdrops++;
+			if_statinc(ifp, if_iqdrops);
 			/* Reuse Rx buffers. */
 			if (sc->alc_cdata.alc_rxhead != NULL)
 				m_freem(sc->alc_cdata.alc_rxhead);
@@ -2793,8 +2843,8 @@ alc_init_backend(struct ifnet *ifp, bool init)
 
 	/* Reprogram the station address. */
 	memcpy(eaddr, CLLADDR(ifp->if_sadl), sizeof(eaddr));
-	CSR_WRITE_4(sc, ALC_PAR0,
-	    eaddr[2] << 24 | eaddr[3] << 16 | eaddr[4] << 8 | eaddr[5]);
+	CSR_WRITE_4(sc, ALC_PAR0, (uint32_t)eaddr[2] << 24
+	    | eaddr[3] << 16 | eaddr[4] << 8 | eaddr[5]);
 	CSR_WRITE_4(sc, ALC_PAR1, eaddr[0] << 8 | eaddr[1]);
 	/*
 	 * Clear WOL status and disable all WOL feature as WOL
@@ -2846,7 +2896,7 @@ alc_init_backend(struct ifnet *ifp, bool init)
 		CSR_WRITE_4(sc, ALC_RRD1_HEAD_ADDR_LO, 0);
 		CSR_WRITE_4(sc, ALC_RRD2_HEAD_ADDR_LO, 0);
 		CSR_WRITE_4(sc, ALC_RRD3_HEAD_ADDR_LO, 0);
-	}\
+	}
 	/* Set Rx return descriptor counter. */
 	CSR_WRITE_4(sc, ALC_RRD_RING_CNT,
 	    (ALC_RR_RING_CNT << RRD_RING_CNT_SHIFT) & RRD_RING_CNT_MASK);
@@ -3043,13 +3093,17 @@ alc_init_backend(struct ifnet *ifp, bool init)
 	reg = (RXQ_CFG_RD_BURST_DEFAULT << RXQ_CFG_RD_BURST_SHIFT) &
 	    RXQ_CFG_RD_BURST_MASK;
 	reg |= RXQ_CFG_RSS_MODE_DIS;
-	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
 		reg |= (RXQ_CFG_816X_IDT_TBL_SIZE_DEFAULT <<
 		    RXQ_CFG_816X_IDT_TBL_SIZE_SHIFT) &
 		    RXQ_CFG_816X_IDT_TBL_SIZE_MASK;
-	if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0 &&
-	    sc->alc_ident->deviceid != PCI_PRODUCT_ATTANSIC_AR8151_V2)
-		reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_1M;
+		if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0)
+			reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_100M;
+	} else {
+		if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0 &&
+		    sc->alc_ident->deviceid != PCI_PRODUCT_ATTANSIC_AR8151_V2)
+			reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_100M;
+	}
 	CSR_WRITE_4(sc, ALC_RXQ_CFG, reg);
 
 	/* Configure DMA parameters. */
@@ -3073,12 +3127,12 @@ alc_init_backend(struct ifnet *ifp, bool init)
 		switch (AR816X_REV(sc->alc_rev)) {
 		case AR816X_REV_A0:
 		case AR816X_REV_A1:
-			reg |= DMA_CFG_RD_CHNL_SEL_1;
+			reg |= DMA_CFG_RD_CHNL_SEL_2;
 			break;
 		case AR816X_REV_B0:
 			/* FALLTHROUGH */
 		default:
-			reg |= DMA_CFG_RD_CHNL_SEL_3;
+			reg |= DMA_CFG_RD_CHNL_SEL_4;
 			break;
 		}
 	}
@@ -3417,27 +3471,37 @@ alc_iff(struct alc_softc *sc)
 	 */
 	rxcfg |= MAC_CFG_BCAST;
 
-	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
+	/* Program new filter. */
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		goto update;
+
+	memset(mchash, 0, sizeof(mchash));
+
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			goto update;
+		}
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		mchash[crc >> 31] |= 1U << ((crc >> 26) & 0x1f);
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ETHER_UNLOCK(ec);
+
+update:
+	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if (ifp->if_flags & IFF_PROMISC) {
 			rxcfg |= MAC_CFG_PROMISC;
-		else
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+		} else
 			rxcfg |= MAC_CFG_ALLMULTI;
 		mchash[0] = mchash[1] = 0xFFFFFFFF;
-	} else {
-		/* Program new filter. */
-		memset(mchash, 0, sizeof(mchash));
-
-		ETHER_LOCK(ec);
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
-			ETHER_NEXT_MULTI(step, enm);
-		}
-		ETHER_UNLOCK(ec);
 	}
-
 	CSR_WRITE_4(sc, ALC_MAR0, mchash[0]);
 	CSR_WRITE_4(sc, ALC_MAR1, mchash[1]);
 	CSR_WRITE_4(sc, ALC_MAC_CFG, rxcfg);

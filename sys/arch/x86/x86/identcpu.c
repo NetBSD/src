@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.77.2.2 2020/04/08 14:07:58 martin Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.77.2.3 2020/04/13 08:04:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.77.2.2 2020/04/08 14:07:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.77.2.3 2020/04/13 08:04:11 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -62,11 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.77.2.2 2020/04/08 14:07:58 martin Exp
 
 static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 
-static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = 
-	AMD_L2CACHE_INFO;
-
-static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] = 
-	AMD_L3CACHE_INFO;
+static const struct x86_cache_info amd_cpuid_l2l3cache_assoc_info[] = 
+	AMD_L2L3CACHE_INFO;
 
 int cpu_vendor;
 char cpu_brand_string[49];
@@ -74,6 +71,8 @@ char cpu_brand_string[49];
 int x86_fpu_save __read_mostly;
 unsigned int x86_fpu_save_size __read_mostly = sizeof(struct save87);
 uint64_t x86_xsave_features __read_mostly = 0;
+size_t x86_xsave_offsets[XSAVE_MAX_COMPONENT+1] __read_mostly;
+size_t x86_xsave_sizes[XSAVE_MAX_COMPONENT+1] __read_mostly;
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.
@@ -105,6 +104,66 @@ cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
 	}
 
 	return (NULL);
+}
+
+/*
+ * Get cache info from one of the following:
+ *	Intel Deterministic Cache Parameter Leaf (0x04)
+ *	AMD Cache Topology Information Leaf (0x8000001d)
+ */
+static void
+cpu_dcp_cacheinfo(struct cpu_info *ci, uint32_t leaf)
+{
+	u_int descs[4];
+	int type, level, ways, partitions, linesize, sets, totalsize;
+	int caitype = -1;
+	int i;
+
+	for (i = 0; ; i++) {
+		x86_cpuid2(leaf, i, descs);
+		type = __SHIFTOUT(descs[0], CPUID_DCP_CACHETYPE);
+		if (type == CPUID_DCP_CACHETYPE_N)
+			break;
+		level = __SHIFTOUT(descs[0], CPUID_DCP_CACHELEVEL);
+		switch (level) {
+		case 1:
+			if (type == CPUID_DCP_CACHETYPE_I)
+				caitype = CAI_ICACHE;
+			else if (type == CPUID_DCP_CACHETYPE_D)
+				caitype = CAI_DCACHE;
+			else
+				caitype = -1;
+			break;
+		case 2:
+			if (type == CPUID_DCP_CACHETYPE_U)
+				caitype = CAI_L2CACHE;
+			else
+				caitype = -1;
+			break;
+		case 3:
+			if (type == CPUID_DCP_CACHETYPE_U)
+				caitype = CAI_L3CACHE;
+			else
+				caitype = -1;
+			break;
+		default:
+			caitype = -1;
+			break;
+		}
+		if (caitype == -1)
+			continue;
+
+		ways = __SHIFTOUT(descs[1], CPUID_DCP_WAYS) + 1;
+		partitions =__SHIFTOUT(descs[1], CPUID_DCP_PARTITIONS)
+		    + 1;
+		linesize = __SHIFTOUT(descs[1], CPUID_DCP_LINESIZE)
+		    + 1;
+		sets = descs[2] + 1;
+		totalsize = ways * partitions * linesize * sets;
+		ci->ci_cinfo[caitype].cai_totalsize = totalsize;
+		ci->ci_cinfo[caitype].cai_associativity = ways;
+		ci->ci_cinfo[caitype].cai_linesize = linesize;
+	}
 }
 
 static void
@@ -140,59 +199,11 @@ cpu_probe_intel_cache(struct cpu_info *ci)
 		}
 	}
 
-	if (cpuid_level >= 4) {
-		int type, level;
-		int ways, partitions, linesize, sets;
-		int caitype = -1;
-		int totalsize;
+	if (cpuid_level < 4)
+		return;
 
-		/* Parse the cache info from `cpuid leaf 4', if we have it. */
-		for (i = 0; ; i++) {
-			x86_cpuid2(4, i, descs);
-			type = __SHIFTOUT(descs[0], CPUID_DCP_CACHETYPE);
-			if (type == CPUID_DCP_CACHETYPE_N)
-				break;
-			level = __SHIFTOUT(descs[0], CPUID_DCP_CACHELEVEL);
-			switch (level) {
-			case 1:
-				if (type == CPUID_DCP_CACHETYPE_I)
-					caitype = CAI_ICACHE;
-				else if (type == CPUID_DCP_CACHETYPE_D)
-					caitype = CAI_DCACHE;
-				else
-					caitype = -1;
-				break;
-			case 2:
-				if (type == CPUID_DCP_CACHETYPE_U)
-					caitype = CAI_L2CACHE;
-				else
-					caitype = -1;
-				break;
-			case 3:
-				if (type == CPUID_DCP_CACHETYPE_U)
-					caitype = CAI_L3CACHE;
-				else
-					caitype = -1;
-				break;
-			default:
-				caitype = -1;
-				break;
-			}
-			if (caitype == -1)
-				continue;
-
-			ways = __SHIFTOUT(descs[1], CPUID_DCP_WAYS) + 1;
-			partitions =__SHIFTOUT(descs[1], CPUID_DCP_PARTITIONS)
-			    + 1;
-			linesize = __SHIFTOUT(descs[1], CPUID_DCP_LINESIZE)
-			    + 1;
-			sets = descs[2] + 1;
-			totalsize = ways * partitions * linesize * sets;
-			ci->ci_cinfo[caitype].cai_totalsize = totalsize;
-			ci->ci_cinfo[caitype].cai_associativity = ways;
-			ci->ci_cinfo[caitype].cai_linesize = linesize;
-		}
-	}
+	/* Parse the cache info from `cpuid leaf 4', if we have it. */
+	cpu_dcp_cacheinfo(ci, 4);
 }
 
 static void
@@ -236,31 +247,21 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 	family = CPUID_TO_FAMILY(ci->ci_signature);
 	model = CPUID_TO_MODEL(ci->ci_signature);
 
-	/*
-	 * K5 model 0 has none of this info.
-	 */
+	/* K5 model 0 has none of this info. */
 	if (family == 5 && model == 0)
 		return;
 
-	/*
-	 * Determine the largest extended function value.
-	 */
+	/* Determine the largest extended function value. */
 	x86_cpuid(0x80000000, descs);
 	lfunc = descs[0];
 
-	/*
-	 * Determine L1 cache/TLB info.
-	 */
-	if (lfunc < 0x80000005) {
-		/* No L1 cache info available. */
+	if (lfunc < 0x80000005)
 		return;
-	}
 
+	/* Determine L1 cache/TLB info. */
 	x86_cpuid(0x80000005, descs);
 
-	/*
-	 * K6-III and higher have large page TLBs.
-	 */
+	/* K6-III and higher have large page TLBs. */
 	if ((family == 5 && model >= 9) || family >= 6) {
 		cai = &ci->ci_cinfo[CAI_ITLB2];
 		cai->cai_totalsize = AMD_L1_EAX_ITLB_ENTRIES(descs[0]);
@@ -293,14 +294,10 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 	cai->cai_associativity = AMD_L1_EDX_IC_ASSOC(descs[3]);
 	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[3]);
 
-	/*
-	 * Determine L2 cache/TLB info.
-	 */
-	if (lfunc < 0x80000006) {
-		/* No L2 cache info available. */
+	if (lfunc < 0x80000006)
 		return;
-	}
 
+	/* Determine L2 cache/TLB info. */
 	x86_cpuid(0x80000006, descs);
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
@@ -308,35 +305,33 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 	cai->cai_associativity = AMD_L2_ECX_C_ASSOC(descs[2]);
 	cai->cai_linesize = AMD_L2_ECX_C_LS(descs[2]);
 
-	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
 	else
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 
-	if (family < 0xf) {
-		/* No L3 cache info available. */
+	if (family < 0xf)
 		return;
-	}
 
+	/* Determine L3 cache info on AMD Family 10h and newer processors */
 	cai = &ci->ci_cinfo[CAI_L3CACHE];
 	cai->cai_totalsize = AMD_L3_EDX_C_SIZE(descs[3]);
 	cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
 	cai->cai_linesize = AMD_L3_EDX_C_LS(descs[3]);
 
-	cp = cache_info_lookup(amd_cpuid_l3cache_assoc_info,
+	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
 	else
 		cai->cai_associativity = 0;	/* XXX Unknown reserved */
 
-	if (lfunc < 0x80000019) {
-		/* No 1GB Page TLB */
+	if (lfunc < 0x80000019)
 		return;
-	}
 
+	/* Determine 1GB TLB info. */
 	x86_cpuid(0x80000019, descs);
 
 	cai = &ci->ci_cinfo[CAI_L1_1GBDTLB];
@@ -358,6 +353,12 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 	cai->cai_totalsize = AMD_L2_1GB_EBX_IUTLB_ENTRIES(descs[0]);
 	cai->cai_associativity = AMD_L2_1GB_EBX_IUTLB_ASSOC(descs[0]);
 	cai->cai_linesize = (1 * 1024);
+
+	if (lfunc < 0x8000001d)
+		return;
+
+	if (ci->ci_feat_val[3] & CPUID_TOPOEXT)
+		cpu_dcp_cacheinfo(ci, 0x8000001d);
 }
 
 static void
@@ -726,7 +727,7 @@ cpu_probe_vortex86(struct cpu_info *ci)
 #define PCI_MODE1_DATA_REG	0x0cfc
 #define PCI_MODE1_ENABLE	0x80000000UL
 
-	uint32_t reg;
+	uint32_t reg, idx;
 
 	if (cpu_vendor != CPUVENDOR_VORTEX86)
 		return;
@@ -740,17 +741,18 @@ cpu_probe_vortex86(struct cpu_info *ci)
 	outl(PCI_MODE1_ADDRESS_REG, PCI_MODE1_ENABLE | 0x90);
 	reg = inl(PCI_MODE1_DATA_REG);
 
-	if ((reg & 0xf8ffffff) != 0x30504d44) {
-		reg = 0;
+	if ((reg & 0xf0ffffff) != 0x30504d44) {
+		idx = 0;
 	} else {
-		reg = (reg >> 24) & 7;
+		idx = (reg >> 24) & 0xf;
 	}
 
 	static const char *cpu_vortex86_flavor[] = {
-	    "??", "SX", "DX", "MX", "DX2", "MX+", "DX3", "EX",
+	    "??", "SX", "DX", "MX", "DX2", "MX+", "DX3", "EX", "EX2",
 	};
+	idx = idx < __arraycount(cpu_vortex86_flavor) ? idx : 0;
 	snprintf(cpu_brand_string, sizeof(cpu_brand_string), "Vortex86%s",
-	    cpu_vortex86_flavor[reg]);
+	    cpu_vortex86_flavor[idx]);
 
 #undef PCI_MODE1_ENABLE
 #undef PCI_MODE1_ADDRESS_REG
@@ -758,7 +760,7 @@ cpu_probe_vortex86(struct cpu_info *ci)
 }
 
 static void
-cpu_probe_old_fpu(struct cpu_info *ci)
+cpu_probe_fpu_old(struct cpu_info *ci)
 {
 #if defined(__i386__) && !defined(XENPV)
 
@@ -778,16 +780,15 @@ static void
 cpu_probe_fpu(struct cpu_info *ci)
 {
 	u_int descs[4];
+	int i;
 
-	x86_fpu_eager = true;
 	x86_fpu_save = FPU_SAVE_FSAVE;
 
 #ifdef i386
 	/* If we have FXSAVE/FXRESTOR, use them. */
 	if ((ci->ci_feat_val[0] & CPUID_FXSR) == 0) {
 		i386_use_fxsave = 0;
-		/* Allow for no fpu even if cpuid is supported */
-		cpu_probe_old_fpu(ci);
+		cpu_probe_fpu_old(ci);
 		return;
 	}
 
@@ -810,14 +811,14 @@ cpu_probe_fpu(struct cpu_info *ci)
 	x86_fpu_save = FPU_SAVE_FXSAVE;
 	x86_fpu_save_size = sizeof(struct fxsave);
 
-	/* See if xsave (for AVX) is supported */
+	/* See if XSAVE is supported */
 	if ((ci->ci_feat_val[1] & CPUID2_XSAVE) == 0)
 		return;
 
 #ifdef XENPV
 	/*
 	 * Xen kernel can disable XSAVE via "no-xsave" option, in that case
-	 * XSAVE instructions like xrstor become privileged and trigger
+	 * the XSAVE/XRSTOR instructions become privileged and trigger
 	 * supervisor trap. OSXSAVE flag seems to be reliably set according
 	 * to whether XSAVE is actually available.
 	 */
@@ -827,11 +828,9 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	x86_fpu_save = FPU_SAVE_XSAVE;
 
-#if 0 /* XXX PR 52966 */
 	x86_cpuid2(0xd, 1, descs);
 	if (descs[0] & CPUID_PES1_XSAVEOPT)
 		x86_fpu_save = FPU_SAVE_XSAVEOPT;
-#endif
 
 	/* Get features and maximum size of the save area */
 	x86_cpuid(0xd, descs);
@@ -839,6 +838,15 @@ cpu_probe_fpu(struct cpu_info *ci)
 		x86_fpu_save_size = descs[2];
 
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
+
+	/* Get component offsets and sizes for the save area */
+	for (i = XSAVE_YMM_Hi128; i < __arraycount(x86_xsave_offsets); i++) {
+		if (x86_xsave_features & __BIT(i)) {
+			x86_cpuid2(0xd, i, descs);
+			x86_xsave_offsets[i] = descs[1];
+			x86_xsave_sizes[i] = descs[0];
+		}
+	}
 }
 
 void
@@ -849,12 +857,14 @@ cpu_probe(struct cpu_info *ci)
 	uint32_t miscbytes;
 	uint32_t brand[12];
 
-	cpu_vendor = i386_nocpuid_cpus[cputype << 1];
-	cpu_class = i386_nocpuid_cpus[(cputype << 1) + 1];
+	if (ci == &cpu_info_primary) {
+		cpu_vendor = i386_nocpuid_cpus[cputype << 1];
+		cpu_class = i386_nocpuid_cpus[(cputype << 1) + 1];
+	}
 
 	if (cpuid_level < 0) {
 		/* cpuid instruction not supported */
-		cpu_probe_old_fpu(ci);
+		cpu_probe_fpu_old(ci);
 		return;
 	}
 
@@ -871,22 +881,24 @@ cpu_probe(struct cpu_info *ci)
 	ci->ci_vendor[1] = descs[3];
 	ci->ci_vendor[3] = 0;
 
-	if (memcmp(ci->ci_vendor, "GenuineIntel", 12) == 0)
-		cpu_vendor = CPUVENDOR_INTEL;
-	else if (memcmp(ci->ci_vendor,  "AuthenticAMD", 12) == 0)
-		cpu_vendor = CPUVENDOR_AMD;
-	else if (memcmp(ci->ci_vendor,  "CyrixInstead", 12) == 0)
-		cpu_vendor = CPUVENDOR_CYRIX;
-	else if (memcmp(ci->ci_vendor,  "Geode by NSC", 12) == 0)
-		cpu_vendor = CPUVENDOR_CYRIX;
-	else if (memcmp(ci->ci_vendor, "CentaurHauls", 12) == 0)
-		cpu_vendor = CPUVENDOR_IDT;
-	else if (memcmp(ci->ci_vendor, "GenuineTMx86", 12) == 0)
-		cpu_vendor = CPUVENDOR_TRANSMETA;
-	else if (memcmp(ci->ci_vendor, "Vortex86 SoC", 12) == 0)
-		cpu_vendor = CPUVENDOR_VORTEX86;
-	else
-		cpu_vendor = CPUVENDOR_UNKNOWN;
+	if (ci == &cpu_info_primary) {
+		if (memcmp(ci->ci_vendor, "GenuineIntel", 12) == 0)
+			cpu_vendor = CPUVENDOR_INTEL;
+		else if (memcmp(ci->ci_vendor, "AuthenticAMD", 12) == 0)
+			cpu_vendor = CPUVENDOR_AMD;
+		else if (memcmp(ci->ci_vendor, "CyrixInstead", 12) == 0)
+			cpu_vendor = CPUVENDOR_CYRIX;
+		else if (memcmp(ci->ci_vendor, "Geode by NSC", 12) == 0)
+			cpu_vendor = CPUVENDOR_CYRIX;
+		else if (memcmp(ci->ci_vendor, "CentaurHauls", 12) == 0)
+			cpu_vendor = CPUVENDOR_IDT;
+		else if (memcmp(ci->ci_vendor, "GenuineTMx86", 12) == 0)
+			cpu_vendor = CPUVENDOR_TRANSMETA;
+		else if (memcmp(ci->ci_vendor, "Vortex86 SoC", 12) == 0)
+			cpu_vendor = CPUVENDOR_VORTEX86;
+		else
+			cpu_vendor = CPUVENDOR_UNKNOWN;
+	}
 
 	if (cpuid_level >= 1) {
 		x86_cpuid(1, descs);
@@ -895,11 +907,13 @@ cpu_probe(struct cpu_info *ci)
 		ci->ci_feat_val[1] = descs[2];
 		ci->ci_feat_val[0] = descs[3];
 
-		/* Determine family + class. */
-		cpu_class = CPUID_TO_FAMILY(ci->ci_signature)
-		    + (CPUCLASS_386 - 3);
-		if (cpu_class > CPUCLASS_686)
-			cpu_class = CPUCLASS_686;
+		if (ci == &cpu_info_primary) {
+			/* Determine family + class. */
+			cpu_class = CPUID_TO_FAMILY(ci->ci_signature)
+			    + (CPUCLASS_386 - 3);
+			if (cpu_class > CPUCLASS_686)
+				cpu_class = CPUCLASS_686;
+		}
 
 		/* CLFLUSH line size is next 8 bits */
 		if (ci->ci_feat_val[0] & CPUID_CFLUSH)
@@ -956,7 +970,9 @@ cpu_probe(struct cpu_info *ci)
 	cpu_probe_geode(ci);
 	cpu_probe_vortex86(ci);
 
-	cpu_probe_fpu(ci);
+	if (ci == &cpu_info_primary) {
+		cpu_probe_fpu(ci);
+	}
 
 #ifndef XEN
 	x86_cpu_topology(ci);

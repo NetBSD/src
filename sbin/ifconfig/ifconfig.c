@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.236.16.2 2020/04/08 14:07:19 martin Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.236.16.3 2020/04/13 08:03:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.236.16.2 2020/04/08 14:07:19 martin Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.236.16.3 2020/04/13 08:03:20 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -133,6 +133,8 @@ static int setifnetmask(prop_dictionary_t, prop_dictionary_t);
 static int setifprefixlen(prop_dictionary_t, prop_dictionary_t);
 static int setlinkstr(prop_dictionary_t, prop_dictionary_t);
 static int unsetlinkstr(prop_dictionary_t, prop_dictionary_t);
+static int setifdescr(prop_dictionary_t, prop_dictionary_t);
+static int unsetifdescr(prop_dictionary_t, prop_dictionary_t);
 static void status(const struct sockaddr *, prop_dictionary_t,
     prop_dictionary_t);
 __dead static void usage(void);
@@ -193,6 +195,9 @@ struct paddr parse_broadcast = PADDR_INITIALIZER(&parse_broadcast,
     "broadcast address",
     setifbroadaddr, "broadcast", NULL, NULL, NULL, &command_root.pb_parser);
 
+struct pstr parse_descr = PSTR_INITIALIZER1(&parse_descr, "descr",
+    setifdescr, "descr", false, &command_root.pb_parser);
+
 static const struct kwinst misckw[] = {
 	  {.k_word = "alias", .k_key = "alias", .k_deact = "alias",
 	   .k_type = KW_T_BOOL, .k_neg = true,
@@ -213,6 +218,12 @@ static const struct kwinst misckw[] = {
 	, {.k_word = "linkstr", .k_nextparser = &parse_linkstr.ps_parser }
 	, {.k_word = "-linkstr", .k_exec = unsetlinkstr,
 	   .k_nextparser = &command_root.pb_parser }
+	, {.k_word = "descr", .k_nextparser = &parse_descr.ps_parser}
+	, {.k_word = "description", .k_nextparser = &parse_descr.ps_parser}
+	, {.k_word = "-descr", .k_exec = unsetifdescr,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "-description", .k_exec = unsetifdescr,
+	   .k_nextparser = &command_root.pb_parser}
 };
 
 /* key: clonecmd */
@@ -1070,7 +1081,7 @@ setifflags(prop_dictionary_t env, prop_dictionary_t oenv)
 	rc = prop_dictionary_get_int64(env, "ifflag", &ifflag);
 	assert(rc);
 
- 	if (direct_ioctl(env, SIOCGIFFLAGS, &ifr) == -1)
+	if (direct_ioctl(env, SIOCGIFFLAGS, &ifr) == -1)
 		return -1;
 
 	if (ifflag < 0) {
@@ -1270,6 +1281,7 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 	struct ifcapreq ifcr;
 	unsigned short flags;
 	const struct afswtch *afp;
+	char ifdescr[IFDESCRSIZE];
 
 	if ((af = getaf(env)) == -1) {
 		afp = NULL;
@@ -1320,6 +1332,12 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 
 	SIMPLEQ_FOREACH(status_f, &status_funcs, f_next)
 		(*status_f->f_func)(env, oenv);
+
+	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	ifr.ifr_buf = &ifdescr;
+	ifr.ifr_buflen = sizeof(ifdescr);
+	if (prog_ioctl(s, SIOCGIFDESCR, &ifr) == 0)
+		printf("\tdescription: \"%s\"\n", (char *)ifr.ifr_buf);
 
 	print_link_addresses(env, true);
 
@@ -1461,6 +1479,55 @@ unsetlinkstr(prop_dictionary_t env, prop_dictionary_t oenv)
 	return 0;
 }
 
+static int
+setifdescr(prop_dictionary_t env, prop_dictionary_t oenv)
+{
+	struct ifreq ifr;
+	size_t len;
+	prop_data_t data;
+	char *descr;
+
+	data = (prop_data_t)prop_dictionary_get(env, "descr");
+	if (data == NULL) {
+		errno = ENOENT;
+		return -1;
+	}
+	len = prop_data_size(data) + 1;
+
+	if (len > IFDESCRSIZE)
+		err(EXIT_FAILURE, "description too long");
+
+	descr = malloc(len);
+	if (descr == NULL)
+		err(EXIT_FAILURE, "malloc description space");
+	if (getargstr(env, "descr", descr, len) == -1)
+		errx(EXIT_FAILURE, "getargstr descr failed");
+
+
+	ifr.ifr_buf = descr;
+	ifr.ifr_buflen = len;
+	if (direct_ioctl(env, SIOCSIFDESCR, &ifr) != 0)
+		err(EXIT_FAILURE, "SIOCSIFDESCR");
+
+	free(descr);
+
+	return 0;
+}
+
+static int
+unsetifdescr(prop_dictionary_t env, prop_dictionary_t oenv)
+{
+	struct ifreq ifr;
+	ifr.ifr_buf = NULL;
+	ifr.ifr_buflen = 0;
+
+	if (direct_ioctl(env, SIOCSIFDESCR, &ifr) != 0)
+		err(EXIT_FAILURE, "SIOCSIFDESCR");
+
+	return 0;
+}
+
+
 static void
 usage(void)
 {
@@ -1486,6 +1553,7 @@ usage(void)
 		"\t[ preference n ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
 		"\t[ linkstr str | -linkstr ]\n"
+		"\t[ description str | descr str | -description | -descr ]\n"
 		"       %s -a [-b] [-d] [-h] %s[-u] [-v] [-z] [ af ]\n"
 		"       %s -l [-b] [-d] [-s] [-u]\n"
 		"       %s -C\n"

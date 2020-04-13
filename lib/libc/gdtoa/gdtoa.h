@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.h,v 1.10 2013/04/18 21:54:10 joerg Exp $ */
+/* $NetBSD: gdtoa.h,v 1.10.28.1 2020/04/13 08:03:09 martin Exp $ */
 
 /****************************************************************
 
@@ -133,7 +133,7 @@ extern char* ldtoa ANSI((long double *ld, int mode, int ndigits, int *decpt,
 extern char* hldtoa ANSI((long double e, const char *xdigs, int ndigits,
 			int *decpt, int *sign, char **rve));
 
-extern char* gdtoa ANSI((FPI *fpi, int be, ULong *bits, int *kindp,
+extern char* gdtoa ANSI((CONST FPI *fpi, int be, ULong *bits, int *kindp,
 			int mode, int ndigits, int *decpt, char **rve));
 extern void freedtoa ANSI((char*));
 extern float  strtof ANSI((CONST char *, char **));

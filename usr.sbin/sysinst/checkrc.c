@@ -1,4 +1,4 @@
-/* $NetBSD: checkrc.c,v 1.1 2014/07/26 19:30:44 dholland Exp $ */
+/* $NetBSD: checkrc.c,v 1.1.28.1 2020/04/13 08:06:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ static int
 check(const char *varname, int filetocheck)
 {
 	char *buf;
+	int rv;
 
 	create_script(varname, filetocheck);
 
@@ -98,10 +99,9 @@ check(const char *varname, int filetocheck)
 		fflush(logfp);
 	}
 
-	if (strncmp(buf, "YES", strlen("YES")) == 0)
-		return 1;
-	else
-		return 0;
+	rv = strncmp(buf, "YES", strlen("YES")) == 0;
+	free(buf);
+	return rv;
 }
 
 int

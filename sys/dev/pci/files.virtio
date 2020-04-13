@@ -1,4 +1,4 @@
-#	$NetBSD: files.virtio,v 1.1 2017/08/02 08:39:14 cherry Exp $
+#	$NetBSD: files.virtio,v 1.1.8.1 2020/04/13 08:04:26 martin Exp $
 
 # VirtIO
 device	virtio {}
@@ -23,3 +23,6 @@ device	vioscsi: scsi
 attach	vioscsi at virtio
 file	dev/pci/vioscsi.c	vioscsi
 
+device	vio9p
+attach	vio9p at virtio
+file	dev/pci/vio9p.c		vio9p

@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.1.1.1.32.1 2019/06/10 22:08:27 christos Exp $	*/
+/*	$NetBSD: sid.h,v 1.1.1.1.32.2 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -224,7 +224,7 @@
 #define		FDO_PWM_MODE_MASK			(7 << 11)
 #define		FDO_PWM_MODE_SHIFT			11
 #define		TACH_PWM_RESP_RATE(x)			((x) << 25)
-#define		TACH_PWM_RESP_RATE_MASK			(0x7f << 25)
+#define		TACH_PWM_RESP_RATE_MASK			(0x7fU << 25)
 #define		TACH_PWM_RESP_RATE_SHIFT		25
 
 #define CG_TACH_CTRL                                    0x770
@@ -530,7 +530,7 @@
 
 #define	MC_SEQ_TRAIN_WAKEUP_CNTL			0x28e8
 #define		TRAIN_DONE_D0      			(1 << 30)
-#define		TRAIN_DONE_D1      			(1 << 31)
+#define		TRAIN_DONE_D1      			(1U << 31)
 
 #define MC_SEQ_SUP_CNTL           			0x28c8
 #define		RUN_MASK      				(1 << 0)
@@ -657,7 +657,7 @@
 #       define IH_WPTR_WRITEBACK_ENABLE                   (1 << 8)
 #       define IH_WPTR_WRITEBACK_TIMER(x)                 ((x) << 9) /* log2 */
 #       define IH_WPTR_OVERFLOW_ENABLE                    (1 << 16)
-#       define IH_WPTR_OVERFLOW_CLEAR                     (1 << 31)
+#       define IH_WPTR_OVERFLOW_CLEAR                     (1U << 31)
 #define IH_RB_BASE                                        0x3e04
 #define IH_RB_RPTR                                        0x3e08
 #define IH_RB_WPTR                                        0x3e0c
@@ -781,10 +781,10 @@
 #       define DESCRIPTION17(x)                          (((x) & 0xff) << 8)
 
 #define AZ_F0_CODEC_PIN_CONTROL_HOT_PLUG_CONTROL         0x54
-#       define AUDIO_ENABLED                             (1 << 31)
+#       define AUDIO_ENABLED                             (1U << 31)
 
 #define AZ_F0_CODEC_PIN_CONTROL_RESPONSE_CONFIGURATION_DEFAULT  0x56
-#define		PORT_CONNECTIVITY_MASK				(3 << 30)
+#define		PORT_CONNECTIVITY_MASK				(3U << 30)
 #define		PORT_CONNECTIVITY_SHIFT				30
 
 #define	DC_LB_MEMORY_SPLIT					0x6b0c
@@ -1003,7 +1003,7 @@
 #define		SE_INDEX(x)     			((x) << 16)
 #define		SH_BROADCAST_WRITES      		(1 << 29)
 #define		INSTANCE_BROADCAST_WRITES      		(1 << 30)
-#define		SE_BROADCAST_WRITES      		(1 << 31)
+#define		SE_BROADCAST_WRITES      		(1U << 31)
 
 #define GRBM_INT_CNTL                                   0x8060
 #       define RDERR_INT_ENABLE                         (1 << 0)
@@ -1249,7 +1249,7 @@
 #define		RB_BLKSZ(x)					((x) << 8)
 #define		BUF_SWAP_32BIT					(2 << 16)
 #define		RB_NO_UPDATE					(1 << 27)
-#define		RB_RPTR_WR_ENA					(1 << 31)
+#define		RB_RPTR_WR_ENA					(1U << 31)
 
 #define	CP_RB0_RPTR_ADDR				0xC10C
 #define	CP_RB0_RPTR_ADDR_HI				0xC110
@@ -1523,7 +1523,7 @@
 #       define LC_XMIT_N_FTS_MASK                         (0xff << 0)
 #       define LC_XMIT_N_FTS_SHIFT                        0
 #       define LC_XMIT_N_FTS_OVERRIDE_EN                  (1 << 8)
-#       define LC_N_FTS_MASK                              (0xff << 24)
+#       define LC_N_FTS_MASK                              (0xffU << 24)
 #define PCIE_LC_SPEED_CNTL                                0xa4 /* PCIE_P */
 #       define LC_GEN2_EN_STRAP                           (1 << 0)
 #       define LC_GEN3_EN_STRAP                           (1 << 1)
@@ -1850,7 +1850,7 @@
 #define	DMA_PGFSM_CONFIG				0xd0d8
 #define	DMA_PGFSM_WRITE					0xd0dc
 
-#define DMA_PACKET(cmd, b, t, s, n)	((((cmd) & 0xF) << 28) |	\
+#define DMA_PACKET(cmd, b, t, s, n)	((((uint32_t)(cmd) & 0xF) << 28) | \
 					 (((b) & 0x1) << 26) |		\
 					 (((t) & 0x1) << 23) |		\
 					 (((s) & 0x1) << 22) |		\

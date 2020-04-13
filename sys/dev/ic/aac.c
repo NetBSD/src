@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.46 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: aac.c,v 1.46.4.1 2020/04/13 08:04:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.46 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.46.4.1 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -590,11 +590,7 @@ aac_init(struct aac_softc *sc)
 	}
 
 	sc->sc_aif_fib = malloc(sizeof(struct aac_fib), M_AACBUF,
-	    M_NOWAIT | M_ZERO);
-	if (sc->sc_aif_fib == NULL) {
-		aprint_error_dev(sc->sc_dv, "cannot alloc fib structure\n");
-		return (ENOMEM);
-	}
+	    M_WAITOK | M_ZERO);
 	if ((rv = bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_common), 1,
 	    sizeof(*sc->sc_common), 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &sc->sc_common_dmamap)) != 0) {
@@ -627,12 +623,7 @@ aac_init(struct aac_softc *sc)
 
 	TAILQ_INIT(&sc->sc_fibmap_tqh);
 	sc->sc_ccbs = malloc(sizeof(struct aac_ccb) * sc->sc_max_fibs, M_AACBUF,
-	    M_NOWAIT | M_ZERO);
-	if (sc->sc_ccbs == NULL) {
-		aprint_error_dev(sc->sc_dv, "memory allocation failure getting ccbs\n");
-		rv = ENOMEM;
-		goto bail_out;
-	}
+	    M_WAITOK | M_ZERO);
 	state++;
 	while (sc->sc_total_fibs < AAC_PREALLOCATE_FIBS(sc)) {
 		if (aac_alloc_commands(sc) != 0)

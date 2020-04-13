@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.64.16.1 2019/06/10 22:06:48 christos Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.64.16.2 2020/04/13 08:04:08 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -485,13 +485,12 @@
 #ifdef __arch64__
 
 /* 64-bit kernel, non-constant */
-#define SPARC64_LD_NONCONST(ld, type)	\
+#define SPARC64_LD_NONCONST(ld)	\
 	__asm volatile(							\
 		"wr %2,%%g0,%%asi;	"				\
 		#ld " [%1]%%asi,%0	"				\
 		: "=r" (_v)						\
-		: "r" ((__uintptr_t)(loc)), "r" (asi),			\
-		  "m" (*(type *)(__uintptr_t)(loc)))
+		: "r" ((__uintptr_t)(loc)), "r" (asi))
 
 #if defined(__GNUC__) && defined(__OPTIMIZE__)
 #define SPARC64_LD_DEF(ld, type, vtype)	\
@@ -502,10 +501,9 @@ static __inline type ld(paddr_t loc, int asi)				\
 		__asm volatile(						\
 			#ld " [%1]%2,%0		"			\
 			: "=r" (_v)					\
-			: "r" ((__uintptr_t)(loc)), "n" (asi),		\
-			  "m" (*(type *)(__uintptr_t)(loc)));		\
+			: "r" ((__uintptr_t)(loc)), "n" (asi));		\
 	else								\
-		SPARC64_LD_NONCONST(ld, type);				\
+		SPARC64_LD_NONCONST(ld);				\
 	return _v;							\
 }
 #else
@@ -513,7 +511,7 @@ static __inline type ld(paddr_t loc, int asi)				\
 static __inline type ld(paddr_t loc, int asi)				\
 {									\
 	vtype _v;							\
-	SPARC64_LD_NONCONST(ld, type);					\
+	SPARC64_LD_NONCONST(ld);					\
 	return _v;							\
 }
 #endif
@@ -679,12 +677,12 @@ SPARC64_LD_DEF64(ldxa, uint64_t)
 #ifdef __arch64__
 
 /* 64-bit kernel, non-constant */
-#define SPARC64_ST_NONCONST(st, type)	\
+#define SPARC64_ST_NONCONST(st)	\
 	__asm volatile(							\
-		"wr %3,%%g0,%%asi;	"				\
-		#st " %1,[%2]%%asi	"				\
-		: "=m" (*(type *)(__uintptr_t)(loc))			\
-		: "r" (value), "r" ((__uintptr_t)(loc)), "r" (asi))
+		"wr %2,%%g0,%%asi;	"				\
+		#st " %0,[%1]%%asi	"				\
+		: : "r" (value), "r" ((__uintptr_t)(loc)),		\
+		    "r" (asi))
 
 #if defined(__GNUC__) && defined(__OPTIMIZE__)
 #define SPARC64_ST_DEF(st, type)	\
@@ -692,18 +690,17 @@ static __inline void st(paddr_t loc, int asi, type value)		\
 {									\
 	if (__builtin_constant_p(asi))					\
 		__asm volatile(						\
-			#st " %1,[%2]%3		"			\
-			: "=m" (*(type *)(__uintptr_t)(loc))		\
-			: "r" (value), "r" ((__uintptr_t)(loc)),	\
-			  "n" (asi));					\
+			#st " %0,[%1]%2		"			\
+			: : "r" (value), "r" ((__uintptr_t)(loc)),	\
+			    "n" (asi));					\
 	else								\
-		SPARC64_ST_NONCONST(st, type);				\
+		SPARC64_ST_NONCONST(st);				\
 }
 #else
 #define SPARC64_ST_DEF(st, type)	\
 static __inline void st(paddr_t loc, int asi, type value)		\
 {									\
-	SPARC64_ST_NONCONST(st, type);					\
+	SPARC64_ST_NONCONST(st);					\
 }
 #endif
 #define SPARC64_ST_DEF64(st, type)	SPARC64_ST_DEF(st, type)

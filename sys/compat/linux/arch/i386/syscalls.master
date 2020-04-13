@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.122 2017/01/02 16:32:09 manu Exp $
+	$NetBSD: syscalls.master,v 1.122.16.1 2020/04/13 08:04:15 martin Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -528,7 +528,8 @@
 321	UNIMPL		signalfd
 322	UNIMPL		timerfd_create
 323	UNIMPL		eventfd
-324	UNIMPL		fallocate
+324	STD		{ int|linux_sys||fallocate(int fd, int mode, \
+			    off_t offset, off_t len); }
 325	UNIMPL		timerfd_settime
 326	UNIMPL		timerfd_gettime
 327	UNIMPL		signalfd4

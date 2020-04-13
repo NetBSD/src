@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.1.28.1 2020/04/13 08:06:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,11 +49,7 @@ message dobootblks
 }
 
 message ordering
-{The order of partition %c is wrong.  Edit again?}
-
-message emptypart
-{There is a valid partition %c after empty partition(s).
-Please re-edit the partition table.}
+{The order of partition %s is wrong.  Edit again?}
 
 message set_kernel_1
 {Kernel (GENERIC)}

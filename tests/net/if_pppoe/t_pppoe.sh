@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.18 2018/02/01 05:22:01 ozaki-r Exp $
+#	$NetBSD: t_pppoe.sh,v 1.18.4.1 2020/04/13 08:05:31 martin Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -79,7 +79,7 @@ setup()
 	export RUMP_SERVER=$SERVER
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 
-	atf_check -s exit:0 rump.ifconfig pppoe0 create
+	rump_server_add_iface $SERVER pppoe0
 	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
 	    inet $SERVER_IP $CLIENT_IP down
 	atf_check -s exit:0 rump.ifconfig pppoe0 link0
@@ -93,7 +93,7 @@ setup()
 	export RUMP_SERVER=$CLIENT
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 
-	atf_check -s exit:0 rump.ifconfig pppoe0 create
+	rump_server_add_iface $CLIENT pppoe0
 	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
 	    inet 0.0.0.0 0.0.0.1 down
 

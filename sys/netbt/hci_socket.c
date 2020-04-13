@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.45.18.1 2019/06/10 22:09:46 christos Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.45.18.2 2020/04/13 08:05:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.45.18.1 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.45.18.2 2020/04/13 08:05:16 martin Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -195,6 +195,8 @@ static const struct {
 	  18, 0x01, 0 },
 	{ HCI_CMD_READ_DEFAULT_ERRDATA_REPORTING,
 	  18, 0x04, 0 },
+	{ HCI_CMD_READ_ENCRYPTION_KEY_SIZE,
+	  20, 0x10, sizeof(hci_read_encryption_key_size_cp) },
 };
 
 /*

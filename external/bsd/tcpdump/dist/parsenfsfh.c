@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parsenfsfh.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: parsenfsfh.c,v 1.8.12.1 2020/04/13 07:56:31 martin Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -211,7 +211,7 @@ Parse_fh(register const unsigned char *fh, u_int len, my_fsid *fsidp,
 		    if ((fhp[6] == 0) && (fhp[7] == 0)) {
 			/* for ffs sizeof(ufid) == 16 bytes */
 			if ((fhp[8] == 0x10 && fhp[9] == 0x0) ||
-			    (fhp[9] == 0x0 && fhp[9] == 0x10))
+			    (fhp[8] == 0x0 && fhp[9] == 0x10))
 				fhtype = FHT_NETBSD;
 			else
 				fhtype = FHT_BSD44;

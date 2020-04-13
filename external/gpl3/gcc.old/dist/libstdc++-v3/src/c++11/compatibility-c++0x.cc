@@ -1,6 +1,6 @@
 // Compatibility symbols for previous versions, C++0x bits -*- C++ -*-
 
-// Copyright (C) 2009-2016 Free Software Foundation, Inc.
+// Copyright (C) 2009-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -86,7 +86,7 @@ namespace std _GLIBCXX_VISIBILITY(default)
 #ifdef _GLIBCXX_USE_WCHAR_T
   template<>
     struct hash<wstring>
-    { 
+    {
       size_t operator()(wstring) const;
     };
 

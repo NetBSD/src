@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.99 2015/04/26 15:15:20 mlelstv Exp $	*/
+/*	$NetBSD: xy.c,v 1.99.18.1 2020/04/13 08:04:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.99 2015/04/26 15:15:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.99.18.1 2020/04/13 08:04:52 martin Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -490,11 +490,8 @@ xycattach(device_t parent, device_t self, void *aux)
 
 	memset(xyc->iopbase, 0, XYC_MAXIOPB * sizeof(struct xy_iopb));
 
-	xyc->reqs = (struct xy_iorq *)
-	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq),
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (xyc->reqs == NULL)
-		panic("xyc malloc");
+	xyc->reqs = malloc(XYC_MAXIOPB * sizeof(struct xy_iorq),
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 
 	/*
 	 * init iorq to iopb pointers, and non-zero fields in the

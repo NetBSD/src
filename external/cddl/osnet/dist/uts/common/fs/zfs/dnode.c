@@ -447,6 +447,9 @@ dnode_create(objset_t *os, dnode_phys_t *dnp, dmu_buf_impl_t *db,
 	if (dnh->dnh_dnode != NULL) {
 		/* Lost the allocation race. */
 		mutex_exit(&os->os_lock);
+#ifdef __NetBSD__
+		dmu_zfetch_fini(&dn->dn_zfetch);
+#endif
 		kmem_cache_free(dnode_cache, dn);
 		return (dnh->dnh_dnode);
 	}

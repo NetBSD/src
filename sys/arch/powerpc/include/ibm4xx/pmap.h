@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18.2.1 2020/04/08 14:07:49 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18.2.2 2020/04/13 08:04:04 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #define KERNEL_PID	1	/* TLB PID to use for kernel translation */
 
 /*
- * A TTE is a 16KB or greater TLB entry w/size and endiannes bits
+ * A TTE is a 16KB or greater TLB entry w/size and endianness bits
  * stuffed in the (unused) low bits of the PA.
  */
 #define	TTE_PA_MASK		0xffffc000

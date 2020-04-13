@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.23.2.2 2020/04/08 14:08:28 martin Exp $	*/
+/*	$NetBSD: fil.c,v 1.23.2.3 2020/04/13 08:05:00 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -141,7 +141,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.23.2.2 2020/04/08 14:08:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.23.2.3 2020/04/13 08:05:00 martin Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -154,6 +154,8 @@ static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr
 extern	int	opts;
 extern	int	blockreason;
 #endif /* _KERNEL */
+
+#define FASTROUTE_RECURSION
 
 #define	LBUMP(x)	softc->x++
 #define	LBUMPD(x, y)	do { softc->x.y++; DT(y); } while (0)
@@ -1723,10 +1725,14 @@ ipf_pr_ipv4hdr(fr_info_t *fin)
 	off &= IP_MF|IP_OFFMASK;
 	if (off != 0) {
 		int morefrag = off & IP_MF;
-
 		fi->fi_flx |= FI_FRAG;
 		off &= IP_OFFMASK;
 		if (off != 0) {
+			if (off == 1 && p == IPPROTO_TCP) {
+				fin->fin_flx |= FI_SHORT;       /* RFC 3128 */
+				DT1(ipf_fi_tcp_frag_off_1, fr_info_t *, fin);
+			}
+
 			fin->fin_flx |= FI_FRAGBODY;
 			off <<= 3;
 			if ((off + fin->fin_dlen > 65535) ||
@@ -6531,8 +6537,11 @@ ipf_checkl4sum(fr_info_t *fin)
 		/*NOTREACHED*/
 	}
 
-	if (csump != NULL)
+	if (csump != NULL) {
 		hdrsum = *csump;
+		if (fin->fin_p == IPPROTO_UDP && hdrsum == 0xffff)
+			hdrsum = 0x0000;
+	}
 
 	if (dosum) {
 		sum = fr_cksum(fin, fin->fin_ip, fin->fin_p, fin->fin_dp);
@@ -7285,11 +7294,6 @@ ipf_resolvedest(ipf_main_softc_t *softc, char *base, frdest_t *fdp, int v)
 			}
 		} else {
 			ifp = GETIFP(base + fdp->fd_name, v);
-			if (ifp == NULL)
-				ifp = (void *)-1;
-			if ((ifp != NULL) && (ifp != (void *)-1))
-				fdp->fd_local = ipf_deliverlocal(softc, v, ifp,
-								 &fdp->fd_ip6);
 		}
 	}
 	fdp->fd_ptr = ifp;

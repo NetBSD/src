@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.33 2018/05/19 13:59:06 thorpej Exp $
+.\" $NetBSD: gpio.4,v 1.33.2.1 2020/04/13 08:03:25 martin Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 20, 2018
+.Dd February 13, 2020
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -102,6 +102,12 @@ The
 or
 .Fa gp_pin
 field must be set before calling.
+If both are set, gp_name takes precedence.
+On return, the
+.Fa gp_name
+field contains the current name of the pin, if set by the controller driver
+or an earlier call to
+.Dv GPIOSET .
 .Pp
 .It Dv GPIOWRITE ( struct gpio_req )
 Writes the output value to the pin.
@@ -226,7 +232,7 @@ The
 driver was written by
 .An Alexander Yurchenko Aq Mt grange@openbsd.org .
 .Nm
-and was ported to
+was ported to
 .Nx
 by
 .An Jared D. McNeill Aq Mt jmcneill@NetBSD.org .

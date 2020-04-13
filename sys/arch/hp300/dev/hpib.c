@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.39 2012/10/13 06:12:23 tsutsui Exp $	*/
+/*	$NetBSD: hpib.c,v 1.39.38.1 2020/04/13 08:03:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.39 2012/10/13 06:12:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.39.38.1 2020/04/13 08:03:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,11 +161,7 @@ hpibbusattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize the DMA queue entry.
 	 */
-	sc->sc_dq = malloc(sizeof(struct dmaqueue), M_DEVBUF, M_NOWAIT);
-	if (sc->sc_dq == NULL) {
-		aprint_error_dev(self, "can't allocate DMA queue entry\n");
-		return;
-	}
+	sc->sc_dq = malloc(sizeof(struct dmaqueue), M_DEVBUF, M_WAITOK);
 	sc->sc_dq->dq_softc = sc;
 	sc->sc_dq->dq_start = hpibstart;
 	sc->sc_dq->dq_done = hpibdone;

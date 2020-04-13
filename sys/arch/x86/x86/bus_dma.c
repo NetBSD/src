@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.77.4.2 2020/04/08 14:07:58 martin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.77.4.3 2020/04/13 08:04:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.77.4.2 2020/04/08 14:07:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.77.4.3 2020/04/13 08:04:11 martin Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -95,6 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.77.4.2 2020/04/08 14:07:58 martin Exp 
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/asan.h>
+#include <sys/msan.h>
 
 #include <sys/bus.h>
 #include <machine/bus_private.h>
@@ -249,7 +251,8 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 			segs[curseg].ds_len += PAGE_SIZE;
 		} else {
 			curseg++;
-			KASSERT(curseg < nsegs);
+			KASSERTMSG(curseg < nsegs, "curseg %d size %llx",
+			    curseg, (long long)size);
 			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
@@ -1324,6 +1327,9 @@ bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t p, bus_addr_t o, bus_size_t l,
 {
 	bus_dma_tag_t it;
 
+	kasan_dma_sync(p, o, l, ops);
+	kmsan_dma_sync(p, o, l, ops);
+
 	if ((t->bdt_exists & BUS_DMAMAP_OVERRIDE_SYNC) == 0)
 		;	/* skip override */
 	else for (it = t; it != NULL; it = it->bdt_super) {
@@ -1383,6 +1389,9 @@ bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t dmam, void *buf,
 {
 	bus_dma_tag_t it;
 
+	kasan_dma_load(dmam, buf, buflen, KASAN_DMA_LINEAR);
+	kmsan_dma_load(dmam, buf, buflen, KMSAN_DMA_LINEAR);
+
 	if ((t->bdt_exists & BUS_DMAMAP_OVERRIDE_LOAD) == 0)
 		;	/* skip override */
 	else for (it = t; it != NULL; it = it->bdt_super) {
@@ -1400,6 +1409,9 @@ bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t dmam,
 		     struct mbuf *chain, int flags)
 {
 	bus_dma_tag_t it;
+
+	kasan_dma_load(dmam, chain, 0, KASAN_DMA_MBUF);
+	kmsan_dma_load(dmam, chain, 0, KMSAN_DMA_MBUF);
 
 	if ((t->bdt_exists & BUS_DMAMAP_OVERRIDE_LOAD_MBUF) == 0)
 		;	/* skip override */
@@ -1419,6 +1431,9 @@ bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t dmam,
 {
 	bus_dma_tag_t it;
 
+	kasan_dma_load(dmam, uio, 0, KASAN_DMA_UIO);
+	kmsan_dma_load(dmam, uio, 0, KMSAN_DMA_UIO);
+
 	if ((t->bdt_exists & BUS_DMAMAP_OVERRIDE_LOAD_UIO) == 0)
 		;	/* skip override */
 	else for (it = t; it != NULL; it = it->bdt_super) {
@@ -1437,6 +1452,9 @@ bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t dmam,
 		    bus_size_t size, int flags)
 {
 	bus_dma_tag_t it;
+
+	kasan_dma_load(dmam, NULL, 0, KASAN_DMA_RAW);
+	kmsan_dma_load(dmam, NULL, 0, KMSAN_DMA_RAW);
 
 	if ((t->bdt_exists & BUS_DMAMAP_OVERRIDE_LOAD_RAW) == 0)
 		;	/* skip override */

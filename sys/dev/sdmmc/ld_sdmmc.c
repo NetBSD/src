@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.34.4.1 2019/06/10 22:07:32 christos Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.34.4.2 2020/04/13 08:04:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.34.4.1 2019/06/10 22:07:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.34.4.2 2020/04/13 08:04:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -460,7 +460,7 @@ MODULE(MODULE_CLASS_DRIVER, ld_sdmmc, "ld");
  */
 #undef  CFDRIVER_DECL
 #define CFDRIVER_DECL(name, class, attr)
-#include "ioconf.c"    
+#include "ioconf.c"
 #endif
 
 static int
@@ -474,13 +474,13 @@ ld_sdmmc_modcmd(modcmd_t cmd, void *opaque)
 	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
 #endif
 	int error = 0;
- 
+
 #ifdef _MODULE
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = config_init_component(no_cfdriver_vec,
 		    cfattach_ioconf_ld_sdmmc, cfdata_ioconf_ld_sdmmc);
-        	break;
+		break;
 	case MODULE_CMD_FINI:
 		error = config_fini_component(no_cfdriver_vec,
 		    cfattach_ioconf_ld_sdmmc, cfdata_ioconf_ld_sdmmc);

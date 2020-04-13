@@ -24,4 +24,7 @@ options {
 
 include "../ns1/trusted.conf";
 
-zone "." { type hint; file "hints"; };
+zone "." {
+	type hint;
+	file "../../common/root.hint";
+};

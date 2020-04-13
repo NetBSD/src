@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.15 2014/06/23 03:40:57 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.15.28.1 2020/04/13 08:03:35 martin Exp $	*/
 
 #ifndef	_ARM_CDEFS_H_
 #define	_ARM_CDEFS_H_
@@ -25,7 +25,8 @@
 #endif
 
 #if defined (_ARM_ARCH_T2) || defined (__ARM_ARCH_6__) || \
-    defined (__ARM_ARCH_6J__) || defined (__ARM_ARCH_6K__) || \
+    defined (__ARM_ARCH_6J__) || \
+    defined (__ARM_ARCH_6K__) || defined (__ARM_ARCH_6KZ__) || \
     defined (__ARM_ARCH_6Z__) || defined (__ARM_ARCH_6ZK__) || \
     defined (__ARM_ARCH_6ZM__)
 #define _ARM_ARCH_6

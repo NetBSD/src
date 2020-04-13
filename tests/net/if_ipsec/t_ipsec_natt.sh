@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_natt.sh,v 1.2.4.2 2019/06/10 22:10:09 christos Exp $
+#	$NetBSD: t_ipsec_natt.sh,v 1.2.4.3 2020/04/13 08:05:31 martin Exp $
 #
 # Copyright (c) 2018 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -61,7 +61,7 @@ setup_ipsecif()
 	local peer_ip=$8
 
 	export RUMP_SERVER=$sock
-	atf_check -s exit:0 rump.ifconfig ipsec$ifid create
+	rump_server_add_iface $sock ipsec$ifid
 	atf_check -s exit:0 rump.ifconfig ipsec$ifid link0 # enable NAT-T
 	atf_check -s exit:0 rump.ifconfig ipsec$ifid tunnel ${src_ip},${src_port} ${dst_ip},${dst_port}
 	atf_check -s exit:0 rump.ifconfig ipsec$ifid ${ipsecif_ip}/32

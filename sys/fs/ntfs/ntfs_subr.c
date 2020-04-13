@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.61.18.1 2020/04/08 14:08:49 martin Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.61.18.2 2020/04/13 08:05:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.61.18.1 2020/04/08 14:08:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.61.18.2 2020/04/13 08:05:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,6 +271,8 @@ ntfs_loadntnode(struct ntfsmount *ntmp, struct ntnode *ip)
 		struct buf *bp;
 		daddr_t bn;
 		off_t boff;
+		size_t resid, l;
+		char *data;
 
 		dprintf(("%s: read system node\n", __func__));
 
@@ -281,17 +283,26 @@ ntfs_loadntnode(struct ntfsmount *ntmp, struct ntnode *ip)
 		boff = ntfs_cntob(ntmp->ntm_mftcn) +
 		    ntfs_bntob(ntmp->ntm_bpmftrec) * ip->i_number;
 		bn = ntfs_cntobn(ntfs_btocn(boff));
-		off = ntfs_btocnoff(boff);
+		boff = ntfs_btocnoff(boff);
+		resid = ntfs_bntob(ntmp->ntm_bpmftrec);
+		data = (char *)mfrp;
+		while (resid > 0) {
+			l = MIN(resid, ntfs_cntob(1) - boff);
 
-		error = bread(ntmp->ntm_devvp, bn, ntfs_cntob(1),
-		    0, &bp);
-		if (error) {
-			printf("%s: BREAD FAILED\n", __func__);
-			goto out;
+			error = bread(ntmp->ntm_devvp, bn, ntfs_cntob(1),
+			    0, &bp);
+			if (error) {
+				printf("%s: BREAD FAILED\n", __func__);
+				goto out;
+			}
+			memcpy(data, (char *)bp->b_data + boff, l);
+			bqrelse(bp);
+
+			bn += ntfs_cntobn(1);
+			boff = 0;
+			data += l;
+			resid -= l;
 		}
-		memcpy(mfrp, (char *)bp->b_data + off,
-		    ntfs_bntob(ntmp->ntm_bpmftrec));
-		bqrelse(bp);
 	} else {
 		struct vnode   *vp;
 

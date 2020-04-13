@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/01/03 15:34:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.8.194.1 2020/04/13 08:03:50 martin Exp $
 
 PROGAOUT=	uboot
 PROGSOURCE=	uboot.c tgets.c
@@ -30,4 +30,4 @@ install:
 
 release: check_RELEASEDIR .WAIT uboot.lif
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} uboot.lif \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc/SYS_UBOOT
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc/SYS_UBOOT

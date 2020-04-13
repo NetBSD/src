@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.75.4.6 2019/06/10 22:09:46 christos Exp $ */
+/*	$NetBSD: ieee80211_node.c,v 1.75.4.7 2020/04/13 08:05:16 martin Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.75.4.6 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.75.4.7 2020/04/13 08:05:16 martin Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2629,7 +2629,7 @@ ieee80211_iterate_nodes(struct ieee80211_node_table *nt,
 void
 ieee80211_dump_node(struct ieee80211_node_table *nt, struct ieee80211_node *ni)
 {
-	printf("0x%p: mac %s refcnt %d\n", ni,
+	printf("%p: mac %s refcnt %d\n", ni,
 		ether_sprintf(ni->ni_macaddr), ieee80211_node_refcnt(ni));
 	printf("\tauthmode %u flags 0x%x\n",
 		ni->ni_authmode, ni->ni_flags);

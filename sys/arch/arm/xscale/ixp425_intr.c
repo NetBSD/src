@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.26 2014/03/26 08:52:00 christos Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.26.30.1 2020/04/13 08:03:39 martin Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.26 2014/03/26 08:52:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.26.30.1 2020/04/13 08:03:39 martin Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -343,10 +343,7 @@ ixp425_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 	       irq, ipl, (uint32_t) func, (uint32_t) arg);
 #endif
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = ipl;

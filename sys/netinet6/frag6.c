@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.74 2018/05/15 19:16:38 maxv Exp $	*/
+/*	$NetBSD: frag6.c,v 1.74.2.1 2020/04/13 08:05:17 martin Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.74 2018/05/15 19:16:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.74.2.1 2020/04/13 08:05:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -181,7 +181,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	dstifp = NULL;
 	/* find the destination interface of the packet. */
 	sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
-	if ((rt = rtcache_lookup(&ro, &u.dst)) != NULL && rt->rt_ifa != NULL)
+	if ((rt = rtcache_lookup(&ro, &u.dst)) != NULL)
 		dstifp = ((struct in6_ifaddr *)rt->rt_ifa)->ia_ifp;
 
 	/* jumbo payload can't contain a fragment header */

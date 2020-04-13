@@ -1,4 +1,4 @@
-.\"	$NetBSD: null.4,v 1.4 2003/08/07 10:31:03 agc Exp $
+.\"	$NetBSD: null.4,v 1.4.100.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)null.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd August 29, 2019
 .Dt NULL 4
 .Os
 .Sh NAME
@@ -38,17 +38,17 @@
 .Sh DESCRIPTION
 The
 .Nm
-device accepts and reads data as any ordinary (and willing)
-file \-
-but throws it away. The length of the
+device accepts and reads data as any ordinary (and willing) file \(em
+but throws it away.
+The length of the
 .Nm null
 device is always zero.
 .Sh FILES
-.Bl -tag -width /dev/null
+.Bl -tag -width Pa -compact
 .It Pa /dev/null
 .El
 .Sh HISTORY
 A
 .Nm
 device appeared in
-.At v7 .
+.At v4 .

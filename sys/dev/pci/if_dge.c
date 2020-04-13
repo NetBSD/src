@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.48.2.2 2020/04/08 14:08:09 martin Exp $ */
+/*	$NetBSD: if_dge.c,v 1.48.2.3 2020/04/13 08:04:26 martin Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.48.2.2 2020/04/08 14:08:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.48.2.3 2020/04/13 08:04:26 martin Exp $");
 
 
 
@@ -521,11 +521,7 @@ dge_alloc_rcvmem(struct dge_softc *sc)
 	 * Now divide it up into DGE_BUFFER_SIZE pieces and save the addresses
 	 * in an array.
 	 */
-	if ((entry = malloc(sizeof(*entry) * DGE_NBUFFERS,
-	    M_DEVBUF, M_NOWAIT)) == NULL) {
-		error = ENOBUFS;
-		goto out;
-	}
+	entry = malloc(sizeof(*entry) * DGE_NBUFFERS, M_DEVBUF, M_WAITOK);
 	sc->sc_entry = entry;
 	for (i = 0; i < DGE_NBUFFERS; i++) {
 		entry[i].rb_slot = i;

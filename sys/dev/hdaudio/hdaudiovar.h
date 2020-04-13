@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.6.2.1 2019/06/10 22:07:08 christos Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.6.2.2 2020/04/13 08:04:20 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -145,6 +145,9 @@ struct hdaudio_softc {
 	bus_size_t		sc_memsize;
 	bool			sc_memvalid;
 
+	uint32_t		sc_flags;
+#define	HDAUDIO_FLAG_32BIT	__BIT(0)
+
 	uint32_t		sc_subsystem;
 
 	kmutex_t		sc_corb_mtx;
@@ -184,58 +187,64 @@ void	hdaudio_stream_reset(struct hdaudio_stream *);
 int	hdaudio_stream_tag(struct hdaudio_stream *);
 uint16_t hdaudio_stream_param(struct hdaudio_stream *, const audio_params_t *);
 
-#ifdef HDAUDIO_32BIT_ACCESS
 static __inline uint8_t
 _hda_read1(struct hdaudio_softc *sc, bus_size_t off)
 {
-	return bus_space_read_4(sc->sc_memt, sc->sc_memh, off & -4) >>
-	    (8 * (off & 3));
+	if (ISSET(sc->sc_flags, HDAUDIO_FLAG_32BIT)) {
+		return bus_space_read_4(sc->sc_memt, sc->sc_memh, off & -4) >>
+		    (8 * (off & 3));
+	} else {
+		return bus_space_read_1(sc->sc_memt, sc->sc_memh, off);
+	}
 }
+
 static __inline uint16_t
 _hda_read2(struct hdaudio_softc *sc, bus_size_t off)
 {
-	return bus_space_read_4(sc->sc_memt, sc->sc_memh, off & -4) >>
-	    (8 * (off & 2));
+	if (ISSET(sc->sc_flags, HDAUDIO_FLAG_32BIT)) {
+		return bus_space_read_4(sc->sc_memt, sc->sc_memh, off & -4) >>
+		    (8 * (off & 2));
+	} else {
+		return bus_space_read_2(sc->sc_memt, sc->sc_memh, off);
+	}
 }
+
 #define hda_read1			_hda_read1
 #define hda_read2			_hda_read2
 #define	hda_read4(sc, off)		\
 	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, (off))
+
 static __inline void
 _hda_write1(struct hdaudio_softc *sc, bus_size_t off, uint8_t val)
 {
-	const size_t shift = 8 * (off & 3);
-	off &= -4;
-	uint32_t tmp = bus_space_read_4(sc->sc_memt, sc->sc_memh, off);
-	tmp = (val << shift) | (tmp & ~(0xff << shift));
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, off, tmp);
+	if (ISSET(sc->sc_flags, HDAUDIO_FLAG_32BIT)) {
+		const size_t shift = 8 * (off & 3);
+		off &= -4;
+		uint32_t tmp = bus_space_read_4(sc->sc_memt, sc->sc_memh, off);
+		tmp = (val << shift) | (tmp & ~(0xff << shift));
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, off, tmp);
+	} else {
+		bus_space_write_1(sc->sc_memt, sc->sc_memh, off, val);
+	}
 }
+
 static __inline void
 _hda_write2(struct hdaudio_softc *sc, bus_size_t off, uint16_t val)
 {
-	const size_t shift = 8 * (off & 2);
-	off &= -4;
-	uint32_t tmp = bus_space_read_4(sc->sc_memt, sc->sc_memh, off);
-	tmp = (val << shift) | (tmp & ~(0xffff << shift));
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, off, tmp);
+	if (ISSET(sc->sc_flags, HDAUDIO_FLAG_32BIT)) {
+		const size_t shift = 8 * (off & 2);
+		off &= -4;
+		uint32_t tmp = bus_space_read_4(sc->sc_memt, sc->sc_memh, off);
+		tmp = (val << shift) | (tmp & ~(0xffff << shift));
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, off, tmp);
+	} else {
+		bus_space_write_2(sc->sc_memt, sc->sc_memh, off, val);
+	}
 }
+
 #define hda_write1			_hda_write1
 #define hda_write2			_hda_write2
 #define	hda_write4(sc, off, val)	\
 	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, (off), (val))
-#else
-#define	hda_read1(sc, off)		\
-	bus_space_read_1((sc)->sc_memt, (sc)->sc_memh, (off))
-#define	hda_read2(sc, off)		\
-	bus_space_read_2((sc)->sc_memt, (sc)->sc_memh, (off))
-#define	hda_read4(sc, off)		\
-	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, (off))
-#define	hda_write1(sc, off, val)	\
-	bus_space_write_1((sc)->sc_memt, (sc)->sc_memh, (off), (val))
-#define	hda_write2(sc, off, val)	\
-	bus_space_write_2((sc)->sc_memt, (sc)->sc_memh, (off), (val))
-#define	hda_write4(sc, off, val)	\
-	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, (off), (val))
-#endif
 
 #endif /* !_HDAUDIOVAR_H */

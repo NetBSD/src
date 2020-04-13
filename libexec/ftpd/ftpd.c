@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.204 2018/04/28 13:38:00 riastradh Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.204.2.1 2020/04/13 08:03:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.204 2018/04/28 13:38:00 riastradh Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.204.2.1 2020/04/13 08:03:17 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -2863,7 +2863,7 @@ logremotehost(struct sockinet *who)
 {
 
 #if defined(HAVE_SOCKADDR_SNPRINTF)
-	char abuf[BUFSIZ];
+	char abuf[MAXHOSTNAMELEN];
 #endif
 
 	struct sockaddr *sa = (struct sockaddr *)&who->si_su;

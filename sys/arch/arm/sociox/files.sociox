@@ -1,0 +1,40 @@
+#	$NetBSD: files.sociox,v 1.9.4.2 2020/04/13 08:03:37 martin Exp $
+#
+# Configuration info for Socionext Unifier/SC2A11
+#
+#
+
+# SC2A11 SynQuacer NetSec GbE
+device	scx: ether, ifnet, arp, mii, bus_dma_generic
+attach	scx at acpinodebus with scx_acpi
+attach	scx at fdt with scx_fdt
+file	arch/arm/sociox/if_scx.c		scx
+
+# Unifier AVE GbE
+device	ave: ether, ifnet, arp, mii, bus_dma_generic
+attach	ave at fdt with ave_fdt
+file	arch/arm/sociox/if_ave.c		ave
+
+# Socionext eMMC
+device	sniemmc: sdmmcbus
+attach	sniemmc at acpinodebus with sniemmc_acpi
+attach	sniemmc at fdt with sniemmc_fdt
+file	arch/arm/sociox/sni_emmc.c		sniemmc
+
+# Socionext I2C
+device	sniiic: i2cbus
+attach	sniiic at acpinodebus with sniiic_acpi
+attach	sniiic at fdt with sniiic_fdt
+file	arch/arm/sociox/sni_i2c.c		sniiic	needs-flag
+
+# Socionext GPIO
+device	snigpio: gpiobus
+attach	snigpio at acpinodebus with snigpio_acpi
+attach	snigpio at fdt with snigpio_fdt
+file	arch/arm/sociox/sni_gpio.c		snigpio
+
+# Socionext EXIU external interrupt controller unit
+device	sniexiu
+attach	sniexiu at acpinodebus with sniexitu_acpi
+attach	sniexiu at fdt with sniexiu_fdt
+file	arch/arm/sociox/sni_exiu.c		sniexiu

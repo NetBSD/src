@@ -1,4 +1,4 @@
-/*	$NetBSD: defsizes.h,v 1.3.4.2 2019/06/10 22:10:38 christos Exp $	*/
+/*	$NetBSD: defsizes.h,v 1.3.4.3 2020/04/13 08:06:00 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -54,3 +54,17 @@
 #ifndef	DEBNEEDMB
 #define	DEBNEEDMB	800
 #endif
+
+#ifndef MD_SETS_SELECTED
+#define MD_SETS_SELECTED SET_KERNEL_1, SET_SYSTEM, SET_X11, SET_MD
+#endif
+#ifndef MD_SETS_SELECTED_MINIMAL
+#define MD_SETS_SELECTED_MINIMAL SET_KERNEL_1, SET_CORE
+#endif
+#ifndef MD_SETS_SELECTED_NOX
+#define MD_SETS_SELECTED_NOX SET_KERNEL_1, SET_SYSTEM, SET_MD
+#endif
+#ifndef MD_SETS_VALID
+#define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD, SET_SOURCE, SET_DEBUGGING
+#endif
+

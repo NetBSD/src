@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14.46.1 2019/06/10 22:05:34 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.14.46.2 2020/04/13 08:03:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #include <prop/proplib.h>
 #include "util.h"
 
-#define	RIDADDR 0  
+#define	RIDADDR 0
 #define	ADDR    1
 #define	MASK    2
 #define	DSTADDR 3

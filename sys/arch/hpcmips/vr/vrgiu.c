@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.42 2012/10/27 17:17:56 chs Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.42.38.1 2020/04/13 08:03:51 martin Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.42 2012/10/27 17:17:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.42.38.1 2020/04/13 08:03:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -534,9 +534,7 @@ vrgiu_intr_establish(
 
 	s = splhigh();
 
-	if (!(ih = malloc(sizeof(struct vrgiu_intr_entry), M_DEVBUF, M_NOWAIT)))
-		panic ("vrgiu_intr_establish: no memory.");
-
+	ih = malloc(sizeof(struct vrgiu_intr_entry), M_DEVBUF, M_WAITOK);
 	DPRINTF(DEBUG_INTR, ("%s: port %d ", device_xname(sc->sc_dev), port));
 	ih->ih_port = port;
 	ih->ih_fun = ih_fun;

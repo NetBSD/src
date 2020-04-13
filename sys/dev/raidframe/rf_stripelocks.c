@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.32.56.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.32.56.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.32.56.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.32.56.2 2020/04/13 08:04:47 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -262,7 +262,7 @@ rf_AcquireStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 #if RF_DEBUG_STRIPELOCK
 	if (rf_stripeLockDebug) {
 		if (stripeID == -1) {
-			Dprintf1("[%d] Lock acquisition supressed (stripeID == -1)\n", tid);
+			Dprintf1("[%d] Lock acquisition suppressed (stripeID == -1)\n", tid);
 		} else {
 			Dprintf8("[%d] Trying to acquire stripe lock table 0x%lx SID %ld type %c range %ld-%ld, range2 %ld-%ld hashval %d\n",
 			    tid, (unsigned long) lockTable, stripeID, lockReqDesc->type, lockReqDesc->start,
@@ -385,7 +385,7 @@ rf_ReleaseStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 #if RF_DEBUG_STRIPELOCK
 	if (rf_stripeLockDebug) {
 		if (stripeID == -1) {
-			Dprintf1("[%d] Lock release supressed (stripeID == -1)\n", tid);
+			Dprintf1("[%d] Lock release suppressed (stripeID == -1)\n", tid);
 		} else {
 			Dprintf8("[%d] Releasing stripe lock on stripe ID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
 			    tid, stripeID, lockReqDesc->type, lockReqDesc->start, lockReqDesc->stop, lockReqDesc->start2, lockReqDesc->stop2, lockTable);

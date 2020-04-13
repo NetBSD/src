@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.39.2.1 2019/06/10 22:07:11 christos Exp $	*/
+/*	$NetBSD: nvme.c,v 1.39.2.2 2020/04/13 08:04:21 martin Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.39.2.1 2019/06/10 22:07:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.39.2.2 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,8 @@ static void	nvme_pt_done(struct nvme_queue *, struct nvme_ccb *,
 static int	nvme_command_passthrough(struct nvme_softc *,
 		    struct nvme_pt_command *, uint16_t, struct lwp *, bool);
 
-static int	nvme_get_number_of_queues(struct nvme_softc *, u_int *);
+static int	nvme_set_number_of_queues(struct nvme_softc *, u_int, u_int *,
+		    u_int *);
 
 #define NVME_TIMO_QOP		5	/* queue create and delete timeout */
 #define NVME_TIMO_IDENT		10	/* probe identify timeout */
@@ -339,7 +340,7 @@ nvme_attach(struct nvme_softc *sc)
 	uint32_t reg;
 	u_int dstrd;
 	u_int mps = PAGE_SHIFT;
-	u_int ioq_allocated;
+	u_int ncq, nsq;
 	uint16_t adminq_entries = nvme_adminq_size;
 	uint16_t ioq_entries = nvme_ioq_size;
 	int i;
@@ -374,7 +375,7 @@ nvme_attach(struct nvme_softc *sc)
 	sc->sc_rdy_to = NVME_CAP_TO(cap);
 	sc->sc_mps = 1 << mps;
 	sc->sc_mdts = MAXPHYS;
-	sc->sc_max_sgl = 2;
+	sc->sc_max_sgl = btoc(round_page(sc->sc_mdts));
 
 	if (nvme_disable(sc) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to disable controller\n");
@@ -399,6 +400,10 @@ nvme_attach(struct nvme_softc *sc)
 		aprint_error_dev(sc->sc_dev, "unable to identify controller\n");
 		goto disable;
 	}
+	if (sc->sc_nn == 0) {
+		aprint_error_dev(sc->sc_dev, "namespace not found\n");
+		goto disable;
+	}
 
 	/* we know how big things are now */
 	sc->sc_max_sgl = sc->sc_mdts / sc->sc_mps;
@@ -409,13 +414,15 @@ nvme_attach(struct nvme_softc *sc)
 
 	if (sc->sc_use_mq) {
 		/* Limit the number of queues to the number allocated in HW */
-		if (nvme_get_number_of_queues(sc, &ioq_allocated) != 0) {
+		if (nvme_set_number_of_queues(sc, sc->sc_nq, &ncq, &nsq) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to get number of queues\n");
 			goto disable;
 		}
-		if (sc->sc_nq > ioq_allocated)
-			sc->sc_nq = ioq_allocated;
+		if (sc->sc_nq > ncq)
+			sc->sc_nq = ncq;
+		if (sc->sc_nq > nsq)
+			sc->sc_nq = nsq;
 	}
 
 	sc->sc_q = kmem_zalloc(sizeof(*sc->sc_q) * sc->sc_nq, KM_SLEEP);
@@ -645,7 +652,7 @@ nvme_ns_dobio(struct nvme_softc *sc, uint16_t nsid, void *cookie,
     struct buf *bp, void *data, size_t datasize,
     int secsize, daddr_t blkno, int flags, nvme_nnc_done nnc_done)
 {
-	struct nvme_queue *q = nvme_get_q(sc);
+	struct nvme_queue *q = nvme_get_q(sc, bp, false);
 	struct nvme_ccb *ccb;
 	bus_dmamap_t dmap;
 	int i, error;
@@ -787,7 +794,7 @@ nvme_ns_sync_finished(void *cookie)
 int
 nvme_ns_sync(struct nvme_softc *sc, uint16_t nsid, int flags)
 {
-	struct nvme_queue *q = nvme_get_q(sc);
+	struct nvme_queue *q = nvme_get_q(sc, NULL, true);
 	struct nvme_ccb *ccb;
 	int result = 0;
 
@@ -797,8 +804,7 @@ nvme_ns_sync(struct nvme_softc *sc, uint16_t nsid, int flags)
 	}
 
 	ccb = nvme_ccb_get(q, true);
-	if (ccb == NULL)
-		return EAGAIN;
+	KASSERT(ccb != NULL);
 
 	ccb->ccb_done = nvme_ns_sync_done;
 	ccb->ccb_cookie = &result;
@@ -1155,7 +1161,7 @@ nvme_command_passthrough(struct nvme_softc *sc, struct nvme_pt_command *pt,
 	    (pt->buf != NULL && (pt->len == 0 || pt->len > sc->sc_mdts)))
 		return EINVAL;
 
-	q = is_adminq ? sc->sc_admin_q : nvme_get_q(sc);
+	q = is_adminq ? sc->sc_admin_q : nvme_get_q(sc, NULL, true);
 	ccb = nvme_ccb_get(q, true);
 	KASSERT(ccb != NULL);
 
@@ -1303,8 +1309,8 @@ nvme_poll_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 {
 	struct nvme_poll_state *state = ccb->ccb_cookie;
 
-	SET(cqe->flags, htole16(NVME_CQE_PHASE));
 	state->c = *cqe;
+	SET(state->c.flags, htole16(NVME_CQE_PHASE));
 
 	ccb->ccb_cookie = state->cookie;
 	state->done(q, ccb, &state->c);
@@ -1576,20 +1582,21 @@ nvme_fill_identify(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 }
 
 static int
-nvme_get_number_of_queues(struct nvme_softc *sc, u_int *nqap)
+nvme_set_number_of_queues(struct nvme_softc *sc, u_int nq, u_int *ncqa,
+    u_int *nsqa)
 {
 	struct nvme_pt_state state;
 	struct nvme_pt_command pt;
 	struct nvme_ccb *ccb;
-	uint16_t ncqa, nsqa;
 	int rv;
 
 	ccb = nvme_ccb_get(sc->sc_admin_q, false);
 	KASSERT(ccb != NULL); /* it's a bug if we don't have spare ccb here */
 
 	memset(&pt, 0, sizeof(pt));
-	pt.cmd.opcode = NVM_ADMIN_GET_FEATURES;
-	pt.cmd.cdw10 = NVM_FEATURE_NUMBER_OF_QUEUES;
+	pt.cmd.opcode = NVM_ADMIN_SET_FEATURES;
+	htolem32(&pt.cmd.cdw10, NVM_FEATURE_NUMBER_OF_QUEUES);
+	htolem32(&pt.cmd.cdw11, ((nq - 1) << 16) | (nq - 1));
 
 	memset(&state, 0, sizeof(state));
 	state.pt = &pt;
@@ -1601,13 +1608,12 @@ nvme_get_number_of_queues(struct nvme_softc *sc, u_int *nqap)
 	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_pt_fill, NVME_TIMO_QOP);
 
 	if (rv != 0) {
-		*nqap = 0;
+		*ncqa = *nsqa = 0;
 		return EIO;
 	}
 
-	ncqa = pt.cpl.cdw0 >> 16;
-	nsqa = pt.cpl.cdw0 & 0xffff;
-	*nqap = MIN(ncqa, nsqa) + 1;
+	*ncqa = (pt.cpl.cdw0 >> 16) + 1;
+	*nsqa = (pt.cpl.cdw0 & 0xffff) + 1;
 
 	return 0;
 }
@@ -1715,7 +1721,13 @@ nvme_ccbs_free(struct nvme_queue *q)
 	mutex_enter(&q->q_ccb_mtx);
 	while ((ccb = SIMPLEQ_FIRST(&q->q_ccb_list)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&q->q_ccb_list, ccb_entry);
+		/* 
+		 * bus_dmamap_destroy() may call vm_map_lock() and rw_enter()
+		 * internally. don't hold spin mutex
+		 */
+		mutex_exit(&q->q_ccb_mtx);
 		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+		mutex_enter(&q->q_ccb_mtx);
 	}
 	mutex_exit(&q->q_ccb_mtx);
 
@@ -1870,7 +1882,7 @@ nvme_dmamem_alloc(struct nvme_softc *sc, size_t size)
 
 	ndm->ndm_size = size;
 
-	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	if (bus_dmamap_create(sc->sc_dmat, size, btoc(round_page(size)), size, 0,
 	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ndm->ndm_map) != 0)
 		goto ndmfree;
 

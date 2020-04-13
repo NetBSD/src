@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_l2tp.c,v 1.16.2.2 2020/04/08 14:08:58 martin Exp $	*/
+/*	$NetBSD: in6_l2tp.c,v 1.16.2.3 2020/04/13 08:05:17 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.16.2.2 2020/04/08 14:08:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.16.2.3 2020/04/13 08:05:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -90,7 +90,8 @@ int
 in6_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 {
 	struct rtentry *rt;
-	struct l2tp_ro *lro;
+	struct route *ro_pc;
+	kmutex_t *lock_pc;
 	struct l2tp_softc *sc;
 	struct ifnet *ifp;
 	struct sockaddr_in6 *sin6_src = satosin6(var->lv_psrc);
@@ -201,25 +202,22 @@ in6_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 		return ENOBUFS;
 	memcpy(mtod(m, struct ip6_hdr *), &ip6hdr, sizeof(struct ip6_hdr));
 
-	lro = percpu_getref(sc->l2tp_ro_percpu);
-	mutex_enter(lro->lr_lock);
-	if ((rt = rtcache_lookup(&lro->lr_ro, var->lv_pdst)) == NULL) {
-		mutex_exit(lro->lr_lock);
-		percpu_putref(sc->l2tp_ro_percpu);
+	if_tunnel_get_ro(sc->l2tp_ro_percpu, &ro_pc, &lock_pc);
+	if ((rt = rtcache_lookup(ro_pc, var->lv_pdst)) == NULL) {
+		if_tunnel_put_ro(sc->l2tp_ro_percpu, lock_pc);
 		m_freem(m);
 		return ENETUNREACH;
 	}
 
 	/* If the route constitutes infinite encapsulation, punt. */
 	if (rt->rt_ifp == ifp) {
-		rtcache_unref(rt, &lro->lr_ro);
-		rtcache_free(&lro->lr_ro);
-		mutex_exit(lro->lr_lock);
-		percpu_putref(sc->l2tp_ro_percpu);
+		rtcache_unref(rt, ro_pc);
+		rtcache_free(ro_pc);
+		if_tunnel_put_ro(sc->l2tp_ro_percpu, lock_pc);
 		m_freem(m);
 		return ENETUNREACH;	/* XXX */
 	}
-	rtcache_unref(rt, &lro->lr_ro);
+	rtcache_unref(rt, ro_pc);
 
 	/*
 	 * To avoid inappropriate rewrite of checksum,
@@ -227,9 +225,8 @@ in6_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 	 */
 	m->m_pkthdr.csum_flags  = 0;
 
-	error = ip6_output(m, 0, &lro->lr_ro, 0, NULL, NULL, NULL);
-	mutex_exit(lro->lr_lock);
-	percpu_putref(sc->l2tp_ro_percpu);
+	error = ip6_output(m, 0, ro_pc, 0, NULL, NULL, NULL);
+	if_tunnel_put_ro(sc->l2tp_ro_percpu, lock_pc);
 	return(error);
 
 looped:

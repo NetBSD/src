@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pinmux.h,v 1.1 2017/09/22 14:36:22 jmcneill Exp $ */
+/* $NetBSD: tegra_pinmux.h,v 1.1.6.1 2020/04/13 08:03:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -34,9 +34,21 @@
 #define TEGRA_PINMUX_MAXFUNC	4
 
 struct tegra_pinmux_pins {
-	const char *name;
-	u_int reg;
-	const char *functions[TEGRA_PINMUX_MAXFUNC];
+	const char *tpp_name;
+	u_int tpp_reg;
+	enum tegra_pin_type {
+		TEGRA_PINMUX,
+		TEGRA_PADCTRL
+	} tpp_type;
+	union {
+		const char *tpp_functions[TEGRA_PINMUX_MAXFUNC];
+		struct {
+			uint32_t	drvdn_mask;
+			uint32_t	drvup_mask;
+			uint32_t	slwrr_mask;
+			uint32_t	slwrf_mask;
+		} tpp_dg;
+	};
 };
 
 struct tegra_pinmux_conf {

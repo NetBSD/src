@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.S,v 1.2 2016/12/04 08:21:08 maxv Exp $	*/
+/*	$NetBSD: multiboot.S,v 1.2.16.1 2020/04/13 08:03:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@
  */
 
 #include <machine/asm.h>
-#define MULTIBOOT_INFO_MAGIC		0x2BADB002
 
 /*
  * Starts program in protected mode / flat space with given stackframe.
@@ -87,8 +86,8 @@
  */
 
 /*
- * multiboot(phyaddr, header, stack)
- *	start the program on protected mode where phyaddr is the entry point
+ * multiboot(entry, header, stack, magic)
+ *	start the program on protected mode, entry is phyaddr.
  */
 ENTRY(multiboot)
 	pushl	%ebp
@@ -101,6 +100,7 @@ ENTRY(multiboot)
 	subl	$4,%ebx
 	movl	%ebx,%edi
 
+	movl	20(%ebp),%edx	/* magic */
 	movl	12(%ebp),%ebx	/* header */
 	movl	8(%ebp),%ecx	/* entry */
 
@@ -118,7 +118,7 @@ ENTRY(multiboot)
 	mov	%ax,%ds
 	mov	%ax,%es
 
-	movl	$MULTIBOOT_INFO_MAGIC,%eax
+	movl	%edx,%eax	/* magic */
 
 	/* Jump to phyaddr, with the new code segment */
 	lret

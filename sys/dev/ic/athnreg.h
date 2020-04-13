@@ -1,4 +1,4 @@
-/*	$NetBSD: athnreg.h,v 1.1 2013/03/30 02:53:02 christos Exp $	*/
+/*	$NetBSD: athnreg.h,v 1.1.40.1 2020/04/13 08:04:21 martin Exp $	*/
 /*	$OpenBSD: athnreg.h,v 1.18 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
@@ -851,12 +851,12 @@
 #define AR_INTR_SPURIOUS	0xffffffff
 
 /* Bits for AR_GPIO_OE_OUT. */
-#define AR_GPIO_OE_OUT_DRV_M	0x00000003
+#define AR_GPIO_OE_OUT_DRV_M	0x00000003UL
 #define AR_GPIO_OE_OUT_DRV_S	0
 #define AR_GPIO_OE_OUT_DRV_NO	0
 #define AR_GPIO_OE_OUT_DRV_LOW	1
 #define AR_GPIO_OE_OUT_DRV_HI	2
-#define AR_GPIO_OE_OUT_DRV_ALL	3
+#define AR_GPIO_OE_OUT_DRV_ALL	3UL
 
 /* Bits for AR_GPIO_INTR_POL. */
 #define AR_GPIO_INTR_POL_PIN(i)		(1 << (i))

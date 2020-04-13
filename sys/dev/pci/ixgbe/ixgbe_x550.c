@@ -875,7 +875,7 @@ static s32 ixgbe_setup_fw_link(struct ixgbe_hw *hw)
 	 *  Broken firmware sets BMCR register incorrectly if
 	 * FW_PHY_ACT_SETUP_LINK_AN isn't set.
 	 * a) FDX may not be set.
-	 * b) BMCR_SPEED1 (bit 6) is always cleard.
+	 * b) BMCR_SPEED1 (bit 6) is always cleared.
 	 * + -------+------+-----------+-----+--------------------------+
 	 * |request | BMCR | BMCR spd | BMCR |                          |
 	 * |        | (HEX)| (in bits)|  FDX |                          |
@@ -2084,7 +2084,14 @@ s32 ixgbe_get_link_capabilities_X550em(struct ixgbe_hw *hw,
 		else
 			*speed = IXGBE_LINK_SPEED_10GB_FULL;
 	} else {
+		*autoneg = TRUE;
+
 		switch (hw->phy.type) {
+		case ixgbe_phy_x550em_xfi:
+			*speed = IXGBE_LINK_SPEED_1GB_FULL |
+				 IXGBE_LINK_SPEED_10GB_FULL;
+			*autoneg = FALSE;
+			break;
 		case ixgbe_phy_ext_1g_t:
 		case ixgbe_phy_sgmii:
 			*speed = IXGBE_LINK_SPEED_1GB_FULL;
@@ -2108,7 +2115,6 @@ s32 ixgbe_get_link_capabilities_X550em(struct ixgbe_hw *hw,
 			    IXGBE_LINK_SPEED_1GB_FULL;
 			break;
 		}
-		*autoneg = TRUE;
 	}
 
 	return IXGBE_SUCCESS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2018/04/11 10:32:09 nonaka Exp $	 */
+/*	$NetBSD: conf.c,v 1.2.2.1 2020/04/13 08:03:54 martin Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -54,20 +54,23 @@
 #endif
 #endif
 #include <biosdisk.h>
+#include "devopen.h"
 #include "efinet.h"
 
 struct devsw devsw[] = {
 	{ "disk", biosdisk_strategy, biosdisk_open, biosdisk_close, biosdisk_ioctl },
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
 	{ "net", net_strategy, net_open, net_close, net_ioctl },
+#endif
 };
 int ndevs = __arraycount(devsw);
 
-#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
 struct netif_driver *netif_drivers[] = {
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
 	&efinetif,
+#endif
 };
 int n_netif_drivers = __arraycount(netif_drivers);
-#endif
 
 struct fs_ops file_system[] = {
 #ifdef SUPPORT_CD9660
@@ -112,4 +115,16 @@ struct fs_ops file_system_nfs = FS_OPS(nfs);
 #endif
 #ifdef SUPPORT_TFTP
 struct fs_ops file_system_tftp = FS_OPS(tftp);
+#endif
+
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+const struct netboot_fstab netboot_fstab[] = {
+#ifdef SUPPORT_NFS
+	{ "nfs", &file_system_nfs },
+#endif
+#ifdef SUPPORT_TFTP
+	{ "tftp", &file_system_tftp },
+#endif
+};
+const int nnetboot_fstab = __arraycount(netboot_fstab);
 #endif

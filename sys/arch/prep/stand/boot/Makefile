@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2017/04/08 19:53:22 christos Exp $
+#	$NetBSD: Makefile,v 1.30.14.1 2020/04/13 08:04:05 martin Exp $
 
 NOMAN= # defined
 
@@ -32,6 +32,7 @@ CPPFLAGS= -nostdinc -I${.OBJDIR} -I${MKBOOTIMAGE} -I${S}
 CPPFLAGS+= -D_STANDALONE -DRELOC=${RELOC} -DUSE_SCAN
 CPPFLAGS+= -D__daddr_t=int32_t
 #CPPFLAGS+= -DDBMONITOR
+#CPPFLAGS+= -DSCSI_SUPPORT    # experimental
 
 .if (${BASE} == "boot")
 CPPFLAGS+= -DCONS_VGA -DVGA_RESET

@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.3.2.3 2020/04/08 14:07:07 martin Exp $	*/
+/*	$NetBSD: name.c,v 1.3.2.4 2020/04/13 08:02:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -460,15 +460,16 @@ dns_name_hash(const dns_name_t *name, bool case_sensitive) {
 	 */
 	REQUIRE(VALID_NAME(name));
 
-	if (name->labels == 0)
+	if (name->labels == 0) {
 		return (0);
+	}
 
 	length = name->length;
-	if (length > 16)
+	if (length > 16) {
 		length = 16;
+	}
 
-	return (isc_hash_function_reverse(name->ndata, length,
-					  case_sensitive, NULL));
+	return (isc_hash_function(name->ndata, length, case_sensitive));
 }
 
 unsigned int
@@ -478,11 +479,11 @@ dns_name_fullhash(const dns_name_t *name, bool case_sensitive) {
 	 */
 	REQUIRE(VALID_NAME(name));
 
-	if (name->labels == 0)
+	if (name->labels == 0) {
 		return (0);
+	}
 
-	return (isc_hash_function_reverse(name->ndata, name->length,
-					  case_sensitive, NULL));
+	return (isc_hash_function(name->ndata, name->length, case_sensitive));
 }
 
 dns_namereln_t
@@ -2381,15 +2382,10 @@ dns_name_format(const dns_name_t *name, char *cp, unsigned int size) {
 	isc_buffer_init(&buf, cp, size - 1);
 	result = dns_name_totext(name, true, &buf);
 	if (result == ISC_R_SUCCESS) {
-		/*
-		 * Null terminate.
-		 */
-		isc_region_t r;
-		isc_buffer_usedregion(&buf, &r);
-		((char *) r.base)[r.length] = '\0';
-
-	} else
+		isc_buffer_putuint8(&buf, (uint8_t)'\0');
+	} else {
 		snprintf(cp, size, "<unknown>");
+	}
 }
 
 /*

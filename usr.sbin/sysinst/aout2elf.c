@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.1 2014/07/26 19:30:44 dholland Exp $
+/*	$NetBSD: aout2elf.c,v 1.1.28.1 2020/04/13 08:06:00 martin Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -195,8 +195,7 @@ endloop:
 __dead static void
 abort_libupdate(void)
 {
-	msg_display(MSG_aoutfail);
-	process_menu(MENU_ok, NULL);
+	hit_enter_to_continue(MSG_aoutfail, NULL);
 	exit(1);
 }
 
@@ -294,8 +293,7 @@ domove:
 	handle_aout_x_libs(src, concat_paths(prefix, "usr/X11R6/lib"));
 
 	if (backedup) {
-		msg_display(MSG_emulbackup);
-		process_menu(MENU_ok, NULL);
+		hit_enter_to_continue(MSG_emulbackup, NULL);
 	}
 
 	return n;

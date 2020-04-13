@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.2.16.1 2019/06/10 22:02:37 christos Exp $
+#	$NetBSD: libmesa.mk,v 1.2.16.2 2020/04/13 08:02:31 martin Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -8,8 +8,8 @@ CPPFLAGS.ac_surface.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=enum-conversion :
 # Please keep the organization in line with those files.
 
 # Main sources
-PATHS.main=	mesa/main
-INCLUDES.main=	glsl mesa/main
+PATHS.main=	mesa/main ../../src/mesa/main ../../src/mapi/glapi
+INCLUDES.main=	glsl mesa/main ../../src/compiler/nir
 SRCS.main= \
 	accum.c \
 	api_arrayelt.c \
@@ -144,11 +144,15 @@ SRCS.main= \
 	es1_conversion.c
 
 # AMD common code
-PATHS.amd=	amd/common amd/addrlib amd/addrlib/core \
-		amd/addrlib/gfx9 amd/addrlib/r800
-INCLUDES.amd=	amd/common amd amd/addrlib amd/addrlib/core \
-		amd/addrlib/inc/chip/r800 \
-		amd/addrlib/inc/chip/gfx9
+PATHS.amd=	amd/common amd/addrlib/src amd/addrlib/src/core \
+		amd/addrlib/src/gfx9 amd/addrlib/src/r800
+INCLUDES.amd=	amd amd/common ../../src/amd/common \
+		amd/addrlib amd/addrlib/inc \
+		amd/addrlib/src amd/addrlib/src/core \
+		amd/addrlib/src/r800 \
+		amd/addrlib/src/chip/r800 \
+		amd/addrlib/src/gfx9 \
+		amd/addrlib/src/chip/gfx9
 
 SRCS.amd+= \
 	addrinterface.cpp \
@@ -301,7 +305,7 @@ PATHS.asm_s=	mesa/x86 mesa/x86/rtasm mesa/sparc mesa/x86-64
 .if ${MACHINE} == "amd64"
 SRCS.asm_s= \
 	xform4.S
-CPPFLAGS+=	-I${X11SRCDIR.Mesa}/../src/arch/x86_64
+CPPFLAGS+=	-I${X11SRCDIR.Mesa}/../src/mesa
 .elif ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 SRCS.asm_s= \
 	sparc_clip.S \
@@ -327,7 +331,7 @@ SRCS.asm_s= \
 	read_rgba_span_x86.S \
 	streaming-load-memcpy.c \
 	sse_minmax.c
-CPPFLAGS+=	-I${X11SRCDIR.Mesa}/../src/arch/i386
+CPPFLAGS+=	-I${X11SRCDIR.Mesa}/../src/mesa
 .endif
 
 .if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
@@ -399,6 +403,7 @@ SRCS.state_tracker= \
 	st_extensions.c \
 	st_format.c \
 	st_gen_mipmap.c \
+	st_glsl_to_ir.cpp \
 	st_glsl_to_nir.cpp \
 	st_glsl_to_tgsi.cpp \
 	st_glsl_to_tgsi_array_merge.cpp \
@@ -407,9 +412,9 @@ SRCS.state_tracker= \
 	st_glsl_types.cpp \
 	st_manager.c \
 	st_mesa_to_tgsi.c \
+	st_nir_builtins.c \
 	st_nir_lower_builtin.c \
 	st_nir_lower_tex_src_plane.c \
-	st_nir_lower_uniforms_to_ubo.c \
 	st_pbo.c \
 	st_program.c \
 	st_sampler_view.c \
@@ -419,7 +424,7 @@ SRCS.state_tracker= \
 	st_tgsi_lower_yuv.c
 
 # Program sources
-PATHS.program=	mesa/program
+PATHS.program=	mesa/program ../../src/mesa/program
 INCLUDES.program=	glsl
 SRCS.program= \
 	arbprogparse.c \
@@ -528,9 +533,10 @@ CPPFLAGS+=	\
 	-DHAVE_MINCORE
 
 .if ${MKLLVMRT} != "no"
+LLVM_VERSION!=		cd ${NETBSDSRCDIR}/external/apache2/llvm && ${MAKE} -V LLVM_VERSION
+HAVE_LLVM_VERSION!=	expr ${LLVM_VERSION:R:R} \* 256 + ${LLVM_VERSION:R:E} \* 16
 CPPFLAGS+=	\
-	-DHAVE_LLVM=0x0700 \
-	-DMESA_LLVM_VERSION_PATCH=0
+	-DHAVE_LLVM=${HAVE_LLVM_VERSION}
 CXXFLAGS+=	-fno-rtti
 .endif
 
@@ -543,3 +549,5 @@ CPPFLAGS+=	\
 	-DYYTEXT_POINTER=1
 
 CFLAGS+=	-fvisibility=hidden -fno-strict-aliasing -fno-builtin-memcmp
+
+.include "libGL/mesa-ver.mk"

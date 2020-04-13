@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: menus.md,v 1.1.28.1 2020/04/13 08:06:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,7 +34,8 @@
 
 /* Menu definitions for sysinst. i386 version, machine dependent. */
 
-menu getboottype, title MSG_Bootblocks_selection, y=10, exit, no clear;
+menu getboottype, title MSG_Bootblocks_selection, y=10, exit, no clear,
+	exitstring MSG_Continue;
 	display action { msg_display(MSG_getboottype);
 		switch (((struct x86_boot_params *)arg)->bp_consdev) {
 		default:
@@ -44,7 +45,7 @@ menu getboottype, title MSG_Bootblocks_selection, y=10, exit, no clear;
 		case 1: case 2: case 3: case 4:
 			if (menu->cursel == 0)
 			    menu->cursel = ((struct x86_boot_params *)arg)->bp_consdev;
-			msg_display_add(MSG_console_com,
+			msg_fmt_display_add(MSG_console_com, "%u%u",
 			    ((struct x86_boot_params *)arg)->bp_consdev - 1,
 			    ((struct x86_boot_params *)arg)->bp_conspeed);
 			break;
@@ -52,7 +53,7 @@ menu getboottype, title MSG_Bootblocks_selection, y=10, exit, no clear;
 			msg_display_add(MSG_console_unchanged);
 			break;
 		}};
-	option MSG_Use_normal_bootblocks, action
+	option MSG_Use_normal_bootblocks, exit, action
 	    {((struct x86_boot_params *)arg)->bp_consdev = 0; m->cursel = 7;};
 	option MSG_Use_serial_com0, action
 	    {((struct x86_boot_params *)arg)->bp_consdev = 1; m->cursel = 5;};
@@ -63,7 +64,7 @@ menu getboottype, title MSG_Bootblocks_selection, y=10, exit, no clear;
 	option MSG_Use_serial_com3, action
 	    {((struct x86_boot_params *)arg)->bp_consdev = 4; m->cursel = 5;};
 	option MSG_serial_baud_rate, sub menu consolebaud;
-	option MSG_Use_existing_bootblocks, action
+	option MSG_Use_existing_bootblocks, exit, action
 	    {((struct x86_boot_params *)arg)->bp_consdev = ~0; m->cursel = 7;};
 
 menu consolebaud, title MSG_serial_baud_rate, x=40, y=13;

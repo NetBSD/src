@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18 2011/07/12 05:31:49 mrg Exp $	*/
+/*	$NetBSD: bus.h,v 1.18.54.1 2020/04/13 08:04:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -73,6 +73,11 @@ typedef	u_long	bus_space_handle_t;
 typedef u_long	bus_type_t;
 typedef u_long	bus_addr_t;
 typedef u_long	bus_size_t;
+
+#define PRIxBSH		"lx"
+#define PRIxBUSADDR	"lx"
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
 
 #define	BUS_ADDR_PADDR(x)	((x) & 0xffffffff)
 

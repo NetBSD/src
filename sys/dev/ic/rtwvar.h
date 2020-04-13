@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.47 2018/04/19 21:50:08 christos Exp $ */
+/* $NetBSD: rtwvar.h,v 1.47.2.1 2020/04/13 08:04:22 martin Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -295,7 +295,7 @@ struct rtw_rx_radiotap_header {
 			uint8_t			p_antsignal;
 		} u_philips;
 	} rr_u;
-} __packed;
+};
 
 #define RTW_TX_RADIOTAP_PRESENT				\
 	((1 << IEEE80211_RADIOTAP_RATE)		|	\
@@ -308,7 +308,7 @@ struct rtw_tx_radiotap_header {
 	uint8_t					rt_pad;
 	uint16_t				rt_chan_freq;
 	uint16_t				rt_chan_flags;
-} __packed;
+};
 
 enum rtw_attach_state {FINISHED, FINISH_DESCMAP_LOAD, FINISH_DESCMAP_CREATE,
 	FINISH_DESC_MAP, FINISH_DESC_ALLOC, FINISH_RXMAPS_CREATE,

@@ -192,7 +192,7 @@ static const struct tramp_frame alphanbsd_sigtramp_sc1 = {
     { 0x23de0010, 0xffffffff },		/* lda sp, 16(sp) */
     { 0x201f0127, 0xffffffff },		/* lda v0, 295 */
     { 0x00000083, 0xffffffff },		/* call_pal callsys */
-    { TRAMP_SENTINEL_INSN, -1 }
+    { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   alphanbsd_sigtramp_cache_init
 };
@@ -203,13 +203,13 @@ static const struct tramp_frame alphanbsd_sigtramp_si2 =
   SIGTRAMP_FRAME,
   4,
   {
-    { 0x221e0080, -1 },		/* lda	a0,128(sp) */
-    { 0x201f0134, -1 },		/* lda	v0,308 */
-    { 0x00000083, -1 },		/* callsys */
-    { 0x47e00410, -1 },		/* mov	v0,a0 */
-    { 0x201f0001, -1 },		/* lda	v0,1 */
-    { 0x00000083, -1 },		/* callsys */
-    { TRAMP_SENTINEL_INSN, -1 }
+    { 0x221e0080, ULONGEST_MAX },		/* lda	a0,128(sp) */
+    { 0x201f0134, ULONGEST_MAX },		/* lda	v0,308 */
+    { 0x00000083, ULONGEST_MAX },		/* callsys */
+    { 0x47e00410, ULONGEST_MAX },		/* mov	v0,a0 */
+    { 0x201f0001, ULONGEST_MAX },		/* lda	v0,1 */
+    { 0x00000083, ULONGEST_MAX },		/* callsys */
+    { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   alphanbsd_sigtramp_cache_init
 };
@@ -220,14 +220,14 @@ static const struct tramp_frame alphanbsd_sigtramp_si4 =
   4,
   {
     { 0x27ba0000, 0xffff0000 },
-    { 0x23bd0000, 0xffff0000 },	/* ldgp	gp,0(ra) */
-    { 0x221e0080, -1 },		/* lda	a0,128(sp) */
-    { 0x201f0134, -1 },		/* lda	v0,308 */
-    { 0x00000083, -1 },		/* callsys */
-    { 0x221fffff, -1 },		/* lda	a0,-1 */
-    { 0x201f0001, -1 },		/* lda	v0,1 */
-    { 0x00000083, -1 },		/* callsys */
-    { TRAMP_SENTINEL_INSN, -1 }
+    { 0x23bd0000, 0xffff0000 },			/* ldgp	gp,0(ra) */
+    { 0x221e0080, ULONGEST_MAX },		/* lda	a0,128(sp) */
+    { 0x201f0134, ULONGEST_MAX },		/* lda	v0,308 */
+    { 0x00000083, ULONGEST_MAX },		/* callsys */
+    { 0x221fffff, ULONGEST_MAX },		/* lda	a0,-1 */
+    { 0x201f0001, ULONGEST_MAX },		/* lda	v0,1 */
+    { 0x00000083, ULONGEST_MAX },		/* callsys */
+    { TRAMP_SENTINEL_INSN, ULONGEST_MAX }
   },
   alphanbsd_sigtramp_cache_init
 };

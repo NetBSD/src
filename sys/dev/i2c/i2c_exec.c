@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.10.18.1 2019/06/10 22:07:09 christos Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.10.18.2 2020/04/13 08:04:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,14 +36,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.10.18.1 2019/06/10 22:07:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.10.18.2 2020/04/13 08:04:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/module.h>
 #include <sys/event.h>
 #include <sys/conf.h>
+#include <sys/kernel.h>
 
 #define	_I2C_PRIVATE
 #include <dev/i2c/i2cvar.h>
@@ -52,6 +54,40 @@ static uint8_t	iic_smbus_crc8(uint16_t);
 static uint8_t	iic_smbus_pec(int, uint8_t *, uint8_t *);
 
 static int	i2cexec_modcmd(modcmd_t, void *);
+
+static inline int
+iic_op_flags(int flags)
+{
+
+	return flags | ((cold || shutting_down) ? I2C_F_POLL : 0);
+}
+
+/*
+ * iic_tag_init:
+ *
+ *	Perform some basic initialization of the i2c controller tag.
+ */
+void
+iic_tag_init(i2c_tag_t tag)
+{
+
+	memset(tag, 0, sizeof(*tag));
+	mutex_init(&tag->ic_bus_lock, MUTEX_DEFAULT, IPL_NONE);
+	LIST_INIT(&tag->ic_list);
+	LIST_INIT(&tag->ic_proc_list);
+}
+
+/*
+ * iic_tag_fini:
+ *
+ *	Teardown of the i2c controller tag.
+ */
+void
+iic_tag_fini(i2c_tag_t tag)
+{
+
+	mutex_destroy(&tag->ic_bus_lock);
+}
 
 /*
  * iic_acquire_bus:
@@ -62,7 +98,50 @@ int
 iic_acquire_bus(i2c_tag_t tag, int flags)
 {
 
-	return (*tag->ic_acquire_bus)(tag->ic_cookie, flags);
+#if 0	/* XXX Not quite ready for this yet. */
+	KASSERT(!cpu_intr_p());
+#endif
+
+	flags = iic_op_flags(flags);
+
+	if (flags & I2C_F_POLL) {
+		/*
+		 * Polling should only be used in rare and/or
+		 * extreme circumstances; most i2c clients
+		 * should be allowed to sleep.
+		 *
+		 * Really, the ONLY user of I2C_F_POLL should be
+		 * "when cold", i.e. during early autoconfiguration
+		 * when there is only proc0, and we might have to
+		 * read SEEPROMs, etc.  There should be no other
+		 * users interfering with our access of the i2c bus
+		 * in that case.
+		 */
+		if (mutex_tryenter(&tag->ic_bus_lock) == 0) {
+			return EBUSY;
+		}
+	} else {
+		/*
+		 * N.B. We implement this as a mutex that we hold across
+		 * across a series of requests beause we'd like to get the
+		 * priority boost if a higher-priority process wants the
+		 * i2c bus while we're asleep waiting for the controller
+		 * to perform the I/O.
+		 *
+		 * XXXJRT Disable preemption here?  We'd like to keep
+		 * the CPU while holding this resource, unless we release
+		 * it voluntarily (which should only happen while waiting
+		 * for a controller to complete I/O).
+		 */
+		mutex_enter(&tag->ic_bus_lock);
+	}
+
+	int error = 0;
+	if (tag->ic_acquire_bus) {
+		error = (*tag->ic_acquire_bus)(tag->ic_cookie, flags);
+	}
+
+	return error;
 }
 
 /*
@@ -74,7 +153,17 @@ void
 iic_release_bus(i2c_tag_t tag, int flags)
 {
 
-	(*tag->ic_release_bus)(tag->ic_cookie, flags);
+#if 0	/* XXX Not quite ready for this yet. */
+	KASSERT(!cpu_intr_p());
+#endif
+
+	flags = iic_op_flags(flags);
+
+	if (tag->ic_release_bus) {
+		(*tag->ic_release_bus)(tag->ic_cookie, flags);
+	}
+
+	mutex_exit(&tag->ic_bus_lock);
 }
 
 /*
@@ -95,6 +184,12 @@ iic_exec(i2c_tag_t tag, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 	uint8_t *buf = vbuf;
 	int error;
 	size_t len;
+
+#if 0	/* XXX Not quite ready for this yet. */
+	KASSERT(!cpu_intr_p());
+#endif
+
+	flags = iic_op_flags(flags);
 
 	if ((flags & I2C_F_PEC) && cmdlen > 0 && tag->ic_exec != NULL) {
 		uint8_t data[33]; /* XXX */

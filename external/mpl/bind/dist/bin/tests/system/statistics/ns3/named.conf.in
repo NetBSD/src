@@ -22,6 +22,8 @@ options {
 	dnssec-validation yes;
 	notify yes;
 	qname-minimization disabled;
+	zone-statistics yes;
+	glue-cache yes;
 };
 
 statistics-channels {
@@ -46,4 +48,10 @@ zone "example" {
 	type master;
 	allow-update { any; };
 	file "internal.db";
+};
+
+zone "a-slave" {
+	type slave;
+	file "slave.bk";
+	masters { 10.53.0.1; };
 };

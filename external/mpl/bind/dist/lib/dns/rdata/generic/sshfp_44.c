@@ -1,4 +1,4 @@
-/*	$NetBSD: sshfp_44.c,v 1.4.2.3 2020/04/08 14:07:08 martin Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.4.2.4 2020/04/13 08:02:57 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,7 @@
 static inline isc_result_t
 fromtext_sshfp(ARGS_FROMTEXT) {
 	isc_token_t token;
+	int len = -1;
 
 	REQUIRE(type == dns_rdatatype_sshfp);
 
@@ -50,9 +51,23 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
 
 	/*
+	 * Enforce known digest lengths.
+	 */
+	switch (token.value.as_ulong) {
+	case 1:
+		len = ISC_SHA1_DIGESTLENGTH;
+		break;
+	case 2:
+		len = ISC_SHA256_DIGESTLENGTH;
+		break;
+	default:
+		break;
+	}
+
+	/*
 	 * Digest.
 	 */
-	return (isc_hex_tobuffer(lexer, target, -2));
+	return (isc_hex_tobuffer(lexer, target, len));
 }
 
 static inline isc_result_t
@@ -84,6 +99,10 @@ totext_sshfp(ARGS_TOTEXT) {
 	snprintf(buf, sizeof(buf), "%u", n);
 	RETERR(str_totext(buf, target));
 
+	if (sr.length == 0U) {
+		return (ISC_R_SUCCESS);
+	}
+
 	/*
 	 * Digest.
 	 */
@@ -112,8 +131,14 @@ fromwire_sshfp(ARGS_FROMWIRE) {
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
-	if (sr.length < 4)
+	if (sr.length < 2) {
 		return (ISC_R_UNEXPECTEDEND);
+	}
+
+	if ((sr.base[1] == 1 && sr.length != ISC_SHA1_DIGESTLENGTH + 2) ||
+	    (sr.base[1] == 2 && sr.length != ISC_SHA256_DIGESTLENGTH + 2)) {
+		return (DNS_R_FORMERR);
+	}
 
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));

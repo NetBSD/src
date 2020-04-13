@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48.4.1 2019/06/10 22:06:20 christos Exp $
+#	$NetBSD: Makefile,v 1.48.4.2 2020/04/13 08:03:52 martin Exp $
 
 INCSDIR= /usr/include/i386
 
@@ -15,7 +15,7 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	joystick.h \
 	kcore.h \
 	limits.h lock.h \
-	math.h mcontext.h mutex.h mtrr.h multiboot.h \
+	math.h mcontext.h mutex.h mtrr.h multiboot.h multiboot2.h \
 	param.h pcb.h pio.h pmap.h proc.h profile.h psl.h \
 	pte.h ptrace.h \
 	reg.h rwlock.h \

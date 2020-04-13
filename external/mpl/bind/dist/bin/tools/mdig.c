@@ -1,4 +1,4 @@
-/*	$NetBSD: mdig.c,v 1.3.2.2 2019/06/10 22:04:25 christos Exp $	*/
+/*	$NetBSD: mdig.c,v 1.3.2.3 2020/04/13 08:02:53 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -98,7 +98,7 @@ static bool besteffort = true;
 static bool display_short_form = false;
 static bool display_headers = true;
 static bool display_comments = true;
-static bool display_rrcomments = true;
+static int display_rrcomments = 0;
 static bool display_ttlunits = true;
 static bool display_ttl = true;
 static bool display_class = true;
@@ -251,7 +251,7 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 		styleflags |= DNS_STYLEFLAG_COMMENT;
 	if (display_unknown_format)
 		styleflags |= DNS_STYLEFLAG_UNKNOWNFORMAT;
-	if (display_rrcomments)
+	if (display_rrcomments > 0)
 		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
 	if (display_ttlunits)
 		styleflags |= DNS_STYLEFLAG_TTL_UNITS;
@@ -269,7 +269,10 @@ recvresponse(isc_task_t *task, isc_event_t *event) {
 		styleflags |= DNS_STYLEFLAG_TTL;
 		styleflags |= DNS_STYLEFLAG_MULTILINE;
 		styleflags |= DNS_STYLEFLAG_COMMENT;
-		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
+		/* Turn on rrcomments unless explicitly disabled */
+		if (display_rrcomments >= 0) {
+			styleflags |= DNS_STYLEFLAG_RRCOMMENT;
+		}
 	}
 	if (display_multiline || (!display_ttl && !display_class))
 		result = dns_master_stylecreate(&style, styleflags,
@@ -902,7 +905,6 @@ save_opt(struct query *query, char *code, char *value) {
 
 static isc_result_t
 parse_netprefix(isc_sockaddr_t **sap, const char *value) {
-	isc_result_t result = ISC_R_SUCCESS;
 	isc_sockaddr_t *sa = NULL;
 	struct in_addr in4;
 	struct in6_addr in6;
@@ -916,6 +918,7 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 
 	slash = strchr(buf, '/');
 	if (slash != NULL) {
+		isc_result_t result;
 		*slash = '\0';
 		result = isc_parse_uint32(&netmask, slash + 1, 10);
 		if (result != ISC_R_SUCCESS) {
@@ -1111,7 +1114,7 @@ plus_option(char *option, struct query *query, bool global)
 			display_authority = state;
 			display_additional = state;
 			display_comments = state;
-			display_rrcomments = state;
+			display_rrcomments = state ? 1 : -1;
 			break;
 		case 'n': /* answer */
 			FULLCHECK("answer");
@@ -1360,7 +1363,7 @@ plus_option(char *option, struct query *query, bool global)
 		case 'r':
 			FULLCHECK("rrcomments");
 			GLOBAL();
-			display_rrcomments = state;
+			display_rrcomments = state ? 1 : -1;
 			break;
 		default:
 			goto invalid_option;
@@ -1378,7 +1381,7 @@ plus_option(char *option, struct query *query, bool global)
 				display_authority = false;
 				display_additional = false;
 				display_comments = false;
-				display_rrcomments = false;
+				display_rrcomments = -1;
 			}
 			break;
 		case 'p': /* split */

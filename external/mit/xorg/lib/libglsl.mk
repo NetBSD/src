@@ -1,4 +1,4 @@
-#	$NetBSD: libglsl.mk,v 1.2.16.1 2019/06/10 22:02:37 christos Exp $
+#	$NetBSD: libglsl.mk,v 1.2.16.2 2020/04/13 08:02:31 martin Exp $
 
 LIBGLSL_GENERATED_CXX_FILES = \
 	glsl_lexer.cpp \
@@ -8,7 +8,14 @@ LIBGLSL_GENERATED_CXX_FILES = \
 COPTS.vtn_glsl450.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=enum-conversion :}
 
 CPPFLAGS+=	-I${X11SRCDIR.Mesa}/src/compiler \
-		-I${X11SRCDIR.Mesa}/src/compiler/nir
+		-I${X11SRCDIR.Mesa}/../src/compiler \
+		-I${X11SRCDIR.Mesa}/src/compiler/nir \
+		-I${X11SRCDIR.Mesa}/../src/compiler/nir \
+		-I${X11SRCDIR.Mesa}/src/compiler/glsl \
+		-I${X11SRCDIR.Mesa}/../src/compiler/glsl \
+		-I${X11SRCDIR.Mesa}/src/compiler/glsl/glcpp \
+		-I${X11SRCDIR.Mesa}/../src/compiler/glsl/glcpp \
+		-I${X11SRCDIR.Mesa}/src/compiler/spirv
 
 LIBGLSL_FILES = \
 	ast_array_index.cpp \
@@ -21,28 +28,30 @@ LIBGLSL_FILES = \
 	builtin_variables.cpp \
 	generate_ir.cpp \
 	gl_nir_lower_atomics.c \
-	gl_nir_lower_samplers.c \
-	gl_nir_lower_samplers_as_deref.c \
 	gl_nir_link_atomics.c \
 	gl_nir_link_uniform_initializers.c \
 	gl_nir_link_uniforms.c \
 	gl_nir_link_xfb.c \
 	gl_nir_linker.c \
+	gl_nir_lower_bindless_images.c \
+	gl_nir_lower_buffers.c \
+	gl_nir_lower_samplers.c \
+	gl_nir_lower_samplers_as_deref.c \
 	glsl_parser_extras.cpp \
 	glsl_symbol_table.cpp \
 	glsl_to_nir.cpp \
 	hir_field_selection.cpp \
+	ir.cpp \
 	ir_array_refcount.cpp \
 	ir_basic_block.cpp \
 	ir_builder.cpp \
 	ir_clone.cpp \
 	ir_constant_expression.cpp \
-	ir.cpp \
 	ir_equals.cpp \
 	ir_expression_flattening.cpp \
+	ir_function.cpp \
 	ir_function_can_inline.cpp \
 	ir_function_detect_recursion.cpp \
-	ir_function.cpp \
 	ir_hierarchical_visitor.cpp \
 	ir_hv_accept.cpp \
 	ir_print_visitor.cpp \
@@ -166,9 +175,11 @@ NIR_FILES = \
 	nir_lower_alpha_test.c \
 	nir_lower_alu.c \
 	nir_lower_alu_to_scalar.c \
+	nir_lower_array_deref_of_vec.c \
 	nir_lower_atomics_to_ssbo.c \
-	nir_lower_bitmap.c \
 	nir_lower_bit_size.c \
+	nir_lower_bitmap.c \
+	nir_lower_bool_to_int32.c \
 	nir_lower_clamp_color_outputs.c \
 	nir_lower_clip.c \
 	nir_lower_clip_cull_distance_arrays.c \
@@ -177,15 +188,16 @@ NIR_FILES = \
 	nir_lower_drawpixels.c \
 	nir_lower_global_vars_to_local.c \
 	nir_lower_gs_intrinsics.c \
-	nir_lower_load_const_to_scalar.c \
-	nir_lower_locals_to_regs.c \
 	nir_lower_idiv.c \
 	nir_lower_indirect_derefs.c \
 	nir_lower_int64.c \
 	nir_lower_io.c \
 	nir_lower_io_arrays_to_elements.c \
-	nir_lower_io_to_temporaries.c \
 	nir_lower_io_to_scalar.c \
+	nir_lower_io_to_vector.c \
+	nir_lower_io_to_temporaries.c \
+	nir_lower_load_const_to_scalar.c \
+	nir_lower_locals_to_regs.c \
 	nir_lower_packing.c \
 	nir_lower_passthrough_edgeflags.c \
 	nir_lower_patch_vertices.c \
@@ -197,8 +209,9 @@ NIR_FILES = \
 	nir_lower_tex.c \
 	nir_lower_to_source_mods.c \
 	nir_lower_two_sided_color.c \
-	nir_lower_vars_to_ssa.c \
+	nir_lower_uniforms_to_ubo.c \
 	nir_lower_var_copies.c \
+	nir_lower_vars_to_ssa.c \
 	nir_lower_vec_to_movs.c \
 	nir_lower_wpos_center.c \
 	nir_lower_wpos_ytransform.c \
@@ -206,6 +219,8 @@ NIR_FILES = \
 	nir_move_load_const.c \
 	nir_move_vec_src_uses_to_dest.c \
 	nir_normalize_cubemap_coords.c \
+	nir_opt_combine_stores.c \
+	nir_opt_comparison_pre.c \
 	nir_opt_conditional_discard.c \
 	nir_opt_constant_folding.c \
 	nir_opt_copy_prop_vars.c \
@@ -216,11 +231,11 @@ NIR_FILES = \
 	nir_opt_dead_write_vars.c \
 	nir_opt_find_array_copies.c \
 	nir_opt_gcm.c \
-	nir_opt_global_to_local.c \
+	nir_opt_idiv_const.c \
 	nir_opt_if.c \
 	nir_opt_intrinsics.c \
-	nir_opt_loop_unroll.c \
 	nir_opt_large_constants.c \
+	nir_opt_loop_unroll.c \
 	nir_opt_move_comparisons.c \
 	nir_opt_move_load_ubo.c \
 	nir_opt_peephole_select.c \
@@ -238,6 +253,7 @@ NIR_FILES = \
 	nir_split_per_member_structs.c \
 	nir_split_var_copies.c \
 	nir_split_vars.c \
+	nir_strip.c \
 	nir_sweep.c \
 	nir_to_lcssa.c \
 	nir_validate.c \
@@ -254,15 +270,20 @@ SPIRV_FILES = \
 	vtn_amd.c \
 	vtn_cfg.c \
 	vtn_glsl450.c \
+	vtn_opencl.c \
 	vtn_subgroup.c \
 	vtn_variables.c
 
 
 .PATH:	${X11SRCDIR.Mesa}/src/compiler
 .PATH:	${X11SRCDIR.Mesa}/src/compiler/glsl
+.PATH:	${X11SRCDIR.Mesa}/../src/compiler/glsl
 .PATH:	${X11SRCDIR.Mesa}/src/compiler/glsl/glcpp
+.PATH:	${X11SRCDIR.Mesa}/../src/compiler/glsl/glcpp
 .PATH:	${X11SRCDIR.Mesa}/src/compiler/nir
+.PATH:	${X11SRCDIR.Mesa}/../src/compiler/nir
 .PATH:	${X11SRCDIR.Mesa}/src/compiler/spirv
+.PATH:	${X11SRCDIR.Mesa}/../src/compiler/spirv
 
 SRCS+=	${LIBGLSL_GENERATED_CXX_FILES} \
 	${LIBGLSL_FILES} \

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.53.56.1 2019/06/10 22:07:31 christos Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.53.56.2 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.53.56.1 2019/06/10 22:07:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.53.56.2 2020/04/13 08:04:47 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -360,7 +360,7 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 		       RF_SectorCount_t nsect, void *bf,
 		       RF_StripeNum_t parityStripeID,
 		       RF_ReconUnitNum_t which_ru,
-		       int (*wakeF) (void *, int), void *arg,
+		       void (*wakeF) (void *, int), void *arg,
 		       RF_AccTraceEntry_t *tracerec, RF_Raid_t *raidPtr,
 		       RF_DiskQueueDataFlags_t flags, void *kb_proc,
 		       int waitflag)

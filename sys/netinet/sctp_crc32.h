@@ -1,5 +1,5 @@
 /*	$KAME: sctp_crc32.h,v 1.5 2004/08/17 04:06:16 itojun Exp $	*/
-/*	$NetBSD: sctp_crc32.h,v 1.1 2015/10/13 21:28:35 rjs Exp $ */
+/*	$NetBSD: sctp_crc32.h,v 1.1.22.1 2020/04/13 08:05:16 martin Exp $ */
 
 #ifndef __SCTP_CRC32C_H__
 #define __SCTP_CRC32C_H__
@@ -38,12 +38,10 @@
 
 #include <sys/types.h>
 
-#ifndef SCTP_USE_ADLER32
 #if defined(_KERNEL)
 u_int32_t update_crc32(u_int32_t, unsigned char *, unsigned int);
 
 u_int32_t sctp_csum_finalize(u_int32_t);
 
 #endif /* _KERNEL */
-#endif /* !SCTP_USE_ADLER32 */
 #endif /* __SCTP_CRC32C_H__ */

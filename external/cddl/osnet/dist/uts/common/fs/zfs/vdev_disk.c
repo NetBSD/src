@@ -35,7 +35,6 @@
 #include <sys/sunldi.h>
 #include <sys/fm/fs/zfs.h>
 #include <sys/disk.h>
-#include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/workqueue.h>
 
@@ -147,10 +146,12 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	spa_t *spa = vd->vdev_spa;
 	vdev_disk_t *dvd;
 	vnode_t *vp;
-	struct dkwedge_info dkw;
-	struct disk *pdk;
 	int error, cmd;
-	struct partinfo pinfo;
+	uint64_t numsecs;
+	unsigned secsize;
+	struct disk *pdk;
+	struct dkwedge_info dkw;
+	struct disk_sectoralign dsa;
 
 	/*
 	 * We must have a pathname, and it must be absolute.
@@ -219,6 +220,20 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 		return (SET_ERROR(EINVAL));
 	}
 
+	pdk = NULL;
+	if (getdiskinfo(vp, &dkw) == 0)
+		pdk = disk_find(dkw.dkw_parent);
+
+	/* XXXNETBSD Once tls-maxphys gets merged this block becomes:
+		dvd->vd_maxphys = (pdk ? disk_maxphys(pdk) : MACHINE_MAXPHYS);
+	*/
+	{
+		struct buf buf = { .b_bcount = MAXPHYS };
+		if (pdk && pdk->dk_driver && pdk->dk_driver->d_minphys)
+			(*pdk->dk_driver->d_minphys)(&buf);
+		dvd->vd_maxphys = buf.b_bcount;
+	}
+
 	/*
 	 * XXXNETBSD Compare the devid to the stored value.
 	 */
@@ -236,32 +251,38 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 	dvd->vd_vp = vp;
 
 skip_open:
-	/*
-	 * Determine the actual size of the device.
-	 * Try wedge info first as it supports larger disks.
-	 */
-	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
-	if (error == 0) {
-		pdk = disk_find(dkw.dkw_parent);
-		if (pdk) {
-			pinfo.pi_secsize = (1 << pdk->dk_byteshift);
-			pinfo.pi_size = dkw.dkw_size;
-			pinfo.pi_offset = dkw.dkw_offset;
-		} else	
-			error = ENODEV;
-	}
-	if (error)
-		error = VOP_IOCTL(vp, DIOCGPARTINFO, &pinfo, FREAD, kcred);
+	error = getdisksize(vp, &numsecs, &secsize);
 	if (error != 0) {
 		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
 		return (SET_ERROR(error));
 	}
-	*psize = pinfo.pi_size * pinfo.pi_secsize;
+
+	*psize = numsecs * secsize;
 	*max_psize = *psize;
 
-	*ashift = highbit(MAX(pinfo.pi_secsize, SPA_MINBLOCKSIZE)) - 1;
-	*pashift = *ashift;
-	vd->vdev_wholedisk = (pinfo.pi_offset == 0); /* XXXNETBSD */
+	*ashift = highbit(MAX(secsize, SPA_MINBLOCKSIZE)) - 1;
+
+	/*
+	 * Try to determine whether the disk has a preferred physical
+	 * sector size even if it can emulate a smaller logical sector
+	 * size with r/m/w cycles, e.g. a disk with 4096-byte sectors
+	 * that for compatibility claims to support 512-byte ones.
+	 */
+	if (VOP_IOCTL(vp, DIOCGSECTORALIGN, &dsa, FREAD, NOCRED) == 0) {
+		*pashift = highbit(dsa.dsa_alignment * secsize) - 1;
+		if (dsa.dsa_firstaligned % dsa.dsa_alignment)
+			printf("ZFS WARNING: vdev %s: sectors are misaligned"
+			    " (alignment=%"PRIu32", firstaligned=%"PRIu32")\n",
+			    vd->vdev_path,
+			    dsa.dsa_alignment, dsa.dsa_firstaligned);
+	} else {
+		*pashift = *ashift;
+	}
+
+	vd->vdev_wholedisk = 0;
+	if (getdiskinfo(vp, &dkw) != 0 &&
+	    dkw.dkw_offset == 0 && dkw.dkw_size == numsecs)
+		vd->vdev_wholedisk = 1,
 
 	/*
 	 * Clear the nowritecache bit, so that on a vdev_reopen() we will
@@ -421,6 +442,7 @@ vdev_disk_io_start(zio_t *zio)
 		zio_interrupt(zio);
 		return;
 	}
+	ASSERT3U(dvd->vd_maxphys, >, 0);
 	vp = dvd->vd_vp;
 #endif
 
@@ -473,7 +495,7 @@ vdev_disk_io_start(zio_t *zio)
 		mutex_exit(vp->v_interlock);
 	}
 
-	if (bp->b_bcount <= MAXPHYS) {
+	if (bp->b_bcount <= dvd->vd_maxphys) {
 		/* We can do this I/O in one pass. */
 		(void)VOP_STRATEGY(vp, bp);
 	} else {
@@ -484,7 +506,7 @@ vdev_disk_io_start(zio_t *zio)
 		resid = zio->io_size;
 		off = 0;
 		while (resid != 0) {
-			size = uimin(resid, MAXPHYS);
+			size = uimin(resid, dvd->vd_maxphys);
 			nbp = getiobuf(vp, true);
 			nbp->b_blkno = btodb(zio->io_offset + off);
 			/* Below call increments v_numoutput. */

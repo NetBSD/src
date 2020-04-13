@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.h,v 1.6 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_engine.h,v 1.6.164.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #define _RF__RF_ENGINE_H_
 
 int rf_ConfigureEngine(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
-int rf_FinishNode(RF_DagNode_t *, int);	/* return finished node to engine */
+void rf_FinishNode(RF_DagNode_t *, int);/* return finished node to engine */
 int rf_DispatchDAG(RF_DagHeader_t *,
 		   void (*cbFunc) (void *), void *);	/* execute dag */
 

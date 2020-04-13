@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.26 2017/04/10 15:04:32 dholland Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.26.14.1 2020/04/13 08:04:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.26 2017/04/10 15:04:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.26.14.1 2020/04/13 08:04:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -293,11 +293,13 @@ linux32_sys_get_robust_list(struct lwp *l,
     const struct linux32_sys_get_robust_list_args *uap, register_t *retval)
 {
 	/* {
+		syscallarg(linux32_pid_t) pid;
 		syscallarg(linux32_robust_list_headpp_t) head;
 		syscallarg(linux32_sizep_t) len;
 	} */
 	struct linux_sys_get_robust_list_args ua;
 
+	NETBSD32TOX_UAP(pid, int);
 	NETBSD32TOP_UAP(head, struct robust_list_head *);
 	NETBSD32TOP_UAP(len, size_t *);
 	return linux_sys_get_robust_list(l, &ua, retval);

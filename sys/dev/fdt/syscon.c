@@ -1,4 +1,4 @@
-/* $NetBSD: syscon.c,v 1.3.4.2 2019/06/10 22:07:08 christos Exp $ */
+/* $NetBSD: syscon.c,v 1.3.4.3 2020/04/13 08:04:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscon.c,v 1.3.4.2 2019/06/10 22:07:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscon.c,v 1.3.4.3 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,6 +113,7 @@ syscon_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
+	int child;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -138,4 +139,8 @@ syscon_attach(device_t parent, device_t self, void *aux)
 	fdtbus_register_syscon(self, phandle, &sc->sc_syscon);
 
 	fdt_add_bus(self, phandle, faa);
+
+	child = of_find_firstchild_byname(phandle, "clocks");
+	if (child > 0)
+		fdt_add_bus(self, child, faa);
 }

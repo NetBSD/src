@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.18 2013/07/17 15:42:03 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.18.28.1 2020/04/13 08:03:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse.c,v 1.18 2013/07/17 15:42:03 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.18.28.1 2020/04/13 08:03:20 martin Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -591,7 +591,7 @@ pbranch_match(const struct parser *p, const struct match *im,
 			match_copy(om, &tmpm);
 			match_cleanup(&tmpm);
 			nmatch++;
-			dbg_warnx("%s: branch %s ok", __func__, nextp->p_name); 
+			dbg_warnx("%s: branch %s ok", __func__, nextp->p_name);
 			if (pb->pb_match_first)
 				break;
 		} else if (rc == 1) {
@@ -600,7 +600,7 @@ pbranch_match(const struct parser *p, const struct match *im,
 				break;
 		} else {
 			dbg_warnx("%s: fail branch %s", __func__,
-			    nextp->p_name); 
+			    nextp->p_name);
 		}
 	}
 	switch (nmatch) {
@@ -608,7 +608,7 @@ pbranch_match(const struct parser *p, const struct match *im,
 		errno = ENOENT;
 		return (nforbid == 0) ? -1 : 1;
 	case 1:
-		dbg_warnx("%s: branch ok", __func__); 
+		dbg_warnx("%s: branch ok", __func__);
 		return 0;
 	default:
 		match_cleanup(om);

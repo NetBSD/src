@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.h,v 1.12 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_paritylog.h,v 1.12.56.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -49,8 +49,7 @@ struct RF_CommonLogData_s {
 	rf_declare_mutex2(mutex);	/* protects cnt */
 	int     cnt;			/* when 0, time to call wakeFunc */
 	RF_Raid_t *raidPtr;
-/*   int                    (*wakeFunc)(struct buf *); */
-	int     (*wakeFunc) (RF_DagNode_t * node, int status);
+	void  (*wakeFunc) (void *, int);
 	void   *wakeArg;
 	RF_AccTraceEntry_t *tracerec;
 	RF_Etimer_t startTime;
@@ -166,7 +165,7 @@ struct RF_RegionInfo_s {
 RF_ParityLogData_t *
 rf_CreateParityLogData(RF_ParityRecordType_t operation,
     RF_PhysDiskAddr_t * pda, void *bufPtr, RF_Raid_t * raidPtr,
-    int (*wakeFunc) (RF_DagNode_t * node, int status),
+    void (*wakeFunc) (void *, int),
     void *wakeArg, RF_AccTraceEntry_t * tracerec,
     RF_Etimer_t startTime);
 	RF_ParityLogData_t *rf_SearchAndDequeueParityLogData(RF_Raid_t * raidPtr,

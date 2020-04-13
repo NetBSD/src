@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.4.1 2019/06/10 21:58:05 christos Exp $
+#	$NetBSD: Makefile,v 1.3.4.2 2020/04/13 08:01:56 martin Exp $
 
 # install multilib c++config.h files
 
@@ -40,7 +40,6 @@ c++config.h: Makefile mkcxxconfig_h.sh
 CLEANFILES+=	c++config.h
 
 INCS+=			c++config.h
-#INCSNAME_c++config.h=	cxxconfig.h
 INCSDIR=		/usr/include/g++/bits
 
 .include <bsd.subdir.mk>

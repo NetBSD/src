@@ -1,10 +1,10 @@
-/*	$NetBSD: bconfig.c,v 1.1.1.7 2018/02/06 01:53:14 christos Exp $	*/
+/*	$NetBSD: bconfig.c,v 1.1.1.7.4.1 2020/04/13 07:56:16 martin Exp $	*/
 
 /* bconfig.c - the config backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2017 The OpenLDAP Foundation.
+ * Copyright 2005-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bconfig.c,v 1.1.1.7 2018/02/06 01:53:14 christos Exp $");
+__RCSID("$NetBSD: bconfig.c,v 1.1.1.7.4.1 2020/04/13 07:56:16 martin Exp $");
 
 #include "portable.h"
 
@@ -199,7 +199,7 @@ enum {
 	CFG_ACL_ADD,
 	CFG_SYNC_SUBENTRY,
 	CFG_LTHREADS,
-
+	CFG_TLS_ECNAME,
 	CFG_LAST
 };
 
@@ -743,6 +743,14 @@ static ConfigTable config_back_cf_table[] = {
 #endif
 		"( OLcfgGlAt:77 NAME 'olcTLSDHParamFile' "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "TLSECName", NULL, 2, 2, 0,
+#ifdef HAVE_TLS
+		CFG_TLS_ECNAME|ARG_STRING|ARG_MAGIC, &config_tls_option,
+#else
+		ARG_IGNORED, NULL,
+#endif
+		"( OLcfgGlAt:96 NAME 'olcTLSECName' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "TLSProtocolMin",	NULL, 2, 2, 0,
 #ifdef HAVE_TLS
 		CFG_TLS_PROTOCOL_MIN|ARG_STRING|ARG_MAGIC, &config_tls_config,
@@ -824,7 +832,7 @@ static ConfigOCs cf_ocs[] = {
 		 "olcThreads $ olcTimeLimit $ olcTLSCACertificateFile $ "
 		 "olcTLSCACertificatePath $ olcTLSCertificateFile $ "
 		 "olcTLSCertificateKeyFile $ olcTLSCipherSuite $ olcTLSCRLCheck $ "
-		 "olcTLSRandFile $ olcTLSVerifyClient $ olcTLSDHParamFile $ "
+		 "olcTLSRandFile $ olcTLSVerifyClient $ olcTLSDHParamFile $ olcTLSECName $ "
 		 "olcTLSCRLFile $ olcTLSProtocolMin $ olcToolThreads $ olcWriteTimeout $ "
 		 "olcObjectIdentifier $ olcAttributeTypes $ olcObjectClasses $ "
 		 "olcDitContentRules $ olcLdapSyntaxes ) )", Cft_Global },
@@ -3829,6 +3837,7 @@ config_tls_option(ConfigArgs *c) {
 	case CFG_TLS_CA_PATH:	flag = LDAP_OPT_X_TLS_CACERTDIR;	break;
 	case CFG_TLS_CA_FILE:	flag = LDAP_OPT_X_TLS_CACERTFILE;	break;
 	case CFG_TLS_DH_FILE:	flag = LDAP_OPT_X_TLS_DHFILE;	break;
+	case CFG_TLS_ECNAME:	flag = LDAP_OPT_X_TLS_ECNAME;	break;
 #ifdef HAVE_GNUTLS
 	case CFG_TLS_CRL_FILE:	flag = LDAP_OPT_X_TLS_CRLFILE;	break;
 #endif
@@ -4614,7 +4623,11 @@ config_renumber_one( Operation *op, SlapReply *rs, CfEntryInfo *parent,
 	/* Do the equivalent of ModRDN */
 	/* Replace DN / NDN */
 	newrdn.bv_len = ptr1 - newrdn.bv_val;
-	rdnNormalize( 0, NULL, NULL, &newrdn, &nnewrdn, NULL );
+	rc = rdnNormalize( 0, NULL, NULL, &newrdn, &nnewrdn, NULL );
+	if ( rc ) {
+		free( newrdn.bv_val );
+		return LDAP_NAMING_VIOLATION;
+	}
 	rc = config_rename_one( op, rs, e, parent, a, &newrdn, &nnewrdn, use_ldif );
 
 	free( nnewrdn.bv_val );

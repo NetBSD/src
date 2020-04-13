@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.73 2017/02/26 10:49:25 maya Exp $ */
+/* $NetBSD: pnpbios.c,v 1.73.14.1 2020/04/13 08:03:53 martin Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.73 2017/02/26 10:49:25 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.73.14.1 2020/04/13 08:03:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,7 @@ pnpbios_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": no vm for mapping\n");
 		return;
 	}
-	pnpbios_scratchbuf = malloc(PNPBIOS_BUFSIZE, M_DEVBUF, M_NOWAIT);
+	pnpbios_scratchbuf = malloc(PNPBIOS_BUFSIZE, M_DEVBUF, M_WAITOK);
 
 	setsegment(&gdtstore[GPNPBIOSCODE_SEL].sd, codeva, 0xffff,
 		   SDT_MEMERA, SEL_KPL, 0, 0);
@@ -393,11 +393,7 @@ pnpbios_enumerate(struct pnpbios_softc *sc)
 		return;
 	}
 
-	buf = malloc(size, M_DEVBUF, M_NOWAIT);
-	if (buf == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate node buffer\n");
-		return;
-	}
+	buf = malloc(size, M_DEVBUF, M_WAITOK);
 
 	/* 
 	 * Loop through the list of indices getting data and match/attaching
@@ -965,7 +961,7 @@ pnp_scan(const uint8_t **bufp, size_t maxlen,
 				const struct pnpansiidentres *res = start;
 				if (in_depends)
 					aprint_normal("ID in dep?\n");
-				idstr = malloc(len + 1, M_DEVBUF, M_NOWAIT);
+				idstr = malloc(len + 1, M_DEVBUF, M_WAITOK);
 				for (i = 0; i < len; i++)
 					idstr[i] = res->r_id[i];
 				idstr[len] = '\0';
@@ -1086,7 +1082,7 @@ pnp_scan(const uint8_t **bufp, size_t maxlen,
 				last = r;
 				do {
 					new = malloc(sizeof(*new),
-						     M_DEVBUF, M_NOWAIT);
+						     M_DEVBUF, M_WAITOK);
 
 					rv = pnp_scan(&p, maxlen - (p - *bufp),
 						       new, 1);
@@ -1133,7 +1129,7 @@ pnp_newirq(struct pnpresources *r, const void *vres, size_t len)
 		DPRINTF(("\ttag irq zeroed\n"));
 		return (0);
 	}
-	irq = malloc(sizeof(struct pnp_irq), M_DEVBUF, M_NOWAIT);
+	irq = malloc(sizeof(struct pnp_irq), M_DEVBUF, M_WAITOK);
 	irq->mask = res->r_mask;
 	if (len > 2)
 		irq->flags = res->r_info;
@@ -1158,7 +1154,7 @@ pnp_newdma(struct pnpresources *r, const void *vres, size_t len)
 		DPRINTF(("\ttag DMA zeroed\n"));
 		return (0);
 	}
-	dma = malloc(sizeof(struct pnp_dma), M_DEVBUF, M_NOWAIT);
+	dma = malloc(sizeof(struct pnp_dma), M_DEVBUF, M_WAITOK);
 	dma->mask = res->r_mask;
 	dma->flags = res->r_flags;
 	SIMPLEQ_INSERT_TAIL(&r->dma, dma, next);
@@ -1180,7 +1176,7 @@ pnp_newioport(struct pnpresources *r, const void *vres, size_t len)
 		DPRINTF(("\ttag io zeroed\n"));
 		return (0);
 	}
-	io = malloc(sizeof(struct pnp_io), M_DEVBUF, M_NOWAIT);
+	io = malloc(sizeof(struct pnp_io), M_DEVBUF, M_WAITOK);
 	io->flags = res->r_flags;
 	io->minbase = res->r_minbase;
 	io->maxbase = res->r_maxbase;
@@ -1208,7 +1204,7 @@ pnp_newfixedioport(struct pnpresources *r, const void *vres,
 		DPRINTF(("\ttag fixedio zeroed\n"));
 		return (0);
 	}
-	io = malloc(sizeof(struct pnp_io), M_DEVBUF, M_NOWAIT);
+	io = malloc(sizeof(struct pnp_io), M_DEVBUF, M_WAITOK);
 	io->flags = 1; /* 10 bit decoding */
 	io->minbase = io->maxbase = res->r_base;
 	io->align = 1;
@@ -1229,7 +1225,7 @@ pnp_compatid(struct pnpresources *r, const void *vres, size_t len)
 	struct pnp_compatid *id;
 
 	res = vres;
-	id = malloc(sizeof(*id), M_DEVBUF, M_NOWAIT);
+	id = malloc(sizeof(*id), M_DEVBUF, M_WAITOK);
 	pnpbios_id_to_string(res->r_id, id->idstr);
 	id->next = r->compatids;
 	r->compatids = id;

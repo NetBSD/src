@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.41.20.1 2019/06/10 22:06:26 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.41.20.2 2020/04/13 08:03:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.41.20.1 2019/06/10 22:06:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.41.20.2 2020/04/13 08:03:57 martin Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -1493,6 +1493,7 @@ opcode_fpu(dis_buffer_t *dbuf, u_short opc)
 			return;
 
 		}
+		/* FALLTHROUGH */
 	/* cpBcc */
 	case 2:
 		if (BITFIELD(opc,5,0) == 0 && *(dbuf->val + 1) == 0) {
@@ -2691,7 +2692,7 @@ get_modregstr_mit(dis_buffer_t *dbuf, int bit, int mod, int sz, int dd)
 			    bd == 3 ? SIZE_LONG :
 			    SIZE_BYTE);
 			if (od && !ISBITSET(ext,6) && !ISBITSET(ext,2))
-				/* Pre-indexed and not supressing index */
+				/* Pre-indexed and not suppressing index */
 				addchar(',');
 			else if (od && ISBITSET(ext,2)) {
 				/* Post-indexed */

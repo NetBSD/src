@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.63.2.2 2020/04/08 14:08:14 martin Exp $ */
+/*	$NetBSD: genfb.c,v 1.63.2.3 2020/04/13 08:04:52 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.63.2.2 2020/04/08 14:08:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.63.2.3 2020/04/13 08:04:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,6 +261,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
 		if (sc->sc_want_clear == false)
 			memcpy(sc->sc_shadowfb, sc->sc_fbaddr, sc->sc_fbsize);
+		aprint_verbose_dev(sc->sc_dev,
+		    "shadow framebuffer enabled, size %zu KB\n",
+		    sc->sc_fbsize >> 10);
 	}
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
@@ -538,6 +541,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	struct genfb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 	int wantcols;
+	bool is_bgr;
 
 	ri->ri_depth = sc->sc_depth;
 	ri->ri_width = sc->sc_width;
@@ -557,16 +561,15 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 		scr->scr_flags |= VCONS_DONT_READ;
 	}
 
-	if (existing && sc->sc_want_clear) {
+	if (existing && sc->sc_want_clear)
 		ri->ri_flg |= RI_CLEAR;
-	}
 
-	if (ri->ri_depth == 32 || ri->ri_depth == 24) {
-		bool is_bgr = false;
+	switch (ri->ri_depth) {
+	case 32:
+	case 24:
+		ri->ri_flg |= RI_ENABLE_ALPHA;
 
-		if (ri->ri_depth == 32) {
-			ri->ri_flg |= RI_ENABLE_ALPHA;
-		}
+		is_bgr = false;
 		prop_dictionary_get_bool(device_properties(sc->sc_dev),
 		    "is_bgr", &is_bgr);
 		if (is_bgr) {
@@ -586,10 +589,25 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 			ri->ri_gpos = 8;
 			ri->ri_bpos = 0;
 		}
-	}
+		break;
 
-	if (ri->ri_depth == 8 && sc->sc_cmcb != NULL)
-		ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
+	case 16:
+	case 15:
+		ri->ri_flg |= RI_ENABLE_ALPHA;
+		break;
+
+	case 8:
+		if (sc->sc_cmcb != NULL)
+			ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
+		break;
+
+	case 2:
+		ri->ri_flg |= RI_ENABLE_ALPHA;
+		break;
+
+	default:
+		break;
+	}
 
 	wantcols = genfb_calc_cols(sc);
 

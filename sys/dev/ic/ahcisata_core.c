@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.60.4.2 2020/04/08 14:08:05 martin Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.60.4.3 2020/04/13 08:04:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.60.4.2 2020/04/08 14:08:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.60.4.3 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -770,6 +770,7 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags, int slot)
 	else
 		timeout = timeout / 10;
 
+	AHCI_CMDTBL_SYNC(sc, achp, slot, BUS_DMASYNC_PREWRITE);
 	AHCI_CMDH_SYNC(sc, achp, slot,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	/* start command */
@@ -860,6 +861,7 @@ again:
 	cmd_tbl = achp->ahcic_cmd_tbl[c_slot];
 	cmd_h->cmdh_flags = htole16(AHCI_CMDH_F_RST | AHCI_CMDH_F_CBSY |
 	    RHD_FISLEN / 4 | (drive << AHCI_CMDH_F_PMP_SHIFT));
+	cmd_h->cmdh_prdtl = 0;
 	cmd_h->cmdh_prdbc = 0;
 	memset(cmd_tbl->cmdt_cfis, 0, 64);
 	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
@@ -1281,6 +1283,7 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 {
 	struct ata_command *ata_c = &xfer->c_ata_c;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
+	struct ahci_softc *sc = AHCI_CH2SC(chp);
 
 	AHCIDEBUG_PRINT(("ahci_cmd_complete port %d CMD 0x%x CI 0x%x\n",
 	    chp->ch_channel,
@@ -1302,8 +1305,10 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 		ata_c->flags |= AT_ERROR;
 	}
 
-	if (ata_c->flags & AT_READREG)
+	if (ata_c->flags & AT_READREG) {
+		AHCI_RFIS_SYNC(sc, achp, BUS_DMASYNC_POSTREAD);
 		satafis_rdh_cmd_readreg(ata_c, achp->ahcic_rfis->rfis_rfis);
+	}
 
 	ahci_cmd_done(chp, xfer);
 

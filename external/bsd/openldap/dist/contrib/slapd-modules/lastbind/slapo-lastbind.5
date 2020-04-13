@@ -56,6 +56,17 @@ old, it will not be changed.
 If this configuration option is omitted, the
 .B authTimestamp
 attribute is updated on each successful bind operation.
+.TP
+.B lastbind_forward_updates
+Specify that updates of the authTimestamp attribute
+on a consumer should be forwarded
+to a master instead of being written directly into the consumer's local
+database. This setting is only useful on a replication consumer, and
+also requires the
+.B updateref
+setting and
+.B chain
+overlay to be appropriately configured.
 
 .SH EXAMPLE
 This example configures the

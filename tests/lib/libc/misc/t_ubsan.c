@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ubsan.c,v 1.5.2.2 2019/06/10 22:10:04 christos Exp $	*/
+/*	$NetBSD: t_ubsan.c,v 1.5.2.3 2020/04/13 08:05:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2018\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ubsan.c,v 1.5.2.2 2019/06/10 22:10:04 christos Exp $");
+__RCSID("$NetBSD: t_ubsan.c,v 1.5.2.3 2020/04/13 08:05:26 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -602,7 +602,7 @@ test_shift_out_of_bounds_signednessbit(void)
 {
 	volatile int32_t a = atoi("1");
 
-	raise((a << 31) ? SIGSEGV : SIGBUS);
+	raise((a << 31) != 0 ? SIGSEGV : SIGBUS);
 }
 
 UBSAN_TC_BODY(shift_out_of_bounds_signednessbit, tc)
@@ -626,7 +626,7 @@ test_shift_out_of_bounds_signedoverflow(void)
 	volatile int32_t b = atoi("30");
 	a <<= b;
 
-	raise((a << 10) ? SIGSEGV : SIGBUS);
+	raise((a << 10) != 0 ? SIGSEGV : SIGBUS);
 }
 
 UBSAN_TC_BODY(shift_out_of_bounds_signedoverflow, tc)
@@ -648,7 +648,7 @@ test_shift_out_of_bounds_negativeexponent(void)
 	volatile int32_t a = atoi("1");
 	volatile int32_t b = atoi("-10");
 
-	raise((a << b) ? SIGSEGV : SIGBUS);
+	raise((a << b) != 0 ? SIGSEGV : SIGBUS);
 }
 
 UBSAN_TC_BODY(shift_out_of_bounds_negativeexponent, tc)
@@ -670,7 +670,7 @@ test_shift_out_of_bounds_toolargeexponent(void)
 	volatile int32_t a = atoi("1");
 	volatile int32_t b = atoi("40");
 
-	raise((a << b) ? SIGSEGV : SIGBUS);
+	raise((a << b) != 0 ? SIGSEGV : SIGBUS);
 }
 
 UBSAN_TC_BODY(shift_out_of_bounds_toolargeexponent, tc)

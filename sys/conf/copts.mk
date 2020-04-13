@@ -1,11 +1,11 @@
-#	$NetBSD: copts.mk,v 1.3.4.3 2020/04/08 14:08:01 martin Exp $
+#	$NetBSD: copts.mk,v 1.3.4.4 2020/04/13 08:04:17 martin Exp $
 
 # MI per-file compiler options required.
 
 .ifndef _SYS_CONF_COPTS_MK_
 _SYS_CONF_COPTS_MK_=1
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.zlib.c+=		-Wno-error=implicit-fallthrough
 COPTS.pf.c+=		-Wno-error=implicit-fallthrough
 COPTS.radeon_cs.c+=	-Wno-error=implicit-fallthrough

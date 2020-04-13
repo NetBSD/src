@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2018/05/28 23:47:40 chs Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2020/04/13 07:56:39 martin Exp $
 
 .include <bsd.init.mk>
+
+USE_SHLIBDIR=	yes
 
 .PATH: ${.CURDIR}/../../dist/common/zfs
 .PATH: ${.CURDIR}/../../dist/common/fs/zfs

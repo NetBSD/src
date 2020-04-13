@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.25 2018/06/11 17:45:50 kamil Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.25.2.1 2020/04/13 08:03:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,14 +31,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.25 2018/06/11 17:45:50 kamil Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.25.2.1 2020/04/13 08:03:20 martin Exp $");
 #endif /* not lint */
 
-#include <sys/param.h> 
-#include <sys/ioctl.h> 
+#include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <net/if.h> 
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 
@@ -219,7 +219,6 @@ in_addr_flags(struct ifaddrs *ifa, int flags)
 	if (prog_ioctl(s, SIOCGIFAFLAG_IN, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGIFAFLAG_IN");
 	return ifr.ifr_addrflags & flags ? true : false;
-	return false;
 }
 #endif
 

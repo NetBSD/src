@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4.42.1 2019/06/10 21:51:36 christos Exp $
+# $NetBSD: Makefile.inc,v 1.4.42.2 2020/04/13 07:56:29 martin Exp $
 
 DIST=	${NETBSDSRCDIR}/external/bsd/pkg_install/dist
 
@@ -15,7 +15,7 @@ CWARNFLAGS+=	-Wno-missing-noreturn
 .include <bsd.own.mk>
 
 # show_version() does not return
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.main.c+=		-Wno-error=implicit-fallthrough
 COPTS.pkg_delete.c+=	-Wno-error=implicit-fallthrough
 .endif

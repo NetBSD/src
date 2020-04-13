@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.261.4.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.261.4.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.261.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.261.4.2 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -1077,8 +1077,8 @@ sysctl_create(SYSCTLFN_ARGS)
 	 */
 	if (l != NULL || nnode.sysctl_func == NULL) {
 		if (type != CTLTYPE_NODE &&
-		    nnode.sysctl_data == NULL &&
 		    !(flags & CTLFLAG_IMMEDIATE) &&
+		    nnode.sysctl_data == NULL &&
 		    own == NULL)
 			return (EINVAL);
 	}

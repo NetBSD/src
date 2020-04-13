@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.36.16.1 2019/06/10 22:06:10 christos Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.36.16.2 2020/04/13 08:03:46 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.36.16.1 2019/06/10 22:06:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.36.16.2 2020/04/13 08:03:46 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -397,7 +397,7 @@ read_ttb(void)
 #define	ioreg_write32(a,v)  	(*(volatile uint32_t *)(a)=(v))
 
 /*
- * u_int initarm(...)
+ * vaddr_t initarm(...)
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -410,7 +410,7 @@ read_ttb(void)
  *   Relocating the kernel to the bottom of physical memory
  */
 
-u_int
+vaddr_t
 initarm(void *arg)
 {
 	int loop;
@@ -899,7 +899,7 @@ initarm(void *arg)
 #endif
 
 	/* We return the new stack pointer address */
-	return (kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
 }
 
 void
@@ -993,9 +993,7 @@ s3c2xx0_bus_dma_init(struct arm32_bus_dma_tag *dma_tag_template)
 #if 1
 	dmat = dma_tag_template;
 #else
-	dmat = malloc(sizeof *dmat, M_DEVBUF, M_NOWAIT);
-	if (dmat == NULL)
-		return NULL;
+	dmat = malloc(sizeof *dmat, M_DEVBUF, M_WAITOK);
 	*dmat =  *dma_tag_template;
 #endif
 

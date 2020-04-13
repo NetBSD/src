@@ -39,7 +39,7 @@ int	yycolumn;
 
 #define	YY_USER_ACTION	yycolumn += yyleng;
 
-extern int		yyparsetarget;
+extern int		yystarttoken;
 extern int		yylineno;
 extern const char *	yyfilename;
 extern int		yyparse(void);
@@ -54,7 +54,7 @@ npfctl_parse_file(const char *name)
 	if (fp == NULL) {
 		err(EXIT_FAILURE, "open '%s'", name);
 	}
-	yyparsetarget = NPFCTL_PARSE_FILE;
+	yystarttoken = 0;
 	yyrestart(fp);
 	yylineno = 1;
 	yycolumn = 0;
@@ -64,11 +64,21 @@ npfctl_parse_file(const char *name)
 }
 
 void
-npfctl_parse_string(const char *str)
+npfctl_parse_string(const char *str, parse_entry_t entry)
 {
 	YY_BUFFER_STATE bs;
 
-	yyparsetarget = NPFCTL_PARSE_STRING;
+	switch (entry) {
+	case NPFCTL_PARSE_RULE:
+		yystarttoken = RULE_ENTRY_TOKEN;
+		break;
+	case NPFCTL_PARSE_MAP:
+		yystarttoken = MAP_ENTRY_TOKEN;
+		break;
+	default:
+		abort();
+	}
+
 	bs = yy_scan_string(str);
 	yyfilename = "stdin";
 	yyparse();
@@ -85,6 +95,15 @@ NUMBER	[0-9]+
 HEXDIG	[0-9a-fA-F]+
 
 %%
+%{
+	/* This is prepended to yylex(). */
+	if (yystarttoken) {
+		int token = yystarttoken;
+		yystarttoken = 0;
+		return token;
+	}
+%}
+
 alg			return ALG;
 table			return TABLE;
 type			return TYPE;
@@ -125,13 +144,12 @@ block			return BLOCK;
 pass			return PASS;
 pcap-filter		return PCAP_FILTER;
 stateful		return STATEFUL;
-stateful-ends		return STATEFUL_ENDS;
+stateful-all		return STATEFUL_ALL;
 apply			return APPLY;
 final			return FINAL;
 quick			return FINAL;
 on			return ON;
 off			return OFF;
-bpf.jit			return BPFJIT;
 inet6			return INET6;
 inet4			return INET4;
 ifaddrs			return IFADDRS;
@@ -207,6 +225,11 @@ any			return ANY;
 "$"{ID}		{
 			yylval.str = estrndup(yytext + 1, yyleng - 1);
 			return VAR_ID;
+		}
+
+[a-z]*"."[a-z.]* {
+			yylval.str = estrndup(yytext, yyleng);
+			return PARAM;
 		}
 
 {ID}		{

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.1 2017/02/08 16:11:40 rin Exp $
+#	$NetBSD: Makefile.common,v 1.1.16.1 2020/04/13 08:03:20 martin Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 # shared stuff with src/distrib/utils/x_newfs for install media.
@@ -38,4 +38,5 @@ COPTS.pass1.c+=	-fno-tree-fre -fno-tree-lrs
 .endif
 .if ${MACHINE_ARCH} == "vax"
 COPTS.pass1.c+=	-O0
+COPTS.inode.c+=	-O0
 .endif

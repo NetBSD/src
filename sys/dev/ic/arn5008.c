@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.15.2.2 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.15.2.3 2020/04/13 08:04:21 martin Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.15.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.15.2.3 2020/04/13 08:04:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -313,9 +313,7 @@ ar5008_read_rom(struct athn_softc *sc)
 	}
 
 	/* Allocate space to store ROM in host memory. */
-	sc->sc_eep = malloc(sc->sc_eep_size, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_eep == NULL)
-		return ENOMEM;
+	sc->sc_eep = malloc(sc->sc_eep_size, M_DEVBUF, M_WAITOK);
 
 	/* Read entire ROM and compute checksum. */
 	sum = 0;
@@ -586,9 +584,7 @@ ar5008_rx_alloc(struct athn_softc *sc)
 	int error, nsegs, i;
 
 	rxq->bf = malloc(ATHN_NRXBUFS * sizeof(*bf), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (rxq->bf == NULL)
-		return ENOMEM;
+	    M_WAITOK | M_ZERO);
 
 	size = ATHN_NRXBUFS * sizeof(struct ar_rx_desc);
 

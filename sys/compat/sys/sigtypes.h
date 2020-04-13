@@ -1,4 +1,4 @@
-/*	$NetBSD: sigtypes.h,v 1.2 2005/12/11 12:20:29 christos Exp $	*/
+/*	$NetBSD: sigtypes.h,v 1.2.166.1 2020/04/13 08:04:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,10 +39,6 @@
 #ifndef	_COMPAT_SYS_SIGTYPES_H_
 #define	_COMPAT_SYS_SIGTYPES_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_compat_netbsd32.h"
-#endif
-
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
 
@@ -67,7 +63,7 @@ struct sigaltstack13 {
 
 #endif	/* _POSIX_C_SOURCE || _XOPEN_SOURCE || ... */
 
-#if defined(COMPAT_NETBSD32) && defined(_KERNEL)
+#ifdef _KERNEL
 
 struct __sigaltstack32 {
 	uint32_t	ss_sp;
@@ -77,7 +73,7 @@ struct __sigaltstack32 {
 
 typedef struct __sigaltstack32 stack32_t;
 
-#endif /* COMPAT_NETBSD32 && _KERNEL */
+#endif /* _KERNEL */
 
 
 #endif	/* !_COMPAT_SYS_SIGTYPES_H_ */

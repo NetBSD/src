@@ -1,4 +1,4 @@
-/* $NetBSD: pci_msi_machdep.c,v 1.5.4.3 2020/04/08 14:07:30 martin Exp $ */
+/* $NetBSD: pci_msi_machdep.c,v 1.5.4.4 2020/04/13 08:03:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.5.4.3 2020/04/08 14:07:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.5.4.4 2020/04/13 08:03:36 martin Exp $");
 
 #include <sys/kernel.h>
 #include <sys/kmem.h>
@@ -206,11 +206,10 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *
 	int intx_count, msi_count, msix_count, error;
 
 	error = EINVAL;
-	intx_count = 1;
-	msi_count = 1;
-	msix_count = 1;
 
 	if (counts != NULL) {
+		intx_count = msi_count = msix_count = 0;
+
 		switch (max_type) {
 		case PCI_INTR_TYPE_MSIX:
 			msix_count = counts[PCI_INTR_TYPE_MSIX];
@@ -227,6 +226,8 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *
 			return EINVAL;
 		}
 		memset(counts, 0, sizeof(*counts) * PCI_INTR_TYPE_SIZE);
+	} else {
+		intx_count = msi_count = msix_count = 1;
 	}
 
 	if (msix_count == -1)
@@ -257,14 +258,16 @@ pci_intr_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *
 void 
 pci_intr_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih, int count)
 {
-	struct arm_pci_msi *msi;
+	struct arm_pci_msi *msi = NULL;
 
 	if (pih == NULL || count == 0)
 		return;
 
-	msi = arm_pci_msi_find_frame(pih[0]);
-	KASSERT(msi != NULL);
-	msi->msi_intr_release(msi, pih, count);
+	if ((pih[0] & (ARM_PCI_INTR_MSIX|ARM_PCI_INTR_MSI)) != 0) {
+		msi = arm_pci_msi_find_frame(pih[0]);
+		KASSERT(msi != NULL);
+		msi->msi_intr_release(msi, pih, count);
+	}
 
 	kmem_free(pih, sizeof(*pih) * count);
 }

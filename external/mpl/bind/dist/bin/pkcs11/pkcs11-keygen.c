@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11-keygen.c,v 1.3.2.2 2019/06/10 22:03:01 christos Exp $	*/
+/*	$NetBSD: pkcs11-keygen.c,v 1.3.2.3 2020/04/13 08:02:37 martin Exp $	*/
 
 /*
  * Copyright (C) 2009, 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
@@ -189,13 +189,13 @@ main(int argc, char *argv[]) {
 	isc_result_t result;
 	CK_RV rv;
 	CK_SLOT_ID slot = 0;
-	CK_MECHANISM mech, dpmech;
+	CK_MECHANISM mech;
 	CK_SESSION_HANDLE hSession;
 	char *lib_name = NULL;
 	char *pin = NULL;
 	CK_ULONG bits = 0;
 	CK_CHAR *label = NULL;
-	CK_OBJECT_HANDLE privatekey, publickey, domainparams;
+	CK_OBJECT_HANDLE privatekey, publickey;
 	CK_BYTE exponent[5];
 	CK_ULONG expsize = 0;
 	pk11_context_t pctx;
@@ -203,7 +203,6 @@ main(int argc, char *argv[]) {
 	int c, errflg = 0;
 	int hide = 1, quiet = 0;
 	int idlen = 0, id_offset = 0;
-	unsigned int i;
 	unsigned long id = 0;
 	CK_BYTE idbuf[4];
 	CK_ULONG ulObjectCount;
@@ -211,10 +210,7 @@ main(int argc, char *argv[]) {
 		{CKA_LABEL, NULL_PTR, 0}
 	};
 	CK_ATTRIBUTE *public_template = NULL;
-	CK_ATTRIBUTE *domain_template = NULL;
-	CK_ATTRIBUTE *param_template = NULL;
 	CK_ULONG public_attrcnt = 0, private_attrcnt = PRIVATE_ATTRS;
-	CK_ULONG domain_attrcnt = 0, param_attrcnt = 0;
 	key_class_t keyclass = key_rsa;
 	pk11_optype_t op_type = OP_ANY;
 
@@ -459,46 +455,6 @@ main(int argc, char *argv[]) {
 		private_template[5].pValue = &truevalue;
 	}
 
-	if (keyclass == key_rsa || keyclass == key_ecc || keyclass == key_ecx)
-		goto generate_keys;
-
-	/* Generate Domain parameters */
-	rv = pkcs_C_GenerateKey(hSession, &dpmech, domain_template,
-			   domain_attrcnt, &domainparams);
-
-	if (rv != CKR_OK) {
-		fprintf(stderr,
-			"C_GenerateKey: Error = 0x%.8lX\n", rv);
-		error = 1;
-		goto exit_search;
-	}
-
-	/* Get Domain parameters */
-	rv = pkcs_C_GetAttributeValue(hSession, domainparams,
-				 param_template, param_attrcnt);
-
-	if (rv != CKR_OK) {
-		fprintf(stderr,
-			"C_GetAttributeValue0: Error = 0x%.8lX\n", rv);
-		error = 1;
-		goto exit_search;
-	}
-
-	/* Allocate space for parameter attributes */
-	for (i = 0; i < param_attrcnt; i++) {
-		param_template[i].pValue = NULL;
-	}
-
-	for (i = 0; i < param_attrcnt; i++) {
-		param_template[i].pValue = malloc(param_template[i].ulValueLen);
-		if (param_template[i].pValue == NULL) {
-			fprintf(stderr, "malloc failed\n");
-			error = 1;
-			goto exit_search;
-		}
-	}
-
- generate_keys:
 	/* Generate Key pair for signing/verifying */
 	rv = pkcs_C_GenerateKeyPair(hSession, &mech,
 			       public_template, public_attrcnt,
@@ -508,8 +464,9 @@ main(int argc, char *argv[]) {
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_GenerateKeyPair: Error = 0x%.8lX\n", rv);
 		error = 1;
-	 } else if (!quiet)
+	} else if (!quiet) {
 		printf("Key pair generation complete.\n");
+	}
 
  exit_search:
 	rv = pkcs_C_FindObjectsFinal(hSession);

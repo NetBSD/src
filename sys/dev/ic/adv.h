@@ -1,4 +1,4 @@
-/*      $NetBSD: adv.h,v 1.13.164.1 2020/04/08 14:08:05 martin Exp $        */
+/*      $NetBSD: adv.h,v 1.13.164.2 2020/04/13 08:04:21 martin Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -35,9 +35,6 @@
 #define _ADVANSYS_NARROW_H_
 
 /******************************************************************************/
-
-/* second level interrupt callback type definition */
-typedef int (* ASC_ISR_CALLBACK) (ASC_SOFTC *, ASC_QDONE_INFO *);
 
 struct adv_ccb
 {

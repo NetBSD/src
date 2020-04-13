@@ -1,6 +1,6 @@
 // <atomic> compatibility -*- C++ -*-
 
-// Copyright (C) 2008-2016 Free Software Foundation, Inc.
+// Copyright (C) 2008-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -64,7 +64,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     {
      bool
      test_and_set(memory_order) noexcept;
-     
+
      void
      clear(memory_order) noexcept;
     };
@@ -150,8 +150,12 @@ _GLIBCXX_END_NAMESPACE_VERSION
     && defined(_GLIBCXX_HAVE_AS_SYMVER_DIRECTIVE) \
     && defined(_GLIBCXX_HAVE_SYMVER_SYMBOL_RENAMING_RUNTIME_SUPPORT)
 
+#ifdef _GLIBCXX_COMPAT_
 #define _GLIBCXX_ASM_SYMVER(cur, old, version) \
    asm (".symver " #cur "," #old "@@" #version);
+#else
+#define _GLIBCXX_ASM_SYMVER(cur, old, version)
+#endif
 
 _GLIBCXX_ASM_SYMVER(_ZNSt9__atomic011atomic_flag5clearESt12memory_order, _ZNVSt9__atomic011atomic_flag5clearESt12memory_order, GLIBCXX_3.4.11)
 

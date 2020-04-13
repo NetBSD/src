@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.8 2015/04/04 15:08:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.8.18.1 2020/04/13 08:04:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,12 +208,7 @@ agp_amd64_attach(device_t parent, device_t self, void *aux)
 	int maxdevs, i, n;
 	int error;
 
-	asc = malloc(sizeof(struct agp_amd64_softc), M_AGP, M_NOWAIT | M_ZERO);
-	if (asc == NULL) {
-		aprint_error(": can't allocate softc\n");
-		error = ENOMEM;
-		goto fail0;
-	}
+	asc = malloc(sizeof(struct agp_amd64_softc), M_AGP, M_WAITOK | M_ZERO);
 
 	if (agp_map_aperture(pa, sc, AGP_APBASE) != 0) {
 		aprint_error(": can't map aperture\n");
@@ -321,7 +316,7 @@ agp_amd64_attach(device_t parent, device_t self, void *aux)
 
 fail2:	agp_free_gatt(sc, gatt);
 fail1:	free(asc, M_AGP);
-fail0:	agp_generic_detach(sc);
+	agp_generic_detach(sc);
 	KASSERT(error);
 	return error;
 }

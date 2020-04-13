@@ -16,7 +16,7 @@ rm -f ns*/named.run ns*/named.run.prev
 rm -f ns2/named.stats
 rm -f ns2/nil.db ns2/other.db ns2/static.db ns2/*.jnl
 rm -f ns2/session.key
-rm -f ns3/named_dump.db
+rm -f ns3/named_dump.db*
 rm -f ns4/*.nta
 rm -f ns4/key?.conf
 rm -f ns6/huge.zone.db

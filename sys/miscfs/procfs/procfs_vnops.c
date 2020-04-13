@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_vnops.c,v 1.203.2.1 2019/06/10 22:09:06 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.203.2.2 2020/04/13 08:05:05 martin Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -105,9 +105,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.203.2.1 2019/06/10 22:09:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.203.2.2 2020/04/13 08:05:05 martin Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -243,6 +244,7 @@ int	procfs_pathconf(void *);
 #define	procfs_islocked	genfs_islocked
 #define	procfs_advlock	genfs_einval
 #define	procfs_bwrite	genfs_eopnotsupp
+int	procfs_getpages(void *);
 #define procfs_putpages	genfs_null_putpages
 
 static int atoi(const char *, size_t);
@@ -291,6 +293,7 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, procfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, procfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, procfs_advlock },		/* advlock */
+	{ &vop_getpages_desc, procfs_getpages },	/* getpages */
 	{ &vop_putpages_desc, procfs_putpages },	/* putpages */
 	{ NULL, NULL }
 };
@@ -555,7 +558,7 @@ static void
 procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
     char *path, size_t len)
 {
-	struct cwdinfo *cwdi;
+	const struct cwdinfo *cwdi;
 	struct vnode *vp, *rvp;
 	char *bp;
 
@@ -564,26 +567,25 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 	 * we are interested in to prevent it from disappearing
 	 * before getcwd_common() below.
 	 */
-	rw_enter(&target->p_cwdi->cwdi_lock, RW_READER);
+	cwdi = cwdlock(target);
 	switch (t) {
 	case PFScwd:
-		vp = target->p_cwdi->cwdi_cdir;
+		vp = cwdi->cwdi_cdir;
 		break;
 	case PFSchroot:
-		vp = target->p_cwdi->cwdi_rdir;
+		vp = cwdi->cwdi_rdir;
 		break;
 	default:
-		rw_exit(&target->p_cwdi->cwdi_lock);
+		cwdunlock(target);
 		return;
 	}
 	if (vp != NULL)
 		vref(vp);
-	rw_exit(&target->p_cwdi->cwdi_lock);
+	cwdunlock(target);
 
-	cwdi = caller->l_proc->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	KASSERT(caller == curlwp);
 
-	rvp = cwdi->cwdi_rdir;
+	rvp = cwdrdir();
 	bp = bpp ? *bpp : NULL;
 
 	/*
@@ -596,12 +598,15 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 			*bpp = bp;
 		}
 		vrele(vp);
-		rw_exit(&cwdi->cwdi_lock);
+		if (rvp != NULL)
+			vrele(rvp);
 		return;
 	}
 
-	if (rvp == NULL)
+	if (rvp == NULL) {
 		rvp = rootvnode;
+		vref(rvp);
+	}
 	if (vp == NULL || getcwd_common(vp, rvp, bp ? &bp : NULL, path,
 	    len / 2, 0, caller) != 0) {
 		if (bpp) {
@@ -615,7 +620,8 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 
 	if (vp != NULL)
 		vrele(vp);
-	rw_exit(&cwdi->cwdi_lock);
+	if (rvp != NULL)
+		vrele(rvp);
 }
 
 /*
@@ -1385,7 +1391,7 @@ procfs_readdir(void *v)
 			return ESRCH;
 		}
 
-		nfd = p->p_fd->fd_dt->dt_nfiles;
+		nfd = atomic_load_consume(&p->p_fd->fd_dt)->dt_nfiles;
 
 		lim = uimin((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 		if (i >= lim) {
@@ -1644,7 +1650,7 @@ procfs_readlink(void *v)
 		len = strlen(bp);
 	} else {
 		file_t *fp;
-		struct vnode *vxp, *vp;
+		struct vnode *vxp, *rvp;
 
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &pown, ESRCH)) != 0)
 			return error;
@@ -1677,14 +1683,13 @@ procfs_readlink(void *v)
 			if (vxp->v_tag == VT_PROCFS) {
 				*--bp = '/';
 			} else {
-				rw_enter(&curproc->p_cwdi->cwdi_lock,
-				    RW_READER);
-				vp = curproc->p_cwdi->cwdi_rdir;
-				if (vp == NULL)
-					vp = rootvnode;
-				error = getcwd_common(vxp, vp, &bp, path,
+				if ((rvp = cwdrdir()) == NULL) {
+					rvp = rootvnode;
+					vref(rvp);
+				}
+				error = getcwd_common(vxp, rvp, &bp, path,
 				    MAXPATHLEN / 2, 0, curlwp);
-				rw_exit(&curproc->p_cwdi->cwdi_lock);
+				vrele(rvp);
 			}
 			if (error)
 				break;
@@ -1717,6 +1722,26 @@ procfs_readlink(void *v)
 	if (path)
 		free(path, M_TEMP);
 	return error;
+}
+
+int
+procfs_getpages(void *v)
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ *ap = v;
+
+	if ((ap->a_flags & PGO_LOCKED) == 0)
+		rw_exit(ap->a_vp->v_uobj.vmobjlock);
+
+	return (EFAULT);
 }
 
 /*

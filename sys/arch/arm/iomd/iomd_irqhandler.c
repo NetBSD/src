@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.22 2014/10/25 10:58:12 skrll Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.22.20.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.22 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.22.20.1 2020/04/13 08:03:35 martin Exp $");
 
 #include "opt_irqstats.h"
 
@@ -346,10 +346,7 @@ intr_claim(int irq, int level, const char *name, int (*ih_func)(void *),
 {
 	irqhandler_t *ih;
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (!ih)
-		panic("intr_claim(): Cannot malloc handler memory");
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_level = level;
 	ih->ih_name = name;
 	ih->ih_func = ih_func;

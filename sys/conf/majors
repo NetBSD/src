@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.79.2.2 2020/04/08 14:08:01 martin Exp $
+# $NetBSD: majors,v 1.79.2.3 2020/04/13 08:04:17 martin Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -86,3 +86,5 @@ device-major spi       char 347		   spi
 # Major 352 is reserved for external/cddl/osnet/dev/fbt/fbt.c
 # Major 353 is reserved for external/cddl/osnet/dev/sdt/sdt.c
 device-major ipmi      char 354		   ipmi
+device-major vhci      char 355            vhci
+device-major vio9p     char 356		   vio9p

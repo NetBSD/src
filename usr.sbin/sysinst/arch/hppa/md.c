@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3.2.1 2019/06/10 22:10:40 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.3.2.2 2020/04/13 08:06:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,6 @@
 /* This file is in close sync with pmax, vax, and x68k, sparc md.c */
 
 #include <sys/types.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <stdio.h>
@@ -63,8 +62,8 @@ md_init_set_status(int flags)
 	(void)flags;
 }
 
-int
-md_get_info(void)
+bool
+md_get_info(struct install_partition_desc *install)
 {
 	struct disklabel disklabel;
 	int fd;
@@ -112,60 +111,62 @@ md_get_info(void)
 	 */
 	root_limit = HP700_PDC_LIMIT / (unsigned)pm->sectorsize;
 
-	return 1;
+	return true;
 }
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-int
-md_make_bsd_partitions(void)
+bool
+md_make_bsd_partitions(struct install_partition_desc *install)
 {
-	return make_bsd_partitions();
+	return make_bsd_partitions(install);
 }
 
 /*
  * any additional partition validation
  */
-int
-md_check_partitions(void)
+bool
+md_check_partitions(struct install_partition_desc *install)
 {
 	/* Check the root partition is sane. */
-	uint32_t limit = HP700_PDC_LIMIT / (unsigned)pm->sectorsize;
-	int part;
+	daddr_t limit = HP700_PDC_LIMIT / (unsigned)pm->sectorsize;
+	size_t part;
 
-	for (part = PART_A; part < MAXPARTITIONS; part++) {
-		if (strcmp(pm->bsdlabel[part].pi_mount, "/") == 0) {
-			uint32_t offset = pm->bsdlabel[part].pi_offset;
-			uint32_t size = pm->bsdlabel[part].pi_size;
+	for (part = 0; part < install->num; part++) {
+		if (strcmp(install->infos[part].mount, "/") == 0) {
+			daddr_t offset = install->infos[part].cur_start;
+			daddr_t size = install->infos[part].size;
 
 			if (offset > limit || offset + size > limit) {
 				msg_display(MSG_md_pdclimit);
 				process_menu(MENU_ok, NULL);
-				return 0;
+				return false;
 			}
 		}
 	}
 
-	return 1;
+	return true;
 }
 
 /*
  * hook called before writing new disklabel.
  */
-int
-md_pre_disklabel(void)
+bool
+md_pre_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	return 0;
+	return true;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-int
-md_post_disklabel(void)
+bool
+md_post_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	return 0;
+	return true;
 }
 
 /*
@@ -174,7 +175,7 @@ md_post_disklabel(void)
  * ``disks are now set up'' message.
  */
 int
-md_post_newfs(void)
+md_post_newfs(struct install_partition_desc *install)
 {
 	int error;
 
@@ -183,7 +184,7 @@ md_post_newfs(void)
 		return error;
 
 	/* boot blocks ... */
-	msg_display(MSG_dobootblks, pm->diskdev);
+	msg_fmt_display(MSG_dobootblks, "%s", pm->diskdev);
 	if (run_program(RUN_DISPLAY,
 	    "/usr/sbin/installboot -v /dev/r%sc /usr/mdec/xxboot",
 	    pm->diskdev))
@@ -193,13 +194,13 @@ md_post_newfs(void)
 }
 
 int
-md_post_extract(void)
+md_post_extract(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install(struct install_partition_desc *install)
 {
 #ifndef DEBUG
 	enable_rc_conf();
@@ -207,21 +208,38 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update(void)
+md_pre_update(struct install_partition_desc *install)
 {
 	return 1;
 }
 
 /* Upgrade support */
 int
-md_update(void)
+md_update(struct install_partition_desc *install)
 {
-	md_post_newfs();
+	md_post_newfs(install);
 	return 1;
 }
 
 int
-md_pre_mount()
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
 	return 0;
 }
+
+bool
+md_parts_use_wholedisk(struct disk_partitions *parts)
+{
+	return parts_use_wholedisk(parts, 0, NULL);
+}
+
+#ifdef HAVE_GPT
+bool
+md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
+    bool root_is_new, part_id efi_id, bool efi_is_new)
+{
+	/* no GPT boot support, nothing needs to be done here */
+	return true;
+}
+#endif
+

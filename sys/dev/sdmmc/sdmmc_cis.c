@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_cis.c,v 1.5 2018/01/28 14:34:06 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_cis.c,v 1.5.4.1 2020/04/13 08:04:48 martin Exp $	*/
 /*	$OpenBSD: sdmmc_cis.c,v 1.1 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines to decode the Card Information Structure of SD I/O cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.5 2018/01/28 14:34:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.5.4.1 2020/04/13 08:04:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -202,7 +202,7 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 		}
 
 #ifdef SDMMCCISDEBUG
-		{ 
+		{
 			int i;
 
 			/* print the tuple */
@@ -259,6 +259,11 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 			reg += tpllen;
 			break;
 
+		case PCMCIA_CISTPL_SDIO:
+			aprint_normal_dev(dev, "SDIO function\n");
+			reg += tpllen;
+			break;
+
 		default:
 			/*
 			 * Tuple codes between 80h-8Fh are vendor unique.
@@ -312,7 +317,7 @@ sdmmc_check_cis_quirks(struct sdmmc_function *sf)
 	if (sf->cis.manufacturer == SDMMC_VENDOR_SPECTEC &&
 	    sf->cis.product == SDMMC_PRODUCT_SPECTEC_SDW820) {
 		/* This card lacks the VERS_1 tuple. */
-		static const char cis1_info[] = 
+		static const char cis1_info[] =
 		    "Spectec\0SDIO WLAN Card\0SDW-820\0\0";
 
 		sf->cis.cis1_major = 0x01;

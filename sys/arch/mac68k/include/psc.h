@@ -1,4 +1,4 @@
-/*	$NetBSD: psc.h,v 1.7 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: psc.h,v 1.7.166.1 2020/04/13 08:03:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -25,6 +25,8 @@
  *
  */
 
+#include <sys/bus.h>	/* XXX for bus_addr_t */
+
 /*
  * Some register definitions for the PSC, present only on the
  * Centris/Quadra 660av and the Quadra 840av.
@@ -47,6 +49,11 @@ int	remove_psc_lev3_intr(void);
 int	remove_psc_lev4_intr(int);
 int	remove_psc_lev5_intr(int);
 int	remove_psc_lev6_intr(int);
+
+int	start_psc_dma(int, int *, bus_addr_t, uint32_t, int);
+int	pause_psc_dma(int);
+int	wait_psc_dma(int, int, uint32_t *);
+int	stop_psc_dma(int, int, uint32_t *, int);
 
 /*
  * Reading an interrupt status register returns a mask of the
@@ -123,3 +130,14 @@ int	remove_psc_lev6_intr(int);
  */
 #define	PSC_SET0	0x00
 #define	PSC_SET1	0x10
+
+/*
+ * Pseudo channels for the dma control functions
+ */
+#define	PSC_DMA_CHANNEL_SCSI	0
+#define	PSC_DMA_CHANNEL_ENETRD	1
+#define	PSC_DMA_CHANNEL_ENETWR	2
+#define	PSC_DMA_CHANNEL_FDC	3
+#define	PSC_DMA_CHANNEL_SCCA	4
+#define	PSC_DMA_CHANNEL_SCCB	5
+#define	PSC_DMA_CHANNEL_SCCATX	6

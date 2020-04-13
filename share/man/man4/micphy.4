@@ -1,4 +1,4 @@
-.\"	$NetBSD: micphy.4,v 1.2 2014/03/03 09:10:46 wiz Exp $
+.\"	$NetBSD: micphy.4,v 1.2.30.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -15,18 +15,20 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd March 3, 2014
+.Dd November 6, 2019
 .Dt MICPHY 4
 .Os
 .Sh NAME
 .Nm micphy
-.Nd Micrel KSZ9021 10/100/1000 PHY driver
+.Nd Micrel KSZ8xxx 10/100 and KSZ9xxx 10/100/1000 PHY driver
 .Sh SYNOPSIS
 .Cd "micphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver currently supports only Micrel KSZ9021RN PHY.
+driver currently supports KSZ80[2345689]1, KSZ87[23]x, KSZ90[23]1, KSZ9131 and
+KSZ9477.
+It also supports LAN7430's internal PHY.
 The driver has a fixup for
 .Xr evbarm/cpsw 4
 which requires Gig-E PHYs to adjust RGMII signal timing.

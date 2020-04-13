@@ -1,4 +1,4 @@
-.\"	$NetBSD: core.5,v 1.31 2017/07/03 21:30:59 wiz Exp $
+.\"	$NetBSD: core.5,v 1.31.6.1 2020/04/13 08:03:25 martin Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"     @(#)core.5	8.3 (Berkeley) 12/11/93
 .\"
-.Dd March 27, 2017
+.Dd December 6, 2019
 .Dt CORE 5
 .Os
 .Sh NAME
@@ -144,7 +144,6 @@ and contains the following
 structure:
 .Bd -literal
 struct netbsd_elfcore_procinfo {
-   /* Version 1 fields start here. */
     uint32_t cpi_version;      /* netbsd_elfcore_procinfo version */
     uint32_t cpi_cpisize;      /* sizeof(netbsd_elfcore_procinfo) */
     uint32_t cpi_signo;        /* killing signal */
@@ -165,8 +164,7 @@ struct netbsd_elfcore_procinfo {
     uint32_t cpi_svgid;        /* saved group ID */
     uint32_t cpi_nlwps;        /* number of LWPs */
     int8_t   cpi_name[32];     /* copy of p->p_comm */
-    /* Add version 2 fields below here. */
-    int32_t         cpi_siglwp;     /* LWP target of killing signal */
+    int32_t  cpi_siglwp;       /* LWP target of killing signal */
 };
 .Ed
 .Pp
@@ -384,7 +382,7 @@ Size of the segment, not including this header.
 A
 .Nm core
 file format appeared in
-.At v6 .
+.At v1 .
 The
 .Nx
 a.out core file format was introduced in

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.26.14.2 2020/04/08 14:07:59 martin Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.26.14.3 2020/04/13 08:04:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.26.14.2 2020/04/08 14:07:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.26.14.3 2020/04/13 08:04:12 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -177,10 +177,10 @@ pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot, u_int flags)
 
 	npte = ma | ((prot & VM_PROT_WRITE) ? PTE_W : 0) | PTE_P;
 	if (flags & PMAP_NOCACHE)
-		npte |= PG_N;
+		npte |= PTE_PCD;
 
 	if ((cpu_feature[2] & CPUID_NOX) && !(prot & VM_PROT_EXECUTE))
-		npte |= PG_NX;
+		npte |= PTE_NX;
 
 	opte = pmap_pte_testset(pte, npte); /* zap! */
 
@@ -235,7 +235,7 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 
 	if (__predict_true((pte & PTE_P) != 0)) {
 		if (pap != NULL)
-			*pap = (pte & PG_FRAME) | (va & (NBPD_L1 - 1));
+			*pap = (pte & PTE_4KFRAME) | (va & (NBPD_L1 - 1));
 		return true;
 	}
 

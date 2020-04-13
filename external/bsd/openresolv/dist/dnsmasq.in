@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2016 Roy Marples
+# Copyright (c) 2007-2020 Roy Marples
 # All rights reserved
 
 # dnsmasq subscriber for resolvconf
@@ -206,4 +206,6 @@ if $dbus; then
 	dbus-send --system --dest=uk.org.thekelleys.dnsmasq \
  		/uk/org/thekelleys/dnsmasq uk.org.thekelleys.$method \
   		$dbusdest
+	dbus-send --system --dest=uk.org.thekelleys.dnsmasq \
+		/uk/org/thekelleys/dnsmasq uk.org.thekelleys.ClearCache
 fi

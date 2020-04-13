@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.38.4.1 2019/06/10 22:07:10 christos Exp $	*/
+/*	$NetBSD: ciss.c,v 1.38.4.2 2020/04/13 08:04:21 martin Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.38.4.1 2019/06/10 22:07:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.38.4.2 2020/04/13 08:04:21 martin Exp $");
 
 #include "bio.h"
 
@@ -347,13 +347,8 @@ ciss_attach(struct ciss_softc *sc)
 		return -1;
 	}
 
-	if (!(sc->sc_lds = malloc(sc->maxunits * sizeof(*sc->sc_lds),
-	    M_DEVBUF, M_NOWAIT))) {
-		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
-		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
-		return -1;
-	}
-	memset(sc->sc_lds, 0, sc->maxunits * sizeof(*sc->sc_lds));
+	sc->sc_lds = malloc(sc->maxunits * sizeof(*sc->sc_lds),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	sc->sc_flush = CISS_FLUSH_ENABLE;
 	if (!(sc->sc_sh = shutdownhook_establish(ciss_shutdown, sc))) {
@@ -998,10 +993,7 @@ ciss_pdscan(struct ciss_softc *sc, int ld)
 	if (!k)
 		return NULL;
 
-	ldp = malloc(sizeof(*ldp) + (k-1), M_DEVBUF, M_NOWAIT);
-	if (!ldp)
-		return NULL;
-
+	ldp = malloc(sizeof(*ldp) + (k-1), M_DEVBUF, M_WAITOK);
 	memset(&ldp->bling, 0, sizeof(ldp->bling));
 	ldp->ndrives = k;
 	ldp->xname[0] = 0;
@@ -1520,11 +1512,7 @@ ciss_create_sensors(struct ciss_softc *sc)
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor = malloc(sizeof(envsys_data_t) * nsensors,
-		M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_sensor == NULL) {
-		aprint_error_dev(sc->sc_dev, "can't allocate envsys_data");
-		return(ENOMEM);
-	}
+		M_DEVBUF, M_WAITOK | M_ZERO);
 
 	for (i = 0; i < nsensors; i++) {
 		sc->sc_sensor[i].units = ENVSYS_DRIVE;

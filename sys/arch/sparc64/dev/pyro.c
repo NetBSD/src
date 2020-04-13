@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.18.16.1 2019/06/10 22:06:47 christos Exp $	*/
+/*	$NetBSD: pyro.c,v 1.18.16.2 2020/04/13 08:04:08 martin Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.18.16.1 2019/06/10 22:06:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.18.16.2 2020/04/13 08:04:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -185,10 +185,7 @@ pyro_init(struct pyro_softc *sc, int busa)
 	struct pcibus_attach_args pba;
 	int *busranges = NULL, nranges;
 
-	pbm = malloc(sizeof(*pbm), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (pbm == NULL)
-		panic("pyro: can't alloc pyro pbm");
-
+	pbm = malloc(sizeof(*pbm), M_DEVBUF, M_WAITOK | M_ZERO);
 	pbm->pp_sc = sc;
 	pbm->pp_bus_a = busa;
 
@@ -221,9 +218,7 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pbm->pp_pc = pyro_alloc_chipset(pbm, sc->sc_node, &_sparc_pci_chipset);
 	pbm->pp_pc->spc_busmax = busranges[1];
 	pbm->pp_pc->spc_busnode = malloc(sizeof(*pbm->pp_pc->spc_busnode),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (pbm->pp_pc->spc_busnode == NULL)
-		panic("pyro: malloc busnode");
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 #if 0
 	pbm->pp_pc->bustag = pbm->pp_cfgt;
@@ -263,9 +258,7 @@ pyro_init_iommu(struct pyro_softc *sc, struct pyro_pbm *pbm)
 	/* We have no STC.  */
 	is->is_sb[0] = NULL;
 
-	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
-	if (name == NULL)
-		panic("couldn't malloc iommu name");
+	name = malloc(32, M_DEVBUF, M_WAITOK);
 	snprintf(name, 32, "%s dvma", device_xname(sc->sc_dev));
 
 	/* Tell iommu how to set the TSB size.  */
@@ -399,9 +392,7 @@ pyro_alloc_bus_tag(struct pyro_pbm *pbm, const char *name, int type)
 	struct pyro_softc *sc = pbm->pp_sc;
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (bt == NULL)
-		panic("pyro: could not allocate bus tag");
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_WAITOK | M_ZERO);
 
 #if 0
 	snprintf(bt->name, sizeof(bt->name), "%s-pbm_%s(%d/%2.2x)",
@@ -423,10 +414,7 @@ pyro_alloc_dma_tag(struct pyro_pbm *pbm)
 	struct pyro_softc *sc = pbm->pp_sc;
 	bus_dma_tag_t dt, pdt = sc->sc_dmat;
 
-	dt = malloc(sizeof(*dt), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (dt == NULL)
-		panic("pyro: could not alloc dma tag");
-
+	dt = malloc(sizeof(*dt), M_DEVBUF, M_WAITOK | M_ZERO);
 	dt->_cookie = pbm;
 	dt->_parent = pdt;
 #define PCOPY(x)	dt->x = pdt->x
@@ -452,9 +440,7 @@ pyro_alloc_chipset(struct pyro_pbm *pbm, int node, pci_chipset_tag_t pc)
 {
 	pci_chipset_tag_t npc;
 
-	npc = malloc(sizeof *npc, M_DEVBUF, M_NOWAIT);
-	if (npc == NULL)
-		panic("pyro: could not allocate pci_chipset_tag_t");
+	npc = malloc(sizeof *npc, M_DEVBUF, M_WAITOK);
 	memcpy(npc, pc, sizeof *pc);
 	npc->cookie = pbm;
 	npc->rootnode = node;

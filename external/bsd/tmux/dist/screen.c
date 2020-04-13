@@ -47,7 +47,6 @@ struct screen_title_entry {
 };
 TAILQ_HEAD(screen_titles, screen_title_entry);
 
-static void	screen_resize_x(struct screen *, u_int);
 static void	screen_resize_y(struct screen *, u_int);
 
 static void	screen_reflow(struct screen *, u_int);
@@ -206,13 +205,7 @@ screen_resize(struct screen *s, u_int sx, u_int sy, int reflow)
 		sy = 1;
 
 	if (sx != screen_size_x(s)) {
-		screen_resize_x(s, sx);
-
-		/*
-		 * It is unclear what should happen to tabs on resize. xterm
-		 * seems to try and maintain them, rxvt resets them. Resetting
-		 * is simpler and more reliable so let's do that.
-		 */
+		s->grid->sx = sx;
 		screen_reset_tabs(s);
 	} else
 		reflow = 0;
@@ -222,28 +215,6 @@ screen_resize(struct screen *s, u_int sx, u_int sy, int reflow)
 
 	if (reflow)
 		screen_reflow(s, sx);
-}
-
-static void
-screen_resize_x(struct screen *s, u_int sx)
-{
-	struct grid		*gd = s->grid;
-
-	if (sx == 0)
-		fatalx("zero size");
-
-	/*
-	 * Treat resizing horizontally simply: just ensure the cursor is
-	 * on-screen and change the size. Don't bother to truncate any lines -
-	 * then the data should be accessible if the size is then increased.
-	 *
-	 * The only potential wrinkle is if UTF-8 double-width characters are
-	 * left in the last column, but UTF-8 terminals should deal with this
-	 * sanely.
-	 */
-	if (s->cx >= sx)
-		s->cx = sx - 1;
-	gd->sx = sx;
 }
 
 static void
@@ -424,7 +395,11 @@ screen_check_selection(struct screen *s, u_int px, u_int py)
 			if (py == sel->sy && px < sel->sx)
 				return (0);
 
-			if (py == sel->ey && px > sel->ex)
+			if (sel->modekeys == MODEKEY_EMACS)
+				xx = (sel->ex == 0 ? 0 : sel->ex - 1);
+			else
+				xx = sel->ex;
+			if (py == sel->ey && px > xx)
 				return (0);
 		} else if (sel->sy > sel->ey) {
 			/* starting line > ending line -- upward selection. */
@@ -455,7 +430,11 @@ screen_check_selection(struct screen *s, u_int px, u_int py)
 					return (0);
 			} else {
 				/* selection start (sx) is on the left */
-				if (px < sel->sx || px > sel->ex)
+				if (sel->modekeys == MODEKEY_EMACS)
+					xx = (sel->ex == 0 ? 0 : sel->ex - 1);
+				else
+					xx = sel->ex;
+				if (px < sel->sx || px > xx)
 					return (0);
 			}
 		}
@@ -484,5 +463,30 @@ screen_select_cell(struct screen *s, struct grid_cell *dst,
 static void
 screen_reflow(struct screen *s, u_int new_x)
 {
-	grid_reflow(s->grid, new_x, &s->cy);
+	u_int		cx = s->cx, cy = s->grid->hsize + s->cy, wx, wy;
+	struct timeval	start, tv;
+
+	gettimeofday(&start, NULL);
+
+	grid_wrap_position(s->grid, cx, cy, &wx, &wy);
+	log_debug("%s: cursor %u,%u is %u,%u", __func__, cx, cy, wx, wy);
+
+	grid_reflow(s->grid, new_x);
+
+	grid_unwrap_position(s->grid, &cx, &cy, wx, wy);
+	log_debug("%s: new cursor is %u,%u", __func__, cx, cy);
+
+	if (cy >= s->grid->hsize) {
+		s->cx = cx;
+		s->cy = cy - s->grid->hsize;
+	} else {
+		s->cx = 0;
+		s->cy = 0;
+	}
+
+	gettimeofday(&tv, NULL);
+	timersub(&tv, &start, &tv);
+
+	log_debug("%s: reflow took %llu.%06u seconds", __func__,
+	    (unsigned long long)tv.tv_sec, (u_int)tv.tv_usec);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: ausoc.c,v 1.3.4.1 2019/06/10 22:07:07 christos Exp $ */
+/* $NetBSD: ausoc.c,v 1.3.4.2 2020/04/13 08:04:19 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.3.4.1 2019/06/10 22:07:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausoc.c,v 1.3.4.2 2020/04/13 08:04:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,7 +121,21 @@ ausoc_set_format(void *priv, int setmode,
     audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
 	struct ausoc_link * const link = priv;
+	const audio_params_t *params = (setmode & AUMODE_PLAY) != 0 ?
+	    play : rec;
 	int error;
+
+	if (link->link_mclk_fs) {
+		const u_int rate = params->sample_rate * link->link_mclk_fs;
+		error = audio_dai_set_sysclk(link->link_codec, rate,
+		    AUDIO_DAI_CLOCK_IN);
+		if (error)
+			return error;
+		error = audio_dai_set_sysclk(link->link_cpu, rate,
+		    AUDIO_DAI_CLOCK_OUT);
+		if (error)
+			return error;
+	}
 
 	error = audio_dai_mi_set_format(link->link_cpu, setmode,
 	    play, rec, pfil, rfil);
@@ -246,20 +260,8 @@ ausoc_trigger_output(void *priv, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *params)
 {
 	struct ausoc_link * const link = priv;
-	u_int n, rate;
 	int error;
-
-	if (link->link_mclk_fs) {
-		rate = params->sample_rate * link->link_mclk_fs;
-		error = audio_dai_set_sysclk(link->link_codec, rate,
-		    AUDIO_DAI_CLOCK_IN);
-		if (error)
-			goto failed;
-		error = audio_dai_set_sysclk(link->link_cpu, rate,
-		    AUDIO_DAI_CLOCK_OUT);
-		if (error)
-			goto failed;
-	}
+	u_int n;
 
 	for (n = 0; n < link->link_naux; n++) {
 		error = audio_dai_trigger(link->link_aux[n], start, end,
@@ -285,20 +287,8 @@ ausoc_trigger_input(void *priv, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *params)
 {
 	struct ausoc_link * const link = priv;
-	u_int n, rate;
 	int error;
-
-	if (link->link_mclk_fs) {
-		rate = params->sample_rate * link->link_mclk_fs;
-		error = audio_dai_set_sysclk(link->link_codec, rate,
-		    AUDIO_DAI_CLOCK_IN);
-		if (error)
-			goto failed;
-		error = audio_dai_set_sysclk(link->link_cpu, rate,
-		    AUDIO_DAI_CLOCK_OUT);
-		if (error)
-			goto failed;
-	}
+	u_int n;
 
 	for (n = 0; n < link->link_naux; n++) {
 		error = audio_dai_trigger(link->link_aux[n], start, end,

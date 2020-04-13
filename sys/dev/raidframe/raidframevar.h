@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.19 2018/04/19 21:50:09 christos Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.19.2.1 2020/04/13 08:04:47 martin Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -210,7 +210,8 @@ typedef RF_uint32 RF_RaidAccessFlags_t;
 typedef struct RF_AccessStripeMap_s RF_AccessStripeMap_t;
 typedef struct RF_AccessStripeMapHeader_s RF_AccessStripeMapHeader_t;
 typedef struct RF_AllocListElem_s RF_AllocListElem_t;
-typedef struct RF_CallbackDesc_s RF_CallbackDesc_t;
+typedef struct RF_CallbackFuncDesc_s RF_CallbackFuncDesc_t;
+typedef struct RF_CallbackValueDesc_s RF_CallbackValueDesc_t;
 typedef struct RF_ChunkDesc_s RF_ChunkDesc_t;
 typedef struct RF_CommonLogData_s RF_CommonLogData_t;
 typedef struct RF_Config_s RF_Config_t;
@@ -519,7 +520,7 @@ typedef struct RF_DeviceConfig_s {
 	u_int   maxqdepth;
 	int     ndevs;
 	RF_RaidDisk_t devs[RF_MAX_DISKS];
-	int     nspares;
+	u_int    nspares;
 	RF_RaidDisk_t spares[RF_MAX_DISKS];
 }       RF_DeviceConfig_t;
 

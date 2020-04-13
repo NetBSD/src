@@ -1,10 +1,10 @@
-/*	$NetBSD: alock.c,v 1.1.1.6 2018/02/06 01:53:13 christos Exp $	*/
+/*	$NetBSD: alock.c,v 1.1.1.6.4.1 2020/04/13 07:56:16 martin Exp $	*/
 
 /* alock.c - access lock library */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2017 The OpenLDAP Foundation.
+ * Copyright 2005-2019 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: alock.c,v 1.1.1.6 2018/02/06 01:53:13 christos Exp $");
+__RCSID("$NetBSD: alock.c,v 1.1.1.6.4.1 2020/04/13 07:56:16 martin Exp $");
 
 #include "portable.h"
 

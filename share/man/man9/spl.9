@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.41 2017/04/06 03:00:13 pgoyette Exp $
+.\"	$NetBSD: spl.9,v 1.41.12.1 2020/04/13 08:03:26 martin Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Michael Long.
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 6, 2017
+.Dd April 7, 2020
 .Dt SPL 9
 .Os
 .Sh NAME
@@ -169,14 +169,17 @@ or endorsed
 .Xr pool_cache 9
 interfaces to allocate memory.
 .Pp
-At the time of writing, the global
+The global
 .Dv kernel_lock
-is automatically acquired for interrupts at this level, in order to
+is automatically acquired for interrupts at this level by default,
+in order to
 support device drivers that do not provide their own multiprocessor
 synchronization.
-A future release of the system may allow the automatic acquisition of
+The automatic acquisition of
 .Dv kernel_lock
-to be disabled for individual interrupt handlers.
+can be disabled for individual interrupt handlers by device drivers
+if supported by subsystem, see e.g.
+.Xr pci_intr_establish 9 .
 .Pp
 .Fn splbio ,
 .Fn splnet ,

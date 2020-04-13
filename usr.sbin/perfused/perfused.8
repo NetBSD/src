@@ -1,4 +1,4 @@
-.\" $NetBSD: perfused.8,v 1.12 2016/10/18 15:06:17 manu Exp $
+.\" $NetBSD: perfused.8,v 1.12.14.1 2020/04/13 08:05:56 martin Exp $
 .\"
 .\" Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
 .\"
@@ -77,7 +77,7 @@ Most FUSE file system daemons use
 .Nm libfuse
 and will work unmodified, provided the modification is done in
 .Nm libfuse
-itself .
+itself.
 .Pp
 The following options are available:
 .Bl -tag -width XdXtypesXX
@@ -158,5 +158,5 @@ When
 runs in the foreground (using the
 .Fl f
 flag), some processes using the FUSE file system will
-sometime hang on
+sometimes hang on
 .Sq uvn_fp2 .

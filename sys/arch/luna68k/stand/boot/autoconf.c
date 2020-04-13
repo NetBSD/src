@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2014/01/10 11:12:03 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10.30.1 2020/04/13 08:03:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 Izumi Tsutsui.  All rights reserved.
@@ -24,6 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/board.h>
 #include <machine/cpu.h>
 #include <luna68k/stand/boot/samachdep.h>
 
@@ -32,11 +33,11 @@ find_devs(void)
 {
 
 	/* find and init devices */
-	scinit(0, (uint8_t *)0xe1000000);
+	scinit(0, (uint8_t *)SCSI_ADDR);
 	if (machtype == LUNA_II) {
-		scinit(1, (uint8_t *)0xe1000040);
+		scinit(1, (uint8_t *)SCSI_2_ADDR);
 	}
-	if (!badaddr((void *)0xf1000000)) {
-		leinit(0, (uint8_t *)0xf1000000);
+	if (!badaddr((void *)LANCE_ADDR)) {
+		leinit(0, (uint8_t *)LANCE_ADDR);
 	}
 }

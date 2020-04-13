@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dags.c,v 1.4 2001/11/13 07:11:14 lukem Exp $	*/
+/*	$NetBSD: rf_evenodd_dags.c,v 1.4.204.1 2020/04/13 08:04:47 martin Exp $	*/
 /*
  * rf_evenodd_dags.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dags.c,v 1.4 2001/11/13 07:11:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dags.c,v 1.4.204.1 2020/04/13 08:04:47 martin Exp $");
 
 #include "rf_archs.h"
 
@@ -103,7 +103,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_EO_100_CreateWriteDAG)
 	if (asmap->numStripeUnitsAccessed != 1 &&
 	    asmap->failedPDAs[0]->numSector != raidPtr->Layout.sectorsPerStripeUnit)
 		RF_PANIC();
-	rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, 2, (int (*) (RF_DagNode_t *)) rf_Degraded_100_EOFunc, RF_TRUE);
+	rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, 2, rf_Degraded_100_EOFunc, RF_TRUE);
 }
 /*
  * E is dead. Small write.
@@ -162,7 +162,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_EO_110_CreateWriteDAG)
 	temp = asmap->parityInfo;
 	asmap->parityInfo = asmap->qInfo;
 	asmap->qInfo = temp;
-	rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, 1, (int (*) (RF_DagNode_t *)) rf_EO_DegradedWriteEFunc, RF_FALSE);
+	rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, 1, rf_EO_DegradedWriteEFunc, RF_FALSE);
 	/* is the regular E func the right one to call? */
 }
 RF_CREATE_DAG_FUNC_DECL(rf_EO_101_CreateWriteDAG)

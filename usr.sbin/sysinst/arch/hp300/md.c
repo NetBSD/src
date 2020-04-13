@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2018/05/18 12:23:22 joerg Exp $ */
+/*	$NetBSD: md.c,v 1.5.2.1 2020/04/13 08:06:02 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,6 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <util.h>
@@ -58,8 +57,8 @@ md_init_set_status(int flags)
 	(void)flags;
 }
 
-int
-md_get_info(void)
+bool
+md_get_info(struct install_partition_desc *install)
 {
 	char buf[1024];
 	int fd;
@@ -111,71 +110,71 @@ md_get_info(void)
 
 	close(fd);
 
-	return 1;
+	return true;
 }
 
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
-int
-md_make_bsd_partitions(void)
+bool
+md_make_bsd_partitions(struct install_partition_desc *install)
 {
 
-	return make_bsd_partitions();
+	return make_bsd_partitions(install);
 }
 
 /*
  * any additional partition validation
  */
-int
-md_check_partitions(void)
+bool
+md_check_partitions(struct install_partition_desc *install)
 {
 	/* hp300 partitions must be in order of the range. */
-	int part, last;
-	uint32_t start;
+	daddr_t last_end = 0;
+	size_t i;
+	char desc[STRSIZE];
 
-	start = 0;
-	last = PART_A - 1;
-	for (part = PART_A; part < MAXPARTITIONS; part++) {
-		if (part == PART_RAW || part == PART_BOOT)
-			continue;
-		if (last >= PART_A && pm->bsdlabel[part].pi_size > 0) {
-			msg_display(MSG_emptypart, part+'a');
-			process_menu(MENU_ok, NULL);
-			return 0;
-		}
-		if (pm->bsdlabel[part].pi_size == 0) {
-			if (last < PART_A)
-				last = part;
-		} else {
-			if (start >= pm->bsdlabel[part].pi_offset) {
-				msg_display(MSG_ordering, part+'a');
+	for (i = 0; i < install->num; i++) {
+		if (i > 0) {
+			/* skip raw part and similar */
+			if (install->infos[i].cur_flags &
+			    (PTI_SEC_CONTAINER|PTI_PSCHEME_INTERNAL|
+			    PTI_RAW_PART))
+				continue;
+
+			if (install->infos[i].cur_start < last_end) {
+				snprintf(desc, sizeof desc,
+				    "%zu (%s)", i,
+				    install->infos[i].mount);
+				msg_fmt_display(MSG_ordering, "%s", desc);
 				if (ask_yesno(NULL))
-					return 0;
+					return false;
 			}
-			start = pm->bsdlabel[part].pi_offset;
 		}
+		last_end = install->infos[i].cur_start + install->infos[i].size;
 	}
 
-	return 1;
+	return true;
 }
 
 /*
  * hook called before writing new disklabel.
  */
-int
-md_pre_disklabel(void)
+bool
+md_pre_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	return 0;
+	return true;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-int
-md_post_disklabel(void)
+bool
+md_post_disklabel(struct install_partition_desc *install,
+    struct disk_partitions *parts)
 {
-	return 0;
+	return true;
 }
 
 /*
@@ -186,25 +185,31 @@ md_post_disklabel(void)
  * On hp300, we use this opportunity to install the boot blocks.
  */
 int
-md_post_newfs(void)
+md_post_newfs(struct install_partition_desc *install)
 {
 	/* boot blocks ... */
-	msg_display(MSG_dobootblks, pm->diskdev);
+	msg_fmt_display(MSG_dobootblks, "%s", pm->diskdev);
 	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
 	    "/usr/sbin/installboot /dev/r%sc /usr/mdec/uboot.lif", pm->diskdev))
 		process_menu(MENU_ok,
 		    __UNCONST("Warning: disk is probably not bootable"));
+
+	wclear(stdscr);
+	touchwin(stdscr);
+	clearok(stdscr, 1);
+	refresh();
+
 	return 0;
 }
 
 int
-md_post_extract(void)
+md_post_extract(struct install_partition_desc *install)
 {
 	return 0;
 }
 
 void
-md_cleanup_install(void)
+md_cleanup_install(struct install_partition_desc *install)
 {
 #ifdef notyet			/* sed is too large for ramdisk */
 	enable_rc_conf();
@@ -212,16 +217,16 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update(void)
+md_pre_update(struct install_partition_desc *install)
 {
 	return 1;
 }
 
 /* Upgrade support */
 int
-md_update(void)
+md_update(struct install_partition_desc *install)
 {
-	md_post_newfs();
+	md_post_newfs(install);
 	return 1;
 }
 
@@ -241,7 +246,24 @@ hp300_boot_size(void)
 }
 
 int
-md_pre_mount()
+md_pre_mount(struct install_partition_desc *install, size_t ndx)
 {
 	return 0;
 }
+
+#ifdef HAVE_GPT
+bool
+md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
+    bool root_is_new, part_id efi_id, bool efi_is_new)
+{
+	/* no GPT boot support, nothing needs to be done here */
+	return true;
+}
+#endif
+
+bool
+md_parts_use_wholedisk(struct disk_partitions *parts)
+{
+	return parts_use_wholedisk(parts, 0, NULL);
+}
+

@@ -1057,7 +1057,7 @@ INTERCEPTOR(int, pthread_key_create, __sanitizer_pthread_key_t *key,
 }
 
 #if SANITIZER_NETBSD
-INTERCEPTOR(void, __libc_thr_keycreate, void *m, void (*dtor)(void *value)) \
+INTERCEPTOR(int, __libc_thr_keycreate, __sanitizer_pthread_key_t *m, void (*dtor)(void *value)) \
   ALIAS(WRAPPER_NAME(pthread_key_create));
 #endif
 

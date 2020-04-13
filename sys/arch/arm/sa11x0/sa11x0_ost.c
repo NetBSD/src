@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.32 2016/10/09 14:43:17 christos Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.32.16.1 2020/04/13 08:03:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.32 2016/10/09 14:43:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.32.16.1 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,14 +80,23 @@ struct saost_softc {
 
 static struct saost_softc *saost_sc = NULL;
 
+#define PXA270_OST_FREQ		3250000		/* PXA270 uses 3.25MHz */
+#define SAOST_FREQ		3686400		/* Others use 3.6864MHz */
+#define SAOST_MAXFREQ		SAOST_FREQ
+
 #if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
+/*
+ * On dynamic configuration, assume fastest frequency for early delay(9)
+ * before tc_init(9), because longer delay(9) is almost harmless during
+ * device probe and initialization.
+ */
 #include <arm/xscale/pxa2x0cpu.h> 
-static uint32_t freq;
-#define TIMER_FREQUENCY         freq
+static uint32_t saost_freq = SAOST_MAXFREQ;
+#define TIMER_FREQUENCY		saost_freq
 #elif defined(CPU_XSCALE_PXA270)
-#define TIMER_FREQUENCY         3250000         /* PXA270 uses 3.25MHz */
+#define TIMER_FREQUENCY		PXA270_OST_FREQ
 #else
-#define TIMER_FREQUENCY         3686400         /* 3.6864MHz */
+#define TIMER_FREQUENCY		SAOST_FREQ
 #endif
 
 #ifndef STATHZ
@@ -230,7 +239,7 @@ cpu_initclocks(void)
 	stathz = STATHZ;
 	profhz = stathz;
 #if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
-	TIMER_FREQUENCY = (CPU_IS_PXA250) ? 3686400 : 3250000;
+	TIMER_FREQUENCY = (CPU_IS_PXA270) ? PXA270_OST_FREQ : SAOST_FREQ;
 #endif
 	sc->sc_statclock_step = TIMER_FREQUENCY / stathz;
 

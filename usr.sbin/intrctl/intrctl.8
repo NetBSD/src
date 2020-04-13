@@ -1,4 +1,4 @@
-.\" $NetBSD: intrctl.8,v 1.4 2016/10/15 12:06:27 jdolecek Exp $
+.\" $NetBSD: intrctl.8,v 1.4.14.1 2020/04/13 08:05:53 martin Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 15, 2016
+.Dd September 23, 2019
 .Dt INTRCTL 8
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@ enable to set an interrupt's affinity to
 If
 .Ar cpu_index
 is already enabled, this command has no effect.
-.It list Op Fl c
+.It list Oo Fl cz Oc Oo Fl w Ar wait Oc
 for each intrid in the system, display interrupt counts per CPU.
 The intrid is an interrupt name such as "ioapic0 pin 22" for x86.
 .Pp
@@ -64,6 +64,18 @@ If
 .Fl c
 is specified, display compact list with total counts per interrupt,
 and CPU affinity as comma separated list of CPU indexes.
+.Pp
+If
+.Fl w
+is specified then
+.Nm
+display the data continuously with a
+.Ar wait
+seconds delay between each iteration.
+.Pp
+If
+.Fl z
+is specified then rows with all CPUs having zero interrupts will be skipped.
 .It nointr Fl c Ar cpu_index
 disable to set an interrupt's affinity to
 .Ar cpu_index .

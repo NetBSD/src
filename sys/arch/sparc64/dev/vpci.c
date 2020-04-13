@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.7 2016/05/10 19:23:59 palle Exp $	*/
+/*	$NetBSD: vpci.c,v 1.7.20.1 2020/04/13 08:04:08 martin Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.7 2016/05/10 19:23:59 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.7.20.1 2020/04/13 08:04:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -200,10 +200,7 @@ vpci_init(struct vpci_softc *sc/*FIXME, int busa*/, struct mainbus_attach_args *
 	struct pcibus_attach_args pba;
 	int *busranges = NULL, nranges;
 
-	pbm = malloc(sizeof(*pbm), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (pbm == NULL)
-		panic("vpci: can't alloc vpci pbm");
-
+	pbm = malloc(sizeof(*pbm), M_DEVBUF, M_WAITOK | M_ZERO);
 	pbm->vp_sc = sc;
 	pbm->vp_devhandle = (ma->ma_reg[0].ur_paddr >> 32) & 0x0fffffff;
 #if 0
@@ -251,9 +248,7 @@ FIXME
 	pbm->vp_pc = vpci_alloc_chipset(pbm, sc->sc_node, &_sparc_pci_chipset);
 	pbm->vp_pc->spc_busmax = busranges[1];
 	pbm->vp_pc->spc_busnode = malloc(sizeof(*pbm->vp_pc->spc_busnode),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (pbm->vp_pc->spc_busnode == NULL)
-		panic("vpci: malloc busnode");
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 #if 0
 	pbm->vp_pc->bustag = pbm->vp_cfgt;
@@ -314,9 +309,7 @@ vpci_init_iommu(struct vpci_softc *sc, struct vpci_pbm *pbm)
 	/* We have no STC.  */
 	is->is_sb[0] = NULL;
 
-	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
-	if (name == NULL)
-		panic("couldn't malloc iommu name");
+	name = malloc(32, M_DEVBUF, M_WAITOK);
 	snprintf(name, 32, "%s dvma", device_xname(sc->sc_dev));
 
 	/* Tell iommu how to set the TSB size.  */
@@ -422,9 +415,7 @@ vpci_alloc_bus_tag(struct vpci_pbm *pbm, const char *name, int type)
 	struct vpci_softc *sc = pbm->vp_sc;
 	struct sparc_bus_space_tag *bt;
 
-	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (bt == NULL)
-		panic("vpci: could not allocate bus tag");
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_WAITOK | M_ZERO);
 
 #if 0
 	snprintf(bt->name, sizeof(bt->name), "%s-pbm_%s(%d/%2.2x)",
@@ -446,10 +437,7 @@ vpci_alloc_dma_tag(struct vpci_pbm *pbm)
 	struct vpci_softc *sc = pbm->vp_sc;
 	bus_dma_tag_t dt, pdt = sc->sc_dmat;
 
-	dt = malloc(sizeof(*dt), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (dt == NULL)
-		panic("vpci: could not alloc dma tag");
-
+	dt = malloc(sizeof(*dt), M_DEVBUF, M_WAITOK | M_ZERO);
 	dt->_cookie = pbm;
 	dt->_parent = pdt;
 #define PCOPY(x)	dt->x = pdt->x
@@ -475,9 +463,7 @@ vpci_alloc_chipset(struct vpci_pbm *pbm, int node, pci_chipset_tag_t pc)
 {
 	pci_chipset_tag_t npc;
 
-	npc = malloc(sizeof *npc, M_DEVBUF, M_NOWAIT);
-	if (npc == NULL)
-		panic("vpci: could not allocate pci_chipset_tag_t");
+	npc = malloc(sizeof *npc, M_DEVBUF, M_WAITOK);
 	memcpy(npc, pc, sizeof *pc);
 	npc->cookie = pbm;
 	npc->rootnode = node;

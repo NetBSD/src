@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38.2.1 2020/04/08 14:09:16 martin Exp $
+#	$NetBSD: Makefile,v 1.38.2.2 2020/04/13 08:05:43 martin Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -76,7 +76,8 @@ SUBDIR.roff+= USD.doc
 CONFIGFILES=		mail.rc
 FILESDIR_mail.rc=	/etc
 
-COPTS.format.c += -Wno-format-nonliteral
+COPTS.format.c+= -Wno-format-nonliteral
+COPTS.fio.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

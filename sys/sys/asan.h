@@ -1,7 +1,7 @@
-/*	$NetBSD: asan.h,v 1.10.4.3 2020/04/08 14:09:03 martin Exp $	*/
+/*	$NetBSD: asan.h,v 1.10.4.4 2020/04/13 08:05:20 martin Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,9 @@
 #include "opt_kasan.h"
 #endif
 
+#ifdef KASAN
 #include <sys/types.h>
+#include <sys/bus.h>
 
 /* Stack redzone values. Part of the compiler ABI. */
 #define KASAN_STACK_LEFT	0xF1
@@ -52,17 +54,31 @@
 #define KASAN_POOL_REDZONE	0xFD
 #define KASAN_POOL_FREED	0xFE
 
-#ifdef KASAN
-void kasan_shadow_map(void *, size_t);
+/* DMA types. */
+#define KASAN_DMA_LINEAR	1
+#define KASAN_DMA_MBUF		2
+#define KASAN_DMA_UIO		3
+#define KASAN_DMA_RAW		4
+
 void kasan_early_init(void *);
 void kasan_init(void);
+void kasan_shadow_map(void *, size_t);
+
 void kasan_softint(struct lwp *);
+
+void kasan_dma_sync(bus_dmamap_t, bus_addr_t, bus_size_t, int);
+void kasan_dma_load(bus_dmamap_t, void *, bus_size_t, int);
 
 void kasan_add_redzone(size_t *);
 void kasan_mark(const void *, size_t, size_t, uint8_t);
 #else
-#define kasan_add_redzone(s)	__nothing
-#define kasan_mark(p, s, l, c)	__nothing
+#define kasan_early_init(u)		__nothing
+#define kasan_init()			__nothing
+#define kasan_shadow_map(a, s)		__nothing
+#define kasan_dma_sync(m, a, s, o)	__nothing
+#define kasan_dma_load(m, b, s, o)	__nothing
+#define kasan_add_redzone(s)		__nothing
+#define kasan_mark(p, s, l, c)		__nothing
 #endif
 
 #endif /* !_SYS_ASAN_H_ */

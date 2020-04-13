@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.198.2.2 2020/04/08 14:09:04 martin Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.198.2.3 2020/04/13 08:05:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.198.2.2 2020/04/08 14:09:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.198.2.3 2020/04/13 08:05:21 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -666,10 +666,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 			panic("uvm_page_physget: called _after_ bootstrap");
 
 		/* Try to match at front or back on unused segment */
-		if (uvm_page_physunload(lcv, freelist, paddrp) == false) {
-			if (paddrp == NULL) /* freelist fail, try next */
-				continue;
-		} else
+		if (uvm_page_physunload(lcv, freelist, paddrp))
 			return true;
 	}
 
@@ -681,10 +678,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 #endif
 	{
 		/* Try the front regardless. */
-		if (uvm_page_physunload_force(lcv, freelist, paddrp) == false) {
-			if (paddrp == NULL) /* freelist fail, try next */
-				continue;
-		} else
+		if (uvm_page_physunload_force(lcv, freelist, paddrp))
 			return true;
 	}
 	return false;

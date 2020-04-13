@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2009/04/22 15:23:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.16.46.1 2020/04/13 08:05:57 martin Exp $
 
 USE_FORT?= yes	# network server
 
@@ -22,5 +22,9 @@ CLEANFILES=	test
 
 test: ${.CURDIR}/test.c
 	cc -o test ${.CURDIR}/test.c -lrpcsvc
+
+COPTS.lockd_lock.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.lock_proc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.nlm_prot_svc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>

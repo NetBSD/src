@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.4 2015/05/11 21:07:56 martin Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.4.16.1 2020/04/13 08:06:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,7 @@ menu fullpart, title  "Select your choice";
 	option "Use the entire disk", 	    exit, action  {usefull = 1;};
 
 menu nodiskmap, title "Choose an option", y=16;
-	display action { msg_display (MSG_nodiskmap, pm->diskdev); };
+	display action { msg_fmt_display (MSG_nodiskmap, "%s", pm->diskdev); };
 	option "Abort install", exit, action {
 		endwin();  exit(1);
 	};
@@ -63,7 +63,7 @@ menu nodiskmap, title "Choose an option", y=16;
 	};
 
 menu editparttable, title  "Choose your partition", exit, y=14;
-	display action  { msg_display (MSG_editparttable);
+	display action  { msg_display (MSG_mac68k_editparttable);
 			  sortmerge();
 			  if (map.selected >= map.usable_cnt)
 				map.selected = 0;
@@ -82,7 +82,7 @@ menu editparttable, title  "Choose your partition", exit, y=14;
 		EBZB *bzb;
 
 		j = map.mblk[map.selected];
-		msg_display(MSG_split_part, map.blk[j].pmPartBlkCnt);
+		msg_fmt_display(MSG_split_part, "%d", map.blk[j].pmPartBlkCnt);
 		msg_prompt_add (MSG_scratch_size, NULL, buf, sizeof(buf));
 		size = atoi(buf);
 		if (size > 0 && size < (int)map.blk[j].pmPartBlkCnt) {
@@ -129,19 +129,20 @@ menu editparttable, title  "Choose your partition", exit, y=14;
 	option "Fix selected partition", action {
 		int i = map.mblk[map.selected];
 		EBZB *bzb = (EBZB *)&map.blk[i].pmBootArgs[0];
-		msg_display(MSG_partdebug, pm->diskdev, bzb->flags.part,
-			map.blk[i].pmPyPartStart,
-			map.blk[i].pmPartBlkCnt);
+		msg_fmt_display(MSG_partdebug, "%s%c%d%d",
+		    pm->diskdev, bzb->flags.part, map.blk[i].pmPyPartStart,
+		    map.blk[i].pmPartBlkCnt);
 		if ((map.blk[i].pmPyPartStart +
 		    map.blk[i].pmPartBlkCnt) > pm->dlsize) {
-			msg_display_add(MSG_parttable_fix_fixing,
-				pm->diskdev, bzb->flags.part);
+			msg_fmt_display_add(MSG_parttable_fix_fixing,
+			    "%s%c%d%d",
+			    pm->diskdev, bzb->flags.part);
 			map.blk[i].pmPartBlkCnt =
 			    pm->dlsize - map.blk[i].pmPyPartStart;
 			map.blk[i].pmDataCnt =
 			    map.blk[i].pmPartBlkCnt;
 		} else {
-		    msg_display_add(MSG_parttable_fix_fine,
+		    msg_fmt_display_add(MSG_parttable_fix_fine, "%s%c",
 			pm->diskdev, bzb->flags.part);
 		}
 		process_menu(MENU_ok, NULL);

@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.6.4.1 2020/04/08 14:08:12 martin Exp $ */
+/* $NetBSD: m25p.c,v 1.6.4.2 2020/04/13 08:04:48 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.6.4.1 2020/04/08 14:08:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.6.4.2 2020/04/13 08:04:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,28 +94,48 @@ static const struct m25p_info {
 } m25p_infos[] = {
 	{ 0x16, 0x20, 0x2017, "STMicro M25P64", 8192, 64 },	/* 64Mbit */
 	{ 0x14, 0x20, 0x2015, "STMicro M25P16", 2048, 64 },	/* 16Mbit */
-	{ 0x12,	0x20, 0x2013, "STMicro M25P40", 512, 64 },	/* 4Mbit */
+	{ 0x12, 0x20, 0x2013, "STMicro M25P40", 512, 64 },	/* 4Mbit */
 	{ 0xc0, 0x20, 0x7117, "STMicro M25PX64", 8192, 64 },	/* 64Mbit */
 	{ 0x00, 0x20, 0xBA18, "Micron MT25QL128", 16384, 64 },  /* 128Mbit (3V) */
 	{ 0x00, 0x20, 0xBB18, "Micron MT25QU128", 16384, 64 },  /* 128Mbit (1.8V)  */
 	{ 0x00, 0xBF, 0x2541, "Microchip SST25VF016B", 2048, 64 }, /* 16Mbit */
+	{ 0x00, 0xC2, 0x2011, "Macronix MX25L10", 128, 64 },	/* 1Mbit */
+	{ 0x00, 0xC2, 0x2012, "Macronix MX25L20", 256, 64 },	/* 2Mbit */
+	{ 0x00, 0xC2, 0x2013, "Macronix MX25L40", 512, 64 },	/* 4Mbit */
+	{ 0x00, 0xC2, 0x2014, "Macronix MX25L80", 1024, 64 },	/* 8Mbit */
+	{ 0x00, 0xC8, 0x4018, "GigaDevice 25Q127CSIG", 16384, 64 },	/* 128Mbit */
+	{ 0x00, 0xEF, 0x3011, "Winbond W25X10", 128, 64 },	/* 1Mbit */
+	{ 0x00, 0xEF, 0x3012, "Winbond W25X20", 256, 64 },	/* 2Mbit */
+	{ 0x00, 0xEF, 0x3013, "Winbond W25X40", 512, 64 },	/* 4Mbit */
+	{ 0x00, 0xEF, 0x3014, "Winbond W25X80", 1024, 64 },	/* 8Mbit */
 	{ 0x13, 0xEF, 0x4014, "Winbond W25Q80.V", 1024, 64 },	/* 8Mbit */
 	{ 0x14, 0xEF, 0x4015, "Winbond W25Q16.V", 2048, 64 },	/* 16Mbit */
 	{ 0x15, 0xEF, 0x4016, "Winbond W25Q32.V", 4096, 64 },	/* 32Mbit */
+	{ 0x15, 0xEF, 0x4018, "Winbond W25Q128.V", 16384, 64 },	/* 128Mbit */
 	{ 0x15, 0xEF, 0x6016, "Winbond W25Q32.W", 4096, 64 },	/* 32Mbit */
 	{ 0 }
+};
+
+static const struct device_compatible_entry compat_data[] = {
+	{ "jedec,spi-nor",	0 },
+	{ NULL,			0 }
 };
 
 static int
 m25p_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
+	int res;
+
+	res = spi_compatible_match(sa, cf, compat_data);
+	if (!res)
+		return res;
 
 	/* configure for 20MHz, which is the max for normal reads */
 	if (spi_configure(sa->sa_handle, SPI_MODE_0, 20000000))
-		return 0;
+		res = 0;
 
-	return 1;
+	return res;
 }
 
 static void
@@ -125,6 +145,9 @@ m25p_attach(device_t parent, device_t self, void *aux)
 	struct spi_attach_args *sa = aux;
 
 	sc->sc_sh = sa->sa_handle;
+
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	config_interrupts(self, m25p_doattach);
 }
@@ -169,7 +192,8 @@ m25p_doattach(device_t self)
 	}
 
 	if (info->name == NULL) {
-		aprint_error(": unknown or unsupported device\n");
+		aprint_error(": vendor 0x%02X dev 0x%04X sig 0x%02X not supported\n",
+			     mfgid, devid, sig);
 		return;
 	}
 

@@ -1,9 +1,9 @@
-/* $NetBSD: cycv_clkmgr.c,v 1.2.4.2 2019/06/10 22:05:50 christos Exp $ */
+/* $NetBSD: cycv_clkmgr.c,v 1.2.4.3 2020/04/13 08:03:32 martin Exp $ */
 
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.2.4.2 2019/06/10 22:05:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.2.4.3 2020/04/13 08:03:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,8 +138,8 @@ cycv_clkmgr_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d",
-			     (uint64_t) addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
+			     addr, error);
 		return;
 	}
 
@@ -166,13 +166,7 @@ cycv_clkmgr_init(struct cycv_clkmgr_softc *sc, int clkmgr_handle)
 						     0);
 
 	sc->sc_clocks = kmem_zalloc(sc->sc_nclocks * sizeof *sc->sc_clocks,
-				    KM_NOSLEEP);
-	if (sc->sc_clocks == NULL) {
-		aprint_error_dev(sc->sc_dev, "no memory\n");
-		sc->sc_nclocks = 0;
-		return;
-	}
-
+				    KM_SLEEP);
 	cycv_clkmgr_clocks_traverse(sc, clocks_handle, cycv_clkmgr_clock_parse,
 				    0);
 

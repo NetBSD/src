@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1 2011/07/01 17:09:58 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.1.54.1 2020/04/13 08:03:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,10 @@
 typedef u_long	bus_addr_t;
 typedef u_long	bus_size_t;
 
+#define PRIxBUSADDR	"lx"
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
+
 /*
  * I/O addresses (in bus space)
  */
@@ -79,6 +83,8 @@ typedef u_long bus_io_size_t;
  */
 typedef struct atari_bus_space	*bus_space_tag_t;
 typedef u_long			bus_space_handle_t;
+
+#define PRIxBSH		"lx"
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02

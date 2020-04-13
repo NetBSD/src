@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_uvd_v4_2.c,v 1.1.6.2 2019/06/10 22:08:27 christos Exp $	*/
+/*	$NetBSD: radeon_uvd_v4_2.c,v 1.1.6.3 2020/04/13 08:04:58 martin Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_uvd_v4_2.c,v 1.1.6.2 2019/06/10 22:08:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_uvd_v4_2.c,v 1.1.6.3 2020/04/13 08:04:58 martin Exp $");
 
 #include <linux/firmware.h>
 #include <drm/drmP.h>
@@ -67,7 +67,7 @@ int uvd_v4_2_resume(struct radeon_device *rdev)
 
 	/* bits 32-39 */
 	addr = (rdev->uvd.gpu_addr >> 32) & 0xFF;
-	WREG32(UVD_LMI_EXT40_ADDR, addr | (0x9 << 16) | (0x1 << 31));
+	WREG32(UVD_LMI_EXT40_ADDR, addr | (0x9 << 16) | (0x1U << 31));
 
 	return 0;
 }

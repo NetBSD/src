@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_xcall.c,v 1.26 2018/02/07 04:25:09 ozaki-r Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.26.4.1 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
- * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007-2010, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.26 2018/02/07 04:25:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.26.4.1 2020/04/13 08:05:04 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.26 2018/02/07 04:25:09 ozaki-r Exp 
 #include <sys/evcnt.h>
 #include <sys/kthread.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #ifdef _RUMPKERNEL
 #include "rump_private.h"
@@ -259,12 +260,38 @@ xc_broadcast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2)
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 	ASSERT_SLEEPABLE();
 
+	if (__predict_false(!mp_online)) {
+		(*func)(arg1, arg2);
+		return 0;
+	}
+
 	if ((flags & XC_HIGHPRI) != 0) {
 		int ipl = xc_extract_ipl(flags);
 		return xc_highpri(func, arg1, arg2, NULL, ipl);
 	} else {
 		return xc_lowpri(func, arg1, arg2, NULL);
 	}
+}
+
+static void
+xc_nop(void *arg1, void *arg2)
+{
+
+	return;
+}
+
+/*
+ * xc_barrier:
+ *
+ *	Broadcast a nop to all CPUs in the system.
+ */
+void
+xc_barrier(unsigned int flags)
+{
+	uint64_t where;
+
+	where = xc_broadcast(flags, xc_nop, NULL, NULL);
+	xc_wait(where);
 }
 
 /*
@@ -276,10 +303,19 @@ uint64_t
 xc_unicast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2,
 	   struct cpu_info *ci)
 {
+	int s;
 
 	KASSERT(ci != NULL);
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 	ASSERT_SLEEPABLE();
+
+	if (__predict_false(!mp_online)) {
+		KASSERT(ci == curcpu());
+		s = splsoftserial();
+		(*func)(arg1, arg2);
+		splx(s);
+		return 0;
+	}
 
 	if ((flags & XC_HIGHPRI) != 0) {
 		int ipl = xc_extract_ipl(flags);
@@ -302,6 +338,10 @@ xc_wait(uint64_t where)
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 	ASSERT_SLEEPABLE();
 
+	if (__predict_false(!mp_online)) {
+		return;
+	}
+
 	/* Determine whether it is high or low priority cross-call. */
 	if ((where & XC_PRI_BIT) != 0) {
 		xc = &xc_high_pri;
@@ -310,10 +350,12 @@ xc_wait(uint64_t where)
 		xc = &xc_low_pri;
 	}
 
+#ifdef __HAVE_ATOMIC64_LOADSTORE
 	/* Fast path, if already done. */
-	if (xc->xc_donep >= where) {
+	if (atomic_load_acquire(&xc->xc_donep) >= where) {
 		return;
 	}
+#endif
 
 	/* Slow path: block until awoken. */
 	mutex_enter(&xc->xc_lock);
@@ -398,7 +440,11 @@ xc_thread(void *cookie)
 		(*func)(arg1, arg2);
 
 		mutex_enter(&xc->xc_lock);
+#ifdef __HAVE_ATOMIC64_LOADSTORE
+		atomic_store_release(&xc->xc_donep, xc->xc_donep + 1);
+#else
 		xc->xc_donep++;
+#endif
 	}
 	/* NOTREACHED */
 }
@@ -438,7 +484,6 @@ xc__highpri_intr(void *dummy)
 	 * Lock-less fetch of function and its arguments.
 	 * Safe since it cannot change at this point.
 	 */
-	KASSERT(xc->xc_donep < xc->xc_headp);
 	func = xc->xc_func;
 	arg1 = xc->xc_arg1;
 	arg2 = xc->xc_arg2;
@@ -451,7 +496,13 @@ xc__highpri_intr(void *dummy)
 	 * cross-call has been processed - notify waiters, if any.
 	 */
 	mutex_enter(&xc->xc_lock);
-	if (++xc->xc_donep == xc->xc_headp) {
+	KASSERT(xc->xc_donep < xc->xc_headp);
+#ifdef __HAVE_ATOMIC64_LOADSTORE
+	atomic_store_release(&xc->xc_donep, xc->xc_donep + 1);
+#else
+	xc->xc_donep++;
+#endif
+	if (xc->xc_donep == xc->xc_headp) {
 		cv_broadcast(&xc->xc_busy);
 	}
 	mutex_exit(&xc->xc_lock);

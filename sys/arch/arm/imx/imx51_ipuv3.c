@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ipuv3.c,v 1.7 2018/03/17 18:34:09 ryo Exp $	*/
+/*	$NetBSD: imx51_ipuv3.c,v 1.7.2.1 2020/04/13 08:03:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2011, 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.7 2018/03/17 18:34:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.7.2.1 2020/04/13 08:03:35 martin Exp $");
 
 #include "opt_imx51_ipuv3.h"
 
@@ -932,12 +932,7 @@ imx51_ipuv3_new_screen(struct imx51_ipuv3_softc *sc,
 	width = geometry->panel_width;
 	height = geometry->panel_height;
 
-	scr = malloc(sizeof(*scr), M_DEVBUF, M_NOWAIT);
-	if (scr == NULL)
-		return ENOMEM;
-
-	memset(scr, 0, sizeof(*scr));
-
+	scr = malloc(sizeof(*scr), M_DEVBUF, M_WAITOK | M_ZERO);
 	scr->nsegs = 0;
 	scr->depth = depth;
 	scr->stride = width * depth / 8;

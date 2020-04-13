@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.49.4.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.49.4.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.49.4.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.49.4.2 2020/04/13 08:05:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,6 +568,7 @@ look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 	return SCAN_CONTINUE;
 }
 
+__noubsan
 static bool
 check_label_magic(const struct disklabel *dlp, uint32_t diskmagic)
 {

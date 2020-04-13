@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.3.30.2 2020/04/08 14:08:27 martin Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.3.30.3 2020/04/13 08:04:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -78,5 +78,7 @@
 #include <drm/drm_agp_netbsd.h>
 #include <drm/drm_irq_netbsd.h>
 #include <drm/drm_wait_netbsd.h>
+
+#include <sys/vmem.h>
 
 #endif  /* _DRM_DRM_OS_NETBSD_H_ */

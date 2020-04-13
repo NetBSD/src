@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.93.2.1 2019/06/10 22:07:09 christos Exp $
+#	$NetBSD: files.i2c,v 1.93.2.2 2020/04/13 08:04:20 martin Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -55,7 +55,6 @@ define	motoi2c
 file	dev/i2c/motoi2c.c			motoi2c
 define	mvi2c
 file	dev/i2c/gttwsi_core.c			mvi2c
-defflag opt_gttwsi.h				GTTWSI_ALLWINNER
 
 #
 # I2C client devices
@@ -70,8 +69,6 @@ file	dev/i2c/m41t00.c			m41trtc
 device	strtc
 attach	strtc at iic
 file	dev/i2c/m41st84.c			strtc
-defflag	opt_strtc.h				STRTC_NO_USERRAM
-						STRTC_NO_WATCHDOG
 
 # MAX6900 Real Time Clock
 device	maxrtc
@@ -196,14 +193,11 @@ device	ibmhawk: sysmon_envsys
 attach	ibmhawk at iic
 file	dev/i2c/ibmhawk.c		ibmhawk
 
-# TI TPS65950 OMAP Power Management and System Companion Device
-device	tps65950pm: sysmon_wdog
-attach	tps65950pm at iic
-file	dev/i2c/tps65950.c		tps65950pm
-
 # TI TPS65217
-device	tps65217pmic: sysmon_envsys
+device	tps65217pmic { }: sysmon_envsys
+device	tps65217reg: tps65217pmic
 attach	tps65217pmic at iic
+attach	tps65217reg at tps65217pmic
 file	dev/i2c/tps65217pmic.c 		tps65217pmic	needs-flag
 
 # Microchip MCP980x
@@ -366,3 +360,33 @@ file	dev/i2c/ssdfb_i2c.c			ssdfb_iic
 device	anxedp: edid, videomode, drmkms, drmkms_i2c
 attach	anxedp at iic
 file	dev/i2c/anxedp.c			anxedp
+
+# NXP PCA9685 16-channel, 12-bit PWM Fm+ LED controller
+device	pcapwm: pwm
+attach	pcapwm at iic
+file	dev/i2c/pca9685.c			pcapwm
+
+# TI TWL4030 Power Management IC
+device	twl
+attach	twl at iic
+file	dev/i2c/twl4030.c			twl
+
+# NXP TDA19988 HDMI encoder
+device	tdahdmi: edid, videomode, drmkms, drmkms_i2c
+attach	tdahdmi at iic
+file	dev/i2c/tda19988.c			tdahdmi
+
+# Everest Semi ES8316 Low Power Audio CODEC
+device	es8316ac
+attach	es8316ac at iic
+file	dev/i2c/es8316ac.c			es8316ac
+
+# CellWise CW2015 Fuel Gauge IC
+device	cwfg: sysmon_envsys
+attach	cwfg at iic
+file	dev/i2c/cwfg.c				cwfg
+
+# Philips PCA955x GPIO
+device	pcagpio: leds
+attach	pcagpio at iic
+file	dev/i2c/pcagpio.c			pcagpio

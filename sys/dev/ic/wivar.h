@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.66 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: wivar.h,v 1.66.14.1 2020/04/13 08:04:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -52,7 +52,7 @@ struct wi_rx_radiotap_header {
 	u_int16_t				wr_chan_flags;
 	int8_t					wr_antsignal;
 	int8_t					wr_antnoise;
-} __packed;
+};
 
 #define WI_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
 				 (1 << IEEE80211_RADIOTAP_RATE) | \
@@ -64,7 +64,7 @@ struct wi_tx_radiotap_header {
 	u_int8_t				wt_rate;
 	u_int16_t				wt_chan_freq;
 	u_int16_t				wt_chan_flags;
-} __packed;
+};
 
 struct wi_rssdesc {
 	struct ieee80211_rssdesc	rd_desc;

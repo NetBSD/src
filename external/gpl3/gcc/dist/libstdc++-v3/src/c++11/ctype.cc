@@ -1,4 +1,4 @@
-// Copyright (C) 1997-2017 Free Software Foundation, Inc.
+// Copyright (C) 1997-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -53,7 +53,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   ctype<char>::~ctype()
   {
+#if 0
+    // There is no constructor for the char specialization, and
+    // _M_c_locale_ctype is uninitialized, found by jemalloc
     _S_destroy_c_locale(_M_c_locale_ctype);
+#endif
     if (_M_del)
       delete[] this->table();
   }

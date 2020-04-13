@@ -1,5 +1,5 @@
 /*	$KAME: sctp_crc32.c,v 1.12 2005/03/06 16:04:17 itojun Exp $	*/
-/*	$NetBSD: sctp_crc32.c,v 1.2 2016/08/12 19:08:54 jdolecek Exp $ */
+/*	$NetBSD: sctp_crc32.c,v 1.2.18.1 2020/04/13 08:05:16 martin Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_crc32.c,v 1.2 2016/08/12 19:08:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_crc32.c,v 1.2.18.1 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sctp.h"
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_crc32.c,v 1.2 2016/08/12 19:08:54 jdolecek Exp 
 
 #include <sys/param.h>
 #include <netinet/sctp_crc32.h>
-
-#ifndef SCTP_USE_ADLER32
 
 #define SCTP_CRC32C_POLY 0x1EDC6F41
 #define SCTP_CRC32C(c, d) (c = ((c) >> 8) ^ sctp_crc_c[((c) ^ (d)) & 0xFF])
@@ -181,4 +179,3 @@ sctp_csum_finalize(u_int32_t crc32c)
 	return (crc32c);
 }
 
-#endif

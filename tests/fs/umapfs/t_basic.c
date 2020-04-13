@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.5 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.5.14.1 2020/04/13 08:05:24 martin Exp $	*/
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,5 +141,5 @@ ATF_TC_BODY(basic, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, basic);
-	return 0; /*XXX?*/
+	return atf_no_error();
 }

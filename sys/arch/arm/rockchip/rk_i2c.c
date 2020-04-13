@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.4.4.3 2020/04/08 14:07:30 martin Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.4.4.4 2020/04/13 08:03:37 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.4.4.3 2020/04/08 14:07:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.4.4.4 2020/04/13 08:03:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -224,8 +224,8 @@ rk_i2c_stop(struct rk_i2c_softc *sc)
 }
 
 static int
-rk_i2c_write(struct rk_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
-    size_t buflen, int flags, bool send_start)
+rk_i2c_write(struct rk_i2c_softc *sc, i2c_addr_t addr, const uint8_t *cmd,
+    size_t cmdlen, const uint8_t *buf, size_t buflen, int flags, bool send_start)
 {
 	union {
 		uint8_t data8[32];
@@ -234,8 +234,10 @@ rk_i2c_write(struct rk_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 	uint32_t con;
 	u_int mode;
 	int error;
+	size_t len;
 
-	if (buflen > 31)
+	len = cmdlen + buflen;
+	if (len > 31)
 		return EINVAL;
 
 	mode = RKI2C_CON_I2C_MODE_TX;
@@ -247,10 +249,11 @@ rk_i2c_write(struct rk_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 
 	/* Transmit data. Slave address goes in the lower 8 bits of TXDATA0 */
 	txdata.data8[0] = addr << 1;
-	memcpy(&txdata.data8[1], buf, buflen);
+	memcpy(&txdata.data8[1], cmd, cmdlen);
+	memcpy(&txdata.data8[1 + cmdlen], buf, buflen);
 	bus_space_write_region_4(sc->sc_bst, sc->sc_bsh, RKI2C_TXDATA(0),
-	    txdata.data32, howmany(buflen + 1, 4));
-	WR4(sc, RKI2C_MTXCNT, __SHIFTIN(buflen + 1, RKI2C_MTXCNT_MTXCNT));
+	    txdata.data32, howmany(len + 1, 4));
+	WR4(sc, RKI2C_MTXCNT, __SHIFTIN(len + 1, RKI2C_MTXCNT_MTXCNT));
 
 	if ((error = rk_i2c_wait(sc, RKI2C_IPD_MBTFIPD)) != 0)
 		return error;
@@ -261,7 +264,7 @@ rk_i2c_write(struct rk_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 static int
 rk_i2c_read(struct rk_i2c_softc *sc, i2c_addr_t addr,
     const uint8_t *cmd, size_t cmdlen, uint8_t *buf,
-    size_t buflen, int flags, bool send_start)
+    size_t buflen, int flags, bool send_start, bool last_ack)
 {
 	uint32_t rxdata[8];
 	uint32_t con, mrxaddr, mrxraddr;
@@ -273,24 +276,27 @@ rk_i2c_read(struct rk_i2c_softc *sc, i2c_addr_t addr,
 	if (cmdlen > 3)
 		return EINVAL;
 
-	mode = RKI2C_CON_I2C_MODE_RTX;
-	con = RKI2C_CON_I2C_EN | RKI2C_CON_ACK | __SHIFTIN(mode, RKI2C_CON_I2C_MODE);
+	mode = send_start ? RKI2C_CON_I2C_MODE_RTX : RKI2C_CON_I2C_MODE_RX;
+	con = RKI2C_CON_I2C_EN | __SHIFTIN(mode, RKI2C_CON_I2C_MODE);
 	WR4(sc, RKI2C_CON, con);
 
 	if (send_start && (error = rk_i2c_start(sc)) != 0)
 		return error;
 
-	mrxaddr = __SHIFTIN((addr << 1) | 1, RKI2C_MRXADDR_SADDR) |
-	    RKI2C_MRXADDR_ADDLVLD;
-	WR4(sc, RKI2C_MRXADDR, mrxaddr);
-	for (n = 0, mrxraddr = 0; n < cmdlen; n++) {
-		mrxraddr |= cmd[n] << (n * 8);
-		mrxraddr |= (RKI2C_MRXRADDR_ADDLVLD << n);
+	if (send_start) {
+		mrxaddr = __SHIFTIN((addr << 1) | 1, RKI2C_MRXADDR_SADDR) |
+		    RKI2C_MRXADDR_ADDLVLD;
+		WR4(sc, RKI2C_MRXADDR, mrxaddr);
+		for (n = 0, mrxraddr = 0; n < cmdlen; n++) {
+			mrxraddr |= cmd[n] << (n * 8);
+			mrxraddr |= (RKI2C_MRXRADDR_ADDLVLD << n);
+		}
+		WR4(sc, RKI2C_MRXRADDR, mrxraddr);
 	}
-	WR4(sc, RKI2C_MRXRADDR, mrxraddr);
 
-	/* Acknowledge last byte read */
-	con |= RKI2C_CON_ACK;
+	if (last_ack) {
+		con |= RKI2C_CON_ACK;
+	}
 	WR4(sc, RKI2C_CON, con);
 
 	/* Receive data. Slave address goes in the lower 8 bits of MRXADDR */
@@ -298,8 +304,14 @@ rk_i2c_read(struct rk_i2c_softc *sc, i2c_addr_t addr,
 	if ((error = rk_i2c_wait(sc, RKI2C_IPD_MBRFIPD)) != 0)
 		return error;
 
+#if 0
 	bus_space_read_region_4(sc->sc_bst, sc->sc_bsh, RKI2C_RXDATA(0),
 	    rxdata, howmany(buflen, 4));
+#else
+	for (n = 0; n < roundup(buflen, 4); n += 4)
+		rxdata[n/4] = RD4(sc, RKI2C_RXDATA(n/4));
+#endif
+
 	memcpy(buf, rxdata, buflen);
 
 	return 0;
@@ -314,18 +326,23 @@ rk_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	int error;
 
 	if (I2C_OP_READ_P(op)) {
-		error = rk_i2c_read(sc, addr, cmdbuf, cmdlen, buf, buflen, flags, send_start);
-	} else {
-		if (cmdlen > 0) {
-			error = rk_i2c_write(sc, addr, cmdbuf, cmdlen, flags, send_start);
+		uint8_t *databuf = buf;
+		while (buflen > 0) {
+			const size_t datalen = uimin(buflen, 32);
+			const bool last_ack = datalen == buflen;
+			error = rk_i2c_read(sc, addr, cmdbuf, cmdlen, databuf, datalen, flags, send_start, last_ack);
 			if (error != 0)
-				goto done;
+				break;
+			databuf += datalen;
+			buflen -= datalen;
 			send_start = false;
+			cmdbuf = NULL;
+			cmdlen = 0;
 		}
-		error = rk_i2c_write(sc, addr, buf, buflen, flags, send_start);
+	} else {
+		error = rk_i2c_write(sc, addr, cmdbuf, cmdlen, buf, buflen, flags, send_start);
 	}
 
-done:
 	if (error != 0 || I2C_OP_STOP_P(op))
 		rk_i2c_stop(sc);
 

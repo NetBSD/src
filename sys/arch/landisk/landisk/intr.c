@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7 2014/10/13 22:24:43 uwe Exp $	*/
+/*	$NetBSD: intr.c,v 1.7.20.1 2020/04/13 08:03:56 martin Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2014/10/13 22:24:43 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7.20.1 2020/04/13 08:03:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,9 +143,7 @@ extintr_establish(int irq, int level, int (*ih_fun)(void *), void *ih_arg)
 
 	KDASSERT(irq >= 5 && irq <= 12);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("intr_establish: can't malloc handler info");
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 
 	s = _cpu_intr_suspend();
 

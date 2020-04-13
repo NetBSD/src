@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.8.16.1 2019/06/10 22:05:12 christos Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.8.16.2 2020/04/13 08:03:08 martin Exp $	*/
 
 #ifndef _TZFILE_H_
 #define _TZFILE_H_
@@ -45,7 +45,7 @@ struct tzhead {
 	char	tzh_magic[4];		/* TZ_MAGIC */
 	char	tzh_version[1];		/* '\0' or '2' or '3' as of 2013 */
 	char	tzh_reserved[15];	/* reserved; must be zero */
-	char	tzh_ttisgmtcnt[4];	/* coded number of trans. time flags */
+	char	tzh_ttisutcnt[4];	/* coded number of trans. time flags */
 	char	tzh_ttisstdcnt[4];	/* coded number of trans. time flags */
 	char	tzh_leapcnt[4];		/* coded number of leap seconds */
 	char	tzh_timecnt[4];		/* coded number of transition times */
@@ -68,14 +68,15 @@ struct tzhead {
 **		one (char [4])		total correction after above
 **	tzh_ttisstdcnt (char)s		indexed by type; if 1, transition
 **					time is standard time, if 0,
-**					transition time is wall clock time
-**					if absent, transition times are
-**					assumed to be wall clock time
-**	tzh_ttisgmtcnt (char)s		indexed by type; if 1, transition
-**					time is UT, if 0,
-**					transition time is local time
-**					if absent, transition times are
+**					transition time is local (wall clock)
+**					time; if absent, transition times are
 **					assumed to be local time
+**	tzh_ttisutcnt (char)s		indexed by type; if 1, transition
+**					time is UT, if 0, transition time is
+**					local time; if absent, transition
+**					times are assumed to be local time.
+**					When this is 1, the corresponding
+**					std/wall indicator must also be 1.
 */
 
 /*

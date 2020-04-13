@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18.46.1 2019/06/10 22:10:22 christos Exp $
+#	$NetBSD: Makefile,v 1.18.46.2 2020/04/13 08:05:45 martin Exp $
 
 PROG=	newsyslog
 SRCS=	newsyslog.c
@@ -8,7 +8,7 @@ MLINKS+=newsyslog.8 newsyslog.conf.5
 
 .include <bsd.own.mk>
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.newsyslog.c += -Wno-error=format-truncation
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/05/09 08:39:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2020/04/13 08:02:30 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ PROG=	xclock
 SRCS=	xclock.c Clock.c
 
 CPPFLAGS+=-DXRENDER -DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
+CPPFLAGS+=-D_CONST_X_STRING
 CPPFLAGS+=-I${DESTDIR}${X11INCDIR}/freetype2/freetype
 
 APPDEFS=XClock XClock-color

@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.50.2.2 2020/04/08 14:07:45 martin Exp $ */
+/* $NetBSD: sbmac.c,v 1.50.2.3 2020/04/13 08:04:00 martin Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.50.2.2 2020/04/08 14:07:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.50.2.3 2020/04/13 08:04:00 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -172,7 +172,7 @@ struct sbmac_softc {
 	struct callout	sc_tick_ch;
 
 	device_t	sc_dev;		/* device */
-	int		sbm_if_flags;
+	u_short		sbm_if_flags;
 	void		*sbm_intrhand;
 
 	/*

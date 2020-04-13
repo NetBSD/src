@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.8 2018/04/11 10:32:09 nonaka Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.8.2.1 2020/04/13 08:03:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -65,7 +65,7 @@ int utf8_to_ucs2(const char *, CHAR16 **, size_t *);
 
 /* eficons.c */
 int cninit(void);
-void consinit(int, int, int);
+void efi_consinit(int, int, int);
 void efi_cons_show(void);
 void command_text(char *);
 void command_gop(char *);
@@ -80,9 +80,14 @@ void efi_disk_show(void);
 
 /* efimemory.c */
 void efi_memory_probe(void);
-void efi_memory_show_map(bool);
+void efi_memory_probe_reloc(EFI_PHYSICAL_ADDRESS, EFI_PHYSICAL_ADDRESS, bool);
+void efi_memory_show_map(bool, bool);
 EFI_MEMORY_DESCRIPTOR *efi_memory_get_map(UINTN *, UINTN *, UINTN *, UINT32 *,
     bool);
+EFI_MEMORY_DESCRIPTOR *efi_memory_compact_map(EFI_MEMORY_DESCRIPTOR *, UINTN *,
+    UINTN);
+struct bi_memmap_entry;
+int efi_memory_get_memmap(struct bi_memmap_entry **memmap, size_t *num);
 
 /* efinet.c */
 void efi_net_probe(void);

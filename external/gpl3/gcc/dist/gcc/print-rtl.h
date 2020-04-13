@@ -1,5 +1,5 @@
 /* Print RTL for GCC.
-   Copyright (C) 1987-2017 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -153,7 +153,7 @@ class rtx_reuse_manager
  private:
   hash_map<const_rtx, int> m_rtx_occurrence_count;
   hash_map<const_rtx, int> m_rtx_reuse_ids;
-  bitmap_head m_defs_seen;
+  auto_bitmap m_defs_seen;
   int m_next_id;
 };
 

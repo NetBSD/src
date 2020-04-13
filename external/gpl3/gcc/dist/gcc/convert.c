@@ -1,5 +1,5 @@
 /* Utility routines for data type conversion for GCC.
-   Copyright (C) 1987-2017 Free Software Foundation, Inc.
+   Copyright (C) 1987-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -33,6 +33,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "langhooks.h"
 #include "builtins.h"
 #include "ubsan.h"
+#include "stringpool.h"
+#include "attribs.h"
+#include "asan.h"
 
 #define maybe_fold_build1_loc(FOLD_P, LOC, CODE, TYPE, EXPR) \
   ((FOLD_P) ? fold_build1_loc (LOC, CODE, TYPE, EXPR)	     \
@@ -190,12 +193,15 @@ convert_to_real_1 (tree type, tree expr, bool fold_p)
 	  CASE_MATHFN (FABS)
 	  CASE_MATHFN (LOGB)
 #undef CASE_MATHFN
+	    if (call_expr_nargs (expr) != 1
+		|| !SCALAR_FLOAT_TYPE_P (TREE_TYPE (CALL_EXPR_ARG (expr, 0))))
+	      break;
 	    {
 	      tree arg0 = strip_float_extensions (CALL_EXPR_ARG (expr, 0));
 	      tree newtype = type;
 
-	      /* We have (outertype)sqrt((innertype)x).  Choose the wider mode from
-		 the both as the safe type for operation.  */
+	      /* We have (outertype)sqrt((innertype)x).  Choose the wider mode
+		 from the both as the safe type for operation.  */
 	      if (TYPE_PRECISION (TREE_TYPE (arg0)) > TYPE_PRECISION (type))
 		newtype = TREE_TYPE (arg0);
 
@@ -431,6 +437,13 @@ do_narrow (location_t loc,
     typex = lang_hooks.types.type_for_size (TYPE_PRECISION (typex),
 					    TYPE_UNSIGNED (typex));
 
+  /* The type demotion below might cause doing unsigned arithmetic
+     instead of signed, and thus hide overflow bugs.  */
+  if ((ex_form == PLUS_EXPR || ex_form == MINUS_EXPR)
+      && !TYPE_UNSIGNED (typex)
+      && sanitize_flags_p (SANITIZE_SI_OVERFLOW))
+    return NULL_TREE;
+
   /* But now perhaps TYPEX is as wide as INPREC.
      In that case, do nothing special here.
      (Otherwise would recurse infinitely in convert.  */
@@ -546,6 +559,7 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
       switch (fcode)
         {
 	CASE_FLT_FN (BUILT_IN_CEIL):
+	CASE_FLT_FN_FLOATN_NX (BUILT_IN_CEIL):
 	  /* Only convert in ISO C99 mode.  */
 	  if (!targetm.libc_has_function (function_c99_misc))
 	    break;
@@ -562,6 +576,7 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
 	  break;
 
 	CASE_FLT_FN (BUILT_IN_FLOOR):
+	CASE_FLT_FN_FLOATN_NX (BUILT_IN_FLOOR):
 	  /* Only convert in ISO C99 mode.  */
 	  if (!targetm.libc_has_function (function_c99_misc))
 	    break;
@@ -578,8 +593,10 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
 	  break;
 
 	CASE_FLT_FN (BUILT_IN_ROUND):
+	CASE_FLT_FN_FLOATN_NX (BUILT_IN_ROUND):
 	  /* Only convert in ISO C99 mode and with -fno-math-errno.  */
-	  if (!targetm.libc_has_function (function_c99_misc) || flag_errno_math)
+	  if (!targetm.libc_has_function (function_c99_misc)
+	      || flag_errno_math)
 	    break;
 	  if (outprec < TYPE_PRECISION (integer_type_node)
 	      || (outprec == TYPE_PRECISION (integer_type_node)
@@ -594,13 +611,16 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
 	  break;
 
 	CASE_FLT_FN (BUILT_IN_NEARBYINT):
+	CASE_FLT_FN_FLOATN_NX (BUILT_IN_NEARBYINT):
 	  /* Only convert nearbyint* if we can ignore math exceptions.  */
 	  if (flag_trapping_math)
 	    break;
 	  gcc_fallthrough ();
 	CASE_FLT_FN (BUILT_IN_RINT):
+	CASE_FLT_FN_FLOATN_NX (BUILT_IN_RINT):
 	  /* Only convert in ISO C99 mode and with -fno-math-errno.  */
-	  if (!targetm.libc_has_function (function_c99_misc) || flag_errno_math)
+	  if (!targetm.libc_has_function (function_c99_misc)
+	      || flag_errno_math)
 	    break;
 	  if (outprec < TYPE_PRECISION (integer_type_node)
 	      || (outprec == TYPE_PRECISION (integer_type_node)
@@ -615,14 +635,21 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
 	  break;
 
 	CASE_FLT_FN (BUILT_IN_TRUNC):
-	  return convert_to_integer_1 (type, CALL_EXPR_ARG (s_expr, 0), dofold);
+	CASE_FLT_FN_FLOATN_NX (BUILT_IN_TRUNC):
+	  if (call_expr_nargs (s_expr) != 1
+	      || !SCALAR_FLOAT_TYPE_P (TREE_TYPE (CALL_EXPR_ARG (s_expr, 0))))
+	    break;
+	  return convert_to_integer_1 (type, CALL_EXPR_ARG (s_expr, 0),
+				       dofold);
 
 	default:
 	  break;
 	}
 
-      if (fn)
-        {
+      if (fn
+	  && call_expr_nargs (s_expr) == 1
+	  && SCALAR_FLOAT_TYPE_P (TREE_TYPE (CALL_EXPR_ARG (s_expr, 0))))
+	{
 	  tree newexpr = build_call_expr (fn, 1, CALL_EXPR_ARG (s_expr, 0));
 	  return convert_to_integer_1 (type, newexpr, dofold);
 	}
@@ -652,7 +679,9 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
 	  break;
 	}
 
-      if (fn)
+      if (fn
+	  && call_expr_nargs (s_expr) == 1
+	  && SCALAR_FLOAT_TYPE_P (TREE_TYPE (CALL_EXPR_ARG (s_expr, 0))))
         {
 	  tree newexpr = build_call_expr (fn, 1, CALL_EXPR_ARG (s_expr, 0));
 	  return convert_to_integer_1 (type, newexpr, dofold);
@@ -663,7 +692,7 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
     {
     case POINTER_TYPE:
     case REFERENCE_TYPE:
-      if (integer_zerop (expr))
+      if (integer_zerop (expr) && !TREE_OVERFLOW (expr))
 	return build_int_cst (type, 0);
 
       /* Convert to an unsigned integer of the correct width first, and from
@@ -710,8 +739,7 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
 	     the signed-to-unsigned case the high-order bits have to
 	     be cleared.  */
 	  if (TYPE_UNSIGNED (type) != TYPE_UNSIGNED (TREE_TYPE (expr))
-	      && (TYPE_PRECISION (TREE_TYPE (expr))
-		  != GET_MODE_PRECISION (TYPE_MODE (TREE_TYPE (expr)))))
+	      && !type_has_mode_precision_p (TREE_TYPE (expr)))
 	    code = CONVERT_EXPR;
 	  else
 	    code = NOP_EXPR;
@@ -724,10 +752,12 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
 	 type corresponding to its mode, then do a nop conversion
 	 to TYPE.  */
       else if (TREE_CODE (type) == ENUMERAL_TYPE
-	       || outprec != GET_MODE_PRECISION (TYPE_MODE (type)))
+	       || maybe_ne (outprec, GET_MODE_PRECISION (TYPE_MODE (type))))
 	{
-	  expr = convert (lang_hooks.types.type_for_mode
-			  (TYPE_MODE (type), TYPE_UNSIGNED (type)), expr);
+	  expr
+	    = convert_to_integer_1 (lang_hooks.types.type_for_mode
+				    (TYPE_MODE (type), TYPE_UNSIGNED (type)),
+				    expr, dofold);
 	  return maybe_fold_build1_loc (dofold, loc, NOP_EXPR, type, expr);
 	}
 
@@ -866,7 +896,7 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
 		break;
 
 	      if (outprec >= BITS_PER_WORD
-		  || TRULY_NOOP_TRUNCATION (outprec, inprec)
+		  || targetm.truly_noop_truncation (outprec, inprec)
 		  || inprec > TYPE_PRECISION (TREE_TYPE (arg0))
 		  || inprec > TYPE_PRECISION (TREE_TYPE (arg1)))
 		{
@@ -879,6 +909,12 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
 	    break;
 
 	  case NEGATE_EXPR:
+	    /* Using unsigned arithmetic for signed types may hide overflow
+	       bugs.  */
+	    if (!TYPE_UNSIGNED (TREE_TYPE (TREE_OPERAND (expr, 0)))
+		&& sanitize_flags_p (SANITIZE_SI_OVERFLOW))
+	      break;
+	    /* Fall through.  */
 	  case BIT_NOT_EXPR:
 	    /* This is not correct for ABS_EXPR,
 	       since we must test the sign before truncation.  */
@@ -903,13 +939,15 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
 	    }
 
 	  CASE_CONVERT:
-	    /* Don't introduce a "can't convert between vector values of
-	       different size" error.  */
-	    if (TREE_CODE (TREE_TYPE (TREE_OPERAND (expr, 0))) == VECTOR_TYPE
-		&& (GET_MODE_SIZE (TYPE_MODE
-				   (TREE_TYPE (TREE_OPERAND (expr, 0))))
-		    != GET_MODE_SIZE (TYPE_MODE (type))))
-	      break;
+	    {
+	      tree argtype = TREE_TYPE (TREE_OPERAND (expr, 0));
+	      /* Don't introduce a "can't convert between vector values
+		 of different size" error.  */
+	      if (TREE_CODE (argtype) == VECTOR_TYPE
+		  && maybe_ne (GET_MODE_SIZE (TYPE_MODE (argtype)),
+			       GET_MODE_SIZE (TYPE_MODE (type))))
+		break;
+	    }
 	    /* If truncating after truncating, might as well do all at once.
 	       If truncating after extending, we may get rid of wasted work.  */
 	    return convert (type, get_unwidened (TREE_OPERAND (expr, 0), type));
@@ -939,8 +977,8 @@ convert_to_integer_1 (tree type, tree expr, bool dofold)
       return build1 (CONVERT_EXPR, type, expr);
 
     case REAL_TYPE:
-      if (flag_sanitize & SANITIZE_FLOAT_CAST
-	  && do_ubsan_in_current_function ())
+      if (sanitize_flags_p (SANITIZE_FLOAT_CAST)
+	  && current_function_decl != NULL_TREE)
 	{
 	  expr = save_expr (expr);
 	  tree check = ubsan_instrument_float_cast (loc, type, expr);

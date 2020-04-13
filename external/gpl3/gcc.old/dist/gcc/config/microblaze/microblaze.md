@@ -1,5 +1,5 @@
 ;; microblaze.md -- Machine description for Xilinx MicroBlaze processors.
-;; Copyright (C) 2009-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
 ;; Contributed by Michael Eager <eager@eagercon.com>.
 
@@ -1321,7 +1321,7 @@
   [(set (match_operand:SI 0 "register_operand" "=d")
 	(ashift:SI (match_operand:SI 1 "register_operand" "d")
                    (match_operand:SI 2 "arith_operand"    "I")))] 
-  "(INTVAL (operands[2]) == 1)"
+  "(operands[2] == const1_rtx)"
   "addk\t%0,%1,%1"
   [(set_attr "type"	"arith")
    (set_attr "mode"	"SI")
@@ -1482,7 +1482,7 @@
   [(set (match_operand:SI 0 "register_operand" "=d")
 	(ashiftrt:SI (match_operand:SI 1 "register_operand" "d")
                      (match_operand:SI 2 "arith_operand"    "I")))] 
-  "(INTVAL (operands[2]) == 1)"
+  "(operands[2] == const1_rtx)"
   "sra\t%0,%1"
   [(set_attr "type"	"arith")
    (set_attr "mode"	"SI")
@@ -1571,7 +1571,7 @@
   [(set (match_operand:SI 0 "register_operand" "=d")
 	(lshiftrt:SI (match_operand:SI 1 "register_operand" "d")
                      (match_operand:SI 2 "arith_operand"    "I")))] 
-  "(INTVAL (operands[2]) == 1)"
+  "(operands[2] == const1_rtx)"
   "srl\t%0,%1"
   [(set_attr "type"	"arith")
    (set_attr "mode"	"SI")
@@ -2323,5 +2323,15 @@
   [(set_attr "type"     "arith")
   (set_attr "mode"      "SI")
   (set_attr "length"    "4")])
+
+; This is used in compiling the unwind routines.
+(define_expand "eh_return"
+  [(use (match_operand 0 "general_operand" ""))]
+  ""
+  "
+{
+  microblaze_eh_return (operands[0]);
+  DONE;
+}")
 
 (include "sync.md")

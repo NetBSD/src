@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.78.4.1 2019/06/10 22:07:02 christos Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.78.4.2 2020/04/13 08:04:17 martin Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.78.4.1 2019/06/10 22:07:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.78.4.2 2020/04/13 08:04:17 martin Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -388,7 +388,7 @@ sunos32_sys_execv(struct lwp *l, const struct sunos32_sys_execv_args *uap, regis
 	} */
 	const char *path = SCARG_P32(uap, path);
 
-	return execve1(l, path, SCARG_P32(uap, argp), NULL,
+	return execve1(l, true, path, -1, SCARG_P32(uap, argp), NULL,
 	    sunos32_execve_fetch_element);
 }
 
@@ -402,9 +402,8 @@ sunos32_sys_execve(struct lwp *l, const struct sunos32_sys_execve_args *uap, reg
 	} */
 	const char *path = SCARG_P32(uap, path);
 
-	return execve1(l, path, SCARG_P32(uap, argp),
-	    SCARG_P32(uap, envp),
-	    sunos32_execve_fetch_element);
+	return execve1(l, true, path, -1, SCARG_P32(uap, argp),
+	    SCARG_P32(uap, envp), sunos32_execve_fetch_element);
 }
 
 int
@@ -839,7 +838,7 @@ sunos32_sys_setsockopt(struct lwp *l, const struct sunos32_sys_setsockopt_args *
 			name = ipoptxlat[name - SUNOS_IP_MULTICAST_IF];
 		}
 	}
-	if (SCARG(uap, valsize) > MLEN) {
+	if ((unsigned)SCARG(uap, valsize) > MLEN) {
 		error = EINVAL;
 		goto out;
 	}
@@ -927,15 +926,13 @@ sunos32_sys_uname(struct lwp *l, const struct sunos32_sys_uname_args *uap, regis
 
 	memset(&sut, 0, sizeof(sut));
 
-	memcpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);
-	memcpy(sut.nodename, hostname, sizeof(sut.nodename));
-	sut.nodename[sizeof(sut.nodename)-1] = '\0';
-	memcpy(sut.release, osrelease, sizeof(sut.release) - 1);
-	memcpy(sut.version, "1", sizeof(sut.version) - 1);
-	memcpy(sut.machine, machine, sizeof(sut.machine) - 1);
+	strlcpy(sut.sysname, ostype, sizeof(sut.sysname));
+	strlcpy(sut.nodename, hostname, sizeof(sut.nodename));
+	strlcpy(sut.release, osrelease, sizeof(sut.release));
+	strlcpy(sut.version, "1", sizeof(sut.version));
+	strlcpy(sut.machine, machine, sizeof(sut.machine));
 
-	return copyout((void *)&sut, SCARG_P32(uap, name),
-	    sizeof(struct sunos_utsname));
+	return copyout(&sut, SCARG_P32(uap, name), sizeof(sut));
 }
 
 int
@@ -1082,25 +1079,15 @@ sunos32_sys_statfs(struct lwp *l, const struct sunos32_sys_statfs_args *uap, reg
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(sunos32_statfsp_t) buf;
 	} */
-	struct mount *mp;
 	struct statvfs *sp;
 	int error;
-	struct vnode *vp;
-	struct sys_statvfs1_args ua;
 
-	SUNOS32TOP_UAP(path, const char);
-
-	error = namei_simple_user(SCARG(&ua, path),
-				NSM_FOLLOW_TRYEMULROOT, &vp);
-	if (error != 0)
-		return (error);
-	mp = vp->v_mount;
-	sp = &mp->mnt_stat;
-	vrele(vp);
-	if ((error = VFS_STATVFS(mp, sp)) != 0)
-		return (error);
-	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
-	return sunstatfs(sp, SCARG_P32(uap, buf));
+	sp = STATVFSBUF_GET();
+	error = do_sys_pstatvfs(l, SCARG_P32(uap, path), 0, sp);
+	if (error == 0)
+		error = sunstatfs(sp, SCARG_P32(uap, buf));
+	STATVFSBUF_PUT(sp);
+	return error;
 }
 
 int
@@ -1110,23 +1097,15 @@ sunos32_sys_fstatfs(struct lwp *l, const struct sunos32_sys_fstatfs_args *uap, r
 		syscallarg(int) fd;
 		syscallarg(sunos32_statfsp_t) buf;
 	} */
-	file_t *fp;
-	struct mount *mp;
 	struct statvfs *sp;
 	int error;
 
-	/* fd_getvnode() will use the descriptor for us */
-	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
-		return (error);
-	mp = fp->f_vnode->v_mount;
-	sp = &mp->mnt_stat;
-	if ((error = VFS_STATVFS(mp, sp)) != 0)
-		goto out;
-	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
-	error = sunstatfs(sp, SCARG_P32(uap, buf));
- out:
- 	fd_putfile(SCARG(uap, fd));
-	return (error);
+	sp = STATVFSBUF_GET();
+	error = do_sys_fstatvfs(l, SCARG(uap, fd), 0, sp);
+	if (error == 0)
+		error = sunstatfs(sp, SCARG_P32(uap, buf));
+	STATVFSBUF_PUT(sp);
+	return error;
 }
 
 int
@@ -1259,7 +1238,7 @@ static const int sreq2breq[] = {
 	PT_KILL,        -1,             PT_ATTACH,      PT_DETACH,
 	PT_GETREGS,     PT_SETREGS,     PT_GETFPREGS,   PT_SETFPREGS
 };
-static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
+static const size_t nreqs = __arraycount(sreq2breq);
 
 int
 sunos32_sys_ptrace(struct lwp *l, const struct sunos32_sys_ptrace_args *uap, register_t *retval)

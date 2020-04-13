@@ -1,4 +1,4 @@
-/*	$NetBSD: nsecify.c,v 1.3.2.2 2019/06/10 22:03:04 christos Exp $	*/
+/*	$NetBSD: nsecify.c,v 1.3.2.3 2020/04/13 08:02:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,6 +29,9 @@
 #include <dns/result.h>
 
 static isc_mem_t *mctx = NULL;
+
+ISC_PLATFORM_NORETURN_PRE static inline void
+fatal(const char *message) ISC_PLATFORM_NORETURN_POST;
 
 static inline void
 fatal(const char *message) {

@@ -1,9 +1,9 @@
-/*	$NetBSD: cancel.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: cancel.c,v 1.1.1.6.4.1 2020/04/13 07:56:13 martin Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2017 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cancel.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: cancel.c,v 1.1.1.6.4.1 2020/04/13 07:56:13 martin Exp $");
 
 #include "portable.h"
 
@@ -47,14 +47,14 @@ ldap_cancel(
 	int		*msgidp )
 {
 	BerElement *cancelidber = NULL;
-	struct berval *cancelidvalp = NULL;
+	struct berval cancelidvalp = { 0, NULL };
 	int rc;
 
 	cancelidber = ber_alloc_t( LBER_USE_DER );
 	ber_printf( cancelidber, "{i}", cancelid );
-	ber_flatten( cancelidber, &cancelidvalp );
+	ber_flatten2( cancelidber, &cancelidvalp, 0 );
 	rc = ldap_extended_operation( ld, LDAP_EXOP_CANCEL,
-		cancelidvalp, sctrls, cctrls, msgidp );
+		&cancelidvalp, sctrls, cctrls, msgidp );
 	ber_free( cancelidber, 1 );
 	return rc;
 }
@@ -67,14 +67,14 @@ ldap_cancel_s(
 	LDAPControl	**cctrls )
 {
 	BerElement *cancelidber = NULL;
-	struct berval *cancelidvalp = NULL;
+	struct berval cancelidvalp = { 0, NULL };
 	int rc;
 
 	cancelidber = ber_alloc_t( LBER_USE_DER );
 	ber_printf( cancelidber, "{i}", cancelid );
-	ber_flatten( cancelidber, &cancelidvalp );
+	ber_flatten2( cancelidber, &cancelidvalp, 0 );
 	rc = ldap_extended_operation_s( ld, LDAP_EXOP_CANCEL,
-		cancelidvalp, sctrls, cctrls, NULL, NULL );
+		&cancelidvalp, sctrls, cctrls, NULL, NULL );
 	ber_free( cancelidber, 1 );
 	return rc;
 }

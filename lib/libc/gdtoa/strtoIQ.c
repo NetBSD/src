@@ -1,4 +1,4 @@
-/* $NetBSD: strtoIQ.c,v 1.2 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtoIQ.c,v 1.2.66.1 2020/04/13 08:03:09 martin Exp $ */
 
 /****************************************************************
 
@@ -40,7 +40,7 @@ strtoIQ(s, sp, a, b) CONST char *s; char **sp; void *a; void *b;
 strtoIQ(CONST char *s, char **sp, void *a, void *b)
 #endif
 {
-	static FPI fpi = { 113, 1-16383-113+1, 32766-16383-113+1, 1, SI };
+	static CONST FPI fpi = { 113, 1-16383-113+1, 32766-16383-113+1, 1, SI };
 	Long exp[2];
 	Bigint *B[2];
 	int k, rv[2];

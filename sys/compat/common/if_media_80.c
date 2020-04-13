@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media_80.c,v 1.1.2.3 2020/04/08 14:08:00 martin Exp $	*/
+/*	$NetBSD: if_media_80.c,v 1.1.2.4 2020/04/13 08:04:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,8 +126,8 @@ compat_ifmediareq_post(struct ifreq *ifr, u_long cmd)
 {
 	struct ifmediareq *ifmr = (struct ifmediareq *)ifr;
 	size_t minwords;
-	int count, *kptr;
-	int error;
+	size_t count;
+	int error, *kptr;
 
 	switch (cmd) {
 	case SIOCSIFMEDIA:

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.26 2010/08/31 07:48:23 enami Exp $	*/
+/*	$NetBSD: db_input.c,v 1.26.60.1 2020/04/13 08:04:17 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.26 2010/08/31 07:48:23 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.26.60.1 2020/04/13 08:04:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.26 2010/08/31 07:48:23 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/cpu.h>
 
 #include <ddb/ddb.h>
 
@@ -352,11 +351,6 @@ int
 db_readline(char *lstart, int lsize)
 {
 
-# ifdef MULTIPROCESSOR
-	db_printf("db{%ld}> ", (long)cpu_number());
-# else
-	db_printf("db> ");
-# endif
 	db_force_whitespace();	/* synch output position */
 
 	db_lbuf_start = lstart;

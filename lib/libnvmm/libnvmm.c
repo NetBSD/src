@@ -1,7 +1,7 @@
-/*	$NetBSD: libnvmm.c,v 1.14.2.2 2019/06/10 22:05:25 christos Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.14.2.3 2020/04/13 08:03:14 martin Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -156,12 +156,12 @@ __area_remove_all(struct nvmm_machine *mach)
 
 /* -------------------------------------------------------------------------- */
 
-static int
+int
 nvmm_init(void)
 {
 	if (nvmm_fd != -1)
 		return 0;
-	nvmm_fd = open("/dev/nvmm", O_RDWR);
+	nvmm_fd = open("/dev/nvmm", O_RDONLY | O_CLOEXEC);
 	if (nvmm_fd == -1)
 		return -1;
 	if (nvmm_capability(&__capability) == -1) {
@@ -169,6 +169,36 @@ nvmm_init(void)
 		nvmm_fd = -1;
 		return -1;
 	}
+	if (__capability.version != NVMM_KERN_VERSION) {
+		close(nvmm_fd);
+		nvmm_fd = -1;
+		errno = EPROGMISMATCH;
+		return -1;
+	}
+
+	return 0;
+}
+
+int
+nvmm_root_init(void)
+{
+	if (nvmm_fd != -1)
+		return 0;
+	nvmm_fd = open("/dev/nvmm", O_WRONLY | O_CLOEXEC);
+	if (nvmm_fd == -1)
+		return -1;
+	if (nvmm_capability(&__capability) == -1) {
+		close(nvmm_fd);
+		nvmm_fd = -1;
+		return -1;
+	}
+	if (__capability.version != NVMM_KERN_VERSION) {
+		close(nvmm_fd);
+		nvmm_fd = -1;
+		errno = EPROGMISMATCH;
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -177,10 +207,6 @@ nvmm_capability(struct nvmm_capability *cap)
 {
 	struct nvmm_ioc_capability args;
 	int ret;
-
-	if (nvmm_init() == -1) {
-		return -1;
-	}
 
 	ret = ioctl(nvmm_fd, NVMM_IOC_CAPABILITY, &args);
 	if (ret == -1)
@@ -198,10 +224,6 @@ nvmm_machine_create(struct nvmm_machine *mach)
 	struct nvmm_comm_page **pages;
 	area_list_t *areas;
 	int ret;
-
-	if (nvmm_init() == -1) {
-		return -1;
-	}
 
 	areas = calloc(1, sizeof(*areas));
 	if (areas == NULL)
@@ -252,12 +274,6 @@ nvmm_machine_configure(struct nvmm_machine *mach, uint64_t op, void *conf)
 {
 	struct nvmm_ioc_machine_configure args;
 	int ret;
-
-	switch (op) {
-	case NVMM_MACH_CONF_CALLBACKS:
-		memcpy(&mach->cbs, conf, sizeof(mach->cbs));
-		return 0;
-	}
 
 	args.machid = mach->machid;
 	args.op = op;
@@ -317,6 +333,31 @@ nvmm_vcpu_destroy(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 	comm = mach->pages[vcpu->cpuid];
 	munmap(comm, PAGE_SIZE);
 	free(vcpu->exit);
+
+	return 0;
+}
+
+int
+nvmm_vcpu_configure(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
+    uint64_t op, void *conf)
+{
+	struct nvmm_ioc_vcpu_configure args;
+	int ret;
+
+	switch (op) {
+	case NVMM_VCPU_CONF_CALLBACKS:
+		memcpy(&vcpu->cbs, conf, sizeof(vcpu->cbs));
+		return 0;
+	}
+
+	args.machid = mach->machid;
+	args.cpuid = vcpu->cpuid;
+	args.op = op;
+	args.conf = conf;
+
+	ret = ioctl(nvmm_fd, NVMM_IOC_VCPU_CONFIGURE, &args);
+	if (ret == -1)
+		return -1;
 
 	return 0;
 }
@@ -510,10 +551,6 @@ nvmm_ctl(int op, void *data, size_t size)
 {
 	struct nvmm_ioc_ctl args;
 	int ret;
-
-	if (nvmm_init() == -1) {
-		return -1;
-	}
 
 	args.op = op;
 	args.data = data;

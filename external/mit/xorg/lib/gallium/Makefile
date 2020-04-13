@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17.14.1 2019/06/10 22:02:38 christos Exp $
+# $NetBSD: Makefile,v 1.17.14.2 2020/04/13 08:02:31 martin Exp $
 
 # Link the gallium mega driver.
 
@@ -13,15 +13,18 @@ LIB=		gallium_dri
 DRIDIR=		${X11USRLIBDIR}/modules/dri
 DRIDEBUGDIR=	${DEBUGDIR}${X11USRLIBDIR}/modules/dri
 
-LLVM_INCLUDE_OBJDIR!=	cd ${NETBSDSRCDIR}/external/bsd/llvm/include && ${PRINTOBJDIR}
+LLVM_INCLUDE_OBJDIR!=	cd ${NETBSDSRCDIR}/external/apache2/llvm/include && ${PRINTOBJDIR}
 
-CWARNFLAGS.clang += -Wno-atomic-alignment -Wno-unknown-warning-option
+CWARNFLAGS.clang += -Wno-atomic-alignment -Wno-unknown-warning-option -Wno-implicit-int-float-conversion
 
-CXXFLAGS+=	-std=c++11
+CXXFLAGS+=	-std=c++14
 CFLAGS+=	-std=gnu11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm \
-		-I${NETBSDSRCDIR}/external/bsd/llvm/dist/llvm/include \
-		-I${LLVM_INCLUDE_OBJDIR} -I${NETBSDSRCDIR}/external/bsd/llvm/config
+		-I${NETBSDSRCDIR}/external/apache2/llvm/dist/llvm/include \
+		-I${LLVM_INCLUDE_OBJDIR} -I${NETBSDSRCDIR}/external/apache2/llvm/config
+
+CFLAGS+=	-pthread
+LDFLAGS+=	-pthread
 
 GALLIUM_SUBDIRS= \
 	auxiliary \
@@ -90,13 +93,23 @@ BUILD_LLVMPIPE=0
 BUILD_I915=0
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 BUILD_I915=1
-. if ${MKLLVMRT} != "no"
-BUILD_RADEON=1
-. endif
 .endif
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
 BUILD_NOUVEAU=1
+. if ${MKLLVMRT} != "no"
+BUILD_RADEON=1
+. endif
 BUILD_VDPAU=1
+.endif
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "powerpc64" || \
+    !empty(MACHINE_ARCH:Maarch64*) || \
+    !empty(MACHINE_ARCH:Mmips*) || \
+    !empty(MACHINE_ARCH:Mearm*) || \
+    !empty(MACHINE_ARCH:Marm*)
 . if ${MKLLVMRT} != "no"
 BUILD_LLVMPIPE=1
 . endif
@@ -104,7 +117,7 @@ BUILD_LLVMPIPE=1
 
 DRIVERS=		kms_swrast swrast
 .if ${BUILD_RADEON} == 1
-DRIVERS+=		r600 r300
+DRIVERS+=		r600 r300 radeonsi
 GALLIUM_SUBDIRS+=	${GALLIUM_SUBDIRS_ATI}
 .endif
 .if ${BUILD_NOUVEAU} == 1
@@ -194,18 +207,15 @@ CPPFLAGS.${_f} +=	-DHAVE_PIPE_LOADER_KMS=1 \
 			-DHAVE_PIPE_LOADER_DRI=1 \
 			-DGALLIUM_STATIC_TARGETS=1 \
 			-I${X11SRCDIR.Mesa}/src/gallium/winsys \
-			-I${X11SRCDIR.Mesa}/src/loader
+			-I${X11SRCDIR.Mesa}/src/loader \
+			-I${X11SRCDIR.Mesa}/../src/util
 .endfor
 
 GALLIUM_SOURCES.auxiliary/pipebuffer= \
 	pb_buffer_fenced.c \
-	pb_buffer_malloc.c \
-	pb_bufmgr_alt.c \
 	pb_bufmgr_cache.c \
 	pb_bufmgr_debug.c \
 	pb_bufmgr_mm.c \
-	pb_bufmgr_ondemand.c \
-	pb_bufmgr_pool.c \
 	pb_bufmgr_slab.c \
 	pb_cache.c \
 	pb_slab.c \
@@ -319,6 +329,8 @@ GALLIUM_SOURCES.auxiliary/nir = \
 GALLIUM_SOURCES.auxiliary/vl= \
 	vl_bicubic_filter.c \
 	vl_compositor.c \
+	vl_compositor_cs.c \
+	vl_compositor_gfx.c \
 	vl_csc.c \
 	vl_decoder.c \
 	vl_deint_filter.c \
@@ -360,10 +372,10 @@ GALLIUM_SOURCES.auxiliary/gallivm= \
 	lp_bld_flow.c \
 	lp_bld_format_aos_array.c \
 	lp_bld_format_aos.c \
-	lp_bld_format_cached.c \
 	lp_bld_format_float.c \
 	lp_bld_format.c \
 	lp_bld_format_soa.c \
+	lp_bld_format_s3tc.c \
 	lp_bld_format_srgb.c \
 	lp_bld_format_yuv.c \
 	lp_bld_gather.c \
@@ -463,8 +475,6 @@ BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/r600/radeon_video.c r600_r
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/radeon/radeon_video.c radeon_radeon_video.c
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/r600/radeon_vce.c r600_radeon_vce.c
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/radeon/radeon_vce.c radeon_radeon_vce.c
-BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/r600/r600_perfcounter.c r600_r600_perfcounter.c
-BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/radeon/r600_perfcounter.c radeon_r600_perfcounter.c
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/r600/radeon_uvd.c r600_radeon_uvd.c
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/radeon/radeon_uvd.c radeon_radeon_uvd.c
 
@@ -475,7 +485,6 @@ GALLIUM_SOURCES.drivers/radeon = \
         r600_query.c \
         r600_streamout.c \
         r600_texture.c \
-	radeon_r600_perfcounter.c \
         radeon_radeon_uvd.c \
 	radeon_uvd_enc.c \
 	radeon_uvd_enc_1_1.c \
@@ -492,7 +501,7 @@ GALLIUM_SOURCES.drivers/radeon = \
 GALLIUM_SOURCES.drivers/r600 = \
 	eg_debug.c \
 	r600_gpu_load.c \
-	r600_r600_perfcounter.c \
+	r600_perfcounter.c \
 	r600_radeon_vce.c \
 	r600_radeon_video.c \
         compute_memory_pool.c \
@@ -653,6 +662,7 @@ CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/gallium/drivers/r300 \
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/gallium/drivers/r600
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/../src/gallium/drivers/r600
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/amd/common
+CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/../src/amd/common
 .endfor
 
 .for _f in ${GALLIUM_SOURCES.drivers/radeon}
@@ -725,10 +735,18 @@ GALLIUM_SOURCES.drivers/nouveau/codegen = \
 	nv50_ir.cpp \
 	nv50_ir_bb.cpp \
 	nv50_ir_build_util.cpp \
+	nv50_ir_emit_gk110.cpp \
+	nv50_ir_emit_gm107.cpp \
 	nv50_ir_emit_nv50.cpp \
+	nv50_ir_emit_nvc0.cpp \
+	nv50_ir_from_common.cpp \
+	nv50_ir_from_nir.cpp \
 	nv50_ir_from_tgsi.cpp \
 	nv50_ir_graph.cpp \
+	nv50_ir_lowering_gm107.cpp \
+	nv50_ir_lowering_helper.cpp \
 	nv50_ir_lowering_nv50.cpp \
+	nv50_ir_lowering_nvc0.cpp \
 	nv50_ir_peephole.cpp \
 	nv50_ir_print.cpp \
 	nv50_ir_ra.cpp \
@@ -736,11 +754,6 @@ GALLIUM_SOURCES.drivers/nouveau/codegen = \
 	nv50_ir_target.cpp \
 	nv50_ir_target_nv50.cpp \
 	nv50_ir_util.cpp \
-	nv50_ir_emit_gk110.cpp \
-	nv50_ir_emit_gm107.cpp \
-	nv50_ir_emit_nvc0.cpp \
-	nv50_ir_lowering_gm107.cpp \
-	nv50_ir_lowering_nvc0.cpp \
 	nv50_ir_target_gm107.cpp \
 	nv50_ir_target_nvc0.cpp
 
@@ -939,10 +952,11 @@ CPPFLAGS.${_s}+= -I${X11SRCDIR.Mesa}/src/gallium/${_d}
 .if ${BUILD_RADEON} == 1
 CFLAGS+=	-pthread
 LDFLAGS+=	-pthread
-LIBDPLIBS+=	pthread		${.CURDIR}/../../../../../lib/libpthread
 .endif
 
-LIBDPLIBS+=	m		${.CURDIR}/../../../../../lib/libm
+LIBDPLIBS+=	X11-xcb         ${.CURDIR}/../libX11/libX11-xcb
+LIBDPLIBS+=	xcb-dri2        ${.CURDIR}/../libxcb/dri2
+LIBDPLIBS+=	xcb		${.CURDIR}/../libxcb/libxcb
 .if ${BUILD_RADEON} == 1 || ${BUILD_NOUVEAU} == 1
 LIBDPLIBS+= 	drm		${.CURDIR}/../libdrm
 .if ${BUILD_I915} == 1
@@ -959,10 +973,11 @@ LIBDPLIBS+= 	drm_nouveau	${.CURDIR}/../libdrm_nouveau
 LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi
 LIBDPLIBS+=	expat		${.CURDIR}/../../../../../external/mit/expat/lib/libexpat
 LIBDPLIBS+=	terminfo	${.CURDIR}/../../../../../lib/libterminfo
-LIBDPLIBS+=	z		${.CURDIR}/../../../../../lib/libz
 LIBDPLIBS+=	execinfo	${.CURDIR}/../../../../../lib/libexecinfo
-LIBDPLIBS+=	X11-xcb         ${.CURDIR}/../libX11/libX11-xcb
-LIBDPLIBS+=	xcb-dri2        ${.CURDIR}/../libxcb/dri2
+
+LIBDPLIBS+=	elf		${NETBSDSRCDIR}/external/bsd/elftoolchain/lib/libelf
+LIBDPLIBS+=	z		${.CURDIR}/../../../../../lib/libz
+LIBDPLIBS+=	m		${.CURDIR}/../../../../../lib/libm
 
 # gallium drivers requiring LLVM
 .if ${BUILD_LLVMPIPE} == 1 || ${BUILD_RADEON} == 1
@@ -978,7 +993,6 @@ LLVMRT_LIBS=	\
 LLVMRT_LIBS+=	\
 		AMDGPUCodeGen \
 		AMDGPUMCTargetDesc \
-		AMDGPUAsmPrinter \
 		AMDGPUTargetInfo \
 		AMDGPUAsmParser \
 		AMDGPUUtils
@@ -992,33 +1006,46 @@ LLVMRT_LIBS+=	\
 		X86MCTargetDesc \
 		X86Disassembler \
 		X86MCTargetDesc \
-		X86AsmPrinter \
 		X86TargetInfo \
 		X86Utils
 .endif
 
 .if ${MACHINE_CPU} == "aarch64"
-# XXX duplicates
 LLVMRT_LIBS+=	\
 		AArch64AsmParser \
 		AArch64CodeGen \
 		AArch64MCTargetDesc \
 		AArch64Utils \
-		AArch64AsmPrinter \
 		AArch64Disassembler \
 		AArch64TargetInfo
 .endif
 
 .if ${MACHINE_CPU} == "arm"
-# XXX duplicates
 LLVMRT_LIBS+=	\
 		ARMCodeGen \
 		ARMDisassembler \
 		ARMTargetInfo \
 		ARMMCTargetDesc \
 		ARMAsmParser \
-		ARMAsmPrinter \
 		ARMUtils
+.endif
+
+.if ${MACHINE_CPU} == "mips"
+LLVMRT_LIBS+=	\
+		MipsCodeGen \
+		MipsDisassembler \
+		MipsAsmParser \
+		MipsMCTargetDesc \
+		MipsTargetInfo
+.endif
+
+.if ${MACHINE_CPU} == "powerpc"
+LLVMRT_LIBS+=	\
+		PowerPCCodeGen \
+		PowerPCDisassembler \
+		PowerPCTargetInfo \
+		PowerPCMCTargetDesc \
+		PowerPCAsmParser
 .endif
 
 LLVMRT_LIBS+=	\
@@ -1027,12 +1054,16 @@ LLVMRT_LIBS+=	\
 		SelectionDAG \
 		AsmPrinter \
 		CodeGen \
+		TransformsCFGuard \
 		Target \
 		InstCombine \
 		ScalarOpts \
 		DebugInfoCodeView \
+		DebugInfoDWARF \
 		Object \
 		BitReader \
+		TextAPI \
+		MIRParser \
 		MCParser \
 		MC \
 		ipo \
@@ -1044,16 +1075,22 @@ LLVMRT_LIBS+=	\
 		ProfileData \
 		Analysis \
 		IR \
+		Remarks \
+		BitstreamReader \
 		Linker \
 		BinaryFormat \
 		TransformsUtils \
-		Support
+		Support \
+		Demangle
 
-.include "${NETBSDSRCDIR}/external/bsd/llvm/link.mk"
+.include "${NETBSDSRCDIR}/external/apache2/llvm/link.mk"
 
 .endif  # ${BUILD_LLVM_PIPE} == 1 || ${BUILD_RADEON} == 1
 
 LDFLAGS+=	-Wl,--version-script=${X11SRCDIR.Mesa}/src/gallium/targets/dri/dri.sym
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE_CPU} == "aarch64"
+LDFLAGS+=	-Wl,-z,defs
+.endif
 
 ##  build mesagallium parts
 MESA_SRC_MODULES=  main math vbo state_tracker program asm_s
@@ -1077,6 +1114,9 @@ CPPFLAGS.streaming-load-memcpy.c+= -msse4.1
 CPPFLAGS.i386+= -march=i586
 CPPFLAGS+=	${CPPFLAGS.${XORG_MACHINE_ARCH:U${MACHINE_ARCH}}}
 
+CPPFLAGS.r600_pipe_common.c+=	-DMESA_LLVM_VERSION_STRING=\"9.0.0\"
+CPPFLAGS.si_get.c+=	-DMESA_LLVM_VERSION_STRING=\"9.0.0\"
+
 .include "../driver.mk"
 
 
@@ -1097,6 +1137,8 @@ CPPFLAGS.target.c += \
 	-DGALLIUM_SOFTPIPE \
 	-I${X11SRCDIR.Mesa}/src/gallium/state_trackers/dri \
 	-I${X11SRCDIR.Mesa}/src/loader \
+	-I${X11SRCDIR.Mesa}/../src/util \
+	-I${X11SRCDIR.Mesa}/../src/gallium/drivers \
 	-I${X11SRCDIR.Mesa}/src/gallium/winsys
 
 .if ${BUILD_LLVMPIPE} == 1
@@ -1153,6 +1195,9 @@ SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHL
 COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
 .endif
 
+.if ${MACHINE_ARCH} == "vax"
+COPTS.nir.c += -O1
+.endif
 
 .include <bsd.lib.mk>
 # Don't regenerate c files

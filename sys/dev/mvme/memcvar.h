@@ -1,4 +1,4 @@
-/*	$NetBSD: memcvar.h,v 1.3 2012/10/27 17:18:27 chs Exp $	*/
+/*	$NetBSD: memcvar.h,v 1.3.38.1 2020/04/13 08:04:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ struct memc_softc {
 #ifdef MVME68K
 #define MEMC_IRQ_LEVEL		6
 #else
-#error Define irq level for memory contoller
+#error Define irq level for memory controller
 #endif
 
 extern	void	memc_init(struct memc_softc *);

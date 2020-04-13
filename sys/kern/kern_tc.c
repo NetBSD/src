@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.49.4.2 2020/04/08 14:08:51 martin Exp $ */
+/* $NetBSD: kern_tc.c,v 1.49.4.3 2020/04/13 08:05:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.49.4.2 2020/04/08 14:08:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.49.4.3 2020/04/13 08:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -638,7 +638,6 @@ tc_detach(struct timecounter *target)
 	struct timecounter *tc;
 	struct timecounter **tcp = NULL;
 	int removals;
-	uint64_t where;
 	lwp_t *l;
 
 	/* First, find the timecounter. */
@@ -681,8 +680,7 @@ tc_detach(struct timecounter *target)
 	 * old timecounter state.
 	 */
 	for (;;) {
-		where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-		xc_wait(where);
+		xc_barrier(0);
 
 		mutex_enter(proc_lock);
 		LIST_FOREACH(l, &alllwp, l_list) {

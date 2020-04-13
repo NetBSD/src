@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.c,v 1.10 2013/11/27 17:24:43 christos Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.10.30.1 2020/04/13 08:03:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: config_hook.c,v 1.10 2013/11/27 17:24:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: config_hook.c,v 1.10.30.1 2020/04/13 08:03:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -118,10 +118,7 @@ config_hook(int type, long id, enum config_hook_mode mode,
 	}
 
 	/* allocate new record */
-	hr = malloc(sizeof(*hr), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (hr == NULL)
-		panic("config_hook: malloc failed");
-
+	hr = malloc(sizeof(*hr), M_DEVBUF, M_WAITOK);
 	hr->hr_ctx = ctx;
 	hr->hr_type = type;
 	hr->hr_id = id;
@@ -211,10 +208,7 @@ config_connect(int type, long id)
 	}
 
 	/* allocate new record */
-	cr = malloc(sizeof(*hr), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (cr == NULL)
-		panic("config_connect: malloc failed");
-
+	cr = malloc(sizeof(*hr), M_DEVBUF, M_WAITOK);
 	cr->hr_func = NULL;
 	cr->hr_type = type;
 	cr->hr_id = id;

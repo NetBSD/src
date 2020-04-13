@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.203.6.1 2019/06/10 22:05:19 christos Exp $
+.\"	$NetBSD: sysctl.3,v 1.203.6.2 2020/04/13 08:03:10 martin Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 6, 2018
+.Dd September 14, 2019
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -288,7 +288,6 @@ The core interface to all of these meta-functions is the structure
 that the kernel uses to describe the tree internally, as defined in
 .In sys/sysctl.h
 as:
-.Pp
 .Bd -literal
 struct sysctlnode {
         uint32_t sysctl_flags;          /* flags and type */
@@ -330,7 +329,8 @@ Querying the tree to discover the name to number mapping permits
 dynamic discovery of all the data that the tree currently has
 instrumented.
 For example, to discover all the nodes below the
-CTL_VFS node:
+.Dv CTL_VFS
+node:
 .Pp
 .Bd -literal -offset indent -compact
 struct sysctlnode query, vfs[128];
@@ -356,7 +356,12 @@ version be explicitly specified.
 .Pp
 Creation and destruction of nodes works by constructing part of a new
 node description (or a description of the existing node) and invoking
-CTL_CREATE (or CTL_CREATESYM) or CTL_DESTROY at the parent of the new
+.Dv CTL_CREATE
+(or
+.Dv CTL_CREATESYM )
+or
+.Dv CTL_DESTROY
+at the parent of the new
 node, with a pointer to the new node passed via the
 .Fa new
 and
@@ -374,7 +379,11 @@ The minimum requirements for creating a node are setting the
 .Fa sysctl_flags
 to indicate the new node's type,
 .Fa sysctl_num
-to either the new node's number (or CTL_CREATE or CTL_CREATESYM if a
+to either the new node's number (or
+.Dv CTL_CREATE
+or
+.Dv CTL_CREATESYM
+if a
 dynamically allocated MIB number is acceptable),
 .Fa sysctl_size
 to the size of the data to be instrumented (which must agree with the
@@ -389,7 +398,9 @@ will vary depending on what is to be instrumented.
 If existing kernel data is to be covered by this new node, its address
 should be given in
 .Fa sysctl_data
-or, if CTL_CREATESYM is used,
+or, if
+.Dv CTL_CREATESYM
+is used,
 .Fa sysctl_data
 should be set to a string containing its name from the kernel's symbol
 table.
@@ -398,10 +409,13 @@ the new integer or quad type data should be placed into either
 .Fa sysctl_idata
 or
 .Fa sysctl_qdata ,
-respectively, along with the SYSCTL_IMMEDIATE flag being set, or
+respectively, along with the
+.Dv CTLFLAG_IMMEDIATE
+flag being set, or
 .Fa sysctl_data
 should be set to point to a copy of the new data, and the
-SYSCTL_OWNDATA flag must be set.
+.Dv CTLFLAG_OWNDATA
+flag must be set.
 This latter method is the only way that new string and struct type
 nodes can be initialized.
 Invalid kernel addresses are accepted, but any attempt to access those
@@ -521,7 +535,6 @@ will match the
 .Fa sysctl_ver
 value for a given node, so that descriptions for nodes whose number
 have been recycled can be detected and ignored or discarded.
-.Pp
 .Bd -literal
 struct sysctldesc {
         int32_t         descr_num;      /* mib number of node */

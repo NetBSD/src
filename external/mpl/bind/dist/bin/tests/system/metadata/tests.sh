@@ -20,14 +20,14 @@ n=1
 echo_i "setting key timers"
 $SETTIME -A now+15s `cat rolling.key` > /dev/null
 
-inact=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < inact.key`
-ksk=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < ksk.key`
-pending=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < pending.key`
-postrev=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < postrev.key`
-prerev=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < prerev.key`
-rolling=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < rolling.key`
-standby=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < standby.key`
-zsk=`sed 's/^K'${czone}'.+005+0*\([0-9]\)/\1/' < zsk.key`
+inact=$(keyfile_to_key_id "$(cat inact.key)")
+ksk=$(keyfile_to_key_id "$(cat ksk.key)")
+pending=$(keyfile_to_key_id "$(cat pending.key)")
+postrev=$(keyfile_to_key_id "$(cat postrev.key)")
+prerev=$(keyfile_to_key_id "$(cat prerev.key)")
+rolling=$(keyfile_to_key_id "$(cat rolling.key)")
+standby=$(keyfile_to_key_id "$(cat standby.key)")
+zsk=$(keyfile_to_key_id "$(cat zsk.key)")
 
 echo_i "signing zones"
 $SIGNER -Sg -o $czone $cfile > /dev/null 2>&1

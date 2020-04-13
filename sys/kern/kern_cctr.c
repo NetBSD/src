@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cctr.c,v 1.9 2009/01/03 03:31:23 yamt Exp $	*/
+/*	$NetBSD: kern_cctr.c,v 1.9.66.1 2020/04/13 08:05:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.9 2009/01/03 03:31:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.9.66.1 2020/04/13 08:05:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static struct timecounter cc_timecounter = {
 	.tc_poll_pps		= cc_calibrate,
 	.tc_counter_mask	= ~0u,
 	.tc_frequency		= 0,
-	.tc_name		= "unkown cycle counter",
+	.tc_name		= "unknown cycle counter",
 	/*
 	 * don't pick cycle counter automatically
 	 * if frequency changes might affect cycle counter

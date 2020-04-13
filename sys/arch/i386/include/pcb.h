@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.57.4.1 2019/06/10 22:06:20 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.57.4.2 2020/04/13 08:03:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -99,7 +99,6 @@ struct pcb {
 	int	not_used[15];
 
 	/* floating point state */
-	struct cpu_info	*pcb_fpcpu;	/* cpu holding our fp state. */
 	union savefpu	pcb_savefpu __aligned(64);
 	/* **** DO NOT ADD ANYTHING HERE **** */
 

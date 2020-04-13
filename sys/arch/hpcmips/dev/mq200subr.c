@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200subr.c,v 1.6 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: mq200subr.c,v 1.6.166.1 2020/04/13 08:03:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -31,7 +31,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200subr.c,v 1.6 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200subr.c,v 1.6.166.1 2020/04/13 08:03:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -258,7 +258,7 @@ mq200_setup(struct mq200_softc *sc)
 	DPRINTF(" GE: PLL%d\n", clock->ge);
 
 	/*
-	 * setup GC1	(CRT contoller)
+	 * setup GC1	(CRT controller)
 	 */
 	if (sc->sc_flags & MQ200_SC_GC1_ENABLE) {
 		/* GC03R	Horizontal Display Control	*/
@@ -304,7 +304,7 @@ mq200_setup(struct mq200_softc *sc)
 	    /* busy wait */;
 
 	/*
-	 * setup GC2	(FP contoller)
+	 * setup GC2	(FP controller)
 	 */
 	if (sc->sc_flags & MQ200_SC_GC2_ENABLE) {
 		//mq200_write(sc, MQ200_GCCR(MQ200_GC2),

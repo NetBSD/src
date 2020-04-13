@@ -1,4 +1,4 @@
-.\"	$NetBSD: getc.3,v 1.12 2003/08/07 16:43:26 agc Exp $
+.\"	$NetBSD: getc.3,v 1.12.98.1 2020/04/13 08:03:10 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)getc.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 25, 2001
+.Dd September 2, 2019
 .Dt GETC 3
 .Os
 .Sh NAME
@@ -154,6 +154,13 @@ and
 .Fn getchar_unlocked
 functions conform to
 .St -p1003.1-96 .
+.Sh HISTORY
+The
+.Fn getc
+and
+.Fn getw
+functions appeared in
+.At v1 .
 .Sh BUGS
 Since
 .Dv EOF

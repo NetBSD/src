@@ -25,7 +25,11 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.4 2017/09/22 15:37:13 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.4.4.1 2020/04/13 08:03:45 martin Exp $");
+
+#include "locators.h"
+
+#define	_INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.4 2017/09/22 15:37:13 khorben Ex
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
+#include <sys/gpio.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -49,13 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.4 2017/09/22 15:37:13 khorben Ex
 #include <arm/imx/imxusbvar.h>
 #include <arm/imx/imx51_iomuxreg.h>
 #include <arm/imx/imxgpiovar.h>
-#include "locators.h"
-
 
 struct netwalker_usbc_softc {
-	struct imxusbc_softc  sc_imxusbc;
+	struct imxusbc_softc sc_imxusbc; /* Must be first */
 };
-
 
 static int	imxusbc_match(device_t, cfdata_t, void *);
 static void	imxusbc_attach(device_t, device_t, void *);
@@ -75,24 +77,29 @@ imxusbc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct axi_attach_args *aa = aux;
 
-	printf("%s\n", __func__);
-
 	if (aa->aa_addr == USBOH3_BASE)
 		return 1;
+
 	return 0;
 }
 
 static void
 imxusbc_attach(device_t parent, device_t self, void *aux)
 {
-	struct axi_attach_args *aa = aux;
 	struct imxusbc_softc *sc = device_private(self);
+	struct axi_attach_args *aa = aux;
+
+	aprint_naive("\n");
+	aprint_normal(": Universal Serial Bus Controller\n");
+
+	if (aa->aa_size == AXICF_SIZE_DEFAULT)
+		aa->aa_size = USBOH3_SIZE;
 
 	sc->sc_init_md_hook = netwalker_usb_init;
+	sc->sc_intr_establish_md_hook = NULL;
 	sc->sc_setup_md_hook = NULL;
 
-	imxusbc_attach_common(parent, self, aa->aa_iot);
-
+	imxusbc_attach_common(parent, self, aa->aa_iot, aa->aa_addr, aa->aa_size);
 }
 
 static void
@@ -134,9 +141,6 @@ init_otg(struct imxehci_softc *sc)
 	bus_space_write_4(usbc->sc_iot, usbc->sc_ioh, USBOH3_PHYCTRL1, reg);
 }
 
-
-
-
 static void
 init_h1(struct imxehci_softc *sc)
 {
@@ -144,8 +148,8 @@ init_h1(struct imxehci_softc *sc)
 	uint32_t reg;
 
 	/* output HIGH to USBH1_STP */
-	gpio_data_write(GPIO_NO(1, 27), 1);
-	gpio_set_direction(GPIO_NO(1, 27), GPIO_DIR_OUT);
+	imxgpio_data_write(GPIO_NO(1, 27), GPIO_PIN_HIGH);
+	imxgpio_set_direction(GPIO_NO(1, 27), GPIO_PIN_OUTPUT);
 
 	iomux_mux_config(iomux_usb1_config);
 
@@ -177,21 +181,21 @@ init_h1(struct imxehci_softc *sc)
 
 
 	/* HUB RESET release */
-	gpio_data_write(GPIO_NO(1, 7), 1);
-	gpio_set_direction(GPIO_NO(1, 7), GPIO_DIR_OUT);
+	imxgpio_data_write(GPIO_NO(1, 7), GPIO_PIN_HIGH);
+	imxgpio_set_direction(GPIO_NO(1, 7), GPIO_PIN_OUTPUT);
 
 	/* Drive 26M_OSC_EN line high 3_1 */
-	gpio_data_write(GPIO_NO(3, 1), 1);
-	gpio_set_direction(GPIO_NO(3, 1), GPIO_DIR_OUT);
+	imxgpio_data_write(GPIO_NO(3, 1), GPIO_PIN_HIGH);
+	imxgpio_set_direction(GPIO_NO(3, 1), GPIO_PIN_OUTPUT);
 
 	/* Drive USB_CLK_EN_B line low  2_1 */
-	gpio_data_write(GPIO_NO(2, 1), 0);
-	gpio_set_direction(GPIO_NO(2, 1), GPIO_DIR_IN);
+	imxgpio_data_write(GPIO_NO(2, 1), GPIO_PIN_LOW);
+	imxgpio_set_direction(GPIO_NO(2, 1), GPIO_PIN_INPUT);
 
 	/* MX51_PIN_EIM_D21 - De-assert USB PHY RESETB */
 	delay(10 * 1000);
-	gpio_data_write(GPIO_NO(2, 5), 1);
-	gpio_set_direction(GPIO_NO(2, 5), GPIO_DIR_OUT);
+	imxgpio_data_write(GPIO_NO(2, 5), GPIO_PIN_HIGH);
+	imxgpio_set_direction(GPIO_NO(2, 5), GPIO_PIN_OUTPUT);
 	iomux_set_function(MUX_PIN(EIM_D21), IOMUX_CONFIG_ALT1);
 	delay(5 * 1000);
 }

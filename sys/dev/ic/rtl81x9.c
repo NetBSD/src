@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.103.2.2 2020/04/08 14:08:06 martin Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.103.2.3 2020/04/13 08:04:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.103.2.2 2020/04/08 14:08:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.103.2.3 2020/04/13 08:04:22 martin Exp $");
 
 
 #include <sys/param.h>
@@ -561,9 +561,9 @@ rtk_setmulti(struct rtk_softc *sc)
 
 		h = rtk_calchash(enm->enm_addrlo);
 		if (h < 32)
-			hashes[0] |= (1 << h);
+			hashes[0] |= __BIT(h);
 		else
-			hashes[1] |= (1 << (h - 32));
+			hashes[1] |= __BIT(h - 32);
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}

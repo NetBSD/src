@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_asconf.c,v 1.11 2017/06/28 14:38:18 rjs Exp $ */
+/*	$NetBSD: sctp_asconf.c,v 1.11.8.1 2020/04/13 08:05:16 martin Exp $ */
 /*	$KAME: sctp_asconf.c,v 1.25 2005/06/16 20:44:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.11 2017/06/28 14:38:18 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.11.8.1 2020/04/13 08:05:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_asconf.c,v 1.11 2017/06/28 14:38:18 rjs Exp $")
 #include <netinet/sctputil.h>
 #include <netinet/sctp_output.h>
 #include <netinet/sctp_asconf.h>
+#include <netinet/sctp_route.h>
 
 /*
  * debug flags:

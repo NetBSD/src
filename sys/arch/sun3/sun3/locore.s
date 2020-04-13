@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.97.30.1 2019/06/10 22:06:49 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.97.30.2 2020/04/13 08:04:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -248,7 +248,7 @@ Lbe10:
  * [this code replaces similarly mmu specific code in the hp300 code]
  */
 sun3_mmu_specific:
-	clrl %d0			| make sure top bits are cleard too
+	clrl %d0			| make sure top bits are cleared too
 	movl %d1,%sp@-			| save %d1
 	movc %sfc,%d1			| save %sfc to %d1
 	moveq #FC_CONTROL,%d0		| %sfc = FC_CONTROL

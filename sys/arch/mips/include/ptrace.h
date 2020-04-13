@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.16 2017/04/12 18:18:00 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.16.12.1 2020/04/13 08:04:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,7 @@
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->r_regs[35]
+#define PTRACE_REG_FP(r)	(r)->r_regs[30]
 #define PTRACE_REG_SET_PC(r, v)	(r)->r_regs[35] = (v)
 #define PTRACE_REG_SP(r)	(r)->r_regs[29]
 #define PTRACE_REG_INTRV(r)	(r)->r_regs[2]

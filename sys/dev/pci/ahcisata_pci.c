@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.38.16.2 2020/04/08 14:08:08 martin Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.38.16.3 2020/04/13 08:04:26 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.38.16.2 2020/04/08 14:08:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.38.16.3 2020/04/13 08:04:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
@@ -394,6 +394,7 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	struct ahci_softc *sc = &psc->ah_sc;
 	bool ahci_cap_64bit;
 	bool ahci_bad_64bit;
+	pcireg_t reg;
 
 	sc->sc_atac.atac_dev = self;
 
@@ -446,6 +447,10 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	} else {
 		AHCIDEBUG_PRINT(("%s: SATA mode\n", AHCINAME(sc)), DEBUG_PROBE);
 	}
+
+	reg = pci_conf_read(psc->sc_pc, psc->sc_pcitag, PCI_COMMAND_STATUS_REG);
+	reg |= (PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE);
+	pci_conf_write(psc->sc_pc, psc->sc_pcitag, PCI_COMMAND_STATUS_REG, reg);
 
 	ahci_attach(sc);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2018/02/28 23:45:56 snj Exp $
+#	$NetBSD: Makefile,v 1.19.4.1 2020/04/13 08:03:18 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -15,5 +15,6 @@ CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/who -DSUPPORT_UTMPX -DSUPPORT_UTMP
 DPADD+=	${LIBRPCSVC}
 LDADD+=	-lrpcsvc
 
-.include <bsd.prog.mk>
+COPTS.rusers_proc.c+=	${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_STRINGOP_OVERFLOW} ${GCC_NO_CAST_FUNCTION_TYPE}
 
+.include <bsd.prog.mk>

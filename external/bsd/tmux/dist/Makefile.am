@@ -101,6 +101,7 @@ dist_tmux_SOURCES = \
 	cmd-rename-session.c \
 	cmd-rename-window.c \
 	cmd-resize-pane.c \
+	cmd-resize-window.c \
 	cmd-respawn-pane.c \
 	cmd-respawn-window.c \
 	cmd-rotate-window.c \
@@ -130,6 +131,7 @@ dist_tmux_SOURCES = \
 	control.c \
 	environ.c \
 	format.c \
+	format-draw.c \
 	grid-view.c \
 	grid.c \
 	input-keys.c \
@@ -196,7 +198,7 @@ install-exec-hook:
 			>$(srcdir)/tmux.1.mdoc; \
 	else \
 		sed -e "s|@SYSCONFDIR@|$(sysconfdir)|g" $(srcdir)/tmux.1| \
-			$(AWK) -f$(srcdir)/mdoc2man.awk >$(srcdir)/tmux.1.man; \
+			$(AWK) -f $(srcdir)/mdoc2man.awk >$(srcdir)/tmux.1.man; \
 	fi
 	$(mkdir_p) $(DESTDIR)$(mandir)/man1
 	$(INSTALL_DATA) $(srcdir)/tmux.1.@MANFORMAT@ \

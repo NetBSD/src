@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2018/06/06 02:20:07 snj Exp $
+#	$NetBSD: Makefile,v 1.21.2.1 2020/04/13 08:02:31 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ INCSDIR=${X11INCDIR}/freetype2
 INCS=	ft2build.h
 
 .PATH:	${FREETYPE}/src/base
-SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftfstype.c \
+SRCS=	ftbase.c ftbbox.c ftbdf.c ftdebug.c ftfstype.c \
 	ftglyph.c ftinit.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
 	ftsystem.c fttype1.c ftwinfnt.c ftbitmap.c ftcid.c \
 	ftgasp.c ftgxval.c ftotval.c ftpatent.c
@@ -103,7 +103,7 @@ LIBDPLIBS= \
 
 PKGCONFIG=	freetype2
 PKGDIST.freetype2=	${.CURDIR}
-PKGCONFIG_VERSION.freetype2=	22.1.16
+PKGCONFIG_VERSION.freetype2=	23:0:17
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

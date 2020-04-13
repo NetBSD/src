@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.11 2013/06/22 05:20:57 uebayasi Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.11.34.1 2020/04/13 08:03:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include <machine/asm.h>
+#include <machine/frameasm.h>
 
 #include "assym.h"
 
@@ -47,10 +48,12 @@ ENTRY(bus_space_read_1)
 	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	1f
 	movzbl	(%rdx), %eax
+	KMSAN_INIT_RET(1)
 	ret
 1:
 	xorl	%eax, %eax
 	inb	%dx, %al
+	KMSAN_INIT_RET(1)
 	ret
 END(bus_space_read_1)
 
@@ -63,10 +66,12 @@ ENTRY(bus_space_read_2)
 	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	1f
 	movzwl	(%rdx), %eax
+	KMSAN_INIT_RET(2)
 	ret
 1:
 	xorl	%eax, %eax
 	inw	%dx, %ax
+	KMSAN_INIT_RET(2)
 	ret
 END(bus_space_read_2)
 
@@ -79,9 +84,11 @@ ENTRY(bus_space_read_4)
 	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	1f
 	movl	(%rdx), %eax
+	KMSAN_INIT_RET(4)
 	ret
 1:
 	inl	%dx, %eax
+	KMSAN_INIT_RET(4)
 	ret
 END(bus_space_read_4)
 
@@ -94,6 +101,7 @@ ENTRY(bus_space_read_8)
 	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	.Ldopanic
 	movq	(%rdx), %rax
+	KMSAN_INIT_RET(8)
 	ret
 END(bus_space_read_8)
 

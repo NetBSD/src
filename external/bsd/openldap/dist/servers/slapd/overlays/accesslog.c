@@ -1,10 +1,10 @@
-/*	$NetBSD: accesslog.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $	*/
+/*	$NetBSD: accesslog.c,v 1.1.1.6.4.1 2020/04/13 07:56:21 martin Exp $	*/
 
 /* accesslog.c - log operations for audit/history purposes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2017 The OpenLDAP Foundation.
+ * Copyright 2005-2019 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: accesslog.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $");
+__RCSID("$NetBSD: accesslog.c,v 1.1.1.6.4.1 2020/04/13 07:56:21 martin Exp $");
 
 #include "portable.h"
 
@@ -1295,10 +1295,8 @@ accesslog_ctrls(
 	
 }
 
-static Entry *accesslog_entry( Operation *op, SlapReply *rs, int logop,
-	Operation *op2 ) {
-	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
-	log_info *li = on->on_bi.bi_private;
+static Entry *accesslog_entry( Operation *op, SlapReply *rs,
+	log_info *li, int logop, Operation *op2 ) {
 
 	char rdnbuf[STRLENOF(RDNEQ)+LDAP_LUTIL_GENTIME_BUFSIZE+8];
 	char nrdnbuf[STRLENOF(RDNEQ)+LDAP_LUTIL_GENTIME_BUFSIZE+8];
@@ -1457,13 +1455,13 @@ accesslog_op2logop( Operation *op )
 }
 
 static int accesslog_response(Operation *op, SlapReply *rs) {
-	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
+	slap_overinst *on = (slap_overinst *)op->o_callback->sc_private;
 	log_info *li = on->on_bi.bi_private;
 	Attribute *a, *last_attr;
 	Modifications *m;
 	struct berval *b, uuid = BER_BVNULL;
 	int i;
-	int logop, do_graduate = 0;
+	int logop;
 	slap_verbmasks *lo;
 	Entry *e = NULL, *old = NULL, *e_uuid = NULL;
 	char timebuf[LDAP_LUTIL_GENTIME_BUFSIZE+8];
@@ -1472,6 +1470,12 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 	BerVarray vals;
 	Operation op2 = {0};
 	SlapReply rs2 = {REP_RESULT};
+
+	{
+		slap_callback *sc = op->o_callback;
+		op->o_callback = sc->sc_next;
+		op->o_tmpfree(sc, op->o_tmpmemctx );
+	}
 
 	if ( rs->sr_type != REP_RESULT && rs->sr_type != REP_EXTENDED )
 		return SLAP_CB_CONTINUE;
@@ -1496,30 +1500,20 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 	if ( lo->mask & LOG_OP_WRITES ) {
 		slap_callback *cb;
 
-		/* Most internal ops are not logged */
-		if ( op->o_dont_replicate) {
-			/* Let contextCSN updates from syncrepl thru; the underlying
-			 * syncprov needs to see them. Skip others.
-			 */
-			if (( op->o_tag != LDAP_REQ_MODIFY ||
-				op->orm_modlist->sml_op != LDAP_MOD_REPLACE ||
-				op->orm_modlist->sml_desc != slap_schema.si_ad_contextCSN ) &&
-				op->orm_no_opattrs )
+		/* These internal ops are not logged */
+		if ( op->o_dont_replicate )
 			return SLAP_CB_CONTINUE;
-		}
 
 		ldap_pvt_thread_mutex_lock( &li->li_log_mutex );
 		old = li->li_old;
 		uuid = li->li_uuid;
 		li->li_old = NULL;
 		BER_BVZERO( &li->li_uuid );
-		/* Disarm mod_cleanup */
-		for ( cb = op->o_callback; cb; cb = cb->sc_next ) {
-			if ( cb->sc_private == (void *)on ) {
-				cb->sc_private = NULL;
-				break;
-			}
-		}
+#ifdef RMUTEX_DEBUG
+		Debug( LDAP_DEBUG_SYNC,
+			"accesslog_response: unlocking rmutex for tid %x\n",
+			op->o_tid, 0, 0 );
+#endif
 		ldap_pvt_thread_rmutex_unlock( &li->li_op_rmutex, op->o_tid );
 	}
 
@@ -1531,9 +1525,10 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 	if ( li->li_success && rs->sr_err != LDAP_SUCCESS )
 		goto done;
 
-	e = accesslog_entry( op, rs, logop, &op2 );
+	e = accesslog_entry( op, rs, li, logop, &op2 );
 
-	attr_merge_one( e, ad_reqDN, &op->o_req_dn, &op->o_req_ndn );
+	if ( !BER_BVISNULL( &op->o_req_ndn ))
+		attr_merge_one( e, ad_reqDN, &op->o_req_dn, &op->o_req_ndn );
 
 	if ( rs->sr_text ) {
 		ber_str2bv( rs->sr_text, 0, 0, &bv );
@@ -1597,6 +1592,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 			if ( m->sml_values ) {
 				i += m->sml_numvals;
 			} else if ( m->sml_op == LDAP_MOD_DELETE ||
+				m->sml_op == SLAP_MOD_SOFTDEL ||
 				m->sml_op == LDAP_MOD_REPLACE )
 			{
 				i++;
@@ -1645,8 +1641,10 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 					char c_op;
 
 					switch ( m->sml_op ) {
-					case LDAP_MOD_ADD: c_op = '+'; break;
-					case LDAP_MOD_DELETE:	c_op = '-'; break;
+					case LDAP_MOD_ADD:	/* FALLTHRU */
+					case SLAP_MOD_SOFTADD: c_op = '+'; break;
+					case LDAP_MOD_DELETE: /* FALLTHRU */
+					case SLAP_MOD_SOFTDEL: c_op = '-'; break;
 					case LDAP_MOD_REPLACE:	c_op = '='; break;
 					case LDAP_MOD_INCREMENT:	c_op = '#'; break;
 
@@ -1659,6 +1657,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 					accesslog_val2val( m->sml_desc, b, c_op, &vals[i] );
 				}
 			} else if ( m->sml_op == LDAP_MOD_DELETE ||
+				m->sml_op == SLAP_MOD_SOFTDEL ||
 				m->sml_op == LDAP_MOD_REPLACE )
 			{
 				vals[i].bv_len = m->sml_desc->ad_cname.bv_len + 2;
@@ -1666,7 +1665,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 				ptr = lutil_strcopy( vals[i].bv_val,
 					m->sml_desc->ad_cname.bv_val );
 				*ptr++ = ':';
-				if ( m->sml_op == LDAP_MOD_DELETE ) {
+				if ( m->sml_op == LDAP_MOD_DELETE || m->sml_op == SLAP_MOD_SOFTDEL ) {
 					*ptr++ = '-';
 				} else {
 					*ptr++ = '=';
@@ -1676,7 +1675,8 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 			}
 			/* ITS#6545: when the same attribute is edited multiple times,
 			 * record the transition */
-			if ( m->sml_next && m->sml_desc == m->sml_next->sml_desc ) {
+			if ( m->sml_next && m->sml_desc == m->sml_next->sml_desc &&
+					m->sml_op == m->sml_next->sml_op ) {
 				ber_str2bv( ":", STRLENOF(":"), 1, &vals[i] );
 				i++;
 			}
@@ -1872,7 +1872,6 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 		slap_get_commit_csn( op, &maxcsn, &foundit );
 		if ( !BER_BVISEMPTY( &maxcsn ) ) {
 			slap_queue_csn( &op2, &op->o_csn );
-			do_graduate = 1;
 		} else {
 			attr_merge_normalize_one( e, slap_schema.si_ad_entryCSN,
 				&op->o_csn, op->o_tmpmemctx );
@@ -1880,11 +1879,13 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 	}
 
 	op2.o_bd->be_add( &op2, &rs2 );
+	if ( rs2.sr_err != LDAP_SUCCESS ) {
+		Debug( LDAP_DEBUG_SYNC,
+			"accesslog_response: got result 0x%x adding log entry %s\n",
+			rs2.sr_err, op2.o_req_dn.bv_val, 0 );
+	}
 	if ( e == op2.ora_e ) entry_free( e );
 	e = NULL;
-	if ( do_graduate ) {
-		slap_graduate_commit_csn( &op2 );
-	}
 
 done:
 	if ( lo->mask & LOG_OP_WRITES )
@@ -1893,36 +1894,13 @@ done:
 	return SLAP_CB_CONTINUE;
 }
 
-/* Since Bind success is sent by the frontend, it won't normally enter
- * the overlay response callback. Add another callback to make sure it
- * gets here.
- */
 static int
-accesslog_bind_resp( Operation *op, SlapReply *rs )
-{
-	BackendDB *be, db;
-	int rc;
-	slap_callback *sc;
-
-	be = op->o_bd;
-	db = *be;
-	op->o_bd = &db;
-	db.bd_info = op->o_callback->sc_private;
-	rc = accesslog_response( op, rs );
-	op->o_bd = be;
-	sc = op->o_callback;
-	op->o_callback = sc->sc_next;
-	op->o_tmpfree( sc, op->o_tmpmemctx );
-	return rc;
-}
-
-static int
-accesslog_op_bind( Operation *op, SlapReply *rs )
+accesslog_op_misc( Operation *op, SlapReply *rs )
 {
 	slap_callback *sc;
 
 	sc = op->o_tmpcalloc( 1, sizeof(slap_callback), op->o_tmpmemctx );
-	sc->sc_response = accesslog_bind_resp;
+	sc->sc_response = accesslog_response;
 	sc->sc_private = op->o_bd->bd_info;
 
 	if ( op->o_callback ) {
@@ -1935,24 +1913,6 @@ accesslog_op_bind( Operation *op, SlapReply *rs )
 }
 
 static int
-accesslog_mod_cleanup( Operation *op, SlapReply *rs )
-{
-	slap_callback *sc = op->o_callback;
-	slap_overinst *on = sc->sc_private;
-	op->o_callback = sc->sc_next;
-
-	op->o_tmpfree( sc, op->o_tmpmemctx );
-
-	if ( on ) {
-		BackendInfo *bi = op->o_bd->bd_info;
-		op->o_bd->bd_info = (BackendInfo *)on;
-		accesslog_response( op, rs );
-		op->o_bd->bd_info = bi;
-	}
-	return 0;
-}
-
-static int
 accesslog_op_mod( Operation *op, SlapReply *rs )
 {
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
@@ -1962,18 +1922,8 @@ accesslog_op_mod( Operation *op, SlapReply *rs )
 	int doit = 0;
 
 	/* These internal ops are not logged */
-	if ( op->o_dont_replicate ) {
-		/* Let contextCSN updates from syncrepl thru; the underlying
-		 * syncprov needs to see them. Skip others.
-		 */
-		if (( op->o_tag != LDAP_REQ_MODIFY ||
-			op->orm_modlist->sml_op != LDAP_MOD_REPLACE ||
-			op->orm_modlist->sml_desc != slap_schema.si_ad_contextCSN ) &&
-			op->orm_no_opattrs )
+	if ( op->o_dont_replicate )
 		return SLAP_CB_CONTINUE;
-		/* give this a unique timestamp */
-		op->o_tincr++;
-	}
 
 	logop = accesslog_op2logop( op );
 	lo = logops+logop+EN_OFFSET;
@@ -1990,13 +1940,24 @@ accesslog_op_mod( Operation *op, SlapReply *rs )
 	}
 			
 	if ( doit ) {
-		slap_callback *cb = op->o_tmpcalloc( 1, sizeof( slap_callback ), op->o_tmpmemctx ), *cb2;
-		cb->sc_cleanup = accesslog_mod_cleanup;
+		slap_callback *cb = op->o_tmpcalloc( 1, sizeof( slap_callback ), op->o_tmpmemctx );
+		cb->sc_cleanup = accesslog_response;
+		cb->sc_response = accesslog_response;
 		cb->sc_private = on;
-		for ( cb2 = op->o_callback; cb2->sc_next; cb2 = cb2->sc_next );
-		cb2->sc_next = cb;
+		cb->sc_next = op->o_callback;
+		op->o_callback = cb;
 
+#ifdef RMUTEX_DEBUG
+		Debug( LDAP_DEBUG_SYNC,
+			"accesslog_op_mod: locking rmutex for tid %x\n",
+			op->o_tid, 0, 0 );
+#endif
 		ldap_pvt_thread_rmutex_lock( &li->li_op_rmutex, op->o_tid );
+#ifdef RMUTEX_DEBUG
+		Debug( LDAP_DEBUG_STATS,
+			"accesslog_op_mod: locked rmutex for tid %x\n",
+			op->o_tid, 0, 0 );
+#endif
 		if ( li->li_oldf && ( op->o_tag == LDAP_REQ_DELETE ||
 			op->o_tag == LDAP_REQ_MODIFY ||
 			( op->o_tag == LDAP_REQ_MODRDN && li->li_oldattrs )))
@@ -2059,7 +2020,7 @@ accesslog_unbind( Operation *op, SlapReply *rs )
 				return SLAP_CB_CONTINUE;
 		}
 
-		e = accesslog_entry( op, rs, LOG_EN_UNBIND, &op2 );
+		e = accesslog_entry( op, rs, li, LOG_EN_UNBIND, &op2 );
 		op2.o_hdr = op->o_hdr;
 		op2.o_tag = LDAP_REQ_ADD;
 		op2.o_bd = li->li_db;
@@ -2107,7 +2068,7 @@ accesslog_abandon( Operation *op, SlapReply *rs )
 			return SLAP_CB_CONTINUE;
 	}
 
-	e = accesslog_entry( op, rs, LOG_EN_ABANDON, &op2 );
+	e = accesslog_entry( op, rs, li, LOG_EN_ABANDON, &op2 );
 	bv.bv_val = buf;
 	bv.bv_len = snprintf( buf, sizeof( buf ), "%d", op->orn_msgid );
 	if ( bv.bv_len < sizeof( buf ) ) {
@@ -2284,6 +2245,7 @@ accesslog_db_root(
 		db = *li->li_db;
 		op->o_bd = &db;
 
+		op->o_tag = LDAP_REQ_ADD;
 		op->ora_e = e;
 		op->o_req_dn = e->e_name;
 		op->o_req_ndn = e->e_nname;
@@ -2349,14 +2311,16 @@ int accesslog_initialize()
 	accesslog.on_bi.bi_db_open = accesslog_db_open;
 
 	accesslog.on_bi.bi_op_add = accesslog_op_mod;
-	accesslog.on_bi.bi_op_bind = accesslog_op_bind;
+	accesslog.on_bi.bi_op_bind = accesslog_op_misc;
+	accesslog.on_bi.bi_op_compare = accesslog_op_misc;
 	accesslog.on_bi.bi_op_delete = accesslog_op_mod;
 	accesslog.on_bi.bi_op_modify = accesslog_op_mod;
 	accesslog.on_bi.bi_op_modrdn = accesslog_op_mod;
+	accesslog.on_bi.bi_op_search = accesslog_op_misc;
+	accesslog.on_bi.bi_extended = accesslog_op_misc;
 	accesslog.on_bi.bi_op_unbind = accesslog_unbind;
 	accesslog.on_bi.bi_op_abandon = accesslog_abandon;
 	accesslog.on_bi.bi_operational = accesslog_operational;
-	accesslog.on_response = accesslog_response;
 
 	accesslog.on_bi.bi_cf_ocs = log_cfocs;
 

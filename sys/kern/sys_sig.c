@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.46.16.1 2019/06/10 22:09:03 christos Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.46.16.2 2020/04/13 08:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.46.16.1 2019/06/10 22:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.46.16.2 2020/04/13 08:05:04 martin Exp $");
 
 #include "opt_dtrace.h"
 
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.46.16.1 2019/06/10 22:09:03 christos E
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/sdt.h>
+#include <sys/compat_stub.h>
 
 SDT_PROVIDER_DECLARE(proc);
 SDT_PROBE_DEFINE2(proc, kernel, , signal__clear,
@@ -413,11 +414,9 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 				v0v1valid = true;
 			else if ((p->p_lflag & PL_SIGCOMPAT) == 0) {
 				kernconfig_lock();
-				if (sendsig_sigcontext_vec == NULL) {
-					(void)module_autoload("compat",
-					    MODULE_CLASS_ANY);
-				}
-				if (sendsig_sigcontext_vec != NULL) {
+				(void)module_autoload("compat_16",
+				    MODULE_CLASS_ANY);
+				if (sendsig_sigcontext_16_hook.hooked) {
 					/*
 					 * We need to remember if the
 					 * sigcontext method may be useable,
@@ -466,7 +465,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 
 	ps = p->p_sigacts;
 	if (osa)
-		*osa = SIGACTION_PS(ps, signum);
+		sigaction_copy(osa, &SIGACTION_PS(ps, signum));
 	if (!nsa)
 		goto out;
 
@@ -476,7 +475,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 		goto out;
 	}
 
-	SIGACTION_PS(ps, signum) = *nsa;
+	sigaction_copy(&SIGACTION_PS(ps, signum), nsa);
 	ps->sa_sigdesc[signum].sd_tramp = tramp;
 	ps->sa_sigdesc[signum].sd_vers = vers;
 	sigminusset(&sigcantmask, &SIGACTION_PS(ps, signum).sa_mask);

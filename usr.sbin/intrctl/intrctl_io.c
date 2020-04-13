@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl_io.c,v 1.4 2018/06/23 11:11:00 jdolecek Exp $	*/
+/*	$NetBSD: intrctl_io.c,v 1.4.2.1 2020/04/13 08:05:53 martin Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl_io.c,v 1.4 2018/06/23 11:11:00 jdolecek Exp $");
+__RCSID("$NetBSD: intrctl_io.c,v 1.4.2.1 2020/04/13 08:05:53 martin Exp $");
 
 #include <sys/sysctl.h>
 #include <sys/intrio.h>
@@ -76,8 +76,7 @@ intrctl_io_alloc(int retry)
 		}
 	}
 error:
-	if (buf != NULL)
-		free(buf);
+	free(buf);
 	return NULL;
 }
 

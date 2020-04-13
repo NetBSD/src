@@ -1,5 +1,5 @@
 /* Support functions for the unwinder.
-   Copyright (C) 2003-2016 Free Software Foundation, Inc.
+   Copyright (C) 2003-2017 Free Software Foundation, Inc.
    Contributed by Paul Brook
 
    This file is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@
 #endif
 #endif
 
-#ifdef __ARM_ARCH_6M__
+#if !__ARM_ARCH_ISA_ARM && __ARM_ARCH_ISA_THUMB == 1
 
 /* r0 points to a 16-word block.  Upload these values to the actual core
    state.  */
@@ -169,7 +169,7 @@ FUNC_START gnu_Unwind_Save_WMMXC
 	UNPREFIX \name
 .endm
 
-#else /* !__ARM_ARCH_6M__ */
+#else /* __ARM_ARCH_ISA_ARM || __ARM_ARCH_ISA_THUMB != 1 */
 
 /* r0 points to a 16-word block.  Upload these values to the actual core
    state.  */
@@ -351,7 +351,7 @@ ARM_FUNC_START gnu_Unwind_Save_WMMXC
 	UNPREFIX \name
 .endm
 
-#endif /* !__ARM_ARCH_6M__ */
+#endif /* __ARM_ARCH_ISA_ARM || __ARM_ARCH_ISA_THUMB != 1 */
 
 UNWIND_WRAPPER _Unwind_RaiseException 1
 UNWIND_WRAPPER _Unwind_Resume 1

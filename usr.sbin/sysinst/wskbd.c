@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbd.c,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: wskbd.c,v 1.1.28.1 2020/04/13 08:06:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wskbd.c,v 1.1 2014/07/26 19:30:44 dholland Exp $");
+__RCSID("$NetBSD: wskbd.c,v 1.1.28.1 2020/04/13 08:06:00 martin Exp $");
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -43,8 +43,6 @@ __RCSID("$NetBSD: wskbd.c,v 1.1 2014/07/26 19:30:44 dholland Exp $");
 #include "menu_defs.h"
 #include "msg_defs.h"
 void save_kb_encoding(void);
-
-#define nelem(x) (sizeof (x) / sizeof *(x))
 
 /* wscons setup for sysinst */
 
@@ -92,15 +90,23 @@ get_kb_encoding(void)
 	unsigned int i;
 	int kb_menu;
 	kbd_t kbdencoding;
-	menu_ent opt[nelem(kb_types)];
+	menu_ent opt[__arraycount(kb_types)];
 	const char *dflt = msg_string(MSG_kb_default);
 
+	/*
+	 * Check if we are running on a wscons keyboard at all,
+	 * do not bother to try changing the layout if not.
+	 */
+	if (ioctl(0, WSKBDIO_GTYPE,  &i) == -1)
+		return;
+
+	memset(opt, 0, sizeof(opt));
 	fd = open("/dev/wskbd0", O_WRONLY);
 	if (fd < 0)
 		return;
 	if (ioctl(fd, WSKBDIO_GETENCODING, &kbdencoding) >=  0) {
 		memset(&opt, 0, sizeof opt);
-		for (i = 0; i < nelem(opt); i++) {
+		for (i = 0; i < __arraycount(opt); i++) {
 			if (kb_types[i].kb_encoding == KB_USER)
 				opt[0].opt_name = MSG_unchanged;
 			else {
@@ -108,10 +114,9 @@ get_kb_encoding(void)
 				if (strcmp(kb_types[i].kb_name, dflt) == 0)
 					kb_default = i;
 			}
-			opt[i].opt_menu = OPT_NOMENU;
 			opt[i].opt_action = set_kb_encoding;
 		}
-		kb_menu = new_menu(MSG_Keyboard_type, opt, nelem(opt),
+		kb_menu = new_menu(MSG_Keyboard_type, opt, __arraycount(opt),
 			-1, -8, 0, 0,
 			MC_SCROLL | MC_NOEXITOPT,
 			set_kb_default, NULL, NULL, NULL, NULL);

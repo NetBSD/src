@@ -1,4 +1,4 @@
-/* $NetBSD: pic_bebox.c,v 1.10 2012/10/20 14:56:31 kiyohara Exp $ */
+/* $NetBSD: pic_bebox.c,v 1.10.38.1 2020/04/13 08:03:40 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.10 2012/10/20 14:56:31 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.10.38.1 2020/04/13 08:03:40 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -57,9 +57,7 @@ setup_bebox_intr(void)
 {
 	struct pic_ops *pic;
 
-	pic = malloc(sizeof(struct pic_ops), M_DEVBUF, M_NOWAIT);
-	KASSERT(pic != NULL);
-
+	pic = malloc(sizeof(struct pic_ops), M_DEVBUF, M_WAITOK);
 	pic->pic_numintrs = 32;
 	pic->pic_cookie = (void *)BEBOX_REG;
 	pic->pic_enable_irq = bebox_enable_irq;

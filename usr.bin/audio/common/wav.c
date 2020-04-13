@@ -1,7 +1,7 @@
-/*	$NetBSD: wav.c,v 1.14 2017/11/25 17:18:15 jdolecek Exp $	*/
+/*	$NetBSD: wav.c,v 1.14.4.1 2020/04/13 08:05:40 martin Exp $	*/
 
 /*
- * Copyright (c) 2002, 2009 Matthew R. Green
+ * Copyright (c) 2002, 2009, 2013, 2015, 2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.14 2017/11/25 17:18:15 jdolecek Exp $");
+__RCSID("$NetBSD: wav.c,v 1.14.4.1 2020/04/13 08:05:40 martin Exp $");
 #endif
 
 
@@ -60,6 +60,7 @@ static const struct {
 	{ WAVE_FORMAT_UNKNOWN, 	"Microsoft Official Unknown" },
 	{ WAVE_FORMAT_PCM,	"Microsoft PCM" },
 	{ WAVE_FORMAT_ADPCM,	"Microsoft ADPCM" },
+	{ WAVE_FORMAT_IEEE_FLOAT,"Microsoft IEEE Floating-Point" },
 	{ WAVE_FORMAT_ALAW,	"Microsoft A-law" },
 	{ WAVE_FORMAT_MULAW,	"Microsoft mu-law" },
 	{ WAVE_FORMAT_OKI_ADPCM,"OKI ADPCM" },
@@ -187,6 +188,20 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 	case WAVE_FORMAT_MULAW:
 		newenc = AUDIO_ENCODING_ULAW;
 		newprec = 8;
+		break;
+	case WAVE_FORMAT_IEEE_FLOAT:
+		switch (getle16(fmt.bits_per_sample)) {
+		case 32:
+			newenc = AUDIO_ENCODING_LIBAUDIO_FLOAT32;
+			newprec = 32;
+			break;
+		case 64:
+			newenc = AUDIO_ENCODING_LIBAUDIO_FLOAT64;
+			newprec = 32;
+			break;
+		default:
+			return (AUDIO_EWAVBADPCM);
+		}
 		break;
 	}
 

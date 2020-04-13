@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.22.20.1 2020/04/08 14:08:02 martin Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.22.20.2 2020/04/13 08:04:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.22.20.1 2020/04/08 14:08:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.22.20.2 2020/04/13 08:04:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1130,10 +1130,7 @@ acpi_pci_link_devbyhandle(ACPI_HANDLE handle)
 			return sc;
 	}
 
-	sc = malloc(sizeof (*sc), M_ACPI, M_NOWAIT | M_ZERO);
-	if (sc == NULL)
-		return NULL;
-
+	sc = malloc(sizeof (*sc), M_ACPI, M_WAITOK | M_ZERO);
 	sc->pl_handle = handle;
 
 	acpi_pci_link_init(sc);

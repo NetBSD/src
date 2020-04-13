@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.1.22.1 2020/04/13 08:06:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,8 +82,8 @@ message onebiosmatch
 }
 
 message onebiosmatch_header
-{BIOS # cilindros cabez sectors sect. totales GB
------- --------- ----- ------- ------------- ---
+{BIOS # cilindros cabez sectors sect. totales   GB 
+------ --------- ----- ------- ------------- ---- 
 }
 
 message onebiosmatch_row
@@ -102,8 +102,8 @@ message biosmultmatch
 }
 
 message biosmultmatch_header
-{   BIOS # cilindros cabez sectors sect totales  GB
-   ------ --------- ----- ------- ------------- ----
+{   BIOS # cilindros cabez sectors  sect totales   GB 
+   ------ --------- ----- ------- ------------- ---- 
 }
 
 message biosmultmatch_row
@@ -162,3 +162,4 @@ message updatembr
 Record a la ultima versión del código de arranque de NetBSD?}
 
 message set_kernel_1  {Núcleo (GENERIC)}
+message set_kernel_2	{Kernel (GENERIC_KASLR)}

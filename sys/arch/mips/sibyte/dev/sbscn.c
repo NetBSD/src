@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.43 2017/07/24 09:56:46 mrg Exp $ */
+/* $NetBSD: sbscn.c,v 1.43.4.1 2020/04/13 08:04:00 martin Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.43 2017/07/24 09:56:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.43.4.1 2020/04/13 08:04:00 martin Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -352,13 +352,7 @@ sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr)
 	tp->t_hwiflow = sbscn_hwiflow;
 
 	ch->ch_tty = tp;
-	ch->ch_rbuf = malloc(sbscn_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
-	if (ch->ch_rbuf == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "channel %d: unable to allocate ring buffer\n",
-		    chan);
-		return;
-	}
+	ch->ch_rbuf = malloc(sbscn_rbuf_size << 1, M_DEVBUF, M_WAITOK);
 	ch->ch_ebuf = ch->ch_rbuf + (sbscn_rbuf_size << 1);
 
 	tty_attach(tp);

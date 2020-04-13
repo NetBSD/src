@@ -1,6 +1,6 @@
-.\"	$NetBSD: ddb.4,v 1.178.2.1 2019/06/10 22:05:39 christos Exp $
+.\"	$NetBSD: ddb.4,v 1.178.2.2 2020/04/13 08:03:25 martin Exp $
 .\"
-.\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd October 12, 2018
+.Dd March 30, 2020
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -117,6 +117,14 @@ from the keyboard:
 <LAlt>-<LAmiga>-<F10>
 .It atari
 <Alt>-<LeftShift>-<F9>
+.It evbarm
+<Ctrl>-<Alt>-<Esc> on PC style keyboards.
+.It ""
+<Break> on serial console.
+.It ""
+Some models:
++++++
+(five plus signs) on serial console.
 .It hp300
 <Shift>-<Reset>
 .It hpcarm
@@ -404,6 +412,8 @@ examine half-words (16 bits).
 examine words (legacy
 .Dq long ,
 32 bits).
+.It Cm q
+examine quad-words (64 bits).
 .It Cm L
 examine long words (implementation dependent)
 .It Cm a
@@ -433,6 +443,8 @@ Non-printing characters are displayed as octal escapes.
 .It Cm m
 display in unsigned hex with a character dump at the end of each line.
 The location is displayed as hex at the beginning of each line.
+.It Cm p
+display as a pointer and it's symbol if possible.
 .It Cm i
 display as a machine instruction.
 .It Cm I
@@ -563,6 +575,11 @@ If
 is specified, stack traces of LWPs holding locks are also printed.
 This command is only useful if a kernel is compiled with
 .Cd options LOCKDEBUG .
+.It Ic show all mount Ns Op Cm /f
+Display all mount points.
+If
+.Cm /f
+is specified, the complete vnode list is printed.
 .It Ic show all pages
 Display basic information about all physical pages managed by the VM system.
 For more detailed information about a single page, use
@@ -817,21 +834,7 @@ If
 is specified, a character is displayed immediately after each symbol
 name indicating the type of symbol.
 .Pp
-For
-.Xr a.out 5 Ns -format
-symbol tables,
-absolute symbols display
-.Sy @ ,
-text segment symbols display
-.Sy * ,
-data segment symbols display
-.Sy + ,
-BSS segment symbols display
-.Sy - ,
-and filename symbols display
-.Sy / .
-For ELF-format symbol tables,
-object symbols display
+Object symbols display
 .Sy + ,
 function symbols display
 .Sy * ,

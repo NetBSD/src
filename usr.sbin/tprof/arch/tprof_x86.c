@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.8.2.2 2019/06/10 22:10:43 christos Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.8.2.3 2020/04/13 08:06:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -655,6 +655,120 @@ static struct event_table amd_f10h = {
 };
 
 /*
+ * AMD Family 15h
+ */
+static struct name_to_event amd_f15h_names[] = {
+	{ "FpPipeAssignment",		0x000, 0x77, true },
+	{ "FpSchedulerEmpty",		0x001, 0x00, true },
+	{ "FpRetSseAvxOps",		0x003, 0xff, true },
+	{ "FpNumMovElim",		0x004, 0x0f, true },
+	{ "FpRetiredSerOps",		0x005, 0x0f, true },
+	{ "LsSegRegLoads",		0x020, 0x7f, true },
+	{ "LsPipeRestartSelfMod",	0x021, 0x00, true },
+	{ "LsPipeRestartVarious",	0x022, 0x1f, true },
+	{ "LsLoadQueueStoreQFull",	0x023, 0x03, true },
+	{ "LsLockedOps",		0x024, 0x00, true },
+	{ "LsRetClflushInstr",		0x026, 0x00, true },
+	{ "LsRetCpuidInstr",		0x027, 0x00, true },
+	{ "LsDispatch",			0x029, 0x07, true },
+	{ "LsCanStoreToLoadFwOps",	0x02a, 0x03, true },
+	{ "LsSmisReceived",		0x02b, 0x00, true },
+	{ "LsExecClflushInstr",		0x030, 0x00, true },
+	{ "LsMisalignStore",		0x032, 0x00, true },
+	{ "LsFpLoadBufStall",		0x034, 0x00, true },
+	{ "LsStlf",			0x035, 0x00, true },
+	{ "DcCacheAccess",		0x040, 0x00, true },
+	{ "DcCacheMiss",		0x041, 0x00, true },
+	{ "DcCacheFillL2Sys",		0x042, 0x1f, true },
+	{ "DcCacheFillSys",		0x043, 0x00, true },
+	{ "DcUnifiedTlbHit",		0x045, 0x77, true },
+	{ "DcUnifiedTlbMiss",		0x046, 0x77, true },
+	{ "DcMisalignAccess",		0x047, 0x00, true },
+	{ "DcPrefetchInstrDisp",	0x04b, 0x07, true },
+	{ "DcIneffSwPrefetch",		0x052, 0x09, true },
+	{ "CuCmdVictimBuf",		0x060, 0x98, true },
+	{ "CuCmdMaskedOps",		0x061, 0x65, true },
+	{ "CuCmdReadBlkOps",		0x062, 0x77, true },
+	{ "CuCmdChgDirtyOps",		0x063, 0x08, true },
+	{ "CuDramSysReq",		0x064, 0x00, true },
+	{ "CuMemReqByType",		0x065, 0x83, true },
+	{ "CuDataCachePrefetch",	0x067, 0x03, true },
+	{ "CuMabReq",			0x068, 0xff, true },
+	{ "CuMabWaitCyc",		0x069, 0xff, true },
+	{ "CuSysRespCacheFill",		0x06c, 0x3f, true },
+	{ "CuOctwordsWritten",		0x06d, 0x01, true },
+	{ "CuCacheXInv",		0x075, 0x0f, true },
+	{ "CuCpuClkNotHalted",		0x076, 0x00, true },
+	{ "CuL2Req",			0x07d, 0x5f, true },
+	{ "CuL2Miss",			0x07e, 0x17, true },
+	{ "CuL2FillWb",			0x07f, 0x07, true },
+	{ "CuPageSplintering",		0x165, 0x07, true },
+	{ "CuL2PrefetchTrigEv",		0x16c, 0x03, true },
+	{ "CuXabAllocStall",		0x177, 0x03, true },
+	{ "CuFreeXabEntries",		0x17f, 0x01, true },
+	{ "IcCacheFetch",		0x080, 0x00, true },
+	{ "IcCacheMiss",		0x081, 0x00, true },
+	{ "IcCacheFillL2",		0x082, 0x00, true },
+	{ "IcCacheFillSys",		0x083, 0x00, true },
+	{ "IcL1TlbMissL2Hit",		0x084, 0x00, true },
+	{ "IcL1TlbMissL2Miss",		0x085, 0x07, true },
+	{ "IcPipeRestartInstrStrProbe",	0x086, 0x00, true },
+	{ "IcFetchStall",		0x087, 0x00, true },
+	{ "IcRetStackHits",		0x088, 0x00, true },
+	{ "IcRetStackOver",		0x089, 0x00, true },
+	{ "IcCacheVictims",		0x08b, 0x00, true },
+	{ "IcCacheLinesInv",		0x08c, 0x0f, true },
+	{ "IcTlbReload",		0x099, 0x00, true },
+	{ "IcTlbReloadAbort",		0x09a, 0x00, true },
+	{ "IcUopsDispatched",		0x186, 0x01, true },
+	{ "ExRetInstr",			0x0c0, 0x00, true },
+	{ "ExRetCops",			0x0c1, 0x00, true },
+	{ "ExRetBrn",			0x0c2, 0x00, true },
+	{ "ExRetBrnMisp",		0x0c3, 0x00, true },
+	{ "ExRetBrnTkn",		0x0c4, 0x00, true },
+	{ "ExRetBrnTknMisp",		0x0c5, 0x00, true },
+	{ "ExRetBrnFar",		0x0c6, 0x00, true },
+	{ "ExRetBrnResync",		0x0c7, 0x00, true },
+	{ "ExRetNearRet",		0x0c8, 0x00, true },
+	{ "ExRetNearRetMispred",	0x0c9, 0x00, true },
+	{ "ExRetBrnIndMisp",		0x0ca, 0x00, true },
+	{ "ExRetMmxFpInstr@X87",	0x0cb, 0x01, true },
+	{ "ExRetMmxFpInstr@Mmx",	0x0cb, 0x02, true },
+	{ "ExRetMmxFpInstr@Sse",	0x0cb, 0x04, true },
+	{ "ExIntMaskedCyc",		0x0cd, 0x00, true },
+	{ "ExIntMaskedCycIntPend",	0x0ce, 0x00, true },
+	{ "ExIntTaken",			0x0cf, 0x00, true },
+	{ "ExDecEmpty",			0x0d0, 0x00, true },
+	{ "ExDispStall",		0x0d1, 0x00, true },
+	{ "ExUseqStallSer",		0x0d2, 0x00, true },
+	{ "ExDispStallInstrRetQFull",	0x0d5, 0x00, true },
+	{ "ExDispStallIntSchedQFull",	0x0d6, 0x00, true },
+	{ "ExDispStallFpSchedQFull",	0x0d7, 0x00, true },
+	{ "ExDispStallLdqFull",		0x0d8, 0x00, true },
+	{ "ExUseqStallAllQuiet",	0x0d9, 0x00, true },
+	{ "ExFpuEx",			0x0db, 0x1f, true },
+	{ "ExBpDr0",			0x0dc, 0x8f, true },
+	{ "ExBpDr1",			0x0dd, 0x8f, true },
+	{ "ExBpDr2",			0x0de, 0x8f, true },
+	{ "ExBpDr3",			0x0df, 0x8f, true },
+	{ "ExRetx87FpOps",		0x1c0, 0x07, true },
+	{ "ExTaggedIbsOps",		0x1cf, 0x07, true },
+	{ "ExRetFusBrInstr",		0x1d0, 0x00, true },
+	{ "ExDispStallStqFull",		0x1d8, 0x00, true },
+	{ "ExCycNoDispIntPrfTok",	0x1dd, 0x00, true },
+	{ "ExCycNoDispfpPrfTok",	0x1de, 0x00, true },
+	{ "ExFpDispContention",		0x1df, 0x0f, true },
+};
+
+static struct event_table amd_f15h = {
+	.tablename = "AMD Family 15h",
+	.names = amd_f15h_names,
+	.nevents = sizeof(amd_f15h_names) /
+	    sizeof(struct name_to_event),
+	.next = NULL
+};
+
+/*
  * AMD Family 17h
  */
 static struct name_to_event amd_f17h_names[] = {
@@ -720,6 +834,8 @@ init_amd_generic(void)
 	switch (CPUID_TO_FAMILY(eax)) {
 	case 0x10:
 		return &amd_f10h;
+	case 0x15:
+		return &amd_f15h;
 	case 0x17:
 		return &amd_f17h;
 	}
