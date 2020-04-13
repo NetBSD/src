@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.16 2020/04/12 07:49:58 maxv Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.17 2020/04/13 05:40:25 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.16 2020/04/12 07:49:58 maxv Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.17 2020/04/13 05:40:25 maxv Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -262,7 +262,8 @@ ENTRY_NP(lwp_trampoline)
 	 */
 	adr	x30, el0_trap_exit	/* tail call via lr */
 	mov	x0, x28			/* mov arg into place */
-	br	x27			/* call function with arg */
+	mov	x16, x27		/* use x16 as jump register, for BTI */
+	br	x16			/* call function with arg */
 END(lwp_trampoline)
 
 	.macro unwind_x0_x2
