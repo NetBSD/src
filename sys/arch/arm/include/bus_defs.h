@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.14 2019/12/28 17:19:43 jmcneill Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.15 2020/04/13 07:09:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_arm_bus_space.h"
+#include "opt_kasan.h"
 #endif
 
 /*
@@ -484,6 +485,11 @@ struct arm32_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+#if defined(KASAN)
+	void		*dm_buf;
+	bus_size_t	dm_buflen;
+	int		dm_buftype;
+#endif
 	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
