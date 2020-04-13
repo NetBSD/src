@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.106 2020/04/13 16:29:59 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.107 2020/04/13 20:09:13 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.106 2020/04/13 16:29:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.107 2020/04/13 20:09:13 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -964,6 +964,8 @@ xbd_diskstart(device_t self, struct buf *bp)
 
 	DPRINTF(("xbd_diskstart(%p): b_bcount = %ld\n",
 	    bp, (long)bp->b_bcount));
+
+	KASSERT(bp->b_bcount <= XBD_MAX_XFER);
 
 	mutex_enter(&sc->sc_lock);
 
