@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.48 2020/04/13 00:27:16 chs Exp $
+.\"	$NetBSD: pool.9,v 1.49 2020/04/13 08:59:14 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -193,7 +193,6 @@ The handle identifying the pool resource instance.
 A pointer to a pool item previously obtained by
 .Fn pool_get .
 .El
-.Pp
 .Ss SETTING POOL RESOURCE WATERMARKS AND LIMITS
 A pool will attempt to increase its resource usage to keep up with the demand
 for its items.
@@ -218,7 +217,7 @@ and
 respectively.
 The defaults for these limits are
 .Dv 0
-and 
+and
 .Dv UINT_MAX ,
 respectively.
 Changing these limits will cause memory to be immediately allocated to the pool
