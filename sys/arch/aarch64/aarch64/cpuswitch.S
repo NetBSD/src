@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.17 2020/04/13 05:40:25 maxv Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.18 2020/04/13 06:02:03 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.17 2020/04/13 05:40:25 maxv Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.18 2020/04/13 06:02:03 maxv Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -249,10 +249,10 @@ ENTRY_NP(lwp_trampoline)
 	cbz	w4, 1f
 	mov	x26, x1
 	bl	_C_LABEL(cprng_strong64)
-	ldr	x0, [x26, #L_MD_IA_KERN_LO]
+	str	x0, [x26, #L_MD_IA_KERN_LO]
 	msr	APIAKeyLo_EL1, x0
 	bl	_C_LABEL(cprng_strong64)
-	ldr	x0, [x26, #L_MD_IA_KERN_HI]
+	str	x0, [x26, #L_MD_IA_KERN_HI]
 	msr	APIAKeyHi_EL1, x0
 1:
 #endif
