@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.66 2020/04/13 15:54:45 maxv Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.67 2020/04/13 16:09:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.66 2020/04/13 15:54:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.67 2020/04/13 16:09:21 maxv Exp $");
 
 #include "opt_dtrace.h"
 
@@ -214,8 +214,10 @@ sched_enqueue(struct lwp *l)
 	}
 	spc->spc_flags &= ~SPCF_IDLE;
 	spc->spc_count++;
-	if ((l->l_pflag & LP_BOUND) == 0)
-		spc->spc_mcount++;
+	if ((l->l_pflag & LP_BOUND) == 0) {
+		atomic_store_relaxed(&spc->spc_mcount,
+		    atomic_load_relaxed(&spc->spc_mcount) + 1);
+	}
 
 	/*
 	 * Update the value of highest priority in the runqueue,
@@ -249,8 +251,10 @@ sched_dequeue(struct lwp *l)
 		spc->spc_migrating = NULL;
 
 	spc->spc_count--;
-	if ((l->l_pflag & LP_BOUND) == 0)
-		spc->spc_mcount--;
+	if ((l->l_pflag & LP_BOUND) == 0) {
+		atomic_store_relaxed(&spc->spc_mcount,
+		    atomic_load_relaxed(&spc->spc_mcount) - 1);
+	}
 
 	q_head = sched_getrq(spc, eprio);
 	TAILQ_REMOVE(q_head, l, l_runq);
@@ -641,7 +645,7 @@ sched_catchlwp(struct cpu_info *ci)
 	gentle = ((curspc->spc_flags & SPCF_1STCLASS) == 0 ||
 	    (spc->spc_flags & SPCF_1STCLASS) != 0);
 
-	if (spc->spc_mcount < (gentle ? min_catch : 1) ||
+	if (atomic_load_relaxed(&spc->spc_mcount) < (gentle ? min_catch : 1) ||
 	    curspc->spc_psid != spc->spc_psid) {
 		spc_unlock(ci);
 		return NULL;
@@ -772,7 +776,8 @@ sched_steal(struct cpu_info *ci, struct cpu_info *tci)
 
 	spc = &ci->ci_schedstate;
 	tspc = &tci->ci_schedstate;
-	if (tspc->spc_mcount != 0 && spc->spc_psid == tspc->spc_psid) {
+	if (atomic_load_relaxed(&tspc->spc_mcount) != 0 &&
+	    spc->spc_psid == tspc->spc_psid) {
 		spc_dlock(ci, tci);
 		l = sched_catchlwp(tci);
 		spc_unlock(ci);
@@ -856,7 +861,7 @@ sched_idle(void)
 			tspc = &inner->ci_schedstate;
 			if (ci == inner || ci == mci ||
 			    spc->spc_psid != tspc->spc_psid ||
-			    tspc->spc_mcount < min_catch) {
+			    atomic_load_relaxed(&tspc->spc_mcount) < min_catch) {
 				continue;
 			}
 			spc_dlock(ci, inner);
