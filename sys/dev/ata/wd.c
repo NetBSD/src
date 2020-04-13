@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.460 2020/04/07 13:22:05 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.461 2020/04/13 08:05:02 maxv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.460 2020/04/07 13:22:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.461 2020/04/13 08:05:02 maxv Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -213,7 +213,7 @@ static int wd_setcache(struct wd_softc *, int);
 static void wd_sysctl_attach(struct wd_softc *);
 static void wd_sysctl_detach(struct wd_softc *);
 
-struct dkdriver wddkdriver = {
+static const struct dkdriver wddkdriver = {
 	.d_open = wdopen,
 	.d_close = wdclose,
 	.d_strategy = wdstrategy,
