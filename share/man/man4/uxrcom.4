@@ -1,4 +1,4 @@
-.\"	$NetBSD: uxrcom.4,v 1.2 2020/04/12 02:04:12 simonb Exp $
+.\"	$NetBSD: uxrcom.4,v 1.3 2020/04/13 08:46:39 wiz Exp $
 .\"	$OpenBSD: uxrcom.4,v 1.1 2019/03/27 22:11:21 kettenis Exp $
 .\"
 .\" Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2019 $
+.Dd April 12, 2020
 .Dt UXRCOM 4
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@
 The
 .Nm
 driver supports serial adapters based on the
-XR21V1410, XR21V1412 and XR21V1414 chipsets.
+XR21V1410, XR21V1412, and XR21V1414 chipsets.
 Devices range from single port to eight port (implemented as a
 USB hub and two
 .Nm
@@ -50,7 +50,6 @@ which makes it behave like a
 .Xr tty 4 ,
 .Xr ucom 4 ,
 .Xr uhub 4 ,
-.Xr modem 4 ,
 .Xr usb 4
 .Sh HISTORY
 The
@@ -77,4 +76,4 @@ The
 driver was written by
 by
 .An Simon Burge
-.Aq simonb@netbsd.org .
+.Aq Mt simonb@NetBSD.org .
