@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.53 2020/04/08 07:56:34 skrll Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.54 2020/04/13 07:11:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -72,6 +72,7 @@
 #define UVMHIST_LINK_STATIC(NAME)
 #define UVMHIST_LOG(NAME,FMT,A,B,C,D)
 #define UVMHIST_CALLED(NAME)
+#define UVMHIST_CALLARGS(NAME,FMT,A,B,C,D)
 #define UVMHIST_FUNC(FNAME)
 
 #endif
