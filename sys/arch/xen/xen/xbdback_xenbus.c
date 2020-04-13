@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.77 2020/04/07 14:07:01 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.78 2020/04/13 00:27:17 chs Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.77 2020/04/07 14:07:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.78 2020/04/13 00:27:17 chs Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -380,13 +380,10 @@ xbdbackattach(int n)
 	    IPL_SOFTBIO, NULL, NULL, NULL);
 
 	/* we allocate enough to handle a whole ring at once */
-	if (pool_prime(&xbdback_request_pool.pc.pc_pool, BLKIF_RING_SIZE) != 0)
-		printf("xbdback: failed to prime request pool\n");
-	if (pool_prime(&xbdback_io_pool.pc.pc_pool, BLKIF_RING_SIZE) != 0)
-		printf("xbdback: failed to prime io pool\n");
-	if (pool_prime(&xbdback_fragment_pool.pc.pc_pool,
-            BLKIF_MAX_SEGMENTS_PER_REQUEST * BLKIF_RING_SIZE) != 0)
-		printf("xbdback: failed to prime fragment pool\n");
+	pool_prime(&xbdback_request_pool.pc.pc_pool, BLKIF_RING_SIZE);
+	pool_prime(&xbdback_io_pool.pc.pc_pool, BLKIF_RING_SIZE);
+	pool_prime(&xbdback_fragment_pool.pc.pc_pool,
+            BLKIF_MAX_SEGMENTS_PER_REQUEST * BLKIF_RING_SIZE);
 
 	xenbus_backend_register(&xbd_backend_driver);
 }

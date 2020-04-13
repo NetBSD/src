@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.13 2019/01/27 02:08:39 pgoyette Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.14 2020/04/13 00:27:16 chs Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.13 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.14 2020/04/13 00:27:16 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,10 +93,7 @@ xen_shm_init(void)
 	pool_init(&xen_shm_callback_pool, sizeof(struct xen_shm_callback_entry),
 	    0, 0, 0, "xshmc", NULL, IPL_VM);
 	/* ensure we'll always get items */
-	if (pool_prime(&xen_shm_callback_pool,
-	    PAGE_SIZE / sizeof(struct xen_shm_callback_entry)) != 0) {
-		panic("xen_shm_init can't prime pool");
-	}
+	pool_prime(&xen_shm_callback_pool, 1);
 
 	xen_shm_size = (XENSHM_NPAGES * PAGE_SIZE);
 
